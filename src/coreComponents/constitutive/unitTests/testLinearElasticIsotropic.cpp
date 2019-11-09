@@ -81,7 +81,7 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
     Rot(1,1) = 1;
     Rot(2,2) = 1;
 
-    cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0 );
+    cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0, 1 );
 
     ASSERT_DOUBLE_EQ( meanStress[0][0] , strain*K );
     ASSERT_DOUBLE_EQ( deviatorStress[0][0](0,0) , (2.0/3.0*strain)*2*G );
@@ -102,7 +102,7 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
     Rot(1,1) = 1;
     Rot(2,2) = 1;
 
-    cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0 );
+    cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0, 1 );
 
     ASSERT_DOUBLE_EQ( meanStress[0][0] , strain*K );
     ASSERT_DOUBLE_EQ( deviatorStress[0][0](0,0) , (-1.0/3.0*strain)*2*G );
@@ -123,7 +123,7 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
     Rot(1,1) = 1;
     Rot(2,2) = 1;
 
-    cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0 );
+    cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0, 1 );
 
     ASSERT_DOUBLE_EQ( meanStress[0][0] , strain*K );
     ASSERT_DOUBLE_EQ( deviatorStress[0][0](0,0) , (-1.0/3.0*strain)*2*G );
@@ -144,7 +144,7 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
     Rot(1,1) = 1;
     Rot(2,2) = 1;
 
-    cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0 );
+    cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0, 1 );
 
     ASSERT_DOUBLE_EQ( meanStress[0][0] , 0 );
     ASSERT_DOUBLE_EQ( deviatorStress[0][0](0,0) , 0.0 );
@@ -165,7 +165,7 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
     Rot(1,1) = 1;
     Rot(2,2) = 1;
 
-    cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0 );
+    cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0, 1 );
 
     ASSERT_DOUBLE_EQ( meanStress[0][0] , 0 );
     ASSERT_DOUBLE_EQ( deviatorStress[0][0](0,0) , 0.0 );
@@ -186,7 +186,7 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
     Rot(1,1) = 1;
     Rot(2,2) = 1;
 
-    cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0 );
+    cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0, 1 );
 
     ASSERT_DOUBLE_EQ( meanStress[0][0] , 0 );
     ASSERT_DOUBLE_EQ( deviatorStress[0][0](0,0) , 0.0 );

@@ -114,7 +114,7 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
     Rot(1,1) = 1;
     Rot(2,2) = 1;
 
-    cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0 );
+    cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0, 1 );
     stressCalc( c.m_data, Ddt, stressV );
     stressCheck( meanStress[0][0], deviatorStress[0][0], stressV );
   }
@@ -129,7 +129,7 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
     Rot(1,1) = 1;
     Rot(2,2) = 1;
 
-    cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0 );
+    cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0, 1 );
     stressCalc( c.m_data, Ddt, stressV );
     stressCheck( meanStress[0][0], deviatorStress[0][0], stressV );
 
@@ -145,7 +145,7 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
     Rot(1,1) = 1;
     Rot(2,2) = 1;
 
-    cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0 );
+    cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0, 1 );
     stressCalc( c.m_data, Ddt, stressV );
     stressCheck( meanStress[0][0], deviatorStress[0][0], stressV );
 
@@ -161,7 +161,7 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
     Rot(1,1) = 1;
     Rot(2,2) = 1;
 
-    cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0 );
+    cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0, 1 );
     stressCalc( c.m_data, Ddt, stressV );
     stressCheck( meanStress[0][0], deviatorStress[0][0], stressV );
 
@@ -177,7 +177,7 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
     Rot(1,1) = 1;
     Rot(2,2) = 1;
 
-    cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0 );
+    cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0, 1 );
     stressCalc( c.m_data, Ddt, stressV );
     stressCheck( meanStress[0][0], deviatorStress[0][0], stressV );
 
@@ -193,7 +193,7 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
     Rot(1,1) = 1;
     Rot(2,2) = 1;
 
-    cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0 );
+    cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0, 1 );
     stressCalc( c.m_data, Ddt, stressV );
     stressCheck( meanStress[0][0], deviatorStress[0][0], stressV );
 

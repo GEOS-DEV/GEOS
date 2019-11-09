@@ -475,9 +475,11 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
         {
           totalMeanStress[er][esr][ei] = meanStress[er][esr][solidIndex][ei][0] - biotCoefficient[er][esr][solidIndex] * pres[er][esr][ei];
 
-//          if ((pres[er][esr][ei] - dPres[er][esr][ei]) > 1e-10)
 //          poro[er][esr][ei] = poroOld[er][esr][ei] + (biotCoefficient[er][esr][solidIndex] - poroOld[er][esr][ei]) / bulkModulus[er][esr][solidIndex][ei]
 //                                                   * (totalMeanStress[er][esr][ei] - oldTotalMeanStress[er][esr][ei] + dPres[er][esr][ei]);
+
+          poro[er][esr][ei] = poroOld[er][esr][ei] * std::exp( (biotCoefficient[er][esr][solidIndex] - poroOld[er][esr][ei]) / bulkModulus[er][esr][solidIndex][ei]
+                                                             * (totalMeanStress[er][esr][ei] - oldTotalMeanStress[er][esr][ei] + dPres[er][esr][ei]) );
 
           // update cell element deltaVoume
           R1Tensor Xlocal[ElementRegionManager::maxNumNodesPerElem];
@@ -489,10 +491,9 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
 
           deltaVolume[er][esr][ei] = computationalGeometry::HexVolume(Xlocal) - volume[er][esr][ei];
 
-////          if (ei==0)
-//          std::cout<< "\n Solid Update: cell dVol= "<< deltaVolume[er][esr][ei] <<", dPoro = "<< poro[er][esr][ei] - poroOld[er][esr][ei]
-//                    << "\n                new cell vol = "<< deltaVolume[er][esr][ei] + volume[er][esr][ei] << ", new porosity = "<< poro[er][esr][ei]
-//                    << "\n                totalMeanStress change = "<< totalMeanStress[er][esr][ei] - oldTotalMeanStress[er][esr][ei] << ", dPres[er][esr][ei] = "<< dPres[er][esr][ei] << std::endl;
+          std::cout<< "\n Solid Update: cell dVol= "<< deltaVolume[er][esr][ei] <<", dPoro = "<< poro[er][esr][ei] - poroOld[er][esr][ei]
+                    << "\n                new cell vol = "<< deltaVolume[er][esr][ei] + volume[er][esr][ei] << ", new porosity = "<< poro[er][esr][ei]
+                    << "\n                totalMeanStress change = "<< totalMeanStress[er][esr][ei] - oldTotalMeanStress[er][esr][ei] << ", dPres[er][esr][ei] = "<< dPres[er][esr][ei] << std::endl;
 
 
           volume[er][esr][ei] += deltaVolume[er][esr][ei];
@@ -625,7 +626,6 @@ real64 HydrofractureSolver::ExplicitStep( real64 const& time_n,
                                           DomainPartition * const domain )
 {
   GEOSX_MARK_FUNCTION;
-
 
   m_flowSolver->CalculateAndApplyMassFlux( time_n, dt, domain );
 

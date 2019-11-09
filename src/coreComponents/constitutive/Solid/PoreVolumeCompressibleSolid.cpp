@@ -91,6 +91,7 @@ void PoreVolumeCompressibleSolid::StateUpdatePoint( localIndex const GEOSX_UNUSE
                                                    localIndex const GEOSX_UNUSED_ARG( q ),
                                                    R2SymTensor const & GEOSX_UNUSED_ARG( D ),
                                                    R2Tensor const & GEOSX_UNUSED_ARG( Rot ),
+                                                   real64 const GEOSX_UNUSED_ARG( dt ),
                                                    integer const GEOSX_UNUSED_ARG( updateStiffnessFlag ) )
 {
 }

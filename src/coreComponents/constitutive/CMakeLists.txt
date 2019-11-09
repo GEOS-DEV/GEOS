@@ -33,6 +33,8 @@ set( constitutive_sources
      Fluid/CompressibleSinglePhaseFluid.cpp
      Solid/LinearElasticAnisotropic.cpp
      Solid/LinearElasticIsotropic.cpp
+     Solid/LinearViscoElasticAnisotropic.cpp
+     Solid/LinearViscoElasticIsotropic.cpp
      Solid/PoroElastic.cpp
      Solid/PoreVolumeCompressibleSolid.cpp
      Solid/SolidBase.cpp

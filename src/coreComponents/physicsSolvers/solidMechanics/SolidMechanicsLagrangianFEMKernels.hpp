@@ -210,6 +210,7 @@ struct ExplicitKernel
           real64 const dt,
           real64 * const maxStableDt)
   {
+    std::cout << "In Launch ::" << std::endl;
     if (elementList.empty())
       return dt;
 
@@ -260,7 +261,8 @@ struct ExplicitKernel
         R2SymTensor Dadt;
         HughesWinget(Rot, Dadt, Ldt);
 
-        constitutiveRelation->StateUpdatePoint( k, q, Dadt, Rot, 0);
+        real64 dt_filter = dt > 0 ? dt : std::numeric_limits<real64>::max();
+        constitutiveRelation->StateUpdatePoint( k, q, Dadt, Rot, dt_filter, 0);
 
         R2SymTensor TotalStress = devStress[k][q];
         TotalStress.PlusIdentity( meanStress[k][q] );
@@ -289,7 +291,7 @@ struct ExplicitKernel
       }
 
       *maxStableDt = std::min(*maxStableDt, sqrt( density[k][0] / ( bulkModulus[k] + 4 / 3.0 * shearModulus[k] ) / 2 /BB ));
-//      std::cout << "\n eleID = " << k+1 << " : \n maxStableDt=" << *maxStableDt << " , density[k][0]=" << density[k][0] << ", BB=" << BB;
+      std::cout << "\n eleID = " << k+1 << " : \n maxStableDt=" << *maxStableDt << " , density[k][0]=" << density[k][0] << ", BB=" << BB;
       AddLocalToGlobal<NUM_NODES_PER_ELEM>( elemsToNodes[k], f_local, acc );
     });
 

@@ -16,8 +16,8 @@
  *  @file LinearElasticAnisotropic.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_SOLID_LINEARELASTICANISOTROPIC_HPP_
-#define GEOSX_CONSTITUTIVE_SOLID_LINEARELASTICANISOTROPIC_HPP_
+#ifndef GEOSX_CONSTITUTIVE_SOLID_LINEARVISCOELASTICANISOTROPIC_HPP_
+#define GEOSX_CONSTITUTIVE_SOLID_LINEARVISCOELASTICANISOTROPIC_HPP_
 #include "SolidBase.hpp"
 #include "constitutive/ExponentialRelation.hpp"
 
@@ -29,16 +29,16 @@ namespace constitutive
 {
 
 /**
- * @class LinearElasticAnisotropic
+ * @class LinearViscoElasticAnisotropic
  *
- * Class to provide a linear elastic anisotropic material response.
+ * Class to provide a linear viscoelastic anisotropic material response.
  */
-class LinearElasticAnisotropic : public SolidBase
+class LinearViscoElasticAnisotropic : public SolidBase
 {
 public:
-  LinearElasticAnisotropic( string const & name, Group * const parent );
+  LinearViscoElasticAnisotropic( string const & name, Group * const parent );
 
-  virtual ~LinearElasticAnisotropic() override;
+  virtual ~LinearViscoElasticAnisotropic() override;
 
   virtual void
   DeliverClone( string const & name,
@@ -48,7 +48,7 @@ public:
   virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
-  static constexpr auto m_catalogNameString = "LinearElasticAnisotropic";
+  static constexpr auto m_catalogNameString = "LinearViscoElasticAnisotropic";
   static std::string CatalogName() { return m_catalogNameString; }
   virtual string GetCatalogName() override { return CatalogName(); }
 
@@ -108,6 +108,7 @@ public:
 
     static constexpr auto defaultStiffnessString  = "defaultStiffness";
     static constexpr auto stiffnessString  = "stiffness";
+    static constexpr auto viscosityString =  "viscosity" ;
 
   };
 
@@ -137,6 +138,7 @@ protected:
 
 private:
 
+  real64 m_viscosity;
 
   StiffnessTensor m_defaultStiffness; /// default value for stiffness tensor
   array1d<StiffnessTensor> m_stiffness; /// stiffness tensor field
@@ -147,4 +149,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* GEOSX_CONSTITUTIVE_SOLID_LINEARELASTICANISOTROPIC_HPP_ */
+#endif /* GEOSX_CONSTITUTIVE_SOLID_LINEARVISCOELASTICANISOTROPIC_HPP_ */

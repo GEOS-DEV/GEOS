@@ -34,6 +34,8 @@
 
 #include "constitutive/Solid/PoreVolumeCompressibleSolid.hpp"
 #include "constitutive/Solid/LinearElasticAnisotropic.hpp"
+#include "constitutive/Solid/LinearViscoElasticIsotropic.hpp"
+#include "constitutive/Solid/LinearViscoElasticAnisotropic.hpp"
 
 /**
  * @namespace the geosx namespace that encapsulates the majority of the code
@@ -380,12 +382,12 @@ void SinglePhaseFlow::UpdateEOS( real64 const time_n,
 
 			dPres[ei] = pres[ei] - dPres[ei];
 
-////      if (pres[ei] < 0)
-//      {
-//        std::cout << "\n----------------- Alert: pressure < 0 ----------------" ;
-//        std::cout << "\n Fluid Update in poroElastic: ei = " << ei  << ", mass = " << mass[ei] << ", poro= " << poro[ei] << ", vol = " << vol[ei]
-//                  << ", calculated dens = " << dens[ei][0] << ", new pres = " << pres[ei] << "\n";
-//      }
+			if (pres[ei] < 0)
+      {
+        std::cout << "\n----------------- Alert: pressure < 0 ----------------" ;
+        std::cout << "\n Fluid Update in poroElastic: ei = " << ei  << ", mass = " << mass[ei] << ", poro= " << poro[ei] << ", vol = " << vol[ei]
+                  << ", calculated dens = " << dens[ei][0] << ", new pres = " << pres[ei] << "\n";
+      }
 
 		} );
 	} );
@@ -470,7 +472,7 @@ void SinglePhaseFlow::UpdateEOS( real64 const time_n,
 	  } );
   }
 
-  // apply pressure boundary condition in the explicit solver
+  // apply aperture boundary condition in the explicit solver
   FieldSpecificationManager * const fsManager = FieldSpecificationManager::get();
   fsManager->Apply( time_n + dt, domain, "ElementRegions", viewKeyStruct::pressureString,
                     [&]( FieldSpecificationBase const * const fs,
@@ -539,7 +541,7 @@ void SinglePhaseFlow::ExplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n
       if (poro[0] > 0.999999 )
         totalCompressibility = fluid->compressibility();
       else if (m_poroElasticFlag)
-        totalCompressibility = dynamic_cast<LinearElasticIsotropic*>(solid)->compressibility() + fluid->compressibility();
+        totalCompressibility = dynamic_cast<LinearViscoElasticIsotropic*>(solid)->compressibility() + fluid->compressibility();
       else
         totalCompressibility = dynamic_cast<PoreVolumeCompressibleSolid*>(solid)->compressibility() + fluid->compressibility();
 

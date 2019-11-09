@@ -13,10 +13,10 @@
  */
 
 /**
- *  @file LinearElasticAnisotropic.cpp
+ *  @file LinearViscoElasticAnisotropic.cpp
  */
 
-#include "LinearElasticAnisotropic.hpp"
+#include "LinearViscoElasticAnisotropic.hpp"
 
 namespace geosx
 {
@@ -27,8 +27,9 @@ namespace constitutive
 
 
 
-LinearElasticAnisotropic::LinearElasticAnisotropic( std::string const & name, Group * const parent ):
+LinearViscoElasticAnisotropic::LinearViscoElasticAnisotropic( std::string const & name, Group * const parent ):
   SolidBase( name, parent ),
+  m_viscosity(),
   m_defaultStiffness{},
   m_stiffness{}
 {
@@ -155,31 +156,36 @@ LinearElasticAnisotropic::LinearElasticAnisotropic( std::string const & name, Gr
 //    setApplyDefaultValue(-1)->
     setDescription("Elastic Stiffness Field in Voigt notation");
 
+  registerWrapper( viewKeyStruct::viscosityString, &m_viscosity, 0 )->
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("MaterialViscosity");
+
 }
 
 
-LinearElasticAnisotropic::~LinearElasticAnisotropic()
+LinearViscoElasticAnisotropic::~LinearViscoElasticAnisotropic()
 {}
 
 
 void
-LinearElasticAnisotropic::DeliverClone( string const & name,
+LinearViscoElasticAnisotropic::DeliverClone( string const & name,
                                       Group * const parent,
                                       std::unique_ptr<ConstitutiveBase> & clone ) const
 {
   if( !clone )
   {
-    clone = std::make_unique<LinearElasticAnisotropic>( name, parent );
+    clone = std::make_unique<LinearViscoElasticAnisotropic>( name, parent );
   }
   SolidBase::DeliverClone( name, parent, clone );
-  LinearElasticAnisotropic * const newConstitutiveRelation = dynamic_cast<LinearElasticAnisotropic *>(clone.get());
+  LinearViscoElasticAnisotropic * const newConstitutiveRelation = dynamic_cast<LinearViscoElasticAnisotropic *>(clone.get());
 
 
   newConstitutiveRelation->m_defaultStiffness = m_defaultStiffness;
   newConstitutiveRelation->m_stiffness = m_stiffness;
 }
 
-void LinearElasticAnisotropic::AllocateConstitutiveData( dataRepository::Group * const parent,
+void LinearViscoElasticAnisotropic::AllocateConstitutiveData( dataRepository::Group * const parent,
                                           localIndex const numConstitutivePointsPerParentIndex )
 {
   SolidBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
@@ -189,16 +195,16 @@ void LinearElasticAnisotropic::AllocateConstitutiveData( dataRepository::Group *
   m_stiffness = m_defaultStiffness;
 }
 
-void LinearElasticAnisotropic::PostProcessInput()
+void LinearViscoElasticAnisotropic::PostProcessInput()
 {
   m_stiffness = m_defaultStiffness;
 }
 
-void LinearElasticAnisotropic::StateUpdatePoint( localIndex const k,
+void LinearViscoElasticAnisotropic::StateUpdatePoint( localIndex const k,
                                                  localIndex const q,
                                                  R2SymTensor const & D,
                                                  R2Tensor const & Rot,
-                                                 real64 const GEOSX_UNUSED_ARG( dt ),
+                                                 real64 const dt,
                                                  integer const GEOSX_UNUSED_ARG( updateStiffnessFlag ) )
 {
   R2SymTensor T;
@@ -218,12 +224,18 @@ void LinearElasticAnisotropic::StateUpdatePoint( localIndex const k,
   T.PlusIdentity( -m_meanStress[k][q] );
   m_deviatorStress[k][q] += T;
 
+  R2SymTensor deviatorStrain = D;
+  deviatorStrain.PlusIdentity( -D.Trace() / 3.0 );
+  m_viscoDeviatorStress[k][q] = m_deviatorStress[k][q];
+  m_viscoDeviatorStress[k][q] += m_viscosity / dt * deviatorStrain;
+  T.QijAjkQlk( m_viscoDeviatorStress[k][q], Rot );
+  m_viscoDeviatorStress[k][q] = T;
+
   T.QijAjkQlk( m_deviatorStress[k][q], Rot );
   m_deviatorStress[k][q] = T;
-
 }
 
-void LinearElasticAnisotropic::GetStiffness( localIndex const k, real64 c[6][6] ) const
+void LinearViscoElasticAnisotropic::GetStiffness( localIndex const k, real64 c[6][6] ) const
 {
   for( int i=0 ; i<6 ; ++i )
   {
@@ -235,6 +247,6 @@ void LinearElasticAnisotropic::GetStiffness( localIndex const k, real64 c[6][6] 
 }
 
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, LinearElasticAnisotropic, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, LinearViscoElasticAnisotropic, std::string const &, Group * const )
 }
 } /* namespace geosx */

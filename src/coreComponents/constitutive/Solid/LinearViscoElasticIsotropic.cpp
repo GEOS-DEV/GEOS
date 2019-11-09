@@ -13,10 +13,10 @@
  */
 
 /**
- *  @file LinearElasticIsotropic.cpp
+ *  @file LinearViscoElasticIsotropic.cpp
  */
 
-#include "LinearElasticIsotropic.hpp"
+#include "LinearViscoElasticIsotropic.hpp"
 
 namespace geosx
 {
@@ -27,9 +27,10 @@ namespace constitutive
 
 
 
-LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, Group * const parent ):
+LinearViscoElasticIsotropic::LinearViscoElasticIsotropic( std::string const & name, Group * const parent ):
   SolidBase( name, parent ),
   m_compressibility(),
+  m_viscosity(),
   m_defaultBulkModulus(),
   m_defaultShearModulus(),
   m_bulkModulus(),
@@ -73,26 +74,32 @@ LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, Group 
     setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("ReferencePressure");
+
+  registerWrapper( viewKeyStruct::viscosityString, &m_viscosity, 0 )->
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("MaterialViscosity");
 }
 
 
-LinearElasticIsotropic::~LinearElasticIsotropic()
+LinearViscoElasticIsotropic::~LinearViscoElasticIsotropic()
 {}
 
 
 void
-LinearElasticIsotropic::DeliverClone( string const & name,
+LinearViscoElasticIsotropic::DeliverClone( string const & name,
                                       Group * const parent,
                                       std::unique_ptr<ConstitutiveBase> & clone ) const
 {
   if( !clone )
   {
-    clone = std::make_unique<LinearElasticIsotropic>( name, parent );
+    clone = std::make_unique<LinearViscoElasticIsotropic>( name, parent );
   }
   SolidBase::DeliverClone( name, parent, clone );
-  LinearElasticIsotropic * const newConstitutiveRelation = dynamic_cast<LinearElasticIsotropic *>(clone.get());
+  LinearViscoElasticIsotropic * const newConstitutiveRelation = dynamic_cast<LinearViscoElasticIsotropic *>(clone.get());
 
   newConstitutiveRelation->m_compressibility      = m_compressibility;
+  newConstitutiveRelation->m_viscosity      = m_viscosity;
   newConstitutiveRelation->m_defaultBulkModulus = m_defaultBulkModulus;
   newConstitutiveRelation->m_bulkModulus = m_bulkModulus;
   newConstitutiveRelation->m_defaultDensity = m_defaultDensity;
@@ -104,7 +111,7 @@ LinearElasticIsotropic::DeliverClone( string const & name,
   newConstitutiveRelation->m_deviatorStress = m_deviatorStress;
 }
 
-void LinearElasticIsotropic::AllocateConstitutiveData( dataRepository::Group * const parent,
+void LinearViscoElasticIsotropic::AllocateConstitutiveData( dataRepository::Group * const parent,
                                           localIndex const numConstitutivePointsPerParentIndex )
 {
   SolidBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
@@ -118,7 +125,7 @@ void LinearElasticIsotropic::AllocateConstitutiveData( dataRepository::Group * c
 
 }
 
-void LinearElasticIsotropic::PostProcessInput()
+void LinearViscoElasticIsotropic::PostProcessInput()
 {
 
   if( !m_postProcessed )
@@ -202,26 +209,31 @@ void LinearElasticIsotropic::PostProcessInput()
   m_postProcessed = true;
 }
 
-void LinearElasticIsotropic::StateUpdatePoint( localIndex const k,
-                                               localIndex const q,
-                                               R2SymTensor const & D,
-                                               R2Tensor const & Rot,
-                                               real64 const GEOSX_UNUSED_ARG( dt ),
-                                               integer const GEOSX_UNUSED_ARG( updateStiffnessFlag ) )
+void LinearViscoElasticIsotropic::StateUpdatePoint( localIndex const k,
+                                                   localIndex const q,
+                                                   R2SymTensor const & D,
+                                                   R2Tensor const & Rot,
+                                                   real64 const dt,
+                                                   integer const GEOSX_UNUSED_ARG( updateStiffnessFlag ) )
 {
   real64 volumeStrain = D.Trace();
   m_meanStress[k][q] += volumeStrain * m_bulkModulus[k];
 
   R2SymTensor temp = D;
   temp.PlusIdentity( -volumeStrain / 3.0 );
+  R2SymTensor deviatorStrain = temp;
   temp *= 2.0 * m_shearModulus[k];
   m_deviatorStress[k][q] += temp;
 
+  m_viscoDeviatorStress[k][q] = m_deviatorStress[k][q];
+  m_viscoDeviatorStress[k][q] += m_viscosity / dt * deviatorStrain;
+  temp.QijAjkQlk( m_viscoDeviatorStress[k][q], Rot );
+  m_viscoDeviatorStress[k][q] = temp;
 
   temp.QijAjkQlk( m_deviatorStress[k][q], Rot );
   m_deviatorStress[k][q] = temp;
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, LinearElasticIsotropic, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, LinearViscoElasticIsotropic, std::string const &, Group * const )
 }
 } /* namespace geosx */

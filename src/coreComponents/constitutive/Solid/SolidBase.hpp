@@ -49,6 +49,7 @@ public:
                                  localIndex const q,
                                  R2SymTensor const & Dadt,
                                  R2Tensor const & Rot,
+                                 real64 const dt,
                                  integer const updateStiffnessFlag ) = 0;
 
 //  virtual void BatchUpdate( arrayView2d<real64 const> const & Dadt,
@@ -60,6 +61,7 @@ public:
     static constexpr auto defaultDensityString  = "defaultDensity";
     static constexpr auto densityString  = "density";
     static constexpr auto deviatorStressString = "DeviatorStress";
+    static constexpr auto viscoDeviatorStressString = "ViscoDeviatorStress";
     static constexpr auto meanStressString = "MeanStress";
   };
 
@@ -75,6 +77,9 @@ public:
   arrayView2d<R2SymTensor>       const & deviatorStress()       { return m_deviatorStress; }
   arrayView2d<R2SymTensor const> const & deviatorStress() const { return m_deviatorStress; }
 
+  arrayView2d<R2SymTensor>       const & viscoDeviatorStress()       { return m_viscoDeviatorStress; }
+  arrayView2d<R2SymTensor const> const & viscoDeviatorStress() const { return m_viscoDeviatorStress; }
+
 protected:
 
 //  template< typename LEAFCLASS, typename POLICY=materialUpdatePolicy, typename ... ARGS >
@@ -86,6 +91,7 @@ protected:
 
   array2d<real64> m_meanStress;
   array2d<R2SymTensor> m_deviatorStress;
+  array2d<R2SymTensor> m_viscoDeviatorStress;
 
 };
 

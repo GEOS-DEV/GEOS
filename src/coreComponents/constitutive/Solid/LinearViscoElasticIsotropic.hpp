@@ -16,8 +16,8 @@
  *  @file LinearElasticIsotropic.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_SOLID_LINEARELASTICISOTROPIC_HPP_
-#define GEOSX_CONSTITUTIVE_SOLID_LINEARELASTICISOTROPIC_HPP_
+#ifndef GEOSX_CONSTITUTIVE_SOLID_LINEARVISCOELASTICISOTROPIC_HPP_
+#define GEOSX_CONSTITUTIVE_SOLID_LINEARVISCOELASTICISOTROPIC_HPP_
 #include "SolidBase.hpp"
 #include "constitutive/ExponentialRelation.hpp"
 
@@ -28,11 +28,11 @@ namespace constitutive
 {
 
 /**
- * @class LinearElasticIsotropic
+ * @class LinearViscoElasticIsotropic
  *
- * Class to provide a linear elastic isotropic material response.
+ * Class to provide a linear viscoelastic isotropic material response.
  */
-class LinearElasticIsotropic : public SolidBase
+class LinearViscoElasticIsotropic : public SolidBase
 {
 public:
   /**
@@ -40,9 +40,9 @@ public:
    * @param name name of the instance in the catalog
    * @param parent the group which contains this instance
    */
-  LinearElasticIsotropic( string const & name, Group * const parent );
+  LinearViscoElasticIsotropic( string const & name, Group * const parent );
 
-  virtual ~LinearElasticIsotropic() override;
+  virtual ~LinearViscoElasticIsotropic() override;
 
   virtual void
   DeliverClone( string const & name,
@@ -52,7 +52,7 @@ public:
   virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
-  static constexpr auto m_catalogNameString = "LinearElasticIsotropic";
+  static constexpr auto m_catalogNameString = "LinearViscoElasticIsotropic";
   static std::string CatalogName() { return m_catalogNameString; }
   virtual string GetCatalogName() override { return CatalogName(); }
 
@@ -75,6 +75,7 @@ public:
     static constexpr auto shearModulusString = "ShearModulus";
 
     static constexpr auto compressibilityString =  "compressibility" ;
+    static constexpr auto viscosityString =  "viscosity" ;
     static constexpr auto referencePressureString =  "referencePressure" ;
   };
 
@@ -149,6 +150,9 @@ private:
   /// scalar compressibility parameter
   real64 m_compressibility;
 
+  /// scalar viscosity parameter
+  real64 m_viscosity;
+
   real64 m_defaultBulkModulus;
   real64 m_defaultShearModulus;
   array1d<real64> m_bulkModulus;
@@ -161,4 +165,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* GEOSX_CONSTITUTIVE_SOLID_LINEARELASTICISOTROPIC_HPP_ */
+#endif /* GEOSX_CONSTITUTIVE_SOLID_LINEARVISCOELASTICISOTROPIC_HPP_ */

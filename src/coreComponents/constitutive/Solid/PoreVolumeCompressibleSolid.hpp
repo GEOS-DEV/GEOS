@@ -57,6 +57,7 @@ public:
                                  localIndex const q,
                                  R2SymTensor const & D,
                                  R2Tensor const & Rot,
+                                 real64 const dt,
                                  integer const updateStiffnessFlag ) override;
 
   struct viewKeyStruct : public SolidBase::viewKeyStruct

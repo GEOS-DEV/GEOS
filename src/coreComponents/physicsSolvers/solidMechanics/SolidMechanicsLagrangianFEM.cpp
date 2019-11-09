@@ -598,6 +598,11 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStepVelocityUpdate( real64 const& ti
                                                               arrayView2d<R2SymTensor> >("DeviatorStress",
                                                                                          constitutiveManager);
 
+  ElementRegionManager::MaterialViewAccessor< arrayView2d<R2SymTensor> > const
+  viscoDevStress = elemManager->ConstructFullMaterialViewAccessor< array2d<R2SymTensor>,
+                                                              arrayView2d<R2SymTensor> >("ViscoDeviatorStress",
+                                                                                         constitutiveManager);
+
   ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase> constitutiveRelations =
     elemManager->ConstructFullConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
 
