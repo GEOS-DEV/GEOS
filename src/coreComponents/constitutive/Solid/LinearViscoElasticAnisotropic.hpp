@@ -139,7 +139,6 @@ protected:
 private:
 
   real64 m_viscosity;
-
   StiffnessTensor m_defaultStiffness; /// default value for stiffness tensor
   array1d<StiffnessTensor> m_stiffness; /// stiffness tensor field
 };

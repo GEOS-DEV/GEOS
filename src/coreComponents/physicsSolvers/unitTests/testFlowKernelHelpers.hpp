@@ -19,12 +19,6 @@
 
 //using namespace geosx;
 
-template<typename T, int NDIM>
-using Array = LvArray::Array<T, NDIM, localIndex>;
-
-template<typename T, int NDIM>
-using ArrayView = LvArray::ArrayView<T, NDIM, localIndex>;
-
 namespace detail
 {
 

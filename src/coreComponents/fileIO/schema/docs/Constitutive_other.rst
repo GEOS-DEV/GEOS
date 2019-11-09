@@ -12,9 +12,13 @@ CompressibleSinglePhaseFluid          node :ref:`DATASTRUCTURE_CompressibleSingl
 Contact                               node :ref:`DATASTRUCTURE_Contact`                               
 LinearElasticAnisotropic              node :ref:`DATASTRUCTURE_LinearElasticAnisotropic`              
 LinearElasticIsotropic                node :ref:`DATASTRUCTURE_LinearElasticIsotropic`                
+LinearViscoElasticAnisotropic         node :ref:`DATASTRUCTURE_LinearViscoElasticAnisotropic`         
+LinearViscoElasticIsotropic           node :ref:`DATASTRUCTURE_LinearViscoElasticIsotropic`           
 PoreVolumeCompressibleSolid           node :ref:`DATASTRUCTURE_PoreVolumeCompressibleSolid`           
 PoroLinearElasticAnisotropic          node :ref:`DATASTRUCTURE_PoroLinearElasticAnisotropic`          
 PoroLinearElasticIsotropic            node :ref:`DATASTRUCTURE_PoroLinearElasticIsotropic`            
+PoroLinearViscoElasticAnisotropic     node :ref:`DATASTRUCTURE_PoroLinearViscoElasticAnisotropic`     
+PoroLinearViscoElasticIsotropic       node :ref:`DATASTRUCTURE_PoroLinearViscoElasticIsotropic`       
 VanGenuchtenBakerRelativePermeability node :ref:`DATASTRUCTURE_VanGenuchtenBakerRelativePermeability` 
 VanGenuchtenCapillaryPressure         node :ref:`DATASTRUCTURE_VanGenuchtenCapillaryPressure`         
 ===================================== ==== ========================================================== 

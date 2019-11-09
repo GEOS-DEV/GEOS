@@ -159,7 +159,7 @@ LinearViscoElasticAnisotropic::LinearViscoElasticAnisotropic( std::string const 
   registerWrapper( viewKeyStruct::viscosityString, &m_viscosity, 0 )->
     setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("MaterialViscosity");
+    setDescription("Material Viscosity");
 
 }
 
@@ -180,7 +180,7 @@ LinearViscoElasticAnisotropic::DeliverClone( string const & name,
   SolidBase::DeliverClone( name, parent, clone );
   LinearViscoElasticAnisotropic * const newConstitutiveRelation = dynamic_cast<LinearViscoElasticAnisotropic *>(clone.get());
 
-
+  newConstitutiveRelation->m_viscosity      = m_viscosity;
   newConstitutiveRelation->m_defaultStiffness = m_defaultStiffness;
   newConstitutiveRelation->m_stiffness = m_stiffness;
 }
@@ -219,20 +219,19 @@ void LinearViscoElasticAnisotropic::StateUpdatePoint( localIndex const k,
   Tdata[3] += c[4][0]*Ddata[0] + c[4][1]*Ddata[2] + c[4][2]*Ddata[5] + c[4][3]*(2*Ddata[4]) + c[4][4]*(2*Ddata[3]) + c[4][5]*(2*Ddata[1]);
   Tdata[1] += c[5][0]*Ddata[0] + c[5][1]*Ddata[2] + c[5][2]*Ddata[5] + c[5][3]*(2*Ddata[4]) + c[5][4]*(2*Ddata[3]) + c[5][5]*(2*Ddata[1]);
 
+  m_stress[k][q] += T;
 
-  m_meanStress[k][q] = ( Tdata[0] + Tdata[2] + Tdata[5] ) / 3.0;
-  T.PlusIdentity( -m_meanStress[k][q] );
-  m_deviatorStress[k][q] += T;
-
+  // store elastic stress and add viscous stress into total stress
   R2SymTensor deviatorStrain = D;
   deviatorStrain.PlusIdentity( -D.Trace() / 3.0 );
-  m_viscoDeviatorStress[k][q] = m_deviatorStress[k][q];
-  m_viscoDeviatorStress[k][q] += m_viscosity / dt * deviatorStrain;
-  T.QijAjkQlk( m_viscoDeviatorStress[k][q], Rot );
-  m_viscoDeviatorStress[k][q] = T;
+  m_elasticStress[k][q] = m_stress[k][q];
+  T.QijAjkQlk( m_elasticStress[k][q], Rot );
+  m_elasticStress[k][q] = T;
+  m_stress[k][q] += m_viscosity / dt * deviatorStrain;
 
-  T.QijAjkQlk( m_deviatorStress[k][q], Rot );
-  m_deviatorStress[k][q] = T;
+  T.QijAjkQlk( m_stress[k][q], Rot );
+  m_stress[k][q] = T;
+
 }
 
 void LinearViscoElasticAnisotropic::GetStiffness( localIndex const k, real64 c[6][6] ) const

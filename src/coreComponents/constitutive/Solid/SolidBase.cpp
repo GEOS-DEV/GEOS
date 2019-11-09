@@ -33,9 +33,8 @@ SolidBase::SolidBase( string const & name,
   ConstitutiveBase( name, parent ),
   m_defaultDensity{0},
   m_density{},
-  m_meanStress{},
-  m_deviatorStress{},
-  m_viscoDeviatorStress{}
+  m_stress{},
+  m_elasticStress{}
 {
 
   registerWrapper( viewKeyStruct::defaultDensityString, &m_defaultDensity, 0 )->
@@ -46,19 +45,13 @@ SolidBase::SolidBase( string const & name,
     setApplyDefaultValue(-1)->
     setDescription("Material Density");
 
-  registerWrapper( viewKeyStruct::deviatorStressString, &m_deviatorStress, 0 )->
+  registerWrapper( viewKeyStruct::stressString, &m_stress, 0 )->
     setPlotLevel(PlotLevel::LEVEL_0)->
-    setDescription("Stress Deviator");
+    setDescription("Total Stress");
 
-  registerWrapper( viewKeyStruct::meanStressString, &m_meanStress, 0 )->
-    setApplyDefaultValue(-1)->
+  registerWrapper( viewKeyStruct::elasticStressString, &m_elasticStress, 0 )->
     setPlotLevel(PlotLevel::LEVEL_0)->
-    setDescription("Mean stress");
-
-  registerWrapper( viewKeyStruct::viscoDeviatorStressString, &m_viscoDeviatorStress, 0 )->
-    setPlotLevel(PlotLevel::LEVEL_0)->
-    setDescription("Stress Deviator");
-
+    setDescription("Elastic Stress");
 
 }
 
@@ -75,9 +68,8 @@ SolidBase::DeliverClone( string const & GEOSX_UNUSED_ARG( name ),
   newConstitutiveRelation->m_defaultDensity = m_defaultDensity;
   newConstitutiveRelation->m_density = m_density;
 
-  newConstitutiveRelation->m_meanStress = m_meanStress;
-  newConstitutiveRelation->m_deviatorStress = m_deviatorStress;
-  newConstitutiveRelation->m_viscoDeviatorStress = m_viscoDeviatorStress;
+  newConstitutiveRelation->m_stress = m_stress;
+  newConstitutiveRelation->m_elasticStress = m_elasticStress;
 }
 
 
@@ -90,9 +82,8 @@ void SolidBase::AllocateConstitutiveData( dataRepository::Group * const parent,
   m_density.resize( parent->size(), numConstitutivePointsPerParentIndex );
   m_density = m_defaultDensity;
 
-  m_deviatorStress.resize( parent->size(), numConstitutivePointsPerParentIndex );
-  m_viscoDeviatorStress.resize( parent->size(), numConstitutivePointsPerParentIndex );
-  m_meanStress.resize( parent->size(), numConstitutivePointsPerParentIndex );
+  m_stress.resize( parent->size(), numConstitutivePointsPerParentIndex );
+  m_elasticStress.resize( parent->size(), numConstitutivePointsPerParentIndex );
 
 
 }

@@ -290,7 +290,7 @@ void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * co
     elemRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr, CellElementSubRegion const * const elementSubRegion )
     {
       arrayView2d<real64> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
-      arrayView2d<localIndex> const & elemsToNodes = elementSubRegion->nodeList();
+      arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & elemsToNodes = elementSubRegion->nodeList();
 
       std::unique_ptr<FiniteElementBase>
       fe = feDiscretization->getFiniteElement( elementSubRegion->GetElementTypeString() );
@@ -372,7 +372,7 @@ void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( 
         + std::to_string(er) + "][" + std::to_string(esr) + "]" );
 
       arrayView2d<real64> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
-      arrayView2d<localIndex> const & elemsToNodes = elementSubRegion->nodeList();
+      arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & elemsToNodes = elementSubRegion->nodeList();
 
       std::unique_ptr<FiniteElementBase>
       fe = feDiscretization->getFiniteElement( elementSubRegion->GetElementTypeString() );
@@ -588,23 +588,13 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStepVelocityUpdate( real64 const& ti
   ElementRegionManager::MaterialViewAccessor<real64> const biotCoefficient =
     elemManager->ConstructFullMaterialViewAccessor<real64>( "BiotCoefficient", constitutiveManager);
 
-  ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> >
-  meanStress = elemManager->ConstructFullMaterialViewAccessor< array2d<real64>,
-                                                               arrayView2d<real64> >("MeanStress",
-                                                                                     constitutiveManager);
-
   ElementRegionManager::MaterialViewAccessor< arrayView2d<R2SymTensor> > const
-  devStress = elemManager->ConstructFullMaterialViewAccessor< array2d<R2SymTensor>,
-                                                              arrayView2d<R2SymTensor> >("DeviatorStress",
-                                                                                         constitutiveManager);
+  stress = elemManager->ConstructFullMaterialViewAccessor< array2d<R2SymTensor>,
+                                                           arrayView2d<R2SymTensor> >( SolidBase::viewKeyStruct::stressString,
+                                                                                       constitutiveManager);
 
-  ElementRegionManager::MaterialViewAccessor< arrayView2d<R2SymTensor> > const
-  viscoDevStress = elemManager->ConstructFullMaterialViewAccessor< array2d<R2SymTensor>,
-                                                              arrayView2d<R2SymTensor> >("ViscoDeviatorStress",
-                                                                                         constitutiveManager);
-
-  ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase> constitutiveRelations =
-    elemManager->ConstructFullConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
+  ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase>
+  constitutiveRelations = elemManager->ConstructFullConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
 
   // add fluid pressure
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const fluidPres =
@@ -627,7 +617,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStepVelocityUpdate( real64 const& ti
 
       arrayView2d<real64> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
 
-      arrayView2d<localIndex> const & elemsToNodes = elementSubRegion->nodeList();
+      arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & elemsToNodes = elementSubRegion->nodeList();
 
       localIndex const numNodesPerElement = elemsToNodes.size(1);
 
@@ -646,8 +636,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStepVelocityUpdate( real64 const& ti
                                    fluidPres[er][esr],
                                    dPres[er][esr],
                                    biotCoefficient[er][esr][m_solidMaterialFullIndex],
-                                   meanStress[er][esr][m_solidMaterialFullIndex],
-                                   devStress[er][esr][m_solidMaterialFullIndex],
+                                   stress[er][esr][m_solidMaterialFullIndex],
                                    dt,
                                    &m_maxStableDt);
 
@@ -697,7 +686,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStepVelocityUpdate( real64 const& ti
 
       arrayView2d<real64> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
 
-      arrayView2d<localIndex> const & elemsToNodes = elementSubRegion->nodeList();
+      arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & elemsToNodes = elementSubRegion->nodeList();
 
       localIndex const numNodesPerElement = elemsToNodes.size(1);
 
@@ -716,11 +705,9 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStepVelocityUpdate( real64 const& ti
                                    fluidPres[er][esr],
                                    dPres[er][esr],
                                    biotCoefficient[er][esr][m_solidMaterialFullIndex],
-                                   meanStress[er][esr][m_solidMaterialFullIndex],
-                                   devStress[er][esr][m_solidMaterialFullIndex],
+                                   stress[er][esr][m_solidMaterialFullIndex],
                                    dt,
                                    &m_maxStableDt );
-
     }); //Element Region
 
   } //Element Manager
@@ -798,7 +785,7 @@ void SolidMechanicsLagrangianFEM::ApplyTractionBC( real64 const time,
                                                    ParallelVector & rhs )
 {
   FieldSpecificationManager * const fsManager = FieldSpecificationManager::get();
-  NewFunctionManager * const functionManager = NewFunctionManager::Instance();
+  FunctionManager * const functionManager = FunctionManager::Instance();
 
   FaceManager * const faceManager = domain->getMeshBody(0)->getMeshLevel(0)->getFaceManager();
   NodeManager * const nodeManager = domain->getMeshBody(0)->getMeshLevel(0)->getNodeManager();
@@ -900,7 +887,7 @@ void SolidMechanicsLagrangianFEM::ApplyTractionBC_explicit( real64 const time,
                                                              DomainPartition * const domain)
 {
   FieldSpecificationManager * const fsManager = FieldSpecificationManager::get();
-  NewFunctionManager * const functionManager = NewFunctionManager::Instance();
+  FunctionManager * const functionManager = FunctionManager::Instance();
 
   FaceManager * const faceManager = domain->getMeshBody(0)->getMeshLevel(0)->getFaceManager();
   NodeManager * const nodeManager = domain->getMeshBody(0)->getMeshLevel(0)->getNodeManager();
@@ -1255,7 +1242,7 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_ARG(
 
       arrayView2d<real64> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
 
-      arrayView2d< localIndex > const & elemsToNodes = elementSubRegion->nodeList();
+      arrayView2d< localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM > const & elemsToNodes = elementSubRegion->nodeList();
       localIndex const numNodesPerElement = elemsToNodes.size(1);
 
       std::unique_ptr<FiniteElementBase>

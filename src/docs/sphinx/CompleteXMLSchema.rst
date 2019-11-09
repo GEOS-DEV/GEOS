@@ -21,13 +21,6 @@ Element: BlackOilFluid
 .. include:: ../../coreComponents/fileIO/schema/docs/BlackOilFluid.rst
 
 
-.. _XML_Blueprint:
-
-Element: Blueprint
-==================
-.. include:: ../../coreComponents/fileIO/schema/docs/Blueprint.rst
-
-
 .. _XML_Box:
 
 Element: Box
@@ -315,6 +308,20 @@ Element: LinearElasticIsotropic
 .. include:: ../../coreComponents/fileIO/schema/docs/LinearElasticIsotropic.rst
 
 
+.. _XML_LinearViscoElasticAnisotropic:
+
+Element: LinearViscoElasticAnisotropic
+======================================
+.. include:: ../../coreComponents/fileIO/schema/docs/LinearViscoElasticAnisotropic.rst
+
+
+.. _XML_LinearViscoElasticIsotropic:
+
+Element: LinearViscoElasticIsotropic
+====================================
+.. include:: ../../coreComponents/fileIO/schema/docs/LinearViscoElasticIsotropic.rst
+
+
 .. _XML_Mesh:
 
 Element: Mesh
@@ -390,6 +397,20 @@ Element: PoroLinearElasticAnisotropic
 Element: PoroLinearElasticIsotropic
 ===================================
 .. include:: ../../coreComponents/fileIO/schema/docs/PoroLinearElasticIsotropic.rst
+
+
+.. _XML_PoroLinearViscoElasticAnisotropic:
+
+Element: PoroLinearViscoElasticAnisotropic
+==========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroLinearViscoElasticAnisotropic.rst
+
+
+.. _XML_PoroLinearViscoElasticIsotropic:
+
+Element: PoroLinearViscoElasticIsotropic
+========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroLinearViscoElasticIsotropic.rst
 
 
 .. _XML_Poroelastic:
@@ -569,13 +590,6 @@ Datastructure: BasisFunctions
 Datastructure: BlackOilFluid
 ============================
 .. include:: ../../coreComponents/fileIO/schema/docs/BlackOilFluid_other.rst
-
-
-.. _DATASTRUCTURE_Blueprint:
-
-Datastructure: Blueprint
-========================
-.. include:: ../../coreComponents/fileIO/schema/docs/Blueprint_other.rst
 
 
 .. _DATASTRUCTURE_Box:
@@ -886,6 +900,20 @@ Datastructure: LinearElasticIsotropic
 .. include:: ../../coreComponents/fileIO/schema/docs/LinearElasticIsotropic_other.rst
 
 
+.. _DATASTRUCTURE_LinearViscoElasticAnisotropic:
+
+Datastructure: LinearViscoElasticAnisotropic
+============================================
+.. include:: ../../coreComponents/fileIO/schema/docs/LinearViscoElasticAnisotropic_other.rst
+
+
+.. _DATASTRUCTURE_LinearViscoElasticIsotropic:
+
+Datastructure: LinearViscoElasticIsotropic
+==========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/LinearViscoElasticIsotropic_other.rst
+
+
 .. _DATASTRUCTURE_Mesh:
 
 Datastructure: Mesh
@@ -968,6 +996,20 @@ Datastructure: PoroLinearElasticAnisotropic
 Datastructure: PoroLinearElasticIsotropic
 =========================================
 .. include:: ../../coreComponents/fileIO/schema/docs/PoroLinearElasticIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_PoroLinearViscoElasticAnisotropic:
+
+Datastructure: PoroLinearViscoElasticAnisotropic
+================================================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroLinearViscoElasticAnisotropic_other.rst
+
+
+.. _DATASTRUCTURE_PoroLinearViscoElasticIsotropic:
+
+Datastructure: PoroLinearViscoElasticIsotropic
+==============================================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroLinearViscoElasticIsotropic_other.rst
 
 
 .. _DATASTRUCTURE_Poroelastic:

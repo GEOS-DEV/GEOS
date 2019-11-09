@@ -60,9 +60,10 @@ public:
   {
     static constexpr auto defaultDensityString  = "defaultDensity";
     static constexpr auto densityString  = "density";
-    static constexpr auto deviatorStressString = "DeviatorStress";
-    static constexpr auto viscoDeviatorStressString = "ViscoDeviatorStress";
-    static constexpr auto meanStressString = "MeanStress";
+
+    static constexpr auto stressString = "stress";
+    static constexpr auto elasticStressString = "elasticStress";
+
   };
 
   real64   defaultDensity() const { return m_defaultDensity; }
@@ -71,14 +72,8 @@ public:
   arrayView2d<real64>       const & density()       { return m_density; }
   arrayView2d<real64 const> const & density() const { return m_density; }
 
-  arrayView2d<real64>        const & meanStress()       { return m_meanStress; }
-  arrayView2d<real64 const > const & meanStress() const { return m_meanStress; }
-
-  arrayView2d<R2SymTensor>       const & deviatorStress()       { return m_deviatorStress; }
-  arrayView2d<R2SymTensor const> const & deviatorStress() const { return m_deviatorStress; }
-
-  arrayView2d<R2SymTensor>       const & viscoDeviatorStress()       { return m_viscoDeviatorStress; }
-  arrayView2d<R2SymTensor const> const & viscoDeviatorStress() const { return m_viscoDeviatorStress; }
+  arrayView2d<R2SymTensor>       const & getStress()       { return m_stress; }
+  arrayView2d<R2SymTensor const> const & getStress() const { return m_stress; }
 
 protected:
 
@@ -89,9 +84,8 @@ protected:
   real64 m_defaultDensity;
   array2d<real64> m_density;
 
-  array2d<real64> m_meanStress;
-  array2d<R2SymTensor> m_deviatorStress;
-  array2d<R2SymTensor> m_viscoDeviatorStress;
+  array2d<R2SymTensor> m_stress;
+  array2d<R2SymTensor> m_elasticStress;
 
 };
 

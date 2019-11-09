@@ -78,7 +78,7 @@ LinearViscoElasticIsotropic::LinearViscoElasticIsotropic( std::string const & na
   registerWrapper( viewKeyStruct::viscosityString, &m_viscosity, 0 )->
     setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("MaterialViscosity");
+    setDescription("Material Viscosity");
 }
 
 
@@ -107,8 +107,7 @@ LinearViscoElasticIsotropic::DeliverClone( string const & name,
   newConstitutiveRelation->m_defaultShearModulus = m_defaultShearModulus;
   newConstitutiveRelation->m_shearModulus = m_shearModulus;
 
-  newConstitutiveRelation->m_meanStress = m_meanStress;
-  newConstitutiveRelation->m_deviatorStress = m_deviatorStress;
+  newConstitutiveRelation->m_stress = m_stress;
 }
 
 void LinearViscoElasticIsotropic::AllocateConstitutiveData( dataRepository::Group * const parent,
@@ -216,22 +215,25 @@ void LinearViscoElasticIsotropic::StateUpdatePoint( localIndex const k,
                                                    real64 const dt,
                                                    integer const GEOSX_UNUSED_ARG( updateStiffnessFlag ) )
 {
-  real64 volumeStrain = D.Trace();
-  m_meanStress[k][q] += volumeStrain * m_bulkModulus[k];
+  real64 meanStresIncrement = D.Trace();
 
   R2SymTensor temp = D;
-  temp.PlusIdentity( -volumeStrain / 3.0 );
+  temp.PlusIdentity( -meanStresIncrement / 3.0 );
   R2SymTensor deviatorStrain = temp;
   temp *= 2.0 * m_shearModulus[k];
-  m_deviatorStress[k][q] += temp;
+  meanStresIncrement *= m_bulkModulus[k];
+  temp.PlusIdentity( meanStresIncrement );
 
-  m_viscoDeviatorStress[k][q] = m_deviatorStress[k][q];
-  m_viscoDeviatorStress[k][q] += m_viscosity / dt * deviatorStrain;
-  temp.QijAjkQlk( m_viscoDeviatorStress[k][q], Rot );
-  m_viscoDeviatorStress[k][q] = temp;
+  m_stress[k][q] += temp;
 
-  temp.QijAjkQlk( m_deviatorStress[k][q], Rot );
-  m_deviatorStress[k][q] = temp;
+  // store elastic stress and add viscous stress into total stress
+  m_elasticStress[k][q] = m_stress[k][q];
+  temp.QijAjkQlk( m_elasticStress[k][q], Rot );
+  m_elasticStress[k][q] = temp;
+  m_stress[k][q] += m_viscosity / dt * deviatorStrain;
+
+  temp.QijAjkQlk( m_stress[k][q], Rot );
+  m_stress[k][q] = temp;
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, LinearViscoElasticIsotropic, std::string const &, Group * const )

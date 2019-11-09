@@ -1,5 +1,3 @@
-<?xml version="1.0" ?>
-<!--# # -->
 
 <Problem>
 
@@ -51,7 +49,7 @@
     <PeriodicEvent name="restarts"
                    timeFrequency="5e4"
                    targetExactTimestep="0"
-                   target="/Outputs/sidreRestart"/>
+                   target="/Outputs/restartOutput"/>
   </Events>
 
   <ElementRegions>
@@ -142,6 +140,6 @@
 
   <Outputs>
     <Silo name="siloOutput"/>
-    <Restart name="sidreRestart"/>
+    <Restart name="restartOutput"/>
   </Outputs>
 </Problem>

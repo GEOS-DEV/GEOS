@@ -19,7 +19,7 @@
 #include "SetSignalHandling.hpp"
 #include "stackTrace.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
-#include "managers/Functions/NewFunctionManager.hpp"
+#include "managers/Functions/FunctionManager.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 
@@ -97,7 +97,7 @@ void basicSetup( int argc, char * argv[] )
 void basicCleanup()
 {
   FieldSpecificationManager::finalize();
-  NewFunctionManager::finalize();
+  FunctionManager::finalize();
 
   finalizeLAI();
   finalizeCXXUtils();

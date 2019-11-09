@@ -27,55 +27,55 @@ TEST( testXmlWrapper, array3d_errors )
   // This should work
   {
     input = " { { {0,1,2},{3,4,5} }, { {6,7,8},{9,10,11} }, { {12,13,14},{15,16,17} } , { {18,19,20},{21,22,23} } }";
-    LvArray::Array< int, 3, localIndex > array;
+    array3d< int > array;
     xmlWrapper::StringToInputVariable( array, input );
   }
   // This should fail the num('{')==num('}') test
   {
     input = " { { {0,1,2},{3,4,5} }, { {6,7,8},{9,10,11} }, { {12,13,14},{15,16,17} } , { {18,19,20},{21,22,23} } ";
-    LvArray::Array< int, 3, localIndex > array;
+    array3d< int > array;
     EXPECT_DEATH_IF_SUPPORTED( xmlWrapper::StringToInputVariable( array, input ), IGNORE_OUTPUT );
   }
   {
     input = " { { {0,1,2},{3,4,5} }, { {6,7,8},{9,10,11} }, { {12,13,14},{15,16,17}  , { {18,19,20},{21,22,23} } }";
-    LvArray::Array< int, 3, localIndex > array;
+    array3d< int > array;
     EXPECT_DEATH_IF_SUPPORTED( xmlWrapper::StringToInputVariable( array, input ), IGNORE_OUTPUT );
   }
   {
     input = " { { {0,1,2},{3,4,5} }, { {6,7,8},{9,10,11} }, { {12,13,14,{15,16,17} } , { {18,19,20},{21,22,23} } }";
-    LvArray::Array< int, 3, localIndex > array;
+    array3d< int > array;
     EXPECT_DEATH_IF_SUPPORTED( xmlWrapper::StringToInputVariable( array, input ), IGNORE_OUTPUT );
   }
   {
     input = " { { {0,1,2},{3,4,5} }, { {6,7,8,{9,10,11} }, { {12,13,14},{15,16,17} } , { {18,19,20},{21,22,23} } }";
-    LvArray::Array< int, 3, localIndex > array;
+    array3d< int > array;
     EXPECT_DEATH_IF_SUPPORTED( xmlWrapper::StringToInputVariable( array, input ), IGNORE_OUTPUT );
   }
   {
     input = " { { 0,1,2},{3,4,5} }, { {6,7,8},{9,10,11} }, { {12,13,14},{15,16,17} } , { {18,19,20},{21,22,23} } }";
-    LvArray::Array< int, 3, localIndex > array;
+    array3d< int > array;
     EXPECT_DEATH_IF_SUPPORTED( xmlWrapper::StringToInputVariable( array, input ), IGNORE_OUTPUT );
   }
   {
     input = "  { {0,1,2},{3,4,5} }, { {6,7,8},{9,10,11} }, { {12,13,14},{15,16,17} } , { {18,19,20},{21,22,23} } ";
-    LvArray::Array< int, 3, localIndex > array;
+    array3d< int > array;
     EXPECT_DEATH_IF_SUPPORTED( xmlWrapper::StringToInputVariable( array, input ), IGNORE_OUTPUT );
   }
 
   {
     input = " { { {,1,2},{3,4,5} }, { {6,7,8},{9,10,11} }, { {12,13,14},{15,16,17} } , { {18,19,20},{21,22,23} } }";
-    LvArray::Array< int, 3, localIndex > array;
+    array3d< int > array;
     EXPECT_DEATH_IF_SUPPORTED( xmlWrapper::StringToInputVariable( array, input ), IGNORE_OUTPUT );
   }
 
   {
     input = " { { {},{3,4,5} }, { {6,7,8},{9,10,11} }, { {12,13,14},{15,16,17} } , { {18,19,20},{21,22,23} } }";
-    LvArray::Array< int, 3, localIndex > array;
+    array3d< int > array;
     EXPECT_DEATH_IF_SUPPORTED( xmlWrapper::StringToInputVariable( array, input ), IGNORE_OUTPUT );
   }
   {
     input = " { { {0,1,2}}{ } }";
-    LvArray::Array< int, 3, localIndex > array;
+    array3d< int > array;
     EXPECT_DEATH_IF_SUPPORTED( xmlWrapper::StringToInputVariable( array, input ), IGNORE_OUTPUT );
   }
 
@@ -119,7 +119,7 @@ TEST( testXmlWrapper, array3d )
   }
   input += " }";
 
-  LvArray::Array< int, 3, localIndex > array;
+  array3d< int > array;
   xmlWrapper::StringToInputVariable( array, input );
 
   ASSERT_EQ( array.size( 0 ), numI );

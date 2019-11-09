@@ -52,7 +52,7 @@ public:
                                localIndex NUM_QUADRATURE_POINTS,
                                constitutive::ConstitutiveBase * const constitutiveRelation,
                                set<localIndex> const & elementList,
-                               arrayView2d<localIndex const> const & elemsToNodes,
+                               arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & elemsToNodes,
                                arrayView3d< R1Tensor const> const & dNdX,
                                arrayView2d<real64 const> const & detJ,
                                arrayView1d<R1Tensor const> const & u,
@@ -61,8 +61,7 @@ public:
                                arrayView1d< real64 const > const & GEOSX_UNUSED_ARG( fluidPressure ),
                                arrayView1d< real64 const > const & GEOSX_UNUSED_ARG( deltaFluidPressure ),
                                real64 const biotCoefficient,
-                               arrayView2d<real64> const & meanStress,
-                               arrayView2d<R2SymTensor> const & devStress,
+                               arrayView2d<R2SymTensor> const & stress,
                                real64 const dt,
                                real64 * const maxStableDt) const override
   {
@@ -79,8 +78,7 @@ public:
                                                         vel,
                                                         acc,
                                                         biotCoefficient,
-                                                        meanStress,
-                                                        devStress,
+                                                        stress,
                                                         dt,
                                                         maxStableDt);
   }
@@ -95,7 +93,7 @@ public:
                                arrayView2d<real64 const > const& detJ,
                                FiniteElementBase const * const fe,
                                arrayView1d< integer const > const & elemGhostRank,
-                               arrayView2d< localIndex const > const & elemsToNodes,
+                               arrayView2d< localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM > const & elemsToNodes,
                                arrayView1d< globalIndex const > const & globalDofNumber,
                                arrayView1d< R1Tensor const > const & disp,
                                arrayView1d< R1Tensor const > const & uhat,

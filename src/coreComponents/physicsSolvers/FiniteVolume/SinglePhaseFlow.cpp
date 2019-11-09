@@ -1462,7 +1462,6 @@ real64 SinglePhaseFlow::CalculateResidualNorm( DomainPartition const * const dom
     arrayView1d<real64 const> const & refPoro        = m_porosityRef[er][esr];
     arrayView1d<real64 const> const & volume         = m_volume[er][esr];
     arrayView1d<real64 const> const & dVol           = m_deltaVolume[er][esr];
-//    arrayView1d<real64 const> const & dens           = m_density[er][esr][m_fluidIndex].dimReduce();
     arrayView2d<real64 const> const & dens           = m_density[er][esr][m_fluidIndex];
 
     localIndex const subRegionSize = subRegion->size();

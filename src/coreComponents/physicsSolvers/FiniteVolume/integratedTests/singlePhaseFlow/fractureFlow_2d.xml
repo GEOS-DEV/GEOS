@@ -1,5 +1,3 @@
-<?xml version="1.0" ?>
-<!--# # -->
 
 <Problem>
 
@@ -100,7 +98,7 @@
             name="restarts"
             timeFrequency="5.0"
             targetExactTimestep="0"
-            target="/Outputs/sidreRestart" />
+            target="/Outputs/restartOutput" />
     </Events>
 
     <NumericalMethods>
@@ -185,7 +183,7 @@
             name="siloOutput"
             plotFileRoot="fractureFlow"
             plotLevel="2" />
-        <Restart name="sidreRestart" />
+        <Restart name="restartOutput" />
     </Outputs>
 
 

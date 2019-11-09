@@ -33,6 +33,7 @@
 #include "physicsSolvers/FiniteVolume/FlowSolverBase.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 
 namespace geosx
 {
@@ -432,8 +433,8 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
     ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> deltaVolume =
       elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(FlowSolverBase::viewKeyStruct::deltaVolumeString);
 
-    ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const meanStress =
-      elemManager->ConstructFullMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >("MeanStress", constitutiveManager);
+    ElementRegionManager::MaterialViewAccessor< arrayView2d<R2SymTensor> > const stress =
+      elemManager->ConstructFullMaterialViewAccessor< array2d<R2SymTensor>, arrayView2d<R2SymTensor> >(SolidBase::viewKeyStruct::stressString, constitutiveManager);
 
     ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> totalMeanStress =
       elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::totalMeanStressString);
@@ -473,7 +474,7 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
 
         for( localIndex ei=0 ; ei<elementSubRegion->size() ; ++ei )
         {
-          totalMeanStress[er][esr][ei] = meanStress[er][esr][solidIndex][ei][0] - biotCoefficient[er][esr][solidIndex] * pres[er][esr][ei];
+          totalMeanStress[er][esr][ei] = stress[er][esr][solidIndex][ei][0].Trace() / 3.0 - biotCoefficient[er][esr][solidIndex] * pres[er][esr][ei];
 
 //          poro[er][esr][ei] = poroOld[er][esr][ei] + (biotCoefficient[er][esr][solidIndex] - poroOld[er][esr][ei]) / bulkModulus[er][esr][solidIndex][ei]
 //                                                   * (totalMeanStress[er][esr][ei] - oldTotalMeanStress[er][esr][ei] + dPres[er][esr][ei]);
@@ -815,40 +816,60 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
 
   if( this->m_verboseLevel == 2 )
   {
+    // Before outputting anything generate permuation matrix and permute.
+    MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+    NodeManager * const nodeManager = mesh->getNodeManager();
+    ElementRegionManager * const elemManager = mesh->getElemManager();
+
+    LAIHelperFunctions::CreatePermutationMatrix(nodeManager,
+                                                m_solidSolver->getSystemMatrix().globalRows(),
+                                                m_solidSolver->getSystemMatrix().globalCols(),
+                                                3,
+                                                m_solidSolver->getDofManager().getKey( keys::TotalDisplacement ),
+                                                m_permutationMatrix0);
+
+    LAIHelperFunctions::CreatePermutationMatrix(elemManager,
+                                                m_flowSolver->getSystemMatrix().globalRows(),
+                                                m_flowSolver->getSystemMatrix().globalCols(),
+                                                1,
+                                                m_flowSolver->getDofManager().getKey( FlowSolverBase::viewKeyStruct::pressureString ),
+                                                m_permutationMatrix1);
+
     GEOS_LOG_RANK_0("***********************************************************");
     GEOS_LOG_RANK_0("matrix00");
     GEOS_LOG_RANK_0("***********************************************************");
-    m_solidSolver->getSystemMatrix().print(std::cout);
+    LAIHelperFunctions::PrintPermutedMatrix(m_solidSolver->getSystemMatrix(), m_permutationMatrix0, std::cout);
     MPI_Barrier(MPI_COMM_GEOSX);
 
     GEOS_LOG_RANK_0("***********************************************************");
     GEOS_LOG_RANK_0("matrix01");
     GEOS_LOG_RANK_0("***********************************************************");
+    LAIHelperFunctions::PrintPermutedMatrix(m_matrix01, m_permutationMatrix0, m_permutationMatrix1, std::cout);
     m_matrix01.print(std::cout);
     MPI_Barrier(MPI_COMM_GEOSX);
 
     GEOS_LOG_RANK_0("***********************************************************");
     GEOS_LOG_RANK_0("matrix10");
     GEOS_LOG_RANK_0("***********************************************************");
-    m_matrix10.print(std::cout);
+    LAIHelperFunctions::PrintPermutedMatrix(m_matrix10, m_permutationMatrix1, m_permutationMatrix0, std::cout);
     MPI_Barrier(MPI_COMM_GEOSX);
 
     GEOS_LOG_RANK_0("***********************************************************");
     GEOS_LOG_RANK_0("matrix11");
     GEOS_LOG_RANK_0("***********************************************************");
-    m_flowSolver->getSystemMatrix().print(std::cout);
+    LAIHelperFunctions::PrintPermutedMatrix(m_flowSolver->getSystemMatrix(), m_permutationMatrix1, std::cout);
     MPI_Barrier(MPI_COMM_GEOSX);
 
     GEOS_LOG_RANK_0("***********************************************************");
     GEOS_LOG_RANK_0("residual0");
     GEOS_LOG_RANK_0("***********************************************************");
-    m_solidSolver->getSystemRhs().print(std::cout);
+    LAIHelperFunctions::PrintPermutedVector(m_solidSolver->getSystemRhs(), m_permutationMatrix0, std::cout);
     MPI_Barrier(MPI_COMM_GEOSX);
 
     GEOS_LOG_RANK_0("***********************************************************");
     GEOS_LOG_RANK_0("residual1");
     GEOS_LOG_RANK_0("***********************************************************");
-    m_flowSolver->getSystemRhs().print(std::cout);
+    LAIHelperFunctions::PrintPermutedVector(m_flowSolver->getSystemRhs(), m_permutationMatrix1, std::cout);
     MPI_Barrier(MPI_COMM_GEOSX);
   }
 
