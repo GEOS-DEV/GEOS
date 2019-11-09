@@ -203,8 +203,8 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
   arrayView1d<R1Tensor> const & u = nodeManager->getReference<r1_array>(keys::TotalDisplacement);
   arrayView1d<R1Tensor> const & uhat = nodeManager->getReference<r1_array>(keys::IncrementalDisplacement);
 
-  ElementRegionManager::ElementViewAccessor<arrayView2d<localIndex>> const elemsToNodes = 
-    elemManager->ConstructViewAccessor<FixedOneToManyRelation, arrayView2d<localIndex>>( CellElementSubRegion::viewKeyStruct::nodeListString );
+  ElementRegionManager::ElementViewAccessor<arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM>> const elemsToNodes = 
+    elemManager->ConstructViewAccessor<CellBlock::NodeMapType, arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM>>( CellElementSubRegion::viewKeyStruct::nodeListString );
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> totalMeanStress =
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::totalMeanStressString);
@@ -303,6 +303,18 @@ real64 PoroelasticSolver::SplitOperatorStep( real64 const& time_n,
 
   SinglePhaseFlow &
   fluidSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>());
+
+  fluidSolver.SetupSystem( domain,
+                           fluidSolver.getDofManager(),
+                           fluidSolver.getSystemMatrix(),
+                           fluidSolver.getSystemRhs(),
+                           fluidSolver.getSystemSolution() );
+
+  solidSolver.SetupSystem( domain,
+                           solidSolver.getDofManager(),
+                           solidSolver.getSystemMatrix(),
+                           solidSolver.getSystemRhs(),
+                           solidSolver.getSystemSolution() );
 
   fluidSolver.ImplicitStepSetup( time_n, dt, domain,
                                  fluidSolver.getDofManager(),

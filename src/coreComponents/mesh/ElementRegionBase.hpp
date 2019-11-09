@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef ELEMENT_REGION_BASE_H
-#define ELEMENT_REGION_BASE_H
+#ifndef GEOSX_MESH_ELEMENTREGIONBASE_HPP
+#define GEOSX_MESH_ELEMENTREGIONBASE_HPP
 
 #include "CellElementSubRegion.hpp"
 #include "FaceElementSubRegion.hpp"
@@ -106,6 +106,16 @@ public:
     return this->GetGroup(viewKeyStruct::elementSubRegions)->GetSubGroups().size();
   }
 
+  template< typename SUBREGIONTYPE = ElementSubRegionBase, typename ... SUBREGIONTYPES >
+  localIndex getNumberOfElements() const
+  {
+    localIndex numElem = 0;
+    this->forElementSubRegions< SUBREGIONTYPE, SUBREGIONTYPES... >([&]( Group const * cellBlock ) -> void
+    {
+      numElem += cellBlock->size();
+    });
+    return numElem;
+  }
 
   template< typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda ) const
@@ -182,7 +192,10 @@ public:
   string_array & getMaterialList() {return m_materialList;}
   string_array const & getMaterialList() const {return m_materialList;}
 
-protected:
+  template< typename CONSTITUTIVE_TYPE >
+  string_array getConstitutiveNames() const ;
+
+  protected:
 
 private:
 
@@ -198,10 +211,23 @@ private:
 ///////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////
 
-
+template< typename CONSTITUTIVE_TYPE >
+string_array ElementRegionBase::getConstitutiveNames() const
+{
+  string_array rval;
+  for( string const & matName : m_materialList )
+  {
+    Group const * const matModel = this->GetSubRegion(0)->GetConstitutiveModels()->GetGroup( matName );
+    if( matModel->group_cast<CONSTITUTIVE_TYPE const *>() != nullptr )
+    {
+      rval.push_back( matName );
+    }
+  }
+  return rval;
+}
 
 }
 
 
 
-#endif /* ELEMENT_REGION_BASE_H_ */
+#endif /* GEOSX_MESH_ELEMENTREGIONBASE_HPP */

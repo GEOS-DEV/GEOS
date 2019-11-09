@@ -16,8 +16,8 @@
  * @file CellBlock.hpp
  */
 
-#ifndef CELLBLOCK_HPP_
-#define CELLBLOCK_HPP_
+#ifndef GEOSX_MESH_CELLBLOCK_HPP_
+#define GEOSX_MESH_CELLBLOCK_HPP_
 
 #include "ElementSubRegionBase.hpp"
 #include "FaceManager.hpp"
@@ -37,9 +37,18 @@ class CellBlock : public ElementSubRegionBase
 {
 public:
 
-  using NodeMapType=FixedOneToManyRelation;
+#if defined( GEOSX_USE_CUDA )
+  using NODE_MAP_PERMUTATION = RAJA::PERM_JI;
+#else
+  using NODE_MAP_PERMUTATION = RAJA::PERM_IJ;
+#endif
+
+  static constexpr int NODE_MAP_UNIT_STRIDE_DIM = LvArray::getStrideOneDimension( NODE_MAP_PERMUTATION {} );
+
+  using NodeMapType = InterObjectRelation< array2d< localIndex, NODE_MAP_PERMUTATION > >;
   using EdgeMapType=FixedOneToManyRelation;
-  using FaceMapType=FixedOneToManyRelation;
+  using FaceMapType = FixedOneToManyRelation;
+
 
   /**
    * @name Static Factory Catalog Functions
@@ -179,36 +188,25 @@ public:
   virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override;
 
 
-  virtual arraySlice1dRval<localIndex const> nodeList( localIndex const k ) const override
-  {
-    return m_toNodesRelation[k];
-  }
-
-  virtual arraySlice1dRval<localIndex> nodeList( localIndex const k ) override
-  {
-    return m_toNodesRelation[k];
-  }
-
+  /**
+   * @return the element to node map
+   */
+  NodeMapType & nodeList()                    { return m_toNodesRelation; }
 
   /**
    * @return the element to node map
    */
-  FixedOneToManyRelation & nodeList()                    { return m_toNodesRelation; }
+  NodeMapType const & nodeList() const        { return m_toNodesRelation; }
 
   /**
    * @return the element to node map
    */
-  FixedOneToManyRelation const & nodeList() const        { return m_toNodesRelation; }
+  localIndex & nodeList( localIndex const k, localIndex a ) { return m_toNodesRelation( k, a ); }
 
   /**
    * @return the element to node map
    */
-  localIndex & nodeList( localIndex const k, localIndex a ) { return m_toNodesRelation[k][a]; }
-
-  /**
-   * @return the element to node map
-   */
-  localIndex const & nodeList( localIndex const k, localIndex a ) const { return m_toNodesRelation[k][a]; }
+  localIndex const & nodeList( localIndex const k, localIndex a ) const { return m_toNodesRelation( k, a ); }
 
   /**
    * @return the element to edge map
@@ -281,4 +279,4 @@ private:
 
 
 
-#endif /* ELEMENTOBJECTT_H_ */
+#endif /* CELLBLOCK_HPP_ */

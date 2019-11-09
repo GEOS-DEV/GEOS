@@ -1,5 +1,3 @@
-<?xml version="1.0" ?>
-<!--# # -->
 
 <Problem>
 
@@ -43,10 +41,7 @@
                    timeFrequency="1.0"
                    targetExactTimestep="1"
                    target="/Outputs/siloOutput" />
-    <PeriodicEvent name = "outputs2"
-                   timeFrequency="1.0"
-                   targetExactTimestep="1"
-                   target="/Outputs/vtkOutput"/>
+
     <PeriodicEvent name="solverApplications"
                    forceDt="1.0"
                    target="/Solvers/SinglePhaseFlow" />
@@ -54,7 +49,7 @@
     <PeriodicEvent name="restarts"
                    timeFrequency="1.0"
                    targetExactTimestep="0"
-                   target="/Outputs/sidreRestart"/>
+                   target="/Outputs/restartOutput"/>
 
   </Events>
 
@@ -142,8 +137,7 @@
 
   <Outputs>
     <Silo name="siloOutput"/>
-    <VTK name="vtkOutput"/>
-    <Restart name="sidreRestart"/>
+    <Restart name="restartOutput"/>
   </Outputs>
 
 </Problem>

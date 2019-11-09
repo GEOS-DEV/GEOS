@@ -13,12 +13,11 @@ set(managers_headers
     Outputs/SiloOutput.hpp
     Outputs/VTKOutput.hpp
     Outputs/RestartOutput.hpp
-    Outputs/BlueprintOutput.hpp
     Functions/FunctionBase.hpp
     Functions/SymbolicFunction.hpp
     Functions/TableFunction.hpp
     Functions/CompositeFunction.hpp
-    Functions/NewFunctionManager.hpp
+    Functions/FunctionManager.hpp
     ObjectManagerBase.hpp
     ProblemManager.hpp
     NumericalMethodsManager.hpp
@@ -46,12 +45,11 @@ set(managers_sources
     Outputs/SiloOutput.cpp
     Outputs/VTKOutput.cpp
     Outputs/RestartOutput.cpp
-    Outputs/BlueprintOutput.cpp
     Functions/FunctionBase.cpp
     Functions/SymbolicFunction.cpp
     Functions/TableFunction.cpp
     Functions/CompositeFunction.cpp
-    Functions/NewFunctionManager.cpp
+    Functions/FunctionManager.cpp
     ObjectManagerBase.cpp
     ProblemManager.cpp
     NumericalMethodsManager.cpp

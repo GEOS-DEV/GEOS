@@ -15,8 +15,9 @@
 #include "ElementRegionBase.hpp"
 
 #include "common/TimingMacros.hpp"
+#include "constitutive/Fluid/SingleFluidBase.hpp"
+#include "constitutive/Solid/SolidBase.hpp"
 
-//#include "constitutive/ConstitutiveManager.hpp"
 //#include "finiteElement/FiniteElementDiscretizationManager.hpp"
 //#include "finiteElement/basis/BasisBase.hpp"
 //#include "finiteElement/quadrature/QuadratureBase.hpp"

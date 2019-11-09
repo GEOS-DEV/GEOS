@@ -16,8 +16,8 @@
  * @file FieldBase.hpp
  */
 
-#ifndef BOUNDARYCONDITIONBASE_H
-#define BOUNDARYCONDITIONBASE_H
+#ifndef GEOSX_MANAGERS_FIELDSPECIFICATION_FIELDSPECIFICATIONBASE_HPP
+#define GEOSX_MANAGERS_FIELDSPECIFICATION_FIELDSPECIFICATIONBASE_HPP
 
 #include "common/DataTypes.hpp"
 #include "codingUtilities/GeosxTraits.hpp"
@@ -25,7 +25,7 @@
 #include "dataRepository/Group.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "managers/FieldSpecification/FieldSpecificationOps.hpp"
-#include "managers/Functions/NewFunctionManager.hpp"
+#include "managers/Functions/FunctionManager.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
@@ -49,7 +49,7 @@ public:
   /**
    * alias to define the catalog type for this base type
    */
-  using CatalogInterface = cxx_utilities::CatalogInterface< FieldSpecificationBase,
+  using CatalogInterface = dataRepository::CatalogInterface< FieldSpecificationBase,
                                                             string const &,
                                                             dataRepository::Group * const >;
 
@@ -83,8 +83,8 @@ public:
    */
   virtual ~FieldSpecificationBase() override;
 
-  template < typename FIELD_OP, typename POLICY, typename T, int N >
-  void ApplyFieldValueKernel( LvArray::ArrayView< T, N, localIndex > const & field,
+  template < typename FIELD_OP, typename POLICY, typename T, int N, int UNIT_STRIDE_DIM >
+  void ApplyFieldValueKernel( LvArray::ArrayView< T, N, UNIT_STRIDE_DIM, localIndex > const & field,
                               SortedArrayView< localIndex const > const & targetSet,
                               real64 const time,
                               Group * dataGroup ) const;
@@ -357,15 +357,15 @@ private:
 };
 
 
-template < typename FIELD_OP, typename POLICY, typename T, int N >
-void FieldSpecificationBase::ApplyFieldValueKernel( LvArray::ArrayView< T, N, localIndex > const & field,
+template < typename FIELD_OP, typename POLICY, typename T, int N, int UNIT_STRIDE_DIM >
+void FieldSpecificationBase::ApplyFieldValueKernel( LvArray::ArrayView< T, N, UNIT_STRIDE_DIM, localIndex > const & field,
                                                     SortedArrayView< localIndex const > const & targetSet,
                                                     real64 const time,
                                                     Group * dataGroup ) const
 {
   integer const component = GetComponent();
   string const & functionName = getReference<string>( viewKeyStruct::functionNameString );
-  NewFunctionManager * functionManager = NewFunctionManager::Instance();
+  FunctionManager * functionManager = FunctionManager::Instance();
 
   if( functionName.empty() )
   {
@@ -474,7 +474,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
 {
   integer const component = GetComponent();
   string const & functionName = getReference<string>( viewKeyStruct::functionNameString );
-  NewFunctionManager * functionManager = NewFunctionManager::Instance();
+  FunctionManager * functionManager = FunctionManager::Instance();
 
   globalIndex_array  dof( targetSet.size() );
   real64_array rhsContribution( targetSet.size() );
@@ -557,13 +557,18 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
 {
   integer const component = GetComponent();
   string const & functionName = getReference<string>( viewKeyStruct::functionNameString );
-  NewFunctionManager * functionManager = NewFunctionManager::Instance();
+  FunctionManager * functionManager = FunctionManager::Instance();
 
   globalIndex_array  dof( targetSet.size() );
   real64_array rhsContribution( targetSet.size() );
 
   // TODO: not correct in parallel, need to compute global size of a set
-  real64 const setSizeFactor = ( normalizeBySetSize && !targetSet.empty() ) ? 1.0/targetSet.size() : 1.0;
+  int mytargetSetNumber = targetSet.size();
+  int totalTargetSetNumber;
+
+  MPI_Allreduce(&mytargetSetNumber, &totalTargetSetNumber, 1, MPI_INTEGER, MPI_SUM, MPI_COMM_WORLD);
+
+  real64 const setSizeFactor = ( normalizeBySetSize && (totalTargetSetNumber!= 0) ) ? 1.0/totalTargetSetNumber : 1.0;
 
   if( functionName.empty() )
   {

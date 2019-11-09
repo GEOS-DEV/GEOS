@@ -20,7 +20,7 @@
 #define FINITEELEMENTBASE_H_
 
 #include "common/DataTypes.hpp"
-#include "ObjectCatalog.hpp"
+#include "dataRepository/ObjectCatalog.hpp"
 
 namespace geosx
 {
@@ -38,7 +38,7 @@ public:
   virtual ~FiniteElementBase();
 
   static string CatalogName() { return "FiniteElementBase"; }
-  using CatalogInterface = cxx_utilities::CatalogInterface< FiniteElementBase, BasisBase const &,
+  using CatalogInterface = dataRepository::CatalogInterface< FiniteElementBase, BasisBase const &,
                                                                                QuadratureBase const &,
                                                                                const int >;
   static CatalogInterface::CatalogType& GetCatalog()
@@ -110,7 +110,9 @@ public:
       return ElementType::INVALID;
   }
 
-  virtual void reinit( arrayView1d< R1Tensor const > const & X, arraySlice1d< localIndex const > const & mapped_support_points ) = 0;
+  virtual void reinit( arrayView1d< R1Tensor const > const & X, arraySlice1d< localIndex const, -1 > const & mapped_support_points ) = 0;
+  virtual void reinit( arrayView1d< R1Tensor const > const & X, arraySlice1d< localIndex const, 0 > const & mapped_support_points ) = 0;
+
 
 
 //  virtual void zero_energy_mode_control( const array1d<R1Tensor>& dNdx,

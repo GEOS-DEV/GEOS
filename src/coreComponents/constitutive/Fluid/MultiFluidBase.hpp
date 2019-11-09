@@ -16,8 +16,8 @@
   * @file MultiFluidBase.hpp
   */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_MULTIFLUIDBASE_HPP
-#define SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_MULTIFLUIDBASE_HPP
+#ifndef GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDBASE_HPP
+#define GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDBASE_HPP
 
 #include "constitutive/ConstitutiveBase.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
@@ -32,21 +32,21 @@ namespace detail
 {
 
 template<typename T, int DIM>
-struct array_slice_helper
+struct ArraySlice_helper
 {
-  using type = array_slice<T, DIM>;
+  using type = ArraySlice<T, DIM>;
 };
 
 // an array slice of DIM=0 decays to a reference to scalar
 template<typename T>
-struct array_slice_helper<T, 0>
+struct ArraySlice_helper<T, 0>
 {
   using type = T &;
 };
 
 // an array1 slice of DIM=1 uses specialization (possibly a raw pointer)
 template<typename T>
-struct array_slice_helper<T, 1>
+struct ArraySlice_helper<T, 1>
 {
   using type = arraySlice1d<T>;
 };
@@ -54,19 +54,19 @@ struct array_slice_helper<T, 1>
 }
 
 template<int DIM>
-using real_array_slice = typename detail::array_slice_helper<real64, DIM>::type;
+using real_ArraySlice = typename detail::ArraySlice_helper<real64, DIM>::type;
 
 template<int DIM>
-using real_array_const_slice = typename detail::array_slice_helper<real64 const, DIM>::type;
+using real_array_const_slice = typename detail::ArraySlice_helper<real64 const, DIM>::type;
 
 // helper struct to represent a var and its derivatives
 template<int DIM>
 struct CompositionalVarContainer
 {
-  real_array_slice<DIM>   value; // variable value
-  real_array_slice<DIM>   dPres; // derivative w.r.t. pressure
-  real_array_slice<DIM>   dTemp; // derivative w.r.t. temperature
-  real_array_slice<DIM+1> dComp; // derivative w.r.t. composition
+  real_ArraySlice<DIM>   value; // variable value
+  real_ArraySlice<DIM>   dPres; // derivative w.r.t. pressure
+  real_ArraySlice<DIM>   dTemp; // derivative w.r.t. temperature
+  real_ArraySlice<DIM+1> dComp; // derivative w.r.t. composition
 };
 
 template<int DIM>
@@ -429,4 +429,4 @@ void MultiFluidBase::BatchUpdateKernel( arrayView1d<real64 const> const & pressu
 
 } //namespace geosx
 
-#endif //SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_MULTIFLUIDBASE_HPP
+#endif //GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDBASE_HPP

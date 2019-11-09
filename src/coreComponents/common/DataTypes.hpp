@@ -18,40 +18,46 @@
  * use of the data types.
  */
 
-#ifndef DATATYPES_HPP
-#define DATATYPES_HPP
+#ifndef GEOSX_COMMON_DATATYPES_HPP
+#define GEOSX_COMMON_DATATYPES_HPP
 
-#include <cassert>
-#include <cmath>
-#include <cstdint>
-#include <iostream>
-#include <map>
-#include <memory>
-#include <set>
-#include <string>
-#include <typeindex>
-#include <typeinfo>
-#include <unordered_map>
-#include <vector>
-
+// Source includes
 #include "common/GeosxConfig.hpp"
 #include "Macros.hpp"
 #include "Logger.hpp"
 #include "Array.hpp"
-#include "StackArrayWrapper.hpp"
+#include "StackBuffer.hpp"
 #include "SortedArray.hpp"
 #include "ArrayOfArrays.hpp"
 #include "ArrayOfSets.hpp"
 #include "math/TensorT/TensorT.h"
 
-#ifdef GEOSX_USE_ATK
-#include "axom/sidre/core/SidreTypes.hpp"
-#endif
+// TPL includes
+#include <camp/camp.hpp>
 
+
+// System includes
 #ifdef GEOSX_USE_MPI
-#include <mpi.h>
+  #include <mpi.h>
 #endif
 
+#include <cassert>
+#include <cmath>
+#include <cstdint>
+#include <iostream>
+#include <memory>
+#include <typeindex>
+#include <typeinfo>
+#include <string>
+#include <map>
+#include <unordered_map>
+#include <vector>
+#include <set>
+
+/// macro definition to specify whether or not to use dynamic_cast
+#ifndef USE_DYNAMIC_CASTING
+  #define USE_DYNAMIC_CASTING 1
+#endif
 
 /**
  * top level geosx namespace contains all code that is specific to GEOSX
@@ -59,6 +65,31 @@
 namespace geosx
 {
 
+template< typename NEW_TYPE, typename EXISTING_TYPE >
+NEW_TYPE dynamicCast( EXISTING_TYPE * const val )
+{
+  static_assert( std::is_pointer< NEW_TYPE >::value, "NEW_TYPE must be a pointer." );
+
+#if USE_DYNAMIC_CASTING
+  NEW_TYPE const newVal = dynamic_cast< NEW_TYPE >( val );
+#else
+  NEW_TYPE const newVal = static_cast< NEW_TYPE >( val );
+#endif
+
+  return newVal;
+}
+
+template< typename NEW_TYPE, typename EXISTING_TYPE >
+NEW_TYPE dynamicCast( EXISTING_TYPE & val )
+{
+  static_assert( std::is_reference< NEW_TYPE >::value, "NEW_TYPE must be a reference." );
+
+  using POINTER_TO_NEW_TYPE = std::remove_reference_t< NEW_TYPE > *;
+  POINTER_TO_NEW_TYPE ptr = dynamicCast< POINTER_TO_NEW_TYPE >( &val );
+  GEOS_ERROR_IF( ptr == nullptr, "Cast failed." );
+
+  return *ptr;
+}
 
 #ifdef GEOSX_USE_MPI
 extern MPI_Comm MPI_COMM_GEOSX;
@@ -66,13 +97,7 @@ extern MPI_Comm MPI_COMM_GEOSX;
 constexpr int MPI_COMM_GEOSX = 0;
 #endif
 
-// underlying types not for general use!!
-//using int32 = std::int32_t;
-//using int64 = std::int64_t;
-//using uint32 = std::uint32_t;
-//using uint64 = std::uint64_t;
 
-/// alias for std::size_t
 using size_t      = std::size_t;
 using integer     = std::int32_t;
 using localIndex  = std::ptrdiff_t;
@@ -81,8 +106,6 @@ using string      = std::string;
 
 using real32 = float;
 using real64 = double;
-//using real   = double;
-
 
 template< typename T >
 using ptr = T*;
@@ -104,46 +127,97 @@ using real64_ptr        = ptr< real64 >;
 using real64_const_ptr  = const_ptr< real64 >;
 
 
-using buffer_unit_type = char;
+using buffer_unit_type = signed char;
 using buffer_type = std::vector< buffer_unit_type >;
 
 //***** BEGIN ARRAY TYPEDEFS *****
 
-template< typename T, int NDIM=1 >
-using array_view = LvArray::ArrayView< T, NDIM, localIndex >;
+template< typename T,
+          int NDIM,
+          typename PERMUTATION=camp::make_idx_seq_t< NDIM >,
+          template< typename > class DATA_VECTOR_TYPE=LvArray::ChaiBuffer >
+using Array = LvArray::Array< T, NDIM, PERMUTATION, localIndex, DATA_VECTOR_TYPE >;
 
-template< typename T, int NDIM=1 >
-using array_slice = LvArray::ArraySlice< T, NDIM, localIndex >;
+template< typename T,
+          int NDIM,
+          int UNIT_STRIDE_DIM = NDIM - 1,
+          template< typename > class DATA_VECTOR_TYPE=LvArray::ChaiBuffer >
+using ArrayView = LvArray::ArrayView< T, NDIM, UNIT_STRIDE_DIM, localIndex, DATA_VECTOR_TYPE >;
 
-template< typename T, int NDIM, int MAXSIZE >
-using stack_array = LvArray::Array< T, NDIM, localIndex, LvArray::StackArrayWrapper< T, MAXSIZE > >;
+template< typename T, int NDIM, int UNIT_STRIDE_DIM = NDIM - 1 >
+using ArraySlice = LvArray::ArraySlice< T, NDIM, UNIT_STRIDE_DIM, localIndex >;
+
+template< typename T, int NDIM, int MAXSIZE, typename PERMUTATION=camp::make_idx_seq_t< NDIM > >
+using StackArray = LvArray::StackArray< T, NDIM, PERMUTATION, localIndex, MAXSIZE >;
 
 template< typename T >
-using array1d = LvArray::Array< T, 1, localIndex >;
+using array1d = Array< T, 1 >;
 
 template< typename T >
-using arrayView1d = array_view< T, 1 >;
+using arrayView1d = ArrayView< T, 1 >;
 
-template< typename T >
-using arraySlice1d = LvArray::ArraySlice1d< T, localIndex >;
-
-template< typename T >
-using arraySlice1dRval = LvArray::ArraySlice1d_rval< T, localIndex >;
+template< typename T, int UNIT_STRIDE_DIM = 0 >
+using arraySlice1d = ArraySlice< T, 1, UNIT_STRIDE_DIM >;
 
 template< typename T, int MAXSIZE >
-using stackArray1d = stack_array< T, 1, MAXSIZE >;
+using stackArray1d = StackArray< T, 1, MAXSIZE >;
 
-template< typename T >
-using array2d = LvArray::Array< T, 2, localIndex >;
+template< typename T, typename PERMUTATION=camp::make_idx_seq_t< 2 > >
+using array2d = Array< T, 2, PERMUTATION >;
 
-template< typename T >
-using arrayView2d = array_view< T, 2 >;
+template< typename T, int UNIT_STRIDE_DIM = 1 >
+using arrayView2d = ArrayView< T, 2, UNIT_STRIDE_DIM >;
 
-template< typename T >
-using arraySlice2d = LvArray::ArraySlice< T, 2, localIndex >;
+template< typename T, int UNIT_STRIDE_DIM = 1 >
+using arraySlice2d = ArraySlice< T, 2, UNIT_STRIDE_DIM >;
 
 template< typename T, int MAXSIZE >
-using stackArray2d = stack_array< T, 2, MAXSIZE >;
+using stackArray2d = StackArray< T, 2, MAXSIZE >;
+
+template< typename T, typename PERMUTATION=camp::make_idx_seq_t< 3 > >
+using array3d = Array< T, 3, PERMUTATION >;
+
+template< typename T, int UNIT_STRIDE_DIM=2 >
+using arrayView3d = ArrayView< T, 3, UNIT_STRIDE_DIM >;
+
+template< typename T, int UNIT_STRIDE_DIM=2 >
+using arraySlice3d = ArraySlice< T, 3, UNIT_STRIDE_DIM >;
+
+template< typename T, int MAXSIZE >
+using stackArray3d = StackArray< T, 3, MAXSIZE >;
+
+template< typename T >
+using array4d = Array< T, 4 >;
+
+template< typename T >
+using arrayView4d = ArrayView< T, 4 >;
+
+template< typename T >
+using arraySlice4d = ArraySlice< T, 4 >;
+
+template< typename T, int MAXSIZE >
+using stackArray4d = StackArray< T, 4, MAXSIZE >;
+
+template< typename T >
+using array5d = Array< T, 5 >;
+
+template< typename T >
+using arrayView5d = ArrayView< T, 5 >;
+
+template< typename T >
+using arraySlice5d = ArraySlice< T, 5 >;
+
+template< typename T, int MAXSIZE >
+using stackArray5d = StackArray< T, 5, MAXSIZE >;
+
+template< typename T >
+using set = LvArray::SortedArray< T, localIndex >;
+
+template< typename T >
+using SortedArray = LvArray::SortedArray< T, localIndex >;
+
+template< typename T >
+using SortedArrayView = LvArray::SortedArrayView< T, localIndex >;
 
 template< typename T, bool CONST_SIZES=std::is_const< T >::value >
 using ArrayOfArraysView = LvArray::ArrayOfArraysView< T, localIndex const, CONST_SIZES >;
@@ -156,51 +230,6 @@ using ArrayOfSetsView = LvArray::ArrayOfSetsView< T, localIndex const >;
 
 template< typename T >
 using ArrayOfSets = LvArray::ArrayOfSets< T, localIndex >;
-
-template< typename T >
-using array3d = LvArray::Array< T, 3, localIndex >;
-
-template< typename T >
-using arrayView3d = array_view< T, 3 >;
-
-template< typename T >
-using arraySlice3d = LvArray::ArraySlice< T, 3, localIndex >;
-
-template< typename T, int MAXSIZE >
-using stackArray3d = stack_array< T, 3, MAXSIZE >;
-
-template< typename T >
-using array4d = LvArray::Array< T, 4, localIndex >;
-
-template< typename T >
-using arrayView4d = LvArray::ArrayView< T, 4, localIndex >;
-
-template< typename T >
-using arraySlice4d = LvArray::ArrayView< T, 4, localIndex >;
-
-template< typename T, int MAXSIZE >
-using stackArray4d = stack_array< T, 4, MAXSIZE >;
-
-template< typename T >
-using array5d = LvArray::Array< T, 5, localIndex >;
-
-template< typename T >
-using arrayView5d = LvArray::ArrayView< T, 5, localIndex >;
-
-template< typename T >
-using arraySlice5d = LvArray::ArrayView< T, 5, localIndex >;
-
-template< typename T, int MAXSIZE >
-using stackArray5d = stack_array< T, 5, MAXSIZE >;
-
-template< typename T >
-using set = LvArray::SortedArray< T, localIndex >;
-
-template< typename T >
-using SortedArray = LvArray::SortedArray< T, localIndex >;
-
-template< typename T >
-using SortedArrayView = LvArray::SortedArrayView< T, localIndex >;
 
 template< typename TKEY, typename TVAL, typename SORTED >
 class mapBase
@@ -548,80 +577,52 @@ public:
     }
   }
 
-#ifdef GEOSX_USE_ATK
-
-  static axom::sidre::TypeID toSidreType( std::type_index typeIndex )
-  {
-    const axom::sidre::TypeID integer_id = axom::sidre::detail::SidreTT< integer >::id;
-    const axom::sidre::TypeID localIndex_id = axom::sidre::detail::SidreTT< localIndex >::id;
-
-    /* We can't use SidreTT<globalIndex>::id here because that returns NO_TYPE_ID.
-     * This is due to a mismatch between globalIndex (long long int) and std::int64_t */
-    const axom::sidre::TypeID globalIndex_id = axom::sidre::detail::SidreTT< axom::int64 >::id;
-
-    const axom::sidre::TypeID real32_id = axom::sidre::detail::SidreTT< real32 >::id;
-    const axom::sidre::TypeID real64_id = axom::sidre::detail::SidreTT< real64 >::id;
-    const axom::sidre::TypeID char_id = axom::sidre::TypeID::UINT8_ID;
-
-    const std::unordered_map< std::type_index, axom::sidre::TypeID > sidre_types =
-    {
-      { std::type_index( typeid(integer)), integer_id },
-      { std::type_index( typeid(localIndex)), localIndex_id },
-      { std::type_index( typeid(globalIndex)), globalIndex_id },
-      { std::type_index( typeid(real32)), real32_id },
-      { std::type_index( typeid(real64)), real64_id },
-      { std::type_index( typeid(R1Tensor)), real64_id },
-      { std::type_index( typeid(R2Tensor)), real64_id },
-      { std::type_index( typeid(R2SymTensor)), real64_id },
-      { std::type_index( typeid(char)), char_id }
-    };
-
-    auto it = sidre_types.find( typeIndex );
-    if( it == sidre_types.end())
-    {
-      return axom::sidre::TypeID::NO_TYPE_ID;
-    }
-    return it->second;
-  }
-
-  static localIndex getSidreSize( std::type_index typeIndex )
-  {
-    const std::unordered_map< std::type_index, localIndex > sidre_sizes =
-    {
-      { std::type_index( typeid(integer)), sizeof(integer) },
-      { std::type_index( typeid(localIndex)), sizeof(localIndex) },
-      { std::type_index( typeid(globalIndex)), sizeof(globalIndex) },
-      { std::type_index( typeid(real32)), sizeof(real32) },
-      { std::type_index( typeid(real64)), sizeof(real64) },
-      { std::type_index( typeid(R1Tensor)), sizeof(real64) },
-      { std::type_index( typeid(R2Tensor)), sizeof(real64) },
-      { std::type_index( typeid(R2SymTensor)), sizeof(real64) },
-      { std::type_index( typeid(char)), sizeof(char) }
-    };
-
-    auto it = sidre_sizes.find( typeIndex );
-    if( it == sidre_sizes.end())
-    {
-      GEOS_ERROR( "Unsupported type of with type index name: " << typeIndex.name());
-    }
-    return it->second;
-  }
-
-#endif /* GEOSX_USE_ATK */
-
-
   // Matching regex for data types in xml
   class typeRegex
   {
 private:
-    std::string ru = "[0-9]*";
-    std::string ri = "[+-]?[0-9]*";
-    std::string rr = "[+-]?[0-9]*\\.?([0-9]*)?[eE]?[-+]?([0-9]*)?";
-    std::string rs = "[a-zA-Z0-9_,\\(\\)+-/\\*]*";
-    std::string r1 = rr + ",? " + rr + ",? " + rr;
-    std::string r2 = rr + ",? " + rr + ",? " + rr + ",? " + rr + ",? " + rr + ",? " + rr + ",? " + rr + ",? " + rr + ",? " + rr;
-    std::string r2s = rr + ",? " + rr + ",? " + rr + ",? " + rr + ",? " + rr + ",? " + rr;
+    // Function to build Array regexes
+    // Note: The sub pattern is the base object you are targeting.  It can either
+    //       be a simple type or a lower-dimensional array.  Sub-elements and
+    //       axes are given as a comma-separated list enclosed in a curly brace.
+    //       For example, a 2D string array would look like: {{"a", "b"}, {"c", "d"}}
+    std::string constructArrayRegex( std::string subPattern, integer dimension )
+    {
+      if( dimension > 1 )
+      {
+        subPattern = constructArrayRegex( subPattern, dimension-1 );
+      }
 
+      std::string arrayPattern = "\\{(" + subPattern + ",\\s*)*" + subPattern + "\\}";
+      return arrayPattern;
+    }
+
+    // Define the component regexes:
+    // Regex to match an unsigned int (123, etc.)
+    std::string ru = "[\\d]+";
+
+    // Regex to match an signed int (-123, 455, +789, etc.)
+    std::string ri = "[+-]?[\\d]+";
+
+    // Regex to match a float (1, +2.3, -.4, 5.6e7, 8E-9, etc.)
+    // Explanation of parts:
+    // [+-]?[\\d]*  matches an optional +/- at the beginning, any numbers preceding the decimal
+    // ([\\d]\\.?|\\.[\\d]) matches the decimal region of the number (0, 1., 2.3, .4)
+    // [\\d]*  matches any number of numbers following the decimal
+    // ([eE][-+]?[\\d]+|\\s*)  matches an optional scientific notation number
+    // Note: the xsd regex implementation does not allow an empty branch, so use allow whitespace at the end
+    std::string rr = "[+-]?[\\d]*([\\d]\\.?|\\.[\\d])[\\d]*([eE][-+]?[\\d]+|\\s*)";
+
+    // Regex to match a string that does not contain the characters  ,{}
+    std::string rs = "[^,\\{\\}]*";
+
+    // Regexes to match a R1Tensor, R2Tensor, and R2SymTensor
+    // These are identical aside from the number of repetitions in the curly brackets
+    std::string r1 = "(" + rr + ",\\s*){2}" + rr;
+    std::string r2 = "(" + rr + ",\\s*){8}" + rr;
+    std::string r2s = "(" + rr + ",\\s*){5}" + rr;
+
+    // Build master list of regexes
     std::unordered_map< std::string, std::string > regexMap =
     {
       {"integer", ri},
@@ -632,31 +633,31 @@ private:
       {"R1Tensor", r1},
       {"R2Tensor", r2},
       {"R2SymTensor", r2s},
-      {"integer_array", "((" + ri + ",? )*)?" + ri},
-      {"localIndex_array", "((" + ri + ",? )*)?" + ri},
-      {"globalIndex_array", "((" + ri + ",? )*)?" + ri},
-      {"real32_array", "((" + rr + ",? )*)?" + rr},
-      {"real64_array", "((" + rr + ",? )*)?" + rr},
-      {"r1_array", "((" + r1 + "; )*)?" + r1},
-      {"r2_array", "((" + r2 + "; )*)?" + r2},
-      {"r2Sym_array", "((" + r2s + "; )*)?" + r2s},
-      {"integer_array2d", ""},
-      {"localIndex_array2d", ""},
-      {"globalIndex_array2d", ""},
-      {"real32_array2d", ""},
-      {"real64_array2d", ""},
-      {"r1_array2d", ""},
-      {"r2_array2d", ""},
-      {"r2Sym_array2d", ""},
-      {"integer_array3d", ""},
-      {"localIndex_array3d", ""},
-      {"globalIndex_array3d", ""},
-      {"real32_array3d", ""},
-      {"real64_array3d", ""},
+      {"integer_array", constructArrayRegex( ri, 1 )},
+      {"localIndex_array", constructArrayRegex( ri, 1 )},
+      {"globalIndex_array", constructArrayRegex( ri, 1 )},
+      {"real32_array", constructArrayRegex( rr, 1 )},
+      {"real64_array", constructArrayRegex( rr, 1 )},
+      {"r1_array", constructArrayRegex( r1, 1 )},
+      {"r2_array", constructArrayRegex( r2, 1 )},
+      {"r2Sym_array", constructArrayRegex( r2s, 1 )},
+      {"integer_array2d", constructArrayRegex( ri, 2 )},
+      {"localIndex_array2d", constructArrayRegex( ri, 2 )},
+      {"globalIndex_array2d", constructArrayRegex( ri, 2 )},
+      {"real32_array2d", constructArrayRegex( rr, 2 )},
+      {"real64_array2d", constructArrayRegex( rr, 2 )},
+      {"r1_array2d", constructArrayRegex( r1, 2 )},
+      {"r2_array2d", constructArrayRegex( r2, 2 )},
+      {"r2Sym_array2d", constructArrayRegex( r2s, 2 )},
+      {"integer_array3d", constructArrayRegex( ri, 3 )},
+      {"localIndex_array3d", constructArrayRegex( ri, 3 )},
+      {"globalIndex_array3d", constructArrayRegex( ri, 3 )},
+      {"real32_array3d", constructArrayRegex( rr, 3 )},
+      {"real64_array3d", constructArrayRegex( rr, 3 )},
       {"string", rs},
-      {"string_array", "((" + rs + ",? )*)?" + rs},
+      {"string_array", constructArrayRegex( rs, 1 )},
       {"mapPair", rs},
-      {"mapPair_array", "((" + rs + ",? )*)?" + rs}
+      {"mapPair_array", constructArrayRegex( rs, 1 )}
     };
 
 public:
@@ -1282,4 +1283,4 @@ public:
 
 
 
-#endif /* COMPONENTS_CORE_SRC_DATAREPOSITORY_DATATYPES_HPP_ */
+#endif /* GEOSX_COMMON_DATATYPES_HPP */

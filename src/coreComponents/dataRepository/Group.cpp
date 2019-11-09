@@ -18,45 +18,23 @@
 #include "codingUtilities/StringUtilities.hpp"
 #include "common/TimingMacros.hpp"
 
-#ifdef GEOSX_USE_ATK
-#include "dataRepository/SidreWrapper.hpp"
-#include "axom/sidre/core/sidre.hpp"
-#endif
+#include "dataRepository/ConduitRestart.hpp"
 
 namespace geosx
 {
 namespace dataRepository
 {
 
-axom::sidre::Group * Group::setSidreGroup( string const & name,
-                                           Group * const parent )
+conduit::Node & conduitNodeFromParent( string const & name, Group * const parent )
 {
-
-  axom::sidre::Group * sidreParent = nullptr;
-  axom::sidre::Group * sidreGroup  = nullptr;
-#ifdef GEOSX_USE_ATK
-  if( parent==nullptr )
+  if( parent == nullptr )
   {
-    sidreParent = SidreWrapper::dataStore().getRoot();
+    return rootConduitNode[ name ];
   }
   else
   {
-    sidreParent = parent->m_sidreGroup;
+    return parent->getConduitNode()[ name ];
   }
-
-  if( sidreParent->hasGroup( name ) )
-  {
-    sidreGroup = sidreParent->getGroup( name );
-  }
-  else
-  {
-    sidreGroup = sidreParent->createGroup( name );
-  }
-  return sidreGroup;
-#else
-  return nullptr;
-
-#endif
 }
 
 Group::Group( std::string const & name,
@@ -64,32 +42,16 @@ Group::Group( std::string const & name,
   m_parent( parent ),
   m_wrappers(),
   m_subGroups(),
-#ifdef GEOSX_USE_ATK
-  m_sidreGroup( Group::setSidreGroup( name, parent )),
-#endif
   m_size( 0 ),
   m_capacity( 0 ),
+  m_name( name ),
   m_restart_flags( RestartFlags::WRITE_AND_READ ),
   m_input_flags( InputFlags::INVALID ),
-  m_name( name )
+  m_conduitNode( conduitNodeFromParent( name, parent ) )
 {}
 
 Group::~Group()
 {}
-
-Group::Group( Group && source ):
-  m_parent( std::move( source.m_parent ) ),
-  m_wrappers( std::move( source.m_wrappers ) ),
-#ifdef GEOSX_USE_ATK
-  m_sidreGroup( std::move( source.m_sidreGroup ) ),
-#endif
-  m_size( source.m_size ),
-  m_capacity( source.m_capacity ),
-  m_restart_flags( source.m_restart_flags ),
-  m_name( source.m_name )
-{}
-
-
 
 Group::CatalogInterface::CatalogType & Group::GetCatalog()
 {
@@ -116,8 +78,9 @@ WrapperBase * Group::registerWrapper( string const & name,
 
 void Group::deregisterWrapper( string const & name )
 {
-  m_sidreGroup->destroyView( name );
+  GEOS_ERROR_IF( !hasView( name ), "Wrapper " << name << " doesn't exist." );
   m_wrappers.erase( name );
+  m_conduitNode.remove( name );
 }
 
 
@@ -496,15 +459,9 @@ localIndex Group::Unpack( buffer_unit_type const * & buffer,
 
 void Group::prepareToWrite()
 {
-#ifdef GEOSX_USE_ATK
   if( getRestartFlags() == RestartFlags::NO_WRITE )
   {
     return;
-  }
-
-  if( !SidreWrapper::dataStore().hasAttribute( "__sizedFromParent__" ))
-  {
-    SidreWrapper::dataStore().createAttributeScalar( "__sizedFromParent__", -1 );
   }
 
   for( auto & pair : m_wrappers )
@@ -512,92 +469,52 @@ void Group::prepareToWrite()
     pair.second->registerToWrite();
   }
 
-  if( m_sidreGroup->hasView( "__size__" ) )
-  {
-    m_sidreGroup->getView( "__size__" )->setScalar( m_size );
-  }
-  else
-  {
-    m_sidreGroup->createView( "__size__" )->setScalar( m_size );
-  }
+  m_conduitNode[ "__size__" ].set( m_size );
 
-  forSubGroups([]( Group * subGroup ) -> void
+  forSubGroups([]( Group * subGroup )
       {
         subGroup->prepareToWrite();
       } );
-#endif
 }
 
 
-void Group::finishWriting() const
+void Group::finishWriting()
 {
-#ifdef GEOSX_USE_ATK
   if( getRestartFlags() == RestartFlags::NO_WRITE )
   {
     return;
   }
-
-  m_sidreGroup->destroyView( "__size__" );
 
   for( auto & pair : m_wrappers )
   {
     pair.second->finishWriting();
   }
 
-  forSubGroups([]( const Group * subGroup ) -> void
+  forSubGroups([]( Group * subGroup )
       {
         subGroup->finishWriting();
       } );
-#endif
 }
 
 
-void Group::prepareToRead()
+void Group::loadFromConduit()
 {
-#ifdef GEOSX_USE_ATK
   if( getRestartFlags() != RestartFlags::WRITE_AND_READ )
   {
     return;
   }
 
-  axom::sidre::View * temp = m_sidreGroup->getView( "__size__" );
-  if( temp != nullptr )
-  {
-    m_size = temp->getScalar();
-    m_sidreGroup->destroyView( "__size__" );
-  }
+  m_size = m_conduitNode.fetch_child( "__size__" ).value();
 
   for( auto & pair : m_wrappers )
   {
-    pair.second->registerToRead();
+    pair.second->loadFromConduit();
   }
 
-  forSubGroups([]( Group * subGroup ) -> void
+  forSubGroups([]( Group * subGroup )
       {
-        subGroup->prepareToRead();
+        subGroup->loadFromConduit();
       } );
-#endif
-}
-
-
-void Group::finishReading()
-{
-#ifdef GEOSX_USE_ATK
-  if( getRestartFlags() != RestartFlags::WRITE_AND_READ )
-  {
-    return;
-  }
-
-  for( auto & pair : m_wrappers )
-  {
-    pair.second->finishReading();
-  }
-
-  forSubGroups([]( Group * subGroup ) -> void
-      {
-        subGroup->finishReading();
-      } );
-#endif
 }
 
 void Group::postRestartInitializationRecursive( Group * const domain )

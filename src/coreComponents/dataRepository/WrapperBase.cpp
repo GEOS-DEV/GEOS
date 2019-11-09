@@ -35,23 +35,10 @@ WrapperBase::WrapperBase( std::string const & name,
   m_plotLevel( PlotLevel::LEVEL_3 ),
   m_inputFlag( InputFlags::INVALID ),
   m_description(),
-  m_registeringObjects()
-#ifdef GEOSX_USE_ATK
-  , m_sidreView( nullptr )
-#endif
+  m_registeringObjects(),
+  m_conduitNode( parent->getConduitNode()[ name ] )
 {
-#ifdef GEOSX_USE_ATK
-  GEOS_ERROR_IF( parent==nullptr, "parameter WrapperCollection * const parent must not be nullptr" );
-
-  if( parent->getSidreGroup()->hasView( name ) )
-  {
-    m_sidreView = parent->getSidreGroup()->getView( name );
-  }
-  else
-  {
-    m_sidreView = parent->getSidreGroup()->createView( name );
-  }
-#endif
+  GEOS_ERROR_IF( parent == nullptr, "Cannot have a view with no parent." );
 }
 
 
@@ -59,16 +46,13 @@ WrapperBase::~WrapperBase()
 {}
 
 
-WrapperBase::WrapperBase( WrapperBase && source ):
-  m_name( std::move( source.m_name ) ),
-  m_parent( source.m_parent ),
-  m_sizedFromParent( source.m_sizedFromParent ),
-  m_restart_flags( source.m_restart_flags )
-#ifdef GEOSX_USE_ATK
-  , m_sidreView( source.m_sidreView )
-#endif
-
-{}
+// WrapperBase::WrapperBase( WrapperBase && source ):
+//   m_name( std::move( source.m_name ) ),
+//   m_parent( source.m_parent ),
+//   m_sizedFromParent( source.m_sizedFromParent ),
+//   m_restart_flags( source.m_restart_flags )
+//   m_conduitNode( source.m_conduitNode )
+// {}
 
 void WrapperBase::resize()
 {
