@@ -2502,12 +2502,16 @@ void SiloFile::WriteMaterialDataField2d( string const & meshName,
                                        string const & multiRoot,
                                        string_array const & materialNames )
 {
+  array1d< array1d < array2d<TYPE> > > fieldData(elemRegion->numSubRegions());
   array1d< array1d < arrayView2d<TYPE const> > > field(elemRegion->numSubRegions());
+
+
   elemRegion->forElementSubRegionsIndex([&]( localIndex const esr,
                                              ElementSubRegionBase const * const subRegion )
   {
     localIndex const nmat = materialNames.size();
     field[esr].resize(nmat);
+    fieldData[esr].resize(nmat);
     for( int matIndex=0 ; matIndex<nmat ; ++matIndex )
     {
       Group const * const
@@ -2518,7 +2522,19 @@ void SiloFile::WriteMaterialDataField2d( string const & meshName,
 
       if( wrapper != nullptr )
       {
-        field[esr][matIndex] = wrapper->reference();
+        arrayView2d<TYPE const> const & fieldView = wrapper->referenceAsView();
+
+        fieldData[esr][matIndex].resize( fieldView.size(0), 1 );
+        field[esr][matIndex] = fieldData[esr][matIndex].toViewConst();
+        for( localIndex k = 0 ; k<fieldView.size(0) ; ++k )
+        {
+          fieldData[esr][matIndex](k,0) = 0;
+          for( localIndex q=0 ; q<fieldView.size(1) ; ++q )
+          {
+            fieldData[esr][matIndex](k,0) += fieldView(k,q);
+          }
+          fieldData[esr][matIndex](k,0) *= 1.0 / fieldView.size(1);
+        }
       }
     }
   });
