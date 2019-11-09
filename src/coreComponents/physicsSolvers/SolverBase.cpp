@@ -33,7 +33,7 @@ SolverBase::SolverBase( std::string const & name,
   m_systemSolverParameters( groupKeyStruct::systemSolverParametersString, this ),
   m_cflFactor(),
   m_maxStableDt{ 1e99 },
-  m_nextDt( 1e99 ),
+  m_nextDt(1e99),
   m_dofManager( name )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );

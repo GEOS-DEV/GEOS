@@ -154,15 +154,15 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
 
   registerWrapper(viewKeysStruct::KrylovResidualInitString, &m_KrylovResidualInit, false )->
     setApplyDefaultValue(0)->
-    setDescription("verbosity level");
+    setDescription("Initial Krylov solver residual.");
 
   registerWrapper(viewKeysStruct::KrylovResidualFinalString, &m_KrylovResidualFinal, false )->
     setApplyDefaultValue(0)->
-    setDescription("verbosity level");
+    setDescription("Final Krylov solver residual.");
 
   registerWrapper(viewKeysStruct::numNewtonIterationsString, &m_numNewtonIterations, false )->
     setApplyDefaultValue(0)->
-    setDescription("verbosity level");
+    setDescription("number of Newton's iterations.");
 
 
 }
