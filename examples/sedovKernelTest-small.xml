@@ -14,28 +14,28 @@
                   xCoords="{ 0, 100 }"
                   yCoords="{ 0, 100 }"
                   zCoords="{ 0, 100 }"
-                  nx="{64}"
-                  ny="{64}"
-                  nz="{64}"
+                  nx="{10}"
+                  ny="{10}"
+                  nz="{10}"
                   cellBlockNames="{cb1}"/>
   </Mesh>
 
 
-  <Events maxTime="1.0e-4">
+  <Events maxTime="1.0e-2">
    
+    <PeriodicEvent name="solverApplications"
+                   forceDt="1.0e-5"
+                   target="/Solvers/lagsolve" />
+
     <PeriodicEvent name="restarts"
-                   timeFrequency="1e-4"
+                   timeFrequency="1e-3"
                    targetExactTimestep="0"
                    target="/Outputs/sidreRestart"/>
 
     <PeriodicEvent name="plot"
-                   timeFrequency="1e-4"
+                   timeFrequency="1e-3"
                    targetExactTimestep="0"
                    target="/Outputs/siloOutput" />
-
-    <PeriodicEvent name="solverApplications"
-                   forceDt="1.0e-4"
-                   target="/Solvers/lagsolve" />
 
   </Events>
 

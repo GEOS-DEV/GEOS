@@ -367,12 +367,13 @@ void FieldSpecificationBase::ApplyFieldValueKernel( LvArray::ArrayView< T, N, lo
   string const & functionName = getReference<string>( viewKeyStruct::functionNameString );
   NewFunctionManager * functionManager = NewFunctionManager::Instance();
 
+  real64 const scale = m_scale;
   if( functionName.empty() )
   {
     forall_in_range< POLICY >( 0, targetSet.size(), GEOSX_HOST_DEVICE_LAMBDA( localIndex const i )
     {
       localIndex const a = targetSet[ i ];
-      FIELD_OP::SpecifyFieldValue( field, a, component, m_scale );
+      FIELD_OP::SpecifyFieldValue( field, a, component, scale );
     });
   }
   else

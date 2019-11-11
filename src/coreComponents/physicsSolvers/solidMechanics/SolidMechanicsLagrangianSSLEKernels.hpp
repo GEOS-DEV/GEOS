@@ -314,9 +314,8 @@ struct ExplicitKernel
 
     using KERNEL_POLICY =
     RAJA::KernelPolicy<
-      //RAJA::statement::CudaKernel<
       RAJA::statement::CudaKernelFixed<ELEM_PATCH_MAX_ELEM,
-        RAJA::statement::For<0, RAJA::cuda_block_x_loop,
+        RAJA::statement::For<0, RAJA::cuda_block_x_direct,
           RAJA::statement::InitLocalMem<RAJA::cuda_shared_mem, InitMemParamList,
             RAJA::statement::For<2, RAJA::cuda_thread_x_loop, RAJA::statement::Lambda<0>>,
             RAJA::statement::CudaSyncThreads,
@@ -326,6 +325,7 @@ struct ExplicitKernel
             RAJA::statement::CudaSyncThreads,
             RAJA::statement::For<2, RAJA::cuda_thread_x_loop, RAJA::statement::Lambda<2>>
 #endif
+            //RAJA::statement::CudaSyncThreads
           >
         >
       >
