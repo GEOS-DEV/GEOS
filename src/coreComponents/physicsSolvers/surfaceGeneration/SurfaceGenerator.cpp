@@ -477,8 +477,7 @@ real64 SurfaceGenerator::SolverStep( real64 const & time_n,
 
 int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
                                         MeshLevel * const mesh,
-                                        array1d<NeighborCommunicator> & 
-                                        neighbors,
+                                        array1d<NeighborCommunicator> & neighbors,
                                         int const tileColor,
                                         int const numTileColors,
                                         bool const prefrac,
