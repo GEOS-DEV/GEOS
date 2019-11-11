@@ -477,7 +477,12 @@ real64 SurfaceGenerator::SolverStep( real64 const & time_n,
 
 int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
                                         MeshLevel * const mesh,
-                                        array1d<NeighborCommunicator> & neighbors,
+                                        array1d<NeighborCommunicator> & 
+                                        #ifdef USE_GEOSX_PTP
+                                        neighbors,
+                                        #else
+                                        GEOSX_UNUSED_ARG( neighbors),
+                                        #endif
                                         int const tileColor,
                                         int const numTileColors,
                                         bool const prefrac,
