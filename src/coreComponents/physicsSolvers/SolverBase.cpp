@@ -377,7 +377,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
 
       // if the residual norm is less than the Newton tolerance we denote that we have
       // converged and break from the Newton loop immediately.
-      if( residualNorm < newtonTol )
+      if( residualNorm < newtonTol && newtonIter > 0 )
       {
         isConverged = 1;
         break;

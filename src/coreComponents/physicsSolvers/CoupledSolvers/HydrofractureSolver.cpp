@@ -474,12 +474,13 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
   derivativeFluxResidual_dAperture = m_flowSolver->getRefDerivativeFluxResidual_dAperture();
   {
 
-    localIndex numRows = -1;
-    localIndex numCols = -1;
-    elemManager->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion const * const elementSubRegion )
+    localIndex numRows = 0;
+    localIndex numCols = 0;
+    string_array const & flowRegions = m_flowSolver->getTargetRegions();
+    elemManager->forElementSubRegions( flowRegions, [&]( ElementSubRegionBase const * const elementSubRegion )
     {
-      numRows = elementSubRegion->size();
-      numCols = elementSubRegion->size();
+      numRows += elementSubRegion->size();
+      numCols += elementSubRegion->size();
     });
 
     derivativeFluxResidual_dAperture = std::make_unique<CRSMatrix<real64,localIndex,localIndex>>( numRows, numCols );
@@ -762,39 +763,44 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
     GEOS_LOG_RANK_0("***********************************************************");
     GEOS_LOG_RANK_0("matrix00");
     GEOS_LOG_RANK_0("***********************************************************");
-    LAIHelperFunctions::PrintPermutedMatrix(m_solidSolver->getSystemMatrix(), m_permutationMatrix0, std::cout);
+//    LAIHelperFunctions::PrintPermutedMatrix(m_solidSolver->getSystemMatrix(), m_permutationMatrix0, std::cout);
+    m_solidSolver->getSystemMatrix().print(std::cout);
     MPI_Barrier(MPI_COMM_GEOSX);
 
     GEOS_LOG_RANK_0("***********************************************************");
     GEOS_LOG_RANK_0("matrix01");
     GEOS_LOG_RANK_0("***********************************************************");
-    LAIHelperFunctions::PrintPermutedMatrix(m_matrix01, m_permutationMatrix0, m_permutationMatrix1, std::cout);
+//    LAIHelperFunctions::PrintPermutedMatrix(m_matrix01, m_permutationMatrix0, m_permutationMatrix1, std::cout);
     m_matrix01.print(std::cout);
     MPI_Barrier(MPI_COMM_GEOSX);
 
     GEOS_LOG_RANK_0("***********************************************************");
     GEOS_LOG_RANK_0("matrix10");
     GEOS_LOG_RANK_0("***********************************************************");
-    LAIHelperFunctions::PrintPermutedMatrix(m_matrix10, m_permutationMatrix1, m_permutationMatrix0, std::cout);
+//    LAIHelperFunctions::PrintPermutedMatrix(m_matrix10, m_permutationMatrix1, m_permutationMatrix0, std::cout);
+    m_matrix10.print(std::cout);
     MPI_Barrier(MPI_COMM_GEOSX);
 
     GEOS_LOG_RANK_0("***********************************************************");
     GEOS_LOG_RANK_0("matrix11");
     GEOS_LOG_RANK_0("***********************************************************");
-    LAIHelperFunctions::PrintPermutedMatrix(m_flowSolver->getSystemMatrix(), m_permutationMatrix1, std::cout);
+//    LAIHelperFunctions::PrintPermutedMatrix(m_flowSolver->getSystemMatrix(), m_permutationMatrix1, std::cout);
+    m_flowSolver->getSystemMatrix().print(std::cout);
     MPI_Barrier(MPI_COMM_GEOSX);
 
 
     GEOS_LOG_RANK_0("***********************************************************");
     GEOS_LOG_RANK_0("residual0");
     GEOS_LOG_RANK_0("***********************************************************");
-    LAIHelperFunctions::PrintPermutedVector(m_solidSolver->getSystemRhs(), m_permutationMatrix0, std::cout);
+//    LAIHelperFunctions::PrintPermutedVector(m_solidSolver->getSystemRhs(), m_permutationMatrix0, std::cout);
+    m_solidSolver->getSystemRhs().print(std::cout);
     MPI_Barrier(MPI_COMM_GEOSX);
 
     GEOS_LOG_RANK_0("***********************************************************");
     GEOS_LOG_RANK_0("residual1");
     GEOS_LOG_RANK_0("***********************************************************");
-    LAIHelperFunctions::PrintPermutedVector(m_flowSolver->getSystemRhs(), m_permutationMatrix1, std::cout);
+//    LAIHelperFunctions::PrintPermutedVector(m_flowSolver->getSystemRhs(), m_permutationMatrix1, std::cout);
+    m_flowSolver->getSystemRhs().print(std::cout);
     MPI_Barrier(MPI_COMM_GEOSX);
   }
 
