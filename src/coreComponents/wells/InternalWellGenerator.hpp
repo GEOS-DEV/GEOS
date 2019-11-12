@@ -29,8 +29,6 @@ namespace dataRepository
 {
 namespace keys
 {
-string const nodeCoords       = "polylineNodeCoords";
-string const segmentConn      = "polylineSegmentConn";
 }
 }
 
@@ -56,6 +54,12 @@ public:
    * @return the name of this type in the catalog
    */  
   static string CatalogName() { return "InternalWell"; }
+
+  struct viewKeyStruct : WellGeneratorBase::viewKeyStruct
+  {
+    constexpr static auto nodeCoords       = "polylineNodeCoords";
+    constexpr static auto segmentConn      = "polylineSegmentConn";
+  };
 
   /// not implemented
   virtual void GenerateElementRegions( DomainPartition & GEOSX_UNUSED_ARG( domain ) ) override {}

@@ -34,12 +34,12 @@ using namespace dataRepository;
 InternalWellGenerator::InternalWellGenerator( string const & name, Group * const parent ):
   WellGeneratorBase( name, parent )
 {
-  registerWrapper(keys::nodeCoords, &m_inputPolyNodeCoords, false )->
+  registerWrapper(viewKeyStruct::nodeCoords, &m_inputPolyNodeCoords, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setSizedFromParent(0)->
     setDescription("physical coordinates of the well polyline nodes");
 
-  registerWrapper(keys::segmentConn, &m_segmentToPolyNodeMap, false )->
+  registerWrapper(viewKeyStruct::segmentConn, &m_segmentToPolyNodeMap, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setSizedFromParent(0)->
     setDescription("connectivity of the polyline segments");
@@ -57,13 +57,13 @@ void InternalWellGenerator::PostProcessInput()
                  "Currently, the well generator must contain the word well in its name ");
 
   GEOS_ERROR_IF( m_inputPolyNodeCoords.size(1) != m_nDims,
-                 "Invalid number of physical coordinates in " << keys::nodeCoords << " for well " << getName() ); 
+                 "Invalid number of physical coordinates in " << viewKeyStruct::nodeCoords << " for well " << getName() ); 
 
   GEOS_ERROR_IF( m_segmentToPolyNodeMap.size(1) != 2,
-                 "Invalid size in " << keys::segmentConn << " for well " << getName() ); 
+                 "Invalid size in " << viewKeyStruct::segmentConn << " for well " << getName() ); 
 
   GEOS_ERROR_IF( m_inputPolyNodeCoords.size(0)-1 != m_segmentToPolyNodeMap.size(0),
-                 "Incompatible sizes of " << keys::nodeCoords << " and " << keys::segmentConn << " in well " << getName() ); 
+                 "Incompatible sizes of " << viewKeyStruct::nodeCoords << " and " << viewKeyStruct::segmentConn << " in well " << getName() ); 
  
   GEOS_ERROR_IF( m_crossSectionArea <= 0,
                  "Invalid " << viewKeyStruct::crossSectionArea << " in well " << getName() );
