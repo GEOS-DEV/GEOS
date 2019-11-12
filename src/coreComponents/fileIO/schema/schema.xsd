@@ -520,6 +520,8 @@
 		<xsd:attribute name="fileName" type="string" use="required" />
 		<!--geometryLogIndexInFile => Position of the log to take if there are several log sections defined in the LAS file -->
 		<xsd:attribute name="geometryLogIndexInFile" type="integer" default="-1" />
+		<!--justImportGeometry => Just import the geometry of the well and ignore the other logs-->
+		<xsd:attribute name="justImportGeometry" type="integer" default="1" />
 		<!--meshName => name of the reservoir mesh associated with this well-->
 		<xsd:attribute name="meshName" type="string" use="required" />
 		<!--numElementsPerSegment => number of well elements per polyline segment-->

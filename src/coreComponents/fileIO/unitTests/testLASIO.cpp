@@ -34,12 +34,12 @@ TEST( LASImport, testXML )
 {
   // Load and save the LAS file
   LASFile lasFile;
-  lasFile.Load(lasFilePath);
+  lasFile.Load(lasFilePath, false);
   lasFile.Save("save.las");
 
   // Reload it
   LASFile lasFile_saved;
-  lasFile_saved.Load( "save.las" );
+  lasFile_saved.Load( "save.las", false );
 
   // Check if the information sections are the same
   integer informationSectionIndex = 0;
