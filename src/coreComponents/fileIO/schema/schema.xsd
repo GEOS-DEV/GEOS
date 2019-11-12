@@ -498,8 +498,8 @@
 	<xsd:complexType name="InternalWellType">
 		<!--crossSectionArea => cross section area of the well-->
 		<xsd:attribute name="crossSectionArea" type="real64" use="required" />
-		<!--meshBodyName => name of the reservoir mesh associated with this well-->
-		<xsd:attribute name="meshBodyName" type="string" use="required" />
+		<!--meshName => name of the reservoir mesh associated with this well-->
+		<xsd:attribute name="meshName" type="string" use="required" />
 		<!--numElementsPerSegment => number of well elements per polyline segment-->
 		<xsd:attribute name="numElementsPerSegment" type="integer" use="required" />
 		<!--polylineNodeCoords => physical coordinates of the well polyline nodes-->
@@ -520,8 +520,8 @@
 		<xsd:attribute name="fileName" type="string" use="required" />
 		<!--geometryLogIndexInFile => Position of the log to take if there are several log sections defined in the LAS file -->
 		<xsd:attribute name="geometryLogIndexInFile" type="integer" default="-1" />
-		<!--meshBodyName => name of the reservoir mesh associated with this well-->
-		<xsd:attribute name="meshBodyName" type="string" use="required" />
+		<!--meshName => name of the reservoir mesh associated with this well-->
+		<xsd:attribute name="meshName" type="string" use="required" />
 		<!--numElementsPerSegment => number of well elements per polyline segment-->
 		<xsd:attribute name="numElementsPerSegment" type="integer" use="required" />
 		<!--wellControlsName => name of the set of constraints associated with this well-->

@@ -31,7 +31,7 @@ WellGeneratorBase::WellGeneratorBase( string const & name, Group * const parent 
   m_crossSectionArea(0),
   m_wellRegionName(""),
   m_wellControlsName(""),
-  m_meshBodyName(""),
+  m_meshName(""),
   m_numElems(0),
   m_numNodesPerElem(2),
   m_numNodes(0),
@@ -60,7 +60,7 @@ registerWrapper(viewKeyStruct::crossSectionArea, &m_crossSectionArea, false )->
     setSizedFromParent(0)->
     setDescription("name of the set of constraints associated with this well");
 
-  registerWrapper(viewKeyStruct::meshBodyName, &m_meshBodyName, false )->
+  registerWrapper(viewKeyStruct::meshName, &m_meshName, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setSizedFromParent(0)->
     setDescription("name of the reservoir mesh associated with this well");

@@ -71,7 +71,7 @@ void InternalWellGenerator::PostProcessInput()
   GEOS_ERROR_IF( m_wellRegionName.empty(), 
                  "Invalid well region name in well " << getName() );
 
-  GEOS_ERROR_IF( m_meshBodyName.empty(), 
+  GEOS_ERROR_IF( m_meshName.empty(), 
                  "Invalid mesh name in well " << getName() );
 
   GEOS_ERROR_IF( m_wellControlsName.empty(), 

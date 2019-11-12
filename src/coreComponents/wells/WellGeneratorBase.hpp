@@ -57,7 +57,7 @@ class WellGeneratorBase : public MeshGeneratorBase
     constexpr static auto crossSectionArea = "crossSectionArea";
     constexpr static auto wellRegionName = "wellRegionName";
     constexpr static auto wellControlsName = "wellControlsName";
-    constexpr static auto meshBodyName = "meshBodyName";
+    constexpr static auto meshName = "meshName";
   };
 
 
@@ -215,7 +215,7 @@ class WellGeneratorBase : public MeshGeneratorBase
   string m_wellControlsName;
 
   /// Name of the mesh body associated with this well
-  string m_meshBodyName;
+  string m_meshName;
   
   // Geometry of the well (later passed to the WellElementSubRegion)
 
