@@ -119,18 +119,6 @@ public:
       return m_toNodesRelation;
     }
 
-
-    virtual arraySlice1dRval<localIndex const> nodeList( localIndex const k ) const override
-    {
-      return m_toNodesRelation[k];
-    }
-
-    virtual arraySlice1dRval<localIndex> nodeList( localIndex const k ) override
-    {
-      return m_toNodesRelation[k];
-    }
-
-
     ///@}
 
     /**
@@ -147,8 +135,8 @@ public:
     arrayView1d< localIndex > const &       getSurfaceToCellList()       { return m_embeddedSurfaceToCell; }
     arrayView1d< localIndex const > const & getSurfaceToCellList() const { return m_embeddedSurfaceToCell; }
 
-    array1d< R1Tensor > const &       getNormalVector()       { return m_normalVector; }
-    array1d< R1Tensor const > const & getNormalVector() const { return m_normalVector; }
+    array1d< R1Tensor >  &       getNormalVector()       { return m_normalVector; }
+    array1d< R1Tensor > const &  getNormalVector() const { return m_normalVector; }
 
 private:
     /// normal vector to the embedded surface element

@@ -21,6 +21,13 @@ Element: BlackOilFluid
 .. include:: ../../coreComponents/fileIO/schema/docs/BlackOilFluid.rst
 
 
+.. _XML_BoundedThickPlane:
+
+Element: BoundedThickPlane
+==========================
+.. include:: ../../coreComponents/fileIO/schema/docs/BoundedThickPlane.rst
+
+
 .. _XML_Box:
 
 Element: Box
@@ -138,6 +145,13 @@ Element: DummySolver
 Element: ElementRegions
 =======================
 .. include:: ../../coreComponents/fileIO/schema/docs/ElementRegions.rst
+
+
+.. _XML_EmbeddedSurfaceGenerator:
+
+Element: EmbeddedSurfaceGenerator
+=================================
+.. include:: ../../coreComponents/fileIO/schema/docs/EmbeddedSurfaceGenerator.rst
 
 
 .. _XML_Events:
@@ -564,6 +578,13 @@ Datastructure: BlackOilFluid
 .. include:: ../../coreComponents/fileIO/schema/docs/BlackOilFluid_other.rst
 
 
+.. _DATASTRUCTURE_BoundedThickPlane:
+
+Datastructure: BoundedThickPlane
+================================
+.. include:: ../../coreComponents/fileIO/schema/docs/BoundedThickPlane_other.rst
+
+
 .. _DATASTRUCTURE_Box:
 
 Datastructure: Box
@@ -688,6 +709,13 @@ Datastructure: DummySolver
 Datastructure: ElementRegions
 =============================
 .. include:: ../../coreComponents/fileIO/schema/docs/ElementRegions_other.rst
+
+
+.. _DATASTRUCTURE_EmbeddedSurfaceGenerator:
+
+Datastructure: EmbeddedSurfaceGenerator
+=======================================
+.. include:: ../../coreComponents/fileIO/schema/docs/EmbeddedSurfaceGenerator_other.rst
 
 
 .. _DATASTRUCTURE_Events:

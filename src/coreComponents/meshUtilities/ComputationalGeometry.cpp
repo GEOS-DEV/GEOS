@@ -67,7 +67,7 @@ R1Tensor LinePlaneIntersection(R1Tensor lineDir,
  * @param[in] unit normal vector to the surface
  * @return area
  */
-real64 ComputeSurfaceArea(array1d<R1Tensor const> const & points,
+real64 ComputeSurfaceArea(array1d<R1Tensor> const & points,
                           localIndex const numPoints,
                           R1Tensor const & normal)
 {
@@ -104,7 +104,7 @@ real64 ComputeSurfaceArea(array1d<R1Tensor const> const & points,
  * @param[in] unit normal vector to the surface
  * @return reordered points
  */
-array1d<R1Tensor> orderPointsCCW(array1d<R1Tensor const> const & points,
+array1d<R1Tensor> orderPointsCCW(array1d<R1Tensor> const & points,
                                  localIndex const numPoints,
                                  R1Tensor const & normal)
 {
