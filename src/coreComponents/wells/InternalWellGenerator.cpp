@@ -66,7 +66,7 @@ void InternalWellGenerator::PostProcessInput()
                  "Incompatible sizes of " << keys::nodeCoords << " and " << keys::segmentConn << " in well " << getName() ); 
  
   GEOS_ERROR_IF( m_crossSectionArea <= 0,
-                 "Invalid " << keys::crossSectionArea << " in well " << getName() );
+                 "Invalid " << viewKeyStruct::crossSectionArea << " in well " << getName() );
 
   GEOS_ERROR_IF( m_wellRegionName.empty(), 
                  "Invalid well region name in well " << getName() );

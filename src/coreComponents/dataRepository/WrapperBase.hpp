@@ -23,17 +23,9 @@
 #include "InputFlags.hpp"
 #include "RestartFlags.hpp"
 
-#ifndef USE_DYNAMIC_CASTING
-/// macro definition to specify whether or not to use dynamic_cast
-#define USE_DYNAMIC_CASTING 1;
-#endif
-
-namespace axom
+namespace conduit
 {
-namespace sidre
-{
-class View;
-}
+class Node;
 }
 
 
@@ -52,11 +44,6 @@ class WrapperBase
 public:
 
   /**
-   * @brief default destructor
-   */
-  virtual ~WrapperBase();
-
-  /**
    * @brief constructor
    * @param[in] name name of the object
    * @param[in] parent pointer to Group that holds this WrapperBase
@@ -64,13 +51,16 @@ public:
   explicit WrapperBase( string const & name,
                         Group * const parent );
 
+  WrapperBase() = delete;
+  WrapperBase( WrapperBase const & ) = delete;
+  WrapperBase( WrapperBase && ) = delete;
+  WrapperBase & operator=( WrapperBase const & ) = delete;
+  WrapperBase & operator=( WrapperBase && ) = delete;
 
   /**
-   * @brief move operator
-   * @param[in] source
+   * @brief default destructor
    */
-  WrapperBase( WrapperBase && source );
-
+  virtual ~WrapperBase();
 
   virtual void CopyWrapperAttributes( WrapperBase const & source );
 
@@ -82,28 +72,10 @@ public:
 
 
   /**
-   * @brief function call T::empty()
-   * @return boolean true if T is empty, false if not.
-   */
-  virtual bool empty() const = 0;
-
-  /**
    * @brief function to call T::size()
    * @return result of T::size()
    */
   virtual localIndex size() const = 0;
-
-  /**
-   * @brief function to call T::numDimensions()
-   * @return result of T::numDimensions()
-   */
-  virtual int numDimensions() const = 0;
-
-  /**
-   * @brief function to call T::size(int)
-   * @return result of T::size(int)
-   */
-  virtual localIndex size( int i ) const = 0;
 
   /**
    * @brief function to call T::resize( num_dims, dims )
@@ -125,29 +97,18 @@ public:
   virtual std::size_t capacity() const = 0;
 
   /**
-   * @brief function to call T::max_size()
-   * @return result of T::max_size()
-   */
-  virtual std::size_t max_size() const = 0;
-
-  /**
-   * @brief function to call T::clear()
-   * @return result of T::clear()
-   */
-  virtual void clear() = 0;
-
-  /**
-   * @brief function to call T::insert()
-   * @return result of T::insert()
-   */
-  virtual void insert() = 0;
-
-  /**
    * @brief function to call T::resize(newsize)
    * @param[in] newsize parameter to pass to T::resize(newsize)
    * @return result of T::resize(newsize)
    */
   virtual void resize( localIndex newsize ) = 0;
+
+  /**
+   *
+   * @param sourceIndex
+   * @param destIndex
+   */
+  virtual void copy( localIndex const sourceIndex, localIndex const destIndex ) = 0;
 
 
   /**
@@ -166,63 +127,26 @@ public:
 
   /**
    *
-   * @return
+   * @param view
    */
-  virtual bool shouldResize() const = 0;
-
-  /**
-   *
-   * @return
-   */
-  virtual size_t sizeOfType() const = 0;
-
-  /**
-   *
-   * @return
-   */
-  virtual bool shouldRegisterDataPtr() const = 0;
+  virtual void registerToWrite() = 0;
 
   /**
    *
    * @param view
    */
-  virtual void registerDataPtr( axom::sidre::View * view=nullptr ) const = 0;
+  virtual void finishWriting() = 0;
 
   /**
    *
    * @param view
    */
-  virtual void registerToWrite( axom::sidre::View * view=nullptr ) = 0;
-
-  /**
-   *
-   * @param view
-   */
-  virtual void finishWriting( axom::sidre::View * view=nullptr ) const = 0;
-
-  /**
-   *
-   * @param view
-   */
-  virtual void registerToRead( axom::sidre::View * view=nullptr ) = 0;
-
-  /**
-   *
-   * @param view
-   */
-  virtual void finishReading( axom::sidre::View * view=nullptr ) = 0;
+  virtual void loadFromConduit() = 0;
 
   /**
    * @brief function to call resize( newsize ) where newsize is taken from the parent Group
    */
   void resize();
-
-  /**
-   *
-   * @param sourceIndex
-   * @param destIndex
-   */
-  virtual void copy( localIndex const sourceIndex, localIndex const destIndex ) = 0;
 
   /**
    *
@@ -235,7 +159,7 @@ public:
    * @param buffer
    * @return
    */
-  virtual localIndex Pack( char * & buffer ) const = 0;
+  virtual localIndex Pack( buffer_unit_type * & buffer ) const = 0;
 
   /**
    *
@@ -243,7 +167,7 @@ public:
    * @param packList
    * @return
    */
-  virtual localIndex Pack( char * & buffer, arrayView1d< localIndex const > const & packList ) const = 0;
+  virtual localIndex Pack( buffer_unit_type * & buffer, arrayView1d< localIndex const > const & packList ) const = 0;
 
   /**
    *
@@ -263,7 +187,7 @@ public:
    * @param buffer
    * @return
    */
-  virtual localIndex Unpack( char const * & buffer ) = 0;
+  virtual localIndex Unpack( buffer_unit_type const * & buffer ) = 0;
 
   /**
    *
@@ -271,7 +195,7 @@ public:
    * @param unpackIndices
    * @return
    */
-  virtual localIndex Unpack( char const * & buffer, arrayView1d< localIndex const > const & unpackIndices ) = 0;
+  virtual localIndex Unpack( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices ) = 0;
 
   /**
    *
@@ -310,22 +234,12 @@ public:
     return this;
   }
 
-#ifdef GEOSX_USE_ATK
-  /**
-   *
-   * @return
-   */
-  axom::sidre::View * getSidreView() const
-  {
-    return m_sidreView;
-  }
-#endif
 
   /**
    *
    * @return
    */
-  PlotLevel getPlotLevel() const {return m_plotLevel;}
+  PlotLevel getPlotLevel() const { return m_plotLevel; }
 
   /**
    *
@@ -430,6 +344,13 @@ public:
 //  static int TV_ttf_display_type( const WrapperBase * wrapper);
 #endif
 
+protected:
+
+  conduit::Node & getConduitNode()
+  {
+    return m_conduitNode;
+  }
+
 private:
 
   /// name of the object that is being wrapped
@@ -455,17 +376,8 @@ private:
 
   std::vector< string > m_registeringObjects;
 
-  #ifdef GEOSX_USE_ATK
-  /// a pointer to the corresponding sidre view
-  axom::sidre::View * m_sidreView;
-#endif
-
-
-  WrapperBase() = delete;
-  WrapperBase( WrapperBase const & ) = delete;
-  WrapperBase & operator=( WrapperBase const & ) = delete;
-  WrapperBase & operator=( WrapperBase && ) = delete;
-
+  /// a reference to the corresponding conduit::Node
+  conduit::Node & m_conduitNode;
 };
 
 }

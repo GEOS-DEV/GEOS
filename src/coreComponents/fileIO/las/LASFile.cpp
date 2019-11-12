@@ -21,27 +21,304 @@
 namespace geosx
 {
 
-LASInformationSection * LASInformationSection::CreateLASInformationSection( char const & name )
+void LASLine::ParseLine( string const & line )
+{
+  // First get the keyword and the rest of the line
+  string_array keywordAndRest = stringutilities::Split( line, "." );
+  stringutilities::RemoveSpaces( keywordAndRest[0] );
+  m_keywordname = keywordAndRest[0];
+
+  // Second get the unit and the rest of the line
+  string_array unitsAndRest = stringutilities::Split( keywordAndRest[1], " ");
+  stringutilities::RemoveSpaces( unitsAndRest[0] );
+  m_unit = unitsAndRest[0];
+
+  // Third get the value and the rest of te line
+  string_array valueAndRest = stringutilities::Split( unitsAndRest[1], ":" );
+  stringutilities::Trim( valueAndRest[0] );
+  m_data = valueAndRest[0];
+
+  // Finally, get the description
+  stringutilities::Trim( valueAndRest[1] );
+  m_description = valueAndRest[1];
+}
+
+std::streampos LASSection::ParseSection( std::ifstream & file )
+{
+   string curLine;
+   std::streampos pos = file.tellg();
+   while ( std::getline(file, curLine) )
+   {
+     stringutilities::TrimLeft( curLine );
+     if( curLine[0] == '#' ) continue;
+     if( curLine[0] == '~' )                // We reach a new section
+     {
+       break;
+     }
+     pos = file.tellg();
+     ParseLine( curLine );
+   }
+   return pos;
+}
+
+void LASInformationSection::WriteSection( std::ofstream & file ) const
+{
+  file << "~" << GetName() << " Section\n";
+  this->forLines([&]( auto & line )
+  {
+    file << line.GetLine() << "\n";
+  });
+}
+
+LASLine const & LASInformationSection::GetLine( string const & keyword ) const
+{
+  for( auto & lasLine : m_lines )
+  {
+    if( lasLine.GetKeyword() == keyword )
+    {
+      return lasLine;
+    }
+  }
+  GEOS_ERROR( "Keyword " << keyword << " not found in section " << GetName() );
+  return m_lines[0]; // Should never be reached;
+}
+
+bool LASInformationSection::HasKeyword( string const & keyword ) const
+{
+  for( auto & lasLine : m_lines )
+  {
+    if( lasLine.GetKeyword() == keyword )
+    {
+      return true;
+    }
+  }
+  return false;
+}
+localIndex LASWellInformationSection::GetNumberOfLogEntries() const
+{
+  real64 start = GetLine("STRT").GetDataAsReal64();
+  real64 stop = GetLine("STOP").GetDataAsReal64();
+  real64 step = GetLine("STEP").GetDataAsReal64();
+
+  real64 length = stop - start;
+  return std::round( length / step ) +1;
+}
+
+void LASInformationSection::ParseLine( string const & line )
+{
+  LASLine curLine( line );
+  GEOS_ERROR_IF( HasKeyword( curLine.GetKeyword() ) != 0, "Keyword " << curLine.GetKeyword()
+                 << " was already defined in "<< GetName() );
+  m_lines.push_back( curLine );
+}
+
+localIndex LASCurveInformationSection::FindLogIndex( string const & logName ) const
+{
+  localIndex logIndex = -1;
+  for( auto & line : m_lines )
+  {
+    logIndex++;
+    if( line.GetKeyword() == logName )
+    {
+      return logIndex;
+    }
+  }
+  return logIndex;
+}
+void LASASCIILogDataSection::WriteSection( std::ofstream & file ) const
+{
+  file << "~" << GetName() << " Section\n";
+  for( localIndex i = 0; i < m_nbLogEntries; i++ )
+  {
+    for( localIndex j = 0; j < m_nbCurves; j++ )
+    {
+      file << m_logs[j][i] << " ";
+    }
+    file << "\n";
+  }
+}
+
+void LASASCIILogDataSection::ParseLine( string const & line )
+{
+  string_array splitLine = stringutilities::Tokenize( line, " \t\n\r" );
+  GEOS_ASSERT( splitLine.size() == m_nbCurves );
+  for( integer i = 0; i < splitLine.size(); i++ )
+  {
+    m_logs[i][m_count] = stringutilities::fromString< real64 >( splitLine[i] );
+  }
+  m_count++;
+}
+
+void LASFile::Load( string const& fileName)
+{
+  std::ifstream file( fileName );
+  GEOS_ERROR_IF( !file.is_open(), "Can't open " << fileName );
+  string curLine;
+  while ( std::getline(file, curLine) )
+  {
+    stringutilities::TrimLeft( curLine );
+    if( curLine[0] == '#' ) continue;  // Comment
+
+    if( curLine[0] == '~' )            // Section
+    {
+      if( curLine[1] != 'A' )
+      {
+        std::unique_ptr< LASInformationSection > curLASInformationSection = LASInformationSection::CreateLASInformationSection( curLine[1] );
+        std::streampos curPos = curLASInformationSection->ParseSection( file );
+        curLASInformationSection->CheckKeywords();
+        file.seekg( curPos );
+        m_lasInformationSections.push_back( std::move( curLASInformationSection ) );
+      }
+      else
+      {
+        LASWellInformationSection * lastWellInformationSection = GetLastSection<LASWellInformationSection>();
+        LASCurveInformationSection * lastCurveInformationSection = GetLastSection<LASCurveInformationSection>();
+        LASASCIILogDataSection curLASASCIISection( lastWellInformationSection->GetNumberOfLogEntries(),
+                                                   lastCurveInformationSection->GetNumberOfCurves() );
+        std::streampos curPos = curLASASCIISection.ParseSection( file );
+        m_lasASCIILogDataSection.push_back( curLASASCIISection );
+        file.seekg( curPos );
+      }
+    }
+  }
+  file.close();
+}
+
+void LASFile::Save( string const& fileName ) const
+{
+  std::ofstream file( fileName );
+  file << "# LAS Log file written by GEOSX" << "\n";
+  localIndex countLog = 0;
+  set< string > sectionsOutputed;
+
+  this->forInformationSections( [&]( auto & informationSection )
+  {
+    if( sectionsOutputed.count( informationSection->GetName() ) )
+    {
+      m_lasASCIILogDataSection[countLog++].WriteSection( file );
+      sectionsOutputed.clear();
+    }
+    informationSection->WriteSection( file );
+    sectionsOutputed.insert( informationSection->GetName() );
+  });
+  if( countLog == 0 )
+  {
+    GEOS_ASSERT( m_lasASCIILogDataSection.size() == 1 );
+    m_lasASCIILogDataSection[0].WriteSection( file );
+  }
+  else
+  {
+    m_lasASCIILogDataSection[countLog].WriteSection( file );
+  }
+  file.close();
+}
+
+arraySlice1d< real64> LASFile::GetLog( string const & logName ) const
+{
+  if( !HasLog( logName ) )
+  {
+    GEOS_ERROR( logName << " not found in LAS file");
+  }
+  localIndex logSectionIndex = 0;
+  for( auto const & section :  m_lasInformationSections )
+  {
+    if( section->GetName() == LASCurveInformationSection::GetNameStatic() )
+    {
+      LASCurveInformationSection * lasCurve = dynamic_cast< LASCurveInformationSection* > ( section.get() );
+      if( lasCurve->HasKeyword( logName ) )
+      {
+        localIndex logIndex = lasCurve->FindLogIndex( logName );
+        GEOS_ASSERT( logIndex > -1 );
+        return m_lasASCIILogDataSection[logSectionIndex].GetLog( logIndex );
+      }
+      else
+      {
+        logSectionIndex++;
+      }
+    }
+  }
+  return m_lasASCIILogDataSection[0].GetLog(0); // should never be reached
+}
+
+
+localIndex LASFile::LogSize( string const& logName ) const
+{
+  if( !HasLog( logName ) )
+  {
+    GEOS_ERROR( logName << " not found in LAS file");
+  }
+  localIndex logSectionIndex = 0;
+  for( auto const & section : m_lasInformationSections )
+  {
+    if( section->GetName() == LASCurveInformationSection::GetNameStatic() )
+    {
+      LASCurveInformationSection * lasCurve = dynamic_cast< LASCurveInformationSection* > ( section.get() );
+      if( lasCurve->HasKeyword( logName ) )
+      {
+        GEOS_ASSERT( lasCurve->FindLogIndex( logName ) > -1 );
+        return m_lasASCIILogDataSection[logSectionIndex].LogSize();
+      }
+      else
+      {
+        logSectionIndex++;
+      }
+    }
+  }
+  return 0; // should never be reached
+}
+
+bool LASFile::HasLog( string const & logName ) const
+{
+  for( auto const & section : m_lasInformationSections )
+  {
+    if( section->GetName() == LASCurveInformationSection::GetNameStatic() )
+    {
+      if ( section->HasKeyword( logName ) )
+      {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+
+template< typename T >
+T * LASFile::GetLastSection()
+{
+  for( auto const & section : m_lasInformationSections )
+  {
+    if( section->GetName() == T::GetNameStatic() )
+    {
+      return dynamic_cast< T * >( section.get() );
+    }
+  }
+  GEOS_ERROR(" LAS Log file  is not valid: Log Data Section was " <<
+             " declared before the " << T::GetNameStatic() << " section");
+  return nullptr;
+}
+
+std::unique_ptr< LASInformationSection > LASInformationSection::CreateLASInformationSection( char const & name )
 {
   if( name == 'V' )          // Version Information
   {
-    return new LASVersionInformationSection();
+    return std::unique_ptr < LASVersionInformationSection > ( new LASVersionInformationSection() );
   }
   else if( name == 'W' )     // Well Information
   {
-    return new LASWellInformationSection();
+    return std::unique_ptr< LASWellInformationSection > ( new LASWellInformationSection() );
   }
   else if( name == 'C' )     // Curve Information
   {
-    return new LASCurveInformationSection();
+    return std::unique_ptr< LASCurveInformationSection > ( new LASCurveInformationSection() );
   }
   else if( name == 'P' )     // Parameter Information
   {
-    return new LASParameterInformationSection();
+    return std::unique_ptr< LASParameterInformationSection > ( new LASParameterInformationSection() );
   }
   else if( name == 'O' )     // Other Information
   {
-    return new LASOtherInformationSection();
+    return std::unique_ptr< LASOtherInformationSection > ( new LASOtherInformationSection() );
   }
   else
   {
@@ -49,4 +326,5 @@ LASInformationSection * LASInformationSection::CreateLASInformationSection( char
     return nullptr;
   }
 }
+
 }

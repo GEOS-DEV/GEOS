@@ -16,8 +16,8 @@
  * @file xmlWrapper.hpp
  */
 
-#ifndef _FILEIO_XMLWRAPPER_HPP_
-#define _FILEIO_XMLWRAPPER_HPP_
+#ifndef GEOSX_DATAREPOSITORY_XMLWRAPPER_HPP_
+#define GEOSX_DATAREPOSITORY_XMLWRAPPER_HPP_
 
 #include <algorithm>
 #include <sstream>
@@ -109,7 +109,7 @@ public:
   static void StringToInputVariable( R1Tensor & target, string value );
 
   template< typename T, int NDIM >
-  static void StringToInputVariable( LvArray::Array< T, NDIM, localIndex > & array, string value );
+  static void StringToInputVariable( Array< T, NDIM > & array, string value );
   ///@}
 
 
@@ -171,7 +171,7 @@ void xmlWrapper::StringToInputVariable( T & target, string inputValue )
 }
 
 template< typename T, int NDIM >
-void xmlWrapper::StringToInputVariable( LvArray::Array< T, NDIM, localIndex > & array, string valueString )
+void xmlWrapper::StringToInputVariable( Array< T, NDIM > & array, string valueString )
 {
   cxx_utilities::stringToArray( array, valueString );
 }
@@ -214,4 +214,4 @@ void xmlWrapper::ReadAttributeAsType( T & rval,
 
 } /* namespace geosx */
 
-#endif /*_FILEIO_XMLWRAPPER_HPP_ */
+#endif /*GEOSX_DATAREPOSITORY_XMLWRAPPER_HPP_ */

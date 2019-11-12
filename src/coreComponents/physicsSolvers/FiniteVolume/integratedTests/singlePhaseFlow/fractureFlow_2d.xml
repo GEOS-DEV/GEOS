@@ -1,5 +1,3 @@
-<?xml version="1.0" ?>
-<!--# # -->
 
 <Problem>
 
@@ -73,34 +71,34 @@
 
 
     <Events maxTime="10.0">
-        <!--SoloEvent
+        <SoloEvent
             name="output0"
-            target="/Outputs/siloOutput" / -->
+            target="/Outputs/siloOutput" />
 
         <SoloEvent
             name="preFracture"
             target="/Solvers/SurfaceGen" />
 
-        <!--SoloEvent
+        <SoloEvent
             name="output1"
-            target="/Outputs/siloOutput" / -->
+            target="/Outputs/siloOutput" />
 
         <PeriodicEvent
             name="solverApplications"
             forceDt="1.0"
             target="/Solvers/SinglePhaseFlow" />
 
-        <!--PeriodicEvent
+        <PeriodicEvent
             name="outputs"
             cycleFrequency="1"
             targetExactTimestep="1"
-            target="/Outputs/siloOutput" / -->
+            target="/Outputs/siloOutput" />
 
         <PeriodicEvent
             name="restarts"
             timeFrequency="5.0"
             targetExactTimestep="0"
-            target="/Outputs/sidreRestart" />
+            target="/Outputs/restartOutput" />
     </Events>
 
     <NumericalMethods>
@@ -120,6 +118,7 @@
 
         <FaceElementRegion
             name="Fracture"
+            defaultAperture="1.0e-5"
             materialList="{water, rock}" />
 
     </ElementRegions>
@@ -184,7 +183,7 @@
             name="siloOutput"
             plotFileRoot="fractureFlow"
             plotLevel="2" />
-        <Restart name="sidreRestart" />
+        <Restart name="restartOutput" />
     </Outputs>
 
 

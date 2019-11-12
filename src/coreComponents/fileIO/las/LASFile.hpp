@@ -89,27 +89,8 @@ class LASLine
       return m_keywordname + "." + m_unit + "    " + m_data + "    :    " + m_description;
     }
   private:
-    void ParseLine( string const & line )
-    {
-      // First get the keyword and the rest of the line
-      string_array keywordAndRest = stringutilities::Split( line, "." );
-      stringutilities::RemoveSpaces( keywordAndRest[0] );
-      m_keywordname = keywordAndRest[0];
+    void ParseLine( string const & line );
 
-      // Second get the unit and the rest of the line
-      string_array unitsAndRest = stringutilities::Split( keywordAndRest[1], " ");
-      stringutilities::RemoveSpaces( unitsAndRest[0] );
-      m_unit = unitsAndRest[0];
-
-      // Third get the value and the rest of te line
-      string_array valueAndRest = stringutilities::Split( unitsAndRest[1], ":" );
-      stringutilities::Trim( valueAndRest[0] );
-      m_data = valueAndRest[0];
-
-      // Finally, get the description
-      stringutilities::Trim( valueAndRest[1] );
-      m_description = valueAndRest[1];
-    }
   private:
     /// Name of the keyword
     string m_keywordname;
@@ -133,23 +114,7 @@ class LASSection
     {
     }
 
-    virtual std::streampos ParseSection( std::ifstream & file )
-    {
-      string curLine;
-      std::streampos pos = file.tellg();
-      while ( std::getline(file, curLine) )
-      {
-        stringutilities::TrimLeft( curLine );
-        if( curLine[0] == '#' ) continue;
-        if( curLine[0] == '~' )                // We reach a new section
-        {
-          break;
-        }
-        pos = file.tellg();
-        ParseLine( curLine );
-      }
-      return pos;
-    }
+    virtual std::streampos ParseSection( std::ifstream & file );
 
     virtual void WriteSection( std::ofstream & file ) const = 0;
 
@@ -180,76 +145,41 @@ class LASInformationSection : public LASSection
       }
     }
 
-    static LASInformationSection * CreateLASInformationSection( char const & name );
+    static std::unique_ptr< LASInformationSection > CreateLASInformationSection( char const & name );
 
-    template< typename LAMBDA >
-    void forLines( LAMBDA&& lambda )
-    {
-      for( auto & line: m_lines )
-      {
-        lambda( line );
-      }
-    }
+template< typename LAMBDA >
+void forLines( LAMBDA&& lambda )
+{
+  for( auto & line: m_lines )
+  {
+    lambda( line );
+  }
+}
 
-    template< typename LAMBDA >
-    void forLines( LAMBDA&& lambda ) const
-    {
-      for( auto & line: m_lines )
-      {
-        lambda( line );
-      }
-    }
+template< typename LAMBDA >
+void forLines( LAMBDA&& lambda ) const
+{
+  for( auto & line: m_lines )
+  {
+    lambda( line );
+  }
+}
 
-    virtual void WriteSection( std::ofstream & file ) const override
-    {
-      file << "~" << GetName() << " Section\n";
-      this->forLines([&]( auto & line )
-      {
-        file << line.GetLine() << "\n";
-      });
-    }
+    virtual void WriteSection( std::ofstream & file ) const override;
 
-    LASLine const & GetLine( string const & keyword ) const
-    {
-      for( auto & lasLine : m_lines )
-      {
-        if( lasLine.GetKeyword() == keyword )
-        {
-          return lasLine;
-        }
-      }
-      GEOS_ERROR( "Keyword " << keyword << " not found in section " << GetName() );
-      return m_lines[0]; // Should never be reached;
-    }
+    LASLine const & GetLine( string const & keyword ) const;
 
-    bool HasKeyword( string const & keyword ) const
-    {
-      for( auto & lasLine : m_lines )
-      {
-        if( lasLine.GetKeyword() == keyword )
-        {
-          return true;
-        }
-      }
-      return false;
-    }
+    bool HasKeyword( string const & keyword ) const;
 
   protected:
-    virtual void ParseLine( string const & line ) override
-    {
-      LASLine curLine( line );
-      GEOS_ERROR_IF( HasKeyword( curLine.GetKeyword() ) != 0, "Keyword " << curLine.GetKeyword()
-                     << " was already defined in "<< GetName() );
-      m_lines.push_back( curLine );
-    }
-
+    virtual void ParseLine( string const & line ) override;
 
   protected:
     /// Contains the mandatory keyword for the section
     array1d< string > m_mandatoryKeyword;
 
     /// Contains all the lines (A line = keyword + value(s))
-    std::vector< LASLine > m_lines;
+    array1d< LASLine > m_lines;
 };
 
 /*!
@@ -310,15 +240,7 @@ class LASWellInformationSection : public LASInformationSection
       return "Well Information";
     }
 
-    localIndex GetNumberOfLogEntries() const
-    {
-      real64 start = GetLine("STRT").GetDataAsReal64();
-      real64 stop = GetLine("STOP").GetDataAsReal64();
-      real64 step = GetLine("STEP").GetDataAsReal64();
-
-      real64 length = stop - start;
-      return std::round( length / step ) +1;
-    }
+    localIndex GetNumberOfLogEntries() const;
 };
 
 /*!
@@ -356,19 +278,7 @@ class LASCurveInformationSection : public LASInformationSection
      * @brief returns the index of the log referenced in this InformationSection
      * @returns -1 if the log is not found, > -1 value otherwise.
      */
-    localIndex FindLogIndex( string const & logName ) const
-    {
-      localIndex logIndex = -1;
-      for( auto & line : m_lines )
-      {
-        logIndex++;
-        if( line.GetKeyword() == logName )
-        {
-          return logIndex;
-        }
-      }
-      return logIndex;
-    }
+    localIndex FindLogIndex( string const & logName ) const;
   private:
     /*!
      * @brief For this specific section, one keyword must be
@@ -476,18 +386,7 @@ class LASASCIILogDataSection : public LASSection
       return "ASCII Log Data";
     }
 
-    virtual void WriteSection( std::ofstream & file ) const override
-    {
-      file << "~" << GetName() << " Section\n";
-      for( localIndex i = 0; i < m_nbLogEntries; i++ )
-      {
-        for( localIndex j = 0; j < m_nbCurves; j++ )
-        {
-          file << m_logs[j][i] << " ";
-        }
-        file << "\n";
-      }
-    }
+    virtual void WriteSection( std::ofstream & file ) const override;
 
     /*!
      * @brief returns the size of the stored logs
@@ -509,22 +408,14 @@ class LASASCIILogDataSection : public LASSection
      * @brief returns the ith log
      * @param[in] i  index of the log
      */
-    LvArray::ArraySlice1d_rval<real64, localIndex> GetLog( localIndex i ) const
+    arraySlice1d< real64 > GetLog( localIndex i ) const
     {
       return m_logs[i];
     }
     
   private:
-    virtual void ParseLine( string const & line ) override
-    {
-      string_array splitLine = stringutilities::Tokenize( line, " \t\n\r" );
-      GEOS_ASSERT( splitLine.size() == m_nbCurves );
-      for( integer i = 0; i < splitLine.size(); i++ )
-      {
-        m_logs[i][m_count] = stringutilities::fromString< real64 >( splitLine[i] );
-      }
-      m_count++;
-    }
+    virtual void ParseLine( string const & line ) override;
+
   private:
     /// Contains the well logs
     array2d< real64 > m_logs;
@@ -541,105 +432,13 @@ class LASFile
   public:
     LASFile() = default;
 
-    ~LASFile()
-    {
-      for( auto lasInformationSection : m_lasInformationSections )
-      {
-        delete lasInformationSection;
-      }
-      m_lasInformationSections.clear();
-    }
+    ~LASFile(){}
     
-    void Load( string const& fileName)
-    {
-      std::ifstream file( fileName );
-      GEOS_ERROR_IF( !file.is_open(), "Can't open " << fileName );
-      string curLine;
-      while ( std::getline(file, curLine) )
-      {
-        stringutilities::TrimLeft( curLine );
-        if( curLine[0] == '#' ) continue;  // Comment
-
-        if( curLine[0] == '~' )            // Section
-        {
-          if( curLine[1] != 'A' )
-          {
-            LASInformationSection * curLASInformationSection = LASInformationSection::CreateLASInformationSection( curLine[1] );
-            std::streampos curPos = curLASInformationSection->ParseSection( file );
-            curLASInformationSection->CheckKeywords();
-            file.seekg( curPos );
-            m_lasInformationSections.push_back( std::move( curLASInformationSection ) );
-          }
-          else
-          {
-            LASWellInformationSection * lastWellInformationSection = GetLastSection<LASWellInformationSection>();
-            LASCurveInformationSection * lastCurveInformationSection = GetLastSection<LASCurveInformationSection>();
-            LASASCIILogDataSection curLASASCIISection( lastWellInformationSection->GetNumberOfLogEntries(),
-                                                       lastCurveInformationSection->GetNumberOfCurves() );
-            std::streampos curPos = curLASASCIISection.ParseSection( file );
-            m_lasASCIILogDataSection.push_back( curLASASCIISection );
-            file.seekg( curPos );
-          }
-        }
-      }
-      file.close();
-    }
+    void Load( string const& fileName);
     
-    void Save( string const& fileName ) const
-    {
-      std::ofstream file( fileName );
-      file << "# LAS Log file written by GEOSX" << "\n";
-      localIndex countLog = 0;
-      set< string > sectionsOutputed;
+    void Save( string const& fileName ) const;
 
-      this->forInformationSections( [&]( auto & informationSection )
-      {
-        if( sectionsOutputed.count( informationSection->GetName() ) )
-        {
-          m_lasASCIILogDataSection[countLog++].WriteSection( file );
-          sectionsOutputed.clear();
-        }
-        informationSection->WriteSection( file );
-        sectionsOutputed.insert( informationSection->GetName() );
-      });
-      if( countLog == 0 )
-      {
-        GEOS_ASSERT( m_lasASCIILogDataSection.size() == 1 );
-        m_lasASCIILogDataSection[0].WriteSection( file );
-      }
-      else
-      {
-        m_lasASCIILogDataSection[countLog].WriteSection( file );
-      }
-      file.close();
-    }
-
-    LvArray::ArraySlice1d_rval<real64, localIndex> GetLog( string const & logName ) const
-    {
-      if( !HasLog( logName ) )
-      {
-        GEOS_ERROR( logName << " not found in LAS file");
-      }
-      localIndex logSectionIndex = 0;
-      for( auto itr = m_lasInformationSections.begin(); itr != m_lasInformationSections.end(); itr++)
-      {
-        if( (*itr)->GetName() == LASCurveInformationSection::GetNameStatic() )
-        {
-          LASCurveInformationSection * lasCurve = dynamic_cast< LASCurveInformationSection* > ( *itr );
-          if( lasCurve->HasKeyword( logName ) )
-          {
-            localIndex logIndex = lasCurve->FindLogIndex( logName );
-            GEOS_ASSERT( logIndex > -1 );
-            return m_lasASCIILogDataSection[logSectionIndex].GetLog( logIndex );
-          }
-          else
-          {
-            logSectionIndex++;
-          }
-        }
-      }
-      return m_lasASCIILogDataSection[0].GetLog(0); // should never be reached
-    }
+    arraySlice1d< real64> GetLog( string const & logName ) const;
 
     template< typename LAMBDA >
     void forInformationSections( LAMBDA&& lambda )
@@ -655,7 +454,7 @@ class LASFile
     {
       for( auto& informationSection : m_lasInformationSections )
       {
-        lambda( informationSection );
+         lambda( informationSection );
       }
     }
 
@@ -668,9 +467,9 @@ class LASFile
       }
     }
 
-    template< typename LAMBDA >
-    void forLogSections( LAMBDA&& lambda ) const
-    {
+     template< typename LAMBDA >
+     void forLogSections( LAMBDA&& lambda ) const
+     {
       for( auto& logSection : m_lasASCIILogDataSection )
       {
         lambda( logSection );
@@ -691,110 +490,62 @@ class LASFile
      * @brief returns the number of log entries for a property
      * @param[in] logName the name of the property
      */
-    localIndex LogSize( string const& logName ) const
-    {
-      if( !HasLog( logName ) )
-      {
-        GEOS_ERROR( logName << " not found in LAS file");
-      }
-      localIndex logSectionIndex = 0;
-      for( auto itr = m_lasInformationSections.begin(); itr != m_lasInformationSections.end(); itr++)
-      {
-        if( (*itr)->GetName() == LASCurveInformationSection::GetNameStatic() )
-        {
-          LASCurveInformationSection * lasCurve = dynamic_cast< LASCurveInformationSection* > ( *itr );
-          if( lasCurve->HasKeyword( logName ) )
-          {
-            GEOS_ASSERT( lasCurve->FindLogIndex( logName ) > -1 );
-            return m_lasASCIILogDataSection[logSectionIndex].LogSize();
-          }
-          else
-          {
-            logSectionIndex++;
-          }
-        }
-      }
-      return 0; // should never be reached
-    }
+    localIndex LogSize( string const& logName ) const;
 
     /*!
      * @brief Tells wether or not the LAS file contains a log.
      * @param[in] logName the name the log
      */
-    bool HasLog( string const & logName ) const
-    {
-      for( auto itr = m_lasInformationSections.begin(); itr != m_lasInformationSections.end(); itr++)
-      {
-        if( (*itr)->GetName() == LASCurveInformationSection::GetNameStatic() )
-        {
-          if ( (*itr)->HasKeyword( logName ) )
-          {
-            return true;
-          }
-        }
-      }
-      return false;
-    }
+    bool HasLog( string const & logName ) const;
 
     /*!
      * @brief Tells wether or not the LAS section contains a line
      * @param[in] keyword the keyword of the line
      */
-    template< typename T >
+    template< typename SECTION >
     bool HasLine( string const & keyword ) const
     {
-      for( auto itr = m_lasInformationSections.begin(); itr != m_lasInformationSections.end(); itr++)
+      for( auto const & section : m_lasInformationSections )
       {
-        if( (*itr)->GetName() == T::GetNameStatic() )
+        if( section->GetName() == SECTION::GetNameStatic() )
         {
-          if( (*itr)->HasKeyword( keyword ) )
+          if( section->HasKeyword( keyword ) )
           {
             return true;
           }
         }
       }
-      return false;
-    }
+       return false;
+     }
 
     /*!
      * @brief returns all the lines corresponding to a keyword in specific sections(s)
      * @details a vector is returned as it is possible to have plenty of same sections in some LAS files
      */
-    template< typename T >
-    std::vector< LASLine const * > const GetLASLines( string const& keyword ) const
-    {
+     template< typename T >
+     std::vector< LASLine const * > const GetLASLines( string const& keyword ) const
+     {
       std::vector< LASLine const * > result;
-      for( auto itr = m_lasInformationSections.begin(); itr != m_lasInformationSections.end(); itr++)
+      for( auto const & section : m_lasInformationSections )
       {
-        if( (*itr)->GetName() == T::GetNameStatic() )
+        if( section->GetName() == T::GetNameStatic() )
         {
-          result.push_back( &(*itr)->GetLine( keyword ) );
+          result.push_back( &section->GetLine( keyword ) );
         }
       }
       GEOS_ASSERT( result.size() > 0 );
       return result;
     }
+
   private:
     template< typename T >
-    T * GetLastSection()
-    {
-      for( auto itr = m_lasInformationSections.rbegin(); itr != m_lasInformationSections.rend(); itr++)
-      {
-        if( (*itr)->GetName() == T::GetNameStatic() )
-        {
-          return dynamic_cast< T * >( *itr);
-        }
-      }
-      GEOS_ERROR(" LAS Log file  is not valid: Log Data Section was " <<
-                 " declared before the " << T::GetNameStatic() << " section");
-      return nullptr;
-    }
+    T * GetLastSection();
   private:
     /// All information sections of the LAS file
-    std::vector< LASInformationSection * > m_lasInformationSections;
+    array1d< std::unique_ptr< LASInformationSection > > m_lasInformationSections;
 
     /// Log data sections
-    std::vector< LASASCIILogDataSection > m_lasASCIILogDataSection;
+    array1d< LASASCIILogDataSection > m_lasASCIILogDataSection;
 };
 }
 

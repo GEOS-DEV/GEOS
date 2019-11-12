@@ -16,8 +16,8 @@
  * @file ObjectManagerBase.hpp
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_MANAGERS_OBJECTMANAGERBASE_HPP_
-#define SRC_COMPONENTS_CORE_SRC_MANAGERS_OBJECTMANAGERBASE_HPP_
+#ifndef GEOSX_MANAGERS_OBJECTMANAGERBASE_HPP_
+#define GEOSX_MANAGERS_OBJECTMANAGERBASE_HPP_
 
 #include "dataRepository/Group.hpp"
 
@@ -45,7 +45,7 @@ public:
    */
   ///@{
 
-  using CatalogInterface = cxx_utilities::CatalogInterface< ObjectManagerBase, std::string const &, dataRepository::Group * const >;
+  using CatalogInterface = dataRepository::CatalogInterface< ObjectManagerBase, std::string const &, dataRepository::Group * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 
   virtual const string getCatalogName() const = 0;
@@ -252,23 +252,23 @@ public:
 
   static void CleanUpMap( std::set<localIndex> const & targetIndices,
                           array1d<set<localIndex> > & upmap,
-                          array2d<localIndex> const & downmap );
+                          arrayView2d<localIndex const> const & downmap );
 
   static void CleanUpMap( std::set<localIndex> const & targetIndices,
                           ArrayOfSetsView< localIndex > const & upmap,
-                          array2d< localIndex const > const & downmap );
+                          arrayView2d< localIndex const > const & downmap );
 
   static void CleanUpMap( std::set<localIndex> const & targetIndices,
                           array1d<set<localIndex> > & upmap,
-                          array1d< array1d<localIndex > > const & downmap );
+                          arrayView1d< arrayView1d<localIndex const > const > const & downmap );
 
   static void CleanUpMap( std::set<localIndex> const & targetIndices,
                           ArrayOfSetsView< localIndex > const & upmap,
-                          array1d< array1d<localIndex> > const & downmap );
+                          arrayView1d< arrayView1d< localIndex const > const > const & downmap );
 
   static void CleanUpMap( std::set<localIndex> const & targetIndices,
                           ArrayOfSetsView< localIndex > const & upmap,
-ArrayOfArraysView< localIndex const > const & downmap );
+                          ArrayOfArraysView< localIndex const > const & downmap );
 
   virtual void enforceStateFieldConsistencyPostTopologyChange( std::set<localIndex> const & targetIndices );
 
@@ -492,4 +492,4 @@ void ObjectManagerBase::FixUpDownMaps( ArrayOfSets< localIndex > & relation,
 
 typedef geosx::ObjectManagerBase ObjectDataStructureBaseT;
 
-#endif /* SRC_COMPONENTS_CORE_SRC_MANAGERS_OBJECTMANAGERBASE_HPP_ */
+#endif /* GEOSX_MANAGERS_OBJECTMANAGERBASE_HPP_ */

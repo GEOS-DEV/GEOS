@@ -22,18 +22,6 @@
 namespace geosx
 {
 
-namespace dataRepository
-{
-namespace keys
-{
-string const nElems           = "numElementsPerSegment";
-string const crossSectionArea = "crossSectionArea";
-string const wellRegionName   = "wellRegionName";
-string const wellControlsName = "wellControlsName";
-string const meshBodyName     = "meshName";
-}
-}
-
 class WellGeneratorBase : public MeshGeneratorBase
 {
   public:
@@ -62,6 +50,15 @@ class WellGeneratorBase : public MeshGeneratorBase
 
   virtual Group * CreateChild( string const & childKey, 
                                string const & childName ) override;
+
+  struct viewKeyStruct
+  {
+    constexpr static auto nElems = "numElementsPerSegment";
+    constexpr static auto crossSectionArea = "crossSectionArea";
+    constexpr static auto wellRegionName = "wellRegionName";
+    constexpr static auto wellControlsName = "wellControlsName";
+    constexpr static auto meshBodyName = "meshBodyName";
+  };
 
 
   /**
@@ -93,37 +90,37 @@ class WellGeneratorBase : public MeshGeneratorBase
    * @brief Getter for the physical location of the centers of well elements 
    * @return list of center locations of the well elements
    */
-  array1d<R1Tensor const> const & GetElemCoords() const { return m_elemCenterCoords; }
+  arrayView1d<R1Tensor const> const & GetElemCoords() const { return m_elemCenterCoords; }
 
   /**
    * @brief Getter for the global indices mapping an element to the previous ones
    * @return list providing the global indices of the previous elements for each element
    */
-  array1d< array1d<globalIndex> const> const & GetPrevElemIndices() const { return m_prevElemId; }
+  arrayView1d< arrayView1d<globalIndex const > const> const & GetPrevElemIndices() const { return m_prevElemId.toViewConst(); }
 
   /**
    * @brief Getter for the global indices mapping an element to the next
    * @return list providing the global index of the next element for each element
    */
-  array1d<globalIndex const> const & GetNextElemIndex() const { return m_nextElemId; }
+  arrayView1d<globalIndex const> const & GetNextElemIndex() const { return m_nextElemId; }
 
   /**
    * @brief Getter for the global indices of the well nodes nodes connected to each element
    * @return list providing the global index of the well nodes for each well element
    */
-  array2d<globalIndex const> const & GetElemToNodesMap() const { return m_elemToNodesMap; }
+  arrayView2d<globalIndex const> const & GetElemToNodesMap() const { return m_elemToNodesMap; }
 
   /**
    * @brief Getter for the physical location of the centers of well elements 
    * @return list of center locations of the well elements
    */
-  array1d<R1Tensor const> const & GetNodeCoords() const { return m_nodeCoords; }
+  arrayView1d<R1Tensor const> const & GetNodeCoords() const { return m_nodeCoords; }
 
   /**
    * @brief Getter for the volume of the well elements 
    * @return list of volumes of the well elements
    */
-  array1d<real64 const> const & GetElemVolume() const { return m_elemVolume; }
+  arrayView1d<real64 const> const & GetElemVolume() const { return m_elemVolume; }
 
   // getters for perforation data
 
@@ -131,19 +128,19 @@ class WellGeneratorBase : public MeshGeneratorBase
    * @brief Getter for the transmissibility at the perforations
    * @return list of transmissibilities at all the perforations on the well
    */
-  array1d<real64 const> const & GetPerfTransmissibility() const { return m_perfTrans; }
+  arrayView1d<real64 const> const & GetPerfTransmissibility() const { return m_perfTrans; }
   
   /**
    * @brief Getter for the locations of the perforations
    * @return list of locations of all the perforations on the well
    */
-  array1d<R1Tensor const> const & GetPerfCoords() const { return m_perfCoords; }
+  arrayView1d<R1Tensor const> const & GetPerfCoords() const { return m_perfCoords; }
 
   /**
    * @brief Getter for the global indices of the well elements connected to each perforation
    * @return list providing the global index of the connected well element for each perforation
    */
-  array1d<globalIndex const> const & GetPerfElemIndex() const { return m_perfElemId; }
+  arrayView1d<globalIndex const> const & GetPerfElemIndex() const { return m_perfElemId; }
 
   /**
    * @brief Getter for the global number of perforations on this well

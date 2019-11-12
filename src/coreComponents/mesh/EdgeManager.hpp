@@ -16,8 +16,8 @@
  * @file EdgeManager.hpp
  */
 
-#ifndef EDGEMANAGERT_H_
-#define EDGEMANAGERT_H_
+#ifndef GEOSX_MESH_EDGEMANAGER_HPP_
+#define GEOSX_MESH_EDGEMANAGER_HPP_
 
 #include "InterObjectRelation.hpp"
 #include "managers/ObjectManagerBase.hpp"
@@ -206,4 +206,4 @@ inline void EdgeManager::calculateLength( localIndex const edgeIndex,
 }
 
 }
-#endif /* EDGEMANAGERT_H_ */
+#endif /* GEOSX_MESH_EDGEMANAGER_HPP_ */

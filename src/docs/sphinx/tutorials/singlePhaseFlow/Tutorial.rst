@@ -25,12 +25,11 @@ Building the input XML file requires the definition of the following XML tags:
  #. *Partition*
  #. :ref:`Outputs <Outputs_tag>`
 
-We open the XML file with a standard header,
+We open the XML file with the Problem block,
 
 .. code-block:: xml
 
-   <?xml version="1.0" ?>
-   <Problem xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="geos_v0.0.xsd">
+   <Problem>
 
 .. _Solver_tag:
 

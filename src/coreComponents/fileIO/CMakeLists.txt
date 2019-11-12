@@ -3,25 +3,23 @@
 #
 # Specify all headers
 #
-set(fileIO_headers
-  silo/SiloFile.hpp
-  las/LASFile.hpp
-  vtk/VTKFile.hpp
-  vtm/VtmFile.hpp
-  blueprint/Blueprint.hpp
-  schema/SchemaUtilities.hpp
-  utils/utils.hpp )
+set( fileIO_headers
+     silo/SiloFile.hpp
+     las/LASFile.hpp
+     vtk/VTKFile.hpp
+     vtm/VtmFile.hpp
+     schema/SchemaUtilities.hpp
+     utils/utils.hpp )
 
 #
 # Specify all sources
 #
-set(fileIO_sources
-  silo/SiloFile.cpp
-  las/LASFile.cpp
-  vtk/VTKFile.cpp
-  vtm/VtmFile.cpp
-  schema/SchemaUtilities.cpp
-  blueprint/Blueprint.cpp )
+set( fileIO_sources
+     silo/SiloFile.cpp
+     las/LASFile.cpp
+     vtk/VTKFile.cpp
+     vtm/VtmFile.cpp
+     schema/SchemaUtilities.cpp )
 
 set( dependencyList common silo hdf5 pugixml RAJA  )
 

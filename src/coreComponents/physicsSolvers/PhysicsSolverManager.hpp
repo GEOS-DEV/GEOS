@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_PHYSICSSOLVERMANAGER_HPP_
-#define SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_PHYSICSSOLVERMANAGER_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_PHYSICSSOLVERMANAGER_HPP_
+#define GEOSX_PHYSICSSOLVERS_PHYSICSSOLVERMANAGER_HPP_
 
 #include "dataRepository/Group.hpp"
 
@@ -62,4 +62,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_PHYSICSSOLVERMANAGER_HPP_ */
+#endif /* GEOSX_PHYSICSSOLVERS_PHYSICSSOLVERMANAGER_HPP_ */

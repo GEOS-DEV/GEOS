@@ -1,5 +1,3 @@
-<?xml version="1.0" ?>
-<!--# # -->
 
 <Problem>
 
@@ -98,7 +96,7 @@
             name="restarts"
             timeFrequency="25000"
             targetExactTimestep="0"
-            target="/Outputs/sidreRestart" />
+            target="/Outputs/restartOutput" />
     </Events>
 
     <NumericalMethods>
@@ -118,6 +116,7 @@
 
         <FaceElementRegion
             name="Fracture"
+            defaultAperture="1.0e-5"
             materialList="{water, rock}" />
 
     </ElementRegions>
@@ -214,7 +213,7 @@
             name="siloOutput"
             plotFileRoot="fractureMatrixFlow"
             plotLevel="1" />
-        <Restart name="sidreRestart" />
+        <Restart name="restartOutput" />
     </Outputs>
 
 

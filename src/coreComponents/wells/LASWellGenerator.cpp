@@ -13,6 +13,7 @@
  */
 
 #include "LASWellGenerator.hpp"
+#include "fileIO/las/LASFile.hpp"
 
 
 namespace geosx
@@ -22,12 +23,12 @@ using namespace dataRepository;
 LASWellGenerator::LASWellGenerator( string const & name, Group * const parent ):
   WellGeneratorBase( name, parent )
 {
-  registerWrapper(keys::fileName, &m_fileName, false )->
+  registerWrapper(viewKeyStruct::fileName, &m_fileName, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setSizedFromParent(0)->
     setDescription("Path to the las file");
 
-  registerWrapper(keys::geometryLogIndexInFile, &m_logIndexToTakeForGeometry, false  )->
+  registerWrapper(viewKeyStruct::geometryLogIndexInFile, &m_logIndexToTakeForGeometry, false  )->
     setInputFlag(InputFlags::OPTIONAL)->
     setApplyDefaultValue( -1 )->
     setDescription("Position of the log to take if there are several log sections defined in the LAS file ");
@@ -100,9 +101,10 @@ void LASWellGenerator::GeneratePolyLineFromDepth( LASFile const & lasFile )
   localIndex wellSectionIndex = 0;
   if( Xs.size() > 1 && m_logIndexToTakeForGeometry == -1 )
   {
-    GEOS_LOG_RANK_0("Warning : " << this->getName() << " corresponding LAS file has more than 1 log section defined "
+    GEOS_ERROR_IF( Xs.size() > 1 && m_logIndexToTakeForGeometry == -1,
+        "Warning : " << this->getName() << " corresponding LAS file has more than 1 log section defined "
                     << "please specify the index of the log section you want to take into account to write the well "
-                    << "into the GEOSX data structure. You have to use the keyword " << keys::geometryLogIndexInFile
+                    << "into the GEOSX data structure. You have to use the keyword " << viewKeyStruct::geometryLogIndexInFile
                     << ". Taking the first one by default.");
   }
   else if( Xs.size() > 1 && m_logIndexToTakeForGeometry != -1 )
@@ -116,10 +118,10 @@ void LASWellGenerator::GeneratePolyLineFromDepth( LASFile const & lasFile )
      auto topDepths = lasFile.GetLASLines< LASWellInformationSection >("ELEV");
      elev = topDepths[wellSectionIndex]->GetDataAsReal64();
   }
-  real64 topX = Xs[wellSectionIndex]->GetDataAsReal64();
-  real64 topY = Ys[wellSectionIndex]->GetDataAsReal64();
-  real64 stop = STOPs[wellSectionIndex]->GetDataAsReal64();
-  real64 start = STARTs[wellSectionIndex]->GetDataAsReal64();
+  real64 const topX = Xs[wellSectionIndex]->GetDataAsReal64();
+  real64 const topY = Ys[wellSectionIndex]->GetDataAsReal64();
+  real64 const stop = STOPs[wellSectionIndex]->GetDataAsReal64();
+  real64 const start = STARTs[wellSectionIndex]->GetDataAsReal64();
   R1Tensor top( topX, topY, start - elev );
   R1Tensor bottom( topX, topY, stop - elev );
   if( start < elev ) // Upward positive z axis
@@ -135,9 +137,9 @@ void LASWellGenerator::GeneratePolyLineFromDepth( LASFile const & lasFile )
   m_segmentToPolyNodeMap[0][1] = 1;
 }
 
-double LASWellGenerator::GetFactor( LASLine const & lasLine )
+real64 LASWellGenerator::GetFactor( LASLine const & lasLine )
 {
-  double factor = 0.;
+  real64 factor = 0.;
   if( stringutilities::ieq( lasLine.GetUnit() , "F" ) ||
       stringutilities::ieq( lasLine.GetUnit() , "ft" ) ||
       stringutilities::ieq( lasLine.GetUnit() , "feets" ) ||

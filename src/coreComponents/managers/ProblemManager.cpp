@@ -33,7 +33,7 @@
 #include "fileIO/utils/utils.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "meshUtilities/SimpleGeometricObjects/SimpleGeometricObjectBase.hpp"
-#include "dataRepository/SidreWrapper.hpp"
+#include "dataRepository/ConduitRestart.hpp"
 #include "dataRepository/RestartFlags.hpp"
 #include "mesh/MeshBody.hpp"
 #include "wells/WellElementRegion.hpp"
@@ -117,9 +117,9 @@ ProblemManager::ProblemManager( const std::string& name,
   m_physicsSolverManager = RegisterGroup<PhysicsSolverManager>(groupKeys.physicsSolverManager);
 
   // The function manager is handled separately
-  m_functionManager = NewFunctionManager::Instance();
+  m_functionManager = FunctionManager::Instance();
   // Mandatory groups that read from the xml
-  RegisterGroup<NewFunctionManager>( groupKeys.functionManager.Key(),
+  RegisterGroup<FunctionManager>( groupKeys.functionManager.Key(),
                                      m_functionManager,
                                      false );
 
@@ -180,13 +180,14 @@ Group * ProblemManager::CreateChild( string const & GEOSX_UNUSED_ARG( childKey )
 
 void ProblemManager::ProblemSetup()
 {
+  GEOSX_MARK_FUNCTION;
   PostProcessInputRecursive();
 
   GenerateMesh();
 
   ApplyNumericalMethods();
 
-  RegisterDataOnMeshRecursive( nullptr );
+  RegisterDataOnMeshRecursive( GetGroup<DomainPartition>(groupKeys.domain)->getMeshBodies() );
 
   Initialize( this );
 
@@ -195,12 +196,6 @@ void ProblemManager::ProblemSetup()
   InitializePostInitialConditions( this );
 }
 
-
-void ProblemManager::RegisterDataOnMeshRecursive( Group * const )
-{
-  GEOSX_MARK_FUNCTION;
-  Group::RegisterDataOnMeshRecursive( GetGroup<DomainPartition>(groupKeys.domain)->getMeshBodies() );
-}
 
 void ProblemManager::ParseCommandLineInput( int argc, char** argv)
 {
@@ -516,7 +511,7 @@ void ProblemManager::GenerateDocumentation()
     DomainPartition * domain  = getDomainPartition();
     meshManager->GenerateMeshLevels(domain);
 
-    RegisterDataOnMeshRecursive(nullptr);
+    RegisterDataOnMeshRecursive( domain->getMeshBodies() );
 
     // Generate schema
     SchemaUtilities::ConvertDocumentationToSchema(schemaName.c_str(), this, 0);
@@ -788,7 +783,6 @@ void ProblemManager::GenerateMesh()
 
 void ProblemManager::ApplyNumericalMethods()
 {
-  GEOSX_MARK_FUNCTION;
   NumericalMethodsManager const * const
   numericalMethodManager = GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
 
@@ -893,6 +887,7 @@ void ProblemManager::InitializePostSubGroups( Group * const GEOSX_UNUSED_ARG( gr
 
 void ProblemManager::RunSimulation()
 {
+  GEOSX_MARK_FUNCTION;
   DomainPartition * domain  = getDomainPartition();
   m_eventManager->Run(domain);
 }
@@ -917,14 +912,10 @@ void ProblemManager::ApplyInitialConditions()
 
 }
 
-void ProblemManager::ReadRestartOverwrite( const std::string& restartFileName )
+void ProblemManager::ReadRestartOverwrite()
 {
-#ifdef GEOSX_USE_ATK
-  this->prepareToRead();
-  SidreWrapper::loadExternalData(restartFileName, MPI_COMM_GEOSX);
-  this->finishReading();
-  this->postRestartInitializationRecursive( GetGroup<DomainPartition>(keys::domain) );
-#endif
+  this->loadFromConduit();
+  this->postRestartInitializationRecursive( GetGroup< DomainPartition >( keys::domain ) );
 }
 
 

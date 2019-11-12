@@ -13,8 +13,8 @@
  */
 
 
-#ifndef MESH_BUFFEROPS_H_
-#define MESH_BUFFEROPS_H_
+#ifndef GEOSX_MESH_BUFFEROPS_HPP_
+#define GEOSX_MESH_BUFFEROPS_HPP_
 
 #include "common/DataTypes.hpp"
 
@@ -28,26 +28,26 @@ namespace bufferOps
 {
 
 template< bool DO_PACKING >
-localIndex Pack( char*& buffer,
+localIndex Pack( buffer_unit_type *& buffer,
                  OrderedVariableToManyElementRelation const & var,
                  arrayView1d<localIndex const> const & packList,
                  ElementRegionManager const * const elementRegionManager );
 
 template< bool DO_PACKING >
-localIndex Pack( char*& buffer,
+localIndex Pack( buffer_unit_type *& buffer,
                  FixedToManyElementRelation const & var,
                  arrayView1d<localIndex const> const & packList,
                  ElementRegionManager const * const elementRegionManager );
 
 
 
-localIndex Unpack( char const * & buffer,
+localIndex Unpack( buffer_unit_type  const * & buffer,
                    OrderedVariableToManyElementRelation & var,
                    arrayView1d<localIndex const> const & packList,
                    ElementRegionManager const * const elementRegionManager,
                    bool const clearFlag );
 
-localIndex Unpack( char const * & buffer,
+localIndex Unpack( buffer_unit_type  const * & buffer,
                    FixedToManyElementRelation & var,
                    arrayView1d<localIndex const> const & packList,
                    ElementRegionManager const * const elementRegionManager,

@@ -15,7 +15,6 @@
 #ifndef GEOSX_CORECOMPONENTS_WELLS_LASWELLGENERATOR_HPP_
 #define GEOSX_CORECOMPONENTS_WELLS_LASWELLGENERATOR_HPP_
 
-#include "fileIO/las/LASFile.hpp"
 
 #include "dataRepository/Group.hpp"
 
@@ -24,20 +23,15 @@
 namespace geosx
 {
 
-namespace dataRepository
-{
-namespace keys
-{
-string const fileName                     = "fileName";
-string const geometryLogIndexInFile       = "geometryLogIndexInFile";
-}
-}
+class LASFile;
+class LASLine;
 
 class LASWellGenerator : public WellGeneratorBase
 {
   public:
   LASWellGenerator( const std::string& name,
                     Group * const parent );
+
 
   /**
    * @brief default destructor
@@ -48,6 +42,12 @@ class LASWellGenerator : public WellGeneratorBase
    * @return the name of this type in the catalog
    */  
   static string CatalogName() { return "LASWell"; }
+
+  struct viewKeyStruct : WellGeneratorBase::viewKeyStruct
+  {
+    constexpr static auto fileName               = "fileName";
+    constexpr static auto geometryLogIndexInFile = "geometryLogIndexInFile";
+  };
 
   /// not implemented
   virtual void GenerateElementRegions( DomainPartition& GEOSX_UNUSED_ARG( domain ) ) override {}
@@ -75,7 +75,7 @@ class LASWellGenerator : public WellGeneratorBase
   /*!
    * @brief Get the factor to conver input unit into meters
    */
-  double GetFactor( LASLine const & lasLine );
+  real64 GetFactor( LASLine const & lasLine );
   private:
 
   /// Path to the LAS file

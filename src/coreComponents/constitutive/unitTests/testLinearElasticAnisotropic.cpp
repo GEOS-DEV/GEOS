@@ -40,13 +40,9 @@ TEST( LinearElasticAnisotropicTests, testAllocation )
   arrayView1d<LinearElasticAnisotropic::StiffnessTensor const> const &
   stiffness = cm.stiffness() ;
 
-  arrayView2d<real64 const>      const & meanStress = cm.meanStress();
-
-  arrayView2d<R2SymTensor const> const & deviatorStress = cm.deviatorStress();
+  arrayView2d<R2SymTensor const> const & deviatorStress = cm.getStress();
 
   EXPECT_EQ( stiffness.size(), numElems );
-  EXPECT_EQ( meanStress.size(0), numElems );
-  EXPECT_EQ( meanStress.size(1), numQuadraturePoints );
   EXPECT_EQ( deviatorStress.size(0), numElems );
   EXPECT_EQ( deviatorStress.size(1), numQuadraturePoints );
 
@@ -66,16 +62,14 @@ void stressCalc( real64 const c[6][6], R2SymTensor const Ddt, real64 stressVoigt
   }
 }
 
-void stressCheck( real64 const meanStress, R2SymTensor const & deviatorStress, real64 const stressV[6] )
+void stressCheck( R2SymTensor const & stress, real64 const stressV[6] )
 {
-  real64 p = ( stressV[0] + stressV[1] + stressV[2] )/3.0;
-  ASSERT_DOUBLE_EQ( meanStress , p );
-  ASSERT_DOUBLE_EQ( deviatorStress(0,0) , stressV[0] - p );
-  ASSERT_DOUBLE_EQ( deviatorStress(1,1) , stressV[1] - p );
-  ASSERT_DOUBLE_EQ( deviatorStress(2,2) , stressV[2] - p );
-  ASSERT_DOUBLE_EQ( deviatorStress(1,2) , stressV[3] );
-  ASSERT_DOUBLE_EQ( deviatorStress(0,2) , stressV[4] );
-  ASSERT_DOUBLE_EQ( deviatorStress(0,1) , stressV[5] );
+  ASSERT_DOUBLE_EQ( stress(0,0) , stressV[0] );
+  ASSERT_DOUBLE_EQ( stress(1,1) , stressV[1] );
+  ASSERT_DOUBLE_EQ( stress(2,2) , stressV[2] );
+  ASSERT_DOUBLE_EQ( stress(1,2) , stressV[3] );
+  ASSERT_DOUBLE_EQ( stress(0,2) , stressV[4] );
+  ASSERT_DOUBLE_EQ( stress(0,1) , stressV[5] );
 }
 
 TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
@@ -99,8 +93,7 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
 
   stiffness[0] = c;
 
-  arrayView2d<real64>      const & meanStress = cm.meanStress();
-  arrayView2d<R2SymTensor> const & deviatorStress = cm.deviatorStress();
+  arrayView2d<R2SymTensor> const & stress = cm.getStress();
 
   real64 const strain = 0.1;
   R2SymTensor Ddt;
@@ -116,12 +109,11 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
 
     cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0 );
     stressCalc( c.m_data, Ddt, stressV );
-    stressCheck( meanStress[0][0], deviatorStress[0][0], stressV );
+    stressCheck( stress[0][0], stressV );
   }
 
   {
-    meanStress = 0.0;
-    deviatorStress = zero;
+    stress = zero;
     Ddt = 0;
 
     Ddt(1,1) = strain;
@@ -131,13 +123,12 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
 
     cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0 );
     stressCalc( c.m_data, Ddt, stressV );
-    stressCheck( meanStress[0][0], deviatorStress[0][0], stressV );
+    stressCheck( stress[0][0], stressV );
 
   }
 
   {
-    meanStress = 0.0;
-    deviatorStress = zero;
+    stress = zero;
     Ddt = 0;
 
     Ddt(2,2) = strain;
@@ -147,13 +138,12 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
 
     cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0 );
     stressCalc( c.m_data, Ddt, stressV );
-    stressCheck( meanStress[0][0], deviatorStress[0][0], stressV );
+    stressCheck( stress[0][0], stressV );
 
   }
 
   {
-    meanStress = 0.0;
-    deviatorStress = zero;
+    stress = zero;
     Ddt = 0;
 
     Ddt(0,1) = strain;
@@ -163,13 +153,12 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
 
     cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0 );
     stressCalc( c.m_data, Ddt, stressV );
-    stressCheck( meanStress[0][0], deviatorStress[0][0], stressV );
+    stressCheck( stress[0][0], stressV );
 
   }
 
   {
-    meanStress = 0.0;
-    deviatorStress = zero;
+    stress = zero;
     Ddt = 0;
 
     Ddt(0,2) = strain;
@@ -179,13 +168,12 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
 
     cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0 );
     stressCalc( c.m_data, Ddt, stressV );
-    stressCheck( meanStress[0][0], deviatorStress[0][0], stressV );
+    stressCheck( stress[0][0], stressV );
 
   }
 
   {
-    meanStress = 0.0;
-    deviatorStress = zero;
+    stress = zero;
     Ddt = 0;
 
     Ddt(1,2) = strain;
@@ -195,7 +183,7 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
 
     cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0 );
     stressCalc( c.m_data, Ddt, stressV );
-    stressCheck( meanStress[0][0], deviatorStress[0][0], stressV );
+    stressCheck( stress[0][0], stressV );
 
   }
 }
@@ -207,8 +195,7 @@ TEST( LinearElasticAnisotropicTests, testXML )
   ConstitutiveManager constitutiveManager("constitutive",nullptr);
 
   string const inputStream =
-  "<?xml version=\"1.0\" ?>"
-  "<Constitutive xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"geos_v0.0.xsd\">"
+  "<Constitutive>"
   "  <LinearElasticAnisotropic name=\"granite\""
   "                            defaultDensity=\"2700\""
   "                            c11=\"1.0e10\" c12=\"1.1e9\"  c13=\"1.2e9\"  c14=\"1.3e9\" c15=\"1.4e9\" c16=\"1.5e9\""

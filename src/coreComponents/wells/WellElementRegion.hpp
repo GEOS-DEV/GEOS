@@ -17,8 +17,8 @@
  *
  */
 
-#ifndef CORECOMPONENTS_WELLS_WELLELEMENTREGION_HPP_
-#define CORECOMPONENTS_WELLS_WELLELEMENTREGION_HPP_
+#ifndef GEOSX_WELLS_WELLELEMENTREGION_HPP_
+#define GEOSX_WELLS_WELLELEMENTREGION_HPP_
 
 #include "mesh/ElementRegionBase.hpp"
 #include "WellGeneratorBase.hpp"
@@ -129,4 +129,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* CORECOMPONENTS_WELLS_WELLELEMENTREGION_HPP_ */
+#endif /* GEOSX_WELLS_WELLELEMENTREGION_HPP_ */

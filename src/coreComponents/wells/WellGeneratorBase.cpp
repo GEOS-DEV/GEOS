@@ -40,27 +40,27 @@ WellGeneratorBase::WellGeneratorBase( string const & name, Group * const parent 
   m_polylineHeadNodeId(-1)
 {
 
-registerWrapper(keys::crossSectionArea, &m_crossSectionArea, false )->
+registerWrapper(viewKeyStruct::crossSectionArea, &m_crossSectionArea, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setSizedFromParent(0)->
     setDescription("cross section area of the well");
 
-  registerWrapper(keys::nElems, &m_numElemsPerSegment, false )->
+  registerWrapper(viewKeyStruct::nElems, &m_numElemsPerSegment, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setSizedFromParent(0)->
     setDescription("number of well elements per polyline segment");
 
-  registerWrapper(keys::wellRegionName, &m_wellRegionName, false )->
+  registerWrapper(viewKeyStruct::wellRegionName, &m_wellRegionName, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setSizedFromParent(0)->
     setDescription("name of the well element region");
 
-  registerWrapper(keys::wellControlsName, &m_wellControlsName, false )->
+  registerWrapper(viewKeyStruct::wellControlsName, &m_wellControlsName, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setSizedFromParent(0)->
     setDescription("name of the set of constraints associated with this well");
 
-  registerWrapper(keys::meshBodyName, &m_meshBodyName, false )->
+  registerWrapper(viewKeyStruct::meshBodyName, &m_meshBodyName, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setSizedFromParent(0)->
     setDescription("name of the reservoir mesh associated with this well");
@@ -141,7 +141,7 @@ void WellGeneratorBase::GenerateMesh( DomainPartition * const domain )
 
   ElementRegionManager * const elemManager = meshLevel->getElemManager();  
   WellElementRegion * const 
-  wellRegion = elemManager->GetGroup(keys::elementRegionsGroup)->GetGroup<WellElementRegion>( this->m_wellRegionName );
+  wellRegion = elemManager->GetGroup(ElementRegionManager::groupKeyStruct::elementRegionsGroup)->GetGroup<WellElementRegion>( this->m_wellRegionName );
 
   GEOS_ERROR_IF( wellRegion == nullptr, 
                  "Well region " << this->m_wellRegionName << " not found in well " << getName() );

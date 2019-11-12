@@ -71,22 +71,24 @@ void SinglePhaseFlow::RegisterDataOnMesh(Group * const MeshBodies)
       subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::densityOldString );
     });
 
-    elemManager->forElementSubRegions<FaceElementSubRegion>( [&]( FaceElementSubRegion * const subRegion )
+    elemManager->forElementRegions<FaceElementRegion>( [&] ( FaceElementRegion * const region )
     {
-      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::pressureString )->setPlotLevel(PlotLevel::LEVEL_0);
-      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::deltaPressureString );
-      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::deltaVolumeString );
-      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::mobilityString );
-      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::dMobility_dPressureString );
-      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::porosityString )->
-        setDefaultValue(1.0);
-      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::porosityOldString )->
-        setDefaultValue(1.0);
-      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::densityOldString );
-      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::aperture0String )->
-        setDefaultValue(0.0);
-
-    } );
+      region->forElementSubRegions<FaceElementSubRegion>( [&]( FaceElementSubRegion * const subRegion )
+      {
+        subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::pressureString )->setPlotLevel(PlotLevel::LEVEL_0);
+        subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::deltaPressureString );
+        subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::deltaVolumeString );
+        subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::mobilityString );
+        subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::dMobility_dPressureString );
+        subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::porosityString )->
+          setDefaultValue(1.0);
+        subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::porosityOldString )->
+          setDefaultValue(1.0);
+        subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::densityOldString );
+        subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::aperture0String )->
+          setDefaultValue( region->getDefaultAperture() );
+      });
+    });
 
     // TODO restrict this to boundary sets
     FaceManager * const faceManager = meshLevel->getFaceManager();
@@ -187,6 +189,8 @@ void SinglePhaseFlow::InitializePostInitialConditions_PreSubGroups( Group * cons
   DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
   MeshLevel * mesh = domain->getMeshBody(0)->getMeshLevel(0);
 
+  ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
+
   //TODO this is a hack until the sets are fixed to include ghosts!!
   std::map<string, string_array > fieldNames;
   fieldNames["elems"].push_back( viewKeyStruct::pressureString );
@@ -205,6 +209,14 @@ void SinglePhaseFlow::InitializePostInitialConditions_PreSubGroups( Group * cons
                                  ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
                                  ElementSubRegionBase * const subRegion )
   {
+
+    real64 const defaultDensity = constitutiveManager->GetConstitutiveRelation( m_fluidIndex )->
+                                  getWrapper< array2d<real64> >( SingleFluidBase::viewKeyStruct::densityString )->
+                                  getDefaultValue();
+    subRegion->getWrapper< array1d<real64> >( viewKeyStruct::densityOldString )->
+      setDefaultValue( defaultDensity );
+
+
     UpdateState( subRegion );
 
     arrayView1d<real64 const> const & poroRef = m_porosityRef[er][esr];
@@ -245,6 +257,12 @@ real64 SinglePhaseFlow::SolverStep( real64 const& time_n,
 
   real64 dt_return;
 
+  // setup dof numbers and linear system
+  if( !m_coupledWellsFlag )
+  {
+    SetupSystem( domain, m_dofManager, m_matrix, m_rhs, m_solution );
+  }
+
   ImplicitStepSetup( time_n, dt, domain, m_dofManager, m_matrix, m_rhs, m_solution );
 
   // currently the only method is implicit time integration
@@ -260,10 +278,10 @@ real64 SinglePhaseFlow::SolverStep( real64 const& time_n,
 void SinglePhaseFlow::ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n ),
                                          real64 const & GEOSX_UNUSED_ARG( dt ),
                                          DomainPartition * const domain,
-                                         DofManager & dofManager,
-                                         ParallelMatrix & matrix,
-                                         ParallelVector & rhs,
-                                         ParallelVector & solution )
+                                         DofManager & GEOSX_UNUSED_ARG( dofManager ),
+                                         ParallelMatrix & GEOSX_UNUSED_ARG( matrix ),
+                                         ParallelVector & GEOSX_UNUSED_ARG( rhs ),
+                                         ParallelVector & GEOSX_UNUSED_ARG( solution ) )
 {
   ResetViews( domain );
 
@@ -280,6 +298,9 @@ void SinglePhaseFlow::ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n
     arrayView1d<real64> const & dVol    = m_deltaVolume[er][esr];
     arrayView1d<real64> const & densOld = m_densityOld[er][esr];
     arrayView1d<real64> const & poroOld = m_porosityOld[er][esr];
+
+    // This should fix NaN density in newly created fracture elements
+    //UpdateState( subRegion );
 
     forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
@@ -308,12 +329,6 @@ void SinglePhaseFlow::ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n
 
     UpdateMobility( subRegion );
   } );
-
-  // setup dof numbers and linear system
-  if( !m_coupledWellsFlag )
-  {
-    SetupSystem( domain, dofManager, matrix, rhs, solution );
-  }
 }
 
 void SinglePhaseFlow::ImplicitStepComplete( real64 const & GEOSX_UNUSED_ARG( time_n ),
@@ -637,7 +652,19 @@ SinglePhaseFlow::ApplyBoundaryConditions( real64 const time_n,
     arrayView1d<globalIndex const> const &
     dofNumber = subRegion->getReference< array1d<globalIndex> >( dofKey );
 
-    fs->ApplyBoundaryConditionToSystem<FieldSpecificationAdd, LAInterface>( lset,
+    arrayView1d< integer const > const &
+    ghostRank = subRegion->getReference<array1d<integer> >( ObjectManagerBase::viewKeyStruct::ghostRankString);
+
+    set< localIndex > localSet;
+    for( localIndex const a : lset )
+    {
+      if( ghostRank[a] < 0 )
+      {
+        localSet.insert(a);
+      }
+    }
+
+    fs->ApplyBoundaryConditionToSystem<FieldSpecificationAdd, LAInterface>( localSet,
                                                                             true,
                                                                             time_n + dt,
                                                                             dt,
@@ -1016,7 +1043,6 @@ real64 SinglePhaseFlow::CalculateResidualNorm( DomainPartition const * const dom
     arrayView1d<real64 const> const & refPoro        = m_porosityRef[er][esr];
     arrayView1d<real64 const> const & volume         = m_volume[er][esr];
     arrayView1d<real64 const> const & dVol           = m_deltaVolume[er][esr];
-//    arrayView1d<real64 const> const & dens           = m_density[er][esr][m_fluidIndex].dimReduce();
     arrayView2d<real64 const> const & dens           = m_density[er][esr][m_fluidIndex];
 
     localIndex const subRegionSize = subRegion->size();

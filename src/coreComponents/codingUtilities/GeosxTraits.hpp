@@ -16,8 +16,8 @@
  * @file GeosxTraits.hpp
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_CODINGUTILITIES_GEOSXTRAITS_HPP_
-#define SRC_COMPONENTS_CORE_SRC_CODINGUTILITIES_GEOSXTRAITS_HPP_
+#ifndef GEOSX_CODINGUTILITIES_GEOSXTRAITS_HPP_
+#define GEOSX_CODINGUTILITIES_GEOSXTRAITS_HPP_
 
 #include <type_traits>
 #include "common/DataTypes.hpp"
@@ -29,119 +29,174 @@ namespace geosx
 namespace traits
 {
 
-template <class T>
-constexpr bool is_string = is_instance_of_v<std::string, T>;
+namespace internal
+{
+  HAS_ALIAS( value_type )
 
-template <class T>
-constexpr bool is_std_vector = is_instantiation_of_v<std::vector, T>;
+  HAS_ALIAS( pointer )
 
-template <class T>
-constexpr bool is_pair = is_instantiation_of_v<std::pair, T>;
+  template< class T,
+            bool HASPOINTERTYPE = has_alias_pointer< T >::value >
+  struct PointerHelper
+  {
+    using Pointer = T *;
+    using ConstPointer = T const *;
+  };
 
-template <class T>
-constexpr bool is_map = is_instantiation_of_v<mapBase, T>;
+  template< class T >
+  struct PointerHelper< T, true >
+  {
+    using Pointer = typename T::pointer;
+    using ConstPointer = typename T::const_pointer;
+  };
 
-template <class T>
-constexpr bool is_set = is_instantiation_of_v<LvArray::SortedArray, T>;
+  template< typename T >
+  struct has_data_method
+  {
+    HAS_MEMBER_FUNCTION_VARIANT( data, nonconst, typename PointerHelper< T >::Pointer, , , )
+    HAS_MEMBER_FUNCTION_VARIANT( data, const,    typename PointerHelper< T >::Pointer, const, , )
 
-template<typename>
-constexpr bool is_array = false;
+    static constexpr bool value = has_memberfunction_vnonconst_data< T >::value ||
+                                  has_memberfunction_vconst_data< T >::value;
+  };
 
-template< typename T, int NDIM, typename INDEX_TYPE >
-constexpr bool is_array< LvArray::Array<T,NDIM,INDEX_TYPE> > = true;
+  template< typename T >
+  struct has_chai_move_method
+  {
+    HAS_MEMBER_FUNCTION( move,
+                         void,
+                         ,
+                         VA_LIST( chai::ExecutionSpace, bool ),
+                         VA_LIST( chai::CPU, true ) )
+    static constexpr bool value = has_memberfunction_move< T >::value;
+  };
 
-template <class T>
-constexpr bool is_tensorT = is_instance_of_v<R1Tensor, T> ||
-                            is_instance_of_v<R2Tensor, T> ||
-                            is_instance_of_v<R2SymTensor, T>;
+  template< typename T >
+  struct has_empty_method
+  {
+    HAS_MEMBER_FUNCTION( empty, bool, const, , )
+    static constexpr bool value = has_memberfunction_empty< T >::value;
+  };
+
+  template< typename T, typename INDEX_TYPE >
+  struct has_size_method
+  {
+    HAS_MEMBER_FUNCTION( size, INDEX_TYPE, const, , )
+    static constexpr bool value = has_memberfunction_size< T >::value;
+  };
+
+  template< typename T, typename INDEX_TYPE >
+  struct has_dimension_size_method
+  {
+    HAS_MEMBER_FUNCTION( size, INDEX_TYPE, const, VA_LIST( int ), VA_LIST( 0 ) )
+    static constexpr bool value = has_memberfunction_size< T >::value;
+  };
+
+  template< typename T, typename INDEX_TYPE >
+  struct has_resize_method
+  {
+    HAS_MEMBER_FUNCTION( resize, void, , VA_LIST( INDEX_TYPE ), VA_LIST( INDEX_TYPE( 0 ) ) )
+    static constexpr bool value = has_memberfunction_resize< T >::value;
+  };
+
+  template< typename T, typename DVT, typename INDEX_TYPE >
+  struct has_resize_default_method
+  {
+    HAS_MEMBER_FUNCTION( resizeDefault, void, , VA_LIST( INDEX_TYPE, DVT const & ), VA_LIST( INDEX_TYPE( 0 ), std::declval< DVT const & >() ) )
+    static constexpr bool value = has_memberfunction_resizeDefault< T >::value;
+  };
+
+  template< typename T >
+  struct has_resize_dimensions_method
+  {
+    HAS_MEMBER_FUNCTION( resize, void, , VA_LIST( int, localIndex const * ),
+                         VA_LIST( 0, static_cast< localIndex const * >( nullptr ) ) )
+    static constexpr bool value = has_memberfunction_resize< T >::value;
+  };
+
+  
+} // namespace internal
+
+template< typename T >
+using Pointer = typename internal::PointerHelper< T >::Pointer;
+
+template< typename T >
+using ConstPointer = typename internal::PointerHelper< T >::ConstPointer;
+
+template< typename T >
+constexpr bool has_alias_value_type = internal::has_alias_value_type< T >::value;
+
+template< typename T >
+constexpr bool has_data_method = internal::has_data_method< T >::value;
+
+template< typename T >
+constexpr bool has_chai_move_method = internal::has_chai_move_method< T >::value;
+
+template< typename T >
+constexpr bool has_empty_method = internal::has_empty_method< T >::value;
+
+template< typename T >
+constexpr bool has_size_method = internal::has_size_method< T, int >::value ||
+                                 internal::has_size_method< T, unsigned int >::value ||
+                                 internal::has_size_method< T, long >::value ||
+                                 internal::has_size_method< T, unsigned long >::value ||
+                                 internal::has_size_method< T, long long >::value ||
+                                 internal::has_size_method< T, unsigned long long >::value;
+
+template< typename T >
+constexpr bool has_dimension_size_method = internal::has_dimension_size_method< T, int >::value ||
+                                           internal::has_dimension_size_method< T, unsigned int >::value ||
+                                           internal::has_dimension_size_method< T, long >::value ||
+                                           internal::has_dimension_size_method< T, unsigned long >::value ||
+                                           internal::has_dimension_size_method< T, long long >::value ||
+                                           internal::has_dimension_size_method< T, unsigned long long >::value;
+
+template< typename T >
+constexpr bool has_resize_method = internal::has_resize_method< T, int >::value ||
+                                   internal::has_resize_method< T, unsigned int >::value ||
+                                   internal::has_resize_method< T, long >::value ||
+                                   internal::has_resize_method< T, unsigned long >::value ||
+                                   internal::has_resize_method< T, long long >::value ||
+                                   internal::has_resize_method< T, unsigned long long >::value;
+
+template< typename T, typename DVT >
+constexpr bool has_resize_default_method = internal::has_resize_default_method< T, DVT, int >::value ||
+                                           internal::has_resize_default_method< T, DVT, unsigned int >::value ||
+                                           internal::has_resize_default_method< T, DVT, long >::value ||
+                                           internal::has_resize_default_method< T, DVT, unsigned long >::value ||
+                                           internal::has_resize_default_method< T, DVT, long long >::value ||
+                                           internal::has_resize_default_method< T, DVT, unsigned long long >::value;
+
+template< typename T >
+constexpr bool has_resize_default_method< T, void > = false;
+
+template< typename T >
+constexpr bool has_resize_dimensions_method = internal::has_resize_dimensions_method< T >::value;
+
+template< typename T >
+constexpr bool is_string = is_instance_of_v< std::string, T >;
+
+template< typename T >
+constexpr bool is_std_vector = is_instantiation_of_v< std::vector, T >;
+
+template< typename T >
+constexpr bool is_pair = is_instantiation_of_v< std::pair, T >;
+
+template< typename T >
+constexpr bool is_map = is_instantiation_of_v< mapBase, T >;
+
+template< typename T >
+constexpr bool is_set = is_instantiation_of_v< LvArray::SortedArray, T >;
+
+template< typename T >
+constexpr bool is_array = LvArray::isArray< T >;
+
+template< typename T >
+constexpr bool is_tensorT = is_instance_of_v< R1Tensor, T > ||
+                            is_instance_of_v< R2Tensor, T > ||
+                            is_instance_of_v< R2SymTensor, T >;
 
 } /* namespace traits */
-
-
-
-namespace bufferOps
-{
-
-/* Forward declaration of is_packable */
-template< typename T >
-struct is_packable;
-
-
-template< typename T >
-struct is_noncontainer_type_packable
-{
-  static constexpr bool value = std::is_trivial<T>::value ||
-                                std::is_arithmetic<T>::value ||
-                                traits::is_tensorT<T> ||
-                                traits::is_string<T>;
-};
-template< typename T >
-constexpr bool is_noncontainer_type_packable<T>::value;
-
-template<typename>
-struct is_packable_array : std::false_type {};
-
-template<typename T, int NDIM, typename INDEX_TYPE>
-struct is_packable_array< LvArray::Array<T,NDIM,INDEX_TYPE> > : is_packable<T> {};
-
-template<typename T, int NDIM, typename INDEX_TYPE>
-struct is_packable_array< LvArray::ArrayView<T,NDIM,INDEX_TYPE> > : is_packable<T> {};
-
-template<typename T, int NDIM, typename INDEX_TYPE>
-struct is_packable_array< LvArray::ArraySlice<T,NDIM,INDEX_TYPE> > : is_packable<T> {};
-
-template<typename T, typename INDEX_TYPE>
-struct is_packable_array< LvArray::ArrayOfArrays<T,INDEX_TYPE> > : is_packable<T> {};
-
-
-template<typename>
-struct is_packable_set : std::false_type {};
-
-template< typename T >
-struct is_packable_set< set<T> >
-{
-  static constexpr bool value = is_packable<T>::value;
-};
-template< typename T>
-constexpr bool is_packable_set< set<T> >::value;
-
-
-template<typename>
-struct is_packable_map : std::false_type {};
-
-template<typename T_KEY, typename T_VAL, typename SORTED>
-struct is_packable_map< mapBase<T_KEY, T_VAL, SORTED> >
-{
-  static constexpr bool value = is_packable<T_KEY>::value &&
-                                is_packable<T_VAL>::value;
-};
-template< typename T_KEY, typename T_VAL, typename SORTED>
-constexpr bool is_packable_map< mapBase<T_KEY, T_VAL, SORTED> >::value;
-
-
-template< typename T >
-struct is_packable
-{
-  static constexpr bool value = is_noncontainer_type_packable<T>::value ||
-                                is_packable_array<T>::value ||
-                                is_packable_map<T>::value ||
-                                is_packable_set<T>::value ;
-
-};
-template< typename T >
-constexpr bool is_packable<T>::value;
-
-
-template< typename T >
-struct is_packable_by_index
-{
-  static constexpr bool value = is_packable_array<T>::value  ;
-
-};
-template< typename T >
-constexpr bool is_packable_by_index<T>::value;
-
-} /* namespace bufferOps */
 
 template<typename T, bool COND>
 struct add_const_if
@@ -154,4 +209,4 @@ using add_const_if_t = typename add_const_if<T, COND>::type;
 
 } /* namespace geosx */
 
-#endif /* SRC_COMPONENTS_CORE_SRC_CODINGUTILITIES_GEOSXTRAITS_HPP_ */
+#endif /* GEOSX_CODINGUTILITIES_GEOSXTRAITS_HPP_ */

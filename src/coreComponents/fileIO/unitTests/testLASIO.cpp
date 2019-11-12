@@ -20,16 +20,17 @@
 
 #include "SetSignalHandling.hpp"
 
+#include "managers/initialization.hpp"
+
 #include "stackTrace.hpp"
 
 using namespace geosx;
-using namespace geosx::dataRepository;
 
 /*!
  * @brief This test load a LAS file, save it, load it again and compare the contents
  * with the original one
  */
-TEST( PAMELAImport, testXML )
+TEST( LASImport, testXML )
 {
   // Load and save the LAS file
   LASFile lasFile;
@@ -46,12 +47,12 @@ TEST( PAMELAImport, testXML )
   {
     informationSection->forLines([&]( auto & line )
     {
-      GEOS_ERROR_IF( line.GetUnit() != lasFile.GetInformationSection( informationSectionIndex).GetLine( line.GetKeyword() ).GetUnit(),
-                     "Mismatch between the unit of section " << informationSection->GetName() << ", keyword "<< line.GetKeyword() );
-      GEOS_ERROR_IF( line.GetDescription() != lasFile.GetInformationSection( informationSectionIndex).GetLine( line.GetKeyword() ).GetDescription(),
-                     "Mismatch between the description of section " << informationSection->GetName() << ", keyword "<< line.GetKeyword() );
-      GEOS_ERROR_IF( line.GetData() != lasFile.GetInformationSection( informationSectionIndex).GetLine( line.GetKeyword() ).GetData(),
-                     "Mismatch between the data of section " << informationSection->GetName() << ", keyword "<< line.GetKeyword() );
+      EXPECT_EQ( line.GetUnit(),
+          lasFile.GetInformationSection( informationSectionIndex).GetLine( line.GetKeyword() ).GetUnit() );
+      EXPECT_EQ( line.GetDescription(),
+          lasFile.GetInformationSection( informationSectionIndex).GetLine( line.GetKeyword() ).GetDescription() );
+      EXPECT_EQ( line.GetData(),
+          lasFile.GetInformationSection( informationSectionIndex).GetLine( line.GetKeyword() ).GetData() );
     });
     informationSectionIndex++;
   });
@@ -67,8 +68,7 @@ TEST( PAMELAImport, testXML )
       auto log2 = lasFile.GetLogSection(logSectionIndex).GetLog( logIndex );
       for( integer entryIndex = 0; entryIndex < logSection.LogSize(); entryIndex++ )
       {
-        GEOS_ERROR_IF( ( log1[entryIndex] - log2[entryIndex] ) / log2[entryIndex] > tolerance,
-                       "Mismatch between logs");
+        EXPECT_LE( ( log1[entryIndex] - log2[entryIndex] ) / log2[entryIndex], tolerance);
       }
     }
   });
@@ -78,28 +78,11 @@ TEST( PAMELAImport, testXML )
 int main(int argc, char** argv)
 {
   ::testing::InitGoogleTest(&argc, argv);
-
-#ifdef GEOSX_USE_MPI
-
-  MPI_Init(&argc,&argv);
-
-  MPI_Comm_dup( MPI_COMM_WORLD, &MPI_COMM_GEOSX );
-
-  logger::InitializeLogger(MPI_COMM_GEOSX);
-#else
-  logger::InitializeLogger():
-#endif
-
-  cxx_utilities::setSignalHandling(cxx_utilities::handler1);
+  geosx::basicSetup( argc, argv);
 
   int const result = RUN_ALL_TESTS();
 
-  logger::FinalizeLogger();
-
-#ifdef GEOSX_USE_MPI
-  MPI_Comm_free( &MPI_COMM_GEOSX );
-  MPI_Finalize();
-#endif
+  geosx::basicCleanup();
 
   return result;
 }

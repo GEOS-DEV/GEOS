@@ -4,10 +4,12 @@
 
 set( dataRepository_tests
      testDefaultValue.cpp
-     testSidreBasic.cpp
-     testSidreExtended.cpp
+     testObjectCatalog.cpp
+     testRestartBasic.cpp
+     testRestartExtended.cpp
      testWrapper.cpp
      testXmlWrapper.cpp
+     testBufferOps.cpp
    )
 
 set( dependencyList dataRepository gtest cxx-utilities managers mpiCommunications mesh wells constitutive meshUtilities )

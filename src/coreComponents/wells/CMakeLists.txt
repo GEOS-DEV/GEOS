@@ -25,7 +25,7 @@ set( wells_sources
      Perforation.cpp
    )
 
-set( dependencyList dataRepository codingUtilities managers )
+set( dependencyList dataRepository codingUtilities managers fileIO )
 
 if ( ENABLE_OPENMP )
    set( dependencyList ${dependencyList} openmp )
