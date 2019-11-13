@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
@@ -21,8 +17,6 @@
  */
 
 #include "SinglePhaseFlowKernels.hpp"
-#include "Epetra_FECrsMatrix.h"
-#include "Epetra_FEVector.h"
 
 namespace geosx
 {
@@ -122,20 +116,20 @@ inline void addLocalContributionsToGlobalSystem( localIndex const numFluxElems,
                                                  globalIndex const * const dofColIndices,
                                                  real64 const * const localFluxJacobian,
                                                  real64 const * const localFlux,
-                                                 Epetra_FECrsMatrix * const jacobian,
-                                                 Epetra_FEVector * const residual )
+                                                 ParallelMatrix * const jacobian,
+                                                 ParallelVector * const residual )
 {
 
   // Add to global residual/jacobian
-  jacobian->SumIntoGlobalValues( integer_conversion<int>(numFluxElems),
-                                 eqnRowIndices,
-                                 integer_conversion<int>(stencilSize),
-                                 dofColIndices,
-                                 localFluxJacobian );
+  jacobian->add( eqnRowIndices,
+                 dofColIndices,
+                 localFluxJacobian,
+                 numFluxElems,
+                 stencilSize );
 
-  residual->SumIntoGlobalValues( integer_conversion<int>(numFluxElems),
-                                 eqnRowIndices,
-                                 localFlux );
+  residual->add( eqnRowIndices,
+                 localFlux,
+                 numFluxElems);
 
 }
 
@@ -154,8 +148,9 @@ Launch<CellElementStencilTPFA>( CellElementStencilTPFA const & stencil,
                                 FluxKernel::ElementView < arrayView1d<real64 const> > const & mob,
                                 FluxKernel::ElementView < arrayView1d<real64 const> > const & dMob_dPres,
                                 FluxKernel::ElementView < arrayView1d<real64 const> > const &,
-                                Epetra_FECrsMatrix * const jacobian,
-                                Epetra_FEVector * const residual )
+                                FluxKernel::ElementView < arrayView1d<real64 const> > const &,
+                                ParallelMatrix * const jacobian,
+                                ParallelVector * const residual )
 {
   constexpr localIndex maxNumFluxElems = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
   constexpr localIndex numFluxElems = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
@@ -231,9 +226,10 @@ Launch<FaceElementStencil>( FaceElementStencil const & stencil,
                             FluxKernel::MaterialView< arrayView2d<real64 const> > const & dDens_dPres,
                             FluxKernel::ElementView < arrayView1d<real64 const> > const & mob,
                             FluxKernel::ElementView < arrayView1d<real64 const> > const & dMob_dPres,
+                            FluxKernel::ElementView < arrayView1d<real64 const> > const & aperture0,
                             FluxKernel::ElementView < arrayView1d<real64 const> > const & aperture,
-                            Epetra_FECrsMatrix * const jacobian,
-                            Epetra_FEVector * const residual )
+                            ParallelMatrix * const jacobian,
+                            ParallelVector * const residual )
 {
   constexpr localIndex maxNumFluxElems = FaceElementStencil::NUM_POINT_IN_FLUX;
   constexpr localIndex maxStencilSize = FaceElementStencil::MAX_STENCIL_SIZE;
@@ -256,8 +252,12 @@ Launch<FaceElementStencil>( FaceElementStencil const & stencil,
     stackArray1d<real64, maxNumFluxElems> localFlux(numFluxElems);
     stackArray2d<real64, maxNumFluxElems*maxStencilSize> localFluxJacobian(numFluxElems, stencilSize);
 
+    // need to store this for later use in determining the dFlux_dU terms when using better permeabilty approximations.
+    stackArray2d<real64, maxNumFluxElems*maxStencilSize> dFlux_dAper(numFluxElems, stencilSize);
+
     localIndex const er = seri[iconn][0];
     localIndex const esr = sesri[iconn][0];
+
 
     FluxKernel::ComputeJunction( numFluxElems,
                                  sei[iconn],
@@ -269,12 +269,14 @@ Launch<FaceElementStencil>( FaceElementStencil const & stencil,
                                  dDens_dPres[er][esr][fluidIndex],
                                  mob[er][esr],
                                  dMob_dPres[er][esr],
+                                 aperture0[er][esr],
                                  aperture[er][esr],
                                  fluidIndex,
                                  gravityFlag,
                                  dt,
                                  localFlux,
-                                 localFluxJacobian );
+                                 localFluxJacobian,
+                                 dFlux_dAper );
 
     // extract DOF numbers
     eqnRowIndices = -1;

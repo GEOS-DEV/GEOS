@@ -1,27 +1,23 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
  * @file PoreVolumeCompressibleSolid.hpp
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_POREVOLUMECOMPRESSIBLESOLID_HPP_
-#define SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_POREVOLUMECOMPRESSIBLESOLID_HPP_
+#ifndef GEOSX_CONSTITUTIVE_SOLID_POREVOLUMECOMPRESSIBLESOLID_HPP_
+#define GEOSX_CONSTITUTIVE_SOLID_POREVOLUMECOMPRESSIBLESOLID_HPP_
 
 #include "constitutive/ConstitutiveBase.hpp"
 
@@ -29,14 +25,6 @@
 
 namespace geosx
 {
-namespace dataRepository
-{
-namespace keys
-{
-string const poreVolumeCompressibleSolid = "PoreVolumeCompressibleSolid";
-}
-}
-
 namespace constitutive
 {
 
@@ -44,19 +32,19 @@ namespace constitutive
 class PoreVolumeCompressibleSolid : public ConstitutiveBase
 {
 public:
-  PoreVolumeCompressibleSolid( std::string const & name, ManagedGroup * const parent );
+  PoreVolumeCompressibleSolid( std::string const & name, Group * const parent );
 
   virtual ~PoreVolumeCompressibleSolid() override;
 
   void DeliverClone( string const & name,
-                     ManagedGroup * const parent,
+                     Group * const parent,
                      std::unique_ptr<ConstitutiveBase> & clone ) const override;
 
-  virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
+  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
 
-  static std::string CatalogName() { return dataRepository::keys::poreVolumeCompressibleSolid; }
+  static std::string CatalogName() { return "PoreVolumeCompressibleSolid"; }
 
   virtual string GetCatalogName() override { return CatalogName(); }
 
@@ -99,4 +87,4 @@ inline void PoreVolumeCompressibleSolid::StateUpdatePointPressure(real64 const &
 } /* namespace geosx */
 
 
-#endif //SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_POREVOLUMECOMPRESSIBLESOLID_HPP_
+#endif //GEOSX_CONSTITUTIVE_SOLID_POREVOLUMECOMPRESSIBLESOLID_HPP_

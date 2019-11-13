@@ -5,6 +5,8 @@ env:
   - DO_BUILD=yes
   - DO_TEST=yes
   - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14 -DENABLE_WARNINGS_AS_ERRORS=ON"
+  - DOCKER_DATE=2019-09-22
+  - TPL_OSX_TRAVIS_BUILD_NUMBER=187
 matrix:
   include:
   - os: osx
@@ -17,7 +19,7 @@ matrix:
     - MPICXX=mpicxx
     - MPIFC=mpifort
     - MPIEXEC=/usr/local/bin/mpirun
-    - GEOSX_TPL_DIR=/Users/travis/build/GEOSX/thirdPartyLibs/install-default-release
+    - GEOSX_TPL_DIR=/Users/travis/build/GEOSX/thirdPartyLibs/install-environment-release
     - CMAKE_BUILD_TYPE=Release
   - compiler: clang6-LC-toss3
     sudo: required
@@ -25,7 +27,7 @@ matrix:
     dist: trusty
     env:
     - IMG=clang6-LC-toss3
-    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-default-release
+    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-environment-release
     - CMAKE_BUILD_TYPE=Release
   - compiler: clang7-LC-toss3
     sudo: required
@@ -33,7 +35,7 @@ matrix:
     dist: trusty
     env:
     - IMG=clang7-LC-toss3
-    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-default-release
+    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-environment-release
     - CMAKE_BUILD_TYPE=Release
   - compiler: clang7-LC-toss3-debug
     sudo: required
@@ -41,7 +43,7 @@ matrix:
     dist: trusty
     env:
     - IMG=clang7-LC-toss3
-    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-default-release
+    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-environment-release
     - CMAKE_BUILD_TYPE=Debug
   - compiler: gcc7-ubuntu18
     sudo: required
@@ -49,7 +51,7 @@ matrix:
     dist: trusty
     env:
     - IMG=gcc7-ubuntu18
-    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-default-release
+    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-environment-release
     - CMAKE_BUILD_TYPE=Release
   - compiler: gcc8-ubuntu18
     sudo: required
@@ -57,7 +59,7 @@ matrix:
     dist: trusty
     env:
     - IMG=gcc8-ubuntu18
-    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-default-release
+    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-environment-release
     - CMAKE_BUILD_TYPE=Release
   - compiler: gcc8-ubuntu18-debug
     sudo: required
@@ -65,7 +67,7 @@ matrix:
     dist: trusty
     env:
     - IMG=gcc8-ubuntu18
-    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-default-release
+    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-environment-release
     - CMAKE_BUILD_TYPE=Debug
 git:
   submodules: false
@@ -75,30 +77,26 @@ before_script:
   - git submodule update --init --recursive src/externalComponents/PVTPackage
   - git submodule update --init --recursive src/externalComponents/PAMELA
   - git submodule update --init --recursive src/coreComponents/fileIO/coupling/hdf5_interface
+  - git submodule update --init --recursive src/externalComponents/GEOSX_PTP
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-      docker run --rm --user='root' -v ${TRAVIS_BUILD_DIR}:/home/geosx/geosx_repo geosx/compiler:$IMG  chown -R geosx /home/geosx;
+      docker run --rm --user='root' -v ${TRAVIS_BUILD_DIR}:/home/geosx/geosx_repo geosx/compiler:$IMG-$DOCKER_DATE  chown -R geosx /home/geosx;
     fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-      brew install openmpi > /dev/null 2>&1;
+      brew install openmpi;
       cd ..;
       mkdir thirdPartyLibs;
       cd thirdPartyLibs;
-      wget https://www.dropbox.com/s/3mlzvaw5g6cm4va/tpl-osx-clang10-20190625.tar.gz;
-      tar -xf tpl-osx-clang10-20190625.tar.gz;
-      cd install-darwin-clang-release/chai/include/chai;
-      wget https://www.dropbox.com/s/mdetuztgiovgpux/ManagedArray.hpp;
-      mv ManagedArray.hpp.1 ManagedArray.hpp;
-      sudo mkdir -p /Users/rrsettgast/Codes/geosx/;
-      sudo ln -s /Users/travis/build/GEOSX/thirdPartyLibs /Users/rrsettgast/Codes/geosx/thirdPartyLibs;
-      cd ../../../..;
-      cd ../GEOSX;  
+      curl -s "https://www.googleapis.com/storage/v1/b/geosx/o/TPL%2Fosx-${TPL_OSX_TRAVIS_BUILD_NUMBER}.tar?alt=media" | tar xf - ;
+      sudo mkdir -p /Users/settgast1/Codes/geosx/;
+      sudo ln -s /Users/travis/build/GEOSX/thirdPartyLibs /Users/settgast1/Codes/geosx/thirdPartyLibs;
+      cd /Users/travis/build/GEOSX/GEOSX ;
     fi
 script: 
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-      python ${TRAVIS_BUILD_DIR}/scripts/config-build.py -hc ${TRAVIS_BUILD_DIR}/host-configs/darwin-clang.cmake -DBLT_MPI_COMMAND_APPEND:STRING="--oversubscribe";
+      python ${TRAVIS_BUILD_DIR}/scripts/config-build.py -hc ${TRAVIS_BUILD_DIR}/host-configs/darwin-clang.cmake -DBLT_MPI_COMMAND_APPEND:STRING="--oversubscribe" -DENABLE_GEOSX_PTP:BOOL=ON;
       cd build-darwin-clang-debug;
       make -j2 VERBOSE=1;
       ctest -V;
     else
-      docker run --rm -v ${TRAVIS_BUILD_DIR}:/home/geosx/geosx_repo  -e DO_BUILD -e DO_TEST -e CMAKE_EXTRA_FLAGS -e PATHMOD  -e GEOSX_TPL_DIR -e CMAKE_BUILD_TYPE geosx/compiler:$IMG  /home/geosx/geosx_repo/scripts/travis_build_and_test.sh;    
+      docker run --rm -v ${TRAVIS_BUILD_DIR}:/home/geosx/GEOSX  -e GEOSX_TPL_DIR -e CMAKE_BUILD_TYPE geosx/compiler:$IMG-$DOCKER_DATE  /home/geosx/GEOSX/scripts/travis_build_and_test.sh;
     fi

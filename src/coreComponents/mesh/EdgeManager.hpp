@@ -1,32 +1,27 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
- * @file EdgeManagerT.h
- * @author settgast1
- * @date Jun 22, 2011
+ * @file EdgeManager.hpp
  */
 
-#ifndef EDGEMANAGERT_H_
-#define EDGEMANAGERT_H_
+#ifndef GEOSX_MESH_EDGEMANAGER_HPP_
+#define GEOSX_MESH_EDGEMANAGER_HPP_
 
 #include "InterObjectRelation.hpp"
 #include "managers/ObjectManagerBase.hpp"
+#include "ToElementRelation.hpp"
 
 
 namespace geosx
@@ -38,6 +33,9 @@ class CellBlockManager;
 class EdgeManager : public ObjectManagerBase
 {
 public:
+
+  using NodeMapType = FixedOneToManyRelation;
+  using FaceMapType = InterObjectRelation< ArrayOfSets< localIndex > >;
 
   /**
     * @name Static Factory Catalog Functions
@@ -55,7 +53,7 @@ public:
 
 
   EdgeManager( std::string const & name,
-               ManagedGroup * const parent );
+               Group * const parent );
   ~EdgeManager() override;
 
 //  void Initialize() {}
@@ -68,8 +66,9 @@ public:
   void BuildEdges( FaceManager * const faceManager, NodeManager * const nodeManager );
 
 
-  void ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const nodeManager,
-                                                        array1d<globalIndex_array>& edgesToNodes ) override final;
+  virtual void
+  ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const  nodeManager,
+                                                   std::vector< std::vector< globalIndex > >& faceToNodes ) override final;
 
   virtual localIndex PackUpDownMapsSize( arrayView1d<localIndex const> const & packList ) const override;
   virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
@@ -83,18 +82,18 @@ public:
   void FixUpDownMaps( bool const clearIfUnmapped );
 
   void depopulateUpMaps( std::set<localIndex> const & receivedEdges,
-                         array1d< array1d< localIndex > > const & facesToEdges );
+                         ArrayOfArraysView< localIndex const > const & facesToEdges );
 
   void ConnectivityFromGlobalToLocal( const set<localIndex>& indices,
-                                      const std::map<globalIndex,localIndex>& nodeGlobalToLocal,
-                                      const std::map<globalIndex,localIndex>& faceGlobalToLocal );
+                                      const map<globalIndex,localIndex>& nodeGlobalToLocal,
+                                      const map<globalIndex,localIndex>& faceGlobalToLocal );
 
 //  void UpdateEdgeExternalityFromSplit( const FaceManager& faceManager,
 //                                     const set<localIndex>& newEdgeIndices,
 //                                     const set<localIndex>& modifiedEdgeIndices );
 
-  void AddToEdgeToFaceMap( const FaceManager * faceManager,
-                           const localIndex_array& newFaceIndices );
+  void AddToEdgeToFaceMap( FaceManager const * const faceManager,
+                           arrayView1d< localIndex const > const & newFaceIndices );
 
   void SplitEdge( const localIndex indexToSplit,
                   const localIndex parentNodeIndex,
@@ -110,6 +109,8 @@ public:
   void calculateLength( localIndex const edgeIndex,
                         arraySlice1d<R1Tensor const> const & X,
                         R1Tensor & center ) const;
+
+
 
 //  localIndex FindEdgeFromNodeIDs(const localIndex nodeA, const localIndex
 // nodeB, const NodeManager& nodeManager);
@@ -128,6 +129,12 @@ public:
     static constexpr auto elementSubRegionListString  = "elemSubRegionList";
     static constexpr auto elementListString           = "elemList";
 
+
+    static constexpr auto edgesTofractureConnectorsEdgesString = "edgesToFractureConnectors";
+    static constexpr auto fractureConnectorEdgesToEdgesString = "fractureConnectorsToEdges";
+    static constexpr auto fractureConnectorsEdgesToFaceElementsIndexString = "fractureConnectorsToElementIndex";
+
+
     dataRepository::ViewKey nodesList             = { nodeListString };
     dataRepository::ViewKey faceList              = { faceListString };
     dataRepository::ViewKey elementRegionList     = { elementRegionListString };
@@ -140,9 +147,10 @@ public:
   struct groupKeyStruct : ObjectManagerBase::groupKeyStruct
   {} groupKeys;
 
+  constexpr int maxEdgesPerNode() const { return 100; }
 
-  FixedOneToManyRelation       & nodeList()       { return m_toNodesRelation; }
-  FixedOneToManyRelation const & nodeList() const { return m_toNodesRelation; }
+  NodeMapType       & nodeList()       { return m_toNodesRelation; }
+  NodeMapType const & nodeList() const { return m_toNodesRelation; }
 
   localIndex & nodeList( localIndex const edgeIndex, localIndex const nodeIndex )
   {
@@ -154,16 +162,24 @@ public:
   }
 
 
-  UnorderedVariableOneToManyRelation       & faceList()       { return m_toFacesRelation; }
-  UnorderedVariableOneToManyRelation const & faceList() const { return m_toFacesRelation; }
+  FaceMapType       & faceList()       { return m_toFacesRelation; }
+  FaceMapType const & faceList() const { return m_toFacesRelation; }
+
+
+  // TODO These should be in their own subset of edges when we add that capability.
+  /// maps from the edges to the fracture connectors index (edges that are fracture connectors)
+  set< localIndex > m_recalculateFractureConnectorEdges;
+  map< localIndex, localIndex > m_edgesToFractureConnectorsEdges;
+  array1d<localIndex> m_fractureConnectorsEdgesToEdges;
+  ArrayOfArrays<localIndex> m_fractureConnectorEdgesToFaceElements;
 
 
 private:
-  FixedOneToManyRelation m_toNodesRelation;
-  UnorderedVariableOneToManyRelation m_toFacesRelation;
+  NodeMapType m_toNodesRelation;
+  FaceMapType m_toFacesRelation;
 
   map< localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInToNodes;
-  map< localIndex, set<globalIndex> > m_unmappedGlobalIndicesInToFaces;
+  map< localIndex, SortedArray<globalIndex> > m_unmappedGlobalIndicesInToFaces;
 
 
   template<bool DOPACK>
@@ -190,4 +206,4 @@ inline void EdgeManager::calculateLength( localIndex const edgeIndex,
 }
 
 }
-#endif /* EDGEMANAGERT_H_ */
+#endif /* GEOSX_MESH_EDGEMANAGER_HPP_ */

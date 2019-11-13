@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
@@ -22,27 +18,27 @@
 
 #include "DomainPartition.hpp"
 
-#include "MPI_Communications/SpatialPartition.hpp"
-#include "constitutive/ConstitutiveManager.hpp"
-
-#include "fileIO/silo/SiloFile.hpp"
-
-#include "common/TimingMacros.hpp"
-
 #include "common/DataTypes.hpp"
-#include "MPI_Communications/NeighborCommunicator.hpp"
-#include "MPI_Communications/CommunicationTools.hpp"
+#include "common/TimingMacros.hpp"
+#include "constitutive/ConstitutiveManager.hpp"
+#include "fileIO/silo/SiloFile.hpp"
 #include "managers/ObjectManagerBase.hpp"
+#include "mpiCommunications/CommunicationTools.hpp"
+#include "mpiCommunications/NeighborCommunicator.hpp"
+#include "mpiCommunications/SpatialPartition.hpp"
+
+
+
 namespace geosx
 {
 using namespace dataRepository;
 
 DomainPartition::DomainPartition( std::string const & name,
-                                  ManagedGroup * const parent ):
-  ManagedGroup( name, parent )
+                                  Group * const parent ):
+  Group( name, parent )
 {
-  this->RegisterViewWrapper< array1d<NeighborCommunicator> >(viewKeys.neighbors)->setRestartFlags( RestartFlags::NO_WRITE );
-  this->RegisterViewWrapper<SpatialPartition,PartitionBase>(keys::partitionManager)->setRestartFlags( RestartFlags::NO_WRITE );
+  this->registerWrapper< array1d<NeighborCommunicator> >(viewKeys.neighbors)->setRestartFlags( RestartFlags::NO_WRITE );
+  this->registerWrapper<SpatialPartition,PartitionBase>(keys::partitionManager)->setRestartFlags( RestartFlags::NO_WRITE );
 
   RegisterGroup( groupKeys.meshBodies );
   RegisterGroup<constitutive::ConstitutiveManager>( groupKeys.constitutiveManager );
@@ -54,9 +50,9 @@ DomainPartition::~DomainPartition()
 {}
 
 
-void DomainPartition::RegisterDataOnMeshRecursive( ManagedGroup * const )
+void DomainPartition::RegisterDataOnMeshRecursive( Group * const )
 {
-  ManagedGroup::RegisterDataOnMeshRecursive( getMeshBodies() );
+  Group::RegisterDataOnMeshRecursive( getMeshBodies() );
 }
 
 
@@ -84,91 +80,68 @@ void DomainPartition::InitializationOrder( string_array & order )
 }
 
 
-void DomainPartition::SetMaps(  )
-{
-  // ManagedGroup * nodeManager = this->GetGroup(keys::FEM_Nodes);
-  // ElementRegionManager * elementRegionManager =
-  // this->GetGroup<ElementRegionManager>(keys::FEM_Elements);
-
-  // {
-  //  integer_array & elementRegionMap =
-  // nodeManager->getReference(keys::elementRegionMap);
-  //  integer_array & elementSubRegionMap =
-  // nodeManager->getReference(keys::elementSubRegionMap);
-  //  integer_array & elementMap = nodeManager->getReference(keys::elementMap);
-
-  //  ManagedGroup * elementRegions =
-  // this->GetGroup(dataRepository::keys::elementRegions);
-
-  //  integer elementRegionIndex = 0;
-  //  elementRegionManager->forElementRegions( [&](ElementRegion&
-  // elementRegion)-> void
-  //  {
-  //    elementRegion.forElementSubRegions( [&]( CellBlockSubRegion & subRegion )->void
-  //    {
-
-  //    });
-  //    ++elementRegionIndex;
-  //  });
-  // }
-}
-
-void DomainPartition::GenerateSets(  )
+void DomainPartition::GenerateSets()
 {
   GEOSX_MARK_FUNCTION;
 
   MeshLevel * const mesh = this->getMeshBody(0)->getMeshLevel(0);
-  ManagedGroup const * const nodeManager = mesh->getNodeManager();
+  Group const * const nodeManager = mesh->getNodeManager();
 
-  dataRepository::ManagedGroup const * const
+  dataRepository::Group const * const
   nodeSets = nodeManager->GetGroup(ObjectManagerBase::groupKeyStruct::setsString);
 
-  std::map< string, integer_array > nodeInSet; // map to contain indicator of whether a node is in a set.
+  map< string, array1d<bool> > nodeInSet; // map to contain indicator of whether a node is in a set.
   string_array setNames; // just a holder for the names of the sets
 
   // loop over all wrappers and fill the nodeIndSet arrays for each set
-  for( auto & viewWrapper : nodeSets->wrappers() )
+  for( auto & wrapper : nodeSets->wrappers() )
   {
-    string name = viewWrapper.second->getName();
+    string name = wrapper.second->getName();
     nodeInSet[name].resize( nodeManager->size() );
-    nodeInSet[name] = 0;
-    ViewWrapper<set<localIndex>> const * const setPtr = nodeSets->getWrapper<set<localIndex>>(name);
+    nodeInSet[name] = false;
+    Wrapper<set<localIndex>> const * const setPtr = nodeSets->getWrapper<set<localIndex>>(name);
     if( setPtr!=nullptr )
     {
       setNames.push_back(name);
       set<localIndex> const & set = setPtr->reference();
-      for( auto const a : set )
+      for( localIndex const a : set )
       {
-        nodeInSet[name][a] = 1;
+        nodeInSet[name][a] = true;
       }
     }
   }
 
 
   ElementRegionManager * const elementRegionManager = mesh->getElemManager();
-
-  elementRegionManager->forElementSubRegions( [&]( ElementSubRegionBase * const subRegion )
+  elementRegionManager->forElementSubRegionsComplete( [&]( localIndex const GEOSX_UNUSED_ARG( er ),
+                                                           localIndex const GEOSX_UNUSED_ARG( esr ),
+                                                           ElementRegionBase const * const GEOSX_UNUSED_ARG( region ),
+                                                           auto * const subRegion )
   {
-    dataRepository::ManagedGroup * elementSets = subRegion->sets();
-    std::map< string, integer_array > numNodesInSet;
+    dataRepository::Group * elementSets = subRegion->sets();
 
-    for( auto & setName : setNames )
+    auto const & elemToNodeMap = subRegion->nodeList();
+
+    for( std::string const & setName : setNames )
     {
+      arrayView1d<bool const> const & nodeInCurSet = nodeInSet[setName];
 
-      set<localIndex> & targetSet = elementSets->RegisterViewWrapper< set<localIndex> >(setName)->reference();
+      set<localIndex> & targetSet = elementSets->registerWrapper< set<localIndex> >(setName)->reference();
       for( localIndex k = 0 ; k < subRegion->size() ; ++k )
       {
-        arraySlice1d<localIndex const> const elemToNodes = subRegion->nodeList(k);
         localIndex const numNodes = subRegion->numNodesPerElement( k );
-        integer count = 0;
-        for( localIndex a = 0 ; a<numNodes ; ++a )
+
+        localIndex elementInSet = true;
+        for ( localIndex i = 0; i < numNodes; ++i )
         {
-          if( nodeInSet[setName][elemToNodes[a]] == 1 )
+          if ( !nodeInCurSet( elemToNodeMap[ k ][ i ] ) )
           {
-            ++count;
+            elementInSet = false;
+            break;
           }
         }
-        if( count == numNodes )
+
+        if ( elementInSet )
         {
           targetSet.insert(k);
         }
@@ -183,6 +156,7 @@ void DomainPartition::SetupCommunications()
   GEOSX_MARK_FUNCTION;
   array1d<NeighborCommunicator> & allNeighbors = this->getReference< array1d<NeighborCommunicator> >( viewKeys.neighbors );
 
+#if defined(GEOSX_USE_MPI)
   if( m_metisNeighborList.empty() )
   {
     PartitionBase   & partition1 = getReference<PartitionBase>(keys::partitionManager);
@@ -195,11 +169,9 @@ void DomainPartition::SetupCommunications()
       MPI_Cart_create(MPI_COMM_GEOSX, 3, partition.m_Partitions.data(), partition.m_Periodic.data(), reorder, &cartcomm);
       GEOS_ERROR_IF( cartcomm == MPI_COMM_NULL, "Fail to run MPI_Cart_create and establish communications");
     }
-    int rank = -1;
+    int const rank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
     int nsdof = 3;
-    MPI_Comm_rank( MPI_COMM_GEOSX, &rank );
 
-    MPI_Comm_rank(cartcomm, &rank);
     MPI_Cart_coords(cartcomm, rank, nsdof, partition.m_coords.data());
 
     int ncoords[3];
@@ -216,8 +188,9 @@ void DomainPartition::SetupCommunications()
       allNeighbors.push_back( std::move(neighbor) );
     }
   }
+#endif
 
-  ManagedGroup * const meshBodies = getMeshBodies();
+  Group * const meshBodies = getMeshBodies();
   MeshBody * const meshBody = meshBodies->GetGroup<MeshBody>(0);
   MeshLevel * const meshLevel = meshBody->GetGroup<MeshLevel>(0);
 
@@ -244,24 +217,8 @@ void DomainPartition::SetupCommunications()
 
   CommunicationTools::FindGhosts( meshLevel, allNeighbors );
 
-
-
-
   faceManager->SortAllFaceNodes( nodeManager, meshLevel->getElemManager() );
-  real64_array & faceArea  = faceManager->faceArea();
-  r1_array & faceNormal = faceManager->faceNormal();
-  r1_array & faceCenter = faceManager->faceCenter();
-  r1_array const & X = nodeManager->referencePosition();
-  array1d<array1d<localIndex> > const & nodeList = faceManager->nodeList();
-
-  for (localIndex kf = 0; kf < faceManager->size(); ++kf)
-  {
-    faceArea[kf] = computationalGeometry::Centroid_3DPolygon(nodeList[kf],
-                                                             X,
-                                                             faceCenter[kf],
-                                                             faceNormal[kf]);
-  }
-
+  faceManager->computeGeometry( nodeManager );
 }
 
 void DomainPartition::AddNeighbors(const unsigned int idim,
@@ -286,8 +243,7 @@ void DomainPartition::AddNeighbors(const unsigned int idim,
     if (!me)
     {
       allNeighbors.push_back(NeighborCommunicator());
-      int neighborRank;
-      MPI_Cart_rank(cartcomm, ncoords, &neighborRank);
+      int neighborRank = MpiWrapper::Cart_rank(cartcomm, ncoords);
       allNeighbors.back().SetNeighborRank(neighborRank);
     }
   }
@@ -335,10 +291,10 @@ void DomainPartition::ReadSilo( const SiloFile& siloFile,
 }
 
 
-void DomainPartition::ReadFiniteElementMesh( const SiloFile& siloFile,
-                                             const int cycleNum,
-                                             const realT problemTime,
-                                             const bool isRestart )
+void DomainPartition::ReadFiniteElementMesh( const SiloFile& GEOSX_UNUSED_ARG( siloFile ),
+                                             const int GEOSX_UNUSED_ARG( cycleNum ),
+                                             const realT GEOSX_UNUSED_ARG( problemTime ),
+                                             const bool GEOSX_UNUSED_ARG( isRestart ) )
 {
 
 

@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
@@ -23,7 +19,7 @@
 #include "RestartOutput.hpp"
 #include "fileIO/silo/SiloFile.hpp"
 #include "managers/DomainPartition.hpp"
-#include "managers/Functions/NewFunctionManager.hpp"
+#include "managers/Functions/FunctionManager.hpp"
 #include "managers/ProblemManager.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 
@@ -35,7 +31,7 @@ using namespace dataRepository;
 using namespace cxx_utilities;
 
 RestartOutput::RestartOutput( std::string const & name,
-                              ManagedGroup * const parent ):
+                              Group * const parent ):
   OutputBase( name, parent)
 {
 }
@@ -43,18 +39,17 @@ RestartOutput::RestartOutput( std::string const & name,
 RestartOutput::~RestartOutput()
 {}
 
-void RestartOutput::Execute(real64 const time_n,
-                            real64 const dt,
+void RestartOutput::Execute(real64 const GEOSX_UNUSED_ARG( time_n ),
+                            real64 const GEOSX_UNUSED_ARG( dt ),
                             integer const cycleNumber,
-                            integer const eventCounter,
-                            real64 const eventProgress,
-                            ManagedGroup * domain)
+                            integer const GEOSX_UNUSED_ARG( eventCounter ),
+                            real64 const GEOSX_UNUSED_ARG( eventProgress ),
+                            Group * domain)
 {
-#ifdef GEOSX_USE_ATK
   GEOSX_MARK_FUNCTION;
 
-  DomainPartition* domainPartition = ManagedGroup::group_cast<DomainPartition*>(domain);
-  ProblemManager* problemManager = ManagedGroup::group_cast<ProblemManager*>(domainPartition->getParent());
+  DomainPartition* domainPartition = Group::group_cast<DomainPartition*>(domain);
+  ProblemManager* problemManager = Group::group_cast<ProblemManager*>(domainPartition->getParent());
 
   // Ignoring the eventProgress indicator for now to be compliant with the integrated test repo
   // integer const eventProgressPercent = static_cast<integer const>(eventProgress * 100.0);
@@ -62,17 +57,14 @@ void RestartOutput::Execute(real64 const time_n,
   sprintf(fileName, "%s_%s_%09d", problemManager->getProblemName().c_str(), "restart", cycleNumber);
 
   problemManager->prepareToWrite();
-  NewFunctionManager::Instance()->prepareToWrite();
+  FunctionManager::Instance()->prepareToWrite();
   FieldSpecificationManager::get()->prepareToWrite();
-  int numFiles;
-  MPI_Comm_size( MPI_COMM_GEOSX, &numFiles );
-  SidreWrapper::writeTree( numFiles, fileName, "sidre_hdf5", MPI_COMM_GEOSX );
+  writeTree( fileName );
   problemManager->finishWriting();
-  NewFunctionManager::Instance()->finishWriting();
+  FunctionManager::Instance()->finishWriting();
   FieldSpecificationManager::get()->finishWriting();
-#endif
 }
 
 
-REGISTER_CATALOG_ENTRY( OutputBase, RestartOutput, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( OutputBase, RestartOutput, std::string const &, Group * const )
 } /* namespace geosx */

@@ -1,33 +1,18 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wglobal-constructors"
-#pragma clang diagnostic ignored "-Wexit-time-destructors"
-#pragma clang diagnostic ignored "-Wused-but-marked-unused"
-#endif
-
 #include "gtest/gtest.h"
-
-#ifdef __clang__
-#define __null nullptr
-#endif
 
 #include "SetSignalHandling.hpp"
 #include "stackTrace.hpp"
@@ -96,7 +81,7 @@ TEST( SinglePhaseFlowKernels, accumulation )
     real64 accumJacobian;
     real64 poroNew;
 
-    AccumulationKernel::Compute<false>( 0.0, densNew[i], densOld[i], dDens_dPres[i], volume, dVol[i],
+    AccumulationKernel<CellElementSubRegion>::Compute<false>( 0.0, densNew[i], densOld[i], dDens_dPres[i], volume, dVol[i],
                                         poroRef[i], poroOld[i], pvMult[i], dPvMult_dPres[i],
                                         0.0, 0.0, 0.0, 0.0, poroNew, accum, accumJacobian );
 
@@ -111,12 +96,6 @@ TEST( SinglePhaseFlowKernels, accumulation )
     EXPECT_DOUBLE_EQ( accumJacobian, accumJacobian_et );
   }
 }
-
-template<typename T, int NDIM>
-using Array = LvArray::Array<T, NDIM, localIndex>;
-
-template<typename T, int NDIM>
-using ArrayView = LvArray::ArrayView<T, NDIM, localIndex>;
 
 template<localIndex stencilSize>
 void computeFlux( arraySlice1d<real64 const> const & weight,
@@ -378,7 +357,7 @@ int main( int argc, char** argv )
 
   logger::InitializeLogger( MPI_COMM_GEOSX );
 #else
-  logger::InitializeLogger():
+  logger::InitializeLogger();
 #endif
 
   cxx_utilities::setSignalHandling( cxx_utilities::handler1 );

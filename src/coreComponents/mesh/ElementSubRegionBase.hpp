@@ -1,12 +1,23 @@
 /*
- * CellBase.hpp
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- *  Created on: Jan 14, 2019
- *      Author: settgast
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef SRC_CORECOMPONENTS_MESH_CELLBASE_HPP_
-#define SRC_CORECOMPONENTS_MESH_CELLBASE_HPP_
+/**
+ * @file ElementSubRegionBase.hpp
+ */
+
+#ifndef GEOSX_MESH_ELEMENTSUBREGIONBASE_HPP_
+#define GEOSX_MESH_ELEMENTSUBREGIONBASE_HPP_
 
 #include "managers/ObjectManagerBase.hpp"
 #include "finiteElement/ElementLibrary/FiniteElementBase.h"
@@ -21,7 +32,8 @@ class DomainPartition;
 class ElementSubRegionBase : public ObjectManagerBase
 {
 public:
-  ElementSubRegionBase( string const & name, dataRepository::ManagedGroup * const parent );
+
+  ElementSubRegionBase( string const & name, dataRepository::Group * const parent );
   ~ElementSubRegionBase();
 
   virtual R1Tensor const & calculateElementCenter( localIndex k,
@@ -33,7 +45,7 @@ public:
 
   virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) = 0;
 
-  virtual void FixUpDownMaps( bool const clearIfUnmapped ) {}
+  virtual void FixUpDownMaps( bool const GEOSX_UNUSED_ARG( clearIfUnmapped ) ) {}
 
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
@@ -52,10 +64,6 @@ public:
   {
     static constexpr auto constitutiveModelsString = "ConstitutiveModels";
   };
-
-
-  virtual arraySlice1dRval<localIndex const> nodeList( localIndex const k ) const = 0;
-  virtual arraySlice1dRval<localIndex> nodeList( localIndex const k ) = 0;
 
 
   /**
@@ -100,20 +108,18 @@ public:
     return m_elementVolume;
   }
 
-  dataRepository::ManagedGroup const * GetConstitutiveModels() const
+  dataRepository::Group const * GetConstitutiveModels() const
   { return &m_constitutiveModels; }
 
-  dataRepository::ManagedGroup * GetConstitutiveModels()
+  dataRepository::Group * GetConstitutiveModels()
   { return &m_constitutiveModels; }
 
   virtual string GetElementTypeString() const { return m_elementTypeString; }
 
-  FiniteElementBase::ElementType GetElementType() const { return m_elementType; }
-
   virtual void SetElementType( string const & elementType );
 
 private:
-  dataRepository::ManagedGroup m_constitutiveModels;
+  dataRepository::Group m_constitutiveModels;
 
 protected:
   /// The number of nodes per element in this cell block
@@ -141,4 +147,4 @@ protected:
 
 } /* namespace geosx */
 
-#endif /* SRC_CORECOMPONENTS_MESH_CELLBASE_HPP_ */
+#endif /* GEOSX_MESH_ELEMENTSUBREGIONBASE_HPP_ */

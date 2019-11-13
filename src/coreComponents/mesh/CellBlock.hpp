@@ -1,27 +1,23 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
  * @file CellBlock.hpp
  */
 
-#ifndef ELEMENTOBJECTT_H_
-#define ELEMENTOBJECTT_H_
+#ifndef GEOSX_MESH_CELLBLOCK_HPP_
+#define GEOSX_MESH_CELLBLOCK_HPP_
 
 #include "ElementSubRegionBase.hpp"
 #include "FaceManager.hpp"
@@ -41,9 +37,16 @@ class CellBlock : public ElementSubRegionBase
 {
 public:
 
-  using NodeMapType=FixedOneToManyRelation;
-  using EdgeMapType=FixedOneToManyRelation;
-  using FaceMapType=FixedOneToManyRelation;
+#if defined( GEOSX_USE_CUDA )
+  using NODE_MAP_PERMUTATION = RAJA::PERM_JI;
+#else
+  using NODE_MAP_PERMUTATION = RAJA::PERM_IJ;
+#endif
+
+  static constexpr int NODE_MAP_UNIT_STRIDE_DIM = LvArray::getStrideOneDimension( NODE_MAP_PERMUTATION {} );
+
+  using NodeMapType = InterObjectRelation< array2d< localIndex, NODE_MAP_PERMUTATION > >;
+  using FaceMapType = FixedOneToManyRelation;
 
   /**
    * @name Static Factory Catalog Functions
@@ -76,7 +79,7 @@ public:
    * @param name the name of the object in the data repository
    * @param parent the parent object of this object in the data repository
    */
-  CellBlock( string const & name, ManagedGroup * const parent );
+  CellBlock( string const & name, Group * const parent );
 
   /**
    * @brief copy constructor
@@ -89,6 +92,12 @@ public:
 
   virtual void SetElementType( string const & elementType ) override;
 
+  localIndex GetNumFaceNodes( localIndex const elementIndex,
+                              localIndex const localFaceIndex) const;
+
+  localIndex GetFaceNodes( localIndex const elementIndex,
+                           localIndex const localFaceIndex,
+                           localIndex * const nodeIndicies) const;
 
   /**
    * @brief function to return the localIndices of the nodes in a face of the element
@@ -114,7 +123,13 @@ public:
   void calculateElementCenters( arrayView1d<R1Tensor const> const & X ) const
   {
     arrayView1d<R1Tensor> const & elementCenters = m_elementCenter;
-    localIndex const nNodes = numNodesPerElement();
+    localIndex nNodes = numNodesPerElement();
+
+    if (!m_elementTypeString.compare(0, 4, "C3D6"))
+    {
+      nNodes -= 2;
+    }
+
     forall_in_range<parallelHostPolicy>( 0, size(), GEOSX_LAMBDA( localIndex const k )
     {
       elementCenters[k] = 0;
@@ -171,46 +186,25 @@ public:
   virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override;
 
 
-  virtual arraySlice1dRval<localIndex const> nodeList( localIndex const k ) const override
-  {
-    return m_toNodesRelation[k];
-  }
-
-  virtual arraySlice1dRval<localIndex> nodeList( localIndex const k ) override
-  {
-    return m_toNodesRelation[k];
-  }
-
+  /**
+   * @return the element to node map
+   */
+  NodeMapType & nodeList()                    { return m_toNodesRelation; }
 
   /**
    * @return the element to node map
    */
-  FixedOneToManyRelation & nodeList()                    { return m_toNodesRelation; }
+  NodeMapType const & nodeList() const        { return m_toNodesRelation; }
 
   /**
    * @return the element to node map
    */
-  FixedOneToManyRelation const & nodeList() const        { return m_toNodesRelation; }
+  localIndex & nodeList( localIndex const k, localIndex a ) { return m_toNodesRelation( k, a ); }
 
   /**
    * @return the element to node map
    */
-  localIndex & nodeList( localIndex const k, localIndex a ) { return m_toNodesRelation[k][a]; }
-
-  /**
-   * @return the element to node map
-   */
-  localIndex const & nodeList( localIndex const k, localIndex a ) const { return m_toNodesRelation[k][a]; }
-
-  /**
-   * @return the element to edge map
-   */
-  FixedOneToManyRelation       & edgeList()       { return m_toEdgesRelation; }
-
-  /**
-   * @return the element to edge map
-   */
-  FixedOneToManyRelation const & edgeList() const { return m_toEdgesRelation; }
+  localIndex const & nodeList( localIndex const k, localIndex a ) const { return m_toNodesRelation( k, a ); }
 
   /**
    * @return the element to face map
@@ -231,7 +225,7 @@ public:
   T & AddProperty( string const & propertyName )
   {
     m_externalPropertyNames.push_back( propertyName );
-    return this->RegisterViewWrapper< T >( propertyName )->reference();
+    return this->registerWrapper< T >( propertyName )->reference();
   }
 
   template< typename LAMBDA >
@@ -239,8 +233,8 @@ public:
   {
     for( auto & externalPropertyName : m_externalPropertyNames )
     {
-      const dataRepository::ViewWrapperBase * vw = this->getWrapperBase( externalPropertyName );
-      lambda( vw );
+      const dataRepository::WrapperBase * wrapper = this->getWrapperBase( externalPropertyName );
+      lambda( wrapper );
     }
   }
 
@@ -249,9 +243,6 @@ protected:
 
   /// The elements to nodes relation
   NodeMapType  m_toNodesRelation;
-
-  /// The elements to edges relation
-  EdgeMapType  m_toEdgesRelation;
 
   /// The elements to faces relation
   FaceMapType  m_toFacesRelation;
@@ -273,4 +264,4 @@ private:
 
 
 
-#endif /* ELEMENTOBJECTT_H_ */
+#endif /* CELLBLOCK_HPP_ */

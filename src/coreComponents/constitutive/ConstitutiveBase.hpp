@@ -1,31 +1,27 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
  * @file ConstitutiveBase.hpp
  */
 
-#ifndef CONSTITUTIVEBASE_HPP_
-#define CONSTITUTIVEBASE_HPP_
+#ifndef GEOSX_CONSTITUTIVE_CONSTITUTIVEBASE_HPP_
+#define GEOSX_CONSTITUTIVE_CONSTITUTIVEBASE_HPP_
 
+#include "dataRepository/ObjectCatalog.hpp"
 #include "common/DataTypes.hpp"
-#include "ObjectCatalog.hpp"
-#include "dataRepository/ManagedGroup.hpp"
+#include "dataRepository/Group.hpp"
 
 namespace geosx
 {
@@ -34,7 +30,7 @@ namespace constitutive
 {
 
 
-class ConstitutiveBase : public dataRepository::ManagedGroup
+class ConstitutiveBase : public dataRepository::Group
 {
 public:
 
@@ -49,7 +45,7 @@ public:
 
 
   ConstitutiveBase( string const & name,
-                    ManagedGroup * const parent );
+                    Group * const parent );
 
   virtual ~ConstitutiveBase() override;
 
@@ -60,13 +56,13 @@ public:
    * @param[out] clone  A reference to a unique_ptr  that will hold the clone.
    */
   virtual void DeliverClone( string const & name,
-                             ManagedGroup * const parent,
+                             Group * const parent,
                              std::unique_ptr<ConstitutiveBase> & clone ) const = 0;
 
 
-  virtual void StateUpdatePointPressure( real64 const & pres,
-                                         localIndex const k,
-                                         localIndex const q ) {}
+  virtual void StateUpdatePointPressure( real64 const & GEOSX_UNUSED_ARG( pres ),
+                                         localIndex const GEOSX_UNUSED_ARG( k ),
+                                         localIndex const GEOSX_UNUSED_ARG( q ) ) {}
 
   /**
    * @brief function to resize the fields in this constitutive model
@@ -75,7 +71,7 @@ public:
   virtual void resize( localIndex newSize ) override;
 
 
-  using CatalogInterface = cxx_utilities::CatalogInterface< ConstitutiveBase, std::string const &, ManagedGroup * const >;
+  using CatalogInterface = dataRepository::CatalogInterface< ConstitutiveBase, std::string const &, Group * const >;
   static typename CatalogInterface::CatalogType& GetCatalog();
 
   /**
@@ -93,7 +89,7 @@ public:
    *   1) Allocate data according to the size of parent and numConstitutivePointsPerParentIndex
    *   2) Create wrappers to the constitutive data in the parent for easier access
    */
-  virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
+  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex );
 
   struct viewKeyStruct
@@ -113,7 +109,7 @@ protected:
 
 private:
   localIndex m_numQuadraturePoints;
-  ManagedGroup * m_constitutiveDataGroup = nullptr;
+  Group * m_constitutiveDataGroup = nullptr;
 
   ConstitutiveBase( ConstitutiveBase const & ) = delete;
   ConstitutiveBase( ConstitutiveBase && ) = delete;
