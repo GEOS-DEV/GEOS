@@ -88,3 +88,18 @@ To execute a serial run enter the following command from a working directory:
 
     path-to-geosx-bin/geosx -i path-to-xml/LaplaceFEM.xml
 
+Command Line options
+-------------------------------
+
+The following command-line options can be specified:
+
+  * ``-?, --help`` - Provides a list of command-line options
+  * ``-i, --input`` - Input filename.xml  (required)
+  * ``-l, --schema-level`` - Verbosity level of output schema (default=0)
+  * ``-n, --name`` - Name of the problem (used for output)
+  * ``-o, --output`` - Directory to place output files
+  * ``-r, --restart`` - Target restart filename
+  * ``-s, --schema`` - Name of the schema file to generate
+  * ``-x, --x-partitions`` - Number of partitions in the x-direction
+  * ``-y, --y-partitions`` - Number of partitions in the y-direction
+  * ``-z, --z-partitions`` - Number of partitions in the z-direction
