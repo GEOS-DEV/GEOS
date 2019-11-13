@@ -108,7 +108,7 @@ Creating an Ubuntu Virtual Machine
   .. image:: Ubuntu_installation_05.png
     :width: 400
 
-- After restarting the Virtual Machine, login, open a new terminal (``control````option````T``) and install Ubuntu updates
+- After restarting the Virtual Machine, login, open a new terminal (``control+option+T``) and install Ubuntu updates
 
 .. code-block:: sh
 
@@ -158,7 +158,7 @@ Click ``OK`` to close all Settings windows.
       sudo usermod -G vboxsf -a YOUR_USERNAME
       reboot
 
-     - The shared folder will now be accessible and located at `` /media/sf_FOLDER_NAME``.
+     - The shared folder will now be accessible and located at ``/media/sf_FOLDER_NAME``.
 
 
 
