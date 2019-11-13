@@ -70,8 +70,6 @@ public:
   // *** ParticleFluid interface
 
   virtual void PointUpdate(localIndex const NC, real64 const & proppantConcentration, arraySlice1d<real64 const> const & componentConcentration, arraySlice1d<real64 const> const & nIndex, arraySlice1d<real64 const> const & KIndex, real64 const &fluidDensity, real64 const &dFluidDensity_dPressure, arraySlice1d<real64 const> const &dFluidDensity_dComponentConcentration, localIndex const k) override; 
-
-  virtual void PointUpdate(localIndex const NC, real64 const & proppantConcentration, real64 const &fluidDensity, real64 const &dFluidDensity_dPressure, arraySlice1d<real64 const> const &dFluidDensity_dComponentConcentration, real64 const &fluidViscosity, real64 const &dFluidViscosity_dPressure, arraySlice1d<real64 const> const &dFluidViscosity_dComponentConcentration, localIndex const k) override;  
   
   virtual void BatchUpdate( arrayView1d<real64 const> const & concentration) override;
 
@@ -119,12 +117,12 @@ private:
 
   void Compute( localIndex const NC,
                 real64 const & proppantConcentration,
+                arraySlice1d<real64 const> const & componentConcentration,
+                arraySlice1d<real64 const> const & nIndex,
+                arraySlice1d<real64 const> const & KIndex,
                 real64 const & fluidDensity,
                 real64 const & dFluidDensity_dPressure,
                 arraySlice1d<real64 const> const & dFluidDensity_dComponentConcentration,
-                real64 const & fluidViscosity,
-                real64 const & dFluidViscosity_dPressure,
-                arraySlice1d<real64 const> const & dFluidViscosity_dComponentConcentration,
                 real64 & settlingFactor,
                 real64 & dSettlingFactor_dPressure,
                 real64 & dSettlingFactor_dProppantConcentration,

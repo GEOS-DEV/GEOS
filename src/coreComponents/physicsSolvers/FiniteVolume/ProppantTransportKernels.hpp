@@ -45,8 +45,10 @@ struct AccumulationKernel
   Compute( localIndex const NC,
            real64 const & proppantConcOld,	   
            real64 const & proppantConcNew,
-           arraySlice1d<real64 const> const & componentConcOld,
-           arraySlice1d<real64 const> const & componentConcNew,           
+           arraySlice1d<real64 const> const & componentDensOld,
+           arraySlice1d<real64 const> const & componentDensNew,
+           arraySlice1d<real64 const> const & GEOSX_UNUSED_ARG( dCompDens_dPres ),
+           arraySlice2d<real64 const> const & dCompDens_dCompConc,
            real64 const & volume,
            arraySlice1d<real64> const & localAccum,
            arraySlice2d<real64> const & localAccumJacobian )
@@ -63,18 +65,20 @@ struct AccumulationKernel
         localAccumJacobian[0][0] = volume;
 
         // component mass conservation        
-        for(localIndex c = 0; c < NC; ++c)
+        for(localIndex c1 = 0; c1 < NC; ++c1)
           {
 
-            localAccum[c+1] = (componentConcNew[c] - componentConcOld[c]) * volume;
-            localAccumJacobian[c+1][c+1] = volume;
-            
+            localAccum[c1+1] = ( componentDensNew[c1] * (1.0 - proppantConcNew) - componentDensOld[c1] * (1.0 - proppantConcOld) ) * volume;
+
+            for(localIndex c2 = 0; c2 < NC; ++c2)
+              localAccumJacobian[c1+1][c2+1] = dCompDens_dCompConc[c1][c2] * (1.0 - proppantConcNew) * volume;
+
+            localAccumJacobian[c1+1][0] = -componentDensNew[c1] * volume;
           }
         
   }
   
 };
-
 
 /******************************** FluxKernel ********************************/
 
@@ -137,7 +141,9 @@ struct FluxKernel
           ElementViewConst < arrayView1d<real64 const> > const & proppantConc,
           ElementViewConst < arrayView1d<real64 const> > const & proppantConcOld,
           ElementViewConst < arrayView1d<real64 const> > const & dProppantConc,
-          ElementViewConst < arrayView2d<real64 const> > const & updatedComponentConc,
+          MaterialView< arrayView3d<real64 const> > const & componentDens,
+          MaterialView< arrayView3d<real64 const> > const & dComponentDens_dPres,
+          MaterialView< arrayView4d<real64 const> > const & dComponentDens_dComponentConc,
 	  ElementViewConst < arrayView1d<real64 const> > const & gravDepth,
           MaterialView< arrayView2d<real64 const> > const & dens,
           MaterialView< arrayView2d<real64 const> > const & dDens_dPres,
@@ -156,11 +162,11 @@ struct FluxKernel
           MaterialView< arrayView2d<real64 const> > const & dSettlingFactor_dComponentConc,          
           MaterialView< arrayView1d<real64 const> > const & collisionFactor,
           MaterialView< arrayView1d<real64 const> > const & dCollisionFactor_dProppantConc,
-          MaterialView< arrayView1d<bool const> > const & isProppantMobile,	  
+          MaterialView< arrayView1d<integer const> > const & isProppantMobile,	  
           MaterialView< arrayView1d<real64 const> > const & proppantPackPermeability,
           ElementViewConst < arrayView1d<real64 const> > const & volume,
           ElementViewConst < arrayView1d<real64 const> > const & aperture,
-          ElementView< arrayView1d<R1Tensor> > & shearRate,          
+          ElementView< arrayView1d<R1Tensor> > const & shearRate,          
           ParallelMatrix * const jacobian,
           ParallelVector * const residual );
 
@@ -182,7 +188,9 @@ struct FluxKernel
 		   arrayView1d<real64 const> const & proppantConc,
 		   arrayView1d<real64 const> const & proppantConcOld,
                    arrayView1d<real64 const> const & dProppantConc,
-                   arrayView2d<real64 const> const & updatedComponentConc,
+                   arrayView3d<real64 const> const & componentDens,
+                   arrayView3d<real64 const> const & dComponentDens_dPres,
+                   arrayView4d<real64 const> const & dComponentDens_dComponentConc,
 		   arrayView1d<real64 const> const & gravDepth,
                    arrayView2d<real64 const> const & dens,
                    arrayView2d<real64 const> const & dDens_dPres,
@@ -201,7 +209,7 @@ struct FluxKernel
                    arrayView2d<real64 const> const & dSettlingFactor_dComponentConc,
                    arrayView1d<real64 const> const & collisionFactor,
                    arrayView1d<real64 const> const & dCollisionFactor_dProppantConc,
-                   arrayView1d<bool const> const & isProppantMobile,
+                   arrayView1d<integer const> const & isProppantMobile,
                    arrayView1d<real64 const> const & proppantPackPermeability,		   
                    arrayView1d<real64 const> const & volume,
                    arrayView1d<real64 const> const & aperture,
@@ -209,7 +217,7 @@ struct FluxKernel
 		   bool updateProppantMobilityFlag,
 		   bool updatePermeabilityFlag,
                    real64 const dt,
-                   arrayView1d<R1Tensor> & shearRate,
+                   arrayView1d<R1Tensor> const & shearRate,
                    arraySlice1d<real64> const & localFlux,
                    arraySlice2d<real64> const & localFluxJacobian)
   {
@@ -247,7 +255,7 @@ struct FluxKernel
     stackArray1d<real64, maxNumFluxElems> transT(numElems);
     stackArray1d<real64, maxNumFluxElems> coefs(numElems);
 
-    stackArray1d<bool, maxNumFluxElems> isProppantMob(numElems);
+    stackArray1d<integer, maxNumFluxElems> isProppantMob(numElems);
 
     real64 edgeDensity, edgeViscosity;
     stackArray1d<real64, maxNumFluxElems> dEdgeDens_dP(numElems);
@@ -284,7 +292,10 @@ struct FluxKernel
 
     stackArray1d<real64, maxNumFluxElems> P(numElems);
     stackArray1d<real64, maxNumFluxElems> proppantC(numElems);
-    stackArray2d<real64, maxNumFluxElems * maxNumComponents> componentC(numElems, NC);    
+    stackArray2d<real64, maxNumFluxElems * maxNumComponents> componentC(numElems, NC);
+    stackArray2d<real64, maxNumFluxElems * maxNumComponents> dComponentC_dP(numElems, NC);
+    stackArray2d<real64, maxNumFluxElems * maxNumComponents> dComponentC_dProppantC(numElems, NC);
+    stackArray3d<real64, maxNumFluxElems * maxNumComponents * maxNumComponents> dComponentC_dComponentC(numElems, NC, NC);                
 
     // clear working arrays
 
@@ -371,7 +382,7 @@ struct FluxKernel
         transT[i] = transT[i] * (1.0 - proppantConcOld[ei]) + proppantPackPermeability[ei]  * 12 * aperture[ei] * stencilWeights[i] * proppantConcOld[ei];
 
       }
-
+    
 
       for(localIndex c = 0; c < NC; ++c)
         {
@@ -382,8 +393,14 @@ struct FluxKernel
           dSettlingFac_dComponentC[i][c] = dSettlingFactor_dComponentConc[ei][c];
 
 
-          componentC[i][c] = updatedComponentConc[ei][c];      
+          componentC[i][c] = componentDens[ei][0][c] * (1.0 - proppantC[i]);      
+          dComponentC_dP[i][c] = dComponentDens_dPres[ei][0][c] * (1.0 - proppantC[i]);
 
+          dComponentC_dProppantC[i][c] = -componentDens[ei][0][c];
+
+          for(localIndex c2 = 0; c2 < NC; ++c2)
+            dComponentC_dComponentC[i][c][c2] = dComponentDens_dComponentConc[ei][0][c][c2] * (1.0 - proppantC[i]);            
+          
 
           dEdgeDens_dComponentC[i][c] = weight[i] * dDens_dComponentConc[ei][0][c];
           dEdgeVisc_dComponentC[i][c] = weight[i] * dVisc_dComponentConc[ei][0][c];
@@ -526,7 +543,7 @@ struct FluxKernel
     for (localIndex i = 0; i < numElems; ++i)
     {
 
-      if(!isProppantMob[i] && updateProppantMobilityFlag)
+      if(isProppantMob[i] == 0 && updateProppantMobilityFlag)
         continue;
 
       if(edgeToFaceProppantFlux[i] >= 0.0)
@@ -584,7 +601,7 @@ struct FluxKernel
       for (localIndex i = 0; i < numElems; ++i)
       {
 
-        if(!isProppantMob[i] && updateProppantMobilityFlag)
+        if(isProppantMob[i] == 0 && updateProppantMobilityFlag)
           continue;
 
         dProppantCe_dP[i] =  dProppantCe_dP[i] / downStreamFlux - proppantCe * dDownStreamFlux_dP[i] / (downStreamFlux * downStreamFlux);
@@ -608,7 +625,7 @@ struct FluxKernel
       for (localIndex i = 0; i < numElems; ++i)
       {
 
-        if(!isProppantMob[i] && updateProppantMobilityFlag)
+        if(isProppantMob[i] == 0 && updateProppantMobilityFlag)
           continue;
 
         dProppantCe_dP[i] =  0.0;
@@ -667,7 +684,10 @@ struct FluxKernel
         
             componentCe[c1] += -edgeToFaceFlux[i] * componentC[i][c1];
 
-            dComponentCe_dComponentC[i][c1][c1] += -edgeToFaceFlux[i];
+            dComponentCe_dP[i][c1] += -edgeToFaceFlux[i] * dComponentC_dP[i][c1];
+
+            for(localIndex c2 = 0; c2 < NC; ++c2)
+              dComponentCe_dComponentC[i][c1][c2] += -edgeToFaceFlux[i] * dComponentC_dComponentC[i][c1][c2];
 
             for(localIndex j = 0; j < numElems; ++j)
               {
@@ -726,12 +746,14 @@ struct FluxKernel
           for (localIndex i = 0; i < numElems; ++i)
             {
 
-              dComponentCe_dP[i][c] =  0.0;
-              dComponentCe_dProppantC[i][c] =  0.0;              
-              dComponentCe_dComponentC[i][c][c] =  weight[i];
-              
               componentCe[c] += componentC[i][c] * weight[i];
 
+              dComponentCe_dP[i][c] = dComponentC_dP[i][c] * weight[i]; 
+              dComponentCe_dProppantC[i][c] = dComponentC_dProppantC[i][c] * weight[i];
+
+              for(localIndex c2 = 0; c2 < NC; ++c2)
+                dComponentCe_dComponentC[i][c][c2] =  dComponentC_dComponentC[i][c][c2] * weight[i];
+                
             }
 
         }
@@ -744,7 +766,7 @@ struct FluxKernel
 
       localIndex idx1 = i * numDofPerCell; // proppant
 
-      if(isProppantMob[i] || !updateProppantMobilityFlag)
+      if(isProppantMob[i] == 1 || !updateProppantMobilityFlag)
       {
 
         if(edgeToFaceProppantFlux[i] >= 0.0)
@@ -818,8 +840,10 @@ struct FluxKernel
         }
 
       }
+      
 
-    
+      // component
+      
       for(localIndex c1 = 0; c1 < NC; ++c1)
       {
 
@@ -861,13 +885,24 @@ struct FluxKernel
           
             localFluxJacobian[idx1][idx2] = -componentC[i][c1] * dEdgeToFaceFlux_dProppantC[i][j] * dt;
 
-            if(i == j)
-              localFluxJacobian[idx1][idx2 + 1 + c1] += -edgeToFaceFlux[i] * dt;
-          
             for(localIndex c2 = 0; c2 < NC; ++c2)
               {
-
+                
                 localFluxJacobian[idx1][idx2 + 1 + c2] = -componentC[i][c1] * dEdgeToFaceFlux_dComponentC[i][j][c2] * dt;
+
+              }
+            
+            if(i == j)            
+              {
+
+                localFluxJacobian[idx1][idx2] += -dComponentC_dProppantC[i][c1] * edgeToFaceFlux[i] * dt;                
+                
+                for(localIndex c2 = 0; c2 < NC; ++c2)                
+                  {
+                    
+                    localFluxJacobian[idx1][idx2 + 1 + c2] += -dComponentC_dComponentC[i][c1][c2] * edgeToFaceFlux[i] * dt;
+
+                  }
 
               }
 

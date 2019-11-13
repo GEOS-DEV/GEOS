@@ -118,13 +118,13 @@ void SinglePhaseFlow::UpdateFluidProperty<true>(Group * const dataGroup) const
 
   SlurryFluidBase * const fluid = GetConstitutiveModel<SlurryFluidBase>( dataGroup, m_fluidName );
 
-  arrayView1d<R1Tensor const> const & shearRate = dataGroup->getReference< array1d<R1Tensor> >( ProppantTransport::viewKeyStruct::shearRateString );
-      
   arrayView1d<real64 const> const & proppantConcentration = dataGroup->getReference<array1d<real64>>( ProppantTransport::viewKeyStruct::proppantConcentrationString );
 
   arrayView1d<real64 const> const & dProppantConcentration = dataGroup->getReference<array1d<real64>>( ProppantTransport::viewKeyStruct::deltaProppantConcentrationString );      
 
-  arrayView2d<real64 const> const & componentConcentration = dataGroup->getReference<array2d<real64>>( ProppantTransport::viewKeyStruct::componentConcentrationString );      
+  arrayView2d<real64 const> const & componentConcentration = dataGroup->getReference<array2d<real64>>( ProppantTransport::viewKeyStruct::componentConcentrationString );
+
+  arrayView1d<R1Tensor const> const & shearRate = dataGroup->getReference< array1d<R1Tensor> >( ProppantTransport::viewKeyStruct::shearRateString );
       
   forall_in_range<RAJA::seq_exec>( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a )
   {                                  
@@ -1109,6 +1109,7 @@ real64 SinglePhaseFlow::CalculateResidualNorm( DomainPartition const * const dom
     arrayView1d<real64 const> const & refPoro        = m_porosityRef[er][esr];
     arrayView1d<real64 const> const & volume         = m_volume[er][esr];
     arrayView1d<real64 const> const & dVol           = m_deltaVolume[er][esr];
+//    arrayView1d<real64 const> const & dens           = m_density[er][esr][m_fluidIndex].dimReduce();
     arrayView2d<real64 const> const & dens           = m_density[er][esr][m_fluidIndex];
 
     localIndex const subRegionSize = subRegion->size();

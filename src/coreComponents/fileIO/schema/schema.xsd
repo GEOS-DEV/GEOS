@@ -584,6 +584,8 @@
 	<xsd:complexType name="SystemSolverParametersType">
 		<!--allowNonConverged => Allow non-converged solution to be accepted-->
 		<xsd:attribute name="allowNonConverged" type="integer" default="0" />
+		<!--doLineSearch => Line search option-->
+		<xsd:attribute name="doLineSearch" type="integer" default="1" />
 		<!--ilut_drop => (no description available)-->
 		<xsd:attribute name="ilut_drop" type="real64" default="0" />
 		<!--ilut_fill => (no description available)-->
@@ -596,12 +598,16 @@
 		<xsd:attribute name="lineSearchCutFactor" type="real64" default="0.5" />
 		<!--maxIterNewton => Maximum number of Newton iterations-->
 		<xsd:attribute name="maxIterNewton" type="integer" default="5" />
+		<!--maxIterNewtonConvergenceCheck => verbosity level-->
+		<xsd:attribute name="maxIterNewtonConvergenceCheck" type="integer" default="0" />
 		<!--maxLineSearchCuts => Max number of line search cuts-->
 		<xsd:attribute name="maxLineSearchCuts" type="integer" default="4" />
 		<!--maxSubSteps => Maximum number of time sub-steps allowed for the solver-->
 		<xsd:attribute name="maxSubSteps" type="integer" default="10" />
 		<!--maxTimeStepCuts => Max number of time step cuts-->
 		<xsd:attribute name="maxTimeStepCuts" type="integer" default="2" />
+		<!--minNumberOfNewtonIterations => Min number of Newton iterations-->
+		<xsd:attribute name="minNumberOfNewtonIterations" type="integer" default="0" />
 		<!--newtonTol => (no description available)-->
 		<xsd:attribute name="newtonTol" type="real64" default="1e-06" />
 		<!--numKrylovIter => Maximum number of Krylov Iterations-->
@@ -738,9 +744,11 @@
 			<xsd:element name="CompositionalMultiphaseFlow" type="CompositionalMultiphaseFlowType" />
 			<xsd:element name="CompositionalMultiphaseWell" type="CompositionalMultiphaseWellType" />
 			<xsd:element name="DummySolver" type="DummySolverType" />
+			<xsd:element name="FlowProppantTransport" type="FlowProppantTransportType" />
 			<xsd:element name="Hydrofracture" type="HydrofractureType" />
 			<xsd:element name="LaplaceFEM" type="LaplaceFEMType" />
 			<xsd:element name="Poroelastic" type="PoroelasticType" />
+			<xsd:element name="ProppantTransport" type="ProppantTransportType" />
 			<xsd:element name="Reservoir" type="ReservoirType" />
 			<xsd:element name="SinglePhaseFlow" type="SinglePhaseFlowType" />
 			<xsd:element name="SinglePhaseWell" type="SinglePhaseWellType" />
@@ -824,6 +832,25 @@
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
+	<xsd:complexType name="FlowProppantTransportType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
+		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
+		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
+		<xsd:attribute name="discretization" type="string" default="none" />
+		<!--flowSolverName => Name of the flow solver to use in the flowProppantTransport solver-->
+		<xsd:attribute name="flowSolverName" type="string" use="required" />
+		<!--proppantSolverName => Name of the proppant transport solver to use in the flowProppantTransport solver-->
+		<xsd:attribute name="proppantSolverName" type="string" use="required" />
+		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
+		<xsd:attribute name="targetRegions" type="string_array" use="required" />
+		<!--verboseLevel => Verbosity level for this solver. Higher values will lead to more screen output. For non-debug  simulations, this should remain at 0.-->
+		<xsd:attribute name="verboseLevel" type="integer" default="0" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
 	<xsd:complexType name="HydrofractureType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
@@ -884,6 +911,33 @@
 		<xsd:attribute name="solidSolverName" type="string" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
+		<!--verboseLevel => Verbosity level for this solver. Higher values will lead to more screen output. For non-debug  simulations, this should remain at 0.-->
+		<xsd:attribute name="verboseLevel" type="integer" default="0" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="ProppantTransportType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
+		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
+		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--discretization => Name of discretization object to use for this solver.-->
+		<xsd:attribute name="discretization" type="string" use="required" />
+		<!--fluidName => Name of fluid constitutive object to use for this solver.-->
+		<xsd:attribute name="fluidName" type="string" use="required" />
+		<!--gravityFlag => Flag that enables/disables gravity-->
+		<xsd:attribute name="gravityFlag" type="integer" use="required" />
+		<!--proppantName => Name of proppant constitutive object to use for this solver.-->
+		<xsd:attribute name="proppantName" type="string" use="required" />
+		<!--solidName => Name of solid constitutive object to use for this solver-->
+		<xsd:attribute name="solidName" type="string" use="required" />
+		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
+		<xsd:attribute name="targetRegions" type="string_array" use="required" />
+		<!--updatePermeability => Flag that enables/disables real-time fracture permeability update-->
+		<xsd:attribute name="updatePermeability" type="integer" default="0" />
+		<!--updateProppantMobility => Flag that enables/disables real-time proppant mobility update-->
+		<xsd:attribute name="updateProppantMobility" type="integer" default="0" />
 		<!--verboseLevel => Verbosity level for this solver. Higher values will lead to more screen output. For non-debug  simulations, this should remain at 0.-->
 		<xsd:attribute name="verboseLevel" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -1062,9 +1116,11 @@
 			<xsd:element name="Contact" type="ContactType" />
 			<xsd:element name="LinearElasticAnisotropic" type="LinearElasticAnisotropicType" />
 			<xsd:element name="LinearElasticIsotropic" type="LinearElasticIsotropicType" />
+			<xsd:element name="ParticleFluid" type="ParticleFluidType" />
 			<xsd:element name="PoreVolumeCompressibleSolid" type="PoreVolumeCompressibleSolidType" />
 			<xsd:element name="PoroLinearElasticAnisotropic" type="PoroLinearElasticAnisotropicType" />
 			<xsd:element name="PoroLinearElasticIsotropic" type="PoroLinearElasticIsotropicType" />
+			<xsd:element name="ProppantSlurryFluid" type="ProppantSlurryFluidType" />
 			<xsd:element name="VanGenuchtenBakerRelativePermeability" type="VanGenuchtenBakerRelativePermeabilityType" />
 			<xsd:element name="VanGenuchtenCapillaryPressure" type="VanGenuchtenCapillaryPressureType" />
 		</xsd:choice>
@@ -1269,6 +1325,34 @@
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
+	<xsd:complexType name="ParticleFluidType">
+		<!--bridgingFactor => Bridging factor-->
+		<xsd:attribute name="bridgingFactor" type="real64" default="3" />
+		<!--collisionAlpha => Collision alpha coefficient-->
+		<xsd:attribute name="collisionAlpha" type="real64" default="1.27" />
+		<!--collisionBeta => Collision beta coefficient-->
+		<xsd:attribute name="collisionBeta" type="real64" default="1.5" />
+		<!--fluidViscosity => Fluid viscosity-->
+		<xsd:attribute name="fluidViscosity" type="real64" default="0.001" />
+		<!--hinderedSettlingCoefficient => Hindered settling coefficient-->
+		<xsd:attribute name="hinderedSettlingCoefficient" type="real64" default="5.9" />
+		<!--isCollisionalSlip => Whether the collisional component of the slip velocity is considered-->
+		<xsd:attribute name="isCollisionalSlip" type="integer" default="0" />
+		<!--maxProppantConcentration => Max proppant concentration-->
+		<xsd:attribute name="maxProppantConcentration" type="real64" default="0.6" />
+		<!--particleSettlingModel => Particle settling velocity model-->
+		<xsd:attribute name="particleSettlingModel" type="string" use="required" />
+		<!--proppantDensity => Proppant density-->
+		<xsd:attribute name="proppantDensity" type="real64" default="1400" />
+		<!--proppantDiameter => Proppant diameter-->
+		<xsd:attribute name="proppantDiameter" type="real64" default="0.0002" />
+		<!--slipConcentration => Slip concentration-->
+		<xsd:attribute name="slipConcentration" type="real64" default="0.1" />
+		<!--sphericity => Sphericity-->
+		<xsd:attribute name="sphericity" type="real64" default="1" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
 	<xsd:complexType name="PoreVolumeCompressibleSolidType">
 		<!--compressibility => Solid compressibility-->
 		<xsd:attribute name="compressibility" type="real64" use="required" />
@@ -1378,6 +1462,34 @@
 		<xsd:attribute name="defaultYoungsModulus" type="real64" default="-1" />
 		<!--referencePressure => ReferencePressure-->
 		<xsd:attribute name="referencePressure" type="real64" default="0" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="ProppantSlurryFluidType">
+		<!--componentNames => List of fluid component names-->
+		<xsd:attribute name="componentNames" type="string_array" default="" />
+		<!--compressibility => Fluid compressibility-->
+		<xsd:attribute name="compressibility" type="real64" default="0" />
+		<!--defaultCompressibility => Default value for compressibility.-->
+		<xsd:attribute name="defaultCompressibility" type="real64_array" default="0" />
+		<!--defaultDensity => Default value for density.-->
+		<xsd:attribute name="defaultDensity" type="real64_array" default="0" />
+		<!--defaultViscosity => Default value for viscosity.-->
+		<xsd:attribute name="defaultViscosity" type="real64_array" default="0" />
+		<!--flowBehaviorIndex => Flow behavior index-->
+		<xsd:attribute name="flowBehaviorIndex" type="real64_array" default="0" />
+		<!--flowConsistencyIndex => Flow consistency index-->
+		<xsd:attribute name="flowConsistencyIndex" type="real64_array" default="0" />
+		<!--maxProppantConcentration => Maximum proppant concentration-->
+		<xsd:attribute name="maxProppantConcentration" type="real64" default="0.6" />
+		<!--referenceDensity => Reference fluid density-->
+		<xsd:attribute name="referenceDensity" type="real64" default="1000" />
+		<!--referencePressure => Reference pressure-->
+		<xsd:attribute name="referencePressure" type="real64" default="100000" />
+		<!--referenceProppantDensity => Reference proppant density-->
+		<xsd:attribute name="referenceProppantDensity" type="real64" default="1400" />
+		<!--referenceViscosity => Reference fluid viscosity-->
+		<xsd:attribute name="referenceViscosity" type="real64" default="0.001" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

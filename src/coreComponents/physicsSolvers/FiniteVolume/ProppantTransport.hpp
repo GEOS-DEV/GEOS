@@ -200,7 +200,7 @@ public:
     
     // these are used to store last converged time step values
     static constexpr auto oldProppantConcentrationString  = "oldProppantConcentration";
-    static constexpr auto oldComponentConcentrationString  = "oldComponentConcentration";    
+    static constexpr auto oldComponentDensityString  = "oldComponentDensity";    
     static constexpr auto slipVelocityString   = "slipVelocity";
     
     static constexpr auto updatePermeabilityString  = "updatePermeability";
@@ -221,7 +221,7 @@ public:
 
     
     ViewKey oldProppantConcentration    = { oldProppantConcentrationString };
-    ViewKey oldComponentConcentration    = { oldComponentConcentrationString };
+    ViewKey oldComponentDensity    = { oldComponentDensityString };
     
 
     ViewKey proppantName      = { proppantNameString };
@@ -244,7 +244,7 @@ public:
   groupKeyStruct const & groupKeys() const { return groupKeysProppantTransport; }
 
   static constexpr localIndex MAX_NUM_COMPONENTS = 3;
-  
+
 protected:
 
   virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const rootGroup ) override;
@@ -286,7 +286,7 @@ private:
   /// views into backup fields
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_proppantConcentrationOld;
-  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_componentConcentrationOld;  
+  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_componentDensityOld;  
 
   /// views into material fields
 
@@ -294,6 +294,10 @@ private:
   ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_dDensity_dPressure;
   ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_dDensity_dProppantConcentration;
   ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_dDensity_dComponentConcentration;
+
+  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_componentDensity;
+  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_dComponentDensity_dPressure;
+  ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> m_dComponentDensity_dComponentConcentration;
   
   ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_fluidDensity;  
   ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_dFluidDensity_dPressure;
@@ -312,7 +316,7 @@ private:
   ElementRegionManager::MaterialViewAccessor<arrayView1d<real64>> m_collisionFactor;
   ElementRegionManager::MaterialViewAccessor<arrayView1d<real64>> m_dCollisionFactor_dProppantConcentration;
 
-  ElementRegionManager::MaterialViewAccessor<arrayView1d<bool>> m_isProppantMobile;
+  ElementRegionManager::MaterialViewAccessor<arrayView1d<integer>> m_isProppantMobile;
 
   ElementRegionManager::MaterialViewAccessor<arrayView1d<real64>> m_proppantPackPermeability;
 

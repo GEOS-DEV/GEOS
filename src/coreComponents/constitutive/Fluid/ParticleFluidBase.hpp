@@ -24,6 +24,7 @@
 #define SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_PARTICLEFLUIDBASE_HPP
 
 #include "constitutive/ConstitutiveBase.hpp"
+#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
 {
@@ -51,6 +52,8 @@ public:
   // *** ParticleFluidBase-specific interface
 
   virtual void PointUpdate(localIndex const NC, real64 const & proppantConcentration, arraySlice1d<real64 const> const & ComponentConcentration, arraySlice1d<real64 const> const & nIndex, arraySlice1d<real64 const> const & KIndex, real64 const &fluidDensity, real64 const &dFluidDensity_dPressure, arraySlice1d<real64 const> const &dFluidDensity_dComponentConcentration, localIndex const k) = 0;
+
+  virtual void PointUpdate(localIndex const NC, real64 const & proppantConcentration, real64 const &fluidDensity, real64 const &dFluidDensity_dPressure, arraySlice1d<real64 const> const &dFluidDensity_dComponentConcentration, real64 const &fluidViscosity, real64 const &dFluidViscosity_dPressure, arraySlice1d<real64 const> const &dFluidViscosity_dComponentConcentration, localIndex const k) = 0;  
 
   virtual void BatchUpdate( arrayView1d<real64 const> const & concentration ) = 0;
 
@@ -111,7 +114,7 @@ protected:
   array1d<real64> m_collisionFactor;
   array1d<real64> m_dCollisionFactor_dProppantConcentration;   
 
-  array1d<bool> m_isProppantMobile;
+  array1d<integer> m_isProppantMobile;
   array1d<real64> m_proppantPackPermeability;  
   
   integer m_isCollisionalSlip;

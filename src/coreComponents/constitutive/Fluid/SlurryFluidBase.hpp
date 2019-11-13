@@ -24,6 +24,7 @@
 #define SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_SLURRYFLUIDBASE_HPP
 
 #include "constitutive/ConstitutiveBase.hpp"
+#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
 {
@@ -55,10 +56,10 @@ public:
 
   virtual void PointUpdate( real64 const & pressure, real64 const & proppantConcentration, arraySlice1d<real64 const> const & Componentconcentration, real64 const & shearRate, localIndex const k, localIndex const q ) = 0;
 
-  virtual void PointUpdateFluidDensity( real64 const & pressure, arraySlice1d<real64 const> const & Componentconcentration, localIndex const k, localIndex const q ) = 0;  
-
   virtual void BatchUpdate( arrayView1d<real64 const> const & pressure, arrayView1d<real64 const> const & proppantConcentration,  arrayView2d<real64 const> const & componentConcentration, arrayView1d<real64 const> const & shearRate) = 0;
 
+  virtual void PointUpdateFluidProperty( real64 const & pressure, arraySlice1d<real64 const> const & Componentconcentration, real64 const & shearRate, localIndex const k, localIndex const q ) = 0;  
+  
   localIndex numFluidComponents() const;
 
   string const & componentName( localIndex ic ) const;
@@ -87,6 +88,17 @@ public:
   array3d<real64> const & dFluidDensity_dComponentConcentration() const { return m_dFluidDens_dCompConc; }
   array3d<real64>       & dFluidDensity_dComponentConcentration()       { return m_dFluidDens_dCompConc; }  
 
+
+  array2d<real64> const & fluidViscosity() const { return m_fluidViscosity; }
+  array2d<real64>       & fluidViscosity()       { return m_fluidViscosity; }  
+
+  array2d<real64> const & dFluidViscosity_dPressure() const { return m_dFluidVisc_dPres; }
+  array2d<real64>       & dFluidViscosity_dPressure()       { return m_dFluidVisc_dPres; }
+  
+  array3d<real64> const & dFluidViscosity_dComponentConcentration() const { return m_dFluidVisc_dCompConc; }
+  array3d<real64>       & dFluidViscosity_dComponentConcentration()       { return m_dFluidVisc_dCompConc; }  
+
+  
   array2d<real64> const & viscosity() const { return m_viscosity; }
   array2d<real64>       & viscosity()       { return m_viscosity; }
 
@@ -97,7 +109,9 @@ public:
   array2d<real64>       & dViscosity_dProppantConcentration()       { return m_dVisc_dProppantConc; }  
 
   array3d<real64> const & dViscosity_dComponentConcentration() const { return m_dVisc_dCompConc; }
-  array3d<real64>       & dViscosity_dComponentConcentration()       { return m_dVisc_dCompConc; }  
+  array3d<real64>       & dViscosity_dComponentConcentration()       { return m_dVisc_dCompConc; }
+
+  bool isNewtonianFluid() const { return m_isNewtonianFluid; }  
 
   // *** Data repository keys
 
@@ -106,18 +120,28 @@ public:
 
     static constexpr auto componentNamesString       = "componentNames";    
     static constexpr auto defaultDensityString      = "defaultDensity";
+    static constexpr auto defaultCompressibilityString      = "defaultCompressibility";
+    static constexpr auto defaultViscosityString      = "defaultViscosity";    
     
     static constexpr auto densityString      = "density";
-    static constexpr auto dDens_dPresString  = "dDensity_dPressure";
-    static constexpr auto dDens_dProppantConcString  = "dDensity_dProppantConc";    
-    static constexpr auto dDens_dCompConcString  = "dDensity_dCompConc";
+    static constexpr auto dDens_dPresString  = "dDens_dPres";
+    static constexpr auto dDens_dProppantConcString  = "dDens_dProppantConc";    
+    static constexpr auto dDens_dCompConcString  = "dDens_dCompConc";
+
+    static constexpr auto componentDensityString      = "componentDensity";
+    static constexpr auto dCompDens_dPresString  = "dCompDens_dPres";
+    static constexpr auto dCompDens_dCompConcString  = "dCompDens_dCompConc";
 
     static constexpr auto fluidDensityString      = "FluidDensity";
-    static constexpr auto dFluidDens_dPresString  = "dFluidDensity_dPres";
-    static constexpr auto dFluidDens_dCompConcString  = "dFluidDensity_dCompConc";        
+    static constexpr auto dFluidDens_dPresString  = "dFluidDens_dPres";
+    static constexpr auto dFluidDens_dCompConcString  = "dFluidDens_dCompConc";        
 
+    static constexpr auto fluidViscosityString      = "FluidViscosity";
+    static constexpr auto dFluidVisc_dPresString  = "dFluidVisc_dPres";
+    static constexpr auto dFluidVisc_dCompConcString  = "dFluidVisc_dCompConc";        
+    
     static constexpr auto viscosityString    = "viscosity";
-    static constexpr auto dVisc_dPresString  = "dViscosity_dPressure";
+    static constexpr auto dVisc_dPresString  = "dVisc_dPres";
     static constexpr auto dVisc_dProppantConcString  = "dVisc_dProppantConc";
     static constexpr auto dVisc_dCompConcString  = "dVisc_dCompConc";        
     static constexpr auto flowBehaviorIndexString   = "flowBehaviorIndex";
@@ -133,8 +157,12 @@ public:
 
     ViewKey fluidDensity = { fluidDensityString };    
     ViewKey dFluidDens_dPres = { dFluidDens_dPresString };
-    ViewKey dFluidDens_dCompConc = { dFluidDens_dCompConcString };        
+    ViewKey dFluidDens_dCompConc = { dFluidDens_dCompConcString };
 
+    ViewKey fluidViscosity = { fluidViscosityString };    
+    ViewKey dFluidVisc_dPres = { dFluidVisc_dPresString };
+    ViewKey dFluidVisc_dCompConc = { dFluidVisc_dCompConcString };
+    
     ViewKey viscosity   = { viscosityString };
     ViewKey dVisc_dPres = { dVisc_dPresString };
     ViewKey dVisc_dProppantConc = { dVisc_dProppantConcString };
@@ -152,6 +180,8 @@ protected:
   string_array    m_componentNames;
 
   array1d<real64> m_defaultDensity;
+  array1d<real64> m_defaultCompressibility;
+  array1d<real64> m_defaultViscosity;  
 
   array1d<real64> m_nIndices;
   array1d<real64> m_Ks;  
@@ -161,14 +191,24 @@ protected:
   array2d<real64> m_dDens_dProppantConc;  
   array3d<real64> m_dDens_dCompConc;  
 
+  array3d<real64> m_componentDensity;
+  array3d<real64> m_dCompDens_dPres;
+  array4d<real64> m_dCompDens_dCompConc;  
+  
   array2d<real64> m_fluidDensity;  
   array2d<real64> m_dFluidDens_dPres;
-  array3d<real64> m_dFluidDens_dCompConc;    
+  array3d<real64> m_dFluidDens_dCompConc;
+
+  array2d<real64> m_fluidViscosity;  
+  array2d<real64> m_dFluidVisc_dPres;
+  array3d<real64> m_dFluidVisc_dCompConc;      
   
   array2d<real64> m_viscosity;
   array2d<real64> m_dVisc_dPres;
   array2d<real64> m_dVisc_dProppantConc;  
-  array3d<real64> m_dVisc_dCompConc;  
+  array3d<real64> m_dVisc_dCompConc;
+
+  bool m_isNewtonianFluid;
 
 };
 

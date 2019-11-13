@@ -6,9 +6,11 @@ Name                         Type Description
 CompositionalMultiphaseFlow  node :ref:`DATASTRUCTURE_CompositionalMultiphaseFlow`  
 CompositionalMultiphaseWell  node :ref:`DATASTRUCTURE_CompositionalMultiphaseWell`  
 DummySolver                  node :ref:`DATASTRUCTURE_DummySolver`                  
+FlowProppantTransport        node :ref:`DATASTRUCTURE_FlowProppantTransport`        
 Hydrofracture                node :ref:`DATASTRUCTURE_Hydrofracture`                
 LaplaceFEM                   node :ref:`DATASTRUCTURE_LaplaceFEM`                   
 Poroelastic                  node :ref:`DATASTRUCTURE_Poroelastic`                  
+ProppantTransport            node :ref:`DATASTRUCTURE_ProppantTransport`            
 Reservoir                    node :ref:`DATASTRUCTURE_Reservoir`                    
 SinglePhaseFlow              node :ref:`DATASTRUCTURE_SinglePhaseFlow`              
 SinglePhaseWell              node :ref:`DATASTRUCTURE_SinglePhaseWell`              
