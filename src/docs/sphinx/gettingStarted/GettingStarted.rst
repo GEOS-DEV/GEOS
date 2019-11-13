@@ -81,7 +81,7 @@ Running the Code
 =================================
 
 GEOSX executables read in a XML input file. A simple example XML is located
-`here <https://github.com/GEOSX/GEOSX/blob/develop/src/components/core/tests/PhysicsSolvers/LaplaceFEM.xml/>`__.
+`here <https://github.com/GEOSX/GEOSX/blob/develop/src/coreComponents/physicsSolvers/SimpleSolvers/integratedTests/10x10x10_LaplaceFEM.xml/>`__.
 To execute a serial run enter the following command from a working directory:
 
 .. code-block:: sh
