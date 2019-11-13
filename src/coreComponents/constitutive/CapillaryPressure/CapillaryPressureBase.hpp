@@ -1,27 +1,23 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
   * @file CapillaryPressureBase.hpp
   */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_CAPILLARYPRESSUREBASE_HPP
-#define SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_CAPILLARYPRESSUREBASE_HPP
+#ifndef GEOSX_CONSTITUTIVE_CAPILLARYPRESSURE_CAPILLARYPRESSUREBASE_HPP
+#define GEOSX_CONSTITUTIVE_CAPILLARYPRESSURE_CAPILLARYPRESSUREBASE_HPP
 
 #include "constitutive/ConstitutiveBase.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
@@ -48,13 +44,13 @@ public:
   static constexpr integer REFERENCE_PHASE = PhaseType::OIL; 
   
   CapillaryPressureBase( std::string const & name,
-                         dataRepository::ManagedGroup * const parent );
+                         dataRepository::Group * const parent );
   
   virtual ~CapillaryPressureBase() override;
 
-  // *** ManagedGroup interface
+  // *** Group interface
   
-  virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
+  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   // *** CapillaryPressure-specific interface
@@ -73,9 +69,9 @@ public:
    *
    * @note This function should generally not be called from a kernel, use BatchUpdate instead
    */
-  virtual void PointUpdate( arraySlice1d<real64 const> const & phaseVolFraction,
-                            localIndex const k,
-                            localIndex const q ) {}
+  virtual void PointUpdate( arraySlice1d<real64 const> const & GEOSX_UNUSED_ARG( phaseVolFraction ),
+                            localIndex const GEOSX_UNUSED_ARG( k ),
+                            localIndex const GEOSX_UNUSED_ARG( q ) ) {}
 
   localIndex numFluidPhases() const;
 
@@ -166,4 +162,4 @@ void CapillaryPressureBase::BatchUpdateKernel( arrayView2d<real64 const> const &
 
 } // namespace geosx
 
-#endif //SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_CAPILLARYPRESSUREBASE_HPP
+#endif //GEOSX_CONSTITUTIVE_CAPILLARYPRESSURE_CAPILLARYPRESSUREBASE_HPP

@@ -63,32 +63,10 @@ if (EXISTS ${ATK_DIR})
 
     include(${ATK_CMAKE}/fmt-targets.cmake)
     include(${ATK_CMAKE}/sparsehash-targets.cmake)
-    include(${ATK_CMAKE}/core-targets.cmake)
-    include(${ATK_CMAKE}/lumberjack-targets.cmake)
-    include(${ATK_CMAKE}/slic-targets.cmake)
-    include(${ATK_CMAKE}/sidre-targets.cmake)
+    include(${ATK_CMAKE}/axom-targets.cmake)
 
-    if (CONDUIT_FOUND)
-        blt_register_library( NAME sidre
-                              INCLUDES ${ATK_INCLUDE_DIRS} 
-                              LIBRARIES  sidre
-                              TREAT_INCLUDES_AS_SYSTEM ON )
-        set(thirdPartyLibs ${thirdPartyLibs} sidre )
-    else()
-        message("Conduit not found turning off sidre")
-    endif()
+    set(thirdPartyLibs ${thirdPartyLibs} axom )
 
-    blt_register_library( NAME slic
-                          INCLUDES ${ATK_INCLUDE_DIRS} 
-                          LIBRARIES  slic
-                          TREAT_INCLUDES_AS_SYSTEM ON)
-
-    blt_register_library( NAME lumberjack
-                          INCLUDES ${ATK_INCLUDE_DIRS} 
-                          LIBRARIES  lumberjack
-                          TREAT_INCLUDES_AS_SYSTEM ON)
-
-    set(thirdPartyLibs ${thirdPartyLibs} slic lumberjack )
 else()
     set(ATK_FOUND FALSE)
     message("Not using axom")

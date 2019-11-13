@@ -1,12 +1,24 @@
 /*
- * PoroElastic.hpp
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- *  Created on: Mar 28, 2019
- *      Author: rrsettgast
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef SRC_CORECOMPONENTS_CONSTITUTIVE_SOLID_POROELASTIC_HPP_
-#define SRC_CORECOMPONENTS_CONSTITUTIVE_SOLID_POROELASTIC_HPP_
+
+/**
+ * @file PoroElastic.hpp
+ */
+
+#ifndef GEOSX_CONSTITUTIVE_SOLID_POROELASTIC_HPP_
+#define GEOSX_CONSTITUTIVE_SOLID_POROELASTIC_HPP_
 
 #include "SolidBase.hpp"
 
@@ -21,7 +33,7 @@ template< typename BASE >
 class PoroElastic : public BASE
 {
 public:
-  PoroElastic( string const & name, dataRepository::ManagedGroup * const parent );
+  PoroElastic( string const & name, dataRepository::Group * const parent );
   virtual ~PoroElastic() override;
 
 
@@ -32,10 +44,10 @@ public:
 
   virtual void
   DeliverClone( string const & name,
-                dataRepository::ManagedGroup * const parent,
+                dataRepository::Group * const parent,
                 std::unique_ptr<ConstitutiveBase> & clone ) const override;
 
-  virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
+  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   inline virtual void
@@ -75,4 +87,4 @@ protected:
 }
 } /* namespace geosx */
 
-#endif /* SRC_CORECOMPONENTS_CONSTITUTIVE_SOLID_POROELASTIC_HPP_ */
+#endif /* GEOSX_CONSTITUTIVE_SOLID_POROELASTIC_HPP_ */

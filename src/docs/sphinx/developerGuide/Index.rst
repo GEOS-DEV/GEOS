@@ -8,8 +8,12 @@ Welcome to the GEOSX developer guide.
    :maxdepth: 1
 
    DeveloperGuidelines
+
+   BuildingProcess
    
    GitWorkflow
+
+   /coreComponents/dataRepository/dataRepository.rst
 
    /coreComponents/fileIO/schema/docs/SchemaGeneration
    
@@ -21,7 +25,7 @@ Welcome to the GEOSX developer guide.
    
    /coreComponents/managers/docs/ProblemManager.rst
    
-   /coreComponents/linearAlgebraInterface/docs/DofManager.rst
+   /coreComponents/linearAlgebra/docs/DofManager.rst
 
 
 

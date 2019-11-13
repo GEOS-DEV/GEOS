@@ -1,8 +1,19 @@
 /*
- * CellBase.cpp
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- *  Created on: Jan 14, 2019
- *      Author: settgast
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
+ */
+
+/**
+ * @file CellBase.cpp
  */
 
 #include "ElementSubRegionBase.hpp"
@@ -11,7 +22,7 @@ namespace geosx
 {
 using namespace dataRepository;
 
-ElementSubRegionBase::ElementSubRegionBase( string const & name, ManagedGroup * const parent ):
+ElementSubRegionBase::ElementSubRegionBase( string const & name, Group * const parent ):
   ObjectManagerBase(name,parent),
   m_constitutiveModels(groupKeyStruct::constitutiveModelsString,this),
   m_numNodesPerElement(),

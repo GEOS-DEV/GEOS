@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 
@@ -21,6 +17,8 @@
 
 #include <vector>
 
+#include "mpiCommunications/CommunicationTools.hpp"
+#include "mpiCommunications/SpatialPartition.hpp"
 #include "optionparser.h"
 
 #include "DomainPartition.hpp"
@@ -34,13 +32,12 @@
 #include "managers/Outputs/OutputManager.hpp"
 #include "fileIO/utils/utils.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
-#include "MPI_Communications/SpatialPartition.hpp"
-#include "MPI_Communications/CommunicationTools.hpp"
 #include "meshUtilities/SimpleGeometricObjects/SimpleGeometricObjectBase.hpp"
-#include "dataRepository/SidreWrapper.hpp"
+#include "dataRepository/ConduitRestart.hpp"
 #include "dataRepository/RestartFlags.hpp"
-
 #include "mesh/MeshBody.hpp"
+#include "wells/InternalWellGenerator.hpp"
+#include "wells/WellElementRegion.hpp"
 #include "meshUtilities/MeshUtilities.hpp"
 #include "common/TimingMacros.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
@@ -51,6 +48,8 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 
+class CellElementSubRegion;
+class FaceElementSubRegion;
 
 struct Arg : public option::Arg
 {
@@ -90,7 +89,7 @@ struct Arg : public option::Arg
 
 
 ProblemManager::ProblemManager( const std::string& name,
-                                ManagedGroup * const parent ):
+                                Group * const parent ):
   ObjectManagerBase(name, parent),
   m_physicsSolverManager(nullptr),
   m_eventManager(nullptr),
@@ -98,7 +97,7 @@ ProblemManager::ProblemManager( const std::string& name,
 {
   // Groups that do not read from the xml
   RegisterGroup<DomainPartition>(groupKeys.domain);
-  ManagedGroup * commandLine = RegisterGroup<ManagedGroup>(groupKeys.commandLine);
+  Group * commandLine = RegisterGroup<Group>(groupKeys.commandLine);
   commandLine->setRestartFlags(RestartFlags::WRITE);
 
   setInputFlags(InputFlags::PROBLEM_ROOT);
@@ -119,54 +118,54 @@ ProblemManager::ProblemManager( const std::string& name,
   m_physicsSolverManager = RegisterGroup<PhysicsSolverManager>(groupKeys.physicsSolverManager);
 
   // The function manager is handled separately
-  m_functionManager = NewFunctionManager::Instance();
+  m_functionManager = FunctionManager::Instance();
   // Mandatory groups that read from the xml
-  RegisterGroup<NewFunctionManager>( groupKeys.functionManager.Key(),
+  RegisterGroup<FunctionManager>( groupKeys.functionManager.Key(),
                                      m_functionManager,
                                      false );
 
   // Command line entries
-  commandLine->RegisterViewWrapper<string>( viewKeys.inputFileName.Key() )->
+  commandLine->registerWrapper<string>( viewKeys.inputFileName.Key() )->
     setRestartFlags(RestartFlags::WRITE)->
     setDescription("Name of the input xml file.");
 
-  commandLine->RegisterViewWrapper<string>( viewKeys.restartFileName.Key() )->
+  commandLine->registerWrapper<string>( viewKeys.restartFileName.Key() )->
     setRestartFlags(RestartFlags::WRITE)->
     setDescription("Name of the restart file.");
 
-  commandLine->RegisterViewWrapper<integer>( viewKeys.beginFromRestart.Key() )->
+  commandLine->registerWrapper<integer>( viewKeys.beginFromRestart.Key() )->
     setRestartFlags(RestartFlags::WRITE)->
     setDescription("Flag to indicate restart run.");
 
-  commandLine->RegisterViewWrapper<string>( viewKeys.problemName.Key() )->
+  commandLine->registerWrapper<string>( viewKeys.problemName.Key() )->
     setRestartFlags(RestartFlags::WRITE)->
     setDescription("Used in writing the output files, if not specified defaults to the name of the input file..");
 
-  commandLine->RegisterViewWrapper<string>( viewKeys.outputDirectory.Key() )->
+  commandLine->registerWrapper<string>( viewKeys.outputDirectory.Key() )->
     setRestartFlags(RestartFlags::WRITE)->
     setDescription("Directory in which to put the output files, if not specified defaults to the current directory.");
 
-  commandLine->RegisterViewWrapper<integer>( viewKeys.xPartitionsOverride.Key() )->
+  commandLine->registerWrapper<integer>( viewKeys.xPartitionsOverride.Key() )->
     setApplyDefaultValue(1)->
     setRestartFlags(RestartFlags::WRITE)->
     setDescription("Number of partitions in the x-direction");
 
-  commandLine->RegisterViewWrapper<integer>( viewKeys.yPartitionsOverride.Key() )->
+  commandLine->registerWrapper<integer>( viewKeys.yPartitionsOverride.Key() )->
     setApplyDefaultValue(1)->
     setRestartFlags(RestartFlags::WRITE)->
     setDescription("Number of partitions in the y-direction");
 
-  commandLine->RegisterViewWrapper<integer>( viewKeys.zPartitionsOverride.Key() )->
+  commandLine->registerWrapper<integer>( viewKeys.zPartitionsOverride.Key() )->
     setApplyDefaultValue(1)->
     setRestartFlags(RestartFlags::WRITE)->
     setDescription("Number of partitions in the z-direction");
 
-  commandLine->RegisterViewWrapper<integer>( viewKeys.overridePartitionNumbers.Key() )->
+  commandLine->registerWrapper<integer>( viewKeys.overridePartitionNumbers.Key() )->
     setApplyDefaultValue(0)->
     setRestartFlags(RestartFlags::WRITE)->
     setDescription("Flag to indicate partition number override");
 
-  commandLine->RegisterViewWrapper<string>( viewKeys.schemaFileName.Key() )->
+  commandLine->registerWrapper<string>( viewKeys.schemaFileName.Key() )->
     setRestartFlags(RestartFlags::WRITE)->
     setDescription("Name of the output schema");
 }
@@ -176,19 +175,20 @@ ProblemManager::~ProblemManager()
 {}
 
 
-ManagedGroup * ProblemManager::CreateChild( string const & childKey, string const & childName )
+Group * ProblemManager::CreateChild( string const & GEOSX_UNUSED_ARG( childKey ), string const & GEOSX_UNUSED_ARG( childName ) )
 { return nullptr; }
 
 
 void ProblemManager::ProblemSetup()
 {
+  GEOSX_MARK_FUNCTION;
   PostProcessInputRecursive();
 
   GenerateMesh();
 
   ApplyNumericalMethods();
 
-  RegisterDataOnMeshRecursive( nullptr );
+  RegisterDataOnMeshRecursive( GetGroup<DomainPartition>(groupKeys.domain)->getMeshBodies() );
 
   Initialize( this );
 
@@ -198,15 +198,9 @@ void ProblemManager::ProblemSetup()
 }
 
 
-void ProblemManager::RegisterDataOnMeshRecursive( ManagedGroup * const )
-{
-  GEOSX_MARK_FUNCTION;
-  ManagedGroup::RegisterDataOnMeshRecursive( GetGroup<DomainPartition>(groupKeys.domain)->getMeshBodies() );
-}
-
 void ProblemManager::ParseCommandLineInput( int argc, char** argv)
 {
-  ManagedGroup * commandLine = GetGroup<ManagedGroup>(groupKeys.commandLine);
+  Group * commandLine = GetGroup<Group>(groupKeys.commandLine);
 
   std::string& inputFileName = commandLine->getReference<std::string>(viewKeys.inputFileName);
   std::string& restartFileName = commandLine->getReference<std::string>(viewKeys.restartFileName);
@@ -506,7 +500,7 @@ void ProblemManager::GenerateDocumentation()
 {
   // Documentation output
   std::cout << "Trying to generate schema..." << std::endl;
-  ManagedGroup * commandLine = GetGroup<ManagedGroup>(groupKeys.commandLine);
+  Group * commandLine = GetGroup<Group>(groupKeys.commandLine);
   std::string const & schemaName = commandLine->getReference<std::string>(viewKeys.schemaFileName);
   
   if (schemaName.empty() == 0)
@@ -518,7 +512,7 @@ void ProblemManager::GenerateDocumentation()
     DomainPartition * domain  = getDomainPartition();
     meshManager->GenerateMeshLevels(domain);
 
-    RegisterDataOnMeshRecursive(nullptr);
+    RegisterDataOnMeshRecursive( domain->getMeshBodies() );
 
     // Generate schema
     SchemaUtilities::ConvertDocumentationToSchema(schemaName.c_str(), this, 0);
@@ -563,18 +557,18 @@ void ProblemManager::SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
 
 
   // Add entries that are only used in the pre-processor
-  ManagedGroup * IncludedList = this->RegisterGroup<ManagedGroup>("Included");
+  Group * IncludedList = this->RegisterGroup<Group>("Included");
   IncludedList->setInputFlags(InputFlags::OPTIONAL);
 
-  ManagedGroup * includedFile = IncludedList->RegisterGroup<ManagedGroup>("File");
+  Group * includedFile = IncludedList->RegisterGroup<Group>("File");
   includedFile->setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
   
-  ManagedGroup * parameterList = this->RegisterGroup<ManagedGroup>("Parameters");
+  Group * parameterList = this->RegisterGroup<Group>("Parameters");
   parameterList->setInputFlags(InputFlags::OPTIONAL);
 
-  ManagedGroup * parameter = parameterList->RegisterGroup<ManagedGroup>("Parameter");
+  Group * parameter = parameterList->RegisterGroup<Group>("Parameter");
   parameter->setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
-  parameter->RegisterViewWrapper<string>("value")->
+  parameter->registerWrapper<string>("value")->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Input parameter definition for the preprocessor");
 
@@ -585,10 +579,9 @@ void ProblemManager::SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
 
 void ProblemManager::ParseInputFile()
 {
-  GEOSX_MARK_FUNCTION;
   DomainPartition * domain  = getDomainPartition();
 
-  ManagedGroup * commandLine = GetGroup<ManagedGroup>(groupKeys.commandLine);
+  Group * commandLine = GetGroup<Group>(groupKeys.commandLine);
   std::string const& inputFileName = commandLine->getReference<std::string>(viewKeys.inputFileName);
 
 
@@ -633,7 +626,6 @@ void ProblemManager::ParseInputFile()
   string path = inputFileName.substr( 0, pos + 1 );
   xmlDocument.append_child(xmlWrapper::filePathString).append_attribute(xmlWrapper::filePathString) = path.c_str();
   xmlProblemNode = xmlDocument.child(this->getName().c_str());
-
   ProcessInputFileRecursive( xmlProblemNode );
 
   // The objects in domain are handled separately for now
@@ -646,11 +638,11 @@ void ProblemManager::ParseInputFile()
     // Open mesh levels
     MeshManager * meshManager = this->GetGroup<MeshManager>(groupKeys.meshManager);
     meshManager->GenerateMeshLevels(domain);
-
     ElementRegionManager * elementManager = domain->getMeshBody(0)->getMeshLevel(0)->getElemManager();
     topLevelNode = xmlProblemNode.child(elementManager->getName().c_str());
     elementManager->ProcessInputFileRecursive( topLevelNode );
     elementManager->PostProcessInputRecursive();
+
   }
 }
 
@@ -659,7 +651,7 @@ void ProblemManager::PostProcessInput()
 {
   DomainPartition * domain  = getDomainPartition();
 
-  ManagedGroup const * commandLine = GetGroup<ManagedGroup>(groupKeys.commandLine);
+  Group const * commandLine = GetGroup<Group>(groupKeys.commandLine);
   integer const & xparCL = commandLine->getReference<integer>(viewKeys.xPartitionsOverride);
   integer const & yparCL = commandLine->getReference<integer>(viewKeys.yPartitionsOverride);
   integer const & zparCL = commandLine->getReference<integer>(viewKeys.zPartitionsOverride);
@@ -687,7 +679,7 @@ void ProblemManager::PostProcessInput()
   if( repartition )
   {
     partition.setPartitions( xpar, ypar, zpar );
-    int mpiSize = CommunicationTools::MPI_Size(MPI_COMM_GEOSX) ;
+    int const mpiSize = MpiWrapper::Comm_size(MPI_COMM_GEOSX) ;
     // Case : Using MPI domain decomposition and partition are not defined (mainly pamela usage)
     if( mpiSize > 1 && xpar == 1 && ypar == 1 && zpar == 1)
     {
@@ -735,10 +727,10 @@ void ProblemManager::GenerateMesh()
 
   MeshManager * meshManager = this->GetGroup<MeshManager>(groupKeys.meshManager);
   meshManager->GenerateMeshes(domain);
-  ManagedGroup const * const cellBlockManager = domain->GetGroup(keys::cellManager);
+  Group const * const cellBlockManager = domain->GetGroup(keys::cellManager);
 
 
-  ManagedGroup * const meshBodies = domain->getMeshBodies();
+  Group * const meshBodies = domain->getMeshBodies();
 
   for( localIndex a=0; a<meshBodies->GetSubGroups().size() ; ++a )
   {
@@ -759,21 +751,19 @@ void ProblemManager::GenerateMesh()
       nodeManager->ConstructGlobalToLocalMap();
 
       elemManager->GenerateMesh( cellBlockManager );
-
-      faceManager->BuildFaces( nodeManager, elemManager );
-
-      edgeManager->BuildEdges(faceManager, nodeManager );
-
-      nodeManager->SetEdgeMaps( meshLevel->getEdgeManager() );
-      nodeManager->SetFaceMaps( meshLevel->getFaceManager() );
       nodeManager->SetElementMaps( meshLevel->getElemManager() );
 
+      faceManager->BuildFaces( nodeManager, elemManager );
+      nodeManager->SetFaceMaps( meshLevel->getFaceManager() );
+
+      edgeManager->BuildEdges( faceManager, nodeManager );
+      nodeManager->SetEdgeMaps( meshLevel->getEdgeManager() );
 
       domain->GenerateSets();
 
-      elemManager->forElementRegions( [&](ElementRegion * const region )->void
+      elemManager->forElementRegions( [&](ElementRegionBase * const region )->void
       {
-        ManagedGroup * subRegions = region->GetGroup(ElementRegion::viewKeyStruct::elementSubRegions);
+        Group * subRegions = region->GetGroup(ElementRegionBase::viewKeyStruct::elementSubRegions);
         subRegions->forSubGroups<ElementSubRegionBase>( [&]( ElementSubRegionBase * const subRegion ) -> void
         {
           subRegion->setupRelatedObjectsInRelations( meshLevel );
@@ -784,29 +774,28 @@ void ProblemManager::GenerateMesh()
       });
 
       elemManager->GenerateAggregates( faceManager, nodeManager );
+
+      elemManager->GenerateWells( meshManager, meshLevel );
+
     }
   }
 }
 
+
 void ProblemManager::ApplyNumericalMethods()
 {
-  GEOSX_MARK_FUNCTION;
   NumericalMethodsManager const * const
   numericalMethodManager = GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
 
   DomainPartition * domain  = getDomainPartition();
-
-  ManagedGroup const * const cellBlockManager = domain->GetGroup(keys::cellManager);
   ConstitutiveManager const * constitutiveManager = domain->GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
-
-
-  ManagedGroup * const meshBodies = domain->getMeshBodies();
-
+  Group * const meshBodies = domain->getMeshBodies();
 
   map<string,localIndex> regionQuadrature;
   for( localIndex solverIndex=0 ; solverIndex<m_physicsSolverManager->numSubGroups() ; ++solverIndex )
   {
     SolverBase const * const solver = m_physicsSolverManager->GetGroup<SolverBase>(solverIndex);
+
     string const numericalMethodName = solver->getDiscretization();
     string_array const & targetRegions = solver->getTargetRegions();
 
@@ -827,13 +816,14 @@ void ProblemManager::ApplyNumericalMethods()
 
         for( auto const & regionName : targetRegions )
         {
-          ElementRegion * const elemRegion = elemManager->GetRegion( regionName );
+          ElementRegionBase * const elemRegion = elemManager->GetRegion( regionName );
           localIndex const quadratureSize = feDiscretization == nullptr ? 1 : feDiscretization->getNumberOfQuadraturePoints();
           if( quadratureSize > regionQuadrature[regionName] )
           {
             regionQuadrature[regionName] = quadratureSize;
           }
-          elemRegion->forElementSubRegions([&]( auto * const subRegion )->void
+          elemRegion->forElementSubRegions<CellElementSubRegion,
+                                           FaceElementSubRegion>([&]( auto * const subRegion )->void
           {
             if( feDiscretization != nullptr )
             {
@@ -852,20 +842,17 @@ void ProblemManager::ApplyNumericalMethods()
     for( localIndex b=0 ; b<meshBody->numSubGroups() ; ++b )
     {
       MeshLevel * const meshLevel = meshBody->GetGroup<MeshLevel>(b);
-      NodeManager * const nodeManager = meshLevel->getNodeManager();
       ElementRegionManager * const elemManager = meshLevel->getElemManager();
-      arrayView1d<R1Tensor> const & X = nodeManager->referencePosition();
 
       for( map<string,localIndex>::iterator iter=regionQuadrature.begin() ; iter!=regionQuadrature.end() ; ++iter )
       {
         string const regionName = iter->first;
         localIndex const quadratureSize = iter->second;
 
-        ElementRegion * const elemRegion = elemManager->GetRegion( regionName );
+        ElementRegionBase * const elemRegion = elemManager->GetRegion( regionName );
         if( elemRegion != nullptr )
         {
           string_array const & materialList = elemRegion->getMaterialList();
-
           elemRegion->forElementSubRegions([&]( auto * const subRegion )->void
           {
             for( auto & materialName : materialList )
@@ -880,29 +867,28 @@ void ProblemManager::ApplyNumericalMethods()
 }
 
 
-void ProblemManager::InitializePostSubGroups( ManagedGroup * const group )
+void ProblemManager::InitializePostSubGroups( Group * const GEOSX_UNUSED_ARG( group ) )
 {
 
 //  ObjectManagerBase::InitializePostSubGroups(nullptr);
 //
   DomainPartition * domain  = getDomainPartition();
 
-  ManagedGroup * const meshBodies = domain->getMeshBodies();
+  Group * const meshBodies = domain->getMeshBodies();
   MeshBody * const meshBody = meshBodies->GetGroup<MeshBody>(0);
   MeshLevel * const meshLevel = meshBody->GetGroup<MeshLevel>(0);
 
-  ElementRegionManager * const elemManager = meshLevel->getElemManager();
   FaceManager * const faceManager = meshLevel->getFaceManager();
   EdgeManager * edgeManager = meshLevel->getEdgeManager();
 
   domain->SetupCommunications();
   faceManager->SetIsExternal();
   edgeManager->SetIsExternal( faceManager );
-
 }
 
 void ProblemManager::RunSimulation()
 {
+  GEOSX_MARK_FUNCTION;
   DomainPartition * domain  = getDomainPartition();
   m_eventManager->Run(domain);
 }
@@ -919,7 +905,6 @@ DomainPartition const * ProblemManager::getDomainPartition() const
 
 void ProblemManager::ApplyInitialConditions()
 {
-  GEOSX_MARK_FUNCTION;
   DomainPartition * domain = GetGroup<DomainPartition>(keys::domain);
 
   FieldSpecificationManager const * boundaryConditionManager = FieldSpecificationManager::get();
@@ -928,17 +913,14 @@ void ProblemManager::ApplyInitialConditions()
 
 }
 
-void ProblemManager::ReadRestartOverwrite( const std::string& restartFileName )
+void ProblemManager::ReadRestartOverwrite()
 {
-#ifdef GEOSX_USE_ATK
-  this->prepareToRead();
-  SidreWrapper::loadExternalData(restartFileName, MPI_COMM_GEOSX);
-  this->finishReading();
-#endif
+  this->loadFromConduit();
+  this->postRestartInitializationRecursive( GetGroup< DomainPartition >( keys::domain ) );
 }
 
 
 
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, ProblemManager, string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, ProblemManager, string const &, Group * const )
 
 } /* namespace geosx */

@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
@@ -21,8 +17,8 @@
  *
  */
 
-#ifndef POROELASTICSOLVER_HPP_
-#define POROELASTICSOLVER_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_COUPLEDSOLVERS_POROELASTICSOLVER_HPP_
+#define GEOSX_PHYSICSSOLVERS_COUPLEDSOLVERS_POROELASTICSOLVER_HPP_
 
 #include "../SolverBase.hpp"
 
@@ -33,7 +29,7 @@ class PoroelasticSolver : public SolverBase
 {
 public:
   PoroelasticSolver( const std::string& name,
-                     ManagedGroup * const parent );
+                     Group * const parent );
   ~PoroelasticSolver() override;
 
   /**
@@ -42,76 +38,30 @@ public:
    */
   static string CatalogName() { return "Poroelastic"; }
 
-  virtual void RegisterDataOnMesh( dataRepository::ManagedGroup * const MeshBodies ) override final;
+  virtual void RegisterDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
 
-  virtual void ImplicitStepSetup( real64 const& time_n,
-                                  real64 const& dt,
-                                  DomainPartition * const domain,
-                                  systemSolverInterface::EpetraBlockSystem * const blockSystem) override final;
+  virtual void
+  ImplicitStepSetup( real64 const & time_n,
+                     real64 const & dt,
+                     DomainPartition * const domain,
+                     DofManager & dofManager,
+                     ParallelMatrix & matrix,
+                     ParallelVector & rhs,
+                     ParallelVector & solution ) override final;
 
-  virtual void ImplicitStepComplete( real64 const& time_n,
-                                     real64 const& dt,
-                                     DomainPartition * const domain) override final;
+  virtual void
+  ImplicitStepComplete( real64 const & time_n,
+                        real64 const & dt,
+                        DomainPartition * const domain ) override final;
 
-  virtual void ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
+  virtual void
+  ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
 
-  virtual real64 SolverStep( real64 const & time_n,
-                             real64 const & dt,
-                             int const cycleNumber,
-                             DomainPartition * domain ) override;
-
-//  virtual real64 ExplicitStep( real64 const & time_n,
-//                               real64 const & dt,
-//                               integer const cycleNumber,
-//                               DomainPartition * const domain );
-//
-//  virtual real64 NonlinearImplicitStep( real64 const & time_n,
-//                                        real64 const & dt,
-//                                        integer const cycleNumber,
-//                                        DomainPartition * const domain,
-//                                        systemSolverInterface::EpetraBlockSystem * const blockSystem );
-//
-//  virtual real64 LinearImplicitStep(real64 const & time_n,
-//                                    real64 const & dt,
-//                                    integer const cycleNumber,
-//                                    DomainPartition * const domain,
-//                                    systemSolverInterface::EpetraBlockSystem * const blockSystem );
-//
-//  virtual void ImplicitStepSetup( real64 const& time_n,
-//                                  real64 const& dt,
-//                                  DomainPartition * const domain,
-//                                  systemSolverInterface::EpetraBlockSystem * const blockSystem);
-//
-//  virtual void AssembleSystem( DomainPartition * const domain,
-//                               systemSolverInterface::EpetraBlockSystem * const blockSystem,
-//                               real64 const time,
-//                               real64 const dt );
-//
-//  virtual void ApplyBoundaryConditions( DomainPartition * const domain,
-//                                        systemSolverInterface::EpetraBlockSystem * const blockSystem,
-//                                        real64 const time,
-//                                        real64 const dt );
-//
-//  virtual real64
-//  CalculateResidualNorm( systemSolverInterface::EpetraBlockSystem const *const blockSystem,
-//                         DomainPartition * const domain );
-//
-//
-//  virtual void SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
-//                            SystemSolverParameters const * const params );
-//
-//  virtual void
-//  ApplySystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
-//                       real64 const scalingFactor,
-//                       DomainPartition * const domain );
-//
-//  virtual void ResetStateToBeginningOfStep( DomainPartition * const domain );
-//
-//
-//  virtual void ImplicitStepComplete( real64 const & time,
-//                                     real64 const & dt,
-//                                     DomainPartition * const domain );
-
+  virtual real64
+  SolverStep( real64 const & time_n,
+              real64 const & dt,
+              int const cycleNumber,
+              DomainPartition * const domain ) override;
 
   void UpdateDeformationForCoupling( DomainPartition * const domain );
 
@@ -145,7 +95,7 @@ public:
 protected:
   virtual void PostProcessInput() override final;
 
-  virtual void InitializePostInitialConditions_PreSubGroups(dataRepository::ManagedGroup * const problemManager) override final;
+  virtual void InitializePostInitialConditions_PreSubGroups(dataRepository::Group * const problemManager) override final;
 
 
 private:
@@ -159,4 +109,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* POROELASTICSOLVER_HPP_ */
+#endif /* GEOSX_PHYSICSSOLVERS_COUPLEDSOLVERS_POROELASTICSOLVER_HPP_ */

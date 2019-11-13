@@ -7,16 +7,20 @@ set(common_headers
     DataTypes.hpp
     GeosxMacros.hpp
     TimingMacros.hpp
-    initialization.hpp )
+   )
 
 #
 # Specify all sources
 #
 set(common_sources
     DataTypes.cpp
-    initialization.cpp)
+   )
 
-set( dependencyList cxx-utilities managers mpi pugixml trilinos )
+set( dependencyList cxx-utilities )
+
+if( ENABLE_MPI )
+  set( dependencyList ${dependencyList} mpi )
+endif()
 
 if( ATK_FOUND )
   set( dependencyList ${dependencyList} conduit )
@@ -50,6 +54,7 @@ blt_add_library( NAME                  common
                  SOURCES               ${common_sources}
                  HEADERS               ${common_headers}
                  DEPENDS_ON            ${dependencyList}
+                 #OBJECT                TRUE
 #                 SHARED TRUE
                )
                

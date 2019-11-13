@@ -1,28 +1,24 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
  * @file OutputBase.hpp
  */
-#ifndef SRC_COMPONENTS_CORE_SRC_OUTPUTBASE_HPP_
-#define SRC_COMPONENTS_CORE_SRC_OUTPUTBASE_HPP_
+#ifndef GEOSX_MANAGERS_OUTPUTS_OUTPUTBASE_HPP_
+#define GEOSX_MANAGERS_OUTPUTS_OUTPUTBASE_HPP_
 
-#include "dataRepository/ManagedGroup.hpp"
+#include "dataRepository/Group.hpp"
 #include "dataRepository/ExecutableGroup.hpp"
 
 
@@ -39,7 +35,7 @@ class OutputBase : public ExecutableGroup
 public:
   /// Main constructor
   explicit OutputBase( std::string const & name,
-                       ManagedGroup * const parent );
+                       Group * const parent );
 
   /// Destructor
   virtual ~OutputBase() override;
@@ -51,7 +47,7 @@ public:
   virtual void SetupDirectoryStructure();
 
   /// Catalog interface
-  using CatalogInterface = cxx_utilities::CatalogInterface< OutputBase, std::string const &, ManagedGroup * const >;
+  using CatalogInterface = dataRepository::CatalogInterface< OutputBase, std::string const &, Group * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 
   struct viewKeysStruct
@@ -64,7 +60,7 @@ public:
   integer parallelThreads() const { return m_parallelThreads; }
 
 protected:
-  virtual void InitializePreSubGroups( ManagedGroup * const group ) override;
+  virtual void InitializePreSubGroups( Group * const group ) override;
 
 private:
   string m_slaveDirectory;
@@ -75,4 +71,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* SRC_COMPONENTS_CORE_SRC_OUTPUTBASE_HPP_ */
+#endif /* GEOSX_MANAGERS_OUTPUTS_OUTPUTBASE_HPP_ */

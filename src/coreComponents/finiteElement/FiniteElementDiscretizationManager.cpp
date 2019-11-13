@@ -1,26 +1,19 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
-/*
- * FiniteElementSpaceManager.cpp
- *
- *  Created on: Dec 5, 2017
- *      Author: sherman
+/**
+ * @file FiniteElementSpaceManager.cpp
  */
 
 #include "FiniteElementDiscretizationManager.hpp"
@@ -31,8 +24,8 @@ namespace geosx
 {
 using namespace dataRepository;
 
-FiniteElementDiscretizationManager::FiniteElementDiscretizationManager( string const & name, ManagedGroup * const parent ):
-  ManagedGroup(name,parent)
+FiniteElementDiscretizationManager::FiniteElementDiscretizationManager( string const & name, Group * const parent ):
+  Group(name,parent)
 {
   setInputFlags(InputFlags::OPTIONAL);
 }
@@ -43,18 +36,18 @@ FiniteElementDiscretizationManager::~FiniteElementDiscretizationManager()
 }
 
 
-ManagedGroup * FiniteElementDiscretizationManager::CreateChild( string const & childKey, string const & childName )
+Group * FiniteElementDiscretizationManager::CreateChild( string const & childKey, string const & childName )
 {
   // These objects should probably not be registered on managed group...
-  std::unique_ptr<ManagedGroup> fem = ManagedGroup::CatalogInterface::Factory( childKey, childName, this );
+  std::unique_ptr<Group> fem = Group::CatalogInterface::Factory( childKey, childName, this );
   return this->RegisterGroup( childName, std::move(fem) );
 }
 
 
 void FiniteElementDiscretizationManager::ExpandObjectCatalogs()
 {
-  // During schema generation, register one of each type derived from ManagedGroup here
-  for (auto& catalogIter: ManagedGroup::GetCatalog())
+  // During schema generation, register one of each type derived from Group here
+  for (auto& catalogIter: Group::GetCatalog())
   {
     CreateChild( catalogIter.first, catalogIter.first );
   }

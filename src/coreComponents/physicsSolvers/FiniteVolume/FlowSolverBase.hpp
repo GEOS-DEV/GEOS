@@ -1,38 +1,32 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
  * @file FlowSolverBase.hpp
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_FLOWSOLVERBASE_HPP_
-#define SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_FLOWSOLVERBASE_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_FINITEVOLUME_FLOWSOLVERBASE_HPP_
+#define GEOSX_PHYSICSSOLVERS_FINITEVOLUME_FLOWSOLVERBASE_HPP_
 
 #include "physicsSolvers/SolverBase.hpp"
-
-class Epetra_FECrsGraph;
 
 namespace geosx
 {
 
 namespace dataRepository
 {
-class ManagedGroup;
+class Group;
 }
 class FieldSpecificationBase;
 class FiniteElementBase;
@@ -48,12 +42,12 @@ class FlowSolverBase : public SolverBase
 {
 public:
 /**
-   * @brief main constructor for ManagedGroup Objects
-   * @param name the name of this instantiation of ManagedGroup in the repository
-   * @param parent the parent group of this instantiation of ManagedGroup
+   * @brief main constructor for Group Objects
+   * @param name the name of this instantiation of Group in the repository
+   * @param parent the parent group of this instantiation of Group
    */
   FlowSolverBase( const std::string& name,
-                  ManagedGroup * const parent );
+                  Group * const parent );
 
 
   /// deleted default constructor
@@ -76,16 +70,18 @@ public:
    */
   virtual ~FlowSolverBase() override;
 
-  virtual void RegisterDataOnMesh( ManagedGroup * const MeshBodies ) override;
-
+  virtual void RegisterDataOnMesh( Group * const MeshBodies ) override;
+  
   void setPoroElasticCoupling() { m_poroElasticFlag = 1; }
+
+  void setReservoirWellsCoupling() { m_coupledWellsFlag = 1; }
 
   localIndex fluidIndex() const { return m_fluidIndex; }
 
   localIndex solidIndex() const { return m_solidIndex; }
 
   localIndex numDofPerCell() const { return m_numDofPerCell; }
-
+  
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     // input data
@@ -101,6 +97,12 @@ public:
     static constexpr auto solidNameString      = "solidName";
     static constexpr auto fluidIndexString     = "fluidIndex";
     static constexpr auto solidIndexString     = "solidIndex";
+
+    static constexpr auto pressureString = "pressure";
+    static constexpr auto deltaPressureString = "deltaPressure";
+    static constexpr auto deltaVolumeString = "deltaVolume";
+
+    static constexpr auto aperture0String  = "aperture_n";
 
     using ViewKey = dataRepository::ViewKey;
 
@@ -125,6 +127,11 @@ public:
   {
   } groupKeysFlowSolverBase;
 
+  /**
+   * @brief Setup stored views into domain data for the current step
+   */
+  virtual void ResetViews( DomainPartition * const domain );
+
 private:
 
   /**
@@ -133,17 +140,13 @@ private:
    */
   void PrecomputeData(DomainPartition *const domain);
 
+
 protected:
 
-  virtual void InitializePreSubGroups(ManagedGroup * const rootGroup) override;
+  virtual void InitializePreSubGroups(Group * const rootGroup) override;
 
-  virtual void InitializePostInitialConditions_PreSubGroups(ManagedGroup * const rootGroup) override;
+  virtual void InitializePostInitialConditions_PreSubGroups(Group * const rootGroup) override;
 
-
-  /**
-   * @brief Setup stored views into domain data for the current step
-   */
-  virtual void ResetViews( DomainPartition * const domain );
 
   /// flag to determine whether or not to apply gravity
   integer m_gravityFlag;
@@ -163,9 +166,13 @@ protected:
   /// flag to determine whether or not coupled with solid solver
   integer m_poroElasticFlag;
 
+  /// flag to determine whether or not coupled with wells
+  integer m_coupledWellsFlag;
+  
   /// the number of Degrees of Freedom per cell
   localIndex m_numDofPerCell;
 
+  
   /// views into constant data fields
   ElementRegionManager::ElementViewAccessor<arrayView1d<integer>> m_elemGhostRank;
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_volume;
@@ -173,10 +180,11 @@ protected:
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_porosityRef;
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_elementArea;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_elementAperture0;
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_elementAperture;
 
 };
 
 }
 
-#endif //SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_FLOWSOLVERBASE_HPP_
+#endif //GEOSX_PHYSICSSOLVERS_FINITEVOLUME_FLOWSOLVERBASE_HPP_

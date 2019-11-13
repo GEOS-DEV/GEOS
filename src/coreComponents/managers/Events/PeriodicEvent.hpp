@@ -1,27 +1,23 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
  * @file PeriodicEvent.hpp
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_MANAGERS_EVENTS_PERIODICEVENT_HPP_
-#define SRC_COMPONENTS_CORE_SRC_MANAGERS_EVENTS_PERIODICEVENT_HPP_
+#ifndef GEOSX_MANAGERS_EVENTS_PERIODICEVENT_HPP_
+#define GEOSX_MANAGERS_EVENTS_PERIODICEVENT_HPP_
 
 #include "managers/Events/EventBase.hpp"
 
@@ -38,7 +34,7 @@ class PeriodicEvent : public EventBase
 public:
   /// Main constructor
   PeriodicEvent(const std::string& name,
-                ManagedGroup * const parent);
+                Group * const parent);
   
   /// Destructor
   virtual ~PeriodicEvent() override;
@@ -58,7 +54,7 @@ public:
   virtual void EstimateEventTiming(real64 const time,
                                    real64 const dt, 
                                    integer const cycle,
-                                   dataRepository::ManagedGroup * domain) override;
+                                   dataRepository::Group * domain) override;
 
   /**
    * If the event forecast is zero, and an optional function (f) is specified, then
@@ -79,7 +75,7 @@ public:
   void CheckOptionalFunctionThreshold(real64 const time,
                                       real64 const dt, 
                                       integer const cycle,
-                                      dataRepository::ManagedGroup * domain);
+                                      dataRepository::Group * domain);
 
   /**
    * Grab the next time-step.  If requested, then limit the requested
@@ -88,7 +84,7 @@ public:
   virtual real64 GetEventTypeDtRequest(real64 const time) override;
 
   /// A pointer to an optional function
-  dataRepository::ManagedGroup * m_functionTarget;
+  dataRepository::Group * m_functionTarget;
 
   struct viewKeyStruct
   {
@@ -129,4 +125,4 @@ public:
 
 } /* namespace geosx */
 
-#endif /* SRC_COMPONENTS_CORE_SRC_MANAGERS_EVENTS_PERIODICEVENT_HPP_ */
+#endif /* GEOSX_MANAGERS_EVENTS_PERIODICEVENT_HPP_ */

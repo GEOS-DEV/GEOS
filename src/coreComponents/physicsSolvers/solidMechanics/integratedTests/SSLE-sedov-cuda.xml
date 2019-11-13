@@ -1,5 +1,6 @@
-<?xml version="1.0" ?>
-<Problem xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="geos_v0.0.xsd">  
+
+<Problem>
+  
   <Solvers>
     <SolidMechanicsLagrangianSSLE name="lagsolve" 
                                   cflFactor="0.25"
@@ -30,7 +31,7 @@
     <PeriodicEvent name="restarts"
                    timeFrequency="5.0e-4"
                    targetExactTimestep="0"
-                   target="/Outputs/sidreRestart"/>
+                   target="/Outputs/restartOutput"/>
   </Events>
 
 
@@ -45,12 +46,12 @@
     </QuadratureRules>
     
     <FiniteElements>
-        <FiniteElementSpace name="FE1" basis="linearBasis" quadrature="gaussian" />
+        <FiniteElementSpace name="FE1" parentSpace="C3D8" basis="linearBasis" quadrature="gaussian" />
     </FiniteElements>
   </NumericalMethods>
 
   <ElementRegions>
-    <ElementRegion name="Region2" cellBlocks="{cb1}" materialList="{shale}" />
+    <CellElementRegion name="Region2" cellBlocks="{cb1}" materialList="{shale}" />
   </ElementRegions>
 
   <Constitutive>
@@ -83,7 +84,7 @@
   </FieldSpecifications>
   
   <Outputs>
-    <Restart name="sidreRestart"/>
+    <Restart name="restartOutput"/>
   </Outputs>
 
   <Geometry>

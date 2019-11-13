@@ -8,33 +8,13 @@ function or_die () {
         exit $status
     fi
 }
-if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-    mkdir build-darwin-clang-debug;
-    cd build-darwin-clang-debug;
-else
-    cd /home/geosx/geosx_repo
-    export PATH=${PATHMOD}:$PATH
-    or_die mkdir travis-build
-    cd travis-build
-fi
 
-if [[ "$DO_BUILD" == "yes" ]] ; then
-    or_die cmake \
-           -DCMAKE_C_COMPILER=${CC} -DCMAKE_CXX_COMPILER=${CXX} -DCMAKE_Fortran_COMPILER=${FC} \
-           -DENABLE_MPI=ON -DMPI_C_COMPILER=${MPICC} -DMPI_CXX_COMPILER=${MPICXX} -DMPI_Fortran_COMPILER=${MPIFC} -DMPIEXEC=${MPIEXEC} -DMPIEXEC_EXECUTABLE=${MPIEXEC} \
-           -DGEOSX_TPL_DIR=${GEOSX_TPL_DIR} \
-           -DENABLE_SPHINX=OFF \
-           -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
-           ${CMAKE_EXTRA_FLAGS} ../src
+#export CMAKE_BUILD_TYPE=Debug
+or_die cd /home/geosx/GEOSX
+or_die python scripts/config-build.py -hc host-configs/environment.cmake -bt ${CMAKE_BUILD_TYPE} -DENABLE_GEOSX_PTP:BOOL=ON
+or_die cd build-environment-*
+or_die make -j 2 VERBOSE=1
+or_die ctest -V
 
-#    if [[ ${CMAKE_EXTRA_FLAGS} == *COVERAGE* ]] ; then
-#      or_die make -j 1
-#    else
-    or_die make -j 1 VERBOSE=1
-#    fi
-    if [[ "${DO_TEST}" == "yes" ]] ; then
-      or_die ctest -V
-    fi
-fi
 
 exit 0

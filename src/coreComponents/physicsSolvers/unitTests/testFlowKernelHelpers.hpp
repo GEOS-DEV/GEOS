@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 #ifndef GEOSX_TESTFLOWKERNELHELPERS_HPP
@@ -22,12 +18,6 @@
 #include "common/DataTypes.hpp"
 
 //using namespace geosx;
-
-template<typename T, int NDIM>
-using Array = LvArray::Array<T, NDIM, localIndex>;
-
-template<typename T, int NDIM>
-using ArrayView = LvArray::ArrayView<T, NDIM, localIndex>;
 
 namespace detail
 {
@@ -72,8 +62,8 @@ struct AccessorHelper<false>
   static ElementAccessor<NDIM, T>
   makeElementAccessor( T const * const data,
                        localIndex const stencilSize,
-                       arraySlice1d<localIndex const> const & stencilRegIndices,
-                       arraySlice1d<localIndex const> const & stencilSubRegIndices,
+                       arraySlice1d<localIndex const> const & GEOSX_UNUSED_ARG( stencilRegIndices ),
+                       arraySlice1d<localIndex const> const & GEOSX_UNUSED_ARG( stencilSubRegIndices ),
                        arraySlice1d<localIndex const> const & stencilElemIndices,
                        DIMS... otherDims )
   {
@@ -97,10 +87,11 @@ struct AccessorHelper<false>
   static MaterialAccessor<NDIM, T>
   makeMaterialAccessor( T const * const data,
                         localIndex const stencilSize,
-                        arraySlice1d<localIndex const> const & stencilRegIndices,
-                        arraySlice1d<localIndex const> const & stencilSubRegIndices,
+                        arraySlice1d<localIndex const> const & GEOSX_UNUSED_ARG( stencilRegIndices ),
+                        arraySlice1d<localIndex const> const & GEOSX_UNUSED_ARG( stencilSubRegIndices ),
                         arraySlice1d<localIndex const> const & stencilElemIndices,
-                        localIndex matIndex, DIMS... otherDims )
+                        localIndex GEOSX_UNUSED_ARG( matIndex ),
+                        DIMS... otherDims )
   {
     localIndex numElems = 0;
     for (int i = 0; i < stencilSize; ++i)
