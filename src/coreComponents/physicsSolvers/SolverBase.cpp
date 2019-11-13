@@ -194,8 +194,6 @@ void SolverBase::Execute( real64 const time_n,
 
   SystemSolverParameters * const solverParams = getSystemSolverParameters();
   integer const maxSubSteps = solverParams->maxSubSteps();
-  integer & newtonIter = solverParams->numNewtonIterations();
-  integer const maxNewtonIter = solverParams->maxIterNewton();
   integer subStep = 0;
 
   for( ; subStep < maxSubSteps && dtRemaining > 0.0; ++subStep )
@@ -210,9 +208,12 @@ void SolverBase::Execute( real64 const time_n,
      * - if the time-step was chopped. Then we can add some heuristics to choose next dt.
      * */
     dtRemaining -= dtAccepted;
-    if (dtRemaining > 0.0)
-	  nextDt = std::min(dtAccepted, dtRemaining);
 
+    if (dtRemaining > 0.0)
+    {
+    	SetNextDt(solverParams, dtAccepted, nextDt);
+    	nextDt = std::min(nextDt, dtRemaining);
+    }
 
     if( m_verboseLevel >= 1 && dtRemaining > 0.0 )
     {
@@ -224,44 +225,38 @@ void SolverBase::Execute( real64 const time_n,
 
   GEOS_ERROR_IF( dtRemaining > 0.0, "Maximum allowed number of sub-steps reached. Consider increasing maxSubSteps." );
 
-  /* What to do with the next time-step?
-   * - keep the same one.
-   * - chop it
-   * - double it
-   */
-  if (subStep == 1)
-  {
-    if (newtonIter <  0.4 * maxNewtonIter )
-    {
-       // Easy convergence, let's double the time-step.
-       m_nextDt = 2*dt;
-       if( m_verboseLevel >= 1 )
-         {
-       	  GEOS_LOG_RANK_0( getName() << ": Newton solver converged in less than " << std::ceil(0.4 * maxNewtonIter) << " time-step will be doubled.");
-         }
-    }else if (newtonIter >  0.7 * maxNewtonIter)
-	{
-      // Tough convergence let us make the time-step smaller!
-       m_nextDt = dt/2;
-       if( m_verboseLevel >= 1 )
-         {
-    	   GEOS_LOG_RANK_0( getName() << ": Newton solver converged in more than " << std::ceil(0.7 * maxNewtonIter) << " time-step will be doubled.");
-         }
-	}else
-	{
-		m_nextDt = dt;
-	}
-  }else
-  {
-	  // If you had to chop the time-step next time start with the chopped time-step value.
-       m_nextDt = nextDt;
-       if( m_verboseLevel >= 1 )
-       {
-    	   GEOS_LOG_RANK_0( getName() << ": Newton solver required time-step cuts. The new time-step will be " << nextDt);
-       }
-  }
+  // Decide what to do with the next Dt for the event running the solver.
+  SetNextDt(solverParams, nextDt, m_nextDt);
 }
 
+void SolverBase::SetNextDt(SystemSolverParameters * const solverParams,
+		                   real64 const & currentDt,
+		                   real64 & nextDt)
+{
+	integer & newtonIter = solverParams->numNewtonIterations();
+	integer const maxNewtonIter = solverParams->maxIterNewton();
+
+	if (newtonIter <  0.4 * maxNewtonIter )
+	{
+		// Easy convergence, let's double the time-step.
+		nextDt = 2*currentDt;
+		if( m_verboseLevel >= 1 )
+		{
+			GEOS_LOG_RANK_0( getName() << ": Newton solver converged in less than " << std::ceil(0.4 * maxNewtonIter) << " iterations, time-step will be doubled.");
+		}
+	}else if (newtonIter >  0.7 * maxNewtonIter)
+	{
+		// Tough convergence let us make the time-step smaller!
+		nextDt = currentDt/2;
+		if( m_verboseLevel >= 1 )
+		{
+			GEOS_LOG_RANK_0( getName() << ": Newton solver converged in more than " << std::ceil(0.7 * maxNewtonIter) << " iterations, time-step will be doubled.");
+		}
+	}else
+	{
+		nextDt = currentDt;
+	}
+}
 
 real64 SolverBase::LinearImplicitStep( real64 const & time_n,
                                        real64 const & dt,
