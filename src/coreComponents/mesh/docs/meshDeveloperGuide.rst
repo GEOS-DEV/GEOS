@@ -4,13 +4,12 @@
 GEOSX Mesh Hierarchy
 ********************
 
-In GEOSX, the mesh structure consists of a hierarchy of classes intended to separate data and 
-functionality into related classes that assist in the definition of a discretized body, as well as
-providing some encapsulation for each topological type.
+In GEOSX, the mesh structure consists of a hierarchy of classes intended to encasulate data and 
+functionality for each topological type.
 Each class in the mesh hierarchy represents a distinct topological object, such as a nodes, edges, 
 faces, elements, etc.
-To understand the role of each class, it is helpful to view an object instantiation hierarchy.
-The object instantiation hierarchy differs from a "class hierarchy" in that it seeks to illustrate 
+The mesh data structure is illustrated in an object instantiation hierarchy.
+The object instantiation hierarchy differs from a "class hierarchy" in that it shows 
 how instantiations of each class relate to each other in the data hierarchy rather than how each class
 type relates to each other in an inheritance diagram. 
 
