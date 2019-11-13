@@ -1,6 +1,7 @@
 
 <Problem>
 
+  <!-- SPHINX_TUT_EXT_SOLVER -->
   <Solvers
     gravityVector="0.0, 0.0, -9.81">
   
@@ -16,18 +17,22 @@
                               maxIterNewton="8"/>
     </SinglePhaseFlow>
   </Solvers>
+  <!-- SPHINX_TUT_EXT_SOLVER_END -->
+
   
+  <!-- SPHINX_TUT_EXT_MESH -->
   <Mesh>
       <PAMELAMeshGenerator name="CubeHex"
           file="cube_10x10x10_hex.msh"/>
   </Mesh>
+  <!-- SPHINX_TUT_EXT_MESH_END -->
 
   <Geometry>
     <Box name="all" xMin="-1e9, -1e9, -1e9" xMax="1e9, 1e9, 1e9"/>
     <Box name="left" xMin="-1, -1, -1" xMax="0.9, 11, 11"/>
   </Geometry>
 
-
+  <!-- SPHINX_TUT_EXT_EVENTS -->
   <Events maxTime="100">
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
@@ -49,8 +54,9 @@
                    target="/Outputs/restartOutput"
                    endTime="-1"/>
   </Events>
+  <!-- SPHINX_TUT_EXT_EVENTS_END -->
 
-
+  <!-- SPHINX_TUT_EXT_NUM_METHODS -->
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation name="singlePhaseTPFA"
@@ -60,12 +66,15 @@
     </FiniteVolume>
 
   </NumericalMethods>
+  <!-- SPHINX_TUT_EXT_NUM_METHODS_END -->
 
-
+  <!-- SPHINX_TUT_EXT_ELEM_REGIONS -->
   <ElementRegions>
     <CellElementRegion name="Domain" cellBlocks="{0_HEX}" materialList="{water, rock}"/>
   </ElementRegions>
+  <!-- SPHINX_TUT_EXT_ELEM_REGIONS_END -->
 
+  <!-- SPHINX_TUT_EXT_CONSTITUTIVE -->
   <Constitutive>
     <CompressibleSinglePhaseFluid name="water"
                                   defaultDensity="1000"
@@ -79,8 +88,10 @@
                                  referencePressure="0.0"
                                  compressibility="1e-9"/>
   </Constitutive>
+  <!-- SPHINX_TUT_EXT_CONSTITUTIVE_END -->
 
-  <FieldSpecifications>
+ <!-- SPHINX_TUT_EXT_FIELDS -->
+ <FieldSpecifications>
     <FieldSpecification name="permx"
                component="0"
                initialCondition="1"  
@@ -124,6 +135,7 @@
                scale="1.1e3"
                setNames="{left}"/>
   </FieldSpecifications>
+ <!-- SPHINX_TUT_EXT_FIELDS_END -->
 
   <Functions>
 
