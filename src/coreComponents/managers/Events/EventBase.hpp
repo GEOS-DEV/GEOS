@@ -1,29 +1,25 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
  * @file EventBase.hpp
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_MANAGERS_EVENTS_EVENTSBASE_HPP_
-#define SRC_COMPONENTS_CORE_SRC_MANAGERS_EVENTS_EVENTSBASE_HPP_
+#ifndef GEOSX_MANAGERS_EVENTS_EVENTSBASE_HPP_
+#define GEOSX_MANAGERS_EVENTS_EVENTSBASE_HPP_
 
-#include "dataRepository/ManagedGroup.hpp"
+#include "dataRepository/Group.hpp"
 #include "dataRepository/ExecutableGroup.hpp"
 #include "fileIO/schema/SchemaUtilities.hpp"
 
@@ -40,7 +36,7 @@ class EventBase : public ExecutableGroup
 public:
   /// Main constructor
   explicit EventBase( std::string const & name,
-                       ManagedGroup * const parent );
+                       Group * const parent );
 
   /// Destructor
   virtual ~EventBase() override;
@@ -55,7 +51,7 @@ public:
   virtual void SignalToPrepareForExecution(real64 const time,
                                            real64 const dt,  
                                            integer const cycle,
-                                           dataRepository::ManagedGroup * domain) override;
+                                           dataRepository::Group * domain) override;
   /**
    * If the event forecast is equal to 0, then call the step function on its target and/or children.
    */
@@ -64,7 +60,7 @@ public:
                         integer const cycleNumber,
                         integer const,
                         real64 const,
-                        dataRepository::ManagedGroup * domain ) override;
+                        dataRepository::Group * domain ) override;
 
   /**
    * This method will call the execute method on the target
@@ -73,7 +69,7 @@ public:
   void Step(real64 const time,
             real64 const dt,  
             integer const cycle,
-            dataRepository::ManagedGroup * domain );
+            dataRepository::Group * domain );
 
   /*
    * This method is called as the code exits the main run loop
@@ -82,7 +78,7 @@ public:
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::ManagedGroup * domain ) override;
+                        dataRepository::Group * domain ) override;
 
   /**
    * An event may have an arbitrary number of sub-events defined as children in the input xml.
@@ -93,7 +89,7 @@ public:
    *         </PeriodicEvent>
    *       </Events>
    */
-  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
+  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 
 
   /// This function is used to expand any catalogs in the data structure
@@ -101,7 +97,7 @@ public:
 
   /**
    * The target object for an event may be specified via the keyword "target" in the input xml.
-   * This string is empty by default and uses GetGroupByPath() method in ManagedGroup, which returns
+   * This string is empty by default and uses GetGroupByPath() method in Group, which returns
    * a pointer to the target using a unix-style path as an input (both absolute and relative paths work).
    * This involves a lot of string parsing, so we do it once during initialization.
    */
@@ -116,13 +112,13 @@ public:
   virtual void CheckEvents(real64 const time, 
                               real64 const dt,
                               integer const cycle,
-                              dataRepository::ManagedGroup * domain);
+                              dataRepository::Group * domain);
 
   /// Method to estimate the timing of the event
   virtual void EstimateEventTiming(real64 const time, 
                                       real64 const dt,
                                       integer const cycle,
-                                      dataRepository::ManagedGroup * domain) = 0;
+                                      dataRepository::Group * domain) = 0;
 
   /**
    * This method will collect time-step size requests from its
@@ -134,7 +130,7 @@ public:
   /**
    * This method is used to get event-specifit dt requests
    */
-  virtual real64 GetEventTypeDtRequest(real64 const time){ return std::numeric_limits<real64>::max(); }
+  virtual real64 GetEventTypeDtRequest(real64 const GEOSX_UNUSED_ARG( time ) ) { return std::numeric_limits<real64>::max(); }
 
 
   /// This method is used to count the number of events/sub-events
@@ -178,7 +174,7 @@ public:
     } viewKeys;
 
   ///Catalog interface
-  using CatalogInterface = cxx_utilities::CatalogInterface< EventBase, std::string const &, ManagedGroup * const >;
+  using CatalogInterface = dataRepository::CatalogInterface< EventBase, std::string const &, Group * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 
   /// Access functions
@@ -223,4 +219,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* SRC_COMPONENTS_CORE_SRC_MANAGERS_EVENTS_EVENTSBASE_HPP_ */
+#endif /* GEOSX_MANAGERS_EVENTS_EVENTSBASE_HPP_ */

@@ -1,5 +1,6 @@
-<?xml version="1.0" ?>
-<Problem xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="geos_v0.0.xsd">  
+
+<Problem>
+  
   <Solvers>
     <SolidMechanicsLagrangianSSLE name="lagsolve" 
                                   cflFactor="0.25"
@@ -9,18 +10,18 @@
   </Solvers>
 
     <Mesh>
-    <InternalMesh name="mesh1"
-                  elementTypes="{C3D8}" 
-                  xCoords="{ 0, 10 }"
-                  yCoords="{ 0, 10 }"
-                  zCoords="{ 0, 10 }"
-                  nx="{100}"
-                  ny="{100}"
-                  nz="{100}"
-                  cellBlockNames="{cb1}"/>
-  </Mesh>
+      <InternalMesh name="mesh1"
+                    elementTypes="{C3D8}" 
+                    xCoords="{ 0, 10 }"
+                    yCoords="{ 0, 10 }"
+                    zCoords="{ 0, 10 }"
+                    nx="{100}"
+                    ny="{100}"
+                    nz="{100}"
+                    cellBlockNames="{cb1}"/>
+    </Mesh>
 
-  <Events maxTime="1.0e-3">
+  <Events maxTime="1.0e-5">
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
     <PeriodicEvent name="solverApplications"
@@ -40,12 +41,12 @@
     </QuadratureRules>
     
     <FiniteElements>
-        <FiniteElementSpace name="FE1" basis="linearBasis" quadrature="gaussian" />
+        <FiniteElementSpace name="FE1" parentSpace="C3D8" basis="linearBasis" quadrature="gaussian" />
     </FiniteElements>
   </NumericalMethods>
 
   <ElementRegions>
-    <ElementRegion name="Region2" cellBlocks="{cb1}" materialList="{shale}" />
+    <CellElementRegion name="Region2" cellBlocks="{cb1}" materialList="{shale}" />
   </ElementRegions>
 
   <Constitutive>

@@ -1,40 +1,38 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 #include <map>
 #include <vector>
 
-#include "ElementRegion.hpp"
 #include "ElementRegionManager.hpp"
+
+#include "mpiCommunications/CommunicationTools.hpp"
 #include "FaceElementRegion.hpp"
 #include "FaceManager.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "CellBlockManager.hpp"
+#include "meshUtilities/MeshManager.hpp"
 
 namespace geosx
 {
 using namespace dataRepository;
 
-ElementRegionManager::ElementRegionManager(  string const & name, ManagedGroup * const parent ):
+ElementRegionManager::ElementRegionManager(  string const & name, Group * const parent ):
   ObjectManagerBase(name,parent)
 {
   setInputFlags(InputFlags::OPTIONAL);
-  this->RegisterGroup<ManagedGroup>(keys::elementRegions);
+  this->RegisterGroup<Group>(ElementRegionManager::groupKeyStruct::elementRegionsGroup);
 }
 
 ElementRegionManager::~ElementRegionManager()
@@ -42,65 +40,54 @@ ElementRegionManager::~ElementRegionManager()
   // TODO Auto-generated destructor stub
 }
 
-localIndex ElementRegionManager::getNumberOfElements() const
-{
-  localIndex numElem = 0;
-  this->forElementSubRegions([&]( ManagedGroup const * cellBlock ) -> void
-    {
-      numElem += cellBlock->size();
-    });
-  return numElem;
-}
-
 localIndex ElementRegionManager::numCellBlocks() const
 {
   localIndex numCellBlocks = 0;
-  this->forElementSubRegions([&]( ManagedGroup const * cellBlock ) -> void
+  this->forElementSubRegions([&]( Group const * GEOSX_UNUSED_ARG( cellBlock ) )
     {
     numCellBlocks += 1;
-    });
+  });
   return numCellBlocks;
 }
 
 void ElementRegionManager::resize( integer_array const & numElements,
                                    string_array const & regionNames,
-                                   string_array const & elementTypes )
+                                   string_array const & GEOSX_UNUSED_ARG( elementTypes ) )
 {
   localIndex const n_regions = integer_conversion<localIndex>(regionNames.size());
-//  ManagedGroup * elementRegions = this->GetGroup(keys::cellBlocks);
+//  Group * elementRegions = this->GetGroup(keys::cellBlocks);
   for( localIndex reg=0 ; reg<n_regions ; ++reg )
   {
-    ElementRegion * elemRegion = this->GetRegion( regionNames[reg] );
+    ElementRegionBase * elemRegion = this->GetRegion( regionNames[reg] );
     elemRegion->resize(numElements[reg]);
   }
 }
 
 
-//CellBlock & ZoneManager::CreateRegion( string const & regionName,
-//                                             string const & elementType,
-//                                             integer const & numElements )
-//{
-////  ElementRegion * elemRegion = elementRegions.RegisterGroup( regionNames );
-////  elemRegion->resize(numElements);
-//}
-
-ManagedGroup * ElementRegionManager::CreateChild( string const & childKey, string const & childName )
+Group * ElementRegionManager::CreateChild( string const & childKey, string const & childName )
  {
   GEOS_ERROR_IF( !(CatalogInterface::hasKeyName(childKey)),
                  "KeyName ("<<childKey<<") not found in ObjectManager::Catalog");
   GEOS_LOG_RANK_0("Adding Object " << childKey<<" named "<< childName<<" from ObjectManager::Catalog.");
-  ManagedGroup * const elementRegions = this->GetGroup(keys::elementRegions);
+  Group * const elementRegions = this->GetGroup(ElementRegionManager::groupKeyStruct::elementRegionsGroup);
   return elementRegions->RegisterGroup( childName,
                                         CatalogInterface::Factory( childKey, childName, elementRegions ) );
 
  }
 
-
 void ElementRegionManager::ExpandObjectCatalogs()
 {
-  // Create an empty region for schema generation
-  // Are there going to be more types in the future?
-  CreateChild( "ElementRegion", "ElementRegion" );
+  ObjectManagerBase::CatalogInterface::CatalogType const & catalog = ObjectManagerBase::GetCatalog();
+  for( ObjectManagerBase::CatalogInterface::CatalogType::const_iterator iter = catalog.begin() ;
+       iter!=catalog.end() ;
+       ++iter )
+  {
+    string const key = iter->first;
+    if( key.find("ElementRegion") != std::string::npos )
+    {
+      this->CreateChild( key, key );
+    }
+  }
 }
 
 
@@ -116,16 +103,22 @@ void ElementRegionManager::SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
     targetChoiceNode.append_attribute("maxOccurs") = "unbounded";
   }
 
-  ManagedGroup * region = this->GetGroup(keys::elementRegions)->GetGroup("ElementRegion");
-  if (region != nullptr)
+  std::set<string> names;
+  this->forElementRegions([&]( ElementRegionBase * const elementRegion )
   {
-    SchemaUtilities::SchemaConstruction(region, schemaRoot, targetChoiceNode, documentationType);
+    names.insert( elementRegion->getName() );
+  });
+
+  for( string const & name: names )
+  {
+    ElementRegionBase * const elementRegion = GetRegion( name );
+    SchemaUtilities::SchemaConstruction( elementRegion, schemaRoot, targetChoiceNode, documentationType);
   }
 }
 
-void ElementRegionManager::GenerateMesh( ManagedGroup const * const cellBlockManager )
+void ElementRegionManager::GenerateMesh( Group const * const cellBlockManager )
 {
-  this->forElementRegions([&](ElementRegion * const elemRegion)->void
+  this->forElementRegions<CellElementRegion>([&](CellElementRegion * const elemRegion)->void
   {
     elemRegion->GenerateMesh( cellBlockManager->GetGroup(keys::cellBlocks) );
   });
@@ -133,12 +126,65 @@ void ElementRegionManager::GenerateMesh( ManagedGroup const * const cellBlockMan
 
 void ElementRegionManager::GenerateAggregates( FaceManager const * const faceManager, NodeManager const * const nodeManager )
 {
-  this->forElementRegions([&](ElementRegion * const elemRegion)->void
+  this->forElementRegions<CellElementRegion>([&](CellElementRegion * const elemRegion)->void
   {
     elemRegion->GenerateAggregates( faceManager, nodeManager );
   });
 }
 
+void ElementRegionManager::GenerateWells( MeshManager * const meshManager,
+                                          MeshLevel   * const meshLevel )
+{
+  NodeManager * const nodeManager = meshLevel->getNodeManager();
+
+  // get the offsets to construct local-to-global maps for well nodes and elements
+  nodeManager->SetMaxGlobalIndex();
+  globalIndex const nodeOffsetGlobal = nodeManager->m_maxGlobalIndex + 1;
+  localIndex  const elemOffsetLocal  = this->getNumberOfElements();
+  globalIndex const elemOffsetGlobal = MpiWrapper::Sum( elemOffsetLocal );
+
+  globalIndex wellElemCount = 0;
+  globalIndex wellNodeCount = 0;
+
+  // construct the wells one by one
+  forElementRegions<WellElementRegion>([&]( WellElementRegion * const wellRegion )
+  {
+
+    // get the global well geometry from the well generator
+    string const generatorName = wellRegion->GetWellGeneratorName();
+    InternalWellGenerator const * const wellGeometry =
+    meshManager->GetGroup<InternalWellGenerator>( generatorName );
+
+    GEOS_ERROR_IF( wellGeometry == nullptr,
+                  "InternalWellGenerator " << generatorName << " not found in well " << wellRegion->getName() );
+
+    // generate the local data (well elements, nodes, perforations) on this well
+    // note: each MPI rank knows the global info on the entire well (constructed earlier in InternalWellGenerator)
+    // so we only need node and element offsets to construct the local-to-global maps in each wellElemSubRegion
+    wellRegion->GenerateWell( *meshLevel, *wellGeometry, nodeOffsetGlobal + wellNodeCount, elemOffsetGlobal + wellElemCount );
+
+    // increment counters with global number of nodes and elements
+    wellElemCount += wellGeometry->GetNumElements();
+    wellNodeCount += wellGeometry->GetNumNodes();
+
+    string const subRegionName = wellRegion->GetSubRegionName();
+    WellElementSubRegion * const
+    subRegion = wellRegion->GetGroup( ElementRegionBase::viewKeyStruct::elementSubRegions )
+                          ->GetGroup<WellElementSubRegion>( subRegionName );
+
+    GEOS_ERROR_IF( subRegion == nullptr,
+                   "Subregion " << subRegionName << " not found in well " << wellRegion->getName() );
+
+    globalIndex const numWellElemsGlobal = MpiWrapper::Sum( subRegion->size() );
+
+    GEOS_ERROR_IF( numWellElemsGlobal != wellGeometry->GetNumElements(),
+                   "Invalid partitioning in well " << subRegionName );
+
+  });
+
+  // communicate to rebuild global node info since we modified global ordering
+  nodeManager->SetMaxGlobalIndex();
+}
 
 int ElementRegionManager::PackSize( string_array const & wrapperNames,
               ElementViewAccessor<arrayView1d<localIndex>> const & packList ) const
@@ -162,14 +208,14 @@ ElementRegionManager::PackPrivate( buffer_unit_type * & buffer,
 {
   int packedSize = 0;
 
-//  packedSize += ManagedGroup::Pack( buffer, wrapperNames, {}, 0, 0);
+//  packedSize += Group::Pack( buffer, wrapperNames, {}, 0, 0);
 
   packedSize += bufferOps::Pack<DOPACK>( buffer, this->getName() );
   packedSize += bufferOps::Pack<DOPACK>( buffer, numRegions() );
 
   for( typename dataRepository::indexType kReg=0 ; kReg<numRegions() ; ++kReg  )
   {
-    ElementRegion const * const elemRegion = GetRegion(kReg);
+    ElementRegionBase const * const elemRegion = GetRegion(kReg);
     packedSize += bufferOps::Pack<DOPACK>( buffer, elemRegion->getName() );
 
     packedSize += bufferOps::Pack<DOPACK>( buffer, elemRegion->numSubRegions() );
@@ -231,7 +277,7 @@ int ElementRegionManager::UnpackPrivate( buffer_unit_type const * & buffer,
     string regionName;
     unpackedSize += bufferOps::Unpack( buffer, regionName );
 
-    ElementRegion * const elemRegion = GetRegion(regionName);
+    ElementRegionBase * const elemRegion = GetRegion(regionName);
 
     localIndex numSubRegionsRead;
     unpackedSize += bufferOps::Unpack( buffer, numSubRegionsRead );
@@ -273,7 +319,7 @@ ElementRegionManager::PackGlobalMapsPrivate( buffer_unit_type * & buffer,
 
   for( typename dataRepository::indexType kReg=0 ; kReg<numRegions() ; ++kReg  )
   {
-    ElementRegion const * const elemRegion = GetRegion(kReg);
+    ElementRegionBase const * const elemRegion = GetRegion(kReg);
     packedSize += bufferOps::Pack<DOPACK>( buffer, elemRegion->getName() );
 
     packedSize += bufferOps::Pack<DOPACK>( buffer, elemRegion->numSubRegions() );
@@ -314,7 +360,7 @@ ElementRegionManager::UnpackGlobalMaps( buffer_unit_type const * & buffer,
     string regionName;
     unpackedSize += bufferOps::Unpack( buffer, regionName );
 
-    ElementRegion * const elemRegion = GetRegion(regionName);
+    ElementRegionBase * const elemRegion = GetRegion(regionName);
 
     localIndex numSubRegionsRead;
     unpackedSize += bufferOps::Unpack( buffer, numSubRegionsRead );
@@ -370,7 +416,7 @@ ElementRegionManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
 
   for( typename dataRepository::indexType kReg=0 ; kReg<numRegions() ; ++kReg  )
   {
-    ElementRegion const * const elemRegion = GetRegion(kReg);
+    ElementRegionBase const * const elemRegion = GetRegion(kReg);
     packedSize += bufferOps::Pack<DOPACK>( buffer, elemRegion->getName() );
 
     packedSize += bufferOps::Pack<DOPACK>( buffer, elemRegion->numSubRegions() );
@@ -417,7 +463,7 @@ ElementRegionManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
     string regionName;
     unpackedSize += bufferOps::Unpack( buffer, regionName );
 
-    ElementRegion * const elemRegion = GetRegion(regionName);
+    ElementRegionBase * const elemRegion = GetRegion(regionName);
 
     localIndex numSubRegionsRead;
     unpackedSize += bufferOps::Unpack( buffer, numSubRegionsRead );
@@ -435,5 +481,5 @@ ElementRegionManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
   return unpackedSize;
 }
 
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, ElementRegionManager, string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, ElementRegionManager, string const &, Group * const )
 }

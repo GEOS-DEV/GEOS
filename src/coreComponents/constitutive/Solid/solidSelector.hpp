@@ -1,12 +1,24 @@
 /*
- * solidSelector.hpp
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- *  Created on: Mar 22, 2019
- *      Author: settgast1
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef SRC_CORECOMPONENTS_CONSTITUTIVE_SOLID_SOLIDSELECTOR_HPP_
-#define SRC_CORECOMPONENTS_CONSTITUTIVE_SOLID_SOLIDSELECTOR_HPP_
+
+/**
+ * @file solidSelector.hpp
+ */
+
+#ifndef GEOSX_CONSTITUTIVE_SOLID_SOLIDSELECTOR_HPP_
+#define GEOSX_CONSTITUTIVE_SOLID_SOLIDSELECTOR_HPP_
 
 #include "LinearElasticIsotropic.hpp"
 
@@ -36,4 +48,4 @@ bool constitutiveUpdatePassThru( constitutive::ConstitutiveBase * const constitu
 }
 }
 
-#endif /* SRC_CORECOMPONENTS_CONSTITUTIVE_SOLID_SOLIDSELECTOR_HPP_ */
+#endif /* GEOSX_CONSTITUTIVE_SOLID_SOLIDSELECTOR_HPP_ */

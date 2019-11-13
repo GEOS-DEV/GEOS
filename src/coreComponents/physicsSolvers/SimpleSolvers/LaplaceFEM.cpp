@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
@@ -26,9 +22,11 @@
 #include <vector>
 #include <math.h>
 
+#include "mpiCommunications/CommunicationTools.hpp"
+#include "mpiCommunications/NeighborCommunicator.hpp"
+#include "dataRepository/Group.hpp"
 #include "common/TimingMacros.hpp"
 
-#include "dataRepository/ManagedGroup.hpp"
 #include "common/DataTypes.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
@@ -38,8 +36,6 @@
 #include "codingUtilities/Utilities.hpp"
 
 #include "managers/DomainPartition.hpp"
-#include "MPI_Communications/CommunicationTools.hpp"
-#include "MPI_Communications/NeighborCommunicator.hpp"
 
 namespace geosx
 {
@@ -52,22 +48,17 @@ namespace keys
 
 using namespace dataRepository;
 using namespace constitutive;
-using namespace systemSolverInterface;
 
 LaplaceFEM::LaplaceFEM( const std::string& name,
-                        ManagedGroup * const parent ):
-  SolverBase( name, parent )
+                        Group * const parent ):
+  SolverBase( name, parent ),
+  m_fieldName("primaryField")
 {
-//  this->RegisterGroup<SystemSolverParameters>( groupKeys.systemSolverParameters.Key() );
-  // To generate the schema, multiple solvers of that use this command are constructed
-  // Doing this can cause an error in the block setup, so move it to InitializePreSubGroups
-  // getLinearSystemRepository()->SetBlockID( BlockIDs::dummyScalarBlock, this->getName() );
-
-  RegisterViewWrapper<string>(laplaceFEMViewKeys.timeIntegrationOption.Key())->
+  registerWrapper<string>(laplaceFEMViewKeys.timeIntegrationOption.Key())->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("option for default time integration method");
 
-  RegisterViewWrapper<string>(laplaceFEMViewKeys.fieldVarName.Key(), &m_fieldName, false)->
+  registerWrapper<string>(laplaceFEMViewKeys.fieldVarName.Key(), &m_fieldName, false)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("name of field variable");
 }
@@ -77,26 +68,23 @@ LaplaceFEM::~LaplaceFEM()
   // TODO Auto-generated destructor stub
 }
 
-void LaplaceFEM::RegisterDataOnMesh( ManagedGroup * const MeshBodies )
+void LaplaceFEM::RegisterDataOnMesh( Group * const MeshBodies )
 {
   for( auto & mesh : MeshBodies->GetSubGroups() )
   {
     NodeManager * const nodes = mesh.second->group_cast<MeshBody*>()->getMeshLevel(0)->getNodeManager();
 
-    nodes->RegisterViewWrapper<real64_array >( m_fieldName )->
+    nodes->registerWrapper<real64_array >( m_fieldName )->
       setApplyDefaultValue(0.0)->
       setPlotLevel(PlotLevel::LEVEL_0)->
       setDescription("Primary field variable");
-
-    nodes->RegisterViewWrapper<array1d<globalIndex> >( viewKeyStruct::blockLocalDofNumberString )->
-      setApplyDefaultValue(-1)->
-      setPlotLevel(PlotLevel::LEVEL_1)->
-      setDescription("Global DOF numbers for the primary field variable");
   }
 }
 
 void LaplaceFEM::PostProcessInput()
 {
+  SolverBase::PostProcessInput();
+
   string tiOption = this->getReference<string>(laplaceFEMViewKeys.timeIntegrationOption);
 
   if( tiOption == "SteadyState" )
@@ -115,14 +103,16 @@ void LaplaceFEM::PostProcessInput()
   {
     GEOS_ERROR("invalid time integration option");
   }
-}
 
-void LaplaceFEM::InitializePreSubGroups( ManagedGroup * const problemManager )
-{
-  SolverBase::InitializePreSubGroups(problemManager);
-
-  // set the blockID for the block system interface
-  getLinearSystemRepository()->SetBlockID( BlockIDs::dummyScalarBlock, this->getName() );
+  // Set basic parameters for solver
+  m_linearSolverParameters.verbosity = 0;
+  m_linearSolverParameters.solverType = "gmres";
+  m_linearSolverParameters.krylov.tolerance = 1e-8;
+  m_linearSolverParameters.krylov.maxIterations = 250;
+  m_linearSolverParameters.krylov.maxRestart = 250;
+  m_linearSolverParameters.preconditionerType = "amg";
+  m_linearSolverParameters.amg.smootherType = "gaussSeidel";
+  m_linearSolverParameters.amg.coarseType = "direct";
 }
 
 real64 LaplaceFEM::SolverStep( real64 const& time_n,
@@ -138,64 +128,54 @@ real64 LaplaceFEM::SolverStep( real64 const& time_n,
   else if( m_timeIntegrationOption == timeIntegrationOption::ImplicitTransient ||
            m_timeIntegrationOption == timeIntegrationOption::SteadyState )
   {
-    dtReturn = this->LinearImplicitStep( time_n, dt, cycleNumber, domain, getLinearSystemRepository() );
+    dtReturn = this->LinearImplicitStep( time_n, dt, cycleNumber, domain, m_dofManager, m_matrix, m_rhs, m_solution );
   }
   return dtReturn;
 }
 
-real64 LaplaceFEM::ExplicitStep( real64 const& time_n,
+real64 LaplaceFEM::ExplicitStep( real64 const& GEOSX_UNUSED_ARG( time_n ),
                                  real64 const& dt,
-                                 const int cycleNumber,
-                                 DomainPartition * const domain )
+                                 const int GEOSX_UNUSED_ARG( cycleNumber ),
+                                 DomainPartition * const GEOSX_UNUSED_ARG( domain ) )
 {
   return dt;
 }
 
-void LaplaceFEM::ImplicitStepSetup( real64 const& time_n,
-                                    real64 const& dt,
+void LaplaceFEM::ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n ),
+                                    real64 const & GEOSX_UNUSED_ARG( dt ),
                                     DomainPartition * const domain,
-                                    systemSolverInterface::EpetraBlockSystem * const blockSystem )
+                                    DofManager & dofManager,
+                                    ParallelMatrix & matrix,
+                                    ParallelVector & rhs,
+                                    ParallelVector & solution )
 {
   // Computation of the sparsity pattern
-  SetupSystem( domain, blockSystem );
+  SetupSystem( domain, dofManager, matrix, rhs, solution );
 }
 
-void LaplaceFEM::ImplicitStepComplete( real64 const & time_n,
-                                       real64 const & dt,
-                                       DomainPartition * const domain)
+void LaplaceFEM::ImplicitStepComplete( real64 const & GEOSX_UNUSED_ARG( time_n ),
+                                       real64 const & GEOSX_UNUSED_ARG( dt ),
+                                       DomainPartition * const GEOSX_UNUSED_ARG( domain ) )
 {
 }
 
-void LaplaceFEM::SetupSystem( DomainPartition * const domain,
-                              EpetraBlockSystem * const blockSystem )
+void LaplaceFEM::SetupDofs( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
+                            DofManager & dofManager ) const
 {
-  // Set basic parameters for solver
-  m_parameters.verbosity = 0;
-  m_parameters.solverType = "gmres";
-  m_parameters.krylov.tolerance = 1e-8;
-  m_parameters.krylov.maxIterations = 250;
-  m_parameters.krylov.maxRestart = 250;
-  m_parameters.preconditionerType = "amg";
-  m_parameters.amg.smootherType = "gaussSeidel";
-  m_parameters.amg.coarseType = "direct";
-
-  dofManager.setMesh( domain, 0, 0 );
-  dofManager.addField( m_fieldName, DofManager::Location::Node, DofManager::Connectivity::Elem );
-
-  ParallelMatrix & sparsity = m_matrix;
-  dofManager.setSparsityPattern( sparsity, m_fieldName, m_fieldName );
-  dofManager.setVector( m_rhs, m_fieldName, m_fieldName );
-  dofManager.setVector( m_solution, m_fieldName, m_fieldName );
+  dofManager.addField( m_fieldName,
+                       DofManager::Location::Node,
+                       DofManager::Connectivity::Elem );
 }
 
-void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
-                                  EpetraBlockSystem * const blockSystem,
-                                  real64 const time_n,
-                                  real64 const dt )
+void LaplaceFEM::AssembleSystem( real64 const time_n,
+                                 real64 const GEOSX_UNUSED_ARG( dt ),
+                                 DomainPartition * const domain,
+                                 DofManager const & dofManager,
+                                 ParallelMatrix & matrix,
+                                 ParallelVector & rhs )
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ManagedGroup * const nodeManager = mesh->getNodeManager();
-  ConstitutiveManager  * const constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
+  Group * const nodeManager = mesh->getNodeManager();
   ElementRegionManager * const elemManager = mesh->getElemManager();
   NumericalMethodsManager const *
   numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
@@ -203,21 +183,25 @@ void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
   feDiscretizationManager = numericalMethodManager->
     GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
 
-  globalIndex_array const & indexArray = nodeManager->getReference<globalIndex_array>( dofManager.getKey( m_fieldName ) );
+  array1d<globalIndex> const & dofIndex =
+    nodeManager->getReference< array1d<globalIndex> >( dofManager.getKey( m_fieldName ) );
 
   // Initialize all entries to zero
-  m_matrix.zero();
-  m_rhs.zero();
+  matrix.zero();
+  rhs.zero();
+
+  matrix.open();
+  rhs.open();
 
   // begin region loop
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
   {
-    ElementRegion * const elementRegion = elemManager->GetRegion(er);
+    ElementRegionBase * const elementRegion = elemManager->GetRegion(er);
 
     FiniteElementDiscretization const *
     feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
 
-    elementRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr,
+    elementRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const GEOSX_UNUSED_ARG( esr ),
                                                                         CellElementSubRegion const * const elementSubRegion )
     {
       array3d<R1Tensor> const &
@@ -226,29 +210,29 @@ void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
       arrayView2d<real64> const &
       detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
 
-      arrayView2d<localIndex> const & elemsToNodes = elementSubRegion->nodeList();
-      const int numNodesPerElement = integer_conversion<int>(elemsToNodes.size(1));
+      localIndex const numNodesPerElement = elementSubRegion->numNodesPerElement();
+      arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & elemNodes = elementSubRegion->nodeList();
 
-      globalIndex_array element_index( numNodesPerElement );
+      globalIndex_array elemDofIndex( numNodesPerElement );
       real64_array element_rhs( numNodesPerElement );
       real64_array2d element_matrix( numNodesPerElement, numNodesPerElement );
 
       integer_array const & elemGhostRank = elementSubRegion->m_ghostRank;
-      const int n_q_points = feDiscretization->m_finiteElement->n_quadrature_points();
+      localIndex const n_q_points = feDiscretization->m_finiteElement->n_quadrature_points();
 
       // begin element loop, skipping ghost elements
       for( localIndex k=0 ; k<elementSubRegion->size() ; ++k )
       {
         if(elemGhostRank[k] < 0)
         {
-          dofManager.getIndices( element_index, DofManager::Connectivity::Elem, er, esr, k, m_fieldName );
-
           element_rhs = 0.0;
           element_matrix = 0.0;
           for( localIndex q=0 ; q<n_q_points ; ++q)
           {
             for( localIndex a=0 ; a<numNodesPerElement ; ++a)
             {
+              elemDofIndex[a] = dofIndex[ elemNodes( k, a ) ];
+
               real64 diffusion = 1.0;
               for( localIndex b=0 ; b<numNodesPerElement ; ++b)
               {
@@ -259,33 +243,50 @@ void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
 
             }
           }
-          m_matrix.add( element_index, element_index, element_matrix );
-          m_rhs.add( element_index, element_rhs );
+          matrix.add( elemDofIndex, elemDofIndex, element_matrix );
+          rhs.add( elemDofIndex, element_rhs );
         }
       }
     });
   }
-  m_matrix.close();
-  m_rhs.close();
+  matrix.close();
+  rhs.close();
 
-  if( verboseLevel() >= 2 )
+  if( verboseLevel() == 2 )
   {
-    string name = "matrix_" + std::to_string( time_n ) + ".mtx";
-    m_matrix.write( name.c_str() );
-    name = "rhs_" + std::to_string( time_n ) + ".mtx";
-    m_rhs.write( name.c_str() );
+    GEOS_LOG_RANK_0( "After LaplaceFEM::AssembleSystem" );
+    GEOS_LOG_RANK_0("\nJacobian:\n");
+    std::cout << matrix;
+    GEOS_LOG_RANK_0("\nResidual:\n");
+    std::cout << rhs;
+  }
+
+  if( verboseLevel() >= 3 )
+  {
+    SystemSolverParameters * const solverParams = getSystemSolverParameters();
+    integer newtonIter = solverParams->numNewtonIterations();
+
+    string filename_mat = "matrix_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
+    matrix.write( filename_mat, true );
+
+    string filename_rhs = "rhs_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
+    rhs.write( filename_rhs, true );
+
+    GEOS_LOG_RANK_0( "After LaplaceFEM::AssembleSystem" );
+    GEOS_LOG_RANK_0( "Jacobian: written to " << filename_mat );
+    GEOS_LOG_RANK_0( "Residual: written to " << filename_rhs );
   }
 }
 
-void LaplaceFEM::ApplySystemSolution( EpetraBlockSystem const * const blockSystem,
+void LaplaceFEM::ApplySystemSolution( DofManager const & dofManager,
+                                      ParallelVector const & solution,
                                       real64 const scalingFactor,
                                       DomainPartition * const domain )
 {
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
   NodeManager * const nodeManager = mesh->getNodeManager();
-  ElementRegionManager * const elemManager = mesh->getElemManager();
 
-  dofManager.copyVectorToField( m_solution, m_fieldName, nodeManager );
+  dofManager.copyVectorToField( solution, m_fieldName, scalingFactor, nodeManager, m_fieldName );
 
   // Syncronize ghost nodes
   std::map<string, string_array> fieldNames;
@@ -294,51 +295,63 @@ void LaplaceFEM::ApplySystemSolution( EpetraBlockSystem const * const blockSyste
   CommunicationTools::
   SynchronizeFields( fieldNames, mesh,
                      domain->getReference<array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
+}
 
-  if( dofManager.needDoubleSync() )
+void LaplaceFEM::ApplyBoundaryConditions( real64 const time_n,
+                                          real64 const dt,
+                                          DomainPartition * const domain,
+                                          DofManager const & dofManager,
+                                          ParallelMatrix & matrix,
+                                          ParallelVector & rhs )
+{
+  ApplyDirichletBC_implicit( time_n + dt, dofManager, *domain, m_matrix, m_rhs );
+
+  if( verboseLevel() == 2 )
   {
-    CommunicationTools::
-    SynchronizeFields( fieldNames, mesh,
-                       domain->getReference<array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
+    GEOS_LOG_RANK_0( "After LaplaceFEM::ApplyBoundaryConditions" );
+    GEOS_LOG_RANK_0("\nJacobian:\n");
+    std::cout << matrix;
+    GEOS_LOG_RANK_0("\nResidual:\n");
+    std::cout << rhs;
+  }
+
+  if( verboseLevel() >= 3 )
+  {
+    SystemSolverParameters * const solverParams = getSystemSolverParameters();
+    integer newtonIter = solverParams->numNewtonIterations();
+
+    string filename_mat = "matrix_bc_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
+    matrix.write( filename_mat, true );
+
+    string filename_rhs = "rhs_bc_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
+    rhs.write( filename_rhs, true );
+
+    GEOS_LOG_RANK_0( "After LaplaceFEM::ApplyBoundaryConditions" );
+    GEOS_LOG_RANK_0( "Jacobian: written to " << filename_mat );
+    GEOS_LOG_RANK_0( "Residual: written to " << filename_rhs );
   }
 }
 
-void LaplaceFEM::ApplyBoundaryConditions( DomainPartition * const domain,
-                                          systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                                          real64 const time_n,
-                                          real64 const dt )
+void LaplaceFEM::SolveSystem( DofManager const & dofManager,
+                              ParallelMatrix & matrix,
+                              ParallelVector & rhs,
+                              ParallelVector & solution )
 {
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ManagedGroup * const nodeManager = mesh->getNodeManager();
-  FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
+  rhs.scale( -1.0 ); // TODO decide if we want this here
+  solution.zero();
 
-  ApplyDirichletBC_implicit( time_n + dt, *domain, m_matrix, m_rhs );
-  if( verboseLevel() >= 2 )
+  SolverBase::SolveSystem( dofManager, matrix, rhs, solution );
+
+  if( verboseLevel() == 2 )
   {
-    string name = "matrixDir_" + std::to_string( time_n+dt ) + ".mtx";
-    m_matrix.write( name.c_str() );
-    name = "rhsDir_" + std::to_string( time_n+dt ) + ".mtx";
-    m_rhs.write( name.c_str() );
-  }
-}
-
-void LaplaceFEM::SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                              SystemSolverParameters const * const params )
-{
-  // Now create a solver from the parameter list
-  LinearSolver solver( m_parameters );
-
-  // Solve using the iterative solver and compare norms with true solution
-  solver.solve( m_matrix, m_solution, m_rhs );
-
-  if( verboseLevel() >= 2 )
-  {
-    string name = "sol.mtx";
-    m_solution.write( name.c_str() );
+    GEOS_LOG_RANK_0("After LaplaceFEM::SolveSystem");
+    GEOS_LOG_RANK_0("\nSolution\n");
+    std::cout << solution;
   }
 }
 
 void LaplaceFEM::ApplyDirichletBC_implicit( real64 const time,
+                                            DofManager const & dofManager,
                                             DomainPartition & domain,
                                             ParallelMatrix & matrix,
                                             ParallelVector & rhs )
@@ -352,19 +365,20 @@ void LaplaceFEM::ApplyDirichletBC_implicit( real64 const time,
                     [&]( FieldSpecificationBase const * const bc,
                     string const &,
                     set<localIndex> const & targetSet,
-                    ManagedGroup * const targetGroup,
-                    string const fieldName )->void
+                    Group * const targetGroup,
+                    string const GEOSX_UNUSED_ARG( fieldName ) )->void
   {
-    bc->ApplyBoundaryConditionToSystem<FieldSpecificationEqual, LAI>( targetSet,
-                                                                      time,
-                                                                      targetGroup,
-                                                                      m_fieldName,
-                                                                      dofManager.getKey( m_fieldName ),
-                                                                      1,
-                                                                      matrix,
-                                                                      rhs );
+    bc->ApplyBoundaryConditionToSystem<FieldSpecificationEqual, LAInterface>( targetSet,
+                                                                              false,
+                                                                              time,
+                                                                              targetGroup,
+                                                                              m_fieldName,
+                                                                              dofManager.getKey( m_fieldName ),
+                                                                              1,
+                                                                              matrix,
+                                                                              rhs );
   });
 }
 
-REGISTER_CATALOG_ENTRY( SolverBase, LaplaceFEM, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( SolverBase, LaplaceFEM, std::string const &, Group * const )
 } /* namespace ANST */
