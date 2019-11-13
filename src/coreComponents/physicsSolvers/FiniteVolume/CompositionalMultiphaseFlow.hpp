@@ -45,6 +45,7 @@ namespace constitutive
 class MultiFluidBase;
 }
 
+//START_SPHINX_INCLUDE_00
 /**
  * @class CompositionalMultiphaseFlow
  *
@@ -82,9 +83,11 @@ public:
    */
   virtual ~CompositionalMultiphaseFlow() override = default;
 
+//START_SPHINX_INCLUDE_01
+
   /**
-   * @brief name of the node manager in the object catalog
-   * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
+   * @brief name of the solver in the object catalog
+   * @return string that contains the catalog name to generate a new object through the object catalog.
    */
   static string CatalogName() { return dataRepository::keys::compositionalMultiphaseFlow; }
 
