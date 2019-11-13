@@ -141,15 +141,14 @@ void LASASCIILogDataSection::WriteSection( std::ofstream & file ) const
 void LASASCIILogDataSection::ParseLine( string const & line )
 {
   string_array splitLine = stringutilities::Tokenize( line, " \t\n\r" );
-  GEOS_ASSERT( splitLine.size() == m_nbCurves );
-  for( integer i = 0; i < splitLine.size(); i++ )
+  for( integer i = 0; i < m_nbCurves; i++ )
   {
     m_logs[i][m_count] = stringutilities::fromString< real64 >( splitLine[i] );
   }
   m_count++;
 }
 
-void LASFile::Load( string const& fileName, bool justImportGeometry )
+void LASFile::Load( string const& fileName )
 {
   std::ifstream file( fileName );
   GEOS_ERROR_IF( !file.is_open(), "Can't open " << fileName );
@@ -174,8 +173,7 @@ void LASFile::Load( string const& fileName, bool justImportGeometry )
         LASWellInformationSection * lastWellInformationSection = GetLastSection<LASWellInformationSection>();
         LASCurveInformationSection * lastCurveInformationSection = GetLastSection<LASCurveInformationSection>();
         LASASCIILogDataSection curLASASCIISection( lastWellInformationSection->GetNumberOfLogEntries(),
-                                                   lastCurveInformationSection->GetNumberOfCurves(),
-                                                   justImportGeometry );
+                                                   lastCurveInformationSection->GetNumberOfCurves() );
         std::streampos curPos = curLASASCIISection.ParseSection( file );
         m_lasASCIILogDataSection.push_back( curLASASCIISection );
         file.seekg( curPos );

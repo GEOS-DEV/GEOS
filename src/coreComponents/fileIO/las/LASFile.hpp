@@ -367,21 +367,13 @@ class LASOtherInformationSection : public LASInformationSection
 class LASASCIILogDataSection : public LASSection
 {
   public:
-    LASASCIILogDataSection( localIndex nbEntries, localIndex nbCurves, bool justImportGeometry ) :
-      LASSection()
+    LASASCIILogDataSection( localIndex nbEntries, localIndex nbCurves ) :
+      LASSection(),
+      m_logs(nbCurves, nbEntries ),
+      m_nbCurves( nbCurves ),
+      m_nbLogEntries( nbEntries ),
+      m_count(0)
     {
-      if( justImportGeometry )
-      {
-        m_logs( 1, nbEntries );
-        m_nbCurves = 1;
-      }
-      else
-      {
-        m_logs.resize( nbCurves, nbEntries );
-        m_nbCurves = nbCurves;
-      }
-      m_nbLogEntries= nbEntries;
-      m_count = 0;
     }
 
     virtual string const GetName() const override
@@ -443,7 +435,7 @@ class LASFile
 
     ~LASFile(){}
     
-    void Load( string const& fileName, bool justImportGeometry );
+    void Load( string const& fileName );
     
     void Save( string const& fileName ) const;
 

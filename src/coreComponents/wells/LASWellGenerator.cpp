@@ -32,11 +32,6 @@ LASWellGenerator::LASWellGenerator( string const & name, Group * const parent ):
     setInputFlag(InputFlags::OPTIONAL)->
     setApplyDefaultValue( -1 )->
     setDescription("Position of the log to take if there are several log sections defined in the LAS file ");
-
-  registerWrapper(viewKeyStruct::justImportGeometry, &m_justImportGeometry, false  )->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDefaultValue(1)->
-    setDescription("Just import the geometry of the well and ignore the other logs");
 }
 
 LASWellGenerator::~LASWellGenerator()
@@ -50,7 +45,7 @@ void LASWellGenerator::PostProcessInput()
 void LASWellGenerator::GeneratePolyLine()
 {
   LASFile lasFile;
-  lasFile.Load(  m_fileName, m_justImportGeometry );
+  lasFile.Load(  m_fileName );
   if( lasFile.HasLog( "X" ) && lasFile.HasLog( "Y" ) )
   {
     GeneratePolyLineFromXYZ( lasFile );

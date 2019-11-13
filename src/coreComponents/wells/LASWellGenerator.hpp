@@ -47,7 +47,6 @@ class LASWellGenerator : public WellGeneratorBase
   {
     constexpr static auto fileName               = "fileName";
     constexpr static auto geometryLogIndexInFile = "geometryLogIndexInFile";
-    constexpr static auto justImportGeometry     = "justImportGeometry";
   };
 
   /// not implemented
@@ -85,10 +84,6 @@ class LASWellGenerator : public WellGeneratorBase
   /// Index of the log to take to write the well geometry if
   /// the LAS file has several time the same sections
   integer m_logIndexToTakeForGeometry;
-
-  /// Just import the geometry and ignore the other logs
-  integer m_justImportGeometry;
-
 };
 
 } // namespace
