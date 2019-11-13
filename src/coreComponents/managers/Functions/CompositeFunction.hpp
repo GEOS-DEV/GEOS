@@ -1,27 +1,23 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
  * @file CompositeFunction.hpp
  */
 
-#ifndef COMPOSITEFUNCTION_HPP_
-#define COMPOSITEFUNCTION_HPP_
+#ifndef GEOSX_MANAGERS_FUNCTIONS_COMPOSITEFUNCTION_HPP_
+#define GEOSX_MANAGERS_FUNCTIONS_COMPOSITEFUNCTION_HPP_
 
 #include "FunctionBase.hpp"
 
@@ -42,7 +38,7 @@ class CompositeFunction : public FunctionBase
 public:
   /// Main constructor
   CompositeFunction( const std::string& name,
-                     dataRepository::ManagedGroup * const parent );
+                     dataRepository::Group * const parent );
 
   /// Destructor
   virtual ~CompositeFunction() override;
@@ -60,7 +56,7 @@ public:
    * @param set the subset of nodes to apply the function to
    * @param result an array to hold the results of the function
    */
-  virtual void Evaluate( dataRepository::ManagedGroup const * const group,
+  virtual void Evaluate( dataRepository::Group const * const group,
                          real64 const time,
                          SortedArrayView<localIndex const> const & set,
                          real64_array & result ) const override final;
@@ -90,4 +86,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* COMPOSITEFUNCTION_HPP_ */
+#endif /* GEOSX_MANAGERS_FUNCTIONS_COMPOSITEFUNCTION_HPP_ */

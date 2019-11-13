@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 
@@ -26,22 +22,22 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 
-CellElementSubRegion::CellElementSubRegion( string const & name, ManagedGroup * const parent ):
+CellElementSubRegion::CellElementSubRegion( string const & name, Group * const parent ):
   CellBlock( name, parent )
 {
-  RegisterViewWrapper( viewKeyStruct::constitutiveGroupingString, &m_constitutiveGrouping, 0)->
+  registerWrapper( viewKeyStruct::constitutiveGroupingString, &m_constitutiveGrouping, 0)->
     setSizedFromParent(0);
 
-  RegisterViewWrapper( viewKeyStruct::constitutiveMapString,
+  registerWrapper( viewKeyStruct::constitutiveMapString,
                        &m_constitutiveMapView, 0);
 
-  RegisterViewWrapper( viewKeyStruct::dNdXString, &m_dNdX, 0);
+  registerWrapper( viewKeyStruct::dNdXString, &m_dNdX, 0);
 
 
-  RegisterViewWrapper( viewKeyStruct::constitutivePointVolumeFraction,
+  registerWrapper( viewKeyStruct::constitutivePointVolumeFraction,
                        &m_constitutivePointVolumeFraction, 0);
 
-  RegisterViewWrapper( viewKeyStruct::dNdXString, &m_dNdX, 0)->setSizedFromParent(1);
+  registerWrapper( viewKeyStruct::dNdXString, &m_dNdX, 0)->setSizedFromParent(1);
 
 }
 
@@ -59,17 +55,17 @@ void CellElementSubRegion::CopyFromCellBlock( CellBlock const * source )
   this->nodeList() = source->nodeList();
   this->m_localToGlobalMap = source->m_localToGlobalMap;
   this->ConstructGlobalToLocalMap();
-  source->forExternalProperties([&]( const dataRepository::ViewWrapperBase * vw )->void
+  source->forExternalProperties([&]( const dataRepository::WrapperBase * wrapper )->void
   {
-    std::type_index typeIndex = std::type_index( vw->get_typeid());
+    std::type_index typeIndex = std::type_index( wrapper->get_typeid());
     rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( typeIndex ),
                                     true,
-                                    [&]( auto type, auto baseType ) -> void
+                                    [&]( auto type, auto GEOSX_UNUSED_ARG( baseType ) ) -> void
     {
       using fieldType = decltype(type);
-      const dataRepository::ViewWrapper<fieldType> & field = dataRepository::ViewWrapper< fieldType >::cast( *vw );
+      const dataRepository::Wrapper<fieldType> & field = dataRepository::Wrapper< fieldType >::cast( *wrapper );
       const fieldType & fieldref = field.reference();
-      this->RegisterViewWrapper( vw->getName(), &const_cast< fieldType & >( fieldref ), 0 ); //TODO remove const_cast
+      this->registerWrapper( wrapper->getName(), &const_cast< fieldType & >( fieldref ), 0 ); //TODO remove const_cast
     });
   });
 }
@@ -84,10 +80,10 @@ void CellElementSubRegion::ConstructSubRegionFromFaceSet( FaceManager const * co
 
 }
 
-void CellElementSubRegion::MaterialPassThru( string const & matName,
-                                           string const & setName,
-                                           set<localIndex> & materialSet,
-                                           ManagedGroup * material )
+void CellElementSubRegion::MaterialPassThru( string const & GEOSX_UNUSED_ARG( matName ),
+                                             string const & GEOSX_UNUSED_ARG( setName ),
+                                             set<localIndex> & GEOSX_UNUSED_ARG( materialSet ),
+                                             Group * GEOSX_UNUSED_ARG( material ) )
 {}
 
 
@@ -123,14 +119,14 @@ localIndex CellElementSubRegion::PackUpDownMapsPrivate( buffer_unit_type * & buf
   localIndex packedSize = 0;
 
   packedSize += bufferOps::Pack<DOPACK>( buffer,
-                                         nodeList().Base(),
+                                         nodeList().Base().toViewConst(),
                                          m_unmappedGlobalIndicesInNodelist,
                                          packList,
                                          this->m_localToGlobalMap,
                                          nodeList().RelatedObjectLocalToGlobal() );
 
   packedSize += bufferOps::Pack<DOPACK>( buffer,
-                                         faceList().Base(),
+                                         faceList().Base().toViewConst(),
                                          m_unmappedGlobalIndicesInFacelist,
                                          packList,
                                          this->m_localToGlobalMap,
@@ -142,15 +138,12 @@ localIndex CellElementSubRegion::PackUpDownMapsPrivate( buffer_unit_type * & buf
 
 localIndex CellElementSubRegion::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                                  localIndex_array & packList,
-                                                 bool const overwriteUpMaps,
-                                                 bool const overwriteDownMaps )
+                                                 bool const GEOSX_UNUSED_ARG( overwriteUpMaps ),
+                                                 bool const GEOSX_UNUSED_ARG( overwriteDownMaps ) )
 {
   localIndex unPackedSize = 0;
-
-
-
   unPackedSize += bufferOps::Unpack( buffer,
-                                     nodeList().Base(),
+                                     nodeList().Base().toView(),
                                      packList,
                                      m_unmappedGlobalIndicesInNodelist,
                                      this->m_globalToLocalMap,

@@ -1,27 +1,23 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
  * @file FaceManager.hpp
  */
 
-#ifndef FACEMANAGER_H_
-#define FACEMANAGER_H_
+#ifndef GEOSX_MESH_FACEMANAGER_HPP_
+#define GEOSX_MESH_FACEMANAGER_HPP_
 
 #include "ToElementRelation.hpp"
 #include "managers/ObjectManagerBase.hpp"
@@ -36,6 +32,10 @@ class CellElementSubRegion;
 class FaceManager : public ObjectManagerBase
 {
 public:
+
+  using NodeMapType = InterObjectRelation< ArrayOfArrays< localIndex > >;
+  using EdgeMapType = InterObjectRelation< ArrayOfArrays< localIndex > >;
+  using ElemMapType = FixedToManyElementRelation;
 
   /**
    * @name Static Factory Catalog Functions
@@ -54,11 +54,13 @@ public:
   ///
   ///
   ///
-  FaceManager( string const &, ManagedGroup * const parent );
+  FaceManager( string const &, Group * const parent );
   virtual ~FaceManager() override final;
 
 
   void BuildFaces( NodeManager * const nodeManager, ElementRegionManager * const elemManager );
+
+  void computeGeometry( NodeManager const * const nodeManager );
 
   localIndex getMaxFaceNodes() const;
 
@@ -67,7 +69,7 @@ public:
 
   void SortFaceNodes( arrayView1d<R1Tensor const> const & X,
                       R1Tensor const & elemCenter,
-                      arrayView1d<localIndex> const & faceNodes,
+                      localIndex * const faceNodes,
                       localIndex const numFaceNodes );
 
   void SetDomainBoundaryObjects( NodeManager * const nodeManager );
@@ -87,6 +89,8 @@ public:
 
   void FixUpDownMaps( bool const clearIfUnmapped );
 
+  virtual void enforceStateFieldConsistencyPostTopologyChange( std::set<localIndex> const & targetIndices ) override;
+
   void depopulateUpMaps( std::set<localIndex> const & receivedFaces,
                          ElementRegionManager const & elemRegionManager );
 
@@ -94,7 +98,8 @@ public:
 
   virtual void
   ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const  nodeManager,
-                                                   array1d<globalIndex_array>& faceToNodes ) override final;
+                                                   std::vector< std::vector< globalIndex > >& faceToNodes ) override final;
+
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
     static constexpr auto nodeListString              = "nodeList";
@@ -116,6 +121,8 @@ public:
   struct groupKeyStruct : ObjectManagerBase::groupKeyStruct
   {} groupKeys;
 
+  constexpr int maxFacesPerNode() const { return 100; }
+
   array1d<real64> &       faceArea()       { return m_faceArea; }
   array1d<real64> const & faceArea() const { return m_faceArea; }
 
@@ -126,11 +133,11 @@ public:
   array1d<R1Tensor> const & faceNormal() const { return m_faceNormal; }
 
 
-  OrderedVariableOneToManyRelation & nodeList()                    { return m_nodeList; }
-  OrderedVariableOneToManyRelation const & nodeList() const        { return m_nodeList; }
+  NodeMapType & nodeList()                    { return m_nodeList; }
+  NodeMapType const & nodeList() const        { return m_nodeList; }
 
-  OrderedVariableOneToManyRelation       & edgeList()       { return m_edgeList; }
-  OrderedVariableOneToManyRelation const & edgeList() const { return m_edgeList; }
+  EdgeMapType       & edgeList()       { return m_edgeList; }
+  EdgeMapType const & edgeList() const { return m_edgeList; }
 
   array2d<localIndex>       & elementRegionList()       { return m_toElements.m_toElementRegion; }
   array2d<localIndex> const & elementRegionList() const { return m_toElements.m_toElementRegion; }
@@ -141,7 +148,8 @@ public:
   array2d<localIndex>       & elementList()       { return m_toElements.m_toElementIndex; }
   array2d<localIndex> const & elementList() const { return m_toElements.m_toElementIndex; }
 
-
+  ElemMapType       & toElementRelation()       { return m_toElements; }
+  ElemMapType const & toElementRelation() const { return m_toElements; }
 
 private:
 
@@ -150,9 +158,9 @@ private:
                                     arrayView1d<localIndex const> const & packList ) const;
 
 
-  OrderedVariableOneToManyRelation m_nodeList;
-  OrderedVariableOneToManyRelation m_edgeList;
-  FixedToManyElementRelation m_toElements;
+  NodeMapType m_nodeList;
+  EdgeMapType m_edgeList;
+  ElemMapType m_toElements;
 
   map< localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInToNodes;
   map< localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInToEdges;

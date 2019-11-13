@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
@@ -26,20 +22,22 @@
 #include <math.h>
 #include <sys/time.h>
 
+#include "mpiCommunications/CommunicationTools.hpp"
+#include "mpiCommunications/NeighborCommunicator.hpp"
 #include "common/TimingMacros.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
+#include "constitutive/contactRelations/ContactRelationBase.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "finiteElement/ElementLibrary/FiniteElement.h"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteElement/Kinematics.h"
 #include "codingUtilities/Utilities.hpp"
+#include "mesh/FaceElementSubRegion.hpp"
 
 #include "managers/DomainPartition.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
-#include "MPI_Communications/CommunicationTools.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
-#include "MPI_Communications/NeighborCommunicator.hpp"
 
 
 //#define verbose 0 //Need to move this somewhere else
@@ -49,8 +47,6 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
-using namespace systemSolverInterface;
-
 
 inline void LinearElasticIsotropic_Kernel(R2SymTensor & Dadt, R2SymTensor & TotalStress, R2Tensor & Rot,
                                           localIndex i, real64 bulkModulus, real64 shearModulus,
@@ -62,7 +58,7 @@ inline void LinearElasticIsotropic_Kernel(R2SymTensor & Dadt, R2SymTensor & Tota
 
   meanStress[i] += volumeStrain * bulkModulus;
   TotalStress *= 2.0 * shearModulus;
-  
+
   devStress[i] += TotalStress;
   
   TotalStress.QijAjkQlk(devStress[i],Rot);
@@ -73,7 +69,7 @@ inline void LinearElasticIsotropic_Kernel(R2SymTensor & Dadt, R2SymTensor & Tota
 }
 
 SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const std::string& name,
-                                                          ManagedGroup * const parent ):
+                                                          Group * const parent ):
   SolverBase( name, parent ),
   m_newmarkGamma(0.5),
   m_newmarkBeta(0.25),
@@ -93,48 +89,45 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const std::string& nam
   m_nonSendOrReceiveNodes(),
   m_iComm()
 {
-  // To generate the schema, multiple solvers of that use this command are constructed
-  // Doing this can cause an error in the block setup, so move it to InitializePreSubGroups
-  // getLinearSystemRepository()->SetBlockID( BlockIDs::displacementBlock, this->getName() );
   m_sendOrReceiveNodes.setUserCallBack("SolidMechanicsLagrangianFEM::m_sendOrReceiveNodes");
   m_nonSendOrReceiveNodes.setUserCallBack("SolidMechanicsLagrangianFEM::m_nonSendOrReceiveNodes");
 
-  RegisterViewWrapper(viewKeyStruct::newmarkGammaString, &m_newmarkGamma, false )->
+  registerWrapper(viewKeyStruct::newmarkGammaString, &m_newmarkGamma, false )->
     setApplyDefaultValue(0.5)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Value of :math:`\\gamma` in the Newmark Method for Implicit Dynamic time integration option");
 
-  RegisterViewWrapper(viewKeyStruct::newmarkBetaString, &m_newmarkBeta, false )->
+  registerWrapper(viewKeyStruct::newmarkBetaString, &m_newmarkBeta, false )->
     setApplyDefaultValue(0.25)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Value of :math:`\\beta` in the Newmark Method for Implicit Dynamic time integration option. "
                    "This should be pow(newmarkGamma+0.5,2.0)/4.0 unless you know what you are doing.");
 
-  RegisterViewWrapper(viewKeyStruct::massDampingString, &m_massDamping, false )->
+  registerWrapper(viewKeyStruct::massDampingString, &m_massDamping, false )->
     setApplyDefaultValue(0.0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Value of mass based damping coefficient. ");
 
-  RegisterViewWrapper(viewKeyStruct::stiffnessDampingString, &m_stiffnessDamping, false )->
+  registerWrapper(viewKeyStruct::stiffnessDampingString, &m_stiffnessDamping, false )->
     setApplyDefaultValue(0.0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Value of stiffness based damping coefficient. ");
 
-  RegisterViewWrapper(viewKeyStruct::timeIntegrationOptionString, &m_timeIntegrationOption, false )->
+  registerWrapper(viewKeyStruct::timeIntegrationOptionString, &m_timeIntegrationOption, false )->
     setInputFlag(InputFlags::FALSE)->
     setDescription("Time integration enum class value.");
 
-  RegisterViewWrapper(viewKeyStruct::timeIntegrationOptionStringString, &m_timeIntegrationOptionString, false )->
+  registerWrapper(viewKeyStruct::timeIntegrationOptionStringString, &m_timeIntegrationOptionString, false )->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Time integration method. Options are: \n QuasiStatic \n ImplicitDynamic \n ExplicitDynamic");
 
-  RegisterViewWrapper(viewKeyStruct::useVelocityEstimateForQSString, &m_useVelocityEstimateForQS, false )->
+  registerWrapper(viewKeyStruct::useVelocityEstimateForQSString, &m_useVelocityEstimateForQS, false )->
     setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription( "Flag to indicate the use of the incremental displacement from the previous step as an "
                     "initial estimate for the incremental displacement of the current step.");
 
-  RegisterViewWrapper(viewKeyStruct::maxNumResolvesString, &m_maxNumResolves, false )->
+  registerWrapper(viewKeyStruct::maxNumResolvesString, &m_maxNumResolves, false )->
     setApplyDefaultValue(10)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription( "Value to indicate how many resolves may be executed after some other event is executed. "
@@ -142,7 +135,7 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const std::string& nam
                     "However if a new surface is generated, then the mechanics solve must be executed again due to the "
                     "change in topology.");
 
-  RegisterViewWrapper(viewKeyStruct::strainTheoryString, &m_strainTheory, false )->
+  registerWrapper(viewKeyStruct::strainTheoryString, &m_strainTheory, false )->
     setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription( "Indicates whether or not to use "
@@ -151,15 +144,25 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const std::string& nam
                     " 0 - Infinitesimal Strain \n"
                     " 1 - Finite Strain");
 
-  RegisterViewWrapper(viewKeyStruct::solidMaterialNameString, &m_solidMaterialName, false )->
+  registerWrapper(viewKeyStruct::solidMaterialNameString, &m_solidMaterialName, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription( "The name of the material that should be used in the constitutive updates");
+
+  registerWrapper(viewKeyStruct::contactRelationNameString, &m_contactRelationName, 0)->
+    setApplyDefaultValue(viewKeyStruct::noContactRelationNameString)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Name of contact relation to enforce constraints on fracture boundary.");
 
 
 }
 
 void SolidMechanicsLagrangianFEM::PostProcessInput()
 {
+  SolverBase::PostProcessInput();
+
+  m_linearSolverParameters.amg.isSymmetric = true;
+  m_linearSolverParameters.dofsPerNode = 3;
+
   if( !m_timeIntegrationOptionString.empty() )
   {
     SetTimeIntegrationOption( m_timeIntegrationOptionString );
@@ -172,61 +175,67 @@ SolidMechanicsLagrangianFEM::~SolidMechanicsLagrangianFEM()
 }
 
 
-void SolidMechanicsLagrangianFEM::RegisterDataOnMesh( ManagedGroup * const MeshBodies )
+void SolidMechanicsLagrangianFEM::RegisterDataOnMesh( Group * const MeshBodies )
 {
   for( auto & mesh : MeshBodies->GetSubGroups() )
   {
     NodeManager * const nodes = mesh.second->group_cast<MeshBody*>()->getMeshLevel(0)->getNodeManager();
 
 
-    nodes->RegisterViewWrapper<array1d<R1Tensor> >( keys::TotalDisplacement )->
+    nodes->registerWrapper<array1d<R1Tensor> >( keys::TotalDisplacement )->
       setPlotLevel(PlotLevel::LEVEL_0)->
       setRegisteringObjects(this->getName())->
       setDescription( "An array that holds the total displacements on the nodes.");
 
-    nodes->RegisterViewWrapper<array1d<R1Tensor> >( keys::IncrementalDisplacement )->
+    nodes->registerWrapper<array1d<R1Tensor> >( keys::IncrementalDisplacement )->
       setPlotLevel(PlotLevel::LEVEL_3)->
       setRegisteringObjects(this->getName())->
       setDescription( "An array that holds the incremental displacements for the current time step on the nodes.");
 
-    nodes->RegisterViewWrapper<array1d<R1Tensor> >( keys::Velocity )->
+    nodes->registerWrapper<array1d<R1Tensor> >( keys::Velocity )->
       setPlotLevel(PlotLevel::LEVEL_0)->
       setRegisteringObjects(this->getName())->
       setDescription( "An array that holds the current velocity on the nodes.");
 
-    nodes->RegisterViewWrapper<array1d<R1Tensor> >( keys::Acceleration )->setPlotLevel(PlotLevel::LEVEL_1)->
-      setPlotLevel(PlotLevel::LEVEL_0)->
+    nodes->registerWrapper<array1d<R1Tensor> >( keys::Acceleration )->
+      setPlotLevel(PlotLevel::LEVEL_1)->
       setRegisteringObjects(this->getName())->
       setDescription( "An array that holds the current acceleration on the nodes. This array also is used "
                       "to hold the summation of nodal forces resulting from the governing equations.");
 
-    nodes->RegisterViewWrapper<array1d<real64> >( keys::Mass )->setPlotLevel(PlotLevel::LEVEL_0)->
+    nodes->registerWrapper<array1d<R1Tensor> >( viewKeyStruct::forceExternal )->
+      setPlotLevel(PlotLevel::LEVEL_0)->
+      setRegisteringObjects(this->getName())->
+      setDescription( "An array that holds the external forces on the nodes. This includes any boundary"
+                      " conditions as well as coupling forces such as hydraulic forces.");
+
+    nodes->registerWrapper<array1d<real64> >( keys::Mass )->setPlotLevel(PlotLevel::LEVEL_0)->
         setPlotLevel(PlotLevel::LEVEL_0)->
         setRegisteringObjects(this->getName())->
         setDescription( "An array that holds the mass on the nodes.");
 
-    nodes->RegisterViewWrapper<array1d<R1Tensor> >( viewKeyStruct::vTildeString )->
+    nodes->registerWrapper<array1d<R1Tensor> >( viewKeyStruct::vTildeString )->
       setPlotLevel(PlotLevel::NOPLOT)->
       setRegisteringObjects(this->getName())->
       setDescription( "An array that holds the velocity predictors on the nodes.");
 
-    nodes->RegisterViewWrapper<array1d<R1Tensor> >( viewKeyStruct::uhatTildeString )->
+    nodes->registerWrapper<array1d<R1Tensor> >( viewKeyStruct::uhatTildeString )->
       setPlotLevel(PlotLevel::NOPLOT)->
       setRegisteringObjects(this->getName())->
       setDescription( "An array that holds the incremental displacement predictors on the nodes.");
 
-    nodes->RegisterViewWrapper<array1d<globalIndex> >( viewKeyStruct::globalDofNumberString )->setPlotLevel(PlotLevel::LEVEL_1);
+    nodes->registerWrapper<array1d<R1Tensor> >( viewKeyStruct::contactForceString )->
+      setPlotLevel(PlotLevel::LEVEL_0)->
+      setRegisteringObjects(this->getName())->
+      setDescription( "An array that holds the contact force.");
 
   }
 }
 
 
-void SolidMechanicsLagrangianFEM::InitializePreSubGroups(ManagedGroup * const rootGroup)
+void SolidMechanicsLagrangianFEM::InitializePreSubGroups(Group * const rootGroup)
 {
   SolverBase::InitializePreSubGroups(rootGroup);
-
-  // set the blockID for the block system interface
-  getLinearSystemRepository()->SetBlockID( BlockIDs::displacementBlock, this->getName() );
 
   DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
   ConstitutiveManager const * const cm = domain->getConstitutiveManager();
@@ -243,6 +252,7 @@ void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * co
 
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   NodeManager * const nodes = mesh->getNodeManager();
+  //FaceManager * const faceManager = mesh->getFaceManager();
 
   ElementRegionManager const * const elementRegionManager = mesh->getElemManager();
   ConstitutiveManager const * const constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
@@ -264,12 +274,12 @@ void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * co
 
   for( localIndex er=0 ; er<elementRegionManager->numRegions() ; ++er )
   {
-    ElementRegion const * const elemRegion = elementRegionManager->GetRegion(er);
+    ElementRegionBase const * const elemRegion = elementRegionManager->GetRegion(er);
 
     elemRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr, CellElementSubRegion const * const elementSubRegion )
     {
       arrayView2d<real64> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
-      arrayView2d<localIndex> const & elemsToNodes = elementSubRegion->nodeList();
+      arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & elemsToNodes = elementSubRegion->nodeList();
 
       std::unique_ptr<FiniteElementBase>
       fe = feDiscretization->getFiniteElement( elementSubRegion->GetElementTypeString() );
@@ -304,13 +314,13 @@ void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * co
   }
 }
 
-void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const problemManager )
+void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( Group * const problemManager )
 {
   DomainPartition * domain = problemManager->GetGroup<DomainPartition>(keys::domain);
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
 
   NodeManager * const nodes = mesh->getNodeManager();
-  FaceManager * const faceManager = mesh->getFaceManager();
+  //FaceManager * const faceManager = mesh->getFaceManager();
 
 
   ElementRegionManager * elementRegionManager = mesh->getElemManager();
@@ -336,7 +346,7 @@ void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( 
 
   for( localIndex er=0 ; er<elementRegionManager->numRegions() ; ++er )
   {
-    ElementRegion const * const elemRegion = elementRegionManager->GetRegion(er);
+    ElementRegionBase const * const elemRegion = elementRegionManager->GetRegion(er);
     m_elemsAttachedToSendOrReceiveNodes[er].resize( elemRegion->numSubRegions() );
     m_elemsNotAttachedToSendOrReceiveNodes[er].resize( elemRegion->numSubRegions() );
 
@@ -351,7 +361,7 @@ void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( 
         + std::to_string(er) + "][" + std::to_string(esr) + "]" );
 
       arrayView2d<real64> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
-      arrayView2d<localIndex> const & elemsToNodes = elementSubRegion->nodeList();
+      arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & elemsToNodes = elementSubRegion->nodeList();
 
       std::unique_ptr<FiniteElementBase>
       fe = feDiscretization->getFiniteElement( elementSubRegion->GetElementTypeString() );
@@ -398,9 +408,9 @@ void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( 
 }
 
 real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const& time_n,
-                                             real64 const& dt,
-                                             const int cycleNumber,
-                                             DomainPartition * domain )
+                                                real64 const& dt,
+                                                const int cycleNumber,
+                                                DomainPartition * domain )
 {
   real64 dtReturn = dt;
 
@@ -408,7 +418,13 @@ real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const& time_n,
 
   if( m_timeIntegrationOption == timeIntegrationOption::ExplicitDynamic )
   {
-    dtReturn = ExplicitStep( time_n, dt, cycleNumber, ManagedGroup::group_cast<DomainPartition*>(domain) );
+    dtReturn = ExplicitStep( time_n, dt, cycleNumber, Group::group_cast<DomainPartition*>(domain) );
+
+    if( surfaceGenerator!=nullptr )
+    {
+      surfaceGenerator->SolverStep( time_n, dt, cycleNumber, domain );
+    }
+
   }
   else if( m_timeIntegrationOption == timeIntegrationOption::ImplicitDynamic ||
            m_timeIntegrationOption == timeIntegrationOption::QuasiStatic )
@@ -416,23 +432,24 @@ real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const& time_n,
     int const maxNumResolves = m_maxNumResolves;
     int locallyFractured = 0;
     int globallyFractured = 0;
+    ImplicitStepSetup( time_n, dt, domain, m_dofManager, m_matrix, m_rhs, m_solution );
     for( int solveIter=0 ; solveIter<maxNumResolves ; ++solveIter )
     {
-      ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
-      dtReturn = NonlinearImplicitStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>(),
-                                        getLinearSystemRepository() );
+      SetupSystem( domain, m_dofManager, m_matrix, m_rhs, m_solution );
+
+      dtReturn = NonlinearImplicitStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition *>(), m_dofManager,
+                                        m_matrix, m_rhs, m_solution );
       if( surfaceGenerator!=nullptr )
       {
-        if( !( surfaceGenerator->SolverStep( time_n, dt, cycleNumber, domain ) > 0 ) )
+        if( surfaceGenerator->SolverStep( time_n, dt, cycleNumber, domain ) > 0 )
         {
           locallyFractured = 1;
         }
-        MPI_Allreduce( &locallyFractured,
-                       &globallyFractured,
-                       1,
-                       MPI_INT,
-                       MPI_MAX,
-                       MPI_COMM_GEOSX);
+        MpiWrapper::allReduce( &locallyFractured,
+                               &globallyFractured,
+                               1,
+                               MPI_MAX,
+                               MPI_COMM_GEOSX);
       }
       if( globallyFractured == 0 )
       {
@@ -447,7 +464,7 @@ real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const& time_n,
 
 real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
                                                   real64 const& dt,
-                                                  const int cycleNumber,
+                                                  const int GEOSX_UNUSED_ARG( cycleNumber ),
                                                   DomainPartition * const domain )
 {
   GEOSX_MARK_FUNCTION;
@@ -462,9 +479,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
   ConstitutiveManager * const constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
 
   FieldSpecificationManager * const fsManager = FieldSpecificationManager::get();
-  localIndex const numNodes = nodes->size();
 
-  arrayView1d<R1Tensor const> const & X = nodes->getReference<array1d<R1Tensor>>(nodes->viewKeys.referencePosition);
   arrayView1d<real64 const> const & mass = nodes->getReference<array1d<real64>>(keys::Mass);
   array1d<R1Tensor> & velocityArray = nodes->getReference<array1d<R1Tensor>>(keys::Velocity);
   arrayView1d<R1Tensor> const & vel = velocityArray;
@@ -515,20 +530,19 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
     }
   );
 
-  ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > meanStress =
-    elemManager->ConstructFullMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >("MeanStress", constitutiveManager);
+  ElementRegionManager::MaterialViewAccessor< arrayView2d<R2SymTensor> > const
+  stress = elemManager->ConstructFullMaterialViewAccessor< array2d<R2SymTensor>,
+                                                           arrayView2d<R2SymTensor> >( SolidBase::viewKeyStruct::stressString,
+                                                                                       constitutiveManager);
 
-  ElementRegionManager::MaterialViewAccessor< arrayView2d<R2SymTensor> > const devStress =
-    elemManager->ConstructFullMaterialViewAccessor< array2d<R2SymTensor>, arrayView2d<R2SymTensor> >("DeviatorStress", constitutiveManager);
-
-  ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase> constitutiveRelations =
-    elemManager->ConstructFullConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
+  ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase>
+  constitutiveRelations = elemManager->ConstructFullConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
 
   //Step 5. Calculate deformation input to constitutive model and update state to
   // Q^{n+1}
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
   {
-    ElementRegion * const elementRegion = elemManager->GetRegion(er);
+    ElementRegionBase * const elementRegion = elemManager->GetRegion(er);
     FiniteElementDiscretization const * feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
 
     elementRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr, CellElementSubRegion const * const elementSubRegion )
@@ -537,7 +551,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
 
       arrayView2d<real64> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
 
-      arrayView2d<localIndex> const & elemsToNodes = elementSubRegion->nodeList();
+      arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & elemsToNodes = elementSubRegion->nodeList();
 
       localIndex const numNodesPerElement = elemsToNodes.size(1);
 
@@ -553,8 +567,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
                                    u,
                                    vel,
                                    acc,
-                                   meanStress[er][esr][m_solidMaterialFullIndex],
-                                   devStress[er][esr][m_solidMaterialFullIndex],
+                                   stress[er][esr][m_solidMaterialFullIndex],
                                    dt );
 
     }); //Element Region
@@ -572,7 +585,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
 
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
   {
-    ElementRegion * const elementRegion = elemManager->GetRegion(er);
+    ElementRegionBase * const elementRegion = elemManager->GetRegion(er);
 
     FiniteElementDiscretization const * feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
 
@@ -582,7 +595,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
 
       arrayView2d<real64> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
 
-      arrayView2d<localIndex> const & elemsToNodes = elementSubRegion->nodeList();
+      arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & elemsToNodes = elementSubRegion->nodeList();
 
       localIndex const numNodesPerElement = elemsToNodes.size(1);
 
@@ -598,8 +611,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
                                    u,
                                    vel,
                                    acc,
-                                   meanStress[er][esr][m_solidMaterialFullIndex],
-                                   devStress[er][esr][m_solidMaterialFullIndex],
+                                   stress[er][esr][m_solidMaterialFullIndex],
                                    dt );
     }); //Element Region
 
@@ -620,9 +632,12 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
 
 
 void SolidMechanicsLagrangianFEM::ApplyDisplacementBC_implicit( real64 const time,
-                                                                 DomainPartition & domain,
-                                                                 EpetraBlockSystem & blockSystem )
+                                                                DofManager const & dofManager,
+                                                                DomainPartition & domain,
+                                                                ParallelMatrix & matrix,
+                                                                ParallelVector & rhs )
 {
+  string const dofKey = dofManager.getKey( keys::TotalDisplacement );
 
   FieldSpecificationManager const * const fsManager = FieldSpecificationManager::get();
 
@@ -631,42 +646,44 @@ void SolidMechanicsLagrangianFEM::ApplyDisplacementBC_implicit( real64 const tim
                      "nodeManager",
                      keys::TotalDisplacement,
                      [&]( FieldSpecificationBase const * const bc,
-                     string const &,
-                     set<localIndex> const & targetSet,
-                     ManagedGroup * const targetGroup,
-                     string const fieldName )->void
-    {
-    bc->ApplyBoundaryConditionToSystem<FieldSpecificationEqual>( targetSet,
-                                                                 false,
-                                                                 time,
-                                                                 targetGroup,
-                                                                 fieldName,
-                                                                 viewKeyStruct::globalDofNumberString,
-                                                                 3,
-                                                                 &blockSystem,
-                                                                 BlockIDs::displacementBlock );
-  });
+                          string const &,
+                          set<localIndex> const & targetSet,
+                          Group * const targetGroup,
+                          string const fieldName )
+  {
+    bc->ApplyBoundaryConditionToSystem<FieldSpecificationEqual, LAInterface>( targetSet,
+                                                                              false,
+                                                                              time,
+                                                                              targetGroup,
+                                                                              fieldName,
+                                                                              dofKey,
+                                                                              3,
+                                                                              matrix,
+                                                                              rhs );
+  } );
 }
 
 
-void SolidMechanicsLagrangianFEM::ApplyTractionBC( DomainPartition * const domain,
-                                                    real64 const time,
-                                                    systemSolverInterface::EpetraBlockSystem & blockSystem )
+void SolidMechanicsLagrangianFEM::ApplyTractionBC( real64 const time,
+                                                   DofManager const & dofManager,
+                                                   DomainPartition * const domain,
+                                                   ParallelVector & rhs )
 {
   FieldSpecificationManager * const fsManager = FieldSpecificationManager::get();
-  NewFunctionManager * const functionManager = NewFunctionManager::Instance();
+  FunctionManager * const functionManager = FunctionManager::Instance();
 
   FaceManager * const faceManager = domain->getMeshBody(0)->getMeshLevel(0)->getFaceManager();
   NodeManager * const nodeManager = domain->getMeshBody(0)->getMeshLevel(0)->getNodeManager();
 
   real64_array const & faceArea  = faceManager->getReference<real64_array>("faceArea");
-  array1d<localIndex_array> const & facesToNodes = faceManager->nodeList();
+  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
 
-  arrayView1d<globalIndex> const & blockLocalDofNumber =
-    nodeManager->getReference<globalIndex_array>(solidMechanicsViewKeys.globalDofNumber);
+  string const dofKey = dofManager.getKey( keys::TotalDisplacement );
 
-  Epetra_FEVector * const rhs = blockSystem.GetResidualVector( BlockIDs::displacementBlock );
+  arrayView1d<globalIndex> const &
+  blockLocalDofNumber = nodeManager->getReference<globalIndex_array>( dofKey );
 
+  arrayView1d<integer const> const & faceGhostRank = faceManager->GhostRank();
   fsManager->Apply( time,
                     domain,
                     "faceManager",
@@ -674,8 +691,8 @@ void SolidMechanicsLagrangianFEM::ApplyTractionBC( DomainPartition * const domai
                     [&]( FieldSpecificationBase const * const bc,
                     string const &,
                     set<localIndex> const & targetSet,
-                    ManagedGroup * const targetGroup,
-                    string const fieldName ) -> void
+                    Group * const GEOSX_UNUSED_ARG( targetGroup ),
+                    string const GEOSX_UNUSED_ARG( fieldName ) ) -> void
   {
     string const & functionName = bc->getReference<string>( FieldSpecificationBase::viewKeyStruct::functionNameString);
 
@@ -687,15 +704,18 @@ void SolidMechanicsLagrangianFEM::ApplyTractionBC( DomainPartition * const domai
     {
       for( auto kf : targetSet )
       {
-        localIndex const numNodes = facesToNodes[kf].size();
-        nodeDOF.resize( numNodes );
-        nodeRHS.resize( numNodes );
-        for( localIndex a=0 ; a<numNodes ; ++a )
+        if( faceGhostRank[kf] < 0 )
         {
-          nodeDOF[a] = 3*blockLocalDofNumber[facesToNodes[kf][a]]+component;
-          nodeRHS[a] = bc->GetScale() * faceArea[kf] / numNodes;
+          localIndex const numNodes = faceToNodeMap.sizeOfArray( kf );
+          nodeDOF.resize( numNodes );
+          nodeRHS.resize( numNodes );
+          for( localIndex a=0 ; a<numNodes ; ++a )
+          {
+            nodeDOF[a] = blockLocalDofNumber[ faceToNodeMap( kf, a ) ] + component;
+            nodeRHS[a] = bc->GetScale() * faceArea[kf] / numNodes;
+          }
+          rhs.add( nodeDOF, nodeRHS );
         }
-        rhs->SumIntoGlobalValues( integer_conversion<int>(numNodes), nodeDOF.data(), nodeRHS.data() );
       }
     }
     else
@@ -708,15 +728,18 @@ void SolidMechanicsLagrangianFEM::ApplyTractionBC( DomainPartition * const domai
           real64 value = bc->GetScale() * function->Evaluate( &time );
           for( auto kf : targetSet )
           {
-            localIndex const numNodes = facesToNodes[kf].size();
-            nodeDOF.resize( numNodes );
-            nodeRHS.resize( numNodes );
-            for( localIndex a=0 ; a<numNodes ; ++a )
+            if( faceGhostRank[kf] < 0 )
             {
-              nodeDOF[a] = 3*blockLocalDofNumber[facesToNodes[kf][a]]+component;
-              nodeRHS[a] = value * faceArea[kf] / numNodes;
+              localIndex const numNodes = faceToNodeMap.sizeOfArray( kf );
+              nodeDOF.resize( numNodes );
+              nodeRHS.resize( numNodes );
+              for( localIndex a=0 ; a<numNodes ; ++a )
+              {
+                nodeDOF[a] = blockLocalDofNumber[ faceToNodeMap( kf, a ) ] + component;
+                nodeRHS[a] = value * faceArea[kf] / numNodes;
+              }
+              rhs.add( nodeDOF, nodeRHS );
             }
-            rhs->SumIntoGlobalValues( integer_conversion<int>(nodeDOF.size()), nodeDOF.data(), nodeRHS.data() );
           }
         }
         else
@@ -727,35 +750,40 @@ void SolidMechanicsLagrangianFEM::ApplyTractionBC( DomainPartition * const domai
 
           for( auto kf : targetSet )
           {
-            localIndex const numNodes = facesToNodes[kf].size();
-            nodeDOF.resize( numNodes );
-            nodeRHS.resize( numNodes );
-            for( localIndex a=0 ; a<numNodes ; ++a )
+            if( faceGhostRank[kf] < 0 )
             {
-              nodeDOF[a] = 3*blockLocalDofNumber[facesToNodes[kf][a]]+component;
-              nodeRHS[a] = result[kf] * faceArea[kf] / numNodes;
+              localIndex const numNodes = faceToNodeMap.sizeOfArray( kf );
+              nodeDOF.resize( numNodes );
+              nodeRHS.resize( numNodes );
+              for( localIndex a=0 ; a<numNodes ; ++a )
+              {
+                nodeDOF[a] = blockLocalDofNumber[ faceToNodeMap( kf, a ) ] + component;
+                nodeRHS[a] = result[kf] * faceArea[kf] / numNodes;
+              }
+              rhs.add( nodeDOF, nodeRHS );
             }
-            rhs->SumIntoGlobalValues( integer_conversion<int>(nodeDOF.size()), nodeDOF.data(), nodeRHS.data() );
           }
       }
     }
   });
 }
 
-void SolidMechanicsLagrangianFEM::ApplyChomboPressure( DomainPartition * const domain,
-                                                       systemSolverInterface::EpetraBlockSystem & blockSystem )
+void SolidMechanicsLagrangianFEM::ApplyChomboPressure( DofManager const & dofManager,
+                                                       DomainPartition * const domain,
+                                                       ParallelVector & rhs )
 {
   FaceManager * const faceManager = domain->getMeshBody(0)->getMeshLevel(0)->getFaceManager();
   NodeManager * const nodeManager = domain->getMeshBody(0)->getMeshLevel(0)->getNodeManager();
 
   arrayView1d<real64 const> const & faceArea  = faceManager->faceArea();
   arrayView1d<R1Tensor const> const & faceNormal  = faceManager->faceNormal();
-  array1d<localIndex_array> const & facesToNodes = faceManager->nodeList();
+  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
+
+  string const dofKey = dofManager.getKey( keys::TotalDisplacement );
 
   arrayView1d<globalIndex> const &
-  blockLocalDofNumber =  nodeManager->getReference<globalIndex_array>(solidMechanicsViewKeys.globalDofNumber);
+  blockLocalDofNumber =  nodeManager->getReference<globalIndex_array>( dofKey );
 
-  Epetra_FEVector * const rhs = blockSystem.GetResidualVector( BlockIDs::displacementBlock );
   arrayView1d<real64 const> const & facePressure = faceManager->getReference< array1d<real64> >("ChomboPressure");
 
   for( localIndex kf=0 ; kf<faceManager->size() ; ++kf )
@@ -763,27 +791,34 @@ void SolidMechanicsLagrangianFEM::ApplyChomboPressure( DomainPartition * const d
     globalIndex nodeDOF[20];
     real64 nodeRHS[20];
 
-    int const numNodes = integer_conversion<int>(facesToNodes[kf].size());
+    int const numNodes = integer_conversion<int>(faceToNodeMap.sizeOfArray(kf));
     for( int a=0 ; a<numNodes ; ++a )
     {
       for( int component=0 ; component<3 ; ++component )
       {
-        nodeDOF[3*a+component] = 3*blockLocalDofNumber[facesToNodes[kf][a]]+component;
+        nodeDOF[3*a+component] = blockLocalDofNumber[faceToNodeMap(kf,a)] + component;
         nodeRHS[3*a+component] = - facePressure[kf] * faceNormal[kf][component] * faceArea[kf] / numNodes;
       }
     }
-    rhs->SumIntoGlobalValues( numNodes*3, nodeDOF, nodeRHS );
+    rhs.add( nodeDOF, nodeRHS, numNodes*3 );
   }
 
 }
 
+
+
 void
 SolidMechanicsLagrangianFEM::
-ImplicitStepSetup( real64 const& time_n, real64 const& dt, DomainPartition * const domain,
-                   systemSolverInterface::EpetraBlockSystem * const blockSystem )
+ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n ),
+                   real64 const & dt,
+                   DomainPartition * const domain,
+                   DofManager & GEOSX_UNUSED_ARG( dofManager ),
+                   ParallelMatrix & GEOSX_UNUSED_ARG( matrix ),
+                   ParallelVector & GEOSX_UNUSED_ARG( rhs ),
+                   ParallelVector & GEOSX_UNUSED_ARG( solution ) )
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ManagedGroup * const nodeManager = mesh->getNodeManager();
+  Group * const nodeManager = mesh->getNodeManager();
 
   if( this->m_timeIntegrationOption == timeIntegrationOption::ImplicitDynamic )
   {
@@ -839,16 +874,14 @@ ImplicitStepSetup( real64 const& time_n, real64 const& dt, DomainPartition * con
       }
     }
   }
-
-  SetupSystem( domain, blockSystem );
 }
 
-void SolidMechanicsLagrangianFEM::ImplicitStepComplete( real64 const & time_n,
-                                                             real64 const & dt,
-                                                             DomainPartition * const domain)
+void SolidMechanicsLagrangianFEM::ImplicitStepComplete( real64 const & GEOSX_UNUSED_ARG( time_n ),
+                                                        real64 const & dt,
+                                                        DomainPartition * const domain)
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ManagedGroup * const nodeManager = mesh->getNodeManager();
+  Group * const nodeManager = mesh->getNodeManager();
   localIndex const numNodes = nodeManager->size();
 
   r1_array& v_n = nodeManager->getReference<r1_array>(keys::Velocity);
@@ -885,164 +918,75 @@ void SolidMechanicsLagrangianFEM::ImplicitStepComplete( real64 const & time_n,
   }
 }
 
-void SolidMechanicsLagrangianFEM::SetNumRowsAndTrilinosIndices( ManagedGroup * const nodeManager,
-                                                                 localIndex & numLocalRows,
-                                                                 globalIndex & numGlobalRows,
-                                                                 localIndex_array& localIndices,
-                                                                 localIndex offset )
+void SolidMechanicsLagrangianFEM::SetupDofs( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
+                                             DofManager & dofManager ) const
 {
-  int n_mpi_processes;
-  MPI_Comm_size( MPI_COMM_GEOSX, &n_mpi_processes );
-
-  int this_mpi_process = 0;
-  MPI_Comm_rank( MPI_COMM_GEOSX, &this_mpi_process );
-
-  std::vector<int> gather(n_mpi_processes);
-
-  int intNumLocalRows = static_cast<int>(numLocalRows);
-  m_linearSolverWrapper.m_epetraComm.GatherAll( &intNumLocalRows,
-                                                &gather.front(),
-                                                1 );
-  numLocalRows = intNumLocalRows;
-
-  localIndex first_local_row = 0;
-  numGlobalRows = 0;
-
-  for( integer p=0 ; p<n_mpi_processes ; ++p)
-  {
-    numGlobalRows += gather[p];
-    if(p<this_mpi_process)
-      first_local_row += gather[p];
-  }
-
-  // create trilinos dof indexing
-
-  globalIndex_array& trilinos_index = nodeManager->getReference<globalIndex_array>(solidMechanicsViewKeys.globalDofNumber);
-  integer_array& is_ghost       = nodeManager->getReference<integer_array>( ObjectManagerBase::viewKeyStruct::ghostRankString);
-
-  trilinos_index = -1;
-
-  integer local_count = 0;
-  for(integer r=0 ; r<trilinos_index.size() ; ++r )
-  {
-    if(is_ghost[r] < 0)
-    {
-      trilinos_index[r] = first_local_row+local_count+offset;
-      local_count++;
-    }
-    else
-    {
-      trilinos_index[r] = -INT_MAX;
-    }
-  }
-
-  assert(local_count == numLocalRows );
-
-//  partition.SynchronizeFields(m_syncedFields, CommRegistry::lagrangeSolver02);
-
+  dofManager.addField( keys::TotalDisplacement,
+                       DofManager::Location::Node,
+                       DofManager::Connectivity::Elem,
+                       3 );
 }
 
-
-void SolidMechanicsLagrangianFEM :: SetupSystem ( DomainPartition * const domain,
-                                                   EpetraBlockSystem * const blockSystem )
+void SolidMechanicsLagrangianFEM::SetupSystem( DomainPartition * const domain,
+                                               DofManager & dofManager,
+                                               ParallelMatrix & matrix,
+                                               ParallelVector & rhs,
+                                               ParallelVector & solution )
 {
+  GEOSX_MARK_FUNCTION;
+  SolverBase::SetupSystem( domain, dofManager, matrix, rhs, solution );
+
+  matrix.open();
+
+  // need this for contact enforcement in the fracture
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  NodeManager * const nodeManager = mesh->getNodeManager();
+  Group * const nodeManager = mesh->getNodeManager();
 
-  localIndex dim = 3;
-  localIndex n_ghost_rows  = nodeManager->GetNumberOfGhosts();
-  localIndex n_local_rows  = nodeManager->size()-n_ghost_rows;
-  globalIndex n_global_rows = 0;
+  constexpr int dim = 3;
+  string const dofKey = dofManager.getKey( keys::TotalDisplacement );
+  globalIndex_array const & dofNumber = nodeManager->getReference<globalIndex_array>( dofKey );
 
-  localIndex_array displacementIndices;
-  SetNumRowsAndTrilinosIndices( nodeManager, n_local_rows, n_global_rows, displacementIndices, 0 );
-
-  std::map<string, string_array > fieldNames;
-  fieldNames["node"].push_back(viewKeyStruct::globalDofNumberString);
-
-  CommunicationTools::SynchronizeFields( fieldNames, mesh,
-                                         domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
-
-  // create epetra map
-  Epetra_Map * const rowMap = blockSystem->SetRowMap( BlockIDs::displacementBlock,
-                                                      std::make_unique<Epetra_Map>( dim*n_global_rows, 
-                                                                                    dim*n_local_rows,
-                                                                                    0,
-                                                                                    m_linearSolverWrapper.m_epetraComm ) );
-
-  Epetra_FECrsGraph * const sparsity = blockSystem->SetSparsity( BlockIDs::displacementBlock,
-                                                                 BlockIDs::displacementBlock,
-                                                                 std::make_unique<Epetra_FECrsGraph>(Copy,*rowMap,0) );
-
-  SetSparsityPattern( domain, sparsity );
-
-  sparsity->GlobalAssemble();
-  sparsity->OptimizeStorage();
-
-  blockSystem->SetMatrix( BlockIDs::displacementBlock,
-                          BlockIDs::displacementBlock,
-                          std::make_unique<Epetra_FECrsMatrix>(Copy,*sparsity) );
-
-  blockSystem->SetSolutionVector( BlockIDs::displacementBlock,
-                                  std::make_unique<Epetra_FEVector>(*rowMap) );
-
-  blockSystem->SetResidualVector( BlockIDs::displacementBlock,
-                                  std::make_unique<Epetra_FEVector>(*rowMap) );
-}
-
-void SolidMechanicsLagrangianFEM::SetSparsityPattern( DomainPartition const * const domain,
-                                                       Epetra_FECrsGraph * const sparsity )
-{
-  int dim=3;
-  MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ManagedGroup const * const nodeManager = mesh->getNodeManager();
-
-  arrayView1d<globalIndex> const & trilinos_index = nodeManager->getReference<array1d<globalIndex>>(solidMechanicsViewKeys.globalDofNumber);
-
-  ElementRegionManager const * const elemManager = mesh->getElemManager();
-
-  for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
+  ElementRegionManager const * const elemRegionManager = mesh->getElemManager();
+  elemRegionManager->forElementSubRegions<FaceElementSubRegion>( [&]( FaceElementSubRegion const * const elementSubRegion)
   {
-    ElementRegion const * const elementRegion = elemManager->GetRegion(er);
+    localIndex const numElems = elementSubRegion->size();
+    array1d<array1d<localIndex > > const & elemsToNodes = elementSubRegion->nodeList();
 
-    elementRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr, CellElementSubRegion const * const elementSubRegion )
+
+    for( localIndex k=0 ; k<numElems ; ++k )
     {
-      localIndex const numElems = elementSubRegion->size();
-      arrayView2d<localIndex> const & elemsToNodes = elementSubRegion->nodeList();
-      localIndex const numNodesPerElement = elemsToNodes.size(1);
+      localIndex const numNodesPerElement = elemsToNodes[k].size();
+      array1d<globalIndex> elementLocalDofIndex(dim * numNodesPerElement);
+      array2d<real64> values( dim * numNodesPerElement, dim * numNodesPerElement );
+      values = 1.0;
 
-      globalIndex_array elementLocalDofIndex(dim * numNodesPerElement);
-
-      for( localIndex k=0 ; k<numElems ; ++k )
+      for( localIndex a=0 ; a<numNodesPerElement ; ++a )
       {
-        for( localIndex a=0 ; a<numNodesPerElement ; ++a )
+        for( int d=0 ; d<dim ; ++d )
         {
-          for(localIndex i=0 ; i<numNodesPerElement ; ++i)
-          {
-            for( int d=0 ; d<dim ; ++d )
-            {
-              elementLocalDofIndex[i * dim + d] = dim * trilinos_index[elemsToNodes[k][i]] + d;
-            }
-          }
-
-          sparsity->InsertGlobalIndices(static_cast<int>(elementLocalDofIndex.size()),
-                                        elementLocalDofIndex.data(),
-                                        static_cast<int>(elementLocalDofIndex.size()),
-                                        elementLocalDofIndex.data());
+          elementLocalDofIndex[a * dim + d] = dofNumber[elemsToNodes[k][a]] + d;
         }
       }
-    });
-  }
+      matrix.insert( elementLocalDofIndex.data(),
+                     elementLocalDofIndex.data(),
+                     values.data(),
+                     elementLocalDofIndex.size(),
+                     elementLocalDofIndex.size() );
+    }
+  });
+  matrix.close();
+
 }
 
-
-void SolidMechanicsLagrangianFEM::AssembleSystem ( DomainPartition * const  domain,
-                                                EpetraBlockSystem * const blockSystem,
-                                                real64 const time_n,
-                                                real64 const dt )
+void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_ARG( time_n ),
+                                                  real64 const dt,
+                                                  DomainPartition * const domain,
+                                                  DofManager const & dofManager,
+                                                  ParallelMatrix & matrix,
+                                                  ParallelVector & rhs )
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ManagedGroup * const nodeManager = mesh->getNodeManager();
+  Group * const nodeManager = mesh->getNodeManager();
   ConstitutiveManager  * const constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
   ElementRegionManager * const elemManager = mesh->getElemManager();
   NumericalMethodsManager const * numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
@@ -1057,23 +1001,22 @@ void SolidMechanicsLagrangianFEM::AssembleSystem ( DomainPartition * const  doma
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const dPres =
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>("deltaPressure");
 
-  Epetra_FECrsMatrix * const matrix = blockSystem->GetMatrix( BlockIDs::displacementBlock,
-                                                              BlockIDs::displacementBlock );
-  Epetra_FEVector * const rhs = blockSystem->GetResidualVector( BlockIDs::displacementBlock );
-  Epetra_FEVector * const solution = blockSystem->GetSolutionVector( BlockIDs::displacementBlock );
+  matrix.zero();
+  rhs.zero();
 
-  matrix->Scale(0.0);
-  rhs->Scale(0.0);
+  matrix.open();
+  rhs.open();
 
   r1_array const& disp = nodeManager->getReference<r1_array>(keys::TotalDisplacement);
   r1_array const& uhat = nodeManager->getReference<r1_array>(keys::IncrementalDisplacement);
-  r1_array const& vel  = nodeManager->getReference<r1_array>(keys::Velocity);
+  //r1_array const& vel  = nodeManager->getReference<r1_array>(keys::Velocity);
 
   r1_array const uhattilde;
   r1_array const vtilde;
 
-  globalIndex_array const &
-  trilinos_index = nodeManager->getReference<globalIndex_array>(solidMechanicsViewKeys.globalDofNumber);
+  string const dofKey = dofManager.getKey( keys::TotalDisplacement );
+
+  globalIndex_array const & dofNumber = nodeManager->getReference<globalIndex_array>( dofKey );
 
 
   ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase>
@@ -1086,7 +1029,7 @@ void SolidMechanicsLagrangianFEM::AssembleSystem ( DomainPartition * const  doma
   // begin region loop
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
   {
-    ElementRegion * const elementRegion = elemManager->GetRegion(er);
+    ElementRegionBase * const elementRegion = elemManager->GetRegion(er);
 
     FiniteElementDiscretization const *
     feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
@@ -1099,13 +1042,14 @@ void SolidMechanicsLagrangianFEM::AssembleSystem ( DomainPartition * const  doma
 
       arrayView2d<real64> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
 
-      arrayView2d< localIndex > const & elemsToNodes = elementSubRegion->nodeList();
+      arrayView2d< localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM > const & elemsToNodes = elementSubRegion->nodeList();
       localIndex const numNodesPerElement = elemsToNodes.size(1);
 
       std::unique_ptr<FiniteElementBase>
       fe = feDiscretization->getFiniteElement( elementSubRegion->GetElementTypeString() );
 
       // space for element matrix and rhs
+
       m_maxForce = ImplicitElementKernelLaunch( numNodesPerElement,
                                                 fe->n_quadrature_points(),
                                                 constitutiveRelations[er][esr][m_solidMaterialFullIndex],
@@ -1116,7 +1060,7 @@ void SolidMechanicsLagrangianFEM::AssembleSystem ( DomainPartition * const  doma
                                                 fe.get(),
                                                 elementSubRegion->m_ghostRank,
                                                 elemsToNodes,
-                                                trilinos_index,
+                                                dofNumber,
                                                 disp,
                                                 uhat,
                                                 vtilde,
@@ -1130,169 +1074,116 @@ void SolidMechanicsLagrangianFEM::AssembleSystem ( DomainPartition * const  doma
                                                 this->m_massDamping,
                                                 this->m_newmarkBeta,
                                                 this->m_newmarkGamma,
-                                                matrix,
-                                                rhs );
+                                                &dofManager,
+                                                &matrix,
+                                                &rhs );
 
     });
   }
 
 
-  // Global assemble
-  matrix->GlobalAssemble(true);
-  rhs->GlobalAssemble();
+  ApplyContactConstraint( dofManager,
+                          *domain,
+                          &matrix,
+                          &rhs );
+
+  matrix.close();
+  rhs.close();
 
   if( verboseLevel() >= 2 )
   {
-    matrix->Print(std::cout);
-    rhs->Print(std::cout);
+    GEOS_LOG_RANK_0( "After SolidMechanicsLagrangianFEM::AssembleSystem" );
+    GEOS_LOG_RANK_0( "\nMatrix:\n" );
+    matrix.print(std::cout);
+    GEOS_LOG_RANK_0( "\nRhs:\n" );
+    rhs.print(std::cout);
   }
 }
 
 void
 SolidMechanicsLagrangianFEM::
-ApplyBoundaryConditions( DomainPartition * const domain,
-                         systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                         real64 const time_n,
-                         real64 const dt )
+ApplyBoundaryConditions( real64 const time_n,
+                         real64 const dt,
+                         DomainPartition * const domain,
+                         DofManager const & dofManager,
+                         ParallelMatrix & matrix,
+                         ParallelVector & rhs )
 {
 
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
 
   FaceManager * const faceManager = mesh->getFaceManager();
-  NodeManager * const nodeManager = mesh->getNodeManager();
-  ElementRegionManager * const elemManager = mesh->getElemManager();
-
   FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
 //  fsManager->ApplyBoundaryCondition( this, &SolidMechanics_LagrangianFEM::ForceBC,
 //                                     nodeManager, keys::Force, time_n + dt, *blockSystem );
+
+  string const dofKey = dofManager.getKey( keys::TotalDisplacement );
+
+  matrix.open();
+  rhs.open();
 
   fsManager->Apply( time_n+dt,
                     domain,
                     "nodeManager",
                     keys::Force,
                     [&]( FieldSpecificationBase const * const bc,
-                    string const &,
-                    set<localIndex> const & targetSet,
-                    ManagedGroup * const targetGroup,
-                    string const fieldName )->void
+                         string const &,
+                         set< localIndex > const & targetSet,
+                         Group * const targetGroup,
+                         string const GEOSX_UNUSED_ARG( fieldName ) )
   {
-    bc->ApplyBoundaryConditionToSystem<FieldSpecificationAdd>( targetSet,
-                                                               false,
-                                                               time_n+dt,
-                                                               targetGroup,
-                                                               keys::TotalDisplacement, // TODO fix use of dummy name for
-                                                               viewKeyStruct::globalDofNumberString,
-                                                               3,
-                                                               blockSystem,
-                                                               BlockIDs::displacementBlock );
+    bc->ApplyBoundaryConditionToSystem<FieldSpecificationAdd, LAInterface>( targetSet,
+                                                                            false,
+                                                                            time_n + dt,
+                                                                            targetGroup,
+                                                                            keys::TotalDisplacement, // TODO fix use of dummy name for
+                                                                            dofKey,
+                                                                            3,
+                                                                            matrix,
+                                                                            rhs );
   });
 
-  ApplyTractionBC( domain,
-                   time_n+dt,
-                   *blockSystem );
+  ApplyTractionBC(
+    time_n + dt,
+    dofManager, domain,
+    rhs );
 
-  ApplyDisplacementBC_implicit( time_n + dt, *domain, *blockSystem );
+  ApplyDisplacementBC_implicit( time_n + dt, dofManager, *domain, matrix, rhs );
 
   if( faceManager->hasView("ChomboPressure") )
   {
     fsManager->ApplyFieldValue( time_n, domain, "faceManager", "ChomboPressure" );
-    ApplyChomboPressure( domain, *blockSystem );
+    ApplyChomboPressure( dofManager, domain, rhs );
   }
 
-  {
-  arrayView1d<real64 const>   const & faceArea   = faceManager->faceArea();
-  arrayView1d<R1Tensor const> const & faceNormal = faceManager->faceNormal();
-  array1d<localIndex_array> const & facesToNodes = faceManager->nodeList();
-
-  arrayView1d<globalIndex> const &
-  blockLocalDofNumber =  nodeManager->getReference<globalIndex_array>(solidMechanicsViewKeys.globalDofNumber);
-  Epetra_FEVector * const rhs = blockSystem->GetResidualVector( BlockIDs::displacementBlock );
-
-  elemManager->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion * const subRegion )->void
-  {
-    if( subRegion->hasView("pressure") )
-    {
-      arrayView1d<real64 const> const & fluidPressure = subRegion->getReference<array1d<real64> >("pressure");
-      arrayView1d<real64 const> const & deltaFluidPressure = subRegion->getReference<array1d<real64> >("deltaPressure");
-
-      FaceElementSubRegion::FaceMapType const & faceMap = subRegion->faceList();
-
-      forall_in_range<serialPolicy>( 0,
-                                   subRegion->size(),
-                                   GEOSX_LAMBDA ( localIndex const kfe )
-      {
-
-        R1Tensor Nbar = faceNormal[faceMap[kfe][0]];
-        Nbar -= faceNormal[faceMap[kfe][1]];
-        Nbar.Normalize();
-        std::cout<<"kfe, faceIndices = "<<kfe<<", ("<<faceMap[kfe][0]<<", "<<faceMap[kfe][1]<<")"<<std::endl;
-
-        std::cout<<"Nbar = "<<Nbar<<std::endl;
-
-        globalIndex nodeDOF[20];
-        real64 nodeRHS[20];
-
-        localIndex const numNodes = facesToNodes[faceMap[kfe][0]].size();
-        real64 nodalForce = ( fluidPressure[kfe]+deltaFluidPressure[kfe] ) * faceArea[faceMap[kfe][0]] / numNodes;
-        std::cout<<"nodalForce = "<<nodalForce<<std::endl;
-
-        for( localIndex kf=0 ; kf<2 ; ++kf )
-        {
-          localIndex const faceIndex = faceMap[kfe][kf];
-          std::cout<<"faceIndex = "<<faceIndex<<std::endl;
-
-          for( localIndex a=0 ; a<numNodes ; ++a )
-          {
-
-            std::cout<<facesToNodes[faceIndex][a]<<", ";
-            for( int component=0 ; component<3 ; ++component )
-            {
-              nodeDOF[3*a+component] = 3*blockLocalDofNumber[facesToNodes[faceIndex][a]]+component;
-              nodeRHS[3*a+component] = - nodalForce * pow(-1,kf) * Nbar[component];
-            }
-          }
-          std::cout<<std::endl;
-
-          rhs->SumIntoGlobalValues( integer_conversion<int>(numNodes*3), nodeDOF, nodeRHS );
-        }
-      });
-    }
-  });
-  }
-
-  Epetra_FECrsMatrix * const matrix = blockSystem->GetMatrix( BlockIDs::displacementBlock,
-                                                                    BlockIDs::displacementBlock );
-  Epetra_FEVector * const rhs = blockSystem->GetResidualVector( BlockIDs::displacementBlock );
+  matrix.close();
+  rhs.close();
 
   if( verboseLevel() >= 2 )
   {
-    matrix->Print(std::cout);
-    rhs->Print(std::cout);
+    GEOS_LOG_RANK_0( "After SolidMechanicsLagrangianFEM::AssembleSystem" );
+    GEOS_LOG_RANK_0("\nJacobian:\n");
+    std::cout << matrix;
+    GEOS_LOG_RANK_0("\nResidual:\n");
+    std::cout << rhs;
   }
-
-  matrix->GlobalAssemble(true);
-  rhs->GlobalAssemble();
 
 
 }
 
 real64
 SolidMechanicsLagrangianFEM::
-CalculateResidualNorm(systemSolverInterface::EpetraBlockSystem const *const blockSystem, DomainPartition *const domain)
+CalculateResidualNorm( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
+                       DofManager const & GEOSX_UNUSED_ARG( dofManager ),
+                       ParallelVector const & rhs )
 {
+  real64 const * localResidual = rhs.extractLocalVector();
 
-  Epetra_FEVector const * const
-  residual = blockSystem->GetResidualVector( BlockIDs::displacementBlock );
+  real64 localResidualNorm[2] = { 0.0, this->m_maxForce };
 
-  real64 localResidual[2] = {0.0, this->m_maxForce};
-//  residual->Norm2(&scalarResidual);
-
-  real64 * residualData = nullptr;
-  int length;
-  residual->ExtractView(&residualData,&length);
-  for( localIndex i=0 ; i<length ; ++i )
+  for( localIndex i=0 ; i<rhs.localSize() ; ++i )
   {
-    localResidual[0] += residualData[i]*residualData[i];
+    localResidualNorm[0] += localResidual[i] * localResidual[i];
   }
 
 
@@ -1300,19 +1191,16 @@ CalculateResidualNorm(systemSolverInterface::EpetraBlockSystem const *const bloc
 //  MPI_Allreduce (&localResidual,&globalResidualNorm,1,MPI_DOUBLE,MPI_SUM ,MPI_COMM_GEOSX);
 
 
-  int rank, size;
-  MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
-  MPI_Comm_size(MPI_COMM_GEOSX, &size);
+  int const rank = MpiWrapper::Comm_rank(MPI_COMM_GEOSX);
+  int const size = MpiWrapper::Comm_size(MPI_COMM_GEOSX);
   array1d<real64> globalValues( size * 2 );
   globalValues = 0;
-  MPI_Gather( localResidual,
-              2,
-              MPI_DOUBLE,
-              globalValues.data(),
-              2,
-              MPI_DOUBLE,
-              0,
-              MPI_COMM_GEOSX );
+  MpiWrapper::gather( localResidualNorm,
+                      2,
+                      globalValues.data(),
+                      2,
+                      0,
+                      MPI_COMM_GEOSX );
 
   if( rank==0 )
   {
@@ -1327,7 +1215,7 @@ CalculateResidualNorm(systemSolverInterface::EpetraBlockSystem const *const bloc
     }
   }
 
-  MPI_Bcast( globalResidualNorm, 2, MPI_DOUBLE, 0, MPI_COMM_GEOSX );
+  MpiWrapper::bcast( globalResidualNorm, 2, 0, MPI_COMM_GEOSX );
 
 
 
@@ -1337,84 +1225,41 @@ CalculateResidualNorm(systemSolverInterface::EpetraBlockSystem const *const bloc
 
 
 
-void SolidMechanicsLagrangianFEM::ApplySystemSolution( EpetraBlockSystem const * const blockSystem,
-                                                        real64 const scalingFactor,
-                                                        DomainPartition * const domain )
+void
+SolidMechanicsLagrangianFEM::ApplySystemSolution( DofManager const & dofManager,
+                                                  ParallelVector const & solution,
+                                                  real64 const scalingFactor,
+                                                  DomainPartition * const domain )
 {
-  NodeManager * const nodeManager = domain->getMeshBody(0)->getMeshLevel(0)->getNodeManager();
+  MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  NodeManager * const nodeManager = mesh->getNodeManager();
 
-  Epetra_Map const * const rowMap        = blockSystem->GetRowMap( BlockIDs::displacementBlock );
-  Epetra_FEVector const * const solution = blockSystem->GetSolutionVector( BlockIDs::displacementBlock );
-
-  int solutionLength;
-  double* local_solution = nullptr;
-  solution->ExtractView(&local_solution,&solutionLength);
-
-
-  globalIndex_array const& trilinos_index = nodeManager->getReference< globalIndex_array >(solidMechanicsViewKeys.globalDofNumber);
-
-  r1_array& X        = nodeManager->getReference<r1_array>(nodeManager->viewKeys.referencePosition);
-  r1_array& disp     = nodeManager->getReference<r1_array>(keys::TotalDisplacement);
-  r1_array& incdisp  = nodeManager->getReference<r1_array>(keys::IncrementalDisplacement);
-
-  localIndex const numNodes = nodeManager->size();
-  realT maxpos = 0.0;
-  realT maxdisp = 0.0;
-
-  integer const dim = 3;
-
-  for(integer r=0 ; r<numNodes ; ++r)
-  {
-    {
-      for( int d=0 ; d<dim ; ++d )
-      {
-        int lid = rowMap->LID( static_cast<int>(dim*trilinos_index[r]) + d );
-
-        if( lid >=0 )
-        {
-          incdisp[r][d] -= scalingFactor*local_solution[lid];
-          disp[r][d] -= scalingFactor*local_solution[lid];
-          maxpos = std::max( maxpos, fabs(X[r][d]+disp[r][d]) );
-          maxdisp = std::max( maxdisp, fabs(disp[r][d]) );
-        }
-      }
-    }
-  }
-//  m_maxDofVal = maxpos;
-//  std::cout<<"Maximum DeltaDisplacement, Position = "<<maxinc<<",
-// "<<maxpos<<", "<<maxinc/maxpos<<std::endl;
+  string fieldName = keys::TotalDisplacement;
+  dofManager.addVectorToField( solution, fieldName, -scalingFactor, nodeManager, keys::IncrementalDisplacement );
+  dofManager.addVectorToField( solution, fieldName, -scalingFactor, nodeManager, keys::TotalDisplacement );
 
   std::map<string, string_array > fieldNames;
-  fieldNames["node"].push_back(keys::IncrementalDisplacement);
-  fieldNames["node"].push_back(keys::TotalDisplacement);
+  fieldNames["node"].push_back( keys::IncrementalDisplacement );
+  fieldNames["node"].push_back( keys::TotalDisplacement );
 
-  CommunicationTools::SynchronizeFields( fieldNames,
-                                         domain->getMeshBody(0)->getMeshLevel(0),
+  CommunicationTools::SynchronizeFields( fieldNames, mesh,
                                          domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
-
-
-
 }
 
-void SolidMechanicsLagrangianFEM::SolveSystem( EpetraBlockSystem * const blockSystem,
-                                        SystemSolverParameters const * const params )
+void SolidMechanicsLagrangianFEM::SolveSystem( DofManager const & dofManager,
+                                               ParallelMatrix & matrix,
+                                               ParallelVector & rhs,
+                                               ParallelVector & solution )
 {
-  Epetra_FEVector * const
-  solution = blockSystem->GetSolutionVector( BlockIDs::displacementBlock );
+  solution.zero();
 
-  Epetra_FEVector * const
-  residual = blockSystem->GetResidualVector( BlockIDs::displacementBlock );
-//  residual->Scale(-1.0);
-
-  solution->Scale(0.0);
-
-  m_linearSolverWrapper.SolveSingleBlockSystem( blockSystem,
-                                                 params,
-                                                 BlockIDs::displacementBlock );
+  SolverBase::SolveSystem( dofManager, matrix, rhs, solution );
 
   if( verboseLevel() >= 2 )
   {
-    solution->Print(std::cout);
+    GEOS_LOG_RANK_0( "After SolidMechanicsLagrangianFEM::SolveSystem" );
+    GEOS_LOG_RANK_0( "\nSolution:\n");
+    std::cout << solution;
   }
 
 }
@@ -1425,16 +1270,213 @@ void SolidMechanicsLagrangianFEM::ResetStateToBeginningOfStep( DomainPartition *
   NodeManager * const nodeManager = mesh->getNodeManager();
 
   r1_array& incdisp  = nodeManager->getReference<r1_array>(keys::IncrementalDisplacement);
+  r1_array& disp     = nodeManager->getReference<r1_array>(keys::TotalDisplacement);
 
   // TODO need to finish this rewind
   forall_in_range(0, nodeManager->size(), GEOSX_LAMBDA (localIndex a) mutable
   {
+    disp[a] -= incdisp[a];
     incdisp[a] = 0.0;
   });
 }
 
 
+void SolidMechanicsLagrangianFEM::ApplyContactConstraint( DofManager const & dofManager,
+                                                          DomainPartition & domain,
+                                                          ParallelMatrix * const matrix,
+                                                          ParallelVector * const rhs )
+{
+  GEOSX_MARK_FUNCTION;
+
+  if( m_contactRelationName != viewKeyStruct::noContactRelationNameString )
+  {
+    MeshLevel * const mesh = domain.getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+    FaceManager const * const faceManager = mesh->getFaceManager();
+    NodeManager * const nodeManager = mesh->getNodeManager();
+    ElementRegionManager * const elemManager = mesh->getElemManager();
 
 
-REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsLagrangianFEM, string const &, dataRepository::ManagedGroup * const )
+    ConstitutiveManager const * const
+    constitutiveManager = domain.GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
+
+    ContactRelationBase const * const
+    contactRelation = constitutiveManager->GetGroup<ContactRelationBase>(m_contactRelationName);
+
+    real64 const contactStiffness = contactRelation->stiffness();
+
+    arrayView1d<R1Tensor const> const & u = nodeManager->getReference< array1d<R1Tensor> >( keys::TotalDisplacement );
+    arrayView1d<R1Tensor> const & fc = nodeManager->getReference< array1d<R1Tensor> >( viewKeyStruct::contactForceString );
+    fc = {0,0,0};
+
+    arrayView1d<R1Tensor const> const & faceNormal = faceManager->faceNormal();
+    ArrayOfArraysView<localIndex const> const & facesToNodes = faceManager->nodeList();
+
+    string const dofKey = dofManager.getKey( keys::TotalDisplacement );
+    arrayView1d<globalIndex> const & nodeDofNumber = nodeManager->getReference<globalIndex_array>( dofKey );
+
+
+    elemManager->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion * const subRegion )->void
+    {
+        arrayView1d<integer const> const & ghostRank = subRegion->GhostRank();
+        arrayView1d<real64> const & area = subRegion->getElementArea();
+        arrayView2d< localIndex const > const & elemsToFaces = subRegion->faceList();
+
+        forall_in_range<serialPolicy>( 0,
+                                       subRegion->size(),
+                                       GEOSX_LAMBDA ( localIndex const kfe )
+        {
+
+          if( ghostRank[kfe] < 0 )
+          {
+            R1Tensor Nbar = faceNormal[elemsToFaces[kfe][0]];
+            Nbar -= faceNormal[elemsToFaces[kfe][1]];
+            Nbar.Normalize();
+
+            localIndex const kf0 = elemsToFaces[kfe][0];
+            localIndex const kf1 = elemsToFaces[kfe][1];
+            localIndex const numNodesPerFace=facesToNodes.sizeOfArray(kf0);
+            real64 const Ja = area[kfe] / numNodesPerFace;
+
+
+            globalIndex rowDOF[24] = {0};
+            real64 nodeRHS[24] = {0};
+            stackArray2d<real64, (4*3*2)*(4*3*2)> dRdP(numNodesPerFace*3*2, numNodesPerFace*3*2);
+
+            for( localIndex a=0 ; a<numNodesPerFace ; ++a )
+            {
+              R1Tensor penaltyForce = Nbar;
+              localIndex const node0 = facesToNodes[kf0][a];
+              localIndex const node1 = facesToNodes[kf1][ a==0 ? a : numNodesPerFace-a ];
+              R1Tensor gap = u[node1];
+              gap -= u[node0];
+              real64 const gapNormal = Dot(gap,Nbar);
+
+              if( gapNormal < 0 )
+              {
+                penaltyForce *= -contactStiffness * gapNormal * Ja;
+                for( int i=0 ; i<3 ; ++i )
+                {
+                  rowDOF[3*a+i]                     = nodeDofNumber[node0]+i;
+                  rowDOF[3*(numNodesPerFace + a)+i] = nodeDofNumber[node1]+i;
+
+
+                  fc[node0] -= penaltyForce;
+                  fc[node1] += penaltyForce;
+                  nodeRHS[3*a+i]                     -= penaltyForce[i];
+                  nodeRHS[3*(numNodesPerFace + a)+i] += penaltyForce[i];
+
+                  dRdP(3*a+i,3*a+i)                                         -= contactStiffness * Ja * Nbar[i] * Nbar[i] ;
+                  dRdP(3*a+i,3*(numNodesPerFace + a)+i)                     += contactStiffness * Ja * Nbar[i] * Nbar[i] ;
+                  dRdP(3*(numNodesPerFace + a)+i,3*a+i)                     += contactStiffness * Ja * Nbar[i] * Nbar[i] ;
+                  dRdP(3*(numNodesPerFace + a)+i,3*(numNodesPerFace + a)+i) -= contactStiffness * Ja * Nbar[i] * Nbar[i] ;
+                }
+              }
+            }
+
+            rhs->add( rowDOF,
+                      nodeRHS,
+                      numNodesPerFace*3*2 );
+
+            matrix->add( rowDOF,
+                         rowDOF,
+                         dRdP.data(),
+                         numNodesPerFace * 3 *2,
+                         numNodesPerFace * 3 *2 );
+          }
+        });
+    });
+  }
+}
+
+real64
+SolidMechanicsLagrangianFEM::ScalingForSystemSolution( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
+                                                       DofManager const & GEOSX_UNUSED_ARG( dofManager ),
+                                                       ParallelVector const & GEOSX_UNUSED_ARG( solution ) )
+{
+  GEOSX_MARK_FUNCTION;
+  real64 scalingFactor = 1.0;
+//  MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+//  FaceManager const * const faceManager = mesh->getFaceManager();
+//  NodeManager const * const nodeManager = mesh->getNodeManager();
+//  ElementRegionManager const * const elemManager = mesh->getElemManager();
+//
+//
+//  arrayView1d<R1Tensor const> const & u = nodeManager->getReference< array1d<R1Tensor> >( keys::TotalDisplacement );
+//
+//  arrayView1d<R1Tensor const> const & faceNormal = faceManager->faceNormal();
+//  array1d<localIndex_array> const & facesToNodes = faceManager->nodeList();
+//
+//  string const dofKey = dofManager.getKey( keys::TotalDisplacement );
+//  arrayView1d<globalIndex> const & nodeDofNumber = nodeManager->getReference<globalIndex_array>( dofKey );
+//
+//  real64 const * soln = nullptr;
+//  solution.extractLocalVector( &( const_cast<real64*&>(soln) ) );
+//  globalIndex const rankOffset = dofManager.offsetLocalDofs();
+//
+//
+//
+//  elemManager->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion const * const subRegion )->void
+//  {
+//      arrayView1d<integer const> const & ghostRank = subRegion->GhostRank();
+//      arrayView1d<real64 const > const & area = subRegion->getElementArea();
+//      arrayView2d< localIndex const > const & elemsToFaces = subRegion->faceList();
+//
+//      RAJA::ReduceMin<RAJA::seq_reduce, real64> newScaleFactor(1.0);
+//      forall_in_range<serialPolicy>( 0,
+//                                     subRegion->size(),
+//                                     GEOSX_LAMBDA ( localIndex const kfe )
+//      {
+//
+//        if( ghostRank[kfe] < 0 )
+//        {
+//          R1Tensor Nbar = faceNormal[elemsToFaces[kfe][0]];
+//          Nbar -= faceNormal[elemsToFaces[kfe][1]];
+//          Nbar.Normalize();
+//
+//          localIndex const kf0 = elemsToFaces[kfe][0];
+//          localIndex const kf1 = elemsToFaces[kfe][1];
+//          localIndex const numNodesPerFace=facesToNodes[kf0].size();
+//          localIndex const * const nodelist0 = facesToNodes[kf0];
+//          localIndex const * const nodelist1 = facesToNodes[kf1];
+//
+//          for( localIndex a=0 ; a<numNodesPerFace ; ++a )
+//          {
+//            R1Tensor penaltyForce = Nbar;
+//            localIndex const node0 = facesToNodes[kf0][a];
+//            localIndex const node1 = facesToNodes[kf1][ a==0 ? a : numNodesPerFace-a ];
+//
+//            localIndex const lid0 = nodeDofNumber[node0] - rankOffset;
+//            localIndex const lid1 = nodeDofNumber[node1] - rankOffset;
+//            GEOS_ASSERT( lid0 >= 0 && lid1 >=0 ); // since vectors are partitioned same as the mesh
+//
+//            R1Tensor gap = u[node1];
+//            gap -= u[node0];
+//            real64 const gapNormal = Dot(gap,Nbar);
+//
+//            R1Tensor deltaGap ;
+//            for( int i=0 ; i<3 ; ++i )
+//            {
+//              deltaGap[i] = soln[lid1] - soln[lid0];
+//            }
+//            real64 const deltaGapNormal = Dot( deltaGap, Nbar );
+//
+//            if( ( gapNormal + deltaGapNormal ) * gapNormal < 0 )
+//            {
+//              newScaleFactor.min( - gapNormal / deltaGapNormal * 1.05 );
+//              newScaleFactor.min( 1.0 );
+//              std::cout<< "gapNormal, deltaGapNormal, scaleFactor, newGap = "<<
+//                  gapNormal<<", "<<deltaGapNormal<<", "<<newScaleFactor.get()<<", "<<gapNormal+newScaleFactor.get()*deltaGapNormal<<std::endl;
+//            }
+//          }
+//        }
+//      });
+//      scalingFactor = newScaleFactor.get();
+//  });
+
+  return scalingFactor;
+}
+
+
+
+REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsLagrangianFEM, string const &, dataRepository::Group * const )
 }

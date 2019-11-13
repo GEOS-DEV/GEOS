@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
@@ -35,32 +31,32 @@ namespace constitutive
 
 
 BrooksCoreyBakerRelativePermeability::BrooksCoreyBakerRelativePermeability( std::string const & name,
-                                                                            ManagedGroup * const parent )
+                                                                            Group * const parent )
   : RelativePermeabilityBase( name, parent )
 {
-  RegisterViewWrapper( viewKeyStruct::phaseMinVolumeFractionString, &m_phaseMinVolumeFraction, false )->
+  registerWrapper( viewKeyStruct::phaseMinVolumeFractionString, &m_phaseMinVolumeFraction, false )->
     setApplyDefaultValue(0.0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Minimum volume fraction value for each phase");
 
 
-  RegisterViewWrapper( viewKeyStruct::waterOilRelPermExponentString,   &m_waterOilRelPermExponent,   false )->
+  registerWrapper( viewKeyStruct::waterOilRelPermExponentString,   &m_waterOilRelPermExponent,   false )->
     setApplyDefaultValue(1.0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Rel perm power law exponent for the pair (water phase, oil phase) at residual gas saturation");
 
-  RegisterViewWrapper( viewKeyStruct::waterOilRelPermMaxValueString,   &m_waterOilRelPermMaxValue,   false )->
+  registerWrapper( viewKeyStruct::waterOilRelPermMaxValueString,   &m_waterOilRelPermMaxValue,   false )->
     setApplyDefaultValue(0.0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Maximum rel perm value for the pair (water phase, oil phase) at residual gas saturation");
 
 
-  RegisterViewWrapper( viewKeyStruct::gasOilRelPermExponentString,   &m_gasOilRelPermExponent,   false )->
+  registerWrapper( viewKeyStruct::gasOilRelPermExponentString,   &m_gasOilRelPermExponent,   false )->
     setApplyDefaultValue(1.0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Rel perm power law exponent for the pair (gas phase, oil phase) at residual water saturation");
 
-  RegisterViewWrapper( viewKeyStruct::gasOilRelPermMaxValueString,   &m_gasOilRelPermMaxValue,   false )->
+  registerWrapper( viewKeyStruct::gasOilRelPermMaxValueString,   &m_gasOilRelPermMaxValue,   false )->
     setApplyDefaultValue(0.0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Maximum rel perm value for the pair (gas phase, oil phase) at residual water saturation");
@@ -74,7 +70,7 @@ BrooksCoreyBakerRelativePermeability::~BrooksCoreyBakerRelativePermeability()
 
 void
 BrooksCoreyBakerRelativePermeability::DeliverClone( string const & name, 
-                                                    ManagedGroup * const parent, 
+                                                    Group * const parent, 
                                                     std::unique_ptr<ConstitutiveBase> & clone ) const
 {
   std::unique_ptr< BrooksCoreyBakerRelativePermeability > newModel = std::make_unique<BrooksCoreyBakerRelativePermeability>( name, parent );
@@ -213,7 +209,7 @@ void BrooksCoreyBakerRelativePermeability::PointUpdate( arraySlice1d<real64 cons
            m_volFracScale );
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, BrooksCoreyBakerRelativePermeability, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, BrooksCoreyBakerRelativePermeability, std::string const &, Group * const )
 } // namespace constitutive
 
 } // namespace geosx

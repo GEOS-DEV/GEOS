@@ -1,41 +1,35 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
  * @file CompositionalMultiphaseFlow.hpp
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_COMPOSITIONALMULTIPHASEFLOW_HPP_
-#define SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_COMPOSITIONALMULTIPHASEFLOW_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_FINITEVOLUME_COMPOSITIONALMULTIPHASEFLOW_HPP_
+#define GEOSX_PHYSICSSOLVERS_FINITEVOLUME_COMPOSITIONALMULTIPHASEFLOW_HPP_
 
-#include <constitutive/RelPerm/RelativePermeabilityBase.hpp>
-#include <constitutive/CapillaryPressure/CapillaryPressureBase.hpp>
+#include "constitutive/RelPerm/RelativePermeabilityBase.hpp"
+#include "constitutive/CapillaryPressure/CapillaryPressureBase.hpp"
+#include "mesh/ElementRegionManager.hpp"
 #include "physicsSolvers/FiniteVolume/FlowSolverBase.hpp"
-#include "../../mesh/ElementRegionManager.hpp"
-
-class Epetra_FECrsGraph;
 
 namespace geosx
 {
 
 namespace dataRepository
 {
-class ManagedGroup;
+class Group;
 
 namespace keys
 {
@@ -61,12 +55,12 @@ class CompositionalMultiphaseFlow : public FlowSolverBase
 public:
 
   /**
-   * @brief main constructor for ManagedGroup Objects
-   * @param name the name of this instantiation of ManagedGroup in the repository
-   * @param parent the parent group of this instantiation of ManagedGroup
+   * @brief main constructor for Group Objects
+   * @param name the name of this instantiation of Group in the repository
+   * @param parent the parent group of this instantiation of Group
    */
   CompositionalMultiphaseFlow( const string& name,
-                               ManagedGroup * const parent );
+                               Group * const parent );
 
   /// deleted default constructor
   CompositionalMultiphaseFlow() = delete;
@@ -94,7 +88,7 @@ public:
    */
   static string CatalogName() { return dataRepository::keys::compositionalMultiphaseFlow; }
 
-  virtual void RegisterDataOnMesh(ManagedGroup * const MeshBodies) override;
+  virtual void RegisterDataOnMesh(Group * const MeshBodies) override;
 
   /**
    * @defgroup Solver Interface Functions
@@ -108,49 +102,71 @@ public:
                              integer const cycleNumber,
                              DomainPartition * domain ) override;
 
-  virtual void ImplicitStepSetup( real64 const& time_n,
-                                  real64 const& dt,
-                                  DomainPartition * const domain,
-                                  systemSolverInterface::EpetraBlockSystem * const blockSystem ) override;
-
-
-  virtual void AssembleSystem( DomainPartition * const domain,
-                               systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                               real64 const time_n,
-                               real64 const dt ) override;
-
-  virtual void ApplyBoundaryConditions( DomainPartition * const domain,
-                                        systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                                        real64 const time_n,
-                                        real64 const dt ) override;
-
-  virtual real64
-  CalculateResidualNorm(systemSolverInterface::EpetraBlockSystem const *const blockSystem,
-                        DomainPartition *const domain) override;
-
-  virtual void SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                            SystemSolverParameters const * const params ) override;
-
-  virtual bool
-  CheckSystemSolution(systemSolverInterface::EpetraBlockSystem const * const blockSystem, real64 const scalingFactor,
-                      DomainPartition * const domain) override;
+  virtual void
+  ImplicitStepSetup( real64 const & time_n,
+                     real64 const & dt,
+                     DomainPartition * const domain,
+                     DofManager & dofManager,
+                     ParallelMatrix & matrix,
+                     ParallelVector & rhs,
+                     ParallelVector & solution ) override;
 
   virtual void
-  ApplySystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
+  SetupDofs( DomainPartition const * const domain,
+             DofManager & dofManager ) const override;
+
+  virtual void
+  AssembleSystem( real64 const time_n,
+                  real64 const dt,
+                  DomainPartition * const domain,
+                  DofManager const & dofManager,
+                  ParallelMatrix & matrix,
+                  ParallelVector & rhs ) override;
+
+  virtual void
+  ApplyBoundaryConditions( real64 const time_n,
+                           real64 const dt,
+                           DomainPartition * const domain,
+                           DofManager const & dofManager,
+                           ParallelMatrix & matrix,
+                           ParallelVector & rhs ) override;
+
+  virtual real64
+  CalculateResidualNorm( DomainPartition const * const domain,
+                         DofManager const & dofManager,
+                         ParallelVector const & rhs ) override;
+
+  virtual void
+  SolveSystem( DofManager const & dofManager,
+               ParallelMatrix & matrix,
+               ParallelVector & rhs,
+               ParallelVector & solution ) override;
+
+  virtual bool
+  CheckSystemSolution( DomainPartition const * const domain,
+                       DofManager const & dofManager,
+                       ParallelVector const & solution,
+                       real64 const scalingFactor ) override;
+
+  virtual void
+  ApplySystemSolution( DofManager const & dofManager,
+                       ParallelVector const & solution,
                        real64 const scalingFactor,
                        DomainPartition * const domain ) override;
 
-  virtual void ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
+  virtual void
+  ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
 
-  virtual void ImplicitStepComplete( real64 const & time,
-                                     real64 const & dt,
-                                     DomainPartition * const domain ) override;
+  virtual void
+  ImplicitStepComplete( real64 const & time,
+                        real64 const & dt,
+                        DomainPartition * const domain ) override;
 
   /**
    * @brief Recompute component fractions from primary variables (component densities)
    * @param dataGroup the group storing the required fields
    */
-  void UpdateComponentFraction( ManagedGroup * dataGroup ) const;
+  void UpdateComponentFraction( Group * dataGroup ) const;
 
   /**
    * @brief Recompute component fractions from primary variables (component densities)
@@ -163,7 +179,7 @@ public:
    * @brief Recompute phase volume fractions (saturations) from constitutive and primary variables
    * @param dataGroup the group storing the required fields
    */
-  void UpdatePhaseVolumeFraction( ManagedGroup * dataGroup ) const;
+  void UpdatePhaseVolumeFraction( Group * dataGroup ) const;
 
   /**
    * @brief Recompute phase volume fractions (saturations) from constitutive and primary variables
@@ -176,31 +192,31 @@ public:
    * @brief Update all relevant fluid models using current values of pressure and composition
    * @param dataGroup the group storing the required fields
    */
-  void UpdateFluidModel( ManagedGroup * dataGroup );
+  void UpdateFluidModel( Group * dataGroup );
 
   /**
    * @brief Update all relevant solid models using current values of pressure
    * @param dataGroup the group storing the required fields
    */
-  void UpdateSolidModel( ManagedGroup * dataGroup );
+  void UpdateSolidModel( Group * dataGroup );
 
   /**
    * @brief Update all relevant fluid models using current values of pressure and composition
    * @param dataGroup the group storing the required fields
    */
-  void UpdateRelPermModel( ManagedGroup * dataGroup );
+  void UpdateRelPermModel( Group * dataGroup );
 
   /**
    * @brief Update all relevant fluid models using current values of pressure and composition
    * @param dataGroup the group storing the required fields
    */
-  void UpdateCapPressureModel( ManagedGroup * dataGroup );
+  void UpdateCapPressureModel( Group * dataGroup );
 
   /**
    * @brief Recompute phase mobility from constitutive and primary variables
    * @param domain the domain containing the mesh and fields
    */
-  void UpdatePhaseMobility( ManagedGroup * dataGroup ) const;
+  void UpdatePhaseMobility( Group * dataGroup ) const;
 
   /**
    * @brief Recompute phase mobility from constitutive and primary variables
@@ -213,7 +229,7 @@ public:
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param domain the domain containing the mesh and fields
    */
-  void UpdateState( ManagedGroup * dataGroup );
+  void UpdateState( Group * dataGroup );
 
   /**
    * @brief Get the number of fluid components (species)
@@ -229,47 +245,58 @@ public:
 
   /**
    * @brief assembles the accumulation terms for all cells
-   * @param domain the physical domain object
-   * @param blockSystem the entire block system
    * @param time_n previous time value
    * @param dt time step
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param matrix the system matrix
+   * @param rhs the system right-hand side vector
    */
-  void AssembleAccumulationTerms( DomainPartition const * const domain,
-                                  Epetra_FECrsMatrix * const jacobian,
-                                  Epetra_FEVector * const residual,
-                                  real64 const time_n,
-                                  real64 const dt );
+  void AssembleAccumulationTerms( real64 const time_n,
+                                  real64 const dt,
+                                  DomainPartition const * const domain,
+                                  DofManager const * const dofManager,
+                                  ParallelMatrix * const matrix,
+                                  ParallelVector * const rhs );
 
   /**
    * @brief assembles the flux terms for all cells
-   * @param domain the physical domain object
-   * @param blockSystem the entire block system
    * @param time_n previous time value
    * @param dt time step
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param matrix the system matrix
+   * @param rhs the system right-hand side vector
    */
-  void AssembleFluxTerms( DomainPartition const * const domain,
-                          Epetra_FECrsMatrix * const jacobian,
-                          Epetra_FEVector * const residual,
-                          real64 const time_n,
-                          real64 const dt );
+  void AssembleFluxTerms( real64 const time_n,
+                          real64 const dt,
+                          DomainPartition const * const domain,
+                          DofManager const * const dofManager,
+                          ParallelMatrix * const matrix,
+                          ParallelVector * const rhs );
 
   /**
    * @brief assembles the volume balance terms for all cells
-   * @param domain the physical domain object
-   * @param blockSystem the entire block system
    * @param time_n previous time value
    * @param dt time step
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param matrix the system matrix
+   * @param rhs the system right-hand side vector
    */
-  void AssembleVolumeBalanceTerms( DomainPartition const * const domain,
-                                   Epetra_FECrsMatrix * const jacobian,
-                                   Epetra_FEVector * const residual,
-                                   real64 const time_n,
-                                   real64 const dt );
+  void AssembleVolumeBalanceTerms( real64 const time_n,
+                                   real64 const dt,
+                                   DomainPartition const * const domain,
+                                   DofManager const * const dofManager,
+                                   ParallelMatrix * const matrix,
+                                   ParallelVector * const rhs );
 
   /**@}*/
 
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {
+    static constexpr auto dofFieldString = "compositionalVariables";
+
     // inputs
     static constexpr auto temperatureString = "temperature";
     static constexpr auto useMassFlagString = "useMass";
@@ -279,11 +306,6 @@ public:
     static constexpr auto capPressureNameString  = "capPressureName";
     static constexpr auto capPressureIndexString = "capPressureIndex";
 
-    static constexpr auto blockLocalDofNumberString    = "blockLocalDofNumber_CompositionalMultiphaseFlow";
-
-    // primary solution field
-    static constexpr auto pressureString      = "pressure";
-    static constexpr auto deltaPressureString = "deltaPressure";
     static constexpr auto facePressureString  = "facePressure";
     static constexpr auto bcPressureString    = "bcPressure";
 
@@ -325,8 +347,6 @@ public:
     ViewKey relPermIndex = { relPermIndexString };
     ViewKey capPressureName  = { capPressureNameString };
     ViewKey capPressureIndex = { capPressureIndexString };
-
-    ViewKey blockLocalDofNumber    = { blockLocalDofNumberString };
 
     // primary solution field
     ViewKey pressure      = { pressureString };
@@ -372,9 +392,9 @@ protected:
 
   virtual void PostProcessInput() override;
 
-  virtual void InitializePreSubGroups( ManagedGroup * const rootGroup ) override;
+  virtual void InitializePreSubGroups( Group * const rootGroup ) override;
 
-  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::ManagedGroup * const rootGroup ) override;
+  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const rootGroup ) override;
 
 private:
 
@@ -404,60 +424,26 @@ private:
   void BackupFields( DomainPartition * const domain );
 
   /**
-   * @brief Set up the linear system (DOF indices and sparsity patterns)
-   * @param domain the domain containing the mesh and fields
-   * @param blockSystem the linear system object
-   */
-  void SetupSystem ( DomainPartition * const domain,
-                     systemSolverInterface::EpetraBlockSystem * const blockSystem );
-
-  /**
-   * @brief set the sparsity pattern for the linear system
-   * @param domain the domain partition
-   * @param sparsity the sparsity pattern matrix
-   */
-  void SetSparsityPattern( DomainPartition const * const domain,
-                           Epetra_FECrsGraph * const sparsity );
-
-  /**
-   * @brief sets the dof indices for this solver
-   * @param meshLevel the mesh object (single level only)
-   * @param numLocalRows the number of local rows on this partition
-   * @param numGlobalRows the number of global rows in the problem
-   * @param offset the DOF offset for this solver in the case of a non-block system
-   *
-   * This function sets the number of global rows, and sets the dof numbers for
-   * this solver. dof numbers are referred to trilinosIndices currently.
-   */
-  void SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
-                                     localIndex & numLocalRows,
-                                     globalIndex & numGlobalRows,
-                                     localIndex offset );
-
-  /**
    * @brief Setup stored views into domain data for the current step
    */
   void ResetViews( DomainPartition * const domain ) override;
 
   /**
    * @brief Function to perform the Application of Dirichlet type BC's
-   * @param object the target ObjectManager for the application of the BC.
    * @param time current time
-   * @param blockSystem the entire block system
-   */
-  void ApplyDirichletBC_implicit( DomainPartition * const domain,
-                                  real64 const time, real64 const dt,
-                                  systemSolverInterface::EpetraBlockSystem * const blockSystem );
-
-  /**
-   * @brief Function to perform the application of Dirichlet BCs on faces
+   * @param dt time step
+   * @param dofManager degree-of-freedom manager associated with the linear system
    * @param domain the domain
-   * @param time current time
-   * @param blockSystem the entire block system
+   * @param matrix the system matrix
+   * @param rhs the system right-hand side vector
+   * @param solution the solution vector
    */
-  void ApplyFaceDirichletBC_implicit( DomainPartition * const domain,
-                                      real64 const time, real64 const dt,
-                                      systemSolverInterface::EpetraBlockSystem * const blockSystem );
+  void ApplyDirichletBC_implicit( real64 const time,
+                                  real64 const dt,
+                                  DofManager const * const dofManager,
+                                  DomainPartition * const domain,
+                                  ParallelMatrix * const matrix,
+                                  ParallelVector * const rhs );
 
   /// the max number of fluid phases
   localIndex m_numPhases;
@@ -488,8 +474,6 @@ private:
 
 
   /// views into primary variable fields
-
-  ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex>> m_dofNumber; // TODO will move to DofManager
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>      m_pressure;
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>      m_deltaPressure;
@@ -552,4 +536,4 @@ private:
 } // namespace geosx
 
 
-#endif //SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_COMPOSITIONALMULTIPHASEFLOW_HPP_
+#endif //GEOSX_PHYSICSSOLVERS_FINITEVOLUME_COMPOSITIONALMULTIPHASEFLOW_HPP_

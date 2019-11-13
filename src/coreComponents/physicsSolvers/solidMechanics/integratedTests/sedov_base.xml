@@ -29,7 +29,7 @@
     <PeriodicEvent name="restarts"
                    timeFrequency="5.0e-4"
                    targetExactTimestep="0"
-                   target="/Outputs/sidreRestart"/>
+                   target="/Outputs/restartOutput"/>
   </Events>
 
 
@@ -44,12 +44,12 @@
     </QuadratureRules>
     
     <FiniteElements>
-        <FiniteElementSpace name="FE1" basis="linearBasis" quadrature="gaussian" />
+        <FiniteElementSpace name="FE1" parentSpace="C3D8" basis="linearBasis" quadrature="gaussian" />
     </FiniteElements>
   </NumericalMethods>
 
   <ElementRegions>
-    <ElementRegion name="Region2" cellBlocks="{cb1}" materialList="{shale}" />
+    <CellElementRegion name="Region2" cellBlocks="{cb1}" materialList="{shale}" />
   </ElementRegions>
 
   <Constitutive>
@@ -66,19 +66,32 @@
       <LinearElasticIsotropic name="water"
                               defaultDensity="1000"
                               defaultBulkModulus="2.0e9"
-                              defaultShearModulus="0.0"/>
+                              defaultShearModulus="1.0e-9"/>
   </Constitutive>
 
 
   <FieldSpecifications>
-    <FieldSpecification name="source"  
+    <FieldSpecification name="source0"
                initialCondition="1"  
                setNames="{source}"
                objectPath="ElementRegions"
-               fieldName="shale_MeanStress"
-               component="-1"
+               fieldName="shale_stress"
+               component="0"
                scale="-1.0e6"/>
-               <!--objectPath="ElementRegions/Region2/cb1" -->
+    <FieldSpecification name="source1"  
+               initialCondition="1"  
+               setNames="{source}"
+               objectPath="ElementRegions"
+               fieldName="shale_stress"
+               component="2"
+               scale="-1.0e6"/>
+    <FieldSpecification name="source2"  
+               initialCondition="1"  
+               setNames="{source}"
+               objectPath="ElementRegions"
+               fieldName="shale_stress"
+               component="5"
+               scale="-1.0e6"/>
 
     <FieldSpecification name="xconstraint" 
                objectPath="nodeManager"
@@ -109,7 +122,7 @@
            plotFileRoot="plot" 
            slaveDirectory="sub"
            />
-    <Restart name="sidreRestart"/>
+    <Restart name="restartOutput"/>
   </Outputs>
 
   <Geometry>

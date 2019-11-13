@@ -1,36 +1,25 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
- * @file ElementManagerT.h
- * @author Randolph Settgast
- * @date created on Sep 14, 2010
+ * @file CellBlockManager.hpp
  */
 
-#ifndef ELEMENTMANAGERT_H_
-#define ELEMENTMANAGERT_H_
+#ifndef GEOSX_MESH_CELLBLOCKMANAGER_H_
+#define GEOSX_MESH_CELLBLOCKMANAGER_H_
 
-//#include "Common.h"
-//#include "DataStructures/VectorFields/ObjectDataStructureBaseT.h"
 #include "CellBlock.hpp"
-#include "managers/ObjectManagerBase.hpp"
-
-//#include "legacy/ArrayT/bufvector.h"
 
 namespace geosx
 {
@@ -67,15 +56,15 @@ public:
 
   ///@}
 
-  CellBlockManager( string const &, ManagedGroup * const parent );
+  CellBlockManager( string const &, Group * const parent );
   virtual ~CellBlockManager() override;
 
 
 //  void Initialize(  ){}
 
-  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
+  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 
-  using ManagedGroup::resize;
+  using Group::resize;
 
   void resize( integer_array const & numElements,
                string_array const & regionNames,
@@ -93,7 +82,7 @@ public:
   template< typename LAMBDA >
   void forElementSubRegions( LAMBDA lambda )
   {
-    ManagedGroup * elementRegions = this->GetGroup(dataRepository::keys::cellBlocks);
+    Group * elementRegions = this->GetGroup(dataRepository::keys::cellBlocks);
     elementRegions->forSubGroups<CellBlock>( lambda );
   }
 private:
@@ -103,4 +92,4 @@ private:
 
 };
 }
-#endif /* ELEMENTMANAGERT_H_ */
+#endif /* GEOSX_MESH_CELLBLOCKMANAGER_H_ */

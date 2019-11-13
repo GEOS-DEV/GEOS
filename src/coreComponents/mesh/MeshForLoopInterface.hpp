@@ -1,23 +1,19 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef __GEOS_RAJA_WRAPPER__HPP
-#define __GEOS_RAJA_WRAPPER__HPP
+#ifndef GEOSX_MESH_MESHFORLOOPINTERFACE_HPP
+#define GEOSX_MESH_MESHFORLOOPINTERFACE_HPP
 
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
@@ -53,11 +49,12 @@ template<class POLICY=serialPolicy,typename LAMBDA=void>
 void for_elems( MeshLevel const * const mesh, LAMBDA && body)
 {
   ElementRegionManager const * const elemManager = mesh->getElemManager();
-  dataRepository::ManagedGroup const * const elementRegions = elemManager->GetGroup(dataRepository::keys::elementRegions);
+  dataRepository::Group const * const
+  elementRegions = elemManager->GetGroup(ElementRegionManager::groupKeyStruct::elementRegionsGroup);
 
   for( auto & region : elementRegions->GetSubGroups() )
   {
-    dataRepository::ManagedGroup const * const elementSubRegions = region.second->GetGroup(ElementRegion::viewKeyStruct::elementSubRegions);
+    dataRepository::Group const * const elementSubRegions = region.second->GetGroup(ElementRegionBase::viewKeyStruct::elementSubRegions);
     for( auto const & iterSubRegions : elementSubRegions->GetSubGroups() )
     {
       CellElementSubRegion const * const elementSubRegion = elementSubRegions->GetGroup<CellElementSubRegion>(iterSubRegions.first);
@@ -72,15 +69,15 @@ void for_elems( MeshLevel const * const mesh, const localIndex *setList, localIn
 {
 
   ElementRegionManager const * const elemManager = mesh->getElemManager();
-  dataRepository::ManagedGroup const * const elementRegions = elemManager->GetGroup(dataRepository::keys::elementRegions);
+  dataRepository::Group const * const
+  elementRegions = elemManager->GetGroup(ElementRegionManager::groupKeyStruct::elementRegionsGroup);
   
   for( auto const & region : elementRegions->GetSubGroups() )
     {
-    dataRepository::ManagedGroup const * const elementSubRegions = region.second->GetGroup(ElementRegion::viewKeyStruct::elementSubRegions);
+    dataRepository::Group const * const elementSubRegions = region.second->GetGroup(ElementRegionBase::viewKeyStruct::elementSubRegions);
     for( auto & iterCellBlocks : elementSubRegions->GetSubGroups() )
     {
-      CellElementSubRegion const * const elementSubRegion = elementSubRegions->GetGroup<CellElementSubRegion>(iterCellBlocks.first);
-
+      GEOSX_UNUSED_VAR( iterCellBlocks );
       forall_in_set<POLICY>(setList, listLen, body);
     }
   }
@@ -101,7 +98,7 @@ void forAllElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
 
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
   {
-    ElementRegion const * const elemRegion = elemManager->GetRegion(er);
+    ElementRegionBase const * const elemRegion = elemManager->GetRegion(er);
     for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
     {
       ElementSubRegionBase const * const elementSubRegion = elemRegion->GetSubRegion(esr);
@@ -167,6 +164,65 @@ void forAllElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
 // }
 
 
+template<typename NUMBER=real64,class POLICY=serialPolicy,typename LAMBDA=void>
+std::pair<NUMBER, localIndex>
+minloc_in_range(localIndex const begin, const localIndex end, LAMBDA && body)
+{
+  NUMBER minDist = std::numeric_limits<NUMBER>::max();
+  localIndex minDistId = -1;
+
+  // TODO: make this a RAJA loop
+  for ( localIndex ei = begin; ei < end; ++ei )
+  {
+    NUMBER dist = body( ei );
+
+    if ( dist < minDist )
+    {
+      minDist   = dist;
+      minDistId = ei;
+    }
+  }
+ 
+  return std::make_pair( minDist, minDistId );
+}
+
+
+template<typename NUMBER=real64,class POLICY=serialPolicy, typename LAMBDA=void>
+std::pair<NUMBER, std::tuple<localIndex,localIndex,localIndex>>
+minLocOverElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
+{
+  NUMBER minVal = std::numeric_limits<NUMBER>::max();
+  localIndex minReg = -1, minSubreg = -1, minIndex = -1;
+
+  ElementRegionManager const * const elemManager = mesh->getElemManager();
+
+  for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
+  {
+    ElementRegionBase const * const elemRegion = elemManager->GetRegion(er);
+
+    elemRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr, auto * const subRegion )
+    {
+      auto ebody = [=](localIndex index) mutable -> real64
+      {
+        return lambdaBody(er,esr,index);
+      };
+
+      auto ret = minloc_in_range<NUMBER,POLICY>(0, subRegion->size(), ebody);
+
+      if (ret.first < minVal)
+      {
+        minVal    = ret.first;
+        minReg    = er;
+        minSubreg = esr;
+        minIndex  = ret.second;
+      }
+    });
+  }
+
+  return std::make_pair(minVal, std::make_tuple(minReg, minSubreg, minIndex));
+}
+
+
 }
 
 
@@ -186,16 +242,16 @@ void for_elems_by_constitutive( MeshLevel const * const mesh,
                                LAMBDA && body )
 {
   ElementRegionManager const * const elemManager = mesh->getElemManager();
-  dataRepository::ManagedGroup const * const elementRegions = elemManager->GetGroup(dataRepository::keys::elementRegions);
+  dataRepository::Group const * const elementRegions = elemManager->GetGroup(dataRepository::keys::elementRegions);
 
 
   for( auto const & regionPair : elementRegions->GetSubGroups() )
   {
-    dataRepository::ManagedGroup const * const elementRegion = regionPair.second;
+    dataRepository::Group const * const elementRegion = regionPair.second;
     auto const & numMethodName = elementRegion->getReference<string>(dataRepository::keys::numericalMethod);
     FiniteElementSpace const * const feDiscretization = feDiscretizationManager->GetGroup<FiniteElementSpace>(numMethodName);
 
-    dataRepository::ManagedGroup const * const elementSubRegions = elementRegion->GetGroup(dataRepository::keys::elementSubRegions);
+    dataRepository::Group const * const elementSubRegions = elementRegion->GetGroup(dataRepository::keys::elementSubRegions);
     for( auto & iterCellBlocks : elementSubRegions->GetSubGroups() )
     {
       CellBlockSubRegion const * cellBlock = elementSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);

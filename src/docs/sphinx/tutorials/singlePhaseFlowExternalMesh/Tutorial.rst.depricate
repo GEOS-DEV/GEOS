@@ -119,7 +119,7 @@ Three controls are in place:
     <PeriodicEvent name="restarts"
                    timeFrequency="1e99"
                    targetExactTimestep="0"
-                   target="/Outputs/sidreRestart"
+                   target="/Outputs/restartOutput"
                    endTime="-1"/>
   </Events>
 
@@ -262,7 +262,7 @@ In our case, the first lines are:
   Adding Event: PeriodicEvent, outputs
   Adding Event: PeriodicEvent, restarts
   Adding Output: Silo, siloWellPump
-  Adding Output: Restart, sidreRestart
+  Adding Output: Restart, restartOutput
   Adding Object ElementRegion named Domain
 
 This indicates initialization of GEOSX.
@@ -430,7 +430,7 @@ Three controls are in place:
     <PeriodicEvent name="restarts"
                    timeFrequency="1e99"
                    targetExactTimestep="0"
-                   target="/Outputs/sidreRestart"
+                   target="/Outputs/restartOutput"
                    endTime="-1"/>
   </Events>
 
@@ -566,7 +566,7 @@ In our case, the first lines are:
 
 .. code-block:: sh
 
-  (base) USEP-MAC062:pamela_test j0529096$ ../../../../../../build-default-release/bin/geosx -i 3D_10x10x10_compressible_pamela_tetra_gravity.xml
+  (base) USEP-MAC062:pamela_test j0529096$ ../../../../../../build-environment-release/bin/geosx -i 3D_10x10x10_compressible_pamela_tetra_gravity.xml
   GEOS must be configured to use Python to use parameters, symbolic math, etc. in input files
   Adding Solver of type SinglePhaseFlow, named SinglePhaseFlow
   Adding Mesh: PAMELAMeshGenerator, CubeTetra
@@ -576,7 +576,7 @@ In our case, the first lines are:
   Adding Event: PeriodicEvent, outputs
   Adding Event: PeriodicEvent, restarts
   Adding Output: Silo, siloWellPump
-  Adding Output: Restart, sidreRestart
+  Adding Output: Restart, restartOutput
   Adding Object ElementRegion named Domain
   0 >>> **********************************************************************
   0 >>>                          PAMELA Library Import tool
