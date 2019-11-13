@@ -1,8 +1,8 @@
 language: minimal
 env:
   global:
-  - TPL_OSX_TRAVIS_BUILD_NUMBER=229
-  - DOCKER_TAG=229
+  - TPL_OSX_TRAVIS_BUILD_NUMBER=232
+  - DOCKER_TAG=232
 matrix:
   include:
   - os: osx
