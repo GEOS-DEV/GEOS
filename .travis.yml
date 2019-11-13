@@ -77,7 +77,7 @@ before_script:
   - git submodule update --init --recursive src/externalComponents/PVTPackage
   - git submodule update --init --recursive src/externalComponents/PAMELA
   - git submodule update --init --recursive src/coreComponents/fileIO/coupling/hdf5_interface
-  - git submodule update --init --recursive src/externalComponents/GEOSX_PTP
+  - git submodule update --init --recursive src/coreComponents/physicsSolvers/GEOSX_PTP
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
       docker run --rm --user='root' -v ${TRAVIS_BUILD_DIR}:/home/geosx/geosx_repo geosx/compiler:$IMG-$DOCKER_DATE  chown -R geosx /home/geosx;
     fi

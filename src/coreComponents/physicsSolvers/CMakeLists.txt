@@ -1,5 +1,7 @@
 message(STATUS "Entering src/coreComponents/physicsSolvers/CMakeLists.txt")
 
+add_subdirectory (GEOSX_PTP)
+
 #
 # Specify solver headers
 #
@@ -52,7 +54,12 @@ set( physicsSolvers_sources
      src/DummySolver.cpp
      )
 
-set( dependencyList common constitutive dataRepository linearAlgebra )
+if( BUILD_OBJ_LIBS)
+  set( dependencyList common constitutive dataRepository linearAlgebra )
+else()
+  set( dependencyList common linearAlgebra )
+endif()
+
 
 set( externalComponentDeps "" )
 if( ENABLE_GEOSX_PTP )
@@ -72,7 +79,7 @@ blt_add_library( NAME                  physicsSolvers
                  SOURCES               ${physicsSolvers_sources}
                  HEADERS               ${physicsSolvers_headers}
                  DEPENDS_ON            ${dependencyList} ${externalComponentDeps}
-                 #OBJECT                TRUE
+                 OBJECT                ${buildAsObj}
                )
 
 target_include_directories( physicsSolvers PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )

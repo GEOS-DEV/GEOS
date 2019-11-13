@@ -46,7 +46,13 @@ set( constitutive_sources
      contactRelations/ContactRelationBase.cpp
    )
 
-set( dependencyList dataRepository )
+if( BUILD_OBJ_LIBS)
+  set( dependencyList dataRepository)
+else()
+  set( dependencyList common )
+endif()
+
+
 
 if( ENABLE_PVTPackage )
     set( constitutive_headers
@@ -76,7 +82,7 @@ blt_add_library( NAME                  constitutive
                  SOURCES               ${constitutive_sources}
                  HEADERS               ${constitutive_headers}
                  DEPENDS_ON            ${dependencyList}
-                 #OBJECT                TRUE
+                 OBJECT                ${buildAsObj}
                )
                
 target_include_directories( constitutive PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
