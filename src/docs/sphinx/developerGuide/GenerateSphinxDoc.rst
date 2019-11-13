@@ -11,15 +11,13 @@ Generate Sphinx documentation files
 
  .. code-block:: sh
 
-  cd GEOSX
-  python scripts/config-build.py -hc host-configs/your-platform.cmake -bt Release
-  cd build-your-platform-release
+  cd GEOSX/build-your-platform-release
   make geosx_docs
 
 - That will create a new folder
 
   .. code-block:: sh
 
-   GEOSX/build-your-platform-release/docs/sphinx
+   GEOSX/build-your-platform-release/html/docs/sphinx
 
 which contains all the html files generated.
