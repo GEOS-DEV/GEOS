@@ -1,7 +1,7 @@
 Appendix: Compiling GEOSX on macOS using an Ubuntu Virtual Machine
 ================================================================================
 
-This document summarizes the steps needed to compile GEOSX on a device running OSX via an Ubuntu Virtual Machine.  
+This document summarizes the steps needed to compile GEOSX on a device running OSX via an Ubuntu Virtual Machine.
 The virtualization layer provided by VirtualBox will be used.
 Many Mac users find this approach more straightforward than setting up a native OSX environment for GEOSX.
 
@@ -174,29 +174,3 @@ Compiling GEOSX
 
 
 - Follow instructions provided at the `Getting Started with GEOSX <https://github.com/GEOSX/GEOSX/blob/develop/src/docs/sphinx/getting_started.rst>`__ page.
-
-Generate Sphinx documentation files
---------------------------------------------------------------------------------
-
-- To generate the documentation files, you will need to install Sphinx using
-
-  .. code-block:: sh
-
-   sudo apt install python-sphinx
-
-  Then you can generate the documentation files with the following command
-
- .. code-block:: sh
-
-  cd GEOSX
-  python scripts/config-build.py -hc host-configs/your-platform.cmake -bt Release
-  cd build-your-platform-release
-  make geosx_docs
-
-- That will create a new folder
-
-  .. code-block:: sh
-
-   GEOSX/build-your-platform-release/docs/sphinx
-
-which contains all the html files generated.
