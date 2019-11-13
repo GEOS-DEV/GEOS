@@ -46,6 +46,11 @@ the ``gravityVector``,
 the tolerances of the Newton and Krylov iterations,
 and the maximum number of iterations.
 
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/FiniteVolume/integratedTests/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_hex_gravity.xml
+  :language: xml
+  :start-after: <!-- SPHINX_TUT_EXT_SOLVER -->
+  :end-before: <!-- SPHINX_TUT_EXT_SOLVER_END -->
+
 .. code-block:: xml
 
   <Solvers
@@ -75,6 +80,11 @@ This file is a file contain grid information in the
 `GMSH <http://gmsh.info>`_
 format.
 
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/FiniteVolume/integratedTests/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_hex_gravity.xml
+  :language: xml
+  :start-after: <!-- SPHINX_TUT_EXT_MESH -->
+  :end-before: <!-- SPHINX_TUT_EXT_MESH_END -->
+
 .. code-block:: xml
 
   <Mesh>
@@ -98,6 +108,11 @@ Three controls are in place:
   - a solver time step of 1 second, even if the solver could converge with longer time-steps,
   - an output time step of 1 second: a new pressure field is written out every second,
   - a restart file with an infinite frequency (ie. no restart is requested)
+
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/FiniteVolume/integratedTests/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_hex_gravity.xml
+  :language: xml
+  :start-after: <!-- SPHINX_TUT_EXT_EVENTS -->
+  :end-before: <!-- SPHINX_TUT_EXT_EVENTS_END -->
 
 .. code-block:: xml
 
@@ -128,6 +143,11 @@ Numerical methods
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 We are using a two-point flux approximation scheme for our grid.
 
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/FiniteVolume/integratedTests/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_hex_gravity.xml
+  :language: xml
+  :start-after: <!-- SPHINX_TUT_EXT_NUM_METHODS -->
+  :end-before: <!-- SPHINX_TUT_EXT_NUM_METHODS_END -->
+
 .. code-block:: xml
 
   <NumericalMethods>
@@ -148,6 +168,11 @@ This block defines regions.
 Here, the entire field is one region called ``Domain``,
 and contains ``water`` and ``rock`` only.
 
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/FiniteVolume/integratedTests/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_hex_gravity.xml
+  :language: xml
+  :start-after: <!-- SPHINX_TUT_EXT_ELEM_REGIONS -->
+  :end-before: <!-- SPHINX_TUT_EXT_ELEM_REGIONS_END -->
+
 .. code-block:: xml
 
   <ElementRegions>
@@ -160,6 +185,11 @@ Constitutive model
 
 The physical properties of the two elements that exist in our field
 (water and rock) are specified here.
+
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/FiniteVolume/integratedTests/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_hex_gravity.xml
+  :language: xml
+  :start-after: <!-- SPHINX_TUT_EXT_CONSTITUTIVE -->
+  :end-before: <!-- SPHINX_TUT_EXT_CONSTITUTIVE_END -->
 
 .. code-block:: xml
 
@@ -186,6 +216,11 @@ We specify the following properties all throughout the model (homogeneous):
   - permeability in the z-direction: ``permz``, constant value of 2.0e-14 m\ :sup:`2` (20 mD),
   - porosity: ``referencePorosity``, constant value of 0.05,
 
+
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/FiniteVolume/integratedTests/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_hex_gravity.xml
+  :language: xml
+  :start-after: <!-- SPHINX_TUT_EXT_FIELDS -->
+  :end-before: <!-- SPHINX_TUT_EXT_FIELDS_END -->
 
 .. code-block:: xml
 
