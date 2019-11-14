@@ -19,7 +19,7 @@
 #ifndef GEOSX_PHYSICSSOLVERS_FINITEVOLUME_SINGLEPHASEFLOW_HPP_
 #define GEOSX_PHYSICSSOLVERS_FINITEVOLUME_SINGLEPHASEFLOW_HPP_
 
-#include "physicsSolvers/FiniteVolume/FlowSolverBase.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "constitutive/Fluid/SingleFluidBase.hpp"
 
 namespace geosx
