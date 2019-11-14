@@ -112,6 +112,8 @@ to support different physics or to define different constitutive properties.
 - For the MEDIT file format, the regions are defined using the tag of the element
 - For the ECLIPSE file formats, the regions have to be first defined using the ECLIPSE software
 
+.. _ImportingExternalMesh:
+
 Importing the Mesh
 ==================
 

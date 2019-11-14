@@ -21,7 +21,7 @@ On Debian flavored distributions, consider the following command line.
     apt-get install git git-lfs gcc g++ gfortran python2.7
 
 The GEOSX software makes use of multiple libraries.
-**Most of them are mirrored in the `thidPartyLib/tplMirror <https://github.com/GEOSX/thirdPartyLibs/tree/master/tplMirror>`_ folder and will be configured and build by the GEOSX TPL building process.**
+**Most of them are mirrored in the** `thidPartyLib/tplMirror <https://github.com/GEOSX/thirdPartyLibs/tree/master/tplMirror>`__ **folder and will be configured and build by the GEOSX TPL building process.**
 You may want to check the `CMakeLists.txt <https://github.com/GEOSX/thirdPartyLibs/blob/master/CMakeLists.txt>`_ that contains the versions of the dependencies.
 
 LLNL HPC libraries and tool boxes...
@@ -48,7 +48,7 @@ Linear (or more) algebra solvers
 
 Note that petsc currently downloads `pt-scotch <https://www.labri.fr/perso/pelegrin/scotch/scotch_en.html>`_ from the internet.
 If you do not have access to internet, you shall modify the `./configure` step of petsc in the `CMakeLists.txt` file,
-and change the `--download-ptscotch` option accordingly. 
+and change the ``--download-ptscotch`` option accordingly. 
 
 A graph partitioning tool
 
@@ -71,13 +71,11 @@ Some of these libraries rely on blas, lapack & MPI implementations.
 As well as the zlib compression library.
 **It is the developer’s responsibility to provide them.**
 
-On Debian flavored distribution, consider installing (apt-get install) the
+On Debian flavored distribution, consider installing (apt-get install) the following packages:
 
 .. code-block:: console
 
     zlib1g-dev libblas-dev liblapack-dev libopenmpi-dev
-
-packages.
 
 Note also that `pt-scotch` relies on `bison` and `flex`.
 The developper should provide these tools too.
@@ -94,12 +92,12 @@ Then running the `make` command (possibly with a specific target) will compile (
 
 These two scripts are also used the build the docker images easier without repeating ourselves (see `Continuous Integration process`_).
 
-The most crucial parameters of the python script are `--installpath`, `--buildtype`, `--hostconfig`.
+The most crucial parameters of the python script are ``--installpath``, ``--buildtype``, ``--hostconfig``.
 (Other parameters do exist, check the script).
 While the first parameter is obvious, the other one requires some explaination.
 
-* `--buildtype` is a wrapper to the `CMAKE_BUILD_TYPE <https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html>`_ option.
-* The `-—hostconfig` option requires a cmake file containing some build parameters (compiler location, etc.).
+* ``--buildtype`` is a wrapper to the `CMAKE_BUILD_TYPE <https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html>`_ option.
+* The ``--hostconfig`` option requires a cmake file containing some build parameters (compiler location, etc.).
   You may find some examples in the host-configs folders of the `third party library <https://github.com/GEOSX/thirdPartyLibs/tree/master/host-configs>`_ of from `GEOSX <https://github.com/GEOSX/GEOSX/tree/develop/host-configs>`_
 
 To be more practical, you may need to run the following command line
