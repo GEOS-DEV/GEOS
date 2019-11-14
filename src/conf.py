@@ -16,7 +16,6 @@ import os
 import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
-
 # -- Project information -----------------------------------------------------
 
 project = u'GEOSX'
@@ -40,7 +39,8 @@ release = u''
 # ones.
 extensions = [
 #    'sphinx.ext.mathjax'
-    'sphinx.ext.imgmath'
+    'sphinx.ext.imgmath',
+    'breathe'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -239,3 +239,7 @@ for macro in f:
     # used when building html version
     imgmath_latex_preamble += macro + '\n'
 #####################################################
+
+# Adding breathe support
+breathe_projects = { "geosx": "@CMAKE_CURRENT_BINARY_DIR@/docs/doxygen/xml/" }
+breathe_default_project = "geosx"
