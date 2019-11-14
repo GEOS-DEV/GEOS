@@ -13,7 +13,7 @@
                               krylovTol="1.0e-10"
                               newtonTol="1.0e-6"
                               maxIterNewton="8"
-                              verbosityFlag="0"/>
+                              verbosity="0"/>
      </SolidMechanicsLagrangianSSLE>
   </Solvers>
 
