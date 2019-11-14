@@ -46,7 +46,6 @@ EventBase::EventBase( const std::string& name,
   m_eventCount(0),
   m_timeStepEventCount(0),
   m_eventProgress(0),
-  m_verbosity(0),
   m_currentEventDtRequest(0.0),
   m_target(nullptr)
 {
@@ -97,11 +96,6 @@ EventBase::EventBase( const std::string& name,
 
   registerWrapper(viewKeyStruct::isTargetExecutingString, &m_targetExecFlag, false )->
     setDescription("Index of the current subevent");
-
-  registerWrapper(viewKeyStruct::verbosityString, &m_verbosity, false )->
-    setApplyDefaultValue(0)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Verbosity level");
 }
 
 
@@ -231,10 +225,8 @@ void EventBase::Execute(real64 const time_n,
     EventBase * subEvent = static_cast<EventBase *>( this->GetSubGroups()[m_currentSubEvent] );
     integer subEventForecast = subEvent->GetForecast();
 
-    if (m_verbosity > 0)
-    {
-      GEOS_LOG_RANK_0("          SubEvent: " << m_currentSubEvent << " (" << subEvent->getName() << "), dt_request=" << subEvent->GetCurrentEventDtRequest() << ", forecast=" << subEventForecast);
-    }
+    // Print debug information for verbosity >= 1
+    VERBOSE_LOG_RANK_0(1, "          SubEvent: " << m_currentSubEvent << " (" << subEvent->getName() << "), dt_request=" << subEvent->GetCurrentEventDtRequest() << ", forecast=" << subEventForecast);
 
     if (subEventForecast <= 0)
     {
