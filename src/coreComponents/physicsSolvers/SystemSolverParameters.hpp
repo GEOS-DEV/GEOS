@@ -40,7 +40,6 @@ public:
 
   struct viewKeysStruct
   {
-    static constexpr auto verbosityString           = "verbosityFlag";
     static constexpr auto solverTypeString          = "solverType";
     static constexpr auto krylovTolString           = "krylovTol";
     static constexpr auto numKrylovIterString       = "numKrylovIter";
@@ -70,7 +69,6 @@ public:
   struct groupKeysStruct
   {} groupKeys;
 
-  integer  verbose() const                    { return m_verbose; }
   string  solverType() const                  { return m_solverType; }
   real64 krylovTol() const                    { return m_krylovTol; }
   integer  numKrylovIter() const              { return m_numKrylovIter; }
@@ -97,8 +95,6 @@ public:
   integer allowNonConverged() const           { return m_allowNonConverged; }
   integer maxSubSteps() const                 { return m_maxSubSteps; }
 
-
-  integer m_verbose;
   string  m_solverType;
   real64  m_krylovTol;
   integer m_numKrylovIter;

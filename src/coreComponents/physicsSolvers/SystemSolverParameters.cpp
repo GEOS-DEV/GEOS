@@ -25,7 +25,6 @@ using namespace dataRepository;
 SystemSolverParameters::SystemSolverParameters( std::string const & name,
                                                 Group * const parent ):
   Group(name,parent),
-  m_verbose(0),
   m_solverType("Klu"),
   m_krylovTol(),
   m_numKrylovIter(),
@@ -46,6 +45,9 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
 {
   setInputFlags(InputFlags::OPTIONAL);
   
+  // This enables verbose filtering
+  enableVerbosityInput();
+
   setRestartFlags(RestartFlags::NO_WRITE);
   registerWrapper(viewKeysStruct::verbosityString, &m_verbose, false )->
     setApplyDefaultValue(0)->
@@ -154,15 +156,15 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
 
   registerWrapper(viewKeysStruct::KrylovResidualInitString, &m_KrylovResidualInit, false )->
     setApplyDefaultValue(0)->
-    setDescription("verbosity level");
+    setDescription("Initial Krylov residual");
 
   registerWrapper(viewKeysStruct::KrylovResidualFinalString, &m_KrylovResidualFinal, false )->
     setApplyDefaultValue(0)->
-    setDescription("verbosity level");
+    setDescription("Final Krylov residual");
 
   registerWrapper(viewKeysStruct::numNewtonIterationsString, &m_numNewtonIterations, false )->
     setApplyDefaultValue(0)->
-    setDescription("verbosity level");
+    setDescription("Number of Newton iterations");
 
 
 }
