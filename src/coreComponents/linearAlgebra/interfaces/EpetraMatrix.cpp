@@ -336,6 +336,11 @@ void EpetraMatrix::multiply( EpetraMatrix const & src,
                              EpetraMatrix & dst,
                              bool const closeResult ) const
 {
+  const Epetra_MpiComm *mpi_comm = dynamic_cast<const Epetra_MpiComm *>(&m_matrix->RangeMap().Comm());
+  dst.createWithLocalSize( this->localRows(),
+                           dst.localCols(),
+                           1,
+                           mpi_comm->Comm() );
   this->multiply( false, src, false, dst, closeResult );
 }
 
@@ -347,6 +352,11 @@ void EpetraMatrix::leftMultiplyTranspose( EpetraMatrix const & src,
                                           EpetraMatrix & dst,
                                           bool const closeResult ) const
 {
+  const Epetra_MpiComm *mpi_comm = dynamic_cast<const Epetra_MpiComm *>(&m_matrix->RangeMap().Comm());
+  dst.createWithLocalSize( this->localCols(),
+                           dst.localCols(),
+                           1,
+                           mpi_comm->Comm() );
   this->multiply( true, src, false, dst, closeResult );
 }
 
