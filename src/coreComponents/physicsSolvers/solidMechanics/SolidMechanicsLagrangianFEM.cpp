@@ -18,29 +18,22 @@
 
 #include "SolidMechanicsLagrangianFEM.hpp"
 
-#include <vector>
-#include <math.h>
-#include <sys/time.h>
-
-#include "mpiCommunications/CommunicationTools.hpp"
-#include "mpiCommunications/NeighborCommunicator.hpp"
+#include "codingUtilities/Utilities.hpp"
 #include "common/TimingMacros.hpp"
-#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/contactRelations/ContactRelationBase.hpp"
-#include "managers/NumericalMethodsManager.hpp"
+#include "constitutive/contact/ContactRelationBase.hpp"
 #include "finiteElement/ElementLibrary/FiniteElement.h"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteElement/Kinematics.h"
-#include "codingUtilities/Utilities.hpp"
-#include "mesh/FaceElementSubRegion.hpp"
-
 #include "managers/DomainPartition.hpp"
+#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
+#include "managers/NumericalMethodsManager.hpp"
+#include "mesh/FaceElementSubRegion.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
+#include "mpiCommunications/CommunicationTools.hpp"
+#include "mpiCommunications/NeighborCommunicator.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
-
-//#define verbose 0 //Need to move this somewhere else
 
 namespace geosx
 {
