@@ -21,7 +21,7 @@
 #include "ReservoirSolver.hpp"
 
 #include "common/TimingMacros.hpp"
-#include "constitutive/Fluid/MultiFluidBase.hpp"
+#include "constitutive/fluid/MultiFluidBase.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/WellSolverBase.hpp"
 

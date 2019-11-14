@@ -20,7 +20,7 @@
 #define GEOSX_PHYSICSSOLVERS_WELLS_COMPOSITIONALMULTIPHASEWELLSOLVER_HPP_
 
 #include "WellSolverBase.hpp"
-#include "constitutive/RelPerm/RelativePermeabilityBase.hpp"
+#include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseFlow.hpp"
 
 namespace geosx

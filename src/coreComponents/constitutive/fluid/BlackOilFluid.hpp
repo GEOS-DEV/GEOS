@@ -19,7 +19,7 @@
 #ifndef GEOSX_CONSTITUTIVE_FLUID_BLACKOILFLUID_HPP_
 #define GEOSX_CONSTITUTIVE_FLUID_BLACKOILFLUID_HPP_
 
-#include "constitutive/Fluid/MultiFluidPVTPackageWrapper.hpp"
+#include "constitutive/fluid/MultiFluidPVTPackageWrapper.hpp"
 
 namespace PVTPackage
 {

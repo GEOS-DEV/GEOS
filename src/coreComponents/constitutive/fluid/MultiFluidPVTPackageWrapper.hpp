@@ -19,7 +19,7 @@
 #ifndef GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDPVTPACKAGEWRAPPER_HPP
 #define GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDPVTPACKAGEWRAPPER_HPP
 
-#include "constitutive/Fluid/MultiFluidBase.hpp"
+#include "constitutive/fluid/MultiFluidBase.hpp"
 
 // PVTPackage includes
 #include "MultiphaseSystem/PVTEnums.hpp"
