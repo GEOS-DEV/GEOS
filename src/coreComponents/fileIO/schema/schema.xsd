@@ -195,7 +195,7 @@
 		<xsd:attribute name="maxCycle" type="integer" default="2147483647" />
 		<!--maxTime => Maximum simulation time for the global event loop.-->
 		<xsd:attribute name="maxTime" type="real64" default="1.79769e+308" />
-		<!--verbosity => Verbosity level.-->
+		<!--verbosity => Verbosity level-->
 		<xsd:attribute name="verbosity" type="integer" default="0" />
 	</xsd:complexType>
 	<xsd:complexType name="HaltEventType">
@@ -776,6 +776,8 @@
 		<xsd:attribute name="useMass" type="integer" default="0" />
 		<!--verboseLevel => Verbosity level for this solver. Higher values will lead to more screen output. For non-debug  simulations, this should remain at 0.-->
 		<xsd:attribute name="verboseLevel" type="integer" default="0" />
+		<!--verbosity => Verbosity level-->
+		<xsd:attribute name="verbosity" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -795,6 +797,8 @@
 		<xsd:attribute name="useMass" type="integer" default="0" />
 		<!--verboseLevel => Verbosity level for this solver. Higher values will lead to more screen output. For non-debug  simulations, this should remain at 0.-->
 		<xsd:attribute name="verboseLevel" type="integer" default="0" />
+		<!--verbosity => Verbosity level-->
+		<xsd:attribute name="verbosity" type="integer" default="0" />
 		<!--wellFluidName => Name of fluid constitutive object to use for this solver.-->
 		<xsd:attribute name="wellFluidName" type="string" use="required" />
 		<!--wellRelPermName => Name of the relative permeability constitutive model to use-->
@@ -826,6 +830,8 @@
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--verboseLevel => Verbosity level for this solver. Higher values will lead to more screen output. For non-debug  simulations, this should remain at 0.-->
 		<xsd:attribute name="verboseLevel" type="integer" default="0" />
+		<!--verbosity => Verbosity level-->
+		<xsd:attribute name="verbosity" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -845,6 +851,8 @@
 		<xsd:attribute name="timeIntegrationOption" type="string" use="required" />
 		<!--verboseLevel => Verbosity level for this solver. Higher values will lead to more screen output. For non-debug  simulations, this should remain at 0.-->
 		<xsd:attribute name="verboseLevel" type="integer" default="0" />
+		<!--verbosity => Verbosity level-->
+		<xsd:attribute name="verbosity" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -866,6 +874,8 @@
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--verboseLevel => Verbosity level for this solver. Higher values will lead to more screen output. For non-debug  simulations, this should remain at 0.-->
 		<xsd:attribute name="verboseLevel" type="integer" default="0" />
+		<!--verbosity => Verbosity level-->
+		<xsd:attribute name="verbosity" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -883,6 +893,8 @@
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--verboseLevel => Verbosity level for this solver. Higher values will lead to more screen output. For non-debug  simulations, this should remain at 0.-->
 		<xsd:attribute name="verboseLevel" type="integer" default="0" />
+		<!--verbosity => Verbosity level-->
+		<xsd:attribute name="verbosity" type="integer" default="0" />
 		<!--wellSolverName => Name of the well solver to use in the reservoir-well system solver-->
 		<xsd:attribute name="wellSolverName" type="string" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -906,6 +918,8 @@
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--verboseLevel => Verbosity level for this solver. Higher values will lead to more screen output. For non-debug  simulations, this should remain at 0.-->
 		<xsd:attribute name="verboseLevel" type="integer" default="0" />
+		<!--verbosity => Verbosity level-->
+		<xsd:attribute name="verbosity" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -923,6 +937,8 @@
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--verboseLevel => Verbosity level for this solver. Higher values will lead to more screen output. For non-debug  simulations, this should remain at 0.-->
 		<xsd:attribute name="verboseLevel" type="integer" default="0" />
+		<!--verbosity => Verbosity level-->
+		<xsd:attribute name="verbosity" type="integer" default="0" />
 		<!--wellFluidName => Name of fluid constitutive object to use for this solver.-->
 		<xsd:attribute name="wellFluidName" type="string" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -965,6 +981,8 @@
 		<xsd:attribute name="useVelocityForQS" type="integer" default="0" />
 		<!--verboseLevel => Verbosity level for this solver. Higher values will lead to more screen output. For non-debug  simulations, this should remain at 0.-->
 		<xsd:attribute name="verboseLevel" type="integer" default="0" />
+		<!--verbosity => Verbosity level-->
+		<xsd:attribute name="verbosity" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -1005,6 +1023,8 @@
 		<xsd:attribute name="useVelocityForQS" type="integer" default="0" />
 		<!--verboseLevel => Verbosity level for this solver. Higher values will lead to more screen output. For non-debug  simulations, this should remain at 0.-->
 		<xsd:attribute name="verboseLevel" type="integer" default="0" />
+		<!--verbosity => Verbosity level-->
+		<xsd:attribute name="verbosity" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -1030,6 +1050,8 @@
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--verboseLevel => Verbosity level for this solver. Higher values will lead to more screen output. For non-debug  simulations, this should remain at 0.-->
 		<xsd:attribute name="verboseLevel" type="integer" default="0" />
+		<!--verbosity => Verbosity level-->
+		<xsd:attribute name="verbosity" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
