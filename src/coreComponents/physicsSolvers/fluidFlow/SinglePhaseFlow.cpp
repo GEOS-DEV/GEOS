@@ -30,7 +30,7 @@
 #include "managers/DomainPartition.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
-#include "physicsSolvers/FiniteVolume/SinglePhaseFlowKernels.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseFlowKernels.hpp"
 
 /**
  * @namespace the geosx namespace that encapsulates the majority of the code

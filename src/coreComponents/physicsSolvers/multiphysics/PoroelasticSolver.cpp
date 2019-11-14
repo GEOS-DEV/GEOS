@@ -21,12 +21,12 @@
 #include "PoroelasticSolver.hpp"
 
 #include "constitutive/ConstitutiveManager.hpp"
-#include "../FiniteVolume/SinglePhaseFlow.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "finiteElement/Kinematics.h"
 #include "managers/DomainPartition.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseFlow.hpp"
 
 
 namespace geosx

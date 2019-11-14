@@ -19,7 +19,7 @@
 #include "common/TimingMacros.hpp"
 #include "constitutive/CapillaryPressure/BrooksCoreyCapillaryPressure.hpp"
 #include "constitutive/CapillaryPressure/VanGenuchtenCapillaryPressure.hpp"
-#include "physicsSolvers/unitTests/testCompFlowUtils.hpp"
+#include "physicsSolvers/fluidFlow/unitTests/testCompFlowUtils.hpp"
 
 // TPL includes
 #include <gtest/gtest.h>
