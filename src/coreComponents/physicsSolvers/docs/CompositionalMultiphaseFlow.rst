@@ -115,9 +115,10 @@ Primary variables
 
 The variable formulation implemented in GEOSX is a global variable formulation based on
 :math:`n_c+1` primary variables, namely, one pressure, :math:`p`, and
-:math:`n_c` (by default, molar) component densities, :math:`\rho_c`.
+:math:`n_c` component densities, :math:`\rho_c`.
 By default, we use molar component densities. A flag discussed in the section
-:ref:`usage` can be used to use mass component densities instead of molar component densities.
+:ref:`usage` can be used to select mass component densities instead of molar component
+densities.
 
 =========================== ===========================
 Number of primary variables Variable type
@@ -182,7 +183,7 @@ Solution strategy
 -----------------
 
 The nonlinear solution strategy is based on Newton's method.
-at each Newton iteration, the solver assembles a residual vector, :math:`R`,
+At each Newton iteration, the solver assembles a residual vector, :math:`R`,
 collecting the :math:`n_c` discrete mass conservation equations and the volume
 constraint for all the control volumes.
 The solver also assembles the Jacobian matrix :math:`J` containing the analytical
@@ -193,7 +194,7 @@ The Newton update, :math:`\delta X`, is then computed as:
 .. math::
   \delta X := - J^{-1} R,
 
-The linear system is solved with one of the solvers described in :doc:`/coreComponents/linearAlgebra/docs/LinearSolverParameters`.
+The linear system is solved with one of the solvers described in :doc:`/coreComponents/linearAlgebra/docs/LinearSolvers`.
 The Newton update is then applied to the primary variables:
 
 ..  math::
