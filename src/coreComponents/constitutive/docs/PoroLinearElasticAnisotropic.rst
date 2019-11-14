@@ -7,7 +7,7 @@ Linear poroelastic anisotropic solid model
 Overview
 =========================
 
-This model may be used to represents a porous material with a linear poroelastic anisotropic response to response to coupled deformation-diffusion processes.
+This model may be used to represents a porous material with a linear poroelastic anisotropic response to coupled deformation-diffusion processes.
 The relationship between stress and strain is typically formulated within the framework of the `Biot theory of poroelasticity <https://doi.org/10.1016/B978-0-08-040615-2.50011-3>`__, 
 which for the case of linear poroelasticity, may be expressed as:
 
