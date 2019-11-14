@@ -16,8 +16,18 @@ import os
 import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
-# -- Project information -----------------------------------------------------
+# Adding breathe support
+read_the_docs_build = os.environ.get('READTHEDOCS', None) == 'True'
+if read_the_docs_build:
+    from subprocess import call
+    call(['doxygen', "./src/docs/doxygen/Doxyfile.in"])
 
+#breathe_projects = { "geosx": "@CMAKE_CURRENT_BINARY_DIR@/../docs/doxygen/xml/" }
+breathe_projects = { "geosx": "./doxygen_output/xml/" }
+breathe_default_project = "geosx"
+
+
+# -- Project information -----------------------------------------------------
 project = u'GEOSX'
 copyright = u'2018, Lawrence Livermore National Laboratory'
 author = u'Randolph Settgast'
@@ -239,7 +249,3 @@ for macro in f:
     # used when building html version
     imgmath_latex_preamble += macro + '\n'
 #####################################################
-
-# Adding breathe support
-breathe_projects = { "geosx": "@CMAKE_CURRENT_BINARY_DIR@/docs/doxygen/xml/" }
-breathe_default_project = "geosx"

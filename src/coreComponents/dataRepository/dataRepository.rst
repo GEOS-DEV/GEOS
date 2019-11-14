@@ -54,6 +54,11 @@ The components/classes of the data structure that a developer will require some 
 * :ref:`ObjectCatalog` 
   A statically initialized factory used for creating new objects in the dataRepository.
 
+* TESTING breathe
+
+.. doxygennamespace:: geosx::dataRepository
+   :project: geosx
+
 .. toctree::
    :maxdepth: 1
 
