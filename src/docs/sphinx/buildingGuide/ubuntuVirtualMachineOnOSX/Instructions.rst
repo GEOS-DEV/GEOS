@@ -158,19 +158,4 @@ Click ``OK`` to close all Settings windows.
       sudo usermod -G vboxsf -a YOUR_USERNAME
       reboot
 
-     - The shared folder will now be accessible and located at ``/media/sf_FOLDER_NAME``.
-
-
-
-
-Compiling GEOSX
---------------------------------------------------------------------------------
-
-- Install packages needed for compiling GEOSX
-
-  .. code-block:: sh
-
-   sudo apt install git git-lfs gcc g++ gfortran python cmake zlib1g-dev libblas-dev liblapack-dev libopenmpi-dev
-
-
-- Follow instructions provided at the `Getting Started with GEOSX <https://github.com/GEOSX/GEOSX/blob/develop/src/docs/sphinx/getting_started.rst>`__ page.
+     - The shared folder will now be accessible and located at `` /media/sf_FOLDER_NAME``.
