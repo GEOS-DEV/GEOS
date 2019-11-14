@@ -5,7 +5,7 @@ GIT Workflow for Developement in GEOSX
 The GEOSX project is hosted on github `here <https://github.com/GEOSX>`__.
 For instuctions on how to clone and build GEOSX, please refer to the :ref:`GettingStartedWithGEOSX`.
 
-hey. look at this :ref:`FunctionManager`
+.. hey. look at this :ref:`FunctionManager`
 
 Branches
 ========
