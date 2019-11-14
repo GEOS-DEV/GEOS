@@ -208,7 +208,6 @@ private:
   localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,
                                     arrayView1d<localIndex const> const & packList ) const;
 
-  //START_SPHINX_INCLUDE_02
   /// reference position of the nodes
   array1d<R1Tensor> m_referencePosition;
 
@@ -220,7 +219,6 @@ private:
 
   /// nodeToElement relation
   ElemMapType m_toElements;
-  //END_SPHINX_INCLUDE_02
 
   map< localIndex, set<globalIndex> > m_unmappedGlobalIndicesInToEdges;
   map< localIndex, set<globalIndex> > m_unmappedGlobalIndicesInToFaces;

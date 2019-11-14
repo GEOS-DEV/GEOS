@@ -29,7 +29,6 @@ Welcome to the GEOSX developer guide.
    
    /coreComponents/linearAlgebra/docs/DofManager.rst
 
-   /coreComponents/mesh/docs/MeshInfrastructure.rst
 
 
 Overview of the code structure
