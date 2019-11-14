@@ -53,6 +53,7 @@ test. It defines ``CellBlocks`` in the three directions to generate a staircase-
 with the following code.
 
 .. code-block:: xml
+
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="{C3D8}"
