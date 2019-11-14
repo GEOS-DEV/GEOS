@@ -69,7 +69,7 @@ For 1D tables, the function may be defined using the coordinates and values attr
 ND Table
 *************
 
-For ND tables, the grid coordinates and values may be defined using a set of .csv files.  The ``coordinateFiles`` attribute specifies the file names that define the coordinates for each axis.  The values in each coordinate file must be comma-delimited and ordered from smallest to largest.  The dimensionality of the table is defined by the number of coordinate files (coordinateFiles="x.csv" would indicate a 1D table, coordinateFiles="x.csv y.csv z.csv t.csv" would indicate a 4D table, etc.).  The ``voxelFile`` attribute specifies name of the file that defines the value of the function at each point along the grid.  These values must be comma-delimited (line-breaks are allowed) and be specified in Fortran order (where the index of the first dimension changes the fastest, and the index of the last dimension changes slowest).
+For ND tables, the grid coordinates and values may be defined using a set of .csv files.  The ``coordinateFiles`` attribute specifies the file names that define the coordinates for each axis.  The values in each coordinate file must be comma-delimited and ordered from smallest to largest.  The dimensionality of the table is defined by the number of coordinate files (coordinateFiles="x.csv" would indicate a 1D table, coordinateFiles="x.csv y.csv z.csv t.csv" would indicate a 4D table, etc.).  The ``voxelFile`` attribute specifies name of the file that defines the value of the function at each point along the grid.  These values must be comma-delimited (line-breaks are allowed) and be specified in Fortran order, i.e., column-major order (where the index of the first dimension changes the fastest, and the index of the last dimension changes slowest).
 
 The following would define a simple 2D function ``c = a + 2*b``:
 
@@ -119,7 +119,7 @@ This function leverages the symbolic expression library mathpresso to define and
 
 The ``variableNames`` attribute defines a set of single-character names for the inputs to the symbolic function.  There should be a definition for each scalar input and for each component of a vector input.  For example if ``inputVarName="time, ReferencePosition"``, then ``variableNames="t, x, y, z"``.  The ``expression`` attribute defines the symbolic expression to be executed.  Aside from the following exceptions, the syntax mirrors python:
 
-- The function string cannot contain ay spaces
+- The function string cannot contain any spaces
 - The power operator is specified using the C-style expression (e.g. pow(x,3) instead of x**3)
 
 
