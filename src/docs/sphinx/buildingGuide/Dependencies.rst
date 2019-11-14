@@ -1,6 +1,3 @@
-Building process
-################
-
 Dependencies
 ============
 
@@ -80,6 +77,9 @@ On Debian flavored distribution, consider installing (apt-get install) the follo
 Note also that `pt-scotch` relies on `bison` and `flex`.
 The developper should provide these tools too.
 
+If you want further details about building the GEOSX and its TPLs, (which packages to install for example),
+consider having a look at the `Dockerfiles in the third party library repository <https://github.com/GEOSX/thirdPartyLibs/tree/master/docker>`_.
+
 Third party libraries build management pattern
 ==============================================
 
@@ -97,46 +97,19 @@ The most crucial parameters of the python script are ``--installpath``, ``--buil
 While the first parameter is obvious, the other one requires some explaination.
 
 * ``--buildtype`` is a wrapper to the `CMAKE_BUILD_TYPE <https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html>`_ option.
-* The ``--hostconfig`` option requires a cmake file containing some build parameters (compiler location, etc.).
+* The ``--hostconfig`` option requires a cmake file containing some build parameters (compiler locations and flags, etc.).
   You may find some examples in the host-configs folders of the `third party library <https://github.com/GEOSX/thirdPartyLibs/tree/master/host-configs>`_ of from `GEOSX <https://github.com/GEOSX/GEOSX/tree/develop/host-configs>`_
 
 To be more practical, you may need to run the following command line
 
 .. code-block:: console
 
-    python scripts/config-build.py --hostconfig=/path/to/your-platform.cmake --buildtype=Release --installpath=/opt
+    python scripts/config-build.py --hostconfig=/path/to/your-platform.cmake --buildtype=Release --installpath=/path/to/install/dir
 
 We do recommend using a *host config cmake file* for fine grained control of the build.
 Have a look at some of the `already existing examples <https://github.com/GEOSX/GEOSX/blob/develop/host-configs>`_
 
 Last, note that any extra argument will be tranfered directly as a `cmake` argument.
+For example, use the `-DNUM_PROC=2` to compile the TPL using two threads.
 
 If you want to directly write the `cmake` command line, we advise you to dig into the `config-build.py <https://github.com/GEOSX/GEOSX/blob/develop/scripts/config-build.py>`_ python code.
-
-Continuous Integration process
-==============================
-
-To save building time, the third party libraries (that do not change so often) and GEOSX are build separately.
-
-Everytime a pull is requested in the TPL repository, a docker image is generated and deployed on `dockerhub <https://hub.docker.com/r/geosx/compiler>`_.
-The date (YYYY-MM-DD) is appended to the tag name so the client code (i.e. GEOSX) can select the version it needs
-(the `DOCKER_DATE` env variable is defined in the `GEOSX's .travis.yml <https://github.com/GEOSX/GEOSX/blob/develop/.travis.yml>`_).
-
-For the OSX builds, we build a tarball a TPL and save them a remote location.
-The client (GEOSX again) will select the version it needs by defining the `TPL_OSX_TRAVIS_BUILD_NUMBER` environment variable in the `.travis.yml <https://github.com/GEOSX/GEOSX/blob/develop/.travis.yml>`_ file.
-
-It must be mentionned that one and only one version of the compiled TPL tarball is stored per pull request (older ones are removed automatically).
-Therefore, a client building against a PR which is not closed may experience a 404 error sooner or later.
-
-It must be noted that there are now two different ways to designate the same version of the TPL.
-An effort should be done to make this homogemneous.
-
-Troubleshooting
-===============
-
-An important counterpart to using a tarball and not a docker image is that the tarball does not provide the whole system the precompiled binaries rely on.
-
-Problems may arise since we use the rolling release `Homebrew <https://brew.sh/>`_ to install open-mpi in particular.
-It is not straightforward for the client to install exactly the same versions through Homebrew and client builds may fail.
-The most common solution is to rebuild the precompiled tarball against an actuated of the brew elements.
-The GEOSX administrators typically manage this task when problems arise.
