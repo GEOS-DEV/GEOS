@@ -17,8 +17,8 @@
 #include "stackTrace.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
-#include "constitutive/Fluid/CompositionalMultiphaseFluid.hpp"
-#include "constitutive/Fluid/BlackOilFluid.hpp"
+#include "constitutive/fluid/CompositionalMultiphaseFluid.hpp"
+#include "constitutive/fluid/BlackOilFluid.hpp"
 #include "physicsSolvers/fluidFlow/unitTests/testCompFlowUtils.hpp"
 
 // TPL includes

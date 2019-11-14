@@ -25,7 +25,7 @@
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/Fluid/SingleFluidBase.hpp"
+#include "constitutive/fluid/SingleFluidBase.hpp"
 #include "managers/DomainPartition.hpp"
 #include "wells/PerforationData.hpp"
 #include "wells/WellElementSubRegion.hpp"

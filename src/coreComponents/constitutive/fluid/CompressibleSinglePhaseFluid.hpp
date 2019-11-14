@@ -19,7 +19,7 @@
 #ifndef GEOSX_CONSTITUTIVE_FLUID_COMPRESSIBLESINGLEPHASEFLUID_HPP_
 #define GEOSX_CONSTITUTIVE_FLUID_COMPRESSIBLESINGLEPHASEFLUID_HPP_
 
-#include "constitutive/Fluid/SingleFluidBase.hpp"
+#include "constitutive/fluid/SingleFluidBase.hpp"
 
 #include "constitutive/ExponentialRelation.hpp"
 
