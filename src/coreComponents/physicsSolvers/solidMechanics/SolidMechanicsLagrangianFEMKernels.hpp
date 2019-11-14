@@ -25,7 +25,7 @@
 #include "Epetra_FEVector.h"
 #include "common/DataTypes.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
-#include "constitutive/Solid/solidSelector.hpp"
+#include "constitutive/solid/solidSelector.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "finiteElement/Kinematics.h"
 #include "common/TimingMacros.hpp"

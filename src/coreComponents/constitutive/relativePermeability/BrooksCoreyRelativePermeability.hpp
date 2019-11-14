@@ -19,7 +19,7 @@
 #ifndef GEOSX_CONSTITUTIVE_BROOKSCOREYRELATIVEPERMEABILITY_HPP
 #define GEOSX_CONSTITUTIVE_BROOKSCOREYRELATIVEPERMEABILITY_HPP
 
-#include "constitutive/RelPerm/RelativePermeabilityBase.hpp"
+#include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 
 namespace geosx
 {

@@ -17,8 +17,8 @@
 #include "stackTrace.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
-#include "constitutive/CapillaryPressure/BrooksCoreyCapillaryPressure.hpp"
-#include "constitutive/CapillaryPressure/VanGenuchtenCapillaryPressure.hpp"
+#include "constitutive/capillaryPressure/BrooksCoreyCapillaryPressure.hpp"
+#include "constitutive/capillaryPressure/VanGenuchtenCapillaryPressure.hpp"
 #include "physicsSolvers/fluidFlow/unitTests/testCompFlowUtils.hpp"
 
 // TPL includes

@@ -20,7 +20,7 @@
 #define GEOSX_PHYSICSSOLVERS_FINITEVOLUME_COMPOSITIONALMULTIPHASEFLOWKERNELS_HPP
 
 #include "common/DataTypes.hpp"
-#include "constitutive/Fluid/MultiFluidBase.hpp"
+#include "constitutive/fluid/MultiFluidBase.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 

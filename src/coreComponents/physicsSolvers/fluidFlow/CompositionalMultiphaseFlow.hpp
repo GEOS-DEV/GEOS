@@ -19,8 +19,8 @@
 #ifndef GEOSX_PHYSICSSOLVERS_FINITEVOLUME_COMPOSITIONALMULTIPHASEFLOW_HPP_
 #define GEOSX_PHYSICSSOLVERS_FINITEVOLUME_COMPOSITIONALMULTIPHASEFLOW_HPP_
 
-#include "constitutive/RelPerm/RelativePermeabilityBase.hpp"
-#include "constitutive/CapillaryPressure/CapillaryPressureBase.hpp"
+#include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
+#include "constitutive/capillaryPressure/CapillaryPressureBase.hpp"
 #include "mesh/ElementRegionManager.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 
