@@ -28,7 +28,6 @@ SolverBase::SolverBase( std::string const & name,
                         Group * const parent )
   :
   ExecutableGroup( name, parent ),
-  m_verboseLevel( 0 ),
   m_gravityVector( R1Tensor( 0.0 ) ),
   m_systemSolverParameters( groupKeyStruct::systemSolverParametersString, this ),
   m_cflFactor(),
@@ -44,12 +43,6 @@ SolverBase::SolverBase( std::string const & name,
 
   // This sets a flag to indicate that this object increments time
   this->SetTimestepBehavior( 1 );
-
-  registerWrapper( viewKeyStruct::verboseLevelString, &m_verboseLevel, false )->
-    setApplyDefaultValue( 0 )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Verbosity level for this solver. Higher values will lead to more screen output. For non-debug "
-                    " simulations, this should remain at 0." );
 
   registerWrapper( viewKeyStruct::cflFactorString, &m_cflFactor, false )->
     setApplyDefaultValue( 0.5 )->
@@ -121,7 +114,7 @@ void SolverBase::PostProcessInput()
 
 void SolverBase::SetLinearSolverParameters()
 {
-  m_linearSolverParameters.verbosity = m_systemSolverParameters.verbose();
+  m_linearSolverParameters.verbosity = m_systemSolverParameters.getVerbosityLevel();
 
   if ( m_systemSolverParameters.scalingOption() )
   {
@@ -201,11 +194,11 @@ void SolverBase::Execute( real64 const time_n,
                                           domain->group_cast<DomainPartition *>() );
     dtRemaining -= dtAccepted;
 
-    if( m_verboseLevel >= 1 && dtRemaining > 0.0 )
+    if(  dtRemaining > 0.0 )
     {
-      GEOS_LOG_RANK_0( getName() << ": sub-step = " << subStep
-                                 << ", accepted dt = " << dtAccepted
-                                 << ", remaining dt = " << dtRemaining );
+      VERBOSE_LOG_RANK_0( 1, getName() << ": sub-step = " << subStep
+                                       << ", accepted dt = " << dtAccepted
+                                       << ", remaining dt = " << dtRemaining );
     }
   }
 
@@ -279,10 +272,7 @@ bool SolverBase::LineSearch( real64 const & time_n,
 
     if( !CheckSystemSolution( domain, dofManager, solution, localScaleFactor ) )
     {
-      if( m_verboseLevel >= 1 )
-      {
-        GEOS_LOG_RANK_0( "Line search: " << lineSearchIteration << ", solution check failed" );
-      }
+      VERBOSE_LOG_RANK_0( 1, "Line search: " << lineSearchIteration << ", solution check failed" );
       continue;
     }
 
@@ -297,10 +287,7 @@ bool SolverBase::LineSearch( real64 const & time_n,
     // get residual norm
     residualNorm = CalculateResidualNorm( domain, dofManager, rhs );
 
-    if( m_verboseLevel >= 1 )
-    {
-      GEOS_LOG_RANK_0( "Line search: " << lineSearchIteration << ", R = " << residualNorm );
-    }
+    VERBOSE_LOG_RANK_0( 1, "Line search: " << lineSearchIteration << ", R = " << residualNorm );
 
     // if the residual norm is less than the last residual, we can proceed to the
     // solution step
@@ -370,10 +357,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       // get residual norm
       real64 residualNorm = CalculateResidualNorm( domain, dofManager, rhs );
 
-      if( m_verboseLevel >= 1 )
-      {
-        GEOS_LOG_RANK_0( "Attempt: " << dtAttempt << ", Newton: " << newtonIter << ", R = " << residualNorm );
-      }
+      VERBOSE_LOG_RANK_0( 1, "Attempt: " << dtAttempt << ", Newton: " << newtonIter << ", R = " << residualNorm );
 
       // if the residual norm is less than the Newton tolerance we denote that we have
       // converged and break from the Newton loop immediately.

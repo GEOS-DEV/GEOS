@@ -247,16 +247,12 @@ void ReservoirSolver::AssembleSystem( real64 const time_n,
   matrix.close();
   rhs.close();
 
-  if( verboseLevel() == 2 )
-  {
-    GEOS_LOG_RANK_0( "After ReservoirSolver::AssembleSystem" );
-    GEOS_LOG_RANK_0("\nJacobian:\n");
-    std::cout << matrix;
-    GEOS_LOG_RANK_0("\nResidual:\n");
-    std::cout << rhs;
-  }
+  // Debug for verbosity >= 2
+  VERBOSE_LOG_RANK_0( 2, "After ReservoirSolver::AssembleSystem" );
+  VERBOSE_LOG_RANK_0( 2, "\nJacobian:\n" << matrix );
+  VERBOSE_LOG_RANK_0( 2, "\nResidual:\n" << rhs );
 
-  if( verboseLevel() >= 3 )
+  if( getVerbosityLevel() >= 3 )
   {
     SystemSolverParameters * const solverParams = getSystemSolverParameters();
     integer newtonIter = solverParams->numNewtonIterations();
@@ -310,12 +306,9 @@ void ReservoirSolver::SolveSystem( DofManager const & dofManager,
 
   SolverBase::SolveSystem( dofManager, matrix, rhs, solution );
 
-  if( verboseLevel() == 2 )
-  {
-    GEOS_LOG_RANK_0("After SinglePhaseFlow::SolveSystem");
-    GEOS_LOG_RANK_0("\nSolution:\n");
-    std::cout << solution;
-  }
+  // Debug for verbosity >= 2
+  VERBOSE_LOG_RANK_0( 2, "After ReservoirSolver::SolveSystem" );
+  VERBOSE_LOG_RANK_0( 2, "\nSolution:\n" << solution );
 }
 
 bool ReservoirSolver::CheckSystemSolution( DomainPartition const * const domain,
