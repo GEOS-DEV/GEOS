@@ -45,6 +45,7 @@ Group::Group( std::string const & name,
   m_size( 0 ),
   m_capacity( 0 ),
   m_name( name ),
+  m_verbosity(0),
   m_restart_flags( RestartFlags::WRITE_AND_READ ),
   m_input_flags( InputFlags::INVALID ),
   m_conduitNode( conduitNodeFromParent( name, parent ) )
@@ -527,6 +528,16 @@ void Group::postRestartInitializationRecursive( Group * const domain )
   this->postRestartInitialization( domain );
 }
 
+
+void Group::enableVerbosityInput()
+{
+  string const verbosityString = "verbosity";
+
+  registerWrapper(verbosityString, &m_verbosity, false )->
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Verbosity level");
+}
 
 } /* end namespace dataRepository */
 } /* end namespace geosx  */

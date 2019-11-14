@@ -37,6 +37,9 @@ SolverBase::SolverBase( std::string const & name,
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
+  // This enables verbose filtering
+  enableVerbosityInput();
+
   this->registerWrapper( viewKeyStruct::gravityVectorString, &m_gravityVector, false );
 
   // This sets a flag to indicate that this object increments time
