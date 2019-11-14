@@ -137,8 +137,8 @@ void WellSolverBase::AssembleSystem( real64 const time,
 
   // Log messages for verbosity >= 2
   VERBOSE_LOG_RANK_0(2, "After WellSolverBase::AssembleSystem" );
-  VERBOSE_LOG_RANK_0(2, "\nJacobian:\n" << matrix);
-  VERBOSE_LOG_RANK_0(2, "\nResidual:\n" << rhs);
+  VERBOSE_LOG_RANK_0(2, "\nJacobian:\n" << matrix );
+  VERBOSE_LOG_RANK_0(2, "\nResidual:\n" << rhs );
 }
 
 void WellSolverBase::UpdateStateAll( DomainPartition * const domain )
