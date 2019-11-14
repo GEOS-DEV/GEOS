@@ -77,8 +77,10 @@ with the following code.
 
 Thus, the generated mesh will be :
 
-.. image:: ../../../coreComponents/mesh/docs/staircase.svg
-
+.. figure:: ../../../coreComponents/mesh/docs/staircase.svg
+   :align: center
+   :width: 500
+ 
 **************************
 Using an External Mesh
 **************************
