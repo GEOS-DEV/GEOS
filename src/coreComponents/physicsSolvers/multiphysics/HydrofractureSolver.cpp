@@ -312,10 +312,8 @@ real64 HydrofractureSolver::SplitOperatorStep( real64 const & GEOSX_UNUSED_ARG( 
 //      m_solidSolver->ResetStateToBeginningOfStep( domain );
 //      ResetStateToBeginningOfStep( domain );
 //    }
-//    if (this->verboseLevel() >= 1)
-//    {
-//      GEOS_LOG_RANK_0( "\tIteration: " << iter+1  << ", FlowSolver: " );
-//    }
+//    VERBOSE_LOG_RANK_0( 1, "\tIteration: " << iter+1  << ", FlowSolver: " );
+//
 //    // call assemble to fill the matrix and the rhs
 //    m_flowSolver->AssembleSystem( domain, getLinearSystemRepository(), time_n+dt, dt );
 //
@@ -336,13 +334,13 @@ real64 HydrofractureSolver::SplitOperatorStep( real64 const & GEOSX_UNUSED_ARG( 
 //      continue;
 //    }
 //
-////    if (m_fluidSolver->getSystemSolverParameters()->numNewtonIterations() == 0 && iter > 0 && this->verboseLevel() >= 1)
+////    if (m_fluidSolver->getSystemSolverParameters()->numNewtonIterations() == 0 && iter > 0 && getVerbosityLevel() >= 1)
 ////    {
 ////      GEOS_LOG_RANK_0( "***** The iterative coupling has converged in " << iter  << " iterations! *****\n" );
 ////      break;
 ////    }
 //
-//    if (this->verboseLevel() >= 1)
+//    if (getVerbosityLevel() >= 1)
 //    {
 //      GEOS_LOG_RANK_0( "\tIteration: " << iter+1  << ", MechanicsSolver: " );
 //    }
@@ -572,7 +570,7 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
 //  std::cout.precision(7);
 //  std::cout.setf(std::ios_base::scientific);
 
-  if( this->m_verboseLevel == 2 )
+  if( getVerbosityLevel() == 2 )
   {
     // Before outputting anything generate permuation matrix and permute.
     MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
@@ -631,7 +629,7 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
     MpiWrapper::Barrier();
   }
 
-  if( verboseLevel() >= 3 )
+  if( getVerbosityLevel() >= 3 )
   {
     SystemSolverParameters * const solverParams = getSystemSolverParameters();
     integer newtonIter = solverParams->numNewtonIterations();
@@ -1415,7 +1413,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
 
       if(params->m_useMLPrecond && i==0 )
       {
-        if( params->m_verbose>=2 )
+        if( params->getVerbosityLevel() >=2 )
         {
           std::cout<< "SolverBase :: Using ML preconditioner for block " << i << i <<std::endl;
         }
@@ -1440,7 +1438,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
       }
       else
       {
-        if( params->m_verbose>=2 )
+        if( params->getVerbosityLevel() >=2 )
         {
           std::cout<< "SolverBase :: Using ILU preconditioner for block " << i << i <<std::endl;
         }
@@ -1542,7 +1540,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
       else
         list->sublist("Linear Solver Types").sublist("AztecOO").sublist("Forward Solve").sublist("AztecOO Settings").set("Aztec Solver","GMRES");
 
-      if( params->m_verbose>=3 )
+      if( params->getVerbosityLevel() >=3 )
         list->sublist("Linear Solver Types").sublist("AztecOO").sublist("Forward Solve").sublist("AztecOO Settings").set("Output Frequency",1);
       else
         list->sublist("Linear Solver Types").sublist("AztecOO").sublist("Forward Solve").sublist("AztecOO Settings").set("Output Frequency",0);
@@ -1591,7 +1589,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
 
     // write a solver profile file
 
-    if( params->m_verbose>=3 )
+    if( params->getVerbosityLevel() >= 3 )
     {
       FILE* fp = fopen("solver_profile.txt","a");
       fprintf(fp,"%d %.9e %.9e\n", params->m_numKrylovIter, params->m_KrylovResidualInit, params->m_KrylovResidualFinal);
@@ -1618,7 +1616,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
     p_matrix[0][0]->RightScale(*scaling[0][COL]);
   }
 
-  if( this->m_verboseLevel == 2 )
+  if( getVerbosityLevel() == 2 )
   {
 
     GEOS_LOG_RANK_0("***********************************************************");

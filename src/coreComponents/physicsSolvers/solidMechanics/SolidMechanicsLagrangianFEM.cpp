@@ -1060,14 +1060,10 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_ARG(
   matrix.close();
   rhs.close();
 
-  if( verboseLevel() >= 2 )
-  {
-    GEOS_LOG_RANK_0( "After SolidMechanicsLagrangianFEM::AssembleSystem" );
-    GEOS_LOG_RANK_0( "\nMatrix:\n" );
-    matrix.print(std::cout);
-    GEOS_LOG_RANK_0( "\nRhs:\n" );
-    rhs.print(std::cout);
-  }
+  // Debug for verbosity >= 2
+  VERBOSE_LOG_RANK_0( 2, "After SolidMechanicsLagrangianFEM::AssembleSystem" );
+  VERBOSE_LOG_RANK_0( 2, "\nJacobian:\n" << matrix );
+  VERBOSE_LOG_RANK_0( 2, "\nResidual:\n" << rhs );
 }
 
 void
@@ -1129,14 +1125,10 @@ ApplyBoundaryConditions( real64 const time_n,
   matrix.close();
   rhs.close();
 
-  if( verboseLevel() >= 2 )
-  {
-    GEOS_LOG_RANK_0( "After SolidMechanicsLagrangianFEM::AssembleSystem" );
-    GEOS_LOG_RANK_0("\nJacobian:\n");
-    std::cout << matrix;
-    GEOS_LOG_RANK_0("\nResidual:\n");
-    std::cout << rhs;
-  }
+  // Debug for verbosity >= 2
+  VERBOSE_LOG_RANK_0( 2, "After SolidMechanicsLagrangianFEM::AssembleSystem" );
+  VERBOSE_LOG_RANK_0( 2, "\nJacobian:\n" << matrix );
+  VERBOSE_LOG_RANK_0( 2, "\nResidual:\n" << rhs );
 
 
 }
@@ -1225,12 +1217,9 @@ void SolidMechanicsLagrangianFEM::SolveSystem( DofManager const & dofManager,
 
   SolverBase::SolveSystem( dofManager, matrix, rhs, solution );
 
-  if( verboseLevel() >= 2 )
-  {
-    GEOS_LOG_RANK_0( "After SolidMechanicsLagrangianFEM::SolveSystem" );
-    GEOS_LOG_RANK_0( "\nSolution:\n");
-    std::cout << solution;
-  }
+  // Debug for verbosity >= 2
+  VERBOSE_LOG_RANK_0( 2, "After SolidMechanicsLagrangianFEM::SolveSystem" );
+  VERBOSE_LOG_RANK_0( 2, "\nSolution:\n" << solution );
 
 }
 
