@@ -170,5 +170,5 @@ The following examples are provided:
 Header Guards
 =============
 Header guard names should consist of the name `GEOSX`, followed by the component name (e.g. dataRepository),
- and finally the name of the header file.
+and finally the name of the header file.
 All characters in the macro should be capitalized.

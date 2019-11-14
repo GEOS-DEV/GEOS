@@ -85,7 +85,7 @@ must be prescribed on this field on cell or face sets of interest.
 In addition, the solver declares a scalar field named ``referencePorosity`` and a vector field
 named ``permeability``, that contains principal values of the symmetric rank-2 permeability tensor
 (tensor axis are assumed aligned with the global coordinate system).
-These fields must be populated via :ref:`FieldSpecification` section and ``permeability`` should
+These fields must be populated via FieldSpecification section and ``permeability`` should
 be supplied as the value of ``coefficientName`` attribute of the flux approximation scheme used.
 
 
