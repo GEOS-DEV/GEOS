@@ -21,7 +21,7 @@
 
 #include "WellSolverBase.hpp"
 #include "constitutive/RelPerm/RelativePermeabilityBase.hpp"
-#include "physicsSolvers/FiniteVolume/CompositionalMultiphaseFlow.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseFlow.hpp"
 
 namespace geosx
 {

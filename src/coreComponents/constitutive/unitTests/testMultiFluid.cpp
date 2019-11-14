@@ -19,7 +19,7 @@
 #include "common/TimingMacros.hpp"
 #include "constitutive/Fluid/CompositionalMultiphaseFluid.hpp"
 #include "constitutive/Fluid/BlackOilFluid.hpp"
-#include "physicsSolvers/unitTests/testCompFlowUtils.hpp"
+#include "physicsSolvers/fluidFlow/unitTests/testCompFlowUtils.hpp"
 
 // TPL includes
 #include <gtest/gtest.h>

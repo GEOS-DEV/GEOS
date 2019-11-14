@@ -33,7 +33,7 @@
 #include "managers/DomainPartition.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
-#include "physicsSolvers/FiniteVolume/CompositionalMultiphaseFlowKernels.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseFlowKernels.hpp"
 
 namespace geosx
 {

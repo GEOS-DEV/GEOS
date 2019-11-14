@@ -18,12 +18,12 @@
 #include "stackTrace.hpp"
 #include "Logger.hpp"
 
-#include "physicsSolvers/FiniteVolume/SinglePhaseFlowKernels.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseFlowKernels.hpp"
 
 using namespace geosx;
 using namespace geosx::SinglePhaseFlowKernels;
 
-#include "physicsSolvers/unitTests/testFlowKernelHelpers.hpp"
+#include "physicsSolvers/fluidFlow/unitTests/testFlowKernelHelpers.hpp"
 
 TEST( SinglePhaseFlowKernels, mobility )
 {

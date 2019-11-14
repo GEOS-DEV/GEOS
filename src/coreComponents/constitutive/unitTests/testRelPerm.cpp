@@ -20,7 +20,7 @@
 #include "constitutive/RelPerm/BrooksCoreyRelativePermeability.hpp"
 #include "constitutive/RelPerm/BrooksCoreyBakerRelativePermeability.hpp"
 #include "constitutive/RelPerm/VanGenuchtenBakerRelativePermeability.hpp"
-#include "physicsSolvers/unitTests/testCompFlowUtils.hpp"
+#include "physicsSolvers/fluidFlow/unitTests/testCompFlowUtils.hpp"
 
 // TPL includes
 #include <gtest/gtest.h>

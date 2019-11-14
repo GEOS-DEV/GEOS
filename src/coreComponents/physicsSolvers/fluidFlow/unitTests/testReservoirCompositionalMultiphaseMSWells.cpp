@@ -22,9 +22,8 @@
 #include "managers/DomainPartition.hpp"
 #include "wells/WellElementSubRegion.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
-#include "physicsSolvers/CoupledSolvers/ReservoirSolver.hpp"
-#include "physicsSolvers/Wells/CompositionalMultiphaseWell.hpp"
-#include "physicsSolvers/FiniteVolume/CompositionalMultiphaseFlow.hpp"
+#include "physicsSolvers/multiphysics/ReservoirSolver.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseWell.hpp"
 
 using namespace geosx;
 using namespace geosx::dataRepository;

@@ -20,7 +20,7 @@
 #define GEOSX_PHYSICSSOLVERS_WELLS_SINGLEPHASEWELLSOLVER_HPP_
 
 #include "WellSolverBase.hpp"
-#include "physicsSolvers/FiniteVolume/SinglePhaseFlow.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseFlow.hpp"
 
 namespace geosx
 {
