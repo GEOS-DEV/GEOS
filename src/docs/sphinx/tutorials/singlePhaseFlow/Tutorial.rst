@@ -6,6 +6,10 @@ Single-phase flow
 
 This example will use the single flow solver (see :ref:`SinglePhaseFlow`) from GEOSX.
 
+***************************************
+Internally Generated Mesh
+***************************************
+
 We begin with a simple a cube test case, before exploring more complex examples. 
 The xml file for this test case is located at src/coreComponents/physicsSolvers/FiniteVolume/integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml
 A pressure source term will be set in the top corner block and a sink pressure term will be set in the bottom corner block.
@@ -145,6 +149,7 @@ The ``setNames`` node value specifies the geometric zone where the value should 
   :end-before: <!-- SPHINX_TUT_INT_HEX_FIELDS_END -->
 
 *REWRITE*
+
 which is followed by all the other field initializations. Please note the change in ``component`` node value as we are dealing with a permeability diagonal tensor.
 
 The other field to be specified are initial pressure, source and sink term pressure,
@@ -239,30 +244,28 @@ For instance, here are reported diagonal pressure profile from sink to source bl
    :width: 400px
 
 
-##########################
-Using an external mesh
-##########################
-
+.. _ExternalHexahedral:
 .. _2_ImportingExternalMesh:
 
+******************************************************************
+Externally Generated - hexahedral elements
+******************************************************************
+
 GEOSX comes with a suite of simple data sets to get you started.
-We explore simple data sets with different geometrical objects.
+We will explore simple data sets with different geometrical objects.
 All meshes will be imported from external files using PAMELA as the importer.
 The first flow simulations will be single-phase displacements:
 
-  #. Cube made with externally-specified **hexahedral** elements,
-  #. Cube made with externally-specified **tetrahedral** elements.
+  #. Cube made with externally-specified :ref:`**hexahedral** <ExternalHexahedral>` elements,
+  #. Cube made with externally-specified :ref:`**tetrahedral** <ExternalTetrahedral>` elements.
 
 
-=====================================
-Cube made of hexahedral elements
-=====================================
 
 This example consists of a simple sugar-cube stack of size 10x10x10.
 
 
 Problem description
-------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 We propagate fluid from one vertical face of a cube to the opposite side.
 The displacement is single phase, compressible, subject to gravity forces.
@@ -270,7 +273,7 @@ We use GEOSX to compute the pressure inside each grid block.
 
 
 Looking at the XML file
-------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 We are going to inspect blocks in the following XML file:
 ``src\coreComponents\physicsSolvers\integratedTests\singlePhaseFlow\pamela_test\3D_10x10x10_compressible_pamela_hex_gravity.xml``
@@ -280,7 +283,7 @@ We will describe the most important of them.
 
 
 Solver specification
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------
 
 Here, we specify the type of solver ``singlePhaseTPFA``,
 the ``gravityVector``,
@@ -294,7 +297,7 @@ and the maximum number of iterations.
 
 
 External mesh specification
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------
 
 Now, we specify the source of our mesh.
 In this example, the mesh is imported using PAMELA from
@@ -315,7 +318,7 @@ The mesh looks like this:
 
 
 Events specification
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------
 
 In this code block, we control the time stepping mechanisms used by the different
 elements of the solver.
@@ -332,7 +335,8 @@ Three controls are in place:
 
 
 Numerical methods
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------
+
 We are using a two-point flux approximation scheme for our grid.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/FiniteVolume/integratedTests/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_hex_gravity.xml
@@ -342,7 +346,7 @@ We are using a two-point flux approximation scheme for our grid.
 
 
 Element Regions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------
 
 This block defines regions.
 Here, the entire field is one region called ``Domain``,
@@ -355,7 +359,7 @@ and contains ``water`` and ``rock`` only.
 
 
 Constitutive model
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------
 
 The physical properties of the two elements that exist in our field
 (water and rock) are specified here.
@@ -368,7 +372,7 @@ The physical properties of the two elements that exist in our field
 
 
 Field Specifications
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------
 
 We specify the following properties all throughout the model (homogeneous):
   - permeability in the x-direction: ``permx``, constant value of 2.0e-14 m\ :sup:`2` (20 mD), and is considered the 0\ :sup:`th` component of the ``permeability`` vector,
@@ -385,7 +389,7 @@ We specify the following properties all throughout the model (homogeneous):
 
 
 Running GEOSX
-------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^
 
 The command to run GEOSX is
 
@@ -462,7 +466,7 @@ At the end of your simulation, you should see something like:
 
 
 Visualization of results in VisIt
-------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. .. image:: HexResults.png
 ..     :width: 400px
@@ -472,15 +476,17 @@ All results are written in a format compatible with `VisIt
 
 
 
-=====================================
-Cube made of tetrahedral elements
-=====================================
+.. _ExternalTetrahedral:
+
+*********************************************************
+Externally Generated - tetrahedral elements
+*********************************************************
 
 This example consists of a simple stack of tetrahedral elements.
 
 
 Problem description
-------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 We propagate fluid from one vertical face of a cube to the opposite side.
 The displacement is single phase, compressible, subject to gravity forces.
@@ -488,7 +494,7 @@ We use GEOSX to compute the pressure inside each grid block.
 
 
 Looking at the XML file
-------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 We are going to inspect blocks in the following XML file:
 ``src\CoreComponents\physicsSolvers\integratedTests\singlePhaseFlow\pamela_test\3D_10x10x10_compressible_pamela_tetra_gravity.xml``
@@ -498,7 +504,7 @@ We will describe the most important of them.
 
 
 Solver specification
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------
 
 Here, we specify the type of solver ``singlePhaseTPFA``,
 the ``gravityVector``,
@@ -512,7 +518,7 @@ and the maximum number of iterations.
 
 
 External mesh specification
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------
 
 Now, we specify the source of our mesh.
 In this example, the mesh is imported using PAMELA from
@@ -527,6 +533,7 @@ format.
   :end-before: <!-- SPHINX_TUT_EXT_TETRA_MESH_END -->
 
 The mesh looks like this:
+
 *ADD IMAGE*
 
 .. .. image:: ImportingExternalMeshCube.png
@@ -534,7 +541,7 @@ The mesh looks like this:
 
 
 Events specification
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------
 
 In this code block, we control the time stepping mechanisms used by the different
 elements of the solver.
@@ -551,7 +558,8 @@ Three controls are in place:
 
 
 Numerical methods
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------
+
 We are using a two-point flux approximation scheme for our grid.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/FiniteVolume/integratedTests/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_tetra_gravity.xml
@@ -561,7 +569,7 @@ We are using a two-point flux approximation scheme for our grid.
 
 
 Element Regions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------
 
 This block defines regions.
 Here, the entire field is one region called ``Domain``,
@@ -574,7 +582,7 @@ and contains ``water`` and ``rock`` only.
 
 
 Constitutive model
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------
 
 The physical properties of the two elements that exist in our field
 (water and rock) are specified here.
@@ -586,7 +594,7 @@ The physical properties of the two elements that exist in our field
 
 
 Field Specifications
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------
 
 We specify the following properties all throughout the model (homogeneous):
   - permeability in the x-direction: ``permx``, constant value of 2.0e-14 m\ :sup:`2` (20 mD), and is considered the 0\ :sup:`th` component of the ``permeability`` vector,
@@ -604,7 +612,7 @@ We specify the following properties all throughout the model (homogeneous):
 
 
 Running GEOSX
-------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The command to run GEOSX is
 
@@ -769,7 +777,7 @@ In our case, the first lines are:
 
 
 Visualization of results in VisIt
-------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. .. image:: TetResults.png
 ..   :width: 400px
