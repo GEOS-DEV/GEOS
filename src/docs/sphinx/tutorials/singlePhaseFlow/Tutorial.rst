@@ -63,7 +63,7 @@ This is done using ``singlePhaseTPFA`` value for the discretization node.
 
 Mesh tag 
 -------------
-GEOSX  allows you to either internally build your mesh or import it from a compatible format thanks to PAMELA (see :ref:`2_ImportingExternalMesh`). 
+GEOSX  allows you to either internally build your mesh or import it from a compatible format thanks to PAMELA (see :ref:`ImportingExternalMesh`). 
 For this test case, we will use an internally generated 10x10x10 uniform regular mesh
 
 .. code-block:: xml
