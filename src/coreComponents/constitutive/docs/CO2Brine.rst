@@ -10,7 +10,7 @@ Summary
 
 The equation-of-state and viscosity of CO2 under both sub- and super-critical conditions are computed as a function of both pressure and temperature, using the empirical equations developed by Span & Wagner (1996) and Fenghour & Wakeman (1998), respectively.
 
-The brine density, which depends on pressure, temperature, and salinity, is calculated based on the correlation developed by Phillips et al.(1981) 
+The brine density, which depends on pressure, temperature, and salinity, is calculated based on the correlation developed by Phillips et al. (1981).
 
 
 Function Description
@@ -18,8 +18,9 @@ Function Description
 
 **Function of CO2 density calculation**
 
+ .. code-block:: c
 
-double PVTPackage::CO2Model::ComputeMassDensity(double P, double T)
+  double PVTPackage::CO2Model::ComputeMassDensity(double P, double T)
 
 ``input parameters:`` 
 
@@ -28,12 +29,14 @@ double PVTPackage::CO2Model::ComputeMassDensity(double P, double T)
 
 ``return parameter:`` 
 
-* density (kg/m^3)
+* density (:math:`$\text{kg/m}^3$`)
 
 
 **Function of CO2 viscosity calculation**
 
-double PVTPackage::CO2Model::ComputeVisc(double P, double T)
+ .. code-block:: c
+
+  double PVTPackage::CO2Model::ComputeVisc(double P, double T)
 
 ``input parameters:``
 
@@ -46,7 +49,9 @@ double PVTPackage::CO2Model::ComputeVisc(double P, double T)
 
 **Function of brine density calculation**
 
-double PVTPackage::BrineModel::ComputeMassDensity(double P, double T, double salinity)
+ .. code-block:: c
+
+  double PVTPackage::BrineModel::ComputeMassDensity(double P, double T, double salinity)
 
 ``input parameters:``
 
@@ -56,22 +61,20 @@ double PVTPackage::BrineModel::ComputeMassDensity(double P, double T, double sal
   
 ``return parameter:`` 
 
-* density (kg/m^3)
+* density (:math:`$\text{kg/m}^3$`)
 
 References
 =================================
 
-- A. Fenghour & W. A. Wakeman, “The viscosity of carbon dioxide”, J. Phys. Chem. Ref. Data, vol. 27, pp. 31-44, 1998.
+- A. Fenghour & W. A. Wakeman, `The viscosity of carbon dioxide
+  <https://aip.scitation.org/doi/abs/10.1063/1.556013>`__, J. Phys. Chem. Ref.
+  Data, vol. 27, pp. 31-44, 1998.
 
-- S. L. Phillips et al., "A technical databook for geothermal energy utilization", Lawrence Berkeley Laboratory report, 1981.
+- S. L. Phillips et al., `A technical databook for geothermal energy
+  utilization <https://escholarship.org/content/qt5wg167jq/qt5wg167jq.pdf>`__,
+  Lawrence Berkeley Laboratory report, 1981.
 
-- R. Span & W. Wagner., “A new equation of state for carbon dioxide covering the fluid region from the triple-point temperature to 1100 K at pressure up to 800 MPa”, J. Phys. Chem. Ref. Data, vol. 25, pp. 1509-1596, 1996. 
-
-
-
-
-
-
-
-
-
+- R. Span & W. Wagner., `A new equation of state for carbon dioxide covering
+  the fluid region from the triple-point temperature to 1100 K at pressure up
+  to 800 MPa <https://aip.scitation.org/doi/abs/10.1063/1.555991>`__, J. Phys.
+  Chem. Ref. Data, vol. 25, pp. 1509-1596, 1996.

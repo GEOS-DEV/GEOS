@@ -41,10 +41,10 @@ Let :math:`\Omega \subset \mathbb{R}^n, \, n =1,2,3` be an open set defining the
 .. math::
    \int_{V_i} \frac{\partial}{\partial t}(\phi\rho) dV - \int_{V_i} \boldsymbol{\nabla} \cdot \frac{\rho \boldsymbol{k}}{\mu} (\nabla p - \gamma \nabla z) dV + \int_{V_i} q dV  = 0.
 
-Applying the divergence theorem to the second term lead to
+Applying the divergence theorem to the second term leads to
 
 .. math::
-  \int_{V_i} \frac{\partial}{\partial t}(\phi\rho)_i - \oint_{S_i} \nabla \left(\frac{\rho \boldsymbol{k}}{\mu}(\nabla p -\gamma \nabla z)\right) \cdot \boldsymbol{n} dS + \int_{V_i} q dV  = 0.
+  \int_{V_i} \frac{\partial}{\partial t}(\phi\rho)_i - \oint_{S_i} \left(\frac{\rho \boldsymbol{k}}{\mu}(\nabla p -\gamma \nabla z)\right) \cdot \boldsymbol{n} dS + \int_{V_i} q dV  = 0.
 
 where :math:`S_i` represents the surface area of the element :math:`V_i` and :math:`\boldsymbol{n}` is a outward unit vector normal to the surface.
 
@@ -57,7 +57,7 @@ Time Discretization
 Let :math:`t_0 < t_1 < \cdots < t_N=T` be a grid discretization of the time interval :math:`[t_0,T], \, t_0, T \in \mathbb{R}^+`. We use the backward Euler (fully implicit) method to integrate the single phase flow equation between two grid points :math:`t_n` and :math:`t_{n+1}, \, n< N` to obtain the residual equation:
 
 .. math::
-   \int_{V_i} \frac{(\phi\rho)_i^{n+1} - (\phi\rho)_i^n}{\Delta t} - \oint_{S_i} \nabla \left(\frac{\rho \boldsymbol{k}}{\mu}(\nabla p -\gamma \nabla z)\right)^{n+1} \cdot \boldsymbol{n} dS + \int_{V_i} q^{n+1} dV = 0
+   \int_{V_i} \frac{(\phi\rho)_i^{n+1} - (\phi\rho)_i^n}{\Delta t} - \oint_{S_i} \left(\frac{\rho \boldsymbol{k}}{\mu}(\nabla p -\gamma \nabla z)\right)^{n+1} \cdot \boldsymbol{n} dS + \int_{V_i} q^{n+1} dV = 0
 
 where :math:`\Delta t = t_{n+1}-t_n` is the time-step. The expression of this residual equation and its derivative are used to form a linear system, which is solved via the solver package.
 
