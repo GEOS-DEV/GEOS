@@ -71,7 +71,7 @@
       targetRegions="{Region2}"
       nodeBasedSIF="1"
       solidMaterialName="rock"
-      rockToughness="0.01e6"
+      rockToughness="1.0e6"
       >
     </SurfaceGenerator>
     
@@ -80,11 +80,11 @@
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="{C3D8}"
-                  xCoords="{-5, 5}"
-                  yCoords="{0, 1}"
+                  xCoords="{-20, 20}"
+                  yCoords="{0, 40}"
                   zCoords="{0, 1}"
-                  nx="{10}"
-                  ny="{1}"
+                  nx="{40}"
+                  ny="{40}"
                   nz="{1}"
                   cellBlockNames="{cb1}"/>
   </Mesh>
@@ -248,7 +248,7 @@
             setNames="{all}"
             objectPath="ElementRegions/Region2/cb1"
             fieldName="permeability"
-            scale="5.0e-19" />
+            scale="1.0e-15" />
 
         <FieldSpecification
             name="permy"
@@ -257,7 +257,7 @@
             setNames="{all}"
             objectPath="ElementRegions/Region2/cb1"
             fieldName="permeability"
-            scale="5.0e-19" />
+            scale="1.0e-15" />
 
         <FieldSpecification
             name="permz"
@@ -266,7 +266,7 @@
             setNames="{all}"
             objectPath="ElementRegions/Region2/cb1"
             fieldName="permeability"
-            scale="5.0e-19" />
+            scale="1.0e-15" />
 
         <FieldSpecification
             name="referencePorosity"
