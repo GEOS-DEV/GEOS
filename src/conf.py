@@ -20,10 +20,8 @@ import sys
 read_the_docs_build = os.environ.get('READTHEDOCS', None) == 'True'
 if read_the_docs_build:
     from subprocess import call
-    call(['doxygen', "./src/docs/doxygen/Doxyfile.in"])
-
-#breathe_projects = { "geosx": "@CMAKE_CURRENT_BINARY_DIR@/../docs/doxygen/xml/" }
-breathe_projects = { "geosx": "./doxygen_output/xml/" }
+    call(['doxygen', "./src/docs/doxygen/DoxyfileReadTheDocs"])
+breathe_projects = { "geosx": "../doxygen_output/xml/" }
 breathe_default_project = "geosx"
 
 
