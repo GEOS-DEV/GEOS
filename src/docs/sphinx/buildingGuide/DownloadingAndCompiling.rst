@@ -125,6 +125,28 @@ If you want to run the same test case in parallel, run the following mpi command
 
 where you split the domain by 2 il all x, y and z directions (the total amount of mpi cores being the number of plit domains).
 
+The temperature field should look like
+
+.. image:: Laplace10x10x10-temperature.png
+   :width: 400
+
+if you want to write VTK output files, you can add
+
+.. code-block:: xml
+
+    <PeriodicEvent name="outputs"
+                   timeFrequency="1.0"
+                   targetExactTimestep="1"
+                   target="/Outputs/vtkOutput"/>
+
+to the `Events` node and 
+
+.. code-block:: xml
+
+    <VTK name="vtkOutput"/>
+
+to the `Outputs` node.
+
 Command Line options
 --------------------
 
