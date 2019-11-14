@@ -20,7 +20,7 @@
 #define GEOSX_PHYSICSSOLVERS_WELLS_WELLSOLVERBASE_HPP_
 
 #include "physicsSolvers/SolverBase.hpp"
-#include "physicsSolvers/FiniteVolume/FlowSolverBase.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 
 
 namespace geosx

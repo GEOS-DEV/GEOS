@@ -20,7 +20,7 @@
 #ifndef GEOSX_PHYSICSSOLVERS_COUPLEDSOLVERS_POROELASTICSOLVER_HPP_
 #define GEOSX_PHYSICSSOLVERS_COUPLEDSOLVERS_POROELASTICSOLVER_HPP_
 
-#include "../SolverBase.hpp"
+#include "physicsSolvers/SolverBase.hpp"
 
 namespace geosx
 {

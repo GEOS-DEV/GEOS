@@ -9,12 +9,12 @@ physics solvers to be included in the simulation.
 .. toctree::
    :maxdepth: 2
 
-   SolidMechanics
+   solidMechanics/docs/SolidMechanics
 
-   SinglePhaseFlow
+   fluidFlow/docs/SinglePhaseFlow
 
-   CompositionalMultiphaseFlow
+   fluidFlow/docs/CompositionalMultiphaseFlow
 
-   Poromechanics
+   multiphysics/docs/Poromechanics
 
 
