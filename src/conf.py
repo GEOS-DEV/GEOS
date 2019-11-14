@@ -219,7 +219,7 @@ texinfo_documents = [
 numfig = True
 
 # Additional stuff for the LaTeX preamble.
-latex_elements['preamble'] = '\usepackage{amsmath}\n\usepackage{amssymb}\n\usepackage[retainorgcmds]{IEEEtrantools}\n'
+latex_elements['preamble'] = '\\usepackage{amsmath}\n\\usepackage{amssymb}\n\\usepackage[retainorgcmds]{IEEEtrantools}\n'
 
 imgmath_image_format='svg'
 imgmath_font_size=14
