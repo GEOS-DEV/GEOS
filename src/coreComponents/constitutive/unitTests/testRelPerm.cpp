@@ -17,9 +17,9 @@
 #include "stackTrace.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
-#include "constitutive/RelPerm/BrooksCoreyRelativePermeability.hpp"
-#include "constitutive/RelPerm/BrooksCoreyBakerRelativePermeability.hpp"
-#include "constitutive/RelPerm/VanGenuchtenBakerRelativePermeability.hpp"
+#include "constitutive/relativePermeability/BrooksCoreyRelativePermeability.hpp"
+#include "constitutive/relativePermeability/BrooksCoreyBakerRelativePermeability.hpp"
+#include "constitutive/relativePermeability/VanGenuchtenBakerRelativePermeability.hpp"
 #include "physicsSolvers/fluidFlow/unitTests/testCompFlowUtils.hpp"
 
 // TPL includes

@@ -22,8 +22,8 @@
 
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/contactRelations/ContactRelationBase.hpp"
-#include "constitutive/Fluid/SingleFluidBase.hpp"
+#include "constitutive/contact/ContactRelationBase.hpp"
+#include "constitutive/fluid/SingleFluidBase.hpp"
 #include "finiteElement/Kinematics.h"
 #include "managers/DomainPartition.hpp"
 #include "managers/NumericalMethodsManager.hpp"

@@ -19,7 +19,7 @@
 #ifndef GEOSX_CONSTITUTIVE_CAPILLARYPRESSURE_BROOKSCOREYCAPILLARYPRESSURE_HPP
 #define GEOSX_CONSTITUTIVE_CAPILLARYPRESSURE_BROOKSCOREYCAPILLARYPRESSURE_HPP
 
-#include "constitutive/CapillaryPressure/CapillaryPressureBase.hpp"
+#include "constitutive/capillaryPressure/CapillaryPressureBase.hpp"
 
 namespace geosx
 {

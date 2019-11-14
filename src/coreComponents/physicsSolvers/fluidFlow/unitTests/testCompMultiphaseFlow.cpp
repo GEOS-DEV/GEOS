@@ -16,7 +16,7 @@
 
 #include "common/DataTypes.hpp"
 #include "managers/initialization.hpp"
-#include "constitutive/Fluid/MultiFluidBase.hpp"
+#include "constitutive/fluid/MultiFluidBase.hpp"
 #include "managers/ProblemManager.hpp"
 #include "managers/DomainPartition.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
