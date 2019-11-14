@@ -51,6 +51,9 @@ EventBase::EventBase( const std::string& name,
   m_target(nullptr)
 {
   setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
+
+  // This enables verbose filtering
+  enableVerbosityInput();
   
   registerWrapper(viewKeyStruct::eventTargetString, &m_eventTarget, false )->
     setInputFlag(InputFlags::OPTIONAL)->
