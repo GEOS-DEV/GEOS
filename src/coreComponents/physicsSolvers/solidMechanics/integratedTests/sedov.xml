@@ -1,6 +1,7 @@
 
 <Problem>
 
+<!-- SPHINX_SOLID_MECHANICS_SOLVER -->
   <Solvers>
     <SolidMechanics_LagrangianFEM name="lagsolve" 
                                   cflFactor="0.25"
@@ -8,6 +9,7 @@
                                   targetRegions="{Region2}"
                                   solidMaterialName="shale"/>
   </Solvers>
+<!-- SPHINX_SOLID_MECHANICS_SOLVER_END -->
 
   <Included>
     <File name="./sedov_base.xml"/>

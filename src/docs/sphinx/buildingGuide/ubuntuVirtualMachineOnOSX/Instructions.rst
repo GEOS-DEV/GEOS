@@ -108,7 +108,7 @@ Creating an Ubuntu Virtual Machine
   .. image:: Ubuntu_installation_05.png
     :width: 400
 
-- After restarting the Virtual Machine, login, open a new terminal (``control````option````T``) and install Ubuntu updates
+- After restarting the Virtual Machine, login, open a new terminal (``control+option+T``) and install Ubuntu updates
 
 .. code-block:: sh
 
@@ -159,18 +159,3 @@ Click ``OK`` to close all Settings windows.
       reboot
 
      - The shared folder will now be accessible and located at `` /media/sf_FOLDER_NAME``.
-
-
-
-
-Compiling GEOSX
---------------------------------------------------------------------------------
-
-- Install packages needed for compiling GEOSX
-
-  .. code-block:: sh
-
-   sudo apt install git git-lfs gcc g++ gfortran python cmake zlib1g-dev libblas-dev liblapack-dev libopenmpi-dev
-
-
-- Follow instructions provided at the `Getting Started with GEOSX <https://github.com/GEOSX/GEOSX/blob/develop/src/docs/sphinx/getting_started.rst>`__ page.
