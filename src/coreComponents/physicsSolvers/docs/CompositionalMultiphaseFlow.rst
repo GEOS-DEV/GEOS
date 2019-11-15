@@ -4,6 +4,9 @@
 Compositional Multiphase Flow Solver
 #######################################
 
+Introduction
+=============
+
 Here, we review the compositional solver in three steps:
 
 1. :ref:`theory`
@@ -97,7 +100,7 @@ The flash calculations performed to enforce the thermodynamical equilibrium are 
 in the section about :doc:`/coreComponents/constitutive/docs/Constitutive`.
 
 To summarize, the compositional multiphase flow solver assembles a set of :math:`n_c+1`
-equations, i.e., :math:`n_c` mass conservation equations and one volume constraint equation.
+equations in each element, i.e., :math:`n_c` mass conservation equations and one volume constraint equation.
 A separate module discussed in the :doc:`/coreComponents/constitutive/docs/Constitutive`
 is responsible for the enforcement of the thermodynamic equilibrium at each nonlinear iteration.
 
@@ -204,8 +207,8 @@ This procedure is repeated until convergence.
 
 .. _usage:
 
-Usage and model parameters
-==========================
+Usage
+=====
 
 The following attributes are supported:
 
