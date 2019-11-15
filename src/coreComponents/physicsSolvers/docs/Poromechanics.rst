@@ -1,7 +1,7 @@
 .. _PoroelasticSolver:
 
 ##########################
-Poromechanics solver
+Poromechanics Solver
 ##########################
 
 Introduction
@@ -56,68 +56,16 @@ The solid constitutive model used here is PoroLinearElasticIsotropic, which deri
 
 An example of a valid XML block for the constitutive model is given here:
 
-.. code-block:: xml
-
-  <Constitutive>
-  
-    <PoroLinearElasticIsotropic name="shale"
-                                defaultDensity="2700"
-                                defaultBulkModulus="61.9e6"
-                                defaultShearModulus="28.57e6"
-                                BiotCoefficient="1.0"
-                                />
-
-    <CompressibleSinglePhaseFluid name="water"
-                                  referencePressure="2.125e6"
-                                  referenceDensity="1000"
-                                  compressibility="1e-19"
-                                  referenceViscosity="0.001"
-                                  viscosibility="0.0"
-                                  />                                  
-  </Constitutive>
+.. literalinclude:: ../../../coreComponents/physicsSolvers/CoupledSolvers/integratedTests/poroElastic_Terzaghi.xml
+  :language: xml
+  :start-after: <!-- SPHINX_POROELASTIC_CONSTITUTIVE -->
+  :end-before: <!-- SPHINX_POROELASTIC_CONSTITUTIVE_END -->
 
 Input example
 ===========================================
 
-.. code-block:: xml
+.. literalinclude:: ../../../coreComponents/physicsSolvers/CoupledSolvers/integratedTests/poroElastic_Terzaghi.xml
+  :language: xml
+  :start-after: <!-- SPHINX_POROELASTIC_SOLVER -->
+  :end-before: <!-- SPHINX_POROELASTIC_SOLVER_END -->
 
-  <Solvers
-    gravityVector="0.0, 0.0, -9.81">
-
-    <Poroelastic name="poroSolve" 
-                 solidSolverName="lagsolve"
-                 fluidSolverName="SinglePhaseFlow"
-                 couplingTypeOption="FixedStress"
-                 verboseLevel="1"
-                 discretization="FE1"
-                 targetRegions="Region2">
-      <SystemSolverParameters maxIterNewton="40"
-                              verbosityFlag="2"/>
-    </Poroelastic>
-
-  
-    <SolidMechanicsLagrangianSSLE name="lagsolve" 
-                                  timeIntegrationOption="QuasiStatic"
-                                  verboseLevel="1"
-                                  discretization="FE1"
-                                  targetRegions="Region2"
-                                  solidMaterialName="shale"
-                                  >
-      <SystemSolverParameters krylovTol="1.0e-10"
-                              newtonTol="1.0e-6"
-                              maxIterNewton="5"
-                              verbosityFlag="2"/>
-    </SolidMechanicsLagrangianSSLE>
-  
-    <SinglePhaseFlow name="SinglePhaseFlow"
-                     verboseLevel="1"
-                     gravityFlag="1"
-                     discretization="singlePhaseTPFA"
-                     targetRegions="Region2"
-                     fluidName="water"
-                     solidName="shale">
-      <SystemSolverParameters krylovTol="1.0e-10"
-                              newtonTol="1.0e-6"
-                              maxIterNewton="8"/>
-    </SinglePhaseFlow>
-  </Solvers>
