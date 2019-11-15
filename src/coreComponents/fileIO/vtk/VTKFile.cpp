@@ -817,6 +817,7 @@ void VTKFile::Write( double const timeStep,
     m_rootFile.save_file(pvdFileName.c_str());
     pvtuFile.save_file(pvtuFileName.c_str());
   }
+  MpiWrapper::Barrier();
   
   string vtuFileName = timeStepFolderName + "/" + std::to_string(mpiRank) + ".vtu";
   CustomVTUXMLWriter vtuWriter( vtuFileName );
