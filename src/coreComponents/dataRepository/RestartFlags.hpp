@@ -31,9 +31,9 @@ namespace dataRepository
  */
 enum class RestartFlags : unsigned char
 {
-  NO_WRITE,     //!< NO_WRITE
-  WRITE,        //!< WRITE
-  WRITE_AND_READ//!< WRITE_AND_READ
+  NO_WRITE,      ///< Doe no write into restart
+  WRITE,         ///< Write into restart
+  WRITE_AND_READ ///< Write and read from restart
 };
 
 /**
