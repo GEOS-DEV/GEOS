@@ -13,22 +13,11 @@ Usage
 =========================
 An example of a valid XML block is given here:
 
-.. code-block:: xml
+.. literalinclude:: ../../../coreComponents/physicsSolvers/solidMechanics/integratedTests/sedov.xml
+  :language: xml
+  :start-after: <!-- SPHINX_SOLID_MECHANICS_SOLVER -->
+  :end-before: <!-- SPHINX_SOLID_MECHANICS_SOLVER_END -->
 
-  <Solvers>
-    <SolidMechanics_LagrangianFEM name="lagsolve"
-                                  timeIntegrationOption="QuasiStatic"
-                                  discretization="FE1"
-                                  targetRegions="Region2">
-      <SystemSolverParameters name="solverParams0"
-                              useMLPrecond="1"
-                              scalingOption="0"
-                              krylovTol="1.0e-8"
-                              newtonTol="1.0e-4"
-                              maxIterNewton="8"
-                              verbosityFlag="0"/>
-     </SolidMechanics_LagrangianFEM>
-  </Solvers>
 
 In the preceding XML block, The `SolidMechanics_LagrangianFEM` is specified by the title of the subblock of the `Solvers` block.
 The following attributes are supported in the input block for `SolidMechanics_LagrangianFEM`:
