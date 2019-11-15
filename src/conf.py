@@ -20,8 +20,19 @@ import sys
 read_the_docs_build = os.environ.get('READTHEDOCS', None) == 'True'
 if read_the_docs_build:
     from subprocess import call
-    call(['doxygen', "./src/docs/doxygen/DoxyfileReadTheDocs"])
-breathe_projects = { "geosx": "../doxygen_output/xml/" }
+    call(['doxygen', "./docs/doxygen/DoxyfileReadTheDocs"])
+print ("#######################################################################")
+print ("#######################################################################")
+print ("#######################################################################\n\n")
+print("Current Working Directory is " + os.getcwd())
+path=os.getcwd()
+for root, dirs, files in os.walk(path):
+    for file in files:
+        print(os.path.join(root,file))
+print ("\n\n#######################################################################")
+print ("#######################################################################")
+print ("#######################################################################")
+breathe_projects = { "geosx": "./doxygen_output/xml/" }
 breathe_default_project = "geosx"
 
 
