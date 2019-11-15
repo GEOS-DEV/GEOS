@@ -1,7 +1,7 @@
 .. _PoroelasticSolver:
 
 ##########################
-Poromechanics solver
+Poromechanics Solver
 ##########################
 
 Introduction
