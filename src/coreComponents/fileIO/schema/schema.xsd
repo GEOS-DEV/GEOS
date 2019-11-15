@@ -622,8 +622,8 @@
 		<xsd:attribute name="useMLPrecond" type="integer" default="0" />
 		<!--useNewtonSolve => (no description available)-->
 		<xsd:attribute name="useNewtonSolve" type="integer" default="0" />
-		<!--verbosityFlag => verbosity level-->
-		<xsd:attribute name="verbosityFlag" type="integer" default="0" />
+		<!--verbosity => Verbosity level-->
+		<xsd:attribute name="verbosity" type="integer" default="0" />
 	</xsd:complexType>
 	<xsd:complexType name="FiniteVolumeType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -774,8 +774,6 @@
 		<xsd:attribute name="temperature" type="real64" use="required" />
 		<!--useMass => Use mass formulation instead of molar-->
 		<xsd:attribute name="useMass" type="integer" default="0" />
-		<!--verboseLevel => Verbosity level for this solver. Higher values will lead to more screen output. For non-debug  simulations, this should remain at 0.-->
-		<xsd:attribute name="verboseLevel" type="integer" default="0" />
 		<!--verbosity => Verbosity level-->
 		<xsd:attribute name="verbosity" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -795,8 +793,6 @@
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--useMass => Use mass formulation instead of molar-->
 		<xsd:attribute name="useMass" type="integer" default="0" />
-		<!--verboseLevel => Verbosity level for this solver. Higher values will lead to more screen output. For non-debug  simulations, this should remain at 0.-->
-		<xsd:attribute name="verboseLevel" type="integer" default="0" />
 		<!--verbosity => Verbosity level-->
 		<xsd:attribute name="verbosity" type="integer" default="0" />
 		<!--wellFluidName => Name of fluid constitutive object to use for this solver.-->
@@ -828,8 +824,6 @@
 		<xsd:attribute name="solidSolverName" type="string" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
-		<!--verboseLevel => Verbosity level for this solver. Higher values will lead to more screen output. For non-debug  simulations, this should remain at 0.-->
-		<xsd:attribute name="verboseLevel" type="integer" default="0" />
 		<!--verbosity => Verbosity level-->
 		<xsd:attribute name="verbosity" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -849,8 +843,6 @@
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--timeIntegrationOption => option for default time integration method-->
 		<xsd:attribute name="timeIntegrationOption" type="string" use="required" />
-		<!--verboseLevel => Verbosity level for this solver. Higher values will lead to more screen output. For non-debug  simulations, this should remain at 0.-->
-		<xsd:attribute name="verboseLevel" type="integer" default="0" />
 		<!--verbosity => Verbosity level-->
 		<xsd:attribute name="verbosity" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -872,8 +864,6 @@
 		<xsd:attribute name="solidSolverName" type="string" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
-		<!--verboseLevel => Verbosity level for this solver. Higher values will lead to more screen output. For non-debug  simulations, this should remain at 0.-->
-		<xsd:attribute name="verboseLevel" type="integer" default="0" />
 		<!--verbosity => Verbosity level-->
 		<xsd:attribute name="verbosity" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -891,8 +881,6 @@
 		<xsd:attribute name="flowSolverName" type="string" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
-		<!--verboseLevel => Verbosity level for this solver. Higher values will lead to more screen output. For non-debug  simulations, this should remain at 0.-->
-		<xsd:attribute name="verboseLevel" type="integer" default="0" />
 		<!--verbosity => Verbosity level-->
 		<xsd:attribute name="verbosity" type="integer" default="0" />
 		<!--wellSolverName => Name of the well solver to use in the reservoir-well system solver-->
@@ -916,8 +904,6 @@
 		<xsd:attribute name="solidName" type="string" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
-		<!--verboseLevel => Verbosity level for this solver. Higher values will lead to more screen output. For non-debug  simulations, this should remain at 0.-->
-		<xsd:attribute name="verboseLevel" type="integer" default="0" />
 		<!--verbosity => Verbosity level-->
 		<xsd:attribute name="verbosity" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -935,8 +921,6 @@
 		<xsd:attribute name="gravityFlag" type="integer" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
-		<!--verboseLevel => Verbosity level for this solver. Higher values will lead to more screen output. For non-debug  simulations, this should remain at 0.-->
-		<xsd:attribute name="verboseLevel" type="integer" default="0" />
 		<!--verbosity => Verbosity level-->
 		<xsd:attribute name="verbosity" type="integer" default="0" />
 		<!--wellFluidName => Name of fluid constitutive object to use for this solver.-->
@@ -979,8 +963,6 @@
 		<xsd:attribute name="timeIntegrationOption" type="string" default="" />
 		<!--useVelocityForQS => Flag to indicate the use of the incremental displacement from the previous step as an initial estimate for the incremental displacement of the current step.-->
 		<xsd:attribute name="useVelocityForQS" type="integer" default="0" />
-		<!--verboseLevel => Verbosity level for this solver. Higher values will lead to more screen output. For non-debug  simulations, this should remain at 0.-->
-		<xsd:attribute name="verboseLevel" type="integer" default="0" />
 		<!--verbosity => Verbosity level-->
 		<xsd:attribute name="verbosity" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -1021,8 +1003,6 @@
 		<xsd:attribute name="timeIntegrationOption" type="string" default="" />
 		<!--useVelocityForQS => Flag to indicate the use of the incremental displacement from the previous step as an initial estimate for the incremental displacement of the current step.-->
 		<xsd:attribute name="useVelocityForQS" type="integer" default="0" />
-		<!--verboseLevel => Verbosity level for this solver. Higher values will lead to more screen output. For non-debug  simulations, this should remain at 0.-->
-		<xsd:attribute name="verboseLevel" type="integer" default="0" />
 		<!--verbosity => Verbosity level-->
 		<xsd:attribute name="verbosity" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -1048,8 +1028,6 @@
 		<xsd:attribute name="solidMaterialName" type="string" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
-		<!--verboseLevel => Verbosity level for this solver. Higher values will lead to more screen output. For non-debug  simulations, this should remain at 0.-->
-		<xsd:attribute name="verboseLevel" type="integer" default="0" />
 		<!--verbosity => Verbosity level-->
 		<xsd:attribute name="verbosity" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->

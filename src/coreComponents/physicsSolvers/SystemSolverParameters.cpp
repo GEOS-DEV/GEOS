@@ -48,12 +48,6 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
   // This enables verbose filtering
   enableVerbosityInput();
 
-  setRestartFlags(RestartFlags::NO_WRITE);
-  registerWrapper(viewKeysStruct::verbosityString, &m_verbose, false )->
-    setApplyDefaultValue(0)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("verbosity level");
-
   registerWrapper(viewKeysStruct::solverTypeString, &m_solverType, false )->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("");
