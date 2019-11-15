@@ -23,7 +23,7 @@ useDirectSolver     integer 0       (no description available)
 useInnerSolver      integer 0       (no description available)                              
 useMLPrecond        integer 0       (no description available)                              
 useNewtonSolve      integer 0       (no description available)                              
-verbosityFlag       integer 0       verbosity level                                         
+verbosity           integer 0       Verbosity level                                         
 =================== ======= ======= ======================================================= 
 
 

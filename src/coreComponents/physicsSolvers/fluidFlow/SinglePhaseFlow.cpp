@@ -404,7 +404,6 @@ void SinglePhaseFlow::AssembleSystem( real64 const time_n,
   VERBOSE_LOG_RANK_0( 2, "After SinglePhaseFlow::AssembleSystem" );
   VERBOSE_LOG_RANK_0( 2, "\nJacobian:\n" << matrix );
   VERBOSE_LOG_RANK_0( 2, "\nResidual:\n" << rhs );
-  }
 
   if( getVerbosityLevel() >= 3 )
   {
