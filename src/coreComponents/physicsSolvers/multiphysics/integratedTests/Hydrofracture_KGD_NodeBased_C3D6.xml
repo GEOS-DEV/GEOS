@@ -68,6 +68,7 @@
       solidMaterialName="rock"
       rockToughness="0.707e7"
       nodeBasedSIF="1"
+      mpiCommOrder="1"
       >
     </SurfaceGenerator>
     
