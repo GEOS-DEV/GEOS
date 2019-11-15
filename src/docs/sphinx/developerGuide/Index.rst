@@ -9,8 +9,6 @@ Welcome to the GEOSX developer guide.
 
    DeveloperGuidelines
 
-   BuildingProcess
-
    GitWorkflow
 
    GenerateSphinxDoc
