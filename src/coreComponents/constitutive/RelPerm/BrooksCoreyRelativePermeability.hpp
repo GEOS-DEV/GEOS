@@ -38,6 +38,7 @@ public:
                      Group * const parent,
                      std::unique_ptr<ConstitutiveBase> & clone ) const override;
 
+//START_SPHINX_INCLUDE_00
   static std::string CatalogName() { return "BrooksCoreyRelativePermeability"; }
 
   virtual string GetCatalogName() override { return CatalogName(); }
@@ -74,7 +75,7 @@ public:
    * @param[in] phaseOrder vector of phase orders
    * @param[in] phaseMinVolumeFraction vector of minimum phase volume fractions
    * @param[in] phaseRelPermExponentInv vector of exponents used in the computation of the relative permeabilities
-   * @param[in] phaseRelPermMaxValue vector of permeability curve end-point values 
+   * @param[in] phaseRelPermMaxValue vector of permeability curve end-point values
    * @param[in] volFracScale scaling factor to apply to the entire relative permeability curve
    * @return (void)
    *
@@ -89,6 +90,7 @@ public:
                               arraySlice1d<real64 const> const & phaseRelPermMaxValue,
                               real64 const & satScale );
 
+//START_SPHINX_INCLUDE_01
   struct viewKeyStruct : RelativePermeabilityBase::viewKeyStruct
   {
     static constexpr auto phaseMinVolumeFractionString = "phaseMinVolumeFraction";
@@ -106,6 +108,7 @@ public:
 protected:
   virtual void PostProcessInput() override;
 
+//START_SPHINX_INCLUDE_02
   array1d<real64> m_phaseMinVolumeFraction;
   array1d<real64> m_phaseRelPermExponent;
   array1d<real64> m_phaseRelPermMaxValue;

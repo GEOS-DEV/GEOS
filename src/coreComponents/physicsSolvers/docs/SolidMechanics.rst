@@ -49,8 +49,8 @@ Definition of Terms
 .. math::
    i,j,k &\equiv \text {indices over spatial dimensions} \notag \\
    a,b,c &\equiv \text {indices over nodes} \notag \\
-   l,m &\equiv \text {indices over volumetric elements} \notag \\
-   q,r,s   &\equiv \text {indices over faces} \notag \\
+   l &\equiv \text {indices over volumetric elements} \notag \\
+   q,r,s &\equiv \text {indices over faces} \notag \\
    n &\equiv \text {indices over time} \notag \\
    kiter &\equiv \text {iteration count for non-linear solution scheme} \notag \\
    \Omega &\equiv \text {Volume of continuum body} \notag \\
@@ -88,13 +88,13 @@ which leads to a discrete set of residual equations:
 
 Quasi-Static Time Integration
 -----------------------------
-The Quasi-Static time integration option solves the equation of motion after removing the intertial term, which is expressed by
+The Quasi-Static time integration option solves the equation of motion after removing the inertial term, which is expressed by
 
 .. math::
    T_{ij,j} + \rho b_{i} = 0,
 
 which is essentially a way to express the equation for static equilibrium (:math:`\Sigma F=0`).
-Thus, selection of the Quasi-Static option will yeild a solution where the sum of all forces at a given node is equal to zero.
+Thus, selection of the Quasi-Static option will yield a solution where the sum of all forces at a given node is equal to zero.
 The resulting finite element discretized set of residual equations are expressed as
 
 .. math::   
@@ -117,7 +117,7 @@ which are solved via the solver package.
  
 Implicit Dynamics Time Integration (Newmark Method)
 ---------------------------------------------------
-For implicit dynamic time integration, we use an implemention of the classical Newmark method.
+For implicit dynamic time integration, we use an implementation of the classical Newmark method.
 This update method can be posed in terms of a simple SDOF spring/dashpot/mass model.
 In the following, :math:`M` represents the mass, :math:`C` represent the damping of the dashpot, :math:`K` 
 represents the spring stiffness, and :math:`F` represents some external load.
@@ -127,7 +127,7 @@ represents the spring stiffness, and :math:`F` represents some external load.
 
 and a series of update equations for the velocity and displacement at a point:
 
-.. math:
+.. math::
    u^{n+1} &= u^n + v^{n+1/2} \Delta t,  \\
    u^{n+1} &= u^n + \left( v^{n} + \inv{2} \left[ (1-2\beta) a^n + 2\beta a^{n+1} \right] \Delta t \right) \Delta t, \\
    v^{n+1} &= v^n + \left[(1-\gamma) a^n + \gamma a^{n+1} \right] \Delta t.
@@ -184,7 +184,7 @@ Again, the expression for the residual equation and derivative are used to expre
    \left( \left. \left({u}_{bj} \right) \right|^{n+1}_{{kiter}+1} - \left. \left({u}_{bj} \right) \right|^{n+1}_{kiter} \right) 
    = - (R_{solid})_{ai}|^{n+1}_{kiter} ,
 
-which are solved via the solver package. Note that the derivatives involving :math:`u` and :math`\hat{u}` are interchangable, 
+which are solved via the solver package. Note that the derivatives involving :math:`u` and :math:`\hat{u}` are interchangable, 
 as are differences between the non-linear iterations.
 
 Explicit Dynamics Time Integration  (Special Implementation of Newmark Method with \gamma=0.5, \beta=0)
@@ -205,12 +205,13 @@ Then the residual equation/s are calculated, and acceleration at the end-of-step
    \left( \tensor{M} + \frac{\Delta t}{2} \tensor{C} \right) \tensor{a}^{n+1} &=  \tensor{F}_{n+1} - \tensor{C} v^{n+1/2} - \tensor{K} u^{n+1} .
 
 Note that the mass matrix must be diagonal, and damping term may not include the stiffness based damping 
-coefficent for this method, otherwise the above equation will require a system solve.
+coefficient for this method, otherwise the above equation will require a system solve.
 Finally, the end-of-step velocities are calculated from the end of step acceleration:   
 
 .. math::
    \tensor{v}^{n+1} &= \tensor{v}^{n+1/2} + \tensor{a}^{n+1} \left( \frac{\Delta t}{2} \right).
 
 Note that the velocities may be stored at the midstep, resulting one less kinematic update. 
-This approach is typeically referred to as the "Leapfrog" method.
-However, GEOSX we do not offer this option since it can cause some confusion that results from the storage of state at different points in time.
+This approach is typically referred to as the "Leapfrog" method.
+However, in GEOSX we do not offer this option since it can cause some confusion that results from the
+storage of state at different points in time.
