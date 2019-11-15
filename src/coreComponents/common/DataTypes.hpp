@@ -14,6 +14,7 @@
 
 /**
  * @file DataTypes.hpp
+ *
  * This file contains various aliases and functions that provide operations regarding the
  * use of the data types.
  */
@@ -65,6 +66,17 @@
 namespace geosx
 {
 
+/**
+ * @brief Perform a type cast of base to derived pointer.
+ * @tparam NEW_TYPE      derived pointer type
+ * @tparam EXISTING_TYPE base type
+ * @param val            base pointer to cast
+ * @return               pointer cast to derived type or @p nullptr
+ *
+ * Depending on value of @p USE_DYNAMIC_CASTING, will use either
+ * @p dynamic_cast or @p static_cast. The latter could result in undefined
+ * behavior if the cast is invalid (e.g. EXISTING_TYPE not base of @p NEW_TYPE)
+ */
 template< typename NEW_TYPE, typename EXISTING_TYPE >
 NEW_TYPE dynamicCast( EXISTING_TYPE * const val )
 {
@@ -77,6 +89,17 @@ NEW_TYPE dynamicCast( EXISTING_TYPE * const val )
 #endif
 }
 
+/**
+ * @brief Perform a type cast of base to derived reference.
+ * @tparam NEW_TYPE      derived reference type
+ * @tparam EXISTING_TYPE base type
+ * @param val            base reference to cast
+ * @return               reference cast to derived type or @p nullptr
+ *
+ * Depending on value of @p USE_DYNAMIC_CASTING, will use either
+ * @p dynamic_cast or @p static_cast. The latter could result in undefined
+ * behavior if the cast is invalid (e.g. EXISTING_TYPE not base of @p NEW_TYPE)
+ */
 template< typename NEW_TYPE, typename EXISTING_TYPE >
 NEW_TYPE dynamicCast( EXISTING_TYPE & val )
 {
@@ -89,150 +112,222 @@ NEW_TYPE dynamicCast( EXISTING_TYPE & val )
   return *ptr;
 }
 
+/// Global MPI communicator used by GEOSX.
 #ifdef GEOSX_USE_MPI
 extern MPI_Comm MPI_COMM_GEOSX;
 #else
 constexpr int MPI_COMM_GEOSX = 0;
 #endif
 
+/**
+ * @name Basic data types used in GEOSX.
+ */
+///@{
 
+/// Unsigned size type.
 using size_t      = std::size_t;
+/// Signed integer type.
 using integer     = std::int32_t;
+/// Local index type (for indexing objects within an MPI partition).
 using localIndex  = std::ptrdiff_t;
+/// Global index type (for indexing objects across MPI partitions).
 using globalIndex = long long int;//std::int64_t;
+/// String type.
 using string      = std::string;
 
+/// 32-bit floating point type.
 using real32 = float;
+/// 64-bit floating point type.
 using real64 = double;
 
-template< typename T >
-using ptr = T*;
+///@}
 
-template< typename T >
-using const_ptr = T const *;
+/**
+ * @name Binary buffer data types.
+ */
+///@{
 
-
-using integer_ptr        = ptr< integer >;
-using integer_const_ptr  = const_ptr< integer >;
-
-using localIndex_ptr         = ptr< localIndex >;
-using localIndex_const_ptr   = const_ptr< localIndex >;
-
-using real32_ptr        = ptr< real32 >;
-using real32_const_ptr  = const_ptr< real32 >;
-
-using real64_ptr        = ptr< real64 >;
-using real64_const_ptr  = const_ptr< real64 >;
-
-
+/// Type stored in communication buffers.
 using buffer_unit_type = signed char;
+/// Type of storage for communication buffers.
 using buffer_type = std::vector< buffer_unit_type >;
 
-//***** BEGIN ARRAY TYPEDEFS *****
+///@}
 
+/**
+ * @name Aliases for LvArray::Array class family.
+ */
+///@{
+
+/// Multidimensional array type. See LvArray:Array for details.
 template< typename T,
           int NDIM,
           typename PERMUTATION=camp::make_idx_seq_t< NDIM >,
           template< typename > class DATA_VECTOR_TYPE=LvArray::ChaiBuffer >
 using Array = LvArray::Array< T, NDIM, PERMUTATION, localIndex, DATA_VECTOR_TYPE >;
 
+/// Multidimensional array view type. See LvArray:ArrayView for details.
 template< typename T,
           int NDIM,
           int UNIT_STRIDE_DIM = NDIM - 1,
           template< typename > class DATA_VECTOR_TYPE=LvArray::ChaiBuffer >
 using ArrayView = LvArray::ArrayView< T, NDIM, UNIT_STRIDE_DIM, localIndex, DATA_VECTOR_TYPE >;
 
+/// Multidimensional array slice type. See LvArray:ArraySlice for details.
 template< typename T, int NDIM, int UNIT_STRIDE_DIM = NDIM - 1 >
 using ArraySlice = LvArray::ArraySlice< T, NDIM, UNIT_STRIDE_DIM, localIndex >;
 
+/// Multidimensional stack-based array type. See LvArray:StackArray for details.
 template< typename T, int NDIM, int MAXSIZE, typename PERMUTATION=camp::make_idx_seq_t< NDIM > >
 using StackArray = LvArray::StackArray< T, NDIM, PERMUTATION, localIndex, MAXSIZE >;
 
+///@}
+
+/**
+ * @name Short-hand aliases for commonly used array types.
+ */
+///@{
+
+/// Alias for 1D array.
 template< typename T >
 using array1d = Array< T, 1 >;
 
+/// Alias for 1D array view.
 template< typename T >
 using arrayView1d = ArrayView< T, 1 >;
 
+/// Alias for 1D array slice.
 template< typename T, int UNIT_STRIDE_DIM = 0 >
 using arraySlice1d = ArraySlice< T, 1, UNIT_STRIDE_DIM >;
 
+/// Alias for 1D stack array.
 template< typename T, int MAXSIZE >
 using stackArray1d = StackArray< T, 1, MAXSIZE >;
 
+/// Alias for 2D array.
 template< typename T, typename PERMUTATION=camp::make_idx_seq_t< 2 > >
 using array2d = Array< T, 2, PERMUTATION >;
 
+/// Alias for 2D array view.
 template< typename T, int UNIT_STRIDE_DIM = 1 >
 using arrayView2d = ArrayView< T, 2, UNIT_STRIDE_DIM >;
 
+/// Alias for 2D array slice.
 template< typename T, int UNIT_STRIDE_DIM = 1 >
 using arraySlice2d = ArraySlice< T, 2, UNIT_STRIDE_DIM >;
 
+/// Alias for 2D stack array.
 template< typename T, int MAXSIZE >
 using stackArray2d = StackArray< T, 2, MAXSIZE >;
 
+/// Alias for 3D array.
 template< typename T, typename PERMUTATION=camp::make_idx_seq_t< 3 > >
 using array3d = Array< T, 3, PERMUTATION >;
 
+/// Alias for 3D array view.
 template< typename T, int UNIT_STRIDE_DIM=2 >
 using arrayView3d = ArrayView< T, 3, UNIT_STRIDE_DIM >;
 
+/// Alias for 3D array slice.
 template< typename T, int UNIT_STRIDE_DIM=2 >
 using arraySlice3d = ArraySlice< T, 3, UNIT_STRIDE_DIM >;
 
+/// Alias for 3D stack array.
 template< typename T, int MAXSIZE >
 using stackArray3d = StackArray< T, 3, MAXSIZE >;
 
+/// Alias for 4D array.
 template< typename T >
 using array4d = Array< T, 4 >;
 
+/// Alias for 4D array view.
 template< typename T >
 using arrayView4d = ArrayView< T, 4 >;
 
+/// Alias for 4D array slice.
 template< typename T >
 using arraySlice4d = ArraySlice< T, 4 >;
 
+/// Alias for 4D stack array.
 template< typename T, int MAXSIZE >
 using stackArray4d = StackArray< T, 4, MAXSIZE >;
 
+/// Alias for 5D array.
 template< typename T >
 using array5d = Array< T, 5 >;
 
+/// Alias for 5D array view.
 template< typename T >
 using arrayView5d = ArrayView< T, 5 >;
 
+/// Alias for 5D array slice.
 template< typename T >
 using arraySlice5d = ArraySlice< T, 5 >;
 
+/// Alias for 5D stack array.
 template< typename T, int MAXSIZE >
 using stackArray5d = StackArray< T, 5, MAXSIZE >;
 
+///@}
+
+/**
+ * @name Aliases for sorted arrays and set types.
+ */
+///@{
+
+/// A set of local indices.
 template< typename T >
 using set = LvArray::SortedArray< T, localIndex >;
 
+/// A sorted array of local indices.
 template< typename T >
 using SortedArray = LvArray::SortedArray< T, localIndex >;
 
+/// A sorted array view of local indices.
 template< typename T >
 using SortedArrayView = LvArray::SortedArrayView< T, localIndex >;
 
-template< typename T, bool CONST_SIZES=std::is_const< T >::value >
-using ArrayOfArraysView = LvArray::ArrayOfArraysView< T, localIndex const, CONST_SIZES >;
+///@}
 
+/**
+ * @name Aliases for LvArray::ArrayOfArrays class family.
+ */
+///@{
+
+/// Array of variable-sized arrays. See LvArray::ArrayOfArrays for details.
 template< typename T >
 using ArrayOfArrays = LvArray::ArrayOfArrays< T, localIndex >;
 
-template< typename T >
-using ArrayOfSetsView = LvArray::ArrayOfSetsView< T, localIndex const >;
+/// View of array of variable-sized arrays. See LvArray::ArrayOfArraysView for details.
+template< typename T, bool CONST_SIZES=std::is_const< T >::value >
+using ArrayOfArraysView = LvArray::ArrayOfArraysView< T, localIndex const, CONST_SIZES >;
 
+/// Array of variable-sized sets. See LvArray::ArrayOfSets for details.
 template< typename T >
 using ArrayOfSets = LvArray::ArrayOfSets< T, localIndex >;
 
+/// View of array of variable-sized sets. See LvArray::ArrayOfSetsView for details.
+template< typename T >
+using ArrayOfSetsView = LvArray::ArrayOfSetsView< T, localIndex const >;
+
+///@}
+
+/**
+ * @name Ordered and unordered map types.
+ */
+///@{
+
+/**
+ * @brief Base template for ordered and unordered maps.
+ * @tparam TKEY key type
+ * @tparam TVAL value type
+ * @tparam SORTED a @p std::integral_constant<bool> indicating whether map is ordered
+ */
 template< typename TKEY, typename TVAL, typename SORTED >
 class mapBase
 {};
 
+/// @cond DO_NOT_DOCUMENT
 template< typename TKEY, typename TVAL >
 class mapBase< TKEY, TVAL, std::integral_constant< bool, true > > : public std::map< TKEY, TVAL >
 {};
@@ -241,6 +336,15 @@ template< typename TKEY, typename TVAL >
 class mapBase< TKEY, TVAL, std::integral_constant< bool, false > > : public std::unordered_map< TKEY, TVAL >
 {};
 
+/**
+ * @brief Stream output operator for map types.
+ * @tparam K key type
+ * @tparam V value type
+ * @tparam SORTED
+ * @param stream output stream
+ * @param map the map to print
+ * @return reference to output stream
+ */
 template< typename K, typename V, typename SORTED >
 inline
 std::ostream & operator<< ( std::ostream & stream, mapBase< K, V, SORTED > const & map )
@@ -253,12 +357,22 @@ std::ostream & operator<< ( std::ostream & stream, mapBase< K, V, SORTED > const
   stream << "}";
   return stream;
 }
+/// @endcond
 
+/// Ordered map type.
 template< typename TKEY, typename TVAL >
 using map = mapBase< TKEY, TVAL, std::integral_constant< bool, true > >;
 
+/// Unordered map type.
 template< typename TKEY, typename TVAL >
 using unordered_map = mapBase< TKEY, TVAL, std::integral_constant< bool, false > >;
+
+///@}
+
+/**
+ * @name Aliases for commonly used array types.
+ */
+///@{
 
 using integer_array        = array1d< integer >;
 using integer_const_array  = array1d< integer const >;
@@ -338,8 +452,12 @@ using localIndex_const_array3d = array3d< localIndex const >;
 using globalIndex_array3d       = array3d< globalIndex >;
 using globalIndex_const_array3d = array3d< globalIndex const >;
 
+///@}
 
-//***** BEGIN LEGACY TYPEDEFS *****
+/**
+ * @name Legacy typedefs.
+ */
+///@{
 
 using r1_array = array1d< R1Tensor >;
 using r2_array = array1d< R2Tensor >;
@@ -358,22 +476,25 @@ constexpr static auto LOCALINDEX_MAX = std::numeric_limits< localIndex >::max();
 
 constexpr static localIndex unmappedLocalIndexValue = -1;
 
-//***** END LEGACY TYPEDEFS *****
+///@}
 
 
-void printTypeSummary();
 /**
- * @class rtTypes
- * class to manage the type selection of types at runtime
+ * @brief Print a short summary of a few select type aliases.
+ */
+void printTypeSummary();
+
+/**
+ * @brief Class to manage the type selection of types at runtime.
  */
 class rtTypes
 {
 public:
 
   /**
-   * @brief function to return a typename as a string
+   * @brief Convert a @p std::type_index to a string.
    * @param key the std::type_index of the type
-   * @return a hard coded string taht is related to the std::type_index
+   * @return a hard coded string that is related to the std::type_index
    */
   static std::string typeNames( std::type_index const key )
   {
@@ -427,8 +548,7 @@ public:
 
 
   /**
-   * @enum TypeIDs
-   * @brief a set of enums for each geosx defined data type
+   * @brief A set of enums for each geosx defined data type.
    */
   enum class TypeIDs
   {
@@ -471,7 +591,7 @@ public:
   };
 
   /**
-   * @brief function to return a TypeID value given a name
+   * @brief Return a TypeID value given a name.
    * @param name the string of the type
    * @return a TypeIDs value corresponding to the input string
    */
@@ -520,7 +640,7 @@ public:
   }
 
   /**
-   * @brief function to return a TypeID enum given a std::type_index
+   * @brief Return a TypeID enum given a std::type_index.
    * @param typeIndex the type_index we would to get the TypeID for
    * @return the TypeID associated with the typeIndex
    */
@@ -575,15 +695,24 @@ public:
     }
   }
 
-  // Matching regex for data types in xml
+  /**
+   * @brief Matching regex for data types in xml.
+   */
   class typeRegex
   {
 private:
-    // Function to build Array regexes
-    // Note: The sub pattern is the base object you are targeting.  It can either
-    //       be a simple type or a lower-dimensional array.  Sub-elements and
-    //       axes are given as a comma-separated list enclosed in a curly brace.
-    //       For example, a 2D string array would look like: {{"a", "b"}, {"c", "d"}}
+
+    /**
+     * @brief Build Array regexes.
+     * @param subPattern
+     * @param dimension
+     * @return
+     *
+     * @note The sub pattern is the base object you are targeting.  It can either
+     *       be a simple type or a lower-dimensional array. Sub-elements and
+     *       axes are given as a comma-separated list enclosed in a curly brace.
+     *       For example, a 2D string array would look like: {{"a", "b"}, {"c", "d"}}
+     */
     std::string constructArrayRegex( std::string subPattern, integer dimension )
     {
       if( dimension > 1 )
@@ -659,9 +788,29 @@ private:
     };
 
 public:
+
+    /**
+     * @brief Get an iterator to the beginning of regex map.
+     * @return
+     */
     std::unordered_map< std::string, std::string >::iterator begin(){return regexMap.begin();}
+
+    /**
+     * @brief Get an iterator to the end of regex map.
+     * @return
+     */
     std::unordered_map< std::string, std::string >::iterator end(){return regexMap.end();}
+
+    /**
+     * @brief Get a const iterator to the beginning of regex map.
+     * @return
+     */
     std::unordered_map< std::string, std::string >::const_iterator begin() const {return regexMap.begin();}
+
+    /**
+     * @brief Get a const iterator to the end of regex map.
+     * @return
+     */
     std::unordered_map< std::string, std::string >::const_iterator end() const {return regexMap.end();}
   };
 
@@ -785,10 +934,11 @@ public:
 
 
   /**
-   * @brief this function provides a switchyard for the intrinsic supported GEOSX array types which calls a generic
+   * @brief Provides a switchyard for the intrinsic supported GEOSX array types which calls a generic
    *        lambda that takes in a two arguments argument which may be used to infer array type and underlying type.
    * @tparam LAMBDA the template arg that represents the lambda function
    * @param type the TypeIDs we would like to pass to the lambda function
+   * @param errorIfTypeNotFound whether to report an error if the type has not been handled
    * @param lambda the lambda function to call
    * @return the return type of lambda
    */
@@ -1213,66 +1363,6 @@ public:
         GEOS_ERROR( "TypeID not recognized." );
       }
     }
-  }
-
-  // TODO depricate
-  inline static void equate( R1Tensor & lhs, integer const component, real64 const & rhs )
-  {
-    lhs[component] = rhs;
-  }
-
-  // TODO depricate
-  template< typename TLHS, typename TRHS >
-  inline static void equate( TLHS & lhs,
-                             integer const,//component,
-                             TRHS const & rhs )
-  {
-    lhs = rhs;
-  }
-
-
-  // TODO depricate
-  inline static void add( R1Tensor & lhs,
-                          integer const component,
-                          real64 const & rhs )
-  {
-    lhs[component] += rhs;
-  }
-
-  // TODO depricate
-  template< typename TLHS, typename TRHS >
-  inline static void add( TLHS & lhs,
-                          integer const,// component,
-                          TRHS const & rhs )
-  {
-    lhs += rhs;
-  }
-
-
-
-  // TODO depricate
-  inline static real64 value( R1Tensor & lhs, integer const component )
-  {
-    return lhs[component];
-  }
-
-  // TODO depricate
-  inline static real64 value( R2Tensor & lhs, integer const component )
-  {
-    return lhs.Data()[component];
-  }
-
-  // TODO depricate
-  inline static real64 value( R2SymTensor & lhs, integer const component )
-  {
-    return lhs.Data()[component];
-  }
-
-  // TODO depricate
-  template< typename TLHS >
-  inline static TLHS value( TLHS const & lhs, integer const )
-  {
-    return lhs;
   }
 
 };

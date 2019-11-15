@@ -727,7 +727,7 @@ AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
     arrayView1d<globalIndex> const &
     faceElementDofNumber = subRegion->getReference< array1d<globalIndex> >( presDofKey );
 
-    if( subRegion->hasView("pressure") )
+    if( subRegion->hasWrapper( "pressure" ) )
     {
       arrayView1d<real64 const> const & fluidPressure = subRegion->getReference<array1d<real64> >("pressure");
       arrayView1d<real64 const> const & deltaFluidPressure = subRegion->getReference<array1d<real64> >("deltaPressure");
