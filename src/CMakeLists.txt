@@ -111,6 +111,10 @@ endif()
 
 if( ${SPHINX_FOUND} )
   blt_add_sphinx_target( geosx_docs )
+
+  if (DOXYGEN_FOUND)
+    add_dependencies (geosx_docs geosx_doxygen)
+  endif()
 endif()
 
 message( "Exiting /src/CMakeLists.txt")
