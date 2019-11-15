@@ -4,6 +4,9 @@
 Compositional Multiphase Flow Solver
 #######################################
 
+Introduction
+=============
+
 Here, we review the compositional solver in three steps:
 
 1. :ref:`theory`
@@ -97,7 +100,7 @@ The flash calculations performed to enforce the thermodynamical equilibrium are 
 in the section about :doc:`/coreComponents/constitutive/docs/Constitutive`.
 
 To summarize, the compositional multiphase flow solver assembles a set of :math:`n_c+1`
-equations, i.e., :math:`n_c` mass conservation equations and one volume constraint equation.
+equations in each element, i.e., :math:`n_c` mass conservation equations and one volume constraint equation.
 A separate module discussed in the :doc:`/coreComponents/constitutive/docs/Constitutive`
 is responsible for the enforcement of the thermodynamic equilibrium at each nonlinear iteration.
 
@@ -115,9 +118,10 @@ Primary variables
 
 The variable formulation implemented in GEOSX is a global variable formulation based on
 :math:`n_c+1` primary variables, namely, one pressure, :math:`p`, and
-:math:`n_c` (by default, molar) component densities, :math:`\rho_c`.
+:math:`n_c` component densities, :math:`\rho_c`.
 By default, we use molar component densities. A flag discussed in the section
-:ref:`usage` can be used to use mass component densities instead of molar component densities.
+:ref:`usage` can be used to select mass component densities instead of molar component
+densities.
 
 =========================== ===========================
 Number of primary variables Variable type
@@ -182,7 +186,7 @@ Solution strategy
 -----------------
 
 The nonlinear solution strategy is based on Newton's method.
-at each Newton iteration, the solver assembles a residual vector, :math:`R`,
+At each Newton iteration, the solver assembles a residual vector, :math:`R`,
 collecting the :math:`n_c` discrete mass conservation equations and the volume
 constraint for all the control volumes.
 The solver also assembles the Jacobian matrix :math:`J` containing the analytical
@@ -193,7 +197,7 @@ The Newton update, :math:`\delta X`, is then computed as:
 .. math::
   \delta X := - J^{-1} R,
 
-The linear system is solved with one of the solvers described in :doc:`/coreComponents/linearAlgebra/docs/LinearSolverParameters`.
+The linear system is solved with one of the solvers described in :doc:`/coreComponents/linearAlgebra/docs/LinearSolvers`.
 The Newton update is then applied to the primary variables:
 
 ..  math::
@@ -203,8 +207,8 @@ This procedure is repeated until convergence.
 
 .. _usage:
 
-Usage and model parameters
-==========================
+Usage
+=====
 
 The following attributes are supported:
 
@@ -215,28 +219,9 @@ The following attributes are supported:
 Input example
 =========================
 
-.. code-block:: xml
+.. literalinclude:: ../../../coreComponents/physicsSolvers/FiniteVolume/integratedTests/compositionalMultiphaseFlow/deadoil_3ph_staircase_3d.xml
+   :language: xml
+   :start-after: <!-- START_SPHINX_INCLUDE_SOLVER_BLOCK -->
+   :end-before: <!-- END_SPHINX_INCLUDE_SOLVER_BLOCK -->
 
-  <Solvers
-    gravityVector="0.0,0.0,-9.81">
-
-    <CompositionalMultiphaseFlow name="compflow"
-                                 verboseLevel="1"
-                                 gravityFlag="1"
-                                 discretization="fluidTPFA"
-                                 fluidName="fluid1"
-                                 solidName="rock"
-                                 relPermName="relperm"
-                                 temperature="297.15"
-                                 useMass="0"
-                                 targetRegions="Region2">
-      <SystemSolverParameters name="SystemSolverParameters"
-                              krylovTol="1.0e-10"
-                              newtonTol="1.0e-6"
-                              maxIterNewton="15"
-                              useDirectSolver="1"
-                              solverType="Klu"
-                              ilut_fill="0"
-                              ilut_drop="0"/>
-    </CompositionalMultiphaseFlow>
-  </Solvers>
+We refer the reader to :ref:`this page <TutorialCompositionalMultiphaseFlow>` for a complete tutorial illustrating the use of this solver.
