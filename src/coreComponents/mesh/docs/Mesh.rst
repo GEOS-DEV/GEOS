@@ -12,12 +12,6 @@ a number of mesh import file formats.  This latter options allows one to work
 with unstructured mesh data and a variety of element types.
 
 ************************
-Mesh Data Structure
-************************
-
-TODO: explain elementRegions and cellBlocks, and then refer to more extensive developer guide documentation.
-
-************************
 Internal Mesh Generation
 ************************
 
@@ -49,11 +43,44 @@ them into several regions.  The following is an example XML ``<mesh>`` block:
 - ``cellBlockNames`` List containing the names of the ``CellBlocks``
 
 The previous sample of XML file will generate a vertical beam with two ``CellBlocks``
-(one in red and one in blue in the following picture)
+(one in red and one in blue in the following picture).
 
 .. image:: ../../../coreComponents/mesh/docs/beam.png
 
+It's possible to generate more complex ``CellBlock`` using the ``InternalMeshGenerator``.
+For instance, the staircase example is a model which is often used in GEOSX as an integrated
+test. It defines ``CellBlocks`` in the three directions to generate a staircase-like model
+with the following code.
 
+.. code-block:: xml
+
+  <Mesh>
+    <InternalMesh name="mesh1"
+                  elementTypes="{C3D8}"
+                  xCoords="{0, 5, 10}"
+                  yCoords="{0, 5, 10}"
+                  zCoords="{0, 2.5, 5, 7.5, 10}"
+                  nx="{5, 5}"
+                  ny="{5, 5}"
+                  nz="{3, 3, 3, 3}"
+                  cellBlockNames="{b00,b01,b02,b03,b04,b05,b06,b07,b08,b09,b10,b11,b12,b13,b14,b15}"/>
+  </Mesh>
+
+  <ElementRegions>
+     <CellElementRegion name="Channel"
+                    cellBlocks="{b08,b00,b01,b05,b06,b14,b15,b11}"
+                    materialList="{fluid1, rock, relperm}"/>
+     <CellElementRegion name="Barrier"
+                    cellBlocks="{b04,b12,b13,b09,b10,b02,b03,b07}"
+                    materialList="{}"/>
+  </ElementRegions>
+
+Thus, the generated mesh will be :
+
+.. figure:: ../../../coreComponents/mesh/docs/staircase.svg
+   :align: center
+   :width: 500
+ 
 **************************
 Using an External Mesh
 **************************
@@ -86,6 +113,8 @@ to support different physics or to define different constitutive properties.
   provided by GMSH
 - For the MEDIT file format, the regions are defined using the tag of the element
 - For the ECLIPSE file formats, the regions have to be first defined using the ECLIPSE software
+
+.. _ImportingExternalMesh:
 
 Importing the Mesh
 ==================
