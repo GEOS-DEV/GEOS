@@ -63,7 +63,7 @@ Most of the time, the ``catalogName`` and the C++ class name are identical.
 This helps make the code easier to debug and allows the XML/C++ correspondence to be evident.
 But strictly speaking, the ``catalogName`` can be anything, as long as it refers uniquely to a specific class.
 The ``catalogName`` must not be confused with the object's *name* (``m_name`` is a data member of the class that stores the object's unique ID, not its class key).
-You can have several objects of the same class and hence the same ``catalogName``, but with different names (ie. unique ID): several fluid models, several solvers, etc.
+You can have several objects of the same class and hence the same ``catalogName``, but with different names (i.e. unique ID): several fluid models, several solvers, etc.
 
 **How can I add my new externally-accessible class to the ObjectCatalog?**
 
@@ -158,21 +158,21 @@ Parsing XML and searching the ObjectCatalog in scope
 Now that we have implemented a ``CatalogName()`` method returning a specific key (of type ``string``), we can have a block in our XML input file with a tag that corresponds to the ``catalogName`` "XmlNameOfMySolver".
 This is how the XML block would look like.
 
-.. code-block:: XML
+.. code-block:: xml
 
-  <Problem>
-    <Solvers
-      gravityVector="0.0, 0.0, -9.81">
-      <XmlNameOfMySolver name="nameOfThisSolverInstance"
-                               verboseLevel="1"
-                               gravityFlag="1"
-                               temperature="297.15"
-        <SystemSolverParameters newtonTol="1.0e-6"
-                                maxIterNewton="15"
-                                useDirectSolver="1"/>
-      </XmlNameOfMySolver>
-    </Solvers>
-  </Problem>
+    <Problem>
+      <Solvers
+        gravityVector="0.0, 0.0, -9.81">
+        <XmlNameOfMySolver name="nameOfThisSolverInstance"
+                                 verboseLevel="1"
+                                 gravityFlag="1"
+                                 temperature="297.15" />
+          <SystemSolverParameters newtonTol="1.0e-6"
+                                  maxIterNewton="15"
+                                  useDirectSolver="1"/>
+        </XmlNameOfMySolver>
+      </Solvers>
+    </Problem>
 
 Here, we see that the XML structure defines a parent node "Problem", that has (among many others) a child node "Solvers".
 In the "Solvers" block, we have placed the new solver block as a child node of the "Solvers" block with the XML tag corresponding to the ``catalogName`` of the new class.
@@ -288,7 +288,7 @@ Now every time a "BrooksCoreyRelativePermeability" ``string`` is encountered ins
 Declare the ``Wrapper`` s  keys (.hpp):
 ---------------------------------------
 
-When attaching properties (ie. data ``Wrapper`` s) to a class, a similar registration process must be done.
+When attaching properties (i.e. data ``Wrapper`` s) to a class, a similar registration process must be done.
 Every property is accessed through its ``ViewKey`` namespace.
 In this namespace, we define ``string`` s that correspond to the tags of XML attributes of the "BrooksCoreyRelativePermeability" block.
 
