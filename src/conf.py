@@ -14,6 +14,7 @@
 #
 import os
 import sys
+import shutil
 # sys.path.insert(0, os.path.abspath('.'))
 
 # Call doxygen in ReadtheDocs
@@ -21,23 +22,34 @@ read_the_docs_build = os.environ.get('READTHEDOCS', None) == 'True'
 if read_the_docs_build:
 
     # Make sure directory exists
-    cwd=os.getcwd()
-    buildpath=os.path.join(cwd,"_build")
-    if (os.path.isdir(buildpath) == 0):
-        os.mkdir(buildpath)
-    htmlpath=os.path.join(buildpath,"html")
-    if (os.path.isdir(htmlpath) == 0):
-        os.mkdir(htmlpath)
+    cwd = os.getcwd()
+    build_path = os.path.join(cwd, "_build")
+    if os.path.isdir(build_path) == 0:
+        os.mkdir(build_path)
+    html_path = os.path.join(build_path, "html")
+    if os.path.isdir(html_path) == 0:
+        os.mkdir(html_path)
+    docs_path = os.path.join(cwd, "docs/doxygen")
+    common_path = os.path.join(cwd, "coreComponents/common")
 
-    # Write correct ReadtheDocs path
-    f = open("./docs/doxygen/Doxyfile.in", "a")
-    f.write("\nINPUT=coreComponents/dataRepository")
-    f.write("\nOUTPUT_DIRECTORY=./_build/html/doxygen_output")
+    input_dirs = ["coreComponents/common",
+                  "coreComponents/dataRepository"]
+
+    # Write correct ReadtheDocs path and input directories
+    doxyfile = "%s/Doxyfile" % build_path
+    shutil.copy("%s/Doxyfile.in" % docs_path, doxyfile)
+    f = open(doxyfile, "a")
+    f.write("\nINPUT = %s" % " ".join(input_dirs))
+    f.write("\nOUTPUT_DIRECTORY = ./_build/html/doxygen_output")
     f.close()
+
+    # Make a symlink to GeosxConfig.hpp in common
+    if not os.path.exists("%s/GeosxConfig.hpp" % common_path):
+        os.symlink("%s/GeosxConfig.hpp" % docs_path, "%s/GeosxConfig.hpp" % common_path)
 
     # Call doxygen
     from subprocess import call
-    call(['doxygen', "./docs/doxygen/Doxyfile.in"])
+    call(['doxygen', doxyfile])
 
 
 # -- Project information -----------------------------------------------------

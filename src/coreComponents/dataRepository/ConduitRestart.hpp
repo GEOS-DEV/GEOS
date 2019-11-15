@@ -29,6 +29,8 @@
 // System includes
 #include <string>
 
+/// @cond DO_NOT_DOCUMENT
+
 #define CONDUIT_TYPE_INFO( T, CONDUIT_TYPE ) \
   template<> \
   struct conduitTypeInfo< T > \
@@ -90,5 +92,7 @@ void loadTree( std::string const & path );
 
 } // namespace dataRepository
 } // namespace geosx
+
+/// @endcond
 
 #endif /* GEOSX_DATAREPOSITORY_CONDUITRESTART_HPP_ */
