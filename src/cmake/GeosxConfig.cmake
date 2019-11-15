@@ -14,8 +14,6 @@ set( PREPROCESSOR_DEFINES ARRAY_BOUNDS_CHECK
                           ATK
                           CALIPER
                           CHAI
-                          CONTAINERARRAY_RETURN_PTR
-                          FPARSER
                           HYPRE
                           MATHPRESSO
                           METIS

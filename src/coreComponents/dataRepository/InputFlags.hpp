@@ -27,17 +27,27 @@ namespace geosx
 namespace dataRepository
 {
 
+/**
+ * @enum InputFlags
+ *
+ * Enumeration of flags that control reading XML input and schema generation.
+ */
 enum class InputFlags : int
 {
-  INVALID,
-  FALSE,
-  OPTIONAL,
-  OPTIONAL_NONUNIQUE,
-  REQUIRED,
-  REQUIRED_NONUNIQUE,
-  PROBLEM_ROOT,
+  INVALID,            ///< Invalid value
+  FALSE,              ///< Not read from input
+  OPTIONAL,           ///< Optional in input
+  OPTIONAL_NONUNIQUE, ///< Optional in input, may be repeated
+  REQUIRED,           ///< Required in input
+  REQUIRED_NONUNIQUE, ///< Required in input, may be repeated
+  PROBLEM_ROOT,       ///< Root of the hierarchy
 };
 
+/**
+ * @brief Convert integer value to InputFlags
+ * @param val value to convert
+ * @return converted enumeration
+ */
 inline InputFlags IntToInputFlag( int const val )
 {
   InputFlags rval = InputFlags::INVALID;
@@ -66,36 +76,62 @@ inline InputFlags IntToInputFlag( int const val )
   return rval;
 }
 
+/**
+ * @brief Convert InputFlags to int
+ * @param val value to convert
+ * @return converted integer
+ */
 inline int InputFlagToInt( InputFlags const val )
 {
   return static_cast< int >(val);
 }
 
+/**
+ * @brief Comparison operator for InputFlags enumeration.
+ * @param left  lhs value
+ * @param right rhs value
+ * @return comparison result
+ */
 inline bool operator==( InputFlags const left, InputFlags const right )
 {
   return static_cast< int >(left) == static_cast< int >(right);
 }
 
+/**
+ * @copydoc operator==(InputFlags const, InputFlags const)
+ */
 inline bool operator!=( InputFlags const left, InputFlags const right )
 {
   return static_cast< int >(left) != static_cast< int >(right);
 }
 
+/**
+ * @copydoc operator==(InputFlags const, InputFlags const)
+ */
 inline bool operator<( InputFlags const left, InputFlags const right )
 {
   return static_cast< int >(left) < static_cast< int >(right);
 }
 
+/**
+ * @copydoc operator==(InputFlags const, InputFlags const)
+ */
 inline bool operator>( InputFlags const left, InputFlags const right )
 {
   return static_cast< int >(left) > static_cast< int >(right);
 }
 
+/**
+ * @copydoc operator==(InputFlags const, InputFlags const)
+ */
 inline bool operator<=( InputFlags const left, InputFlags const right )
 {
   return static_cast< int >(left) <= static_cast< int >(right);
 }
 
+/**
+ * @copydoc operator==(InputFlags const, InputFlags const)
+ */
 inline bool operator>=( InputFlags const left, InputFlags const right )
 {
   return static_cast< int >(left) >= static_cast< int >(right);
