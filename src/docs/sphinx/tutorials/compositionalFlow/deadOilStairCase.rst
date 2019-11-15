@@ -50,7 +50,8 @@ are identified by defining two geometrical objects, boxes, with specific extensi
    :end-before: <!-- END_SPHINX_INCLUDE_GEOM_BLOCK -->
 
 In this test case we construct an internal mesh formed by 16 cell blocks each one containing
-5 x 5 x 3 cells.
+5 x 5 x 3 cells. A detailed explanation of how the internal mesh is specified
+is provided :ref:`here <Meshes>`.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/FiniteVolume/integratedTests/compositionalMultiphaseFlow/deadoil_3ph_staircase_3d.xml
     :language: xml
@@ -84,6 +85,7 @@ time-steps are used at the beginning of the simulation when convergence is more 
 
 Numerical methods tag
 ----------------------------------------
+We choose a standard two-point flux apporximation of the flux. 
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/FiniteVolume/integratedTests/compositionalMultiphaseFlow/deadoil_3ph_staircase_3d.xml
    :language: xml
