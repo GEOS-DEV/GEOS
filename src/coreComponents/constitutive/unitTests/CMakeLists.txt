@@ -9,7 +9,7 @@ set( gtest_geosx_tests
      testCapillaryPressure.cpp 
    )
 
-set( dependencyList geosx_core gtest axom )
+set( dependencyList geosx_core gtest )
 
 if( ENABLE_MPI )
     set( dependencyList ${dependencyList} mpi )
