@@ -53,7 +53,7 @@ The upwinded mass fractions are computed as:
 The perforation terms are obtained with: 
 
 .. math:: 
-  q^{perf}_{c,i} = \left\{ \begin{array}{cl} WI z_{c,i} \lambda^{res}_T \rho_{m,i} \Delta \Phi & \text{if the well is upstream (i.e.,} \, \, \Delta \Phi > 0)  \\[10pt] WI x^{res}_{c,p} \lambda^{res}_p \rho^{res}_p \Delta \Phi & \text{otherwise,} \end{array}\right.
+  q^{perf}_{c,i} = \left\{ \begin{array}{cl} WI z_{c,i} \rho_{m,i} \lambda^{res}_T  \Delta \Phi & \text{if the well is upstream (i.e.,} \, \, \Delta \Phi > 0)  \\[10pt] WI x^{res}_{c,p} \rho^{res}_p \lambda^{res}_p \Delta \Phi & \text{otherwise,} \end{array}\right.
 
 where :math:`\Delta \Phi = p_i - p^{res} + \rho_{m,i} g \Delta d_{i,perf}` is the potential gradient between the segment center and the reservoir center. 
 In the expression of the potential gradient, the mixture density is computed as :math:`\rho_{m,i} = \sum_p S_{p,i} \rho_{p,i}`. 
@@ -98,20 +98,20 @@ If the pressure at the top segment becomes too large than the maximum pressure s
 To summarize, the compositional multiphase flow solver assembles a set of :math:`n_c+2` equations, i.e., :math:`n_c` mass conservation equations and 1 volume constraint equation in each segment, plus 1 pressure relation at the interface between a segment and the next segment in the direction of the well head. 
 For the top segment, the pressure relation is replace with the control equation.
 
-==================== ===========================
+==================== ======================================
 Number of equations  Equation type
-==================== ===========================
+==================== ======================================
 :math:`n_c`          Mass conservation equations
 1                    Pressure relation or control equation
 1                    Volume constraint
-==================== ===========================
+==================== ======================================
 
 .. _well_primary_variables:
 
 Primary variables
 ------------------
 
-The well variable formulation is the same at that of the :ref:`CompositionalMultiphaseFlow`. 
+The well variable formulation is the same as that of the :ref:`CompositionalMultiphaseFlow`. 
 In a well segment, in addition to the :math:`n_c+1` primary variables of the :ref:`CompositionalMultiphaseFlow`, namely, one pressure, :math:`p`, and
 :math:`n_c` component densities, :math:`\rho_c`, we also treat the total mass flux at the interface with the next segment, denoted by :math:`q`, as a primary variable.
 
@@ -138,3 +138,7 @@ The following attributes are supported:
 Input example
 =========================
 
+.. literalinclude:: ../../../coreComponents/physicsSolvers/Wells/integratedTests/compositionalMultiphaseWell/compositional_multiphase_wells_2d.xml
+  :language: xml
+  :start-after: <!-- SPHINX_COMP_WELL_SOLVER -->
+  :end-before: <!-- SPHINX_COMP_WELL_SOLVER_END -->

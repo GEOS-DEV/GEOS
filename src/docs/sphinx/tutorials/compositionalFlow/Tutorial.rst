@@ -1,3 +1,5 @@
+.. _TutorialCompositionalMultiphaseFlow:
+   
 #############################
 Compositional flow
 #############################

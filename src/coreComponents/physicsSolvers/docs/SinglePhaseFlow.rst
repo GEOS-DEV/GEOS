@@ -115,21 +115,9 @@ must be prescribed on this field on cell or face sets of interest.
 Input example
 =========================
 
-.. code-block:: xml
+.. literalinclude:: ../../../coreComponents/physicsSolvers/FiniteVolume/integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml
+  :language: xml
+  :start-after: <!-- SPHINX_TUT_INT_HEX_SOLVERS -->
+  :end-before: <!-- SPHINX_TUT_INT_HEX_SOLVERS_END -->
 
-  <Solvers
-    gravityVector="0.0,0.0,-9.81">
-
-    <SinglePhaseFlow name="SinglePhaseFlow"
-                     verboseLevel="3"
-                     gravityFlag="1"
-                     discretization="singlePhaseTPFA"
-                     fluidName="water"
-                     solidName="rock"
-                     targetRegions="Region2">
-      <SystemSolverParameters name="SystemSolverParameters"
-                              krylovTol="1.0e-10"
-                              newtonTol="1.0e-6"
-                              maxIterNewton="8"/>
-    </SinglePhaseFlow>
-  </Solvers>
+We refer the reader to :ref:`this page <TutorialSinglePhaseFlow>` for a complete tutorial illustrating the use of this solver.
