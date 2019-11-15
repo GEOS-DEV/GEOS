@@ -117,8 +117,8 @@
   </Constitutive>
 <!-- END_SPHINX_INCLUDE_CONST_BLOCK -->
 
-  <FieldSpecifications>
 <!-- START_SPHINX_INCLUDE_PERM_BLOCK -->
+  <FieldSpecifications>
     <FieldSpecification name="permx_channel"
                         component="0"
                         initialCondition="1"
@@ -246,12 +246,13 @@
                         fieldName="globalCompFraction"
                         component="2"
                         scale="0.001"/>
-<!-- END_SPHINX_INCLUDE_BC_BLOCK -->
   </FieldSpecifications>
+<!-- END_SPHINX_INCLUDE_BC_BLOCK -->
 <!-- START_SPHINX_INCLUDE_OUTPUT_BLOCK -->
   <Outputs>
-    <Silo name="siloOutput"/>
+    <Silo name="siloOutput"
+          plotLevel="3"/>
     <Restart name="restartOutput"/>
   </Outputs>
-  <!-- END_SPHINX_INCLUDE_OUTPUT_BLOCK -->
+<!-- END_SPHINX_INCLUDE_OUTPUT_BLOCK -->
 </Problem>
