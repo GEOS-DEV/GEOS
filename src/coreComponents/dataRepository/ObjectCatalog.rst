@@ -97,7 +97,7 @@ with the "ObjectCatalog".
 ``TYPE`` must be derived from ``BASETYPE`` and have a constructor that matches the variadic parameter
 pack specified in the template parameter list.
 The main purpose of the ``CatalogEntry`` is to override the ``CatalogInterface::Allocate()`` virtual 
-function s.t. when key is retrieved from the catalog, the it is possible to create a new ``TYPE``.
+function s.t. when key is retrieved from the catalog, then it is possible to create a new ``TYPE``.
 The ``CatalogEntry::Allocate()`` function is a simple creation of the underlying ``TYPE`` as shown by 
 its definition:
 

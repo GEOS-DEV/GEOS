@@ -5,7 +5,28 @@ Single-phase Flow Solver
 #####################################
 
 Introduction
+=============
+
+Here, we describe the single-phase solver in three steps:
+
+1. :ref:`theory`
+
+    a. :ref:`singlephase_equations`
+
+    b. :ref:`singlephase_discretization`
+
+2. :ref:`usage`
+
+3. :ref:`input_example`
+
+
+Theory
 =========================
+
+.. _singlephase_equations:
+
+Governing equations
+-------------------
 
 This is a cell-centered Finite Volume solver for compressible single-phase flow in porous media.
 Fluid pressure as the primary solution variable.
@@ -34,8 +55,15 @@ When the entire pore space is filled by a single phase, we can substitute the Da
 with :math:`\gamma \nabla z= \rho \boldsymbol{g}`.
 
 
+.. _singlephase_discretization:
+
+Discretization
+--------------
+
+
 Space Discretization
-=======================
+~~~~~~~~~~~~~~~~~~~~
+
 Let :math:`\Omega \subset \mathbb{R}^n, \, n =1,2,3` be an open set defining the computational domain. We consider :math:`\Omega` meshed by element such that :math:`\Omega = \cup_{i}V_i` and integrate the single phase flow equation, described above, over each element :math:`V_i`:
 
 .. math::
@@ -53,7 +81,8 @@ For the flux term, the (static) transmissibility is currently computed with a Tw
 The pressure-dependent mobility :math:`\lambda = \frac{\rho}{\mu}` at the interface is approximated using a first-order upwinding on the sign of the potential difference.
 
 Time Discretization
-=========================
+~~~~~~~~~~~~~~~~~~~
+
 Let :math:`t_0 < t_1 < \cdots < t_N=T` be a grid discretization of the time interval :math:`[t_0,T], \, t_0, T \in \mathbb{R}^+`. We use the backward Euler (fully implicit) method to integrate the single phase flow equation between two grid points :math:`t_n` and :math:`t_{n+1}, \, n< N` to obtain the residual equation:
 
 .. math::
@@ -62,7 +91,7 @@ Let :math:`t_0 < t_1 < \cdots < t_N=T` be a grid discretization of the time inte
 where :math:`\Delta t = t_{n+1}-t_n` is the time-step. The expression of this residual equation and its derivative are used to form a linear system, which is solved via the solver package.
 
 Usage
-=========================
+======
 
 The solver is enabled by adding a ``<SinglePhaseFlow>`` node in the Solvers section.
 Like any solver, time stepping is driven by events, see :ref:`EventManager`.
@@ -76,37 +105,19 @@ In particular:
 * ``discretization`` must point to a Finite Volume flux approximation scheme defined in the Numerical Methods section of the input file (see :ref:`FiniteVolume`)
 * ``fluidName`` must point to a single phase fluid model defined in the Constitutive section of the input file (see :ref:`Constitutive`)
 * ``solidName`` must point to a solid mechanics model defined in the Constitutive section of the input file (see :ref:`Constitutive`)
-* ``targetRegions`` attribute is currently not supported, the solver is always applied to all regions.
+* ``targetRegions`` is used to specify the regions on which the solver is applied
 
 Primary solution field label is ``pressure``.
 Initial conditions must be prescribed on this field in every region, and boundary conditions
 must be prescribed on this field on cell or face sets of interest.
 
-In addition, the solver declares a scalar field named ``referencePorosity`` and a vector field
-named ``permeability``, that contains principal values of the symmetric rank-2 permeability tensor
-(tensor axis are assumed aligned with the global coordinate system).
-These fields must be populated via :ref:`FieldSpecification` section and ``permeability`` should
-be supplied as the value of ``coefficientName`` attribute of the flux approximation scheme used.
 
-
-Example
+Input example
 =========================
 
-.. code-block:: xml
+.. literalinclude:: ../../../coreComponents/physicsSolvers/FiniteVolume/integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml
+  :language: xml
+  :start-after: <!-- SPHINX_TUT_INT_HEX_SOLVERS -->
+  :end-before: <!-- SPHINX_TUT_INT_HEX_SOLVERS_END -->
 
-  <Solvers
-    gravityVector="0.0,0.0,-9.81">
-
-    <SinglePhaseFlow name="SinglePhaseFlow"
-                     verboseLevel="3"
-                     gravityFlag="1"
-                     discretization="singlePhaseTPFA"
-                     fluidName="water"
-                     solidName="rock"
-                     targetRegions="Region2">
-      <SystemSolverParameters name="SystemSolverParameters"
-                              krylovTol="1.0e-10"
-                              newtonTol="1.0e-6"
-                              maxIterNewton="8"/>
-    </SinglePhaseFlow>
-  </Solvers>
+We refer the reader to :ref:`this page <TutorialSinglePhaseFlow>` for a complete tutorial illustrating the use of this solver.
