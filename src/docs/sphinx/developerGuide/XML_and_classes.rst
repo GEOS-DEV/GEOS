@@ -1,3 +1,5 @@
+.. _XML_and_classes:
+
 GEOSX data structures and XML input correspondence
 ##################################################
 
@@ -10,6 +12,7 @@ GEOSX data structure overview
 =============================
 
 
+.. _GroupPar:
 
 Group : the base class of GEOSX
 -------------------------------
@@ -35,6 +38,8 @@ In the code listing below, we see that each ``Group`` object is at minimum equip
    :end-before: RestartFlags
 
 *[Source: src/coreComponents/dataRepository/Group.hpp]*
+
+.. _ObjectCatalogPar:
 
 A few words about the ObjectCatalog
 -----------------------------------
