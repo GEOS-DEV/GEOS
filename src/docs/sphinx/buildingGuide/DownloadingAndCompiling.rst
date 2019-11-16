@@ -27,7 +27,7 @@ It is suggested that you setup ssh keys, and use ssh for your clones as discusse
 `on this github article <https://help.github.com/articles/adding-a-new-ssh-key-to-your-github-account/>`_.
 Before going further, you should `test your ssh connection <https://help.github.com/en/github/authenticating-to-github/testing-your-ssh-connection>`_.
 
-If it fails (maybe because of your company proxy...), you may consider the `personnal access token option<https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line>`_.
+If it fails (maybe because of your company proxy...), you may consider the `personnal access token option <https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line>`_.
 
 The next command lines will use the ssh connection pattern.
 Note that you'll have to adapt the commands if you adopt https connections.

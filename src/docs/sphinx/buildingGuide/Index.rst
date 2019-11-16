@@ -13,6 +13,6 @@ Welcome to the GEOSX building guide.
 
    ContinuousIntegration
 
-   ubuntuVirtualMachineOnOSX
+   ubuntuVirtualMachineOnOSX/Instructions
 
 
