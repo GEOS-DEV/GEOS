@@ -176,7 +176,8 @@ SurfaceGenerator::SurfaceGenerator( const std::string& name,
 //  m_maxTurnAngle(91.0),
   m_solidMaterialName(""),
   m_nodeBasedSIF(0),
-  m_rockToughness(1.0e99)
+  m_rockToughness(1.0e99),
+  m_mpiCommOrder(0)
 {
   this->registerWrapper( viewKeyStruct::failCriterionString,
                              &this->m_failCriterion,
@@ -193,6 +194,10 @@ SurfaceGenerator::SurfaceGenerator( const std::string& name,
   registerWrapper(viewKeyStruct::nodeBasedSIFString, &m_nodeBasedSIF, 0)->
       setInputFlag(InputFlags::OPTIONAL)->
       setDescription("Rock toughness of the solid material");
+
+  registerWrapper(viewKeyStruct::mpiCommOrderString, &m_mpiCommOrder, 0)->
+      setInputFlag(InputFlags::OPTIONAL)->
+      setDescription("Flag to enable MPI consistent communication ordering");
 
   this->registerWrapper( viewKeyStruct::fractureRegionNameString, &m_fractureRegionName, 0 )->
       setInputFlag(dataRepository::InputFlags::OPTIONAL)->
@@ -578,7 +583,7 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
                                                        neighbors,
                                                        modifiedObjects,
                                                        receivedObjects,
-                                                       false );
+                                                       m_mpiCommOrder );
 
     SynchronizeTipSets( faceManager,
                         edgeManager,
