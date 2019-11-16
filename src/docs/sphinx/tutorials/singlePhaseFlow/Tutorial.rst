@@ -102,8 +102,6 @@ The two-point flux approximation, which was first introduced under the *Solver>S
   :start-after: <!-- SPHINX_TUT_INT_HEX_NUM_METHODS -->
   :end-before: <!-- SPHINX_TUT_INT_HEX_NUM_METHODS_END -->
 
-*DIFFERENCE BETWEEN FILES HERE* Check if Dirichlet boundary conditions are actually specified by this xml.
-
 Here the ``boundaryFieldName`` node specifies that for Dirichlet boundary conditions the face located value is considered. The ``coefficientName`` node refers to the field which has to be considered in the stencil computation. 
 
 .. _ElementRegions_tag:
@@ -142,20 +140,13 @@ Here, fields such as porosity, permeability, source and sink terms or initial fi
   - a lower permeability in the z-direction: ``permz``, constant value of 1.0e-15 m\ :sup:`2` (10 mD)
 
 The ``setNames`` node value specifies the geometric zone where the value should be applied.
+These directional permeabilities are followed by all the other field initializations. Please note the change in ``component`` node value as we are dealing with a permeability diagonal tensor.
+The other fields to be specified are a constant homogenious reference porosity for the whole domain, initial pressure, and source and sink term pressures.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/FiniteVolume/integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_INT_HEX_FIELDS -->
   :end-before: <!-- SPHINX_TUT_INT_HEX_FIELDS_END -->
-
-*REWRITE*
-
-which is followed by all the other field initializations. Please note the change in ``component`` node value as we are dealing with a permeability diagonal tensor.
-
-The other field to be specified are initial pressure, source and sink term pressure,
-
-And finally, we specify a constant homogeneous porosity for the whole domain as,
-
 
 .. _Functions_tag:
 
@@ -240,8 +231,8 @@ For instance, here are reported diagonal pressure profile from sink to source bl
 .. image:: Plots.png
    :width: 400px
 
-.. image:: Animation.gif
-   :width: 400px
+.. image:: IntHexMovie.mpg
+   :width: 500px
 
 
 .. _ExternalHexahedral:
@@ -468,8 +459,8 @@ At the end of your simulation, you should see something like:
 Visualization of results in VisIt
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. .. image:: HexResults.png
-..     :width: 400px
+.. image:: ExtHexResults.png
+    :width: 400px
 
 All results are written in a format compatible with `VisIt
 <https://wci.llnl.gov/simulation/computer-codes/visit/>`_.
@@ -534,10 +525,8 @@ format.
 
 The mesh looks like this:
 
-*ADD IMAGE*
-
-.. .. image:: ImportingExternalMeshCube.png
-..   :width: 250px
+.. image:: TetCube.png
+  :width: 250px
 
 
 Events specification
@@ -779,8 +768,8 @@ In our case, the first lines are:
 Visualization of results in VisIt
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. .. image:: TetResults.png
-..   :width: 400px
+.. image:: ExtTetResults.png
+  :width: 400px
 
 
 
