@@ -29,6 +29,7 @@ Welcome to the GEOSX developer guide.
 
    /coreComponents/linearAlgebra/docs/DofManager.rst
 
+   AddingNewSolver
 
 
 Overview of the code structure

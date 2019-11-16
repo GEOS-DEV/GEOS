@@ -1,9 +1,11 @@
+.. _Meshes:
+
 ============
 Meshes
 ============
 
 This section describes how meshes are handled.
-We first briefly describe how meshes are stored within GEOSX, 
+We first briefly describe how meshes are stored within GEOSX,
 in order to clarify how the user can interact with mesh data.
 
 There are then two options for generating a mesh.  GEOSX can internally
@@ -80,7 +82,7 @@ Thus, the generated mesh will be :
 .. figure:: ../../../coreComponents/mesh/docs/staircase.svg
    :align: center
    :width: 500
- 
+
 **************************
 Using an External Mesh
 **************************
