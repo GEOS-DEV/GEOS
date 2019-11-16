@@ -517,6 +517,14 @@ public:
   //@{
 
 
+  /**
+   * @brief Returns the number of nozero entries in the longest
+   * row of the matrix.
+   */
+  localIndex maxRowLength() const;
+
+  // TODO: These break the goal of hiding local row indexing from user.  Revise
+  // use cases to use ilower() and iupper();
   localIndex getLocalRowLocalLength( localIndex localRow );
   localIndex getLocalRowGlobalLength( localIndex localRow );
 

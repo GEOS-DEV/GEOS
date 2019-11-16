@@ -38,6 +38,7 @@
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 
+
 namespace geosx
 {
 
@@ -1386,6 +1387,71 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
 {
   GEOSX_MARK_FUNCTION;
 
+  // ... playground for new strategy ...
+  
+  //#define PLAYGROUND
+  #ifdef PLAYGROUND
+  GEOSX_MARK_BEGIN(NEW_SOLVER_STRATEGY);
+  LinearSolverParameters solidParameters;
+                         solidParameters.verbosity = 1;
+                         solidParameters.solverType = "bicgstab";
+                         solidParameters.dofsPerNode = 3;
+                         solidParameters.krylov.tolerance = 1e-6;
+                         solidParameters.krylov.maxIterations = 100;
+                         solidParameters.preconditionerType = "amg";
+                         solidParameters.amg.smootherType = "ilu";
+                         solidParameters.amg.coarseType = "ilu";
+                         solidParameters.amg.separateComponents = true;
+                         solidParameters.amg.isSymmetric = true;
+                         solidParameters.amg.numSweeps = 1;
+
+  LinearSolverParameters fluidParameters;
+                         fluidParameters.verbosity = 0;
+                         fluidParameters.solverType = "bicgstab";
+                         fluidParameters.krylov.tolerance = 1e-6;
+                         fluidParameters.krylov.maxIterations = 100;
+                         fluidParameters.preconditionerType = "amg";
+                         fluidParameters.amg.smootherType = "ilu";
+                         fluidParameters.amg.coarseType = "ilu";
+                         fluidParameters.amg.isSymmetric = true;
+                         fluidParameters.amg.numSweeps = 1;
+
+  /*
+  ParallelVector newRu (m_solidSolver->getSystemRhs()); 
+  ParallelVector newRp (m_flowSolver->getSystemRhs()); 
+
+  LinearSolver fluidKrylov( fluidParameters );
+               fluidKrylov.solve(m_flowSolver->getSystemMatrix(),
+                                 m_flowSolver->getSystemSolution(),
+                                 m_flowSolver->getSystemRhs());
+
+  m_matrix01.residual(m_flowSolver->getSystemSolution(),
+                      m_solidSolver->getSystemRhs(),
+                      newRu);  
+
+  newRu.scale(-1.0);
+
+  LinearSolver solidKrylov( solidParameters );
+               solidKrylov.solve(m_solidSolver->getSystemMatrix(),
+                                 m_solidSolver->getSystemSolution(),
+                                 m_solidSolver->getSystemRhs());
+
+  m_matrix10.residual(m_solidSolver->getSystemSolution(),
+                      m_flowSolver->getSystemRhs(),
+                      newRp);
+  
+  newRp.scale(-1.0);
+
+               fluidKrylov.solve(m_flowSolver->getSystemMatrix(),
+                                 m_flowSolver->getSystemSolution(),
+                                 newRp);
+  */
+  GEOSX_MARK_END(NEW_SOLVER_STRATEGY);
+
+  return;
+  #endif
+
+  // ... begin old strategy ...
   SystemSolverParameters * const params = &m_systemSolverParameters;
 
   using namespace Teuchos;
@@ -1409,6 +1475,12 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
 
   p_matrix[1][1] = m_flowSolver->getSystemMatrix().unwrappedPointer();
 
+  if( params->m_verbose>=1 )
+  {
+    GEOS_LOG_RANK_0("  System | n_u = " << p_matrix[0][0]->NumGlobalRows64() <<
+                              " n_p = " << p_matrix[1][1]->NumGlobalRows64());
+  }
+
     // SCHEME CHOICES
     //
     // there are several flags to control solver behavior.
@@ -1430,9 +1502,9 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
     //    false is probably better.
 
   const bool use_inner_solver  = params->m_useInnerSolver;
-  const int use_scaling        = params->m_scalingOption;  // no longer just row
+  const int  use_scaling       = params->m_scalingOption;  // no longer just row
   const bool use_bicgstab      = params->m_useBicgstab;
-  const bool use_diagonal_prec = false;
+  const bool use_diagonal_prec = true;
 
 
     // DEBUGGING
@@ -1463,6 +1535,11 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
 
   p_solution[0]->PutScalar(0.0);
   p_solution[1]->PutScalar(0.0);
+
+    // create separate displacement component matrix
+
+  ParallelMatrix blockDiag00;
+  LAIHelperFunctions::SeparateComponentFilter(m_solidSolver->getSystemMatrix(),blockDiag00,3);
 
   GEOSX_MARK_END(Setup);
 
@@ -1542,6 +1619,8 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
     matrix_block[i][j] = Thyra::epetraLinearOp(mmm);
   }
 
+  RCP<Epetra_Operator> bbb(blockDiag00.unwrappedPointer(),false);
+  RCP<const Thyra::LinearOpBase<double> >  blockDiagOp = Thyra::epetraLinearOp(bbb);
 
   for(unsigned i=0; i<2; ++i)
   {
@@ -1648,12 +1727,13 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
         list->set("Preconditioner Type","ML");
         list->sublist("Preconditioner Types").sublist("ML").set("Base Method Defaults","SA");
         list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("PDE equations",(i==0?3:1));
-        list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("smoother: type","block Gauss-Seidel");
+        //list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("smoother: type","block Gauss-Seidel");
         //list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("smoother: type","Gauss-Seidel");
         //list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("smoother: type","Chebyshev");
+        list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("smoother: type","ILU");
         list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("ML output", 0);
         list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("aggregation: type","Uncoupled");
-        list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("smoother: sweeps",3);
+        list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("smoother: sweeps",1);
 
 #if AGGREGATION==1
           list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("x-coordinates",x_coord.data());
@@ -1696,9 +1776,10 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
       RCP<const Thyra::PreconditionerFactoryBase<double> > strategy = createPreconditioningStrategy(builder);
       RCP<Thyra::PreconditionerBase<double> > tmp;
 
-      //if(i==0)
+      if(i==0)
+        tmp = prec(*strategy,blockDiagOp);
+      else
         tmp = prec(*strategy,matrix_block[i][i]);
-      //else
       //  tmp = prec(*strategy,SchurEstimate);
 
      sub_op[i] = tmp->getUnspecifiedPrecOp();
@@ -1740,15 +1821,15 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
     RCP<const Thyra::LinearOpBase<double> > Linv,Dinv,Uinv,Eye;
 
     //Eye = Thyra::block2x2(eye_00,zero_01,zero_10,eye_11);
-    //Linv = Thyra::block2x2(eye_00,zero_01,mB2Ainv,eye_11);
+    Linv = Thyra::block2x2(eye_00,zero_01,mB2Ainv,eye_11);
     Dinv = Thyra::block2x2(sub_op[0],zero_01,zero_10,sub_op[1]);
     Uinv = Thyra::block2x2(eye_00,mAinvB1,zero_10,eye_11);
 
     //preconditioner = Eye;
     //preconditioner = Dinv;
-    preconditioner = Thyra::multiply(Uinv,Dinv);
+    //preconditioner = Thyra::multiply(Uinv,Dinv);
     //preconditioner = Thyra::multiply(Dinv,Linv);
-    //preconditioner = Thyra::multiply(Uinv,Dinv,Linv);
+    preconditioner = Thyra::multiply(Uinv,Dinv,Linv);
   }
 
   GEOSX_MARK_END(PRECONDITIONER);
@@ -1770,7 +1851,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
       else
         list->sublist("Linear Solver Types").sublist("AztecOO").sublist("Forward Solve").sublist("AztecOO Settings").set("Aztec Solver","GMRES");
 
-      if( params->m_verbose>=3 )
+      if( params->m_verbose>=1 )
         list->sublist("Linear Solver Types").sublist("AztecOO").sublist("Forward Solve").sublist("AztecOO Settings").set("Output Frequency",1);
       else
         list->sublist("Linear Solver Types").sublist("AztecOO").sublist("Forward Solve").sublist("AztecOO Settings").set("Output Frequency",0);
@@ -1818,18 +1899,21 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
       params->m_KrylovResidualFinal = Thyra::norm(*r);
     }
 
-    // write a solver profile file
     if( params->m_verbose>=1 )
     {
-      printf("    kryolv iter, r0, rf: %d %.3e %.3e\n", params->m_numKrylovIter, params->m_KrylovResidualInit, params->m_KrylovResidualFinal);
+      GEOS_LOG_RANK_0("  Krylov | Iter = " << params->m_numKrylovIter <<
+                      " | InitialNorm "    << params->m_KrylovResidualInit << 
+                      " | FinalNorm "      << params->m_KrylovResidualFinal);
     }
 
+    /* serial only
     if( params->m_verbose>=3 )
     {
       FILE* fp = fopen("solver_profile.txt","a");
       fprintf(fp,"%d %.9e %.9e\n", params->m_numKrylovIter, params->m_KrylovResidualInit, params->m_KrylovResidualFinal);
       fclose(fp);
     }
+    */
 
     // apply column scaling C to get true solution x from x' = Cinv*x
 
@@ -1854,6 +1938,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
   if( this->m_verboseLevel == 2 )
   {
 
+  /*
   ParallelVector permutedSol;
   ParallelVector const & solution = m_solidSolver->getSystemSolution();
 
@@ -1862,6 +1947,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
   m_permutationMatrix0.multiply(solution, permutedSol);
 
   permutedSol.close();
+  */
 
 //  GEOS_LOG_RANK_0("***********************************************************");
 //  GEOS_LOG_RANK_0("solution0");

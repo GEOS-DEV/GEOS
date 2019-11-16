@@ -110,6 +110,10 @@ void PrintPermutedMatrix(ParallelMatrix const & matrix,
                          std::ostream & os);
 
 
+void SeparateComponentFilter(ParallelMatrix const & src,
+                             ParallelMatrix & dst,
+                             const localIndex dofsPerNode);
+
 } // LAIHelperFunctions namespace
 
 } // geosx namespace

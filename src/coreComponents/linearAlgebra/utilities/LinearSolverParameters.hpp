@@ -38,7 +38,7 @@ public:
   string  solverType = "cg";           //!< Solver type [direct, cg, gmres, bicgstab]
   string  preconditionerType = "ilut"; //!< Preconditioner type [none, ilu, ilut, icc, amg]
   integer dofsPerNode = 1;             //!< Can be used to enable dense-block algorithms if available
-
+ 
   struct
   {
     real64  tolerance = 1e-6;
@@ -62,6 +62,7 @@ public:
     string  coarseType = "direct";
     integer numSweeps = 2;
     bool    isSymmetric = true;
+    bool    separateComponents = false;
     string  nullSpaceType = "constantModes";
   }
   amg;

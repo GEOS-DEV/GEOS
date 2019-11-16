@@ -418,6 +418,10 @@ void EpetraMatrix::leftRightScale( EpetraVector const & vecLeft,
   rightScale( vecRight );
 }
 
+localIndex EpetraMatrix::maxRowLength() const
+{
+  return m_matrix->MaxNumEntries();
+}
 
 localIndex EpetraMatrix::getLocalRowLocalLength( localIndex localRow )
 {

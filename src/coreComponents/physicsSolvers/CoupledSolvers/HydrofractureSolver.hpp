@@ -22,6 +22,7 @@
 
 #include "physicsSolvers/SolverBase.hpp"
 
+
 namespace geosx
 {
 
@@ -181,7 +182,6 @@ private:
   ParallelMatrix m_permutationMatrix1; // it's used to have the output based on global ordering
 
   integer m_maxNumResolves;
-
 };
 
 } /* namespace geosx */
