@@ -1486,7 +1486,7 @@ void DofManager::vectorToField( ParallelVector const & vector,
         {
           FIELD_OP::template SpecifyFieldValue( field,
                                                 i,
-                                                integer_conversion< integer >( c - loComp ),
+                                                c - loComp,
                                                 scalingFactor * localVector[lid + c] );
         }
       }
@@ -1580,7 +1580,7 @@ void DofManager::fieldToVector( ObjectManagerBase const * const manager,
         {
           FIELD_OP::template ReadFieldValue( field,
                                              i,
-                                             integer_conversion< int >( c - loComp ),
+                                             c - loComp,
                                              localVector[lid + c] );
         }
       }

@@ -16,7 +16,7 @@ set(common_sources
     DataTypes.cpp
    )
 
-set( dependencyList cxx-utilities )
+set( dependencyList cxx-utilities pugixml )
 
 if( ENABLE_MPI )
   set( dependencyList ${dependencyList} mpi )
@@ -30,19 +30,6 @@ if( ENABLE_CALIPER )
   set( dependencyList ${dependencyList} caliper )
 endif()
 
-if( ENABLE_RAJA )
-  set( dependencyList ${dependencyList} RAJA )
-endif()
-
-if ( ENABLE_OPENMP )
-  set( dependencyList ${dependencyList} openmp )
-endif()
-
-if ( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
-endif()
-
-
 #set( dependencyList2 mpi )
 #foreach( lib ${dependencyList} )
 #    set( dependencyList2 ${dependencyList2} ${GEOSX_LINK_PREPEND_FLAG} ${lib} ${GEOSX_LINK_POSTPEND_FLAG} )
@@ -54,7 +41,7 @@ blt_add_library( NAME                  common
                  SOURCES               ${common_sources}
                  HEADERS               ${common_headers}
                  DEPENDS_ON            ${dependencyList}
-                 #OBJECT                TRUE
+                 OBJECT                ${buildAsObj}
 #                 SHARED TRUE
                )
                

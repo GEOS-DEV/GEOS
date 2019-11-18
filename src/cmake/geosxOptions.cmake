@@ -76,6 +76,8 @@ else()
   option(ENABLE_OPENMP     "Enables OpenMP compiler support" ON)
 endif()
 
+option ( BUILD_OBJ_LIBS "Builds coreComponent modules as object libraries" OFF)
+
 #set( BUILD_SHARED_LIBS ON CACHE PATH "" FORCE)
 #set( ENABLE_SHARED_LIBS ON CACHE PATH "" FORCE )
 
