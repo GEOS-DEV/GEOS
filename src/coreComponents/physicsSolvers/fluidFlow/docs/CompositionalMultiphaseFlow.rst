@@ -219,7 +219,7 @@ The following attributes are supported:
 Input example
 =========================
 
-.. literalinclude:: ../../../coreComponents/physicsSolvers/FiniteVolume/integratedTests/compositionalMultiphaseFlow/deadoil_3ph_staircase_3d.xml
+.. literalinclude:: ../integratedTests/compositionalMultiphaseFlow/deadoil_3ph_staircase_3d.xml
    :language: xml
    :start-after: <!-- START_SPHINX_INCLUDE_SOLVER_BLOCK -->
    :end-before: <!-- END_SPHINX_INCLUDE_SOLVER_BLOCK -->

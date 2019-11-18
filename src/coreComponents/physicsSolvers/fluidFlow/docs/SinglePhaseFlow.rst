@@ -115,7 +115,7 @@ must be prescribed on this field on cell or face sets of interest.
 Input example
 =========================
 
-.. literalinclude:: ../../../coreComponents/physicsSolvers/FiniteVolume/integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml
+.. literalinclude:: ../integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_INT_HEX_SOLVERS -->
   :end-before: <!-- SPHINX_TUT_INT_HEX_SOLVERS_END -->
