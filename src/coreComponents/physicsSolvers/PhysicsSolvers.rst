@@ -1,0 +1,21 @@
+.. _Solvers:
+
+Physics Solvers
+============================================
+
+The ``<Solvers>`` section of the input file specifies one or several 
+physics solvers to be included in the simulation.
+
+.. toctree::
+   :maxdepth: 2
+
+   solidMechanics/docs/SolidMechanics
+
+   fluidFlow/docs/SinglePhaseFlow
+
+   fluidFlow/docs/CompositionalMultiphaseFlow
+
+   multiphysics/docs/Poromechanics
+
+   CompositionalMultiphaseWell
+
