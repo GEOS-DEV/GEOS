@@ -28,7 +28,6 @@
 
 // System includes
 #include <string>
-#include <mpi.h>
 
 #define CONDUIT_TYPE_INFO( T, CONDUIT_TYPE ) \
   template<> \

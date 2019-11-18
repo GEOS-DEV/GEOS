@@ -5,22 +5,22 @@ set( constitutive_headers
      ConstitutiveManager.hpp
      ConstitutiveBase.hpp
      ExponentialRelation.hpp
-     Fluid/SingleFluidBase.hpp
-     Fluid/MultiFluidBase.hpp
-     Fluid/CompressibleSinglePhaseFluid.hpp
-     Solid/LinearElasticAnisotropic.hpp
-     Solid/LinearElasticIsotropic.hpp
-     Solid/PoroElastic.hpp
-     Solid/PoreVolumeCompressibleSolid.hpp
-     Solid/SolidBase.hpp
-     RelPerm/RelativePermeabilityBase.hpp
-     RelPerm/BrooksCoreyRelativePermeability.hpp
-     RelPerm/BrooksCoreyBakerRelativePermeability.hpp
-     RelPerm/VanGenuchtenBakerRelativePermeability.hpp
-     CapillaryPressure/CapillaryPressureBase.hpp
-     CapillaryPressure/BrooksCoreyCapillaryPressure.hpp
-     CapillaryPressure/VanGenuchtenCapillaryPressure.hpp
-     contactRelations/ContactRelationBase.hpp
+     capillaryPressure/CapillaryPressureBase.hpp
+     capillaryPressure/BrooksCoreyCapillaryPressure.hpp
+     capillaryPressure/VanGenuchtenCapillaryPressure.hpp
+     contact/ContactRelationBase.hpp
+     fluid/SingleFluidBase.hpp
+     fluid/MultiFluidBase.hpp
+     fluid/CompressibleSinglePhaseFluid.hpp
+     relativePermeability/RelativePermeabilityBase.hpp
+     relativePermeability/BrooksCoreyRelativePermeability.hpp
+     relativePermeability/BrooksCoreyBakerRelativePermeability.hpp
+     relativePermeability/VanGenuchtenBakerRelativePermeability.hpp
+     solid/LinearElasticAnisotropic.hpp
+     solid/LinearElasticIsotropic.hpp
+     solid/PoroElastic.hpp
+     solid/PoreVolumeCompressibleSolid.hpp
+     solid/SolidBase.hpp
    )
 #
 # Specify all sources
@@ -28,38 +28,44 @@ set( constitutive_headers
 set( constitutive_sources
      ConstitutiveManager.cpp
      ConstitutiveBase.cpp
-     Fluid/SingleFluidBase.cpp
-     Fluid/MultiFluidBase.cpp
-     Fluid/CompressibleSinglePhaseFluid.cpp
-     Solid/LinearElasticAnisotropic.cpp
-     Solid/LinearElasticIsotropic.cpp
-     Solid/PoroElastic.cpp
-     Solid/PoreVolumeCompressibleSolid.cpp
-     Solid/SolidBase.cpp
-     RelPerm/RelativePermeabilityBase.cpp
-     RelPerm/BrooksCoreyRelativePermeability.cpp
-     RelPerm/BrooksCoreyBakerRelativePermeability.cpp
-     RelPerm/VanGenuchtenBakerRelativePermeability.cpp
-     CapillaryPressure/CapillaryPressureBase.cpp
-     CapillaryPressure/BrooksCoreyCapillaryPressure.cpp
-     CapillaryPressure/VanGenuchtenCapillaryPressure.cpp
-     contactRelations/ContactRelationBase.cpp
+     capillaryPressure/CapillaryPressureBase.cpp
+     capillaryPressure/BrooksCoreyCapillaryPressure.cpp
+     capillaryPressure/VanGenuchtenCapillaryPressure.cpp
+     contact/ContactRelationBase.cpp
+     fluid/SingleFluidBase.cpp
+     fluid/MultiFluidBase.cpp
+     fluid/CompressibleSinglePhaseFluid.cpp
+     relativePermeability/RelativePermeabilityBase.cpp
+     relativePermeability/BrooksCoreyRelativePermeability.cpp
+     relativePermeability/BrooksCoreyBakerRelativePermeability.cpp
+     relativePermeability/VanGenuchtenBakerRelativePermeability.cpp
+     solid/LinearElasticAnisotropic.cpp
+     solid/LinearElasticIsotropic.cpp
+     solid/PoroElastic.cpp
+     solid/PoreVolumeCompressibleSolid.cpp
+     solid/SolidBase.cpp
    )
 
-set( dependencyList dataRepository )
+if( BUILD_OBJ_LIBS)
+  set( dependencyList dataRepository)
+else()
+  set( dependencyList common )
+endif()
+
+
 
 if( ENABLE_PVTPackage )
     set( constitutive_headers
          ${constitutive_headers}
-         Fluid/MultiFluidPVTPackageWrapper.hpp
-         Fluid/CompositionalMultiphaseFluid.hpp
-         Fluid/BlackOilFluid.hpp
+         fluid/MultiFluidPVTPackageWrapper.hpp
+         fluid/CompositionalMultiphaseFluid.hpp
+         fluid/BlackOilFluid.hpp
        )
     set( constitutive_sources
          ${constitutive_sources}
-         Fluid/MultiFluidPVTPackageWrapper.cpp
-         Fluid/CompositionalMultiphaseFluid.cpp
-         Fluid/BlackOilFluid.cpp
+         fluid/MultiFluidPVTPackageWrapper.cpp
+         fluid/CompositionalMultiphaseFluid.cpp
+         fluid/BlackOilFluid.cpp
        )
     set( dependencyList ${dependencyList} PVTPackage )
 endif()
@@ -76,7 +82,7 @@ blt_add_library( NAME                  constitutive
                  SOURCES               ${constitutive_sources}
                  HEADERS               ${constitutive_headers}
                  DEPENDS_ON            ${dependencyList}
-                 #OBJECT                TRUE
+                 OBJECT                ${buildAsObj}
                )
                
 target_include_directories( constitutive PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
