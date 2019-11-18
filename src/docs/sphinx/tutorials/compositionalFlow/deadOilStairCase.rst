@@ -34,7 +34,7 @@ region to which the solver has to be applied and the specific fluid and solid na
 Solver parameters are defined in a separate subsection. A more detailed description
 of all fields specific to a compositional solver can be found :ref:`here <CompositionalMultiphaseFlow>`
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/FiniteVolume/integratedTests/compositionalMultiphaseFlow/deadoil_3ph_staircase_3d.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/compositionalMultiphaseFlow/deadoil_3ph_staircase_3d.xml
    :language: xml
    :start-after: <!-- START_SPHINX_INCLUDE_SOLVER_BLOCK -->
    :end-before: <!-- END_SPHINX_INCLUDE_SOLVER_BLOCK -->
@@ -44,7 +44,7 @@ Geometry and Mesh tag
 The geometry tag can be used to define the location of source as sink terms. They
 are identified by defining two geometrical objects, boxes, with specific extensions.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/FiniteVolume/integratedTests/compositionalMultiphaseFlow/deadoil_3ph_staircase_3d.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/compositionalMultiphaseFlow/deadoil_3ph_staircase_3d.xml
    :language: xml
    :start-after: <!-- START_SPHINX_INCLUDE_GEOM_BLOCK -->
    :end-before: <!-- END_SPHINX_INCLUDE_GEOM_BLOCK -->
@@ -53,7 +53,7 @@ In this test case we construct an internal mesh formed by 16 cell blocks each on
 5 x 5 x 3 cells. A detailed explanation of how the internal mesh is specified
 is provided :ref:`here <Meshes>`.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/FiniteVolume/integratedTests/compositionalMultiphaseFlow/deadoil_3ph_staircase_3d.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/compositionalMultiphaseFlow/deadoil_3ph_staircase_3d.xml
     :language: xml
     :start-after: <!-- START_SPHINX_INCLUDE_MESH_BLOCK -->
     :end-before: <!-- END_SPHINX_INCLUDE_MESH_BLOCK -->
@@ -64,7 +64,7 @@ The cell blocks defined in the previous tag have to be assigned to a specific re
 Here, we consider two regions, one identifying the high permeability channel in
 which the flow occurs and one identifying the flow barriers.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/FiniteVolume/integratedTests/compositionalMultiphaseFlow/deadoil_3ph_staircase_3d.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/compositionalMultiphaseFlow/deadoil_3ph_staircase_3d.xml
    :language: xml
    :start-after: <!-- START_SPHINX_INCLUDE_ELEMREG_BLOCK -->
    :end-before: <!-- END_SPHINX_INCLUDE_ELEMREG_BLOCK -->
@@ -78,16 +78,16 @@ frequency of the output and restart files. Here, we define three solver applicat
 events with different fixed time-step sizes. This is done to ensure that smaller
 time-steps are used at the beginning of the simulation when convergence is more difficult.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/FiniteVolume/integratedTests/compositionalMultiphaseFlow/deadoil_3ph_staircase_3d.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/compositionalMultiphaseFlow/deadoil_3ph_staircase_3d.xml
    :language: xml
    :start-after: <!-- START_SPHINX_INCLUDE_EVENTS_BLOCK -->
    :end-before: <!-- END_SPHINX_INCLUDE_EVENTS_BLOCK -->
 
 Numerical methods tag
 ----------------------------------------
-We choose a standard two-point flux apporximation of the flux. 
+We choose a standard two-point flux apporximation of the flux.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/FiniteVolume/integratedTests/compositionalMultiphaseFlow/deadoil_3ph_staircase_3d.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/compositionalMultiphaseFlow/deadoil_3ph_staircase_3d.xml
    :language: xml
    :start-after: <!-- START_SPHINX_INCLUDE_NUMMET_BLOCK -->
    :end-before: <!-- END_SPHINX_INCLUDE_NUMMET_BLOCK -->
@@ -98,7 +98,7 @@ In the section we specify the constitutive relations to be employed.
 For the `BlackOilFluid` subtag we have to specify the phases peresent, their densities,
 and their molar weights. We also specify the tables defining the thermodynamic behavior
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/FiniteVolume/integratedTests/compositionalMultiphaseFlow/deadoil_3ph_staircase_3d.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/compositionalMultiphaseFlow/deadoil_3ph_staircase_3d.xml
     :language: xml
     :start-after: <!-- START_SPHINX_INCLUDE_CONST_BLOCK -->
     :end-before: <!-- END_SPHINX_INCLUDE_CONST_BLOCK -->
@@ -114,21 +114,21 @@ Permeability and porosity
 The permeability in the channel region is homogeneous and isotropic. A uniform porosity
 is also considered.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/FiniteVolume/integratedTests/compositionalMultiphaseFlow/deadoil_3ph_staircase_3d.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/compositionalMultiphaseFlow/deadoil_3ph_staircase_3d.xml
     :language: xml
     :start-after: <!-- START_SPHINX_INCLUDE_PERM_BLOCK -->
     :end-before: <!-- END_SPHINX_INCLUDE_PERM_BLOCK -->
 
 Initial conditions
 ``````````````````````````````````````````
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/FiniteVolume/integratedTests/compositionalMultiphaseFlow/deadoil_3ph_staircase_3d.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/compositionalMultiphaseFlow/deadoil_3ph_staircase_3d.xml
     :language: xml
     :start-after: <!-- START_SPHINX_INCLUDE_INIT_BLOCK -->
     :end-before: <!-- END_SPHINX_INCLUDE_INIT_BLOCK -->
 
 Boundary conditions
 ``````````````````````````````````````````
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/FiniteVolume/integratedTests/compositionalMultiphaseFlow/deadoil_3ph_staircase_3d.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/compositionalMultiphaseFlow/deadoil_3ph_staircase_3d.xml
       :language: xml
       :start-after: <!-- START_SPHINX_INCLUDE_BC_BLOCK -->
       :end-before: <!-- END_SPHINX_INCLUDE_BC_BLOCK -->
@@ -137,7 +137,7 @@ Output tags
 ----------------------------------------
 Finally, we define the type of output desired.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/FiniteVolume/integratedTests/compositionalMultiphaseFlow/deadoil_3ph_staircase_3d.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/compositionalMultiphaseFlow/deadoil_3ph_staircase_3d.xml
     :language: xml
     :start-after: <!-- START_SPHINX_INCLUDE_OUTPUT_BLOCK -->
     :end-before: <!-- END_SPHINX_INCLUDE_OUTPUT_BLOCK -->
