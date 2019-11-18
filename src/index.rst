@@ -9,9 +9,9 @@ GEOSX is a simulation platform focused on enabling streamlined development of HP
 
    docs/sphinx/tutorials/Index
 
-   docs/sphinx/userGuide/Index
-
    docs/sphinx/buildingGuide/Index
+
+   docs/sphinx/userGuide/Index
 
    docs/sphinx/developerGuide/Index
 
