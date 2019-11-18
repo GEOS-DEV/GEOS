@@ -76,17 +76,17 @@ Internally, this requires adding the derived class information to ``ObjectCatalo
    Below, we illustrate this with the ``CompositionalMultiphaseFlow`` solver.
    The first code listing defines the class name, which in this case is the same as the ``catalogName`` shown in the second listing.
 
-.. literalinclude:: ../../../coreComponents/physicsSolvers/FiniteVolume/CompositionalMultiphaseFlow.hpp
+.. literalinclude:: ../../../coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseFlow.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_00
    :end-before: public:
 
-.. literalinclude:: ../../../coreComponents/physicsSolvers/FiniteVolume/CompositionalMultiphaseFlow.hpp
+.. literalinclude:: ../../../coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseFlow.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_01
    :end-before: virtual
 
-*[Source: src/coreComponents/physicsSolvers/FiniteVolume/CompositionalMultiphaseFlow.hpp]*
+*[Source: src/coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseFlow.hpp]*
 
 
 2. To let GEOSX know where to search in the ``ObjectCatalog``, a macro needs to be added at the end of the .cpp file implementing the class.
@@ -94,12 +94,12 @@ Internally, this requires adding the derived class information to ``ObjectCatalo
    As a result of this construct, the ``ObjectCatalog`` is not a flat list of ``string`` s mapping the C++ classes.
    Instead, the ``ObjectCatalog`` forms a tree that reproduces locally the structure of the class diagram, from the base class to the derived classes.
 
-.. literalinclude:: ../../../coreComponents/physicsSolvers/FiniteVolume/CompositionalMultiphaseFlow.cpp
+.. literalinclude:: ../../../coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseFlow.cpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_01
    :end-before: }
 
-*[Source: src/coreComponents/physicsSolvers/FiniteVolume/CompositionalMultiphaseFlow.cpp]*
+*[Source: src/coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseFlow.cpp]*
 
 
 .. highlights::
@@ -139,17 +139,17 @@ We have deliberately distinguished the class name from the catalog/XML name for 
 It is nevertheless a best practice to use the same name for the class and for the ``catalogName``.
 This is the case below for the existing ``CompositionalMultiphaseFlow`` class.
 
-.. literalinclude:: ../../../coreComponents/physicsSolvers/FiniteVolume/CompositionalMultiphaseFlow.hpp
+.. literalinclude:: ../../../coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseFlow.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_00
    :end-before: public:
 
-.. literalinclude:: ../../../coreComponents/physicsSolvers/FiniteVolume/CompositionalMultiphaseFlow.hpp
+.. literalinclude:: ../../../coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseFlow.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_01
    :end-before: virtual
 
-*[Source: src/coreComponents/physicsSolvers/FiniteVolume/CompositionalMultiphaseFlow.hpp]*
+*[Source: src/coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseFlow.hpp]*
 
 
 Parsing XML and searching the ObjectCatalog in scope
@@ -230,12 +230,12 @@ Here, the only data (=wrapper) that is defined at the level of our ``CppNameOfMy
 We register a property of temperature, corresponding to the member class ``m_temperature`` of ``CppNameOfMySolver``.
 The registration also checks if a property is required or optional (here, it is required), and provides a brief description that will be used in the auto-generated code documentation.
 
-.. literalinclude:: ../../../coreComponents/physicsSolvers/FiniteVolume/CompositionalMultiphaseFlow.cpp
+.. literalinclude:: ../../../coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseFlow.cpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_00
    :end-before: Mass
 
-*[Source: src/coreComponents/physicsSolvers/FiniteVolume/CompositionalMultiphaseFlow.cpp]*
+*[Source: src/coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseFlow.cpp]*
 
 This operation is done recursively if XML tags are nested.
 
@@ -267,21 +267,21 @@ Implement a ``CatalogName`` function (.hpp):
 
 As explained above we add the class to the ``ObjectCatalog`` in two steps. First we implement the ``CatalogName`` function:
 
-.. literalinclude:: ../../../coreComponents/constitutive/RelPerm/BrooksCoreyRelativePermeability.hpp
+.. literalinclude:: ../../../coreComponents/constitutive/relativePermeability/BrooksCoreyRelativePermeability.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_00
    :end-before: virtual
 
-*[source: src/coreComponents/constitutive/RelPerm/BrooksCoreyRelativePermeability.hpp]*
+*[source: src/coreComponents/constitutive/relativePermeability/BrooksCoreyRelativePermeability.hpp]*
 
 Then in the .cpp file we add the macro to register the catalog entry:
 
-.. literalinclude:: ../../../coreComponents/constitutive/RelPerm/BrooksCoreyRelativePermeability.cpp
+.. literalinclude:: ../../../coreComponents/constitutive/relativePermeability/BrooksCoreyRelativePermeability.cpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_01
    :end-before: }
 
-*[source: src/coreComponents/constitutive/RelPerm/BrooksCoreyRelativePermeability.cpp]*
+*[source: src/coreComponents/constitutive/relativePermeability/BrooksCoreyRelativePermeability.cpp]*
 
 Now every time a "BrooksCoreyRelativePermeability" ``string`` is encountered inside a ``Relative Permeability`` catalog, we will instantiate a class ``BrooksCoreyRelativePermeability``.
 
@@ -292,12 +292,12 @@ When attaching properties (i.e. data ``Wrapper`` s) to a class, a similar regist
 Every property is accessed through its ``ViewKey`` namespace.
 In this namespace, we define ``string`` s that correspond to the tags of XML attributes of the "BrooksCoreyRelativePermeability" block.
 
-.. literalinclude:: ../../../coreComponents/constitutive/RelPerm/BrooksCoreyRelativePermeability.hpp
+.. literalinclude:: ../../../coreComponents/constitutive/relativePermeability/BrooksCoreyRelativePermeability.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_01
    :end-before: protected
 
-*[source: src/coreComponents/constitutive/RelPerm/BrooksCoreyRelativePermeability.hpp]*
+*[source: src/coreComponents/constitutive/relativePermeability/BrooksCoreyRelativePermeability.hpp]*
 
 Declare data members (.hpp):
 ----------------------------
@@ -305,12 +305,12 @@ Declare data members (.hpp):
 The data members are defined in the class.
 They will ultimately contain the data read from the XML file (other data members not read from the XML file can also exist).
 
-.. literalinclude:: ../../../coreComponents/constitutive/RelPerm/BrooksCoreyRelativePermeability.hpp
+.. literalinclude:: ../../../coreComponents/constitutive/relativePermeability/BrooksCoreyRelativePermeability.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_02
    :end-before: m_satScale;
 
-*[source: src/coreComponents/constitutive/RelPerm/BrooksCoreyRelativePermeability.hpp]*
+*[source: src/coreComponents/constitutive/relativePermeability/BrooksCoreyRelativePermeability.hpp]*
 
 Implement the data registration process (``registerWrapper``):
 --------------------------------------------------------------
@@ -322,12 +322,12 @@ We see that this input is not required.
 If it is absent from the XML file, the default value is used instead.
 The short description that completes the registration will be added to the auto-generated documentation.
 
-.. literalinclude:: ../../../coreComponents/constitutive/RelPerm/BrooksCoreyRelativePermeability.cpp
+.. literalinclude:: ../../../coreComponents/constitutive/relativePermeability/BrooksCoreyRelativePermeability.cpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_00
    :end-before: }
 
-*[source: src/coreComponents/constitutive/RelPerm/BrooksCoreyRelativePermeability.cpp]*
+*[source: src/coreComponents/constitutive/relativePermeability/BrooksCoreyRelativePermeability.cpp]*
 
 The XML block
 -------------
