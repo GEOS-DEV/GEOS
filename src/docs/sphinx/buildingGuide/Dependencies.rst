@@ -130,8 +130,8 @@ Problems may arise since we use the rolling release `Homebrew <https://brew.sh/>
 To circumvent this potential issue, the brew version is fixed to a specific commit (see BREW_HASH variable in `third party's .travis.yml <https://github.com/GEOSX/thirdPartyLibs/blob/master/.travis.yml>`_) and stored in a `brew_hash.txt` file at the root folder of the TPLs.
 It is therefore possible for GEOSX to build against the same revision of brew packages.
 
-It must be mentionned that one and only one version of the compiled TPL tarball is stored per pull request (older ones are removed automatically).
+It must be mentioned that one and only one version of the compiled TPL tarball is stored per pull request (older ones are removed automatically).
 Therefore, a client building against a work in progress PR may experience a 404 error sooner or later.
 
 It must be noted that there are now two different ways to designate the same version of the TPL.
-An effort should be done to make this homogemneous.
+An effort should be done to make this homogeneous.
