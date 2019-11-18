@@ -85,11 +85,7 @@ public:
   /**
    * @param[in] rhs reference to R1TensorT object to use in initialization
    */
-  R1TensorT( const R1TensorT< T_dim >& rhs ): TensorBaseT< T_dim > ()
-  { TensorBaseT< T_dim >::operator=( rhs ); }
-
-  R1TensorT( const TensorBaseT< T_dim >& rhs ): TensorBaseT< T_dim > ()
-  { TensorBaseT< T_dim >::operator=( rhs ); }
+  R1TensorT( const R1TensorT< T_dim >& rhs ) = default;
 
   /**
    * Explicit constructors - will throw compile-time errors if not called with
@@ -97,9 +93,6 @@ public:
    */
   R1TensorT(realT x,realT y);  //2D only
   R1TensorT(realT x,realT y, realT z); //3D only
-
-  /// non-virtual destructor
-  ~R1TensorT( void ) {}
 
   //***** ASSIGNMENT OPERATORS *************************************************
   /// assignment of all data to an integer
@@ -110,7 +103,7 @@ public:
   R1TensorT< T_dim >& operator=( const realT& rhs );
 
   /// assignment to another R1TensorT
-  R1TensorT< T_dim >& operator=( const R1TensorT< T_dim >& rhs );
+  R1TensorT< T_dim >& operator=( const R1TensorT< T_dim >& rhs ) = default;
 
   //***** ACCESS OPERATORS ****************************************************
   /// const access to data
@@ -267,17 +260,6 @@ inline R1TensorT< T_dim >& R1TensorT< T_dim >::operator=( const int& rhs )
 template<int T_dim>
 GEOSX_HOST_DEVICE
 inline R1TensorT< T_dim >& R1TensorT< T_dim >::operator=( const realT& rhs )
-{
-  TensorBaseT< T_dim >::operator=( rhs );
-  return *this;
-}
-
-/**
- * @param[in] rhs tensor to copy
- * @return reference to *this
- */
-template<int T_dim>
-inline R1TensorT< T_dim >& R1TensorT< T_dim >::operator=( const R1TensorT< T_dim >& rhs )
 {
   TensorBaseT< T_dim >::operator=( rhs );
   return *this;

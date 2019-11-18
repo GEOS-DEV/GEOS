@@ -5,8 +5,8 @@ env:
   - DO_BUILD=yes
   - DO_TEST=yes
   - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14 -DENABLE_WARNINGS_AS_ERRORS=ON"
-  - DOCKER_DATE=2019-09-22
-  - TPL_OSX_TRAVIS_BUILD_NUMBER=187
+  - DOCKER_DATE=2019-11-13
+  - TPL_OSX_TRAVIS_BUILD_NUMBER=235
 matrix:
   include:
   - os: osx
@@ -82,14 +82,17 @@ before_script:
       docker run --rm --user='root' -v ${TRAVIS_BUILD_DIR}:/home/geosx/geosx_repo geosx/compiler:$IMG-$DOCKER_DATE  chown -R geosx /home/geosx;
     fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-      brew install openmpi;
       cd ..;
       mkdir thirdPartyLibs;
       cd thirdPartyLibs;
       curl -s "https://www.googleapis.com/storage/v1/b/geosx/o/TPL%2Fosx-${TPL_OSX_TRAVIS_BUILD_NUMBER}.tar?alt=media" | tar xf - ;
+      BREW_HASH=$(cat install-darwin-clang-release/brew_hash.txt);
+      rm install-darwin-clang-release/brew_hash.txt;
+      BREW_URL=https://raw.github.com/Homebrew/homebrew-core/${BREW_HASH};
+      brew install ${BREW_URL}/Formula/open-mpi.rb;
       sudo mkdir -p /Users/settgast1/Codes/geosx/;
       sudo ln -s /Users/travis/build/GEOSX/thirdPartyLibs /Users/settgast1/Codes/geosx/thirdPartyLibs;
-      cd /Users/travis/build/GEOSX/GEOSX ;
+      cd /Users/travis/build/GEOSX/GEOSX ; 
     fi
 script: 
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then

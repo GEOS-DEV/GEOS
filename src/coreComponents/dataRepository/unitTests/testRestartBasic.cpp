@@ -25,7 +25,6 @@
 
 // System includes
 #include <random>
-#include <mpi.h>
 
 
 namespace geosx
