@@ -187,36 +187,37 @@ For internal mesh generation,
 
   .. code-block:: sh
 
-                  GEOS must be configured to use Python to use parameters, symbolic math, etc. in input files
-                  Adding Solver of type SinglePhaseFlow, named SinglePhaseFlow
-                  Adding Mesh: InternalMesh, mesh
-                  Adding Geometric Object: Box, all
-                  Adding Geometric Object: Box, source
-                  Adding Geometric Object: Box, sink
-                  Adding Event: PeriodicEvent, solverApplications
-                  Adding Event: PeriodicEvent, outputs
-                  Adding Output: Silo, siloOutput
-                  Adding Object ElementRegion named Domain
+  GEOS must be configured to use Python to use parameters, symbolic math, etc. in input files
+  Adding Solver of type SinglePhaseFlow, named SinglePhaseFlow
+  Adding Mesh: InternalMesh, mesh1
+  Adding Geometric Object: Box, source
+  Adding Geometric Object: Box, sink
+  Adding Event: PeriodicEvent, solverApplications
+  Adding Event: PeriodicEvent, outputs
+  Adding Output: Silo, siloOutput
+  Adding Object CellElementRegion named Region2 from ObjectManager::Catalog.
 
 The time iteration are then logged until the end of the simulation
 
   .. code-block:: sh
 
-                  Running simulation
-                  Time: 0s, dt:0s, Cycle: 0
-                  Time: 0s, dt:10s, Cycle: 1
-                  Attempt: 0, Newton: 0, R = 1407.81
-                  Attempt: 0, Newton: 1, R = 0.400114
-                  Attempt: 0, Newton: 2, R = 0.00085387
-                  Attempt: 0, Newton: 3, R = 6.23344e-07
-                  ...
-                  Time: 990s, dt:10s, Cycle: 100
-                  Attempt: 0, Newton: 0, R = 0.33595
-                  Attempt: 0, Newton: 1, R = 2.07127e-05
-                  Attempt: 0, Newton: 2, R = 2.82288e-09
-                  Cleaning up events
+  Running simulation
+  Time: 0s, dt:20s, Cycle: 0
+  Attempt: 0, Newton: 0, R = 5.6703
+  Attempt: 0, Newton: 1, R = 0.000207606
+  Attempt: 0, Newton: 2, R = 9.87966e-11
+  Time: 20s, dt:20s, Cycle: 1
+  Attempt: 0, Newton: 0, R = 0.0680544
+  Attempt: 0, Newton: 1, R = 5.30163e-05
+  Attempt: 0, Newton: 2, R = 5.0784e-12
+  ...
+  Time: 4960s, dt:20s, Cycle: 248
+  Attempt: 0, Newton: 0, R = 9.33817e-07
+  Time: 4980s, dt:20s, Cycle: 249
+  Attempt: 0, Newton: 0, R = 9.33817e-07
+  Cleaning up events
 
-                  init time = 0.63475s, run time = 2.9198s
+  init time = 0.043643s, run time = 4.0304s
 
 
 
@@ -398,7 +399,7 @@ In our case, the first lines are:
 
   GEOS must be configured to use Python to use parameters, symbolic math, etc. in input files
   Adding Solver of type SinglePhaseFlow, named SinglePhaseFlow
-  Adding Mesh: PAMELAMeshGenerator, CubeTetra
+  Adding Mesh: PAMELAMeshGenerator, CubeHex
   Adding Geometric Object: Box, all
   Adding Geometric Object: Box, left
   Adding Event: PeriodicEvent, solverApplications
@@ -406,7 +407,7 @@ In our case, the first lines are:
   Adding Event: PeriodicEvent, restarts
   Adding Output: Silo, siloWellPump
   Adding Output: Restart, restartOutput
-  Adding Object ElementRegion named Domain
+  Adding Object CellElementRegion named Domain from ObjectManager::Catalog.
 
 This indicates initialization of GEOSX.
 The mesh preprocessing tool PAMELA is launched next,
@@ -415,33 +416,34 @@ with console messages as follows.
 
   .. code-block:: sh
 
-    0 >>> **********************************************************************
-    0 >>>                          PAMELA Library Import tool
-    0 >>> **********************************************************************
-    0 >>> GMSH FORMAT IDENTIFIED
-    0 >>> *** Importing Gmsh mesh format...
-    0 >>> Reading nodes...
-    0 >>> Done
-    0 >>> Reading elements...
-    0 >>> Number of nodes = 366
-    0 >>> Number of triangles = 624
-    0 >>> Number of quadrilaterals = 0
-    0 >>> Number of tetrahedra = 1153
-    0 >>> Number of hexahedra = 0
-    0 >>> Number of pyramids = 0
-    0 >>> Number of prisms = 0
-    0 >>> *** Done
-    0 >>> *** Creating Polygons from Polyhedra...
-    0 >>> 1994 polygons have been created
-    0 >>> *** Done
-    0 >>> *** Perform partitioning...
-    0 >>> TRIVIAL partioning...
-    0 >>> Ghost elements...
-    0 >>> Clean mesh...
-    0 >>> *** Done...
-    0 >>> Clean Adjacency...
-    0 >>> *** Done...
-    Running simulation
+  0 >>> **********************************************************************
+  0 >>>                          PAMELA Library Import tool
+  0 >>> **********************************************************************
+  0 >>> GMSH FORMAT IDENTIFIED
+  0 >>> *** Importing Gmsh mesh format...
+  0 >>> Reading nodes...
+  0 >>> Done0
+  0 >>> Reading elements...
+  0 >>> Number of nodes = 1331
+  0 >>> Number of triangles = 0
+  0 >>> Number of quadrilaterals = 0
+  0 >>> Number of tetrahedra = 0
+  0 >>> Number of hexahedra = 1000
+  0 >>> Number of pyramids = 0
+  0 >>> Number of prisms = 0
+  0 >>> *** Done
+  0 >>> *** Creating Polygons from Polyhedra...
+  0 >>> 3300 polygons have been created
+  0 >>> *** Done
+  0 >>> *** Perform partitioning...
+  0 >>> TRIVIAL partioning...
+  0 >>> Ghost elements...
+  0 >>> Clean mesh...
+  0 >>> *** Done...
+  0 >>> Clean Adjacency...
+  0 >>> *** Done...
+  Writing into the GEOSX mesh data structure
+  Running simulation
 
 
 The console should display initialization messages,
@@ -451,9 +453,11 @@ At the end of your simulation, you should see something like:
 
 .. code-block:: sh
 
-  Time: 99s, dt:1s, Cycle: 100
+  Time: 99s, dt:1s, Cycle: 99
   Cleaning up events
-  init time = 0.21122s, run time = 2.9672s
+  Writing out restart file at 3D_10x10x10_compressible_pamela_hex_gravity_restart_000000100/rank_0000000.hdf5
+  
+  init time = 0.081181s, run time = 5.4595s
 
 
 Visualization of results in VisIt
@@ -617,7 +621,6 @@ In our case, the first lines are:
 
 .. code-block:: sh
 
-  (base) USEP-MAC062:pamela_test j0529096$ ../../../../../../build-environment-release/bin/geosx -i 3D_10x10x10_compressible_pamela_tetra_gravity.xml
   GEOS must be configured to use Python to use parameters, symbolic math, etc. in input files
   Adding Solver of type SinglePhaseFlow, named SinglePhaseFlow
   Adding Mesh: PAMELAMeshGenerator, CubeTetra
@@ -628,14 +631,19 @@ In our case, the first lines are:
   Adding Event: PeriodicEvent, restarts
   Adding Output: Silo, siloWellPump
   Adding Output: Restart, restartOutput
-  Adding Object ElementRegion named Domain
+  Adding Object CellElementRegion named Domain from ObjectManager::Catalog.
+
+Followed by:
+
+.. code-block:: sh
+
   0 >>> **********************************************************************
   0 >>>                          PAMELA Library Import tool
   0 >>> **********************************************************************
   0 >>> GMSH FORMAT IDENTIFIED
   0 >>> *** Importing Gmsh mesh format...
   0 >>> Reading nodes...
-  0 >>> Done
+  0 >>> Done0
   0 >>> Reading elements...
   0 >>> Number of nodes = 366
   0 >>> Number of triangles = 624
@@ -655,113 +663,33 @@ In our case, the first lines are:
   0 >>> *** Done...
   0 >>> Clean Adjacency...
   0 >>> *** Done...
+  Writing into the GEOSX mesh data structure
+
+And finally, the simulation is run:
+
+.. code-block:: sh
+
   Running simulation
-  Time: 0s, dt:0s, Cycle: 0
-  Time: 0s, dt:1s, Cycle: 1
-  Time: 1s, dt:1s, Cycle: 2
-  Time: 2s, dt:1s, Cycle: 3
-  Time: 3s, dt:1s, Cycle: 4
-  Time: 4s, dt:1s, Cycle: 5
-  Time: 5s, dt:1s, Cycle: 6
-  Time: 6s, dt:1s, Cycle: 7
-  Time: 7s, dt:1s, Cycle: 8
-  Time: 8s, dt:1s, Cycle: 9
-  Time: 9s, dt:1s, Cycle: 10
-  Time: 10s, dt:1s, Cycle: 11
-  Time: 11s, dt:1s, Cycle: 12
-  Time: 12s, dt:1s, Cycle: 13
-  Time: 13s, dt:1s, Cycle: 14
-  Time: 14s, dt:1s, Cycle: 15
-  Time: 15s, dt:1s, Cycle: 16
-  Time: 16s, dt:1s, Cycle: 17
-  Time: 17s, dt:1s, Cycle: 18
-  Time: 18s, dt:1s, Cycle: 19
-  Time: 19s, dt:1s, Cycle: 20
-  Time: 20s, dt:1s, Cycle: 21
-  Time: 21s, dt:1s, Cycle: 22
-  Time: 22s, dt:1s, Cycle: 23
-  Time: 23s, dt:1s, Cycle: 24
-  Time: 24s, dt:1s, Cycle: 25
-  Time: 25s, dt:1s, Cycle: 26
-  Time: 26s, dt:1s, Cycle: 27
-  Time: 27s, dt:1s, Cycle: 28
-  Time: 28s, dt:1s, Cycle: 29
-  Time: 29s, dt:1s, Cycle: 30
-  Time: 30s, dt:1s, Cycle: 31
-  Time: 31s, dt:1s, Cycle: 32
-  Time: 32s, dt:1s, Cycle: 33
-  Time: 33s, dt:1s, Cycle: 34
-  Time: 34s, dt:1s, Cycle: 35
-  Time: 35s, dt:1s, Cycle: 36
-  Time: 36s, dt:1s, Cycle: 37
-  Time: 37s, dt:1s, Cycle: 38
-  Time: 38s, dt:1s, Cycle: 39
-  Time: 39s, dt:1s, Cycle: 40
-  Time: 40s, dt:1s, Cycle: 41
-  Time: 41s, dt:1s, Cycle: 42
-  Time: 42s, dt:1s, Cycle: 43
-  Time: 43s, dt:1s, Cycle: 44
-  Time: 44s, dt:1s, Cycle: 45
-  Time: 45s, dt:1s, Cycle: 46
-  Time: 46s, dt:1s, Cycle: 47
-  Time: 47s, dt:1s, Cycle: 48
-  Time: 48s, dt:1s, Cycle: 49
-  Time: 49s, dt:1s, Cycle: 50
-  Time: 50s, dt:1s, Cycle: 51
-  Time: 51s, dt:1s, Cycle: 52
-  Time: 52s, dt:1s, Cycle: 53
-  Time: 53s, dt:1s, Cycle: 54
-  Time: 54s, dt:1s, Cycle: 55
-  Time: 55s, dt:1s, Cycle: 56
-  Time: 56s, dt:1s, Cycle: 57
-  Time: 57s, dt:1s, Cycle: 58
-  Time: 58s, dt:1s, Cycle: 59
-  Time: 59s, dt:1s, Cycle: 60
-  Time: 60s, dt:1s, Cycle: 61
-  Time: 61s, dt:1s, Cycle: 62
-  Time: 62s, dt:1s, Cycle: 63
-  Time: 63s, dt:1s, Cycle: 64
-  Time: 64s, dt:1s, Cycle: 65
-  Time: 65s, dt:1s, Cycle: 66
-  Time: 66s, dt:1s, Cycle: 67
-  Time: 67s, dt:1s, Cycle: 68
-  Time: 68s, dt:1s, Cycle: 69
-  Time: 69s, dt:1s, Cycle: 70
-  Time: 70s, dt:1s, Cycle: 71
-  Time: 71s, dt:1s, Cycle: 72
-  Time: 72s, dt:1s, Cycle: 73
-  Time: 73s, dt:1s, Cycle: 74
-  Time: 74s, dt:1s, Cycle: 75
-  Time: 75s, dt:1s, Cycle: 76
-  Time: 76s, dt:1s, Cycle: 77
-  Time: 77s, dt:1s, Cycle: 78
-  Time: 78s, dt:1s, Cycle: 79
-  Time: 79s, dt:1s, Cycle: 80
-  Time: 80s, dt:1s, Cycle: 81
-  Time: 81s, dt:1s, Cycle: 82
-  Time: 82s, dt:1s, Cycle: 83
-  Time: 83s, dt:1s, Cycle: 84
-  Time: 84s, dt:1s, Cycle: 85
-  Time: 85s, dt:1s, Cycle: 86
-  Time: 86s, dt:1s, Cycle: 87
-  Time: 87s, dt:1s, Cycle: 88
-  Time: 88s, dt:1s, Cycle: 89
-  Time: 89s, dt:1s, Cycle: 90
-  Time: 90s, dt:1s, Cycle: 91
-  Time: 91s, dt:1s, Cycle: 92
-  Time: 92s, dt:1s, Cycle: 93
-  Time: 93s, dt:1s, Cycle: 94
-  Time: 94s, dt:1s, Cycle: 95
-  Time: 95s, dt:1s, Cycle: 96
-  Time: 96s, dt:1s, Cycle: 97
-  Time: 97s, dt:1s, Cycle: 98
-  Time: 98s, dt:1s, Cycle: 99
-  Time: 99s, dt:1s, Cycle: 100
+  Time: 0s, dt:1s, Cycle: 0
+  Time: 1s, dt:1s, Cycle: 1
+  Time: 2s, dt:1s, Cycle: 2
+  Time: 3s, dt:1s, Cycle: 3
+  Time: 4s, dt:1s, Cycle: 4
+  Time: 5s, dt:1s, Cycle: 5
+  Time: 6s, dt:1s, Cycle: 6
+  Time: 7s, dt:1s, Cycle: 7
+  Time: 8s, dt:1s, Cycle: 8
+  Time: 9s, dt:1s, Cycle: 9
+  Time: 10s, dt:1s, Cycle: 10
+  ...
+  Time: 96s, dt:1s, Cycle: 96
+  Time: 97s, dt:1s, Cycle: 97
+  Time: 98s, dt:1s, Cycle: 98
+  Time: 99s, dt:1s, Cycle: 99
   Cleaning up events
-
-  init time = 0.3512s, run time = 3.5676s
-
-
+  Writing out restart file at 3D_10x10x10_compressible_pamela_tetra_gravity_restart_000000100/rank_0000000.hdf5
+  
+  init time = 0.074377s, run time = 5.4331s
 
 
 
