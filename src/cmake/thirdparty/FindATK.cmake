@@ -65,6 +65,11 @@ if (EXISTS ${ATK_DIR})
     include(${ATK_CMAKE}/sparsehash-targets.cmake)
     include(${ATK_CMAKE}/axom-targets.cmake)
 
+    blt_register_library (NAME axom
+                          INCLUDES ${ATK_INCLUDE_DIRS}
+                          LIBRARIES axom
+                          TREAT_INCLUDES_AS_SYSTEM ON)
+                          
     set(thirdPartyLibs ${thirdPartyLibs} axom )
 
 else()

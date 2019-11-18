@@ -50,7 +50,7 @@ public:
   explicit R2TensorT( const realT data ): TensorBaseT< T_dim*T_dim >(data) {}
 
   /// copy constructor
-  R2TensorT(const R2TensorT<T_dim>& rhs);
+  R2TensorT(const R2TensorT<T_dim>& rhs) = default;
 
   /// constructor initialized by raw data
   explicit R2TensorT( const realT data[T_dim*T_dim] ): TensorBaseT< T_dim*T_dim >(data){}
@@ -65,9 +65,6 @@ public:
                                                                                                         // error
                                                                                                         // otherwise
 
-  /// non-virtual destructor
-  ~R2TensorT(void);
-
   //***** ASSIGNMENT OPERATORS ************************************************
   /// assignment of all data to an integer
   R2TensorT<T_dim>& operator=( const int& rhs );
@@ -77,7 +74,7 @@ public:
   R2TensorT<T_dim>& operator=( const realT& rhs );
 
   /// assignment to another R2TensorT
-  R2TensorT<T_dim>& operator=( const R2TensorT<T_dim>& rhs );
+  R2TensorT<T_dim>& operator=( const R2TensorT<T_dim>& rhs ) = default;
 
   /// assignment to another R2SymTensorT
   R2TensorT<T_dim>& operator=( const R2SymTensorT<T_dim>& rhs );
@@ -241,17 +238,6 @@ R2TensorT<T_dim>::R2TensorT(void):
   TensorBaseT< T_dim*T_dim >()
 {}
 
-/**
- * @param[in] rhs reference to R2TensorT object to use in initialization
- * @return none
- */
-template<int T_dim>
-R2TensorT< T_dim >::R2TensorT( const R2TensorT< T_dim >& rhs ):
-  TensorBaseT< T_dim*T_dim > ()
-{
-  TensorBaseT< T_dim*T_dim >::operator=( rhs );
-}
-
 /// Explicit 2D constructor
 ///
 /// Template specialisation - if templated on another dimension constructor will
@@ -288,13 +274,6 @@ inline R2TensorT<3>::R2TensorT(realT Txx,realT Txy,realT Txz,
   this->t_data[7] = Tzy;
   this->t_data[8] = Tzz;
 }
-
-/**
- * @return none
- */
-template< int T_dim >
-R2TensorT<T_dim>::~R2TensorT(void)
-{}
 
 //***** ACCESS OPERATORS ******************************************************
 /**
@@ -340,18 +319,6 @@ inline R2TensorT<T_dim>& R2TensorT<T_dim>::operator=( const int& rhs )
 template< int T_dim >
 GEOSX_HOST_DEVICE
 inline R2TensorT<T_dim>& R2TensorT<T_dim>::operator=( const realT& rhs )
-{
-  TensorBaseT< T_dim*T_dim >::operator=(rhs);
-  return *this;
-}
-
-
-/**
- * @param[in] rhs tensor to copy
- * @return reference to *this
- */
-template< int T_dim >
-inline R2TensorT<T_dim>& R2TensorT<T_dim>::operator=( const R2TensorT<T_dim>& rhs )
 {
   TensorBaseT< T_dim*T_dim >::operator=(rhs);
   return *this;

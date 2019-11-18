@@ -508,6 +508,7 @@ private:
     constexpr static auto tipFacesString = "tipFaces";
     constexpr static auto trailingFacesString = "trailingFaces";
     constexpr static auto fractureRegionNameString = "fractureRegion";
+    constexpr static auto mpiCommOrderString = "mpiCommOrder";
 
     //TODO: rock toughness should be a material parameter, and we need to make rock toughness to KIC a constitutive relation.
     constexpr static auto rockToughnessString = "rockToughness";
@@ -533,6 +534,9 @@ private:
   int m_nodeBasedSIF;
 
   realT m_rockToughness;
+
+  // Flag for consistent communication ordering
+  int m_mpiCommOrder;
 
   /// set of separable faces
   localIndex_set m_separableFaceSet;
