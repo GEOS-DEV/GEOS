@@ -20,7 +20,9 @@
                               useDirectSolver="1"
                               maxTimeStepCuts="10"
                               maxLineSearchCuts="2"
-                              maxSubSteps="100"/>
+                              maxSubSteps="100"
+                              dtCutIterLimit = "0.7"
+                              dtIncIterLimit = "0.3"/>
     </CompositionalMultiphaseFlow>
   </Solvers>
   
