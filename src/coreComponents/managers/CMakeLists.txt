@@ -65,7 +65,12 @@ if( ENABLE_MPI )
     list( APPEND managers_sources Outputs/ChomboIO.cpp )
 endif()
 
-set( dependencyList dataRepository fileIO optionparser RAJA linearAlgebra )
+if( BUILD_OBJ_LIBS )
+  set( dependencyList dataRepository fileIO optionparser RAJA linearAlgebra )
+else()
+  set( dependencyList common fileIO linearAlgebra optionparser RAJA )
+endif()
+
 
 if( ENABLE_MATHPRESSO )
    set( dependencyList ${dependencyList} mathpresso )
@@ -83,7 +88,7 @@ blt_add_library( NAME                  managers
                  SOURCES               ${managers_sources}
                  HEADERS               ${managers_headers}
                  DEPENDS_ON            ${dependencyList}
-                 #OBJECT                TRUE
+                 OBJECT                ${buildAsObj}
                )
 
 target_include_directories( managers PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
