@@ -253,7 +253,10 @@ bool SolverBase::LineSearch( real64 const & time_n,
                              real64 & lastResidual )
 {
 
-  GEOS_LOG_RANK_0("    Dropping Into Line Search: Last Residual = "<<lastResidual );
+  if(m_verboseLevel >= 1)
+  {
+    GEOS_LOG_RANK_0("    Beginning line search with last residual = " << std::scientific << lastResidual );
+  }
   SystemSolverParameters * const solverParams = getSystemSolverParameters();
 
   integer const maxNumberLineSearchCuts = solverParams->maxLineSearchCuts();
@@ -300,7 +303,7 @@ bool SolverBase::LineSearch( real64 const & time_n,
 
     if( m_verboseLevel >= 1 )
     {
-      GEOS_LOG_RANK_0( "    Line search "<< lineSearchIteration<<" (scale="<<cumulativeScale<<") R = "<< residualNorm );
+      GEOS_LOG_RANK_0( "    Line search "<< lineSearchIteration << std::scientific << " (scale="<<cumulativeScale<<") R = "<< residualNorm );
     }
 
     // if the residual norm is less than the last residual, we can proceed to the
@@ -397,7 +400,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
         {         
           if( m_verboseLevel >= 1 )
           {
-            GEOS_LOG_RANK_0 ( "The Line search failed!" );
+            GEOS_LOG_RANK_0 ( "    The Line search failed!" );
           }
           break;
         }

@@ -22,6 +22,9 @@
 
 #include "physicsSolvers/SolverBase.hpp"
 
+#include "Teuchos_RCP.hpp"
+#include "Thyra_LinearOpBase.hpp"
+#include "Thyra_PreconditionerFactoryBase.hpp"
 
 namespace geosx
 {
@@ -174,6 +177,8 @@ private:
   FlowSolverBase * m_flowSolver;
 
   string m_contactRelationName;
+
+  std::unique_ptr<ParallelMatrix> m_blockDiagUU;
 
   ParallelMatrix m_matrix01;
   ParallelMatrix m_matrix10;
