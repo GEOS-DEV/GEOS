@@ -676,6 +676,13 @@ void VTKFile::Write( double const timeStep,
   ElementRegionManager const * elemManager = domain.getMeshBody(0)->getMeshLevel(0)->getElemManager();
   NodeManager const * nodeManager = domain.getMeshBody(0)->getMeshLevel(0)->getNodeManager();
   string timeStepFolderName = m_baseName + "/" + std::to_string( timeStep );
+  if( mpiRank == 0 )    
+  {                     
+    // Create a directory for this time step
+    mode_t mode = 0733;
+    mkdir( timeStepFolderName.c_str(), mode );
+  }
+  MpiWrapper::Barrier();
   string format;
   if( m_binary )
   {
@@ -756,9 +763,6 @@ void VTKFile::Write( double const timeStep,
     dataSetNode.append_attribute("file") = pvtuFileName.c_str();
 
     /// Create the pvtu file for this time step
-    // Create a directory for this time step
-    mode_t mode = 0733;
-    mkdir( timeStepFolderName.c_str(), mode );
     pugi::xml_document pvtuFile;
 
     // Declaration of XML version
@@ -817,7 +821,6 @@ void VTKFile::Write( double const timeStep,
     m_rootFile.save_file(pvdFileName.c_str());
     pvtuFile.save_file(pvtuFileName.c_str());
   }
-  MpiWrapper::Barrier();
   
   string vtuFileName = timeStepFolderName + "/" + std::to_string(mpiRank) + ".vtu";
   CustomVTUXMLWriter vtuWriter( vtuFileName );
