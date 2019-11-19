@@ -77,7 +77,7 @@ SolverBase::SolverBase( std::string const & name,
 
   registerWrapper( viewKeyStruct::initialDtString, &m_nextDt, false )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Initial time-step value required by the solver." );
+    setDescription( "Initial time-step value required by the solver to the event manager." );
 }
 
 SolverBase::~SolverBase()
@@ -230,8 +230,8 @@ void SolverBase::Execute( real64 const time_n,
 }
 
 void SolverBase::SetNextDt( SystemSolverParameters * const solverParams,
-		                    real64 const & currentDt,
-		                    real64 & nextDt )
+                            real64 const & currentDt,
+                            real64 & nextDt )
 {
 	integer & newtonIter = solverParams->numNewtonIterations();
 	int iterCutLimit = std::ceil(solverParams->dtCutIterLimit());

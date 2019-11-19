@@ -160,6 +160,10 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
     setApplyDefaultValue(0)->
     setDescription("Final Krylov solver residual.");
 
+  registerWrapper(viewKeysStruct::numNewtonIterationsString, &m_numNewtonIterations, false )->
+    setApplyDefaultValue(0)->
+    setDescription("Number of Newton's iterations.");
+
   registerWrapper(viewKeysStruct::dtCutIterLimString, &m_dtCutIterLimit, false )->
     setApplyDefaultValue(0.7)->
 	setInputFlag(InputFlags::OPTIONAL)->
