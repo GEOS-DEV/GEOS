@@ -23,6 +23,7 @@
                       targetRegions="{Fracture}"
                       solidMaterialName="granite"
                       rockToughness="1e6"
+                      mpiCommOrder="1"
                       >
     </SurfaceGenerator>
     

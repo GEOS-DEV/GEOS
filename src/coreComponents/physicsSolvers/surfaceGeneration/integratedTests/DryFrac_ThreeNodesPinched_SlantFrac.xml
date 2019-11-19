@@ -24,7 +24,8 @@
                       verboseLevel="1"
                       discretization="FE1"
                       fractureRegion="Fracture"
-                      targetRegions="{Region2}">
+                      targetRegions="{Region2}"
+                      mpiCommOrder="1">
     </SurfaceGenerator>
   </Solvers>
 
