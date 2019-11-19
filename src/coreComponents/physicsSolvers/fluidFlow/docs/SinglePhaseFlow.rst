@@ -7,17 +7,9 @@ Single-phase Flow Solver
 Introduction
 =============
 
-Here, we describe the single-phase solver in three steps:
-
-1. :ref:`theory`
-
-    a. :ref:`singlephase_equations`
-
-    b. :ref:`singlephase_discretization`
-
-2. :ref:`usage`
-
-3. :ref:`input_example`
+Here, we describe the single-phase flow solver. 
+The role of this solver is to implement the fully implicit finite-volume discretization (mainly, accumulation and source terms, boundary conditions) of the equations governing compressible single-phase flow in porous media.
+This solver can be combined with the SinglePhaseWell class which handles the discrete multi-segment well model and provides source/sink terms for the fluid flow solver.
 
 
 Theory
