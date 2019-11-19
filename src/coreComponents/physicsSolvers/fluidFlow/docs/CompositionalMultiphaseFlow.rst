@@ -7,31 +7,17 @@ Compositional Multiphase Flow Solver
 Introduction
 =============
 
-Here, we review the compositional solver in three steps:
+This flow solver is in charge of implementing the finite-volume discretization (mainly, accumulation and flux terms, boundary conditions) of the equations governing compositional multiphase flow in porous media. 
+The present solver can be combined with the :ref:`CompositionalMultiphaseWell` which handles the discrete multi-segment well model and provides source/sink terms for the fluid flow solver.
 
-1. :ref:`theory`
-
-    a. :ref:`equations`
-
-    b. :ref:`primary_variables`
-
-    c. :ref:`discretization`
-
-    d. :ref:`solution_strategy`
-
-2. :ref:`usage`
-
-3. :ref:`input_example`
+Below, we first review the set of :ref:`equations`, followed by a discussion of the
+choice of :ref:`primary_variables` used in the global variable formulation. 
+Then we give an overview of the :ref:`discretization` and we conclude with a brief description of the nonlinear :ref:`solution_strategy`. 
 
 .. _theory:
 
 Theory
 =========================
-
-In this section, we review the global variable formulation implemented in GEOSX.
-We review the set of :ref:`equations` first, followed by a discussion of the
-choice of :ref:`primary_variables`. Then we give an overview of the :ref:`discretization`
-and we conclude with a brief description of the nonlinear :ref:`solution_strategy`.
 
 .. _equations:
 
