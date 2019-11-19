@@ -130,7 +130,37 @@ public:
    */
   arrayView1d<StiffnessTensor const> const & stiffness() const { return m_stiffness; }
 
+  class KernelWrapper
+  {
+  public:
+    KernelWrapper( arrayView1d<StiffnessTensor const> const & stiffness ) :
+      m_stiffnessView( stiffness )
+    {}
 
+    /**
+     * accessor to return the stiffness at a given element
+     * @param k the element number
+     * @param c the stiffness array
+     */
+    GEOSX_HOST_DEVICE inline
+    void GetStiffness( localIndex const k, real64 (&c)[6][6] ) const
+    {
+      for( int i=0 ; i<6 ; ++i )
+      {
+        for( int j=0 ; j<6 ; ++j )
+        {
+          c[i][j] = m_stiffnessView(k).m_data[i][j];
+
+        }
+      }
+    }
+
+  private:
+    arrayView1d<StiffnessTensor const> const m_stiffnessView;
+  };
+
+  KernelWrapper createKernelWrapper() const
+  { return KernelWrapper( m_stiffness ); }
 protected:
   virtual void PostProcessInput() override;
 
