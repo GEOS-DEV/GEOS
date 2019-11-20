@@ -1,8 +1,7 @@
 language: minimal
 env:
   global:
-  - TPL_OSX_TRAVIS_BUILD_NUMBER=233
-  - DOCKER_TAG=233
+  - GEOSX_TPL_TAG=81-249
 matrix:
   include:
   - os: osx
@@ -51,7 +50,7 @@ before_script:
   # We also are careful about the carriage return, so we can build the URL smoothly.
 - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
     mkdir ../thirdPartyLibs;
-    TPL_METADATA_URL=https://www.googleapis.com/storage/v1/b/geosx/o/TPL%2Fosx-${TPL_OSX_TRAVIS_BUILD_NUMBER}.tar;
+    TPL_METADATA_URL=https://www.googleapis.com/storage/v1/b/geosx/o/TPL%2Fosx-${GEOSX_TPL_TAG}.tar;
     TPL_BULK_URL=${TPL_METADATA_URL}?alt=media;
     curl -s "${TPL_BULK_URL}" | tar --directory=../thirdPartyLibs -xf -;
     BREW_HASH=$(curl -s "${TPL_METADATA_URL}" | python3 -c "import sys, json; print(json.load(sys.stdin)['metadata']['BREW_HASH'], end='')");
@@ -65,5 +64,5 @@ script:
     make -j $(nproc) VERBOSE=1;
     ctest -V;
   else
-    docker run --rm -v ${TRAVIS_BUILD_DIR}:/tmp/GEOSX -e CMAKE_BUILD_TYPE ${DOCKER_REPOSITORY}:${DOCKER_TAG} /tmp/GEOSX/scripts/travis_build_and_test.sh;
+    docker run --rm -v ${TRAVIS_BUILD_DIR}:/tmp/GEOSX -e CMAKE_BUILD_TYPE ${DOCKER_REPOSITORY}:${GEOSX_TPL_TAG} /tmp/GEOSX/scripts/travis_build_and_test.sh;
   fi
