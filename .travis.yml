@@ -44,7 +44,7 @@ before_script:
 - git submodule update --init --recursive src/externalComponents/PVTPackage
 - git submodule update --init --recursive src/externalComponents/PAMELA
 - git submodule update --init --recursive src/coreComponents/fileIO/coupling/hdf5_interface
-- git submodule update --init --recursive src/externalComponents/GEOSX_PTP
+- git submodule update --init --recursive src/coreComponents/physicsSolvers/GEOSX_PTP
   # For osx, we download the brew version which was used to build the TPL (mainly because of openmpi).
   # A python one-liner is used no to install `jq` just for this purpose.
   # We also are careful about the carriage return, so we can build the URL smoothly.
