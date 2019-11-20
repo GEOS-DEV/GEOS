@@ -219,15 +219,15 @@ void LinearViscoElasticAnisotropic::StateUpdatePoint( localIndex const k,
   Tdata[3] += c[4][0]*Ddata[0] + c[4][1]*Ddata[2] + c[4][2]*Ddata[5] + c[4][3]*(2*Ddata[4]) + c[4][4]*(2*Ddata[3]) + c[4][5]*(2*Ddata[1]);
   Tdata[1] += c[5][0]*Ddata[0] + c[5][1]*Ddata[2] + c[5][2]*Ddata[5] + c[5][3]*(2*Ddata[4]) + c[5][4]*(2*Ddata[3]) + c[5][5]*(2*Ddata[1]);
 
-  m_stress[k][q] += T;
+  m_elasticStress[k][q] += T;
 
   // store elastic stress and add viscous stress into total stress
   R2SymTensor deviatorStrain = D;
   deviatorStrain.PlusIdentity( -D.Trace() / 3.0 );
-  m_elasticStress[k][q] = m_stress[k][q];
+  m_stress[k][q] = m_elasticStress[k][q];
+  m_stress[k][q] += m_viscosity / dt * deviatorStrain;
   T.QijAjkQlk( m_elasticStress[k][q], Rot );
   m_elasticStress[k][q] = T;
-  m_stress[k][q] += m_viscosity / dt * deviatorStrain;
 
   T.QijAjkQlk( m_stress[k][q], Rot );
   m_stress[k][q] = T;

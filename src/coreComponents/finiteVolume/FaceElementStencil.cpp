@@ -36,12 +36,6 @@ void FaceElementStencil::add( localIndex const numPts,
 {
   GEOS_ERROR_IF( numPts >= MAX_STENCIL_SIZE, "Maximum stencil size exceeded" );
 
-  localIndex constexpr maxElems = FaceElementStencil::MAX_STENCIL_SIZE;
-  stackArray1d<real64, FaceElementStencil::MAX_STENCIL_SIZE> zeroVector;
-//  localIndex const maxElems = (numPts - 1 ) * (numPts - 1 );
-//  zeroVector.resize(maxElems);
-  zeroVector = 0;
-
   typename decltype( m_stencilIndices )::iterator iter = m_stencilIndices.find(connectorIndex);
   if( iter==m_stencilIndices.end() )
   {
@@ -51,7 +45,6 @@ void FaceElementStencil::add( localIndex const numPts,
     m_weights.appendArray( weights, numPts );
     m_weightedElementCenterToConnectorCenter.appendArray( weightedElementCenterToConnectorCenter, numPts );
     m_stencilIndices[connectorIndex] = m_weights.size() - 1;
-    m_buffer.appendArray( zeroVector.data(), maxElems );
   }
   else
   {
@@ -61,14 +54,12 @@ void FaceElementStencil::add( localIndex const numPts,
     m_elementIndices.clearArray( stencilIndex );
     m_weights.clearArray( stencilIndex );
     m_weightedElementCenterToConnectorCenter.clearArray( stencilIndex );
-    m_buffer.clearArray( stencilIndex );
 
     m_elementRegionIndices.appendToArray( stencilIndex, elementRegionIndices, numPts );
     m_elementSubRegionIndices.appendToArray( stencilIndex, elementSubRegionIndices, numPts );
     m_elementIndices.appendToArray( stencilIndex, elementIndices, numPts );
     m_weights.appendToArray( stencilIndex, weights, numPts );
     m_weightedElementCenterToConnectorCenter.appendToArray( stencilIndex, weightedElementCenterToConnectorCenter, numPts );
-    m_buffer.appendToArray( stencilIndex, zeroVector.data(), maxElems );
   }
 }
 

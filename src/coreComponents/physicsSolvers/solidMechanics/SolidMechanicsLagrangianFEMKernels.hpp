@@ -288,7 +288,7 @@ struct ExplicitKernel
       }
 
       *maxStableDt = std::min(*maxStableDt, sqrt( density[k][0] / ( bulkModulus[k] + 4 / 3.0 * shearModulus[k] ) / 2 /BB ));
-      std::cout << "\n eleID = " << k+1 << " : \n maxStableDt=" << *maxStableDt << " , density[k][0]=" << density[k][0] << ", BB=" << BB;
+   //   std::cout << "\n eleID = " << k+1 << " : \n maxStableDt=" << *maxStableDt << " , density[k][0]=" << density[k][0] << ", BB=" << BB;
       AddLocalToGlobal<NUM_NODES_PER_ELEM>( elemsToNodes[k], f_local, acc );
     });
 

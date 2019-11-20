@@ -75,7 +75,7 @@ void SinglePhaseFlow::RegisterDataOnMesh(Group * const MeshBodies)
       subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::porosityOldString );
       subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::densityOldString );
       subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::totalCompressibilityString );
-      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::massString );
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::massString )->setPlotLevel(PlotLevel::LEVEL_0);
       subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::injMassString );
       subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::injMass0String );
     });
@@ -95,7 +95,7 @@ void SinglePhaseFlow::RegisterDataOnMesh(Group * const MeshBodies)
           setDefaultValue(1.0);
         subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::densityOldString );
         subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::totalCompressibilityString );
-        subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::massString );
+        subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::massString )->setPlotLevel(PlotLevel::LEVEL_0);
         subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::injMassString );
         subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::injMass0String );
         subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::aperture0String )->
@@ -472,7 +472,7 @@ void SinglePhaseFlow::UpdateEOS( real64 const time_n,
 	  } );
   }
 
-  // apply aperture boundary condition in the explicit solver
+  // apply pressure boundary condition in the explicit solver
   FieldSpecificationManager * const fsManager = FieldSpecificationManager::get();
   fsManager->Apply( time_n + dt, domain, "ElementRegions", viewKeyStruct::pressureString,
                     [&]( FieldSpecificationBase const * const fs,
@@ -983,7 +983,6 @@ void SinglePhaseFlow::AssembleFluxTermsExplicit( real64 const GEOSX_UNUSED_ARG( 
                         aperture ,
                         poro,
                         totalCompressibility,
-                        1,
                         &m_mass,
                         &m_maxStableDt);
   });
@@ -1029,6 +1028,7 @@ void SinglePhaseFlow::CalculateAndApplyMassFlux( real64 const time_n,
     {
       injMass[ei] = injMass0[ei] * m_injectionRelaxationCoefficient + injMass[ei] * (1 - m_injectionRelaxationCoefficient);
       mass[ei] += injMass[ei];
+//      std::cout << "\n ei = " << ei  << ", injMass = " << injMass[ei] << ", injMass0 = " << injMass0[ei] << ", mass = " << mass[ei] << std::endl;
       injMass0[ei] = 0;
     } );
   } );

@@ -46,8 +46,6 @@ void CellElementStencilTPFA::add( localIndex const numPts,
   m_elementIndices.resize( newSize, numPts );
   m_weights.resize( newSize, numPts );
   m_weightedElementCenterToConnectorCenter.resize( newSize, numPts );
-  m_buffer.resize( newSize, 1 );
-  m_buffer(oldSize, 0) = 0;
 
   for( localIndex a=0 ; a<numPts ; ++a )
   {

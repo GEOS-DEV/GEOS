@@ -370,7 +370,6 @@ struct FluxKernel
           ElementView < arrayView1d<real64 const> > const & aperture,
           ElementView < arrayView1d<real64 const> > const & poro,
           ElementView < arrayView1d<real64 const> > const & totalCompressibility,
-          real64 const relaxationCoefficient,
           ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> * const mass,
           real64 * const maxStableDt);
 
@@ -586,7 +585,6 @@ struct FluxKernel
            arraySlice1d<localIndex const> const & sei,
            arraySlice1d<real64 const> const & stencilWeights,
            arraySlice1d<real64 const> const & stencilWeightedElementCenterToConnectorCenter,
-           arraySlice1d<real64> const & fluxBuffer,
            ElementView <arrayView1d<real64 const>> const & pres,
            ElementView <arrayView1d<real64 const>> const & gravDepth,
            MaterialView<arrayView2d<real64 const>> const & dens,
@@ -596,7 +594,6 @@ struct FluxKernel
            localIndex const fluidIndex,
            integer const gravityFlag,
            real64 const dt,
-           real64 const relaxationCoefficient,
            ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> * const mass,
            real64 * const maxStableDt)
   {
@@ -658,12 +655,8 @@ struct FluxKernel
 //    }
 
     // populate local flux
-    fluxBuffer[0] = mob[er_up][esr_up][ei_up] * potDif * dt * relaxationCoefficient + fluxBuffer[0] * ( 1 - relaxationCoefficient );
-    (*mass)[seri[0]][sesri[0]][sei[0]] -= fluxBuffer[0];
-    (*mass)[seri[1]][sesri[1]][sei[1]] += fluxBuffer[0];
-
- //   std::cout<< "\n Matrix mass transfer between " << sei[0] << " and " << sei[1] << " = " << fluxBuffer[0] << ", mob = " << mob[er_up][esr_up][ei_up] << ", potDif = " << potDif ;
-
+    (*mass)[seri[0]][sesri[0]][sei[0]] -= mob[er_up][esr_up][ei_up] * potDif * dt;
+    (*mass)[seri[1]][sesri[1]][sei[1]] += mob[er_up][esr_up][ei_up] * potDif * dt;
   }
 
 
@@ -680,7 +673,6 @@ struct FluxKernel
            arraySlice1d<localIndex const> const & stencilElementIndices,
            arraySlice1d<real64 const> const & stencilWeights,
            arraySlice1d<real64 const> const & stencilWeightedElementCenterToConnectorCenter,
-           arraySlice1d<real64> const & fluxBuffer,
            arrayView1d<real64 const> const & pres,
            arrayView1d<real64 const> const & gravDepth,
            arrayView2d<real64 const> const & dens,
@@ -691,7 +683,6 @@ struct FluxKernel
            localIndex const GEOSX_UNUSED_ARG( fluidIndex ),
            integer const gravityFlag,
            real64 const dt,
-           real64 const relaxationCoefficient,
            arrayView1d<real64> * const mass,
            real64 * const maxStableDt)
   {
@@ -740,9 +731,8 @@ struct FluxKernel
     *maxStableDt = std::min( totalCompressibility[ei_up] * viscosity * poro[ei_up] / 2.0 * weightedSum * weightedSum, *maxStableDt);
 
     // populate local flux
-    fluxBuffer[0] = mob[ei_up] * potDif * dt * relaxationCoefficient + fluxBuffer[0] * ( 1 - relaxationCoefficient );
-    (*mass)[stencilElementIndices[0]] -= fluxBuffer[0];
-    (*mass)[stencilElementIndices[1]] += fluxBuffer[0];
+    (*mass)[stencilElementIndices[0]] -= mob[ei_up] * potDif * dt;
+    (*mass)[stencilElementIndices[1]] += mob[ei_up] * potDif * dt;
 
   }
 
@@ -861,7 +851,6 @@ struct FluxKernel
                    arraySlice1d<localIndex const> const & stencilElementIndices,
                    arraySlice1d<real64 const> const & stencilWeights,
                    arraySlice1d<real64 const> const & stencilWeightedElementCenterToConnectorCenter,
-                   arraySlice1d<real64> const & fluxBuffer,
                    arrayView1d<real64 const> const & pres,
                    arrayView1d<real64 const> const & gravDepth,
                    arrayView2d<real64 const> const & dens,
@@ -872,26 +861,40 @@ struct FluxKernel
                    localIndex const GEOSX_UNUSED_ARG( fluidIndex ),
                    integer const GEOSX_UNUSED_ARG( gravityFlag ),
                    real64 const dt,
-                   real64 const relaxationCoefficient,
                    arrayView1d<real64> * const mass,
                    real64 * const maxStableDt)
   {
     real64 sumOfWeights = 0, dAperTerm_dAper;
     real64 aperTerm[10];
+    real64 maxApertureForPermeablity = 1e-4;
 
     for( localIndex k=0 ; k<numFluxElems ; ++k )
     {
       FluxKernelHelper::
-      apertureForPermeablityCalculation<0>( aperture0[stencilElementIndices[k]],
-                                            aperture[stencilElementIndices[k]],
+      apertureForPermeablityCalculation<0>( std::min(aperture0[stencilElementIndices[k]], maxApertureForPermeablity),
+                                            std::min(aperture[stencilElementIndices[k]], maxApertureForPermeablity),
                                             aperTerm[k],
                                             dAperTerm_dAper);
 
       sumOfWeights += aperTerm[k] * stencilWeights[k];
     }
+/*
+    // for capped
+    real64 sumOfWeightsCapped = 0;
+    real64 aperTermCapped [10];
+    real64 maxApertureForPermeablity = 1e-4;
+    for( localIndex k=0 ; k<numFluxElems ; ++k )
+    {
+      FluxKernelHelper::
+      apertureForPermeablityCalculation<0>( std::min(aperture0[stencilElementIndices[k]], maxApertureForPermeablity),
+                                            std::min(aperture[stencilElementIndices[k]], maxApertureForPermeablity),
+                                            aperTermCapped [k],
+                                            dAperTerm_dAper);
 
+      sumOfWeightsCapped += aperTermCapped [k] * stencilWeights[k];
+    }
+*/
     localIndex k[2];
-    integer count = 0;
     for( k[0]=0 ; k[0]<numFluxElems ; ++k[0] )
     {
       for( k[1]=k[0]+1 ; k[1]<numFluxElems ; ++k[1] )
@@ -914,26 +917,21 @@ struct FluxKernel
         localIndex ei_up  = stencilElementIndices[k[k_up]];
 
         // populate local flux
-        fluxBuffer[count] = mob[ei_up] * weight * potDif * dt * relaxationCoefficient + fluxBuffer[count] * ( 1 - relaxationCoefficient );
-        (*mass)[stencilElementIndices[k[0]]] -= fluxBuffer[count];
-        (*mass)[stencilElementIndices[k[1]]] += fluxBuffer[count];
+        (*mass)[stencilElementIndices[k[0]]] -= mob[ei_up] * weight * potDif * dt;
+        (*mass)[stencilElementIndices[k[1]]] += mob[ei_up] * weight * potDif * dt;
 
 //        std::cout<< "\n Fracture mass transfer between " << stencilElementIndices[k[0]] << " and " << stencilElementIndices[k[1]]
-//				 << " = " << fluxBuffer[count] << ", weigth = " << weight << ", potDif = " << potDif ;
+//				 << " = " << mob[ei_up] * weight * potDif * dt << ", weigth = " << weight << ", potDif = " << potDif ;
 
-        count += 1;
-
-        // TODO: need to read this from input file
-        real64 const maxPermeabilityAperture = 1e-4;
+//        real64 const weightCapped = ( stencilWeights[k[0]]*aperTermCapped[k[0]] ) *
+//                                    ( stencilWeights[k[1]]*aperTermCapped[k[1]] ) / sumOfWeightsCapped;
 
         real64 const edgeLength = 12 * stencilWeightedElementCenterToConnectorCenter[k[0]] * stencilWeights[k[0]];
 
-        real64 const areaAlongFlowDirection = stencilWeightedElementCenterToConnectorCenter[k[0]] * std::min(aperture[stencilElementIndices[k[0]]], maxPermeabilityAperture)
-                                            + stencilWeightedElementCenterToConnectorCenter[k[1]] * std::min(aperture[stencilElementIndices[k[1]]], maxPermeabilityAperture);
+        real64 const areaAlongFlowDirection = stencilWeightedElementCenterToConnectorCenter[k[0]] * std::min(aperture[stencilElementIndices[k[0]]], maxApertureForPermeablity)
+                                            + stencilWeightedElementCenterToConnectorCenter[k[1]] * std::min(aperture[stencilElementIndices[k[1]]], maxApertureForPermeablity);
 
-        real64 weightedSum = edgeLength * areaAlongFlowDirection * sumOfWeights /
-                            ( stencilWeights[k[0]] * std::min(aperTerm[k[0]], pow(maxPermeabilityAperture, 3)) *
-                              stencilWeights[k[1]] * std::min(aperTerm[k[1]], pow(maxPermeabilityAperture, 3)) );
+        real64 weightedSum = edgeLength * areaAlongFlowDirection / weight;
 
         *maxStableDt = std::min(totalCompressibility[ei_up] * dens[ei_up][0] / mob[ei_up] / 2.0 * weightedSum, *maxStableDt);
 

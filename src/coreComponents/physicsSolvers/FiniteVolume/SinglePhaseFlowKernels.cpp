@@ -317,7 +317,6 @@ Launch<CellElementStencilTPFA>( CellElementStencilTPFA & stencil,
                                 FluxKernel::ElementView < arrayView1d<real64 const> > const & GEOSX_UNUSED_ARG( aperture ),
                                 FluxKernel::ElementView < arrayView1d<real64 const> > const & poro,
                                 FluxKernel::ElementView < arrayView1d<real64 const> > const & totalCompressibility,
-                                real64 const relaxationCoefficient,
                                 ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> * const mass,
                                 real64 * const maxStableDt)
 {
@@ -328,7 +327,6 @@ Launch<CellElementStencilTPFA>( CellElementStencilTPFA & stencil,
   typename CellElementStencilTPFA::IndexContainerViewConstType const & sei = stencil.getElementIndices();
   typename CellElementStencilTPFA::WeightContainerViewConstType const & weights = stencil.getWeights();
   typename CellElementStencilTPFA::WeightContainerViewConstType const & weightedElementCenterToConnectorCenter = stencil.getweightedElementCenterToConnectorCenter();
-  typename CellElementStencilTPFA::WeightContainerType & buffer = stencil.getBuffer();
 
   forall_in_range<serialPolicy>( 0, stencil.size(), GEOSX_LAMBDA ( localIndex iconn )
   {
@@ -339,7 +337,6 @@ Launch<CellElementStencilTPFA>( CellElementStencilTPFA & stencil,
                          sei[iconn],
                          weights[iconn],
                          weightedElementCenterToConnectorCenter[iconn],
-                         buffer[iconn],
                          pres,
                          gravDepth,
                          dens,
@@ -349,7 +346,6 @@ Launch<CellElementStencilTPFA>( CellElementStencilTPFA & stencil,
                          fluidIndex,
                          gravityFlag,
                          dt,
-                         relaxationCoefficient,
                          mass,
                          maxStableDt);
   } );
@@ -369,7 +365,6 @@ Launch<FaceElementStencil>( FaceElementStencil & stencil,
                             FluxKernel::ElementView < arrayView1d<real64 const> > const & aperture,
                             FluxKernel::ElementView < arrayView1d<real64 const> > const & GEOSX_UNUSED_ARG( poro ),
                             FluxKernel::ElementView < arrayView1d<real64 const> > const & totalCompressibility,
-                            real64 const relaxationCoefficient,
                             ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> * const mass,
                             real64 * const maxStableDt)
 {
@@ -378,7 +373,6 @@ Launch<FaceElementStencil>( FaceElementStencil & stencil,
   typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
   typename FaceElementStencil::WeightContainerViewConstType const & weights = stencil.getWeights();
   typename FaceElementStencil::WeightContainerViewConstType const & weightedElementCenterToConnectorCenter = stencil.getweightedElementCenterToConnectorCenter();
-  typename FaceElementStencil::WeightContainerType & buffer = stencil.getBuffer();
 
   forall_in_range<serialPolicy>( 0, stencil.size(), GEOSX_LAMBDA ( localIndex iconn )
   {
@@ -392,7 +386,6 @@ Launch<FaceElementStencil>( FaceElementStencil & stencil,
                                  sei[iconn],
                                  weights[iconn],
                                  weightedElementCenterToConnectorCenter[iconn],
-                                 buffer[iconn],
                                  pres[er][esr],
                                  gravDepth[er][esr],
                                  dens[er][esr][fluidIndex],
@@ -403,7 +396,6 @@ Launch<FaceElementStencil>( FaceElementStencil & stencil,
                                  fluidIndex,
                                  gravityFlag,
                                  dt,
-                                 relaxationCoefficient,
                                  &((*mass)[er][esr]),
                                  maxStableDt);
   } );

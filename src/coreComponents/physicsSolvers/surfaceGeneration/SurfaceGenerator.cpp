@@ -637,7 +637,7 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
   }
 
 
-  // apply pressure boundary condition in the explicit solver
+  // apply aperture boundary condition in the explicit solver
   FaceElementSubRegion const * const faceElementSubRegion = elementManager.GetRegion(m_fractureRegionName)->GetSubRegion<FaceElementSubRegion>(0);
   set<localIndex> const & newFaceElems = faceElementSubRegion->m_newFaceElements;
 

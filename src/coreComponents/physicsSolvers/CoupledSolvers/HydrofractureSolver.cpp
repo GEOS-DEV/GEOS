@@ -34,6 +34,7 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
+#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 
 namespace geosx
 {
@@ -114,7 +115,7 @@ real64 HydrofractureSolver::GetTimestepRequest(real64 const time)
     real64 maxDtSolid = m_solidSolver->GetTimestepRequest( time );
     real64 maxDtflow = m_flowSolver->GetTimestepRequest( time );
 
-    std::cout << "\n !!! maxDtSolid = " << maxDtSolid << ",  maxDtflow = " << maxDtflow << std::endl;
+//    std::cout << "\n !!! maxDtSolid = " << maxDtSolid << ",  maxDtflow = " << maxDtflow << std::endl;
 
     return std::min(maxDtSolid, maxDtflow);
   }
@@ -293,7 +294,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 
     ExplicitStep( time_n, dt, cycleNumber, domain );
 
-    std::cout << std::endl << "*************************************************" << std::endl;
+//    std::cout << std::endl << "*************************************************" << std::endl;
   }
   else if( m_couplingTypeOption == couplingTypeOption::TightlyCoupled )
   {
@@ -492,9 +493,9 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
 
           deltaVolume[er][esr][ei] = computationalGeometry::HexVolume(Xlocal) - volume[er][esr][ei];
 
-          std::cout<< "\n Solid Update: cell dVol= "<< deltaVolume[er][esr][ei] <<", dPoro = "<< poro[er][esr][ei] - poroOld[er][esr][ei]
-                    << "\n                new cell vol = "<< deltaVolume[er][esr][ei] + volume[er][esr][ei] << ", new porosity = "<< poro[er][esr][ei]
-                    << "\n                totalMeanStress change = "<< totalMeanStress[er][esr][ei] - oldTotalMeanStress[er][esr][ei] << ", dPres[er][esr][ei] = "<< dPres[er][esr][ei] << std::endl;
+//          std::cout<< "\n Solid Update: cell dVol= "<< deltaVolume[er][esr][ei] <<", dPoro = "<< poro[er][esr][ei] - poroOld[er][esr][ei]
+//                    << "\n                new cell vol = "<< deltaVolume[er][esr][ei] + volume[er][esr][ei] << ", new porosity = "<< poro[er][esr][ei]
+//                    << "\n                totalMeanStress change = "<< totalMeanStress[er][esr][ei] - oldTotalMeanStress[er][esr][ei] << ", dPres[er][esr][ei] = "<< dPres[er][esr][ei] << std::endl;
 
 
           volume[er][esr][ei] += deltaVolume[er][esr][ei];
@@ -503,7 +504,27 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
         }
       });
     }
-  }
+  }  // end of if
+
+  // apply aperture boundary condition in the explicit solver
+  FieldSpecificationManager * const fsManager = FieldSpecificationManager::get();
+  fsManager->Apply( 1.0, domain, "ElementRegions", FaceElementSubRegion::viewKeyStruct::elementApertureString,
+                    [&]( FieldSpecificationBase const * const fs,
+                         string const &,
+                         set<localIndex> const & lset,
+                         Group * const targetGroup,
+                         string const & ) -> void
+  {
+    fs->ApplyFieldValue<FieldSpecificationEqual>( lset,
+                                                  1.0,
+                                                  targetGroup,
+                                                  FaceElementSubRegion::viewKeyStruct::elementApertureString );
+  });
+
+  applyToSubRegions( meshLevel, [&] ( ElementSubRegionBase * const subRegion )
+  {
+    subRegion->CalculateElementGeometricQuantities( *nodeManager, *faceManager );
+  });
 }
 
 real64 HydrofractureSolver::SplitOperatorStep( real64 const & GEOSX_UNUSED_ARG( time_n ),

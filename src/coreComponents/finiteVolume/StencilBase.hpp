@@ -36,13 +36,12 @@ class StencilBase
 public:
 
   StencilBase():
-    m_elementRegionIndices(),
-    m_elementSubRegionIndices(),
-    m_elementIndices(),
-    m_weights(),
-    m_weightedElementCenterToConnectorCenter(),
-	m_buffer(),
-    m_stencilIndices()
+  m_elementRegionIndices(),
+  m_elementSubRegionIndices(),
+  m_elementIndices(),
+  m_weights(),
+  m_weightedElementCenterToConnectorCenter(),
+  m_stencilIndices()
   {}
 
   virtual ~StencilBase() = default;
@@ -116,12 +115,6 @@ public:
    */
   typename LEAFCLASSTRAITS::WeightContainerViewConstType const & getweightedElementCenterToConnectorCenter() const { return m_weightedElementCenterToConnectorCenter; }
 
-  /**
-   * @brief Const access to the buffer
-   * @return A view to const
-   */
-  typename LEAFCLASSTRAITS::WeightContainerType & getBuffer() { return m_buffer; }
-
 protected:
   /// The container for the element region indices for each point in each stencil
   typename LEAFCLASSTRAITS::IndexContainerType  m_elementRegionIndices;
@@ -138,9 +131,6 @@ protected:
   /// The container for the weighted Element Center To Connector Center ( distance divided by square root of permeability) for each point in each stencil
   typename LEAFCLASSTRAITS::WeightContainerType m_weightedElementCenterToConnectorCenter;
 
-  /// The container for the buffer
-  typename LEAFCLASSTRAITS::WeightContainerType m_buffer;
-
   /// The map that provides the stencil index given the index of the underlying connector object.
   map<localIndex, localIndex> m_stencilIndices;
 
@@ -156,7 +146,6 @@ void StencilBase<LEAFCLASSTRAITS,LEAFCLASS>::reserve( localIndex const size )
   m_elementIndices.reserve( size * 2 );
   m_weights.reserve( size * 2 );
   m_weightedElementCenterToConnectorCenter.reserve( size * 2 );
-  m_buffer.reserve( size );
 }
 
 

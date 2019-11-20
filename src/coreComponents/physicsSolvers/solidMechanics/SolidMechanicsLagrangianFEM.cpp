@@ -252,7 +252,7 @@ void SolidMechanicsLagrangianFEM::SetInitialTimeStep(Group * const domain )
   if( setMechanicsSolverTimeStep == 0 && m_timeIntegrationOption == timeIntegrationOption::ExplicitDynamic )
   {
     updateIntrinsicNodalData( domain->group_cast<DomainPartition *>() );
-    ExplicitStep( 0, 0, 0, domain->group_cast<DomainPartition *>() );
+    ExplicitStepVelocityUpdate( 0, 0, 0, domain->group_cast<DomainPartition *>() );
     setMechanicsSolverTimeStep = 1;
   }
 }

@@ -224,13 +224,13 @@ void LinearViscoElasticIsotropic::StateUpdatePoint( localIndex const k,
   meanStresIncrement *= m_bulkModulus[k];
   temp.PlusIdentity( meanStresIncrement );
 
-  m_stress[k][q] += temp;
+  m_elasticStress[k][q] += temp;
 
   // store elastic stress and add viscous stress into total stress
-  m_elasticStress[k][q] = m_stress[k][q];
+  m_stress[k][q] = m_elasticStress[k][q];
+  m_stress[k][q] += m_viscosity / dt * deviatorStrain;
   temp.QijAjkQlk( m_elasticStress[k][q], Rot );
   m_elasticStress[k][q] = temp;
-  m_stress[k][q] += m_viscosity / dt * deviatorStrain;
 
   temp.QijAjkQlk( m_stress[k][q], Rot );
   m_stress[k][q] = temp;
