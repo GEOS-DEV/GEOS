@@ -59,7 +59,12 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
   registerWrapper(viewKeysStruct::krylovTolString, &m_krylovTol, false )->
     setApplyDefaultValue(1.0e-6)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Allowable tolerance for krylov solve");
+    setDescription("Desired tolerance for Krylov solve");
+
+  registerWrapper(viewKeysStruct::useAdaptiveKrylovString, &m_useAdaptiveKrylovTol, false )->
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Enable Eisenstat-Walker adaptive Krylov tolerance");
 
   registerWrapper(viewKeysStruct::numKrylovIterString, &m_numKrylovIter, false )->
     setApplyDefaultValue(100)->

@@ -48,6 +48,7 @@ using namespace constitutive;
 HydrofractureSolver::HydrofractureSolver( const std::string& name,
                                       Group * const parent ):
   SolverBase(name,parent),
+  m_pressureScale(1e6),
   m_solidSolverName(),
   m_flowSolverName(),
   m_couplingTypeOptionString("FixedStress"),
@@ -857,6 +858,7 @@ CalculateResidualNorm( DomainPartition const * const domain,
   real64 const fluidResidual = m_flowSolver->CalculateResidualNorm( domain,
                                                                     m_flowSolver->getDofManager(),
                                                                     m_flowSolver->getSystemRhs() );
+
   real64 const solidResidual = m_solidSolver->CalculateResidualNorm( domain,
                                                                      m_solidSolver->getDofManager(),
                                                                      m_solidSolver->getSystemRhs() );
@@ -1492,7 +1494,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
   //const int  use_scaling       = params->m_scalingOption;  
   const bool use_diagonal_prec = true;
   const bool use_bicgstab      = params->m_useBicgstab;
-  
+ 
   /* ...disable old scaling strategy ...
   const unsigned n_blocks = 2; // algorithm *should* work for any block size n
   enum {ROW,COL}; // indexing to improve readability (ROW=0,COL=1)
@@ -1508,11 +1510,10 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
   }
   */
 
-  const real64 pressureScale = 1e6;
-  p_matrix[0][1]->Scale(pressureScale);
-  p_matrix[1][0]->Scale(pressureScale);
-  p_matrix[1][1]->Scale(pressureScale*pressureScale);
-  p_rhs[1]->Scale(pressureScale);
+  p_matrix[0][1]->Scale(m_pressureScale);
+  p_matrix[1][0]->Scale(m_pressureScale);
+  p_matrix[1][1]->Scale(m_pressureScale*m_pressureScale);
+  p_rhs[1]->Scale(m_pressureScale);
 
     // set initial guess to zero.  this is not strictly
     // necessary but is good for comparing solver performance.
@@ -1743,7 +1744,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
 
   {
     RCP<Teuchos::ParameterList> list = rcp(new Teuchos::ParameterList("list"),true);
-
+    
       list->set("Linear Solver Type","AztecOO");
       list->set("Preconditioner Type","None"); // will use user-defined P
       list->sublist("Linear Solver Types").sublist("AztecOO").sublist("Forward Solve").set("Max Iterations",params->m_maxIters);
@@ -1774,14 +1775,15 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
         //      should remove after debugging because this is potentially slow
         //      and should just use iterative residual
 
+    /*
     RCP<Thyra::VectorBase<double> > Ax = Thyra::createMember(matrix->range());
     RCP<Thyra::VectorBase<double> > r  = Thyra::createMember(matrix->range());
     {
       Thyra::apply(*matrix, Thyra::NOTRANS,*lhs,Ax.ptr());
       Thyra::V_VmV<double>(r.ptr(),*rhs,*Ax);
     }
-      params->m_KrylovResidualInit = Thyra::norm(*r);
-
+    params->m_KrylovResidualInit = Thyra::norm(*r);
+    */
 
     // !!!! Actual Solve !!!!
     clock.start(true);
@@ -1793,19 +1795,21 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
         // JAW: check "true" residual after
         //      should remove after debugging because this is potentially slow
 
+    /*
     {
       Thyra::apply(*matrix, Thyra::NOTRANS,*lhs,Ax.ptr());
       Thyra::V_VmV<double>(r.ptr(),*rhs,*Ax);
       params->m_KrylovResidualFinal = Thyra::norm(*r);
     }
+    */
 
     params->m_numKrylovIter = status.extraParameters->get<int>("Iteration Count");
 
     if( m_verboseLevel>=1 )
     {
       GEOS_LOG_RANK_0("    Linear Solver | Iter = " << params->m_numKrylovIter << std::scientific <<
-                      " | InitialNorm " << params->m_KrylovResidualInit << 
-                      " | FinalNorm " << params->m_KrylovResidualFinal <<
+                      " | TargetReduction " << params->m_krylovTol <<
+                      //" | ActualReduction " << params->m_KrylovResidualFinal / params->m_KrylovResidualInit <<
                       " | CopyTime " << copyTime <<
                       " | SetupTime " << setupTime <<
                       " | SolveTime " << solveTime );
@@ -1819,7 +1823,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
         p_solution[b]->Multiply(1.0,*scaling[b][COL],*p_solution[b],0.0);
     }
     */
-    p_solution[1]->Scale(pressureScale);
+    p_solution[1]->Scale(m_pressureScale);
   }
 
     // put 00 matrix back to unscaled form

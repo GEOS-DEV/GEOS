@@ -406,6 +406,13 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
         }
       }
 
+      // if using adaptive Krylov tolerance scheme, update tolerance.
+      // TODO: need to combine overlapping usage on LinearSolverParameters and SystemSolverParamters
+      if(solverParams->useAdaptiveKrylovTol())
+      {
+        solverParams->m_krylovTol = LinearSolverParameters::eisenstatWalker(residualNorm,lastResidual);
+      }
+
       // call the default linear solver on the system
       SolveSystem( dofManager, matrix, rhs, solution );
 

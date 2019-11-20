@@ -43,6 +43,7 @@ public:
     static constexpr auto verbosityString           = "verbosityFlag";
     static constexpr auto solverTypeString          = "solverType";
     static constexpr auto krylovTolString           = "krylovTol";
+    static constexpr auto useAdaptiveKrylovString   = "useAdaptiveKrylovTol";
     static constexpr auto numKrylovIterString       = "numKrylovIter";
     static constexpr auto kspaceString              = "kspace";
     static constexpr auto ilut_fillString           = "ilut_fill";
@@ -73,6 +74,7 @@ public:
   integer  verbose() const                    { return m_verbose; }
   string  solverType() const                  { return m_solverType; }
   real64 krylovTol() const                    { return m_krylovTol; }
+  integer useAdaptiveKrylovTol() const        { return m_useAdaptiveKrylovTol; }
   integer  numKrylovIter() const              { return m_numKrylovIter; }
   integer  kspace() const                     { return m_kspace; }
   real64 ilut_fill() const                    { return m_ilut_fill; }
@@ -101,6 +103,7 @@ public:
   integer m_verbose;
   string  m_solverType;
   real64  m_krylovTol;
+  integer m_useAdaptiveKrylovTol;
   integer m_numKrylovIter;
   integer m_kspace;
   real64  m_ilut_fill;

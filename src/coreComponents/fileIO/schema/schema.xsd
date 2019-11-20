@@ -588,7 +588,7 @@
 		<xsd:attribute name="ilut_drop" type="real64" default="0" />
 		<!--ilut_fill => (no description available)-->
 		<xsd:attribute name="ilut_fill" type="real64" default="3" />
-		<!--krylovTol => Allowable tolerance for krylov solve-->
+		<!--krylovTol => Desired tolerance for Krylov solve-->
 		<xsd:attribute name="krylovTol" type="real64" default="1e-06" />
 		<!--kspace => (no description available)-->
 		<xsd:attribute name="kspace" type="integer" default="300" />
@@ -612,6 +612,8 @@
 		<xsd:attribute name="solverType" type="string" default="" />
 		<!--timestepCutFactor => Time step cut factor-->
 		<xsd:attribute name="timestepCutFactor" type="real64" default="0.5" />
+		<!--useAdaptiveKrylovTol => Enable Eisenstat-Walker adaptive Krylov tolerance-->
+		<xsd:attribute name="useAdaptiveKrylovTol" type="integer" default="0" />
 		<!--useBicgstab => (no description available)-->
 		<xsd:attribute name="useBicgstab" type="integer" default="0" />
 		<!--useDirectSolver => (no description available)-->

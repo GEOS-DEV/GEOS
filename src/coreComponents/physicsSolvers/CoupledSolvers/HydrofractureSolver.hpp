@@ -168,6 +168,8 @@ protected:
 
 private:
 
+  const real64 m_pressureScale;
+
   string m_solidSolverName;
   string m_flowSolverName;
   string m_couplingTypeOptionString;
