@@ -78,10 +78,6 @@ void setupCXXUtils()
 
 void finalizeCXXUtils()
 {
-#ifdef GEOSX_USE_CHAI
-  chai::ArrayManager::finalize();
-#endif
-
   logger::FinalizeLogger();
 }
 

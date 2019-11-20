@@ -1092,6 +1092,8 @@
 		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--fractureRegion => (no description available)-->
 		<xsd:attribute name="fractureRegion" type="string" default="FractureRegion" />
+		<!--mpiCommOrder => Flag to enable MPI consistent communication ordering-->
+		<xsd:attribute name="mpiCommOrder" type="integer" default="0" />
 		<!--nodeBasedSIF => Rock toughness of the solid material-->
 		<xsd:attribute name="nodeBasedSIF" type="integer" default="0" />
 		<!--rockToughness => Rock toughness of the solid material-->
