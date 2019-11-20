@@ -205,6 +205,7 @@ void SeparateComponentFilter(ParallelMatrix const & src,
   const localIndex  maxDstEntries = maxEntries / dofsPerNode;
 
   dst.createWithLocalSize(localRows,maxEntries,MPI_COMM_WORLD);
+  dst.open();
 
   array1d<real64> srcValues;
   array1d<real64> dstValues( maxDstEntries );

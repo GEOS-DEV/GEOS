@@ -48,7 +48,6 @@ using namespace constitutive;
 HydrofractureSolver::HydrofractureSolver( const std::string& name,
                                       Group * const parent ):
   SolverBase(name,parent),
-  m_pressureScale(1e6),
   m_solidSolverName(),
   m_flowSolverName(),
   m_couplingTypeOptionString("FixedStress"),
@@ -1510,10 +1509,12 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
   }
   */
 
-  p_matrix[0][1]->Scale(m_pressureScale);
-  p_matrix[1][0]->Scale(m_pressureScale);
-  p_matrix[1][1]->Scale(m_pressureScale*m_pressureScale);
-  p_rhs[1]->Scale(m_pressureScale);
+  const real64 pressureScale = 1e6;
+
+  p_matrix[0][1]->Scale(pressureScale);
+  p_matrix[1][0]->Scale(pressureScale);
+  p_matrix[1][1]->Scale(pressureScale*pressureScale);
+  p_rhs[1]->Scale(pressureScale);
 
     // set initial guess to zero.  this is not strictly
     // necessary but is good for comparing solver performance.
@@ -1526,11 +1527,31 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
   clock.start(true);
   if(newtonIter==0)
   {
-    m_blockDiagUU.reset(new ParallelMatrix());
+    m_blockDiagUU = rcp(new ParallelMatrix());
     LAIHelperFunctions::SeparateComponentFilter(m_solidSolver->getSystemMatrix(),*m_blockDiagUU,3);
   }
-  double copyTime = clock.stop();
 
+    // create schur complement approximation matrix
+
+  Epetra_CrsMatrix* schurApproxPP = NULL; // confirm we delete this at end of function!
+  {
+    Epetra_Vector diag(p_matrix[0][0]->RowMap());
+    Epetra_Vector diagInv(p_matrix[0][0]->RowMap());
+ 
+    p_matrix[0][0]->ExtractDiagonalCopy(diag); 
+    diagInv.Reciprocal(diag);
+ 
+    Epetra_FECrsMatrix DB(*p_matrix[0][1]);
+    DB.LeftScale(diagInv);
+    DB.FillComplete();
+
+    Epetra_FECrsMatrix BtDB(Epetra_DataAccess::Copy,p_matrix[1][1]->RowMap(),1); 
+    EpetraExt::MatrixMatrix::Multiply(*p_matrix[1][0],false,DB,false,BtDB);
+    EpetraExt::MatrixMatrix::Add(BtDB,false,-1.0,*p_matrix[1][1],false,1.0,schurApproxPP);
+
+    schurApproxPP->FillComplete();
+  }
+  double auxTime = clock.stop();
   GEOSX_MARK_END(Setup);
 
     // we want to use thyra to wrap epetra operators and vectors
@@ -1561,7 +1582,10 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
   }
 
   RCP<Epetra_Operator> bbb(m_blockDiagUU->unwrappedPointer(),false);
+  RCP<Epetra_Operator> ppp(schurApproxPP,false);
+
   RCP<const Thyra::LinearOpBase<double> >  blockDiagOp = Thyra::epetraLinearOp(bbb);
+  RCP<const Thyra::LinearOpBase<double> >  schurOp = Thyra::epetraLinearOp(ppp);
 
   for(unsigned i=0; i<2; ++i)
   {
@@ -1687,11 +1711,12 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
     if(i==0)
       tmp = prec(*strategy,blockDiagOp);
     else
-      tmp = prec(*strategy,matrix_block[i][i]);
+      tmp = prec(*strategy,schurOp);
+      //tmp = prec(*strategy,matrix_block[i][i]);
 
     sub_op[i] = tmp->getUnspecifiedPrecOp();
   }
-
+ 
 
     // create zero operators for off diagonal blocks
 
@@ -1743,7 +1768,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
     // construction, since now we have a user defined preconditioner
 
   {
-    RCP<Teuchos::ParameterList> list = rcp(new Teuchos::ParameterList("list"),true);
+    RCP<Teuchos::ParameterList> list = rcp(new Teuchos::ParameterList("list"));
     
       list->set("Linear Solver Type","AztecOO");
       list->set("Preconditioner Type","None"); // will use user-defined P
@@ -1810,7 +1835,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
       GEOS_LOG_RANK_0("    Linear Solver | Iter = " << params->m_numKrylovIter << std::scientific <<
                       " | TargetReduction " << params->m_krylovTol <<
                       //" | ActualReduction " << params->m_KrylovResidualFinal / params->m_KrylovResidualInit <<
-                      " | CopyTime " << copyTime <<
+                      " | AuxTime " << auxTime <<
                       " | SetupTime " << setupTime <<
                       " | SolveTime " << solveTime );
     }
@@ -1823,7 +1848,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
         p_solution[b]->Multiply(1.0,*scaling[b][COL],*p_solution[b],0.0);
     }
     */
-    p_solution[1]->Scale(m_pressureScale);
+    p_solution[1]->Scale(pressureScale);
   }
 
     // put 00 matrix back to unscaled form
@@ -1868,6 +1893,8 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
     p_solution[1]->Print(std::cout);
     */
   }
+
+  delete schurApproxPP;
 }
 
 

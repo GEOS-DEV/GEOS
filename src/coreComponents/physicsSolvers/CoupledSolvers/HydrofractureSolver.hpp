@@ -168,19 +168,18 @@ protected:
 
 private:
 
-  const real64 m_pressureScale;
-
   string m_solidSolverName;
   string m_flowSolverName;
+  string m_contactRelationName;
   string m_couplingTypeOptionString;
+
   couplingTypeOption m_couplingTypeOption;
 
   SolidMechanicsLagrangianFEM * m_solidSolver;
   FlowSolverBase * m_flowSolver;
 
-  string m_contactRelationName;
-
-  std::unique_ptr<ParallelMatrix> m_blockDiagUU;
+  Teuchos::RCP<ParallelMatrix> m_blockDiagUU;
+  Teuchos::RCP<const Thyra::LinearOpBase<double> > m_cachedPrecondUU;
 
   ParallelMatrix m_matrix01;
   ParallelMatrix m_matrix10;
