@@ -22,6 +22,11 @@ endif()
 message(STATUS "GEOSX_TPL_DIR=${GEOSX_TPL_DIR}")
 
 ################################
-# uncrustify
+# uncrustify (This is here instead of SetupGeosxThirdParty.cmake so that BLT will see it)
 ################################
-set(UNCRUSTIFY_EXECUTABLE "${GEOSX_TPL_DIR}/uncrustify/bin/uncrustify" CACHE PATH "" )
+if ( EXISTS ${UNCRUSTIFY_EXECUTABLE} )
+    message( STATUS "Using system uncrustify found at ${UNCRUSTIFY_EXECUTABLE}" )
+else()
+    set( UNCRUSTIFY_EXECUTABLE "${GEOSX_TPL_DIR}/uncrustify/bin/uncrustify" CACHE PATH "" )
+    message( STATUS "Using uncrustify from thirdPartyLibs at ${UNCRUSTIFY_EXECUTABLE}" )
+endif()

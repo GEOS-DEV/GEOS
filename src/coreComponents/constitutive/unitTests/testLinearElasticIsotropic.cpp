@@ -17,7 +17,7 @@
 #include "gtest/gtest.h"
 
 #include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/Solid/LinearElasticIsotropic.hpp"
+#include "constitutive/solid/LinearElasticIsotropic.hpp"
 
 #include "dataRepository/xmlWrapper.hpp"
 using namespace geosx;

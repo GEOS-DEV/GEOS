@@ -1,6 +1,3 @@
-message(STATUS "\nProcessing SetupGeosxThirdParty.cmake")
-
-
 ####################################
 # 3rd Party Dependencies
 ####################################
@@ -46,6 +43,10 @@ endif()
 ################################
 include(${CMAKE_SOURCE_DIR}/cmake/thirdparty/FindATK.cmake)
 
+################################
+# PTHREADS
+################################
+find_package(Threads)
 
 ################################
 # HDF5
@@ -627,5 +628,4 @@ if( ENABLE_PETSC )
 
 endif()
 
-message("Leaving SetupGeosxThirdParty.cmake\n")
-
+message(STATUS "thirdPartyLibs = ${thirdPartyLibs}")
