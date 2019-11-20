@@ -32,10 +32,10 @@
 #include "mesh/MeshForLoopInterface.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseFlowKernels.hpp"
 
-#include "constitutive/Solid/PoreVolumeCompressibleSolid.hpp"
-#include "constitutive/Solid/LinearElasticAnisotropic.hpp"
-#include "constitutive/Solid/LinearViscoElasticIsotropic.hpp"
-#include "constitutive/Solid/LinearViscoElasticAnisotropic.hpp"
+#include "constitutive/solid/PoreVolumeCompressibleSolid.hpp"
+#include "constitutive/solid/LinearElasticAnisotropic.hpp"
+#include "constitutive/solid/LinearViscoElasticIsotropic.hpp"
+#include "constitutive/solid/LinearViscoElasticAnisotropic.hpp"
 
 /**
  * @namespace the geosx namespace that encapsulates the majority of the code
