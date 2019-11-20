@@ -76,6 +76,7 @@ SolverBase::SolverBase( std::string const & name,
                     "applied to rests in the EventManager." );
 
   registerWrapper( viewKeyStruct::initialDtString, &m_nextDt, false )->
+    setApplyDefaultValue( 1e99 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Initial time-step value required by the solver to the event manager." );
 }
@@ -243,7 +244,7 @@ void SolverBase::SetNextDt( SystemSolverParameters * const solverParams,
 		nextDt = 2*currentDt;
 		if( m_verboseLevel >= 1 )
 		{
-			GEOS_LOG_RANK_0( getName() << ": Newton solver converged in less than " << iterIncLimit << " iterations, time-step will be doubled.");
+			GEOS_LOG_RANK_0( getName() << ": Newton solver converged in less than " << iterIncLimit << " iterations, time-step required will be doubled.");
 		}
 	}else if (newtonIter >  iterCutLimit)
 	{
@@ -251,7 +252,7 @@ void SolverBase::SetNextDt( SystemSolverParameters * const solverParams,
 		nextDt = currentDt/2;
 		if( m_verboseLevel >= 1 )
 		{
-			GEOS_LOG_RANK_0( getName() << ": Newton solver converged in more than " << iterCutLimit << " iterations, time-step will be doubled.");
+			GEOS_LOG_RANK_0( getName() << ": Newton solver converged in more than " << iterCutLimit << " iterations, time-step required will be halved.");
 		}
 	}else
 	{

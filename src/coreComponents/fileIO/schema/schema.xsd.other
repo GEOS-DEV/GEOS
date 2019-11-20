@@ -368,6 +368,8 @@
 		<xsd:attribute name="KrylovResidualFinal" type="real64" />
 		<!--KrylovResidualInit => Initial Krylov solver residual.-->
 		<xsd:attribute name="KrylovResidualInit" type="real64" />
+		<!--numberOfNewtonIterations => Number of Newton's iterations.-->
+		<xsd:attribute name="numberOfNewtonIterations" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="FiniteVolumeType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
