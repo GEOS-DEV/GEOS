@@ -84,9 +84,9 @@ void finalizeCXXUtils()
 void basicSetup( int argc, char * argv[] )
 {
   setupMPI( argc, argv );
+  setupCXXUtils();
   setupOpenMP();
   setupMKL();
-  setupCXXUtils();
   setupLAI( argc, argv );
 }
 
