@@ -33,7 +33,7 @@
 
 
 #ifdef USE_GEOSX_PTP
-#include "GEOSX_PTP/ParallelTopologyChange.hpp"
+#include "physicsSolvers/GEOSX_PTP/ParallelTopologyChange.hpp"
 #endif
 
 #include <set>
@@ -177,7 +177,8 @@ SurfaceGenerator::SurfaceGenerator( const std::string& name,
 //  m_maxTurnAngle(91.0),
   m_solidMaterialName(""),
   m_nodeBasedSIF(0),
-  m_rockToughness(1.0e99)
+  m_rockToughness(1.0e99),
+  m_mpiCommOrder(0)
 {
   this->registerWrapper( viewKeyStruct::failCriterionString,
                              &this->m_failCriterion,
@@ -194,6 +195,10 @@ SurfaceGenerator::SurfaceGenerator( const std::string& name,
   registerWrapper(viewKeyStruct::nodeBasedSIFString, &m_nodeBasedSIF, 0)->
       setInputFlag(InputFlags::OPTIONAL)->
       setDescription("Rock toughness of the solid material");
+
+  registerWrapper(viewKeyStruct::mpiCommOrderString, &m_mpiCommOrder, 0)->
+      setInputFlag(InputFlags::OPTIONAL)->
+      setDescription("Flag to enable MPI consistent communication ordering");
 
   this->registerWrapper( viewKeyStruct::fractureRegionNameString, &m_fractureRegionName, 0 )->
       setInputFlag(dataRepository::InputFlags::OPTIONAL)->
@@ -575,10 +580,11 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
     ModifiedObjectLists receivedObjects;
 
     /// Nodes to edges in process node is not being set on rank 2. need to check that the new node->edge map is properly communicated
-    ParallelTopologyChange::SyncronizeTopologyChange( mesh,
-                                                      neighbors,
-                                                      modifiedObjects,
-                                                      receivedObjects );
+    ParallelTopologyChange::SynchronizeTopologyChange( mesh,
+                                                       neighbors,
+                                                       modifiedObjects,
+                                                       receivedObjects,
+                                                       m_mpiCommOrder );
 
     SynchronizeTipSets( faceManager,
                         edgeManager,
@@ -587,6 +593,7 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
 
 
 #else
+    GEOSX_UNUSED_VAR( neighbors );
     AssignNewGlobalIndicesSerial( nodeManager, modifiedObjects.newNodes );
     AssignNewGlobalIndicesSerial( edgeManager, modifiedObjects.newEdges );
     AssignNewGlobalIndicesSerial( faceManager, modifiedObjects.newFaces );

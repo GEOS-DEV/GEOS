@@ -678,7 +678,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
   int mytargetSetNumber = targetSet.size();
   int totalTargetSetNumber;
 
-  MPI_Allreduce(&mytargetSetNumber, &totalTargetSetNumber, 1, MPI_INTEGER, MPI_SUM, MPI_COMM_WORLD);
+  MpiWrapper::allReduce( &mytargetSetNumber, &totalTargetSetNumber, 1, MPI_SUM, MPI_COMM_GEOSX );
 
   real64 const setSizeFactor = ( normalizeBySetSize && (totalTargetSetNumber!= 0) ) ? 1.0/totalTargetSetNumber : 1.0;
 
