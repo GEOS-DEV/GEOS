@@ -47,7 +47,7 @@ set(ENABLE_MKL ON CACHE BOOL "")
 set(MKL_ROOT /usr/tce/packages/intel/intel-19.0.4/compilers_and_libraries_2019.4.227/linux/mkl)
 set(MKL_INCLUDE_DIRS /usr/tce/packages/mkl/mkl-2019.0/include CACHE STRING "")
 set(MKL_LIBRARIES ${MKL_ROOT}/lib/intel64/libmkl_intel_lp64.so
-                  ${MKL_ROOT}/lib/intel64/libmkl_gnu_thread.so
+                  ${MKL_ROOT}/lib/intel64/libmkl_intel_thread.so
                   ${MKL_ROOT}/lib/intel64/libmkl_core.so
                   CACHE STRING "")
 
