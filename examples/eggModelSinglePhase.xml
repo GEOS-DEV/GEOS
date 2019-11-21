@@ -1,0 +1,182 @@
+
+<Problem>
+
+ <Solvers
+    gravityVector="0.0, 0.0, 0.0">
+
+    <!--  Reservoir name="reservoirSystem"
+               flowSolverName="singlePhaseFlow"
+               wellSolverName="singlePhaseWell"
+               verboseLevel="1"
+               targetRegions="{egg,wellRegion1,wellRegion2}">
+      <SystemSolverParameters maxIterNewton="40"
+                              useDirectSolver="1"
+                              verbosityFlag="0"
+                              maxSubSteps="10"
+                              maxTimeStepCuts="10"
+                              newtonTol="1e-4"/>
+    </Reservoir-->
+  
+    <SinglePhaseFlow name="singlePhaseFlow"
+                     verboseLevel="1"
+                     gravityFlag="1"
+                     discretization="singlePhaseTPFA"
+                     fluidName="water"
+                     solidName="rock"
+                     targetRegions="{egg}">
+    </SinglePhaseFlow>
+
+    <!--SinglePhaseWell name="singlePhaseWell"
+                     verboseLevel="1"
+                     gravityFlag="1"
+                     wellFluidName="water"
+                     targetRegions="{wellRegion1,wellRegion2}">
+        <WellControls name="wellControls1"
+                      type="producer"
+                      control="BHP"
+                      targetBHP="1e6"
+                      targetRate="1e99"
+                      referenceDepth="0.5"/>
+        <WellControls name="wellControls2"
+                      type="injector"
+                      control="BHP" 
+                      targetBHP="1e7"
+                      targetRate="1e99" 
+                      referenceDepth="0.5"/>
+    </SinglePhaseWell-->
+  </Solvers>
+  
+  <Mesh>
+    <PAMELAMeshGenerator name="mesh"
+                         file="/g/g90/cusini1/geosx/GEOSX/examples/egg.msh"
+                         fieldNamesInGEOSX="{permeability}"
+                         fieldsToImport="{PERM}"/>
+                         
+   <!--InternalMesh name="mesh"
+                  elementTypes="{C3D8}" 
+                  xCoords="{0, 100}"
+                  yCoords="{0, 100}"
+                  zCoords="{0, 10}"
+                  nx="{100}"
+                  ny="{100}"
+                  nz="{10}"
+                  cellBlockNames="{0_HEX}"/-->
+
+    <!--InternalWell name="well_producer1"
+                  wellRegionName="wellRegion1"
+                  wellControlsName="wellControls1"
+                  meshName="mesh"
+                  polylineNodeCoords="{ {140,  20, 0}, 
+                                        {140,  20, 2} }"
+                  polylineSegmentConn="{ {0, 1} }"
+                  crossSectionArea="0.3"
+                  numElementsPerSegment="1">
+        <Perforation name="producer1_perf1"
+                     distanceFromHead="0.5"
+                     transmissibility="1e-13"/> 
+    </InternalWell--> 
+
+    <!--InternalWell name="well_injector1"
+                  wellRegionName="wellRegion2"
+                  wellControlsName="wellControls2"
+                  meshName="mesh"
+                  polylineNodeCoords="{ {20, 140, 0}, 
+                                        {20, 140, 2 } }"
+                  polylineSegmentConn="{ {0, 1} }"
+                  crossSectionArea="0.3"
+                  numElementsPerSegment="1">
+        <Perforation name="injector1_perf1"
+                     distanceFromHead="0.5"
+                     transmissibility="1e-13"/> 
+    </InternalWell--> 
+  </Mesh>
+
+  <Events maxTime="5e6" verbosity="1">
+    <PeriodicEvent name="outputs"
+                   timeFrequency="5e3"
+                   targetExactTimestep="1"
+                   target="/Outputs/siloOutput" />
+
+    <PeriodicEvent name="solverApplications"
+                   target="/Solvers/singlePhaseFlow"/>
+                   
+    <PeriodicEvent name="restarts"
+                   timeFrequency="2.5e4"
+                   targetExactTimestep="0"
+                   target="/Outputs/restartOutput"/>
+  </Events>
+  
+ <Geometry>
+    <Box name="all"  xMin="-1e9, -1e9, -1e9" xMax="  1e9, 1e9, 1e9"/>
+    <Box name="inj"  xMin=" 0, 0, -0.01"     xMax="   140,   10,  10"/>
+    <Box name="prod" xMin=" 0, 130.0, -0.01" xMax="  140.00,  140.00,  10"/>
+  </Geometry>
+  
+  <ElementRegions>
+    <CellElementRegion name="egg"
+                       cellBlocks="{0_HEX}"
+                       materialList="{water, rock}"/>
+    <!--WellElementRegion name="wellRegion1"
+                       materialList="{water}"/> 
+    <WellElementRegion name="wellRegion2"
+                       materialList="{water}"/--> 
+  </ElementRegions>
+
+ <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation name="singlePhaseTPFA"
+                                 fieldName="pressure"
+                                 boundaryFieldName="facePressure"
+                                 targetRegions="{egg}"
+                                 coefficientName="permeability"/>
+    </FiniteVolume>
+ </NumericalMethods>
+
+ <Constitutive>
+    <CompressibleSinglePhaseFluid name="water"
+                                  defaultDensity="1000"
+                                  defaultViscosity="0.001"
+                                  referencePressure="1e6"
+                                  referenceDensity="1000"
+                                  compressibility="5e-10"
+                                  referenceViscosity="0.001"
+                                  viscosibility="0.0"/>
+
+    <PoreVolumeCompressibleSolid name="rock"
+                                 referencePressure="1e6"
+                                 compressibility="1e-15"/>
+  </Constitutive>
+
+  <FieldSpecifications>
+    <FieldSpecification name="porosity_egg"
+                        initialCondition="1"
+                        setNames="{all}"
+                        objectPath="ElementRegions/egg/0_HEX"
+                        fieldName="referencePorosity"
+                        scale="0.2"/>
+
+    <FieldSpecification name="initialPressure_egg"
+                        initialCondition="1"
+                        setNames="{all}"
+                        objectPath="ElementRegions/egg/0_HEX"
+                        fieldName="pressure"
+                        scale="5e6"/>
+                        
+	<FieldSpecification name="injTerm"
+		objectPath="ElementRegions/egg/0_HEX" 
+		fieldName="pressure" 
+		scale="1e7"
+		setNames="{inj}" />
+		
+	<FieldSpecification name="prodTerm"
+		objectPath="ElementRegions/egg/0_HEX" 
+		fieldName="pressure" 
+		scale="1e6"
+		setNames="{prod}"/>                                             
+  </FieldSpecifications>
+
+  <Outputs>
+    <Silo name="siloOutput"/>
+    <Restart name="restartOutput"/>
+  </Outputs>
+</Problem>
