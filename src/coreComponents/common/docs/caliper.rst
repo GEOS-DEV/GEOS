@@ -3,7 +3,7 @@ Basic profiling with CALIPER
 *****************************
 
 GEOSX is equipped with `Caliper <https://github.com/LLNL/Caliper>`_ timers.
-We integrate Caliper into GEOSX by marking source-code sections of interest such as compuational kernels or initialization steps.
+We integrate Caliper into GEOSX by marking source-code sections of interest such as computational kernels or initialization steps.
 Caliper is included in the GEOSX TPL library and is built by adding the following cmake configuration to a host-config file.
 
 .. code-block:: sh
@@ -68,7 +68,7 @@ way to get started is setting the following variable
 
 * ``CALI_CONFIG_PROFILE=runtime-report``
 
-We refer the reader to the full Caliper tutorial `Caliper <https://github.com/LLNL/Caliper>`_ , for further details.
+We refer the reader to the full Caliper tutorial `Caliper <https://github.com/LLNL/Caliper>`_, for further details.
 
 Post running application, the output will be of the following form (where time is given in microseconds). 
   

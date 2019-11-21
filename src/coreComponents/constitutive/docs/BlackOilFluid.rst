@@ -11,7 +11,7 @@ In the black-oil model three pseudo-components, oil (o), gas (g) and water (w)
 are considered. These are assumed to be partitioned across three fluid phases,
 named liquid (l), vapor (v) and aqueous (a).
 
-Phase behavior is characterized by the following properties which are used to relate
+Phase behavior is characterized by the following quantities which are used to relate
 properties of the fluids in the reservoir to their properties at surface conditions.
 
 * :math:`B_o`: oil formation volume factor
@@ -24,7 +24,7 @@ as functions of pressure and solution ratios.
 
 Dead oil
 -------------
-In **dead-oil** each component occupies only one phase. Thus,the following partition matrix determines the components distribution within the
+In **dead-oil** each component occupies only one phase. Thus, the following partition matrix determines the components distribution within the
 three phases:
 
 .. math::

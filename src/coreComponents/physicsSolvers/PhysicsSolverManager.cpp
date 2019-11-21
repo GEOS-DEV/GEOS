@@ -42,6 +42,7 @@ PhysicsSolverManager::~PhysicsSolverManager()
 {}
 
 
+//START_SPHINX_INCLUDE_00
 Group * PhysicsSolverManager::CreateChild( string const & childKey, string const & childName )
 {
   Group * rval = nullptr;
