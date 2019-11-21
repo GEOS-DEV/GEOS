@@ -1397,19 +1397,11 @@ CompositionalMultiphaseFlow::CheckSystemSolution( DomainPartition const * const 
   });
   int globalCheck;
 
-// It would be nicer to use bool instead of int but I don't seem to be able to make it work.
-//  MPI_Allreduce( &localCheck,
-//                 &globalCheck,
-//                 1,
-//				   MPI_LOGICAL,
-//				   MPI_LAND,
-//                 MPI_COMM_GEOSX);
-  MPI_Allreduce( &localCheck,
-                 &globalCheck,
-                 1,
-                 MPI_INT,
-                 MPI_MIN,
-                 MPI_COMM_GEOSX);
+  MpiWrapper::allReduce( &localCheck,
+                         &globalCheck,
+                         1,
+                         MPI_MIN,
+                         MPI_COMM_GEOSX );
 
   bool result = true;
   if (globalCheck == 0)
