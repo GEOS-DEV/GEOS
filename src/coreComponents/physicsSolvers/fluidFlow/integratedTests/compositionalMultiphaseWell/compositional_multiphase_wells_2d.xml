@@ -27,6 +27,7 @@
                                  useMass="0">
     </CompositionalMultiphaseFlow>
 
+ <!-- SPHINX_COMP_WELL_SOLVER -->
     <CompositionalMultiphaseWell name="compositionalMultiphaseWell"
                                  verboseLevel="1"
                                  gravityFlag="1"
@@ -55,7 +56,7 @@
                	      injectionStream="{0.1, 0.1, 0.1, 0.7}"
                       referenceDepth="0.5"/>
     </CompositionalMultiphaseWell>
-
+ <!-- SPHINX_COMP_WELL_SOLVER_END -->
     
   </Solvers>  
 

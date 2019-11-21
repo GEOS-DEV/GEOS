@@ -17,4 +17,5 @@ physics solvers to be included in the simulation.
 
    multiphysics/docs/Poromechanics
 
+   fluidFlow/docs/CompositionalMultiphaseWell
 
