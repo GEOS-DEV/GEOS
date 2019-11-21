@@ -1,7 +1,7 @@
 language: minimal
 env:
   global:
-  - GEOSX_TPL_TAG=81-249
+  - GEOSX_TPL_TAG=81-251
 matrix:
   include:
   - os: osx
