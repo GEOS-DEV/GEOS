@@ -45,7 +45,7 @@ Group::Group( std::string const & name,
   m_size( 0 ),
   m_capacity( 0 ),
   m_name( name ),
-  m_verbosity(0),
+  m_logLevel( 0 ),
   m_restart_flags( RestartFlags::WRITE_AND_READ ),
   m_input_flags( InputFlags::INVALID ),
   m_conduitNode( conduitNodeFromParent( name, parent ) )
@@ -529,14 +529,14 @@ void Group::postRestartInitializationRecursive( Group * const domain )
 }
 
 
-void Group::enableVerbosityInput()
+void Group::enableLogLevelInput()
 {
-  string const verbosityString = "verbosity";
+  string const logLevelString = "logLevel";
 
-  registerWrapper(verbosityString, &m_verbosity, false )->
-    setApplyDefaultValue(0)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Verbosity level");
+  registerWrapper( logLevelString, &m_logLevel, false )->
+    setApplyDefaultValue( 0 )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Log level" );
 }
 
 } /* end namespace dataRepository */

@@ -45,8 +45,8 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
 {
   setInputFlags(InputFlags::OPTIONAL);
   
-  // This enables verbose filtering
-  enableVerbosityInput();
+  // This enables logLevel filtering
+  enableLogLevelInput();
 
   registerWrapper(viewKeysStruct::solverTypeString, &m_solverType, false )->
     setInputFlag(InputFlags::OPTIONAL)->

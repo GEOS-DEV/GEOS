@@ -51,8 +51,8 @@ EventBase::EventBase( const std::string& name,
 {
   setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
 
-  // This enables verbose filtering
-  enableVerbosityInput();
+  // This enables logLevel filtering
+  enableLogLevelInput();
   
   registerWrapper(viewKeyStruct::eventTargetString, &m_eventTarget, false )->
     setInputFlag(InputFlags::OPTIONAL)->
@@ -225,8 +225,8 @@ void EventBase::Execute(real64 const time_n,
     EventBase * subEvent = static_cast<EventBase *>( this->GetSubGroups()[m_currentSubEvent] );
     integer subEventForecast = subEvent->GetForecast();
 
-    // Print debug information for verbosity >= 1
-    VERBOSE_LOG_RANK_0(1, "          SubEvent: " << m_currentSubEvent << " (" << subEvent->getName() << "), dt_request=" << subEvent->GetCurrentEventDtRequest() << ", forecast=" << subEventForecast);
+    // Print debug information for logLevel >= 1
+    LOG_LEVEL_RANK_0(1, "          SubEvent: " << m_currentSubEvent << " (" << subEvent->getName() << "), dt_request=" << subEvent->GetCurrentEventDtRequest() << ", forecast=" << subEventForecast);
 
     if (subEventForecast <= 0)
     {

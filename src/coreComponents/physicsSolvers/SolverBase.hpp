@@ -463,7 +463,6 @@ public:
 
   struct viewKeyStruct
   {
-    constexpr static auto verboseLevelString = "verboseLevel";
     constexpr static auto gravityVectorString = "gravityVector";
     constexpr static auto cflFactorString = "cflFactor";
     constexpr static auto maxStableDtString = "maxStableDt";
@@ -483,7 +482,6 @@ public:
   R1Tensor       & getGravityVector()       { return m_gravityVector; }
   R1Tensor const * globalGravityVector() const;
 
-  integer verboseLevel() const { return m_verboseLevel; }
 
   /**
    * accessor for the system solver parameters.
@@ -545,7 +543,7 @@ protected:
   template<typename BASETYPE>
   static BASETYPE * GetConstitutiveModel( dataRepository::Group * dataGroup, string const & name );
 
-  integer m_verboseLevel = 0;
+  integer m_logLevel = 0;
   R1Tensor m_gravityVector;
   SystemSolverParameters m_systemSolverParameters;
 
