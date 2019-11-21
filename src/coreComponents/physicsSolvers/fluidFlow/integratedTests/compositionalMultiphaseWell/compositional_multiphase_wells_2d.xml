@@ -9,7 +9,8 @@
                wellSolverName="compositionalMultiphaseWell"
                verboseLevel="1"
                targetRegions="{Region1,wellRegion1,wellRegion2,wellRegion3}">
-      <SystemSolverParameters maxIterNewton="40"
+      <SystemSolverParameters newtonTol="1.0e-4"
+                              maxIterNewton="40"
                               useDirectSolver="1"
                               verbosityFlag="0"/>
     </Reservoir>
@@ -134,19 +135,19 @@
   </Mesh>
 
 
-  <Events maxTime="5e4">
+  <Events maxTime="7e3">
 
     <PeriodicEvent name="solverApplications"
                    forceDt="1e3"
                    target="/Solvers/reservoirSystem" />
 
     <PeriodicEvent name="outputs"
-                   timeFrequency="5e3"
+                   timeFrequency="1e3"
                    targetExactTimestep="1"
                    target="/Outputs/siloOutput" />
 
     <PeriodicEvent name="restarts"
-                   timeFrequency="2.5e4"
+                   timeFrequency="3e3"
                    targetExactTimestep="0"
                    target="/Outputs/restartOutput" />
   </Events>
