@@ -162,7 +162,6 @@ protected:
 private:
 
   string m_fieldName;
-  stabledt m_stabledt;
   timeIntegrationOption m_timeIntegrationOption;
 
 };
