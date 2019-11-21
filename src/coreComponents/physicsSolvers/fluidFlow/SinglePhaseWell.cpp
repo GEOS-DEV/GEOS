@@ -695,7 +695,7 @@ void SinglePhaseWell::CheckWellControlSwitch( DomainPartition * const domain )
       {
         wellControls->SetControl( WellControls::Control::LIQUIDRATE,
                                   wellControls->GetTargetRate() );
-        LOG_LEVEL_RANK_0( "Control switch for well " << subRegion->getName()
+        LOG_LEVEL_RANK_0( 1, "Control switch for well " << subRegion->getName()
                           << " from BHP constraint to rate constraint" );
       }
       else // rate control
@@ -704,7 +704,7 @@ void SinglePhaseWell::CheckWellControlSwitch( DomainPartition * const domain )
                                   wellControls->GetTargetBHP() );
 
         // Debug information for logLevel >= 1 
-        LOG_LEVEL_RANK_0(1, "Control switch for well " << subRegion->getName()
+        LOG_LEVEL_RANK_0( 1, "Control switch for well " << subRegion->getName()
                               << " from rate constraint to BHP constraint" );
       }
     }
