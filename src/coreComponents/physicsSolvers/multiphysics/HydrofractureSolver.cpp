@@ -98,8 +98,10 @@ void HydrofractureSolver::RegisterDataOnMesh( dataRepository::Group * const Mesh
 	  elemManager->forElementSubRegions<FaceElementSubRegion>( [&]( auto * const elementSubRegion ) -> void
 		{
 		  elementSubRegion->template registerWrapper< array1d<real64> >( viewKeyStruct::contactStressString )->
+      setPlotLevel(PlotLevel::LEVEL_3)->
 			setDescription("Contact stress");
 		  elementSubRegion->template registerWrapper< array1d<real64> >( viewKeyStruct::appliedFacePressureString )->
+      setPlotLevel(PlotLevel::LEVEL_3)->
 			setDescription("Applied fluid pressure on fracture faces");
 		});
 	}
@@ -399,7 +401,9 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
         // TODO this needs a proper contact based strategy for aperture
         aperture[kfe] = -Dot(temp,faceNormal[kf0]) / numNodesPerFace;
         contactStress[kfe] = std::max( - aperture[kfe] * contactRelation->stiffness(), 0.0 );
-//        std::cout<< "\n\n Update fracture volume: kfe = " << kfe  <<", aper0 = "<<aperture[kfe]<<", contactStress = "<<contactStress[kfe];
+
+//        if (contactStress[kfe] > 0)
+//          std::cout<< "\n\n Contact stress: kfe = " << kfe  <<", aper0 = "<<aperture[kfe]<<", contactStress = "<<contactStress[kfe];
 
         aperture[kfe] = contactRelation->effectiveAperture( aperture[kfe] );
         deltaVolume[kfe] = aperture[kfe] * area[kfe] - volume[kfe];

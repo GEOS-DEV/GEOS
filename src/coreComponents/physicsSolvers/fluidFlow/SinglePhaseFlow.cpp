@@ -360,37 +360,38 @@ void SinglePhaseFlow::UpdateEOS( real64 const time_n,
 
   if (m_poroElasticFlag)
   {
-	applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-							 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
-							 ElementSubRegionBase * const subRegion )
-	{
-		SingleFluidBase * const fluid = GetConstitutiveModel<SingleFluidBase>( subRegion, m_fluidName );
-		arrayView2d<real64> const & dens = m_density[er][esr][m_fluidIndex];
-		arrayView1d<real64> const & vol  = m_volume[er][esr];
-		arrayView1d<real64> const & poro = m_porosity[er][esr];
-		arrayView1d<real64> const & mass = m_mass[er][esr];
-		arrayView1d<real64> const & pres = m_pressure[er][esr];
-		arrayView1d<real64> const & dPres = m_deltaPressure[er][esr];
+    applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
+                 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
+                 ElementSubRegionBase * const subRegion )
+    {
+      SingleFluidBase * const fluid = GetConstitutiveModel<SingleFluidBase>( subRegion, m_fluidName );
+      arrayView2d<real64> const & dens = m_density[er][esr][m_fluidIndex];
+      arrayView1d<real64> const & vol  = m_volume[er][esr];
+      arrayView1d<real64> const & poro = m_porosity[er][esr];
+      arrayView1d<real64> const & mass = m_mass[er][esr];
+      arrayView1d<real64> const & pres = m_pressure[er][esr];
+      arrayView1d<real64> const & dPres = m_deltaPressure[er][esr];
 
-		forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
-		{
-      dens[ei][0] = mass[ei] / ( vol[ei] * poro[ei] ) * m_relaxationCoefficient + dens[ei][0] * (1 - m_relaxationCoefficient);
-
-			dPres[ei] = pres[ei];
-			fluid->PointInverseUpdate( pres[ei], ei, 0);
-//      pres[ei] = std::max(pres[ei], 0.0);
-
-			dPres[ei] = pres[ei] - dPres[ei];
-
-			if (pres[ei] < 0)
+      forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
       {
-        std::cout << "\n----------------- Alert: pressure < 0 ----------------" ;
-        std::cout << "\n Fluid Update in poroElastic: ei = " << ei  << ", mass = " << mass[ei] << ", poro= " << poro[ei] << ", vol = " << vol[ei]
-                  << ", calculated dens = " << dens[ei][0] << ", new pres = " << pres[ei] << "\n";
-      }
+        dens[ei][0] = mass[ei] / ( vol[ei] * poro[ei] ) * m_relaxationCoefficient + dens[ei][0] * (1 - m_relaxationCoefficient);
 
-		} );
-	} );
+        dPres[ei] = pres[ei];
+        fluid->PointInverseUpdate( pres[ei], ei, 0);
+  //      pres[ei] = std::max(pres[ei], 0.0);
+
+        dPres[ei] = pres[ei] - dPres[ei];
+
+//        if (pres[ei] < 0)
+//        if (ei < 6)
+//        {
+//          std::cout << "\n----------------- Alert: pressure < 0 ----------------" ;
+//          std::cout << "\n Fluid Update in poroElastic: ei = " << ei + 1 << ", mass = " << mass[ei] << ", poro= " << poro[ei] << ", vol = " << vol[ei]
+//                    << ", calculated dens = " << dens[ei][0] << ", new pres = " << pres[ei] << "\n";
+//        }
+
+      } );
+    } );
   }
   else
   {
@@ -541,7 +542,7 @@ void SinglePhaseFlow::ExplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n
       if (poro[0] > 0.999999 )
         totalCompressibility = fluid->compressibility();
       else if (m_poroElasticFlag)
-        totalCompressibility = dynamic_cast<LinearViscoElasticIsotropic*>(solid)->compressibility() + fluid->compressibility();
+        totalCompressibility = dynamic_cast<LinearElasticIsotropic*>(solid)->compressibility() + fluid->compressibility();
       else
         totalCompressibility = dynamic_cast<PoreVolumeCompressibleSolid*>(solid)->compressibility() + fluid->compressibility();
 

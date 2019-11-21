@@ -619,6 +619,7 @@ struct FluxKernel
     real64 potDif = 0.0, weightedSum = 0.0;
     R1Tensor faceConormal, cellToFaceVec;
     R2SymTensor coefTensor;
+    bool faceToCellConnector = false;
     for (localIndex ke = 0; ke < stencilSize; ++ke)
     {
       localIndex const er  = seri[ke];
@@ -633,6 +634,7 @@ struct FluxKernel
       potDif += weight * (pres[er][esr][ei] - gravTerm);
 
       weightedSum += stencilWeightedElementCenterToConnectorCenter[ke];
+      if (stencilWeightedElementCenterToConnectorCenter[ke] < 1e-30) faceToCellConnector = true;
     }
 
     // upwinding of fluid properties (make this an option?)
@@ -645,14 +647,15 @@ struct FluxKernel
     real64 viscosity = 1 / mob[er_up][esr_up][ei_up] * dens[er_up][esr_up][fluidIndex][ei_up][0];
 
     // TODO the density terms in dDens_dPres and mob cancel out only for ExponentApproximationType::Full relationship. Need to consider other ExponentApproximationTypes.
-    *maxStableDt = std::min( totalCompressibility[er_up][esr_up][ei_up] * viscosity * poro[er_up][esr_up][ei_up] / 2.0 * weightedSum * weightedSum, *maxStableDt);
+    if (!faceToCellConnector)
+      *maxStableDt = std::min( totalCompressibility[er_up][esr_up][ei_up] * viscosity * poro[er_up][esr_up][ei_up] / 2.0 * weightedSum * weightedSum, *maxStableDt);
 
-//    if (*maxStableDt < 0)
-//    {
-//      std::cout<< "\n Porosity = " << poro[er_up][esr_up][ei_up] << ", viscosity = " << viscosity
-//       << ", weightedSum = " << weightedSum << ", totalCompressibility = " << totalCompressibility[ei_up][esr_up][ei_up] << ", potDif = " << potDif ;
-//      GEOS_ERROR("ComputeMatrix::negative maxStableDt");
-//    }
+    if (*maxStableDt < 0)
+    {
+      std::cout<< "\n Porosity = " << poro[er_up][esr_up][ei_up] << ", viscosity = " << viscosity
+       << ", weightedSum = " << weightedSum << ", totalCompressibility = " << totalCompressibility[er_up][esr_up][ei_up] << ", potDif = " << potDif ;
+      GEOS_ERROR("ComputeMatrix::negative maxStableDt");
+    }
 
     // populate local flux
     (*mass)[seri[0]][sesri[0]][sei[0]] -= mob[er_up][esr_up][ei_up] * potDif * dt;
@@ -866,7 +869,7 @@ struct FluxKernel
   {
     real64 sumOfWeights = 0, dAperTerm_dAper;
     real64 aperTerm[10];
-    real64 maxApertureForPermeablity = 1e-4;
+    real64 maxApertureForPermeablity = 2e-4;
 
     for( localIndex k=0 ; k<numFluxElems ; ++k )
     {
