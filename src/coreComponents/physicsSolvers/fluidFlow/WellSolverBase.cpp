@@ -135,10 +135,10 @@ void WellSolverBase::AssembleSystem( real64 const time,
   // finally assemble the well control equation
   FormControlEquation( domain, &dofManager, &matrix, &rhs );
 
-  // Log messages for verbosity >= 2
-  VERBOSE_LOG_RANK_0(2, "After WellSolverBase::AssembleSystem" );
-  VERBOSE_LOG_RANK_0(2, "\nJacobian:\n" << matrix );
-  VERBOSE_LOG_RANK_0(2, "\nResidual:\n" << rhs );
+  // Log messages for logLevel >= 2
+  LOG_LEVEL_RANK_0(2, "After WellSolverBase::AssembleSystem" );
+  LOG_LEVEL_RANK_0(2, "\nJacobian:\n" << matrix );
+  LOG_LEVEL_RANK_0(2, "\nResidual:\n" << rhs );
 }
 
 void WellSolverBase::UpdateStateAll( DomainPartition * const domain )

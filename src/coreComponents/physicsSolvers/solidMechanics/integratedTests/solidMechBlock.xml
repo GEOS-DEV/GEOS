@@ -4,7 +4,7 @@
   <Solvers>
     <SolidMechanics_LagrangianFEM name="lagsolve" 
                                   timeIntegrationOption="QuasiStatic"
-                                  verbosity="0"
+                                  logLevel="0"
                                   discretization="FE1"
                                   targetRegions="{Region2}"
                                   >
@@ -13,7 +13,7 @@
                               krylovTol="1.0e-8"
                               newtonTol="1.0e-4"
                               maxIterNewton="8"
-                              verbosity="0"/>
+                              logLevel="0"/>
     </SolidMechanics_LagrangianFEM>
   </Solvers>
 

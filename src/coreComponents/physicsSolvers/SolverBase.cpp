@@ -36,8 +36,8 @@ SolverBase::SolverBase( std::string const & name,
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
-  // This enables verbose filtering
-  enableVerbosityInput();
+  // This enables logLevel filtering
+  enableLogLevelInput();
 
   this->registerWrapper( viewKeyStruct::gravityVectorString, &m_gravityVector, false );
 
@@ -114,7 +114,7 @@ void SolverBase::PostProcessInput()
 
 void SolverBase::SetLinearSolverParameters()
 {
-  m_linearSolverParameters.verbosity = m_systemSolverParameters.getVerbosityLevel();
+  m_linearSolverParameters.logLevel = m_systemSolverParameters.getLogLevel();
 
   if ( m_systemSolverParameters.scalingOption() )
   {
@@ -196,7 +196,7 @@ void SolverBase::Execute( real64 const time_n,
 
     if(  dtRemaining > 0.0 )
     {
-      VERBOSE_LOG_RANK_0( 1, getName() << ": sub-step = " << subStep
+      LOG_LEVEL_RANK_0( 1, getName() << ": sub-step = " << subStep
                                        << ", accepted dt = " << dtAccepted
                                        << ", remaining dt = " << dtRemaining );
     }
@@ -272,7 +272,7 @@ bool SolverBase::LineSearch( real64 const & time_n,
 
     if( !CheckSystemSolution( domain, dofManager, solution, localScaleFactor ) )
     {
-      VERBOSE_LOG_RANK_0( 1, "Line search: " << lineSearchIteration << ", solution check failed" );
+      LOG_LEVEL_RANK_0( 1, "Line search: " << lineSearchIteration << ", solution check failed" );
       continue;
     }
 
@@ -287,7 +287,7 @@ bool SolverBase::LineSearch( real64 const & time_n,
     // get residual norm
     residualNorm = CalculateResidualNorm( domain, dofManager, rhs );
 
-    VERBOSE_LOG_RANK_0( 1, "Line search: " << lineSearchIteration << ", R = " << residualNorm );
+    LOG_LEVEL_RANK_0( 1, "Line search: " << lineSearchIteration << ", R = " << residualNorm );
 
     // if the residual norm is less than the last residual, we can proceed to the
     // solution step
@@ -357,7 +357,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       // get residual norm
       real64 residualNorm = CalculateResidualNorm( domain, dofManager, rhs );
 
-      VERBOSE_LOG_RANK_0( 1, "Attempt: " << dtAttempt << ", Newton: " << newtonIter << ", R = " << residualNorm );
+      LOG_LEVEL_RANK_0( 1, "Attempt: " << dtAttempt << ", Newton: " << newtonIter << ", R = " << residualNorm );
 
       // if the residual norm is less than the Newton tolerance we denote that we have
       // converged and break from the Newton loop immediately.

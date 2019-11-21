@@ -1018,10 +1018,10 @@ public:
   void postRestartInitializationRecursive( Group * const domain );
 
   /// Enable verbosity input for object
-  void enableVerbosityInput();
+  void enableLogLevelInput();
 
   /// @return The verbosity level
-  integer getVerbosityLevel() const { return m_verbosity; }
+  integer getLogLevel() const { return m_logLevel; }
 
 protected:
   /**
@@ -1109,7 +1109,7 @@ private:
   string m_name;
 
   /// Verbosity flag for group logs
-  integer m_verbosity;
+  integer m_logLevel;
 
   RestartFlags m_restart_flags; ///< Restart flag for this group...and
                                 ///< subsequently all wrappers in this group

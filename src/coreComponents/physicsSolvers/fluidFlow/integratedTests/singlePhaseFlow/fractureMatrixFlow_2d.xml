@@ -5,7 +5,7 @@
 
         <SinglePhaseFlow
             name="SinglePhaseFlow"
-            verbosity="0"
+            logLevel="0"
             gravityFlag="1"
             discretization="singlePhaseTPFA"
             targetRegions="{Region2, Fracture}"
@@ -19,7 +19,7 @@
         </SinglePhaseFlow>
         <SurfaceGenerator
             name="SurfaceGen"
-            verbosity="0"
+            logLevel="0"
             solidMaterialName="rock"
             fractureRegion="Fracture"
             targetRegions="{Fracture}"

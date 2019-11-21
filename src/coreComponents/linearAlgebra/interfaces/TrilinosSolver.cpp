@@ -116,7 +116,7 @@ void TrilinosSolver::solve_direct( EpetraMatrix & mat,
   solver->Solve();
 
   // Basic output
-  if( m_parameters.verbosity > 0 )
+  if( m_parameters.logLevel > 0 )
   {
     solver->PrintStatus();
     solver->PrintTiming();
@@ -212,7 +212,7 @@ void TrilinosSolver::solve_krylov( EpetraMatrix & mat,
     translate.insert( std::make_pair( "ilu", "ILU" ));
     translate.insert( std::make_pair( "ilut", "ILUT" ));
 
-    list.set( "ML output", m_parameters.verbosity );
+    list.set( "ML output", m_parameters.logLevel );
     list.set( "max levels", m_parameters.amg.maxLevels );
     list.set( "aggregation: type", "Uncoupled" );
     list.set( "PDE equations", m_parameters.dofsPerNode );
@@ -236,7 +236,7 @@ void TrilinosSolver::solve_krylov( EpetraMatrix & mat,
   solver.SetAztecOption( AZ_conv, AZ_rhs );
 
   // Control output
-  switch( m_parameters.verbosity )
+  switch( m_parameters.logLevel )
   {
   case 1:
     solver.SetAztecOption( AZ_output, AZ_summary );

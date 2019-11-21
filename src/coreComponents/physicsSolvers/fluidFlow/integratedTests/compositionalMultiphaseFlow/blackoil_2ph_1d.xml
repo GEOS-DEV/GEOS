@@ -5,7 +5,7 @@
     gravityVector="0.0, 0.0, -9.81">
   
     <CompositionalMultiphaseFlow name="compflow"
-                                 verbosity="1"
+                                 logLevel="1"
                                  gravityFlag="1"
                                  discretization="fluidTPFA"
                                  fluidName="fluid1"

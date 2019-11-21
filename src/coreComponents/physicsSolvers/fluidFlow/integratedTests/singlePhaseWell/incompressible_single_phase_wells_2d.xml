@@ -7,15 +7,15 @@
     <Reservoir name="reservoirSystem"
                flowSolverName="singlePhaseFlow"
                wellSolverName="singlePhaseWell"
-               verbosity="1"
+               logLevel="1"
                targetRegions="{Region1,wellRegion1,wellRegion2,wellRegion3}">
       <SystemSolverParameters maxIterNewton="40"
                               useDirectSolver="1"
-                              verbosity="0"/>
+                              logLevel="0"/>
     </Reservoir>
   
     <SinglePhaseFlow name="singlePhaseFlow"
-                     verbosity="1"
+                     logLevel="1"
                      gravityFlag="1"
                      discretization="singlePhaseTPFA"
                      fluidName="water"
@@ -24,7 +24,7 @@
     </SinglePhaseFlow>
 
     <SinglePhaseWell name="singlePhaseWell"
-                     verbosity="1"
+                     logLevel="1"
                      gravityFlag="1"
                      wellFluidName="water"
                      targetRegions="{wellRegion1,wellRegion2,wellRegion3}">

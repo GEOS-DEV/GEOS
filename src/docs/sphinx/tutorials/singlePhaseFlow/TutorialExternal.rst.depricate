@@ -56,7 +56,7 @@ and the maximum number of iterations.
   <Solvers
     gravityVector="0.0,0.0,-9.81">
     <SinglePhaseFlow name="SinglePhaseFlow"
-                          verbosity="0"
+                          logLevel="0"
                           gravityFlag="1"
                           fluidName="water"
                           solidName="rock"
@@ -402,7 +402,7 @@ and the maximum number of iterations.
   <Solvers
     gravityVector="0.0,0.0,-9.81">
     <SinglePhaseFlow name="SinglePhaseFlow"
-                          verbosity="0"
+                          logLevel="0"
                           gravityFlag="1"
                           fluidName="water"
                           solidName="rock"
