@@ -42,7 +42,7 @@ def generate_test_xml_files(root_dir):
     gravityVector="0.0, 0.0, -9.81">
 
     <SinglePhaseFlow name="SinglePhaseFlow"
-                     verbosity="0"
+                     logLevel="0"
                      gravityFlag="1"
                      discretization="singlePhaseTPFA"
                      fluidName="water"

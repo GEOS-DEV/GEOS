@@ -112,7 +112,7 @@ void LaplaceFEM::PostProcessInput()
   }
 
   // Set basic parameters for solver
-  // m_linearSolverParameters.verbosity = 0;
+  // m_linearSolverParameters.logLevel = 0;
   // m_linearSolverParameters.solverType = "gmres";
   // m_linearSolverParameters.krylov.tolerance = 1e-8;
   // m_linearSolverParameters.krylov.maxIterations = 250;
@@ -262,12 +262,12 @@ void LaplaceFEM::AssembleSystem( real64 const time_n,
   rhs.close();
   //END_SPHINX_INCLUDE_04
 
-  // Debug for verbosity >= 2
-  VERBOSE_LOG_RANK_0( 2, "After LaplaceFEM::AssembleSystem" );
-  VERBOSE_LOG_RANK_0( 2, "\nJacobian:\n" << matrix );
-  VERBOSE_LOG_RANK_0( 2, "\nResidual:\n" << rhs );
+  // Debug for logLevel >= 2
+  LOG_LEVEL_RANK_0( 2, "After LaplaceFEM::AssembleSystem" );
+  LOG_LEVEL_RANK_0( 2, "\nJacobian:\n" << matrix );
+  LOG_LEVEL_RANK_0( 2, "\nResidual:\n" << rhs );
 
-  if( getVerbosityLevel() >= 3 )
+  if( getLogLevel() >= 3 )
   {
     SystemSolverParameters * const solverParams = getSystemSolverParameters();
     integer newtonIter = solverParams->numNewtonIterations();
@@ -312,12 +312,12 @@ void LaplaceFEM::ApplyBoundaryConditions( real64 const time_n,
 {
   ApplyDirichletBC_implicit( time_n + dt, dofManager, *domain, m_matrix, m_rhs );
 
-  // Debug for verbosity >= 2
-  VERBOSE_LOG_RANK_0( 2, "After LaplaceFEM::ApplyBoundaryConditions" );
-  VERBOSE_LOG_RANK_0( 2, "\nJacobian:\n" << matrix );
-  VERBOSE_LOG_RANK_0( 2, "\nResidual:\n" << rhs );
+  // Debug for logLevel >= 2
+  LOG_LEVEL_RANK_0( 2, "After LaplaceFEM::ApplyBoundaryConditions" );
+  LOG_LEVEL_RANK_0( 2, "\nJacobian:\n" << matrix );
+  LOG_LEVEL_RANK_0( 2, "\nResidual:\n" << rhs );
 
-  if( getVerbosityLevel() >= 3 )
+  if( getLogLevel() >= 3 )
   {
     SystemSolverParameters * const solverParams = getSystemSolverParameters();
     integer newtonIter = solverParams->numNewtonIterations();
@@ -344,9 +344,9 @@ void LaplaceFEM::SolveSystem( DofManager const & dofManager,
 
   SolverBase::SolveSystem( dofManager, matrix, rhs, solution );
 
-  // Debug for verbosity >= 2
-  VERBOSE_LOG_RANK_0( 2, "After LaplaceFEM::SolveSystem" );
-  VERBOSE_LOG_RANK_0( 2, "\nSolution:\n" << solution );
+  // Debug for logLevel >= 2
+  LOG_LEVEL_RANK_0( 2, "After LaplaceFEM::SolveSystem" );
+  LOG_LEVEL_RANK_0( 2, "\nSolution:\n" << solution );
 }
 
 void LaplaceFEM::ApplyDirichletBC_implicit( real64 const time,

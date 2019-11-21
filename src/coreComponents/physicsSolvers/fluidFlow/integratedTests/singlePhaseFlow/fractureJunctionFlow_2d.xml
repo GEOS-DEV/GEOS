@@ -5,7 +5,7 @@
     gravityVector="0.0,0.0,-9.81">
   
     <SinglePhaseFlow name="SinglePhaseFlow"
-                     verbosity="0"
+                     logLevel="0"
                      gravityFlag="1"
                      discretization="singlePhaseTPFA"
                      targetRegions="{Fracture}"
@@ -18,7 +18,7 @@
     </SinglePhaseFlow>
     
     <SurfaceGenerator name="SurfaceGen"
-                      verbosity="0"
+                      logLevel="0"
                       fractureRegion="Fracture"
                       targetRegions="{Fracture}"
                       solidMaterialName="granite"

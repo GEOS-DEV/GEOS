@@ -50,7 +50,7 @@ protected:
     "                discretization=\"FE1\""
     "                timeIntegrationOption=\"SteadyState\""
     "                fieldName=\"Temperature\""
-    "                verbosity=\"0\""
+    "                logLevel=\"0\""
     "                targetRegions=\"Region1\">"
     "    </LaplaceFEM>"
     "  </Solvers>"

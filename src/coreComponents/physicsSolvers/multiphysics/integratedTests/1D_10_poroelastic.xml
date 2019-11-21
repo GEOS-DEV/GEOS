@@ -8,26 +8,26 @@
                  solidSolverName="lagsolve"
                  fluidSolverName="SinglePhaseFlow"
                  couplingTypeOption="FixedStress"
-                 verbosity="1"
+                 logLevel="1"
                  targetRegions="{Region2}">
       <SystemSolverParameters maxIterNewton="40"
-                              verbosity="2"/>
+                              logLevel="2"/>
     </Poroelastic>
 
   
     <SolidMechanics_LagrangianFEM name="lagsolve" 
                                   timeIntegrationOption="QuasiStatic"
-                                  verbosity="1"
+                                  logLevel="1"
                                   solidMaterialName="shale"
                                   targetRegions="{Region2}">
       <SystemSolverParameters krylovTol="1.0e-10"
                               newtonTol="1.0e-6"
                               maxIterNewton="5"
-                              verbosity="2"/>
+                              logLevel="2"/>
     </SolidMechanics_LagrangianFEM>
   
     <SinglePhaseFlow name="SinglePhaseFlow"
-                     verbosity="1"
+                     logLevel="1"
                      gravityFlag="1"
                      discretization="singlePhaseTPFA"
                      fluidName="water"

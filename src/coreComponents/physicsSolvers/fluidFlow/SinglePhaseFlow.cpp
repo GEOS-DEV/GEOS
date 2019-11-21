@@ -400,12 +400,12 @@ void SinglePhaseFlow::AssembleSystem( real64 const time_n,
     rhs.close();
   }
 
-  // Debug for verbosity >= 2
-  VERBOSE_LOG_RANK_0( 2, "After SinglePhaseFlow::AssembleSystem" );
-  VERBOSE_LOG_RANK_0( 2, "\nJacobian:\n" << matrix );
-  VERBOSE_LOG_RANK_0( 2, "\nResidual:\n" << rhs );
+  // Debug for logLevel >= 2
+  LOG_LEVEL_RANK_0( 2, "After SinglePhaseFlow::AssembleSystem" );
+  LOG_LEVEL_RANK_0( 2, "\nJacobian:\n" << matrix );
+  LOG_LEVEL_RANK_0( 2, "\nResidual:\n" << rhs );
 
-  if( getVerbosityLevel() >= 3 )
+  if( getLogLevel() >= 3 )
   {
     SystemSolverParameters * const solverParams = getSystemSolverParameters();
     integer newtonIter = solverParams->numNewtonIterations();
@@ -716,12 +716,12 @@ SinglePhaseFlow::ApplyBoundaryConditions( real64 const time_n,
   matrix.close();
   rhs.close();
 
-  // Debug for verbosity >= 2
-  VERBOSE_LOG_RANK_0( 2, "After SinglePhaseFlow::ApplyBoundaryConditions" );
-  VERBOSE_LOG_RANK_0( 2, "\nJacobian:\n" << matrix );
-  VERBOSE_LOG_RANK_0( 2, "\nResidual:\n" << rhs );
+  // Debug for logLevel >= 2
+  LOG_LEVEL_RANK_0( 2, "After SinglePhaseFlow::ApplyBoundaryConditions" );
+  LOG_LEVEL_RANK_0( 2, "\nJacobian:\n" << matrix );
+  LOG_LEVEL_RANK_0( 2, "\nResidual:\n" << rhs );
 
-  if( getVerbosityLevel() >= 3 )
+  if( getLogLevel() >= 3 )
   {
     SystemSolverParameters * const solverParams = getSystemSolverParameters();
     integer newtonIter = solverParams->numNewtonIterations();
@@ -1101,9 +1101,9 @@ void SinglePhaseFlow::SolveSystem( DofManager const & dofManager,
 
   SolverBase::SolveSystem( dofManager, matrix, rhs, solution );
   
-  // Debug for verbosity >= 2
-  VERBOSE_LOG_RANK_0( 2, "After SinglePhaseFlow::SolveSystem" );
-  VERBOSE_LOG_RANK_0( 2, "\nSolution:\n" << solution );
+  // Debug for logLevel >= 2
+  LOG_LEVEL_RANK_0( 2, "After SinglePhaseFlow::SolveSystem" );
+  LOG_LEVEL_RANK_0( 2, "\nSolution:\n" << solution );
 }
 
 void SinglePhaseFlow::ResetStateToBeginningOfStep( DomainPartition * const domain )
