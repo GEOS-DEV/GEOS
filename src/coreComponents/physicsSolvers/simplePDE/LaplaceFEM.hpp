@@ -19,7 +19,7 @@
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "linearAlgebra/DofManager.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
-
+//START_SPHINX_INCLUDE_00
 struct stabledt
 {
   double m_maxdt;
@@ -34,11 +34,14 @@ class Group;
 class FieldSpecificationBase;
 class FiniteElementBase;
 class DomainPartition;
+//END_SPHINX_INCLUDE_00
 
-
+//START_SPHINX_INCLUDE_02
 class LaplaceFEM : public SolverBase
 {
 public:
+
+  LaplaceFEM() = delete;
 
   LaplaceFEM( const std::string& name,
               Group * const parent );
@@ -49,6 +52,7 @@ public:
 
   virtual void RegisterDataOnMesh( Group * const MeshBodies ) override final;
 
+//END_SPHINX_INCLUDE_02
   /**
    * @defgroup Solver Interface Functions
    *
@@ -56,6 +60,7 @@ public:
    */
   /**@{*/
 
+  //START_SPHINX_INCLUDE_03
   virtual real64 SolverStep( real64 const & time_n,
                              real64 const & dt,
                              integer const cycleNumber,
@@ -115,6 +120,8 @@ public:
   ImplicitStepComplete( real64 const & time,
                         real64 const & dt,
                         DomainPartition * const domain ) override;
+
+  //END_SPHINX_INCLUDE_03
   /**@}*/
 
   void ApplyDirichletBC_implicit( real64 const time,
@@ -123,19 +130,23 @@ public:
                                   ParallelMatrix & matrix,
                                   ParallelVector & rhs );
 
+  //START_SPHINX_INCLUDE_01
   enum class timeIntegrationOption
   {
     SteadyState,
     ImplicitTransient,
     ExplicitTransient
   };
+ //END_SPHINX_INCLUDE_01
 
+  //START_SPHINX_INCLUDE_04
   struct viewKeyStruct : public SolverBase::viewKeyStruct
   {
     dataRepository::ViewKey timeIntegrationOption = { "timeIntegrationOption" };
     dataRepository::ViewKey fieldVarName = { "fieldName" };
 
   } laplaceFEMViewKeys;
+  //END_SPHINX_INCLUDE_04
 
   inline ParallelVector const * getSolution() const {
     return & m_solution;
@@ -143,7 +154,7 @@ public:
 
   inline globalIndex getSize() const {
     return m_matrix.globalRows();
-  }
+}
 
 protected:
   virtual void PostProcessInput() override final;
@@ -151,9 +162,7 @@ protected:
 private:
 
   string m_fieldName;
-  stabledt m_stabledt;
   timeIntegrationOption m_timeIntegrationOption;
-  LaplaceFEM();
 
 };
 

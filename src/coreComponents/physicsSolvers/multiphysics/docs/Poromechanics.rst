@@ -1,7 +1,7 @@
 .. _PoroelasticSolver:
 
 ##########################
-Poromechanics solver
+Poromechanics Solver
 ##########################
 
 Introduction
@@ -10,7 +10,7 @@ Introduction
 This section describes the use of the poroelasticity models implemented in GEOSX.
 
 Currently, the poroelasticity model is implemented using a "fixed-stress" coupling, which is a sequential method that solves the flow
-problem first and then geomechanics problem with the rate of volumetric (mean) total stress variation frozen. 
+problem first and then geomechanics problem with the rate of volumetric (mean) total stress variation frozen.
 
 In our model, the geomechanics (elasticity) equation is expressed in terms of the total stress :math:`\mathbf{\sigma}`:
 
@@ -27,14 +27,14 @@ The fluid mass conservation equation is expressed in terms of pore pressure and 
 .. math::
     \left( \frac{1}{M} + \frac{b^2}{K_{dr}} \right) \frac{\partial p}{\partial t} + \frac{b}{K_{dr}} \frac{\partial \sigma_v}{\partial t} + \nabla \cdot \mathbf{v}_f = f
 
-where :math:`M` is the Biot's modulus and :math:`K_{dr}` is the drained bulk modulus. 
+where :math:`M` is the Biot's modulus and :math:`K_{dr}` is the drained bulk modulus.
 
 Unlike the conventional reservoir model that uses Lagrange’s porosity, in the coupled geomechanics and flow model, Euler’s porosity :math:`\phi` is adopted so the porosity variation is derived as:
 
 .. math::
     \partial \phi = \left( \frac{b-\phi}{K_s}\right) \partial p + \left( b-\phi \right) \partial \epsilon_v
 
-where :math:`K_{s}` is the bulk modulus of the solid grain and :math:`\epsilon_v` is the volumetric strain.  
+where :math:`K_{s}` is the bulk modulus of the solid grain and :math:`\epsilon_v` is the volumetric strain.
 
 For more details, refer to `Kim(2010)
 <https://pangea.stanford.edu/ERE/pdf/pereports/PhD/Kim10.pdf>`_.
@@ -43,7 +43,7 @@ Usage
 ===========================================
 
 The poroelasticity model is implemented as a main solver listed in
-``<Solvers>`` block of the input XML file that calls both SolidMechanicsLagrangianSSLE and SinglePhaseFlow solvers. 
+``<Solvers>`` block of the input XML file that calls both SolidMechanicsLagrangianSSLE and SinglePhaseFlow solvers.
 In the main solver, it requires the specification of solidSolverName, fluidSolverName, and couplingTypeOption.
 
 The following attributes are supported:
@@ -56,68 +56,15 @@ The solid constitutive model used here is PoroLinearElasticIsotropic, which deri
 
 An example of a valid XML block for the constitutive model is given here:
 
-.. code-block:: xml
-
-  <Constitutive>
-  
-    <PoroLinearElasticIsotropic name="shale"
-                                defaultDensity="2700"
-                                defaultBulkModulus="61.9e6"
-                                defaultShearModulus="28.57e6"
-                                BiotCoefficient="1.0"
-                                />
-
-    <CompressibleSinglePhaseFluid name="water"
-                                  referencePressure="2.125e6"
-                                  referenceDensity="1000"
-                                  compressibility="1e-19"
-                                  referenceViscosity="0.001"
-                                  viscosibility="0.0"
-                                  />                                  
-  </Constitutive>
+.. literalinclude:: ../integratedTests/poroElastic_Terzaghi.xml
+  :language: xml
+  :start-after: <!-- SPHINX_POROELASTIC_CONSTITUTIVE -->
+  :end-before: <!-- SPHINX_POROELASTIC_CONSTITUTIVE_END -->
 
 Input example
 ===========================================
 
-.. code-block:: xml
-
-  <Solvers
-    gravityVector="0.0, 0.0, -9.81">
-
-    <Poroelastic name="poroSolve" 
-                 solidSolverName="lagsolve"
-                 fluidSolverName="SinglePhaseFlow"
-                 couplingTypeOption="FixedStress"
-                 verboseLevel="1"
-                 discretization="FE1"
-                 targetRegions="Region2">
-      <SystemSolverParameters maxIterNewton="40"
-                              verbosityFlag="2"/>
-    </Poroelastic>
-
-  
-    <SolidMechanicsLagrangianSSLE name="lagsolve" 
-                                  timeIntegrationOption="QuasiStatic"
-                                  verboseLevel="1"
-                                  discretization="FE1"
-                                  targetRegions="Region2"
-                                  solidMaterialName="shale"
-                                  >
-      <SystemSolverParameters krylovTol="1.0e-10"
-                              newtonTol="1.0e-6"
-                              maxIterNewton="5"
-                              verbosityFlag="2"/>
-    </SolidMechanicsLagrangianSSLE>
-  
-    <SinglePhaseFlow name="SinglePhaseFlow"
-                     verboseLevel="1"
-                     gravityFlag="1"
-                     discretization="singlePhaseTPFA"
-                     targetRegions="Region2"
-                     fluidName="water"
-                     solidName="shale">
-      <SystemSolverParameters krylovTol="1.0e-10"
-                              newtonTol="1.0e-6"
-                              maxIterNewton="8"/>
-    </SinglePhaseFlow>
-  </Solvers>
+.. literalinclude:: ../integratedTests/poroElastic_Terzaghi.xml
+  :language: xml
+  :start-after: <!-- SPHINX_POROELASTIC_SOLVER -->
+  :end-before: <!-- SPHINX_POROELASTIC_SOLVER_END -->

@@ -1,6 +1,3 @@
-Building process
-################
-
 Dependencies
 ============
 
@@ -13,7 +10,7 @@ The build management process it self uses
 - C/C++/FORTRAN compilers (GEOSX uses c++14).
 - `python <https://www.python.org/>`_ (version 2.7 tested and validated, only standard modules are used).
 
-**It is the developer’s responsibility to provide these tools.**
+**It is the developer's responsibility to provide these tools.**
 On Debian flavored distributions, consider the following command line.
 
 .. code-block:: console
@@ -21,7 +18,7 @@ On Debian flavored distributions, consider the following command line.
     apt-get install git git-lfs gcc g++ gfortran python2.7
 
 The GEOSX software makes use of multiple libraries.
-**Most of them are mirrored in the `thidPartyLib/tplMirror <https://github.com/GEOSX/thirdPartyLibs/tree/master/tplMirror>`_ folder and will be configured and build by the GEOSX TPL building process.**
+**Most of them are mirrored in the** `thidPartyLib/tplMirror <https://github.com/GEOSX/thirdPartyLibs/tree/master/tplMirror>`__ **folder and will be configured and build by the GEOSX TPL building process.**
 You may want to check the `CMakeLists.txt <https://github.com/GEOSX/thirdPartyLibs/blob/master/CMakeLists.txt>`_ that contains the versions of the dependencies.
 
 LLNL HPC libraries and tool boxes...
@@ -48,7 +45,7 @@ Linear (or more) algebra solvers
 
 Note that petsc currently downloads `pt-scotch <https://www.labri.fr/perso/pelegrin/scotch/scotch_en.html>`_ from the internet.
 If you do not have access to internet, you shall modify the `./configure` step of petsc in the `CMakeLists.txt` file,
-and change the `--download-ptscotch` option accordingly. 
+and change the ``--download-ptscotch`` option accordingly. 
 
 A graph partitioning tool
 
@@ -69,18 +66,19 @@ Code formatters & linters
 
 Some of these libraries rely on blas, lapack & MPI implementations.
 As well as the zlib compression library.
-**It is the developer’s responsibility to provide them.**
+**It is the developer's responsibility to provide them.**
 
-On Debian flavored distribution, consider installing (apt-get install) the
+On Debian flavored distribution, consider installing (apt-get install) the following packages:
 
 .. code-block:: console
 
     zlib1g-dev libblas-dev liblapack-dev libopenmpi-dev
 
-packages.
-
 Note also that `pt-scotch` relies on `bison` and `flex`.
 The developper should provide these tools too.
+
+If you want further details about building the GEOSX and its TPLs, (which packages to install for example),
+consider having a look at the `Dockerfiles in the third party library repository <https://github.com/GEOSX/thirdPartyLibs/tree/master/docker>`_.
 
 Third party libraries build management pattern
 ==============================================
@@ -94,24 +92,25 @@ Then running the `make` command (possibly with a specific target) will compile (
 
 These two scripts are also used the build the docker images easier without repeating ourselves (see `Continuous Integration process`_).
 
-The most crucial parameters of the python script are `--installpath`, `--buildtype`, `--hostconfig`.
+The most crucial parameters of the python script are ``--installpath``, ``--buildtype``, ``--hostconfig``.
 (Other parameters do exist, check the script).
 While the first parameter is obvious, the other one requires some explaination.
 
-* `--buildtype` is a wrapper to the `CMAKE_BUILD_TYPE <https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html>`_ option.
-* The `-—hostconfig` option requires a cmake file containing some build parameters (compiler location, etc.).
+* ``--buildtype`` is a wrapper to the `CMAKE_BUILD_TYPE <https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html>`_ option.
+* The ``--hostconfig`` option requires a cmake file containing some build parameters (compiler locations and flags, etc.).
   You may find some examples in the host-configs folders of the `third party library <https://github.com/GEOSX/thirdPartyLibs/tree/master/host-configs>`_ of from `GEOSX <https://github.com/GEOSX/GEOSX/tree/develop/host-configs>`_
 
 To be more practical, you may need to run the following command line
 
 .. code-block:: console
 
-    python scripts/config-build.py --hostconfig=/path/to/your-platform.cmake --buildtype=Release --installpath=/opt
+    python scripts/config-build.py --hostconfig=/path/to/your-platform.cmake --buildtype=Release --installpath=/path/to/install/dir
 
 We do recommend using a *host config cmake file* for fine grained control of the build.
 Have a look at some of the `already existing examples <https://github.com/GEOSX/GEOSX/blob/develop/host-configs>`_
 
 Last, note that any extra argument will be tranfered directly as a `cmake` argument.
+For example, use the `-DNUM_PROC=2` to compile the TPL using two threads.
 
 If you want to directly write the `cmake` command line, we advise you to dig into the `config-build.py <https://github.com/GEOSX/GEOSX/blob/develop/scripts/config-build.py>`_ python code.
 
@@ -131,8 +130,8 @@ Problems may arise since we use the rolling release `Homebrew <https://brew.sh/>
 To circumvent this potential issue, the brew version is fixed to a specific commit (see BREW_HASH variable in `third party's .travis.yml <https://github.com/GEOSX/thirdPartyLibs/blob/master/.travis.yml>`_) and stored in a `brew_hash.txt` file at the root folder of the TPLs.
 It is therefore possible for GEOSX to build against the same revision of brew packages.
 
-It must be mentionned that one and only one version of the compiled TPL tarball is stored per pull request (older ones are removed automatically).
+It must be mentioned that one and only one version of the compiled TPL tarball is stored per pull request (older ones are removed automatically).
 Therefore, a client building against a work in progress PR may experience a 404 error sooner or later.
 
 It must be noted that there are now two different ways to designate the same version of the TPL.
-An effort should be done to make this homogemneous.
+An effort should be done to make this homogeneous.
