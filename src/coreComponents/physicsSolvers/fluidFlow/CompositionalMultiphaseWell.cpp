@@ -2220,8 +2220,8 @@ void CompositionalMultiphaseWell::CheckWellControlSwitch( DomainPartition * cons
         wellControls->SetControl( WellControls::Control::LIQUIDRATE, 
                                     wellControls->GetTargetRate() );
         
-        // Debug information for verbosity >= 1
-        VERBOSE_LOG_RANK_0(1, "Control switch for well " << subRegion->getName()
+        // Debug information for logLevel >= 1
+        LOG_LEVEL_RANK_0(1, "Control switch for well " << subRegion->getName()
                               << " from BHP constraint to rate constraint" );
 
       }
@@ -2229,8 +2229,8 @@ void CompositionalMultiphaseWell::CheckWellControlSwitch( DomainPartition * cons
       {
         wellControls->SetControl( WellControls::Control::BHP, 
                                     wellControls->GetTargetBHP() );
-        // Debug information for verbosity >= 1
-        VERBOSE_LOG_RANK_0(1,  "Control switch for well " << subRegion->getName()
+        // Debug information for logLevel >= 1
+        LOG_LEVEL_RANK_0(1,  "Control switch for well " << subRegion->getName()
                                << " from rate constraint to BHP constraint" );
       }
     }

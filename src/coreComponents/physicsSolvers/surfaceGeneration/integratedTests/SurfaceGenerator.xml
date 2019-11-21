@@ -6,7 +6,7 @@
 
     <SolidMechanicsLagrangianSSLE name="lagSolve" 
                                   timeIntegrationOption="QuasiStatic"
-                                  verbosity="0"
+                                  logLevel="0"
                                   discretization="FE1"
                                   targetRegions="{Region2}"
                                   solidMaterialName="granite"
@@ -14,11 +14,11 @@
       <SystemSolverParameters krylovTol="1.0e-10"
                               newtonTol="1.0e-3"
                               maxIterNewton="8"
-                              verbosity="0"/>
+                              logLevel="0"/>
      </SolidMechanicsLagrangianSSLE>
   
     <SurfaceGenerator name="SurfaceGen"
-                      verbosity="0"
+                      logLevel="0"
                       fractureRegion="Fracture"
                       targetRegions="{Region2}"
                       solidMaterialName="granite"

@@ -550,7 +550,7 @@ void testInterfaceSolvers()
   Solver solver( parameters );
 
   // Set basic options
-  parameters.verbosity = 0;
+  parameters.logLevel = 0;
   parameters.solverType = "cg";
   parameters.krylov.tolerance = 1e-8;
   parameters.krylov.maxIterations = 250;

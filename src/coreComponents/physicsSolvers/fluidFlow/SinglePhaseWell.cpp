@@ -695,19 +695,16 @@ void SinglePhaseWell::CheckWellControlSwitch( DomainPartition * const domain )
       {
         wellControls->SetControl( WellControls::Control::LIQUIDRATE,
                                   wellControls->GetTargetRate() );
-        if ( m_verboseLevel >= 1 )
-        {
-          GEOS_LOG_RANK_0( "Control switch for well " << subRegion->getName()
-                           << " from BHP constraint to rate constraint" );
-        }
+        LOG_LEVEL_RANK_0( "Control switch for well " << subRegion->getName()
+                          << " from BHP constraint to rate constraint" );
       }
       else // rate control
       {
         wellControls->SetControl( WellControls::Control::BHP,
                                   wellControls->GetTargetBHP() );
 
-        // Debug information for verbosity >= 1 
-        VERBOSE_LOG_RANK_0(1, "Control switch for well " << subRegion->getName()
+        // Debug information for logLevel >= 1 
+        LOG_LEVEL_RANK_0(1, "Control switch for well " << subRegion->getName()
                               << " from rate constraint to BHP constraint" );
       }
     }

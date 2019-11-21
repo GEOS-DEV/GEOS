@@ -41,8 +41,8 @@ EventManager::EventManager( std::string const & name,
 {
   setInputFlags(InputFlags::REQUIRED);
 
-  // This enables verbose filtering
-  enableVerbosityInput();
+  // This enables logLevel filtering
+  enableLogLevelInput();
   
   registerWrapper(viewKeyStruct::maxTimeString, &m_maxTime, false )->
     setApplyDefaultValue(std::numeric_limits<real64>::max())->
@@ -159,8 +159,8 @@ void EventManager::Run(dataRepository::Group * domain)
       subEvent->CheckEvents(m_time, m_dt, m_cycle, domain);
       integer eventForecast = subEvent->GetForecast();
 
-      // Print debug information for verbosity >= 1 
-      VERBOSE_LOG_RANK_0(1, "     Event: " << m_currentSubEvent << " (" << subEvent->getName() << "), dt_request=" << subEvent->GetCurrentEventDtRequest() << ", forecast=" << eventForecast);
+      // Print debug information for logLevel >= 1 
+      LOG_LEVEL_RANK_0(1, "     Event: " << m_currentSubEvent << " (" << subEvent->getName() << "), dt_request=" << subEvent->GetCurrentEventDtRequest() << ", forecast=" << eventForecast);
 
       // Execute, signal events
       if (eventForecast == 1)
