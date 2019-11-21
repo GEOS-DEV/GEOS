@@ -55,6 +55,7 @@ CompositionalMultiphaseFlow::CompositionalMultiphaseFlow( const string & name,
   // Doing this can cause an error in the block setup, so move it to InitializePreSubGroups
   // getLinearSystemRepository()->SetBlockID(BlockIDs::compositionalBlock, this->getName());
 
+//START_SPHINX_INCLUDE_00
   this->registerWrapper( viewKeyStruct::temperatureString, &m_temperature, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Temperature");
@@ -1614,6 +1615,6 @@ void CompositionalMultiphaseFlow::ResetViews( DomainPartition * const domain )
   }
 }
 
-
+//START_SPHINX_INCLUDE_01
 REGISTER_CATALOG_ENTRY(SolverBase, CompositionalMultiphaseFlow, string const &, Group * const)
 }// namespace geosx
