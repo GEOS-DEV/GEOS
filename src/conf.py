@@ -16,6 +16,29 @@ import os
 import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
+# Call doxygen in ReadtheDocs
+read_the_docs_build = os.environ.get('READTHEDOCS', None) == 'True'
+if read_the_docs_build:
+
+    # Make sure directory exists
+    cwd=os.getcwd()
+    buildpath=os.path.join(cwd,"_build")
+    if (os.path.isdir(buildpath) == 0):
+        os.mkdir(buildpath)
+    htmlpath=os.path.join(buildpath,"html")
+    if (os.path.isdir(htmlpath) == 0):
+        os.mkdir(htmlpath)
+
+    # Write correct ReadtheDocs path
+    f = open("./docs/doxygen/Doxyfile.in", "a")
+    f.write("\nINPUT=coreComponents/dataRepository")
+    f.write("\nOUTPUT_DIRECTORY=./_build/html/doxygen_output")
+    f.close()
+
+    # Call doxygen
+    from subprocess import call
+    call(['doxygen', "./docs/doxygen/Doxyfile.in"])
+
 
 # -- Project information -----------------------------------------------------
 
