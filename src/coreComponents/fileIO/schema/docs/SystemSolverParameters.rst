@@ -9,6 +9,7 @@ ilut_fill           real64  3       (no description available)
 krylovTol           real64  1e-06   Allowable tolerance for krylov solve                    
 kspace              integer 0       (no description available)                              
 lineSearchCutFactor real64  0.5     Line search cut factor                                  
+logLevel            integer 0       Log level                                               
 maxIterNewton       integer 5       Maximum number of Newton iterations                     
 maxLineSearchCuts   integer 4       Max number of line search cuts                          
 maxSubSteps         integer 10      Maximum number of time sub-steps allowed for the solver 
@@ -23,7 +24,6 @@ useDirectSolver     integer 0       (no description available)
 useInnerSolver      integer 0       (no description available)                              
 useMLPrecond        integer 0       (no description available)                              
 useNewtonSolve      integer 0       (no description available)                              
-verbosity           integer 0       Verbosity level                                         
 =================== ======= ======= ======================================================= 
 
 
