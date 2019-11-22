@@ -1,7 +1,7 @@
 language: minimal
 env:
   global:
-  - GEOSX_TPL_TAG=81-251
+  - GEOSX_TPL_TAG=81-252
 matrix:
   include:
   - os: osx
@@ -14,27 +14,27 @@ matrix:
     - MPIEXEC=/usr/local/bin/mpirun
   - services: docker
     env:
-    - DOCKER_REPOSITORY=totogaz/centos7.5.1804-clang6.0.1
+    - DOCKER_REPOSITORY=geosx/centos7.5.1804-clang6.0.1
     - CMAKE_BUILD_TYPE=Release
   - services: docker
     env:
-    - DOCKER_REPOSITORY=totogaz/centos7.5.1804-clang7.0.0
+    - DOCKER_REPOSITORY=geosx/centos7.5.1804-clang7.0.0
     - CMAKE_BUILD_TYPE=Release
   - services: docker
     env:
-    - DOCKER_REPOSITORY=totogaz/centos7.5.1804-clang7.0.0
+    - DOCKER_REPOSITORY=geosx/centos7.5.1804-clang7.0.0
     - CMAKE_BUILD_TYPE=Debug
   - services: docker
     env:
-    - DOCKER_REPOSITORY=totogaz/ubuntu18.04-gcc7
+    - DOCKER_REPOSITORY=geosx/ubuntu18.04-gcc7
     - CMAKE_BUILD_TYPE=Release
   - services: docker
     env:
-    - DOCKER_REPOSITORY=totogaz/ubuntu18.04-gcc8
+    - DOCKER_REPOSITORY=geosx/ubuntu18.04-gcc8
     - CMAKE_BUILD_TYPE=Release
   - services: docker
     env:
-    - DOCKER_REPOSITORY=totogaz/ubuntu18.04-gcc8
+    - DOCKER_REPOSITORY=geosx/ubuntu18.04-gcc8
     - CMAKE_BUILD_TYPE=Debug
 git:
   submodules: false
