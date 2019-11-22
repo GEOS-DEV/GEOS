@@ -255,7 +255,7 @@ void EventBase::Execute(real64 const time_n,
 
 real64 EventBase::GetTimestepRequest(real64 const time)
 {
-  m_currentEventDtRequest = std::numeric_limits<real64>::max();
+  m_currentEventDtRequest = std::numeric_limits<real64>::max() / 2.0;
 
   // Events and their targets may request a max dt when active
   if ((time >= m_beginTime) && (time < m_endTime))
@@ -304,7 +304,7 @@ real64 EventBase::GetTimestepRequest(real64 const time)
     {
       // If the current dt request exceeds the end time, cut it
       // Otherwise, if it falls just short of the end time, grow it.
-      if (time + m_currentSubEvent*m_finalDtStretch > m_endTime)
+      if (time + m_currentEventDtRequest*m_finalDtStretch > m_endTime)
       {
         m_currentEventDtRequest = m_endTime - time;
       }
