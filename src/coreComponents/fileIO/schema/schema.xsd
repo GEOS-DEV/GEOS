@@ -208,6 +208,8 @@
 		<xsd:attribute name="beginTime" type="real64" default="0" />
 		<!--endTime => End time of this event.-->
 		<xsd:attribute name="endTime" type="real64" default="1e+100" />
+		<!--finalDtStretch => Allow the final dt request for this event to grow by this percentage to match the endTime exactly.-->
+		<xsd:attribute name="finalDtStretch" type="real64" default="1" />
 		<!--forceDt => While active, this event will request this timestep value (ignoring any children/targets requests).-->
 		<xsd:attribute name="forceDt" type="real64" default="-1" />
 		<!--maxEventDt => While active, this event will request a timestep <= this value (depending upon any child/target requests).-->
@@ -235,6 +237,8 @@
 		<xsd:attribute name="cycleFrequency" type="integer" default="1" />
 		<!--endTime => End time of this event.-->
 		<xsd:attribute name="endTime" type="real64" default="1e+100" />
+		<!--finalDtStretch => Allow the final dt request for this event to grow by this percentage to match the endTime exactly.-->
+		<xsd:attribute name="finalDtStretch" type="real64" default="1" />
 		<!--forceDt => While active, this event will request this timestep value (ignoring any children/targets requests).-->
 		<xsd:attribute name="forceDt" type="real64" default="-1" />
 		<!--function => Name of an optional function to evaluate when the time/cycle criteria are met.If the result is greater than the specified eventThreshold, the function will continue to execute.-->
@@ -272,6 +276,8 @@
 		<xsd:attribute name="beginTime" type="real64" default="0" />
 		<!--endTime => End time of this event.-->
 		<xsd:attribute name="endTime" type="real64" default="1e+100" />
+		<!--finalDtStretch => Allow the final dt request for this event to grow by this percentage to match the endTime exactly.-->
+		<xsd:attribute name="finalDtStretch" type="real64" default="1" />
 		<!--forceDt => While active, this event will request this timestep value (ignoring any children/targets requests).-->
 		<xsd:attribute name="forceDt" type="real64" default="-1" />
 		<!--maxEventDt => While active, this event will request a timestep <= this value (depending upon any child/target requests).-->

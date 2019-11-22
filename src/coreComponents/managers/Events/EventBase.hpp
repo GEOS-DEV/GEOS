@@ -159,7 +159,7 @@ public:
     static constexpr auto currentSubEventString = "currentSubEvent";
     static constexpr auto isTargetExecutingString = "isTargetExecuting";
     static constexpr auto verbosityString = "verbosity";
-    static constexpr auto finalDtEpsilonString = "finalDtEpsilon";
+    static constexpr auto finalDtStretchString = "finalDtStretch";
 
     dataRepository::ViewKey eventTarget = { "target" };
     dataRepository::ViewKey beginTime = { "beginTime" };
@@ -202,7 +202,7 @@ private:
   real64 m_endTime;
   real64 m_forceDt;
   real64 m_maxEventDt;
-  real64 m_finalDtEpsilon;
+  real64 m_finalDtStretch;
   integer m_targetExactStartStop;
   integer m_currentSubEvent;
   integer m_targetExecFlag;

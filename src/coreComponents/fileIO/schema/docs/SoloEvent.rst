@@ -5,6 +5,7 @@ Name                 Type    Default  Description
 ==================== ======= ======== ================================================================================================================================================================= 
 beginTime            real64  0        Start time of this event.                                                                                                                                         
 endTime              real64  1e+100   End time of this event.                                                                                                                                           
+finalDtStretch       real64  1        Allow the final dt request for this event to grow by this percentage to match the endTime exactly.                                                                
 forceDt              real64  -1       While active, this event will request this timestep value (ignoring any children/targets requests).                                                               
 maxEventDt           real64  -1       While active, this event will request a timestep <= this value (depending upon any child/target requests).                                                        
 name                 string  required A name is required for any non-unique nodes                                                                                                                       
