@@ -14,12 +14,12 @@
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="{C3D8}"
-                  xCoords="{0, 60, 100, 500}"
-                  yCoords="{0, 60, 100, 500}"
-                  zCoords="{-250, -50, -10, 10, 50, 250}"
-                  nx="{60, 10, 8}"
-                  ny="{60, 10, 8}"
-                  nz="{4, 10, 20, 10, 4}"
+                  xCoords="{0, 100, 200, 800}"
+                  yCoords="{0, 100, 200, 800}"
+                  zCoords="{-500, -100, -20, 20, 100, 500}"
+                  nx="{25, 10, 20}"
+                  ny="{25, 10, 20}"
+                  nz="{10, 10, 10, 10, 10}"
                   cellBlockNames="{cb1}"/>
   </Mesh>
 
@@ -36,10 +36,10 @@
   </Mesh-->
 
   <Geometry>
-    <Cylinder name="fracture" point1="0.0, 0.0, -0.1" point2="0.0, 0.0, 0.1" radius="2.5"/>
+    <Cylinder name="fracture" point1="0.0, 0.0, -0.1" point2="0.0, 0.0, 0.1" radius="10.1"/>
     <Box name="source"
          xMin="-0.01, -0.01, -0.1"
-         xMax=" 1.1,  1.1, 0.1"/>
+         xMax=" 4.1,  4.1, 0.1"/>
     <Box name="core"  
          xMin="-0.1, -0.1, -0.1"
          xMax="500.1, 500.1, 0.1" />
@@ -68,20 +68,13 @@
     <PeriodicEvent 
       name="solverApplications0"
       beginTime="0.0"
-      endTime="1.0"
-      forceDt="0.05"
-      target="/Solvers/hydrofracture" />
-
-    <PeriodicEvent 
-      name="solverApplications1"
-      beginTime="1.0"
-      endTime="3.0"
+      endTime="2.0"
       forceDt="0.1"
       target="/Solvers/hydrofracture" />
 
     <PeriodicEvent 
       name="solverApplications2"
-      beginTime="3.0"
+      beginTime="2.0"
       endTime="5.0"
       forceDt="0.2"
       target="/Solvers/hydrofracture" />
@@ -90,7 +83,7 @@
       name="solverApplications3"
       beginTime="5.0"
       endTime="10.0"
-      forceDt="0.2"
+      forceDt="0.2000000000001"
       target="/Solvers/hydrofracture" />
 
     <PeriodicEvent 
@@ -100,11 +93,26 @@
       forceDt="0.5"
       target="/Solvers/hydrofracture" />
 
+    <PeriodicEvent 
+      name="solverApplications5"
+      beginTime="50.0"
+      endTime="200.0"
+      forceDt="1.0"
+      target="/Solvers/hydrofracture" />
+
     <!-- This event is applied every 1.0s.  The targetExactTimestep
     flag allows this event to request a dt modification to match an
     integer multiple of the timeFrequency. -->
     <PeriodicEvent name="outputs"
-                   timeFrequency="1"
+                   beginTime="0.0"
+                   endTime="1.0"
+                   timeFrequency="0.5"
+                   targetExactTimestep="0"
+                   target="/Outputs/siloOutput" />
+
+    <PeriodicEvent name="outputs2"
+                   beginTime="1.0"
+                   timeFrequency="2"
                    targetExactTimestep="0"
                    target="/Outputs/siloOutput" />
 
@@ -208,7 +216,7 @@
                
     <SourceFlux name="sourceTerm"
                 objectPath="ElementRegions/Fracture"
-                scale="-26.5"
+                scale="-6.625"
                 setNames="{source}"/>
   </FieldSpecifications>
 

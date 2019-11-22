@@ -560,7 +560,7 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
                                         bool const prefrac,
                                         real64 const GEOSX_UNUSED_ARG( time ) )
 {
-
+  GEOSX_MARK_FUNCTION;
   NodeManager & nodeManager = *(mesh->getNodeManager());
   EdgeManager & edgeManager = *(mesh->getEdgeManager());
   FaceManager & faceManager = *(mesh->getFaceManager());

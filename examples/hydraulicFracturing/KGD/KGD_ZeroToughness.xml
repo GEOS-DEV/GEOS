@@ -19,6 +19,7 @@
       verboseLevel="1"
       targetRegions="{Region2, Fracture}"
       contactRelationName="fractureContact"
+      maxNumResolves="1"
       >
       <SystemSolverParameters
         maxIterNewton="50"

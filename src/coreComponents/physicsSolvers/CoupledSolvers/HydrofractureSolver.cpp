@@ -174,8 +174,8 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
                        m_rhs,
                        m_solution );
 
-    int const maxNumResolves = m_maxNumResolves;
-    for( int solveIter=0 ; solveIter<maxNumResolves ; ++solveIter )
+    int const maxIter = m_maxNumResolves + 1;
+    for( int solveIter=0 ; solveIter<maxIter ; ++solveIter )
     {
       int locallyFractured = 0;
       int globallyFractured = 0;

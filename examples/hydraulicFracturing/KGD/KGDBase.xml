@@ -97,7 +97,7 @@
   </InitialConditions>
 
   <FieldSpecifications>
-    <FieldSpecification name="initialMeanStress"
+    <!--FieldSpecification name="initialMeanStress"
                initialCondition="1"
                setNames="{all}"
                objectPath="ElementRegions"
@@ -127,7 +127,7 @@
                objectPath="ElementRegions"
                fieldName="rock_DeviatorStress"
                component="2"
-               scale="-1.1e7"/>
+               scale="-1.1e7"/-->
 
     <FieldSpecification name="waterDensity"
                initialCondition="1"
