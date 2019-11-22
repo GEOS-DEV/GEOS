@@ -38,6 +38,7 @@ EventBase::EventBase( const std::string& name,
   m_endTime(1e100),
   m_forceDt(-1.0),
   m_maxEventDt(-1.0),
+  m_finalDtEpsilon(1.0),
   m_targetExactStartStop(0),
   m_currentSubEvent(0),
   m_targetExecFlag(0),
@@ -75,6 +76,11 @@ EventBase::EventBase( const std::string& name,
     setApplyDefaultValue(-1.0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("While active, this event will request a timestep <= this value (depending upon any child/target requests).");
+
+  registerWrapper(viewKeyStruct::finalDtEpsilonString, &m_finalDtEpsilon, false )->
+    setApplyDefaultValue(1.0 + 1e-6)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Allow the final dt request for this event to grow by this percentage to match the endTime exactly.");
 
   registerWrapper(viewKeyStruct::targetExactStartStopString, &m_targetExactStartStop, false )->
     setApplyDefaultValue(1)->
@@ -296,7 +302,12 @@ real64 EventBase::GetTimestepRequest(real64 const time)
     }
     else if (tmp_t < m_endTime)
     {
-      m_currentEventDtRequest = std::min(m_endTime - time, m_currentEventDtRequest);
+      // If the current dt request exceeds the end time, cut it
+      // Otherwise, if it falls just short of the end time, grow it.
+      if (time + m_currentSubEvent*m_finalDtEpsilon > m_endTime)
+      {
+        m_currentEventDtRequest = m_endTime - time;
+      }
     }
   }
 

@@ -159,6 +159,7 @@ public:
     static constexpr auto currentSubEventString = "currentSubEvent";
     static constexpr auto isTargetExecutingString = "isTargetExecuting";
     static constexpr auto verbosityString = "verbosity";
+    static constexpr auto finalDtEpsilonString = "finalDtEpsilon";
 
     dataRepository::ViewKey eventTarget = { "target" };
     dataRepository::ViewKey beginTime = { "beginTime" };
@@ -201,6 +202,7 @@ private:
   real64 m_endTime;
   real64 m_forceDt;
   real64 m_maxEventDt;
+  real64 m_finalDtEpsilon;
   integer m_targetExactStartStop;
   integer m_currentSubEvent;
   integer m_targetExecFlag;
@@ -211,6 +213,7 @@ private:
   real64 m_eventProgress;
   integer m_verbosity;
   real64 m_currentEventDtRequest;
+
 
   /// A pointer to the optional event target
   ExecutableGroup * m_target;
