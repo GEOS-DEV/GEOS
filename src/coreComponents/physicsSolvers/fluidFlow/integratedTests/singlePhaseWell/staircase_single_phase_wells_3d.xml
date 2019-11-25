@@ -60,7 +60,7 @@
                   wellControlsName="wellControls1"
                   meshName="mesh1"
                   crossSectionArea="0.3"
-                  fileName="well_producer2.las"
+                  fileName="well_producer.las"
                   numElementsPerSegment="20">
         <Perforation name="producer1_perf1"
                      distanceFromHead="11.95"
