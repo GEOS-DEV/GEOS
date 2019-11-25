@@ -1,31 +1,29 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
  * @file VTKFile.cpp
  */
 
+// Source includes
 #include "VTKFile.hpp"
-#include <sys/stat.h>
-
 #include "dataRepository/Wrapper.hpp"
 #include "managers/DomainPartition.hpp"
+#include "mpiCommunications/MpiWrapper.hpp"
 
+// System includes
+#include <sys/stat.h>
 
 
 namespace geosx
@@ -131,7 +129,7 @@ class CustomVTUXMLWriter
     if( binary )
     {
       localIndex totalNumberOfConnectivities = 0;
-      elemManager->forElementRegionsComplete< CellElementRegion >( [&]( localIndex const er,
+      elemManager->forElementRegionsComplete< CellElementRegion >( [&]( localIndex const GEOSX_UNUSED_ARG( er ),
                                                                         auto const * const elemRegion )
       {
         elemRegion->template forElementSubRegions< CellElementSubRegion >( [&]( auto const * const elemSubRegion )
@@ -269,8 +267,7 @@ class CustomVTUXMLWriter
       outputString.resize( FindBase64StringLength( multiplier * sizeof( localIndex) ) );
       localIndex_array connectivityFragment( multiplier );
       integer countConnectivityFragment = 0;
-      CellElementSubRegion * toto;
-      elemManager->forElementRegionsComplete< CellElementRegion >( [&]( localIndex const er,
+      elemManager->forElementRegionsComplete< CellElementRegion >( [&]( localIndex const GEOSX_UNUSED_ARG( er ),
                                                                auto const * const elemRegion )
       {
         elemRegion->template forElementSubRegions< CellElementSubRegion >( [&]( auto const * const elemSubRegion )
@@ -335,7 +332,7 @@ class CustomVTUXMLWriter
 
     void WriteAsciiConnectivities( ElementRegionManager const * const elemManager )
     {
-      elemManager->forElementRegionsComplete< CellElementRegion >( [&]( localIndex const er,
+      elemManager->forElementRegionsComplete< CellElementRegion >( [&]( localIndex const GEOSX_UNUSED_ARG( er ),
                                                                     auto const * const elemRegion )
       {
         elemRegion->template forElementSubRegions< CellElementSubRegion >( [&]( auto const * const elemSubRegion )
@@ -372,7 +369,7 @@ class CustomVTUXMLWriter
     void WriteAsciiOffsets( ElementRegionManager const * const elemManager )
     {
       localIndex curOffset = elemManager->GetRegion(0)->GetSubRegion(0)->numNodesPerElement();
-      elemManager->forElementRegionsComplete< CellElementRegion >( [&]( localIndex const er,
+      elemManager->forElementRegionsComplete< CellElementRegion >( [&]( localIndex const GEOSX_UNUSED_ARG( er ),
                                                                     auto const * const elemRegion )
       {
         elemRegion->template forElementSubRegions< CellElementSubRegion >( [&]( auto const * const elemSubRegion )
@@ -396,7 +393,7 @@ class CustomVTUXMLWriter
       outputString.resize( FindBase64StringLength( sizeof( localIndex ) * multiplier ) );
       integer countOffsetFragmentIndex = 0;
       localIndex curOffset = elemManager->GetRegion(0)->GetSubRegion(0)->numNodesPerElement();
-      elemManager->forElementRegionsComplete< CellElementRegion >( [&]( localIndex const er,
+      elemManager->forElementRegionsComplete< CellElementRegion >( [&]( localIndex const GEOSX_UNUSED_ARG( er ),
                                                                     auto const * const elemRegion )
       {
         elemRegion->template forElementSubRegions< CellElementSubRegion >( [&]( auto const * const elemSubRegion )
@@ -421,7 +418,7 @@ class CustomVTUXMLWriter
 
     void WriteAsciiTypes( ElementRegionManager const * const elemManager )
     {
-      elemManager->forElementRegionsComplete< CellElementRegion >( [&]( localIndex const er,
+      elemManager->forElementRegionsComplete< CellElementRegion >( [&]( localIndex const GEOSX_UNUSED_ARG( er ),
                                                                     auto const * const elemRegion )
       {
         elemRegion->template forElementSubRegions< CellElementSubRegion >( [&]( auto const * const elemSubRegion )
@@ -443,7 +440,7 @@ class CustomVTUXMLWriter
       string outputString;
       outputString.resize( FindBase64StringLength( sizeof( integer ) * multiplier ) );
       integer countTypeFragmentIndex = 0;
-      elemManager->forElementRegionsComplete< CellElementRegion >( [&]( localIndex const er,
+      elemManager->forElementRegionsComplete< CellElementRegion >( [&]( localIndex const GEOSX_UNUSED_ARG( er ),
                                                                     auto const * const elemRegion )
       {
         elemRegion->template forElementSubRegions< CellElementSubRegion >( [&]( auto const * const elemSubRegion )
@@ -486,7 +483,6 @@ class CustomVTUXMLWriter
     void WriteCellBinaryData( ElementRegionManager::ElementViewAccessor< T > const & dataView, ElementRegionManager const * const elemManager )
     {
       std::stringstream stream;
-      std::uint32_t size = integer_conversion < std::uint32_t >( elemManager->getNumberOfElements< CellElementSubRegion >() * sizeof( dataView[0][0][0] ) );
       WriteSize( elemManager->getNumberOfElements< CellElementSubRegion >(), sizeof( dataView[0][0][0] ) );
       integer multiplier = FindMultiplier( sizeof( dataView[0][0][0] ) );// We do not write all the data at once to avoid creating a big table each time.
       string outputString;
@@ -540,7 +536,6 @@ class CustomVTUXMLWriter
     {
       std::stringstream stream;
       auto & viewRef = dataView.reference();
-      std::uint32_t size = integer_conversion < std::uint32_t >(  viewRef.size() * sizeof( viewRef[0]) );
       integer multiplier = FindMultiplier( sizeof( viewRef[0] ) );// We do not write all the data at once to avoid creating a big table each time.
       string outputString;
       outputString.resize( FindBase64StringLength( sizeof( viewRef[0] )  * multiplier ) );
@@ -648,8 +643,7 @@ VTKFile::VTKFile( string const & name ):
   m_baseName( name ),
   m_binary( false )
 {
-  int mpiRank;
-  MPI_Comm_rank( MPI_COMM_GEOSX, &mpiRank );
+  int const mpiRank = MpiWrapper::Comm_rank(MPI_COMM_GEOSX);
   if( mpiRank == 0 )
   {
     // Declaration of XML version
@@ -677,13 +671,18 @@ VTKFile::VTKFile( string const & name ):
 void VTKFile::Write( double const timeStep,
                      DomainPartition const & domain )
 {
-  int mpiRank;
-  int mpiSize;
-  MPI_Comm_rank( MPI_COMM_GEOSX, &mpiRank );
-  MPI_Comm_size( MPI_COMM_GEOSX, &mpiSize );
+  int const mpiRank = MpiWrapper::Comm_rank(MPI_COMM_GEOSX);
+  int const mpiSize = MpiWrapper::Comm_size(MPI_COMM_GEOSX);
   ElementRegionManager const * elemManager = domain.getMeshBody(0)->getMeshLevel(0)->getElemManager();
   NodeManager const * nodeManager = domain.getMeshBody(0)->getMeshLevel(0)->getNodeManager();
   string timeStepFolderName = m_baseName + "/" + std::to_string( timeStep );
+  if( mpiRank == 0 )    
+  {                     
+    // Create a directory for this time step
+    mode_t mode = 0733;
+    mkdir( timeStepFolderName.c_str(), mode );
+  }
+  MpiWrapper::Barrier();
   string format;
   if( m_binary )
   {
@@ -694,10 +693,10 @@ void VTKFile::Write( double const timeStep,
     format = "ascii";
   }
 
-  set< std::tuple< string, string, integer, rtTypes::TypeIDs > > cellFields; // First : field name, Second : type, Third : field dimension;
+  std::set< std::tuple< string, string, integer, rtTypes::TypeIDs > > cellFields; // First : field name, Second : type, Third : field dimension;
   // Find all cell fields to export
-  elemManager->forElementRegionsComplete< CellElementRegion >( [&]( localIndex const er,
-                                                           auto const * const elemRegion )
+  elemManager->forElementRegionsComplete< CellElementRegion >( [&]( localIndex const GEOSX_UNUSED_ARG( er ),
+                                                                    auto const * const elemRegion )
   {
     elemRegion->forElementSubRegions([&]( auto const * const subRegion )
     {
@@ -728,7 +727,7 @@ void VTKFile::Write( double const timeStep,
     });
   });
 
-  set< std::tuple< string, string, integer, rtTypes::TypeIDs > > nodeFields; // First : field name, Second : type, Third : field dimension;
+  std::set< std::tuple< string, string, integer, rtTypes::TypeIDs > > nodeFields; // First : field name, Second : type, Third : field dimension;
   // Find all node fields to export
   for( auto const & wrapperIter : nodeManager->wrappers() )
   {
@@ -764,9 +763,6 @@ void VTKFile::Write( double const timeStep,
     dataSetNode.append_attribute("file") = pvtuFileName.c_str();
 
     /// Create the pvtu file for this time step
-    // Create a directory for this time step
-    mode_t mode = 0733;
-    mkdir( timeStepFolderName.c_str(), mode );
     pugi::xml_document pvtuFile;
 
     // Declaration of XML version
@@ -837,8 +833,8 @@ void VTKFile::Write( double const timeStep,
   // Declaration of the node Piece and the basic informations of the mesh
   localIndex totalNumberOfCells = elemManager->getNumberOfElements< CellElementSubRegion >();
   localIndex totalNumberOfSubRegion = 0;
-  elemManager->forElementRegionsComplete< CellElementRegion >( [&]( localIndex const er,
-                                                              auto const * const elemRegion )
+  elemManager->forElementRegionsComplete< CellElementRegion >( [&]( localIndex const GEOSX_UNUSED_ARG( er ),
+                                                                    auto const * const elemRegion )
   {
     totalNumberOfSubRegion += elemRegion->numSubRegions();
   });
@@ -902,8 +898,8 @@ void VTKFile::Write( double const timeStep,
 
 
   array1d< std::tuple< integer, localIndex, string > > subRegionsInfo; // First value : cell size, Second value : number of cells, Third value : cell Types
-  elemManager->forElementRegionsComplete< CellElementRegion >( [&]( localIndex const er,
-                                                                auto const * const elemRegion )
+  elemManager->forElementRegionsComplete< CellElementRegion >( [&]( localIndex const GEOSX_UNUSED_ARG( er ),
+                                                                    auto const * const elemRegion )
   {
     elemRegion->template forElementSubRegions< CellElementSubRegion >( [&]( auto const * const elemSubRegion )
     {

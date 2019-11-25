@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 
@@ -30,7 +26,7 @@ namespace bufferOps
 
 
 template< bool DO_PACKING >
-localIndex Pack( char*& buffer,
+localIndex Pack( buffer_unit_type *& buffer,
                  OrderedVariableToManyElementRelation const & var,
                  arrayView1d<localIndex const> const & packList,
                  ElementRegionManager const * const elementRegionManager )
@@ -66,17 +62,17 @@ localIndex Pack( char*& buffer,
 
   return sizeOfPackedChars;
 }
-template localIndex Pack<true>( char*&,
+template localIndex Pack<true>( buffer_unit_type *&,
                                 OrderedVariableToManyElementRelation const &,
                                 arrayView1d<localIndex const> const &,
                                 ElementRegionManager const * const );
-template localIndex Pack<false>( char*&,
+template localIndex Pack<false>( buffer_unit_type *&,
                                  OrderedVariableToManyElementRelation const &,
                                  arrayView1d<localIndex const> const &,
                                  ElementRegionManager const * const );
 
 
-localIndex Unpack( char const * & buffer,
+localIndex Unpack( buffer_unit_type const * & buffer,
                    OrderedVariableToManyElementRelation & var,
                    arrayView1d<localIndex const> const & packList,
                    ElementRegionManager const * const elementRegionManager,
@@ -160,7 +156,7 @@ localIndex Unpack( char const * & buffer,
 
 
 template< bool DO_PACKING >
-localIndex Pack( char*& buffer,
+localIndex Pack( buffer_unit_type *& buffer,
                  FixedToManyElementRelation const & var,
                  arrayView1d<localIndex const> const & packList,
                  ElementRegionManager const * const elementRegionManager )
@@ -196,17 +192,17 @@ localIndex Pack( char*& buffer,
 
   return sizeOfPackedChars;
 }
-template localIndex Pack<true>( char*&,
+template localIndex Pack<true>( buffer_unit_type *&,
                                 FixedToManyElementRelation const &,
                                 arrayView1d<localIndex const> const &,
                                 ElementRegionManager const * const );
-template localIndex Pack<false>( char*&,
+template localIndex Pack<false>( buffer_unit_type *&,
                                  FixedToManyElementRelation const &,
                                  arrayView1d<localIndex const> const &,
                                  ElementRegionManager const * const );
 
 
-localIndex Unpack( char const * & buffer,
+localIndex Unpack( buffer_unit_type const * & buffer,
                    FixedToManyElementRelation & var,
                    arrayView1d<localIndex const> const & packList,
                    ElementRegionManager const * const elementRegionManager,

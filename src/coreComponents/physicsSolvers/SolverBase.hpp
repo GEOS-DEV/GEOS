@@ -1,23 +1,19 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef SOLVERBASE_HPP_
-#define SOLVERBASE_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_SOLVERBASE_HPP_
+#define GEOSX_PHYSICSSOLVERS_SOLVERBASE_HPP_
 
 
 
@@ -32,8 +28,9 @@
 #include "mesh/MeshBody.hpp"
 #include "physicsSolvers/SystemSolverParameters.hpp"
 
-#include "InterfaceTypes.hpp" // LAI
-#include "DofManager.hpp"
+#include "linearAlgebra/interfaces/InterfaceTypes.hpp"
+#include "linearAlgebra/utilities/LinearSolverParameters.hpp"
+#include "linearAlgebra/DofManager.hpp"
 
 namespace geosx
 {
@@ -198,7 +195,8 @@ public:
               DofManager const & dofManager,
               ParallelMatrix & matrix,
               ParallelVector & rhs,
-              ParallelVector & solution,
+              ParallelVector const & solution,
+              real64 const scaleFactor,
               real64 & lastResidual );
 
   /**
@@ -382,6 +380,18 @@ public:
                        real64 const scalingFactor );
 
   /**
+   * @brief Function to determine if the solution vector should be scaled back in order to maintain a known constraint.
+   * @param[in] domain The domain partition.
+   * @param[in] dofManager degree-of-freedom manager associated with the linear system
+   * @param[in] solution the solution vector
+   * @return The factor that should be used to scale the solution vector values when they are being applied.
+   */
+  virtual real64
+  ScalingForSystemSolution( DomainPartition const * const domain,
+                            DofManager const & dofManager,
+                            ParallelVector const & solution );
+
+  /**
    * @brief Function to apply the solution vector to the state
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
@@ -448,7 +458,7 @@ public:
   virtual Group * CreateChild( string const & childKey, string const & childName ) override;
   virtual void ExpandObjectCatalogs() override;
 
-  using CatalogInterface = cxx_utilities::CatalogInterface< SolverBase, std::string const &, Group * const >;
+  using CatalogInterface = dataRepository::CatalogInterface< SolverBase, std::string const &, Group * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 
   struct viewKeyStruct
@@ -590,4 +600,4 @@ BASETYPE * SolverBase::GetConstitutiveModel( dataRepository::Group * dataGroup, 
 } /* namespace ANST */
 
 
-#endif /* SOLVERBASE_HPP_ */
+#endif /* GEOSX_PHYSICSSOLVERS_SOLVERBASE_HPP_ */

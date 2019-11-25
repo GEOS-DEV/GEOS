@@ -1,35 +1,31 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
  * @file FieldBase.hpp
  */
 
-#ifndef BOUNDARYCONDITIONBASE_H
-#define BOUNDARYCONDITIONBASE_H
+#ifndef GEOSX_MANAGERS_FIELDSPECIFICATION_FIELDSPECIFICATIONBASE_HPP
+#define GEOSX_MANAGERS_FIELDSPECIFICATION_FIELDSPECIFICATIONBASE_HPP
 
-#include "dataRepository/Group.hpp"
 #include "common/DataTypes.hpp"
 #include "codingUtilities/GeosxTraits.hpp"
 #include "codingUtilities/Utilities.hpp"
-#include "linearAlgebraInterface/src/InterfaceTypes.hpp"
+#include "dataRepository/Group.hpp"
+#include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "managers/FieldSpecification/FieldSpecificationOps.hpp"
-#include "managers/Functions/NewFunctionManager.hpp"
+#include "managers/Functions/FunctionManager.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
@@ -53,7 +49,7 @@ public:
   /**
    * alias to define the catalog type for this base type
    */
-  using CatalogInterface = cxx_utilities::CatalogInterface< FieldSpecificationBase,
+  using CatalogInterface = dataRepository::CatalogInterface< FieldSpecificationBase,
                                                             string const &,
                                                             dataRepository::Group * const >;
 
@@ -87,8 +83,8 @@ public:
    */
   virtual ~FieldSpecificationBase() override;
 
-  template < typename FIELD_OP, typename POLICY, typename T, int N >
-  void ApplyFieldValueKernel( LvArray::ArrayView< T, N, localIndex > const & field,
+  template < typename FIELD_OP, typename POLICY, typename T, int N, int UNIT_STRIDE_DIM >
+  void ApplyFieldValueKernel( LvArray::ArrayView< T, N, UNIT_STRIDE_DIM, localIndex > const & field,
                               SortedArrayView< localIndex const > const & targetSet,
                               real64 const time,
                               Group * dataGroup ) const;
@@ -98,7 +94,7 @@ public:
    * @param[in] targetSet the set of indices which the value will be applied.
    * @param[in] time The time at which any time dependent functions are to be evaluated as part of the
    *             application of the value.
-   * @param[in] dataGroup the ManagedGroup that contains the field to apply the value to.
+   * @param[in] dataGroup the Group that contains the field to apply the value to.
    * @param[in] fieldname the name of the field to apply the value to.
    *
    * This function applies the value to a field variable. This function is typically
@@ -115,7 +111,7 @@ public:
    * @param[in] targetSet The set of indices which the boundary condition will be applied.
    * @param[in] time The time at which any time dependent functions are to be evaluated as part of the
    *             application of the boundary condition.
-   * @param[in] dataGroup The ManagedGroup that contains the field to apply the boundary condition to.
+   * @param[in] dataGroup The Group that contains the field to apply the boundary condition to.
    * @param[in] fieldName The name of the field to apply the boundary condition to.
    * @param[in] dofMapName The name of the map from the local index of the primary field to the
    *                       global degree of freedom number.
@@ -149,7 +145,7 @@ public:
    * @param[in] targetSet The set of indices which the boundary condition will be applied.
    * @param[in] time The time at which any time dependent functions are to be evaluated as part of the
    *             application of the boundary condition.
-   * @param[in] dataGroup The ManagedGroup that contains the field to apply the boundary condition to.
+   * @param[in] dataGroup The Group that contains the field to apply the boundary condition to.
    * @param[in] dofMapName The name of the map from the local index of the primary field to the
    *                       global degree of freedom number.
    * @param[in] dofDim The number of degrees of freedom per index of the primary field. For instance
@@ -185,7 +181,7 @@ public:
    * @param[in] time The time at which any time dependent functions are to be evaluated as part of the
    *             application of the boundary condition.
    * @param[in] dt time step size which is applied as a factor to bc values
-   * @param[in] dataGroup The ManagedGroup that contains the field to apply the boundary condition to.
+   * @param[in] dataGroup The Group that contains the field to apply the boundary condition to.
    * @param[in] dofMapName The name of the map from the local index of the primary field to the
    *                       global degree of freedom number.
    * @param[in] dofDim The number of degrees of freedom per index of the primary field. For instance
@@ -260,7 +256,7 @@ public:
     return m_component;
   }
 
-  virtual const R1Tensor& GetDirection( realT time )
+  virtual const R1Tensor& GetDirection( realT GEOSX_UNUSED_ARG( time ) )
   {
     return m_direction;
   }
@@ -361,15 +357,15 @@ private:
 };
 
 
-template < typename FIELD_OP, typename POLICY, typename T, int N >
-void FieldSpecificationBase::ApplyFieldValueKernel( LvArray::ArrayView< T, N, localIndex > const & field,
+template < typename FIELD_OP, typename POLICY, typename T, int N, int UNIT_STRIDE_DIM >
+void FieldSpecificationBase::ApplyFieldValueKernel( LvArray::ArrayView< T, N, UNIT_STRIDE_DIM, localIndex > const & field,
                                                     SortedArrayView< localIndex const > const & targetSet,
                                                     real64 const time,
                                                     Group * dataGroup ) const
 {
   integer const component = GetComponent();
   string const & functionName = getReference<string>( viewKeyStruct::functionNameString );
-  NewFunctionManager * functionManager = NewFunctionManager::Instance();
+  FunctionManager * functionManager = FunctionManager::Instance();
 
   if( functionName.empty() )
   {
@@ -420,7 +416,7 @@ void FieldSpecificationBase::ApplyFieldValue( set<localIndex> const & targetSet,
 
   rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( typeIndex ),
                                  false,
-                                 [&]( auto arrayInstance, auto dataTypeInstance )
+                                 [&]( auto arrayInstance, auto GEOSX_UNUSED_ARG( dataTypeInstance ) )
   {
     using ArrayType = decltype(arrayInstance);
     dataRepository::Wrapper<ArrayType> & view = dataRepository::Wrapper<ArrayType>::cast( *wrapper );
@@ -471,14 +467,14 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                                 real64 const time,
                                 dataRepository::Group * dataGroup,
                                 arrayView1d<globalIndex const> const & dofMap,
-                                integer const & dofDim,
+                                integer const & GEOSX_UNUSED_ARG( dofDim ),
                                 typename LAI::ParallelMatrix & matrix,
                                 typename LAI::ParallelVector & rhs,
                                 LAMBDA && lambda ) const
 {
   integer const component = GetComponent();
   string const & functionName = getReference<string>( viewKeyStruct::functionNameString );
-  NewFunctionManager * functionManager = NewFunctionManager::Instance();
+  FunctionManager * functionManager = FunctionManager::Instance();
 
   globalIndex_array  dof( targetSet.size() );
   real64_array rhsContribution( targetSet.size() );
@@ -554,20 +550,25 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                                 real64 const dt,
                                 dataRepository::Group * dataGroup,
                                 arrayView1d<globalIndex const> const & dofMap,
-                                integer const & dofDim,
+                                integer const & GEOSX_UNUSED_ARG( dofDim ),
                                 typename LAI::ParallelMatrix & matrix,
                                 typename LAI::ParallelVector & rhs,
                                 LAMBDA && lambda ) const
 {
   integer const component = GetComponent();
   string const & functionName = getReference<string>( viewKeyStruct::functionNameString );
-  NewFunctionManager * functionManager = NewFunctionManager::Instance();
+  FunctionManager * functionManager = FunctionManager::Instance();
 
   globalIndex_array  dof( targetSet.size() );
   real64_array rhsContribution( targetSet.size() );
 
   // TODO: not correct in parallel, need to compute global size of a set
-  real64 const setSizeFactor = ( normalizeBySetSize && !targetSet.empty() ) ? 1.0/targetSet.size() : 1.0;
+  int mytargetSetNumber = targetSet.size();
+  int totalTargetSetNumber;
+
+  MpiWrapper::allReduce( &mytargetSetNumber, &totalTargetSetNumber, 1, MPI_SUM, MPI_COMM_GEOSX );
+
+  real64 const setSizeFactor = ( normalizeBySetSize && (totalTargetSetNumber!= 0) ) ? 1.0/totalTargetSetNumber : 1.0;
 
   if( functionName.empty() )
   {

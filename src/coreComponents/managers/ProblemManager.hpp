@@ -1,30 +1,23 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
-/*
- * ProblemManager.hpp
- *
- *  Created on: Jul 21, 2016
- *      Author: rrsettgast
+/**
+ * @file ProblemManager.hpp
  */
 
-#ifndef COMPONENTS_CORE_SRC_MANAGERS_PROBLEMMANAGER_HPP_
-#define COMPONENTS_CORE_SRC_MANAGERS_PROBLEMMANAGER_HPP_
+#ifndef GEOSX_MANAGERS_PROBLEMMANAGER_HPP_
+#define GEOSX_MANAGERS_PROBLEMMANAGER_HPP_
 
 #ifdef GEOSX_USE_PYTHON
 // Note: the python header must be included first to avoid conflicting
@@ -36,22 +29,13 @@
 
 #include "ObjectManagerBase.hpp"
 #include "EventManager.hpp"
-#include "managers/Functions/NewFunctionManager.hpp"
+#include "managers/Functions/FunctionManager.hpp"
 #include "fileIO/schema/SchemaUtilities.hpp"
 
 namespace geosx
 {
 
 class PhysicsSolverManager;
-namespace dataRepository
-{
-namespace keys
-{
-string const eventManager="EventManager";
-}
-}
-
-
 class DomainPartition;
 
 class ProblemManager : public ObjectManagerBase
@@ -79,8 +63,6 @@ public:
   virtual void SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
                                    xmlWrapper::xmlNode schemaParent,
                                    integer documentationType) override;
-
-  virtual void RegisterDataOnMeshRecursive( Group * const MeshBodies ) override final;
 
   virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 
@@ -115,7 +97,7 @@ public:
   void RunSimulation();
 
 
-  void ReadRestartOverwrite( const std::string& restartFileName );
+  void ReadRestartOverwrite();
 
   void ApplyInitialConditions();
 
@@ -155,6 +137,7 @@ public:
 
   struct groupKeysStruct
   {
+//    constexpr auto eventManager="EventManager";
     dataRepository::GroupKey commandLine    = { "commandLine" };
     dataRepository::GroupKey constitutiveManager = { "Constitutive" };
     dataRepository::GroupKey domain    = { "domain" };
@@ -187,9 +170,9 @@ private:
 
   PhysicsSolverManager * m_physicsSolverManager;
   EventManager * m_eventManager;
-  NewFunctionManager * m_functionManager;
+  FunctionManager * m_functionManager;
 };
 
 } /* namespace geosx */
 
-#endif /* COMPONENTS_CORE_SRC_MANAGERS_PROBLEMMANAGER_HPP_ */
+#endif /* GEOSX_MANAGERS_PROBLEMMANAGER_HPP_ */

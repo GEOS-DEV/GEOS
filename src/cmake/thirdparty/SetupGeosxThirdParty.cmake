@@ -1,6 +1,3 @@
-message(STATUS "\nProcessing SetupGeosxThirdParty.cmake")
-
-
 ####################################
 # 3rd Party Dependencies
 ####################################
@@ -46,6 +43,10 @@ endif()
 ################################
 include(${CMAKE_SOURCE_DIR}/cmake/thirdparty/FindATK.cmake)
 
+################################
+# PTHREADS
+################################
+find_package(Threads)
 
 ################################
 # HDF5
@@ -181,7 +182,11 @@ if( ENABLE_CALIPER )
             NO_SYSTEM_ENVIRONMENT_PATH
             NO_CMAKE_SYSTEM_PATH)
 
-    set( caliper_lib_list caliper-mpi caliper )
+    if( ENABLE_MPI )
+      set( caliper_lib_list caliper-mpi caliper )
+    else()
+      set( caliper_lib_list caliper )
+    endif()
 
     message(STATUS "looking for libs in ${CALIPER_DIR}")
     blt_find_libraries( FOUND_LIBS CALIPER_LIBRARIES
@@ -548,9 +553,14 @@ if( ENABLE_HYPRE )
     if (NOT HYPRE_FOUND)
         message(FATAL_ERROR "HYPRE not found in ${HYPRE_DIR}. Maybe you need to build it")
     endif()
+    
+    set( HYPRE_DEPENDS "blas;lapack" )
+    if( ENABLE_SUPERLU_DIST )
+        list( APPEND HYPRE_DEPENDS "superlu_dist" )
+    endif()
 
     blt_register_library( NAME hypre
-                          DEPENDS_ON superlu_dist blas lapack
+                          DEPENDS_ON ${HYPRE_DEPENDS}
                           INCLUDES ${HYPRE_INCLUDE_DIRS}
                           LIBRARIES ${HYPRE_LIBRARY}
                           TREAT_INCLUDES_AS_SYSTEM ON )
@@ -578,4 +588,44 @@ if(UNCRUSTIFY_FOUND)
     
 endif()
 
-message(STATUS "Leaving SetupGeosxThirdParty.cmake\n")
+################################
+# PETSC
+################################
+if( ENABLE_PETSC )
+    message( STATUS "setting up PETSC" )
+
+    if( EXISTS ${PETSC_DIR} )
+  
+    else()
+        set(PETSC_DIR ${GEOSX_TPL_DIR}/petsc)
+    endif()
+
+    find_path( Petsc_INCLUDE_DIRS petscvec.h
+               PATHS  ${PETSC_DIR}/include
+               NO_DEFAULT_PATH
+               NO_CMAKE_ENVIRONMENT_PATH
+               NO_CMAKE_PATH
+               NO_SYSTEM_ENVIRONMENT_PATH
+               NO_CMAKE_SYSTEM_PATH)
+
+    find_library( Petsc_LIBRARIES NAMES petsc
+                  PATHS ${PETSC_DIR}/lib
+                  NO_DEFAULT_PATH
+                  NO_CMAKE_ENVIRONMENT_PATH
+                  NO_CMAKE_PATH
+                  NO_SYSTEM_ENVIRONMENT_PATH
+                  NO_CMAKE_SYSTEM_PATH)
+
+    message( STATUS "Petsc_INCLUDE_DIRS = ${Petsc_INCLUDE_DIRS}" )
+    message( STATUS "Petsc_LIBRARIES = ${Petsc_LIBRARIES}" )
+  
+  
+    blt_register_library( NAME petsc
+                          INCLUDES ${Petsc_INCLUDE_DIRS} 
+                          LIBRARIES ${Petsc_LIBRARIES}
+                          TREAT_INCLUDES_AS_SYSTEM ON )
+    set( thirdPartyLibs ${thirdPartyLibs} petsc )  
+
+endif()
+
+message(STATUS "thirdPartyLibs = ${thirdPartyLibs}")

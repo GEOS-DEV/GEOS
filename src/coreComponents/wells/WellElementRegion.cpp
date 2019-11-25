@@ -1,28 +1,24 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
  * @file WellElementRegion.cpp
  */
 
-#include "MPI_Communications/CommunicationTools.hpp"
-
 #include "WellElementRegion.hpp"
+
+#include "mpiCommunications/MpiWrapper.hpp"
 #include "WellElementSubRegion.hpp"
 
 namespace geosx
@@ -71,7 +67,7 @@ void WellElementRegion::GenerateWell( MeshLevel & mesh,
   // 1) select the local perforations based on connectivity to the local reservoir elements
   perforationData->ConnectToMeshElements( mesh, wellGeometry );
 
-  globalIndex const matchedPerforations = CommunicationTools::Sum( perforationData->size() );
+  globalIndex const matchedPerforations = MpiWrapper::Sum( perforationData->size() );
   GEOS_ERROR_IF( matchedPerforations != numPerforationsGlobal, 
                  "Invalid mapping perforation-to-element in well " << this->getName() );
 
@@ -80,7 +76,7 @@ void WellElementRegion::GenerateWell( MeshLevel & mesh,
   array1d<integer> elemStatusGlobal( numElemsGlobal );
   elemStatusGlobal = WellElementSubRegion::WellElemStatus::UNOWNED;
 
-  array1d<globalIndex const> const & perfElemIdGlobal = wellGeometry.GetPerfElemIndex();
+  arrayView1d<globalIndex const> const & perfElemIdGlobal = wellGeometry.GetPerfElemIndex();
 
   for (localIndex iperfGlobal = 0; iperfGlobal < numPerforationsGlobal; ++iperfGlobal)
   {
@@ -109,7 +105,7 @@ void WellElementRegion::GenerateWell( MeshLevel & mesh,
   localIndex const refElemIdLocal = subRegion->GetTopWellElementIndex();
 
   array1d<localIndex> allRankTopElem;
-  CommunicationTools::allGather( refElemIdLocal, allRankTopElem );
+  MpiWrapper::allGather( refElemIdLocal, allRankTopElem );
   int topRank = -1;
   for (int irank = 0; irank < allRankTopElem.size(); ++irank)
   {

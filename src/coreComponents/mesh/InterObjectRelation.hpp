@@ -1,30 +1,23 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
-/*
- * InterObjectRelationship.h
- *
- *  Created on: May 4, 2012
- *      Author: settgast1
+/**
+ * @file InterObjectRelationship.hpp
  */
 
-#ifndef INTEROBJECTRELATION_H_
-#define INTEROBJECTRELATION_H_
+#ifndef GEOSX_MESH_INTEROBJECTRELATION_HPP_
+#define GEOSX_MESH_INTEROBJECTRELATION_HPP_
 
 
 //#include "Common/typedefs.h"
@@ -41,6 +34,11 @@ public:
 
   using base_type = BASETYPE;
 
+  template< typename ...ARGS >
+  InterObjectRelation( ARGS && ...args ) :
+    BASETYPE( std::forward< ARGS >( args )... )
+  {}
+
   /// equals operator that sets *this to a single value of any type
   template<typename rTYPE> InterObjectRelation& operator=( const rTYPE& rhs )
   {
@@ -54,7 +52,7 @@ public:
   void SetRelatedObject( ObjectManagerBase const * const relatedObject )
   { m_relatedObject = relatedObject; }
 
-  const ObjectDataStructureBaseT* RelatedObject() const
+  const ObjectManagerBase * RelatedObject() const
   { return m_relatedObject; }
 
   globalIndex_array const & RelatedObjectLocalToGlobal() const
@@ -64,21 +62,10 @@ public:
   { return this->m_relatedObject->m_globalToLocalMap; }
 
 private:
-  ObjectDataStructureBaseT const * m_relatedObject = nullptr;
+  ObjectManagerBase const * m_relatedObject = nullptr;
 };
 
-typedef InterObjectRelation<array1d<localIndex>>                OneToOneRelation;
-typedef InterObjectRelation<array1d<localIndex const>>          OneToOneConstRelation;
-
 typedef InterObjectRelation<array2d<localIndex>>                FixedOneToManyRelation;
-typedef InterObjectRelation<array2d<localIndex const>>          FixedOneToManyConstRelation;
-
-typedef InterObjectRelation<array1d<array1d<localIndex>>>       OrderedVariableOneToManyRelation;
-typedef InterObjectRelation<array1d<array1d<localIndex const>>> OrderedVariableOneToManyConstRelation;
-
-typedef InterObjectRelation<array1d<set<localIndex>>>           UnorderedVariableOneToManyRelation;
-typedef InterObjectRelation<array1d<set<localIndex const>>>     UnorderedVariableOneToManyConstRelation;
-
 }
 
-#endif /* INTEROBJECTRELATION_H_ */
+#endif /* GEOSX_MESH_INTEROBJECTRELATION_HPP_ */

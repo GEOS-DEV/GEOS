@@ -29,7 +29,7 @@
     <PeriodicEvent name="restarts"
                    timeFrequency="5.0e-4"
                    targetExactTimestep="0"
-                   target="/Outputs/sidreRestart"/>
+                   target="/Outputs/restartOutput"/>
   </Events>
 
 
@@ -71,14 +71,27 @@
 
 
   <FieldSpecifications>
-    <FieldSpecification name="source"  
+    <FieldSpecification name="source0"
                initialCondition="1"  
                setNames="{source}"
                objectPath="ElementRegions"
-               fieldName="shale_MeanStress"
-               component="-1"
+               fieldName="shale_stress"
+               component="0"
                scale="-1.0e6"/>
-               <!--objectPath="ElementRegions/Region2/cb1" -->
+    <FieldSpecification name="source1"  
+               initialCondition="1"  
+               setNames="{source}"
+               objectPath="ElementRegions"
+               fieldName="shale_stress"
+               component="2"
+               scale="-1.0e6"/>
+    <FieldSpecification name="source2"  
+               initialCondition="1"  
+               setNames="{source}"
+               objectPath="ElementRegions"
+               fieldName="shale_stress"
+               component="5"
+               scale="-1.0e6"/>
 
     <FieldSpecification name="xconstraint" 
                objectPath="nodeManager"
@@ -109,7 +122,7 @@
            plotFileRoot="plot" 
            slaveDirectory="sub"
            />
-    <Restart name="sidreRestart"/>
+    <Restart name="restartOutput"/>
   </Outputs>
 
   <Geometry>

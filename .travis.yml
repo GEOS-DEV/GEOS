@@ -1,10 +1,7 @@
-language: cpp
+language: minimal
 env:
   global:
-  - OMP_NUM_THREADS=3
-  - DO_BUILD=yes
-  - DO_TEST=yes
-  - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14 -DENABLE_WARNINGS_AS_ERRORS=ON"
+  - GEOSX_TPL_TAG=81-252
 matrix:
   include:
   - os: osx
@@ -12,94 +9,60 @@ matrix:
     env:
     - CC=clang
     - CXX=clang++
-    - FC=gfortran
     - MPICC=mpicc
     - MPICXX=mpicxx
-    - MPIFC=mpifort
     - MPIEXEC=/usr/local/bin/mpirun
-    - GEOSX_TPL_DIR=/Users/travis/build/GEOSX/thirdPartyLibs/install-default-release
-    - CMAKE_BUILD_TYPE=Release
-  - compiler: clang6-LC-toss3
-    sudo: required
-    services: docker
-    dist: trusty
+  - services: docker
     env:
-    - IMG=clang6-LC-toss3
-    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-default-release
+    - DOCKER_REPOSITORY=geosx/centos7.5.1804-clang6.0.1
     - CMAKE_BUILD_TYPE=Release
-  - compiler: clang7-LC-toss3
-    sudo: required
-    services: docker
-    dist: trusty
+  - services: docker
     env:
-    - IMG=clang7-LC-toss3
-    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-default-release
+    - DOCKER_REPOSITORY=geosx/centos7.5.1804-clang7.0.0
     - CMAKE_BUILD_TYPE=Release
-  - compiler: clang7-LC-toss3-debug
-    sudo: required
-    services: docker
-    dist: trusty
+  - services: docker
     env:
-    - IMG=clang7-LC-toss3
-    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-default-release
+    - DOCKER_REPOSITORY=geosx/centos7.5.1804-clang7.0.0
     - CMAKE_BUILD_TYPE=Debug
-  - compiler: gcc7-ubuntu18
-    sudo: required
-    services: docker
-    dist: trusty
+  - services: docker
     env:
-    - IMG=gcc7-ubuntu18
-    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-default-release
+    - DOCKER_REPOSITORY=geosx/ubuntu18.04-gcc7
     - CMAKE_BUILD_TYPE=Release
-  - compiler: gcc8-ubuntu18
-    sudo: required
-    services: docker
-    dist: trusty
+  - services: docker
     env:
-    - IMG=gcc8-ubuntu18
-    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-default-release
+    - DOCKER_REPOSITORY=geosx/ubuntu18.04-gcc8
     - CMAKE_BUILD_TYPE=Release
-  - compiler: gcc8-ubuntu18-debug
-    sudo: required
-    services: docker
-    dist: trusty
+  - services: docker
     env:
-    - IMG=gcc8-ubuntu18
-    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-default-release
+    - DOCKER_REPOSITORY=geosx/ubuntu18.04-gcc8
     - CMAKE_BUILD_TYPE=Debug
 git:
   submodules: false
 before_script:
-  - git submodule update --init --recursive src/coreComponents/cxx-utilities
-  - git submodule update --init --recursive src/cmake/blt
-  - git submodule update --init --recursive src/externalComponents/PVTPackage
-  - git submodule update --init --recursive src/externalComponents/PAMELA
-  - git submodule update --init --recursive src/coreComponents/fileIO/coupling/hdf5_interface
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-      docker run --rm --user='root' -v ${TRAVIS_BUILD_DIR}:/home/geosx/geosx_repo geosx/compiler:$IMG  chown -R geosx /home/geosx;
-    fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-      brew install openmpi;
-      ln -s /usr/local/Cellar/open-mpi/4.0.1_2 /usr/local/Cellar/open-mpi/4.0.1_1;
-      cd ..;
-      mkdir thirdPartyLibs;
-      cd thirdPartyLibs;
-      wget https://www.dropbox.com/s/3mlzvaw5g6cm4va/tpl-osx-clang10-20190625.tar.gz;
-      tar -xf tpl-osx-clang10-20190625.tar.gz;
-      cd install-darwin-clang-release/chai/include/chai;
-      wget https://www.dropbox.com/s/mdetuztgiovgpux/ManagedArray.hpp;
-      mv ManagedArray.hpp.1 ManagedArray.hpp;
-      sudo mkdir -p /Users/rrsettgast/Codes/geosx/;
-      sudo ln -s /Users/travis/build/GEOSX/thirdPartyLibs /Users/rrsettgast/Codes/geosx/thirdPartyLibs;
-      cd ../../../..;
-      cd ../GEOSX;  
-    fi
-script: 
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-      python ${TRAVIS_BUILD_DIR}/scripts/config-build.py -hc ${TRAVIS_BUILD_DIR}/host-configs/darwin-clang.cmake -DBLT_MPI_COMMAND_APPEND:STRING="--oversubscribe";
-      cd build-darwin-clang-debug;
-      make -j2 VERBOSE=1;
-      ctest -V;
-    else
-      docker run --rm -v ${TRAVIS_BUILD_DIR}:/home/geosx/geosx_repo  -e DO_BUILD -e DO_TEST -e CMAKE_EXTRA_FLAGS -e PATHMOD  -e GEOSX_TPL_DIR -e CMAKE_BUILD_TYPE geosx/compiler:$IMG  /home/geosx/geosx_repo/scripts/travis_build_and_test.sh;    
-    fi
+- git submodule update --init --recursive src/coreComponents/cxx-utilities
+- git submodule update --init --recursive src/cmake/blt
+- git submodule update --init --recursive src/externalComponents/PVTPackage
+- git submodule update --init --recursive src/externalComponents/PAMELA
+- git submodule update --init --recursive src/coreComponents/fileIO/coupling/hdf5_interface
+- git submodule update --init --recursive src/coreComponents/physicsSolvers/GEOSX_PTP
+  # For osx, we download the brew version which was used to build the TPL (mainly because of openmpi).
+  # A python one-liner is used no to install `jq` just for this purpose.
+  # We also are careful about the carriage return, so we can build the URL smoothly.
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+    mkdir ../thirdPartyLibs;
+    TPL_METADATA_URL=https://www.googleapis.com/storage/v1/b/geosx/o/TPL%2Fosx-${GEOSX_TPL_TAG}.tar;
+    TPL_BULK_URL=${TPL_METADATA_URL}?alt=media;
+    curl -s "${TPL_BULK_URL}" | tar --directory=../thirdPartyLibs -xf -;
+    BREW_HASH=$(curl -s "${TPL_METADATA_URL}" | python3 -c "import sys, json; print(json.load(sys.stdin)['metadata']['BREW_HASH'], end='')");
+    BREW_URL=https://raw.github.com/Homebrew/homebrew-core/${BREW_HASH};
+    brew install ${BREW_URL}/Formula/open-mpi.rb;
+  fi
+script:
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+    python ${TRAVIS_BUILD_DIR}/scripts/config-build.py -hc ${TRAVIS_BUILD_DIR}/host-configs/darwin-clang.cmake -DBLT_MPI_COMMAND_APPEND:STRING="--oversubscribe" -DENABLE_GEOSX_PTP:BOOL=ON;
+    cd build-darwin-clang-debug;
+    make -j $(nproc) VERBOSE=1;
+    ctest -V;
+  else
+    docker run --rm -v ${TRAVIS_BUILD_DIR}:/tmp/GEOSX -e CMAKE_BUILD_TYPE ${DOCKER_REPOSITORY}:${GEOSX_TPL_TAG} /tmp/GEOSX/scripts/travis_build_and_test.sh;
+  fi

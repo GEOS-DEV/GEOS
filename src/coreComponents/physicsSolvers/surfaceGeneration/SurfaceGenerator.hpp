@@ -1,28 +1,24 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
  * @file SurfaceGenerator.hpp
  */
-#ifndef SRC_COMPONENTS_SURFACEGENERATION_SURFACEGENERATOR_HPP_
-#define SRC_COMPONENTS_SURFACEGENERATION_SURFACEGENERATOR_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_SURFACEGENERATION_SURFACEGENERATOR_HPP_
+#define GEOSX_PHYSICSSOLVERS_SURFACEGENERATION_SURFACEGENERATOR_HPP_
 
-#include "MPI_Communications/NeighborCommunicator.hpp"
+#include "mpiCommunications/NeighborCommunicator.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 #include "managers/DomainPartition.hpp"
 
@@ -83,8 +79,8 @@ public:
   virtual void Execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
-                        integer const eventCounter,
-                        real64 const eventProgress,
+                        integer const GEOSX_UNUSED_ARG( eventCounter ),
+                        real64 const GEOSX_UNUSED_ARG( eventProgress ),
                         dataRepository::Group * domain ) override
   {
     SolverStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>());
@@ -263,8 +259,8 @@ private:
                                 EdgeManager & edgeManager,
                                 FaceManager & faceManager,
                                 ElementRegionManager & elementManager,
-                                array1d<std::set<localIndex> >& nodesToRupturedFaces,
-                                array1d<std::set<localIndex> >& edgesToRupturedFaces );
+                                std::vector<std::set<localIndex> >& nodesToRupturedFaces,
+                                std::vector<std::set<localIndex> >& edgesToRupturedFaces );
 
   /**
    *
@@ -313,8 +309,8 @@ private:
                     EdgeManager & edgeManager,
                     FaceManager & faceManager,
                     ElementRegionManager & elemManager,
-                    arrayView1d<std::set<localIndex> >& nodesToRupturedFaces,
-                    arrayView1d<std::set<localIndex> >& edgesToRupturedFaces,
+                    std::vector<std::set<localIndex> >& nodesToRupturedFaces,
+                    std::vector<std::set<localIndex> >& edgesToRupturedFaces,
                     ElementRegionManager & elementManager,
                     ModifiedObjectLists& modifiedObjects,
                     const bool prefrac );
@@ -339,8 +335,8 @@ private:
                            const EdgeManager & edgeManager,
                            const FaceManager & faceManager,
                            ElementRegionManager & elemManager,
-                           const arrayView1d<std::set<localIndex> >& nodesToRupturedFaces,
-                           const arrayView1d<std::set<localIndex> >& edgesToRupturedFaces,
+                           const std::vector<std::set<localIndex> >& nodesToRupturedFaces,
+                           const std::vector<std::set<localIndex> >& edgesToRupturedFaces,
                            std::set<localIndex>& separationPathFaces,
                            map<localIndex, int>& edgeLocations,
                            map<localIndex, int>& faceLocations,
@@ -368,8 +364,8 @@ private:
                         FaceManager & faceManager,
                         ElementRegionManager & elementManager,
                         ModifiedObjectLists& modifiedObjects,
-                        arrayView1d<std::set<localIndex> >& nodesToRupturedFaces,
-                        arrayView1d<std::set<localIndex> >& edgesToRupturedFaces,
+                        std::vector<std::set<localIndex> >& nodesToRupturedFaces,
+                        std::vector<std::set<localIndex> >& edgesToRupturedFaces,
                         const std::set<localIndex>& separationPathFaces,
                         const map<localIndex, int>& edgeLocations,
                         const map<localIndex, int>& faceLocations,
@@ -512,6 +508,7 @@ private:
     constexpr static auto tipFacesString = "tipFaces";
     constexpr static auto trailingFacesString = "trailingFaces";
     constexpr static auto fractureRegionNameString = "fractureRegion";
+    constexpr static auto mpiCommOrderString = "mpiCommOrder";
 
     //TODO: rock toughness should be a material parameter, and we need to make rock toughness to KIC a constitutive relation.
     constexpr static auto rockToughnessString = "rockToughness";
@@ -538,17 +535,20 @@ private:
 
   realT m_rockToughness;
 
+  // Flag for consistent communication ordering
+  int m_mpiCommOrder;
+
   /// set of separable faces
   localIndex_set m_separableFaceSet;
 
   /// copy of the original node->face mapping prior to any separation
-  array1d< set<localIndex> > m_originalNodetoFaces;
+  ArrayOfSets< localIndex > m_originalNodetoFaces;
 
   /// copy of the original node->edge mapping prior to any separation
-  array1d< set<localIndex> > m_originalNodetoEdges;
+  ArrayOfSets< localIndex > m_originalNodetoEdges;
 
   /// copy of the original face->edge mapping prior to any separation
-  array1d< array1d<localIndex> > m_originalFaceToEdges;
+  ArrayOfArrays< localIndex>  m_originalFaceToEdges;
 
   /// collection of faces that have been used for separation of each node
   array1d< set<localIndex> > m_usedFacesForNode;
@@ -577,4 +577,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* SRC_COMPONENTS_SURFACEGENERATION_SURFACEGENERATOR_HPP_ */
+#endif /* GEOSX_PHYSICSSOLVERS_SURFACEGENERATION_SURFACEGENERATOR_HPP_ */

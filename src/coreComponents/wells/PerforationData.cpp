@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /*
@@ -22,9 +18,10 @@
  */
 
 #include "PerforationData.hpp"
+
+#include "mpiCommunications/MpiWrapper.hpp"
 #include "Perforation.hpp"
 
-#include "MPI_Communications/CommunicationTools.hpp"
 #include "managers/DomainPartition.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
@@ -64,8 +61,8 @@ void PerforationData::ConnectToMeshElements( MeshLevel const & mesh,
                                                                                                    viewKeyStruct::
                                                                                                    elementCenterString );
   
-  array1d<R1Tensor const> const & perfCoordsGlobal = wellGeometry.GetPerfCoords();
-  array1d<real64 const>   const & perfTransGlobal  = wellGeometry.GetPerfTransmissibility();
+  arrayView1d<R1Tensor const> const & perfCoordsGlobal = wellGeometry.GetPerfCoords();
+  arrayView1d<real64 const>   const & perfTransGlobal  = wellGeometry.GetPerfTransmissibility();
 
   resize( perfCoordsGlobal.size() );
   localIndex iperfLocal = 0;
@@ -136,7 +133,7 @@ void PerforationData::ConnectToWellElements( InternalWellGenerator const & wellG
                                              unordered_map<globalIndex,localIndex> const & globalToLocalWellElemMap, 
                                              globalIndex elemOffsetGlobal )
 {
-  array1d<globalIndex const> const & perfElemIndexGlobal = wellGeometry.GetPerfElemIndex();
+  arrayView1d<globalIndex const> const & perfElemIndexGlobal = wellGeometry.GetPerfElemIndex();
 
   for (localIndex iperfLocal = 0; iperfLocal < size(); ++iperfLocal)
   {
@@ -149,7 +146,7 @@ void PerforationData::ConnectToWellElements( InternalWellGenerator const & wellG
   //DebugLocalPerforations();
 }
  
-void PerforationData::InitializePostInitialConditions_PreSubGroups( Group * const problemManager )
+void PerforationData::InitializePostInitialConditions_PreSubGroups( Group * const GEOSX_UNUSED_ARG( problemManager ) )
 {
   for (localIndex iperf = 0; iperf < size(); ++iperf)
   {
@@ -169,7 +166,7 @@ void PerforationData::DebugLocalPerforations() const
     return;
   } 
 
-  if ( CommunicationTools::MPI_Rank( MPI_COMM_GEOSX ) != 1)
+  if ( MpiWrapper::Comm_rank( MPI_COMM_GEOSX ) != 1)
   {
     return;
   } 
@@ -177,7 +174,7 @@ void PerforationData::DebugLocalPerforations() const
   std::cout << std::endl;
   std::cout << "++++++++++++++++++++++++++" << std::endl;
   std::cout << "PerforationData = " << getName() << " of " << getParent()->getName() << std::endl;
-  std::cout << "MPI rank = " << CommunicationTools::MPI_Rank( MPI_COMM_GEOSX ) << std::endl;
+  std::cout << "MPI rank = " << MpiWrapper::Comm_rank( MPI_COMM_GEOSX ) << std::endl;
   std::cout << "Number of local perforations = " << size() << std::endl;
 
   for (localIndex iperf = 0; iperf < size(); ++iperf) 

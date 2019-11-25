@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
@@ -32,21 +28,32 @@ FaceElementRegion::FaceElementRegion( string const & name, Group * const parent 
 {
   this->GetGroup(viewKeyStruct::elementSubRegions)->RegisterGroup<FaceElementSubRegion>("default");
 
-
-
-
+  registerWrapper( viewKeyStruct::defaultApertureString, &m_defaultAperture, false )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("The default aperture of for new faceElements.");
 }
 
 FaceElementRegion::~FaceElementRegion()
 {}
 
 
+void FaceElementRegion::InitializePreSubGroups( Group * const )
+{
+  this->forElementSubRegions<FaceElementSubRegion>( [&] (FaceElementSubRegion * const subRegion )
+  {
+    subRegion->getWrapper< array1d< real64 > >( FaceElementSubRegion::viewKeyStruct::elementApertureString )->
+      setApplyDefaultValue( m_defaultAperture );
+
+  });
+}
+
+
 
 localIndex FaceElementRegion::AddToFractureMesh( EdgeManager * const edgeManager,
                                                  FaceManager const * const faceManager,
-                                                 array1d< array1d<localIndex> > const & originalFaceToEdges,
+                                                 ArrayOfArraysView< localIndex const >  const & originalFaceToEdgeMap,
                                                  string const & subRegionName,
-                                                 localIndex const faceIndices[2]  )
+                                                 localIndex const faceIndices[2] )
 {
   localIndex rval = -1;
 
@@ -66,8 +73,7 @@ localIndex FaceElementRegion::AddToFractureMesh( EdgeManager * const edgeManager
   FaceElementSubRegion::EdgeMapType & edgeMap = subRegion->edgeList();
   FaceElementSubRegion::FaceMapType & faceMap = subRegion->faceList();
 
-  OrderedVariableOneToManyRelation const & facesToNodesMap = faceManager->nodeList();
-  array1d< array1d<localIndex> > const & facesToEdgesMap = originalFaceToEdges;
+  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
 
   localIndex const kfe = subRegion->size() - 1;
 
@@ -79,36 +85,37 @@ localIndex FaceElementRegion::AddToFractureMesh( EdgeManager * const edgeManager
   subRegion->m_ghostRank[kfe] = faceManager->m_ghostRank[faceIndices[0]];
 
   // Add the nodes that compose the new FaceElement to the nodeList
-  arrayView1d<localIndex const> const & faceToNodesMap0 = facesToNodesMap[faceIndices[0]];
-  arrayView1d<localIndex const> const & faceToNodesMap1 = facesToNodesMap[faceIndices[1]];
+  localIndex const numNodesInFace0 = faceToNodeMap.sizeOfArray( faceIndices[ 0 ] );
+  localIndex const numNodesInFace1 = faceToNodeMap.sizeOfArray( faceIndices[ 1 ] );
 
  //Temporarily set the map size 8 for both quadrangle and triangle faces. TODO: need to fix for arbitrary face sizes.
   nodeMap[kfe].resize( 8 );
 
-  for( localIndex a=0 ; a<faceToNodesMap0.size() ; ++a )
+  for( localIndex a = 0 ; a < numNodesInFace0 ; ++a )
   {
-    localIndex const aa = a < 2 ? a : faceToNodesMap0.size() - a + 1;
-    localIndex const bb = aa == 0 ? aa : faceToNodesMap0.size() - aa;
+    localIndex const aa = a < 2 ? a : numNodesInFace0 - a + 1;
+    localIndex const bb = aa == 0 ? aa : numNodesInFace1 - aa;
 
     // TODO HACK need to generalize to something other than quads
-    nodeMap[kfe][a]   = faceToNodesMap0[aa];
-    nodeMap[kfe][a+faceToNodesMap0.size()] = faceToNodesMap1[bb];
+    nodeMap[ kfe ][ a ] = faceToNodeMap( faceIndices[ 0 ], aa );
+    nodeMap[ kfe ][ a + numNodesInFace0 ] = faceToNodeMap( faceIndices[ 1 ], bb );
   }
 
-  if( faceToNodesMap0.size()==3 )
+  if( numNodesInFace0 == 3 )
   {
-    nodeMap[kfe][6] = faceToNodesMap0[2];
-    nodeMap[kfe][7] =faceToNodesMap1[2];
+    nodeMap[ kfe ][ 6 ] = faceToNodeMap( faceIndices[ 0 ], 2 );
+    nodeMap[ kfe ][ 7 ] = faceToNodeMap( faceIndices[ 1 ], 2 );
   }
 
   // Add the edges that compose the faceElement to the edge map. This is essentially a copy of
   // the facesToEdges entry.
-  arrayView1d<localIndex const> const & faceToEdgesMap = facesToEdgesMap[faceIndices[0]];
-  edgeMap[kfe].resize( faceToEdgesMap.size() );
-  for( localIndex a=0 ; a<faceToEdgesMap.size() ; ++a )
+  localIndex const faceID = faceIndices[0];
+  localIndex const numEdges = originalFaceToEdgeMap.sizeOfArray( faceID );
+  edgeMap[kfe].resize( numEdges );
+  for( localIndex a=0 ; a<numEdges ; ++a )
   {
-    edgeMap[kfe][a] = faceToEdgesMap[a];
-    connectedEdges.insert( faceToEdgesMap[a] );
+    edgeMap[kfe][a] = originalFaceToEdgeMap(faceID, a);
+    connectedEdges.insert( originalFaceToEdgeMap(faceID, a) );
   }
 
   // Add the cell region/subregion/index to the faceElementToCells map

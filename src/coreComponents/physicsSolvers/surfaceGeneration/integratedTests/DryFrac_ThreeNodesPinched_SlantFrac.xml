@@ -1,8 +1,5 @@
-<?xml version="1.0" ?>
-<!--# # -->
 
-<Problem xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="geos_v0.0.xsd">
-
+<Problem>
   
   <Solvers
     gravityVector="0.0, 0.0, -9.81">
@@ -27,7 +24,8 @@
                       verboseLevel="1"
                       discretization="FE1"
                       fractureRegion="Fracture"
-                      targetRegions="{Region2}">
+                      targetRegions="{Region2}"
+                      mpiCommOrder="1">
     </SurfaceGenerator>
   </Solvers>
 
@@ -68,7 +66,7 @@
     <PeriodicEvent name="restarts"
                    timeFrequency="0.5"
                    targetExactTimestep="0"
-                   target="/Outputs/sidreRestart"/>
+                   target="/Outputs/restartOutput"/>
   </Events>
 
 
@@ -91,6 +89,7 @@
     <CellElementRegion name="Region2" cellBlocks="{cb1}" materialList="{granite}" />
 
     <FaceElementRegion name="Fracture"
+                       defaultAperture="1.0e-4"
                        materialList="{granite}"/>
   </ElementRegions>
 
@@ -166,7 +165,7 @@
  
   <Outputs>
     <Silo name="siloOutput" plotLevel="5" parallelThreads="1" plotFileRoot="simple2D"/>
-    <Restart name="sidreRestart"/>
+    <Restart name="restartOutput"/>
   </Outputs>
 
 </Problem>

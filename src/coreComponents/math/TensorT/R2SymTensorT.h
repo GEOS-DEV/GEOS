@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
@@ -79,11 +75,8 @@ public:
    */
   explicit R2SymTensorT( const realT data ): TensorBaseT< SymSize< T_dim >::value >(data) {}
 
-  /// default destructor
-  ~R2SymTensorT(void);
-
   /// copy constructor
-  R2SymTensorT(const R2SymTensorT< T_dim >& rhs);
+  R2SymTensorT(const R2SymTensorT< T_dim >& rhs) = default;
 
   explicit R2SymTensorT( const TensorBaseT< SymSize< T_dim >::value  >& rhs ): TensorBaseT< SymSize< T_dim >::value  > ()
   { TensorBaseT< SymSize< T_dim >::value  >::operator=( rhs ); }
@@ -100,8 +93,7 @@ public:
   R2SymTensorT< T_dim >& operator=(const realT& rhs);
 
   /// assignment to another R2SymTensorT
-  GEOSX_HOST_DEVICE
-  R2SymTensorT< T_dim >& operator=(const R2SymTensorT< T_dim >& rhs);
+  R2SymTensorT< T_dim >& operator=(const R2SymTensorT< T_dim >& rhs) = default;
 
   R2SymTensorT& operator+=( const R2SymTensorT<T_dim>& rhs );
 
@@ -233,16 +225,6 @@ R2SymTensorT< T_dim >::R2SymTensorT(void):
   TensorBaseT< SymSize< T_dim >::value > ()
 {}
 
-template<int T_dim>
-R2SymTensorT< T_dim >::~R2SymTensorT(void)
-{}
-
-template<int T_dim>
-R2SymTensorT< T_dim >::R2SymTensorT(const R2SymTensorT< T_dim >& rhs):
-  TensorBaseT< SymSize< T_dim >::value > ()
-{
-  TensorBaseT< SymSize< T_dim >::value >::operator=( rhs );
-}
 
 //***** ASSIGNMENT OPERATORS **************************************************
 
@@ -261,16 +243,6 @@ template<int T_dim>
 GEOSX_HOST_DEVICE
 R2SymTensorT< T_dim >&
 R2SymTensorT< T_dim >::operator=(const realT& rhs)
-{
-  TensorBaseT< SymSize< T_dim >::value >::operator=( rhs );
-  return *this;
-}
-
-// Assigns all components to another TensorBaseT's (Copy Constructor)
-template<int T_dim>
-GEOSX_HOST_DEVICE
-R2SymTensorT< T_dim >&
-R2SymTensorT< T_dim >::operator=(const R2SymTensorT< T_dim >& rhs)
 {
   TensorBaseT< SymSize< T_dim >::value >::operator=( rhs );
   return *this;

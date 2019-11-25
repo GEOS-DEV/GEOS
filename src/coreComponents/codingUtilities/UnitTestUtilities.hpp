@@ -1,27 +1,23 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /*
  * @file UnitTestUtilities.hpp
  */
 
-#ifndef GEOSX_UNITTESTUTILITIES_HPP
-#define GEOSX_UNITTESTUTILITIES_HPP
+#ifndef GEOSX_CODINGUTILITIES_UNITTESTUTILITIES_HPP
+#define GEOSX_CODINGUTILITIES_UNITTESTUTILITIES_HPP
 
 #include "gtest/gtest.h"
 
@@ -33,21 +29,16 @@ namespace geosx
 namespace testing
 {
 
-template< typename T >
-::testing::AssertionResult checkRelativeErrorFormat( const char *, const char *, const char *,
-                                                     T v1, T v2, T relTol )
+constexpr real64 DEFAULT_ABS_TOL = 1E-13;
+
+::testing::AssertionResult checkRelativeErrorFormat( const char *, const char *, const char *, const char *,
+                                                     real64 const v1, real64 const v2, real64 const relTol, real64 const absTol )
 {
-  T const delta = std::abs( v1 - v2 );
-  T const value = std::max( std::abs( v1 ), std::abs( v2 ));
-
-  if( delta < 1E-13 )
+  real64 const delta = std::abs( v1 - v2 );
+  real64 const value = std::max( std::abs(v1), std::abs(v2) );
+  if (delta > absTol && delta > relTol * value)
   {
-    return ::testing::AssertionSuccess();
-  }
-
-  if( delta > relTol * value )
-  {
-    return ::testing::AssertionFailure() << std::scientific << std::setprecision( 5 )
+    return ::testing::AssertionFailure() << std::scientific << std::setprecision(5)
                                          << " relative error: " << delta / value
                                          << " (" << v1 << " vs " << v2 << "),"
                                          << " exceeds " << relTol << std::endl;
@@ -55,17 +46,26 @@ template< typename T >
   return ::testing::AssertionSuccess();
 }
 
-template< typename T >
-void checkRelativeError( T v1, T v2, T relTol )
-{
-  EXPECT_PRED_FORMAT3( checkRelativeErrorFormat, v1, v2, relTol );
-}
+::testing::AssertionResult checkRelativeErrorFormat( char const * a, char const * b, char const * c,
+                                                     real64 const v1, real64 const v2, real64 const relTol )
+{ return checkRelativeErrorFormat( a, b, c, "DEFAULT_ABS_TOL", v1, v2, relTol, DEFAULT_ABS_TOL ); }
 
-template< typename T >
-void checkRelativeError( T v1, T v2, T relTol, string const & name )
+void checkRelativeError( real64 const v1, real64 const v2, real64 const relTol )
+{ EXPECT_PRED_FORMAT3( checkRelativeErrorFormat, v1, v2, relTol ); }
+
+void checkRelativeError( real64 const v1, real64 const v2, real64 const relTol, real64 const absTol )
+{ EXPECT_PRED_FORMAT4( checkRelativeErrorFormat, v1, v2, relTol, absTol ); }
+
+void checkRelativeError( real64 const v1, real64 const v2, real64 const relTol, string const & name )
 {
   SCOPED_TRACE( name );
   EXPECT_PRED_FORMAT3( checkRelativeErrorFormat, v1, v2, relTol );
+}
+
+void checkRelativeError( real64 const v1, real64 const v2, real64 const relTol, real64 const absTol, string const & name )
+{
+  SCOPED_TRACE(name);
+  EXPECT_PRED_FORMAT4( checkRelativeErrorFormat, v1, v2, relTol, absTol );
 }
 
 void compareMatrixRow( globalIndex rowNumber, real64 relTol,
@@ -124,4 +124,4 @@ void compareMatrices( MATRIX const & matrix1,
 
 }
 
-#endif //GEOSX_UNITTESTUTILITIES_HPP
+#endif //GEOSX_CODINGUTILITIES_UNITTESTUTILITIES_HPP

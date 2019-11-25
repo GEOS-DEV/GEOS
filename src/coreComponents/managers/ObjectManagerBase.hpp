@@ -1,27 +1,23 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
  * @file ObjectManagerBase.hpp
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_MANAGERS_OBJECTMANAGERBASE_HPP_
-#define SRC_COMPONENTS_CORE_SRC_MANAGERS_OBJECTMANAGERBASE_HPP_
+#ifndef GEOSX_MANAGERS_OBJECTMANAGERBASE_HPP_
+#define GEOSX_MANAGERS_OBJECTMANAGERBASE_HPP_
 
 #include "dataRepository/Group.hpp"
 
@@ -49,7 +45,7 @@ public:
    */
   ///@{
 
-  using CatalogInterface = cxx_utilities::CatalogInterface< ObjectManagerBase, std::string const &, dataRepository::Group * const >;
+  using CatalogInterface = dataRepository::CatalogInterface< ObjectManagerBase, std::string const &, dataRepository::Group * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 
   virtual const string getCatalogName() const = 0;
@@ -92,17 +88,17 @@ public:
 
 
 
-  virtual localIndex PackUpDownMapsSize( arrayView1d<localIndex const> const & packList ) const
+  virtual localIndex PackUpDownMapsSize( arrayView1d<localIndex const> const & GEOSX_UNUSED_ARG( packList ) ) const
   { return 0; }
 
-  virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
-                                     arrayView1d<localIndex const> const & packList ) const
+  virtual localIndex PackUpDownMaps( buffer_unit_type * & GEOSX_UNUSED_ARG( buffer ),
+                                     arrayView1d<localIndex const> const & GEOSX_UNUSED_ARG( packList ) ) const
   { return 0; }
 
-  virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                       array1d<localIndex> & packList,
-                                       bool const overwriteUpMaps,
-                                       bool const overwriteDownMaps )
+  virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & GEOSX_UNUSED_ARG( buffer ),
+                                       array1d<localIndex> & GEOSX_UNUSED_ARG( packList ),
+                                       bool const GEOSX_UNUSED_ARG( overwriteUpMaps ),
+                                       bool const GEOSX_UNUSED_ARG( overwriteDownMaps ) )
   { return 0; }
 
 
@@ -184,15 +180,19 @@ public:
 
   /// builds a new set on this object given another objects set and the map
   // between them
-  void ConstructSetFromSetAndMap( const set<localIndex>& inputSet,
+  void ConstructSetFromSetAndMap( SortedArrayView<localIndex const> const & inputSet,
                                   const array2d<localIndex>& map,
                                   const std::string& newSetName );
 
   /// builds a new set on this object given another objects set and the map
   // between them
-  void ConstructSetFromSetAndMap( const set<localIndex>& inputSet,
+  void ConstructSetFromSetAndMap( SortedArrayView<localIndex const> const & inputSet,
                                   const array1d<localIndex_array>& map,
                                   const std::string& newSetName );
+
+  void ConstructSetFromSetAndMap( SortedArrayView<localIndex const> const & inputSet,
+                                  ArrayOfArraysView< localIndex const > const & map,
+                                  const std::string& setName );
 
   void ConstructGlobalToLocalMap();
 
@@ -243,15 +243,32 @@ public:
   template< typename TYPE_RELATION >
   static void FixUpDownMaps( TYPE_RELATION & relation,
                              map< localIndex, set<globalIndex> > & unmappedIndices,
-                             bool const clearIfUnmapped  );
+                             bool const clearIfUnmapped );
+
+  static void FixUpDownMaps( ArrayOfSets< localIndex > & relation,
+                             unordered_map<globalIndex,localIndex> const & globalToLocal,
+                             map< localIndex, set<globalIndex> > & unmappedIndices,
+                             bool const clearIfUnmapped );
 
   static void CleanUpMap( std::set<localIndex> const & targetIndices,
                           array1d<set<localIndex> > & upmap,
-                          array2d<localIndex> const & downmap );
+                          arrayView2d<localIndex const> const & downmap );
+
+  static void CleanUpMap( std::set<localIndex> const & targetIndices,
+                          ArrayOfSetsView< localIndex > const & upmap,
+                          arrayView2d< localIndex const > const & downmap );
 
   static void CleanUpMap( std::set<localIndex> const & targetIndices,
                           array1d<set<localIndex> > & upmap,
-                          array1d< array1d<localIndex > > const & downmap );
+                          arrayView1d< arrayView1d<localIndex const > const > const & downmap );
+
+  static void CleanUpMap( std::set<localIndex> const & targetIndices,
+                          ArrayOfSetsView< localIndex > const & upmap,
+                          arrayView1d< arrayView1d< localIndex const > const > const & downmap );
+
+  static void CleanUpMap( std::set<localIndex> const & targetIndices,
+                          ArrayOfSetsView< localIndex > const & upmap,
+                          ArrayOfArraysView< localIndex const > const & downmap );
 
   virtual void enforceStateFieldConsistencyPostTopologyChange( std::set<localIndex> const & targetIndices );
 
@@ -367,13 +384,6 @@ public:
 };
 
 
-//template< typename T >
-//void ObjectManagerBase::FixUpDownMaps()
-//{
-//
-//}
-
-
 template< typename TYPE_RELATION >
 void ObjectManagerBase::FixUpDownMaps( TYPE_RELATION & relation,
                                        map< localIndex, array1d<globalIndex> > & unmappedIndices,
@@ -442,7 +452,39 @@ void ObjectManagerBase::FixUpDownMaps( TYPE_RELATION & relation,
   unmappedIndices.clear();
 }
 
-
+inline
+void ObjectManagerBase::FixUpDownMaps( ArrayOfSets< localIndex > & relation,
+                                       unordered_map<globalIndex,localIndex> const & globalToLocal,
+                                       map< localIndex, set<globalIndex> > & unmappedIndices,
+                                       bool const clearIfUnmapped )
+{
+  for( map< localIndex, set<globalIndex> >::iterator iter = unmappedIndices.begin() ;
+       iter != unmappedIndices.end() ;
+       ++iter )
+  {
+    localIndex const li = iter->first;
+    if( clearIfUnmapped )
+    {
+      relation.clearSet( li );
+    }
+    else
+    {
+      set<globalIndex> const & globalIndices = iter->second;
+      for( globalIndex const newGlobalIndex : globalIndices )
+      {
+        // NOTE: This simply ignores if newGlobalIndex is not found. This is OK if this function is
+        // used for an upmap and the object shouldn't exist on this rank. There should be a better
+        // way to check this.
+        auto iterG2L = globalToLocal.find(newGlobalIndex);
+        if( iterG2L != globalToLocal.end() )
+        {
+          relation.insertIntoSet( li, iterG2L->second );
+        }
+      }
+    }
+  }
+  unmappedIndices.clear();
+}
 
 } /* namespace geosx */
 
@@ -450,4 +492,4 @@ void ObjectManagerBase::FixUpDownMaps( TYPE_RELATION & relation,
 
 typedef geosx::ObjectManagerBase ObjectDataStructureBaseT;
 
-#endif /* SRC_COMPONENTS_CORE_SRC_MANAGERS_OBJECTMANAGERBASE_HPP_ */
+#endif /* GEOSX_MANAGERS_OBJECTMANAGERBASE_HPP_ */

@@ -8,21 +8,28 @@ Welcome to the GEOSX developer guide.
    :maxdepth: 1
 
    DeveloperGuidelines
-   
+
    GitWorkflow
 
-   /coreComponents/fileIO/schema/docs/SchemaGeneration
-   
-   UnitTests
-   
-   IntegratedTests
-      
-   caliper_link
-   
-   /coreComponents/managers/docs/ProblemManager.rst
-   
-   /coreComponents/linearAlgebraInterface/docs/DofManager.rst
+   GenerateSphinxDoc
 
+   /coreComponents/dataRepository/dataRepository.rst
+
+   /coreComponents/fileIO/schema/docs/SchemaGeneration
+
+   UnitTests
+
+   IntegratedTests
+
+   caliper_link
+
+   XML_and_classes
+
+   /coreComponents/managers/docs/ProblemManager.rst
+
+   /coreComponents/linearAlgebra/docs/DofManager.rst
+
+   AddingNewSolver
 
 
 Overview of the code structure

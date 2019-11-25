@@ -1,31 +1,28 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 #include <map>
 #include <vector>
 
 #include "ElementRegionManager.hpp"
+
+#include "mpiCommunications/CommunicationTools.hpp"
 #include "FaceElementRegion.hpp"
 #include "FaceManager.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "CellBlockManager.hpp"
 #include "meshUtilities/MeshManager.hpp"
-#include "MPI_Communications/CommunicationTools.hpp"
 
 namespace geosx
 {
@@ -35,7 +32,7 @@ ElementRegionManager::ElementRegionManager(  string const & name, Group * const 
   ObjectManagerBase(name,parent)
 {
   setInputFlags(InputFlags::OPTIONAL);
-  this->RegisterGroup<Group>(keys::elementRegionsGroup);
+  this->RegisterGroup<Group>(ElementRegionManager::groupKeyStruct::elementRegionsGroup);
 }
 
 ElementRegionManager::~ElementRegionManager()
@@ -46,8 +43,8 @@ ElementRegionManager::~ElementRegionManager()
 localIndex ElementRegionManager::numCellBlocks() const
 {
   localIndex numCellBlocks = 0;
-  this->forElementSubRegions([&]( Group const * cellBlock ) -> void
-  {
+  this->forElementSubRegions([&]( Group const * GEOSX_UNUSED_ARG( cellBlock ) )
+    {
     numCellBlocks += 1;
   });
   return numCellBlocks;
@@ -55,10 +52,10 @@ localIndex ElementRegionManager::numCellBlocks() const
 
 void ElementRegionManager::resize( integer_array const & numElements,
                                    string_array const & regionNames,
-                                   string_array const & elementTypes )
+                                   string_array const & GEOSX_UNUSED_ARG( elementTypes ) )
 {
   localIndex const n_regions = integer_conversion<localIndex>(regionNames.size());
-//  ManagedGroup * elementRegions = this->GetGroup(keys::cellBlocks);
+//  Group * elementRegions = this->GetGroup(keys::cellBlocks);
   for( localIndex reg=0 ; reg<n_regions ; ++reg )
   {
     ElementRegionBase * elemRegion = this->GetRegion( regionNames[reg] );
@@ -72,7 +69,7 @@ Group * ElementRegionManager::CreateChild( string const & childKey, string const
   GEOS_ERROR_IF( !(CatalogInterface::hasKeyName(childKey)),
                  "KeyName ("<<childKey<<") not found in ObjectManager::Catalog");
   GEOS_LOG_RANK_0("Adding Object " << childKey<<" named "<< childName<<" from ObjectManager::Catalog.");
-  Group * const elementRegions = this->GetGroup(keys::elementRegionsGroup);
+  Group * const elementRegions = this->GetGroup(ElementRegionManager::groupKeyStruct::elementRegionsGroup);
   return elementRegions->RegisterGroup( childName,
                                         CatalogInterface::Factory( childKey, childName, elementRegions ) );
 
@@ -106,10 +103,17 @@ void ElementRegionManager::SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
     targetChoiceNode.append_attribute("maxOccurs") = "unbounded";
   }
 
+  std::set<string> names;
   this->forElementRegions([&]( ElementRegionBase * const elementRegion )
   {
-    SchemaUtilities::SchemaConstruction( elementRegion, schemaRoot, targetChoiceNode, documentationType);
+    names.insert( elementRegion->getName() );
   });
+
+  for( string const & name: names )
+  {
+    ElementRegionBase * const elementRegion = GetRegion( name );
+    SchemaUtilities::SchemaConstruction( elementRegion, schemaRoot, targetChoiceNode, documentationType);
+  }
 }
 
 void ElementRegionManager::GenerateMesh( Group const * const cellBlockManager )
@@ -137,7 +141,7 @@ void ElementRegionManager::GenerateWells( MeshManager * const meshManager,
   nodeManager->SetMaxGlobalIndex();
   globalIndex const nodeOffsetGlobal = nodeManager->m_maxGlobalIndex + 1;
   localIndex  const elemOffsetLocal  = this->getNumberOfElements();
-  globalIndex const elemOffsetGlobal = CommunicationTools::Sum( elemOffsetLocal );
+  globalIndex const elemOffsetGlobal = MpiWrapper::Sum( elemOffsetLocal );
 
   globalIndex wellElemCount = 0;
   globalIndex wellNodeCount = 0;
@@ -171,7 +175,7 @@ void ElementRegionManager::GenerateWells( MeshManager * const meshManager,
     GEOS_ERROR_IF( subRegion == nullptr,
                    "Subregion " << subRegionName << " not found in well " << wellRegion->getName() );
 
-    globalIndex const numWellElemsGlobal = CommunicationTools::Sum( subRegion->size() );
+    globalIndex const numWellElemsGlobal = MpiWrapper::Sum( subRegion->size() );
 
     GEOS_ERROR_IF( numWellElemsGlobal != wellGeometry->GetNumElements(),
                    "Invalid partitioning in well " << subRegionName );
@@ -204,7 +208,7 @@ ElementRegionManager::PackPrivate( buffer_unit_type * & buffer,
 {
   int packedSize = 0;
 
-//  packedSize += ManagedGroup::Pack( buffer, wrapperNames, {}, 0, 0);
+//  packedSize += Group::Pack( buffer, wrapperNames, {}, 0, 0);
 
   packedSize += bufferOps::Pack<DOPACK>( buffer, this->getName() );
   packedSize += bufferOps::Pack<DOPACK>( buffer, numRegions() );

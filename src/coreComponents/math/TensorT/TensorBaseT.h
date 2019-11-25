@@ -1,25 +1,20 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
  * @brief This file contains the definition of the TensorBaseT class
  * @file TensorBaseT.h
- * @author Randolph Settgast
  */
 
 #ifndef TENSOR_BASE_T_H_
@@ -36,7 +31,6 @@
 
 /**
  * @brief TensorBaseT is the base class for the tensor library.
- * @author Randolph Settgast
  * @tparam T_length length
  *
  * TensorBaseT defines basic operations on the data for use by the derived
@@ -84,11 +78,7 @@ public:
   explicit TensorBaseT( const realT data[T_length] );
 
   /// constructor initialized by another TensorBaseT object
-  TensorBaseT( const TensorBaseT< T_length >& rhs );
-
-  /// non-virtual destructor. This means that this class in NOT intended to be
-  /// used as a polymorphically.
-  ~TensorBaseT( void );
+  TensorBaseT( const TensorBaseT< T_length >& rhs ) = default;
 
   //***** ASSIGNMENT OPERATORS *************************************************
   /// assignment of all data to an integer
@@ -100,8 +90,7 @@ public:
   TensorBaseT& operator=( const realT& rhs );
 
   /// assignment to another TensorBaseT
-  GEOSX_HOST_DEVICE
-  TensorBaseT& operator=( const TensorBaseT& rhs );
+  TensorBaseT& operator=( const TensorBaseT& rhs ) = default;
 
   /// add a realT to data
   TensorBaseT& operator+=( const realT& rhs );
@@ -253,7 +242,6 @@ protected:
   //***** MEMBER ACCESS *******************************************************
 public:
   /**
-   * @author Randolph R. Settgast
    * @return gives a non-const realT* which points to t_data
    * @brief returns a non-const realT* which points to t_data
    */
@@ -264,7 +252,6 @@ public:
   }
 
   /**
-   * @author Randolph R. Settgast
    * @return gives a const realT* which points to t_data
    * @brief gives a const realT* which points to t_data
    */
@@ -275,7 +262,6 @@ public:
   }
 
   /**
-   * @author walsh24
    * @return gives a non-const realT* which points to t_data
    * @brief returns a non-const realT* which points to t_data
    */
@@ -285,7 +271,6 @@ public:
   }
 
   /**
-   * @author walsh24
    * @return gives a const realT* which points to t_data
    * @brief gives a const realT* which points to t_data
    */
@@ -295,7 +280,6 @@ public:
   }
 
   /**
-   * @author walsh24
    * @return gives a non-const realT* which points to the past-the-end element
    * of t_data
    * @brief returns a non-const realT* which points to the past-the-end element
@@ -307,7 +291,6 @@ public:
   }
 
   /**
-   * @author walsh24
    * @return gives a const realT* which points to the past-the-end element of
    * t_data
    * @brief gives a const realT* which points to the past-the-end element of
@@ -321,7 +304,6 @@ public:
 
 
   /**
-   * @author Randolph R. Settgast
    * @return the number of data entries (Length) for the tensor
    * @brief gives the number of data entries (Length) for the tensor
    */
@@ -332,7 +314,6 @@ public:
   }
 
   /**
-   * @author Randolph R. Settgast
    * @return the maximum single value in the t_data
    * @brief gives the maximum single value in the t_data
    */
@@ -346,7 +327,6 @@ public:
   }
 
   /**
-   * @author Scott Johnson
    * @return the minimum single value in the t_data
    * @brief gives the minimum single value in the t_data
    */
@@ -399,7 +379,6 @@ private:
 //**** CONSTRUCTORS AND DESTRUCTORS *******************************************
 
 /**
- * @author Randolph Settgast
  * @return none
  */
 template<int T_length>
@@ -410,19 +389,6 @@ TensorBaseT< T_length >::TensorBaseT( void )//:
 
 
 /**
- * @author Randolph Settgast
- * @param[in] rhs reference to TensorBaseT object to use in initialization
- * @return none
- */
-template<int T_length>
-TensorBaseT< T_length >::TensorBaseT( const TensorBaseT< T_length >& rhs )
-{
-  TensorBaseT< T_length >::operator=( rhs );
-}
-
-
-/**
- * @author Randolph Settgast
  * @param[in] data naked array used for initialization of t_data
  * @return none
  */
@@ -434,7 +400,6 @@ TensorBaseT< T_length >::TensorBaseT( const realT data )
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] data naked array used for initialization of t_data
  * @return none
  */
@@ -445,18 +410,9 @@ TensorBaseT< T_length >::TensorBaseT( const realT data[T_length] )
     t_data[i] = data[i];
 }
 
-/**
- * @author Randolph Settgast
- * @return none
- */
-template<int T_length>
-TensorBaseT< T_length >::~TensorBaseT( void )
-{}
-
 //***** ASSIGNMENT OPERATORS **************************************************
 
 /**
- * @author Randolph Settgast
  * @param[in] rhs value to set each member of t_data to
  * @return none
  */
@@ -470,7 +426,6 @@ TensorBaseT< T_length >::operator=( const int& rhs )
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] rhs value to set each member of t_data to
  * @return none
  */
@@ -485,38 +440,6 @@ TensorBaseT< T_length >::operator=( const realT& rhs )
 }
 
 /**
- * @author Randolph Settgast
- * @param[in] rhs tensor to copy
- * @return none
- */
-template<int T_length>
-GEOSX_HOST_DEVICE
-inline TensorBaseT< T_length >&
-TensorBaseT< T_length >::operator=( const TensorBaseT< T_length >& rhs )
-{
-  for (int i = 0 ; i < T_length ; ++i)
-    t_data[i] = rhs.t_data[i];
-
-//  memcpy(t_data,rhs.t_data,sizeof(realT)*T_length);
-
-  return *this;
-}
-
-
-// intel compiler doesn't seem to be unrolling these loops
-template<>
-inline TensorBaseT< 3 >&
-TensorBaseT<3>::operator=( const TensorBaseT< 3 >& rhs )
-{
-  t_data[0] = rhs.t_data[0];
-  t_data[1] = rhs.t_data[1];
-  t_data[2] = rhs.t_data[2];
-  return *this;
-}
-
-
-/**
- * @author Randolph Settgast
  * @param[in] rhs value to add to t_data
  * @return none
  */
@@ -540,7 +463,6 @@ TensorBaseT<3>::operator+=( const realT& rhs )
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] rhs value to subtract from t_data
  * @return none
  */
@@ -554,7 +476,6 @@ TensorBaseT< T_length >::operator-=( const realT& rhs )
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] rhs value to multiply t_data with
  * @return none
  */
@@ -578,7 +499,6 @@ TensorBaseT<3>::operator*=( const realT& rhs )
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] rhs value to divide t_data with
  * @return none
  */
@@ -592,7 +512,6 @@ TensorBaseT< T_length >::operator/=( const realT& rhs )
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] rhs tensor to add
  * @return none
  */
@@ -617,7 +536,6 @@ TensorBaseT<3>::operator+=( const TensorBaseT< 3 >& rhs )
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] rhs tensor to subract
  * @return none
  */
@@ -631,7 +549,6 @@ TensorBaseT< T_length >::operator-=( const TensorBaseT< T_length >& rhs )
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] rhs tensor to multiply by
  * @return none
  */
@@ -645,7 +562,6 @@ TensorBaseT< T_length >::operator*=( const TensorBaseT< T_length >& rhs )
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] rhs tensor to divide by
  * @return none
  */

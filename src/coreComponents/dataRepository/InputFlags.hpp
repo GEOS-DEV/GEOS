@@ -1,30 +1,25 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
-/*
- * InputFlags.hpp
- *
- *  Created on: Dec 17, 2018
- *      Author: settgast
+/**
+ * @file InputFlags.hpp
  */
 
-#ifndef CORECOMPONENTS_DATAREPOSITORY_INPUTFLAGS_HPP_
-#define CORECOMPONENTS_DATAREPOSITORY_INPUTFLAGS_HPP_
+#ifndef GEOSX_DATAREPOSITORY_INPUTFLAGS_HPP_
+#define GEOSX_DATAREPOSITORY_INPUTFLAGS_HPP_
+
+#include "Logger.hpp"
 
 namespace geosx
 {
@@ -112,4 +107,4 @@ inline bool operator>=( InputFlags const left, InputFlags const right )
 
 
 
-#endif /* CORECOMPONENTS_DATAREPOSITORY_INPUTFLAGS_HPP_ */
+#endif /* GEOSX_DATAREPOSITORY_INPUTFLAGS_HPP_ */

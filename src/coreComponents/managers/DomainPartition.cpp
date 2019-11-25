@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
@@ -22,17 +18,17 @@
 
 #include "DomainPartition.hpp"
 
-#include "MPI_Communications/SpatialPartition.hpp"
-#include "constitutive/ConstitutiveManager.hpp"
-
-#include "fileIO/silo/SiloFile.hpp"
-
-#include "common/TimingMacros.hpp"
-
 #include "common/DataTypes.hpp"
-#include "MPI_Communications/NeighborCommunicator.hpp"
-#include "MPI_Communications/CommunicationTools.hpp"
+#include "common/TimingMacros.hpp"
+#include "constitutive/ConstitutiveManager.hpp"
+#include "fileIO/silo/SiloFile.hpp"
 #include "managers/ObjectManagerBase.hpp"
+#include "mpiCommunications/CommunicationTools.hpp"
+#include "mpiCommunications/NeighborCommunicator.hpp"
+#include "mpiCommunications/SpatialPartition.hpp"
+
+
+
 namespace geosx
 {
 using namespace dataRepository;
@@ -84,7 +80,7 @@ void DomainPartition::InitializationOrder( string_array & order )
 }
 
 
-void DomainPartition::GenerateSets(  )
+void DomainPartition::GenerateSets()
 {
   GEOSX_MARK_FUNCTION;
 
@@ -117,9 +113,14 @@ void DomainPartition::GenerateSets(  )
 
 
   ElementRegionManager * const elementRegionManager = mesh->getElemManager();
-  elementRegionManager->forElementSubRegions( [&]( ElementSubRegionBase * const subRegion )
+  elementRegionManager->forElementSubRegionsComplete( [&]( localIndex const GEOSX_UNUSED_ARG( er ),
+                                                           localIndex const GEOSX_UNUSED_ARG( esr ),
+                                                           ElementRegionBase const * const GEOSX_UNUSED_ARG( region ),
+                                                           auto * const subRegion )
   {
     dataRepository::Group * elementSets = subRegion->sets();
+
+    auto const & elemToNodeMap = subRegion->nodeList();
 
     for( std::string const & setName : setNames )
     {
@@ -128,10 +129,19 @@ void DomainPartition::GenerateSets(  )
       set<localIndex> & targetSet = elementSets->registerWrapper< set<localIndex> >(setName)->reference();
       for( localIndex k = 0 ; k < subRegion->size() ; ++k )
       {
-        localIndex const * const elemToNodes = subRegion->nodeList(k);
         localIndex const numNodes = subRegion->numNodesPerElement( k );
 
-        if ( std::all_of( elemToNodes, elemToNodes + numNodes, [&nodeInCurSet](localIndex const nodeIndex) { return nodeInCurSet[nodeIndex]; } ) )
+        localIndex elementInSet = true;
+        for ( localIndex i = 0; i < numNodes; ++i )
+        {
+          if ( !nodeInCurSet( elemToNodeMap[ k ][ i ] ) )
+          {
+            elementInSet = false;
+            break;
+          }
+        }
+
+        if ( elementInSet )
         {
           targetSet.insert(k);
         }
@@ -146,6 +156,7 @@ void DomainPartition::SetupCommunications()
   GEOSX_MARK_FUNCTION;
   array1d<NeighborCommunicator> & allNeighbors = this->getReference< array1d<NeighborCommunicator> >( viewKeys.neighbors );
 
+#if defined(GEOSX_USE_MPI)
   if( m_metisNeighborList.empty() )
   {
     PartitionBase   & partition1 = getReference<PartitionBase>(keys::partitionManager);
@@ -158,11 +169,9 @@ void DomainPartition::SetupCommunications()
       MPI_Cart_create(MPI_COMM_GEOSX, 3, partition.m_Partitions.data(), partition.m_Periodic.data(), reorder, &cartcomm);
       GEOS_ERROR_IF( cartcomm == MPI_COMM_NULL, "Fail to run MPI_Cart_create and establish communications");
     }
-    int rank = -1;
+    int const rank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
     int nsdof = 3;
-    MPI_Comm_rank( MPI_COMM_GEOSX, &rank );
 
-    MPI_Comm_rank(cartcomm, &rank);
     MPI_Cart_coords(cartcomm, rank, nsdof, partition.m_coords.data());
 
     int ncoords[3];
@@ -179,6 +188,7 @@ void DomainPartition::SetupCommunications()
       allNeighbors.push_back( std::move(neighbor) );
     }
   }
+#endif
 
   Group * const meshBodies = getMeshBodies();
   MeshBody * const meshBody = meshBodies->GetGroup<MeshBody>(0);
@@ -233,8 +243,7 @@ void DomainPartition::AddNeighbors(const unsigned int idim,
     if (!me)
     {
       allNeighbors.push_back(NeighborCommunicator());
-      int neighborRank;
-      MPI_Cart_rank(cartcomm, ncoords, &neighborRank);
+      int neighborRank = MpiWrapper::Cart_rank(cartcomm, ncoords);
       allNeighbors.back().SetNeighborRank(neighborRank);
     }
   }
@@ -282,10 +291,10 @@ void DomainPartition::ReadSilo( const SiloFile& siloFile,
 }
 
 
-void DomainPartition::ReadFiniteElementMesh( const SiloFile& siloFile,
-                                             const int cycleNum,
-                                             const realT problemTime,
-                                             const bool isRestart )
+void DomainPartition::ReadFiniteElementMesh( const SiloFile& GEOSX_UNUSED_ARG( siloFile ),
+                                             const int GEOSX_UNUSED_ARG( cycleNum ),
+                                             const realT GEOSX_UNUSED_ARG( problemTime ),
+                                             const bool GEOSX_UNUSED_ARG( isRestart ) )
 {
 
 

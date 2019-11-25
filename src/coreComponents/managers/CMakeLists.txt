@@ -13,13 +13,11 @@ set(managers_headers
     Outputs/SiloOutput.hpp
     Outputs/VTKOutput.hpp
     Outputs/RestartOutput.hpp
-    Outputs/BlueprintOutput.hpp
-    Outputs/ChomboIO.hpp
     Functions/FunctionBase.hpp
     Functions/SymbolicFunction.hpp
     Functions/TableFunction.hpp
     Functions/CompositeFunction.hpp
-    Functions/NewFunctionManager.hpp
+    Functions/FunctionManager.hpp
     ObjectManagerBase.hpp
     ProblemManager.hpp
     NumericalMethodsManager.hpp
@@ -27,7 +25,9 @@ set(managers_headers
     FieldSpecification/FieldSpecificationBase.hpp
     FieldSpecification/FieldSpecificationManager.hpp
     FieldSpecification/DirichletBoundaryCondition.hpp
-    FieldSpecification/SourceFluxBoundaryCondition.hpp)    
+    FieldSpecification/SourceFluxBoundaryCondition.hpp
+    initialization.hpp
+   )
 
 
 #
@@ -45,22 +45,32 @@ set(managers_sources
     Outputs/SiloOutput.cpp
     Outputs/VTKOutput.cpp
     Outputs/RestartOutput.cpp
-    Outputs/BlueprintOutput.cpp
-    Outputs/ChomboIO.cpp
     Functions/FunctionBase.cpp
     Functions/SymbolicFunction.cpp
     Functions/TableFunction.cpp
     Functions/CompositeFunction.cpp
-    Functions/NewFunctionManager.cpp
+    Functions/FunctionManager.cpp
     ObjectManagerBase.cpp
     ProblemManager.cpp
     NumericalMethodsManager.cpp
     FieldSpecification/FieldSpecificationBase.cpp
     FieldSpecification/FieldSpecificationManager.cpp
     FieldSpecification/DirichletBoundaryCondition.cpp
-    FieldSpecification/SourceFluxBoundaryCondition.cpp)
+    FieldSpecification/SourceFluxBoundaryCondition.cpp
+    initialization.cpp
+   )
 
-set( dependencyList dataRepository fileIO optionparser RAJA linearAlgebraInterface )
+if( ENABLE_MPI )
+    list( APPEND managers_headers Outputs/ChomboIO.hpp )
+    list( APPEND managers_sources Outputs/ChomboIO.cpp )
+endif()
+
+if( BUILD_OBJ_LIBS )
+  set( dependencyList dataRepository fileIO optionparser RAJA linearAlgebra )
+else()
+  set( dependencyList common fileIO linearAlgebra optionparser RAJA )
+endif()
+
 
 if( ENABLE_MATHPRESSO )
    set( dependencyList ${dependencyList} mathpresso )
@@ -78,6 +88,7 @@ blt_add_library( NAME                  managers
                  SOURCES               ${managers_sources}
                  HEADERS               ${managers_headers}
                  DEPENDS_ON            ${dependencyList}
+                 OBJECT                ${buildAsObj}
                )
 
 target_include_directories( managers PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)

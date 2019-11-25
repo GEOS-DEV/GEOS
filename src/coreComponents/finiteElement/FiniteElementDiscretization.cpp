@@ -1,26 +1,19 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
-/*
- * FiniteElementSpace.cpp
- *
- *  Created on: Aug 4, 2016
- *      Author: rrsettgast
+/**
+ * @file FiniteElementSpace.cpp
  */
 
 #include "FiniteElementDiscretization.hpp"
@@ -96,36 +89,6 @@ void FiniteElementDiscretization::ApplySpaceToTargetCells( ElementSubRegionBase 
 
   array2d< real64 > & detJ = cellBlock->registerWrapper< array2d< real64 > >(keys::detJ)->reference();
   detJ.resize(cellBlock->size(), m_quadrature->size() );
-}
-
-void FiniteElementDiscretization::CalculateShapeFunctionGradients( arrayView1d<R1Tensor const> const & X,
-                                                                   ElementSubRegionBase * const elementSubRegion ) const
-{
-  GEOSX_MARK_FUNCTION;
-
-  arrayView3d<R1Tensor> const & dNdX = elementSubRegion->getReference< array3d< R1Tensor > >(keys::dNdX);
-  arrayView2d<real64> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
-  FixedOneToManyRelation const & elemsToNodes = elementSubRegion->getWrapper<FixedOneToManyRelation>(std::string("nodeList"))->reference();
-
-  PRAGMA_OMP( omp parallel )
-  {
-    std::unique_ptr<FiniteElementBase> fe = getFiniteElement( m_parentSpace );
-
-    PRAGMA_OMP( omp for )
-    for (localIndex k = 0 ; k < elementSubRegion->size() ; ++k)
-    {
-      fe->reinit(X, elemsToNodes[k]);
-
-      for( localIndex q = 0 ; q < fe->n_quadrature_points() ; ++q )
-      {
-        detJ(k, q) = fe->JxW(q);
-        for (localIndex b = 0 ; b < fe->dofs_per_element() ; ++b)
-        {
-          dNdX[k][q][b] = fe->gradient(b, q);
-        }
-      }
-    }
-  }
 }
 
 void FiniteElementDiscretization::PostProcessInput()

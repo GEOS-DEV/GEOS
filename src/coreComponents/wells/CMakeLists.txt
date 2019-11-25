@@ -21,10 +21,28 @@ set( wells_sources
      Perforation.cpp
    )
 
+if( BUILD_OBJ_LIBS )
+  set( dependencyList dataRepository codingUtilities managers)
+else()
+  set( dependencyList common)
+endif()
+
+
+
+if ( ENABLE_OPENMP )
+   set( dependencyList ${dependencyList} openmp )
+endif()
+
+if ( ENABLE_CUDA )
+   set( dependencyList ${dependencyList} cuda )
+endif()
+   
+
 blt_add_library( NAME                  wells
                  SOURCES               ${wells_sources}
                  HEADERS               ${wells_headers}
-                 DEPENDS_ON            dataRepository codingUtilities managers
+                 DEPENDS_ON            ${dependencyList}
+                 OBJECT                ${buildAsObj}
                )
                
 target_include_directories( wells PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)

@@ -21,13 +21,6 @@ Element: BlackOilFluid
 .. include:: ../../coreComponents/fileIO/schema/docs/BlackOilFluid.rst
 
 
-.. _XML_Blueprint:
-
-Element: Blueprint
-==================
-.. include:: ../../coreComponents/fileIO/schema/docs/Blueprint.rst
-
-
 .. _XML_Box:
 
 Element: Box
@@ -131,13 +124,6 @@ Element: Cylinder
 Element: Dirichlet
 ==================
 .. include:: ../../coreComponents/fileIO/schema/docs/Dirichlet.rst
-
-
-.. _XML_DummySolver:
-
-Element: DummySolver
-====================
-.. include:: ../../coreComponents/fileIO/schema/docs/DummySolver.rst
 
 
 .. _XML_ElementRegions:
@@ -571,13 +557,6 @@ Datastructure: BlackOilFluid
 .. include:: ../../coreComponents/fileIO/schema/docs/BlackOilFluid_other.rst
 
 
-.. _DATASTRUCTURE_Blueprint:
-
-Datastructure: Blueprint
-========================
-.. include:: ../../coreComponents/fileIO/schema/docs/Blueprint_other.rst
-
-
 .. _DATASTRUCTURE_Box:
 
 Datastructure: Box
@@ -688,13 +667,6 @@ Datastructure: Cylinder
 Datastructure: Dirichlet
 ========================
 .. include:: ../../coreComponents/fileIO/schema/docs/Dirichlet_other.rst
-
-
-.. _DATASTRUCTURE_DummySolver:
-
-Datastructure: DummySolver
-==========================
-.. include:: ../../coreComponents/fileIO/schema/docs/DummySolver_other.rst
 
 
 .. _DATASTRUCTURE_ElementRegions:

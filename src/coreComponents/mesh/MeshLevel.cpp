@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
@@ -86,7 +82,7 @@ void MeshLevel::GenerateAdjacencyLists( localIndex_array & seedNodeList,
 
 
   FaceManager * const faceManager = this->getFaceManager();
-  array1d< array1d< localIndex > > const & faceToEdges = faceManager->edgeList();
+  ArrayOfArraysView< localIndex const > const & faceToEdges = faceManager->edgeList();
 
   ElementRegionManager * const elemManager = this->getElemManager();
 
@@ -124,10 +120,9 @@ void MeshLevel::GenerateAdjacencyLists( localIndex_array & seedNodeList,
                                             WellElementSubRegion>([&]( localIndex const kSubReg, 
                                                                        auto const * const subRegion )
       {
-
-        array2d<localIndex> const & elemsToNodes = subRegion->nodeList();
-        array2d<localIndex> const & elemsToFaces = subRegion->faceList();
-        array2d<localIndex> const & elemsToEdges = subRegion->edgeList();
+        using SubRegionType = std::remove_pointer_t< decltype( subRegion ) >;
+        arrayView2d< localIndex const, SubRegionType::NODE_MAP_UNIT_STRIDE_DIM > const & elemsToNodes = subRegion->nodeList();
+        arrayView2d< localIndex const > const & elemsToFaces = subRegion->faceList();
         for( auto const elementIndex : elementAdjacencySet[kReg][kSubReg] )
         {
           for( localIndex a=0 ; a<elemsToNodes.size(1) ; ++a )
@@ -139,10 +134,11 @@ void MeshLevel::GenerateAdjacencyLists( localIndex_array & seedNodeList,
           {
             faceAdjacencySet.insert(elemsToFaces[elementIndex][a]);
 
-            array1d<localIndex> const & edgeList = faceToEdges[elemsToFaces[elementIndex][a]];
-            for( localIndex b=0 ; b<edgeList.size() ; ++b )
+            localIndex const faceID = elemsToFaces[elementIndex][a];
+            localIndex const numEdges = faceToEdges.sizeOfArray( faceID );
+            for( localIndex b=0 ; b<numEdges ; ++b )
             {
-              edgeAdjacencySet.insert(edgeList[b]);
+              edgeAdjacencySet.insert(faceToEdges(faceID, b));
             }
 
           }

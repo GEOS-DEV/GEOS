@@ -1,27 +1,23 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
  * @file FaceManager.hpp
  */
 
-#ifndef FACEMANAGER_H_
-#define FACEMANAGER_H_
+#ifndef GEOSX_MESH_FACEMANAGER_HPP_
+#define GEOSX_MESH_FACEMANAGER_HPP_
 
 #include "ToElementRelation.hpp"
 #include "managers/ObjectManagerBase.hpp"
@@ -37,8 +33,8 @@ class FaceManager : public ObjectManagerBase
 {
 public:
 
-  using NodeMapType = OrderedVariableOneToManyRelation;
-  using EdgeMapType = OrderedVariableOneToManyRelation;
+  using NodeMapType = InterObjectRelation< ArrayOfArrays< localIndex > >;
+  using EdgeMapType = InterObjectRelation< ArrayOfArrays< localIndex > >;
   using ElemMapType = FixedToManyElementRelation;
 
   /**
@@ -73,7 +69,7 @@ public:
 
   void SortFaceNodes( arrayView1d<R1Tensor const> const & X,
                       R1Tensor const & elemCenter,
-                      arrayView1d<localIndex> const & faceNodes,
+                      localIndex * const faceNodes,
                       localIndex const numFaceNodes );
 
   void SetDomainBoundaryObjects( NodeManager * const nodeManager );
@@ -137,11 +133,11 @@ public:
   array1d<R1Tensor> const & faceNormal() const { return m_faceNormal; }
 
 
-  OrderedVariableOneToManyRelation & nodeList()                    { return m_nodeList; }
-  OrderedVariableOneToManyRelation const & nodeList() const        { return m_nodeList; }
+  NodeMapType & nodeList()                    { return m_nodeList; }
+  NodeMapType const & nodeList() const        { return m_nodeList; }
 
-  OrderedVariableOneToManyRelation       & edgeList()       { return m_edgeList; }
-  OrderedVariableOneToManyRelation const & edgeList() const { return m_edgeList; }
+  EdgeMapType       & edgeList()       { return m_edgeList; }
+  EdgeMapType const & edgeList() const { return m_edgeList; }
 
   array2d<localIndex>       & elementRegionList()       { return m_toElements.m_toElementRegion; }
   array2d<localIndex> const & elementRegionList() const { return m_toElements.m_toElementRegion; }

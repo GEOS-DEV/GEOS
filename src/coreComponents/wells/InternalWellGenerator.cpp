@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /*
@@ -23,10 +19,9 @@
 
 #include "InternalWellGenerator.hpp"
 
+#include "mpiCommunications/CommunicationTools.hpp"
 #include "managers/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
-#include "MPI_Communications/CommunicationTools.hpp"
-
 #include "WellElementRegion.hpp"
 #include "WellElementSubRegion.hpp"
 #include "PerforationData.hpp"
@@ -186,7 +181,7 @@ void InternalWellGenerator::GenerateMesh( DomainPartition * const domain )
 
   // merge perforations to make sure that no well element is shared between two MPI domains
   // TODO: instead of merging perforations, split the well elements and do not change the physical location of the perforation
-  int mpiSize = CommunicationTools::MPI_Size(MPI_COMM_GEOSX) ;
+  int const mpiSize = MpiWrapper::Comm_size(MPI_COMM_GEOSX) ;
   if (mpiSize > 1)
   {
     MergePerforations();
@@ -197,7 +192,8 @@ void InternalWellGenerator::GenerateMesh( DomainPartition * const domain )
 
   ElementRegionManager * const elemManager = meshLevel->getElemManager();  
   WellElementRegion * const 
-  wellRegion = elemManager->GetGroup(keys::elementRegionsGroup)->GetGroup<WellElementRegion>( this->m_wellRegionName );
+  wellRegion = elemManager->GetGroup(ElementRegionManager::groupKeyStruct::elementRegionsGroup)->
+                            GetGroup<WellElementRegion>( this->m_wellRegionName );
 
   GEOS_ERROR_IF( wellRegion == nullptr, 
                  "Well region " << this->m_wellRegionName << " not found in well " << getName() );
@@ -517,7 +513,7 @@ void InternalWellGenerator::MergePerforations()
 
 void InternalWellGenerator::DebugWellGeometry() const 
 {
-  if (CommunicationTools::MPI_Rank( MPI_COMM_GEOSX ) != 0)
+  if (MpiWrapper::Comm_rank( MPI_COMM_GEOSX ) != 0)
   {
     return;
   } 
@@ -525,7 +521,7 @@ void InternalWellGenerator::DebugWellGeometry() const
   std::cout << std::endl;
   std::cout << "++++++++++++++++++++++++++" << std::endl;
   std::cout << "InternalWellGenerator = " << getName() << std::endl;
-  std::cout << "MPI rank = " << CommunicationTools::MPI_Rank( MPI_COMM_GEOSX ) << std::endl;
+  std::cout << "MPI rank = " << MpiWrapper::Comm_rank( MPI_COMM_GEOSX ) << std::endl;
   std::cout << "Number of well elements = " << m_numElems << std::endl;
   
   for (globalIndex iwelem = 0; iwelem < m_numElems; ++iwelem)

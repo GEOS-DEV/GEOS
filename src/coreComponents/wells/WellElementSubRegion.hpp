@@ -1,23 +1,19 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef CORECOMPONENTS_WELLS_WELLELEMENTSUBREGION_HPP_
-#define CORECOMPONENTS_WELLS_WELLELEMENTSUBREGION_HPP_
+#ifndef GEOSX_WELLS_WELLELEMENTSUBREGION_HPP_
+#define GEOSX_WELLS_WELLELEMENTSUBREGION_HPP_
 
 #include "mesh/ElementSubRegionBase.hpp"
 #include "mesh/InterObjectRelation.hpp"
@@ -35,9 +31,17 @@ class WellElementSubRegion : public ElementSubRegionBase
 {
 public:
 
-  using NodeMapType=FixedOneToManyRelation;
-  using EdgeMapType=FixedOneToManyRelation; // unused but needed in MeshLevel::GenerateAdjacencyLists
-  using FaceMapType=FixedOneToManyRelation; // unused but needed in MeshLevel::GenerateAdjacencyLists
+#if defined( GEOSX_USE_CUDA )
+  using NODE_MAP_PERMUTATION = RAJA::PERM_JI;
+#else
+  using NODE_MAP_PERMUTATION = RAJA::PERM_IJ;
+#endif
+
+  static constexpr int NODE_MAP_UNIT_STRIDE_DIM = LvArray::getStrideOneDimension( NODE_MAP_PERMUTATION {} );
+
+  using NodeMapType = InterObjectRelation< array2d< localIndex, NODE_MAP_PERMUTATION > >;
+  using EdgeMapType = FixedOneToManyRelation; // unused but needed in MeshLevel::GenerateAdjacencyLists
+  using FaceMapType = FixedOneToManyRelation; // unused but needed in MeshLevel::GenerateAdjacencyLists
 
   /**
    * @brief enumeration for values in segmentStatusList parameter of Generate()
@@ -51,9 +55,9 @@ public:
   };
 
   /**
-   * @brief main constructor for ManagedGroup Objects
-   * @param name the name of this instantiation of ManagedGroup in the repository
-   * @param parent the parent group of this instantiation of ManagedGroup
+   * @brief main constructor for Group Objects
+   * @param name the name of this instantiation of Group in the repository
+   * @param parent the parent group of this instantiation of Group
    */  
   WellElementSubRegion( string const & name, 
                         Group * const parent );
@@ -75,14 +79,14 @@ public:
   virtual const string getCatalogName() const override { return WellElementSubRegion::CatalogName(); }
     
   virtual R1Tensor const & calculateElementCenter( localIndex k,
-                                                   const NodeManager& nodeManager,
-                                                   const bool useReferencePos = true) const override
+                                                   const NodeManager& GEOSX_UNUSED_ARG( nodeManager ),
+                                                   const bool GEOSX_UNUSED_ARG( useReferencePos ) = true) const override
   { 
     return m_elementCenter[k]; 
   }
 
-  virtual void CalculateElementGeometricQuantities( NodeManager const & nodeManager,
-                                                    FaceManager const & faceManager ) override 
+  virtual void CalculateElementGeometricQuantities( NodeManager const & GEOSX_UNUSED_ARG( nodeManager ),
+                                                    FaceManager const & GEOSX_UNUSED_ARG( faceManager ) ) override 
   {}
 
   virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override;
@@ -122,7 +126,7 @@ public:
   /**
    * @return the element to node map
    */
-  FixedOneToManyRelation & nodeList() 
+  NodeMapType & nodeList() 
   { 
     return m_toNodesRelation; 
   }
@@ -130,27 +134,9 @@ public:
   /**
    * @return the element to node map
    */
-  FixedOneToManyRelation const & nodeList() const 
+  NodeMapType const & nodeList() const 
   { 
     return m_toNodesRelation; 
-  }
-
-  /**
-   * @brief returns the element to node relations.
-   * @param[in] k the index of the element.
-   */
-  virtual arraySlice1dRval<localIndex const> nodeList( localIndex const k ) const override
-  { 
-    return m_toNodesRelation[k];
-  }
-
-  /**
-   * @brief returns the element to node relations.
-   * @param[in] k the index of the element.
-   */
-  virtual arraySlice1dRval<localIndex> nodeList( localIndex const k ) override
-  {
-    return m_toNodesRelation[k];
   }
 
   /**
@@ -414,5 +400,5 @@ private:
 
 } /* namespace geosx */
 
-#endif /* SRC_CORECOMPONENTS_WELLS_WELLELEMENTSUBREGION_HPP_ */
+#endif /* GEOSX_WELLS_WELLELEMENTSUBREGION_HPP_ */
 

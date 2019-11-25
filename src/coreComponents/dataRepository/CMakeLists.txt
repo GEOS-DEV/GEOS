@@ -10,11 +10,14 @@ set(dataRepository_headers
     InputFlags.hpp
     KeyIndexT.hpp
     MappedVector.hpp
+    ObjectCatalog.hpp 
     ReferenceWrapper.hpp
     RestartFlags.hpp
-    SidreWrapper.hpp
+    ConduitRestart.hpp
+    WrapperHelpers.hpp
     Wrapper.hpp
     WrapperBase.hpp
+    xmlWrapper.hpp
     )
 
 #
@@ -22,35 +25,34 @@ set(dataRepository_headers
 #
 set(dataRepository_sources
     Group.cpp
-    SidreWrapper.cpp
+    ConduitRestart.cpp
     Wrapper.cpp
     WrapperBase.cpp
+    xmlWrapper.cpp
     )
 
-
 set( extraComponentsLinkList "")
-
 
 if( ENABLE_MPI )
   set( extraComponentsLinkList ${extraComponentsLinkList} mpi )
 endif()
 
 
-
-
-set( dependencyList common cxx-utilities codingUtilities pugixml fileIO )
-if( CONDUIT_FOUND )
-  set( dependencyList ${dependencyList} conduit )
+if( BUILD_OBJ_LIBS )
+  set (dependencyList common cxx-utilities codingUtilities pugixml fileIO)
+else()
+  set( dependencyList common )
 endif()
 
-if( ATK_FOUND )
-  set( dependencyList ${dependencyList} sidre )
+if( CONDUIT_FOUND )
+  set( dependencyList ${dependencyList} conduit )
 endif()
 
 blt_add_library( NAME                  dataRepository
                  SOURCES               ${dataRepository_sources}
                  HEADERS               ${dataRepository_headers}
                  DEPENDS_ON            ${dependencyList}
+                 OBJECT                ${buildAsObj}
                )
 
 target_include_directories( dataRepository PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)

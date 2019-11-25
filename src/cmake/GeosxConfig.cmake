@@ -23,6 +23,7 @@ set( PREPROCESSOR_DEFINES ARRAY_BOUNDS_CHECK
                           OPENMP
                           CUDA
                           PARMETIS
+                          PETSC
                           PYTHON
                           RAJA 
                           SUPERLU_DIST
@@ -30,6 +31,7 @@ set( PREPROCESSOR_DEFINES ARRAY_BOUNDS_CHECK
                           TOTALVIEW_OUTPUT
                           TRILINOS
                           MKL
+                          GEOSX_PTP
                           ${externalComponentsList} )
 
 foreach( DEP in ${PREPROCESSOR_DEFINES})

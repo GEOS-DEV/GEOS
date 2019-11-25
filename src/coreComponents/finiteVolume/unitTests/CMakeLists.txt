@@ -6,7 +6,12 @@ set( gtest_geosx_tests
      testStencilCollection.cpp
    )
 
-set( dependencyList geosx_core gtest )
+if( BUILD_OBJ_LIBS )
+  set( dependencyList geosx_core gtest )
+else()
+  set( dependencyList finiteVolume gtest )
+endif()
+
 
 if( ENABLE_OPENMP )
     set( dependencyList ${dependencyList} openmp )
@@ -21,7 +26,6 @@ endif()
 #
 foreach(test ${gtest_geosx_tests})
     get_filename_component( test_name ${test} NAME_WE )
-    message("processing test_name ${test_name}")
     blt_add_executable( NAME ${test_name}
             SOURCES ${test}
             OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
