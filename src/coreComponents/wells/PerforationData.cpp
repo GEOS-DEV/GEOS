@@ -43,7 +43,7 @@ PerforationData::PerforationData(string const & name, Group * const parent)
 
   registerWrapper( viewKeyStruct::wellElementIndexString, &m_wellElementIndex, false );
   registerWrapper( viewKeyStruct::locationString, &m_location, false );
-  registerWrapper( viewKeyStruct::transmissibilityString, &m_transmissibility, false );
+  registerWrapper( viewKeyStruct::wellPeacemanIndexString, &m_wellPeacemanIndex, false );
 }
 
 PerforationData::~PerforationData()
@@ -62,7 +62,7 @@ void PerforationData::ConnectToMeshElements( MeshLevel const & mesh,
                                                                                                    elementCenterString );
   
   arrayView1d<R1Tensor const> const & perfCoordsGlobal = wellGeometry.GetPerfCoords();
-  arrayView1d<real64 const>   const & perfTransGlobal  = wellGeometry.GetPerfTransmissibility();
+  arrayView1d<real64 const>   const & perfTransGlobal  = wellGeometry.GetPerfPeacemanIndex();
 
   resize( perfCoordsGlobal.size() );
   localIndex iperfLocal = 0;
@@ -116,8 +116,8 @@ void PerforationData::ConnectToMeshElements( MeshLevel const & mesh,
     m_toMeshElements.m_toElementSubRegion[iperfLocal] = esr;
     m_toMeshElements.m_toElementIndex    [iperfLocal] = ei;
     
-    // construct the local transmissibility and location maps
-    m_transmissibility[iperfLocal] = perfTransGlobal[iperfGlobal];
+    // construct the local wellPeacemanIndex and location maps
+    m_wellPeacemanIndex[iperfLocal] = perfTransGlobal[iperfGlobal];
     m_location[iperfLocal] = coords;
 
     m_localToGlobalMap[iperfLocal++] = iperfGlobal;
@@ -150,10 +150,10 @@ void PerforationData::InitializePostInitialConditions_PreSubGroups( Group * cons
 {
   for (localIndex iperf = 0; iperf < size(); ++iperf)
   {
-    if (m_transmissibility[iperf] < 0.0)
+    if (m_wellPeacemanIndex[iperf] < 0.0)
     {
-      // TODO: compute transmissibility internally
-      GEOS_ERROR( "Invalid transmissibility value: " << m_transmissibility[iperf] );
+      // TODO: compute wellPeacemanIndex internally
+      GEOS_ERROR( "Invalid well Peaceman index value: " << m_wellPeacemanIndex[iperf] );
     }
   }
 }
@@ -193,7 +193,7 @@ void PerforationData::DebugLocalPerforations() const
               << std::endl;
     std::cout << "m_location[" << iperf << "] = " << m_location[iperf]
               << std::endl;
-    std::cout << "m_transmissibility[" << iperf << "] = " << m_transmissibility[iperf]
+    std::cout << "m_wellPeacemanIndex[" << iperf << "] = " << m_wellPeacemanIndex[iperf]
               << std::endl;
   }
 }

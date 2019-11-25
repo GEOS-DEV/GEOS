@@ -122,16 +122,16 @@ public:
   arrayView1d<R1Tensor const> const & GetLocation() const { return m_location; }
 
   /**
-   * @brief Getter for perforation transmissibilities
-   * @return list of perforation transmissibilities
+   * @brief Getter for perforation well indices
+   * @return list of perforation well indices
    */
-  arrayView1d<real64> & GetTransmissibility() { return m_transmissibility; }
+  arrayView1d<real64> & GetWellPeacemanIndex() { return m_wellPeacemanIndex; }
 
   /**
-   * @brief Getter for perforation transmissibilities
-   * @return list of perforation transmissibilities
+   * @brief Getter for perforation well indices
+   * @return list of perforation well indices
    */
-  arrayView1d<real64 const> const & getTransmissibility() const { return m_transmissibility; }
+  arrayView1d<real64 const> const & getWellPeacemanIndex() const { return m_wellPeacemanIndex; }
 
 
   /**
@@ -161,7 +161,7 @@ public:
     static constexpr auto reservoirElementIndexString     = "reservoirElementIndex";
     static constexpr auto wellElementIndexString          = "wellElementIndex";
     static constexpr auto locationString                  = "location";
-    static constexpr auto transmissibilityString          = "transmissibility";
+    static constexpr auto wellPeacemanIndexString         = "wellPeacemanIndex";
 
     dataRepository::ViewKey numPerforationsGlobal     = { numPerforationsGlobalString };
     dataRepository::ViewKey reservoirElementRegion    = { reservoirElementRegionString };
@@ -169,7 +169,7 @@ public:
     dataRepository::ViewKey reservoirElementIndex     = { reservoirElementIndexString };
     dataRepository::ViewKey wellElementIndex          = { wellElementIndexString };
     dataRepository::ViewKey location                  = { locationString };
-    dataRepository::ViewKey transmissibility          = { transmissibilityString };
+    dataRepository::ViewKey wellPeacemanIndex         = { wellPeacemanIndexString };
 
   } viewKeysPerforationData;
 
@@ -197,8 +197,8 @@ private:
   /// location of the perforations
   array1d<R1Tensor> m_location;
 
-  /// transmissibility (well index) of the perforations
-  array1d<real64> m_transmissibility;
+  /// well index of the perforations
+  array1d<real64> m_wellPeacemanIndex;
 
 };
 

@@ -37,7 +37,7 @@ static constexpr auto perforation = "Perforation";
 /**
  * @class Perforation
  *
- * This class describes a perforation with its location, transmissibility and corresponding well element
+ * This class describes a perforation with its location, well Peaceman index  and corresponding well element
  */  
 class Perforation : public dataRepository::Group
 {
@@ -77,19 +77,19 @@ public:
   real64 const & GetDistanceFromWellHead() const { return m_distanceFromHead; }
 
   /**
-   * @brief Getter for the transmissibility at the perforation
-   * @return the transmissibility
+   * @brief Getter for the well Peaceman index at the perforation
+   * @return the well Peaceman index
    */
-  real64 GetTransmissibility() const { return m_transmissibility; }
+  real64 GetWellPeacemanIndex() const { return m_wellPeacemanIndex ; }
 
 
   struct viewKeyStruct
   {
-    static constexpr auto distanceFromHeadString = "distanceFromHead";
-    static constexpr auto transmissibilityString = "transmissibility";
+    static constexpr auto distanceFromHeadString  = "distanceFromHead";
+    static constexpr auto wellPeacemanIndexString = "wellPeacemanIndex";
 
-    dataRepository::ViewKey distanceFromHead = { distanceFromHeadString };
-    dataRepository::ViewKey transmissibility = { transmissibilityString };
+    dataRepository::ViewKey distanceFromHead  = { distanceFromHeadString };
+    dataRepository::ViewKey wellPeacemanIndex = { wellPeacemanIndexString };
 
   } viewKeysPerforation;
 
@@ -102,8 +102,8 @@ private:
   // linear distance from well head
   real64 m_distanceFromHead;
 
-  // transmissibility (well index) at this perforation
-  real64 m_transmissibility;
+  // well index at this perforation
+  real64 m_wellPeacemanIndex;
 
 };
 

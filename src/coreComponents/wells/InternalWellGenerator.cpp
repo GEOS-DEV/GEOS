@@ -34,7 +34,7 @@ using namespace dataRepository;
 InternalWellGenerator::InternalWellGenerator( string const & name, Group * const parent ):
   MeshGeneratorBase( name, parent ),
   m_numElemsPerSegment(0),
-  m_crossSectionArea(0),
+  m_radius(0),
   m_wellRegionName(""),
   m_wellControlsName(""),
   m_meshBodyName(""),
@@ -48,37 +48,37 @@ InternalWellGenerator::InternalWellGenerator( string const & name, Group * const
   registerWrapper(keys::nodeCoords, &m_inputPolyNodeCoords, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setSizedFromParent(0)->
-    setDescription("physical coordinates of the well polyline nodes");
+    setDescription("Physical coordinates of the well polyline nodes");
 
   registerWrapper(keys::segmentConn, &m_segmentToPolyNodeMap, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setSizedFromParent(0)->
-    setDescription("connectivity of the polyline segments");
+    setDescription("Connectivity of the polyline segments");
 
-registerWrapper(keys::crossSectionArea, &m_crossSectionArea, false )->
+registerWrapper(keys::radius, &m_radius, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setSizedFromParent(0)->
-    setDescription("cross section area of the well");
+    setDescription("Radius of the well");
 
   registerWrapper(keys::nElems, &m_numElemsPerSegment, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setSizedFromParent(0)->
-    setDescription("number of well elements per polyline segment");
+    setDescription("Number of well elements per polyline segment");
 
   registerWrapper(keys::wellRegionName, &m_wellRegionName, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setSizedFromParent(0)->
-    setDescription("name of the well element region");
+    setDescription("Name of the well element region");
 
   registerWrapper(keys::wellControlsName, &m_wellControlsName, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setSizedFromParent(0)->
-    setDescription("name of the set of constraints associated with this well");
+    setDescription("Name of the set of constraints associated with this well");
 
   registerWrapper(keys::meshBodyName, &m_meshBodyName, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setSizedFromParent(0)->
-    setDescription("name of the reservoir mesh associated with this well");
+    setDescription("Name of the reservoir mesh associated with this well");
 }
 
 InternalWellGenerator::~InternalWellGenerator()
@@ -100,8 +100,8 @@ void InternalWellGenerator::PostProcessInput()
   GEOS_ERROR_IF( m_inputPolyNodeCoords.size(0)-1 != m_segmentToPolyNodeMap.size(0),
                  "Incompatible sizes of " << keys::nodeCoords << " and " << keys::segmentConn << " in well " << getName() ); 
  
-  GEOS_ERROR_IF( m_crossSectionArea <= 0,
-                 "Invalid " << keys::crossSectionArea << " in well " << getName() );
+  GEOS_ERROR_IF( m_radius <= 0,
+                 "Invalid " << keys::radius << " in well " << getName() );
 
   GEOS_ERROR_IF( m_wellRegionName.empty(), 
                  "Invalid well region name in well " << getName() );
@@ -164,7 +164,7 @@ void InternalWellGenerator::GenerateMesh( DomainPartition * const domain )
 
   m_perfCoords.resize( m_numPerforations );
   m_perfDistFromHead.resize( m_numPerforations );
-  m_perfTrans.resize( m_numPerforations );
+  m_perfPeacemanIndex.resize( m_numPerforations );
   m_perfElemId.resize( m_numPerforations );
 
   // construct a reverse map from the polyline nodes to the segments
@@ -344,8 +344,8 @@ void InternalWellGenerator::DiscretizePolyline()
       m_nodeDistFromHead[iwellNodeBottom] += m_nodeDistFromHead[iwellNodeTop];
        
       // 4) set element volume
-      m_elemVolume[iwelemCurrent] = vWellElem.L2_Norm() * m_crossSectionArea;
-
+      m_elemVolume[iwelemCurrent] = vWellElem.L2_Norm() * M_PI * m_radius * m_radius;
+      
       // 4) increment the element counter
       ++iwelemCurrent;
     }
@@ -372,8 +372,8 @@ void InternalWellGenerator::ConnectPerforationsToWellElements()
     // get the perforation and its properties
     Perforation const * const perf = 
       this->GetGroup<Perforation>( m_perforationList[iperf] );
-    m_perfDistFromHead[iperf] = perf->GetDistanceFromWellHead();
-    m_perfTrans[iperf]        = perf->GetTransmissibility();    
+    m_perfDistFromHead[iperf]  = perf->GetDistanceFromWellHead();
+    m_perfPeacemanIndex[iperf] = perf->GetWellPeacemanIndex();    
 
     // search in all the elements of this well between head and bottom
     globalIndex iwelemTop    = 0;
@@ -472,22 +472,22 @@ void InternalWellGenerator::MergePerforations()
     // collect the indices of the elems with more that one perforation
     if ( elemToPerfMap[iwelem].size() > 1 )
     {
-      // find the perforation with the largest transmissibility and keep its location
-      globalIndex iperfMaxTrans = elemToPerfMap[iwelem][0];
-      real64 maxTrans = m_perfTrans[iperfMaxTrans];
+      // find the perforation with the largest Peaceman index and keep its location
+      globalIndex iperfMaxPeacemanIndex = elemToPerfMap[iwelem][0];
+      real64 maxPeacemanIndex = m_perfPeacemanIndex[iperfMaxPeacemanIndex];
       for (localIndex ip = 1; ip < elemToPerfMap[iwelem].size(); ++ip)
       {
-        if (m_perfTrans[elemToPerfMap[iwelem][ip]] > maxTrans)
+        if (m_perfPeacemanIndex[elemToPerfMap[iwelem][ip]] > maxPeacemanIndex)
         {
-          iperfMaxTrans = elemToPerfMap[iwelem][ip];
-          maxTrans = m_perfTrans[iperfMaxTrans];
+          iperfMaxPeacemanIndex = elemToPerfMap[iwelem][ip];
+          maxPeacemanIndex = m_perfPeacemanIndex[iperfMaxPeacemanIndex];
         }
       }
       
-      // assign the coordinates of the perf with the largest trans to the other perfs on this elem
+      // assign the coordinates of the perf with the largest Peaceman index to the other perfs on this elem
       for (localIndex ip = 0; ip < elemToPerfMap[iwelem].size(); ++ip)
       {
-        if (elemToPerfMap[iwelem][ip] == iperfMaxTrans)
+        if (elemToPerfMap[iwelem][ip] == iperfMaxPeacemanIndex)
         {
           continue;
         }
@@ -495,8 +495,8 @@ void InternalWellGenerator::MergePerforations()
         GEOS_LOG_RANK_0( "Moving perforation #" << elemToPerfMap[iwelem][ip] 
                       << " of well " << getName()
                       << " from " << m_perfCoords[elemToPerfMap[iwelem][ip]] 
-                      << " to " << m_perfCoords[iperfMaxTrans] << " to make sure that no well element is shared between two MPI ranks" );
-        m_perfCoords[elemToPerfMap[iwelem][ip]] = m_perfCoords[iperfMaxTrans];
+                      << " to " << m_perfCoords[iperfMaxPeacemanIndex] << " to make sure that no well element is shared between two MPI ranks" );
+        m_perfCoords[elemToPerfMap[iwelem][ip]] = m_perfCoords[iperfMaxPeacemanIndex];
       }
     }
 
@@ -555,7 +555,7 @@ void InternalWellGenerator::DebugWellGeometry() const
   {
     std::cout << "m_perfCoords[" << iperf << "] = " << m_perfCoords[iperf] 
               << std::endl;
-    std::cout << "m_perfTrans[" << iperf << "] = " << m_perfTrans[iperf] 
+    std::cout << "m_perfPeacemanIndex[" << iperf << "] = " << m_perfPeacemanIndex[iperf] 
               << std::endl;
     std::cout << "m_perfElemId[" << iperf << "] = " << m_perfElemId[iperf] 
               << std::endl;

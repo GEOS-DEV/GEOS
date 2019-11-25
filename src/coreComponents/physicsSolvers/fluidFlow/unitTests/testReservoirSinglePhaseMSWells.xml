@@ -32,14 +32,12 @@
                       type="producer"
                       control="BHP"
                       targetBHP="5e5"
-                      targetRate="1e-3"
-                      referenceDepth="0.5"/>
+                      targetRate="1e-3"/>
         <WellControls name="wellControls2"
                       type="injector"
                       control="liquidRate" 
                       targetBHP="1e7"
-                      targetRate="1e-4" 
-                      referenceDepth="0.5"/>
+                      targetRate="1e-4"/>
     </SinglePhaseWell>
 
   </Solvers>
@@ -68,14 +66,14 @@
                                          {1, 2},
                                          {2, 3},
                                          {3, 4} }"
-                  crossSectionArea="0.35"
+                  radius="0.1"
                   numElementsPerSegment="1">
         <Perforation name="producer1_perf1"
                      distanceFromHead="19.4"
-                     transmissibility="1e-12"/> 
+                     wellPeacemanIndex="1e-12"/> 
         <Perforation name="producer1_perf2"
                      distanceFromHead="20.3"
-                     transmissibility="1e-12"/> 
+                     wellPeacemanIndex="1e-12"/> 
     </InternalWell> 
 
     <InternalWell name="well_injector1"
@@ -91,14 +89,14 @@
                                          {1, 2},
                                          {2, 3},
                                          {3, 4} }"
-                  crossSectionArea="0.25"
+                  radius="0.1"
                   numElementsPerSegment="3">
         <Perforation name="injector1_perf1"
                      distanceFromHead="19.52"
-                     transmissibility="1e-12"/> 
+                     wellPeacemanIndex="1e-12"/> 
         <Perforation name="injector1_perf2"
                      distanceFromHead="20.45"
-                     transmissibility="1e-12"/> 
+                     wellPeacemanIndex="1e-12"/> 
     </InternalWell> 
 
   </Mesh>

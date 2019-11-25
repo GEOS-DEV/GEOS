@@ -971,8 +971,8 @@ void SinglePhaseWell::ComputeAllPerforationRates( WellElementSubRegion const * c
   arrayView1d<localIndex const> const & perfWellElemIndex =
     perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::wellElementIndexString );
 
-  arrayView1d<real64 const> const & perfTransmissibility =
-    perforationData->getReference<array1d<real64>>( PerforationData::viewKeyStruct::transmissibilityString );
+  arrayView1d<real64 const> const & perfPeacemanIndex =
+    perforationData->getReference<array1d<real64>>( PerforationData::viewKeyStruct::wellPeacemanIndexString );
 
   arrayView1d<real64> const & perfRate =
     perforationData->getReference<array1d<real64>>( viewKeyStruct::perforationRateString );
@@ -1045,8 +1045,8 @@ void SinglePhaseWell::ComputeAllPerforationRates( WellElementSubRegion const * c
     // multiplier for well side in the flux
     multiplier[SubRegionTag::WELL] = -1;
 
-    // get transmissibility at the interface
-    real64 const trans = perfTransmissibility[iperf];
+    // get wellPeacemanIndex at the interface
+    real64 const trans = perfPeacemanIndex[iperf];
 
     // compute potential difference
     real64 potDif = 0.0;

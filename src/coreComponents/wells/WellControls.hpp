@@ -150,7 +150,6 @@ public:
   {
 
     static constexpr auto refWellElemIndexString = "referenceWellElementIndex";
-    static constexpr auto refWellElemDepthString = "referenceDepth";
     static constexpr auto typeString             = "type";
     static constexpr auto controlString          = "control";
     static constexpr auto targetBHPString        = "targetBHP";
@@ -158,7 +157,6 @@ public:
     static constexpr auto injectionStreamString  = "injectionStream";
     
     dataRepository::ViewKey referenceIndex  = { refWellElemIndexString };
-    dataRepository::ViewKey referenceDepth  = { refWellElemDepthString };
     dataRepository::ViewKey type            = { typeString };
     dataRepository::ViewKey control         = { controlString };
     dataRepository::ViewKey targetBHP       = { targetBHPString };
@@ -180,7 +178,6 @@ private:
   Type m_type;
 
   /// reference index
-  real64 m_refWellElemDepth; // not used yet
   localIndex m_refWellElemIndex;
 
   /// well controls

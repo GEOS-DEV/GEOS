@@ -33,7 +33,7 @@ namespace keys
 string const nodeCoords       = "polylineNodeCoords";
 string const segmentConn      = "polylineSegmentConn";
 string const nElems           = "numElementsPerSegment";
-string const crossSectionArea = "crossSectionArea";
+string const radius           = "radius";
 string const wellRegionName   = "wellRegionName";
 string const wellControlsName = "wellControlsName";
 string const meshBodyName     = "meshName";
@@ -52,7 +52,7 @@ public:
   // define the top and bottom node of a segment
   struct NodeLocation
   {
-    static constexpr integer TOP = 0;
+    static constexpr integer TOP    = 0;
     static constexpr integer BOTTOM = 1;
   };
 
@@ -164,10 +164,10 @@ public:
   arrayView1d<R1Tensor const> const & GetPerfCoords() const { return m_perfCoords; }
 
   /**
-   * @brief Getter for the transmissibility at the perforations
-   * @return list of transmissibilities at all the perforations on the well
+   * @brief Getter for the well Peaceman index at the perforations
+   * @return list of well Peaceman index at all the perforations on the well
    */
-  arrayView1d<real64 const> const & GetPerfTransmissibility() const { return m_perfTrans; }
+  arrayView1d<real64 const> const & GetPerfPeacemanIndex() const { return m_perfPeacemanIndex; }
 
   /**
    * @brief Getter for the global indices of the well elements connected to each perforation
@@ -227,8 +227,8 @@ private:
   /// Number of well elements per polyline interval
   int m_numElemsPerSegment;
 
-  /// Cross section area of the well (assumed to be valid for the entire well)
-  real64 m_crossSectionArea;
+  /// Radius area of the well (assumed to be valid for the entire well)
+  real64 m_radius;
 
   /// Name of the corresponding well region
   string m_wellRegionName;
@@ -283,8 +283,8 @@ private:
   /// Absolute physical location of the perforation 
   array1d<R1Tensor>    m_perfCoords;
 
-  /// Transmissibility at the perforation
-  array1d<real64>      m_perfTrans;
+  /// Well Peaceman index at the perforation
+  array1d<real64>      m_perfPeacemanIndex;
 
   /// Global index of the well element
   array1d<globalIndex> m_perfElemId;

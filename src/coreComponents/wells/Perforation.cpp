@@ -29,16 +29,16 @@ using namespace dataRepository;
 Perforation::Perforation(string const & name, Group * const parent)
   : Group(name, parent),
     m_distanceFromHead(0),
-    m_transmissibility(0)
+    m_wellPeacemanIndex(0)
 {
   registerWrapper( viewKeyStruct::distanceFromHeadString, &m_distanceFromHead, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Perforation linear distance from well head");
 
-  registerWrapper( viewKeyStruct::transmissibilityString, &m_transmissibility, false )->
+  registerWrapper( viewKeyStruct::wellPeacemanIndexString, &m_wellPeacemanIndex, false )->
     setApplyDefaultValue(-1.0)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Perforation transmissibility");
+    setDescription("Perforation well Peaceman index");
 
 }
 
