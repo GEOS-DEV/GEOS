@@ -41,6 +41,8 @@
 #define GEOSX_USE_RAJA
 /// Enables use of sys/time.h based timers (CMake option ENABLE_TIMERS)
 #define GEOSX_USE_TIMERS
+/// Enables use of additional debugging interface for TotalView (Cmake option ENABLE_TOTALVIEW_OUTPUT)
+#define GEOSX_USE_TOTALVIEW_OUTPUT
 /// Enables use of Intel MKL (CMake option ENABLE_MKL)
 #define GEOSX_USE_MKL
 /// Enables use of Trilinos library (CMake option ENABLE_TRILINOS)
