@@ -1,3 +1,5 @@
+.. _SpatialPartitioning:
+
 ###############################################################################
 Parallel Partitioning
 ###############################################################################
@@ -25,6 +27,8 @@ The following figure show the partitioning of a simple mesh.
 Real nodes appear as solid red circles in the owning partition and ghost nodes are shown as hollow circles.
 
 .. image:: SimplePartitioning_GEOSX.svg
+   :align: center
+   :width: 55%
 
 Specifying partitioning pattern
 =================================
@@ -32,11 +36,14 @@ Specifying partitioning pattern
 Cartesian partitioning
 -----------------------
 In the command line to run GEOSX, the user can specify the partitioning pattern by adding the following switches:
-(placeholder)
+
+  * ``-x, --x-partitions`` - Number of partitions in the x-direction
+  * ``-y, --y-partitions`` - Number of partitions in the y-direction
+  * ``-z, --z-partitions`` - Number of partitions in the z-direction
 
 Graph-based partitioning
 ---------------------------
-
+TODO ...
 
 Ghost ranks
 ===============

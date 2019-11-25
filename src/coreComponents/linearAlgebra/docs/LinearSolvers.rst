@@ -1,3 +1,5 @@
+.. _LinearSolvers:
+
 ################################################################################
 Linear Solvers
 ################################################################################
@@ -28,7 +30,7 @@ In GEOSX both options are made available wrapping around well-established open-s
 Direct methods
 **************
 
-The major advantages are their reliability, robustness, and ease of implementation.
+The major advantages are their reliability, robustness, and ease of use.
 However, they have large memory requirements and exhibit poor scalability.  Direct methods should be used in a prototyping stage, for example when developing a new formulation or algorithm, when the dimension of the problem, namely the size of matrix :math:`\mathsf{A}`, is small.
 Irrespective of the selected direct solver implementation, three stages can be idenitified:
 
@@ -184,7 +186,7 @@ The following table summarizes the available input parameters for the preconditi
 |                          |          |              |                                                |
 +--------------------------+----------+--------------+------------------------------------------------+
 |                          |          |              |                                                |
-| ``amg.smootherType``     | string   | ``GS``       | Smoother to apply within AMG cycle             |
+| ``amg.smootherType``     | string   | ``GS``       | Smoother to apply within AMG cycle.            |
 |                          |          |              | Valide values of this parameter are:           |
 |                          |          |              |                                                |
 |                          |          |              | * ``J``:                                       |
@@ -198,7 +200,7 @@ The following table summarizes the available input parameters for the preconditi
 |                          |          |              |                                                |
 +--------------------------+----------+--------------+------------------------------------------------+
 |                          |          |              |                                                |
-| ``amg.coarseType``       | string   | ``direct``   | Solver used on the coarsest level              |
+| ``amg.coarseType``       | string   | ``direct``   | Solver used on the coarsest level.             |
 |                          |          |              | Valide values of this parameter are:           |
 |                          |          |              |                                                |
 |                          |          |              | * ``direct``:                                  |
