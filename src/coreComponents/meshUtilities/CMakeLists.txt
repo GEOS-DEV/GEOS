@@ -35,8 +35,13 @@ set(meshUtilities_sources
     SimpleGeometricObjects/BoundedThickPlane.cpp
    )
 
+if( BUILD_OBJ_LIBS)
+  set( dependencyList common dataRepository fileIO mesh)
+else()
+  set( dependencyList common)
+endif()
 
-set( dependencyList common dataRepository fileIO mesh )
+set( dependencyList common )
 
 if( ENABLE_PAMELA )
     message(STATUS "Adding PAMELAMeshGenerator sources and headers")
@@ -57,7 +62,7 @@ blt_add_library( NAME                  meshUtilities
                  SOURCES               ${meshUtilities_sources}
                  HEADERS               ${meshUtilities_headers}
                  DEPENDS_ON            ${dependencyList}
-                 #OBJECT                TRUE
+                 OBJECT                ${buildAsObj}
                )
                
 target_include_directories( meshUtilities PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)

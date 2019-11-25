@@ -22,8 +22,6 @@
 // TPL includes
 #include <gtest/gtest.h>
 
-// System includes
-#include <mpi.h>
 
 namespace geosx
 {
