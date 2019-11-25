@@ -862,10 +862,21 @@ CalculateResidualNorm( DomainPartition const * const domain,
                                                                      m_solidSolver->getDofManager(),
                                                                      m_solidSolver->getSystemRhs() );
 
-  GEOS_LOG_RANK_0(std::scientific <<
-                  "    Norm(r_u) = " << solidResidual <<
-                  " | Norm(r_p) = " << fluidResidual << 
-                  " | Norm(r)  = " << fluidResidual+solidResidual );
+  {
+
+    char output[200] = {0};
+    sprintf( output,
+             "Norm(r_u, r_p, r) = (%4.2e, %4.2e, %4.2e) ; ",
+             solidResidual,
+             fluidResidual,
+             fluidResidual+solidResidual );
+
+    m_nlSolverOutputLog += output;
+  }
+//  GEOS_LOG_RANK_0(std::scientific <<
+//                  "    Norm(r_u) = " << solidResidual <<
+//                  " | Norm(r_p) = " << fluidResidual <<
+//                  " | Norm(r)  = " << fluidResidual+solidResidual );
 
   return fluidResidual + solidResidual;
 }
@@ -1782,7 +1793,9 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
       if( params->m_verbose>=1 )
         list->sublist("Linear Solver Types").sublist("AztecOO").sublist("Forward Solve").sublist("AztecOO Settings").set("Output Frequency",1);
       else
+      {
         list->sublist("Linear Solver Types").sublist("AztecOO").sublist("Forward Solve").sublist("AztecOO Settings").set("Output Frequency",0);
+      }
 
 
     Stratimikos::DefaultLinearSolverBuilder builder;
@@ -1800,7 +1813,6 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
         //      should remove after debugging because this is potentially slow
         //      and should just use iterative residual
 
-    /*
     RCP<Thyra::VectorBase<double> > Ax = Thyra::createMember(matrix->range());
     RCP<Thyra::VectorBase<double> > r  = Thyra::createMember(matrix->range());
     {
@@ -1808,7 +1820,6 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
       Thyra::V_VmV<double>(r.ptr(),*rhs,*Ax);
     }
     params->m_KrylovResidualInit = Thyra::norm(*r);
-    */
 
     // !!!! Actual Solve !!!!
     clock.start(true);
@@ -1820,17 +1831,27 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
         // JAW: check "true" residual after
         //      should remove after debugging because this is potentially slow
 
-    /*
     {
       Thyra::apply(*matrix, Thyra::NOTRANS,*lhs,Ax.ptr());
       Thyra::V_VmV<double>(r.ptr(),*rhs,*Ax);
       params->m_KrylovResidualFinal = Thyra::norm(*r);
     }
-    */
 
     params->m_numKrylovIter = status.extraParameters->get<int>("Iteration Count");
 
-    if( m_verboseLevel>=1 )
+    {
+      char output[200];
+      sprintf( output,
+               "lastLinSolve(iter,tol,ri, rf) = (%4d, %4.2e, %4.2e, %4.2e) ; ",
+               params->m_numKrylovIter,
+               params->m_krylovTol,
+               params->m_KrylovResidualInit,
+               params->m_KrylovResidualFinal );
+
+      m_nlSolverOutputLog += output;
+    }
+
+    if( m_verboseLevel>=2 )
     {
       GEOS_LOG_RANK_0("    Linear Solver | Iter = " << params->m_numKrylovIter << std::scientific <<
                       " | TargetReduction " << params->m_krylovTol <<

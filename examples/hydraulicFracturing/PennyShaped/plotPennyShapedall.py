@@ -51,13 +51,13 @@ for i in range(0,numFiles):
     radP[i], Pressure[i] = np.loadtxt(prefix[i]+'_pressure.ply',skiprows=11, usecols = (0,1), unpack=True)
     radA[i], Aperture[i] = np.loadtxt(prefix[i]+'_aperture.ply',skiprows=11, usecols = (0,1), unpack=True)
 
-    print Aperture[i]
+    #print Aperture[i]
     cutoffList = []
     for j in range(0,len(radP[i])):
         if Aperture[i][j] < aper_cutoff:
             cutoffList.append(j)
 
-    print cutoffList
+    #print cutoffList
     radP[i] = np.delete( radP[i], cutoffList )
     radA[i] = np.delete( radA[i], cutoffList )
     Aperture[i] = np.delete( Aperture[i], cutoffList )
@@ -67,7 +67,7 @@ for i in range(0,numFiles):
 
     Radius[i] = (Area[i]*4/math.pi)**0.5
     
-print Aperture[0]
+#print Aperture[0]
     
 #labels[0] = "GEOS Results $K_{IC}=2.0e6$, $\mu=0.001$"
 #labels[1] = "GEOS Results $K_{IC}/10$"

@@ -19,10 +19,11 @@
       verboseLevel="1"
       targetRegions="{Region2, Fracture}"
       contactRelationName="fractureContact"
+      maxNumResolves="2"
       >
       <SystemSolverParameters
         maxIterNewton="50"
-        newtonTol="1e-5"
+        newtonTol="1e-3"
         verbosityFlag="0"
         useAdaptiveKrylovTol="1"
         maxLineSearchCuts="5"
@@ -112,7 +113,7 @@
                                 />
                                 
     <Contact name="fractureContact"
-      penaltyStiffness="1.0e0" >
+      penaltyStiffness="1.0e10" >
       <TableFunction 
         name="aperTable" 
         coordinates = "{ -1.0e-3, 0.0}"

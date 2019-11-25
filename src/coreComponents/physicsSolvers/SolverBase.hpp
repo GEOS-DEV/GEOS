@@ -569,6 +569,8 @@ protected:
   /// Linear solver parameters
   LinearSolverParameters m_linearSolverParameters;
 
+  string m_nlSolverOutputLog;
+
 };
 
 template<typename BASETYPE>

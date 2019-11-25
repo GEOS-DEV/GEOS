@@ -276,6 +276,8 @@ bool SolverBase::LineSearch( real64 const & time_n,
   // main loop for the line search.
   for( integer lineSearchIteration = 0; lineSearchIteration < maxNumberLineSearchCuts; ++lineSearchIteration )
   {
+    m_nlSolverOutputLog.clear();
+
     // cut the scale factor by half. This means that the scale factors will
     // have values of -0.5, -0.25, -0.125, ...
     localScaleFactor *= lineSearchCutFactor;
@@ -366,7 +368,11 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
     {
       if( m_verboseLevel >= 1 )
       {
-        GEOS_LOG_RANK_0( "  Attempt: " << dtAttempt << ", Newton Iteration: " << newtonIter);
+//        char output[100] = {0};
+//        sprintf( output, " NewtonIter: %2d", newtonIter );
+//        GEOS_LOG_RANK_0( output <<" ; " << m_nlSolverOutputLog );
+//        m_nlSolverOutputLog.clear();
+        GEOS_LOG_RANK_0("  NewtonIter: "<<newtonIter);
       }
 
       // call assemble to fill the matrix and the rhs
@@ -397,7 +403,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
 
         // if line search failed, then break out of the main Newton loop. Timestep will be cut.
         if( !lineSearchSuccess )
-        {         
+        {
           if( m_verboseLevel >= 1 )
           {
             GEOS_LOG_RANK_0 ( "    The Line search failed!" );
@@ -415,6 +421,15 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
 
       // call the default linear solver on the system
       SolveSystem( dofManager, matrix, rhs, solution );
+
+      if( m_verboseLevel >= 1 )
+      {
+//        char output[100] = {0};
+//        sprintf( output, " NewtonIter: %2d", newtonIter );
+//        GEOS_LOG_RANK_0( output <<" ; " << m_nlSolverOutputLog );
+        GEOS_LOG_RANK_0( "  "<<m_nlSolverOutputLog );
+        m_nlSolverOutputLog.clear();
+      }
 
       scaleFactor = ScalingForSystemSolution( domain, dofManager, solution );
 
