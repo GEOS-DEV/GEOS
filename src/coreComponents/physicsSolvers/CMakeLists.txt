@@ -47,9 +47,9 @@ set( physicsSolvers_sources
      fluidFlow/WellSolverBase.cpp
      multiphysics/HydrofractureSolver.cpp
      multiphysics/PoroelasticSolver.cpp
-     multiphysics/ReservoirSolverBase.hpp
-     multiphysics/SinglePhaseReservoir.hpp
-     multiphysics/CompositionalMultiphaseReservoir.hpp
+     multiphysics/ReservoirSolverBase.cpp
+     multiphysics/SinglePhaseReservoir.cpp
+     multiphysics/CompositionalMultiphaseReservoir.cpp
      simplePDE/LaplaceFEM.cpp
      solidMechanics/SolidMechanicsLagrangianFEM.cpp
      solidMechanics/SolidMechanicsLagrangianSSLE.cpp

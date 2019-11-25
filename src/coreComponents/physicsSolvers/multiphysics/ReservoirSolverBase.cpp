@@ -25,8 +25,8 @@
 #include "ReservoirSolverBase.hpp"
 
 #include "common/TimingMacros.hpp"
-#include "physicsSolvers/FiniteVolume/FlowSolverBase.hpp"
-#include "physicsSolvers/Wells/WellSolverBase.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
+#include "physicsSolvers/fluidFlow/WellSolverBase.hpp"
 
 namespace geosx
 {
@@ -130,17 +130,17 @@ void ReservoirSolverBase::ImplicitStepSetup( real64 const & time_n,
   SetupSystem( domain, dofManager, matrix, rhs, solution );
 }
 
-void ReservoirSolverBase::SetupDofs( DomainPartition const * const domain,
-                                     DofManager & dofManager ) const
+void ReservoirSolverBase::SetupDofs( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
+                                     DofManager & GEOSX_UNUSED_ARG( dofManager ) ) const
 {
   GEOS_ERROR( "ReservoirSolverBase::SetupDofs called!. Should be overridden." );
 }
 
-void ReservoirSolverBase::SetupSystem( DomainPartition * const domain,
-                                       DofManager & dofManager,
-                                       ParallelMatrix & matrix,
-                                       ParallelVector & rhs,
-                                       ParallelVector & solution )
+void ReservoirSolverBase::SetupSystem( DomainPartition * const GEOSX_UNUSED_ARG( domain ),
+                                       DofManager & GEOSX_UNUSED_ARG( dofManager ),
+                                       ParallelMatrix & GEOSX_UNUSED_ARG( matrix ),
+                                       ParallelVector & GEOSX_UNUSED_ARG( rhs ),
+                                       ParallelVector & GEOSX_UNUSED_ARG( solution ) )
 {
   GEOS_ERROR( "ReservoirSolverBase::SetupSystem called!. Should be overridden." );
 }
@@ -200,12 +200,12 @@ void ReservoirSolverBase::AssembleSystem( real64 const time_n,
   }
 }
 
-void ReservoirSolverBase::AssembleCouplingTerms( real64 const time_n,
-                                                 real64 const dt,
-                                                 DomainPartition const * const domain,
-                                                 DofManager const * const dofManager,
-                                                 ParallelMatrix * const matrix,
-                                                 ParallelVector * const rhs )
+void ReservoirSolverBase::AssembleCouplingTerms( real64 const GEOSX_UNUSED_ARG( time_n ),
+                                                 real64 const GEOSX_UNUSED_ARG( dt ),
+                                                 DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
+                                                 DofManager const * const GEOSX_UNUSED_ARG( dofManager ),
+                                                 ParallelMatrix * const GEOSX_UNUSED_ARG( matrix ),
+                                                 ParallelVector * const GEOSX_UNUSED_ARG( rhs ) )
 {
   GEOS_ERROR( "ReservoirSolverBase::AssembleCouplingTerms called!. Should be overridden." );
 }
@@ -293,7 +293,7 @@ void ReservoirSolverBase::ImplicitStepComplete( real64 const& time_n,
   m_wellSolver->ImplicitStepComplete( time_n, dt, domain );
 }
 
-void ReservoirSolverBase::ResetViews( DomainPartition * const domain )
+void ReservoirSolverBase::ResetViews( DomainPartition * const GEOSX_UNUSED_ARG( domain ) )
 {
 }
 

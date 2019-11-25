@@ -25,8 +25,8 @@
 #include "SinglePhaseReservoir.hpp"
 
 #include "common/TimingMacros.hpp"
-#include "physicsSolvers/FiniteVolume/SinglePhaseFlow.hpp"
-#include "physicsSolvers/Wells/SinglePhaseWell.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseFlow.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseWell.hpp"
 
 namespace geosx
 {
@@ -152,7 +152,7 @@ void SinglePhaseReservoir::SetupSystem( DomainPartition * const domain,
   matrix.close();
 }
 
-void SinglePhaseReservoir::AssembleCouplingTerms( real64 const time_n,
+void SinglePhaseReservoir::AssembleCouplingTerms( real64 const GEOSX_UNUSED_ARG( time_n ),
                                                   real64 const dt,
                                                   DomainPartition const * const domain,
                                                   DofManager const * const dofManager,

@@ -22,6 +22,7 @@
 #include "managers/DomainPartition.hpp"
 #include "wells/WellElementSubRegion.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
+#include "physicsSolvers/multiphysics/ReservoirSolverBase.hpp"
 #include "physicsSolvers/multiphysics/CompositionalMultiphaseReservoir.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseWell.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseFlow.hpp"
@@ -530,8 +531,8 @@ TEST_F(ReservoirSolverTest, derivativeNumericalCheck_mixtureDensity)
 
 TEST_F(ReservoirSolverTest, jacobianNumericalCheck_Perforation)
 {
-  real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
-  real64 const tol = 1e-1; // 10% error margin
+  //real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
+  //real64 const tol = 1e-1; // 10% error margin
 
   real64 const time = 0.0;
   real64 const dt = 1e4;

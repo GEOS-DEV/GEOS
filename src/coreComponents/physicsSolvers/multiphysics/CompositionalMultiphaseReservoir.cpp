@@ -25,9 +25,9 @@
 #include "CompositionalMultiphaseReservoir.hpp"
 
 #include "common/TimingMacros.hpp"
-#include "constitutive/Fluid/MultiFluidBase.hpp"
-#include "physicsSolvers/FiniteVolume/CompositionalMultiphaseFlow.hpp"
-#include "physicsSolvers/Wells/CompositionalMultiphaseWell.hpp"
+#include "constitutive/fluid/MultiFluidBase.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseFlow.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseWell.hpp"
 
 namespace geosx
 {
@@ -156,7 +156,7 @@ void CompositionalMultiphaseReservoir::SetupSystem( DomainPartition * const doma
   matrix.close();
 }
 
-void CompositionalMultiphaseReservoir::AssembleCouplingTerms( real64 const time_n,
+void CompositionalMultiphaseReservoir::AssembleCouplingTerms( real64 const GEOSX_UNUSED_ARG( time_n ),
                                                               real64 const dt,
                                                               DomainPartition const * const domain,
                                                               DofManager const * const dofManager,

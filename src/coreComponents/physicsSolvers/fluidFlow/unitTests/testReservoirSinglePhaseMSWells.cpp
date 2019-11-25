@@ -21,6 +21,7 @@
 #include "managers/DomainPartition.hpp"
 #include "wells/WellElementSubRegion.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
+#include "physicsSolvers/multiphysics/ReservoirSolverBase.hpp"
 #include "physicsSolvers/multiphysics/SinglePhaseReservoir.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseWell.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseFlow.hpp"
@@ -335,7 +336,7 @@ TEST_F(ReservoirSolverTest, jacobianNumericalCheck_Perforation)
                              solver->getSystemSolution() );
 
   testNumericalJacobian( solver, domain, eps, tol,
-                         [&] ( SinglePhaseWell * const targetSolver,
+                         [&] ( SinglePhaseWell * const GEOSX_UNUSED_ARG( targetSolver ),
                                DomainPartition * const targetDomain,
                                ParallelMatrix * targetJacobian,
                                ParallelVector * targetResidual,

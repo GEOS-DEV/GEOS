@@ -906,8 +906,8 @@ void SinglePhaseWell::ResetViews(DomainPartition * const domain)
                                                                                           constitutiveManager );
 }
 
-void SinglePhaseWell::ImplicitStepComplete( real64 const & time,
-                                            real64 const & dt,
+void SinglePhaseWell::ImplicitStepComplete( real64 const & GEOSX_UNUSED_ARG( time ),
+                                            real64 const & GEOSX_UNUSED_ARG( dt ),
                                             DomainPartition * const domain )
 {
   MeshLevel const * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);

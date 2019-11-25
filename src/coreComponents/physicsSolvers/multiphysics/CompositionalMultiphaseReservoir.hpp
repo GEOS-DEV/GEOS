@@ -24,7 +24,7 @@
 #ifndef SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_COUPLEDSOLVERS_COMPOSITIONALMULTIPHASERESERVOIR_HPP_
 #define SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_COUPLEDSOLVERS_COMPOSITIONALMULTIPHASERESERVOIR_HPP_
 
-#include "physicsSolvers/CoupledSolvers/ReservoirSolverBase.hpp"
+#include "physicsSolvers/multiphysics/ReservoirSolverBase.hpp"
 
 namespace geosx
 {
