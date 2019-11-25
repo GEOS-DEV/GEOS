@@ -15,6 +15,8 @@ physics solvers to be included in the simulation.
 
    fluidFlow/docs/CompositionalMultiphaseFlow
 
+   fluidFlow/docs/ProppantTransport   
+   
    multiphysics/docs/Poromechanics
 
-
+  

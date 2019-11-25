@@ -98,7 +98,7 @@ Theory
 
 The following mass balance and constitutive equations are solved inside fractures,
 
-proppant-fluid mixture:
+proppant-fluid slurry flow:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. math::
@@ -115,13 +115,23 @@ and :math:`p` is pressure, :math:`\rho_m` and :math:`\mu_m` are density and visc
    K_f =  \frac{a^2}{12}
 
    
-proppant:
+proppant transport:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. math::
    \frac{\partial}{\partial t}(c) + \boldsymbol{\nabla} \cdot (c \boldsymbol{u}_p) = 0,
 
 in which :math:`c` and :math:`\boldsymbol{u}_p` represent the volume fraction and velocity of the proppant particles. 
+
+
+multi-component fluid transport:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. math::
+   \frac{\partial}{\partial t}(\rho_f \omega_i) + \boldsymbol{\nabla} \cdot (\rho_f \omega_i \boldsymbol{u}_f) = 0,
+
+Here :math:`\omega_i` denotes the  mass fraction of `i-th` component in fluid, and :math:`\boldsymbol{\rho}_f` and :math:`\boldsymbol{u}_f` represent the carrying fluid density and velocity, respectively. 
+
 
 The density and velocity of the mixed fluid are further expressed as,
 
@@ -133,7 +143,7 @@ and
 .. math::
    \rho_m \boldsymbol{u}_m = (1 - c) \rho_f \boldsymbol{u}_f + c \rho_p \boldsymbol{u}_p,
 
-in which :math:`\rho_f` and :math:`\boldsymbol{u}_f` are the density and velocity of the carrying fluid, and :math:`\rho_p` is the density of the proppant particles.   
+in which :math:`\rho_f` and :math:`\boldsymbol{u}_f` are the density and velocity of the carrying fluid, and :math:`\rho_p` is the density of the proppant particles. :math:`\rho_f` can be calculated either by user-supplied PVT function or by the mass fraction weighted average of the component densities.   
 
 
 proppant slip velocity:
@@ -157,7 +167,7 @@ where :math:`\boldsymbol{u}_{settling}` is the settling velocity for a single pa
 .. math::
     \boldsymbol{u}_{settling} = ( \rho_p - \rho_f)  \frac{d{_p}^{2}}{18 \mu_f}\boldsymbol{g},
 
-:math:`d_p` is the particle diameter, and :math:`F(c)` is the correction term to account for hindered settling effects as a result of particle-particle interactions,
+:math:`d_p` is the particle diameter, and :math:`F(c)` is the correction factor to the particle settling velocity in order to account for hindered settling effects as a result of particle-particle interactions,
          
 .. math::
     F(c) = e^{-\lambda_s c},
@@ -169,7 +179,7 @@ The collisional component of the slip velocity is modeled by defining :math:`\la
 .. math::
     \boldsymbol{u}_{slip} =  \frac{\lambda - 1}{1 - c} \boldsymbol{u}_{m}
 
-We use a simple expression proposed by Barree & Conway (1995) to define :math:`\lambda` as,
+We use a simple expression of :math:`\lambda` proposed by Barree & Conway (1995) to correct the particle slip velocity in horizontal direction,
 
 .. math::
     \lambda=  \left[\alpha - |c - c_{slip} |^{\beta} \right]\, 
@@ -195,10 +205,10 @@ b. proppant bridging when proppant particle size is close to or larger than frac
 
 in which :math:`\lambda_{b}` is the bridging factor and set to 3 by default, and :math:`d_p` is the particle diameter. 
    
-c. the effect of the proppant concentration on the viscosity of the bulk fluid. The effective slurry viscosity, :math:`\mu_m`, is calculated based on the Stokes-Einstein model (Einstein, 1906),
+c. the effect of the proppant concentration on the viscosity of the bulk fluid. The effective slurry viscosity, :math:`\mu_m`, is calculated based on the Stokes-Einstein model (Keck et al., 1992),
 
 .. math::
-     \mu_{m} =  \mu_{f}\left (1 + \frac{5}{2}c \right).
+     \mu_{m} =  \mu_{f}\left [1 + 1.25 \left ( \frac{c}{1-c/c_{max}} \right) \right ]^{2}.
 
 
 Note that continued model development and improvement are underway and additional empirical correlations or functions will be added to support the above calculations.       
@@ -225,4 +235,4 @@ References
 
 - R. D. Barree & M. W. Conway. "Experimental and numerical modeling of convective proppant transport", JPT. Journal of petroleum technology, 47(3):216-222, 1995.
 
-- A. Einstein. Eine neue bestimmung der molekuldimensionen. Annalen der Physik, 324(2):289-306, 1906.  
+- R. G. Keck, W. L. Nehmer, & G. S. Strumolo. “A new method for predicting friction pressures and rheology of proppant-laden fracturing fluids,” SPE Prod. Eng., 7(1):21-28, 1992.  
