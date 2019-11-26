@@ -427,6 +427,11 @@ real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const& time_n,
     {
       SetupSystem( domain, m_dofManager, m_matrix, m_rhs, m_solution );
 
+      if( solveIter>0 )
+      {
+        ResetStressToBeginningOfStep(domain);
+      }
+
       dtReturn = NonlinearImplicitStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition *>(), m_dofManager,
                                         m_matrix, m_rhs, m_solution );
 
@@ -446,10 +451,6 @@ real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const& time_n,
       if( globallyFractured == 0 )
       {
         break;
-      }
-      else
-      {
-        ResetStressToBeginningOfStep(domain);
       }
     }
     ImplicitStepComplete( time_n, dt,  domain );
