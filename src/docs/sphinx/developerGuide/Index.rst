@@ -13,6 +13,8 @@ Welcome to the GEOSX developer guide.
 
    GenerateSphinxDoc
 
+   Doxygen
+
    /coreComponents/dataRepository/dataRepository.rst
 
    /coreComponents/fileIO/schema/docs/SchemaGeneration
