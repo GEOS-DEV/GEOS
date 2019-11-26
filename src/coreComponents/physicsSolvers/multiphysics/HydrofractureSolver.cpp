@@ -183,6 +183,11 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
                    m_rhs,
                    m_solution  );
 
+      if( solveIter>0 )
+      {
+        m_solidSolver->ResetStressToBeginningOfStep( domain );
+      }
+
       // currently the only method is implicit time integration
       dtReturn = this->NonlinearImplicitStep( time_n,
                                               dt,
@@ -210,10 +215,6 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
       if( globallyFractured == 0 )
       {
         break;
-      }
-      else
-      {
-        m_solidSolver->ResetStressToBeginningOfStep( domain );
       }
     }
 
