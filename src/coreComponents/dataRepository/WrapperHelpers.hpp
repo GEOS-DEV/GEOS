@@ -19,6 +19,9 @@
 #ifndef GEOSX_DATAREPOSITORY_WRAPPERHELPERS_HPP_
 #define GEOSX_DATAREPOSITORY_WRAPPERHELPERS_HPP_
 
+/**
+ * @brief Enables verbose logging of restart output
+ */
 #define RESTART_TYPE_LOGGING 0
 
 // Source includes
