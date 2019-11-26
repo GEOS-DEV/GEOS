@@ -177,18 +177,18 @@ public:
     elementRegions->forSubGroups<REGIONTYPE, REGIONTYPES...>( std::forward<LAMBDA>(lambda) );
   }
 
-  template< typename LAMBDA >
+  template< typename REGIONTYPE = ElementRegionBase, typename ... REGIONTYPES, typename LAMBDA >
   void forElementRegions( string_array const & targetRegions, LAMBDA && lambda )
   {
     Group * const elementRegions = this->GetGroup(groupKeyStruct::elementRegionsGroup);
-    elementRegions->forSubGroups<ElementRegionBase>( targetRegions, std::forward<LAMBDA>(lambda) );
+    elementRegions->forSubGroups<REGIONTYPE,REGIONTYPES...>( targetRegions, std::forward<LAMBDA>(lambda) );
   }
 
-  template< typename LAMBDA >
+  template< typename REGIONTYPE = ElementRegionBase, typename ... REGIONTYPES, typename LAMBDA >
   void forElementRegions( string_array const & targetRegions, LAMBDA && lambda ) const
   {
     Group const * const elementRegions = this->GetGroup(groupKeyStruct::elementRegionsGroup);
-    elementRegions->forSubGroups<ElementRegionBase>( targetRegions, std::forward<LAMBDA>(lambda) );
+    elementRegions->forSubGroups<REGIONTYPE,REGIONTYPES...>( targetRegions, std::forward<LAMBDA>(lambda) );
   }
 
 
