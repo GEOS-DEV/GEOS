@@ -44,9 +44,13 @@ void SolidMechanicsLagrangianSSLE::ApplySystemSolution( DofManager const & dofMa
                                                         real64 const scalingFactor,
                                                         DomainPartition * const domain  )
 {
-
   SolidMechanicsLagrangianFEM::ApplySystemSolution( dofManager, solution, scalingFactor, domain );
+}
 
+
+void
+SolidMechanicsLagrangianSSLE::updateStress( DomainPartition * const domain )
+{
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   Group * const nodeManager = mesh->getNodeManager();
   ConstitutiveManager  * const constitutiveManager = domain->GetGroup<ConstitutiveManager >(dataRepository::keys::ConstitutiveManager);
@@ -54,17 +58,7 @@ void SolidMechanicsLagrangianSSLE::ApplySystemSolution( DofManager const & dofMa
   NumericalMethodsManager const * numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(dataRepository::keys::numericalMethodsManager);
   FiniteElementDiscretizationManager const * feDiscretizationManager = numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(dataRepository::keys::finiteElementDiscretizations);
 
-  ElementRegionManager::MaterialViewAccessor<real64> const
-  biotCoefficient = elemManager->ConstructFullMaterialViewAccessor<real64>( "BiotCoefficient", constitutiveManager);
-
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const
-  fluidPres = elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>("pressure");
-
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const
-  dPres = elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>("deltaPressure");
-
-  r1_array const& disp = nodeManager->getReference<r1_array>(dataRepository::keys::TotalDisplacement);
-
+  arrayView1d<R1Tensor const> const & incDisp = nodeManager->getReference<r1_array>(dataRepository::keys::IncrementalDisplacement);
 
   ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase>
   constitutiveRelations = elemManager->ConstructFullConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
@@ -102,13 +96,13 @@ void SolidMechanicsLagrangianSSLE::ApplySystemSolution( DofManager const & dofMa
                                                    elemsToNodes,
                                                    dNdX,
                                                    detJ,
-                                                   disp );
+                                                   incDisp );
 
     });
   }
 
-
 }
+
 
 REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsLagrangianSSLE, string const &, dataRepository::Group * const )
 } /* namespace geosx */

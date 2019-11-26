@@ -141,9 +141,10 @@ HydrofractureSolver::~HydrofractureSolver()
   // TODO Auto-generated destructor stub
 }
 
-void HydrofractureSolver::ResetStateToBeginningOfStep( DomainPartition * const GEOSX_UNUSED_ARG( domain ) )
+void HydrofractureSolver::ResetStateToBeginningOfStep( DomainPartition * const domain )
 {
-
+  m_flowSolver->ResetStateToBeginningOfStep(domain);
+  m_solidSolver->ResetStateToBeginningOfStep(domain);
 }
 
 real64 HydrofractureSolver::SolverStep( real64 const & time_n,
@@ -192,6 +193,8 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
                                               m_rhs,
                                               m_solution );
 
+      m_solidSolver->updateStress( domain );
+
       if( surfaceGenerator!=nullptr )
       {
         if( surfaceGenerator->SolverStep( time_n, dt, cycleNumber, domain ) > 0 )
@@ -207,6 +210,10 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
       if( globallyFractured == 0 )
       {
         break;
+      }
+      else
+      {
+        m_solidSolver->ResetStressToBeginningOfStep( domain );
       }
     }
 

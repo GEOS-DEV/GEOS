@@ -202,6 +202,22 @@ void SolidMechanicsLagrangianFEM::RegisterDataOnMesh( Group * const MeshBodies )
       setRegisteringObjects(this->getName())->
       setDescription( "An array that holds the contact force.");
 
+    ElementRegionManager * const
+    elementRegionManager = mesh.second->group_cast<MeshBody*>()->getMeshLevel(0)->getElemManager();
+    elementRegionManager->forElementRegions<CellElementRegion>( m_targetRegions,
+                                                                [&]( CellElementRegion * const elemRegion )
+    {
+      elemRegion->forElementSubRegions<CellElementSubRegion>([&]( CellElementSubRegion * const subRegion )
+      {
+        subRegion->registerWrapper<array2d<R2SymTensor> >( viewKeyStruct::stress_n )->
+          setPlotLevel(PlotLevel::NOPLOT)->
+          setRestartFlags(RestartFlags::NO_WRITE)->
+          setRegisteringObjects(this->getName())->
+          setDescription("Array to hold the beginning of step stress for implicit problem rewinds");
+      });
+    });
+
+
   }
 }
 
@@ -385,6 +401,7 @@ real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const& time_n,
                                                 const int cycleNumber,
                                                 DomainPartition * domain )
 {
+  GEOSX_MARK_FUNCTION;
   real64 dtReturn = dt;
 
   SolverBase * const surfaceGenerator =  this->getParent()->GetGroup<SolverBase>("SurfaceGen");
@@ -412,6 +429,8 @@ real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const& time_n,
 
       dtReturn = NonlinearImplicitStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition *>(), m_dofManager,
                                         m_matrix, m_rhs, m_solution );
+
+      updateStress( domain );
       if( surfaceGenerator!=nullptr )
       {
         if( surfaceGenerator->SolverStep( time_n, dt, cycleNumber, domain ) > 0 )
@@ -427,6 +446,10 @@ real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const& time_n,
       if( globallyFractured == 0 )
       {
         break;
+      }
+      else
+      {
+        ResetStressToBeginningOfStep(domain);
       }
     }
     ImplicitStepComplete( time_n, dt,  domain );
@@ -844,6 +867,40 @@ ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n ),
       } );
     }
   }
+
+  ElementRegionManager * const elementRegionManager = mesh->getElemManager();
+  ConstitutiveManager  * const
+  constitutiveManager = domain->GetGroup<ConstitutiveManager >(dataRepository::keys::ConstitutiveManager);
+  ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase>
+  constitutiveRelations = elementRegionManager->ConstructFullConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
+
+  elementRegionManager->
+  forElementSubRegionsComplete<CellElementSubRegion>( m_targetRegions,
+                                                      [&]( localIndex const er,
+                                                           localIndex const esr,
+                                                           ElementRegionBase * const,
+                                                           CellElementSubRegion * const subRegion )
+  {
+    SolidBase * const
+    constitutiveRelation = constitutiveRelations[er][esr][m_solidMaterialFullIndex]->group_cast<SolidBase*>();
+
+    arrayView2d<R2SymTensor> const & stress = constitutiveRelation->getStress();
+
+    array2d<R2SymTensor> &
+    stress_n = subRegion->getReference<array2d<R2SymTensor>>(viewKeyStruct::stress_n);
+    stress_n.resize( stress.size(0), stress.size(1) );
+
+    for( localIndex k=0 ; k<stress.size(0) ; ++k )
+    {
+      for( localIndex a=0 ; a<stress.size(1) ; ++a )
+      {
+        stress_n(k,a) = stress(k,a);
+      }
+    }
+  });
+
+
+
 }
 
 void SolidMechanicsLagrangianFEM::ImplicitStepComplete( real64 const & GEOSX_UNUSED_ARG( time_n ),
@@ -955,6 +1012,7 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_ARG(
                                                   ParallelMatrix & matrix,
                                                   ParallelVector & rhs )
 {
+  GEOSX_MARK_FUNCTION;
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   Group * const nodeManager = mesh->getNodeManager();
   ConstitutiveManager  * const constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
@@ -1079,7 +1137,7 @@ ApplyBoundaryConditions( real64 const time_n,
                          ParallelMatrix & matrix,
                          ParallelVector & rhs )
 {
-
+  GEOSX_MARK_FUNCTION;
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
 
   FaceManager * const faceManager = mesh->getFaceManager();
@@ -1147,6 +1205,7 @@ CalculateResidualNorm( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
                        DofManager const & GEOSX_UNUSED_ARG( dofManager ),
                        ParallelVector const & rhs )
 {
+  GEOSX_MARK_FUNCTION;
   real64 const * localResidual = rhs.extractLocalVector();
 
   real64 localResidualNorm[2] = { 0.0, this->m_maxForce };
@@ -1247,6 +1306,43 @@ void SolidMechanicsLagrangianFEM::ResetStateToBeginningOfStep( DomainPartition *
   {
     disp[a] -= incdisp[a];
     incdisp[a] = 0.0;
+  });
+
+  ResetStressToBeginningOfStep(domain);
+}
+
+void SolidMechanicsLagrangianFEM::ResetStressToBeginningOfStep( DomainPartition * const domain )
+{
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+
+  ElementRegionManager * const elementRegionManager = mesh->getElemManager();
+  ConstitutiveManager  * const
+  constitutiveManager = domain->GetGroup<ConstitutiveManager >(dataRepository::keys::ConstitutiveManager);
+  ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase>
+  constitutiveRelations = elementRegionManager->ConstructFullConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
+
+  elementRegionManager->
+  forElementSubRegionsComplete<CellElementSubRegion>( m_targetRegions,
+                                                      [&]( localIndex const er,
+                                                           localIndex const esr,
+                                                           ElementRegionBase * const,
+                                                           CellElementSubRegion * const subRegion )
+  {
+    SolidBase * const
+    constitutiveRelation = constitutiveRelations[er][esr][m_solidMaterialFullIndex]->group_cast<SolidBase*>();
+
+    arrayView2d<R2SymTensor> const & stress = constitutiveRelation->getStress();
+
+    array2d<R2SymTensor> &
+    stress_n = subRegion->getReference<array2d<R2SymTensor>>(viewKeyStruct::stress_n);
+
+    for( localIndex k=0 ; k<stress.size(0) ; ++k )
+    {
+      for( localIndex a=0 ; a<stress.size(1) ; ++a )
+      {
+        stress(k,a) = stress_n(k,a);
+      }
+    }
   });
 }
 
@@ -1446,7 +1542,11 @@ SolidMechanicsLagrangianFEM::ScalingForSystemSolution( DomainPartition const * c
   return scalingFactor;
 }
 
+void
+SolidMechanicsLagrangianFEM::updateStress( DomainPartition * const GEOSX_UNUSED_ARG(domain) )
+{
 
+}
 
 REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsLagrangianFEM, string const &, dataRepository::Group * const )
 }
