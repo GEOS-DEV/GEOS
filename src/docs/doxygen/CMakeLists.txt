@@ -11,4 +11,9 @@ add_custom_target( build_doxygen_output_dir
                  )
 
 add_dependencies( geosx_doxygen build_doxygen_output_dir )
-                   
+
+
+add_test( NAME testDoxygenCheck
+          COMMAND ${CMAKE_SOURCE_DIR}/../scripts/checkDoxygenWarnings.bash ${CMAKE_MAKE_PROGRAM} geosx_doxygen
+          WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+          )

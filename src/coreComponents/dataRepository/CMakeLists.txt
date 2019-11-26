@@ -24,6 +24,7 @@ set(dataRepository_headers
 # Specify all sources
 #
 set(dataRepository_sources
+    ExecutableGroup.cpp
     Group.cpp
     ConduitRestart.cpp
     Wrapper.cpp

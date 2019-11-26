@@ -104,7 +104,7 @@ FluxApproximationBase::getBoundaryStencil(string const & setName)
 
 bool FluxApproximationBase::hasBoundaryStencil(string const & setName) const
 {
-  return this->hasView(setName);
+  return this->hasWrapper( setName );
 }
 
 void FluxApproximationBase::InitializePostInitialConditions_PreSubGroups( Group * const rootGroup )
