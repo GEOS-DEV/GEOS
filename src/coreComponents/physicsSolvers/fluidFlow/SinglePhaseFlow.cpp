@@ -374,19 +374,16 @@ void SinglePhaseFlow::UpdateEOS( real64 const time_n,
 
       forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
       {
-        dens[ei][0] = mass[ei] / ( vol[ei] * poro[ei] ) * m_relaxationCoefficient + dens[ei][0] * (1 - m_relaxationCoefficient);
+        dens[ei][0] = mass[ei] / ( vol[ei] * poro[ei] ); // * m_relaxationCoefficient + dens[ei][0] * (1 - m_relaxationCoefficient);
 
         dPres[ei] = pres[ei];
         fluid->PointInverseUpdate( pres[ei], ei, 0);
   //      pres[ei] = std::max(pres[ei], 0.0);
-
         dPres[ei] = pres[ei] - dPres[ei];
 
-//        if (pres[ei] < 0)
-//        if (ei < 6)
+//        if ( std::abs(mass[ei]) > 0 )
 //        {
-//          std::cout << "\n----------------- Alert: pressure < 0 ----------------" ;
-//          std::cout << "\n Fluid Update in poroElastic: ei = " << ei + 1 << ", mass = " << mass[ei] << ", poro= " << poro[ei] << ", vol = " << vol[ei]
+//          std::cout << "\n Fluid Update in poroElastic: ei = " << ei << ", mass = " << mass[ei] << ", poro= " << poro[ei] << ", vol = " << vol[ei]
 //                    << ", calculated dens = " << dens[ei][0] << ", new pres = " << pres[ei] << "\n";
 //        }
 
@@ -395,15 +392,14 @@ void SinglePhaseFlow::UpdateEOS( real64 const time_n,
   }
   else
   {
-	  mesh->getElemManager()->
-	      forElementSubRegionsComplete<CellElementSubRegion>( m_targetRegions,
-	                                                                   [&] ( localIndex er,
-	                                                                         localIndex esr,
-	                                                                         ElementRegionBase const * const GEOSX_UNUSED_ARG( region ),
-																			 CellElementSubRegion * subRegion )
-	  {
+    mesh->getElemManager()->
+        forElementSubRegionsComplete<CellElementSubRegion>( m_targetRegions,
+                                                            [&] ( localIndex er,
+                                                                  localIndex esr,
+                                                                  ElementRegionBase const * const GEOSX_UNUSED_ARG( region ),
+                                                                  CellElementSubRegion * subRegion )
+    {
       SingleFluidBase * const fluid = GetConstitutiveModel<SingleFluidBase>( subRegion, m_fluidName );
-//      arrayView2d<real64> const & dens = m_density[er][esr][m_fluidIndex];
       arrayView1d<real64> const & vol  = m_volume[er][esr];
       arrayView1d<real64> const & mass = m_mass[er][esr];
       arrayView1d<real64> const & pres = m_pressure[er][esr];
@@ -419,58 +415,50 @@ void SinglePhaseFlow::UpdateEOS( real64 const time_n,
         fluid->PointInverseUpdate( pres[ei], mass[ei], vol[ei], poroRef[ei], totalCompressibility[ei]);
 
         fluid->PointUpdateDensityExplicit( pres[ei], ei, 0 );
+        dPres[ei] = pres[ei] - dPres[ei];
 
-//        std::cout << "\n Fluid Update in matrix: ei = " << ei  << ", mass = " << mass[ei] << ", poro= " << poro[ei] << ", vol = " << vol[ei]
-//                  << ", calculated dens = " << dens[ei][0] << ", new pres = " << pres[ei] << "\n";
-//        if (pres[ei] < 0)
-//        {
-//          std::cout << "\n----------------- Alert: pressure < 0 ----------------" ;
-//          std::cout << "\n Fluid Update in matrix: ei = " << ei  << ", mass = " << mass[ei] << ", poro= " << poro[ei] << ", vol = " << vol[ei]
-//                    << ", calculated dens = " << dens[ei][0] << ", new pres = " << pres[ei] << "\n";
-//        }
+        if ( std::abs(mass[ei]) > 0 )
+        {
+          arrayView2d<real64> const & dens = m_density[er][esr][m_fluidIndex];
+          arrayView1d<real64> const & poro = m_porosity[er][esr];
+          std::cout << "\n Fluid Update in matrix: ei = " << ei  << ", mass = " << mass[ei] << ", poro= " << poro[ei] << ", vol = " << vol[ei]
+                    << ", calculated dens = " << dens[ei][0] << ", new pres = " << pres[ei] << "\n";
+        }
 //        pres[ei] = std::max(pres[ei], 0.0);
 
-        dPres[ei] = pres[ei] - dPres[ei];
       } );
-	  } );
+    } );
 
-	  mesh->getElemManager()->
-	      forElementSubRegionsComplete<FaceElementSubRegion>( m_targetRegions,
-	                                                          [&] ( localIndex const er,
-	                                                                localIndex const esr,
-	                                                                ElementRegionBase const * const GEOSX_UNUSED_ARG( region ),
-	                                                                FaceElementSubRegion * subRegion )
-	  {
-	    SingleFluidBase * const fluid = GetConstitutiveModel<SingleFluidBase>( subRegion, m_fluidName );
-  		arrayView2d<real64> const & dens = m_density[er][esr][m_fluidIndex];
-  		arrayView1d<real64> const & vol  = m_volume[er][esr];
-  		arrayView1d<real64> const & mass = m_mass[er][esr];
-  		arrayView1d<real64> const & pres = m_pressure[er][esr];
-  		arrayView1d<real64> const & dPres = m_deltaPressure[er][esr];
+    mesh->getElemManager()->
+        forElementSubRegionsComplete<FaceElementSubRegion>( m_targetRegions,
+                                                            [&] ( localIndex const er,
+                                                                  localIndex const esr,
+                                                                  ElementRegionBase const * const GEOSX_UNUSED_ARG( region ),
+                                                                  FaceElementSubRegion * subRegion )
+    {
+      SingleFluidBase * const fluid = GetConstitutiveModel<SingleFluidBase>( subRegion, m_fluidName );
+      arrayView2d<real64> const & dens = m_density[er][esr][m_fluidIndex];
+      arrayView1d<real64> const & vol  = m_volume[er][esr];
+      arrayView1d<real64> const & mass = m_mass[er][esr];
+      arrayView1d<real64> const & pres = m_pressure[er][esr];
+      arrayView1d<real64> const & dPres = m_deltaPressure[er][esr];
 
-	    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
-	    {
-        dens[ei][0] = mass[ei] / vol[ei] * m_relaxationCoefficient + dens[ei][0] * (1 - m_relaxationCoefficient);
+      forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+      {
+        dens[ei][0] = mass[ei] / vol[ei]; // * m_relaxationCoefficient + dens[ei][0] * (1 - m_relaxationCoefficient);
+
         dPres[ei] = pres[ei];
         fluid->PointInverseUpdate( pres[ei], ei, 0);
-
-//        std::cout << "\n Fluid Update in fracture: ei = " << ei  << ", mass = " << mass[ei] << ", vol = " << vol[ei]
-//                  << ", calculated dens = " << dens[ei][0] << ", new pres = " << pres[ei] << "\n";
-//        if (pres[ei] < 0)
-//        {
-//          std::cout << "\n----------------- Alert: pressure < 0 ----------------" ;
-//          std::cout << "\n Fluid Update in fracture: ei = " << ei  << ", mass = " << mass[ei] << ", vol = " << vol[ei]
-//                    << ", calculated dens = " << dens[ei][0] << ", new pres = " << pres[ei] << "\n";
-//        }
-//        pres[ei] = std::max(pres[ei], 0.0);
-
         dPres[ei] = pres[ei] - dPres[ei];
 
-//      std::cout << "\n Pressure Update in fracture: ei = " << ei << ", old dens = " << dens[ei][0]
-//            << ", mass = " << mass[ei] << ", new pres = " << pres[ei] << ", dPres= " << dPres[ei] << "\n";
-
-	    } );
-	  } );
+  //        if (pres[ei] < 0)
+        if ( std::abs(mass[ei]) > 0 )
+        {
+          std::cout << "\n Fluid Update in fracture: ei = " << ei  << ", mass = " << mass[ei] << ", vol = " << vol[ei]
+                    << ", calculated dens = " << dens[ei][0] << ", new pres = " << pres[ei] << "\n";
+        }
+      } );
+    } );
   }
 
   // apply pressure boundary condition in the explicit solver
@@ -959,8 +947,9 @@ void SinglePhaseFlow::AssembleFluxTermsExplicit( real64 const GEOSX_UNUSED_ARG( 
   FluxKernel::ElementView < arrayView1d<real64 const> > const & pres        = m_pressure.toViewConst();
   FluxKernel::ElementView < arrayView1d<real64 const> > const & gravDepth   = m_gravDepth.toViewConst();
   FluxKernel::MaterialView< arrayView2d<real64 const> > const & dens        = m_density.toViewConst();
+  FluxKernel::MaterialView< arrayView2d<real64 const> > const & visc        = m_viscosity.toViewConst();
   FluxKernel::ElementView < arrayView1d<real64 const> > const & mob         = m_mobility.toViewConst();
-  FluxKernel::ElementView < arrayView1d<real64 const> > const & poro         = m_porosityRef.toViewConst();
+  FluxKernel::ElementView < arrayView1d<real64 const> > const & poro        = m_porosityRef.toViewConst();
   FluxKernel::ElementView < arrayView1d<real64 const> > const & totalCompressibility = m_totalCompressibility.toViewConst();
 
   FluxKernel::ElementView < arrayView1d<real64 const> > const & aperture0  = m_elementAperture0.toViewConst();
@@ -979,6 +968,7 @@ void SinglePhaseFlow::AssembleFluxTermsExplicit( real64 const GEOSX_UNUSED_ARG( 
                         pres,
                         gravDepth,
                         dens,
+                        visc,
                         mob,
                         aperture0,
                         aperture ,

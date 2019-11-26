@@ -371,6 +371,9 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
   ContactRelationBase const * const
   contactRelation = constitutiveManager->GetGroup<ContactRelationBase>(m_contactRelationName);
 
+  ContactRelationBase const * const
+  contactRelationInlet = constitutiveManager->GetGroup<ContactRelationBase>("fractureContactInlet");
+
   // update face area
   faceManager->computeGeometry(nodeManager);
 
@@ -405,9 +408,12 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
 //        if (contactStress[kfe] > 0)
 //          std::cout<< "\n\n Contact stress: kfe = " << kfe  <<", aper0 = "<<aperture[kfe]<<", contactStress = "<<contactStress[kfe];
 
-        aperture[kfe] = contactRelation->effectiveAperture( aperture[kfe] );
+        if (kfe == 2)
+          aperture[kfe] = contactRelationInlet->effectiveAperture( aperture[kfe] );
+        else
+          aperture[kfe] = contactRelation->effectiveAperture( aperture[kfe] );
+
         deltaVolume[kfe] = aperture[kfe] * area[kfe] - volume[kfe];
-//        std::cout <<"\n                    Eff aperture=" << aperture[kfe] << ", area=" << area[kfe] << ", frac volume =" << aperture[kfe] * area[kfe] << "\n";
       }
     });
   });
@@ -509,25 +515,6 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
     }
   }  // end of if
 
-  // apply aperture boundary condition in the explicit solver
-  FieldSpecificationManager * const fsManager = FieldSpecificationManager::get();
-  fsManager->Apply( 1.0, domain, "ElementRegions", FaceElementSubRegion::viewKeyStruct::elementApertureString,
-                    [&]( FieldSpecificationBase const * const fs,
-                         string const &,
-                         set<localIndex> const & lset,
-                         Group * const targetGroup,
-                         string const & ) -> void
-  {
-    fs->ApplyFieldValue<FieldSpecificationEqual>( lset,
-                                                  1.0,
-                                                  targetGroup,
-                                                  FaceElementSubRegion::viewKeyStruct::elementApertureString );
-  });
-
-  applyToSubRegions( meshLevel, [&] ( ElementSubRegionBase * const subRegion )
-  {
-    subRegion->CalculateElementGeometricQuantities( *nodeManager, *faceManager );
-  });
 }
 
 real64 HydrofractureSolver::SplitOperatorStep( real64 const & GEOSX_UNUSED_ARG( time_n ),

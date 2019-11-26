@@ -670,9 +670,13 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
                                                   FaceElementSubRegion::viewKeyStruct::elementApertureString );
   });
 
-  applyToSubRegions( mesh, [&] ( ElementSubRegionBase * const subRegion )
+  ElementRegionManager * const elemManager = mesh->getElemManager();
+  elemManager->forElementRegions<FaceElementRegion>([&]( FaceElementRegion * const faceElemRegion )
   {
-    subRegion->CalculateElementGeometricQuantities( nodeManager, faceManager );
+    faceElemRegion->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion * const subRegion )
+    {
+      subRegion->CalculateElementGeometricQuantities( nodeManager, faceManager );
+    });
   });
 
   return rval;
