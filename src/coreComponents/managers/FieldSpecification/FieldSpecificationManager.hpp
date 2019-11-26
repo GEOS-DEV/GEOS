@@ -48,7 +48,7 @@ public:
 
   /**
    * @brief Singleton getter returns a pointer to the Singleton instance of
-   *        BoundaryConditionManager.
+   *        FieldSpecificationManager.
    * @return a pointer to the singleton FieldSpecificationManager
    */
   static FieldSpecificationManager * get();

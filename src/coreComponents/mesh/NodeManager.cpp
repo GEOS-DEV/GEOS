@@ -226,7 +226,7 @@ void NodeManager::ViewPackingExclusionList( set<localIndex> & exclusionList ) co
   exclusionList.insert(this->getWrapperIndex(viewKeyStruct::elementSubRegionListString));
   exclusionList.insert(this->getWrapperIndex(viewKeyStruct::elementListString));
 
-  if( this->hasView( "usedFaces" ) )
+  if( this->hasWrapper( "usedFaces" ) )
   {
     exclusionList.insert(this->getWrapperIndex("usedFaces"));
   }

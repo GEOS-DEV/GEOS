@@ -38,6 +38,8 @@ public:
 
   static string CatalogName() { return "SystemSolverParameters"; }
 
+  virtual void PostProcessInput() override;
+
   struct viewKeysStruct
   {
     static constexpr auto verbosityString           = "verbosityFlag";
@@ -66,6 +68,8 @@ public:
     static constexpr auto doLineSearchString   = "doLineSearch";    
     static constexpr auto maxSubStepsString         = "maxSubSteps";
     static constexpr auto minNumNewtonIterationsString   = "minNumberOfNewtonIterations";    
+    static constexpr auto dtCutIterLimString        = "dtCutIterLimit";
+    static constexpr auto dtIncIterLimString        = "dtIncIterLimit";
 
     static constexpr auto maxIterNewtonConvergenceCheckString  = "maxIterNewtonConvergenceCheck";
     
@@ -101,6 +105,9 @@ public:
   integer allowNonConverged() const           { return m_allowNonConverged; }
   integer doLineSearch() const           { return m_doLineSearch; }  
   integer maxSubSteps() const                 { return m_maxSubSteps; }
+  integer & numdtAttempts()                   { return m_numdtAttempts; }
+  real64  dtCutIterLimit() const              { return m_dtCutIterLimit * m_maxIterNewton; }
+  real64  dtIncIterLimit() const              { return m_dtIncIterLimit * m_maxIterNewton; }
 
   integer minNumNewtonIterations() const           { return m_minNumNewtonIterations; }
 
@@ -135,9 +142,10 @@ public:
   integer m_minNumNewtonIterations;    
   integer m_maxSubSteps;
   integer m_maxIters = 1000;
-
   integer m_maxIterNewtonConvergenceCheck;
-
+  integer m_numdtAttempts; // number of times that the time-step had to be cut.
+  real64  m_dtCutIterLimit;
+  real64  m_dtIncIterLimit;
 };
 
 } /* namespace geosx */

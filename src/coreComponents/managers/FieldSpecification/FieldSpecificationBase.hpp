@@ -448,8 +448,8 @@ void FieldSpecificationBase::ApplyBoundaryConditionToSystem( set<localIndex> con
                                                              typename LAI::ParallelMatrix & matrix,
                                                              typename LAI::ParallelVector & rhs ) const
 {
-  dataRepository::WrapperBase * wrapper = dataGroup->getWrapperBase( fieldName );
-  std::type_index typeIndex = std::type_index( wrapper->get_typeid());
+  dataRepository::WrapperBase * wrapperBase = dataGroup->getWrapperBase( fieldName );
+  std::type_index typeIndex = std::type_index( wrapperBase->get_typeid());
   arrayView1d<globalIndex> const & dofMap = dataGroup->getReference<array1d<globalIndex>>( dofMapName );
   integer const component = GetComponent();
 
@@ -457,12 +457,15 @@ void FieldSpecificationBase::ApplyBoundaryConditionToSystem( set<localIndex> con
     [&]( auto type ) -> void
     {
       using fieldType = decltype(type);
-      dataRepository::Wrapper<fieldType> & view = dynamic_cast< dataRepository::Wrapper<fieldType> & >(*wrapper);
-      fieldType & field = view.reference();
+      dataRepository::Wrapper<fieldType> & wrapper = dynamic_cast< dataRepository::Wrapper<fieldType> & >(*wrapperBase);
+      typename dataRepository::Wrapper<fieldType>::ViewTypeConst fieldView = wrapper.referenceAsView();
 
       this->ApplyBoundaryConditionToSystem<FIELD_OP, LAI>( targetSet, normalizeBySetSize, time, dataGroup, dofMap, dofDim, matrix, rhs, [&]( localIndex const a, localIndex const GEOSX_UNUSED_ARG(c) )->real64
         {
-          return static_cast<real64>(rtTypes::value( field[a], component ));
+          //return static_cast<real64>(rtTypes::value( field[a], component ));
+          real64 value = 0.0;
+          FieldSpecificationEqual::ReadFieldValue( fieldView, a, component, value );
+          return value;
         }
       );
     }
