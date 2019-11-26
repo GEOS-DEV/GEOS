@@ -117,17 +117,27 @@ public:
 
 
 
-  /// default copy constructor
-  MappedVector( MappedVector const & source ) = default;
+  /**
+   * @brief Default copy constructor.
+   */
+  MappedVector( MappedVector const & ) = default;
 
-  /// default copy assignment operator
-  MappedVector & operator=( MappedVector const & source ) = default;
+  /**
+   * @brief Default copy assignment operator.
+   * @return
+   */
+  MappedVector & operator=( MappedVector const & ) = default;
 
-  /// default move operator
-  MappedVector( MappedVector && source ) = default;
+  /**
+   * @brief Default move operator.
+   */
+  MappedVector( MappedVector && ) = default;
 
-  /// default move assignement operator
-  MappedVector & operator=( MappedVector && source ) = default;
+  /**
+   * @brief Default move assignment operator.
+   * @return
+   */
+  MappedVector & operator=( MappedVector && ) = default;
 
 
 

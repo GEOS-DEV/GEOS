@@ -1120,7 +1120,7 @@ ApplyBoundaryConditions( real64 const time_n,
 
   ApplyDisplacementBC_implicit( time_n + dt, dofManager, *domain, matrix, rhs );
 
-  if( faceManager->hasView("ChomboPressure") )
+  if( faceManager->hasWrapper( "ChomboPressure" ) )
   {
     fsManager->ApplyFieldValue( time_n, domain, "faceManager", "ChomboPressure" );
     ApplyChomboPressure( dofManager, domain, rhs );
