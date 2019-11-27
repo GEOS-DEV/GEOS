@@ -259,7 +259,7 @@ void MultiFluidPVTPackageWrapper::Compute( localIndex const NC, localIndex const
     phaseDens.dTemp[ip] = dens.dT;
 
     // TODO
-    phaseVisc.value[ip] = 1.0;
+    phaseVisc.value[ip] = 0.001;
     phaseVisc.dPres[ip] = 0.0;
     phaseVisc.dTemp[ip] = 0.0;
 

@@ -1,0 +1,239 @@
+
+<Problem>
+
+ <Solvers
+    gravityVector="0.0, 0.0, 0">
+
+    <Reservoir name="reservoirSystem"
+               flowSolverName="compositionalMultiphaseFlow"
+               wellSolverName="compositionalMultiphaseWell"
+               verboseLevel="1"
+               targetRegions="{egg,wellRegion1,wellRegion2,wellRegion3}">
+      <SystemSolverParameters maxIterNewton="40"
+                              useDirectSolver="1"
+                              verbosityFlag="0"
+                              maxSubSteps="10"
+                              maxTimeStepCuts="10"
+                              newtonTol="1e-6"/>
+    </Reservoir>
+  
+    <CompositionalMultiphaseFlow name="compositionalMultiphaseFlow"
+                                 verboseLevel="1"
+                                 gravityFlag="1"
+                                 discretization="fluidTPFA"
+				 fluidName="fluid1"
+                                 solidName="rock"
+                                 relPermName="relperm"
+                                 temperature="297.15"
+                                 useMass="0"
+                                 targetRegions="{egg}">
+    </CompositionalMultiphaseFlow>
+
+    <CompositionalMultiphaseWell name="compositionalMultiphaseWell"
+                                 verboseLevel="1"
+                                 gravityFlag="1"
+                                 wellFluidName="fluid1"
+                                 wellRelPermName="relperm"
+                                 wellTemperature="297.15"
+                                 useMass="0"
+                                 targetRegions="{wellRegion1,wellRegion2,wellRegion3}">
+        <WellControls name="wellControls1"
+                      type="producer"
+                      control="BHP"
+                      targetBHP="5e5"
+                      targetRate="1e9"/>
+        <WellControls name="wellControls2"
+                      type="producer"
+                      control="BHP"
+                      targetBHP="5e5"
+                      targetRate="1e9"/>
+        <WellControls name="wellControls3"
+                      type="injector"
+                      control="liquidRate"
+	              injectionStream="{0.1, 0.1, 0.1, 0.7}"
+                      targetBHP="1e7"
+                      targetRate="0.01"/>
+     
+    </CompositionalMultiphaseWell>
+  </Solvers>
+  
+  <Mesh>
+    <PAMELAMeshGenerator name="mesh"
+                         file="/g/g90/hamon1/geosx/GEOSX/examples/fluidFlow/data/egg.msh"
+                         fieldNamesInGEOSX="{permeability}"
+                         fieldsToImport="{PERM}"/>
+                         
+    <InternalWell name="well_producer1"
+                  wellRegionName="wellRegion1"
+                  wellControlsName="wellControls1"
+                  meshName="mesh"
+                  polylineNodeCoords="{ {120,  40, 0}, 
+                                        {120,  40, 2} }"
+                  polylineSegmentConn="{ {0, 1} }"
+                  radius="0.1"
+                  numElementsPerSegment="1">
+     <Perforation name="producer1_perf1"
+                  distanceFromHead="1.99"
+                  wellPeacemanIndex="1e-13"/> 
+    </InternalWell>
+ 
+    <InternalWell name="well_producer2"
+                  wellRegionName="wellRegion2"
+                  wellControlsName="wellControls2"
+                  meshName="mesh"
+                  polylineNodeCoords="{ {20, 120, 0}, 
+                                        {20, 120, 2 } }"
+                  polylineSegmentConn="{ {0, 1} }"
+                  radius="0.1"
+                  numElementsPerSegment="1">
+     <Perforation name="producer2_perf1"
+                  distanceFromHead="1.99"
+                  wellPeacemanIndex="1e-13"/>
+    </InternalWell>
+  
+    <InternalWell name="well_injector1"
+                  wellRegionName="wellRegion3"
+                  wellControlsName="wellControls3"
+                  meshName="mesh"
+                  polylineNodeCoords="{ {60, 60, 0}, 
+                                        {60, 60, 2 } }"
+                  polylineSegmentConn="{ {0, 1} }"
+                  radius="0.1"
+                  numElementsPerSegment="1">
+     <Perforation name="injector1_perf1"
+                  distanceFromHead="1.5"
+                  wellPeacemanIndex="1e-13"/> 
+    </InternalWell>
+ 
+  </Mesh>
+
+  <Events maxTime="2e5" verbosity="1">
+    <PeriodicEvent name="outputs"
+                   timeFrequency="2.5e1"
+                   targetExactTimestep="1"
+                   target="/Outputs/siloOutput" />
+
+    <PeriodicEvent name="solverApplications1"
+                   target="/Solvers/reservoirSystem"
+		   forceDt="2.5e1"
+		   endTime="5e1"/>
+
+    <PeriodicEvent name="solverApplications2"
+                   target="/Solvers/reservoirSystem"
+		   forceDt="1e2"
+		   beginTime="5e1"
+		   endTime="2.5e2"/>
+
+    <PeriodicEvent name="restarts"
+                   timeFrequency="2.5e4"
+                   targetExactTimestep="0"
+                   target="/Outputs/restartOutput"/>
+  </Events>
+  
+ <Geometry>
+    <Box name="all"  xMin="-1e9, -1e9, -1e9" xMax="  1e9, 1e9, 1e9"/>
+ </Geometry>
+  
+  <ElementRegions>
+    <CellElementRegion name="egg"
+                       cellBlocks="{0_HEX}"
+                       materialList="{fluid1, rock, relperm}"/>
+    <WellElementRegion name="wellRegion1"
+                       materialList="{fluid1}"/> 
+    <WellElementRegion name="wellRegion2"
+                       materialList="{fluid1}"/>  
+    <WellElementRegion name="wellRegion3"
+                       materialList="{fluid1}"/>
+  </ElementRegions>
+
+ <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation name="fluidTPFA"
+                                 fieldName="pressure"
+                                 boundaryFieldName="facePressure"
+                                 targetRegions="{egg}"
+                                 coefficientName="permeability"/>
+    </FiniteVolume>
+ </NumericalMethods>
+
+ <Constitutive>
+        <CompositionalMultiphaseFluid name="fluid1"
+                                  phaseNames="{oil, gas}"
+                                  equationsOfState="{PR, PR}"
+                                  componentNames="{N2, C10, C20, H2O}"
+                                  componentCriticalPressure="{34e5, 25.3e5, 14.6e5, 220.5e5}"
+                                  componentCriticalTemperature="{126.2, 622.0, 782.0, 647.0}"
+                                  componentAcentricFactor="{0.04, 0.443, 0.816, 0.344}"
+                                  componentMolarWeight="{28e-3, 134e-3, 275e-3, 18e-3}"
+                                  componentVolumeShift="{0, 0, 0, 0}"
+                                  componentBinaryCoeff="{ {0, 0, 0, 0},
+                                                          {0, 0, 0, 0},
+                                                          {0, 0, 0, 0},
+                                                          {0, 0, 0, 0} }"/>
+
+    <PoreVolumeCompressibleSolid name="rock"
+                                 referencePressure="0"
+                                 compressibility="1e-15"/>
+
+    <BrooksCoreyRelativePermeability name="relperm"
+                                     phaseNames="{oil, gas}"
+                                     phaseMinVolumeFraction="{0.05, 0.05}"
+                                     phaseRelPermExponent="{2.0, 2.0}"
+                                     phaseRelPermMaxValue="{1, 1}"/>
+
+  </Constitutive>
+
+  <FieldSpecifications>
+    <FieldSpecification name="porosity_egg"
+                        initialCondition="1"
+                        setNames="{all}"
+                        objectPath="ElementRegions/egg/0_HEX"
+                        fieldName="referencePorosity"
+                        scale="0.2"/>
+
+    <FieldSpecification name="initialPressure_egg"
+                        initialCondition="1"
+                        setNames="{all}"
+                        objectPath="ElementRegions/egg/0_HEX"
+                        fieldName="pressure"
+                        scale="1e6"/>
+    
+    <FieldSpecification name="initialComposition_N2"
+                        initialCondition="1"
+                        setNames="{all}"
+                        objectPath="ElementRegions/egg/0_HEX"
+                        fieldName="globalCompFraction"
+                        component="0"
+                        scale="0.099"/>
+
+    <FieldSpecification name="initialComposition_C10"
+                        initialCondition="1"
+                        setNames="{all}"
+                        objectPath="ElementRegions/egg/0_HEX"
+                        fieldName="globalCompFraction"
+                        component="1"
+                        scale="0.3"/>
+
+    <FieldSpecification name="initialComposition_C20"
+                        initialCondition="1"
+                        setNames="{all}"
+                        objectPath="ElementRegions/egg/0_HEX"
+                        fieldName="globalCompFraction"
+                        component="2"
+                        scale="0.6"/>
+
+    <FieldSpecification name="initialComposition_H20"
+                        initialCondition="1"
+                        setNames="{all}"
+                        objectPath="ElementRegions/egg/0_HEX"
+                        fieldName="globalCompFraction"
+                        component="3"
+                        scale="0.001"/>
+   
+  </FieldSpecifications>
+
+  <Outputs>
+    <Silo name="siloOutput"/>
+    <Restart name="restartOutput"/>
+  </Outputs>
+</Problem>
