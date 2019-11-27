@@ -48,16 +48,6 @@ geosx_osx_build: &geosx_osx_build
   - make -j $(nproc) VERBOSE=1
   - ctest -V
 
-geosx_doxygen_build: &geosx_doxygen_build
-  stage: build
-  dist: bionic
-  addons:
-    apt:
-      packages:
-      - doxygen
-  script:
-    make doxygen
-
 jobs:
   include:
   - <<: *geosx_doxygen_build
