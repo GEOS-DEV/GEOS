@@ -372,6 +372,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
                                           ParallelVector & rhs,
                                           ParallelVector & solution )
 {
+  GEOSX_MARK_FUNCTION;
   // dt may be cut during the course of this step, so we are keeping a local
   // value to track the achieved dt for this step.
   real64 stepDt = dt;
@@ -573,6 +574,7 @@ void SolverBase::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofManager ),
                               ParallelVector & rhs,
                               ParallelVector & solution )
 {
+  GEOSX_MARK_FUNCTION;
   // Create a solver from the parameter list
   LinearSolver solver( m_linearSolverParameters );
 
