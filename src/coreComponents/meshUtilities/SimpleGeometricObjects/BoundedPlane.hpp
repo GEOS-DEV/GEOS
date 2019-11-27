@@ -13,39 +13,60 @@
  */
 
 /**
- * @file BoundedThickPlane.hpp
+ * @file BoundedPlane.hpp
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_MESHUTILITIES_SIMPLEGEOMETRICOBJECTS_BOUNDEDTHICKPLANE_HPP_
-#define SRC_COMPONENTS_CORE_SRC_MESHUTILITIES_SIMPLEGEOMETRICOBJECTS_BOUNDEDTHICKPLANE_HPP_
+#ifndef SRC_COMPONENTS_CORE_SRC_MESHUTILITIES_SIMPLEGEOMETRICOBJECTS_BOUNDEDPLANE_HPP_
+#define SRC_COMPONENTS_CORE_SRC_MESHUTILITIES_SIMPLEGEOMETRICOBJECTS_BOUNDEDPLANE_HPP_
 
-#include "ThickPlane.hpp"
+#include "SimpleGeometricObjectBase.hpp"
 
 namespace geosx
 {
 
-class BoundedThickPlane : public ThickPlane
+class BoundedPlane : public SimpleGeometricObjectBase
 {
 public:
-  BoundedThickPlane( const std::string& name,
+  BoundedPlane( const std::string& name,
               Group * const parent );
 
-  virtual ~BoundedThickPlane() override;
+  virtual ~BoundedPlane() override;
 
-  static string CatalogName() { return "BoundedThickPlane"; }
+  static string CatalogName() { return "BoundedPlane"; }
 
   bool IsCoordInObject( const R1Tensor& coord ) const override final;
+
+  void findRectangleLimits();
+
+  /*
+   * Accessors
+   */
+  // normal vector
+  R1Tensor & getNormal() {return m_normal;}
+
+  R1Tensor const & getNormal() const {return m_normal;}
+
+  // origin of the plane
+  R1Tensor & getCenter() {return m_origin;}
+
+  R1Tensor const & getCenter() const {return m_origin;}
+
 
 protected:
   virtual void PostProcessInput() override final;
 
 private:
-  R1Tensor            m_lengthVector;
-  R1Tensor            m_widthVector;
-  array1d < real64 >  m_dimensions;
+  R1Tensor m_origin;
+  R1Tensor m_normal;
+  R1Tensor             m_lengthVector;
+  R1Tensor             m_widthVector;
+  array1d < real64 >   m_dimensions;
+  array1d < R1Tensor > m_points;
 
   struct viewKeyStruct
   {
+    static constexpr auto originString = "origin";
+    static constexpr auto normalString = "normal";
     static constexpr auto dimensionsString    = "dimensions";
     static constexpr auto mLengthVectorString = "lengthVector";
     static constexpr auto mWidthVectorString  = "widthVector";
@@ -55,6 +76,6 @@ private:
 };
 } /* namespace geosx */
 
-#endif /* SRC_COMPONENTS_CORE_SRC_MESHUTILITIES_SIMPLEGEOMETRICOBJECTS_BOUNDEDTHICKPLANE_HPP_
+#endif /* SRC_COMPONENTS_CORE_SRC_MESHUTILITIES_SIMPLEGEOMETRICOBJECTS_BOUNDEDPLANE_HPP_
         */
 

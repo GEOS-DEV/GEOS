@@ -28,7 +28,7 @@
 #include "ToElementRelation.hpp"
 #include "EdgeManager.hpp"
 #include "CellElementSubRegion.hpp"
-#include "meshUtilities/SimpleGeometricObjects/BoundedThickPlane.hpp"
+#include "meshUtilities/SimpleGeometricObjects/BoundedPlane.hpp"
 
 namespace geosx
 {
@@ -80,7 +80,7 @@ public:
                                NodeManager const & nodeManager,
                                EdgeManager const & edgeManager,
                                FixedOneToManyRelation const & cellToEdges,
-                               BoundedThickPlane const * plane);
+                               BoundedPlane const * plane);
 
     void CalculateElementGeometricQuantities( array1d<R1Tensor> const  intersectionPoints,
                                               localIndex k );

@@ -46,7 +46,7 @@ public:
   static constexpr int NODE_MAP_UNIT_STRIDE_DIM = LvArray::getStrideOneDimension( NODE_MAP_PERMUTATION {} );
 
   using NodeMapType = InterObjectRelation< array2d< localIndex, NODE_MAP_PERMUTATION > >;
-  using EdgeMapType=FixedOneToManyRelation;
+  using EdgeMapType = FixedOneToManyRelation;
   using FaceMapType = FixedOneToManyRelation;
 
 

@@ -29,7 +29,7 @@
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp"
 #include "meshUtilities/SimpleGeometricObjects/GeometricObjectManager.hpp"
-#include "meshUtilities/SimpleGeometricObjects/BoundedThickPlane.hpp"
+#include "meshUtilities/SimpleGeometricObjects/BoundedPlane.hpp"
 
 #ifdef USE_GEOSX_PTP
 #include "physicsSolvers/GEOSX_PTP/ParallelTopologyChange.hpp"
@@ -120,7 +120,7 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
       embeddedSurfaceRegion->GetSubRegion<EmbeddedSurfaceSubRegion>(0);
 
   // Loop over all the fracture planes
-  geometricObjManager->forSubGroups<BoundedThickPlane>( [&]( BoundedThickPlane * const fracture ) -> void
+  geometricObjManager->forSubGroups<BoundedPlane>( [&]( BoundedPlane * const fracture ) -> void
   {
     /* 1. Find out if an element is cut but the fracture or not.
      * Loop over all the elements and for each one of them loop over the nodes and compute the
