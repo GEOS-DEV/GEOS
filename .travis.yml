@@ -47,7 +47,6 @@ geosx_osx_build: &geosx_osx_build
 
 jobs:
   include:
-  - <<: *geosx_doxygen_build
   - <<: *geosx_osx_build
   - <<: *geosx_linux_build
     env:
