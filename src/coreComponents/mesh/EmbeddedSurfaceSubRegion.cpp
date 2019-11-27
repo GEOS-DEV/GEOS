@@ -105,73 +105,94 @@ void EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface (localIndex const cellIndex
 
 }
 
-void EmbeddedSurfaceSubRegion::CalculateElementGeometricQuantities(NodeManager const & nodeManager,
-                                                                   EdgeManager const & edgeManager,
-                                                                   FixedOneToManyRelation const & cellToEdges,
-                                                                   R1Tensor origin)
+void EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface (localIndex const cellIndex,
+                                                      R1Tensor normalVector,
+                                                      NodeManager const & nodeManager,
+                                                      EdgeManager const & edgeManager,
+                                                      FixedOneToManyRelation const & cellToEdges,
+                                                      BoundedThickPlane const * fracture)
 {
-  /*
-   * Compute area of each embedded surface element:
+  /* The goal is to add an embeddedSurfaceElem if it is contained within the BoundedPlane
    *
-   * To compute the area of each embedded surface I need to find the intersection point
-   * between the plane and each edge of each fractured element. So, I perform a loop over
-   * all the embeddedSurfaceElements, then, for each of them I loop over the edges of the
-   * relative fractured element (cut by the ) embedded surface) contained in m_embeddedSurfaceToCell.
+   * A. Identify whether the cell falls within the bounded plane or not
    *
-   * For each edge:
+   * we loop over each edge:
    *
-   * 1. I check if it is cut by the plane using the Dot product between the distance of each node
-   * from the origin and the normal vector. If an edgde is cut by the plane it is just a
-   * matter of finding the intersection between a line and a plane.
+   *   1. check if it is cut by the plane using the Dot product between the distance of each node
+   *   from the origin and the normal vector.
+   *   2. If an edge is cut by the plane we look for the intersection between a line and a plane.
+   *   3. Once we have the intersection we check if it falls inside the bounded plane.
    *
-   * 2. Once I have the intersection points computing the area is easy as long as
-   * they are ordered either CW or CCW.
+   * Only elements for which all intersection points fall within the fracture plane limits will be added.
+   * If the frac does not cut through the entire element we will just chop it (it's a discretization error).
+   *
+   * B. Once we know the element has to be added we compute it's geometric properties:
+   * - Surface Area: this is trivial given the intersection points as long as they are ordered either CW or CCW.
+   * - centre:
+   * - Volume:
+   * - Heaviside:
    */
 
+  bool addEmbeddedElem = true;
   array1d<R1Tensor> const & nodesCoord = nodeManager.referencePosition();
   array2d<localIndex> const & edgeToNodes = edgeManager.nodeList();
-  localIndex count, edgeIndex;
-  R1Tensor lineDir, dist;
+  R1Tensor origin  = fracture->getCenter();
+  localIndex edgeIndex;
+  R1Tensor lineDir, dist, point;
   real64 prodScalarProd;
 
-  // loop over the embedded surface elements
-  for ( localIndex k=0; k < this->size(); k++ )
-   {
-    count = 0;
-    array1d<R1Tensor> intersectionPoints;
-    // loop over the edges
-    // std::cout << "embedded elem " << k << std::endl;
-    for (localIndex ke = 0; ke < 12; ke++)
+  array1d<R1Tensor> intersectionPoints;
+  for (localIndex ke = 0; ke < 12; ke++)
+  {
+    edgeIndex = cellToEdges[cellIndex][ke];
+    dist = nodesCoord[edgeToNodes[edgeIndex][0]];
+    dist -= origin;
+    prodScalarProd = Dot(dist, normalVector);
+    dist = nodesCoord[edgeToNodes[edgeIndex][1]];
+    dist -= origin;
+    prodScalarProd *= Dot(dist, normalVector);
+
+    if (prodScalarProd < 0)
     {
-      edgeIndex = cellToEdges[m_embeddedSurfaceToCell[k]][ke];
-      dist = nodesCoord[edgeToNodes[edgeIndex][0]];
-      dist -= origin;
-      prodScalarProd = Dot(dist, m_normalVector[k]);
-      dist = nodesCoord[edgeToNodes[edgeIndex][1]];
-      dist -= origin;
-      prodScalarProd *= Dot(dist, m_normalVector[k]);
+      lineDir  = nodesCoord[edgeToNodes[edgeIndex][0]];
+      lineDir -= nodesCoord[edgeToNodes[edgeIndex][1]];
+      lineDir.Normalize();
+      point = computationalGeometry::LinePlaneIntersection(lineDir,
+                                                           nodesCoord[edgeToNodes[edgeIndex][0]],
+                                                           normalVector,
+                                                           origin);
 
-      if (prodScalarProd < 0)
+      // Check if the point is inside the fracture (bounded plane)
+      if ( !fracture->IsCoordInObject(point) )
       {
-        lineDir  = nodesCoord[edgeToNodes[edgeIndex][0]];
-        lineDir -= nodesCoord[edgeToNodes[edgeIndex][1]];
-        lineDir.Normalize();
-        intersectionPoints.push_back(computationalGeometry::LinePlaneIntersection(lineDir, nodesCoord[edgeToNodes[edgeIndex][0]],
-            m_normalVector[k], origin));
-
-        m_elementCenter[k] += intersectionPoints[count];
-        count++;
+        addEmbeddedElem = false;
       }
-    } //end of edge loop
+      intersectionPoints.push_back(point);
+    }
+  } //end of edge loop
 
-    m_elementArea[k]   = computationalGeometry::ComputeSurfaceArea(intersectionPoints, count, m_normalVector[k]);
-    m_elementCenter[k] /= count;
-    this->CalculateElementGeometricQuantities(k);
-
-    // std::cout << "Area = " << m_elementArea[k] << std::endl;
-   } // end of embedded element loop
+  if (addEmbeddedElem)
+  {
+    m_embeddedSurfaceToCell.push_back(cellIndex);
+    m_normalVector.push_back(normalVector);
+    // resize
+    this->resize(this->size() + 1);
+    this->CalculateElementGeometricQuantities(intersectionPoints, this->size()-1);
+  }
 }
 
+void EmbeddedSurfaceSubRegion::CalculateElementGeometricQuantities( array1d<R1Tensor> const  intersectionPoints,
+                                                                    localIndex k )
+{
+      for (localIndex p = 0; p < intersectionPoints.size(); p++)
+      {
+        m_elementCenter[k] += intersectionPoints[p];
+      }
+
+    m_elementArea[k]   = computationalGeometry::ComputeSurfaceArea(intersectionPoints, intersectionPoints.size(), m_normalVector[k]);
+    m_elementCenter[k] /= intersectionPoints.size();
+    this->CalculateElementGeometricQuantities(k);
+}
 
 void EmbeddedSurfaceSubRegion::setupRelatedObjectsInRelations( MeshLevel const * const mesh )
 {

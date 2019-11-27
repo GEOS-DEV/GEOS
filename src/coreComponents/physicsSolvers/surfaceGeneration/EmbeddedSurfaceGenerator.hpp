@@ -27,6 +27,7 @@
 #include "physicsSolvers/SolverBase.hpp"
 #include "managers/DomainPartition.hpp"
 
+
 namespace geosx
 {
 
@@ -67,13 +68,6 @@ public:
 
   virtual void RegisterDataOnMesh( Group * const MeshBody ) override final;
 
-  /**
-   * @defgroup Solver Interface Functions
-   *
-   * These functions provide the primary interface that is required for derived classes
-   */
-  /**@{*/
-
   virtual void Execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
@@ -84,6 +78,14 @@ public:
     SolverStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>());
   }
 
+  /**
+       * @brief xxx
+       * @param[in] ...
+       * @param[in] ...
+       * @param[in] ...
+       * @return ...
+       *
+       */
   virtual real64 SolverStep( real64 const& time_n,
                              real64 const& dt,
                              integer const cycleNumber,
@@ -93,7 +95,23 @@ public:
 
 protected:
 
+  /**
+       * @brief xxx
+       * @param[in] ...
+       * @param[in] ...
+       * @param[in] ...
+       * @return ...
+       *
+       */
   virtual void InitializePostSubGroups( Group * const problemManager ) override final;
+  /**
+         * @brief xxx
+         * @param[in] ...
+         * @param[in] ...
+         * @param[in] ...
+         * @return ...
+         *
+         */
   virtual void InitializePostInitialConditions_PreSubGroups( Group * const problemManager ) override final;
   virtual void postRestartInitialization( Group * const domain ) override final;
 

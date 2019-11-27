@@ -28,6 +28,7 @@
 #include "ToElementRelation.hpp"
 #include "EdgeManager.hpp"
 #include "CellElementSubRegion.hpp"
+#include "meshUtilities/SimpleGeometricObjects/BoundedThickPlane.hpp"
 
 namespace geosx
 {
@@ -74,11 +75,15 @@ public:
     void AddNewEmbeddedSurface(localIndex const cellIndex,
                                R1Tensor normalVector);
 
+    void AddNewEmbeddedSurface(localIndex const cellIndex,
+                               R1Tensor normalVector,
+                               NodeManager const & nodeManager,
+                               EdgeManager const & edgeManager,
+                               FixedOneToManyRelation const & cellToEdges,
+                               BoundedThickPlane const * plane);
 
-    void CalculateElementGeometricQuantities(NodeManager const & nodeManager,
-                                             EdgeManager const & edgeManager,
-                                             FixedOneToManyRelation const & cellToEdges,
-                                             R1Tensor origin);
+    void CalculateElementGeometricQuantities( array1d<R1Tensor> const  intersectionPoints,
+                                              localIndex k );
 
     /**
      * @brief function to set the ghostRank for a list of FaceElements and set them to the value of their bounding faces.

@@ -32,9 +32,8 @@
 #include "meshUtilities/SimpleGeometricObjects/BoundedThickPlane.hpp"
 
 #ifdef USE_GEOSX_PTP
-#include "GEOSX_PTP/ParallelTopologyChange.hpp"
+#include "physicsSolvers/GEOSX_PTP/ParallelTopologyChange.hpp"
 #endif
-
 #include <set>
 
 namespace geosx
@@ -58,7 +57,6 @@ EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( const std::string& name,
 
 EmbeddedSurfaceGenerator::~EmbeddedSurfaceGenerator()
 {
-  // TODO Auto-generated destructor stub
 }
 
 void EmbeddedSurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
@@ -122,7 +120,7 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
       embeddedSurfaceRegion->GetSubRegion<EmbeddedSurfaceSubRegion>(0);
 
   // Loop over all the fracture planes
-  geometricObjManager->forSubGroups<ThickPlane>( [&]( ThickPlane * const fracture ) -> void
+  geometricObjManager->forSubGroups<BoundedThickPlane>( [&]( BoundedThickPlane * const fracture ) -> void
   {
     /* 1. Find out if an element is cut but the fracture or not.
      * Loop over all the elements and for each one of them loop over the nodes and compute the
@@ -157,8 +155,7 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
             if ( Dot(distVec, normalVector) > 0 )
             {
               isPositive = 1;
-              // std::cout << prodScalarProduct << std::endl;
-            } else if (Dot(distVec, normalVector) < 0 )
+            } else if ( Dot(distVec, normalVector) < 0 )
             {
               isNegative = 1;
             }
@@ -167,16 +164,14 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
             // TODO in reality this condition is not sufficient because the fracture is a bounded plane. I should also check
             // that the cell is inside the actual fracture plane. For now let us assume the plane is not bounded.
           {
-            // Add the embedded surface element
-            embeddedSurfaceSubRegion->AddNewEmbeddedSurface(cellIndex, normalVector);
+            embeddedSurfaceSubRegion->AddNewEmbeddedSurface( cellIndex,
+                                                             normalVector,
+                                                             *nodeManager,
+                                                             *edgeManager,
+                                                             cellToEdges,
+                                                             fracture );
           }
         } // end loop over cells
-        /* 2. Now that you know that the element is cut by the fracture we can
-         * a. fill in the data relative to where the actual intersections are
-         * b. compute the geometric quantities (and the Heaviside ?).
-         */
-        embeddedSurfaceSubRegion->CalculateElementGeometricQuantities(*nodeManager, *edgeManager,
-                                                                       cellToEdges, planeCenter);
       });// end loop over subregions
     });// end loop over elementRegions
   });// end loop over thick planes
@@ -208,7 +203,6 @@ real64 EmbeddedSurfaceGenerator::SolverStep( real64 const & GEOSX_UNUSED_ARG( ti
    */
   return rval;
 }
-
 
 REGISTER_CATALOG_ENTRY( SolverBase,
                         EmbeddedSurfaceGenerator,
