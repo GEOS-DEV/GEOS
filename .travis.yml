@@ -4,9 +4,10 @@ env:
   global:
   - GEOSX_TPL_TAG=81-252
 
+# The integrated test repository contains large data (using git lfs) and we do not use them here.
+# To save time (and money) we do not let travis automatically clone all our (lfs) subrepositories and do it by hand.
 git:
   submodules: false
-
 geosx_before_script: &geosx_before_script
   before_script:
   - git submodule update --init --recursive src/coreComponents/cxx-utilities
@@ -21,18 +22,14 @@ geosx_linux_build: &geosx_linux_build
   services: docker
   <<: *geosx_before_script
   script:
+    # The linux build relies on three environment variables DOCKER_REPOSITORY and GEOSX_TPL_TAG to define the TPL version.
+    # And another CMAKE_BUILD_TYPE to define the build type we want for GEOSX.
   - docker run --rm -v ${TRAVIS_BUILD_DIR}:/tmp/GEOSX -e CMAKE_BUILD_TYPE ${DOCKER_REPOSITORY}:${GEOSX_TPL_TAG} /tmp/GEOSX/scripts/travis_build_and_test.sh;
 
 geosx_osx_build: &geosx_osx_build
   stage: build
   os: osx
   osx_image: xcode10.2
-  env:
-  - CC=clang
-  - CXX=clang++
-  - MPICC=mpicc
-  - MPICXX=mpicxx
-  - MPIEXEC=/usr/local/bin/mpirun
   install:
   - mkdir ../thirdPartyLibs
   - TPL_METADATA_URL=https://www.googleapis.com/storage/v1/b/geosx/o/TPL%2Fosx-${GEOSX_TPL_TAG}.tar
