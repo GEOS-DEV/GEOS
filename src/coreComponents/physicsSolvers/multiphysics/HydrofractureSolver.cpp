@@ -141,9 +141,10 @@ HydrofractureSolver::~HydrofractureSolver()
   // TODO Auto-generated destructor stub
 }
 
-void HydrofractureSolver::ResetStateToBeginningOfStep( DomainPartition * const GEOSX_UNUSED_ARG( domain ) )
+void HydrofractureSolver::ResetStateToBeginningOfStep( DomainPartition * const domain )
 {
-
+  m_flowSolver->ResetStateToBeginningOfStep(domain);
+  m_solidSolver->ResetStateToBeginningOfStep(domain);
 }
 
 real64 HydrofractureSolver::SolverStep( real64 const & time_n,
@@ -182,6 +183,11 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
                    m_rhs,
                    m_solution  );
 
+      if( solveIter>0 )
+      {
+        m_solidSolver->ResetStressToBeginningOfStep( domain );
+      }
+
       // currently the only method is implicit time integration
       dtReturn = this->NonlinearImplicitStep( time_n,
                                               dt,
@@ -191,6 +197,8 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
                                               m_matrix,
                                               m_rhs,
                                               m_solution );
+
+      m_solidSolver->updateStress( domain );
 
       if( surfaceGenerator!=nullptr )
       {
@@ -727,7 +735,7 @@ AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
     arrayView1d<globalIndex> const &
     faceElementDofNumber = subRegion->getReference< array1d<globalIndex> >( presDofKey );
 
-    if( subRegion->hasView("pressure") )
+    if( subRegion->hasWrapper( "pressure" ) )
     {
       arrayView1d<real64 const> const & fluidPressure = subRegion->getReference<array1d<real64> >("pressure");
       arrayView1d<real64 const> const & deltaFluidPressure = subRegion->getReference<array1d<real64> >("deltaPressure");

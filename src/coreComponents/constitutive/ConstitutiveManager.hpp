@@ -115,7 +115,7 @@ ConstitutiveManager::GetConstitutiveData( string const & name,
   for( localIndex a=0 ; a<this->GetSubGroups().size() ; ++a )
   {
     ConstitutiveBase const * const material = relationGroup->GetGroup<ConstitutiveBase>( a );
-    if( material->hasView( name ) )
+    if( material->hasWrapper( name ) )
     {
       rval[a] = material->getReference<T>( name );
     }
