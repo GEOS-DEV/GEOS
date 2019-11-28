@@ -1,10 +1,18 @@
+"""Command line tools for pygeos"""
 
 import argparse
 from pygeos import xml_processor
 
 
-# Entry point for the pygeos console script
 def main():
+  """Entry point for the pygeos console script
+
+  @arg input Input file name
+  @arg -o/--output Output filename (default = randomly generated string)
+  @arg -s/--schema GEOSX schema to use for validating the generated xml
+  @arg -v/--verbose Verbosity level
+  """
+
   # Parse the user arguments
   parser = argparse.ArgumentParser()
   parser.add_argument('input', type=str, help='Input file name')
