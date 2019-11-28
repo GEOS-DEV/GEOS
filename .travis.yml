@@ -22,7 +22,7 @@ geosx_linux_build: &geosx_linux_build
   services: docker
   <<: *geosx_before_script
   script:
-    # The linux build relies on three environment variables DOCKER_REPOSITORY and GEOSX_TPL_TAG to define the TPL version.
+    # The linux build relies on two environment variables DOCKER_REPOSITORY and GEOSX_TPL_TAG to define the TPL version.
     # And another CMAKE_BUILD_TYPE to define the build type we want for GEOSX.
   - docker run --rm -v ${TRAVIS_BUILD_DIR}:/tmp/GEOSX -e CMAKE_BUILD_TYPE ${DOCKER_REPOSITORY}:${GEOSX_TPL_TAG} /tmp/GEOSX/scripts/travis_build_and_test.sh;
 
