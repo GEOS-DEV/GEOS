@@ -1348,7 +1348,8 @@ CompositionalMultiphaseFlow::CheckSystemSolution( DomainPartition const * const 
 {
   MeshLevel const * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
   real64 const * localSolution = solution.extractLocalVector();
-  bool result = true;
+  int localCheck = 1;
+
 
   string const dofKey = dofManager.getKey( viewKeyStruct::dofFieldString );
 
@@ -1379,7 +1380,7 @@ CompositionalMultiphaseFlow::CheckSystemSolution( DomainPartition const * const 
         real64 const newPres = pres[ei] + dPres[ei] + scalingFactor * localSolution[lid];
         if (newPres < 0.0)
         {
-          result = false;
+        	localCheck = 0;
         }
       }
 
@@ -1389,12 +1390,24 @@ CompositionalMultiphaseFlow::CheckSystemSolution( DomainPartition const * const 
         real64 const newDens = compDens[ei][ic] + dCompDens[ei][ic] + scalingFactor * localSolution[lid];
         if (newDens < 0.0)
         {
-          result = false;
+        	localCheck = 0;
         }
       }
     });
   });
+  int globalCheck;
 
+  MpiWrapper::allReduce( &localCheck,
+                         &globalCheck,
+                         1,
+                         MPI_MIN,
+                         MPI_COMM_GEOSX );
+
+  bool result = true;
+  if (globalCheck == 0)
+  {
+    result = false;
+  }
   return result;
 }
 

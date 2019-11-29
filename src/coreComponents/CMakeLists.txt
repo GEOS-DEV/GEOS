@@ -104,13 +104,13 @@ set( enforceUncrustifyLibs
      common
      dataRepository )
 
-foreach( lib ${enforceUncrustifyLibs} )
-
-add_test( NAME testUncrustifyCheck_${lib}
-          COMMAND ${CMAKE_MAKE_PROGRAM} ${lib}_uncrustify_check
-          WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-        )
-
-endforeach()
+if( ENABLE_UNCRUSTIFY )
+  foreach( lib ${enforceUncrustifyLibs} )
+    add_test( NAME testUncrustifyCheck_${lib}
+              COMMAND ${CMAKE_MAKE_PROGRAM} ${lib}_uncrustify_check
+              WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+            )
+  endforeach()
+endif()
 
 add_subdirectory( unitTests )
