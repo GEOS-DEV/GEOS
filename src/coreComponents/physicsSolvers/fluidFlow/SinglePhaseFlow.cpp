@@ -400,16 +400,12 @@ void SinglePhaseFlow::AssembleSystem( real64 const time_n,
     rhs.close();
   }
 
-  if( verboseLevel() == 2 )
-  {
-    GEOS_LOG_RANK_0( "After SinglePhaseFlow::AssembleSystem" );
-    GEOS_LOG_RANK_0("\nJacobian:\n");
-    std::cout << matrix;
-    GEOS_LOG_RANK_0("\nResidual:\n");
-    std::cout << rhs;
-  }
+  // Debug for logLevel >= 2
+  GEOS_LOG_LEVEL_RANK_0( 2, "After SinglePhaseFlow::AssembleSystem" );
+  GEOS_LOG_LEVEL_RANK_0( 2, "\nJacobian:\n" << matrix );
+  GEOS_LOG_LEVEL_RANK_0( 2, "\nResidual:\n" << rhs );
 
-  if( verboseLevel() >= 3 )
+  if( getLogLevel() >= 3 )
   {
     SystemSolverParameters * const solverParams = getSystemSolverParameters();
     integer newtonIter = solverParams->numNewtonIterations();
@@ -720,16 +716,12 @@ SinglePhaseFlow::ApplyBoundaryConditions( real64 const time_n,
   matrix.close();
   rhs.close();
 
-  if( verboseLevel() == 2 )
-  {
-    GEOS_LOG_RANK_0( "After SinglePhaseFlow::ApplyBoundaryConditions" );
-    GEOS_LOG_RANK_0("\nJacobian:\n");
-    std::cout << matrix;
-    GEOS_LOG_RANK_0("\nResidual:\n");
-    std::cout << rhs;
-  }
+  // Debug for logLevel >= 2
+  GEOS_LOG_LEVEL_RANK_0( 2, "After SinglePhaseFlow::ApplyBoundaryConditions" );
+  GEOS_LOG_LEVEL_RANK_0( 2, "\nJacobian:\n" << matrix );
+  GEOS_LOG_LEVEL_RANK_0( 2, "\nResidual:\n" << rhs );
 
-  if( verboseLevel() >= 3 )
+  if( getLogLevel() >= 3 )
   {
     SystemSolverParameters * const solverParams = getSystemSolverParameters();
     integer newtonIter = solverParams->numNewtonIterations();
@@ -1108,13 +1100,10 @@ void SinglePhaseFlow::SolveSystem( DofManager const & dofManager,
   solution.zero();
 
   SolverBase::SolveSystem( dofManager, matrix, rhs, solution );
-
-  if( verboseLevel() == 2 )
-  {
-    GEOS_LOG_RANK_0("After SinglePhaseFlow::SolveSystem");
-    GEOS_LOG_RANK_0("\nSolution:\n");
-    std::cout << solution;
-  }
+  
+  // Debug for logLevel >= 2
+  GEOS_LOG_LEVEL_RANK_0( 2, "After SinglePhaseFlow::SolveSystem" );
+  GEOS_LOG_LEVEL_RANK_0( 2, "\nSolution:\n" << solution );
 }
 
 void SinglePhaseFlow::ResetStateToBeginningOfStep( DomainPartition * const domain )
