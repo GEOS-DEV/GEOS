@@ -141,7 +141,7 @@ void EventManager::Run(dataRepository::Group * domain)
       m_currentSubEvent = 0;
 
 #ifdef GEOSX_USE_MPI
-      // Find the min dt across procfesses
+      // Find the min dt across processes
       real64 dt_global;
       MPI_Allreduce(&m_dt, &dt_global, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_GEOSX);
       m_dt = dt_global;

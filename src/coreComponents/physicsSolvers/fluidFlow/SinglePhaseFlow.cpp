@@ -865,7 +865,7 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit( real64 const time_n,
                           Group * const,
                           string const & )
   {
-    if (!sets->hasView(setName) || !fluxApprox->hasBoundaryStencil(setName))
+    if ( !sets->hasWrapper( setName ) || !fluxApprox->hasBoundaryStencil( setName))
       return;
 
     FluxApproximationBase::BoundaryStencil const & stencil = fluxApprox->getBoundaryStencil(setName);

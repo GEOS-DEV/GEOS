@@ -41,7 +41,7 @@ GEOSX will find find a compiled version of the third party libraries.
 As part of the contract provided by the TPL, the docker images also defines several environment variables.
 The 
 
-.. code-block::
+.. code-block:: sh
 
     GEOSX_TPL_DIR
 
@@ -50,7 +50,7 @@ GEOSX must use it when building.
 
 Other variables are classical absolute path compiler variables.
 
-.. code-block::
+.. code-block:: sh
 
     CC
     CXX
@@ -59,14 +59,14 @@ Other variables are classical absolute path compiler variables.
 
 Anf the absolute path the mpirun (or equivalent) command.
 
-.. code-block::
+.. code-block:: sh
 
     MPIEXEC
 
 The following openmpi environment variables allow it to work properly in the docker container.
 But there should be no reason to access or use them explicitely.
 
-.. code-block::
+.. code-block:: sh
 
     OMPI_CC=$CC
     OMPI_CXX=$CXX
