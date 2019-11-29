@@ -1,14 +1,17 @@
+"""Tools for reading/writing GEOSX ascii tables"""
 
 import numpy as np
 
 
-# Write an GEOS-compatible ascii table
-#   axes_values = A list of the axes values in order
-#   properties = A dictionary of properties given as an ndarray
-#                The shape of the array must be consistent with the axes
-#   axes_names = A list of axes names (optional)
-#   string_format = Format for table values
 def write_GEOS_table(axes_values, properties, axes_names=['x', 'y', 'z', 't'], string_format='%1.5e'):
+  """Write an GEOS-compatible ascii table.
+
+     @param axes_values List of arrays containing the coordinates for each axis of the table.
+     @param properties Dict of arrays with dimensionality/size defined by the axes_values
+     @param axes_names Names for each axis (default = ['x', 'y', 'z', 't'])
+     @param string_format Format for output values (default = %1.5e)
+  """
+
   # Check to make sure the axes/property files have the correct shape
   axes_shape = tuple([len(x) for x in axes_values])
   for k in properties.keys():
@@ -25,11 +28,13 @@ def write_GEOS_table(axes_values, properties, axes_names=['x', 'y', 'z', 't'], s
     np.savetxt('%s.geos' % (k), tmp, fmt=string_format, delimiter=',')
 
 
-# Read an GEOS-compatible ascii table
-#   axes_files = A list of the axes file names in order
-#   property_files = A list of the property file names
 def read_GEOS_table(axes_files, property_files):
-  # Open spatial files
+  """Read an GEOS-compatible ascii table.
+
+     @param axes_files List of the axes file names in order.
+     @param property_files List of property file names
+     @return List of axis definitions, dict of property values
+  """
   axes_values = []
   for f in axes_files:
     axes_values.append(np.loadtxt('%s.geos' % (f), unpack=True, delimiter=','))
@@ -44,8 +49,9 @@ def read_GEOS_table(axes_files, property_files):
   return axes_values, properties
 
 
-# Example of how to read/write GEOS tables using the above functions
 def write_read_GEOS_table_example():
+  """Table read / write example."""
+
   # Define table axes
   a = np.array([0.0, 1.0])
   b = np.array([0.0, 0.5, 1.0])

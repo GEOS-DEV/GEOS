@@ -27,6 +27,7 @@
 #include "mesh/MeshForLoopInterface.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseFlow.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
 
 namespace geosx
@@ -298,8 +299,8 @@ real64 PoroelasticSolver::SplitOperatorStep( real64 const& time_n,
   real64 dtReturn = dt;
   real64 dtReturnTemporary;
 
-  SolverBase &
-  solidSolver = *(this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolverBase*>());
+  SolidMechanicsLagrangianFEM &
+  solidSolver = *(this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolidMechanicsLagrangianFEM*>());
 
   SinglePhaseFlow &
   fluidSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>());
@@ -366,6 +367,8 @@ real64 PoroelasticSolver::SplitOperatorStep( real64 const& time_n,
     }
 
     LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1  << ", MechanicsSolver: " );
+
+    solidSolver.ResetStressToBeginningOfStep(domain);
     dtReturnTemporary = solidSolver.NonlinearImplicitStep( time_n,
                                                            dtReturn,
                                                            cycleNumber,
@@ -374,6 +377,9 @@ real64 PoroelasticSolver::SplitOperatorStep( real64 const& time_n,
                                                            solidSolver.getSystemMatrix(),
                                                            solidSolver.getSystemRhs(),
                                                            solidSolver.getSystemSolution() );
+
+    solidSolver.updateStress( domain );
+
     if (dtReturnTemporary < dtReturn)
     {
       iter = 0;

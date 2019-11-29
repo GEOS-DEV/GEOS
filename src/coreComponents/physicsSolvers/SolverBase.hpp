@@ -130,6 +130,21 @@ public:
                              integer const cycleNumber,
                              DomainPartition * const domain );
 
+
+
+  /**
+     * @brief entry function to perform a solver step
+     * @param [in]  time_n time at the beginning of the step
+     * @param [in]  dt the perscribed timestep
+     * @param [out] return the timestep that was achieved during the step.
+     *
+     * T
+     */
+  virtual void SetNextDt(SystemSolverParameters * const solverParams,
+  		                 real64 const & currentDt,
+  		                 real64 & nextDt);
+
+
   /**
    * @brief Entry function for an explicit time integration step
    * @param time_n time at the beginning of the step
@@ -452,6 +467,12 @@ public:
                         real64 const & dt,
                         DomainPartition * const domain );
 
+
+  /*
+   * Returns the requirement for the next time-step to the event executing the solver.
+   */
+  virtual real64 GetTimestepRequest( real64 const GEOSX_UNUSED_ARG( time ) ) override
+		  {return m_nextDt;};
   /**@}*/
 
 
@@ -465,6 +486,7 @@ public:
   {
     constexpr static auto gravityVectorString = "gravityVector";
     constexpr static auto cflFactorString = "cflFactor";
+    constexpr static auto initialDtString = "initialDt";
     constexpr static auto maxStableDtString = "maxStableDt";
     static constexpr auto discretizationString = "discretization";
     constexpr static auto targetRegionsString = "targetRegions";
@@ -549,6 +571,7 @@ protected:
 
   real64 m_cflFactor;
   real64 m_maxStableDt;
+  real64 m_nextDt;
 
   /// name of the FV discretization object in the data repository
   string m_discretizationName;

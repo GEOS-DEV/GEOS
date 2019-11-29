@@ -38,6 +38,8 @@ public:
 
   static string CatalogName() { return "SystemSolverParameters"; }
 
+  virtual void PostProcessInput() override;
+
   struct viewKeysStruct
   {
     static constexpr auto solverTypeString          = "solverType";
@@ -63,6 +65,8 @@ public:
     static constexpr auto lineSearchCutFactorString = "lineSearchCutFactor";
     static constexpr auto allowNonConvergedString   = "allowNonConverged";
     static constexpr auto maxSubStepsString         = "maxSubSteps";
+    static constexpr auto dtCutIterLimString        = "dtCutIterLimit";
+    static constexpr auto dtIncIterLimString        = "dtIncIterLimit";
 
   } viewKeys;
 
@@ -94,6 +98,9 @@ public:
   real64  lineSearchCutFactor() const         { return m_lineSearchCutFactor; }
   integer allowNonConverged() const           { return m_allowNonConverged; }
   integer maxSubSteps() const                 { return m_maxSubSteps; }
+  integer & numdtAttempts()                   { return m_numdtAttempts; }
+  real64  dtCutIterLimit() const              { return m_dtCutIterLimit * m_maxIterNewton; }
+  real64  dtIncIterLimit() const              { return m_dtIncIterLimit * m_maxIterNewton; }
 
   string  m_solverType;
   real64  m_krylovTol;
@@ -120,8 +127,9 @@ public:
   integer m_allowNonConverged;
   integer m_maxSubSteps;
   integer m_maxIters = 1000;
-
-
+  integer m_numdtAttempts; // number of times that the time-step had to be cut.
+  real64  m_dtCutIterLimit;
+  real64  m_dtIncIterLimit;
 };
 
 } /* namespace geosx */
