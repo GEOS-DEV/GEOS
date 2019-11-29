@@ -263,9 +263,9 @@ void LaplaceFEM::AssembleSystem( real64 const time_n,
   //END_SPHINX_INCLUDE_04
 
   // Debug for logLevel >= 2
-  LOG_LEVEL_RANK_0( 2, "After LaplaceFEM::AssembleSystem" );
-  LOG_LEVEL_RANK_0( 2, "\nJacobian:\n" << matrix );
-  LOG_LEVEL_RANK_0( 2, "\nResidual:\n" << rhs );
+  GEOS_LOG_LEVEL_RANK_0( 2, "After LaplaceFEM::AssembleSystem" );
+  GEOS_LOG_LEVEL_RANK_0( 2, "\nJacobian:\n" << matrix );
+  GEOS_LOG_LEVEL_RANK_0( 2, "\nResidual:\n" << rhs );
 
   if( getLogLevel() >= 3 )
   {
@@ -313,9 +313,9 @@ void LaplaceFEM::ApplyBoundaryConditions( real64 const time_n,
   ApplyDirichletBC_implicit( time_n + dt, dofManager, *domain, m_matrix, m_rhs );
 
   // Debug for logLevel >= 2
-  LOG_LEVEL_RANK_0( 2, "After LaplaceFEM::ApplyBoundaryConditions" );
-  LOG_LEVEL_RANK_0( 2, "\nJacobian:\n" << matrix );
-  LOG_LEVEL_RANK_0( 2, "\nResidual:\n" << rhs );
+  GEOS_LOG_LEVEL_RANK_0( 2, "After LaplaceFEM::ApplyBoundaryConditions" );
+  GEOS_LOG_LEVEL_RANK_0( 2, "\nJacobian:\n" << matrix );
+  GEOS_LOG_LEVEL_RANK_0( 2, "\nResidual:\n" << rhs );
 
   if( getLogLevel() >= 3 )
   {
@@ -345,8 +345,8 @@ void LaplaceFEM::SolveSystem( DofManager const & dofManager,
   SolverBase::SolveSystem( dofManager, matrix, rhs, solution );
 
   // Debug for logLevel >= 2
-  LOG_LEVEL_RANK_0( 2, "After LaplaceFEM::SolveSystem" );
-  LOG_LEVEL_RANK_0( 2, "\nSolution:\n" << solution );
+  GEOS_LOG_LEVEL_RANK_0( 2, "After LaplaceFEM::SolveSystem" );
+  GEOS_LOG_LEVEL_RANK_0( 2, "\nSolution:\n" << solution );
 }
 
 void LaplaceFEM::ApplyDirichletBC_implicit( real64 const time,

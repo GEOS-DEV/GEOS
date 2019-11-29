@@ -214,7 +214,7 @@ void SolverBase::Execute( real64 const time_n,
 
     if( m_logLevel >= 1 && dtRemaining > 0.0 )
     {
-      LOG_LEVEL_RANK_0( 1, getName() << ": sub-step = " << subStep
+      GEOS_LOG_LEVEL_RANK_0( 1, getName() << ": sub-step = " << subStep
                                        << ", accepted dt = " << dtAccepted
                                        << ", remaining dt = " << dtRemaining );
     }
@@ -238,12 +238,12 @@ void SolverBase::SetNextDt( SystemSolverParameters * const solverParams,
 	{
 		// Easy convergence, let's double the time-step.
 		nextDt = 2*currentDt;
-		LOG_LEVEL_RANK_0( 1,  getName() << ": Newton solver converged in less than " << iterIncLimit << " iterations, time-step required will be doubled.");
+		GEOS_LOG_LEVEL_RANK_0( 1,  getName() << ": Newton solver converged in less than " << iterIncLimit << " iterations, time-step required will be doubled.");
 	}else if (newtonIter >  iterCutLimit)
 	{
 		// Tough convergence let us make the time-step smaller!
 		nextDt = currentDt/2;
-		LOG_LEVEL_RANK_0(1, getName() << ": Newton solver converged in more than " << iterCutLimit << " iterations, time-step required will be halved.");
+		GEOS_LOG_LEVEL_RANK_0(1, getName() << ": Newton solver converged in more than " << iterCutLimit << " iterations, time-step required will be halved.");
 	}else
 	{
 		nextDt = currentDt;
@@ -316,7 +316,7 @@ bool SolverBase::LineSearch( real64 const & time_n,
 
     if( !CheckSystemSolution( domain, dofManager, solution, localScaleFactor ) )
     {
-      LOG_LEVEL_RANK_0( 1, "Line search: " << lineSearchIteration << ", solution check failed" );
+      GEOS_LOG_LEVEL_RANK_0( 1, "Line search: " << lineSearchIteration << ", solution check failed" );
       continue;
     }
 
@@ -331,7 +331,7 @@ bool SolverBase::LineSearch( real64 const & time_n,
     // get residual norm
     residualNorm = CalculateResidualNorm( domain, dofManager, rhs );
 
-    LOG_LEVEL_RANK_0( 1, "Line search: " << lineSearchIteration << ", R = " << residualNorm );
+    GEOS_LOG_LEVEL_RANK_0( 1, "Line search: " << lineSearchIteration << ", R = " << residualNorm );
 
     // if the residual norm is less than the last residual, we can proceed to the
     // solution step
@@ -404,7 +404,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       // get residual norm
       real64 residualNorm = CalculateResidualNorm( domain, dofManager, rhs );
 
-      LOG_LEVEL_RANK_0( 1, "Attempt: " << dtAttempt << ", Newton: " << newtonIter << ", R = " << residualNorm );
+      GEOS_LOG_LEVEL_RANK_0( 1, "Attempt: " << dtAttempt << ", Newton: " << newtonIter << ", R = " << residualNorm );
 
       // if the residual norm is less than the Newton tolerance we denote that we have
       // converged and break from the Newton loop immediately.
