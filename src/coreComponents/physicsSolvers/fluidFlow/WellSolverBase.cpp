@@ -136,9 +136,9 @@ void WellSolverBase::AssembleSystem( real64 const time,
   FormControlEquation( domain, &dofManager, &matrix, &rhs );
 
   // Log messages for logLevel >= 2
-  LOG_LEVEL_RANK_0(2, "After WellSolverBase::AssembleSystem" );
-  LOG_LEVEL_RANK_0(2, "\nJacobian:\n" << matrix );
-  LOG_LEVEL_RANK_0(2, "\nResidual:\n" << rhs );
+  GEOS_LOG_LEVEL_RANK_0(2, "After WellSolverBase::AssembleSystem" );
+  GEOS_LOG_LEVEL_RANK_0(2, "\nJacobian:\n" << matrix );
+  GEOS_LOG_LEVEL_RANK_0(2, "\nResidual:\n" << rhs );
 }
 
 void WellSolverBase::UpdateStateAll( DomainPartition * const domain )
