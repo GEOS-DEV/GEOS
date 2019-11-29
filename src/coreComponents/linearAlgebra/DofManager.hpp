@@ -610,7 +610,7 @@ private:
   /**
    * Verbosity level
    */
-  localIndex m_verbosity;
+  localIndex m_logLevel;
 
   /**
    *  Limit on max number of fields
