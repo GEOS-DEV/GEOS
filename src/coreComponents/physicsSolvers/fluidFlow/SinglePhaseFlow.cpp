@@ -401,9 +401,9 @@ void SinglePhaseFlow::AssembleSystem( real64 const time_n,
   }
 
   // Debug for logLevel >= 2
-  LOG_LEVEL_RANK_0( 2, "After SinglePhaseFlow::AssembleSystem" );
-  LOG_LEVEL_RANK_0( 2, "\nJacobian:\n" << matrix );
-  LOG_LEVEL_RANK_0( 2, "\nResidual:\n" << rhs );
+  GEOS_LOG_LEVEL_RANK_0( 2, "After SinglePhaseFlow::AssembleSystem" );
+  GEOS_LOG_LEVEL_RANK_0( 2, "\nJacobian:\n" << matrix );
+  GEOS_LOG_LEVEL_RANK_0( 2, "\nResidual:\n" << rhs );
 
   if( getLogLevel() >= 3 )
   {
@@ -717,9 +717,9 @@ SinglePhaseFlow::ApplyBoundaryConditions( real64 const time_n,
   rhs.close();
 
   // Debug for logLevel >= 2
-  LOG_LEVEL_RANK_0( 2, "After SinglePhaseFlow::ApplyBoundaryConditions" );
-  LOG_LEVEL_RANK_0( 2, "\nJacobian:\n" << matrix );
-  LOG_LEVEL_RANK_0( 2, "\nResidual:\n" << rhs );
+  GEOS_LOG_LEVEL_RANK_0( 2, "After SinglePhaseFlow::ApplyBoundaryConditions" );
+  GEOS_LOG_LEVEL_RANK_0( 2, "\nJacobian:\n" << matrix );
+  GEOS_LOG_LEVEL_RANK_0( 2, "\nResidual:\n" << rhs );
 
   if( getLogLevel() >= 3 )
   {
@@ -1102,8 +1102,8 @@ void SinglePhaseFlow::SolveSystem( DofManager const & dofManager,
   SolverBase::SolveSystem( dofManager, matrix, rhs, solution );
   
   // Debug for logLevel >= 2
-  LOG_LEVEL_RANK_0( 2, "After SinglePhaseFlow::SolveSystem" );
-  LOG_LEVEL_RANK_0( 2, "\nSolution:\n" << solution );
+  GEOS_LOG_LEVEL_RANK_0( 2, "After SinglePhaseFlow::SolveSystem" );
+  GEOS_LOG_LEVEL_RANK_0( 2, "\nSolution:\n" << solution );
 }
 
 void SinglePhaseFlow::ResetStateToBeginningOfStep( DomainPartition * const domain )

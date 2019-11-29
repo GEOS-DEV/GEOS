@@ -3,52 +3,12 @@
 	<xsd:annotation>
 		<xsd:documentation xml:lang="en">GEOSX Input Schema</xsd:documentation>
 	</xsd:annotation>
-	<xsd:simpleType name="string">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[^,\{\}]*" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="real32_array3d">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="\{(\{(\{([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\},\s*)*\{([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\}\},\s*)*\{(\{([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\},\s*)*\{([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\}\}\}" />
-		</xsd:restriction>
-	</xsd:simpleType>
 	<xsd:simpleType name="globalIndex_array3d">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value="\{(\{(\{([+-]?[\d]+,\s*)*[+-]?[\d]+\},\s*)*\{([+-]?[\d]+,\s*)*[+-]?[\d]+\}\},\s*)*\{(\{([+-]?[\d]+,\s*)*[+-]?[\d]+\},\s*)*\{([+-]?[\d]+,\s*)*[+-]?[\d]+\}\}\}" />
 		</xsd:restriction>
 	</xsd:simpleType>
-	<xsd:simpleType name="real64_array3d">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="\{(\{(\{([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\},\s*)*\{([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\}\},\s*)*\{(\{([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\},\s*)*\{([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\}\}\}" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="r2_array2d">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="\{(\{(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){8}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){8}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\},\s*)*\{(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){8}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){8}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\}\}" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="mapPair_array">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="\{([^,\{\}]*,\s*)*[^,\{\}]*\}" />
-		</xsd:restriction>
-	</xsd:simpleType>
 	<xsd:simpleType name="integer_array3d">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="\{(\{(\{([+-]?[\d]+,\s*)*[+-]?[\d]+\},\s*)*\{([+-]?[\d]+,\s*)*[+-]?[\d]+\}\},\s*)*\{(\{([+-]?[\d]+,\s*)*[+-]?[\d]+\},\s*)*\{([+-]?[\d]+,\s*)*[+-]?[\d]+\}\}\}" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="r1_array2d">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="\{(\{(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\},\s*)*\{(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\}\}" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="string_array">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="\{([^,\{\}]*,\s*)*[^,\{\}]*\}" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="localIndex_array3d">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value="\{(\{(\{([+-]?[\d]+,\s*)*[+-]?[\d]+\},\s*)*\{([+-]?[\d]+,\s*)*[+-]?[\d]+\}\},\s*)*\{(\{([+-]?[\d]+,\s*)*[+-]?[\d]+\},\s*)*\{([+-]?[\d]+,\s*)*[+-]?[\d]+\}\}\}" />
 		</xsd:restriction>
@@ -58,19 +18,9 @@
 			<xsd:pattern value="\{(\{([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\},\s*)*\{([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\}\}" />
 		</xsd:restriction>
 	</xsd:simpleType>
-	<xsd:simpleType name="mapPair">
+	<xsd:simpleType name="string_array">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[^,\{\}]*" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="real32_array2d">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="\{(\{([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\},\s*)*\{([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\}\}" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="r2Sym_array2d">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="\{(\{(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){5}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){5}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\},\s*)*\{(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){5}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){5}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\}\}" />
+			<xsd:pattern value="\{([^,\{\}]*,\s*)*[^,\{\}]*\}" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="globalIndex_array2d">
@@ -78,12 +28,17 @@
 			<xsd:pattern value="\{(\{([+-]?[\d]+,\s*)*[+-]?[\d]+\},\s*)*\{([+-]?[\d]+,\s*)*[+-]?[\d]+\}\}" />
 		</xsd:restriction>
 	</xsd:simpleType>
-	<xsd:simpleType name="localIndex_array2d">
+	<xsd:simpleType name="r2Sym_array2d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="\{(\{([+-]?[\d]+,\s*)*[+-]?[\d]+\},\s*)*\{([+-]?[\d]+,\s*)*[+-]?[\d]+\}\}" />
+			<xsd:pattern value="\{(\{(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){5}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){5}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\},\s*)*\{(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){5}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){5}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\}\}" />
 		</xsd:restriction>
 	</xsd:simpleType>
-	<xsd:simpleType name="integer_array2d">
+	<xsd:simpleType name="real32">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="localIndex_array2d">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value="\{(\{([+-]?[\d]+,\s*)*[+-]?[\d]+\},\s*)*\{([+-]?[\d]+,\s*)*[+-]?[\d]+\}\}" />
 		</xsd:restriction>
@@ -98,19 +53,9 @@
 			<xsd:pattern value="\{(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\}" />
 		</xsd:restriction>
 	</xsd:simpleType>
-	<xsd:simpleType name="real32_array">
+	<xsd:simpleType name="real64_array3d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="\{([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\}" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="r2_array">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="\{(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){8}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){8}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\}" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="globalIndex_array">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="\{([+-]?[\d]+,\s*)*[+-]?[\d]+\}" />
+			<xsd:pattern value="\{(\{(\{([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\},\s*)*\{([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\}\},\s*)*\{(\{([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\},\s*)*\{([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\}\}\}" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="real64_array">
@@ -118,14 +63,14 @@
 			<xsd:pattern value="\{([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\}" />
 		</xsd:restriction>
 	</xsd:simpleType>
-	<xsd:simpleType name="localIndex_array">
+	<xsd:simpleType name="real32_array">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="\{([+-]?[\d]+,\s*)*[+-]?[\d]+\}" />
+			<xsd:pattern value="\{([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\}" />
 		</xsd:restriction>
 	</xsd:simpleType>
-	<xsd:simpleType name="integer_array">
+	<xsd:simpleType name="integer">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="\{([+-]?[\d]+,\s*)*[+-]?[\d]+\}" />
+			<xsd:pattern value="[+-]?[\d]+" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="R2SymTensor">
@@ -133,9 +78,44 @@
 			<xsd:pattern value="([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){5}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)" />
 		</xsd:restriction>
 	</xsd:simpleType>
+	<xsd:simpleType name="real32_array3d">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="\{(\{(\{([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\},\s*)*\{([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\}\},\s*)*\{(\{([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\},\s*)*\{([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\}\}\}" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="r2_array2d">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="\{(\{(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){8}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){8}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\},\s*)*\{(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){8}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){8}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\}\}" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="integer_array2d">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="\{(\{([+-]?[\d]+,\s*)*[+-]?[\d]+\},\s*)*\{([+-]?[\d]+,\s*)*[+-]?[\d]+\}\}" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="r2_array">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="\{(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){8}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){8}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\}" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:simpleType name="R2Tensor">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value="([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){8}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="localIndex_array3d">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="\{(\{(\{([+-]?[\d]+,\s*)*[+-]?[\d]+\},\s*)*\{([+-]?[\d]+,\s*)*[+-]?[\d]+\}\},\s*)*\{(\{([+-]?[\d]+,\s*)*[+-]?[\d]+\},\s*)*\{([+-]?[\d]+,\s*)*[+-]?[\d]+\}\}\}" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="real32_array2d">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="\{(\{([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\},\s*)*\{([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\}\}" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="localIndex_array">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="\{([+-]?[\d]+,\s*)*[+-]?[\d]+\}" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="real64">
@@ -143,9 +123,19 @@
 			<xsd:pattern value="[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)" />
 		</xsd:restriction>
 	</xsd:simpleType>
+	<xsd:simpleType name="string">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[^,\{\}]*" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:simpleType name="R1Tensor">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value="([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="mapPair">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[^,\{\}]*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="globalIndex">
@@ -153,19 +143,29 @@
 			<xsd:pattern value="[+-]?[\d]+" />
 		</xsd:restriction>
 	</xsd:simpleType>
+	<xsd:simpleType name="globalIndex_array">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="\{([+-]?[\d]+,\s*)*[+-]?[\d]+\}" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="mapPair_array">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="\{([^,\{\}]*,\s*)*[^,\{\}]*\}" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="integer_array">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="\{([+-]?[\d]+,\s*)*[+-]?[\d]+\}" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:simpleType name="localIndex">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value="[+-]?[\d]+" />
 		</xsd:restriction>
 	</xsd:simpleType>
-	<xsd:simpleType name="real32">
+	<xsd:simpleType name="r1_array2d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="integer">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[+-]?[\d]+" />
+			<xsd:pattern value="\{(\{(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\},\s*)*\{(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\}\}" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:element name="Problem" type="ProblemType" />
@@ -768,13 +768,10 @@
 		<xsd:attribute name="fluidName" type="string" use="required" />
 		<!--gravityFlag => Flag that enables/disables gravity-->
 		<xsd:attribute name="gravityFlag" type="integer" use="required" />
-<<<<<<< HEAD
-		<!--logLevel => Log level-->
-		<xsd:attribute name="logLevel" type="integer" default="0" />
-=======
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
->>>>>>> develop
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--relPermName => Name of the relative permeability constitutive model to use-->
 		<xsd:attribute name="relPermName" type="string" use="required" />
 		<!--solidName => Name of solid constitutive object to use for this solver-->
@@ -798,13 +795,10 @@
 		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--gravityFlag => Flag that enables/disables gravity-->
 		<xsd:attribute name="gravityFlag" type="integer" use="required" />
-<<<<<<< HEAD
-		<!--logLevel => Log level-->
-		<xsd:attribute name="logLevel" type="integer" default="0" />
-=======
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
->>>>>>> develop
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--useMass => Use mass formulation instead of molar-->
@@ -832,13 +826,10 @@
 		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--fluidSolverName => Name of the fluid mechanics solver to use in the poroelastic solver-->
 		<xsd:attribute name="fluidSolverName" type="string" use="required" />
-<<<<<<< HEAD
-		<!--logLevel => Log level-->
-		<xsd:attribute name="logLevel" type="integer" default="0" />
-=======
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
->>>>>>> develop
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxNumResolves => Value to indicate how many resolves may be executed to perform surface generation after the execution of flow and mechanics solver. -->
 		<xsd:attribute name="maxNumResolves" type="integer" default="10" />
 		<!--solidSolverName => Name of the solid mechanics solver to use in the poroelastic solver-->
@@ -858,13 +849,10 @@
 		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--fieldName => name of field variable-->
 		<xsd:attribute name="fieldName" type="string" use="required" />
-<<<<<<< HEAD
-		<!--logLevel => Log level-->
-		<xsd:attribute name="logLevel" type="integer" default="0" />
-=======
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
->>>>>>> develop
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--timeIntegrationOption => option for default time integration method-->
@@ -884,13 +872,10 @@
 		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--fluidSolverName => Name of the fluid mechanics solver to use in the poroelastic solver-->
 		<xsd:attribute name="fluidSolverName" type="string" use="required" />
-<<<<<<< HEAD
-		<!--logLevel => Log level-->
-		<xsd:attribute name="logLevel" type="integer" default="0" />
-=======
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
->>>>>>> develop
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--solidSolverName => Name of the solid mechanics solver to use in the poroelastic solver-->
 		<xsd:attribute name="solidSolverName" type="string" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
@@ -908,13 +893,10 @@
 		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--flowSolverName => Name of the flow solver to use in the reservoir-well system solver-->
 		<xsd:attribute name="flowSolverName" type="string" use="required" />
-<<<<<<< HEAD
-		<!--logLevel => Log level-->
-		<xsd:attribute name="logLevel" type="integer" default="0" />
-=======
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
->>>>>>> develop
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--wellSolverName => Name of the well solver to use in the reservoir-well system solver-->
@@ -934,13 +916,10 @@
 		<xsd:attribute name="fluidName" type="string" use="required" />
 		<!--gravityFlag => Flag that enables/disables gravity-->
 		<xsd:attribute name="gravityFlag" type="integer" use="required" />
-<<<<<<< HEAD
-		<!--logLevel => Log level-->
-		<xsd:attribute name="logLevel" type="integer" default="0" />
-=======
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
->>>>>>> develop
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--solidName => Name of solid constitutive object to use for this solver-->
 		<xsd:attribute name="solidName" type="string" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
@@ -958,13 +937,10 @@
 		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--gravityFlag => Flag that enables/disables gravity-->
 		<xsd:attribute name="gravityFlag" type="integer" use="required" />
-<<<<<<< HEAD
-		<!--logLevel => Log level-->
-		<xsd:attribute name="logLevel" type="integer" default="0" />
-=======
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
->>>>>>> develop
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--wellFluidName => Name of fluid constitutive object to use for this solver.-->
@@ -982,13 +958,10 @@
 		<xsd:attribute name="contactRelationName" type="string" default="NOCONTACT" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="string" default="none" />
-<<<<<<< HEAD
-		<!--logLevel => Log level-->
-		<xsd:attribute name="logLevel" type="integer" default="0" />
-=======
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
->>>>>>> develop
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--massDamping => Value of mass based damping coefficient. -->
 		<xsd:attribute name="massDamping" type="real64" default="0" />
 		<!--maxNumResolves => Value to indicate how many resolves may be executed after some other event is executed. For example, if a SurfaceGenerator is specified, it will be executed after the mechanics solve. However if a new surface is generated, then the mechanics solve must be executed again due to the change in topology.-->
@@ -1027,13 +1000,10 @@
 		<xsd:attribute name="contactRelationName" type="string" default="NOCONTACT" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="string" default="none" />
-<<<<<<< HEAD
-		<!--logLevel => Log level-->
-		<xsd:attribute name="logLevel" type="integer" default="0" />
-=======
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
->>>>>>> develop
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--massDamping => Value of mass based damping coefficient. -->
 		<xsd:attribute name="massDamping" type="real64" default="0" />
 		<!--maxNumResolves => Value to indicate how many resolves may be executed after some other event is executed. For example, if a SurfaceGenerator is specified, it will be executed after the mechanics solve. However if a new surface is generated, then the mechanics solve must be executed again due to the change in topology.-->
@@ -1072,13 +1042,10 @@
 		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--fractureRegion => (no description available)-->
 		<xsd:attribute name="fractureRegion" type="string" default="FractureRegion" />
-<<<<<<< HEAD
-		<!--logLevel => Log level-->
-		<xsd:attribute name="logLevel" type="integer" default="0" />
-=======
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
->>>>>>> develop
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--mpiCommOrder => Flag to enable MPI consistent communication ordering-->
 		<xsd:attribute name="mpiCommOrder" type="integer" default="0" />
 		<!--nodeBasedSIF => Rock toughness of the solid material-->
