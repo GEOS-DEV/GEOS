@@ -45,6 +45,7 @@ Group::Group( std::string const & name,
   m_size( 0 ),
   m_capacity( 0 ),
   m_name( name ),
+  m_logLevel( 0 ),
   m_restart_flags( RestartFlags::WRITE_AND_READ ),
   m_input_flags( InputFlags::INVALID ),
   m_conduitNode( conduitNodeFromParent( name, parent ) )
@@ -471,7 +472,7 @@ void Group::prepareToWrite()
 
   m_conduitNode[ "__size__" ].set( m_size );
 
-  forSubGroups([]( Group * subGroup )
+  forSubGroups( []( Group * subGroup )
       {
         subGroup->prepareToWrite();
       } );
@@ -490,7 +491,7 @@ void Group::finishWriting()
     pair.second->finishWriting();
   }
 
-  forSubGroups([]( Group * subGroup )
+  forSubGroups( []( Group * subGroup )
       {
         subGroup->finishWriting();
       } );
@@ -511,7 +512,7 @@ void Group::loadFromConduit()
     pair.second->loadFromConduit();
   }
 
-  forSubGroups([]( Group * subGroup )
+  forSubGroups( []( Group * subGroup )
       {
         subGroup->loadFromConduit();
       } );
@@ -519,7 +520,7 @@ void Group::loadFromConduit()
 
 void Group::postRestartInitializationRecursive( Group * const domain )
 {
-  forSubGroups([&]( Group * const subGroup )
+  forSubGroups( [&]( Group * const subGroup )
       {
         subGroup->postRestartInitializationRecursive( domain );
       } );
@@ -535,6 +536,16 @@ void Group::SetSchemaDeviations( xmlWrapper::xmlNode GEOSX_UNUSED_ARG( schemaRoo
 void Group::RegisterDataOnMesh( Group * const GEOSX_UNUSED_ARG( MeshBody ) )
 {}
 
+
+void Group::enableLogLevelInput()
+{
+  string const logLevelString = "logLevel";
+
+  registerWrapper( logLevelString, &m_logLevel, false )->
+    setApplyDefaultValue( 0 )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Log level" );
+}
 
 } /* end namespace dataRepository */
 } /* end namespace geosx  */

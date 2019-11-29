@@ -1424,6 +1424,11 @@ public:
    */
   void loadFromConduit();
 
+  /// Enable verbosity input for object
+  void enableLogLevelInput();
+
+  /// @return The verbosity level
+  integer getLogLevel() const { return m_logLevel; }
   ///@}
 
 protected:
@@ -1521,6 +1526,9 @@ private:
 
   /// The name/key of this Group in its parent collection of sub-Groups.
   string m_name;
+
+  /// Verbosity flag for group logs
+  integer m_logLevel;
 
   RestartFlags m_restart_flags; ///< Restart flag for this group...and
                                 ///< subsequently all wrappers in this group
