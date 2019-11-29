@@ -42,7 +42,6 @@ public:
 
   struct viewKeysStruct
   {
-    static constexpr auto verbosityString           = "verbosityFlag";
     static constexpr auto solverTypeString          = "solverType";
     static constexpr auto krylovTolString           = "krylovTol";
     static constexpr auto numKrylovIterString       = "numKrylovIter";
@@ -74,7 +73,6 @@ public:
   struct groupKeysStruct
   {} groupKeys;
 
-  integer  verbose() const                    { return m_verbose; }
   string  solverType() const                  { return m_solverType; }
   real64 krylovTol() const                    { return m_krylovTol; }
   integer  numKrylovIter() const              { return m_numKrylovIter; }
@@ -104,8 +102,6 @@ public:
   real64  dtCutIterLimit() const              { return m_dtCutIterLimit * m_maxIterNewton; }
   real64  dtIncIterLimit() const              { return m_dtIncIterLimit * m_maxIterNewton; }
 
-
-  integer m_verbose;
   string  m_solverType;
   real64  m_krylovTol;
   integer m_numKrylovIter;

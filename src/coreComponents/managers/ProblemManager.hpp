@@ -122,7 +122,6 @@ public:
 
   struct viewKeysStruct
   {
-    dataRepository::ViewKey verbosity                = { "verbosityFlag" };
     dataRepository::ViewKey inputFileName            = {"inputFileName"};
     dataRepository::ViewKey restartFileName          = {"restartFileName"};
     dataRepository::ViewKey beginFromRestart         = {"beginFromRestart"};

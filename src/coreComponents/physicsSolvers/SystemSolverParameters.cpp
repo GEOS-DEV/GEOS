@@ -25,7 +25,6 @@ using namespace dataRepository;
 SystemSolverParameters::SystemSolverParameters( std::string const & name,
                                                 Group * const parent ):
   Group(name,parent),
-  m_verbose(0),
   m_solverType("Klu"),
   m_krylovTol(),
   m_numKrylovIter(),
@@ -46,11 +45,8 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
 {
   setInputFlags(InputFlags::OPTIONAL);
   
-  setRestartFlags(RestartFlags::NO_WRITE);
-  registerWrapper(viewKeysStruct::verbosityString, &m_verbose, false )->
-    setApplyDefaultValue(0)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("verbosity level");
+  // This enables logLevel filtering
+  enableLogLevelInput();
 
   registerWrapper(viewKeysStruct::solverTypeString, &m_solverType, false )->
     setInputFlag(InputFlags::OPTIONAL)->
