@@ -1,8 +1,7 @@
-
+<!--# {{short}} # -->
+<!--# {{long}} # -->
 <Problem>
-
- <Solvers
-    gravityVector="0.0, 0.0, -9.81">
+  <Solvers gravityVector="0.0, 0.0, -9.81">
 
     <Reservoir name="reservoirSystem"
                flowSolverName="singlePhaseFlow"
@@ -10,8 +9,7 @@
                verboseLevel="1"
                targetRegions="{domain,
 			       wellRegion1,
-			       wellRegion2,
-			       wellRegion3}">
+			       wellRegion2}">
       <SystemSolverParameters maxIterNewton="40"
                               useDirectSolver="1"
                               verbosityFlag="0"
@@ -19,7 +17,7 @@
                               maxTimeStepCuts="10"
                               newtonTol="1e-6"/>
     </Reservoir>
-  
+    
     <SinglePhaseFlow name="singlePhaseFlow"
                      verboseLevel="1"
                      gravityFlag="1"
@@ -34,151 +32,148 @@
                      gravityFlag="1"
                      wellFluidName="water"
                      targetRegions="{wellRegion1,
-				     wellRegion2,
-				     wellRegion3}">
+				     wellRegion2}">
         <WellControls name="wellControls1"
                       type="producer"
                       control="BHP"
                       targetBHP="1e5"
                       targetRate="1e9"/>
         <WellControls name="wellControls2"
-                      type="producer"
-                      control="BHP"
-                      targetBHP="1e5"
-                      targetRate="1e9"/>
-        <WellControls name="wellControls3"
                       type="injector"
                       control="liquidRate" 
-                      targetBHP="1e9"
+                      targetBHP="1e8"
                       targetRate="200"/>     
     </SinglePhaseWell>
+    
   </Solvers>
   
   <Mesh>
-    <PAMELAMeshGenerator name="mesh"
-                         file="/g/g90/hamon1/geosx/GEOSX/examples/fluidFlow/data/egg.msh"
-                         fieldNamesInGEOSX="{permeability}"
-                         fieldsToImport="{PERM}"/>
-                         
-    <InternalWell name="well_producer1"
+    <PAMELAMeshGenerator name="domain"
+                         file="/g/g90/hamon1/geosx/GEOSX/examples/fluidFlow/data/SPE1.GRDECL"
+			 scale="0.3048"/>
+
+    <InternalWell name="wellProducer1"
                   wellRegionName="wellRegion1"
                   wellControlsName="wellControls1"
-                  meshName="mesh"
-                  polylineNodeCoords="{ {360,  120, 0}, 
-                                        {360,  120, 2} }"
+                  meshName="domain"
+                  polylineNodeCoords="{ {1,  1, 2567}, 
+                                        {1,  1, 2547} }"
                   polylineSegmentConn="{ {0, 1} }"
                   radius="0.1"
                   numElementsPerSegment="2">
      <Perforation name="producer1_perf1"
-                  distanceFromHead="1.99"
+                  distanceFromHead="19.9"
                   wellPeacemanIndex="1e-10"/> 
     </InternalWell> 
-    <InternalWell name="well_producer2"
+    <InternalWell name="wellInjector1"
                   wellRegionName="wellRegion2"
                   wellControlsName="wellControls2"
-                  meshName="mesh"
-                  polylineNodeCoords="{ {60, 360, 0}, 
-                                        {60, 360, 2 } }"
-                  polylineSegmentConn="{ {0, 1} }"
-                  radius="0.1"
-                  numElementsPerSegment="2">
-     <Perforation name="producer2_perf1"
-                  distanceFromHead="1.99"
-                  wellPeacemanIndex="1e-10"/>
-    </InternalWell> 
-    <InternalWell name="well_injector1"
-                  wellRegionName="wellRegion3"
-                  wellControlsName="wellControls3"
-                  meshName="mesh"
-                  polylineNodeCoords="{ {180, 180, 0}, 
-                                        {180, 180, 2 } }"
+                  meshName="domain"
+                  polylineNodeCoords="{ {2999, 2999, 2567}, 
+                                        {2999, 2999, 2547 } }"
                   polylineSegmentConn="{ {0, 1} }"
                   radius="0.1"
                   numElementsPerSegment="4">
      <Perforation name="injector1_perf1"
-                  distanceFromHead="1.25"
+                  distanceFromHead="5.25"
                   wellPeacemanIndex="1e-10"/>
      <Perforation name="injector1_perf2"
-                  distanceFromHead="1.95"
+                  distanceFromHead="19.35"
                   wellPeacemanIndex="1e-10"/> 
     </InternalWell>
-  
+
   </Mesh>
-
-  <Events maxTime="2e2" verbosity="1">
-    <PeriodicEvent name="outputs"
-                   timeFrequency="1e2"
-                   targetExactTimestep="1"
-                   target="/Outputs/siloOutput" />
-
-    <PeriodicEvent name="solverApplications"
-                   target="/Solvers/reservoirSystem"/>
-                   
-    <PeriodicEvent name="restarts"
-                   timeFrequency="2.5e4"
-                   targetExactTimestep="0"
-                   target="/Outputs/restartOutput"/>
-  </Events>
   
- <Geometry>
-    <Box name="all"  xMin="-1e9, -1e9, -1e9" xMax="  1e9, 1e9, 1e9"/>
- </Geometry>
+  <Geometry>
+    <Box name="all" xMin="-1e9, -1e9, -1e9" xMax="1e9, 1e9, 1e9" />
+  </Geometry>
   
   <ElementRegions>
     <CellElementRegion name="domain"
                        cellBlocks="{0_HEX}"
-                       materialList="{water, rock}"/>
+                       materialList="{water, rock}" />
     <WellElementRegion name="wellRegion1"
                        materialList="{water}"/> 
     <WellElementRegion name="wellRegion2"
                        materialList="{water}"/>
-    <WellElementRegion name="wellRegion3"
-                       materialList="{water}"/>   
   </ElementRegions>
-
- <NumericalMethods>
+  
+  <Events maxTime="5e5">
+    <PeriodicEvent name="solverApplications"
+                   forceDt="1e4"
+                   target="/Solvers/reservoirSystem" />
+    <PeriodicEvent name="outputs"
+                   timeFrequency="1e4"
+                   targetExactTimestep="1"
+                   target="/Outputs/siloOutput" />
+  </Events>
+  
+  <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation name="singlePhaseTPFA"
                                  fieldName="pressure"
                                  boundaryFieldName="facePressure"
                                  targetRegions="{domain}"
-                                 coefficientName="permeability"/>
+                                 coefficientName="permeability" />
     </FiniteVolume>
- </NumericalMethods>
-
- <Constitutive>
+  </NumericalMethods>
+  
+  <Constitutive>
     <CompressibleSinglePhaseFluid name="water"
                                   defaultDensity="1000"
                                   defaultViscosity="0.001"
-                                  referencePressure="1e5"
+                                  referencePressure="0.0"
                                   referenceDensity="1000"
-                                  compressibility="0"
-                                  referenceViscosity="0.001"
-                                  viscosibility="0.0"/>
+                                  compressibility="1e-10"
+                                  referenceViscosity="0.005"
+                                  viscosibility="0.0" />
 
     <PoreVolumeCompressibleSolid name="rock"
-                                 referencePressure="0"
-                                 compressibility="1e-15"/>
+                                 referencePressure="0.0"
+                                 compressibility="1e-9" />
+
   </Constitutive>
-
+  
   <FieldSpecifications>
-    <FieldSpecification name="porosity_domain"
+    <FieldSpecification name="permx"
+                        component="0"
                         initialCondition="1"
                         setNames="{all}"
-                        objectPath="ElementRegions/domain/0_HEX"
+                        objectPath="ElementRegions/domain"
+                        fieldName="permeability"
+                        scale="100.0e-15" />
+    <FieldSpecification name="permy"
+                        component="1"
+                        initialCondition="1"
+                        setNames="{all}"
+                        objectPath="ElementRegions/domain"
+                        fieldName="permeability"
+                        scale="60.0e-15" />
+    <FieldSpecification name="permz"
+                        component="2"
+                        initialCondition="1"
+                        setNames="{all}"
+                        objectPath="ElementRegions/domain"
+                        fieldName="permeability"
+                        scale="25.0e-15" />
+    <FieldSpecification name="referencePorosity"
+                        initialCondition="1"
+                        setNames="{all}"
+                        objectPath="ElementRegions/domain"
                         fieldName="referencePorosity"
-                        scale="0.2"/>
-
-    <FieldSpecification name="initialPressure_domain"
+                        scale="0.05" />
+    <FieldSpecification name="initialPressure"
                         initialCondition="1"
                         setNames="{all}"
-                        objectPath="ElementRegions/domain/0_HEX"
+                        objectPath="ElementRegions/domain"
                         fieldName="pressure"
-                        scale="5e6"/>                                         
+                        scale="1e6" />
+    
   </FieldSpecifications>
-
+  
+  <Functions>
+  </Functions>
   <Outputs>
-    <Silo name="siloOutput"/>
-    <Restart name="restartOutput"/>
+    <Silo name="siloOutput" />
   </Outputs>
 </Problem>

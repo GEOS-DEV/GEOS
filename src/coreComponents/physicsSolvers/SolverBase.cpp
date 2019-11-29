@@ -365,7 +365,7 @@ bool SolverBase::LineSearch( real64 const & time_n,
 
 real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
                                           real64 const & dt,
-                                          integer const cycleNumber,
+                                          integer const GEOSX_UNUSED_ARG( cycleNumber ),
                                           DomainPartition * const domain,
                                           DofManager const & dofManager,
                                           ParallelMatrix & matrix,
@@ -433,7 +433,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
         break;
       }
 
-
+      /*
       // do line search in case residual has increased
       if( residualNorm > lastResidual )
       {
@@ -448,7 +448,8 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
           break;
         }
       }
-
+      */
+      
       // call the default linear solver on the system
       SolveSystem( dofManager, matrix, rhs, solution );
 

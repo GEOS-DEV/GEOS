@@ -10,14 +10,14 @@
                      discretization="singlePhaseTPFA"
                      fluidName="water"
                      solidName="rock"
-                     targetRegions="{egg}">
+                     targetRegions="{domain}">
     </SinglePhaseFlow>
 
   </Solvers>
   
   <Mesh>
     <PAMELAMeshGenerator name="mesh"
-                         file="../data/egg.msh"
+                         file="/g/g90/hamon1/geosx/GEOSX/examples/fluidFlow/data/egg.msh"
                          fieldNamesInGEOSX="{permeability}"
                          fieldsToImport="{PERM}"/>
                        
@@ -40,12 +40,12 @@
   
  <Geometry>
     <Box name="all"  xMin="-1e9, -1e9, -1e9" xMax="  1e9, 1e9, 1e9"/>
-    <Box name="inj"  xMin=" 0, 0, -0.01"     xMax="   140,   10,  10"/>
-    <Box name="prod" xMin=" 0, 130.0, -0.01" xMax="  140.00,  140.00,  10"/>
+    <Box name="inj"  xMin=" 0, 0, -0.01"     xMax="   480,  30,  30"/>
+    <Box name="prod" xMin=" 0, 390.0, -0.01" xMax="  480.00,  480.00,  10"/>
   </Geometry>
   
   <ElementRegions>
-    <CellElementRegion name="egg"
+    <CellElementRegion name="domain"
                        cellBlocks="{0_HEX}"
                        materialList="{water, rock}"/>
   </ElementRegions>
@@ -55,7 +55,7 @@
       <TwoPointFluxApproximation name="singlePhaseTPFA"
                                  fieldName="pressure"
                                  boundaryFieldName="facePressure"
-                                 targetRegions="{egg}"
+                                 targetRegions="{domain}"
                                  coefficientName="permeability"/>
     </FiniteVolume>
  </NumericalMethods>
@@ -76,31 +76,31 @@
   </Constitutive>
 
   <FieldSpecifications>
-    <FieldSpecification name="porosity_egg"
+    <FieldSpecification name="porosity_domain"
                         initialCondition="1"
                         setNames="{all}"
-                        objectPath="ElementRegions/egg/0_HEX"
+                        objectPath="ElementRegions/domain/0_HEX"
                         fieldName="referencePorosity"
                         scale="0.2"/>
 
-    <FieldSpecification name="initialPressure_egg"
+    <FieldSpecification name="initialPressure_domain"
                         initialCondition="1"
                         setNames="{all}"
-                        objectPath="ElementRegions/egg/0_HEX"
+                        objectPath="ElementRegions/domain/0_HEX"
                         fieldName="pressure"
                         scale="5e6"/>
                         
-	<FieldSpecification name="injTerm"
-		objectPath="ElementRegions/egg/0_HEX" 
-		fieldName="pressure" 
-		scale="1e7"
-		setNames="{inj}" />
-		
-	<FieldSpecification name="prodTerm"
-		objectPath="ElementRegions/egg/0_HEX" 
-		fieldName="pressure" 
-		scale="1e6"
-		setNames="{prod}"/>                                             
+    <FieldSpecification name="injTerm"
+  		        objectPath="ElementRegions/domain/0_HEX" 
+		        fieldName="pressure" 
+		        scale="1e7"
+		        setNames="{inj}" />
+	
+    <FieldSpecification name="prodTerm"
+  		        objectPath="ElementRegions/domain/0_HEX" 
+		        fieldName="pressure" 
+	 	        scale="1e6"
+		        setNames="{prod}"/>                                             
   </FieldSpecifications>
 
   <Outputs>

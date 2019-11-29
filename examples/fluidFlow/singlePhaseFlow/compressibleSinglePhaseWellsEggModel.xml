@@ -60,7 +60,7 @@
                          fieldNamesInGEOSX="{permeability}"
                          fieldsToImport="{PERM}"/>
                          
-    <InternalWell name="well_producer1"
+    <InternalWell name="wellProducer1"
                   wellRegionName="wellRegion1"
                   wellControlsName="wellControls1"
                   meshName="mesh"
@@ -73,7 +73,7 @@
                   distanceFromHead="1.99"
                   wellPeacemanIndex="1e-10"/> 
     </InternalWell> 
-    <InternalWell name="well_producer2"
+    <InternalWell name="wellProducer2"
                   wellRegionName="wellRegion2"
                   wellControlsName="wellControls2"
                   meshName="mesh"
@@ -86,7 +86,7 @@
                   distanceFromHead="1.99"
                   wellPeacemanIndex="1e-10"/>
     </InternalWell> 
-    <InternalWell name="well_injector1"
+    <InternalWell name="wellInjector1"
                   wellRegionName="wellRegion3"
                   wellControlsName="wellControls3"
                   meshName="mesh"
@@ -105,9 +105,9 @@
   
   </Mesh>
 
-  <Events maxTime="2e2" verbosity="1">
+  <Events maxTime="2e5" verbosity="1">
     <PeriodicEvent name="outputs"
-                   timeFrequency="1e2"
+                   timeFrequency="1e4"
                    targetExactTimestep="1"
                    target="/Outputs/siloOutput" />
 
@@ -152,7 +152,7 @@
                                   defaultViscosity="0.001"
                                   referencePressure="1e5"
                                   referenceDensity="1000"
-                                  compressibility="0"
+                                  compressibility="1e-10"
                                   referenceViscosity="0.001"
                                   viscosibility="0.0"/>
 

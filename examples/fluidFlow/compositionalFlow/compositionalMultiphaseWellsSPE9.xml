@@ -1,8 +1,7 @@
-
+<!--# {{short}} # -->
+<!--# {{long}} # -->
 <Problem>
-
- <Solvers
-    gravityVector="0.0, 0.0, -9.81">
+  <Solvers gravityVector="0.0, 0.0, -9.81">
 
     <Reservoir name="reservoirSystem"
                flowSolverName="compositionalMultiphaseFlow"
@@ -11,7 +10,9 @@
                targetRegions="{domain,
 			       wellRegion1,
 			       wellRegion2,
-			       wellRegion3}">
+			       wellRegion3,
+			       wellRegion4,
+			       wellRegion5}">
       <SystemSolverParameters maxIterNewton="40"
                               useDirectSolver="1"
                               verbosityFlag="0"
@@ -19,7 +20,7 @@
                               maxTimeStepCuts="10"
                               newtonTol="1e-4"/>
     </Reservoir>
-  
+
     <CompositionalMultiphaseFlow name="compositionalMultiphaseFlow"
                                  verboseLevel="1"
                                  gravityFlag="1"
@@ -40,129 +41,123 @@
                                  wellTemperature="297.15"
                                  useMass="0"
                                  targetRegions="{wellRegion1,
-						 wellRegion2,
-						 wellRegion3}">
+				                 wellRegion2,
+				                 wellRegion3,
+				                 wellRegion4,
+				                 wellRegion5}">
         <WellControls name="wellControls1"
                       type="producer"
                       control="BHP"
-                      targetBHP="5e5"
+                      targetBHP="1e5"
                       targetRate="1e9"/>
         <WellControls name="wellControls2"
                       type="producer"
                       control="BHP"
-                      targetBHP="5e5"
+                      targetBHP="1e5"
                       targetRate="1e9"/>
         <WellControls name="wellControls3"
                       type="injector"
-                      control="liquidRate"
-	              injectionStream="{0.1, 0.1, 0.1, 0.7}"
-                      targetBHP="1e7"
-                      targetRate="100"/>
-     
+                      control="liquidRate" 
+                      targetBHP="1e8"
+         	      injectionStream="{0.1, 0.1, 0.1, 0.7}"
+                      targetRate="200"/>
+        <WellControls name="wellControls4"
+                      type="injector"
+                      control="liquidRate" 
+                      targetBHP="1e8"
+      	              injectionStream="{0.1, 0.1, 0.1, 0.7}"
+                      targetRate="200"/>
+        <WellControls name="wellControls5"
+                      type="injector"
+                      control="liquidRate" 
+                      targetBHP="1e8"
+      	              injectionStream="{0.1, 0.1, 0.1, 0.7}"
+                      targetRate="200"/>
     </CompositionalMultiphaseWell>
+
   </Solvers>
-  
+
   <Mesh>
-    <PAMELAMeshGenerator name="mesh"
-                         file="/g/g90/hamon1/geosx/GEOSX/examples/fluidFlow/data/egg.msh"
-                         fieldNamesInGEOSX="{permeability}"
-                         fieldsToImport="{PERM}"/>
-                         
-    <InternalWell name="well_producer1"
-                  wellRegionName="wellRegion1"
-                  wellControlsName="wellControls1"
-                  meshName="mesh"
-                  polylineNodeCoords="{ {120,  40, 0}, 
-                                        {120,  40, 2} }"
-                  polylineSegmentConn="{ {0, 1} }"
-                  radius="0.1"
-                  numElementsPerSegment="1">
-     <Perforation name="producer1_perf1"
-                  distanceFromHead="1.99"
-                  wellPeacemanIndex="1e-10"/> 
-    </InternalWell>
+    <PAMELAMeshGenerator name="domain"
+			 file="/g/g90/hamon1/geosx/GEOSX/examples/fluidFlow/data/SPE9.GRDECL"
+			 scale="0.3048"/>
+
     <InternalWell name="wellProducer1"
                   wellRegionName="wellRegion1"
                   wellControlsName="wellControls1"
-                  meshName="mesh"
-                  polylineNodeCoords="{ {360,  120, 0}, 
-                                        {360,  120, 2} }"
+                  meshName="domain"
+                  polylineNodeCoords="{ {1788, 1900, 3160}, 
+                                        {1788, 1900, 3140} }"
                   polylineSegmentConn="{ {0, 1} }"
                   radius="0.1"
                   numElementsPerSegment="2">
      <Perforation name="producer1_perf1"
-                  distanceFromHead="1.99"
+                  distanceFromHead="19.9"
                   wellPeacemanIndex="1e-10"/> 
     </InternalWell> 
+
     <InternalWell name="wellProducer2"
                   wellRegionName="wellRegion2"
                   wellControlsName="wellControls2"
-                  meshName="mesh"
-                  polylineNodeCoords="{ {60, 360, 0}, 
-                                        {60, 360, 2 } }"
+                  meshName="domain"
+                  polylineNodeCoords="{ {1788, 355, 3160}, 
+                                        {1788, 355, 3140} }"
                   polylineSegmentConn="{ {0, 1} }"
                   radius="0.1"
                   numElementsPerSegment="2">
      <Perforation name="producer2_perf1"
-                  distanceFromHead="1.99"
-                  wellPeacemanIndex="1e-10"/>
+                  distanceFromHead="19.9"
+                  wellPeacemanIndex="1e-10"/> 
     </InternalWell> 
+    
     <InternalWell name="wellInjector1"
                   wellRegionName="wellRegion3"
                   wellControlsName="wellControls3"
-                  meshName="mesh"
-                  polylineNodeCoords="{ {180, 180, 0}, 
-                                        {180, 180, 2 } }"
+                  meshName="domain"
+                  polylineNodeCoords="{ {355, 1900, 2905}, 
+                                        {355, 1900, 2955} }"
                   polylineSegmentConn="{ {0, 1} }"
                   radius="0.1"
                   numElementsPerSegment="4">
      <Perforation name="injector1_perf1"
-                  distanceFromHead="1.25"
-                  wellPeacemanIndex="1e-10"/>
-     <Perforation name="injector1_perf2"
-                  distanceFromHead="1.95"
+                  distanceFromHead="49.35"
                   wellPeacemanIndex="1e-10"/> 
     </InternalWell>
- 
+
+    <InternalWell name="wellInjector2"
+                  wellRegionName="wellRegion4"
+                  wellControlsName="wellControls4"
+                  meshName="domain"
+                  polylineNodeCoords="{ {355, 355, 2905}, 
+                                        {355, 355, 2955} }"
+                  polylineSegmentConn="{ {0, 1} }"
+                  radius="0.1"
+                  numElementsPerSegment="4">
+     <Perforation name="injector2_perf1"
+                  distanceFromHead="49.35"
+                  wellPeacemanIndex="1e-10"/> 
+    </InternalWell>
+
+    <InternalWell name="wellInjector3"
+                  wellRegionName="wellRegion5"
+                  wellControlsName="wellControls5"
+                  meshName="domain"
+                  polylineNodeCoords="{ {355, 1050, 2905},
+                                        {355, 1050, 2955} }"
+                  polylineSegmentConn="{ {0, 1} }"
+                  radius="0.1"
+                  numElementsPerSegment="4">
+     <Perforation name="injector3_perf1"
+                  distanceFromHead="49.35"
+                  wellPeacemanIndex="1e-10"/> 
+    </InternalWell>
+
   </Mesh>
-
-  <Events maxTime="1e8" verbosity="1">
-
-    <!-- This event is applied every cycle, and overrides the
-    solver time-step request -->
-    <PeriodicEvent name="solverApplications1"
-                   forceDt="1e3"
-                   target="/Solvers/reservoirSystem"
-		   beginTime="0"
-		   endTime="1e3"/>
-
-    <PeriodicEvent name="solverApplications2"
-                   forceDt="1e4"
-                   target="/Solvers/reservoirSystem"
-		   beginTime="1e3"
-		   endTime="1.1e4"/>
-
-    <PeriodicEvent name="solverApplications3"
-                   forceDt="1e5"
-                   target="/Solvers/reservoirSystem"
-		   beginTime="1.1e4"
-		   endTime="1e8"/>
-
-    <PeriodicEvent name="outputs"
-                   timeFrequency="5e5"
-                   targetExactTimestep="1"
-                   target="/Outputs/siloOutput" />
-
-    <PeriodicEvent name="restarts"
-                   timeFrequency="5e5"
-                   targetExactTimestep="0"
-                   target="/Outputs/restartOutput"/>
-  </Events>
   
- <Geometry>
-    <Box name="all"  xMin="-1e9, -1e9, -1e9" xMax="  1e9, 1e9, 1e9"/>
- </Geometry>
-  
+  <Geometry>
+    <Box name="all" xMin="-1e9, -1e9, -1e9" xMax="1e9, 1e9, 1e9"/>
+  </Geometry>
+
   <ElementRegions>
     <CellElementRegion name="domain"
                        cellBlocks="{0_HEX}"
@@ -170,22 +165,57 @@
     <WellElementRegion name="wellRegion1"
                        materialList="{fluid1}"/> 
     <WellElementRegion name="wellRegion2"
-                       materialList="{fluid1}"/>  
+                       materialList="{fluid1}"/>
     <WellElementRegion name="wellRegion3"
+                       materialList="{fluid1}"/> 
+    <WellElementRegion name="wellRegion4"
+                       materialList="{fluid1}"/>
+    <WellElementRegion name="wellRegion5"
                        materialList="{fluid1}"/>
   </ElementRegions>
 
- <NumericalMethods>
+  <Events maxTime="1e8">
+    <!-- This event is applied every cycle, and overrides the
+    solver time-step request -->
+    <PeriodicEvent name="solverApplications1"
+                   forceDt="1e4"
+                   target="/Solvers/reservoirSystem"
+		   beginTime="0"
+		   endTime="1e4"/>
+
+    <PeriodicEvent name="solverApplications2"
+                   forceDt="1e5"
+                   target="/Solvers/reservoirSystem"
+		   beginTime="1e4"
+		   endTime="1.1e5"/>
+
+    <PeriodicEvent name="solverApplications3"
+                   forceDt="5e5"
+                   target="/Solvers/reservoirSystem"
+		   beginTime="1.1e5"
+		   endTime="1e8"/>
+    
+    <!-- This event is applied every 1.0s.  The targetExactTimestep
+    flag allows this event to request a dt modification to match an
+    integer multiple of the timeFrequency. -->
+    <PeriodicEvent name="outputs"
+                   timeFrequency="5e5"
+                   targetExactTimestep="1"
+                   target="/Outputs/siloOutput" />
+  </Events>
+
+  <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation name="fluidTPFA"
                                  fieldName="pressure"
                                  boundaryFieldName="facePressure"
                                  targetRegions="{domain}"
-                                 coefficientName="permeability"/>
+                                 coefficientName="permeability" />
     </FiniteVolume>
- </NumericalMethods>
+  </NumericalMethods>
+  
+  <Constitutive>
 
- <Constitutive>
     <CompositionalMultiphaseFluid name="fluid1"
                                   phaseNames="{oil, gas}"
                                   equationsOfState="{PR, PR}"
@@ -209,60 +239,76 @@
                                      phaseMinVolumeFraction="{0.05, 0.05}"
                                      phaseRelPermExponent="{2.0, 2.0}"
                                      phaseRelPermMaxValue="{1, 1}"/>
-
-  </Constitutive>
+  </Constitutive> 
 
   <FieldSpecifications>
-    <FieldSpecification name="porosity_domain"
-                        initialCondition="1"
-                        setNames="{all}"
-                        objectPath="ElementRegions/domain/0_HEX"
-                        fieldName="referencePorosity"
-                        scale="0.2"/>
 
-    <FieldSpecification name="initialPressure_domain"
+    <FieldSpecification name="permx"
+                        component="0"
                         initialCondition="1"
                         setNames="{all}"
-                        objectPath="ElementRegions/domain/0_HEX"
+                        objectPath="ElementRegions/domain"
+                        fieldName="permeability"
+                        scale="100.0e-15" />
+    <FieldSpecification name="permy"
+                        component="1"
+                        initialCondition="1"
+                        setNames="{all}"
+                        objectPath="ElementRegions/domain"
+                        fieldName="permeability"
+                        scale="60.0e-15" />
+    <FieldSpecification name="permz"
+                        component="2"
+                        initialCondition="1"
+                        setNames="{all}"
+                        objectPath="ElementRegions/domain"
+                        fieldName="permeability"
+                        scale="25.0e-15" />
+    <FieldSpecification name="referencePorosity"
+                        initialCondition="1"
+                        setNames="{all}"
+                        objectPath="ElementRegions/domain"
+                        fieldName="referencePorosity"
+                        scale="0.05" />
+    <FieldSpecification name="initialPressure"
+                        initialCondition="1"
+                        setNames="{all}"
+                        objectPath="ElementRegions/domain"
                         fieldName="pressure"
-                        scale="1e6"/>
-    
+                        scale="1e6" />
     <FieldSpecification name="initialComposition_N2"
                         initialCondition="1"
                         setNames="{all}"
-                        objectPath="ElementRegions/domain/0_HEX"
+                        objectPath="ElementRegions/domain"
                         fieldName="globalCompFraction"
                         component="0"
                         scale="0.099"/>
-
     <FieldSpecification name="initialComposition_C10"
                         initialCondition="1"
                         setNames="{all}"
-                        objectPath="ElementRegions/domain/0_HEX"
+                        objectPath="ElementRegions/domain"
                         fieldName="globalCompFraction"
                         component="1"
                         scale="0.3"/>
-
     <FieldSpecification name="initialComposition_C20"
                         initialCondition="1"
                         setNames="{all}"
-                        objectPath="ElementRegions/domain/0_HEX"
+                        objectPath="ElementRegions/domain"
                         fieldName="globalCompFraction"
                         component="2"
                         scale="0.6"/>
-
     <FieldSpecification name="initialComposition_H20"
                         initialCondition="1"
                         setNames="{all}"
-                        objectPath="ElementRegions/domain/0_HEX"
+                        objectPath="ElementRegions/domain"
                         fieldName="globalCompFraction"
                         component="3"
                         scale="0.001"/>
-   
-  </FieldSpecifications>
 
+  </FieldSpecifications>
+  <Functions>
+  </Functions>
   <Outputs>
     <Silo name="siloOutput"/>
-    <Restart name="restartOutput"/>
   </Outputs>
-</Problem>
+  </Problem>
