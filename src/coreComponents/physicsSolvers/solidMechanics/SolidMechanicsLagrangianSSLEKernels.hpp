@@ -76,7 +76,6 @@ struct StressCalculationKernel
       //Compute Quadrature
       for ( localIndex q = 0; q < NUM_QUADRATURE_POINTS; ++q )
       {
-        stress[ k ][ q ] = 0.0;
         real64 * const restrict p_stress = stress[ k ][ q ].Data();
         for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
         {
@@ -277,10 +276,13 @@ struct ImplicitKernel
           ParallelMatrix * const matrix,
           ParallelVector * const rhs )
   {
+    GEOSX_MARK_FUNCTION;
     constexpr int dim = 3;
     RAJA::ReduceMax< serialReduce, double > maxForce( 0 );
 
     typename CONSTITUTIVE_TYPE::KernelWrapper const & constitutive = constitutiveRelation->createKernelWrapper();
+
+    arrayView2d<R2SymTensor const> const & stress = constitutiveRelation->getStress();
 
     RAJA::forall< serialPolicy >( RAJA::TypedRangeSegment< localIndex >( 0, numElems ),
                                   GEOSX_LAMBDA ( localIndex const k )
@@ -340,11 +342,7 @@ struct ImplicitKernel
           CopyGlobalToLocal<NUM_NODES_PER_ELEM,R1Tensor>( elemsToNodes[k], disp, uhat, u_local, uhat_local );
         }
 
-        R2SymTensor referenceStress;
-        if( !fluidPressure.empty() )
-        {
-          referenceStress.PlusIdentity( - biotCoefficient[0] * (fluidPressure[k] + deltaFluidPressure[k]));
-        }
+
 
 
         R1Tensor dNdXa;
@@ -386,8 +384,8 @@ struct ImplicitKernel
 
                 for( int i=0 ; i<dim ; ++i )
                 {
-                  realT const acc = 1.0 / ( newmarkBeta * dt * dt ) * ( uhat[b][i] - uhattilde[b][i] );
-                  realT const vel = vtilde[b][i] + newmarkGamma/( newmarkBeta * dt ) *( uhat[b][i] - uhattilde[b][i] );
+                  realT const acc = 1.0 / ( newmarkBeta * dt * dt ) * ( uhat_local[b][i] - uhattilde_local[b][i] );
+                  realT const vel = vtilde_local[b][i] + newmarkGamma/( newmarkBeta * dt ) *( uhat_local[b][i] - uhattilde_local[b][i] );
 
                   dRdU_InertiaMassDamping(a*dim+i,b*dim+i) -= temp1;
                   R_InertiaMassDamping(a*dim+i) -= ( massDamping * vel + acc ) * integrationFactor;
@@ -402,6 +400,12 @@ struct ImplicitKernel
           R1Tensor temp;
           for( integer q=0 ; q<NUM_QUADRATURE_POINTS ; ++q )
           {
+            R2SymTensor referenceStress = stress(k,q);
+            if( !fluidPressure.empty() )
+            {
+              referenceStress.PlusIdentity( - biotCoefficient[0] * (fluidPressure[k] + deltaFluidPressure[k]));
+            }
+
             const realT detJq = detJ[k][q];
             R2SymTensor stress0 = referenceStress;
             stress0 *= detJq;
@@ -431,7 +435,7 @@ struct ImplicitKernel
             {
               for( int j=0 ; j<dim ; ++j )
               {
-                R(a*dim+i) += dRdU(a*dim+i,b*dim+j) * u_local[b][j];
+                R(a*dim+i) += dRdU(a*dim+i,b*dim+j) * uhat_local[b][j];
               }
             }
 
@@ -441,7 +445,7 @@ struct ImplicitKernel
               {
                 for( int j=0 ; j<dim ; ++j )
                 {
-                  R_StiffnessDamping(a*dim+i) += stiffnessDamping * dRdU(a*dim+i,b*dim+j) * ( vtilde[b][j] + newmarkGamma/(newmarkBeta * dt)*(uhat[b][j]-uhattilde[b][j]) );
+                  R_StiffnessDamping(a*dim+i) += stiffnessDamping * dRdU(a*dim+i,b*dim+j) * ( vtilde_local[b][j] + newmarkGamma/(newmarkBeta * dt)*(uhat_local[b][j]-uhattilde_local[b][j]) );
                 }
               }
             }

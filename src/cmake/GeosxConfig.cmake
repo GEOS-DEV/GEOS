@@ -51,9 +51,7 @@ install( FILES ${CMAKE_BINARY_DIR}/include/common/GeosxConfig.hpp
 
 function( make_full_config_file 
           PREPROCESSOR_VARS )
-    message(" ***** PREPROCESSOR_VARS = ${PREPROCESSOR_VARS}")
     foreach( DEP in ${PREPROCESSOR_VARS})
-        message( "Adding a preproc dependency ${DEP} to docs/doxygen/GeosxConfig.hpp" )
         set(USE_${DEP} TRUE  )
         set(GEOSX_USE_${DEP} TRUE  )
         set(${DEP} TRUE  )
