@@ -471,7 +471,7 @@ void Group::prepareToWrite()
 
   m_conduitNode[ "__size__" ].set( m_size );
 
-  forSubGroups([]( Group * subGroup )
+  forSubGroups( []( Group * subGroup )
       {
         subGroup->prepareToWrite();
       } );
@@ -490,7 +490,7 @@ void Group::finishWriting()
     pair.second->finishWriting();
   }
 
-  forSubGroups([]( Group * subGroup )
+  forSubGroups( []( Group * subGroup )
       {
         subGroup->finishWriting();
       } );
@@ -511,7 +511,7 @@ void Group::loadFromConduit()
     pair.second->loadFromConduit();
   }
 
-  forSubGroups([]( Group * subGroup )
+  forSubGroups( []( Group * subGroup )
       {
         subGroup->loadFromConduit();
       } );
@@ -519,7 +519,7 @@ void Group::loadFromConduit()
 
 void Group::postRestartInitializationRecursive( Group * const domain )
 {
-  forSubGroups([&]( Group * const subGroup )
+  forSubGroups( [&]( Group * const subGroup )
       {
         subGroup->postRestartInitializationRecursive( domain );
       } );
