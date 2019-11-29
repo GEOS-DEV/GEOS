@@ -1,3 +1,5 @@
+"""Tools for processing xml files in GEOSX"""
+
 from lxml import etree as ElementTree
 from lxml.etree import XMLSyntaxError
 import re
@@ -10,9 +12,14 @@ unitManager = unit_manager.UnitManager()
 parameterHandler = regex_tools.DictRegexHandler()
 
 
-# Merge nodes in an included file into the current
-# structure level by level
 def merge_xml_nodes(existingNode, targetNode, level):
+  """Merge nodes in an included file into the current structure level by level.
+
+     @param existingNode The current node in the base xml structure.
+     @param targetNode The node to insert.
+     @param level The xml file depth.
+  """
+
   # Copy attributes on the current level
   for tk in targetNode.attrib.keys():
     existingNode.set(tk, targetNode.get(tk))
@@ -51,8 +58,15 @@ def merge_xml_nodes(existingNode, targetNode, level):
       existingNode.insert(-1, target)
 
 
-# Recursively merge included files into the current structure
 def merge_included_xml_files(root, fname, includeCount, maxInclude=100):
+  """Recursively merge included files into the current structure.
+
+     @param root The root node of the base xml structure.
+     @param fname The name of the target xml file to merge.
+     @param includeCount The current recursion depth.
+     @param maxInclude The maximum number of xml files to include (default = 100)
+  """
+
   # Expand the input path
   pwd = os.getcwd()
   includePath, fname = os.path.split(os.path.abspath(os.path.expanduser(fname)))
@@ -88,9 +102,13 @@ def merge_included_xml_files(root, fname, includeCount, maxInclude=100):
   os.chdir(pwd)
 
 
-# Apply regexes that handle parameters, units, and symbolic math to
-# each xml attribute in the structure
 def apply_regex_to_node(node):
+  """Apply regexes that handle parameters, units, and symbolic math to each
+     xml attribute in the structure.
+
+     @param node The target node in the xml structure.
+  """
+
   for k in node.attrib.keys():
     value = node.get(k)
 
@@ -126,8 +144,12 @@ def apply_regex_to_node(node):
     apply_regex_to_node(subNode)
 
 
-# If the target name is not specified, generate a random name for the compiled xml
 def generate_random_name(prefix='', suffix='.xml'):
+  """If the target name is not specified, generate a random name for the compiled xml
+
+     @param prefix The file prefix (default = '').
+     @param suffix The file suffix (default = '.xml')
+  """
   from hashlib import md5
   from time import time
   from os import getpid
@@ -136,8 +158,16 @@ def generate_random_name(prefix='', suffix='.xml'):
   return '%s%s%s' % (prefix, md5(tmp.encode('utf-8')).hexdigest(), suffix)
 
 
-# Process an xml file
 def process(inputFile, outputFile='', schema='', verbose=0, keep_parameters=True, keep_includes=True):
+  """Process an xml file
+
+     @param inputFile Input file name.
+     @param outputFile Output file name (if not specified, then generate randomly).
+     @param schema Schema file name to validate the final xml (if not specified, then do not validate).
+     @param verbose Verbosity level.
+     @param keep_parameters If True, then keep parameters in the compiled file (default = True)
+     @param keep_includes If True, then keep includes in the compiled file (default = True)
+  """
   if verbose:
     print('\nReading input xml parameters and parsing symbolic math...')
 
@@ -206,8 +236,13 @@ def process(inputFile, outputFile='', schema='', verbose=0, keep_parameters=True
   return outputFile
 
 
-# Validate an xml file, and parse the warnings
 def validate_xml(fname, schema, verbose):
+  """Validate an xml file, and parse the warnings.
+
+     @param fname Target xml file name.
+     @param schema Schema file name.
+     @param verbose Verbosity level.
+  """
   if verbose:
     print('Validating the xml against the schema...')
   try:

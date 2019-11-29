@@ -24,14 +24,9 @@ option( ENABLE_GEOSX_PTP "" OFF)
 option( ENABLE_PAMELA "" ON )
 option( ENABLE_PVTPackage "" ON )
 
-option( ENABLE_FPARSER "Enables FPARSER" OFF )
-
 option( ENABLE_UNCRUSTIFY "" ON )
 
 option( ENABLE_FORTRAN "Enables Fortran support" OFF)
-
-
-option(ENABLE_CONTAINERARRAY_RETURN_PTR     "Enables Wrapper to return pointers instead of references" ON )
 
 option( ENABLE_TRILINOS "Enables TRILINOS" ON )
 option( ENABLE_METIS "Enables METIS" ON )

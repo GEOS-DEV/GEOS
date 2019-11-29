@@ -38,7 +38,7 @@ namespace wrapperDefaultValue
 /**
  * @struct is_defaultable
  * @tparam T type to check
- * @brief trait to determine if type \p T should have a default value
+ * @brief trait to determine if type @p T should have a default value
  */
 template< typename T >
 struct is_defaultable
@@ -69,6 +69,8 @@ struct Helper
 {
   /// attribute to indicate whether type \p T has a default value
   static constexpr bool has_default_value = false;
+
+  /// alias for default value type (void be default)
   using value_type = void;
 };
 
@@ -94,6 +96,7 @@ struct Helper< T, typename std::enable_if< is_defaultable< T >::value >::type >
 };
 
 HAS_ALIAS( value_type )
+
 /**
  * @struct Helper
  * @tparam T type to check

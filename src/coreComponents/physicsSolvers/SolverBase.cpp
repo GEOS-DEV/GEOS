@@ -32,6 +32,7 @@ SolverBase::SolverBase( std::string const & name,
   m_systemSolverParameters( groupKeyStruct::systemSolverParametersString, this ),
   m_cflFactor(),
   m_maxStableDt{ 1e99 },
+  m_nextDt(1e99),
   m_dofManager( name )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
@@ -70,6 +71,10 @@ SolverBase::SolverBase( std::string const & name,
                     "solver may be applied to these regions. The decision about what regions this solver will be"
                     "applied to rests in the EventManager." );
 
+  registerWrapper( viewKeyStruct::initialDtString, &m_nextDt, false )->
+    setApplyDefaultValue( 1e99 )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Initial time-step value required by the solver to the event manager." );
 }
 
 SolverBase::~SolverBase()
@@ -182,19 +187,32 @@ void SolverBase::Execute( real64 const time_n,
 {
   GEOSX_MARK_FUNCTION;
   real64 dtRemaining = dt;
+  real64 nextDt = dt;
 
   SystemSolverParameters * const solverParams = getSystemSolverParameters();
   integer const maxSubSteps = solverParams->maxSubSteps();
+  integer subStep = 0;
 
-  for( integer subStep = 0; subStep < maxSubSteps && dtRemaining > 0.0; ++subStep )
+  for( ; subStep < maxSubSteps && dtRemaining > 0.0; ++subStep )
   {
     real64 const dtAccepted = SolverStep( time_n + (dt - dtRemaining),
-                                          dtRemaining,
+                                          nextDt,
                                           cycleNumber,
                                           domain->group_cast<DomainPartition *>() );
+    /*
+     * Let us check convergence history of previous solve:
+     * - number of nonlinear iter.
+     * - if the time-step was chopped. Then we can add some heuristics to choose next dt.
+     * */
     dtRemaining -= dtAccepted;
 
-    if(  dtRemaining > 0.0 )
+    if( dtRemaining > 0.0 )
+    {
+    	SetNextDt(solverParams, dtAccepted, nextDt);
+    	nextDt = std::min(nextDt, dtRemaining);
+    }
+
+    if( m_logLevel >= 1 && dtRemaining > 0.0 )
     {
       LOG_LEVEL_RANK_0( 1, getName() << ": sub-step = " << subStep
                                        << ", accepted dt = " << dtAccepted
@@ -203,8 +221,34 @@ void SolverBase::Execute( real64 const time_n,
   }
 
   GEOS_ERROR_IF( dtRemaining > 0.0, "Maximum allowed number of sub-steps reached. Consider increasing maxSubSteps." );
+
+  // Decide what to do with the next Dt for the event running the solver.
+  SetNextDt(solverParams, nextDt, m_nextDt);
 }
 
+void SolverBase::SetNextDt( SystemSolverParameters * const solverParams,
+                            real64 const & currentDt,
+                            real64 & nextDt )
+{
+	integer & newtonIter = solverParams->numNewtonIterations();
+	int iterCutLimit = std::ceil(solverParams->dtCutIterLimit());
+	int iterIncLimit = std::ceil(solverParams->dtIncIterLimit());
+
+	if (newtonIter <  iterIncLimit )
+	{
+		// Easy convergence, let's double the time-step.
+		nextDt = 2*currentDt;
+		LOG_LEVEL_RANK_0( 1,  getName() << ": Newton solver converged in less than " << iterIncLimit << " iterations, time-step required will be doubled.");
+	}else if (newtonIter >  iterCutLimit)
+	{
+		// Tough convergence let us make the time-step smaller!
+		nextDt = currentDt/2;
+		LOG_LEVEL_RANK_0(1, getName() << ": Newton solver converged in more than " << iterCutLimit << " iterations, time-step required will be halved.");
+	}else
+	{
+		nextDt = currentDt;
+	}
+}
 
 real64 SolverBase::LinearImplicitStep( real64 const & time_n,
                                        real64 const & dt,
@@ -312,6 +356,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
                                           ParallelVector & rhs,
                                           ParallelVector & solution )
 {
+  GEOSX_MARK_FUNCTION;
   // dt may be cut during the course of this step, so we are keeping a local
   // value to track the achieved dt for this step.
   real64 stepDt = dt;
@@ -326,12 +371,14 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
 
   bool const allowNonConverged = solverParams->allowNonConverged() > 0;
 
+  integer & dtAttempt = solverParams->numdtAttempts();
+
   // a flag to denote whether we have converged
   integer isConverged = 0;
 
   // outer loop attempts to apply full timestep, and managed the cutting of the timestep if
   // required.
-  for( int dtAttempt = 0; dtAttempt < maxNumberDtCuts; ++dtAttempt )
+  for(dtAttempt = 0; dtAttempt < maxNumberDtCuts; ++dtAttempt )
   {
     // reset the solver state, since we are restarting the time step
     if( dtAttempt > 0 )
@@ -508,6 +555,7 @@ void SolverBase::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofManager ),
                               ParallelVector & rhs,
                               ParallelVector & solution )
 {
+  GEOSX_MARK_FUNCTION;
   // Create a solver from the parameter list
   LinearSolver solver( m_linearSolverParameters );
 
