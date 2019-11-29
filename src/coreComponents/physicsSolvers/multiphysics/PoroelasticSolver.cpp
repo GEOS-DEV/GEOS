@@ -342,7 +342,7 @@ real64 PoroelasticSolver::SplitOperatorStep( real64 const& time_n,
       ResetStateToBeginningOfStep( domain );
     }
     
-    LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1  << ", FlowSolver: " );
+    GEOS_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1  << ", FlowSolver: " );
     
     dtReturnTemporary = fluidSolver.NonlinearImplicitStep( time_n,
                                                            dtReturn,
@@ -362,11 +362,11 @@ real64 PoroelasticSolver::SplitOperatorStep( real64 const& time_n,
 
     if (fluidSolver.getSystemSolverParameters()->numNewtonIterations() == 0 && iter > 0)
     {
-      LOG_LEVEL_RANK_0( 1, "***** The iterative coupling has converged in " << iter  << " iterations! *****\n" );
+      GEOS_LOG_LEVEL_RANK_0( 1, "***** The iterative coupling has converged in " << iter  << " iterations! *****\n" );
       break;
     }
 
-    LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1  << ", MechanicsSolver: " );
+    GEOS_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1  << ", MechanicsSolver: " );
 
     solidSolver.ResetStressToBeginningOfStep(domain);
     dtReturnTemporary = solidSolver.NonlinearImplicitStep( time_n,
