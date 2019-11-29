@@ -5,7 +5,7 @@
     gravityVector="0.0, 0.0, -9.81">
   
     <CompositionalMultiphaseFlow name="compflow"
-                                 verboseLevel="0"
+                                 logLevel="0"
                                  gravityFlag="1"
                                  discretization="fluidTPFA"
                                  targetRegions="{Region2}"
