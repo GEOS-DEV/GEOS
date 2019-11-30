@@ -48,6 +48,7 @@ if read_the_docs_build:
     with open(doxyfile_dst, "a") as f:
         f.write("\nINPUT = %s" % " ".join(input_dirs))
         f.write("\nOUTPUT_DIRECTORY = %s/doxygen_output" % html_path)
+        f.write("\nHAVE_DOT = YES")
 
     # Make a symlink to GeosxConfig.hpp in common
     if not os.path.exists(config_dst):
