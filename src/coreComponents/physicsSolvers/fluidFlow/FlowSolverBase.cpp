@@ -73,7 +73,8 @@ FlowSolverBase::FlowSolverBase( std::string const & name,
   
 
   this->registerWrapper( viewKeyStruct::inputFluxEstimateString,  &m_fluxEstimate,  false )->
-    setInputFlag(InputFlags::REQUIRED)->
+    setApplyDefaultValue(1.0)->
+    setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Initial estimate of the input flux used only for residual scaling. This should be "
                    "essentially equivalent to the input flux * dt.");
 
