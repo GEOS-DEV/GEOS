@@ -29,7 +29,7 @@ During each cycle, the EventManager will do the following:
    a. The maximum dt specified via the target's GetTimestepRequest method
    b. The time remaining until user-defined points (e.g. application start/stop times)
    c. Any timestep overrides (e.g. user-defined maximum dt)
-   d. The timestep reuest for any of its children
+   d. The timestep request for any of its children
 
 2. Set the cycle dt to the smallest value requested by any event
 
@@ -39,7 +39,7 @@ During each cycle, the EventManager will do the following:
    b. ``if (forecast == 1)`` the event will signal its target to prepare to execute.  This is useful for preparing time-consuming I/O operations.
    c. ``if (forecast <= 0)`` the event will call the Execute method on its target object
 
-5. Check to see if the EventManager exit criteria have been met
+4. Check to see if the EventManager exit criteria have been met
 
 
 After exiting the main event loop, the EventManager will call the ``Cleanup`` method for each of its children (to produce final plots, etc.).  Note: if the code is resuming from a restart file, the EventManager will pick up exactly where it left off in the execution loop.
@@ -50,7 +50,7 @@ Event Manager Configuration
 
 Event
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-The children of the Event block define the events that may execute during a simulation.  These may be of type ``HaltEvent``, ``PeriodicEvent``, or ``SoloEvent``.  The exit criteria for the global event loop are defined by the attributes ``maxTime`` and ``maxCycle`` (which by default are set to their max values).  If the optional verbosity flag is set, the EventManager will report additional information with regards to timestep requests and event forecasts for its children.
+The children of the Event block define the events that may execute during a simulation.  These may be of type ``HaltEvent``, ``PeriodicEvent``, or ``SoloEvent``.  The exit criteria for the global event loop are defined by the attributes ``maxTime`` and ``maxCycle`` (which by default are set to their max values).  If the optional logLevel flag is set, the EventManager will report additional information with regards to timestep requests and event forecasts for its children.
 
 .. include:: ../../../coreComponents/fileIO/schema/docs/Events.rst
 
@@ -65,7 +65,7 @@ If timeFrequency is specified, the event will attempt to execute every X seconds
 
 By default, a PeriodicEvent will execute throughout the entire simulation.  This can be restricted by specifying the beginTime and/or endTime attributes.  Note: if either of these values are set, then the event will modify its timestep requests so that a cycle will occur at these times (this can be turned off by specifying targetExactStartStop="0").
 
-The timestep request event is typically determined via its target.  However, this value can be overriden by setting the ``forceDt`` or ``maxEventDt`` attributes.
+The timestep request event is typically determined via its target.  However, this value can be overridden by setting the ``forceDt`` or ``maxEventDt`` attributes.
 
 .. include:: ../../../coreComponents/fileIO/schema/docs/PeriodicEvent.rst
 

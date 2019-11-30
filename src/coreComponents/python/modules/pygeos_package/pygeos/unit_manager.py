@@ -1,17 +1,24 @@
+"""Tools for managing units in GEOSX"""
 
 import re
 from pygeos import regex_tools
 
 
-# A structure for creating and applying unit definitions
 class UnitManager():
+  """This class is used to manage unit definitions."""
+
   def __init__(self):
+    """Initialize the class by creating an instance of the dict regex handler, building units."""
     self.units = {}
     self.unitMatcher = regex_tools.DictRegexHandler()
     self.buildUnits()
 
-  # Evaluate the symbolic expression
   def __call__(self, unitStruct):
+    """Evaluate the symbolic expression for matched strings.
+
+       @param unitStruct A list containing the variable scale and the unit definition.
+    """
+
     # Replace all instances of units in the string with their scale defined in self.units
     symbolicUnits = re.sub(regex_tools.patterns['units_b'], self.unitMatcher, unitStruct[1])
 
@@ -26,14 +33,18 @@ class UnitManager():
     str_value = re.sub(regex_tools.patterns['strip_trailing_b'], '', str_value)
     return str_value
 
-  # This function is called when the regex identifies unit definitions in a string
   def regexHandler(self, match):
+    """Split the matched string into a scale and unit definition.
+
+       @param match The matching string from the regex.
+    """
     # The first matched group includes the scale of the value (e.g. 1.234)
     # The second matches the string inside the unit definition (e.g. m/s**2)
     return self.__call__([match.group(1), match.group(2)])
 
-  # Build the unit definitions
   def buildUnits(self):
+    """Build the unit definitions."""
+
     # Long, short names for SI prefixes
     prefixes = {'giga':  {'value': 1e9,  'alt': 'G'},
                 'mega':  {'value': 1e6,  'alt': 'M'},

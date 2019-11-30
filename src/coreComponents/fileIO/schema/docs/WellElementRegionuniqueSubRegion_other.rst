@@ -12,7 +12,7 @@ isExternal                 integer_array                                        
 localToGlobalMap           globalIndex_array                                                                  Array that contains a map from localIndex to globalIndex. 
 nextWellElementIndex       localIndex_array                                                                   (no description available)                                
 nextWellElementIndexGlobal localIndex_array                                                                   (no description available)                                
-nodeList                   InterObjectRelation< Array< long, 2, int_seq< long, 0l, 1l >, long, ChaiBuffer > > (no description available)                                
+nodeList                   InterObjectRelation< Array< long, 2, int_seq< long, 1l, 0l >, long, ChaiBuffer > > (no description available)                                
 topRank                    integer                                                                            (no description available)                                
 topWellElementIndex        localIndex                                                                         (no description available)                                
 wellControlsName           string                                                                             (no description available)                                

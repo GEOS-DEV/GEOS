@@ -24,6 +24,7 @@ set(dataRepository_headers
 # Specify all sources
 #
 set(dataRepository_sources
+    ExecutableGroup.cpp
     Group.cpp
     ConduitRestart.cpp
     Wrapper.cpp
@@ -38,23 +39,21 @@ if( ENABLE_MPI )
 endif()
 
 
-
-set( dependencyList common cxx-utilities codingUtilities pugixml fileIO )
+if( BUILD_OBJ_LIBS )
+  set (dependencyList common cxx-utilities codingUtilities pugixml fileIO)
+else()
+  set( dependencyList common )
+endif()
 
 if( CONDUIT_FOUND )
   set( dependencyList ${dependencyList} conduit )
 endif()
 
-if( ATK_FOUND )
-  set( dependencyList ${dependencyList} axom )
-endif()
-
-
 blt_add_library( NAME                  dataRepository
                  SOURCES               ${dataRepository_sources}
                  HEADERS               ${dataRepository_headers}
                  DEPENDS_ON            ${dependencyList}
-                 #OBJECT                TRUE
+                 OBJECT                ${buildAsObj}
                )
 
 target_include_directories( dataRepository PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)

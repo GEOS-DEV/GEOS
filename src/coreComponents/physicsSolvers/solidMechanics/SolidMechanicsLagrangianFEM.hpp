@@ -19,12 +19,13 @@
 #ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSLAGRANGIANFEM_HPP_
 #define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSLAGRANGIANFEM_HPP_
 
+#include "common/TimingMacros.hpp"
+#include "mesh/MeshForLoopInterface.hpp"
 #include "mpiCommunications/CommunicationTools.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 
-#include "common/TimingMacros.hpp"
-#include "mesh/MeshForLoopInterface.hpp"
 #include "SolidMechanicsLagrangianFEMKernels.hpp"
+
 
 
 namespace geosx
@@ -76,6 +77,11 @@ public:
   virtual void RegisterDataOnMesh( Group * const MeshBody ) override final;
 
   void updateIntrinsicNodalData( DomainPartition * const domain );
+
+  virtual void
+  updateStress( DomainPartition * const domain );
+
+
 
   /**
    * @defgroup Solver Interface Functions
@@ -148,6 +154,8 @@ public:
                          ParallelVector const & rhs ) override;
 
   virtual void ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
+
+  void ResetStressToBeginningOfStep( DomainPartition * const domain );
 
   virtual void ImplicitStepComplete( real64 const & time,
                                      real64 const & dt,
@@ -369,6 +377,7 @@ public:
     static constexpr auto strainTheoryString = "strainTheory";
     static constexpr auto solidMaterialNameString = "solidMaterialName";
     static constexpr auto solidMaterialFullIndexString = "solidMaterialFullIndex";
+    static constexpr auto stress_n = "beginningOfStepStress";
     static constexpr auto forceExternal = "externalForce";
     static constexpr auto contactRelationNameString = "contactRelationName";
     static constexpr auto noContactRelationNameString = "NOCONTACT";
