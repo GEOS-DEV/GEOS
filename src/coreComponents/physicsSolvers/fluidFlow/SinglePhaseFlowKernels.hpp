@@ -622,6 +622,7 @@ struct FluxKernel
     R1Tensor faceConormal, cellToFaceVec;
     R2SymTensor coefTensor;
     bool faceToCellConnector = false;
+    bool massTransferFlag = false;
     for (localIndex ke = 0; ke < stencilSize; ++ke)
     {
       localIndex const er  = seri[ke];
@@ -637,6 +638,7 @@ struct FluxKernel
 
       weightedSum += stencilWeightedElementCenterToConnectorCenter[ke];
       if (stencilWeightedElementCenterToConnectorCenter[ke] < 1e-30) faceToCellConnector = true;
+      if (pres[er][esr][ei] > 1e5) massTransferFlag = true;
     }
 
     // upwinding of fluid properties (make this an option?)
@@ -657,9 +659,11 @@ struct FluxKernel
     }
 
     // populate local flux
-    if (std::abs(potDif) > std::numeric_limits<real64>::min())
+    if (massTransferFlag && std::abs(potDif) > std::numeric_limits<real64>::min())
+    {
       (*mass)[seri[0]][sesri[0]][sei[0]] -= mob[er_up][esr_up][ei_up] * potDif * dt;
       (*mass)[seri[1]][sesri[1]][sei[1]] += mob[er_up][esr_up][ei_up] * potDif * dt;
+    }
   }
 
 
@@ -942,9 +946,13 @@ struct FluxKernel
         }
 
         // populate local flux
-        if (std::abs(potDif) > std::numeric_limits<real64>::min())
+        bool massTransferFlag = true;
+        if (pres[ei[0]] < 1e5 && pres[ei[1]] < 1e5) massTransferFlag = false;
+        if (massTransferFlag && std::abs(potDif) > std::numeric_limits<real64>::min())
+        {
           (*mass)[stencilElementIndices[k[0]]] -= mob[ei_up] * weight * potDif * dt;
           (*mass)[stencilElementIndices[k[1]]] += mob[ei_up] * weight * potDif * dt;
+        }
       }
     }
   }

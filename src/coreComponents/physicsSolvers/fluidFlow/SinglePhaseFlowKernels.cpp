@@ -383,8 +383,6 @@ Launch<FaceElementStencil>( FaceElementStencil & stencil,
 
     localIndex const er = seri[iconn][0];
     localIndex const esr = sesri[iconn][0];
-
-  //  std::cout<< "\n iconn in ComputeJunction = " << iconn ;
     FluxKernel::ComputeJunction( numFluxElems,
                                  sei[iconn],
                                  weights[iconn],

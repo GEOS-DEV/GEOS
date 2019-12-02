@@ -158,7 +158,7 @@ void EventManager::Run(dataRepository::Group * domain)
       m_dt = dt_global;
 #endif
     }
-
+    if ((m_cycle % 100000) == 0)
     GEOS_LOG_RANK_0("Time: " << m_time << "s, dt:" << m_dt << "s, Cycle: " << m_cycle);
 
     // Execute 

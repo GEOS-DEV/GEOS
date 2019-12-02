@@ -371,8 +371,8 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
   ContactRelationBase const * const
   contactRelation = constitutiveManager->GetGroup<ContactRelationBase>(m_contactRelationName);
 
-  ContactRelationBase const * const
-  contactRelationInlet = constitutiveManager->GetGroup<ContactRelationBase>("fractureContactInlet");
+//  ContactRelationBase const * const
+//  contactRelationInlet = constitutiveManager->GetGroup<ContactRelationBase>("fractureContactInlet");
 
   // update face area
   faceManager->computeGeometry(nodeManager);
@@ -408,9 +408,9 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
 //        if (contactStress[kfe] > 0)
 //          std::cout<< "\n\n Contact stress: kfe = " << kfe  <<", aper0 = "<<aperture[kfe]<<", contactStress = "<<contactStress[kfe];
 
-        if (kfe == 2)
-          aperture[kfe] = contactRelationInlet->effectiveAperture( aperture[kfe] );
-        else
+//        if (kfe == 2)
+//          aperture[kfe] = contactRelationInlet->effectiveAperture( aperture[kfe] );
+//        else
           aperture[kfe] = contactRelation->effectiveAperture( aperture[kfe] );
 
         deltaVolume[kfe] = aperture[kfe] * area[kfe] - volume[kfe];
