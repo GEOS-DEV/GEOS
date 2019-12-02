@@ -1847,7 +1847,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
     {
       char output[200];
       sprintf( output,
-               "lastLinSolve(iter,tol,ri, rf) = (%4d, %4.2e, %4.2e, %4.2e) ; ",
+               "LinSolve(iter,tol,ri, rf) = (%4d, %4.2e, %4.2e, %4.2e) ; ",
                params->m_numKrylovIter,
                params->m_krylovTol,
                params->m_KrylovResidualInit,

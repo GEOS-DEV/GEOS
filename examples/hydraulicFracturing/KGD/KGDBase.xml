@@ -1,22 +1,12 @@
 
   <Mesh>
-    <!-- InternalMesh name="mesh1"
+    <InternalMesh name="mesh1"
                   elementTypes="{C3D8}"
                   xCoords="{-180, -40, 40, 180}"
                   yCoords="{0, 100, 180}"
                   zCoords="{0, 1}"
                   nx="{50, 80, 50}"
                   ny="{100, 40}"
-                  nz="{2}"
-                  cellBlockNames="{cb1}"/-->
-
-    <InternalMesh name="mesh1"
-                  elementTypes="{C3D8}"
-                  xCoords="{-40, 40}"
-                  yCoords="{0, 100}"
-                  zCoords="{0, 1}"
-                  nx="{80}"
-                  ny="{100}"
                   nz="{2}"
                   cellBlockNames="{cb1}"/>
   </Mesh>
