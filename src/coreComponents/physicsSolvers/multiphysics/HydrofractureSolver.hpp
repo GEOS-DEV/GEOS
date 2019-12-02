@@ -22,10 +22,6 @@
 
 #include "physicsSolvers/SolverBase.hpp"
 
-#include "Teuchos_RCP.hpp"
-#include "Thyra_LinearOpBase.hpp"
-#include "Thyra_PreconditionerFactoryBase.hpp"
-
 namespace geosx
 {
 
@@ -178,8 +174,10 @@ private:
   SolidMechanicsLagrangianFEM * m_solidSolver;
   FlowSolverBase * m_flowSolver;
 
-  Teuchos::RCP<ParallelMatrix> m_blockDiagUU;
-  Teuchos::RCP<const Thyra::LinearOpBase<double> > m_cachedPrecondUU;
+  real64 m_densityScaling;
+  real64 m_pressureScaling;
+
+  std::unique_ptr<ParallelMatrix> m_blockDiagUU;
 
   ParallelMatrix m_matrix01;
   ParallelMatrix m_matrix10;

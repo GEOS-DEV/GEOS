@@ -465,7 +465,6 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
 //                                 keys::TotalDisplacement );
 
 
-
   m_matrix01.createWithLocalSize( m_solidSolver->getSystemMatrix().localRows(),
                                   m_flowSolver->getSystemMatrix().localCols(),
                                   9,
@@ -662,6 +661,8 @@ void HydrofractureSolver::AssembleSystem( real64 const time,
 
   AssembleFluidMassResidualDerivativeWrtDisplacement( domain, &m_matrix10, &(m_flowSolver->getSystemRhs()) );
 
+  m_densityScaling = 1e-3;
+  m_pressureScaling = 1e9;
 }
 
 void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
@@ -750,7 +751,7 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
 //  std::cout.precision(7);
 //  std::cout.setf(std::ios_base::scientific);
 
-  if( getLogLevel() == 2 )
+  if( m_logLevel >= 3 )
   {
     // Before outputting anything generate permuation matrix and permute.
     ElementRegionManager * const elemManager = mesh->getElemManager();
@@ -877,10 +878,16 @@ CalculateResidualNorm( DomainPartition const * const domain,
 
     m_nlSolverOutputLog += output;
   }
+
 //  GEOS_LOG_RANK_0(std::scientific <<
 //                  "    Norm(r_u) = " << solidResidual <<
 //                  " | Norm(r_p) = " << fluidResidual <<
 //                  " | Norm(r)  = " << fluidResidual+solidResidual );
+
+  if(getLogLevel() >= 2)
+  {
+
+  }
 
   return fluidResidual + solidResidual;
 }
@@ -1542,7 +1549,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
   clock.start(true);
   if(newtonIter==0)
   {
-    m_blockDiagUU = rcp(new ParallelMatrix());
+    m_blockDiagUU.reset(new ParallelMatrix());
     LAIHelperFunctions::SeparateComponentFilter(m_solidSolver->getSystemMatrix(),*m_blockDiagUU,3);
   }
 
@@ -1856,11 +1863,10 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
       m_nlSolverOutputLog += output;
     }
 
-    if( m_logLevel>=2 )
+    if( getLogLevel() >= 2 )
     {
-      GEOS_LOG_RANK_0("    Linear Solver | Iter = " << params->m_numKrylovIter << std::scientific <<
+      GEOS_LOG_RANK_0("    Linear Solver | Iter = " << params->m_numKrylovIter <<
                       " | TargetReduction " << params->m_krylovTol <<
-                      //" | ActualReduction " << params->m_KrylovResidualFinal / params->m_KrylovResidualInit <<
                       " | AuxTime " << auxTime <<
                       " | SetupTime " << setupTime <<
                       " | SolveTime " << solveTime );
