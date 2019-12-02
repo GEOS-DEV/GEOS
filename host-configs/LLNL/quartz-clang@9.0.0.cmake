@@ -1,4 +1,4 @@
-set(CONFIG_NAME "toss_3_x86_64_ib-clang@9.0.0" CACHE PATH "")
+set(CONFIG_NAME "quartz-clang@9.0.0" CACHE PATH "")
 
 set(CMAKE_C_COMPILER /usr/tce/packages/clang/clang-9.0.0/bin/clang CACHE PATH "")
 set(CMAKE_CXX_COMPILER /usr/tce/packages/clang/clang-9.0.0/bin/clang++ CACHE PATH "")
@@ -21,4 +21,4 @@ set(MKL_LIBRARIES ${MKL_ROOT}/lib/libmkl_intel_lp64.so
 # PETSc doesn't seem to work correctly with clang.
 set(ENABLE_PETSC OFF CACHE BOOL "")
 
-include(${CMAKE_CURRENT_LIST_DIR}/../../host-configs/LLNL/toss_3_x86_64_ib-base.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/../../host-configs/LLNL/quartz-base.cmake)
