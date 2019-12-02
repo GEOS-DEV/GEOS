@@ -222,7 +222,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
       }
       else
       {
-        if( m_logLevel >= 1 )
+        if( getLogLevel() >= 1 )
         {
           GEOS_LOG_RANK_0("  Fracture propagation. Re-entering Newton Solve.");
         }
@@ -1794,7 +1794,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
       else
         list->sublist("Linear Solver Types").sublist("AztecOO").sublist("Forward Solve").sublist("AztecOO Settings").set("Aztec Solver","GMRES");
 
-      if( params->getLogLevel()>=1 )
+      if( params->getLogLevel()>=2 )
         list->sublist("Linear Solver Types").sublist("AztecOO").sublist("Forward Solve").sublist("AztecOO Settings").set("Output Frequency",1);
       else
       {
@@ -1843,7 +1843,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
 
     params->m_numKrylovIter = status.extraParameters->get<int>("Iteration Count");
 
-    if( params->getLogLevel() >= 3 )
+    if( params->getLogLevel() >= 1 )
     {
       char output[200];
       sprintf( output,
@@ -1856,7 +1856,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
       m_nlSolverOutputLog += output;
     }
 
-    if( m_logLevel>=2 )
+    if( getLogLevel()>=2 )
     {
       GEOS_LOG_RANK_0("    Linear Solver | Iter = " << params->m_numKrylovIter << std::scientific <<
                       " | TargetReduction " << params->m_krylovTol <<

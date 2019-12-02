@@ -212,7 +212,7 @@ void SolverBase::Execute( real64 const time_n,
     	nextDt = std::min(nextDt, dtRemaining);
     }
 
-    if( m_logLevel >= 1 && dtRemaining > 0.0 )
+    if( getLogLevel() >= 1 && dtRemaining > 0.0 )
     {
       GEOS_LOG_LEVEL_RANK_0( 1, getName() << ": sub-step = " << subStep
                                        << ", accepted dt = " << dtAccepted
@@ -230,24 +230,24 @@ void SolverBase::SetNextDt( SystemSolverParameters * const solverParams,
                             real64 const & currentDt,
                             real64 & nextDt )
 {
-	integer & newtonIter = solverParams->numNewtonIterations();
-	int iterCutLimit = std::ceil(solverParams->dtCutIterLimit());
-	int iterIncLimit = std::ceil(solverParams->dtIncIterLimit());
+  integer & newtonIter = solverParams->numNewtonIterations();
+  int iterCutLimit = std::ceil(solverParams->dtCutIterLimit());
+  int iterIncLimit = std::ceil(solverParams->dtIncIterLimit());
 
-	if (newtonIter <  iterIncLimit )
-	{
-		// Easy convergence, let's double the time-step.
-		nextDt = 2*currentDt;
-		GEOS_LOG_LEVEL_RANK_0( 1,  getName() << ": Newton solver converged in less than " << iterIncLimit << " iterations, time-step required will be doubled.");
-	}else if (newtonIter >  iterCutLimit)
-	{
-		// Tough convergence let us make the time-step smaller!
-		nextDt = currentDt/2;
-		GEOS_LOG_LEVEL_RANK_0(1, getName() << ": Newton solver converged in more than " << iterCutLimit << " iterations, time-step required will be halved.");
-	}else
-	{
-		nextDt = currentDt;
-	}
+  if (newtonIter <  iterIncLimit )
+  {
+    // Easy convergence, let's double the time-step.
+    nextDt = 2*currentDt;
+    GEOS_LOG_LEVEL_RANK_0( 2,  getName() << ": Newton solver converged in less than " << iterIncLimit << " iterations, time-step required will be doubled.");
+  }else if (newtonIter >  iterCutLimit)
+  {
+    // Tough convergence let us make the time-step smaller!
+    nextDt = currentDt/2;
+    GEOS_LOG_LEVEL_RANK_0(2, getName() << ": Newton solver converged in more than " << iterCutLimit << " iterations, time-step required will be halved.");
+  }else
+  {
+    nextDt = currentDt;
+  }
 }
 
 real64 SolverBase::LinearImplicitStep( real64 const & time_n,
@@ -400,14 +400,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
     // main Newton loop
     for( newtonIter = 0; newtonIter < maxNewtonIter; ++newtonIter )
     {
-      if( m_logLevel >= 1 )
-      {
-//        char output[100] = {0};
-//        sprintf( output, " NewtonIter: %2d", newtonIter );
-//        GEOS_LOG_RANK_0( output <<" ; " << m_nlSolverOutputLog );
-//        m_nlSolverOutputLog.clear();
-        GEOS_LOG_RANK_0("  NewtonIter: "<<newtonIter);
-      }
+      m_nlSolverOutputLog.clear();
 
       // call assemble to fill the matrix and the rhs
       AssembleSystem( time_n, stepDt, domain, dofManager, matrix, rhs );
@@ -418,7 +411,13 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       // get residual norm
       real64 residualNorm = CalculateResidualNorm( domain, dofManager, rhs );
 
-      GEOS_LOG_LEVEL_RANK_0( 1, "Attempt: " << dtAttempt << ", Newton: " << newtonIter << ", R = " << residualNorm );
+      if( getLogLevel() >= 1 )
+      {
+        char output[100] = {0};
+        sprintf( output, " Attempt: %2d, NewtonIter: %2d, R = %4.2e ; ", dtAttempt, newtonIter, residualNorm );
+        GEOS_LOG_LEVEL_RANK_0( 1, output << m_nlSolverOutputLog );
+        m_nlSolverOutputLog.clear();
+      }
 
       // if the residual norm is less than the Newton tolerance we denote that we have
       // converged and break from the Newton loop immediately.
@@ -455,14 +454,6 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       // call the default linear solver on the system
       SolveSystem( dofManager, matrix, rhs, solution );
 
-      if( m_logLevel >= 1 )
-      {
-//        char output[100] = {0};
-//        sprintf( output, " NewtonIter: %2d", newtonIter );
-//        GEOS_LOG_RANK_0( output <<" ; " << m_nlSolverOutputLog );
-        GEOS_LOG_RANK_0( "  "<<m_nlSolverOutputLog );
-        m_nlSolverOutputLog.clear();
-      }
 
       scaleFactor = ScalingForSystemSolution( domain, dofManager, solution );
 

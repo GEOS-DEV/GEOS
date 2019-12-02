@@ -565,7 +565,6 @@ protected:
   template<typename BASETYPE>
   static BASETYPE * GetConstitutiveModel( dataRepository::Group * dataGroup, string const & name );
 
-  integer m_logLevel = 0;
   R1Tensor m_gravityVector;
   SystemSolverParameters m_systemSolverParameters;
 

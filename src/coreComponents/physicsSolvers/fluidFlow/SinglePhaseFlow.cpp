@@ -1180,7 +1180,7 @@ void SinglePhaseFlow::ApplySystemSolution( DofManager const & dofManager,
   {
     arrayView1d<real64 const> const & pressure = m_pressure[er][esr] ;
     arrayView1d<real64 const> const & dp = m_deltaPressure[er][esr] ;
-    if( m_logLevel >= 1 )
+    if( getLogLevel() >= 1 )
     {
       std::cout<<"Pressure - Presolution"<<std::endl;
       for( localIndex a=0 ; a<pressure.size(0) ; ++a )
@@ -1195,7 +1195,7 @@ void SinglePhaseFlow::ApplySystemSolution( DofManager const & dofManager,
                                  subRegion,
                                  viewKeyStruct::deltaPressureString );
 
-    if( m_logLevel >= 1 )
+    if( getLogLevel() >= 1 )
     {
       std::cout<<"Pressure - Postsolution"<<std::endl;
       for( localIndex a=0 ; a<pressure.size(0) ; ++a )
