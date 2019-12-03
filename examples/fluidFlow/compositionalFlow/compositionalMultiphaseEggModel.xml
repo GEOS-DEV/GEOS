@@ -4,20 +4,6 @@
  <Solvers
     gravityVector="0.0, 0.0, -9.81">
 
-    <Reservoir name="reservoirSystem"
-               flowSolverName="compositionalMultiphaseFlow"
-               wellSolverName="compositionalMultiphaseWell"
-               targetRegions="{domain,
-			       wellRegion1,
-			       wellRegion2,
-			       wellRegion3}">
-      <SystemSolverParameters maxIterNewton="40"
-                              useDirectSolver="0"
-                              maxSubSteps="10"
-                              maxTimeStepCuts="10"
-                              newtonTol="1e-4"/>
-    </Reservoir>
-  
     <CompositionalMultiphaseFlow name="compositionalMultiphaseFlow"
                                  gravityFlag="1"
                                  discretization="fluidTPFA"
@@ -27,35 +13,13 @@
                                  temperature="297.15"
                                  useMass="0"
                                  targetRegions="{domain}">
+      <SystemSolverParameters maxIterNewton="40"
+                              useDirectSolver="0"
+                              maxSubSteps="10"
+                              maxTimeStepCuts="10"
+                              newtonTol="1e-4"/>
     </CompositionalMultiphaseFlow>
 
-    <CompositionalMultiphaseWell name="compositionalMultiphaseWell"
-                                 gravityFlag="1"
-                                 wellFluidName="fluid1"
-                                 wellRelPermName="relperm"
-                                 wellTemperature="297.15"
-                                 useMass="0"
-                                 targetRegions="{wellRegion1,
-						 wellRegion2,
-						 wellRegion3}">
-        <WellControls name="wellControls1"
-                      type="producer"
-                      control="BHP"
-                      targetBHP="5e5"
-                      targetRate="1e9"/>
-        <WellControls name="wellControls2"
-                      type="producer"
-                      control="BHP"
-                      targetBHP="5e5"
-                      targetRate="1e9"/>
-        <WellControls name="wellControls3"
-                      type="injector"
-                      control="liquidRate"
-	              injectionStream="{0.1, 0.1, 0.1, 0.7}"
-                      targetBHP="1e7"
-                      targetRate="100"/>
-     
-    </CompositionalMultiphaseWell>
   </Solvers>
   
   <Mesh>
@@ -63,63 +27,6 @@
                          file="/g/g90/hamon1/geosx/GEOSX/examples/fluidFlow/data/egg.msh"
                          fieldNamesInGEOSX="{permeability}"
                          fieldsToImport="{PERM}"/>
-                         
-    <InternalWell name="well_producer1"
-                  wellRegionName="wellRegion1"
-                  wellControlsName="wellControls1"
-                  meshName="mesh"
-                  polylineNodeCoords="{ {120,  40, 0}, 
-                                        {120,  40, 2} }"
-                  polylineSegmentConn="{ {0, 1} }"
-                  radius="0.1"
-                  numElementsPerSegment="1">
-     <Perforation name="producer1_perf1"
-                  distanceFromHead="1.99"
-                  wellPeacemanIndex="1e-10"/> 
-    </InternalWell>
-    <InternalWell name="wellProducer1"
-                  wellRegionName="wellRegion1"
-                  wellControlsName="wellControls1"
-                  meshName="mesh"
-                  polylineNodeCoords="{ {360,  120, 0}, 
-                                        {360,  120, 2} }"
-                  polylineSegmentConn="{ {0, 1} }"
-                  radius="0.1"
-                  numElementsPerSegment="2">
-     <Perforation name="producer1_perf1"
-                  distanceFromHead="1.99"
-                  wellPeacemanIndex="1e-10"/> 
-    </InternalWell> 
-    <InternalWell name="wellProducer2"
-                  wellRegionName="wellRegion2"
-                  wellControlsName="wellControls2"
-                  meshName="mesh"
-                  polylineNodeCoords="{ {60, 360, 0}, 
-                                        {60, 360, 2 } }"
-                  polylineSegmentConn="{ {0, 1} }"
-                  radius="0.1"
-                  numElementsPerSegment="2">
-     <Perforation name="producer2_perf1"
-                  distanceFromHead="1.99"
-                  wellPeacemanIndex="1e-10"/>
-    </InternalWell> 
-    <InternalWell name="wellInjector1"
-                  wellRegionName="wellRegion3"
-                  wellControlsName="wellControls3"
-                  meshName="mesh"
-                  polylineNodeCoords="{ {180, 180, 0}, 
-                                        {180, 180, 2 } }"
-                  polylineSegmentConn="{ {0, 1} }"
-                  radius="0.1"
-                  numElementsPerSegment="4">
-     <Perforation name="injector1_perf1"
-                  distanceFromHead="1.25"
-                  wellPeacemanIndex="1e-10"/>
-     <Perforation name="injector1_perf2"
-                  distanceFromHead="1.95"
-                  wellPeacemanIndex="1e-10"/> 
-    </InternalWell>
- 
   </Mesh>
 
   <Events maxTime="1e8">
@@ -128,19 +35,19 @@
     solver time-step request -->
     <PeriodicEvent name="solverApplications1"
                    forceDt="1e3"
-                   target="/Solvers/reservoirSystem"
+                   target="/Solvers/compositionalMultiphaseFlow"
 		   beginTime="0"
 		   endTime="1e3"/>
 
     <PeriodicEvent name="solverApplications2"
                    forceDt="1e4"
-                   target="/Solvers/reservoirSystem"
+                   target="/Solvers/compositionalMultiphaseFlow"
 		   beginTime="1e3"
 		   endTime="1.1e4"/>
 
     <PeriodicEvent name="solverApplications3"
                    forceDt="1e5"
-                   target="/Solvers/reservoirSystem"
+                   target="/Solvers/compositionalMultiphaseFlow"
 		   beginTime="1.1e4"
 		   endTime="1e8"/>
 
@@ -163,12 +70,6 @@
     <CellElementRegion name="domain"
                        cellBlocks="{0_HEX}"
                        materialList="{fluid1, rock, relperm}"/>
-    <WellElementRegion name="wellRegion1"
-                       materialList="{fluid1}"/> 
-    <WellElementRegion name="wellRegion2"
-                       materialList="{fluid1}"/>  
-    <WellElementRegion name="wellRegion3"
-                       materialList="{fluid1}"/>
   </ElementRegions>
 
  <NumericalMethods>

@@ -6,6 +6,7 @@
     <Reservoir name="reservoirSystem"
                flowSolverName="singlePhaseFlow"
                wellSolverName="singlePhaseWell"
+	       logLevel="1"
                targetRegions="{domain,
 			       wellRegion1,
 			       wellRegion2,
@@ -13,6 +14,7 @@
 			       wellRegion4,
 			       wellRegion5}">
       <SystemSolverParameters maxIterNewton="40"
+  	      	              logLevel="0"
                               useDirectSolver="1"
                               maxSubSteps="10"
                               maxTimeStepCuts="10"
@@ -20,6 +22,7 @@
     </Reservoir>
  
     <SinglePhaseFlow name="singlePhaseFlow"
+      	      	     logLevel="0"
                      gravityFlag="1"
                      discretization="singlePhaseTPFA"
                      fluidName="water"
@@ -28,6 +31,7 @@
     </SinglePhaseFlow>
 
     <SinglePhaseWell name="singlePhaseWell"
+      	             logLevel="1"
                      gravityFlag="1"
                      wellFluidName="water"
                      targetRegions="{wellRegion1,

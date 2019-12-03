@@ -225,7 +225,7 @@ public:
                  globalIndex                        elemOffsetGlobal );
 
   void ConnectPerforationsToMeshElements( MeshLevel                   & mesh,
-					  InternalWellGenerator const & wellGeometry );
+                                          InternalWellGenerator const & wellGeometry );
   
   /*
    * @brief Reconstruct the (local) map nextWellElemId using nextWellElemIdGlobal after the ghost exchange
@@ -361,25 +361,28 @@ private:
    */ 
   void UpdateNodeManagerNodeToElementMap( MeshLevel & mesh );
 
-  void InitializeLocalSearch( MeshLevel const  & mesh,
-                              R1Tensor  const  & location,
-                              localIndex       & erInit,
-                              localIndex       & esrInit,
-                              localIndex       & eiInit) const;
+  void InitializeLocalSearch( MeshLevel const & mesh,
+                              R1Tensor  const & location,
+                              localIndex      & erInit,
+                              localIndex      & esrInit,
+                              localIndex      & eiInit) const;
 
-  bool SearchLocalElements( MeshLevel const  & mesh,
-   		            R1Tensor  const  & location,
-			    set<localIndex>  & nodes,
-			    set<globalIndex> & elements,
-			    localIndex       & erMatched,
-			    localIndex       & esrMatched,
- 			    localIndex       & eiMatched ) const;
+  bool SearchLocalElements( MeshLevel  const & mesh,
+                            R1Tensor   const & location,
+                            localIndex const & erInit,
+                            localIndex const & esrInit,
+                            localIndex const & eiInit,
+                            localIndex       & erMatched,
+                            localIndex       & esrMatched,
+                            localIndex       & eiMatched ) const;
   
-  bool SearchEntireDomain( MeshLevel  const  & mesh,
-                           R1Tensor   const  & location,
-                           localIndex        & erMatched,
-                           localIndex        & esrMatched,
-                           localIndex        & eiMatched ) const;
+  bool VisitNeighborElements( MeshLevel const  & mesh,
+                              R1Tensor  const  & location,
+                              set<localIndex>  & nodes,
+                              set<globalIndex> & elements,
+                              localIndex       & erMatched,
+                              localIndex       & esrMatched,
+                              localIndex       & eiMatched ) const;
   
   void CollectElementNodes( CellBlock const * subRegion,
                             localIndex        ei,
@@ -427,6 +430,9 @@ private:
   /// top rank
   integer m_topRank;
 
+  /// depth of the local search to match perforation to res elements
+  localIndex m_searchDepth;
+  
 };
 
 } /* namespace geosx */

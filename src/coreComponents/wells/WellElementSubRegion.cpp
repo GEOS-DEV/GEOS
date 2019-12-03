@@ -30,7 +30,8 @@ WellElementSubRegion::WellElementSubRegion( string const & name, Group * const p
   m_toNodesRelation(),
   m_topWellElementIndex( -1 ),
   m_perforationData( groupKeyStruct::perforationDataString, this ),
-  m_topRank( -1 )
+  m_topRank( -1 ),
+  m_searchDepth( 10 )
 {
 
   registerWrapper( viewKeyStruct::wellControlsString, &m_wellControlsName, false );
@@ -183,58 +184,19 @@ void WellElementSubRegion::AssignUnownedElementsInReservoir( MeshLevel          
     localIndex esrInit    = -1;
     localIndex eiInit     = -1;
     
-    // start from the element that is the closest from the perforation  
+    // find the reservoir element that is the closest from the well element
+    // this will be used next to search around the closest reservoir element
     InitializeLocalSearch( mesh, location,
-    			   erInit, esrInit, eiInit );
-   	
-    // Strategy #1: search locally, starting from the location of the previous perforation
-    // the assumption here is that perforations have been entered in order of depth
-    bool resElemFound = false;
+                           erInit, esrInit, eiInit );
 
-    CellElementRegion const * region = Group::group_cast<CellElementRegion const *>(mesh.getElemManager()->GetRegion(erInit));
-    CellBlock const * subRegion      = Group::group_cast<CellBlock const *>(region->GetSubRegion(esrInit));
-           
-    set<localIndex>  nodes;
-    set<globalIndex> elements;
-
-    // collect the nodes of the current element
-    // they will be used to access the neighbors and check if they contain the perforation
-    CollectElementNodes( subRegion, eiInit, nodes); 
-
-    // enlarge the neighborhoods four times (if no match is found)
-    // before switching to the other strategy
-    localIndex const depth = 4;
-    for (localIndex d = 0; d < depth; ++d)
-    {
-      // search the elements that can be access from the set "nodes"
-      // stop if an element containing the perforation is found
-      // if not, enlarge the set "nodes"
-      resElemFound = SearchLocalElements( mesh, location, nodes, elements,
-                                          erMatched, esrMatched, eiMatched );
-      if (resElemFound)
-      {
-        break;
-      }
-    }  
-
-    // Strategy #2: brute force 
-    // if the local search was not sucessful, let's search in the entire domain
-    if (resElemFound == false)  
-    {
-      resElemFound = SearchEntireDomain( mesh, location,
-                                         erMatched, esrMatched, eiMatched );
-    }
-
+    // search locally, starting from the reservoir element found above
+    bool resElemFound = SearchLocalElements( mesh, location,
+                                             erInit, esrInit, eiInit,
+                                             erMatched, esrMatched, eiMatched );
+    
     // if the element was found
     if (resElemFound)
     {
-      ElementRegionManager::ElementViewAccessor<arrayView1d<R1Tensor const>> 
-      elemCenter = mesh.getElemManager()->ConstructViewAccessor<array1d<R1Tensor>, arrayView1d<R1Tensor const>>( ElementSubRegionBase::
-                                                                                                                 viewKeyStruct::
-                                                                                                                 elementCenterString );
-      std::cout << "CellElementCenter = "   << elemCenter[erMatched][esrMatched][eiMatched] << std::endl;
-      std::cout << "WellElementLocation = " << location                << std::endl;
-
       // the well element is in the reservoir element (er,esr,ei), so tag it as local
       localElems.insert( currGlobal );
       elemStatusGlobal[currGlobal] = WellElemStatus::LOCAL;
@@ -541,7 +503,7 @@ void WellElementSubRegion::UpdateNodeManagerNodeToElementMap( MeshLevel & mesh )
 }
 
 void WellElementSubRegion::ConnectPerforationsToMeshElements( MeshLevel                   & mesh,
- 			                                      InternalWellGenerator const & wellGeometry )
+                                                              InternalWellGenerator const & wellGeometry )
 {
   arrayView1d<R1Tensor const> const & perfCoordsGlobal    = wellGeometry.GetPerfCoords();
   arrayView1d<real64 const>   const & perfWellIndexGlobal = wellGeometry.GetPerfPeacemanIndex();
@@ -564,66 +526,28 @@ void WellElementSubRegion::ConnectPerforationsToMeshElements( MeshLevel         
     
     if (iperfLocal > 0)
     {
-      // get the info of the element matched with the previous perforation  
+      // get the info of the element matched with the previous perforation
+      // this will be used next to search around this reservoir element
       erInit  = m_perforationData.GetMeshElements().m_toElementRegion[iperfLocal-1];
       esrInit = m_perforationData.GetMeshElements().m_toElementSubRegion[iperfLocal-1];
       eiInit  = m_perforationData.GetMeshElements().m_toElementIndex[iperfLocal-1];
-    }	
+    }   
     else
     {
-      // start from the element that is the closest from the perforation  
+      // find the reservoir element that is the closest from the perforation
+      // this will be used next to search around the closest reservoir element
       InitializeLocalSearch( mesh, location,
-      			     erInit, esrInit, eiInit );
-    }	
-	
-    // Strategy #1: search locally, starting from the location of the previous perforation
-    // the assumption here is that perforations have been entered in order of depth
-    bool resElemFound = false;
+                             erInit, esrInit, eiInit );
+    }   
 
-    CellElementRegion const * region = Group::group_cast<CellElementRegion const *>(mesh.getElemManager()->GetRegion(erInit));
-    CellBlock const * subRegion      = Group::group_cast<CellBlock const *>(region->GetSubRegion(esrInit));
-           
-    set<localIndex>  nodes;
-    set<globalIndex> elements;
+    // search locally, starting from the reservoir element found above
+    bool resElemFound = SearchLocalElements( mesh, location,
+                                             erInit, esrInit, eiInit,
+                                             erMatched, esrMatched, eiMatched );
 
-    // collect the nodes of the current element
-    // they will be used to access the neighbors and check if they contain the perforation
-    CollectElementNodes( subRegion, eiInit, nodes); 
-
-    // enlarge the neighborhoods four times (if no match is found)
-    // before switching to the other strategy
-    localIndex const depth = 4;
-    for (localIndex d = 0; d < depth; ++d)
-    {
-      // search the elements that can be access from the set "nodes"
-      // stop if an element containing the perforation is found
-      // if not, enlarge the set "nodes"
-      resElemFound = SearchLocalElements( mesh, location, nodes, elements,
-                                          erMatched, esrMatched, eiMatched );
-      if (resElemFound)
-      {
-        break;
-      }
-    }  
-
-    // Strategy #2: brute force 
-    // if the local search was not sucessful, let's search in the entire domain
-    if (resElemFound == false)  
-    {
-      resElemFound = SearchEntireDomain( mesh, location,
-                                         erMatched, esrMatched, eiMatched );
-    }
-    
     // if the element was found
     if (resElemFound)
     {
-      ElementRegionManager::ElementViewAccessor<arrayView1d<R1Tensor const>> 
-      elemCenter = mesh.getElemManager()->ConstructViewAccessor<array1d<R1Tensor>, arrayView1d<R1Tensor const>>( ElementSubRegionBase::
-                                                                                                                 viewKeyStruct::
-                                                                                                                 elementCenterString );
-      std::cout << "CellElementCenter = "   << elemCenter[erMatched][esrMatched][eiMatched] << std::endl;
-      std::cout << "PerforationLocation = " << location                << std::endl;
-      
       // set the indices for the matched element
       m_perforationData.GetMeshElements().m_toElementRegion   [iperfLocal] = erMatched;
       m_perforationData.GetMeshElements().m_toElementSubRegion[iperfLocal] = esrMatched;
@@ -643,18 +567,18 @@ void WellElementSubRegion::ConnectPerforationsToMeshElements( MeshLevel         
   m_perforationData.ConstructGlobalToLocalMap();
 }
 
-void WellElementSubRegion::InitializeLocalSearch( MeshLevel const  & mesh,
-                                                  R1Tensor  const  & location,
-                                                  localIndex       & erInit, 
-                                                  localIndex       & esrInit, 
-                                                  localIndex       & eiInit) const
+void WellElementSubRegion::InitializeLocalSearch( MeshLevel const & mesh,
+                                                  R1Tensor  const & location,
+                                                  localIndex      & erInit, 
+                                                  localIndex      & esrInit, 
+                                                  localIndex      & eiInit) const
 {
   ElementRegionManager::ElementViewAccessor<arrayView1d<R1Tensor const>> 
   resElemCenter = mesh.getElemManager()->ConstructViewAccessor<array1d<R1Tensor>, arrayView1d<R1Tensor const>>( ElementSubRegionBase::
                                                                                                                 viewKeyStruct::
                                                                                                                 elementCenterString );
-
-  // find the closest reservoir element
+  // to initialize the local search for the reservoir element that contains "location", 
+  // we find the reservoir element that minimizes the distance from "location" to the element center
   auto ret = minLocOverElemsInMesh( &mesh, [&] ( localIndex const er,
                                                  localIndex const esr,
                                                  localIndex const ei ) -> real64
@@ -664,19 +588,62 @@ void WellElementSubRegion::InitializeLocalSearch( MeshLevel const  & mesh,
     return v.L2_Norm();
   });
 
-  // save the region, subregion and index
+  // save the region, subregion and index of the reservoir element
+  // note that this reservoir element does not necessarily contains "location"
   erInit  = std::get<0>(ret.second);
   esrInit = std::get<1>(ret.second);
   eiInit  = std::get<2>(ret.second);
 }
 
-bool WellElementSubRegion::SearchLocalElements( MeshLevel const  & mesh,
-                                                R1Tensor  const  & location,
-                                                set<localIndex>  & nodes,
-                                                set<globalIndex> & elements,
+bool WellElementSubRegion::SearchLocalElements( MeshLevel  const & mesh,
+                                                R1Tensor   const & location,
+                                                localIndex const & erInit,
+                                                localIndex const & esrInit,
+                                                localIndex const & eiInit,
                                                 localIndex       & erMatched,
                                                 localIndex       & esrMatched,
                                                 localIndex       & eiMatched ) const
+{
+  // search locally, starting from the location of the previous perforation
+  // the assumption here is that perforations have been entered in order of depth
+  bool resElemFound = false;
+
+  CellElementRegion const * region = Group::group_cast<CellElementRegion const *>(mesh.getElemManager()->GetRegion(erInit));
+  CellBlock const * subRegion      = Group::group_cast<CellBlock const *>(region->GetSubRegion(esrInit));
+           
+  set<localIndex>  nodes;
+  set<globalIndex> elements;
+
+  // collect the nodes of the current element
+  // they will be used to access the neighbors and check if they contain the perforation
+  CollectElementNodes( subRegion, eiInit, nodes); 
+
+  // enlarge the neighborhoods four times (if no match is found)
+  // before switching to the other strategy
+  for (localIndex d = 0; d < m_searchDepth; ++d)
+  {
+    localIndex nNodes = nodes.size();
+    
+    // search the elements that can be access from the set "nodes"
+    // stop if an element containing the perforation is found
+    // if not, enlarge the set "nodes"
+    resElemFound = VisitNeighborElements( mesh, location, nodes, elements,
+                                          erMatched, esrMatched, eiMatched );
+    if (resElemFound || nNodes == nodes.size())
+    {
+      break;
+    }
+  }  
+  return resElemFound;
+}
+
+bool WellElementSubRegion::VisitNeighborElements( MeshLevel const  & mesh,
+                                                  R1Tensor  const  & location,
+                                                  set<localIndex>  & nodes,
+                                                  set<globalIndex> & elements,
+                                                  localIndex       & erMatched,
+                                                  localIndex       & esrMatched,
+                                                  localIndex       & eiMatched ) const
 {
   ElementRegionManager const * const elemManager = mesh.getElemManager();
   NodeManager const * const nodeManager          = mesh.getNodeManager();
@@ -739,40 +706,24 @@ bool WellElementSubRegion::SearchLocalElements( MeshLevel const  & mesh,
   return matched;
 }
 
-bool WellElementSubRegion::SearchEntireDomain( MeshLevel  const  & mesh,
-                                               R1Tensor   const  & location,
-                                               localIndex        & erMatched,
-                                               localIndex        & esrMatched,
-                                               localIndex        & eiMatched ) const
-{
-  ElementRegionManager const * elemManager = mesh.getElemManager();
-  NodeManager const * const nodeManager    = mesh.getNodeManager();
-  
-  bool matched = false;
 
-  // loop over the cell element regions
-  elemManager->forElementSubRegionsComplete<CellElementSubRegion>( [&]( localIndex const er,
-                                                                        localIndex const esr,
-                                                                        ElementRegionBase const * GEOSX_UNUSED_ARG( elemRegion ), 
-                                                                        CellElementSubRegion const * subRegion )
+void WellElementSubRegion::CollectElementNodes( CellBlock const * subRegion,
+                                                localIndex        ei,
+                                                set<localIndex> & nodes ) const
+{
+  // get all the nodes belonging to this element 
+  for (localIndex a = 0; a < subRegion->numNodesPerElement(); ++a)
   {
-    // loop over the elements of the subregion 
-    for (localIndex ei = 0; ei < subRegion->size(); ++ei) 
-    {                              
-      // check if the element of the subregion contains the perforations
-      if (IsPointInsideElement( nodeManager, location, subRegion, ei ))
-      {
-        // store the indices of the mesh element
-        erMatched  = er;
-        esrMatched = esr;
-        eiMatched  = ei;
-        matched = true;
-        break;
-      }
+    localIndex const inode = subRegion->nodeList(ei,a);
+
+    // if not already visited, store the newly found node
+    if (!nodes.contains(inode))
+    {
+      nodes.insert(inode);
     }
-  });
-  return matched;
+  }  
 }
+
 
 bool WellElementSubRegion::IsPointInsideElement( NodeManager const * const nodeManager,
                                                  R1Tensor    const & location,
@@ -798,24 +749,6 @@ bool WellElementSubRegion::IsPointInsideElement( NodeManager const * const nodeM
   }
   return isInsideElement;
 } 
-
-
-void WellElementSubRegion::CollectElementNodes( CellBlock const * subRegion,
-                                                localIndex        ei,
-                                                set<localIndex> & nodes ) const
-{
-  // get all the nodes belonging to this element 
-  for (localIndex a = 0; a < subRegion->numNodesPerElement(); ++a)
-  {
-    localIndex const inode = subRegion->nodeList(ei,a);
-
-    // if not already visited, store the newly found node
-    if (!nodes.contains(inode))
-    {
-      nodes.insert(inode);
-    }
-  }  
-}
 
 
 void WellElementSubRegion::ReconstructLocalConnectivity()
@@ -940,12 +873,12 @@ void WellElementSubRegion::DebugWellElementSubRegions( arrayView1d<integer const
   {
     return;
   } 
-
+  
   if ( MpiWrapper::Comm_rank( MPI_COMM_GEOSX ) < 1)
   {
     return;
   } 
-
+  
   std::cout << std::endl;
   std::cout << "++++++++++++++++++++++++++" << std::endl;
   std::cout << "WellElementSubRegion = " << getName() << std::endl;
