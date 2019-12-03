@@ -314,10 +314,10 @@ using ArrayOfSetsView = LvArray::ArrayOfSetsView< T, localIndex const >;
 ///@}
 
 template< typename T, typename ROWINDEX, typename COLINDEX >
-using CRSMatrix = LvArray::CRSMatrix<T,COLINDEX,ROWINDEX>;
+using CRSMatrix = LvArray::CRSMatrix< T, COLINDEX, ROWINDEX >;
 
 template< typename T, typename COLINDEX, typename LINEEARINDEX >
-using CRSMatrixView = LvArray::CRSMatrixView<T,COLINDEX,LINEEARINDEX>;
+using CRSMatrixView = LvArray::CRSMatrixView< T, COLINDEX, LINEEARINDEX >;
 
 /**
  * @name Ordered and unordered map types.
