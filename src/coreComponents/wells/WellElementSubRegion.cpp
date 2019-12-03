@@ -165,14 +165,7 @@ void WellElementSubRegion::AssignUnownedElementsInReservoir( MeshLevel          
                                                              set<globalIndex>            & localElems,
                                                              arrayView1d<integer>        & elemStatusGlobal ) const
 {
-  NodeManager const * const nodeManager          = mesh.getNodeManager();
-  ElementRegionManager const * const elemManager = mesh.getElemManager();
-
   // get the well and reservoir element coordinates
-  ElementRegionManager::ElementViewAccessor<arrayView1d<R1Tensor const>> 
-  resElemCoords = elemManager->ConstructViewAccessor<array1d<R1Tensor>, arrayView1d<R1Tensor const>>( ElementSubRegionBase::
-                                                                                                      viewKeyStruct::
-                                                                                                      elementCenterString );
   arrayView1d<R1Tensor const> const & wellElemCoordsGlobal = wellGeometry.GetElemCoords();
 
   // assign the well elements based on location wrt the reservoir elements
@@ -180,42 +173,72 @@ void WellElementSubRegion::AssignUnownedElementsInReservoir( MeshLevel          
   // then the well element is assigned to rank k
   for (globalIndex currGlobal : unownedElems)
   {
-    R1Tensor const & wellElemCoords = wellElemCoordsGlobal[currGlobal];
+    R1Tensor const & location = wellElemCoordsGlobal[currGlobal];
 
+    localIndex erMatched  = -1;
+    localIndex esrMatched = -1;
+    localIndex eiMatched  = -1;
 
+    localIndex erInit     = -1;
+    localIndex esrInit    = -1;
+    localIndex eiInit     = -1;
+    
+    // start from the element that is the closest from the perforation  
+    InitializeLocalSearch( mesh, location,
+    			   erInit, esrInit, eiInit );
+   	
+    // Strategy #1: search locally, starting from the location of the previous perforation
+    // the assumption here is that perforations have been entered in order of depth
+    bool resElemFound = false;
 
-    // find the closest reservoir element
-    auto ret = minLocOverElemsInMesh( &mesh, [&] ( localIndex const er,
-                                                   localIndex const esr,
-                                                   localIndex const ei ) -> real64
+    CellElementRegion const * region = Group::group_cast<CellElementRegion const *>(mesh.getElemManager()->GetRegion(erInit));
+    CellBlock const * subRegion      = Group::group_cast<CellBlock const *>(region->GetSubRegion(esrInit));
+           
+    set<localIndex>  nodes;
+    set<globalIndex> elements;
+
+    // collect the nodes of the current element
+    // they will be used to access the neighbors and check if they contain the perforation
+    CollectElementNodes( subRegion, eiInit, nodes); 
+
+    // enlarge the neighborhoods four times (if no match is found)
+    // before switching to the other strategy
+    localIndex const depth = 4;
+    for (localIndex d = 0; d < depth; ++d)
     {
-      R1Tensor v = wellElemCoords;
-      v -= resElemCoords[er][esr][ei];
-      return v.L2_Norm();
-    } );
+      // search the elements that can be access from the set "nodes"
+      // stop if an element containing the perforation is found
+      // if not, enlarge the set "nodes"
+      resElemFound = SearchLocalElements( mesh, location, nodes, elements,
+                                          erMatched, esrMatched, eiMatched );
+      if (resElemFound)
+      {
+        break;
+      }
+    }  
 
-    // save the region, subregion and index
-    localIndex const er  = std::get<0>(ret.second);
-    localIndex const esr = std::get<1>(ret.second);
-    localIndex const ei  = std::get<2>(ret.second);
-
-    // check if well element center location is indeed inside the element
-    CellBlock const * const cellBlock = elemManager->GetRegion( er )->GetSubRegion<CellElementSubRegion>( esr );
-    array1d<array1d<localIndex>> faceNodes( cellBlock->numFacesPerElement() );
-
-    for (localIndex kf = 0; kf < cellBlock->numFacesPerElement(); ++kf)
+    // Strategy #2: brute force 
+    // if the local search was not sucessful, let's search in the entire domain
+    if (resElemFound == false)  
     {
-      cellBlock->GetFaceNodes( ei, kf, faceNodes[kf] );
+      resElemFound = SearchEntireDomain( mesh, location,
+                                         erMatched, esrMatched, eiMatched );
     }
 
-    if (! computationalGeometry::IsPointInsidePolyhedron( nodeManager->referencePosition(), faceNodes, wellElemCoords ))
+    // if the element was found
+    if (resElemFound)
     {
-      continue;
-    }
+      ElementRegionManager::ElementViewAccessor<arrayView1d<R1Tensor const>> 
+      elemCenter = mesh.getElemManager()->ConstructViewAccessor<array1d<R1Tensor>, arrayView1d<R1Tensor const>>( ElementSubRegionBase::
+                                                                                                                 viewKeyStruct::
+                                                                                                                 elementCenterString );
+      std::cout << "CellElementCenter = "   << elemCenter[erMatched][esrMatched][eiMatched] << std::endl;
+      std::cout << "WellElementLocation = " << location                << std::endl;
 
-    // the well element is in the reservoir element (er,esr,ei), so tag it as local
-    localElems.insert( currGlobal );
-    elemStatusGlobal[currGlobal] = WellElemStatus::LOCAL;
+      // the well element is in the reservoir element (er,esr,ei), so tag it as local
+      localElems.insert( currGlobal );
+      elemStatusGlobal[currGlobal] = WellElemStatus::LOCAL;
+    }
   }
 }
 
