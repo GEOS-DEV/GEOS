@@ -392,6 +392,8 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       ResetStateToBeginningOfStep( domain );
     }
 
+    real64 residualNormZero = 1e99;
+
     // keep residual from previous iteration in case we need to do a line search
     real64 lastResidual = 1e99;
     integer & newtonIter = solverParams->numNewtonIterations();
@@ -418,11 +420,17 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       // get residual norm
       real64 residualNorm = CalculateResidualNorm( domain, dofManager, rhs );
 
-      GEOS_LOG_LEVEL_RANK_0( 1, "Attempt: " << dtAttempt << ", Newton: " << newtonIter << ", R = " << residualNorm );
+      if(newtonIter == 0)
+      {
+        residualNormZero = residualNorm;
+      }
+
+      GEOS_LOG_LEVEL_RANK_0( 1, "Attempt: " << dtAttempt << ", Newton: " << newtonIter << ", R = " << std::scientific << residualNorm 
+                             << " (Rel = " << residualNorm / (residualNormZero+1) << ")" );
 
       // if the residual norm is less than the Newton tolerance we denote that we have
       // converged and break from the Newton loop immediately.
-      if( residualNorm < newtonTol ) //)&& newtonIter > 0 )
+      if( residualNorm < newtonTol*(residualNormZero+1) ) //)&& newtonIter > 0 )
       {
         isConverged = 1;
         break;

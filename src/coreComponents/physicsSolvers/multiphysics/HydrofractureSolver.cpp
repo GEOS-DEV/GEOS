@@ -660,9 +660,6 @@ void HydrofractureSolver::AssembleSystem( real64 const time,
   AssembleForceResidualDerivativeWrtPressure( domain, &m_matrix01, &(m_solidSolver->getSystemRhs()) );
 
   AssembleFluidMassResidualDerivativeWrtDisplacement( domain, &m_matrix10, &(m_flowSolver->getSystemRhs()) );
-
-  m_densityScaling = 1e-3;
-  m_pressureScaling = 1e9;
 }
 
 void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
@@ -748,8 +745,20 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
                                                          dofNumber,
                                                          m_matrix10 );
   });
-//  std::cout.precision(7);
-//  std::cout.setf(std::ios_base::scientific);
+
+  // scale system.  we do this here because it is the last "assembly" related step.
+  // TODO: revisit Assemble(), ApplyBC(), Scale() sequence in SolverBase
+
+  m_densityScaling = 1e-3;
+  m_pressureScaling = 1e9;
+
+  m_matrix01.scale(m_pressureScaling);
+  m_matrix10.scale(m_pressureScaling*m_densityScaling);
+  m_flowSolver->getSystemMatrix().scale(m_pressureScaling*m_pressureScaling*m_densityScaling);
+  m_flowSolver->getSystemRhs().scale(m_pressureScaling*m_densityScaling);
+
+ 
+  // debugging info.  can probably be trimmed once everything is working.
 
   if( m_logLevel >= 3 )
   {
@@ -859,6 +868,11 @@ CalculateResidualNorm( DomainPartition const * const domain,
                        ParallelVector const & GEOSX_UNUSED_ARG( rhs ) )
 {
   GEOSX_MARK_FUNCTION;
+
+  real64 const fluidResidual = m_flowSolver->getSystemRhs().norm2();
+  real64 const solidResidual = m_solidSolver->getSystemRhs().norm2();
+
+  /*
   real64 const fluidResidual = m_flowSolver->CalculateResidualNorm( domain,
                                                                     m_flowSolver->getDofManager(),
                                                                     m_flowSolver->getSystemRhs() );
@@ -866,63 +880,35 @@ CalculateResidualNorm( DomainPartition const * const domain,
   real64 const solidResidual = m_solidSolver->CalculateResidualNorm( domain,
                                                                      m_solidSolver->getDofManager(),
                                                                      m_solidSolver->getSystemRhs() );
+  */
 
+  // print out some information regarding the displacement and pressure fields.
+  // note that this is somewhat confusing because "displacement" is the current displacement,
+  // while "pressure" is the previous timestep pressure and needs to have "deltaPressure" added.
+  // TODO: consistify naming to newField and oldField, or oldField and deltaField.
+
+  if(getLogLevel() >= 2 && m_systemSolverParameters.numNewtonIterations() > 0)
   {
-    char output[200] = {0};
-    sprintf( output,
-             "Norm(r_u, r_p, r) = (%4.2e, %4.2e, %4.2e) ; ",
-             solidResidual,
-             fluidResidual,
-             fluidResidual+solidResidual );
-
-    m_nlSolverOutputLog += output;
-  }
-
-    SystemSolverParameters * const params = &m_systemSolverParameters;
-    integer newtonIter = params->numNewtonIterations();
-
-  if(getLogLevel() >= 2 && newtonIter > 0)
-  {
-
-    // print out some information regarding the displacement and pressure fields.
-    // note that this is somewhat confusing because "displacement" is the current displacement,
-    // while "pressure" is the previous timestep pressure and needs to have "deltaPressure" added.
-    // TODO: consistify naming to newField and oldField, or oldField and deltaField.
-    
     real64 maxDu = m_solidSolver->getSystemSolution().normInf();
     real64 maxDp = m_flowSolver->getSystemSolution().normInf();
 
     ParallelVector vecU, vecP;
-
-    m_solidSolver->getDofManager().setVector(vecU);
-    m_flowSolver->getDofManager().setVector(vecP);
+    m_solidSolver->getDofManager().setVector( vecU );
+    m_flowSolver->getDofManager().setVector( vecP );
 
     MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0); // TODO: camelCase getGrou<>
     NodeManager const * const nodeManager = mesh->getNodeManager();
     ElementRegionManager const * const elemManager = mesh->getElemManager();
 
-    m_solidSolver->getDofManager().copyFieldToVector(nodeManager,
-                                                     keys::TotalDisplacement,
-                                                     1.0,
-                                                     vecU,
-                                                     keys::TotalDisplacement);
-
-    real64 maxU = vecU.normInf();
+    m_solidSolver->getDofManager().copyFieldToVector( nodeManager, keys::TotalDisplacement, 1.0, vecU, keys::TotalDisplacement );
 
     elemManager->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion const * const subRegion )->void
     {
-      m_flowSolver->getDofManager().copyFieldToVector(subRegion,
-                                                      "pressure", 
-                                                      1.0,
-                                                      vecP,
-                                                      "pressure"); 
-      m_flowSolver->getDofManager().addFieldToVector(subRegion,
-                                                      "deltaPressure", 
-                                                      1.0,
-                                                      vecP,
-                                                      "pressure");
-
+      m_flowSolver->getDofManager().copyFieldToVector( subRegion, "pressure", 1.0, vecP, "pressure" ); 
+      m_flowSolver->getDofManager().addFieldToVector( subRegion, "deltaPressure", 1.0, vecP, "pressure" ); //TODO: use proper keys
     });
+
+    real64 maxU = vecU.normInf();
     real64 maxP = vecP.normInf();
 
     GEOS_LOG_RANK_0("    --- Solution Info ----------------------------------");
@@ -930,11 +916,11 @@ CalculateResidualNorm( DomainPartition const * const domain,
     GEOS_LOG_RANK_0("    Total Change:    U=" << std::scientific << maxDu << " P=" << maxDp);
     GEOS_LOG_RANK_0("    Current Max:     U=" << std::scientific << maxU << " P=" << maxP);
     GEOS_LOG_RANK_0("    Residual:        U=" << std::scientific << solidResidual << " P=" << fluidResidual);
-    GEOS_LOG_RANK_0("    --- End Solution Info ------------------------------");
+    GEOS_LOG_RANK_0("    ----------------------------------------------------");
   }
  
   return fluidResidual + solidResidual;
-  }
+}
 
 
 
@@ -1575,12 +1561,13 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
   }
   */
 
+  /*
   const real64 pressureScale = 1e6;
-
   p_matrix[0][1]->Scale(pressureScale);
   p_matrix[1][0]->Scale(pressureScale);
   p_matrix[1][1]->Scale(pressureScale*pressureScale);
   p_rhs[1]->Scale(pressureScale);
+  */
 
     // set initial guess to zero.  this is not strictly
     // necessary but is good for comparing solver performance.
@@ -1881,6 +1868,8 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
     GEOSX_MARK_BEGIN(SOLVER);
       Thyra::SolveStatus<double> status = solver->solve(Thyra::NOTRANS,*rhs,lhs.ptr());
     GEOSX_MARK_END(SOLVER);
+
+
     double solveTime = clock.stop();
 
         // JAW: check "true" residual after
@@ -1925,7 +1914,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
     }
     */
 
-    p_solution[1]->Scale(pressureScale);
+    p_solution[1]->Scale(m_pressureScaling);
 
   }
 
