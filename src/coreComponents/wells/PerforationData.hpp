@@ -134,15 +134,6 @@ public:
    */
   arrayView1d<real64 const> const & getWellPeacemanIndex() const { return m_wellPeacemanIndex; }
 
-
-  /**
-   * @brief Locates connected local mesh elements and resizes current object appropriately
-   * @param[in] mesh the target mesh level
-   * @param[in] wellGeometry the InternalWellGenerator containing the global well topology
-   */
-  void ConnectToMeshElements( MeshLevel const & mesh,
-                              InternalWellGenerator const & wellGeometry );
-
   /**
    * @brief Connect each perforation to a local wellbore element
    * @param[in] wellGeometry the InternalWellGenerator containing the global well topology
@@ -185,35 +176,6 @@ protected:
 private:
 
   void DebugLocalPerforations() const;
-
-  bool IsPointInsideElement( NodeManager const * const nodeManager,
-                             R1Tensor    const & location,
-                             CellBlock   const * subRegion,
-                             localIndex          ei ) const;
-
-  void CollectNodes( CellBlock const * subRegion,
-                     localIndex        ei,
-  	             set<localIndex> & nodes ) const;
-
-  void InitializeLocalSearch( MeshLevel const  & mesh,
-                              R1Tensor  const  & location,
-                              localIndex       & erInit,
-                              localIndex       & esrInit,
-                              localIndex       & eiInit) const;
-
-  bool SearchLocalElements( MeshLevel const  & mesh,
-   		            R1Tensor  const  & location,
-			    set<localIndex>  & nodes,
-			    set<globalIndex> & elements,
-			    localIndex       & erMatched,
-			    localIndex       & esrMatched,
- 			    localIndex       & eiMatched ) const;
-  
-  bool SearchEntireDomain( MeshLevel  const  & mesh,
-                           R1Tensor   const  & location,
-                           localIndex        & erMatched,
-                           localIndex        & esrMatched,
-                           localIndex        & eiMatched ) const;
  
   /// global number of perforations
   globalIndex m_numPerforationsGlobal; 
