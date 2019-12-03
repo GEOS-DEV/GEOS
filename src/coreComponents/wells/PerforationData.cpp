@@ -23,6 +23,7 @@
 #include "Perforation.hpp"
 
 #include "managers/DomainPartition.hpp"
+#include "mesh/MeshForLoopInterface.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 
 namespace geosx
@@ -63,56 +64,55 @@ void PerforationData::ConnectToMeshElements( MeshLevel const & mesh,
   {
     R1Tensor const & location = perfCoordsGlobal[iperfGlobal];
 
-    m_toMeshElements.m_toElementRegion   [iperfLocal] = -1;
-    m_toMeshElements.m_toElementSubRegion[iperfLocal] = -1;
-    m_toMeshElements.m_toElementIndex    [iperfLocal] = -1;
-
     localIndex erMatched  = -1;
     localIndex esrMatched = -1;
     localIndex eiMatched  = -1;
+
+    localIndex erInit  = -1;
+    localIndex esrInit = -1;
+    localIndex eiInit  = -1;
     
+    if (iperfLocal > 0)
+    {
+      // get the info of the element matched with the previous perforation  
+      erInit  = m_toMeshElements.m_toElementRegion[iperfLocal-1];
+      esrInit = m_toMeshElements.m_toElementSubRegion[iperfLocal-1];
+      eiInit  = m_toMeshElements.m_toElementIndex[iperfLocal-1];
+    }	
+    else
+    {
+      // start from the element that is the closest from the perforation  
+      InitializeLocalSearch( mesh, location,
+			     erInit, esrInit, eiInit );
+    }	
+	
     // Strategy #1: search locally, starting from the location of the previous perforation
     // the assumption here is that perforations have been entered in order of depth
     bool resElemFound = false;
-    if (iperfLocal > 0)
+
+    CellElementRegion const * region = Group::group_cast<CellElementRegion const *>(mesh.getElemManager()->GetRegion(erInit));
+    CellBlock const * subRegion      = Group::group_cast<CellBlock const *>(region->GetSubRegion(esrInit));
+           
+    set<localIndex>  nodes;
+    set<globalIndex> elements;
+
+    // collect the nodes of the current element
+    // they will be used to access the neighbors and check if they contain the perforation
+    CollectNodes( subRegion, eiInit, nodes); 
+
+    // enlarge the neighborhoods four times (if no match is found)
+    // before switching to the other strategy
+    localIndex const depth = 4;
+    for (localIndex d = 0; d < depth; ++d)
     {
-
-      // get the info of the element matched with the previous perforation  
-      localIndex const erPrev  = m_toMeshElements.m_toElementRegion[iperfLocal-1];
-      localIndex const esrPrev = m_toMeshElements.m_toElementSubRegion[iperfLocal-1];
-      localIndex const eiPrev  = m_toMeshElements.m_toElementIndex[iperfLocal-1];
-
-      CellElementRegion const * region = Group::group_cast<CellElementRegion const *>(elemManager->GetRegion(erPrev));
-      CellBlock const * subRegion      = Group::group_cast<CellBlock const *>(region->GetSubRegion(esrPrev));
-            
-      set<localIndex>  nodes;
-      set<globalIndex> elements;
-
-      // collect the nodes of the current element
-      // they will be used to access the neighbors and check if they contain the perforation
-      CollectNodes( subRegion, eiPrev, nodes); 
-
-      // enlarge the neighborhoods four times (if no match is found)
-      // before switching to the other strategy
-      localIndex const depth = 4;
-      for (localIndex d = 0; d < depth; ++d)
+      // search the elements that can be access from the set "nodes"
+      // stop if an element containing the perforation is found
+      // if not, enlarge the set "nodes"
+      resElemFound = SearchLocalElements( mesh, location, nodes, elements,
+                                          erMatched, esrMatched, eiMatched );
+      if (resElemFound)
       {
-        // search the elements that can be access from the set "nodes"
-        // stop if an element containing the perforation is found
-        // if not, enlarge the set "nodes"
-
-        std::cout << "d = " << d << std::endl;
-        std::cout << "size(nodes) = " << nodes.size() << std::endl;
-        std::cout << "size(elements) = " << elements.size() << std::endl;
-        
-        bool matched = SearchLocalElements( mesh, location, nodes, elements,
-                                            erMatched, esrMatched, eiMatched );
-        if (matched)
-        {
-          std::cout << "==> a match was found!" << std::endl;
-          resElemFound = true;
-          break;
-        }
+        break;
       }
     }  
 
@@ -120,15 +120,20 @@ void PerforationData::ConnectToMeshElements( MeshLevel const & mesh,
     // if the local search was not sucessful, let's search in the entire domain
     if (resElemFound == false)  
     {
-
-      bool matched = SearchEntireDomain( mesh, location,
+      resElemFound = SearchEntireDomain( mesh, location,
                                          erMatched, esrMatched, eiMatched );
-
     }
     
     // if the element was found
     if (resElemFound)
     {
+      ElementRegionManager::ElementViewAccessor<arrayView1d<R1Tensor const>> 
+      elemCenter = mesh.getElemManager()->ConstructViewAccessor<array1d<R1Tensor>, arrayView1d<R1Tensor const>>( ElementSubRegionBase::
+                                                                                                                 viewKeyStruct::
+                                                                                                                 elementCenterString );
+      std::cout << "CellElementCenter = "   << elemCenter[erMatched][esrMatched][eiMatched] << std::endl;
+      std::cout << "PerforationLocation = " << location                << std::endl;
+      
       // set the indices for the matched element
       m_toMeshElements.m_toElementRegion   [iperfLocal] = erMatched;
       m_toMeshElements.m_toElementSubRegion[iperfLocal] = esrMatched;
@@ -147,6 +152,137 @@ void PerforationData::ConnectToMeshElements( MeshLevel const & mesh,
   resize( iperfLocal );
   ConstructGlobalToLocalMap();
 
+}
+
+void PerforationData::InitializeLocalSearch( MeshLevel const  & mesh,
+                                             R1Tensor  const  & location,
+                                             localIndex       & erInit,
+                                             localIndex       & esrInit,
+                                             localIndex       & eiInit) const
+{
+  ElementRegionManager::ElementViewAccessor<arrayView1d<R1Tensor const>> 
+  resElemCenter = mesh.getElemManager()->ConstructViewAccessor<array1d<R1Tensor>, arrayView1d<R1Tensor const>>( ElementSubRegionBase::
+                                                                                                                viewKeyStruct::
+                                                                                                                elementCenterString );
+
+  // find the closest reservoir element
+  auto ret = minLocOverElemsInMesh( &mesh, [&] ( localIndex const er,
+                                                 localIndex const esr,
+                                                 localIndex const ei ) -> real64
+  {
+    R1Tensor v = location;
+    v -= resElemCenter[er][esr][ei];
+    return v.L2_Norm();
+  });
+
+  // save the region, subregion and index
+  erInit  = std::get<0>(ret.second);
+  esrInit = std::get<1>(ret.second);
+  eiInit  = std::get<2>(ret.second);
+}
+
+bool PerforationData::SearchLocalElements( MeshLevel const  & mesh,
+                                           R1Tensor  const  & location,
+                                           set<localIndex>  & nodes,
+                                           set<globalIndex> & elements,
+                                           localIndex       & erMatched,
+                                           localIndex       & esrMatched,
+                                           localIndex       & eiMatched ) const
+{
+  ElementRegionManager const * const elemManager = mesh.getElemManager();
+  NodeManager const * const nodeManager          = mesh.getNodeManager();
+
+  ArrayOfArraysView<localIndex const> const & toElementRegionList    = nodeManager->elementRegionList();
+  ArrayOfArraysView<localIndex const> const & toElementSubRegionList = nodeManager->elementSubRegionList();
+  ArrayOfArraysView<localIndex const> const & toElementList          = nodeManager->elementList();
+
+  bool matched = false;
+
+  // we will enlarge the set of nodes in the loop below
+  // to do this we have to create a new set that will
+  // contain the already visited nodes only
+  set<localIndex> currNodes = nodes;
+  
+  // for all the nodes already visited
+  for (localIndex currNode : currNodes)
+  {
+    // collect the elements that have not been visited yet
+    for( localIndex b=0 ; b<toElementRegionList.sizeOfArray(currNode) ; ++b )
+    {
+      localIndex  const er      = toElementRegionList[currNode][b];
+      localIndex  const esr     = toElementSubRegionList[currNode][b];
+      localIndex  const eiLocal = toElementList[currNode][b];
+
+      CellElementRegion const * const region    = Group::group_cast<CellElementRegion const *>(elemManager->GetRegion(er));
+      CellBlock         const * const subRegion = Group::group_cast<CellElementSubRegion const *>(region->GetSubRegion(esr));
+      globalIndex               const eiGlobal  = subRegion->m_localToGlobalMap[eiLocal];
+
+      // if this element has not been visited yet, save it
+      if (!elements.contains(eiGlobal))
+      {
+        elements.insert(eiGlobal);
+        
+        // perform the test to see if the point is in this element
+        // if the point is in the element, save the indices and stop the search
+        if (IsPointInsideElement( nodeManager, location, subRegion, eiLocal ))
+        {  
+          erMatched  = er;
+          esrMatched = esr;
+          eiMatched  = eiLocal;
+          matched    = true;
+          break;
+        }
+        // otherwise add the nodes of this element to the set of new nodes to visit
+        else
+        {
+          CollectNodes( subRegion, eiLocal, nodes); 
+        }
+      }
+    }
+    
+    if (matched)
+    {
+      break;
+    }
+  }
+
+  // if not matched, insert the new nodes  
+  return matched;
+}
+
+bool PerforationData::SearchEntireDomain( MeshLevel  const  & mesh,
+                                          R1Tensor   const  & location,
+                                          localIndex        & erMatched,
+                                          localIndex        & esrMatched,
+                                          localIndex        & eiMatched ) const
+{
+  ElementRegionManager const * elemManager = mesh.getElemManager();
+  NodeManager const * const nodeManager    = mesh.getNodeManager();
+  
+  bool matched = false;
+
+  // loop over the cell element regions
+  elemManager->forElementSubRegionsComplete<CellElementSubRegion>( [&]( localIndex const er,
+                                                                        localIndex const esr,
+                                                                        ElementRegionBase const * GEOSX_UNUSED_ARG( elemRegion ), 
+                                                                        CellElementSubRegion const * subRegion )
+  {
+    // loop over the elements of the subregion 
+    for (localIndex ei = 0; ei < subRegion->size(); ++ei) 
+    {                              
+      // check if the element of the subregion contains the perforations
+      if (IsPointInsideElement( nodeManager, location, subRegion, ei ))
+      {
+        // store the indices of the mesh element
+        erMatched  = er;
+        esrMatched = esr;
+        eiMatched  = ei;
+        matched = true;
+        break;
+      }
+    }
+  });
+  return matched;
 }
 
 bool PerforationData::IsPointInsideElement( NodeManager const * const nodeManager,
@@ -187,119 +323,10 @@ void PerforationData::CollectNodes( CellBlock const * subRegion,
     if (!nodes.contains(inode))
     {
       nodes.insert(inode);
-      std::cout << "inode = " << inode << std::endl;
     }
   }  
 }
-
-bool PerforationData::SearchEntireDomain( MeshLevel  const  & mesh,
-                                          R1Tensor   const  & location,
-                                          localIndex        & erMatched,
-                                          localIndex        & esrMatched,
-                                          localIndex        & eiMatched ) const
-{
-  ElementRegionManager const * elemManager = mesh.getElemManager();
-  NodeManager const * const nodeManager    = mesh.getNodeManager();
   
-  bool matched = false;
-
-  // loop over the cell element regions
-  elemManager->forElementSubRegionsComplete<CellElementSubRegion>( [&]( localIndex const er,
-                                                                        localIndex const esr,
-                                                                        ElementRegionBase const * GEOSX_UNUSED_ARG( elemRegion ), 
-                                                                        CellElementSubRegion const * subRegion )
-  {
-    // loop over the elements of the subregion 
-    for (localIndex ei = 0; ei < subRegion->size(); ++ei) 
-    {                              
-      // check if the element of the subregion contains the perforations
-      if (IsPointInsideElement( nodeManager, location, subRegion, ei ))
-      {
-        // store the indices of the mesh element
-        erMatched  = er;
-        esrMatched = esr;
-        eiMatched  = ei;
-
-        matched = true;
-            
-        std::cout << "er = " << er << " esr = " << esr << " ei = " << ei << std::endl;
-        //          std::cout << "CellElementCenter = " << elemCenter[er][esr][ei] << std::endl;
-        std::cout << "PerforationLocation = " << location << std::endl;
-
-        break;
-      }
-    }
-  });
-  return matched;
-}
-
-bool PerforationData::SearchLocalElements( MeshLevel const  & mesh,
-                                           R1Tensor  const  & location,
-                                           set<localIndex>  & nodes,
-                                           set<globalIndex> & elements,
-                                           localIndex       & erMatched,
-                                           localIndex       & esrMatched,
-                                           localIndex       & eiMatched ) const
-{
-  ElementRegionManager const * const elemManager = mesh.getElemManager();
-  NodeManager const * const nodeManager = mesh.getNodeManager();
-
-  ArrayOfArraysView<localIndex const> const & toElementRegionList    = nodeManager->elementRegionList();
-  ArrayOfArraysView<localIndex const> const & toElementSubRegionList = nodeManager->elementSubRegionList();
-  ArrayOfArraysView<localIndex const> const & toElementList          = nodeManager->elementList();
-
-  bool matched = false;
-
-  // we will enlarge the set of nodes in the loop below
-  // to do this we have to create a new set that will
-  // contain the already visited nodes only
-  set<localIndex> currNodes = nodes;
-  
-  // for all the nodes already visited
-  for (localIndex currNode : currNodes)
-  {
-    // collect the elements that have not been visited yet
-    for( localIndex b=0 ; b<toElementRegionList.sizeOfArray(currNode) ; ++b )
-    {
-      localIndex  const er      = toElementRegionList[currNode][b];
-      localIndex  const esr     = toElementSubRegionList[currNode][b];
-      localIndex  const eiLocal = toElementList[currNode][b];
-
-      CellElementRegion const * const region    = Group::group_cast<CellElementRegion const *>(elemManager->GetRegion(er));
-      CellBlock         const * const subRegion = Group::group_cast<CellElementSubRegion const *>(region->GetSubRegion(esr));
-      globalIndex               const eiGlobal  = subRegion->m_localToGlobalMap[eiLocal];
-
-      // if this element has not been visited yet, save it
-      if (!elements.contains(eiGlobal))
-      {
-        elements.insert(eiGlobal);
-
-        std::cout << "++--00 er = " << er << " esr = " << esr << " eiLocal = " << eiLocal << std::endl;
-        
-        // perform the test to see if the point is in this element
-        // if the point is in the element, save the indices and stop the search
-        if (IsPointInsideElement( nodeManager, location, subRegion, eiLocal ))
-        {  
-          erMatched  = er;
-          esrMatched = esr;
-          eiMatched  = eiLocal;
-          matched    = true;
-          std::cout << "++++ er = " << er << " esr = " << esr << " eiLocal = " << eiLocal << std::endl;
-          std::cout << "we found a matched" << std::endl;
-          break;
-        }
-        // otherwise add the nodes of this element to the set of new nodes to visit
-        else
-        {
-          CollectNodes( subRegion, eiPrev, nodes); 
-        }
-      }
-    }
-  }
-
-  // if not matched, insert the new nodes  
-  return matched;
-}
   
 void PerforationData::ConnectToWellElements( InternalWellGenerator const & wellGeometry,
                                              unordered_map<globalIndex,localIndex> const & globalToLocalWellElemMap, 

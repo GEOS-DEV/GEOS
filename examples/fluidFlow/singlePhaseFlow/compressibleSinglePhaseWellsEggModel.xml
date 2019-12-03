@@ -7,7 +7,6 @@
     <Reservoir name="reservoirSystem"
                flowSolverName="singlePhaseFlow"
                wellSolverName="singlePhaseWell"
-               verboseLevel="1"
                targetRegions="{domain,
 			       wellRegion1,
 			       wellRegion2,
@@ -21,7 +20,6 @@
     </Reservoir>
   
     <SinglePhaseFlow name="singlePhaseFlow"
-                     verboseLevel="1"
                      gravityFlag="1"
                      discretization="singlePhaseTPFA"
                      fluidName="water"
@@ -30,7 +28,6 @@
     </SinglePhaseFlow>
 
     <SinglePhaseWell name="singlePhaseWell"
-                     verboseLevel="1"
                      gravityFlag="1"
                      wellFluidName="water"
                      targetRegions="{wellRegion1,

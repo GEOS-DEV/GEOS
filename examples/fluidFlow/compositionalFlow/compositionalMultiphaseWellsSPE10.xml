@@ -7,7 +7,6 @@
     <Reservoir name="reservoirSystem"
                flowSolverName="compositionalMultiphaseFlow"
                wellSolverName="compositionalMultiphaseWell"
-               verboseLevel="1"
                targetRegions="{domain,
                                wellRegion1,
                                wellRegion2, 
@@ -18,7 +17,6 @@
     </Reservoir>
   
     <CompositionalMultiphaseFlow name="compositionalMultiphaseFlow"
-                                 verboseLevel="1"
                                  gravityFlag="0"
                                  targetRegions="{domain}"
                                  discretization="fluidTPFA"
@@ -30,7 +28,6 @@
     </CompositionalMultiphaseFlow>
 
     <CompositionalMultiphaseWell name="compositionalMultiphaseWell"
-                                 verboseLevel="1"
                                  gravityFlag="0"
                                  targetRegions="{wellRegion1,
                                                  wellRegion2,

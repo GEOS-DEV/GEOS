@@ -195,12 +195,12 @@ private:
                      localIndex        ei,
   	             set<localIndex> & nodes ) const;
 
-  bool SearchEntireDomain( MeshLevel  const  & mesh,
-                           R1Tensor   const  & location,
-                           localIndex        & erMatched,
-                           localIndex        & esrMatched,
-                           localIndex        & eiMatched ) const;
-  
+  void InitializeLocalSearch( MeshLevel const  & mesh,
+                              R1Tensor  const  & location,
+                              localIndex       & erInit,
+                              localIndex       & esrInit,
+                              localIndex       & eiInit) const;
+
   bool SearchLocalElements( MeshLevel const  & mesh,
    		            R1Tensor  const  & location,
 			    set<localIndex>  & nodes,
@@ -209,6 +209,12 @@ private:
 			    localIndex       & esrMatched,
  			    localIndex       & eiMatched ) const;
   
+  bool SearchEntireDomain( MeshLevel  const  & mesh,
+                           R1Tensor   const  & location,
+                           localIndex        & erMatched,
+                           localIndex        & esrMatched,
+                           localIndex        & eiMatched ) const;
+ 
   /// global number of perforations
   globalIndex m_numPerforationsGlobal; 
 
