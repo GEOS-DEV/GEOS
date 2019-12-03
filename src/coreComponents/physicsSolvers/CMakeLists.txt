@@ -21,6 +21,7 @@ set( physicsSolvers_headers
      multiphysics/PoroelasticSolver.hpp
      multiphysics/ReservoirSolver.hpp
      simplePDE/LaplaceFEM.hpp
+     simplePDE/ReactionDiffusionFEM.hpp
      solidMechanics/SolidMechanicsLagrangianFEM.hpp
      solidMechanics/SolidMechanicsLagrangianSSLE.hpp
      solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp
@@ -47,6 +48,7 @@ set( physicsSolvers_sources
      multiphysics/PoroelasticSolver.cpp
      multiphysics/ReservoirSolver.cpp
      simplePDE/LaplaceFEM.cpp
+     simplePDE/ReactionDiffusionFEM.cpp
      solidMechanics/SolidMechanicsLagrangianFEM.cpp
      solidMechanics/SolidMechanicsLagrangianSSLE.cpp
      surfaceGeneration/SurfaceGenerator.cpp

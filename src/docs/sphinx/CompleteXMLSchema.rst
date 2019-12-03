@@ -399,6 +399,13 @@ Element: QuadratureRules
 .. include:: ../../coreComponents/fileIO/schema/docs/QuadratureRules.rst
 
 
+.. _XML_ReactionDiffusionFEM:
+
+Element: ReactionDiffusionFEM
+=============================
+.. include:: ../../coreComponents/fileIO/schema/docs/ReactionDiffusionFEM.rst
+
+
 .. _XML_Reservoir:
 
 Element: Reservoir
@@ -961,6 +968,13 @@ Datastructure: Problem
 Datastructure: QuadratureRules
 ==============================
 .. include:: ../../coreComponents/fileIO/schema/docs/QuadratureRules_other.rst
+
+
+.. _DATASTRUCTURE_ReactionDiffusionFEM:
+
+Datastructure: ReactionDiffusionFEM
+===================================
+.. include:: ../../coreComponents/fileIO/schema/docs/ReactionDiffusionFEM_other.rst
 
 
 .. _DATASTRUCTURE_Reservoir:

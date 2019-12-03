@@ -9,6 +9,7 @@ CompositionalMultiphaseWell  node             :ref:`XML_CompositionalMultiphaseW
 Hydrofracture                node             :ref:`XML_Hydrofracture`                
 LaplaceFEM                   node             :ref:`XML_LaplaceFEM`                   
 Poroelastic                  node             :ref:`XML_Poroelastic`                  
+ReactionDiffusionFEM         node             :ref:`XML_ReactionDiffusionFEM`         
 Reservoir                    node             :ref:`XML_Reservoir`                    
 SinglePhaseFlow              node             :ref:`XML_SinglePhaseFlow`              
 SinglePhaseWell              node             :ref:`XML_SinglePhaseWell`              
