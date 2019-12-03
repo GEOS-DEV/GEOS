@@ -13,22 +13,10 @@ Usage
 =========================
 An example of a valid XML block is given here:
 
-.. code-block:: xml
-
-  <Solvers>
-    <SolidMechanics_LagrangianFEM name="lagsolve"
-                                  timeIntegrationOption="QuasiStatic"
-                                  discretization="FE1"
-                                  targetRegions="Region2">
-      <SystemSolverParameters name="solverParams0"
-                              useMLPrecond="1"
-                              scalingOption="0"
-                              krylovTol="1.0e-8"
-                              newtonTol="1.0e-4"
-                              maxIterNewton="8"
-                              verbosityFlag="0"/>
-     </SolidMechanics_LagrangianFEM>
-  </Solvers>
+.. literalinclude:: ../integratedTests/sedov.xml
+  :language: xml
+  :start-after: <!-- SPHINX_SOLID_MECHANICS_SOLVER -->
+  :end-before: <!-- SPHINX_SOLID_MECHANICS_SOLVER_END -->
 
 In the preceding XML block, The `SolidMechanics_LagrangianFEM` is specified by the title of the subblock of the `Solvers` block.
 The following attributes are supported in the input block for `SolidMechanics_LagrangianFEM`:
@@ -49,8 +37,8 @@ Definition of Terms
 .. math::
    i,j,k &\equiv \text {indices over spatial dimensions} \notag \\
    a,b,c &\equiv \text {indices over nodes} \notag \\
-   l,m &\equiv \text {indices over volumetric elements} \notag \\
-   q,r,s   &\equiv \text {indices over faces} \notag \\
+   l &\equiv \text {indices over volumetric elements} \notag \\
+   q,r,s &\equiv \text {indices over faces} \notag \\
    n &\equiv \text {indices over time} \notag \\
    kiter &\equiv \text {iteration count for non-linear solution scheme} \notag \\
    \Omega &\equiv \text {Volume of continuum body} \notag \\
@@ -71,7 +59,7 @@ Definition of Terms
    \mathbf{T} & \equiv \text { Cauchy stress} \notag \\
    \rho & \equiv \text { density in the current configuration} \notag \\
    \mathbf{x}& \equiv \text { current position} \notag \\
-   \mathbf{w}&\equiv \text { aperture, or gap vector} \notag 
+   \mathbf{w}&\equiv \text { aperture, or gap vector} \notag
 
 
 The `SolidMechanics_LagrangianFEM` solves the equations of motion as given by
@@ -80,46 +68,46 @@ The `SolidMechanics_LagrangianFEM` solves the equations of motion as given by
    T_{ij,j} + \rho(b_{i}-\ddot{x}_{i}) = 0,
 
 which is a 3-dimensional expression for the well known expression of Newtons Second Law (:math:`F = m a`).
-These equations of motion are discritized using the Finite Element Method, 
+These equations of motion are discritized using the Finite Element Method,
 which leads to a discrete set of residual equations:
 
-.. math::   
+.. math::
    (R_{solid})_{ai}=\int\limits_{\Gamma_t} \Phi_a t_i   dA  - \int\limits_\Omega \Phi_{a,j} T_{ij}   dV +\int\limits_\Omega \Phi_a \rho(b_{i}-\Phi_b\ddot{x}_{ib})  dV = 0
 
 Quasi-Static Time Integration
 -----------------------------
-The Quasi-Static time integration option solves the equation of motion after removing the intertial term, which is expressed by
+The Quasi-Static time integration option solves the equation of motion after removing the inertial term, which is expressed by
 
 .. math::
    T_{ij,j} + \rho b_{i} = 0,
 
 which is essentially a way to express the equation for static equilibrium (:math:`\Sigma F=0`).
-Thus, selection of the Quasi-Static option will yeild a solution where the sum of all forces at a given node is equal to zero.
+Thus, selection of the Quasi-Static option will yield a solution where the sum of all forces at a given node is equal to zero.
 The resulting finite element discretized set of residual equations are expressed as
 
-.. math::   
+.. math::
    (R_{solid})_{ai}=\int\limits_{\Gamma_t} \Phi_a t_i   dA  - \int\limits_\Omega \Phi_{a,j} T_{ij}   dV + \int\limits_\Omega \Phi_a \rho b_{i}  dV = 0,
-   
-Taking the derivative of these residual equations wrt. the primary variable (displacement) yields 
+
+Taking the derivative of these residual equations wrt. the primary variable (displacement) yields
 
 .. math::
-    \pderiv{(R_{solid}^e)_{ai}}{u_{bj}} &= 
+    \pderiv{(R_{solid}^e)_{ai}}{u_{bj}} &=
             - \int\limits_{\Omega^e} \Phi_{a,k} \frac{\partial T_{ik}}{\partial u_{bj}}   dV,
 
 And finally, the expression for the residual equation and derivative are used to express a non-linear system of equations
 
 .. math::
-   \left. \left(\pderiv{(R_{solid}^e)_{ai}}{u_{bj}} \right)\right|^{n+1}_{kiter} 
-   \left( \left. \left({u}_{bj} \right) \right|^{n+1}_{{kiter}+1} - \left. \left({u}_{bj} \right) \right|^{n+1}_{kiter} \right) 
+   \left. \left(\pderiv{(R_{solid}^e)_{ai}}{u_{bj}} \right)\right|^{n+1}_{kiter}
+   \left( \left. \left({u}_{bj} \right) \right|^{n+1}_{{kiter}+1} - \left. \left({u}_{bj} \right) \right|^{n+1}_{kiter} \right)
    = - (R_{solid})_{ai}|^{n+1}_{kiter} ,
 
 which are solved via the solver package.
- 
+
 Implicit Dynamics Time Integration (Newmark Method)
 ---------------------------------------------------
-For implicit dynamic time integration, we use an implemention of the classical Newmark method.
+For implicit dynamic time integration, we use an implementation of the classical Newmark method.
 This update method can be posed in terms of a simple SDOF spring/dashpot/mass model.
-In the following, :math:`M` represents the mass, :math:`C` represent the damping of the dashpot, :math:`K` 
+In the following, :math:`M` represents the mass, :math:`C` represent the damping of the dashpot, :math:`K`
 represents the spring stiffness, and :math:`F` represents some external load.
 
 .. math::
@@ -127,7 +115,7 @@ represents the spring stiffness, and :math:`F` represents some external load.
 
 and a series of update equations for the velocity and displacement at a point:
 
-.. math:
+.. math::
    u^{n+1} &= u^n + v^{n+1/2} \Delta t,  \\
    u^{n+1} &= u^n + \left( v^{n} + \inv{2} \left[ (1-2\beta) a^n + 2\beta a^{n+1} \right] \Delta t \right) \Delta t, \\
    v^{n+1} &= v^n + \left[(1-\gamma) a^n + \gamma a^{n+1} \right] \Delta t.
@@ -137,14 +125,14 @@ assuming zero end-of-step acceleration.
 
 .. math::
    \tilde{u}^{n+1} &= u^n + \left( v^{n} + \inv{2}  (1-2\beta) a^n  \Delta t \right) \Delta t = u^n + \hat{\tilde{u}}\\
-   \tilde{v}^{n+1} &= v^n + (1-\gamma) a^n  \Delta t =  v^n + \hat{\tilde{v}} 
+   \tilde{v}^{n+1} &= v^n + (1-\gamma) a^n  \Delta t =  v^n + \hat{\tilde{v}}
 
-This gives the end of step displacement and velocity in terms of the predictor with a correction for the end 
+This gives the end of step displacement and velocity in terms of the predictor with a correction for the end
 step acceleration.
 
 .. math::
    u^{n+1} &= \tilde{u}^{n+1} + \beta a^{n+1} \Delta t^2 \\
-   v^{n+1} &= \tilde{v}^{n+1} + \gamma a^{n+1} \Delta t 
+   v^{n+1} &= \tilde{v}^{n+1} + \gamma a^{n+1} \Delta t
 
 The acceleration and velocity may now be expressed in terms of displacement, and ultimatly in terms
 of the incremental displacement.
@@ -169,28 +157,28 @@ equation of motion.
 We may express the system in context of a nonlinear residual problem
 
 .. math::
-    (R_{solid}^e)_{ai} &= 
+    (R_{solid}^e)_{ai} &=
         \int\limits_{\Gamma_t^e} \Phi_a t_i   dA  \\
         &- \int\limits_{\Omega^e} \Phi_{a,j} \left(T_{ij}^{n+1}+  a_{stiff} \left(\pderiv{T_{ij}^{n+1}}{\hat{u}_{bk}} \right)_{elastic} \left( \tilde{v}_{bk}^{n+1} + \frac{\gamma}{\beta \Delta t} \left(\hat{u}_{bk} - \hat{\tilde{u}}_{bk} \right) \right) \right)  dV \notag \\
         &+\int\limits_{\Omega^e} \Phi_a \rho \left(b_{i}- \Phi_b  \left( a_{mass} \left( \tilde{v}_{bi}^{n+1} + \frac{\gamma}{\beta \Delta t} \left(\hat{u}_{bi} - \hat{\tilde{u}}_{bi} \right) \right) + \frac{1}{\beta \Delta t^2}  \left( \hat{u}_{bi} - \hat{\tilde{u}}_{bi} \right) \right) \right)  dV ,\notag \\
-    \pderiv{(R_{solid}^e)_{ai}}{\hat{u}_{bj}} &= 
+    \pderiv{(R_{solid}^e)_{ai}}{\hat{u}_{bj}} &=
         - \int\limits_{\Omega^e} \Phi_{a,k} \left(\pderiv{T_{ik}^{n+1}}{\hat{u}_{bj}}+  a_{stiff} \frac{\gamma}{\beta \Delta t} \left(\pderiv{T_{ik}^{n+1}}{\hat{u}_{bj}} \right)_{elastic} \right)   dV \notag \\
         &- \left( \frac{\gamma a_{mass}}{\beta \Delta t} + \frac{1}{\beta \Delta t^2}  \right) \int\limits_{\Omega^e} \rho \Phi_a \Phi_c    \pderiv{ \hat{u}_{ci} }{\hat{u}_{bj}}dV .
 
 Again, the expression for the residual equation and derivative are used to express a non-linear system of equations
 
 .. math::
-   \left. \left(\pderiv{(R_{solid}^e)_{ai}}{u_{bj}} \right)\right|^{n+1}_{kiter} 
-   \left( \left. \left({u}_{bj} \right) \right|^{n+1}_{{kiter}+1} - \left. \left({u}_{bj} \right) \right|^{n+1}_{kiter} \right) 
+   \left. \left(\pderiv{(R_{solid}^e)_{ai}}{u_{bj}} \right)\right|^{n+1}_{kiter}
+   \left( \left. \left({u}_{bj} \right) \right|^{n+1}_{{kiter}+1} - \left. \left({u}_{bj} \right) \right|^{n+1}_{kiter} \right)
    = - (R_{solid})_{ai}|^{n+1}_{kiter} ,
 
-which are solved via the solver package. Note that the derivatives involving :math:`u` and :math`\hat{u}` are interchangable, 
+which are solved via the solver package. Note that the derivatives involving :math:`u` and :math:`\hat{u}` are interchangable,
 as are differences between the non-linear iterations.
 
 Explicit Dynamics Time Integration  (Special Implementation of Newmark Method with \gamma=0.5, \beta=0)
 -------------------------------------------------------------------------------------------------------
-For the Newmark Method, if \gamma=0.5, \beta=0, and the inertial term contains a diagonalized "mass matrix", 
-the update equations may be carried out without the solution of a system of equations. 
+For the Newmark Method, if \gamma=0.5, \beta=0, and the inertial term contains a diagonalized "mass matrix",
+the update equations may be carried out without the solution of a system of equations.
 In this case, the update equations simplify to a non-iterative update algorithm.
 
 First the mid-step velocity and end-of-step displacements are calculated through the update equations
@@ -204,13 +192,14 @@ Then the residual equation/s are calculated, and acceleration at the end-of-step
 .. math::
    \left( \tensor{M} + \frac{\Delta t}{2} \tensor{C} \right) \tensor{a}^{n+1} &=  \tensor{F}_{n+1} - \tensor{C} v^{n+1/2} - \tensor{K} u^{n+1} .
 
-Note that the mass matrix must be diagonal, and damping term may not include the stiffness based damping 
-coefficent for this method, otherwise the above equation will require a system solve.
-Finally, the end-of-step velocities are calculated from the end of step acceleration:   
+Note that the mass matrix must be diagonal, and damping term may not include the stiffness based damping
+coefficient for this method, otherwise the above equation will require a system solve.
+Finally, the end-of-step velocities are calculated from the end of step acceleration:
 
 .. math::
    \tensor{v}^{n+1} &= \tensor{v}^{n+1/2} + \tensor{a}^{n+1} \left( \frac{\Delta t}{2} \right).
 
-Note that the velocities may be stored at the midstep, resulting one less kinematic update. 
-This approach is typeically referred to as the "Leapfrog" method.
-However, GEOSX we do not offer this option since it can cause some confusion that results from the storage of state at different points in time.
+Note that the velocities may be stored at the midstep, resulting one less kinematic update.
+This approach is typically referred to as the "Leapfrog" method.
+However, in GEOSX we do not offer this option since it can cause some confusion that results from the
+storage of state at different points in time.

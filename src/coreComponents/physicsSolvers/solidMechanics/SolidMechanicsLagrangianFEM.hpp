@@ -80,6 +80,11 @@ public:
 
   void updateIntrinsicNodalData( DomainPartition * const domain );
 
+  virtual void
+  updateStress( DomainPartition * const domain );
+
+
+
   /**
    * @defgroup Solver Interface Functions
    *
@@ -168,6 +173,8 @@ public:
                          ParallelVector const & rhs ) override;
 
   virtual void ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
+
+  void ResetStressToBeginningOfStep( DomainPartition * const domain );
 
   virtual void ImplicitStepComplete( real64 const & time,
                                      real64 const & dt,
@@ -398,6 +405,7 @@ public:
     static constexpr auto strainTheoryString = "strainTheory";
     static constexpr auto solidMaterialNameString = "solidMaterialName";
     static constexpr auto solidMaterialFullIndexString = "solidMaterialFullIndex";
+    static constexpr auto stress_n = "beginningOfStepStress";
     static constexpr auto forceExternal = "externalForce";
     static constexpr auto contactRelationNameString = "contactRelationName";
     static constexpr auto noContactRelationNameString = "NOCONTACT";

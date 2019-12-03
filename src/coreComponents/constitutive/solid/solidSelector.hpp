@@ -22,6 +22,7 @@
 
 #include "LinearElasticIsotropic.hpp"
 #include "LinearViscoElasticIsotropic.hpp"
+#include "LinearElasticAnisotropic.hpp"
 
 namespace geosx
 {
@@ -41,6 +42,15 @@ bool constitutiveUpdatePassThru( constitutive::ConstitutiveBase * const constitu
   else if( dynamic_cast<LinearViscoElasticIsotropic * >( constitutiveRelation ) )
   {
     lambda( static_cast<LinearViscoElasticIsotropic & >( *constitutiveRelation) );
+  }
+  else if( dynamic_cast<LinearElasticAnisotropic * >( constitutiveRelation ) )
+  {
+#if !defined(__CUDA_ARCH__)
+    lambda( static_cast<LinearElasticAnisotropic & >( *constitutiveRelation) );
+#else
+    GEOS_ERROR( "Cannot call kernel using constitutiveUpdatePassThru. "
+                "Too many parameters in LinearElasticAnisotropic::KernelWrapper");
+#endif
   }
   else
   {

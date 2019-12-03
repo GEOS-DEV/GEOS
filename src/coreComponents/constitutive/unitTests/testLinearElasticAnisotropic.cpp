@@ -37,14 +37,14 @@ TEST( LinearElasticAnisotropicTests, testAllocation )
   EXPECT_EQ( cm.size(), numElems );
   EXPECT_EQ( cm.numQuadraturePoints(), numQuadraturePoints );
 
-  arrayView1d<LinearElasticAnisotropic::StiffnessTensor const> const &
-  stiffness = cm.stiffness() ;
+//  arrayView1d<LinearElasticAnisotropic::StiffnessTensor const> const &
+//  stiffness = cm.stiffness() ;
 
-  arrayView2d<R2SymTensor const> const & deviatorStress = cm.getStress();
+  arrayView2d<R2SymTensor const> const & stress = cm.getStress();
 
-  EXPECT_EQ( stiffness.size(), numElems );
-  EXPECT_EQ( deviatorStress.size(0), numElems );
-  EXPECT_EQ( deviatorStress.size(1), numQuadraturePoints );
+//  EXPECT_EQ( stiffness.size(), numElems );
+  EXPECT_EQ( stress.size(0), numElems );
+  EXPECT_EQ( stress.size(1), numQuadraturePoints );
 
 }
 
@@ -84,14 +84,15 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
                                                   { 5.0e10, 5.1e10, 5.2e10, 5.3e10, 5.4e10, 5.5e10 }
                                               } };
 
+  cm.setDefaultStiffness( c );
+
   dataRepository::Group disc( "discretization", nullptr );
   disc.resize(2);
   cm.AllocateConstitutiveData( &disc, 2 );
 
-  arrayView1d<LinearElasticAnisotropic::StiffnessTensor> const &
-  stiffness = cm.stiffness();
+//  arrayView1d<LinearElasticAnisotropic::StiffnessTensor> const &
+//  stiffness = cm.stiffness();
 
-  stiffness[0] = c;
 
   arrayView2d<R2SymTensor> const & stress = cm.getStress();
 
@@ -198,12 +199,12 @@ TEST( LinearElasticAnisotropicTests, testXML )
   "<Constitutive>"
   "  <LinearElasticAnisotropic name=\"granite\""
   "                            defaultDensity=\"2700\""
-  "                            c11=\"1.0e10\" c12=\"1.1e9\"  c13=\"1.2e9\"  c14=\"1.3e9\" c15=\"1.4e9\" c16=\"1.5e9\""
-  "                            c21=\"2.0e9\"  c22=\"2.1e10\" c23=\"2.2e9\"  c24=\"2.3e9\" c25=\"2.4e9\" c26=\"2.5e9\""
-  "                            c31=\"3.0e9\"  c32=\"3.1e9\"  c33=\"3.2e10\" c34=\"3.3e9\" c35=\"3.4e9\" c36=\"3.5e9\""
-  "                            c41=\"4.0e9\"  c42=\"4.1e9\"  c43=\"4.2e9\"  c44=\"4.3e9\" c45=\"4.4e9\" c46=\"4.5e9\""
-  "                            c51=\"5.0e9\"  c52=\"5.1e9\"  c53=\"5.2e9\"  c54=\"5.3e9\" c55=\"5.4e9\" c56=\"5.5e9\""
-  "                            c61=\"6.0e9\"  c62=\"6.1e9\"  c63=\"6.2e9\"  c64=\"6.3e9\" c65=\"6.4e9\" c66=\"6.5e9\" />"
+  "                            defaultC11=\"1.0e10\" defaultC12=\"1.1e9\"  defaultC13=\"1.2e9\"  defaultC14=\"1.3e9\" defaultC15=\"1.4e9\" defaultC16=\"1.5e9\""
+  "                            defaultC21=\"2.0e9\"  defaultC22=\"2.1e10\" defaultC23=\"2.2e9\"  defaultC24=\"2.3e9\" defaultC25=\"2.4e9\" defaultC26=\"2.5e9\""
+  "                            defaultC31=\"3.0e9\"  defaultC32=\"3.1e9\"  defaultC33=\"3.2e10\" defaultC34=\"3.3e9\" defaultC35=\"3.4e9\" defaultC36=\"3.5e9\""
+  "                            defaultC41=\"4.0e9\"  defaultC42=\"4.1e9\"  defaultC43=\"4.2e9\"  defaultC44=\"4.3e9\" defaultC45=\"4.4e9\" defaultC46=\"4.5e9\""
+  "                            defaultC51=\"5.0e9\"  defaultC52=\"5.1e9\"  defaultC53=\"5.2e9\"  defaultC54=\"5.3e9\" defaultC55=\"5.4e9\" defaultC56=\"5.5e9\""
+  "                            defaultC61=\"6.0e9\"  defaultC62=\"6.1e9\"  defaultC63=\"6.2e9\"  defaultC64=\"6.3e9\" defaultC65=\"6.4e9\" defaultC66=\"6.5e9\" />"
   "</Constitutive>";
 
   xmlWrapper::xmlDocument xmlDocument;
@@ -224,8 +225,11 @@ TEST( LinearElasticAnisotropicTests, testXML )
   disc.resize(1);
   model->AllocateConstitutiveData( &disc, 1 );
 
-  arrayView1d<LinearElasticAnisotropic::StiffnessTensor const> const &
-  stiffness = model->stiffness() ;
+
+  LinearElasticAnisotropic::KernelWrapper kernelWrapper = model->createKernelWrapper();
+
+  real64 stiffness[6][6];
+  kernelWrapper.GetStiffness(0,stiffness);
 
   real64 c[6][6] = { { 1.0e10, 1.1e9,  1.2e9,  1.3e9,  1.4e9,  1.5e9 },
                      { 2.0e9,  2.1e10, 2.2e9,  2.3e9,  2.4e9,  2.5e9 },
@@ -239,7 +243,7 @@ TEST( LinearElasticAnisotropicTests, testXML )
   {
     for( int j=0 ; j<6 ; ++j )
     {
-      ASSERT_DOUBLE_EQ( stiffness[0].m_data[i][j] , c[i][j] );
+      ASSERT_DOUBLE_EQ( stiffness[i][j] , c[i][j] );
     }
   }
 

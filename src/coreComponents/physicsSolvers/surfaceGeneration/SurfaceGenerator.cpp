@@ -1597,7 +1597,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
 
   // Split the node into two, using the original index, and a new one.
   localIndex newNodeIndex;
-  if( verboseLevel() )
+  if( getLogLevel() )
   {
     GEOS_LOG_RANK("");
     std::cout<<"Splitting node "<<nodeID<<" along separation plane faces: ";
@@ -1641,7 +1641,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
 //  usedFacesNew = usedFaces[nodeID];
 
 
-  if( verboseLevel() )
+  if( getLogLevel() )
     std::cout<<"Done splitting node "<<nodeID<<" into nodes "<<nodeID<<" and "<<newNodeIndex<<std::endl;
 
   // split edges
@@ -1663,7 +1663,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
 
       edgeToFaceMap.clearSet( newEdgeIndex );
 
-      if( verboseLevel() )
+      if( getLogLevel() )
       {
         GEOS_LOG_RANK("");
         std::cout<<"  Split edge "<<parentEdgeIndex<<" into edges "<<parentEdgeIndex<<" and "<<newEdgeIndex<<std::endl;
@@ -1724,7 +1724,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
       if( faceManager.SplitObject( faceIndex, rank, newFaceIndex ) )
       {
 
-        if( verboseLevel() )
+        if( getLogLevel() )
         {
           GEOS_LOG_RANK("");
           std::cout<<"  Split face "<<faceIndex<<" into faces "<<faceIndex<<" and "<<newFaceIndex<<std::endl;
@@ -1867,18 +1867,18 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
       arrayView2d<localIndex, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & elemsToNodes = elemSubRegion.nodeList();
       arrayView2d<localIndex> & elemsToFaces = elemSubRegion.faceList();
 
-      if( verboseLevel() > 1 )
+      if( getLogLevel() > 1 )
         std::cout<<"Element "<<elemIndex<<std::endl;
 
       // 2a) correct elementToNode and nodeToElement
-      if( verboseLevel() > 1 )
+      if( getLogLevel() > 1 )
         std::cout<<"  Looping over all nodes on element, and correcting node<->element maps:"<<std::endl;
 
 
       R1Tensor elemCenter = {0.0, 0.0, 0.0};
       {
         // loop over all nodes on element
-        if( verboseLevel() > 1 )
+        if( getLogLevel() > 1 )
           std::cout<<"    m_ElementToNodeMap = ( ";
         for( localIndex a=0 ; a<elemsToNodes.size( 1 ) ; ++a )
         {
@@ -1887,7 +1887,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
           if( elemsToNodes[elemIndex][a] == nodeID )
           {
 
-            if( verboseLevel() > 1 )
+            if( getLogLevel() > 1 )
               std::cout<<elemsToNodes[elemIndex][a]<<"->"<<newNodeIndex<<", ";
 
             elemsToNodes[elemIndex][a] = newNodeIndex;
@@ -1895,18 +1895,18 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
             insert( nodeManager.toElementRelation(), newNodeIndex, regionIndex, subRegionIndex, elemIndex );
             erase( nodeManager.toElementRelation(), nodeID, regionIndex, subRegionIndex, elemIndex );
           }
-          else if( verboseLevel() > 1 )
+          else if( getLogLevel() > 1 )
             std::cout<<elemsToNodes[elemIndex][a]<<", ";
         }
         elemCenter /= elemsToNodes.size( 1 );
-        if( verboseLevel() > 1 )
+        if( getLogLevel() > 1 )
           std::cout<<")"<<std::endl;
 
-        if( verboseLevel() > 1 )
+        if( getLogLevel() > 1 )
         {
           for( localIndex a=0 ; a<elemsToNodes.size( 1 ) ; ++a )
           {
-            if( verboseLevel() > 1 )
+            if( getLogLevel() > 1 )
             {
               std::cout<<"    nodeToElemMaps["<<elemsToNodes[elemIndex][a]<<"] = ( ";
               for( localIndex k=0 ; k<nodeToRegionMap.sizeOfArray(elemsToNodes[elemIndex][a]) ; ++k )
@@ -1919,7 +1919,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
             }
           }
 
-          if( verboseLevel() > 1 )
+          if( getLogLevel() > 1 )
           {
             std::cout<<"    nodeToElemMaps["<<nodeID<<"] = ( ";
             for( localIndex k=0 ; k<nodeToRegionMap.sizeOfArray(nodeID) ; ++k )
@@ -1936,7 +1936,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
 
 
       // 2b) loop over all faces on element.
-      if( verboseLevel() > 1 )
+      if( getLogLevel() > 1 )
       {
         std::cout<<"  Looping over all faces on element (parent and child):"<<std::endl;
       }
@@ -1996,7 +1996,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
             faceToElementMap[faceIndex][1] = -1;
           }
 
-          if( verboseLevel() > 1 )
+          if( getLogLevel() > 1 )
           {
             std::cout<<"    faceToRegionMap["<<newFaceIndex<<"][0]    = "<<faceToRegionMap[newFaceIndex][0]<<std::endl;
             std::cout<<"    faceToSubRegionMap["<<newFaceIndex<<"][0] = "<<faceToSubRegionMap[newFaceIndex][0]<<std::endl;
@@ -2043,7 +2043,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
 
         // 3b) correct faceToNodes and nodeToFaces
 
-        if( verboseLevel() > 1 )
+        if( getLogLevel() > 1 )
         {
           localIndex const parentFace = parentFaceIndex[newFaceIndex];
           if( parentFace!=-1 )
@@ -2059,7 +2059,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
         // loop over all nodes on the face.
         for( localIndex & nodeIndex : faceToNodeMap.getIterableArray(newFaceIndex) )
         {
-          if( verboseLevel() > 1 )
+          if( getLogLevel() > 1 )
             std::cout<<nodeIndex;
 
           // if the facenode is the one that is being split
@@ -2083,22 +2083,22 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
               // insert the newFace into the nodeToFaceMap of the newNode
               nodeToFaceMap.insertIntoSet( nodeIndex,  newFaceIndex );
             }
-            if( verboseLevel() > 1 ) std::cout<<"->"<<nodeIndex<<", ";
+            if( getLogLevel() > 1 ) std::cout<<"->"<<nodeIndex<<", ";
           }
           else // the node is not being split
           {
             nodeToFaceMap.insertIntoSet( nodeIndex, newFaceIndex );
 
-            if( verboseLevel() > 1 ) std::cout<<", ";
+            if( getLogLevel() > 1 ) std::cout<<", ";
           }
 
         }
-        if( verboseLevel() > 1 ) std::cout<<")"<<std::endl;
+        if( getLogLevel() > 1 ) std::cout<<")"<<std::endl;
 
 
 
         // faceToEdges
-        if( verboseLevel() > 1 )
+        if( getLogLevel() > 1 )
         {
           const localIndex parentFace = parentFaceIndex[newFaceIndex];
           if( parentFace!=-1 )
@@ -2128,13 +2128,13 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
 
           modifiedObjects.modifiedEdges.insert( edgeIndex );
 
-          if( verboseLevel() > 1 )
+          if( getLogLevel() > 1 )
             std::cout<<edgeIndex;
 
 
 
           //edgeToNodeMap
-          if( verboseLevel() > 1 )
+          if( getLogLevel() > 1 )
           {
             std::cout<<"(";
           }
@@ -2145,29 +2145,29 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
               if( edgeToNodeMap[edgeIndex][a] == nodeID )
               {
 
-                if( verboseLevel() > 1 )
+                if( getLogLevel() > 1 )
                   std::cout<<edgeToNodeMap[edgeIndex][a];
 
                 edgeToNodeMap[edgeIndex][a] = newNodeIndex;
                 nodeToEdgeMap.removeFromSet( nodeID, edgeIndex );
 
-                if( verboseLevel() > 1 )
+                if( getLogLevel() > 1 )
                   std::cout<<"->"<<edgeToNodeMap[edgeIndex][a]<<", ";
 
               }
-              else if( verboseLevel() > 1 )
+              else if( getLogLevel() > 1 )
                 std::cout<<edgeToNodeMap[edgeIndex][a]<<", ";
 
               nodeToEdgeMap.insertIntoSet( edgeToNodeMap[edgeIndex][a], edgeIndex );
               modifiedObjects.modifiedNodes.insert(edgeToNodeMap[edgeIndex][a]);
             }
-            if( verboseLevel() > 1 )
+            if( getLogLevel() > 1 )
               std::cout<<")";
           }
-          if( verboseLevel() > 1 )
+          if( getLogLevel() > 1 )
             std::cout<<", ";
         }
-        if( verboseLevel() > 1 )
+        if( getLogLevel() > 1 )
           std::cout<<")"<<std::endl;
       } // for( int kf=0 ; kf<elemRegion.m_numFacesPerElement ; ++kf )
     } // if( location==1 )
@@ -2204,7 +2204,7 @@ void SurfaceGenerator::MapConsistencyCheck( localIndex const GEOSX_UNUSED_ARG( n
 
 
 #if 1
-  if( verboseLevel() > 2 )
+  if( getLogLevel() > 2 )
   {
     std::cout<<"CONSISTENCY CHECKING OF THE MAPS"<<std::endl;
 
@@ -2287,7 +2287,7 @@ void SurfaceGenerator::MapConsistencyCheck( localIndex const GEOSX_UNUSED_ARG( n
 
   }
 
-  if( verboseLevel() > 2 )
+  if( getLogLevel() > 2 )
   {
     // nodeToEdge
     std::vector<std::set<localIndex> > inverseEdgesToNodes( nodeManager.size() );
@@ -2325,7 +2325,7 @@ void SurfaceGenerator::MapConsistencyCheck( localIndex const GEOSX_UNUSED_ARG( n
     }
   }
 
-  if( verboseLevel() > 2 )
+  if( getLogLevel() > 2 )
   {
     // nodeToFace
     std::vector<std::set<localIndex> > inverseFacesToNodes( nodeManager.size() );
@@ -2358,7 +2358,7 @@ void SurfaceGenerator::MapConsistencyCheck( localIndex const GEOSX_UNUSED_ARG( n
 
 
 
-  if( verboseLevel() > 2 )
+  if( getLogLevel() > 2 )
   {
 
 

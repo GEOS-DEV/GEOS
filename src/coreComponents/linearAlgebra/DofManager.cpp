@@ -29,9 +29,9 @@ namespace geosx
 
 using namespace dataRepository;
 
-DofManager::DofManager( string name, localIndex const verbosity )
+DofManager::DofManager( string name, localIndex const logLevel )
   : m_name( std::move( name ) ),
-    m_verbosity( verbosity ),
+    m_logLevel( logLevel ),
     m_domain( nullptr ),
     m_mesh( nullptr ),
     m_closed( false )
@@ -1086,7 +1086,7 @@ void DofManager::addField( string const & fieldName,
   makeConnLocPattern( field, connectivity, field.regionNames, *connLocPattern );
 
   // log some basic info
-  if( m_verbosity > 0 )
+  if( m_logLevel > 0 )
   {
     GEOS_LOG_RANK_0( "DofManager :: Added field .... " << field.docstring );
     GEOS_LOG_RANK_0( "DofManager :: Global dofs .... " << field.numGlobalRows );
@@ -1207,7 +1207,7 @@ void DofManager::addField( string const & fieldName,
   connLocPattern->close();
 
   // log some basic info
-  if( m_verbosity > 0 )
+  if( m_logLevel > 0 )
   {
     GEOS_LOG_RANK_0( "DofManager :: Added field .... " << field.docstring );
     GEOS_LOG_RANK_0( "DofManager :: Global dofs .... " << field.numGlobalRows );
