@@ -31,7 +31,8 @@ namespace geosx
 class DomainPartition;
 class MeshLevel;
 class WellElementSubRegion;
-
+class CellBlock;
+  
 /**
  * @class PerforationData
  *
@@ -185,6 +186,29 @@ private:
 
   void DebugLocalPerforations() const;
 
+  bool IsPointInsideElement( NodeManager const * const nodeManager,
+                             R1Tensor    const & location,
+                             CellBlock   const * subRegion,
+                             localIndex          ei ) const;
+
+  void CollectNodes( CellBlock const * subRegion,
+                     localIndex        ei,
+  	             set<localIndex> & nodes ) const;
+
+  bool SearchEntireDomain( MeshLevel  const  & mesh,
+                           R1Tensor   const  & location,
+                           localIndex        & erMatched,
+                           localIndex        & esrMatched,
+                           localIndex        & eiMatched ) const;
+  
+  bool SearchLocalElements( MeshLevel const  & mesh,
+   		            R1Tensor  const  & location,
+			    set<localIndex>  & nodes,
+			    set<globalIndex> & elements,
+			    localIndex       & erMatched,
+			    localIndex       & esrMatched,
+ 			    localIndex       & eiMatched ) const;
+  
   /// global number of perforations
   globalIndex m_numPerforationsGlobal; 
 
