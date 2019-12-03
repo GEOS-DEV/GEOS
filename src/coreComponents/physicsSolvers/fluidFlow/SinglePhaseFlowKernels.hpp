@@ -600,6 +600,7 @@ struct FluxKernel
            real64 * const maxStableDt)
   {
     localIndex constexpr numElems = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
+    real64 minPressure = 1e5;
 
     stackArray1d<real64, numElems>   densWeight(numElems);
 
@@ -634,12 +635,15 @@ struct FluxKernel
       real64 const gravD = gravDepth[er][esr][ei];
       real64 const gravTerm = gravityFlag ? densMean * gravD : 0.0;
 
-      potDif += weight * (pres[er][esr][ei] - gravTerm);
+      potDif += weight * (std::max(pres[er][esr][ei], minPressure) - gravTerm);
 
       weightedSum += stencilWeightedElementCenterToConnectorCenter[ke];
       if (stencilWeightedElementCenterToConnectorCenter[ke] < 1e-30) faceToCellConnector = true;
-      if (pres[er][esr][ei] > 1e5) massTransferFlag = true;
+      if (pres[er][esr][ei] > minPressure) massTransferFlag = true;
     }
+
+    if (!massTransferFlag)
+      return;
 
     // upwinding of fluid properties (make this an option?)
     localIndex const k_up = (potDif >= 0) ? 0 : 1;
@@ -659,7 +663,7 @@ struct FluxKernel
     }
 
     // populate local flux
-    if (massTransferFlag && std::abs(potDif) > std::numeric_limits<real64>::min())
+    if (std::abs(potDif) > std::numeric_limits<real64>::min())
     {
       (*mass)[seri[0]][sesri[0]][sei[0]] -= mob[er_up][esr_up][ei_up] * potDif * dt;
       (*mass)[seri[1]][sesri[1]][sei[1]] += mob[er_up][esr_up][ei_up] * potDif * dt;
@@ -873,6 +877,7 @@ struct FluxKernel
     real64 sumOfWeights = 0, dAperTerm_dAper;
     real64 aperTerm[10];
     real64 maxApertureForPermeablity = 4e-4;
+    real64 minPressure = 1e5;
 
     for( localIndex k=0 ; k<numFluxElems ; ++k )
     {
@@ -915,7 +920,10 @@ struct FluxKernel
         // average density
         real64 const densMean = 0.5 * ( dens[ei[0]][0] + dens[ei[1]][0] );
 
-        real64 const potDif =  ( ( pres[ei[0]] ) - ( pres[ei[1]] ) -
+        if (pres[ei[0]] <= minPressure && pres[ei[1]] <= minPressure)
+          return;
+
+        real64 const potDif =  ( std::max(pres[ei[0]], minPressure) - std::max(pres[ei[1]], minPressure) -
                                  densMean * ( gravDepth[ei[0]] - gravDepth[ei[1]] ) );
 
         // upwinding of fluid properties (make this an option?)
@@ -946,9 +954,7 @@ struct FluxKernel
         }
 
         // populate local flux
-        bool massTransferFlag = true;
-        if (pres[ei[0]] < 1e5 && pres[ei[1]] < 1e5) massTransferFlag = false;
-        if (massTransferFlag && std::abs(potDif) > std::numeric_limits<real64>::min())
+        if (std::abs(potDif) > std::numeric_limits<real64>::min())
         {
           (*mass)[stencilElementIndices[k[0]]] -= mob[ei_up] * weight * potDif * dt;
           (*mass)[stencilElementIndices[k[1]]] += mob[ei_up] * weight * potDif * dt;

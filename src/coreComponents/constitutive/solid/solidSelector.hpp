@@ -43,15 +43,15 @@ bool constitutiveUpdatePassThru( constitutive::ConstitutiveBase * const constitu
   {
     lambda( static_cast<LinearViscoElasticIsotropic & >( *constitutiveRelation) );
   }
-  else if( dynamic_cast<LinearElasticAnisotropic * >( constitutiveRelation ) )
-  {
-#if !defined(__CUDA_ARCH__)
-    lambda( static_cast<LinearElasticAnisotropic & >( *constitutiveRelation) );
-#else
-    GEOS_ERROR( "Cannot call kernel using constitutiveUpdatePassThru. "
-                "Too many parameters in LinearElasticAnisotropic::KernelWrapper");
-#endif
-  }
+//  else if( dynamic_cast<LinearElasticAnisotropic * >( constitutiveRelation ) )
+//  {
+//#if !defined(__CUDA_ARCH__)
+//    lambda( static_cast<LinearElasticAnisotropic & >( *constitutiveRelation) );
+//#else
+//    GEOS_ERROR( "Cannot call kernel using constitutiveUpdatePassThru. "
+//                "Too many parameters in LinearElasticAnisotropic::KernelWrapper");
+//#endif
+//  }
   else
   {
     rval = false;

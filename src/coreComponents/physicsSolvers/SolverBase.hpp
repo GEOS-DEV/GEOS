@@ -79,12 +79,6 @@ public:
                         real64 const eventProgress,
                         dataRepository::Group * const domain ) override;
 
-  /**
-   * This method will collect time-step size requests from its
-   * targets and/or children.
-   */
-  virtual real64 GetTimestepRequest(real64 const time) override;
-
   virtual void SetInitialTimeStep( Group * domain ) override;
 
   /**
@@ -497,9 +491,13 @@ public:
    * Returns the requirement for the next time-step to the event executing the solver.
    */
   virtual real64 GetTimestepRequest( real64 const GEOSX_UNUSED_ARG( time ) ) override
-		  {return m_nextDt;};
+    {
+      if (m_maxStableDt < 1e99)
+        return m_maxStableDt * m_cflFactor;
+      else
+        return m_nextDt;
+    };
   /**@}*/
-
 
   virtual Group * CreateChild( string const & childKey, string const & childName ) override;
   virtual void ExpandObjectCatalogs() override;

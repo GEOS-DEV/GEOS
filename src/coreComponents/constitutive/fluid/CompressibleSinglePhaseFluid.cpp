@@ -174,7 +174,7 @@ void CompressibleSinglePhaseFluid::PointUpdateDensityExplicit( real64 const & pr
       Compute( pressure, m_density[k][q], m_dDensity_dPressure[k][q], relation );
     } );
   else
-    m_density[k][q] = pressure * m_referenceDensity / m_referencePressure;
+    m_density[k][q] = m_referenceDensity;
 }
 
 void CompressibleSinglePhaseFluid::PointInverseUpdate( real64 & pressure, localIndex const k, localIndex const q )
@@ -182,7 +182,7 @@ void CompressibleSinglePhaseFluid::PointInverseUpdate( real64 & pressure, localI
   if (m_density[k][q] > m_referenceDensity)
     Compute( pressure, m_density[k][q], m_viscosity[k][q], m_dViscosity_dPressure[k][q] );
   else
-    pressure = m_density[k][q] * m_referencePressure / m_referenceDensity;
+    pressure = 0;
 
 //  real64 pressureCap = 1e8;
 //  pressure = m_density[k][q] < m_referenceDensity ? 0 : (pressure <= 0.5 * pressureCap
@@ -212,7 +212,7 @@ void CompressibleSinglePhaseFluid::PointInverseUpdate( real64 & pressure, real64
       }
     }
   else
-    pressure = value * m_referencePressure;
+    pressure = 0;
 }
 
 void CompressibleSinglePhaseFluid::BatchUpdate( arrayView1d<double const> const & pressure )

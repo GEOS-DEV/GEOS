@@ -87,11 +87,6 @@ SolverBase::CatalogInterface::CatalogType & SolverBase::GetCatalog()
   return catalog;
 }
 
-real64 SolverBase::GetTimestepRequest(real64 const GEOSX_UNUSED_ARG( time ))
-{
-  return (m_maxStableDt * m_cflFactor);
-}
-
 void SolverBase::SetInitialTimeStep(Group * GEOSX_UNUSED_ARG( domain ))
 {
 }

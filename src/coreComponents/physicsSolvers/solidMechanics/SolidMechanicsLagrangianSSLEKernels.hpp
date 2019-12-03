@@ -402,7 +402,7 @@ struct ImplicitKernel
             R2SymTensor referenceStress = stress(k,q);
             if( !fluidPressure.empty() )
             {
-              referenceStress.PlusIdentity( - biotCoefficient[0] * (fluidPressure[k] + deltaFluidPressure[k]));
+              referenceStress.PlusIdentity( - biotCoefficient * (fluidPressure[k] + deltaFluidPressure[k]));
             }
 
             const realT detJq = detJ[k][q];
