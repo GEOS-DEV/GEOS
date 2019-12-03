@@ -66,6 +66,11 @@ FlowSolverBase::FlowSolverBase( std::string const & name,
   this->registerWrapper( viewKeyStruct::fluidIndexString, &m_fluidIndex, false );
   this->registerWrapper( viewKeyStruct::solidIndexString, &m_solidIndex, false );
   
+  this->registerWrapper( viewKeyStruct::inputFluxEstimateString,  &m_fluxEstimate,  false )->
+    setApplyDefaultValue(1.0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Initial estimate of the input flux used only for residual scaling. This should be "
+                   "essentially equivalent to the input flux * dt.");
 }
 
 void FlowSolverBase::RegisterDataOnMesh( Group * const MeshBodies )
