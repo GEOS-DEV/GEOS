@@ -25,10 +25,6 @@
 
 #include "linearAlgebra/interfaces/BlasLapackLA.hpp"
 
-#ifdef GEOSX_USE_OPENMP
-#include <omp.h>
-#endif
-
 using namespace geosx;
 
 using INDEX_TYPE = std::ptrdiff_t;
