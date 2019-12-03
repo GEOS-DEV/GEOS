@@ -278,7 +278,9 @@ struct ImplicitKernel
   {
     GEOSX_MARK_FUNCTION;
     constexpr int dim = 3;
-    constexpr int ndof = dim * NUM_NODES_PER_ELEM;
+
+    // if the following is not static, then gcc8.1 gives a "error: use of 'this' in a constant expression"
+    static constexpr int ndof = dim * NUM_NODES_PER_ELEM;
     RAJA::ReduceMax< serialReduce, double > maxForce( 0 );
 
     typename CONSTITUTIVE_TYPE::KernelWrapper const & constitutive = constitutiveRelation->createKernelWrapper();

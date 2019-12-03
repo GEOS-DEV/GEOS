@@ -24,7 +24,7 @@
       <SystemSolverParameters
         maxIterNewton="50"
         newtonTol="1e-3"
-        logLevel="0"
+        logLevel="1"
         useAdaptiveKrylovTol="1"
         maxLineSearchCuts="5"
         useMLPrecond="1"
