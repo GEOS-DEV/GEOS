@@ -104,6 +104,8 @@ public:
 
     static constexpr auto aperture0String  = "aperture_n";
 
+    static constexpr auto inputFluxEstimateString  = "inputFluxEstimate";
+
     using ViewKey = dataRepository::ViewKey;
 
     // input data
@@ -172,6 +174,7 @@ protected:
   /// the number of Degrees of Freedom per cell
   localIndex m_numDofPerCell;
 
+  real64 m_fluxEstimate;
   
   /// views into constant data fields
   ElementRegionManager::ElementViewAccessor<arrayView1d<integer>> m_elemGhostRank;
