@@ -7,15 +7,14 @@
     <CompositionalMultiphaseReservoir name="reservoirSystem"
                 	              flowSolverName="compositionalMultiphaseFlow"
                                       wellSolverName="compositionalMultiphaseWell"
-                                      verboseLevel="1"
+                                      logLevel="1"
                                       targetRegions="{Region1,wellRegion1,wellRegion2}">
       <SystemSolverParameters useDirectSolver="1"
-	                      maxIterNewton="40"
-                              verbosityFlag="2"/>
+	                      maxIterNewton="40"/>
     </CompositionalMultiphaseReservoir>
     
     <CompositionalMultiphaseFlow name="compositionalMultiphaseFlow"
-                                 logLevel="1"
+                                 logLevel="0"
                                  gravityFlag="1"
                                  discretization="fluidTPFA"
                                  targetRegions="{Region1}"
