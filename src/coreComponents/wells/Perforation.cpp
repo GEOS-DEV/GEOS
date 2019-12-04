@@ -33,7 +33,7 @@ Perforation::Perforation(string const & name, Group * const parent)
 {
   registerWrapper( viewKeyStruct::distanceFromHeadString, &m_distanceFromHead, false )->
     setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Perforation linear distance from well head");
+    setDescription("Linear distance from well head to the perforation");
 
   registerWrapper( viewKeyStruct::transmissibilityString, &m_transmissibility, false )->
     setApplyDefaultValue(-1.0)->

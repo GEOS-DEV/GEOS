@@ -62,11 +62,10 @@
                   polylineNodeCoords="{ {9.5,  0.5, 12  }, 
                                         {9.5,  0.5, 0.05 } }"
                   polylineSegmentConn="{ {0, 1} }"
-                  crossSectionArea="0.3"
+                  crossSectionArea="0.05"
                   numElementsPerSegment="20">
         <Perforation name="producer1_perf1"
-                     distanceFromHead="11.95"
-                     transmissibility="1e-12"/> 
+                     distanceFromHead="11.95"/> 
     </InternalWell> 
 
     <InternalWell name="well_injector1"
@@ -76,11 +75,10 @@
                   polylineNodeCoords="{ {9.5, 0.2, 12  }, 
                                         {9.5, 0.2, 9.5 } }"
                   polylineSegmentConn="{ {0, 1} }"
-                  crossSectionArea="0.3"
+                  crossSectionArea="0.05"
                   numElementsPerSegment="30">
         <Perforation name="injector1_perf1"
-                     distanceFromHead="2.45"
-                     transmissibility="1e-12"/> 
+                     distanceFromHead="2.45"/> 
     </InternalWell> 
 
 

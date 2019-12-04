@@ -253,6 +253,7 @@ public:
     static constexpr auto nextWellElementIndexGlobalString = "nextWellElementIndexGlobal";
     static constexpr auto topWellElementIndexString        = "topWellElementIndex";
     static constexpr auto topRankString                    = "topRank";
+    static constexpr auto radiusString                     = "radius";
   
     dataRepository::ViewKey wellControlsName     = { wellControlsString };
     dataRepository::ViewKey wellNodeList         = { wellNodeListString };
@@ -260,6 +261,7 @@ public:
     dataRepository::ViewKey nextWellElementIndexGlobal = { nextWellElementIndexGlobalString };
     dataRepository::ViewKey topWellElementIndex  = { topWellElementIndexString };
     dataRepository::ViewKey topRank            = { topRankString };
+    dataRepository::ViewKey radius             = { radiusString };
 
   } viewKeysWellElementSubRegion;
   
@@ -347,7 +349,6 @@ private:
   void ConstructSubRegionLocalElementMaps( MeshLevel                   & mesh, 
                                            InternalWellGenerator const & wellGeometry,
                                            set<globalIndex>      const & localElems,
-                                           set<globalIndex>      const & localNodes,
                                            globalIndex                   nodeOffsetGlobal,
                                            globalIndex                   elemOffsetGlobal );
 
@@ -395,6 +396,9 @@ private:
 
   /// top rank
   integer m_topRank;
+
+  /// radius of the well element
+  array1d<real64> m_radius;
 
 };
 

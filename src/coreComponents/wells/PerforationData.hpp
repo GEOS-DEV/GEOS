@@ -133,7 +133,16 @@ public:
    */
   arrayView1d<real64 const> const & getTransmissibility() const { return m_transmissibility; }
 
-
+  /**
+   * @brief Computes the well transmissibility for each local perforation on this well
+   * @param[in] mesh the target mesh level
+   * @param[in] wellElementSubRegion the subRegion corresponding to this well
+   * @param[in] permeabilityKey key to access the permeability in the reservoir
+   */  
+  void ComputeWellTransmissibility( MeshLevel const & mesh,
+                                    WellElementSubRegion const * const wellElemSubRegion,
+                                    string const & permeabilityKey );
+  
   /**
    * @brief Locates connected local mesh elements and resizes current object appropriately
    * @param[in] mesh the target mesh level
@@ -143,7 +152,7 @@ public:
                               InternalWellGenerator const & wellGeometry );
 
   /**
-   * @brief Connect each perforation to a local wellbore element
+   * @brief Connects each perforation to a local wellbore element
    * @param[in] wellGeometry the InternalWellGenerator containing the global well topology
    * @param[in] wellElementGlobalToLocalMap the global to local map of wellbore elements
    * @param[in] elemOffsetGlobal the offset of the first global well element ( = offset of last global mesh elem + 1 )
@@ -177,12 +186,42 @@ public:
   {
   } groupKeysPerforationData;
 
-protected:
-
-  virtual void InitializePostInitialConditions_PreSubGroups( Group * const group ) override;
 
 private:
 
+  /**
+   * @brief Computes the approximate dimensions of the reservoir element containing a perforation
+   *        This is done by computing a bounding box containing the element
+   * @param[in] mesh the target mesh level
+   * @param[in] er the index of the element region containing the reservoir element
+   * @param[in] esr the index of the element subRegion containing the reservoir element
+   * @param[in] ei the index of the reservoir element 
+   * @param[inout] dx dimension of the element in the x-direction
+   * @param[inout] dy dimension of the element in the y-direction
+   * @param[inout] dz dimension of the element in the z-direction
+   */  
+  void GetReservoirElementDimensions( MeshLevel  const & mesh,
+                                      localIndex const er, localIndex const esr, localIndex const ei,
+                                      real64 & dx, real64 & dy, real64 & dz ) const;
+  /**
+   * @brief Checks if the well is along the x-, y-, or z- directions 
+   * @param[in] vecWellElemCenterToPerf vector connecting the well element center to the perforation
+   * @param[in] dx dimension of the element in the x-direction
+   * @param[in] dy dimension of the element in the y-direction
+   * @param[in] dz dimension of the element in the z-direction
+   * @param[in] perm absolute permeability in the reservoir element
+   * @param[inout] d1 dimension of the element in the first direction
+   * @param[inout] d2 dimension of the element in the second direction
+   * @param[inout] h dimension of the element in the third direction
+   * @param[inout] k1 absolute permeability in the reservoir element (first direction)
+   * @param[inout] k2 absolute permeability in the reservoir element (second direction)
+   */  
+  void DecideWellDirection( R1Tensor const & vecWellElemCenterToPerf,
+                            real64 const & dx, real64 const & dy, real64 const & dz,
+                            R1Tensor const & perm,
+                            real64 & d1, real64 & d2, real64 & h,
+                            real64 & k1, real64 & k2 ) const;
+  
   void DebugLocalPerforations() const;
 
   /// global number of perforations

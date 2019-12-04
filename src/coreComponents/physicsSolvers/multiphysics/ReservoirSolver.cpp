@@ -51,6 +51,31 @@ ReservoirSolver::~ReservoirSolver()
 {
 }
 
+void ReservoirSolver::InitializePostInitialConditions_PreSubGroups(Group * const rootGroup)
+{
+  SolverBase::InitializePostInitialConditions_PreSubGroups(rootGroup);
+
+  DomainPartition * const domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
+
+  MeshLevel * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  ElementRegionManager * const elemManager = meshLevel->getElemManager();
+
+  // loop over the wells
+  elemManager->forElementSubRegions<WellElementSubRegion>( [&]( WellElementSubRegion * const subRegion )
+  {
+    // get the string to access the permeability
+    string const permeabilityKey = FlowSolverBase::viewKeyStruct::permeabilityString;
+
+    PerforationData * const perforationData = subRegion->GetPerforationData();
+
+    // compute the Peaceman index (if not read from XML)
+    perforationData->ComputeWellTransmissibility( *meshLevel,
+                                                  subRegion,
+                                                  permeabilityKey ); 
+  });
+}
+
+  
 void ReservoirSolver::PostProcessInput()
 {
   SolverBase::PostProcessInput();
