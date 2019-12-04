@@ -1124,7 +1124,7 @@ real64 SinglePhaseFlow::CalculateResidualNorm( DomainPartition const * const dom
   string const dofKey = dofManager.getKey( viewKeyStruct::pressureString );
 
   // compute the norm of local residual scaled by cell pore volume
-  real64 localResidualNorm[2] = { 0.0, 0.0 };
+  real64 localResidualNorm[3] = { 0.0, 0.0, 0.0 };
   applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
                                  ElementRegionBase const * const GEOSX_UNUSED_ARG( region ),
                                  ElementSubRegionBase const * const subRegion )
@@ -1145,24 +1145,20 @@ real64 SinglePhaseFlow::CalculateResidualNorm( DomainPartition const * const dom
         real64 const val = localResidual[lid];
         localResidualNorm[0] += val * val;
         localResidualNorm[1] += refPoro[a] * densOld[a] * volume[a];
+        localResidualNorm[2] += 1;
       }
     }
   });
 
-//  std::cout << "        The fluid  residual on this rank is  " << localResidualNorm[0] << "  normalized with  "
-//               << localResidualNorm[1] + m_fluxEstimate << std::endl;
-
   // compute global residual norm
-  real64 globalResidualNorm[2] = {0,0};
+  real64 globalResidualNorm[3] = {0,0,0};
   MpiWrapper::allReduce( localResidualNorm,
                          globalResidualNorm,
-                         2,
+                         3,
                          MPI_SUM,
                          MPI_COMM_GEOSX);
   
-//  MPI_Barrier(MPI_COMM_GEOSX);
-//  GEOS_LOG_RANK_0("      Global fluid residual " << globalResidualNorm[0] << " scaled by  " <<   globalResidualNorm[1] + m_fluxEstimate );
-  return sqrt(globalResidualNorm[0]) / ( globalResidualNorm[1] + m_fluxEstimate );
+  return sqrt(globalResidualNorm[0]) / ( ( globalResidualNorm[1] + m_fluxEstimate ) / (globalResidualNorm[2]+1) );
 }
 
 void SinglePhaseFlow::ApplySystemSolution( DofManager const & dofManager,
