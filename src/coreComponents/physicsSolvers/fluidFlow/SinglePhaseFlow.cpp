@@ -239,6 +239,7 @@ void SinglePhaseFlow::SetInitialTimeStep(Group * const domain )
   if( setFlowSolverTimeStep == 0 && m_timeIntegrationOption == timeIntegrationOption::ExplicitTransient )
   {
     ExplicitStepSetup( 0, 0, domain->group_cast<DomainPartition *>() );
+    m_maxStableDt = std::min(m_maxStableDt, 1e-10);
     setFlowSolverTimeStep = 1;
   }
 }
@@ -426,7 +427,7 @@ void SinglePhaseFlow::UpdateEOS( real64 const time_n,
         fluid->PointUpdateDensityExplicit( pres[ei], ei, 0 );
         dPres[ei] = pres[ei] - dPres[ei];
 
-//        if ( std::abs(mass[ei]) > 0 )
+//        if ( pres[ei] >= 1e5 )
 //        {
 //          arrayView2d<real64> const & dens = m_density[er][esr][m_fluidIndex];
 //          arrayView1d<real64> const & poro = m_porosity[er][esr];
@@ -460,7 +461,7 @@ void SinglePhaseFlow::UpdateEOS( real64 const time_n,
         pres[ei] = pres[ei] * m_relaxationCoefficient + dPres[ei] * (1 - m_relaxationCoefficient);
         dPres[ei] = pres[ei] - dPres[ei];
 
-//        if ( std::abs(mass[ei]) > 0 )
+//        if ( pres[ei] >= 1e5 )
 //        {
 //          std::cout << "\n Fluid Update in fracture: ei = " << ei  << ", mass = " << mass[ei] << ", vol = " << vol[ei]
 //                    << ", calculated dens = " << dens[ei][0] << ", new pres = " << pres[ei] << "\n";

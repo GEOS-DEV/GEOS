@@ -173,8 +173,8 @@ void CompressibleSinglePhaseFluid::PointUpdateDensityExplicit( real64 const & pr
     {
       Compute( pressure, m_density[k][q], m_dDensity_dPressure[k][q], relation );
     } );
-  else
-    m_density[k][q] = m_referenceDensity;
+//  else
+//    m_density[k][q] = m_referenceDensity;
 }
 
 void CompressibleSinglePhaseFluid::PointInverseUpdate( real64 & pressure, localIndex const k, localIndex const q )

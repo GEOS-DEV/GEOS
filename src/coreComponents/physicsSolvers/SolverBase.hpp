@@ -492,10 +492,9 @@ public:
    */
   virtual real64 GetTimestepRequest( real64 const GEOSX_UNUSED_ARG( time ) ) override
     {
-      if (m_maxStableDt < 1e99)
-        return m_maxStableDt * m_cflFactor;
-      else
-        return m_nextDt;
+//      return m_nextDt;
+    // need to return the following for explicit solver
+      return m_maxStableDt * m_cflFactor;
     };
   /**@}*/
 

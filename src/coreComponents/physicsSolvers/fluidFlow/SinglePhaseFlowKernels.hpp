@@ -623,7 +623,7 @@ struct FluxKernel
     R1Tensor faceConormal, cellToFaceVec;
     R2SymTensor coefTensor;
     bool faceToCellConnector = false;
-    bool massTransferFlag = false;
+    bool isMassTransfer = false;
     for (localIndex ke = 0; ke < stencilSize; ++ke)
     {
       localIndex const er  = seri[ke];
@@ -638,11 +638,12 @@ struct FluxKernel
       potDif += weight * (std::max(pres[er][esr][ei], minPressure) - gravTerm);
 
       weightedSum += stencilWeightedElementCenterToConnectorCenter[ke];
+
       if (stencilWeightedElementCenterToConnectorCenter[ke] < 1e-30) faceToCellConnector = true;
-      if (pres[er][esr][ei] > minPressure) massTransferFlag = true;
+      if (pres[er][esr][ei] > minPressure) isMassTransfer = true;
     }
 
-    if (!massTransferFlag)
+    if (!isMassTransfer)
       return;
 
     // upwinding of fluid properties (make this an option?)
@@ -920,9 +921,6 @@ struct FluxKernel
         // average density
         real64 const densMean = 0.5 * ( dens[ei[0]][0] + dens[ei[1]][0] );
 
-        if (pres[ei[0]] <= minPressure && pres[ei[1]] <= minPressure)
-          return;
-
         real64 const potDif =  ( std::max(pres[ei[0]], minPressure) - std::max(pres[ei[1]], minPressure) -
                                  densMean * ( gravDepth[ei[0]] - gravDepth[ei[1]] ) );
 
@@ -952,6 +950,10 @@ struct FluxKernel
            << ", weightedSum = " << weightedSum << ", totalCompressibility = " << totalCompressibility[ei_up] << ", potDif = " << potDif ;
           GEOS_ERROR("ComputeJunction::negative maxStableDt");
         }
+
+        // isMassTransfer
+        if (pres[ei[0]] <= minPressure && pres[ei[1]] <= minPressure)
+          return;
 
         // populate local flux
         if (std::abs(potDif) > std::numeric_limits<real64>::min())
