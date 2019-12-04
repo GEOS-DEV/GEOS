@@ -11,30 +11,45 @@
                   cellBlockNames="{cb1}"/>
   </Mesh-->
 
+  <!-- aspect ratio of 2.5 -->
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="{C3D8}"
-                  xCoords="{0, 100, 200, 800}"
-                  yCoords="{0, 100, 200, 800}"
-                  zCoords="{-500, -100, -20, 20, 100, 500}"
+                  xCoords="{0, 100, 200, 400}"
+                  yCoords="{0, 100, 200, 400}"
+                  zCoords="{-200, -100, -20, 20, 100, 200}"
                   nx="{25, 10, 20}"
                   ny="{25, 10, 20}"
                   nz="{10, 10, 10, 10, 10}"
                   cellBlockNames="{cb1}"/>
   </Mesh>
 
+  <!-- aspect ratio of 5.0 -->
   <!--Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="{C3D8}"
-                  xCoords="{0, 10}"
-                  yCoords="{0, 10}"
-                  zCoords="{-10, 10}"
-                  nx="{10}"
-                  ny="{10}"
-                  nz="{10}"
+                  xCoords="{0, 100, 200, 600}"
+                  yCoords="{0, 100, 200, 600}"
+                  zCoords="{-300, -100, -20, 20, 100, 300}"
+                  nx="{25, 10, 20}"
+                  ny="{25, 10, 20}"
+                  nz="{10, 10, 10, 10, 10}"
                   cellBlockNames="{cb1}"/>
   </Mesh-->
 
+  <!-- aspect ratio of 10.0 -->
+  <!--Mesh>
+    <InternalMesh name="mesh1"
+                  elementTypes="{C3D8}"
+                  xCoords="{0, 100, 200, 1000}"
+                  yCoords="{0, 100, 200, 1000}"
+                  zCoords="{-500, -100, -20, 20, 100, 500}"
+                  nx="{25, 10, 20}"
+                  ny="{25, 10, 20}"
+                  nz="{10, 10, 10, 10, 10}"
+                  cellBlockNames="{cb1}"/>
+  </Mesh-->
+  
   <Geometry>
     <Cylinder name="fracture" 
               point1="0.0, 0.0, -0.1" 
