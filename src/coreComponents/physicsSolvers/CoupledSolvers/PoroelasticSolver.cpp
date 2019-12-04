@@ -21,7 +21,7 @@
 #include "PoroelasticSolver.hpp"
 
 #include "constitutive/ConstitutiveManager.hpp"
-#include "../FiniteVolume/SinglePhaseFlow.hpp"
+#include "../FiniteVolume/SinglePhaseFlowBase.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "finiteElement/Kinematics.h"
 #include "managers/DomainPartition.hpp"
@@ -129,7 +129,7 @@ void PoroelasticSolver::PostProcessInput()
 
 void PoroelasticSolver::InitializePostInitialConditions_PreSubGroups(Group * const problemManager)
 {
-  this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>()->setPoroElasticCoupling();
+  this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlowBase*>()->setPoroElasticCoupling();
   // Calculate initial total mean stress
   this->UpdateDeformationForCoupling(problemManager->GetGroup<DomainPartition>(keys::domain));
 }
@@ -181,8 +181,8 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
 //  SolverBase & solidSolver =
 //    *(this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolverBase*>());
 
-  SinglePhaseFlow & fluidSolver = 
-    *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>());
+  SinglePhaseFlowBase & fluidSolver = 
+    *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlowBase*>());
 
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   
@@ -219,16 +219,16 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(FlowSolverBase::viewKeyStruct::deltaPressureString);
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> poro =
-    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(SinglePhaseFlow::viewKeyStruct::porosityString);
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(SinglePhaseFlowBase::viewKeyStruct::porosityString);
   
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const poroOld =
-    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(SinglePhaseFlow::viewKeyStruct::porosityOldString);
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(SinglePhaseFlowBase::viewKeyStruct::porosityOldString);
   
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const volume =
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(CellBlock::viewKeyStruct::elementVolumeString);
   
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> dVol =
-    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(SinglePhaseFlow::viewKeyStruct::deltaVolumeString);
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(SinglePhaseFlowBase::viewKeyStruct::deltaVolumeString);
 
   ElementRegionManager::MaterialViewAccessor< arrayView1d<real64> > const bulkModulus =
     elemManager->ConstructFullMaterialViewAccessor< array1d<real64>, arrayView1d<real64> >( "BulkModulus", constitutiveManager);
@@ -301,8 +301,8 @@ real64 PoroelasticSolver::SplitOperatorStep( real64 const& time_n,
   SolverBase &
   solidSolver = *(this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolverBase*>());
 
-  SinglePhaseFlow &
-  fluidSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>());
+  SinglePhaseFlowBase &
+  fluidSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlowBase*>());
 
   fluidSolver.SetupSystem( domain,
                            fluidSolver.getDofManager(),

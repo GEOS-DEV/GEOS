@@ -14,14 +14,14 @@
                               verbosityFlag="2"/>
     </Reservoir>
   
-    <SinglePhaseFlow name="singlePhaseFlow"
+    <SinglePhaseCellCentered name="singlePhaseFlow"
                      verboseLevel="1"
                      gravityFlag="1"
                      discretization="singlePhaseTPFA"
                      fluidName="water"
                      solidName="rock"
                      targetRegions="{Region1}">
-    </SinglePhaseFlow>
+    </SinglePhaseCellCentered>
 
     <SinglePhaseWell name="singlePhaseWell"
                      verboseLevel="1"

@@ -312,7 +312,7 @@ void ReservoirSolver::SolveSystem( DofManager const & dofManager,
 
   if( verboseLevel() == 2 )
   {
-    GEOS_LOG_RANK_0("After SinglePhaseFlow::SolveSystem");
+    GEOS_LOG_RANK_0("After SolverBase::SolveSystem");
     GEOS_LOG_RANK_0("\nSolution:\n");
     std::cout << solution;
   }
