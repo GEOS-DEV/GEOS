@@ -15,7 +15,7 @@
     </CompositionalMultiphaseReservoir>
     
     <CompositionalMultiphaseFlow name="compositionalMultiphaseFlow"
-                                 verboseLevel="1"
+                                 logLevel="1"
                                  gravityFlag="1"
                                  discretization="fluidTPFA"
                                  targetRegions="{Region1}"
@@ -27,7 +27,7 @@
     </CompositionalMultiphaseFlow>
 
     <CompositionalMultiphaseWell name="compositionalMultiphaseWell"
-                                 verboseLevel="1"
+                                 logLevel="1"
                                  gravityFlag="1"
                                  targetRegions="{wellRegion1,wellRegion2}"
                                  wellFluidName="fluid1"

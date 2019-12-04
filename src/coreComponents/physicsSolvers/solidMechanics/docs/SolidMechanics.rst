@@ -18,7 +18,6 @@ An example of a valid XML block is given here:
   :start-after: <!-- SPHINX_SOLID_MECHANICS_SOLVER -->
   :end-before: <!-- SPHINX_SOLID_MECHANICS_SOLVER_END -->
 
-
 In the preceding XML block, The `SolidMechanics_LagrangianFEM` is specified by the title of the subblock of the `Solvers` block.
 The following attributes are supported in the input block for `SolidMechanics_LagrangianFEM`:
 

@@ -7,15 +7,14 @@
     <CompositionalMultiphaseReservoir name="reservoirSystem"
                                       flowSolverName="compositionalMultiphaseFlow"
                                       wellSolverName="compositionalMultiphaseWell"
-                                      verboseLevel="1"
+                                      logLevel="1"
                                       targetRegions="{Region1,wellRegion1,wellRegion2,wellRegion3}">
       <SystemSolverParameters maxIterNewton="40"
-                              useDirectSolver="1"
-                              verbosityFlag="0"/>
+                              useDirectSolver="1"/>
     </CompositionalMultiphaseReservoir>
     
     <CompositionalMultiphaseFlow name="compositionalMultiphaseFlow"
-                                 verboseLevel="1"
+                                 logLevel="0"
                                  gravityFlag="1"
                                  discretization="fluidTPFA"
                                  targetRegions="{Region1}"
@@ -28,7 +27,7 @@
 
  <!-- SPHINX_COMP_WELL_SOLVER -->
     <CompositionalMultiphaseWell name="compositionalMultiphaseWell"
-                                 verboseLevel="1"
+                                 logLevel="1"
                                  gravityFlag="1"
                                  targetRegions="{wellRegion1,wellRegion2,wellRegion3}"
                                  wellFluidName="fluid1"

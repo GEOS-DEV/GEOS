@@ -722,7 +722,7 @@ void CompositionalMultiphaseFlow::AssembleSystem( real64 const time_n,
     rhs.close();
   }
 
-  if( verboseLevel() == 2 )
+  if( getLogLevel() == 2 )
   {
     GEOS_LOG_RANK_0( "After CompositionalMultiphaseFlow::AssembleSystem" );
     GEOS_LOG_RANK_0("\nJacobian:\n");
@@ -731,7 +731,7 @@ void CompositionalMultiphaseFlow::AssembleSystem( real64 const time_n,
     std::cout << rhs;
   }
 
-  if( verboseLevel() >= 3 )
+  if( getLogLevel() >= 3 )
   {
     SystemSolverParameters * const solverParams = getSystemSolverParameters();
     integer newtonIter = solverParams->numNewtonIterations();
@@ -1100,7 +1100,7 @@ void CompositionalMultiphaseFlow::ApplyBoundaryConditions( real64 const time_n,
   matrix.close();
   rhs.close();
 
-  if( verboseLevel() == 2 )
+  if( getLogLevel() == 2 )
   {
     GEOS_LOG_RANK_0( "After CompositionalMultiphaseFlow::ApplyBoundaryConditions" );
     GEOS_LOG_RANK_0("\nJacobian:\n");
@@ -1109,7 +1109,7 @@ void CompositionalMultiphaseFlow::ApplyBoundaryConditions( real64 const time_n,
     std::cout << rhs;
   }
 
-  if( verboseLevel() >= 3 )
+  if( getLogLevel() >= 3 )
   {
     SystemSolverParameters * const solverParams = getSystemSolverParameters();
     integer newtonIter = solverParams->numNewtonIterations();
@@ -1332,7 +1332,7 @@ void CompositionalMultiphaseFlow::SolveSystem( DofManager const & dofManager,
 
   SolverBase::SolveSystem( dofManager, matrix, rhs, solution );
 
-  if( verboseLevel() == 2 )
+  if( getLogLevel() == 2 )
   {
     GEOS_LOG_RANK_0("After CompositionalMultiphaseFlow::SolveSystem");
     GEOS_LOG_RANK_0("\nSolution\n");
@@ -1348,7 +1348,8 @@ CompositionalMultiphaseFlow::CheckSystemSolution( DomainPartition const * const 
 {
   MeshLevel const * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
   real64 const * localSolution = solution.extractLocalVector();
-  bool result = true;
+  int localCheck = 1;
+
 
   string const dofKey = dofManager.getKey( viewKeyStruct::dofFieldString );
 
@@ -1379,7 +1380,7 @@ CompositionalMultiphaseFlow::CheckSystemSolution( DomainPartition const * const 
         real64 const newPres = pres[ei] + dPres[ei] + scalingFactor * localSolution[lid];
         if (newPres < 0.0)
         {
-          result = false;
+        	localCheck = 0;
         }
       }
 
@@ -1389,12 +1390,24 @@ CompositionalMultiphaseFlow::CheckSystemSolution( DomainPartition const * const 
         real64 const newDens = compDens[ei][ic] + dCompDens[ei][ic] + scalingFactor * localSolution[lid];
         if (newDens < 0.0)
         {
-          result = false;
+        	localCheck = 0;
         }
       }
     });
   });
+  int globalCheck;
 
+  MpiWrapper::allReduce( &localCheck,
+                         &globalCheck,
+                         1,
+                         MPI_MIN,
+                         MPI_COMM_GEOSX );
+
+  bool result = true;
+  if (globalCheck == 0)
+  {
+    result = false;
+  }
   return result;
 }
 

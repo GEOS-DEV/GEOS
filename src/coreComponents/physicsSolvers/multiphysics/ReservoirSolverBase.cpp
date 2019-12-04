@@ -174,7 +174,7 @@ void ReservoirSolverBase::AssembleSystem( real64 const time_n,
   matrix.close();
   rhs.close();
 
-  if( verboseLevel() == 2 )
+  if( getLogLevel() == 2 )
   {
     GEOS_LOG_RANK_0( "After ReservoirSolverBase::AssembleSystem" );
     GEOS_LOG_RANK_0("\nJacobian:\n");
@@ -183,7 +183,7 @@ void ReservoirSolverBase::AssembleSystem( real64 const time_n,
     std::cout << rhs;
   }
 
-  if( verboseLevel() >= 3 )
+  if( getLogLevel() >= 3 )
   {
     SystemSolverParameters * const solverParams = getSystemSolverParameters();
     integer newtonIter = solverParams->numNewtonIterations();
@@ -247,7 +247,7 @@ void ReservoirSolverBase::SolveSystem( DofManager const & dofManager,
 
   SolverBase::SolveSystem( dofManager, matrix, rhs, solution );
 
-  if( verboseLevel() == 2 )
+  if( getLogLevel() == 2 )
   {
     GEOS_LOG_RANK_0("After SinglePhaseFlow::SolveSystem");
     GEOS_LOG_RANK_0("\nSolution:\n");
