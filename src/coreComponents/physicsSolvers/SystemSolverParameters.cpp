@@ -117,6 +117,10 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Maximum number of Newton iterations");
 
+  registerWrapper(viewKeysStruct::minIterNewtonString, &m_minIterNewton, false )->
+      setApplyDefaultValue(1)->
+      setInputFlag(InputFlags::OPTIONAL)->
+      setDescription("Minimum number of Newton iterations.");
 
   registerWrapper( viewKeysStruct::maxTimeStepCutsString, &m_maxTimeStepCuts, false )->
     setApplyDefaultValue(2)->

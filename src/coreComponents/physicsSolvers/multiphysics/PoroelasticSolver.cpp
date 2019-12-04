@@ -116,6 +116,18 @@ void PoroelasticSolver::PostProcessInput()
   if( ctOption == "FixedStress" )
   {
     this->m_couplingTypeOption = couplingTypeOption::FixedStress;
+
+    // For this coupled solver the minimum number of Newton Iter should be 0 for both flow and solid solver otherwise it will never converge.
+    SolidMechanicsLagrangianFEM &
+      solidSolver = *(this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolidMechanicsLagrangianFEM*>());
+      integer & minNewtonIterSolid = solidSolver.getSystemSolverParameters()->minIterNewton();
+
+    SinglePhaseFlow &
+      fluidSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>());
+    integer & minNewtonIterFluid = fluidSolver.getSystemSolverParameters()->minIterNewton();
+
+    minNewtonIterSolid = 0;
+    minNewtonIterFluid = 0;
   }
   else if( ctOption == "TightlyCoupled" )
   {

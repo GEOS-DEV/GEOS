@@ -16,6 +16,7 @@ maxIterNewton       integer 5       Maximum number of Newton iterations
 maxLineSearchCuts   integer 4       Max number of line search cuts                                                                                     
 maxSubSteps         integer 10      Maximum number of time sub-steps allowed for the solver                                                            
 maxTimeStepCuts     integer 2       Max number of time step cuts                                                                                       
+minIterNewton       integer 1       Minimum number of Newton iterations.                                                                               
 newtonTol           real64  1e-06   (no description available)                                                                                         
 numKrylovIter       integer 100     Maximum number of Krylov Iterations                                                                                
 scalingOption       integer 0       (no description available)                                                                                         

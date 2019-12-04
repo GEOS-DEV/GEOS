@@ -364,6 +364,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
   SystemSolverParameters * const solverParams = getSystemSolverParameters();
 
   integer const maxNewtonIter = solverParams->maxIterNewton();
+  integer const minNewtonIter = solverParams->minIterNewton();
   real64 const newtonTol = solverParams->newtonTol();
 
   integer const maxNumberDtCuts = solverParams->maxTimeStepCuts();
@@ -408,7 +409,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
 
       // if the residual norm is less than the Newton tolerance we denote that we have
       // converged and break from the Newton loop immediately.
-      if( residualNorm < newtonTol )
+      if( residualNorm < newtonTol && newtonIter >= minNewtonIter)
       {
         isConverged = 1;
         break;
