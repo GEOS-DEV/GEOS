@@ -11,7 +11,7 @@
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
       couplingTypeOption="TightlyCoupled"
-      verboseLevel="2"
+      logLevel="2"
       targetRegions="{Region2, Fracture}"
       contactRelationName="fractureContact"
       >
@@ -19,7 +19,7 @@
         maxIterNewton="100"
         newtonTol="1e-6"
         krylovTol="1.0e-8"
-        verbosityFlag="0"
+        logLevel="0"
         maxLineSearchCuts="5"
         useMLPrecond="1"
         scalingOption="2"
@@ -29,7 +29,7 @@
     <SolidMechanicsLagrangianSSLE 
       name="lagsolve" 
       timeIntegrationOption="QuasiStatic"
-      verboseLevel="0"
+      logLevel="0"
       discretization="FE1"
       targetRegions="{Region2}"
       solidMaterialName="rock"
@@ -39,13 +39,13 @@
         krylovTol="1.0e-10"
         newtonTol="1.0e-6"
         maxIterNewton="5"
-        verbosityFlag="0"
+        logLevel="0"
         />
     </SolidMechanicsLagrangianSSLE>
   
     <SinglePhaseFlow 
       name="SinglePhaseFlow"
-      verboseLevel="0"
+      logLevel="0"
       gravityFlag="0"
       discretization="singlePhaseTPFA"
       targetRegions="{Fracture}"
@@ -58,13 +58,13 @@
         krylovTol="1.0e-12"
         newtonTol="1.0e-5"
         maxIterNewton="10"
-        verbosityFlag="0"
+        logLevel="0"
         />
     </SinglePhaseFlow>
     
     <SurfaceGenerator
       name="SurfaceGen"
-      verboseLevel="0"
+      logLevel="0"
       discretization="FE1"
       fractureRegion="Fracture"
       targetRegions="{Region2}"

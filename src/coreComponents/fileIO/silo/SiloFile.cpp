@@ -3011,8 +3011,6 @@ int SiloFile::GetMeshType( string const & meshName ) const
     char pwd[256];
     DBGetDir(m_dbFilePtr, pwd);
 
-    DBtoc * TOC = DBGetToc(m_dbFilePtr);
-
     for( int i=0 ; i<3 ; ++i )
     {
       meshType = DBInqMeshtype(m_dbFilePtr,meshName.c_str());
@@ -3023,7 +3021,6 @@ int SiloFile::GetMeshType( string const & meshName ) const
       else
       {
         DBSetDir(m_dbFilePtr,"..");
-        TOC = DBGetToc(m_dbFilePtr);
       }
     }
     DBSetDir(m_dbFilePtr,pwd);

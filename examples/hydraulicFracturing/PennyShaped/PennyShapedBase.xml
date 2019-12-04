@@ -36,7 +36,10 @@
   </Mesh-->
 
   <Geometry>
-    <Cylinder name="fracture" point1="0.0, 0.0, -0.1" point2="0.0, 0.0, 0.1" radius="10.1"/>
+    <Cylinder name="fracture" 
+              point1="0.0, 0.0, -0.1" 
+              point2="0.0, 0.0, 0.1" 
+              radius="10.1"/>
     <Box name="source"
          xMin="-0.01, -0.01, -0.1"
          xMax=" 4.1,  4.1, 0.1"/>
@@ -68,6 +71,13 @@
     <PeriodicEvent 
       name="solverApplications0"
       beginTime="0.0"
+      endTime="0.2"
+      forceDt="0.05"
+      target="/Solvers/hydrofracture" />
+
+    <PeriodicEvent 
+      name="solverApplications1"
+      beginTime="0.2"
       endTime="2.0"
       forceDt="0.1"
       target="/Solvers/hydrofracture" />

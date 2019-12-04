@@ -222,7 +222,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
       }
       else
       {
-        if( m_logLevel >= 1 )
+        if( getLogLevel() >= 1 )
         {
           GEOS_LOG_RANK_0("  Fracture propagation. Re-entering Newton Solve.");
         }
@@ -760,7 +760,7 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
  
   // debugging info.  can probably be trimmed once everything is working.
 
-  if( m_logLevel >= 3 )
+  if( getLogLevel()>=3 )
   {
     // Before outputting anything generate permuation matrix and permute.
     ElementRegionManager * const elemManager = mesh->getElemManager();
@@ -1832,7 +1832,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
       else
         list->sublist("Linear Solver Types").sublist("AztecOO").sublist("Forward Solve").sublist("AztecOO Settings").set("Aztec Solver","GMRES");
 
-      if( params->getLogLevel()>=1 )
+      if( params->getLogLevel()>=2 )
         list->sublist("Linear Solver Types").sublist("AztecOO").sublist("Forward Solve").sublist("AztecOO Settings").set("Output Frequency",1);
       else
       {
@@ -1883,11 +1883,11 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
 
     params->m_numKrylovIter = status.extraParameters->get<int>("Iteration Count");
 
-    if( params->getLogLevel() >= 3 )
+    if( params->getLogLevel() >= 1 )
     {
       char output[200];
       sprintf( output,
-               "lastLinSolve(iter,tol,ri, rf) = (%4d, %4.2e, %4.2e, %4.2e) ; ",
+               "LinSolve(iter,tol,ri, rf) = (%4d, %4.2e, %4.2e, %4.2e) ; ",
                params->m_numKrylovIter,
                params->m_krylovTol,
                params->m_KrylovResidualInit,
@@ -1896,7 +1896,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
       m_nlSolverOutputLog += output;
     }
 
-    if( getLogLevel() >= 2 )
+    if( getLogLevel()>=2 )
     {
       GEOS_LOG_RANK_0("    Linear Solver | Iter = " << params->m_numKrylovIter <<
                       " | TargetReduction " << params->m_krylovTol <<
