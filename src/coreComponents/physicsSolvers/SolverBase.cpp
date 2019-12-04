@@ -416,7 +416,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
         residualNormZero = residualNorm;
       }
 
-      GEOS_LOG_LEVEL_RANK_0( 1, "Attempt: " << dtAttempt << ", Newton: " << newtonIter << ", R = " << std::scientific << residualNorm 
+      GEOS_LOG_LEVEL_RANK_0( 1, " Attempt: " << dtAttempt << ", Newton: " << newtonIter << ", R = " << std::scientific << residualNorm 
                              << " (Rel = " << residualNorm / (residualNormZero+1) << ")" );
 
       // if the residual norm is less than the Newton tolerance we denote that we have
@@ -424,6 +424,8 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       if( residualNorm < newtonTol*(residualNormZero+1) ) //)&& newtonIter > 0 )
       {
         isConverged = 1;
+
+        /*
         if( getLogLevel() >= 1 )
         {
           char output[100] = {0};
@@ -431,6 +433,8 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
           GEOS_LOG_LEVEL_RANK_0( 1, output << m_nlSolverOutputLog );
           m_nlSolverOutputLog.clear();
         }
+        */
+
         break;
       }
 
@@ -461,6 +465,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       // call the default linear solver on the system
       SolveSystem( dofManager, matrix, rhs, solution );
 
+      /*
       if( getLogLevel() >= 1 )
       {
         char output[100] = {0};
@@ -468,6 +473,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
         GEOS_LOG_LEVEL_RANK_0( 1, output << m_nlSolverOutputLog );
         m_nlSolverOutputLog.clear();
       }
+      */
 
       scaleFactor = ScalingForSystemSolution( domain, dofManager, solution );
 

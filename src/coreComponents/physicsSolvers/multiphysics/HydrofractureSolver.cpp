@@ -1734,18 +1734,21 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
       list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("PDE equations",(i==0?3:1));
       list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("ML output", 0);
       list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("aggregation: type","Uncoupled");
+      list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("aggregation: threshold",1e-3);
 
-      if(false/*i==0*/) // smoother for mechanics block
+      if(i==0) // smoother for mechanics block
       {
         list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("smoother: type","Chebyshev");
         list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("smoother: sweeps",3);
-        //list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("coarse: type","Chebyshev");
-        //list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("coarse: sweeps",3);
+        list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("coarse: type","Chebyshev");
+        list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("coarse: sweeps",3);
       }
       else // smoother for flow block
       {
-        list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("smoother: type","ILU");
-        list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("smoother: sweeps",1);
+        list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("smoother: type","Chebyshev");
+        list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("smoother: sweeps",3);
+        //list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("smoother: type","ILU");
+        //list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("smoother: sweeps",1);
       }
 
     }
@@ -1883,6 +1886,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
 
     params->m_numKrylovIter = status.extraParameters->get<int>("Iteration Count");
 
+    /*
     if( params->getLogLevel() >= 1 )
     {
       char output[200];
@@ -1895,8 +1899,9 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
 
       m_nlSolverOutputLog += output;
     }
+    */
 
-    if( getLogLevel()>=2 )
+    if( getLogLevel()>=1 )
     {
       GEOS_LOG_RANK_0("    Linear Solver | Iter = " << params->m_numKrylovIter <<
                       " | TargetReduction " << params->m_krylovTol <<
