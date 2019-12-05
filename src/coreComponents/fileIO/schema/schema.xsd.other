@@ -818,7 +818,6 @@
 		<xsd:attribute name="density" type="real64_array2d" />
 		<!--stress => Stress Deviator-->
 		<xsd:attribute name="stress" type="r2Sym_array2d" />
-<<<<<<< HEAD
 	</xsd:complexType>
 	<xsd:complexType name="MultiPhaseMultiComponentFluidType">
 		<!--dPhaseCompFraction_dGlobalCompFraction => (no description available)-->
@@ -861,8 +860,6 @@
 		<xsd:attribute name="phaseViscosity" type="real64_array3d" />
 		<!--totalDensity => (no description available)-->
 		<xsd:attribute name="totalDensity" type="real64_array2d" />
-=======
->>>>>>> develop
 	</xsd:complexType>
 	<xsd:complexType name="PoreVolumeCompressibleSolidType">
 		<!--dPVMult_dDensity => (no description available)-->

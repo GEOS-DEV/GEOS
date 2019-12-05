@@ -57,7 +57,6 @@ public:
     static constexpr auto KrylovResidualFinalString = "KrylovResidualFinal";
     static constexpr auto useNewtonSolveString      = "useNewtonSolve";
     static constexpr auto newtonTolString           = "newtonTol";
-    static constexpr auto minIterNewtonString       = "minIterNewton";
     static constexpr auto maxIterNewtonString       = "maxIterNewton";
     static constexpr auto minIterNewtonString       = "minIterNewton";
     static constexpr auto numNewtonIterationsString = "numberOfNewtonIterations";
