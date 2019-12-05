@@ -35,8 +35,7 @@ TEST( PAMELAImport, testXML )
   // Load the mesh
   std::stringstream inputStreamMesh;
   inputStreamMesh <<
-  "<?xml version=\"1.0\" ?>" <<
-  "  <Mesh xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"geos_v0.0.xsd\">" <<
+  "<Mesh>" <<
   "  <PAMELAMeshGenerator name=\"ToyModel\" " <<
   "  fieldsToImport=\"{barycenter}\""<<
   "  fieldNamesInGEOSX=\"{barycenter}\""<<
@@ -65,8 +64,7 @@ TEST( PAMELAImport, testXML )
   // Create the ElementRegions
   std::stringstream inputStreamRegion;
   inputStreamRegion <<
-  "<?xml version=\"1.0\" ?>" <<
-  "  <ElementRegions xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"geos_v0.0.xsd\">" <<
+  "<ElementRegions>" <<
   "  <CellElementRegion name=\"0\" cellBlocks=\"{0_TETRA}\" materialList=\"{water, rock}\"/>" <<
   "  <CellElementRegion name=\"1\" cellBlocks=\"{1_TETRA}\" materialList=\"{water, rock}\"/>" <<
   "  <CellElementRegion name=\"2\" cellBlocks=\"{2_TETRA}\" materialList=\"{water, rock}\"/>" <<

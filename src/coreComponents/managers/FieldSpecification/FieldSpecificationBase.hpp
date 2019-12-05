@@ -25,7 +25,7 @@
 #include "dataRepository/Group.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "managers/FieldSpecification/FieldSpecificationOps.hpp"
-#include "managers/Functions/NewFunctionManager.hpp"
+#include "managers/Functions/FunctionManager.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "managers/ObjectManagerBase.hpp"
 
@@ -85,8 +85,8 @@ public:
    */
   virtual ~FieldSpecificationBase() override;
 
-  template < typename FIELD_OP, typename POLICY, typename T, int N >
-  void ApplyFieldValueKernel( LvArray::ArrayView< T, N, localIndex > const & field,
+  template < typename FIELD_OP, typename POLICY, typename T, int N, int UNIT_STRIDE_DIM >
+  void ApplyFieldValueKernel( LvArray::ArrayView< T, N, UNIT_STRIDE_DIM, localIndex > const & field,
                               SortedArrayView< localIndex const > const & targetSet,
                               real64 const time,
                               Group * dataGroup ) const;
@@ -377,15 +377,15 @@ private:
 };
 
 
-template < typename FIELD_OP, typename POLICY, typename T, int N >
-void FieldSpecificationBase::ApplyFieldValueKernel( LvArray::ArrayView< T, N, localIndex > const & field,
+template < typename FIELD_OP, typename POLICY, typename T, int N, int UNIT_STRIDE_DIM >
+void FieldSpecificationBase::ApplyFieldValueKernel( LvArray::ArrayView< T, N, UNIT_STRIDE_DIM, localIndex > const & field,
                                                     SortedArrayView< localIndex const > const & targetSet,
                                                     real64 const time,
                                                     Group * dataGroup ) const
 {
   integer const component = GetComponent();
   string const & functionName = getReference<string>( viewKeyStruct::functionNameString );
-  NewFunctionManager * functionManager = NewFunctionManager::Instance();
+  FunctionManager * functionManager = FunctionManager::Instance();
 
   if( functionName.empty() )
   {
@@ -457,8 +457,8 @@ void FieldSpecificationBase::ApplyBoundaryConditionToSystem( set<localIndex> con
                                                              typename LAI::ParallelMatrix & matrix,
                                                              typename LAI::ParallelVector & rhs ) const
 {
-  dataRepository::WrapperBase * wrapper = dataGroup->getWrapperBase( fieldName );
-  std::type_index typeIndex = std::type_index( wrapper->get_typeid());
+  dataRepository::WrapperBase * wrapperBase = dataGroup->getWrapperBase( fieldName );
+  std::type_index typeIndex = std::type_index( wrapperBase->get_typeid());
   arrayView1d<globalIndex> const & dofMap = dataGroup->getReference<array1d<globalIndex>>( dofMapName );
   integer const component = GetComponent();
 
@@ -466,13 +466,16 @@ void FieldSpecificationBase::ApplyBoundaryConditionToSystem( set<localIndex> con
     [&]( auto type ) -> void
     {
       using fieldType = decltype(type);
-      dataRepository::Wrapper<fieldType> & view = dynamic_cast< dataRepository::Wrapper<fieldType> & >(*wrapper);
-      fieldType & field = view.reference();
+      dataRepository::Wrapper<fieldType> & wrapper = dynamic_cast< dataRepository::Wrapper<fieldType> & >(*wrapperBase);
+      typename dataRepository::Wrapper<fieldType>::ViewTypeConst fieldView = wrapper.referenceAsView();
 
       this->ApplyBoundaryConditionToSystem<FIELD_OP, LAI>( targetSet, normalizeBySetSize, time, dataGroup, dofMap, dofDim, matrix, rhs,
         [&]( localIndex const a )->real64
         {
-          return static_cast<real64>(rtTypes::value( field[a], component ));
+          //return static_cast<real64>(rtTypes::value( field[a], component ));
+          real64 value = 0.0;
+          FieldSpecificationEqual::ReadFieldValue( fieldView, a, component, value );
+          return value;
         }
       );
     }
@@ -494,7 +497,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
 {
   integer const component = GetComponent();
   string const & functionName = getReference<string>( viewKeyStruct::functionNameString );
-  NewFunctionManager * functionManager = NewFunctionManager::Instance();
+  FunctionManager * functionManager = FunctionManager::Instance();
 
   globalIndex_array  dof( targetSet.size() );
   real64_array rhsContribution( targetSet.size() );
@@ -577,7 +580,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
 {
   integer const component = GetComponent();
   string const & functionName = getReference<string>( viewKeyStruct::functionNameString );
-  NewFunctionManager * functionManager = NewFunctionManager::Instance();
+  FunctionManager * functionManager = FunctionManager::Instance();
 
   globalIndex_array  dof( targetSet.size() );
   real64_array rhsContribution( targetSet.size() );
@@ -586,7 +589,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
   int mytargetSetNumber = targetSet.size();
   int totalTargetSetNumber;
 
-  MPI_Allreduce(&mytargetSetNumber, &totalTargetSetNumber, 1, MPI_INTEGER, MPI_SUM, MPI_COMM_WORLD);
+  MpiWrapper::allReduce( &mytargetSetNumber, &totalTargetSetNumber, 1, MPI_SUM, MPI_COMM_GEOSX );
 
   real64 const setSizeFactor = ( normalizeBySetSize && (totalTargetSetNumber!= 0) ) ? 1.0/totalTargetSetNumber : 1.0;
 
@@ -666,7 +669,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
 {
   integer const component = GetComponent();
   string const & functionName = getReference<string>( viewKeyStruct::functionNameString );
-  NewFunctionManager * functionManager = NewFunctionManager::Instance();
+  FunctionManager * functionManager = FunctionManager::Instance();
 
   globalIndex_array  dof( targetSet.size() );
   real64_array rhsContribution( targetSet.size() );

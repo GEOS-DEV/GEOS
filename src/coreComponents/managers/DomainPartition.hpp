@@ -22,6 +22,8 @@
 #include "dataRepository/Group.hpp"
 #include "mesh/MeshBody.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
+#include "mpiCommunications/MpiWrapper.hpp"
+
 namespace geosx
 {
 

@@ -9,7 +9,7 @@ set( gtest_geosx_tests
      testCapillaryPressure.cpp 
    )
 
-set( dependencyList geosx_core gtest axom )
+set( dependencyList geosx_core gtest )
 
 if( ENABLE_MPI )
     set( dependencyList ${dependencyList} mpi )
@@ -33,7 +33,6 @@ endif()
 #
 foreach(test ${gtest_geosx_tests})
     get_filename_component( test_name ${test} NAME_WE )
-    message("processing test_name ${test_name}")
     blt_add_executable( NAME ${test_name}
             SOURCES ${test}
             OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}

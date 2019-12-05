@@ -1,15 +1,12 @@
-<?xml version="1.0" ?>
-<!--# # -->
 
-<Problem xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="geos_v0.0.xsd">
-
+<Problem>
   
   <Solvers
     gravityVector="0.0, 0.0, -9.81">
 
     <SolidMechanicsLagrangianSSLE name="lagSolve" 
                                   timeIntegrationOption="QuasiStatic"
-                                  verboseLevel="0"
+                                  logLevel="0"
                                   discretization="FE1"
                                   targetRegions="{Region2}"
                                   solidMaterialName="granite"
@@ -17,15 +14,16 @@
       <SystemSolverParameters krylovTol="1.0e-10"
                               newtonTol="1.0e-3"
                               maxIterNewton="8"
-                              verbosityFlag="0"/>
+                              logLevel="0"/>
      </SolidMechanicsLagrangianSSLE>
   
     <SurfaceGenerator name="SurfaceGen"
-                      verboseLevel="0"
+                      logLevel="0"
                       fractureRegion="Fracture"
                       targetRegions="{Region2}"
                       solidMaterialName="granite"
                       rockToughness="1e6"
+                      mpiCommOrder="1"
                       >
     </SurfaceGenerator>
   </Solvers>
@@ -78,7 +76,7 @@
     <PeriodicEvent name="restarts"
                    timeFrequency="0.5"
                    targetExactTimestep="0"
-                   target="/Outputs/sidreRestart"/>
+                   target="/Outputs/restartOutput"/>
   </Events>
 
 
@@ -180,7 +178,7 @@
  
   <Outputs>
     <Silo name="siloOutput" plotLevel="5" parallelThreads="1" plotFileRoot="plot"/>
-    <Restart name="sidreRestart"/>
+    <Restart name="restartOutput"/>
   </Outputs>
 
 
