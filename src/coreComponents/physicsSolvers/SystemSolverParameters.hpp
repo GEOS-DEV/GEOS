@@ -38,9 +38,10 @@ public:
 
   static string CatalogName() { return "SystemSolverParameters"; }
 
+  virtual void PostProcessInput() override;
+
   struct viewKeysStruct
   {
-    static constexpr auto verbosityString           = "verbosityFlag";
     static constexpr auto solverTypeString          = "solverType";
     static constexpr auto krylovTolString           = "krylovTol";
     static constexpr auto numKrylovIterString       = "numKrylovIter";
@@ -57,6 +58,7 @@ public:
     static constexpr auto useNewtonSolveString      = "useNewtonSolve";
     static constexpr auto newtonTolString           = "newtonTol";
     static constexpr auto maxIterNewtonString       = "maxIterNewton";
+    static constexpr auto minIterNewtonString       = "minIterNewton";
     static constexpr auto numNewtonIterationsString = "numberOfNewtonIterations";
     static constexpr auto maxTimeStepCutsString     = "maxTimeStepCuts";
     static constexpr auto timeStepCutFactorString   = "timestepCutFactor";
@@ -64,13 +66,14 @@ public:
     static constexpr auto lineSearchCutFactorString = "lineSearchCutFactor";
     static constexpr auto allowNonConvergedString   = "allowNonConverged";
     static constexpr auto maxSubStepsString         = "maxSubSteps";
+    static constexpr auto dtCutIterLimString        = "dtCutIterLimit";
+    static constexpr auto dtIncIterLimString        = "dtIncIterLimit";
 
   } viewKeys;
 
   struct groupKeysStruct
   {} groupKeys;
 
-  integer  verbose() const                    { return m_verbose; }
   string  solverType() const                  { return m_solverType; }
   real64 krylovTol() const                    { return m_krylovTol; }
   integer  numKrylovIter() const              { return m_numKrylovIter; }
@@ -87,6 +90,8 @@ public:
   integer   useNewtonSolve() const            { return m_useNewtonSolve; }
   real64 newtonTol() const                    { return m_newtonTol; }
   integer  maxIterNewton() const              { return m_maxIterNewton; }
+  integer  minIterNewton() const              { return m_minIterNewton; }
+  integer & minIterNewton()                   { return m_minIterNewton; }
   integer const & numNewtonIterations() const { return m_numNewtonIterations; }
   integer & numNewtonIterations()             { return m_numNewtonIterations; }
 
@@ -96,9 +101,10 @@ public:
   real64  lineSearchCutFactor() const         { return m_lineSearchCutFactor; }
   integer allowNonConverged() const           { return m_allowNonConverged; }
   integer maxSubSteps() const                 { return m_maxSubSteps; }
+  integer & numdtAttempts()                   { return m_numdtAttempts; }
+  real64  dtCutIterLimit() const              { return m_dtCutIterLimit * m_maxIterNewton; }
+  real64  dtIncIterLimit() const              { return m_dtIncIterLimit * m_maxIterNewton; }
 
-
-  integer m_verbose;
   string  m_solverType;
   real64  m_krylovTol;
   integer m_numKrylovIter;
@@ -115,6 +121,7 @@ public:
   integer m_useNewtonSolve;
   real64  m_newtonTol;
   integer m_maxIterNewton;
+  integer m_minIterNewton;
   integer m_numNewtonIterations;
 
   integer m_maxTimeStepCuts;
@@ -124,8 +131,9 @@ public:
   integer m_allowNonConverged;
   integer m_maxSubSteps;
   integer m_maxIters = 1000;
-
-
+  integer m_numdtAttempts; // number of times that the time-step had to be cut.
+  real64  m_dtCutIterLimit;
+  real64  m_dtIncIterLimit;
 };
 
 } /* namespace geosx */

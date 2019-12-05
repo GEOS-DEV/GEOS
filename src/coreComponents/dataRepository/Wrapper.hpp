@@ -51,7 +51,7 @@ namespace dataRepository
 
 /**
  * Templated class to serve as a wrapper to arbitrary objects.
- * @tparam T is any object that is to be wrapped by Wrapper
+ * @tparam T is any type that is to be wrapped by Wrapper
  */
 template< typename T >
 class Wrapper : public WrapperBase
@@ -59,8 +59,18 @@ class Wrapper : public WrapperBase
 
 public:
 
-  using TYPE = T;
   /**
+   * @brief Alias for the wrapped type @p T
+   */
+  using TYPE = T;
+
+  /**
+   * @name Constructors, destructor, copy/move assignment
+   */
+  ///@{
+
+  /**
+   * @brief Constructor that creates a new instance of wrapped type
    * @param name name of the object
    * @param parent parent group which owns the Wrapper
    */
@@ -80,6 +90,7 @@ public:
   }
 
   /**
+   * @brief Constructor that takes ownership of an existing instance of wrapped type
    * @param name name of the object
    * @param parent parent group that owns the Wrapper
    * @param object object that is being wrapped by the Wrapper
@@ -101,6 +112,7 @@ public:
   }
 
   /**
+   * @brief Constructor that conditionally takes ownership of an existing instance of wrapped type
    * @param name name of the object
    * @param parent parent group that owns the Wrapper
    * @param object object that is being wrapped by the Wrapper
@@ -124,7 +136,9 @@ public:
   }
 
   /**
-   * default destructor
+   * @brief Default destructor
+   *
+   * Deletes wrapped object if the wrapper is owning
    */
   virtual ~Wrapper() noexcept override final
   {
@@ -136,9 +150,10 @@ public:
   }
 
   /**
-   * Copy Assignment Operator
+   * @brief Copy Assignment Operator
+   *
    * @param source rhs
-   * @return *this
+   * @return @p *this
    */
   Wrapper & operator=( Wrapper const & source )
   {
@@ -147,7 +162,7 @@ public:
   }
 
   /**
-   * Move Assignment Operator
+   * @brief Move Assignment Operator
    * @param source
    * @return *this
    */
@@ -157,15 +172,17 @@ public:
     return *this;
   }
 
+  ///@}
 
   /**
-   * Factory Method to make a new Wrapper<T>, allocating a new T. Only is
-   * going to work if T has a default constructor.
+   * @brief Factory Method to make a new Wrapper<T>, allocating a new T.
+   *
+   * Only is going to work if T has a default constructor.
    * Perhaps this is worthless in the general case.
+   *
    * @param name name of the object
    * @param parent group that owns the Wrapper
-   * @return A std::unique_ptr<WrapperBase> that holds the newly allocated
-   * Wrapper.
+   * @return A std::unique_ptr<WrapperBase> that holds the newly allocated Wrapper.
    */
   template< typename TNEW >
   static std::unique_ptr< WrapperBase > Factory( std::string const & name,
@@ -174,6 +191,11 @@ public:
     std::unique_ptr< TNEW > newObject = std::make_unique< TNEW >();
     return std::make_unique< Wrapper< T > >( name, parent, std::move( newObject ));
   }
+
+  /**
+   * @name Miscellaneous
+   */
+  ///@{
 
   virtual std::unique_ptr< WrapperBase > clone( string const & name,
                                                 Group * const parent ) override
@@ -199,9 +221,16 @@ public:
     return typeid(T);
   }
 
+  ///@}
 
   /**
-   * static function to cast a Wrapper base to a derived Wrapper<T>
+   * @name Type-casting static functions
+   */
+  ///@{
+
+  /**
+   * @brief Static function to cast a Wrapper base to a derived Wrapper<T>
+   *
    * @param base
    * @return casted Wrapper<T>
    */
@@ -211,7 +240,8 @@ public:
   }
 
   /**
-   * static function to cast a Wrapper base to a derived Wrapper<T>
+   * @brief Static function to cast a Wrapper base to a derived Wrapper<T>
+   *
    * @param base
    * @return casted reference to const Wrapper<T>
    */
@@ -221,7 +251,8 @@ public:
   }
 
   /**
-   * static function to cast a Wrapper base to a derived Wrapper<T>
+   * @brief Static function to cast a Wrapper base to a derived Wrapper<T>
+   *
    * @param base
    * @return casted Wrapper<T>
    */
@@ -231,7 +262,7 @@ public:
   }
 
   /**
-   * static function to cast a Wrapper base to a derived Wrapper<T>
+   * Static function to cast a Wrapper base to a derived Wrapper<T>
    * @param base
    * @return casted reference to const Wrapper<T>
    */
@@ -240,20 +271,20 @@ public:
     return dynamicCast< Wrapper< T > const & >( base );
   }
 
+  ///@}
+
   /**
-   * @brief function to determine if T is packable by the buffer packing functions
-   * @return true if T is packable. false if not.
+   * @name Methods for buffer packing/unpacking
+   *
+   * This group of functions is used to pack/unpack wrapped object to/from binary buffers
    */
+  ///@{
+
   virtual bool isPackable() const override final
   {
     return bufferOps::is_packable< T >;
   }
 
-  /**
-   * @brief function to pack T
-   * @param buffer the buffer in which to pack T
-   * @return number of packed bytes.
-   */
   virtual localIndex Pack( buffer_unit_type * & buffer ) const override final
   {
     localIndex packedSize = 0;
@@ -264,12 +295,6 @@ public:
     return packedSize;
   }
 
-  /**
-   * @brief function to pack T
-   * @param buffer the buffer in which to pack T
-   * @param packList indices of T to pack
-   * @return number of packed bytes.
-   */
   virtual localIndex Pack( buffer_unit_type * & buffer, arrayView1d< localIndex const > const & packList ) const override final
   {
     localIndex packedSize = 0;
@@ -286,10 +311,6 @@ public:
     return packedSize;
   }
 
-  /**
-   * @brief function to pack return the length of packing...without doing the packing.
-   * @return size of packed bytes
-   */
   virtual localIndex PackSize( ) const override final
   {
     buffer_unit_type * buffer = nullptr;
@@ -301,11 +322,6 @@ public:
     return packedSize;
   }
 
-  /**
-   * @brief function to get the the packing size
-   * @param packList indices of T to pack
-   * @return number of packed bytes.
-   */
   virtual localIndex PackSize( arrayView1d< localIndex const > const & packList ) const override final
   {
 
@@ -325,11 +341,6 @@ public:
     return packedSize;
   }
 
-  /**
-   * @brief function to unpack a buffer into the object referred to by m_data
-   * @param buffer
-   * @return
-   */
   virtual localIndex Unpack( buffer_unit_type const * & buffer ) override final
   {
     localIndex unpackedSize = 0;
@@ -358,6 +369,16 @@ public:
     return unpackedSize;
   }
 
+  ///@}
+
+  /**
+   * @name Methods that delegate to the wrapped type
+   *
+   * These functions will call the corresponding method on the wrapped
+   * object, if such method is declared in wrapped type.
+   */
+  ///@{
+
   virtual localIndex size() const override final
   {
     return wrapperHelpers::size( *m_data );
@@ -380,7 +401,9 @@ public:
     {
       return; //parent->m_data;
     }
-  };/// @endcond DO_NOT_DOCUMENT
+  };
+  /// @endcond DO_NOT_DOCUMENT
+
   virtual void reserve( std::size_t new_cap ) override final
   {
     reserve_wrapper::reserve( this, new_cap );
@@ -409,7 +432,9 @@ public:
     copy( T * const GEOSX_UNUSED_ARG( data ), localIndex const GEOSX_UNUSED_ARG( sourceIndex ), localIndex const GEOSX_UNUSED_ARG( destIndex ) )
     {}
 
-  };/// @endcond DO_NOT_DOCUMENT
+  };
+  /// @endcond
+
   virtual void copy( localIndex const sourceIndex, localIndex const destIndex ) override final
   {
     if( this->sizedFromParent() )
@@ -418,34 +443,52 @@ public:
     }
   }
 
-  /**
-   * @brief accessor for m_data
-   * @return reference to T
-   */
-  T & reference()
-  { return *m_data; }
+  /// @cond DO_NOT_DOCUMENT
+  struct move_wrapper
+  {
+    template< class U = T >
+    static typename std::enable_if< traits::has_chai_move_method< U >, void >::type
+    move( U & data, chai::ExecutionSpace space, bool touch )
+    { data.move( space, touch ); }
+
+    template< class U = T >
+    static typename std::enable_if< !traits::has_chai_move_method< U >, void >::type
+    move( U &, chai::ExecutionSpace, bool )
+    {}
+  };
+  /// @endcond
+
+  virtual void move( chai::ExecutionSpace space, bool touch ) override
+  { return move_wrapper::move( *m_data, space, touch ); }
+
+  /// @cond DO_NOT_DOCUMENT
+  HAS_MEMBER_FUNCTION( setUserCallBack,
+                       void,
+                       ,
+                       std::string const &,
+                       "" )
+
+  template< class U = T >
+  typename std::enable_if< !has_memberfunction_setUserCallBack< U >::value, void >::type
+  setUserCallBack()
+  {}
+  /// @endcond
 
   /**
-   * @brief accessor for m_data
-   * @return reference to const T
+   * @brief Calls @p T::setUserCallBack() if it exists, passing tree path to the wrapper as argument.
+   * @tparam U dummy template parameter to enable SFINAE (do not change)
    */
-  T const & reference() const
-  { return *m_data; }
+  template< class U = T >
+  typename std::enable_if< has_memberfunction_setUserCallBack< U >::value, void >::type
+  setUserCallBack()
+  {
+    std::string const path = getConduitNode().path();
+    m_data->setUserCallBack( path );
+  }
 
-  /**
-   * @brief accessor for m_data
-   * @return pointer to T
-   */
-  T * getPointer()
-  { return m_data; }
+  ///@}
 
-  /**
-   * @brief accessor for m_data
-   * @return pointer to const T
-   */
-  T const * getPointer() const
-  { return m_data; }
-
+  /// @cond DO_NOT_DOCUMENT
   HAS_ALIAS( ViewType )
 
   template< class U=T,
@@ -462,33 +505,117 @@ public:
     using ViewType = typename T::ViewType const &;
     using ViewTypeConst = typename T::ViewTypeConst const &;
   };
+  /// @endcond
 
+  /**
+   * @brief Alias for @p T::ViewType if it exists, <tt>T &</tt> otherwise
+   */
   using ViewType      = typename Get_View_Type< T >::ViewType;
 
+  /**
+   * @brief Alias for @p T::ViewTypeConst if it exists, <tt>T const &</tt> otherwise
+   */
   using ViewTypeConst = typename Get_View_Type< T >::ViewTypeConst;
 
+  /**
+   * @name Methods for wrapped value data access
+   */
+  ///@{
+
+  /**
+   * @brief Accessor for m_data
+   * @return reference to T
+   */
+  T & reference()
+  { return *m_data; }
+
+  /**
+   * @brief Accessor for m_data
+   * @return reference to const T
+   */
+  T const & reference() const
+  { return *m_data; }
+
+  /**
+   * @brief Accessor for m_data
+   * @return pointer to T
+   */
+  T * getPointer()
+  { return m_data; }
+
+  /**
+   * @brief Accessor for m_data
+   * @return pointer to const T
+   */
+  T const * getPointer() const
+  { return m_data; }
+
+  /**
+   * @brief Provides type-dependent access to the underlying data.
+   * @return a type-dependent pointer to data
+   *
+   * Particular type and value returned depend on whether wrapped type
+   * provides a @p pointer alias and/or @p data() method.
+   */
+  traits::Pointer< T > dataPtr()
+  {
+    return wrapperHelpers::dataPtr( *m_data );
+  }
+
+  /**
+   * @copydoc dataPtr()
+   */
+  traits::ConstPointer< T > dataPtr() const
+  {
+    return wrapperHelpers::dataPtr( *m_data );
+  }
+
+  /**
+   * @brief Provide access to wrapped object converted to a view, if possible.
+   * @tparam U dummy template parameter to enable SFINAE (do not change)
+   * @return the view for wrapped object
+   *
+   * This is used mainly for @p LvArray classes (arrays, etc.) that can convert
+   * themselves into views. For other types, a regular reference is returned.
+   */
   template< class U=T >
   typename std::enable_if< has_alias_ViewType< U >::value, ViewType >::type
   referenceAsView()
   { return m_data->toView(); }
 
+  /**
+   * @copydoc referenceAsView()
+   */
   template< class U=T >
   typename std::enable_if< !has_alias_ViewType< U >::value, ViewType >::type
   referenceAsView()
   { return *m_data; }
 
+  /**
+   * @copydoc referenceAsView()
+   */
   template< class U=T >
   typename std::enable_if< has_alias_ViewType< U >::value, ViewTypeConst >::type
   referenceAsView() const
   { return m_data->toViewConst(); }
 
+  /**
+   * @copydoc referenceAsView()
+   */
   template< class U=T >
   typename std::enable_if< !has_alias_ViewType< U >::value, ViewType >::type
   referenceAsView() const
   { return *m_data; }
 
+  ///@}
+
   /**
-   * @brief accessor for m_default
+   * @name Methods to manipulate default value for wrapped object
+   */
+  ///@{
+
+  /**
+   * @brief Accessor for m_default.
    * @return reference to const m_default member
    */
   template< typename U=T >
@@ -500,7 +627,7 @@ public:
 
 
   /**
-   * @brief accessor for default value
+   * @brief Accessor for default value.
    * @return reference to const T
    */
   template< typename U=T >
@@ -511,7 +638,8 @@ public:
   }
 
   /**
-   * @brief setter for default value
+   * @brief Setter for default value.
+   * @param defaultVal the new default value
    * @return pointer to Wrapper<T>
    */
   template< typename U=T >
@@ -523,7 +651,8 @@ public:
   }
 
   /**
-   * @brief set and apply for default value
+   * @brief Set and apply for default value.
+   * @param defaultVal the new default value
    * @return pointer to Wrapper<T>
    */
   template< typename U=T >
@@ -535,53 +664,7 @@ public:
     return this;
   }
 
-
-  traits::Pointer< T > dataPtr()
-  {
-    return wrapperHelpers::dataPtr( *m_data );
-  }
-
-  traits::ConstPointer< T > dataPtr() const
-  {
-    return wrapperHelpers::dataPtr( *m_data );
-  }
-
-  HAS_MEMBER_FUNCTION( setUserCallBack,
-                       void,
-                       ,
-                       std::string const &,
-                       "" )
-
-  template< class U = T >
-  typename std::enable_if< has_memberfunction_setUserCallBack< U >::value, void >::type
-  setUserCallBack()
-  {
-    std::string const path = getConduitNode().path();
-    m_data->setUserCallBack( path );
-  }
-
-  template< class U = T >
-  typename std::enable_if< !has_memberfunction_setUserCallBack< U >::value, void >::type
-  setUserCallBack()
-  {}
-
-
-
-  struct move_wrapper
-  {
-    template< class U = T >
-    static typename std::enable_if< traits::has_chai_move_method< U >, void >::type
-    move( U & data, chai::ExecutionSpace space, bool touch )
-    { data.move( space, touch ); }
-
-    template< class U = T >
-    static typename std::enable_if< !traits::has_chai_move_method< U >, void >::type
-    move( U &, chai::ExecutionSpace, bool )
-    {}
-  };
-
-  virtual void move( chai::ExecutionSpace space, bool touch ) override
-  { return move_wrapper::move( *m_data, space, touch ); }
+  ///@}
 
   /// @cond DO_NOT_DOCUMENT
 
@@ -628,15 +711,20 @@ public:
 
 
   /**
-   *  @name overridden setters
-   *  Group of setters that override non-virtual functions in WrapperBase
+   *  @name Overridden setters
+   *  Setters that replace (hide) corresponding non-virtual functions in WrapperBase
+   *  with the goal of returning Wrapper<T> pointers rather than WrapperBase pointers.
    */
   ///@{
 
-  /**
-   * @brief set whether this wrapper is resized when its parent is resized
+  /*
+   * @brief Set whether this wrapper is resized when its parent is resized.
    * @param val an int that is converted into a bool
    * @return a pointer to this wrapper
+   */
+
+  /**
+   * @copydoc WrapperBase::setSizedFromParent(int)
    */
   Wrapper< T > * setSizedFromParent( int val )
   {
@@ -645,9 +733,7 @@ public:
   }
 
   /**
-   * @brief set the RestartFlags of the wrapper
-   * @param flags the new RestartFlags value
-   * @return a pointer to this wrapper
+   * @copydoc WrapperBase::setRestartFlags(RestartFlags)
    */
   Wrapper< T > * setRestartFlags( RestartFlags flags )
   {
@@ -656,9 +742,7 @@ public:
   }
 
   /**
-   * @brief set the PlotLevel of the wrapper
-   * @param flag the new PlotLevel value
-   * @return a pointer to this wrapper
+   * @copydoc WrapperBase::setPlotLevel(PlotLevel const)
    */
   Wrapper< T > * setPlotLevel( PlotLevel const flag )
   {
@@ -667,9 +751,7 @@ public:
   }
 
   /**
-   * @brief set the plotLevel of the wrapper
-   * @param flag an integer that specifies the new plotLevel value
-   * @return a pointer to this wrapper
+   * @copydoc WrapperBase::setPlotLevel(int const)
    */
   Wrapper< T > * setPlotLevel( int const flag )
   {
@@ -678,9 +760,7 @@ public:
   }
 
   /**
-   * @brief set the InputFlag of the wrapper
-   * @param input the new InputFlags value
-   * @return a pointer to this wrapper
+   * @copydoc WrapperBase::setInputFlag(InputFlags const)
    */
   Wrapper< T > * setInputFlag( InputFlags const input )
   {
@@ -689,16 +769,13 @@ public:
   }
 
   /**
-   * @brief set the description string of the wrapper
-   * @param description the description
-   * @return a pointer to this wrapper
+   * @copydoc WrapperBase::setDescription(string const &)
    */
   Wrapper< T > * setDescription( string const & description )
   {
     WrapperBase::setDescription( description );
     return this;
   }
-
 
   ///@}
 
