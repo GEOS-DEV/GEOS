@@ -608,6 +608,8 @@
 		<xsd:attribute name="maxSubSteps" type="integer" default="10" />
 		<!--maxTimeStepCuts => Max number of time step cuts-->
 		<xsd:attribute name="maxTimeStepCuts" type="integer" default="2" />
+		<!--minIterNewton => Minimum number of Newton iterations.-->
+		<xsd:attribute name="minIterNewton" type="integer" default="1" />
 		<!--newtonTol => (no description available)-->
 		<xsd:attribute name="newtonTol" type="real64" default="1e-06" />
 		<!--numKrylovIter => Maximum number of Krylov Iterations-->
@@ -770,6 +772,8 @@
 		<xsd:attribute name="gravityFlag" type="integer" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--inputFluxEstimate => Initial estimate of the input flux used only for residual scaling. This should be essentially equivalent to the input flux * dt.-->
+		<xsd:attribute name="inputFluxEstimate" type="real64" default="1" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--relPermName => Name of the relative permeability constitutive model to use-->
@@ -918,6 +922,8 @@
 		<xsd:attribute name="gravityFlag" type="integer" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--inputFluxEstimate => Initial estimate of the input flux used only for residual scaling. This should be essentially equivalent to the input flux * dt.-->
+		<xsd:attribute name="inputFluxEstimate" type="real64" default="1" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--solidName => Name of solid constitutive object to use for this solver-->
