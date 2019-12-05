@@ -716,14 +716,14 @@ TEST( testLAOperations, testEpetraLAOperations )
 #endif
 
 #ifdef GEOSX_USE_PETSC
-TEST( testLAOperations, testPETScLAOperations )
-{
-  testVectorFunctions< PetscInterface >();
-  // testMatrixFunctions< PetscInterface >();
-  testInterfaceSolvers< PetscInterface >();
-  testMatrixMatrixOperations< PetscInterface >();
-  testRectangularMatrixOperations< PetscInterface >();
-}
+//TEST( testLAOperations, testPETScLAOperations )
+//{
+//  testVectorFunctions< PetscInterface >();
+//  // testMatrixFunctions< PetscInterface >();
+//  testInterfaceSolvers< PetscInterface >();
+//  testMatrixMatrixOperations< PetscInterface >();
+//  testRectangularMatrixOperations< PetscInterface >();
+//}
 #endif
 
 //@}
