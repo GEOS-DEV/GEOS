@@ -5,14 +5,15 @@ set( LAI_tests
      testLAOperations.cpp 
      testArrayLAOperations.cpp
      testKrylovSolvers.cpp
-     testDofManager.cpp )
+     testDofManager.cpp 
+     testLAIHelperFunctions.cpp)
 
 set( nranks 2 )
 
 #
 # Add gtest C++ based tests
 #
-set( dependencyList gtest geosx_core axom )
+set( dependencyList gtest geosx_core )
 
 if ( ENABLE_MPI )
   set ( dependencyList ${dependencyList} mpi )
@@ -28,7 +29,6 @@ endif()
 
 foreach(test ${LAI_tests})
   get_filename_component( test_name ${test} NAME_WE )
-  message("processing test_name ${test_name}")
 
   blt_add_executable( NAME ${test_name}  
                       SOURCES ${test}

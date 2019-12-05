@@ -19,7 +19,7 @@
 #include "SetSignalHandling.hpp"
 #include "stackTrace.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
-#include "managers/Functions/NewFunctionManager.hpp"
+#include "managers/Functions/FunctionManager.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 
@@ -78,26 +78,22 @@ void setupCXXUtils()
 
 void finalizeCXXUtils()
 {
-#ifdef GEOSX_USE_CHAI
-  chai::ArrayManager::finalize();
-#endif
-
   logger::FinalizeLogger();
 }
 
 void basicSetup( int argc, char * argv[] )
 {
   setupMPI( argc, argv );
+  setupCXXUtils();
   setupOpenMP();
   setupMKL();
-  setupCXXUtils();
   setupLAI( argc, argv );
 }
 
 void basicCleanup()
 {
   FieldSpecificationManager::finalize();
-  NewFunctionManager::finalize();
+  FunctionManager::finalize();
 
   finalizeLAI();
   finalizeCXXUtils();

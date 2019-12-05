@@ -5,13 +5,15 @@
 set( dataRepository_tests
      testDefaultValue.cpp
      testObjectCatalog.cpp
-     testSidreBasic.cpp
-     testSidreExtended.cpp
+     testRestartBasic.cpp
+     testRestartExtended.cpp
      testWrapper.cpp
      testXmlWrapper.cpp
+     testBufferOps.cpp
    )
 
-set( dependencyList dataRepository gtest cxx-utilities managers mpiCommunications mesh wells constitutive meshUtilities )
+set( dependencyList geosx_core cxx-utilities gtest)
+
 #
 # Add gtest C++ based tests
 #

@@ -12,6 +12,7 @@ CompressibleSinglePhaseFluid          node         :ref:`XML_CompressibleSingleP
 Contact                               node         :ref:`XML_Contact`                               
 LinearElasticAnisotropic              node         :ref:`XML_LinearElasticAnisotropic`              
 LinearElasticIsotropic                node         :ref:`XML_LinearElasticIsotropic`                
+MultiPhaseMultiComponentFluid         node         :ref:`XML_MultiPhaseMultiComponentFluid`         
 PoreVolumeCompressibleSolid           node         :ref:`XML_PoreVolumeCompressibleSolid`           
 PoroLinearElasticAnisotropic          node         :ref:`XML_PoroLinearElasticAnisotropic`          
 PoroLinearElasticIsotropic            node         :ref:`XML_PoroLinearElasticIsotropic`            

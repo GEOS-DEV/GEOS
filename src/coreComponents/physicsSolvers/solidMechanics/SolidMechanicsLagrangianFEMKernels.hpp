@@ -25,7 +25,7 @@
 #include "Epetra_FEVector.h"
 #include "common/DataTypes.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
-#include "constitutive/Solid/solidSelector.hpp"
+#include "constitutive/solid/solidSelector.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "finiteElement/Kinematics.h"
 #include "common/TimingMacros.hpp"
@@ -48,28 +48,20 @@ enum class timeIntegrationOption : int
 namespace SolidMechanicsLagrangianFEMKernels
 {
 
-#if defined(__CUDACC__)
-  using KERNEL_POLICY = RAJA::cuda_exec< 256 >;
-#elif defined(GEOSX_USE_OPENMP)
-  using KERNEL_POLICY = RAJA::omp_parallel_for_exec;
-#else
-  using KERNEL_POLICY = RAJA::loop_exec;
-#endif
-
 inline void velocityUpdate( arrayView1d<R1Tensor> const & acceleration,
                             arrayView1d<R1Tensor> const & velocity,
                             real64 const dt )
 {
   GEOSX_MARK_FUNCTION;
 
-  RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, acceleration.size() ),
-                                 GEOSX_DEVICE_LAMBDA ( localIndex const i )
+  RAJA::forall< parallelDevicePolicy< 256 > >( RAJA::TypedRangeSegment< localIndex >( 0, acceleration.size() ),
+                                               GEOSX_DEVICE_LAMBDA ( localIndex const i )
   {
     for (int j = 0; j < 3; ++j)
     {
       velocity[ i ][ j ] += dt * acceleration[ i ][ j ];
       acceleration[ i ][ j ] = 0;
-    } 
+    }
   });
 }
 
@@ -81,8 +73,8 @@ inline void velocityUpdate( arrayView1d<R1Tensor> const & acceleration,
 {
   GEOSX_MARK_FUNCTION;
 
-  RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, indices.size() ),
-                                 GEOSX_DEVICE_LAMBDA ( localIndex const i )
+  RAJA::forall< parallelDevicePolicy< 256 > >( RAJA::TypedRangeSegment< localIndex >( 0, indices.size() ),
+                                               GEOSX_DEVICE_LAMBDA ( localIndex const i )
   {
     localIndex const a = indices[ i ];
     for (int j = 0; j < 3; ++j)
@@ -100,8 +92,8 @@ inline void displacementUpdate( arrayView1d<R1Tensor const> const & velocity,
 {
   GEOSX_MARK_FUNCTION;
 
-  RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, velocity.size() ),
-                                 GEOSX_DEVICE_LAMBDA ( localIndex const i )
+  RAJA::forall< parallelDevicePolicy< 256 > >( RAJA::TypedRangeSegment< localIndex >( 0, velocity.size() ),
+                                               GEOSX_DEVICE_LAMBDA ( localIndex const i )
   {
     for (int j = 0; j < 3; ++j)
     {
@@ -192,14 +184,13 @@ struct ExplicitKernel
   static inline real64
   Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
           LvArray::SortedArrayView<localIndex const, localIndex> const & elementList,
-          arrayView2d<localIndex const> const & elemsToNodes,
+          arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & elemsToNodes,
           arrayView3d< R1Tensor const> const & dNdX,
           arrayView2d<real64 const> const & detJ,
           arrayView1d<R1Tensor const> const & u,
           arrayView1d<R1Tensor const> const & vel,
           arrayView1d<R1Tensor> const & acc,
-          arrayView2d<real64> const & meanStress,
-          arrayView2d<R2SymTensor> const & devStress,
+          arrayView2d<R2SymTensor> const & stress,
           real64 const dt )
   {
     forall_in_set<serialPolicy>( elementList.values(),
@@ -247,10 +238,7 @@ struct ExplicitKernel
 
         constitutiveRelation->StateUpdatePoint( k, q, Dadt, Rot, 0);
 
-        R2SymTensor TotalStress = devStress[k][q];
-        TotalStress.PlusIdentity( meanStress[k][q] );
-
-        Integrate<NUM_NODES_PER_ELEM>( TotalStress, dNdX[k][q], detJ[k][q], detF, fInv, f_local );
+        Integrate<NUM_NODES_PER_ELEM>( stress[k][q], dNdX[k][q], detJ[k][q], detF, fInv, f_local );
       }//quadrature loop
 
 
@@ -269,8 +257,7 @@ struct ExplicitKernel
                              localIndex const numQuadraturePoints,
                              arrayView3d< R1Tensor const> const & dNdX,
                              arrayView2d<real64 const> const & detJ,
-                             arrayView2d<real64 const> const & meanStress,
-                             arrayView2d<R2SymTensor const> const & devStress,
+                             arrayView2d<R2SymTensor const> const & stress,
                              R1Tensor & force )
   {
     GEOSX_MARK_FUNCTION;
@@ -279,17 +266,17 @@ struct ExplicitKernel
     //Compute Quadrature
     for ( localIndex q = 0; q < numQuadraturePoints; ++q )
     {
-      real64 const * const restrict p_devStress = devStress[ k ][ q ].Data();
+      real64 const * const restrict p_stress = stress[ k ][ q ].Data();
 
-      force[ 0 ] -= ( p_devStress[ 1 ] * dNdX[ k ][ q ][ a ][ 1 ] +
-                      p_devStress[ 3 ] * dNdX[ k ][ q ][ a ][ 2 ] +
-                      dNdX[ k ][ q ][ a ][ 0 ] * ( p_devStress[ 0 ] + meanStress[ k ][ q ] ) ) * detJ[ k ][ q ];
-      force[ 1 ] -= ( p_devStress[ 1 ] * dNdX[ k ][ q ][ a ][ 0 ] +
-                      p_devStress[ 4 ] * dNdX[ k ][ q ][ a ][ 2 ] +
-                      dNdX[ k ][ q ][ a ][ 1 ] * ( p_devStress[ 2 ] + meanStress[ k ][ q ] ) ) * detJ[ k ][ q ];
-      force[ 2 ] -= ( p_devStress[ 3 ] * dNdX[ k ][ q ][ a ][ 0 ] +
-                      p_devStress[ 4 ] * dNdX[ k ][ q ][ a ][ 1 ] +
-                      dNdX[ k ][ q ][ a ][ 2 ] * ( p_devStress[ 5 ] + meanStress[ k ][ q ] ) ) * detJ[ k ][ q ];
+      force[ 0 ] -= ( p_stress[ 1 ] * dNdX[ k ][ q ][ a ][ 1 ] +
+                      p_stress[ 3 ] * dNdX[ k ][ q ][ a ][ 2 ] +
+                      dNdX[ k ][ q ][ a ][ 0 ] * ( p_stress[ 0 ] ) ) * detJ[ k ][ q ];
+      force[ 1 ] -= ( p_stress[ 1 ] * dNdX[ k ][ q ][ a ][ 0 ] +
+                      p_stress[ 4 ] * dNdX[ k ][ q ][ a ][ 2 ] +
+                      dNdX[ k ][ q ][ a ][ 1 ] * ( p_stress[ 2 ] ) ) * detJ[ k ][ q ];
+      force[ 2 ] -= ( p_stress[ 3 ] * dNdX[ k ][ q ][ a ][ 0 ] +
+                      p_stress[ 4 ] * dNdX[ k ][ q ][ a ][ 1 ] +
+                      dNdX[ k ][ q ][ a ][ 2 ] * ( p_stress[ 5 ] ) ) * detJ[ k ][ q ];
     }//quadrature loop
 
     return 0;
@@ -301,34 +288,32 @@ struct ExplicitKernel
                              arrayView1d<localIndex const> const & targetNodeInElemList,
                              arrayView3d< R1Tensor const> const & dNdX,
                              arrayView2d<real64 const> const & detJ,
-                             arrayView2d<real64 const> const & meanStress,
-                             arrayView2d<R2SymTensor const> const & devStress,
+                             arrayView2d<R2SymTensor const> const & stress,
                              arrayView1d< R1Tensor > const & force )
   {
    GEOSX_MARK_FUNCTION;
 
-    // RAJA::kernel<KERNEL_POLICY>( RAJA::make_tuple( RAJA::TypedRangeSegment<localIndex>( 0, elementList.size() ) ),
-    RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, elementList.size() ),
-                                   GEOSX_DEVICE_LAMBDA ( localIndex const i )
+    RAJA::forall< parallelDevicePolicy< 256 > >( RAJA::TypedRangeSegment< localIndex >( 0, elementList.size() ),
+                                                 GEOSX_DEVICE_LAMBDA ( localIndex const i )
     {
       localIndex const k = elementList[ i ];
 
       //Compute Quadrature
       for ( localIndex q = 0; q < NUM_QUADRATURE_POINTS; ++q )
       {
-        real64 const * const restrict p_devStress = devStress[ k ][ q ].Data();
+        real64 const * const restrict p_stress = stress[ k ][ q ].Data();
 
         localIndex const a = targetNodeInElemList[ i ];
 
-        force[i][ 0 ] -= ( p_devStress[ 1 ] * dNdX[ k ][ q ][ a ][ 1 ] +
-                           p_devStress[ 3 ] * dNdX[ k ][ q ][ a ][ 2 ] +
-                           dNdX[ k ][ q ][ a ][ 0 ] * ( p_devStress[ 0 ] + meanStress[ k ][ q ] ) ) * detJ[ k ][ q ];
-        force[i][ 1 ] -= ( p_devStress[ 1 ] * dNdX[ k ][ q ][ a ][ 0 ] +
-                           p_devStress[ 4 ] * dNdX[ k ][ q ][ a ][ 2 ] +
-                           dNdX[ k ][ q ][ a ][ 1 ] * ( p_devStress[ 2 ] + meanStress[ k ][ q ] ) ) * detJ[ k ][ q ];
-        force[i][ 2 ] -= ( p_devStress[ 3 ] * dNdX[ k ][ q ][ a ][ 0 ] +
-                           p_devStress[ 4 ] * dNdX[ k ][ q ][ a ][ 1 ] +
-                           dNdX[ k ][ q ][ a ][ 2 ] * ( p_devStress[ 5 ] + meanStress[ k ][ q ] ) ) * detJ[ k ][ q ];
+        force[i][ 0 ] -= ( p_stress[ 1 ] * dNdX[ k ][ q ][ a ][ 1 ] +
+                           p_stress[ 3 ] * dNdX[ k ][ q ][ a ][ 2 ] +
+                           dNdX[ k ][ q ][ a ][ 0 ] * ( p_stress[ 0 ]  ) ) * detJ[ k ][ q ];
+        force[i][ 1 ] -= ( p_stress[ 1 ] * dNdX[ k ][ q ][ a ][ 0 ] +
+                           p_stress[ 4 ] * dNdX[ k ][ q ][ a ][ 2 ] +
+                           dNdX[ k ][ q ][ a ][ 1 ] * ( p_stress[ 2 ]  ) ) * detJ[ k ][ q ];
+        force[i][ 2 ] -= ( p_stress[ 3 ] * dNdX[ k ][ q ][ a ][ 0 ] +
+                           p_stress[ 4 ] * dNdX[ k ][ q ][ a ][ 1 ] +
+                           dNdX[ k ][ q ][ a ][ 2 ] * ( p_stress[ 5 ]  ) ) * detJ[ k ][ q ];
       }//quadrature loop
     });
 
@@ -383,7 +368,7 @@ struct ImplicitKernel
           arrayView2d<real64 const > const& GEOSX_UNUSED_ARG( detJ ),
           FiniteElementBase const * const GEOSX_UNUSED_ARG( fe ),
           arrayView1d< integer const > const & GEOSX_UNUSED_ARG( elemGhostRank ),
-          arrayView2d< localIndex const > const & GEOSX_UNUSED_ARG( elemsToNodes ),
+          arrayView2d< localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM > const & GEOSX_UNUSED_ARG( elemsToNodes ),
           arrayView1d< globalIndex const > const & GEOSX_UNUSED_ARG( globalDofNumber ),
           arrayView1d< R1Tensor const > const & GEOSX_UNUSED_ARG( disp ),
           arrayView1d< R1Tensor const > const & GEOSX_UNUSED_ARG( uhat ),

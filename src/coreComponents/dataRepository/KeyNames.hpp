@@ -28,6 +28,8 @@ namespace dataRepository
 namespace keys
 {
 
+/// @cond DO_NOT_DOCUMENT
+
 //static constexpr auto ReferencePosition = "ReferencePosition";
 static constexpr auto referencePositionString = "ReferencePosition";
 
@@ -63,6 +65,8 @@ static constexpr auto FE_Space    = "FE_Space";
 //static constexpr auto FEM_Elements = "FEM_Elements";
 static constexpr auto cellManager = "cellManager";
 static constexpr auto functionManager = "FunctionManager";
+
+/// @endcond
 
 }
 }

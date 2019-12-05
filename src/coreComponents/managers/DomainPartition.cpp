@@ -80,7 +80,7 @@ void DomainPartition::InitializationOrder( string_array & order )
 }
 
 
-void DomainPartition::GenerateSets(  )
+void DomainPartition::GenerateSets()
 {
   GEOSX_MARK_FUNCTION;
 
@@ -113,9 +113,14 @@ void DomainPartition::GenerateSets(  )
 
 
   ElementRegionManager * const elementRegionManager = mesh->getElemManager();
-  elementRegionManager->forElementSubRegions( [&]( ElementSubRegionBase * const subRegion )
+  elementRegionManager->forElementSubRegionsComplete( [&]( localIndex const GEOSX_UNUSED_ARG( er ),
+                                                           localIndex const GEOSX_UNUSED_ARG( esr ),
+                                                           ElementRegionBase const * const GEOSX_UNUSED_ARG( region ),
+                                                           auto * const subRegion )
   {
     dataRepository::Group * elementSets = subRegion->sets();
+
+    auto const & elemToNodeMap = subRegion->nodeList();
 
     for( std::string const & setName : setNames )
     {
@@ -124,10 +129,19 @@ void DomainPartition::GenerateSets(  )
       set<localIndex> & targetSet = elementSets->registerWrapper< set<localIndex> >(setName)->reference();
       for( localIndex k = 0 ; k < subRegion->size() ; ++k )
       {
-        localIndex const * const elemToNodes = subRegion->nodeList(k);
         localIndex const numNodes = subRegion->numNodesPerElement( k );
 
-        if ( std::all_of( elemToNodes, elemToNodes + numNodes, [&nodeInCurSet](localIndex const nodeIndex) { return nodeInCurSet[nodeIndex]; } ) )
+        localIndex elementInSet = true;
+        for ( localIndex i = 0; i < numNodes; ++i )
+        {
+          if ( !nodeInCurSet( elemToNodeMap[ k ][ i ] ) )
+          {
+            elementInSet = false;
+            break;
+          }
+        }
+
+        if ( elementInSet )
         {
           targetSet.insert(k);
         }

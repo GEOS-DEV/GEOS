@@ -49,27 +49,31 @@ class Group;
 class xmlWrapper
 {
 public:
-  /// @typedef alias for the type of xml document
+
+  /// Alias for the type of xml document.
   using xmlDocument = pugi::xml_document;
 
-  /// @typedef alias for the type of the result from an xml parse attempt
+  /// Alias for the type of the result from an xml parse attempt.
   using xmlResult = pugi::xml_parse_result;
 
-  /// @typedef alias for the type of an xml node
+  /// Alias for the type of an xml node.
   using xmlNode = pugi::xml_node;
 
-  /// @typedef alias for the type of an xml attribute
+  /// Alias for the type of an xml attribute.
   using xmlAttribute = pugi::xml_attribute;
 
-  /// @typedef alias for the type variant of an xml node
+  /// Alias for the type variant of an xml node.
   using xmlTypes = pugi::xml_node_type;
 
-  /// constexpr variable to hold name for inserting the file path into the xml file. This is used
-  /// because we would like the option to hold the file path in the xml structure.
+  /**
+   * @brief constexpr variable to hold name for inserting the file path into the xml file.
+   *
+   * This is used because we would like the option to hold the file path in the xml structure.
+   */
   static constexpr auto filePathString = "filePath";
 
   /**
-   * @name FUNCTION GROUP for rule of five functions...which are all deleted in this case.
+   * @name Constructors/destructor/assignment.
    */
   ///@{
   xmlWrapper() = delete;
@@ -81,7 +85,7 @@ public:
   ///@}
 
   /**
-   * Function to add xml nodes from included files.
+   * @brief Function to add xml nodes from included files.
    * @param targetNode the node for which to look for included children specifications
    *
    * This function looks for a "Included" node under the targetNode, loops over all subnodes under the "Included"
@@ -91,64 +95,106 @@ public:
   static void addIncludedXML( xmlNode & targetNode );
 
   /**
-   * @name FUNCTION GROUP for StringToInputVariable()
-   * @brief Functions to parse a string, and fill a variable with the value/s in the string.
-   * @tparam T the type of variable fill with string value
-   * @param[out] target the object to read values into
-   * @param[in] value the string that contains the data to be parsed into target
+   * @name String to variable parsing.
    *
-   * This function takes in @p value and parses that string based on the type of
-   * @p target. The function implementation should provide sufficient error
-   * checking in the case that @p value is formatted incorrectly for the type specified in
-   * @p target.
+   * These functions take in @p value and parse that string based on the type of
+   * @p target. The function implementation should provide sufficient error checking
+   * in the case that @p value is formatted incorrectly for the type specified in @p target.
    */
   ///@{
+
+  /**
+   * @brief Parse a string and fill a variable with the value(s) in the string.
+   * @tparam T the type of variable fill with string value
+   * @param[out] target the object to read values into
+   * @param[in]  value  the string that contains the data to be parsed into target
+   */
   template< typename T >
   static void StringToInputVariable( T & target, string value );
 
+  /**
+   * @copybrief StringToInputVariable(T &, string)
+   * @param[out] target the object to read values into
+   * @param[in]  value  the string that contains the data to be parsed into target
+   */
   static void StringToInputVariable( R1Tensor & target, string value );
 
+  /**
+   * @copybrief StringToInputVariable(T &, string)
+   * @tparam T    data type of the array
+   * @tparam NDIM number of dimensions of the array
+   * @param[out] array the array to read values into
+   * @param[in]  value the string that contains the data to be parsed into target
+   */
   template< typename T, int NDIM >
-  static void StringToInputVariable( LvArray::Array< T, NDIM, localIndex > & array, string value );
+  static void StringToInputVariable( Array< T, NDIM > & array, string value );
+
   ///@}
 
 
   /**
-   * @name FUNCTION GROUP for ReadAttributeAsType()
-   * @brief Functions to extract attributes in an xml tree, and translate those values into a
-   *        typed variable.
-   * @tparam T the type of variable fill with xml attribute.
-   * @tparam T_DEF the default value of @p T, or in the case where @p T is an array,
-   *                the entries of T.
-   * @param rval the variable to fill.
-   * @param name the name of the xml attribute to process
-   * @param targetNode The xml node that should contain the attribute
-   * @param required whether or not the value is required
+   * @name Attribute extraction from XML nodes.
    */
   ///@{
 
+  /**
+   * @brief Extract attribute in an xml tree, and translate its value into a typed variable.
+   * @tparam T             the type of variable fill with xml attribute.
+   * @param[out] rval      the variable to fill with value
+   * @param[in] name       the name of the xml attribute to process
+   * @param[in] targetNode the xml node that should contain the attribute
+   * @param[in] required   whether or not the value is required
+   */
   template< typename T >
   static void ReadAttributeAsType( T & rval,
                                    string const & name,
                                    xmlNode const & targetNode,
                                    bool const required );
 
+  /**
+   * @copybrief ReadAttributeAsType(T &, string const &, xmlNode const &, bool const);
+   * @tparam T             the type of variable fill with xml attribute.
+   * @tparam T_DEF         type of the default value for @p rval
+   * @param[out] rval      the variable to fill with value
+   * @param[in] name       the name of the xml attribute to process
+   * @param[in] targetNode the xml node that should contain the attribute
+   * @param[in] defVal     default value of @p rval (or entries of @p rval, if it is an array)
+   */
   template< typename T, typename T_DEF = T >
   static void ReadAttributeAsType( T & rval,
                                    string const & name,
                                    xmlNode const & targetNode,
                                    T_DEF const & defVal );
 
+  /**
+   * @copybrief ReadAttributeAsType(T &, string const &, xmlNode const &, bool const);
+   * @tparam T             the type of variable fill with xml attribute.
+   * @param[out] rval      the variable to fill with value
+   * @param[in] name       the name of the xml attribute to process
+   * @param[in] targetNode the xml node that should contain the attribute
+   * @param[in] defVal     default value of @p rval (or entries of @p rval, if it is an array)
+   * @return
+   */
   template< typename T >
   static typename std::enable_if_t< !dataRepository::DefaultValue< T >::has_default_value >
   ReadAttributeAsType( T & rval,
                        string const & name,
                        xmlNode const & targetNode,
-                       dataRepository::DefaultValue< T > const & GEOSX_UNUSED_ARG( defVal ) )
+                       dataRepository::DefaultValue< T > const & defVal )
   {
+    GEOSX_UNUSED_VAR( defVal );
     ReadAttributeAsType( rval, name, targetNode, false );
   }
 
+  /**
+   * @copybrief ReadAttributeAsType(T &, string const &, xmlNode const &, bool const);
+   * @tparam T             the type of variable fill with xml attribute.
+   * @param[out] rval      the variable to fill with value
+   * @param[in] name       the name of the xml attribute to process
+   * @param[in] targetNode the xml node that should contain the attribute
+   * @param[in] defVal     default value of @p rval (or entries of @p rval, if it is an array)
+   * @return
+   */
   template< typename T >
   static typename std::enable_if_t< dataRepository::DefaultValue< T >::has_default_value >
   ReadAttributeAsType( T & rval,
@@ -158,6 +204,7 @@ public:
   {
     ReadAttributeAsType( rval, name, targetNode, defVal.value );
   }
+
   ///@}
 
 };
@@ -171,7 +218,7 @@ void xmlWrapper::StringToInputVariable( T & target, string inputValue )
 }
 
 template< typename T, int NDIM >
-void xmlWrapper::StringToInputVariable( LvArray::Array< T, NDIM, localIndex > & array, string valueString )
+void xmlWrapper::StringToInputVariable( Array< T, NDIM > & array, string valueString )
 {
   cxx_utilities::stringToArray( array, valueString );
 }

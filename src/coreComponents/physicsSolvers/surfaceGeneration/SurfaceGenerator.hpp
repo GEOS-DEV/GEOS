@@ -259,8 +259,8 @@ private:
                                 EdgeManager & edgeManager,
                                 FaceManager & faceManager,
                                 ElementRegionManager & elementManager,
-                                array1d<std::set<localIndex> >& nodesToRupturedFaces,
-                                array1d<std::set<localIndex> >& edgesToRupturedFaces );
+                                std::vector<std::set<localIndex> >& nodesToRupturedFaces,
+                                std::vector<std::set<localIndex> >& edgesToRupturedFaces );
 
   /**
    *
@@ -309,8 +309,8 @@ private:
                     EdgeManager & edgeManager,
                     FaceManager & faceManager,
                     ElementRegionManager & elemManager,
-                    arrayView1d<std::set<localIndex> >& nodesToRupturedFaces,
-                    arrayView1d<std::set<localIndex> >& edgesToRupturedFaces,
+                    std::vector<std::set<localIndex> >& nodesToRupturedFaces,
+                    std::vector<std::set<localIndex> >& edgesToRupturedFaces,
                     ElementRegionManager & elementManager,
                     ModifiedObjectLists& modifiedObjects,
                     const bool prefrac );
@@ -335,8 +335,8 @@ private:
                            const EdgeManager & edgeManager,
                            const FaceManager & faceManager,
                            ElementRegionManager & elemManager,
-                           const arrayView1d<std::set<localIndex> >& nodesToRupturedFaces,
-                           const arrayView1d<std::set<localIndex> >& edgesToRupturedFaces,
+                           const std::vector<std::set<localIndex> >& nodesToRupturedFaces,
+                           const std::vector<std::set<localIndex> >& edgesToRupturedFaces,
                            std::set<localIndex>& separationPathFaces,
                            map<localIndex, int>& edgeLocations,
                            map<localIndex, int>& faceLocations,
@@ -364,8 +364,8 @@ private:
                         FaceManager & faceManager,
                         ElementRegionManager & elementManager,
                         ModifiedObjectLists& modifiedObjects,
-                        arrayView1d<std::set<localIndex> >& nodesToRupturedFaces,
-                        arrayView1d<std::set<localIndex> >& edgesToRupturedFaces,
+                        std::vector<std::set<localIndex> >& nodesToRupturedFaces,
+                        std::vector<std::set<localIndex> >& edgesToRupturedFaces,
                         const std::set<localIndex>& separationPathFaces,
                         const map<localIndex, int>& edgeLocations,
                         const map<localIndex, int>& faceLocations,
@@ -508,6 +508,7 @@ private:
     constexpr static auto tipFacesString = "tipFaces";
     constexpr static auto trailingFacesString = "trailingFaces";
     constexpr static auto fractureRegionNameString = "fractureRegion";
+    constexpr static auto mpiCommOrderString = "mpiCommOrder";
 
     //TODO: rock toughness should be a material parameter, and we need to make rock toughness to KIC a constitutive relation.
     constexpr static auto rockToughnessString = "rockToughness";
@@ -533,6 +534,9 @@ private:
   int m_nodeBasedSIF;
 
   realT m_rockToughness;
+
+  // Flag for consistent communication ordering
+  int m_mpiCommOrder;
 
   /// set of separable faces
   localIndex_set m_separableFaceSet;

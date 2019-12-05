@@ -129,7 +129,7 @@ void VTMMeshGenerator::GenerateMesh( DomainPartition * const domain )
                     cellBlock -> SetElementType("C3D8");
                     auto & cellToVertex = cellBlock->nodeList();
                     cellBlock->resize( mesh.NumCells());
-                    cellToVertex.resize( mesh.NumCells(), mesh.NumVerticesInCell(0));
+                    cellToVertex.resize( mesh.NumCells(), mesh.NumVerticesInCell(0) );
 
                     for( localIndex k=0 ; k<mesh.NumCells() ; ++k )
                     {
@@ -148,7 +148,7 @@ void VTMMeshGenerator::GenerateMesh( DomainPartition * const domain )
                     cellBlock -> SetElementType("C3D4");
                     auto & cellToVertex = cellBlock->nodeList();
                     cellBlock->resize( mesh.NumCells());
-                    cellToVertex.resize( mesh.NumCells(), mesh.NumVerticesInCell(0));
+                    cellToVertex.resize( mesh.NumCells(), mesh.NumVerticesInCell(0) );
 
                     for( localIndex k=0 ; k<mesh.NumCells() ; ++k )
                     {
