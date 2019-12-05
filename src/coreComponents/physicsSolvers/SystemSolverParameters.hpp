@@ -59,6 +59,7 @@ public:
     static constexpr auto newtonTolString           = "newtonTol";
     static constexpr auto minIterNewtonString       = "minIterNewton";
     static constexpr auto maxIterNewtonString       = "maxIterNewton";
+    static constexpr auto minIterNewtonString       = "minIterNewton";
     static constexpr auto numNewtonIterationsString = "numberOfNewtonIterations";
     static constexpr auto maxTimeStepCutsString     = "maxTimeStepCuts";
     static constexpr auto timeStepCutFactorString   = "timestepCutFactor";
