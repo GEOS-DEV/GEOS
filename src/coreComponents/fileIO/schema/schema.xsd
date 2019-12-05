@@ -584,8 +584,11 @@
 	<xsd:complexType name="SystemSolverParametersType">
 		<!--allowNonConverged => Allow non-converged solution to be accepted-->
 		<xsd:attribute name="allowNonConverged" type="integer" default="0" />
+<<<<<<< HEAD
 		<!--doLineSearch => Line search option-->
 		<xsd:attribute name="doLineSearch" type="integer" default="1" />
+=======
+>>>>>>> develop
 		<!--dtCutIterLimit => Fraction of the Max Newton iterations above which the solver asks for the time-step to be cut for the next dt.-->
 		<xsd:attribute name="dtCutIterLimit" type="real64" default="0.7" />
 		<!--dtIncIterLimit => Fraction of the Max Newton iterations below which the solver asks for the time-step to be doubled for the next dt.-->
