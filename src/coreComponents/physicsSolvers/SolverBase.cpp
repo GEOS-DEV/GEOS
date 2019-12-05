@@ -292,8 +292,7 @@ bool SolverBase::LineSearch( real64 const & time_n,
                              real64 const scaleFactor,
                              real64 & lastResidual )
 {
-
-  GEOS_LOG_LEVEL_RANK_0(1, "    Beginning line search with last residual = " << std::scientific << lastResidual );
+  //GEOS_LOG_LEVEL_RANK_0(1, "    Beginning line search with last residual = " << std::scientific << lastResidual );
   SystemSolverParameters * const solverParams = getSystemSolverParameters();
 
   integer const maxNumberLineSearchCuts = solverParams->maxLineSearchCuts();
@@ -322,7 +321,7 @@ bool SolverBase::LineSearch( real64 const & time_n,
 
     if( !CheckSystemSolution( domain, dofManager, solution, localScaleFactor ) )
     {
-      GEOS_LOG_LEVEL_RANK_0( 1, "Line search: " << lineSearchIteration << ", solution check failed" );
+      GEOS_LOG_LEVEL_RANK_0( 1, "---- Line search " << lineSearchIteration << ", solution check failed" );
       continue;
     }
 
@@ -337,7 +336,11 @@ bool SolverBase::LineSearch( real64 const & time_n,
     // get residual norm
     residualNorm = CalculateResidualNorm( domain, dofManager, rhs );
 
-    GEOS_LOG_LEVEL_RANK_0( 1, "    Line search "<< lineSearchIteration << std::scientific << " (scale="<<cumulativeScale<<") R = "<< residualNorm );
+    {
+      char output[100];
+      sprintf(output,"---- Line search @ %.3f, R_abs = %.3e",cumulativeScale,residualNorm);
+      GEOS_LOG_LEVEL_RANK_0(1,output);
+    }
 
     // if the residual norm is less than the last residual, we can proceed to the
     // solution step
@@ -408,6 +411,9 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       // apply boundary conditions to system
       ApplyBoundaryConditions( time_n, stepDt, domain, dofManager, matrix, rhs );
 
+      // TODO: maybe add scale function here?
+      // Scale()
+
       // get residual norm
       real64 residualNorm = CalculateResidualNorm( domain, dofManager, rhs );
 
@@ -416,12 +422,27 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
         residualNormZero = residualNorm;
       }
 
-      GEOS_LOG_LEVEL_RANK_0( 1, " Attempt: " << dtAttempt << ", Newton: " << newtonIter << ", R = " << std::scientific << residualNorm 
-                             << " (Rel = " << residualNorm / (residualNormZero+1) << ")" );
+      {
+        char output[100];
+        sprintf(output,"-- Attempt %2d, Newton %2d, R_abs = %.3e, R_rel = %.3e",dtAttempt,newtonIter,residualNorm,residualNorm/residualNormZero);
+        GEOS_LOG_LEVEL_RANK_0(1,output);
+      }
+
+      /* 
+      GEOS_LOG_LEVEL_RANK_0( 1, " Attempt: " << dtAttempt << 
+                                ", Newton: " << newtonIter << 
+                                ", R_abs = " << std::scientific << residualNorm <<  
+                                " (R_rel = " << residualNorm / residualNormZero << ")" );
+      */
 
       // if the residual norm is less than the Newton tolerance we denote that we have
       // converged and break from the Newton loop immediately.
-      if( residualNorm < newtonTol*(residualNormZero+1) ) //)&& newtonIter > 0 )
+
+      // use a relative tolerance, but add 1 to the denominator.  if starting residual is
+      // large, this behaves like a relative tolerance.  if it is small, it behaves like
+      // an absolute tolerance.  this can avoid inadvertently trying to solve to machine precision.
+
+      if( residualNorm < newtonTol*(residualNormZero+1) ) 
       {
         isConverged = 1;
 
@@ -438,11 +459,9 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
         break;
       }
 
-
       // do line search in case residual has increased
       if( residualNorm > lastResidual )
       {
-
         residualNorm = lastResidual;
         bool lineSearchSuccess = LineSearch( time_n, stepDt, cycleNumber, domain, dofManager,
                                              matrix, rhs, solution, scaleFactor, residualNorm );
@@ -450,7 +469,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
         // if line search failed, then break out of the main Newton loop. Timestep will be cut.
         if( !lineSearchSuccess )
         {
-          GEOS_LOG_LEVEL_RANK_0 ( 1, "    The Line search failed!" );
+          GEOS_LOG_LEVEL_RANK_0 ( 1, "---- The Line search failed!" );
           break;
         }
       }
@@ -464,6 +483,12 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
 
       // call the default linear solver on the system
       SolveSystem( dofManager, matrix, rhs, solution );
+
+      {
+        char output[100];
+        sprintf(output,"---- Linear solve, Tol = %.2e, Iter = %3d",solverParams->m_krylovTol,solverParams->m_numKrylovIter);
+        GEOS_LOG_LEVEL_RANK_0(1,output);
+      }
 
       /*
       if( getLogLevel() >= 1 )
@@ -489,10 +514,10 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
 
       lastResidual = residualNorm;
     }
+
     if( isConverged )
     {
-      // break out of outer loop
-      break;
+      break; // out of outer loop
     }
     else    
     {

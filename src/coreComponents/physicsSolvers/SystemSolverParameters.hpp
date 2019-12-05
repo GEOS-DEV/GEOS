@@ -54,8 +54,8 @@ public:
     static constexpr auto scalingOptionString       = "scalingOption";
     static constexpr auto useBicgstabString         = "useBicgstab";
     static constexpr auto useDirectSolverString     = "useDirectSolver";
-    static constexpr auto KrylovResidualInitString  = "KrylovResidualInit";
-    static constexpr auto KrylovResidualFinalString = "KrylovResidualFinal";
+    static constexpr auto krylovResidualInitString  = "krylovResidualInit";
+    static constexpr auto krylovResidualFinalString = "krylovResidualFinal";
     static constexpr auto useNewtonSolveString      = "useNewtonSolve";
     static constexpr auto newtonTolString           = "newtonTol";
     static constexpr auto maxIterNewtonString       = "maxIterNewton";
@@ -86,8 +86,8 @@ public:
   integer  scalingOption() const              { return m_scalingOption; }
   integer   useBicgstab() const               { return m_useBicgstab; }
   integer   useDirectSolver() const           { return m_useDirectSolver; }
-  real64 KrylovResidualInit() const           { return m_KrylovResidualInit; }
-  real64 KrylovResidualFinal() const          { return m_KrylovResidualFinal; }
+  real64 krylovResidualInit() const           { return m_krylovResidualInit; }
+  real64 krylovResidualFinal() const          { return m_krylovResidualFinal; }
   integer   useNewtonSolve() const            { return m_useNewtonSolve; }
   real64 newtonTol() const                    { return m_newtonTol; }
   integer  maxIterNewton() const              { return m_maxIterNewton; }
@@ -116,13 +116,16 @@ public:
   integer m_scalingOption;
   integer m_useBicgstab;
   integer m_useDirectSolver;
-  real64  m_KrylovResidualInit;
-  real64  m_KrylovResidualFinal;
+  real64  m_krylovResidualInit;
+  real64  m_krylovResidualFinal;
+  real64  m_krylovAuxTime;
+  real64  m_krylovSetupTime;
+  real64  m_krylovSolveTime;
   integer m_useNewtonSolve;
   real64  m_newtonTol;
   integer m_maxIterNewton;
   integer m_numNewtonIterations;
-
+  
   integer m_maxTimeStepCuts;
   real64  m_timeStepCutFactor;
   integer m_maxLineSearchCuts;

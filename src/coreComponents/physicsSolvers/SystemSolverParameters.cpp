@@ -36,8 +36,8 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
   m_scalingOption(),
   m_useBicgstab(),
   m_useDirectSolver(),
-  m_KrylovResidualInit(),
-  m_KrylovResidualFinal(),
+  m_krylovResidualInit(),
+  m_krylovResidualFinal(),
   m_useNewtonSolve(),
   m_newtonTol(),
   m_maxIterNewton(),
@@ -153,11 +153,11 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Maximum number of time sub-steps allowed for the solver");
 
-  registerWrapper(viewKeysStruct::KrylovResidualInitString, &m_KrylovResidualInit, false )->
+  registerWrapper(viewKeysStruct::krylovResidualInitString, &m_krylovResidualInit, false )->
     setApplyDefaultValue(0)->
     setDescription("Initial Krylov solver residual.");
 
-  registerWrapper(viewKeysStruct::KrylovResidualFinalString, &m_KrylovResidualFinal, false )->
+  registerWrapper(viewKeysStruct::krylovResidualFinalString, &m_krylovResidualFinal, false )->
     setApplyDefaultValue(0)->
     setDescription("Final Krylov solver residual.");
 

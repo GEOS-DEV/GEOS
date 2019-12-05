@@ -76,7 +76,6 @@ HydrofractureSolver::HydrofractureSolver( const std::string& name,
     setApplyDefaultValue(10)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Value to indicate how many resolves may be executed to perform surface generation after the execution of flow and mechanics solver. ");
-
 }
 
 void HydrofractureSolver::RegisterDataOnMesh( dataRepository::Group * const GEOSX_UNUSED_ARG( MeshBodies ) )
@@ -132,7 +131,6 @@ void HydrofractureSolver::PostProcessInput()
   {
     GEOS_ERROR("invalid coupling type option");
   }
-
 }
 
 void HydrofractureSolver::InitializePostInitialConditions_PreSubGroups(Group * const GEOSX_UNUSED_ARG( problemManager ) )
@@ -224,7 +222,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
       {
         if( getLogLevel() >= 1 )
         {
-          GEOS_LOG_RANK_0("  Fracture propagation. Re-entering Newton Solve.");
+          GEOS_LOG_RANK_0("++ Fracture propagation. Re-entering Newton Solve.");
         }
       }
     }
@@ -276,7 +274,6 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
         }
         //area[kfe] = faceArea[kf0];
 
-
         // TODO this needs a proper contact based strategy for aperture
         aperture[kfe] = -Dot(temp,faceNormal[kf0]) / numNodesPerFace;
         aperture[kfe] = contactRelation->effectiveAperture( aperture[kfe] );
@@ -286,12 +283,7 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
 
     });
   });
-
 }
-
-
-
-
 
 real64 HydrofractureSolver::SplitOperatorStep( real64 const & GEOSX_UNUSED_ARG( time_n ),
                                                real64 const & dt,
@@ -452,8 +444,6 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
                            m_flowSolver->getSystemRhs(),
                            m_flowSolver->getSystemSolution() );
 
-
-
   // TODO: once we move to a monolithic matrix, we can just use SolverBase implementation
 
 //  dofManager.setSparsityPattern( m_matrix01,
@@ -463,7 +453,6 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
 //  dofManager.setSparsityPattern( m_matrix10,
 //                                 FlowSolverBase::viewKeyStruct::pressureString,
 //                                 keys::TotalDisplacement );
-
 
   m_matrix01.createWithLocalSize( m_solidSolver->getSystemMatrix().localRows(),
                                   m_flowSolver->getSystemMatrix().localCols(),
@@ -513,8 +502,6 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
   }
 //  CRSMatrixView<real64,localIndex,localIndex const> const &
 //  derivativeFluxResidual_dAperture = m_flowSolver->getDerivativeFluxResidual_dAperture();
-
-
 
   string const presDofKey = m_flowSolver->getDofManager().getKey( FlowSolverBase::viewKeyStruct::pressureString );
   string const dispDofKey = m_solidSolver->getDofManager().getKey( keys::TotalDisplacement );
@@ -620,17 +607,10 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
         }
       }
     }//);
-
   });
-
 
   m_matrix01.close();
   m_matrix10.close();
-
-
-
-
-
 }
 
 void HydrofractureSolver::AssembleSystem( real64 const time,
@@ -658,7 +638,6 @@ void HydrofractureSolver::AssembleSystem( real64 const time,
 
 
   AssembleForceResidualDerivativeWrtPressure( domain, &m_matrix01, &(m_solidSolver->getSystemRhs()) );
-
   AssembleFluidMassResidualDerivativeWrtDisplacement( domain, &m_matrix10, &(m_flowSolver->getSystemRhs()) );
 }
 
@@ -756,11 +735,9 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
   m_matrix10.scale(m_pressureScaling*m_densityScaling);
   m_flowSolver->getSystemMatrix().scale(m_pressureScaling*m_pressureScaling*m_densityScaling);
   m_flowSolver->getSystemRhs().scale(m_pressureScaling*m_densityScaling);
-
  
-  // debugging info.  can probably be trimmed once everything is working.
-
-  if( getLogLevel()>=3 )
+  // debugging info.  can be trimmed once everything is working.
+  if( getLogLevel()>=10 )
   {
     // Before outputting anything generate permuation matrix and permute.
     ElementRegionManager * const elemManager = mesh->getElemManager();
@@ -822,7 +799,7 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
     MpiWrapper::Barrier();
   }
 
-  if( getLogLevel() >= 3 )
+  if( getLogLevel() >= 10 )
   {
     SystemSolverParameters * const solverParams = getSystemSolverParameters();
     integer newtonIter = solverParams->numNewtonIterations();
@@ -858,12 +835,11 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
       GEOS_LOG_RANK_0( "residual1: written to " << filename );
     }
   }
-
 }
 
 real64
 HydrofractureSolver::
-CalculateResidualNorm( DomainPartition const * const domain,
+CalculateResidualNorm( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
                        DofManager const & GEOSX_UNUSED_ARG( dofManager ),
                        ParallelVector const & GEOSX_UNUSED_ARG( rhs ) )
 {
@@ -882,43 +858,6 @@ CalculateResidualNorm( DomainPartition const * const domain,
                                                                      m_solidSolver->getSystemRhs() );
   */
 
-  // print out some information regarding the displacement and pressure fields.
-  // note that this is somewhat confusing because "displacement" is the current displacement,
-  // while "pressure" is the previous timestep pressure and needs to have "deltaPressure" added.
-  // TODO: consistify naming to newField and oldField, or oldField and deltaField.
-
-  if(getLogLevel() >= 2 && m_systemSolverParameters.numNewtonIterations() > 0)
-  {
-    real64 maxDu = m_solidSolver->getSystemSolution().normInf();
-    real64 maxDp = m_flowSolver->getSystemSolution().normInf();
-
-    ParallelVector vecU, vecP;
-    m_solidSolver->getDofManager().setVector( vecU );
-    m_flowSolver->getDofManager().setVector( vecP );
-
-    MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0); // TODO: camelCase getGrou<>
-    NodeManager const * const nodeManager = mesh->getNodeManager();
-    ElementRegionManager const * const elemManager = mesh->getElemManager();
-
-    m_solidSolver->getDofManager().copyFieldToVector( nodeManager, keys::TotalDisplacement, 1.0, vecU, keys::TotalDisplacement );
-
-    elemManager->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion const * const subRegion )->void
-    {
-      m_flowSolver->getDofManager().copyFieldToVector( subRegion, "pressure", 1.0, vecP, "pressure" ); 
-      m_flowSolver->getDofManager().addFieldToVector( subRegion, "deltaPressure", 1.0, vecP, "pressure" ); //TODO: use proper keys
-    });
-
-    real64 maxU = vecU.normInf();
-    real64 maxP = vecP.normInf();
-
-    GEOS_LOG_RANK_0("    --- Solution Info ----------------------------------");
-    GEOS_LOG_RANK_0("    Relative Change: U=" << std::scientific << maxDu/maxU << " P=" << maxDp/maxP);
-    GEOS_LOG_RANK_0("    Total Change:    U=" << std::scientific << maxDu << " P=" << maxDp);
-    GEOS_LOG_RANK_0("    Current Max:     U=" << std::scientific << maxU << " P=" << maxP);
-    GEOS_LOG_RANK_0("    Residual:        U=" << std::scientific << solidResidual << " P=" << fluidResidual);
-    GEOS_LOG_RANK_0("    ----------------------------------------------------");
-  }
- 
   return fluidResidual + solidResidual;
 }
 
@@ -985,7 +924,6 @@ AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
         stackArray2d<real64, 12*12> dRdP(numNodesPerFace*3, 1);
         globalIndex colDOF = faceElementDofNumber[kfe];
 
-
         real64 const Ja = area[kfe] / numNodesPerFace;
 
         //          std::cout<<"fluidPressure["<<kfe<<"] = "<<fluidPressure[kfe]+deltaFluidPressure[kfe]<<std::endl;
@@ -1039,9 +977,7 @@ AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
   rhs0->close();
   matrix01->close();
   rhs0->close();
-
 }
-
 
 void
 HydrofractureSolver::
@@ -1173,6 +1109,7 @@ AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const * cons
 
   matrix10->close();
 }
+
 void
 HydrofractureSolver::
 ApplySystemSolution( DofManager const & GEOSX_UNUSED_ARG( dofManager ),
@@ -1191,10 +1128,10 @@ ApplySystemSolution( DofManager const & GEOSX_UNUSED_ARG( dofManager ),
                                      domain );
 
   this->UpdateDeformationForCoupling(domain);
-
 }
 
 }
+
 #include "EpetraExt_MatrixMatrix.h"
 #include "Thyra_OperatorVectorClientSupport.hpp"
 #include "Thyra_AztecOOLinearOpWithSolveFactory.hpp"
@@ -1218,288 +1155,20 @@ ApplySystemSolution( DofManager const & GEOSX_UNUSED_ARG( dofManager ),
 #include "Thyra_PreconditionerFactoryBase.hpp"
 #include "Thyra_get_Epetra_Operator.hpp"
 #include "Thyra_MLPreconditionerFactory.hpp"
-
-
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_Time.hpp"
-
 #include "Stratimikos_DefaultLinearSolverBuilder.hpp"
 
 namespace geosx
 {
-
-void print_norms( Epetra_FECrsMatrix * m_matrix[2][2],
-                  Epetra_FEVector * m_rhs[2],
-                  std::string nametag )
-{
-   int const rank = MpiWrapper::Comm_rank(MPI_COMM_WORLD );
-
-   double matnorm[2][2];
-   double rhsnorm[2];
-
-   matnorm[0][0] = m_matrix[0][0]->NormInf();
-   matnorm[0][1] = m_matrix[0][1]->NormInf();
-   matnorm[1][0] = m_matrix[1][0]->NormInf();
-   matnorm[1][1] = m_matrix[1][1]->NormInf();
-
-   m_rhs[0]->NormInf(&(rhsnorm[0]));
-   m_rhs[1]->NormInf(&(rhsnorm[1]));
-
-   if( rank==0 )
-   {
-     printf("SolverBase :: Linear system inf-norms (%s)\n",nametag.c_str());
-     printf("           ::   | %.1e %.1e | = | %.1e |\n",matnorm[0][0],matnorm[0][1],rhsnorm[0]);
-     printf("           ::   | %.1e %.1e |   | %.1e |\n",matnorm[1][0],matnorm[1][1],rhsnorm[1]);
-   }
-}
-using namespace Teuchos;
-using namespace Thyra;
-
-void scale2x2System( int const use_scaling,
-                     Epetra_FECrsMatrix * m_matrix[2][2],
-                     Epetra_FEVector * m_rhs[2],
-                     RCP<Epetra_Vector> scaling [2][2] )
-{
-  GEOSX_MARK_FUNCTION;
-
-  // ROW & COLUMN SCALING
-  //
-  // Scale the linear system with row and column scaling
-  // matrices R and C.  The resulting linear system is
-  //  (R.A.C).(Cinv.x) = R.b
-  // We use the iterative method of Ruiz (2001) to
-  // repeatedly update R and C until the desired scaling
-  // is found. Note also that C must be saved to later
-  // compute the true solution from the temporary solution
-  //  x = C.x' where x' = Cinv.x
-
-  // The diagonal scaling matrices are stored as four
-  // vectors, one for each combination of row/column and
-  // block 0/block 1.  We store them in a 2x2 array as
-  // [ R0 C0 ;
-  //   R1 C1 ]
-
-  // note that we can extend this methodology to larger
-  // block systems by storing a (n_blocks x 2) array:
-  // [ R0 C0 ;
-  //   R1 C1 ;
-  //   .. ..
-  //   Rn Cn ]
-
-  const unsigned n_blocks = 2;           // algorithm *should* work for any block size n
-  enum {ROW,COL};            // indexing to improve readability (ROW=0,COL=1)
-
-    // complete scaling
-  RCP<Epetra_Vector> scaling_k [n_blocks][2];  // scaling at iteration k
-
-  if(use_scaling == 2)
-  {
-    // first print unscaled norms
-
-    //    if(params->m_verbose >= 2)
-    //    {
-    //      print_norms(epetraSystem,"unscaled");
-    //    }
-
-    // allocate storage for our scaling vectors, and initialize
-    // them to identity scalings (R=C=I).
-
-    for(unsigned b=0; b<n_blocks; ++b)
-    {
-      scaling[b][ROW] = rcp(new Epetra_Vector(m_matrix[b][b]->RangeMap()));
-      scaling[b][COL] = rcp(new Epetra_Vector(m_matrix[b][b]->DomainMap()));
-
-      scaling[b][ROW]->PutScalar(1.0);
-      scaling[b][COL]->PutScalar(1.0);
-
-      scaling_k[b][ROW] = rcp(new Epetra_Vector(m_matrix[b][b]->RangeMap()));
-      scaling_k[b][COL] = rcp(new Epetra_Vector(m_matrix[b][b]->DomainMap()));
-    }
-
-    // begin scaling iterations
-
-    for(unsigned k=0; k<20; ++k)
-    {
-      // get row and column max norms for scaling
-
-      for(unsigned a=0; a<n_blocks; ++a)
-      {
-
-        scaling_k[a][ROW]->PutScalar(0.0); // clear
-        scaling_k[a][COL]->PutScalar(0.0); // clear
-
-        Epetra_Vector tmp_row(m_matrix[a][a]->RangeMap());
-        Epetra_Vector tmp_col(m_matrix[a][a]->DomainMap());
-
-        for(unsigned b=0; b<n_blocks; ++b)
-        {
-          m_matrix[a][b]->InvRowMaxs(tmp_row); // 1/row_norms for block
-          m_matrix[b][a]->InvColMaxs(tmp_col); // 1/col_norms for block
-
-          tmp_row.Reciprocal(tmp_row); // row_norms for block
-          tmp_col.Reciprocal(tmp_col); // col_norms for block
-
-          scaling_k[a][ROW]->Update(1.0,tmp_row,1.0);  // add across blocks (A and B) or (C and D)
-          scaling_k[a][COL]->Update(1.0,tmp_col,1.0);  // add across blocks (A and C) or (B and D)
-
-          // note this last step defines a weird norm, i.e. the sum inf_norm(A)+inf_norm(B)
-          // rather than inf_norm([A B]).  the first is just easier to compute using
-          // built in operations.  this should not make much of a difference in terms
-          // of actual performance, as we're just trying to get a reasonable scaling.
-        }
-
-        for(int i=0; i<scaling_k[a][ROW]->MyLength(); ++i)
-          (*scaling_k[a][ROW])[i] = 1./sqrt((*scaling_k[a][ROW])[i]);  // use 1/sqrt(norm) for scaling
-        for(int i=0; i<scaling_k[a][COL]->MyLength(); ++i)
-          (*scaling_k[a][COL])[i] = 1./sqrt((*scaling_k[a][COL])[i]);  // use 1/sqrt(norm) for scaling
-
-        scaling[a][ROW]->Multiply(1.0,*scaling[a][ROW],*scaling_k[a][ROW],0.0); // save total row scaling over all iterations
-        scaling[a][COL]->Multiply(1.0,*scaling[a][COL],*scaling_k[a][COL],0.0); // save total col scaling over all iterations
-      }
-
-      // actually scale matrix A(k) = R(k).A(k-1).C(k)
-      // also scale rhs b(k) = R(k)*b(k-1)
-      // will scale solution x = C*x' after solve
-
-      for(unsigned a=0; a<n_blocks; ++a)
-      {
-        for(unsigned b=0; b<n_blocks; ++b)
-        {
-          m_matrix[a][b]->LeftScale(*scaling_k[a][ROW]);
-          m_matrix[a][b]->RightScale(*scaling_k[b][COL]);
-        }
-        m_rhs[a]->Multiply(1.0,*scaling_k[a][ROW],*m_rhs[a],0.0);
-      }
-
-      // check for convergence in desired row and column norms
-      // and print info in verbose mode > 0
-
-      double convergence = 0.0;
-      double norm_threshold = 0.2;
-
-      for(unsigned a=0; a<n_blocks; ++a)
-        for(unsigned b=0; b<2; ++b)
-        {
-          double tmp[1];
-          scaling_k[a][b]->Reciprocal(*scaling_k[a][b]);
-          scaling_k[a][b]->NormInf(&(tmp[0]));
-          tmp[0] = abs(1-pow(tmp[0],2));
-          convergence = std::max(convergence,tmp[0]);
-        }
-
-      //if( partition.m_rank == 0 && params->m_verbose >= 2 )
-//      {
-//        if(k==0)
-//        {
-//          printf("SolverBase :: Re-scaling matrix \n");
-//          printf("           ::   %d ... %.1e\n",k,convergence);
-//        }
-//        else
-//          printf("           ::   %d ... %.1e\n",k,convergence);
-//      }
-
-      if(convergence < norm_threshold && k > 1) break;
-    }
-
-    //    if(params->m_verbose >= 2)
-    //    {
-    //      print_norms(epetraSystem,"scaled");
-    //    }
-  } // end scaling
-  else if( use_scaling==1 )
-  {
-
-    // perform an explicit row scaling of the linear system,
-    // R*A*x = R*b, where R is a diagonal scaling matrix.
-    // we will use inverse row sums for the scaling.
-
-    for(unsigned b=0; b<2; ++b)
-    {
-      Epetra_Vector scale_one(m_matrix[b][b]->RowMap());
-      Epetra_Vector scale_two(m_matrix[b][b]->RowMap());
-
-      Epetra_Vector scale_one_inv(m_matrix[b][b]->RowMap());
-      Epetra_Vector scale_two_inv(m_matrix[b][b]->RowMap());
-
-      m_matrix[b][0]->InvRowSums(scale_one_inv);
-      m_matrix[b][1]->InvRowSums(scale_two_inv);
-      scale_one.Reciprocal(scale_one_inv);
-      scale_two.Reciprocal(scale_two_inv);  // not ideal, could choke if 1/0 or 1/NaN appears
-      scale_one.Update(1.0,scale_two,1.0);
-      scale_one_inv.Reciprocal(scale_one);
-
-      for(unsigned c=0; c<2; ++c)
-      {
-        m_matrix[b][c]->LeftScale(scale_one_inv);
-      }
-
-      Epetra_MultiVector tmp (*m_rhs[b]);
-      m_rhs[b]->Multiply(1.0,scale_one_inv,tmp,0.0);
-    }
-  }
-}
-
+  
 void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofManager ),
                                        ParallelMatrix & ,
                                        ParallelVector & ,
                                        ParallelVector &  )
 {
   GEOSX_MARK_FUNCTION;
-
-  // ... playground for new strategy ...
-  
-  //#define PLAYGROUND
-  #ifdef PLAYGROUND
-  GEOSX_MARK_BEGIN(PLAYGROUND);
-  LinearSolverParameters solidParameters;
-                         solidParameters.verbosity = 1;
-                         solidParameters.solverType = "bicgstab";
-                         solidParameters.dofsPerNode = 3;
-                         solidParameters.krylov.tolerance = 1e-6;
-                         solidParameters.krylov.maxIterations = 100;
-                         solidParameters.preconditionerType = "amg";
-                         solidParameters.amg.smootherType = "ilu";
-                         solidParameters.amg.coarseType = "ilu";
-                         solidParameters.amg.separateComponents = true;
-                         solidParameters.amg.isSymmetric = true;
-                         solidParameters.amg.numSweeps = 1;
-
-  LinearSolverParameters fluidParameters;
-                         fluidParameters.verbosity = 0;
-                         fluidParameters.solverType = "bicgstab";
-                         fluidParameters.krylov.tolerance = 1e-6;
-                         fluidParameters.krylov.maxIterations = 100;
-                         fluidParameters.preconditionerType = "amg";
-                         fluidParameters.amg.smootherType = "ilu";
-                         fluidParameters.amg.coarseType = "ilu";
-                         fluidParameters.amg.isSymmetric = true;
-                         fluidParameters.amg.numSweeps = 1;
-
-  ParallelVector newRu (m_solidSolver->getSystemRhs()); 
-  ParallelVector newRp (m_flowSolver->getSystemRhs()); 
-
-  LinearSolver fluidKrylov( fluidParameters );
-               fluidKrylov.solve(m_flowSolver->getSystemMatrix(),
-                                 m_flowSolver->getSystemSolution(),
-                                 m_flowSolver->getSystemRhs());
-
-  m_matrix01.residual(m_flowSolver->getSystemSolution(),
-                      m_solidSolver->getSystemRhs(),
-                      newRu);  
-
-  newRu.scale(-1.0);
-
-  LinearSolver solidKrylov( solidParameters );
-               solidKrylov.solve(m_solidSolver->getSystemMatrix(),
-                                 m_solidSolver->getSystemSolution(),
-                                 newRu);
-
-  GEOSX_MARK_END(PLAYGROUND);
-  return;
-  #endif
-
-  // ... begin old strategy ...
 
   SystemSolverParameters * const params = &m_systemSolverParameters;
   integer newtonIter = params->numNewtonIterations();
@@ -1530,47 +1199,17 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
     // there are several flags to control solver behavior.
     // these should be compared in a scaling study.
     //
-    // -- whether to use a block diagonal or a full
-    //    block triangular preconditioner.  false is
-    //    probably better.
-    // -- whether to perform an explicit scaling
-    //    of the linear system before solving.  note
-    //    that the matrix and rhs are modified in place
-    //    by this operation.  true is probably better.
+    // -- whether to use a block diagonal or a 
+    //    block triangular preconditioner.
     // -- whether to use BiCGstab or GMRES for the
     //    krylov solver.  GMRES is generally more robust,
     //    BiCGstab sometimes shows better parallel performance.
     //    false is probably better.
 
-  //const int  use_scaling       = params->m_scalingOption;  
   const bool use_diagonal_prec = true;
   const bool use_bicgstab      = params->m_useBicgstab;
- 
-  /* ...disable old scaling strategy ...
-  const unsigned n_blocks = 2; // algorithm *should* work for any block size n
-  enum {ROW,COL}; // indexing to improve readability (ROW=0,COL=1)
-  RCP<Epetra_Vector> scaling[n_blocks][2];  // complete scaling
-  scale2x2System( use_scaling, p_matrix, p_rhs, scaling );
 
-  for(integer i=0; i<2; ++i)
-  for(integer j=0; j<2; ++j)
-  {
-    real64 scale_norm;
-    scaling[i][j]->Norm2(&scale_norm);
-    GEOS_LOG_RANK_0("scale norm " << i << " " << j << " : " << scale_norm);
-  }
-  */
-
-  /*
-  const real64 pressureScale = 1e6;
-  p_matrix[0][1]->Scale(pressureScale);
-  p_matrix[1][0]->Scale(pressureScale);
-  p_matrix[1][1]->Scale(pressureScale*pressureScale);
-  p_rhs[1]->Scale(pressureScale);
-  */
-
-    // set initial guess to zero.  this is not strictly
-    // necessary but is good for comparing solver performance.
+    // set initial guess to zero
 
   p_solution[0]->PutScalar(0.0);
   p_solution[1]->PutScalar(0.0);
@@ -1658,8 +1297,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
                                                                    matrix_block[1][1]);
 
     // creating a representation of the blocked
-    // rhs is a little uglier. (todo: check if there is
-    // a cleaner way to do this.)
+    // rhs and lhs is a little uglier. 
 
   RCP<Thyra::ProductMultiVectorBase<double> > rhs;
   {
@@ -1676,8 +1314,6 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
 
     rhs = Thyra::defaultProductMultiVector<double>(vs,mva);
   }
-
-    // do the identical operation for the lhs
 
   RCP<Thyra::ProductMultiVectorBase<double> > lhs;
 
@@ -1699,26 +1335,9 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
   GEOSX_MARK_END(THYRA_SETUP);
 
     // for the preconditioner, we need two approximate inverses,
-    // one for the (0,0) block and one for the approximate
-    // schur complement.  for now, we will use the (1,1) block
-    // as our schur complement approximation, though we should
-    // explore better approaches later.
-
     // we store both "sub operators" in a 1x2 array:
 
   RCP<const Thyra::LinearOpBase<double> > sub_op[2];
-
-    // each implicit "inverse" is based on an inner krylov solver,
-    // with their own sub-preconditioners.  this leads to a very
-    // accurate approximation of the inverse operator, but can be
-    // overly expensive.  the other option is to ditch the inner
-    // krylov solver, and just use the sub-preconditioners directly.
-
-    // the implicit inverse for each diagonal block is built in
-    // three steps
-    //   1.  define solver parameters
-    //   2.  build a solver factory
-    //   3.  build the inner solver operator
 
   clock.start(true);
   GEOSX_MARK_BEGIN(PRECONDITIONER);
@@ -1747,8 +1366,6 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
       {
         list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("smoother: type","Chebyshev");
         list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("smoother: sweeps",3);
-        //list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("smoother: type","ILU");
-        //list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("smoother: sweeps",1);
       }
 
     }
@@ -1830,6 +1447,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
       list->set("Preconditioner Type","None"); // will use user-defined P
       list->sublist("Linear Solver Types").sublist("AztecOO").sublist("Forward Solve").set("Max Iterations",params->m_maxIters);
       list->sublist("Linear Solver Types").sublist("AztecOO").sublist("Forward Solve").set("Tolerance",params->m_krylovTol);
+
       if(use_bicgstab)
         list->sublist("Linear Solver Types").sublist("AztecOO").sublist("Forward Solve").sublist("AztecOO Settings").set("Aztec Solver","BiCGStab");
       else
@@ -1837,11 +1455,6 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
 
       if( params->getLogLevel()>=2 )
         list->sublist("Linear Solver Types").sublist("AztecOO").sublist("Forward Solve").sublist("AztecOO Settings").set("Output Frequency",1);
-      else
-      {
-        list->sublist("Linear Solver Types").sublist("AztecOO").sublist("Forward Solve").sublist("AztecOO Settings").set("Output Frequency",0);
-      }
-
 
     Stratimikos::DefaultLinearSolverBuilder builder;
     builder.setParameterList(list);
@@ -1854,88 +1467,31 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
                                                Thyra::rightPrec<double>(preconditioner),
                                                solver.ptr());
 
-        // JAW: check "true" residual before solve.
-        //      should remove after debugging because this is potentially slow
-        //      and should just use iterative residual
-
-    RCP<Thyra::VectorBase<double> > Ax = Thyra::createMember(matrix->range());
-    RCP<Thyra::VectorBase<double> > r  = Thyra::createMember(matrix->range());
-    {
-      Thyra::apply(*matrix, Thyra::NOTRANS,*lhs,Ax.ptr());
-      Thyra::V_VmV<double>(r.ptr(),*rhs,*Ax);
-    }
-    params->m_KrylovResidualInit = Thyra::norm(*r);
-
-    // !!!! Actual Solve !!!!
     clock.start(true);
     GEOSX_MARK_BEGIN(SOLVER);
+
+      // !!!! Actual Solve !!!!
       Thyra::SolveStatus<double> status = solver->solve(Thyra::NOTRANS,*rhs,lhs.ptr());
+
     GEOSX_MARK_END(SOLVER);
-
-
     double solveTime = clock.stop();
-
-        // JAW: check "true" residual after
-        //      should remove after debugging because this is potentially slow
-
-    {
-      Thyra::apply(*matrix, Thyra::NOTRANS,*lhs,Ax.ptr());
-      Thyra::V_VmV<double>(r.ptr(),*rhs,*Ax);
-      params->m_KrylovResidualFinal = Thyra::norm(*r);
-    }
-
     params->m_numKrylovIter = status.extraParameters->get<int>("Iteration Count");
 
-    /*
-    if( params->getLogLevel() >= 1 )
+    if( getLogLevel()>=2 )
     {
-      char output[200];
-      sprintf( output,
-               "LinSolve(iter,tol,ri, rf) = (%4d, %4.2e, %4.2e, %4.2e) ; ",
-               params->m_numKrylovIter,
-               params->m_krylovTol,
-               params->m_KrylovResidualInit,
-               params->m_KrylovResidualFinal );
-
-      m_nlSolverOutputLog += output;
-    }
-    */
-
-    if( getLogLevel()>=1 )
-    {
-      GEOS_LOG_RANK_0("    Linear Solver | Iter = " << params->m_numKrylovIter <<
+      GEOS_LOG_RANK_0("\t\tLinear Solver | Iter = " << params->m_numKrylovIter <<
                       " | TargetReduction " << params->m_krylovTol <<
                       " | AuxTime " << auxTime <<
                       " | SetupTime " << setupTime <<
                       " | SolveTime " << solveTime );
     }
 
-    // apply column scaling C to get true solution x from x' = Cinv*x
-    /*
-    if(use_scaling==2)
-    {
-      for(unsigned b=0; b<n_blocks; ++b)
-        p_solution[b]->Multiply(1.0,*scaling[b][COL],*p_solution[b],0.0);
-    }
-    */
-
     p_solution[1]->Scale(m_pressureScaling);
-
   }
 
-    // put 00 matrix back to unscaled form
+  delete schurApproxPP;
 
-  /*
-  if(use_scaling==2)
-  {
-    scaling[0][ROW]->Reciprocal(*scaling[0][ROW]);
-    scaling[0][COL]->Reciprocal(*scaling[0][COL]);
-
-    p_matrix[0][0]->LeftScale(*scaling[0][ROW]);
-    p_matrix[0][0]->RightScale(*scaling[0][COL]);
-  }
-  */
-
+  //TODO: remove all this once everything is working
   if( getLogLevel() == 2 )
   {
     /*
@@ -1965,10 +1521,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
     p_solution[1]->Print(std::cout);
     */
   }
-
-  delete schurApproxPP;
 }
-
 
 real64
 HydrofractureSolver::ScalingForSystemSolution( DomainPartition const * const domain,
