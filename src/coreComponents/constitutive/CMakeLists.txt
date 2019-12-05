@@ -5,31 +5,31 @@ set( constitutive_headers
      ConstitutiveManager.hpp
      ConstitutiveBase.hpp
      ExponentialRelation.hpp
-     Fluid/SingleFluidBase.hpp
-     Fluid/MultiFluidBase.hpp
-     Fluid/CompressibleSinglePhaseFluid.hpp
-     Fluid/MultiPhaseMultiComponentFluid.hpp
-     Fluid/PVTFunctions/BrineCO2DensityFunction.hpp
-     Fluid/PVTFunctions/BrineViscosityFunction.hpp
-     Fluid/PVTFunctions/CO2SolubilityFunction.hpp     
-     Fluid/PVTFunctions/FenghourCO2ViscosityFunction.hpp
-     Fluid/PVTFunctions/FlashModelBase.hpp
-     Fluid/PVTFunctions/PVTFunctionBase.hpp
-     Fluid/PVTFunctions/SpanWagnerCO2DensityFunction.hpp    
-     Fluid/PVTFunctions/UtilityFunctions.hpp     
-     Solid/LinearElasticAnisotropic.hpp
-     Solid/LinearElasticIsotropic.hpp
-     Solid/PoroElastic.hpp
-     Solid/PoreVolumeCompressibleSolid.hpp
-     Solid/SolidBase.hpp
-     RelPerm/RelativePermeabilityBase.hpp
-     RelPerm/BrooksCoreyRelativePermeability.hpp
-     RelPerm/BrooksCoreyBakerRelativePermeability.hpp
-     RelPerm/VanGenuchtenBakerRelativePermeability.hpp
-     CapillaryPressure/CapillaryPressureBase.hpp
-     CapillaryPressure/BrooksCoreyCapillaryPressure.hpp
-     CapillaryPressure/VanGenuchtenCapillaryPressure.hpp
-     contactRelations/ContactRelationBase.hpp
+     capillaryPressure/CapillaryPressureBase.hpp
+     capillaryPressure/BrooksCoreyCapillaryPressure.hpp
+     capillaryPressure/VanGenuchtenCapillaryPressure.hpp
+     contact/ContactRelationBase.hpp
+     fluid/MultiPhaseMultiComponentFluid.hpp     
+     fluid/PVTFunctions/BrineCO2DensityFunction.hpp
+     fluid/PVTFunctions/BrineViscosityFunction.hpp
+     fluid/PVTFunctions/CO2SolubilityFunction.hpp     
+     fluid/PVTFunctions/FenghourCO2ViscosityFunction.hpp
+     fluid/PVTFunctions/FlashModelBase.hpp
+     fluid/PVTFunctions/PVTFunctionBase.hpp
+     fluid/PVTFunctions/SpanWagnerCO2DensityFunction.hpp    
+     fluid/PVTFunctions/UtilityFunctions.hpp     
+     fluid/SingleFluidBase.hpp
+     fluid/MultiFluidBase.hpp
+     fluid/CompressibleSinglePhaseFluid.hpp
+     relativePermeability/RelativePermeabilityBase.hpp
+     relativePermeability/BrooksCoreyRelativePermeability.hpp
+     relativePermeability/BrooksCoreyBakerRelativePermeability.hpp
+     relativePermeability/VanGenuchtenBakerRelativePermeability.hpp
+     solid/LinearElasticAnisotropic.hpp
+     solid/LinearElasticIsotropic.hpp
+     solid/PoroElastic.hpp
+     solid/PoreVolumeCompressibleSolid.hpp
+     solid/SolidBase.hpp
    )
 #
 # Specify all sources
@@ -37,45 +37,52 @@ set( constitutive_headers
 set( constitutive_sources
      ConstitutiveManager.cpp
      ConstitutiveBase.cpp
-     Fluid/SingleFluidBase.cpp
-     Fluid/MultiFluidBase.cpp
-     Fluid/CompressibleSinglePhaseFluid.cpp
-     Fluid/MultiPhaseMultiComponentFluid.cpp     
-     Fluid/PVTFunctions/BrineCO2DensityFunction.cpp
-     Fluid/PVTFunctions/BrineViscosityFunction.cpp 
-     Fluid/PVTFunctions/CO2SolubilityFunction.cpp
-     Fluid/PVTFunctions/FenghourCO2ViscosityFunction.cpp
-     Fluid/PVTFunctions/SpanWagnerCO2DensityFunction.cpp    
-     Fluid/PVTFunctions/UtilityFunctions.cpp
-     Solid/LinearElasticAnisotropic.cpp
-     Solid/LinearElasticIsotropic.cpp
-     Solid/PoroElastic.cpp
-     Solid/PoreVolumeCompressibleSolid.cpp
-     Solid/SolidBase.cpp
-     RelPerm/RelativePermeabilityBase.cpp
-     RelPerm/BrooksCoreyRelativePermeability.cpp
-     RelPerm/BrooksCoreyBakerRelativePermeability.cpp
-     RelPerm/VanGenuchtenBakerRelativePermeability.cpp
-     CapillaryPressure/CapillaryPressureBase.cpp
-     CapillaryPressure/BrooksCoreyCapillaryPressure.cpp
-     CapillaryPressure/VanGenuchtenCapillaryPressure.cpp
-     contactRelations/ContactRelationBase.cpp
+     capillaryPressure/CapillaryPressureBase.cpp
+     capillaryPressure/BrooksCoreyCapillaryPressure.cpp
+     capillaryPressure/VanGenuchtenCapillaryPressure.cpp
+     contact/ContactRelationBase.cpp
+     fluid/CompressibleSinglePhaseFluid.cpp
+     fluid/MultiPhaseMultiComponentFluid.cpp     
+     fluid/PVTFunctions/BrineCO2DensityFunction.cpp
+     fluid/PVTFunctions/BrineViscosityFunction.cpp 
+     fluid/PVTFunctions/CO2SolubilityFunction.cpp
+     fluid/PVTFunctions/FenghourCO2ViscosityFunction.cpp
+     fluid/PVTFunctions/SpanWagnerCO2DensityFunction.cpp    
+     fluid/PVTFunctions/UtilityFunctions.cpp
+     fluid/SingleFluidBase.cpp
+     fluid/MultiFluidBase.cpp
+     fluid/CompressibleSinglePhaseFluid.cpp
+     relativePermeability/RelativePermeabilityBase.cpp
+     relativePermeability/BrooksCoreyRelativePermeability.cpp
+     relativePermeability/BrooksCoreyBakerRelativePermeability.cpp
+     relativePermeability/VanGenuchtenBakerRelativePermeability.cpp
+     solid/LinearElasticAnisotropic.cpp
+     solid/LinearElasticIsotropic.cpp
+     solid/PoroElastic.cpp
+     solid/PoreVolumeCompressibleSolid.cpp
+     solid/SolidBase.cpp
    )
 
-set( dependencyList dataRepository )
+if( BUILD_OBJ_LIBS)
+  set( dependencyList dataRepository)
+else()
+  set( dependencyList common )
+endif()
+
+
 
 if( ENABLE_PVTPackage )
     set( constitutive_headers
          ${constitutive_headers}
-         Fluid/MultiFluidPVTPackageWrapper.hpp
-         Fluid/CompositionalMultiphaseFluid.hpp
-         Fluid/BlackOilFluid.hpp
+         fluid/MultiFluidPVTPackageWrapper.hpp
+         fluid/CompositionalMultiphaseFluid.hpp
+         fluid/BlackOilFluid.hpp
        )
     set( constitutive_sources
          ${constitutive_sources}
-         Fluid/MultiFluidPVTPackageWrapper.cpp
-         Fluid/CompositionalMultiphaseFluid.cpp
-         Fluid/BlackOilFluid.cpp
+         fluid/MultiFluidPVTPackageWrapper.cpp
+         fluid/CompositionalMultiphaseFluid.cpp
+         fluid/BlackOilFluid.cpp
        )
     set( dependencyList ${dependencyList} PVTPackage )
 endif()
@@ -92,7 +99,7 @@ blt_add_library( NAME                  constitutive
                  SOURCES               ${constitutive_sources}
                  HEADERS               ${constitutive_headers}
                  DEPENDS_ON            ${dependencyList}
-                 #OBJECT                TRUE
+                 OBJECT                ${buildAsObj}
                )
                
 target_include_directories( constitutive PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )

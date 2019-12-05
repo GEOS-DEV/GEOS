@@ -16,7 +16,7 @@
  * @file CompositeFunction.cpp
  */
 
-#include "NewFunctionManager.hpp"
+#include "FunctionManager.hpp"
 #include "CompositeFunction.hpp"
 #include "common/DataTypes.hpp"
 
@@ -80,7 +80,7 @@ void CompositeFunction::InitializeFunction()
   GEOS_ERROR_IF(err != mathpresso::kErrorOk, "JIT Compiler Error");
 
   // Grab pointers to sub functions
-  NewFunctionManager * functionManager = NewFunctionManager::Instance();
+  FunctionManager * functionManager = FunctionManager::Instance();
   m_numSubFunctions = integer_conversion<localIndex>(m_functionNames.size());
   for (localIndex ii=0 ; ii<m_numSubFunctions ; ++ii)
   {
