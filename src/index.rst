@@ -7,9 +7,9 @@ GEOSX is a simulation platform focused on enabling streamlined development of HP
 .. toctree::
    :maxdepth: 2
 
-   docs/sphinx/gettingStarted/Index
-
    docs/sphinx/tutorials/Index
+
+   docs/sphinx/buildingGuide/Index
 
    docs/sphinx/userGuide/Index
 
@@ -31,3 +31,9 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
+Doxygen
+========================
+.. raw:: html
+
+   <a href="doxygen_output/html/index.html">Link to Doxygen</a>

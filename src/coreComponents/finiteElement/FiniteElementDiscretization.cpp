@@ -91,36 +91,6 @@ void FiniteElementDiscretization::ApplySpaceToTargetCells( ElementSubRegionBase 
   detJ.resize(cellBlock->size(), m_quadrature->size() );
 }
 
-void FiniteElementDiscretization::CalculateShapeFunctionGradients( arrayView1d<R1Tensor const> const & X,
-                                                                   ElementSubRegionBase * const elementSubRegion ) const
-{
-  GEOSX_MARK_FUNCTION;
-
-  arrayView3d<R1Tensor> const & dNdX = elementSubRegion->getReference< array3d< R1Tensor > >(keys::dNdX);
-  arrayView2d<real64> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
-  FixedOneToManyRelation const & elemsToNodes = elementSubRegion->getWrapper<FixedOneToManyRelation>(std::string("nodeList"))->reference();
-
-  PRAGMA_OMP( omp parallel )
-  {
-    std::unique_ptr<FiniteElementBase> fe = getFiniteElement( m_parentSpace );
-
-    PRAGMA_OMP( omp for )
-    for (localIndex k = 0 ; k < elementSubRegion->size() ; ++k)
-    {
-      fe->reinit(X, elemsToNodes[k]);
-
-      for( localIndex q = 0 ; q < fe->n_quadrature_points() ; ++q )
-      {
-        detJ(k, q) = fe->JxW(q);
-        for (localIndex b = 0 ; b < fe->dofs_per_element() ; ++b)
-        {
-          dNdX[k][q][b] = fe->gradient(b, q);
-        }
-      }
-    }
-  }
-}
-
 void FiniteElementDiscretization::PostProcessInput()
 {
   auto const & basisName = this->getReference<string>(keys::basis);

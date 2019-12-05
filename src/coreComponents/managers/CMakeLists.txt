@@ -13,12 +13,11 @@ set(managers_headers
     Outputs/SiloOutput.hpp
     Outputs/VTKOutput.hpp
     Outputs/RestartOutput.hpp
-    Outputs/BlueprintOutput.hpp
     Functions/FunctionBase.hpp
     Functions/SymbolicFunction.hpp
     Functions/TableFunction.hpp
     Functions/CompositeFunction.hpp
-    Functions/NewFunctionManager.hpp
+    Functions/FunctionManager.hpp
     ObjectManagerBase.hpp
     ProblemManager.hpp
     NumericalMethodsManager.hpp
@@ -46,12 +45,11 @@ set(managers_sources
     Outputs/SiloOutput.cpp
     Outputs/VTKOutput.cpp
     Outputs/RestartOutput.cpp
-    Outputs/BlueprintOutput.cpp
     Functions/FunctionBase.cpp
     Functions/SymbolicFunction.cpp
     Functions/TableFunction.cpp
     Functions/CompositeFunction.cpp
-    Functions/NewFunctionManager.cpp
+    Functions/FunctionManager.cpp
     ObjectManagerBase.cpp
     ProblemManager.cpp
     NumericalMethodsManager.cpp
@@ -67,7 +65,12 @@ if( ENABLE_MPI )
     list( APPEND managers_sources Outputs/ChomboIO.cpp )
 endif()
 
-set( dependencyList dataRepository fileIO optionparser RAJA linearAlgebra )
+if( BUILD_OBJ_LIBS )
+  set( dependencyList dataRepository fileIO optionparser RAJA linearAlgebra )
+else()
+  set( dependencyList common fileIO linearAlgebra optionparser RAJA )
+endif()
+
 
 if( ENABLE_MATHPRESSO )
    set( dependencyList ${dependencyList} mathpresso )
@@ -85,7 +88,7 @@ blt_add_library( NAME                  managers
                  SOURCES               ${managers_sources}
                  HEADERS               ${managers_headers}
                  DEPENDS_ON            ${dependencyList}
-                 #OBJECT                TRUE
+                 OBJECT                ${buildAsObj}
                )
 
 target_include_directories( managers PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)

@@ -29,9 +29,9 @@ namespace geosx
 
 using namespace dataRepository;
 
-DofManager::DofManager( string name, localIndex const verbosity )
+DofManager::DofManager( string name, localIndex const logLevel )
   : m_name( std::move( name ) ),
-    m_verbosity( verbosity ),
+    m_logLevel( logLevel ),
     m_domain( nullptr ),
     m_mesh( nullptr ),
     m_closed( false )
@@ -329,21 +329,21 @@ struct MapHelperImpl
 {
 };
 
-template< typename T >
-struct MapHelperImpl< array2d<T> >
+template< typename T, typename PERMUTATION >
+struct MapHelperImpl< array2d<T, PERMUTATION> >
 {
-  static localIndex size0( array2d<T> const & map )
+  static localIndex size0( array2d<T, PERMUTATION> const & map )
   {
     return map.size( 0 );
   }
 
-  static localIndex size1( array2d<T> const & map,
+  static localIndex size1( array2d<T, PERMUTATION> const & map,
                            localIndex const GEOSX_UNUSED_ARG( i0 ) )
   {
     return map.size( 1 );
   }
 
-  static T const & value( array2d<T> const & map,
+  static T const & value( array2d<T, PERMUTATION> const & map,
                           localIndex const i0,
                           localIndex const i1 )
   {
@@ -1086,7 +1086,7 @@ void DofManager::addField( string const & fieldName,
   makeConnLocPattern( field, connectivity, field.regionNames, *connLocPattern );
 
   // log some basic info
-  if( m_verbosity > 0 )
+  if( m_logLevel > 0 )
   {
     GEOS_LOG_RANK_0( "DofManager :: Added field .... " << field.docstring );
     GEOS_LOG_RANK_0( "DofManager :: Global dofs .... " << field.numGlobalRows );
@@ -1207,7 +1207,7 @@ void DofManager::addField( string const & fieldName,
   connLocPattern->close();
 
   // log some basic info
-  if( m_verbosity > 0 )
+  if( m_logLevel > 0 )
   {
     GEOS_LOG_RANK_0( "DofManager :: Added field .... " << field.docstring );
     GEOS_LOG_RANK_0( "DofManager :: Global dofs .... " << field.numGlobalRows );
@@ -1276,7 +1276,7 @@ void DofManager::setSparsityPatternOneBlock( ParallelMatrix & pattern,
     // Diagonal block
     ParallelMatrix const * const connLocPattDistr = m_sparsityPattern( rowFieldIndex, rowFieldIndex ).first.get();
 
-    connLocPattDistr->multiplyTranspose( *connLocPattDistr, pattern, closePattern );
+    connLocPattDistr->leftMultiplyTranspose( *connLocPattDistr, pattern, closePattern );
   }
   else
   {
@@ -1297,7 +1297,7 @@ void DofManager::setSparsityPatternOneBlock( ParallelMatrix & pattern,
         CL2 = m_sparsityPattern( colFieldIndex, rowFieldIndex ).first.get();
       }
 
-      CL1->multiplyTranspose( *CL2, pattern, closePattern );
+      CL1->leftMultiplyTranspose( *CL2, pattern, closePattern );
     }
     else
     {
@@ -1486,7 +1486,7 @@ void DofManager::vectorToField( ParallelVector const & vector,
         {
           FIELD_OP::template SpecifyFieldValue( field,
                                                 i,
-                                                integer_conversion< integer >( c - loComp ),
+                                                c - loComp,
                                                 scalingFactor * localVector[lid + c] );
         }
       }
@@ -1580,7 +1580,7 @@ void DofManager::fieldToVector( ObjectManagerBase const * const manager,
         {
           FIELD_OP::template ReadFieldValue( field,
                                              i,
-                                             integer_conversion< int >( c - loComp ),
+                                             c - loComp,
                                              localVector[lid + c] );
         }
       }
