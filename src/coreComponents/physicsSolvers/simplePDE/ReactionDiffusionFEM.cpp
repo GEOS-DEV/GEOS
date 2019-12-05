@@ -105,7 +105,7 @@ void ReactionDiffusionFEM::PostProcessInput() {
   }
 
   // Set basic parameters for solver
-  m_linearSolverParameters.verbosity = 0;
+  m_linearSolverParameters.logLevel = 0;
   m_linearSolverParameters.solverType = "gmres";
   m_linearSolverParameters.krylov.tolerance = 1e-8;
   m_linearSolverParameters.krylov.maxIterations = 250;
@@ -260,7 +260,7 @@ void ReactionDiffusionFEM::AssembleSystem(real64 const time_n,
   matrix.close();
   rhs.close();
 
-  if (verboseLevel() == 2) {
+  if (getLogLevel() == 2) {
     GEOS_LOG_RANK_0("After ReactionDiffusionFEM::AssembleSystem");
     GEOS_LOG_RANK_0("\nJacobian:\n");
     std::cout << matrix;
@@ -268,7 +268,7 @@ void ReactionDiffusionFEM::AssembleSystem(real64 const time_n,
     std::cout << rhs;
   }
 
-  if (verboseLevel() >= 3) {
+  if (getLogLevel() >= 3) {
     SystemSolverParameters *const solverParams = getSystemSolverParameters();
     integer newtonIter = solverParams->numNewtonIterations();
 
@@ -311,7 +311,7 @@ void ReactionDiffusionFEM::ApplyBoundaryConditions(
     DofManager const &dofManager, ParallelMatrix &matrix, ParallelVector &rhs) {
   ApplyDirichletBC_implicit(time_n + dt, dofManager, *domain, m_matrix, m_rhs);
 
-  if (verboseLevel() == 2) {
+  if (getLogLevel() == 2) {
     GEOS_LOG_RANK_0("After ReactionDiffusionFEM::ApplyBoundaryConditions");
     GEOS_LOG_RANK_0("\nJacobian:\n");
     std::cout << matrix;
@@ -319,7 +319,7 @@ void ReactionDiffusionFEM::ApplyBoundaryConditions(
     std::cout << rhs;
   }
 
-  if (verboseLevel() >= 3) {
+  if (getLogLevel() >= 3) {
     SystemSolverParameters *const solverParams = getSystemSolverParameters();
     integer newtonIter = solverParams->numNewtonIterations();
 
@@ -346,7 +346,7 @@ void ReactionDiffusionFEM::SolveSystem(DofManager const &dofManager,
 
   SolverBase::SolveSystem(dofManager, matrix, rhs, solution);
 
-  if (verboseLevel() == 2) {
+  if (getLogLevel() == 2) {
     GEOS_LOG_RANK_0("After ReactionDiffusionFEM::SolveSystem");
     GEOS_LOG_RANK_0("\nSolution\n");
     std::cout << solution;
