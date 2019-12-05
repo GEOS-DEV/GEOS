@@ -364,10 +364,10 @@
 	</xsd:complexType>
 	<xsd:complexType name="FiniteElementSpaceType" />
 	<xsd:complexType name="SystemSolverParametersType">
-		<!--KrylovResidualFinal => Final Krylov solver residual.-->
-		<xsd:attribute name="KrylovResidualFinal" type="real64" />
-		<!--KrylovResidualInit => Initial Krylov solver residual.-->
-		<xsd:attribute name="KrylovResidualInit" type="real64" />
+		<!--krylovResidualFinal => Final Krylov solver residual.-->
+		<xsd:attribute name="krylovResidualFinal" type="real64" />
+		<!--krylovResidualInit => Initial Krylov solver residual.-->
+		<xsd:attribute name="krylovResidualInit" type="real64" />
 		<!--numberOfNewtonIterations => Number of Newton's iterations.-->
 		<xsd:attribute name="numberOfNewtonIterations" type="integer" />
 	</xsd:complexType>
