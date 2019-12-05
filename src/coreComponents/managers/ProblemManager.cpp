@@ -309,6 +309,7 @@ void ProblemManager::ParseCommandLineInput( int argc, char** argv)
   if (schemaName.empty())
   {
     getAbsolutePath(inputFileName, inputFileName);
+    getFolder( inputFileName, Path::pathPrefix() );
 
     if (problemName == "") 
     {

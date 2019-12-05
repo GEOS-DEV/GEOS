@@ -16,6 +16,7 @@
 #define GEOSX_FILEIO_UTILS_UTILS_HPP
 
 #include <unistd.h>
+#include "cxx-utilities/src/src/Logger.hpp"
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <dirent.h>
@@ -24,6 +25,30 @@
 
 namespace geosx
 {
+
+/*!
+ * @brief Class describing a file Path
+ * @details Purpose of this class is to
+ * be used as a type to specify file path within the XML input files,
+ * through the operator >>
+ */
+class Path : public std::string
+{
+public:
+  using std::string::string;
+
+  /*!
+   * @brief Get the path prefix of the file
+   * @details The path prefix is usually a folder path
+   * in which the XML file is located
+   */
+  static std::string & pathPrefix()
+  {
+    static std::string m_pathPrefix;
+    return m_pathPrefix;
+  }
+};
+
 
 /* Taken from http://www.martinbroadhurst.com/list-the-files-in-a-directory-in-c.html */
 inline void readDirectory( std::string const & name, std::vector< std::string >& v)
@@ -55,12 +80,23 @@ inline void getAbsolutePath( std::string const & path, std::string & absolute_pa
   }
 }
 
+inline void getFolder( std::string const & filePath, std::string & folderPath ) 
+{
+  std::string absolutePath;
+  getAbsolutePath( filePath, absolutePath );
+  const size_t lastSlash = absolutePath.rfind( '/' );
+  if( std::string::npos != lastSlash )
+  {
+    folderPath = absolutePath.substr( 0, lastSlash );
+  }
+}
+
 
 inline void splitPath( std::string const & path, std::string & dirname, std::string & basename )
 {
   size_t pos = path.find_last_of( '/' );
   
-  if( pos == string::npos )
+  if( pos == std::string::npos )
   {
     dirname = ".";
     basename = path;
@@ -87,6 +123,16 @@ template< typename REGEX >
 inline bool regexMatch( const std::string & str, REGEX regex )
 {
   return std::regex_match(str, regex);
+}
+
+inline std::istream & operator>>(std::istream & is, Path & p)
+{
+    is >> static_cast<std::string &>(p);
+    if (!isAbsolutePath(p) && !p.pathPrefix().empty())
+    {
+        getAbsolutePath(p.pathPrefix() + '/' + p, p);
+    }
+    return is;
 }
 
 } /* end namespace geosx */

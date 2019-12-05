@@ -3,6 +3,11 @@
 	<xsd:annotation>
 		<xsd:documentation xml:lang="en">GEOSX Input Schema</xsd:documentation>
 	</xsd:annotation>
+	<xsd:simpleType name="Path">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[^,\{\}]*" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:simpleType name="string">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value="[^,\{\}]*" />
@@ -524,7 +529,7 @@
 		<!--fieldsToImport => Fields to be imported from the external mesh file-->
 		<xsd:attribute name="fieldsToImport" type="string_array" default="" />
 		<!--file => path to the mesh file-->
-		<xsd:attribute name="file" type="string" use="required" />
+		<xsd:attribute name="file" type="path" use="required" />
 		<!--reverseZ => 0 : Z coordinate is upward, 1 : Z coordinate is downward-->
 		<xsd:attribute name="reverseZ" type="integer" default="0" />
 		<!--scale => Scale the coordinates of the vertices-->

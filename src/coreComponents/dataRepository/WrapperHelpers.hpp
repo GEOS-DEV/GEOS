@@ -79,20 +79,22 @@ size( T const & GEOSX_UNUSED_ARG( value ) )
   return 1;
 }
 
-inline char * dataPtr( std::string & var )
+template< typename T >
+inline std::enable_if_t< traits::is_string<T> , char * >
+dataPtr( T & var )
 {
   return const_cast< char * >( var.data() );
 }
 
 template< typename T >
-inline std::enable_if_t< traits::has_data_method< T >, typename traits::Pointer< T > >
+inline std::enable_if_t< !traits::is_string<T> && traits::has_data_method< T >, typename traits::Pointer< T > >
 dataPtr( T & value )
 {
   return value.data();
 }
 
 template< typename T >
-inline std::enable_if_t< !traits::has_data_method< T >, typename traits::Pointer< T > >
+inline std::enable_if_t< !traits::is_string<T> && !traits::has_data_method< T >, typename traits::Pointer< T > >
 dataPtr( T & value )
 {
   return &value;

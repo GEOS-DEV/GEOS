@@ -17,7 +17,8 @@ set( fileIO_sources
      silo/SiloFile.cpp
      vtk/VTKFile.cpp
      vtm/VtmFile.cpp
-     schema/SchemaUtilities.cpp )
+     schema/SchemaUtilities.cpp
+     utils/utils.cpp )
 
 if( BUILD_OBJ_LIBS)
   set( dependencyList common silo hdf5 pugixml RAJA  )
