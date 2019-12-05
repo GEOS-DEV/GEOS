@@ -1202,21 +1202,29 @@ CalculateResidualNorm( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
   real64 const * localResidual = rhs.extractLocalVector();
 
   real64 localResidualNorm[2] = { 0.0, this->m_maxForce };
+  //real64 localResInfNorm[2] = {}
 
   for( localIndex i=0 ; i<rhs.localSize() ; ++i )
   {
+  // sum(rhs^2) on each rank.
     localResidualNorm[0] += localResidual[i] * localResidual[i];
+    //infNorm
   }
 
 
+  // globalResidualNorm[0]: the sum of all the local sum(rhs^2).
+  // globalResidualNorm[1]: max of max force of each rank. Basically max force globally
   real64 globalResidualNorm[2] = {0,0};
 //  MPI_Allreduce (&localResidual,&globalResidualNorm,1,MPI_DOUBLE,MPI_SUM ,MPI_COMM_GEOSX);
+
 
 
   int const rank = MpiWrapper::Comm_rank(MPI_COMM_GEOSX);
   int const size = MpiWrapper::Comm_size(MPI_COMM_GEOSX);
   array1d<real64> globalValues( size * 2 );
   globalValues = 0;
+
+  // Everything is done on rank 0
   MpiWrapper::gather( localResidualNorm,
                       2,
                       globalValues.data(),
@@ -1228,8 +1236,11 @@ CalculateResidualNorm( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
   {
     for( int r=0 ; r<size ; ++r )
     {
+      // sum across all ranks
       globalResidualNorm[0] += globalValues[r*2];
 
+      // check if it is greater than the other ranks.
+      // If yes, change the entry of globalResidualNorm[1] (new max)
       if( globalResidualNorm[1] < globalValues[r*2+1] )
       {
         globalResidualNorm[1] = globalValues[r*2+1];
@@ -1239,10 +1250,7 @@ CalculateResidualNorm( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
 
   MpiWrapper::bcast( globalResidualNorm, 2, 0, MPI_COMM_GEOSX );
 
-
-
-  return sqrt(globalResidualNorm[0])/(globalResidualNorm[1]+1);
-
+  return sqrt(globalResidualNorm[0])/(globalResidualNorm[1]+1); // the + 1 is for the first time-step when maxForce = 0;
 }
 
 
