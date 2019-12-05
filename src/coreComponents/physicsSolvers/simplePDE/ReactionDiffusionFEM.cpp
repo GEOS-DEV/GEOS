@@ -39,11 +39,12 @@
 
 // this should be part of the input file
 
-double myFunc(double x, double y, double z) {
+double myFunc(double , double , double ) {
+  return 0;
   // return pow(x, 2) + pow(y, 2) + pow(z, 2) + 6;
-  return x * (1 - x) * y * (1 - y) * z * (1 - z) -
-         2 * (x - 1) * x * (y - 1) * y - 2 * (x - 1) * x * (z - 1) * z -
-         2 * (y - 1) * y * (z - 1) * z;
+//  return x * (1 - x) * y * (1 - y) * z * (1 - z) -
+//         2 * (x - 1) * x * (y - 1) * y - 2 * (x - 1) * x * (z - 1) * z -
+//         2 * (y - 1) * y * (z - 1) * z;
 }
 
 ///////////////////////////////////

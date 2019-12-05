@@ -6,7 +6,7 @@
                 discretization="FE1"
                 timeIntegrationOption="SteadyState"
                 fieldName="Temperature"
-                verboseLevel="0"
+                logLevel="0"
                 targetRegions="{Region1}">
     </ReactionDiffusionFEM>
   </Solvers>
@@ -14,9 +14,9 @@
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="{C3D8}"
-                  xCoords="{0, 1}"
-                  yCoords="{0, 1}"
-                  zCoords="{0, 1}"
+                  xCoords="{-1, 1}"
+                  yCoords="{-1, 1}"
+                  zCoords="{-1, 1}"
                   nx="{10}"
                   ny="{10}"
                   nz="{10}"
@@ -38,6 +38,11 @@
                    targetExactTimestep="1"
                    target="/Outputs/VTKOutput" />
 
+    <PeriodicEvent name="outputs"
+                   timeFrequency="1.0"
+                   targetExactTimestep="1"
+                   target="/Outputs/SiloOutput" />
+                   
     <PeriodicEvent name="restarts"
                    timeFrequency="1e99"
                    targetExactTimestep="0"
@@ -73,50 +78,27 @@
   </Constitutive>
 
   <FieldSpecifications>
-    <FieldSpecification name="wallX0Term"
-               fieldName="Temperature"
-               objectPath="nodeManager"
-               scale="0"
-               setNames="{wallX0}"/>
-    <FieldSpecification name="wallX1Term"
-               fieldName="Temperature"
-               objectPath="nodeManager"
-               scale="0"
-               setNames="{wallX1}"/>
-    <FieldSpecification name="wallY0Term"
-               fieldName="Temperature"
-               objectPath="nodeManager"
-               scale="0"
-               setNames="{wallY0}"/>
-    <FieldSpecification name="wallY1Term"
-               fieldName="Temperature"
-               objectPath="nodeManager"
-               scale="0"
-               setNames="{wallY1}"/>
-    <FieldSpecification name="wallZ0Term"
-               fieldName="Temperature"
-               objectPath="nodeManager"
-               scale="0"
-               setNames="{wallZ0}"/>
-    <FieldSpecification name="wallZ1Term"
-               fieldName="Temperature"
-               objectPath="nodeManager"
-               scale="0"
-               setNames="{wallZ1}"/>
+    <FieldSpecification name="boundary"
+                        fieldName="Temperature"
+                        objectPath="nodeManager"
+                        scale="0"
+                        setNames="{xneg, xpos, yneg, ypos, zneg, zpos}"/>
+
+    <FieldSpecification name="pointSource"
+                        fieldName="Temperature"
+                        objectPath="nodeManager"
+                        scale="1"
+                        setNames="{centerPoint}"/>
   </FieldSpecifications>
 
   <Outputs>
-    <VTK name="VTKOutput" parallelThreads="32" plotFileRoot="plot"/>
+    <Silo name="SiloOutput" parallelThreads="1" plotFileRoot="plot"/>
+    <VTK name="VTKOutput" parallelThreads="1" plotFileRoot="plot"/>
     <Restart name="restartOutput"/>
   </Outputs>
 
   <Geometry>
-    <Box name="wallX0" xMin="-0.01, -0.01, -0.01" xMax="+0.01, +1.01, +1.01"/>
-    <Box name="wallX1"   xMin="+0.99, -0.01, -0.01" xMax="+1.01, +1.01, +1.01"/>
-    <Box name="wallY0" xMin="-0.01, -0.01, -0.01" xMax="+1.01, +0.01, +1.01"/>
-    <Box name="wallY1"   xMin="-0.01, +0.99, -0.01" xMax="+1.01, +1.01, +1.01"/>
-    <Box name="wallZ0" xMin="-0.01, -0.01, -0.01" xMax="+1.01, +1.01, +0.01"/>
-    <Box name="wallZ1"   xMin="-0.01, -0.01, 0.99" xMax="+1.01, +1.01, +1.01"/>
+    <Box name="centerPoint" xMin="-0.001, -0.001, -0.001" xMax="+0.001, +0.001, +0.001"/>
   </Geometry>
 
 </Problem>
