@@ -4,7 +4,10 @@
 Name                Type    Default Description                                                                                                        
 =================== ======= ======= ================================================================================================================== 
 allowNonConverged   integer 0       Allow non-converged solution to be accepted                                                                        
+<<<<<<< HEAD
 doLineSearch        integer 1       Line search option                                                                                                 
+=======
+>>>>>>> develop
 dtCutIterLimit      real64  0.7     Fraction of the Max Newton iterations above which the solver asks for the time-step to be cut for the next dt.     
 dtIncIterLimit      real64  0.4     Fraction of the Max Newton iterations below which the solver asks for the time-step to be doubled for the next dt. 
 ilut_drop           real64  0       (no description available)                                                                                         
