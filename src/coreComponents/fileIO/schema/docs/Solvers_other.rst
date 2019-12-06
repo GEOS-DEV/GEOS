@@ -7,6 +7,7 @@ CompositionalMultiphaseFlow  node :ref:`DATASTRUCTURE_CompositionalMultiphaseFlo
 CompositionalMultiphaseWell  node :ref:`DATASTRUCTURE_CompositionalMultiphaseWell`  
 Hydrofracture                node :ref:`DATASTRUCTURE_Hydrofracture`                
 LaplaceFEM                   node :ref:`DATASTRUCTURE_LaplaceFEM`                   
+PhaseFieldFracture           node :ref:`DATASTRUCTURE_PhaseFieldFracture`           
 Poroelastic                  node :ref:`DATASTRUCTURE_Poroelastic`                  
 ReactionDiffusionFEM         node :ref:`DATASTRUCTURE_ReactionDiffusionFEM`         
 Reservoir                    node :ref:`DATASTRUCTURE_Reservoir`                    

@@ -357,6 +357,13 @@ Element: PeriodicEvent
 .. include:: ../../coreComponents/fileIO/schema/docs/PeriodicEvent.rst
 
 
+.. _XML_PhaseFieldFracture:
+
+Element: PhaseFieldFracture
+===========================
+.. include:: ../../coreComponents/fileIO/schema/docs/PhaseFieldFracture.rst
+
+
 .. _XML_PoreVolumeCompressibleSolid:
 
 Element: PoreVolumeCompressibleSolid
@@ -926,6 +933,13 @@ Datastructure: Parameters
 Datastructure: PeriodicEvent
 ============================
 .. include:: ../../coreComponents/fileIO/schema/docs/PeriodicEvent_other.rst
+
+
+.. _DATASTRUCTURE_PhaseFieldFracture:
+
+Datastructure: PhaseFieldFracture
+=================================
+.. include:: ../../coreComponents/fileIO/schema/docs/PhaseFieldFracture_other.rst
 
 
 .. _DATASTRUCTURE_PoreVolumeCompressibleSolid:

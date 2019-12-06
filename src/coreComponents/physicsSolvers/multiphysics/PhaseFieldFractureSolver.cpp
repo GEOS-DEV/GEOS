@@ -26,8 +26,7 @@
 #include "managers/DomainPartition.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
-#include "physicsSolvers/simplePDE/ReactionDiffusionFEMFEM.hpp"
-#include "physicsSolvers/fluidFlow/ReactionDiffusionFEM.hpp"
+#include "physicsSolvers/simplePDE/ReactionDiffusionFEM.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
 
@@ -41,7 +40,7 @@ PhaseFieldFractureSolver::PhaseFieldFractureSolver( const std::string& name,
                                       Group * const parent ):
   SolverBase(name,parent),
   m_solidSolverName(),
-  m_DamageSolverName(),
+  m_damageSolverName(),
   m_couplingTypeOptionString("FixedStress"),
   m_couplingTypeOption()
 
@@ -50,7 +49,7 @@ PhaseFieldFractureSolver::PhaseFieldFractureSolver( const std::string& name,
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Name of the solid mechanics solver to use in the PhaseFieldFracture solver");
 
-  registerWrapper(viewKeyStruct::damageSolverNameString, &m_DamageSolverName, 0)->
+  registerWrapper(viewKeyStruct::damageSolverNameString, &m_damageSolverName, 0)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Name of the fluid mechanics solver to use in the PhaseFieldFracture solver");
 
@@ -124,7 +123,7 @@ void PhaseFieldFractureSolver::PostProcessInput()
       integer & minNewtonIterSolid = solidSolver.getSystemSolverParameters()->minIterNewton();
 
     ReactionDiffusionFEM &
-      damageSolver = *(this->getParent()->GetGroup(m_DamageSolverName)->group_cast<ReactionDiffusionFEM*>());
+      damageSolver = *(this->getParent()->GetGroup(m_damageSolverName)->group_cast<ReactionDiffusionFEM*>());
     integer & minNewtonIterFluid = damageSolver.getSystemSolverParameters()->minIterNewton();
 
     minNewtonIterSolid = 0;
@@ -141,11 +140,9 @@ void PhaseFieldFractureSolver::PostProcessInput()
 
 }
 
-void PhaseFieldFractureSolver::InitializePostInitialConditions_PreSubGroups(Group * const problemManager)
+void PhaseFieldFractureSolver::InitializePostInitialConditions_PreSubGroups(Group * const  )
 {
-  this->getParent()->GetGroup(m_DamageSolverName)->group_cast<ReactionDiffusionFEM*>()->setPhaseFieldFractureCoupling();
-  // Calculate initial total mean stress
-  this->UpdateDeformationForCoupling(problemManager->GetGroup<DomainPartition>(keys::domain));
+
 }
 
 PhaseFieldFractureSolver::~PhaseFieldFractureSolver()
@@ -190,119 +187,7 @@ real64 PhaseFieldFractureSolver::SolverStep( real64 const & time_n,
   return dtReturn;
 }
 
-void PhaseFieldFractureSolver::UpdateDeformationForCoupling( DomainPartition * const domain )
-{
-//  SolverBase & solidSolver =
-//    *(this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolverBase*>());
 
-  ReactionDiffusionFEM & damageSolver =
-    *(this->getParent()->GetGroup(m_DamageSolverName)->group_cast<ReactionDiffusionFEM*>());
-
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-
-  ElementRegionManager * const elemManager = mesh->getElemManager();
-
-  NodeManager * const nodeManager = domain->getMeshBody(0)->getMeshLevel(0)->getNodeManager();
-
-  NumericalMethodsManager const * const numericalMethodManager =
-    domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
-
-  FiniteElementDiscretizationManager const * const feDiscretizationManager =
-    numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
-
-  ConstitutiveManager * const constitutiveManager =
-    domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
-
-  arrayView1d<R1Tensor> const & X = nodeManager->getReference<r1_array>(nodeManager->viewKeys.referencePosition);
-  arrayView1d<R1Tensor> const & u = nodeManager->getReference<r1_array>(keys::TotalDisplacement);
-  arrayView1d<R1Tensor> const & uhat = nodeManager->getReference<r1_array>(keys::IncrementalDisplacement);
-
-  ElementRegionManager::ElementViewAccessor<arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM>> const elemsToNodes =
-    elemManager->ConstructViewAccessor<CellBlock::NodeMapType, arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM>>( CellElementSubRegion::viewKeyStruct::nodeListString );
-
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> totalMeanStress =
-    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::totalMeanStressString);
-
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const oldTotalMeanStress =
-    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::oldTotalMeanStressString);
-
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const pres =
-    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(DamageSolverBase::viewKeyStruct::pressureString);
-
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const dPres =
-    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(DamageSolverBase::viewKeyStruct::deltaPressureString);
-
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> poro =
-    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(ReactionDiffusionFEM::viewKeyStruct::porosityString);
-
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const poroOld =
-    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(ReactionDiffusionFEM::viewKeyStruct::porosityOldString);
-
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const volume =
-    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(CellBlock::viewKeyStruct::elementVolumeString);
-
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> dVol =
-    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(ReactionDiffusionFEM::viewKeyStruct::deltaVolumeString);
-
-  ElementRegionManager::MaterialViewAccessor< arrayView1d<real64> > const bulkModulus =
-    elemManager->ConstructFullMaterialViewAccessor< array1d<real64>, arrayView1d<real64> >( "BulkModulus", constitutiveManager);
-
-  ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const pvmult =
-    elemManager->ConstructFullMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >( ConstitutiveBase::viewKeyStruct::poreVolumeMultiplierString,
-                                                                                        constitutiveManager );
-  ElementRegionManager::MaterialViewAccessor<real64> const biotCoefficient =
-    elemManager->ConstructFullMaterialViewAccessor<real64>( "BiotCoefficient", constitutiveManager);
-
-  localIndex const solidIndex = domain->getConstitutiveManager()->GetConstitutiveRelation( damageSolver.solidIndex() )->getIndexInParent();
-
-  for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
-  {
-    ElementRegionBase const * const elemRegion = elemManager->GetRegion(er);
-
-    FiniteElementDiscretization const * feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
-
-    for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
-    {
-      CellElementSubRegion const * const cellElementSubRegion = elemRegion->GetSubRegion<CellElementSubRegion>(esr);
-
-      arrayView3d<R1Tensor> const & dNdX = cellElementSubRegion->getReference< array3d<R1Tensor> >(keys::dNdX);
-
-      localIndex const numNodesPerElement = elemsToNodes[er][esr].size(1);
-      r1_array u_local( numNodesPerElement );
-      r1_array uhat_local( numNodesPerElement );
-
-      for( localIndex ei=0 ; ei<cellElementSubRegion->size() ; ++ei )
-      {
-        CopyGlobalToLocal<R1Tensor>( elemsToNodes[er][esr][ei], u, uhat, u_local, uhat_local, numNodesPerElement );
-
-        real64 volumetricStrain = 0.0;
-        localIndex const numQuadraturePoints = feDiscretization->m_finiteElement->n_quadrature_points() ;
-        for( localIndex q=0 ; q<numQuadraturePoints; ++q )
-        {
-          R2Tensor dUdX;
-          CalculateGradient( dUdX, u_local, dNdX[ei][q], numNodesPerElement );
-          volumetricStrain += dUdX.Trace();
-        }
-        volumetricStrain /= numQuadraturePoints;
-        totalMeanStress[er][esr][ei] = volumetricStrain * bulkModulus[er][esr][solidIndex][ei] - biotCoefficient[er][esr][solidIndex] * (pres[er][esr][ei] + dPres[er][esr][ei]);
-
-        poro[er][esr][ei] = poroOld[er][esr][ei] + (biotCoefficient[er][esr][solidIndex] - poroOld[er][esr][ei]) / bulkModulus[er][esr][solidIndex][ei]
-                                                 * (totalMeanStress[er][esr][ei] - oldTotalMeanStress[er][esr][ei] + dPres[er][esr][ei]);
-
-        // update element volume
-        R1Tensor Xlocal[ElementRegionManager::maxNumNodesPerElem];
-        for (localIndex a = 0; a < elemsToNodes[er][esr].size(1); ++a)
-        {
-          Xlocal[a] = X[elemsToNodes[er][esr][ei][a]];
-          Xlocal[a] += u[elemsToNodes[er][esr][ei][a]] ;
-        }
-
-        dVol[er][esr][ei] = computationalGeometry::HexVolume(Xlocal) - volume[er][esr][ei];
-      }
-    }
-  }
-
-}
 
 real64 PhaseFieldFractureSolver::SplitOperatorStep( real64 const& time_n,
                                              real64 const& dt,
@@ -316,7 +201,7 @@ real64 PhaseFieldFractureSolver::SplitOperatorStep( real64 const& time_n,
   solidSolver = *(this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolidMechanicsLagrangianFEM*>());
 
   ReactionDiffusionFEM &
-  damageSolver = *(this->getParent()->GetGroup(m_DamageSolverName)->group_cast<ReactionDiffusionFEM*>());
+  damageSolver = *(this->getParent()->GetGroup(m_damageSolverName)->group_cast<ReactionDiffusionFEM*>());
 
   damageSolver.SetupSystem( domain,
                            damageSolver.getDofManager(),
@@ -355,29 +240,6 @@ real64 PhaseFieldFractureSolver::SplitOperatorStep( real64 const& time_n,
       ResetStateToBeginningOfStep( domain );
     }
 
-    GEOS_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1  << ", DamageSolver: " );
-
-    dtReturnTemporary = damageSolver.NonlinearImplicitStep( time_n,
-                                                           dtReturn,
-                                                           cycleNumber,
-                                                           domain,
-                                                           damageSolver.getDofManager(),
-                                                           damageSolver.getSystemMatrix(),
-                                                           damageSolver.getSystemRhs(),
-                                                           damageSolver.getSystemSolution() );
-
-    if (dtReturnTemporary < dtReturn)
-    {
-      iter = 0;
-      dtReturn = dtReturnTemporary;
-      continue;
-    }
-
-    if (damageSolver.getSystemSolverParameters()->numNewtonIterations() == 0 && iter > 0)
-    {
-      GEOS_LOG_LEVEL_RANK_0( 1, "***** The iterative coupling has converged in " << iter  << " iterations! *****\n" );
-      break;
-    }
 
     GEOS_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1  << ", MechanicsSolver: " );
 
@@ -399,9 +261,33 @@ real64 PhaseFieldFractureSolver::SplitOperatorStep( real64 const& time_n,
       dtReturn = dtReturnTemporary;
       continue;
     }
-    if (solidSolver.getSystemSolverParameters()->numNewtonIterations() > 0)
+
+    if (solidSolver.getSystemSolverParameters()->numNewtonIterations() == 0 && iter > 0)
     {
-      this->UpdateDeformationForCoupling(domain);
+      GEOS_LOG_LEVEL_RANK_0( 1, "***** The iterative coupling has converged in " << iter  << " iterations! *****\n" );
+      break;
+    }
+
+
+    GEOS_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1  << ", DamageSolver: " );
+
+    dtReturnTemporary = damageSolver.LinearImplicitStep( time_n,
+                                                         dtReturn,
+                                                         cycleNumber,
+                                                         domain,
+                                                         damageSolver.getDofManager(),
+                                                         damageSolver.getSystemMatrix(),
+                                                         damageSolver.getSystemRhs(),
+                                                         damageSolver.getSystemSolution() );
+
+
+
+
+    if (dtReturnTemporary < dtReturn)
+    {
+      iter = 0;
+      dtReturn = dtReturnTemporary;
+      continue;
     }
     ++iter;
   }

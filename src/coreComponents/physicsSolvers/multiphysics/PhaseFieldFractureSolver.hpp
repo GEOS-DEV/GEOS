@@ -63,7 +63,6 @@ public:
               int const cycleNumber,
               DomainPartition * const domain ) override;
 
-  void UpdateDeformationForCoupling( DomainPartition * const domain );
 
   real64 SplitOperatorStep( real64 const& time_n,
                             real64 const& dt,
@@ -88,7 +87,7 @@ public:
     constexpr static auto oldTotalMeanStressString = "oldTotalMeanStress";
 
     constexpr static auto solidSolverNameString = "solidSolverName";
-    constexpr static auto fluidSolverNameString = "fluidSolverName";
+    constexpr static auto damageSolverNameString = "damageSolverName";
   } PhaseFieldFractureSolverViewKeys;
 
 
@@ -101,7 +100,7 @@ protected:
 private:
 
   string m_solidSolverName;
-  string m_flowSolverName;
+  string m_damageSolverName;
   string m_couplingTypeOptionString;
   couplingTypeOption m_couplingTypeOption;
 
