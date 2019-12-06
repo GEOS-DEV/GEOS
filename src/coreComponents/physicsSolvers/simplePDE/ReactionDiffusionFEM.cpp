@@ -59,17 +59,25 @@ using namespace dataRepository;
 using namespace constitutive;
 
 ReactionDiffusionFEM::ReactionDiffusionFEM(const std::string &name,
-                                           Group *const parent)
-    : SolverBase(name, parent), m_fieldName("primaryField") {
-  registerWrapper<string>(
-      reactionDiffusionFEMViewKeys.timeIntegrationOption.Key())
-      ->setInputFlag(InputFlags::REQUIRED)
-      ->setDescription("option for default time integration method");
+                                           Group *const parent):
+  SolverBase(name, parent), m_fieldName("primaryField")
+{
 
-  registerWrapper<string>(reactionDiffusionFEMViewKeys.fieldVarName.Key(),
-                          &m_fieldName, false)
-      ->setInputFlag(InputFlags::REQUIRED)
-      ->setDescription("name of field variable");
+  registerWrapper<string>(reactionDiffusionFEMViewKeys.timeIntegrationOption.Key())->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("option for default time integration method");
+
+  registerWrapper<string>(reactionDiffusionFEMViewKeys.fieldVarName.Key(), &m_fieldName, false)->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("name of field variable");
+
+//  registerWrapper(viewKeyStruct::coeffFieldName,
+//                          &m_coeffFieldName, false)->
+//    setInputFlag(InputFlags::REQUIRED)->
+//    setDescription("name of field variable representing the diffusion coefficient");
+
+
+
 }
 
 ReactionDiffusionFEM::~ReactionDiffusionFEM() {
@@ -78,6 +86,9 @@ ReactionDiffusionFEM::~ReactionDiffusionFEM() {
 
 void ReactionDiffusionFEM::RegisterDataOnMesh(Group *const MeshBodies) {
   for (auto &mesh : MeshBodies->GetSubGroups()) {
+
+    MeshLevel * meshLevel = Group::group_cast<MeshBody *>(mesh.second)->getMeshLevel(0);
+
     NodeManager *const nodes = mesh.second->group_cast<MeshBody *>()
                                    ->getMeshLevel(0)
                                    ->getNodeManager();
@@ -86,6 +97,17 @@ void ReactionDiffusionFEM::RegisterDataOnMesh(Group *const MeshBodies) {
         ->setApplyDefaultValue(0.0)
         ->setPlotLevel(PlotLevel::LEVEL_0)
         ->setDescription("Primary field variable");
+
+    ElementRegionManager * const elemManager = meshLevel->getElemManager();
+
+    elemManager->forElementSubRegions<CellElementSubRegion>( [&]( CellElementSubRegion * const subRegion )
+    {
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::coeffName)->
+        setApplyDefaultValue(0.0)->
+        setPlotLevel(PlotLevel::LEVEL_0)->
+        setDescription("field variable representing the diffusion coefficient");
+    });
+
   }
 }
 
@@ -175,7 +197,7 @@ void ReactionDiffusionFEM::AssembleSystem(real64 const time_n,
       numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(
           keys::finiteElementDiscretizations);
 
-  array1d<globalIndex> const &dofIndex =
+  arrayView1d<globalIndex const> const &dofIndex =
       nodeManager->getReference<array1d<globalIndex>>(
           dofManager.getKey(m_fieldName));
 
@@ -211,6 +233,9 @@ void ReactionDiffusionFEM::AssembleSystem(real64 const time_n,
                       CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const &elemNodes =
               elementSubRegion->nodeList();
 
+          arrayView1d<real64 const> const &
+          coeff = elementSubRegion->getReference<array1d<real64> >(viewKeyStruct::coeffName);
+
           globalIndex_array elemDofIndex(numNodesPerElement);
           real64_array element_rhs(numNodesPerElement);
           real64_array2d element_matrix(numNodesPerElement, numNodesPerElement);
@@ -240,14 +265,14 @@ void ReactionDiffusionFEM::AssembleSystem(real64 const time_n,
                 }
                 for (localIndex a = 0; a < numNodesPerElement; ++a) {
                   elemDofIndex[a] = dofIndex[elemNodes(k, a)];
-                  real64 diffusion = 1.0;
+//                  real64 diffusion = 1.0;
                   real64 Na = feDiscretization->m_finiteElement->value(a, q);
                   element_rhs(a) += detJ[k][q] * Na * myFunc(Xq, Yq, Zq);
                   for (localIndex b = 0; b < numNodesPerElement; ++b) {
                     real64 Nb = feDiscretization->m_finiteElement->value(b, q);
                     element_matrix(a, b) +=
                         detJ[k][q] *
-                        (diffusion * +Dot(dNdX[k][q][a], dNdX[k][q][b]) -
+                        (coeff(k) * +Dot(dNdX[k][q][a], dNdX[k][q][b]) -
                          Na * Nb);
                   }
                 }

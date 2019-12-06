@@ -89,8 +89,28 @@
                         objectPath="nodeManager"
                         scale="1"
                         setNames="{centerPoint}"/>
+                        
+    <FieldSpecification name="diffusionCoeff"
+                        initialCondition="1"
+                        setNames="{all}"
+                        objectPath="ElementRegions"
+                        fieldName="coeffField"
+                        scale="2e3" 
+                        functionName="f_b" 
+                        />
   </FieldSpecifications>
 
+
+  <Functions>
+    <!-- These are example mathpresso functions.  In order to use them, you need to specify the order that the 
+    symbolic math function should expect the variables to be given, and an expression that it will compile.
+    A list of available functions is given here: https://github.com/kobalicek/mathpresso -->
+    <SymbolicFunction name="f_b"
+                      inputVarNames="{elementCenter}"
+                      variableNames="{x, y, z}"
+                      expression="sqrt(pow(x,2)+pow(y,2)+pow(z,2))"/>
+    
+  </Functions>  
   <Outputs>
     <Silo name="SiloOutput" parallelThreads="1" plotFileRoot="plot"/>
     <VTK name="VTKOutput" parallelThreads="1" plotFileRoot="plot"/>

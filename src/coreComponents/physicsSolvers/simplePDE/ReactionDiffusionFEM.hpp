@@ -110,7 +110,12 @@ public:
     ExplicitTransient
   };
 
-  struct viewKeyStruct : public SolverBase::viewKeyStruct {
+  struct viewKeyStruct : public SolverBase::viewKeyStruct
+  {
+    static constexpr auto coeffFieldName = "coeffFieldName";
+    static constexpr auto coeffName = "coeffField";
+
+
     dataRepository::ViewKey timeIntegrationOption = {"timeIntegrationOption"};
     dataRepository::ViewKey fieldVarName = {"fieldName"};
 
@@ -127,6 +132,9 @@ private:
   string m_fieldName;
   stabledt m_stabledt;
   timeIntegrationOption m_timeIntegrationOption;
+
+//  string m_coeffFieldName;
+
   ReactionDiffusionFEM();
 };
 
