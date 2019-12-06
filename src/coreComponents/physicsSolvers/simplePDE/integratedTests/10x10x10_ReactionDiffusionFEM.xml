@@ -17,9 +17,9 @@
                   xCoords="{-1, 1}"
                   yCoords="{-1, 1}"
                   zCoords="{-1, 1}"
-                  nx="{10}"
-                  ny="{10}"
-                  nz="{10}"
+                  nx="{30}"
+                  ny="{30}"
+                  nz="{30}"
                   cellBlockNames="{cb1}"/>
   </Mesh>
 
@@ -38,11 +38,11 @@
                    targetExactTimestep="1"
                    target="/Outputs/VTKOutput" />
 
-    <PeriodicEvent name="outputs"
+    <!--PeriodicEvent name="outputs"
                    timeFrequency="1.0"
                    targetExactTimestep="1"
-                   target="/Outputs/SiloOutput" />
-                   
+                   target="/Outputs/SiloOutput" /-->
+
     <PeriodicEvent name="restarts"
                    timeFrequency="1e99"
                    targetExactTimestep="0"
@@ -78,39 +78,39 @@
   </Constitutive>
 
   <FieldSpecifications>
-    <FieldSpecification name="boundary"
+    <!--<FieldSpecification name="boundary"
                         fieldName="Temperature"
                         objectPath="nodeManager"
                         scale="0"
-                        setNames="{xneg, xpos, yneg, ypos, zneg, zpos}"/>
+                        setNames="{xneg, xpos, yneg, ypos, zneg, zpos}"/> -->
 
     <FieldSpecification name="pointSource"
                         fieldName="Temperature"
                         objectPath="nodeManager"
                         scale="1"
-                        setNames="{centerPoint}"/>
-                        
+                        setNames="{centerLine}"/>
+
     <FieldSpecification name="diffusionCoeff"
                         initialCondition="1"
                         setNames="{all}"
                         objectPath="ElementRegions"
                         fieldName="coeffField"
-                        scale="2e3" 
-                        functionName="f_b" 
+                        scale="2e3"
+                        functionName="f_b"
                         />
   </FieldSpecifications>
 
 
   <Functions>
-    <!-- These are example mathpresso functions.  In order to use them, you need to specify the order that the 
+    <!-- These are example mathpresso functions.  In order to use them, you need to specify the order that the
     symbolic math function should expect the variables to be given, and an expression that it will compile.
     A list of available functions is given here: https://github.com/kobalicek/mathpresso -->
     <SymbolicFunction name="f_b"
                       inputVarNames="{elementCenter}"
                       variableNames="{x, y, z}"
-                      expression="sqrt(pow(x,2)+pow(y,2)+pow(z,2))"/>
-    
-  </Functions>  
+                      expression="0"/>
+
+  </Functions>
   <Outputs>
     <Silo name="SiloOutput" parallelThreads="1" plotFileRoot="plot"/>
     <VTK name="VTKOutput" parallelThreads="1" plotFileRoot="plot"/>
@@ -118,7 +118,7 @@
   </Outputs>
 
   <Geometry>
-    <Box name="centerPoint" xMin="-0.001, -0.001, -0.001" xMax="+0.001, +0.001, +0.001"/>
+    <Box name="centerLine" xMin="-0.001, -1.001, -1.001" xMax="+0.001, +1.001, +1.001"/>
   </Geometry>
 
 </Problem>

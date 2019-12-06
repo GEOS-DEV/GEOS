@@ -244,6 +244,9 @@ void ReactionDiffusionFEM::AssembleSystem(real64 const time_n,
           localIndex const n_q_points =
               feDiscretization->m_finiteElement->n_quadrature_points();
 
+          real64 ell = 0.05; //phase-field lenghtscale
+          real64 Gc = 1; //energy release rate
+          //real64 diffusion = 1.0;
           // begin element loop, skipping ghost elements
           for (localIndex k = 0; k < elementSubRegion->size(); ++k) {
             if (elemGhostRank[k] < 0) {
@@ -265,15 +268,20 @@ void ReactionDiffusionFEM::AssembleSystem(real64 const time_n,
                 }
                 for (localIndex a = 0; a < numNodesPerElement; ++a) {
                   elemDofIndex[a] = dofIndex[elemNodes(k, a)];
-//                  real64 diffusion = 1.0;
+                  //real64 diffusion = 1.0;
                   real64 Na = feDiscretization->m_finiteElement->value(a, q);
-                  element_rhs(a) += detJ[k][q] * Na * myFunc(Xq, Yq, Zq);
+                  //element_rhs(a) += detJ[k][q] * Na * myFunc(Xq, Yq, Zq); //older reaction diffusion solver
+                  element_rhs(a) += detJ[k][q] * Na * (4 * ell) * coeff(k) / Gc;
                   for (localIndex b = 0; b < numNodesPerElement; ++b) {
                     real64 Nb = feDiscretization->m_finiteElement->value(b, q);
                     element_matrix(a, b) +=
                         detJ[k][q] *
-                        (coeff(k) * +Dot(dNdX[k][q][a], dNdX[k][q][b]) -
-                         Na * Nb);
+                        (pow((2*ell),2) * -Dot(dNdX[k][q][a], dNdX[k][q][b]) -
+                         Na * Nb * (1 + 4 * ell*coeff(k)/Gc));
+                         //detJ[k][q] *
+                         //(coeff(k) * -Dot(dNdX[k][q][a], dNdX[k][q][b]) -
+                          //Na * Nb);
+
                   }
                 }
               }
