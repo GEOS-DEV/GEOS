@@ -395,8 +395,6 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       ResetStateToBeginningOfStep( domain );
     }
 
-    real64 residualNormZero = 1e99;
-
     // keep residual from previous iteration in case we need to do a line search
     real64 lastResidual = 1e99;
     integer & newtonIter = solverParams->numNewtonIterations();
@@ -417,14 +415,9 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       // get residual norm
       real64 residualNorm = CalculateResidualNorm( domain, dofManager, rhs );
 
-      if(newtonIter == 0)
-      {
-        residualNormZero = residualNorm;
-      }
-
       {
         char output[100];
-        sprintf(output,"-- Attempt %2d, Newton %2d, R_abs = %.3e, R_rel = %.3e",dtAttempt,newtonIter,residualNorm,residualNorm/residualNormZero);
+        sprintf(output,"-- Attempt %2d, Newton %2d, R_abs = %.3e",dtAttempt,newtonIter,residualNorm);
         GEOS_LOG_LEVEL_RANK_0(1,output);
       }
 
@@ -438,11 +431,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       // if the residual norm is less than the Newton tolerance we denote that we have
       // converged and break from the Newton loop immediately.
 
-      // use a relative tolerance, but add 1 to the denominator.  if starting residual is
-      // large, this behaves like a relative tolerance.  if it is small, it behaves like
-      // an absolute tolerance.  this can avoid inadvertently trying to solve to machine precision.
-
-      if( residualNorm < newtonTol*(residualNormZero+1) ) 
+      if( residualNorm < newtonTol /*(residualNormZero+1)*/ ) 
       {
         isConverged = 1;
 

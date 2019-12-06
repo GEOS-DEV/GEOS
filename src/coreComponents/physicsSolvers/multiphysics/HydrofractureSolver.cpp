@@ -725,17 +725,6 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
                                                          m_matrix10 );
   });
 
-  // scale system.  we do this here because it is the last "assembly" related step.
-  // TODO: revisit Assemble(), ApplyBC(), Scale() sequence in SolverBase
-
-  m_densityScaling = 1e-3;
-  m_pressureScaling = 1e9;
-
-  m_matrix01.scale(m_pressureScaling);
-  m_matrix10.scale(m_pressureScaling*m_densityScaling);
-  m_flowSolver->getSystemMatrix().scale(m_pressureScaling*m_pressureScaling*m_densityScaling);
-  m_flowSolver->getSystemRhs().scale(m_pressureScaling*m_densityScaling);
- 
   // debugging info.  can be trimmed once everything is working.
   if( getLogLevel()>=10 )
   {
@@ -839,16 +828,17 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
 
 real64
 HydrofractureSolver::
-CalculateResidualNorm( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
+CalculateResidualNorm( DomainPartition const * const domain,
                        DofManager const & GEOSX_UNUSED_ARG( dofManager ),
                        ParallelVector const & GEOSX_UNUSED_ARG( rhs ) )
 {
   GEOSX_MARK_FUNCTION;
 
+  /*
   real64 const fluidResidual = m_flowSolver->getSystemRhs().norm2();
   real64 const solidResidual = m_solidSolver->getSystemRhs().norm2();
+  */
 
-  /*
   real64 const fluidResidual = m_flowSolver->CalculateResidualNorm( domain,
                                                                     m_flowSolver->getDofManager(),
                                                                     m_flowSolver->getSystemRhs() );
@@ -856,7 +846,6 @@ CalculateResidualNorm( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
   real64 const solidResidual = m_solidSolver->CalculateResidualNorm( domain,
                                                                      m_solidSolver->getDofManager(),
                                                                      m_solidSolver->getSystemRhs() );
-  */
 
   return fluidResidual + solidResidual;
 }
@@ -1170,6 +1159,12 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
 {
   GEOSX_MARK_FUNCTION;
 
+  /*
+  globalIndex numU = m_solidSolver->getSystemRhs().globalSize();
+  globalIndex numP = m_flowSolver->getSystemRhs().globalSize();
+  GEOS_LOG_RANK_0("size = " << numU << " + " << numP);
+  */
+
   SystemSolverParameters * const params = &m_systemSolverParameters;
   integer newtonIter = params->numNewtonIterations();
 
@@ -1193,6 +1188,16 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
   p_matrix[0][1] = m_matrix01.unwrappedPointer();
   p_matrix[1][0] = m_matrix10.unwrappedPointer();
   p_matrix[1][1] = m_flowSolver->getSystemMatrix().unwrappedPointer();
+
+  // scale and symmetrize
+
+  m_densityScaling = 1e-3;
+  m_pressureScaling = 1e9;
+
+  p_matrix[0][1]->Scale(m_pressureScaling);
+  p_matrix[1][0]->Scale(m_pressureScaling*m_densityScaling);
+  p_matrix[1][1]->Scale(m_pressureScaling*m_pressureScaling*m_densityScaling);
+  p_rhs[1]->Scale(m_pressureScaling*m_densityScaling);
 
     // SCHEME CHOICES
     //
@@ -1487,6 +1492,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
     }
 
     p_solution[1]->Scale(m_pressureScaling);
+    p_rhs[1]->Scale(1/(m_pressureScaling*m_densityScaling));
   }
 
   delete schurApproxPP;
