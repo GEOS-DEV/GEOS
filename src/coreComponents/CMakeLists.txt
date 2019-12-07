@@ -34,13 +34,19 @@ set( subdirs
 #     physicsSolvers
 #     wells
 #     python
-#     linearAlgebraInterface
+#     linearAlgebra
 #     cxx-utilities
 #     )
 
 set( coreLibLinkLine "" PARENT_SCOPE)
 set( geosx_core_include_dirs "" )
 set( geosx_core_defines "" )
+
+
+set( buildAsObj FALSE)
+if ( BUILD_OBJ_LIBS)
+  set(buildAsObj TRUE)
+endif()
 
 foreach( lib ${subdirs} )
     add_subdirectory(${lib})
@@ -72,18 +78,20 @@ if( GEOSX_USE_ATK )
 endif()
 
 
-blt_combine_static_libraries( NAME          geosx_core
-                              SOURCE_LIBS   ${coreLibs}
-                              LIB_TYPE SHARED
-                              LINK_PREPEND  ${GEOSX_LINK_PREPEND_FLAG}
-                              LINK_POSTPEND ${GEOSX_LINK_POSTPEND_FLAG}
-                            )
-
-#blt_add_library ( NAME geosx_core
-#                  SOURCES dummy.cpp
-#                  DEPENDS_ON  ${coreLibs}
-#                  SHARED TRUE
-#                )
+if( BUILD_OBJ_LIBS )
+  blt_add_library ( NAME geosx_core
+                    SOURCES dummy.cpp
+                    DEPENDS_ON  ${coreLibs}
+                    SHARED TRUE
+                  )
+else()                  
+  blt_combine_static_libraries( NAME          geosx_core
+                                SOURCE_LIBS   ${coreLibs}
+                                LIB_TYPE SHARED
+                                LINK_PREPEND  ${GEOSX_LINK_PREPEND_FLAG}
+                                LINK_POSTPEND ${GEOSX_LINK_POSTPEND_FLAG}
+                              )
+endif()
 
 #set( geosx_core_libs geosx_core CACHE PATH "" FORCE)
 
@@ -96,13 +104,13 @@ set( enforceUncrustifyLibs
      common
      dataRepository )
 
-foreach( lib ${enforceUncrustifyLibs} )
-
-add_test( NAME testUncrustifyCheck_${lib}
-          COMMAND ${CMAKE_MAKE_PROGRAM} ${lib}_uncrustify_check
-          WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-        )
-
-endforeach()
+if( ENABLE_UNCRUSTIFY )
+  foreach( lib ${enforceUncrustifyLibs} )
+    add_test( NAME testUncrustifyCheck_${lib}
+              COMMAND ${CMAKE_MAKE_PROGRAM} ${lib}_uncrustify_check
+              WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+            )
+  endforeach()
+endif()
 
 add_subdirectory( unitTests )

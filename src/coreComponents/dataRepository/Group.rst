@@ -9,8 +9,7 @@ In GEOSX, the ``Group`` may be thought of as an analogy to the file folder in a 
 structure.
 As such, a ``Group`` is used as a container class that holds a collection of other Groups, or sub-Groups, 
 a pointer to the parent of the Group, and a collection of Wrappers.
-The ``Group`` also Group also defines a general capability to create and traverse/access the objects in 
-the hierarchy.
+The ``Group`` also defines a general capability to create and traverse/access the objects in the hierarchy.
 The Wrappers contained in a Group may be of arbitrary type, but in the case of an LvArray object, a Group
 size and capacity may be translated down to array, thereby keeping a collection of wrapped Array objects
 that will resize in unison with the Group.
@@ -27,7 +26,7 @@ Some noteworthy implementation details inside the declaration of ``dataRepositor
    :end-before: /**
    
 * In the GEOSX repository, the ``keyType`` is specified to be a ``string`` for all  collection objects, 
-  while the ``indexType`` is specified to be a `localIndex`.
+  while the ``indexType`` is specified to be a ``localIndex``.
   The types are set in the ``common/DataTypes.hpp`` file, but are typically a ``std::string`` and a 
   ``std::ptrdiff_t`` respectively.
   
@@ -36,7 +35,7 @@ Some noteworthy implementation details inside the declaration of ``dataRepositor
    :start-after: //START_SPHINX_INCLUDE_01
    :end-before: /**
    
-* The `subGroupMap` and `wrapperMap` aliases represent the type of container that the collection of 
+* The ``subGroupMap`` and ``wrapperMap`` aliases represent the type of container that the collection of 
   sub-``Group`` s and ``Wrapper`` s are stored in for each ``Group``.
   These container types are template specializations of the ``MappedVector`` class, which store a pointer to 
   a type, and provides functionality for a key or index based lookup. 
@@ -55,7 +54,7 @@ Some noteworthy implementation details inside the declaration of ``dataRepositor
     Special care should be taken to avoid using this access whenever possible. 
     Remember...with great power comes great responsibility.
 * The ``m_wrappers`` member is the collection of Wrappers contained in the current ``Group``.
-* The ``m_subGroups`` member is the collection of ``Group``s contained in the current ``Group``.
+* The ``m_subGroups`` member is the collection of ``Group`` s contained in the current ``Group``.
 * The ``m_size`` and ``m_capacity`` members are used to set the size and capacity of any objects contained
   in the ``m_wrappers`` collection that have been specified to be set by their owning ``Group``.
   This is typically only useful for Array types and is implemented within the ``WrapperBase`` object.

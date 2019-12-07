@@ -19,12 +19,13 @@
 #ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSLAGRANGIANFEM_HPP_
 #define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSLAGRANGIANFEM_HPP_
 
+#include "common/TimingMacros.hpp"
+#include "mesh/MeshForLoopInterface.hpp"
 #include "mpiCommunications/CommunicationTools.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 
-#include "common/TimingMacros.hpp"
-#include "mesh/MeshForLoopInterface.hpp"
 #include "SolidMechanicsLagrangianFEMKernels.hpp"
+
 
 
 namespace geosx
@@ -76,6 +77,11 @@ public:
   virtual void RegisterDataOnMesh( Group * const MeshBody ) override final;
 
   void updateIntrinsicNodalData( DomainPartition * const domain );
+
+  virtual void
+  updateStress( DomainPartition * const domain );
+
+
 
   /**
    * @defgroup Solver Interface Functions
@@ -149,6 +155,8 @@ public:
 
   virtual void ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
 
+  void ResetStressToBeginningOfStep( DomainPartition * const domain );
+
   virtual void ImplicitStepComplete( real64 const & time,
                                      real64 const & dt,
                                      DomainPartition * const domain ) override;
@@ -178,14 +186,13 @@ public:
                                localIndex NUM_QUADRATURE_POINTS,
                                constitutive::ConstitutiveBase * const constitutiveRelation,
                                set<localIndex> const & elementList,
-                               arrayView2d<localIndex const> const & elemsToNodes,
+                               arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & elemsToNodes,
                                arrayView3d< R1Tensor const> const & dNdX,
                                arrayView2d<real64 const> const & detJ,
                                arrayView1d<R1Tensor const> const & u,
                                arrayView1d<R1Tensor const> const & vel,
                                arrayView1d<R1Tensor> const & acc,
-                               arrayView2d<real64> const & meanStress,
-                               arrayView2d<R2SymTensor> const & devStress,
+                               arrayView2d<R2SymTensor> const & stress,
                                real64 const dt ) const
   {
     using ExplicitKernel = SolidMechanicsLagrangianFEMKernels::ExplicitKernel;
@@ -200,8 +207,7 @@ public:
                                                         u,
                                                         vel,
                                                         acc,
-                                                        meanStress,
-                                                        devStress,
+                                                        stress,
                                                         dt );
   }
 
@@ -247,7 +253,7 @@ public:
                                arrayView2d<real64 const > const& detJ,
                                FiniteElementBase const * const fe,
                                arrayView1d< integer const > const & elemGhostRank,
-                               arrayView2d< localIndex const > const & elemsToNodes,
+                               arrayView2d< localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM > const & elemsToNodes,
                                arrayView1d< globalIndex const > const & globalDofNumber,
                                arrayView1d< R1Tensor const > const & disp,
                                arrayView1d< R1Tensor const > const & uhat,
@@ -370,6 +376,7 @@ public:
     static constexpr auto strainTheoryString = "strainTheory";
     static constexpr auto solidMaterialNameString = "solidMaterialName";
     static constexpr auto solidMaterialFullIndexString = "solidMaterialFullIndex";
+    static constexpr auto stress_n = "beginningOfStepStress";
     static constexpr auto forceExternal = "externalForce";
     static constexpr auto contactRelationNameString = "contactRelationName";
     static constexpr auto noContactRelationNameString = "NOCONTACT";

@@ -177,18 +177,18 @@ public:
     elementRegions->forSubGroups<REGIONTYPE, REGIONTYPES...>( std::forward<LAMBDA>(lambda) );
   }
 
-  template< typename LAMBDA >
+  template< typename REGIONTYPE = ElementRegionBase, typename ... REGIONTYPES, typename LAMBDA >
   void forElementRegions( string_array const & targetRegions, LAMBDA && lambda )
   {
     Group * const elementRegions = this->GetGroup(groupKeyStruct::elementRegionsGroup);
-    elementRegions->forSubGroups<ElementRegionBase>( targetRegions, std::forward<LAMBDA>(lambda) );
+    elementRegions->forSubGroups<REGIONTYPE,REGIONTYPES...>( targetRegions, std::forward<LAMBDA>(lambda) );
   }
 
-  template< typename LAMBDA >
+  template< typename REGIONTYPE = ElementRegionBase, typename ... REGIONTYPES, typename LAMBDA >
   void forElementRegions( string_array const & targetRegions, LAMBDA && lambda ) const
   {
     Group const * const elementRegions = this->GetGroup(groupKeyStruct::elementRegionsGroup);
-    elementRegions->forSubGroups<ElementRegionBase>( targetRegions, std::forward<LAMBDA>(lambda) );
+    elementRegions->forSubGroups<REGIONTYPE,REGIONTYPES...>( targetRegions, std::forward<LAMBDA>(lambda) );
   }
 
 
@@ -542,7 +542,7 @@ ElementRegionManager::ConstructViewAccessor( string const & viewName, string con
         group = group->GetGroup(ObjectManagerBase::groupKeyStruct::neighborDataString)->GetGroup(neighborName);
       }
 
-      if ( group->hasView(viewName) )
+      if ( group->hasWrapper( viewName ) )
       {
         viewAccessor[kReg][kSubReg] = group->getReference<VIEWTYPE>(viewName);
       }
@@ -573,7 +573,7 @@ ConstructViewAccessor( string const & viewName, string const & neighborName )
         group = group->GetGroup(ObjectManagerBase::groupKeyStruct::neighborDataString)->GetGroup(neighborName);
       }
 
-      if ( group->hasView(viewName) )
+      if ( group->hasWrapper( viewName ) )
       {
         viewAccessor[kReg][kSubReg] = group->getReference<VIEWTYPE>(viewName);
       }
@@ -603,7 +603,7 @@ ConstructReferenceAccessor( string const & viewName, string const & neighborName
         group = group->GetGroup(ObjectManagerBase::groupKeyStruct::neighborDataString)->GetGroup(neighborName);
       }
 
-      if ( group->hasView(viewName) )
+      if ( group->hasWrapper( viewName ) )
       {
         viewAccessor[kReg][kSubReg].set(group->getReference<VIEWTYPE>(viewName));
       }
@@ -633,7 +633,7 @@ ConstructReferenceAccessor( string const & viewName, string const & neighborName
         group = group->GetGroup(ObjectManagerBase::groupKeyStruct::neighborDataString)->GetGroup(neighborName);
       }
 
-      if ( group->hasView(viewName) )
+      if ( group->hasWrapper( viewName ) )
       {
         viewAccessor[kReg][kSubReg].set(group->getReference<VIEWTYPE>(viewName));
       }

@@ -78,19 +78,15 @@ void setupCXXUtils()
 
 void finalizeCXXUtils()
 {
-#ifdef GEOSX_USE_CHAI
-  chai::ArrayManager::finalize();
-#endif
-
   logger::FinalizeLogger();
 }
 
 void basicSetup( int argc, char * argv[] )
 {
   setupMPI( argc, argv );
+  setupCXXUtils();
   setupOpenMP();
   setupMKL();
-  setupCXXUtils();
   setupLAI( argc, argv );
 }
 

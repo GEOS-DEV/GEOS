@@ -97,7 +97,7 @@ public:
   void RunSimulation();
 
 
-  void ReadRestartOverwrite( const std::string& restartFileName );
+  void ReadRestartOverwrite();
 
   void ApplyInitialConditions();
 
@@ -122,7 +122,6 @@ public:
 
   struct viewKeysStruct
   {
-    dataRepository::ViewKey verbosity                = { "verbosityFlag" };
     dataRepository::ViewKey inputFileName            = {"inputFileName"};
     dataRepository::ViewKey restartFileName          = {"restartFileName"};
     dataRepository::ViewKey beginFromRestart         = {"beginFromRestart"};

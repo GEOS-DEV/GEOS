@@ -38,9 +38,10 @@ public:
 
   static string CatalogName() { return "SystemSolverParameters"; }
 
+  virtual void PostProcessInput() override;
+
   struct viewKeysStruct
   {
-    static constexpr auto verbosityString           = "verbosityFlag";
     static constexpr auto solverTypeString          = "solverType";
     static constexpr auto krylovTolString           = "krylovTol";
     static constexpr auto numKrylovIterString       = "numKrylovIter";
@@ -64,13 +65,14 @@ public:
     static constexpr auto lineSearchCutFactorString = "lineSearchCutFactor";
     static constexpr auto allowNonConvergedString   = "allowNonConverged";
     static constexpr auto maxSubStepsString         = "maxSubSteps";
+    static constexpr auto dtCutIterLimString        = "dtCutIterLimit";
+    static constexpr auto dtIncIterLimString        = "dtIncIterLimit";
 
   } viewKeys;
 
   struct groupKeysStruct
   {} groupKeys;
 
-  integer  verbose() const                    { return m_verbose; }
   string  solverType() const                  { return m_solverType; }
   real64 krylovTol() const                    { return m_krylovTol; }
   integer  numKrylovIter() const              { return m_numKrylovIter; }
@@ -96,9 +98,10 @@ public:
   real64  lineSearchCutFactor() const         { return m_lineSearchCutFactor; }
   integer allowNonConverged() const           { return m_allowNonConverged; }
   integer maxSubSteps() const                 { return m_maxSubSteps; }
+  integer & numdtAttempts()                   { return m_numdtAttempts; }
+  real64  dtCutIterLimit() const              { return m_dtCutIterLimit * m_maxIterNewton; }
+  real64  dtIncIterLimit() const              { return m_dtIncIterLimit * m_maxIterNewton; }
 
-
-  integer m_verbose;
   string  m_solverType;
   real64  m_krylovTol;
   integer m_numKrylovIter;
@@ -124,8 +127,9 @@ public:
   integer m_allowNonConverged;
   integer m_maxSubSteps;
   integer m_maxIters = 1000;
-
-
+  integer m_numdtAttempts; // number of times that the time-step had to be cut.
+  real64  m_dtCutIterLimit;
+  real64  m_dtIncIterLimit;
 };
 
 } /* namespace geosx */
