@@ -161,9 +161,12 @@ public:
   struct viewKeyStruct : SinglePhaseFlowBase::viewKeyStruct
   {
     // primary face-based field
-    static constexpr auto facePressureString      = "facePressure";
+    static constexpr auto facePressureString = "facePressure";
     static constexpr auto deltaFacePressureString = "deltaFacePressure";
 
+    // face-based depth
+    static constexpr auto faceGravDepthString = "faceGravDepth";
+    
     // auxiliary one-sided face-based vars
     static constexpr auto oneSidedVolFluxString = "oneSidedVolumetricFlux";
     static constexpr auto dOneSidedVolFlux_dPressureString = "dOneSidedVolumetricFlux_dPressure";
@@ -173,7 +176,7 @@ public:
     static constexpr auto dUpwMobility_dPressureString = "dUpwindedMobility_dPressure";
     
     // one-sided face-based maps
-    static constexpr auto oneSidedFaceToFaceString = "oneSidedFaceToFace";
+    static constexpr auto oneSidedFaceToFaceString = "oneSidedFaceToFace"; // TODO: decide if we keep this
     static constexpr auto elemOffsetString = "elemOffsetString";
 
     // one-sided face-based info
@@ -225,29 +228,39 @@ private:
                             ParallelMatrix * const matrix,
                             ParallelVector * const rhs );
 
+  void RegisterOneSidedFaceData( MeshLevel * const mesh );
+
+  void ResizeOneSidedFaceFields( MeshLevel * const mesh );
+    
+  void ConstructOneSidedFaceMaps( DomainPartition * const domain );
+  
   void ComputeOneSidedVolFluxes( DomainPartition const * const domain );
 
-  void RecomputeHalfTransmissibilities( ElementSubRegionBase const * const subRegion,
- 				        localIndex const ei,
-					localIndex const numFacesInElem,
-					stackArray2d<real64, MAX_NUM_FACES_IN_ELEM*MAX_NUM_FACES_IN_ELEM> & halfTrans );
+  void RecomputeOneSidedTransmissibilities( ElementSubRegionBase const * const subRegion,
+                                            localIndex const ei,
+                                            localIndex const numFacesInElem,
+                                            stackArray2d<real64, MAX_NUM_FACES_IN_ELEM
+                                                                *MAX_NUM_FACES_IN_ELEM> & halfTrans );
   
   void UpdateUpwindedTransportCoefficients( DomainPartition const * const domain );
   
   void IncrementLocalMassFluxSum( real64 const & dt,
- 	 	                  real64 const & upwMobility,
-				  real64 const & dUpwMobility_dp,
-				  real64 const & dUpwMobility_dp_neighbor,
-				  real64 const & oneSidedVolFlux,
-				  real64 const & dOneSidedVolFlux_dp,
-				  real64 const & dOneSidedVolFlux_dfp,
-				  real64       & sumOneSidedMassFluxes,
-				  real64       & dSumOneSidedMassFluxes_dp,
-				  real64       & dSumOneSidedMassFluxes_dp_neighbor,
+                                  real64 const & upwMobility,
+                                  real64 const & dUpwMobility_dp,
+                                  real64 const & dUpwMobility_dp_neighbor,
+                                  real64 const & oneSidedVolFlux,
+                                  real64 const & dOneSidedVolFlux_dp,
+                                  real64 const & dOneSidedVolFlux_dfp,
+                                  real64       & sumOneSidedMassFluxes,
+                                  real64       & dSumOneSidedMassFluxes_dp,
+                                  real64       & dSumOneSidedMassFluxes_dp_neighbor,
                                   real64       & dSumOneSidedMassFluxes_dfp ) const;
 
+  /// Number of one-sided faces on this MPI rank
+  localIndex m_numOneSidedFaces;
+  
 };
 
 } /* namespace geosx */
 
-#endif //GEOSX_PHYSICSSOLVERS_FINITEVOLUME_SINGLEPHASEMIMETIC_HPP_
+#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEMIMETIC_HPP_
