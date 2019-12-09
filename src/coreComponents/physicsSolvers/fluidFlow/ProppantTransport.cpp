@@ -769,7 +769,7 @@ void ProppantTransport::AssembleSystem( real64 const time,
 
   AssembleAccumulationTerms( domain, &dofManager, &matrix, &rhs );
 
-  if( verboseLevel() >= 2 )
+  if( getLogLevel() >= 2 )
   {
     GEOS_LOG_RANK_0("After ProppantTransport::AssembleAccumulationTerms");
     GEOS_LOG_RANK_0("\nJacobian:\n");
@@ -790,7 +790,7 @@ void ProppantTransport::AssembleSystem( real64 const time,
   matrix.close();
   rhs.close();
 
-  if( verboseLevel() >= 2 )
+  if( getLogLevel() >= 2 )
   {
     GEOS_LOG_RANK_0("After ProppantTransport::AssembleSystem");
     GEOS_LOG_RANK_0("\nJacobian:\n");
@@ -1137,7 +1137,7 @@ void ProppantTransport::ApplyBoundaryConditions(real64 const time_n,
   });
  
 
-  if( verboseLevel() >= 3 )
+  if( getLogLevel() >= 3 )
   {
     SystemSolverParameters * const solverParams = getSystemSolverParameters();
     integer newtonIter = solverParams->numNewtonIterations();
@@ -1266,7 +1266,7 @@ void ProppantTransport::SolveSystem( DofManager const & dofManager,
 
   SolverBase::SolveSystem( dofManager, matrix, rhs, solution );
   
-  if( verboseLevel() >= 2 )
+  if( getLogLevel() >= 2 )
   {
     GEOS_LOG_RANK("After ProppantTransport::SolveSystem");
     GEOS_LOG_RANK("\nsolution:\n" << solution);

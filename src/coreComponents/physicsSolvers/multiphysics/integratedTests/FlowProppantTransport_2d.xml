@@ -7,7 +7,7 @@
     gravityVector="0.0,0.0,-9.81">
 
     <ProppantTransport name="ProppantTransport"
-                       verboseLevel="1"
+                       logLevel="0"  
                        gravityFlag="1"
                        discretization="singlePhaseTPFA"
                        targetRegions="{Fracture}"
@@ -20,7 +20,7 @@
                               newtonTol="1.0e-8"
                               maxIterNewton="8"
                               doLineSearch="0"
-                              minNumberOfNewtonIterations="1"/>
+                              minIterNewton="1"/>
     
     </ProppantTransport>    
 
@@ -29,7 +29,7 @@
                            proppantSolverName="ProppantTransport"
                            flowSolverName="SinglePhaseFlow"
                            targetRegions="{Fracture}"
-                           verboseLevel="1">
+                           logLevel="1">
 
       
       <SystemSolverParameters name="SystemSolverParameters"
@@ -41,7 +41,7 @@
 
 
     <SinglePhaseFlow name="SinglePhaseFlow"
-                     verboseLevel="1"
+                     logLevel="1"
                      gravityFlag="1"
                      discretization="singlePhaseTPFA"
                      targetRegions="{Fracture}"
@@ -59,7 +59,7 @@
 
     
     <SurfaceGenerator name="SurfaceGen"
-                      verboseLevel="0"
+                      logLevel="0"
                       fractureRegion="Fracture"
                       targetRegions="{Fracture}"
                       solidMaterialName="granite"

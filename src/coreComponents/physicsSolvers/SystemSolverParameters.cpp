@@ -25,7 +25,6 @@ using namespace dataRepository;
 SystemSolverParameters::SystemSolverParameters( std::string const & name,
                                                 Group * const parent ):
   Group(name,parent),
-  m_verbose(0),
   m_solverType("Klu"),
   m_krylovTol(),
   m_numKrylovIter(),
@@ -46,11 +45,8 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
 {
   setInputFlags(InputFlags::OPTIONAL);
   
-  setRestartFlags(RestartFlags::NO_WRITE);
-  registerWrapper(viewKeysStruct::verbosityString, &m_verbose, false )->
-    setApplyDefaultValue(0)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("verbosity level");
+  // This enables logLevel filtering
+  enableLogLevelInput();
 
   registerWrapper(viewKeysStruct::solverTypeString, &m_solverType, false )->
     setInputFlag(InputFlags::OPTIONAL)->
@@ -121,6 +117,10 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Maximum number of Newton iterations");
 
+  registerWrapper(viewKeysStruct::minIterNewtonString, &m_minIterNewton, false )->
+      setApplyDefaultValue(1)->
+      setInputFlag(InputFlags::OPTIONAL)->
+      setDescription("Minimum number of Newton iterations.");
 
   registerWrapper( viewKeysStruct::maxTimeStepCutsString, &m_maxTimeStepCuts, false )->
     setApplyDefaultValue(2)->
@@ -189,6 +189,10 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
   	setInputFlag(InputFlags::OPTIONAL)->
   	setDescription("Fraction of the Max Newton iterations below which the solver asks for the time-step to be doubled for the next dt.");
 
+  registerWrapper(viewKeysStruct::maxIterNewtonConvergenceCheckString, &m_maxIterNewtonConvergenceCheck, false )->
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->    
+    setDescription("verbosity level");  
 }
 
 void SystemSolverParameters::PostProcessInput()

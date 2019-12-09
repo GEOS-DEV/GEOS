@@ -164,7 +164,7 @@ real64 FlowProppantTransportSolver::SolverStep( real64 const & time_n,
       proppantSolver.ResetStateToBeginningOfStep( domain );
       ResetStateToBeginningOfStep( domain );
     }
-    if (this->verboseLevel() >= 1)
+    if (getLogLevel() >= 1)
     {
       GEOS_LOG_RANK_0( "\tIteration: " << iter+1  << ", FlowSolver: " );
     }
@@ -186,13 +186,13 @@ real64 FlowProppantTransportSolver::SolverStep( real64 const & time_n,
       continue;
     }
   
-    if (flowSolver.getSystemSolverParameters()->numNewtonIterations() <=maxIterNewtonConvergenceCheckNumber  && iter > 0 && this->verboseLevel() >= 1)
+    if (flowSolver.getSystemSolverParameters()->numNewtonIterations() <=maxIterNewtonConvergenceCheckNumber  && iter > 0 && getLogLevel() >= 1)
     {
       GEOS_LOG_RANK_0( "***** The iterative coupling has converged in " << iter  << " iterations! *****\n" );
       break;
     }
 
-    if (this->verboseLevel() >= 1)
+    if (getLogLevel()  >= 1)
     {
       GEOS_LOG_RANK_0( "\tIteration: " << iter+1  << ", Proppant Solver: " );
     }

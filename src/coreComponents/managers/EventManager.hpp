@@ -65,7 +65,6 @@ public:
   {
     static constexpr auto maxTimeString = "maxTime";
     static constexpr auto maxCycleString = "maxCycle";
-    static constexpr auto verbosityString = "verbosity";
 
     static constexpr auto timeString = "time";
     static constexpr auto dtString = "dt";
@@ -77,7 +76,6 @@ public:
     dataRepository::ViewKey cycle = { "cycle" };
     dataRepository::ViewKey maxTime = { "maxTime" };
     dataRepository::ViewKey maxCycle = { "maxCycle" };
-    dataRepository::ViewKey verbosity = { "verbosity" };
     dataRepository::ViewKey currentSubEvent = { "currentSubEvent" };
   } viewKeys;
 
@@ -89,7 +87,6 @@ private:
 
   real64 m_maxTime;
   integer m_maxCycle;
-  integer m_verbosity;
 
   real64 m_time;
   real64 m_dt;
