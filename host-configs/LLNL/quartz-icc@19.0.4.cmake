@@ -20,6 +20,4 @@ set(MKL_LIBRARIES ${MKL_ROOT}/lib/libmkl_intel_lp64.so
                   ${COMPILER_DIR}/compiler/lib/intel64/libiomp5.so
                   CACHE STRING "")
 
-set(ENABLE_PETSC ON CACHE BOOL "Enables PETSc." FORCE)
-
 include(${CMAKE_CURRENT_LIST_DIR}/../../host-configs/LLNL/quartz-base.cmake)
