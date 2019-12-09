@@ -821,10 +821,14 @@
 		<xsd:attribute name="c65" type="real64_array" />
 		<!--c66 => The 66 component of the Elastic Stiffness Tensor in Voigt notation-->
 		<xsd:attribute name="c66" type="real64_array" />
+		<!--damage => Material Damage Variable-->
+		<xsd:attribute name="damage" type="real64_array2d" />
 		<!--defaultStiffness => Default Elastic Stiffness Tensor in Voigt notation-->
 		<xsd:attribute name="defaultStiffness" type="geosx::constitutive::LinearElasticAnisotropic::StiffnessTensor" />
 		<!--density => Material Density-->
 		<xsd:attribute name="density" type="real64_array2d" />
+		<!--strainEnergyDensity => Stress Deviator-->
+		<xsd:attribute name="strainEnergyDensity" type="real64_array2d" />
 		<!--stress => Stress Deviator-->
 		<xsd:attribute name="stress" type="r2Sym_array2d" />
 	</xsd:complexType>
@@ -833,8 +837,12 @@
 		<xsd:attribute name="BulkModulus" type="real64_array" />
 		<!--ShearModulus => Elastic Shear Modulus-->
 		<xsd:attribute name="ShearModulus" type="real64_array" />
+		<!--damage => Material Damage Variable-->
+		<xsd:attribute name="damage" type="real64_array2d" />
 		<!--density => Material Density-->
 		<xsd:attribute name="density" type="real64_array2d" />
+		<!--strainEnergyDensity => Stress Deviator-->
+		<xsd:attribute name="strainEnergyDensity" type="real64_array2d" />
 		<!--stress => Stress Deviator-->
 		<xsd:attribute name="stress" type="r2Sym_array2d" />
 	</xsd:complexType>
@@ -919,12 +927,16 @@
 		<xsd:attribute name="c66" type="real64_array" />
 		<!--dPVMult_dDensity => (no description available)-->
 		<xsd:attribute name="dPVMult_dDensity" type="real64_array2d" />
+		<!--damage => Material Damage Variable-->
+		<xsd:attribute name="damage" type="real64_array2d" />
 		<!--defaultStiffness => Default Elastic Stiffness Tensor in Voigt notation-->
 		<xsd:attribute name="defaultStiffness" type="geosx::constitutive::LinearElasticAnisotropic::StiffnessTensor" />
 		<!--density => Material Density-->
 		<xsd:attribute name="density" type="real64_array2d" />
 		<!--poreVolumeMultiplier => (no description available)-->
 		<xsd:attribute name="poreVolumeMultiplier" type="real64_array2d" />
+		<!--strainEnergyDensity => Stress Deviator-->
+		<xsd:attribute name="strainEnergyDensity" type="real64_array2d" />
 		<!--stress => Stress Deviator-->
 		<xsd:attribute name="stress" type="r2Sym_array2d" />
 	</xsd:complexType>
@@ -935,10 +947,14 @@
 		<xsd:attribute name="ShearModulus" type="real64_array" />
 		<!--dPVMult_dDensity => (no description available)-->
 		<xsd:attribute name="dPVMult_dDensity" type="real64_array2d" />
+		<!--damage => Material Damage Variable-->
+		<xsd:attribute name="damage" type="real64_array2d" />
 		<!--density => Material Density-->
 		<xsd:attribute name="density" type="real64_array2d" />
 		<!--poreVolumeMultiplier => (no description available)-->
 		<xsd:attribute name="poreVolumeMultiplier" type="real64_array2d" />
+		<!--strainEnergyDensity => Stress Deviator-->
+		<xsd:attribute name="strainEnergyDensity" type="real64_array2d" />
 		<!--stress => Stress Deviator-->
 		<xsd:attribute name="stress" type="r2Sym_array2d" />
 	</xsd:complexType>

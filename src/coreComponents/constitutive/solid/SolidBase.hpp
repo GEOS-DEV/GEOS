@@ -57,13 +57,18 @@ public:
 
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
+    static constexpr auto damageString  = "damage";
     static constexpr auto defaultDensityString  = "defaultDensity";
     static constexpr auto densityString  = "density";
+    static constexpr auto strainEnergyDensityString = "strainEnergyDensity";
     static constexpr auto stressString = "stress";
   };
 
   real64   defaultDensity() const { return m_defaultDensity; }
   real64 & defaultDensity()       { return m_defaultDensity; }
+
+  arrayView2d<real64>       const & getDamage()       { return m_damage; }
+  arrayView2d<real64 const> const & getDamage() const { return m_damage; }
 
   arrayView2d<real64>       const & density()       { return m_density; }
   arrayView2d<real64 const> const & density() const { return m_density; }
@@ -71,15 +76,20 @@ public:
   arrayView2d<R2SymTensor>       const & getStress()       { return m_stress; }
   arrayView2d<R2SymTensor const> const & getStress() const { return m_stress; }
 
+  arrayView2d<real64>       const & getStrainEnergyDensity()       { return m_strainEnergyDensity; }
+  arrayView2d<real64 const> const & getStrainEnergyDensity() const { return m_strainEnergyDensity; }
+
+
 protected:
 
 //  template< typename LEAFCLASS, typename POLICY=materialUpdatePolicy, typename ... ARGS >
 //  void BatchUpdateKernel( ARGS && ... args );
 
 
+  array2d<real64> m_damage;
   real64 m_defaultDensity;
   array2d<real64> m_density;
-
+  array2d<real64> m_strainEnergyDensity;
   array2d<R2SymTensor> m_stress;
 
 };

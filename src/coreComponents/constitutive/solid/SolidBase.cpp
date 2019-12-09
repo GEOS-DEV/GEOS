@@ -31,10 +31,17 @@ namespace constitutive
 SolidBase::SolidBase( string const & name,
                       Group * const parent ):
   ConstitutiveBase( name, parent ),
+  m_damage{},
   m_defaultDensity{0},
   m_density{},
+  m_strainEnergyDensity{},
   m_stress{}
 {
+
+  registerWrapper( viewKeyStruct::damageString, &m_damage, 0 )->
+    setApplyDefaultValue(0.0)->
+    setPlotLevel(PlotLevel::LEVEL_0)->
+    setDescription("Material Damage Variable");
 
   registerWrapper( viewKeyStruct::defaultDensityString, &m_defaultDensity, 0 )->
     setInputFlag(InputFlags::REQUIRED)->
@@ -43,6 +50,11 @@ SolidBase::SolidBase( string const & name,
   registerWrapper( viewKeyStruct::densityString, &m_density, 0 )->
     setApplyDefaultValue(-1)->
     setDescription("Material Density");
+
+  registerWrapper( viewKeyStruct::strainEnergyDensityString, &m_strainEnergyDensity, 0 )->
+    setApplyDefaultValue(0.0)->
+    setPlotLevel(PlotLevel::LEVEL_0)->
+    setDescription("Stress Deviator");
 
   registerWrapper( viewKeyStruct::stressString, &m_stress, 0 )->
     setPlotLevel(PlotLevel::LEVEL_0)->
@@ -60,10 +72,11 @@ SolidBase::DeliverClone( string const & GEOSX_UNUSED_ARG( name ),
 {
   SolidBase * const newConstitutiveRelation = dynamic_cast<SolidBase*>(clone.get());
 
+  newConstitutiveRelation->m_damage = m_damage;
   newConstitutiveRelation->m_defaultDensity = m_defaultDensity;
   newConstitutiveRelation->m_density = m_density;
-
   newConstitutiveRelation->m_stress = m_stress;
+  newConstitutiveRelation->m_strainEnergyDensity = m_strainEnergyDensity;
 }
 
 
@@ -73,11 +86,11 @@ void SolidBase::AllocateConstitutiveData( dataRepository::Group * const parent,
   ConstitutiveBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
   this->resize( parent->size() );
+  m_damage.resize( parent->size(), numConstitutivePointsPerParentIndex );
   m_density.resize( parent->size(), numConstitutivePointsPerParentIndex );
   m_density = m_defaultDensity;
-
   m_stress.resize( parent->size(), numConstitutivePointsPerParentIndex );
-
+  m_strainEnergyDensity.resize( parent->size(), numConstitutivePointsPerParentIndex );
 
 }
 

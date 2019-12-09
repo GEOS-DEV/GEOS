@@ -40,9 +40,11 @@ c64                  real64_array    The 64 component of the Elastic Stiffness T
 c65                  real64_array    The 65 component of the Elastic Stiffness Tensor in Voigt notation 
 c66                  real64_array    The 66 component of the Elastic Stiffness Tensor in Voigt notation 
 dPVMult_dDensity     real64_array2d  (no description available)                                         
+damage               real64_array2d  Material Damage Variable                                           
 defaultStiffness     StiffnessTensor Default Elastic Stiffness Tensor in Voigt notation                 
 density              real64_array2d  Material Density                                                   
 poreVolumeMultiplier real64_array2d  (no description available)                                         
+strainEnergyDensity  real64_array2d  Stress Deviator                                                    
 stress               r2Sym_array2d   Stress Deviator                                                    
 ==================== =============== ================================================================== 
 
