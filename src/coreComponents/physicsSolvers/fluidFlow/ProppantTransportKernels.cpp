@@ -152,102 +152,109 @@ Launch<FaceElementStencil>( FaceElementStencil const & stencil,
 
   ArrayOfArraysView<R1Tensor const> const & cellCenterToEdgeCenters = stencil.getCellCenterToEdgeCenters();
 
+  ArrayOfArraysView<integer const> const & isGhostConnectors = stencil.getIsGhostConnectors();  
+  
   constexpr  localIndex DOF1 = maxNumFluxElems * constitutive::MultiFluidBase::MAX_NUM_COMPONENTS;
   constexpr  localIndex DOF2 = maxStencilSize * constitutive::MultiFluidBase::MAX_NUM_COMPONENTS;
 
   forall_in_range<serialPolicy>( 0, stencil.size(), GEOSX_LAMBDA ( localIndex iconn )
   {
 
-    localIndex const numFluxElems = stencil.stencilSize(iconn);
-    localIndex const stencilSize  = numFluxElems;
+    if(isGhostConnectors[iconn][0] < 0) 
+      {
 
-    localIndex const DOF = numFluxElems * numDofPerCell;
+        localIndex const numFluxElems = stencil.stencilSize(iconn);
+        localIndex const stencilSize  = numFluxElems;
+
+        localIndex const DOF = numFluxElems * numDofPerCell;
     
-    // working arrays
-    stackArray1d<globalIndex, DOF1> eqnRowIndices(DOF);
-    stackArray1d<globalIndex, DOF2> dofColIndices(DOF);
+        // working arrays
+        stackArray1d<globalIndex, DOF1> eqnRowIndices(DOF);
+        stackArray1d<globalIndex, DOF2> dofColIndices(DOF);
 
-    stackArray1d<real64, DOF1> localFlux(DOF);
-    stackArray2d<real64, DOF1*DOF2> localFluxJacobian(DOF, DOF);
+        stackArray1d<real64, DOF1> localFlux(DOF);
+        stackArray2d<real64, DOF1*DOF2> localFluxJacobian(DOF, DOF);
 
-    localIndex const er = seri[iconn][0];
-    localIndex const esr = sesri[iconn][0];
+        localIndex const er = seri[iconn][0];
+        localIndex const esr = sesri[iconn][0];
 
-    FluxKernel::ComputeJunction( numFluxElems,
-				 numDofPerCell,
-                                 sei[iconn],
-                                 weights[iconn],
-				 cellCenterToEdgeCenters[iconn],
-                                 pres[er][esr],
-                                 dPres[er][esr],
-				 proppantConc[er][esr],
-				 dProppantConc[er][esr],
-                                 componentDens[er][esr][fluidIndex],
-                                 dComponentDens_dPres[er][esr][fluidIndex],
-                                 dComponentDens_dComponentConc[er][esr][fluidIndex],
-                                 gravDepth[er][esr],
-                                 dens[er][esr][fluidIndex],
-                                 dDens_dPres[er][esr][fluidIndex],
-                                 dDens_dProppantConc[er][esr][fluidIndex],
-                                 dDens_dComponentConc[er][esr][fluidIndex],
-				 visc[er][esr][fluidIndex],
-                                 dVisc_dPres[er][esr][fluidIndex],
-                                 dVisc_dProppantConc[er][esr][fluidIndex],
-                                 dVisc_dComponentConc[er][esr][fluidIndex],
-                                 fluidDensity[er][esr][fluidIndex],
-                                 dFluidDens_dPres[er][esr][fluidIndex],
-                                 dFluidDens_dComponentConc[er][esr][fluidIndex],
-				 settlingFactor[er][esr][proppantIndex],
-				 dSettlingFactor_dPres[er][esr][proppantIndex],
-				 dSettlingFactor_dProppantConc[er][esr][proppantIndex],
-				 dSettlingFactor_dComponentConc[er][esr][proppantIndex],
-				 collisionFactor[er][esr][proppantIndex],
-				 dCollisionFactor_dProppantConc[er][esr][proppantIndex],
-				 isProppantMobile[er][esr],
-				 proppantPackVf[er][esr],
-                                 aperture[er][esr],
-				 proppantLiftFlux[er][esr],
-				 isInterfaceElement[er][esr],
-                                 unitGravityVector,
-                                 proppantPackPermeability,
-                                 dt,
-                                 localFlux,
-                                 localFluxJacobian);
+        FluxKernel::ComputeJunction( numFluxElems,
+                                     numDofPerCell,
+                                     sei[iconn],
+                                     weights[iconn],
+                                     cellCenterToEdgeCenters[iconn],
+                                     pres[er][esr],
+                                     dPres[er][esr],
+                                     proppantConc[er][esr],
+                                     dProppantConc[er][esr],
+                                     componentDens[er][esr][fluidIndex],
+                                     dComponentDens_dPres[er][esr][fluidIndex],
+                                     dComponentDens_dComponentConc[er][esr][fluidIndex],
+                                     gravDepth[er][esr],
+                                     dens[er][esr][fluidIndex],
+                                     dDens_dPres[er][esr][fluidIndex],
+                                     dDens_dProppantConc[er][esr][fluidIndex],
+                                     dDens_dComponentConc[er][esr][fluidIndex],
+                                     visc[er][esr][fluidIndex],
+                                     dVisc_dPres[er][esr][fluidIndex],
+                                     dVisc_dProppantConc[er][esr][fluidIndex],
+                                     dVisc_dComponentConc[er][esr][fluidIndex],
+                                     fluidDensity[er][esr][fluidIndex],
+                                     dFluidDens_dPres[er][esr][fluidIndex],
+                                     dFluidDens_dComponentConc[er][esr][fluidIndex],
+                                     settlingFactor[er][esr][proppantIndex],
+                                     dSettlingFactor_dPres[er][esr][proppantIndex],
+                                     dSettlingFactor_dProppantConc[er][esr][proppantIndex],
+                                     dSettlingFactor_dComponentConc[er][esr][proppantIndex],
+                                     collisionFactor[er][esr][proppantIndex],
+                                     dCollisionFactor_dProppantConc[er][esr][proppantIndex],
+                                     isProppantMobile[er][esr],
+                                     proppantPackVf[er][esr],
+                                     aperture[er][esr],
+                                     proppantLiftFlux[er][esr],
+                                     isInterfaceElement[er][esr],
+                                     unitGravityVector,
+                                     proppantPackPermeability,
+                                     dt,
+                                     localFlux,
+                                     localFluxJacobian);
 
 
-    for (localIndex i = 0; i < numFluxElems; ++i)
-    {
+          for (localIndex i = 0; i < numFluxElems; ++i)
+            {
 
-      for (localIndex j = 0; j < numDofPerCell; ++j)
-      {
+              for (localIndex j = 0; j < numDofPerCell; ++j)
+                {
 
-        eqnRowIndices[i * numDofPerCell + j] = dofNumber[seri(iconn,i)][sesri(iconn,i)][sei(iconn,i)] + j;
+                  eqnRowIndices[i * numDofPerCell + j] = dofNumber[seri(iconn,i)][sesri(iconn,i)][sei(iconn,i)] + j;
 
-      }
+                }
 	
-    }
+            }
 
-    for (localIndex i = 0; i < stencilSize; ++i)
-    {
+        for (localIndex i = 0; i < stencilSize; ++i)
+          {
 
-      for (localIndex j = 0; j < numDofPerCell; ++j)
-      {
+            for (localIndex j = 0; j < numDofPerCell; ++j)
+              {
 
-        dofColIndices[i * numDofPerCell + j] = dofNumber[seri(iconn,i)][sesri(iconn,i)][sei(iconn,i)] + j;
+                dofColIndices[i * numDofPerCell + j] = dofNumber[seri(iconn,i)][sesri(iconn,i)][sei(iconn,i)] + j;
+
+              }
+
+
+          }
+
+        addLocalContributionsToGlobalSystem( numFluxElems * numDofPerCell,
+                                             stencilSize * numDofPerCell,
+                                             eqnRowIndices.data(),
+                                             dofColIndices.data(),
+                                             localFluxJacobian.data(),
+                                             localFlux.data(),
+                                             jacobian,
+                                             residual );
 
       }
-
-
-    }
-
-    addLocalContributionsToGlobalSystem( numFluxElems * numDofPerCell,
-                                         stencilSize * numDofPerCell,
-                                         eqnRowIndices.data(),
-                                         dofColIndices.data(),
-                                         localFluxJacobian.data(),
-                                         localFlux.data(),
-                                         jacobian,
-                                         residual );
   } );
 }
 

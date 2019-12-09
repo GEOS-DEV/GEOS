@@ -66,6 +66,7 @@ void FaceElementStencil::add( localIndex const numPts,
 
 void FaceElementStencil::add( localIndex const numPts,
                               R1Tensor const * const cellCenterToEdgeCenter,
+                              integer const * const isGhostConnectors,                              
                               localIndex const connectorIndex )
 {
   GEOS_ERROR_IF( numPts >= MAX_STENCIL_SIZE, "Maximum stencil size exceeded" );
@@ -82,10 +83,15 @@ void FaceElementStencil::add( localIndex const numPts,
       {
 	m_cellCenterToEdgeCenters.clearArray( stencilIndex );
 	m_cellCenterToEdgeCenters.appendToArray( stencilIndex, cellCenterToEdgeCenter, numPts );
+
+	m_isGhostConnectors.clearArray( stencilIndex );
+	m_isGhostConnectors.appendToArray( stencilIndex, isGhostConnectors, numPts );
+        
       }
     else
       {
 	m_cellCenterToEdgeCenters.appendArray( cellCenterToEdgeCenter, numPts );
+	m_isGhostConnectors.appendArray( isGhostConnectors, numPts );
       }
   }
 }  

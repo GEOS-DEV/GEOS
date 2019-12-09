@@ -261,6 +261,7 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
   stackArray1d<real64, maxElems> stencilWeights;
 
   stackArray1d<R1Tensor, maxElems> stencilCellCenterToEdgeCenters;    
+  stackArray1d<integer, maxElems> isGhostConnectors;
   
   arrayView1d<integer const> const & edgeGhostRank = edgeManager->GhostRank();
 
@@ -271,7 +272,7 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
     // only do this if there are more than one element attached to the connector
     localIndex const edgeIndex = fractureConnectorsToEdges[fci];
 
-    if( edgeGhostRank[edgeIndex] < 0 && numElems > 1 )
+    //    if( edgeGhostRank[edgeIndex] < 0 && numElems > 1 )
     {
 
       GEOS_ERROR_IF(numElems > maxElems, "Max stencil size exceeded by fracture-fracture connector " << fci);
@@ -281,6 +282,7 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
       stencilWeights.resize(numElems);
 
       stencilCellCenterToEdgeCenters.resize(numElems);
+      isGhostConnectors.resize(numElems);      
       
       // get edge geometry
       R1Tensor edgeCenter, edgeLength;
@@ -306,6 +308,8 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
         stencilWeights[kfe] =  1.0 / 12.0 * edgeLength.L2_Norm() / cellCenterToEdgeCenter.L2_Norm();
 
         stencilCellCenterToEdgeCenters[kfe] = cellCenterToEdgeCenter;
+
+        isGhostConnectors[kfe] = edgeGhostRank[edgeIndex];
         
       }
       // add/overwrite the stencil for index fci
@@ -318,6 +322,7 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
 
       fractureStencil.add( numElems,
                            stencilCellCenterToEdgeCenters.data(),
+                           isGhostConnectors.data(),           
                            fci );      
       
     }

@@ -83,6 +83,7 @@ public:
 
   void add( localIndex const numPts,
 	    R1Tensor const * const cellCenterToEdgeCenter,
+            integer const * const isGhostConnector,
 	    localIndex const connectorIndex );  
 
   virtual localIndex size() const  override final
@@ -94,10 +95,15 @@ public:
 
   ArrayOfArraysView< R1Tensor const > const & getCellCenterToEdgeCenters() const
   { return m_cellCenterToEdgeCenters; }
+
+  ArrayOfArraysView< integer const > const & getIsGhostConnectors() const
+  { return m_isGhostConnectors; }  
+
   
 private:
 
   ArrayOfArrays<R1Tensor> m_cellCenterToEdgeCenters;
+  ArrayOfArrays<integer> m_isGhostConnectors;  
 
 
 };

@@ -268,6 +268,13 @@ public:
 
   static constexpr localIndex MAX_NUM_COMPONENTS = 3;
 
+  /*
+  void WriteVTKData(const std::string& prefix,
+                    DomainPartition * domain,
+                    const int cycleNumber,
+                    real64 const& time);
+  */
+  
 protected:
 
   virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const rootGroup ) override;

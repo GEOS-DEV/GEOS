@@ -240,11 +240,17 @@ Launch<FaceElementStencil>( FaceElementStencil const & stencil,
   typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
   typename FaceElementStencil::WeightContainerViewConstType const & weights = stencil.getWeights();
 
+  ArrayOfArraysView<integer const> const & isGhostConnectors = stencil.getIsGhostConnectors();  
+  
+
   forall_in_range<serialPolicy>( 0, stencil.size(), GEOSX_LAMBDA ( localIndex iconn )
   {
     localIndex const numFluxElems = stencil.stencilSize(iconn);
     localIndex const stencilSize  = numFluxElems;
 
+    if(numFluxElems > 1 && isGhostConnectors[iconn][0] < 0)
+      {
+    
     // working arrays
     stackArray1d<globalIndex, maxNumFluxElems> eqnRowIndices(numFluxElems);
     stackArray1d<globalIndex, maxStencilSize> dofColIndices(stencilSize);
@@ -298,7 +304,8 @@ Launch<FaceElementStencil>( FaceElementStencil const & stencil,
                                          localFlux.data(),
                                          jacobian,
                                          residual );
-  } );
+      }
+    } );
 }
 
 
