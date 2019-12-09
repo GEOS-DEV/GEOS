@@ -132,14 +132,12 @@ struct FluxKernel
           real64 const dt,
           localIndex const fluidIndex,
           localIndex const proppantIndex,
-	  bool updateProppantMobilityFlag,
-	  bool updatePermeabilityFlag,
+          real64 const proppantPackPermeability,         
           R1Tensor const & unitGravityVector,          
           ElementViewConst < arrayView1d<globalIndex const > > const & dofNumber,
           ElementViewConst < arrayView1d<real64 const> > const & pres,
           ElementViewConst < arrayView1d<real64 const> > const & dPres,
           ElementViewConst < arrayView1d<real64 const> > const & proppantConc,
-          ElementViewConst < arrayView1d<real64 const> > const & proppantConcOld,
           ElementViewConst < arrayView1d<real64 const> > const & dProppantConc,
           MaterialView< arrayView3d<real64 const> > const & componentDens,
           MaterialView< arrayView3d<real64 const> > const & dComponentDens_dPres,
@@ -162,15 +160,29 @@ struct FluxKernel
           MaterialView< arrayView2d<real64 const> > const & dSettlingFactor_dComponentConc,          
           MaterialView< arrayView1d<real64 const> > const & collisionFactor,
           MaterialView< arrayView1d<real64 const> > const & dCollisionFactor_dProppantConc,
-          MaterialView< arrayView1d<integer const> > const & isProppantMobile,	  
-          MaterialView< arrayView1d<real64 const> > const & proppantPackPermeability,
-          ElementViewConst < arrayView1d<real64 const> > const & volume,
+          ElementViewConst < arrayView1d<integer const> > const & isProppantMobile,	  
+          ElementViewConst < arrayView1d<real64 const> > const & proppantPackVf,
           ElementViewConst < arrayView1d<real64 const> > const & aperture,
-          ElementView< arrayView1d<R1Tensor> > const & shearRate,          
+          ElementViewConst < arrayView1d<real64 const> > const & proppantLiftFlux,
+          ElementViewConst < arrayView1d<integer const> > const & isInterfaceElement,	            
           ParallelMatrix * const jacobian,
           ParallelVector * const residual );
 
 
+  template< typename STENCIL_TYPE >
+  static void
+  LaunchCellBasedFluxCalculation( STENCIL_TYPE const & stencil,
+                                  localIndex const fluidIndex,
+                                  real64 const proppantPackPermeability,
+                                  R1Tensor const unitGravityVector,
+                                  ElementViewConst < arrayView1d<real64 const> > const & pres,
+                                  ElementViewConst < arrayView1d<real64 const> > const & gravDepth,
+                                  MaterialView< arrayView2d<real64 const> > const & dens,
+                                  MaterialView< arrayView2d<real64 const> > const & visc,
+                                  ElementViewConst < arrayView1d<real64 const> > const & aperture,
+                                  ElementViewConst < arrayView1d<real64 const> > const & proppantPackVf,                                  
+                                  ElementView< arrayView1d<R1Tensor> > const & cellBasedFlux);          
+  
   /**
      * @brief Compute flux and its derivatives for a given multi-element connector.
      *
@@ -186,7 +198,6 @@ struct FluxKernel
 		   arrayView1d<real64 const> const & pres,
                    arrayView1d<real64 const> const & dPres,
 		   arrayView1d<real64 const> const & proppantConc,
-		   arrayView1d<real64 const> const & proppantConcOld,
                    arrayView1d<real64 const> const & dProppantConc,
                    arrayView3d<real64 const> const & componentDens,
                    arrayView3d<real64 const> const & dComponentDens_dPres,
@@ -210,20 +221,21 @@ struct FluxKernel
                    arrayView1d<real64 const> const & collisionFactor,
                    arrayView1d<real64 const> const & dCollisionFactor_dProppantConc,
                    arrayView1d<integer const> const & isProppantMobile,
-                   arrayView1d<real64 const> const & proppantPackPermeability,		   
-                   arrayView1d<real64 const> const & volume,
+                   arrayView1d<real64 const> const & proppantPackVf,
                    arrayView1d<real64 const> const & aperture,
+                   arrayView1d<real64 const> const & proppantLiftFlux,
+                   arrayView1d<integer const> const & isInterfaceElement,
                    R1Tensor const & unitGravityVector,
-		   bool updateProppantMobilityFlag,
-		   bool updatePermeabilityFlag,
+		   real64 const proppantPackPermeability,
                    real64 const dt,
-                   arrayView1d<R1Tensor> const & shearRate,
                    arraySlice1d<real64> const & localFlux,
                    arraySlice2d<real64> const & localFluxJacobian)
   {
 
     // We assume numElems == stencilSize;
 
+    static constexpr real64 TINY = 1e-30;   
+    
     // working array
     constexpr localIndex maxNumFluxElems = FaceElementStencil::NUM_POINT_IN_FLUX;
     constexpr localIndex maxNumComponents = ProppantTransport::MAX_NUM_COMPONENTS;
@@ -338,7 +350,29 @@ struct FluxKernel
       stencilEdgeToFaceDownDistance = -Dot(stencilCellCenterToEdgeCenters[i], unitGravityVector) * edgeLength / stencilCellCenterToEdgeCenters[i].L2_Norm();
       
       coefs[i] =  stencilEdgeToFaceDownDistance * aperture[ei];
-      
+
+      if(fabs(stencilEdgeToFaceDownDistance) > TINY)
+        {
+
+          // vertical flow component
+
+          if(proppantPackVf[ei] > 0.0)
+            {
+
+              // assume the pack peremeability dominates bulk permeability in vertical direction
+              transT[i] = proppantPackPermeability * stencilWeights[i] * aperture[ei] * 12.0;     
+
+            }
+
+        }
+      else
+        {
+
+          // horizontal flow component
+          transT[i] = transT[i] * (1.0 - proppantPackVf[ei]) + proppantPackVf[ei] * proppantPackPermeability * stencilWeights[i] * aperture[ei] * 12.0;
+          
+        }
+
     }
 
     for( localIndex i=0 ; i<numElems ; ++i )
@@ -376,13 +410,6 @@ struct FluxKernel
       dCollisionFac_dProppantC[i] = dCollisionFactor_dProppantConc[ei];
 
       isProppantMob[i] = isProppantMobile[ei];
-
-      if(proppantPackPermeability[ei] > 0.0 && updatePermeabilityFlag)
-      {
-        transT[i] = transT[i] * (1.0 - proppantConcOld[ei]) + proppantPackPermeability[ei]  * 12 * aperture[ei] * stencilWeights[i] * proppantConcOld[ei];
-
-      }
-    
 
       for(localIndex c = 0; c < NC; ++c)
         {
@@ -468,10 +495,6 @@ struct FluxKernel
       
       edgeToFaceFlux[i] = transT[i] * fluxTerm / edgeViscosity;
 
-      for (localIndex k = 0; k < 3; ++k)
-        shearRate[ei][k] += -edgeToFaceFlux[i] * stencilCellCenterToEdgeCenters[i][k] / aperture[ei] / volume[ei];
-
-      
       dEdgeToFaceFlux_dP[i][i] += -transT[i] / edgeViscosity;
 
       for (localIndex j = 0; j < numElems; ++j)
@@ -492,6 +515,9 @@ struct FluxKernel
 
       //contribution from paricle slipping
 
+    
+      /*
+      
       edgeToFaceProppantFlux[i] = (1.0 + fluidDens[i] / mixDens[i] * (1.0 - proppantC[i]) * collisionFac[i]) *  edgeToFaceFlux[i] + fluidDens[i] / mixDens[i] * (1.0 - proppantC[i]) * settlingFac[i] * coefs[i];
 
       dEdgeToFaceProppantFlux_dP[i][i] = (dFluidDens_dP[i] / mixDens[i] - fluidDens[i] * dMixDens_dP[i] / (mixDens[i] * mixDens[i])) * (1.0 - proppantC[i]) * (collisionFac[i] * edgeToFaceFlux[i] + settlingFac[i] * coefs[i]) + fluidDens[i] / mixDens[i] * (1.0 - proppantC[i]) * dSettlingFac_dP[i] * coefs[i];
@@ -522,6 +548,98 @@ struct FluxKernel
           
       }
 
+      */
+
+
+      for (localIndex j = 0; j < numElems; ++j)
+        {
+
+          dEdgeToFaceProppantFlux_dP[i][j] = 0.0;
+          dEdgeToFaceProppantFlux_dProppantC[i][j] = 0.0;
+
+          for(localIndex c = 0; c < NC; ++c)
+            {
+
+              dEdgeToFaceProppantFlux_dComponentC[i][j][c] = 0.0;
+              
+            }
+          
+        }
+
+          
+      if(fabs(coefs[i]) > TINY)
+        {
+
+          // vertical
+          
+          edgeToFaceProppantFlux[i] = (1.0 - proppantC[i]) * settlingFac[i] * coefs[i];
+
+          if(isInterfaceElement[ei] == 1)
+            {
+
+              real64 dir = 0.0;
+
+              if(fabs(edgeToFaceProppantFlux[i]) > TINY)
+                dir = edgeToFaceProppantFlux[i] / fabs(edgeToFaceProppantFlux[i]);
+
+              edgeToFaceProppantFlux[i] = fabs(edgeToFaceProppantFlux[i]) - proppantLiftFlux[ei];
+
+              
+              edgeToFaceProppantFlux[i] *= dir;
+              
+            }
+
+
+          edgeToFaceProppantFlux[i] += edgeToFaceFlux[i];
+          
+
+          dEdgeToFaceProppantFlux_dProppantC[i][i] = (-settlingFac[i] + (1 - proppantC[i]) * dSettlingFac_dProppantC[i]) * coefs[i];
+
+
+          for (localIndex j = 0; j < numElems; ++j)
+            {
+
+              dEdgeToFaceProppantFlux_dProppantC[i][j] += dEdgeToFaceFlux_dProppantC[i][j];
+              dEdgeToFaceProppantFlux_dP[i][j] += dEdgeToFaceFlux_dP[i][j];
+
+              for(localIndex c = 0; c < NC; ++c)
+                {
+
+                  dEdgeToFaceProppantFlux_dComponentC[i][j][c] += dEdgeToFaceFlux_dComponentC[i][j][c];                  
+
+                }
+            }
+          
+        }
+      else
+        {
+
+          // horizontal
+        
+          real64 fluxCoef = (1.0 - proppantPackVf[ei]) / (proppantPackVf[ei] * 12.0 * proppantPackPermeability / aperture[ei]/ aperture[ei] + (1.0 - proppantPackVf[ei])); 
+
+                                                          
+          edgeToFaceProppantFlux[i] = fluxCoef * edgeToFaceFlux[i];
+
+                                                          
+          for (localIndex j = 0; j < numElems; ++j)
+            {
+
+              dEdgeToFaceProppantFlux_dP[i][j] += fluxCoef * dEdgeToFaceFlux_dP[i][j];
+              dEdgeToFaceProppantFlux_dProppantC[i][j] += fluxCoef * dEdgeToFaceFlux_dProppantC[i][j];
+
+              for(localIndex c = 0; c < NC; ++c)
+                {
+
+                  dEdgeToFaceProppantFlux_dComponentC[i][j][c] += fluxCoef * dEdgeToFaceFlux_dComponentC[i][j][c];
+
+                }
+              
+            }
+
+                                                          
+        }
+
     }
   
     // get proppantCe
@@ -543,7 +661,7 @@ struct FluxKernel
     for (localIndex i = 0; i < numElems; ++i)
     {
 
-      if(isProppantMob[i] == 0 && updateProppantMobilityFlag)
+      if(isProppantMob[i] == 0)
         continue;
 
       if(edgeToFaceProppantFlux[i] >= 0.0)
@@ -601,7 +719,7 @@ struct FluxKernel
       for (localIndex i = 0; i < numElems; ++i)
       {
 
-        if(isProppantMob[i] == 0 && updateProppantMobilityFlag)
+        if(isProppantMob[i] == 0)
           continue;
 
         dProppantCe_dP[i] =  dProppantCe_dP[i] / downStreamFlux - proppantCe * dDownStreamFlux_dP[i] / (downStreamFlux * downStreamFlux);
@@ -625,7 +743,7 @@ struct FluxKernel
       for (localIndex i = 0; i < numElems; ++i)
       {
 
-        if(isProppantMob[i] == 0 && updateProppantMobilityFlag)
+        if(isProppantMob[i] == 0)
           continue;
 
         dProppantCe_dP[i] =  0.0;
@@ -766,7 +884,7 @@ struct FluxKernel
 
       localIndex idx1 = i * numDofPerCell; // proppant
 
-      if(isProppantMob[i] == 1 || !updateProppantMobilityFlag)
+      if(isProppantMob[i] == 1)
       {
 
         if(edgeToFaceProppantFlux[i] >= 0.0)
@@ -914,12 +1032,498 @@ struct FluxKernel
 
     }
 
-  }
+}
+
+inline static void
+ComputeCellBasedFlux( localIndex const numElems,
+                      arraySlice1d<localIndex const> const & stencilElementIndices,
+                      arraySlice1d<real64 const> const & stencilWeights,
+                      arraySlice1d<R1Tensor const> const & stencilCellCenterToEdgeCenters,
+                      real64 const proppantPackPermeability,
+                      R1Tensor const unitGravityVector,
+                      arrayView1d<real64 const> const & pres,
+                      arrayView1d<real64 const> const & gravDepth,
+                      arrayView2d<real64 const> const & dens,
+                      arrayView2d<real64 const> const & visc,
+                      arrayView1d<real64 const> const & aperture,
+                      arrayView1d<real64 const> const & proppantPackVf,
+                      arrayView1d<R1Tensor> const & cellBasedFlux)
+{
+
+    static constexpr real64 TINY = 1e-30;   
+
+    constexpr localIndex maxNumFluxElems = FaceElementStencil::NUM_POINT_IN_FLUX;
+  
+    stackArray1d<real64, maxNumFluxElems> weight(numElems);
+
+    stackArray1d<real64, maxNumFluxElems> transT(numElems);
+
+    real64 edgeToFaceFlux;
+
+    // clear working arrays
+
+    real64 edgeDensity = 0.0;
+    real64 edgeViscosity = 0.0;
+
+    real64 aperTerm;
+    real64 sumOfWeights = 0;
+
+    real64 stencilEdgeToFaceDownDistance;
+    real64 edgeLength;
+    
+    for( localIndex i=0 ; i<numElems ; ++i )
+    {
+
+      localIndex const ei  = stencilElementIndices[i];      
+
+      aperTerm = aperture[ei] * aperture[ei] * aperture[ei];
+      
+      sumOfWeights += stencilWeights[i];
+      weight[i] = stencilWeights[i];
+
+      transT[i] = aperTerm * stencilWeights[i];
+
+      edgeLength = 12.0 * stencilWeights[i] * stencilCellCenterToEdgeCenters[i].L2_Norm();
+      
+      stencilEdgeToFaceDownDistance = -Dot(stencilCellCenterToEdgeCenters[i], unitGravityVector) * edgeLength / stencilCellCenterToEdgeCenters[i].L2_Norm();
+
+      if(fabs(stencilEdgeToFaceDownDistance) > TINY)
+        {
+
+          // vertical flow component
+
+          if(proppantPackVf[ei] > 0.0)
+            {
+
+              // assume the pack peremeability dominates bulk permeability in vertical direction
+              transT[i] = proppantPackPermeability * stencilWeights[i] * aperture[ei] * 12.0;     
+
+            }
+
+        }
+      else
+        {
+
+          // horizontal flow component
+          transT[i] = transT[i] * (1.0 - proppantPackVf[ei]) + proppantPackVf[ei] * proppantPackPermeability * stencilWeights[i] * aperture[ei] * 12.0;
+          
+        }
+          
+    }
+
+    for( localIndex i=0 ; i<numElems ; ++i )
+      weight[i] /= sumOfWeights;
+
+    //get averaged edgeDensity and edgeViscosity
+
+    for (localIndex i = 0; i < numElems; ++i) {
+
+      localIndex const ei  = stencilElementIndices[i];
+
+      edgeDensity += weight[i] * dens[ei][0];
+
+      edgeViscosity += weight[i] * visc[ei][0];
+
+    }
+
+    real64 transTSum = 0.0;
+    real64 Pe = 0.0;
+
+    for (localIndex i = 0; i < numElems; ++i)
+    {
+
+      localIndex const ei  = stencilElementIndices[i];
+      
+      real64 const gravD    = gravDepth[ei];
+      real64 const gravTerm = edgeDensity * gravD;
+
+      Pe += transT[i] * (pres[ei] - gravTerm);
+
+      transTSum += transT[i];
+
+    }
+
+    Pe /= transTSum;
+
+    for (localIndex i = 0; i < numElems; ++i)
+    {
+
+      localIndex const ei  = stencilElementIndices[i];      
+
+      real64 const gravD    = gravDepth[ei];
+      real64 const gravTerm = edgeDensity * gravD;
+
+      real64 const fluxTerm = Pe - (pres[ei] - gravTerm);
+      
+      edgeToFaceFlux = transT[i] * fluxTerm / edgeViscosity;
+
+      for (localIndex k = 0; k < 3; ++k)
+        cellBasedFlux[ei][k] += -edgeToFaceFlux * stencilCellCenterToEdgeCenters[i][k];
+
+    }
+}
 
 };
 
+struct ProppantPackVolumeKernel
+{
+
+  template< typename VIEWTYPE >
+  using ElementView = typename ElementRegionManager::ElementViewAccessor<VIEWTYPE>::ViewType;
+
+  template< typename VIEWTYPE >
+  using ElementViewConst = typename ElementRegionManager::ElementViewAccessor<VIEWTYPE>::ViewTypeConst;
+  
+  template< typename VIEWTYPE >
+  using MaterialView = typename ElementRegionManager::MaterialViewAccessor<VIEWTYPE>::ViewType;
+
+  template< typename VIEWTYPE >
+  using MaterialViewConst = typename ElementRegionManager::MaterialViewAccessor<VIEWTYPE>::ViewTypeConst;
+  
+  template< typename STENCIL_TYPE >
+  static void
+  LaunchProppantPackVolumeCalculation(STENCIL_TYPE const & stencil,
+                                      real64 const dt,
+                                      localIndex const fluidIndex,
+                                      localIndex const proppantIndex,
+                                      real64 const proppantDensity,
+                                      real64 const proppantDiameter,
+                                      real64 const maxProppantConcentration,
+                                      R1Tensor const unitGravityVector,
+                                      real64 const criticalShieldsNumber,
+                                      ElementView < arrayView1d<real64> > const & conc,
+                                      MaterialViewConst< arrayView1d<real64 const> > const & settlingFactor,
+                                      MaterialViewConst< arrayView2d<real64 const> > const & fluidDensity,
+                                      MaterialViewConst< arrayView2d<real64 const> > const & fluidViscosity,
+                                      ElementView < arrayView1d<integer> > const & isProppantMobile,
+                                      ElementView < arrayView1d<integer const> > const & isProppantBoundaryElement,
+                                      ElementView < arrayView1d<real64> > const & proppantPackVf,
+                                      ElementView < arrayView1d<real64> > const & proppantExcessPackV,
+                                      ElementView < arrayView1d<real64 const> > const & aperture,
+                                      ElementView < arrayView1d<real64 const> > const & volume,
+                                      ElementView < arrayView1d<integer const> > const & elemGhostRank,          
+                                      ElementView < arrayView1d<R1Tensor> > const & cellBasedFlux,
+                                      ElementView < arrayView1d<real64> > const & proppantLiftFlux);
+  
+
+  template< typename STENCIL_TYPE >
+  static void
+  LaunchProppantPackVolumeUpdate(STENCIL_TYPE const & stencil,
+                                 R1Tensor const unitGravityVector,
+                                 real64 const maxProppantConcentration,
+                                 ElementView < arrayView1d<real64> > const & conc,
+                                 ElementView < arrayView1d<integer> > const & isProppantMobile,
+                                 ElementView < arrayView1d<real64> > const & proppantPackVf,
+                                 ElementView < arrayView1d<real64> > const & proppantExcessPackV);
+
+
+  template< typename STENCIL_TYPE >
+  static void
+  LaunchInterfaceElementUpdate(STENCIL_TYPE const & stencil,
+                               R1Tensor const unitGravityVector,
+                               ElementView < arrayView1d<integer> > const & isProppantMobile,
+                               ElementView < arrayView1d<integer> > const & isInterfaceElement);
+
+
+  inline static void
+  ComputeProppantPackVolume( localIndex const numElems,
+                             real64 const dt,
+                             real64 const proppantDensity,
+                             real64 const proppantDiameter,
+                             real64 const maxProppantConcentration,
+                             R1Tensor const unitGravityVector,
+                             real64 const criticalShieldsNumber,
+                             arraySlice1d<localIndex const> const & stencilElementIndices,
+                             arraySlice1d<real64 const> const & stencilWeights,
+                             arraySlice1d<R1Tensor const> const & stencilCellCenterToEdgeCenters,                             
+                             arrayView1d<real64 const> const & settlingFactor,
+                             arrayView2d<real64 const> const & fluidDensity,
+                             arrayView2d<real64 const> const & fluidViscosity,                                                          
+                             arrayView1d<real64 const> const & volume,
+                             arrayView1d<real64 const> const & aperture,
+                             arrayView1d<integer const> const & elemGhostRank,
+                             arrayView1d<integer const> const & isProppantBoundaryElement,                                                          
+                             arrayView1d<real64> const & conc,
+                             arrayView1d<integer> const & isProppantMobile,
+                             arrayView1d<real64> const & proppantPackVf,
+                             arrayView1d<real64> const & proppantExcessPackV,
+                             arrayView1d<R1Tensor const> const & cellBasedFlux,
+                             arrayView1d<real64> const & proppantLiftFlux)
+  {
+
+    integer faceIndex = -1;
+
+    static constexpr real64 TINY = 1e-30;       
+
+    real64 edgeLength = 12.0 * stencilWeights[0] * stencilCellCenterToEdgeCenters[0].L2_Norm();    
+    
+    if(numElems == 1)
+      {
+
+        localIndex const ei  = stencilElementIndices[0];
+
+        real64 stencilEdgeToFaceDownDistance = -Dot(stencilCellCenterToEdgeCenters[0], unitGravityVector) * edgeLength / stencilCellCenterToEdgeCenters[0].L2_Norm();
+
+        if(stencilEdgeToFaceDownDistance < -TINY && isProppantMobile[ei] == 1)
+          // bottom face element
+          faceIndex = 0;
+
+      }
+    else if(numElems == 2)
+      {
+ 
+        localIndex const ei0  = stencilElementIndices[0];
+        localIndex const ei1  = stencilElementIndices[1];        
+
+        real64 stencilEdgeToFaceDownDistance0 = -Dot(stencilCellCenterToEdgeCenters[0], unitGravityVector) * edgeLength / stencilCellCenterToEdgeCenters[0].L2_Norm();
+
+        real64 stencilEdgeToFaceDownDistance1 = -Dot(stencilCellCenterToEdgeCenters[1], unitGravityVector) * edgeLength / stencilCellCenterToEdgeCenters[1].L2_Norm();        
+        
+        //0: top  1: bottom 
+        
+        if(stencilEdgeToFaceDownDistance0 < -TINY && stencilEdgeToFaceDownDistance1 > TINY && isProppantMobile[ei0] == 1 && isProppantMobile[ei1] == 0)
+          {
+
+            faceIndex = 0;
+
+          }
+
+        //0: bottom  1: top 
+        
+        if(stencilEdgeToFaceDownDistance0 > TINY && stencilEdgeToFaceDownDistance1 < -TINY && isProppantMobile[ei1] == 1 && isProppantMobile[ei0] == 0)
+          {
+
+            faceIndex = 1;
+
+          }
+      }
+
+
+    if(faceIndex >= 0)
+      {
+
+        localIndex const ei = stencilElementIndices[faceIndex];
+
+        if(elemGhostRank[ei] < 0 && isProppantBoundaryElement[ei] == 0)
+          {
+        
+            real64 L = stencilCellCenterToEdgeCenters[ei].L2_Norm() * 2.0;
+            
+            real64 dH = (1.0 - conc[ei]) * settlingFactor[ei] * conc[ei] / maxProppantConcentration * dt;
+
+            R1Tensor velocity = cellBasedFlux[ei];
+
+            for(localIndex idx = 0; idx < 3; ++idx)
+              velocity[idx] -= Dot(cellBasedFlux[ei], unitGravityVector) * unitGravityVector[idx];
+
+            real64 velocityMag = velocity.L2_Norm() / volume[ei];
+
+            //            real64 Re = fluidDensity[ei] * velocityMag * edgeLength / fluidViscosity[ei];
+
+            // fD = 64/Re
+            
+            real64 tau = 8.0 * fluidViscosity[ei][0] / edgeLength  * velocityMag;
+            
+            real64 ShieldsNumber = 1.0 * tau / (proppantDensity - fluidDensity[ei][0]) / 9.81 / proppantDiameter;
+
+            proppantLiftFlux[ei] = aperture[ei] * (proppantDiameter * sqrt(9.81 * proppantDiameter * (proppantDensity - fluidDensity[ei][0]) / fluidDensity[ei][0])) * (9.64 * pow(ShieldsNumber, 0.166)) * pow(ShieldsNumber - criticalShieldsNumber, 1.5);
+
+            if(proppantLiftFlux[ei] < 0.0)
+              proppantLiftFlux[ei] = 0.0;
+            
+            dH -=  proppantLiftFlux[ei] / edgeLength / aperture[ei] / maxProppantConcentration * dt;
+
+            real64 Vf = proppantPackVf[ei];
+            
+            Vf += dH / L;
+
+            if(Vf >= 1.0)
+              {
+
+                isProppantMobile[ei] = 0;
+            
+                proppantExcessPackV[ei] = (Vf - 1.0) * L;
+            
+                proppantPackVf[ei] = 1.0;
+
+                conc[ei] = maxProppantConcentration;
+
+              }
+            else 
+              {
+
+                proppantPackVf[ei] = Vf;
+                
+                if(proppantPackVf[ei] < 0.0)
+                  proppantPackVf[ei] = 0.0;
+            
+              }
+
+          }
+
+      }
+  }     
+
+  inline static void
+  UpdateInterfaceElement( localIndex const numElems,
+                          arraySlice1d<localIndex const> const & stencilElementIndices,
+                          arraySlice1d<real64 const> const & stencilWeights,
+                          arraySlice1d<R1Tensor const> const & stencilCellCenterToEdgeCenters,
+                          R1Tensor const unitGravityVector,
+                          arrayView1d<integer const> const & isProppantMobile,
+                          arrayView1d<integer> const & isInterfaceElement)
+  {
+
+    integer faceIndex = -1;
+
+    static constexpr real64 TINY = 1e-30;       
+
+    real64 edgeLength = 12.0 * stencilWeights[0] * stencilCellCenterToEdgeCenters[0].L2_Norm();    
+    
+    if(numElems == 1)
+      {
+
+        localIndex const ei  = stencilElementIndices[0];
+
+        real64 stencilEdgeToFaceDownDistance = -Dot(stencilCellCenterToEdgeCenters[0], unitGravityVector) * edgeLength / stencilCellCenterToEdgeCenters[0].L2_Norm();
+
+        if(stencilEdgeToFaceDownDistance < -TINY && isProppantMobile[ei] == 1)
+          // bottom face element
+          faceIndex = 0;
+
+      }
+    else if(numElems == 2)
+      {
+ 
+        localIndex const ei0  = stencilElementIndices[0];
+        localIndex const ei1  = stencilElementIndices[1];        
+
+        real64 stencilEdgeToFaceDownDistance0 = -Dot(stencilCellCenterToEdgeCenters[0], unitGravityVector) * edgeLength / stencilCellCenterToEdgeCenters[0].L2_Norm();
+
+        real64 stencilEdgeToFaceDownDistance1 = -Dot(stencilCellCenterToEdgeCenters[1], unitGravityVector) * edgeLength / stencilCellCenterToEdgeCenters[1].L2_Norm();        
+        
+        //0: top  1: bottom 
+        
+        if(stencilEdgeToFaceDownDistance0 < -TINY && stencilEdgeToFaceDownDistance1 > TINY && isProppantMobile[ei0] == 1 && isProppantMobile[ei1] == 0)
+          {
+
+            faceIndex = 0;
+
+          }
+
+        //0: bottom  1: top 
+        
+        if(stencilEdgeToFaceDownDistance0 > TINY && stencilEdgeToFaceDownDistance1 < -TINY && isProppantMobile[ei1] == 1 && isProppantMobile[ei0] == 0)
+          {
+
+            faceIndex = 1;
+
+          }
+      }
+
+    if(faceIndex >= 0)
+      {
+
+        isInterfaceElement[faceIndex] = 1;
+
+      }
+
+  }
+
+  
+  inline static void
+  UpdateProppantPackVolume( localIndex const numElems,
+                            arraySlice1d<localIndex const> const & stencilElementIndices,
+                            arraySlice1d<real64 const> const & stencilWeights,
+                            arraySlice1d<R1Tensor const> const & stencilCellCenterToEdgeCenters,
+                            R1Tensor const unitGravityVector,
+                            real64 const maxProppantConcentration,
+                            arrayView1d<real64> const & conc,
+                            arrayView1d<integer> const & isProppantMobile,
+                            arrayView1d<real64> const & proppantPackVf,
+                            arrayView1d<real64> const & proppantExcessPackV)
+  {
+
+    integer faceIndex = -1;
+    real64 excessV = 0.0;
+
+    static constexpr real64 TINY = 1e-30;       
+
+    real64 edgeLength = 12.0 * stencilWeights[0] * stencilCellCenterToEdgeCenters[0].L2_Norm();    
+    
+    if(numElems == 2)
+      {
+ 
+        localIndex const ei0  = stencilElementIndices[0];
+        localIndex const ei1  = stencilElementIndices[1];        
+
+        real64 stencilEdgeToFaceDownDistance0 = -Dot(stencilCellCenterToEdgeCenters[0], unitGravityVector) * edgeLength / stencilCellCenterToEdgeCenters[0].L2_Norm();
+
+        real64 stencilEdgeToFaceDownDistance1 = -Dot(stencilCellCenterToEdgeCenters[1], unitGravityVector) * edgeLength / stencilCellCenterToEdgeCenters[1].L2_Norm();        
+        
+        //0: top  1: bottom 
+
+        if(stencilEdgeToFaceDownDistance0 < -TINY && stencilEdgeToFaceDownDistance1 > TINY && isProppantMobile[ei0] == 1 && isProppantMobile[ei1] == 0 && proppantExcessPackV[ei1] > 0.0)
+          {
+
+            faceIndex = 0;
+            excessV = proppantExcessPackV[ei1];
+            
+          }
+
+        //0: bottom  1: top 
+        
+        if(stencilEdgeToFaceDownDistance0 > TINY && stencilEdgeToFaceDownDistance1 < -TINY && isProppantMobile[ei1] == 1 && isProppantMobile[ei0] == 0 && proppantExcessPackV[ei0] > 0.0)
+          {
+
+            faceIndex = 1;
+            excessV = proppantExcessPackV[ei0];            
+
+          }
+      }
+
+  
+    if(faceIndex >= 0)
+      {
+
+        localIndex const ei = stencilElementIndices[faceIndex];
+
+        real64 L = stencilCellCenterToEdgeCenters[ei].L2_Norm() * 2.0;
+        
+        real64 Vf = proppantPackVf[ei];
+        
+        Vf += excessV / L;
+
+        if(Vf >= 1.0)
+          {
+
+            isProppantMobile[ei] = 0;
+            
+            proppantPackVf[ei] = 1.0;
+
+            conc[ei] = maxProppantConcentration;
+
+          }
+        else
+          {
+
+            proppantPackVf[ei] = Vf;
+
+
+          }
+            
+      }
+
+  }
+
+};  
+
 
 } // namespace ProppantTransportKernels
+
+
+
+
 
 } // namespace geosx
 

@@ -219,6 +219,8 @@ real64 FlowProppantTransportSolver::SolverStep( real64 const & time_n,
   
   flowSolver.ImplicitStepComplete( time_n, dt, domain );
   proppantSolver.ImplicitStepComplete( time_n, dt, domain );
+
+  proppantSolver.PostStepUpdate(time_n, dtReturn, cycleNumber, domain);
   this->ImplicitStepComplete( time_n, dt, domain );
 
   return dtReturn;

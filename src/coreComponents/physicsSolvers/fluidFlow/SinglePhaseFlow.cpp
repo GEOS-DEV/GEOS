@@ -124,11 +124,11 @@ void SinglePhaseFlow::UpdateFluidProperty<true>(Group * const dataGroup) const
 
   arrayView2d<real64 const> const & componentConcentration = dataGroup->getReference<array2d<real64>>( ProppantTransport::viewKeyStruct::componentConcentrationString );
 
-  arrayView1d<R1Tensor const> const & shearRate = dataGroup->getReference< array1d<R1Tensor> >( ProppantTransport::viewKeyStruct::shearRateString );
+  arrayView1d<R1Tensor const> const & cellBasedFlux = dataGroup->getReference< array1d<R1Tensor> >( ProppantTransport::viewKeyStruct::cellBasedFluxString );
       
   forall_in_range<RAJA::seq_exec>( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a )
   {                                  
-    fluid->PointUpdate( pres[a] + dPres[a], proppantConcentration[a] + dProppantConcentration[a],  componentConcentration[a], shearRate[a].L2_Norm(), a, 0 );
+    fluid->PointUpdate( pres[a] + dPres[a], proppantConcentration[a] + dProppantConcentration[a],  componentConcentration[a], cellBasedFlux[a].L2_Norm(), a, 0 );
   });
 }
 

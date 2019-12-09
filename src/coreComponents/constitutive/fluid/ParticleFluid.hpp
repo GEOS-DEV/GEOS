@@ -75,10 +75,6 @@ public:
   
   virtual void BatchUpdate( arrayView1d<real64 const> const & concentration) override;
 
-  virtual void PointUpdateMob(real64 const & concentration, real64 const & aperture, localIndex const k) override;
-
-  virtual void BatchUpdateMob( arrayView1d<real64 const> const & concentration, arrayView1d<real64 const> const & aperture) override;
-  
   // *** Data repository keys
 
   struct viewKeyStruct : public ParticleFluidBase::viewKeyStruct
@@ -104,7 +100,6 @@ public:
     dataRepository::ViewKey slipConcentration = { slipConcentrationString };
     dataRepository::ViewKey collisionBeta   = { collisionBetaString };
 
-    dataRepository::ViewKey bridgingFactor   = { bridgingFactorString };
     dataRepository::ViewKey sphericity   = { sphericityString };
 
     dataRepository::ViewKey particleSettlingModel   = { particleSettlingModelString };            
@@ -132,12 +127,6 @@ private:
                 real64 & collisionFactor,
                 real64 & dCollisionFactor_dProppantConcentration ) const;
 
-  void ComputeMob( real64 const & concentration,
-		   real64 const & aperture,		
-		   integer & isProppantMobile,
-		   real64 & proppantPackPermeability ) const;
-
-
   string m_particleSettlingModelString;
 
   ParticleSettlingModel m_particleSettlingModel;
@@ -156,14 +145,10 @@ private:
 
   real64 m_collisionBeta;
 
-  real64 m_bridgingFactor;
-
   real64 m_sphericity;
 
   real64 m_packPermeabilityCoef;
 
-  real64 m_bridgingAperture;  
-  
 };
 
 } /* namespace constitutive */

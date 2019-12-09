@@ -57,10 +57,6 @@ public:
 
   virtual void BatchUpdate( arrayView1d<real64 const> const & concentration ) = 0;
 
-  virtual void PointUpdateMob(real64 const & concentration, real64 const &apeture, localIndex const k) = 0;
-
-  virtual void BatchUpdateMob( arrayView1d<real64 const> const & concentration, arrayView1d<real64 const> const &aperture) = 0;
-  
   static constexpr localIndex MAX_NUM_COMPONENTS = 4;
   
   // *** Data repository keys
@@ -78,8 +74,6 @@ public:
 
     static constexpr auto maxProppantConcentrationString    = "maxProppantConcentration";
 
-    static constexpr auto isProppantMobileString    = "isProppantMobile";
-
     static constexpr auto isCollisionalSlipString    = "isCollisionalSlip";
     
     static constexpr auto proppantPackPermeabilityString    = "proppantPackPermeability";
@@ -96,7 +90,6 @@ public:
 
     ViewKey maxProppantConcentration   = { maxProppantConcentrationString };
 
-    ViewKey isProppantMobile   = { isProppantMobileString };
     ViewKey isCollisionalSlip   = { isCollisionalSlipString };
     ViewKey proppantPackPermeability   = { proppantPackPermeabilityString };        
 
@@ -114,7 +107,6 @@ protected:
   array1d<real64> m_collisionFactor;
   array1d<real64> m_dCollisionFactor_dProppantConcentration;   
 
-  array1d<integer> m_isProppantMobile;
   array1d<real64> m_proppantPackPermeability;  
   
   integer m_isCollisionalSlip;

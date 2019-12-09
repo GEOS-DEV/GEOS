@@ -47,8 +47,6 @@ ParticleFluidBase::ParticleFluidBase( std::string const & name, Group * const pa
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Max proppant concentration");    
 
-  registerWrapper( viewKeyStruct::isProppantMobileString, &m_isProppantMobile, false );
-
   registerWrapper( viewKeyStruct::isCollisionalSlipString, &m_isCollisionalSlip, false )->
       setApplyDefaultValue(0)->
       setInputFlag(InputFlags::OPTIONAL)->
@@ -80,7 +78,6 @@ void ParticleFluidBase::AllocateConstitutiveData( Group * const parent,
   m_collisionFactor.resize( parent->size());
   m_dCollisionFactor_dProppantConcentration.resize( parent->size());
 
-  m_isProppantMobile.resize( parent->size());  
   m_proppantPackPermeability.resize( parent->size());  
   
 }
@@ -105,8 +102,6 @@ ParticleFluidBase::DeliverClone( string const & name,
   newConstitutiveRelation->m_dCollisionFactor_dProppantConcentration = m_dCollisionFactor_dProppantConcentration;  
 
   newConstitutiveRelation->m_maxProppantConcentration = this->m_maxProppantConcentration;
-
-  newConstitutiveRelation->m_isProppantMobile = this->m_isProppantMobile;
 
   newConstitutiveRelation->m_isCollisionalSlip = this->m_isCollisionalSlip;
 

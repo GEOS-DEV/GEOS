@@ -94,6 +94,11 @@ public:
                       integer const cycleNumber,
                       DomainPartition * domain );  
 
+  void PostStepUpdate( real64 const& time_n,
+                       real64 const& dt,
+                       integer const cycleNumber,
+                       DomainPartition * domain );  
+  
   /**
    * @defgroup Solver Interface Functions
    *
@@ -182,7 +187,7 @@ public:
                               real64 const & dt,
                               DomainPartition * const domain);  
   
-
+  
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {
 
@@ -201,13 +206,34 @@ public:
     // these are used to store last converged time step values
     static constexpr auto oldProppantConcentrationString  = "oldProppantConcentration";
     static constexpr auto oldComponentDensityString  = "oldComponentDensity";    
-    static constexpr auto slipVelocityString   = "slipVelocity";
     
-    static constexpr auto updatePermeabilityString  = "updatePermeability";
-    static constexpr auto updateProppantMobilityString  = "updateProppantMobility";
+    static constexpr auto updateProppantPackingString  = "updateProppantPacking";
 
-    static constexpr auto shearRateString  = "shearRate";    
+    static constexpr auto cellBasedFluxString  = "cellBasedFlux";    
 
+    static constexpr auto isInterfaceElementString   = "isInterfaceElement";            
+
+    static constexpr auto isProppantBoundaryString   = "isProppantBoundary";
+
+    static constexpr auto isProppantMobileString   = "isProppantMobile";                    
+    
+    static constexpr auto proppantPackVolumeFractionString  = "proppantPackVolumeFraction";
+
+    static constexpr auto proppantExcessPackVolumeString  = "proppantExcessPackVolume";
+
+    static constexpr auto proppantLiftFluxString  = "proppantLiftFlux";    
+
+    static constexpr auto bridgingFactorString  = "bridgingFactor";
+
+    static constexpr auto maxProppantConcentrationString  = "maxProppantConcentration";
+
+    static constexpr auto proppantDiameterString  = "proppantDiameter";
+
+    static constexpr auto proppantDensityString  = "proppantDensity";
+
+    static constexpr auto criticalShieldsNumberString  = "criticalShieldsNumber";                                
+
+    /*
     using ViewKey = dataRepository::ViewKey;
 
     // primary solution field
@@ -226,10 +252,7 @@ public:
 
     ViewKey proppantName      = { proppantNameString };
     ViewKey proppantIndex      = { proppantIndexString };
-
-    ViewKey updatePermeability = { updatePermeabilityString };
-    ViewKey updateProppantMobility = { updateProppantMobilityString };
-
+    */
     
   } viewKeysProppantTransport;
 
@@ -264,8 +287,15 @@ private:
 
   void UpdateProppantModel( Group * const dataGroup );
 
-  void UpdateProppantModelStep( Group * const dataGroup );
+  void UpdateProppantMobility( Group * const dataGroup );
 
+  void UpdateProppantPackVolume( real64 const time_n,
+                                 real64 const dt,
+                                 DomainPartition * const domain);
+
+  void UpdateCellBasedFlux( real64 const time_n,
+                            DomainPartition * const domain);  
+  
   void UpdateState( Group * dataGroup );
 
   /// views into primary variable fields
@@ -281,8 +311,20 @@ private:
 
   ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_updatedComponentConcentration;
 
-  ElementRegionManager::ElementViewAccessor<arrayView1d<R1Tensor>> m_shearRate;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<R1Tensor>> m_cellBasedFlux;
+
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_proppantLiftFlux;
   
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_proppantPackVolumeFraction;
+
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_proppantExcessPackVolume;
+
+  ElementRegionManager::ElementViewAccessor<arrayView1d<integer>> m_isProppantBoundaryElement;
+
+  ElementRegionManager::ElementViewAccessor<arrayView1d<integer>> m_isInterfaceElement;      
+  
+  ElementRegionManager::ElementViewAccessor<arrayView1d<integer>> m_isProppantMobile;
+
   /// views into backup fields
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_proppantConcentrationOld;
@@ -303,6 +345,8 @@ private:
   ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_dFluidDensity_dPressure;
   ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_dFluidDensity_dComponentConcentration;      
 
+  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_fluidViscosity;  
+  
   ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_viscosity;
   ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_dViscosity_dPressure;
   ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_dViscosity_dProppantConcentration;
@@ -316,17 +360,20 @@ private:
   ElementRegionManager::MaterialViewAccessor<arrayView1d<real64>> m_collisionFactor;
   ElementRegionManager::MaterialViewAccessor<arrayView1d<real64>> m_dCollisionFactor_dProppantConcentration;
 
-  ElementRegionManager::MaterialViewAccessor<arrayView1d<integer>> m_isProppantMobile;
-
-  ElementRegionManager::MaterialViewAccessor<arrayView1d<real64>> m_proppantPackPermeability;
-
   string m_proppantName;
   localIndex m_proppantIndex;  
-  integer m_updatePermeability;
-  integer m_updateProppantMobility;  
   integer m_numComponents;
 
   R1Tensor m_downVector;
+
+  integer m_updateProppantPacking;
+  real64 m_proppantPackPermeability;
+  real64 m_bridgingFactor;
+  real64 m_minAperture;  
+  real64 m_maxProppantConcentration;
+  real64 m_proppantDiameter;
+  real64 m_proppantDensity;
+  real64 m_criticalShieldsNumber;        
   
 };
 

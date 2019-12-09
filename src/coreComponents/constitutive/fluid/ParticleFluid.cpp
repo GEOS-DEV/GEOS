@@ -91,10 +91,6 @@ ParticleFluid::ParticleFluid( std::string const & name, Group * const parent ):
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Collision beta coefficient");
 
-  registerWrapper( viewKeyStruct::bridgingFactorString, &m_bridgingFactor, false )->
-    setApplyDefaultValue(3.0)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Bridging factor");
 
   registerWrapper( viewKeyStruct::sphericityString, &m_sphericity, false )->
     setApplyDefaultValue(1.0)->
@@ -133,7 +129,6 @@ ParticleFluid::DeliverClone( string const & name,
   newConstitutiveRelation->m_slipConcentration = this->m_slipConcentration;
   newConstitutiveRelation->m_collisionBeta = this->m_collisionBeta;
 
-  newConstitutiveRelation->m_bridgingFactor = this->m_bridgingFactor;
   newConstitutiveRelation->m_sphericity = this->m_sphericity;
 
   newConstitutiveRelation->m_particleSettlingModelString = this->m_particleSettlingModelString;
@@ -146,8 +141,6 @@ void ParticleFluid::PostProcessInput()
   ParticleFluidBase::PostProcessInput();
 
   m_packPermeabilityCoef = pow(m_sphericity * m_proppantDiameter, 2.0) / 180.0;
-
-  m_bridgingAperture = m_bridgingFactor * m_proppantDiameter;
 
   m_particleSettlingModel = stringToParticleSettlingModel(m_particleSettlingModelString);
   
@@ -172,16 +165,6 @@ void ParticleFluid::PointUpdate(localIndex const NC, real64 const & proppantConc
  
 }
   
-void ParticleFluid::BatchUpdateMob( arrayView1d<real64 const> const &, arrayView1d<real64 const> const &) 
-{
-
-}
-  
-void ParticleFluid::PointUpdateMob( real64 const & concentration, real64 const & aperture, localIndex const k)
-{
-  ComputeMob( concentration, aperture, m_isProppantMobile[k], m_proppantPackPermeability[k]);
-
-}  
 
 void ParticleFluid::Compute( localIndex const NC,
                              real64 const & proppantConcentration,
@@ -277,53 +260,6 @@ void ParticleFluid::Compute( localIndex const NC,
     }
 }
 
-void ParticleFluid::ComputeMob( real64 const & concentration,
-				real64 const & aperture,
-				integer & isProppantMobile,
-				real64 & proppantPackPermeability ) const
-{
-
-  real64 minAperture;
-
-  // We also need to consider other models/implementations to address proppant "bridging"
-  
-  if(concentration < 0.17)
-    {
-
-      minAperture = (1.0 + (m_bridgingFactor - 1.0) / 0.17 * concentration) * m_proppantDiameter;
-
-    }
-  else
-    {
-
-      minAperture = m_bridgingAperture;
-
-    }
-
-
-  isProppantMobile = (aperture > minAperture) ? 1 : 0;
-
-
-  if(!isProppantMobile || concentration >= m_maxProppantConcentration)
-    {
-
-      real64 poro = 1.0 - concentration;
-
-      if(poro < 1.0)      
-	proppantPackPermeability = m_packPermeabilityCoef * (poro * poro *poro)/((1.0 - poro) * (1.0 - poro));
-      else 
-	proppantPackPermeability = 0.0;      
-    }
-  else
-    {
-
-      //we may use an empirical correlation to relate pack peremeability to proppant concentration
-
-      proppantPackPermeability = 0.0;
-      
-    }
-  
-}
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ParticleFluid, std::string const &, Group * const )
 
