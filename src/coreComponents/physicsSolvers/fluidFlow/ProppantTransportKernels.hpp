@@ -132,7 +132,7 @@ struct FluxKernel
           real64 const dt,
           localIndex const fluidIndex,
           localIndex const proppantIndex,
-          real64 const proppantPackPermeability,         
+          ElementViewConst < arrayView1d<R1Tensor const> > const & transTMultiplier,          
           R1Tensor const & unitGravityVector,          
           ElementViewConst < arrayView1d<globalIndex const > > const & dofNumber,
           ElementViewConst < arrayView1d<real64 const> > const & pres,
@@ -173,7 +173,7 @@ struct FluxKernel
   static void
   LaunchCellBasedFluxCalculation( STENCIL_TYPE const & stencil,
                                   localIndex const fluidIndex,
-                                  real64 const proppantPackPermeability,
+                                  ElementViewConst < arrayView1d<R1Tensor const> > const & transTMultiplier,                                  
                                   R1Tensor const unitGravityVector,
                                   ElementViewConst < arrayView1d<real64 const> > const & pres,
                                   ElementViewConst < arrayView1d<real64 const> > const & gravDepth,
@@ -226,7 +226,7 @@ struct FluxKernel
                    arrayView1d<real64 const> const & proppantLiftFlux,
                    arrayView1d<integer const> const & isInterfaceElement,
                    R1Tensor const & unitGravityVector,
-		   real64 const proppantPackPermeability,
+                   arrayView1d<R1Tensor const> const & transTMultiplier,
                    real64 const dt,
                    arraySlice1d<real64> const & localFlux,
                    arraySlice2d<real64> const & localFluxJacobian)
@@ -234,7 +234,7 @@ struct FluxKernel
 
     // We assume numElems == stencilSize;
 
-    static constexpr real64 TINY = 1e-30;   
+    static constexpr real64 TINY = 1e-10;   
     
     // working array
     constexpr localIndex maxNumFluxElems = FaceElementStencil::NUM_POINT_IN_FLUX;
@@ -360,8 +360,9 @@ struct FluxKernel
             {
 
               // assume the pack peremeability dominates bulk permeability in vertical direction
-              transT[i] = proppantPackPermeability * stencilWeights[i] * aperture[ei] * 12.0;     
-
+              //              transT[i] = proppantPackPermeability * stencilWeights[i] * aperture[ei] * 12.0;     
+              transT[i] *= transTMultiplier[ei][1];
+              
             }
 
         }
@@ -369,7 +370,9 @@ struct FluxKernel
         {
 
           // horizontal flow component
-          transT[i] = transT[i] * (1.0 - proppantPackVf[ei]) + proppantPackVf[ei] * proppantPackPermeability * stencilWeights[i] * aperture[ei] * 12.0;
+          //          transT[i] = transT[i] * (1.0 - proppantPackVf[ei]) + proppantPackVf[ei] * proppantPackPermeability * stencilWeights[i] * aperture[ei] * 12.0;
+
+          transT[i] *= transTMultiplier[ei][0];
           
         }
 
@@ -566,13 +569,14 @@ struct FluxKernel
           
         }
 
-          
+              
       if(fabs(coefs[i]) > TINY)
         {
 
           // vertical
           
           edgeToFaceProppantFlux[i] = (1.0 - proppantC[i]) * settlingFac[i] * coefs[i];
+
 
           if(isInterfaceElement[ei] == 1)
             {
@@ -616,8 +620,9 @@ struct FluxKernel
 
           // horizontal
         
-          real64 fluxCoef = (1.0 - proppantPackVf[ei]) / (proppantPackVf[ei] * 12.0 * proppantPackPermeability / aperture[ei]/ aperture[ei] + (1.0 - proppantPackVf[ei])); 
+          //          real64 fluxCoef = (1.0 - proppantPackVf[ei]) / (proppantPackVf[ei] * 12.0 * proppantPackPermeability / aperture[ei]/ aperture[ei] + (1.0 - proppantPackVf[ei]));
 
+          real64 fluxCoef = (1.0 - proppantPackVf[ei]) / transTMultiplier[ei][0];           
                                                           
           edgeToFaceProppantFlux[i] = fluxCoef * edgeToFaceFlux[i];
 
@@ -1039,7 +1044,7 @@ ComputeCellBasedFlux( localIndex const numElems,
                       arraySlice1d<localIndex const> const & stencilElementIndices,
                       arraySlice1d<real64 const> const & stencilWeights,
                       arraySlice1d<R1Tensor const> const & stencilCellCenterToEdgeCenters,
-                      real64 const proppantPackPermeability,
+                      arrayView1d<R1Tensor const> const & transMultiplier,
                       R1Tensor const unitGravityVector,
                       arrayView1d<real64 const> const & pres,
                       arrayView1d<real64 const> const & gravDepth,
@@ -1050,7 +1055,7 @@ ComputeCellBasedFlux( localIndex const numElems,
                       arrayView1d<R1Tensor> const & cellBasedFlux)
 {
 
-    static constexpr real64 TINY = 1e-30;   
+    static constexpr real64 TINY = 1e-10;   
 
     constexpr localIndex maxNumFluxElems = FaceElementStencil::NUM_POINT_IN_FLUX;
   
@@ -1096,8 +1101,10 @@ ComputeCellBasedFlux( localIndex const numElems,
             {
 
               // assume the pack peremeability dominates bulk permeability in vertical direction
-              transT[i] = proppantPackPermeability * stencilWeights[i] * aperture[ei] * 12.0;     
+              //              transT[i] = proppantPackPermeability * stencilWeights[i] * aperture[ei] * 12.0;     
 
+              transT[i] *= transMultiplier[ei][1];
+              
             }
 
         }
@@ -1105,7 +1112,9 @@ ComputeCellBasedFlux( localIndex const numElems,
         {
 
           // horizontal flow component
-          transT[i] = transT[i] * (1.0 - proppantPackVf[ei]) + proppantPackVf[ei] * proppantPackPermeability * stencilWeights[i] * aperture[ei] * 12.0;
+          //          transT[i] = transT[i] * (1.0 - proppantPackVf[ei]) + proppantPackVf[ei] * proppantPackPermeability * stencilWeights[i] * aperture[ei] * 12.0;
+
+          transT[i] *= transMultiplier[ei][0];
           
         }
           
@@ -1253,7 +1262,7 @@ struct ProppantPackVolumeKernel
 
     integer faceIndex = -1;
 
-    static constexpr real64 TINY = 1e-30;       
+    static constexpr real64 TINY = 1e-10;       
 
     real64 edgeLength = 12.0 * stencilWeights[0] * stencilCellCenterToEdgeCenters[0].L2_Norm();    
     
@@ -1307,7 +1316,7 @@ struct ProppantPackVolumeKernel
         if(elemGhostRank[ei] < 0 && isProppantBoundaryElement[ei] == 0)
           {
         
-            real64 L = stencilCellCenterToEdgeCenters[ei].L2_Norm() * 2.0;
+            real64 L = stencilCellCenterToEdgeCenters[faceIndex].L2_Norm() * 2.0;
             
             real64 dH = (1.0 - conc[ei]) * settlingFactor[ei] * conc[ei] / maxProppantConcentration * dt;
 
@@ -1330,6 +1339,8 @@ struct ProppantPackVolumeKernel
 
             if(proppantLiftFlux[ei] < 0.0)
               proppantLiftFlux[ei] = 0.0;
+
+            proppantLiftFlux[ei] = 0.0;
             
             dH -=  proppantLiftFlux[ei] / edgeLength / aperture[ei] / maxProppantConcentration * dt;
 
@@ -1376,7 +1387,7 @@ struct ProppantPackVolumeKernel
 
     integer faceIndex = -1;
 
-    static constexpr real64 TINY = 1e-30;       
+    static constexpr real64 TINY = 1e-10;       
 
     real64 edgeLength = 12.0 * stencilWeights[0] * stencilCellCenterToEdgeCenters[0].L2_Norm();    
     
@@ -1447,7 +1458,7 @@ struct ProppantPackVolumeKernel
     integer faceIndex = -1;
     real64 excessV = 0.0;
 
-    static constexpr real64 TINY = 1e-30;       
+    static constexpr real64 TINY = 1e-10;       
 
     real64 edgeLength = 12.0 * stencilWeights[0] * stencilCellCenterToEdgeCenters[0].L2_Norm();    
     
@@ -1488,7 +1499,7 @@ struct ProppantPackVolumeKernel
 
         localIndex const ei = stencilElementIndices[faceIndex];
 
-        real64 L = stencilCellCenterToEdgeCenters[ei].L2_Norm() * 2.0;
+        real64 L = stencilCellCenterToEdgeCenters[faceIndex].L2_Norm() * 2.0;
         
         real64 Vf = proppantPackVf[ei];
         

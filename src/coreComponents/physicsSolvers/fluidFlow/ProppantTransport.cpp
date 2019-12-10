@@ -110,7 +110,12 @@ void ProppantTransport::RegisterDataOnMesh(Group * const MeshBodies)
 
       subRegion->registerWrapper< array2d<real64> >( viewKeyStruct::updatedComponentConcentrationString )->setDefaultValue(0.0);
 
-      subRegion->registerWrapper< array1d<R1Tensor> >( viewKeyStruct::cellBasedFluxString );      
+      subRegion->registerWrapper< array1d<R1Tensor> >( viewKeyStruct::cellBasedFluxString );
+
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::poroMultiplierString )->setDefaultValue(1.0);
+
+      subRegion->registerWrapper< array1d<R1Tensor> >( viewKeyStruct::transTMultiplierString );            
+      
       
     });
 
@@ -147,6 +152,12 @@ void ProppantTransport::RegisterDataOnMesh(Group * const MeshBodies)
       subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::proppantExcessPackVolumeString );
 
       subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::proppantLiftFluxString );                  
+
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::poroMultiplierString )->setDefaultValue(1.0);
+
+      subRegion->registerWrapper< array1d<R1Tensor> >( viewKeyStruct::transTMultiplierString );            
+      
+
       
     } );
 
@@ -443,6 +454,9 @@ real64 ProppantTransport::SolverStep( real64 const& time_n,
 
       arrayView1d<real64> const & packVf = m_proppantPackVolumeFraction[er][esr];
 
+      arrayView1d<real64> const & poroMultiplier = m_poroMultiplier[er][esr];
+      arrayView1d<R1Tensor> const & transTMultiplier = m_transTMultiplier[er][esr];            
+
       arrayView1d<real64> const & excessPackV = m_proppantExcessPackVolume[er][esr];            
 
       arrayView1d<integer> const & isInterfaceElement = m_isInterfaceElement[er][esr];
@@ -471,6 +485,9 @@ real64 ProppantTransport::SolverStep( real64 const& time_n,
         packVf[ei] = 0.0;
         excessPackV[ei] = 0.0;
 
+        poroMultiplier[ei] = 1.0;        
+        transTMultiplier[ei] = 1.0;
+        
         isInterfaceElement[ei] = 0;
         isProppantMobile[ei] = 1;                
 
@@ -573,6 +590,10 @@ void ProppantTransport::PreStepUpdate( real64 const& time,
 
       arrayView1d<real64> const & excessPackV = m_proppantExcessPackVolume[er][esr];            
 
+      arrayView1d<real64> const & poroMultiplier = m_poroMultiplier[er][esr];
+      arrayView1d<R1Tensor> const & transTMultiplier = m_transTMultiplier[er][esr];            
+
+      
       arrayView1d<integer> const & isInterfaceElement = m_isInterfaceElement[er][esr];
 
       arrayView1d<integer> const & isProppantMobile = m_isProppantMobile[er][esr];          
@@ -598,6 +619,9 @@ void ProppantTransport::PreStepUpdate( real64 const& time,
         
         packVf[ei] = 0.0;
         excessPackV[ei] = 0.0;
+
+        poroMultiplier[ei] = 1.0;
+        transTMultiplier[ei] = 1.0;        
 
         isInterfaceElement[ei] = 0;
         isProppantMobile[ei] = 1;                
@@ -833,11 +857,10 @@ void ProppantTransport::AssembleAccumulationTerms( DomainPartition const * const
 
     arrayView3d<real64 const> const & dCompDens_dPres          = m_dComponentDensity_dPressure[er][esr][m_fluidIndex];
 
-    arrayView4d<real64 const> const & dCompDens_dCompConc          = m_dComponentDensity_dComponentConcentration[er][esr][m_fluidIndex];            
+    arrayView4d<real64 const> const & dCompDens_dCompConc          = m_dComponentDensity_dComponentConcentration[er][esr][m_fluidIndex];
 
-    arrayView1d<real64 const> const & proppantPackVf          = m_proppantPackVolumeFraction[er][esr];        
+    arrayView1d<real64 const> const & proppantPackVf          = m_proppantPackVolumeFraction[er][esr];            
 
-    
     forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
       if (elemGhostRank[ei] < 0)
@@ -850,7 +873,7 @@ void ProppantTransport::AssembleAccumulationTerms( DomainPartition const * const
         real64 effectiveVolume = volume[ei];
         if(proppantPackVf[ei] < 1.0)
           effectiveVolume = volume[ei]  * (1.0 - proppantPackVf[ei]);
-
+        
 	AccumulationKernel::Compute(NC,
                                     proppantConcOld[ei],
 				    proppantConc[ei] + dProppantConc[ei],
@@ -954,7 +977,9 @@ void ProppantTransport::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG(time_n)
 
   FluxKernel::MaterialView< arrayView1d<real64 const> > const & dCollisionFactor_dProppantConc = m_dCollisionFactor_dProppantConcentration.toViewConst();
 
-  FluxKernel::ElementViewConst < arrayView1d<integer const> > const & isProppantMobile  = m_isProppantMobile.toViewConst();  
+  FluxKernel::ElementViewConst < arrayView1d<integer const> > const & isProppantMobile  = m_isProppantMobile.toViewConst();
+
+  FluxKernel::ElementViewConst < arrayView1d<R1Tensor const> > const & transTMultiplier  = m_transTMultiplier.toViewConst();    
   
   FluxKernel::ElementViewConst < arrayView1d<real64 const> > const & aperture  = m_elementAperture.toViewConst();
 
@@ -977,7 +1002,7 @@ void ProppantTransport::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG(time_n)
                         dt,
                         fluidIndex,
 			proppantIndex,
-                        m_proppantPackPermeability,
+                        transTMultiplier,
                         m_downVector,
                         dofNumber,
                         pres,
@@ -1046,7 +1071,7 @@ void ProppantTransport::ApplyBoundaryConditions(real64 const time_n,
     arrayView1d<real64 const> const &
     dProppantConc = subRegion->getReference<array1d<real64> >( viewKeyStruct::deltaProppantConcentrationString );
 
-    if(fs->GetFluxFlag())
+    if(fs->GetFluxFlag() && 0)
       {
         
         fs->ApplyBoundaryConditionToSystem<FieldSpecificationAdd, LAInterface>( lset,
@@ -1311,6 +1336,7 @@ void ProppantTransport::ResetViews(DomainPartition * const domain)
 
   m_pressure =
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( viewKeyStruct::pressureString );
+
   m_deltaPressure =
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( viewKeyStruct::deltaPressureString );
 
@@ -1417,6 +1443,12 @@ void ProppantTransport::ResetViews(DomainPartition * const domain)
   m_dCollisionFactor_dProppantConcentration = 
     elemManager->ConstructFullMaterialViewAccessor<array1d<real64>, arrayView1d<real64> >( ParticleFluidBase::viewKeyStruct::dCollisionFactor_dProppantConcentrationString, constitutiveManager );
 
+  m_poroMultiplier =
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( viewKeyStruct::poroMultiplierString );
+
+  m_transTMultiplier =
+    elemManager->ConstructViewAccessor<array1d<R1Tensor>, arrayView1d<R1Tensor>>( viewKeyStruct::transTMultiplierString );  
+  
 }
 
 
@@ -1452,7 +1484,7 @@ void ProppantTransport::UpdateCellBasedFlux( real64 const GEOSX_UNUSED_ARG(time_
 
   FluxKernel::ElementView < arrayView1d<real64 const> > const & proppantPackVf  = m_proppantPackVolumeFraction.toViewConst();
 
-  real64 const proppantPackPermeability = m_proppantPackPermeability; 
+  FluxKernel::ElementView < arrayView1d<R1Tensor const> > const & transTMultiplier  = m_transTMultiplier.toViewConst();  
 
   localIndex const fluidIndex = m_fluidIndex;
 
@@ -1461,7 +1493,7 @@ void ProppantTransport::UpdateCellBasedFlux( real64 const GEOSX_UNUSED_ARG(time_
 
     FluxKernel::LaunchCellBasedFluxCalculation( stencil,
                                                 fluidIndex,
-                                                proppantPackPermeability,
+                                                transTMultiplier,
                                                 m_downVector,
                                                 pres,
                                                 gravDepth,
@@ -1636,10 +1668,39 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_ARG(
     CommunicationTools::SynchronizeFields( fieldNames, mesh, comms );
 
   }
+
+  // update poroMultiplier and transTMultiplier
+
+  applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
+                                 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
+                                 ElementSubRegionBase * const subRegion )
+  {
+
+    arrayView1d<real64 const> const & proppantPackVf = m_proppantPackVolumeFraction[er][esr];
+
+    arrayView1d<real64 const> const & aperture = m_elementAperture[er][esr];        
+    
+    arrayView1d<real64> const & poroMultiplier = m_poroMultiplier[er][esr];
+    arrayView1d<R1Tensor> const & transTMultiplier = m_transTMultiplier[er][esr];        
+    
+    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+    {
+
+      poroMultiplier[ei] = 1.0 - (1.0 -  m_maxProppantConcentration) * proppantPackVf[ei];
+
+      //K0 horizontal
+
+      transTMultiplier[ei][0] = (1.0 - proppantPackVf[ei]) + proppantPackVf[ei] * m_proppantPackPermeability / (aperture[ei] * aperture[ei]);
+
+      //K1 vertical
+
+      transTMultiplier[ei][1] = m_proppantPackPermeability * 12.0 / (aperture[ei] * aperture[ei]);
+      
+    } );
+  
+  });
   
 }
-
-
 
 REGISTER_CATALOG_ENTRY( SolverBase, ProppantTransport, std::string const &, Group * const )
 } /* namespace geosx */

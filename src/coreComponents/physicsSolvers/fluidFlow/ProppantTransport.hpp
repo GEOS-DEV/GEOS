@@ -221,7 +221,11 @@ public:
 
     static constexpr auto proppantExcessPackVolumeString  = "proppantExcessPackVolume";
 
-    static constexpr auto proppantLiftFluxString  = "proppantLiftFlux";    
+    static constexpr auto proppantLiftFluxString  = "proppantLiftFlux";
+
+    static constexpr auto poroMultiplierString  = "poroMultiplier";
+
+    static constexpr auto transTMultiplierString  = "transTMultiplier";            
 
     static constexpr auto bridgingFactorString  = "bridgingFactor";
 
@@ -331,6 +335,10 @@ private:
   ElementRegionManager::ElementViewAccessor<arrayView1d<integer>> m_isInterfaceElement;      
   
   ElementRegionManager::ElementViewAccessor<arrayView1d<integer>> m_isProppantMobile;
+
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_poroMultiplier;
+
+  ElementRegionManager::ElementViewAccessor<arrayView1d<R1Tensor>> m_transTMultiplier;    
 
   /// views into backup fields
 

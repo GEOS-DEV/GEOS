@@ -235,6 +235,9 @@ public:
     static constexpr auto porosityOldString = "porosityOld";
     static constexpr auto densityOldString = "densityOld";
 
+    static constexpr auto transTMultString = "transTMult";
+    static constexpr auto poroMultString = "poroMult";        
+
   } viewKeysSinglePhaseFlow;
 
   viewKeyStruct & viewKeys()
@@ -333,6 +336,13 @@ private:
 
   ElementRegionManager::MaterialViewAccessor<arrayView1d<real64>> m_bulkModulus;
   ElementRegionManager::MaterialViewAccessor<real64> m_biotCoefficient;
+
+  // coupling with proppant transport
+
+    ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_poroMultiplier;
+
+    ElementRegionManager::ElementViewAccessor<arrayView1d<R1Tensor>> m_transTMultiplier;  
+  
 };
 
 

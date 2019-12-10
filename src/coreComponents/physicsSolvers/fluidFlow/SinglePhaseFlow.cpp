@@ -74,6 +74,9 @@ void SinglePhaseFlow::RegisterDataOnMesh(Group * const MeshBodies)
       subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::porosityOldString );
       subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::densityOldString );
 
+      subRegion->registerWrapper< array1d<R1Tensor> >( viewKeyStruct::transTMultString );
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::poroMultString );            
+
     });
 
     elemManager->forElementRegions<FaceElementRegion>( [&] ( FaceElementRegion * const region )
@@ -93,6 +96,9 @@ void SinglePhaseFlow::RegisterDataOnMesh(Group * const MeshBodies)
         subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::aperture0String )->
           setDefaultValue( region->getDefaultAperture() );
 
+        subRegion->registerWrapper< array1d<R1Tensor> >( viewKeyStruct::transTMultString );
+        subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::poroMultString );              
+        
       });
     });
 
@@ -321,6 +327,26 @@ real64 SinglePhaseFlow::SolverStep( real64 const& time_n,
 
     boundaryConditionManager->ApplyInitialConditions( domain );
 
+    MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
+
+    applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
+                                   ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
+                                   ElementSubRegionBase * const subRegion )
+      {
+
+        arrayView1d<R1Tensor> const & transTMultiplier   = m_transTMultiplier[er][esr];
+        arrayView1d<real64> const & poroMultiplier   = m_poroMultiplier[er][esr];        
+
+        forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+       {
+
+         transTMultiplier[ei] = 1.0;
+         poroMultiplier[ei] = 1.0;         
+
+       } );
+
+      });
+    
   }
   
   // setup dof numbers and linear system
@@ -546,7 +572,7 @@ void SinglePhaseFlow::AccumulationLaunch( localIndex const er,
                                            poroRef[ei],
                                            poroOld[ei],
                                            pvmult[ei][0],
-                                           dPVMult_dPres[ei][0],
+-                                          dPVMult_dPres[ei][0],
                                            biotCoefficient,
                                            bulkModulus[ei],
                                            totalMeanStress[ei],
@@ -582,6 +608,8 @@ void SinglePhaseFlow::AccumulationLaunch( localIndex const er,
   arrayView2d<real64 const> const & dens          = m_density[er][esr][m_fluidIndex];
   arrayView2d<real64 const> const & dDens_dPres   = m_dDens_dPres[er][esr][m_fluidIndex];
 
+  arrayView1d<real64 const> const & poroMultiplier        = m_poroMultiplier[er][esr];
+  
   forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
   {
     if (elemGhostRank[ei] < 0)
@@ -589,10 +617,12 @@ void SinglePhaseFlow::AccumulationLaunch( localIndex const er,
       real64 localAccum, localAccumJacobian;
       globalIndex const elemDOF = dofNumber[ei];
 
+      real64 effectiveVolume = volume[ei] * poroMultiplier[ei];
+      
       AccumulationKernel<FaceElementSubRegion>::template Compute<ISPORO>( dens[ei][0],
                                                                           densOld[ei],
                                                                           dDens_dPres[ei][0],
-                                                                          volume[ei],
+                                                                          effectiveVolume,
                                                                           dVol[ei],
                                                                           localAccum,
                                                                           localAccumJacobian );
@@ -667,9 +697,12 @@ void SinglePhaseFlow::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time_n )
   FluxKernel::ElementView < arrayView1d<real64 const> > const & aperture0  = m_elementAperture0.toViewConst();
   FluxKernel::ElementView < arrayView1d<real64 const> > const & aperture  = m_elementAperture.toViewConst();
 
+  FluxKernel::ElementView < arrayView1d<R1Tensor const> > const & transTMultiplier  = m_transTMultiplier.toViewConst();
+  
   integer const gravityFlag = m_gravityFlag;
   localIndex const fluidIndex = m_fluidIndex;
 
+  R1Tensor const gravityVector = getGravityVector();
 
   fluxApprox->forCellStencils( [&]( auto const & stencil )
   {
@@ -690,6 +723,8 @@ void SinglePhaseFlow::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time_n )
                         dMob_dPres,
                         aperture0,
                         aperture,
+                        transTMultiplier,
+                        gravityVector,
                         matrix,
                         rhs );
   });
@@ -1257,6 +1292,14 @@ void SinglePhaseFlow::ResetViews( DomainPartition * const domain )
       m_dVisc_dPres =
         elemManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64> >( SlurryFluidBase::viewKeyStruct::dVisc_dPresString,
                                                                                                constitutiveManager );
+
+      m_poroMultiplier =
+      elemManager->ConstructViewAccessor< array1d<real64>, arrayView1d<real64> >( ProppantTransport::viewKeyStruct::poroMultiplierString );
+
+      m_transTMultiplier =
+      elemManager->ConstructViewAccessor< array1d<R1Tensor>, arrayView1d<R1Tensor> >( ProppantTransport::viewKeyStruct::transTMultiplierString );
+
+
     }
   else
     {
@@ -1273,6 +1316,15 @@ void SinglePhaseFlow::ResetViews( DomainPartition * const domain )
       m_dVisc_dPres =
         elemManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64> >( SingleFluidBase::viewKeyStruct::dVisc_dPresString,
                                                                                            constitutiveManager );
+
+      m_poroMultiplier =
+      elemManager->ConstructViewAccessor< array1d<real64>, arrayView1d<real64> >( viewKeyStruct::poroMultString );
+
+      
+      m_transTMultiplier =
+      elemManager->ConstructViewAccessor< array1d<R1Tensor>, arrayView1d<R1Tensor> >( viewKeyStruct::transTMultString );
+
+      
     }
 
       

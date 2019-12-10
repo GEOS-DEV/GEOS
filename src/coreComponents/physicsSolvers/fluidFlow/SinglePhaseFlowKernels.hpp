@@ -334,6 +334,8 @@ struct FluxKernel
           ElementView < arrayView1d<real64 const> > const & dMob_dPres,
           ElementView < arrayView1d<real64 const> > const & aperture0,
           ElementView < arrayView1d<real64 const> > const & aperture,
+          ElementView < arrayView1d<R1Tensor const> > const & transTMultiplier,
+          R1Tensor const gravityVector,
           ParallelMatrix * const jacobian,
           ParallelVector * const residual );
 

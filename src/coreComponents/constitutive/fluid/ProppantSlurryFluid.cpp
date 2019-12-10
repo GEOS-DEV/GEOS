@@ -255,17 +255,22 @@ void ProppantSlurryFluid::Compute( real64 const & proppantConcentration,
     }  
 
 
-  real64 coef = pow(1.0 + 1.25 *  proppantConcentration / (1.0 - proppantConcentration / m_maxProppantConcentration), 2.0);
+  real64 effectiveConcentration = proppantConcentration;
+  if(effectiveConcentration > 0.95 * m_maxProppantConcentration)
+    effectiveConcentration = 0.95 * m_maxProppantConcentration;
+  
+  real64 coef = pow(1.0 + 1.25 *  effectiveConcentration / (1.0 - effectiveConcentration / m_maxProppantConcentration), 2.0);
   
   viscosity = fluidViscosity * coef;
 
   dViscosity_dPressure = dFluidViscosity_dPressure * coef;
   
-  dViscosity_dProppantConcentration = fluidViscosity * 2.0 * (1.0 + 1.25 *  proppantConcentration / (1.0 - proppantConcentration / m_maxProppantConcentration)) * 1.25 * m_maxProppantConcentration * m_maxProppantConcentration / (m_maxProppantConcentration - proppantConcentration) / (m_maxProppantConcentration - proppantConcentration); 
+  dViscosity_dProppantConcentration = fluidViscosity * 2.0 * (1.0 + 1.25 *  effectiveConcentration / (1.0 - effectiveConcentration / m_maxProppantConcentration)) * 1.25 * m_maxProppantConcentration * m_maxProppantConcentration / (m_maxProppantConcentration - effectiveConcentration) / (m_maxProppantConcentration - effectiveConcentration); 
 
   for(localIndex c = 0; c < NC; ++c) 
     dViscosity_dComponentConcentration[c] = dFluidViscosity_dComponentConcentration[c] * coef;
 
+  
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ProppantSlurryFluid, std::string const &, Group * const )
