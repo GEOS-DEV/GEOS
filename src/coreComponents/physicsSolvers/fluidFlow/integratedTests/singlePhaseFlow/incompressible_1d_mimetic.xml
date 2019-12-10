@@ -13,6 +13,7 @@
                      targetRegions="{Region1}">
       <SystemSolverParameters krylovTol="1.0e-10"
                               newtonTol="1.0e-6"
+			      useDirectSolver="1"
                               maxIterNewton="8"/>
     </SinglePhaseMimetic>
   </Solvers>
@@ -20,12 +21,12 @@
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="{C3D8}" 
-                  xCoords="{0, 4}"
+                  xCoords="{0, 1}"
                   yCoords="{0, 1}"
-                  zCoords="{0, 1}"
-                  nx="{4}"
+                  zCoords="{0, 100}"
+                  nx="{1}"
                   ny="{1}"
-                  nz="{1}"
+                  nz="{2}"
                   cellBlockNames="{block1}"/>
   </Mesh>
 
@@ -35,19 +36,19 @@
   </Geometry>
 
 
-  <Events maxTime="1.0">
+  <Events maxTime="1e4">
 
     <PeriodicEvent name="outputs"
-                   timeFrequency="1.0"
+                   timeFrequency="1e3"
                    targetExactTimestep="1"
                    target="/Outputs/siloOutput" />
 
     <PeriodicEvent name="solverApplications"
-                   forceDt="1.0"
+                   forceDt="1e3"
                    target="/Solvers/SinglePhaseFlow" />
 
     <PeriodicEvent name="restarts"
-                   timeFrequency="1.0"
+                   timeFrequency="1e3"
                    targetExactTimestep="0"
                    target="/Outputs/restartOutput"/>
 
@@ -73,7 +74,7 @@
                                   defaultViscosity="0.001"
                                   referencePressure="0.0"
                                   referenceDensity="1000"
-                                  compressibility="0.0"
+                                  compressibility="0"
                                   referenceViscosity="0.001"
                                   viscosibility="0.0"/>
 
@@ -90,7 +91,7 @@
                         setNames="{all}"
                         objectPath="ElementRegions/Region1/block1"
                         fieldName="permeability"
-                        scale="2.0e-16"/>
+                        scale="2.0e-13"/>
 
     <FieldSpecification name="permy"
                         component="1"
@@ -98,7 +99,7 @@
                         setNames="{all}"
                         objectPath="ElementRegions/Region1/block1"
                         fieldName="permeability"
-                        scale="2.0e-16"/>
+                        scale="2.0e-13"/>
 
     <FieldSpecification name="permz"
                         component="2"
@@ -106,7 +107,7 @@
                         setNames="{all}"
                         objectPath="ElementRegions/Region1/block1"
                         fieldName="permeability"
-                        scale="2.0e-16"/>
+                        scale="2.0e-13"/>
 
     <FieldSpecification name="referencePorosity"
                         initialCondition="1"

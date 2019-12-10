@@ -363,9 +363,9 @@ void SinglePhaseFlowBase::SetupDofs( DomainPartition const * const GEOSX_UNUSED_
 }
 
 void SinglePhaseFlowBase::AssembleSystem( real64 const time_n,
-                                          real64 const dt,
-                                          DomainPartition * const domain,
-                                          DofManager const & dofManager,
+                                          real64 const GEOSX_UNUSED_ARG( dt ),
+                                          DomainPartition * const GEOSX_UNUSED_ARG( domain ),
+                                          DofManager const & GEOSX_UNUSED_ARG( dofManager ),
                                           ParallelMatrix & matrix,
                                           ParallelVector & rhs )
 {
@@ -377,6 +377,7 @@ void SinglePhaseFlowBase::AssembleSystem( real64 const time_n,
   matrix.open();
   rhs.open();
 
+  /*
   if (m_poroElasticFlag)
   {
     AssembleAccumulationTerms<true>( domain, &dofManager, &matrix, &rhs );
@@ -387,7 +388,8 @@ void SinglePhaseFlowBase::AssembleSystem( real64 const time_n,
   }
 
   AssembleFluxTerms( time_n, dt, domain, &dofManager, &matrix, &rhs );
-
+  */
+  
   if (!m_coupledWellsFlag)
   {
     // these functions will be called by the ReservoirSolver
@@ -395,7 +397,7 @@ void SinglePhaseFlowBase::AssembleSystem( real64 const time_n,
     matrix.close();
     rhs.close();
   }
-
+  
 
   // Debug for logLevel >= 2
   GEOS_LOG_LEVEL_RANK_0( 2, "After SinglePhaseFlowBase::AssembleSystem" );
@@ -403,8 +405,8 @@ void SinglePhaseFlowBase::AssembleSystem( real64 const time_n,
   GEOS_LOG_LEVEL_RANK_0( 2, "\nResidual:\n" << rhs );
 
 
-  if( getLogLevel() >= 3 )
-  {
+  //if( getLogLevel() >= 3 )
+  //{
     SystemSolverParameters * const solverParams = getSystemSolverParameters();
     integer newtonIter = solverParams->numNewtonIterations();
 
@@ -417,7 +419,8 @@ void SinglePhaseFlowBase::AssembleSystem( real64 const time_n,
     GEOS_LOG_RANK_0( "After SinglePhaseFlowBase::AssembleSystem" );
     GEOS_LOG_RANK_0( "Jacobian: written to " << filename_mat );
     GEOS_LOG_RANK_0( "Residual: written to " << filename_rhs );
-  }
+    //}
+    exit(0);
 }
 
 template< bool ISPORO >
