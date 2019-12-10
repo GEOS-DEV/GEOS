@@ -193,8 +193,6 @@ protected:
   std::unique_ptr< CRSMatrix<real64,localIndex,localIndex> > m_derivativeFluxResidual_dAperture;
 
   real64 m_fluxEstimate;
-
-
   
   /// views into constant data fields
   ElementRegionManager::ElementViewAccessor<arrayView1d<integer>> m_elemGhostRank;

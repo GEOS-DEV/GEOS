@@ -198,7 +198,7 @@ void SeparateComponentFilter(ParallelMatrix const & src,
                              ParallelMatrix & dst,
                              const localIndex dofsPerNode)
 {
-  GEOS_ERROR_IF(dofsPerNode < 2,"Function requires dofsPerNode > 1");
+  GEOSX_ERROR_IF(dofsPerNode < 2,"Function requires dofsPerNode > 1");
 
   const localIndex  localRows  = src.localRows();
   const localIndex  maxEntries = src.maxRowLength();

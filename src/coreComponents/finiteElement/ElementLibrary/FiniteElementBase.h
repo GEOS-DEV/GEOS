@@ -87,7 +87,7 @@ public:
         return "POLYTOPE";
       case ElementType::INVALID:
       default:
-        GEOS_ERROR("Invalid Element Type specified");
+        GEOSX_ERROR("Invalid Element Type specified");
         return "INVALID";
     }
   }
@@ -143,28 +143,28 @@ public:
   double value(const int shape_index,
                const int q_index) const
   {
-    GEOS_ASSERT(q_index < n_q_points);
-    GEOS_ASSERT(shape_index < n_dofs);
+    GEOSX_ASSERT(q_index < n_q_points);
+    GEOSX_ASSERT(shape_index < n_dofs);
     return data[q_index].parent_values[shape_index];
   }
 
   std::vector<double> const & values( const int q_index ) const
   {
-    GEOS_ASSERT(q_index < n_q_points);
+    GEOSX_ASSERT(q_index < n_q_points);
     return data[q_index].parent_values;
   }
 
   inline R1Tensor gradient( const localIndex shape_index,
                      const localIndex q_index ) const
   {
-    GEOS_ASSERT(q_index < n_q_points);
-    GEOS_ASSERT(shape_index < n_dofs);
+    GEOSX_ASSERT(q_index < n_q_points);
+    GEOSX_ASSERT(shape_index < n_dofs);
     return data[q_index].mapped_gradients[shape_index];
   }
 
   inline double JxW(const localIndex q_index) const
   {
-    GEOS_ASSERT(q_index < n_q_points);
+    GEOSX_ASSERT(q_index < n_q_points);
     return data[q_index].jacobian_determinant *
            data[q_index].parent_q_weight;
   }

@@ -38,7 +38,7 @@ GeometricObjectManager::~GeometricObjectManager()
 
 Group * GeometricObjectManager::CreateChild( string const & childKey, string const & childName )
 {
-  GEOS_LOG_RANK_0("Adding Geometric Object: " << childKey << ", " << childName);
+  GEOSX_LOG_RANK_0("Adding Geometric Object: " << childKey << ", " << childName);
   std::unique_ptr<SimpleGeometricObjectBase> geometriObject = SimpleGeometricObjectBase::CatalogInterface::Factory( childKey, childName, this );
   return this->RegisterGroup<SimpleGeometricObjectBase>( childName, std::move(geometriObject) );
 }

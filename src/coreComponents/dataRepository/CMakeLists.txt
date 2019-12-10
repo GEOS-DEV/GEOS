@@ -1,4 +1,3 @@
-
 #
 # Specify all headers
 #
@@ -38,15 +37,10 @@ if( ENABLE_MPI )
   set( extraComponentsLinkList ${extraComponentsLinkList} mpi )
 endif()
 
+set( dependencyList common conduit fmt )
 
 if( BUILD_OBJ_LIBS )
-  set (dependencyList common cxx-utilities codingUtilities pugixml fileIO)
-else()
-  set( dependencyList common )
-endif()
-
-if( CONDUIT_FOUND )
-  set( dependencyList ${dependencyList} conduit )
+  set (dependencyList ${dependencyList} cxx-utilities codingUtilities pugixml fileIO)
 endif()
 
 blt_add_library( NAME                  dataRepository

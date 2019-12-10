@@ -23,21 +23,21 @@
 // This class implements solvers from the Trilinos library. Iterative solvers come from
 // the AztecOO package, and direct solvers from the Amesos package.
 
-// Include the corresponding header file.
+// Source inclues
 #include "TrilinosSolver.hpp"
-
 #include "linearAlgebra/interfaces/EpetraMatrix.hpp"
 #include "linearAlgebra/interfaces/EpetraVector.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 
+// TPL includes
 #include <Epetra_Map.h>
 #include <Epetra_FECrsGraph.h>
 #include <Epetra_FECrsMatrix.h>
 #include <Epetra_FEVector.h>
-#include "AztecOO.h"
-#include "Amesos.h"
-#include "ml_MultiLevelPreconditioner.h"
+#include <AztecOO.h>
+#include <Amesos.h>
+#include <ml_MultiLevelPreconditioner.h>
 
 // Put everything under the geosx namespace.
 namespace geosx
@@ -51,11 +51,15 @@ namespace geosx
 // Constructor
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-TrilinosSolver::TrilinosSolver( LinearSolverParameters const & parameters )
-  :
+TrilinosSolver::TrilinosSolver( LinearSolverParameters const & parameters ) :
   m_parameters( parameters )
 {}
 
+TrilinosSolver::~TrilinosSolver()
+{
+  delete m_solver;
+  m_solver = nullptr;
+}
 
 // ----------------------------
 // Top-Level Solver
@@ -102,25 +106,27 @@ void TrilinosSolver::solve_direct( EpetraMatrix & mat,
                                 sol.unwrappedPointer(),
                                 rhs.unwrappedPointer() );
 
-  // Instantiate the Amesos solver.
-  Amesos_BaseSolver* solver;
-  Amesos Factory;
+  if ( m_solver == nullptr )
+  {
+    // Instantiate the Amesos solver.
+    Amesos Factory;
 
-  // Select KLU solver (only one available as of 9/20/2018)
-  solver = Factory.Create( "Klu", problem );
+    // Select KLU solver (only one available as of 9/20/2018)
+    m_solver = Factory.Create( "Klu", problem );
+  }
 
   // Factorize the matrix
-  solver->SymbolicFactorization();
-  solver->NumericFactorization();
+  m_solver->SymbolicFactorization();
+  m_solver->NumericFactorization();
 
   // Solve the system
-  solver->Solve();
+  m_solver->Solve();
 
   // Basic output
   if( m_parameters.logLevel > 0 )
   {
-    solver->PrintStatus();
-    solver->PrintTiming();
+    m_solver->PrintStatus();
+    m_solver->PrintTiming();
   }
 }
 
@@ -159,7 +165,7 @@ void TrilinosSolver::solve_krylov( EpetraMatrix & mat,
     solver.SetAztecOption( AZ_solver, AZ_cg );
   }
   else
-    GEOS_ERROR( "The requested linear solverType doesn't seem to exist" );
+    GEOSX_ERROR( "The requested linear solverType doesn't seem to exist" );
 
   // Create a null pointer to an ML amg preconditioner
   std::unique_ptr<ML_Epetra::MultiLevelPreconditioner> ml_preconditioner;
@@ -247,7 +253,7 @@ void TrilinosSolver::solve_krylov( EpetraMatrix & mat,
     solver.SetPrecOperator( ml_preconditioner.get() );
   }
   else
-    GEOS_ERROR( "The requested preconditionerType doesn't seem to exist" );
+    GEOSX_ERROR( "The requested preconditionerType doesn't seem to exist" );
 
   // Ask for a convergence normalized by the right hand side
   solver.SetAztecOption( AZ_conv, AZ_rhs );

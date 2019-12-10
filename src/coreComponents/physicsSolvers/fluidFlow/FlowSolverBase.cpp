@@ -71,13 +71,11 @@ FlowSolverBase::FlowSolverBase( std::string const & name,
   this->registerWrapper( viewKeyStruct::fluidIndexString, &m_fluidIndex, false );
   this->registerWrapper( viewKeyStruct::solidIndexString, &m_solidIndex, false );
   
-
   this->registerWrapper( viewKeyStruct::inputFluxEstimateString,  &m_fluxEstimate,  false )->
     setApplyDefaultValue(1.0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Initial estimate of the input flux used only for residual scaling. This should be "
                    "essentially equivalent to the input flux * dt.");
-
 }
 
 void FlowSolverBase::RegisterDataOnMesh( Group * const MeshBodies )
@@ -120,11 +118,11 @@ void FlowSolverBase::InitializePreSubGroups(Group * const rootGroup)
   ConstitutiveManager * const cm = domain->getConstitutiveManager();
 
   ConstitutiveBase const * fluid  = cm->GetConstitutiveRelation<ConstitutiveBase>( m_fluidName );
-  GEOS_ERROR_IF( fluid == nullptr, "Fluid model " + m_fluidName + " not found" );
+  GEOSX_ERROR_IF( fluid == nullptr, "Fluid model " + m_fluidName + " not found" );
   m_fluidIndex = fluid->getIndexInParent();
 
   ConstitutiveBase const * solid  = cm->GetConstitutiveRelation<ConstitutiveBase>( m_solidName );
-  GEOS_ERROR_IF( solid == nullptr, "Solid model " + m_solidName + " not found" );
+  GEOSX_ERROR_IF( solid == nullptr, "Solid model " + m_solidName + " not found" );
   m_solidIndex = solid->getIndexInParent();
 
   // fill stencil targetRegions

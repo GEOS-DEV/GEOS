@@ -59,6 +59,7 @@ public:
     static constexpr auto useNewtonSolveString      = "useNewtonSolve";
     static constexpr auto newtonTolString           = "newtonTol";
     static constexpr auto maxIterNewtonString       = "maxIterNewton";
+    static constexpr auto minIterNewtonString       = "minIterNewton";
     static constexpr auto numNewtonIterationsString = "numberOfNewtonIterations";
     static constexpr auto maxTimeStepCutsString     = "maxTimeStepCuts";
     static constexpr auto timeStepCutFactorString   = "timestepCutFactor";
@@ -91,6 +92,8 @@ public:
   integer   useNewtonSolve() const            { return m_useNewtonSolve; }
   real64 newtonTol() const                    { return m_newtonTol; }
   integer  maxIterNewton() const              { return m_maxIterNewton; }
+  integer  minIterNewton() const              { return m_minIterNewton; }
+  integer & minIterNewton()                   { return m_minIterNewton; }
   integer const & numNewtonIterations() const { return m_numNewtonIterations; }
   integer & numNewtonIterations()             { return m_numNewtonIterations; }
 
@@ -124,6 +127,7 @@ public:
   integer m_useNewtonSolve;
   real64  m_newtonTol;
   integer m_maxIterNewton;
+  integer m_minIterNewton;
   integer m_numNewtonIterations;
   
   integer m_maxTimeStepCuts;

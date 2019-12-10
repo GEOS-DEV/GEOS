@@ -608,6 +608,8 @@
 		<xsd:attribute name="maxSubSteps" type="integer" default="10" />
 		<!--maxTimeStepCuts => Max number of time step cuts-->
 		<xsd:attribute name="maxTimeStepCuts" type="integer" default="2" />
+		<!--minIterNewton => Minimum number of Newton iterations.-->
+		<xsd:attribute name="minIterNewton" type="integer" default="1" />
 		<!--newtonTol => (no description available)-->
 		<xsd:attribute name="newtonTol" type="real64" default="1e-06" />
 		<!--numKrylovIter => Maximum number of Krylov Iterations-->

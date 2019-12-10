@@ -330,11 +330,13 @@ Launch<FaceElementStencil>( FaceElementStencil const & stencil,
 //        GEOS_LOG_RANK("dFlux_dAper("<<localRowIndices[a]<<", "<<localColIndices[b]<<") = "<<dFlux_dAper(a,b) );
 //      }
 //    }
-    dR_dAper.add( localRowIndices.data(),
-                  localColIndices.data(),
-                  dFlux_dAper.data(),
-                  numFluxElems,
-                  stencilSize );
+    for( localIndex row=0 ; row<numFluxElems ; ++row )
+    {
+      dR_dAper.addToRowBinarySearch( localRowIndices[row],
+                                     localColIndices.data(),
+                                     dFlux_dAper.data() + (stencilSize * row),
+                                     stencilSize );
+    }
 
   } );
 

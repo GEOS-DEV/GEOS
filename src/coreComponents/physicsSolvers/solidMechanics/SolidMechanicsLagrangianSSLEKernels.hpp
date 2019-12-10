@@ -334,7 +334,7 @@ struct ImplicitKernel
 
         if( tiOption == timeIntegrationOption::ImplicitDynamic )
         {
-          GEOS_ERROR("Option not supported");
+          GEOSX_ERROR("Option not supported");
           CopyGlobalToLocal< NUM_NODES_PER_ELEM, R1Tensor>( elemsToNodes[k],
                                       disp, uhat, vtilde, uhattilde,
                                       u_local, uhat_local, vtilde_local, uhattilde_local );
@@ -459,7 +459,7 @@ struct ImplicitKernel
 
         if( tiOption == timeIntegrationOption::ImplicitDynamic )
         {
-          GEOS_ERROR("NOT IMPLEMENTED");
+          GEOSX_ERROR("NOT IMPLEMENTED");
 //          dRdU_StiffnessDamping = dRdU;
 //          dRdU_StiffnessDamping.Scale( stiffnessDamping * newmarkGamma / ( newmarkBeta * dt ) );
 //

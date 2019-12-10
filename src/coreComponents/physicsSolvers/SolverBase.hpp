@@ -21,7 +21,7 @@
 #include <limits>
 
 #include "dataRepository/Group.hpp"
-#include "codingUtilities/GeosxTraits.hpp"
+#include "codingUtilities/traits.hpp"
 #include "common/DataTypes.hpp"
 #include "dataRepository/ExecutableGroup.hpp"
 #include "managers/DomainPartition.hpp"
@@ -598,10 +598,10 @@ BASETYPE const * SolverBase::GetConstitutiveModel( dataRepository::Group const *
 {
   Group const * const constitutiveModels =
     dataGroup->GetGroup( constitutive::ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
-  GEOS_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
+  GEOSX_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
 
   BASETYPE const * const model = constitutiveModels->GetGroup<BASETYPE>( name );
-  GEOS_ERROR_IF( model == nullptr, "Target group does not contain model " << name );
+  GEOSX_ERROR_IF( model == nullptr, "Target group does not contain model " << name );
 
   return model;
 }
@@ -611,10 +611,10 @@ BASETYPE * SolverBase::GetConstitutiveModel( dataRepository::Group * dataGroup, 
 {
   Group * const constitutiveModels =
     dataGroup->GetGroup( constitutive::ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
-  GEOS_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
+  GEOSX_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
 
   BASETYPE * const model = constitutiveModels->GetGroup<BASETYPE>( name );
-  GEOS_ERROR_IF( model == nullptr, "Target group does not contain model " << name );
+  GEOSX_ERROR_IF( model == nullptr, "Target group does not contain model " << name );
 
   return model;
 }
