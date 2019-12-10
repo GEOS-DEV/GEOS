@@ -98,10 +98,10 @@ void HydrofractureSolver::RegisterDataOnMesh( dataRepository::Group * const Mesh
 	  elemManager->forElementSubRegions<FaceElementSubRegion>( [&]( auto * const elementSubRegion ) -> void
 		{
 		  elementSubRegion->template registerWrapper< array1d<real64> >( viewKeyStruct::contactStressString )->
-      setPlotLevel(PlotLevel::LEVEL_3)->
+      setPlotLevel(PlotLevel::LEVEL_0)->
 			setDescription("Contact stress");
 		  elementSubRegion->template registerWrapper< array1d<real64> >( viewKeyStruct::appliedFacePressureString )->
-      setPlotLevel(PlotLevel::LEVEL_3)->
+      setPlotLevel(PlotLevel::LEVEL_0)->
 			setDescription("Applied fluid pressure on fracture faces");
 		});
 	}

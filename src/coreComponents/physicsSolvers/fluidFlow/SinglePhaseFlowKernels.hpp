@@ -877,7 +877,7 @@ struct FluxKernel
   {
     real64 sumOfWeights = 0, dAperTerm_dAper;
     real64 aperTerm[10];
-    real64 maxApertureForPermeablity = 4e-4;
+    real64 maxApertureForPermeablity = 4e-1;
     real64 minPressure = 1e5;
 
     for( localIndex k=0 ; k<numFluxElems ; ++k )

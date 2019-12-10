@@ -382,11 +382,11 @@ void SinglePhaseFlow::UpdateEOS( real64 const time_n,
         pres[ei] = pres[ei] * m_relaxationCoefficient + dPres[ei] * (1 - m_relaxationCoefficient);
         dPres[ei] = pres[ei] - dPres[ei];
 
-        if ( std::abs(mass[ei]) > 0 )
-        {
-          std::cout << "\n Fluid Update in poroElastic: time_n = " << time_n <<",  ei = " << ei << ", mass = " << mass[ei] << ", poro= " << poro[ei] << ", vol = " << vol[ei]
-                    << ", calculated dens = " << dens[ei][0] << ", new pres = " << pres[ei] << "\n";
-        }
+//        if ( std::abs(mass[ei]) > 0 )
+//        {
+//          std::cout << "\n Fluid Update in poroElastic:  ei = " << ei << ", mass = " << mass[ei] << ", poro= " << poro[ei] << ", vol = " << vol[ei]
+//                    << ", calculated dens = " << dens[ei][0] << ", new pres = " << pres[ei] << "\n";
+//        }
 
       } );
     } );
