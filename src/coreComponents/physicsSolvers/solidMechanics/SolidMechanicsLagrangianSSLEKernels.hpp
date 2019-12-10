@@ -512,8 +512,8 @@ struct ImplicitKernel
     typename CONSTITUTIVE_TYPE::KernelWrapper const & constitutive = constitutiveRelation->createKernelWrapper();
 
     arrayView2d<real64 const> const & damage = constitutiveRelation->getDamage();
-    arrayView2d<real64> const & strainEnergyDensity = constitutiveRelation->getStrainEnergyDensity();
-    arrayView2d<R2SymTensor const> const & stress = constitutiveRelation->getStress();
+//    arrayView2d<real64> const & strainEnergyDensity = constitutiveRelation->getStrainEnergyDensity();
+    arrayView2d<R2SymTensor> const & stress = constitutiveRelation->getStress();
 
     RAJA::forall< serialPolicy >( RAJA::TypedRangeSegment< localIndex >( 0, numElems ),
                                   GEOSX_LAMBDA ( localIndex const k )
@@ -652,15 +652,23 @@ struct ImplicitKernel
             }
           }
 
-          real64 const * const pStress = stress(k,q).Data();
+//          real64 * const pStress = stress(k,q).Data();
           // Note: the ordering of the symmetric tensor objects in not Voight ordering.
           // Question: I would expect that we should be degrading the strainEnergyDensity as damage progresses?
-          strainEnergyDensity(k,q) += ( pStress[0] + 0.5 * stressInc[0] ) * strainInc[0] * ( 1.0 - damage(k,q) );
-          strainEnergyDensity(k,q) += ( pStress[2] + 0.5 * stressInc[1] ) * strainInc[1] * ( 1.0 - damage(k,q) );
-          strainEnergyDensity(k,q) += ( pStress[5] + 0.5 * stressInc[2] ) * strainInc[2] * ( 1.0 - damage(k,q) );
-          strainEnergyDensity(k,q) += ( pStress[4] + 0.5 * stressInc[3] ) * strainInc[3] * ( 1.0 - damage(k,q) );
-          strainEnergyDensity(k,q) += ( pStress[3] + 0.5 * stressInc[4] ) * strainInc[4] * ( 1.0 - damage(k,q) );
-          strainEnergyDensity(k,q) += ( pStress[1] + 0.5 * stressInc[5] ) * strainInc[5] * ( 1.0 - damage(k,q) );
+//          strainEnergyDensity(k,q) += ( pStress[0] + 0.5 * stressInc[0] ) * strainInc[0] * ( 1.0 - damage(k,q) );
+//          strainEnergyDensity(k,q) += ( pStress[2] + 0.5 * stressInc[1] ) * strainInc[1] * ( 1.0 - damage(k,q) );
+//          strainEnergyDensity(k,q) += ( pStress[5] + 0.5 * stressInc[2] ) * strainInc[2] * ( 1.0 - damage(k,q) );
+//          strainEnergyDensity(k,q) += ( pStress[4] + 0.5 * stressInc[3] ) * strainInc[3] * ( 1.0 - damage(k,q) );
+//          strainEnergyDensity(k,q) += ( pStress[3] + 0.5 * stressInc[4] ) * strainInc[4] * ( 1.0 - damage(k,q) );
+//          strainEnergyDensity(k,q) += ( pStress[1] + 0.5 * stressInc[5] ) * strainInc[5] * ( 1.0 - damage(k,q) );
+
+//          pStress[0] += stressInc[0];
+//          pStress[2] += stressInc[1];
+//          pStress[5] += stressInc[2];
+//          pStress[4] += stressInc[3];
+//          pStress[3] += stressInc[4];
+//          pStress[1] += stressInc[5];
+
 
           R2SymTensor referenceStress = stress(k,q);
           if( !fluidPressure.empty() )

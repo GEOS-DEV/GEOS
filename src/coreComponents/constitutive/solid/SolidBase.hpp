@@ -51,6 +51,8 @@ public:
                                  R2Tensor const & Rot,
                                  integer const updateStiffnessFlag ) = 0;
 
+  virtual void calculateStrainEnergyDensity();
+
 //  virtual void BatchUpdate( arrayView2d<real64 const> const & Dadt,
 //                            arrayView2d<real64 const> const & Rot )
 

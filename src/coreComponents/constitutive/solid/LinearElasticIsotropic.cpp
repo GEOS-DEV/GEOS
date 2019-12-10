@@ -201,6 +201,25 @@ void LinearElasticIsotropic::StateUpdatePoint( localIndex const k,
   m_stress[k][q] = temp;
 }
 
+void LinearElasticIsotropic::calculateStrainEnergyDensity()
+{
+  for( localIndex k=0 ; k<m_stress.size(0) ; ++k )
+  {
+    real64 const invE = ( 3.0 * m_bulkModulus[k] + m_shearModulus[k] ) / ( 9.0 * m_bulkModulus[k] * m_shearModulus[k] );
+    real64 const nu = ( 1.5 * m_bulkModulus[k] - m_shearModulus[k] ) / ( 3.0 * m_bulkModulus[k] + m_shearModulus[k] );
+    for( localIndex q=0 ; q<m_stress.size(1) ; ++q )
+    {
+      real64 const * const stress = m_stress(k,q).Data();
+      m_strainEnergyDensity(k,q) = ( stress[0]*stress[0] + stress[2]*stress[2] + stress[5]*stress[5] -
+                                     2 * ( nu * (stress[2] * stress[5] + stress[0] * (stress[2] + stress[5]) ) +
+                                           (1 + nu) * (stress[4]*stress[4] + stress[3]*stress[3] + stress[1]*stress[1])
+                                         )
+                                   ) * invE;
+    }
+  }
+}
+
+
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, LinearElasticIsotropic, std::string const &, Group * const )
 }
 } /* namespace geosx */

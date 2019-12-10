@@ -94,5 +94,10 @@ void SolidBase::AllocateConstitutiveData( dataRepository::Group * const parent,
 
 }
 
+void SolidBase::calculateStrainEnergyDensity()
+{
+  GEOS_ERROR("SolidBase::calculateStrainEnergyDensity() called. Should be overridden.");
+}
+
 }
 } /* namespace geosx */

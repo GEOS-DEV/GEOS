@@ -62,6 +62,8 @@ public:
                                  R2Tensor const & Rot,
                                  integer const updateStiffnessFlag ) override;
 
+  virtual void calculateStrainEnergyDensity() override;
+
 
   struct viewKeyStruct : public SolidBase::viewKeyStruct
   {
