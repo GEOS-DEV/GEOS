@@ -5,7 +5,7 @@ import numpy as np
 import vtk
 
 
-def perturb(point_array, index_set, seed):
+def perturb(point_array, index_set):
     # Option for later: parameterize spacing and change perturbation size
     nrows = np.size(point_array, 0)
 
@@ -19,7 +19,6 @@ def perturb(point_array, index_set, seed):
     # Make each perturbation between +/-0.1, uniform distribution
     max_nudge = 0.1
     min_nudge = -1 * max_nudge
-    np.random.seed(seed)
 
     if 'x' in index_set:
         x_nudge = np.random.uniform(min_nudge, max_nudge, size=(nrows, 1))
@@ -65,7 +64,7 @@ def get_cube_indices(ncubes, indmap):
     return index_list
 
 
-def make_nxnxn_framework(n, seed):
+def make_nxnxn_framework(n):
     # Option for later: make axbxc rectangle instead of nxnxn cube
 
     # Generate all categories of points
@@ -114,7 +113,7 @@ def make_nxnxn_framework(n, seed):
     perturbation_list = []
 
     for i in range(0, len(points_list)):
-        perturbation_list.append(perturb(points_list[i], nudge_axes[i], seed))
+        perturbation_list.append(perturb(points_list[i], nudge_axes[i]))
 
     # print(perturbation_list)
     perturbations = np.concatenate(perturbation_list, axis=0)
@@ -241,8 +240,8 @@ def write_msh(points, inds, fname):
         fout.write('$EndElements')
 
 
-def generate_all_types(n, seed):
-    points, inds = make_nxnxn_framework(n, seed)
+def generate_all_types(n):
+    points, inds = make_nxnxn_framework(n)
     # Write hexes
     hex_name = 'hex_' + str(n)
     write_msh(points, inds, hex_name+'.msh')
@@ -274,4 +273,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     for ncubes in args.sideLengths:
-        generate_all_types(ncubes, args.seed)
+        np.random.seed(seed)
+        generate_all_types(ncubes)
