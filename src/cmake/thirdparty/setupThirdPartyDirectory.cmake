@@ -30,3 +30,13 @@ else()
     set( UNCRUSTIFY_EXECUTABLE "${GEOSX_TPL_DIR}/uncrustify/bin/uncrustify" CACHE PATH "" )
     message( STATUS "Using uncrustify from thirdPartyLibs at ${UNCRUSTIFY_EXECUTABLE}" )
 endif()
+
+################################
+# Doxygen (This is here instead of SetupGeosxThirdParty.cmake so that BLT will see it)
+################################
+if ( EXISTS ${DOXYGEN_EXECUTABLE} )
+    message( STATUS "Using system Doxygen found at ${DOXYGEN_EXECUTABLE}" )
+else()
+    set( DOXYGEN_EXECUTABLE "${GEOSX_TPL_DIR}/doxygen/bin/doxygen" CACHE PATH "" )
+    message( STATUS "Using Doxygen from thirdPartyLibs at ${DOXYGEN_EXECUTABLE}" )
+endif()
