@@ -18,6 +18,10 @@
 
 #include "EdgeManager.hpp"
 #include "FaceElementRegion.hpp"
+#include "finiteElement/basis/LagrangeBasis.hpp"
+#include "finiteElement/quadrature/GaussQuadrature.hpp"
+#include "finiteElement/ElementLibrary/FiniteElement.h"
+
 
 namespace geosx
 {
@@ -49,7 +53,8 @@ void FaceElementRegion::InitializePreSubGroups( Group * const )
 
 
 
-localIndex FaceElementRegion::AddToFractureMesh( EdgeManager * const edgeManager,
+localIndex FaceElementRegion::AddToFractureMesh( real64 const time_np1,
+                                                 EdgeManager * const edgeManager,
                                                  FaceManager const * const faceManager,
                                                  ArrayOfArraysView< localIndex const >  const & originalFaceToEdgeMap,
                                                  string const & subRegionName,
@@ -69,6 +74,14 @@ localIndex FaceElementRegion::AddToFractureMesh( EdgeManager * const edgeManager
   subRegion->resize( subRegion->size() + 1 );
   rval = subRegion->size() - 1;
 
+
+  arrayView1d<real64> &
+  ruptureTime = subRegion->getReference<real64_array>( viewKeyStruct::ruptureTimeString );
+
+
+  arrayView1d<R1Tensor const> const & faceCenter = faceManager->faceCenter();
+  arrayView1d<R1Tensor > const & elemCenter = subRegion->getElementCenter();
+
   FaceElementSubRegion::NodeMapType & nodeMap = subRegion->nodeList();
   FaceElementSubRegion::EdgeMapType & edgeMap = subRegion->edgeList();
   FaceElementSubRegion::FaceMapType & faceMap = subRegion->faceList();
@@ -76,6 +89,10 @@ localIndex FaceElementRegion::AddToFractureMesh( EdgeManager * const edgeManager
   ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
 
   localIndex const kfe = subRegion->size() - 1;
+  ruptureTime(kfe) = time_np1;
+
+  elemCenter(kfe) = faceCenter(faceIndices[0]);
+
 
   faceMap[kfe][0] = faceIndices[0];
   faceMap[kfe][1] = faceIndices[1];

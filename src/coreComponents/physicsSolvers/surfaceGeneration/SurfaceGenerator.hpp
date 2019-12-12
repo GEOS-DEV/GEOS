@@ -100,7 +100,7 @@ public:
                         int const tileColor,
                         int const numTileColors,
                         const bool prefrac,
-                        const realT time);
+                        const realT time_np1 );
 
   /**
    * @brief Function to generate new global indices of a simple object (node, edge, face)
@@ -304,6 +304,7 @@ private:
    * @return
    */
   bool ProcessNode( const localIndex nodeID,
+                    real64 const time,
                     NodeManager & nodeManager,
                     EdgeManager & edgeManager,
                     FaceManager & faceManager,
@@ -358,6 +359,7 @@ private:
    * @param elemLocations
    */
   void PerformFracture( const localIndex nodeID,
+                        real64 const time_np1,
                         NodeManager & nodeManager,
                         EdgeManager & edgeManager,
                         FaceManager & faceManager,
@@ -460,6 +462,9 @@ private:
                            ModifiedObjectLists& receivedObjects);
 
 
+//  void setDegreeFromCrackTip( NodeManager & nodeManager,
+//                              FaceManager & faceManager );
+
   /**
    *
    * @param edgeID
@@ -487,18 +492,24 @@ private:
                                 FaceManager & faceManager );
 
 
+  real64 calculateRuptureRate( FaceElementRegion const & faceElementRegion,
+                               EdgeManager const & edgeManager );
+
   /**
    * @struct viewKeyStruct holds char strings and viewKeys for fast lookup
    */
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     constexpr static auto ruptureStateString = "ruptureState";
+    constexpr static auto ruptureTimeString = "ruptureTime";
+    constexpr static auto ruptureRateString = "ruptureRate";
     constexpr static auto SIFonFaceString = "SIFonFace";
     constexpr static auto K_ICString = "K_IC";
     constexpr static auto primaryCandidateFaceString = "primaryCandidateFace";
     constexpr static auto isFaceSeparableString = "isFaceSeparable";
     constexpr static auto failCriterionString = "failCriterion";
     constexpr static auto degreeFromCrackString = "degreeFromCrack";
+    constexpr static auto degreeFromCrackTipString = "degreeFromCrackTip";
     constexpr static auto solidMaterialNameString = "solidMaterialName";
     constexpr static auto fExternalString = "fExternal";
     constexpr static auto SIFNodeString = "SIFNode";
@@ -531,6 +542,9 @@ private:
 
 
 private:
+
+  constexpr static real64 m_nonRuptureTime = 1e9;
+
   /// choice of failure criterion
   integer m_failCriterion=1;
 
@@ -580,6 +594,8 @@ private:
   set< localIndex > m_tipFaces;
 
   set< localIndex > m_trailingFaces;
+
+  set< localIndex > m_faceElemsRupturedThisSolve;
 
 };
 

@@ -42,6 +42,8 @@ namespace geosx
   using namespace dataRepository;
   using namespace constitutive;
 
+  constexpr real64 SurfaceGenerator::m_nonRuptureTime;
+
 void ModifiedObjectLists::clearNewFromModified()
 {
   for( localIndex const a : newNodes )
@@ -261,6 +263,17 @@ void SurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
         subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::K_IC_20String )->setDefaultValue(-1);
         subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::K_IC_21String )->setDefaultValue(-1);
         subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::K_IC_22String )->setDefaultValue(-1);
+
+        subRegion->registerWrapper<real64_array>(viewKeyStruct::ruptureTimeString)->
+          setApplyDefaultValue(m_nonRuptureTime)->
+          setPlotLevel(dataRepository::PlotLevel::LEVEL_0)->
+          setDescription("Time that the face was ruptured.");
+
+        subRegion->registerWrapper<real64_array>(viewKeyStruct::ruptureRateString)->
+          setApplyDefaultValue(1.0e99)->
+          setPlotLevel(dataRepository::PlotLevel::LEVEL_0)->
+          setDescription("Rate of rupture for a given face.");
+
       });
     });
 
@@ -283,10 +296,21 @@ void SurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
       setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
       setDescription("connectivity distance from crack.");
 
+    nodeManager->registerWrapper<integer_array>(viewKeyStruct::degreeFromCrackTipString)->
+      setApplyDefaultValue(100000)->
+      setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
+      setDescription("degree of connectivity separation from crack tip.");
+
     nodeManager->registerWrapper<real64_array>(viewKeyStruct::SIFNodeString)->
       setApplyDefaultValue(0)->
       setPlotLevel(dataRepository::PlotLevel::LEVEL_0)->
       setDescription("SIF on the node");
+
+    nodeManager->registerWrapper<real64_array>(viewKeyStruct::ruptureTimeString)->
+      setApplyDefaultValue(m_nonRuptureTime)->
+      setPlotLevel(dataRepository::PlotLevel::LEVEL_0)->
+      setDescription("Time that the node was ruptured.");
+
 
     edgeManager->registerWrapper<localIndex_array>(ObjectManagerBase::viewKeyStruct::parentIndexString)->
       setApplyDefaultValue(-1)->
@@ -328,6 +352,11 @@ void SurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
       setPlotLevel(dataRepository::PlotLevel::LEVEL_0)->
       setDescription("Rupture state of the face.0=not ready for rupture. 1=ready for rupture. 2=ruptured");
 
+    faceManager->registerWrapper<real64_array>(viewKeyStruct::ruptureTimeString)->
+      setApplyDefaultValue(m_nonRuptureTime)->
+      setPlotLevel(dataRepository::PlotLevel::LEVEL_0)->
+      setDescription("Time that the face was ruptured.");
+
     faceManager->registerWrapper<real64_array>(viewKeyStruct::SIFonFaceString)->
       setApplyDefaultValue(1)->
       setPlotLevel(dataRepository::PlotLevel::LEVEL_0)->
@@ -348,6 +377,10 @@ void SurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
       setPlotLevel(dataRepository::PlotLevel::LEVEL_0)->
       setDescription("A flag to mark if the face is separable");
 
+    faceManager->registerWrapper<integer_array>(viewKeyStruct::degreeFromCrackTipString)->
+      setApplyDefaultValue(100000)->
+      setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
+      setDescription("degree of connectivity separation from crack tip.");
   }
 }
 
@@ -498,7 +531,7 @@ void SurfaceGenerator::postRestartInitialization( Group * const domain0 )
 
 
 real64 SurfaceGenerator::SolverStep( real64 const & time_n,
-                                     real64 const & GEOSX_UNUSED_ARG( dt ),
+                                     real64 const & dt,
                                      const int GEOSX_UNUSED_ARG( cycleNumber ),
                                      DomainPartition * const domain )
 {
@@ -518,7 +551,7 @@ real64 SurfaceGenerator::SolverStep( real64 const & time_n,
                                partition.GetColor(),
                                partition.NumColor(),
                                0,
-                               time_n);
+                               time_n + dt);
     }
   }
 
@@ -563,9 +596,11 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
                                         int const tileColor,
                                         int const numTileColors,
                                         bool const prefrac,
-                                        real64 const GEOSX_UNUSED_ARG( time ) )
+                                        real64 const time_np1 )
 {
   GEOSX_MARK_FUNCTION;
+
+  m_faceElemsRupturedThisSolve.clear();
   NodeManager & nodeManager = *(mesh->getNodeManager());
   EdgeManager & edgeManager = *(mesh->getEdgeManager());
   FaceManager & faceManager = *(mesh->getFaceManager());
@@ -632,7 +667,15 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
         if(isNodeGhost[a]<0 &&
            nodeToElementMap.sizeOfArray(a)>1 )
         {
-          didSplit += ProcessNode( a, nodeManager, edgeManager, faceManager, elementManager, nodesToRupturedFaces, edgesToRupturedFaces, elementManager,
+          didSplit += ProcessNode( a,
+                                   time_np1,
+                                   nodeManager,
+                                   edgeManager,
+                                   faceManager,
+                                   elementManager,
+                                   nodesToRupturedFaces,
+                                   edgesToRupturedFaces,
+                                   elementManager,
                                    modifiedObjects, prefrac );
           if( didSplit > 0 )
           {
@@ -720,7 +763,7 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
   }
 
 
-
+  calculateRuptureRate( *(elementManager.GetRegion<FaceElementRegion>(this->m_fractureRegionName)), edgeManager);
 
   return rval;
 }
@@ -834,10 +877,41 @@ void SurfaceGenerator::SynchronizeTipSets (FaceManager & faceManager,
   }
 }
 
+
+//void SurfaceGenerator::setDegreeFromCrackTip( NodeManager & nodeManager,
+//                                              FaceManager & faceManager )
+//{
+//
+//  arrayView1d<integer> &
+//  nodeDegreeFromCrackTip = nodeManager.getReference<integer_array>( viewKeyStruct::degreeFromCrackTipString );
+//
+//  arrayView1d<integer> &
+//  faceDegreeFromCrackTip = faceManager.getReference<integer_array>( viewKeyStruct::degreeFromCrackTipString );
+//
+//  ArrayOfArraysView< localIndex const > const & facesToNodes = faceManager.nodeList();
+//
+//  arrayView1d<integer const > const & ruptureState = faceManager.getReference<integer_array>( "ruptureState" );
+//
+//  faceDegreeFromCrackTip = 100000;
+//
+//  for( localIndex kf=0 ; kf<faceManager.size() ; ++kf )
+//  {
+//    if( ruptureState(kf) >=2 )
+//    {
+//      for( localIndex a=0 ; a<facesToNodes.sizeOfArray(kf) ; ++a )
+//      {
+//        localIndex const nodeIndex = facesToNodes(kf,a);
+//        if( )
+//      }
+//    }
+//  }
+//}
+
 //**********************************************************************************************************************
 //**********************************************************************************************************************
 //**********************************************************************************************************************
 bool SurfaceGenerator::ProcessNode( const localIndex nodeID,
+                                    real64 const time_np1,
                                     NodeManager & nodeManager,
                                     EdgeManager & edgeManager,
                                     FaceManager & faceManager,
@@ -875,6 +949,7 @@ bool SurfaceGenerator::ProcessNode( const localIndex nodeID,
 
       didSplit = true;
       PerformFracture( nodeID,
+                       time_np1,
                        nodeManager,
                        edgeManager,
                        faceManager,
@@ -1585,6 +1660,7 @@ bool SurfaceGenerator::SetElemLocations( const int location,
 //**********************************************************************************************************************
 //**********************************************************************************************************************
 void SurfaceGenerator::PerformFracture( const localIndex nodeID,
+                                        real64 const time_np1,
                                         NodeManager & nodeManager,
                                         EdgeManager & edgeManager,
                                         FaceManager & faceManager,
@@ -1632,9 +1708,21 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
   arrayView1d<localIndex const> const &
   childNodeIndices = nodeManager.getReference<localIndex_array>( ObjectManagerBase::viewKeyStruct::childIndexString );
 
-  arrayView1d<integer> & degreeFromCrack =
-    nodeManager.getReference<integer_array>( viewKeyStruct::degreeFromCrackString );
+  arrayView1d<integer> &
+  degreeFromCrack = nodeManager.getReference<integer_array>( viewKeyStruct::degreeFromCrackString );
 
+  arrayView1d<integer> &
+  nodeDegreeFromCrackTip = nodeManager.getReference<integer_array>( viewKeyStruct::degreeFromCrackTipString );
+
+  arrayView1d<integer> &
+  faceDegreeFromCrackTip = faceManager.getReference<integer_array>( viewKeyStruct::degreeFromCrackTipString );
+
+
+  arrayView1d<real64> &
+  nodeRuptureTime = nodeManager.getReference<real64_array>( viewKeyStruct::ruptureTimeString );
+
+  arrayView1d<real64> &
+  faceRuptureTime = faceManager.getReference<real64_array>( viewKeyStruct::ruptureTimeString );
 
   // ***** split all the objects first *****
 
@@ -1667,6 +1755,9 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
   degreeFromCrack[nodeID] = 0;
   degreeFromCrack[newNodeIndex] = 0;
   m_tipNodes.erase( nodeID );
+  nodeDegreeFromCrackTip( nodeID ) = 1;
+  nodeRuptureTime(nodeID) = time_np1;
+  nodeRuptureTime(newNodeIndex) = time_np1;
 
   //TODO HACK...should recalculate mass
 //  const real64 newMass = 0.5 * (*nodeManager.m_mass)[nodeID];
@@ -1780,8 +1871,14 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
         ruptureState[faceIndex] = 2;
         ruptureState[newFaceIndex] = 2;
 
+        faceRuptureTime(faceIndex) = time_np1;
+        faceRuptureTime(newFaceIndex) = time_np1;
+
+
         m_trailingFaces.insert( faceIndex );
         m_tipFaces.erase( faceIndex );
+        faceDegreeFromCrackTip(faceIndex) = 0;
+        faceDegreeFromCrackTip(newFaceIndex) = 0;
 
         localIndex const numFaceEdges = faceToEdgeMap.sizeOfArray( faceIndex );
         faceToEdgeMap.resizeArray( newFaceIndex, numFaceEdges );
@@ -1835,6 +1932,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
 
           {
             m_tipNodes.insert( nodeIndex );
+            nodeDegreeFromCrackTip( nodeIndex ) = 0;
           }
           if( nodeManager.m_isExternal[nodeIndex] )
           {
@@ -1844,12 +1942,15 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
 
         {
           localIndex faceIndices[2] = {faceIndex,newFaceIndex};
-          modifiedObjects.newElements[ {fractureElementRegion->getIndexInParent(),0} ].
-          insert( fractureElementRegion->AddToFractureMesh( &edgeManager,
-                                                            &faceManager,
-                                                            this->m_originalFaceToEdges,
-                                                            "default",
-                                                            faceIndices ) );
+          localIndex const
+          newFaceElement = fractureElementRegion->AddToFractureMesh( time_np1,
+                                                                     &edgeManager,
+                                                                     &faceManager,
+                                                                     this->m_originalFaceToEdges,
+                                                                     "default",
+                                                                     faceIndices );
+          m_faceElemsRupturedThisSolve.insert( newFaceElement );
+          modifiedObjects.newElements[ {fractureElementRegion->getIndexInParent(),0} ].insert( newFaceElement );
         }
 //        externalFaceManager.SplitFace(parentFaceIndex, newFaceIndex, nodeManager);
 
@@ -4425,6 +4526,68 @@ AssignNewGlobalIndicesSerial( ElementRegionManager & elementManager,
     }
   }
 }
+
+real64
+SurfaceGenerator::calculateRuptureRate( FaceElementRegion const & faceElementRegion,
+                                        EdgeManager const & edgeManager )
+{
+  real64 maxRuptureRate = 0;
+  FaceElementSubRegion const * const subRegion = faceElementRegion.GetSubRegion<FaceElementSubRegion>(0);
+
+  ArrayOfArraysView<localIndex const> const &
+  fractureConnectorEdgesToFaceElements = edgeManager.m_fractureConnectorEdgesToFaceElements;
+
+  arrayView1d<real64 const> const &
+  ruptureTime = subRegion->getReference<real64_array>( viewKeyStruct::ruptureTimeString );
+
+  arrayView1d<real64> const &
+  ruptureRate = subRegion->getReference<real64_array>( viewKeyStruct::ruptureRateString );
+
+  arrayView1d<R1Tensor const > const & elemCenter = subRegion->getElementCenter();
+
+  for( localIndex kfc=0 ; kfc<fractureConnectorEdgesToFaceElements.size() ; ++kfc )
+  {
+    for( localIndex kfe0=0 ; kfe0<fractureConnectorEdgesToFaceElements.sizeOfArray(kfc) ; ++kfe0 )
+    {
+      localIndex const faceElem0 = fractureConnectorEdgesToFaceElements(kfc,kfe0);
+      for( localIndex kfe1=kfe0+1 ; kfe1<fractureConnectorEdgesToFaceElements.sizeOfArray(kfc) ; ++kfe1 )
+      {
+        localIndex const faceElem1 = fractureConnectorEdgesToFaceElements(kfc,kfe1);
+        if( !( m_faceElemsRupturedThisSolve.count( faceElem0 ) && m_faceElemsRupturedThisSolve.count( faceElem1 ) ) )
+        {
+          real64 const deltaRuptureTime = fabs(ruptureTime(faceElem0) - ruptureTime(faceElem1));
+          if( deltaRuptureTime > 1.0e-14 * (ruptureTime(faceElem0) + ruptureTime(faceElem1)) )
+          {
+            R1Tensor distance = elemCenter(faceElem0);
+            distance -= elemCenter(faceElem1);
+            real64 const pairwiseRuptureRate = 1.0 / deltaRuptureTime;
+            if( m_faceElemsRupturedThisSolve.count( faceElem0 ) )
+            {
+              ruptureRate(faceElem0) = std::min( ruptureRate(faceElem0), pairwiseRuptureRate );
+            }
+            else if( m_faceElemsRupturedThisSolve.count( faceElem1 ) )
+            {
+              ruptureRate(faceElem1) = std::min( ruptureRate(faceElem1), pairwiseRuptureRate );
+            }
+          }
+        }
+      }
+    }
+  }
+
+
+  for( localIndex faceElemIndex : m_faceElemsRupturedThisSolve )
+  {
+    maxRuptureRate = std::max( maxRuptureRate, ruptureRate(faceElemIndex) );
+  }
+
+
+
+
+
+  return maxRuptureRate;
+}
+
 
 
 REGISTER_CATALOG_ENTRY( SolverBase,

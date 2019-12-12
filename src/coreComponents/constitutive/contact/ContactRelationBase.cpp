@@ -62,7 +62,7 @@ ContactRelationBase::CreateChild( string const & catalogKey, string const & chil
   if( functionCatalog.count(catalogKey) )
   {
     m_apertureFunction = (FunctionBase::CatalogInterface::Factory( catalogKey, childName, this )).release();
-    rval =  FunctionManager::Instance().RegisterGroup( childName, m_apertureFunction, 0 );
+    rval =  FunctionManager::Instance().RegisterGroup( childName, m_apertureFunction, 1 );
   }
   else
   {

@@ -1,12 +1,22 @@
 
   <Mesh>
-    <InternalMesh name="mesh1"
+    <!-- InternalMesh name="mesh1"
                   elementTypes="{C3D8}"
                   xCoords="{-180, -40, 40, 180}"
                   yCoords="{0, 100, 180}"
                   zCoords="{0, 1}"
                   nx="{50, 80, 50}"
                   ny="{100, 40}"
+                  nz="{2}"
+                  cellBlockNames="{cb1}"/-->
+                  
+    <InternalMesh name="mesh1"
+                  elementTypes="{C3D8}"
+                  xCoords="{ -20, 20 }"
+                  yCoords="{0, 40}"
+                  zCoords="{0, 1}"
+                  nx="{40}"
+                  ny="{40}"
                   nz="{2}"
                   cellBlockNames="{cb1}"/>
   </Mesh>
@@ -24,7 +34,7 @@
   </Geometry>
 
 
-  <Events maxTime="100.0">
+  <Events maxTime="50.0">
   
     <!-- SoloEvent 
       name="initialPlot"
@@ -33,6 +43,7 @@
 
     <SoloEvent 
       name="preFracture"
+      forceDt="1.0"
       target="/Solvers/SurfaceGen"
       />
   
@@ -45,7 +56,7 @@
     solver time-step request -->
     <PeriodicEvent 
       name="solverApplications0"
-      beginTime="0.0"
+      beginTime="1.0"
       endTime="20.0"
       forceDt="0.5"
       target="/Solvers/hydrofracture" />
@@ -80,9 +91,20 @@
     <QuadratureRules>
         <GaussQuadrature3 name="gaussian"   degree="2"  />    
     </QuadratureRules>
+
+    <QuadratureRules>
+        <GaussQuadrature3 name="constant"   degree="1"  />    
+    </QuadratureRules>
     
     <FiniteElements>
         <FiniteElementSpace name="FE1" parentSpace="C3D8" basis="linearBasis" quadrature="gaussian" />
+    </FiniteElements>
+
+    <FiniteElements>
+        <FiniteElementSpace name="FE2" 
+                            parentSpace="C3D8"
+                             basis="linearBasis"
+                             quadrature="constant" />
     </FiniteElements>
 
     <FiniteVolume>

@@ -6,6 +6,7 @@ Name                    Type                                                    
 K_IC                    r1_array                                                     K_IC on the face                                                                   
 SIFonFace               real64_array                                                 SIF on the face                                                                    
 childIndex              localIndex_array                                             child index of the face.                                                           
+degreeFromCrackTip      integer_array                                                degree of connectivity separation from crack tip.                                  
 domainBoundaryIndicator integer_array                                                (no description available)                                                         
 edgeList                InterObjectRelation< ArrayOfArrays< long, long > >           (no description available)                                                         
 elemList                localIndex_array2d                                           (no description available)                                                         
@@ -28,6 +29,7 @@ nodeList                InterObjectRelation< ArrayOfArrays< long, long > >      
 parentIndex             localIndex_array                                             Parent index of the face.                                                          
 primaryCandidateFace    localIndex_array                                             The face that has the highest score for splitability                               
 ruptureState            integer_array                                                Rupture state of the face.0=not ready for rupture. 1=ready for rupture. 2=ruptured 
+ruptureTime             real64_array                                                 Time that the face was ruptured.                                                   
 neighborData            node                                                         :ref:`DATASTRUCTURE_neighborData`                                                  
 sets                    node                                                         :ref:`DATASTRUCTURE_sets`                                                          
 ======================= ============================================================ ================================================================================== 

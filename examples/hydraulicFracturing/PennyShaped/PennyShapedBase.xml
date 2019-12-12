@@ -131,13 +131,13 @@
     <PeriodicEvent name="outputs"
                    beginTime="0.0"
                    endTime="1.0"
-                   timeFrequency="0.5"
+                   timeFrequency="0.001"
                    targetExactTimestep="0"
                    target="/Outputs/siloOutput" />
 
     <PeriodicEvent name="outputs2"
                    beginTime="1.0"
-                   timeFrequency="2"
+                   timeFrequency="0.001"
                    targetExactTimestep="0"
                    target="/Outputs/siloOutput" />
 

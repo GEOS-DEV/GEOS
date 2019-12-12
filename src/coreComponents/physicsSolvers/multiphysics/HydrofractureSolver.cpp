@@ -224,6 +224,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
         {
           GEOSX_LOG_RANK_0("++ Fracture propagation. Re-entering Newton Solve.");
         }
+        m_flowSolver->ResetViews(domain);
       }
     }
 
