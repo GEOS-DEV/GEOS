@@ -11,6 +11,11 @@ function or_die () {
     fi
 }
 
+# Use different host-config for clang cuda build
+if [["$*" == *--enable-clang-cuda*]]; then
+  hc_prefix="cuda-"
+fi 
+
 or_die cd /tmp/GEOSX
 # The -DBLT_MPI_COMMAND_APPEND:STRING=--allow-run-as-root option is added for openmpi
 # which prevents from running as root user by default.
@@ -18,7 +23,7 @@ or_die cd /tmp/GEOSX
 # Using this option therefore offers a minimal and convenient way
 # to run the unit tests.
 or_die python scripts/config-build.py \
-              -hc host-configs/environment.cmake \
+              -hc host-configs/${hc_prefix}environment.cmake \
               -bt ${CMAKE_BUILD_TYPE} \
               -bp /tmp/build \
               -DGEOSX_TPL_DIR=$GEOSX_TPL_DIR \
@@ -26,6 +31,10 @@ or_die python scripts/config-build.py \
               -DBLT_MPI_COMMAND_APPEND:STRING=--allow-run-as-root
 or_die cd /tmp/build
 or_die make -j $(nproc) VERBOSE=1
-or_die ctest -V 
+
+# Disable unit tests when building clang cuda
+if [["$*" != *--enable-clang-cuda*]]; then
+  or_die ctest -V
+fi 
 
 exit 0
