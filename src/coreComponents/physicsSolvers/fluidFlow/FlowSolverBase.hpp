@@ -118,7 +118,7 @@ public:
     }
     else
     {
-      GEOS_ERROR("Invalid time integration option for flow solver: " << stringVal);
+      GEOSX_ERROR("Invalid time integration option for flow solver: " << stringVal);
     }
   }
 
@@ -155,6 +155,7 @@ public:
     static constexpr auto injectionRelaxationCoefficientString = "injectionRelaxationCoefficient";
     static constexpr auto timeIntegrationOptionString = "timeIntegrationOption";
     static constexpr auto maximumApertureString      = "maximumAperture";
+    static constexpr auto inputFluxEstimateString  = "inputFluxEstimate";
 
     using ViewKey = dataRepository::ViewKey;
 
@@ -238,6 +239,8 @@ protected:
   string m_timeIntegrationOptionString;
   timeIntegrationOption m_timeIntegrationOption;
 
+  real64 m_fluxEstimate;
+  
   /// views into constant data fields
   ElementRegionManager::ElementViewAccessor<arrayView1d<integer>> m_elemGhostRank;
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_volume;

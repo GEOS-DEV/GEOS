@@ -180,7 +180,7 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
       }
     }
 
-    GEOS_ASSERT( faceWeightInv > 0.0 );
+    GEOSX_ASSERT( faceWeightInv > 0.0 );
     faceWeight = 1.0 / faceWeightInv;
 
     for (localIndex ke = 0; ke < numElems; ++ke)
@@ -267,7 +267,7 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
     if( edgeGhostRank[edgeIndex] < 0 && numElems > 1 )
     {
 
-      GEOS_ERROR_IF(numElems > maxElems, "Max stencil size exceeded by fracture-fracture connector " << fci);
+      GEOSX_ERROR_IF(numElems > maxElems, "Max stencil size exceeded by fracture-fracture connector " << fci);
       stencilCellsRegionIndex.resize(numElems);
       stencilCellsSubRegionIndex.resize(numElems);
       stencilCellsIndex.resize(numElems);
@@ -322,7 +322,7 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
       {
         localIndex const numElems = faceElementsToCells.size(1);
 
-        GEOS_ERROR_IF(numElems > maxElems, "Max stencil size exceeded by fracture-cell connector " << kfe);
+        GEOSX_ERROR_IF(numElems > maxElems, "Max stencil size exceeded by fracture-cell connector " << kfe);
         stencilCellsRegionIndex.resize(numElems);
         stencilCellsSubRegionIndex.resize(numElems);
         stencilCellsIndex.resize(numElems);

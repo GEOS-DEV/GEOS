@@ -660,7 +660,7 @@ struct FluxKernel
     {
       std::cout<< "\n In Compute: Porosity = " << poro[er_up][esr_up][ei_up] << ", viscosity = " << visc[er_up][esr_up][fluidIndex][ei_up][0]
        << ", weightedSum = " << weightedSum << ", totalCompressibility = " << totalCompressibility[er_up][esr_up][ei_up] << ", potDif = " << potDif ;
-      GEOS_ERROR("ComputeMatrix::negative maxStableDt");
+      GEOSX_ERROR("ComputeMatrix::negative maxStableDt");
     }
 
     // populate local flux
@@ -948,7 +948,7 @@ struct FluxKernel
         {
           std::cout<< "\n In ComputeJunction: Density = " << dens[ei_up][0] << ", pres = " << pres[ei_up] << ", visc = " << visc[ei_up][0]
            << ", weightedSum = " << weightedSum << ", totalCompressibility = " << totalCompressibility[ei_up] << ", potDif = " << potDif ;
-          GEOS_ERROR("ComputeJunction::negative maxStableDt");
+          GEOSX_ERROR("ComputeJunction::negative maxStableDt");
         }
 
         // isMassTransfer

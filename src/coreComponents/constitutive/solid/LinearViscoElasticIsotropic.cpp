@@ -158,7 +158,7 @@ void LinearViscoElasticIsotropic::PostProcessInput()
     }
     errorCheck += ")";
 
-    GEOS_ERROR_IF( numConstantsSpecified != 2,
+    GEOSX_ERROR_IF( numConstantsSpecified != 2,
                    "A specific pair of elastic constants is required. Either (K,G) or (E,nu). "<<
                    "You have specified "<<errorCheck );
 
@@ -194,7 +194,7 @@ void LinearViscoElasticIsotropic::PostProcessInput()
     }
     else
     {
-      GEOS_ERROR( "invalid specification for default elastic constants. "<<errorCheck<<" has been specified.");
+      GEOSX_ERROR( "invalid specification for default elastic constants. "<<errorCheck<<" has been specified.");
     }
   }
 
@@ -202,7 +202,7 @@ void LinearViscoElasticIsotropic::PostProcessInput()
   if (m_compressibility <= 0)
   {
     string const message = "Must specify 2 elastic constants!";
-    GEOS_ERROR( message );
+    GEOSX_ERROR( message );
   }
 
   m_postProcessed = true;

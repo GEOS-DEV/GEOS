@@ -283,7 +283,7 @@ struct ExplicitKernel
       if (*maxStableDt <= 1e-20)
       {
         std::cout << "\n eleID = " << k+1 << " : \n maxStableDt=" << *maxStableDt << " , density[k][0]=" << density[k][0] << ", BB=" << BB;
-        GEOS_ERROR("ComputeMatrix::negative maxStableDt");
+        GEOSX_ERROR("ComputeMatrix::negative maxStableDt");
       }
       AddLocalToGlobal<NUM_NODES_PER_ELEM>( elemsToNodes[k], f_local, acc );
     });
@@ -427,7 +427,7 @@ struct ImplicitKernel
           ParallelMatrix * const GEOSX_UNUSED_ARG( matrix ),
           ParallelVector * const GEOSX_UNUSED_ARG( rhs ) )
   {
-    GEOS_ERROR("SolidMechanicsLagrangianFEM::ImplicitElementKernelWrapper::Launch() not implemented");
+    GEOSX_ERROR("SolidMechanicsLagrangianFEM::ImplicitElementKernelWrapper::Launch() not implemented");
     return 0;
   }
 

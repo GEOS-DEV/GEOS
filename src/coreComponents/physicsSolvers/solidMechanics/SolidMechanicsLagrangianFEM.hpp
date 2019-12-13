@@ -385,7 +385,7 @@ public:
     }
     else
     {
-      GEOS_ERROR("Invalid time integration option: " << stringVal);
+      GEOSX_ERROR("Invalid time integration option: " << stringVal);
     }
   }
 

@@ -37,7 +37,7 @@ void CellElementStencilTPFA::add( localIndex const numPts,
                                   real64 const * const weightedElementCenterToConnectorCenter,
                                   localIndex const connectorIndex )
 {
-  GEOS_ERROR_IF( numPts!=2, "number of cells in TPFA stencil should be 2");
+  GEOSX_ERROR_IF( numPts!=2, "number of cells in TPFA stencil should be 2");
 
   localIndex const oldSize = m_elementRegionIndices.size(0);
   localIndex const newSize = oldSize + 1;

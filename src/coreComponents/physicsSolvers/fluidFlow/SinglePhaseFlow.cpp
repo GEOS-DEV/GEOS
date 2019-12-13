@@ -345,7 +345,7 @@ real64 SinglePhaseFlow::SolverStep( real64 const& time_n,
   }
   else if( m_timeIntegrationOption == timeIntegrationOption::InertialTransient )
   {
-    GEOS_ERROR( "timeIntegrationOption::InertialTransient not yet implemented");
+    GEOSX_ERROR( "timeIntegrationOption::InertialTransient not yet implemented");
   }
 
   return dtReturn;
@@ -427,13 +427,13 @@ void SinglePhaseFlow::UpdateEOS( real64 const time_n,
         fluid->PointUpdateDensityExplicit( pres[ei], ei, 0 );
         dPres[ei] = pres[ei] - dPres[ei];
 
-//        if ( pres[ei] >= 1e5 )
-//        {
-//          arrayView2d<real64> const & dens = m_density[er][esr][m_fluidIndex];
-//          arrayView1d<real64> const & poro = m_porosity[er][esr];
-//          std::cout << "\n Fluid Update in matrix: ei = " << ei  << ", mass = " << mass[ei] << ", poro= " << poro[ei] << ", vol = " << vol[ei]
-//                    << ", calculated dens = " << dens[ei][0] << ", new pres = " << pres[ei] << "\n";
-//        }
+        if ( mass[ei] > 0 )
+        {
+          arrayView2d<real64> const & dens = m_density[er][esr][m_fluidIndex];
+          arrayView1d<real64> const & poro = m_porosity[er][esr];
+          std::cout << "\n Fluid Update in matrix: ei = " << ei  << ", mass = " << mass[ei] << ", poro= " << poro[ei] << ", vol = " << vol[ei]
+                    << ", calculated dens = " << dens[ei][0] << ", new pres = " << pres[ei] << "\n";
+        }
 
       } );
     } );
@@ -461,19 +461,19 @@ void SinglePhaseFlow::UpdateEOS( real64 const time_n,
         pres[ei] = pres[ei] * m_relaxationCoefficient + dPres[ei] * (1 - m_relaxationCoefficient);
         dPres[ei] = pres[ei] - dPres[ei];
 
-//        if ( pres[ei] >= 1e5 )
-//        {
-//          std::cout << "\n Fluid Update in fracture: ei = " << ei  << ", mass = " << mass[ei] << ", vol = " << vol[ei]
-//                    << ", calculated dens = " << dens[ei][0] << ", new pres = " << pres[ei] << "\n";
-//        }
+        if ( mass[ei] > 0 )
+        {
+          std::cout << "\n Fluid Update in fracture: ei = " << ei  << ", mass = " << mass[ei] << ", vol = " << vol[ei]
+                    << ", calculated dens = " << dens[ei][0] << ", new pres = " << pres[ei] << "\n";
+        }
 
       } );
     } );
   }
 
   // apply pressure boundary condition in the explicit solver
-  FieldSpecificationManager * const fsManager = FieldSpecificationManager::get();
-  fsManager->Apply( time_n + dt, domain, "ElementRegions", viewKeyStruct::pressureString,
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
+  fsManager.Apply( time_n + dt, domain, "ElementRegions", viewKeyStruct::pressureString,
                     [&]( FieldSpecificationBase const * const fs,
                          string const &,
                          set<localIndex> const & lset,
@@ -719,9 +719,9 @@ void SinglePhaseFlow::AssembleSystem( real64 const time_n,
   }
 
   // Debug for logLevel >= 2
-  GEOS_LOG_LEVEL_RANK_0( 2, "After SinglePhaseFlow::AssembleSystem" );
-  GEOS_LOG_LEVEL_RANK_0( 2, "\nJacobian:\n" << matrix );
-  GEOS_LOG_LEVEL_RANK_0( 2, "\nResidual:\n" << rhs );
+  GEOSX_LOG_LEVEL_RANK_0( 2, "After SinglePhaseFlow::AssembleSystem" );
+  GEOSX_LOG_LEVEL_RANK_0( 2, "\nJacobian:\n" << matrix );
+  GEOSX_LOG_LEVEL_RANK_0( 2, "\nResidual:\n" << rhs );
 
   if( getLogLevel() >= 3 )
   {
@@ -734,9 +734,9 @@ void SinglePhaseFlow::AssembleSystem( real64 const time_n,
     string filename_rhs = "rhs_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
     rhs.write( filename_rhs, true );
 
-    GEOS_LOG_RANK_0( "After SinglePhaseFlow::AssembleSystem" );
-    GEOS_LOG_RANK_0( "Jacobian: written to " << filename_mat );
-    GEOS_LOG_RANK_0( "Residual: written to " << filename_rhs );
+    GEOSX_LOG_RANK_0( "After SinglePhaseFlow::AssembleSystem" );
+    GEOSX_LOG_RANK_0( "Jacobian: written to " << filename_mat );
+    GEOSX_LOG_RANK_0( "Residual: written to " << filename_rhs );
   }
 }
 
@@ -993,9 +993,9 @@ void SinglePhaseFlow::CalculateAndApplyMassFlux( real64 const time_n,
   AssembleFluxTermsExplicit( time_n, dt, domain, &m_dofManager );
 
   // apply mass flux boundary condition
-  FieldSpecificationManager * const fsManager = FieldSpecificationManager::get();
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
 
-  fsManager->Apply( time_n + dt, domain, "ElementRegions", "FLUX",
+  fsManager.Apply( time_n + dt, domain, "ElementRegions", "FLUX",
                     [&]( FieldSpecificationBase const * const fs,
                          string const &,
                          set<localIndex> const & lset,
@@ -1053,17 +1053,17 @@ SinglePhaseFlow::ApplyBoundaryConditions( real64 const time_n,
   matrix.open();
   rhs.open();
 
-  FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
   string const dofKey = dofManager.getKey( viewKeyStruct::pressureString );
 
   // call the BoundaryConditionManager::ApplyField function that will check to see
   // if the boundary condition should be applied to this subregion
-  fsManager->Apply( time_n + dt, domain, "ElementRegions", "FLUX",
-                    [&]( FieldSpecificationBase const * const fs,
-                         string const &,
-                         set<localIndex> const & lset,
-                         Group * subRegion,
-                         string const & ) -> void
+  fsManager.Apply( time_n + dt, domain, "ElementRegions", "FLUX",
+                   [&]( FieldSpecificationBase const * const fs,
+                        string const &,
+                        set<localIndex> const & lset,
+                        Group * subRegion,
+                        string const & ) -> void
   {
     arrayView1d<globalIndex const> const &
     dofNumber = subRegion->getReference< array1d<globalIndex> >( dofKey );
@@ -1097,12 +1097,12 @@ SinglePhaseFlow::ApplyBoundaryConditions( real64 const time_n,
   } );
 
 
-  fsManager->Apply( time_n + dt, domain, "ElementRegions", viewKeyStruct::pressureString,
-                    [&]( FieldSpecificationBase const * const fs,
-                         string const &,
-                         set<localIndex> const & lset,
-                         Group * subRegion,
-                         string const & ) -> void
+  fsManager.Apply( time_n + dt, domain, "ElementRegions", viewKeyStruct::pressureString,
+                   [&]( FieldSpecificationBase const * const fs,
+                        string const &,
+                        set<localIndex> const & lset,
+                        Group * subRegion,
+                        string const & ) -> void
   {
     arrayView1d<globalIndex const> const &
     dofNumber = subRegion->getReference< array1d<globalIndex> >( dofKey );
@@ -1137,9 +1137,9 @@ SinglePhaseFlow::ApplyBoundaryConditions( real64 const time_n,
   rhs.close();
 
   // Debug for logLevel >= 2
-  GEOS_LOG_LEVEL_RANK_0( 2, "After SinglePhaseFlow::ApplyBoundaryConditions" );
-  GEOS_LOG_LEVEL_RANK_0( 2, "\nJacobian:\n" << matrix );
-  GEOS_LOG_LEVEL_RANK_0( 2, "\nResidual:\n" << rhs );
+  GEOSX_LOG_LEVEL_RANK_0( 2, "After SinglePhaseFlow::ApplyBoundaryConditions" );
+  GEOSX_LOG_LEVEL_RANK_0( 2, "\nJacobian:\n" << matrix );
+  GEOSX_LOG_LEVEL_RANK_0( 2, "\nResidual:\n" << rhs );
 
   if( getLogLevel() >= 3 )
   {
@@ -1152,9 +1152,9 @@ SinglePhaseFlow::ApplyBoundaryConditions( real64 const time_n,
     string filename_rhs = "rhs_bc_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
     rhs.write( filename_rhs, true );
 
-    GEOS_LOG_RANK_0( "After SinglePhaseFlow::ApplyBoundaryConditions" );
-    GEOS_LOG_RANK_0( "Jacobian: written to " << filename_mat );
-    GEOS_LOG_RANK_0( "Residual: written to " << filename_rhs );
+    GEOSX_LOG_RANK_0( "After SinglePhaseFlow::ApplyBoundaryConditions" );
+    GEOSX_LOG_RANK_0( "Jacobian: written to " << filename_mat );
+    GEOSX_LOG_RANK_0( "Residual: written to " << filename_rhs );
   }
 }
 
@@ -1165,7 +1165,7 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit( real64 const time_n,
                                                      ParallelMatrix * const matrix,
                                                      ParallelVector * const rhs )
 {
-  FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
   MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager * const elemManager = mesh->getElemManager();
   FaceManager * const faceManager = mesh->getFaceManager();
@@ -1219,30 +1219,30 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit( real64 const time_n,
 
   // first, evaluate BC to get primary field values (pressure)
 //  fsManager->ApplyField(faceManager, viewKeyStruct::facePressure, time + dt);
-  fsManager->Apply( time_n + dt,
-                    domain,
-                    "faceManager",
-                    viewKeyStruct::facePressureString,
-                    [&] ( FieldSpecificationBase const * const fs,
-                          string const &,
-                          set<localIndex> const & targetSet,
-                          Group * const targetGroup,
-                          string const fieldName )
+  fsManager.Apply( time_n + dt,
+                   domain,
+                   "faceManager",
+                   viewKeyStruct::facePressureString,
+                   [&] ( FieldSpecificationBase const * const fs,
+                         string const &,
+                         set<localIndex> const & targetSet,
+                         Group * const targetGroup,
+                         string const fieldName )
   {
     fs->ApplyFieldValue<FieldSpecificationEqual>(targetSet,time_n + dt, targetGroup, fieldName);
   });
 
 
   // call constitutive models to get dependent quantities needed for flux (density, viscosity)
-  fsManager->Apply( time_n + dt,
-                    domain,
-                    "faceManager",
-                    viewKeyStruct::facePressureString,
-                    [&] ( FieldSpecificationBase const * GEOSX_UNUSED_ARG( bc ),
-                          string const &,
-                          set<localIndex> const & targetSet,
-                          Group * const,
-                          string const & )
+  fsManager.Apply( time_n + dt,
+                   domain,
+                   "faceManager",
+                   viewKeyStruct::facePressureString,
+                   [&] ( FieldSpecificationBase const * GEOSX_UNUSED_ARG( bc ),
+                         string const &,
+                         set<localIndex> const & targetSet,
+                         Group * const,
+                         string const & )
   {
     for (auto kf : targetSet)
     {
@@ -1255,7 +1255,7 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit( real64 const time_n,
           break;
         }
       }
-      GEOS_ERROR_IF( ke > 1, "Face not adjacent to target regions: " << kf );
+      GEOSX_ERROR_IF( ke > 1, "Face not adjacent to target regions: " << kf );
       localIndex const er  = elemRegionList[kf][ke];
       localIndex const esr = elemSubRegionList[kf][ke];
 
@@ -1275,15 +1275,15 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit( real64 const time_n,
 
   real64 densWeight[numElems] = { 0.5, 0.5 };
 
-  fsManager->Apply( time_n + dt,
-                    domain,
-                    "faceManager",
-                    viewKeyStruct::facePressureString,
-                    [&] ( FieldSpecificationBase const * GEOSX_UNUSED_ARG( bc ),
-                          string const & setName,
-                          set<localIndex> const &,
-                          Group * const,
-                          string const & )
+  fsManager.Apply( time_n + dt,
+                   domain,
+                   "faceManager",
+                   viewKeyStruct::facePressureString,
+                   [&] ( FieldSpecificationBase const * GEOSX_UNUSED_ARG( bc ),
+                         string const & setName,
+                         set<localIndex> const &,
+                         Group * const,
+                         string const & )
   {
     if ( !sets->hasWrapper( setName ) || !fluxApprox->hasBoundaryStencil( setName))
       return;
@@ -1345,7 +1345,7 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit( real64 const time_n,
             break;
           }
           default:
-            GEOS_ERROR("Unsupported point type in stencil");
+            GEOSX_ERROR("Unsupported point type in stencil");
         }
 
         // average density
@@ -1388,7 +1388,7 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit( real64 const time_n,
             break;
           }
           default:
-          GEOS_ERROR("Unsupported point type in stencil");
+          GEOSX_ERROR("Unsupported point type in stencil");
         }
 
         real64 const gravTerm = m_gravityFlag ? densMean * gravD : 0.0;
@@ -1444,7 +1444,7 @@ real64 SinglePhaseFlow::CalculateResidualNorm( DomainPartition const * const dom
   string const dofKey = dofManager.getKey( viewKeyStruct::pressureString );
 
   // compute the norm of local residual scaled by cell pore volume
-  real64 localResidualNorm = 0.0;
+  real64 localResidualNorm[3] = { 0.0, 0.0, 0.0 };
   applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
                                  ElementRegionBase const * const GEOSX_UNUSED_ARG( region ),
                                  ElementSubRegionBase const * const subRegion )
@@ -1454,8 +1454,7 @@ real64 SinglePhaseFlow::CalculateResidualNorm( DomainPartition const * const dom
     arrayView1d<integer const> const & elemGhostRank = m_elemGhostRank[er][esr];
     arrayView1d<real64 const> const & refPoro        = m_porosityRef[er][esr];
     arrayView1d<real64 const> const & volume         = m_volume[er][esr];
-    arrayView1d<real64 const> const & dVol           = m_deltaVolume[er][esr];
-    arrayView2d<real64 const> const & dens           = m_density[er][esr][m_fluidIndex];
+    arrayView1d<real64 const> const & densOld        = m_densityOld[er][esr];
 
     localIndex const subRegionSize = subRegion->size();
     for ( localIndex a = 0; a < subRegionSize; ++a )
@@ -1463,17 +1462,28 @@ real64 SinglePhaseFlow::CalculateResidualNorm( DomainPartition const * const dom
       if (elemGhostRank[a] < 0)
       {
         localIndex const lid = rhs.getLocalRowID( dofNumber[a] );
-        real64 const val = localResidual[lid] / (refPoro[a] * dens[a][0] * ( volume[a] + dVol[a]));
-        localResidualNorm += val * val;
+        real64 const val = localResidual[lid];
+        localResidualNorm[0] += val * val;
+        localResidualNorm[1] += refPoro[a] * densOld[a] * volume[a];
+        localResidualNorm[2] += 1;
       }
     }
   });
 
-  // compute global residual norm
-  real64 globalResidualNorm;
-  MpiWrapper::allReduce(&localResidualNorm, &globalResidualNorm, 1, MPI_SUM, MPI_COMM_GEOSX);
+//  std::cout << "        The fluid  residual on this rank is  " << localResidualNorm[0] << "  normalized with  "
+//               << localResidualNorm[1] + m_fluxEstimate << std::endl;
 
-  return sqrt(globalResidualNorm);
+  // compute global residual norm
+  real64 globalResidualNorm[3] = {0,0,0};
+  MpiWrapper::allReduce( localResidualNorm,
+                         globalResidualNorm,
+                         3,
+                         MPI_SUM,
+                         MPI_COMM_GEOSX);
+
+  // MPI_Barrier(MPI_COMM_GEOSX);
+  // GEOS_LOG_RANK_0("      Global fluid residual " << globalResidualNorm[0] << " scaled by  " <<   ( globalResidualNorm[1] + m_fluxEstimate ) / (globalResidualNorm[2]+1) );
+  return sqrt(globalResidualNorm[0]) / ( ( globalResidualNorm[1] + m_fluxEstimate ) / (globalResidualNorm[2]+1) );
 }
 
 void SinglePhaseFlow::ApplySystemSolution( DofManager const & dofManager,
@@ -1522,8 +1532,8 @@ void SinglePhaseFlow::SolveSystem( DofManager const & dofManager,
   SolverBase::SolveSystem( dofManager, matrix, rhs, solution );
   
   // Debug for logLevel >= 2
-  GEOS_LOG_LEVEL_RANK_0( 2, "After SinglePhaseFlow::SolveSystem" );
-  GEOS_LOG_LEVEL_RANK_0( 2, "\nSolution:\n" << solution );
+  GEOSX_LOG_LEVEL_RANK_0( 2, "After SinglePhaseFlow::SolveSystem" );
+  GEOSX_LOG_LEVEL_RANK_0( 2, "\nSolution:\n" << solution );
 }
 
 void SinglePhaseFlow::ResetStateToBeginningOfStep( DomainPartition * const domain )

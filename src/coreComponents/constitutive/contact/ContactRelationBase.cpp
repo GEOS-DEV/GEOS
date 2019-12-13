@@ -62,11 +62,11 @@ ContactRelationBase::CreateChild( string const & catalogKey, string const & chil
   if( functionCatalog.count(catalogKey) )
   {
     m_apertureFunction = (FunctionBase::CatalogInterface::Factory( catalogKey, childName, this )).release();
-    rval =  FunctionManager::Instance()->RegisterGroup( childName, m_apertureFunction, 0 );
+    rval =  FunctionManager::Instance().RegisterGroup( childName, m_apertureFunction, 0 );
   }
   else
   {
-    GEOS_ERROR(catalogKey<<" is an invalid key ContactRelationBase child group.");
+    GEOSX_ERROR(catalogKey<<" is an invalid key ContactRelationBase child group.");
   }
   return rval;
 }
@@ -79,21 +79,21 @@ void ContactRelationBase::InitializePreSubGroups( Group * const )
     array1d<array1d<real64>> & xvals0 = apertureTable->getCoordinates();
     array1d<real64> &          yvals = apertureTable->getValues();
 
-    GEOS_ERROR_IF( xvals0.size() > 1,
+    GEOSX_ERROR_IF( xvals0.size() > 1,
                    "Aperture limiter table cannot be greater than a 1d table.");
 
     array1d<real64> & xvals = xvals0[0];
 
-    GEOS_ERROR_IF( xvals.back() > 0.0 || xvals.back() < 0.0 ,
+    GEOSX_ERROR_IF( xvals.back() > 0.0 || xvals.back() < 0.0 ,
                    "Invalid aperture limiter table. Last coordinate must be zero!!" );
 
-    GEOS_ERROR_IF( xvals.size() < 2,
+    GEOSX_ERROR_IF( xvals.size() < 2,
                    "Invalid aperture limiter table. Must have more than two points specified");
 
     localIndex n=xvals.size()-1;
     real64 const slope = (yvals[n]-yvals[n-1]) / (xvals[n]-xvals[n-1]) ;
 
-    GEOS_ERROR_IF( slope >= 1.0,
+    GEOSX_ERROR_IF( slope >= 1.0,
                    "Invalid aperture table. slope of last two points >= 1 is invalid.");
 
     real64 m_apertureTransition = (yvals[n] - slope * xvals[n] ) / ( 1.0 - slope );

@@ -116,6 +116,18 @@ void PoroelasticSolver::PostProcessInput()
   if( ctOption == "FixedStress" )
   {
     this->m_couplingTypeOption = couplingTypeOption::FixedStress;
+
+    // For this coupled solver the minimum number of Newton Iter should be 0 for both flow and solid solver otherwise it will never converge.
+    SolidMechanicsLagrangianFEM &
+      solidSolver = *(this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolidMechanicsLagrangianFEM*>());
+      integer & minNewtonIterSolid = solidSolver.getSystemSolverParameters()->minIterNewton();
+
+    SinglePhaseFlow &
+      fluidSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>());
+    integer & minNewtonIterFluid = fluidSolver.getSystemSolverParameters()->minIterNewton();
+
+    minNewtonIterSolid = 0;
+    minNewtonIterFluid = 0;
   }
   else if( ctOption == "TightlyCoupled" )
   {
@@ -123,7 +135,7 @@ void PoroelasticSolver::PostProcessInput()
   }
   else
   {
-    GEOS_ERROR("invalid coupling type option");
+    GEOSX_ERROR("invalid coupling type option");
   }
 
 }
@@ -172,7 +184,7 @@ real64 PoroelasticSolver::SolverStep( real64 const & time_n,
   }
   else if( m_couplingTypeOption == couplingTypeOption::TightlyCoupled )
   {
-    GEOS_ERROR( "couplingTypeOption::FullyImplicit not yet implemented");
+    GEOSX_ERROR( "couplingTypeOption::FullyImplicit not yet implemented");
   }
   return dtReturn;
 }
@@ -344,7 +356,7 @@ real64 PoroelasticSolver::SplitOperatorStep( real64 const& time_n,
       ResetStateToBeginningOfStep( domain );
     }
     
-    GEOS_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1  << ", FlowSolver: " );
+    GEOSX_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1  << ", FlowSolver: " );
     
     dtReturnTemporary = fluidSolver.NonlinearImplicitStep( time_n,
                                                            dtReturn,
@@ -364,11 +376,11 @@ real64 PoroelasticSolver::SplitOperatorStep( real64 const& time_n,
 
     if (fluidSolver.getSystemSolverParameters()->numNewtonIterations() == 0 && iter > 0)
     {
-      GEOS_LOG_LEVEL_RANK_0( 1, "***** The iterative coupling has converged in " << iter  << " iterations! *****\n" );
+      GEOSX_LOG_LEVEL_RANK_0( 1, "***** The iterative coupling has converged in " << iter  << " iterations! *****\n" );
       break;
     }
 
-    GEOS_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1  << ", MechanicsSolver: " );
+    GEOSX_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1  << ", MechanicsSolver: " );
 
     solidSolver.ResetStressToBeginningOfStep(domain);
     dtReturnTemporary = solidSolver.NonlinearImplicitStep( time_n,
