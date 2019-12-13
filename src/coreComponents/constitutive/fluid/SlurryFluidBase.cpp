@@ -92,16 +92,19 @@ void SlurryFluidBase::PostProcessInput()
 
   localIndex const NC = numFluidComponents();
 
-  GEOS_ERROR_IF( m_defaultDensity.size() != NC, "The number of flow behavior indices is not the same as the component number" );
+  GEOSX_ERROR_IF( m_defaultDensity.size() != NC,
+                  "The number of flow behavior indices is not the same as the component number" );
 
-  GEOS_ERROR_IF( m_defaultCompressibility.size() != NC, "The number of flow behavior indices is not the same as the component number" );
+  GEOSX_ERROR_IF( m_defaultCompressibility.size() != NC,
+                  "The number of flow behavior indices is not the same as the component number" );
 
-  GEOS_ERROR_IF( m_defaultViscosity.size() != NC, "The number of flow behavior indices is not the same as the component number" );  
+  GEOSX_ERROR_IF( m_defaultViscosity.size() != NC,
+                  "The number of flow behavior indices is not the same as the component number" );
 
   /*
-  GEOS_ERROR_IF( m_nIndices.size() != NC, "The number of flow behavior indices is not the same as the component number" );
+  GEOSX_ERROR_IF( m_nIndices.size() != NC, "The number of flow behavior indices is not the same as the component number" );
 
-  GEOS_ERROR_IF( m_Ks.size() != NC, "The number of flow consistency indices is not the same as the component number" );  
+  GEOSX_ERROR_IF( m_Ks.size() != NC, "The number of flow consistency indices is not the same as the component number" );  
   */
 
   
@@ -114,7 +117,7 @@ localIndex SlurryFluidBase::numFluidComponents() const
 
 string const & SlurryFluidBase::componentName(localIndex ic) const
 {
-  GEOS_ERROR_IF( ic >= numFluidComponents(), "Index " << ic << " exceeds number of fluid components" );
+  GEOSX_ERROR_IF( ic >= numFluidComponents(), "Index " << ic << " exceeds number of fluid components" );
   return m_componentNames[ic];
 }
 
@@ -159,7 +162,7 @@ SlurryFluidBase::DeliverClone( string const & name,
                                Group * const parent,
                                std::unique_ptr<ConstitutiveBase> & clone ) const
 {
-  GEOS_ERROR_IF( !clone, "clone not allocated" );
+  GEOSX_ERROR_IF( !clone, "clone not allocated" );
 
   ConstitutiveBase::DeliverClone( name, parent, clone );
   SlurryFluidBase * const newConstitutiveRelation = dynamic_cast<SlurryFluidBase *>(clone.get());

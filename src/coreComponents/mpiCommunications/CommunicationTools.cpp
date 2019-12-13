@@ -76,7 +76,7 @@ void CommunicationTools::releaseCommID( int & ID )
 
   if( commIDs.count( ID ) > 0 )
   {
-    GEOS_ERROR( "Attempting to release commID that is already free" );
+    GEOSX_ERROR( "Attempting to release commID that is already free" );
   }
   commIDs.insert( ID );
   ID = -1;
@@ -389,7 +389,7 @@ void CommunicationTools::AssignNewGlobalIndices( ObjectManagerBase & object,
   localIndex nIndicesAssigned = 0;
   for ( localIndex const newLocalIndex : indexList )
   {
-    GEOS_ERROR_IF( object.m_localToGlobalMap[newLocalIndex] != -1,
+    GEOSX_ERROR_IF( object.m_localToGlobalMap[newLocalIndex] != -1,
                    "Local object " << newLocalIndex << " should be new but already has a global index "
                    << object.m_localToGlobalMap[newLocalIndex] );
 
@@ -452,7 +452,7 @@ AssignNewGlobalIndices( ElementRegionManager & elementManager,
 
     for ( localIndex const newLocalIndex : indexList )
     {
-      GEOS_ERROR_IF( subRegion->m_localToGlobalMap[newLocalIndex] != -1,
+      GEOSX_ERROR_IF( subRegion->m_localToGlobalMap[newLocalIndex] != -1,
                      "Local object " << newLocalIndex << " should be new but already has a global index "
                      << subRegion->m_localToGlobalMap[newLocalIndex] );
 

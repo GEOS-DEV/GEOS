@@ -43,7 +43,7 @@ ParticleFluid::ParticleSettlingModel ParticleFluid::stringToParticleSettlingMode
   }
   else
   {
-    GEOS_ERROR("Unrecognized particle settling velocity model: " << str);
+    GEOSX_ERROR("Unrecognized particle settling velocity model: " << str);
   }
   return ParticleFluid::ParticleSettlingModel::Stokes;
 }
@@ -278,7 +278,7 @@ void ParticleFluid::Compute( localIndex const NC,
     
       break;
     default:
-      GEOS_ERROR("Particle settling model type not supported");
+      GEOSX_ERROR("Particle settling model type not supported");
   }
 
       

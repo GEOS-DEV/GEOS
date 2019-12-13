@@ -20,7 +20,7 @@
 #define GEOSX_MANAGERS_FIELDSPECIFICATION_FIELDSPECIFICATIONBASE_HPP
 
 #include "common/DataTypes.hpp"
-#include "codingUtilities/GeosxTraits.hpp"
+#include "codingUtilities/traits.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "dataRepository/Group.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
@@ -376,7 +376,7 @@ void FieldSpecificationBase::ApplyFieldValueKernel( LvArray::ArrayView< T, N, UN
 {
   integer const component = GetComponent();
   string const & functionName = getReference<string>( viewKeyStruct::functionNameString );
-  FunctionManager * functionManager = FunctionManager::Instance();
+  FunctionManager & functionManager = FunctionManager::Instance();
 
   if( functionName.empty() )
   {
@@ -388,9 +388,9 @@ void FieldSpecificationBase::ApplyFieldValueKernel( LvArray::ArrayView< T, N, UN
   }
   else
   {
-    FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>( functionName );
+    FunctionBase const * const function  = functionManager.GetGroup<FunctionBase>( functionName );
 
-    GEOS_ERROR_IF( function == nullptr, "Function '" << functionName << "' not found" );
+    GEOSX_ERROR_IF( function == nullptr, "Function '" << functionName << "' not found" );
 
     if( function->isFunctionOfTime()==2 )
     {
@@ -487,7 +487,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
 {
   integer const component = GetComponent();
   string const & functionName = getReference<string>( viewKeyStruct::functionNameString );
-  FunctionManager * functionManager = FunctionManager::Instance();
+  FunctionManager & functionManager = FunctionManager::Instance();
 
   globalIndex_array  dof( targetSet.size() );
   real64_array rhsContribution( targetSet.size() );
@@ -513,9 +513,9 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
   }
   else
   {
-    FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>( functionName );
+    FunctionBase const * const function  = functionManager.GetGroup<FunctionBase>( functionName );
 
-    GEOS_ERROR_IF( function == nullptr, "Function '" << functionName << "' not found" );
+    GEOSX_ERROR_IF( function == nullptr, "Function '" << functionName << "' not found" );
 
     if( function->isFunctionOfTime()==2 )
     {
@@ -570,7 +570,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
 {
   integer const component = GetComponent();
   string const & functionName = getReference<string>( viewKeyStruct::functionNameString );
-  FunctionManager * functionManager = FunctionManager::Instance();
+  FunctionManager & functionManager = FunctionManager::Instance();
 
   globalIndex_array  dof( targetSet.size() );
   real64_array rhsContribution( targetSet.size() );
@@ -601,9 +601,9 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
   }
   else
   {
-    FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>( functionName );
+    FunctionBase const * const function  = functionManager.GetGroup<FunctionBase>( functionName );
 
-    GEOS_ERROR_IF( function == nullptr, "Function '" << functionName << "' not found" );
+    GEOSX_ERROR_IF( function == nullptr, "Function '" << functionName << "' not found" );
 
     if( function->isFunctionOfTime()==2 )
     {

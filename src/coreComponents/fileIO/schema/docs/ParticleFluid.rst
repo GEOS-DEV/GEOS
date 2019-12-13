@@ -3,7 +3,6 @@
 =========================== ======= ======== ==================================================================== 
 Name                        Type    Default  Description                                                          
 =========================== ======= ======== ==================================================================== 
-bridgingFactor              real64  3        Bridging factor                                                      
 collisionAlpha              real64  1.27     Collision alpha coefficient                                          
 collisionBeta               real64  1.5      Collision beta coefficient                                           
 fluidViscosity              real64  0.001    Fluid viscosity                                                      

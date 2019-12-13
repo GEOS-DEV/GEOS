@@ -103,14 +103,17 @@ void ProppantSlurryFluid::PostProcessInput()
 {
   SlurryFluidBase::PostProcessInput();
 
-  GEOS_ERROR_IF( m_compressibility < 0.0, "An invalid value of fluid compressibility ("
-                                          << m_compressibility << ") is specified" );
+  GEOSX_ERROR_IF( m_compressibility < 0.0,
+                  "An invalid value of fluid compressibility ("<< m_compressibility << ") is specified" );
 
-  GEOS_ERROR_IF( m_referenceDensity <= 0.0, "An invalid value of fluid reference density (" << m_compressibility << ") is specified" );
+  GEOSX_ERROR_IF( m_referenceDensity <= 0.0,
+                  "An invalid value of fluid reference density (" << m_compressibility << ") is specified" );
 
-  GEOS_ERROR_IF( m_referenceViscosity <= 0.0, "An invalid value of fluid reference viscosity is specified" );
+  GEOSX_ERROR_IF( m_referenceViscosity <= 0.0,
+                  "An invalid value of fluid reference viscosity is specified" );
 
-  GEOS_ERROR_IF( m_maxProppantConcentration <= 0.0 || m_maxProppantConcentration > 1.0, "An invalid value of maximum proppant volume fraction is specified" );
+  GEOSX_ERROR_IF( m_maxProppantConcentration <= 0.0 || m_maxProppantConcentration > 1.0,
+                  "An invalid value of maximum proppant volume fraction is specified" );
 
 }
 

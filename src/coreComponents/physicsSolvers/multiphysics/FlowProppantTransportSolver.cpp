@@ -114,9 +114,9 @@ real64 FlowProppantTransportSolver::SolverStep( real64 const & time_n,
   
   if(cycleNumber == 0) {
 
-    FieldSpecificationManager const * boundaryConditionManager = FieldSpecificationManager::get();
+    FieldSpecificationManager const & boundaryConditionManager = FieldSpecificationManager::get();
 
-    boundaryConditionManager->ApplyInitialConditions( domain );
+    boundaryConditionManager.ApplyInitialConditions( domain );
 
   }
 
@@ -166,7 +166,7 @@ real64 FlowProppantTransportSolver::SolverStep( real64 const & time_n,
     }
     if (getLogLevel() >= 1)
     {
-      GEOS_LOG_RANK_0( "\tIteration: " << iter+1  << ", FlowSolver: " );
+      GEOSX_LOG_RANK_0( "\tIteration: " << iter+1  << ", FlowSolver: " );
     }
 
     dtReturnTemporary = flowSolver.NonlinearImplicitStep( time_n,
@@ -188,13 +188,13 @@ real64 FlowProppantTransportSolver::SolverStep( real64 const & time_n,
   
     if (flowSolver.getSystemSolverParameters()->numNewtonIterations() <=maxIterNewtonConvergenceCheckNumber  && iter > 0 && getLogLevel() >= 1)
     {
-      GEOS_LOG_RANK_0( "***** The iterative coupling has converged in " << iter  << " iterations! *****\n" );
+      GEOSX_LOG_RANK_0( "***** The iterative coupling has converged in " << iter  << " iterations! *****\n" );
       break;
     }
 
     if (getLogLevel()  >= 1)
     {
-      GEOS_LOG_RANK_0( "\tIteration: " << iter+1  << ", Proppant Solver: " );
+      GEOSX_LOG_RANK_0( "\tIteration: " << iter+1  << ", Proppant Solver: " );
     }
     
     dtReturnTemporary = proppantSolver.NonlinearImplicitStep( time_n,

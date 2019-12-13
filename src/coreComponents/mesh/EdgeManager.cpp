@@ -170,7 +170,7 @@ localIndex calculateTotalNumberOfEdges( ArrayOfArraysView< EdgeBuilder const > c
                                         arrayView1d< localIndex > const & uniqueEdgeOffsets )
 {
   localIndex const numNodes = edgesByLowestNode.size();
-  GEOS_ERROR_IF_NE( numNodes, uniqueEdgeOffsets.size() - 1 );
+  GEOSX_ERROR_IF_NE( numNodes, uniqueEdgeOffsets.size() - 1 );
 
   uniqueEdgeOffsets[0] = 0;
 
@@ -287,7 +287,7 @@ void addEdge( ArrayOfArraysView< EdgeBuilder const > const & edgesByLowestNode,
               localIndex const firstMatch,
               localIndex const numMatches )
 {
-  GEOS_ASSERT_EQ( edgeToFaceMap.capacityOfSet( edgeID ), numMatches );
+  GEOSX_ASSERT_EQ( edgeToFaceMap.capacityOfSet( edgeID ), numMatches );
 
   // Populate the edge to node map.
   edgeToNodeMap( edgeID, 0 ) = firstNodeID;
@@ -325,10 +325,10 @@ void populateMaps( ArrayOfArraysView< EdgeBuilder const > const & edgesByLowestN
   localIndex const numNodes = edgesByLowestNode.size();
   localIndex const numFaces = faceToNodeMap.size();
   localIndex const numUniqueEdges = uniqueEdgeOffsets.back();
-  GEOS_ERROR_IF_NE( numNodes, uniqueEdgeOffsets.size() - 1 );
-  GEOS_ERROR_IF_NE( numFaces, faceToEdgeMap.size() );
-  GEOS_ERROR_IF_NE( numUniqueEdges, edgeToFaceMap.size() );
-  GEOS_ERROR_IF_NE( numUniqueEdges, edgeToNodeMap.size( 0 ) );
+  GEOSX_ERROR_IF_NE( numNodes, uniqueEdgeOffsets.size() - 1 );
+  GEOSX_ERROR_IF_NE( numFaces, faceToEdgeMap.size() );
+  GEOSX_ERROR_IF_NE( numUniqueEdges, edgeToFaceMap.size() );
+  GEOSX_ERROR_IF_NE( numUniqueEdges, edgeToNodeMap.size( 0 ) );
 
   // The face to edge map has the same shape as the face to node map, so we can resize appropriately.
   localIndex totalSize = 0;
@@ -1025,7 +1025,7 @@ localIndex EdgeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
 
   string nodeListString;
   unPackedSize += bufferOps::Unpack( buffer, nodeListString );
-  GEOS_ERROR_IF_NE( nodeListString, viewKeyStruct::nodeListString );
+  GEOSX_ERROR_IF_NE( nodeListString, viewKeyStruct::nodeListString );
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toNodesRelation,
                                      packList,
@@ -1035,7 +1035,7 @@ localIndex EdgeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
 
   string faceListString;
   unPackedSize += bufferOps::Unpack( buffer, faceListString );
-  GEOS_ERROR_IF_NE( faceListString, viewKeyStruct::faceListString );
+  GEOSX_ERROR_IF_NE( faceListString, viewKeyStruct::faceListString );
 
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toFacesRelation,

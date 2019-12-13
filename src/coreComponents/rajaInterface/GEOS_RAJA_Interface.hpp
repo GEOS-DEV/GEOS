@@ -15,9 +15,11 @@
 #ifndef GEOSX_RAJAINTERFACE_RAJAINTERFACE_HPP
 #define GEOSX_RAJAINTERFACE_RAJAINTERFACE_HPP
 
-#include "RAJA/RAJA.hpp"
+// Source includes
 #include "common/DataTypes.hpp"
 
+// TPL includes
+#include <RAJA/RAJA.hpp>
 
 using serialPolicy = RAJA::loop_exec;
 using serialReduce = RAJA::seq_reduce;

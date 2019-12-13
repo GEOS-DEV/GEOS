@@ -12,15 +12,16 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include "gtest/gtest.h"
-
-#include "SetSignalHandling.hpp"
-#include "stackTrace.hpp"
+// Source includes
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "managers/DomainPartition.hpp"
+#include "managers/initialization.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
+
+// TPL includes
+#include <gtest/gtest.h>
 
 using namespace geosx;
 using namespace geosx::constitutive;
@@ -32,24 +33,24 @@ void RegisterAndApplyField( DomainPartition * domain,
                             string const & objectPath,
                             real64 value )
 {
-  auto fieldSpecificationManager = FieldSpecificationManager::get();
+  FieldSpecificationManager & fieldSpecificationManager = FieldSpecificationManager::get();
 
-  auto fieldSpec = fieldSpecificationManager->RegisterGroup<FieldSpecificationBase>(fieldName);
+  auto fieldSpec = fieldSpecificationManager.RegisterGroup<FieldSpecificationBase>(fieldName);
   fieldSpec->SetFieldName(fieldName);
   fieldSpec->SetObjectPath(objectPath);
   fieldSpec->SetScale(value);
   fieldSpec->InitialCondition(true);
   fieldSpec->AddSetName("all");
 
-  fieldSpecificationManager->Apply( 0., domain, "", "",
-                                    [&] ( FieldSpecificationBase const * const bc,
-                                          string const &,
-                                          set<localIndex> const & targetSet,
-                                          Group * const targetGroup,
-                                          string const name )
-                                    {
-                                      bc->ApplyFieldValue<FieldSpecificationEqual>( targetSet, 0.0, targetGroup, name );
-                                    });
+  fieldSpecificationManager.Apply( 0., domain, "", "",
+                                   [&] ( FieldSpecificationBase const * const bc,
+                                         string const &,
+                                         set<localIndex> const & targetSet,
+                                         Group * const targetGroup,
+                                         string const name )
+                                   {
+                                     bc->ApplyFieldValue<FieldSpecificationEqual>( targetSet, 0.0, targetGroup, name );
+                                   });
 }
 
 TEST(FieldSpecification, Recursive)
@@ -168,7 +169,7 @@ TEST(FieldSpecification, Recursive)
   {
     forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
-      GEOS_ERROR_IF(field0[er][esr][ei] < 1. || field0[er][esr][ei] > 1., "Recursive fields are not set");
+      GEOSX_ERROR_IF(field0[er][esr][ei] < 1. || field0[er][esr][ei] > 1., "Recursive fields are not set");
     });
   });
 
@@ -176,18 +177,18 @@ TEST(FieldSpecification, Recursive)
   {
     forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
-      GEOS_ERROR_IF(field1[0][esr][ei] < 2. || field1[0][esr][ei] > 2., "Recursive fields are not set");
+      GEOSX_ERROR_IF(field1[0][esr][ei] < 2. || field1[0][esr][ei] > 2., "Recursive fields are not set");
     });
   });
 
   forall_in_range<serialPolicy>( 0, reg0Hex->size(), GEOSX_LAMBDA ( localIndex ei )
   {
-    GEOS_ERROR_IF(field2[0][0][ei] < 1. || field2[0][0][ei] > 3., "Recursive fields are not set");
+    GEOSX_ERROR_IF(field2[0][0][ei] < 1. || field2[0][0][ei] > 3., "Recursive fields are not set");
   });
 
   forall_in_range<serialPolicy>( 0, reg1Tet->size(), GEOSX_LAMBDA ( localIndex ei )
   {
-    GEOS_ERROR_IF(field3[1][1][ei] < 4. || field3[1][1][ei] > 4., "Recursive fields are not set");
+    GEOSX_ERROR_IF(field3[1][1][ei] < 4. || field3[1][1][ei] > 4., "Recursive fields are not set");
   });
 
 
@@ -196,29 +197,12 @@ TEST(FieldSpecification, Recursive)
 
 int main(int argc, char** argv)
 {
+  basicSetup( argc, argv );
+
   ::testing::InitGoogleTest(&argc, argv);
-
-#ifdef GEOSX_USE_MPI
-
-  MPI_Init(&argc,&argv);
-
-  MPI_Comm_dup( MPI_COMM_WORLD, &MPI_COMM_GEOSX );
-
-  logger::InitializeLogger(MPI_COMM_GEOSX);
-#else
-  logger::InitializeLogger();
-#endif
-
-  cxx_utilities::setSignalHandling(cxx_utilities::handler1);
-
   int const result = RUN_ALL_TESTS();
 
-  logger::FinalizeLogger();
-
-#ifdef GEOSX_USE_MPI
-  MPI_Comm_free( &MPI_COMM_GEOSX );
-  MPI_Finalize();
-#endif
+  basicCleanup();
 
   return result;
 }

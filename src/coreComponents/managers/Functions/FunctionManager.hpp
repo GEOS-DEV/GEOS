@@ -34,19 +34,10 @@ public:
                       dataRepository::Group * const parent );
   virtual ~FunctionManager() override;
 
-  static FunctionManager * Instance()
+  static FunctionManager & Instance()
   {
-    static FunctionManager * theFunctionManager = nullptr;
-    if (theFunctionManager == nullptr)
-    {
-      theFunctionManager = new FunctionManager("Functions", nullptr); 
-    }
+    static FunctionManager theFunctionManager( "Functions", nullptr ); 
     return theFunctionManager;
-  }
-
-  static void finalize()
-  {
-    delete Instance();
   }
 
   static string CatalogName() { return "FunctionManager"; }
