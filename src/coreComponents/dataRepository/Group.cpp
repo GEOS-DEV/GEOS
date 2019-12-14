@@ -167,7 +167,17 @@ void Group::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
 
             if( inputFlag == InputFlags::REQUIRED || !(typedWrapper.getDefaultValueStruct().has_default_value) )
             {
-              xmlWrapper::ReadAttributeAsType( objectReference, wrapperName, targetNode, inputFlag == InputFlags::REQUIRED );
+              bool const readSuccess = xmlWrapper::ReadAttributeAsType( objectReference,
+                                                                        wrapperName,
+                                                                        targetNode,
+                                                                        inputFlag == InputFlags::REQUIRED );
+              GEOSX_ERROR_IF( !readSuccess,
+                              "Input variable " + wrapperName + " is required in " + targetNode.path()
+                              + ". Available options are: \n"+ dumpInputOptions()
+                              + "\nFor more details, please refer to documentation at: \n"
+                              + "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html \n" );
+
+
             }
             else
             {
@@ -185,7 +195,9 @@ void Group::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
       GEOSX_ERROR_IF( processedXmlNodes.count( childName )==0,
                       "XML Node ("<<targetNode.name()<<") with attribute name=("<<
                       targetNode.attribute( "name" ).value()<<") contains child node named ("<<
-                      childName<<") that is not read." );
+                      childName<<") that is not read. Valid options are: \n" << dumpInputOptions()
+                      + "\nFor more details, please refer to documentation at: \n"
+                      + "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html \n" );
     }
   }
 
@@ -235,6 +247,32 @@ void Group::PrintDataHierarchy( integer indent )
     group.second->PrintDataHierarchy( indent + 1 );
   }
 }
+
+string Group::dumpInputOptions()
+{
+  string rval;
+  char temp[100] = {0};
+  sprintf( temp, "  |         name         |  opt/req  | Description \n" );
+  rval.append( temp );
+  sprintf( temp, "  |----------------------|-----------|-----------------------------------------\n" );
+  rval.append( temp );
+
+  for( auto const & wrapper : m_wrappers )
+  {
+    WrapperBase const * const wb = wrapper.second;
+    if( wb->getInputFlag() == InputFlags::OPTIONAL ||
+        wb->getInputFlag() == InputFlags::REQUIRED )
+    {
+      sprintf( temp, "  | %20s | %9s | %s \n",
+               wb->getName().c_str(),
+               InputFlagToString( wb->getInputFlag()).c_str(),
+               wb->getDescription().c_str() );
+      rval.append( temp );
+    }
+  }
+  return rval;
+}
+
 
 void Group::InitializationOrder( string_array & order )
 {
