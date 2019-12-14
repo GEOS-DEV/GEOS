@@ -639,8 +639,7 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
 
   if( getLogLevel() >= 3 )
   {
-    SystemSolverParameters * const solverParams = getSystemSolverParameters();
-    integer newtonIter = solverParams->numNewtonIterations();
+    integer newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
 
     {
       string filename = "matrix00_" + std::to_string( time ) + "_" + std::to_string( newtonIter ) + ".mtx";
