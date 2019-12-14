@@ -124,12 +124,6 @@ void ProppantTransport::RegisterDataOnMesh(Group * const MeshBodies)
 
       subRegion->registerWrapper< array1d<R1Tensor> >( viewKeyStruct::cellBasedFluxString );
 
-      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::poroMultiplierString )->
-        setDefaultValue(1.0);
-
-      subRegion->registerWrapper< array1d<R1Tensor> >( viewKeyStruct::transTMultiplierString );
-
-
     });
 
 
@@ -165,10 +159,6 @@ void ProppantTransport::RegisterDataOnMesh(Group * const MeshBodies)
       subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::proppantExcessPackVolumeString );
 
       subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::proppantLiftFluxString );                  
-
-      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::poroMultiplierString )->setDefaultValue(1.0);
-
-      subRegion->registerWrapper< array1d<R1Tensor> >( viewKeyStruct::transTMultiplierString );            
 
     } );
 

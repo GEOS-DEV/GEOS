@@ -37,7 +37,8 @@ SourceFluxBoundaryCondition::~SourceFluxBoundaryCondition()
 
 void SourceFluxBoundaryCondition::InitializePreSubGroups( Group * const )
 {
-    this->SetFluxFlag();
+  this->SetFieldName("FLUX");
+  this->SetFluxFlag();
 }
 
 

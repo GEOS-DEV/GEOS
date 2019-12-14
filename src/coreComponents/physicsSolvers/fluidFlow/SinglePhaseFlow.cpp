@@ -73,10 +73,6 @@ void SinglePhaseFlow::RegisterDataOnMesh(Group * const MeshBodies)
       subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::porosityString )->setPlotLevel(PlotLevel::LEVEL_1);
       subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::porosityOldString );
       subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::densityOldString );
-
-      subRegion->registerWrapper< array1d<R1Tensor> >( viewKeyStruct::transTMultString );
-      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::poroMultString );            
-
     });
 
     elemManager->forElementRegions<FaceElementRegion>( [&] ( FaceElementRegion * const region )
@@ -96,9 +92,10 @@ void SinglePhaseFlow::RegisterDataOnMesh(Group * const MeshBodies)
         subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::aperture0String )->
           setDefaultValue( region->getDefaultAperture() );
 
-        subRegion->registerWrapper< array1d<R1Tensor> >( viewKeyStruct::transTMultString );
-        subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::poroMultString );              
-        
+        subRegion->registerWrapper< array1d<R1Tensor> >( viewKeyStruct::transTMultString )->
+          setDefaultValue({1.0,1.0,1.0});
+        subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::poroMultString )->
+          setDefaultValue(1.0);
       });
     });
 
@@ -251,8 +248,6 @@ void SinglePhaseFlow::InitializePostInitialConditions_PreSubGroups( Group * cons
   DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
   MeshLevel * mesh = domain->getMeshBody(0)->getMeshLevel(0);
 
-  //  ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
-
   //TODO this is a hack until the sets are fixed to include ghosts!!
   std::map<string, string_array > fieldNames;
   fieldNames["elems"].push_back( viewKeyStruct::pressureString );
@@ -261,7 +256,7 @@ void SinglePhaseFlow::InitializePostInitialConditions_PreSubGroups( Group * cons
     domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors );
 
   CommunicationTools::SynchronizeFields( fieldNames, mesh, comms );
-  //  ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
+  ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
   
   ResetViews( domain );
 
@@ -273,13 +268,11 @@ void SinglePhaseFlow::InitializePostInitialConditions_PreSubGroups( Group * cons
                                  ElementSubRegionBase * const subRegion )
   {
 
-    /*
     real64 const defaultDensity = constitutiveManager->GetConstitutiveRelation( m_fluidIndex )->
                                   getWrapper< array2d<real64> >( SingleFluidBase::viewKeyStruct::densityString )->
                                   getDefaultValue();
     subRegion->getWrapper< array1d<real64> >( viewKeyStruct::densityOldString )->
       setDefaultValue( defaultDensity );
-    */
 
     UpdateState( subRegion );
 
@@ -320,34 +313,6 @@ real64 SinglePhaseFlow::SolverStep( real64 const& time_n,
   GEOSX_MARK_FUNCTION;
 
   real64 dt_return;
-
-  if(cycleNumber == 0) {
-
-    FieldSpecificationManager const & boundaryConditionManager = FieldSpecificationManager::get();
-
-    boundaryConditionManager.ApplyInitialConditions( domain );
-
-    MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
-
-    applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                                   ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
-                                   ElementSubRegionBase * const subRegion )
-      {
-
-        arrayView1d<R1Tensor> const & transTMultiplier   = m_transTMultiplier[er][esr];
-        arrayView1d<real64> const & poroMultiplier   = m_poroMultiplier[er][esr];        
-
-        forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
-       {
-
-         transTMultiplier[ei] = 1.0;
-         poroMultiplier[ei] = 1.0;         
-
-       } );
-
-      });
-    
-  }
   
   // setup dof numbers and linear system
   if( !m_coupledWellsFlag )
@@ -431,7 +396,7 @@ void SinglePhaseFlow::ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n
 
 
     //    UpdateMobility( subRegion );
-    UpdateState( subRegion );    
+    UpdateState( subRegion );
   } );
 }
 
