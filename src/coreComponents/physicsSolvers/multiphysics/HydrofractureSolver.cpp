@@ -1542,5 +1542,14 @@ HydrofractureSolver::ScalingForSystemSolution( DomainPartition const * const dom
                                                   m_solidSolver->getSystemSolution() );
 }
 
+void HydrofractureSolver::SetNextDt( SystemSolverParameters * const GEOSX_UNUSED_ARG(solverParams),
+                                     real64 const & currentDt ,
+                                     real64 & nextDt )
+{
+  SolverBase * const surfaceGenerator =  this->getParent()->GetGroup<SolverBase>("SurfaceGen");
+  nextDt = surfaceGenerator->GetTimestepRequest() < 1e99 ? surfaceGenerator->GetTimestepRequest() : currentDt;
+  GEOSX_LOG_RANK_0("nextDt surfaceGen " << nextDt);
+}
+
 REGISTER_CATALOG_ENTRY( SolverBase, HydrofractureSolver, std::string const &, Group * const )
 } /* namespace geosx */

@@ -475,6 +475,8 @@ public:
 		  {return m_nextDt;};
   /**@}*/
 
+  real64 GetTimestepRequest()
+      {return m_nextDt;};
 
   virtual Group * CreateChild( string const & childKey, string const & childName ) override;
   virtual void ExpandObjectCatalogs() override;

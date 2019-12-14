@@ -4,7 +4,7 @@
 <Problem>
 
   <Included>
-    <File name="./PennyShapedBase.xml"/>
+    <File name="./KGDBase_adaptiveDt.xml"/>
   </Included>
 
   <Solvers
@@ -19,13 +19,13 @@
       logLevel="1"
       targetRegions="{Region2, Fracture}"
       contactRelationName="fractureContact"
-      maxNumResolves="10"
+      maxNumResolves="1"
+      initialDt="1"
       >
       <SystemSolverParameters
         maxIterNewton="50"
-        newtonTol="1e-3"
+        newtonTol="1e-5"
         logLevel="1"
-        useAdaptiveKrylovTol="1"
         maxLineSearchCuts="10"
         useMLPrecond="1"
         scalingOption="2"
@@ -57,7 +57,7 @@
       targetRegions="{Fracture}"
       fluidName="water"
       solidName="rock"
-      inputFluxEstimate="1.0"
+      inputFluxEstimate="1"
       >
       <SystemSolverParameters 
         name="SystemSolverParameters"
@@ -76,13 +76,13 @@
       targetRegions="{Region2}"
       nodeBasedSIF="1"
       solidMaterialName="rock"
-      rockToughness="0.3e6"
+      rockToughness="0.5e6"
+      initialDt="1"
       >
     </SurfaceGenerator>
     
   </Solvers>
   
-
   <ElementRegions>
     <CellElementRegion name="Region2"
                    cellBlocks="{cb1}"
@@ -96,11 +96,11 @@
   <Constitutive>
     <CompressibleSinglePhaseFluid name="water"
                                   defaultDensity="1000"
-                                  defaultViscosity="0.001"
+                                  defaultViscosity="0.005"
                                   referencePressure="0.0"
                                   referenceDensity="1000"
-                                  compressibility="5e-12"
-                                  referenceViscosity="1.0e-3"
+                                  compressibility="5e-13"
+                                  referenceViscosity="5.0e-3"
                                   viscosibility="0.0"/>
 
     <PoroLinearElasticIsotropic name="rock"
@@ -113,7 +113,7 @@
                                 />
                                 
     <Contact name="fractureContact"
-      penaltyStiffness="1.0e10" >
+      penaltyStiffness="1.0e0" >
       <TableFunction 
         name="aperTable" 
         coordinates = "{ -1.0e-3, 0.0}"
@@ -122,7 +122,6 @@
     </Contact>
   </Constitutive>
 
-
   <Outputs>
       <Silo name="siloOutput"
             plotFileRoot="zeroToughness"
@@ -130,6 +129,5 @@
             parallelThreads="48"/>
       <Restart name="sidreRestart"/>
   </Outputs>
-
 
 </Problem>

@@ -130,11 +130,11 @@ ThresholdAtts.outputMeshType = 0
 ThresholdAtts.boundsInputType = 0
 ThresholdAtts.listedVarNames = ("Fracture_Solid_ElementFields/ghostRank", "Fracture_Solid_ElementFields/elementAperture")
 ThresholdAtts.zonePortions = (1, 1)
-ThresholdAtts.lowerBounds = (-1e+37, 0.0002)
+ThresholdAtts.lowerBounds = (-1e+37, 0.00012)
 ThresholdAtts.upperBounds = (-1, 1e+37)
 ThresholdAtts.defaultVarName = "Fracture_Solid_ElementFields/elementArea"
 ThresholdAtts.defaultVarIsScalar = 1
-ThresholdAtts.boundsRange = ("-1e+37:-1", "0.0002:1e+37")
+ThresholdAtts.boundsRange = ("-1e+37:-1", "0.00012:1e+37")
 SetOperatorOptions(ThresholdAtts, 1)
 DrawPlots()
 

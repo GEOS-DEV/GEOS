@@ -571,7 +571,7 @@ struct FluxKernel
     for( localIndex k=0 ; k<numFluxElems ; ++k )
     {
       FluxKernelHelper::
-      apertureForPermeablityCalculation<0>( aperture0[stencilElementIndices[k]],
+      apertureForPermeablityCalculation<1>( aperture0[stencilElementIndices[k]],
                                             aperture[stencilElementIndices[k]],
                                             aperTerm[k],
                                             dAperTerm_dAper[k] );

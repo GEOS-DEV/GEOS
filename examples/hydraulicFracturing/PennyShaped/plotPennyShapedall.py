@@ -147,7 +147,7 @@ N1 = 1
 fig2 = fig1 #plt.figure()  # a new figure window
 ax2 = fig2.add_subplot(3, 2, 4)  # specify (nrows, ncols, axnum)
 for i in range(0,numFiles):
-    plt.plot(radA[i][1::N1]/np.amax(radA[i]),Aperture[i][1::N1]*1000,symbols[i],fillstyle='none', markersize=4,label=labels[i] )
+    plt.plot(radA[i]/np.amax(radA[i]),Aperture[i]*1000,symbols[i],fillstyle='none', markersize=4,label=labels[i] )
 #plt.plot(solns[0],w_tough[0]*1000,  'k-', label='$\mu$ => 0' )
 plt.plot(solns[0],w_viscous[0]*1000,'r-', label='$K_{Ic}$ => 0' )
 plt.plot(solns[0],w_tough[0]*1000,'k-', label='$\mu$ => 0' )
@@ -161,7 +161,7 @@ plt.xlim([0, 1 ])
 #print np.append(Pressure[i][1::N1],Pressure[i][-1])
 ax2 = fig2.add_subplot(3, 2, 6)  # specify (nrows, ncols, axnum)
 for i in range(0,numFiles):
-    plt.plot(radP[i][1::N1]/np.amax(radP[i]),Pressure[i][1::N1]/1.0e6,symbols[i],fillstyle='none', markersize=4, label=labels[i] )
+    plt.plot(radP[i]/np.amax(radP[i]),Pressure[i]/1.0e6,symbols[i],fillstyle='none', markersize=4, label=labels[i] )
 #plt.plot(solns[0],p_tough[0]/1.0e6,  'k-', label='$\mu$ => 0' )
 plt.plot(solns[0],p_viscous[0]/1.0e6,'r-', label='$K_{Ic}$ => 0' )
 plt.plot(solns[0],p_tough[0]/1.0e6,'k-', label='$\mu$ => 0' )

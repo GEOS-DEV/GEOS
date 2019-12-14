@@ -763,7 +763,11 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
   }
 
 
-  calculateRuptureRate( *(elementManager.GetRegion<FaceElementRegion>(this->m_fractureRegionName)), edgeManager);
+  real64 ruptureRate = calculateRuptureRate( *(elementManager.GetRegion<FaceElementRegion>(this->m_fractureRegionName)), edgeManager);
+
+  GEOSX_LOG_RANK_0( "rupture rate is " << ruptureRate);
+  if ( ruptureRate > 0 )
+    m_nextDt = ruptureRate < 1e99 ? 1 / ruptureRate: 1e99;
 
   return rval;
 }
@@ -4580,10 +4584,6 @@ SurfaceGenerator::calculateRuptureRate( FaceElementRegion const & faceElementReg
   {
     maxRuptureRate = std::max( maxRuptureRate, ruptureRate(faceElemIndex) );
   }
-
-
-
-
 
   return maxRuptureRate;
 }

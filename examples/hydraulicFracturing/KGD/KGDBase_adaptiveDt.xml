@@ -34,7 +34,7 @@
   </Geometry>
 
 
-  <Events maxTime="50.0">
+  <Events maxTime="50.0" logLevel="1">
   
     <!-- SoloEvent 
       name="initialPlot"
@@ -54,17 +54,9 @@
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
     <PeriodicEvent 
-      name="solverApplications0"
+      name="solverApplication"
       beginTime="0.0"
-      endTime="20.0"
-      forceDt="0.5"
-      target="/Solvers/hydrofracture" />
-
-    <PeriodicEvent 
-      name="solverApplications1"
-      beginTime="20.0"
       endTime="100.0"
-      forceDt="1.0"
       target="/Solvers/hydrofracture" />
 
     <!-- This event is applied every 1.0s.  The targetExactTimestep
