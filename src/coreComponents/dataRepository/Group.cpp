@@ -251,7 +251,7 @@ void Group::PrintDataHierarchy( integer indent )
 string Group::dumpInputOptions()
 {
   string rval;
-  char temp[100] = {0};
+  char temp[1000] = {0};
   sprintf( temp, "  |         name         |  opt/req  | Description \n" );
   rval.append( temp );
   sprintf( temp, "  |----------------------|-----------|-----------------------------------------\n" );

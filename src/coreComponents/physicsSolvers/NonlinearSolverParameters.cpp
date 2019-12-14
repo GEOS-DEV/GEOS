@@ -22,7 +22,7 @@ NonlinearSolverParameters::NonlinearSolverParameters( std::string const & name,
   enableLogLevelInput();
 
   registerWrapper( viewKeysStruct::lineSearchActionString, &m_lineSearchAction, false )->
-    setApplyDefaultValue(1)->
+    setApplyDefaultValue(2)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("How the line search is to be used. Options are: \n "
                    "0 - Do not use line search.\n"

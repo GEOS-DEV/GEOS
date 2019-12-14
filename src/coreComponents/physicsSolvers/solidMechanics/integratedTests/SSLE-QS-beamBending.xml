@@ -8,11 +8,13 @@
                                   targetRegions="{Region2}"
                                   solidMaterialName="shale"
                                   >
-      <SystemSolverParameters useMLPrecond="1"
+      <NonlinearSolverParameters name="nlsp"
+                                 newtonTol="1.0e-6"
+                                 newtonMaxIter="8"/>
+      <SystemSolverParameters name="ssp"
+                              useMLPrecond="1"
                               scalingOption="0"
                               krylovTol="1.0e-10"
-                              newtonTol="1.0e-6"
-                              maxIterNewton="8"
                               logLevel="0"/>
      </SolidMechanicsLagrangianSSLE>
   </Solvers>

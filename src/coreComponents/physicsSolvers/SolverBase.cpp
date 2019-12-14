@@ -96,6 +96,10 @@ Group * SolverBase::CreateChild( string const & childKey, string const & childNa
   {
     rval = RegisterGroup( childName, &m_systemSolverParameters, 0 );
   }
+  else if(childKey == NonlinearSolverParameters::CatalogName() )
+  {
+    rval = RegisterGroup( childName, &m_nonlinearSolverParameters, 0 );
+  }
   else
   {
     GEOSX_ERROR( childKey << " is an invalid key to SolverBase child group." );
@@ -412,17 +416,27 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
 
 
       // do line search in case residual has increased
-      if( residualNorm > lastResidual )
+      if( m_nonlinearSolverParameters.m_lineSearchAction>0 && residualNorm > lastResidual )
       {
 
         residualNorm = lastResidual;
         bool lineSearchSuccess = LineSearch( time_n, stepDt, cycleNumber, domain, dofManager,
                                              matrix, rhs, solution, scaleFactor, residualNorm );
 
-        // if line search failed, then break out of the main Newton loop. Timestep will be cut.
+
         if( !lineSearchSuccess )
         {
-          break;
+
+          if( m_nonlinearSolverParameters.m_lineSearchAction==1 )
+          {
+            GEOSX_LOG_LEVEL_RANK_0( 1, "Line search failed to produce reduced residual. Accepting iteration.");
+          }
+          else if( m_nonlinearSolverParameters.m_lineSearchAction==2 )
+          {
+            // if line search failed, then break out of the main Newton loop. Timestep will be cut.
+            GEOSX_LOG_LEVEL_RANK_0( 1, "Line search failed to produce reduced residual. Exiting Newton Loop.");
+            break;
+          }
         }
       }
 
