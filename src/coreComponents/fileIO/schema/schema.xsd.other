@@ -721,8 +721,8 @@
 		<xsd:attribute name="totalDensity" type="real64_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="CompressibleSinglePhaseFluidType">
-		<!--dPressure_dDensity => (no description available)-->
-		<xsd:attribute name="dPressure_dDensity" type="real64_array2d" />
+		<!--dDensity_dPressure => (no description available)-->
+		<xsd:attribute name="dDensity_dPressure" type="real64_array2d" />
 		<!--dViscosity_dDensity => (no description available)-->
 		<xsd:attribute name="dViscosity_dDensity" type="real64_array2d" />
 		<!--density => (no description available)-->
