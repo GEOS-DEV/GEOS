@@ -177,6 +177,12 @@ public:
    */
   void PrintDataHierarchy( integer indent = 0 );
 
+  /**
+   * @brief Generates a table formatted string containing all input options.
+   * @return a string containing a well formatted table containing input options.
+   */
+  string dumpInputOptions();
+
   ///@}
 
   //START_SPHINX_INCLUDE_REGISTER_GROUP
