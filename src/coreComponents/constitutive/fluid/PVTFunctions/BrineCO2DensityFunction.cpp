@@ -45,7 +45,7 @@ BrineCO2DensityFunction::BrineCO2DensityFunction( string_array const & inputPara
 
   }
 
-  GEOS_ERROR_IF(notFound, "Component CO2 is not found!");
+  GEOSX_ERROR_IF(notFound, "Component CO2 is not found!");
 
   notFound = 1;
 
@@ -61,7 +61,7 @@ BrineCO2DensityFunction::BrineCO2DensityFunction( string_array const & inputPara
 
   }
 
-  GEOS_ERROR_IF(notFound, "Component Water/Brine is not found!");
+  GEOSX_ERROR_IF(notFound, "Component Water/Brine is not found!");
 
 
   MakeTable(inputPara);
@@ -84,7 +84,7 @@ void BrineCO2DensityFunction::MakeTable(string_array const & inputPara)
   PEnd = -1.0;  
 
   
-  GEOS_ERROR_IF(inputPara.size() < 9, "Invalid BrineCO2Density input!");
+  GEOSX_ERROR_IF(inputPara.size() < 9, "Invalid BrineCO2Density input!");
 
   try
     {
@@ -102,7 +102,7 @@ void BrineCO2DensityFunction::MakeTable(string_array const & inputPara)
     }
   catch (const std::invalid_argument & e) {
 
-    GEOS_ERROR("Invalid BrineCO2Density argument:" + std::string(e.what()));
+    GEOSX_ERROR("Invalid BrineCO2Density argument:" + std::string(e.what()));
 
   }  
 
