@@ -19,14 +19,17 @@
 #ifndef GEOSX_DATAREPOSITORY_XMLWRAPPER_HPP_
 #define GEOSX_DATAREPOSITORY_XMLWRAPPER_HPP_
 
-#include <algorithm>
-#include <sstream>
-
-#include "pugixml.hpp"
-
+// Source includes
 #include "common/DataTypes.hpp"
 #include "dataRepository/DefaultValue.hpp"
-#include "ArrayUtilities.hpp"
+#include "cxx-utilities/src/ArrayUtilities.hpp"
+
+// TPL includes
+#include <pugixml.hpp>
+
+// System includes
+#include <algorithm>
+#include <sstream>
 
 namespace geosx
 {
@@ -144,9 +147,10 @@ public:
    * @param[in] name       the name of the xml attribute to process
    * @param[in] targetNode the xml node that should contain the attribute
    * @param[in] required   whether or not the value is required
+   * @return boolean value indicating whether the value was successfully read from XML.
    */
   template< typename T >
-  static void ReadAttributeAsType( T & rval,
+  static bool ReadAttributeAsType( T & rval,
                                    string const & name,
                                    xmlNode const & targetNode,
                                    bool const required );
@@ -159,9 +163,10 @@ public:
    * @param[in] name       the name of the xml attribute to process
    * @param[in] targetNode the xml node that should contain the attribute
    * @param[in] defVal     default value of @p rval (or entries of @p rval, if it is an array)
+   * @return boolean value indicating whether the value was successfully read from XML.
    */
   template< typename T, typename T_DEF = T >
-  static void ReadAttributeAsType( T & rval,
+  static bool ReadAttributeAsType( T & rval,
                                    string const & name,
                                    xmlNode const & targetNode,
                                    T_DEF const & defVal );
@@ -173,17 +178,17 @@ public:
    * @param[in] name       the name of the xml attribute to process
    * @param[in] targetNode the xml node that should contain the attribute
    * @param[in] defVal     default value of @p rval (or entries of @p rval, if it is an array)
-   * @return
+   * @return boolean value indicating whether the value was successfully read from XML.
    */
   template< typename T >
-  static typename std::enable_if_t< !dataRepository::DefaultValue< T >::has_default_value >
+  static std::enable_if_t< !dataRepository::DefaultValue< T >::has_default_value, bool >
   ReadAttributeAsType( T & rval,
                        string const & name,
                        xmlNode const & targetNode,
                        dataRepository::DefaultValue< T > const & defVal )
   {
     GEOSX_UNUSED_VAR( defVal );
-    ReadAttributeAsType( rval, name, targetNode, false );
+    return ReadAttributeAsType( rval, name, targetNode, false );
   }
 
   /**
@@ -193,16 +198,16 @@ public:
    * @param[in] name       the name of the xml attribute to process
    * @param[in] targetNode the xml node that should contain the attribute
    * @param[in] defVal     default value of @p rval (or entries of @p rval, if it is an array)
-   * @return
+   * @return boolean value indicating whether the value was successfully read from XML.
    */
   template< typename T >
-  static typename std::enable_if_t< dataRepository::DefaultValue< T >::has_default_value >
+  static typename std::enable_if_t< dataRepository::DefaultValue< T >::has_default_value, bool >
   ReadAttributeAsType( T & rval,
                        string const & name,
                        xmlNode const & targetNode,
                        dataRepository::DefaultValue< T > const & defVal )
   {
-    ReadAttributeAsType( rval, name, targetNode, defVal.value );
+    return ReadAttributeAsType( rval, name, targetNode, defVal.value );
   }
 
   ///@}
@@ -224,22 +229,27 @@ void xmlWrapper::StringToInputVariable( Array< T, NDIM > & array, string valueSt
 }
 
 template< typename T >
-void xmlWrapper::ReadAttributeAsType( T & rval,
+bool xmlWrapper::ReadAttributeAsType( T & rval,
                                       string const & name,
                                       xmlNode const & targetNode,
                                       bool const required )
 {
   pugi::xml_attribute xmlatt = targetNode.attribute( name.c_str() );
 
-  GEOS_ERROR_IF( xmlatt.empty() && required, "Input variable " + name + " is required in " + targetNode.path() );
+  bool const success = !(xmlatt.empty() && required);
+  //GEOSX_ERROR_IF( xmlatt.empty() && required, "Input variable " + name + " is required in " + targetNode.path() );
 
-  // parse the string/attribute into a value
-  StringToInputVariable( rval, xmlatt.value() );
+  if( success )
+  {
+    // parse the string/attribute into a value
+    StringToInputVariable( rval, xmlatt.value() );
+  }
+  return success;
 }
 
 
 template< typename T, typename T_DEF >
-void xmlWrapper::ReadAttributeAsType( T & rval,
+bool xmlWrapper::ReadAttributeAsType( T & rval,
                                       string const & name,
                                       xmlNode const & targetNode,
                                       T_DEF const & defVal )
@@ -255,6 +265,7 @@ void xmlWrapper::ReadAttributeAsType( T & rval,
     // set the value to the default value
     rval = defVal;
   }
+  return true;
 }
 
 
