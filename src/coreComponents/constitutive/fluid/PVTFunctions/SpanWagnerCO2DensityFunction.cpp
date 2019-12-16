@@ -122,7 +122,7 @@ SpanWagnerCO2DensityFunction::SpanWagnerCO2DensityFunction( string_array const &
 
   }
 
-  GEOS_ERROR_IF(notFound, "Component CO2 is not found!");
+  GEOSX_ERROR_IF(notFound, "Component CO2 is not found!");
 
   MakeTable(inputPara);
 
@@ -145,7 +145,7 @@ void SpanWagnerCO2DensityFunction::MakeTable(string_array const & inputPara)
   PStart = -1.0;
   PEnd = -1.0;  
   
-  GEOS_ERROR_IF(inputPara.size() < 8, "Invalid SpanWagnerCO2Density input!");
+  GEOSX_ERROR_IF(inputPara.size() < 8, "Invalid SpanWagnerCO2Density input!");
 
   try
     {
@@ -161,7 +161,7 @@ void SpanWagnerCO2DensityFunction::MakeTable(string_array const & inputPara)
     }
   catch (const std::invalid_argument & e) {
 
-    GEOS_ERROR("Invalid SpanWagnerCO2Density argument:" + std::string(e.what()));  
+    GEOSX_ERROR("Invalid SpanWagnerCO2Density argument:" + std::string(e.what()));  
 
   }
 
@@ -332,7 +332,7 @@ void SpanWagnerCO2DensityFunction::SpanWagnerCO2Density(real64 const & T, real64
 
     if(fabs(dre) < eps) break;
 
-    GEOS_ERROR_IF(count > 50, "SpanWagnerCO2Density NR convergence fails! " << "dre = " << dre << ", eps = " << eps);
+    GEOSX_ERROR_IF(count > 50, "SpanWagnerCO2Density NR convergence fails! " << "dre = " << dre << ", eps = " << eps);
 
     count++;
 

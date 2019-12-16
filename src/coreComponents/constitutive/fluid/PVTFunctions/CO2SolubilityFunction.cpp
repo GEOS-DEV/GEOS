@@ -116,7 +116,7 @@ void CO2Solubility(real64 const & T, real64 const & P, real64 & V_r, real64 (*f)
 
     if(fabs(dre) < eps) break;
 
-    GEOS_ERROR_IF(count > 50, "CO2Solubiltiy NR convergence fails! " << "dre = " << dre << ", eps = " << eps);
+    GEOSX_ERROR_IF(count > 50, "CO2Solubiltiy NR convergence fails! " << "dre = " << dre << ", eps = " << eps);
 
     count++;
 
@@ -183,7 +183,7 @@ CO2SolubilityFunction::CO2SolubilityFunction( string_array const & inputPara,
 
   }
 
-  GEOS_ERROR_IF(notFound, "Component CO2 is not found!");
+  GEOSX_ERROR_IF(notFound, "Component CO2 is not found!");
 
   notFound = 1;
 
@@ -199,7 +199,7 @@ CO2SolubilityFunction::CO2SolubilityFunction( string_array const & inputPara,
 
   }
 
-  GEOS_ERROR_IF(notFound, "Component Water/Brine is not found!");
+  GEOSX_ERROR_IF(notFound, "Component Water/Brine is not found!");
 
 
   notFound = 1;
@@ -216,7 +216,7 @@ CO2SolubilityFunction::CO2SolubilityFunction( string_array const & inputPara,
 
   }
 
-  GEOS_ERROR_IF(notFound, "Phase co2/gas is not found!");
+  GEOSX_ERROR_IF(notFound, "Phase co2/gas is not found!");
 
   notFound = 1;
 
@@ -232,7 +232,7 @@ CO2SolubilityFunction::CO2SolubilityFunction( string_array const & inputPara,
 
   }
 
-  GEOS_ERROR_IF(notFound, "Phase water/liquid is not found!");
+  GEOSX_ERROR_IF(notFound, "Phase water/liquid is not found!");
 
   MakeTable(inputPara);
 
@@ -255,7 +255,7 @@ void CO2SolubilityFunction::MakeTable(string_array const & inputPara)
   PStart = -1.0;
   PEnd = -1.0;  
   
-  GEOS_ERROR_IF(inputPara.size() < 9, "Invalid CO2Solubility input!");
+  GEOSX_ERROR_IF(inputPara.size() < 9, "Invalid CO2Solubility input!");
 
   try
     {
@@ -273,7 +273,7 @@ void CO2SolubilityFunction::MakeTable(string_array const & inputPara)
     }
   catch (const std::invalid_argument & e) {
 
-    GEOS_ERROR("Invalid CO2Solubility argument:" + std::string(e.what()));
+    GEOSX_ERROR("Invalid CO2Solubility argument:" + std::string(e.what()));
 
   }    
 

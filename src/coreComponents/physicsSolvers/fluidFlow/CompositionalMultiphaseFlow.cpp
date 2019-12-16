@@ -1145,13 +1145,13 @@ CompositionalMultiphaseFlow::ApplySourceFluxBC( real64 const time,
 						ParallelVector * const rhs )
 {
   
-  FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
 
   string const dofKey = dofManager->getKey( viewKeyStruct::dofFieldString );
   
   localIndex counter =0;
 
-  fsManager->Apply( time + dt, domain, "ElementRegions", "FLUX",
+  fsManager.Apply( time + dt, domain, "ElementRegions", "FLUX",
                     [&]( FieldSpecificationBase const * const fs,
                     string const &,
                     set<localIndex> const & lset,
