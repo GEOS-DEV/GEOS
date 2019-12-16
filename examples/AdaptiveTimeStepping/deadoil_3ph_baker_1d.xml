@@ -15,14 +15,16 @@
                                  temperature="300"
                                  useMass="0"
                                  initialDt="1e7">
-      <SystemSolverParameters newtonTol="1.0e-10"
-                              maxIterNewton="15"
-                              useDirectSolver="1"
-                              maxTimeStepCuts="10"
-                              maxLineSearchCuts="2"
-                              maxSubSteps="100"
-                              dtCutIterLimit = "0.7"
-                              dtIncIterLimit = "0.3"/>
+      <NonlinearSolverParameters
+           name="nlsp"
+           newtonTol="1.0e-10"
+           newtonMaxIter="15"
+           maxTimeStepCuts="10"
+           maxLineSearchCuts="2"
+           maxSubSteps="100"
+           dtCutIterLimit = "0.7"
+           dtIncIterLimit = "0.3"/>
+      <SystemSolverParameters useDirectSolver="1"/>
     </CompositionalMultiphaseFlow>
   </Solvers>
   
