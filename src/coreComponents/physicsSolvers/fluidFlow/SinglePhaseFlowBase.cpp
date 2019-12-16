@@ -358,7 +358,7 @@ void SinglePhaseFlowBase::ImplicitStepComplete( real64 const & GEOSX_UNUSED_ARG(
 void SinglePhaseFlowBase::SetupDofs( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
                                      DofManager & GEOSX_UNUSED_ARG( dofManager ) ) const
 {
-  GEOS_ERROR( "SinglePhaseFlowBase::SetupDofs called!. Should be overridden." );
+  GEOSX_ERROR( "SinglePhaseFlowBase::SetupDofs called!. Should be overridden." );
 }
 
 void SinglePhaseFlowBase::AssembleSystem( real64 const time_n,
@@ -399,9 +399,9 @@ void SinglePhaseFlowBase::AssembleSystem( real64 const time_n,
   
 
   // Debug for logLevel >= 2
-  GEOS_LOG_LEVEL_RANK_0( 2, "After SinglePhaseFlowBase::AssembleSystem" );
-  GEOS_LOG_LEVEL_RANK_0( 2, "\nJacobian:\n" << matrix );
-  GEOS_LOG_LEVEL_RANK_0( 2, "\nResidual:\n" << rhs );
+  GEOSX_LOG_LEVEL_RANK_0( 2, "After SinglePhaseFlowBase::AssembleSystem" );
+  GEOSX_LOG_LEVEL_RANK_0( 2, "\nJacobian:\n" << matrix );
+  GEOSX_LOG_LEVEL_RANK_0( 2, "\nResidual:\n" << rhs );
 
 
   if( getLogLevel() >= 3 )
@@ -415,9 +415,9 @@ void SinglePhaseFlowBase::AssembleSystem( real64 const time_n,
     string filename_rhs = "rhs_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
     rhs.write( filename_rhs, true );
 
-    GEOS_LOG_RANK_0( "After SinglePhaseFlowBase::AssembleSystem" );
-    GEOS_LOG_RANK_0( "Jacobian: written to " << filename_mat );
-    GEOS_LOG_RANK_0( "Residual: written to " << filename_rhs );
+    GEOSX_LOG_RANK_0( "After SinglePhaseFlowBase::AssembleSystem" );
+    GEOSX_LOG_RANK_0( "Jacobian: written to " << filename_mat );
+    GEOSX_LOG_RANK_0( "Residual: written to " << filename_rhs );
   }
 
 }
@@ -560,7 +560,7 @@ void SinglePhaseFlowBase::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time
                                              ParallelMatrix * const GEOSX_UNUSED_ARG(matrix),
                                              ParallelVector * const GEOSX_UNUSED_ARG(rhs) )
 {
-  GEOS_ERROR( "SinglePhaseFlowBase::AssembleFluxTerms called!. Should be overridden." );
+  GEOSX_ERROR( "SinglePhaseFlowBase::AssembleFluxTerms called!. Should be overridden." );
 }
 
 void
@@ -571,7 +571,7 @@ SinglePhaseFlowBase::ApplyBoundaryConditions( real64 const GEOSX_UNUSED_ARG(time
                                               ParallelMatrix & GEOSX_UNUSED_ARG(matrix),
                                               ParallelVector & GEOSX_UNUSED_ARG(rhs) )
 {
-  GEOS_ERROR( "SinglePhaseFlowBase::ApplyBoundaryConditions called!. Should be overridden." );
+  GEOSX_ERROR( "SinglePhaseFlowBase::ApplyBoundaryConditions called!. Should be overridden." );
 }
 
 
@@ -579,7 +579,7 @@ real64 SinglePhaseFlowBase::CalculateResidualNorm( DomainPartition const * const
                                                    DofManager const & GEOSX_UNUSED_ARG( dofManager ),
                                                    ParallelVector const & GEOSX_UNUSED_ARG( rhs ) )
 {
-  GEOS_ERROR( "SinglePhaseFlowBase::CalculateResidualNorm called!. Should be overridden." );
+  GEOSX_ERROR( "SinglePhaseFlowBase::CalculateResidualNorm called!. Should be overridden." );
   return 0.0;
 }
 
@@ -588,7 +588,7 @@ void SinglePhaseFlowBase::ApplySystemSolution( DofManager const & GEOSX_UNUSED_A
                                                real64 const GEOSX_UNUSED_ARG( scalingFactor ),
                                                DomainPartition * const GEOSX_UNUSED_ARG( domain ) )
 {
-  GEOS_ERROR( "SinglePhaseFlowBase::ApplySystemSolution called!. Should be overridden." );
+  GEOSX_ERROR( "SinglePhaseFlowBase::ApplySystemSolution called!. Should be overridden." );
 }
 
 void SinglePhaseFlowBase::SolveSystem( DofManager const & dofManager,
@@ -604,8 +604,8 @@ void SinglePhaseFlowBase::SolveSystem( DofManager const & dofManager,
   SolverBase::SolveSystem( dofManager, matrix, rhs, solution );
 
   // Debug for logLevel >= 2
-  GEOS_LOG_LEVEL_RANK_0( 2, "After SinglePhaseFlowBase::SolveSystem" );
-  GEOS_LOG_LEVEL_RANK_0( 2, "\nSolution:\n" << solution );
+  GEOSX_LOG_LEVEL_RANK_0( 2, "After SinglePhaseFlowBase::SolveSystem" );
+  GEOSX_LOG_LEVEL_RANK_0( 2, "\nSolution:\n" << solution );
 
 }
 

@@ -897,6 +897,7 @@ real64 SinglePhaseMimetic::CalculateResidualNorm( DomainPartition const * const 
       if (elemGhostRank[a] < 0)
       {
         localIndex const lid = rhs.getLocalRowID( elemDofNumber[a] );
+	// TODO: implement a normalization that matches the normalization used in SinglePhaseCellCentered
         real64 const val = localResidual[lid] / (refPoro[a] * dens[a][0] * ( volume[a] + dVol[a]));
         localResidualNorm[EqType::MASS_CONS] += val * val;
       }
