@@ -84,8 +84,8 @@ public:
   array2d<real64> const & density() const { return m_density; }
   array2d<real64>       & density()       { return m_density; }
 
-  array2d<real64> const & dPressure_dDensity() const { return m_dDensity_dPressure; }
-  array2d<real64>       & dPressure_dDensity()       { return m_dDensity_dPressure; }
+  array2d<real64> const & dDensity_dPressure() const { return m_dDensity_dPressure; }
+  array2d<real64>       & dDensity_dPressure()       { return m_dDensity_dPressure; }
 
   array2d<real64> const & viscosity() const { return m_viscosity; }
   array2d<real64>       & viscosity()       { return m_viscosity; }
