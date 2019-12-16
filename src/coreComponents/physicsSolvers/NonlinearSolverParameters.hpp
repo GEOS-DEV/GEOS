@@ -90,7 +90,10 @@ public:
    * cut to the next timestep.
    * @return The scaled value of the limit (m_dtCutIterLimit * m_maxIterNewton)
    */
-  integer dtCutIterLimit() const              { return m_dtCutIterLimit * m_maxIterNewton; }
+  integer dtCutIterLimit() const
+  {
+    return std::ceil(m_dtCutIterLimit * m_maxIterNewton);
+  }
 
 
   /**
@@ -98,7 +101,10 @@ public:
    * increase to the next timestep.
    * @return The scaled value of the limit (m_dtIncIterLimit * m_maxIterNewton)
    */
-  integer dtIncIterLimit() const              { return m_dtIncIterLimit * m_maxIterNewton; }
+  integer dtIncIterLimit() const
+  {
+    return std::ceil(m_dtIncIterLimit * m_maxIterNewton);
+  }
 
   /// Flag to apply a line search.
   integer m_lineSearchAction;
