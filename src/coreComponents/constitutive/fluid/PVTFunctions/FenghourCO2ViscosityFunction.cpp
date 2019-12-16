@@ -53,7 +53,7 @@ void FenghourCO2ViscosityFunction::MakeTable(string_array const & inputPara)
   PStart = -1.0;
   PEnd = -1.0;  
   
-  GEOS_ERROR_IF(inputPara.size() < 8, "Invalid FenghourCO2Viscosity input!");
+  GEOSX_ERROR_IF(inputPara.size() < 8, "Invalid FenghourCO2Viscosity input!");
 
   try
     {
@@ -69,7 +69,7 @@ void FenghourCO2ViscosityFunction::MakeTable(string_array const & inputPara)
     }
   catch (const std::invalid_argument & e) {
 
-    GEOS_ERROR("Invalid FenghourCO2Viscosity argument:" + std::string(e.what()));  
+    GEOSX_ERROR("Invalid FenghourCO2Viscosity argument:" + std::string(e.what()));  
 
   }
     

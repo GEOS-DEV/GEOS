@@ -175,11 +175,11 @@ void SolverBase::SetSourceFluxSetSize(real64 const time,
 				      DomainPartition * const domain)
 {
 
-  FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
 
   array1d<integer> fluxBCElementNumberLocal;
 
-  fsManager->Apply( time + dt, domain, "ElementRegions", "FLUX",
+  fsManager.Apply( time + dt, domain, "ElementRegions", "FLUX",
                     [&]( FieldSpecificationBase const * const GEOSX_UNUSED_ARG(fs),
                     string const &,
                     set<localIndex> const & lset,
