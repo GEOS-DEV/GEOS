@@ -594,7 +594,7 @@
 1 - Use line search. Allow exit from line search without achieving smaller residual than starting residual.
 2 - Use line search. If smaller residual than starting resdual is not achieved, cut time step.
 -->
-		<xsd:attribute name="lineSearchAction" type="integer" default="2" />
+		<xsd:attribute name="lineSearchAction" type="integer" default="1" />
 		<!--lineSearchCutFactor => Line search cut factor. For instance, a value of 0.5 will result in the effective application of the last solution by a factor of (0.5, 0.25, 0.125, ...)-->
 		<xsd:attribute name="lineSearchCutFactor" type="real64" default="0.5" />
 		<!--lineSearchMaxCuts => Maximum number of line search cuts.-->
@@ -611,7 +611,7 @@
 		<xsd:attribute name="newtonMinIter" type="integer" default="1" />
 		<!--newtonTol => The required tolerance in order to exit the Newton iteration loop.-->
 		<xsd:attribute name="newtonTol" type="real64" default="1e-06" />
-		<!--timestepCutFactor => Time step cut factor-->
+		<!--timestepCutFactor => Factor by which the time step will be cut if a timestep cut is required.-->
 		<xsd:attribute name="timestepCutFactor" type="real64" default="0.5" />
 	</xsd:complexType>
 	<xsd:complexType name="SystemSolverParametersType">
