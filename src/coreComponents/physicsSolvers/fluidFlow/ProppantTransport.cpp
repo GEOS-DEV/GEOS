@@ -1654,9 +1654,9 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_ARG(
                                  ElementSubRegionBase * const subRegion )
   {
 
-    arrayView1d<real64 const> const & proppantPackVf = m_proppantPackVolumeFraction[er][esr];
+    arrayView1d<real64 const> const & proppantPackVfNew = m_proppantPackVolumeFraction[er][esr];
 
-    arrayView1d<real64 const> const & aperture = m_elementAperture[er][esr];        
+    arrayView1d<real64 const> const & aperture0 = m_elementAperture[er][esr];        
     
     arrayView1d<real64> const & poroMultiplier = m_poroMultiplier[er][esr];
     arrayView1d<R1Tensor> const & transTMultiplier = m_transTMultiplier[er][esr];        
@@ -1664,19 +1664,19 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_ARG(
     forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
 
-      poroMultiplier[ei] = 1.0 - (1.0 -  m_maxProppantConcentration) * proppantPackVf[ei];
+      poroMultiplier[ei] = 1.0 - (1.0 -  m_maxProppantConcentration) * proppantPackVfNew[ei];
 
       //      poroMultiplier[ei] = proppantPackVf[ei];      
 
       //K0 horizontal
 
-      transTMultiplier[ei][0] = (1.0 - proppantPackVf[ei]) + proppantPackVf[ei] * m_proppantPackPermeability / (aperture[ei] * aperture[ei]);
+      transTMultiplier[ei][0] = (1.0 - proppantPackVfNew[ei]) + proppantPackVfNew[ei] * m_proppantPackPermeability / (aperture0[ei] * aperture0[ei]);
 
       //K1 vertical
 
       //      transTMultiplier[ei][1] = m_proppantPackPermeability * 12.0 / (aperture[ei] * aperture[ei]);
 
-      transTMultiplier[ei][1] = 1.0 / (proppantPackVf[ei] * aperture[ei] * aperture[ei] / 12.0 / m_proppantPackPermeability + (1.0 - proppantPackVf[ei]));
+      transTMultiplier[ei][1] = 1.0 / (proppantPackVfNew[ei] * aperture0[ei] * aperture0[ei] / 12.0 / m_proppantPackPermeability + (1.0 - proppantPackVfNew[ei]));
 
  
     } );
