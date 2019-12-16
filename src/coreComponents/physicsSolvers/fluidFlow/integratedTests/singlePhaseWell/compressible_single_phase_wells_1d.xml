@@ -9,7 +9,9 @@
                wellSolverName="singlePhaseWell"
                logLevel="1"
                targetRegions="{Region1,wellRegion1,wellRegion2}">
-      <SystemSolverParameters maxIterNewton="40"
+      <NonlinearSolverParameters name="nlsp"
+                                 newtonMaxIter="40"/>
+      <SystemSolverParameters name="ssp"
                               useDirectSolver="1"
                               logLevel="0"/>
     </Reservoir>
