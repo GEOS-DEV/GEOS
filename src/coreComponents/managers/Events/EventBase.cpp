@@ -111,7 +111,7 @@ EventBase::CatalogInterface::CatalogType& EventBase::GetCatalog()
 
 Group * EventBase::CreateChild( string const & childKey, string const & childName )
 {
-  GEOS_LOG_RANK_0("Adding Event: " << childKey << ", " << childName);
+  GEOSX_LOG_RANK_0("Adding Event: " << childKey << ", " << childName);
   std::unique_ptr<EventBase> event = EventBase::CatalogInterface::Factory( childKey, childName, this );
   return this->RegisterGroup<EventBase>( childName, std::move(event) );
 }
@@ -137,7 +137,7 @@ void EventBase::GetTargetReferences()
   {
     Group * tmp = this->GetGroupByPath(m_eventTarget);
     m_target = Group::group_cast<ExecutableGroup*>(tmp);
-    GEOS_ERROR_IF(m_target == nullptr, "The target of an event must be executable! " << m_target);
+    GEOSX_ERROR_IF(m_target == nullptr, "The target of an event must be executable! " << m_target);
   }
 
   this->forSubGroups<EventBase>([]( EventBase * subEvent ) -> void
@@ -226,7 +226,7 @@ void EventBase::Execute(real64 const time_n,
     integer subEventForecast = subEvent->GetForecast();
 
     // Print debug information for logLevel >= 1
-    GEOS_LOG_LEVEL_RANK_0(1, "          SubEvent: " << m_currentSubEvent << " (" << subEvent->getName() << "), dt_request=" << subEvent->GetCurrentEventDtRequest() << ", forecast=" << subEventForecast);
+    GEOSX_LOG_LEVEL_RANK_0(1, "          SubEvent: " << m_currentSubEvent << " (" << subEvent->getName() << "), dt_request=" << subEvent->GetCurrentEventDtRequest() << ", forecast=" << subEventForecast);
 
     if (subEventForecast <= 0)
     {

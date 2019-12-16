@@ -95,7 +95,7 @@ void SinglePhaseWell::UpdateState( WellElementSubRegion * const subRegion )
 {
   SinglePhaseFlowBase * const flowSolver = getParent()->GetGroup<SinglePhaseFlowBase>( GetFlowSolverName() );
 
-  GEOS_ERROR_IF( flowSolver == nullptr,
+  GEOSX_ERROR_IF( flowSolver == nullptr,
                  "Flow solver " << GetFlowSolverName() << " not found in well solver " << getName() );
 
   flowSolver->UpdateFluidModel( subRegion );
@@ -216,7 +216,7 @@ void SinglePhaseWell::InitializeWells( DomainPartition * const domain )
     MpiWrapper::Broadcast( pressureControl, subRegion->GetTopRank() );
     MpiWrapper::Broadcast( gravDepthControl, subRegion->GetTopRank() );
 
-    GEOS_ERROR_IF( pressureControl <= 0, "Invalid well initialization: negative pressure was found" );
+    GEOSX_ERROR_IF( pressureControl <= 0, "Invalid well initialization: negative pressure was found" );
 
     // 3) Estimate the pressures in the well elements using this avgDensity
     integer const gravityFlag = m_gravityFlag;
@@ -695,7 +695,7 @@ void SinglePhaseWell::CheckWellControlSwitch( DomainPartition * const domain )
       {
         wellControls->SetControl( WellControls::Control::LIQUIDRATE,
                                   wellControls->GetTargetRate() );
-        GEOS_LOG_LEVEL_RANK_0( 1, "Control switch for well " << subRegion->getName()
+        GEOSX_LOG_LEVEL_RANK_0( 1, "Control switch for well " << subRegion->getName()
                           << " from BHP constraint to rate constraint" );
       }
       else // rate control
@@ -704,7 +704,7 @@ void SinglePhaseWell::CheckWellControlSwitch( DomainPartition * const domain )
                                   wellControls->GetTargetBHP() );
 
         // Debug information for logLevel >= 1 
-        GEOS_LOG_LEVEL_RANK_0( 1, "Control switch for well " << subRegion->getName()
+        GEOSX_LOG_LEVEL_RANK_0( 1, "Control switch for well " << subRegion->getName()
                               << " from rate constraint to BHP constraint" );
       }
     }

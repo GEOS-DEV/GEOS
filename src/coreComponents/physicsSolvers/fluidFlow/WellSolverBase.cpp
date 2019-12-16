@@ -133,9 +133,9 @@ void WellSolverBase::AssembleSystem( real64 const time,
   FormControlEquation( domain, &dofManager, &matrix, &rhs );
 
   // Log messages for logLevel >= 2
-  GEOS_LOG_LEVEL_RANK_0(2, "After WellSolverBase::AssembleSystem" );
-  GEOS_LOG_LEVEL_RANK_0(2, "\nJacobian:\n" << matrix );
-  GEOS_LOG_LEVEL_RANK_0(2, "\nResidual:\n" << rhs );
+  GEOSX_LOG_LEVEL_RANK_0(2, "After WellSolverBase::AssembleSystem" );
+  GEOSX_LOG_LEVEL_RANK_0(2, "\nJacobian:\n" << matrix );
+  GEOSX_LOG_LEVEL_RANK_0(2, "\nResidual:\n" << rhs );
 }
 
 void WellSolverBase::UpdateStateAll( DomainPartition * const domain )
@@ -235,7 +235,7 @@ void WellSolverBase::PrecomputeData(DomainPartition * const domain)
  
       localIndex const iwelemControl = subRegion->GetTopWellElementIndex();
 
-      GEOS_ERROR_IF( iwelemControl < 0, 
+      GEOSX_ERROR_IF( iwelemControl < 0, 
                      "Invalid well definition: well " << subRegion->getName() 
                   << " has no well head");
   
@@ -259,7 +259,7 @@ WellControls * WellSolverBase::GetWellControls( WellElementSubRegion const * con
   string const & name = subRegion->GetWellControlsName();
 
   WellControls * wellControls = this->GetGroup<WellControls>( name );
-  GEOS_ERROR_IF( wellControls == nullptr, "Well constraint " + name + " not found" ); 
+  GEOSX_ERROR_IF( wellControls == nullptr, "Well constraint " + name + " not found" ); 
 
   return wellControls;
 }
@@ -269,7 +269,7 @@ WellControls const * WellSolverBase::GetWellControls( WellElementSubRegion const
   string const & name = subRegion->GetWellControlsName();
 
   WellControls const * wellControls = this->GetGroup<WellControls>( name );
-  GEOS_ERROR_IF( wellControls == nullptr, "Well constraint " + name + " not found" ); 
+  GEOSX_ERROR_IF( wellControls == nullptr, "Well constraint " + name + " not found" ); 
 
   return wellControls;
 }

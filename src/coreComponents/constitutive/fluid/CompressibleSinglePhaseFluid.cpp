@@ -41,7 +41,7 @@ static ExponentApproximationType stringToExponentType( string const & model )
   {
     return ExponentApproximationType::Full;
   }
-  GEOS_ERROR("Model type not supported: " << model);
+  GEOSX_ERROR("Model type not supported: " << model);
 
   // otherwise compilers complain about reaching the end of non-void function
   return ExponentApproximationType::Full;
@@ -126,16 +126,16 @@ void CompressibleSinglePhaseFluid::PostProcessInput()
 {
   SingleFluidBase::PostProcessInput();
 
-  GEOS_ERROR_IF( m_compressibility < 0.0, "An invalid value of fluid compressibility ("
+  GEOSX_ERROR_IF( m_compressibility < 0.0, "An invalid value of fluid compressibility ("
                                           << m_compressibility << ") is specified" );
 
-  GEOS_ERROR_IF( m_viscosibility < 0.0, "An invalid value of fluid viscosibility ("
+  GEOSX_ERROR_IF( m_viscosibility < 0.0, "An invalid value of fluid viscosibility ("
                                         << m_compressibility << ") is specified" );
 
-  GEOS_ERROR_IF( m_referenceDensity <= 0.0, "An invalid value of fluid reference density ("
+  GEOSX_ERROR_IF( m_referenceDensity <= 0.0, "An invalid value of fluid reference density ("
                                             << m_compressibility << ") is specified" );
 
-  GEOS_ERROR_IF( m_referenceViscosity <= 0.0, "An invalid value of fluid reference viscosity ("
+  GEOSX_ERROR_IF( m_referenceViscosity <= 0.0, "An invalid value of fluid reference viscosity ("
                                               << m_compressibility << ") is specified" );
 
   m_densityModelType   = stringToExponentType( m_densityModelString );

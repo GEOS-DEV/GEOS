@@ -12,12 +12,15 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-
-#include <gtest/gtest.h>
-
+// Source includes
+#include "managers/initialization.hpp"
 #include "finiteVolume/FluxStencil.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
+// TPL includes
+#include <gtest/gtest.h>
+
+// System includes
 #include <chrono>
 #include <iostream>
 
@@ -103,12 +106,12 @@ TEST(testStencilCollection, noAcessorIterationTPFA)
 
 int main( int argc, char* argv[] )
 {
-  logger::InitializeLogger();
+  geosx::basicSetup( argc, argv );
 
   int result = 0;
   testing::InitGoogleTest( &argc, argv );
   result = RUN_ALL_TESTS();
 
-  logger::FinalizeLogger();
+  geosx::basicCleanup();
   return result;
 }
