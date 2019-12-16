@@ -234,8 +234,8 @@ void SolverBase::SetNextDt( real64 const & currentDt,
                             real64 & nextDt )
 {
   integer & newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
-  int iterCutLimit = std::ceil(m_nonlinearSolverParameters.dtCutIterLimit());
-  int iterIncLimit = std::ceil(m_nonlinearSolverParameters.dtIncIterLimit());
+  int const iterCutLimit = m_nonlinearSolverParameters.dtCutIterLimit();
+  int const iterIncLimit = m_nonlinearSolverParameters.dtIncIterLimit();
 
   if (newtonIter <  iterIncLimit )
   {
