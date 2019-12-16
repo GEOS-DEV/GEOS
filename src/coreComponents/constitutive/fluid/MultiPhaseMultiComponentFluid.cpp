@@ -97,7 +97,7 @@ void MultiPhaseMultiComponentFluid::PostProcessInput()
 
   localIndex const NP = numFluidPhases();
 
-  GEOS_ERROR_IF( m_phasePVTParaFiles.size() != NP, "The number of phasePVTParaFiles is not the same as the number of phases!");   
+  GEOSX_ERROR_IF( m_phasePVTParaFiles.size() != NP, "The number of phasePVTParaFiles is not the same as the number of phases!");   
 
   CreatePVTModels();
 
@@ -160,7 +160,7 @@ void MultiPhaseMultiComponentFluid::CreatePVTModels()
         m_phaseViscosityFuns.push_back( PVTFunction::CatalogInterface::Factory( strs[1], strs, m_componentNames, m_componentMolarWeight ));
       }
       else 
-        GEOS_ERROR("Error: Invalid PVT function: " << strs[0] << ".");
+        GEOSX_ERROR("Error: Invalid PVT function: " << strs[0] << ".");
     }
 
     is.close();
@@ -189,7 +189,7 @@ void MultiPhaseMultiComponentFluid::CreatePVTModels()
 								m_componentMolarWeight) );
       }
       else 
-        GEOS_ERROR("Error: Not flash model: " << strs[0] << ".");
+        GEOSX_ERROR("Error: Not flash model: " << strs[0] << ".");
     }
 
     is.close();
