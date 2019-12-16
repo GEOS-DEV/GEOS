@@ -30,7 +30,7 @@
                               logLevel="2"/>
     </SolidMechanicsLagrangianSSLE>
   
-    <SinglePhaseFlow name="SinglePhaseFlow"
+    <SinglePhaseCellCentered name="SinglePhaseFlow"
                      logLevel="1"
                      gravityFlag="1"
                      discretization="singlePhaseTPFA"
@@ -40,7 +40,7 @@
       <SystemSolverParameters krylovTol="1.0e-10"
                               newtonTol="1.0e-6"
                               maxIterNewton="8"/>
-    </SinglePhaseFlow>
+    </SinglePhaseCellCentered>
   </Solvers>
 <!-- SPHINX_POROELASTIC_SOLVER_END -->  
 

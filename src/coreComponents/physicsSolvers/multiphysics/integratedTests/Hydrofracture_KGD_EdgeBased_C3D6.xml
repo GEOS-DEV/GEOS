@@ -41,7 +41,7 @@
         />
     </SolidMechanicsLagrangianSSLE>
   
-    <SinglePhaseFlow 
+    <SinglePhaseCellCentered 
       name="SinglePhaseFlow"
       logLevel="0"
       gravityFlag="1"
@@ -57,7 +57,7 @@
         maxIterNewton="10"
         logLevel="0"
         />
-    </SinglePhaseFlow>
+    </SinglePhaseCellCentered>
     
     <SurfaceGenerator
       name="SurfaceGen"

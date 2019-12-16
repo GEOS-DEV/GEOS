@@ -14,14 +14,14 @@
                               logLevel="0"/>
     </Reservoir>
   
-    <SinglePhaseCellCentered name="singlePhaseFlow"
+    <SinglePhaseMimetic name="singlePhaseFlow"
                      logLevel="1"
                      gravityFlag="1"
                      discretization="singlePhaseTPFA"
                      fluidName="water"
                      solidName="rock"
                      targetRegions="{Region1}">
-    </SinglePhaseCellCentered>
+    </SinglePhaseMimetic>
 
     <SinglePhaseWell name="singlePhaseWell"
                      logLevel="1"

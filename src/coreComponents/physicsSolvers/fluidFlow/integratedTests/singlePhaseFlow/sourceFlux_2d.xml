@@ -4,7 +4,8 @@
   <Solvers
     gravityVector="0.0, 0.0, -9.81">
   
-    <SinglePhaseFlow name="SinglePhaseFlow"
+    <SinglePhaseCellCentered
+	             name="SinglePhaseFlow"
                      logLevel="0"
                      gravityFlag="1"
                      discretization="singlePhaseTPFA"
@@ -14,7 +15,7 @@
       <SystemSolverParameters krylovTol="1.0e-10"
                               newtonTol="1.0e-6"
                               maxIterNewton="8"/>
-    </SinglePhaseFlow>
+    </SinglePhaseCellCentered>
   </Solvers>
   
   <Mesh>

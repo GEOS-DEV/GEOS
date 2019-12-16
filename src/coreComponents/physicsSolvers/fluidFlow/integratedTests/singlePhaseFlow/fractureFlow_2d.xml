@@ -3,7 +3,7 @@
 
     <Solvers gravityVector="0.0,0.0,-9.81">
 
-        <SinglePhaseFlow
+        <SinglePhaseCellCentered
             name="SinglePhaseFlow"
             logLevel="0"
             gravityFlag="1"
@@ -16,7 +16,7 @@
                 krylovTol="1.0e-12"
                 newtonTol="1.0e-8"
                 maxIterNewton="8" />
-        </SinglePhaseFlow>
+        </SinglePhaseCellCentered>
 
         <SurfaceGenerator
             name="SurfaceGen"

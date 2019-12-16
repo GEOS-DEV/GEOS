@@ -98,9 +98,6 @@ void WellSolverBase::ImplicitStepSetup( real64 const & time_n,
   // bind the stored reservoir views to the current domain
   ResetViews( domain );
 
-  FlowSolverBase const * const flowSolver = getParent()->GetGroup<FlowSolverBase>( GetFlowSolverName() );
-  m_numDofPerResElement = flowSolver->numDofPerCell();
-
   // Initialize the primary and secondary variables for the first time step
   if (time_n <= 0.0)
   {
@@ -163,8 +160,11 @@ void WellSolverBase::InitializePreSubGroups(Group * const rootGroup)
 
   ConstitutiveBase const * fluid  = cm->GetConstitutiveRelation<ConstitutiveBase>( m_fluidName );
   GEOS_ERROR_IF( fluid == nullptr, "Fluid model " + m_fluidName + " not found" );
+  
+  m_resFluidIndex = fluid->getIndexInParent();
 
-  m_resFluidIndex = fluid->getIndexInParent(); 
+  FlowSolverBase const * const flowSolver = getParent()->GetGroup<FlowSolverBase>( GetFlowSolverName() );
+  m_numDofPerResElement = flowSolver->numDofPerCell();
 }
   
 void WellSolverBase::InitializePostInitialConditions_PreSubGroups(Group * const rootGroup)

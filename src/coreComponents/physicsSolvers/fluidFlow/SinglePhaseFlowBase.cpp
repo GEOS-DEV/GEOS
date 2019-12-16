@@ -42,6 +42,7 @@ SinglePhaseFlowBase::SinglePhaseFlowBase( const std::string& name,
                                           Group * const parent ):
   FlowSolverBase(name, parent)
 {
+  m_numDofPerCell = 1;
 }
 
 
@@ -297,7 +298,7 @@ void SinglePhaseFlowBase::ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( ti
 
     // This should fix NaN density in newly created fracture elements
     //UpdateState( subRegion );
-
+    
     forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
       dPres[ei] = 0.0;
@@ -325,6 +326,7 @@ void SinglePhaseFlowBase::ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( ti
 
     UpdateMobility( subRegion );
   } );
+
 }
 
 void SinglePhaseFlowBase::ImplicitStepComplete( real64 const & GEOSX_UNUSED_ARG( time_n ),
@@ -354,18 +356,15 @@ void SinglePhaseFlowBase::ImplicitStepComplete( real64 const & GEOSX_UNUSED_ARG(
 }
 
 void SinglePhaseFlowBase::SetupDofs( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
-                                     DofManager & dofManager ) const
+                                     DofManager & GEOSX_UNUSED_ARG( dofManager ) ) const
 {
-  dofManager.addField( viewKeyStruct::pressureString,
-                       DofManager::Location::Elem,
-                       DofManager::Connectivity::Face,
-                       m_targetRegions );
+  GEOS_ERROR( "SinglePhaseFlowBase::SetupDofs called!. Should be overridden." );
 }
 
 void SinglePhaseFlowBase::AssembleSystem( real64 const time_n,
-                                          real64 const GEOSX_UNUSED_ARG( dt ),
-                                          DomainPartition * const GEOSX_UNUSED_ARG( domain ),
-                                          DofManager const & GEOSX_UNUSED_ARG( dofManager ),
+                                          real64 const dt,
+                                          DomainPartition * const domain,
+                                          DofManager const & dofManager,
                                           ParallelMatrix & matrix,
                                           ParallelVector & rhs )
 {
@@ -377,7 +376,7 @@ void SinglePhaseFlowBase::AssembleSystem( real64 const time_n,
   matrix.open();
   rhs.open();
 
-  /*
+
   if (m_poroElasticFlag)
   {
     AssembleAccumulationTerms<true>( domain, &dofManager, &matrix, &rhs );
@@ -388,7 +387,7 @@ void SinglePhaseFlowBase::AssembleSystem( real64 const time_n,
   }
 
   AssembleFluxTerms( time_n, dt, domain, &dofManager, &matrix, &rhs );
-  */
+ 
   
   if (!m_coupledWellsFlag)
   {
@@ -405,8 +404,8 @@ void SinglePhaseFlowBase::AssembleSystem( real64 const time_n,
   GEOS_LOG_LEVEL_RANK_0( 2, "\nResidual:\n" << rhs );
 
 
-  //if( getLogLevel() >= 3 )
-  //{
+  if( getLogLevel() >= 3 )
+  {
     SystemSolverParameters * const solverParams = getSystemSolverParameters();
     integer newtonIter = solverParams->numNewtonIterations();
 
@@ -419,8 +418,8 @@ void SinglePhaseFlowBase::AssembleSystem( real64 const time_n,
     GEOS_LOG_RANK_0( "After SinglePhaseFlowBase::AssembleSystem" );
     GEOS_LOG_RANK_0( "Jacobian: written to " << filename_mat );
     GEOS_LOG_RANK_0( "Residual: written to " << filename_rhs );
-    //}
-    exit(0);
+  }
+
 }
 
 template< bool ISPORO >
@@ -576,82 +575,20 @@ SinglePhaseFlowBase::ApplyBoundaryConditions( real64 const GEOSX_UNUSED_ARG(time
 }
 
 
-real64 SinglePhaseFlowBase::CalculateResidualNorm( DomainPartition const * const domain,
-                                                   DofManager const & dofManager,
-                                                   ParallelVector const & rhs )
+real64 SinglePhaseFlowBase::CalculateResidualNorm( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
+                                                   DofManager const & GEOSX_UNUSED_ARG( dofManager ),
+                                                   ParallelVector const & GEOSX_UNUSED_ARG( rhs ) )
 {
-  MeshLevel const * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
-
-  // get a view into local residual vector
-  real64 const * localResidual = rhs.extractLocalVector();
-
-  string const dofKey = dofManager.getKey( viewKeyStruct::pressureString );
-
-  // compute the norm of local residual scaled by cell pore volume
-  real64 localResidualNorm = 0.0;
-  applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                 ElementRegionBase const * const GEOSX_UNUSED_ARG( region ),
-                                 ElementSubRegionBase const * const subRegion )
-  {
-    arrayView1d<globalIndex const> const & dofNumber = subRegion->getReference< array1d<globalIndex> >( dofKey );
-
-    arrayView1d<integer const> const & elemGhostRank = m_elemGhostRank[er][esr];
-    arrayView1d<real64 const> const & refPoro        = m_porosityRef[er][esr];
-    arrayView1d<real64 const> const & volume         = m_volume[er][esr];
-    arrayView1d<real64 const> const & dVol           = m_deltaVolume[er][esr];
-//    arrayView1d<real64 const> const & dens           = m_density[er][esr][m_fluidIndex].dimReduce();
-    arrayView2d<real64 const> const & dens           = m_density[er][esr][m_fluidIndex];
-
-    localIndex const subRegionSize = subRegion->size();
-    for ( localIndex a = 0; a < subRegionSize; ++a )
-    {
-      if (elemGhostRank[a] < 0)
-      {
-        localIndex const lid = rhs.getLocalRowID( dofNumber[a] );
-        real64 const val = localResidual[lid] / (refPoro[a] * dens[a][0] * ( volume[a] + dVol[a]));
-        localResidualNorm += val * val;
-      }
-    }
-  });
-
-  // compute global residual norm
-  real64 globalResidualNorm;
-  MpiWrapper::allReduce(&localResidualNorm, &globalResidualNorm, 1, MPI_SUM, MPI_COMM_GEOSX);
-
-  return sqrt(globalResidualNorm);
+  GEOS_ERROR( "SinglePhaseFlowBase::CalculateResidualNorm called!. Should be overridden." );
+  return 0.0;
 }
 
-void SinglePhaseFlowBase::ApplySystemSolution( DofManager const & dofManager,
-                                               ParallelVector const & solution,
-                                               real64 const scalingFactor,
-                                               DomainPartition * const domain )
+void SinglePhaseFlowBase::ApplySystemSolution( DofManager const & GEOSX_UNUSED_ARG( dofManager ),
+                                               ParallelVector const & GEOSX_UNUSED_ARG( solution ),
+                                               real64 const GEOSX_UNUSED_ARG( scalingFactor ),
+                                               DomainPartition * const GEOSX_UNUSED_ARG( domain ) )
 {
-  MeshLevel * mesh = domain->getMeshBody(0)->getMeshLevel(0);
-
-  applyToSubRegions( mesh, [&] ( localIndex const GEOSX_UNUSED_ARG( er ),
-                                 localIndex const GEOSX_UNUSED_ARG( esr ),
-                                 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
-                                 ElementSubRegionBase * const subRegion )
-  {
-    dofManager.addVectorToField( solution,
-                                 viewKeyStruct::pressureString,
-                                 scalingFactor,
-                                 subRegion,
-                                 viewKeyStruct::deltaPressureString );
-  } );
-
-  std::map<string, string_array> fieldNames;
-  fieldNames["elems"].push_back( viewKeyStruct::deltaPressureString );
-
-  array1d<NeighborCommunicator> & comms =
-    domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors );
-
-  CommunicationTools::SynchronizeFields( fieldNames, mesh, comms );
-
-  applyToSubRegions( mesh, [&] ( ElementSubRegionBase * subRegion )
-  {
-    UpdateState( subRegion );
-  } );
+  GEOS_ERROR( "SinglePhaseFlowBase::ApplySystemSolution called!. Should be overridden." );
 }
 
 void SinglePhaseFlowBase::SolveSystem( DofManager const & dofManager,

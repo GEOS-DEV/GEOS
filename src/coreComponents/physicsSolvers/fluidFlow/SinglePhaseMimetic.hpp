@@ -46,12 +46,12 @@ public:
 
   static constexpr localIndex MAX_NUM_FACES_IN_ELEM = 15;
 
-  struct CellPos
+  struct EqType
   {
-    static constexpr integer LOCAL    = 0;
-    static constexpr integer NEIGHBOR = 1;
+    static constexpr integer MASS_CONS  = 0;
+    static constexpr integer CONSTRAINT = 1;
   };
-
+  
   
   /**
    * @brief main constructor for Group Objects
@@ -163,20 +163,7 @@ public:
     // primary face-based field
     static constexpr auto facePressureString      = "facePressure";
     static constexpr auto deltaFacePressureString = "deltaFacePressure";
-
-    // auxiliary face-based maps
-    static constexpr auto numAdjacentElementsString = "numAdjacentElements";
-    static constexpr auto faceToOneSidedFaceString  = "faceToOneSidedFace";
-    static constexpr auto faceToElemDofNumberString = "faceToElemDofNumberString";
-
-    // auxiliary one-sided face-based vars
-    static constexpr auto oneSidedVolFluxString                = "oneSidedVolumetricFlux";
-    static constexpr auto dOneSidedVolFlux_dPressureString     = "dOneSidedVolumetricFlux_dPressure";
-    static constexpr auto dOneSidedVolFlux_dFacePressureString = "dOneSidedVolumetricFlux_dFacePressure";
-
-    static constexpr auto upwMobilityString            = "upwindedMobility";
-    static constexpr auto dUpwMobility_dPressureString = "dUpwindedMobility_dPressure";
-    
+  
     // one-sided face-based connectivity maps
     static constexpr auto oneSidedFaceToFaceString  = "oneSidedFaceToFace"; 
     static constexpr auto neighborRegionIdString    = "neighborRegionIndex";
@@ -206,14 +193,6 @@ public:
   groupKeyStruct const & groupKeys() const
   { return groupKeysSinglePhaseMimetic; }
 
-  /**
-   * @brief Setup stored views into domain data for the current step
-   */
-  void ResetViews( DomainPartition * const domain ) override;
-
-protected:
-
-  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const rootGroup ) override;
 
 private:
 
@@ -223,13 +202,7 @@ private:
    */
   void RegisterOneSidedFaceData( Group * const MeshBodies );
 
-  
-  /**
-   * @brief Set the size of the arrays needed to implement the solver
-   * @param[in,out] domain the domain containing the mesh and fields
-   */
-  void ResizeFaceFields( DomainPartition * const domain );
-  
+
   /**
    * @brief Set the size of the one-sided face based arrays
    * @param[in,out] domain the domain containing the mesh and fields
@@ -240,112 +213,146 @@ private:
    */
   void ResizeOneSidedFaceFields( DomainPartition * const domain );
 
-  /**
-   * @brief Reset the face maps before calling ConstructFaceMaps  
-   * @param[in,out] domain the domain containing the mesh and fields
-   */
-  void ResetFaceMaps( DomainPartition * const domain );
   
   /**
    * @brief Construct the connectivity maps that are used in the mimetic method
    * @param[in,out] domain the domain containing the mesh and fields
    *
-   * In the mimetic method, we assemble the fluxes element-by-element. In each
+   * In this class, we assemble the fluxes element-by-element. In each
    * element, we iterate over the one-sided faces of the element. This function
    * constructs the arrays storing the connectivity information necessary to 
    * conveniently do that.
    */
-  void ConstructFaceMaps( DomainPartition * const domain );
+  void ConstructOneSidedFaceMaps( DomainPartition * const domain,
+                                  DofManager const & dofManager );
 
   /**
-   * @brief Compute the one-sided volumetric fluxes for all the elements of the domain
-   * @param[in] domain the domain containing the mesh and fields
+   * @brief In a given element, compute the one-sided volumetric fluxes at this element's faces
+   * @param[in] facePres the pressure at the mesh faces at the beginning of the time step
+   * @param[in] dFacePres the accumulated pressure updates at the mesh face 
+   * @param[in] faceGravDepth the depth at the mesh faces
+   * @param[in] oneSidedFaceToFace the map from one-sided face to face 
+   * @param[in] elemPres the pressure at this element's center
+   * @param[in] dElemPres the accumulated pressure updates at this element's center
+   * @param[in] elemGravDepth the depth at this element's center
+   * @param[in] elemDens the density at this elenent's center  
+   * @param[in] dElemDens_dp the derivative of the density at this element's center 
+   * @param[in] elemOffset the offset of this element in the map oneSidedFaceToFace
+   * @param[in] numFacesInElem the number of faces in this element
+   * @param[in] transMatrix the transmissibility matrix in this element
+   * @param[out] oneSidedVolFlux the volumetric fluxes at this element's faces  
+   * @param[out] dOneSidedVolFlux_dp the derivatives of the vol fluxes wrt to this element's cell centered pressure 
+   * @param[out] dOneSidedVolFlux_dfp the derivatives of the vol fluxes wrt to this element's face pressures
+   */
+  void ComputeOneSidedVolFluxes( arrayView1d<real64 const> const & facePres,
+                                 arrayView1d<real64 const> const & dFacePres,
+                                 arrayView1d<real64 const> const & faceGravDepth,
+                                 arrayView1d<localIndex const> const & oneSidedFaceToFace,
+                                 real64 const & elemPres,
+                                 real64 const & dElemPres,
+                                 real64 const & elemGravDepth,
+                                 real64 const & elemDens,
+                                 real64 const & dElemDens_dp,
+                                 localIndex const elemOffset,
+                                 localIndex const numFacesInElem,
+                                 stackArray2d<real64, MAX_NUM_FACES_IN_ELEM
+                                                     *MAX_NUM_FACES_IN_ELEM> const & transMatrix,
+                                 stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> & oneSidedVolFlux,
+                                 stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> & dOneSidedVolFlux_dp,
+                                 stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> & dOneSidedVolFlux_dfp ) const;
+
+  /**
+   * @brief In a given element, collect the upwinded mobilities at this element's faces 
+   * @param[in] neighborRegionId the region index of the neighbor element of the one-sided faces (non-local)
+   * @param[in] neighborSubRegionId the subregion index of the neighbor element of the one-sided faces (non-local)
+   * @param[in] neighborElemId the elem index of the neighbor element of the one-sided faces (non-local)
+   * @param[in] neighborDofNumber the dof number of the neighbor element of the one-sided faces (non-local)
+   * @param[in] domainMobility the mobilities in the domain (non-local)
+   * @param[in] dDomainMobility_dp the derivatives of the mobilities in the domain wrt cell-centered pressure (non-local)
+   * @param[in] elemMobility the mobility in this element
+   * @param[in] dElemMobility_dp the derivative of the mobility wrt this element cell-centered pressure 
+   * @param[in] elemDofNumber the dof number of this element's cell centered pressure
+   * @param[in] elemOffset the offset of this element in the map oneSidedFaceToFace
+   * @param[in] numFacesInElem the number of faces in this element
+   * @param[in] oneSidedVolFlux the volumetric fluxes at this element's faces  
+   * @param[inout] upwMobility the upwinded mobilities at this element's faces  
+   * @param[inout] dUpwMobility_dp the derivatives of the upwinded mobilities wrt the cell-centered pressures (local or neighbor)  
+   * @param[inout] upwDofNumber  the dof number of the upwind pressure 
    *
-   * For each element, this function loops over the one-sided faces. For each
-   * one-sided face, it computes and stores the volumetric flux.  
+   * Note: because of the upwinding, this function requires non-local information
    */
-  void ComputeOneSidedVolFluxes( DomainPartition const * const domain );
+  void UpdateUpwindedCoefficients( arrayView1d<localIndex const> const & neighborRegionId,
+                                   arrayView1d<localIndex const> const & neighborSubRegionId,
+                                   arrayView1d<localIndex const> const & neighborElemId,
+                                   arrayView1d<globalIndex const> const & neighborDofNumber,
+                                   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const & domainMobility,
+                                   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const & dDomainMobility_dp,
+                                   real64 const & elemMobility,
+                                   real64 const & dElemMobility_dp,
+                                   globalIndex const elemDofNumber,
+                                   localIndex const elemOffset,
+                                   localIndex const numFacesInElem,
+                                   stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> const & oneSidedVolFlux,
+                                   stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> & upwMobility,
+                                   stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> & dUpwMobility_dp,
+                                   stackArray1d<globalIndex, MAX_NUM_FACES_IN_ELEM> & upwDofNumber ) const;
 
   /**
-   * @brief Collect the upwind mobility for all the one-sided faces of the domain
-   * @param[in] domain the domain containing the mesh and fields
-   *
-   * For each element, this function loops over the one-sided faces. For each
-   * one-sided face, it uses the sign of the one-sided volumetric flux to 
-   * detect the upwind element. The upwind mobilities are then stored
+   * @brief In a given element, assemble the mass conservation equation
+   * @param[in] dt the time step size 
+   * @param[in] faceDofNumber the dof numbers of the face pressures 
+   * @param[in] oneSidedFaceToFace the map from one-sided face to face to access face Dof numbers
+   * @param[in] elemDofNumber the dof number of this element's cell centered pressure
+   * @param[in] elemOffset the offset of this element in the map oneSidedFaceToFace
+   * @param[in] numFacesInElem the number of faces in this element
+   * @param[in] oneSidedVolFlux the volumetric fluxes at this element's faces  
+   * @param[in] dOneSidedVolFlux_dp the derivatives of the vol fluxes wrt to this element's cell centered pressure 
+   * @param[in] dOneSidedVolFlux_dfp the derivatives of the vol fluxes wrt to this element's face pressures
+   * @param[in] upwMobility the upwinded mobilities at this element's faces  
+   * @param[in] dUpwMobility_dp the derivatives of the upwinded mobilities wrt the cell-centered pressures (local or neighbor)  
+   * @param[in] upwDofNumber  the dof number of the upwind pressure 
+   * @param[inout] matrix the jacobian matrix
+   * @param[inout] rhs the residual
    */
-  void UpdateUpwindedTransportCoefficients( DomainPartition const * const domain );
+  void AssembleOneSidedMassFluxes( real64 const & dt,
+                                   arrayView1d<globalIndex const> const & faceDofNumber,
+                                   arrayView1d<localIndex const> const & oneSidedFaceToFace,
+                                   globalIndex const elemDofNumber,
+                                   localIndex const elemOffset,
+                                   localIndex const numFacesInElem,
+                                   stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> const & oneSidedVolFlux,
+                                   stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> const & dOneSidedVolFlux_dp,
+                                   stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> const & dOneSidedVolFlux_dfp,
+                                   stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> const & upwMobility,
+                                   stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> const & dUpwMobility_dp,
+                                   stackArray1d<globalIndex, MAX_NUM_FACES_IN_ELEM> const & upwDofNumber,
+                                   ParallelMatrix * const matrix,
+                                   ParallelVector * const rhs ) const;
+
 
   /**
-   * @brief Assemble the upwinded one-sided mass fluxes for all the elements of the domain
-   * @param time_n time at the beginning of the step
-   * @param dt the perscribed timestep
-   * @param domain the domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
-   * 
-   * For each element, this function loops over the one-sided faces. For 
-   * each one-sided face, it multiplies the upwinded mobility by the one-sided
-   * volumetric flux to obtain the upwinded one-sided mass flux. Then this  
-   * function performs the assembly of the flux terms in the residual and Jacobian
-   * matrix
+   * @brief In a given element, assemble the constraints at this element's faces
+   * @param[in] faceDofNumber the dof numbers of the face pressures 
+   * @param[in] oneSidedFaceToFace the map from one-sided face to face to access face Dof numbers
+   * @param[in] elemDofNumber the dof number of this element's cell centered pressure
+   * @param[in] elemOffset the offset of this element in the map oneSidedFaceToFace
+   * @param[in] numFacesInElem the number of faces in this element
+   * @param[in] oneSidedVolFlux the volumetric fluxes at this element's faces  
+   * @param[in] dOneSidedVolFlux_dp the derivatives of the vol fluxes wrt to this element's cell centered pressure 
+   * @param[in] dOneSidedVolFlux_dfp the derivatives of the vol fluxes wrt to this element's face pressures
+   * @param[inout] matrix the jacobian matrix
+   * @param[inout] rhs the residual
    */
-  void AssembleUpwindedOneSidedMassFluxes( real64 const time_n,
-                                           real64 const dt,
-                                           DomainPartition const * const domain,
-                                           DofManager const * const dofManager,
-                                           ParallelMatrix * const matrix,
-                                           ParallelVector * const rhs );
-
-  /**
-   * @brief Assemble the constraints enforcing flux continuity at the faces
-   * @param time_n time at the beginning of the step
-   * @param dt the prescribed timestep
-   * @param domain the domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
-   * 
-   * For each face, we have to make sure that the one-sided fluxes coming from the 
-   * two adjacent elements match. This is done by imposing a constraint at each face.
-   * To assemble these constraints, we loop over the elements. For each element, we 
-   * loop over the one-sided faces. For each one-sided face, we add to the contribution
-   * of the one-sided flux to the constraint at this face.
-   */
-  void AssembleConstraints( real64 const time_n,
-                            real64 const dt,
-                            DomainPartition const * const domain,
-                            DofManager const * const dofManager,
+  void AssembleConstraints( arrayView1d<globalIndex const> const & faceDofNumber,
+                            arrayView1d<localIndex const> const & oneSidedFaceToFace,
+                            globalIndex const elemDofNumber,
+                            localIndex const elemOffset,
+                            localIndex const numFacesInElem,
+                            stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> const & oneSidedVolFlux,
+                            stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> const & dOneSidedVolFlux_dp,
+                            stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> const & dOneSidedVolFlux_dfp,
                             ParallelMatrix * const matrix,
-                            ParallelVector * const rhs );
-
-
-  /**
-   * @brief At a given one-sided face, compute the mass flux
-   * @param dt time step
-   * @param upwMobility 
-   * @param dUpwMobility_dp 
-   * @param dUpwMobility_dp_neighbor
-   * @param oneSidedVolFlux
-   * @param dOneSidedVolFlux_dp
-   * @param dOneSidedVolFlux_dfp
-   * @param sumOneSidedMassFluxes
-   * @param dSumOneSidedMassFluxes_dp
-   * @param dSumOneSidedMassFluxes_dp_neighbor
-   * @param dSumOneSidedMassFluxes_dfp
-   */
-  void IncrementLocalMassFluxSum( real64 const & dt,
-                                  real64 const & upwMobility,
-                                  real64 const & dUpwMobility_dp,
-                                  real64 const & dUpwMobility_dp_neighbor,
-                                  real64 const & oneSidedVolFlux,
-                                  real64 const & dOneSidedVolFlux_dp,
-                                  real64 const & dOneSidedVolFlux_dfp,
-                                  real64       & sumOneSidedMassFluxes,
-                                  real64       & dSumOneSidedMassFluxes_dp,
-                                  real64       & dSumOneSidedMassFluxes_dp_neighbor,
-                                  real64       & dSumOneSidedMassFluxes_dfp ) const;
+                            ParallelVector * const rhs ) const;
 
 
   /**
@@ -358,21 +365,21 @@ private:
    * @param[in] elemOffset the position of the element in one-sided face based maps
    * @param[in] numFacesInElem the number of faces in this element
    * @param[in] lengthTolerance the tolerance used in the trans calculations
-   * @param[out] oneSidedTrans 
+   * @param[inout] transMatrix
    *
    * This function is in this class until we find a better place for it
    * 
    */
-  void RecomputeOneSidedTransmissibilities( arrayView1d<R1Tensor const> const & X, 
- 	      	      		            ArrayOfArraysView<localIndex const> const & faceToNodes, 
-					    arrayView1d<localIndex const> const & oneSidedFaceToFace, 
-					    R1Tensor const & elemCenter, 
- 					    R1Tensor const & permeability,
-					    real64 const   & elemOffset,
-					    real64 const   & numFacesInElem,
-					    real64 const   & lengthTolerance,
-					    stackArray2d<real64, MAX_NUM_FACES_IN_ELEM
- 					                        *MAX_NUM_FACES_IN_ELEM> & oneSidedTrans ) const; 
+  void ComputeTransmissibilityMatrix( arrayView1d<R1Tensor const> const & nodePosition, 
+                                      ArrayOfArraysView<localIndex const> const & faceToNodes, 
+                                      arrayView1d<localIndex const> const & oneSidedFaceToFace, 
+                                      R1Tensor const & elemCenter, 
+                                      R1Tensor const & elemPerm,
+                                      real64 const   & elemOffset,
+                                      real64 const   & numFacesInElem,
+                                      real64 const   & lengthTolerance,
+                                      stackArray2d<real64, MAX_NUM_FACES_IN_ELEM
+                                                          *MAX_NUM_FACES_IN_ELEM> & transMatrix ) const; 
   
 
   /// Number of one-sided faces on this MPI rank

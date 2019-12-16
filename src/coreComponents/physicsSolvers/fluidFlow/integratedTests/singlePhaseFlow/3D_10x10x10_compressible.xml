@@ -9,7 +9,7 @@
  <Solvers
     gravityVector="0.0, 0.0, -9.81">
   
-    <SinglePhaseFlow name="SinglePhaseFlow"
+    <SinglePhaseCellCentered name="SinglePhaseFlow"
                      verboseLevel="1"
                      gravityFlag="1"
                      discretization="singlePhaseTPFA"
@@ -19,7 +19,7 @@
       <SystemSolverParameters krylovTol="1.0e-10"
                               newtonTol="1.0e-6"
                               maxIterNewton="8"/>
-    </SinglePhaseFlow>
+    </SinglePhaseCellCentered>
   </Solvers>
  <!-- SPHINX_TUT_INT_HEX_SOLVERS_END -->
   

@@ -88,6 +88,10 @@ public:
   /**@{*/
 
   virtual void
+  SetupDofs( DomainPartition const * const domain,
+             DofManager & dofManager ) const override;
+  
+  virtual void
   ApplyBoundaryConditions( real64 const time_n,
                            real64 const dt,
                            DomainPartition * const domain,
@@ -95,6 +99,17 @@ public:
                            ParallelMatrix & matrix,
                            ParallelVector & rhs ) override;
 
+  virtual real64
+  CalculateResidualNorm( DomainPartition const * const domain,
+                         DofManager const & dofManager,
+                         ParallelVector const & rhs ) override;
+  
+  virtual void
+  ApplySystemSolution( DofManager const & dofManager,
+                       ParallelVector const & solution,
+                       real64 const scalingFactor,
+                       DomainPartition * const domain ) override;
+  
   /**
    * @brief assembles the flux terms for all cells
    * @param time_n previous time value

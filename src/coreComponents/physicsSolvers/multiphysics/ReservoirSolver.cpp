@@ -72,6 +72,8 @@ real64 ReservoirSolver::SolverStep( real64 const & time_n,
 {
   real64 dt_return = dt;
 
+  SetupSystem( domain, m_dofManager, m_matrix, m_rhs, m_solution );
+
   // setup reservoir and well systems
   ImplicitStepSetup( time_n, dt, domain, m_dofManager, m_matrix, m_rhs, m_solution );
 
@@ -109,7 +111,7 @@ void ReservoirSolver::ImplicitStepSetup( real64 const & time_n,
                                    solution );
 
   // setup the coupled linear system
-  SetupSystem( domain, dofManager, matrix, rhs, solution );
+  //SetupSystem( domain, dofManager, matrix, rhs, solution );
 }
 
 void ReservoirSolver::SetupDofs( DomainPartition const * const domain,
@@ -222,6 +224,7 @@ void ReservoirSolver::SetupSystem( DomainPartition * const domain,
    } );
 
   matrix.close();
+
 }
 
 void ReservoirSolver::AssembleSystem( real64 const time_n,
@@ -243,6 +246,7 @@ void ReservoirSolver::AssembleSystem( real64 const time_n,
                                 dofManager,
                                 matrix,
                                 rhs );
+
 
   matrix.close();
   rhs.close();
@@ -267,6 +271,7 @@ void ReservoirSolver::AssembleSystem( real64 const time_n,
     GEOS_LOG_RANK_0( "Jacobian: written to " << filename_mat );
     GEOS_LOG_RANK_0( "Residual: written to " << filename_rhs );
   }
+
 }
 
 void ReservoirSolver::ApplyBoundaryConditions( real64 const time_n,

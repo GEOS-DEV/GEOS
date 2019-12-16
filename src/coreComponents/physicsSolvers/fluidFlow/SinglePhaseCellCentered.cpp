@@ -18,6 +18,8 @@
 
 #include "SinglePhaseCellCentered.hpp"
 
+#include "mpiCommunications/CommunicationTools.hpp"
+#include "mpiCommunications/NeighborCommunicator.hpp"
 #include "common/TimingMacros.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
@@ -43,6 +45,96 @@ SinglePhaseCellCentered::SinglePhaseCellCentered( const std::string& name,
 }
 
 
+void SinglePhaseCellCentered::SetupDofs( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
+                                         DofManager & dofManager ) const
+{
+  dofManager.addField( viewKeyStruct::pressureString,
+                       DofManager::Location::Elem,
+                       DofManager::Connectivity::Face, 
+                       m_targetRegions );
+}
+  
+
+real64 SinglePhaseCellCentered::CalculateResidualNorm( DomainPartition const * const domain,
+                                                       DofManager const & dofManager,
+                                                       ParallelVector const & rhs )
+{
+  MeshLevel const * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
+
+  // get a view into local residual vector
+  real64 const * localResidual = rhs.extractLocalVector();
+
+  string const dofKey = dofManager.getKey( viewKeyStruct::pressureString );
+
+  // compute the norm of local residual scaled by cell pore volume
+  real64 localResidualNorm = 0.0;
+  applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
+                                 ElementRegionBase const * const GEOSX_UNUSED_ARG( region ),
+                                 ElementSubRegionBase const * const subRegion )
+  {
+    arrayView1d<globalIndex const> const & dofNumber = subRegion->getReference< array1d<globalIndex> >( dofKey );
+
+    arrayView1d<integer const> const & elemGhostRank = m_elemGhostRank[er][esr];
+    arrayView1d<real64 const> const & refPoro        = m_porosityRef[er][esr];
+    arrayView1d<real64 const> const & volume         = m_volume[er][esr];
+    arrayView1d<real64 const> const & dVol           = m_deltaVolume[er][esr];
+//    arrayView1d<real64 const> const & dens           = m_density[er][esr][m_fluidIndex].dimReduce();
+    arrayView2d<real64 const> const & dens           = m_density[er][esr][m_fluidIndex];
+
+    localIndex const subRegionSize = subRegion->size();
+    for ( localIndex a = 0; a < subRegionSize; ++a )
+    {
+      if (elemGhostRank[a] < 0)
+      {
+        localIndex const lid = rhs.getLocalRowID( dofNumber[a] );
+        real64 const val = localResidual[lid] / (refPoro[a] * dens[a][0] * ( volume[a] + dVol[a]));
+        localResidualNorm += val * val;
+      }
+    }
+  });
+
+  // compute global residual norm
+  real64 globalResidualNorm;
+  MpiWrapper::allReduce(&localResidualNorm, &globalResidualNorm, 1, MPI_SUM, MPI_COMM_GEOSX);
+
+  return sqrt(globalResidualNorm);
+}
+
+  
+void SinglePhaseCellCentered::ApplySystemSolution( DofManager const & dofManager,
+                                                   ParallelVector const & solution,
+                                                   real64 const scalingFactor,
+                                                   DomainPartition * const domain )
+{
+  MeshLevel * mesh = domain->getMeshBody(0)->getMeshLevel(0);
+
+  applyToSubRegions( mesh, [&] ( localIndex const GEOSX_UNUSED_ARG( er ),
+                                 localIndex const GEOSX_UNUSED_ARG( esr ),
+                                 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
+                                 ElementSubRegionBase * const subRegion )
+  {
+    dofManager.addVectorToField( solution,
+                                 viewKeyStruct::pressureString,
+                                 scalingFactor,
+                                 subRegion,
+                                 viewKeyStruct::deltaPressureString );
+  } );
+
+  std::map<string, string_array> fieldNames;
+  fieldNames["elems"].push_back( viewKeyStruct::deltaPressureString );
+
+  array1d<NeighborCommunicator> & comms =
+    domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors );
+
+  CommunicationTools::SynchronizeFields( fieldNames, mesh, comms );
+
+  applyToSubRegions( mesh, [&] ( ElementSubRegionBase * subRegion )
+  {
+    UpdateState( subRegion );
+  } );
+}
+
+  
 void SinglePhaseCellCentered::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time_n ),
                                                  real64 const dt,
                                                  DomainPartition const * const domain,
