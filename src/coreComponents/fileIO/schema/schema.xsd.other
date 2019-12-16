@@ -359,17 +359,20 @@
 	<xsd:complexType name="FiniteElementsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="FiniteElementSpace" type="FiniteElementSpaceType" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="FiniteElementSpaceType" />
+	<xsd:complexType name="NonlinearSolverParametersType">
+		<!--newtonNumberOfIterations => Number of Newton's iterations.-->
+		<xsd:attribute name="newtonNumberOfIterations" type="integer" />
+	</xsd:complexType>
 	<xsd:complexType name="SystemSolverParametersType">
 		<!--KrylovResidualFinal => Final Krylov solver residual.-->
 		<xsd:attribute name="KrylovResidualFinal" type="real64" />
 		<!--KrylovResidualInit => Initial Krylov solver residual.-->
 		<xsd:attribute name="KrylovResidualInit" type="real64" />
-		<!--numberOfNewtonIterations => Number of Newton's iterations.-->
-		<xsd:attribute name="numberOfNewtonIterations" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="FiniteVolumeType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -719,8 +722,8 @@
 		<xsd:attribute name="totalDensity" type="real64_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="CompressibleSinglePhaseFluidType">
-		<!--dPressure_dDensity => (no description available)-->
-		<xsd:attribute name="dPressure_dDensity" type="real64_array2d" />
+		<!--dDensity_dPressure => (no description available)-->
+		<xsd:attribute name="dDensity_dPressure" type="real64_array2d" />
 		<!--dViscosity_dDensity => (no description available)-->
 		<xsd:attribute name="dViscosity_dDensity" type="real64_array2d" />
 		<!--density => (no description available)-->

@@ -13,14 +13,15 @@
                                  temperature="368.15"
                                  useMass="1"
                                  targetRegions="{Region1}">
-      <SystemSolverParameters krylovTol="1.0e-7"
-                              newtonTol="1.0e-5"
-                              maxIterNewton="100"
+      <NonlinearSolverParameters name="nlsp"
+				 newtonTol="1.0e-5"
+				 newtonMaxIter="100"
+                                 maxTimeStepCuts="5"
+                                 lineSearchAction="0"/>
+      <SystemSolverParameters name="ssp"
+ 			      krylovTol="1.0e-7"
                               useDirectSolver="0"
-			      useBicgstab="1"
-                              maxTimeStepCuts="5"
-                              maxLineSearchCuts="2"
-                              doLineSearch="0"/>      
+			      useBicgstab="1"/>      
     </CompositionalMultiphaseFlow>
   </Solvers>
   
