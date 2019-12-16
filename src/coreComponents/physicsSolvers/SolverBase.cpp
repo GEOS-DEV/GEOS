@@ -417,7 +417,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
 
 
       // do line search in case residual has increased
-      if( 0 /*residualNorm > lastResidual*/ )
+      if( residualNorm > lastResidual )
       {
 
         residualNorm = lastResidual;
