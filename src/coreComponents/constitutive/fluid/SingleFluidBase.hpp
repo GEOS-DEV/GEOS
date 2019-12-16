@@ -99,7 +99,7 @@ public:
   {
     static constexpr auto defaultDensityString      = "defaultDensity";
     static constexpr auto densityString      = "density";
-    static constexpr auto dDens_dPresString  = "dPressure_dDensity";
+    static constexpr auto dDens_dPresString  = "dDensity_dPressure";
 
     static constexpr auto defaultViscosityString    = "defaultViscosity";
     static constexpr auto viscosityString    = "viscosity";

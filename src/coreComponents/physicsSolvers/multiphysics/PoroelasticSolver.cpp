@@ -120,11 +120,11 @@ void PoroelasticSolver::PostProcessInput()
     // For this coupled solver the minimum number of Newton Iter should be 0 for both flow and solid solver otherwise it will never converge.
     SolidMechanicsLagrangianFEM &
       solidSolver = *(this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolidMechanicsLagrangianFEM*>());
-      integer & minNewtonIterSolid = solidSolver.getSystemSolverParameters()->minIterNewton();
+      integer & minNewtonIterSolid = solidSolver.getNonlinearSolverParameters().m_minIterNewton;
 
     SinglePhaseFlow &
       fluidSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>());
-    integer & minNewtonIterFluid = fluidSolver.getSystemSolverParameters()->minIterNewton();
+    integer & minNewtonIterFluid = fluidSolver.getNonlinearSolverParameters().m_minIterNewton;
 
     minNewtonIterSolid = 0;
     minNewtonIterFluid = 0;
@@ -344,7 +344,7 @@ real64 PoroelasticSolver::SplitOperatorStep( real64 const& time_n,
   this->ImplicitStepSetup( time_n, dt, domain, m_dofManager, m_matrix, m_rhs, m_solution );
 
   int iter = 0;
-  while (iter < (*(this->getSystemSolverParameters())).maxIterNewton() )
+  while (iter < m_nonlinearSolverParameters.m_maxIterNewton )
   {
     if (iter == 0)
     {
@@ -372,7 +372,7 @@ real64 PoroelasticSolver::SplitOperatorStep( real64 const& time_n,
       continue;
     }
 
-    if (fluidSolver.getSystemSolverParameters()->numNewtonIterations() == 0 && iter > 0)
+    if ( fluidSolver.getNonlinearSolverParameters().m_numNewtonIterations == 0 && iter > 0)
     {
       GEOSX_LOG_LEVEL_RANK_0( 1, "***** The iterative coupling has converged in " << iter  << " iterations! *****\n" );
       break;
@@ -398,7 +398,7 @@ real64 PoroelasticSolver::SplitOperatorStep( real64 const& time_n,
       dtReturn = dtReturnTemporary;
       continue;
     }
-    if (solidSolver.getSystemSolverParameters()->numNewtonIterations() > 0)
+    if (solidSolver.getNonlinearSolverParameters().m_numNewtonIterations > 0)
     {
       this->UpdateDeformationForCoupling(domain);
     }
