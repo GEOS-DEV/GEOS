@@ -152,10 +152,7 @@ real64 FlowProppantTransportSolver::SolverStep( real64 const & time_n,
   this->ImplicitStepSetup( time_n, dt, domain, m_dofManager, m_matrix, m_rhs, m_solution );
 
   int iter = 0;
-  integer maxIterNewtonNumber = this->getSystemSolverParameters()->maxIterNewton();
-  integer maxIterNewtonConvergenceCheckNumber = this->getSystemSolverParameters()->maxIterNewtonConvergenceCheck();  
-
-  while (iter <  maxIterNewtonNumber)
+  while (iter <  this->m_nonlinearSolverParameters.m_maxIterNewton )
   {
     if (iter == 0)
     {
@@ -186,7 +183,9 @@ real64 FlowProppantTransportSolver::SolverStep( real64 const & time_n,
       continue;
     }
   
-    if (flowSolver.getSystemSolverParameters()->numNewtonIterations() <=maxIterNewtonConvergenceCheckNumber  && iter > 0 && getLogLevel() >= 1)
+    NonlinearSolverParameters const & fluidNonLinearParams = flowSolver.getNonlinearSolverParameters();
+    if( fluidNonLinearParams.m_numNewtonIterations<=this->m_nonlinearSolverParameters.m_minIterNewton && iter > 0 &&
+        getLogLevel() >= 1)
     {
       GEOSX_LOG_RANK_0( "***** The iterative coupling has converged in " << iter  << " iterations! *****\n" );
       break;

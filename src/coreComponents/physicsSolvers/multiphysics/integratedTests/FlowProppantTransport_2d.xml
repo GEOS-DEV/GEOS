@@ -15,12 +15,13 @@
                        proppantName="sand"		       
                        solidName="rock">
 
+      <NonlinearSolverParameters name="nlsp"
+                                 newtonTol="1.0e-8"
+                                 newtonMaxIter="8"
+                                 lineSearchAction="0"
+                                 newtonMinIter="1"/>
       <SystemSolverParameters name="SystemSolverParameters"
-                              krylovTol="1.0e-12"
-                              newtonTol="1.0e-8"
-                              maxIterNewton="8"
-                              doLineSearch="0"
-                              minIterNewton="1"/>
+                              krylovTol="1.0e-12"/>
     
     </ProppantTransport>    
 
@@ -32,9 +33,11 @@
                            logLevel="1">
 
       
-      <SystemSolverParameters name="SystemSolverParameters"
-                              maxIterNewton="5"
-                              maxIterNewtonConvergenceCheck="0"/>
+      <NonlinearSolverParameters name="nlsp"
+                                 newtonMinIter="1"
+                                 newtonMaxIter="5"
+                                 />
+      <SystemSolverParameters name="SystemSolverParameters"/>
     </FlowProppantTransport>
 
 
@@ -48,12 +51,13 @@
                      fluidName="water"
                      solidName="rock">
 
+      <NonlinearSolverParameters name="nlsp"
+                                 newtonTol="1.0e-8"
+                                 newtonMaxIter="8"
+                                 lineSearchAction="0"
+                                 newtonMinIter="1"/>
        <SystemSolverParameters name="SystemSolverParameters"
-                               krylovTol="1.0e-12"
-                               newtonTol="1.0e-8"
-                               maxIterNewton="8"
-                               doLineSearch="0"
-                               minNumberOfNewtonIterations="0"/>
+                               krylovTol="1.0e-12"/>
     </SinglePhaseFlow>
 
 

@@ -6,24 +6,26 @@ add_subdirectory (GEOSX_PTP)
 # Specify solver headers
 #
 set( physicsSolvers_headers
+     NonlinearSolverParameters.hpp
      PhysicsSolverManager.hpp
      SolverBase.hpp
      SystemSolverParameters.hpp
-     multiphysics/FlowProppantTransportSolver.hpp     
+     fluidFlow/CompositionalMultiphaseFlow.hpp
+     fluidFlow/CompositionalMultiphaseFlowKernels.hpp
+     fluidFlow/CompositionalMultiphaseWell.hpp
+     fluidFlow/FlowSolverBase.hpp
+     fluidFlow/ProppantTransport.hpp
+     fluidFlow/ProppantTransportKernels.hpp
+     fluidFlow/SinglePhaseFlow.hpp
+     fluidFlow/SinglePhaseFlowKernels.hpp
+     fluidFlow/SinglePhaseWell.hpp
+     fluidFlow/WellSolverBase.hpp
+     fluidFlow/WellSolverBase.hpp
+     multiphysics/FlowProppantTransportSolver.hpp
      multiphysics/HydrofractureSolver.hpp
      multiphysics/PoroelasticSolver.hpp
      multiphysics/ReservoirSolver.hpp
      simplePDE/LaplaceFEM.hpp
-     fluidFlow/FlowSolverBase.hpp
-     fluidFlow/ProppantTransport.hpp
-     fluidFlow/ProppantTransportKernels.hpp          
-     fluidFlow/SinglePhaseFlow.hpp
-     fluidFlow/SinglePhaseFlowKernels.hpp
-     fluidFlow/CompositionalMultiphaseFlow.hpp
-     fluidFlow/CompositionalMultiphaseFlowKernels.hpp
-     fluidFlow/WellSolverBase.hpp
-     fluidFlow/SinglePhaseWell.hpp
-     fluidFlow/CompositionalMultiphaseWell.hpp
      solidMechanics/SolidMechanicsLagrangianFEM.hpp
      solidMechanics/SolidMechanicsLagrangianSSLE.hpp
      solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp
@@ -37,22 +39,26 @@ set( physicsSolvers_headers
 set( physicsSolvers_sources
      PhysicsSolverManager.cpp
      SolverBase.cpp
+     NonlinearSolverParameters.cpp
      SystemSolverParameters.cpp
+     fluidFlow/CompositionalMultiphaseFlow.cpp
+     fluidFlow/CompositionalMultiphaseFlowKernels.cpp
+     fluidFlow/CompositionalMultiphaseWell.cpp
+     fluidFlow/FlowSolverBase.cpp
+     fluidFlow/SinglePhaseFlow.cpp
+     fluidFlow/SinglePhaseFlowKernels.cpp
+     fluidFlow/SinglePhaseWell.cpp
+     fluidFlow/ProppantTransport.cpp
+     fluidFlow/ProppantTransportKernels.cpp               
+     fluidFlow/SinglePhaseFlow.cpp
+     fluidFlow/SinglePhaseFlowKernels.cpp
+     fluidFlow/SinglePhaseWell.cpp
+     fluidFlow/WellSolverBase.cpp
      multiphysics/FlowProppantTransportSolver.cpp          
      multiphysics/HydrofractureSolver.cpp
      multiphysics/PoroelasticSolver.cpp
      multiphysics/ReservoirSolver.cpp
      simplePDE/LaplaceFEM.cpp
-     fluidFlow/FlowSolverBase.cpp
-     fluidFlow/ProppantTransport.cpp
-     fluidFlow/ProppantTransportKernels.cpp               
-     fluidFlow/SinglePhaseFlow.cpp
-     fluidFlow/SinglePhaseFlowKernels.cpp
-     fluidFlow/CompositionalMultiphaseFlow.cpp
-     fluidFlow/CompositionalMultiphaseFlowKernels.cpp
-     fluidFlow/WellSolverBase.cpp
-     fluidFlow/SinglePhaseWell.cpp
-     fluidFlow/CompositionalMultiphaseWell.cpp
      solidMechanics/SolidMechanicsLagrangianFEM.cpp
      solidMechanics/SolidMechanicsLagrangianSSLE.cpp
      surfaceGeneration/SurfaceGenerator.cpp
