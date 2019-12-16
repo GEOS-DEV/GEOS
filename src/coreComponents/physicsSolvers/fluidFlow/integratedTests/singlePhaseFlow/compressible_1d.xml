@@ -5,7 +5,7 @@
     gravityVector="0.0, 0.0, -9.81">
   
     <SinglePhaseFlow name="SinglePhaseFlow"
-                     logLevel="2"
+                     logLevel="0"
                      gravityFlag="1"
                      discretization="singlePhaseTPFA"
                      fluidName="water"
