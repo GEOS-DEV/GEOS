@@ -235,7 +235,9 @@ public:
 
     static constexpr auto proppantDensityString  = "proppantDensity";
 
-    static constexpr auto criticalShieldsNumberString  = "criticalShieldsNumber";                                
+    static constexpr auto criticalShieldsNumberString  = "criticalShieldsNumber";
+
+    static constexpr auto frictionCoefficientString  = "frictionCoefficient";                                    
 
     /*
     using ViewKey = dataRepository::ViewKey;
@@ -389,7 +391,7 @@ private:
   real64 m_proppantDiameter;
   real64 m_proppantDensity;
   real64 m_criticalShieldsNumber;        
-  
+  real64 m_frictionCoefficient;          
 };
 
 

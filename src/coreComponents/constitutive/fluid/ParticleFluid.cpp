@@ -169,11 +169,11 @@ void ParticleFluid::PointUpdate(localIndex const NC, real64 const & proppantConc
 void ParticleFluid::Compute( localIndex const NC,
                              real64 const & proppantConcentration,
                              real64 const & fluidDensity,
-                             real64 const & dFluidDensity_dPressure,
-                             arraySlice1d<real64 const> const & dFluidDensity_dComponentConcentration,
+                             real64 const & GEOSX_UNUSED_ARG( dFluidDensity_dPressure ),
+                             arraySlice1d<real64 const> const & GEOSX_UNUSED_ARG( dFluidDensity_dComponentConcentration ),
                              real64 const & fluidViscosity,
-                             real64 const & dFluidViscosity_dPressure,
-                             arraySlice1d<real64 const> const & dFluidViscosity_dComponentConcentration,
+                             real64 const & GEOSX_UNUSED_ARG( dFluidViscosity_dPressure ),
+                             arraySlice1d<real64 const> const & GEOSX_UNUSED_ARG( dFluidViscosity_dComponentConcentration ),
                              real64 & settlingFactor,
                              real64 & dSettlingFactor_dPressure,
                              real64 & dSettlingFactor_dProppantConcentration,
@@ -183,8 +183,8 @@ void ParticleFluid::Compute( localIndex const NC,
 {
 
   real64 singleParticleSettlingVelocity = 0.0;
-  real64 dSingleParticleSettlingVelocity_dPressure = 0.0;
-  array1d<real64> dSingleParticleSettlingVelocity_dComponentConcentration(NC);
+  //  real64 dSingleParticleSettlingVelocity_dPressure = 0.0;
+  //  array1d<real64> dSingleParticleSettlingVelocity_dComponentConcentration(NC);
 
   static real64 constCoef = 9.81 * m_proppantDiameter * m_proppantDiameter / 18.0;
   
@@ -194,6 +194,7 @@ void ParticleFluid::Compute( localIndex const NC,
 
       singleParticleSettlingVelocity = constCoef * (m_proppantDensity - fluidDensity ) / fluidViscosity;
 
+      /*
       dSingleParticleSettlingVelocity_dPressure = -(constCoef * dFluidDensity_dPressure + singleParticleSettlingVelocity  * dFluidViscosity_dPressure) / fluidViscosity;
 
       for(localIndex c = 0; c < NC; ++c)
@@ -202,6 +203,7 @@ void ParticleFluid::Compute( localIndex const NC,
           dSingleParticleSettlingVelocity_dComponentConcentration[c] = -(constCoef * dFluidDensity_dComponentConcentration[c] + singleParticleSettlingVelocity  * dFluidViscosity_dComponentConcentration[c]) / fluidViscosity; 
 
         }
+      */
 
       break;
     case ParticleSettlingModel::Intermediate:
@@ -216,7 +218,16 @@ void ParticleFluid::Compute( localIndex const NC,
       
   settlingFactor = 0.0;
 
+  dSettlingFactor_dPressure = 0.0;     
+  
   dSettlingFactor_dProppantConcentration = 0.0;
+
+  for(localIndex c = 0; c < NC; ++c)
+    {
+
+      dSettlingFactor_dComponentConcentration[c] = 0.0;
+
+    }
 
   collisionFactor = 0.0;
 
@@ -230,6 +241,8 @@ void ParticleFluid::Compute( localIndex const NC,
       
       settlingFactor = singleParticleSettlingVelocity * exp(-m_hinderedSettlingCoefficient * proppantConcentration);
 
+      /*
+      
       dSettlingFactor_dPressure = dSingleParticleSettlingVelocity_dPressure * exp(-m_hinderedSettlingCoefficient * proppantConcentration);      
 
       dSettlingFactor_dProppantConcentration = -m_hinderedSettlingCoefficient * settlingFactor;
@@ -241,6 +254,8 @@ void ParticleFluid::Compute( localIndex const NC,
 
         }
       
+      */
+
       // collisionFactor
       // Collision model (We need to check the other models)
       if (m_isCollisionalSlip)
@@ -254,10 +269,11 @@ void ParticleFluid::Compute( localIndex const NC,
 
           collisionFactor = (lambda - 1.0) / (1.0 - proppantConcentration);
 
-          dCollisionFactor_dProppantConcentration = (dLambda_dC  + collisionFactor) / (1.0 - proppantConcentration);
+          //          dCollisionFactor_dProppantConcentration = (dLambda_dC  + collisionFactor) / (1.0 - proppantConcentration);
         }
 
     }
+
 }
 
 

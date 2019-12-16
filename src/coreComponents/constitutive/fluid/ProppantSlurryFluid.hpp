@@ -61,7 +61,7 @@ public:
 
   // *** ProppantSlurryFluid interface
 
-  virtual void PointUpdate( real64 const & pressure, real64 const & proppantConcentration, arraySlice1d<real64 const> const & Componentconcentration, real64 const & shearRate, localIndex const k, localIndex const q ) override;
+  virtual void PointUpdate( real64 const & pressure, real64 const & proppantConcentration, arraySlice1d<real64 const> const & Componentconcentration, real64 const & shearRate, integer const & isProppantBoundary, localIndex const k, localIndex const q ) override;
 
   virtual void PointUpdateFluidProperty(real64 const & pressure, arraySlice1d<real64 const> const & componentConcentration, real64 const & shearRate, localIndex const k, localIndex const q ) override;  
 
@@ -95,6 +95,7 @@ public:
                 real64 const & fluidViscosity,
                 real64 const & dFluidViscosity_dPressure,
                 arraySlice1d<real64 const> const & dFluidViscosity_dComponentConcentration,
+                integer const & isProppantBoundary,                
                 real64 & density,
                 real64 & dDensity_dPressure,
                 real64 & dDensity_dProppantConcentration,

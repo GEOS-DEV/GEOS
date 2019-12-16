@@ -309,17 +309,7 @@ public:
     m_setNames.push_back( setName );
   }
 
-  void SetFluxFlag()
-  {
-    m_fluxFlag = 1;
-  }
 
-  bool GetFluxFlag() const
-  {
-    return m_fluxFlag;
-  }  
-
-  
 protected:
   void PostProcessInput() override final;
 
@@ -363,7 +353,6 @@ private:
   /// the name of a function used to turn on and off the boundary condition.
   string m_bcApplicationFunctionName;
 
-  bool m_fluxFlag;
 
 };
 
@@ -460,7 +449,8 @@ void FieldSpecificationBase::ApplyBoundaryConditionToSystem( set<localIndex> con
       dataRepository::Wrapper<fieldType> & wrapper = dynamic_cast< dataRepository::Wrapper<fieldType> & >(*wrapperBase);
       typename dataRepository::Wrapper<fieldType>::ViewTypeConst fieldView = wrapper.referenceAsView();
 
-      this->ApplyBoundaryConditionToSystem<FIELD_OP, LAI>( targetSet, normalizeBySetSize, time, dataGroup, dofMap, dofDim, matrix, rhs, [&]( localIndex const a, localIndex const GEOSX_UNUSED_ARG(c) )->real64
+      this->ApplyBoundaryConditionToSystem<FIELD_OP, LAI>( targetSet, normalizeBySetSize, time, dataGroup, dofMap, dofDim, matrix, rhs,
+        [&]( localIndex const a )->real64
         {
           //return static_cast<real64>(rtTypes::value( field[a], component ));
           real64 value = 0.0;
@@ -506,7 +496,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                                                  matrix,
                                                  rhsContribution( counter ),
                                                  m_scale * setSizeFactor,
-                                                 lambda( a, component ) );
+                                                 lambda( a ) );
       ++counter;
     }
     FIELD_OP::template PrescribeRhsValues<LAI>( rhs, counter, dof.data(), rhsContribution.data() );
@@ -528,7 +518,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                                                    matrix,
                                                    rhsContribution( counter ),
                                                    value,
-                                                   lambda( a, component ) );
+                                                   lambda( a ) );
         ++counter;
       }
       FIELD_OP::template PrescribeRhsValues<LAI>( rhs, counter, dof.data(), rhsContribution.data() );
@@ -546,7 +536,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                                                    matrix,
                                                    rhsContribution( counter ),
                                                    m_scale * result[counter] * setSizeFactor,
-                                                   lambda( a, component ) );
+                                                   lambda( a ) );
         ++counter;
       }
       FIELD_OP::template PrescribeRhsValues<LAI>( rhs, counter, dof.data(), rhsContribution.data() );
@@ -594,7 +584,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                                                  matrix,
                                                  rhsContribution( counter ),
                                                  m_scale * dt * setSizeFactor,
-                                                 lambda( a, component ) );
+                                                 lambda( a ) );
       ++counter;
     }
     FIELD_OP::template PrescribeRhsValues<LAI>( rhs, counter, dof.data(), rhsContribution.data() );
@@ -616,7 +606,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                                                    matrix,
                                                    rhsContribution( counter ),
                                                    value,
-                                                   lambda( a, component ) );
+                                                   lambda( a ) );
         ++counter;
       }
       FIELD_OP::template PrescribeRhsValues<LAI>( rhs, counter, dof.data(), rhsContribution.data() );
@@ -634,7 +624,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                                                    matrix,
                                                    rhsContribution( counter ),
                                                    m_scale * dt * result[counter] * setSizeFactor,
-                                                   lambda( a, component ) );
+                                                   lambda( a ) );
         ++counter;
       }
       FIELD_OP::template PrescribeRhsValues<LAI>( rhs, counter, dof.data(), rhsContribution.data() );

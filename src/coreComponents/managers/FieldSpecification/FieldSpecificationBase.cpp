@@ -19,8 +19,7 @@ namespace geosx
 using namespace dataRepository;
 
 FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * parent ):
-  Group( name, parent ),
-  m_fluxFlag(0)
+  Group( name, parent )
 //  m_setNames(),
 //  m_objectPath(),
 //  m_fieldName(),

@@ -128,10 +128,13 @@ void SinglePhaseFlow::UpdateFluidProperty<true>(Group * const dataGroup) const
   arrayView2d<real64 const> const & componentConcentration = dataGroup->getReference<array2d<real64>>( ProppantTransport::viewKeyStruct::componentConcentrationString );
 
   arrayView1d<R1Tensor const> const & cellBasedFlux = dataGroup->getReference< array1d<R1Tensor> >( ProppantTransport::viewKeyStruct::cellBasedFluxString );
-      
+
+  arrayView1d<integer const> const & isProppantBoundaryElement  = dataGroup->getReference< array1d<integer> >( ProppantTransport::viewKeyStruct::isProppantBoundaryString );
+  
   forall_in_range<RAJA::seq_exec>( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a )
-  {                                  
-    fluid->PointUpdate( pres[a] + dPres[a], proppantConcentration[a] + dProppantConcentration[a],  componentConcentration[a], cellBasedFlux[a].L2_Norm(), a, 0 );
+  {
+      fluid->PointUpdate( pres[a] + dPres[a], proppantConcentration[a] + dProppantConcentration[a],  componentConcentration[a], cellBasedFlux[a].L2_Norm(), isProppantBoundaryElement[a], a, 0 );
+
   });
 }
 
@@ -713,6 +716,45 @@ SinglePhaseFlow::ApplyBoundaryConditions( real64 const time_n,
   string const dofKey = dofManager.getKey( viewKeyStruct::pressureString );
 
   // call the BoundaryConditionManager::ApplyField function that will check to see
+  // if the boundary condition should be applied to this subregion
+  fsManager.Apply( time_n + dt, domain, "ElementRegions", "FLUX",
+                   [&]( FieldSpecificationBase const * const fs,
+                        string const &,
+                        set<localIndex> const & lset,
+                        Group * subRegion,
+                        string const & ) -> void
+  {
+    arrayView1d<globalIndex const> const &
+    dofNumber = subRegion->getReference< array1d<globalIndex> >( dofKey );
+
+    arrayView1d< integer const > const &
+    ghostRank = subRegion->getReference<array1d<integer> >( ObjectManagerBase::viewKeyStruct::ghostRankString);
+
+    set< localIndex > localSet;
+    for( localIndex const a : lset )
+    {
+      if( ghostRank[a] < 0 )
+      {
+        localSet.insert(a);
+      }
+    }
+
+    fs->ApplyBoundaryConditionToSystem<FieldSpecificationAdd, LAInterface>( localSet,
+                                                                            true,
+                                                                            time_n + dt,
+                                                                            dt,
+                                                                            subRegion,
+                                                                            dofNumber,
+                                                                            1,
+                                                                            matrix,
+                                                                            rhs,
+                                                                            [&]( localIndex const GEOSX_UNUSED_ARG( a ) ) -> real64
+    {
+      return 0;
+    } );
+
+  } );
+
 
   fsManager.Apply( time_n + dt, domain, "ElementRegions", viewKeyStruct::pressureString,
                    [&]( FieldSpecificationBase const * const fs,
@@ -733,54 +775,20 @@ SinglePhaseFlow::ApplyBoundaryConditions( real64 const time_n,
     dPres = subRegion->getReference<array1d<real64> >( viewKeyStruct::deltaPressureString );
 
     // call the application of the boundary condition to alter the matrix and rhs
-
-    if(fs->GetFluxFlag())
-    {
-
-      arrayView1d< integer const > const &
-      ghostRank = subRegion->getReference<array1d<integer> >( ObjectManagerBase::viewKeyStruct::ghostRankString);
-
-      set< localIndex > localSet;
-      for( localIndex const a : lset )
-      {
-        if( ghostRank[a] < 0 )
-        {
-          localSet.insert(a);
-        }
-      }
-        
-      fs->ApplyBoundaryConditionToSystem<FieldSpecificationAdd, LAInterface>( localSet,
-                                                                              true,
+    fs->ApplyBoundaryConditionToSystem<FieldSpecificationEqual, LAInterface>( lset,
+                                                                              false,
                                                                               time_n + dt,
-                                                                              dt,
                                                                               subRegion,
                                                                               dofNumber,
                                                                               1,
                                                                               matrix,
                                                                               rhs,
-                                                                              [&]( localIndex const GEOSX_UNUSED_ARG( a ),
-                                                                                   localIndex const GEOSX_UNUSED_ARG( c ) ) -> real64
-      {
-        return 0;
-      } );
-    }
-    else
+                                                                              [&]( localIndex const a ) -> real64
     {
-      fs->ApplyBoundaryConditionToSystem<FieldSpecificationEqual, LAInterface>( lset,
-                                                                                false,
-                                                                                time_n + dt,
-                                                                                subRegion,
-                                                                                dofNumber,
-                                                                                1,
-                                                                                matrix,
-                                                                                rhs,
-                                                                                [&]( localIndex const a,
-                                                                                     localIndex const GEOSX_UNUSED_ARG( c ) ) -> real64
-      {
-        return pres[a] + dPres[a];
-      });
-    }
+      return pres[a] + dPres[a];
+    });
   });
+
 
   ApplyFaceDirichletBC_implicit( time_n, dt, &dofManager, domain, &matrix, &rhs );
 

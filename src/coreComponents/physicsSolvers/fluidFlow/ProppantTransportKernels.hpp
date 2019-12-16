@@ -164,7 +164,7 @@ struct FluxKernel
           ElementViewConst < arrayView1d<real64 const> > const & proppantPackVf,
           ElementViewConst < arrayView1d<real64 const> > const & aperture,
           ElementViewConst < arrayView1d<real64 const> > const & proppantLiftFlux,
-          ElementViewConst < arrayView1d<integer const> > const & isInterfaceElement,	            
+          ElementViewConst < arrayView1d<integer const> > const & isInterfaceElement,
           ParallelMatrix * const jacobian,
           ParallelVector * const residual );
 
@@ -224,7 +224,8 @@ struct FluxKernel
                    arrayView1d<real64 const> const & proppantPackVf,
                    arrayView1d<real64 const> const & aperture,
                    arrayView1d<real64 const> const & proppantLiftFlux,
-                   arrayView1d<integer const> const & isInterfaceElement,
+                   //                              arrayView1d<integer const> const & isInterfaceElement,
+                                      arrayView1d<integer const> const &,                   
                    R1Tensor const & unitGravityVector,
                    arrayView1d<R1Tensor const> const & transTMultiplier,
                    real64 const dt,
@@ -356,21 +357,13 @@ struct FluxKernel
 
           // vertical flow component
 
-          if(proppantPackVf[ei] > 0.0)
-            {
-
-              // assume the pack peremeability dominates bulk permeability in vertical direction
-              //              transT[i] = proppantPackPermeability * stencilWeights[i] * aperture[ei] * 12.0;     
-              transT[i] *= transTMultiplier[ei][1];
-              
-            }
+          transT[i] *= transTMultiplier[ei][1];
 
         }
       else
         {
 
           // horizontal flow component
-          //          transT[i] = transT[i] * (1.0 - proppantPackVf[ei]) + proppantPackVf[ei] * proppantPackPermeability * stencilWeights[i] * aperture[ei] * 12.0;
 
           transT[i] *= transTMultiplier[ei][0];
           
@@ -495,7 +488,7 @@ struct FluxKernel
       real64 const gravTerm = edgeDensity * gravD;
 
       real64 const fluxTerm = Pe - (P[i] - gravTerm);
-      
+
       edgeToFaceFlux[i] = transT[i] * fluxTerm / edgeViscosity;
 
       dEdgeToFaceFlux_dP[i][i] += -transT[i] / edgeViscosity;
@@ -569,42 +562,24 @@ struct FluxKernel
           
         }
 
-              
+                  
       if(fabs(coefs[i]) > TINY)
         {
 
           // vertical
           
-          edgeToFaceProppantFlux[i] = (1.0 - proppantC[i]) * settlingFac[i] * coefs[i];
+          edgeToFaceProppantFlux[i] = (1.0 - proppantC[i]) * settlingFac[i] * coefs[i] * fluidDens[i] / mixDens[i];
 
-
-          if(isInterfaceElement[ei] == 1)
-            {
-
-              real64 dir = 0.0;
-
-              if(fabs(edgeToFaceProppantFlux[i]) > TINY)
-                dir = edgeToFaceProppantFlux[i] / fabs(edgeToFaceProppantFlux[i]);
-
-              edgeToFaceProppantFlux[i] = fabs(edgeToFaceProppantFlux[i]) - proppantLiftFlux[ei];
-
-              
-              edgeToFaceProppantFlux[i] *= dir;
-              
-            }
+          dEdgeToFaceProppantFlux_dProppantC[i][i] = (-settlingFac[i] + (1 - proppantC[i]) * dSettlingFac_dProppantC[i]) * coefs[i] * fluidDens[i] / mixDens[i];
 
 
           edgeToFaceProppantFlux[i] += edgeToFaceFlux[i];
-          
-
-          dEdgeToFaceProppantFlux_dProppantC[i][i] = (-settlingFac[i] + (1 - proppantC[i]) * dSettlingFac_dProppantC[i]) * coefs[i];
-
 
           for (localIndex j = 0; j < numElems; ++j)
             {
 
               dEdgeToFaceProppantFlux_dProppantC[i][j] += dEdgeToFaceFlux_dProppantC[i][j];
-              dEdgeToFaceProppantFlux_dP[i][j] += dEdgeToFaceFlux_dP[i][j];
+              //              dEdgeToFaceProppantFlux_dP[i][j] += dEdgeToFaceFlux_dP[i][j];
 
               for(localIndex c = 0; c < NC; ++c)
                 {
@@ -613,40 +588,37 @@ struct FluxKernel
 
                 }
             }
-          
         }
       else
         {
 
           // horizontal
         
-          //          real64 fluxCoef = (1.0 - proppantPackVf[ei]) / (proppantPackVf[ei] * 12.0 * proppantPackPermeability / aperture[ei]/ aperture[ei] + (1.0 - proppantPackVf[ei]));
+       
+           real64 fluxCoef = transTMultiplier[ei][0] > 0.0 ? (1.0 - proppantPackVf[ei]) / transTMultiplier[ei][0] : 0.0;           
 
-          real64 fluxCoef = (1.0 - proppantPackVf[ei]) / transTMultiplier[ei][0];           
-                                                          
-          edgeToFaceProppantFlux[i] = fluxCoef * edgeToFaceFlux[i];
+           edgeToFaceProppantFlux[i] = (fluxCoef + fluidDens[i] / mixDens[i] * (1.0 - proppantC[i]) * collisionFac[i]) * edgeToFaceFlux[i];
 
-                                                          
-          for (localIndex j = 0; j < numElems; ++j)
+           dEdgeToFaceProppantFlux_dProppantC[i][i] = -fluidDens[i] / mixDens[i] * (collisionFac[i] - (1.0 - proppantC[i]) * dCollisionFac_dProppantC[i]) * edgeToFaceFlux[i];
+
+           for (localIndex j = 0; j < numElems; ++j)
             {
 
-              dEdgeToFaceProppantFlux_dP[i][j] += fluxCoef * dEdgeToFaceFlux_dP[i][j];
-              dEdgeToFaceProppantFlux_dProppantC[i][j] += fluxCoef * dEdgeToFaceFlux_dProppantC[i][j];
+              dEdgeToFaceProppantFlux_dProppantC[i][j] += (fluxCoef + fluidDens[i] / mixDens[i] * (1.0 - proppantC[i]) * collisionFac[i]) * dEdgeToFaceFlux_dProppantC[i][j];
 
               for(localIndex c = 0; c < NC; ++c)
                 {
 
-                  dEdgeToFaceProppantFlux_dComponentC[i][j][c] += fluxCoef * dEdgeToFaceFlux_dComponentC[i][j][c];
+                  dEdgeToFaceProppantFlux_dComponentC[i][j][c] += (fluxCoef + fluidDens[i] / mixDens[i] * (1.0 - proppantC[i]) * collisionFac[i]) * dEdgeToFaceFlux_dComponentC[i][j][c];
 
                 }
               
             }
-
                                                           
         }
 
     }
-  
+    
     // get proppantCe
 
     real64 proppantCe = 0.0;
@@ -887,6 +859,8 @@ struct FluxKernel
     for (localIndex i = 0; i < numElems; ++i)
     {
 
+      localIndex const ei  = stencilElementIndices[i];      
+      
       localIndex idx1 = i * numDofPerCell; // proppant
 
       if(isProppantMob[i] == 1)
@@ -896,12 +870,13 @@ struct FluxKernel
         {
 
 
-          localFlux[idx1] = -proppantCe * edgeToFaceProppantFlux[i] * dt;
+          localFlux[idx1] = -proppantCe * edgeToFaceProppantFlux[i] * dt- proppantLiftFlux[ei] * dt;
+          
         }
         else
         {
 
-          localFlux[idx1] = -proppantC[i] * edgeToFaceProppantFlux[i] * dt;
+          localFlux[idx1] = -proppantC[i] * edgeToFaceProppantFlux[i] * dt- proppantLiftFlux[ei] * dt;
 
         }
 
@@ -1051,7 +1026,7 @@ ComputeCellBasedFlux( localIndex const numElems,
                       arrayView2d<real64 const> const & dens,
                       arrayView2d<real64 const> const & visc,
                       arrayView1d<real64 const> const & aperture,
-                      arrayView1d<real64 const> const & proppantPackVf,
+                      arrayView1d<real64 const> const & GEOSX_UNUSED_ARG(proppantPackVf),
                       arrayView1d<R1Tensor> const & cellBasedFlux)
 {
 
@@ -1097,22 +1072,13 @@ ComputeCellBasedFlux( localIndex const numElems,
 
           // vertical flow component
 
-          if(proppantPackVf[ei] > 0.0)
-            {
-
-              // assume the pack peremeability dominates bulk permeability in vertical direction
-              //              transT[i] = proppantPackPermeability * stencilWeights[i] * aperture[ei] * 12.0;     
-
-              transT[i] *= transMultiplier[ei][1];
+          transT[i] *= transMultiplier[ei][1];
               
-            }
-
         }
       else
         {
 
           // horizontal flow component
-          //          transT[i] = transT[i] * (1.0 - proppantPackVf[ei]) + proppantPackVf[ei] * proppantPackPermeability * stencilWeights[i] * aperture[ei] * 12.0;
 
           transT[i] *= transMultiplier[ei][0];
           
@@ -1200,9 +1166,11 @@ struct ProppantPackVolumeKernel
                                       real64 const maxProppantConcentration,
                                       R1Tensor const unitGravityVector,
                                       real64 const criticalShieldsNumber,
+                                      real64 const fricitonCoefficient,                                      
                                       ElementView < arrayView1d<real64> > const & conc,
                                       MaterialViewConst< arrayView1d<real64 const> > const & settlingFactor,
-                                      MaterialViewConst< arrayView2d<real64 const> > const & fluidDensity,
+                                      MaterialViewConst< arrayView2d<real64 const> > const & density,
+                                      MaterialViewConst< arrayView2d<real64 const> > const & fluidDensity,                                      
                                       MaterialViewConst< arrayView2d<real64 const> > const & fluidViscosity,
                                       ElementView < arrayView1d<integer> > const & isProppantMobile,
                                       ElementView < arrayView1d<integer const> > const & isProppantBoundaryElement,
@@ -1242,12 +1210,15 @@ struct ProppantPackVolumeKernel
                              real64 const maxProppantConcentration,
                              R1Tensor const unitGravityVector,
                              real64 const criticalShieldsNumber,
+                             real64 const frictionCoefficient,
                              arraySlice1d<localIndex const> const & stencilElementIndices,
                              arraySlice1d<real64 const> const & stencilWeights,
                              arraySlice1d<R1Tensor const> const & stencilCellCenterToEdgeCenters,                             
                              arrayView1d<real64 const> const & settlingFactor,
+                             arrayView2d<real64 const> const & density,                             
                              arrayView2d<real64 const> const & fluidDensity,
-                             arrayView2d<real64 const> const & fluidViscosity,                                                          
+                             //                             arrayView2d<real64 const> const & fluidViscosity,
+                             arrayView2d<real64 const> const &,                                                                                       
                              arrayView1d<real64 const> const & volume,
                              arrayView1d<real64 const> const & aperture,
                              arrayView1d<integer const> const & elemGhostRank,
@@ -1307,7 +1278,7 @@ struct ProppantPackVolumeKernel
           }
       }
 
-
+  
     if(faceIndex >= 0)
       {
 
@@ -1318,30 +1289,37 @@ struct ProppantPackVolumeKernel
         
             real64 L = stencilCellCenterToEdgeCenters[faceIndex].L2_Norm() * 2.0;
             
-            real64 dH = (1.0 - conc[ei]) * settlingFactor[ei] * conc[ei] / maxProppantConcentration * dt;
-
             R1Tensor velocity = cellBasedFlux[ei];
 
+            real64 downVelocity = Dot(cellBasedFlux[ei], unitGravityVector);
+            
             for(localIndex idx = 0; idx < 3; ++idx)
-              velocity[idx] -= Dot(cellBasedFlux[ei], unitGravityVector) * unitGravityVector[idx];
+              velocity[idx] -= downVelocity * unitGravityVector[idx];
 
             real64 velocityMag = velocity.L2_Norm() / volume[ei];
 
-            //            real64 Re = fluidDensity[ei] * velocityMag * edgeLength / fluidViscosity[ei];
+            real64 dH = (downVelocity*0.0 + fluidDensity[ei][0] / density[ei][0] *(1.0 - conc[ei]) * settlingFactor[ei]) * conc[ei] / maxProppantConcentration * dt;
+            
+            /*
+            real64 Re = fluidDensity[ei] * velocityMag * edgeLength / fluidViscosity[ei];
 
-            // fD = 64/Re
+            fD = 64/Re;
             
             real64 tau = 8.0 * fluidViscosity[ei][0] / edgeLength  * velocityMag;
+            */
+
+            //            real64 fD = 0.03;
+
             
-            real64 ShieldsNumber = 1.0 * tau / (proppantDensity - fluidDensity[ei][0]) / 9.81 / proppantDiameter;
+            real64 tau = 1.0/8.0 * frictionCoefficient * fluidDensity[ei][0] * velocityMag * velocityMag; 
+                      
+            real64 ShieldsNumber = tau / (proppantDensity - fluidDensity[ei][0]) / 9.81 / proppantDiameter;
 
             proppantLiftFlux[ei] = aperture[ei] * (proppantDiameter * sqrt(9.81 * proppantDiameter * (proppantDensity - fluidDensity[ei][0]) / fluidDensity[ei][0])) * (9.64 * pow(ShieldsNumber, 0.166)) * pow(ShieldsNumber - criticalShieldsNumber, 1.5);
 
             if(proppantLiftFlux[ei] < 0.0)
               proppantLiftFlux[ei] = 0.0;
 
-            proppantLiftFlux[ei] = 0.0;
-            
             dH -=  proppantLiftFlux[ei] / edgeLength / aperture[ei] / maxProppantConcentration * dt;
 
             real64 Vf = proppantPackVf[ei];
