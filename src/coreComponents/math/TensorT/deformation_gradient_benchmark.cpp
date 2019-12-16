@@ -96,12 +96,12 @@ int main(int argc, char* argv[] )
   }
 
 
-  GEOS_LOG("\t\t\t\t"<<xtot<<' '<<ytot<<' '<<ztot);
-  GEOS_LOG("\t\t\t\t"<<Tot(0)<<' '<<Tot(1)<<' '<<Tot(2));
-//  GEOS_LOG("baseline CPU time    = "<<t2-t1);
-//  GEOS_LOG("Tensor CPU time      = "<<t3-t2<<std::endl);
+  GEOSX_LOG("\t\t\t\t"<<xtot<<' '<<ytot<<' '<<ztot);
+  GEOSX_LOG("\t\t\t\t"<<Tot(0)<<' '<<Tot(1)<<' '<<Tot(2));
+//  GEOSX_LOG("baseline CPU time    = "<<t2-t1);
+//  GEOSX_LOG("Tensor CPU time      = "<<t3-t2<<std::endl);
 
-  GEOS_LOG(num_nodes<<' '<<t2-t1<<std::endl);
+  GEOSX_LOG(num_nodes<<' '<<t2-t1<<std::endl);
 
   delete [] xdisp;
   delete [] ydisp;

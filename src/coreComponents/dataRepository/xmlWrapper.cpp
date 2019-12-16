@@ -41,7 +41,7 @@ void xmlWrapper::StringToInputVariable( R1Tensor & target, string inputValue )
       ss.ignore();
     }
   }
-  GEOS_ERROR_IF( count!=3, "incorrect number of components specified for R1Tensor" );
+  GEOSX_ERROR_IF( count!=3, "incorrect number of components specified for R1Tensor" );
 }
 
 void xmlWrapper::addIncludedXML( xmlNode & targetNode )
@@ -56,7 +56,7 @@ void xmlWrapper::addIncludedXML( xmlNode & targetNode )
   {
     // Get the child tag and name
     string childName = childNode.name();
-    GEOS_ERROR_IF( childName!="File", "Child nodes of \"Included\" should be named \"File\" " );
+    GEOSX_ERROR_IF( childName!="File", "Child nodes of \"Included\" should be named \"File\" " );
 
     string filePathName = childNode.attribute( "name" ).value();
     if( filePathName[0] != '/' )
@@ -66,7 +66,7 @@ void xmlWrapper::addIncludedXML( xmlNode & targetNode )
     xmlDocument includedXmlDocument;
     xmlResult result;
     result = includedXmlDocument.load_file( filePathName.c_str());
-    GEOS_ERROR_IF( !result, "Attempt to include file ("<<filePathName.c_str()<<") failed\n" );
+    GEOSX_ERROR_IF( !result, "Attempt to include file ("<<filePathName.c_str()<<") failed\n" );
 
     for( xmlNode importNode=includedXmlDocument.first_child() ; importNode ; importNode=importNode.next_sibling())
     {

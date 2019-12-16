@@ -355,7 +355,7 @@ void NeighborCommunicator::FindAndPackGhosts( bool const GEOSX_UNUSED_ARG( conta
   packedSize += elemManager.Pack( sendBufferPtr, {}, elementAdjacencyList );
 
 
-  GEOS_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
+  GEOSX_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
 
   this->MPI_iSendReceive( commID, MPI_COMM_GEOSX );
 }
@@ -523,7 +523,7 @@ void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
     });
   }
 
-  GEOS_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
+  GEOSX_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
 
   this->MPI_iSendReceive( commID, MPI_COMM_GEOSX );
   this->MPI_WaitAll( commID );
@@ -539,21 +539,21 @@ void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
                                      nodeGhostsToSend,
                                      unmappedNodeIndices,
                                      nodeManager.m_globalToLocalMap );
-  GEOS_ERROR_IF( unmappedNodeIndices.size()!=0,
+  GEOSX_ERROR_IF( unmappedNodeIndices.size()!=0,
                  "Some node global indices were not mappable to a localIndex" );
 
   unpackedSize += bufferOps::Unpack( receiveBufferPtr,
                                      edgeGhostsToSend,
                                      unmappedEdgeIndices,
                                      edgeManager.m_globalToLocalMap );
-  GEOS_ERROR_IF( unmappedEdgeIndices.size()!=0,
+  GEOSX_ERROR_IF( unmappedEdgeIndices.size()!=0,
                  "Some edge global indices were not mappable to a localIndex" );
 
   unpackedSize += bufferOps::Unpack( receiveBufferPtr,
                                      faceGhostsToSend,
                                      unmappedFaceIndices,
                                      faceManager.m_globalToLocalMap );
-  GEOS_ERROR_IF( unmappedFaceIndices.size()!=0,
+  GEOSX_ERROR_IF( unmappedFaceIndices.size()!=0,
                  "Some face global indices were not mappable to a localIndex" );
 
 
@@ -575,7 +575,7 @@ void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
                                         elementGhostToSend[er][esr].get(),
                                         unmappedIndices,
                                         subRegion->m_globalToLocalMap );
-      GEOS_ERROR_IF( unmappedIndices.size()!=0,
+      GEOSX_ERROR_IF( unmappedIndices.size()!=0,
                      "Some element global indices were not mappable to a localIndex" );
 
       subRegion->SetGhostRankForSenders( elementGhostToSend[er][esr].get() );
@@ -726,7 +726,7 @@ void NeighborCommunicator::PackCommBufferForSync( std::map<string, string_array 
     }
   }
 
-  GEOS_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
+  GEOSX_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
 }
 
 

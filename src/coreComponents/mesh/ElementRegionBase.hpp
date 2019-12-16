@@ -60,12 +60,12 @@ public:
 
   virtual void GenerateMesh( Group const * const GEOSX_UNUSED_ARG( cellBlocks ) )
   {
-    GEOS_ERROR( "ElementRegionBase::GenerateMesh() should be overriden if called.");
+    GEOSX_ERROR( "ElementRegionBase::GenerateMesh() should be overriden if called.");
   }
 
 //  void GenerateAggregates( FaceManager const * const faceManager, NodeManager const * const NodeManager )
 //  {
-//    GEOS_ERROR( "ElementRegionBase::GenerateAggregates() should be overriden if called.");
+//    GEOSX_ERROR( "ElementRegionBase::GenerateAggregates() should be overriden if called.");
 //  }
 
   subGroupMap & GetSubRegions()

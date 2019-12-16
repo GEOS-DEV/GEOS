@@ -18,8 +18,8 @@
 
 
 #include "DataTypes.hpp"
-#include "Logger.hpp"
-#include "StringUtilities.hpp"
+#include "common/Logger.hpp"
+#include "cxx-utilities/src/StringUtilities.hpp"
 
 namespace geosx
 {
@@ -29,9 +29,9 @@ MPI_Comm MPI_COMM_GEOSX;
 
 void printTypeSummary()
 {
-  GEOS_LOG_RANK_0( "real64 is alias of " <<cxx_utilities::demangle( typeid(real64).name() ) );
-  GEOS_LOG_RANK_0( "localIndex is alias of " <<cxx_utilities::demangle( typeid(localIndex).name() ) );
-  GEOS_LOG_RANK_0( "globalIndex is alias of "<<cxx_utilities::demangle( typeid(globalIndex).name()) );
+  GEOSX_LOG_RANK_0( "real64 is alias of " <<cxx_utilities::demangle( typeid(real64).name() ) );
+  GEOSX_LOG_RANK_0( "localIndex is alias of " <<cxx_utilities::demangle( typeid(localIndex).name() ) );
+  GEOSX_LOG_RANK_0( "globalIndex is alias of "<<cxx_utilities::demangle( typeid(globalIndex).name()) );
 }
 
 

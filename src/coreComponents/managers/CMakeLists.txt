@@ -68,7 +68,7 @@ endif()
 if( BUILD_OBJ_LIBS )
   set( dependencyList dataRepository fileIO optionparser RAJA linearAlgebra )
 else()
-  set( dependencyList common fileIO linearAlgebra optionparser RAJA )
+  set( dependencyList common fileIO linearAlgebra optionparser RAJA mpiCommunications )
 endif()
 
 

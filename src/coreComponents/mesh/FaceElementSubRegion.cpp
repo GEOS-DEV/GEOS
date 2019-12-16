@@ -214,7 +214,7 @@ localIndex FaceElementSubRegion::UnpackUpDownMaps( buffer_unit_type const * & bu
 
   string nodeListString;
   unPackedSize += bufferOps::Unpack( buffer, nodeListString );
-  GEOS_ERROR_IF_NE( nodeListString, viewKeyStruct::nodeListString );
+  GEOSX_ERROR_IF_NE( nodeListString, viewKeyStruct::nodeListString );
 
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toNodesRelation,
@@ -226,7 +226,7 @@ localIndex FaceElementSubRegion::UnpackUpDownMaps( buffer_unit_type const * & bu
 
   string edgeListString;
   unPackedSize += bufferOps::Unpack( buffer, edgeListString );
-  GEOS_ERROR_IF_NE( edgeListString, viewKeyStruct::edgeListString );
+  GEOSX_ERROR_IF_NE( edgeListString, viewKeyStruct::edgeListString );
 
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toEdgesRelation,
@@ -237,7 +237,7 @@ localIndex FaceElementSubRegion::UnpackUpDownMaps( buffer_unit_type const * & bu
 
   string faceListString;
   unPackedSize += bufferOps::Unpack( buffer, faceListString );
-  GEOS_ERROR_IF_NE( faceListString, viewKeyStruct::faceListString );
+  GEOSX_ERROR_IF_NE( faceListString, viewKeyStruct::faceListString );
 
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toFacesRelation.Base(),
@@ -248,7 +248,7 @@ localIndex FaceElementSubRegion::UnpackUpDownMaps( buffer_unit_type const * & bu
 
   string elementListString;
   unPackedSize += bufferOps::Unpack( buffer, elementListString );
-  GEOS_ERROR_IF_NE( elementListString, viewKeyStruct::faceElementsToCellRegionsString );
+  GEOSX_ERROR_IF_NE( elementListString, viewKeyStruct::faceElementsToCellRegionsString );
 
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_faceElementsToCells,

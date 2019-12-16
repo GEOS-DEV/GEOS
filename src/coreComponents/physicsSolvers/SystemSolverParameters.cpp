@@ -171,22 +171,22 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
 
   registerWrapper(viewKeysStruct::dtCutIterLimString, &m_dtCutIterLimit, false )->
     setApplyDefaultValue(0.7)->
-	setInputFlag(InputFlags::OPTIONAL)->
-	setDescription("Fraction of the Max Newton iterations above which the solver asks for the time-step to be cut for the next dt.");
+  setInputFlag(InputFlags::OPTIONAL)->
+  setDescription("Fraction of the Max Newton iterations above which the solver asks for the time-step to be cut for the next dt.");
 
   registerWrapper(viewKeysStruct::dtIncIterLimString, &m_dtIncIterLimit, false )->
       setApplyDefaultValue(0.4)->
-  	setInputFlag(InputFlags::OPTIONAL)->
-  	setDescription("Fraction of the Max Newton iterations below which the solver asks for the time-step to be doubled for the next dt.");
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Fraction of the Max Newton iterations below which the solver asks for the time-step to be doubled for the next dt.");
 
 }
 
 void SystemSolverParameters::PostProcessInput()
 {
-	if (m_dtCutIterLimit <= m_dtIncIterLimit)
-	{
-		GEOS_ERROR(" dtIncIterLimit should be smaller than dtCutIterLimit!!" );
-	}
+  if (m_dtCutIterLimit <= m_dtIncIterLimit)
+  {
+    GEOSX_ERROR(" dtIncIterLimit should be smaller than dtCutIterLimit!!" );
+  }
 }
 
 REGISTER_CATALOG_ENTRY( Group, SystemSolverParameters, std::string const &, Group * const )

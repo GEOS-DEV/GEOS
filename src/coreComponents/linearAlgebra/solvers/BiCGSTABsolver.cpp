@@ -161,7 +161,7 @@ void BiCGSTABsolver< LAI >::solve( typename LAI::ParallelMatrix const & A,
 
   }
 
-  GEOS_LOG_RANK_0( "Native BiCGSTAB (no preconditioner) converged in " << numIt << " iterations.");
+  GEOSX_LOG_RANK_0( "Native BiCGSTAB (no preconditioner) converged in " << numIt << " iterations.");
 
 }
 
@@ -175,7 +175,7 @@ void BiCGSTABsolver<LAI>::solve( BlockMatrixView<LAI> const & GEOSX_UNUSED_ARG( 
                                  BlockMatrixView<LAI> const & GEOSX_UNUSED_ARG( M ) )
 
 {
-  GEOS_ERROR( "Not implemented" );
+  GEOSX_ERROR( "Not implemented" );
 
   // TODO: BlockVectorView is a view that doesn't handle any vector
   //       storage.  The copy and copy constructor functions below

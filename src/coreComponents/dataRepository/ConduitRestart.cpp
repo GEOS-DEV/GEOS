@@ -24,7 +24,6 @@
 
 // TPL includes
 #include <conduit_relay.hpp>
-#include <axom/core/utilities/FileUtilities.hpp>
 #include <fmt/fmt.hpp>
 
 namespace geosx
@@ -48,7 +47,13 @@ std::string writeRootNode( std::string const & rootPath )
 
     conduit::relay::io::save( root, rootPath + ".root", "hdf5" );
 
-    axom::utilities::filesystem::makeDirsForPath( rootPath );
+    std::string cmd = "mkdir -p " + rootPath;
+    int ret = std::system( cmd.c_str());
+    if( ret != 0 )
+    {
+      GEOSX_LOG( "Failed to initialize Logger: command '" << cmd << "' exited with code " << std::to_string( ret ));
+      abort();
+    }
   }
 
   MpiWrapper::Barrier( MPI_COMM_GEOSX );
@@ -66,7 +71,7 @@ std::string readRootNode( std::string const & rootPath )
     conduit::relay::io::load( rootPath + ".root", "hdf5", node );
 
     int const nFiles = node.fetch_child( "number_of_files" ).value();
-    GEOS_ERROR_IF_NE( nFiles, MpiWrapper::Comm_size() );
+    GEOSX_ERROR_IF_NE( nFiles, MpiWrapper::Comm_size() );
 
     std::string const filePattern = node.fetch_child( "file_pattern" ).as_string();
 
@@ -74,7 +79,7 @@ std::string readRootNode( std::string const & rootPath )
     splitPath( rootPath, rootDirName, rootFileName );
 
     rankFilePattern = rootDirName + "/" + filePattern;
-    GEOS_LOG_RANK_VAR( rankFilePattern );
+    GEOSX_LOG_RANK_VAR( rankFilePattern );
   }
 
   MpiWrapper::Broadcast( rankFilePattern, 0 );
@@ -87,7 +92,7 @@ void writeTree( std::string const & path )
   GEOSX_MARK_FUNCTION;
 
   std::string const filePathForRank = writeRootNode( path );
-  GEOS_LOG_RANK( "Writing out restart file at " << filePathForRank );
+  GEOSX_LOG_RANK( "Writing out restart file at " << filePathForRank );
   conduit::relay::io::save( rootConduitNode, filePathForRank, "hdf5" );
 }
 
@@ -96,7 +101,7 @@ void loadTree( std::string const & path )
 {
   GEOSX_MARK_FUNCTION;
   std::string const filePathForRank = readRootNode( path );
-  GEOS_LOG_RANK( "Reading in restart file at " << filePathForRank );
+  GEOSX_LOG_RANK( "Reading in restart file at " << filePathForRank );
   conduit::relay::io::load( filePathForRank, "hdf5", rootConduitNode );
 }
 

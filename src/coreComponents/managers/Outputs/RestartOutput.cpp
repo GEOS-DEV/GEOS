@@ -57,12 +57,12 @@ void RestartOutput::Execute(real64 const GEOSX_UNUSED_ARG( time_n ),
   sprintf(fileName, "%s_%s_%09d", problemManager->getProblemName().c_str(), "restart", cycleNumber);
 
   problemManager->prepareToWrite();
-  FunctionManager::Instance()->prepareToWrite();
-  FieldSpecificationManager::get()->prepareToWrite();
+  FunctionManager::Instance().prepareToWrite();
+  FieldSpecificationManager::get().prepareToWrite();
   writeTree( fileName );
   problemManager->finishWriting();
-  FunctionManager::Instance()->finishWriting();
-  FieldSpecificationManager::get()->finishWriting();
+  FunctionManager::Instance().finishWriting();
+  FieldSpecificationManager::get().finishWriting();
 }
 
 

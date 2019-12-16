@@ -18,7 +18,4 @@ set(MKL_LIBRARIES ${MKL_ROOT}/lib/libmkl_intel_lp64.so
                   ${MKL_ROOT}/lib/libmkl_core.so
                   CACHE STRING "")
 
-# PETSc doesn't seem to work correctly with clang.
-set(ENABLE_PETSC OFF CACHE BOOL "")
-
 include(${CMAKE_CURRENT_LIST_DIR}/../../host-configs/LLNL/quartz-base.cmake)
