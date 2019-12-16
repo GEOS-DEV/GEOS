@@ -51,9 +51,7 @@ public:
    *        FieldSpecificationManager.
    * @return a pointer to the singleton FieldSpecificationManager
    */
-  static FieldSpecificationManager * get();
-
-  static void finalize();
+  static FieldSpecificationManager & get();
 
   /**
    * @brief create a new FieldSpecificationBase object as a child of this group.
@@ -240,7 +238,7 @@ public:
             targetGroup = targetGroup->GetGroup( targetPath[pathLevel] );
             processedPath += "/" + targetPath[pathLevel];
 
-            GEOS_ERROR_IF( targetGroup == nullptr,
+            GEOSX_ERROR_IF( targetGroup == nullptr,
                 "ApplyBoundaryCondition(): Last entry in objectPath ("<<processedPath<<") is not found" );
           }
           ApplyOnTargetRecursive( targetGroup, fs, targetName, std::forward< LAMBDA >( lambda ) );

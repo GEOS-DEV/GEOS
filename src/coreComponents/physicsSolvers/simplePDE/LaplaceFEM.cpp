@@ -108,7 +108,7 @@ void LaplaceFEM::PostProcessInput()
   }
   else
   {
-    GEOS_ERROR("invalid time integration option");
+    GEOSX_ERROR("invalid time integration option");
   }
 
   // Set basic parameters for solver
@@ -263,9 +263,9 @@ void LaplaceFEM::AssembleSystem( real64 const time_n,
   //END_SPHINX_INCLUDE_04
 
   // Debug for logLevel >= 2
-  GEOS_LOG_LEVEL_RANK_0( 2, "After LaplaceFEM::AssembleSystem" );
-  GEOS_LOG_LEVEL_RANK_0( 2, "\nJacobian:\n" << matrix );
-  GEOS_LOG_LEVEL_RANK_0( 2, "\nResidual:\n" << rhs );
+  GEOSX_LOG_LEVEL_RANK_0( 2, "After LaplaceFEM::AssembleSystem" );
+  GEOSX_LOG_LEVEL_RANK_0( 2, "\nJacobian:\n" << matrix );
+  GEOSX_LOG_LEVEL_RANK_0( 2, "\nResidual:\n" << rhs );
 
   if( getLogLevel() >= 3 )
   {
@@ -278,9 +278,9 @@ void LaplaceFEM::AssembleSystem( real64 const time_n,
     string filename_rhs = "rhs_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
     rhs.write( filename_rhs, true );
 
-    GEOS_LOG_RANK_0( "After LaplaceFEM::AssembleSystem" );
-    GEOS_LOG_RANK_0( "Jacobian: written to " << filename_mat );
-    GEOS_LOG_RANK_0( "Residual: written to " << filename_rhs );
+    GEOSX_LOG_RANK_0( "After LaplaceFEM::AssembleSystem" );
+    GEOSX_LOG_RANK_0( "Jacobian: written to " << filename_mat );
+    GEOSX_LOG_RANK_0( "Residual: written to " << filename_rhs );
   }
 }
 
@@ -313,9 +313,9 @@ void LaplaceFEM::ApplyBoundaryConditions( real64 const time_n,
   ApplyDirichletBC_implicit( time_n + dt, dofManager, *domain, m_matrix, m_rhs );
 
   // Debug for logLevel >= 2
-  GEOS_LOG_LEVEL_RANK_0( 2, "After LaplaceFEM::ApplyBoundaryConditions" );
-  GEOS_LOG_LEVEL_RANK_0( 2, "\nJacobian:\n" << matrix );
-  GEOS_LOG_LEVEL_RANK_0( 2, "\nResidual:\n" << rhs );
+  GEOSX_LOG_LEVEL_RANK_0( 2, "After LaplaceFEM::ApplyBoundaryConditions" );
+  GEOSX_LOG_LEVEL_RANK_0( 2, "\nJacobian:\n" << matrix );
+  GEOSX_LOG_LEVEL_RANK_0( 2, "\nResidual:\n" << rhs );
 
   if( getLogLevel() >= 3 )
   {
@@ -328,9 +328,9 @@ void LaplaceFEM::ApplyBoundaryConditions( real64 const time_n,
     string filename_rhs = "rhs_bc_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
     rhs.write( filename_rhs, true );
 
-    GEOS_LOG_RANK_0( "After LaplaceFEM::ApplyBoundaryConditions" );
-    GEOS_LOG_RANK_0( "Jacobian: written to " << filename_mat );
-    GEOS_LOG_RANK_0( "Residual: written to " << filename_rhs );
+    GEOSX_LOG_RANK_0( "After LaplaceFEM::ApplyBoundaryConditions" );
+    GEOSX_LOG_RANK_0( "Jacobian: written to " << filename_mat );
+    GEOSX_LOG_RANK_0( "Residual: written to " << filename_rhs );
   }
 }
 
@@ -345,8 +345,8 @@ void LaplaceFEM::SolveSystem( DofManager const & dofManager,
   SolverBase::SolveSystem( dofManager, matrix, rhs, solution );
 
   // Debug for logLevel >= 2
-  GEOS_LOG_LEVEL_RANK_0( 2, "After LaplaceFEM::SolveSystem" );
-  GEOS_LOG_LEVEL_RANK_0( 2, "\nSolution:\n" << solution );
+  GEOSX_LOG_LEVEL_RANK_0( 2, "After LaplaceFEM::SolveSystem" );
+  GEOSX_LOG_LEVEL_RANK_0( 2, "\nSolution:\n" << solution );
 }
 
 void LaplaceFEM::ApplyDirichletBC_implicit( real64 const time,
@@ -355,17 +355,17 @@ void LaplaceFEM::ApplyDirichletBC_implicit( real64 const time,
                                             ParallelMatrix & matrix,
                                             ParallelVector & rhs )
 {
-  FieldSpecificationManager const * const fsManager = FieldSpecificationManager::get();
+  FieldSpecificationManager const & fsManager = FieldSpecificationManager::get();
 
-  fsManager->Apply( time,
-                    &domain,
-                    "nodeManager",
-                    m_fieldName,
-                    [&]( FieldSpecificationBase const * const bc,
-                    string const &,
-                    set<localIndex> const & targetSet,
-                    Group * const targetGroup,
-                    string const GEOSX_UNUSED_ARG( fieldName ) )->void
+  fsManager.Apply( time,
+                   &domain,
+                   "nodeManager",
+                   m_fieldName,
+                   [&]( FieldSpecificationBase const * const bc,
+                        string const &,
+                        set<localIndex> const & targetSet,
+                        Group * const targetGroup,
+                        string const GEOSX_UNUSED_ARG( fieldName ) )->void
   {
     bc->ApplyBoundaryConditionToSystem<FieldSpecificationEqual, LAInterface>( targetSet,
                                                                               false,

@@ -177,6 +177,12 @@ public:
    */
   void PrintDataHierarchy( integer indent = 0 );
 
+  /**
+   * @brief Generates a table formatted string containing all input options.
+   * @return a string containing a well formatted table containing input options.
+   */
+  string dumpInputOptions();
+
   ///@}
 
   //START_SPHINX_INCLUDE_REGISTER_GROUP
@@ -1192,9 +1198,9 @@ public:
     {
       if( hasWrapper( lookup ) )
       {
-        GEOS_ERROR( "call to getWrapper results in nullptr but a view exists. Most likely given the incorrect type. lookup : " << lookup );
+        GEOSX_ERROR( "call to getWrapper results in nullptr but a view exists. Most likely given the incorrect type. lookup : " << lookup );
       }
-      GEOS_ERROR( "call to getWrapper results in nullptr and a view does not exist. lookup : " << lookup );
+      GEOSX_ERROR( "call to getWrapper results in nullptr and a view does not exist. lookup : " << lookup );
     }
 
     return wrapper->reference();
@@ -1213,9 +1219,9 @@ public:
     {
       if( hasWrapper( lookup ) )
       {
-        GEOS_ERROR( "call to getWrapper results in nullptr but a view exists. Most likely given the incorrect type. lookup : " << lookup );
+        GEOSX_ERROR( "call to getWrapper results in nullptr but a view exists. Most likely given the incorrect type. lookup : " << lookup );
       }
-      GEOS_ERROR( "call to getWrapper results in nullptr and a view does not exist. lookup : " << lookup );
+      GEOSX_ERROR( "call to getWrapper results in nullptr and a view does not exist. lookup : " << lookup );
     }
 
     return dynamicCast< T const & >( wrapper->reference() );

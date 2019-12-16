@@ -26,7 +26,7 @@
 #include <exception>
 #include <limits>
 #include "TensorOps.h"
-#include "Logger.hpp"
+#include "common/Logger.hpp"
 #include "common/GeosxMacros.hpp"
 
 /**
@@ -220,7 +220,7 @@ public:
   {
     std::istringstream iss(str, std::istringstream::in);
     for ( int i = 0 ; i < T_length ; i++ )
-      GEOS_ERROR_IF(!(iss >> t_data[i]), "Error");
+      GEOSX_ERROR_IF(!(iss >> t_data[i]), "Error");
   }
 
 /*

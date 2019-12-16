@@ -493,7 +493,7 @@ protected:
 
     solver = problemManager->GetPhysicsSolverManager().GetGroup<ReservoirSolver>( "reservoirSystem" );
 
-    GEOS_ERROR_IF( solver == nullptr, "ReservoirSystem not found" );
+    GEOSX_ERROR_IF( solver == nullptr, "ReservoirSystem not found" );
 
   }
 
@@ -519,7 +519,7 @@ TEST_F(ReservoirSolverTest, derivativeNumericalCheck_mixtureDensity)
 
   //DomainPartition * domain = problemManager->getDomainPartition();
 
-  //GEOS_ERROR_IF( solver == nullptr, "ReservoirSystem not found" );
+  //GEOSX_ERROR_IF( solver == nullptr, "ReservoirSystem not found" );
 
   //CompositionalMultiphaseWell * wellSolver = solver->GetWellSolver()->group_cast<CompositionalMultiphaseWell*>();
   
