@@ -93,14 +93,14 @@ void ChomboCoupler::write(double dt)
 
 void ChomboCoupler::read(bool usePressures)
 {
-  GEOS_LOG_RANK_0("Waiting for file existence: " << m_inputPath);
+  GEOSX_LOG_RANK_0("Waiting for file existence: " << m_inputPath);
   waitForFileExistence(m_comm, m_inputPath.data());
 
-  GEOS_LOG_RANK_0("File found: " << m_inputPath);
+  GEOSX_LOG_RANK_0("File found: " << m_inputPath);
 
   if (usePressures)
   {
-    GEOS_LOG_RANK_0("Reading pressures...");
+    GEOSX_LOG_RANK_0("Reading pressures...");
 
     FaceManager* faces = m_mesh.getFaceManager();
     const localIndex n_faces = faces->size();

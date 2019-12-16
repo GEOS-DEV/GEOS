@@ -53,7 +53,7 @@ void WellElementRegion::GenerateWell( MeshLevel & mesh,
   subRegion = this->GetGroup( ElementRegionBase::viewKeyStruct::elementSubRegions )
                   ->GetGroup<WellElementSubRegion>( m_subRegionName );
 
-  GEOS_ERROR_IF( subRegion == nullptr, 
+  GEOSX_ERROR_IF( subRegion == nullptr, 
                  "Well subRegion " << this->m_subRegionName << " not found in well region " << getName() );
   subRegion->SetWellControlsName( m_wellControlsName );
 
@@ -68,7 +68,7 @@ void WellElementRegion::GenerateWell( MeshLevel & mesh,
   perforationData->ConnectToMeshElements( mesh, wellGeometry );
 
   globalIndex const matchedPerforations = MpiWrapper::Sum( perforationData->size() );
-  GEOS_ERROR_IF( matchedPerforations != numPerforationsGlobal, 
+  GEOSX_ERROR_IF( matchedPerforations != numPerforationsGlobal, 
                  "Invalid mapping perforation-to-element in well " << this->getName() );
 
 
@@ -111,11 +111,11 @@ void WellElementRegion::GenerateWell( MeshLevel & mesh,
   {
     if (allRankTopElem[irank] >= 0)
     {
-      GEOS_ASSERT( topRank < 0 );
+      GEOSX_ASSERT( topRank < 0 );
       topRank = irank;
     }
   }
-  GEOS_ASSERT( topRank >= 0 );
+  GEOSX_ASSERT( topRank >= 0 );
   subRegion->SetTopRank( topRank );
 
 

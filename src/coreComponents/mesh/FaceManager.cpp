@@ -143,7 +143,7 @@ struct FaceBuilder
 void findSmallestThreeValues( arrayView1d< localIndex const > const & values, localIndex (&minValues)[3] )
 {
   localIndex const n = values.size();
-  GEOS_ASSERT_GE( n, 3 );
+  GEOSX_ASSERT_GE( n, 3 );
 
   // Pick out the first three values
   minValues[0] = values[0];
@@ -234,7 +234,7 @@ localIndex calculateTotalNumberOfFaces( ArrayOfArraysView< FaceBuilder const > c
                                         arrayView1d< localIndex > const & uniqueFaceOffsets )
 {
   localIndex const numNodes = facesByLowestNode.size();
-  GEOS_ERROR_IF_NE( numNodes, uniqueFaceOffsets.size() - 1 );
+  GEOSX_ERROR_IF_NE( numNodes, uniqueFaceOffsets.size() - 1 );
 
   uniqueFaceOffsets[0] = 0;
 
@@ -375,7 +375,7 @@ void addInteriorFace( ElementRegionManager & elementManager,
     
     // The first element defines the node ordering for the face.
     localIndex const numFaceNodes = subRegion.GetFaceNodes( k, elementLocalFaceIndex, nodeList[ faceID ] );
-    GEOS_ASSERT_EQ( numFaceNodes, nodeList.sizeOfArray( faceID ) );
+    GEOSX_ASSERT_EQ( numFaceNodes, nodeList.sizeOfArray( faceID ) );
     GEOSX_DEBUG_VAR( numFaceNodes );
     
     // Add the face to the element to face map.
@@ -431,7 +431,7 @@ void addBoundaryFace( ElementRegionManager & elementManager,
   
   // Get the nodes associated with the face.
   localIndex const numFaceNodes = subRegion.GetFaceNodes( k, elementLocalFaceIndex, nodeList[ faceID ] );
-  GEOS_ASSERT_EQ( numFaceNodes, nodeList.sizeOfArray( faceID ) );
+  GEOSX_ASSERT_EQ( numFaceNodes, nodeList.sizeOfArray( faceID ) );
   GEOSX_DEBUG_VAR( numFaceNodes );
 
   // Add the face to the element to face map.
@@ -470,11 +470,11 @@ void populateMaps( ElementRegionManager & elementManager,
 
   localIndex const numNodes = facesByLowestNode.size();
   localIndex const numUniqueFaces = uniqueFaceOffsets.back();
-  GEOS_ERROR_IF_NE( numNodes, uniqueFaceOffsets.size() - 1 );
-  GEOS_ERROR_IF_NE( numUniqueFaces, elemRegionList.size( 0 ) );
-  GEOS_ERROR_IF_NE( numUniqueFaces, elemSubRegionList.size( 0 ) );
-  GEOS_ERROR_IF_NE( numUniqueFaces, elemList.size( 0 ) );
-  GEOS_ERROR_IF_NE( numUniqueFaces, nodeList.size() );
+  GEOSX_ERROR_IF_NE( numNodes, uniqueFaceOffsets.size() - 1 );
+  GEOSX_ERROR_IF_NE( numUniqueFaces, elemRegionList.size( 0 ) );
+  GEOSX_ERROR_IF_NE( numUniqueFaces, elemSubRegionList.size( 0 ) );
+  GEOSX_ERROR_IF_NE( numUniqueFaces, elemList.size( 0 ) );
+  GEOSX_ERROR_IF_NE( numUniqueFaces, nodeList.size() );
 
   // loop over all the nodes.
   forall_in_range< parallelHostPolicy >( 0, numNodes, [&]( localIndex const nodeID )
@@ -681,7 +681,7 @@ void FaceManager::SortAllFaceNodes( NodeManager const * const nodeManager,
   arrayView1d<R1Tensor const> const & X = nodeManager->referencePosition();
 
   const indexType max_face_nodes = getMaxFaceNodes();
-  GEOS_ERROR_IF( max_face_nodes >= MAX_FACE_NODES, "More nodes on a face than expected!" );
+  GEOSX_ERROR_IF( max_face_nodes >= MAX_FACE_NODES, "More nodes on a face than expected!" );
 
   elemManager->forElementSubRegions<CellElementSubRegion>([X] (CellElementSubRegion const * const subRegion)
   { subRegion->calculateElementCenters(X); });
@@ -892,7 +892,7 @@ localIndex FaceManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
 
   string nodeListString;
   unPackedSize += bufferOps::Unpack( buffer, nodeListString );
-  GEOS_ERROR_IF_NE( nodeListString, viewKeyStruct::nodeListString );
+  GEOSX_ERROR_IF_NE( nodeListString, viewKeyStruct::nodeListString );
 
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_nodeList,
@@ -904,7 +904,7 @@ localIndex FaceManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
 
   string edgeListString;
   unPackedSize += bufferOps::Unpack( buffer, edgeListString );
-  GEOS_ERROR_IF_NE( edgeListString, viewKeyStruct::edgeListString );
+  GEOSX_ERROR_IF_NE( edgeListString, viewKeyStruct::edgeListString );
 
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_edgeList,
@@ -916,7 +916,7 @@ localIndex FaceManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
 
   string elementListString;
   unPackedSize += bufferOps::Unpack( buffer, elementListString );
-  GEOS_ERROR_IF_NE( elementListString, viewKeyStruct::elementListString );
+  GEOSX_ERROR_IF_NE( elementListString, viewKeyStruct::elementListString );
 
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toElements,

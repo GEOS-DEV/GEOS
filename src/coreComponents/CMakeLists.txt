@@ -102,7 +102,8 @@ geosx_add_code_checks( PREFIX core )
 
 set( enforceUncrustifyLibs
      common
-     dataRepository )
+     dataRepository
+     cxx-utilities )
 
 if( ENABLE_UNCRUSTIFY )
   foreach( lib ${enforceUncrustifyLibs} )

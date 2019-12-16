@@ -66,9 +66,9 @@ void ElementRegionManager::resize( integer_array const & numElements,
 
 Group * ElementRegionManager::CreateChild( string const & childKey, string const & childName )
  {
-  GEOS_ERROR_IF( !(CatalogInterface::hasKeyName(childKey)),
+  GEOSX_ERROR_IF( !(CatalogInterface::hasKeyName(childKey)),
                  "KeyName ("<<childKey<<") not found in ObjectManager::Catalog");
-  GEOS_LOG_RANK_0("Adding Object " << childKey<<" named "<< childName<<" from ObjectManager::Catalog.");
+  GEOSX_LOG_RANK_0("Adding Object " << childKey<<" named "<< childName<<" from ObjectManager::Catalog.");
   Group * const elementRegions = this->GetGroup(ElementRegionManager::groupKeyStruct::elementRegionsGroup);
   return elementRegions->RegisterGroup( childName,
                                         CatalogInterface::Factory( childKey, childName, elementRegions ) );
@@ -155,7 +155,7 @@ void ElementRegionManager::GenerateWells( MeshManager * const meshManager,
     InternalWellGenerator const * const wellGeometry =
     meshManager->GetGroup<InternalWellGenerator>( generatorName );
 
-    GEOS_ERROR_IF( wellGeometry == nullptr,
+    GEOSX_ERROR_IF( wellGeometry == nullptr,
                   "InternalWellGenerator " << generatorName << " not found in well " << wellRegion->getName() );
 
     // generate the local data (well elements, nodes, perforations) on this well
@@ -172,12 +172,12 @@ void ElementRegionManager::GenerateWells( MeshManager * const meshManager,
     subRegion = wellRegion->GetGroup( ElementRegionBase::viewKeyStruct::elementSubRegions )
                           ->GetGroup<WellElementSubRegion>( subRegionName );
 
-    GEOS_ERROR_IF( subRegion == nullptr,
+    GEOSX_ERROR_IF( subRegion == nullptr,
                    "Subregion " << subRegionName << " not found in well " << wellRegion->getName() );
 
     globalIndex const numWellElemsGlobal = MpiWrapper::Sum( subRegion->size() );
 
-    GEOS_ERROR_IF( numWellElemsGlobal != wellGeometry->GetNumElements(),
+    GEOSX_ERROR_IF( numWellElemsGlobal != wellGeometry->GetNumElements(),
                    "Invalid partitioning in well " << subRegionName );
 
   });
@@ -267,7 +267,7 @@ int ElementRegionManager::UnpackPrivate( buffer_unit_type const * & buffer,
   string name;
   unpackedSize += bufferOps::Unpack( buffer, name );
 
-  GEOS_ERROR_IF( name!=this->getName(), "Unpacked name ("<<name<<") does not equal object name ("<<this->getName() );
+  GEOSX_ERROR_IF( name!=this->getName(), "Unpacked name ("<<name<<") does not equal object name ("<<this->getName() );
 
   localIndex numRegionsRead;
   unpackedSize += bufferOps::Unpack( buffer, numRegionsRead );

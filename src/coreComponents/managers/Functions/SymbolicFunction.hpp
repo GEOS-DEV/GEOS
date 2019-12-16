@@ -73,7 +73,7 @@ public:
 #ifdef GEOSX_USE_MATHPRESSO
     return parserExpression.evaluate( reinterpret_cast<void*>( const_cast<real64*>(input) ) );
 #else
-    GEOS_ERROR("GEOSX was not built with mathpresso!");
+    GEOSX_ERROR("GEOSX was not built with mathpresso!");
     return 0;
 #endif
   }

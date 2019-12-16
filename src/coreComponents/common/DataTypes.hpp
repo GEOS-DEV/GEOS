@@ -24,13 +24,13 @@
 
 // Source includes
 #include "common/GeosxConfig.hpp"
-#include "Macros.hpp"
-#include "Logger.hpp"
-#include "Array.hpp"
-#include "StackBuffer.hpp"
-#include "SortedArray.hpp"
-#include "ArrayOfArrays.hpp"
-#include "ArrayOfSets.hpp"
+#include "common/Logger.hpp"
+#include "cxx-utilities/src/Macros.hpp"
+#include "cxx-utilities/src/Array.hpp"
+#include "cxx-utilities/src/StackBuffer.hpp"
+#include "cxx-utilities/src/SortedArray.hpp"
+#include "cxx-utilities/src/ArrayOfArrays.hpp"
+#include "cxx-utilities/src/ArrayOfSets.hpp"
 #include "math/TensorT/TensorT.h"
 
 // TPL includes
@@ -107,7 +107,7 @@ NEW_TYPE dynamicCast( EXISTING_TYPE & val )
 
   using POINTER_TO_NEW_TYPE = std::remove_reference_t< NEW_TYPE > *;
   POINTER_TO_NEW_TYPE ptr = dynamicCast< POINTER_TO_NEW_TYPE >( &val );
-  GEOS_ERROR_IF( ptr == nullptr, "Cast failed." );
+  GEOSX_ERROR_IF( ptr == nullptr, "Cast failed." );
 
   return *ptr;
 }
@@ -871,7 +871,7 @@ public:
       }
       default:
       {
-        GEOS_ERROR( "TypeID not recognized." );
+        GEOSX_ERROR( "TypeID not recognized." );
       }
     }
   }
@@ -926,7 +926,7 @@ public:
       }
       default:
       {
-        GEOS_ERROR( "TypeID not recognized." );
+        GEOSX_ERROR( "TypeID not recognized." );
       }
     }
   }
@@ -1037,7 +1037,7 @@ public:
       {
         if( errorIfTypeNotFound )
         {
-          GEOS_ERROR( "TypeID not recognized." );
+          GEOSX_ERROR( "TypeID not recognized." );
         }
       }
     }
@@ -1179,7 +1179,7 @@ public:
       }
       default:
       {
-        GEOS_ERROR( "TypeID not recognized." );
+        GEOSX_ERROR( "TypeID not recognized." );
         return lambda( double(1) );
       }
     }
@@ -1270,7 +1270,7 @@ public:
       // }
       default:
       {
-        GEOS_ERROR( "TypeID not recognized." );
+        GEOSX_ERROR( "TypeID not recognized." );
       }
     }
   }
@@ -1360,7 +1360,7 @@ public:
       //  }
       default:
       {
-        GEOS_ERROR( "TypeID not recognized." );
+        GEOSX_ERROR( "TypeID not recognized." );
       }
     }
   }

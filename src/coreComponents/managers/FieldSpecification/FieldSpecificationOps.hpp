@@ -221,7 +221,7 @@ struct FieldSpecificationOp
                   integer const component,
                   real64 & value )
   {
-    GEOS_ASSERT( component >= 0 );
+    GEOSX_ASSERT( component >= 0 );
     OP::template apply( value, field( index, component ) );
   }
 
@@ -236,7 +236,7 @@ struct FieldSpecificationOp
                   integer const GEOSX_UNUSED_ARG( component ),
                   real64 & GEOSX_UNUSED_ARG( value ) )
   {
-    GEOS_ERROR( "ReadFieldValue: unsupported operation" );
+    GEOSX_ERROR( "ReadFieldValue: unsupported operation" );
   }
 
   /**
@@ -321,7 +321,7 @@ struct FieldSpecificationOp
                   integer const GEOSX_UNUSED_ARG( component ),
                   real64 & GEOSX_UNUSED_ARG( value ) )
   {
-    GEOS_ERROR( "ReadFieldValue: unsupported operation" );
+    GEOSX_ERROR( "ReadFieldValue: unsupported operation" );
   }
 
 };
