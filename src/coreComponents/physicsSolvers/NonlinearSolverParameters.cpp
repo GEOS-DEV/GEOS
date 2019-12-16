@@ -1,8 +1,15 @@
 /*
- * NonlinearSolverParameters.cpp
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- *  Created on: Dec 14, 2019
- *      Author: settgast
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 #include "NonlinearSolverParameters.hpp"
@@ -80,7 +87,7 @@ NonlinearSolverParameters::NonlinearSolverParameters( std::string const & name,
   registerWrapper( viewKeysStruct::timeStepCutFactorString, &m_timeStepCutFactor, false )->
     setApplyDefaultValue(0.5)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Time step cut factor");
+    setDescription("Factor by which the time step will be cut if a timestep cut is required.");
 
   registerWrapper( viewKeysStruct::maxTimeStepCutsString, &m_maxTimeStepCuts, false )->
     setApplyDefaultValue(2)->
