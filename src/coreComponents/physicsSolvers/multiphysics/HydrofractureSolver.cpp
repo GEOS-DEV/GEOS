@@ -848,7 +848,15 @@ CalculateResidualNorm( DomainPartition const * const domain,
                                                                      m_solidSolver->getDofManager(),
                                                                      m_solidSolver->getSystemRhs() );
 
-  GEOSX_LOG_RANK_0("residuals for fluid, solid: "<<fluidResidual<<", "<<solidResidual);
+  if( getLogLevel() >= 1 && logger::internal::rank==0 )
+  {
+    char output[200] = {0};
+    sprintf( output,
+             "( Rfluid, Rsolid ) = (%4.2e, %4.2e) ; ",
+             fluidResidual,
+             solidResidual);
+    std::cout<<output;
+  }
 
   return fluidResidual + solidResidual;
 }

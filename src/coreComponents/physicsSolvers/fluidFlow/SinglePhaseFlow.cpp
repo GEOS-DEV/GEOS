@@ -205,14 +205,15 @@ void SinglePhaseFlow::InitializePostInitialConditions_PreSubGroups( Group * cons
   // Moved the following part from ImplicitStepSetup to here since it only needs to be initialized once
   // They will be updated in ApplySystemSolution and ImplicitStepComplete, respectively
 
+  real64 const defaultDensity = constitutiveManager->GetConstitutiveRelation( m_fluidIndex )->
+                                getWrapper< array2d<real64> >( SingleFluidBase::viewKeyStruct::densityString )->
+                                getDefaultValue();
+
   applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
                                  ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
                                  ElementSubRegionBase * const subRegion )
   {
 
-    real64 const defaultDensity = constitutiveManager->GetConstitutiveRelation( m_fluidIndex )->
-                                  getWrapper< array2d<real64> >( SingleFluidBase::viewKeyStruct::densityString )->
-                                  getDefaultValue();
     subRegion->getWrapper< array1d<real64> >( viewKeyStruct::densityOldString )->
       setDefaultValue( defaultDensity );
 
@@ -246,6 +247,16 @@ void SinglePhaseFlow::InitializePostInitialConditions_PreSubGroups( Group * cons
       } );
     }
   } );
+
+  ElementRegionManager * const elemManager = mesh->getElemManager();
+  elemManager->forElementRegions<FaceElementRegion>( [&] ( FaceElementRegion * const region )
+  {
+    region->forElementSubRegions<FaceElementSubRegion>( [&]( FaceElementSubRegion * const subRegion )
+    {
+      subRegion->getWrapper<real64_array>(FaceElementSubRegion::viewKeyStruct::creationMassString)->
+        setApplyDefaultValue(defaultDensity * region->getDefaultAperture() );
+    });
+  });
 }
 
 real64 SinglePhaseFlow::SolverStep( real64 const& time_n,
@@ -443,6 +454,40 @@ void SinglePhaseFlow::ImplicitStepComplete( real64 const & GEOSX_UNUSED_ARG( tim
       vol[ei] += dVol[ei];
     } );
   } );
+
+  ElementRegionManager * const elemManager = mesh->getElemManager();
+  elemManager->forElementSubRegionsComplete<FaceElementSubRegion>( this->m_targetRegions,
+                                                                   [&] ( localIndex er,
+                                                                         localIndex esr,
+                                                                         ElementRegionBase const * const GEOSX_UNUSED_ARG( region ),
+                                                                         FaceElementSubRegion * const subRegion )
+  {
+
+    arrayView1d<integer const> const & elemGhostRank = m_elemGhostRank[er][esr];
+    arrayView1d<real64 const> const & densOld        = m_densityOld[er][esr];
+    arrayView1d<real64 const> const & volume         = m_volume[er][esr];
+    arrayView1d<real64> const &
+    creationMass = subRegion->getReference<real64_array>( FaceElementSubRegion::viewKeyStruct::creationMassString);
+
+    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+    {
+      if (elemGhostRank[ei] < 0)
+      {
+        if( volume[ei] * densOld[ei] > 1.1 * creationMass[ei] )
+        {
+          creationMass[ei] *= 0.5;
+          if( creationMass[ei]<1.0e-20 )
+          {
+            creationMass[ei] = 0.0;
+          }
+        }
+      }});
+  });
+
+
+
+
+
 }
 
 void SinglePhaseFlow::SetupDofs( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
@@ -605,6 +650,9 @@ void SinglePhaseFlow::AccumulationLaunch( localIndex const er,
   arrayView2d<real64 const> const & dens          = m_density[er][esr][m_fluidIndex];
   arrayView2d<real64 const> const & dDens_dPres   = m_dDens_dPres[er][esr][m_fluidIndex];
 
+  arrayView1d<real64 const> const &
+  creationMass = subRegion->getReference<real64_array>(FaceElementSubRegion::viewKeyStruct::creationMassString);
+
   forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
   {
     if (elemGhostRank[ei] < 0)
@@ -620,6 +668,10 @@ void SinglePhaseFlow::AccumulationLaunch( localIndex const er,
                                                                           localAccum,
                                                                           localAccumJacobian );
 
+      if( volume[ei] * densOld[ei] > 1.1 * creationMass[ei] )
+      {
+        localAccum += creationMass[ei] * 0.5;
+      }
       // add contribution to global residual and jacobian
       matrix->add( elemDOF, elemDOF, localAccumJacobian );
       rhs->add( elemDOF, localAccum );

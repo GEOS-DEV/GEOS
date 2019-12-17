@@ -273,7 +273,6 @@ void SurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
           setApplyDefaultValue(1.0e99)->
           setPlotLevel(dataRepository::PlotLevel::LEVEL_0)->
           setDescription("Rate of rupture for a given face.");
-
       });
     });
 
