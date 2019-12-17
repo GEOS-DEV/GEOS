@@ -40,8 +40,8 @@ ChomboCoupler::ChomboCoupler( MPI_Comm const comm, const std::string & outputPat
 void ChomboCoupler::write( double dt )
 {
   ++m_counter;
-  FaceManager * faces = m_mesh.getFaceManager();
-  NodeManager * nodes = m_mesh.getNodeManager();
+  FaceManager const * const faces = m_mesh.getFaceManager();
+  NodeManager const * const nodes = m_mesh.getNodeManager();
 
   ArrayOfArraysView< localIndex const > const & face_connectivity = faces->nodeList().toViewConst();
   localIndex const n_faces = face_connectivity.size();
@@ -102,7 +102,9 @@ void ChomboCoupler::read( bool usePressures )
   {
     GEOSX_LOG_RANK_0( "Reading pressures..." );
 
-    FaceManager * faces = m_mesh.getFaceManager();
+    FaceManager* const faces = m_mesh.getFaceManager();
+    NodeManager* const nodes = m_mesh.getNodeManager();
+
     const localIndex n_faces = faces->size();
     const localIndex n_nodes = m_mesh.getNodeManager()->size();
 
@@ -111,7 +113,10 @@ void ChomboCoupler::read( bool usePressures )
     real64 * pressure_ptr = faces->getReference< real64_array >( "ChomboPressure" ).data();
     face_fields["Pressure"] = std::make_tuple( H5T_NATIVE_DOUBLE, 1, pressure_ptr );
 
+    r1_array const& reference_pos = nodes->getReference<r1_array>(nodes->viewKeys.referencePosition);
+    R1Tensor * const reference_pos_ptr = reference_pos.data();
     FieldMap_out node_fields;
+    node_fields["position"] = std::make_tuple(H5T_NATIVE_DOUBLE, 3, reference_pos_ptr);
 
     readBoundaryFile( m_comm, m_inputPath.data(),
                       m_face_offset, m_n_faces_written, n_faces, face_fields,
