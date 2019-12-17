@@ -649,7 +649,6 @@ void SolidMechanicsLagrangianFEM::ApplyDisplacementBC_implicit( real64 const tim
                         string const fieldName )
   {
     bc->ApplyBoundaryConditionToSystem<FieldSpecificationEqual, LAInterface>( targetSet,
-                                                                              false,
                                                                               time,
                                                                               targetGroup,
                                                                               fieldName,
@@ -1156,7 +1155,6 @@ ApplyBoundaryConditions( real64 const time_n,
                         string const GEOSX_UNUSED_ARG( fieldName ) )
   {
     bc->ApplyBoundaryConditionToSystem<FieldSpecificationAdd, LAInterface>( targetSet,
-                                                                            false,
                                                                             time_n + dt,
                                                                             targetGroup,
                                                                             keys::TotalDisplacement, // TODO fix use of dummy name for

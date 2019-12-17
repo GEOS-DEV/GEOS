@@ -569,10 +569,6 @@ protected:
 
   void SetLinearSolverParameters();
 
-  void SetSourceFluxSetSize(real64 const time,
-			    real64 const dt,
-			    DomainPartition * const domain);
-
   string getDiscretizationName() const {return m_discretizationName;}
 
   template<typename BASETYPE>
@@ -607,8 +603,6 @@ protected:
   LinearSolverParameters m_linearSolverParameters;
 
   NonlinearSolverParameters m_nonlinearSolverParameters;
-
-  array1d<integer> m_sourceFluxSetSize;
  
 };
 
