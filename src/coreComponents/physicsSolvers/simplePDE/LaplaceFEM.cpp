@@ -366,7 +366,6 @@ void LaplaceFEM::ApplyDirichletBC_implicit( real64 const time,
                         string const GEOSX_UNUSED_ARG( fieldName ) )->void
   {
     bc->ApplyBoundaryConditionToSystem<FieldSpecificationEqual, LAInterface>( targetSet,
-                                                                              false,
                                                                               time,
                                                                               targetGroup,
                                                                               m_fieldName,

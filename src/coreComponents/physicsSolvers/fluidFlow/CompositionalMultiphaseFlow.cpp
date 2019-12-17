@@ -604,8 +604,6 @@ real64 CompositionalMultiphaseFlow::SolverStep( real64 const & time_n,
 {
   GEOSX_MARK_FUNCTION;
 
-  SolverBase::SetSourceFluxSetSize(time_n, dt, domain);
-  
   real64 dt_return;
 
   ImplicitStepSetup( time_n, dt, domain, m_dofManager, m_matrix, m_rhs, m_solution );
@@ -1136,20 +1134,18 @@ void CompositionalMultiphaseFlow::ApplyBoundaryConditions( real64 const time_n,
 
 void
 CompositionalMultiphaseFlow::ApplySourceFluxBC( real64 const time,
-						real64 const dt,
-						DofManager const * const dofManager,
-						DomainPartition * const domain,
-						ParallelMatrix * const matrix,
-						ParallelVector * const rhs )
+                                                real64 const dt,
+                                                DofManager const * const dofManager,
+                                                DomainPartition * const domain,
+                                                ParallelMatrix * const matrix,
+                                                ParallelVector * const rhs )
 {
   
   FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
 
   string const dofKey = dofManager->getKey( viewKeyStruct::dofFieldString );
   
-  localIndex counter =0;
-
-  fsManager.Apply( time + dt, domain, "ElementRegions", "FLUX",
+  fsManager.Apply( time + dt, domain, "ElementRegions", FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString,
                     [&]( FieldSpecificationBase const * const fs,
                     string const &,
                     set<localIndex> const & lset,
@@ -1160,31 +1156,32 @@ CompositionalMultiphaseFlow::ApplySourceFluxBC( real64 const time,
     arrayView1d<globalIndex const> const &
     dofNumber = subRegion->getReference< array1d<globalIndex> >( dofKey );
 
-    bool normalizeBySetSize = 1;
+    arrayView1d< integer const > const &
+    ghostRank = subRegion->getReference<array1d<integer> >( ObjectManagerBase::viewKeyStruct::ghostRankString);
 
-    real64 const setSizeFactor = normalizeBySetSize && m_sourceFluxSetSize[counter] > 0 ? 1.0/m_sourceFluxSetSize[counter] : 1.0;
+    set< localIndex > localSet;
+    for( localIndex const a : lset )
+    {
+      if( ghostRank[a] < 0 )
+      {
+        localSet.insert(a);
+      }
+    }
+   
+    fs->ApplyBoundaryConditionToSystem<FieldSpecificationAdd, LAInterface>( localSet,
+                                                                            time + dt,
+                                                                            dt,
+                                                                            subRegion,
+                                                                            dofNumber,
+                                                                            integer_conversion<int>(m_numDofPerCell),
+                                                                            *matrix,
+                                                                            *rhs,
+                                                                            [&] (localIndex const GEOSX_UNUSED_ARG(a)) -> real64
+                                                                            {
+                                                                              return 0;
+                                                                            });
 
-    fs->ApplyBoundaryConditionToSystem<FieldSpecificationAdd, LAInterface>( lset,
-									    time + dt,
-									    dt,
-									    setSizeFactor,
-									    subRegion,
-									    dofNumber,
-									    integer_conversion<int>(m_numDofPerCell),
-									    *matrix,
-									    *rhs,
-									    [&] (localIndex const GEOSX_UNUSED_ARG(a)) -> real64
-									    {
-									      return 0;
-									    });
-
-    counter++;
-    
   });
-
-
-  
-  
 }
 
   
