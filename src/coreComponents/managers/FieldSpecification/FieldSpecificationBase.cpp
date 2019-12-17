@@ -14,23 +14,18 @@
 
 #include "FieldSpecificationBase.hpp"
 
+#include "mpiCommunications/MpiWrapper.hpp"
+#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
+#include "managers/DomainPartition.hpp"
+
+
 namespace geosx
 {
 using namespace dataRepository;
 
 FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * parent ):
-  Group( name, parent )
-//  m_setNames(),
-//  m_objectPath(),
-//  m_fieldName(),
-//  m_component(-1),
-//  m_direction(-1),
-//  m_initialCondition(0),
-//  m_functionName(),
-//  m_scale(0.0),
-//  m_beginTime(0.0),
-//  m_endTime(1e9),
-//  m_bcApplicationFunctionName()
+  Group( name, parent ),
+  m_normalizeBySetSize(false)
 {
   setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
 
@@ -85,6 +80,13 @@ FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * par
     setApplyDefaultValue(1.0e99)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("time at which bc will stop being applied");
+
+  
+  registerWrapper( viewKeyStruct::setSizeScalingFactorString, &m_setSizeScalingFactor, 0 )->
+    setApplyDefaultValue(1)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("size of the set on which the boundary condition is applied");
+  
 }
 
 
@@ -98,6 +100,53 @@ FieldSpecificationBase::GetCatalog()
   return catalog;
 }
 
+void FieldSpecificationBase::InitializePreSubGroups( Group * const rootGroup )
+{
+  if (!m_normalizeBySetSize)
+  { 
+    m_setSizeScalingFactor = 1.0;
+  }
+  else
+  {  
+
+    
+    DomainPartition * const domain = rootGroup->GetGroup<DomainPartition>( keys::domain );
+    FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
+
+    integer localSetSize = 0;
+
+    // for flux boundary condition, compute the local size of the set
+    real64 dummyTime = 0.0;
+    fsManager.Apply( dummyTime, domain, m_objectPath, FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString,
+                      [&]( FieldSpecificationBase const * const GEOSX_UNUSED_ARG( fs ),
+                      string const &,
+                      set<localIndex> const & lset,
+                      Group * subRegion,
+                      string const & ) -> void
+    {
+      integer_array& ghostRank = subRegion->getReference<integer_array>( ObjectManagerBase::viewKeyStruct::ghostRankString );    
+    
+      for( auto a : lset )
+      {
+        if (ghostRank[a] < 0)
+        {
+          ++localSetSize; 
+        }
+      }
+ 
+    });
+
+    // compute the global set size
+    integer globalSetSize = 0;
+    MpiWrapper::allReduce( &localSetSize, &globalSetSize, 1, MPI_SUM, MPI_COMM_GEOSX );
+
+    // set the scaling factor
+    m_setSizeScalingFactor = 1.0 / globalSetSize;
+
+  }
+}
+
+  
 void FieldSpecificationBase::PostProcessInput()
 {}
 

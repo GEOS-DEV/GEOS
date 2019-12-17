@@ -175,46 +175,7 @@ void SolverBase::SetLinearSolverParameters()
   }
 }
 
-void SolverBase::SetSourceFluxSetSize(real64 const time,
-				      real64 const dt,
-				      DomainPartition * const domain)
-{
-
-  FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
-
-  array1d<integer> fluxBCElementNumberLocal;
-
-  fsManager.Apply( time + dt, domain, "ElementRegions", "FLUX",
-                    [&]( FieldSpecificationBase const * const GEOSX_UNUSED_ARG(fs),
-                    string const &,
-                    set<localIndex> const & lset,
-		    Group * subRegion,
-                    string const & ) -> void
-  {
-
-    integer_array& is_ghost = subRegion->getReference<integer_array>( ObjectManagerBase::viewKeyStruct::ghostRankString);    
-
-    integer aa = 0;
-
-    for( auto a : lset )
-      {
-	if(is_ghost[a] < 0)    
-	  aa++;
-      }
-
-    fluxBCElementNumberLocal.push_back(aa);
-    
-  });
-
-
-  integer fluxBCNum = integer_conversion<int>(fluxBCElementNumberLocal.size());
-
-  m_sourceFluxSetSize.resize(fluxBCNum);
-
-  MPI_Allreduce( fluxBCElementNumberLocal.data(), m_sourceFluxSetSize.data(), fluxBCNum, MPI_INT, MPI_SUM, MPI_COMM_GEOSX );
-
-}
-
+  
 real64 SolverBase::SolverStep( real64 const & GEOSX_UNUSED_ARG( time_n ),
                                real64 const & GEOSX_UNUSED_ARG( dt ),
                                const integer GEOSX_UNUSED_ARG( cycleNumber ),
