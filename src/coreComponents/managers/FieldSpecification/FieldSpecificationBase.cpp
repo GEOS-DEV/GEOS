@@ -102,48 +102,38 @@ FieldSpecificationBase::GetCatalog()
 
 void FieldSpecificationBase::InitializePreSubGroups( Group * const rootGroup )
 {
-  if (!m_normalizeBySetSize)
-  { 
-    m_setSizeScalingFactor = 1.0;
-  }
-  else
-  {  
+  DomainPartition * const domain = rootGroup->GetGroup<DomainPartition>( keys::domain );
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
 
+  integer localSetSize = 0;
+
+  // compute the local size of the set
+  real64 dummyTime = 0.0;
+  fsManager.Apply( dummyTime, domain, m_objectPath, m_fieldName,
+                    [&]( FieldSpecificationBase const * const GEOSX_UNUSED_ARG( fs ),
+                    string const &,
+                    set<localIndex> const & lset,
+                    Group * subRegion,
+                    string const & ) -> void
+  {
+    integer_array& ghostRank = subRegion->getReference<integer_array>( ObjectManagerBase::viewKeyStruct::ghostRankString );    
     
-    DomainPartition * const domain = rootGroup->GetGroup<DomainPartition>( keys::domain );
-    FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
-
-    integer localSetSize = 0;
-
-    // for flux boundary condition, compute the local size of the set
-    real64 dummyTime = 0.0;
-    fsManager.Apply( dummyTime, domain, m_objectPath, FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString,
-                      [&]( FieldSpecificationBase const * const GEOSX_UNUSED_ARG( fs ),
-                      string const &,
-                      set<localIndex> const & lset,
-                      Group * subRegion,
-                      string const & ) -> void
+    for( auto a : lset )
     {
-      integer_array& ghostRank = subRegion->getReference<integer_array>( ObjectManagerBase::viewKeyStruct::ghostRankString );    
-    
-      for( auto a : lset )
+      if (ghostRank[a] < 0)
       {
-        if (ghostRank[a] < 0)
-        {
-          ++localSetSize; 
-        }
+        ++localSetSize; 
       }
+    }
  
-    });
+  });
 
-    // compute the global set size
-    integer globalSetSize = 0;
-    MpiWrapper::allReduce( &localSetSize, &globalSetSize, 1, MPI_SUM, MPI_COMM_GEOSX );
+  // compute the global set size
+  integer globalSetSize = 0;
+  MpiWrapper::allReduce( &localSetSize, &globalSetSize, 1, MPI_SUM, MPI_COMM_GEOSX );
 
-    // set the scaling factor
-    m_setSizeScalingFactor = 1.0 / globalSetSize;
-
-  }
+  // set the scaling factor
+  m_setSizeScalingFactor = globalSetSize >= 1 ? 1.0 / globalSetSize : 1;
 }
 
   

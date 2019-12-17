@@ -488,6 +488,8 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
   globalIndex_array  dof( targetSet.size() );
   real64_array rhsContribution( targetSet.size() );
 
+  real64 const sizeScalingFactor = m_normalizeBySetSize ? m_setSizeScalingFactor : 1; 
+  
   if( functionName.empty() )
   {
 
@@ -498,7 +500,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
       FIELD_OP::template SpecifyFieldValue<LAI>( dof( counter ),
                                                  matrix,
                                                  rhsContribution( counter ),
-                                                 m_scale * m_setSizeScalingFactor,
+                                                 m_scale * sizeScalingFactor,
                                                  lambda( a ) );
       ++counter;
     }
@@ -512,7 +514,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
 
     if( function->isFunctionOfTime()==2 )
     {
-      real64 value = m_scale * function->Evaluate( &time ) * m_setSizeScalingFactor;
+      real64 value = m_scale * function->Evaluate( &time ) * sizeScalingFactor;
       integer counter=0;
       for( auto a : targetSet )
       {
@@ -538,7 +540,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
         FIELD_OP::template SpecifyFieldValue<LAI>( dof( counter ),
                                                    matrix,
                                                    rhsContribution( counter ),
-                                                   m_scale * result[counter] * m_setSizeScalingFactor,
+                                                   m_scale * result[counter] * sizeScalingFactor,
                                                    lambda( a ) );
         ++counter;
       }
@@ -567,6 +569,8 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
   globalIndex_array  dof( targetSet.size() );
   real64_array rhsContribution( targetSet.size() );
 
+  real64 const sizeScalingFactor = m_normalizeBySetSize ? m_setSizeScalingFactor : 1; 
+  
   if( functionName.empty() )
   {
 
@@ -577,7 +581,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
       FIELD_OP::template SpecifyFieldValue<LAI>( dof( counter ),
                                                  matrix,
                                                  rhsContribution( counter ),
-                                                 m_scale * dt * m_setSizeScalingFactor,
+                                                 m_scale * dt * sizeScalingFactor,
                                                  lambda( a ) );
       ++counter;
     }
@@ -591,7 +595,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
 
     if( function->isFunctionOfTime()==2 )
     {
-      real64 value = m_scale * dt * function->Evaluate( &time ) * m_setSizeScalingFactor;
+      real64 value = m_scale * dt * function->Evaluate( &time ) * sizeScalingFactor;
       integer counter=0;
       for( auto a : targetSet )
       {
@@ -617,7 +621,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
         FIELD_OP::template SpecifyFieldValue<LAI>( dof( counter ),
                                                    matrix,
                                                    rhsContribution( counter ),
-                                                   m_scale * dt * result[counter] * m_setSizeScalingFactor,
+                                                   m_scale * dt * result[counter] * sizeScalingFactor,
                                                    lambda( a ) );
         ++counter;
       }
