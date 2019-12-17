@@ -56,20 +56,6 @@ public:
     static constexpr auto useDirectSolverString     = "useDirectSolver";
     static constexpr auto krylovResidualInitString  = "krylovResidualInit";
     static constexpr auto krylovResidualFinalString = "krylovResidualFinal";
-    static constexpr auto useNewtonSolveString      = "useNewtonSolve";
-    static constexpr auto newtonTolString           = "newtonTol";
-    static constexpr auto maxIterNewtonString       = "maxIterNewton";
-    static constexpr auto minIterNewtonString       = "minIterNewton";
-    static constexpr auto numNewtonIterationsString = "numberOfNewtonIterations";
-    static constexpr auto maxTimeStepCutsString     = "maxTimeStepCuts";
-    static constexpr auto timeStepCutFactorString   = "timestepCutFactor";
-    static constexpr auto maxLineSearchCutsString   = "maxLineSearchCuts";
-    static constexpr auto lineSearchCutFactorString = "lineSearchCutFactor";
-    static constexpr auto allowNonConvergedString   = "allowNonConverged";
-    static constexpr auto maxSubStepsString         = "maxSubSteps";
-    static constexpr auto dtCutIterLimString        = "dtCutIterLimit";
-    static constexpr auto dtIncIterLimString        = "dtIncIterLimit";
-
   } viewKeys;
 
   struct groupKeysStruct
@@ -89,23 +75,6 @@ public:
   integer   useDirectSolver() const           { return m_useDirectSolver; }
   real64 krylovResidualInit() const           { return m_krylovResidualInit; }
   real64 krylovResidualFinal() const          { return m_krylovResidualFinal; }
-  integer   useNewtonSolve() const            { return m_useNewtonSolve; }
-  real64 newtonTol() const                    { return m_newtonTol; }
-  integer  maxIterNewton() const              { return m_maxIterNewton; }
-  integer  minIterNewton() const              { return m_minIterNewton; }
-  integer & minIterNewton()                   { return m_minIterNewton; }
-  integer const & numNewtonIterations() const { return m_numNewtonIterations; }
-  integer & numNewtonIterations()             { return m_numNewtonIterations; }
-
-  integer maxTimeStepCuts() const             { return m_maxTimeStepCuts; }
-  real64  timeStepCutFactor() const           { return m_timeStepCutFactor; }
-  integer maxLineSearchCuts() const           { return m_maxLineSearchCuts; }
-  real64  lineSearchCutFactor() const         { return m_lineSearchCutFactor; }
-  integer allowNonConverged() const           { return m_allowNonConverged; }
-  integer maxSubSteps() const                 { return m_maxSubSteps; }
-  integer & numdtAttempts()                   { return m_numdtAttempts; }
-  real64  dtCutIterLimit() const              { return m_dtCutIterLimit * m_maxIterNewton; }
-  real64  dtIncIterLimit() const              { return m_dtIncIterLimit * m_maxIterNewton; }
 
   string  m_solverType;
   real64  m_krylovTol;
@@ -124,22 +93,9 @@ public:
   real64  m_krylovAuxTime;
   real64  m_krylovSetupTime;
   real64  m_krylovSolveTime;
-  integer m_useNewtonSolve;
-  real64  m_newtonTol;
-  integer m_maxIterNewton;
-  integer m_minIterNewton;
-  integer m_numNewtonIterations;
-  
-  integer m_maxTimeStepCuts;
-  real64  m_timeStepCutFactor;
-  integer m_maxLineSearchCuts;
-  real64  m_lineSearchCutFactor;
-  integer m_allowNonConverged;
-  integer m_maxSubSteps;
   integer m_maxIters = 1000;
-  integer m_numdtAttempts; // number of times that the time-step had to be cut.
-  real64  m_dtCutIterLimit;
-  real64  m_dtIncIterLimit;
+
+
 };
 
 } /* namespace geosx */

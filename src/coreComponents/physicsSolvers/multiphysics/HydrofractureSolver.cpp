@@ -791,8 +791,7 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
 
   if( getLogLevel() >= 10 )
   {
-    SystemSolverParameters * const solverParams = getSystemSolverParameters();
-    integer newtonIter = solverParams->numNewtonIterations();
+    integer newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
 
     {
       string filename = "matrix00_" + std::to_string( time ) + "_" + std::to_string( newtonIter ) + ".mtx";
@@ -1177,7 +1176,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
   */
 
   SystemSolverParameters * const params = &m_systemSolverParameters;
-  integer newtonIter = params->numNewtonIterations();
+  integer const newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
 
   using namespace Teuchos;
   using namespace Thyra;
@@ -1550,8 +1549,7 @@ HydrofractureSolver::ScalingForSystemSolution( DomainPartition const * const dom
                                                   m_solidSolver->getSystemSolution() );
 }
 
-void HydrofractureSolver::SetNextDt( SystemSolverParameters * const GEOSX_UNUSED_ARG(solverParams),
-                                     real64 const & currentDt ,
+void HydrofractureSolver::SetNextDt( real64 const & currentDt ,
                                      real64 & nextDt )
 {
   SolverBase * const surfaceGenerator =  this->getParent()->GetGroup<SolverBase>("SurfaceGen");
