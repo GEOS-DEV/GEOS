@@ -11,12 +11,15 @@
             targetRegions="{Region2, Fracture}"
             fluidName="water"
             solidName="rock">
+            <NonlinearSolverParameters
+                name="nlsp"
+                newtonTol="1.0e-8"
+                newtonMaxIter="8"/>
             <SystemSolverParameters
                 name="SystemSolverParameters"
-                krylovTol="1.0e-12"
-                newtonTol="1.0e-8"
-                maxIterNewton="8" />
+                krylovTol="1.0e-12"/>
         </SinglePhaseCellCentered>
+
         <SurfaceGenerator
             name="SurfaceGen"
             logLevel="0"

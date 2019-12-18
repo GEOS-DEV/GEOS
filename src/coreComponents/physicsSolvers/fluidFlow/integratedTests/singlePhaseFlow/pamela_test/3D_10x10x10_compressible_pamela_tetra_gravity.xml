@@ -12,9 +12,11 @@
                           solidName="rock"
                           discretization="singlePhaseTPFA"
                           targetRegions="{Domain}">
-      <SystemSolverParameters krylovTol="1.0e-10"
-                              newtonTol="1.0e-6"
-                              maxIterNewton="8"/>
+      <NonlinearSolverParameters name="nlsp"
+                                 newtonTol="1.0e-6"
+                                 newtonMaxIter="8"/>
+      <SystemSolverParameters name="ssp"
+                              krylovTol="1.0e-10"/>
     </SinglePhaseFlow>
   </Solvers>
  <!-- SPHINX_TUT_EXT_TETRA_SOLVERS_END -->
