@@ -196,9 +196,9 @@ template< typename T >
 constexpr bool is_array = LvArray::isArray< T >;
 
 template< typename T >
-constexpr bool is_tensorT = is_instance_of_v< R1Tensor, T > ||
-                            is_instance_of_v< R2Tensor, T > ||
-                            is_instance_of_v< R2SymTensor, T >;
+constexpr bool is_tensorT = is_same_v< R1Tensor, T > ||
+                            is_same_v< R2Tensor, T > ||
+                            is_same_v< R2SymTensor, T >;
 
 } /* namespace traits */
 
