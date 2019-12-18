@@ -162,17 +162,30 @@ The gravitational component of the slip velocity is written as a form as
     \boldsymbol{u}_{slip} = F(c) \boldsymbol{u}_{settling},
 
 
-where :math:`\boldsymbol{u}_{settling}` is the settling velocity for a single particle and calculated based on the Stokes drag law,
-
-.. math::
-    \boldsymbol{u}_{settling} = ( \rho_p - \rho_f)  \frac{d{_p}^{2}}{18 \mu_f}\boldsymbol{g},
-
-:math:`d_p` is the particle diameter, and :math:`F(c)` is the correction factor to the particle settling velocity in order to account for hindered settling effects as a result of particle-particle interactions,
+where :math:`\boldsymbol{u}_{settling}` is the settling velocity for a single particle, :math:`d_p` is the particle diameter, and :math:`F(c)` is the correction factor to the particle settling velocity in order to account for hindered settling effects as a result of particle-particle interactions,
          
 .. math::
     F(c) = e^{-\lambda_s c},
 
 with the hindered settling coefficient :math:`\lambda_s` as an empirical constant set to 5.9 by default (Barree & Conway, 1995). 
+
+The settling velocity for a single particle, :math:`\boldsymbol{u}_{settling}` , is calculated based on the Stokes drag law by default,
+
+.. math::
+    \boldsymbol{u}_{settling} = ( \rho_p - \rho_f)  \frac{d{_p}^{2}}{18 \mu_f}\boldsymbol{g}.
+
+Single-particle settling under intermediate Reynolds-number and turbulent flow conditions can also be described respectively by the Allen's equation (Barree & Conway, 1995),
+
+.. math::
+    \boldsymbol{u}_{settling} = 0.2 d^{1.18} \left [ \frac{g ( \rho_p - \rho_f)}{\rho_f} \right ]^{0.72} \left ( \frac{\rho_f}{\mu_f} \right )^{0.45} \boldsymbol{e},
+ 
+and Newton's equation(Barree & Conway, 1995),       
+
+.. math::
+    \boldsymbol{u}_{settling} = 1.74 d{_p}^{0.5}\left [ \frac{g ( \rho_p - \rho_f)}{\rho_f}\right]^{0.5} \boldsymbol{e}.
+
+
+:math:`\boldsymbol{e}` is the unit gravity vector.
     
 The collisional component of the slip velocity is modeled by defining :math:`\lambda`, the ratio of the particle velocity to the volume averaged mixture velocity as a function of the proppant concentration. From this the particle slip velocity is related to the mixed fluid velocity by,
 
@@ -186,26 +199,58 @@ We use a simple expression of :math:`\lambda` proposed by Barree & Conway (1995)
 
 where :math:`\alpha` and :math:`\beta` are empirical constants, :math:`c_{slip}` is the volume fraction exhibiting the greatest particle slip. By default the model parameters are set to the values given in (Barree & Conway, 1995): :math:`\alpha= 1.27`, :math:`c_{slip} =0.1` and :math:`\beta =  1.5`. This model can be extended to account for the transition to the particle pack as the proppant concentration approaches the jamming transition.
 
-other features of proppant transport:
+proppant bed build-up and load transport:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In addition to suspended particle flow the GEOSX has the option to model proppant settling into an immobile bed at the bottom of the fracture. As the proppant cannot settle further down the proppant bed starts to form and develop at the element that is either at the bottom of the fracture or has an underlying element already filled with particles. Such an "inter-facial" element is divided into proppant flow and immobile bed regions based on the proppant-pack height. 
+
+Although proppant becomes immobile fluid can continue to flow through the settled proppant pack. The pack permeability `K` is defined based on the Kozeny-Carmen relationship:  
+
+.. math::
+   K = \frac{(sd_p)^2}{180}\frac{(1-c_{s})^{3}}{c_{s}^{2}},
+
+where :math:`c_{s}` is the saturation or maximum fraction for proppant packing, :math:`s` is the sphericity and :math:`d_p` is the particle diameter.
+
+
+The growth of the settled pack is controlled by the interplay between proppant gravitational settling and shear-force induced lifting as (Hu et al., 2018),
+
+.. math:: 
+    \frac{d H}{d t} =  \frac{c u_{p}}{c_{s}} - \frac{Q_{lift}}{A c_{s}},
+
+where :math:`H`, :math:`t`, :math:`c_{s}`, :math:`Q_{lift}`, and :math:`A` represent the height of the proppant bed, time, saturation or maximum proppant concnetration in the proppant bed, proppant-bed load (wash-out) flux, and cross-sectional area, respectively.
+
+The rate of proppant bed load transport (or wash out) due to shear force is calculated by the correlation proposed by Wiberg and Smith (1989),
+
+.. math:: 
+    Q_{lift} = a \left ( d{_p} \sqrt{\frac{g d{_p} ( \rho_p - \rho_f)}{\rho_f}} \right ) (9.64 N_{sh}^{0.166})(N_{sh} - N_{sh, c})^{1.5}. 
+
+:math:`a` is fracture aperture, and :math:`N_{sh}` is the Shields number measuring the relative importance of the shear force to the gravitational force on a particle of sediment (Miller et al., 1977; Biot & Medlin, 1985; McClure, 2018) as  
+    
+.. math::
+   N_{sh} = \frac{\tau}{d{_p} g ( \rho_p - \rho_f)},
+
+and  
+
+.. math::
+   \tau = 0.125 f \rho_f V^2
+
+where :math:`\tau` is the shear stress acting on the top of the proppant bed and :math:`f` is the Darcy friction coefficient. :math:`N_{sh, c}` is the critical Shields number for the onset of bed load transport.  
+
+
+proppant bridging and screenout
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The GEOSX also has the option to model
-
-a. proppant pack-formation when proppant concentration is above the maximum packing fraction. Under this condition fluid can continue to flow through the settled proppant pack. The pack permeability `K` is determined based on the Kozeny-Carmen relationship:  
+Proppant bridging occurs when proppant particle size is close to or larger than fracture aperture. The aperture at which bridging occurs, :math:`h_{b}`, is defined simply by
 
 .. math::
-   K = \frac{(sd_p)^2}{180}\frac{(1-c)^{3}}{c^{2}},
+   h_{b} = \lambda_{b} d_p,   
 
-where :math:`c` is the solid fraction for proppant packing, :math:`s` is the sphericity and :math:`d_p` is the particle diameter.
+in which :math:`\lambda_{b}` is the bridging factor. 
 
-b. proppant bridging when proppant particle size is close to or larger than fracture aperture. The aperture at which bridging occurs, :math:`h_{b}`, is determined from
+slurry fluid viscosity
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. math::
-   h_{b} = \begin{cases} (1.0 + \frac{\lambda_{b} - 1.0}{0.17}c) d_p & \quad c < 0.17 \\ \lambda_{b} d_p & \quad c \geq 0.17 \\ \end{cases},   
-
-in which :math:`\lambda_{b}` is the bridging factor and set to 3 by default, and :math:`d_p` is the particle diameter. 
-   
-c. the effect of the proppant concentration on the viscosity of the bulk fluid. The effective slurry viscosity, :math:`\mu_m`, is calculated based on the Stokes-Einstein model (Keck et al., 1992),
+The viscosity of the bulk fluid, :math:`\mu_m`, is calculated as a function of proppant concentration as (Keck et al., 1992),
 
 .. math::
      \mu_{m} =  \mu_{f}\left [1 + 1.25 \left ( \frac{c}{1-c/c_{max}} \right) \right ]^{2}.
@@ -234,5 +279,15 @@ References
 =================================
 
 - R. D. Barree & M. W. Conway. "Experimental and numerical modeling of convective proppant transport", JPT. Journal of petroleum technology, 47(3):216-222, 1995.
+  
+- M. A. Biot & W. L. Medlin. "Theory of Sand Transport in Thin Fluids", Paper presented at the SPE Annual Technical Conference and Exhibition, Las Vegas, NV, 1985.
 
-- R. G. Keck, W. L. Nehmer, & G. S. Strumolo. “A new method for predicting friction pressures and rheology of proppant-laden fracturing fluids,” SPE Prod. Eng., 7(1):21-28, 1992.  
+- X. Hu, K. Wu, X. Song, W. Yu, J. Tang, G. Li, & Z. Shen. "A new model for simulating particle transport in a low‐viscosity fluid for fluid‐driven fracturing", AIChE J. 64 (9), 35423552, 2018.
+  
+- R. G. Keck, W. L. Nehmer, & G. S. Strumolo. “A new method for predicting friction pressures and rheology of proppant-laden fracturing fluids", SPE Prod. Eng., 7(1):21-28, 1992.  
+
+- M. McClure. "Bed load proppant transport during slickwater hydraulic fracturing: insights from comparisons between published laboratory data and correlations for sediment and pipeline slurry transport", J. Pet. Sci. Eng. 161 (2), 599610, 2018.
+
+- M. C. Miller, I. N.  McCave, & P. D. Komar. "Threshold of sediment motion under unidirectional currents", Sedimentology 24 (4), 507527, 1977.
+
+- P. L. Wiberg &  J. D. Smith. "Model for calculating bed load transport of sediment", J. Hydraul. Eng. 115 (1), 101123, 1989.

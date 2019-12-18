@@ -41,6 +41,10 @@ ParticleFluid::ParticleSettlingModel ParticleFluid::stringToParticleSettlingMode
   {
     return ParticleFluid::ParticleSettlingModel::Intermediate;
   }
+  else if (str == "Turbulence")
+  {
+    return ParticleFluid::ParticleSettlingModel::Turbulence;
+  }  
   else
   {
     GEOSX_ERROR("Unrecognized particle settling velocity model: " << str);
@@ -208,9 +212,14 @@ void ParticleFluid::Compute( localIndex const NC,
       break;
     case ParticleSettlingModel::Intermediate:
       
-      singleParticleSettlingVelocity = 20.34 * pow(m_proppantDensity - fluidDensity, 0.71) * pow(m_proppantDiameter, 1.14) / pow(fluidDensity, 0.29) / pow(fluidViscosity, 0.43);
+      singleParticleSettlingVelocity = 0.2 * pow(m_proppantDiameter, 1.18) * pow(9.81 * (m_proppantDensity - fluidDensity) /fluidDensity , 0.72) * pow(fluidDensity / fluidViscosity, 0.45);      
     
       break;
+    case ParticleSettlingModel::Turbulence:
+
+      singleParticleSettlingVelocity = 1.74 * pow(m_proppantDiameter, 0.5) * pow(9.81 * (m_proppantDensity - fluidDensity) /fluidDensity , 0.5);            
+      
+      break;      
     default:
       GEOSX_ERROR("Particle settling model type not supported");
   }

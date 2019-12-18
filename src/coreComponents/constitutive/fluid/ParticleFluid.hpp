@@ -45,7 +45,8 @@ public:
   enum class ParticleSettlingModel
   {
     Stokes,
-    Intermediate
+    Intermediate,
+    Turbulence
   };
 
   static ParticleSettlingModel stringToParticleSettlingModel( string const & str );

@@ -1298,7 +1298,7 @@ struct ProppantPackVolumeKernel
 
             real64 velocityMag = velocity.L2_Norm() / volume[ei];
 
-            real64 dH = (downVelocity*0.0 + fluidDensity[ei][0] / density[ei][0] *(1.0 - conc[ei]) * settlingFactor[ei]) * conc[ei] / maxProppantConcentration * dt;
+            real64 dH = (downVelocity + fluidDensity[ei][0] / density[ei][0] *(1.0 - conc[ei]) * settlingFactor[ei]) * conc[ei] / maxProppantConcentration * dt;
             
             /*
             real64 Re = fluidDensity[ei] * velocityMag * edgeLength / fluidViscosity[ei];
@@ -1315,8 +1315,15 @@ struct ProppantPackVolumeKernel
                       
             real64 ShieldsNumber = tau / (proppantDensity - fluidDensity[ei][0]) / 9.81 / proppantDiameter;
 
-            proppantLiftFlux[ei] = aperture[ei] * (proppantDiameter * sqrt(9.81 * proppantDiameter * (proppantDensity - fluidDensity[ei][0]) / fluidDensity[ei][0])) * (9.64 * pow(ShieldsNumber, 0.166)) * pow(ShieldsNumber - criticalShieldsNumber, 1.5);
+            proppantLiftFlux[ei] = 0.0;
+            
+            if(ShieldsNumber > criticalShieldsNumber)
+              {
+                
+                proppantLiftFlux[ei] = aperture[ei] * (proppantDiameter * sqrt(9.81 * proppantDiameter * (proppantDensity - fluidDensity[ei][0]) / fluidDensity[ei][0])) * (9.64 * pow(ShieldsNumber, 0.166)) * pow(ShieldsNumber - criticalShieldsNumber, 1.5);
 
+              }
+                
             if(proppantLiftFlux[ei] < 0.0)
               proppantLiftFlux[ei] = 0.0;
 
