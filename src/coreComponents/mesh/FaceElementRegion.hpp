@@ -59,7 +59,6 @@ public:
   { return FaceElementRegion::CatalogName(); }
 
 
-
   virtual void GenerateMesh( Group const * ) override {}
 
   /**

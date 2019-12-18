@@ -111,9 +111,8 @@ public:
                              int const cycleNumber,
                              DomainPartition * const domain ) override;
 
-  virtual void SetNextDt(SystemSolverParameters * const solverParams,
-                         real64 const & currentDt,
-                         real64 & nextDt) override;
+  virtual void SetNextDt( real64 const & currentDt,
+                          real64 & nextDt) override;
 
 
   virtual real64 ExplicitStep( real64 const & time_n,

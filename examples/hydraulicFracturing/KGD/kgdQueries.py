@@ -59,7 +59,7 @@ def RadiusScatterPlot( field ):
     ThresholdAtts.outputMeshType = 0
     ThresholdAtts.listedVarNames = ("Fracture_Solid_ElementFields/elementAperture", "Fracture_Solid_ElementFields/ghostRank")
     ThresholdAtts.zonePortions = (1, 1)
-    ThresholdAtts.lowerBounds = (1.2e-4, -1e+37)
+    ThresholdAtts.lowerBounds = (1.2e-8, -1e+37)
     ThresholdAtts.upperBounds = (1e+37, -1)
     ThresholdAtts.defaultVarName = "face_radius"
     ThresholdAtts.defaultVarIsScalar = 1
@@ -102,10 +102,10 @@ AddOperator("Threshold", 1)
 ThresholdAtts = ThresholdAttributes()
 ThresholdAtts.outputMeshType = 0
 ThresholdAtts.boundsInputType = 0
-ThresholdAtts.listedVarNames = ("Fracture_Solid_ElementFields/ghostRank")
-ThresholdAtts.zonePortions = (1)
-ThresholdAtts.lowerBounds = (-1e+37)
-ThresholdAtts.upperBounds = (-1)
+ThresholdAtts.listedVarNames = ("Fracture_Solid_ElementFields/elementAperture", "Fracture_Solid_ElementFields/ghostRank")
+ThresholdAtts.zonePortions = (1, 1)
+ThresholdAtts.lowerBounds = (1.2e-4, -1e+37)
+ThresholdAtts.upperBounds = (1e+37, -1)
 ThresholdAtts.defaultVarName = "default"
 ThresholdAtts.defaultVarIsScalar = 0
 ThresholdAtts.boundsRange = ("-1e+37:-1")
