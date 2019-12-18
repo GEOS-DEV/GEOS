@@ -18,7 +18,6 @@
 #include "common/TimingMacros.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 #include "managers/DomainPartition.hpp"
-#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 
 namespace geosx
 {
@@ -175,7 +174,6 @@ void SolverBase::SetLinearSolverParameters()
   }
 }
 
-  
 real64 SolverBase::SolverStep( real64 const & GEOSX_UNUSED_ARG( time_n ),
                                real64 const & GEOSX_UNUSED_ARG( dt ),
                                const integer GEOSX_UNUSED_ARG( cycleNumber ),
@@ -441,7 +439,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
           }
         }
       }
-    
+
       // call the default linear solver on the system
       SolveSystem( dofManager, matrix, rhs, solution );
 
