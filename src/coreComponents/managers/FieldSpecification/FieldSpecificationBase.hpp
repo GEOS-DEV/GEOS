@@ -225,8 +225,6 @@ public:
     constexpr static auto initialConditionString = "initialCondition";
     constexpr static auto beginTimeString = "beginTime";
     constexpr static auto endTimeString = "endTime";
-    constexpr static auto normalizeBySetSizeString = "normalizeBySetSize";
-    constexpr static auto setSizeScalingFactorString = "setSizeScalingFactor";
     constexpr static auto fluxBoundaryConditionString = "fluxBoundaryConditionString"; 
   } viewKeys;
 
@@ -315,8 +313,6 @@ public:
 protected:
   void PostProcessInput() override final;
 
-  void InitializePreSubGroups( Group * const rootGroup ) override;
-
   /// The flag used to decide if the BC value is normalized by the size of the set on which it is applied
   bool m_normalizeBySetSize;
   
@@ -361,7 +357,7 @@ private:
   string m_bcApplicationFunctionName;
 
   /// The factor used to normalize the boundary flux by the size of the set it is applied to
-  real64 m_setSizeScalingFactor;
+  //real64 m_setSizeScalingFactor;
 
 };
 
@@ -488,7 +484,25 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
   globalIndex_array  dof( targetSet.size() );
   real64_array rhsContribution( targetSet.size() );
 
-  real64 const sizeScalingFactor = m_normalizeBySetSize ? m_setSizeScalingFactor : 1; 
+  real64 sizeScalingFactor = 0;
+  if (m_normalizeBySetSize)
+  {
+    // note: this assumes that the ghost elements have been filtered out 
+    
+    // recompute the set size here to make sure that topology changes are accounted for
+    integer const localSetSize = targetSet.size(); 
+    integer globalSetSize = 0;
+
+    // synchronize
+    MpiWrapper::allReduce( &localSetSize, &globalSetSize, 1, MPI_SUM, MPI_COMM_GEOSX );
+
+    // set the scaling factor
+    sizeScalingFactor = globalSetSize >= 1 ? 1.0 / globalSetSize : 1;
+  }
+  else
+  {
+    sizeScalingFactor = 1;
+  }
   
   if( functionName.empty() )
   {
@@ -569,7 +583,26 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
   globalIndex_array  dof( targetSet.size() );
   real64_array rhsContribution( targetSet.size() );
 
-  real64 const sizeScalingFactor = m_normalizeBySetSize ? m_setSizeScalingFactor : 1; 
+  real64 sizeScalingFactor = 0.0;
+  if (m_normalizeBySetSize)
+  {
+    // note: this assumes that the ghost elements have been filtered out 
+    
+    // recompute the set size here to make sure that topology changes are accounted for
+    integer const localSetSize = targetSet.size(); 
+    integer globalSetSize = 0;
+
+    // synchronize
+    MpiWrapper::allReduce( &localSetSize, &globalSetSize, 1, MPI_SUM, MPI_COMM_GEOSX );
+
+    // set the scaling factor
+    sizeScalingFactor = globalSetSize >= 1 ? 1.0 / globalSetSize : 1;
+  }
+  else
+  {
+    sizeScalingFactor = 1;
+  }
+
   
   if( functionName.empty() )
   {
