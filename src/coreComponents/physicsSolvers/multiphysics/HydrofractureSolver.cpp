@@ -216,6 +216,9 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
       }
       if( globallyFractured == 0 )
       {
+        // surfaceGenerator->group_cast<SurfaceGenerator*>()->getSurfaceElementsRupturedThisSolve().clear();
+        // set < localIndex > surfaceElemsRupturedThisSolve = surfaceGenerator->group_cast<surfaceGenerator*>()->getSurfaceElementsRupturedThisSolve();
+        // surfaceElemsRupturedThisSolve.clear();
         break;
       }
       else

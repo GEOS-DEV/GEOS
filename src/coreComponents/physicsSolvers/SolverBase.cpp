@@ -451,6 +451,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       }
 
       // do line search in case residual has increased
+
       if( residualNorm > lastResidual )
       {
         residualNorm = lastResidual;
@@ -463,6 +464,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
           GEOSX_LOG_LEVEL_RANK_0 ( 1, "---- The Line search failed!" );
           break;
         }
+
       }
 
       // if using adaptive Krylov tolerance scheme, update tolerance.
