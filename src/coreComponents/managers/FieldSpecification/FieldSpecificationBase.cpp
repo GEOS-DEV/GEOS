@@ -81,12 +81,6 @@ FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * par
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("time at which bc will stop being applied");
 
-  
-  registerWrapper( viewKeyStruct::setSizeScalingFactorString, &m_setSizeScalingFactor, 0 )->
-    setApplyDefaultValue(1)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("size of the set on which the boundary condition is applied");
-  
 }
 
 
@@ -100,41 +94,6 @@ FieldSpecificationBase::GetCatalog()
   return catalog;
 }
 
-void FieldSpecificationBase::InitializePreSubGroups( Group * const rootGroup )
-{
-  DomainPartition * const domain = rootGroup->GetGroup<DomainPartition>( keys::domain );
-  FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
-
-  integer localSetSize = 0;
-
-  // compute the local size of the set
-  real64 dummyTime = 0.0;
-  fsManager.Apply( dummyTime, domain, m_objectPath, m_fieldName,
-                    [&]( FieldSpecificationBase const * const GEOSX_UNUSED_ARG( fs ),
-                    string const &,
-                    set<localIndex> const & lset,
-                    Group * subRegion,
-                    string const & ) -> void
-  {
-    integer_array& ghostRank = subRegion->getReference<integer_array>( ObjectManagerBase::viewKeyStruct::ghostRankString );    
-    
-    for( auto a : lset )
-    {
-      if (ghostRank[a] < 0)
-      {
-        ++localSetSize; 
-      }
-    }
- 
-  });
-
-  // compute the global set size
-  integer globalSetSize = 0;
-  MpiWrapper::allReduce( &localSetSize, &globalSetSize, 1, MPI_SUM, MPI_COMM_GEOSX );
-
-  // set the scaling factor
-  m_setSizeScalingFactor = globalSetSize >= 1 ? 1.0 / globalSetSize : 1;
-}
 
   
 void FieldSpecificationBase::PostProcessInput()
