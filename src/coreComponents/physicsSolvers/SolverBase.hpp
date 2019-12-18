@@ -603,7 +603,7 @@ protected:
   LinearSolverParameters m_linearSolverParameters;
 
   NonlinearSolverParameters m_nonlinearSolverParameters;
- 
+
 };
 
 template<typename BASETYPE>

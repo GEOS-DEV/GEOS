@@ -695,7 +695,6 @@ SinglePhaseFlow::ApplyBoundaryConditions( real64 const time_n,
 
     // call the application of the boundary condition to alter the matrix and rhs
     fs->ApplyBoundaryConditionToSystem<FieldSpecificationEqual, LAInterface>( lset,
-                                                                              false,
                                                                               time_n + dt,
                                                                               subRegion,
                                                                               dofNumber,
