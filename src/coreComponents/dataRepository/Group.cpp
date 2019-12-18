@@ -12,13 +12,12 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
+// Source includes
 #include "Group.hpp"
-
-#include "ArrayUtilities.hpp"
+#include "ConduitRestart.hpp"
 #include "codingUtilities/StringUtilities.hpp"
 #include "common/TimingMacros.hpp"
 
-#include "dataRepository/ConduitRestart.hpp"
 
 namespace geosx
 {
@@ -79,7 +78,7 @@ WrapperBase * Group::registerWrapper( string const & name,
 
 void Group::deregisterWrapper( string const & name )
 {
-  GEOS_ERROR_IF( !hasWrapper( name ), "Wrapper " << name << " doesn't exist." );
+  GEOSX_ERROR_IF( !hasWrapper( name ), "Wrapper " << name << " doesn't exist." );
   m_wrappers.erase( name );
   m_conduitNode.remove( name );
 }
@@ -168,7 +167,17 @@ void Group::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
 
             if( inputFlag == InputFlags::REQUIRED || !(typedWrapper.getDefaultValueStruct().has_default_value) )
             {
-              xmlWrapper::ReadAttributeAsType( objectReference, wrapperName, targetNode, inputFlag == InputFlags::REQUIRED );
+              bool const readSuccess = xmlWrapper::ReadAttributeAsType( objectReference,
+                                                                        wrapperName,
+                                                                        targetNode,
+                                                                        inputFlag == InputFlags::REQUIRED );
+              GEOSX_ERROR_IF( !readSuccess,
+                              "Input variable " + wrapperName + " is required in " + targetNode.path()
+                              + ". Available options are: \n"+ dumpInputOptions()
+                              + "\nFor more details, please refer to documentation at: \n"
+                              + "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html \n" );
+
+
             }
             else
             {
@@ -183,10 +192,12 @@ void Group::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
     string const childName = attribute.name();
     if( childName != "name" && childName != "xmlns:xsi" && childName != "xsi:noNamespaceSchemaLocation" )
     {
-      GEOS_ERROR_IF( processedXmlNodes.count( childName )==0,
-                     "XML Node ("<<targetNode.name()<<") with attribute name=("<<
-                     targetNode.attribute( "name" ).value()<<") contains child node named ("<<
-                     childName<<") that is not read." );
+      GEOSX_ERROR_IF( processedXmlNodes.count( childName )==0,
+                      "XML Node ("<<targetNode.name()<<") with attribute name=("<<
+                      targetNode.attribute( "name" ).value()<<") contains child node named ("<<
+                      childName<<") that is not read. Valid options are: \n" << dumpInputOptions()
+                      + "\nFor more details, please refer to documentation at: \n"
+                      + "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html \n" );
     }
   }
 
@@ -215,9 +226,9 @@ void Group::RegisterDataOnMeshRecursive( Group * const meshBodies )
 
 Group * Group::CreateChild( string const & childKey, string const & childName )
 {
-  GEOS_ERROR_IF( !(CatalogInterface::hasKeyName( childKey )),
-                 "KeyName ("<<childKey<<") not found in Group::Catalog" );
-  GEOS_LOG_RANK_0( "Adding Object " << childKey<<" named "<< childName<<" from Group::Catalog." );
+  GEOSX_ERROR_IF( !(CatalogInterface::hasKeyName( childKey )),
+                  "KeyName ("<<childKey<<") not found in Group::Catalog" );
+  GEOSX_LOG_RANK_0( "Adding Object " << childKey<<" named "<< childName<<" from Group::Catalog." );
   return RegisterGroup( childName,
                         CatalogInterface::Factory( childKey, childName, this ) );
 }
@@ -227,15 +238,41 @@ void Group::PrintDataHierarchy( integer indent )
 {
   for( auto & view : this->wrappers() )
   {
-    GEOS_LOG( string( indent, '\t' )<<view.second->getName()<<", "<<view.second->get_typeid().name());
+    GEOSX_LOG( string( indent, '\t' )<<view.second->getName()<<", "<<view.second->get_typeid().name());
   }
 
   for( auto & group : this->m_subGroups )
   {
-    GEOS_LOG( string( indent, '\t' )<<group.first<<':' );
+    GEOSX_LOG( string( indent, '\t' )<<group.first<<':' );
     group.second->PrintDataHierarchy( indent + 1 );
   }
 }
+
+string Group::dumpInputOptions()
+{
+  string rval;
+  char temp[1000] = {0};
+  sprintf( temp, "  |         name         |  opt/req  | Description \n" );
+  rval.append( temp );
+  sprintf( temp, "  |----------------------|-----------|-----------------------------------------\n" );
+  rval.append( temp );
+
+  for( auto const & wrapper : m_wrappers )
+  {
+    WrapperBase const * const wb = wrapper.second;
+    if( wb->getInputFlag() == InputFlags::OPTIONAL ||
+        wb->getInputFlag() == InputFlags::REQUIRED )
+    {
+      sprintf( temp, "  | %20s | %9s | %s \n",
+               wb->getName().c_str(),
+               InputFlagToString( wb->getInputFlag()).c_str(),
+               wb->getDescription().c_str() );
+      rval.append( temp );
+    }
+  }
+  return rval;
+}
+
 
 void Group::InitializationOrder( string_array & order )
 {
@@ -418,11 +455,11 @@ localIndex Group::Unpack( buffer_unit_type const * & buffer,
   localIndex unpackedSize = 0;
   string groupName;
   unpackedSize += bufferOps::Unpack( buffer, groupName );
-  GEOS_ERROR_IF( groupName != this->getName(), "Group::Unpack(): group names do not match" );
+  GEOSX_ERROR_IF( groupName != this->getName(), "Group::Unpack(): group names do not match" );
 
   string wrappersLabel;
   unpackedSize += bufferOps::Unpack( buffer, wrappersLabel );
-  GEOS_ERROR_IF( wrappersLabel != "Wrappers", "Group::Unpack(): wrapper label incorrect" );
+  GEOSX_ERROR_IF( wrappersLabel != "Wrappers", "Group::Unpack(): wrapper label incorrect" );
 
   localIndex numWrappers;
   unpackedSize += bufferOps::Unpack( buffer, numWrappers );
@@ -439,11 +476,11 @@ localIndex Group::Unpack( buffer_unit_type const * & buffer,
   {
     string subGroups;
     unpackedSize += bufferOps::Unpack( buffer, subGroups );
-    GEOS_ERROR_IF( subGroups != "SubGroups", "Group::Unpack(): group names do not match" );
+    GEOSX_ERROR_IF( subGroups != "SubGroups", "Group::Unpack(): group names do not match" );
 
     decltype( m_subGroups.size()) numSubGroups;
     unpackedSize += bufferOps::Unpack( buffer, numSubGroups );
-    GEOS_ERROR_IF( numSubGroups != m_subGroups.size(), "Group::Unpack(): incorrect number of subGroups" );
+    GEOSX_ERROR_IF( numSubGroups != m_subGroups.size(), "Group::Unpack(): incorrect number of subGroups" );
 
     for( auto const & index : this->m_subGroups )
     {

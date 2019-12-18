@@ -8,6 +8,7 @@ set(common_headers
     Path.hpp
     GeosxMacros.hpp
     TimingMacros.hpp
+    Logger.hpp
    )
 
 #
@@ -15,6 +16,7 @@ set(common_headers
 #
 set(common_sources
     DataTypes.cpp
+    Logger.cpp
    )
 
 set( dependencyList cxx-utilities pugixml )

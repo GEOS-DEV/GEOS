@@ -423,7 +423,7 @@ inline MPI_Op MpiWrapper::getMpiOp( Reduction const op )
       return MPI_PROD;
     }
     default:
-      GEOS_ERROR( "Unsupported reduction operation" );
+      GEOSX_ERROR( "Unsupported reduction operation" );
       return MPI_NO_OP;
   }
 }
@@ -440,7 +440,7 @@ int MpiWrapper::Allgather( T_SEND const * const sendbuf,
 #else
   static_assert( std::is_same< T_SEND, T_RECV >::value,
                  "MpiWrapper::Allgather() for serial run requires send and receive buffers are of the same type" );
-  GEOS_ERROR_IF_NE_MSG( sendcount, recvcount, "sendcount is not equal to recvcount." );
+  GEOSX_ERROR_IF_NE_MSG( sendcount, recvcount, "sendcount is not equal to recvcount." );
   *recvbuf = *sendbuf;
   return 0;
 #endif
@@ -558,7 +558,7 @@ int MpiWrapper::gather( TS const * const sendbuf,
                  "MpiWrapper::gather() for serial run requires send and receive buffers are of the same type" );
   std::size_t const sendBufferSize = sendcount * sizeof(TS);
   std::size_t const recvBufferSize = recvcount * sizeof(TR);
-  GEOS_ERROR_IF_NE_MSG( sendBufferSize, recvBufferSize, "size of send buffer and receive buffer are not equal" );
+  GEOSX_ERROR_IF_NE_MSG( sendBufferSize, recvBufferSize, "size of send buffer and receive buffer are not equal" );
   memcpy( recvbuf, sendbuf, sendBufferSize );
   return 0;
 #endif
@@ -580,7 +580,7 @@ int MpiWrapper::gatherv( TS const * const sendbuf,
                  "MpiWrapper::gather() for serial run requires send and receive buffers are of the same type" );
   std::size_t const sendBufferSize = sendcount * sizeof(TS);
   std::size_t const recvBufferSize = recvcounts[0] * sizeof(TR);
-  GEOS_ERROR_IF_NE_MSG( sendBufferSize, recvBufferSize, "size of send buffer and receive buffer are not equal" );
+  GEOSX_ERROR_IF_NE_MSG( sendBufferSize, recvBufferSize, "size of send buffer and receive buffer are not equal" );
   memcpy( recvbuf, sendbuf, sendBufferSize );
   return 0;
 #endif
@@ -606,7 +606,7 @@ int MpiWrapper::iRecv( T * const buf,
   }
   else
   {
-    GEOS_ERROR_IF( iPointer->second.first != 0,
+    GEOSX_ERROR_IF( iPointer->second.first != 0,
                    "Tag does is assigned, but pointer was not set by iSend." );
     memcpy( buf, iPointer->second.second, count*sizeof(T) );
     pointerMap.erase( iPointer );
@@ -635,7 +635,7 @@ int MpiWrapper::iSend( T const * const buf,
   }
   else
   {
-    GEOS_ERROR_IF( iPointer->second.first != 1,
+    GEOSX_ERROR_IF( iPointer->second.first != 1,
                    "Tag does is assigned, but pointer was not set by iRecv." );
     memcpy( iPointer->second.second, buf, count*sizeof(T) );
     pointerMap.erase( iPointer );

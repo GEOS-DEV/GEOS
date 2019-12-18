@@ -17,7 +17,7 @@
 
 
 #include <unistd.h>
-#include "cxx-utilities/src/src/Logger.hpp"
+#include "common/Logger.hpp"
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <dirent.h>
@@ -64,9 +64,9 @@ inline void getAbsolutePath( std::string const & path, std::string & absolutePat
   {
     char const * ret = getcwd( absFilePath, PATH_MAX + 1 );
     if ( ret != nullptr )
-      GEOS_ERROR( "Could not get the absolute path for " << path << " from " << absFilePath );
+      GEOSX_ERROR( "Could not get the absolute path for " << path << " from " << absFilePath );
     else
-      GEOS_ERROR( "Could not get the absolute path for " << path );
+      GEOSX_ERROR( "Could not get the absolute path for " << path );
   }
 }
 
