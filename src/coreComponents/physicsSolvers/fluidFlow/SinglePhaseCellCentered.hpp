@@ -24,15 +24,6 @@
 namespace geosx
 {
 
-namespace dataRepository
-{
-class Group;
-}
-class FieldSpecificationBase;
-
-class FiniteElementBase;
-
-class DomainPartition;
 
 /**
  * @class SinglePhaseCellCentered

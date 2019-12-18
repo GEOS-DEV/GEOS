@@ -24,15 +24,6 @@
 namespace geosx
 {
 
-namespace dataRepository
-{
-class Group;
-}
-class FieldSpecificationBase;
-
-class FiniteElementBase;
-
-class DomainPartition;
 
 /**
  * @class SinglePhaseMimetic
@@ -165,16 +156,10 @@ public:
     static constexpr auto deltaFacePressureString = "deltaFacePressure";
   
     // one-sided face-based connectivity maps
-    static constexpr auto oneSidedFaceToFaceString  = "oneSidedFaceToFace"; 
     static constexpr auto neighborRegionIdString    = "neighborRegionIndex";
     static constexpr auto neighborSubRegionIdString = "neighborSubRegionIndex";
     static constexpr auto neighborElemIdString      = "neighborElemIndex";
     static constexpr auto neighborDofNumberString   = "neighborDofNumber";
-
-    // elem-based map to access the one-sided face vars from the elements
-    static constexpr auto elemOffsetString         = "elemOffsetString";
-
-    
   } viewKeysSinglePhaseMimetic;
 
   viewKeyStruct & viewKeys()
@@ -247,14 +232,12 @@ private:
   void ComputeOneSidedVolFluxes( arrayView1d<real64 const> const & facePres,
                                  arrayView1d<real64 const> const & dFacePres,
                                  arrayView1d<real64 const> const & faceGravDepth,
-                                 arrayView1d<localIndex const> const & oneSidedFaceToFace,
+                                 arraySlice1d<localIndex const> const elemToFaces,
                                  real64 const & elemPres,
                                  real64 const & dElemPres,
                                  real64 const & elemGravDepth,
                                  real64 const & elemDens,
                                  real64 const & dElemDens_dp,
-                                 localIndex const elemOffset,
-                                 localIndex const numFacesInElem,
                                  stackArray2d<real64, MAX_NUM_FACES_IN_ELEM
                                                      *MAX_NUM_FACES_IN_ELEM> const & transMatrix,
                                  stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> & oneSidedVolFlux,
@@ -281,17 +264,15 @@ private:
    *
    * Note: because of the upwinding, this function requires non-local information
    */
-  void UpdateUpwindedCoefficients( arrayView1d<localIndex const> const & neighborRegionId,
-                                   arrayView1d<localIndex const> const & neighborSubRegionId,
-                                   arrayView1d<localIndex const> const & neighborElemId,
-                                   arrayView1d<globalIndex const> const & neighborDofNumber,
+  void UpdateUpwindedCoefficients( arraySlice1d<localIndex const> const neighborRegionId,
+                                   arraySlice1d<localIndex const> const neighborSubRegionId,
+                                   arraySlice1d<localIndex const> const neighborElemId,
+                                   arraySlice1d<globalIndex const> const neighborDofNumber,
                                    ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const & domainMobility,
                                    ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const & dDomainMobility_dp,
                                    real64 const & elemMobility,
                                    real64 const & dElemMobility_dp,
                                    globalIndex const elemDofNumber,
-                                   localIndex const elemOffset,
-                                   localIndex const numFacesInElem,
                                    stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> const & oneSidedVolFlux,
                                    stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> & upwMobility,
                                    stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> & dUpwMobility_dp,
@@ -316,10 +297,8 @@ private:
    */
   void AssembleOneSidedMassFluxes( real64 const & dt,
                                    arrayView1d<globalIndex const> const & faceDofNumber,
-                                   arrayView1d<localIndex const> const & oneSidedFaceToFace,
+                                   arraySlice1d<localIndex const> const elemToFaces,
                                    globalIndex const elemDofNumber,
-                                   localIndex const elemOffset,
-                                   localIndex const numFacesInElem,
                                    stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> const & oneSidedVolFlux,
                                    stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> const & dOneSidedVolFlux_dp,
                                    stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> const & dOneSidedVolFlux_dfp,
@@ -344,20 +323,18 @@ private:
    * @param[inout] rhs the residual
    */
   void AssembleConstraints( arrayView1d<globalIndex const> const & faceDofNumber,
-                            arrayView1d<localIndex const> const & oneSidedFaceToFace,
+                            arraySlice1d<localIndex const> const elemToFaces,
                             globalIndex const elemDofNumber,
-                            localIndex const elemOffset,
-                            localIndex const numFacesInElem,
                             stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> const & oneSidedVolFlux,
                             stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> const & dOneSidedVolFlux_dp,
                             stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> const & dOneSidedVolFlux_dfp,
                             ParallelMatrix * const matrix,
-                            ParallelVector * const rhs ) const;
+                            ParallelVector * const rhs ) const; 
 
 
   /**
    * @brief In a given element, recompute the transmissibility matrix
-   * @param[in] X the position of the nodes
+   * @param[in] nodePosition the position of the nodes
    * @param[in] faceToNodes the map from the face to their nodes
    * @param[in] oneSidedFaceToFace the maps from the one-sided face to the corresponding face
    * @param[in] elemCenter the center of the element
@@ -372,19 +349,18 @@ private:
    */
   void ComputeTransmissibilityMatrix( arrayView1d<R1Tensor const> const & nodePosition, 
                                       ArrayOfArraysView<localIndex const> const & faceToNodes, 
-                                      arrayView1d<localIndex const> const & oneSidedFaceToFace, 
+                                      arraySlice1d<localIndex const> const elemToFaces,
                                       R1Tensor const & elemCenter, 
                                       R1Tensor const & elemPerm,
-                                      real64 const   & elemOffset,
-                                      real64 const   & numFacesInElem,
-                                      real64 const   & lengthTolerance,
+                                      real64   const & lengthTolerance,
                                       stackArray2d<real64, MAX_NUM_FACES_IN_ELEM
                                                           *MAX_NUM_FACES_IN_ELEM> & transMatrix ) const; 
   
 
-  /// Number of one-sided faces on this MPI rank
-  localIndex m_numOneSidedFaces;
-
+  
+  /// Dof key for the member functions that do not have access to the coupled Dof manager
+  string m_faceDofKey; 
+  
   /// relative tolerance (redundant with FluxApproximationBase)
   real64 m_areaRelTol;
   

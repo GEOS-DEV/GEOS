@@ -25,15 +25,6 @@
 namespace geosx
 {
 
-namespace dataRepository
-{
-class Group;
-}
-class FieldSpecificationBase;
-
-class FiniteElementBase;
-
-class DomainPartition;
 
 /**
  * @class SinglePhaseFlowBase
@@ -97,10 +88,6 @@ public:
                      ParallelVector & solution ) override;
 
   virtual void
-  SetupDofs( DomainPartition const * const domain,
-             DofManager & dofManager ) const override;
-
-  virtual void
   AssembleSystem( real64 const time_n,
                   real64 const dt,
                   DomainPartition * const domain,
@@ -108,30 +95,12 @@ public:
                   ParallelMatrix & matrix,
                   ParallelVector & rhs ) override;
 
-  virtual void
-  ApplyBoundaryConditions( real64 const time_n,
-                           real64 const dt,
-                           DomainPartition * const domain,
-                           DofManager const & dofManager,
-                           ParallelMatrix & matrix,
-                           ParallelVector & rhs ) override;
-
-  virtual real64
-  CalculateResidualNorm( DomainPartition const * const domain,
-                         DofManager const & dofManager,
-                         ParallelVector const & rhs ) override;
-
+  
   virtual void
   SolveSystem( DofManager const & dofManager,
                ParallelMatrix & matrix,
                ParallelVector & rhs,
                ParallelVector & solution ) override;
-
-  virtual void
-  ApplySystemSolution( DofManager const & dofManager,
-                       ParallelVector const & solution,
-                       real64 const scalingFactor,
-                       DomainPartition * const domain ) override;
 
   virtual void
   ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
@@ -188,7 +157,7 @@ public:
                      DomainPartition const * const domain,
                      DofManager const * const dofManager,
                      ParallelMatrix * const matrix,
-                     ParallelVector * const rhs );
+                     ParallelVector * const rhs ) = 0;
 
 
 

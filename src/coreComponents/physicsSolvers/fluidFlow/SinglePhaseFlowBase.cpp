@@ -296,9 +296,6 @@ void SinglePhaseFlowBase::ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( ti
     arrayView1d<real64> const & densOld = m_densityOld[er][esr];
     arrayView1d<real64> const & poroOld = m_porosityOld[er][esr];
 
-    // This should fix NaN density in newly created fracture elements
-    //UpdateState( subRegion );
-    
     forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
       dPres[ei] = 0.0;
@@ -355,11 +352,6 @@ void SinglePhaseFlowBase::ImplicitStepComplete( real64 const & GEOSX_UNUSED_ARG(
   } );
 }
 
-void SinglePhaseFlowBase::SetupDofs( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
-                                     DofManager & GEOSX_UNUSED_ARG( dofManager ) ) const
-{
-  GEOSX_ERROR( "SinglePhaseFlowBase::SetupDofs called!. Should be overridden." );
-}
 
 void SinglePhaseFlowBase::AssembleSystem( real64 const time_n,
                                           real64 const dt,
@@ -552,44 +544,6 @@ void SinglePhaseFlowBase::AssembleAccumulationTerms( DomainPartition const * con
   } );
 }
 
-
-void SinglePhaseFlowBase::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time_n ),
-                                             real64 const GEOSX_UNUSED_ARG(dt),
-                                             DomainPartition const * const GEOSX_UNUSED_ARG(domain),
-                                             DofManager const * const GEOSX_UNUSED_ARG(dofManager),
-                                             ParallelMatrix * const GEOSX_UNUSED_ARG(matrix),
-                                             ParallelVector * const GEOSX_UNUSED_ARG(rhs) )
-{
-  GEOSX_ERROR( "SinglePhaseFlowBase::AssembleFluxTerms called!. Should be overridden." );
-}
-
-void
-SinglePhaseFlowBase::ApplyBoundaryConditions( real64 const GEOSX_UNUSED_ARG(time_n),
-                                              real64 const GEOSX_UNUSED_ARG(dt),
-                                              DomainPartition * const GEOSX_UNUSED_ARG(domain),
-                                              DofManager const & GEOSX_UNUSED_ARG(dofManager),
-                                              ParallelMatrix & GEOSX_UNUSED_ARG(matrix),
-                                              ParallelVector & GEOSX_UNUSED_ARG(rhs) )
-{
-  GEOSX_ERROR( "SinglePhaseFlowBase::ApplyBoundaryConditions called!. Should be overridden." );
-}
-
-
-real64 SinglePhaseFlowBase::CalculateResidualNorm( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
-                                                   DofManager const & GEOSX_UNUSED_ARG( dofManager ),
-                                                   ParallelVector const & GEOSX_UNUSED_ARG( rhs ) )
-{
-  GEOSX_ERROR( "SinglePhaseFlowBase::CalculateResidualNorm called!. Should be overridden." );
-  return 0.0;
-}
-
-void SinglePhaseFlowBase::ApplySystemSolution( DofManager const & GEOSX_UNUSED_ARG( dofManager ),
-                                               ParallelVector const & GEOSX_UNUSED_ARG( solution ),
-                                               real64 const GEOSX_UNUSED_ARG( scalingFactor ),
-                                               DomainPartition * const GEOSX_UNUSED_ARG( domain ) )
-{
-  GEOSX_ERROR( "SinglePhaseFlowBase::ApplySystemSolution called!. Should be overridden." );
-}
 
 void SinglePhaseFlowBase::SolveSystem( DofManager const & dofManager,
                                        ParallelMatrix & matrix,
