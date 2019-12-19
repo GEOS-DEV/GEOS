@@ -144,6 +144,17 @@ public:
   virtual void SetNextDt( real64 const & currentDt,
                           real64 & nextDt);
 
+  /**
+       * @brief entry function to perform a solver step
+       * @param [in]  time_n time at the beginning of the step
+       * @param [in]  dt the perscribed timestep
+       * @param [out] return the timestep that was achieved during the step.
+       *
+       * T
+       */
+  void SetNextDtBasedOnNewtonIter( real64 const & currentDt,
+                                   real64 & nextDt);
+
 
   /**
    * @brief Entry function for an explicit time integration step

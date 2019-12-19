@@ -278,6 +278,20 @@ FluxKernelHelper::apertureForPermeablityCalculation<1>( real64 const aper0,
                              3*aper*aper );
 }
 
+
+template<>
+inline void
+FluxKernelHelper::apertureForPermeablityCalculation<2>( real64 const aper0,
+                                                        real64 const aper,
+                                                        real64 & aperTerm,
+                                                        real64 & dAperTerm_dAper )
+{
+  aperTerm = aper0 * aper0 * aper;
+
+  dAperTerm_dAper = aper0 * aper0;
+}
+
+
 struct FluxKernel
 {
   /**

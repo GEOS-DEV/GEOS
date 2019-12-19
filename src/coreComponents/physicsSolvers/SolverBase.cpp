@@ -233,6 +233,12 @@ void SolverBase::Execute( real64 const time_n,
 void SolverBase::SetNextDt( real64 const & currentDt,
                             real64 & nextDt )
 {
+  SetNextDtBasedOnNewtonIter(currentDt, nextDt);
+}
+
+void SolverBase::SetNextDtBasedOnNewtonIter( real64 const & currentDt,
+                                             real64 & nextDt )
+{
   integer & newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
   int const iterCutLimit = m_nonlinearSolverParameters.dtCutIterLimit();
   int const iterIncLimit = m_nonlinearSolverParameters.dtIncIterLimit();

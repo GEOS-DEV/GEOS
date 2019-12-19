@@ -76,6 +76,8 @@ HydrofractureSolver::HydrofractureSolver( const std::string& name,
     setApplyDefaultValue(10)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Value to indicate how many resolves may be executed to perform surface generation after the execution of flow and mechanics solver. ");
+
+  m_numResolves[0] = 0;
 }
 
 void HydrofractureSolver::RegisterDataOnMesh( dataRepository::Group * const GEOSX_UNUSED_ARG( MeshBodies ) )
@@ -174,7 +176,9 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
                        m_solution );
 
     int const maxIter = m_maxNumResolves + 1;
-    for( int solveIter=0 ; solveIter<maxIter ; ++solveIter )
+    m_numResolves[1] = m_numResolves[0];
+    int solveIter;
+    for( solveIter=0 ; solveIter<maxIter ; ++solveIter )
     {
       int locallyFractured = 0;
       int globallyFractured = 0;
@@ -233,7 +237,9 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 
     // final step for completion of timestep. typically secondary variable updates and cleanup.
     ImplicitStepComplete( time_n, dtReturn, domain );
+    m_numResolves[1] = solveIter;
   }
+
   return dtReturn;
 }
 
@@ -1556,8 +1562,15 @@ void HydrofractureSolver::SetNextDt( real64 const & currentDt ,
                                      real64 & nextDt )
 {
   SolverBase * const surfaceGenerator =  this->getParent()->GetGroup<SolverBase>("SurfaceGen");
-  nextDt = surfaceGenerator->GetTimestepRequest() < 1e99 ? surfaceGenerator->GetTimestepRequest() : currentDt;
-  GEOSX_LOG_RANK_0("nextDt surfaceGen " << nextDt);
+
+  if (m_numResolves[0] == 0 & m_numResolves[1] == 0)
+  {
+    this->SetNextDtBasedOnNewtonIter(currentDt, nextDt);
+  } else
+  {
+    nextDt = surfaceGenerator->GetTimestepRequest() < 1e99 ? surfaceGenerator->GetTimestepRequest() : currentDt;
+  }
+  GEOSX_LOG_RANK_0(this->getName() << ": nextDt request is "  << nextDt);
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, HydrofractureSolver, std::string const &, Group * const )
