@@ -1557,5 +1557,10 @@ void HydrofractureSolver::SetNextDt( real64 const & currentDt ,
   GEOSX_LOG_RANK_0("nextDt surfaceGen " << nextDt);
 }
 
+void HydrofractureSolver::initializeNewFaceElements( DomainPartition const &  )
+{
+//  m_flowSolver->
+}
+
 REGISTER_CATALOG_ENTRY( SolverBase, HydrofractureSolver, std::string const &, Group * const )
 } /* namespace geosx */

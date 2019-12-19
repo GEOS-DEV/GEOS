@@ -252,6 +252,16 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
 
   arrayView1d<integer const> const & edgeGhostRank = edgeManager->GhostRank();
 
+  arrayView1d< real64 > const &
+  fluidPressure = fractureSubRegion->getReference<array1d<real64>>("pressure");
+//  map<localIndex,localIndex> numNeighborElements;
+//  for( localIndex const kfe : fractureSubRegion->m_newFaceElements )
+//  {
+//    fluidPressure[kfe] = 0;
+////    numNeighborElements[kfe] = 0;
+//  }
+
+
   // add new connectors/connections between face elements to the fracture stencil
   for( auto const fci : edgeManager->m_recalculateFractureConnectorEdges )
   {
@@ -273,10 +283,12 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
       edgeManager->calculateCenter( edgeIndex, X, edgeCenter );
       edgeManager->calculateLength( edgeIndex, X, edgeLength );
 
+      real64 pressureSum = 1.0e99;
+      set<localIndex> newElems;
+
       // loop over all face elements attached to the connector and add them to the stencil
       for( localIndex kfe=0 ; kfe<numElems ; ++kfe )
       {
-
         localIndex const fractureElementIndex = fractureConnectorsToFaceElements[fci][kfe];
 
         // use straight difference between the edge center and face center for gradient length...maybe do something
@@ -290,7 +302,23 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
         stencilCellsIndex[kfe] = fractureElementIndex;
 
         stencilWeights[kfe] =  1.0 / 12.0 * edgeLength.L2_Norm() / cellCenterToEdgeCenter.L2_Norm();
+
+        // code to initialize new face elements with pressures from neighbors
+        if( fractureSubRegion->m_newFaceElements.count(fractureElementIndex)==0 )
+        {
+          pressureSum = std::min(pressureSum, fluidPressure[fractureElementIndex]);
+        }
+        else
+        {
+          newElems.insert(fractureElementIndex);
+        }
       }
+
+      for( localIndex const newElemIndex : newElems )
+      {
+        fluidPressure[newElemIndex] = std::min(fluidPressure[newElemIndex], pressureSum);
+      }
+
       // add/overwrite the stencil for index fci
       fractureStencil.add( numElems,
                            stencilCellsRegionIndex,
@@ -298,8 +326,11 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
                            stencilCellsIndex,
                            stencilWeights.data(),
                            fci );
+
     }
   }
+
+
 
   // add connections for FaceElements to/from CellElements.
   {

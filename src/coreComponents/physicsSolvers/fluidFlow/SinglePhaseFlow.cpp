@@ -508,6 +508,16 @@ void SinglePhaseFlow::AssembleSystem( real64 const time_n,
 {
   GEOSX_MARK_FUNCTION;
 
+  MeshLevel * mesh = domain->getMeshBody(0)->getMeshLevel(0);
+  applyToSubRegions( mesh, [&] ( localIndex , localIndex ,
+                                 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
+                                 ElementSubRegionBase * const subRegion )
+  {
+    UpdateState( subRegion );
+  } );
+
+
+
   matrix.zero();
   rhs.zero();
 

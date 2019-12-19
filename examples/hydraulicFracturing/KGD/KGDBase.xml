@@ -118,37 +118,13 @@
   </InitialConditions>
 
   <FieldSpecifications>
-    <!--FieldSpecification name="initialMeanStress"
+    <FieldSpecification name="initialMeanStress"
                initialCondition="1"
                setNames="{all}"
                objectPath="ElementRegions"
-               fieldName="rock_MeanStress"
-               component="-1"
-               scale="-1e7"/>
-
-    <FieldSpecification name="initialDevStressX"
-               initialCondition="1"
-               setNames="{all}"
-               objectPath="ElementRegions"
-               fieldName="rock_DeviatorStress"
+               fieldName="rock_stress"
                component="0"
-               scale="-1.1e7"/>
-
-    <FieldSpecification name="initialDevStressY"
-               initialCondition="1"
-               setNames="{all}"
-               objectPath="ElementRegions"
-               fieldName="rock_DeviatorStress"
-               component="1"
-               scale="-1.1e7"/>
-
-    <FieldSpecification name="initialDevStressZ"
-               initialCondition="1"
-               setNames="{all}"
-               objectPath="ElementRegions"
-               fieldName="rock_DeviatorStress"
-               component="2"
-               scale="-1.1e7"/-->
+               scale="-60e6"/>
 
     <FieldSpecification name="waterDensity"
                initialCondition="1"

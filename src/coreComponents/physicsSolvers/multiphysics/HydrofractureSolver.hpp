@@ -139,6 +139,8 @@ public:
                             integer const cycleNumber,
                             DomainPartition * const domain );
 
+  void initializeNewFaceElements( DomainPartition const & domain );
+
   enum class couplingTypeOption : int
   {
     FixedStress,
