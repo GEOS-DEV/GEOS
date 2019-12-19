@@ -192,6 +192,7 @@ private:
   ParallelMatrix m_permutationMatrix1; // it's used to have the output based on global ordering
 
   integer m_maxNumResolves;
+  integer m_numResolves[2];
 };
 
 } /* namespace geosx */
