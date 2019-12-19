@@ -40,6 +40,7 @@ public:
    * @brief Get the path prefix of the file
    * @details The path prefix is usually a folder path
    * in which the XML file is located
+   * @return the path prefix
    */
   static std::string & pathPrefix()
   {
@@ -63,7 +64,7 @@ inline void getAbsolutePath( std::string const & path, std::string & absolutePat
   else
   {
     char const * ret = getcwd( absFilePath, PATH_MAX + 1 );
-    if ( ret != nullptr )
+    if( ret != nullptr )
       GEOSX_ERROR( "Could not get the absolute path for " << path << " from " << absFilePath );
     else
       GEOSX_ERROR( "Could not get the absolute path for " << path );
@@ -73,6 +74,8 @@ inline void getAbsolutePath( std::string const & path, std::string & absolutePat
 /*!
  * @brief Tells wether the path is absolute of not
  * @param[in] path the input path
+ * @retval true if the path is absolute
+ * @retval false if the path is relative
  */
 inline bool isAbsolutePath( const std::string & path )
 {
@@ -81,17 +84,18 @@ inline bool isAbsolutePath( const std::string & path )
 
 /*!
  * @brief Operator use with the class Path while parsing the XML file
- * @param[in,out] is the input stream 
+ * @param[in,out] is the input stream
  * @param[in,out] p the path that will be set to an absolute path relative to the xml file
+ * @return the input stream
  */
-inline std::istream & operator>>(std::istream & is, Path & p)
+inline std::istream & operator>>( std::istream & is, Path & p )
 {
-    is >> static_cast<std::string &>(p);
-    if (!isAbsolutePath(p) && !p.pathPrefix().empty())
-    {
-        getAbsolutePath(p.pathPrefix() + '/' + p, p);
-    }
-    return is;
+  is >> static_cast< std::string & >(p);
+  if( !isAbsolutePath( p ) && !p.pathPrefix().empty())
+  {
+    getAbsolutePath( p.pathPrefix() + '/' + p, p );
+  }
+  return is;
 }
 
 /*!
@@ -103,7 +107,7 @@ inline std::istream & operator>>(std::istream & is, Path & p)
 inline void splitPath( std::string const & path, std::string & dirName, std::string & baseName )
 {
   size_t pos = path.find_last_of( '/' );
-  
+
   if( pos == std::string::npos )
   {
     dirName = ".";
@@ -126,9 +130,9 @@ inline void splitPath( std::string const & path, std::string & dirName, std::str
  * @brief List all the files of one directory
  * @details Taken from http://www.martinbroadhurst.com/list-the-files-in-a-directory-in-c.html
  * @param[in] path path to the directory
- * param[out] file vector containing allt the file path
+ * @param[out] files vector containing allt the file path
  */
-inline void readDirectory( std::string const & path, std::vector< std::string >& files )
+inline void readDirectory( std::string const & path, std::vector< std::string > & files )
 {
   DIR * dirp = opendir( path.c_str() );
   struct dirent * dp;
