@@ -659,13 +659,17 @@ void SinglePhaseFlow::AccumulationLaunch( localIndex const er,
   arrayView2d<real64 const> const & dens          = m_density[er][esr][m_fluidIndex];
   arrayView2d<real64 const> const & dDens_dPres   = m_dDens_dPres[er][esr][m_fluidIndex];
 
-  arrayView1d<real64 const> const &
-  creationMass = subRegion->getReference<real64_array>(FaceElementSubRegion::viewKeyStruct::creationMassString);
+//  arrayView1d<real64 const> const &
+//  creationMass = subRegion->getReference<real64_array>(FaceElementSubRegion::viewKeyStruct::creationMassString);
 
   forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
   {
     if (elemGhostRank[ei] < 0)
     {
+
+//      printf( "element, densOld, dens = %4ld, %4.2e, %4.2e \n", ei, densOld[ei], dens[ei][0] );
+      printf( "element, volume, dvol = %4ld, %4.2e, %4.2e \n", ei, volume[ei], dVol[ei] );
+
       real64 localAccum, localAccumJacobian;
       globalIndex const elemDOF = dofNumber[ei];
 
@@ -677,10 +681,10 @@ void SinglePhaseFlow::AccumulationLaunch( localIndex const er,
                                                                           localAccum,
                                                                           localAccumJacobian );
 
-      if( volume[ei] * densOld[ei] > 1.1 * creationMass[ei] )
-      {
-        localAccum += creationMass[ei] * 0.5;
-      }
+//      if( volume[ei] * densOld[ei] > 1.1 * creationMass[ei] )
+//      {
+//        localAccum += creationMass[ei] * 0.5;
+//      }
       // add contribution to global residual and jacobian
       matrix->add( elemDOF, elemDOF, localAccumJacobian );
       rhs->add( elemDOF, localAccum );

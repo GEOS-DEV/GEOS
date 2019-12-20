@@ -23,7 +23,7 @@
                   nz="{10, 10, 10, 10, 10}"
                   cellBlockNames="{cb1}"/-->
 
-    <InternalMesh name="mesh1"
+    <!-- InternalMesh name="mesh1"
                   elementTypes="{C3D8}"
                   xCoords="{-400, -200, -102, 102, 200, 400}"
                   yCoords="{-400, -200, -102, 102, 200, 400}"
@@ -31,7 +31,7 @@
                   nx="{20, 10, 51, 10, 20}"
                   ny="{20, 10, 51, 10, 20}"
                   nz="{20, 10, 10, 10, 20}"
-                  cellBlockNames="{cb1}"/>
+                  cellBlockNames="{cb1}"/-->
                   
     <InternalMesh name="mesh1"
                   elementTypes="{C3D8}"
