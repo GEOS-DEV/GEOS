@@ -276,6 +276,9 @@ FluxKernelHelper::apertureForPermeablityCalculation<1>( real64 const aper0,
   dAperTerm_dAper = 0.25 * ( aper0*aper0 +
                              2*aper0*aper +
                              3*aper*aper );
+
+
+  //printf( "aper0, aper, Kf = %4.2e, %4.2e, %4.2e \n", aper0, aper, aperTerm );
 }
 
 

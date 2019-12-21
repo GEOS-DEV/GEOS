@@ -668,7 +668,7 @@ void SinglePhaseFlow::AccumulationLaunch( localIndex const er,
     {
 
 //      printf( "element, densOld, dens = %4ld, %4.2e, %4.2e \n", ei, densOld[ei], dens[ei][0] );
-      printf( "element, volume, dvol = %4ld, %4.2e, %4.2e \n", ei, volume[ei], dVol[ei] );
+      //printf( "element, volume, dvol = %4ld, %4.2e, %4.2e \n", ei, volume[ei], dVol[ei] );
 
       real64 localAccum, localAccumJacobian;
       globalIndex const elemDOF = dofNumber[ei];
