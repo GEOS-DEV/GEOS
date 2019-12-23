@@ -178,7 +178,7 @@ template< typename T >
 constexpr bool has_resize_dimensions_method = internal::has_resize_dimensions_method< T >::value;
 
 template< typename T >
-constexpr bool is_string = is_instance_of_v< std::string, T >;
+constexpr bool is_string = is_base_of_v< std::string, T >;
 
 template< typename T >
 constexpr bool is_std_vector = is_instantiation_of< std::vector, T >;

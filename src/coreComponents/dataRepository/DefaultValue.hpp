@@ -53,6 +53,7 @@ struct is_defaultable
                                 std::is_same< T, unsigned long long int >::value ||
                                 std::is_floating_point< T >::value ||
                                 std::is_same< T, string >::value ||
+                                std::is_same< T, Path >::value ||
                                 std::is_same< T, R1Tensor >::value ||
                                 std::is_same< T, R2Tensor >::value ||
                                 std::is_same< T, R2SymTensor >::value;

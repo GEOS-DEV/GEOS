@@ -15,12 +15,10 @@
 /**
  * @file MultiPhaseMultiComponentFluid.cpp
  */
-#include "codingUtilities/Utilities.hpp"
-#include "codingUtilities/StringUtilities.hpp"
-#include "managers/ProblemManager.hpp"
-#include "fileIO/utils/utils.hpp"
-
 #include "MultiPhaseMultiComponentFluid.hpp"
+
+#include "common/Path.hpp"
+#include "managers/ProblemManager.hpp"
 #include "constitutive/fluid/PVTFunctions/CO2SolubilityFunction.hpp"
 #include "constitutive/fluid/PVTFunctions/SpanWagnerCO2DensityFunction.hpp"
 #include "constitutive/fluid/PVTFunctions/FenghourCO2ViscosityFunction.hpp"
@@ -183,10 +181,10 @@ void MultiPhaseMultiComponentFluid::CreatePVTModels()
       {
 
         m_flashModel = ( FlashModel::CatalogInterface::Factory( strs[1],
-								strs,
-								m_phaseNames,
-								m_componentNames,
-								m_componentMolarWeight) );
+                strs,
+                m_phaseNames,
+                m_componentNames,
+                m_componentMolarWeight) );
       }
       else 
         GEOSX_ERROR("Error: Not flash model: " << strs[0] << ".");
@@ -341,7 +339,7 @@ void MultiPhaseMultiComponentFluid::Compute( localIndex const NC, localIndex con
     for (localIndex ic = 0; ic < NC; ++ic)
     {
       C[ic].m_var = composition[ic];
-      C[ic].m_der[ic+1] = 1.0;            
+      C[ic].m_der[ic+1] = 1.0;
     }
   }
 
@@ -497,8 +495,8 @@ void MultiPhaseMultiComponentFluid::Compute( real64 const & GEOSX_UNUSED_ARG( pr
                                              arraySlice2d<real64> const & GEOSX_UNUSED_ARG( dPhaseCompFraction_dTemperature ),
                                              arraySlice3d<real64> const & GEOSX_UNUSED_ARG( dPhaseCompFraction_dGlobalCompFraction ),
                                              real64 & GEOSX_UNUSED_ARG( totalDensity ),
-					     real64 & GEOSX_UNUSED_ARG( dTotalDensity_dPressure ),
-					     real64 & GEOSX_UNUSED_ARG( dTotalDensity_dTemperature ),
+                                             real64 & GEOSX_UNUSED_ARG( dTotalDensity_dPressure ),
+                                             real64 & GEOSX_UNUSED_ARG( dTotalDensity_dTemperature ),
                                              arraySlice1d<real64> const & GEOSX_UNUSED_ARG( dTotalDensity_dGlobalCompFraction) ) const
 {
 }

@@ -75,7 +75,7 @@ private:
   string_array m_fieldsToImport;
 
   /// Path to the mesh file
-  string m_filePath;
+  Path m_filePath;
 
   /// Scale factor that will be applied to the point coordinates
   real64 m_scale;

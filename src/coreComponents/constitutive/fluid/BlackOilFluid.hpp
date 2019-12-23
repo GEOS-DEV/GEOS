@@ -82,7 +82,7 @@ private:
   array1d<real64> m_surfaceDensities;
 
   // Black-oil table filenames
-  string_array m_tableFiles;
+  path_array  m_tableFiles;
 
   // Input string for type of black-oil fluid (live/dead)
   string m_fluidTypeString;
