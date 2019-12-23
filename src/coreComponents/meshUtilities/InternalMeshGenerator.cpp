@@ -93,17 +93,20 @@ InternalMeshGenerator::InternalMeshGenerator( string const & name, Group * const
   registerWrapper(keys::xBias, &(m_nElemBias[0]), false )->
     setApplyDefaultValue(1.0)->
     setSizedFromParent(0)->
-    setInputFlag(InputFlags::OPTIONAL);
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("bias of element sizes in the x-direction within each mesh block (dx_left=(1+b)*L/N, dx_right=(1-b)*L/N)");
 
   registerWrapper(keys::yBias, &(m_nElemBias[1]), false )->
     setApplyDefaultValue(1.0)->
     setSizedFromParent(0)->
-    setInputFlag(InputFlags::OPTIONAL);
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("bias of element sizes in the y-direction within each mesh block (dy_left=(1+b)*L/N, dx_right=(1-b)*L/N)");
 
   registerWrapper(keys::zBias, &(m_nElemBias[2]), false )->
     setApplyDefaultValue(1.0)->
     setSizedFromParent(0)->
-    setInputFlag(InputFlags::OPTIONAL);
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("bias of element sizes in the z-direction within each mesh block (dz_left=(1+b)*L/N, dz_right=(1-b)*L/N)");
 
   registerWrapper(keys::cellBlockNames, &m_regionNames, false )->
     setInputFlag(InputFlags::REQUIRED)->
