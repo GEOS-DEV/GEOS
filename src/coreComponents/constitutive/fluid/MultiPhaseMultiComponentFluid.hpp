@@ -148,7 +148,7 @@ private:
   void CreatePVTModels();
 
   // phase PVT parameter filenames
-  string_array m_phasePVTParaFiles;
+  path_array m_phasePVTParaFiles;
 
   string m_flashModelParaFile;
 
