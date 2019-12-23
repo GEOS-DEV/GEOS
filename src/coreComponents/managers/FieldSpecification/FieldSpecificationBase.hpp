@@ -27,6 +27,8 @@
 #include "managers/FieldSpecification/FieldSpecificationOps.hpp"
 #include "managers/Functions/FunctionManager.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "managers/ObjectManagerBase.hpp"
+
 
 namespace geosx
 {
@@ -40,7 +42,7 @@ class Function;
 class FieldSpecificationBase : public dataRepository::Group
 {
 public:
-
+ 
   /**
    * @defgroup alias and functions to defined statically initialized catalog
    * @{
@@ -127,7 +129,6 @@ public:
    */
   template< typename FIELD_OP, typename LAI >
   void ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
-                                       bool normalizeBySetSize,
                                        real64 const time,
                                        dataRepository::Group * dataGroup,
                                        string const & fieldName,
@@ -163,7 +164,6 @@ public:
   template< typename FIELD_OP, typename LAI, typename LAMBDA >
   void
   ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
-                                  bool normalizeBySetSize,
                                   real64 const time,
                                   dataRepository::Group * dataGroup,
                                   arrayView1d<globalIndex const> const & dofMap,
@@ -199,7 +199,6 @@ public:
   template< typename FIELD_OP, typename LAI, typename LAMBDA >
   void
   ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
-                                  bool normalizeBySetSize,
                                   real64 const time,
                                   real64 const dt,
                                   dataRepository::Group * dataGroup,
@@ -209,6 +208,8 @@ public:
                                   typename LAI::ParallelVector & rhs,
                                   LAMBDA && lambda ) const;
 
+  
+  
   struct viewKeyStruct
   {
     constexpr static auto setNamesString = "setNames";
@@ -224,8 +225,7 @@ public:
     constexpr static auto initialConditionString = "initialCondition";
     constexpr static auto beginTimeString = "beginTime";
     constexpr static auto endTimeString = "endTime";
-
-
+    constexpr static auto fluxBoundaryConditionString = "fluxBoundaryConditionString"; 
   } viewKeys;
 
   struct groupKeyStruct
@@ -313,6 +313,9 @@ public:
 protected:
   void PostProcessInput() override final;
 
+  /// The flag used to decide if the BC value is normalized by the size of the set on which it is applied
+  bool m_normalizeBySetSize;
+  
 private:
 
 
@@ -350,9 +353,11 @@ private:
   /// Time after which the bc will no longer be applied.
   real64 m_endTime;
 
-  /// the name of a function used to turn on and off the boundary condition.
+  /// The name of a function used to turn on and off the boundary condition.
   string m_bcApplicationFunctionName;
 
+  /// The factor used to normalize the boundary flux by the size of the set it is applied to
+  //real64 m_setSizeScalingFactor;
 
 };
 
@@ -428,7 +433,6 @@ void FieldSpecificationBase::ApplyFieldValue( set<localIndex> const & targetSet,
 
 template< typename FIELD_OP, typename LAI >
 void FieldSpecificationBase::ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
-                                                             bool normalizeBySetSize,
                                                              real64 const time,
                                                              dataRepository::Group * dataGroup,
                                                              string const & fieldName,
@@ -449,10 +453,9 @@ void FieldSpecificationBase::ApplyBoundaryConditionToSystem( set<localIndex> con
       dataRepository::Wrapper<fieldType> & wrapper = dynamic_cast< dataRepository::Wrapper<fieldType> & >(*wrapperBase);
       typename dataRepository::Wrapper<fieldType>::ViewTypeConst fieldView = wrapper.referenceAsView();
 
-      this->ApplyBoundaryConditionToSystem<FIELD_OP, LAI>( targetSet, normalizeBySetSize, time, dataGroup, dofMap, dofDim, matrix, rhs,
+      this->ApplyBoundaryConditionToSystem<FIELD_OP, LAI>( targetSet, time, dataGroup, dofMap, dofDim, matrix, rhs,
         [&]( localIndex const a )->real64
         {
-          //return static_cast<real64>(rtTypes::value( field[a], component ));
           real64 value = 0.0;
           FieldSpecificationEqual::ReadFieldValue( fieldView, a, component, value );
           return value;
@@ -466,7 +469,6 @@ template< typename FIELD_OP, typename LAI, typename LAMBDA >
 void
 FieldSpecificationBase::
 ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
-                                bool normalizeBySetSize,
                                 real64 const time,
                                 dataRepository::Group * dataGroup,
                                 arrayView1d<globalIndex const> const & dofMap,
@@ -482,9 +484,26 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
   globalIndex_array  dof( targetSet.size() );
   real64_array rhsContribution( targetSet.size() );
 
-  // TODO: not correct in parallel, need to compute global size of a set
-  real64 const setSizeFactor = ( normalizeBySetSize && !targetSet.empty() ) ? 1.0/targetSet.size() : 1.0;
+  real64 sizeScalingFactor = 0;
+  if (m_normalizeBySetSize)
+  {
+    // note: this assumes that the ghost elements have been filtered out 
+    
+    // recompute the set size here to make sure that topology changes are accounted for
+    integer const localSetSize = targetSet.size(); 
+    integer globalSetSize = 0;
 
+    // synchronize
+    MpiWrapper::allReduce( &localSetSize, &globalSetSize, 1, MPI_SUM, MPI_COMM_GEOSX );
+
+    // set the scaling factor
+    sizeScalingFactor = globalSetSize >= 1 ? 1.0 / globalSetSize : 1;
+  }
+  else
+  {
+    sizeScalingFactor = 1;
+  }
+  
   if( functionName.empty() )
   {
 
@@ -495,7 +514,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
       FIELD_OP::template SpecifyFieldValue<LAI>( dof( counter ),
                                                  matrix,
                                                  rhsContribution( counter ),
-                                                 m_scale * setSizeFactor,
+                                                 m_scale * sizeScalingFactor,
                                                  lambda( a ) );
       ++counter;
     }
@@ -509,7 +528,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
 
     if( function->isFunctionOfTime()==2 )
     {
-      real64 value = m_scale * function->Evaluate( &time ) * setSizeFactor;
+      real64 value = m_scale * function->Evaluate( &time ) * sizeScalingFactor;
       integer counter=0;
       for( auto a : targetSet )
       {
@@ -535,7 +554,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
         FIELD_OP::template SpecifyFieldValue<LAI>( dof( counter ),
                                                    matrix,
                                                    rhsContribution( counter ),
-                                                   m_scale * result[counter] * setSizeFactor,
+                                                   m_scale * result[counter] * sizeScalingFactor,
                                                    lambda( a ) );
         ++counter;
       }
@@ -548,7 +567,6 @@ template< typename FIELD_OP, typename LAI, typename LAMBDA >
 void
 FieldSpecificationBase::
 ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
-                                bool normalizeBySetSize,
                                 real64 const time,
                                 real64 const dt,
                                 dataRepository::Group * dataGroup,
@@ -565,14 +583,27 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
   globalIndex_array  dof( targetSet.size() );
   real64_array rhsContribution( targetSet.size() );
 
-  // TODO: not correct in parallel, need to compute global size of a set
-  int mytargetSetNumber = targetSet.size();
-  int totalTargetSetNumber;
+  real64 sizeScalingFactor = 0.0;
+  if (m_normalizeBySetSize)
+  {
+    // note: this assumes that the ghost elements have been filtered out 
+    
+    // recompute the set size here to make sure that topology changes are accounted for
+    integer const localSetSize = targetSet.size(); 
+    integer globalSetSize = 0;
 
-  MpiWrapper::allReduce( &mytargetSetNumber, &totalTargetSetNumber, 1, MPI_SUM, MPI_COMM_GEOSX );
+    // synchronize
+    MpiWrapper::allReduce( &localSetSize, &globalSetSize, 1, MPI_SUM, MPI_COMM_GEOSX );
 
-  real64 const setSizeFactor = ( normalizeBySetSize && (totalTargetSetNumber!= 0) ) ? 1.0/totalTargetSetNumber : 1.0;
+    // set the scaling factor
+    sizeScalingFactor = globalSetSize >= 1 ? 1.0 / globalSetSize : 1;
+  }
+  else
+  {
+    sizeScalingFactor = 1;
+  }
 
+  
   if( functionName.empty() )
   {
 
@@ -583,7 +614,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
       FIELD_OP::template SpecifyFieldValue<LAI>( dof( counter ),
                                                  matrix,
                                                  rhsContribution( counter ),
-                                                 m_scale * dt * setSizeFactor,
+                                                 m_scale * dt * sizeScalingFactor,
                                                  lambda( a ) );
       ++counter;
     }
@@ -597,7 +628,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
 
     if( function->isFunctionOfTime()==2 )
     {
-      real64 value = m_scale * dt * function->Evaluate( &time ) * setSizeFactor;
+      real64 value = m_scale * dt * function->Evaluate( &time ) * sizeScalingFactor;
       integer counter=0;
       for( auto a : targetSet )
       {
@@ -623,7 +654,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
         FIELD_OP::template SpecifyFieldValue<LAI>( dof( counter ),
                                                    matrix,
                                                    rhsContribution( counter ),
-                                                   m_scale * dt * result[counter] * setSizeFactor,
+                                                   m_scale * dt * result[counter] * sizeScalingFactor,
                                                    lambda( a ) );
         ++counter;
       }
