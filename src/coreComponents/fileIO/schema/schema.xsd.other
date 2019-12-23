@@ -3,6 +3,11 @@
 	<xsd:annotation>
 		<xsd:documentation xml:lang="en">GEOSX Input Schema</xsd:documentation>
 	</xsd:annotation>
+	<xsd:simpleType name="Path">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[^,\{\}]*" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:simpleType name="string">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value="[^,\{\}]*" />
@@ -151,6 +156,11 @@
 	<xsd:simpleType name="globalIndex">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value="[+-]?[\d]+" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="path_array">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="\{([^,\{\}]*,\s*)*[^,\{\}]*\}" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="localIndex">
@@ -1321,7 +1331,7 @@
 		<!--nextWellElementIndexGlobal => (no description available)-->
 		<xsd:attribute name="nextWellElementIndexGlobal" type="localIndex_array" />
 		<!--nodeList => (no description available)-->
-		<xsd:attribute name="nodeList" type="geosx::InterObjectRelation&lt;LvArray::Array&lt;long, 2, camp::int_seq&lt;long, 1l, 0l&gt;, long, LvArray::ChaiBuffer&gt; &gt;" />
+		<xsd:attribute name="nodeList" type="geosx::InterObjectRelation&lt;LvArray::Array&lt;long, 2, camp::int_seq&lt;long, 0l, 1l&gt;, long, LvArray::ChaiBuffer&gt; &gt;" />
 		<!--topRank => (no description available)-->
 		<xsd:attribute name="topRank" type="integer" />
 		<!--topWellElementIndex => (no description available)-->
