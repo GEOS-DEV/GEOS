@@ -163,6 +163,7 @@ void InternalMeshGenerator::PostProcessInput()
   }
 
   {
+    // Check for vertex/element matching
     bool failFlag = false;
     for( int i=0 ; i<m_dim ; ++i )
     {
@@ -171,6 +172,20 @@ void InternalMeshGenerator::PostProcessInput()
     if( failFlag )
     {
       GEOSX_ERROR("vertex/element mismatch InternalMeshGenerator::ReadXMLPost()");
+    }
+
+    // If specified, check to make sure bias values have the correct length
+    for( int i=0 ; i<m_dim ; ++i )
+    {
+      if (m_nElems[i].size() > 0)
+      {
+        m_useBias = true;
+        failFlag += ( m_nElems[i].size() != m_nElemBias[i].size() );
+      }
+    }
+    if( failFlag )
+    {
+      GEOSX_ERROR("element/bias mismatch InternalMeshGenerator::ReadXMLPost()");
     }
   }
 
