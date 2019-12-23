@@ -180,7 +180,7 @@ void InternalMeshGenerator::PostProcessInput()
     // If specified, check to make sure bias values have the correct length
     for( int i=0 ; i<m_dim ; ++i )
     {
-      if (m_nElems[i].size() > 0)
+      if (m_nElemBias[i].size() > 0)
       {
         m_useBias = true;
         failFlag += ( m_nElems[i].size() != m_nElemBias[i].size() );
