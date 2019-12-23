@@ -86,7 +86,7 @@ void WellElementSubRegion::Generate( MeshLevel                        & mesh,
   // this is enforced in the InternalWellGenerator that currently merges two perforations 
   // if they belong to the same well element. This is a temporary solution.
   // TODO: split the well elements that contain multiple perforations, so that no element is shared
-  GEOS_ERROR_IF( sharedElems.size() > 0,
+  GEOSX_ERROR_IF( sharedElems.size() > 0,
                  "Well " << getName() << " contains shared well elements");
 
 
@@ -251,7 +251,7 @@ void WellElementSubRegion::CheckPartitioningValidity( InternalWellGenerator cons
       globalIndex const numBranches = prevElemIdsGlobal[iwelemGlobal].size();
       globalIndex const prevGlobal  = prevElemIdsGlobal[iwelemGlobal][numBranches-1];
 
-      GEOS_ERROR_IF( prevGlobal <= iwelemGlobal || prevGlobal < 0,
+      GEOSX_ERROR_IF( prevGlobal <= iwelemGlobal || prevGlobal < 0,
                     "Invalid partitioning in well " << getName() );
 
       if (elemStatusGlobal[prevGlobal] == WellElemStatus::LOCAL)

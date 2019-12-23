@@ -19,7 +19,7 @@
 #ifndef GEOSX_DATAREPOSITORY_INPUTFLAGS_HPP_
 #define GEOSX_DATAREPOSITORY_INPUTFLAGS_HPP_
 
-#include "Logger.hpp"
+#include "common/Logger.hpp"
 
 namespace geosx
 {
@@ -45,7 +45,7 @@ enum class InputFlags : int
 
 /**
  * @brief Convert integer value to InputFlags
- * @param val value to convert
+ * @param[in] val value to convert
  * @return converted enumeration
  */
 inline InputFlags IntToInputFlag( int const val )
@@ -70,7 +70,7 @@ inline InputFlags IntToInputFlag( int const val )
     }
     default:
     {
-      GEOS_ERROR( "Invalid integer conversion to InputFlag" );
+      GEOSX_ERROR( "Invalid integer conversion to InputFlag" );
     }
   }
   return rval;
@@ -78,12 +78,62 @@ inline InputFlags IntToInputFlag( int const val )
 
 /**
  * @brief Convert InputFlags to int
- * @param val value to convert
+ * @param[in] val value to convert
  * @return converted integer
  */
 inline int InputFlagToInt( InputFlags const val )
 {
   return static_cast< int >(val);
+}
+
+
+/**
+ * @brief Convert an InputFlags value to a string.
+ * @param[in] val The value of the input flag that will be converted to a string
+ * @return The string equivalent of the input @p val.
+ */
+inline std::string InputFlagToString( InputFlags const val )
+{
+  std::string rval;
+  switch( val )
+  {
+    case InputFlags::INVALID:
+    {
+      rval = "INVALID";
+      break;
+    }
+    case InputFlags::FALSE:
+    {
+      rval = "FALSE";
+      break;
+    }
+    case InputFlags::OPTIONAL:
+    {
+      rval = "OPTIONAL";
+      break;
+    }
+    case InputFlags::OPTIONAL_NONUNIQUE:
+    {
+      rval = "OPTIONAL_NONUNIQUE";
+      break;
+    }
+    case InputFlags::REQUIRED:
+    {
+      rval = "REQUIRED";
+      break;
+    }
+    case InputFlags::REQUIRED_NONUNIQUE:
+    {
+      rval = "REQUIRED_NONUNIQUE";
+      break;
+    }
+    case InputFlags::PROBLEM_ROOT:
+    {
+      rval = "PROBLEM_ROOT";
+      break;
+    }
+  }
+  return rval;
 }
 
 /**
