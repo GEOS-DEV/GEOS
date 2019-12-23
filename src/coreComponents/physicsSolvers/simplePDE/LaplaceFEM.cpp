@@ -291,7 +291,7 @@ void LaplaceFEM::ApplySystemSolution( DofManager const & dofManager,
   MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
   NodeManager * const nodeManager = mesh->getNodeManager();
 
-  dofManager.copyVectorToField( solution, m_fieldName, scalingFactor, nodeManager, m_fieldName );
+  dofManager.addVectorToField( solution, m_fieldName, scalingFactor, nodeManager, m_fieldName );
 
   // Syncronize ghost nodes
   std::map<string, string_array> fieldNames;
@@ -366,7 +366,6 @@ void LaplaceFEM::ApplyDirichletBC_implicit( real64 const time,
                         string const GEOSX_UNUSED_ARG( fieldName ) )->void
   {
     bc->ApplyBoundaryConditionToSystem<FieldSpecificationEqual, LAInterface>( targetSet,
-                                                                              false,
                                                                               time,
                                                                               targetGroup,
                                                                               m_fieldName,
