@@ -10,7 +10,8 @@ Hydrofracture                node             :ref:`XML_Hydrofracture`
 LaplaceFEM                   node             :ref:`XML_LaplaceFEM`                   
 Poroelastic                  node             :ref:`XML_Poroelastic`                  
 Reservoir                    node             :ref:`XML_Reservoir`                    
-SinglePhaseFlow              node             :ref:`XML_SinglePhaseFlow`              
+SinglePhaseFVM               node             :ref:`XML_SinglePhaseFVM`               
+SinglePhaseHybridFVM         node             :ref:`XML_SinglePhaseHybridFVM`         
 SinglePhaseWell              node             :ref:`XML_SinglePhaseWell`              
 SolidMechanicsLagrangianSSLE node             :ref:`XML_SolidMechanicsLagrangianSSLE` 
 SolidMechanics_LagrangianFEM node             :ref:`XML_SolidMechanics_LagrangianFEM` 

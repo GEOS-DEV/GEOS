@@ -13,26 +13,26 @@
  */
 
 /**
- * @file SinglePhaseCellCentered.hpp
+ * @file SinglePhaseFVM.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASECELLCENTERED_HPP_
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASECELLCENTERED_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEFVM_HPP_
+#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEFVM_HPP_
 
-#include "physicsSolvers/fluidFlow/SinglePhaseFlowBase.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 
 namespace geosx
 {
 
 
 /**
- * @class SinglePhaseCellCentered
+ * @class SinglePhaseFVM
  *
  * class to perform a single phase finite volume solve 
  * using only cell-centered variables 
  * works with both TPFA and MPFA
  */
-class SinglePhaseCellCentered : public SinglePhaseFlowBase
+class SinglePhaseFVM : public SinglePhaseBase
 {
 public:
   /**
@@ -40,36 +40,36 @@ public:
    * @param name the name of this instantiation of Group in the repository
    * @param parent the parent group of this instantiation of Group
    */
-  SinglePhaseCellCentered( const std::string & name,
-                           Group * const parent );
+  SinglePhaseFVM( const std::string & name,
+                  Group * const parent );
 
 
   /// deleted default constructor
-  SinglePhaseCellCentered() = delete;
+  SinglePhaseFVM() = delete;
 
   /// deleted copy constructor
-  SinglePhaseCellCentered( SinglePhaseCellCentered const & ) = delete;
+  SinglePhaseFVM( SinglePhaseFVM const & ) = delete;
 
   /// default move constructor
-  SinglePhaseCellCentered( SinglePhaseCellCentered && ) = default;
+  SinglePhaseFVM( SinglePhaseFVM && ) = default;
 
   /// deleted assignment operator
-  SinglePhaseCellCentered & operator=( SinglePhaseCellCentered const & ) = delete;
+  SinglePhaseFVM & operator=( SinglePhaseFVM const & ) = delete;
 
   /// deleted move operator
-  SinglePhaseCellCentered & operator=( SinglePhaseCellCentered && ) = delete;
+  SinglePhaseFVM & operator=( SinglePhaseFVM && ) = delete;
 
   /**
    * @brief default destructor
    */
-  virtual ~SinglePhaseCellCentered() override = default;
+  virtual ~SinglePhaseFVM() override = default;
 
   /**
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
   static string CatalogName()
-  { return "SinglePhaseCellCentered"; }
+  { return "SinglePhaseFVM"; }
 
   /**
    * @defgroup Solver Interface Function
@@ -120,25 +120,25 @@ public:
 
   /**@}*/
 
-  struct viewKeyStruct : SinglePhaseFlowBase::viewKeyStruct
+  struct viewKeyStruct : SinglePhaseBase::viewKeyStruct
   {
-  } viewKeysSinglePhaseCellCentered;
+  } viewKeysSinglePhaseFVM;
 
   viewKeyStruct & viewKeys()
-  { return viewKeysSinglePhaseCellCentered; }
+  { return viewKeysSinglePhaseFVM; }
 
   viewKeyStruct const & viewKeys() const
-  { return viewKeysSinglePhaseCellCentered; }
+  { return viewKeysSinglePhaseFVM; }
 
   struct groupKeyStruct : SolverBase::groupKeyStruct
   {
-  } groupKeysSinglePhaseCellCentered;
+  } groupKeysSinglePhaseFVM;
 
   groupKeyStruct & groupKeys()
-  { return groupKeysSinglePhaseCellCentered; }
+  { return groupKeysSinglePhaseFVM; }
 
   groupKeyStruct const & groupKeys() const
-  { return groupKeysSinglePhaseCellCentered; }
+  { return groupKeysSinglePhaseFVM; }
 
 private:
 
@@ -158,11 +158,11 @@ private:
                                       ParallelMatrix * const matrix,
                                       ParallelVector * const rhs );
 
-  // no data needed here, see SinglePhaseFlowBase
+  // no data needed here, see SinglePhaseBase
 
 };
 
 
 } /* namespace geosx */
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASECELLCENTERED_HPP_
+#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEFVM_HPP_

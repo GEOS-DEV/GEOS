@@ -15,17 +15,17 @@
 // Source includes
 #include "managers/initialization.hpp"
 #include "common/Logger.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseFlowKernels.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/unitTests/testFlowKernelHelpers.hpp"
 
 // TPL includes
 #include <gtest/gtest.h>
 
 using namespace geosx;
-using namespace geosx::SinglePhaseFlowKernels;
+using namespace geosx::SinglePhaseKernels;
 
 
-TEST( SinglePhaseFlowKernels, mobility )
+TEST( SinglePhaseKernels, mobility )
 {
   int constexpr NTEST = 3;
 
@@ -58,7 +58,7 @@ TEST( SinglePhaseFlowKernels, mobility )
  * @note This only tests uncoupled version.
  * In future, porosity update will be elsewhere and this will be simplified.
  */
-TEST( SinglePhaseFlowKernels, accumulation )
+TEST( SinglePhaseKernels, accumulation )
 {
   int constexpr NTEST = 3;
 
@@ -243,7 +243,7 @@ void testFluxKernel( CellElementStencilTPFA const & stencil,
   }
 }
 
-TEST( SinglePhaseFlowKernels, fluxFull )
+TEST( SinglePhaseKernels, fluxFull )
 {
   localIndex constexpr stencilSize = 2;
 
@@ -294,7 +294,7 @@ TEST( SinglePhaseFlowKernels, fluxFull )
   }
 }
 
-TEST( SinglePhaseFlowKernels, fluxRegion )
+TEST( SinglePhaseKernels, fluxRegion )
 {
   localIndex constexpr stencilSize = 2;
   CellElementStencilTPFA stencil;

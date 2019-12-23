@@ -13,11 +13,11 @@
  */
 
 /**
- * @file SinglePhaseFlowBase.hpp
+ * @file SinglePhaseBase.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEFLOWBASE_HPP_
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEFLOWBASE_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEBASE_HPP_
+#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEBASE_HPP_
 
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
@@ -27,11 +27,11 @@ namespace geosx
 
 
 /**
- * @class SinglePhaseFlowBase
+ * @class SinglePhaseBase
  *
  * base class to perform a single phase finite volume solve.
  */
-class SinglePhaseFlowBase : public FlowSolverBase
+class SinglePhaseBase : public FlowSolverBase
 {
 public:
   /**
@@ -39,29 +39,29 @@ public:
    * @param name the name of this instantiation of Group in the repository
    * @param parent the parent group of this instantiation of Group
    */
-  SinglePhaseFlowBase( const std::string & name,
+  SinglePhaseBase( const std::string & name,
                        Group * const parent );
 
 
   /// deleted default constructor
-  SinglePhaseFlowBase() = delete;
+  SinglePhaseBase() = delete;
 
   /// deleted copy constructor
-  SinglePhaseFlowBase( SinglePhaseFlowBase const & ) = delete;
+  SinglePhaseBase( SinglePhaseBase const & ) = delete;
 
   /// default move constructor
-  SinglePhaseFlowBase( SinglePhaseFlowBase && ) = default;
+  SinglePhaseBase( SinglePhaseBase && ) = default;
 
   /// deleted assignment operator
-  SinglePhaseFlowBase & operator=( SinglePhaseFlowBase const & ) = delete;
+  SinglePhaseBase & operator=( SinglePhaseBase const & ) = delete;
 
   /// deleted move operator
-  SinglePhaseFlowBase & operator=( SinglePhaseFlowBase && ) = delete;
+  SinglePhaseBase & operator=( SinglePhaseBase && ) = delete;
 
   /**
    * @brief default destructor
    */
-  virtual ~SinglePhaseFlowBase() override = default;
+  virtual ~SinglePhaseBase() override = default;
 
   virtual void RegisterDataOnMesh( Group * const MeshBodies ) override;
 
@@ -194,23 +194,23 @@ public:
     static constexpr auto porosityOldString = "porosityOld";
     static constexpr auto densityOldString = "densityOld";
 
-  } viewKeysSinglePhaseFlowBase;
+  } viewKeysSinglePhaseBase;
 
   viewKeyStruct & viewKeys()
-  { return viewKeysSinglePhaseFlowBase; }
+  { return viewKeysSinglePhaseBase; }
 
   viewKeyStruct const & viewKeys() const
-  { return viewKeysSinglePhaseFlowBase; }
+  { return viewKeysSinglePhaseBase; }
 
   struct groupKeyStruct : SolverBase::groupKeyStruct
   {
-  } groupKeysSinglePhaseFlowBase;
+  } groupKeysSinglePhaseBase;
 
   groupKeyStruct & groupKeys()
-  { return groupKeysSinglePhaseFlowBase; }
+  { return groupKeysSinglePhaseBase; }
 
   groupKeyStruct const & groupKeys() const
-  { return groupKeysSinglePhaseFlowBase; }
+  { return groupKeysSinglePhaseBase; }
 
   /**
    * @brief Setup stored views into domain data for the current step
@@ -276,4 +276,4 @@ protected:
 
 } /* namespace geosx */
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEFLOWBASE_HPP_
+#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEBASE_HPP_

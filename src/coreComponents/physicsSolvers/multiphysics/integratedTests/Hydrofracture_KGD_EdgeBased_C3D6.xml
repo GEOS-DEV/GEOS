@@ -44,7 +44,7 @@
         />
     </SolidMechanicsLagrangianSSLE>
   
-    <SinglePhaseCellCentered 
+    <SinglePhaseFVM 
       name="SinglePhaseFlow"
       logLevel="0"
       gravityFlag="1"
@@ -60,7 +60,7 @@
                               krylovTol="1.0e-12"
                               logLevel="0"
         />
-    </SinglePhaseCellCentered>
+    </SinglePhaseFVM>
     
     <SurfaceGenerator
       name="SurfaceGen"

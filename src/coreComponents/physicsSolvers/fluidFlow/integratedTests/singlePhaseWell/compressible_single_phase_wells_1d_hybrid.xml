@@ -5,10 +5,10 @@
     gravityVector="0.0, 0.0, -9.81">
 
     <Reservoir name="reservoirSystem"
-               flowSolverName="SinglePhaseFlow"
-               wellSolverName="SinglePhaseWell"
+               flowSolverName="singlePhaseFlow"
+               wellSolverName="singlePhaseWell"
                logLevel="1"
-               targetRegions="{Channel,wellRegion1,wellRegion2}">
+               targetRegions="{Region1,wellRegion1,wellRegion2}">
       <NonlinearSolverParameters name="nlsp"
 				 lineSearchAction="0"
                                  newtonMaxIter="40"/>
@@ -17,16 +17,16 @@
                               logLevel="0"/>
     </Reservoir>
   
-    <SinglePhaseMimetic name="SinglePhaseFlow"
-                     logLevel="0"
+    <SinglePhaseHybridFVM name="singlePhaseFlow"
+                     logLevel="1"
                      gravityFlag="1"
                      discretization="singlePhaseTPFA"
                      fluidName="water"
                      solidName="rock"
-                     targetRegions="{Channel}">
-    </SinglePhaseMimetic>
+                     targetRegions="{Region1}">
+    </SinglePhaseHybridFVM>
 
-    <SinglePhaseWell name="SinglePhaseWell"
+    <SinglePhaseWell name="singlePhaseWell"
                      logLevel="1"
                      gravityFlag="1"
                      wellFluidName="water"
@@ -39,9 +39,9 @@
                       referenceDepth="0.5"/>
         <WellControls name="wellControls2"
                       type="injector"
-                      control="liquidRate"
-                      targetBHP="1e7"
-                      targetRate="1e-3"
+                      control="liquidRate" 
+                      targetBHP="1e8"
+                      targetRate="1e-3" 
                       referenceDepth="0.5"/>
     </SinglePhaseWell>
 
@@ -50,25 +50,34 @@
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="{C3D8}" 
-                  xCoords="{0, 5, 10}"
-                  yCoords="{0, 5, 10}"
-                  zCoords="{0, 2.5, 5, 7.5, 10}"
-                  nx="{5, 5}"
-                  ny="{5, 5}"
-                  nz="{3, 3, 3, 3}"
-                  cellBlockNames="{b00,b01,b02,b03,b04,b05,b06,b07,b08,b09,b10,b11,b12,b13,b14,b15}"/>
+                  xCoords="{0, 5}"
+                  yCoords="{0, 1}"
+                  zCoords="{0, 1}"
+                  nx="{5}"
+                  ny="{1}"
+                  nz="{1}"
+                  cellBlockNames="{cb1}"/>
 
     <InternalWell name="well_producer1"
                   wellRegionName="wellRegion1"
                   wellControlsName="wellControls1"
                   meshName="mesh1"
-                  polylineNodeCoords="{ {9.5,  0.5, 12  }, 
-                                        {9.5,  0.5, 0.05 } }"
-                  polylineSegmentConn="{ {0, 1} }"
+                  polylineNodeCoords="{ {4.5, 0, 20  }, 
+                                        {4.5, 0, 15  },
+                                        {4.5, 0, 10  },
+                                        {4.5, 0,  0.5},
+                                        {3.5, 0,  0.5} }"
+                  polylineSegmentConn="{ {0, 1},
+                                         {1, 2},
+                                         {2, 3},
+                                         {3, 4} }"
                   crossSectionArea="0.3"
-                  numElementsPerSegment="20">
+                  numElementsPerSegment="2">
         <Perforation name="producer1_perf1"
-                     distanceFromHead="11.95"
+                     distanceFromHead="19.4"
+                     transmissibility="1e-12"/> 
+        <Perforation name="producer1_perf2"
+                     distanceFromHead="20.3"
                      transmissibility="1e-12"/> 
     </InternalWell> 
 
@@ -76,58 +85,63 @@
                   wellRegionName="wellRegion2"
                   wellControlsName="wellControls2"
                   meshName="mesh1"
-                  polylineNodeCoords="{ {9.5, 0.2, 12  }, 
-                                        {9.5, 0.2, 9.5 } }"
-                  polylineSegmentConn="{ {0, 1} }"
+                  polylineNodeCoords="{ {0.5, 0, 20  }, 
+                                        {0.5, 0, 15  },
+                                        {0.5, 0, 10  },
+                                        {0.5, 0,  0.5},
+                                        {1.5, 0,  0.5} }"
+                  polylineSegmentConn="{ {0, 1},
+                                         {1, 2},
+                                         {2, 3},
+                                         {3, 4} }"
                   crossSectionArea="0.3"
-                  numElementsPerSegment="30">
+                  numElementsPerSegment="3">
         <Perforation name="injector1_perf1"
-                     distanceFromHead="2.45"
+                     distanceFromHead="19.52"
+                     transmissibility="1e-12"/> 
+        <Perforation name="injector1_perf2"
+                     distanceFromHead="20.45"
                      transmissibility="1e-12"/> 
     </InternalWell> 
-
-
   </Mesh>
 
-  <Events maxTime="5e4">
+
+  <Events maxTime="1e6">
+    <PeriodicEvent name="solverApplications"
+                   forceDt="1e5"
+                   target="/Solvers/reservoirSystem" />
 
     <PeriodicEvent name="outputs"
-                   timeFrequency="5e3"
+                   timeFrequency="1e5"
                    targetExactTimestep="1"
                    target="/Outputs/siloOutput" />
 
-    <PeriodicEvent name="solverApplications"
-                   forceDt="5e3"
-                   target="/Solvers/reservoirSystem" />
-
     <PeriodicEvent name="restarts"
-                   timeFrequency="2.5e4"
+                   timeFrequency="5e5"
                    targetExactTimestep="0"
                    target="/Outputs/restartOutput"/>
-  </Events>
 
-  <ElementRegions>
-    <CellElementRegion name="Channel"
-                   cellBlocks="{b08,b00,b01,b05,b06,b14,b15,b11}"
-                   materialList="{water, rock}"/>
-    <CellElementRegion name="Barrier"
-                   cellBlocks="{b04,b12,b13,b09,b10,b02,b03,b07}"
-                   materialList="{}"/>
-    <WellElementRegion name="wellRegion1"
-                       materialList="{water}"/> 
-    <WellElementRegion name="wellRegion2"
-                       materialList="{water}"/> 
-  </ElementRegions>
+  </Events>
 
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation name="singlePhaseTPFA"
                                  fieldName="pressure"
-                                 boundaryFieldName="facePressure"
-                                 targetRegions="{Channel}"
                                  coefficientName="permeability"/>
     </FiniteVolume>
   </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion name="Region1"
+                   cellBlocks="{cb1}"
+                   materialList="{water, rock}"/>
+
+    <WellElementRegion name="wellRegion1"
+                       materialList="{water}"/> 
+   <WellElementRegion name="wellRegion2"
+                      materialList="{water}"/> 
+
+  </ElementRegions>
 
   <Constitutive>
     <CompressibleSinglePhaseFluid name="water"
@@ -135,8 +149,8 @@
                                   defaultViscosity="0.001"
                                   referencePressure="0.0"
                                   referenceDensity="1000"
-                                  compressibility="5e-10"
-                                  referenceViscosity="0.001"
+                                  compressibility="5e-9"
+                                  referenceViscosity="0.005"
                                   viscosibility="0.0"/>
 
     <PoreVolumeCompressibleSolid name="rock"
@@ -144,48 +158,58 @@
                                  compressibility="1e-9"/>
   </Constitutive>
 
+ 
   <FieldSpecifications>
-    <FieldSpecification name="permx_channel"
+    <FieldSpecification name="permx"
                         component="0"
-                        initialCondition="1"
+                        initialCondition="1"  
                         setNames="{all}"
-                        objectPath="ElementRegions/Channel"
+                        objectPath="ElementRegions/Region1/cb1"
                         fieldName="permeability"
                         scale="2.0e-16"/>
 
-    <FieldSpecification name="permy_channel"
+    <FieldSpecification name="permy"
                         component="1"
                         initialCondition="1"
                         setNames="{all}"
-                        objectPath="ElementRegions/Channel"
+                        objectPath="ElementRegions/Region1/cb1"
                         fieldName="permeability"
                         scale="2.0e-16"/>
 
-    <FieldSpecification name="permz_channel"
+    <FieldSpecification name="permz"
                         component="2"
                         initialCondition="1"
                         setNames="{all}"
-                        objectPath="ElementRegions/Channel"
+                        objectPath="ElementRegions/Region1/cb1"
                         fieldName="permeability"
                         scale="2.0e-16"/>
 
-    <FieldSpecification name="porosity_channel"
+    <FieldSpecification name="referencePorosity"
                         initialCondition="1"
                         setNames="{all}"
-                        objectPath="ElementRegions/Channel"
+                        objectPath="ElementRegions/Region1/cb1"
                         fieldName="referencePorosity"
-                        scale="0.1"/>
+                        scale="0.05"/>
 
-    <FieldSpecification name="initialPressure_channel"
+    <FieldSpecification name="initialPressure"
                         initialCondition="1"
                         setNames="{all}"
-                        objectPath="ElementRegions/Channel"
+                        objectPath="ElementRegions/Region1/cb1"
                         fieldName="pressure"
-                        scale="1e6"/>
+                        scale="5e6"/>
   </FieldSpecifications>
+    
+  <Functions>
+    <TableFunction     name="timeFunction"         inputVarNames="{time}" coordinates="{1.0, 2.0, 6e4}" values="{1.0, 2.0, 2.0}" />
+  </Functions>
+
+  <Partition>
+    <SpatialPartition xPar="1" yPar="1" zPar="1"/>
+  </Partition> 
 
   <Outputs>
-    <Silo name="siloOutput"/>
-    <Restart name="restartOutput"/>
+      <Silo name="siloOutput"/>
+      <Restart name="restartOutput"/>
   </Outputs>
+
 </Problem>

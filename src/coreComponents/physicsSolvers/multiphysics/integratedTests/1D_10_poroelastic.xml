@@ -30,7 +30,7 @@
                               logLevel="2"/>
     </SolidMechanics_LagrangianFEM>
   
-    <SinglePhaseCellCentered name="SinglePhaseFlow"
+    <SinglePhaseFVM name="SinglePhaseFlow"
                      logLevel="1"
                      gravityFlag="1"
                      discretization="singlePhaseTPFA"
@@ -42,7 +42,7 @@
                                  newtonMaxIter="8"/>
       <SystemSolverParameters name="ssp"
                               krylovTol="1.0e-10"/>
-    </SinglePhaseCellCentered>
+    </SinglePhaseFVM>
   </Solvers>
   
   <Mesh>

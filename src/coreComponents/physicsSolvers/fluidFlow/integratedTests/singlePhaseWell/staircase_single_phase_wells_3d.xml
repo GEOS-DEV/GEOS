@@ -16,7 +16,7 @@
                               logLevel="0"/>
     </Reservoir>
   
-    <SinglePhaseCellCentered
+    <SinglePhaseFVM
 	             name="SinglePhaseFlow"
                      logLevel="0"
                      gravityFlag="1"
@@ -24,7 +24,7 @@
                      fluidName="water"
                      solidName="rock"
                      targetRegions="{Channel}">
-    </SinglePhaseCellCentered>
+    </SinglePhaseFVM>
 
     <SinglePhaseWell name="SinglePhaseWell"
                      logLevel="1"

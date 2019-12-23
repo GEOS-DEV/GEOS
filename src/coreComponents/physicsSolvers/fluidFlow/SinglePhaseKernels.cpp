@@ -13,15 +13,15 @@
  */
 
 /**
- * @file SinglePhaseFlowKernels.cpp
+ * @file SinglePhaseKernels.cpp
  */
 
-#include "SinglePhaseFlowKernels.hpp"
+#include "SinglePhaseKernels.hpp"
 
 namespace geosx
 {
 
-namespace SinglePhaseFlowKernels
+namespace SinglePhaseKernels
 {
 
 /******************************** MobilityKernel ********************************/
@@ -304,6 +304,6 @@ Launch<FaceElementStencil>( FaceElementStencil const & stencil,
 
 
 
-} // namespace SinglePhaseFlowKernels
+} // namespace SinglePhaseKernels
 
 } // namespace geosx

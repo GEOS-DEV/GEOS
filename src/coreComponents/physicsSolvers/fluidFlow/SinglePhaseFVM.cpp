@@ -13,10 +13,10 @@
  */
 
 /**
- * @file SinglePhaseCellCentered.cpp
+ * @file SinglePhaseFVM.cpp
  */
 
-#include "SinglePhaseCellCentered.hpp"
+#include "SinglePhaseFVM.hpp"
 
 #include "mpiCommunications/CommunicationTools.hpp"
 #include "mpiCommunications/NeighborCommunicator.hpp"
@@ -25,7 +25,7 @@
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseFlowKernels.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseKernels.hpp"
 
 /**
  * @namespace the geosx namespace that encapsulates the majority of the code
@@ -35,18 +35,18 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
-using namespace SinglePhaseFlowKernels;
+using namespace SinglePhaseKernels;
 
-SinglePhaseCellCentered::SinglePhaseCellCentered( const std::string& name,
-                                                  Group * const parent ):
-  SinglePhaseFlowBase(name, parent)
+SinglePhaseFVM::SinglePhaseFVM( const std::string& name,
+                                Group * const parent ):
+  SinglePhaseBase(name, parent)
 {
   m_numDofPerCell = 1;
 }
 
 
-void SinglePhaseCellCentered::SetupDofs( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
-                                         DofManager & dofManager ) const
+void SinglePhaseFVM::SetupDofs( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
+                                DofManager & dofManager ) const
 {
   dofManager.addField( viewKeyStruct::pressureString,
                        DofManager::Location::Elem,
@@ -55,9 +55,9 @@ void SinglePhaseCellCentered::SetupDofs( DomainPartition const * const GEOSX_UNU
 }
   
 
-real64 SinglePhaseCellCentered::CalculateResidualNorm( DomainPartition const * const domain,
-                                                       DofManager const & dofManager,
-                                                       ParallelVector const & rhs )
+real64 SinglePhaseFVM::CalculateResidualNorm( DomainPartition const * const domain,
+                                              DofManager const & dofManager,
+                                              ParallelVector const & rhs )
 {
   MeshLevel const * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
 
@@ -105,10 +105,10 @@ real64 SinglePhaseCellCentered::CalculateResidualNorm( DomainPartition const * c
 }
 
   
-void SinglePhaseCellCentered::ApplySystemSolution( DofManager const & dofManager,
-                                                   ParallelVector const & solution,
-                                                   real64 const scalingFactor,
-                                                   DomainPartition * const domain )
+void SinglePhaseFVM::ApplySystemSolution( DofManager const & dofManager,
+                                          ParallelVector const & solution,
+                                          real64 const scalingFactor,
+                                          DomainPartition * const domain )
 {
   MeshLevel * mesh = domain->getMeshBody(0)->getMeshLevel(0);
 
@@ -139,12 +139,12 @@ void SinglePhaseCellCentered::ApplySystemSolution( DofManager const & dofManager
 }
 
   
-void SinglePhaseCellCentered::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time_n ),
-                                                 real64 const dt,
-                                                 DomainPartition const * const domain,
-                                                 DofManager const * const dofManager,
-                                                 ParallelMatrix * const matrix,
-                                                 ParallelVector * const rhs )
+void SinglePhaseFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time_n ),
+                                        real64 const dt,
+                                        DomainPartition const * const domain,
+                                        DofManager const * const dofManager,
+                                        ParallelMatrix * const matrix,
+                                        ParallelVector * const rhs )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -207,12 +207,12 @@ void SinglePhaseCellCentered::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( 
 }
 
 void
-SinglePhaseCellCentered::ApplyBoundaryConditions( real64 const time_n,
-                                                  real64 const dt,
-                                                  DomainPartition * const domain,
-                                                  DofManager const & dofManager,
-                                                  ParallelMatrix & matrix,
-                                                  ParallelVector & rhs )
+SinglePhaseFVM::ApplyBoundaryConditions( real64 const time_n,
+                                         real64 const dt,
+                                         DomainPartition * const domain,
+                                         DofManager const & dofManager,
+                                         ParallelMatrix & matrix,
+                                         ParallelVector & rhs )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -303,7 +303,7 @@ SinglePhaseCellCentered::ApplyBoundaryConditions( real64 const time_n,
   rhs.close();
 
   // Debug for logLevel >= 2
-  GEOSX_LOG_LEVEL_RANK_0( 2, "After SinglePhaseCellCentered::ApplyBoundaryConditions" );
+  GEOSX_LOG_LEVEL_RANK_0( 2, "After SinglePhaseFVM::ApplyBoundaryConditions" );
   GEOSX_LOG_LEVEL_RANK_0( 2, "\nJacobian:\n" << matrix );
   GEOSX_LOG_LEVEL_RANK_0( 2, "\nResidual:\n" << rhs );
  
@@ -317,18 +317,18 @@ SinglePhaseCellCentered::ApplyBoundaryConditions( real64 const time_n,
     string filename_rhs = "rhs_bc_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
     rhs.write( filename_rhs, true );
 
-    GEOSX_LOG_RANK_0( "After SinglePhaseCellCentered::ApplyBoundaryConditions" );
+    GEOSX_LOG_RANK_0( "After SinglePhaseFVM::ApplyBoundaryConditions" );
     GEOSX_LOG_RANK_0( "Jacobian: written to " << filename_mat );
     GEOSX_LOG_RANK_0( "Residual: written to " << filename_rhs );
   }
 }
 
-void SinglePhaseCellCentered::ApplyFaceDirichletBC_implicit( real64 const time_n,
-                                                             real64 const dt,
-                                                             DofManager const * const dofManager,
-                                                             DomainPartition * const domain,
-                                                             ParallelMatrix * const matrix,
-                                                             ParallelVector * const rhs )
+void SinglePhaseFVM::ApplyFaceDirichletBC_implicit( real64 const time_n,
+                                                    real64 const dt,
+                                                    DofManager const * const dofManager,
+                                                    DomainPartition * const domain,
+                                                    ParallelMatrix * const matrix,
+                                                    ParallelVector * const rhs )
 {
   FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
   MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
@@ -598,5 +598,5 @@ void SinglePhaseCellCentered::ApplyFaceDirichletBC_implicit( real64 const time_n
 }
 
 
-REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseCellCentered, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseFVM, std::string const &, Group * const )
 } /* namespace geosx */

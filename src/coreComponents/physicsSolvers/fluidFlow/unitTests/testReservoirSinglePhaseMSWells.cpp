@@ -22,7 +22,7 @@
 #include "wells/WellElementSubRegion.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/multiphysics/ReservoirSolver.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseCellCentered.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseFVM.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseWell.hpp"
 
 using namespace geosx;
@@ -53,7 +53,7 @@ void testNumericalJacobian( ReservoirSolver * solver,
                             LAMBDA && assembleFunction )
 {
   SinglePhaseWell * wellSolver = solver->GetWellSolver()->group_cast<SinglePhaseWell*>();
-  SinglePhaseCellCentered * flowSolver = solver->GetFlowSolver()->group_cast<SinglePhaseCellCentered*>();
+  SinglePhaseFVM * flowSolver = solver->GetFlowSolver()->group_cast<SinglePhaseFVM*>();
 
   ParallelMatrix & jacobian = solver->getSystemMatrix();
   ParallelVector & residual = solver->getSystemRhs();
@@ -102,10 +102,10 @@ void testNumericalJacobian( ReservoirSolver * solver,
 
       // get the primary variables on reservoir elements
       arrayView1d<real64> & pres =
-        subRegion-> template getReference<array1d<real64>>( SinglePhaseCellCentered::viewKeyStruct::pressureString );
+        subRegion-> template getReference<array1d<real64>>( SinglePhaseFVM::viewKeyStruct::pressureString );
 
       arrayView1d<real64> & dPres =
-        subRegion-> template getReference<array1d<real64>>( SinglePhaseCellCentered::viewKeyStruct::deltaPressureString );
+        subRegion-> template getReference<array1d<real64>>( SinglePhaseFVM::viewKeyStruct::deltaPressureString );
 
       // a) compute all the derivatives wrt to the pressure in RESERVOIR elem ei 
       for (localIndex ei = 0; ei < subRegion->size(); ++ei)

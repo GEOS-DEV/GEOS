@@ -13,10 +13,10 @@
  */
 
 /**
- * @file SinglePhaseFlowBase.cpp
+ * @file SinglePhaseBase.cpp
  */
 
-#include "SinglePhaseFlowBase.hpp"
+#include "SinglePhaseBase.hpp"
 
 #include "mpiCommunications/CommunicationTools.hpp"
 #include "mpiCommunications/NeighborCommunicator.hpp"
@@ -26,7 +26,7 @@
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "managers/DomainPartition.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseFlowKernels.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseKernels.hpp"
 
 /**
  * @namespace the geosx namespace that encapsulates the majority of the code
@@ -36,17 +36,17 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
-using namespace SinglePhaseFlowKernels;
+using namespace SinglePhaseKernels;
 
-SinglePhaseFlowBase::SinglePhaseFlowBase( const std::string& name,
-                                          Group * const parent ):
+SinglePhaseBase::SinglePhaseBase( const std::string& name,
+                                  Group * const parent ):
   FlowSolverBase(name, parent)
 {
   m_numDofPerCell = 1;
 }
 
 
-void SinglePhaseFlowBase::RegisterDataOnMesh(Group * const MeshBodies)
+void SinglePhaseBase::RegisterDataOnMesh(Group * const MeshBodies)
 {
   FlowSolverBase::RegisterDataOnMesh(MeshBodies);
 
@@ -98,7 +98,7 @@ void SinglePhaseFlowBase::RegisterDataOnMesh(Group * const MeshBodies)
   }
 }
 
-void SinglePhaseFlowBase::UpdateFluidModel(Group * const dataGroup) const
+void SinglePhaseBase::UpdateFluidModel(Group * const dataGroup) const
 {
   GEOSX_MARK_FUNCTION;
 
@@ -115,7 +115,7 @@ void SinglePhaseFlowBase::UpdateFluidModel(Group * const dataGroup) const
   //fluid->BatchUpdate( pres, temp, compFrac );
 }
 
-void SinglePhaseFlowBase::UpdateSolidModel(Group * const dataGroup) const
+void SinglePhaseBase::UpdateSolidModel(Group * const dataGroup) const
 {
   GEOSX_MARK_FUNCTION;
 
@@ -130,7 +130,7 @@ void SinglePhaseFlowBase::UpdateSolidModel(Group * const dataGroup) const
   });
 }
 
-void SinglePhaseFlowBase::UpdateMobility( Group * const dataGroup ) const
+void SinglePhaseBase::UpdateMobility( Group * const dataGroup ) const
 {
   GEOSX_MARK_FUNCTION;
 
@@ -168,7 +168,7 @@ void SinglePhaseFlowBase::UpdateMobility( Group * const dataGroup ) const
 }
 
 
-void SinglePhaseFlowBase::UpdateState( Group * dataGroup ) const
+void SinglePhaseBase::UpdateState( Group * dataGroup ) const
 {
   GEOSX_MARK_FUNCTION;
 
@@ -177,7 +177,7 @@ void SinglePhaseFlowBase::UpdateState( Group * dataGroup ) const
   UpdateMobility( dataGroup );
 }
 
-void SinglePhaseFlowBase::InitializePostInitialConditions_PreSubGroups( Group * const rootGroup )
+void SinglePhaseBase::InitializePostInitialConditions_PreSubGroups( Group * const rootGroup )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -245,10 +245,10 @@ void SinglePhaseFlowBase::InitializePostInitialConditions_PreSubGroups( Group * 
   } );
 }
 
-real64 SinglePhaseFlowBase::SolverStep( real64 const& time_n,
-                                        real64 const& dt,
-                                        const int cycleNumber,
-                                        DomainPartition * domain )
+real64 SinglePhaseBase::SolverStep( real64 const& time_n,
+                                    real64 const& dt,
+                                    const int cycleNumber,
+                                    DomainPartition * domain )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -272,13 +272,13 @@ real64 SinglePhaseFlowBase::SolverStep( real64 const& time_n,
 }
 
 
-void SinglePhaseFlowBase::ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n ),
-                                             real64 const & GEOSX_UNUSED_ARG( dt ),
-                                             DomainPartition * const domain,
-                                             DofManager & GEOSX_UNUSED_ARG( dofManager ),
-                                             ParallelMatrix & GEOSX_UNUSED_ARG( matrix ),
-                                             ParallelVector & GEOSX_UNUSED_ARG( rhs ),
-                                             ParallelVector & GEOSX_UNUSED_ARG( solution ) )
+void SinglePhaseBase::ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n ),
+                                         real64 const & GEOSX_UNUSED_ARG( dt ),
+                                         DomainPartition * const domain,
+                                         DofManager & GEOSX_UNUSED_ARG( dofManager ),
+                                         ParallelMatrix & GEOSX_UNUSED_ARG( matrix ),
+                                         ParallelVector & GEOSX_UNUSED_ARG( rhs ),
+                                         ParallelVector & GEOSX_UNUSED_ARG( solution ) )
 {
   ResetViews( domain );
 
@@ -326,9 +326,9 @@ void SinglePhaseFlowBase::ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( ti
 
 }
 
-void SinglePhaseFlowBase::ImplicitStepComplete( real64 const & GEOSX_UNUSED_ARG( time_n ),
-                                                real64 const & GEOSX_UNUSED_ARG( dt ),
-                                                DomainPartition * const domain )
+void SinglePhaseBase::ImplicitStepComplete( real64 const & GEOSX_UNUSED_ARG( time_n ),
+                                            real64 const & GEOSX_UNUSED_ARG( dt ),
+                                            DomainPartition * const domain )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -353,12 +353,12 @@ void SinglePhaseFlowBase::ImplicitStepComplete( real64 const & GEOSX_UNUSED_ARG(
 }
 
 
-void SinglePhaseFlowBase::AssembleSystem( real64 const time_n,
-                                          real64 const dt,
-                                          DomainPartition * const domain,
-                                          DofManager const & dofManager,
-                                          ParallelMatrix & matrix,
-                                          ParallelVector & rhs )
+void SinglePhaseBase::AssembleSystem( real64 const time_n,
+                                      real64 const dt,
+                                      DomainPartition * const domain,
+                                      DofManager const & dofManager,
+                                      ParallelMatrix & matrix,
+                                      ParallelVector & rhs )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -391,7 +391,7 @@ void SinglePhaseFlowBase::AssembleSystem( real64 const time_n,
   
 
   // Debug for logLevel >= 2
-  GEOSX_LOG_LEVEL_RANK_0( 2, "After SinglePhaseFlowBase::AssembleSystem" );
+  GEOSX_LOG_LEVEL_RANK_0( 2, "After SinglePhaseBase::AssembleSystem" );
   GEOSX_LOG_LEVEL_RANK_0( 2, "\nJacobian:\n" << matrix );
   GEOSX_LOG_LEVEL_RANK_0( 2, "\nResidual:\n" << rhs );
 
@@ -407,7 +407,7 @@ void SinglePhaseFlowBase::AssembleSystem( real64 const time_n,
     string filename_rhs = "rhs_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
     rhs.write( filename_rhs, true );
 
-    GEOSX_LOG_RANK_0( "After SinglePhaseFlowBase::AssembleSystem" );
+    GEOSX_LOG_RANK_0( "After SinglePhaseBase::AssembleSystem" );
     GEOSX_LOG_RANK_0( "Jacobian: written to " << filename_mat );
     GEOSX_LOG_RANK_0( "Residual: written to " << filename_rhs );
   }
@@ -415,12 +415,12 @@ void SinglePhaseFlowBase::AssembleSystem( real64 const time_n,
 }
 
 template< bool ISPORO >
-void SinglePhaseFlowBase::AccumulationLaunch( localIndex const er,
-                                              localIndex const esr,
-                                              CellElementSubRegion const * const subRegion,
-                                              DofManager const * const dofManager,
-                                              ParallelMatrix * const matrix,
-                                              ParallelVector * const rhs )
+void SinglePhaseBase::AccumulationLaunch( localIndex const er,
+                                          localIndex const esr,
+                                          CellElementSubRegion const * const subRegion,
+                                          DofManager const * const dofManager,
+                                          ParallelMatrix * const matrix,
+                                          ParallelVector * const rhs )
 {
   string const dofKey = dofManager->getKey( viewKeyStruct::pressureString );
   arrayView1d<globalIndex const> const & dofNumber = subRegion->getReference< array1d<globalIndex> >( dofKey );
@@ -480,12 +480,12 @@ void SinglePhaseFlowBase::AccumulationLaunch( localIndex const er,
 }
 
 template< bool ISPORO >
-void SinglePhaseFlowBase::AccumulationLaunch( localIndex const er,
-                                              localIndex const esr,
-                                              FaceElementSubRegion const * const subRegion,
-                                              DofManager const * const dofManager,
-                                              ParallelMatrix * const matrix,
-                                              ParallelVector * const rhs )
+void SinglePhaseBase::AccumulationLaunch( localIndex const er,
+                                          localIndex const esr,
+                                          FaceElementSubRegion const * const subRegion,
+                                          DofManager const * const dofManager,
+                                          ParallelMatrix * const matrix,
+                                          ParallelVector * const rhs )
 {
   string const dofKey = dofManager->getKey( viewKeyStruct::pressureString );
   arrayView1d<globalIndex const> const & dofNumber = subRegion->getReference< array1d<globalIndex> >( dofKey );
@@ -521,10 +521,10 @@ void SinglePhaseFlowBase::AccumulationLaunch( localIndex const er,
 }
 
 template< bool ISPORO >
-void SinglePhaseFlowBase::AssembleAccumulationTerms( DomainPartition const * const domain,
-                                                     DofManager const * const dofManager,
-                                                     ParallelMatrix * const matrix,
-                                                     ParallelVector * const rhs )
+void SinglePhaseBase::AssembleAccumulationTerms( DomainPartition const * const domain,
+                                                 DofManager const * const dofManager,
+                                                 ParallelMatrix * const matrix,
+                                                 ParallelVector * const rhs )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -545,10 +545,10 @@ void SinglePhaseFlowBase::AssembleAccumulationTerms( DomainPartition const * con
 }
 
 
-void SinglePhaseFlowBase::SolveSystem( DofManager const & dofManager,
-                                       ParallelMatrix & matrix,
-                                       ParallelVector & rhs,
-                                       ParallelVector & solution )
+void SinglePhaseBase::SolveSystem( DofManager const & dofManager,
+                                   ParallelMatrix & matrix,
+                                   ParallelVector & rhs,
+                                   ParallelVector & solution )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -558,12 +558,12 @@ void SinglePhaseFlowBase::SolveSystem( DofManager const & dofManager,
   SolverBase::SolveSystem( dofManager, matrix, rhs, solution );
 
   // Debug for logLevel >= 2
-  GEOSX_LOG_LEVEL_RANK_0( 2, "After SinglePhaseFlowBase::SolveSystem" );
+  GEOSX_LOG_LEVEL_RANK_0( 2, "After SinglePhaseBase::SolveSystem" );
   GEOSX_LOG_LEVEL_RANK_0( 2, "\nSolution:\n" << solution );
 
 }
 
-void SinglePhaseFlowBase::ResetStateToBeginningOfStep( DomainPartition * const domain )
+void SinglePhaseBase::ResetStateToBeginningOfStep( DomainPartition * const domain )
 {
   MeshLevel * mesh = domain->getMeshBody(0)->getMeshLevel(0);
 
@@ -582,7 +582,7 @@ void SinglePhaseFlowBase::ResetStateToBeginningOfStep( DomainPartition * const d
   } );
 }
 
-void SinglePhaseFlowBase::ResetViews( DomainPartition * const domain )
+void SinglePhaseBase::ResetViews( DomainPartition * const domain )
 {
   FlowSolverBase::ResetViews( domain );
 
