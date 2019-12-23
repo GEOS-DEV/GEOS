@@ -26,8 +26,7 @@ using namespace dataRepository;
 SourceFluxBoundaryCondition::SourceFluxBoundaryCondition( string const & name, Group *const parent ):
   FieldSpecificationBase( name, parent )
 {
-  // TODO Auto-generated constructor stub
-
+  m_normalizeBySetSize = true;
 }
 
 SourceFluxBoundaryCondition::~SourceFluxBoundaryCondition()
@@ -35,9 +34,11 @@ SourceFluxBoundaryCondition::~SourceFluxBoundaryCondition()
   // TODO Auto-generated destructor stub
 }
 
-void SourceFluxBoundaryCondition::InitializePreSubGroups( Group * const )
+void SourceFluxBoundaryCondition::InitializePreSubGroups( Group * const rootGroup )
 {
-  this->SetFieldName("FLUX");
+  this->SetFieldName(viewKeyStruct::fluxBoundaryConditionString);
+  
+  FieldSpecificationBase::InitializePreSubGroups( rootGroup ); 
 }
 
 
