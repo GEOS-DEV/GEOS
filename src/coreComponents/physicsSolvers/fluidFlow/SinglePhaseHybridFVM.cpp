@@ -102,9 +102,10 @@ void SinglePhaseHybridFVM::ImplicitStepSetup( real64 const & time_n,
   // get the accumulated pressure updates
   arrayView1d<real64> & dFacePres =
     faceManager->getReference<array1d<real64>>(viewKeyStruct::deltaFacePressureString);
- 
+
   forall_in_range<serialPolicy>( 0, faceManager->size(), GEOSX_LAMBDA ( localIndex iface )
   {
+    
     // zero out if face is in target region
     if (faceDofNumber[iface] >= 0)
     {
@@ -232,7 +233,7 @@ void SinglePhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( tim
 
   elemManager->
     forElementSubRegionsComplete<CellElementSubRegion,
-				 FaceElementSubRegion>( m_targetRegions,
+                                 FaceElementSubRegion>( m_targetRegions,
                                                       [&]( localIndex const er,
                                                            localIndex const esr,
                                                            ElementRegionBase const * const,
@@ -301,12 +302,12 @@ void SinglePhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( tim
                                        faceToNodes,        
                                        elemToFaces[ei],
                                        elemCenter[ei],
-	 		               elemVolume[ei],
+                                       elemVolume[ei],
                                        elemPerm[ei],
                                        lengthTolerance,
                                        transMatrix );   
 
-	
+        
         /*
          * compute auxiliary quantities at the one sided faces of this element:
          * 1) One-sided volumetric fluxes
@@ -333,21 +334,21 @@ void SinglePhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( tim
         // so we can upwind the transport coefficients (mobilities) at the one sided faces 
         // ** this function needs non-local information **
         UpdateUpwindedCoefficients( mesh,
-				    elemRegionList, 
+                                    elemRegionList, 
                                     elemSubRegionList,
                                     elemList,
-				    regionFilter,
+                                    regionFilter,
                                     elemToFaces[ei],
                                     m_mobility, 
                                     m_dMobility_dPres,
-				    er, esr, ei,
+                                    er, esr, ei,
                                     elemDofNumber[ei],
-				    elemDofKey,
+                                    elemDofKey,
                                     oneSidedVolFlux,
                                     upwMobility,      
                                     dUpwMobility_dp,
                                     upwDofNumber );
-	
+        
         /*
          * perform assembly in this element in two steps:
          * 1) mass conservation equations
@@ -448,16 +449,16 @@ void SinglePhaseHybridFVM::ComputeOneSidedVolFluxes( arrayView1d<real64 const> c
 }
 
 void SinglePhaseHybridFVM::UpdateUpwindedCoefficients( MeshLevel const * const mesh,
-						       array2d<localIndex> const & elemRegionList,
-						       array2d<localIndex> const & elemSubRegionList,
-						       array2d<localIndex> const & elemList,
-						       set<localIndex> const & regionFilter,
-	                                               arraySlice1d<localIndex const> const elemToFaces,
+                                                       array2d<localIndex> const & elemRegionList,
+                                                       array2d<localIndex> const & elemSubRegionList,
+                                                       array2d<localIndex> const & elemList,
+                                                       set<localIndex> const & regionFilter,
+                                                       arraySlice1d<localIndex const> const elemToFaces,
                                                        ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const & domainMobility,
                                                        ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const & dDomainMobility_dp,
-						       localIndex const er,
-						       localIndex const esr,
-						       localIndex const ei,
+                                                       localIndex const er,
+                                                       localIndex const esr,
+                                                       localIndex const ei,
                                                        globalIndex const elemDofNumber,
                                                        string const elemDofKey,    
                                                        stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> const & oneSidedVolFlux,
@@ -491,7 +492,7 @@ void SinglePhaseHybridFVM::UpdateUpwindedCoefficients( MeshLevel const * const m
         localIndex const erNeighbor  = elemRegionList[elemToFaces[ifaceLoc]][k];
         localIndex const esrNeighbor = elemSubRegionList[elemToFaces[ifaceLoc]][k];
         localIndex const eiNeighbor  = elemList[elemToFaces[ifaceLoc]][k];
-						    
+                                                    
         // this element is not the current element
         // we have found the neighbor or we are at the boundary 
         if ( erNeighbor != er || esrNeighbor != esr || eiNeighbor != ei ) 
@@ -500,7 +501,7 @@ void SinglePhaseHybridFVM::UpdateUpwindedCoefficients( MeshLevel const * const m
           bool const onBoundary       = (erNeighbor == -1 || esrNeighbor == -1 || eiNeighbor != -1);
           bool const neighborInTarget = regionFilter.contains(erNeighbor); 
 
-	  // if not on boundary, save the mobility and the upwDofNumber  
+          // if not on boundary, save the mobility and the upwDofNumber  
           if ( !onBoundary && neighborInTarget )
           {
             ElementRegionBase const * const neighborRegion =
@@ -508,15 +509,15 @@ void SinglePhaseHybridFVM::UpdateUpwindedCoefficients( MeshLevel const * const m
             ElementSubRegionBase const * const neighborSubRegion =
               Group::group_cast<ElementSubRegionBase const *>(neighborRegion->GetSubRegion(esrNeighbor));
 
-	    arrayView1d<globalIndex const> const & neighborDofNumber =
+            arrayView1d<globalIndex const> const & neighborDofNumber =
               neighborSubRegion->getReference<array1d<globalIndex>>( elemDofKey );  
 
             upwMobility[ifaceLoc]     = domainMobility[erNeighbor][esrNeighbor][eiNeighbor];
             dUpwMobility_dp[ifaceLoc] = dDomainMobility_dp[erNeighbor][esrNeighbor][eiNeighbor];
             upwDofNumber[ifaceLoc]    = neighborDofNumber[eiNeighbor];
-	  }
-	  // if the face is on the boundary, use the properties of the local elem
-	}
+          }
+          // if the face is on the boundary, use the properties of the local elem
+        }
       }
     }
   }   
@@ -929,12 +930,12 @@ void SinglePhaseHybridFVM::ComputeQFamilyInnerProduct( arrayView1d<R1Tensor cons
                                                        ArrayOfArraysView<localIndex const> const & faceToNodes, 
                                                        arraySlice1d<localIndex const> const elemToFaces,
                                                        R1Tensor const & elemCenter,
- 	 		                               real64   const & elemVolume,
+                                                       real64   const & elemVolume,
                                                        R1Tensor const & elemPerm,
-					               real64   const & tParam, 
+                                                       real64   const & tParam, 
                                                        real64   const & lengthTolerance,
                                                        stackArray2d<real64, MAX_NUM_FACES_IN_ELEM
-                   						           *MAX_NUM_FACES_IN_ELEM> const & transMatrix ) const
+                                                                           *MAX_NUM_FACES_IN_ELEM> const & transMatrix ) const
 {
   R1Tensor faceCenter, faceNormal, cellToFaceVec;
   real64 const areaTolerance = lengthTolerance * lengthTolerance;
@@ -1032,11 +1033,11 @@ void SinglePhaseHybridFVM::ComputeQFamilyInnerProduct( arrayView1d<R1Tensor cons
   
   // 3) compute N K N' 
   BlasLapackLA::matrixMatrixTMultiply( permMat,
-				       normalsMat,
-				       work_dimByNumFaces );
+                                       normalsMat,
+                                       work_dimByNumFaces );
   BlasLapackLA::matrixMatrixMultiply( normalsMat,
-				      work_dimByNumFaces,
-				      transMat );
+                                      work_dimByNumFaces,
+                                      transMat );
 
   // 4) compute the orthonormalization of the matrix cellToFaceVec 
   //    This is done either with SVD or MGS
@@ -1046,9 +1047,9 @@ void SinglePhaseHybridFVM::ComputeQFamilyInnerProduct( arrayView1d<R1Tensor cons
   {
     // calling SVD seems to be an overkill to orthonormalize the 3 columns of cellToFaceMat...
     BlasLapackLA::matrixSVD( cellToFaceMat,
-  			     work_numFacesByDim,
-			     work_dim,
-			     work_dimByDim );
+                             work_numFacesByDim,
+                             work_dim,
+                             work_dimByDim );
   }
   else
   {
@@ -1078,8 +1079,8 @@ void SinglePhaseHybridFVM::ComputeQFamilyInnerProduct( arrayView1d<R1Tensor cons
     
   // 5) compute P_Q = I - QQ'
   BlasLapackLA::matrixMatrixTMultiply( work_numFacesByDim,
-				       work_numFacesByDim,
-				       worka_numFacesByNumFaces );
+                                       work_numFacesByDim,
+                                       worka_numFacesByNumFaces );
   BlasLapackLA::matrixScale( -1, worka_numFacesByNumFaces );
   for (localIndex i = 0; i < numFacesInElem; ++i)
   {
@@ -1095,11 +1096,11 @@ void SinglePhaseHybridFVM::ComputeQFamilyInnerProduct( arrayView1d<R1Tensor cons
     }
   }
   BlasLapackLA::matrixMatrixMultiply( workb_numFacesByNumFaces,
-				      worka_numFacesByNumFaces,
-				      workc_numFacesByNumFaces );
+                                      worka_numFacesByNumFaces,
+                                      workc_numFacesByNumFaces );
   BlasLapackLA::matrixMatrixMultiply( worka_numFacesByNumFaces,
-				      workc_numFacesByNumFaces,
-				      workb_numFacesByNumFaces );
+                                      workc_numFacesByNumFaces,
+                                      workb_numFacesByNumFaces );
  
   // 7) compute T = ( N K N' + t U diag(diag(N K N')) U ) / elemVolume
   BlasLapackLA::matrixScale( tParam, workb_numFacesByNumFaces );
@@ -1127,23 +1128,23 @@ void SinglePhaseHybridFVM::ComputeTransmissibilityMatrix( arrayView1d<R1Tensor c
                                                           ArrayOfArraysView<localIndex const> const & faceToNodes, 
                                                           arraySlice1d<localIndex const> const elemToFaces,
                                                           R1Tensor const & elemCenter,
- 	    		                                  real64   const & elemVolume,
+                                                          real64   const & elemVolume,
                                                           R1Tensor const & elemPerm,
                                                           real64   const & lengthTolerance,
                                                           stackArray2d<real64, MAX_NUM_FACES_IN_ELEM
- 						                              *MAX_NUM_FACES_IN_ELEM> const & transMatrix ) const
+                                                                              *MAX_NUM_FACES_IN_ELEM> const & transMatrix ) const
 {
   switch (m_ipType)
   {
     case InnerProductType::TPFA:
     {
       ComputeTPFAInnerProduct( nodePosition,
-			       faceToNodes,
-			       elemToFaces,
-			       elemCenter,
-			       elemPerm,
-			       lengthTolerance,
-			       transMatrix );
+                               faceToNodes,
+                               elemToFaces,
+                               elemCenter,
+                               elemPerm,
+                               lengthTolerance,
+                               transMatrix );
       break;
     }
 
@@ -1152,14 +1153,14 @@ void SinglePhaseHybridFVM::ComputeTransmissibilityMatrix( arrayView1d<R1Tensor c
       // for now, Q-TPFA is useful for debugging the IP computation
       // since it reduces to TPFA on orthogonal meshes...
       ComputeQFamilyInnerProduct( nodePosition,
-				  faceToNodes,
-				  elemToFaces,
-				  elemCenter,
-				  elemVolume,
-				  elemPerm,
-				  2,   
-				  lengthTolerance,
-				  transMatrix );
+                                  faceToNodes,
+                                  elemToFaces,
+                                  elemCenter,
+                                  elemVolume,
+                                  elemPerm,
+                                  2,   
+                                  lengthTolerance,
+                                  transMatrix );
       break;
     }
 
