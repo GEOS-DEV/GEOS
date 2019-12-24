@@ -20,7 +20,7 @@
 
 #include "codingUtilities/Utilities.hpp"
 #include "managers/ProblemManager.hpp"
-#include "fileIO/utils/utils.hpp"
+#include "common/Path.hpp"
 
 // PVTPackage includes
 #include "MultiphaseSystem/BlackOilMultiphaseSystem.hpp"
@@ -50,7 +50,7 @@ BlackOilFluid::FluidType BlackOilFluid::stringToFluidType( string const & str )
   }
   else
   {
-    GEOS_ERROR("Unrecognized black-oil fluid type: " << str);
+    GEOSX_ERROR("Unrecognized black-oil fluid type: " << str);
   }
   return BlackOilFluid::FluidType::LiveOil; // keep compilers happy
 }
@@ -117,7 +117,7 @@ void BlackOilFluid::PostProcessInput()
 #define BOFLUID_CHECK_INPUT_LENGTH( data, expected, attr ) \
   if (integer_conversion<localIndex>((data).size()) != integer_conversion<localIndex>(expected)) \
   { \
-    GEOS_ERROR( "BlackOilFluid: invalid number of entries in " \
+    GEOSX_ERROR( "BlackOilFluid: invalid number of entries in " \
                 << (attr) << " attribute (" \
                 << (data).size() << "given, " \
                 << (expected) << " expected)" ); \
@@ -138,29 +138,6 @@ void BlackOilFluid::createFluid()
   std::vector<double> densities( m_surfaceDensities.begin(), m_surfaceDensities.end() );
   std::vector<double> molarWeights( m_componentMolarWeight.begin(), m_componentMolarWeight.end() );
 
-  // if table file names are not absolute paths, convert them to such, based on path to main input/restart file
-  ProblemManager const * const problemManager = this->GetGroupByPath<ProblemManager>("/");
-  if (problemManager != nullptr)
-  {
-    // hopefully at least one of input or restart file names is provided, otherwise '.' will be used
-    string inputFileName = problemManager->getInputFileName();
-    if (inputFileName.empty())
-    {
-      inputFileName = problemManager->getRestartFileName();
-    }
-    string inputFileDir;
-    splitPath( inputFileName, inputFileDir, inputFileName );
-
-    // if table file names are not full paths, convert them to such
-    for (std::string & filename : tableFiles)
-    {
-      if (!isAbsolutePath(filename))
-      {
-        getAbsolutePath( inputFileDir + '/' + filename, filename );
-      }
-    }
-  }
-
   switch (m_fluidType)
   {
     case FluidType::LiveOil:
@@ -170,7 +147,7 @@ void BlackOilFluid::createFluid()
       m_fluid = std::make_unique<DeadOilMultiphaseSystem>( phases, tableFiles, densities, molarWeights );
       break;
     default:
-      GEOS_ERROR("Unknown fluid type");
+      GEOSX_ERROR("Unknown fluid type");
   }
 }
 

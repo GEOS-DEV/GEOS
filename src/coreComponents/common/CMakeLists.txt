@@ -5,8 +5,10 @@
 set(common_headers
     ${CMAKE_BINARY_DIR}/include/common/GeosxConfig.hpp
     DataTypes.hpp
+    Path.hpp
     GeosxMacros.hpp
     TimingMacros.hpp
+    Logger.hpp
    )
 
 #
@@ -14,6 +16,7 @@ set(common_headers
 #
 set(common_sources
     DataTypes.cpp
+    Logger.cpp
    )
 
 set( dependencyList cxx-utilities pugixml )

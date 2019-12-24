@@ -5,7 +5,7 @@
     gravityVector="0.0, 0.0, -9.81">
   
     <CompositionalMultiphaseFlow name="compflow"
-                                 verboseLevel="1"
+                                 logLevel="1"
                                  gravityFlag="1"
                                  discretization="fluidTPFA"
                                  targetRegions="{Region1}"
@@ -14,8 +14,10 @@
                                  relPermName="relperm"
                                  temperature="297.15"
                                  useMass="0">
-      <SystemSolverParameters newtonTol="1.0e-6"
-                              maxIterNewton="15"
+      <NonlinearSolverParameters name="nlsp"
+                                 newtonTol="1.0e-6"
+                                 newtonMaxIter="15"/>
+      <SystemSolverParameters name="ssp"
                               useDirectSolver="1"/>
     </CompositionalMultiphaseFlow>
   </Solvers>

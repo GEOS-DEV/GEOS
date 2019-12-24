@@ -19,7 +19,7 @@
 #define GEOSX_LINEARALGEBRA_INTERFACES_BLASLAPACKLA_HPP_
 
 #include "common/DataTypes.hpp"
-#include "Logger.hpp"
+#include "common/Logger.hpp"
 
 
 namespace geosx

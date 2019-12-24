@@ -27,6 +27,7 @@
 #include "mesh/MeshForLoopInterface.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseFlow.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
 
 namespace geosx
@@ -115,6 +116,18 @@ void PoroelasticSolver::PostProcessInput()
   if( ctOption == "FixedStress" )
   {
     this->m_couplingTypeOption = couplingTypeOption::FixedStress;
+
+    // For this coupled solver the minimum number of Newton Iter should be 0 for both flow and solid solver otherwise it will never converge.
+    SolidMechanicsLagrangianFEM &
+      solidSolver = *(this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolidMechanicsLagrangianFEM*>());
+      integer & minNewtonIterSolid = solidSolver.getNonlinearSolverParameters().m_minIterNewton;
+
+    SinglePhaseFlow &
+      fluidSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>());
+    integer & minNewtonIterFluid = fluidSolver.getNonlinearSolverParameters().m_minIterNewton;
+
+    minNewtonIterSolid = 0;
+    minNewtonIterFluid = 0;
   }
   else if( ctOption == "TightlyCoupled" )
   {
@@ -122,7 +135,7 @@ void PoroelasticSolver::PostProcessInput()
   }
   else
   {
-    GEOS_ERROR("invalid coupling type option");
+    GEOSX_ERROR("invalid coupling type option");
   }
 
 }
@@ -171,7 +184,7 @@ real64 PoroelasticSolver::SolverStep( real64 const & time_n,
   }
   else if( m_couplingTypeOption == couplingTypeOption::TightlyCoupled )
   {
-    GEOS_ERROR( "couplingTypeOption::FullyImplicit not yet implemented");
+    GEOSX_ERROR( "couplingTypeOption::FullyImplicit not yet implemented");
   }
   return dtReturn;
 }
@@ -298,8 +311,8 @@ real64 PoroelasticSolver::SplitOperatorStep( real64 const& time_n,
   real64 dtReturn = dt;
   real64 dtReturnTemporary;
 
-  SolverBase &
-  solidSolver = *(this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolverBase*>());
+  SolidMechanicsLagrangianFEM &
+  solidSolver = *(this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolidMechanicsLagrangianFEM*>());
 
   SinglePhaseFlow &
   fluidSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>());
@@ -331,7 +344,7 @@ real64 PoroelasticSolver::SplitOperatorStep( real64 const& time_n,
   this->ImplicitStepSetup( time_n, dt, domain, m_dofManager, m_matrix, m_rhs, m_solution );
 
   int iter = 0;
-  while (iter < (*(this->getSystemSolverParameters())).maxIterNewton() )
+  while (iter < m_nonlinearSolverParameters.m_maxIterNewton )
   {
     if (iter == 0)
     {
@@ -340,10 +353,9 @@ real64 PoroelasticSolver::SplitOperatorStep( real64 const& time_n,
       solidSolver.ResetStateToBeginningOfStep( domain );
       ResetStateToBeginningOfStep( domain );
     }
-    if (this->verboseLevel() >= 1)
-    {
-      GEOS_LOG_RANK_0( "\tIteration: " << iter+1  << ", FlowSolver: " );
-    }
+    
+    GEOSX_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1  << ", FlowSolver: " );
+    
     dtReturnTemporary = fluidSolver.NonlinearImplicitStep( time_n,
                                                            dtReturn,
                                                            cycleNumber,
@@ -360,16 +372,15 @@ real64 PoroelasticSolver::SplitOperatorStep( real64 const& time_n,
       continue;
     }
 
-    if (fluidSolver.getSystemSolverParameters()->numNewtonIterations() == 0 && iter > 0 && this->verboseLevel() >= 1)
+    if ( fluidSolver.getNonlinearSolverParameters().m_numNewtonIterations == 0 && iter > 0)
     {
-      GEOS_LOG_RANK_0( "***** The iterative coupling has converged in " << iter  << " iterations! *****\n" );
+      GEOSX_LOG_LEVEL_RANK_0( 1, "***** The iterative coupling has converged in " << iter  << " iterations! *****\n" );
       break;
     }
 
-    if (this->verboseLevel() >= 1)
-    {
-      GEOS_LOG_RANK_0( "\tIteration: " << iter+1  << ", MechanicsSolver: " );
-    }
+    GEOSX_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1  << ", MechanicsSolver: " );
+
+    solidSolver.ResetStressToBeginningOfStep(domain);
     dtReturnTemporary = solidSolver.NonlinearImplicitStep( time_n,
                                                            dtReturn,
                                                            cycleNumber,
@@ -378,13 +389,16 @@ real64 PoroelasticSolver::SplitOperatorStep( real64 const& time_n,
                                                            solidSolver.getSystemMatrix(),
                                                            solidSolver.getSystemRhs(),
                                                            solidSolver.getSystemSolution() );
+
+    solidSolver.updateStress( domain );
+
     if (dtReturnTemporary < dtReturn)
     {
       iter = 0;
       dtReturn = dtReturnTemporary;
       continue;
     }
-    if (solidSolver.getSystemSolverParameters()->numNewtonIterations() > 0)
+    if (solidSolver.getNonlinearSolverParameters().m_numNewtonIterations > 0)
     {
       this->UpdateDeformationForCoupling(domain);
     }

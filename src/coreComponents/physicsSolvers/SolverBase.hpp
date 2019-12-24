@@ -21,12 +21,13 @@
 #include <limits>
 
 #include "dataRepository/Group.hpp"
-#include "codingUtilities/GeosxTraits.hpp"
+#include "codingUtilities/traits.hpp"
 #include "common/DataTypes.hpp"
 #include "dataRepository/ExecutableGroup.hpp"
 #include "managers/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
 #include "physicsSolvers/SystemSolverParameters.hpp"
+#include "physicsSolvers/NonlinearSolverParameters.hpp"
 
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
@@ -129,6 +130,20 @@ public:
                              real64 const & dt,
                              integer const cycleNumber,
                              DomainPartition * const domain );
+
+
+
+  /**
+     * @brief entry function to perform a solver step
+     * @param [in]  time_n time at the beginning of the step
+     * @param [in]  dt the perscribed timestep
+     * @param [out] return the timestep that was achieved during the step.
+     *
+     * T
+     */
+  virtual void SetNextDt( real64 const & currentDt,
+                          real64 & nextDt);
+
 
   /**
    * @brief Entry function for an explicit time integration step
@@ -452,6 +467,12 @@ public:
                         real64 const & dt,
                         DomainPartition * const domain );
 
+
+  /*
+   * Returns the requirement for the next time-step to the event executing the solver.
+   */
+  virtual real64 GetTimestepRequest( real64 const GEOSX_UNUSED_ARG( time ) ) override
+		  {return m_nextDt;};
   /**@}*/
 
 
@@ -463,9 +484,9 @@ public:
 
   struct viewKeyStruct
   {
-    constexpr static auto verboseLevelString = "verboseLevel";
     constexpr static auto gravityVectorString = "gravityVector";
     constexpr static auto cflFactorString = "cflFactor";
+    constexpr static auto initialDtString = "initialDt";
     constexpr static auto maxStableDtString = "maxStableDt";
     static constexpr auto discretizationString = "discretization";
     constexpr static auto targetRegionsString = "targetRegions";
@@ -475,6 +496,7 @@ public:
   struct groupKeyStruct
   {
     constexpr static auto systemSolverParametersString = "SystemSolverParameters";
+    constexpr static auto nonlinearSolverParametersString = "NonlinearSolverParameters";
   } groupKeys;
 
 
@@ -483,7 +505,6 @@ public:
   R1Tensor       & getGravityVector()       { return m_gravityVector; }
   R1Tensor const * globalGravityVector() const;
 
-  integer verboseLevel() const { return m_verboseLevel; }
 
   /**
    * accessor for the system solver parameters.
@@ -498,6 +519,17 @@ public:
   SystemSolverParameters const * getSystemSolverParameters() const
   {
     return &m_systemSolverParameters;
+  }
+
+
+  NonlinearSolverParameters & getNonlinearSolverParameters()
+  {
+    return m_nonlinearSolverParameters;
+  }
+
+  NonlinearSolverParameters const & getNonlinearSolverParameters() const
+  {
+    return m_nonlinearSolverParameters;
   }
 
   string getDiscretization() const {return m_discretizationName;}
@@ -545,12 +577,13 @@ protected:
   template<typename BASETYPE>
   static BASETYPE * GetConstitutiveModel( dataRepository::Group * dataGroup, string const & name );
 
-  integer m_verboseLevel = 0;
+  integer m_logLevel = 0;
   R1Tensor m_gravityVector;
   SystemSolverParameters m_systemSolverParameters;
 
   real64 m_cflFactor;
   real64 m_maxStableDt;
+  real64 m_nextDt;
 
   /// name of the FV discretization object in the data repository
   string m_discretizationName;
@@ -569,6 +602,8 @@ protected:
   /// Linear solver parameters
   LinearSolverParameters m_linearSolverParameters;
 
+  NonlinearSolverParameters m_nonlinearSolverParameters;
+
 };
 
 template<typename BASETYPE>
@@ -576,10 +611,10 @@ BASETYPE const * SolverBase::GetConstitutiveModel( dataRepository::Group const *
 {
   Group const * const constitutiveModels =
     dataGroup->GetGroup( constitutive::ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
-  GEOS_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
+  GEOSX_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
 
   BASETYPE const * const model = constitutiveModels->GetGroup<BASETYPE>( name );
-  GEOS_ERROR_IF( model == nullptr, "Target group does not contain model " << name );
+  GEOSX_ERROR_IF( model == nullptr, "Target group does not contain model " << name );
 
   return model;
 }
@@ -589,10 +624,10 @@ BASETYPE * SolverBase::GetConstitutiveModel( dataRepository::Group * dataGroup, 
 {
   Group * const constitutiveModels =
     dataGroup->GetGroup( constitutive::ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
-  GEOS_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
+  GEOSX_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
 
   BASETYPE * const model = constitutiveModels->GetGroup<BASETYPE>( name );
-  GEOS_ERROR_IF( model == nullptr, "Target group does not contain model " << name );
+  GEOSX_ERROR_IF( model == nullptr, "Target group does not contain model " << name );
 
   return model;
 }

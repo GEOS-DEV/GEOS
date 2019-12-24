@@ -1076,7 +1076,7 @@ void KernelLaunchSelectorCompSwitch( T value, LAMBDA && lambda )
     case 3:  lambda( std::integral_constant<T, 3>() ); return;
     case 4:  lambda( std::integral_constant<T, 4>() ); return;
     case 5:  lambda( std::integral_constant<T, 5>() ); return;
-    default: GEOS_ERROR("Unknown numComp value: " << value);
+    default: GEOSX_ERROR("Unknown numComp value: " << value);
   }
 }
 
@@ -1101,7 +1101,7 @@ void KernelLaunchSelector2( localIndex numComp, localIndex numPhase, ARGS && ...
       case 1: KERNELWRAPPER::template Launch<NC(), 1>( std::forward<ARGS>(args)... ); return;
       case 2: KERNELWRAPPER::template Launch<NC(), 2>( std::forward<ARGS>(args)... ); return;
       case 3: KERNELWRAPPER::template Launch<NC(), 3>( std::forward<ARGS>(args)... ); return;
-      default: GEOS_ERROR("Unknown numPhase value: " << numPhase);
+      default: GEOSX_ERROR("Unknown numPhase value: " << numPhase);
     }
   });
 }

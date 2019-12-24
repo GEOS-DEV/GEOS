@@ -226,7 +226,7 @@ void NodeManager::ViewPackingExclusionList( set<localIndex> & exclusionList ) co
   exclusionList.insert(this->getWrapperIndex(viewKeyStruct::elementSubRegionListString));
   exclusionList.insert(this->getWrapperIndex(viewKeyStruct::elementListString));
 
-  if( this->hasView( "usedFaces" ) )
+  if( this->hasWrapper( "usedFaces" ) )
   {
     exclusionList.insert(this->getWrapperIndex("usedFaces"));
   }
@@ -287,7 +287,7 @@ localIndex NodeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
 
   string temp;
   unPackedSize += bufferOps::Unpack( buffer, temp );
-  GEOS_ERROR_IF( temp != viewKeyStruct::edgeListString, "");
+  GEOSX_ERROR_IF( temp != viewKeyStruct::edgeListString, "");
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toEdgesRelation,
                                      packList,
@@ -297,7 +297,7 @@ localIndex NodeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                      overwriteUpMaps );
 
   unPackedSize += bufferOps::Unpack( buffer, temp );
-  GEOS_ERROR_IF( temp != viewKeyStruct::faceListString, "");
+  GEOSX_ERROR_IF( temp != viewKeyStruct::faceListString, "");
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toFacesRelation,
                                      packList,
@@ -307,7 +307,7 @@ localIndex NodeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                      overwriteUpMaps );
 
   unPackedSize += bufferOps::Unpack( buffer, temp );
-  GEOS_ERROR_IF( temp != viewKeyStruct::elementListString, "");
+  GEOSX_ERROR_IF( temp != viewKeyStruct::elementListString, "");
   unPackedSize += bufferOps::Unpack( buffer,
                                      this->m_toElements,
                                      packList,
