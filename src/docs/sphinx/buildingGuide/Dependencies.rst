@@ -113,25 +113,3 @@ Last, note that any extra argument will be tranfered directly as a `cmake` argum
 For example, use the `-DNUM_PROC=2` to compile the TPL using two threads.
 
 If you want to directly write the `cmake` command line, we advise you to dig into the `config-build.py <https://github.com/GEOSX/GEOSX/blob/develop/scripts/config-build.py>`_ python code.
-
-Continuous Integration process
-==============================
-
-To save building time, the third party libraries (that do not change so often) and GEOSX are build separately.
-
-Everytime a pull is requested in the TPL repository, a docker image is generated and deployed on `dockerhub <https://hub.docker.com/r/geosx/compiler>`_.
-The date (YYYY-MM-DD) is appended to the tag name so the client code (i.e. GEOSX) can select the version it needs
-(the `DOCKER_DATE` env variable is defined in the `GEOSX's .travis.yml <https://github.com/GEOSX/GEOSX/blob/develop/.travis.yml>`_).
-
-For the OSX builds, we build a tarball of the TPLs and save them a remote location.
-The client (GEOSX again) will select the version it needs by defining the `TPL_OSX_TRAVIS_BUILD_NUMBER` environment variable in the `.travis.yml <https://github.com/GEOSX/GEOSX/blob/develop/.travis.yml>`_ file.
-An important counterpart to using a tarball and not a docker image is that the tarball does not provide the whole system the precompiled binaries rely on.
-Problems may arise since we use the rolling release `Homebrew <https://brew.sh/>`_ (to install open-mpi in particular).
-To circumvent this potential issue, the brew version is fixed to a specific commit (see BREW_HASH variable in `third party's .travis.yml <https://github.com/GEOSX/thirdPartyLibs/blob/master/.travis.yml>`_) and stored in a `brew_hash.txt` file at the root folder of the TPLs.
-It is therefore possible for GEOSX to build against the same revision of brew packages.
-
-It must be mentioned that one and only one version of the compiled TPL tarball is stored per pull request (older ones are removed automatically).
-Therefore, a client building against a work in progress PR may experience a 404 error sooner or later.
-
-It must be noted that there are now two different ways to designate the same version of the TPL.
-An effort should be done to make this homogeneous.
