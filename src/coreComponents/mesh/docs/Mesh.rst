@@ -177,7 +177,7 @@ The mesh block has the following syntax.
                          file="/path/to/the/mesh/file.msh"/>
   </Mesh>
 
-We strongly recommand to use absolute path to the mesh file.
+The path mentionned has to be either relative to the XML file, or absolute.
 
 GEOSX uses ``ElementRegions`` to support different physics, or to define different constitutive properties.
 An ``ElementRegion`` is defined as a set of ``CellBlocks``.

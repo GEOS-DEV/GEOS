@@ -7,8 +7,7 @@ set( fileIO_headers
      silo/SiloFile.hpp
      vtk/VTKFile.hpp
      vtm/VtmFile.hpp
-     schema/SchemaUtilities.hpp
-     utils/utils.hpp )
+     schema/SchemaUtilities.hpp )
 
 #
 # Specify all sources
