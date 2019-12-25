@@ -154,7 +154,7 @@ void SinglePhaseHybridFVM::SetupDofs( DomainPartition const * const GEOSX_UNUSED
   
   // setup the connectivity of elem fields
   // we need Connectivity::Face because of the two-point upwinding
-  // in AssembleUpwindedOneSidedMassFluxes
+  // in AssembleOneSidedMassFluxes
   dofManager.addField( viewKeyStruct::pressureString,
                        DofManager::Location::Elem,
                        DofManager::Connectivity::Face, 
@@ -558,6 +558,7 @@ void SinglePhaseHybridFVM::AssembleOneSidedMassFluxes( real64 const & dt,
   // for each element, loop over the one-sided faces
   for (localIndex ifaceLoc = 0; ifaceLoc < numFacesInElem; ++ifaceLoc)
   {
+
     // compute the mass flux at the one-sided face plus its derivatives
     // add the newly computed flux to the sum
     sumLocalMassFluxes      += dt * upwMobility[ifaceLoc] * oneSidedVolFlux[ifaceLoc];
@@ -786,18 +787,19 @@ void SinglePhaseHybridFVM::ApplySystemSolution( DofManager const & dofManager,
                                scalingFactor,
                                faceManager,
                                viewKeyStruct::deltaFacePressureString );
-
-  // 3. synchronize
   
+  // 3. synchronize
+
+  // the tags in fieldNames have to match the tags used in NeighborCommunicator.cpp
   std::map<string, string_array> fieldNames;
-  fieldNames["faces"].push_back( viewKeyStruct::deltaFacePressureString );
+  fieldNames["face"].push_back( viewKeyStruct::deltaFacePressureString );
   fieldNames["elems"].push_back( viewKeyStruct::deltaPressureString );
 
   array1d<NeighborCommunicator> & comms =
     domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors );
 
   CommunicationTools::SynchronizeFields( fieldNames, mesh, comms );
-
+  
   applyToSubRegions( mesh, [&] ( ElementSubRegionBase * subRegion )
   {
     UpdateState( subRegion );
