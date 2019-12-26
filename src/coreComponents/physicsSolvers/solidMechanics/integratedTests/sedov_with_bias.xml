@@ -1,16 +1,19 @@
-  <!-- SPHINX_INTERNAL_MESH -->
+<!-- SPHINX_MESH_BIAS -->
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="{C3D8}" 
-                  xCoords="{ 0, 10 }"
-                  yCoords="{ 0, 10 }"
-                  zCoords="{ 0, 10 }"
-                  nx="{10}"
-                  ny="{10}"
-                  nz="{10}"
+                  xCoords="{ -10, -1, 0, 1, 10 }"
+                  yCoords="{ -10, -1, 0, 1, 10  }"
+                  zCoords="{ -10, -1, 0, 1, 10  }"
+                  nx="{ 4, 1, 1, 4 }"
+                  ny="{ 5, 1, 1, 5 }"
+                  nz="{ 6, 1, 1, 6 }"
+                  xBias="{ 0.555, 0, 0, -0.555 }"
+                  yBias="{ 0.444, 0, 0, -0.444 }"
+                  zBias="{ 0.333, 0, 0, -0.333 }"
                   cellBlockNames="{cb1}"/>
   </Mesh>
-  <!-- SPHINX_INTERNAL_MESH_END -->
+<!-- SPHINX_MESH_BIAS_END -->
 
 
   <Events maxTime="1.0e-3">
