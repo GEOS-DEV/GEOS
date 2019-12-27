@@ -426,6 +426,7 @@
 			<xsd:element name="SolidMechanicsLagrangianSSLE" type="SolidMechanicsLagrangianSSLEType" />
 			<xsd:element name="SolidMechanics_LagrangianFEM" type="SolidMechanics_LagrangianFEMType" />
 			<xsd:element name="SurfaceGenerator" type="SurfaceGeneratorType" />
+			<xsd:element name="TwoPhaseHybridFVM" type="TwoPhaseHybridFVMType" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseFlowType">
@@ -558,6 +559,19 @@
 		<xsd:attribute name="tipNodes" type="LvArray::SortedArray&lt;long, long&gt;" />
 		<!--trailingFaces => Set containing all the trailing faces-->
 		<xsd:attribute name="trailingFaces" type="LvArray::SortedArray&lt;long, long&gt;" />
+	</xsd:complexType>
+	<xsd:complexType name="TwoPhaseHybridFVMType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
+		<!--fluidIndex => (no description available)-->
+		<xsd:attribute name="fluidIndex" type="localIndex" />
+		<!--gravityVector => (no description available)-->
+		<xsd:attribute name="gravityVector" type="R1Tensor" />
+		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
+		<xsd:attribute name="maxStableDt" type="real64" />
+		<!--solidIndex => (no description available)-->
+		<xsd:attribute name="solidIndex" type="localIndex" />
 	</xsd:complexType>
 	<xsd:complexType name="commandLineType">
 		<!--beginFromRestart => Flag to indicate restart run.-->
@@ -1034,6 +1048,8 @@
 		<xsd:attribute name="SIFonFace" type="real64_array" />
 		<!--childIndex => child index of the face.-->
 		<xsd:attribute name="childIndex" type="localIndex_array" />
+		<!--deltaFacePressure => An array that holds the accumulated pressure updates at the faces. => TwoPhaseHybridFVM-->
+		<xsd:attribute name="deltaFacePressure" type="real64_array" />
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--edgeList => (no description available)-->
@@ -1054,7 +1070,7 @@
 		<xsd:attribute name="faceMobility" type="real64_array" />
 		<!--faceNormal => (no description available)-->
 		<xsd:attribute name="faceNormal" type="r1_array" />
-		<!--facePressure => (no description available)-->
+		<!--facePressure => An array that holds the pressures at the faces. => TwoPhaseHybridFVM-->
 		<xsd:attribute name="facePressure" type="real64_array" />
 		<!--faceViscosity => (no description available)-->
 		<xsd:attribute name="faceViscosity" type="real64_array2d" />
