@@ -91,8 +91,6 @@ void SinglePhaseHybridFVM::ImplicitStepSetup( real64 const & time_n,
 
   // get the face-based DOF numbers 
   string const faceDofKey = dofManager.getKey( viewKeyStruct::facePressureString );
-  arrayView1d<globalIndex const> const & faceDofNumber =
-    faceManager->getReference< array1d<globalIndex> >( faceDofKey );  
 
   // save the face Dof key for use in two functions
   // that do not have acces to the coupled solver dofManager
@@ -105,12 +103,7 @@ void SinglePhaseHybridFVM::ImplicitStepSetup( real64 const & time_n,
 
   forall_in_range<serialPolicy>( 0, faceManager->size(), GEOSX_LAMBDA ( localIndex iface )
   {
-    
-    // zero out if face is in target region
-    if (faceDofNumber[iface] >= 0)
-    {
-      dFacePres[iface] = 0;
-    }
+    dFacePres[iface] = 0;
   });
 
 }
@@ -135,7 +128,7 @@ void SinglePhaseHybridFVM::ImplicitStepComplete( real64 const & time_n,
   // get the face-based pressures 
   arrayView1d<real64> const & facePres =
     faceManager->getReference<array1d<real64>>(viewKeyStruct::facePressureString);
-  arrayView1d<real64 const> const & dFacePres =
+  arrayView1d<real64> const & dFacePres =
     faceManager->getReference<array1d<real64>>(viewKeyStruct::deltaFacePressureString);
 
   forall_in_range<serialPolicy>( 0, faceManager->size(), GEOSX_LAMBDA ( localIndex iface )
@@ -817,20 +810,13 @@ void SinglePhaseHybridFVM::ResetStateToBeginningOfStep( DomainPartition * const 
   MeshLevel * const mesh          = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   FaceManager * const faceManager = mesh->getFaceManager();
 
-  // get the face-based DOF numbers 
-  arrayView1d<globalIndex const> const & faceDofNumber =
-    faceManager->getReference< array1d<globalIndex> >( m_faceDofKey );  
-
   // get the accumulated face pressure updates
   arrayView1d<real64> & dFacePres =
     faceManager->getReference<array1d<real64>>(viewKeyStruct::deltaFacePressureString);
 
   forall_in_range<serialPolicy>( 0, faceManager->size(), GEOSX_LAMBDA ( localIndex iface )
   {
-    if (faceDofNumber[iface] >= 0)
-    {  
-      dFacePres[iface] = 0;
-    }
+    dFacePres[iface] = 0;
   });
 }
 
@@ -970,7 +956,7 @@ void SinglePhaseHybridFVM::ComputeQFamilyInnerProduct( arrayView1d<R1Tensor cons
     cellToFaceMat.resizeDimension<0>( numFacesInElem );
     cellToFaceMat.resizeDimension<1>( dim );
     work_dim.resize( dim );
-    work_dimByDim( dim, dim );
+    work_dimByDim.resize( dim, dim );
   }
   else
   {
