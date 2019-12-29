@@ -1169,7 +1169,6 @@ void ProppantTransport::ApplyBoundaryConditions(real64 const time_n,
 
         
     fs->ApplyBoundaryConditionToSystem<FieldSpecificationEqual, LAInterface>( lset,
-                                                                              false,
                                                                               time_n + dt,
                                                                               subRegion,
                                                                               dofNumber,
