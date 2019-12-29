@@ -58,7 +58,9 @@ public:
 
   virtual void BatchUpdate( arrayView1d<real64 const> const & pressure, arrayView1d<real64 const> const & proppantConcentration,  arrayView2d<real64 const> const & componentConcentration, arrayView1d<real64 const> const & shearRate) = 0;
 
-  virtual void PointUpdateFluidProperty( real64 const & pressure, arraySlice1d<real64 const> const & Componentconcentration, real64 const & shearRate, localIndex const k, localIndex const q ) = 0;  
+  virtual void PointUpdateFluidProperty( real64 const & pressure, arraySlice1d<real64 const> const & Componentconcentration, real64 const & shearRate, localIndex const k, localIndex const q ) = 0;
+
+  virtual void PointUpdateComponentDensity( real64 const & pressure, arraySlice1d<real64 const> const & Componentconcentration, localIndex const k, localIndex const q ) = 0;    
   
   localIndex numFluidComponents() const;
 

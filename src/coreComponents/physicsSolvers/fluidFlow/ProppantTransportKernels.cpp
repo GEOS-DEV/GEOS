@@ -61,6 +61,7 @@ Launch<CellElementStencilTPFA>( CellElementStencilTPFA const & GEOSX_UNUSED_ARG(
 				localIndex const GEOSX_UNUSED_ARG(fluidIndex),
 				localIndex const GEOSX_UNUSED_ARG(proppantIndex),
 			        FluxKernel::ElementViewConst< arrayView1d<R1Tensor const> > const & GEOSX_UNUSED_ARG(transTMultiplier),
+                                integer const GEOSX_UNUSED_ARG(updateProppantPacking),
                                 R1Tensor const & GEOSX_UNUSED_ARG(unitGravityVector),                                
 				FluxKernel::ElementViewConst< arrayView1d<globalIndex const > > const & GEOSX_UNUSED_ARG( dofNumber ),
 				FluxKernel::ElementViewConst< arrayView1d<real64 const> > const & GEOSX_UNUSED_ARG( pres ),
@@ -107,6 +108,7 @@ Launch<FaceElementStencil>( FaceElementStencil const & stencil,
 			    localIndex const fluidIndex,
 			    localIndex const proppantIndex,
                             FluxKernel::ElementViewConst< arrayView1d<R1Tensor const> > const & transTMultiplier,
+                            integer const updateProppantPacking,
                             R1Tensor const & unitGravityVector,
 			    FluxKernel::ElementViewConst< arrayView1d<globalIndex const > > const & dofNumber,
 			    FluxKernel::ElementViewConst< arrayView1d<real64 const> > const & pres,
@@ -160,10 +162,11 @@ Launch<FaceElementStencil>( FaceElementStencil const & stencil,
   forall_in_range<serialPolicy>( 0, stencil.size(), GEOSX_LAMBDA ( localIndex iconn )
   {
 
-    if(isGhostConnectors[iconn][0] < 0) 
+    localIndex const numFluxElems = stencil.stencilSize(iconn);
+
+    if(isGhostConnectors[iconn][0] < 0 && !(updateProppantPacking == 0 && numFluxElems <= 1) ) 
       {
 
-        localIndex const numFluxElems = stencil.stencilSize(iconn);
         localIndex const stencilSize  = numFluxElems;
 
         localIndex const DOF = numFluxElems * numDofPerCell;

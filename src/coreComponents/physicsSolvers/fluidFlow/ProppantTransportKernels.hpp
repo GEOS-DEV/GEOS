@@ -50,6 +50,7 @@ struct AccumulationKernel
            arraySlice1d<real64 const> const & GEOSX_UNUSED_ARG( dCompDens_dPres ),
            arraySlice2d<real64 const> const & dCompDens_dCompConc,
            real64 const & volume,
+           real64 const & packPoreVolume,           
            arraySlice1d<real64> const & localAccum,
            arraySlice2d<real64> const & localAccumJacobian )
   {
@@ -68,12 +69,13 @@ struct AccumulationKernel
         for(localIndex c1 = 0; c1 < NC; ++c1)
           {
 
-            localAccum[c1+1] = ( componentDensNew[c1] * (1.0 - proppantConcNew) - componentDensOld[c1] * (1.0 - proppantConcOld) ) * volume;
+            localAccum[c1+1] = ( componentDensNew[c1] * (1.0 - proppantConcNew) - componentDensOld[c1] * (1.0 - proppantConcOld) ) * volume + (componentDensNew[c1] - componentDensOld[c1]) * packPoreVolume;
 
             for(localIndex c2 = 0; c2 < NC; ++c2)
-              localAccumJacobian[c1+1][c2+1] = dCompDens_dCompConc[c1][c2] * (1.0 - proppantConcNew) * volume;
+              localAccumJacobian[c1+1][c2+1] = dCompDens_dCompConc[c1][c2] * (1.0 - proppantConcNew) * volume + dCompDens_dCompConc[c1][c2] * packPoreVolume;
 
             localAccumJacobian[c1+1][0] = -componentDensNew[c1] * volume;
+
           }
         
   }
@@ -132,7 +134,8 @@ struct FluxKernel
           real64 const dt,
           localIndex const fluidIndex,
           localIndex const proppantIndex,
-          ElementViewConst < arrayView1d<R1Tensor const> > const & transTMultiplier,          
+          ElementViewConst < arrayView1d<R1Tensor const> > const & transTMultiplier,
+          integer const updateProppantPacking,
           R1Tensor const & unitGravityVector,          
           ElementViewConst < arrayView1d<globalIndex const > > const & dofNumber,
           ElementViewConst < arrayView1d<real64 const> > const & pres,
@@ -221,7 +224,7 @@ struct FluxKernel
                    arrayView1d<real64 const> const & collisionFactor,
                    arrayView1d<real64 const> const & dCollisionFactor_dProppantConc,
                    arrayView1d<integer const> const & isProppantMobile,
-                   arrayView1d<real64 const> const & proppantPackVf,
+                   arrayView1d<real64 const> const & GEOSX_UNUSED_ARG(proppantPackVf),
                    arrayView1d<real64 const> const & aperture,
                    arrayView1d<real64 const> const & proppantLiftFlux,
                    //                              arrayView1d<integer const> const & isInterfaceElement,
@@ -303,6 +306,12 @@ struct FluxKernel
     stackArray2d<real64, maxNumFluxElems * maxNumFluxElems> dEdgeToFaceProppantFlux_dProppantC(numElems,numElems);
     stackArray3d<real64, maxNumFluxElems * maxNumFluxElems * maxNumComponents> dEdgeToFaceProppantFlux_dComponentC(numElems,numElems, NC);    
 
+
+    stackArray1d<real64, maxNumFluxElems> edgeToFaceFluidFlux(numElems);
+    stackArray2d<real64, maxNumFluxElems * maxNumFluxElems> dEdgeToFaceFluidFlux_dP(numElems,numElems);
+    stackArray2d<real64, maxNumFluxElems * maxNumFluxElems> dEdgeToFaceFluidFlux_dProppantC(numElems,numElems);
+    stackArray3d<real64, maxNumFluxElems * maxNumFluxElems * maxNumComponents> dEdgeToFaceFluidFlux_dComponentC(numElems,numElems, NC);    
+    
     stackArray1d<real64, maxNumFluxElems> P(numElems);
     stackArray1d<real64, maxNumFluxElems> proppantC(numElems);
     stackArray2d<real64, maxNumFluxElems * maxNumComponents> componentC(numElems, NC);
@@ -415,16 +424,15 @@ struct FluxKernel
 
           dSettlingFac_dComponentC[i][c] = dSettlingFactor_dComponentConc[ei][c];
 
+          componentC[i][c] = componentDens[ei][0][c];      
+          dComponentC_dP[i][c] = dComponentDens_dPres[ei][0][c];
 
-          componentC[i][c] = componentDens[ei][0][c] * (1.0 - proppantC[i]);      
-          dComponentC_dP[i][c] = dComponentDens_dPres[ei][0][c] * (1.0 - proppantC[i]);
-
-          dComponentC_dProppantC[i][c] = -componentDens[ei][0][c];
+          dComponentC_dProppantC[i][c] = 0.0;
 
           for(localIndex c2 = 0; c2 < NC; ++c2)
-            dComponentC_dComponentC[i][c][c2] = dComponentDens_dComponentConc[ei][0][c][c2] * (1.0 - proppantC[i]);            
+            dComponentC_dComponentC[i][c][c2] = dComponentDens_dComponentConc[ei][0][c][c2];            
           
-
+          
           dEdgeDens_dComponentC[i][c] = weight[i] * dDens_dComponentConc[ei][0][c];
           dEdgeVisc_dComponentC[i][c] = weight[i] * dVisc_dComponentConc[ei][0][c];
 
@@ -510,7 +518,7 @@ struct FluxKernel
       }
 
       //contribution from paricle slipping
-
+    
     
       /*
       
@@ -550,7 +558,7 @@ struct FluxKernel
       for (localIndex j = 0; j < numElems; ++j)
         {
 
-          dEdgeToFaceProppantFlux_dP[i][j] = 0.0;
+          //          dEdgeToFaceProppantFlux_dP[i][j] = 0.0;
           dEdgeToFaceProppantFlux_dProppantC[i][j] = 0.0;
 
           for(localIndex c = 0; c < NC; ++c)
@@ -594,22 +602,19 @@ struct FluxKernel
 
           // horizontal
         
-       
-           real64 fluxCoef = transTMultiplier[ei][0] > 0.0 ? (1.0 - proppantPackVf[ei]) / transTMultiplier[ei][0] : 0.0;           
-
-           edgeToFaceProppantFlux[i] = (fluxCoef + fluidDens[i] / mixDens[i] * (1.0 - proppantC[i]) * collisionFac[i]) * edgeToFaceFlux[i];
+           edgeToFaceProppantFlux[i] = (1.0 + fluidDens[i] / mixDens[i] * (1.0 - proppantC[i]) * collisionFac[i]) * edgeToFaceFlux[i];
 
            dEdgeToFaceProppantFlux_dProppantC[i][i] = -fluidDens[i] / mixDens[i] * (collisionFac[i] - (1.0 - proppantC[i]) * dCollisionFac_dProppantC[i]) * edgeToFaceFlux[i];
 
            for (localIndex j = 0; j < numElems; ++j)
             {
 
-              dEdgeToFaceProppantFlux_dProppantC[i][j] += (fluxCoef + fluidDens[i] / mixDens[i] * (1.0 - proppantC[i]) * collisionFac[i]) * dEdgeToFaceFlux_dProppantC[i][j];
+              dEdgeToFaceProppantFlux_dProppantC[i][j] += (1.0 + fluidDens[i] / mixDens[i] * (1.0 - proppantC[i]) * collisionFac[i]) * dEdgeToFaceFlux_dProppantC[i][j];
 
               for(localIndex c = 0; c < NC; ++c)
                 {
 
-                  dEdgeToFaceProppantFlux_dComponentC[i][j][c] += (fluxCoef + fluidDens[i] / mixDens[i] * (1.0 - proppantC[i]) * collisionFac[i]) * dEdgeToFaceFlux_dComponentC[i][j][c];
+                  dEdgeToFaceProppantFlux_dComponentC[i][j][c] += (1.0 + fluidDens[i] / mixDens[i] * (1.0 - proppantC[i]) * collisionFac[i]) * dEdgeToFaceFlux_dComponentC[i][j][c];
 
                 }
               
@@ -617,8 +622,62 @@ struct FluxKernel
                                                           
         }
 
-    }
+      // fluid flux for component transport
+
+      for (localIndex j = 0; j < numElems; ++j)
+        {
+
+          dEdgeToFaceFluidFlux_dP[i][j] = 0.0;
+          dEdgeToFaceFluidFlux_dProppantC[i][j] = 0.0;
+
+          for(localIndex c = 0; c < NC; ++c)
+            {
+
+              dEdgeToFaceFluidFlux_dComponentC[i][j][c] = 0.0;
+              
+            }
+          
+        }
+
+      // note that all the fluid properties are from previous time step
+
+      real64 fluidFluxCoef = 1.0;
+
+      if(isProppantMob[i] == 0 || numElems == 1)
+        fluidFluxCoef = 0.0;
+      
+      edgeToFaceFluidFlux[i] = mixDens[i] / fluidDens[i] * edgeToFaceFlux[i] - fluidFluxCoef * (mixDens[i] -  fluidDens[i] * (1.0 - proppantC[i])) / fluidDens[i] * edgeToFaceProppantFlux[i];
+
+      dEdgeToFaceFluidFlux_dProppantC[i][i] = -fluidFluxCoef * edgeToFaceProppantFlux[i];
+
+      for (localIndex j = 0; j < numElems; ++j)
+        {
+
+          dEdgeToFaceFluidFlux_dProppantC[i][j] += mixDens[i] / fluidDens[i] * dEdgeToFaceFlux_dProppantC[i][j] - fluidFluxCoef * (mixDens[i] -  fluidDens[i] * (1.0 - proppantC[i])) / fluidDens[i] * dEdgeToFaceProppantFlux_dProppantC[i][j];
+
+          for(localIndex c = 0; c < NC; ++c)
+            {
+
+              dEdgeToFaceFluidFlux_dComponentC[i][j][c] += mixDens[i] / fluidDens[i] * dEdgeToFaceFlux_dComponentC[i][j][c] - fluidFluxCoef * (mixDens[i] -  fluidDens[i] * (1.0 - proppantC[i])) / fluidDens[i] * dEdgeToFaceProppantFlux_dComponentC[i][j][c];              
+          
+            }
+        }
+
     
+      for (localIndex j = 0; j < numElems; ++j)
+        {
+
+          dEdgeToFaceFluidFlux_dProppantC[i][j] = 0.0;
+
+          for(localIndex c = 0; c < NC; ++c)
+            {
+
+              dEdgeToFaceFluidFlux_dComponentC[i][j][c] = 0.0;
+          
+            }
+        }      
+    }
+   
     // get proppantCe
 
     real64 proppantCe = 0.0;
@@ -749,21 +808,23 @@ struct FluxKernel
     for (localIndex i = 0; i < numElems; ++i)
     {
 
-      if(edgeToFaceFlux[i] >= 0.0)
+      if(edgeToFaceFluidFlux[i] >= 0.0)
       {
         // downstream
-        downStreamFlux += edgeToFaceFlux[i];
 
+        downStreamFlux += edgeToFaceFluidFlux[i];
+
+        
         for(localIndex j = 0; j < numElems; ++j)
         {
 
-          dDownStreamFlux_dP[j] += dEdgeToFaceFlux_dP[i][j];
-          dDownStreamFlux_dProppantC[j] += dEdgeToFaceFlux_dProppantC[i][j];
+          dDownStreamFlux_dP[j] += dEdgeToFaceFluidFlux_dP[i][j];
+          dDownStreamFlux_dProppantC[j] += dEdgeToFaceFluidFlux_dProppantC[i][j];
 
           for(localIndex c = 0; c < NC; ++c)
             {
 
-              dDownStreamFlux_dComponentC[j][c] += dEdgeToFaceFlux_dComponentC[i][j][c];
+              dDownStreamFlux_dComponentC[j][c] += dEdgeToFaceFluidFlux_dComponentC[i][j][c];
 
             }
           
@@ -777,23 +838,23 @@ struct FluxKernel
         for(localIndex c1 = 0; c1 < NC; ++c1)
           {
         
-            componentCe[c1] += -edgeToFaceFlux[i] * componentC[i][c1];
+            componentCe[c1] += -edgeToFaceFluidFlux[i] * componentC[i][c1];
 
-            dComponentCe_dP[i][c1] += -edgeToFaceFlux[i] * dComponentC_dP[i][c1];
+            dComponentCe_dP[i][c1] += -edgeToFaceFluidFlux[i] * dComponentC_dP[i][c1];
 
             for(localIndex c2 = 0; c2 < NC; ++c2)
-              dComponentCe_dComponentC[i][c1][c2] += -edgeToFaceFlux[i] * dComponentC_dComponentC[i][c1][c2];
+              dComponentCe_dComponentC[i][c1][c2] += -edgeToFaceFluidFlux[i] * dComponentC_dComponentC[i][c1][c2];
 
             for(localIndex j = 0; j < numElems; ++j)
               {
 
-                dComponentCe_dP[j][c1] += -dEdgeToFaceFlux_dP[i][j] * componentC[i][c1];
-                dComponentCe_dProppantC[j][c1] += -dEdgeToFaceFlux_dProppantC[i][j] * componentC[i][c1];
+                dComponentCe_dP[j][c1] += -dEdgeToFaceFluidFlux_dP[i][j] * componentC[i][c1];
+                dComponentCe_dProppantC[j][c1] += -dEdgeToFaceFluidFlux_dProppantC[i][j] * componentC[i][c1];
 
                 for(localIndex c2 = 0; c2 < NC; ++c2)
                   {
 
-                    dComponentCe_dComponentC[j][c1][c2] += -dEdgeToFaceFlux_dComponentC[i][j][c2] * componentC[i][c1];
+                    dComponentCe_dComponentC[j][c1][c2] += -dEdgeToFaceFluidFlux_dComponentC[i][j][c2] * componentC[i][c1];
 
                   }
               }
@@ -891,12 +952,14 @@ struct FluxKernel
 
             localFluxJacobian[idx1][idx2] = -(dProppantCe_dProppantC[j] * edgeToFaceProppantFlux[i] + proppantCe * dEdgeToFaceProppantFlux_dProppantC[i][j]) * dt;
 
+            /*
             for(localIndex c = 0; c < NC; ++c)
               {
 
                 localFluxJacobian[idx1][idx2 + 1 + c] = -(dProppantCe_dComponentC[j][c] * edgeToFaceProppantFlux[i] + proppantCe * dEdgeToFaceProppantFlux_dComponentC[i][j][c]) * dt;
 
               }
+            */
 
           }
           else
@@ -906,13 +969,14 @@ struct FluxKernel
 
             if(i == j)
               localFluxJacobian[idx1][idx2] += -edgeToFaceProppantFlux[i] * dt;
-
+            /*
             for(localIndex c = 0; c < NC; ++c)
               {
 
                 localFluxJacobian[idx1][idx2 + 1 + c] = -proppantC[i] * dEdgeToFaceProppantFlux_dComponentC[i][j][c] * dt;
 
               }
+            */
 
           }
 
@@ -938,67 +1002,61 @@ struct FluxKernel
         }
 
       }
-      
-
+    
+    
       // component
-      
-      for(localIndex c1 = 0; c1 < NC; ++c1)
-      {
+    
+      if(numElems > 1){
 
-        idx1 = i * numDofPerCell + 1 + c1;
-
-        if(edgeToFaceFlux[i] >= 0.0)
-        {
-
-          localFlux[idx1] = -componentCe[c1] * edgeToFaceFlux[i] * dt;
-
-        }
-        else
-        {
-
-          localFlux[idx1] = -componentC[i][c1] * edgeToFaceFlux[i] * dt;
-
-        }
-
-        for (localIndex j = 0; j < numElems; ++j)
-        {
-
-          localIndex idx2 = j * numDofPerCell;
-
-          if(edgeToFaceFlux[i] >= 0.0)
+        for(localIndex c1 = 0; c1 < NC; ++c1)
           {
 
-            localFluxJacobian[idx1][idx2] = -(dComponentCe_dProppantC[j][c1] * edgeToFaceFlux[i] + componentCe[c1] * dEdgeToFaceFlux_dProppantC[i][j]) * dt;
+            idx1 = i * numDofPerCell + 1 + c1;
 
-            for(localIndex c2 = 0; c2 < NC; ++c2)
+            if(edgeToFaceFluidFlux[i] >= 0.0)
               {
 
-                localFluxJacobian[idx1][idx2 + 1 + c2] = -(dComponentCe_dComponentC[j][c1][c2] * edgeToFaceFlux[i] + componentCe[c1] * dEdgeToFaceFlux_dComponentC[i][j][c2]) * dt;
+                localFlux[idx1] = -componentCe[c1] * edgeToFaceFluidFlux[i] * dt;
+
+              }
+            else 
+              {
+
+                localFlux[idx1] = -componentC[i][c1] * edgeToFaceFluidFlux[i] * dt;
 
               }
 
-          }
-          else
-          {
-          
-            localFluxJacobian[idx1][idx2] = -componentC[i][c1] * dEdgeToFaceFlux_dProppantC[i][j] * dt;
-
-            for(localIndex c2 = 0; c2 < NC; ++c2)
-              {
-                
-                localFluxJacobian[idx1][idx2 + 1 + c2] = -componentC[i][c1] * dEdgeToFaceFlux_dComponentC[i][j][c2] * dt;
-
-              }
-            
-            if(i == j)            
+            for (localIndex j = 0; j < numElems; ++j)
               {
 
-                localFluxJacobian[idx1][idx2] += -dComponentC_dProppantC[i][c1] * edgeToFaceFlux[i] * dt;                
-                
-                for(localIndex c2 = 0; c2 < NC; ++c2)                
+                localIndex idx2 = j * numDofPerCell;
+
+                if(edgeToFaceFluidFlux[i] >= 0.0)
                   {
+
+                    for(localIndex c2 = 0; c2 < NC; ++c2)
+                      {
+
+                        localFluxJacobian[idx1][idx2 + 1 + c2] = -(dComponentCe_dComponentC[j][c1][c2] * edgeToFaceFluidFlux[i] + 0*componentCe[c1] * dEdgeToFaceFluidFlux_dComponentC[i][j][c2]) * dt;
+
+                      }
+
+                  }
+                else 
+                  {
+          
+            
+                    if(i == j)            
+                      {
+
+                        for(localIndex c2 = 0; c2 < NC; ++c2)                
+                          {
                     
-                    localFluxJacobian[idx1][idx2 + 1 + c2] += -dComponentC_dComponentC[i][c1][c2] * edgeToFaceFlux[i] * dt;
+                            localFluxJacobian[idx1][idx2 + 1 + c2] += -dComponentC_dComponentC[i][c1][c2] * edgeToFaceFluidFlux[i] * dt;
+
+                          }
+
+                      }
 
                   }
 
@@ -1006,13 +1064,11 @@ struct FluxKernel
 
           }
 
-        }
-
       }
-
+      
     }
 
-}
+  }
 
 inline static void
 ComputeCellBasedFlux( localIndex const numElems,
@@ -1298,18 +1354,7 @@ struct ProppantPackVolumeKernel
 
             real64 velocityMag = velocity.L2_Norm() / volume[ei];
 
-            real64 dH = (downVelocity + fluidDensity[ei][0] / density[ei][0] *(1.0 - conc[ei]) * settlingFactor[ei]) * conc[ei] / maxProppantConcentration * dt;
-            
-            /*
-            real64 Re = fluidDensity[ei] * velocityMag * edgeLength / fluidViscosity[ei];
-
-            fD = 64/Re;
-            
-            real64 tau = 8.0 * fluidViscosity[ei][0] / edgeLength  * velocityMag;
-            */
-
-            //            real64 fD = 0.03;
-
+            real64 dH = fluidDensity[ei][0] / density[ei][0] * (1.0 - conc[ei]) * settlingFactor[ei] * conc[ei] / maxProppantConcentration * dt;
             
             real64 tau = 1.0/8.0 * frictionCoefficient * fluidDensity[ei][0] * velocityMag * velocityMag; 
                       

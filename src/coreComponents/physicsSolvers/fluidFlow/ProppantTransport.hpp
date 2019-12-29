@@ -199,8 +199,11 @@ public:
     static constexpr auto deltaProppantConcentrationString      = "deltaProppantConcentration";    
 
     static constexpr auto componentConcentrationString      = "componentConcentration";
+    
     static constexpr auto deltaComponentConcentrationString      = "deltaComponentConcentration";    
 
+    static constexpr auto bcComponentConcentrationString      = "bcComponentConcentration";
+    
     static constexpr auto updatedComponentConcentrationString      = "updatedComponentConcentration";
     
     // these are used to store last converged time step values
@@ -274,13 +277,6 @@ public:
 
   static constexpr localIndex MAX_NUM_COMPONENTS = 3;
 
-  /*
-  void WriteVTKData(const std::string& prefix,
-                    DomainPartition * domain,
-                    const int cycleNumber,
-                    real64 const& time);
-  */
-  
 protected:
 
   virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const rootGroup ) override;
@@ -297,6 +293,8 @@ private:
    * @param domain the domain
    */
   void UpdateFluidModel( Group * const dataGroup );
+
+  void UpdateComponentDensity( Group * const dataGroup );  
 
   void UpdateProppantModel( Group * const dataGroup );
 

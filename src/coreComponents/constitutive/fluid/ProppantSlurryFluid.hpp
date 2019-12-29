@@ -63,7 +63,9 @@ public:
 
   virtual void PointUpdate( real64 const & pressure, real64 const & proppantConcentration, arraySlice1d<real64 const> const & Componentconcentration, real64 const & shearRate, integer const & isProppantBoundary, localIndex const k, localIndex const q ) override;
 
-  virtual void PointUpdateFluidProperty(real64 const & pressure, arraySlice1d<real64 const> const & componentConcentration, real64 const & shearRate, localIndex const k, localIndex const q ) override;  
+  virtual void PointUpdateFluidProperty(real64 const & pressure, arraySlice1d<real64 const> const & componentConcentration, real64 const & shearRate, localIndex const k, localIndex const q ) override;
+
+  virtual void PointUpdateComponentDensity(real64 const & pressure, arraySlice1d<real64 const> const & componentConcentration, localIndex const k, localIndex const q ) override;    
 
   virtual void BatchUpdate( arrayView1d<real64 const> const & pressure, arrayView1d<real64 const> const & proppantConcentration,  arrayView2d<real64 const> const & componentConcentration, arrayView1d<real64 const> const & shearRate) override;
 
@@ -76,6 +78,12 @@ public:
                             real64 & dFluidDensity_dPressure,
                             arraySlice1d<real64> const & dFluidDensity_dComponentConcentration) const;
 
+  void ComputeComponentDensity( real64 const & pressure,
+                                arraySlice1d<real64 const> const & componentConcentration,
+                                arraySlice1d<real64> const & componentDensity,
+                                arraySlice1d<real64> const & dComponentDensity_dPressure,
+                                arraySlice2d<real64> const & dComponentDensity_dComponentConcentration) const;
+  
   
   void ComputeFluidViscosity( arraySlice1d<real64 const> const & componentDensity,
                               arraySlice1d<real64 const> const & dComponentDensity_dPressure,

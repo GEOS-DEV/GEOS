@@ -47,45 +47,80 @@ Input example
 .. code-block:: xml
 
   <Solvers
-    gravityVector="0.0, 0.0, 0">
+    gravityVector="0.0, 0.0, -9.81">
   
     <ProppantTransport name="ProppantTransport"
-                       verboseLevel="1"
+                       logLevel="1"  
                        gravityFlag="1"
-                       updateProppantMobility="1"		       
+                       updateProppantPacking="1"
                        discretization="singlePhaseTPFA"
                        targetRegions="{Fracture}"
                        fluidName="water"
                        proppantName="sand"		       
-                       solidName="rock">
-      
+                       solidName="rock">    
+
+      <NonlinearSolverParameters name="nlsp"
+                                 newtonTol="1.0e-6"
+                                 newtonMaxIter="8"
+                                 lineSearchAction="0"
+                                 newtonMinIter="1"
+                                 maxTimeStepCuts="5"/>
+
       <SystemSolverParameters name="SystemSolverParameters"
-                              krylovTol="1.0e-10"
-                              newtonTol="1.0e-5"
-                              maxIterNewton="40"/>
-    </ProppantTransport>
+                              krylovTol="1.0e-12"
+                              useDirectSolver="0"/>
+    </ProppantTransport>    
+
+    <FlowProppantTransport name="FlowProppantTransport"
+                           proppantSolverName="ProppantTransport"
+                           flowSolverName="SinglePhaseFlow"
+                           targetRegions="{Fracture}"
+                           logLevel="1">
+    </FlowProppantTransport>
+
+    <SinglePhaseFlow name="SinglePhaseFlow"
+                     logLevel="1"
+                     gravityFlag="1"
+                     discretization="singlePhaseTPFA"
+                     targetRegions="{Fracture}"
+                     fluidName="water"
+                     solidName="rock">
+
+       <NonlinearSolverParameters name="nlsp"
+                                 newtonTol="1.0e-8"
+                                 newtonMaxIter="8"
+                                 lineSearchAction="0"
+                                 newtonMinIter="0"
+                                 maxTimeStepCuts="5"/>
+
+       <SystemSolverParameters name="SystemSolverParameters"
+                               krylovTol="1.0e-12"/>
+
+    </SinglePhaseFlow>
     
     <SurfaceGenerator name="SurfaceGen"
-                      verboseLevel="0"
+                      logLevel="0"
                       fractureRegion="Fracture"
-                      targetRegions="{Fracture}">
+                      targetRegions="{Fracture}"
+                      solidMaterialName="granite"
+                      rockToughness="1e6">
     </SurfaceGenerator>
-    
+  
   </Solvers>
 
   <Constitutive>
     <ProppantSlurryFluid name="water"
-                         defaultDensity="1000"
-                         defaultViscosity="0.001"
                          referencePressure="1e5"
                          referenceDensity="1000"
                          compressibility="5e-10"
                          referenceViscosity="0.001"
-                         referenceProppantDensity="1200.0"/>
+                         referenceProppantDensity="2550.0"/>
 
     <ParticleFluid name="sand"
-                   hinderedSettlingCoefficient="5.9"
-                   proppantDensity="1200.0"/>
+                   particleSettlingModel="Stokes"
+		   hinderedSettlingCoefficient="5.9"
+                   proppantDensity="2550.0"
+                   proppantDiameter="4.0e-4"                   
 
     <PoreVolumeCompressibleSolid name="rock"
                                  referencePressure="0.0"
@@ -98,7 +133,7 @@ Theory
 
 The following mass balance and constitutive equations are solved inside fractures,
 
-proppant-fluid slurry flow:
+proppant-fluid slurry flow
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. math::
@@ -115,7 +150,7 @@ and :math:`p` is pressure, :math:`\rho_m` and :math:`\mu_m` are density and visc
    K_f =  \frac{a^2}{12}
 
    
-proppant transport:
+proppant transport
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. math::
@@ -124,16 +159,21 @@ proppant transport:
 in which :math:`c` and :math:`\boldsymbol{u}_p` represent the volume fraction and velocity of the proppant particles. 
 
 
-multi-component fluid transport:
+multi-component fluid transport
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. math::
-   \frac{\partial}{\partial t}(\rho_f \omega_i) + \boldsymbol{\nabla} \cdot (\rho_f \omega_i \boldsymbol{u}_f) = 0,
+   \frac{\partial}{\partial t} [ \rho_i \omega_i (1 - c) ] + \boldsymbol{\nabla} \cdot [ \rho_i \omega_i (1 - c) \boldsymbol{u}_f ] = 0.
 
-Here :math:`\omega_i` denotes the  mass fraction of `i-th` component in fluid, and :math:`\boldsymbol{\rho}_f` and :math:`\boldsymbol{u}_f` represent the carrying fluid density and velocity, respectively. 
+Here :math:`\boldsymbol{u}_f` represents the carrying fluid velocity. :math:`\rho_i` and :math:`\omega_i` denote the density and concentration of `i-th` component in fluid, respectively. The fluid density :math:`\rho_f` can now be readily written as
 
+.. math::
+   \rho_f = \sum_{i=1}^{N_c} \rho_i \omega_i, 
 
-The density and velocity of the mixed fluid are further expressed as,
+where :math:`N_c` is the number of components in fluid.
+Similarly, the fluid viscosity :math:`\mu_f` can be calculated by the mass fraction weighted average of the component viscosities.   
+
+The density and velocity of the slurry fluid are further expressed as,
 
 .. math::
    \rho_m = (1 - c) \rho_f + c \rho_p,
@@ -143,10 +183,10 @@ and
 .. math::
    \rho_m \boldsymbol{u}_m = (1 - c) \rho_f \boldsymbol{u}_f + c \rho_p \boldsymbol{u}_p,
 
-in which :math:`\rho_f` and :math:`\boldsymbol{u}_f` are the density and velocity of the carrying fluid, and :math:`\rho_p` is the density of the proppant particles. :math:`\rho_f` can be calculated either by user-supplied PVT function or by the mass fraction weighted average of the component densities.   
+in which :math:`\rho_f` and :math:`\boldsymbol{u}_f` are the density and velocity of the carrying fluid, and :math:`\rho_p` is the density of the proppant particles. 
 
 
-proppant slip velocity:
+proppant slip velocity
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The proppant particle and carrying fluid velocities are related by the slip velocity :math:`\boldsymbol{u}_{slip}`,
@@ -199,8 +239,8 @@ We use a simple expression of :math:`\lambda` proposed by Barree & Conway (1995)
 
 where :math:`\alpha` and :math:`\beta` are empirical constants, :math:`c_{slip}` is the volume fraction exhibiting the greatest particle slip. By default the model parameters are set to the values given in (Barree & Conway, 1995): :math:`\alpha= 1.27`, :math:`c_{slip} =0.1` and :math:`\beta =  1.5`. This model can be extended to account for the transition to the particle pack as the proppant concentration approaches the jamming transition.
 
-proppant bed build-up and load transport:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+proppant bed build-up and load transport
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In addition to suspended particle flow the GEOSX has the option to model proppant settling into an immobile bed at the bottom of the fracture. As the proppant cannot settle further down the proppant bed starts to form and develop at the element that is either at the bottom of the fracture or has an underlying element already filled with particles. Such an "inter-facial" element is divided into proppant flow and immobile bed regions based on the proppant-pack height. 
 
@@ -212,7 +252,7 @@ Although proppant becomes immobile fluid can continue to flow through the settle
 where :math:`c_{s}` is the saturation or maximum fraction for proppant packing, :math:`s` is the sphericity and :math:`d_p` is the particle diameter.
 
 
-The growth of the settled pack is controlled by the interplay between proppant gravitational settling and shear-force induced lifting as (Hu et al., 2018),
+The growth of the settled pack in an "inter-facial" element is controlled by the interplay between proppant gravitational settling and shear-force induced lifting as (Hu et al., 2018),
 
 .. math:: 
     \frac{d H}{d t} =  \frac{c u_{p}}{c_{s}} - \frac{Q_{lift}}{A c_{s}},
@@ -262,17 +302,13 @@ Note that continued model development and improvement are underway and additiona
 Spatial Discretization
 =======================
 
-The above governing equations are discretized using a cell-centered two-point flux approximation (TPFA) finite volume method. We use an upwind scheme to approximate proppant transport across cell interfaces.
+The above governing equations are discretized using a cell-centered two-point flux approximation (TPFA) finite volume method. We use an upwind scheme to approximate proppant and component transport across cell interfaces.
 
-Temporal Discretization
-=======================
-
-An implicit time integration scheme (backward Euler) is employed to solve slurry flow and proppant transport equations. 
 
 Solution Strategy
 =======================
 
-The discretized non-linear equations at each time step are solved by the Newton-Raphson method. Each nonlinear iteration step requires the solution of a set of linear algebraic equations.
+The discretized non-linear slurry flow and proppant/component transport equations at each time step are separately solved by the Newton-Raphson method. The coupling between them is achieved by a time-marching sequential (operator-splitting) solution approach. 
 
 
 References

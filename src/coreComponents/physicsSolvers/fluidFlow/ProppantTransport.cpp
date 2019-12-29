@@ -152,7 +152,8 @@ void ProppantTransport::RegisterDataOnMesh(Group * const MeshBodies)
 
       subRegion->registerWrapper< array1d<integer> >( viewKeyStruct::isProppantMobileString );
 
-      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::proppantPackVolumeFractionString );
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::proppantPackVolumeFractionString )->
+        setPlotLevel(PlotLevel::LEVEL_0);
 
       subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::proppantExcessPackVolumeString );
 
@@ -161,6 +162,8 @@ void ProppantTransport::RegisterDataOnMesh(Group * const MeshBodies)
       subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::poroMultiplierString )->setDefaultValue(1.0);
 
       subRegion->registerWrapper< array1d<R1Tensor> >( viewKeyStruct::transTMultiplierString )->setDefaultValue({1.0, 1.0, 1.0});            
+
+      subRegion->registerWrapper< array2d<real64> >( viewKeyStruct::bcComponentConcentrationString )->setDefaultValue(0.0);
       
       
     } );
@@ -225,7 +228,9 @@ void ProppantTransport::ResizeFractureFields( real64 const & GEOSX_UNUSED_ARG( t
          subRegion->template getReference< array2d<real64> >(viewKeyStruct::componentConcentrationString).resizeDimension<1>(NC);
          subRegion->template getReference< array2d<real64> >(viewKeyStruct::deltaComponentConcentrationString).resizeDimension<1>(NC);
          subRegion->template getReference< array2d<real64> >(viewKeyStruct::updatedComponentConcentrationString).resizeDimension<1>(NC);
-         subRegion->template getReference< array2d<real64> >(viewKeyStruct::oldComponentDensityString).resizeDimension<1>(NC);    
+         subRegion->template getReference< array2d<real64> >(viewKeyStruct::oldComponentDensityString).resizeDimension<1>(NC);
+
+         subRegion->template getReference< array2d<real64> >(viewKeyStruct::bcComponentConcentrationString).resizeDimension<1>(NC);         
     
        });
 
@@ -259,6 +264,35 @@ void ProppantTransport::UpdateFluidModel(Group * const dataGroup)
   });
 
 }
+
+void ProppantTransport::UpdateComponentDensity(Group * const dataGroup)
+{
+  GEOSX_MARK_FUNCTION;
+
+  SlurryFluidBase * const fluid = GetConstitutiveModel<SlurryFluidBase>( dataGroup, m_fluidName );
+
+  arrayView1d<real64 const> const & pres = dataGroup->getReference<array1d<real64>>( viewKeyStruct::pressureString );
+  arrayView1d<real64 const> const & dPres = dataGroup->getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
+
+  arrayView2d<real64 const> const & componentConc = dataGroup->getReference<array2d<real64>>( viewKeyStruct::componentConcentrationString );
+  arrayView2d<real64 const> const & dComponentConc = dataGroup->getReference<array2d<real64>>( viewKeyStruct::deltaComponentConcentrationString );
+
+  arrayView2d<real64> const & updatedComponentConc = dataGroup->getReference<array2d<real64>>( viewKeyStruct::updatedComponentConcentrationString );    
+
+  forall_in_range<RAJA::seq_exec>( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a )
+  {
+
+    for(localIndex c = 0; c < m_numComponents; ++c)
+      {
+        updatedComponentConc[a][c] = componentConc[a][c] + dComponentConc[a][c];
+      }
+    
+    fluid->PointUpdateComponentDensity( pres[a] + dPres[a], updatedComponentConc[a], a, 0 );
+
+  });
+
+}
+
 
 void ProppantTransport::UpdateProppantModel(Group * const dataGroup)
 {
@@ -538,7 +572,7 @@ real64 ProppantTransport::SolverStep( real64 const& time_n,
 
 
 void ProppantTransport::PreStepUpdate( real64 const& time,
-                                       real64 const&,
+                                       real64 const& dt,
                                        const int cycleNumber,
                                        DomainPartition * domain )
 {
@@ -563,6 +597,8 @@ void ProppantTransport::PreStepUpdate( real64 const& time,
     
     /* Below must be called after ImplicitStepSetup */
 
+    ResizeFractureFields( time, dt, domain);
+    
     localIndex const NC = m_numComponents;
     
     applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
@@ -585,7 +621,7 @@ void ProppantTransport::PreStepUpdate( real64 const& time,
       arrayView1d<real64> const & proppantConc = m_proppantConcentration[er][esr];      
 
       arrayView2d<real64> const & componentDensOld = m_componentDensityOld[er][esr];
-      arrayView3d<real64> const & componentDens = m_componentDensity[er][esr][m_fluidIndex];      
+      arrayView3d<real64> const & componentDens = m_componentDensity[er][esr][m_fluidIndex];
 
       arrayView1d<R1Tensor> const & cellBasedFlux   = m_cellBasedFlux[er][esr];
 
@@ -609,8 +645,6 @@ void ProppantTransport::PreStepUpdate( real64 const& time,
 
         proppantConcOld[ei] = proppantConc[ei];
 
-
-        
         for(localIndex c = 0; c < NC; ++c)
           {
 
@@ -878,9 +912,15 @@ void ProppantTransport::AssembleAccumulationTerms( DomainPartition const * const
         stackArray2d<real64, MAX_NUM_COMPONENTS * MAX_NUM_COMPONENTS> localAccumJacobian( m_numDofPerCell, m_numDofPerCell );
 
         real64 effectiveVolume = volume[ei];
+        real64 packPoreVolume = 0.0;        
+
         if(proppantPackVf[ei] < 1.0)
-          effectiveVolume = volume[ei]  * (1.0 - proppantPackVf[ei]);
-        
+          {
+            effectiveVolume = volume[ei]  * (1.0 - proppantPackVf[ei]);
+            packPoreVolume = volume[ei]  * proppantPackVf[ei] * (1.0 - m_maxProppantConcentration);
+
+          }
+
 	AccumulationKernel::Compute(NC,
                                     proppantConcOld[ei],
 				    proppantConc[ei] + dProppantConc[ei],
@@ -889,6 +929,7 @@ void ProppantTransport::AssembleAccumulationTerms( DomainPartition const * const
                                     dCompDens_dPres[ei][0],
                                     dCompDens_dCompConc[ei][0],
                                     effectiveVolume,
+                                    packPoreVolume,
                                     localAccum,
                                     localAccumJacobian );
 
@@ -911,6 +952,7 @@ void ProppantTransport::AssembleAccumulationTerms( DomainPartition const * const
 
     } );
   } );
+
 }
 
 
@@ -1010,6 +1052,7 @@ void ProppantTransport::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG(time_n)
                         fluidIndex,
 			proppantIndex,
                         transTMultiplier,
+                        m_updateProppantPacking,                        
                         m_downVector,
                         dofNumber,
                         pres,
@@ -1062,6 +1105,9 @@ void ProppantTransport::ApplyBoundaryConditions(real64 const time_n,
   string const dofKey = dofManager.getKey( viewKeyStruct::proppantConcentrationString );
 
 
+  /* Since flux boundary condition can be set in SinglePhaseFlow solver, ther is no need to set it in ProppantTransport solver */
+
+  /*
   fsManager.Apply( time_n + dt, domain, "ElementRegions", "FLUX",
                    [&]( FieldSpecificationBase const * const fs,
                         string const &,
@@ -1099,7 +1145,9 @@ void ProppantTransport::ApplyBoundaryConditions(real64 const time_n,
         } );
 
   } );
-      
+  */
+
+  //  Apply Dirichlet BC for proppant concentration
 
  fsManager.Apply( time_n + dt, domain, "ElementRegions", viewKeyStruct::proppantConcentrationString,
                     [&]( FieldSpecificationBase const * const fs,
@@ -1135,7 +1183,129 @@ void ProppantTransport::ApplyBoundaryConditions(real64 const time_n,
   
   });
  
+ //  Apply Dirichlet BC for component concentration
 
+  localIndex const NC = m_numComponents;
+
+  if(NC > 0)
+    {
+
+      map< string, map< string, array1d<bool> > > bcStatusMap; // map to check consistent application of BC
+
+      fsManager.Apply( time_n + dt,
+                       domain,
+                       "ElementRegions",
+                       viewKeyStruct::proppantConcentrationString,
+                       [&]( FieldSpecificationBase const * const GEOSX_UNUSED_ARG( fs ),
+                            string const & setName,
+                            set<localIndex> const & GEOSX_UNUSED_ARG( targetSet ),
+                        Group * subRegion,
+                        string const & )
+      {
+
+        string const & subRegionName = subRegion->getName();
+        GEOSX_ERROR_IF( bcStatusMap[subRegionName].count( setName ) > 0, "Conflicting proppant boundary conditions on set " << setName );
+        bcStatusMap[subRegionName][setName].resize( NC );
+        bcStatusMap[subRegionName][setName] = false;
+
+      });
+
+      fsManager.Apply( time_n + dt,
+                       domain,
+                       "ElementRegions",
+                       viewKeyStruct::componentConcentrationString,
+                       [&] ( FieldSpecificationBase const * const fs,
+                             string const & setName,
+                             set<localIndex> const & targetSet,
+                             Group * subRegion,
+                             string const & )      
+      {
+
+         string const & subRegionName = subRegion->getName();
+         localIndex const comp = fs->GetComponent();
+
+         GEOSX_ERROR_IF( bcStatusMap[subRegionName].count( setName ) == 0, "Proppant boundary condition not prescribed on set '" << setName << "'" );
+         GEOSX_ERROR_IF( bcStatusMap[subRegionName][setName][comp], "Conflicting composition[" << comp << "] boundary conditions on set '" << setName << "'" );
+         bcStatusMap[subRegionName][setName][comp] = true;
+         
+         fs->ApplyFieldValue<FieldSpecificationEqual>( targetSet,
+                                                       time_n + dt,
+                                                       subRegion,
+                                                       viewKeyStruct::bcComponentConcentrationString );
+
+      });
+    
+      bool bcConsistent = true;
+      for (auto const & bcStatusEntryOuter : bcStatusMap)
+        {
+          for( auto const & bcStatusEntryInner : bcStatusEntryOuter.second )
+            {
+              for( localIndex ic = 0 ; ic < NC ; ++ic )
+                {
+                  bcConsistent &= bcStatusEntryInner.second[ic];
+                  GEOSX_WARNING_IF( !bcConsistent, "Composition boundary condition not applied to component " << ic
+                                    << " on region '" << bcStatusEntryOuter.first << "',"
+                                    << " set '" << bcStatusEntryInner.first << "'" );
+                }
+            }
+        }
+
+      GEOSX_ERROR_IF( !bcConsistent, "Inconsistent composition boundary conditions" );
+    
+      fsManager.Apply( time_n + dt,
+                       domain,
+                       "ElementRegions",
+                       viewKeyStruct::proppantConcentrationString,
+                       [&] ( FieldSpecificationBase const * const GEOSX_UNUSED_ARG( bc ),
+                         string const & GEOSX_UNUSED_ARG( setName ),
+                         set<localIndex> const & targetSet,
+                         Group * subRegion,
+                         string const & )
+      {      
+
+        arrayView1d<globalIndex const> const & dofNumber = subRegion->getReference< array1d<globalIndex> >( dofKey );
+
+        arrayView2d<real64 const> const & compConc  = subRegion->getReference< array2d<real64> >( viewKeyStruct::componentConcentrationString );
+
+        arrayView2d<real64 const> const & deltaCompConc  = subRegion->getReference< array2d<real64> >( viewKeyStruct::deltaComponentConcentrationString );
+
+        arrayView2d<real64 const> const & bcCompConc  = subRegion->getReference< array2d<real64> >( viewKeyStruct::bcComponentConcentrationString );        
+
+        array1d<real64> rhsContribution( targetSet.size() * NC );
+        array1d<globalIndex> dof( targetSet.size() * NC );
+
+        integer counter = 0;
+
+        for (localIndex a : targetSet)
+          {
+
+            for (localIndex ic = 0; ic < NC; ++ic)
+              {
+                
+                dof[counter] = dofNumber[a] + ic + 1;
+
+                FieldSpecificationEqual::SpecifyFieldValue<LAInterface>( dof[counter],
+                                                                         matrix,
+                                                                         rhsContribution[counter],
+                                                                         bcCompConc[a][ic],
+                                                                         compConc[a][ic] + deltaCompConc[a][ic] );
+
+                ++counter;
+
+              }
+
+            FieldSpecificationEqual::PrescribeRhsValues<LAInterface>( rhs,
+                                                                      counter,
+                                                                      dof.data(),
+                                                                      rhsContribution.data());
+
+
+          }
+            
+      });
+
+    }
+                            
   if( getLogLevel() >= 3 )
   {
     integer const newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
@@ -1244,12 +1414,13 @@ void ProppantTransport::ApplySystemSolution( DofManager const & dofManager,
   comms = domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors );
 
   CommunicationTools::SynchronizeFields( fieldNames, mesh, comms );
-  /*
+
   applyToSubRegions( mesh, [&] ( ElementSubRegionBase * subRegion )
   {
-    UpdateState( subRegion );
+    //    UpdateState( subRegion );
+    UpdateComponentDensity( subRegion );    
   } );
-  */
+
 }
 
 void ProppantTransport::SolveSystem( DofManager const & dofManager,
@@ -1663,17 +1834,13 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_ARG(
     forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
 
-      poroMultiplier[ei] = 1.0 - (1.0 -  m_maxProppantConcentration) * proppantPackVfNew[ei];
-
-      //      poroMultiplier[ei] = proppantPackVf[ei];      
+      poroMultiplier[ei] = 1.0 - m_maxProppantConcentration * proppantPackVfNew[ei];
 
       //K0 horizontal
 
-      transTMultiplier[ei][0] = (1.0 - proppantPackVfNew[ei]) + proppantPackVfNew[ei] * m_proppantPackPermeability / (aperture0[ei] * aperture0[ei]);
+      transTMultiplier[ei][0] = (1.0 - proppantPackVfNew[ei]) + proppantPackVfNew[ei] * m_proppantPackPermeability * 12.0 / (aperture0[ei] * aperture0[ei]);
 
       //K1 vertical
-
-      //      transTMultiplier[ei][1] = m_proppantPackPermeability * 12.0 / (aperture[ei] * aperture[ei]);
 
       transTMultiplier[ei][1] = 1.0 / (proppantPackVfNew[ei] * aperture0[ei] * aperture0[ei] / 12.0 / m_proppantPackPermeability + (1.0 - proppantPackVfNew[ei]));
 
@@ -1683,6 +1850,7 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_ARG(
   });
   
 }
+
 
 REGISTER_CATALOG_ENTRY( SolverBase, ProppantTransport, std::string const &, Group * const )
 } /* namespace geosx */

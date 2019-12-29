@@ -140,6 +140,15 @@ void ProppantSlurryFluid::PointUpdateFluidProperty(real64 const & pressure, arra
 
 }
 
+void ProppantSlurryFluid::PointUpdateComponentDensity(real64 const & pressure, arraySlice1d<real64 const> const & componentConcentration, localIndex const k, localIndex const q )
+{
+
+  ComputeComponentDensity( pressure, componentConcentration, m_componentDensity[k][q], m_dCompDens_dPres[k][q], m_dCompDens_dCompConc[k][q]);
+
+}
+
+
+
 void ProppantSlurryFluid::ComputeFluidDensity( real64 const & pressure,
                                            arraySlice1d<real64 const> const & componentConcentration,
                                            arraySlice1d<real64> const &  componentDensity,
@@ -182,14 +191,45 @@ void ProppantSlurryFluid::ComputeFluidDensity( real64 const & pressure,
       dFluidDensity_dComponentConcentration[c] += dComponentDensity_dComponentConcentration[c][c] - baseFluidDensity;
 
     }
+
+
+  for(localIndex c = 0; c < NC; ++c)  
+    dFluidDensity_dComponentConcentration[c] = 0.0;
+
 }
-  
+
+void ProppantSlurryFluid::ComputeComponentDensity( real64 const & pressure,
+                                                   arraySlice1d<real64 const> const & componentConcentration,
+                                                   arraySlice1d<real64> const &  componentDensity,
+                                                   arraySlice1d<real64> const &  dComponentDensity_dPressure,
+                                                   arraySlice2d<real64> const & dComponentDensity_dComponentConcentration ) const                                   
+{
+
+  localIndex const NC = numFluidComponents();  
+
+  for(localIndex c = 0; c < NC; ++c)
+    {
+
+      componentDensity[c] = componentConcentration[c] * m_defaultDensity[c] * exp(m_defaultCompressibility[c] * (pressure - m_referencePressure));
+
+      dComponentDensity_dPressure[c] = m_defaultCompressibility[c] * componentDensity[c];
+
+      for(localIndex i = 0; i < NC; ++i)  
+        dComponentDensity_dComponentConcentration[c][i] = 0.0;
+
+      dComponentDensity_dComponentConcentration[c][c] = m_defaultDensity[c] * exp(m_defaultCompressibility[c] * (pressure - m_referencePressure));  
+      
+    }
+
+}
+
+
 void ProppantSlurryFluid::ComputeFluidViscosity( arraySlice1d<real64 const> const & componentDensity,
                                                  arraySlice1d<real64 const> const & dComponentDensity_dPressure,
-                                                 arraySlice2d<real64 const> const & dComponentDensity_dComponentConcentration,
+                                                 arraySlice2d<real64 const> const & GEOSX_UNUSED_ARG( dComponentDensity_dComponentConcentration ),
                                                  real64 const & fluidDensity,
                                                  real64 const & dFluidDensity_dPressure,
-                                                 arraySlice1d<real64 const> const & dFluidDensity_dComponentConcentration,                                   
+                                                 arraySlice1d<real64 const> const & GEOSX_UNUSED_ARG( dFluidDensity_dComponentConcentration ),                                   
                                                  real64 & fluidViscosity,
                                                  real64 & dFluidViscosity_dPressure,
                                                  arraySlice1d<real64> const & dFluidViscosity_dComponentConcentration ) const
@@ -209,13 +249,14 @@ void ProppantSlurryFluid::ComputeFluidViscosity( arraySlice1d<real64 const> cons
       fluidViscosity += componentDensity[c1] / fluidDensity * (m_defaultViscosity[c1] - m_referenceViscosity);
 
       dFluidViscosity_dPressure += (dComponentDensity_dPressure[c1] / fluidDensity - componentDensity[c1] / fluidDensity / fluidDensity * dFluidDensity_dPressure) * (m_defaultViscosity[c1] - m_referenceViscosity);       
-  
+      /*  
       for(localIndex c2 = 0; c2 < NC; ++c2)
         {
 
           dFluidViscosity_dComponentConcentration[c2] += (dComponentDensity_dComponentConcentration[c1][c2] / fluidDensity - componentDensity[c1] / fluidDensity / fluidDensity * dFluidDensity_dComponentConcentration[c2]) * (m_defaultViscosity[c1] - m_referenceViscosity);
 
         }
+      */
     }
 
 }
@@ -293,8 +334,6 @@ void ProppantSlurryFluid::Compute( real64 const & proppantConcentration,
       dViscosity_dComponentConcentration[c] = 0.0;
 
     }
-      
-  viscosity = fluidViscosity;
 
 }
 
