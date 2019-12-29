@@ -703,12 +703,12 @@ void ProppantTransport::PostStepUpdate( real64 const & time_n,
   
 
 void ProppantTransport::ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n ),
-					   real64 const & GEOSX_UNUSED_ARG( dt ),
+                                           real64 const & GEOSX_UNUSED_ARG( dt ),
                                            DomainPartition * const domain,
                                            DofManager & GEOSX_UNUSED_ARG(dofManager),
                                            ParallelMatrix & GEOSX_UNUSED_ARG(matrix),
                                            ParallelVector & GEOSX_UNUSED_ARG(rhs),
-					   ParallelVector & GEOSX_UNUSED_ARG(solution) )
+                                           ParallelVector & GEOSX_UNUSED_ARG(solution) )
 {
 
   localIndex const NC = m_numComponents;  
@@ -771,7 +771,7 @@ void ProppantTransport::ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time
 }
 
 void ProppantTransport::ImplicitStepComplete( real64 const & GEOSX_UNUSED_ARG(time_n),
-					      real64 const & GEOSX_UNUSED_ARG(dt),
+                                              real64 const & GEOSX_UNUSED_ARG(dt),
                                             DomainPartition * const domain )
 {
   GEOSX_MARK_FUNCTION;
@@ -921,9 +921,9 @@ void ProppantTransport::AssembleAccumulationTerms( DomainPartition const * const
 
           }
 
-	AccumulationKernel::Compute(NC,
+        AccumulationKernel::Compute(NC,
                                     proppantConcOld[ei],
-				    proppantConc[ei] + dProppantConc[ei],
+                                    proppantConc[ei] + dProppantConc[ei],
                                     componentDensOld[ei],
                                     componentDens[ei][0],
                                     dCompDens_dPres[ei][0],
@@ -934,8 +934,8 @@ void ProppantTransport::AssembleAccumulationTerms( DomainPartition const * const
                                     localAccumJacobian );
 
         globalIndex const elemDOF = dofNumber[ei];
-	
-	for (localIndex idof = 0; idof < m_numDofPerCell; ++idof)
+
+        for (localIndex idof = 0; idof < m_numDofPerCell; ++idof)
         {
           localAccumDOF[idof] = elemDOF + idof;
         }
@@ -1047,18 +1047,18 @@ void ProppantTransport::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG(time_n)
   {
 
     FluxKernel::Launch( stencil,
-			m_numDofPerCell,
+                        m_numDofPerCell,
                         dt,
                         fluidIndex,
-			proppantIndex,
+                        proppantIndex,
                         transTMultiplier,
                         m_updateProppantPacking,                        
                         m_downVector,
                         dofNumber,
                         pres,
                         dPres,
-			proppantConc,
-			dProppantConc,
+                        proppantConc,
+                        dProppantConc,
                         componentDens,
                         dComponentDens_dPres,
                         dComponentDens_dComponentConc,
@@ -1071,16 +1071,16 @@ void ProppantTransport::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG(time_n)
                         dVisc_dPres,
                         dVisc_dProppantConc,
                         dVisc_dComponentConc,                        
-			fluidDensity,
-			dFluidDens_dPres,
-			dFluidDens_dComponentConc,
-			settlingFactor,
-			dSettlingFactor_dPres,                        
-			dSettlingFactor_dProppantConc,
-			dSettlingFactor_dComponentConc,
-			collisionFactor,
-			dCollisionFactor_dProppantConc,
-			isProppantMobile,
+                        fluidDensity,
+                        dFluidDens_dPres,
+                        dFluidDens_dComponentConc,
+                        settlingFactor,
+                        dSettlingFactor_dPres,
+                        dSettlingFactor_dProppantConc,
+                        dSettlingFactor_dComponentConc,
+                        collisionFactor,
+                        dCollisionFactor_dProppantConc,
+                        isProppantMobile,
                         proppantPackVf,
                         aperture,
                         proppantLiftFlux,
@@ -1092,11 +1092,11 @@ void ProppantTransport::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG(time_n)
 }
 
 void ProppantTransport::ApplyBoundaryConditions(real64 const time_n,
-						real64 const dt,
-						DomainPartition * const domain,
-						DofManager const & dofManager,
-						ParallelMatrix & matrix,
-						ParallelVector & rhs )
+                                                real64 const dt,
+                                                DomainPartition * const domain,
+                                                DofManager const & dofManager,
+                                                ParallelMatrix & matrix,
+                                                ParallelVector & rhs )
 {
   
   GEOSX_MARK_FUNCTION;
@@ -1390,7 +1390,7 @@ void ProppantTransport::ApplySystemSolution( DofManager const & dofManager,
   {
 
     dofManager.addVectorToField( solution,
-				 viewKeyStruct::proppantConcentrationString,
+                                 viewKeyStruct::proppantConcentrationString,
                                  scalingFactor,
                                  subRegion,
                                  viewKeyStruct::deltaProppantConcentrationString,
@@ -1399,7 +1399,7 @@ void ProppantTransport::ApplySystemSolution( DofManager const & dofManager,
 
     if(m_numDofPerCell > 1) 
     dofManager.addVectorToField( solution,
-				 viewKeyStruct::proppantConcentrationString,
+                                 viewKeyStruct::proppantConcentrationString,
                                  scalingFactor,
                                  subRegion,
                                  viewKeyStruct::deltaComponentConcentrationString,

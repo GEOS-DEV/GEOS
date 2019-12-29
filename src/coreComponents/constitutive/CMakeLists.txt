@@ -5,6 +5,19 @@ set( constitutive_headers
      ConstitutiveManager.hpp
      ConstitutiveBase.hpp
      ExponentialRelation.hpp
+     capillaryPressure/CapillaryPressureBase.hpp
+     capillaryPressure/BrooksCoreyCapillaryPressure.hpp
+     capillaryPressure/VanGenuchtenCapillaryPressure.hpp
+     contact/ContactRelationBase.hpp
+     fluid/MultiPhaseMultiComponentFluid.hpp     
+     fluid/PVTFunctions/BrineCO2DensityFunction.hpp
+     fluid/PVTFunctions/BrineViscosityFunction.hpp
+     fluid/PVTFunctions/CO2SolubilityFunction.hpp     
+     fluid/PVTFunctions/FenghourCO2ViscosityFunction.hpp
+     fluid/PVTFunctions/FlashModelBase.hpp
+     fluid/PVTFunctions/PVTFunctionBase.hpp
+     fluid/PVTFunctions/SpanWagnerCO2DensityFunction.hpp    
+     fluid/PVTFunctions/UtilityFunctions.hpp     
      fluid/SingleFluidBase.hpp
      fluid/MultiFluidBase.hpp
      fluid/CompressibleSinglePhaseFluid.hpp
@@ -32,6 +45,18 @@ set( constitutive_headers
 set( constitutive_sources
      ConstitutiveManager.cpp
      ConstitutiveBase.cpp
+     capillaryPressure/CapillaryPressureBase.cpp
+     capillaryPressure/BrooksCoreyCapillaryPressure.cpp
+     capillaryPressure/VanGenuchtenCapillaryPressure.cpp
+     contact/ContactRelationBase.cpp
+     fluid/CompressibleSinglePhaseFluid.cpp
+     fluid/MultiPhaseMultiComponentFluid.cpp     
+     fluid/PVTFunctions/BrineCO2DensityFunction.cpp
+     fluid/PVTFunctions/BrineViscosityFunction.cpp 
+     fluid/PVTFunctions/CO2SolubilityFunction.cpp
+     fluid/PVTFunctions/FenghourCO2ViscosityFunction.cpp
+     fluid/PVTFunctions/SpanWagnerCO2DensityFunction.cpp    
+     fluid/PVTFunctions/UtilityFunctions.cpp
      fluid/SingleFluidBase.cpp
      fluid/MultiFluidBase.cpp
      fluid/CompressibleSinglePhaseFluid.cpp
