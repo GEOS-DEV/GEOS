@@ -114,8 +114,12 @@ void ProppantTransport::RegisterDataOnMesh(Group * const MeshBodies)
 
       subRegion->registerWrapper< array2d<real64> >( viewKeyStruct::updatedComponentConcentrationString )->setDefaultValue(0.0);
 
-      subRegion->registerWrapper< array1d<R1Tensor> >( viewKeyStruct::cellBasedFluxString );
+      subRegion->registerWrapper< array1d<R1Tensor> >( viewKeyStruct::cellBasedFluxString )->setDefaultValue({0.0, 0.0, 0.0});
 
+      subRegion->registerWrapper< array1d<integer> >( viewKeyStruct::isProppantBoundaryString )->setDefaultValue(0);
+
+      subRegion->registerWrapper< array2d<real64> >( viewKeyStruct::bcComponentConcentrationString )->setDefaultValue(0.0);      
+      
       /*
       subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::poroMultiplierString )->setDefaultValue(1.0);
 
