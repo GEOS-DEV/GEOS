@@ -23,8 +23,8 @@
       >
       <NonlinearSolverParameters name="nlsp"
                                  newtonTol="1.0e-5"
-                                 newtonMaxIter="50"
-                                 lineSearchMaxCuts="10"/>
+                                 newtonMaxIter="20"
+                                 lineSearchMaxCuts="4"/>
       <SystemSolverParameters
         logLevel="0"
         useMLPrecond="1"
@@ -90,7 +90,7 @@
                    materialList="{water, rock}"/>
                    
     <FaceElementRegion name="Fracture"
-                       defaultAperture="0.1e-3"
+                       defaultAperture="0.02e-3"
                        materialList="{water, rock}"/>
   </ElementRegions>
 
@@ -104,21 +104,18 @@
                                   referenceViscosity="5.0e-3"
                                   viscosibility="0.0"/>
 
-    <PoroLinearElasticIsotropic name="rock"
-                                defaultDensity="2700"
-                                defaultBulkModulus="20.0e9"
-                                defaultShearModulus="12.0e9"
-                                BiotCoefficient="1"
-                                compressibility="1.6155088853e-18"
-                                referencePressure="2.125e6"
-                                />
+    <LinearElasticIsotropic name="rock"
+                            defaultDensity="2700"
+                            defaultBulkModulus="20.0e9"
+                            defaultShearModulus="12.0e9"
+                            />
                                 
     <Contact name="fractureContact"
       penaltyStiffness="1.0e0" >
       <TableFunction 
         name="aperTable" 
         coordinates = "{ -1.0e-3, 0.0}"
-        values      = "{  1.0e-6, 0.1e-3}" 
+        values      = "{  1.0e-6, 0.02e-3}" 
         />
     </Contact>
   </Constitutive>

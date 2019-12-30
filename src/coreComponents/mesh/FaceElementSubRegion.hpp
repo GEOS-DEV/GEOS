@@ -92,7 +92,6 @@ public:
     static constexpr auto faceElementsToCellRegionsString    = "fractureElementsToCellRegions";
     static constexpr auto faceElementsToCellSubRegionsString    = "fractureElementsToCellSubRegions";
     static constexpr auto faceElementsToCellIndexString    = "fractureElementsToCellIndices";
-    constexpr static auto creationMassString = "creationMass";
 
   };
 

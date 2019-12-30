@@ -248,15 +248,6 @@ void SinglePhaseFlow::InitializePostInitialConditions_PreSubGroups( Group * cons
     }
   } );
 
-  ElementRegionManager * const elemManager = mesh->getElemManager();
-  elemManager->forElementRegions<FaceElementRegion>( [&] ( FaceElementRegion * const region )
-  {
-    region->forElementSubRegions<FaceElementSubRegion>( [&]( FaceElementSubRegion * const subRegion )
-    {
-      subRegion->getWrapper<real64_array>(FaceElementSubRegion::viewKeyStruct::creationMassString)->
-        setApplyDefaultValue(defaultDensity * region->getDefaultAperture() );
-    });
-  });
 }
 
 real64 SinglePhaseFlow::SolverStep( real64 const& time_n,
@@ -454,40 +445,6 @@ void SinglePhaseFlow::ImplicitStepComplete( real64 const & GEOSX_UNUSED_ARG( tim
       vol[ei] += dVol[ei];
     } );
   } );
-
-  ElementRegionManager * const elemManager = mesh->getElemManager();
-  elemManager->forElementSubRegionsComplete<FaceElementSubRegion>( this->m_targetRegions,
-                                                                   [&] ( localIndex er,
-                                                                         localIndex esr,
-                                                                         ElementRegionBase const * const GEOSX_UNUSED_ARG( region ),
-                                                                         FaceElementSubRegion * const subRegion )
-  {
-
-    arrayView1d<integer const> const & elemGhostRank = m_elemGhostRank[er][esr];
-    arrayView1d<real64 const> const & densOld        = m_densityOld[er][esr];
-    arrayView1d<real64 const> const & volume         = m_volume[er][esr];
-    arrayView1d<real64> const &
-    creationMass = subRegion->getReference<real64_array>( FaceElementSubRegion::viewKeyStruct::creationMassString);
-
-    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
-    {
-      if (elemGhostRank[ei] < 0)
-      {
-        if( volume[ei] * densOld[ei] > 1.1 * creationMass[ei] )
-        {
-          creationMass[ei] *= 0.5;
-          if( creationMass[ei]<1.0e-20 )
-          {
-            creationMass[ei] = 0.0;
-          }
-        }
-      }});
-  });
-
-
-
-
-
 }
 
 void SinglePhaseFlow::SetupDofs( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
@@ -668,7 +625,7 @@ void SinglePhaseFlow::AccumulationLaunch( localIndex const er,
     {
 
 //      printf( "element, densOld, dens = %4ld, %4.2e, %4.2e \n", ei, densOld[ei], dens[ei][0] );
-      printf( "element, volume, dvol = %4ld, %4.2e, %4.2e \n", ei, volume[ei], dVol[ei] );
+//      printf( "element, volume, dvol = %4ld, %4.2e, %4.2e \n", ei, volume[ei], dVol[ei] );
 
       real64 localAccum, localAccumJacobian;
       globalIndex const elemDOF = dofNumber[ei];

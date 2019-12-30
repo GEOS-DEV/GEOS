@@ -584,11 +584,31 @@ struct FluxKernel
 
     for( localIndex k=0 ; k<numFluxElems ; ++k )
     {
+
+#define PERM_CALC 1
+#if PERM_CALC==0
       FluxKernelHelper::
       apertureForPermeablityCalculation<1>( aperture0[stencilElementIndices[k]],
                                             aperture[stencilElementIndices[k]],
                                             aperTerm[k],
                                             dAperTerm_dAper[k] );
+
+#elif PERM_CALC==1
+      real64 const aperAdd = 2.0e-4;
+      FluxKernelHelper::
+      apertureForPermeablityCalculation<1>( aperture0[stencilElementIndices[k]],
+                                            aperture[stencilElementIndices[k]],
+                                            aperTerm[k],
+                                            dAperTerm_dAper[k] );
+
+      aperTerm[k] += aperAdd*aperAdd*aperAdd;
+
+#elif PERMCALC==2
+
+
+
+#endif
+
 
       sumOfWeights += aperTerm[k] * stencilWeights[k];
     }

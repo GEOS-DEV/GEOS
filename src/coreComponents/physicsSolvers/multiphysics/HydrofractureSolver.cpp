@@ -283,7 +283,6 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
           temp += u[faceToNodeMap(kf0, a)];
           temp -= u[faceToNodeMap(kf1, a)];
         }
-        //area[kfe] = faceArea[kf0];
 
         // TODO this needs a proper contact based strategy for aperture
         aperture[kfe] = -Dot(temp,faceNormal[kf0]) / numNodesPerFace;
