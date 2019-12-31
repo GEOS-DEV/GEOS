@@ -3,6 +3,11 @@
 	<xsd:annotation>
 		<xsd:documentation xml:lang="en">GEOSX Input Schema</xsd:documentation>
 	</xsd:annotation>
+	<xsd:simpleType name="Path">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[^,\{\}]*" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:simpleType name="string">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value="[^,\{\}]*" />
@@ -151,6 +156,11 @@
 	<xsd:simpleType name="globalIndex">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value="[+-]?[\d]+" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="path_array">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="\{([^,\{\}]*,\s*)*[^,\{\}]*\}" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="localIndex">
@@ -479,18 +489,18 @@
 		<xsd:attribute name="nz" type="integer_array" use="required" />
 		<!--trianglePattern => pattern by which to decompose the hex mesh into prisms (more explanation required)-->
 		<xsd:attribute name="trianglePattern" type="integer" default="0" />
+		<!--xBias => bias of element sizes in the x-direction within each mesh block (dx_left=(1+b)*L/N, dx_right=(1-b)*L/N)-->
+		<xsd:attribute name="xBias" type="real64_array" default="1" />
 		<!--xCoords => x-coordinates of each mesh block vertex-->
 		<xsd:attribute name="xCoords" type="real64_array" use="required" />
-		<!--xbias => (no description available)-->
-		<xsd:attribute name="xbias" type="real64_array" default="1" />
+		<!--yBias => bias of element sizes in the y-direction within each mesh block (dy_left=(1+b)*L/N, dx_right=(1-b)*L/N)-->
+		<xsd:attribute name="yBias" type="real64_array" default="1" />
 		<!--yCoords => y-coordinates of each mesh block vertex-->
 		<xsd:attribute name="yCoords" type="real64_array" use="required" />
-		<!--ybias => (no description available)-->
-		<xsd:attribute name="ybias" type="real64_array" default="1" />
+		<!--zBias => bias of element sizes in the z-direction within each mesh block (dz_left=(1+b)*L/N, dz_right=(1-b)*L/N)-->
+		<xsd:attribute name="zBias" type="real64_array" default="1" />
 		<!--zCoords => z-coordinates of each mesh block vertex-->
 		<xsd:attribute name="zCoords" type="real64_array" use="required" />
-		<!--zbias => (no description available)-->
-		<xsd:attribute name="zbias" type="real64_array" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -524,7 +534,7 @@
 		<!--fieldsToImport => Fields to be imported from the external mesh file-->
 		<xsd:attribute name="fieldsToImport" type="string_array" default="" />
 		<!--file => path to the mesh file-->
-		<xsd:attribute name="file" type="string" use="required" />
+		<xsd:attribute name="file" type="path" use="required" />
 		<!--reverseZ => 0 : Z coordinate is upward, 1 : Z coordinate is downward-->
 		<xsd:attribute name="reverseZ" type="integer" default="0" />
 		<!--scale => Scale the coordinates of the vertices-->
@@ -1113,6 +1123,7 @@
 			<xsd:element name="Contact" type="ContactType" />
 			<xsd:element name="LinearElasticAnisotropic" type="LinearElasticAnisotropicType" />
 			<xsd:element name="LinearElasticIsotropic" type="LinearElasticIsotropicType" />
+			<xsd:element name="MultiPhaseMultiComponentFluid" type="MultiPhaseMultiComponentFluidType" />
 			<xsd:element name="PoreVolumeCompressibleSolid" type="PoreVolumeCompressibleSolidType" />
 			<xsd:element name="PoroLinearElasticAnisotropic" type="PoroLinearElasticAnisotropicType" />
 			<xsd:element name="PoroLinearElasticIsotropic" type="PoroLinearElasticIsotropicType" />
@@ -1132,7 +1143,7 @@
 		<!--surfaceDensities => List of surface densities for each phase-->
 		<xsd:attribute name="surfaceDensities" type="real64_array" use="required" />
 		<!--tableFiles => List of filenames with input PVT tables-->
-		<xsd:attribute name="tableFiles" type="string_array" use="required" />
+		<xsd:attribute name="tableFiles" type="path_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -1317,6 +1328,20 @@
 		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
 		<!--defaultYoungsModulus => Elastic Young's Modulus.-->
 		<xsd:attribute name="defaultYoungsModulus" type="real64" default="-1" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="MultiPhaseMultiComponentFluidType">
+		<!--componentMolarWeight => Component molar weights-->
+		<xsd:attribute name="componentMolarWeight" type="real64_array" default="0" />
+		<!--componentNames => List of component names-->
+		<xsd:attribute name="componentNames" type="string_array" default="" />
+		<!--flashModelParaFile => name of the filen including flash calculation function parameters-->
+		<xsd:attribute name="flashModelParaFile" type="string" use="required" />
+		<!--phaseNames => List of fluid phases-->
+		<xsd:attribute name="phaseNames" type="string_array" default="" />
+		<!--phasePVTParaFiles => List of the names of the files including PVT function parameters-->
+		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
