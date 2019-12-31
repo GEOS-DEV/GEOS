@@ -34,12 +34,23 @@ class TwoPhaseBase : public FlowSolverBase
 {
 public:
 
+  static constexpr localIndex NUM_PHASES = 2;
+  static constexpr localIndex NUM_DOF    = 2;
+  
   // define the column offset of the derivatives
   struct ColOffset
   {
     static constexpr integer DPRES = 0;
     static constexpr integer DSAT  = 1;
   };
+
+  // define the row offset for the mass conservation eqns 
+  struct RowOffset
+  {
+    static constexpr integer NONWETTING = 0;
+    static constexpr integer WETTING    = 1;
+  };
+
   
   /**
    * @brief main constructor for Group Objects
@@ -101,6 +112,12 @@ public:
                   DofManager const & dofManager,
                   ParallelMatrix & matrix,
                   ParallelVector & rhs ) override;
+
+  virtual bool
+  CheckSystemSolution( DomainPartition const * const domain,
+                       DofManager const & dofManager,
+                       ParallelVector const & solution,
+                       real64 const scalingFactor ) override;
 
   virtual void
   SolveSystem( DofManager const & dofManager,
@@ -168,12 +185,16 @@ public:
   {
     static constexpr auto elemDofFieldString = "elemVariables";
 
+    // inputs
+    static constexpr auto relPermNameString  = "relPermName";
+    static constexpr auto relPermIndexString = "relPermIndex";
+    
     // primary variables    
     static constexpr auto wettingPhaseSatString = "wettingPhaseSaturation";
     static constexpr auto deltaWettingPhaseSatString = "deltaWettingPhaseSaturation";
-   
+    static constexpr auto phaseSatString = "phaseSaturation"; // currently only used to update relperms
+    
     // intermediate fields
-    static constexpr auto porosityString = "porosity";
     static constexpr auto phaseMobilityString = "phaseMobility";
     static constexpr auto dPhaseMobility_dPressureString = "dPhaseMobility_dPressure";
     static constexpr auto dPhaseMobility_dSaturationString = "dPhaseMobility_dSaturation";
@@ -202,10 +223,22 @@ public:
 
 protected:
 
+  virtual void PostProcessInput() override;
+
+  virtual void InitializePreSubGroups( Group * const rootGroup ) override;
+ 
   virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const rootGroup ) override;
 
 protected:
 
+  /**
+   * @brief Resize the allocated multidimensional fields
+   * @param domain the domain containing the mesh and fields
+   *
+   * Resize fields along dimensions 1 and 2 (0 is the size of containing object, i.e. element subregion)
+   * once the number of phases/components is known (e.g. component fractions)
+   */
+  void ResizeFields( MeshLevel * const meshLevel );
 
   /**
    * @brief Function to update all constitutive models
@@ -217,8 +250,14 @@ protected:
    * @brief Function to update fluid mobility
    * @param dataGroup group that contains the fields
    */
-  void UpdateMobility( Group * const dataGroup ) const;
+  void UpdatePhaseMobility( Group * const dataGroup ) const;
 
+  /**
+   * @brief Update all relevant fluid models using current values of pressure and composition
+   * @param dataGroup the group storing the required fields
+   */
+  void UpdateRelPermModel( Group * const dataGroup ) const; 
+  
   /**
    * @brief Backup current values of all constitutive fields that participate in the accumulation term
    * @param domain the domain containing the mesh and fields
@@ -255,9 +294,21 @@ protected:
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_porosityOld;
   ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_phaseDensOld;
 
+  /// name of the rel perm constitutive model
+  string m_relPermName;
+
+  /// index of the rel perm constitutive model
+  localIndex m_relPermIndex;
+
+  /// map from the phase indices to the row indices
+  array1d<localIndex> m_phaseToRow;
+  
+  /// index of the wetting phase in the MaterialViewAccessors
   localIndex m_wettingPh;
+
+  /// index of the non-wetting phase in the MaterialViewAccessors
   localIndex m_nonWettingPh;
-  localIndex m_numPhases;
+
 };
 
 

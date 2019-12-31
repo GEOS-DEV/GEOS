@@ -182,7 +182,10 @@ private:
    * @param[in] elemPres the pressure at this element's center
    * @param[in] dElemPres the accumulated pressure updates at this element's center
    * @param[in] elemGravDepth the depth at this element's center
-   * @param[in] elemPhaseDens the density at this elenent's center  
+   * @param[in] elemPhaseMob the phase mobilities at this elenent's center  
+   * @param[in] dElemPhaseMob_dp the derivative of the mobilities at this element's center 
+   * @param[in] dElemPhaseMob_dS the derivative of the mobilities at this element's center 
+   * @param[in] elemPhaseDens the phase densities at this elenent's center  
    * @param[in] dElemPhaseDens_dp the derivative of the density at this element's center 
    * @param[in] elemOffset the offset of this element in the map oneSidedFaceToFace
    * @param[in] numFacesInElem the number of faces in this element
@@ -211,68 +214,79 @@ private:
                                  stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> & dOneSidedVolFlux_dS,
                                  stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> & dOneSidedVolFlux_dfp ) const;
 
+
   /**
    * @brief In a given element, collect the upwinded mobilities at this element's faces 
-   * @param[in] neighborRegionId the region index of the neighbor element of the one-sided faces (non-local)
-   * @param[in] neighborSubRegionId the subregion index of the neighbor element of the one-sided faces (non-local)
-   * @param[in] neighborElemId the elem index of the neighbor element of the one-sided faces (non-local)
-   * @param[in] neighborDofNumber the dof number of the neighbor element of the one-sided faces (non-local)
-   * @param[in] domainMobility the mobilities in the domain (non-local)
-   * @param[in] dDomainMobility_dp the derivatives of the mobilities in the domain wrt cell-centered pressure (non-local)
-   * @param[in] elemMobility the mobility in this element
-   * @param[in] dElemMobility_dp the derivative of the mobility wrt this element cell-centered pressure 
-   * @param[in] dElemMobility_dS the derivative of the mobility wrt this element cell-centered saturation 
+   * @param[in] mesh the mesh object (single level only)
+   * @param[in] elemRegionList face-to-elemRegions map
+   * @param[in] elemSubRegionList face-to-elemSubRegions map
+   * @param[in] elemList face-to-elemIds map
+   * @param[in] regionFilter set containing the indices of the target regions
+   * @param[in] elemToFaces elem-to-faces maps
+   * @param[in] domainMob the mobilities in the domain (non-local)
+   * @param[in] dDomainMob_dp the derivatives of the mobilities in the domain wrt cell-centered pressure (non-local)
+   * @param[in] dDomainMob_dS the derivatives of the mobilities in the domain wrt cell-centered saturation (non-local)
+   * @param[in] er index of this element's region
+   * @param[in] esr index of this element's subregion  
+   * @param[in] ei index of this element 
    * @param[in] elemDofNumber the dof number of this element's cell centered pressure
-   * @param[in] elemOffset the offset of this element in the map oneSidedFaceToFace
-   * @param[in] numFacesInElem the number of faces in this element
+   * @param[in] elemDofKey 
    * @param[in] oneSidedVolFlux the volumetric fluxes at this element's faces  
-   * @param[inout] upwMobility the upwinded mobilities at this element's faces  
-   * @param[inout] dUpwMobility_dp the derivatives of the upwinded mobilities wrt the cell-centered pressures (local or neighbor)  
-   * @param[inout] dUpwMobility_dS the derivatives of the upwinded mobilities wrt the cell-centered saturations (local or neighbor)  
-   * @param[inout] upwDofNumber  the dof number of the upwind pressure 
+   * @param[inout] viscousMobRatio the upwinded viscous mobility ratio at this element's faces  
+   * @param[inout] dViscousMobRatio_dp the derivatives of the viscous mobilities ratio wrt the cell-centered pressures 
+   * @param[inout] dViscousMobRatio_dS the derivatives of the viscous mobilities ratio wrt the cell-centered saturations 
+   * @param[inout] viscousDofNumber the dof number of the upwind pressure for the viscous term
+   * @param[inout] buoyancyMobRatio the upwinded buoyancy mobility ratio at this element's faces  
+   * @param[inout] dBuoyancyMobRatio_dp the derivatives of the buoyancy mobilities ratio wrt the cell-centered pressures 
+   * @param[inout] dBuoyancyMobRatio_dS the derivatives of the buoyancy mobilities ratio wrt the cell-centered saturations 
+   * @param[inout] buoyancyDofNumber the dof number of the upwind pressure for the buoyancy term 
    *
    * Note: because of the upwinding, this function requires non-local information
    */
-   void UpdateUpwindedCoefficients( MeshLevel const * const  mesh,
-                                    array2d<localIndex> const & elemRegionList,
-                                    array2d<localIndex> const & elemSubRegionList,
-                                    array2d<localIndex> const & elemList,
-                                    set<localIndex> const & regionFilter,
-                                    arraySlice1d<localIndex const> const elemToFaces,
-                                    ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> const & domainMobility,
-                                    ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> const & dDomainMobility_dp,
-                                    ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> const & dDomainMobility_dS,
-                                    localIndex const er,
-                                    localIndex const esr,
-                                    localIndex const ei,
-                                    globalIndex const elemDofNumber,
-                                    string const elemDofKey,
-                                    stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> const & oneSidedVolFlux,
-                                    stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> & viscousMobilityRatio,
-                                    stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> & dViscousMobilityRatio_dp,
-                                    stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> & dViscousMobilityRatio_dS,
-                                    stackArray1d<globalIndex, MAX_NUM_FACES_IN_ELEM> & viscousDofNumber,
-                                    stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> & buoyancyMobilityRatio,
-                                    stackArray2d<real64, 2*MAX_NUM_FACES_IN_ELEM> & dBuoyancyMobilityRatio_dp,
-                                    stackArray2d<real64, 2*MAX_NUM_FACES_IN_ELEM> & dBuoyancyMobilityRatio_dS,
-                                    stackArray2d<globalIndex, 2*MAX_NUM_FACES_IN_ELEM> & buoyancyDofNumber ) const;
+  void UpdateUpwindedCoefficients( MeshLevel const * const  mesh,
+                                   array2d<localIndex> const & elemRegionList,
+                                   array2d<localIndex> const & elemSubRegionList,
+                                   array2d<localIndex> const & elemList,
+                                   set<localIndex> const & regionFilter,
+                                   arraySlice1d<localIndex const> const elemToFaces,
+                                   ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> const & domainMob,
+                                   ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> const & dDomainMob_dp,
+                                   ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> const & dDomainMob_dS,
+                                   ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> const & domainDens,
+                                   ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> const & dDomainDens_dp,
+                                   localIndex const er,
+                                   localIndex const esr,
+                                   localIndex const ei,
+                                   globalIndex const elemDofNumber,
+                                   string const elemDofKey,
+                                   stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> const & oneSidedVolFlux,
+                                   stackArray2d<real64, NUM_PHASES*MAX_NUM_FACES_IN_ELEM> & viscousCoef,
+                                   stackArray2d<real64, NUM_PHASES*MAX_NUM_FACES_IN_ELEM> & dViscousCoef_dp,
+                                   stackArray2d<real64, NUM_PHASES*MAX_NUM_FACES_IN_ELEM> & dViscousCoef_dS,
+                                   stackArray1d<globalIndex, MAX_NUM_FACES_IN_ELEM> & viscousDofNumber,
+                                   stackArray2d<real64, NUM_PHASES*MAX_NUM_FACES_IN_ELEM>   & buoyancyCoef,
+                                   stackArray3d<real64, 2*NUM_PHASES*MAX_NUM_FACES_IN_ELEM> & dBuoyancyCoef_dp,
+                                   stackArray3d<real64, 2*NUM_PHASES*MAX_NUM_FACES_IN_ELEM> & dBuoyancyCoef_dS,
+                                   stackArray2d<globalIndex, 2*MAX_NUM_FACES_IN_ELEM> & buoyancyDofNumber ) const;
 
   /**
-   * @brief In a given element, assemble the mass conservation equation
+   * @brief In a given element, assemble the mass conservation equations
    * @param[in] dt the time step size 
    * @param[in] faceDofNumber the dof numbers of the face pressures 
-   * @param[in] oneSidedFaceToFace the map from one-sided face to face to access face Dof numbers
+   * @param[in] elemToFaces the map from one-sided face to face to access face Dof numbers
    * @param[in] elemDofNumber the dof number of this element's cell centered pressure
-   * @param[in] elemOffset the offset of this element in the map oneSidedFaceToFace
-   * @param[in] numFacesInElem the number of faces in this element
    * @param[in] oneSidedVolFlux the volumetric fluxes at this element's faces  
-   * @param[in] dOneSidedVolFlux_dp the derivatives of the vol fluxes wrt to this element's cell centered pressure 
+   * @param[in] dOneSidedVolFlux_dp the derivatives of the vol fluxes wrt to this element's cell centered pressure
    * @param[in] dOneSidedVolFlux_dS the derivatives of the vol fluxes wrt to this element's cell centered saturation
    * @param[in] dOneSidedVolFlux_dfp the derivatives of the vol fluxes wrt to this element's face pressures
-   * @param[in] upwPhaseMobility the upwinded mobilities at this element's faces  
-   * @param[in] dUpwPhaseMobility_dp the derivatives of the upwinded mobilities wrt the cell-centered pressures (local or neighbor)  
-   * @param[in] dUpwPhaseMobility_dS the derivatives of the upwinded mobilities wrt the cell-centered saturations (local or neighbor)  
-   * @param[in] upwDofNumber  the dof number of the upwind pressure 
+   * @param[inout] viscousCoef the upwinded viscous coefficient (density times mobility ratio) at this element's faces  
+   * @param[inout] dViscousCoef_dp the derivatives of the viscous coefficient wrt the cell-centered pressures 
+   * @param[inout] dViscousCoef_dS the derivatives of the viscous coefficient wrt the cell-centered saturations 
+   * @param[inout] viscousDofNumber the dof number of the upwind pressure for the viscous term
+   * @param[inout] buoyancyCoef the upwinded buoyancy mobility ratio at this element's faces  
+   * @param[inout] dBuoyancyCoef_dp the derivatives of the buoyancy mobilities ratio wrt the cell-centered pressures 
+   * @param[inout] dBuoyancyCoef_dS the derivatives of the buoyancy mobilities ratio wrt the cell-centered saturations 
+   * @param[inout] buoyancyDofNumber the dof number of the upwind pressure for the buoyancy term 
    * @param[inout] matrix the jacobian matrix
    * @param[inout] rhs the residual
    */
@@ -284,27 +298,26 @@ private:
                                    stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> const & dOneSidedVolFlux_dp,
                                    stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> const & dOneSidedVolFlux_dS,
                                    stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> const & dOneSidedVolFlux_dfp,
-                                   stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> const & viscousMobilityRatio,
-                                   stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> const & dViscousMobilityRatio_dp,
-                                   stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> const & dViscousMobilityRatio_dS,
+                                   stackArray2d<real64, NUM_PHASES*MAX_NUM_FACES_IN_ELEM> const & viscousCoef,
+                                   stackArray2d<real64, NUM_PHASES*MAX_NUM_FACES_IN_ELEM> const & dViscousCoef_dp,
+                                   stackArray2d<real64, NUM_PHASES*MAX_NUM_FACES_IN_ELEM> const & dViscousCoef_dS,
                                    stackArray1d<globalIndex, MAX_NUM_FACES_IN_ELEM> const & viscousDofNumber,
-                                   stackArray1d<real64, MAX_NUM_FACES_IN_ELEM>   const & buoyancyMobilityRatio,
-                                   stackArray2d<real64, 2*MAX_NUM_FACES_IN_ELEM> const & dBuoyancyMobilityRatio_dp,
-                                   stackArray2d<real64, 2*MAX_NUM_FACES_IN_ELEM> const & dBuoyancyMobilityRatio_dS,
+                                   stackArray2d<real64, NUM_PHASES*MAX_NUM_FACES_IN_ELEM>   const & buoyancyCoef,
+                                   stackArray3d<real64, 2*NUM_PHASES*MAX_NUM_FACES_IN_ELEM> const & dBuoyancyCoef_dp,
+                                   stackArray3d<real64, 2*NUM_PHASES*MAX_NUM_FACES_IN_ELEM> const & dBuoyancyCoef_dS,
                                    stackArray2d<globalIndex, 2*MAX_NUM_FACES_IN_ELEM> const & buoyancyDofNumber,
                                    ParallelMatrix * const matrix,
                                    ParallelVector * const rhs ) const;
 
+
   /**
    * @brief In a given element, assemble the constraints at this element's faces
    * @param[in] faceDofNumber the dof numbers of the face pressures 
-   * @param[in] oneSidedFaceToFace the map from one-sided face to face to access face Dof numbers
+   * @param[in] elemToFaces the map from one-sided face to face to access face Dof numbers
    * @param[in] elemDofNumber the dof number of this element's cell centered pressure
-   * @param[in] elemOffset the offset of this element in the map oneSidedFaceToFace
-   * @param[in] numFacesInElem the number of faces in this element
    * @param[in] oneSidedVolFlux the volumetric fluxes at this element's faces  
    * @param[in] dOneSidedVolFlux_dp the derivatives of the vol fluxes wrt to this element's cell centered pressure 
-   * @param[in] dOneSidedVolFlux_dS the derivatives of the vol fluxes wrt to this element's cell centered saturation
+   * @param[in] dOneSidedVolFlux_dS the derivatives of the vol fluxes wrt to this element's cell centered saturation 
    * @param[in] dOneSidedVolFlux_dfp the derivatives of the vol fluxes wrt to this element's face pressures
    * @param[inout] matrix the jacobian matrix
    * @param[inout] rhs the residual
@@ -324,17 +337,16 @@ private:
    * @brief In a given element, recompute the transmissibility matrix
    * @param[in] nodePosition the position of the nodes
    * @param[in] faceToNodes the map from the face to their nodes
-   * @param[in] oneSidedFaceToFace the maps from the one-sided face to the corresponding face
+   * @param[in] elemToFaces the maps from the one-sided face to the corresponding face
    * @param[in] elemCenter the center of the element
-   * @param[in] permeability the permeability in the element
-   * @param[in] elemOffset the position of the element in one-sided face based maps
-   * @param[in] numFacesInElem the number of faces in this element
+   * @param[in] elemVolume the volume of the element
+   * @param[in] elemPerm the permeability in the element
    * @param[in] lengthTolerance the tolerance used in the trans calculations
    * @param[inout] transMatrix
    *
    * This function is in this class until we find a better place for it
    * 
-   */
+   */  
   void ComputeTransmissibilityMatrix( arrayView1d<R1Tensor const> const & nodePosition, 
                                       ArrayOfArraysView<localIndex const> const & faceToNodes, 
                                       arraySlice1d<localIndex const> const elemToFaces,
@@ -373,8 +385,10 @@ private:
   string m_faceDofKey; 
   
   /// relative tolerance (redundant with FluxApproximationBase)
-  real64 m_areaRelTol;
-  
+  real64 const m_areaRelTol;
+
+  /// minimum value of the total mobility
+  real64 const m_minTotalMob;
 };
 
 } /* namespace geosx */

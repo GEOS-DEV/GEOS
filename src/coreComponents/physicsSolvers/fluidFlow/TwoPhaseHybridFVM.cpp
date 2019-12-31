@@ -36,7 +36,8 @@ TwoPhaseHybridFVM::TwoPhaseHybridFVM( const std::string& name,
                                       Group * const parent ):
   TwoPhaseBase(name, parent),
   m_faceDofKey(""),
-  m_areaRelTol(1e-8)
+  m_areaRelTol(1e-8),
+  m_minTotalMob(1e-8)
 {
   // two cell-centered dof per cell
   m_numDofPerCell = 2;
@@ -64,7 +65,7 @@ void TwoPhaseHybridFVM::RegisterDataOnMesh(Group * const MeshBodies)
       setPlotLevel(PlotLevel::LEVEL_0)->
       setRegisteringObjects(this->getName())->
       setDescription( "An array that holds the accumulated pressure updates at the faces.");
-    
+   
   }
 }
   
@@ -85,27 +86,13 @@ void TwoPhaseHybridFVM::ImplicitStepSetup( real64 const & time_n,
   MeshLevel * const meshLevel     = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   FaceManager * const faceManager = meshLevel->getFaceManager();
 
-  // get the face-based DOF numbers 
-  string const faceDofKey = dofManager.getKey( viewKeyStruct::facePressureString );
-  arrayView1d<globalIndex const> const & faceDofNumber =
-    faceManager->getReference< array1d<globalIndex> >( faceDofKey );  
-
-  // save the face Dof key for use in two functions
-  // that do not have acces to the coupled solver dofManager
-  // namely ResetStateToBeginningOfStep and ImplicitStepComplete
-  m_faceDofKey = faceDofKey;
-  
   // get the accumulated pressure updates
   arrayView1d<real64> & dFacePres =
     faceManager->getReference<array1d<real64>>(viewKeyStruct::deltaFacePressureString);
  
   forall_in_range<serialPolicy>( 0, faceManager->size(), GEOSX_LAMBDA ( localIndex iface )
   {
-    // zero out if face is in target region
-    if (faceDofNumber[iface] >= 0)
-    {
-      dFacePres[iface] = 0;
-    }
+    dFacePres[iface] = 0;
   });
   
 }
@@ -125,7 +112,7 @@ void TwoPhaseHybridFVM::ImplicitStepComplete( real64 const & time_n,
 
   // get the face-based DOF numbers 
   arrayView1d<globalIndex const> const & faceDofNumber =
-    faceManager->getReference< array1d<globalIndex> >( m_faceDofKey );  
+    faceManager->getReference< array1d<globalIndex> >( m_faceDofKey );
 
   // get the face-based pressures 
   arrayView1d<real64> const & facePres =
@@ -165,6 +152,8 @@ void TwoPhaseHybridFVM::SetupDofs( DomainPartition const * const GEOSX_UNUSED_AR
                           viewKeyStruct::elemDofFieldString,
                           DofManager::Connectivity::Elem,
                           true );
+
+ 
 }
 
 void TwoPhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time_n ),
@@ -193,9 +182,13 @@ void TwoPhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time_n
 
   
   // face data
-  
+
   // get the face-based DOF numbers for the assembly
-  string const faceDofKey = dofManager->getKey( viewKeyStruct::facePressureString );
+  string const faceDofKey = dofManager->getKey( viewKeyStruct::faceDofFieldString );
+  // save the face Dof key for use in two functions
+  // that do not have acces to the coupled solver dofManager
+  // namely ResetStateToBeginningOfStep and ImplicitStepComplete
+  m_faceDofKey = faceDofKey;
   arrayView1d<globalIndex const> const & faceDofNumber =
     faceManager->getReference< array1d<globalIndex> >( faceDofKey );  
 
@@ -219,7 +212,8 @@ void TwoPhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time_n
   
   // max number of faces allowed in an element 
   localIndex constexpr maxNumFaces = MAX_NUM_FACES_IN_ELEM;
-
+  localIndex constexpr numPhases   = NUM_PHASES;
+  
   // tolerance for transmissibility calculation
   real64 const lengthTolerance = domain->getMeshBody( 0 )->getGlobalLengthScale() * m_areaRelTol; 
 
@@ -236,7 +230,7 @@ void TwoPhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time_n
     // elem data
     
     // get the cell-centered DOF numbers and ghost rank for the assembly
-    string const elemDofKey = dofManager->getKey( viewKeyStruct::pressureString );
+    string const elemDofKey = dofManager->getKey( viewKeyStruct::elemDofFieldString );
     arrayView1d<globalIndex const> const & elemDofNumber =
       subRegion->template getReference< array1d<globalIndex> >( elemDofKey ); 
     arrayView1d<integer const>     const & elemGhostRank = m_elemGhostRank[er][esr];   
@@ -289,17 +283,17 @@ void TwoPhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time_n
         stackArray1d<real64, maxNumFaces> dOneSidedTotalVolFlux_dS( numFacesInElem );
         stackArray1d<real64, maxNumFaces> dOneSidedTotalVolFlux_dfp( numFacesInElem );
       
-        // upwinded mobility ratio for the viscous term
-        stackArray1d<real64, maxNumFaces> viscousMobilityRatio( numFacesInElem );
-        stackArray1d<real64, maxNumFaces> dViscousMobilityRatio_dp( numFacesInElem );
-        stackArray1d<real64, maxNumFaces> dViscousMobilityRatio_dS( numFacesInElem );
+        // upwinded coefficient for the viscous term
+        stackArray2d<real64, numPhases*maxNumFaces> viscousCoef( numFacesInElem, numPhases  );
+        stackArray2d<real64, numPhases*maxNumFaces> dViscousCoef_dp( numFacesInElem, numPhases );
+        stackArray2d<real64, numPhases*maxNumFaces> dViscousCoef_dS( numFacesInElem, numPhases );
         stackArray1d<globalIndex, maxNumFaces> viscousDofNumber( numFacesInElem ); 
 
-        // mobility ratio for the buoyancy term
-        stackArray1d<real64, maxNumFaces> buoyancyMobilityRatio( numFacesInElem );
-        stackArray2d<real64, 2 * maxNumFaces> dBuoyancyMobilityRatio_dp( numFacesInElem, 2 );
-        stackArray2d<real64, 2 * maxNumFaces> dBuoyancyMobilityRatio_dS( numFacesInElem, 2 );
-        stackArray2d<globalIndex, 2 * maxNumFaces> buoyancyDofNumber( numFacesInElem, 2 );      
+        // upwinded coefficient for the buoyancy term
+        stackArray2d<real64, numPhases*maxNumFaces> buoyancyCoef( numFacesInElem, numPhases );
+        stackArray3d<real64, 2*numPhases*maxNumFaces> dBuoyancyCoef_dp( numFacesInElem, numPhases, 2 );
+        stackArray3d<real64, 2*numPhases*maxNumFaces> dBuoyancyCoef_dS( numFacesInElem, numPhases, 2 );
+        stackArray2d<globalIndex, 2*maxNumFaces> buoyancyDofNumber( numFacesInElem, 2 );      
         
         // recompute the local transmissibility matrix at each iteration
         // we can decide later to precompute transMatrix if needed
@@ -351,17 +345,19 @@ void TwoPhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time_n
                                     m_phaseMob, 
                                     m_dPhaseMob_dPres,
                                     m_dPhaseMob_dSat,
+                                    m_phaseDens, 
+                                    m_dPhaseDens_dPres,
                                     er, esr, ei,
                                     elemDofNumber[ei],
                                     elemDofKey,
                                     oneSidedTotalVolFlux,
-                                    viscousMobilityRatio,      
-                                    dViscousMobilityRatio_dp,
-                                    dViscousMobilityRatio_dS,
+                                    viscousCoef,      
+                                    dViscousCoef_dp,
+                                    dViscousCoef_dS,
                                     viscousDofNumber,
-                                    buoyancyMobilityRatio,      
-                                    dBuoyancyMobilityRatio_dp,
-                                    dBuoyancyMobilityRatio_dS,
+                                    buoyancyCoef,      
+                                    dBuoyancyCoef_dp,
+                                    dBuoyancyCoef_dS,
                                     buoyancyDofNumber );
         
         /*
@@ -380,13 +376,13 @@ void TwoPhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time_n
                                     dOneSidedTotalVolFlux_dp,
                                     dOneSidedTotalVolFlux_dS,
                                     dOneSidedTotalVolFlux_dfp,
-                                    viscousMobilityRatio,      
-                                    dViscousMobilityRatio_dp,
-                                    dViscousMobilityRatio_dS,
+                                    viscousCoef,      
+                                    dViscousCoef_dp,
+                                    dViscousCoef_dS,
                                     viscousDofNumber,
-                                    buoyancyMobilityRatio,
-                                    dBuoyancyMobilityRatio_dp,
-                                    dBuoyancyMobilityRatio_dS,
+                                    buoyancyCoef,
+                                    dBuoyancyCoef_dp,
+                                    dBuoyancyCoef_dS,
                                     buoyancyDofNumber,
                                     matrix,
                                     rhs );
@@ -428,6 +424,7 @@ void TwoPhaseHybridFVM::ComputeOneSidedVolFluxes( arrayView1d<real64 const> cons
                                                   stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> & dOneSidedVolFlux_dS,
                                                   stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> & dOneSidedVolFlux_dfp ) const
 {
+  localIndex constexpr numPhases  = NUM_PHASES;  
   localIndex const numFacesInElem = elemToFaces.size();
   
   // for this element, loop over the local (one-sided) faces
@@ -443,6 +440,7 @@ void TwoPhaseHybridFVM::ComputeOneSidedVolFluxes( arrayView1d<real64 const> cons
     {
 
       // pressure and gravity terms
+      // TODO: account for capillary pressure here
       real64 const ccPres = elemPres + dElemPres;
       real64 const fPres  = facePres[elemToFaces[jfaceLoc]] + dFacePres[elemToFaces[jfaceLoc]];
 
@@ -455,35 +453,30 @@ void TwoPhaseHybridFVM::ComputeOneSidedVolFluxes( arrayView1d<real64 const> cons
       real64 const dPresDif_dfp = -1;
 
       // gravity term
-      real64 const depthDif                    = ccGravDepth - fGravDepth;
-      
-      real64 const wettingPhaseGravTerm        = elemPhaseDens[m_wettingPh]        * depthDif;
-      real64 const dWettingPhaseGravTerm_dp    = dElemPhaseDens_dp[m_wettingPh]    * depthDif;
-      
-      real64 const nonWettingPhaseGravTerm     = elemPhaseDens[m_nonWettingPh]     * depthDif;
-      real64 const dNonWettingPhaseGravTerm_dp = dElemPhaseDens_dp[m_nonWettingPh] * depthDif;
+      real64 const depthDif = ccGravDepth - fGravDepth;
 
-      // 1) compute the potential diff between the cell center and the face center
-      real64 const wettingPhasePotDif         = presDif     - wettingPhaseGravTerm;
-      real64 const dWettingPhasePotDif_dp     = dPresDif_dp - dWettingPhaseGravTerm_dp;
-      real64 const dWettingPhasePotDif_dfp    = dPresDif_dfp;
+      real64 sumWeightedPotDif      = 0;
+      real64 dSumWeightedPotDif_dp  = 0;
+      real64 dSumWeightedPotDif_dS  = 0;
+      real64 dSumWeightedPotDif_dfp = 0;
       
-      real64 const nonWettingPhasePotDif      = presDif     - nonWettingPhaseGravTerm;
-      real64 const dNonWettingPhasePotDif_dp  = dPresDif_dp - dNonWettingPhaseGravTerm_dp;
-      real64 const dNonWettingPhasePotDif_dfp = dPresDif_dfp;
+      for (localIndex ip = 0; ip < numPhases; ++ip)
+      {
+        real64 const phaseGravTerm     = elemPhaseDens[ip]     * depthDif;
+        real64 const dPhaseGravTerm_dp = dElemPhaseDens_dp[ip] * depthDif;
 
-      // sum of potential differences weighted by phase mobility
-      real64 sumWeightedPotDif      = elemPhaseMob[m_wettingPh]      * wettingPhasePotDif;
-      real64 dSumWeightedPotDif_dp  = dElemPhaseMob_dp[m_wettingPh]  * wettingPhasePotDif
-                                    + elemPhaseMob[m_wettingPh]      * dWettingPhasePotDif_dp;
-      real64 dSumWeightedPotDif_dS  = dElemPhaseMob_dS[m_wettingPh]  * wettingPhasePotDif;
-      real64 dSumWeightedPotDif_dfp = elemPhaseMob[m_wettingPh]      * dWettingPhasePotDif_dfp;
-      
-      sumWeightedPotDif      += elemPhaseMob[m_nonWettingPh]     * nonWettingPhasePotDif;
-      dSumWeightedPotDif_dp  += dElemPhaseMob_dp[m_nonWettingPh] * nonWettingPhasePotDif
-                              + elemPhaseMob[m_nonWettingPh]     * dNonWettingPhasePotDif_dp;
-      dSumWeightedPotDif_dS  += dElemPhaseMob_dS[m_nonWettingPh] * nonWettingPhasePotDif;
-      dSumWeightedPotDif_dfp += elemPhaseMob[m_nonWettingPh]     * dNonWettingPhasePotDif_dfp;
+        // 1) compute the potential diff between the cell center and the face center
+        real64 const phasePotDif       = presDif     - phaseGravTerm;
+        real64 const dPhasePotDif_dp   = dPresDif_dp - dPhaseGravTerm_dp;
+        real64 const dPhasePotDif_dfp  = dPresDif_dfp;
+
+        // sum of potential differences weighted by phase mobility
+        sumWeightedPotDif       += elemPhaseMob[ip]     * phasePotDif;
+        dSumWeightedPotDif_dp   += dElemPhaseMob_dp[ip] * phasePotDif
+                                 + elemPhaseMob[ip]     * dPhasePotDif_dp;
+        dSumWeightedPotDif_dS   += dElemPhaseMob_dS[ip] * phasePotDif;
+        dSumWeightedPotDif_dfp  += elemPhaseMob[ip]     * dPhasePotDif_dfp;
+      }
       
       // 2) compute the contribution of this face to the volumetric fluxes in the cell
       oneSidedVolFlux[ifaceLoc]      += transMatrix[ifaceLoc][jfaceLoc] * sumWeightedPotDif;
@@ -501,34 +494,37 @@ void TwoPhaseHybridFVM::UpdateUpwindedCoefficients( MeshLevel const * const  mes
                                                     array2d<localIndex> const & elemList,
                                                     set<localIndex> const & regionFilter,
                                                     arraySlice1d<localIndex const> const elemToFaces,
-                                                    ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> const & domainMobility,
-                                                    ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> const & dDomainMobility_dp,
-                                                    ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> const & dDomainMobility_dS,
+                                                    ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> const & domainMob,
+                                                    ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> const & dDomainMob_dp,
+                                                    ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> const & dDomainMob_dS,
+                                                    ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> const & domainDens,
+                                                    ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> const & dDomainDens_dp,
                                                     localIndex const er,
                                                     localIndex const esr,
                                                     localIndex const ei,
                                                     globalIndex const elemDofNumber,
                                                     string const elemDofKey,
                                                     stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> const & oneSidedVolFlux,
-                                                    stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> & viscousMobilityRatio,
-                                                    stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> & dViscousMobilityRatio_dp,
-                                                    stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> & dViscousMobilityRatio_dS,
+                                                    stackArray2d<real64, NUM_PHASES*MAX_NUM_FACES_IN_ELEM> & viscousCoef,
+                                                    stackArray2d<real64, NUM_PHASES*MAX_NUM_FACES_IN_ELEM> & dViscousCoef_dp,
+                                                    stackArray2d<real64, NUM_PHASES*MAX_NUM_FACES_IN_ELEM> & dViscousCoef_dS,
                                                     stackArray1d<globalIndex, MAX_NUM_FACES_IN_ELEM> & viscousDofNumber,
-                                                    stackArray1d<real64, MAX_NUM_FACES_IN_ELEM>   & buoyancyMobilityRatio,
-                                                    stackArray2d<real64, 2*MAX_NUM_FACES_IN_ELEM> & dBuoyancyMobilityRatio_dp,
-                                                    stackArray2d<real64, 2*MAX_NUM_FACES_IN_ELEM> & dBuoyancyMobilityRatio_dS,
+                                                    stackArray2d<real64, NUM_PHASES*MAX_NUM_FACES_IN_ELEM>   & buoyancyCoef,
+                                                    stackArray3d<real64, 2*NUM_PHASES*MAX_NUM_FACES_IN_ELEM> & dBuoyancyCoef_dp,
+                                                    stackArray3d<real64, 2*NUM_PHASES*MAX_NUM_FACES_IN_ELEM> & dBuoyancyCoef_dS,
                                                     stackArray2d<globalIndex, 2*MAX_NUM_FACES_IN_ELEM> & buoyancyDofNumber ) const
 {
   localIndex const numFacesInElem = elemToFaces.size();
+  localIndex constexpr numPhases  = NUM_PHASES;
   
   // for this element, loop over the local (one-sided) faces
   for (localIndex ifaceLoc = 0; ifaceLoc < numFacesInElem; ++ifaceLoc)
   {
 
     // we initialize these upw quantities with the values of the local elem    
-    localIndex erUpwViscous    = er;
-    localIndex esrUpwViscous   = esr;
-    localIndex eiUpwViscous    = ei;
+    localIndex erUpw  = er;
+    localIndex esrUpw = esr;
+    localIndex eiUpw  = ei;
     viscousDofNumber[ifaceLoc] = elemDofNumber;
 
     // if the local elem if upstream, we are done, we can proceed to the next one-sided face
@@ -566,9 +562,9 @@ void TwoPhaseHybridFVM::UpdateUpwindedCoefficients( MeshLevel const * const  mes
             arrayView1d<globalIndex const> const & neighborDofNumber =
               neighborSubRegion->getReference<array1d<globalIndex>>( elemDofKey );  
 
-            erUpwViscous  = erNeighbor;
-            esrUpwViscous = esrNeighbor;
-            eiUpwViscous  = eiNeighbor;
+            erUpw  = erNeighbor;
+            esrUpw = esrNeighbor;
+            eiUpw  = eiNeighbor;
             viscousDofNumber[ifaceLoc] = neighborDofNumber[eiNeighbor];
             
           }
@@ -577,33 +573,61 @@ void TwoPhaseHybridFVM::UpdateUpwindedCoefficients( MeshLevel const * const  mes
       }
     }
 
-    // viscous term 
-    real64 const viscousWettingMob        = domainMobility[erUpwViscous][esrUpwViscous][eiUpwViscous][m_wettingPh];
-    real64 const dViscousWettingMob_dp    = dDomainMobility_dp[erUpwViscous][esrUpwViscous][eiUpwViscous][m_wettingPh];
-    real64 const dViscousWettingMob_dS    = dDomainMobility_dS[erUpwViscous][esrUpwViscous][eiUpwViscous][m_wettingPh];        
-    real64 const viscousNonWettingMob     = domainMobility[erUpwViscous][esrUpwViscous][eiUpwViscous][m_nonWettingPh];
-    real64 const dViscousNonWettingMob_dp = dDomainMobility_dp[erUpwViscous][esrUpwViscous][eiUpwViscous][m_nonWettingPh];
-    real64 const dViscousNonWettingMob_dS = dDomainMobility_dS[erUpwViscous][esrUpwViscous][eiUpwViscous][m_nonWettingPh];
-     
-    real64 const viscousTotalMob          = viscousWettingMob     + viscousNonWettingMob;
-    real64 const dViscousTotalMob_dp      = dViscousWettingMob_dp + dViscousNonWettingMob_dp;
-    real64 const dViscousTotalMob_dS      = dViscousWettingMob_dS + dViscousNonWettingMob_dS; 
+    // upwinded coefficient for the viscous terms
 
-    viscousMobilityRatio[ifaceLoc]        = viscousWettingMob / viscousTotalMob;
-    dViscousMobilityRatio_dp[ifaceLoc]    = ( dViscousWettingMob_dp * viscousTotalMob
-                                            - viscousWettingMob     * dViscousTotalMob_dp )
-                                            / (viscousTotalMob*viscousTotalMob);
-    dViscousMobilityRatio_dS[ifaceLoc]    = ( dViscousWettingMob_dS * viscousTotalMob
-                                            - viscousWettingMob     * dViscousTotalMob_dS )
-                                            / (viscousTotalMob*viscousTotalMob);
-    
-    // buoyancy term
-    buoyancyMobilityRatio[ifaceLoc] = 0.0;
-    for (localIndex i = 0; i < 2; ++i)
+    // total mobility
+    real64 totalMob     = 0;
+    real64 dTotalMob_dp = 0;
+    real64 dTotalMob_dS = 0;
+
+    for (localIndex ip = 0; ip < numPhases; ++ip)
     {
-      dBuoyancyMobilityRatio_dp[ifaceLoc][i] = 0.0;
-      dBuoyancyMobilityRatio_dS[ifaceLoc][i] = 0.0;
-      buoyancyDofNumber[ifaceLoc][i]         = -1;
+      totalMob     += domainMob[erUpw][esrUpw][eiUpw][ip];
+      dTotalMob_dp += dDomainMob_dp[erUpw][esrUpw][eiUpw][ip];
+      dTotalMob_dS += dDomainMob_dS[erUpw][esrUpw][eiUpw][ip];
+    }
+    if (totalMob < m_minTotalMob)
+    {
+      totalMob     = m_minTotalMob;
+      dTotalMob_dp = 0;
+      dTotalMob_dS = 0;
+    }
+    
+    for (localIndex ip = 0; ip < numPhases; ++ip)
+    {
+      // upwinded mobilities
+      real64 const mob     = domainMob[erUpw][esrUpw][eiUpw][ip];
+      real64 const dMob_dp = dDomainMob_dp[erUpw][esrUpw][eiUpw][ip];
+      real64 const dMob_dS = dDomainMob_dS[erUpw][esrUpw][eiUpw][ip];        
+
+      // upwinded mobility ratios
+      real64 const mobRatio     = mob / totalMob;
+      real64 const dMobRatio_dp = (dMob_dp * totalMob - mob * dTotalMob_dp)
+                                / (totalMob*totalMob);
+      real64 const dMobRatio_dS = (dMob_dS * totalMob - mob * dTotalMob_dS)
+                                / (totalMob*totalMob);
+      
+      // upwinded densities
+      real64 const dens     = domainDens[erUpw][esrUpw][m_fluidIndex][eiUpw][0][ip];
+      real64 const dDens_dp = dDomainDens_dp[erUpw][esrUpw][m_fluidIndex][eiUpw][0][ip];
+
+      viscousCoef[ifaceLoc][ip]     = dens * mobRatio;
+      dViscousCoef_dp[ifaceLoc][ip] = dDens_dp * mobRatio + dens * dMobRatio_dp;
+      dViscousCoef_dS[ifaceLoc][ip] = dens * dMobRatio_dS;
+    }
+
+    // TODO: add the buoyancy coefficients
+    
+    // upwinded coefficient for the buoyancy terms
+    for (localIndex ip = 0; ip < numPhases; ++ip)
+    {
+      buoyancyCoef[ifaceLoc][ip] = 0.0;
+      for (localIndex nei = 0; nei < 2; ++nei)
+      {
+        dBuoyancyCoef_dp[ifaceLoc][ip][nei] = 0.0;
+        dBuoyancyCoef_dS[ifaceLoc][ip][nei] = 0.0;
+        buoyancyDofNumber[ifaceLoc][nei]    = -1;
+      }
     }
   }
 }
@@ -617,107 +641,102 @@ void TwoPhaseHybridFVM::AssembleOneSidedMassFluxes( real64 const & dt,
                                                     stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> const & dOneSidedVolFlux_dp,
                                                     stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> const & dOneSidedVolFlux_dS,
                                                     stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> const & dOneSidedVolFlux_dfp,
-                                                    stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> const & viscousMobilityRatio,
-                                                    stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> const & dViscousMobilityRatio_dp,
-                                                    stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> const & dViscousMobilityRatio_dS,
+                                                    stackArray2d<real64, NUM_PHASES*MAX_NUM_FACES_IN_ELEM> const & viscousCoef,
+                                                    stackArray2d<real64, NUM_PHASES*MAX_NUM_FACES_IN_ELEM> const & dViscousCoef_dp,
+                                                    stackArray2d<real64, NUM_PHASES*MAX_NUM_FACES_IN_ELEM> const & dViscousCoef_dS,
                                                     stackArray1d<globalIndex, MAX_NUM_FACES_IN_ELEM> const & viscousDofNumber,
-                                                    stackArray1d<real64, MAX_NUM_FACES_IN_ELEM>   const & GEOSX_UNUSED_ARG( buoyancyMobilityRatio ),
-                                                    stackArray2d<real64, 2*MAX_NUM_FACES_IN_ELEM> const & GEOSX_UNUSED_ARG( dBuoyancyMobilityRatio_dp ),
-                                                    stackArray2d<real64, 2*MAX_NUM_FACES_IN_ELEM> const & GEOSX_UNUSED_ARG( dBuoyancyMobilityRatio_dS ),
+                                                    stackArray2d<real64, NUM_PHASES*MAX_NUM_FACES_IN_ELEM>   const & GEOSX_UNUSED_ARG( buoyancyCoef ),
+                                                    stackArray3d<real64, 2*NUM_PHASES*MAX_NUM_FACES_IN_ELEM> const & GEOSX_UNUSED_ARG( dBuoyancyCoef_dp ),
+                                                    stackArray3d<real64, 2*NUM_PHASES*MAX_NUM_FACES_IN_ELEM> const & GEOSX_UNUSED_ARG( dBuoyancyCoef_dS ),
                                                     stackArray2d<globalIndex, 2*MAX_NUM_FACES_IN_ELEM> const & GEOSX_UNUSED_ARG( buoyancyDofNumber ),
                                                     ParallelMatrix * const matrix,
                                                     ParallelVector * const rhs ) const
 {
   localIndex constexpr maxNumFaces = MAX_NUM_FACES_IN_ELEM;
+  localIndex constexpr numPhases   = NUM_PHASES;
+  localIndex constexpr numDof      = NUM_DOF;
 
   localIndex const numFacesInElem = elemToFaces.size();
-  
-  // fluxes
-  real64 sumLocalMassFluxes     = 0;
-  real64 dSumLocalMassFluxes_dp = 0;
-  real64 dSumLocalMassFluxes_dS = 0;  
-  stackArray1d<real64, maxNumFaces> dSumLocalMassFluxes_dp_neighbor( numFacesInElem );
-  stackArray1d<real64, maxNumFaces> dSumLocalMassFluxes_dS_neighbor( numFacesInElem );  
-  stackArray1d<real64, maxNumFaces> dSumLocalMassFluxes_dfp( numFacesInElem );
-  dSumLocalMassFluxes_dp_neighbor = 0;
-  dSumLocalMassFluxes_dS_neighbor = 0;  
-  dSumLocalMassFluxes_dfp = 0;
-          
-  // dof numbers 
-  globalIndex const eqnRowIndex         = elemDofNumber;
-  globalIndex const dofColIndexElemPres = elemDofNumber + ColOffset::DPRES;
-  globalIndex const dofColIndexElemSat  = elemDofNumber + ColOffset::DSAT;  
-  stackArray1d<globalIndex, maxNumFaces> dofColIndicesNeighborPres( numFacesInElem );
-  stackArray1d<globalIndex, maxNumFaces> dofColIndicesNeighborSat( numFacesInElem );  
-  stackArray1d<globalIndex, maxNumFaces> dofColIndicesFacePres( numFacesInElem );
 
+  localIndex const w  = TwoPhaseBase::RowOffset::WETTING;
+  localIndex const nw = TwoPhaseBase::RowOffset::NONWETTING;
+  localIndex const dp = TwoPhaseBase::ColOffset::DPRES;
+  localIndex const dS = TwoPhaseBase::ColOffset::DSAT;
+
+  // dof numbers
+  stackArray1d<globalIndex, numPhases>              eqnRowIndices( numPhases );
+  stackArray1d<globalIndex, numDof*(1+maxNumFaces)> elemDofColIndices( numDof * (1+numFacesInElem) );
+  stackArray1d<globalIndex, maxNumFaces>            faceDofColIndices( numFacesInElem );
+  eqnRowIndices[w]      = elemDofNumber + w;
+  eqnRowIndices[nw]     = elemDofNumber + nw;
+  elemDofColIndices[dp] = elemDofNumber + dp;
+  elemDofColIndices[dS] = elemDofNumber + dS;
+
+  // fluxes
+  stackArray1d<real64, numPhases> sumLocalMassFluxes( numPhases );
+  stackArray2d<real64, numPhases*numDof*(1+maxNumFaces)> dSumLocalMassFluxes_dElemVars( numPhases, numDof * (1+numFacesInElem) );
+  stackArray2d<real64, numPhases*maxNumFaces> dSumLocalMassFluxes_dFaceVars( numPhases, numFacesInElem );
+  sumLocalMassFluxes = 0;
+  dSumLocalMassFluxes_dElemVars = 0;
+  dSumLocalMassFluxes_dFaceVars = 0;
+  
   // TODO: add buoyancy terms
   
   // for each element, loop over the one-sided faces
   for (localIndex ifaceLoc = 0; ifaceLoc < numFacesInElem; ++ifaceLoc)
   {
-    // compute the mass flux at the one-sided face plus its derivatives
-    // add the newly computed flux to the sum
-    sumLocalMassFluxes      += dt * viscousMobilityRatio[ifaceLoc] * oneSidedVolFlux[ifaceLoc];
-    dSumLocalMassFluxes_dp  += dt * viscousMobilityRatio[ifaceLoc] * dOneSidedVolFlux_dp[ifaceLoc];
-    dSumLocalMassFluxes_dS  += dt * viscousMobilityRatio[ifaceLoc] * dOneSidedVolFlux_dS[ifaceLoc];    
-    if (elemDofNumber == viscousDofNumber[ifaceLoc])
+    localIndex const fOffset = numDof*(ifaceLoc+1);
+    for (localIndex ip = 0; ip < numPhases; ++ip)
     {
-      dSumLocalMassFluxes_dp  += dt * dViscousMobilityRatio_dp[ifaceLoc] * oneSidedVolFlux[ifaceLoc];
-      dSumLocalMassFluxes_dS  += dt * dViscousMobilityRatio_dS[ifaceLoc] * oneSidedVolFlux[ifaceLoc];      
+      localIndex const rowId = m_phaseToRow[ip];
+      
+      // compute the mass flux at the one-sided face plus its derivatives
+      // add the newly computed flux to the sum
+      real64 const coef     = dt * viscousCoef[ifaceLoc][ip];
+      real64 const dCoef_dp = dt * dViscousCoef_dp[ifaceLoc][ip];
+      real64 const dCoef_dS = dt * dViscousCoef_dS[ifaceLoc][ip];
+
+      // residual 
+      sumLocalMassFluxes[rowId]  += coef * oneSidedVolFlux[ifaceLoc];
+ 
+      // derivatives wrt the cell centered vars of the local elem
+      dSumLocalMassFluxes_dElemVars[rowId][dp] += coef * dOneSidedVolFlux_dp[ifaceLoc];
+      dSumLocalMassFluxes_dElemVars[rowId][dS] += coef * dOneSidedVolFlux_dS[ifaceLoc];
+
+      // derivatives wrt the cell centered vars of the neighbor
+      dSumLocalMassFluxes_dElemVars[rowId][fOffset+dp] = dCoef_dp * oneSidedVolFlux[ifaceLoc];
+      dSumLocalMassFluxes_dElemVars[rowId][fOffset+dS] = dCoef_dS * oneSidedVolFlux[ifaceLoc];
+
+      // derivatives wrt the face centered var 
+      dSumLocalMassFluxes_dFaceVars[rowId][ifaceLoc] = coef * dOneSidedVolFlux_dfp[ifaceLoc];
     }
-    else
-    {
-      dSumLocalMassFluxes_dp_neighbor[ifaceLoc] = dt * dViscousMobilityRatio_dp[ifaceLoc] * oneSidedVolFlux[ifaceLoc];
-      dSumLocalMassFluxes_dS_neighbor[ifaceLoc] = dt * dViscousMobilityRatio_dS[ifaceLoc] * oneSidedVolFlux[ifaceLoc];      
-    }
-    dSumLocalMassFluxes_dfp[ifaceLoc] = dt * viscousMobilityRatio[ifaceLoc] * dOneSidedVolFlux_dfp[ifaceLoc];
 
     // collect the relevant dof numbers
-    dofColIndicesNeighborPres[ifaceLoc] = viscousDofNumber[ifaceLoc] + ColOffset::DPRES;
-    dofColIndicesNeighborSat[ifaceLoc]  = viscousDofNumber[ifaceLoc] + ColOffset::DSAT;    
-    dofColIndicesFacePres[ifaceLoc]     = faceDofNumber[elemToFaces[ifaceLoc]];
-
+    elemDofColIndices[fOffset+dp] = viscousDofNumber[ifaceLoc] + dp;
+    elemDofColIndices[fOffset+dS] = viscousDofNumber[ifaceLoc] + dS;
+    faceDofColIndices[ifaceLoc]   = faceDofNumber[elemToFaces[ifaceLoc]];
+    
   }
   
   // we are ready to assemble the local flux and its derivatives
 
   // residual
-  rhs->add( &eqnRowIndex,
-            &sumLocalMassFluxes,
-            1 );
+  rhs->add( eqnRowIndices.data(),
+            sumLocalMassFluxes.data(),
+            numPhases );
 
-  // TODO: group the matrix->add calls
-  
-  // jacobian -- derivative wrt local cell centered variables
-  matrix->add( &eqnRowIndex,
-               &dofColIndexElemPres,
-               &dSumLocalMassFluxes_dp,
-               1,
-               1 );
-  matrix->add( &eqnRowIndex,
-               &dofColIndexElemSat,
-               &dSumLocalMassFluxes_dS,
-               1,
-               1 );
-  
-  // jacobian -- derivatives wrt neighbor cell centered variables
-  matrix->add( &eqnRowIndex,
-               dofColIndicesNeighborPres.data(),
-               dSumLocalMassFluxes_dp_neighbor.data(),
-               1,
-               numFacesInElem );
-  matrix->add( &eqnRowIndex,
-               dofColIndicesNeighborSat.data(),
-               dSumLocalMassFluxes_dS_neighbor.data(),
-               1,
-               numFacesInElem );
-  
-  // jacobian -- derivatives wrt face pressure terms
-  matrix->add( &eqnRowIndex,
-               dofColIndicesFacePres.data(),
-               dSumLocalMassFluxes_dfp.data(),
-               1,
+  // jacobian -- derivative wrt elem centered vars
+  matrix->add( eqnRowIndices.data(),
+               elemDofColIndices.data(),
+               dSumLocalMassFluxes_dElemVars.data(),
+               numPhases,
+               numDof * (1+numFacesInElem) );
+
+  // jacobian -- derivatives wrt face centered vars
+  matrix->add( eqnRowIndices.data(),
+               faceDofColIndices.data(),
+               dSumLocalMassFluxes_dFaceVars.data(),
+               numPhases,
                numFacesInElem );
 }
 
@@ -732,47 +751,48 @@ void TwoPhaseHybridFVM::AssembleConstraints( arrayView1d<globalIndex const> cons
                                              ParallelMatrix * const matrix,
                                              ParallelVector * const rhs ) const 
 {
+  localIndex constexpr numDof     = NUM_DOF;
   localIndex const numFacesInElem = elemToFaces.size();
-  
-  globalIndex const dofColIndexElemPres = elemDofNumber + ColOffset::DPRES;
-  globalIndex const dofColIndexElemSat  = elemDofNumber + ColOffset::DSAT;   
+
+  localIndex const dp = TwoPhaseBase::ColOffset::DPRES;
+  localIndex const dS = TwoPhaseBase::ColOffset::DSAT;
+
+  // dof numbers
+  stackArray1d<globalIndex, numDof> elemDofColIndices( numDof );
+  elemDofColIndices[dp] = elemDofNumber + dp;
+  elemDofColIndices[dS] = elemDofNumber + dS;
+
+  // fluxes
+  stackArray1d<real64, numDof> dFlux_dElemVars( numDof );
   
   // for each element, loop over the local (one-sided) faces
   for (localIndex ifaceLoc = 0; ifaceLoc < numFacesInElem; ++ifaceLoc)
   {
     // dof numbers 
-    globalIndex const eqnRowIndex         = faceDofNumber[elemToFaces[ifaceLoc]];
-    globalIndex const dofColIndexFacePres = faceDofNumber[elemToFaces[ifaceLoc]];
+    globalIndex const eqnRowIndex     = faceDofNumber[elemToFaces[ifaceLoc]];
+    globalIndex const faceDofColIndex = faceDofNumber[elemToFaces[ifaceLoc]];
 
     // fluxes
-    real64 const flux      = oneSidedVolFlux[ifaceLoc];
-    real64 const dFlux_dp  = dOneSidedVolFlux_dp[ifaceLoc];
-    real64 const dFlux_dS  = dOneSidedVolFlux_dS[ifaceLoc];    
-    real64 const dFlux_dfp = dOneSidedVolFlux_dfp[ifaceLoc];
-    
+    real64 const flux            = oneSidedVolFlux[ifaceLoc];
+    real64 const dFlux_dFaceVars = dOneSidedVolFlux_dfp[ifaceLoc];
+    dFlux_dElemVars[dp]          = dOneSidedVolFlux_dp[ifaceLoc];
+    dFlux_dElemVars[dS]          = dOneSidedVolFlux_dS[ifaceLoc];
+
     // residual
     rhs->add( &eqnRowIndex,
               &flux,
               1 );
 
-    // TODO: group the matrix->add calls
-    
-    // jacobian -- derivative wrt local cell centered pressure term
+    // jacobian -- derivative wrt local cell centered vars
     matrix->add( &eqnRowIndex,
-                 &dofColIndexElemPres,
-                 &dFlux_dp,
-                 1, 1 );
-
-    // jacobian -- derivative wrt local cell centered saturation term
-    matrix->add( &eqnRowIndex,
-                 &dofColIndexElemSat,
-                 &dFlux_dS,
-                 1, 1 );
-    
+                 elemDofColIndices.data(),
+                 dFlux_dElemVars.data(),
+                 1, numDof );
+   
     // jacobian -- derivatives wrt face pressure terms
     matrix->add( &eqnRowIndex,
-                 &dofColIndexFacePres,
-                 &dFlux_dfp,
+                 &faceDofColIndex,
+                 &dFlux_dFaceVars,
                  1, 1 );
 
   }      
@@ -793,12 +813,101 @@ TwoPhaseHybridFVM::ApplyBoundaryConditions( real64 const GEOSX_UNUSED_ARG( time_
 
 }
 
-real64 TwoPhaseHybridFVM::CalculateResidualNorm( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
-                                                 DofManager const & GEOSX_UNUSED_ARG( dofManager ),
-                                                 ParallelVector const & GEOSX_UNUSED_ARG( rhs ) )
+real64 TwoPhaseHybridFVM::CalculateResidualNorm( DomainPartition const * const domain,
+                                                 DofManager const & dofManager,
+                                                 ParallelVector const & rhs )
 {
-  return 0.0;
+  MeshLevel const * const mesh          = domain->getMeshBody(0)->getMeshLevel(0);
+  FaceManager const * const faceManager = mesh->getFaceManager();
+
+  localIndex constexpr numPhases = NUM_PHASES;
+  
+  // here we compute the cell-centered residual norm in the derived class
+  // to avoid duplicating a synchronization point 
+  
+  // get a view into local residual vector
+  real64 const * localResidual = rhs.extractLocalVector();
+
+  string const elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString );
+  string const faceDofKey = dofManager.getKey( viewKeyStruct::faceDofFieldString );
+  
+  // local residual
+  array1d<real64> localResidualNorm( numPhases+1 ), globalResidualNorm( numPhases+1 );
+  localResidualNorm  = 0;
+  globalResidualNorm = 0;
+  
+  // 1. Compute the residual for the mass conservation equations
+
+  // compute the norm of local residual scaled by cell pore volume
+  applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
+                                 ElementRegionBase const * const GEOSX_UNUSED_ARG( region ),
+                                 ElementSubRegionBase const * const subRegion )
+  {
+    arrayView1d<globalIndex const> const & elemDofNumber =
+      subRegion->getReference< array1d<globalIndex> >( elemDofKey );
+
+    arrayView1d<integer const> const & elemGhostRank = m_elemGhostRank[er][esr];
+    arrayView1d<real64 const> const & volume         = m_volume[er][esr];
+    arrayView1d<real64 const> const & porosityOld    = m_porosityOld[er][esr];    
+    arrayView1d<real64 const> const & satOld         = m_wettingPhaseSat[er][esr];
+    arrayView2d<real64> const & phaseDensOld         = m_phaseDensOld[er][esr];
+
+    localIndex const subRegionSize = subRegion->size();
+    for ( localIndex a = 0; a < subRegionSize; ++a )
+    {
+      if (elemGhostRank[a] < 0)
+      {
+        // for the normalization, compute a saturation-weighted total density
+        real64 const totalDensOld = satOld[a]     * phaseDensOld[a][m_wettingPh]
+                                  + (1-satOld[a]) * phaseDensOld[a][m_nonWettingPh];
+        real64 const normalizer   = porosityOld[a] * totalDensOld * volume[a];
+        
+        for (localIndex ip = 0; ip < numPhases; ++ip)
+        {  
+          localIndex const lid = rhs.getLocalRowID( elemDofNumber[a] + m_phaseToRow[ip] );
+          real64 const val = localResidual[lid] / normalizer;
+          localResidualNorm[m_phaseToRow[ip]] += val * val;
+        }
+      }
+    }
+  });
+
+  
+  // 2. Compute the residual for the face-based constraints
+
+  arrayView1d<integer const> const & faceGhostRank =
+    faceManager->getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
+  arrayView1d<globalIndex const> const & faceDofNumber =
+    faceManager->getReference< array1d<globalIndex> >( faceDofKey );
+
+  for( localIndex iface = 0 ; iface < faceManager->size(); ++iface )
+  {
+    // if not ghost face and if adjacent to target region
+    if (faceGhostRank[iface] < 0 && faceDofNumber[iface] >= 0)
+    {
+      localIndex const lid    = rhs.getLocalRowID( faceDofNumber[iface] );
+      real64 const normalizer = 1; // TODO: compute the normalizer here
+      real64 const val        = localResidual[lid] / normalizer;
+      localResidualNorm[2] += val * val;
+    }
+  }
+
+  
+  // 3. Combine the two norms
+
+  MpiWrapper::allReduce(localResidualNorm.data(), globalResidualNorm.data(), numPhases+1, MPI_SUM, MPI_COMM_GEOSX);
+ 
+  real64 maxNorm = 0;
+  for (localIndex rowId = 0; rowId < numPhases + 1; ++rowId)
+  {
+    if (globalResidualNorm[rowId] > maxNorm)
+    {
+      maxNorm = globalResidualNorm[rowId];
+    }
+  }
+  return sqrt( maxNorm );
 }
+
 
 void TwoPhaseHybridFVM::ApplySystemSolution( DofManager const & dofManager,
                                              ParallelVector const & solution,
