@@ -23,7 +23,7 @@
       >
       <NonlinearSolverParameters name="nlsp"
                                  newtonTol="1.0e-5"
-                                 newtonMaxIter="20"
+                                 newtonMaxIter="10"
                                  lineSearchMaxCuts="4"/>
       <SystemSolverParameters
         logLevel="0"

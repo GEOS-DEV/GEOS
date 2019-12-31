@@ -218,12 +218,12 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
   arrayView1d<real64 const>   const & faceArea   = faceManager->faceArea();
   arrayView1d<R1Tensor const> const & faceCenter = faceManager->faceCenter();
   arrayView1d<R1Tensor const> const & faceNormal = faceManager->faceNormal();
-//  ArrayOfArraysView<localIndex const> const & faceToNodesMap = faceManager->nodeList();
+  ArrayOfArraysView<localIndex const> const & faceToNodesMap = faceManager->nodeList();
 
   arrayView1d<R1Tensor const> const & X = nodeManager->referencePosition();
 
-//  arrayView1d<R1Tensor> const & incrementalDisplacement = nodeManager->getReference<array1d<R1Tensor>>(keys::IncrementalDisplacement);
-//  arrayView1d<R1Tensor> const & totalDisplacement = nodeManager->getReference<array1d<R1Tensor>>(keys::TotalDisplacement);
+  arrayView1d<R1Tensor> const & incrementalDisplacement = nodeManager->getReference<array1d<R1Tensor>>(keys::IncrementalDisplacement);
+  arrayView1d<R1Tensor> const & totalDisplacement = nodeManager->getReference<array1d<R1Tensor>>(keys::TotalDisplacement);
 
   FaceElementStencil & fractureStencil = getReference<FaceElementStencil>(viewKeyStruct::fractureStencilString);
   CellElementStencilTPFA & cellStencil = getReference<CellElementStencilTPFA>(viewKeyStruct::cellStencilString);
@@ -260,8 +260,8 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
   arrayView1d< real64 > const &
   fluidPressure = fractureSubRegion->getReference<array1d<real64>>("pressure");
 
-  arrayView1d< real64 const > const &
-  aperture = fractureSubRegion->getElementAperture();
+  arrayView1d< real64 > const &
+  aperture = fractureSubRegion->getReference<array1d<real64>>("elementAperture");
 
 //  dataRepository::Group const * const constitutiveRelation = fractureSubRegion->GetConstitutiveModels()->GetGroup("water");
   arrayView1d<real64> const &
@@ -273,7 +273,7 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
 //    fluidPressure[kfe] = 0;
 ////    numNeighborElements[kfe] = 0;
 //  }
-
+  set<localIndex> allNewElems;
 
   // add new connectors/connections between face elements to the fracture stencil
   for( auto const fci : edgeManager->m_recalculateFractureConnectorEdges )
@@ -326,6 +326,7 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
         else
         {
           newElems.insert(fractureElementIndex);
+          allNewElems.insert(fractureElementIndex);
         }
       }
 
@@ -333,27 +334,7 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
       {
         fluidPressure[newElemIndex] = std::min(fluidPressure[newElemIndex], initialPressure);
         dens[newElemIndex] = 0.0;
-//
-//        localIndex const faceIndex0 = faceMap(newElemIndex,0);
-//        localIndex const faceIndex1 = faceMap(newElemIndex,1);
-//
-//        R1Tensor newDisp = faceNormal(faceIndex0);
-//        newDisp *= -0.5 * initialAperture;
-//
-//        localIndex const numNodesPerFace = faceToNodesMap.sizeOfArray(faceIndex0);
-//        for( localIndex a=0 ; a<numNodesPerFace ; ++a )
-//        {
-//          localIndex const node0 = faceToNodesMap(faceIndex0,a);
-//          localIndex const node1 = faceToNodesMap(faceIndex1, a==0 ? a : numNodesPerFace-a );
-//          if( node0 != node1 )
-//          {
-//            incrementalDisplacement[node0] += newDisp;
-//            totalDisplacement[node0] += newDisp;
-//            incrementalDisplacement[node1] -= newDisp;
-//            totalDisplacement[node1] -= newDisp;
-//          }
-//
-//        }
+        aperture[newElemIndex] = std::min(aperture[newElemIndex], initialAperture);
       }
 
       // add/overwrite the stencil for index fci
@@ -367,7 +348,38 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
     }
   }
 
+  for( localIndex const newElemIndex : allNewElems )
+  {
+    localIndex const faceIndex0 = faceMap(newElemIndex,0);
+    localIndex const faceIndex1 = faceMap(newElemIndex,1);
 
+    R1Tensor newDisp = faceNormal(faceIndex0);
+    if (aperture[newElemIndex] < 1e98)
+    {
+      newDisp *= -0.5 * aperture[newElemIndex];
+    } else
+    {
+      // It's important for the prefrac stage.
+      newDisp *= -0.0;
+    }
+
+    printf("New elem index, Initial aper = %4ld %4.2e \n", newElemIndex,  aperture[newElemIndex]);
+
+    localIndex const numNodesPerFace = faceToNodesMap.sizeOfArray(faceIndex0);
+    for( localIndex a=0 ; a<numNodesPerFace ; ++a )
+    {
+      localIndex const node0 = faceToNodesMap(faceIndex0,a);
+      localIndex const node1 = faceToNodesMap(faceIndex1, a==0 ? a : numNodesPerFace-a );
+      if( node0 != node1 )
+      {
+        incrementalDisplacement[node0] += newDisp;
+        totalDisplacement[node0] += newDisp;
+        incrementalDisplacement[node1] -= newDisp;
+        totalDisplacement[node1] -= newDisp;
+      }
+
+    }
+  }
 
   // add connections for FaceElements to/from CellElements.
   {

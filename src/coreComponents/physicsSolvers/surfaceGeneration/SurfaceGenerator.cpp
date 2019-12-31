@@ -1846,10 +1846,6 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
 
   set<localIndex> & externalFaces = faceManager.externalSet();
 
-
-  //arrayView1d< real64 > const &
-  //fluidPressure = fractureElementRegion->GetSubRegion(0)->getReference<array1d<real64>>("pressure");
-
   // loop over all faces attached to the nodeID
   for( map<localIndex, int>::const_iterator iter_face=faceLocations.begin() ; iter_face!=faceLocations.end() ; ++iter_face )
   {
@@ -1958,11 +1954,6 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
                                                                      faceIndices );
           m_faceElemsRupturedThisSolve.insert( newFaceElement );
           modifiedObjects.newElements[ {fractureElementRegion->getIndexInParent(),0} ].insert( newFaceElement );
-
-
-          // TODO
-          // this is a hack!
-          //fluidPressure[newFaceElement] = 50e6;
         }
 //        externalFaceManager.SplitFace(parentFaceIndex, newFaceIndex, nodeManager);
 
