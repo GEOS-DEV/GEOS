@@ -65,7 +65,7 @@ for i in range(0,numFiles):
 
     labels.append(prefix[i])
 
-    Radius[i] = Area[i] / 2
+    Radius[i] = Area[i]
 
 #labels[0] = "GEOS Results $K_{IC}=2.0e6$, $\mu=0.001$"
 #labels[1] = "GEOS Results $K_{IC}/10$"

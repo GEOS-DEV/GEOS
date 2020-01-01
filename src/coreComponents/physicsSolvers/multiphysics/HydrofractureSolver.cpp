@@ -33,6 +33,7 @@
 #include "mesh/FaceElementRegion.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
+#include "mpiCommunications/NeighborCommunicator.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
@@ -227,6 +228,17 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
       }
       else
       {
+        std::map<string, string_array > fieldNames;
+        fieldNames["node"].push_back( keys::IncrementalDisplacement );
+        fieldNames["node"].push_back( keys::TotalDisplacement );
+        fieldNames["elems"].push_back( FlowSolverBase::viewKeyStruct::pressureString );
+        fieldNames["elems"].push_back( "elementAperture" );
+
+        CommunicationTools::SynchronizeFields( fieldNames,
+                                               domain->getMeshBody(0)->getMeshLevel(0),
+                                               domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
+
+
         if( getLogLevel() >= 1 )
         {
           GEOSX_LOG_RANK_0("++ Fracture propagation. Re-entering Newton Solve.");

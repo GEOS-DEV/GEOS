@@ -1,6 +1,6 @@
 
   <Mesh>
-    <!-- InternalMesh name="mesh1"
+    <InternalMesh name="mesh1"
                   elementTypes="{C3D8}"
                   xCoords="{-240, -40, 40, 240}"
                   yCoords="{0, 100, 180}"
@@ -8,9 +8,9 @@
                   nx="{100, 80, 100}"
                   ny="{100, 40}"
                   nz="{2}"
-                  cellBlockNames="{cb1}"/-->
+                  cellBlockNames="{cb1}"/>
 
-    <InternalMesh name="mesh1"
+    <!-- InternalMesh name="mesh1"
                   elementTypes="{C3D8}"
                   xCoords="{-840, -40, 40, 840}"
                   yCoords="{-380, -100.5, 100.5, 380}"
@@ -18,7 +18,7 @@
                   nx="{140, 80, 140}"
                   ny="{90, 201, 90}"
                   nz="{2}"
-                  cellBlockNames="{cb1}"/>
+                  cellBlockNames="{cb1}"/-->
 
     <!--InternalMesh name="mesh1"
                   elementTypes="{C3D8}"
@@ -36,8 +36,8 @@
          xMin="-0.01,  -4.01, -0.01"
          xMax=" 0.01,   4.01,  1.01"/>
     <Box name="source"
-         xMin="-0.01, -0.51, -0.01"
-         xMax=" 0.01,  0.51, 1.01"/>
+         xMin="-0.01, -1.01, -0.01"
+         xMax=" 0.01,  1.01, 1.01"/>
     <Box name="core"
          xMin="-0.01, -100.01, -0.01"
          xMax=" 0.01,  100.01, 1.01"/>
@@ -196,7 +196,7 @@
                
     <SourceFlux name="sourceTerm"
                 objectPath="ElementRegions/Fracture"
-                scale="-2.0"
+                scale="-1.0"
                 setNames="{source}"/>
   </FieldSpecifications>
 
