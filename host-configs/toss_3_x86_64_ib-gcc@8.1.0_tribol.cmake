@@ -11,7 +11,7 @@ set(CMAKE_Fortran_COMPILER /usr/tce/packages/gcc/gcc-8.1.0/bin/gfortran CACHE PA
 set(ENABLE_FORTRAN OFF CACHE BOOL "")
 set(ENABLE_MPI ON CACHE BOOL "")
 
-set(MPI_HOME             /usr/tce/packages/mvapich2/mvapich2-2.2-gcc-8.1.0 CACHE PATH "")
+set(MPI_HOME             /usr/tce/packages/mvapich2/mvapich2-2.3-gcc-8.1.0 CACHE PATH "")
 set(MPI_C_COMPILER       ${MPI_HOME}/bin/mpicc   CACHE PATH "")
 set(MPI_CXX_COMPILER     ${MPI_HOME}/bin/mpicxx  CACHE PATH "")
 set(MPI_Fortran_COMPILER ${MPI_HOME}/bin/mpifort CACHE PATH "")
