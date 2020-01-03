@@ -154,14 +154,11 @@
 		   hinderedSettlingCoefficient="5.9"
                    proppantDensity="1200.0"/>
 
-   <PoroLinearElasticIsotropic name="rock"
-                                defaultDensity="2700"
-                                defaultBulkModulus="1.0e9"
-                                defaultShearModulus="1.0e9"
-                                BiotCoefficient="1"
-                                compressibility="1.6155088853e-18"
-                                referencePressure="2.125e6"
-                                />
+
+    <PoreVolumeCompressibleSolid name="rock"
+                                 referencePressure="0.0"
+                                 compressibility="1e-9"/>
+
     
   </Constitutive>
 
