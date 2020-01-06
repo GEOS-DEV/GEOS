@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * NewComponent.cpp
- *
- *  Created on: Jun 8, 2016
- *      Author: settgast
+/**
+ * @file NewComponent.cpp
  */
 
 #include "NewComponent.hpp"
@@ -29,7 +26,7 @@ namespace geosx
 {
 
 NewComponent::NewComponent( std::string const & name,
-                            ManagedGroup * const parent ):
+                            Group * const parent ):
     SolverBase(name,parent)
 {
 
@@ -50,6 +47,6 @@ real64 NewComponent::SolverStep( real64 const & /*time_n*/,
   return 0;
 }
 
-REGISTER_CATALOG_ENTRY( SolverBase, NewComponent, std::string const &, dataRepository::ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( SolverBase, NewComponent, std::string const &, dataRepository::Group * const )
 
 } /* namespace geosx */

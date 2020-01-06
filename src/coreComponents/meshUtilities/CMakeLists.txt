@@ -29,11 +29,17 @@ set(meshUtilities_sources
     SimpleGeometricObjects/GeometricObjectManager.cpp
     SimpleGeometricObjects/SimpleGeometricObjectBase.cpp
     SimpleGeometricObjects/Box.cpp
+    SimpleGeometricObjects/Cylinder.cpp
     SimpleGeometricObjects/ThickPlane.cpp
    )
 
+if( BUILD_OBJ_LIBS)
+  set( dependencyList common dataRepository fileIO mesh)
+else()
+  set( dependencyList common)
+endif()
 
-set( dependencyList fileIO common trilinos )
+set( dependencyList common )
 
 if( ENABLE_PAMELA )
     message(STATUS "Adding PAMELAMeshGenerator sources and headers")
@@ -42,11 +48,19 @@ if( ENABLE_PAMELA )
     set( dependencyList ${dependencyList} PAMELA )
 endif()
 
-    
+if( ENABLE_OPENMP )
+    set( dependencyList ${dependencyList} openmp )
+endif()
+
+if ( ENABLE_CUDA )
+  set( dependencyList ${dependencyList} cuda )
+endif()
+
 blt_add_library( NAME                  meshUtilities
                  SOURCES               ${meshUtilities_sources}
                  HEADERS               ${meshUtilities_headers}
                  DEPENDS_ON            ${dependencyList}
+                 OBJECT                ${buildAsObj}
                )
                
 target_include_directories( meshUtilities PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)

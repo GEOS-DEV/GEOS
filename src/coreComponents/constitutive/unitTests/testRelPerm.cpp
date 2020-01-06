@@ -1,145 +1,33 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
-#include "gtest/gtest.h"
-
-#include "SetSignalHandling.hpp"
-#include "stackTrace.hpp"
+// Source includes
+#include "managers/initialization.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
-#include "constitutive/RelPerm/BrooksCoreyRelativePermeability.hpp"
-#include "constitutive/RelPerm/BrooksCoreyBakerRelativePermeability.hpp"
-#include "constitutive/RelPerm/VanGenuchtenBakerRelativePermeability.hpp"
+#include "constitutive/relativePermeability/BrooksCoreyRelativePermeability.hpp"
+#include "constitutive/relativePermeability/BrooksCoreyBakerRelativePermeability.hpp"
+#include "constitutive/relativePermeability/VanGenuchtenBakerRelativePermeability.hpp"
+#include "physicsSolvers/fluidFlow/unitTests/testCompFlowUtils.hpp"
+
+// TPL includes
+#include <gtest/gtest.h>
 
 using namespace geosx;
+using namespace geosx::testing;
 using namespace geosx::constitutive;
 using namespace geosx::dataRepository;
-
-template<typename T, int NDIM>
-using array = LvArray::Array<T,NDIM,localIndex>;
-
-template<typename T>
-::testing::AssertionResult checkRelativeErrorFormat( const char *, const char *, const char *,
-                                                     T v1, T v2, T relTol )
-{
-  T const delta = std::abs( v1 - v2 );
-  T const value = std::max( std::abs(v1), std::abs(v2) );
-  if (delta > relTol * value)
-  {
-    return ::testing::AssertionFailure() << std::scientific << std::setprecision(5)
-                                         << " relative error: " << delta / value
-                                         << " (" << v1 << " vs " << v2 << "),"
-                                         << " exceeds " << relTol << std::endl;
-  }
-  return ::testing::AssertionSuccess();
-}
-
-template<typename T>
-void checkRelativeError( T v1, T v2, T relTol )
-{
-  EXPECT_PRED_FORMAT3( checkRelativeErrorFormat, v1, v2, relTol );
-}
-
-template<typename T>
-void checkRelativeError( T v1, T v2, T relTol, string const & name )
-{
-  SCOPED_TRACE(name);
-  EXPECT_PRED_FORMAT3( checkRelativeErrorFormat, v1, v2, relTol );
-}
-
-template<typename T>
-void checkDerivative( T valueEps, T value, T deriv, real64 eps, real64 relTol, string const & name, string const & var )
-{
-  T numDeriv = (valueEps - value) / eps;
-  checkRelativeError( deriv, numDeriv, relTol, "d(" + name + ")/d(" + var + ")" );
-}
-
-template<typename T, typename ... Args>
-void
-checkDerivative( arraySlice1d<T> const & valueEps,
-                 arraySlice1d<T> const & value,
-                 arraySlice1d<T> const & deriv,
-                 real64 eps, real64 relTol,
-                 string const & name, string const & var,
-                 string_array const & labels,
-                 Args ... label_lists )
-{
-  localIndex const size = labels.size(0);
-
-  for (localIndex i = 0; i < size; ++i)
-  {
-    checkDerivative( valueEps[i], value[i], deriv[i], eps, relTol,
-                     name + "[" + labels[i] + "]", var, label_lists... );
-  }
-}
-
-template<typename T, int DIM, typename ... Args>
-typename std::enable_if<(DIM > 1), void>::type
-checkDerivative( array_slice<T,DIM> const & valueEps,
-                 array_slice<T,DIM> const & value,
-                 array_slice<T,DIM> const & deriv,
-                 real64 eps, real64 relTol,
-                 string const & name, string const & var,
-                 string_array const & labels,
-                 Args ... label_lists )
-{
-  localIndex const size = labels.size(0);
-
-  for (localIndex i = 0; i < size; ++i)
-  {
-    checkDerivative( valueEps[i], value[i], deriv[i], eps, relTol,
-                     name + "[" + labels[i] + "]", var, label_lists... );
-  }
-}
-
-// invert compositional derivative array layout to move innermost slice on the top
-// (this is needed so we can use checkDerivative() to check derivative w.r.t. for each compositional var)
-array1d<real64> invertLayout( arraySlice1d<real64 const> const & input, localIndex N )
-{
-  array<real64,1> output( N );
-  for (int i = 0; i < N; ++i)
-    output[i] = input[i];
-
-  return output;
-}
-
-array2d<real64> invertLayout( arraySlice2d<real64 const> const & input, localIndex N1, localIndex N2 )
-{
-  array<real64,2> output( N2, N1 );
-
-  for (int i = 0; i < N1; ++i)
-    for (int j = 0; j < N2; ++j)
-      output[j][i] = input[i][j];
-
-  return output;
-}
-
-array3d<real64> invertLayout( arraySlice3d<real64 const> const & input, localIndex N1, localIndex N2, localIndex N3 )
-{
-  array<real64,3> output( N3, N1, N2 );
-
-  for (int i = 0; i < N1; ++i)
-    for (int j = 0; j < N2; ++j)
-      for (int k = 0; k < N3; ++k)
-        output[k][i][j] = input[i][j][k];
-
-  return output;
-}
 
 void testNumericalDerivatives( RelativePermeabilityBase * relPerm,
                                arraySlice1d<real64> const & saturation,
@@ -182,11 +70,18 @@ void testNumericalDerivatives( RelativePermeabilityBase * relPerm,
     relPermCopy->PointUpdate( satNew, 0, 0 );
     string var = "phaseVolFrac[" + phases[jp] + "]";
 
-    checkDerivative( phaseRelPermCopy, phaseRelPerm, dPhaseRelPerm_dS[jp], dS, relTol, "phaseRelPerm", var, phases );
+    checkDerivative( phaseRelPermCopy.toSliceConst(),
+                     phaseRelPerm.toSliceConst(),
+                     dPhaseRelPerm_dS[jp].toSliceConst(),
+                     dS,
+                     relTol,
+                     "phaseRelPerm",
+                     var,
+                     phases );
   }
 }
 
-RelativePermeabilityBase * makeBrooksCoreyRelPerm( string const & name, ManagedGroup * parent )
+RelativePermeabilityBase * makeBrooksCoreyRelPerm( string const & name, Group * parent )
 {
   auto relPerm = parent->RegisterGroup<BrooksCoreyRelativePermeability>( name );
 
@@ -210,7 +105,7 @@ RelativePermeabilityBase * makeBrooksCoreyRelPerm( string const & name, ManagedG
   return relPerm;
 }
 
-RelativePermeabilityBase * makeBrooksCoreyBakerRelPermTwoPhase( string const & name, ManagedGroup * parent )
+RelativePermeabilityBase * makeBrooksCoreyBakerRelPermTwoPhase( string const & name, Group * parent )
 {
   auto relPerm = parent->RegisterGroup<BrooksCoreyBakerRelativePermeability>( name );
 
@@ -235,7 +130,7 @@ RelativePermeabilityBase * makeBrooksCoreyBakerRelPermTwoPhase( string const & n
 }
 
 
-RelativePermeabilityBase * makeBrooksCoreyBakerRelPermThreePhase( string const & name, ManagedGroup * parent )
+RelativePermeabilityBase * makeBrooksCoreyBakerRelPermThreePhase( string const & name, Group * parent )
 {
   auto relPerm = parent->RegisterGroup<BrooksCoreyBakerRelativePermeability>( name );
 
@@ -267,7 +162,7 @@ RelativePermeabilityBase * makeBrooksCoreyBakerRelPermThreePhase( string const &
   return relPerm;
 }
 
-RelativePermeabilityBase * makeVanGenuchtenBakerRelPermTwoPhase( string const & name, ManagedGroup * parent )
+RelativePermeabilityBase * makeVanGenuchtenBakerRelPermTwoPhase( string const & name, Group * parent )
 {
   auto relPerm = parent->RegisterGroup<VanGenuchtenBakerRelativePermeability>( name );
 
@@ -292,7 +187,7 @@ RelativePermeabilityBase * makeVanGenuchtenBakerRelPermTwoPhase( string const & 
 }
 
 
-RelativePermeabilityBase * makeVanGenuchtenBakerRelPermThreePhase( string const & name, ManagedGroup * parent )
+RelativePermeabilityBase * makeVanGenuchtenBakerRelPermThreePhase( string const & name, Group * parent )
 {
   auto relPerm = parent->RegisterGroup<VanGenuchtenBakerRelativePermeability>( name );
 
@@ -328,7 +223,7 @@ RelativePermeabilityBase * makeVanGenuchtenBakerRelPermThreePhase( string const 
 
 TEST(testRelPerm, numericalDerivatives_brooksCoreyRelPerm)
 {
-  auto parent = std::make_unique<ManagedGroup>( "parent", nullptr );
+  auto parent = std::make_unique<Group>( "parent", nullptr );
   parent->resize( 1 );
 
   RelativePermeabilityBase * fluid = makeBrooksCoreyRelPerm( "relPerm", parent.get() );
@@ -348,7 +243,7 @@ TEST(testRelPerm, numericalDerivatives_brooksCoreyRelPerm)
 
 TEST(testRelPerm, numericalDerivatives_BrooksCoreyBakerRelPermTwoPhase)
 {
-  auto parent = std::make_unique<ManagedGroup>( "parent", nullptr );
+  auto parent = std::make_unique<Group>( "parent", nullptr );
   parent->resize( 1 );
 
   RelativePermeabilityBase * fluid = makeBrooksCoreyBakerRelPermTwoPhase( "relPerm", parent.get() );
@@ -377,7 +272,7 @@ TEST(testRelPerm, numericalDerivatives_BrooksCoreyBakerRelPermTwoPhase)
 
 TEST(testRelPerm, numericalDerivatives_BrooksCoreyBakerRelPermThreePhase)
 {
-  auto parent = std::make_unique<ManagedGroup>( "parent", nullptr );
+  auto parent = std::make_unique<Group>( "parent", nullptr );
   parent->resize( 1 );
 
   RelativePermeabilityBase * fluid = makeBrooksCoreyBakerRelPermThreePhase( "relPerm", parent.get() );
@@ -408,7 +303,7 @@ TEST(testRelPerm, numericalDerivatives_BrooksCoreyBakerRelPermThreePhase)
 
 TEST(testRelPerm, numericalDerivatives_VanGenuchtenBakerRelPermTwoPhase)
 {
-  auto parent = std::make_unique<ManagedGroup>( "parent", nullptr );
+  auto parent = std::make_unique<Group>( "parent", nullptr );
   parent->resize( 1 );
 
   RelativePermeabilityBase * fluid = makeVanGenuchtenBakerRelPermTwoPhase( "relPerm", parent.get() );
@@ -436,7 +331,7 @@ TEST(testRelPerm, numericalDerivatives_VanGenuchtenBakerRelPermTwoPhase)
 
 TEST(testRelPerm, numericalDerivatives_VanGenuchtenBakerRelPermThreePhase)
 {
-  auto parent = std::make_unique<ManagedGroup>( "parent", nullptr );
+  auto parent = std::make_unique<Group>( "parent", nullptr );
   parent->resize( 1 );
 
   RelativePermeabilityBase * fluid = makeVanGenuchtenBakerRelPermThreePhase( "relPerm", parent.get() );
@@ -465,31 +360,15 @@ TEST(testRelPerm, numericalDerivatives_VanGenuchtenBakerRelPermThreePhase)
 }
 
 
-int main(int argc, char** argv)
+int main( int argc, char** argv )
 {
-  ::testing::InitGoogleTest(&argc, argv);
+  ::testing::InitGoogleTest( &argc, argv );
 
-#ifdef GEOSX_USE_MPI
-
-  MPI_Init(&argc,&argv);
-
-  MPI_Comm_dup( MPI_COMM_WORLD, &MPI_COMM_GEOSX );
-
-  logger::InitializeLogger(MPI_COMM_GEOSX);
-#else
-  logger::InitializeLogger():
-#endif
-
-  cxx_utilities::setSignalHandling(cxx_utilities::handler1);
+  geosx::basicSetup( argc, argv );
 
   int const result = RUN_ALL_TESTS();
 
-  logger::FinalizeLogger();
-
-#ifdef GEOSX_USE_MPI
-  MPI_Comm_free( &MPI_COMM_GEOSX );
-  MPI_Finalize();
-#endif
+  geosx::basicCleanup();
 
   return result;
 }

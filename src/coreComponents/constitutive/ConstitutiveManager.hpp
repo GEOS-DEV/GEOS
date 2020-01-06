@@ -1,29 +1,25 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
  * @file ConstitutiveManager.hpp
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_CONSTITUTIVEMANAGER_HPP_
-#define SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_CONSTITUTIVEMANAGER_HPP_
+#ifndef GEOSX_CONSTITUTIVE_CONSTITUTIVEMANAGER_HPP_
+#define GEOSX_CONSTITUTIVE_CONSTITUTIVEMANAGER_HPP_
 
-#include "dataRepository/ManagedGroup.hpp"
+#include "dataRepository/Group.hpp"
 #include "dataRepository/ReferenceWrapper.hpp"
 #include "ConstitutiveBase.hpp"
 
@@ -43,22 +39,22 @@ using ViewAccessor = array1d < VIEWTYPE >;
  * @class ConstitutiveManager
  * @brief Class to manage the allocation and access to constitutive relations
  */
-class ConstitutiveManager : public dataRepository::ManagedGroup
+class ConstitutiveManager : public dataRepository::Group
 {
 public:
   ConstitutiveManager() = delete;
 
   ConstitutiveManager( string const & name,
-                       ManagedGroup * const parent );
+                       Group * const parent );
 
-  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override final;
+  virtual Group * CreateChild( string const & childKey, string const & childName ) override final;
 
   /// This function is used to expand any catalogs in the data structure
   virtual void ExpandObjectCatalogs() override;
 
   ConstitutiveBase *
   HangConstitutiveRelation( string const & constitutiveRelationInstanceName,
-                            dataRepository::ManagedGroup * const parent,
+                            dataRepository::Group * const parent,
                             localIndex const numConstitutivePointsPerParentIndex ) const;
 
   ~ConstitutiveManager() override;
@@ -90,12 +86,12 @@ public:
   // template< typename T >
   // ViewAccessor< T >
   // GetConstitutiveData( string const & name,
-  //                      dataRepository::ManagedGroup * const relationGroup );
+  //                      dataRepository::Group * const relationGroup );
 
   template< typename T >
   ViewAccessor< T >
   GetConstitutiveData( string const & name,
-                       dataRepository::ManagedGroup const * const relationGroup ) const;
+                       dataRepository::Group const * const relationGroup ) const;
 
 
   struct groupKeyStruct
@@ -111,7 +107,7 @@ public:
 template< typename T >
 ViewAccessor< T >
 ConstitutiveManager::GetConstitutiveData( string const & name,
-                                          dataRepository::ManagedGroup const * const relationGroup ) const
+                                          dataRepository::Group const * const relationGroup ) const
 {
   ViewAccessor< T const > rval( relationGroup->numSubGroups() );
 
@@ -119,7 +115,7 @@ ConstitutiveManager::GetConstitutiveData( string const & name,
   for( localIndex a=0 ; a<this->GetSubGroups().size() ; ++a )
   {
     ConstitutiveBase const * const material = relationGroup->GetGroup<ConstitutiveBase>( a );
-    if( material->hasView( name ) )
+    if( material->hasWrapper( name ) )
     {
       rval[a] = material->getReference<T>( name );
     }
@@ -130,7 +126,7 @@ ConstitutiveManager::GetConstitutiveData( string const & name,
 // template< typename T >
 // ViewAccessor< T >
 // ConstitutiveManager::GetConstitutiveData( string const & name,
-//                                           dataRepository::ManagedGroup * const relationGroup )
+//                                           dataRepository::Group * const relationGroup )
 // {
 //   return const_cast< ViewAccessor<T> >(const_cast<ConstitutiveManager const *>(this)->
 //                                        GetConstitutiveData<T>( name, relationGroup ) );
@@ -139,4 +135,4 @@ ConstitutiveManager::GetConstitutiveData( string const & name,
 }
 } /* namespace geosx */
 
-#endif /* SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_CONSTITUTIVEMANAGER_HPP_ */
+#endif /* GEOSX_CONSTITUTIVE_CONSTITUTIVEMANAGER_HPP_ */

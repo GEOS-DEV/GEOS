@@ -1,27 +1,23 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
  * @file TableFunction.hpp
  */
 
-#ifndef TABLEFUNCTION_HPP_
-#define TABLEFUNCTION_HPP_
+#ifndef GEOSX_MANAGERS_FUNCTIONS_TABLEFUNCTION_HPP_
+#define GEOSX_MANAGERS_FUNCTIONS_TABLEFUNCTION_HPP_
 
 #include "FunctionBase.hpp"
 
@@ -38,7 +34,7 @@ class TableFunction : public FunctionBase
 public:
   /// Main constructor
   TableFunction( const std::string& name,
-                 dataRepository::ManagedGroup * const parent );
+                 dataRepository::Group * const parent );
 
   /// Destructor
   virtual ~TableFunction() override;
@@ -46,8 +42,14 @@ public:
   /// Catalog name interface
   static string CatalogName() { return "TableFunction"; }
   
+
+  template< typename T >
+  void parse_file( array1d<T> & target, string const & filename, char delimiter );
+
   /// Initialize the function
   virtual void InitializeFunction() override;
+
+  void reInitializeFunction();
 
   /**
    * @brief Method to evaluate a function on a target object
@@ -56,16 +58,26 @@ public:
    * @param set the subset of nodes to apply the function to
    * @param result an array to hold the results of the function
    */
-  virtual void Evaluate( dataRepository::ManagedGroup const * const group,
+  virtual void Evaluate( dataRepository::Group const * const group,
                          real64 const time,
-                         set<localIndex> const & sets,
-                         real64_array & result ) const override final;
+                         SortedArrayView<localIndex const> const & set,
+                         real64_array & result ) const override final
+  {
+    FunctionBase::EvaluateT<TableFunction>( group, time, set, result );
+  }
 
   /**
    * @brief Method to evaluate a function
    * @param input a scalar input
    */
   virtual real64 Evaluate( real64 const * const input) const override final;
+
+
+  array1d<real64_array> const & getCoordinates() const { return m_coordinates; }
+  array1d<real64_array>       & getCoordinates()       { return m_coordinates; }
+
+  array1d<real64> const & getValues() const { return m_values; }
+  array1d<real64>       & getValues()       { return m_values; }
 
 private:
   /// An array of table axes
@@ -88,4 +100,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* TABLEFUNCTION_HPP_ */
+#endif /* GEOSX_MANAGERS_FUNCTIONS_TABLEFUNCTION_HPP_ */

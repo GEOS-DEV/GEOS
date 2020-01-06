@@ -1,26 +1,23 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /*
- * Box.cpp
- *
- *  Created on: Aug 4, 2017
- *      Author: settgast
+ * @file Box.cpp
+ * @brief Generate a box geometry.
+ * @param Maximum (x,y,z) coordinates of the box
+ * @param Minimum (x,y,z) coordinates of the box
+ * @param The strike angle of the box
  */
 
 #include "Box.hpp"
@@ -29,7 +26,7 @@ namespace geosx
 {
 using namespace dataRepository;
 
-Box::Box( const std::string& name, ManagedGroup * const parent ):
+Box::Box( const std::string& name, Group * const parent ):
   SimpleGeometricObjectBase( name, parent ),
   m_min{0.0,0.0,0.0},
   m_max{0.0,0.0,0.0},
@@ -38,22 +35,22 @@ Box::Box( const std::string& name, ManagedGroup * const parent ):
   m_cosStrike{0.0},
   m_sinStrike{0.0}
 {
-  RegisterViewWrapper( viewKeyStruct::xMinString, &m_min, false )->
+  registerWrapper( viewKeyStruct::xMinString, &m_min, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Minimum (x,y,z) coordinates of the box");
 
-  RegisterViewWrapper( viewKeyStruct::xMaxString, &m_max, false )->
+  registerWrapper( viewKeyStruct::xMaxString, &m_max, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Maximum (x,y,z) coordinates of the box");
 
-  RegisterViewWrapper( viewKeyStruct::strikeAngleString, &m_strikeAngle, false )->
+  registerWrapper( viewKeyStruct::strikeAngleString, &m_strikeAngle, false )->
     setApplyDefaultValue(-90.0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("The strike angle of the box");
 
-  RegisterViewWrapper( viewKeyStruct::boxCenterString, &m_boxCenter, false );
-  RegisterViewWrapper( viewKeyStruct::cosStrikeString, &m_cosStrike, false );
-  RegisterViewWrapper( viewKeyStruct::sinStrikeString, &m_sinStrike, false );
+  registerWrapper( viewKeyStruct::boxCenterString, &m_boxCenter, false );
+  registerWrapper( viewKeyStruct::cosStrikeString, &m_cosStrike, false );
+  registerWrapper( viewKeyStruct::sinStrikeString, &m_sinStrike, false );
 }
 
 Box::~Box()
@@ -71,7 +68,7 @@ void Box::PostProcessInput()
   m_strikeAngle += 90; // Counterclockwise from x-axis
   if (std::fabs(m_strikeAngle) > 1e-20)
   {
-    GEOS_ERROR_IF( (m_max[0]-m_min[0]) < (m_max[1]-m_min[1]),
+    GEOSX_ERROR_IF( (m_max[0]-m_min[0]) < (m_max[1]-m_min[1]),
                    "Error: When a strike angle is specified, the box is supposed to represent a plane normal to the "
                    "y direction. This box seems to be too thick.");
 
@@ -141,6 +138,6 @@ bool Box::IsCoordInObject( const R1Tensor& coord ) const
   return rval;
 }
 
-REGISTER_CATALOG_ENTRY( SimpleGeometricObjectBase, Box, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( SimpleGeometricObjectBase, Box, std::string const &, Group * const )
 
 } /* namespace geosx */

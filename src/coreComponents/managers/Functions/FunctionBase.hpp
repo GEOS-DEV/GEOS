@@ -1,29 +1,26 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
  * @file FunctionBase.hpp
  */
 
-#ifndef FUNCTIONBASE_HPP_
-#define FUNCTIONBASE_HPP_
+#ifndef GEOSX_MANAGERS_FUNCTIONS_FUNCTIONBASE_HPP_
+#define GEOSX_MANAGERS_FUNCTIONS_FUNCTIONBASE_HPP_
 
-#include "dataRepository/ManagedGroup.hpp"
+#include "dataRepository/Group.hpp"
+#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
 {
@@ -42,12 +39,12 @@ string const inputVarNames("inputVarNames");
  *
  * An object for interfacing with arbitrary N-dimensional functions.
  */
-class FunctionBase : public dataRepository::ManagedGroup
+class FunctionBase : public dataRepository::Group
 {
 public:
   /// Main constructor
   FunctionBase( const std::string& name,
-                dataRepository::ManagedGroup * const parent );
+                dataRepository::Group * const parent );
 
   /// Destructor
   virtual ~FunctionBase() override;
@@ -68,9 +65,9 @@ public:
    * @param set the subset of nodes to apply the function to
    * @param result an array to hold the results of the function
    */
-  virtual void Evaluate( dataRepository::ManagedGroup const * const group,
+  virtual void Evaluate( dataRepository::Group const * const group,
                          real64 const time,
-                         set<localIndex> const & set,
+                         SortedArrayView< localIndex const > const & set,
                          real64_array & result ) const = 0;
 
   /**
@@ -80,7 +77,7 @@ public:
   virtual real64 Evaluate( real64 const * const input ) const = 0;
 
   // Setup catalog
-  using CatalogInterface = cxx_utilities::CatalogInterface< FunctionBase, std::string const &, ManagedGroup * const >;
+  using CatalogInterface = dataRepository::CatalogInterface< FunctionBase, std::string const &, Group * const >;
   static CatalogInterface::CatalogType& GetCatalog()
   {
     static CatalogInterface::CatalogType catalog;
@@ -94,7 +91,7 @@ public:
    * @param set the subset of nodes to apply the function to
    * @return An array holding the min, average, max values of the results
    */
-  real64_array EvaluateStats( dataRepository::ManagedGroup const * const group,
+  real64_array EvaluateStats( dataRepository::Group const * const group,
                               real64 const time,
                               set<localIndex> const & set) const;
 
@@ -102,9 +99,9 @@ protected:
   string_array m_inputVarNames;
 
   template< typename LEAF >
-  void EvaluateT( dataRepository::ManagedGroup const * const group,
+  void EvaluateT( dataRepository::Group const * const group,
                   real64 const time,
-                  set<localIndex> const & set,
+                  SortedArrayView<localIndex const> const & set,
                   real64_array & result ) const;
 
   virtual void PostProcessInput() override { InitializeFunction(); }
@@ -113,9 +110,9 @@ protected:
 
 /// Method to apply an function with an arbitrary type of output
 template< typename LEAF >
-void FunctionBase::EvaluateT( dataRepository::ManagedGroup const * const group,
+void FunctionBase::EvaluateT( dataRepository::Group const * const group,
                               real64 const time,
-                              set<localIndex> const & set,
+                              SortedArrayView<localIndex const> const & set,
                               real64_array & result ) const
 {
   real64 const * input_ptrs[4];
@@ -123,7 +120,7 @@ void FunctionBase::EvaluateT( dataRepository::ManagedGroup const * const group,
   string_array const & inputVarNames = this->getReference<string_array>( dataRepository::keys::inputVarNames );
   
   localIndex const numVars = integer_conversion<localIndex>(inputVarNames.size());
-  GEOS_ERROR_IF(numVars > 4, "Number of variables is: " << numVars);
+  GEOSX_ERROR_IF(numVars > 4, "Number of variables is: " << numVars);
 
   localIndex varSize[4];
   for( auto varIndex=0 ; varIndex<numVars ; ++varIndex )
@@ -137,14 +134,14 @@ void FunctionBase::EvaluateT( dataRepository::ManagedGroup const * const group,
     }
     else
     {
-      dataRepository::ViewWrapperBase const & vwb = *(group->getWrapperBase( varName ));
-      std::type_index typeIndex = std::type_index(vwb.get_typeid());
+      dataRepository::WrapperBase const & wrapperb = *(group->getWrapperBase( varName ));
+      std::type_index typeIndex = std::type_index(wrapperb.get_typeid());
       rtTypes::ApplyTypeLambda2( rtTypes::typeID(typeIndex), [&]( auto container_type, auto var_type ) -> void
         {
           using containerType = decltype(container_type);
           using varType = decltype(var_type);
-          dataRepository::ViewWrapper<containerType> const & view =
-            dynamic_cast< dataRepository::ViewWrapper<containerType> const & >(vwb);
+          dataRepository::Wrapper<containerType> const & view =
+            dynamic_cast< dataRepository::Wrapper<containerType> const & >(wrapperb);
 
           input_ptrs[varIndex] = reinterpret_cast<double const*>(view.dataPtr());
           varSize[varIndex] = sizeof(varType) / sizeof(double);
@@ -153,8 +150,9 @@ void FunctionBase::EvaluateT( dataRepository::ManagedGroup const * const group,
   }
 
   integer count=0;
-  for( auto const & index : set )
+  forall_in_range<serialPolicy>( 0, set.size(), [&, set]( localIndex const i )
   {
+    localIndex const index = set[ i ];
     double input[4];
     int c = 0;
     for( int a=0 ; a<numVars ; ++a )
@@ -169,9 +167,9 @@ void FunctionBase::EvaluateT( dataRepository::ManagedGroup const * const group,
     // TODO: Check this line to make sure it is correct
     result[count] = static_cast<LEAF const *>(this)->Evaluate(input);
     ++count;
-  }
+  });
 
 }
 } /* namespace geosx */
 
-#endif /* FUNCTIONBASE_HPP_ */
+#endif /* GEOSX_MANAGERS_FUNCTIONS_FUNCTIONBASE_HPP_ */

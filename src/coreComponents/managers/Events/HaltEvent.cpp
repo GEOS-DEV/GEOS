@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 #include "HaltEvent.hpp"
@@ -30,7 +26,7 @@ using namespace dataRepository;
 
 
 HaltEvent::HaltEvent( const std::string& name,
-                      ManagedGroup * const parent ):
+                      Group * const parent ):
   EventBase(name,parent),
   m_externalStartTime(0.0),
   m_externalLastTime(0.0),
@@ -42,9 +38,9 @@ HaltEvent::HaltEvent( const std::string& name,
   m_externalStartTime = tim.tv_sec + (tim.tv_usec / 1000000.0);
   m_externalLastTime = m_externalStartTime;  
 
-  RegisterViewWrapper(viewKeyStruct::maxRuntimeString, &m_maxRuntime, false )->
+  registerWrapper(viewKeyStruct::maxRuntimeString, &m_maxRuntime, false )->
     setInputFlag(InputFlags::REQUIRED)->
-    setDescription("max runtime");
+    setDescription("The maximum allowable runtime for the job.");
 }
 
 
@@ -52,10 +48,10 @@ HaltEvent::~HaltEvent()
 {}
 
 
-void HaltEvent::EstimateEventTiming(real64 const time,
-                                     real64 const dt, 
-                                     integer const cycle,
-                                     ManagedGroup * domain)
+void HaltEvent::EstimateEventTiming(real64 const GEOSX_UNUSED_ARG( time ),
+                                    real64 const GEOSX_UNUSED_ARG( dt ),
+                                    integer const GEOSX_UNUSED_ARG( cycle ),
+                                    Group * GEOSX_UNUSED_ARG( domain ))
 {
   // Check run time
   timeval tim;
@@ -84,5 +80,5 @@ void HaltEvent::EstimateEventTiming(real64 const time,
 }
 
 
-REGISTER_CATALOG_ENTRY( EventBase, HaltEvent, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( EventBase, HaltEvent, std::string const &, Group * const )
 } /* namespace geosx */

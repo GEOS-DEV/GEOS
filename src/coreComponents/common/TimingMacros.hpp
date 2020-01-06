@@ -1,26 +1,32 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
+
+
+
 /* UNCRUSTIFY-OFF */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_COMMON_TIMING_MACROS_HPP_
-#define SRC_COMPONENTS_CORE_SRC_COMMON_TIMING_MACROS_HPP_
+/**
+ * @file TimingMacros.hpp
+ *
+ * A collection of timing-related macros that wrap Caliper.
+ */
+
+#ifndef GEOSX_COMMON_TIMINGMACROS_HPP_
+#define GEOSX_COMMON_TIMINGMACROS_HPP_
 
 #include "common/GeosxConfig.hpp"
+#include "common/GeosxMacros.hpp"
 
 #ifdef GEOSX_USE_CALIPER
 #include <caliper/cali.h>
@@ -39,26 +45,35 @@ namespace timingHelpers
   }
 }
 
-#define DO_STRINGIFY(arg) #arg
-#define GEOSX_MARK_LOOP_BEGIN(loop, loopName) CALI_CXX_MARK_LOOP_BEGIN(loop,DO_STRINGIFY(loopName))
+/// Mark the beginning of a loop with a given id and assign a name to it
+#define GEOSX_MARK_LOOP_BEGIN(loop, loopName) CALI_CXX_MARK_LOOP_BEGIN(loop,STRINGIZE_NX(loopName))
+
+/// Mark the beginning of a loop with a given id
 #define GEOSX_MARK_LOOP_END(loop) CALI_CXX_MARK_LOOP_END(loop)
+
+/// Mark an iteration of a loop with a given id
 #define GEOSX_MARK_LOOP_ITERATION(loop, iter) CALI_CXX_MARK_LOOP_ITERATION(loop, iter)
 
-#define GEOSX_MARK_FUNCTION_TAG(name) cali::Function __cali_ann##__LINE__(DO_STRINGIFY(name))
+/// Mark a function or scope for timing with a given name
+#define GEOSX_MARK_FUNCTION_TAG(name) cali::Function __cali_ann##__LINE__(STRINGIZE_NX(name))
 
+/// Mark a function for timing using a compiler-provided name
 #define GEOSX_MARK_FUNCTION_SCOPED cali::Function __cali_ann##__func__(timingHelpers::stripPF(__PRETTY_FUNCTION__).c_str())
-#define GEOSX_MARK_FUNCTION_PRETTY cali::Function __cali_ann##__func__(__PRETTY_FUNCTION__))
 
+/// Mark a function for timing using a compiler-provided name
 //#define GEOSX_MARK_FUNCTION CALI_CXX_MARK_FUNCTION
 #define GEOSX_MARK_FUNCTION GEOSX_MARK_FUNCTION_SCOPED
 
+/// Mark the beginning of timed statement group
 #define GEOSX_MARK_BEGIN(name) CALI_MARK_BEGIN(DO_STRINGIFY(name))
+
+/// Mark the end of timed statements group
 #define GEOSX_MARK_END(name) CALI_MARK_END(DO_STRINGIFY(name))
 
 #else
+/// @cond DO_NOT_DOCUMENT
 #define GEOSX_MARK_FUNCTION_TAG(name)
 #define GEOSX_MARK_FUNCTION_SCOPED
-#define GEOSX_MARK_FUNCTION_PRETTY
 #define GEOSX_MARK_FUNCTION
 
 #define GEOSX_MARK_LOOP_BEGIN(loop, loopName)
@@ -66,8 +81,10 @@ namespace timingHelpers
 #define GEOSX_MARK_LOOP_ITERATION(loop, iter)
 #define GEOSX_MARK_BEGIN(name)
 #define GEOSX_MARK_END(name)
+/// @endcond
 #endif
 
+/// Get current time of day as a floating point number of seconds in a variable @p time.
 #ifdef GEOSX_USE_TIMERS
 #define GEOSX_GET_TIME( time )                                                 \
   real64 time;                                                                 \

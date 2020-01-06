@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
@@ -21,9 +17,10 @@
  */
 
 #include "EventManager.hpp"
+
+#include "mpiCommunications/CommunicationTools.hpp"
 #include "managers/Events/EventBase.hpp"
 #include "common/TimingMacros.hpp"
-#include "MPI_Communications/CommunicationTools.hpp"
 
 namespace geosx
 {
@@ -33,48 +30,45 @@ using namespace cxx_utilities;
 
 
 EventManager::EventManager( std::string const & name,
-                            ManagedGroup * const parent ):
-  ManagedGroup( name, parent),
+                            Group * const parent ):
+  Group( name, parent),
   m_maxTime(),
   m_maxCycle(),
-  m_verbosity(),
   m_time(),
   m_dt(),
   m_cycle(),
   m_currentSubEvent()
 {
   setInputFlags(InputFlags::REQUIRED);
+
+  // This enables logLevel filtering
+  enableLogLevelInput();
   
-  RegisterViewWrapper(viewKeyStruct::maxTimeString, &m_maxTime, false )->
+  registerWrapper(viewKeyStruct::maxTimeString, &m_maxTime, false )->
     setApplyDefaultValue(std::numeric_limits<real64>::max())->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Maximum simulation time.");
+    setDescription("Maximum simulation time for the global event loop.");
 
-  RegisterViewWrapper(viewKeyStruct::maxCycleString, &m_maxCycle, false )->
+  registerWrapper(viewKeyStruct::maxCycleString, &m_maxCycle, false )->
     setApplyDefaultValue(std::numeric_limits<integer>::max())->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Maximum simulation cycle.");
+    setDescription("Maximum simulation cycle for the global event loop.");
 
-  RegisterViewWrapper(viewKeyStruct::verbosityString, &m_verbosity, false )->
-    setApplyDefaultValue(0)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Verbosity level");
-
-  RegisterViewWrapper(viewKeyStruct::timeString, &m_time, false )->
+  registerWrapper(viewKeyStruct::timeString, &m_time, false )->
     setRestartFlags(RestartFlags::WRITE_AND_READ)->
     setDescription("Current simulation time.");
 
-  RegisterViewWrapper(viewKeyStruct::dtString, &m_dt, false )->
+  registerWrapper(viewKeyStruct::dtString, &m_dt, false )->
     setRestartFlags(RestartFlags::WRITE_AND_READ)->
     setDescription("Current simulation timestep.");
 
-  RegisterViewWrapper(viewKeyStruct::cycleString, &m_cycle, false )->
+  registerWrapper(viewKeyStruct::cycleString, &m_cycle, false )->
     setRestartFlags(RestartFlags::WRITE_AND_READ)->
     setDescription("Current simulation cycle number.");
 
-  RegisterViewWrapper(viewKeyStruct::currentSubEventString, &m_currentSubEvent, false )->
+  registerWrapper(viewKeyStruct::currentSubEventString, &m_currentSubEvent, false )->
     setRestartFlags(RestartFlags::WRITE_AND_READ)->
-    setDescription("index of the current subevent.");
+    setDescription("Index of the current subevent.");
 
 }
 
@@ -84,9 +78,9 @@ EventManager::~EventManager()
 
 
 
-ManagedGroup * EventManager::CreateChild( string const & childKey, string const & childName )
+Group * EventManager::CreateChild( string const & childKey, string const & childName )
 {
-  GEOS_LOG_RANK_0("Adding Event: " << childKey << ", " << childName);
+  GEOSX_LOG_RANK_0("Adding Event: " << childKey << ", " << childName);
   std::unique_ptr<EventBase> event = EventBase::CatalogInterface::Factory( childKey, childName, this );
   return this->RegisterGroup<EventBase>( childName, std::move(event) );
 }
@@ -102,7 +96,7 @@ void EventManager::ExpandObjectCatalogs()
 }
 
 
-void EventManager::Run(dataRepository::ManagedGroup * domain)
+void EventManager::Run(dataRepository::Group * domain)
 {
   GEOSX_MARK_FUNCTION;
 
@@ -125,7 +119,7 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
   // Inform user if it appears this is a mid-loop restart
   if ((m_currentSubEvent > 0))
   {
-    GEOS_LOG_RANK_0("The restart-file was written during step " << m_currentSubEvent << " of the event loop.  Resuming from that point.");
+    GEOSX_LOG_RANK_0("The restart-file was written during step " << m_currentSubEvent << " of the event loop.  Resuming from that point.");
   }
 
   // Run problem
@@ -147,18 +141,14 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
       m_currentSubEvent = 0;
 
 #ifdef GEOSX_USE_MPI
-      // Find the min dt across procfesses
-      GEOSX_MARK_BEGIN("EventManager::MPI calls");
-
+      // Find the min dt across processes
       real64 dt_global;
       MPI_Allreduce(&m_dt, &dt_global, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_GEOSX);
       m_dt = dt_global;
-
-      GEOSX_MARK_END("EventManager::MPI calls");
 #endif
     }
 
-    GEOS_LOG_RANK_0("Time: " << m_time << "s, dt:" << m_dt << "s, Cycle: " << m_cycle);
+    GEOSX_LOG_RANK_0("Time: " << m_time << "s, dt:" << m_dt << "s, Cycle: " << m_cycle);
 
     // Execute 
     for ( ; m_currentSubEvent<this->numSubGroups(); ++m_currentSubEvent)
@@ -169,10 +159,8 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
       subEvent->CheckEvents(m_time, m_dt, m_cycle, domain);
       integer eventForecast = subEvent->GetForecast();
 
-      if (m_verbosity > 0)
-      {
-        GEOS_LOG_RANK_0("     Event: " << m_currentSubEvent << " (" << subEvent->getName() << "), dt_request=" << subEvent->GetCurrentEventDtRequest() << ", forecast=" << eventForecast);
-      }
+      // Print debug information for logLevel >= 1 
+      GEOSX_LOG_LEVEL_RANK_0(1, "     Event: " << m_currentSubEvent << " (" << subEvent->getName() << "), dt_request=" << subEvent->GetCurrentEventDtRequest() << ", forecast=" << eventForecast);
 
       // Execute, signal events
       if (eventForecast == 1)
@@ -198,7 +186,7 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
   }
 
   // Cleanup
-  GEOS_LOG_RANK_0("Cleaning up events");
+  GEOSX_LOG_RANK_0("Cleaning up events");
   
   this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
   {

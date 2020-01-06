@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
@@ -23,9 +19,8 @@
 #ifndef FINITEELEMENTBASE_H_
 #define FINITEELEMENTBASE_H_
 
-#include <assert.h>
 #include "common/DataTypes.hpp"
-#include "ObjectCatalog.hpp"
+#include "dataRepository/ObjectCatalog.hpp"
 
 namespace geosx
 {
@@ -43,7 +38,7 @@ public:
   virtual ~FiniteElementBase();
 
   static string CatalogName() { return "FiniteElementBase"; }
-  using CatalogInterface = cxx_utilities::CatalogInterface< FiniteElementBase, BasisBase const &,
+  using CatalogInterface = dataRepository::CatalogInterface< FiniteElementBase, BasisBase const &,
                                                                                QuadratureBase const &,
                                                                                const int >;
   static CatalogInterface::CatalogType& GetCatalog()
@@ -92,7 +87,7 @@ public:
         return "POLYTOPE";
       case ElementType::INVALID:
       default:
-        GEOS_ERROR("Invalid Element Type specified");
+        GEOSX_ERROR("Invalid Element Type specified");
         return "INVALID";
     }
   }
@@ -115,7 +110,9 @@ public:
       return ElementType::INVALID;
   }
 
-  virtual void reinit( array1d<R1TensorT<3> > const & mapped_support_points) = 0;
+  virtual void reinit( arrayView1d< R1Tensor const > const & X, arraySlice1d< localIndex const, -1 > const & mapped_support_points ) = 0;
+  virtual void reinit( arrayView1d< R1Tensor const > const & X, arraySlice1d< localIndex const, 0 > const & mapped_support_points ) = 0;
+
 
 
 //  virtual void zero_energy_mode_control( const array1d<R1Tensor>& dNdx,
@@ -146,28 +143,28 @@ public:
   double value(const int shape_index,
                const int q_index) const
   {
-    assert(q_index < n_q_points);
-    assert(shape_index < n_dofs);
+    GEOSX_ASSERT(q_index < n_q_points);
+    GEOSX_ASSERT(shape_index < n_dofs);
     return data[q_index].parent_values[shape_index];
   }
 
   std::vector<double> const & values( const int q_index ) const
   {
-    assert(q_index < n_q_points);
+    GEOSX_ASSERT(q_index < n_q_points);
     return data[q_index].parent_values;
   }
 
-  R1Tensor gradient( const localIndex shape_index,
+  inline R1Tensor gradient( const localIndex shape_index,
                      const localIndex q_index ) const
   {
-    assert(q_index < n_q_points);
-    assert(shape_index < n_dofs);
+    GEOSX_ASSERT(q_index < n_q_points);
+    GEOSX_ASSERT(shape_index < n_dofs);
     return data[q_index].mapped_gradients[shape_index];
   }
 
-  double JxW(const localIndex q_index) const
+  inline double JxW(const localIndex q_index) const
   {
-    assert(q_index < n_q_points);
+    GEOSX_ASSERT(q_index < n_q_points);
     return data[q_index].jacobian_determinant *
            data[q_index].parent_q_weight;
   }

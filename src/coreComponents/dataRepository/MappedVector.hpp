@@ -1,31 +1,29 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
  * @file MappedVector.hpp
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_DATAREPOSITORY_MAPPEDVECTOR_HPP_
-#define SRC_COMPONENTS_CORE_SRC_DATAREPOSITORY_MAPPEDVECTOR_HPP_
+#ifndef GEOSX_DATAREPOSITORY_MAPPEDVECTOR_HPP_
+#define GEOSX_DATAREPOSITORY_MAPPEDVECTOR_HPP_
 
-#include "Logger.hpp"
+// Source includes
 #include "KeyIndexT.hpp"
-#include "SFINAE_Macros.hpp"
+#include "common/GeosxMacros.hpp"
+#include "common/Logger.hpp"
+#include "cxx-utilities/src/IntegerConversion.hpp"
 
 namespace geosx
 {
@@ -119,17 +117,27 @@ public:
 
 
 
-  /// default copy constructor
-  MappedVector( MappedVector const & source ) = default;
+  /**
+   * @brief Default copy constructor.
+   */
+  MappedVector( MappedVector const & ) = default;
 
-  /// default copy assignment operator
-  MappedVector & operator=( MappedVector const & source ) = default;
+  /**
+   * @brief Default copy assignment operator.
+   * @return
+   */
+  MappedVector & operator=( MappedVector const & ) = default;
 
-  /// default move operator
-  MappedVector( MappedVector && source ) = default;
+  /**
+   * @brief Default move operator.
+   */
+  MappedVector( MappedVector && ) = default;
 
-  /// default move assignement operator
-  MappedVector & operator=( MappedVector && source ) = default;
+  /**
+   * @brief Default move assignment operator.
+   * @return
+   */
+  MappedVector & operator=( MappedVector && ) = default;
 
 
 
@@ -222,13 +230,13 @@ public:
 //
 //    if( index==KeyIndex::invalid_index )
 //    {
-//      GEOS_ERROR("MappedVector::operator[]( KeyIndex const & keyIndex ):
+//      GEOSX_ERROR("MappedVector::operator[]( KeyIndex const & keyIndex ):
 // invalid key index passed as const into accessor function\n");
 //    }
 //#if RANGE_CHECKING==1
 //    else if (m_values[index].first!=keyIndex.Key() )
 //    {
-//      GEOS_ERROR("MappedVector::operator[]( KeyIndex const & keyIndex ):
+//      GEOSX_ERROR("MappedVector::operator[]( KeyIndex const & keyIndex ):
 // inconsistent key passed as const into accessor function\n")
 //    }
 //#endif
@@ -343,6 +351,9 @@ public:
     // delete the pointed-to value, if owned
     deleteValue( index );
 
+    // delete lookup entry
+    m_keyLookup.erase( m_values[index].first );
+
     // delete and shift vector entries
     m_values.erase( m_values.begin() + index );
     m_ownsValues.erase( m_ownsValues.begin() + index );
@@ -357,7 +368,6 @@ public:
     }
 
     // adjust lookup map indices
-    m_keyLookup.erase( m_values[index].first );
     for( typename valueContainer::size_type i = index ; i < m_values.size() ; ++i )
     {
       m_keyLookup[m_values[i].first] = i;
@@ -468,7 +478,7 @@ private:
 
   template< typename U = T_PTR >
   typename std::enable_if< !std::is_same< U, T * >::value, void >::type
-  deleteValue( INDEX_TYPE index )
+  deleteValue( INDEX_TYPE GEOSX_UNUSED_ARG( index ) )
   {}
 
   /// random access container that holds the values
@@ -543,9 +553,9 @@ T * MappedVector< T, T_PTR, KEY_TYPE, INDEX_TYPE >::insert( KEY_TYPE const & key
       }
       else if( source->get_typeid() != m_values[index].second->get_typeid() )
       {
-        string const message = "MappedVector::insert(): Tried to insert existing key with a "
-                               "different type without overwrite flag\n";
-        GEOS_ERROR( message<<" "<<source->get_typeid().name()<<"!="<<m_values[index].second->get_typeid().name() );
+        GEOSX_ERROR( "MappedVector::insert(): Tried to insert existing key ("<<keyName<<
+                     ") with a different type without overwrite flag\n"<<" "<<source->get_typeid().name()<<" != "<<
+                     m_values[index].second->get_typeid().name() );
       }
       else
       {
@@ -558,4 +568,4 @@ T * MappedVector< T, T_PTR, KEY_TYPE, INDEX_TYPE >::insert( KEY_TYPE const & key
 }
 }
 
-#endif /* SRC_COMPONENTS_CORE_SRC_DATAREPOSITORY_MAPPEDVECTOR_HPP_ */
+#endif /* GEOSX_DATAREPOSITORY_MAPPEDVECTOR_HPP_ */

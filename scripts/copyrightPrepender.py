@@ -12,7 +12,7 @@
 # This file is part of the GEOSX Simulation Framework.
 #
 # GEOSX is a free software; you can redistribute it and/or modify it under the
-# terms of the GNU Lesser General Public License (as published by the FREE 
+# terms of the GNU Lesser General Public License (as published by the FREE
 # Software Foundation) version 2.1 dated February 1999.
 ###############################################################################
 
@@ -27,7 +27,25 @@ import os
 import sys
 import argparse
 
+
 copyright_str = \
+    """/*
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
+ *
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
+ */
+
+"""
+
+old_copyright_str = \
 """/*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
@@ -48,26 +66,26 @@ copyright_str = \
 
 """
 
-old_copyright_str = \
-"""/*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
- *
- * Produced at the Lawrence Livermore National Laboratory
- *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- */
-
-"""
+# old_copyright_str = \
+# """/*
+#  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+#  *
+#  * Produced at the Lawrence Livermore National Laboratory
+#  *
+#  * LLNL-CODE-746361
+#  *
+#  * All rights reserved. See COPYRIGHT for details.
+#  *
+#  * This file is part of the GEOSX Simulation Framework.
+#  *
+#  * GEOSX is a free software; you can redistribute it and/or modify it under
+#  * the terms of the GNU Lesser General Public License (as published by the
+#  * Free Software Foundation) version 2.1 dated February 1999.
+#  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  */
+#
+# """
 
 copyright_str_arr = copyright_str.split("\n")[:-1]
 
@@ -97,7 +115,7 @@ def getLineToBeginAt(lines):
         if lines[1][:-1] == copyright_str_arr[1]:
             print "\t Already has copyright statement."
             return -1
-        
+
         print "\t Need to update copyright statement."
         return len(copyright_str_arr)
 
@@ -116,14 +134,14 @@ def getLineToBeginAt(lines):
         return len(old_copyright_str_arr)
 
     print "\t Missing copyright statement."
-    return 0
+    return -2
 
 def checkAndAddCopyrightHeader(filename, testOnly=False):
     """Update the copyright header on the given file. If testOnly file is not updated.
     """
 
     with open(filename, "r+") as f:
-        print "  Processing file {}:".format(filename)
+        # print "  Processing file {}:".format(filename)
 
         lines = []
         for i in range(max_copyright_lines):
@@ -134,6 +152,9 @@ def checkAndAddCopyrightHeader(filename, testOnly=False):
             lines += [line]
 
         line_to_begin_at = getLineToBeginAt(lines)
+
+        if line_to_begin_at==-2:
+            print("Check missing or malformed copyright (including empty lines) : {}".format(filename))
 
         if line_to_begin_at >= 0 and not testOnly:
             lines += f.readlines()
@@ -168,18 +189,18 @@ if __name__ == "__main__":
     parser.set_defaults(isRecursive=False)
 
     # Test run to see which files might require a copyright notice.
-    parser.add_argument("-t", "--test", action='store_true', help="add flag if we only want to see which files are missing copyright statements, but not to modify any files.") 
+    parser.add_argument("-t", "--test", action='store_true', help="add flag if we only want to see which files are missing copyright statements, but not to modify any files.")
 
     # Additional possible featues to be implemented
     #
-    # Specify a collection of file types.  
+    # Specify a collection of file types.
     #parser.add_argument("-f", "--filetypes", type=str, nargs="*", help="add file types on which to operate ")    # default should be *.hpp and *.cpp
     # For now, we hardcode to c/c++ header and source files
     valid_extensions = (".hpp", ".cpp", ".h", ".c", ".cxx", ".cc")
-    
+
     args = parser.parse_args()
 
     ## Iterate through files, check for and add copyright notice
-    print "Looking at directory {}".format( args.dir )   
+    print "Looking at directory {}".format( args.dir )
     for fullFileName in fileNameGenerator(args.dir, valid_extensions, args.isRecursive):
         checkAndAddCopyrightHeader(fullFileName, args.test)

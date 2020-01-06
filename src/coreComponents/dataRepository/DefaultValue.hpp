@@ -1,30 +1,27 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
- * @file WrapperDefaultValueHelper.hpp
+ * @file DefaultValue.hpp
  */
 
-#ifndef CORECOMPONENTS_DATAREPOSITORY_DEFAULTVALUE_HPP_
-#define CORECOMPONENTS_DATAREPOSITORY_DEFAULTVALUE_HPP_
+#ifndef GEOSX_DATAREPOSITORY_DEFAULTVALUE_HPP_
+#define GEOSX_DATAREPOSITORY_DEFAULTVALUE_HPP_
 
+// Source includes
 #include "common/DataTypes.hpp"
-#include "SFINAE_Macros.hpp"
+#include "codingUtilities/traits.hpp"
 
 namespace geosx
 {
@@ -42,7 +39,7 @@ namespace wrapperDefaultValue
 /**
  * @struct is_defaultable
  * @tparam T type to check
- * @brief trait to determine if type \p T should have a default value
+ * @brief trait to determine if type @p T should have a default value
  */
 template< typename T >
 struct is_defaultable
@@ -56,6 +53,7 @@ struct is_defaultable
                                 std::is_same< T, unsigned long long int >::value ||
                                 std::is_floating_point< T >::value ||
                                 std::is_same< T, string >::value ||
+                                std::is_same< T, Path >::value ||
                                 std::is_same< T, R1Tensor >::value ||
                                 std::is_same< T, R2Tensor >::value ||
                                 std::is_same< T, R2SymTensor >::value;
@@ -73,6 +71,9 @@ struct Helper
 {
   /// attribute to indicate whether type \p T has a default value
   static constexpr bool has_default_value = false;
+
+  /// alias for default value type (void be default)
+  using value_type = void;
 };
 
 /**
@@ -96,7 +97,6 @@ struct Helper< T, typename std::enable_if< is_defaultable< T >::value >::type >
   value_type value = value_type();
 };
 
-HAS_ALIAS( value_type )
 /**
  * @struct Helper
  * @tparam T type to check
@@ -107,8 +107,8 @@ HAS_ALIAS( value_type )
  * containers.
  */
 template< typename T >
-struct Helper< T, typename std::enable_if< has_alias_value_type< T >::value &&
-                                           ( is_defaultable< typename T::value_type >::value) >::type >
+struct Helper< T, typename std::enable_if_t< traits::has_alias_value_type< T > &&
+                                             is_defaultable< typename T::value_type >::value > >
 {
   /// attribute to indicate whether type \p T has a default value
   static constexpr bool has_default_value = true;
@@ -134,4 +134,4 @@ using DefaultValue = wrapperDefaultValue::Helper< T >;
 }
 
 
-#endif /* CORECOMPONENTS_DATAREPOSITORY_DEFAULTVALUE_HPP_ */
+#endif /* GEOSX_DATAREPOSITORY_DEFAULTVALUE_HPP_ */

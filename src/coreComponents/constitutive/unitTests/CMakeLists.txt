@@ -20,12 +20,19 @@ if( ENABLE_PVTPackage )
     set( dependencyList ${dependencyList} PVTPackage )
 endif()
 
+if( ENABLE_OPENMP )
+  set( dependencyList ${dependencyList} openmp )
+endif()
+
+if( ENABLE_CUDA )
+  set( dependencyList ${dependencyList} cuda )
+endif()
+
 #
 # Add gtest C++ based tests
 #
 foreach(test ${gtest_geosx_tests})
     get_filename_component( test_name ${test} NAME_WE )
-    message("processing test_name ${test_name}")
     blt_add_executable( NAME ${test_name}
             SOURCES ${test}
             OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
@@ -34,7 +41,6 @@ foreach(test ${gtest_geosx_tests})
 
     blt_add_test( NAME ${test_name}
                   COMMAND ${test_name}
-                  NUM_MPI_TASKS 1
                 )
 
 endforeach()

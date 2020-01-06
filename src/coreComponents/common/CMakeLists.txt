@@ -5,18 +5,25 @@
 set(common_headers
     ${CMAKE_BINARY_DIR}/include/common/GeosxConfig.hpp
     DataTypes.hpp
+    Path.hpp
     GeosxMacros.hpp
     TimingMacros.hpp
-    initialization.hpp )
+    Logger.hpp
+   )
 
 #
 # Specify all sources
 #
 set(common_sources
     DataTypes.cpp
-    initialization.cpp)
+    Logger.cpp
+   )
 
-set( dependencyList cxx-utilities managers mpi pugixml trilinos )
+set( dependencyList cxx-utilities pugixml )
+
+if( ENABLE_MPI )
+  set( dependencyList ${dependencyList} mpi )
+endif()
 
 if( ATK_FOUND )
   set( dependencyList ${dependencyList} conduit )
@@ -25,11 +32,6 @@ endif()
 if( ENABLE_CALIPER )
   set( dependencyList ${dependencyList} caliper )
 endif()
-
-if( ENABLE_RAJA )
-  set( dependencyList ${dependencyList} RAJA )
-endif()
-
 
 #set( dependencyList2 mpi )
 #foreach( lib ${dependencyList} )
@@ -42,6 +44,7 @@ blt_add_library( NAME                  common
                  SOURCES               ${common_sources}
                  HEADERS               ${common_headers}
                  DEPENDS_ON            ${dependencyList}
+                 OBJECT                ${buildAsObj}
 #                 SHARED TRUE
                )
                

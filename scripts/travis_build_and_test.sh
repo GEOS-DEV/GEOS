@@ -1,5 +1,7 @@
 #!/bin/bash
 env
+# The or_die function run the passed command line and
+# exits the program in case of non zero error code
 function or_die () {
     "$@"
     local status=$?
@@ -8,33 +10,22 @@ function or_die () {
         exit $status
     fi
 }
-if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-    mkdir build-darwin-clang-debug;
-    cd build-darwin-clang-debug;
-else
-    cd /home/geosx/geosx_repo
-    export PATH=${PATHMOD}:$PATH
-    or_die mkdir travis-build
-    cd travis-build
-fi
 
-if [[ "$DO_BUILD" == "yes" ]] ; then
-    or_die cmake \
-           -DCMAKE_C_COMPILER=${CC} -DCMAKE_CXX_COMPILER=${CXX} -DCMAKE_Fortran_COMPILER=${FC} \
-           -DENABLE_MPI=ON -DMPI_C_COMPILER=${MPICC} -DMPI_CXX_COMPILER=${MPICXX} -DMPI_Fortran_COMPILER=${MPIFC} -DMPIEXEC=${MPIEXEC} -DMPIEXEC_EXECUTABLE=${MPIEXEC} \
-           -DGEOSX_TPL_DIR=${GEOSX_TPL_DIR} \
-           -DENABLE_SPHINX=OFF \
-           -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
-           ${CMAKE_EXTRA_FLAGS} ../src
-
-#    if [[ ${CMAKE_EXTRA_FLAGS} == *COVERAGE* ]] ; then
-#      or_die make -j 1
-#    else
-    or_die make -j 1 VERBOSE=1
-#    fi
-    if [[ "${DO_TEST}" == "yes" ]] ; then
-      or_die ctest -V
-    fi
-fi
+or_die cd /tmp/GEOSX
+# The -DBLT_MPI_COMMAND_APPEND:STRING=--allow-run-as-root option is added for openmpi
+# which prevents from running as root user by default.
+# And by default, you are root in a docker container.
+# Using this option therefore offers a minimal and convenient way
+# to run the unit tests.
+or_die python scripts/config-build.py \
+              -hc host-configs/environment.cmake \
+              -bt ${CMAKE_BUILD_TYPE} \
+              -bp /tmp/build \
+              -DGEOSX_TPL_DIR=$GEOSX_TPL_DIR \
+              -DENABLE_GEOSX_PTP:BOOL=ON \
+              -DBLT_MPI_COMMAND_APPEND:STRING=--allow-run-as-root
+or_die cd /tmp/build
+or_die make -j $(nproc) VERBOSE=1
+or_die ctest -V 
 
 exit 0

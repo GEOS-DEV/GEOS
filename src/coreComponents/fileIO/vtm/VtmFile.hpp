@@ -1,27 +1,23 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
  * @file PvtuFile.hpp
  */
 
-#ifndef VTUPFILE_HPP_
-#define VTUPFILE_HPP_
+#ifndef GEOSX_FILEIO_VTM_VTUPFILE_HPP_
+#define GEOSX_FILEIO_VTM_VTUPFILE_HPP_
 
 #include "pugixml.hpp"
 #include "common/DataTypes.hpp"
@@ -415,9 +411,13 @@ class VtuFile {
 
 class MeshBlock {
     public:
+
         MeshBlock( string fileName,
-                string blockName);
-        MeshBlock() {}
+                   string blockName) :
+            m_vtuFileName( fileName),
+            m_blockName( blockName)
+        {}
+
         void Load(bool loadMesh, bool loadProperties);
         DumbMesh const & mesh() const;
         bool IsARegionBlock() const;
@@ -438,7 +438,7 @@ class RankBlock {
         localIndex NumMeshBlocks() const;
         MeshBlock const & GetMeshBlock(localIndex const meshBlockIndex) const;
     private:
-        array1d< MeshBlock > m_block;
+        std::vector< MeshBlock > m_block;
 };
 class VtmFile {
     public:
@@ -476,11 +476,11 @@ class VtmFile {
          */
         void SetRanksAndBlocks(
                 pugi::xml_document const & vtmDoc,
-                array1d< RankBlock >& rankBlocks);
+                std::vector< RankBlock >& rankBlocks);
     private:
-        array1d< RankBlock > m_rankBlocks;
+        std::vector< RankBlock > m_rankBlocks;
         string m_fileName {""};
 };
 
 }
-#endif /*PvtuFile.hpp*/
+#endif /*GEOSX_FILEIO_VTM_VTUPFILE_HPP_*/

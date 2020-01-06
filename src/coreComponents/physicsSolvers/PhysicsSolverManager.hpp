@@ -1,26 +1,21 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_PHYSICSSOLVERMANAGER_HPP_
-#define SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_PHYSICSSOLVERMANAGER_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_PHYSICSSOLVERMANAGER_HPP_
+#define GEOSX_PHYSICSSOLVERS_PHYSICSSOLVERMANAGER_HPP_
 
-#include "dataRepository/ManagedGroup.hpp"
-#include "systemSolverInterface/EpetraBlockSystem.hpp"
+#include "dataRepository/Group.hpp"
 
 namespace pugi
 {
@@ -31,15 +26,15 @@ namespace geosx
 {
 class SolverBase;
 
-class PhysicsSolverManager : public dataRepository::ManagedGroup
+class PhysicsSolverManager : public dataRepository::Group
 {
 public:
   PhysicsSolverManager( std::string const & name,
-                        ManagedGroup * const parent );
+                        Group * const parent );
 
   virtual ~PhysicsSolverManager() override;
 
-  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
+  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 
   /// This function is used to expand any catalogs in the data structure
   virtual void ExpandObjectCatalogs() override;
@@ -47,7 +42,6 @@ public:
   struct viewKeyStruct
   {
       constexpr static auto gravityVectorString = "gravityVector";
-      constexpr static auto blockSystemRepositoryString = "blockSystemRepository";
   } viewKeys;
 
   struct groupKeyStruct
@@ -64,11 +58,8 @@ private:
 
   R1Tensor m_gravityVector;
 
-  /// this is a block structured linear system object used to hold the system
-  systemSolverInterface::EpetraBlockSystem m_blockSystemRepository;
-
 };
 
 } /* namespace geosx */
 
-#endif /* SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_PHYSICSSOLVERMANAGER_HPP_ */
+#endif /* GEOSX_PHYSICSSOLVERS_PHYSICSSOLVERMANAGER_HPP_ */

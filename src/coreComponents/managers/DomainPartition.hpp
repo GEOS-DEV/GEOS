@@ -1,31 +1,29 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
  * @file DomainPartition.hpp
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_MANAGERS_DOMAINPARTITION_HPP_
-#define SRC_COMPONENTS_CORE_SRC_MANAGERS_DOMAINPARTITION_HPP_
+#ifndef GEOSX_MANAGERS_DOMAINPARTITION_HPP_
+#define GEOSX_MANAGERS_DOMAINPARTITION_HPP_
 
-#include "dataRepository/ManagedGroup.hpp"
+#include "dataRepository/Group.hpp"
 #include "mesh/MeshBody.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
+#include "mpiCommunications/MpiWrapper.hpp"
+
 namespace geosx
 {
 
@@ -41,11 +39,11 @@ string const partitionManager("partitionManager");
 class ObjectManagerBase;
 class PartitionBase;
 
-class DomainPartition : public dataRepository::ManagedGroup
+class DomainPartition : public dataRepository::Group
 {
 public:
   DomainPartition( std::string const & name,
-                   ManagedGroup * const parent );
+                   Group * const parent );
 
   ~DomainPartition() override;
 
@@ -55,12 +53,11 @@ public:
   DomainPartition& operator=( DomainPartition const & ) = delete;
   DomainPartition& operator=( DomainPartition && ) = delete;
 
-  virtual void RegisterDataOnMeshRecursive( ManagedGroup * const MeshBodies ) override final;
+  virtual void RegisterDataOnMeshRecursive( Group * const MeshBodies ) override final;
 
 
   void InitializationOrder( string_array & order ) override final;
 
-  void SetMaps();
   void GenerateSets();
 
 
@@ -122,9 +119,9 @@ public:
   { return this->GetGroup<constitutive::ConstitutiveManager>(groupKeys.constitutiveManager); }
 
 
-  ManagedGroup const * getMeshBodies() const
+  Group const * getMeshBodies() const
   { return this->GetGroup(groupKeys.meshBodies); }
-  ManagedGroup * getMeshBodies()
+  Group * getMeshBodies()
   { return this->GetGroup(groupKeys.meshBodies); }
 
   MeshBody const * getMeshBody( string const & meshName ) const
@@ -132,9 +129,9 @@ public:
   MeshBody * getMeshBody( string const & meshName )
   { return this->GetGroup(groupKeys.meshBodies)->GetGroup<MeshBody>(meshName); }
 
-  MeshBody const * getMeshBody( integer const index ) const
+  MeshBody const * getMeshBody( localIndex const index ) const
   { return this->GetGroup(groupKeys.meshBodies)->GetGroup<MeshBody>(index); }
-  MeshBody * getMeshBody( integer const index )
+  MeshBody * getMeshBody( localIndex const index )
   { return this->GetGroup(groupKeys.meshBodies)->GetGroup<MeshBody>(index); }
 
   std::set<int>       & getMetisNeighborList()       {return m_metisNeighborList;}
@@ -148,4 +145,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* SRC_COMPONENTS_CORE_SRC_MANAGERS_DOMAINPARTITION_HPP_ */
+#endif /* GEOSX_MANAGERS_DOMAINPARTITION_HPP_ */

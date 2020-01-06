@@ -1,35 +1,27 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
-/*
- * MeshUtilities.cpp
+/**
+ * @file MeshUtilities.cpp
  *
- *  Created on: Dec 5, 2012
- *      Author: settgast1
  */
 
 #include "MeshUtilities.hpp"
 #include "managers/ObjectManagerBase.hpp"
-#include "fileIO/xmlWrapper.hpp"
+#include "dataRepository/xmlWrapper.hpp"
 #include "SimpleGeometricObjects/SimpleGeometricObjectBase.hpp"
-
-//#include "ObjectManagers/PhysicalDomainT.h"
-//#include "SimpleGeometricObjects.hpp"
+#include "common/TimingMacros.hpp"
 
 namespace geosx
 {
@@ -48,21 +40,20 @@ MeshUtilities::~MeshUtilities()
 
 
 
-void MeshUtilities::GenerateNodesets( dataRepository::ManagedGroup const * geometries,
+void MeshUtilities::GenerateNodesets( dataRepository::Group const * geometries,
                                       ObjectManagerBase * const nodeManager )
 {
-
   array1d<R1Tensor>& X = nodeManager->getReference<r1_array>(keys::referencePositionString);
-  ManagedGroup * sets = nodeManager->sets();
+  Group * sets = nodeManager->sets();
 
   for (int i = 0 ; i < geometries->GetSubGroups().size() ; ++i)
   {
-//    ViewWrapper<SimpleGeometricObjectBase> const * const wrapper = geometries->getGroup<SimpleGeometricObjectBase>(i);
+//    Wrapper<SimpleGeometricObjectBase> const * const wrapper = geometries->getGroup<SimpleGeometricObjectBase>(i);
 //    if (wrapper!=nullptr)
 //    {
 //      SimpleGeometricObjectBase const & object = wrapper->reference();
 //      string name = wrapper->getName();
-//      set<localIndex> & set = sets->RegisterViewWrapper<set<localIndex>>(name)->reference();
+//      set<localIndex> & set = sets->registerWrapper<set<localIndex>>(name)->reference();
 //      for (localIndex a=0 ; a<X.size() ; ++a)
 //      {
 //        if (object.IsCoordInObject(X[a]))
@@ -75,7 +66,7 @@ void MeshUtilities::GenerateNodesets( dataRepository::ManagedGroup const * geome
         if (object!=nullptr)
         {
           string name = object->getName();
-          set<localIndex> & targetSet = sets->RegisterViewWrapper< set<localIndex> >(name)->reference();
+          set<localIndex> & targetSet = sets->registerWrapper< set<localIndex> >(name)->reference();
           for (localIndex a=0 ; a<X.size() ; ++a)
           {
             if (object->IsCoordInObject(X[a]))

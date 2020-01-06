@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 
@@ -22,7 +18,7 @@
 #include <numpy/arrayobject.h>
 #include <iostream>
 #include <sstream>
-#include "Logger.hpp"
+#include "common/Logger.hpp"
 
 void init_numpy()
 {
@@ -32,8 +28,8 @@ void init_numpy()
 
 int main(int argc, char** argv)
 {
-  GEOS_ERROR_IF(argc != 5, "The arguments are: path module x y");
-  GEOS_LOG("Testing c++ python bindings...");
+  GEOSX_ERROR_IF(argc != 5, "The arguments are: path module x y");
+  GEOSX_LOG("Testing c++ python bindings...");
 
   // Initialize Python, setup the user-defined search path
   std::cout << "Initializing python..." << std::endl;
@@ -48,14 +44,14 @@ int main(int argc, char** argv)
   if (pModule == NULL)
   {
     PyErr_Print();
-    GEOS_ERROR("Error in loading python module");
+    GEOSX_ERROR("Error in loading python module");
   }
 
   // Call the function designed to print and return modified string
   PyObject *pFunc = PyObject_GetAttrString(pModule, (char*)"printStringFromPython");
   PyObject *pValue = Py_BuildValue("(z)", (char*)"blah-blah-blah");
   PyObject *pResult = PyObject_CallObject(pFunc, pValue);
-  GEOS_LOG("Returned string: " << PyString_AsString(pResult));
+  GEOSX_LOG("Returned string: " << PyString_AsString(pResult));
 
   // Cast an array of doubles into a numpy array, modify the values in python
   const int numpy_size = 10;

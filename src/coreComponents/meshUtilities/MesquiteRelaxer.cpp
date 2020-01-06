@@ -1,24 +1,19 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
- * @file MesquireRelaxer.cpp
- * @author herbold, settgast
+ * @file MesquiteRelaxer.cpp
  */
 #include "MesquiteRelaxer.h"
 #include <iostream>
@@ -40,7 +35,6 @@ using std::auto_ptr;
 #include <algorithm>
 #include <vector>
 #include <utility>
-//#include <iostream>
 
 using namespace MESQUITE_NS;
 
@@ -110,7 +104,7 @@ void MesquiteRelaxer::RelaxMesh( PhysicalDomainT& domain )
       topo = ElementTypes::HEXES;
       break;
     default:
-      GEOS_ERROR("There is no default case");
+      GEOSX_ERROR("There is no default case");
       break;
     }
 
@@ -158,10 +152,10 @@ void MesquiteRelaxer::RelaxMesh( PhysicalDomainT& domain )
       MesquiteRelaxer::RunSteepestDescent(topo,num_iter,patch);
       break;
     case SolverTypes::BOUNDARY:
-      GEOS_LOG_RANK("Not Implemented yet");
+      GEOSX_LOG_RANK("Not Implemented yet");
       return;
     default:
-      GEOS_LOG_RANK("There is no default case");
+      GEOSX_LOG_RANK("There is no default case");
       break;
     }
   }
@@ -217,7 +211,7 @@ void MesquiteRelaxer::ConstructMesh( unsigned long num_nod,
     type=HEXAHEDRON;
     break;
   default:
-    GEOS_ERROR("invalid topo");
+    GEOSX_ERROR("invalid topo");
   }
   ;
 

@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
@@ -33,7 +29,7 @@ using namespace dataRepository;
 
 
 EventBase::EventBase( const std::string& name,
-                      ManagedGroup * const parent ):
+                      Group * const parent ):
   ExecutableGroup(name, parent),
   m_lastTime(-1.0e100),
   m_lastCycle(-1.0e9),
@@ -50,59 +46,56 @@ EventBase::EventBase( const std::string& name,
   m_eventCount(0),
   m_timeStepEventCount(0),
   m_eventProgress(0),
-  m_verbosity(0),
   m_currentEventDtRequest(0.0),
   m_target(nullptr)
 {
   setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
-  
-  RegisterViewWrapper(viewKeyStruct::eventTargetString, &m_eventTarget, false )->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("event target");
 
-  RegisterViewWrapper(viewKeyStruct::beginTimeString, &m_beginTime, false )->
+  // This enables logLevel filtering
+  enableLogLevelInput();
+  
+  registerWrapper(viewKeyStruct::eventTargetString, &m_eventTarget, false )->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Name of the object to be executed when the event criteria are met.");
+
+  registerWrapper(viewKeyStruct::beginTimeString, &m_beginTime, false )->
     setApplyDefaultValue(0.0)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Start time of this event");
+    setDescription("Start time of this event.");
 
-  RegisterViewWrapper(viewKeyStruct::endTimeString, &m_endTime, false )->
+  registerWrapper(viewKeyStruct::endTimeString, &m_endTime, false )->
     setApplyDefaultValue(1e100)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("End time of this event");
+    setDescription("End time of this event.");
 
-  RegisterViewWrapper(viewKeyStruct::forceDtString, &m_forceDt, false )->
+  registerWrapper(viewKeyStruct::forceDtString, &m_forceDt, false )->
     setApplyDefaultValue(-1.0)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Forced timestep for this event");
+    setDescription("While active, this event will request this timestep value (ignoring any children/targets requests).");
 
-  RegisterViewWrapper(viewKeyStruct::maxEventDtString, &m_maxEventDt, false )->
+  registerWrapper(viewKeyStruct::maxEventDtString, &m_maxEventDt, false )->
     setApplyDefaultValue(-1.0)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Forced timestep for this event");
+    setDescription("While active, this event will request a timestep <= this value (depending upon any child/target requests).");
 
-  RegisterViewWrapper(viewKeyStruct::targetExactStartStopString, &m_targetExactStartStop, false )->
+  registerWrapper(viewKeyStruct::targetExactStartStopString, &m_targetExactStartStop, false )->
     setApplyDefaultValue(1)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("allows timesteps to be truncated to match the start/stop times exactly");
+    setDescription("If this option is set, the event will reduce its timestep requests to match any specified beginTime/endTimes exactly.");
  
- RegisterViewWrapper(viewKeyStruct::lastTimeString, &m_lastTime, false )->
+ registerWrapper(viewKeyStruct::lastTimeString, &m_lastTime, false )->
     setApplyDefaultValue(-1.0e100)->
-    setDescription("last event occurrence (time)");
+    setDescription("Last event occurrence (time)");
 
-  RegisterViewWrapper(viewKeyStruct::lastCycleString, &m_lastCycle, false )->
+  registerWrapper(viewKeyStruct::lastCycleString, &m_lastCycle, false )->
     setApplyDefaultValue(-1.0e9)->
-    setDescription("last event occurrence (cycle)");
+    setDescription("Last event occurrence (cycle)");
 
-  RegisterViewWrapper(viewKeyStruct::currentSubEventString, &m_currentSubEvent, false )->
-    setDescription("index of the current subevent");
+  registerWrapper(viewKeyStruct::currentSubEventString, &m_currentSubEvent, false )->
+    setDescription("Index of the current subevent");
 
-  RegisterViewWrapper(viewKeyStruct::isTargetExecutingString, &m_targetExecFlag, false )->
-    setDescription("index of the current subevent");
-
-  RegisterViewWrapper(viewKeyStruct::verbosityString, &m_verbosity, false )->
-    setApplyDefaultValue(0)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Verbosity level");
+  registerWrapper(viewKeyStruct::isTargetExecutingString, &m_targetExecFlag, false )->
+    setDescription("Index of the current subevent");
 }
 
 
@@ -116,9 +109,9 @@ EventBase::CatalogInterface::CatalogType& EventBase::GetCatalog()
   return catalog;
 }
 
-ManagedGroup * EventBase::CreateChild( string const & childKey, string const & childName )
+Group * EventBase::CreateChild( string const & childKey, string const & childName )
 {
-  GEOS_LOG_RANK_0("Adding Event: " << childKey << ", " << childName);
+  GEOSX_LOG_RANK_0("Adding Event: " << childKey << ", " << childName);
   std::unique_ptr<EventBase> event = EventBase::CatalogInterface::Factory( childKey, childName, this );
   return this->RegisterGroup<EventBase>( childName, std::move(event) );
 }
@@ -142,9 +135,9 @@ void EventBase::GetTargetReferences()
 {
   if (!m_eventTarget.empty())
   {
-    ManagedGroup * tmp = this->GetGroupByPath(m_eventTarget);
-    m_target = ManagedGroup::group_cast<ExecutableGroup*>(tmp);
-    GEOS_ERROR_IF(m_target == nullptr, "The target of an event must be executable! " << m_target);
+    Group * tmp = this->GetGroupByPath(m_eventTarget);
+    m_target = Group::group_cast<ExecutableGroup*>(tmp);
+    GEOSX_ERROR_IF(m_target == nullptr, "The target of an event must be executable! " << m_target);
   }
 
   this->forSubGroups<EventBase>([]( EventBase * subEvent ) -> void
@@ -157,7 +150,7 @@ void EventBase::GetTargetReferences()
 void EventBase::CheckEvents(real64 const time,
                             real64 const dt, 
                             integer const cycle,
-                            ManagedGroup * domain)
+                            Group * domain)
 {
   // Check event status
   if (time < m_beginTime)
@@ -191,7 +184,7 @@ void EventBase::CheckEvents(real64 const time,
 void EventBase::SignalToPrepareForExecution(real64 const time,
                                         real64 const dt, 
                                         integer const cycle,
-                                        dataRepository::ManagedGroup * domain)
+                                        dataRepository::Group * domain)
 {
   if (m_target != nullptr)
   {
@@ -213,7 +206,7 @@ void EventBase::Execute(real64 const time_n,
                         const integer cycleNumber,
                         integer const,
                         real64 const,
-                        ManagedGroup * domain)
+                        Group * domain)
 {
   GEOSX_MARK_FUNCTION;
   
@@ -232,10 +225,8 @@ void EventBase::Execute(real64 const time_n,
     EventBase * subEvent = static_cast<EventBase *>( this->GetSubGroups()[m_currentSubEvent] );
     integer subEventForecast = subEvent->GetForecast();
 
-    if (m_verbosity > 0)
-    {
-      GEOS_LOG_RANK_0("          SubEvent: " << m_currentSubEvent << " (" << subEvent->getName() << "), dt_request=" << subEvent->GetCurrentEventDtRequest() << ", forecast=" << subEventForecast);
-    }
+    // Print debug information for logLevel >= 1
+    GEOSX_LOG_LEVEL_RANK_0(1, "          SubEvent: " << m_currentSubEvent << " (" << subEvent->getName() << "), dt_request=" << subEvent->GetCurrentEventDtRequest() << ", forecast=" << subEventForecast);
 
     if (subEventForecast <= 0)
     {
@@ -310,9 +301,9 @@ real64 EventBase::GetTimestepRequest(real64 const time)
 
 void EventBase::Cleanup(real64 const time_n,
                         integer const cycleNumber,
-                        integer const eventCounter,
-                        real64 const eventProgress,
-                        ManagedGroup * domain)
+                        integer const GEOSX_UNUSED_ARG( eventCounter ),
+                        real64 const GEOSX_UNUSED_ARG( eventProgress ),
+                        Group * domain)
 {
   if (m_target != nullptr)
   {

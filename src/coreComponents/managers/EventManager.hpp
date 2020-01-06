@@ -1,26 +1,22 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 
-#ifndef SRC_COMPONENTS_CORE_SRC_EVENTMANAGER_HPP_
-#define SRC_COMPONENTS_CORE_SRC_EVENTMANAGER_HPP_
+#ifndef GEOSX_MANAGERS_EVENTMANAGER_HPP_
+#define GEOSX_MANAGERS_EVENTMANAGER_HPP_
 
-#include "dataRepository/ManagedGroup.hpp"
+#include "dataRepository/Group.hpp"
 #include "managers/Events/EventBase.hpp"
 
 
@@ -39,18 +35,18 @@ string const Events("Events");
  *
  * A class for managing code events.
  */
-class EventManager : public dataRepository::ManagedGroup
+class EventManager : public dataRepository::Group
 {
 public:
   /// Main constructor
   EventManager( std::string const & name,
-                ManagedGroup * const parent );
+                Group * const parent );
 
   /// Destructor
   virtual ~EventManager() override;
 
   /// A method to add child events
-  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
+  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 
   /// This function is used to expand any catalogs in the data structure
   virtual void ExpandObjectCatalogs() override;
@@ -63,13 +59,12 @@ public:
    *   - Determine dt for the next cycle
    *   - Advance time, cycle, etc.
    */
-  void Run(dataRepository::ManagedGroup * domain);
+  void Run(dataRepository::Group * domain);
 
   struct viewKeyStruct
   {
     static constexpr auto maxTimeString = "maxTime";
     static constexpr auto maxCycleString = "maxCycle";
-    static constexpr auto verbosityString = "verbosity";
 
     static constexpr auto timeString = "time";
     static constexpr auto dtString = "dt";
@@ -81,19 +76,17 @@ public:
     dataRepository::ViewKey cycle = { "cycle" };
     dataRepository::ViewKey maxTime = { "maxTime" };
     dataRepository::ViewKey maxCycle = { "maxCycle" };
-    dataRepository::ViewKey verbosity = { "verbosity" };
     dataRepository::ViewKey currentSubEvent = { "currentSubEvent" };
   } viewKeys;
 
   /// Catalog interface
-  using CatalogInterface = cxx_utilities::CatalogInterface< EventBase, std::string const &, ManagedGroup * const >;
+  using CatalogInterface = dataRepository::CatalogInterface< EventBase, std::string const &, Group * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 
 private:
 
   real64 m_maxTime;
   integer m_maxCycle;
-  integer m_verbosity;
 
   real64 m_time;
   real64 m_dt;
@@ -104,4 +97,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* SRC_COMPONENTS_CORE_SRC_EVENTMANAGER_HPP_ */
+#endif /* GEOSX_MANAGERS_EVENTMANAGER_HPP_ */

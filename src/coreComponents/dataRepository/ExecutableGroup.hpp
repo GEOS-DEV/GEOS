@@ -1,34 +1,27 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
  * @file ExecutableGroup.hpp
  */
 
-#ifndef EXECUTABLEGROUP_HPP_
-#define EXECUTABLEGROUP_HPP_
+#ifndef GEOSX_DATAREPOSITORY_EXECUTABLEGROUP_HPP_
+#define GEOSX_DATAREPOSITORY_EXECUTABLEGROUP_HPP_
 
-#include "ManagedGroup.hpp"
 #include "common/DataTypes.hpp"
+#include "Group.hpp"
 
-
-/** Objects that are executable and/or able to request changes dt, should
-    be derived from this type. */
 
 namespace geosx
 {
@@ -39,51 +32,79 @@ namespace geosx
  * Objects that are executable and/or able to request changes dt
  * should be derived from this type.
  */
-class ExecutableGroup : public dataRepository::ManagedGroup
+class ExecutableGroup : public dataRepository::Group
 {
 public:
 
-  using dataRepository::ManagedGroup::ManagedGroup;
+  using dataRepository::Group::Group;
 
-  /*
+  /**
+   * @brief Main extension point of executable targets.
+   * @param[in] time_n        current time level
+   * @param[in] dt            time step to be taken
+   * @param[in] cycleNumber   global cycle number
+   * @param[in] eventCounter  index of event that triggered execution
+   * @param[in] eventProgress fractional progress in current cycle
+   * @param[in,out] domain    the physical domain
+   *
    * If the start criteria are satisfied, then the event manager
-   * will call this method
+   * will call this method.
    */
   virtual void Execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::ManagedGroup * domain ) = 0;
+                        dataRepository::Group * domain ) = 0;
 
-  /*
-   * This method will inform the object that it expects to execute
-   * during the next timestep
+  /**
+   * @brief Inform the object that it expects to execute during the next timestep.
+   * @param[in] time_n        current time level
+   * @param[in] dt            time step to be taken
+   * @param[in] cycle         global cycle number
+   * @param[in,out] domain    the physical domain
    */
-  virtual void SignalToPrepareForExecution( real64 const time,
+  virtual void SignalToPrepareForExecution( real64 const time_n,
                                             real64 const dt,
                                             integer const cycle,
-                                            dataRepository::ManagedGroup * domain ) {}
-  /*
-   * This method is called as the code exits the main run loop
+                                            dataRepository::Group * domain );
+  /**
+   * @brief Called as the code exits the main run loop.
+   * @param[in] time_n        current time level
+   * @param[in] cycleNumber   global cycle number
+   * @param[in] eventCounter  index of event that triggered execution
+   * @param[in] eventProgress fractional progress in current cycle
+   * @param[in,out] domain    the physical domain
    */
   virtual void Cleanup( real64 const time_n,
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::ManagedGroup * domain ) {}
+                        dataRepository::Group * domain );
 
-  /*
-   * This supplies the timestep request for each executable
-   * target to the event manager
+  /**
+   * @brief Supplies the timestep request for this target to the event manager.
+   * @param[in] time current time level
+   * @return         desired time step size
    */
-  virtual real64 GetTimestepRequest( real64 const time ) {return std::numeric_limits< integer >::max();}
+  virtual real64 GetTimestepRequest( real64 const time )
+  {
+    GEOSX_UNUSED_VAR( time );
+    return std::numeric_limits< integer >::max();
+  }
 
 
-  /// These set and supply the timestep behavior for a target
-  void SetTimestepBehavior( integer behavior ){ m_timestepType = behavior; }
+  /**
+   * @brief Set the timestep behavior for a target.
+   * @param[in] behavior if positive, target does time stepping
+   */
+  void SetTimestepBehavior( integer const behavior ) { m_timestepType = behavior; }
 
-  integer GetTimestepBehavior(){ return m_timestepType; }
+  /**
+   * @brief Get the target's time step behavior.
+   * @return @p >0 if target does time stepping, @p <=0 otherwise
+   */
+  integer GetTimestepBehavior() { return m_timestepType; }
 
 
 private:
@@ -91,7 +112,7 @@ private:
 };
 
 
-} /* namespace ANST */
+}
 
 
-#endif /* EXECUTABLEGROUP_HPP_ */
+#endif /* GEOSX_DATAREPOSITORY_EXECUTABLEGROUP_HPP_ */

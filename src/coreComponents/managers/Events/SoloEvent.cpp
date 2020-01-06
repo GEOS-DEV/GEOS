@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
  /**
@@ -29,26 +25,26 @@ using namespace dataRepository;
 
 
 SoloEvent::SoloEvent( const std::string& name,
-                              ManagedGroup * const parent ):
+                              Group * const parent ):
   EventBase(name,parent),
   m_targetTime(-1.0),
   m_targetCycle(-1),
   m_targetExactTimestep(0)
 {
-  RegisterViewWrapper(viewKeyStruct::targetTimeString, &m_targetTime, false )->
+  registerWrapper(viewKeyStruct::targetTimeString, &m_targetTime, false )->
     setApplyDefaultValue(-1.0)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Event time");
+    setDescription("Targeted time to execute the event.");
 
-  RegisterViewWrapper(viewKeyStruct::targetCycleString, &m_targetCycle, false )->
+  registerWrapper(viewKeyStruct::targetCycleString, &m_targetCycle, false )->
     setApplyDefaultValue(-1)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Event cycle");
+    setDescription("Targeted cycle to execute the event.");
 
-  RegisterViewWrapper(viewKeyStruct::targetExactTimestepString, &m_targetExactTimestep, false )->
+  registerWrapper(viewKeyStruct::targetExactTimestepString, &m_targetExactTimestep, false )->
     setApplyDefaultValue(1)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Allows timesteps to be truncated to match time frequency perfectly");
+    setDescription("If this option is set, the event will reduce its timestep requests to match the specified execution time exactly: dt_request = min(dt_request, t_target - time)).");
 }
 
 
@@ -59,7 +55,7 @@ SoloEvent::~SoloEvent()
 void SoloEvent::EstimateEventTiming(real64 const time,
                                     real64 const dt, 
                                     integer const cycle,
-                                    ManagedGroup * domain)
+                                    Group * GEOSX_UNUSED_ARG( domain ))
 {
   // Check event status
   if (m_lastCycle < 0)
@@ -110,5 +106,5 @@ real64 SoloEvent::GetEventTypeDtRequest(real64 const time)
 
 
 
-REGISTER_CATALOG_ENTRY( EventBase, SoloEvent, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( EventBase, SoloEvent, std::string const &, Group * const )
 } /* namespace geosx */

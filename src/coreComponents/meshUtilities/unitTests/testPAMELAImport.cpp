@@ -1,31 +1,27 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
-#include "gtest/gtest.h"
 
-#include "fileIO/xmlWrapper.hpp"
 
+// Source includes
+#include "managers/initialization.hpp"
+#include "dataRepository/xmlWrapper.hpp"
 #include "tests/meshFileNames.hpp"
-
 #include "meshUtilities/MeshManager.hpp"
 
-#include "SetSignalHandling.hpp"
+// TPL includes
+#include <gtest/gtest.h>
 
-#include "stackTrace.hpp"
 
 using namespace geosx;
 using namespace geosx::dataRepository;
@@ -48,7 +44,7 @@ void TestMeshImport( string const& inputStringMesh,
   auto domain = std::unique_ptr< DomainPartition >( new DomainPartition( "domain", nullptr ) );
   meshManager.GenerateMeshes( domain.get() );
 
-  ManagedGroup * const meshBodies = domain->getMeshBodies();
+  Group * const meshBodies = domain->getMeshBodies();
   MeshBody * const meshBody = meshBodies->GetGroup<MeshBody>(0);
   MeshLevel * const meshLevel = meshBody->GetGroup<MeshLevel>(0);
   NodeManager * const nodeManager = meshLevel->getNodeManager();
@@ -61,7 +57,7 @@ void TestMeshImport( string const& inputStringMesh,
   elemManager->ProcessInputFileRecursive( xmlRegionNode );
   elemManager->PostProcessInputRecursive();
 
-  ManagedGroup const * const cellBlockManager = domain->GetGroup(keys::cellManager);
+  Group const * const cellBlockManager = domain->GetGroup(keys::cellManager);
 
   // This method will call the CopyElementSubRegionFromCellBlocks that will trigger the property transfer.
   elemManager->GenerateMesh( cellBlockManager );
@@ -71,7 +67,7 @@ void TestMeshImport( string const& inputStringMesh,
   if( !propertyToTest.empty() )
   {
     auto centerProperty =  elemManager->ConstructViewAccessor<array1d<R1Tensor>, arrayView1d<R1Tensor> >( propertyToTest );
-    elemManager->forElementRegions( [&]( ElementRegion * const elemRegion)->void
+    elemManager->forElementRegions( [&]( ElementRegionBase * const elemRegion)->void
     {
       localIndex er = elemRegion->getIndexInParent();
       elemRegion->forElementSubRegionsIndex( [&]( localIndex const esr, auto * const elemSubRegion )
@@ -83,7 +79,7 @@ void TestMeshImport( string const& inputStringMesh,
                                        centerProperty[er][esr][ei][1],
                                        centerProperty[er][esr][ei][2] );
           center -= centerFromProperty;
-          GEOS_ERROR_IF( center.L2_Norm() > meshBody->getGlobalLengthScale() * 1e-8, "Property import of centers if wrong");
+          GEOSX_ERROR_IF( center.L2_Norm() > meshBody->getGlobalLengthScale() * 1e-8, "Property import of centers if wrong");
         }
       });
     });
@@ -107,16 +103,15 @@ TEST( PAMELAImport, testGMSH )
 
   std::stringstream inputStreamRegion;
   inputStreamRegion <<
-  "<?xml version=\"1.0\" ?>" <<
-  "  <ElementRegions xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"geos_v0.0.xsd\">" <<
-  "  <ElementRegion name=\"0\" cellBlocks=\"{0_TETRA}\" materialList=\"{water, rock}\"/>" <<
-  "  <ElementRegion name=\"1\" cellBlocks=\"{1_TETRA}\" materialList=\"{water, rock}\"/>" <<
-  "  <ElementRegion name=\"2\" cellBlocks=\"{2_TETRA}\" materialList=\"{water, rock}\"/>" <<
-  "  <ElementRegion name=\"3\" cellBlocks=\"{3_TETRA}\" materialList=\"{water, rock}\"/>" <<
-  "  <ElementRegion name=\"4\" cellBlocks=\"{4_TETRA}\" materialList=\"{water, rock}\"/>" <<
-  "  <ElementRegion name=\"5\" cellBlocks=\"{5_TETRA}\" materialList=\"{water, rock}\"/>" <<
-  "  <ElementRegion name=\"6\" cellBlocks=\"{6_TETRA}\" materialList=\"{water, rock}\"/>" <<
-  "  <ElementRegion name=\"7\" cellBlocks=\"{7_TETRA}\" materialList=\"{water, rock}\"/>" <<
+  "<ElementRegions>" <<
+  "  <CellElementRegion name=\"0\" cellBlocks=\"{0_TETRA}\" materialList=\"{water, rock}\"/>" <<
+  "  <CellElementRegion name=\"1\" cellBlocks=\"{1_TETRA}\" materialList=\"{water, rock}\"/>" <<
+  "  <CellElementRegion name=\"2\" cellBlocks=\"{2_TETRA}\" materialList=\"{water, rock}\"/>" <<
+  "  <CellElementRegion name=\"3\" cellBlocks=\"{3_TETRA}\" materialList=\"{water, rock}\"/>" <<
+  "  <CellElementRegion name=\"4\" cellBlocks=\"{4_TETRA}\" materialList=\"{water, rock}\"/>" <<
+  "  <CellElementRegion name=\"5\" cellBlocks=\"{5_TETRA}\" materialList=\"{water, rock}\"/>" <<
+  "  <CellElementRegion name=\"6\" cellBlocks=\"{6_TETRA}\" materialList=\"{water, rock}\"/>" <<
+  "  <CellElementRegion name=\"7\" cellBlocks=\"{7_TETRA}\" materialList=\"{water, rock}\"/>" <<
   "</ElementRegions>";
   string inputStringRegion = inputStreamRegion.str();
 
@@ -141,39 +136,23 @@ TEST( PAMELAImport, testECLIPSE )
   std::stringstream inputStreamRegion;
   inputStreamRegion <<
   "<?xml version=\"1.0\" ?>" <<
-  "  <ElementRegions xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"geos_v0.0.xsd\">" <<
-  "  <ElementRegion name=\"0\" cellBlocks=\"{0_HEX}\" materialList=\"{water, rock}\"/>" <<
+  "  <CellElementRegions xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"geos_v0.0.xsd\">" <<
+  "  <CellElementRegion name=\"0\" cellBlocks=\"{0_HEX}\" materialList=\"{water, rock}\"/>" <<
   "</ElementRegions>";
   string inputStringRegion = inputStreamRegion.str();
 
   TestMeshImport( inputStringMesh, inputStringRegion, "" );
 }
 
-int main(int argc, char** argv)
+int main( int argc, char** argv )
 {
-  ::testing::InitGoogleTest(&argc, argv);
+  ::testing::InitGoogleTest( &argc, argv );
 
-#ifdef GEOSX_USE_MPI
-
-  MPI_Init(&argc,&argv);
-
-  MPI_Comm_dup( MPI_COMM_WORLD, &MPI_COMM_GEOSX );
-
-  logger::InitializeLogger(MPI_COMM_GEOSX);
-#else
-  logger::InitializeLogger():
-#endif
-
-  cxx_utilities::setSignalHandling(cxx_utilities::handler1);
+  geosx::basicSetup( argc, argv );
 
   int const result = RUN_ALL_TESTS();
 
-  logger::FinalizeLogger();
-
-#ifdef GEOSX_USE_MPI
-  MPI_Comm_free( &MPI_COMM_GEOSX );
-  MPI_Finalize();
-#endif
+  geosx::basicCleanup();
 
   return result;
 }

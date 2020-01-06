@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
@@ -25,12 +21,9 @@
 
 #include "VtmFile.hpp"
 
-#include "Logger.hpp"
+#include "common/Logger.hpp"
 #include "mesh/MeshBody.hpp"
 
-#ifdef GEOSX_USE_MPI
-#include <mpi.h>
-#endif
 
 namespace geosx{
 
@@ -57,13 +50,6 @@ double DumbPropertyManager::GetValue(globalIndex const elementIndex) const {
     return m_values[elementIndex];
 }
 */
-
-MeshBlock::MeshBlock( string fileName,
-        string blockName ) :
-    m_vtuFileName(fileName),
-    m_blockName(blockName)
-{
-}
 
 bool MeshBlock::IsARegionBlock() const  {
     return m_mesh.NumCells() > 0;
@@ -129,7 +115,7 @@ void VtmFile::Load( string const &fileName, bool loadMesh, bool loadProperties) 
     if( mpiRank == 0) {
         CheckXmlFileConsistency(vtmDoc,fileName);
     }
-    array1d< RankBlock > rankBlocks;
+    std::vector< RankBlock > rankBlocks;
     SetRanksAndBlocks(vtmDoc,rankBlocks);
     // Retrieve the number of partitions
     int const numFiles = integer_conversion<int>(rankBlocks.size());
@@ -167,9 +153,8 @@ void VtmFile::Load( string const &fileName, bool loadMesh, bool loadProperties) 
         }
     }
     if( mpiRank < numFiles ) {
-        for(localIndex p_index = 0; p_index < 
-                m_rankBlocks.size(); ++p_index) {
-            m_rankBlocks[p_index].Load(loadMesh, loadProperties);
+        for ( RankBlock & rankBlock : m_rankBlocks ) {
+            rankBlock.Load(loadMesh, loadProperties);
         }
     }
 }
@@ -195,8 +180,8 @@ void VtuFile::Load( string const &filename,
     LoadProperties(vtmDoc, properties);
 }
 
-void VtuFile::Save( string const &filename) {
-    GEOS_ERROR("vtu file save is not implemented yet");
+void VtuFile::Save( string const & GEOSX_UNUSED_ARG( filename ) ) {
+    GEOSX_ERROR("vtu file save is not implemented yet");
 }
 
 
@@ -207,17 +192,17 @@ void VtmFile::CheckXmlFileConsistency(pugi::xml_document const & vtmDoc,
     // VTKFile is the main node of the pvtufile
     auto const & vtkFileNode =vtmDoc.child("VTKFile");
     if( vtkFileNode.empty() ) {
-        GEOS_ERROR("Main node VTKFile not found in " + filename);
+        GEOSX_ERROR("Main node VTKFile not found in " + filename);
     }
 
     if( vtkFileNode.attribute("type").as_string() !=
             static_cast< string >("vtkMultiBlockDataSet")) {
-        GEOS_ERROR("VTKFile is not a vtkMultiBlockDataSet" + filename);
+        GEOSX_ERROR("VTKFile is not a vtkMultiBlockDataSet" + filename);
     }
 
     auto const & vtkMultiBlockDataSetNode =  vtkFileNode.child("vtkMultiBlockDataSet");
     if( vtkMultiBlockDataSetNode.empty() ) {
-        GEOS_ERROR("vtkMultiBlockDataSet node is not present in " + filename);
+        GEOSX_ERROR("vtkMultiBlockDataSet node is not present in " + filename);
     }
 
     localIndex countNbRank=0;
@@ -230,7 +215,7 @@ void VtmFile::CheckXmlFileConsistency(pugi::xml_document const & vtmDoc,
                     countNbBlock++;
                 }
                 if( block.attribute("file").empty() ) {
-                    GEOS_ERROR(
+                    GEOSX_ERROR(
                             "DataSet "
                             + static_cast< string >(rank.attribute("name").as_string())
                             + " of block "
@@ -238,7 +223,7 @@ void VtmFile::CheckXmlFileConsistency(pugi::xml_document const & vtmDoc,
                             " does not contain a \"file\" attribute");
                 }
                 if( block.attribute("name").empty() ) {
-                    GEOS_ERROR(
+                    GEOSX_ERROR(
                             "DataSet "
                             + static_cast< string >(rank.attribute("name").as_string())
                             + " of block "
@@ -247,20 +232,20 @@ void VtmFile::CheckXmlFileConsistency(pugi::xml_document const & vtmDoc,
                 }
             }
             if( countNbBlock == 0 ) {
-                GEOS_ERROR(static_cast< string >(rank.attribute("name").as_string()) +
+                GEOSX_ERROR(static_cast< string >(rank.attribute("name").as_string()) +
                         " does not contain any DataSet");
             }
         }
     }
     if( countNbRank == 0 ) {
-        GEOS_ERROR("There is no block defined in " + filename);
+        GEOSX_ERROR("There is no block defined in " + filename);
     }
 
 }
 
 void VtmFile::SetRanksAndBlocks(
         pugi::xml_document const & vtmDoc,
-                array1d< RankBlock >& rankBlocks) {
+                std::vector< RankBlock >& rankBlocks) {
     auto const & vtkFileNode =vtmDoc.child("VTKFile");
     auto const & vtkMultiBlockDataSetNode =  vtkFileNode.child("vtkMultiBlockDataSet");
     string dirPath;
@@ -300,12 +285,12 @@ void VtuFile::CheckXmlChildFileConsistency(pugi::xml_document const & vtmDoc,
     auto const & vtkFileNode =vtmDoc.child("VTKFile");
     auto const & uGridNode = vtkFileNode.child("UnstructuredGrid");
     if( uGridNode.empty() ) {
-        GEOS_ERROR("Node UnstructuredGrid not found or empty in " +
+        GEOSX_ERROR("Node UnstructuredGrid not found or empty in " +
                 filename);
     }
     pugi::xml_node pieceNode = uGridNode.child("Piece");
     if (pieceNode.empty()) {
-        GEOS_ERROR("Piece node is missing in " + filename);
+        GEOSX_ERROR("Piece node is missing in " + filename);
     }
 
     string const pieceNodeChildNames[4] = {"PointData",
@@ -313,7 +298,7 @@ void VtuFile::CheckXmlChildFileConsistency(pugi::xml_document const & vtmDoc,
     for( auto const & pieceNodeChildName : pieceNodeChildNames ) {
         auto const & pieceNodeChild = pieceNode.child(pieceNodeChildName.c_str());
         if(pieceNodeChild.empty()) {
-            GEOS_ERROR("Node " + pieceNodeChildName +
+            GEOSX_ERROR("Node " + pieceNodeChildName +
                 " not found or empty in " + filename);
         }
     }
@@ -326,7 +311,7 @@ void VtuFile::CheckXmlChildFileConsistency(pugi::xml_document const & vtmDoc,
                 auto const & attribute =
                     dataProperty.attribute( mandatoryAttribute.c_str());
                 if( attribute.empty() ) {
-                    GEOS_ERROR("Mandatory attribute " + mandatoryAttribute +
+                    GEOSX_ERROR("Mandatory attribute " + mandatoryAttribute +
                         " does not exist in a DataArray of PointData");
                 }
             }
@@ -340,7 +325,7 @@ void VtuFile::CheckXmlChildFileConsistency(pugi::xml_document const & vtmDoc,
                 auto const & attribute =
                     dataProperty.attribute( mandatoryAttribute.c_str());
                 if( attribute.empty() ) {
-                    GEOS_ERROR("Mandatory attribute " + mandatoryAttribute +
+                    GEOSX_ERROR("Mandatory attribute " + mandatoryAttribute +
                         " does not exist in a DataArray of CellData in "
                         + filename);
                 }
@@ -352,34 +337,34 @@ void VtuFile::CheckXmlChildFileConsistency(pugi::xml_document const & vtmDoc,
         }
     }
     if (!cellsHasGlobalIndexProperty) {
-        //GEOS_ERROR("Can't find any DataArray which contains the property originalIndex in  CellData in "+filename);
+        //GEOSX_ERROR("Can't find any DataArray which contains the property originalIndex in  CellData in "+filename);
     }
 
     auto const & pointDataArray = pieceNode.child("Points").find_child_by_attribute("DataArray","Name","Points");
     if(pointDataArray.empty() ) {
-        GEOS_ERROR("Can't find DataArray names \"Points\" in node \"Points\" in " + filename);
+        GEOSX_ERROR("Can't find DataArray names \"Points\" in node \"Points\" in " + filename);
     }
 
     if( pieceNode.attribute("NumberOfCells").empty() ) {
-        GEOS_ERROR("Attribute \"NumberOfCells\" of Node \"Piece\" is missing or empty in "
+        GEOSX_ERROR("Attribute \"NumberOfCells\" of Node \"Piece\" is missing or empty in "
                 + filename);
     }
 
     if( pieceNode.attribute("NumberOfPoints").empty() ) {
-        GEOS_ERROR("Attribute \"NumberOfPoints\" of Node \"Piece\" is missing or empty in "
+        GEOSX_ERROR("Attribute \"NumberOfPoints\" of Node \"Piece\" is missing or empty in "
                 + filename);
     }
 
     if (pieceNode.child("Cells").find_child_by_attribute(
                 "DataArray","Name","connectivity").empty()) {
-        GEOS_ERROR("No property \"connectivity\" found in \"Cells\" node of " + filename);
+        GEOSX_ERROR("No property \"connectivity\" found in \"Cells\" node of " + filename);
     }
     if (pieceNode.child("Cells").find_child_by_attribute("DataArray","Name","types").empty()) {
-        GEOS_ERROR("No property \"types\" found in \"Cells\" node of " + filename);
+        GEOSX_ERROR("No property \"types\" found in \"Cells\" node of " + filename);
     }
     if (pieceNode.child("Cells").find_child_by_attribute(
                 "DataArray","Name","offsets").empty()) {
-        GEOS_ERROR("No property \"offsets\" found in \"Cells\" node of " + filename);
+        GEOSX_ERROR("No property \"offsets\" found in \"Cells\" node of " + filename);
     }
 }   
 
@@ -467,7 +452,7 @@ void VtuFile::LoadMesh(pugi::xml_document const & vtmDoc, DumbMesh& mesh){
         } else if(elementType == 9) {
             numQuad++;
         } else {
-            GEOS_ERROR("Element type " + std::to_string(elementType) + " not supported");
+            GEOSX_ERROR("Element type " + std::to_string(elementType) + " not supported");
         }
     }
 
@@ -535,7 +520,7 @@ void VtuFile::LoadMesh(pugi::xml_document const & vtmDoc, DumbMesh& mesh){
                    */
         }
         else {
-            GEOS_ERROR("Element not recognised");
+            GEOSX_ERROR("Element not recognised");
         }
     }
 

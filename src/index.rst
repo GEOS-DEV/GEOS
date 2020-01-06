@@ -1,33 +1,29 @@
 GEOSX Documentation
 =================================
 
-GEOSX is a simulation platform focused on providing streamlined development of HPC physics simulators.
-
-
+GEOSX is a simulation platform focused on enabling streamlined development of HPC physics simulators.
 
 
 .. toctree::
    :maxdepth: 2
 
-   docs/sphinx/getting_started
+   docs/sphinx/tutorials/Index
 
-   docs/sphinx/Tutorials/Tutorials_list
+   docs/sphinx/buildingGuide/Index
 
-   docs/sphinx/UserGuide/UserGuide
+   docs/sphinx/userGuide/Index
 
-   docs/sphinx/DeveloperGuide/DeveloperGuide
+   docs/sphinx/developerGuide/Index
 
-   docs/sphinx/MiniApps/MiniApps
+   docs/sphinx/miniApps/Index
 
    docs/sphinx/CompleteXMLSchema
 
-   docs/sphinx/CompleteDatastructure
+   docs/sphinx/Contributors
 
-   docs/sphinx/authors
+   docs/sphinx/Publications
 
-   docs/sphinx/publications
-
-   docs/sphinx/acknowledgements
+   docs/sphinx/Acknowledgements
 
 Indices and tables
 ==================
@@ -35,3 +31,9 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
+Doxygen
+========================
+.. raw:: html
+
+   <a href="doxygen_output/html/index.html">Link to Doxygen</a>

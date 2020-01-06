@@ -1,56 +1,53 @@
-
 #
 # Specify all headers
 #
 set(dataRepository_headers
     BufferOps_inline.hpp
     BufferOps.hpp
+    ExecutableGroup.hpp
+    Group.hpp
     InputFlags.hpp
     KeyIndexT.hpp
-    ManagedGroup.hpp
-    ExecutableGroup.hpp
     MappedVector.hpp
+    ObjectCatalog.hpp 
     ReferenceWrapper.hpp
-    SidreWrapper.hpp
-    ViewWrapper.hpp
-    ViewWrapperBase.hpp
     RestartFlags.hpp
+    ConduitRestart.hpp
+    WrapperHelpers.hpp
+    Wrapper.hpp
+    WrapperBase.hpp
+    xmlWrapper.hpp
     )
 
 #
 # Specify all sources
 #
 set(dataRepository_sources
-    ManagedGroup.cpp
-    SidreWrapper.cpp
-    ViewWrapper.cpp
-    ViewWrapperBase.cpp
+    ExecutableGroup.cpp
+    Group.cpp
+    ConduitRestart.cpp
+    Wrapper.cpp
+    WrapperBase.cpp
+    xmlWrapper.cpp
     )
 
-
 set( extraComponentsLinkList "")
-
 
 if( ENABLE_MPI )
   set( extraComponentsLinkList ${extraComponentsLinkList} mpi )
 endif()
 
+set( dependencyList common conduit fmt )
 
-
-
-set( dependencyList common cxx-utilities codingUtilities pugixml fileIO )
-if( CONDUIT_FOUND )
-  set( dependencyList ${dependencyList} conduit )
-endif()
-
-if( ATK_FOUND )
-  set( dependencyList ${dependencyList} sidre )
+if( BUILD_OBJ_LIBS )
+  set (dependencyList ${dependencyList} cxx-utilities codingUtilities pugixml fileIO)
 endif()
 
 blt_add_library( NAME                  dataRepository
                  SOURCES               ${dataRepository_sources}
                  HEADERS               ${dataRepository_headers}
                  DEPENDS_ON            ${dependencyList}
+                 OBJECT                ${buildAsObj}
                )
 
 target_include_directories( dataRepository PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
