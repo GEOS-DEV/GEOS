@@ -17,7 +17,7 @@
   */
 
 #include "PeriodicEvent.hpp"
-#include "managers/Functions/NewFunctionManager.hpp"
+#include "managers/Functions/FunctionManager.hpp"
 
 namespace geosx
 {
@@ -129,8 +129,8 @@ void PeriodicEvent::CheckOptionalFunctionThreshold(real64 const time,
                                                    Group * GEOSX_UNUSED_ARG( domain ))
 {
   // Grab the function
-  NewFunctionManager * functionManager = NewFunctionManager::Instance();
-  FunctionBase * function = functionManager->GetGroup<FunctionBase>(m_functionName);
+  FunctionManager & functionManager = FunctionManager::Instance();
+  FunctionBase * function = functionManager.GetGroup<FunctionBase>(m_functionName);
 
   real64 result = 0.0;
   if (m_functionInputObject.empty())

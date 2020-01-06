@@ -1,8 +1,5 @@
-<?xml version="1.0" ?>
-<!--# # -->
 
-<Problem xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="geos_v0.0.xsd">
-
+<Problem>
   
   <Solvers>
     <!-- This solver will open up a field called FEM_Nodes/test, where it will place the results of the functions.

@@ -16,21 +16,21 @@
  * @file Utilities.hpp
  */
 
-#ifndef UTILITIES_H_
-#define UTILITIES_H_
+#ifndef GEOSX_CODINGUTILITIES_UTILITIES_H_
+#define GEOSX_CODINGUTILITIES_UTILITIES_H_
 
 #include "common/DataTypes.hpp"
 
 namespace geosx
 {
 
-template< typename T >
-inline void CopyGlobalToLocal(arraySlice1d<localIndex const> const & globalToLocalRelation,
+template< typename T, int UNIT_STRIDE_DIM >
+inline void CopyGlobalToLocal(arraySlice1d< localIndex const, UNIT_STRIDE_DIM> const & globalToLocalRelation,
                               arraySlice1d< T const> const& globalField1,
                               arraySlice1d< T const> const& globalField2,
-                              arraySlice1d< T > & localField1,
-                              arraySlice1d< T > & localField2,
-                              localIndex N)
+                              arraySlice1d< T > const & localField1,
+                              arraySlice1d< T > const & localField2,
+                              localIndex const N)
 {
   for( localIndex a=0 ; a<N ; ++a )
   {
@@ -39,8 +39,8 @@ inline void CopyGlobalToLocal(arraySlice1d<localIndex const> const & globalToLoc
   }
 }
 
-template< localIndex N, typename T >
-inline void CopyGlobalToLocal(arraySlice1d<localIndex const > const & globalToLocalRelation,
+template< localIndex N, typename T, int UNIT_STRIDE_DIM >
+inline void CopyGlobalToLocal(arraySlice1d< localIndex const, UNIT_STRIDE_DIM > const & globalToLocalRelation,
                               arraySlice1d< T const > const & globalField1,
                               arraySlice1d< T const > const & globalField2,
                               T * const restrict localField1,
@@ -53,8 +53,8 @@ inline void CopyGlobalToLocal(arraySlice1d<localIndex const > const & globalToLo
   }
 }
 
-template< localIndex N, typename T >
-inline void CopyGlobalToLocal(arraySlice1d<localIndex> const & globalToLocalRelation,
+template< localIndex N, typename T, int UNIT_STRIDE_DIM >
+inline void CopyGlobalToLocal(arraySlice1d< localIndex, UNIT_STRIDE_DIM > const & globalToLocalRelation,
                               arraySlice1d< T > const & globalField1,
                               arraySlice1d< T > const & globalField2,
                               arraySlice1d< T > const & globalField3,
@@ -70,8 +70,8 @@ inline void CopyGlobalToLocal(arraySlice1d<localIndex> const & globalToLocalRela
   }
 }
 
-template< int N, typename T >
-inline void CopyGlobalToLocal(arraySlice1d<localIndex const> const & globalToLocalRelation,
+template< int N, typename T, int UNIT_STRIDE_DIM >
+inline void CopyGlobalToLocal(arraySlice1d< localIndex const, UNIT_STRIDE_DIM > const & globalToLocalRelation,
                               arraySlice1d< T const > const & globalField1,
                               arraySlice1d< T const > const & globalField2,
                               arraySlice1d< T const > const & globalField3,
@@ -102,7 +102,7 @@ template< typename T1, typename T2, typename SORTED >
 T2& stlMapLookup( mapBase<T1,T2, SORTED>& Map, const T1& key )
 {
   typename mapBase<T1, T2, SORTED>::iterator MapIter = Map.find( key );
-  GEOS_ERROR_IF(MapIter==Map.end(), "Key not found: " << key);
+  GEOSX_ERROR_IF(MapIter==Map.end(), "Key not found: " << key);
   return MapIter->second;
 }
 
@@ -209,4 +209,4 @@ inline void applyChainRuleInPlace( localIndex N,
 
 } // namespace geosx
 
-#endif /* UTILITIES_H_ */
+#endif /* GEOSX_CODINGUTILITIES_UTILITIES_H_ */

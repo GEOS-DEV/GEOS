@@ -78,13 +78,13 @@ real64 Centroid_3DPolygon( localIndex const * const pointsIndices,
     {
       for( localIndex a=0 ; a<numPoints ; ++a )
       {
-        GEOS_LOG_RANK("Points: " << points[pointsIndices[a]](0) << " "
+        GEOSX_LOG_RANK("Points: " << points[pointsIndices[a]](0) << " "
                       << points[pointsIndices[a]](1) << " "
                       << points[pointsIndices[a]](2) << " "
                       << pointsIndices[a]);
       }
 
-      GEOS_ERROR("Negative area found : " << area );
+      GEOSX_ERROR("Negative area found : " << area );
     }
     else
     {
@@ -233,7 +233,7 @@ real64 Centroid_3DPolygon( localIndex const * const pointsIndices,
     }
     else
     {
-      GEOS_ERROR("Zero area calculated!");
+      GEOSX_ERROR("Zero area calculated!");
     }
   }
   else if( numPoints==1 )

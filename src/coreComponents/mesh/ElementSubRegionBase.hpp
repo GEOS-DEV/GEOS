@@ -13,11 +13,11 @@
  */
 
 /**
- * @file CellBase.hpp
+ * @file ElementSubRegionBase.hpp
  */
 
-#ifndef SRC_CORECOMPONENTS_MESH_CELLBASE_HPP_
-#define SRC_CORECOMPONENTS_MESH_CELLBASE_HPP_
+#ifndef GEOSX_MESH_ELEMENTSUBREGIONBASE_HPP_
+#define GEOSX_MESH_ELEMENTSUBREGIONBASE_HPP_
 
 #include "managers/ObjectManagerBase.hpp"
 #include "finiteElement/ElementLibrary/FiniteElementBase.h"
@@ -32,6 +32,7 @@ class DomainPartition;
 class ElementSubRegionBase : public ObjectManagerBase
 {
 public:
+
   ElementSubRegionBase( string const & name, dataRepository::Group * const parent );
   ~ElementSubRegionBase();
 
@@ -63,10 +64,6 @@ public:
   {
     static constexpr auto constitutiveModelsString = "ConstitutiveModels";
   };
-
-
-  virtual arraySlice1dRval<localIndex const> nodeList( localIndex const k ) const = 0;
-  virtual arraySlice1dRval<localIndex> nodeList( localIndex const k ) = 0;
 
 
   /**
@@ -150,4 +147,4 @@ protected:
 
 } /* namespace geosx */
 
-#endif /* SRC_CORECOMPONENTS_MESH_CELLBASE_HPP_ */
+#endif /* GEOSX_MESH_ELEMENTSUBREGIONBASE_HPP_ */

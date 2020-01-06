@@ -72,11 +72,11 @@ void HypreSolver::solve( HypreMatrix & mat,
                          HypreVector & sol,
                          HypreVector & rhs )
 {
-  GEOS_ASSERT_MSG( mat.isClosed(),
+  GEOSX_ASSERT_MSG( mat.isClosed(),
                    "Matrix has not been closed");
-  GEOS_ASSERT_MSG( sol.unwrappedPointer() != nullptr,
+  GEOSX_ASSERT_MSG( sol.unwrappedPointer() != nullptr,
                    "Invalid solution vector");
-  GEOS_ASSERT_MSG( rhs.unwrappedPointer() != nullptr,
+  GEOSX_ASSERT_MSG( rhs.unwrappedPointer() != nullptr,
                    "Invalid right-hand side vector");
 
 //{
@@ -157,13 +157,13 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
 
   if( m_parameters.preconditionerType == "none" )
   {
-    GEOS_ERROR( "precond none: Not implemented yet" );
+    GEOSX_ERROR( "precond none: Not implemented yet" );
 //    solver.SetAztecOption( AZ_precond, AZ_none );
   }
   else if( m_parameters.preconditionerType == "jacobi" )
   {
 //    solver.SetAztecOption( AZ_precond, AZ_Jacobi );
-    GEOS_ERROR( "precond Jacobi: Not implemented yet" );
+    GEOSX_ERROR( "precond Jacobi: Not implemented yet" );
   }
   else if( m_parameters.preconditionerType == "ilu" )
   {
@@ -171,7 +171,7 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
 //    solver.SetAztecOption( AZ_overlap, m_parameters.dd.overlap );
 //    solver.SetAztecOption( AZ_subdomain_solve, AZ_ilu );
 //    solver.SetAztecOption( AZ_graph_fill, m_parameters.ilu.fill );
-    GEOS_ERROR( "precond ilu: Not implemented yet" );
+    GEOSX_ERROR( "precond ilu: Not implemented yet" );
   }
   else if( m_parameters.preconditionerType == "icc" )
   {
@@ -179,7 +179,7 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
 //    solver.SetAztecOption( AZ_overlap, m_parameters.dd.overlap );
 //    solver.SetAztecOption( AZ_subdomain_solve, AZ_icc );
 //    solver.SetAztecOption( AZ_graph_fill, m_parameters.ilu.fill );
-    GEOS_ERROR( "precond icc: Not implemented yet" );
+    GEOSX_ERROR( "precond icc: Not implemented yet" );
   }
   else if( m_parameters.preconditionerType == "ilut" )
   {
@@ -229,7 +229,7 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
   }
   else
   {
-    GEOS_ERROR( "The requested preconditionerType doesn't seem to exist" );
+    GEOSX_ERROR( "The requested preconditionerType doesn't seem to exist" );
   }
 
   // Choose the solver type - set parameters - solve
@@ -306,7 +306,7 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
   }
   else
   {
-    GEOS_ERROR( "The requested linear solverType doesn't seem to exist" );
+    GEOSX_ERROR( "The requested linear solverType doesn't seem to exist" );
   }
 
   // Destroy preconditioner

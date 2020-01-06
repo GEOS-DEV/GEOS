@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef CORECOMPONENTS_WELLS_WELLELEMENTSUBREGION_HPP_
-#define CORECOMPONENTS_WELLS_WELLELEMENTSUBREGION_HPP_
+#ifndef GEOSX_WELLS_WELLELEMENTSUBREGION_HPP_
+#define GEOSX_WELLS_WELLELEMENTSUBREGION_HPP_
 
 #include "mesh/ElementSubRegionBase.hpp"
 #include "mesh/InterObjectRelation.hpp"
@@ -31,9 +31,17 @@ class WellElementSubRegion : public ElementSubRegionBase
 {
 public:
 
-  using NodeMapType=FixedOneToManyRelation;
-  using EdgeMapType=FixedOneToManyRelation; // unused but needed in MeshLevel::GenerateAdjacencyLists
-  using FaceMapType=FixedOneToManyRelation; // unused but needed in MeshLevel::GenerateAdjacencyLists
+#if defined( GEOSX_USE_CUDA )
+  using NODE_MAP_PERMUTATION = RAJA::PERM_JI;
+#else
+  using NODE_MAP_PERMUTATION = RAJA::PERM_IJ;
+#endif
+
+  static constexpr int NODE_MAP_UNIT_STRIDE_DIM = LvArray::getStrideOneDimension( NODE_MAP_PERMUTATION {} );
+
+  using NodeMapType = InterObjectRelation< array2d< localIndex, NODE_MAP_PERMUTATION > >;
+  using EdgeMapType = FixedOneToManyRelation; // unused but needed in MeshLevel::GenerateAdjacencyLists
+  using FaceMapType = FixedOneToManyRelation; // unused but needed in MeshLevel::GenerateAdjacencyLists
 
   /**
    * @brief enumeration for values in segmentStatusList parameter of Generate()
@@ -118,7 +126,7 @@ public:
   /**
    * @return the element to node map
    */
-  FixedOneToManyRelation & nodeList() 
+  NodeMapType & nodeList() 
   { 
     return m_toNodesRelation; 
   }
@@ -126,27 +134,9 @@ public:
   /**
    * @return the element to node map
    */
-  FixedOneToManyRelation const & nodeList() const 
+  NodeMapType const & nodeList() const 
   { 
     return m_toNodesRelation; 
-  }
-
-  /**
-   * @brief returns the element to node relations.
-   * @param[in] k the index of the element.
-   */
-  virtual arraySlice1dRval<localIndex const> nodeList( localIndex const k ) const override
-  { 
-    return m_toNodesRelation[k];
-  }
-
-  /**
-   * @brief returns the element to node relations.
-   * @param[in] k the index of the element.
-   */
-  virtual arraySlice1dRval<localIndex> nodeList( localIndex const k ) override
-  {
-    return m_toNodesRelation[k];
   }
 
   /**
@@ -410,5 +400,5 @@ private:
 
 } /* namespace geosx */
 
-#endif /* SRC_CORECOMPONENTS_WELLS_WELLELEMENTSUBREGION_HPP_ */
+#endif /* GEOSX_WELLS_WELLELEMENTSUBREGION_HPP_ */
 

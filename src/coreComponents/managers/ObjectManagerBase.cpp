@@ -18,6 +18,7 @@
 
 #include "ObjectManagerBase.hpp"
 #include "common/TimingMacros.hpp"
+#include "mpiCommunications/MpiWrapper.hpp"
 
 namespace geosx
 {
@@ -75,7 +76,7 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( SortedArrayView<localIndex co
   newset.clear();
 
   localIndex const numObjects = size();
-  GEOS_ERROR_IF( map.size( 0 ) != numObjects, "Size mismatch. " << map.size( 0 ) << " != " << numObjects );
+  GEOSX_ERROR_IF( map.size( 0 ) != numObjects, "Size mismatch. " << map.size( 0 ) << " != " << numObjects );
 
   if ( setName == "all" )
   {
@@ -107,7 +108,7 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( SortedArrayView<localIndex co
   newset.clear();
 
   localIndex const numObjects = size();
-  GEOS_ERROR_IF( map.size() != numObjects, "Size mismatch. " << map.size() << " != " << numObjects );
+  GEOSX_ERROR_IF( map.size() != numObjects, "Size mismatch. " << map.size() << " != " << numObjects );
 
   if ( setName == "all" )
   {
@@ -138,7 +139,7 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( SortedArrayView<localIndex co
   newset.clear();
 
   localIndex const numObjects = size();
-  GEOS_ERROR_IF( map.size() != numObjects, "Size mismatch. " << map.size() << " != " << numObjects );
+  GEOSX_ERROR_IF( map.size() != numObjects, "Size mismatch. " << map.size() << " != " << numObjects );
 
   if ( setName == "all" )
   {
@@ -317,7 +318,7 @@ localIndex ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
   localIndex unpackedSize = 0;
   string groupName;
   unpackedSize += bufferOps::Unpack( buffer, groupName );
-  GEOS_ERROR_IF( groupName != this->getName(), "ObjectManagerBase::Unpack(): group names do not match");
+  GEOSX_ERROR_IF( groupName != this->getName(), "ObjectManagerBase::Unpack(): group names do not match");
 
   int sendingRank;
   unpackedSize += bufferOps::Unpack( buffer, sendingRank );
@@ -329,7 +330,7 @@ localIndex ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
 
     string wrappersLabel;
     unpackedSize += bufferOps::Unpack( buffer, wrappersLabel);
-    GEOS_ERROR_IF( wrappersLabel != "Wrappers", "ObjectManagerBase::Unpack(): wrapper label incorrect");
+    GEOSX_ERROR_IF( wrappersLabel != "Wrappers", "ObjectManagerBase::Unpack(): wrapper label incorrect");
 
     localIndex numWrappers;
     unpackedSize += bufferOps::Unpack( buffer, numWrappers);
@@ -349,11 +350,11 @@ localIndex ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
   {
     string subGroups;
     unpackedSize += bufferOps::Unpack( buffer, subGroups );
-    GEOS_ERROR_IF( subGroups != "SubGroups", "Group::Unpack(): group names do not match");
+    GEOSX_ERROR_IF( subGroups != "SubGroups", "Group::Unpack(): group names do not match");
 
     decltype( this->GetSubGroups().size()) numSubGroups;
     unpackedSize += bufferOps::Unpack( buffer, numSubGroups );
-    GEOS_ERROR_IF( numSubGroups != this->GetSubGroups().size(), "Group::Unpack(): incorrect number of subGroups");
+    GEOSX_ERROR_IF( numSubGroups != this->GetSubGroups().size(), "Group::Unpack(): incorrect number of subGroups");
 
     for( auto const & index : this->GetSubGroups() )
     {
@@ -365,7 +366,7 @@ localIndex ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
   }
 
   unpackedSize += bufferOps::Unpack( buffer, groupName );
-  GEOS_ERROR_IF( groupName != this->getName(), "ObjectManagerBase::Unpack(): group names do not match");
+  GEOSX_ERROR_IF( groupName != this->getName(), "ObjectManagerBase::Unpack(): group names do not match");
 
   return unpackedSize;
 }
@@ -421,7 +422,7 @@ localIndex ObjectManagerBase::UnpackParentChildMaps( buffer_unit_type const * & 
   {
     string shouldBeParentIndexString;
     unpackedSize += bufferOps::Unpack( buffer, shouldBeParentIndexString );
-    GEOS_ERROR_IF( shouldBeParentIndexString != viewKeyStruct::parentIndexString,
+    GEOSX_ERROR_IF( shouldBeParentIndexString != viewKeyStruct::parentIndexString,
                    "value read from buffer is:"<<shouldBeParentIndexString<<". It should be "<<viewKeyStruct::parentIndexString);
     unpackedSize += bufferOps::Unpack( buffer,
                                        *parentIndex,
@@ -436,7 +437,7 @@ localIndex ObjectManagerBase::UnpackParentChildMaps( buffer_unit_type const * & 
   {
     string shouldBeChildIndexString;
     unpackedSize += bufferOps::Unpack( buffer, shouldBeChildIndexString );
-    GEOS_ERROR_IF( shouldBeChildIndexString != viewKeyStruct::childIndexString,
+    GEOSX_ERROR_IF( shouldBeChildIndexString != viewKeyStruct::childIndexString,
                    "value read from buffer is:"<<shouldBeChildIndexString<<". It should be "<<viewKeyStruct::childIndexString);
     unpackedSize += bufferOps::Unpack( buffer,
                                        *childIndex,
@@ -484,7 +485,7 @@ localIndex ObjectManagerBase::UnpackSets( buffer_unit_type const *& buffer )
   localIndex unpackedSize = 0;
   string name;
   unpackedSize += bufferOps::Unpack( buffer, name );
-  GEOS_ERROR_IF( name != m_sets.getName(), "ObjectManagerBase::UnpackSets(): group names do not match");
+  GEOSX_ERROR_IF( name != m_sets.getName(), "ObjectManagerBase::UnpackSets(): group names do not match");
 
   localIndex numUnpackedSets;
   unpackedSize += bufferOps::Unpack( buffer, numUnpackedSets );
@@ -590,11 +591,11 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer
   localIndex unpackedSize = 0;
   string groupName;
   unpackedSize += bufferOps::Unpack( buffer, groupName );
-  GEOS_ERROR_IF( groupName != this->getName(), "ObjectManagerBase::Unpack(): group names do not match");
+  GEOSX_ERROR_IF( groupName != this->getName(), "ObjectManagerBase::Unpack(): group names do not match");
 
   string localToGlobalString;
   unpackedSize += bufferOps::Unpack( buffer, localToGlobalString);
-  GEOS_ERROR_IF( localToGlobalString != viewKeyStruct::localToGlobalMapString, "ObjectManagerBase::Unpack(): label incorrect");
+  GEOSX_ERROR_IF( localToGlobalString != viewKeyStruct::localToGlobalMapString, "ObjectManagerBase::Unpack(): label incorrect");
 
   int const rank = MpiWrapper::Comm_rank(MPI_COMM_GEOSX );
   int sendingRank;
@@ -632,7 +633,7 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer
 
         ++numNewIndices;
 
-        GEOS_ERROR_IF( packList.size() != 0,
+        GEOSX_ERROR_IF( packList.size() != 0,
                        "ObjectManagerBase::Unpack(): packList specified, "
                        "but a new globalIndex is unpacked");
       }
@@ -674,7 +675,7 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer
   {
     string parentIndicesString;
     unpackedSize += bufferOps::Unpack( buffer, parentIndicesString );
-    GEOS_ERROR_IF( parentIndicesString != viewKeyStruct::parentIndexString, "ObjectManagerBase::Unpack(): label incorrect");
+    GEOSX_ERROR_IF( parentIndicesString != viewKeyStruct::parentIndexString, "ObjectManagerBase::Unpack(): label incorrect");
     unpackedSize += bufferOps::Unpack( buffer,
                                        *parentIndices,
                                        packList,
@@ -687,11 +688,11 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer
   {
     string subGroups;
     unpackedSize += bufferOps::Unpack( buffer, subGroups );
-    GEOS_ERROR_IF( subGroups != "SubGroups", "Group::Unpack(): group names do not match");
+    GEOSX_ERROR_IF( subGroups != "SubGroups", "Group::Unpack(): group names do not match");
 
     decltype( this->GetSubGroups().size()) numSubGroups;
     unpackedSize += bufferOps::Unpack( buffer, numSubGroups );
-    GEOS_ERROR_IF( numSubGroups != this->GetSubGroups().size(), "Group::Unpack(): incorrect number of subGroups");
+    GEOSX_ERROR_IF( numSubGroups != this->GetSubGroups().size(), "Group::Unpack(): incorrect number of subGroups");
 
     for( auto const & index : this->GetSubGroups() )
     {
@@ -751,9 +752,8 @@ localIndex ObjectManagerBase::GetNumberOfLocalIndices() const
   //return std::count_if( m_ghostRank.begin(), m_ghostRank.end(), [](integer i)->localIndex {return i==-1;} );
 }
 
-void ObjectManagerBase::SetReceiveLists(  )
+void ObjectManagerBase::SetReceiveLists()
 {
-
   map<int,localIndex_array>  receiveIndices;
   for( localIndex a=0 ; a<size() ; ++a )
   {
@@ -770,7 +770,6 @@ void ObjectManagerBase::SetReceiveLists(  )
     localIndex_array & nodeAdjacencyList = neighborData->getReference<localIndex_array>( m_ObjectManagerBaseViewKeys.ghostsToReceive );
     nodeAdjacencyList = iter->second;
   }
-
 }
 
 integer ObjectManagerBase::SplitObject( localIndex const indexToSplit,
@@ -868,9 +867,9 @@ void ObjectManagerBase::SetMaxGlobalIndex()
                          MPI_COMM_GEOSX );
 }
 
-void ObjectManagerBase::CleanUpMap( std::set<localIndex> const & targetIndices,
-                                    array1d<set<localIndex> > & upmap,
-                                    array2d<localIndex> const & downmap )
+void ObjectManagerBase::CleanUpMap( std::set< localIndex > const & targetIndices,
+                                    array1d< set< localIndex > > & upmap,
+                                    arrayView2d< localIndex const > const & downmap )
 {
   for( auto const & targetIndex : targetIndices )
   {
@@ -900,7 +899,7 @@ void ObjectManagerBase::CleanUpMap( std::set<localIndex> const & targetIndices,
 
 void ObjectManagerBase::CleanUpMap( std::set<localIndex> const & targetIndices,
                                     ArrayOfSetsView< localIndex > const & upmap,
-                                    array2d< localIndex const > const & downmap )
+                                    arrayView2d< localIndex const > const & downmap )
 {
   for( localIndex const targetIndex : targetIndices )
   {
@@ -934,7 +933,7 @@ void ObjectManagerBase::CleanUpMap( std::set<localIndex> const & targetIndices,
 
 void ObjectManagerBase::CleanUpMap( std::set<localIndex> const & targetIndices,
                                     array1d<set<localIndex> > & upmap,
-                                    array1d< array1d<localIndex> > const & downmap )
+                                    arrayView1d< arrayView1d< localIndex const > const > const & downmap )
 {
   for( auto const & targetIndex : targetIndices )
   {
@@ -964,7 +963,7 @@ void ObjectManagerBase::CleanUpMap( std::set<localIndex> const & targetIndices,
 
 void ObjectManagerBase::CleanUpMap( std::set< localIndex > const & targetIndices,
                                     ArrayOfSetsView< localIndex > const & upmap,
-                                    array1d< array1d< localIndex > > const & downmap )
+                                    arrayView1d< arrayView1d< localIndex const > const > const & downmap )
 {
   for( localIndex const targetIndex : targetIndices )
   {

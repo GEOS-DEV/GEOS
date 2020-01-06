@@ -17,8 +17,8 @@
  *
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_FINITEVOLUME_FLUXSTENCIL_HPP_
-#define SRC_COMPONENTS_CORE_SRC_FINITEVOLUME_FLUXSTENCIL_HPP_
+#ifndef GEOSX_FINITEVOLUME_FLUXSTENCIL_HPP_
+#define GEOSX_FINITEVOLUME_FLUXSTENCIL_HPP_
 
 #include <common/DataTypes.hpp>
 #include "codingUtilities/Utilities.hpp"
@@ -124,7 +124,7 @@ void FluxStencil<INDEX, WEIGHT>::add( localIndex const numPts,
                                       WEIGHT const * const weights,
                                       localIndex const connectorIndex )
 {
-  GEOS_ERROR_IF( numPts >= MAX_STENCIL_SIZE, "Maximum stencil size exceeded" );
+  GEOSX_ERROR_IF( numPts >= MAX_STENCIL_SIZE, "Maximum stencil size exceeded" );
 
   stackArray1d<Entry, MAX_STENCIL_SIZE> entries(numPts);
   for (localIndex i = 0; i < numPts; ++i)
@@ -161,4 +161,4 @@ void FluxStencil<INDEX, WEIGHT>::compress()
 }
 
 
-#endif //SRC_COMPONENTS_CORE_SRC_FINITEVOLUME_FLUXSTENCIL_HPP_
+#endif //GEOSX_FINITEVOLUME_FLUXSTENCIL_HPP_

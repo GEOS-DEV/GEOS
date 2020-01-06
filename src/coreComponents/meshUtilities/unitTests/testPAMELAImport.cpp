@@ -13,17 +13,15 @@
  */
 
 
-#include "gtest/gtest.h"
-
+// Source includes
+#include "managers/initialization.hpp"
 #include "dataRepository/xmlWrapper.hpp"
-
 #include "tests/meshFileNames.hpp"
-
 #include "meshUtilities/MeshManager.hpp"
 
-#include "SetSignalHandling.hpp"
+// TPL includes
+#include <gtest/gtest.h>
 
-#include "stackTrace.hpp"
 
 using namespace geosx;
 using namespace geosx::dataRepository;
@@ -35,8 +33,7 @@ TEST( PAMELAImport, testXML )
   // Load the mesh
   std::stringstream inputStreamMesh;
   inputStreamMesh <<
-  "<?xml version=\"1.0\" ?>" <<
-  "  <Mesh xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"geos_v0.0.xsd\">" <<
+  "<Mesh>" <<
   "  <PAMELAMeshGenerator name=\"ToyModel\" " <<
   "  fieldsToImport=\"{barycenter}\""<<
   "  fieldNamesInGEOSX=\"{barycenter}\""<<
@@ -65,8 +62,7 @@ TEST( PAMELAImport, testXML )
   // Create the ElementRegions
   std::stringstream inputStreamRegion;
   inputStreamRegion <<
-  "<?xml version=\"1.0\" ?>" <<
-  "  <ElementRegions xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"geos_v0.0.xsd\">" <<
+  "<ElementRegions>" <<
   "  <CellElementRegion name=\"0\" cellBlocks=\"{0_TETRA}\" materialList=\"{water, rock}\"/>" <<
   "  <CellElementRegion name=\"1\" cellBlocks=\"{1_TETRA}\" materialList=\"{water, rock}\"/>" <<
   "  <CellElementRegion name=\"2\" cellBlocks=\"{2_TETRA}\" materialList=\"{water, rock}\"/>" <<
@@ -104,38 +100,22 @@ TEST( PAMELAImport, testXML )
                                      centerProperty[er][esr][ei][1],
                                      centerProperty[er][esr][ei][2] );
         center -= centerFromProperty;
-        GEOS_ERROR_IF( center.L2_Norm() > meshBody->getGlobalLengthScale() * 1e-8, "Property import of centers if wrong");
+        GEOSX_ERROR_IF( center.L2_Norm() > meshBody->getGlobalLengthScale() * 1e-8, "Property import of centers if wrong");
       }
     });
   });
 
 }
 
-int main(int argc, char** argv)
+int main( int argc, char** argv )
 {
-  ::testing::InitGoogleTest(&argc, argv);
+  ::testing::InitGoogleTest( &argc, argv );
 
-#ifdef GEOSX_USE_MPI
-
-  MPI_Init(&argc,&argv);
-
-  MPI_Comm_dup( MPI_COMM_WORLD, &MPI_COMM_GEOSX );
-
-  logger::InitializeLogger(MPI_COMM_GEOSX);
-#else
-  logger::InitializeLogger():
-#endif
-
-  cxx_utilities::setSignalHandling(cxx_utilities::handler1);
+  geosx::basicSetup( argc, argv );
 
   int const result = RUN_ALL_TESTS();
 
-  logger::FinalizeLogger();
-
-#ifdef GEOSX_USE_MPI
-  MPI_Comm_free( &MPI_COMM_GEOSX );
-  MPI_Finalize();
-#endif
+  geosx::basicCleanup();
 
   return result;
 }

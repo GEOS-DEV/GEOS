@@ -21,13 +21,6 @@ Element: BlackOilFluid
 .. include:: ../../coreComponents/fileIO/schema/docs/BlackOilFluid.rst
 
 
-.. _XML_Blueprint:
-
-Element: Blueprint
-==================
-.. include:: ../../coreComponents/fileIO/schema/docs/Blueprint.rst
-
-
 .. _XML_Box:
 
 Element: Box
@@ -131,13 +124,6 @@ Element: Cylinder
 Element: Dirichlet
 ==================
 .. include:: ../../coreComponents/fileIO/schema/docs/Dirichlet.rst
-
-
-.. _XML_DummySolver:
-
-Element: DummySolver
-====================
-.. include:: ../../coreComponents/fileIO/schema/docs/DummySolver.rst
 
 
 .. _XML_ElementRegions:
@@ -322,6 +308,20 @@ Element: MeshFile
 .. include:: ../../coreComponents/fileIO/schema/docs/MeshFile.rst
 
 
+.. _XML_MultiPhaseMultiComponentFluid:
+
+Element: MultiPhaseMultiComponentFluid
+======================================
+.. include:: ../../coreComponents/fileIO/schema/docs/MultiPhaseMultiComponentFluid.rst
+
+
+.. _XML_NonlinearSolverParameters:
+
+Element: NonlinearSolverParameters
+==================================
+.. include:: ../../coreComponents/fileIO/schema/docs/NonlinearSolverParameters.rst
+
+
 .. _XML_NumericalMethods:
 
 Element: NumericalMethods
@@ -441,6 +441,20 @@ Element: SinglePhaseWell
 .. include:: ../../coreComponents/fileIO/schema/docs/SinglePhaseWell.rst
 
 
+.. _XML_SolidMechanicsLagrangianSSLE:
+
+Element: SolidMechanicsLagrangianSSLE
+=====================================
+.. include:: ../../coreComponents/fileIO/schema/docs/SolidMechanicsLagrangianSSLE.rst
+
+
+.. _XML_SolidMechanics_LagrangianFEM:
+
+Element: SolidMechanics_LagrangianFEM
+=====================================
+.. include:: ../../coreComponents/fileIO/schema/docs/SolidMechanics_LagrangianFEM.rst
+
+
 .. _XML_SoloEvent:
 
 Element: SoloEvent
@@ -541,13 +555,6 @@ Datastructure: BasisFunctions
 Datastructure: BlackOilFluid
 ============================
 .. include:: ../../coreComponents/fileIO/schema/docs/BlackOilFluid_other.rst
-
-
-.. _DATASTRUCTURE_Blueprint:
-
-Datastructure: Blueprint
-========================
-.. include:: ../../coreComponents/fileIO/schema/docs/Blueprint_other.rst
 
 
 .. _DATASTRUCTURE_Box:
@@ -660,13 +667,6 @@ Datastructure: Cylinder
 Datastructure: Dirichlet
 ========================
 .. include:: ../../coreComponents/fileIO/schema/docs/Dirichlet_other.rst
-
-
-.. _DATASTRUCTURE_DummySolver:
-
-Datastructure: DummySolver
-==========================
-.. include:: ../../coreComponents/fileIO/schema/docs/DummySolver_other.rst
 
 
 .. _DATASTRUCTURE_ElementRegions:
@@ -872,6 +872,20 @@ Datastructure: MeshFile
 .. include:: ../../coreComponents/fileIO/schema/docs/MeshFile_other.rst
 
 
+.. _DATASTRUCTURE_MultiPhaseMultiComponentFluid:
+
+Datastructure: MultiPhaseMultiComponentFluid
+============================================
+.. include:: ../../coreComponents/fileIO/schema/docs/MultiPhaseMultiComponentFluid_other.rst
+
+
+.. _DATASTRUCTURE_NonlinearSolverParameters:
+
+Datastructure: NonlinearSolverParameters
+========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/NonlinearSolverParameters_other.rst
+
+
 .. _DATASTRUCTURE_NumericalMethods:
 
 Datastructure: NumericalMethods
@@ -989,6 +1003,20 @@ Datastructure: SinglePhaseFlow
 Datastructure: SinglePhaseWell
 ==============================
 .. include:: ../../coreComponents/fileIO/schema/docs/SinglePhaseWell_other.rst
+
+
+.. _DATASTRUCTURE_SolidMechanicsLagrangianSSLE:
+
+Datastructure: SolidMechanicsLagrangianSSLE
+===========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/SolidMechanicsLagrangianSSLE_other.rst
+
+
+.. _DATASTRUCTURE_SolidMechanics_LagrangianFEM:
+
+Datastructure: SolidMechanics_LagrangianFEM
+===========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/SolidMechanics_LagrangianFEM_other.rst
 
 
 .. _DATASTRUCTURE_SoloEvent:

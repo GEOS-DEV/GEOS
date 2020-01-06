@@ -22,7 +22,11 @@ set( finiteVolume_sources
      TwoPointFluxApproximation.cpp
    )
 
-set( dependencyList dataRepository codingUtilities managers )
+if ( BUILD_OBJ_LIBS )
+  set( dependencyList dataRepository codingUtilities managers)
+else()
+  set( dependencyList common)
+endif()
 
 if ( ENABLE_OPENMP )
   set( dependencyList ${dependencyList} openmp )
@@ -32,11 +36,15 @@ if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
 endif()
 
+if ( ENABLE_HYPRE )
+  set( dependencyList ${dependencyList} hypre )
+endif()
+
 blt_add_library( NAME                  finiteVolume
                  SOURCES               ${finiteVolume_sources}
                  HEADERS               ${finiteVolume_headers}
                  DEPENDS_ON            ${dependencyList}
-                 #OBJECT                TRUE
+                 OBJECT                ${buildAsObj}
                )
                
 target_include_directories( finiteVolume PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)

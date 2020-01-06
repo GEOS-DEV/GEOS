@@ -1,23 +1,22 @@
-<?xml version="1.0" ?>
-<!--# # -->
 
-<Problem xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="geos_v0.0.xsd">
-
+<Problem>
   
   <Solvers
     gravityVector="0.0, 0.0, -9.81">
 
     <SolidMechanicsLagrangianSSLE name="lagSolve" 
                                   timeIntegrationOption="QuasiStatic"
-                                  verboseLevel="0"
+                                  logLevel="0"
                                   discretization="FE1"
                                   targetRegions="{Region2}"
                                   solidMaterialName="granite"
                                   >
-      <SystemSolverParameters krylovTol="1.0e-10"
-                              newtonTol="1.0e-3"
-                              maxIterNewton="8"
-                              verbosityFlag="0"/>
+      <NonlinearSolverParameters name="nlsp"
+                                 newtonTol="1.0e-3"
+                                 newtonMaxIter="8"/>
+      <SystemSolverParameters name="ssp"
+                              krylovTol="1.0e-10"
+                              logLevel="0"/>
      </SolidMechanicsLagrangianSSLE>
   
     <SurfaceGenerator name="SurfaceGen"
@@ -26,8 +25,9 @@
                       nodeBasedSIF="1"
                       discretization="FE1"
                       fractureRegion="Fracture"
-                      verboseLevel="1"
-                      targetRegions="{Region2}">
+                      logLevel="1"
+                      targetRegions="{Region2}"
+                      mpiCommOrder="1">
     </SurfaceGenerator>
   </Solvers>
 
@@ -68,7 +68,7 @@
     <PeriodicEvent name="restarts"
                    timeFrequency="0.5"
                    targetExactTimestep="0"
-                   target="/Outputs/sidreRestart"/>
+                   target="/Outputs/restartOutput"/>
   </Events>
 
 
@@ -90,6 +90,7 @@
   <ElementRegions>
     <CellElementRegion name="Region2" cellBlocks="{cb1}" materialList="{granite}" />
     <FaceElementRegion name="Fracture"
+                       defaultAperture="1.0e-4"
                        materialList="{granite}"/>
   </ElementRegions>
 
@@ -165,7 +166,7 @@
  
   <Outputs>
     <Silo name="siloOutput" plotLevel="5" parallelThreads="1" plotFileRoot="simple2D"/>
-    <Restart name="sidreRestart"/>
+    <Restart name="restartOutput"/>
   </Outputs>
 
 

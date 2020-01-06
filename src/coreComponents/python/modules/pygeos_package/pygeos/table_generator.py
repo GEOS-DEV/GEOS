@@ -1,38 +1,69 @@
+"""Tools for reading/writing GEOSX ascii tables"""
 
-from numpy import array, loadtxt
+import numpy as np
 
 
-def writeGEOSTable(spatial, properties):
-  # Open spatial files
-  spatial_names = ('x', 'y', 'z', 't')
-  for ii in range(0, len(spatial)):
-    with open('%s.txt' % spatial_names[ii], 'w') as f:
-      for p in spatial[ii]:
-        f.write('%s\n' % (p))
+def write_GEOS_table(axes_values, properties, axes_names=['x', 'y', 'z', 't'], string_format='%1.5e'):
+  """Write an GEOS-compatible ascii table.
 
-  # Open property files
+     @param axes_values List of arrays containing the coordinates for each axis of the table.
+     @param properties Dict of arrays with dimensionality/size defined by the axes_values
+     @param axes_names Names for each axis (default = ['x', 'y', 'z', 't'])
+     @param string_format Format for output values (default = %1.5e)
+  """
+
+  # Check to make sure the axes/property files have the correct shape
+  axes_shape = tuple([len(x) for x in axes_values])
   for k in properties.keys():
-    with open('%s.txt' % (k), 'w') as f:
-      # Header
-      for ii in range(0, len(spatial)):
-        f.write('%s\n' % (len(spatial[ii])))
+    if (np.shape(properties[k]) != axes_shape):
+      raise Exception("Shape of parameter %s is incompatible with given axes" % (k))
 
-      # Table
-      values = array(properties[k]).reshape(-1, order='F')
-      for v in values:
-        f.write('%1.3e\n' % (v))
+  # Write axes files
+  for ii in range(0, len(axes_values)):
+    np.savetxt('%s.geos' % (axes_names[ii]), axes_values[ii], fmt=string_format, delimiter=',')
+
+  # Write property files
+  for k in properties.keys():
+    tmp = np.reshape(properties[k], (-1), order='F')
+    np.savetxt('%s.geos' % (k), tmp, fmt=string_format, delimiter=',')
 
 
-def readGEOSTable(sfiles, pfiles):
-  # Open spatial files
-  spatial = []
-  for s in sfiles:
-    spatial.append(loadtxt('%s.txt' % (s), unpack=True))
+def read_GEOS_table(axes_files, property_files):
+  """Read an GEOS-compatible ascii table.
+
+     @param axes_files List of the axes file names in order.
+     @param property_files List of property file names
+     @return List of axis definitions, dict of property values
+  """
+  axes_values = []
+  for f in axes_files:
+    axes_values.append(np.loadtxt('%s.geos' % (f), unpack=True, delimiter=','))
+  axes_shape = tuple([len(x) for x in axes_values])
 
   # Open property files
   properties = {}
-  for p in pfiles:
-    tmp = loadtxt('%s.txt' % (p), unpack=True)
-    properties[p] = tmp[3:].reshape(tmp[:3], order='F')
+  for f in property_files:
+    tmp = np.loadtxt('%s.geos' % (f), unpack=True, delimiter=',')
+    properties[f] = np.reshape(tmp, axes_shape, order='F')
 
-  return spatial, properties
+  return axes_values, properties
+
+
+def write_read_GEOS_table_example():
+  """Table read / write example."""
+
+  # Define table axes
+  a = np.array([0.0, 1.0])
+  b = np.array([0.0, 0.5, 1.0])
+  axes_values = [a, b]
+
+  # Generate table values (note: the indexing argument is important)
+  A, B = np.meshgrid(a, b, indexing='ij')
+  properties = {'c': A + 2.0*B}
+
+  # Write, then read tables
+  write_GEOS_table(axes_values, properties, axes_names=['a', 'b'])
+  axes_b, properties_b = read_GEOS_table(['a', 'b'], ['c'])
+
+
+

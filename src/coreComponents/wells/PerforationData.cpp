@@ -61,8 +61,8 @@ void PerforationData::ConnectToMeshElements( MeshLevel const & mesh,
                                                                                                    viewKeyStruct::
                                                                                                    elementCenterString );
   
-  array1d<R1Tensor const> const & perfCoordsGlobal = wellGeometry.GetPerfCoords();
-  array1d<real64 const>   const & perfTransGlobal  = wellGeometry.GetPerfTransmissibility();
+  arrayView1d<R1Tensor const> const & perfCoordsGlobal = wellGeometry.GetPerfCoords();
+  arrayView1d<real64 const>   const & perfTransGlobal  = wellGeometry.GetPerfTransmissibility();
 
   resize( perfCoordsGlobal.size() );
   localIndex iperfLocal = 0;
@@ -133,13 +133,13 @@ void PerforationData::ConnectToWellElements( InternalWellGenerator const & wellG
                                              unordered_map<globalIndex,localIndex> const & globalToLocalWellElemMap, 
                                              globalIndex elemOffsetGlobal )
 {
-  array1d<globalIndex const> const & perfElemIndexGlobal = wellGeometry.GetPerfElemIndex();
+  arrayView1d<globalIndex const> const & perfElemIndexGlobal = wellGeometry.GetPerfElemIndex();
 
   for (localIndex iperfLocal = 0; iperfLocal < size(); ++iperfLocal)
   {
     globalIndex const iwelemGlobal = perfElemIndexGlobal[m_localToGlobalMap[iperfLocal]];
     globalIndex const ielemGlobal  = elemOffsetGlobal + iwelemGlobal;
-    GEOS_ASSERT( globalToLocalWellElemMap.count( ielemGlobal ) > 0 );
+    GEOSX_ASSERT( globalToLocalWellElemMap.count( ielemGlobal ) > 0 );
     m_wellElementIndex[iperfLocal] = globalToLocalWellElemMap.at( ielemGlobal ); 
   }
 
@@ -153,7 +153,7 @@ void PerforationData::InitializePostInitialConditions_PreSubGroups( Group * cons
     if (m_transmissibility[iperf] < 0.0)
     {
       // TODO: compute transmissibility internally
-      GEOS_ERROR( "Invalid transmissibility value: " << m_transmissibility[iperf] );
+      GEOSX_ERROR( "Invalid transmissibility value: " << m_transmissibility[iperf] );
     }
   }
 }

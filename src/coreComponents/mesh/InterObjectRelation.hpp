@@ -16,8 +16,8 @@
  * @file InterObjectRelationship.hpp
  */
 
-#ifndef INTEROBJECTRELATION_H_
-#define INTEROBJECTRELATION_H_
+#ifndef GEOSX_MESH_INTEROBJECTRELATION_HPP_
+#define GEOSX_MESH_INTEROBJECTRELATION_HPP_
 
 
 //#include "Common/typedefs.h"
@@ -33,6 +33,11 @@ class InterObjectRelation : public BASETYPE
 public:
 
   using base_type = BASETYPE;
+
+  template< typename ...ARGS >
+  InterObjectRelation( ARGS && ...args ) :
+    BASETYPE( std::forward< ARGS >( args )... )
+  {}
 
   /// equals operator that sets *this to a single value of any type
   template<typename rTYPE> InterObjectRelation& operator=( const rTYPE& rhs )
@@ -63,4 +68,4 @@ private:
 typedef InterObjectRelation<array2d<localIndex>>                FixedOneToManyRelation;
 }
 
-#endif /* INTEROBJECTRELATION_H_ */
+#endif /* GEOSX_MESH_INTEROBJECTRELATION_HPP_ */

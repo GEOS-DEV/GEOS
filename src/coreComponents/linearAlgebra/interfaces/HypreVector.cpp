@@ -64,7 +64,7 @@ HypreVector::HypreVector()
 
 HypreVector::HypreVector( HypreVector const &src )
 {
-  GEOS_ERROR_IF( src.unwrappedPointer() == nullptr,
+  GEOSX_ERROR_IF( src.unwrappedPointer() == nullptr,
                  "source vector appears to be empty" );
   // Note: every vector is created initialized to 0 and then 'closed',
   //       i.e. made ready to use
@@ -99,7 +99,7 @@ HypreVector::~HypreVector()
 
 void HypreVector::create( HypreVector const & src )
 {
-  GEOS_ERROR_IF( src.unwrappedPointer() == nullptr,
+  GEOSX_ERROR_IF( src.unwrappedPointer() == nullptr,
                  "source vector appears to be empty" );
   // Note: every vector is created initialized to 0 and then 'closed',
   //       i.e. made ready to use
@@ -132,7 +132,7 @@ void HypreVector::create( HypreVector const & src )
 void HypreVector::createWithLocalSize( localIndex const localSize,
                                        MPI_Comm const & comm )
 {
-  GEOS_ERROR_IF( localSize < 1,
+  GEOSX_ERROR_IF( localSize < 1,
                  "local size is lower than 1" );
 
   int this_mpi_process;
@@ -189,7 +189,7 @@ void HypreVector::createWithGlobalSize( globalIndex const globalSize,
   HYPRE_Int residual = integer_conversion<HYPRE_Int>( globalSize )
                      % integer_conversion<HYPRE_Int>( n_mpi_process );
 
-  GEOS_ERROR_IF( localSize < 1,
+  GEOSX_ERROR_IF( localSize < 1,
                  "local size is lower than 1: less that one processor per component" );
 
   HYPRE_Int jLower;
@@ -234,7 +234,7 @@ void HypreVector::create( array1d<real64> const & localValues,
 {
   HYPRE_Int localSize = integer_conversion<HYPRE_Int>( localValues.size() );
 
-  GEOS_ERROR_IF( localSize < 1, "local size is lower than 1" );
+  GEOSX_ERROR_IF( localSize < 1, "local size is lower than 1" );
 
   int this_mpi_process;
   int n_mpi_process;
@@ -288,9 +288,9 @@ void HypreVector::create( array1d<real64> const & localValues,
 void HypreVector::set( globalIndex const globalRow,
                        real64 const value )
 {
-  GEOS_ERROR_IF( m_ij_vector == nullptr,
+  GEOSX_ERROR_IF( m_ij_vector == nullptr,
                  "vector appears to be empty (not created)" );
-  GEOS_ASSERT_MSG( this->ilower() <= globalRow &&
+  GEOSX_ASSERT_MSG( this->ilower() <= globalRow &&
                    globalRow < this->iupper(),
                    "HypreVector, it is not possible to set values on other processors");
   HYPRE_IJVectorSetValues( m_ij_vector,
@@ -302,7 +302,7 @@ void HypreVector::set( globalIndex const globalRow,
 void HypreVector::add( globalIndex const globalRow,
                        real64 const value )
 {
-  GEOS_ERROR_IF( m_ij_vector == nullptr,
+  GEOSX_ERROR_IF( m_ij_vector == nullptr,
                  "vector appears to be empty (not created)" );
   HYPRE_IJVectorAddToValues( m_ij_vector,
                              1,
@@ -316,9 +316,9 @@ void HypreVector::set( globalIndex const * globalIndices,
                        real64 const * values,
                        localIndex size )
 {
-  GEOS_ERROR_IF( m_ij_vector == nullptr,
+  GEOSX_ERROR_IF( m_ij_vector == nullptr,
                  "vector appears to be empty (not created)" );
-  GEOS_ASSERT_MSG( this->ilower() <= *std::min_element(globalIndices, globalIndices + size) &&
+  GEOSX_ASSERT_MSG( this->ilower() <= *std::min_element(globalIndices, globalIndices + size) &&
                    *std::max_element(globalIndices, globalIndices + size) < this->iupper(),
                    "HypreVector, it is not possible to set values on other processors");
   HYPRE_IJVectorSetValues( m_ij_vector,
@@ -331,7 +331,7 @@ void HypreVector::add( globalIndex const * globalIndices,
                        real64 const * values,
                        localIndex size )
 {
-  GEOS_ERROR_IF( m_ij_vector == nullptr,
+  GEOSX_ERROR_IF( m_ij_vector == nullptr,
                  "vector appears to be empty (not created)" );
   HYPRE_IJVectorAddToValues( m_ij_vector,
                              integer_conversion<HYPRE_Int>( size ),
@@ -344,9 +344,9 @@ void HypreVector::add( globalIndex const * globalIndices,
 void HypreVector::set( array1d<globalIndex> const & globalIndices,
                        array1d<real64> const & values )
 {
-  GEOS_ERROR_IF( m_ij_vector == nullptr,
+  GEOSX_ERROR_IF( m_ij_vector == nullptr,
                  "vector appears to be empty (not created)" );
-  GEOS_ASSERT_MSG( this->ilower() <= *std::min_element(globalIndices.data(),
+  GEOSX_ASSERT_MSG( this->ilower() <= *std::min_element(globalIndices.data(),
                                                        globalIndices.data() + globalIndices.size() ) &&
                    *std::max_element(globalIndices.data(),
                                      globalIndices.data() + globalIndices.size()) < this->iupper(),
@@ -360,7 +360,7 @@ void HypreVector::set( array1d<globalIndex> const & globalIndices,
 void HypreVector::add( array1d<globalIndex> const & globalIndices,
                        array1d<real64> const & values )
 {
-  GEOS_ERROR_IF( m_ij_vector == nullptr,
+  GEOSX_ERROR_IF( m_ij_vector == nullptr,
                  "vector appears to be empty (not created)" );
   HYPRE_IJVectorAddToValues( m_ij_vector,
                              integer_conversion<HYPRE_Int>( values.size() ),
@@ -372,21 +372,21 @@ void HypreVector::add( array1d<globalIndex> const & globalIndices,
 
 void HypreVector::set( real64 value )
 {
-  GEOS_ERROR_IF( m_ij_vector == nullptr,
+  GEOSX_ERROR_IF( m_ij_vector == nullptr,
                  "vector appears to be empty (not created)" );
   HYPRE_ParVectorSetConstantValues( m_par_vector, value );
 }
 
 void HypreVector::zero()
 {
-  GEOS_ERROR_IF( m_ij_vector == nullptr,
+  GEOSX_ERROR_IF( m_ij_vector == nullptr,
                  "vector appears to be empty (not created)" );
   hypre_IJVectorZeroValues( m_ij_vector );
 }
 
 void HypreVector::rand()
 {
-  GEOS_ERROR_IF( m_ij_vector == nullptr,
+  GEOSX_ERROR_IF( m_ij_vector == nullptr,
                  "vector appears to be empty (not created)" );
   HYPRE_ParVectorSetRandomValues( m_par_vector, 1984 );
 }
@@ -416,7 +416,7 @@ void HypreVector::close()
 
 void HypreVector::scale( real64 const scalingFactor )
 {
-  GEOS_ERROR_IF( m_ij_vector == nullptr,
+  GEOSX_ERROR_IF( m_ij_vector == nullptr,
                  "vector appears to be empty (not created)" );
   HYPRE_ParVectorScale( scalingFactor, m_par_vector );
 }
@@ -428,9 +428,9 @@ void HypreVector::scale( real64 const scalingFactor )
 
 real64 HypreVector::dot( HypreVector const &vec )
 {
-  GEOS_ERROR_IF( m_ij_vector == nullptr,
+  GEOSX_ERROR_IF( m_ij_vector == nullptr,
                  "vector this appears to be empty (not created)" );
-  GEOS_ERROR_IF( m_ij_vector == nullptr,
+  GEOSX_ERROR_IF( m_ij_vector == nullptr,
                  "vector vec appears to be empty (not created)" );
 
   return hypre_ParVectorInnerProd( m_par_vector,
@@ -444,9 +444,9 @@ real64 HypreVector::dot( HypreVector const &vec )
 
 void HypreVector::copy( HypreVector const &x )
 {
-  GEOS_ERROR_IF( m_ij_vector == nullptr,
+  GEOSX_ERROR_IF( m_ij_vector == nullptr,
                  "destination vector appears to be empty (not created)" );
-  GEOS_ERROR_IF( *x.unwrappedPointer() == nullptr,
+  GEOSX_ERROR_IF( *x.unwrappedPointer() == nullptr,
                  "source vector appears to be empty (not created)" );
   // TODO: add dimension checks?
   HYPRE_ParVectorCopy( *x.getHypreParVectorPointer(), m_par_vector );
@@ -460,9 +460,9 @@ void HypreVector::copy( HypreVector const &x )
 void HypreVector::axpy( real64 const alpha,
                         HypreVector const &x )
 {
-  GEOS_ERROR_IF( m_ij_vector == nullptr,
+  GEOSX_ERROR_IF( m_ij_vector == nullptr,
                  "destination vector appears to be empty (not created)" );
-  GEOS_ERROR_IF( *x.unwrappedPointer() == nullptr,
+  GEOSX_ERROR_IF( *x.unwrappedPointer() == nullptr,
                  "source vector appears to be empty (not created)" );
   HYPRE_ParVectorAxpy( alpha, *x.getHypreParVectorPointer(), m_par_vector );
 }
@@ -476,9 +476,9 @@ void HypreVector::axpby( real64 const alpha,
                          HypreVector const &x,
                          real64 const beta )
 {
-  GEOS_ERROR_IF( m_ij_vector == nullptr,
+  GEOSX_ERROR_IF( m_ij_vector == nullptr,
                  "destination vector appears to be empty (not created)" );
-  GEOS_ERROR_IF( *x.unwrappedPointer() == nullptr,
+  GEOSX_ERROR_IF( *x.unwrappedPointer() == nullptr,
                  "source vector appears to be empty (not created)" );
   this->scale( beta );
   this->axpy( alpha, x );
@@ -491,7 +491,7 @@ void HypreVector::axpby( real64 const alpha,
 
 real64 HypreVector::norm1() const
 {
-  GEOS_ERROR_IF( m_ij_vector == nullptr,
+  GEOSX_ERROR_IF( m_ij_vector == nullptr,
                  "vector appears to be empty (not created)" );
 
   MPI_Comm comm = hypre_IJVectorComm( m_ij_vector );
@@ -521,7 +521,7 @@ real64 HypreVector::norm1() const
 
 real64 HypreVector::norm2() const
 {
-  GEOS_ERROR_IF( m_ij_vector == nullptr,
+  GEOSX_ERROR_IF( m_ij_vector == nullptr,
                  "vector appears to be empty (not created)" );
 
   return std::sqrt( hypre_ParVectorInnerProd( m_par_vector,
@@ -562,7 +562,7 @@ real64 HypreVector::normInf() const
 
 void HypreVector::print( std::ostream & os ) const
 {
-  GEOS_ERROR_IF( m_ij_vector == nullptr,
+  GEOSX_ERROR_IF( m_ij_vector == nullptr,
                  "matrix appears to be empty (not created) or not finalized" );
   if ( MpiWrapper::Comm_rank( hypre_IJMatrixComm( m_ij_vector ) ) == 0 )
   {
@@ -577,7 +577,7 @@ void HypreVector::print( std::ostream & os ) const
 void HypreVector::write( string const & filename,
                          bool const mtxFormat ) const
                          {
-  GEOS_ERROR_IF( m_ij_vector == nullptr,
+  GEOSX_ERROR_IF( m_ij_vector == nullptr,
                  "vector appears to be empty (not created)" );
   if (mtxFormat)
   {
@@ -593,9 +593,9 @@ void HypreVector::write( string const & filename,
 
 real64 HypreVector::get( globalIndex globalRow ) const
                          {
-  GEOS_ERROR_IF( m_ij_vector == nullptr,
+  GEOSX_ERROR_IF( m_ij_vector == nullptr,
                  "vector appears to be empty (not created)" );
-  GEOS_ASSERT_MSG( this->ilower() <= globalRow &&
+  GEOSX_ASSERT_MSG( this->ilower() <= globalRow &&
                    globalRow < this->iupper(),
                    "HypreVector, globalRow not in local range");
 
@@ -606,7 +606,7 @@ real64 HypreVector::get( globalIndex globalRow ) const
 	                              1,
 	    						  &globalRow,
 								  &value );
-  GEOS_ASSERT_MSG( ierr == 0,
+  GEOSX_ASSERT_MSG( ierr == 0,
                    "Error getting IJVector values - error code: " +
                    std::to_string( ierr ) );
 
@@ -616,9 +616,9 @@ real64 HypreVector::get( globalIndex globalRow ) const
 void HypreVector::get( array1d<globalIndex> const & globalIndices,
                        array1d<real64> & values ) const
                        {
-  GEOS_ERROR_IF( m_ij_vector == nullptr,
+  GEOSX_ERROR_IF( m_ij_vector == nullptr,
                  "vector appears to be empty (not created)" );
-  GEOS_ERROR_IF( globalIndices.size() > values.size(),
+  GEOSX_ERROR_IF( globalIndices.size() > values.size(),
                  "IJ_vector, more globalIndices required than available values" );
 
   HYPRE_Int ierr;
@@ -627,7 +627,7 @@ void HypreVector::get( array1d<globalIndex> const & globalIndices,
                                   globalIndices.size(),
                                   globalIndices.data(),
                                   values.data() );
-  GEOS_ASSERT_MSG( ierr == 0,
+  GEOSX_ASSERT_MSG( ierr == 0,
                  "Error getting IJVector values - error code: " +
                      std::to_string( ierr ) );
 }
@@ -664,7 +664,7 @@ HYPRE_ParVector* HypreVector::getHypreParVectorPointer()
 
 globalIndex HypreVector::globalSize() const
 {
-  GEOS_ERROR_IF( m_ij_vector == nullptr,
+  GEOSX_ERROR_IF( m_ij_vector == nullptr,
                  "vector appears to be empty (not created)" );
   return hypre_IJVectorGlobalNumRows( m_ij_vector );
 }
@@ -675,7 +675,7 @@ globalIndex HypreVector::globalSize() const
 // Return the local size of the vector (total number of local elements).
 localIndex HypreVector::localSize() const
 {
-  GEOS_ERROR_IF( m_ij_vector == nullptr,
+  GEOSX_ERROR_IF( m_ij_vector == nullptr,
                  "vector appears to be empty (not created)" );
   return hypre_ParVectorActualLocalSize( m_par_vector );
 }

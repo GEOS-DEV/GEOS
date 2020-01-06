@@ -64,9 +64,9 @@ HypreMatrix::HypreMatrix()
 
 HypreMatrix::HypreMatrix( HypreMatrix const &src )
 {
-  GEOS_ERROR_IF( src.unwrappedPointer() == nullptr,
+  GEOSX_ERROR_IF( src.unwrappedPointer() == nullptr,
                  "Input matrix looks empty" );
-  GEOS_ERROR_IF( src.isAssembled(),
+  GEOSX_ERROR_IF( src.isAssembled(),
                  "Input matrix hasn't been closed before copy" );
 
   this->reset();
@@ -192,13 +192,13 @@ void HypreMatrix::createWithGlobalSize( globalIndex const globalRows,
   globalIndex localRowSize = globalRows / n_mpi_process;
   globalIndex rowResidual = globalRows % n_mpi_process;
 
-  GEOS_ERROR_IF( localRowSize < 1,
+  GEOSX_ERROR_IF( localRowSize < 1,
                  "localRowSize is lower than 1: less than one processor per row" );
 
   globalIndex localColSize = globalCols / n_mpi_process;
   globalIndex colResidual = globalCols % n_mpi_process;
 
-  GEOS_ERROR_IF( localColSize < 1,
+  GEOSX_ERROR_IF( localColSize < 1,
                  "localColSize is lower than 1: less than one processor per column" );
 
   globalIndex ilower, iupper, jlower, jupper;
@@ -253,9 +253,9 @@ void HypreMatrix::createWithLocalSize( localIndex const localRows,
                                        localIndex const maxEntriesPerRow,
                                        MPI_Comm const & comm )
 {
-  GEOS_ERROR_IF( localRows < 0,
+  GEOSX_ERROR_IF( localRows < 0,
                  "local rows are lower than 0" );
-  GEOS_ERROR_IF( localCols < 0,
+  GEOSX_ERROR_IF( localCols < 0,
                  "local columns are lower than 0" );
   this->reset();
 
@@ -402,7 +402,7 @@ void HypreMatrix::add( globalIndex const rowIndex,
                        globalIndex const colIndex,
                        real64 const value )
 {
-  GEOS_ERROR_IF( m_ij_mat == nullptr,
+  GEOSX_ERROR_IF( m_ij_mat == nullptr,
 	             "matrix appears to be empty (not created)" );
   HYPRE_Int ncols = 1;
   HYPRE_IJMatrixAddToValues( m_ij_mat,
@@ -417,9 +417,9 @@ void HypreMatrix::set( globalIndex const rowIndex,
                        globalIndex const colIndex,
                        real64 const value )
 {
-  GEOS_ERROR_IF( m_ij_mat == nullptr,
+  GEOSX_ERROR_IF( m_ij_mat == nullptr,
 	             "matrix appears to be empty (not created)" );
-  GEOS_ASSERT_MSG( this->ilower() <= rowIndex &&
+  GEOSX_ASSERT_MSG( this->ilower() <= rowIndex &&
 		           rowIndex < this->iupper(),
 	               "HypreMatrix, it is not possible to set values on other processors");
 
@@ -450,7 +450,7 @@ void HypreMatrix::add( globalIndex const rowIndex,
                        real64 const * values,
                        localIndex size )
 {
-  GEOS_ERROR_IF( m_ij_mat == nullptr,
+  GEOSX_ERROR_IF( m_ij_mat == nullptr,
 				 "matrix appears to be empty (not created)" );
 
   HYPRE_Int ncols = integer_conversion<HYPRE_Int>( size );
@@ -467,9 +467,9 @@ void HypreMatrix::set( globalIndex const rowIndex,
                        real64 const * values,
                        localIndex size )
 {
-  GEOS_ERROR_IF( m_ij_mat == nullptr,
+  GEOSX_ERROR_IF( m_ij_mat == nullptr,
 				 "matrix appears to be empty (not created)" );
-  GEOS_ASSERT_MSG( this->ilower() <= rowIndex &&
+  GEOSX_ASSERT_MSG( this->ilower() <= rowIndex &&
 		           rowIndex < this->iupper(),
 	               "HypreMatrix, it is not possible to set values on other processors");
 
@@ -499,7 +499,7 @@ void HypreMatrix::add( globalIndex const rowIndex,
                        array1d<globalIndex> const &colIndices,
                        array1d<real64> const &values )
 {
-  GEOS_ERROR_IF( m_ij_mat == nullptr,
+  GEOSX_ERROR_IF( m_ij_mat == nullptr,
 				 "matrix appears to be empty (not created)" );
   HYPRE_Int ncols = integer_conversion<HYPRE_Int>( colIndices.size() );
   HYPRE_IJMatrixAddToValues( m_ij_mat,
@@ -514,9 +514,9 @@ void HypreMatrix::set( globalIndex const rowIndex,
                        array1d<globalIndex> const &colIndices,
                        array1d<real64> const &values )
 {
-  GEOS_ERROR_IF( m_ij_mat == nullptr,
+  GEOSX_ERROR_IF( m_ij_mat == nullptr,
 				 "matrix appears to be empty (not created)" );
-  GEOS_ASSERT_MSG( this->ilower() <= rowIndex &&
+  GEOSX_ASSERT_MSG( this->ilower() <= rowIndex &&
 		           rowIndex < this->iupper(),
 	               "HypreMatrix, it is not possible to set values on other processors");
 
@@ -545,7 +545,7 @@ void HypreMatrix::add( array1d<globalIndex> const & rowIndices,
                        array1d<globalIndex> const & colIndices,
                        array2d<real64> const & values )
 {
-  GEOS_ERROR_IF( m_ij_mat == nullptr,
+  GEOSX_ERROR_IF( m_ij_mat == nullptr,
 	             "vector appears to be empty (not created)" );
   globalIndex nCols = colIndices.size();
   for( globalIndex i = 0 ; i < rowIndices.size() ; ++i )
@@ -561,9 +561,9 @@ void HypreMatrix::set( array1d<globalIndex> const & rowIndices,
                        array1d<globalIndex> const & colIndices,
                        array2d<real64> const & values )
 {
-  GEOS_ERROR_IF( m_ij_mat == nullptr,
+  GEOSX_ERROR_IF( m_ij_mat == nullptr,
 	             "vector appears to be empty (not created)" );
-  GEOS_ASSERT_MSG( this->ilower() <= *std::min_element(rowIndices.data(),
+  GEOSX_ASSERT_MSG( this->ilower() <= *std::min_element(rowIndices.data(),
 	                                                   rowIndices.data() + rowIndices.size() ) &&
 	                   *std::max_element(rowIndices.data(),
 	                		             rowIndices.data() + rowIndices.size()) < this->iupper(),
@@ -662,7 +662,7 @@ void HypreMatrix::multiply( HypreMatrix const & src,
                             bool const closeResult ) const
 {
   // Error check
-  GEOS_ASSERT_MSG( this->globalCols() == src.globalRows(),
+  GEOSX_ASSERT_MSG( this->globalCols() == src.globalRows(),
 		               "Incompatible matrix dimensions");
 
   // Compute product
@@ -681,12 +681,12 @@ void HypreMatrix::multiply( HypreMatrix const & src,
 }
 
 // Perform the matrix-matrix product transpose(this) * src = dst.
-void HypreMatrix::multiplyTranspose( HypreMatrix const & src,
-                                     HypreMatrix & dst,
-                                     bool const closeResult ) const
+void HypreMatrix::leftMultiplyTranspose( HypreMatrix const & src,
+                                         HypreMatrix & dst,
+                                         bool const closeResult ) const
 {
   // Error check
-  GEOS_ASSERT_MSG( this->globalRows() == src.globalRows(),
+  GEOSX_ASSERT_MSG( this->globalRows() == src.globalRows(),
                    "Incompatible matrix dimensions");
 
   // Compute product
@@ -938,9 +938,9 @@ void HypreMatrix::getRowCopy( globalIndex globalRow,
                               array1d<globalIndex> &colIndices,
                               array1d<real64> &values ) const
                               {
-  GEOS_ASSERT_MSG( m_is_pattern_fixed == true,
+  GEOSX_ASSERT_MSG( m_is_pattern_fixed == true,
                    "matrix sparsity pattern not created" );
-  GEOS_ASSERT_MSG( this->ilower() <= globalRow &&
+  GEOSX_ASSERT_MSG( this->ilower() <= globalRow &&
                    globalRow < this->iupper(),
                    std::string("Row ") +
                    std::to_string(globalRow) +
@@ -967,9 +967,9 @@ void HypreMatrix::getRowCopy( globalIndex globalRow,
 
 real64 HypreMatrix::getDiagValue( globalIndex globalRow ) const
 {
-  GEOS_ASSERT_MSG( m_is_pattern_fixed == true,
+  GEOSX_ASSERT_MSG( m_is_pattern_fixed == true,
                    "matrix sparsity pattern not created" );
-  GEOS_ASSERT_MSG( this->ilower() <= globalRow &&
+  GEOSX_ASSERT_MSG( this->ilower() <= globalRow &&
                    globalRow < this->iupper(),
                    std::string("Row ") +
                    std::to_string(globalRow) +
@@ -1005,11 +1005,11 @@ real64 HypreMatrix::getDiagValue( globalIndex globalRow ) const
 void HypreMatrix::clearRow( globalIndex const globalRow,
                             real64 const diagValue )
 {
-  GEOS_ASSERT_MSG( m_is_pattern_fixed,
+  GEOSX_ASSERT_MSG( m_is_pattern_fixed,
                    std::string("HypreMatrix, sparsity pattern must be fixed") );
-  GEOS_ASSERT_MSG( !m_is_ready_to_use,
+  GEOSX_ASSERT_MSG( !m_is_ready_to_use,
                    std::string("HypreMatrix, matrix must be opened") );
-  GEOS_ASSERT_MSG( this->ilower() <= globalRow &&
+  GEOSX_ASSERT_MSG( this->ilower() <= globalRow &&
                    globalRow < this->iupper(),
                    std::string("HypreMatrix, it is not possible to clear") +
                    std::string("rows on other processors") );
@@ -1206,7 +1206,7 @@ localIndex HypreMatrix::localNonzeros() const
 // Wrapper to print the trilinos output of the matrix
 void HypreMatrix::print( std::ostream & os ) const
 {
-  GEOS_ERROR_IF( !m_is_ready_to_use,
+  GEOSX_ERROR_IF( !m_is_ready_to_use,
                  "matrix appears to be empty (not created) or not finalized" );
   if ( MpiWrapper::Comm_rank( hypre_IJMatrixComm( m_ij_mat ) ) == 0 )
   {
@@ -1222,7 +1222,7 @@ void HypreMatrix::print( std::ostream & os ) const
 void HypreMatrix::write( string const & filename,
                          bool const mtxFormat ) const
 {
-  GEOS_ERROR_IF( !m_is_ready_to_use,
+  GEOSX_ERROR_IF( !m_is_ready_to_use,
                  "matrix appears to be empty (not created) or not finalized" );
   if (mtxFormat)
   {

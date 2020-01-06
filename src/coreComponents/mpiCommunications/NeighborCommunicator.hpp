@@ -23,7 +23,7 @@
 
 #include "common/DataTypes.hpp"
 #include "dataRepository/ReferenceWrapper.hpp"
-#include "IntegerConversion.hpp"
+#include "cxx-utilities/src/IntegerConversion.hpp"
 
 namespace geosx
 {
@@ -45,10 +45,10 @@ public:
 //  ~NeighborCommunicator();
 
 
-  void MPI_iSendReceive( char const * const sendBuffer,
+  void MPI_iSendReceive( buffer_unit_type const * const sendBuffer,
                          int const sendSize,
                          MPI_Request& sendRequest,
-                         char * const receiveBuffer,
+                         buffer_unit_type * const receiveBuffer,
                          int const receiveSize,
                          MPI_Request& receiveRequest,
                          int const commID,
@@ -89,10 +89,10 @@ public:
                          int const commID,
                          MPI_Comm mpiComm )
   {
-    MPI_iSendReceive( reinterpret_cast<char const*>( sendBuffer ),
+    MPI_iSendReceive( reinterpret_cast<buffer_unit_type const*>( sendBuffer ),
                       sendSize * sizeof(T),
                       sendReq,
-                      reinterpret_cast<char*>( recvBuffer ),
+                      reinterpret_cast<buffer_unit_type*>( recvBuffer ),
                       recvSize * sizeof(T),
                       recvReq,
                       commID,
@@ -134,7 +134,7 @@ public:
   }
 
 
-  void MPI_iSendReceive( char const * const sendBuffer,
+  void MPI_iSendReceive( buffer_unit_type const * const sendBuffer,
                          int const sendSize,
                          int const commID,
                          MPI_Comm mpiComm );

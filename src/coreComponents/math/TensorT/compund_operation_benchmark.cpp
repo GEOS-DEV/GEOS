@@ -83,19 +83,19 @@ int main(int argc, char* argv[] )
 
 
   for( int i=0 ; i<9 ; ++i )
-    GEOS_LOG(e[i]);
-  GEOS_LOG("");
+    GEOSX_LOG(e[i]);
+  GEOSX_LOG("");
 
 
   for( int i=0 ; i<3 ; ++i )
     for( int j=0 ; j<3 ; ++j )
     {
-      GEOS_LOG(E(i,j));
+      GEOSX_LOG(E(i,j));
     }
-  GEOS_LOG("");
+  GEOSX_LOG("");
 
-  GEOS_LOG("baseline CPU time    = "<<t2-t1);
-  GEOS_LOG("TensorClass CPU time = "<<t3-t2);
+  GEOSX_LOG("baseline CPU time    = "<<t2-t1);
+  GEOSX_LOG("TensorClass CPU time = "<<t3-t2);
 
 
   return 0;

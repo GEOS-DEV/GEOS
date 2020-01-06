@@ -53,15 +53,18 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
     reference().resize(0,2);
 
   registerWrapper( viewKeyStruct::elementApertureString, &m_elementAperture, false )->
-    setApplyDefaultValue(1.0e-5)->
+    setApplyDefaultValue(-1.0)->
     setPlotLevel(dataRepository::PlotLevel::LEVEL_0)->
     setDescription("The aperture of each FaceElement.");
 
   registerWrapper( viewKeyStruct::elementAreaString, &m_elementArea, false )->
     setApplyDefaultValue(-1.0)->
+    setPlotLevel(dataRepository::PlotLevel::LEVEL_2)->
     setDescription("The area of each FaceElement.");
 
   registerWrapper( viewKeyStruct::elementCenterString, &m_elementCenter, false )->
+    setApplyDefaultValue({0.0,0.0,0.0})->
+    setPlotLevel(dataRepository::PlotLevel::LEVEL_2)->
     setDescription("The center of each FaceElement.");
 
   registerWrapper( viewKeyStruct::elementVolumeString, &m_elementVolume, false )->
@@ -76,16 +79,17 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
     setDescription( "A map of face element local indices to the cell local indices");
 
   registerWrapper( viewKeyStruct::faceElementsToCellSubRegionsString,
-                       &(m_faceElementsToCells.m_toElementSubRegion), 0 )->
+                   &(m_faceElementsToCells.m_toElementSubRegion), 0 )->
     setApplyDefaultValue(-1)->
     setPlotLevel(PlotLevel::NOPLOT)->
     setDescription( "A map of face element local indices to the cell local indices");
 
   registerWrapper( viewKeyStruct::faceElementsToCellIndexString,
-                       &(m_faceElementsToCells.m_toElementIndex), 0 )->
+                   &(m_faceElementsToCells.m_toElementIndex), 0 )->
     setApplyDefaultValue(-1)->
     setPlotLevel(PlotLevel::NOPLOT)->
     setDescription( "A map of face element local indices to the cell local indices");
+
 
   m_faceElementsToCells.resize(0,2);
   m_faceElementsToCells.setElementRegionManager( getParent()->getParent()->getParent()->getParent()->group_cast<ElementRegionManager*>() );
@@ -183,7 +187,7 @@ localIndex FaceElementSubRegion::PackUpDownMapsPrivate( buffer_unit_type * & buf
 
   packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::faceListString) );
   packedSize += bufferOps::Pack<DOPACK>( buffer,
-                                         m_toFacesRelation.Base(),
+                                         m_toFacesRelation.Base().toViewConst(),
                                          m_unmappedGlobalIndicesInToFaces,
                                          packList,
                                          this->m_localToGlobalMap,
@@ -210,7 +214,7 @@ localIndex FaceElementSubRegion::UnpackUpDownMaps( buffer_unit_type const * & bu
 
   string nodeListString;
   unPackedSize += bufferOps::Unpack( buffer, nodeListString );
-  GEOS_ERROR_IF_NE( nodeListString, viewKeyStruct::nodeListString );
+  GEOSX_ERROR_IF_NE( nodeListString, viewKeyStruct::nodeListString );
 
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toNodesRelation,
@@ -222,7 +226,7 @@ localIndex FaceElementSubRegion::UnpackUpDownMaps( buffer_unit_type const * & bu
 
   string edgeListString;
   unPackedSize += bufferOps::Unpack( buffer, edgeListString );
-  GEOS_ERROR_IF_NE( edgeListString, viewKeyStruct::edgeListString );
+  GEOSX_ERROR_IF_NE( edgeListString, viewKeyStruct::edgeListString );
 
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toEdgesRelation,
@@ -233,7 +237,7 @@ localIndex FaceElementSubRegion::UnpackUpDownMaps( buffer_unit_type const * & bu
 
   string faceListString;
   unPackedSize += bufferOps::Unpack( buffer, faceListString );
-  GEOS_ERROR_IF_NE( faceListString, viewKeyStruct::faceListString );
+  GEOSX_ERROR_IF_NE( faceListString, viewKeyStruct::faceListString );
 
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toFacesRelation.Base(),
@@ -244,7 +248,7 @@ localIndex FaceElementSubRegion::UnpackUpDownMaps( buffer_unit_type const * & bu
 
   string elementListString;
   unPackedSize += bufferOps::Unpack( buffer, elementListString );
-  GEOS_ERROR_IF_NE( elementListString, viewKeyStruct::faceElementsToCellRegionsString );
+  GEOSX_ERROR_IF_NE( elementListString, viewKeyStruct::faceElementsToCellRegionsString );
 
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_faceElementsToCells,

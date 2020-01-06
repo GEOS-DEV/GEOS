@@ -14,7 +14,49 @@
 #
 import os
 import sys
+import shutil
 # sys.path.insert(0, os.path.abspath('.'))
+
+# Call doxygen in ReadtheDocs
+read_the_docs_build = os.environ.get('READTHEDOCS', None) == 'True'
+if read_the_docs_build:
+
+    # Make sure directory exists
+    cwd = os.getcwd()
+
+    build_path = os.path.join(cwd, "_build")
+    if not os.path.isdir(build_path):
+        os.mkdir(build_path)
+
+    html_path = os.path.join(build_path, "html")
+    if not os.path.isdir(html_path):
+        os.mkdir(html_path)
+
+    docs_path = os.path.join(cwd, "docs", "doxygen")
+    common_path = os.path.join(cwd, "coreComponents", "common")
+
+    doxyfile_src = os.path.join(docs_path, "Doxyfile.in")
+    doxyfile_dst = os.path.join(build_path, "Doxyfile")
+    config_src = os.path.join(docs_path, "GeosxConfig.hpp")
+    config_dst = os.path.join(common_path, "GeosxConfig.hpp")
+
+    input_dirs = ["coreComponents/common",
+                  "coreComponents/dataRepository"]
+
+    # Write correct ReadtheDocs path and input directories
+    shutil.copy(doxyfile_src, doxyfile_dst)
+    with open(doxyfile_dst, "a") as f:
+        f.write("\nINPUT = %s" % " ".join(input_dirs))
+        f.write("\nOUTPUT_DIRECTORY = %s/doxygen_output" % html_path)
+        f.write("\nHAVE_DOT = YES")
+
+    # Make a symlink to GeosxConfig.hpp in common
+    if not os.path.exists(config_dst):
+        os.symlink(config_src, config_dst)
+
+    # Call doxygen
+    from subprocess import call
+    call(['doxygen', doxyfile_dst])
 
 
 # -- Project information -----------------------------------------------------
@@ -219,7 +261,7 @@ texinfo_documents = [
 numfig = True
 
 # Additional stuff for the LaTeX preamble.
-latex_elements['preamble'] = '\usepackage{amsmath}\n\usepackage{amssymb}\n\usepackage[retainorgcmds]{IEEEtrantools}\n'
+latex_elements['preamble'] = '\\usepackage{amsmath}\n\\usepackage{amssymb}\n\\usepackage[retainorgcmds]{IEEEtrantools}\n'
 
 imgmath_image_format='svg'
 imgmath_font_size=14

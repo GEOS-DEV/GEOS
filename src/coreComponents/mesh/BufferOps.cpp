@@ -26,7 +26,7 @@ namespace bufferOps
 
 
 template< bool DO_PACKING >
-localIndex Pack( char*& buffer,
+localIndex Pack( buffer_unit_type *& buffer,
                  OrderedVariableToManyElementRelation const & var,
                  arrayView1d<localIndex const> const & packList,
                  ElementRegionManager const * const elementRegionManager )
@@ -62,17 +62,17 @@ localIndex Pack( char*& buffer,
 
   return sizeOfPackedChars;
 }
-template localIndex Pack<true>( char*&,
+template localIndex Pack<true>( buffer_unit_type *&,
                                 OrderedVariableToManyElementRelation const &,
                                 arrayView1d<localIndex const> const &,
                                 ElementRegionManager const * const );
-template localIndex Pack<false>( char*&,
+template localIndex Pack<false>( buffer_unit_type *&,
                                  OrderedVariableToManyElementRelation const &,
                                  arrayView1d<localIndex const> const &,
                                  ElementRegionManager const * const );
 
 
-localIndex Unpack( char const * & buffer,
+localIndex Unpack( buffer_unit_type const * & buffer,
                    OrderedVariableToManyElementRelation & var,
                    arrayView1d<localIndex const> const & packList,
                    ElementRegionManager const * const elementRegionManager,
@@ -82,7 +82,7 @@ localIndex Unpack( char const * & buffer,
 
   localIndex numIndicesUnpacked;
   sizeOfUnpackedChars += bufferOps::Unpack( buffer, numIndicesUnpacked );
-  GEOS_ERROR_IF( numIndicesUnpacked != packList.size(), "");
+  GEOSX_ERROR_IF( numIndicesUnpacked != packList.size(), "");
 
   for( localIndex a=0 ; a<packList.size() ; ++a )
   {
@@ -156,7 +156,7 @@ localIndex Unpack( char const * & buffer,
 
 
 template< bool DO_PACKING >
-localIndex Pack( char*& buffer,
+localIndex Pack( buffer_unit_type *& buffer,
                  FixedToManyElementRelation const & var,
                  arrayView1d<localIndex const> const & packList,
                  ElementRegionManager const * const elementRegionManager )
@@ -192,17 +192,17 @@ localIndex Pack( char*& buffer,
 
   return sizeOfPackedChars;
 }
-template localIndex Pack<true>( char*&,
+template localIndex Pack<true>( buffer_unit_type *&,
                                 FixedToManyElementRelation const &,
                                 arrayView1d<localIndex const> const &,
                                 ElementRegionManager const * const );
-template localIndex Pack<false>( char*&,
+template localIndex Pack<false>( buffer_unit_type *&,
                                  FixedToManyElementRelation const &,
                                  arrayView1d<localIndex const> const &,
                                  ElementRegionManager const * const );
 
 
-localIndex Unpack( char const * & buffer,
+localIndex Unpack( buffer_unit_type const * & buffer,
                    FixedToManyElementRelation & var,
                    arrayView1d<localIndex const> const & packList,
                    ElementRegionManager const * const elementRegionManager,
@@ -212,14 +212,14 @@ localIndex Unpack( char const * & buffer,
 
   localIndex numIndicesUnpacked;
   sizeOfUnpackedChars += bufferOps::Unpack( buffer, numIndicesUnpacked );
-  GEOS_ERROR_IF( numIndicesUnpacked != packList.size(), "");
+  GEOSX_ERROR_IF( numIndicesUnpacked != packList.size(), "");
 
   for( localIndex a=0 ; a<packList.size() ; ++a )
   {
     localIndex index = packList[a];
     localIndex numSubIndicesUnpacked;
     sizeOfUnpackedChars += bufferOps::Unpack( buffer, numSubIndicesUnpacked );
-    GEOS_ERROR_IF( numSubIndicesUnpacked != var.m_toElementRegion.size(1), "");
+    GEOSX_ERROR_IF( numSubIndicesUnpacked != var.m_toElementRegion.size(1), "");
 
     for( localIndex b=0 ; b<numSubIndicesUnpacked ; ++b )
     {

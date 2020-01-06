@@ -28,10 +28,11 @@
 #include "mesh/FaceElementRegion.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
 
 #ifdef USE_GEOSX_PTP
-#include "GEOSX_PTP/ParallelTopologyChange.hpp"
+#include "physicsSolvers/GEOSX_PTP/ParallelTopologyChange.hpp"
 #endif
 
 #include <set>
@@ -108,7 +109,7 @@ static localIndex GetOtherFaceEdge( const map< localIndex, std::pair<localIndex,
   }
   else
   {
-    GEOS_ERROR( "SurfaceGenerator::Couldn't find thisEdge in localFacesToEdges[thisFace]" );
+    GEOSX_ERROR( "SurfaceGenerator::Couldn't find thisEdge in localFacesToEdges[thisFace]" );
   }
   return nextEdge;
 }
@@ -147,7 +148,7 @@ static void CheckForAndRemoveDeadEndPath( const localIndex edgeIndex,
       nextEdge = localVFaceToVEdges.first;
     else
     {
-      GEOS_ERROR( "SurfaceGenerator::FindFracturePlanes: Could not find the next edge when removing dead end faces." );
+      GEOSX_ERROR( "SurfaceGenerator::FindFracturePlanes: Could not find the next edge when removing dead end faces." );
     }
 
     // delete the face from the working arrays
@@ -175,7 +176,8 @@ SurfaceGenerator::SurfaceGenerator( const std::string& name,
 //  m_maxTurnAngle(91.0),
   m_solidMaterialName(""),
   m_nodeBasedSIF(0),
-  m_rockToughness(1.0e99)
+  m_rockToughness(1.0e99),
+  m_mpiCommOrder(0)
 {
   this->registerWrapper( viewKeyStruct::failCriterionString,
                              &this->m_failCriterion,
@@ -192,6 +194,10 @@ SurfaceGenerator::SurfaceGenerator( const std::string& name,
   registerWrapper(viewKeyStruct::nodeBasedSIFString, &m_nodeBasedSIF, 0)->
       setInputFlag(InputFlags::OPTIONAL)->
       setDescription("Rock toughness of the solid material");
+
+  registerWrapper(viewKeyStruct::mpiCommOrderString, &m_mpiCommOrder, 0)->
+      setInputFlag(InputFlags::OPTIONAL)->
+      setDescription("Flag to enable MPI consistent communication ordering");
 
   this->registerWrapper( viewKeyStruct::fractureRegionNameString, &m_fractureRegionName, 0 )->
       setInputFlag(dataRepository::InputFlags::OPTIONAL)->
@@ -488,19 +494,18 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
   FaceManager & faceManager = *(mesh->getFaceManager());
   ElementRegionManager & elementManager = *(mesh->getElemManager());
 
-  array1d<std::set<localIndex> > nodesToRupturedFaces;
-  array1d<std::set<localIndex> > edgesToRupturedFaces;
+  std::vector< std::set< localIndex > > nodesToRupturedFaces;
+  std::vector< std::set< localIndex > > edgesToRupturedFaces;
 
   ArrayOfArraysView<localIndex> const & nodeToElementMap = nodeManager.elementList();
   ArrayOfArraysView<localIndex const> const & faceToNodeMap = faceManager.nodeList();
 
   map<string, string_array > fieldNames;
   fieldNames["face"].push_back(viewKeyStruct::ruptureStateString);
+  fieldNames["node"].push_back( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternal );
 
-  MPI_iCommData icomm;
-  CommunicationTools::SynchronizePackSendRecvSizes( fieldNames, mesh, neighbors, icomm );
-  CommunicationTools::SynchronizePackSendRecv( fieldNames, mesh, neighbors, icomm );
-  CommunicationTools::SynchronizeUnpack( mesh, neighbors, icomm );
+  CommunicationTools::SynchronizeFields( fieldNames, mesh,
+                                         domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
 
 
   if( !prefrac )
@@ -574,10 +579,11 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
     ModifiedObjectLists receivedObjects;
 
     /// Nodes to edges in process node is not being set on rank 2. need to check that the new node->edge map is properly communicated
-    ParallelTopologyChange::SyncronizeTopologyChange( mesh,
-                                                      neighbors,
-                                                      modifiedObjects,
-                                                      receivedObjects );
+    ParallelTopologyChange::SynchronizeTopologyChange( mesh,
+                                                       neighbors,
+                                                       modifiedObjects,
+                                                       receivedObjects,
+                                                       m_mpiCommOrder );
 
     SynchronizeTipSets( faceManager,
                         edgeManager,
@@ -586,6 +592,7 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
 
 
 #else
+    GEOSX_UNUSED_VAR( neighbors );
     AssignNewGlobalIndicesSerial( nodeManager, modifiedObjects.newNodes );
     AssignNewGlobalIndicesSerial( edgeManager, modifiedObjects.newEdges );
     AssignNewGlobalIndicesSerial( faceManager, modifiedObjects.newFaces );
@@ -653,7 +660,7 @@ void SurfaceGenerator::SynchronizeTipSets (FaceManager & faceManager,
   {
     localIndex const parentNodeIndex = parentNodeIndices[nodeIndex];
 
-    GEOS_ERROR_IF( parentNodeIndex == -1, "parentNodeIndex should not be -1" );
+    GEOSX_ERROR_IF( parentNodeIndex == -1, "parentNodeIndex should not be -1" );
 
     m_tipNodes.erase(parentNodeIndex);
   }
@@ -673,7 +680,7 @@ void SurfaceGenerator::SynchronizeTipSets (FaceManager & faceManager,
   {
     localIndex const parentEdgeIndex = parentEdgeIndices[edgeIndex];
 
-    GEOS_ERROR_IF( parentEdgeIndex == -1, "parentEdgeIndex should not be -1" );
+    GEOSX_ERROR_IF( parentEdgeIndex == -1, "parentEdgeIndex should not be -1" );
 
     m_tipEdges.erase(parentEdgeIndex);
     for( localIndex const faceIndex : edgeToFaceMap.getIterableSet( parentEdgeIndex ) )
@@ -709,7 +716,7 @@ void SurfaceGenerator::SynchronizeTipSets (FaceManager & faceManager,
   for( localIndex const faceIndex : receivedObjects.newFaces )
   {
     localIndex const parentFaceIndex = parentFaceIndices[faceIndex];
-    GEOS_ERROR_IF( parentFaceIndex == -1, "parentFaceIndex should not be -1" );
+    GEOSX_ERROR_IF( parentFaceIndex == -1, "parentFaceIndex should not be -1" );
 
     m_trailingFaces.insert(parentFaceIndex);
     m_tipFaces.erase(parentFaceIndex);
@@ -758,8 +765,8 @@ bool SurfaceGenerator::ProcessNode( const localIndex nodeID,
                                     EdgeManager & edgeManager,
                                     FaceManager & faceManager,
                                     ElementRegionManager & elemManager,
-                                    arrayView1d<std::set<localIndex> >& nodesToRupturedFaces,
-                                    arrayView1d<std::set<localIndex> >& edgesToRupturedFaces,
+                                    std::vector<std::set<localIndex> >& nodesToRupturedFaces,
+                                    std::vector<std::set<localIndex> >& edgesToRupturedFaces,
                                     ElementRegionManager & elementManager,
                                     ModifiedObjectLists& modifiedObjects,
                                     const bool GEOSX_UNUSED_ARG( prefrac ) )
@@ -818,8 +825,8 @@ bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
                                            const EdgeManager & edgeManager,
                                            const FaceManager & faceManager,
                                            ElementRegionManager & elemManager,
-                                           const arrayView1d<std::set<localIndex> >& nodesToRupturedFaces,
-                                           const arrayView1d<std::set<localIndex> >& edgesToRupturedFaces,
+                                           const std::vector<std::set<localIndex> >& nodesToRupturedFaces,
+                                           const std::vector<std::set<localIndex> >& edgesToRupturedFaces,
                                            std::set<localIndex>& separationPathFaces,
                                            map<localIndex, int>& edgeLocations,
                                            map<localIndex, int>& faceLocations,
@@ -913,7 +920,7 @@ bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
 
     if( edge[0] == INT_MAX || edge[1] == INT_MAX )
     {
-      GEOS_ERROR( "SurfaceGenerator::FindFracturePlanes: invalid edge." );
+      GEOSX_ERROR( "SurfaceGenerator::FindFracturePlanes: invalid edge." );
     }
 
 
@@ -986,7 +993,7 @@ bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
   if( startingFace==INT_MAX || startingEdge==INT_MAX )
   {
     return false;
-    //    GEOS_ERROR("Fracturantor3::FindFracturePlanes: couldn't set starting face/edge");
+    //    GEOSX_ERROR("Fracturantor3::FindFracturePlanes: couldn't set starting face/edge");
   }
 
 
@@ -1078,7 +1085,7 @@ bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
           std::cout<<std::endl;
 
 
-          GEOS_ERROR( "crap" );
+          GEOSX_ERROR( "crap" );
         }
 
         // add faces in the path to separationPathFaces
@@ -1190,7 +1197,7 @@ bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
             }
             if( pathFound == false )
             {
-              GEOS_ERROR( "SurfaceGenerator::FindFracturePlanes: couldn't find the next face in the rupture path" );
+              GEOSX_ERROR( "SurfaceGenerator::FindFracturePlanes: couldn't find the next face in the rupture path" );
             }
           }
 
@@ -1209,7 +1216,7 @@ bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
         }
         else
         {
-          GEOS_ERROR( "SurfaceGenerator::next edge in separation path is apparently  connected to less than 2 ruptured face" );
+          GEOSX_ERROR( "SurfaceGenerator::next edge in separation path is apparently  connected to less than 2 ruptured face" );
         }
 
       }
@@ -1237,7 +1244,7 @@ bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
 
     if( edge[0] == INT_MAX || edge[1] == INT_MAX )
     {
-      GEOS_ERROR( "SurfaceGenerator::FindFracturePlanes: invalid edge." );
+      GEOSX_ERROR( "SurfaceGenerator::FindFracturePlanes: invalid edge." );
     }
 
 
@@ -1341,7 +1348,7 @@ bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
   if( fail )
   {
 
-    //    GEOS_ERROR("SurfaceGenerator::FindFracturePlanes: unset element,face, or edge");
+    //    GEOSX_ERROR("SurfaceGenerator::FindFracturePlanes: unset element,face, or edge");
     return false;
   }
   return true;
@@ -1506,8 +1513,8 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
                                         FaceManager & faceManager,
                                         ElementRegionManager & elementManager,
                                         ModifiedObjectLists& modifiedObjects,
-                                        arrayView1d<std::set<localIndex> >& GEOSX_UNUSED_ARG( nodesToRupturedFaces ),
-                                        arrayView1d<std::set<localIndex> >& GEOSX_UNUSED_ARG( edgesToRupturedFaces ),
+                                        std::vector<std::set<localIndex> >& GEOSX_UNUSED_ARG( nodesToRupturedFaces ),
+                                        std::vector<std::set<localIndex> >& GEOSX_UNUSED_ARG( edgesToRupturedFaces ),
                                         const std::set<localIndex>& separationPathFaces,
                                         const map<localIndex, int>& edgeLocations,
                                         const map<localIndex, int>& faceLocations,
@@ -1556,9 +1563,9 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
 
   // Split the node into two, using the original index, and a new one.
   localIndex newNodeIndex;
-  if( verboseLevel() )
+  if( getLogLevel() )
   {
-    GEOS_LOG_RANK("");
+    GEOSX_LOG_RANK("");
     std::cout<<"Splitting node "<<nodeID<<" along separation plane faces: ";
     for( std::set<localIndex>::const_iterator i=separationPathFaces.begin() ; i!=separationPathFaces.end() ; ++i )
     {
@@ -1600,7 +1607,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
 //  usedFacesNew = usedFaces[nodeID];
 
 
-  if( verboseLevel() )
+  if( getLogLevel() )
     std::cout<<"Done splitting node "<<nodeID<<" into nodes "<<nodeID<<" and "<<newNodeIndex<<std::endl;
 
   // split edges
@@ -1622,9 +1629,9 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
 
       edgeToFaceMap.clearSet( newEdgeIndex );
 
-      if( verboseLevel() )
+      if( getLogLevel() )
       {
-        GEOS_LOG_RANK("");
+        GEOSX_LOG_RANK("");
         std::cout<<"  Split edge "<<parentEdgeIndex<<" into edges "<<parentEdgeIndex<<" and "<<newEdgeIndex<<std::endl;
       }
 
@@ -1683,9 +1690,9 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
       if( faceManager.SplitObject( faceIndex, rank, newFaceIndex ) )
       {
 
-        if( verboseLevel() )
+        if( getLogLevel() )
         {
-          GEOS_LOG_RANK("");
+          GEOSX_LOG_RANK("");
           std::cout<<"  Split face "<<faceIndex<<" into faces "<<faceIndex<<" and "<<newFaceIndex<<std::endl;
         }
 
@@ -1823,21 +1830,21 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
       modifiedObjects.modifiedElements[{regionIndex,subRegionIndex}].insert( elemIndex );
 
 
-      arrayView2d<localIndex> & elemsToNodes = elemSubRegion.nodeList();
+      arrayView2d<localIndex, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & elemsToNodes = elemSubRegion.nodeList();
       arrayView2d<localIndex> & elemsToFaces = elemSubRegion.faceList();
 
-      if( verboseLevel() > 1 )
+      if( getLogLevel() > 1 )
         std::cout<<"Element "<<elemIndex<<std::endl;
 
       // 2a) correct elementToNode and nodeToElement
-      if( verboseLevel() > 1 )
+      if( getLogLevel() > 1 )
         std::cout<<"  Looping over all nodes on element, and correcting node<->element maps:"<<std::endl;
 
 
       R1Tensor elemCenter = {0.0, 0.0, 0.0};
       {
         // loop over all nodes on element
-        if( verboseLevel() > 1 )
+        if( getLogLevel() > 1 )
           std::cout<<"    m_ElementToNodeMap = ( ";
         for( localIndex a=0 ; a<elemsToNodes.size( 1 ) ; ++a )
         {
@@ -1846,7 +1853,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
           if( elemsToNodes[elemIndex][a] == nodeID )
           {
 
-            if( verboseLevel() > 1 )
+            if( getLogLevel() > 1 )
               std::cout<<elemsToNodes[elemIndex][a]<<"->"<<newNodeIndex<<", ";
 
             elemsToNodes[elemIndex][a] = newNodeIndex;
@@ -1854,18 +1861,18 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
             insert( nodeManager.toElementRelation(), newNodeIndex, regionIndex, subRegionIndex, elemIndex );
             erase( nodeManager.toElementRelation(), nodeID, regionIndex, subRegionIndex, elemIndex );
           }
-          else if( verboseLevel() > 1 )
+          else if( getLogLevel() > 1 )
             std::cout<<elemsToNodes[elemIndex][a]<<", ";
         }
         elemCenter /= elemsToNodes.size( 1 );
-        if( verboseLevel() > 1 )
+        if( getLogLevel() > 1 )
           std::cout<<")"<<std::endl;
 
-        if( verboseLevel() > 1 )
+        if( getLogLevel() > 1 )
         {
           for( localIndex a=0 ; a<elemsToNodes.size( 1 ) ; ++a )
           {
-            if( verboseLevel() > 1 )
+            if( getLogLevel() > 1 )
             {
               std::cout<<"    nodeToElemMaps["<<elemsToNodes[elemIndex][a]<<"] = ( ";
               for( localIndex k=0 ; k<nodeToRegionMap.sizeOfArray(elemsToNodes[elemIndex][a]) ; ++k )
@@ -1878,7 +1885,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
             }
           }
 
-          if( verboseLevel() > 1 )
+          if( getLogLevel() > 1 )
           {
             std::cout<<"    nodeToElemMaps["<<nodeID<<"] = ( ";
             for( localIndex k=0 ; k<nodeToRegionMap.sizeOfArray(nodeID) ; ++k )
@@ -1895,7 +1902,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
 
 
       // 2b) loop over all faces on element.
-      if( verboseLevel() > 1 )
+      if( getLogLevel() > 1 )
       {
         std::cout<<"  Looping over all faces on element (parent and child):"<<std::endl;
       }
@@ -1955,7 +1962,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
             faceToElementMap[faceIndex][1] = -1;
           }
 
-          if( verboseLevel() > 1 )
+          if( getLogLevel() > 1 )
           {
             std::cout<<"    faceToRegionMap["<<newFaceIndex<<"][0]    = "<<faceToRegionMap[newFaceIndex][0]<<std::endl;
             std::cout<<"    faceToSubRegionMap["<<newFaceIndex<<"][0] = "<<faceToSubRegionMap[newFaceIndex][0]<<std::endl;
@@ -2002,7 +2009,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
 
         // 3b) correct faceToNodes and nodeToFaces
 
-        if( verboseLevel() > 1 )
+        if( getLogLevel() > 1 )
         {
           localIndex const parentFace = parentFaceIndex[newFaceIndex];
           if( parentFace!=-1 )
@@ -2018,7 +2025,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
         // loop over all nodes on the face.
         for( localIndex & nodeIndex : faceToNodeMap.getIterableArray(newFaceIndex) )
         {
-          if( verboseLevel() > 1 )
+          if( getLogLevel() > 1 )
             std::cout<<nodeIndex;
 
           // if the facenode is the one that is being split
@@ -2042,22 +2049,22 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
               // insert the newFace into the nodeToFaceMap of the newNode
               nodeToFaceMap.insertIntoSet( nodeIndex,  newFaceIndex );
             }
-            if( verboseLevel() > 1 ) std::cout<<"->"<<nodeIndex<<", ";
+            if( getLogLevel() > 1 ) std::cout<<"->"<<nodeIndex<<", ";
           }
           else // the node is not being split
           {
             nodeToFaceMap.insertIntoSet( nodeIndex, newFaceIndex );
 
-            if( verboseLevel() > 1 ) std::cout<<", ";
+            if( getLogLevel() > 1 ) std::cout<<", ";
           }
 
         }
-        if( verboseLevel() > 1 ) std::cout<<")"<<std::endl;
+        if( getLogLevel() > 1 ) std::cout<<")"<<std::endl;
 
 
 
         // faceToEdges
-        if( verboseLevel() > 1 )
+        if( getLogLevel() > 1 )
         {
           const localIndex parentFace = parentFaceIndex[newFaceIndex];
           if( parentFace!=-1 )
@@ -2087,13 +2094,13 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
 
           modifiedObjects.modifiedEdges.insert( edgeIndex );
 
-          if( verboseLevel() > 1 )
+          if( getLogLevel() > 1 )
             std::cout<<edgeIndex;
 
 
 
           //edgeToNodeMap
-          if( verboseLevel() > 1 )
+          if( getLogLevel() > 1 )
           {
             std::cout<<"(";
           }
@@ -2104,29 +2111,29 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
               if( edgeToNodeMap[edgeIndex][a] == nodeID )
               {
 
-                if( verboseLevel() > 1 )
+                if( getLogLevel() > 1 )
                   std::cout<<edgeToNodeMap[edgeIndex][a];
 
                 edgeToNodeMap[edgeIndex][a] = newNodeIndex;
                 nodeToEdgeMap.removeFromSet( nodeID, edgeIndex );
 
-                if( verboseLevel() > 1 )
+                if( getLogLevel() > 1 )
                   std::cout<<"->"<<edgeToNodeMap[edgeIndex][a]<<", ";
 
               }
-              else if( verboseLevel() > 1 )
+              else if( getLogLevel() > 1 )
                 std::cout<<edgeToNodeMap[edgeIndex][a]<<", ";
 
               nodeToEdgeMap.insertIntoSet( edgeToNodeMap[edgeIndex][a], edgeIndex );
               modifiedObjects.modifiedNodes.insert(edgeToNodeMap[edgeIndex][a]);
             }
-            if( verboseLevel() > 1 )
+            if( getLogLevel() > 1 )
               std::cout<<")";
           }
-          if( verboseLevel() > 1 )
+          if( getLogLevel() > 1 )
             std::cout<<", ";
         }
-        if( verboseLevel() > 1 )
+        if( getLogLevel() > 1 )
           std::cout<<")"<<std::endl;
       } // for( int kf=0 ; kf<elemRegion.m_numFacesPerElement ; ++kf )
     } // if( location==1 )
@@ -2163,7 +2170,7 @@ void SurfaceGenerator::MapConsistencyCheck( localIndex const GEOSX_UNUSED_ARG( n
 
 
 #if 1
-  if( verboseLevel() > 2 )
+  if( getLogLevel() > 2 )
   {
     std::cout<<"CONSISTENCY CHECKING OF THE MAPS"<<std::endl;
 
@@ -2175,14 +2182,14 @@ void SurfaceGenerator::MapConsistencyCheck( localIndex const GEOSX_UNUSED_ARG( n
       CellElementSubRegion& elemSubRegion = *(elem.first);
       const localIndex elemIndex = elem.second;
 
-      arrayView2d<localIndex> & elemsToNodes = elemSubRegion.nodeList();
+      arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & elemsToNodes = elemSubRegion.nodeList();
       arrayView2d<localIndex> & elemsToFaces = elemSubRegion.faceList();
 
 
       std::set<localIndex> elemNodes;
 
 
-      GEOS_LOG("Element " << elemIndex);
+      GEOSX_LOG("Element " << elemIndex);
       std::cout << " elementToNodes = ";
       for( int a=0 ; a<8 ; ++a )
       {
@@ -2246,10 +2253,10 @@ void SurfaceGenerator::MapConsistencyCheck( localIndex const GEOSX_UNUSED_ARG( n
 
   }
 
-  if( verboseLevel() > 2 )
+  if( getLogLevel() > 2 )
   {
     // nodeToEdge
-    array1d<std::set<localIndex> > inverseEdgesToNodes( nodeManager.size() );
+    std::vector<std::set<localIndex> > inverseEdgesToNodes( nodeManager.size() );
 
     for( localIndex ke=0 ; ke<edgeManager.size() ; ++ke )
     {
@@ -2284,10 +2291,10 @@ void SurfaceGenerator::MapConsistencyCheck( localIndex const GEOSX_UNUSED_ARG( n
     }
   }
 
-  if( verboseLevel() > 2 )
+  if( getLogLevel() > 2 )
   {
     // nodeToFace
-    array1d<std::set<localIndex> > inverseFacesToNodes( nodeManager.size() );
+    std::vector<std::set<localIndex> > inverseFacesToNodes( nodeManager.size() );
     for( localIndex kf=0 ; kf<faceManager.size() ; ++kf )
     {
       for( localIndex const b : faceToNodeMap.getIterableArray(kf) )
@@ -2317,12 +2324,12 @@ void SurfaceGenerator::MapConsistencyCheck( localIndex const GEOSX_UNUSED_ARG( n
 
 
 
-  if( verboseLevel() > 2 )
+  if( getLogLevel() > 2 )
   {
 
 
     // nodeToElement
-    array1d<std::set<std::pair<CellElementSubRegion const *, localIndex > > > inverseElemsToNodes( nodeManager.size() );
+    std::vector<std::set<std::pair<CellElementSubRegion const *, localIndex > > > inverseElemsToNodes( nodeManager.size() );
     for( localIndex er=0 ; er<elementManager.numRegions() ; ++er )
     {
       ElementRegionBase const & elemRegion = *(elementManager.GetRegion( er ));
@@ -2331,7 +2338,7 @@ void SurfaceGenerator::MapConsistencyCheck( localIndex const GEOSX_UNUSED_ARG( n
         CellElementSubRegion const * const subRegion = elemRegion.GetSubRegion<CellElementSubRegion>( esr );
         if( subRegion != nullptr )
         {
-          arrayView2d<localIndex> const & elemsToNodes = subRegion->nodeList();
+          arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & elemsToNodes = subRegion->nodeList();
           for( localIndex k=0 ; k<subRegion->size() ; ++k )
           {
             std::pair<CellElementSubRegion const *, localIndex > elem = std::make_pair( subRegion, k );
@@ -2390,7 +2397,7 @@ void SurfaceGenerator::MapConsistencyCheck( localIndex const GEOSX_UNUSED_ARG( n
 
 
     // edgeToFace
-    array1d<std::set<localIndex> > inverseFacesToEdges( edgeManager.size() );
+    std::vector<std::set<localIndex> > inverseFacesToEdges( edgeManager.size() );
     for( localIndex kf=0 ; kf<faceManager.size() ; ++kf )
     {
       for( localIndex const b : faceToEdgeMap.getIterableArray( kf ) )
@@ -2419,7 +2426,7 @@ void SurfaceGenerator::MapConsistencyCheck( localIndex const GEOSX_UNUSED_ARG( n
     }
 
     // faceToElement
-    array1d<std::set<std::pair<CellElementSubRegion const *, localIndex > > > inverseElemsToFaces( faceManager.size() );
+    std::vector< std::set< std::pair< CellElementSubRegion const *, localIndex > > > inverseElemsToFaces( faceManager.size() );
     for( localIndex er=0 ; er<elementManager.numRegions() ; ++er )
     {
       ElementRegionBase const & elemRegion = *(elementManager.GetRegion( er ));
@@ -2437,7 +2444,7 @@ void SurfaceGenerator::MapConsistencyCheck( localIndex const GEOSX_UNUSED_ARG( n
             for( localIndex a=0 ; a<elemsToFaces.size( 1 ) ; ++a )
             {
               const localIndex faceID = elemsToFaces( k, a );
-              inverseElemsToFaces[faceID].insert( elem );
+              inverseElemsToFaces[ faceID ].insert( elem );
 
   //            if( parentFaceIndex[faceID] != -1 )
   //            {
@@ -2693,7 +2700,8 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
     SIFonFace[i] = 0.0;
   }
 
-//  arrayView1d<R1Tensor>& fExternal = nodeManager.getReference<arrayView1d<R1Tensor>>( "fExternal" );
+  arrayView1d<R1Tensor> const &
+    fext = nodeManager.getReference< array1d<R1Tensor> >( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternal );
   arrayView1d<R1Tensor> const & displacement = nodeManager.getReference<r1_array>(keys::TotalDisplacement);
   ArrayOfArraysView< localIndex const > const & nodeToRegionMap = nodeManager.elementRegionList();
   ArrayOfArraysView< localIndex const > const & nodeToSubRegionMap = nodeManager.elementSubRegionList();
@@ -2722,7 +2730,7 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
 
   ConstitutiveManager const * const cm = domain->getConstitutiveManager();
   ConstitutiveBase const * const solid  = cm->GetConstitutiveRelation<ConstitutiveBase>( m_solidMaterialName );
-  GEOS_ERROR_IF( solid == nullptr, "constitutive model " + m_solidMaterialName + " not found" );
+  GEOSX_ERROR_IF( solid == nullptr, "constitutive model " + m_solidMaterialName + " not found" );
   m_solidMaterialFullIndex = solid->getIndexInParent();
 
   ConstitutiveManager * const constitutiveManager =
@@ -2734,14 +2742,9 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
   ElementRegionManager::MaterialViewAccessor< arrayView1d<real64> > const bulkModulus =
       elementManager.ConstructFullMaterialViewAccessor< array1d<real64>, arrayView1d<real64> >( "BulkModulus", constitutiveManager);
 
-  ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> >
-  meanStress = elementManager.ConstructFullMaterialViewAccessor< array2d<real64>,
-                                                               arrayView2d<real64> >("MeanStress",
-                                                                                     constitutiveManager);
-
   ElementRegionManager::MaterialViewAccessor< arrayView2d<R2SymTensor> > const
-  devStress = elementManager.ConstructFullMaterialViewAccessor< array2d<R2SymTensor>,
-                                                              arrayView2d<R2SymTensor> >("DeviatorStress",
+  stress = elementManager.ConstructFullMaterialViewAccessor< array2d<R2SymTensor>,
+                                                             arrayView2d<R2SymTensor> >( SolidBase::viewKeyStruct::stressString,
                                                                                          constitutiveManager);
 
   NumericalMethodsManager const * numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
@@ -2813,7 +2816,7 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
             string const elementRegionName = elementRegion->getName();
             localIndex const er = elementManager.GetRegions().getIndex( elementRegionName );
             localIndex const esr = elementRegion->GetSubRegions().getIndex( elementSubRegion->getName() );
-            arrayView2d<localIndex> & elementsToNodes = elementSubRegion->nodeList();
+            arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & elementsToNodes = elementSubRegion->nodeList();
 
             xEle = elementSubRegion->getElementCenter()[iEle];
 
@@ -2824,7 +2827,7 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
 
             for (localIndex n=0 ; n<elementsToNodes.size( 1 ) ; ++n)
             {
-              if (elementsToNodes[iEle][n] == nodeIndex)
+              if (elementsToNodes(iEle, n) == nodeIndex)
               {
                 R1Tensor temp;
                 xEle = elementSubRegion->getElementCenter()[iEle];
@@ -2835,8 +2838,7 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
                                            numQuadraturePoints,
                                            dNdX[er][esr],
                                            detJ[er][esr],
-                                           meanStress[er][esr][m_solidMaterialFullIndex],
-                                           devStress[er][esr][m_solidMaterialFullIndex],
+                                           stress[er][esr][m_solidMaterialFullIndex],
                                            temp );
 
                 //wu40: the nodal force need to be weighted by Young's modulus and possion's ratio.
@@ -2863,7 +2865,7 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
             nodeDisconnectForce /= 2.0;
           }
 
-          //Find the trailing node according the node index and face index
+          //Find the trailing node according to the node index and face index
           if (unpinchedNodeID.size() == 0) //Tet mesh under three nodes pinched scenario. Need to find the other trailing face that containing the trailing node.
           {
             for ( localIndex const edgeIndex: faceToEdgeMap.getIterableArray( trailingFaceIndex ) )
@@ -2885,7 +2887,7 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
 
             if (tralingNodeID == std::numeric_limits<localIndex>::max())
             {
-              GEOS_ERROR( "Error. The triangular trailing face has three tip nodes but cannot find the other trailing face containing the trailing node." );
+              GEOSX_ERROR( "Error. The triangular trailing face has three tip nodes but cannot find the other trailing face containing the trailing node." );
             }
           }
           else if (unpinchedNodeID.size() == 1)
@@ -2923,13 +2925,45 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
           trailingNodeDisp = displacement[theOtherTrailingNodeID];
           trailingNodeDisp -= displacement[tralingNodeID];
 
-  //        tipNodeForce[0] = nodeDisconnectForce[0] + ( fExternal[tralingNodeID][0] - fExternal[theOtherTrailingNodeID][0]) / 2.0;
-  //        tipNodeForce[1] = nodeDisconnectForce[1] + ( fExternal[tralingNodeID][1] - fExternal[theOtherTrailingNodeID][1]) / 2.0;
-  //        tipNodeForce[2] = nodeDisconnectForce[2] + ( fExternal[tralingNodeID][2] - fExternal[theOtherTrailingNodeID][2]) / 2.0;
+          //Calculate average young's modulus and poisson ratio for fext.
+          R1Tensor fExternal[2];
+          for  (localIndex i=0 ; i<2 ; ++i )
+          {
+            realT averageYoungsModulus(0), averagePoissonRatio(0);
+            localIndex nodeID = i == 0 ? tralingNodeID : theOtherTrailingNodeID;
+            for( localIndex k=0 ; k<nodeToRegionMap.sizeOfArray(nodeID) ; ++k )
+            {
+              CellElementSubRegion * elementSubRegion = elementManager.GetRegion( nodeToRegionMap[nodeID][k] )->
+                  GetSubRegion<CellElementSubRegion>( nodeToSubRegionMap[nodeID][k] );
+              localIndex iEle = nodeToElementMap[nodeID][k];
 
-          tipNodeForce[0] = nodeDisconnectForce[0];
-          tipNodeForce[1] = nodeDisconnectForce[1];
-          tipNodeForce[2] = nodeDisconnectForce[2];
+              ElementRegionBase * const
+              elementRegion = elementSubRegion->getParent()->getParent()->group_cast<ElementRegionBase*>();
+              string const elementRegionName = elementRegion->getName();
+              localIndex const er = elementManager.GetRegions().getIndex( elementRegionName );
+              localIndex const esr = elementRegion->GetSubRegions().getIndex( elementSubRegion->getName() );
+
+              realT K = bulkModulus[er][esr][m_solidMaterialFullIndex][iEle];
+              realT G = shearModulus[er][esr][m_solidMaterialFullIndex][iEle];
+              averageYoungsModulus += 9 * K * G / ( 3 * K + G );
+              averagePoissonRatio += ( 3 * K - 2 * G ) / ( 2 * ( 3 * K + G ) );
+            }
+
+            averageYoungsModulus /= nodeToRegionMap.sizeOfArray(nodeID);
+            averagePoissonRatio /= nodeToRegionMap.sizeOfArray(nodeID);
+
+            fExternal[i] = fext[nodeID];
+            fExternal[i] *= averageYoungsModulus / (1 - averagePoissonRatio * averagePoissonRatio);
+          }
+
+          //TODO: The sign of fext here is opposite to the sign of fFaceA in function "CalculateEdgeSIF".
+          tipNodeForce[0] = nodeDisconnectForce[0] - ( fExternal[0][0] - fExternal[1][0] ) / 2.0;
+          tipNodeForce[1] = nodeDisconnectForce[1] - ( fExternal[0][1] - fExternal[1][1] ) / 2.0;
+          tipNodeForce[2] = nodeDisconnectForce[2] - ( fExternal[0][2] - fExternal[1][2] ) / 2.0;
+
+//          tipNodeForce[0] = nodeDisconnectForce[0];
+//          tipNodeForce[1] = nodeDisconnectForce[1];
+//          tipNodeForce[2] = nodeDisconnectForce[2];
 
           realT tipArea;
           tipArea = faceArea(trailingFaceIndex);
@@ -2975,13 +3009,13 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
               if( Dot( v0, vecTip ) < 0 )
                 vecTip *= -1.0;
 
-  //            tipForce[0] = Dot( nodeDisconnectForce, vecTipNorm ) + Dot( fExternal[tralingNodeID], vecTipNorm ) / 2.0 - Dot( fExternal[theOtherTrailingNodeID], vecTipNorm ) /2.0;
-  //            tipForce[1] = Dot( nodeDisconnectForce, vecTip ) + Dot( fExternal[tralingNodeID], vecTip ) / 2.0 - Dot( fExternal[theOtherTrailingNodeID], vecTip ) /2.0;
-  //            tipForce[2] = Dot( nodeDisconnectForce, vecEdge ) + Dot( fExternal[tralingNodeID], vecEdge ) / 2.0 - Dot( fExternal[theOtherTrailingNodeID], vecEdge ) /2.0;
+              tipForce[0] = Dot( nodeDisconnectForce, vecTipNorm ) - (Dot( fExternal[0], vecTipNorm ) - Dot( fExternal[1], vecTipNorm ))/2.0;
+              tipForce[1] = Dot( nodeDisconnectForce, vecTip ) - (Dot( fExternal[0], vecTip ) - Dot( fExternal[1], vecTip ))/2.0;
+              tipForce[2] = Dot( nodeDisconnectForce, vecEdge ) - (Dot( fExternal[0], vecEdge ) - Dot( fExternal[1], vecEdge )) /2.0;
 
-              tipForce[0] = Dot( nodeDisconnectForce, vecTipNorm );
-              tipForce[1] = Dot( nodeDisconnectForce, vecTip );
-              tipForce[2] = Dot( nodeDisconnectForce, vecEdge );
+//              tipForce[0] = Dot( nodeDisconnectForce, vecTipNorm );
+//              tipForce[1] = Dot( nodeDisconnectForce, vecTip );
+//              tipForce[2] = Dot( nodeDisconnectForce, vecEdge );
 
               tipOpening[0] = Dot( trailingNodeDisp, vecTipNorm );
               tipOpening[1] = Dot( trailingNodeDisp, vecTip );
@@ -3106,7 +3140,7 @@ realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
   {
     char msg[200];
     sprintf( msg, "Error! Edge %d has two external faces, but the parent-child relationship is wrong.", int(edgeID));
-    GEOS_ERROR( msg );
+    GEOSX_ERROR( msg );
   }
 
   trailFaceID = faceParentIndex[faceInvolved[0]]==-1 ? faceInvolved[0] : faceParentIndex[faceInvolved[0]];
@@ -3185,7 +3219,7 @@ realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
 
     if( numSharedNodes == 4 )
     {
-      GEOS_ERROR( "Error.  The fracture face has four shared nodes with its child.  This should not happen." );
+      GEOSX_ERROR( "Error.  The fracture face has four shared nodes with its child.  This should not happen." );
     }
     else if( numSharedNodes == 3 )
     {
@@ -3194,7 +3228,7 @@ realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
       //wu40: I think the following check is not necessary.
       if( lNodeFaceA.size() != 1 || lNodeFaceAp.size() != 1 )
       {
-        GEOS_ERROR( "Error. These two faces share three nodes but the number of remaining nodes is not one.  Something is wrong" );
+        GEOSX_ERROR( "Error. These two faces share three nodes but the number of remaining nodes is not one.  Something is wrong" );
       }
       else
       {
@@ -3233,7 +3267,7 @@ realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
     }
 
     if( convexCorner == std::numeric_limits<localIndex>::max())
-      GEOS_ERROR( "Error.  This is a three-node-pinched edge but I cannot find the convex corner" );
+      GEOSX_ERROR( "Error.  This is a three-node-pinched edge but I cannot find the convex corner" );
 
   }
 
@@ -3300,7 +3334,7 @@ realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
 
       if( trailingNodes.size() > 2 || trailingNodes.size() == 0 )
       {
-        GEOS_ERROR( "Fatal error in finding nodes behind tip edge." );
+        GEOSX_ERROR( "Fatal error in finding nodes behind tip edge." );
       }
       else if( trailingNodes.size() == 1 )  // Need some work to find the other node
       {
@@ -3481,6 +3515,8 @@ realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
     rval = -1.0;
   }
 
+//  std::cout << "EdgeID: " << edgeID << " SIF: " << rval << std::endl;
+
   return rval;
 }
 
@@ -3508,7 +3544,7 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition * domain,
 
   ConstitutiveManager const * const cm = domain->getConstitutiveManager();
   ConstitutiveBase const * const solid  = cm->GetConstitutiveRelation<ConstitutiveBase>( m_solidMaterialName );
-  GEOS_ERROR_IF( solid == nullptr, "constitutive model " + m_solidMaterialName + " not found" );
+  GEOSX_ERROR_IF( solid == nullptr, "constitutive model " + m_solidMaterialName + " not found" );
   m_solidMaterialFullIndex = solid->getIndexInParent();
 
   ConstitutiveManager * const constitutiveManager =
@@ -3526,8 +3562,8 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition * domain,
                                                                                      constitutiveManager);
 
   ElementRegionManager::MaterialViewAccessor< arrayView2d<R2SymTensor> > const
-  devStress = elementManager.ConstructFullMaterialViewAccessor< array2d<R2SymTensor>,
-                                                              arrayView2d<R2SymTensor> >("DeviatorStress",
+  stress = elementManager.ConstructFullMaterialViewAccessor< array2d<R2SymTensor>,
+                                                             arrayView2d<R2SymTensor> >( SolidBase::viewKeyStruct::stressString,
                                                                                          constitutiveManager);
 
 
@@ -3563,11 +3599,11 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition * domain,
   for (localIndex i=0; i < nodeIndices.size() ; ++i)
   {
     localIndex nodeID = nodeIndices(i);
-    localIndex_array temp11;
-    for (int ii = 0; ii < nodeToElementMap.sizeOfArray(nodeID); ii++)
-    {
-      temp11.push_back(nodeToElementMap[nodeID][ii]);
-    }
+//    localIndex_array temp11;
+//    for (int ii = 0; ii < nodeToElementMap.sizeOfArray(nodeID); ii++)
+//    {
+//      temp11.push_back(nodeToElementMap[nodeID][ii]);
+//    }
 
     for( localIndex k=0 ; k<nodeToRegionMap.sizeOfArray(nodeID) ; ++k )
     {
@@ -3598,10 +3634,10 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition * domain,
         realT youngsModulus = 9 * K * G / ( 3 * K + G );
         realT poissonRatio = ( 3 * K - 2 * G ) / ( 2 * ( 3 * K + G ) );
 
-        arrayView2d<localIndex> & elementsToNodes = elementSubRegion->nodeList();
+        arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & elementsToNodes = elementSubRegion->nodeList();
         for (localIndex n=0 ; n<elementsToNodes.size( 1 ) ; ++n)
         {
-          if (elementsToNodes[iEle][n] == nodeID)
+          if (elementsToNodes(iEle, n) == nodeID)
           {
             R1Tensor temp;
             xEle = elementSubRegion->getElementCenter()[iEle]; //For C3D6 element type, elementsToNodes map may include repeated indices and the following may run multiple times for the same element.
@@ -3613,8 +3649,7 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition * domain,
                                        numQuadraturePoints,
                                        dNdX[er][esr],
                                        detJ[er][esr],
-                                       meanStress[er][esr][m_solidMaterialFullIndex],
-                                       devStress[er][esr][m_solidMaterialFullIndex],
+                                       stress[er][esr][m_solidMaterialFullIndex],
                                        temp );
 
             temp *= youngsModulus;
@@ -3627,16 +3662,31 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition * domain,
               {
                 nElemEachSide[0] += 1;
                 fNode += temp;
+
+                //wu40: for debug purpose
+//                std::cout << "ElementID: " << iEle << ", NodeID: " << nodeID << std::endl;
+//                std::cout << "Nodal force: " << temp[0] << ", " << temp[1] << ", " << temp[2] << std::endl;
+//                std::cout << "Add to total nodal force (fdisc): " << fNode[0] << ", " << fNode[1] << ", " << fNode[2] << std::endl;
               }
               else
               {
                 nElemEachSide[1] +=1;
                 fNode -= temp;
+
+                //wu40: for debug purpose
+//                std::cout << "ElementID: " << iEle << ", NodeID: " << nodeID << std::endl;
+//                std::cout << "Nodal force: " << temp[0] << ", " << temp[1] << ", " << temp[2] << std::endl;
+//                std::cout << "Minus from total nodal force (fdisc): " << fNode[0] << ", " << fNode[1] << ", " << fNode[2] << std::endl;
               }
             }
             else
             {
               fNode += temp;
+
+              //wu40: for debug purpose
+//              std::cout << "ElementID: " << iEle << ", NodeID: " << nodeID << std::endl;
+//              std::cout << "Nodal force: " << temp[0] << ", " << temp[1] << ", " << temp[2] << std::endl;
+//              std::cout << "Add to total nodal force (fext): " << fNode[0] << ", " << fNode[1] << ", " << fNode[2] << std::endl;
             }
           }
         }
@@ -4059,8 +4109,8 @@ void SurfaceGenerator::PostUpdateRuptureStates( NodeManager & nodeManager,
                                                 EdgeManager & edgeManager,
                                                 FaceManager & faceManager,
                                                 ElementRegionManager & GEOSX_UNUSED_ARG( elementManager ),
-                                                array1d<std::set<localIndex> >& nodesToRupturedFaces,
-                                                array1d<std::set<localIndex> >& edgesToRupturedFaces )
+                                                std::vector< std::set< localIndex > > & nodesToRupturedFaces,
+                                                std::vector< std::set< localIndex > > & edgesToRupturedFaces )
 {
   ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList();
   ArrayOfArraysView< localIndex const > const & faceToEdgeMap = faceManager.edgeList();
@@ -4138,7 +4188,7 @@ int SurfaceGenerator::CheckEdgeSplitability( localIndex const edgeID,
   {
     //    char msg[200];
     //    sprintf(msg, "Error! Edge %d has an odd number of external faces.", int(edgeID));
-    //    GEOS_ERROR(msg);
+    //    GEOSX_ERROR(msg);
     //    std::cout << "Error! Edge " << int(edgeID) << " has an odd number of external faces. "
     //        << (*nodeManager.m_refposition)[edgeToNodeMap[edgeID][0]][0] << " ,"
     //        << (*nodeManager.m_refposition)[edgeToNodeMap[edgeID][0]][1] << " ,"
