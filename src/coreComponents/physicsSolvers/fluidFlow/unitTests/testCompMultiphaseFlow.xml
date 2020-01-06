@@ -280,7 +280,7 @@
     <TableFunction name="initialPressureFunc"
                    inputVarNames="{elementCenter}"
                    coordinates="{0.0, 3.0}"
-                   values="{0.0, 0.5}"/>
+                   values="{1.0, 0.5}"/>
 
     <!-- This is what the equivalent 3D table function would look like -->
     <!-- <TableFunction name="initialPressureFunc"
