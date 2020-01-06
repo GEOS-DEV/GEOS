@@ -290,7 +290,6 @@ real64 TableFunction::Evaluate( real64 const * const input ) const
         if ((input[ii] - m_coordinates[ii][subIndex - 1]) <= (m_coordinates[ii][subIndex] - input[ii]))
         {
           // The left-hand side is closer
-          // TODO: Check to see if the index selection is correct
           --subIndex;
         }
       }
