@@ -416,17 +416,17 @@
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="TableFunctionType">
-		<!--coordinateFiles => List of coordinate file names-->
+		<!--coordinateFiles => List of coordinate file names for ND Table-->
 		<xsd:attribute name="coordinateFiles" type="string_array" default="" />
-		<!--coordinates => Table coordinates inputs for 1D tables-->
-		<xsd:attribute name="coordinates" type="real64_array" use="required" />
+		<!--coordinates => Coordinates inputs for 1D tables-->
+		<xsd:attribute name="coordinates" type="real64_array" default="0" />
 		<!--inputVarNames => Name of fields are input to function.-->
 		<xsd:attribute name="inputVarNames" type="string_array" default="" />
-		<!--interpolation => Interpolation method-->
-		<xsd:attribute name="interpolation" type="string" default="" />
-		<!--values => Table Values for 1D tables-->
-		<xsd:attribute name="values" type="real64_array" use="required" />
-		<!--voxelFile => Voxel file name-->
+		<!--interpolation => Interpolation method (options = linear, nearest)-->
+		<xsd:attribute name="interpolation" type="string" default="linear" />
+		<!--values => Values for 1D tables-->
+		<xsd:attribute name="values" type="real64_array" default="0" />
+		<!--voxelFile => Voxel file name for ND Table-->
 		<xsd:attribute name="voxelFile" type="string" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />

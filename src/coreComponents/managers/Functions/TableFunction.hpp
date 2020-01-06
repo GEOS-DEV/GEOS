@@ -79,13 +79,34 @@ public:
   array1d<real64> const & getValues() const { return m_values; }
   array1d<real64>       & getValues()       { return m_values; }
 
+  // Available interpolation types
+  enum class InterpolationType
+  {
+    Linear,
+    Nearest
+  };
+
 private:
+  /// Coordinates for 1D table
+  real64_array m_tableCoordinates1D;
+
+  /// List of table coordinate file names
+  string_array m_coordinateFiles;
+
+  /// Table voxel file names
+  string m_voxelFile;
+
+  /// Table interpolation method
+  string m_interpolationMethodString;
+  InterpolationType m_interpolationMethod;
+
+
   /// An array of table axes
   array1d<real64_array> m_coordinates;
 
   /// Table values (in fortran order)
   real64_array m_values;
-
+ 
   /// Table size indicators
   static localIndex constexpr m_maxDimensions = 4;
   localIndex m_dimensions;
