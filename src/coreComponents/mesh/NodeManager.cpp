@@ -95,8 +95,8 @@ void NodeManager::SetEdgeMaps( EdgeManager const * const edgeManager )
 
   forall_in_range< parallelHostPolicy >( 0, totalNumEdges, [&]( localIndex const edgeID )
   {
-    toEdgesTemp.atomicAppendToArray( RAJA::atomic::auto_atomic{}, edgeToNodeMap( edgeID, 0 ), edgeID );
-    toEdgesTemp.atomicAppendToArray( RAJA::atomic::auto_atomic{}, edgeToNodeMap( edgeID, 1 ), edgeID );
+    toEdgesTemp.atomicAppendToArray( RAJA::auto_atomic{}, edgeToNodeMap( edgeID, 0 ), edgeID );
+    toEdgesTemp.atomicAppendToArray( RAJA::auto_atomic{}, edgeToNodeMap( edgeID, 1 ), edgeID );
   } );
 
   GEOSX_MARK_BEGIN("Reserving space in m_toEdgesRelation");
@@ -134,7 +134,7 @@ void NodeManager::SetFaceMaps( FaceManager const * const faceManager )
     localIndex const numFaceNodes = faceToNodes[ faceID ].size();
     for ( localIndex a = 0; a < numFaceNodes; ++a )
     {
-      toFacesTemp.atomicAppendToArray( RAJA::atomic::auto_atomic{}, faceToNodes[ faceID ][ a ], faceID );
+      toFacesTemp.atomicAppendToArray( RAJA::auto_atomic{}, faceToNodes[ faceID ][ a ], faceID );
     }
   } );
 
