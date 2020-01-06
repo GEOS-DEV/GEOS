@@ -77,7 +77,7 @@ void PoroElastic<BASE>::PostProcessInput()
   if (m_compressibility <= 0)
   {
 //    string const message = std::to_string( numConstantsSpecified ) + " Elastic Constants Specified. Must specify 2 constants!";
-//    GEOS_ERROR( message );
+//    GEOSX_ERROR( message );
   }
   m_poreVolumeRelation.SetCoefficients( m_referencePressure, 1.0, m_compressibility );
 

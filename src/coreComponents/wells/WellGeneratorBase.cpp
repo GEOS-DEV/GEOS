@@ -87,7 +87,7 @@ Group * WellGeneratorBase::CreateChild( string const & childKey, string const & 
   }
   else
   {
-    GEOS_ERROR( "Unrecognized node: " << childKey );
+    GEOSX_ERROR( "Unrecognized node: " << childKey );
   }
   return nullptr;
 }
@@ -143,7 +143,7 @@ void WellGeneratorBase::GenerateMesh( DomainPartition * const domain )
   WellElementRegion * const 
   wellRegion = elemManager->GetGroup(ElementRegionManager::groupKeyStruct::elementRegionsGroup)->GetGroup<WellElementRegion>( this->m_wellRegionName );
 
-  GEOS_ERROR_IF( wellRegion == nullptr, 
+  GEOSX_ERROR_IF( wellRegion == nullptr, 
                  "Well region " << this->m_wellRegionName << " not found in well " << getName() );
 
   wellRegion->SetWellGeneratorName( this->getName() );
@@ -166,18 +166,18 @@ void WellGeneratorBase::ConstructPolylineNodeToSegmentMap()
     v -= m_polyNodeCoords[ipolyNode_b];
 
     // various checks and warnings on the segment and element length
-    GEOS_ERROR_IF( v.L2_Norm() < 1e-2,
+    GEOSX_ERROR_IF( v.L2_Norm() < 1e-2,
                    "Error in the topology of well " << getName() 
                 << ": we detected a polyline segment measuring less than 1 cm" );
 
     if ( v.L2_Norm() < 1 )
     {
-      GEOS_LOG_RANK_0( "Warning: we detected a segment measuring less than 1 m in the topology of well " << getName() );
+      GEOSX_LOG_RANK_0( "Warning: we detected a segment measuring less than 1 m in the topology of well " << getName() );
     }
 
     if ( v.L2_Norm() / static_cast<real64>(m_numElemsPerSegment) < 1e-2 )
     {
-      GEOS_LOG_RANK_0( "Warning: the chosen number of elements per polyline segment (" << m_numElemsPerSegment 
+      GEOSX_LOG_RANK_0( "Warning: the chosen number of elements per polyline segment (" << m_numElemsPerSegment 
                     << ") leads to well elements measuring less than 1 cm in the topology of well " << getName() );
     }
 
@@ -198,7 +198,7 @@ void WellGeneratorBase::FindPolylineHeadNodeIndex()
 
   // we determine which node is the head node based on depth
   // therefore here we throw an error if the well head segment is horizontal
-  GEOS_ERROR_IF(    !(m_polyNodeCoords[ipolyNode_a][2] < m_polyNodeCoords[ipolyNode_b][2])
+  GEOSX_ERROR_IF(    !(m_polyNodeCoords[ipolyNode_a][2] < m_polyNodeCoords[ipolyNode_b][2])
                  && !(m_polyNodeCoords[ipolyNode_a][2] > m_polyNodeCoords[ipolyNode_b][2]), 
                  "The head polyline segment cannot be horizontal in well " << getName()
               << " since we use depth to determine which of its nodes is to head node of the well" );
@@ -218,7 +218,7 @@ void WellGeneratorBase::FindPolylineHeadNodeIndex()
     }
     real64 const currentZcoord = m_polyNodeCoords[inode][2];
 
-    GEOS_ERROR_IF( !(currentZcoord < headZcoord), 
+    GEOSX_ERROR_IF( !(currentZcoord < headZcoord), 
                    "Error in the topology of well " << getName() 
                 << " since we found a well node that is above the head node" );
   }
@@ -243,7 +243,7 @@ void WellGeneratorBase::DiscretizePolyline()
   for (globalIndex is = 0; is < m_segmentToPolyNodeMap.size(0); ++is)
   {
 
-    GEOS_ERROR_IF( isegCurrent == -1,
+    GEOSX_ERROR_IF( isegCurrent == -1,
                   "Invalid segmentToNode map in well " << getName() );
 
     globalIndex const ipolyNodeBottom = ( ipolyNodeTop == m_segmentToPolyNodeMap[isegCurrent][0] )
@@ -263,7 +263,7 @@ void WellGeneratorBase::DiscretizePolyline()
       m_elemCenterCoords[iwelemCurrent] *= scaleCenter;
       m_elemCenterCoords[iwelemCurrent] += m_polyNodeCoords[ipolyNodeTop];      
 
-      GEOS_ERROR_IF( iwelemCurrent >= m_numElems,
+      GEOSX_ERROR_IF( iwelemCurrent >= m_numElems,
                      "Invalid well topology in well " << getName() );
 
       globalIndex const iwelemTop    = iwelemCurrent - 1;
@@ -331,7 +331,7 @@ void WellGeneratorBase::ConnectPerforationsToWellElements()
     real64 const wellLength = 
       m_nodeDistFromHead[m_elemToNodesMap[iwelemBottom][NodeLocation::BOTTOM]];
 
-    GEOS_ERROR_IF( m_perfDistFromHead[iperf] > wellLength,
+    GEOSX_ERROR_IF( m_perfDistFromHead[iperf] > wellLength,
                   "Distance from perforation " << perf->getName() << " to head is larger than well length for well " << getName() ); 
     
     // start binary search
@@ -353,7 +353,7 @@ void WellGeneratorBase::ConnectPerforationsToWellElements()
         iwelemBottom = iwelemMid;
       }
 
-      GEOS_ERROR_IF( currentNumSteps > maxNumSteps,
+      GEOSX_ERROR_IF( currentNumSteps > maxNumSteps,
                     "Perforation " << perf->getName() << " cannot be mapped to a well element in well " << getName() );
   
       currentNumSteps++;
@@ -361,7 +361,7 @@ void WellGeneratorBase::ConnectPerforationsToWellElements()
 
     // set the index of the matched element
     globalIndex iwelemMatched = iwelemTop;
-    GEOS_ERROR_IF( iwelemMatched >= m_numElems,
+    GEOSX_ERROR_IF( iwelemMatched >= m_numElems,
                   "Invalid topology in well " << getName() );
 
     m_perfElemId[iperf] = iwelemMatched;    
@@ -372,7 +372,7 @@ void WellGeneratorBase::ConnectPerforationsToWellElements()
     real64 const elemLength       = m_nodeDistFromHead[inodeBottom] - m_nodeDistFromHead[inodeTop];
     real64 const topToPerfDist    = m_perfDistFromHead[iperf] - m_nodeDistFromHead[inodeTop];
 
-    GEOS_ERROR_IF( (elemLength <= 0) || (topToPerfDist < 0),
+    GEOSX_ERROR_IF( (elemLength <= 0) || (topToPerfDist < 0),
                   "Invalid topology in well " << getName() );
  
     R1Tensor v = m_nodeCoords[inodeBottom];
@@ -440,7 +440,7 @@ void WellGeneratorBase::MergePerforations()
           continue;
         }
 
-        GEOS_LOG_RANK_0( "Moving perforation #" << elemToPerfMap[iwelem][ip] 
+        GEOSX_LOG_RANK_0( "Moving perforation #" << elemToPerfMap[iwelem][ip] 
                       << " of well " << getName()
                       << " from " << m_perfCoords[elemToPerfMap[iwelem][ip]] 
                       << " to " << m_perfCoords[iperfMaxTrans] << " to make sure that no well element is shared between two MPI ranks" );
@@ -451,7 +451,7 @@ void WellGeneratorBase::MergePerforations()
     // in passing, check that there is always a perforation in the last well element (otherwise, the problem is not well posed)
     for (localIndex iwelemPrev = 0; iwelemPrev < m_prevElemId[iwelem].size(); ++iwelemPrev)
     {
-      GEOS_ERROR_IF( m_prevElemId[iwelem][iwelemPrev] == -1 && elemToPerfMap[iwelem].size() == 0, 
+      GEOSX_ERROR_IF( m_prevElemId[iwelem][iwelemPrev] == -1 && elemToPerfMap[iwelem].size() == 0, 
                      "The bottom element of well " << getName() << " does not have a perforation" 
                   << " This is needed to have a well-posed problem" );
     }

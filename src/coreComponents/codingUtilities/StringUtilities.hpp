@@ -31,7 +31,7 @@
 //#include <string>
 
 #include "common/DataTypes.hpp"
-#include "IntegerConversion.hpp"
+#include "cxx-utilities/src/IntegerConversion.hpp"
 
 namespace geosx
 {

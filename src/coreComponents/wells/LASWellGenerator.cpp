@@ -63,16 +63,16 @@ void LASWellGenerator::GeneratePolyLineFromXYZ( LASFile const & lasFile )
   auto Y = lasFile.GetLog( "Y" );
   auto Z = lasFile.GetLog( "TVDSS" );
   localIndex nbLogEntries = lasFile.LogSize( "X" );
-  GEOS_ASSERT( nbLogEntries == lasFile.LogSize( "Y" ) );
-  GEOS_ASSERT( nbLogEntries == lasFile.LogSize( "TVDSS" ) );
+  GEOSX_ASSERT( nbLogEntries == lasFile.LogSize( "Y" ) );
+  GEOSX_ASSERT( nbLogEntries == lasFile.LogSize( "TVDSS" ) );
   m_polyNodeCoords.resize( nbLogEntries );
 
   auto lasLineXInfo = lasFile.GetLASLines< LASCurveInformationSection >( "X");
   auto lasLineYInfo = lasFile.GetLASLines< LASCurveInformationSection >( "Y" );
   auto lasLineZInfo = lasFile.GetLASLines< LASCurveInformationSection >( "TVDSS");
-  GEOS_ERROR_IF(lasLineXInfo.size() > 1, "X curve info is defined in more than one Curve Information Section" );
-  GEOS_ERROR_IF(lasLineYInfo.size() > 1, "Y curve info is defined in more than one Curve Information Section" );
-  GEOS_ERROR_IF(lasLineZInfo.size() > 1, "TVDSS curve info is defined in more than one Curve Information Section" );
+  GEOSX_ERROR_IF(lasLineXInfo.size() > 1, "X curve info is defined in more than one Curve Information Section" );
+  GEOSX_ERROR_IF(lasLineYInfo.size() > 1, "Y curve info is defined in more than one Curve Information Section" );
+  GEOSX_ERROR_IF(lasLineZInfo.size() > 1, "TVDSS curve info is defined in more than one Curve Information Section" );
   double factorX = GetFactor( *lasLineXInfo[0] );
   double factorY = GetFactor( *lasLineYInfo[0] );
   double factorZ = GetFactor( *lasLineZInfo[0] );
@@ -95,13 +95,13 @@ void LASWellGenerator::GeneratePolyLineFromDepth( LASFile const & lasFile )
   auto Ys = lasFile.GetLASLines< LASWellInformationSection >("YCOORD");
   auto STARTs = lasFile.GetLASLines< LASWellInformationSection >("STRT");
   auto STOPs = lasFile.GetLASLines< LASWellInformationSection >("STOP");
-  GEOS_ASSERT( Ys.size() == Xs.size() );
-  GEOS_ASSERT( Ys.size() == STARTs.size() );
-  GEOS_ASSERT( Ys.size() == STOPs.size() );
+  GEOSX_ASSERT( Ys.size() == Xs.size() );
+  GEOSX_ASSERT( Ys.size() == STARTs.size() );
+  GEOSX_ASSERT( Ys.size() == STOPs.size() );
   localIndex wellSectionIndex = 0;
   if( Xs.size() > 1 && m_logIndexToTakeForGeometry == -1 )
   {
-    GEOS_ERROR_IF( Xs.size() > 1 && m_logIndexToTakeForGeometry == -1,
+    GEOSX_ERROR_IF( Xs.size() > 1 && m_logIndexToTakeForGeometry == -1,
         "Warning : " << this->getName() << " corresponding LAS file has more than 1 log section defined "
                     << "please specify the index of the log section you want to take into account to write the well "
                     << "into the GEOSX data structure. You have to use the keyword " << viewKeyStruct::geometryLogIndexInFile
@@ -157,7 +157,7 @@ real64 LASWellGenerator::GetFactor( LASLine const & lasLine )
   }
   else
   {
-    GEOS_ERROR( "Unit : " << lasLine.GetUnit() << " is not valid, valid units are FEETS and METERS.");
+    GEOSX_ERROR( "Unit : " << lasLine.GetUnit() << " is not valid, valid units are FEETS and METERS.");
   }
   return factor;
 }

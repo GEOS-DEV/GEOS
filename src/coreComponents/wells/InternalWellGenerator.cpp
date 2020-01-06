@@ -53,28 +53,28 @@ InternalWellGenerator::~InternalWellGenerator()
 
 void InternalWellGenerator::PostProcessInput()
 {
-  GEOS_ERROR_IF( getName().find("well") == std::string::npos,
+  GEOSX_ERROR_IF( getName().find("well") == std::string::npos,
                  "Currently, the well generator must contain the word well in its name ");
 
-  GEOS_ERROR_IF( m_inputPolyNodeCoords.size(1) != m_nDims,
+  GEOSX_ERROR_IF( m_inputPolyNodeCoords.size(1) != m_nDims,
                  "Invalid number of physical coordinates in " << viewKeyStruct::nodeCoords << " for well " << getName() ); 
 
-  GEOS_ERROR_IF( m_segmentToPolyNodeMap.size(1) != 2,
+  GEOSX_ERROR_IF( m_segmentToPolyNodeMap.size(1) != 2,
                  "Invalid size in " << viewKeyStruct::segmentConn << " for well " << getName() ); 
 
-  GEOS_ERROR_IF( m_inputPolyNodeCoords.size(0)-1 != m_segmentToPolyNodeMap.size(0),
+  GEOSX_ERROR_IF( m_inputPolyNodeCoords.size(0)-1 != m_segmentToPolyNodeMap.size(0),
                  "Incompatible sizes of " << viewKeyStruct::nodeCoords << " and " << viewKeyStruct::segmentConn << " in well " << getName() ); 
  
-  GEOS_ERROR_IF( m_crossSectionArea <= 0,
+  GEOSX_ERROR_IF( m_crossSectionArea <= 0,
                  "Invalid " << viewKeyStruct::crossSectionArea << " in well " << getName() );
 
-  GEOS_ERROR_IF( m_wellRegionName.empty(), 
+  GEOSX_ERROR_IF( m_wellRegionName.empty(), 
                  "Invalid well region name in well " << getName() );
 
-  GEOS_ERROR_IF( m_meshName.empty(), 
+  GEOSX_ERROR_IF( m_meshName.empty(), 
                  "Invalid mesh name in well " << getName() );
 
-  GEOS_ERROR_IF( m_wellControlsName.empty(), 
+  GEOSX_ERROR_IF( m_wellControlsName.empty(), 
                  "Invalid well constraint name in well " << getName() );
 
 

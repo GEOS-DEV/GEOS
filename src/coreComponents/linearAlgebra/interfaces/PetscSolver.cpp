@@ -125,7 +125,7 @@ void PetscSolver::solve_krylov( PetscSparseMatrix &mat,
   }
   else
   {
-    GEOS_ERROR( "The requested linear solverType doesn't seem to exist" );
+    GEOSX_ERROR( "The requested linear solverType doesn't seem to exist" );
   }
   
   // create a preconditioner and pick type
@@ -142,11 +142,11 @@ void PetscSolver::solve_krylov( PetscSparseMatrix &mat,
   }
   else if( m_parameters.preconditionerType == "ilu" )
   {
-    GEOS_ERROR( "The requested linear preconditionerType isn't available in PETSc" );
+    GEOSX_ERROR( "The requested linear preconditionerType isn't available in PETSc" );
   }
   else if( m_parameters.preconditionerType == "icc" )
   {
-    GEOS_ERROR( "The requested linear preconditionerType isn't available in PETSc" );
+    GEOSX_ERROR( "The requested linear preconditionerType isn't available in PETSc" );
   }
   else if( m_parameters.preconditionerType == "ilut" )
   {
@@ -154,7 +154,7 @@ void PetscSolver::solve_krylov( PetscSparseMatrix &mat,
     PCSetType( prec, PCHYPRE );
     PCHYPRESetType( prec, "pilut" );
 #else
-    GEOS_ERROR("Can't use HYPRE through PETSc in serial");
+    GEOSX_ERROR("Can't use HYPRE through PETSc in serial");
 #endif
   }
   else if( m_parameters.preconditionerType == "amg" )
@@ -180,7 +180,7 @@ void PetscSolver::solve_krylov( PetscSparseMatrix &mat,
     PCSetType( prec, PCHYPRE );
     PCHYPRESetType( prec, "boomeramg" );
 #else
-    GEOS_ERROR("Can't use HYPRE through PETSc in serial");
+    GEOSX_ERROR("Can't use HYPRE through PETSc in serial");
 #endif
     // PETSc needs char[]
     char max_levels[10], cycle_type[10], num_sweeps[10], smoother_type[30], coarse_type[30];
@@ -203,11 +203,11 @@ void PetscSolver::solve_krylov( PetscSparseMatrix &mat,
   }
   else
   {
-    GEOS_ERROR( "The requested preconditionerType isn't availbe in exist" );
+    GEOSX_ERROR( "The requested preconditionerType isn't availbe in exist" );
   }
 
   // display output
-  if ( m_parameters.verbosity > 0 )
+  if ( m_parameters.logLevel > 0 )
   {
     PetscOptionsSetValue( nullptr, "-ksp_monitor", nullptr ); 
   }

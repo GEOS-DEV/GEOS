@@ -18,11 +18,7 @@
 
 #include "fileIO/las/LASFile.hpp"
 
-#include "SetSignalHandling.hpp"
-
 #include "managers/initialization.hpp"
-
-#include "stackTrace.hpp"
 
 using namespace geosx;
 

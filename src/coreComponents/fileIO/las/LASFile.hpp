@@ -52,7 +52,7 @@ class LASLine
 
     bool GetDataAsBool() const
     {
-      GEOS_ASSERT( m_data == "YES" || m_data == "NO");
+      GEOSX_ASSERT( m_data == "YES" || m_data == "NO");
       return ( m_data == "YES" ? true : false );
     }
 
@@ -140,7 +140,7 @@ class LASInformationSection : public LASSection
     {
       for( string & keyword : m_mandatoryKeyword )
       {
-        GEOS_ERROR_IF( HasKeyword( keyword ) == 0, "Mandatory keyword " << keyword << " not found in "
+        GEOSX_ERROR_IF( HasKeyword( keyword ) == 0, "Mandatory keyword " << keyword << " not found in "
                                                       << GetName() );
       }
     }
@@ -286,7 +286,7 @@ class LASCurveInformationSection : public LASInformationSection
      * */
     virtual void CheckKeywords() override
     {
-      GEOS_ERROR_IF( !HasKeyword( "DEPTH" ) && !HasKeyword( "DEPT" ) && !HasKeyword( "TIME" )  && !HasKeyword( "INDEX "),
+      GEOSX_ERROR_IF( !HasKeyword( "DEPTH" ) && !HasKeyword( "DEPT" ) && !HasKeyword( "TIME" )  && !HasKeyword( "INDEX "),
                      "Invalid " << GetName() << " section. It musts contains at least one those keyword \n"
                      << "DEPTH DEPT TIME INDEX");
     }
@@ -345,7 +345,7 @@ class LASOtherInformationSection : public LASInformationSection
      * */
     virtual void CheckKeywords() override
     {
-      GEOS_ERROR_IF( !m_lines.empty(),
+      GEOSX_ERROR_IF( !m_lines.empty(),
                      "Invalid " << GetName() << " section. No keyword should be defined, only data.");
     }
 
@@ -534,7 +534,7 @@ class LASFile
           result.push_back( &section->GetLine( keyword ) );
         }
       }
-      GEOS_ASSERT( result.size() > 0 );
+      GEOSX_ASSERT( result.size() > 0 );
       return result;
     }
 

@@ -6,19 +6,21 @@
 
     <SolidMechanicsLagrangianSSLE name="lagSolve" 
                                   timeIntegrationOption="QuasiStatic"
-                                  verboseLevel="0"
+                                  logLevel="0"
                                   discretization="FE1"
                                   targetRegions="{Region2}"
                                   solidMaterialName="granite"
                                   >
-      <SystemSolverParameters krylovTol="1.0e-10"
-                              newtonTol="1.0e-3"
-                              maxIterNewton="8"
-                              verbosityFlag="0"/>
+      <NonlinearSolverParameters name="nlsp"
+                                 newtonTol="1.0e-3"
+                                 newtonMaxIter="8"/>
+      <SystemSolverParameters name="ssp"
+                              krylovTol="1.0e-10"
+                              logLevel="0"/>
      </SolidMechanicsLagrangianSSLE>
   
     <SurfaceGenerator name="SurfaceGen"
-                      verboseLevel="0"
+                      logLevel="0"
                       fractureRegion="Fracture"
                       targetRegions="{Region2}"
                       solidMaterialName="granite"

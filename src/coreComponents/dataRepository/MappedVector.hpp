@@ -19,11 +19,11 @@
 #ifndef GEOSX_DATAREPOSITORY_MAPPEDVECTOR_HPP_
 #define GEOSX_DATAREPOSITORY_MAPPEDVECTOR_HPP_
 
-#include "common/GeosxMacros.hpp"
-#include "IntegerConversion.hpp"
-#include "Logger.hpp"
+// Source includes
 #include "KeyIndexT.hpp"
-#include "SFINAE_Macros.hpp"
+#include "common/GeosxMacros.hpp"
+#include "common/Logger.hpp"
+#include "cxx-utilities/src/IntegerConversion.hpp"
 
 namespace geosx
 {
@@ -117,17 +117,27 @@ public:
 
 
 
-  /// default copy constructor
-  MappedVector( MappedVector const & source ) = default;
+  /**
+   * @brief Default copy constructor.
+   */
+  MappedVector( MappedVector const & ) = default;
 
-  /// default copy assignment operator
-  MappedVector & operator=( MappedVector const & source ) = default;
+  /**
+   * @brief Default copy assignment operator.
+   * @return
+   */
+  MappedVector & operator=( MappedVector const & ) = default;
 
-  /// default move operator
-  MappedVector( MappedVector && source ) = default;
+  /**
+   * @brief Default move operator.
+   */
+  MappedVector( MappedVector && ) = default;
 
-  /// default move assignement operator
-  MappedVector & operator=( MappedVector && source ) = default;
+  /**
+   * @brief Default move assignment operator.
+   * @return
+   */
+  MappedVector & operator=( MappedVector && ) = default;
 
 
 
@@ -220,13 +230,13 @@ public:
 //
 //    if( index==KeyIndex::invalid_index )
 //    {
-//      GEOS_ERROR("MappedVector::operator[]( KeyIndex const & keyIndex ):
+//      GEOSX_ERROR("MappedVector::operator[]( KeyIndex const & keyIndex ):
 // invalid key index passed as const into accessor function\n");
 //    }
 //#if RANGE_CHECKING==1
 //    else if (m_values[index].first!=keyIndex.Key() )
 //    {
-//      GEOS_ERROR("MappedVector::operator[]( KeyIndex const & keyIndex ):
+//      GEOSX_ERROR("MappedVector::operator[]( KeyIndex const & keyIndex ):
 // inconsistent key passed as const into accessor function\n")
 //    }
 //#endif
@@ -543,9 +553,9 @@ T * MappedVector< T, T_PTR, KEY_TYPE, INDEX_TYPE >::insert( KEY_TYPE const & key
       }
       else if( source->get_typeid() != m_values[index].second->get_typeid() )
       {
-        GEOS_ERROR( "MappedVector::insert(): Tried to insert existing key ("<<keyName<<
-                    ") with a different type without overwrite flag\n"<<" "<<source->get_typeid().name()<<" != "<<
-                    m_values[index].second->get_typeid().name() );
+        GEOSX_ERROR( "MappedVector::insert(): Tried to insert existing key ("<<keyName<<
+                     ") with a different type without overwrite flag\n"<<" "<<source->get_typeid().name()<<" != "<<
+                     m_values[index].second->get_typeid().name() );
       }
       else
       {

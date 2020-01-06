@@ -8,37 +8,43 @@
                  solidSolverName="lagsolve"
                  fluidSolverName="SinglePhaseFlow"
                  couplingTypeOption="FixedStress"
-                 verboseLevel="1"
+                 logLevel="1"
                  discretization="FE1"
                  targetRegions="{Region2}">
-      <SystemSolverParameters maxIterNewton="40"
-                              verbosityFlag="2"/>
+      <NonlinearSolverParameters name="nlsp"
+                                 newtonMaxIter="40"/>
+      <SystemSolverParameters name="ssp"
+                              logLevel="2"/>
     </Poroelastic>
 
   
     <SolidMechanicsLagrangianSSLE name="lagsolve" 
                                   timeIntegrationOption="QuasiStatic"
-                                  verboseLevel="1"
+                                  logLevel="1"
                                   discretization="FE1"
                                   targetRegions="{Region2}"
                                   solidMaterialName="shale"
                                   >
-      <SystemSolverParameters krylovTol="1.0e-10"
-                              newtonTol="1.0e-6"
-                              maxIterNewton="5"
-                              verbosityFlag="2"/>
+      <NonlinearSolverParameters name="nlsp"
+                                 newtonTol="1.0e-6"
+                                 newtonMaxIter="5"/>
+      <SystemSolverParameters name="ssp"
+                              krylovTol="1.0e-10"
+                              logLevel="2"/>
     </SolidMechanicsLagrangianSSLE>
   
     <SinglePhaseFlow name="SinglePhaseFlow"
-                     verboseLevel="1"
+                     logLevel="1"
                      gravityFlag="1"
                      discretization="singlePhaseTPFA"
                      targetRegions="{Region2}"
                      fluidName="water"
                      solidName="shale">
-      <SystemSolverParameters krylovTol="1.0e-10"
-                              newtonTol="1.0e-6"
-                              maxIterNewton="8"/>
+      <NonlinearSolverParameters name="nlsp"
+                                 newtonTol="1.0e-6"
+                                 newtonMaxIter="8"/>
+      <SystemSolverParameters name="ssp"
+                              krylovTol="1.0e-10"/>
     </SinglePhaseFlow>
   </Solvers>
   

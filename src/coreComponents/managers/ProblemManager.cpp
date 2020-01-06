@@ -16,6 +16,7 @@
 #include "ProblemManager.hpp"
 
 #include <vector>
+#include <regex>
 
 #include "mpiCommunications/CommunicationTools.hpp"
 #include "mpiCommunications/SpatialPartition.hpp"
@@ -30,7 +31,7 @@
 #include "meshUtilities/SimpleGeometricObjects/GeometricObjectManager.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "managers/Outputs/OutputManager.hpp"
-#include "fileIO/utils/utils.hpp"
+#include "common/Path.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "meshUtilities/SimpleGeometricObjects/SimpleGeometricObjectBase.hpp"
 #include "dataRepository/ConduitRestart.hpp"
@@ -54,7 +55,7 @@ struct Arg : public option::Arg
 {
   static option::ArgStatus Unknown(const option::Option& option, bool /*error*/)
   {
-    GEOS_LOG_RANK("Unknown option: " << option.name);
+    GEOSX_LOG_RANK("Unknown option: " << option.name);
     return option::ARG_ILLEGAL;
   }
 
@@ -66,7 +67,7 @@ struct Arg : public option::Arg
       return option::ARG_OK;
     }
 
-    GEOS_LOG_RANK("Error: " << option.name << " requires a non-empty argument!");
+    GEOSX_LOG_RANK("Error: " << option.name << " requires a non-empty argument!");
     return option::ARG_ILLEGAL;
   }
 
@@ -80,7 +81,7 @@ struct Arg : public option::Arg
       return option::ARG_OK;
     }
 
-    GEOS_LOG_RANK("Error: " << option.name << " requires a long-int argument!");
+    GEOSX_LOG_RANK("Error: " << option.name << " requires a long-int argument!");
     return option::ARG_ILLEGAL;
   }
 
@@ -103,7 +104,7 @@ ProblemManager::ProblemManager( const std::string& name,
 
   // Mandatory groups that read from the xml
   RegisterGroup<FieldSpecificationManager>( groupKeys.fieldSpecificationManager.Key(),
-                                            FieldSpecificationManager::get(),
+                                            &FieldSpecificationManager::get(),
                                             false );//->setRestartFlags(RestartFlags::NO_WRITE);
 
 
@@ -117,11 +118,11 @@ ProblemManager::ProblemManager( const std::string& name,
   m_physicsSolverManager = RegisterGroup<PhysicsSolverManager>(groupKeys.physicsSolverManager);
 
   // The function manager is handled separately
-  m_functionManager = FunctionManager::Instance();
+  m_functionManager = &FunctionManager::Instance();
   // Mandatory groups that read from the xml
   RegisterGroup<FunctionManager>( groupKeys.functionManager.Key(),
-                                     m_functionManager,
-                                     false );
+                                  m_functionManager,
+                                  false );
 
   // Command line entries
   commandLine->registerWrapper<string>( viewKeys.inputFileName.Key() )->
@@ -243,7 +244,7 @@ void ProblemManager::ParseCommandLineInput( int argc, char** argv)
   // Handle special cases
   if (parse.error())
   {
-    GEOS_ERROR("Bad input arguments");
+    GEOSX_ERROR("Bad input arguments");
   }
 
   if (options[HELP] || (argc == 0))
@@ -257,7 +258,7 @@ void ProblemManager::ParseCommandLineInput( int argc, char** argv)
   {
     if (options[SCHEMA].count() == 0)
     {
-      GEOS_ERROR("An input xml must be specified!");
+      GEOSX_ERROR("An input xml must be specified!");
     }
   }
 
@@ -308,6 +309,10 @@ void ProblemManager::ParseCommandLineInput( int argc, char** argv)
   if (schemaName.empty())
   {
     getAbsolutePath(inputFileName, inputFileName);
+    string xmlFolder;
+    string notUsed;
+    splitPath( inputFileName, xmlFolder, notUsed );
+    Path::pathPrefix() = xmlFolder;
 
     if (problemName == "") 
     {
@@ -330,7 +335,7 @@ void ProblemManager::ParseCommandLineInput( int argc, char** argv)
       mkdir(outputDirectory.data(), 0755);
       if (chdir(outputDirectory.data()) != 0)
       {
-        GEOS_ERROR("Could not change to the ouput directory: " + outputDirectory);
+        GEOSX_ERROR("Could not change to the ouput directory: " + outputDirectory);
       }
     }
   }
@@ -367,7 +372,7 @@ bool ProblemManager::ParseRestart( int argc, char** argv, std::string& restartFi
   // Handle special cases
   if (parse.error())
   {
-    GEOS_ERROR("Bad input arguments");
+    GEOSX_ERROR("Bad input arguments");
   }
 
   if (options[HELP] || (argc == 0))
@@ -381,7 +386,7 @@ bool ProblemManager::ParseRestart( int argc, char** argv, std::string& restartFi
   {
     if (options[SCHEMA].count() == 0)
     {
-      GEOS_ERROR("An input xml must be specified!");
+      GEOSX_ERROR("An input xml must be specified!");
     }
   }
 
@@ -428,7 +433,7 @@ bool ProblemManager::ParseRestart( int argc, char** argv, std::string& restartFi
 
     if (dir_contents.size() == 0)
     {
-      GEOS_ERROR("Directory gotten from " << restartFileName << " " << dirname << " is empty.");
+      GEOSX_ERROR("Directory gotten from " << restartFileName << " " << dirname << " is empty.");
     }
 
     std::regex basename_regex(basename);
@@ -446,7 +451,7 @@ bool ProblemManager::ParseRestart( int argc, char** argv, std::string& restartFi
     }
 
     if (!match_found) {
-      GEOS_ERROR("No matches found for pattern " << basename << " in directory " << dirname << ".");
+      GEOSX_ERROR("No matches found for pattern " << basename << " in directory " << dirname << ".");
     }
 
     restartFileName = dirname + "/" + max_match;
@@ -461,20 +466,20 @@ void ProblemManager::InitializePythonInterpreter()
 {  
 #ifdef GEOSX_USE_PYTHON
   // Initialize python and numpy
-  GEOS_LOG_RANK_0("Loading python interpreter");
+  GEOSX_LOG_RANK_0("Loading python interpreter");
 
   // Check to make sure the appropriate environment variables are set
   if (getenv("GPAC_SCHEMA") == NULL)
   {
-    GEOS_ERROR("GPAC_SCHEMA must be defined to use the new preprocessor!");
+    GEOSX_ERROR("GPAC_SCHEMA must be defined to use the new preprocessor!");
   }
   if (getenv("GEOS_PYTHONPATH") == NULL)
   {
-    GEOS_ERROR("GEOS_PYTHONPATH must be defined to use the new preprocessor!");
+    GEOSX_ERROR("GEOS_PYTHONPATH must be defined to use the new preprocessor!");
   }
   if (getenv("GEOS_PYTHONHOME") == NULL)
   {
-    GEOS_ERROR("GEOS_PYTHONHOME must be defined to use the new preprocessor!");
+    GEOSX_ERROR("GEOS_PYTHONHOME must be defined to use the new preprocessor!");
   }
 
   setenv("PYTHONPATH", getenv("GEOS_PYTHONPATH"), 1);
@@ -489,7 +494,7 @@ void ProblemManager::ClosePythonInterpreter()
 {
 #ifdef GEOSX_USE_PYTHON
   // Add any other cleanup here
-  GEOS_LOG_RANK_0("Closing python interpreter");
+  GEOSX_LOG_RANK_0("Closing python interpreter");
   Py_Finalize();
 #endif
 }
@@ -541,9 +546,9 @@ void ProblemManager::SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
   m_functionManager->GenerateDataStructureSkeleton(0);
   SchemaUtilities::SchemaConstruction(m_functionManager, schemaRoot, targetChoiceNode, documentationType);
 
-  FieldSpecificationManager * bcManager = FieldSpecificationManager::get();
-  bcManager->GenerateDataStructureSkeleton(0);
-  SchemaUtilities::SchemaConstruction(bcManager, schemaRoot, targetChoiceNode, documentationType);
+  FieldSpecificationManager & bcManager = FieldSpecificationManager::get();
+  bcManager.GenerateDataStructureSkeleton(0);
+  SchemaUtilities::SchemaConstruction(&bcManager, schemaRoot, targetChoiceNode, documentationType);
 
   ConstitutiveManager * constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
   SchemaUtilities::SchemaConstruction(constitutiveManager, schemaRoot, targetChoiceNode, documentationType);
@@ -590,7 +595,7 @@ void ProblemManager::ParseInputFile()
   if (pModule == NULL)
   {
     PyErr_Print();
-    GEOS_ERROR("Could not find the pygeos module in GEOS_PYTHONPATH!");
+    GEOSX_ERROR("Could not find the pygeos module in GEOS_PYTHONPATH!");
   }
 
   // Call the xml preprocessor
@@ -608,7 +613,7 @@ void ProblemManager::ParseInputFile()
   Py_DECREF(pModule);
 
 #else
-  GEOS_LOG_RANK_0("GEOS must be configured to use Python to use parameters, symbolic math, etc. in input files");
+  GEOSX_LOG_RANK_0("GEOS must be configured to use Python to use parameters, symbolic math, etc. in input files");
 #endif
 
 
@@ -616,9 +621,9 @@ void ProblemManager::ParseInputFile()
   xmlResult = xmlDocument.load_file(inputFileName.c_str());
   if (!xmlResult)
   {
-    GEOS_LOG_RANK_0("XML parsed with errors!");
-    GEOS_LOG_RANK_0("Error description: " << xmlResult.description());
-    GEOS_LOG_RANK_0("Error offset: " << xmlResult.offset);
+    GEOSX_LOG_RANK_0("XML parsed with errors!");
+    GEOSX_LOG_RANK_0("Error description: " << xmlResult.description());
+    GEOSX_LOG_RANK_0("Error offset: " << xmlResult.offset);
   }
 
   string::size_type const pos=inputFileName.find_last_of('/');
@@ -905,11 +910,7 @@ DomainPartition const * ProblemManager::getDomainPartition() const
 void ProblemManager::ApplyInitialConditions()
 {
   DomainPartition * domain = GetGroup<DomainPartition>(keys::domain);
-
-  FieldSpecificationManager const * boundaryConditionManager = FieldSpecificationManager::get();
-
-  boundaryConditionManager->ApplyInitialConditions( domain );
-
+  FieldSpecificationManager::get().ApplyInitialConditions( domain );
 }
 
 void ProblemManager::ReadRestartOverwrite()
