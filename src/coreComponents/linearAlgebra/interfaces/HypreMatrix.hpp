@@ -430,6 +430,24 @@ public:
                               bool const closeResult = true ) const;
 
   /**
+     * @brief Matrix/Matrix transpose multiplication.
+     *
+     * Compute <tt>B * this^T = C<tt>.
+     *
+     * \param src Input matrix (B).
+     * \param dst Output matrix (C).
+     * \param closeResult whether to close @p dst for additional entries.
+     *
+     * Note that the output matrix C should have the same
+     * row-map as this.  If close() has already been called
+     * on C, then C's sparsity pattern must already contain
+     * the nonzero entries produced by the product this*B.
+     */
+  void rightMultiplyTranspose( HypreMatrix const & src,
+                               HypreMatrix & dst,
+                               bool const closeResult = true ) const;
+
+  /**
    * @brief Compute residual <tt>r = b - A*x</tt>.
    *
    * \param x Input solution.

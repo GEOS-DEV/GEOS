@@ -64,10 +64,10 @@ HypreMatrix::HypreMatrix()
 
 HypreMatrix::HypreMatrix( HypreMatrix const &src )
 {
-  GEOSX_ERROR_IF( src.unwrappedPointer() == nullptr,
-                 "Input matrix looks empty" );
-  GEOSX_ERROR_IF( src.isAssembled(),
-                 "Input matrix hasn't been closed before copy" );
+  GEOSX_ASSERT_MSG( src.unwrappedPointer() != nullptr,
+                    "Input matrix looks empty" );
+  GEOSX_ASSERT_MSG( src.isAssembled(),
+                    "Input matrix hasn't been closed before copy" );
 
   this->reset();
 
@@ -723,6 +723,51 @@ void HypreMatrix::leftMultiplyTranspose( HypreMatrix const & src,
   }
 
 }
+
+// Perform the matrix-matrix product src * transpose(this) = dst.
+void HypreMatrix::rightMultiplyTranspose( HypreMatrix const & src,
+                                          HypreMatrix & dst,
+                                          bool const closeResult ) const
+{
+  // Error check
+  GEOSX_ASSERT_MSG( src.globalCols() == this->globalCols(),
+                   "Incompatible matrix dimensions");
+
+  // Compute column partitioning if needed for src matrix
+  if ( hypre_IJMatrixRowPartitioning( src.m_ij_mat ) !=
+       hypre_IJMatrixColPartitioning( src.m_ij_mat ) )
+  {
+    if (!hypre_ParCSRMatrixCommPkg(src.m_parcsr_mat))
+    {
+      hypre_MatvecCommPkgCreate(src.m_parcsr_mat);
+    }
+  }
+
+  // Transpose this
+  HYPRE_ParCSRMatrix tmp;
+  hypre_ParCSRMatrixTranspose( src.m_parcsr_mat,
+                               &tmp,
+                               1 );
+
+  // Compute product
+  HYPRE_ParCSRMatrix dst_parcsr;
+  dst_parcsr = hypre_ParMatmul( src.m_parcsr_mat,
+                                tmp );
+
+  // Create IJ layer (with matrix closed)
+  dst.parCSRtoIJ( dst_parcsr );
+
+  // Destroy temporary matrix
+  hypre_ParCSRMatrixDestroy( tmp );
+
+  // Reopen matrix if desired
+  if (!closeResult)
+  {
+    dst.open();
+  }
+
+}
+
 
 void HypreMatrix::parCSRtoIJ( HYPRE_ParCSRMatrix &parCSRMatrix )
 {

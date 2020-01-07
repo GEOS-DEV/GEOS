@@ -135,7 +135,7 @@ ParallelMatrix PermuteMatrix(ParallelMatrix const & matrix,
                                       MPI_COMM_GEOSX );
 
   permutationMatrix.multiply(matrix, temp, true);
-  //permutationMatrix.rightMultiplyTranspose(temp, permutedMatrix, true);
+  permutationMatrix.rightMultiplyTranspose(temp, permutedMatrix, true);
 
   return permutedMatrix;
 }
@@ -162,11 +162,7 @@ ParallelMatrix PermuteMatrix(ParallelMatrix const & matrix,
                                       MPI_COMM_GEOSX );
 
   permutationMatrixLeft.multiply( matrix, temp, true );
-  //permutationMatrixRight.rightMultiplyTranspose( temp, permutedMatrix, true );
-  if ( permutationMatrixRight.isAssembled() )
-  {
-
-  }
+  permutationMatrixRight.rightMultiplyTranspose( temp, permutedMatrix, true );
 
   return permutedMatrix;
 }

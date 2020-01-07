@@ -145,7 +145,7 @@ typename LAI::ParallelMatrix compute2DLaplaceOperator( MPI_Comm comm,
 template<typename LAI>
 void compute2DLaplaceOperator( MPI_Comm comm,
                                geosx::globalIndex n,
-			        		   typename LAI::ParallelMatrix &laplace2D )
+			        		             typename LAI::ParallelMatrix &laplace2D )
 {
   // total dofs = n^2
   geosx::globalIndex N = n * n;
