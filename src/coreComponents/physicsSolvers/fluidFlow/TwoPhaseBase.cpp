@@ -46,8 +46,8 @@ TwoPhaseBase::TwoPhaseBase( const std::string& name,
                             Group * const parent ):
   FlowSolverBase(name, parent)
 {
-  m_wettingPh     = -1;
-  m_nonWettingPh  = -1;
+  m_ipw     = -1;
+  m_ipnw  = -1;
   m_numDofPerCell =  2;
  
   this->registerWrapper( viewKeyStruct::relPermNameString,  &m_relPermName,  false )->
@@ -103,6 +103,11 @@ void TwoPhaseBase::UpdateFluidModel(Group * const dataGroup ) const
   // TODO: find a way to call a constitutive model here
   //       (maybe some variant of SingleFluid with pressure-dependent densities and viscosities
   //       or, better a MultiFluid two-phase Dead-Oil)
+
+  arrayView1d<real64 const> const & pres  =
+    dataGroup->getReference< array1d<real64> >( viewKeyStruct::pressureString );
+  arrayView1d<real64 const> const & dPres =
+    dataGroup->getReference< array1d<real64> >( viewKeyStruct::deltaPressureString );
   
   // phase densities
   arrayView3d<real64> const & phaseDens =
@@ -115,20 +120,26 @@ void TwoPhaseBase::UpdateFluidModel(Group * const dataGroup ) const
     fluid->getReference<array3d<real64>>( MultiFluidBase::viewKeyStruct::phaseViscosityString );
   arrayView3d<real64> const & dPhaseVisc_dPres =
     fluid->getReference<array3d<real64>>( MultiFluidBase::viewKeyStruct::dPhaseViscosity_dPressureString );
-  
+
+  real64 const p_ref       = 1e6;
+  real64 const c_w         = 1e-12;
+  real64 const c_nw        = 1e-9;
+  real64 const dens_ref_w  = 1000;
+  real64 const dens_ref_nw = 800;
+  real64 const visc_ref_w  = 0.001;
+  real64 const visc_ref_nw = 0.0005;
   forall_in_range( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a )
   {
     // densities
-    phaseDens[a][0][m_wettingPh]           = 1000.;
-    dPhaseDens_dPres[a][0][m_wettingPh]    = 0.;    
-    phaseDens[a][0][m_nonWettingPh]        = 800.;
-    dPhaseDens_dPres[a][0][m_nonWettingPh] = 0.;
-    
+    phaseDens[a][0][m_ipw]         = dens_ref_w * std::exp( c_w * ( pres[a]+dPres[a] - p_ref ) );
+    dPhaseDens_dPres[a][0][m_ipw]  = c_w * phaseDens[a][0][m_ipw];
+    phaseDens[a][0][m_ipnw]        = dens_ref_nw * std::exp( c_nw * ( pres[a]+dPres[a] - p_ref ) );
+    dPhaseDens_dPres[a][0][m_ipnw] = c_nw * phaseDens[a][0][m_ipnw];
     // viscosities
-    phaseVisc[a][0][m_wettingPh]           = 0.001;
-    dPhaseVisc_dPres[a][0][m_wettingPh]    = 0.;    
-    phaseVisc[a][0][m_nonWettingPh]        = 0.0005;
-    dPhaseVisc_dPres[a][0][m_nonWettingPh] = 0.;        
+    phaseVisc[a][0][m_ipw]         = visc_ref_w * std::exp( c_w * ( pres[a]+dPres[a] - p_ref ) );
+    dPhaseVisc_dPres[a][0][m_ipw]  = c_w * phaseVisc[a][0][m_ipw];
+    phaseVisc[a][0][m_ipnw]        = visc_ref_nw * std::exp( c_w * ( pres[a]+dPres[a] - p_ref ) );
+    dPhaseVisc_dPres[a][0][m_ipnw] = c_nw * phaseVisc[a][0][m_ipnw];;        
   });
 }
 
@@ -168,8 +179,8 @@ void TwoPhaseBase::UpdateRelPermModel( Group * const dataGroup ) const
 
   forall_in_range( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a )
   {
-    phaseSat[a][m_wettingPh]    = sat[a] + dSat[a];
-    phaseSat[a][m_nonWettingPh] = 1-phaseSat[a][m_wettingPh];     
+    phaseSat[a][m_ipw]    = sat[a] + dSat[a];
+    phaseSat[a][m_ipnw] = 1-phaseSat[a][m_ipw];     
   });
   
   relPerm->BatchUpdate( phaseSat );
@@ -218,7 +229,7 @@ void TwoPhaseBase::UpdatePhaseMobility( Group * const dataGroup ) const
     }
     
     // this is needed because we need the derivative wrt the wetting-phase saturation
-    dPhaseMob_dSat[a][m_nonWettingPh] *= -1;
+    dPhaseMob_dSat[a][m_ipnw] *= -1;
 
   }); 
 }
@@ -276,22 +287,22 @@ void TwoPhaseBase::InitializePreSubGroups( Group * const rootGroup )
   if ( (fluid->phaseName( 0 ) == "oil" && fluid->phaseName( 1 ) == "gas") ||
        (fluid->phaseName( 1 ) == "oil" && fluid->phaseName( 0 ) == "water") )
   {
-    m_wettingPh    = 0;
-    m_nonWettingPh = 1;
+    m_ipw    = 0;
+    m_ipnw = 1;
   }
   else if ( (fluid->phaseName( 1 ) == "oil" && fluid->phaseName( 0 ) == "gas") ||
             (fluid->phaseName( 0 ) == "oil" && fluid->phaseName( 1 ) == "water") )
   {
-    m_wettingPh    = 1;
-    m_nonWettingPh = 0;
+    m_ipw    = 1;
+    m_ipnw = 0;
   }
-  GEOSX_ERROR_IF( m_wettingPh == -1 || m_nonWettingPh == -1,
+  GEOSX_ERROR_IF( m_ipw == -1 || m_ipnw == -1,
                   "TwoPhaseBase: the accepted phase names are water, oil, and gas");
 
   // fill the array mapping the phase index to the row offset in the residual 
   m_phaseToRow.resize(NUM_PHASES); 
-  m_phaseToRow[m_wettingPh]    = RowOffset::WETTING;
-  m_phaseToRow[m_nonWettingPh] = RowOffset::NONWETTING;
+  m_phaseToRow[m_ipw]    = RowOffset::WETTING;
+  m_phaseToRow[m_ipnw] = RowOffset::NONWETTING;
 
   for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
   {
@@ -361,7 +372,6 @@ void TwoPhaseBase::InitializePostInitialConditions_PreSubGroups( Group * const r
   {
     UpdateState( subRegion );
   });
-
 }
 
 real64 TwoPhaseBase::SolverStep( real64 const& time_n,
@@ -534,13 +544,13 @@ void TwoPhaseBase::AssembleAccumulationTerms( DomainPartition const * const doma
         stackArray1d<real64, numPhases> satNew( numPhases );
         stackArray1d<real64, numPhases> satOld( numPhases );
         stackArray1d<real64, numPhases> dSatNew_dS( numPhases );
-        satNew[m_wettingPh]        = sat[ei] + dSat[ei];
-        satNew[m_nonWettingPh]     = 1 - satNew[m_wettingPh];
-        satOld[m_wettingPh]        = sat[ei];
-        satOld[m_nonWettingPh]     = 1 - satOld[m_wettingPh];
-        dSatNew_dS[m_wettingPh]    = 1;
-        dSatNew_dS[m_nonWettingPh] = -1;
-        
+        satNew[m_ipw]      = sat[ei] + dSat[ei];
+        satNew[m_ipnw]     = 1 - satNew[m_ipw];
+        satOld[m_ipw]      = sat[ei];
+        satOld[m_ipnw]     = 1 - satOld[m_ipw];
+        dSatNew_dS[m_ipw]  = 1;
+        dSatNew_dS[m_ipnw] = -1;
+
         // dof numbers
         dofColIndices[dp] = dofNumber[ei] + dp;
         dofColIndices[dS] = dofNumber[ei] + dS;

@@ -1353,19 +1353,19 @@ void DofManager::setSparsityPattern( ParallelMatrix & matrix,
     array1d<globalIndex> indices;
     array1d<real64> values;
 
-    globalIndex fieldOffset = 0;
+    globalIndex blockOffsetRow = 0;
 
     // Loop over all fields
-    for( localIndex iGlo = 0; iGlo < m_fields.size(); ++iGlo )
+    for( localIndex iBlock = 0; iBlock < m_fields.size(); ++iBlock )
     {
-      FieldDescription const & field = m_fields[iGlo];
-      globalIndex const row_adjustment = field.fieldOffset - field.firstLocalRow;
+      FieldDescription const & iField = m_fields[iBlock];
+      globalIndex blockOffsetCol = 0;
 
       // Loop over all fields
-      for( localIndex jGlo = 0; jGlo < m_fields.size(); ++jGlo )
+      for( localIndex jBlock = 0; jBlock < m_fields.size(); ++jBlock )
       {
         // compute single coupling block pattern
-        setSparsityPatternOneBlock( localPattern, iGlo, jGlo );
+        setSparsityPatternOneBlock( localPattern, iBlock, jBlock );
 
         // Assemble into global pattern (with indices adjusted for field offsets)
         for( globalIndex i = localPattern.ilower(); i < localPattern.iupper(); ++i )
@@ -1375,19 +1375,21 @@ void DofManager::setSparsityPattern( ParallelMatrix & matrix,
           {
             for( globalIndex j = 0; j < indices.size(); ++j )
             {
-              indices[j] += fieldOffset;
+              indices[j] += blockOffsetCol;
             }
-            sparsity.insert( i + row_adjustment, indices, values );
+            sparsity.insert( i + iField.fieldOffset - iField.firstLocalRow, indices, values );
           }
         }
+
+        blockOffsetCol += m_fields[jBlock].numGlobalRows;
       }
 
-      for( globalIndex i = 0; i < field.numLocalRows; ++i )
+      for( globalIndex i = 0; i < iField.numLocalRows; ++i )
       {
-        colPerm.insert( fieldOffset + field.firstLocalRow + i, field.fieldOffset + i, 1.0 );
+        colPerm.insert( blockOffsetRow + iField.firstLocalRow + i, iField.fieldOffset + i, 1.0 );
       }
 
-      fieldOffset += field.numGlobalRows;
+      blockOffsetRow += iField.numGlobalRows;
     }
     sparsity.close();
     colPerm.close();

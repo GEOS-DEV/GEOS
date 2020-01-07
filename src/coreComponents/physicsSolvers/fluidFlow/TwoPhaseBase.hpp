@@ -304,10 +304,10 @@ protected:
   array1d<localIndex> m_phaseToRow;
   
   /// index of the wetting phase in the MaterialViewAccessors
-  localIndex m_wettingPh;
+  localIndex m_ipw;
 
   /// index of the non-wetting phase in the MaterialViewAccessors
-  localIndex m_nonWettingPh;
+  localIndex m_ipnw;
 
 };
 
