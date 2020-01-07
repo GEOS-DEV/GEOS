@@ -85,7 +85,7 @@ struct Helper
  * a member to hold a default value.
  */
 template< typename T >
-struct Helper< T, typename std::enable_if< is_defaultable< T >::value >::type >
+struct Helper< T, std::enable_if_t< is_defaultable< T >::value > >
 {
   /// attribute to indicate whether type \p T has a default value
   static constexpr bool has_default_value = true;
@@ -107,8 +107,8 @@ struct Helper< T, typename std::enable_if< is_defaultable< T >::value >::type >
  * containers.
  */
 template< typename T >
-struct Helper< T, typename std::enable_if_t< traits::has_alias_value_type< T > &&
-                                             is_defaultable< typename T::value_type >::value > >
+struct Helper< T, std::enable_if_t< traits::has_alias_value_type< T > &&
+                                    is_defaultable< typename T::value_type >::value > >
 {
   /// attribute to indicate whether type \p T has a default value
   static constexpr bool has_default_value = true;
@@ -120,7 +120,21 @@ struct Helper< T, typename std::enable_if_t< traits::has_alias_value_type< T > &
   value_type value = value_type();
 };
 
+template< typename T >
+std::enable_if_t< !Helper< T >::has_default_value, std::ostream & >
+operator<<( std::ostream & stream, Helper< T > const & GEOSX_UNUSED_ARG( value ) )
+{
+  return stream;
 }
+
+template< typename T >
+std::enable_if_t< Helper< T >::has_default_value, std::ostream & >
+operator<<( std::ostream & stream, Helper< T > const & value )
+{
+  return stream << value.value;
+}
+
+} // namespace wrapperDefaultValue
 
 /**
  * @tparam T the type to check
@@ -129,9 +143,8 @@ struct Helper< T, typename std::enable_if_t< traits::has_alias_value_type< T > &
 template< typename T >
 using DefaultValue = wrapperDefaultValue::Helper< T >;
 
-
-}
-}
+} // namespace dataRepository
+} // namespace geosx
 
 
 #endif /* GEOSX_DATAREPOSITORY_DEFAULTVALUE_HPP_ */
