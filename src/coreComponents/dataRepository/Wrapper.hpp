@@ -615,6 +615,14 @@ public:
   ///@{
 
   /**
+   * @copydoc WrapperBase::hasDefaultValue()
+   */
+  virtual bool hasDefaultValue() const final override
+  {
+    return m_default.has_default_value;
+  }
+
+  /**
    * @brief Accessor for m_default.
    * @return reference to const m_default member
    */
@@ -662,6 +670,16 @@ public:
     m_default.value = defaultVal;
     *m_data = m_default.value;
     return this;
+  }
+
+  /**
+   * @copydoc WrapperBase::getDefaultValueString()
+   */
+  virtual std::string getDefaultValueString() const override
+  {
+    std::stringstream ss;
+    ss << m_default;
+    return ss.str();
   }
 
   HAS_MEMBER_FUNCTION( setName,

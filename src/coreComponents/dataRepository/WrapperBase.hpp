@@ -134,6 +134,18 @@ public:
   ///@}
 
   /**
+   * @brief Return true iff this wrapper has a valid default value.
+   * @return True iff this wrapper has a valid default value.
+   */
+  virtual bool hasDefaultValue() const = 0;
+
+  /**
+   * @brief Return a string representing the default value.
+   * @return A string representing the default value.
+   */
+  virtual std::string getDefaultValueString() const = 0;
+
+  /**
    * @name Restart output methods
    */
   ///@{
