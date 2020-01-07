@@ -76,7 +76,7 @@ TableFunction::TableFunction( const std::string& name,
 
   registerWrapper( keys::tableInterpolation, &m_interpolationMethodString, false )->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Interpolation method (options = linear, nearest)")->
+    setDescription("Interpolation method (options = linear, nearest, upper, lower)")->
     setDefaultValue("linear");
 }
 
@@ -156,6 +156,14 @@ void TableFunction::InitializeFunction()
   else if ( m_interpolationMethodString == "nearest" )
   {
     m_interpolationMethod = InterpolationType::Nearest;
+  }
+  else if ( m_interpolationMethodString == "upper" )
+  {
+    m_interpolationMethod = InterpolationType::Upper;
+  }
+  else if ( m_interpolationMethodString == "lower" )
+  {
+    m_interpolationMethod = InterpolationType::Lower;
   }
   else
   {
@@ -259,8 +267,8 @@ real64 TableFunction::Evaluate( real64 const * const input ) const
     }
   }
   
-  // Nearest neighbor interpolation
-  else if (m_interpolationMethod == InterpolationType::Nearest)
+  // Nearest, Upper, Lower interpolation methods
+  else
   {
     // Determine the index to the nearest table entry
     localIndex tableIndex = 0;
@@ -282,15 +290,27 @@ real64 TableFunction::Evaluate( real64 const * const input ) const
       else
       {
         // Coordinate is within the table axis
+        // Note: std::distance will return the index of the upper table vertex
         auto lower = std::lower_bound(m_coordinates[ii].begin(), m_coordinates[ii].end(), input[ii]);
         subIndex = integer_conversion<localIndex>(std::distance(m_coordinates[ii].begin(), lower));
 
-        // Check to see which side is closer
-        // Note: std::distance will return the right-hand index
-        if ((input[ii] - m_coordinates[ii][subIndex - 1]) <= (m_coordinates[ii][subIndex] - input[ii]))
+        // Interpolation types:
+        //   - Nearest returns the value of the closest table vertex
+        //   - Upper returns the value of the next table vertex
+        //   - Lower returns the value of the previous table vertex
+        if (m_interpolationMethod == InterpolationType::Nearest)
         {
-          // The left-hand side is closer
-          --subIndex;
+          if ((input[ii] - m_coordinates[ii][subIndex - 1]) <= (m_coordinates[ii][subIndex] - input[ii]))
+          {
+            --subIndex;
+          }
+        }
+        else if (m_interpolationMethod == InterpolationType::Lower)
+        {
+          if (subIndex > 0)
+          {
+            --subIndex;
+          }
         }
       }
 
@@ -300,12 +320,7 @@ real64 TableFunction::Evaluate( real64 const * const input ) const
 
     // Retrieve the nearest value
     result = m_values[tableIndex];
-  }
-  else
-  {
-    GEOSX_ERROR( "Unrecognized interpolation type: " << m_interpolationMethodString );
-  }
-  
+  }  
 
   return result;
 }

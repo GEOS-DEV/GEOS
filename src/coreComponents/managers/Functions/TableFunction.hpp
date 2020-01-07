@@ -83,7 +83,9 @@ public:
   enum class InterpolationType
   {
     Linear,
-    Nearest
+    Nearest,
+    Upper,
+    Lower
   };
 
 private:
