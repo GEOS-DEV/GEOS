@@ -21,11 +21,11 @@ Element: BlackOilFluid
 .. include:: ../../coreComponents/fileIO/schema/docs/BlackOilFluid.rst
 
 
-.. _XML_BoundedThickPlane:
+.. _XML_BoundedPlane:
 
-Element: BoundedThickPlane
-==========================
-.. include:: ../../coreComponents/fileIO/schema/docs/BoundedThickPlane.rst
+Element: BoundedPlane
+=====================
+.. include:: ../../coreComponents/fileIO/schema/docs/BoundedPlane.rst
 
 
 .. _XML_Box:
@@ -585,11 +585,11 @@ Datastructure: BlackOilFluid
 .. include:: ../../coreComponents/fileIO/schema/docs/BlackOilFluid_other.rst
 
 
-.. _DATASTRUCTURE_BoundedThickPlane:
+.. _DATASTRUCTURE_BoundedPlane:
 
-Datastructure: BoundedThickPlane
-================================
-.. include:: ../../coreComponents/fileIO/schema/docs/BoundedThickPlane_other.rst
+Datastructure: BoundedPlane
+===========================
+.. include:: ../../coreComponents/fileIO/schema/docs/BoundedPlane_other.rst
 
 
 .. _DATASTRUCTURE_Box:
