@@ -658,6 +658,7 @@ public:
 
   /**
    * @brief Map a global row index to local row index
+   *        (-1 returned if out of range)
    */
   localIndex getLocalRowID( globalIndex const index ) const;
 

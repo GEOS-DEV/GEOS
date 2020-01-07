@@ -71,7 +71,7 @@ HypreMatrix::HypreMatrix( HypreMatrix const &src )
 
   this->reset();
 
-  MPI_Comm comm = hypre_IJVectorComm( *src.unwrappedPointer() );
+  MPI_Comm comm = hypre_IJMatrixComm( *src.unwrappedPointer() );
   HYPRE_Int ilower, iupper, jlower, jupper;
   HYPRE_Int objectType;
 
@@ -1030,7 +1030,7 @@ real64 HypreMatrix::getDiagValue( globalIndex globalRow ) const
   HYPRE_Int *       JA       = hypre_CSRMatrixJ( prt_CSR );
   double *          ptr_data = hypre_CSRMatrixData( prt_CSR );
 
-  std::cout << "\n\n Getting diagonal value: ";
+  //std::cout << "\n\n Getting diagonal value: ";
   for( HYPRE_Int j = IA[localRow] ; j < IA[localRow + 1] ; ++j )
   {
     if ( JA[j] == globalRow )
@@ -1112,7 +1112,16 @@ HYPRE_IJMatrix * HypreMatrix::unwrappedPointer()
 // Map a global row index to local row index
 localIndex HypreMatrix::getLocalRowID( globalIndex const index ) const
 {
-  return integer_conversion<localIndex>( index - this->ilower() );
+  if ( index < this->iupper() )
+  {
+    return std::max( integer_conversion<localIndex>(-1),
+                     integer_conversion<localIndex>( index - this->ilower() ) );
+  }
+  else
+  {
+    return integer_conversion<localIndex>(-1);
+  }
+
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""

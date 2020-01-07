@@ -471,8 +471,16 @@ struct ImplicitKernel
         // TODO remove local epetra objects, remove use of unwrappedPointer()
         //matrix->unwrappedPointer()->SumIntoGlobalValues( elementLocalDofIndex, dRdU);
         //rhs->unwrappedPointer()->SumIntoGlobalValues( elementLocalDofIndex, R);
-        GEOSX_UNUSED_VAR( matrix );
-        GEOSX_UNUSED_VAR( rhs );
+
+        for (int i = 0; i< dRdU.M(); ++i )
+        {
+          for (int j = 0; j< dRdU.N(); ++j )
+          {
+            matrix->add( elementLocalDofIndex(i), elementLocalDofIndex(j), dRdU(i,j) );
+          }
+          rhs->add( elementLocalDofIndex(i), R(i) );
+        }
+
       }
     });
 

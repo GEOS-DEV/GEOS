@@ -316,8 +316,8 @@ void HypreVector::set( globalIndex const * globalIndices,
                        real64 const * values,
                        localIndex size )
 {
-  GEOSX_ERROR_IF( m_ij_vector == nullptr,
-                 "vector appears to be empty (not created)" );
+  GEOSX_ASSERT_MSG( m_ij_vector != nullptr,
+                    "vector appears to be empty (not created)" );
   GEOSX_ASSERT_MSG( this->ilower() <= *std::min_element(globalIndices, globalIndices + size) &&
                    *std::max_element(globalIndices, globalIndices + size) < this->iupper(),
                    "HypreVector, it is not possible to set values on other processors");
@@ -686,7 +686,16 @@ localIndex HypreVector::localSize() const
 // Map a global row index to local row index
 localIndex HypreVector::getLocalRowID( globalIndex const index ) const
 {
-  return integer_conversion< localIndex >( index - this->ilower() ) ;
+  if ( index < this->iupper() )
+  {
+    return std::max( integer_conversion<localIndex>(-1),
+                     integer_conversion<localIndex>( index - this->ilower() ) );
+  }
+  else
+  {
+    return integer_conversion<localIndex>(-1);
+  }
+
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
