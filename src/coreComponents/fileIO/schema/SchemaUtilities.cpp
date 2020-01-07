@@ -235,18 +235,10 @@ void SchemaUtilities::SchemaConstruction(Group * const group,
             }
             else if ( flag == InputFlags::OPTIONAL )
             {
-              rtTypes::TypeIDs const wrapperTypeID = rtTypes::typeID(wrapper->get_typeid());
-              rtTypes::ApplyIntrinsicTypeLambda2( wrapperTypeID,
-                                                  [&]( auto a, auto GEOSX_UNUSED_ARG( b ) ) -> void
+              if ( wrapper->hasDefaultValue() )
               {
-                using COMPOSITE_TYPE = decltype(a);
-                Wrapper<COMPOSITE_TYPE>& typedWrapper = Wrapper<COMPOSITE_TYPE>::cast( *wrapper );
-                
-                if( typedWrapper.getDefaultValueStruct().has_default_value )
-                {
-                  SetDefaultValueString( typedWrapper.getDefaultValueStruct(), attributeNode );
-                }
-              });
+                attributeNode.append_attribute("default") = wrapper->getDefaultValueString().c_str();
+              }
             }
             else if (documentationType == 0)
             {
