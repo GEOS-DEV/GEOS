@@ -12,6 +12,7 @@ CompressibleSinglePhaseFluid          node :ref:`DATASTRUCTURE_CompressibleSingl
 Contact                               node :ref:`DATASTRUCTURE_Contact`                               
 LinearElasticAnisotropic              node :ref:`DATASTRUCTURE_LinearElasticAnisotropic`              
 LinearElasticIsotropic                node :ref:`DATASTRUCTURE_LinearElasticIsotropic`                
+MultiPhaseMultiComponentFluid         node :ref:`DATASTRUCTURE_MultiPhaseMultiComponentFluid`         
 PoreVolumeCompressibleSolid           node :ref:`DATASTRUCTURE_PoreVolumeCompressibleSolid`           
 PoroLinearElasticAnisotropic          node :ref:`DATASTRUCTURE_PoroLinearElasticAnisotropic`          
 PoroLinearElasticIsotropic            node :ref:`DATASTRUCTURE_PoroLinearElasticIsotropic`            

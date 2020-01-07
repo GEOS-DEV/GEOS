@@ -68,7 +68,7 @@ localIndex CellBlock::GetNumFaceNodes( localIndex const GEOSX_UNUSED_ARG( elemen
     if (localFaceIndex == 4) return 3;
   }
 
-  GEOS_ERROR("Error. Don't know what kind of element this is and cannot build faces.");
+  GEOSX_ERROR("Error. Don't know what kind of element this is and cannot build faces.");
   return -1;
 }
 
@@ -232,7 +232,7 @@ localIndex CellBlock::GetFaceNodes( localIndex const elementIndex,
     }
   }
 
-  GEOS_ERROR("Error. Don't know what kind of element this is and cannot build faces.");
+  GEOSX_ERROR("Error. Don't know what kind of element this is and cannot build faces.");
   return -1;
 }
 
@@ -243,7 +243,7 @@ void CellBlock::GetFaceNodes( localIndex const elementIndex,
   nodeIndicies.resize( GetNumFaceNodes( elementIndex, localFaceIndex ) );
   localIndex const numNodes = GetFaceNodes( elementIndex, localFaceIndex, nodeIndicies.data() );
   GEOSX_DEBUG_VAR( numNodes);
-  GEOS_ASSERT_EQ( numNodes, nodeIndicies.size() );
+  GEOSX_ASSERT_EQ( numNodes, nodeIndicies.size() );
 }
 
 R1Tensor const & CellBlock::calculateElementCenter( localIndex k,
@@ -304,7 +304,7 @@ void CellBlock::SetElementType( string const & elementType)
   }
   else
   {
-    GEOS_ERROR("Error.  Don't know what kind of element this is.");
+    GEOSX_ERROR("Error.  Don't know what kind of element this is.");
   }
 
   if (!m_elementTypeString.compare(0, 4, "C3D8"))

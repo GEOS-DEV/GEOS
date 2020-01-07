@@ -159,7 +159,7 @@ void ExponentApproximationTypeSwitchBlock( ExponentApproximationType const type,
     }
     default:
     {
-      GEOS_ERROR( "ExponentApproximationTypeSwitchBlock() ExponentApproximationType is invalid!" );
+      GEOSX_ERROR( "ExponentApproximationTypeSwitchBlock() ExponentApproximationType is invalid!" );
     }
   }
 }

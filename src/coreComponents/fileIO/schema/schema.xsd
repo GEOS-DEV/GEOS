@@ -3,6 +3,11 @@
 	<xsd:annotation>
 		<xsd:documentation xml:lang="en">GEOSX Input Schema</xsd:documentation>
 	</xsd:annotation>
+	<xsd:simpleType name="Path">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[^,\{\}]*" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:simpleType name="string">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value="[^,\{\}]*" />
@@ -153,6 +158,11 @@
 			<xsd:pattern value="[+-]?[\d]+" />
 		</xsd:restriction>
 	</xsd:simpleType>
+	<xsd:simpleType name="path_array">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="\{([^,\{\}]*,\s*)*[^,\{\}]*\}" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:simpleType name="localIndex">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value="[+-]?[\d]+" />
@@ -191,12 +201,12 @@
 			<xsd:element name="PeriodicEvent" type="PeriodicEventType" />
 			<xsd:element name="SoloEvent" type="SoloEventType" />
 		</xsd:choice>
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxCycle => Maximum simulation cycle for the global event loop.-->
 		<xsd:attribute name="maxCycle" type="integer" default="2147483647" />
 		<!--maxTime => Maximum simulation time for the global event loop.-->
 		<xsd:attribute name="maxTime" type="real64" default="1.79769e+308" />
-		<!--verbosity => Verbosity level.-->
-		<xsd:attribute name="verbosity" type="integer" default="0" />
 	</xsd:complexType>
 	<xsd:complexType name="HaltEventType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -210,6 +220,8 @@
 		<xsd:attribute name="endTime" type="real64" default="1e+100" />
 		<!--forceDt => While active, this event will request this timestep value (ignoring any children/targets requests).-->
 		<xsd:attribute name="forceDt" type="real64" default="-1" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxEventDt => While active, this event will request a timestep <= this value (depending upon any child/target requests).-->
 		<xsd:attribute name="maxEventDt" type="real64" default="-1" />
 		<!--maxRuntime => The maximum allowable runtime for the job.-->
@@ -218,8 +230,6 @@
 		<xsd:attribute name="target" type="string" default="" />
 		<!--targetExactStartStop => If this option is set, the event will reduce its timestep requests to match any specified beginTime/endTimes exactly.-->
 		<xsd:attribute name="targetExactStartStop" type="integer" default="1" />
-		<!--verbosity => Verbosity level-->
-		<xsd:attribute name="verbosity" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -239,6 +249,8 @@
 		<xsd:attribute name="forceDt" type="real64" default="-1" />
 		<!--function => Name of an optional function to evaluate when the time/cycle criteria are met.If the result is greater than the specified eventThreshold, the function will continue to execute.-->
 		<xsd:attribute name="function" type="string" default="" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxEventDt => While active, this event will request a timestep <= this value (depending upon any child/target requests).-->
 		<xsd:attribute name="maxEventDt" type="real64" default="-1" />
 		<!--object => If the optional function requires an object as an input, specify its path here.-->
@@ -257,8 +269,6 @@
 		<xsd:attribute name="threshold" type="real64" default="0" />
 		<!--timeFrequency => Event application frequency (time).  Note: if this value is specified, it will override any cycle-based behavior.-->
 		<xsd:attribute name="timeFrequency" type="real64" default="-1" />
-		<!--verbosity => Verbosity level-->
-		<xsd:attribute name="verbosity" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -274,6 +284,8 @@
 		<xsd:attribute name="endTime" type="real64" default="1e+100" />
 		<!--forceDt => While active, this event will request this timestep value (ignoring any children/targets requests).-->
 		<xsd:attribute name="forceDt" type="real64" default="-1" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxEventDt => While active, this event will request a timestep <= this value (depending upon any child/target requests).-->
 		<xsd:attribute name="maxEventDt" type="real64" default="-1" />
 		<!--target => Name of the object to be executed when the event criteria are met.-->
@@ -286,8 +298,6 @@
 		<xsd:attribute name="targetExactTimestep" type="integer" default="1" />
 		<!--targetTime => Targeted time to execute the event.-->
 		<xsd:attribute name="targetTime" type="real64" default="-1" />
-		<!--verbosity => Verbosity level-->
-		<xsd:attribute name="verbosity" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -496,18 +506,18 @@
 		<xsd:attribute name="nz" type="integer_array" use="required" />
 		<!--trianglePattern => pattern by which to decompose the hex mesh into prisms (more explanation required)-->
 		<xsd:attribute name="trianglePattern" type="integer" default="0" />
+		<!--xBias => bias of element sizes in the x-direction within each mesh block (dx_left=(1+b)*L/N, dx_right=(1-b)*L/N)-->
+		<xsd:attribute name="xBias" type="real64_array" default="1" />
 		<!--xCoords => x-coordinates of each mesh block vertex-->
 		<xsd:attribute name="xCoords" type="real64_array" use="required" />
-		<!--xbias => (no description available)-->
-		<xsd:attribute name="xbias" type="real64_array" default="1" />
+		<!--yBias => bias of element sizes in the y-direction within each mesh block (dy_left=(1+b)*L/N, dx_right=(1-b)*L/N)-->
+		<xsd:attribute name="yBias" type="real64_array" default="1" />
 		<!--yCoords => y-coordinates of each mesh block vertex-->
 		<xsd:attribute name="yCoords" type="real64_array" use="required" />
-		<!--ybias => (no description available)-->
-		<xsd:attribute name="ybias" type="real64_array" default="1" />
+		<!--zBias => bias of element sizes in the z-direction within each mesh block (dz_left=(1+b)*L/N, dz_right=(1-b)*L/N)-->
+		<xsd:attribute name="zBias" type="real64_array" default="1" />
 		<!--zCoords => z-coordinates of each mesh block vertex-->
 		<xsd:attribute name="zCoords" type="real64_array" use="required" />
-		<!--zbias => (no description available)-->
-		<xsd:attribute name="zbias" type="real64_array" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -541,7 +551,7 @@
 		<!--fieldsToImport => Fields to be imported from the external mesh file-->
 		<xsd:attribute name="fieldsToImport" type="string_array" default="" />
 		<!--file => path to the mesh file-->
-		<xsd:attribute name="file" type="string" use="required" />
+		<xsd:attribute name="file" type="path" use="required" />
 		<!--reverseZ => 0 : Z coordinate is upward, 1 : Z coordinate is downward-->
 		<xsd:attribute name="reverseZ" type="integer" default="0" />
 		<!--scale => Scale the coordinates of the vertices-->
@@ -585,6 +595,7 @@
 	<xsd:complexType name="FiniteElementsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="FiniteElementSpace" type="FiniteElementSpaceType" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
 	</xsd:complexType>
@@ -598,9 +609,39 @@
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:complexType name="SystemSolverParametersType">
-		<!--allowNonConverged => Allow non-converged solution to be accepted-->
+	<xsd:complexType name="NonlinearSolverParametersType">
+		<!--allowNonConverged => Allow non-converged solution to be accepted. (i.e. exit from the Newton loop without achieving the desired tolerance)-->
 		<xsd:attribute name="allowNonConverged" type="integer" default="0" />
+		<!--dtCutIterLimit => Fraction of the Max Newton iterations above which the solver asks for the time-step to be cut for the next dt.-->
+		<xsd:attribute name="dtCutIterLimit" type="real64" default="0.7" />
+		<!--dtIncIterLimit => Fraction of the Max Newton iterations below which the solver asks for the time-step to be doubled for the next dt.-->
+		<xsd:attribute name="dtIncIterLimit" type="real64" default="0.4" />
+		<!--lineSearchAction => How the line search is to be used. Options are: 
+ 0 - Do not use line search.
+1 - Use line search. Allow exit from line search without achieving smaller residual than starting residual.
+2 - Use line search. If smaller residual than starting resdual is not achieved, cut time step.
+-->
+		<xsd:attribute name="lineSearchAction" type="integer" default="1" />
+		<!--lineSearchCutFactor => Line search cut factor. For instance, a value of 0.5 will result in the effective application of the last solution by a factor of (0.5, 0.25, 0.125, ...)-->
+		<xsd:attribute name="lineSearchCutFactor" type="real64" default="0.5" />
+		<!--lineSearchMaxCuts => Maximum number of line search cuts.-->
+		<xsd:attribute name="lineSearchMaxCuts" type="integer" default="4" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--maxSubSteps => Maximum number of time sub-steps allowed for the solver-->
+		<xsd:attribute name="maxSubSteps" type="integer" default="10" />
+		<!--maxTimeStepCuts => Max number of time step cuts-->
+		<xsd:attribute name="maxTimeStepCuts" type="integer" default="2" />
+		<!--newtonMaxIter => Maximum number of iterations that are allowed in a Newton loop.-->
+		<xsd:attribute name="newtonMaxIter" type="integer" default="5" />
+		<!--newtonMinIter => Minimum number of iterations that are required before exiting the Newton loop.-->
+		<xsd:attribute name="newtonMinIter" type="integer" default="1" />
+		<!--newtonTol => The required tolerance in order to exit the Newton iteration loop.-->
+		<xsd:attribute name="newtonTol" type="real64" default="1e-06" />
+		<!--timestepCutFactor => Factor by which the time step will be cut if a timestep cut is required.-->
+		<xsd:attribute name="timestepCutFactor" type="real64" default="0.5" />
+	</xsd:complexType>
+	<xsd:complexType name="SystemSolverParametersType">
 		<!--ilut_drop => (no description available)-->
 		<xsd:attribute name="ilut_drop" type="real64" default="0" />
 		<!--ilut_fill => (no description available)-->
@@ -609,26 +650,14 @@
 		<xsd:attribute name="krylovTol" type="real64" default="1e-06" />
 		<!--kspace => (no description available)-->
 		<xsd:attribute name="kspace" type="integer" default="0" />
-		<!--lineSearchCutFactor => Line search cut factor-->
-		<xsd:attribute name="lineSearchCutFactor" type="real64" default="0.5" />
-		<!--maxIterNewton => Maximum number of Newton iterations-->
-		<xsd:attribute name="maxIterNewton" type="integer" default="5" />
-		<!--maxLineSearchCuts => Max number of line search cuts-->
-		<xsd:attribute name="maxLineSearchCuts" type="integer" default="4" />
-		<!--maxSubSteps => Maximum number of time sub-steps allowed for the solver-->
-		<xsd:attribute name="maxSubSteps" type="integer" default="10" />
-		<!--maxTimeStepCuts => Max number of time step cuts-->
-		<xsd:attribute name="maxTimeStepCuts" type="integer" default="2" />
-		<!--newtonTol => (no description available)-->
-		<xsd:attribute name="newtonTol" type="real64" default="1e-06" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--numKrylovIter => Maximum number of Krylov Iterations-->
 		<xsd:attribute name="numKrylovIter" type="integer" default="100" />
 		<!--scalingOption => (no description available)-->
 		<xsd:attribute name="scalingOption" type="integer" default="0" />
 		<!--solverType => (no description available)-->
 		<xsd:attribute name="solverType" type="string" default="" />
-		<!--timestepCutFactor => Time step cut factor-->
-		<xsd:attribute name="timestepCutFactor" type="real64" default="0.5" />
 		<!--useBicgstab => (no description available)-->
 		<xsd:attribute name="useBicgstab" type="integer" default="0" />
 		<!--useDirectSolver => (no description available)-->
@@ -637,10 +666,6 @@
 		<xsd:attribute name="useInnerSolver" type="integer" default="0" />
 		<!--useMLPrecond => (no description available)-->
 		<xsd:attribute name="useMLPrecond" type="integer" default="0" />
-		<!--useNewtonSolve => (no description available)-->
-		<xsd:attribute name="useNewtonSolve" type="integer" default="0" />
-		<!--verbosityFlag => verbosity level-->
-		<xsd:attribute name="verbosityFlag" type="integer" default="0" />
 	</xsd:complexType>
 	<xsd:complexType name="FiniteVolumeType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -782,6 +807,12 @@
 		<xsd:attribute name="fluidName" type="string" use="required" />
 		<!--gravityFlag => Flag that enables/disables gravity-->
 		<xsd:attribute name="gravityFlag" type="integer" use="required" />
+		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
+		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--inputFluxEstimate => Initial estimate of the input flux used only for residual scaling. This should be essentially equivalent to the input flux * dt.-->
+		<xsd:attribute name="inputFluxEstimate" type="real64" default="1" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--relPermName => Name of the relative permeability constitutive model to use-->
 		<xsd:attribute name="relPermName" type="string" use="required" />
 		<!--solidName => Name of solid constitutive object to use for this solver-->
@@ -792,8 +823,6 @@
 		<xsd:attribute name="temperature" type="real64" use="required" />
 		<!--useMass => Use mass formulation instead of molar-->
 		<xsd:attribute name="useMass" type="integer" default="0" />
-		<!--verboseLevel => Verbosity level for this solver. Higher values will lead to more screen output. For non-debug  simulations, this should remain at 0.-->
-		<xsd:attribute name="verboseLevel" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -807,12 +836,14 @@
 		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--gravityFlag => Flag that enables/disables gravity-->
 		<xsd:attribute name="gravityFlag" type="integer" use="required" />
+		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
+		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--useMass => Use mass formulation instead of molar-->
 		<xsd:attribute name="useMass" type="integer" default="0" />
-		<!--verboseLevel => Verbosity level for this solver. Higher values will lead to more screen output. For non-debug  simulations, this should remain at 0.-->
-		<xsd:attribute name="verboseLevel" type="integer" default="0" />
 		<!--wellFluidName => Name of fluid constitutive object to use for this solver.-->
 		<xsd:attribute name="wellFluidName" type="string" use="required" />
 		<!--wellRelPermName => Name of the relative permeability constitutive model to use-->
@@ -855,14 +886,16 @@
 		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--fluidSolverName => Name of the fluid mechanics solver to use in the poroelastic solver-->
 		<xsd:attribute name="fluidSolverName" type="string" use="required" />
+		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
+		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxNumResolves => Value to indicate how many resolves may be executed to perform surface generation after the execution of flow and mechanics solver. -->
 		<xsd:attribute name="maxNumResolves" type="integer" default="10" />
 		<!--solidSolverName => Name of the solid mechanics solver to use in the poroelastic solver-->
 		<xsd:attribute name="solidSolverName" type="string" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
-		<!--verboseLevel => Verbosity level for this solver. Higher values will lead to more screen output. For non-debug  simulations, this should remain at 0.-->
-		<xsd:attribute name="verboseLevel" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -876,12 +909,14 @@
 		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--fieldName => name of field variable-->
 		<xsd:attribute name="fieldName" type="string" use="required" />
+		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
+		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--timeIntegrationOption => option for default time integration method-->
 		<xsd:attribute name="timeIntegrationOption" type="string" use="required" />
-		<!--verboseLevel => Verbosity level for this solver. Higher values will lead to more screen output. For non-debug  simulations, this should remain at 0.-->
-		<xsd:attribute name="verboseLevel" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -897,12 +932,14 @@
 		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--fluidSolverName => Name of the fluid mechanics solver to use in the poroelastic solver-->
 		<xsd:attribute name="fluidSolverName" type="string" use="required" />
+		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
+		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--solidSolverName => Name of the solid mechanics solver to use in the poroelastic solver-->
 		<xsd:attribute name="solidSolverName" type="string" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
-		<!--verboseLevel => Verbosity level for this solver. Higher values will lead to more screen output. For non-debug  simulations, this should remain at 0.-->
-		<xsd:attribute name="verboseLevel" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -916,10 +953,12 @@
 		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--flowSolverName => Name of the flow solver to use in the reservoir-well system solver-->
 		<xsd:attribute name="flowSolverName" type="string" use="required" />
+		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
+		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
-		<!--verboseLevel => Verbosity level for this solver. Higher values will lead to more screen output. For non-debug  simulations, this should remain at 0.-->
-		<xsd:attribute name="verboseLevel" type="integer" default="0" />
 		<!--wellSolverName => Name of the well solver to use in the reservoir-well system solver-->
 		<xsd:attribute name="wellSolverName" type="string" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -937,12 +976,16 @@
 		<xsd:attribute name="fluidName" type="string" use="required" />
 		<!--gravityFlag => Flag that enables/disables gravity-->
 		<xsd:attribute name="gravityFlag" type="integer" use="required" />
+		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
+		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--inputFluxEstimate => Initial estimate of the input flux used only for residual scaling. This should be essentially equivalent to the input flux * dt.-->
+		<xsd:attribute name="inputFluxEstimate" type="real64" default="1" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--solidName => Name of solid constitutive object to use for this solver-->
 		<xsd:attribute name="solidName" type="string" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
-		<!--verboseLevel => Verbosity level for this solver. Higher values will lead to more screen output. For non-debug  simulations, this should remain at 0.-->
-		<xsd:attribute name="verboseLevel" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -956,10 +999,12 @@
 		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--gravityFlag => Flag that enables/disables gravity-->
 		<xsd:attribute name="gravityFlag" type="integer" use="required" />
+		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
+		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
-		<!--verboseLevel => Verbosity level for this solver. Higher values will lead to more screen output. For non-debug  simulations, this should remain at 0.-->
-		<xsd:attribute name="verboseLevel" type="integer" default="0" />
 		<!--wellFluidName => Name of fluid constitutive object to use for this solver.-->
 		<xsd:attribute name="wellFluidName" type="string" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -975,6 +1020,10 @@
 		<xsd:attribute name="contactRelationName" type="string" default="NOCONTACT" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="string" default="none" />
+		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
+		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--massDamping => Value of mass based damping coefficient. -->
 		<xsd:attribute name="massDamping" type="real64" default="0" />
 		<!--maxNumResolves => Value to indicate how many resolves may be executed after some other event is executed. For example, if a SurfaceGenerator is specified, it will be executed after the mechanics solve. However if a new surface is generated, then the mechanics solve must be executed again due to the change in topology.-->
@@ -1000,8 +1049,6 @@
 		<xsd:attribute name="timeIntegrationOption" type="string" default="" />
 		<!--useVelocityForQS => Flag to indicate the use of the incremental displacement from the previous step as an initial estimate for the incremental displacement of the current step.-->
 		<xsd:attribute name="useVelocityForQS" type="integer" default="0" />
-		<!--verboseLevel => Verbosity level for this solver. Higher values will lead to more screen output. For non-debug  simulations, this should remain at 0.-->
-		<xsd:attribute name="verboseLevel" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -1015,6 +1062,10 @@
 		<xsd:attribute name="contactRelationName" type="string" default="NOCONTACT" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="string" default="none" />
+		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
+		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--massDamping => Value of mass based damping coefficient. -->
 		<xsd:attribute name="massDamping" type="real64" default="0" />
 		<!--maxNumResolves => Value to indicate how many resolves may be executed after some other event is executed. For example, if a SurfaceGenerator is specified, it will be executed after the mechanics solve. However if a new surface is generated, then the mechanics solve must be executed again due to the change in topology.-->
@@ -1040,8 +1091,6 @@
 		<xsd:attribute name="timeIntegrationOption" type="string" default="" />
 		<!--useVelocityForQS => Flag to indicate the use of the incremental displacement from the previous step as an initial estimate for the incremental displacement of the current step.-->
 		<xsd:attribute name="useVelocityForQS" type="integer" default="0" />
-		<!--verboseLevel => Verbosity level for this solver. Higher values will lead to more screen output. For non-debug  simulations, this should remain at 0.-->
-		<xsd:attribute name="verboseLevel" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -1055,6 +1104,10 @@
 		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--fractureRegion => (no description available)-->
 		<xsd:attribute name="fractureRegion" type="string" default="FractureRegion" />
+		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
+		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--mpiCommOrder => Flag to enable MPI consistent communication ordering-->
 		<xsd:attribute name="mpiCommOrder" type="integer" default="0" />
 		<!--nodeBasedSIF => Rock toughness of the solid material-->
@@ -1065,8 +1118,6 @@
 		<xsd:attribute name="solidMaterialName" type="string" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
-		<!--verboseLevel => Verbosity level for this solver. Higher values will lead to more screen output. For non-debug  simulations, this should remain at 0.-->
-		<xsd:attribute name="verboseLevel" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -1081,6 +1132,7 @@
 			<xsd:element name="Contact" type="ContactType" />
 			<xsd:element name="LinearElasticAnisotropic" type="LinearElasticAnisotropicType" />
 			<xsd:element name="LinearElasticIsotropic" type="LinearElasticIsotropicType" />
+			<xsd:element name="MultiPhaseMultiComponentFluid" type="MultiPhaseMultiComponentFluidType" />
 			<xsd:element name="PoreVolumeCompressibleSolid" type="PoreVolumeCompressibleSolidType" />
 			<xsd:element name="PoroLinearElasticAnisotropic" type="PoroLinearElasticAnisotropicType" />
 			<xsd:element name="PoroLinearElasticIsotropic" type="PoroLinearElasticIsotropicType" />
@@ -1100,7 +1152,7 @@
 		<!--surfaceDensities => List of surface densities for each phase-->
 		<xsd:attribute name="surfaceDensities" type="real64_array" use="required" />
 		<!--tableFiles => List of filenames with input PVT tables-->
-		<xsd:attribute name="tableFiles" type="string_array" use="required" />
+		<xsd:attribute name="tableFiles" type="path_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -1285,6 +1337,20 @@
 		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
 		<!--defaultYoungsModulus => Elastic Young's Modulus.-->
 		<xsd:attribute name="defaultYoungsModulus" type="real64" default="-1" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="MultiPhaseMultiComponentFluidType">
+		<!--componentMolarWeight => Component molar weights-->
+		<xsd:attribute name="componentMolarWeight" type="real64_array" default="0" />
+		<!--componentNames => List of component names-->
+		<xsd:attribute name="componentNames" type="string_array" default="" />
+		<!--flashModelParaFile => name of the filen including flash calculation function parameters-->
+		<xsd:attribute name="flashModelParaFile" type="string" use="required" />
+		<!--phaseNames => List of fluid phases-->
+		<xsd:attribute name="phaseNames" type="string_array" default="" />
+		<!--phasePVTParaFiles => List of the names of the files including PVT function parameters-->
+		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

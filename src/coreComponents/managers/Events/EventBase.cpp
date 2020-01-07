@@ -46,11 +46,13 @@ EventBase::EventBase( const std::string& name,
   m_eventCount(0),
   m_timeStepEventCount(0),
   m_eventProgress(0),
-  m_verbosity(0),
   m_currentEventDtRequest(0.0),
   m_target(nullptr)
 {
   setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
+
+  // This enables logLevel filtering
+  enableLogLevelInput();
   
   registerWrapper(viewKeyStruct::eventTargetString, &m_eventTarget, false )->
     setInputFlag(InputFlags::OPTIONAL)->
@@ -94,11 +96,6 @@ EventBase::EventBase( const std::string& name,
 
   registerWrapper(viewKeyStruct::isTargetExecutingString, &m_targetExecFlag, false )->
     setDescription("Index of the current subevent");
-
-  registerWrapper(viewKeyStruct::verbosityString, &m_verbosity, false )->
-    setApplyDefaultValue(0)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Verbosity level");
 }
 
 
@@ -114,7 +111,7 @@ EventBase::CatalogInterface::CatalogType& EventBase::GetCatalog()
 
 Group * EventBase::CreateChild( string const & childKey, string const & childName )
 {
-  GEOS_LOG_RANK_0("Adding Event: " << childKey << ", " << childName);
+  GEOSX_LOG_RANK_0("Adding Event: " << childKey << ", " << childName);
   std::unique_ptr<EventBase> event = EventBase::CatalogInterface::Factory( childKey, childName, this );
   return this->RegisterGroup<EventBase>( childName, std::move(event) );
 }
@@ -140,7 +137,7 @@ void EventBase::GetTargetReferences()
   {
     Group * tmp = this->GetGroupByPath(m_eventTarget);
     m_target = Group::group_cast<ExecutableGroup*>(tmp);
-    GEOS_ERROR_IF(m_target == nullptr, "The target of an event must be executable! " << m_target);
+    GEOSX_ERROR_IF(m_target == nullptr, "The target of an event must be executable! " << m_target);
   }
 
   this->forSubGroups<EventBase>([]( EventBase * subEvent ) -> void
@@ -228,10 +225,8 @@ void EventBase::Execute(real64 const time_n,
     EventBase * subEvent = static_cast<EventBase *>( this->GetSubGroups()[m_currentSubEvent] );
     integer subEventForecast = subEvent->GetForecast();
 
-    if (m_verbosity > 0)
-    {
-      GEOS_LOG_RANK_0("          SubEvent: " << m_currentSubEvent << " (" << subEvent->getName() << "), dt_request=" << subEvent->GetCurrentEventDtRequest() << ", forecast=" << subEventForecast);
-    }
+    // Print debug information for logLevel >= 1
+    GEOSX_LOG_LEVEL_RANK_0(1, "          SubEvent: " << m_currentSubEvent << " (" << subEvent->getName() << "), dt_request=" << subEvent->GetCurrentEventDtRequest() << ", forecast=" << subEventForecast);
 
     if (subEventForecast <= 0)
     {
