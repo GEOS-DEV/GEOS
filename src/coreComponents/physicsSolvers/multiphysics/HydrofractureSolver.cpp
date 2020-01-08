@@ -141,6 +141,28 @@ void HydrofractureSolver::InitializePostInitialConditions_PreSubGroups(Group * c
 HydrofractureSolver::~HydrofractureSolver()
 {
   // TODO Auto-generated destructor stub
+#ifdef GEOSX_USE_HYPRE_MGR
+  if (IJ_matrix != nullptr)
+  {
+    HYPRE_IJMatrixDestroy(IJ_matrix);
+    IJ_matrix = nullptr;
+  }
+  if (IJ_matrix_uu != nullptr)
+  {
+    HYPRE_IJMatrixDestroy(IJ_matrix_uu);
+    IJ_matrix_uu = nullptr;
+  }
+  if (IJ_rhs != nullptr)
+  {
+    HYPRE_IJVectorDestroy(IJ_rhs);
+    IJ_rhs = nullptr;
+  }
+  if (IJ_lhs != nullptr)
+  {
+    HYPRE_IJVectorDestroy(IJ_lhs);
+    IJ_lhs = nullptr;
+  }
+#endif
 }
 
 void HydrofractureSolver::ResetStateToBeginningOfStep( DomainPartition * const domain )
@@ -230,6 +252,8 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 
     // final step for completion of timestep. typically secondary variable updates and cleanup.
     ImplicitStepComplete( time_n, dtReturn, domain );
+
+    n_cycles++;
   }
   return dtReturn;
 }
@@ -1170,6 +1194,10 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
 
   SystemSolverParameters * const params = &m_systemSolverParameters;
   integer newtonIter = params->numNewtonIterations();
+  double setupTime, solveTime, auxTime;
+  setupTime = 0.0;
+  solveTime = 0.0;
+  auxTime = 0.0;
 
   using namespace Teuchos;
   using namespace Thyra;
@@ -1187,6 +1215,10 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
   p_solution[0] = m_solidSolver->getSystemSolution().unwrappedPointer();
   p_solution[1] = m_flowSolver->getSystemSolution().unwrappedPointer();
 
+  // set initial guess to zero
+  p_solution[0]->PutScalar(0.0);
+  p_solution[1]->PutScalar(0.0);
+
   p_matrix[0][0] = m_solidSolver->getSystemMatrix().unwrappedPointer();
   p_matrix[0][1] = m_matrix01.unwrappedPointer();
   p_matrix[1][0] = m_matrix10.unwrappedPointer();
@@ -1202,6 +1234,465 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
   p_matrix[1][1]->Scale(m_pressureScaling*m_pressureScaling*m_densityScaling);
   p_rhs[1]->Scale(m_pressureScaling*m_densityScaling);
 
+#ifdef GEOSX_USE_HYPRE_MGR
+  // ordering = 0: reduce U first; 1: reduce P first.
+  integer ordering = 1;
+  timeval tim;
+  gettimeofday(&tim, nullptr);
+  const real64 t_start = tim.tv_sec + (tim.tv_usec / 1000000.0);
+
+  int my_id = MpiWrapper::Comm_rank(MPI_COMM_GEOSX);
+  globalIndex nrows_u, nrows_p;
+  nrows_u = p_matrix[0][0]->NumGlobalRows64();
+  nrows_p = p_matrix[1][1]->NumGlobalRows64();
+
+  unsigned int num_processes = MpiWrapper::Comm_size(MPI_COMM_GEOSX);
+  const std::vector<int> n_local_rows = {p_matrix[0][0]->NumMyRows(),
+                                         p_matrix[1][0]->NumMyRows()};
+  const int n_local_rows_all = n_local_rows[0] + n_local_rows[1];
+
+  if (my_id == 0)
+  {
+    printf("Global matrix size solid = %lld, fluid = %lld\n", nrows_u, nrows_p);
+  }
+  //printf("my_id = %d, local matrix size solid = %d, fluid = %d\n", my_id, n_local_rows[0], n_local_rows[1]);
+
+  int nnz_max = p_matrix[0][0]->MaxNumEntries();
+  std::vector<double> col_values(nnz_max);
+  std::vector<globalIndex>    col_indices(nnz_max);
+
+  //############################################# BEGIN COPYING HYPRE MATRIX ###############################################
+  std::vector<globalIndex> offset(2*num_processes, 0);
+  std::vector<globalIndex> iDOF_offset(num_processes, 0);
+
+  if (newtonIter == 0)
+  {
+    GEOSX_MARK_BEGIN(COPY_HYPRE_MATRIX);
+    if (IJ_matrix != nullptr)
+    {
+      HYPRE_IJMatrixDestroy(IJ_matrix);
+      IJ_matrix = nullptr;
+    }
+    if (IJ_rhs != nullptr)
+    {
+      HYPRE_IJVectorDestroy(IJ_rhs);
+      IJ_rhs = nullptr;
+    }
+    if (IJ_lhs != nullptr)
+    {
+      HYPRE_IJVectorDestroy(IJ_lhs);
+      IJ_lhs = nullptr;
+    }
+
+    clock.start(true);
+
+    for(int iDOF=0; iDOF<2; ++iDOF)
+    {
+      MpiWrapper::Allgather<int,globalIndex>(&n_local_rows[iDOF], 1, iDOF_offset.data(), 1, MPI_COMM_GEOSX);
+
+      for (unsigned i=0; i<num_processes; ++i)
+      {
+        offset[i*2+iDOF] = iDOF_offset[i];
+        // if (my_id == 0) printf("Proc %d, iDOF %d, offset %lld,\n", i, iDOF, iDOF_offset[i]);
+      }
+    }
+
+    int this_offset = 0;
+    int next_offset = 0;
+    for (unsigned iproc = 0; iproc < num_processes; ++iproc)
+    {
+      for (int iDOF=0; iDOF<2; ++iDOF)
+      {
+        next_offset += offset[iproc*2 + iDOF];
+        offset[iproc*2+iDOF] = this_offset;
+
+        //if (my_id == 0) printf("Proc %d, iDOF %d, this offset %d, next offset %d\n", iproc, iDOF, this_offset, next_offset);
+        this_offset = next_offset;
+      }
+    }
+
+    std::map<globalIndex, globalIndex> GID_trilinos_to_hypre_U;
+    std::map<globalIndex, globalIndex> GID_trilinos_to_hypre_P;
+    std::vector<int>   rank_IDs(nnz_max);
+    std::vector<int>   local_IDs(nnz_max);
+    int n_entries;
+
+    // .... .... displacement mapping
+    for (int iDOF=0; iDOF < 2; iDOF++)
+    {
+      for(int row=0; row<n_local_rows[iDOF]; ++row)
+      {
+        const globalIndex global_row = p_matrix[iDOF][0]->GRID64(row);
+        p_matrix[iDOF][0]->ExtractGlobalRowCopy(global_row, nnz_max, n_entries, col_values.data(), col_indices.data());
+        std::sort(col_indices.begin(), col_indices.begin()+n_entries);
+        p_matrix[iDOF][0]->DomainMap().RemoteIDList(n_entries, col_indices.data(), rank_IDs.data(), local_IDs.data());
+
+        for (int i = 0; i < n_entries; ++i)
+        {
+          GID_trilinos_to_hypre_U[col_indices[i]] = local_IDs[i] + offset[rank_IDs[i]*2];
+          //if (my_id == 0 && (row < 10 || row > (n_local_rows[0] - 10)))
+          //{
+            //printf("row = %lld, column index = %lld, local_id = %d, offset = %lld, new GID_U = %lld\n", global_row, col_indices[i], local_IDs[i], offset[rank_IDs[i]*2], local_IDs[i] + offset[rank_IDs[i]*2]);
+          //}
+        }
+      }
+    }
+    GID_trilinos_to_hypre[0] = std::move(GID_trilinos_to_hypre_U);
+
+    // .... .... pressure mapping
+    for (int iDOF = 0; iDOF < 2; iDOF++)
+    {
+      for(int row=0; row<n_local_rows[iDOF]; ++row)
+      {
+        const globalIndex global_row = p_matrix[iDOF][1]->GRID64(row);
+        p_matrix[iDOF][1]->ExtractGlobalRowCopy(global_row, nnz_max, n_entries, col_values.data(), col_indices.data());
+        std::sort(col_indices.begin(), col_indices.begin()+n_entries);
+        p_matrix[iDOF][1]->DomainMap().RemoteIDList(n_entries, col_indices.data(), rank_IDs.data(), local_IDs.data());
+
+        for (int i = 0; i < n_entries; ++i)
+        {
+          GID_trilinos_to_hypre_P[col_indices[i]] = local_IDs[i] + offset[rank_IDs[i]*2 + 1];
+        }
+      }
+    }
+    GID_trilinos_to_hypre[1] = std::move(GID_trilinos_to_hypre_P);
+
+    // .... Create the matrix
+    HYPRE_Int ilower = GID_trilinos_to_hypre[0].at(p_matrix[0][0]->GRID64(0));
+    HYPRE_Int iupper = ilower + n_local_rows[0] + n_local_rows[1] - 1;
+
+    std::vector<HYPRE_Int> nnz_local_rows(n_local_rows_all);
+    int shift = n_local_rows[0];
+    for (int iDOF=0; iDOF<2; ++iDOF)
+    {
+      for (int row=0; row<n_local_rows[iDOF]; ++row)
+      {
+        for (int jDOF=0; jDOF<2; ++jDOF)
+        {
+          int row_idx = row + (iDOF == 0 ? 0 : 1) * shift;
+          nnz_local_rows[row_idx] += p_matrix[iDOF][jDOF]->NumMyEntries(row);
+        }
+      }
+    }
+
+    HYPRE_IJMatrixCreate(MPI_COMM_GEOSX, ilower, iupper, ilower, iupper, &IJ_matrix);
+    HYPRE_IJMatrixSetObjectType(IJ_matrix, HYPRE_PARCSR);
+    HYPRE_IJMatrixSetRowSizes(IJ_matrix, nnz_local_rows.data());
+    //printf("Done creating matrix\n");
+
+    // .... Create rhs and lhs
+    HYPRE_IJVectorCreate(MPI_COMM_GEOSX, ilower, iupper,&IJ_rhs);
+    HYPRE_IJVectorSetObjectType(IJ_rhs, HYPRE_PARCSR);
+
+    HYPRE_IJVectorCreate(MPI_COMM_GEOSX, ilower, iupper,&IJ_lhs);
+    HYPRE_IJVectorSetObjectType(IJ_lhs, HYPRE_PARCSR);
+    //printf("Done creating lhs and rhs\n");
+  }
+
+  // copy entries
+  // .... matrix and vector
+  HYPRE_IJMatrixInitialize(IJ_matrix);
+  HYPRE_IJVectorInitialize(IJ_rhs);
+  HYPRE_IJVectorInitialize(IJ_lhs);
+
+  std::vector<HYPRE_BigInt>    row_hypre_GIDs(n_local_rows_all);
+  std::vector<double> rhs_values(n_local_rows_all);
+
+  for(int iDOF=0; iDOF<2; ++iDOF)
+  {
+    for(int row=0; row<n_local_rows[iDOF]; ++row)
+    {
+      const globalIndex global_row = p_matrix[iDOF][iDOF]->GRID64(row);
+      const HYPRE_Int hypre_row = GID_trilinos_to_hypre[iDOF].at(global_row);
+      int n_entries;
+
+      // fill hypre matrix row-by-row
+      for (int jDOF=0; jDOF<2; ++jDOF)
+      {
+        p_matrix[iDOF][jDOF]->ExtractGlobalRowCopy(global_row, nnz_max, n_entries, col_values.data(), col_indices.data());
+        for (int col = 0; col < n_entries; ++col)
+        {
+          col_indices[col] = GID_trilinos_to_hypre[jDOF].at(col_indices[col]);
+        }
+        HYPRE_Int num_entries = n_entries;
+        HYPRE_IJMatrixSetValues(IJ_matrix, 1, &num_entries, &hypre_row, col_indices.data(), col_values.data());
+      }
+    }
+
+    // fill the rhs row-by-row
+    int shift = n_local_rows[0];
+    for (int row=0; row<n_local_rows[iDOF]; ++row)
+    {
+      const int global_row = p_matrix[iDOF][iDOF]->GRID64(row);
+      const globalIndex hypre_row = GID_trilinos_to_hypre[iDOF].at(global_row);
+      int row_idx = row + (iDOF == 0 ? 0 : 1) * shift;
+      row_hypre_GIDs[row_idx] = hypre_row;
+
+      *(rhs_values.begin() + row_idx) = p_rhs[iDOF]->Values()[row];
+    }
+  }
+
+  HYPRE_IJVectorSetValues(IJ_rhs, n_local_rows_all, row_hypre_GIDs.data(), rhs_values.data());
+  hypre_IJVectorZeroValues(IJ_lhs);
+  //printf("Done copy matrix and rhs values\n");
+
+  // finalize matrix and make it ready to use
+  HYPRE_IJMatrixAssemble(IJ_matrix);
+  HYPRE_IJMatrixGetObject(IJ_matrix, (void**) &parcsr_matrix); // Get the parcsr matrix object to use
+  HYPRE_IJVectorGetObject(IJ_rhs, (void **) &par_rhs);
+  HYPRE_IJVectorGetObject(IJ_lhs, (void **) &par_lhs);
+
+  /*
+  if (print_matrix < 1)
+  {
+    print_matrix++;
+    //hypre_ParCSRMatrixPrintIJ(parcsr_matrix,0,0,"full_mat");
+    //hypre_ParVectorPrintIJ(par_rhs,0,"full_rhs");
+    for (int i=0; i<2; i++)
+    for (int j=0; j<2; j++)
+    {
+      char fname[256];
+      sprintf(fname,"%s%s_block.%05d",i==0?"U":"P",j==0?"U":"P",my_id);
+      std::ofstream myfile(fname, std::ios::out);
+      p_matrix[i][j]->Print(myfile);
+      myfile.close();
+      //EpetraExt::RowMatrixToMatrixMarketFile(fname,*p_matrix[i][j]);
+    }
+  }
+  */
+
+  auxTime = clock.stop();
+  GEOSX_MARK_END(COPY_HYPRE_MATRIX);
+
+  //######################################### END COPYING HYPRE MATRIX #########################################
+
+
+  //########################################## BEGIN COPYING UU MATRIX #########################################
+  if (ordering == 0)
+  {
+    if(newtonIter==0)
+    {
+      if (IJ_matrix_uu != nullptr)
+      {
+        HYPRE_IJMatrixDestroy(IJ_matrix_uu);
+        IJ_matrix_uu = nullptr;
+      }
+      m_blockDiagUU.reset(new ParallelMatrix());
+      LAIHelperFunctions::SeparateComponentFilter(m_solidSolver->getSystemMatrix(),*m_blockDiagUU,3);
+      const Epetra_FECrsMatrix *blockDiagUU = m_blockDiagUU->unwrappedPointer();
+      
+      HYPRE_Int ilower = blockDiagUU->RowMatrixRowMap().MinMyGID64();
+      HYPRE_Int iupper = blockDiagUU->RowMatrixRowMap().MaxMyGID64();
+      HYPRE_IJMatrixCreate(MPI_COMM_GEOSX, ilower, iupper, ilower, iupper, &IJ_matrix_uu);
+      HYPRE_IJMatrixSetObjectType(IJ_matrix_uu, HYPRE_PARCSR);
+      HYPRE_IJMatrixInitialize(IJ_matrix_uu);
+      for(int i = 0; i < blockDiagUU->NumMyRows(); i++)
+      {
+        int numElements;
+        blockDiagUU->NumMyRowEntries(i,numElements);
+        globalIndex global_row = blockDiagUU->GRID64(i);
+        std::vector<HYPRE_Int> indices; indices.resize(numElements);
+        std::vector<double> values; values.resize(numElements);
+        int numEntries;
+        blockDiagUU->ExtractGlobalRowCopy(global_row, numElements, numEntries, values.data(), indices.data());
+        HYPRE_Int n_entries = numEntries;
+        HYPRE_IJMatrixSetValues(IJ_matrix_uu, 1, &n_entries, &global_row, indices.data(), values.data());
+      }
+      HYPRE_IJMatrixAssemble(IJ_matrix_uu);
+      HYPRE_IJMatrixGetObject(IJ_matrix_uu, (void**) &parcsr_uu);
+    } 
+    //########################################## END COPYING UU MATRIX #########################################
+
+    //#################################### SETUP AMG FOR UU BLOCK ######################################
+    HYPRE_BoomerAMGCreate(&uu_amg_solver); 
+    HYPRE_BoomerAMGSetPrintLevel(uu_amg_solver, 0);
+    HYPRE_BoomerAMGSetRelaxOrder(uu_amg_solver, 1);
+    HYPRE_BoomerAMGSetMaxIter(uu_amg_solver, 1);
+    HYPRE_BoomerAMGSetNumFunctions(uu_amg_solver, 3);
+    //HYPRE_BoomerAMGSetStrongThreshold(uu_amg_solver, 0.25);
+    HYPRE_BoomerAMGSetAggNumLevels(uu_amg_solver, 1);
+    HYPRE_BoomerAMGSetNumSweeps(uu_amg_solver, 3);
+    //HYPRE_BoomerAMGSetRelaxType(uu_amg_solver, 3);
+
+    clock.start(true);
+    HYPRE_BoomerAMGSetup
+      (uu_amg_solver, parcsr_uu, par_rhs_uu, par_lhs_uu);
+    setupTime = clock.stop();
+  }
+
+  // ############# MGR OPTIONS ******************
+  /* mgr options */
+  HYPRE_Int mgr_bsize = 2;
+  HYPRE_Int mgr_nlevels = 1;
+  HYPRE_Int mgr_non_c_to_f = 1;
+  HYPRE_Int *mgr_idx_array = NULL;
+  HYPRE_Int *mgr_num_cindexes = NULL; 
+  HYPRE_Int **mgr_cindexes = NULL;
+  HYPRE_Int mgr_relax_type = 0;
+  HYPRE_Int mgr_num_relax_sweeps = 1;
+  HYPRE_Int mgr_num_interp_sweeps = 0;
+  HYPRE_Int mgr_gsmooth_type = 16;
+  HYPRE_Int mgr_num_gsmooth_sweeps = 0;
+  HYPRE_Int mgr_num_restrict_sweeps = 0;
+  HYPRE_Int *mgr_level_interp_type = hypre_CTAlloc(HYPRE_Int, mgr_nlevels, HYPRE_MEMORY_HOST);
+  mgr_level_interp_type[0] = 2;
+  HYPRE_Int *mgr_level_restrict_type = hypre_CTAlloc(HYPRE_Int, mgr_nlevels, HYPRE_MEMORY_HOST);
+  mgr_level_restrict_type[0] = 0;
+  HYPRE_Int *mgr_coarse_grid_method = hypre_CTAlloc(HYPRE_Int, mgr_nlevels, HYPRE_MEMORY_HOST);
+  mgr_coarse_grid_method[0] = 0;
+
+  HYPRE_Int *lv1 = hypre_CTAlloc(HYPRE_Int, mgr_bsize, HYPRE_MEMORY_HOST);
+  lv1[0] = ordering == 0 ? 1 : 0;
+  mgr_cindexes = hypre_CTAlloc(HYPRE_Int*, mgr_nlevels, HYPRE_MEMORY_HOST);
+  mgr_cindexes[0] = lv1;
+  mgr_num_cindexes = hypre_CTAlloc(HYPRE_Int, mgr_nlevels, HYPRE_MEMORY_HOST);
+  mgr_num_cindexes[0] = 1;
+
+  mgr_idx_array = hypre_CTAlloc(HYPRE_Int, mgr_bsize, HYPRE_MEMORY_HOST);
+  HYPRE_Int ilower = GID_trilinos_to_hypre[0].at(p_matrix[0][0]->GRID64(0));
+  mgr_idx_array[0] = ilower;
+  mgr_idx_array[1] = n_local_rows[0] + ilower;
+
+  HYPRE_Int *mgr_level_frelax_method = hypre_CTAlloc(HYPRE_Int, mgr_nlevels, HYPRE_MEMORY_HOST);
+  mgr_level_frelax_method[0] = 99;
+
+  HYPRE_ParCSRGMRESCreate(MPI_COMM_GEOSX, &pgmres_solver);
+  HYPRE_GMRESSetKDim(pgmres_solver, params->m_maxIters);
+  HYPRE_GMRESSetMaxIter(pgmres_solver, params->m_maxIters);
+  HYPRE_GMRESSetTol(pgmres_solver, params->m_krylovTol);
+  HYPRE_GMRESSetLogging(pgmres_solver, 1);
+  HYPRE_GMRESSetPrintLevel(pgmres_solver, 0);
+
+  HYPRE_MGRCreate(&mgr_precond);
+  /* set MGR data by block */
+  HYPRE_MGRSetCpointsByContiguousBlock( mgr_precond, mgr_bsize, mgr_nlevels, mgr_idx_array, mgr_num_cindexes, mgr_cindexes);
+  /* set intermediate coarse grid strategy */
+  HYPRE_MGRSetNonCpointsToFpoints(mgr_precond, mgr_non_c_to_f);
+  /* set F relaxation strategy */
+  HYPRE_MGRSetLevelFRelaxMethod(mgr_precond, mgr_level_frelax_method);
+  /* set relax type for single level F-relaxation and post-relaxation */
+  HYPRE_MGRSetRelaxType(mgr_precond, mgr_relax_type);
+  HYPRE_MGRSetNumRelaxSweeps(mgr_precond, mgr_num_relax_sweeps);
+  /* set restrict type */
+  HYPRE_MGRSetLevelRestrictType(mgr_precond, mgr_level_restrict_type);
+  HYPRE_MGRSetNumRestrictSweeps(mgr_precond, mgr_num_restrict_sweeps);
+  /* set interpolation type */
+  HYPRE_MGRSetLevelInterpType(mgr_precond, mgr_level_interp_type);
+  HYPRE_MGRSetNumInterpSweeps(mgr_precond, mgr_num_interp_sweeps);
+  /* set P_max_elmts for coarse grid */
+  //HYPRE_MGRSetPMaxElmts(mgr_precond, P_max_elmts);
+  /* set print level */
+  HYPRE_MGRSetPrintLevel(mgr_precond, 0);
+  /* set max iterations */
+  HYPRE_MGRSetMaxIter(mgr_precond, 1);
+  HYPRE_MGRSetTol(mgr_precond, 0.0);
+  //HYPRE_MGRSetCoarseGridMethod(mgr_precond, mgr_coarse_grid_method);
+
+  HYPRE_MGRSetGlobalsmoothType(mgr_precond, mgr_gsmooth_type);
+  HYPRE_MGRSetMaxGlobalsmoothIters( mgr_precond, mgr_num_gsmooth_sweeps );   
+
+  /* create AMG coarse grid solver */
+  HYPRE_BoomerAMGCreate(&cg_amg_solver); 
+  if (ordering == 0)
+  {
+    HYPRE_BoomerAMGSetPrintLevel(cg_amg_solver, 0);
+    HYPRE_BoomerAMGSetRelaxOrder(cg_amg_solver, 1);
+    HYPRE_BoomerAMGSetMaxIter(cg_amg_solver, 1);
+    HYPRE_BoomerAMGSetNumFunctions(cg_amg_solver, 1);
+    HYPRE_BoomerAMGSetNumSweeps(cg_amg_solver, 3);
+  }
+  else
+  {
+    HYPRE_BoomerAMGSetPrintLevel(cg_amg_solver, 0);
+    HYPRE_BoomerAMGSetMaxIter(cg_amg_solver, 1);
+    HYPRE_BoomerAMGSetRelaxOrder(cg_amg_solver, 1);
+    HYPRE_BoomerAMGSetAggNumLevels(cg_amg_solver, 1);
+    HYPRE_BoomerAMGSetNumFunctions(cg_amg_solver, 3);
+    HYPRE_BoomerAMGSetNumSweeps(cg_amg_solver, 3);
+    //HYPRE_BoomerAMGSetCoarsenType(cg_amg_solver, 6);
+    //HYPRE_BoomerAMGSetRelaxType(cg_amg_solver, 3);
+    //HYPRE_BoomerAMGSetInterpType(cg_amg_solver, 0);
+    //HYPRE_BoomerAMGSetPMaxElmts(cg_amg_solver, 0);
+    /*
+    HYPRE_BoomerAMGSetSmoothType(cg_amg_solver, 6);
+    //HYPRE_BoomerAMGSetEuLevel(cg_amg_solver, 5);
+    HYPRE_BoomerAMGSetSmoothNumLevels(cg_amg_solver, 5);
+    HYPRE_BoomerAMGSetSmoothNumSweeps(cg_amg_solver, 1);
+    HYPRE_BoomerAMGSetSchwarzUseNonSymm(cg_amg_solver, 1);
+    */
+  }
+  /* set the MGR coarse solver. Comment out to use default CG solver in MGR */
+  HYPRE_MGRSetCoarseSolver(mgr_precond, HYPRE_BoomerAMGSolve, HYPRE_BoomerAMGSetup, cg_amg_solver);
+
+  // set fine grid solver
+  if (ordering == 0)
+    HYPRE_MGRSetFSolver(mgr_precond, HYPRE_BoomerAMGSolve, HYPRE_BoomerAMGSetup, uu_amg_solver);
+
+  /* setup MGR-PCG solver */
+  HYPRE_GMRESSetPrecond(pgmres_solver,
+                        (HYPRE_PtrToSolverFcn) HYPRE_MGRSolve,
+                        (HYPRE_PtrToSolverFcn) HYPRE_MGRSetup,
+                        mgr_precond);
+
+  GEOSX_MARK_BEGIN(MGR_SETUP);
+  clock.start(true);
+  HYPRE_GMRESSetup(pgmres_solver, (HYPRE_Matrix)parcsr_matrix, (HYPRE_Vector)par_rhs, (HYPRE_Vector)par_lhs);
+  setupTime += clock.stop();
+  GEOSX_MARK_END(MGR_SETUP);
+
+  GEOSX_MARK_BEGIN(MGR_SOLVE);
+  clock.start(true);
+  HYPRE_GMRESSolve
+    (pgmres_solver, (HYPRE_Matrix)parcsr_matrix, (HYPRE_Vector)par_rhs, (HYPRE_Vector)par_lhs);
+  solveTime = clock.stop();
+  GEOSX_MARK_END(MGR_SOLVE);
+
+  HYPRE_Int num_iterations;
+  HYPRE_Real final_res_norm;
+  HYPRE_GMRESGetNumIterations(pgmres_solver, &num_iterations);
+  HYPRE_GMRESGetFinalRelativeResidualNorm(pgmres_solver, &final_res_norm);
+
+  if (my_id == 0)
+    printf("Using hypreMGR, cycle = %d, iters = %lld, Final Residual = %1.5e\n", n_cycles, num_iterations, final_res_norm);
+
+  params->m_numKrylovIter = num_iterations;
+
+  HYPRE_MGRDestroy(mgr_precond);
+  HYPRE_BoomerAMGDestroy(cg_amg_solver);
+  HYPRE_ParCSRGMRESDestroy(pgmres_solver);
+  hypre_TFree(lv1, HYPRE_MEMORY_HOST);
+  hypre_TFree(mgr_cindexes, HYPRE_MEMORY_HOST);
+  hypre_TFree(mgr_num_cindexes, HYPRE_MEMORY_HOST);
+  hypre_TFree(mgr_idx_array, HYPRE_MEMORY_HOST);
+
+  //############################################ BEGIN COPYING SOLUTION #####################################
+  // copy the hypre solution mapping back to the original Trilinos ordering
+  HYPRE_IJVectorGetValues(IJ_lhs, n_local_rows_all, row_hypre_GIDs.data(), rhs_values.data());
+
+  for(int iDOF=0; iDOF<2; ++iDOF)
+  {
+    // fill the rhs row-by-row
+    for (int row=0; row<n_local_rows[iDOF]; ++row)
+    {
+      int row_idx = (iDOF == 0) ? row : row + n_local_rows[0];
+      p_solution[iDOF]->Values()[row] = *(rhs_values.begin() + row_idx);
+    }
+  }
+
+  gettimeofday(&tim, nullptr);
+  const real64 t_end = tim.tv_sec + (tim.tv_usec / 1000000.0);
+  if( getLogLevel()>=2 )
+  {
+    GEOSX_LOG_RANK_0("\t\tLinear Solver | Iter = " << params->m_numKrylovIter <<
+                    " | TargetReduction " << params->m_krylovTol <<
+                    " | AuxTime " << auxTime <<
+                    " | SetupTime " << setupTime <<
+                    " | SolveTime " << solveTime <<
+                    " | TotalTime " << t_end - t_start);
+  }
+
+#else
+
     // SCHEME CHOICES
     //
     // there are several flags to control solver behavior.
@@ -1214,15 +1705,14 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
     //    BiCGstab sometimes shows better parallel performance.
     //    false is probably better.
 
+  timeval tim;
+  gettimeofday(&tim, nullptr);
+  const real64 t_start = tim.tv_sec + (tim.tv_usec / 1000000.0);
+
   const bool use_diagonal_prec = true;
   const bool use_bicgstab      = params->m_useBicgstab;
 
-    // set initial guess to zero
-
-  p_solution[0]->PutScalar(0.0);
-  p_solution[1]->PutScalar(0.0);
-
-    // create separate displacement component matrix
+  // create separate displacement component matrix
 
   clock.start(true);
   if(newtonIter==0)
@@ -1232,7 +1722,6 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
   }
 
     // create schur complement approximation matrix
-
   Epetra_CrsMatrix* schurApproxPP = NULL; // confirm we delete this at end of function!
   {
     Epetra_Vector diag(p_matrix[0][0]->RowMap());
@@ -1251,7 +1740,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
 
     schurApproxPP->FillComplete();
   }
-  double auxTime = clock.stop();
+  auxTime = clock.stop();
   GEOSX_MARK_END(Setup);
 
     // we want to use thyra to wrap epetra operators and vectors
@@ -1442,7 +1931,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
   }
 
   GEOSX_MARK_END(PRECONDITIONER);
-  double setupTime = clock.stop();
+  setupTime = clock.stop();
 
     // define solver strategy for blocked system. this is
     // similar but slightly different from the sub operator
@@ -1482,8 +1971,11 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
       Thyra::SolveStatus<double> status = solver->solve(Thyra::NOTRANS,*rhs,lhs.ptr());
 
     GEOSX_MARK_END(SOLVER);
-    double solveTime = clock.stop();
+    solveTime = clock.stop();
     params->m_numKrylovIter = status.extraParameters->get<int>("Iteration Count");
+
+    gettimeofday(&tim, nullptr);
+    const real64 t_end = tim.tv_sec + (tim.tv_usec / 1000000.0);
 
     if( getLogLevel()>=2 )
     {
@@ -1491,14 +1983,26 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
                       " | TargetReduction " << params->m_krylovTol <<
                       " | AuxTime " << auxTime <<
                       " | SetupTime " << setupTime <<
-                      " | SolveTime " << solveTime );
+                      " | SolveTime " << solveTime <<
+                      " | TotalTime" << t_end - t_start);
     }
-
-    p_solution[1]->Scale(m_pressureScaling);
-    p_rhs[1]->Scale(1/(m_pressureScaling*m_densityScaling));
   }
-
   delete schurApproxPP;
+#endif
+
+  p_solution[1]->Scale(m_pressureScaling);
+  p_rhs[1]->Scale(1/(m_pressureScaling*m_densityScaling));
+
+  /*
+  if ((n_cycles % 10) == 0 && newtonIter == 0)
+  {
+    char fname[256];
+    sprintf(fname, "solution_u_%03d.txt", n_cycles);
+    EpetraExt::MultiVectorToMatrixMarketFile(fname, *p_solution[0]);
+    sprintf(fname, "solution_p_%03d.txt", n_cycles);
+    EpetraExt::MultiVectorToMatrixMarketFile(fname, *p_solution[1]);
+  }
+  */
 
   //TODO: remove all this once everything is working
   if( getLogLevel() == 2 )

@@ -21,6 +21,15 @@
 #define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_HYDROFRACTURESOLVER_HPP_
 
 #include "physicsSolvers/SolverBase.hpp"
+#include <EpetraExt_RowMatrixOut.h>
+#include <EpetraExt_MultiVectorOut.h>
+
+#ifdef GEOSX_USE_HYPRE_MGR
+// .... HYPRE INCLUDES
+#include "_hypre_IJ_mv.h"
+#include "_hypre_parcsr_ls.h"
+#include "HYPRE.h"
+#endif
 
 namespace geosx
 {
@@ -191,6 +200,30 @@ private:
   ParallelMatrix m_permutationMatrix1; // it's used to have the output based on global ordering
 
   integer m_maxNumResolves;
+
+  integer n_cycles = 0;
+
+#ifdef GEOSX_USE_HYPRE_MGR
+  // HYPRE variables
+  HYPRE_IJMatrix IJ_matrix=nullptr;
+  HYPRE_IJMatrix IJ_matrix_uu=nullptr;
+  HYPRE_ParCSRMatrix parcsr_matrix=nullptr;
+  HYPRE_ParCSRMatrix parcsr_uu=nullptr;
+  HYPRE_IJVector IJ_rhs=nullptr;
+  HYPRE_ParVector par_rhs=nullptr;
+  HYPRE_IJVector IJ_lhs=nullptr;
+  HYPRE_ParVector par_lhs=nullptr;
+  HYPRE_ParVector par_lhs_uu=nullptr;
+  HYPRE_ParVector par_rhs_uu=nullptr;
+
+  std::map<int, std::map<globalIndex, globalIndex>> GID_trilinos_to_hypre;
+
+  HYPRE_Solver pgmres_solver;
+  HYPRE_Solver mgr_precond;
+  HYPRE_Solver cg_amg_solver;
+  HYPRE_Solver uu_amg_solver;
+#endif
+  int print_matrix = 0;
 };
 
 } /* namespace geosx */

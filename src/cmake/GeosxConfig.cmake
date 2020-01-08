@@ -41,6 +41,7 @@ foreach( DEP in ${PREPROCESSOR_DEFINES})
     endif()
 endforeach()
 
+set( GEOSX_USE_HYPRE_MGR TRUE )
 
 configure_file( ${CMAKE_SOURCE_DIR}/coreComponents/common/GeosxConfig.hpp.in
                 ${CMAKE_BINARY_DIR}/include/common/GeosxConfig.hpp )
