@@ -93,7 +93,7 @@ void HypreSolver::solve( HypreMatrix & mat,
 //    rhs_ptr->Multiply( 1.0, scaling, tmp, 0.0 );
 //  }
 
-  if( m_parameters.solverType == "direct" )
+  if( 1 ) //m_parameters.solverType == "direct" )
   {
     solve_direct( mat, sol, rhs );
   }
@@ -117,7 +117,6 @@ void HypreSolver::solve_direct( HypreMatrix & mat,
   hypre_SLUDistSetup( &solver,
                       HYPRE_ParCSRMatrix(mat),
                       0 );
-  std::cout << "Setup: DONE\n";
   hypre_SLUDistSolve( solver,
                       HYPRE_ParVector( rhs ),
                       HYPRE_ParVector( sol ) );
@@ -199,23 +198,12 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
     precondApplyFunction = (HYPRE_PtrToSolverFcn) HYPRE_ParCSRPilutSolve;
     precondSetupFunction = (HYPRE_PtrToSolverFcn) HYPRE_ParCSRPilutSetup;
     precondDestroyFunction = (HYPRE_PtrToDestroyFcn) HYPRE_ParCSRPilutDestroy;
-//    HYPRE_BoomerAMGCreate(&precond);
-//    HYPRE_BoomerAMGSetPrintLevel(precond, 1); /* print amg solution info */
-//    HYPRE_BoomerAMGSetCoarsenType(precond, 6);
-//    HYPRE_BoomerAMGSetOldDefault(precond);
-//    HYPRE_BoomerAMGSetRelaxType(precond, 6); /* Sym G.S./Jacobi hybrid */
-//    HYPRE_BoomerAMGSetNumSweeps(precond, 1);
-//    HYPRE_BoomerAMGSetTol(precond, 0.0); /* conv. tolerance zero */
-//    HYPRE_BoomerAMGSetMaxIter(precond, 1); /* do only one iteration! */
-//
-//    precondApplyFunction = (HYPRE_PtrToSolverFcn) HYPRE_BoomerAMGSolve;
-//    precondSetupFunction = (HYPRE_PtrToSolverFcn) HYPRE_BoomerAMGSetup;
-//    precondDestroyFunction = (HYPRE_PtrToDestroyFcn) HYPRE_BoomerAMGDestroy;
+
   }
   else if( m_parameters.preconditionerType == "amg" )
   {
     HYPRE_BoomerAMGCreate(&precond);
-    HYPRE_BoomerAMGSetPrintLevel(precond, 1); /* print amg solution info */
+    HYPRE_BoomerAMGSetPrintLevel(precond, -1); /* print amg solution info */
     HYPRE_BoomerAMGSetCoarsenType(precond, 6);
     HYPRE_BoomerAMGSetOldDefault(precond);
     HYPRE_BoomerAMGSetRelaxType(precond, 6); /* Sym G.S./Jacobi hybrid */
@@ -242,7 +230,7 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
     HYPRE_GMRESSetTol(solver, m_parameters.krylov.tolerance);
 
     // Default for now
-    HYPRE_GMRESSetPrintLevel(solver, 2); /* prints out the iteration info */
+    HYPRE_GMRESSetPrintLevel(solver, 0); /* prints out the iteration info */
     HYPRE_GMRESSetLogging(solver, 1); /* needed to get run info later */
 
     // Set the preconditioner
