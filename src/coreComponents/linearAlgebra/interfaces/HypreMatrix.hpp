@@ -22,13 +22,17 @@
 #include "common/DataTypes.hpp"
 #include "HypreVector.hpp"
 
-#include "HYPRE_IJ_mv.h"
-#include "HYPRE_parcsr_mv.h"
+// Just a placeholder to avoid to include two HYPRE header files
+//#include "_hypre_IJ_mv.h"
+//#include "_hypre_parcsr_mv.h"
 
-#include "HYPRE.h"
-#include "_hypre_IJ_mv.h"
-#include "_hypre_parcsr_mv.h"
+// IJMatrix definition
+struct hypre_IJMatrix_struct;
+typedef struct hypre_IJMatrix_struct *HYPRE_IJMatrix;
 
+// ParCSRMatrix definition
+struct hypre_ParCSRMatrix_struct;
+typedef struct hypre_ParCSRMatrix_struct *HYPRE_ParCSRMatrix;
 
 namespace geosx
 {
@@ -557,11 +561,6 @@ public:
   operator HYPRE_ParCSRMatrix()
   {
     return (HYPRE_ParCSRMatrix) m_parcsr_mat;
-  }
-
-  operator hypre_ParCSRMatrix*() const
-  {
-	return (HYPRE_ParCSRMatrix) m_parcsr_mat;;
   }
 
   /**

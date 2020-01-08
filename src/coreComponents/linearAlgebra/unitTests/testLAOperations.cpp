@@ -286,10 +286,6 @@ public:
 // -----------------------------------------
   void testMatrixFunctions()
   {
-    // Define aliases
-    using Vector = typename LAI::ParallelVector;
-    using Matrix = typename LAI::ParallelMatrix;
-
     // Get the MPI rank
     int numranks = MpiWrapper::Comm_size( MPI_COMM_WORLD );
     int rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
@@ -352,9 +348,11 @@ public:
 //  B.write("matrix_B");
       C.write( "matrix_C" );
       D.write( "matrix_D" );
+      /*
       hypre_ParCSRMatrixPrintIJ( HYPRE_ParCSRMatrix( C ),
                                  0,
                                  0, "matrix_C_par" );
+      */
 
 //  D.write("matrix_D");
     }

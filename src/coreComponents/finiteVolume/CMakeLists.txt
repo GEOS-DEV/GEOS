@@ -36,10 +36,6 @@ if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
 endif()
 
-if ( ENABLE_HYPRE )
-  set( dependencyList ${dependencyList} hypre )
-endif()
-
 blt_add_library( NAME                  finiteVolume
                  SOURCES               ${finiteVolume_sources}
                  HEADERS               ${finiteVolume_headers}

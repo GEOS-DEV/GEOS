@@ -29,19 +29,10 @@
 #include "linearAlgebra/interfaces/HypreVector.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 
-//#include <math.h>
 #include "_hypre_utilities.h"
-#include "krylov.h"
-//#include "HYPRE.h"
 #include "_hypre_parcsr_ls.h"
-
-//#include <Epetra_Map.h>
-//#include <Epetra_FECrsGraph.h>
-//#include <Epetra_FECrsMatrix.h>
-//#include <Epetra_FEVector.h>
-//#include "AztecOO.h"
-//#include "Amesos.h"
-//#include "ml_MultiLevelPreconditioner.h"
+#include "_hypre_IJ_mv.h"
+#include "krylov.h"
 
 // Put everything under the geosx namespace.
 namespace geosx
@@ -93,7 +84,7 @@ void HypreSolver::solve( HypreMatrix & mat,
 //    rhs_ptr->Multiply( 1.0, scaling, tmp, 0.0 );
 //  }
 
-  if( 1 ) //m_parameters.solverType == "direct" )
+  if( m_parameters.solverType == "direct" )
   {
     solve_direct( mat, sol, rhs );
   }
@@ -131,11 +122,11 @@ void HypreSolver::solve_direct( HypreMatrix & mat,
 
 void HypreSolver::solve_krylov( HypreMatrix & mat,
                                 HypreVector & sol,
-								                HypreVector & rhs )
+                                HypreVector & rhs )
 {
 
   // Instantiate preconditioner and solver
-  HYPRE_Solver precond;
+  HYPRE_Solver precond = nullptr;
   HYPRE_Solver solver;
 
   // Get MPI communicator
@@ -146,12 +137,12 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
   HYPRE_Int (*precondSetupFunction)( HYPRE_Solver,
                                      HYPRE_Matrix,
                                      HYPRE_Vector,
-                                     HYPRE_Vector );
+                                     HYPRE_Vector ) = nullptr;
   HYPRE_Int (*precondApplyFunction)( HYPRE_Solver,
                                      HYPRE_Matrix,
                                      HYPRE_Vector,
-                                     HYPRE_Vector );
-  HYPRE_Int (*precondDestroyFunction)( HYPRE_Solver );
+                                     HYPRE_Vector ) = nullptr;
+  HYPRE_Int (*precondDestroyFunction)( HYPRE_Solver ) = nullptr;
 
 
   if( m_parameters.preconditionerType == "none" )
@@ -186,8 +177,8 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
 
     if (m_parameters.ilu.threshold >= 0 )
     {
-        HYPRE_ParCSRPilutSetDropTolerance( precond,
-                                           m_parameters.ilu.threshold );
+      HYPRE_ParCSRPilutSetDropTolerance( precond,
+                                         m_parameters.ilu.threshold );
     }
     if (m_parameters.ilu.fill >= 0 )
     {
@@ -230,7 +221,7 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
     HYPRE_GMRESSetTol(solver, m_parameters.krylov.tolerance);
 
     // Default for now
-    HYPRE_GMRESSetPrintLevel(solver, 0); /* prints out the iteration info */
+    HYPRE_GMRESSetPrintLevel(solver, m_parameters.logLevel); /* prints out the iteration info */
     HYPRE_GMRESSetLogging(solver, 1); /* needed to get run info later */
 
     // Set the preconditioner

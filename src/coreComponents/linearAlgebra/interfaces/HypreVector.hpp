@@ -22,8 +22,17 @@
 #include "common/DataTypes.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
 
-#include "HYPRE_IJ_mv.h"
-#include "HYPRE_parcsr_mv.h"
+// Just a placeholder to avoid to include two HYPRE header files
+// #include "HYPRE_IJ_mv.h"
+// #include "HYPRE_parcsr_mv.h"
+
+// IJVector definition
+struct hypre_IJVector_struct;
+typedef struct hypre_IJVector_struct *HYPRE_IJVector;
+
+// ParVector definition
+struct hypre_ParVector_struct;
+typedef struct hypre_ParVector_struct *HYPRE_ParVector;
 
 namespace geosx
 {
