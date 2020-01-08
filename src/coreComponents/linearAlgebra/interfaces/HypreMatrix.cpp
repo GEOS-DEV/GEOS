@@ -1033,7 +1033,7 @@ real64 HypreMatrix::getDiagValue( globalIndex globalRow ) const
   //std::cout << "\n\n Getting diagonal value: ";
   for( HYPRE_Int j = IA[localRow] ; j < IA[localRow + 1] ; ++j )
   {
-    if ( JA[j] == globalRow )
+    if ( JA[j] == localRow )
     {
       return ptr_data[j];
     }
