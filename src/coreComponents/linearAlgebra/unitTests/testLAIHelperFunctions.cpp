@@ -35,6 +35,9 @@
 using namespace geosx;
 using namespace geosx::testing;
 
+static real64 const machinePrecision = std::numeric_limits<real64>::epsilon();
+static real64 const tolerance  = machinePrecision;//1e-10;
+
 namespace
 {
 int global_argc;
@@ -80,12 +83,12 @@ protected:
       "  <Mesh>"
       "    <InternalMesh name=\"mesh1\""
       "                  elementTypes=\"{C3D8}\""
-      "                  xCoords=\"{0, 2}\""
+      "                  xCoords=\"{0, 1}\""
       "                  yCoords=\"{0, 1}\""
       "                  zCoords=\"{0, 1}\""
-      "                  nx=\"{2}\""
-      "                  ny=\"{2}\""
-      "                  nz=\"{1}\""
+      "                  nx=\"{6}\""
+      "                  ny=\"{9}\""
+      "                  nz=\"{5}\""
       "                  cellBlockNames=\"{block1}\"/>"
       "  </Mesh>"
       "  <ElementRegions>"
@@ -155,22 +158,19 @@ TEST_F(LAIHelperFunctionsTest, Test_NodalVectorPermutation)
                        Region );
   dofManager.close();
 
-  // ParallelMatrix pattern;
-  // dofManager.setSparsityPattern( pattern, "displacement", "displacement" );
-
   localIndex nDof = 3*nodeManager->size();
+
   arrayView1d<globalIndex> const &  dofNumber =  nodeManager->getReference<globalIndex_array>( dofManager.getKey( "nodalVariable" )  );
   arrayView1d<integer> const & isNodeGhost = nodeManager->GhostRank();
 
   ParallelVector nodalVariable, expectedPermutedVector;
-  nodalVariable.createWithGlobalSize(nDof, MPI_COMM_GEOSX);
+  nodalVariable.createWithLocalSize(nDof, MPI_COMM_GEOSX);
   nodalVariable.set(0);
-  expectedPermutedVector.createWithGlobalSize(nDof, MPI_COMM_GEOSX);
+  expectedPermutedVector.createWithLocalSize(nDof, MPI_COMM_GEOSX);
   expectedPermutedVector.set(0);
 
   for ( localIndex a=0; a <nodeManager->size(); a++ )
   {
-    // std::cout<< "Node " << a << "is ghost = " << isNodeGhost[a] << std::endl;
     if (isNodeGhost[a] < 0)
     {
       for (localIndex d=0; d < 3; d++)
@@ -196,17 +196,11 @@ TEST_F(LAIHelperFunctionsTest, Test_NodalVectorPermutation)
                                               dofManager.getKey( "nodalVariable" ),
                                               permutationMatrix);
 
-  // permutationMatrix.print(std::cout);
   ParallelVector permutedVector = LAIHelperFunctions::PermuteVector(nodalVariable, permutationMatrix);
-
-  //expectedPermutedVector.print(std::cout);
-  //nodalVariable.print(std::cout);
-  //permutedVector.print(std::cout);
 
   permutedVector.axpy(-1, expectedPermutedVector);
 
   real64 vectorNorm = permutedVector.norm1();
-  real64 tolerance  = 1e-10;
 
   EXPECT_LT( vectorNorm, tolerance );
 
@@ -230,9 +224,9 @@ TEST_F(LAIHelperFunctionsTest, Test_CellCenteredVectorPermutation)
   integer nDof = dofManager.numGlobalDofs("cellCentered");
 
   ParallelVector cellCenteredVariable, expectedPermutedVector;
-  cellCenteredVariable.createWithGlobalSize(nDof, MPI_COMM_GEOSX);
+  cellCenteredVariable.createWithLocalSize(nDof, MPI_COMM_GEOSX);
   cellCenteredVariable.set(0);
-  expectedPermutedVector.createWithGlobalSize(nDof, MPI_COMM_GEOSX);
+  expectedPermutedVector.createWithLocalSize(nDof, MPI_COMM_GEOSX);
   expectedPermutedVector.set(0);
 
   elemManager->forElementSubRegions([&]( ElementSubRegionBase const * const elementSubRegion )
@@ -274,7 +268,6 @@ TEST_F(LAIHelperFunctionsTest, Test_CellCenteredVectorPermutation)
   permutedVector.axpy(-1, expectedPermutedVector);
 
   real64 vectorNorm = permutedVector.norm1();
-  real64 tolerance  = 1e-10;
 
   EXPECT_LT( vectorNorm, tolerance );
 

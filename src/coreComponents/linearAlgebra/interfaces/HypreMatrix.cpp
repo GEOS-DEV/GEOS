@@ -1264,7 +1264,7 @@ void HypreMatrix::print( std::ostream & os ) const
                  "matrix appears to be empty (not created) or not finalized" );
   if ( MpiWrapper::Comm_rank( hypre_IJMatrixComm( m_ij_mat ) ) == 0 )
   {
-    os << "Hypre interface: no output on screen available/n";
+    os << "Hypre interface: no output on screen available\n";
     os << "                 use write method";
   }
 }
@@ -1280,7 +1280,7 @@ void HypreMatrix::write( string const & filename,
                  "matrix appears to be empty (not created) or not finalized" );
   if (mtxFormat)
   {
-    std::cout << "MatrixMarket not available for HypreMtrix, default used\n";
+    std::cout << "MatrixMarket not available for HypreMatrix, default used\n";
   }
 //  HYPRE_IJMatrixPrint( m_ij_mat, filename.c_str() );
   hypre_ParCSRMatrixPrintIJ( m_parcsr_mat,
