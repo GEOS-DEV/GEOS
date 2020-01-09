@@ -59,15 +59,6 @@ Group::CatalogInterface::CatalogType & Group::GetCatalog()
   return catalog;
 }
 
-WrapperBase * Group::registerWrapper( std::string const & name, rtTypes::TypeIDs const & type )
-{
-  return rtTypes::ApplyTypeLambda1( type,
-                                    [this, &name]( auto a ) -> WrapperBase *
-      {
-        return this->registerWrapper< decltype(a) >( name );
-      } );
-}
-
 WrapperBase * Group::registerWrapper( string const & name,
                                       WrapperBase * const wrapper )
 {
@@ -156,10 +147,9 @@ void Group::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
       rtTypes::TypeIDs const wrapperTypeID = rtTypes::typeID( wrapper->get_typeid());
 
       rtTypes::ApplyIntrinsicTypeLambda2( wrapperTypeID,
-                                          [&]( auto a, auto GEOSX_UNUSED_ARG( b ) ) -> void
+                                          [&]( auto a, auto GEOSX_UNUSED_ARG( b ) )
           {
-//        using BASE_TYPE = decltype(b);
-            using COMPOSITE_TYPE = decltype(a);
+            using COMPOSITE_TYPE = decltype( a );
 
             Wrapper< COMPOSITE_TYPE > & typedWrapper = Wrapper< COMPOSITE_TYPE >::cast( *wrapper );
             COMPOSITE_TYPE & objectReference = typedWrapper.reference();

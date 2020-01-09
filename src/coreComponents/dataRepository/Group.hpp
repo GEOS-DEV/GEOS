@@ -830,16 +830,6 @@ public:
   template< typename T, typename TBASE=T >
   Wrapper< TBASE > * registerWrapper( Group::wrapperMap::KeyIndex & viewKey );
 
-
-  /**
-   * @copybrief registerWrapper(std::string const &,wrapperMap::KeyIndex::index_type * const)
-   * @param[in] name the name of the wrapper to use as a string key
-   * @param[in] type the runtime type to wrap in the new Wrapper
-   * @return         an un-typed pointer to the newly registered/created wrapper
-   */
-  WrapperBase * registerWrapper( std::string const & name,
-                                 rtTypes::TypeIDs const & type );
-
   /**
    * @brief Register a Wrapper around a given object and take ownership.
    * @tparam T the type of the wrapped object
