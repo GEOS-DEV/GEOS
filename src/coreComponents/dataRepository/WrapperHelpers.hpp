@@ -192,7 +192,6 @@ numElementsFromByteSize( localIndex const byteSize )
 }
 
 
-
 // This is for an object that needs to be packed.
 template< typename T >
 std::enable_if_t< !bufferOps::can_memcpy< typename traits::Pointer< T > > >
