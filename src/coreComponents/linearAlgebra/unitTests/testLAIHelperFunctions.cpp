@@ -178,10 +178,9 @@ TEST_F(LAIHelperFunctionsTest, Test_NodalVectorPermutation)
 
         localIndex index = dofNumber(a) + d;
         real64  Value = nodeManager->m_localToGlobalMap[a] * 3 + d;
-        //std::cout << "node " << a <<  " dof " << index << " value = " << Value << std::endl;
-        nodalVariable.set(index, Value);
+        nodalVariable.add(index, Value);
         index =  nodeManager->m_localToGlobalMap[a] * 3 + d;
-        expectedPermutedVector.set(index, Value);
+        expectedPermutedVector.add(index, Value);
       }
     }
   }
@@ -249,10 +248,10 @@ TEST_F(LAIHelperFunctionsTest, Test_CellCenteredVectorPermutation)
         {
             globalIndex index = dofNumber[k];
             real64 Value = elementSubRegion->m_localToGlobalMap[k];
-            cellCenteredVariable.set(index, Value);
+            cellCenteredVariable.add(index, Value);
             index = elementSubRegion->m_localToGlobalMap[k];
             Value = elementSubRegion->m_localToGlobalMap[k];
-            expectedPermutedVector.set(index, Value);
+            expectedPermutedVector.add(index, Value);
         }
       }
     });

@@ -58,6 +58,7 @@ void CreatePermutationMatrix(NodeManager* const nodeManager,
       }
   permutationMatrix.close();
   permutationMatrix.set(1);
+  permutationMatrix.close();
 }
 
 void CreatePermutationMatrix(ElementRegionManager* const elemManager,
@@ -99,6 +100,7 @@ void CreatePermutationMatrix(ElementRegionManager* const elemManager,
   });
   permutationMatrix.close();
   permutationMatrix.set(1);
+  permutationMatrix.close();
 }
 
 ParallelVector PermuteVector(ParallelVector const & vector,
