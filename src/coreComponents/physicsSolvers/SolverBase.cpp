@@ -51,7 +51,7 @@ SolverBase::SolverBase( std::string const & name,
 
   registerWrapper( viewKeyStruct::maxStableDtString, &m_maxStableDt, false )->
     setApplyDefaultValue( 0.5 )->
-    setInputFlag( InputFlags::FALSE )->
+    setInputFlag( InputFlags::NOT_READ )->
     setDescription( "Value of the Maximum Stable Timestep for this solver." );
 
   this->registerWrapper( viewKeyStruct::discretizationString, &m_discretizationName, false )->

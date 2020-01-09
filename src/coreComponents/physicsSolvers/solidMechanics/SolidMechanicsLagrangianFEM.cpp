@@ -87,7 +87,7 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const std::string& nam
     setDescription("Value of stiffness based damping coefficient. ");
 
   registerWrapper(viewKeyStruct::timeIntegrationOptionString, &m_timeIntegrationOption, false )->
-    setInputFlag(InputFlags::FALSE)->
+    setInputFlag(InputFlags::NOT_READ)->
     setDescription("Time integration enum class value.");
 
   registerWrapper(viewKeyStruct::timeIntegrationOptionStringString, &m_timeIntegrationOptionString, false )->

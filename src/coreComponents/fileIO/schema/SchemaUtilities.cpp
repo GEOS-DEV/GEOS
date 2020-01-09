@@ -191,7 +191,7 @@ void SchemaUtilities::SchemaConstruction(Group * const group,
         WrapperBase * const wrapper = group->getWrapperBase(attributeName);
         InputFlags flag = wrapper->getInputFlag();
         
-        if (( flag > InputFlags::FALSE ) != ( documentationType == 1 ))
+        if (( flag > InputFlags::NOT_READ ) != ( documentationType == 1 ))
         {
           // Ignore duplicate copies of attributes
           if( targetTypeDefNode.find_child_by_attribute("xsd:attribute", "name", attributeName.c_str()).empty())

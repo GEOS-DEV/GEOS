@@ -153,117 +153,117 @@ LinearElasticAnisotropic::LinearElasticAnisotropic( std::string const & name, Gr
 
   // These are temporary until we figure out how to read in multidim arrays from input.
   registerWrapper( viewKeyStruct::c11, &(m_c00), 0 )->
-    setInputFlag(InputFlags::FALSE)->
+    setInputFlag(InputFlags::NOT_READ)->
     setDescription("The 11 component of the Elastic Stiffness Tensor in Voigt notation");
   registerWrapper( viewKeyStruct::c12, &(m_c01), 0 )->
-    setInputFlag(InputFlags::FALSE)->
+    setInputFlag(InputFlags::NOT_READ)->
     setDescription("The 12 component of the Elastic Stiffness Tensor in Voigt notation");
   registerWrapper( viewKeyStruct::c13, &(m_c02), 0 )->
-    setInputFlag(InputFlags::FALSE)->
+    setInputFlag(InputFlags::NOT_READ)->
     setDescription("The 13 component of the Elastic Stiffness Tensor in Voigt notation");
   registerWrapper( viewKeyStruct::c14, &(m_c03), 0 )->
-    setInputFlag(InputFlags::FALSE)->
+    setInputFlag(InputFlags::NOT_READ)->
     setDescription("The 14 component of the Elastic Stiffness Tensor in Voigt notation");
   registerWrapper( viewKeyStruct::c15, &(m_c04), 0 )->
-    setInputFlag(InputFlags::FALSE)->
+    setInputFlag(InputFlags::NOT_READ)->
     setDescription("The 15 component of the Elastic Stiffness Tensor in Voigt notation");
   registerWrapper( viewKeyStruct::c16, &(m_c05), 0 )->
-    setInputFlag(InputFlags::FALSE)->
+    setInputFlag(InputFlags::NOT_READ)->
     setDescription("The 16 component of the Elastic Stiffness Tensor in Voigt notation");
 
   registerWrapper( viewKeyStruct::c21, &(m_c10), 0 )->
-    setInputFlag(InputFlags::FALSE)->
+    setInputFlag(InputFlags::NOT_READ)->
     setDescription("The 21 component of the Elastic Stiffness Tensor in Voigt notation");
   registerWrapper( viewKeyStruct::c22, &(m_c11), 0 )->
-    setInputFlag(InputFlags::FALSE)->
+    setInputFlag(InputFlags::NOT_READ)->
     setDescription("The 22 component of the Elastic Stiffness Tensor in Voigt notation");
   registerWrapper( viewKeyStruct::c23, &(m_c12), 0 )->
-    setInputFlag(InputFlags::FALSE)->
+    setInputFlag(InputFlags::NOT_READ)->
     setDescription("The 23 component of the Elastic Stiffness Tensor in Voigt notation");
   registerWrapper( viewKeyStruct::c24, &(m_c13), 0 )->
-    setInputFlag(InputFlags::FALSE)->
+    setInputFlag(InputFlags::NOT_READ)->
     setDescription("The 24 component of the Elastic Stiffness Tensor in Voigt notation");
   registerWrapper( viewKeyStruct::c25, &(m_c14), 0 )->
-    setInputFlag(InputFlags::FALSE)->
+    setInputFlag(InputFlags::NOT_READ)->
     setDescription("The 25 component of the Elastic Stiffness Tensor in Voigt notation");
   registerWrapper( viewKeyStruct::c26, &(m_c15), 0 )->
-    setInputFlag(InputFlags::FALSE)->
+    setInputFlag(InputFlags::NOT_READ)->
     setDescription("The 26 component of the Elastic Stiffness Tensor in Voigt notation");
 
   registerWrapper( viewKeyStruct::c31, &(m_c20), 0 )->
-    setInputFlag(InputFlags::FALSE)->
+    setInputFlag(InputFlags::NOT_READ)->
     setDescription("The 31 component of the Elastic Stiffness Tensor in Voigt notation");
   registerWrapper( viewKeyStruct::c32, &(m_c21), 0 )->
-    setInputFlag(InputFlags::FALSE)->
+    setInputFlag(InputFlags::NOT_READ)->
     setDescription("The 32 component of the Elastic Stiffness Tensor in Voigt notation");
   registerWrapper( viewKeyStruct::c33, &(m_c22), 0 )->
-    setInputFlag(InputFlags::FALSE)->
+    setInputFlag(InputFlags::NOT_READ)->
     setDescription("The 33 component of the Elastic Stiffness Tensor in Voigt notation");
   registerWrapper( viewKeyStruct::c34, &(m_c23), 0 )->
-    setInputFlag(InputFlags::FALSE)->
+    setInputFlag(InputFlags::NOT_READ)->
     setDescription("The 34 component of the Elastic Stiffness Tensor in Voigt notation");
   registerWrapper( viewKeyStruct::c35, &(m_c24), 0 )->
-    setInputFlag(InputFlags::FALSE)->
+    setInputFlag(InputFlags::NOT_READ)->
     setDescription("The 35 component of the Elastic Stiffness Tensor in Voigt notation");
   registerWrapper( viewKeyStruct::c36, &(m_c25), 0 )->
-    setInputFlag(InputFlags::FALSE)->
+    setInputFlag(InputFlags::NOT_READ)->
     setDescription("The 36 component of the Elastic Stiffness Tensor in Voigt notation");
 
   registerWrapper( viewKeyStruct::c41, &(m_c30), 0 )->
-    setInputFlag(InputFlags::FALSE)->
+    setInputFlag(InputFlags::NOT_READ)->
     setDescription("The 41 component of the Elastic Stiffness Tensor in Voigt notation");
   registerWrapper( viewKeyStruct::c42, &(m_c31), 0 )->
-    setInputFlag(InputFlags::FALSE)->
+    setInputFlag(InputFlags::NOT_READ)->
     setDescription("The 42 component of the Elastic Stiffness Tensor in Voigt notation");
   registerWrapper( viewKeyStruct::c43, &(m_c32), 0 )->
-    setInputFlag(InputFlags::FALSE)->
+    setInputFlag(InputFlags::NOT_READ)->
     setDescription("The 43 component of the Elastic Stiffness Tensor in Voigt notation");
   registerWrapper( viewKeyStruct::c44, &(m_c33), 0 )->
-    setInputFlag(InputFlags::FALSE)->
+    setInputFlag(InputFlags::NOT_READ)->
     setDescription("The 44 component of the Elastic Stiffness Tensor in Voigt notation");
   registerWrapper( viewKeyStruct::c45, &(m_c34), 0 )->
-    setInputFlag(InputFlags::FALSE)->
+    setInputFlag(InputFlags::NOT_READ)->
     setDescription("The 45 component of the Elastic Stiffness Tensor in Voigt notation");
   registerWrapper( viewKeyStruct::c46, &(m_c35), 0 )->
-    setInputFlag(InputFlags::FALSE)->
+    setInputFlag(InputFlags::NOT_READ)->
     setDescription("The 46 component of the Elastic Stiffness Tensor in Voigt notation");
 
   registerWrapper( viewKeyStruct::c51, &(m_c40), 0 )->
-    setInputFlag(InputFlags::FALSE)->
+    setInputFlag(InputFlags::NOT_READ)->
     setDescription("The 51 component of the Elastic Stiffness Tensor in Voigt notation");
   registerWrapper( viewKeyStruct::c52, &(m_c41), 0 )->
-    setInputFlag(InputFlags::FALSE)->
+    setInputFlag(InputFlags::NOT_READ)->
     setDescription("The 52 component of the Elastic Stiffness Tensor in Voigt notation");
   registerWrapper( viewKeyStruct::c53, &(m_c42), 0 )->
-    setInputFlag(InputFlags::FALSE)->
+    setInputFlag(InputFlags::NOT_READ)->
     setDescription("The 53 component of the Elastic Stiffness Tensor in Voigt notation");
   registerWrapper( viewKeyStruct::c54, &(m_c43), 0 )->
-    setInputFlag(InputFlags::FALSE)->
+    setInputFlag(InputFlags::NOT_READ)->
     setDescription("The 54 component of the Elastic Stiffness Tensor in Voigt notation");
   registerWrapper( viewKeyStruct::c55, &(m_c44), 0 )->
-    setInputFlag(InputFlags::FALSE)->
+    setInputFlag(InputFlags::NOT_READ)->
     setDescription("The 55 component of the Elastic Stiffness Tensor in Voigt notation");
   registerWrapper( viewKeyStruct::c56, &(m_c45), 0 )->
-    setInputFlag(InputFlags::FALSE)->
+    setInputFlag(InputFlags::NOT_READ)->
     setDescription("The 56 component of the Elastic Stiffness Tensor in Voigt notation");
 
   registerWrapper( viewKeyStruct::c61, &(m_c50), 0 )->
-    setInputFlag(InputFlags::FALSE)->
+    setInputFlag(InputFlags::NOT_READ)->
     setDescription("The 61 component of the Elastic Stiffness Tensor in Voigt notation");
   registerWrapper( viewKeyStruct::c62, &(m_c51), 0 )->
-    setInputFlag(InputFlags::FALSE)->
+    setInputFlag(InputFlags::NOT_READ)->
     setDescription("The 62 component of the Elastic Stiffness Tensor in Voigt notation");
   registerWrapper( viewKeyStruct::c63, &(m_c52), 0 )->
-    setInputFlag(InputFlags::FALSE)->
+    setInputFlag(InputFlags::NOT_READ)->
     setDescription("The 63 component of the Elastic Stiffness Tensor in Voigt notation");
   registerWrapper( viewKeyStruct::c64, &(m_c53), 0 )->
-    setInputFlag(InputFlags::FALSE)->
+    setInputFlag(InputFlags::NOT_READ)->
     setDescription("The 64 component of the Elastic Stiffness Tensor in Voigt notation");
   registerWrapper( viewKeyStruct::c65, &(m_c54), 0 )->
-    setInputFlag(InputFlags::FALSE)->
+    setInputFlag(InputFlags::NOT_READ)->
     setDescription("The 65 component of the Elastic Stiffness Tensor in Voigt notation");
   registerWrapper( viewKeyStruct::c66, &(m_c55), 0 )->
-    setInputFlag(InputFlags::FALSE)->
+    setInputFlag(InputFlags::NOT_READ)->
     setDescription("The 66 component of the Elastic Stiffness Tensor in Voigt notation");
 
 //  registerWrapper( viewKeyStruct::stiffnessString, &m_stiffness, 0 )->

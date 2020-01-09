@@ -35,7 +35,7 @@ namespace dataRepository
 enum class InputFlags : int
 {
   INVALID,            ///< Invalid value
-  FALSE,              ///< Not read from input
+  NOT_READ,              ///< Not read from input
   OPTIONAL,           ///< Optional in input
   OPTIONAL_NONUNIQUE, ///< Optional in input, may be repeated
   REQUIRED,           ///< Required in input
@@ -55,7 +55,7 @@ inline InputFlags IntToInputFlag( int const val )
   {
     case 0:
     {
-      rval = InputFlags::FALSE;
+      rval = InputFlags::NOT_READ;
       break;
     }
     case 1:
@@ -102,9 +102,9 @@ inline std::string InputFlagToString( InputFlags const val )
       rval = "INVALID";
       break;
     }
-    case InputFlags::FALSE:
+    case InputFlags::NOT_READ:
     {
-      rval = "FALSE";
+      rval = "NOT_READ";
       break;
     }
     case InputFlags::OPTIONAL:
