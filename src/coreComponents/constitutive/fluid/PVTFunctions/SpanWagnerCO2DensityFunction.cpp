@@ -22,9 +22,10 @@
 namespace geosx
 {
 
-using namespace stringutilities;
-
 namespace PVTProps
+{
+
+namespace internal 
 {
 
   //calc density based on table 3
@@ -103,8 +104,8 @@ namespace PVTProps
 
     return rho * (1.0 + delta * phi_r_delta) / (P / (R * T)) - 1.0;
   }
+} // end of namespace internal
 
-  
 SpanWagnerCO2DensityFunction::SpanWagnerCO2DensityFunction( string_array const & inputPara, string_array const & componentNames, real64_array const & componentMolarWeight): PVTFunction( inputPara[1], componentNames, componentMolarWeight)
 {
 
@@ -113,7 +114,7 @@ SpanWagnerCO2DensityFunction::SpanWagnerCO2DensityFunction( string_array const &
   for(localIndex i = 0; i < componentNames.size(); ++i)
   {
 
-    if(streq(componentNames[i], "CO2") || streq(componentNames[i], "co2"))
+    if(stringutilities::streq(componentNames[i], "CO2") || stringutilities::streq(componentNames[i], "co2"))
     {
       m_CO2Index = i;
       notFound = 0;
@@ -241,7 +242,7 @@ void SpanWagnerCO2DensityFunction::CalculateCO2Density(real64_array const & pres
 
       TK = temperature[j] + T_K_f;
 
-      SpanWagnerCO2Density(TK, PPa, density[i][j], &f);
+      SpanWagnerCO2Density(TK, PPa, density[i][j], &internal::f);
 
     }
 
@@ -340,12 +341,10 @@ void SpanWagnerCO2DensityFunction::SpanWagnerCO2Density(real64 const & T, real64
   }
 }
 
+  REGISTER_CATALOG_ENTRY( PVTFunction,
+                          SpanWagnerCO2DensityFunction,
+                          string_array const &, string_array const &, real64_array const & )
 
+} // end of namespace PVTProps
 
-REGISTER_CATALOG_ENTRY( PVTFunction,
-                        SpanWagnerCO2DensityFunction,
-                        string_array const &, string_array const &, real64_array const & )
-
-}
-
-}
+} //end of namespace geosx

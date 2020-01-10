@@ -31,17 +31,17 @@ constexpr integer CapillaryPressureBase::PhaseType::GAS;
 constexpr integer CapillaryPressureBase::PhaseType::OIL;
 constexpr integer CapillaryPressureBase::PhaseType::WATER;
 
-namespace 
+namespace internal
 {
 
-std::unordered_map<string, integer> const phaseDict =
+std::unordered_map<string, integer> const phaseDictCapPresBase =
 {
   { "gas",   CapillaryPressureBase::PhaseType::GAS   },
   { "oil",   CapillaryPressureBase::PhaseType::OIL   },
   { "water", CapillaryPressureBase::PhaseType::WATER }
 };
 
-}
+} //end of namespace internal
 
 CapillaryPressureBase::CapillaryPressureBase( std::string const & name,
                                               Group * const parent )
@@ -87,8 +87,8 @@ void CapillaryPressureBase::PostProcessInput()
 
   for (localIndex ip = 0; ip < NP; ++ip)
   {
-    auto it = phaseDict.find( m_phaseNames[ip] );
-    GEOSX_ERROR_IF( it == phaseDict.end(), "CapillaryPressureBase: phase not supported: " << m_phaseNames[ip] );
+    auto it = internal::phaseDictCapPresBase.find( m_phaseNames[ip] );
+    GEOSX_ERROR_IF( it == internal::phaseDictCapPresBase.end(), "CapillaryPressureBase: phase not supported: " << m_phaseNames[ip] );
     integer const phaseIndex = it->second;
     GEOSX_ERROR_IF( phaseIndex >= PhaseType::MAX_NUM_PHASES, "CapillaryPressureBase: invalid phase index " << phaseIndex );
 

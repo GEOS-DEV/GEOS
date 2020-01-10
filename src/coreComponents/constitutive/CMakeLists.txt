@@ -63,6 +63,15 @@ set( constitutive_sources
      solid/SolidBase.cpp
    )
 
+# SpanWagnerCO2DensityFunction.cpp and CO2SolubilityFunction.cpp
+# share common variable, T_c
+if( CMAKE_UNITY_BUILD )
+  set_source_files_properties (
+    fluid/PVTFunctions/SpanWagnerCO2DensityFunction.cpp 
+    PROPERTIES SKIP_UNITY_BUILD_INCLUSION TRUE
+                              )
+endif()
+
 if( BUILD_OBJ_LIBS)
   set( dependencyList dataRepository)
 else()

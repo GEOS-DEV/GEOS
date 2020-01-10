@@ -31,17 +31,17 @@ constexpr integer RelativePermeabilityBase::PhaseType::GAS;
 constexpr integer RelativePermeabilityBase::PhaseType::OIL;
 constexpr integer RelativePermeabilityBase::PhaseType::WATER;
 
-namespace
+namespace internal
 {
 
-std::unordered_map<string, integer> const phaseDict =
+std::unordered_map<string, integer> const phaseDictRelPermBase =
 {
   { "gas",   RelativePermeabilityBase::PhaseType::GAS   },
   { "oil",   RelativePermeabilityBase::PhaseType::OIL   },
   { "water", RelativePermeabilityBase::PhaseType::WATER }
 };
 
-}
+} //end of namespace internal
 
 
 RelativePermeabilityBase::RelativePermeabilityBase( std::string const & name, Group * const parent )
@@ -84,8 +84,8 @@ void RelativePermeabilityBase::PostProcessInput()
 
   for (localIndex ip = 0; ip < NP; ++ip)
   {
-    auto it = phaseDict.find( m_phaseNames[ip] );
-    GEOSX_ERROR_IF( it == phaseDict.end(), "RelativePermeabilityBase: phase not supported: " << m_phaseNames[ip] );
+    auto it = internal::phaseDictRelPermBase.find( m_phaseNames[ip] );
+    GEOSX_ERROR_IF( it ==  internal::phaseDictRelPermBase.end(), "RelativePermeabilityBase: phase not supported: " << m_phaseNames[ip] );
     integer const phaseIndex = it->second;
     GEOSX_ERROR_IF( phaseIndex >= PhaseType::MAX_NUM_PHASES, "RelativePermeabilityBase: invalid phase index " << phaseIndex );
 
