@@ -34,6 +34,10 @@ namespace geosx
 class Path : public std::string
 {
 public:
+
+  ~Path()
+  {}
+
   using std::string::string;
 
   /*!

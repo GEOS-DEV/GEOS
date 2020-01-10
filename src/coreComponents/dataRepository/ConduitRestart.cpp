@@ -16,6 +16,12 @@
  * @file ConduitRestart.cpp
  */
 
+// HACK: the fmt/fmt.hpp include needs to come before the ConduitRestart.hpp or
+//       it is *possible* to get a compile error where
+//       umpire::util::FixedMallocPool::Pool is used in a template in
+//       axom fmt. I have no idea why this is occuring and don't have
+//       the time to diagnose the issue right now.
+#include <fmt/fmt.hpp>
 // Source includes
 #include "ConduitRestart.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
@@ -24,7 +30,6 @@
 
 // TPL includes
 #include <conduit_relay.hpp>
-#include <fmt/fmt.hpp>
 
 namespace geosx
 {

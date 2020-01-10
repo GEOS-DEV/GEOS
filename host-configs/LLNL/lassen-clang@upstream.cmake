@@ -13,6 +13,8 @@ set(ENABLE_GEOSX_PTP ON CACHE BOOL "")
 set(ENABLE_CALIPER ON CACHE BOOL "")
 set(ENABLE_PAPI OFF CACHE BOOL "")
 
+set(ENABLE_UNCRUSTIFY OFF CACHE BOOL "")
+
 set(ENABLE_ESSL ON CACHE BOOL "")
 set(ESSL_INCLUDE_DIRS /usr/tcetmp/packages/essl/essl-6.2/include CACHE STRING "")
 set(ESSL_LIBRARIES /usr/tcetmp/packages/essl/essl-6.2/lib64/libesslsmpcuda.so

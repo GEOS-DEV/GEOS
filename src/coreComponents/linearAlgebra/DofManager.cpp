@@ -2066,7 +2066,7 @@ void DofManager::close()
     // synchronize index arrays for all fields across ranks
     CommunicationTools::
     SynchronizeFields( fieldNames, m_mesh,
-                       m_domain->getReference< array1d< NeighborCommunicator > >( m_domain->viewKeys.neighbors ) );
+                       m_domain->getReference< array1d<NeighborCommunicator > >( m_domain->viewKeys.neighbors ) );
   }
 
   m_closed = true;
