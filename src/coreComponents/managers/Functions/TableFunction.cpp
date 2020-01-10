@@ -77,7 +77,7 @@ TableFunction::TableFunction( const std::string& name,
   registerWrapper( keys::tableInterpolation, &m_interpolationMethodString, false )->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Interpolation method (options = linear, nearest, upper, lower)")->
-    setDefaultValue("linear");
+    setApplyDefaultValue("linear");
 }
 
 TableFunction::~TableFunction()
@@ -91,34 +91,33 @@ void TableFunction::parse_file( array1d<T> & target, string const & filename, ch
   std::string lineString;
   T value;
 
-  if (inputStream)
-  {
-    while (!inputStream.eof())
-    {
-      std::getline(inputStream, lineString);
-      std::istringstream ss( lineString );
+  GEOSX_ERROR_IF( !inputStream, "Could not read input file: " << filename );
 
+  // Read the file
+  // TODO: Update this to handle large parallel jobs
+  while (!inputStream.eof())
+  {
+    std::getline(inputStream, lineString);
+    std::istringstream ss( lineString );
+
+    while(ss.peek() == delimiter || ss.peek() == ' ')
+    {
+      ss.ignore();
+    }
+    while( ss>>value )
+    {
+      target.push_back( value );
       while(ss.peek() == delimiter || ss.peek() == ' ')
       {
         ss.ignore();
       }
-      while( ss>>value )
-      {
-        target.push_back( value );
-        while(ss.peek() == delimiter || ss.peek() == ' ')
-        {
-          ss.ignore();
-        }
-      }
     }
+  }
 
-    inputStream.close();
-  }
-  else
-  {
-    GEOSX_ERROR( "Could not read input file: " << filename );
-  }
+  inputStream.close();
 }
+
+
 void TableFunction::InitializeFunction()
 {
   // Read in data
@@ -138,7 +137,6 @@ void TableFunction::InitializeFunction()
     m_dimensions = integer_conversion<localIndex>(m_coordinateFiles.size());
     m_coordinates.resize(m_dimensions);
 
-    // TODO: Read these files on rank 0, then broadcast
     parse_file( m_values, m_voxelFile, ',' );
     for (localIndex ii=0 ; ii<m_dimensions ; ++ii)
     {
