@@ -377,7 +377,7 @@ MultiFluidBase * makeLiveOilFluid(string const & name, Group * parent)
   surfaceDens.resize( 3 );
   surfaceDens[0] = 800.0; surfaceDens[1] = 0.9907; surfaceDens[2] = 1022.0;
 
-  auto & tableNames = fluid->getReference<string_array>( BlackOilFluid::viewKeyStruct::tableFilesString );
+  auto & tableNames = fluid->getReference<path_array>( BlackOilFluid::viewKeyStruct::tableFilesString );
   tableNames.resize( 3 );
   tableNames[0] = "pvto.txt"; tableNames[1] = "pvtg.txt"; tableNames[2] = "pvtw.txt";
 
@@ -410,7 +410,7 @@ MultiFluidBase * makeDeadOilFluid( string const & name, Group * parent )
   surfaceDens.resize( 3 );
   surfaceDens[0] = 800.0; surfaceDens[1] = 0.9907; surfaceDens[2] = 1022.0;
 
-  auto & tableNames = fluid->getReference<string_array>( BlackOilFluid::viewKeyStruct::tableFilesString );
+  auto & tableNames = fluid->getReference<path_array>( BlackOilFluid::viewKeyStruct::tableFilesString );
   tableNames.resize( 3 );
   tableNames[0] = "pvdo.txt"; tableNames[1] = "pvdg.txt"; tableNames[2] = "pvdw.txt";
 

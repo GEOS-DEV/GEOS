@@ -1055,7 +1055,7 @@ SinglePhaseFlow::ApplyBoundaryConditions( real64 const time_n,
 
   // call the BoundaryConditionManager::ApplyField function that will check to see
   // if the boundary condition should be applied to this subregion
-  fsManager.Apply( time_n + dt, domain, "ElementRegions", "FLUX",
+  fsManager.Apply( time_n + dt, domain, "ElementRegions", FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString,
                    [&]( FieldSpecificationBase const * const fs,
                         string const &,
                         set<localIndex> const & lset,
@@ -1078,7 +1078,6 @@ SinglePhaseFlow::ApplyBoundaryConditions( real64 const time_n,
     }
 
     fs->ApplyBoundaryConditionToSystem<FieldSpecificationAdd, LAInterface>( localSet,
-                                                                            true,
                                                                             time_n + dt,
                                                                             dt,
                                                                             subRegion,
@@ -1114,7 +1113,6 @@ SinglePhaseFlow::ApplyBoundaryConditions( real64 const time_n,
 
     // call the application of the boundary condition to alter the matrix and rhs
     fs->ApplyBoundaryConditionToSystem<FieldSpecificationEqual, LAInterface>( lset,
-                                                                              false,
                                                                               time_n + dt,
                                                                               subRegion,
                                                                               dofNumber,

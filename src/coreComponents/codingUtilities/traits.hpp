@@ -178,7 +178,7 @@ template< typename T >
 constexpr bool has_resize_dimensions_method = internal::has_resize_dimensions_method< T >::value;
 
 template< typename T >
-constexpr bool is_string = is_instance_of_v< std::string, T >;
+constexpr bool is_string = is_base_of_v< std::string, T >;
 
 template< typename T >
 constexpr bool is_std_vector = is_instantiation_of< std::vector, T >;
@@ -196,9 +196,9 @@ template< typename T >
 constexpr bool is_array = LvArray::isArray< T >;
 
 template< typename T >
-constexpr bool is_tensorT = is_instance_of_v< R1Tensor, T > ||
-                            is_instance_of_v< R2Tensor, T > ||
-                            is_instance_of_v< R2SymTensor, T >;
+constexpr bool is_tensorT = is_same_v< R1Tensor, T > ||
+                            is_same_v< R2Tensor, T > ||
+                            is_same_v< R2SymTensor, T >;
 
 } /* namespace traits */
 
