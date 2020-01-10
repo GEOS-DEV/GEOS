@@ -25,8 +25,8 @@ set( physicsSolvers_headers
      solidMechanics/SolidMechanicsLagrangianSSLE.hpp
      solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp
      solidMechanics/SolidMechanicsLagrangianSSLEKernels.hpp     
+     surfaceGeneration/SurfaceGenerator.hpp
      )
-     #surfaceGeneration/SurfaceGenerator.hpp
      #multiphysics/HydrofractureSolver.hpp
 
 #
@@ -50,10 +50,9 @@ set( physicsSolvers_sources
      simplePDE/LaplaceFEM.cpp
      solidMechanics/SolidMechanicsLagrangianFEM.cpp
      solidMechanics/SolidMechanicsLagrangianSSLE.cpp
+     surfaceGeneration/SurfaceGenerator.cpp
      )
-     #surfaceGeneration/SurfaceGenerator.cpp
      #multiphysics/HydrofractureSolver.cpp
-
 
 if( BUILD_OBJ_LIBS)
   set( dependencyList common constitutive dataRepository linearAlgebra )
