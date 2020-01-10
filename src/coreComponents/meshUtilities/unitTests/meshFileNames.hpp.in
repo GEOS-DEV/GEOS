@@ -1,3 +1,4 @@
 #include <string>
 
 static const std::string gmshFilePath = "@GMSH_FILE_PATH@";
+static const std::string eclipseFilePath = "@ECLIPSE_FILE_PATH@";
