@@ -418,7 +418,7 @@ void SinglePhaseFlow::UpdateEOS( real64 const time_n,
 //        pres[ei] = pres[ei] * m_relaxationCoefficient + dPres[ei] * (1 - m_relaxationCoefficient);
 //        dPres[ei] = pres[ei] - dPres[ei];
 
-        // Both density and porosity are functions of pressure, so we solve pressure directly and then update density and porosity (not directly used)
+        // Both density and porosity are functions of pressure, so we solve pressure directly and then update density and porosity correspondingly
         dPres[ei] = pres[ei];
         fluid->PointInverseUpdate( pres[ei], mass[ei], vol[ei], poroRef[ei], totalCompressibility[ei]);
         pres[ei] = pres[ei] * m_relaxationCoefficient + dPres[ei] * (1 - m_relaxationCoefficient);

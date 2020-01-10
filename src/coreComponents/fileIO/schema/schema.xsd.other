@@ -613,12 +613,9 @@
 			<xsd:element name="Contact" type="ContactType" />
 			<xsd:element name="LinearElasticAnisotropic" type="LinearElasticAnisotropicType" />
 			<xsd:element name="LinearElasticIsotropic" type="LinearElasticIsotropicType" />
-<<<<<<< HEAD
 			<xsd:element name="LinearViscoElasticAnisotropic" type="LinearViscoElasticAnisotropicType" />
 			<xsd:element name="LinearViscoElasticIsotropic" type="LinearViscoElasticIsotropicType" />
-=======
 			<xsd:element name="MultiPhaseMultiComponentFluid" type="MultiPhaseMultiComponentFluidType" />
->>>>>>> develop
 			<xsd:element name="PoreVolumeCompressibleSolid" type="PoreVolumeCompressibleSolidType" />
 			<xsd:element name="PoroLinearElasticAnisotropic" type="PoroLinearElasticAnisotropicType" />
 			<xsd:element name="PoroLinearElasticIsotropic" type="PoroLinearElasticIsotropicType" />
@@ -851,7 +848,7 @@
 		<!--elasticStress => Elastic Stress-->
 		<xsd:attribute name="elasticStress" type="r2Sym_array2d" />
 		<!--stiffness => Elastic Stiffness Field in Voigt notation-->
-		<xsd:attribute name="stiffness" type="LvArray::Array&lt;geosx::constitutive::LinearViscoElasticAnisotropic::StiffnessTensor, 1, camp::int_seq&lt;long, 0l&gt;, long, LvArray::ChaiBuffer&gt;" />
+		<xsd:attribute name="stiffness" type="LvArray::Array&lt;geosx::constitutive::LinearViscoElasticAnisotropic::StiffnessTensor, 1, camp::int_seq&lt;long, 0l&gt;, long, LvArray::NewChaiBuffer&gt;" />
 		<!--stress => Total Stress-->
 		<xsd:attribute name="stress" type="r2Sym_array2d" />
 	</xsd:complexType>
@@ -1035,7 +1032,7 @@
 		<!--poreVolumeMultiplier => (no description available)-->
 		<xsd:attribute name="poreVolumeMultiplier" type="real64_array2d" />
 		<!--stiffness => Elastic Stiffness Field in Voigt notation-->
-		<xsd:attribute name="stiffness" type="LvArray::Array&lt;geosx::constitutive::LinearViscoElasticAnisotropic::StiffnessTensor, 1, camp::int_seq&lt;long, 0l&gt;, long, LvArray::ChaiBuffer&gt;" />
+		<xsd:attribute name="stiffness" type="LvArray::Array&lt;geosx::constitutive::LinearViscoElasticAnisotropic::StiffnessTensor, 1, camp::int_seq&lt;long, 0l&gt;, long, LvArray::NewChaiBuffer&gt;" />
 		<!--stress => Total Stress-->
 		<xsd:attribute name="stress" type="r2Sym_array2d" />
 	</xsd:complexType>
@@ -1408,7 +1405,7 @@
 		<!--nextWellElementIndexGlobal => (no description available)-->
 		<xsd:attribute name="nextWellElementIndexGlobal" type="localIndex_array" />
 		<!--nodeList => (no description available)-->
-		<xsd:attribute name="nodeList" type="geosx::InterObjectRelation&lt;LvArray::Array&lt;long, 2, camp::int_seq&lt;long, 1l, 0l&gt;, long, LvArray::NewChaiBuffer&gt; &gt;" />
+		<xsd:attribute name="nodeList" type="geosx::InterObjectRelation&lt;LvArray::Array&lt;long, 2, camp::int_seq&lt;long, 0l, 1l&gt;, long, LvArray::NewChaiBuffer&gt; &gt;" />
 		<!--topRank => (no description available)-->
 		<xsd:attribute name="topRank" type="integer" />
 		<!--topWellElementIndex => (no description available)-->

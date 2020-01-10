@@ -34,6 +34,7 @@ EventManager::EventManager( std::string const & name,
   Group( name, parent),
   m_maxTime(),
   m_maxCycle(),
+  m_outputCycleFrequency(),
   m_time(),
   m_dt(),
   m_cycle(),
@@ -53,6 +54,11 @@ EventManager::EventManager( std::string const & name,
     setApplyDefaultValue(std::numeric_limits<integer>::max())->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Maximum simulation cycle for the global event loop.");
+
+  registerWrapper(viewKeyStruct::outputCycleFrequencyString, &m_outputCycleFrequency, false )->
+    setApplyDefaultValue(1)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Cycle frequency for output.");
 
   registerWrapper(viewKeyStruct::timeString, &m_time, false )->
     setRestartFlags(RestartFlags::WRITE_AND_READ)->
@@ -156,7 +162,7 @@ void EventManager::Run(dataRepository::Group * domain)
 #endif
     }
 
-    if ((m_cycle % 300000) == 20)
+    if ((m_cycle % m_outputCycleFrequency) == 0)
     GEOSX_LOG_RANK_0("Time: " << m_time << "s, dt:" << m_dt << "s, Cycle: " << m_cycle);
 
     // Execute 
