@@ -60,12 +60,12 @@ For a given element block, the average element size will be
 the element on the left-most side of the block will have size
 
 .. math::
-   dx_{left}[i] = (1 + xBias[i]) \dot dx_{average}[i],
+   dx_{left}[i] = (1 + xBias[i]) \cdot dx_{average}[i],
 
 and the element on the right-most side will have size
 
 .. math::
-   dx_{right}[i] = (1 - xBias[i]) \dot dx_{average}[i].
+   dx_{right}[i] = (1 - xBias[i]) \cdot dx_{average}[i].
 
 
 The following are the two most common scenarios that occur while designing a mesh with bias:
@@ -73,12 +73,12 @@ The following are the two most common scenarios that occur while designing a mes
 1. The size of the block and the element size on an adjacent region are known.  Assuming that we are to the left of the target block, the appropriate bias would be:
 
 .. math::
-   xBias[i] = 1 - \frac{nx[i] \dot dx_{left}[i+1]}{xCoords[i+1]-xCoords[i]}
+   xBias[i] = 1 - \frac{nx[i] \cdot dx_{left}[i+1]}{xCoords[i+1]-xCoords[i]}
 
 2. The bias of the block and the element size on an adjacent region are known.  Again, assuming that we are to the left of the target block, the appropriate size for the block would be:
 
 .. math::
-   xCoords[i+1]-xCoords[i] = \frac{nx[i] \dot dx_{left}[i+1]}{1 - xBias[i]}
+   xCoords[i+1]-xCoords[i] = \frac{nx[i] \cdot dx_{left}[i+1]}{1 - xBias[i]}
 
 
 The following is an example of a mesh block along each dimension, and an image showing the corresponding mesh.  Note that there is a core region of elements with zero bias, and that the transitions between element blocks are smooth.
