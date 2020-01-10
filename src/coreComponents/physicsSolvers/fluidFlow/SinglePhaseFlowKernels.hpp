@@ -640,7 +640,9 @@ struct FluxKernel
       weightedSum += stencilWeightedElementCenterToConnectorCenter[ke];
 
       if (stencilWeightedElementCenterToConnectorCenter[ke] < 1e-30) faceToCellConnector = true;
-      if (pres[er][esr][ei] > minPressure) isMassTransfer = true;
+      real64 temp = pres[er][esr][ei];
+      if (temp > minPressure)
+        isMassTransfer = true;
     }
 
     if (!isMassTransfer)
@@ -656,12 +658,12 @@ struct FluxKernel
     if (!faceToCellConnector)
       *maxStableDt = std::min( totalCompressibility[er_up][esr_up][ei_up] * visc[er_up][esr_up][fluidIndex][ei_up][0] * poro[er_up][esr_up][ei_up] / 2.0 * weightedSum * weightedSum, *maxStableDt);
 
-    if (*maxStableDt <= 1e-20)
-    {
-      std::cout<< "\n In Compute: Porosity = " << poro[er_up][esr_up][ei_up] << ", viscosity = " << visc[er_up][esr_up][fluidIndex][ei_up][0]
-       << ", weightedSum = " << weightedSum << ", totalCompressibility = " << totalCompressibility[er_up][esr_up][ei_up] << ", potDif = " << potDif ;
-      GEOSX_ERROR("ComputeMatrix::negative maxStableDt");
-    }
+//    if (*maxStableDt <= 1e-20)
+//    {
+//      std::cout<< "\n In Compute: Porosity = " << poro[er_up][esr_up][ei_up] << ", viscosity = " << visc[er_up][esr_up][fluidIndex][ei_up][0]
+//       << ", weightedSum = " << weightedSum << ", totalCompressibility = " << totalCompressibility[er_up][esr_up][ei_up] << ", potDif = " << potDif ;
+//      GEOSX_ERROR("ComputeMatrix::negative maxStableDt");
+//    }
 
     // populate local flux
     if (std::abs(potDif) > std::numeric_limits<real64>::min())
@@ -669,6 +671,11 @@ struct FluxKernel
       (*mass)[seri[0]][sesri[0]][sei[0]] -= mob[er_up][esr_up][ei_up] * potDif * dt;
       (*mass)[seri[1]][sesri[1]][sei[1]] += mob[er_up][esr_up][ei_up] * potDif * dt;
     }
+
+//    if (faceToCellConnector)
+//      std::cout<< "\n Mass transfer between face and CellConnector: mob = " << mob[er_up][esr_up][ei_up] << ", poro = " << poro[er_up][esr_up][ei_up]
+//       << ", ei_up = " << ei_up << ", mass transfer = " << mob[er_up][esr_up][ei_up] * potDif * dt << ", potDif = " << potDif ;
+
   }
 
 
@@ -944,12 +951,12 @@ struct FluxKernel
 
         *maxStableDt = std::min(totalCompressibility[ei_up] * visc[ei_up][0] / 2.0 * weightedSum, *maxStableDt);
 
-        if (*maxStableDt <= 1e-20)
-        {
-          std::cout<< "\n In ComputeJunction: Density = " << dens[ei_up][0] << ", pres = " << pres[ei_up] << ", visc = " << visc[ei_up][0]
-           << ", weightedSum = " << weightedSum << ", totalCompressibility = " << totalCompressibility[ei_up] << ", potDif = " << potDif ;
-          GEOSX_ERROR("ComputeJunction::negative maxStableDt");
-        }
+//        if (*maxStableDt <= 1e-20)
+//        {
+//          std::cout<< "\n In ComputeJunction: Density = " << dens[ei_up][0] << ", pres = " << pres[ei_up] << ", visc = " << visc[ei_up][0]
+//           << ", weightedSum = " << weightedSum << ", totalCompressibility = " << totalCompressibility[ei_up] << ", potDif = " << potDif ;
+//          GEOSX_ERROR("ComputeJunction::negative maxStableDt");
+//        }
 
         // isMassTransfer
         if (pres[ei[0]] <= minPressure && pres[ei[1]] <= minPressure)

@@ -398,6 +398,7 @@ public:
     static constexpr auto newmarkBetaString = "newmarkBeta";
     static constexpr auto massDampingString = "massDamping";
     static constexpr auto stiffnessDampingString = "stiffnessDamping";
+    static constexpr auto fractureNodalMassScalingString = "fractureNodalMassScaling";
     static constexpr auto useVelocityEstimateForQSString = "useVelocityForQS";
     static constexpr auto timeIntegrationOptionStringString = "timeIntegrationOption";
     static constexpr auto timeIntegrationOptionString = "timeIntegrationOptionEnum";
@@ -417,6 +418,7 @@ public:
     dataRepository::ViewKey newmarkBeta = { newmarkBetaString };
     dataRepository::ViewKey massDamping = { massDampingString };
     dataRepository::ViewKey stiffnessDamping = { stiffnessDampingString };
+    dataRepository::ViewKey fractureNodalMassScaling = { fractureNodalMassScalingString };
     dataRepository::ViewKey useVelocityEstimateForQS = { useVelocityEstimateForQSString };
     dataRepository::ViewKey timeIntegrationOption = { timeIntegrationOptionString };
   } solidMechanicsViewKeys;
@@ -435,6 +437,7 @@ protected:
   real64 m_newmarkBeta;
   real64 m_massDamping;
   real64 m_stiffnessDamping;
+  real64 m_fractureNodalMassScaling;
   string m_timeIntegrationOptionString;
   timeIntegrationOption m_timeIntegrationOption;
   integer m_useVelocityEstimateForQS;

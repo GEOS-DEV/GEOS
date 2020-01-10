@@ -382,7 +382,7 @@ void SinglePhaseFlow::UpdateEOS( real64 const time_n,
         pres[ei] = pres[ei] * m_relaxationCoefficient + dPres[ei] * (1 - m_relaxationCoefficient);
         dPres[ei] = pres[ei] - dPres[ei];
 
-//        if ( std::abs(mass[ei]) > 0 )
+//        if ( std::abs(mass[ei]) > 0 && poro[ei] > 0.999 )
 //        {
 //          std::cout << "\n Fluid Update in poroElastic:  ei = " << ei << ", mass = " << mass[ei] << ", poro= " << poro[ei] << ", vol = " << vol[ei]
 //                    << ", calculated dens = " << dens[ei][0] << ", new pres = " << pres[ei] << "\n";
@@ -406,8 +406,6 @@ void SinglePhaseFlow::UpdateEOS( real64 const time_n,
       arrayView1d<real64> const & pres = m_pressure[er][esr];
       arrayView1d<real64> const & dPres = m_deltaPressure[er][esr];
 
-//      arrayView2d<real64> const & dens = m_density[er][esr][m_fluidIndex];
-//      arrayView1d<real64> const & poro = m_porosity[er][esr];
       arrayView1d<real64 const> const & poroRef       = m_porosityRef[er][esr];
       arrayView1d<real64> const & totalCompressibility = m_totalCompressibility[er][esr];
 

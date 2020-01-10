@@ -48,6 +48,7 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const std::string& nam
   m_newmarkBeta(0.25),
   m_massDamping(0.0),
   m_stiffnessDamping(0.0),
+  m_fractureNodalMassScaling(0.0),
   m_timeIntegrationOptionString(),
   m_timeIntegrationOption(timeIntegrationOption::ExplicitDynamic),
   m_useVelocityEstimateForQS(0),
@@ -85,6 +86,11 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const std::string& nam
     setApplyDefaultValue(0.0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Value of stiffness based damping coefficient. ");
+
+  registerWrapper(viewKeyStruct::fractureNodalMassScalingString, &m_fractureNodalMassScaling, false )->
+    setApplyDefaultValue(1.0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Mass scaling coefficient of fracture nodes. ");
 
   registerWrapper(viewKeyStruct::timeIntegrationOptionString, &m_timeIntegrationOption, false )->
     setInputFlag(InputFlags::FALSE)->
@@ -252,7 +258,6 @@ void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * co
 
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   NodeManager * const nodes = mesh->getNodeManager();
-  //FaceManager * const faceManager = mesh->getFaceManager();
 
   ElementRegionManager const * const elementRegionManager = mesh->getElemManager();
   ConstitutiveManager const * const constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
@@ -312,6 +317,49 @@ void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * co
       }
     });
   }
+
+  // Apply mass scaling on fracture nodes
+//  FaceManager * const faceManager = mesh->getFaceManager();
+//  set<localIndex> fractureNodes;
+//  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
+//  arrayView1d<integer>& faceRuptureState = faceManager->getReference<integer_array>( "ruptureState" );
+//  for( localIndex kfe=0 ; kfe<faceManager->size() ; ++kfe )
+//  {
+//    if( faceRuptureState[kfe] >0  )
+//    {
+//       localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray(kfe);
+//       for( localIndex a=0 ; a<numNodesPerFace ; ++a )
+//       {
+//         fractureNodes.insert(faceToNodeMap(kfe, a));
+//       }
+//    }
+//  }
+//  for( localIndex index : fractureNodes )
+//  {
+//    mass[index] *= m_fractureNodalMassScaling;
+//  }
+
+//  Group * nodeSets = nodes->sets();
+//  localIndex_set & xnegNodes = nodeSets->registerWrapper<localIndex_set>( std::string("xneg") )->reference();
+//  localIndex_set & xposNodes = nodeSets->registerWrapper<localIndex_set>( std::string("xpos") )->reference();
+//  localIndex_set & ynegNodes = nodeSets->registerWrapper<localIndex_set>( std::string("yneg") )->reference();
+//  localIndex_set & yposNodes = nodeSets->registerWrapper<localIndex_set>( std::string("ypos") )->reference();
+//  localIndex_set & znegNodes = nodeSets->registerWrapper<localIndex_set>( std::string("zneg") )->reference();
+//  localIndex_set & zposNodes = nodeSets->registerWrapper<localIndex_set>( std::string("zpos") )->reference();
+
+//  for( localIndex index : xnegNodes )
+//    mass[index] *= 2;
+//  for( localIndex index : xposNodes )
+//    mass[index] *= 2;
+//  for( localIndex index : ynegNodes )
+//    mass[index] *= 2;
+//  for( localIndex index : yposNodes )
+//    mass[index] *= 2;
+//  for( localIndex index : znegNodes )
+//    mass[index] *= 2;
+//  for( localIndex index : zposNodes )
+//    mass[index] *= 2;
+
 }
 
 void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( Group * const problemManager )

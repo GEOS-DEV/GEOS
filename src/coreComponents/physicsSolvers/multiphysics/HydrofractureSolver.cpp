@@ -122,7 +122,7 @@ real64 HydrofractureSolver::GetTimestepRequest(real64 const time)
     return std::min(maxDtSolid, maxDtflow);
   }
   else
-	return std::numeric_limits<real64>::max();
+    return std::numeric_limits<real64>::max();
 }
 
 void HydrofractureSolver::ExplicitStepSetup( real64 const & time_n,
@@ -380,9 +380,6 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
   ContactRelationBase const * const
   contactRelation = constitutiveManager->GetGroup<ContactRelationBase>(m_contactRelationName);
 
-//  ContactRelationBase const * const
-//  contactRelationInlet = constitutiveManager->GetGroup<ContactRelationBase>("fractureContactInlet");
-
   // update face area
   faceManager->computeGeometry(nodeManager);
 
@@ -412,17 +409,18 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
 
         // TODO this needs a proper contact based strategy for aperture
         aperture[kfe] = -Dot(temp,faceNormal[kf0]) / numNodesPerFace;
-        contactStress[kfe] = std::max( - aperture[kfe] * contactRelation->stiffness(), 0.0 );
+        contactStress[kfe] = std::max(- aperture[kfe] * contactRelation->stiffness(), 0.0);
 
 //        if (contactStress[kfe] > 0)
-//          std::cout<< "\n\n Contact stress: kfe = " << kfe  <<", aper0 = "<<aperture[kfe]<<", contactStress = "<<contactStress[kfe];
+//          std::cout<< "\n Solid Fracture Update: kfe = " << kfe <<", frac aperture = "<< aperture[kfe] <<", contactStress = "<< contactStress[kfe];
 
-//        if (kfe == 2)
-//          aperture[kfe] = contactRelationInlet->effectiveAperture( aperture[kfe] );
-//        else
-          aperture[kfe] = contactRelation->effectiveAperture( aperture[kfe] );
+        aperture[kfe] = contactRelation->effectiveAperture( aperture[kfe] );
+
+//        if (contactStress[kfe] > 0)
+//          std::cout<<", eff aperture = "<< aperture[kfe] << std::endl;
 
         deltaVolume[kfe] = aperture[kfe] * area[kfe] - volume[kfe];
+
       }
     });
   });
@@ -511,9 +509,13 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
 
           deltaVolume[er][esr][ei] = computationalGeometry::HexVolume(Xlocal) - volume[er][esr][ei];
 
-//          std::cout<< "\n Solid Update: cell dVol= "<< deltaVolume[er][esr][ei] <<", dPoro = "<< poro[er][esr][ei] - poroOld[er][esr][ei]
+//          std::cout<< "\n Solid Matrix Update: cell dVol= "<< deltaVolume[er][esr][ei] <<", dPoro = "<< poro[er][esr][ei] - poroOld[er][esr][ei]
 //                    << "\n                new cell vol = "<< deltaVolume[er][esr][ei] + volume[er][esr][ei] << ", new porosity = "<< poro[er][esr][ei]
 //                    << "\n                totalMeanStress change = "<< totalMeanStress[er][esr][ei] - oldTotalMeanStress[er][esr][ei] << ", dPres[er][esr][ei] = "<< dPres[er][esr][ei] << std::endl;
+
+
+//          std::cout<< "\n Solid Matrix Update: ei = " << ei << ", cell dVol= "<< deltaVolume[er][esr][ei] <<", dPoro = "<< poro[er][esr][ei] - poroOld[er][esr][ei]
+//                    << "\n                totalMeanStress = "<< totalMeanStress[er][esr][ei]  << ", oldTotalMeanStress = "<< oldTotalMeanStress[er][esr][ei] << ", dPres[er][esr][ei] = "<< dPres[er][esr][ei] << std::endl;
 
 
           volume[er][esr][ei] += deltaVolume[er][esr][ei];
@@ -654,7 +656,7 @@ real64 HydrofractureSolver::ExplicitStep( real64 const& time_n,
 
   m_flowSolver->UpdateEOS( time_n, dt, domain );
 
-  this->ApplyContactAndPressureToFacesForExplicitSolver( domain );
+  this->ApplyContactAndPressureToFacesInExplicitSolver( domain );
 
   m_solidSolver->ExplicitStepVelocityUpdate( time_n, dt, cycleNumber, domain );
 
@@ -950,7 +952,7 @@ CalculateResidualNorm( DomainPartition const * const domain,
 
 void
 HydrofractureSolver::
-ApplyContactAndPressureToFacesForExplicitSolver( DomainPartition * const domain )
+ApplyContactAndPressureToFacesInExplicitSolver( DomainPartition * const domain )
 {
   GEOSX_MARK_FUNCTION;
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
