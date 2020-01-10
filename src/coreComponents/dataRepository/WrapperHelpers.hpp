@@ -26,6 +26,7 @@
 
 // Source includes
 #include "BufferOps.hpp"
+#include "BufferOpsDevice.hpp"
 #include "DefaultValue.hpp"
 #include "ConduitRestart.hpp"
 #include "common/DataTypes.hpp"
@@ -402,6 +403,92 @@ void pullDataFromConduitNode( InterObjectRelation< T > & var,
   return pullDataFromConduitNode( var.Base(), node );
 }
 
+template< bool DO_PACKING, typename T, typename IDX >
+inline std::enable_if_t< bufferOps::is_packable_by_index< T >, localIndex >
+PackByIndex( buffer_unit_type * & buffer, T & var, IDX & idx )
+{
+  return bufferOps::PackByIndex< DO_PACKING >( buffer, var, idx );
+}
+
+template< bool DO_PACKING, typename T, typename IDX >
+inline std::enable_if_t< !bufferOps::is_packable_by_index< T >, localIndex >
+PackByIndex( buffer_unit_type * &, T &, IDX & )
+{
+  return 0;
+}
+
+template< typename T, typename IDX >
+inline std::enable_if_t< bufferOps::is_packable_by_index< T >, localIndex >
+UnpackByIndex( buffer_unit_type const * & buffer, T & var, IDX & idx )
+{
+  return bufferOps::UnpackByIndex( buffer, var, idx );
+}
+
+template< typename T, typename IDX >
+inline std::enable_if_t< !bufferOps::is_packable_by_index< T >, localIndex >
+UnpackByIndex( buffer_unit_type const * &, T &, IDX & )
+{
+  return 0;
+}
+
+
+template< bool DO_PACKING, typename T >
+inline std::enable_if_t< bufferOps::is_container< T > && bufferOps::can_memcpy< T >, localIndex >
+PackDevice( buffer_unit_type * & buffer, T & var )
+{
+  return bufferOps::PackDevice< parallelDevicePolicy< >, DO_PACKING >( buffer, var );
+}
+
+template< bool DO_PACKING, typename T >
+inline std::enable_if_t< !bufferOps::is_container< T > || !bufferOps::can_memcpy< T >, localIndex >
+PackDevice( buffer_unit_type * &, T & )
+{
+  GEOSX_ERROR( "Trying to pack data type ("<<typeid(T).name()<<") on device but type is not packable on device." );
+  return 0;
+}
+
+template< bool DO_PACKING, typename T, typename IDX >
+inline std::enable_if_t< bufferOps::is_container< T >, localIndex >
+PackByIndexDevice( buffer_unit_type * & buffer, T & var, IDX & idx )
+{
+  return bufferOps::PackByIndexDevice< parallelDevicePolicy< >, DO_PACKING >( buffer, var, idx );
+}
+
+template< bool DO_PACKING, typename T, typename IDX >
+inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
+PackByIndexDevice( buffer_unit_type * &, T &, IDX & )
+{
+  GEOSX_ERROR( "Trying to pack data type ("<<typeid(T).name()<<") on device but type is not packable by index." );
+  return 0;
+}
+
+template< typename T >
+inline std::enable_if_t< bufferOps::is_container< T >, localIndex >
+UnpackDevice( buffer_unit_type const * & buffer, T & var )
+{
+  return bufferOps::UnpackDevice< parallelDevicePolicy< > >( buffer, var );
+}
+
+template< typename T >
+inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
+UnpackDevice( buffer_unit_type const * &, T & )
+{
+  return 0;
+}
+
+template< typename T, typename IDX >
+inline std::enable_if_t< bufferOps::is_container< T >, localIndex >
+UnpackByIndexDevice( buffer_unit_type const * & buffer, T & var, IDX & idx )
+{
+  return bufferOps::UnpackByIndexDevice< parallelDevicePolicy< > >( buffer, var, idx );
+}
+
+template< typename T, typename IDX >
+inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
+UnpackByIndexDevice( buffer_unit_type const * &, T &, IDX & )
+{
+  return 0;
+}
 
 } // namespace WrapperHelpers
 } // namespace dataRepository

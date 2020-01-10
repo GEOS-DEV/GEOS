@@ -56,17 +56,20 @@ public:
 
   virtual localIndex PackSize( string_array const & wrapperNames,
                                arrayView1d<localIndex const> const & packList,
-                               integer const recursive ) const override;
+                               integer const recursive,
+                               bool on_device = false ) const override;
 
 
   virtual localIndex Pack( buffer_unit_type * & buffer,
                            string_array const & wrapperNames,
                            arrayView1d<localIndex const> const & packList,
-                           integer const recursive )  const override;
+                           integer const recursive,
+                           bool on_device = false)  const override;
 
   virtual localIndex Unpack( buffer_unit_type const *& buffer,
                              arrayView1d<localIndex> & packList,
-                             integer const recursive )  override;
+                             integer const recursive,
+                             bool on_device = false ) override;
 
   template< bool DOPACK >
   localIndex PackSets( buffer_unit_type * & buffer,
@@ -128,7 +131,8 @@ private:
   localIndex PackPrivate( buffer_unit_type * & buffer,
                           string_array const & wrapperNames,
                           arrayView1d<localIndex const> const & packList,
-                          integer const recursive ) const;
+                          integer const recursive,
+                          bool on_device) const;
 
   template< bool DOPACK >
   localIndex PackGlobalMapsPrivate( buffer_unit_type * & buffer,

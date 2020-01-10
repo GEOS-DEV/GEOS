@@ -118,7 +118,6 @@ namespace internal
     static constexpr bool value = has_memberfunction_resize< T >::value;
   };
 
-  
 } // namespace internal
 
 template< typename T >
@@ -196,9 +195,9 @@ template< typename T >
 constexpr bool is_array = LvArray::isArray< T >;
 
 template< typename T >
-constexpr bool is_tensorT = is_same_v< R1Tensor, T > ||
-                            is_same_v< R2Tensor, T > ||
-                            is_same_v< R2SymTensor, T >;
+constexpr bool is_tensorT = is_same_v< std::remove_const_t< T >, R1Tensor > ||
+                            is_same_v< std::remove_const_t< T >, R2Tensor > ||
+                            is_same_v< std::remove_const_t< T >, R2SymTensor >;
 
 } /* namespace traits */
 
