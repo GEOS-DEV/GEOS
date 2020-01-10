@@ -152,7 +152,7 @@ public:
     static constexpr auto aperture0String  = "aperture_n";
 
     static constexpr auto relaxationCoefficientString = "relaxationCoefficient";
-    static constexpr auto injectionRelaxationCoefficientString = "injectionRelaxationCoefficient";
+    static constexpr auto pressureInitializationString = "pressureInitialization";
     static constexpr auto timeIntegrationOptionString = "timeIntegrationOption";
     static constexpr auto maximumApertureString      = "maximumAperture";
     static constexpr auto inputFluxEstimateString  = "inputFluxEstimate";
@@ -174,7 +174,7 @@ public:
     ViewKey fluidIndex     = { fluidIndexString };
     ViewKey solidIndex     = { solidIndexString };
     ViewKey relaxationCoefficient = { relaxationCoefficientString };
-    ViewKey injectionRelaxationCoefficient = { injectionRelaxationCoefficientString };
+    ViewKey pressureInitialization = { pressureInitializationString };
     ViewKey timeIntegrationOption = { timeIntegrationOptionString };
     ViewKey maximumAperture = { maximumApertureString };
 
@@ -232,12 +232,12 @@ protected:
   /// the relaxation Coefficient for mass flux
   real64 m_relaxationCoefficient;
 
-  /// the relaxation Coefficient for injection BC
-  real64 m_injectionRelaxationCoefficient;
-
   /// option for time integration
   string m_timeIntegrationOptionString;
   timeIntegrationOption m_timeIntegrationOption;
+
+  /// flag to determine whether or not to initialize using pressure field in explicit flow solver
+  integer m_explicitSolverInitializationFlag;
 
   real64 m_fluxEstimate;
   

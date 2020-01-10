@@ -42,9 +42,9 @@ FlowSolverBase::FlowSolverBase( std::string const & name,
     m_coupledWellsFlag(0),
     m_numDofPerCell(0),
     m_relaxationCoefficient(1),
-    m_injectionRelaxationCoefficient(1),
     m_timeIntegrationOptionString(),
     m_timeIntegrationOption(timeIntegrationOption::ImplicitTransient),
+    m_explicitSolverInitializationFlag(),
     m_elemGhostRank(),
     m_volume(),
     m_gravDepth(),
@@ -65,7 +65,7 @@ FlowSolverBase::FlowSolverBase( std::string const & name,
 
   this->registerWrapper( viewKeyStruct::solidNameString,  &m_solidName,  false )->
     setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Name of solid constitutive object to use for this solver");
+    setDescription("Name of solid constitutive object to use for this solver.");
 
   this->registerWrapper( viewKeyStruct::fluidIndexString, &m_fluidIndex, false );
   this->registerWrapper( viewKeyStruct::solidIndexString, &m_solidIndex, false );
@@ -74,15 +74,15 @@ FlowSolverBase::FlowSolverBase( std::string const & name,
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Time integration method. Options are: \n SteadyState \n ImplicitTransient \n ExplicitTransient \n InertialTransient");
 
+  this->registerWrapper( viewKeyStruct::pressureInitializationString, &m_explicitSolverInitializationFlag,  false )->
+  setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("flag to determine whether or not to initialize using pressure field in explicit flow solver.");
+
   this->registerWrapper( viewKeyStruct::relaxationCoefficientString, &m_relaxationCoefficient,  false )->
 	setApplyDefaultValue(1)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Relaxation Coefficient for mass flux in explicit flow solver");
-
-  this->registerWrapper( viewKeyStruct::injectionRelaxationCoefficientString, &m_injectionRelaxationCoefficient,  false )->
-	setApplyDefaultValue(1)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Relaxation Coefficient for injection BC in explicit flow solver");
+    setDescription("Relaxation Coefficient for mass flux in explicit flow solver.");
   
   this->registerWrapper( viewKeyStruct::inputFluxEstimateString,  &m_fluxEstimate,  false )->
     setApplyDefaultValue(1.0)->

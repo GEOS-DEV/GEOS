@@ -76,8 +76,6 @@ void SinglePhaseFlow::RegisterDataOnMesh(Group * const MeshBodies)
       subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::densityOldString );
       subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::totalCompressibilityString );
       subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::massString )->setPlotLevel(PlotLevel::LEVEL_0);
-      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::injMassString );
-      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::injMass0String );
     });
 
     elemManager->forElementRegions<FaceElementRegion>( [&] ( FaceElementRegion * const region )
@@ -96,8 +94,6 @@ void SinglePhaseFlow::RegisterDataOnMesh(Group * const MeshBodies)
         subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::densityOldString );
         subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::totalCompressibilityString );
         subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::massString )->setPlotLevel(PlotLevel::LEVEL_0);
-        subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::injMassString );
-        subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::injMass0String );
         subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::aperture0String )->
           setDefaultValue( region->getDefaultAperture() );
       });
@@ -382,11 +378,13 @@ void SinglePhaseFlow::UpdateEOS( real64 const time_n,
         pres[ei] = pres[ei] * m_relaxationCoefficient + dPres[ei] * (1 - m_relaxationCoefficient);
         dPres[ei] = pres[ei] - dPres[ei];
 
-//        if ( std::abs(mass[ei]) > 0 && poro[ei] > 0.999 )
-//        {
-//          std::cout << "\n Fluid Update in poroElastic:  ei = " << ei << ", mass = " << mass[ei] << ", poro= " << poro[ei] << ", vol = " << vol[ei]
-//                    << ", calculated dens = " << dens[ei][0] << ", new pres = " << pres[ei] << "\n";
-//        }
+////        if ( std::abs(mass[ei]) > 0 && poro[ei] > 0.999 )
+        if ( std::abs(mass[ei]) > 0 )
+        {
+          std::cout.precision(17);
+          std::cout << "\n Fluid Update in poroElastic:  ei = " << ei << ", mass = " << mass[ei] << ", poro= " << poro[ei] << ", vol = " << vol[ei]
+                    << ", calculated dens = " << dens[ei][0] << ", new pres = " << pres[ei] << "\n";
+        }
 
       } );
     } );
@@ -490,6 +488,28 @@ void SinglePhaseFlow::UpdateEOS( real64 const time_n,
     UpdateState( subRegion );
   } );
 
+  applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
+                 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
+                 ElementSubRegionBase * const subRegion )
+ {
+    UpdateState( subRegion );
+    arrayView2d<real64> const & dens = m_density[er][esr][m_fluidIndex];
+    arrayView1d<real64> const & vol  = m_volume[er][esr];
+    arrayView1d<real64> const & poro = m_porosity[er][esr];
+    arrayView1d<real64> const & mass = m_mass[er][esr];
+    arrayView1d<real64> const & pres = m_pressure[er][esr];
+
+    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+    {
+      if ( std::abs(mass[ei]) > 0 )
+      {
+        std::cout << "\n After pressure BC:  ei = " << ei << ", mass = " << mass[ei] << ", poro= " << poro[ei] << ", vol = " << vol[ei]
+                  << ", dens = " << dens[ei][0] << ", new pres = " << pres[ei] << "\n";
+      }
+
+    } );
+  } );
+
 }
 
 real64 SinglePhaseFlow::ExplicitStep( real64 const& time_n,
@@ -524,17 +544,11 @@ void SinglePhaseFlow::ExplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n
     {
       UpdateState( subRegion );
 
-//      arrayView2d<real64> const & dens = m_density[er][esr][m_fluidIndex];
-//      arrayView1d<real64> const & vol  = m_volume[er][esr];
-//      arrayView1d<real64> const & mass = m_mass[er][esr];
-      arrayView1d<real64> const & poro = m_porosity[er][esr];
-      arrayView1d<real64> const & injMass = m_injMass[er][esr];
-      arrayView1d<real64> const & injMass0 = m_injMass0[er][esr];
-
       arrayView1d<real64> const & totalCompressibility = m_totalCompressibility[er][esr];
-      CompressibleSinglePhaseFluid * const fluid =  dynamic_cast<CompressibleSinglePhaseFluid*>(GetConstitutiveModel<SingleFluidBase>( subRegion, m_fluidName ));
+      CompressibleSinglePhaseFluid * const fluid = dynamic_cast<CompressibleSinglePhaseFluid*>(GetConstitutiveModel<SingleFluidBase>( subRegion, m_fluidName ));
       ConstitutiveBase * const solid = GetConstitutiveModel<ConstitutiveBase>( subRegion, m_solidName );
 
+      arrayView1d<real64> const & poro = m_porosity[er][esr];
       if (poro[0] > 0.999999 )
         totalCompressibility = fluid->compressibility();
       else if (m_poroElasticFlag)
@@ -542,12 +556,19 @@ void SinglePhaseFlow::ExplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n
       else
         totalCompressibility = dynamic_cast<PoreVolumeCompressibleSolid*>(solid)->compressibility() + fluid->compressibility();
 
-      forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+      if (m_explicitSolverInitializationFlag)
       {
- //       mass[ei] = dens[ei][0] * vol[ei] * poro[ei];
-        injMass[ei] = 0;
-        injMass0[ei] = 0;
-      } );
+        arrayView2d<real64> const & dens = m_density[er][esr][m_fluidIndex];
+        arrayView1d<real64> const & vol  = m_volume[er][esr];
+        arrayView1d<real64> const & mass = m_mass[er][esr];
+        arrayView1d<real64> const & pres = m_pressure[er][esr];
+        forall_in_range<RAJA::seq_exec>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex const ei )
+        {
+          fluid->PointUpdate( pres[ei], ei, 0 );
+          mass[ei] = dens[ei][0] * vol[ei] * poro[ei];
+        });
+      }
+
     } );
   }
 
@@ -986,13 +1007,14 @@ void SinglePhaseFlow::CalculateAndApplyMassFlux( real64 const time_n,
                                                  real64 const dt,
                                                  DomainPartition * const domain )
 {
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
 
   AssembleFluxTermsExplicit( time_n, dt, domain, &m_dofManager );
 
   // apply mass flux boundary condition
   FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
 
-  fsManager.Apply( time_n + dt, domain, "ElementRegions", "FLUX",
+  fsManager.Apply( time_n + dt, domain, "ElementRegions", FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString,
                     [&]( FieldSpecificationBase const * const fs,
                          string const &,
                          set<localIndex> const & lset,
@@ -1004,27 +1026,8 @@ void SinglePhaseFlow::CalculateAndApplyMassFlux( real64 const time_n,
                                                       time_n + dt,
                                                       dt,
                                                       subRegion,
-                                                      viewKeyStruct::injMass0String );
+                                                      viewKeyStruct::massString );
 
-  } );
-
-  // damping face injection rate in cases where there are large changes in flux
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                                 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
-                                 ElementSubRegionBase * const subRegion )
-  {
-    arrayView1d<real64> const & mass = m_mass[er][esr];
-    arrayView1d<real64> const & injMass = m_injMass[er][esr];
-    arrayView1d<real64> const & injMass0 = m_injMass0[er][esr];
-
-    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
-    {
-      injMass[ei] = injMass0[ei] * m_injectionRelaxationCoefficient + injMass[ei] * (1 - m_injectionRelaxationCoefficient);
-      mass[ei] += injMass[ei];
-//      std::cout << "\n ei = " << ei  << ", injMass = " << injMass[ei] << ", injMass0 = " << injMass0[ei] << ", mass = " << mass[ei] << std::endl;
-      injMass0[ei] = 0;
-    } );
   } );
 
   // synchronize element fields
@@ -1578,10 +1581,6 @@ void SinglePhaseFlow::ResetViews( DomainPartition * const domain )
 
   m_mass =
     elemManager->ConstructViewAccessor< array1d<real64>, arrayView1d<real64> >( viewKeyStruct::massString );
-  m_injMass =
-    elemManager->ConstructViewAccessor< array1d<real64>, arrayView1d<real64> >( viewKeyStruct::injMassString );
-  m_injMass0 =
-    elemManager->ConstructViewAccessor< array1d<real64>, arrayView1d<real64> >( viewKeyStruct::injMass0String );
 
   m_pvMult =
     elemManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64> >( ConstitutiveBase::viewKeyStruct::poreVolumeMultiplierString,
