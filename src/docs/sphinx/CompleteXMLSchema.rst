@@ -476,6 +476,13 @@ Element: SourceFlux
 .. include:: ../../coreComponents/fileIO/schema/docs/SourceFlux.rst
 
 
+.. _XML_SurfaceGenerator:
+
+Element: SurfaceGenerator
+=========================
+.. include:: ../../coreComponents/fileIO/schema/docs/SurfaceGenerator.rst
+
+
 .. _XML_SymbolicFunction:
 
 Element: SymbolicFunction
@@ -1038,6 +1045,13 @@ Datastructure: Solvers
 Datastructure: SourceFlux
 =========================
 .. include:: ../../coreComponents/fileIO/schema/docs/SourceFlux_other.rst
+
+
+.. _DATASTRUCTURE_SurfaceGenerator:
+
+Datastructure: SurfaceGenerator
+===============================
+.. include:: ../../coreComponents/fileIO/schema/docs/SurfaceGenerator_other.rst
 
 
 .. _DATASTRUCTURE_SymbolicFunction:
