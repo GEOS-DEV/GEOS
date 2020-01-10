@@ -234,8 +234,6 @@
   <Functions>
     <TableFunction     name="timeFunction"         inputVarNames="{time}" coordinates="{0.01, 0.02, 1e7}" values="{1.0, 2.0, 2.0}" />
     <TableFunction name="timeFunction2"         inputVarNames="{time}" coordinates="{0.01, 0.02, 1e7}" values="{1.0, 1.0, 1.0}" />
-    <!--SymbolicFunction  name="spaceFunction"        inputVarNames="ReferencePosition"  variableNames="x y z" expression="sqrt(pow(x,2)+pow(y,2)+pow(z,2))"/>
-    <CompositeFunction name="timeSpaceFunction" variableNames="timeTable1 spaceFunction" expression="timeTable1*spaceFunction"/-->
   </Functions>
 
   <!-- <Partition>
