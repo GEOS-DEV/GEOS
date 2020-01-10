@@ -124,8 +124,8 @@ for i in range(0,len(AI_L2)):
   ax.plot(float(AI_L2[i]),float(FLOPS[i]),c=colors[1],marker=styles[i],linestyle='None',ms=markersize,label=labels[i])
 #ax.plot((AI_L2),(FLOPS),c=colors[1],linestyle='-')
 for i in range(0,len(AI_HBM)):
-  ax.plot(float(AI_HBM[i]),float(FLOPS[i]),c=colors[2],marker=styles[i],linestyle='None',ms=markersize,label=labels[i])
-  marker_handles.append(ax.plot([],[],c='gray',marker=styles[i],linestyle='None',ms=markersize,label=labels[i])[0]) 
+  ax.plot(float(AI_HBM[i]),float(FLOPS[i]),c=colors[i],marker=styles[i],linestyle='None',ms=markersize,label=labels[i])
+  marker_handles.append(ax.plot([],[],c=colors[i],marker=styles[i],linestyle='None',ms=markersize,label=labels[i])[0]) 
 #ax.plot((AI_HBM),(FLOPS),c=colors[2],linestyle='-')
 
 ax.grid(which='both',linewidth=1)
@@ -162,13 +162,13 @@ for roof in smemroofs:
 
 
 leg1 = plt.legend(handles = marker_handles,loc=4)
-ax.add_artist(leg1)
+#ax.add_artist(leg1)
 
 patch_handles = list()
 for i in range(0,len(smem_roof_name)):
     patch_handles.append(mpatches.Patch(color=colors[i],label = smem_roof_name[i]))
 
-leg2 = plt.legend(handles = patch_handles,loc='lower right',bbox_to_anchor = (0.6,0),scatterpoints = 1)
+#leg2 = plt.legend(handles = patch_handles,loc='lower right',bbox_to_anchor = (0.6,0),scatterpoints = 1)
 
 ax.text(xlim[0]*1.1,ylim[1]/1.1,'V100',horizontalalignment='left',verticalalignment='top')
 
