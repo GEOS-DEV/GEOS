@@ -65,7 +65,6 @@ public:
   {
     static constexpr auto maxTimeString = "maxTime";
     static constexpr auto maxCycleString = "maxCycle";
-    static constexpr auto outputCycleFrequencyString = "outputCycleFrequency";
 
     static constexpr auto timeString = "time";
     static constexpr auto dtString = "dt";
@@ -88,7 +87,6 @@ private:
 
   real64 m_maxTime;
   integer m_maxCycle;
-  integer m_outputCycleFrequency;
 
   real64 m_time;
   real64 m_dt;

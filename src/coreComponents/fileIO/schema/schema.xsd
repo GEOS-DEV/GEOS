@@ -207,8 +207,6 @@
 		<xsd:attribute name="maxCycle" type="integer" default="2147483647" />
 		<!--maxTime => Maximum simulation time for the global event loop.-->
 		<xsd:attribute name="maxTime" type="real64" default="1.79769e+308" />
-		<!--outputCycleFrequency => Cycle frequency for output.-->
-		<xsd:attribute name="outputCycleFrequency" type="integer" default="1" />
 	</xsd:complexType>
 	<xsd:complexType name="HaltEventType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
