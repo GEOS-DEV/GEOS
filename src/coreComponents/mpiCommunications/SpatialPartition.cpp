@@ -183,7 +183,7 @@ void SpatialPartition::AddNeighbors( const unsigned int idim,
     }
     if( !me )
     {
-      m_neighbors.push_back( NeighborCommunicator());
+      m_neighbors.push_back( NeighborCommunicator( ) );
       int rank;
       rank = MpiWrapper::Cart_rank( cartcomm, ncoords );
       m_neighbors.back().SetNeighborRank( rank );

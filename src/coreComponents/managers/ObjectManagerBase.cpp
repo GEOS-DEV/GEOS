@@ -203,14 +203,16 @@ void ObjectManagerBase::ConstructGlobalToLocalMap()
 
 localIndex ObjectManagerBase::PackSize( string_array const & wrapperNames,
                                         arrayView1d<localIndex const> const & packList,
-                                        integer const recursive ) const
+                                        integer const recursive,
+                                        bool on_device ) const
 {
   localIndex packedSize = 0;
   buffer_unit_type * junk;
   packedSize += this->PackPrivate<false>( junk,
                                           wrapperNames,
                                           packList,
-                                          recursive );
+                                          recursive,
+                                          on_device );
 
   return packedSize;
 }
@@ -218,11 +220,12 @@ localIndex ObjectManagerBase::PackSize( string_array const & wrapperNames,
 localIndex ObjectManagerBase::Pack( buffer_unit_type * & buffer,
                                     string_array const & wrapperNames,
                                     arrayView1d<localIndex const> const & packList,
-                                    integer const recursive ) const
+                                    integer const recursive,
+                                    bool on_device ) const
 {
   localIndex packedSize = 0;
 
-  packedSize += this->PackPrivate<true>( buffer, wrapperNames, packList, recursive );
+  packedSize += this->PackPrivate<true>( buffer, wrapperNames, packList, recursive, on_device );
 
   return packedSize;
 }
@@ -231,7 +234,8 @@ template< bool DOPACK >
 localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
                                            string_array const & wrapperNames,
                                            arrayView1d<localIndex const> const & packList,
-                                           integer const recursive ) const
+                                           integer const recursive,
+                                           bool on_device ) const
 {
   localIndex packedSize = 0;
   packedSize += bufferOps::Pack<DOPACK>( buffer, this->getName() );
@@ -277,11 +281,11 @@ localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
         packedSize += bufferOps::Pack<DOPACK>( buffer, wrapperName );
         if(DOPACK)
         {
-          packedSize += wrapper->Pack( buffer, packList );
+          packedSize += wrapper->PackByIndex( buffer, packList, on_device );
         }
         else
         {
-          packedSize += wrapper->PackSize( packList );
+          packedSize += wrapper->PackByIndexSize( packList, on_device );
         }
       }
       else
@@ -300,7 +304,7 @@ localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
     for( auto const & keyGroupPair : this->GetSubGroups() )
     {
       packedSize += bufferOps::Pack<DOPACK>( buffer, keyGroupPair.first );
-      packedSize += keyGroupPair.second->Pack( buffer, wrapperNames, packList, recursive );
+      packedSize += keyGroupPair.second->Pack( buffer, wrapperNames, packList, recursive, on_device);
     }
   }
 
@@ -313,7 +317,8 @@ localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
 
 localIndex ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
                                       arrayView1d<localIndex> & packList,
-                                      integer const recursive )
+                                      integer const recursive,
+                                      bool on_device )
 {
   localIndex unpackedSize = 0;
   string groupName;
@@ -341,7 +346,7 @@ localIndex ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
       if( wrapperName != "nullptr" )
       {
         WrapperBase * const wrapper = this->getWrapperBase(wrapperName);
-        unpackedSize += wrapper->Unpack(buffer,packList);
+        unpackedSize += wrapper->UnpackByIndex(buffer,packList,on_device);
       }
     }
   }
@@ -361,7 +366,7 @@ localIndex ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
       GEOSX_UNUSED_VAR( index );
       string subGroupName;
       unpackedSize += bufferOps::Unpack( buffer, subGroupName );
-      unpackedSize += this->GetGroup(subGroupName)->Unpack(buffer,packList,recursive);
+      unpackedSize += this->GetGroup(subGroupName)->Unpack(buffer,packList,recursive,on_device);
     }
   }
 

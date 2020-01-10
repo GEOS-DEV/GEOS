@@ -68,21 +68,25 @@ public:
 
   static void SynchronizeFields( const std::map<string, string_array >& fieldNames,
                                  MeshLevel * const mesh,
-                                 array1d<NeighborCommunicator> & allNeighbors );
+                                 array1d<NeighborCommunicator> & allNeighbors,
+                                 bool on_device = false );
 
   static void SynchronizePackSendRecvSizes( const std::map<string, string_array >& fieldNames,
                                             MeshLevel * const mesh,
                                             array1d<NeighborCommunicator> & neighbors,
-                                            MPI_iCommData & icomm );
+                                            MPI_iCommData & icomm,
+                                            bool on_device = false );
 
   static void SynchronizePackSendRecv( const std::map<string, string_array >& fieldNames,
                                        MeshLevel * const mesh,
                                        array1d<NeighborCommunicator> & allNeighbors,
-                                       MPI_iCommData & icomm );
+                                       MPI_iCommData & icomm,
+                                       bool on_device = false );
 
   static void SynchronizeUnpack( MeshLevel * const mesh,
                                  array1d<NeighborCommunicator> & neighbors,
-                                 MPI_iCommData & icomm );
+                                 MPI_iCommData & icomm,
+                                 bool on_device = false);
 
 
 };

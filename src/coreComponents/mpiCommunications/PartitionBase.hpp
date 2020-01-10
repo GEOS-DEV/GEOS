@@ -123,7 +123,7 @@ protected:
   virtual void InitializePostSubGroups( dataRepository::Group * const ) = 0;
 
 //
-  array1d<NeighborCommunicator> m_neighbors;
+  std::vector<NeighborCommunicator> m_neighbors;
 
   array1d<MPI_Request> m_mpiRequest;
   array1d<MPI_Status> m_mpiStatus;
