@@ -27,7 +27,9 @@
 
 namespace geosx
 {
-inline int CommTag( int const GEOSX_UNUSED_ARG( senderRank ), int const GEOSX_UNUSED_ARG( receiverRank ), int const comm )
+inline int CommTag( int const GEOSX_UNUSED_ARG( senderRank ),
+                    int const GEOSX_UNUSED_ARG( receiverRank ),
+                    int const comm )
 {
 //  int m_size;
 //  MPI_Comm_size( MPI_COMM_GEOSX, &m_size );
@@ -42,8 +44,6 @@ class NeighborCommunicator
 public:
 
   NeighborCommunicator();
-//  ~NeighborCommunicator();
-
 
   void MPI_iSendReceive( buffer_unit_type const * const sendBuffer,
                          int const sendSize,
@@ -160,17 +160,20 @@ public:
 
   void PackCommBufferForSync( std::map<string, string_array > const & fieldNames,
                               MeshLevel * const meshLevel,
-                              int const commID );
+                              int const commID,
+                              bool on_device = false );
 
   int PackCommSizeForSync( std::map<string, string_array > const & fieldNames,
                            MeshLevel * const meshLevel,
-                           int const commID );
+                           int const commID,
+                           bool on_device = false );
 
   void SendRecvBuffers( int const commID );
 
   void UnpackBufferForSync( std::map<string, string_array > const & fieldNames,
                             MeshLevel * const meshLevel,
-                            int const commID );
+                            int const commID,
+                            bool on_device = false );
 
   static int Rank();
   static int MPISize();
@@ -230,8 +233,8 @@ private:
   int m_sendBufferSize[maxComm];
   int m_receiveBufferSize[maxComm];
 
-  buffer_type m_sendBuffer[maxComm];
-  buffer_type m_receiveBuffer[maxComm];
+  std::vector<buffer_type> m_sendBuffer;
+  std::vector<buffer_type> m_receiveBuffer;
 
   MPI_Request m_mpiSendBufferRequest[maxComm];
   MPI_Request m_mpiRecvBufferRequest[maxComm];
