@@ -23,9 +23,16 @@ or_die python scripts/config-build.py \
               -bp /tmp/build \
               -DGEOSX_TPL_DIR=$GEOSX_TPL_DIR \
               -DENABLE_GEOSX_PTP:BOOL=ON \
-              -DBLT_MPI_COMMAND_APPEND:STRING=--allow-run-as-root
+              -DBLT_MPI_COMMAND_APPEND:STRING=--allow-run-as-root \
+              -DENABLE_CUDA:BOOL=${ENABLE_CUDA:-OFF} \
+              -DCMAKE_CUDA_FLAGS:STRING=\""${CMAKE_CUDA_FLAGS:-Unused}"\"
+              
 or_die cd /tmp/build
 or_die make -j $(nproc) VERBOSE=1
-or_die ctest -V 
+
+# Unit tests
+if [[ "$*" != *-disable-unit-tests* ]]; then
+  or_die ctest -V
+fi 
 
 exit 0
