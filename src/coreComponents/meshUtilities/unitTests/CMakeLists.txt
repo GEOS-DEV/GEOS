@@ -8,6 +8,7 @@ set( gtest_geosx_tests
    )
 
 set( GMSH_FILE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/toy_model.msh )
+set( ECLIPSE_FILE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/toy_model.GRDECL )
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/meshFileNames.hpp.in ${CMAKE_BINARY_DIR}/include/tests/meshFileNames.hpp )
 endif(ENABLE_PAMELA)
 
