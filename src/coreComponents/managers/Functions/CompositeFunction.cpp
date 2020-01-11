@@ -25,7 +25,7 @@ namespace geosx
 
 namespace dataRepository
 {
-namespace keys
+namespace compositeFunctionKeys
 {
 std::string const functionNames = "functionNames";
 std::string const variableNames = "variableNames";
@@ -46,15 +46,15 @@ CompositeFunction::CompositeFunction( const std::string& name,
   m_numSubFunctions(),
   m_subFunctions()
 {
-  registerWrapper( keys::functionNames, &m_functionNames, false )->
+  registerWrapper( compositeFunctionKeys::functionNames, &m_functionNames, false )->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("List of source functions. The order must match the variableNames argument.");
 
-  registerWrapper( keys::variableNames, &m_variableNames, false )->
+  registerWrapper( compositeFunctionKeys::variableNames, &m_variableNames, false )->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("List of variables in expression");
 
-  registerWrapper( keys::expression, &m_expression, false )->
+  registerWrapper( compositeFunctionKeys::expression, &m_expression, false )->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Composite math expression");
 }

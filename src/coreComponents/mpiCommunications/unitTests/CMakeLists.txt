@@ -2,7 +2,7 @@
 set( mpiCommunications_tests
      testNeighborCommunicator.cpp )
 
-set( dependencyList gtest fileIO trilinos cxx-utilities mpiCommunications dataRepository mesh wells mesh common managers constitutive meshUtilities )
+set( dependencyList geosx_core gtest )
 
 if ( ENABLE_OPENMP )
   set( dependencyList ${dependencyList} openmp )
