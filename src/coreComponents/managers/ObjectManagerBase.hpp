@@ -20,6 +20,7 @@
 #define GEOSX_MANAGERS_OBJECTMANAGERBASE_HPP_
 
 #include "dataRepository/Group.hpp"
+#include "common/TimingMacros.hpp"
 
 namespace geosx
 {
@@ -393,6 +394,8 @@ void ObjectManagerBase::FixUpDownMaps( TYPE_RELATION & relation,
                                        map< localIndex, array1d<globalIndex> > & unmappedIndices,
                                        bool const  )
 {
+  GEOSX_MARK_FUNCTION;
+
   bool allValuesMapped = true;
   unordered_map<globalIndex,localIndex> const & globalToLocal = relation.RelatedObjectGlobalToLocal();
   for( map< localIndex, array1d<globalIndex> >::iterator iter = unmappedIndices.begin() ;
@@ -427,6 +430,8 @@ void ObjectManagerBase::FixUpDownMaps( TYPE_RELATION & relation,
                                        map< localIndex, set<globalIndex> > & unmappedIndices,
                                        bool const clearIfUnmapped )
 {
+  GEOSX_MARK_FUNCTION;
+
   unordered_map<globalIndex,localIndex> const & globalToLocal = relation.RelatedObjectGlobalToLocal();
   for( map< localIndex, set<globalIndex> >::iterator iter = unmappedIndices.begin() ;
        iter != unmappedIndices.end() ;
@@ -462,6 +467,8 @@ void ObjectManagerBase::FixUpDownMaps( ArrayOfSets< localIndex > & relation,
                                        map< localIndex, set<globalIndex> > & unmappedIndices,
                                        bool const clearIfUnmapped )
 {
+  GEOSX_MARK_FUNCTION;
+
   for( map< localIndex, set<globalIndex> >::iterator iter = unmappedIndices.begin() ;
        iter != unmappedIndices.end() ;
        ++iter )

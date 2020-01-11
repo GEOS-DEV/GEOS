@@ -552,11 +552,14 @@ void CommunicationTools::FindGhosts( MeshLevel * const meshLevel,
     neighbor.FindAndPackGhosts( false, 1, meshLevel, commID );
   }
 
+  GEOSX_MARK_BEGIN("Neighbor wait loop");
   for( auto & neighbor : neighbors )
   {
     neighbor.MPI_WaitAll( commID );
     neighbor.UnpackGhosts( meshLevel, commID );
   }
+  GEOSX_MARK_END("Neighbor wait loop");
+
   meshLevel->getNodeManager()->SetReceiveLists();
   meshLevel->getEdgeManager()->SetReceiveLists();
   meshLevel->getFaceManager()->SetReceiveLists();
@@ -578,7 +581,6 @@ void CommunicationTools::FindGhosts( MeshLevel * const meshLevel,
       subRegion->FixUpDownMaps(false);
     }
   }
-
 
   CommunicationTools::releaseCommID( commID );
 }
