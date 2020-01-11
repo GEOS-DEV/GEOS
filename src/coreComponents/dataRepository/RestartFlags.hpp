@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef RESTARTFLAGS_H_
-#define RESTARTFLAGS_H_
+#ifndef GEOSX_DATAREPOSITORY_RESTARTFLAGS_HPP_
+#define GEOSX_DATAREPOSITORY_RESTARTFLAGS_HPP_
 
 /**
  * @file RestartFlags.hpp
@@ -31,9 +31,9 @@ namespace dataRepository
  */
 enum class RestartFlags : unsigned char
 {
-  NO_WRITE,     //!< NO_WRITE
-  WRITE,        //!< WRITE
-  WRITE_AND_READ//!< WRITE_AND_READ
+  NO_WRITE,      ///< Doe no write into restart
+  WRITE,         ///< Write into restart
+  WRITE_AND_READ ///< Write and read from restart
 };
 
 /**
@@ -137,4 +137,4 @@ inline bool operator!=( PlotLevel const left, PlotLevel const right )
 }   /* namespace dataRepository */
 }   /* namespace geosx */
 
-#endif  /* RESTARTFLAGS_H_ */
+#endif  /* GEOSX_DATAREPOSITORY_RESTARTFLAGS_HPP_ */

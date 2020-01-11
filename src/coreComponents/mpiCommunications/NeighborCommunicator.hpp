@@ -23,11 +23,13 @@
 
 #include "common/DataTypes.hpp"
 #include "dataRepository/ReferenceWrapper.hpp"
-#include "IntegerConversion.hpp"
+#include "cxx-utilities/src/IntegerConversion.hpp"
 
 namespace geosx
 {
-inline int CommTag( int const GEOSX_UNUSED_ARG( senderRank ), int const GEOSX_UNUSED_ARG( receiverRank ), int const comm )
+inline int CommTag( int const GEOSX_UNUSED_ARG( senderRank ),
+                    int const GEOSX_UNUSED_ARG( receiverRank ),
+                    int const comm )
 {
 //  int m_size;
 //  MPI_Comm_size( MPI_COMM_GEOSX, &m_size );
@@ -42,13 +44,11 @@ class NeighborCommunicator
 public:
 
   NeighborCommunicator();
-//  ~NeighborCommunicator();
 
-
-  void MPI_iSendReceive( char const * const sendBuffer,
+  void MPI_iSendReceive( buffer_unit_type const * const sendBuffer,
                          int const sendSize,
                          MPI_Request& sendRequest,
-                         char * const receiveBuffer,
+                         buffer_unit_type * const receiveBuffer,
                          int const receiveSize,
                          MPI_Request& receiveRequest,
                          int const commID,
@@ -89,10 +89,10 @@ public:
                          int const commID,
                          MPI_Comm mpiComm )
   {
-    MPI_iSendReceive( reinterpret_cast<char const*>( sendBuffer ),
+    MPI_iSendReceive( reinterpret_cast<buffer_unit_type const*>( sendBuffer ),
                       sendSize * sizeof(T),
                       sendReq,
-                      reinterpret_cast<char*>( recvBuffer ),
+                      reinterpret_cast<buffer_unit_type*>( recvBuffer ),
                       recvSize * sizeof(T),
                       recvReq,
                       commID,
@@ -134,7 +134,7 @@ public:
   }
 
 
-  void MPI_iSendReceive( char const * const sendBuffer,
+  void MPI_iSendReceive( buffer_unit_type const * const sendBuffer,
                          int const sendSize,
                          int const commID,
                          MPI_Comm mpiComm );
@@ -160,17 +160,20 @@ public:
 
   void PackCommBufferForSync( std::map<string, string_array > const & fieldNames,
                               MeshLevel * const meshLevel,
-                              int const commID );
+                              int const commID,
+                              bool on_device = false );
 
   int PackCommSizeForSync( std::map<string, string_array > const & fieldNames,
                            MeshLevel * const meshLevel,
-                           int const commID );
+                           int const commID,
+                           bool on_device = false );
 
   void SendRecvBuffers( int const commID );
 
   void UnpackBufferForSync( std::map<string, string_array > const & fieldNames,
                             MeshLevel * const meshLevel,
-                            int const commID );
+                            int const commID,
+                            bool on_device = false );
 
   static int Rank();
   static int MPISize();
@@ -230,8 +233,8 @@ private:
   int m_sendBufferSize[maxComm];
   int m_receiveBufferSize[maxComm];
 
-  buffer_type m_sendBuffer[maxComm];
-  buffer_type m_receiveBuffer[maxComm];
+  std::vector<buffer_type> m_sendBuffer;
+  std::vector<buffer_type> m_receiveBuffer;
 
   MPI_Request m_mpiSendBufferRequest[maxComm];
   MPI_Request m_mpiRecvBufferRequest[maxComm];

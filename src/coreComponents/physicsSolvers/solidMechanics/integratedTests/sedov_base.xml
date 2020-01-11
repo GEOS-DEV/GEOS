@@ -1,3 +1,4 @@
+  <!-- SPHINX_INTERNAL_MESH -->
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="{C3D8}" 
@@ -9,6 +10,7 @@
                   nz="{10}"
                   cellBlockNames="{cb1}"/>
   </Mesh>
+  <!-- SPHINX_INTERNAL_MESH_END -->
 
 
   <Events maxTime="1.0e-3">
@@ -29,6 +31,7 @@
     <PeriodicEvent name="restarts"
                    timeFrequency="5.0e-4"
                    targetExactTimestep="0"
+<<<<<<< HEAD
                    target="/Outputs/sidreRestart"/>
                    
     <SoloEvent 
@@ -37,6 +40,9 @@
       />
 
                    
+=======
+                   target="/Outputs/restartOutput"/>
+>>>>>>> develop
   </Events>
 
 
@@ -78,13 +84,27 @@
 
 
   <FieldSpecifications>
-    <!-- FieldSpecification name="source"  
+    <FieldSpecification name="source0"
                initialCondition="1"  
                setNames="{source}"
                objectPath="ElementRegions"
-               fieldName="shale_MeanStress"
-               component="-1"
-               scale="-1.0e6"/-->
+               fieldName="shale_stress"
+               component="0"
+               scale="-1.0e6"/>
+    <FieldSpecification name="source1"  
+               initialCondition="1"  
+               setNames="{source}"
+               objectPath="ElementRegions"
+               fieldName="shale_stress"
+               component="2"
+               scale="-1.0e6"/>
+    <FieldSpecification name="source2"  
+               initialCondition="1"  
+               setNames="{source}"
+               objectPath="ElementRegions"
+               fieldName="shale_stress"
+               component="5"
+               scale="-1.0e6"/>
 
     <FieldSpecification name="xconstraint" 
                objectPath="nodeManager"
@@ -115,7 +135,7 @@
            plotFileRoot="plot" 
            slaveDirectory="sub"
            />
-    <Restart name="sidreRestart"/>
+    <Restart name="restartOutput"/>
   </Outputs>
 
   <Geometry>

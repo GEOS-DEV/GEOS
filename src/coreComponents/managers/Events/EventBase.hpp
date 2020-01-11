@@ -16,8 +16,8 @@
  * @file EventBase.hpp
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_MANAGERS_EVENTS_EVENTSBASE_HPP_
-#define SRC_COMPONENTS_CORE_SRC_MANAGERS_EVENTS_EVENTSBASE_HPP_
+#ifndef GEOSX_MANAGERS_EVENTS_EVENTSBASE_HPP_
+#define GEOSX_MANAGERS_EVENTS_EVENTSBASE_HPP_
 
 #include "dataRepository/Group.hpp"
 #include "dataRepository/ExecutableGroup.hpp"
@@ -158,7 +158,6 @@ public:
     static constexpr auto targetExactStartStopString = "targetExactStartStop";
     static constexpr auto currentSubEventString = "currentSubEvent";
     static constexpr auto isTargetExecutingString = "isTargetExecuting";
-    static constexpr auto verbosityString = "verbosity";
 
     dataRepository::ViewKey eventTarget = { "target" };
     dataRepository::ViewKey beginTime = { "beginTime" };
@@ -170,11 +169,10 @@ public:
     dataRepository::ViewKey targetExactStartStop = { "targetExactStartStop" };
     dataRepository::ViewKey currentSubEvent = { "currentSubEvent" };
     dataRepository::ViewKey isTargetExecuting = { "isTargetExecuting" };
-    dataRepository::ViewKey verbosity = { "verbosity" };
     } viewKeys;
 
   ///Catalog interface
-  using CatalogInterface = cxx_utilities::CatalogInterface< EventBase, std::string const &, Group * const >;
+  using CatalogInterface = dataRepository::CatalogInterface< EventBase, std::string const &, Group * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 
   /// Access functions
@@ -209,7 +207,6 @@ private:
   integer m_eventCount;
   integer m_timeStepEventCount;
   real64 m_eventProgress;
-  integer m_verbosity;
   real64 m_currentEventDtRequest;
 
   /// A pointer to the optional event target
@@ -219,4 +216,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* SRC_COMPONENTS_CORE_SRC_MANAGERS_EVENTS_EVENTSBASE_HPP_ */
+#endif /* GEOSX_MANAGERS_EVENTS_EVENTSBASE_HPP_ */

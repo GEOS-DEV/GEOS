@@ -33,22 +33,18 @@ NeighborCommunicator::NeighborCommunicator():
   m_neighborRank( -1 ),
   m_sendBufferSize(),
   m_receiveBufferSize(),
-  m_sendBuffer(),
-  m_receiveBuffer(),
+  m_sendBuffer{maxComm,buffer_type()},
+  m_receiveBuffer{maxComm,buffer_type()},
   m_mpiSendBufferRequest(),
   m_mpiRecvBufferRequest(),
   m_mpiSendBufferStatus(),
   m_mpiRecvBufferStatus()
-{}
+{ }
 
-//NeighborCommunicator::~NeighborCommunicator()
-//{
-//}
-
-void NeighborCommunicator::MPI_iSendReceive( char const * const sendBuffer,
+void NeighborCommunicator::MPI_iSendReceive( buffer_unit_type const * const sendBuffer,
                                              int const sendSize,
                                              MPI_Request& sendRequest,
-                                             char * const receiveBuffer,
+                                             buffer_unit_type * const receiveBuffer,
                                              int const receiveSize,
                                              MPI_Request& receiveRequest,
                                              int const commID,
@@ -56,7 +52,7 @@ void NeighborCommunicator::MPI_iSendReceive( char const * const sendBuffer,
 {
   int const sendTag = CommTag( Rank(), m_neighborRank, commID );
   //m_rank * m_size + m_neighborRank + m_size*m_size*commID;
-  MpiWrapper::iSend( const_cast<char*>(sendBuffer),
+  MpiWrapper::iSend( const_cast<buffer_unit_type*>(sendBuffer),
              sendSize,
              m_neighborRank,
              sendTag,
@@ -153,7 +149,7 @@ void NeighborCommunicator::MPI_iSendReceive( int const commID,
                     mpiComm );
 }
 
-void NeighborCommunicator::MPI_iSendReceive( char const * const sendBuffer,
+void NeighborCommunicator::MPI_iSendReceive( buffer_unit_type const * const sendBuffer,
                                              int const sendSize,
                                              int const commID,
                                              MPI_Comm mpiComm )
@@ -354,8 +350,7 @@ void NeighborCommunicator::FindAndPackGhosts( bool const GEOSX_UNUSED_ARG( conta
   packedSize += faceManager.Pack( sendBufferPtr, {}, faceAdjacencyList, 0 );
   packedSize += elemManager.Pack( sendBufferPtr, {}, elementAdjacencyList );
 
-
-  GEOS_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
+  GEOSX_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
 
   this->MPI_iSendReceive( commID, MPI_COMM_GEOSX );
 }
@@ -456,22 +451,22 @@ void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
 
   int bufferSize = 0;
   bufferSize += bufferOps::Pack<false>( sendBufferPtr,
-                                        nodeGhostsToReceive,
-                                        array1d<globalIndex>(),
+                                        nodeGhostsToReceive.toSliceConst(),
+                                        nullptr,
                                         nodeGhostsToReceive.size(),
-                                        nodeManager.m_localToGlobalMap );
+                                        nodeManager.m_localToGlobalMap.toSliceConst() );
 
   bufferSize += bufferOps::Pack<false>( sendBufferPtr,
-                                        edgeGhostsToReceive,
-                                        array1d<globalIndex>(),
+                                        edgeGhostsToReceive.toSliceConst(),
+                                        nullptr,
                                         edgeGhostsToReceive.size(),
-                                        edgeManager.m_localToGlobalMap );
+                                        edgeManager.m_localToGlobalMap.toSliceConst() );
 
   bufferSize += bufferOps::Pack<false>( sendBufferPtr,
-                                        faceGhostsToReceive,
-                                        array1d<globalIndex>(),
+                                        faceGhostsToReceive.toSliceConst(),
+                                        nullptr,
                                         faceGhostsToReceive.size(),
-                                        faceManager.m_localToGlobalMap );
+                                        faceManager.m_localToGlobalMap.toSliceConst() );
 
   for( localIndex er=0 ; er<elemManager.numRegions() ; ++er )
   {
@@ -480,10 +475,10 @@ void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
                                                 ElementSubRegionBase const * const subRegion )
     {
       bufferSize+= bufferOps::Pack<false>( sendBufferPtr,
-                                           elementGhostToReceive[er][esr],
-                                           array1d<globalIndex>(),
+                                           elementGhostToReceive[er][esr].toSliceConst(),
+                                           nullptr,
                                            elementGhostToReceive[er][esr].size(),
-                                           subRegion->m_localToGlobalMap );
+                                           subRegion->m_localToGlobalMap.toSliceConst() );
     });
   }
 
@@ -491,22 +486,22 @@ void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
 
   int packedSize = 0;
   packedSize += bufferOps::Pack<true>( sendBufferPtr,
-                                       nodeGhostsToReceive,
-                                       array1d<globalIndex>(),
+                                       nodeGhostsToReceive.toSliceConst(),
+                                       nullptr,
                                        nodeGhostsToReceive.size(),
-                                       nodeManager.m_localToGlobalMap );
+                                       nodeManager.m_localToGlobalMap.toSliceConst() );
 
   packedSize += bufferOps::Pack<true>( sendBufferPtr,
-                                       edgeGhostsToReceive,
-                                       array1d<globalIndex>(),
+                                       edgeGhostsToReceive.toSliceConst(),
+                                       nullptr,
                                        edgeGhostsToReceive.size(),
-                                       edgeManager.m_localToGlobalMap );
+                                       edgeManager.m_localToGlobalMap.toSliceConst() );
 
   packedSize += bufferOps::Pack<true>( sendBufferPtr,
-                                       faceGhostsToReceive,
-                                       array1d<globalIndex>(),
+                                       faceGhostsToReceive.toSliceConst(),
+                                       nullptr,
                                        faceGhostsToReceive.size(),
-                                       faceManager.m_localToGlobalMap );
+                                       faceManager.m_localToGlobalMap.toSliceConst() );
 
 
 
@@ -516,14 +511,14 @@ void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
     elemRegion->forElementSubRegionsIndex([&]( localIndex const esr, ElementSubRegionBase const * const subRegion )
     {
       packedSize+= bufferOps::Pack<true>( sendBufferPtr,
-                                          elementGhostToReceive[er][esr],
-                                          array1d<globalIndex>(),
+                                          elementGhostToReceive[er][esr].toSliceConst(),
+                                          nullptr,
                                           elementGhostToReceive[er][esr].size(),
-                                          subRegion->m_localToGlobalMap );
+                                          subRegion->m_localToGlobalMap.toSliceConst() );
     });
   }
 
-  GEOS_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
+  GEOSX_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
 
   this->MPI_iSendReceive( commID, MPI_COMM_GEOSX );
   this->MPI_WaitAll( commID );
@@ -539,21 +534,21 @@ void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
                                      nodeGhostsToSend,
                                      unmappedNodeIndices,
                                      nodeManager.m_globalToLocalMap );
-  GEOS_ERROR_IF( unmappedNodeIndices.size()!=0,
+  GEOSX_ERROR_IF( unmappedNodeIndices.size()!=0,
                  "Some node global indices were not mappable to a localIndex" );
 
   unpackedSize += bufferOps::Unpack( receiveBufferPtr,
                                      edgeGhostsToSend,
                                      unmappedEdgeIndices,
                                      edgeManager.m_globalToLocalMap );
-  GEOS_ERROR_IF( unmappedEdgeIndices.size()!=0,
+  GEOSX_ERROR_IF( unmappedEdgeIndices.size()!=0,
                  "Some edge global indices were not mappable to a localIndex" );
 
   unpackedSize += bufferOps::Unpack( receiveBufferPtr,
                                      faceGhostsToSend,
                                      unmappedFaceIndices,
                                      faceManager.m_globalToLocalMap );
-  GEOS_ERROR_IF( unmappedFaceIndices.size()!=0,
+  GEOSX_ERROR_IF( unmappedFaceIndices.size()!=0,
                  "Some face global indices were not mappable to a localIndex" );
 
 
@@ -575,7 +570,7 @@ void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
                                         elementGhostToSend[er][esr].get(),
                                         unmappedIndices,
                                         subRegion->m_globalToLocalMap );
-      GEOS_ERROR_IF( unmappedIndices.size()!=0,
+      GEOSX_ERROR_IF( unmappedIndices.size()!=0,
                      "Some element global indices were not mappable to a localIndex" );
 
       subRegion->SetGhostRankForSenders( elementGhostToSend[er][esr].get() );
@@ -586,7 +581,8 @@ void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
 
 int NeighborCommunicator::PackCommSizeForSync( std::map<string, string_array > const & fieldNames,
                                                MeshLevel * const mesh,
-                                               int const commID )
+                                               int const commID,
+                                               bool on_device )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -625,17 +621,17 @@ int NeighborCommunicator::PackCommSizeForSync( std::map<string, string_array > c
 
   if( fieldNames.count( "node" ) > 0 )
   {
-    bufferSize += nodeManager.PackSize( fieldNames.at( "node" ), nodeGhostsToSend, 0 );
+    bufferSize += nodeManager.PackSize( fieldNames.at( "node" ), nodeGhostsToSend, 0, on_device );
   }
 
   if( fieldNames.count( "edge" ) > 0 )
   {
-    bufferSize += edgeManager.PackSize( fieldNames.at( "edge" ), edgeGhostsToSend, 0 );
+    bufferSize += edgeManager.PackSize( fieldNames.at( "edge" ), edgeGhostsToSend, 0, on_device );
   }
 
   if( fieldNames.count( "face" ) > 0 )
   {
-    bufferSize += faceManager.PackSize( fieldNames.at( "face" ), faceGhostsToSend, 0 );
+    bufferSize += faceManager.PackSize( fieldNames.at( "face" ), faceGhostsToSend, 0, on_device );
   }
 
   if( fieldNames.count( "elems" ) > 0 )
@@ -646,7 +642,7 @@ int NeighborCommunicator::PackCommSizeForSync( std::map<string, string_array > c
       elemRegion->forElementSubRegionsIndex( [&]( localIndex const esr,
                                                   auto const * const subRegion )
       {
-        bufferSize += subRegion->PackSize( fieldNames.at( "elems" ), elementGhostToSend[er][esr], 0 );
+        bufferSize += subRegion->PackSize( fieldNames.at( "elems" ), elementGhostToSend[er][esr], 0, on_device );
       });
     }
   }
@@ -658,7 +654,8 @@ int NeighborCommunicator::PackCommSizeForSync( std::map<string, string_array > c
 
 void NeighborCommunicator::PackCommBufferForSync( std::map<string, string_array > const & fieldNames,
                                                   MeshLevel * const mesh,
-                                                  int const commID )
+                                                  int const commID, 
+                                                  bool on_device )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -693,7 +690,6 @@ void NeighborCommunicator::PackCommBufferForSync( std::map<string, string_array 
                                                          viewKeyStruct::
                                                          ghostsToSendString,
                                                          std::to_string( this->m_neighborRank ) );
-
   buffer_type & sendBuffer = SendBuffer( commID );
   int const bufferSize =  integer_conversion<int>(sendBuffer.size());
   buffer_unit_type * sendBufferPtr = sendBuffer.data();
@@ -701,17 +697,17 @@ void NeighborCommunicator::PackCommBufferForSync( std::map<string, string_array 
   int packedSize = 0;
   if( fieldNames.count( "node" ) > 0 )
   {
-    packedSize += nodeManager.Pack( sendBufferPtr, fieldNames.at( "node" ), nodeGhostsToSend, 0 );
+    packedSize += nodeManager.Pack( sendBufferPtr, fieldNames.at( "node" ), nodeGhostsToSend, 0, on_device );
   }
 
   if( fieldNames.count( "edge" ) > 0 )
   {
-    packedSize += edgeManager.Pack( sendBufferPtr, fieldNames.at( "edge" ), edgeGhostsToSend, 0 );
+    packedSize += edgeManager.Pack( sendBufferPtr, fieldNames.at( "edge" ), edgeGhostsToSend, 0, on_device );
   }
 
   if( fieldNames.count( "face" ) > 0 )
   {
-    packedSize += faceManager.Pack( sendBufferPtr, fieldNames.at( "face" ), faceGhostsToSend, 0 );
+    packedSize += faceManager.Pack( sendBufferPtr, fieldNames.at( "face" ), faceGhostsToSend, 0, on_device );
   }
 
   if( fieldNames.count( "elems" ) > 0 )
@@ -721,12 +717,12 @@ void NeighborCommunicator::PackCommBufferForSync( std::map<string, string_array 
       ElementRegionBase const * const elemRegion = elemManager.GetRegion( er );
       elemRegion->forElementSubRegionsIndex([&]( localIndex const esr, auto const * const subRegion )
       {
-        packedSize += subRegion->Pack( sendBufferPtr, fieldNames.at( "elems" ), elementGhostToSend[er][esr], 0 );
+        packedSize += subRegion->Pack( sendBufferPtr, fieldNames.at( "elems" ), elementGhostToSend[er][esr], 0, on_device );
       });
     }
   }
 
-  GEOS_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
+  GEOSX_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
 }
 
 
@@ -738,7 +734,8 @@ void NeighborCommunicator::SendRecvBuffers( int const commID )
 
 void NeighborCommunicator::UnpackBufferForSync( std::map<string, string_array > const & fieldNames,
                                                 MeshLevel * const mesh,
-                                                int const commID )
+                                                int const commID,
+                                                bool on_device )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -779,17 +776,17 @@ void NeighborCommunicator::UnpackBufferForSync( std::map<string, string_array > 
 
   if( fieldNames.count( "node" ) > 0 )
   {
-    unpackedSize += nodeManager.Unpack( receiveBufferPtr, nodeGhostsToReceive, 0 );
+    unpackedSize += nodeManager.Unpack( receiveBufferPtr, nodeGhostsToReceive, 0, on_device);
   }
 
   if( fieldNames.count( "edge" ) > 0 )
   {
-    unpackedSize += edgeManager.Unpack( receiveBufferPtr, edgeGhostsToReceive, 0 );
+    unpackedSize += edgeManager.Unpack( receiveBufferPtr, edgeGhostsToReceive, 0, on_device );
   }
 
   if( fieldNames.count( "face" ) > 0 )
   {
-    unpackedSize += faceManager.Unpack( receiveBufferPtr, faceGhostsToReceive, 0 );
+    unpackedSize += faceManager.Unpack( receiveBufferPtr, faceGhostsToReceive, 0, on_device );
   }
 
   if( fieldNames.count( "elems" ) > 0 )
@@ -800,7 +797,7 @@ void NeighborCommunicator::UnpackBufferForSync( std::map<string, string_array > 
       elemRegion->forElementSubRegionsIndex([&]( localIndex const esr,
                                                  auto * const subRegion )
       {
-        unpackedSize += subRegion->Unpack( receiveBufferPtr, elementGhostToReceive[er][esr], 0 );
+        unpackedSize += subRegion->Unpack( receiveBufferPtr, elementGhostToReceive[er][esr], 0, on_device );
       });
     }
   }

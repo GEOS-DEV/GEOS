@@ -15,11 +15,11 @@
 /**
  * @file BlasLapackLA.hpp
  */
-#ifndef GEOSX_LINEARALGEBRA_BLASLAPACKLA_HPP_
-#define GEOSX_LINEARALGEBRA_BLASLAPACKLA_HPP_
+#ifndef GEOSX_LINEARALGEBRA_INTERFACES_BLASLAPACKLA_HPP_
+#define GEOSX_LINEARALGEBRA_INTERFACES_BLASLAPACKLA_HPP_
 
 #include "common/DataTypes.hpp"
-#include "Logger.hpp"
+#include "common/Logger.hpp"
 
 
 namespace geosx

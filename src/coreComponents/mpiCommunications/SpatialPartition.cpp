@@ -183,7 +183,7 @@ void SpatialPartition::AddNeighbors( const unsigned int idim,
     }
     if( !me )
     {
-      m_neighbors.push_back( NeighborCommunicator());
+      m_neighbors.push_back( NeighborCommunicator( ) );
       int rank;
       rank = MpiWrapper::Cart_rank( cartcomm, ncoords );
       m_neighbors.back().SetNeighborRank( rank );
@@ -335,7 +335,7 @@ void SpatialPartition::setSizes( const R1Tensor& min, const R1Tensor& max )
     }
     else
     {
-      GEOS_ERROR( "SpatialPartition::setSizes(): number of partition locations does not equal number of partitions - 1\n" );
+      GEOSX_ERROR( "SpatialPartition::setSizes(): number of partition locations does not equal number of partitions - 1\n" );
     }
   }
 }

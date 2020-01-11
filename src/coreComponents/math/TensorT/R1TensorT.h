@@ -87,11 +87,7 @@ public:
   /**
    * @param[in] rhs reference to R1TensorT object to use in initialization
    */
-  R1TensorT( const R1TensorT< T_dim >& rhs ): TensorBaseT< T_dim > ()
-  { TensorBaseT< T_dim >::operator=( rhs ); }
-
-  R1TensorT( const TensorBaseT< T_dim >& rhs ): TensorBaseT< T_dim > ()
-  { TensorBaseT< T_dim >::operator=( rhs ); }
+  R1TensorT( const R1TensorT< T_dim >& rhs ) = default;
 
   /**
    * Explicit constructors - will throw compile-time errors if not called with
@@ -281,6 +277,7 @@ inline R1TensorT< T_dim >& R1TensorT< T_dim >::operator=( const realT& rhs )
   TensorBaseT< T_dim >::operator=( rhs );
   return *this;
 }
+
 
 /**
  * @param[in] rhs tensor to copy

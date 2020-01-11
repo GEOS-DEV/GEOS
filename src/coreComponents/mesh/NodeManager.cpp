@@ -191,20 +191,20 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
     elemRegion->forElementSubRegionsIndex<CellElementSubRegion>( [&]( localIndex const kSubReg,
                                                                       CellElementSubRegion const * const subRegion )
     {
-      for( localIndex ke=0 ; ke<subRegion->size() ; ++ke )
+      arrayView2d< localIndex const, CellElementSubRegion::NODE_MAP_UNIT_STRIDE_DIM > const & elemToNodeMap = subRegion->nodeList();
+
+      for( localIndex k=0 ; k<subRegion->size() ; ++k )
       {
-        arraySlice1d<localIndex const> const elemToNodes = subRegion->nodeList(ke);
-        
         localIndex_array nodeIndices;
         for( localIndex a=0 ; a<subRegion->numNodesPerElement() ; ++a )
         {
-          localIndex nodeIndex = elemToNodes[a];
+          localIndex nodeIndex = elemToNodeMap( k, a );
 
           if (std::find(nodeIndices.begin(), nodeIndices.end(), nodeIndex) == nodeIndices.end())
           {
             toElementRegionList.appendToArray( nodeIndex, kReg );
             toElementSubRegionList.appendToArray( nodeIndex, kSubReg );
-            toElementList.appendToArray( nodeIndex, ke );
+            toElementList.appendToArray( nodeIndex, k );
 
             nodeIndices.push_back(nodeIndex);
           }
@@ -226,7 +226,7 @@ void NodeManager::ViewPackingExclusionList( set<localIndex> & exclusionList ) co
   exclusionList.insert(this->getWrapperIndex(viewKeyStruct::elementSubRegionListString));
   exclusionList.insert(this->getWrapperIndex(viewKeyStruct::elementListString));
 
-  if( this->hasView( "usedFaces" ) )
+  if( this->hasWrapper( "usedFaces" ) )
   {
     exclusionList.insert(this->getWrapperIndex("usedFaces"));
   }
@@ -287,7 +287,7 @@ localIndex NodeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
 
   string temp;
   unPackedSize += bufferOps::Unpack( buffer, temp );
-  GEOS_ERROR_IF( temp != viewKeyStruct::edgeListString, "");
+  GEOSX_ERROR_IF( temp != viewKeyStruct::edgeListString, "");
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toEdgesRelation,
                                      packList,
@@ -297,7 +297,7 @@ localIndex NodeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                      overwriteUpMaps );
 
   unPackedSize += bufferOps::Unpack( buffer, temp );
-  GEOS_ERROR_IF( temp != viewKeyStruct::faceListString, "");
+  GEOSX_ERROR_IF( temp != viewKeyStruct::faceListString, "");
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toFacesRelation,
                                      packList,
@@ -307,7 +307,7 @@ localIndex NodeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                      overwriteUpMaps );
 
   unPackedSize += bufferOps::Unpack( buffer, temp );
-  GEOS_ERROR_IF( temp != viewKeyStruct::elementListString, "");
+  GEOSX_ERROR_IF( temp != viewKeyStruct::elementListString, "");
   unPackedSize += bufferOps::Unpack( buffer,
                                      this->m_toElements,
                                      packList,
@@ -351,12 +351,12 @@ void NodeManager::depopulateUpMaps( std::set<localIndex> const & receivedNodes,
 
       CellElementSubRegion const * subRegion = elemRegionManager.GetRegion(elemRegionIndex)->
                                                GetSubRegion<CellElementSubRegion>(elemSubRegionIndex);
-      array2d<localIndex> const & downmap = subRegion->nodeList();
+      arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & downmap = subRegion->nodeList();
       bool hasTargetIndex = false;
 
       for( localIndex a=0 ; a<downmap.size(1) ; ++a )
       {
-        localIndex const compositeLocalIndex = downmap[elemIndex][a];
+        localIndex const compositeLocalIndex = downmap( elemIndex, a );
         if( compositeLocalIndex==targetIndex )
         {
           hasTargetIndex=true;

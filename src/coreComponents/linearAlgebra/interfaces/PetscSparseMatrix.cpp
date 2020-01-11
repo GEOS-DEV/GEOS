@@ -353,11 +353,22 @@ void PetscSparseMatrix::multiply( PetscSparseMatrix const & src,
 // Matrix/matrix multiplication
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Perform the matrix-matrix product this^T * src = dst.
-void PetscSparseMatrix::multiplyTranspose( PetscSparseMatrix const & src,
-                                           PetscSparseMatrix & dst,
-                                           bool const GEOSX_UNUSED_ARG( closeResult ) ) const
+void PetscSparseMatrix::leftMultiplyTranspose( PetscSparseMatrix const & src,
+                                               PetscSparseMatrix & dst,
+                                               bool const GEOSX_UNUSED_ARG( closeResult ) ) const
 {
   MatTransposeMatMult( m_mat, src.getConstMat(), MAT_INITIAL_MATRIX, PETSC_DEFAULT, dst.unwrappedNonConstPointer() );
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Matrix/matrix multiplication
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Perform the matrix-matrix product src * this^T  = dst.
+void PetscSparseMatrix::rightMultiplyTranspose( PetscSparseMatrix const & src,
+                                                PetscSparseMatrix & dst,
+                                                bool const GEOSX_UNUSED_ARG( closeResult ) ) const
+{
+  MatMatTransposeMult( m_mat, src.getConstMat(), MAT_INITIAL_MATRIX, PETSC_DEFAULT, dst.unwrappedNonConstPointer() );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -460,7 +471,7 @@ void PetscSparseMatrix::getRowCopy( globalIndex globalRow,
 
 real64 PetscSparseMatrix::getDiagValue( globalIndex globalRow ) const
 {
-  GEOS_ERROR_IF( !m_assembled, "Attempting to call " << __FUNCTION__ << " before close() is illegal" );
+  GEOSX_ERROR_IF( !m_assembled, "Attempting to call " << __FUNCTION__ << " before close() is illegal" );
 
   PetscScalar const * vals = nullptr;
   PetscInt const * cols = nullptr;
@@ -658,7 +669,7 @@ localIndex PetscSparseMatrix::getLocalRowID( globalIndex const index ) const
   MatGetOwnershipRange( m_mat, &low, &high);
   if ( index < low || high <= index ) 
   {
-    GEOS_ERROR( "getLocalRowID: processor does not own global row index" );
+    GEOSX_ERROR( "getLocalRowID: processor does not own global row index" );
   } 
   return index - low; 
 }
@@ -673,7 +684,7 @@ localIndex PetscSparseMatrix::getGlobalRowID( localIndex const index ) const
   MatGetOwnershipRange( m_mat, &low, &high);
   if ( high - low < index ) 
   {
-    GEOS_ERROR( "getGloballRowID: processor does not own this many rows" );
+    GEOSX_ERROR( "getGloballRowID: processor does not own this many rows" );
   } 
   return static_cast<localIndex>( index + low );  
 }

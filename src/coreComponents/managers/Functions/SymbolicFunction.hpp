@@ -16,8 +16,8 @@
  * @file SymbolicFunction.hpp
  */
 
-#ifndef SYMBOLICFUNCTION_HPP_
-#define SYMBOLICFUNCTION_HPP_
+#ifndef GEOSX_MANAGERS_FUNCTIONS_SYMBOLICFUNCTION_HPP_
+#define GEOSX_MANAGERS_FUNCTIONS_SYMBOLICFUNCTION_HPP_
 
 #include "FunctionBase.hpp"
 
@@ -73,7 +73,7 @@ public:
 #ifdef GEOSX_USE_MATHPRESSO
     return parserExpression.evaluate( reinterpret_cast<void*>( const_cast<real64*>(input) ) );
 #else
-    GEOS_ERROR("GEOSX was not built with mathpresso!");
+    GEOSX_ERROR("GEOSX was not built with mathpresso!");
     return 0;
 #endif
   }
@@ -89,4 +89,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* SYMBOLICFUNCTION_HPP_ */
+#endif /* GEOSX_MANAGERS_FUNCTIONS_SYMBOLICFUNCTION_HPP_ */

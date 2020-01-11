@@ -1,0 +1,34 @@
+<Problem>
+<Solvers
+    gravityVector="0.0, 0.0, -9.81">
+
+    <SinglePhaseFlow name="SinglePhaseFlow"
+                     verboseLevel="0"
+                     gravityFlag="1"
+                     discretization="singlePhaseTPFA"
+                     fluidName="water"
+                     solidName="rock"
+                     targetRegions="{Region1}">
+      <SystemSolverParameters krylovTol="1.0e-10"
+                              newtonTol="1.0e-6"
+                              maxIterNewton="8"/>
+    </SinglePhaseFlow>
+  </Solvers>
+
+  <Mesh>
+    <InternalMesh name="mesh1"
+                  elementTypes="{C3D8}" 
+                  xCoords="{0, 10}"
+                  yCoords="{0, 1}"
+                  zCoords="{0, 1}"
+                  nx="{10}"
+                  ny="{1}"
+                  nz="{1}"
+                  cellBlockNames="{block1}"/>
+  </Mesh>
+
+  <Geometry>
+    <Box name="source" xMin="-0.01, -0.01, -0.01" xMax=" 1.01, 1.01, 1.01"/>
+    <Box name="sink"   xMin=" 8.99, -0.01, -0.01" xMax="10.01, 1.01, 1.01"/>
+  </Geometry>
+</Problem>

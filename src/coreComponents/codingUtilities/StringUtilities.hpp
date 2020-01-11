@@ -16,8 +16,8 @@
  * @file StringUtilities.hpp
  */
 
-#ifndef STRINGUTILITIES_HPP_
-#define STRINGUTILITIES_HPP_
+#ifndef GEOSX_CODINGUTILITIES_STRINGUTILITIES_HPP_
+#define GEOSX_CODINGUTILITIES_STRINGUTILITIES_HPP_
 
 #include <cxxabi.h>
 #include <cstring>
@@ -31,7 +31,7 @@
 //#include <string>
 
 #include "common/DataTypes.hpp"
-#include "IntegerConversion.hpp"
+#include "cxx-utilities/src/IntegerConversion.hpp"
 
 namespace geosx
 {
@@ -275,4 +275,4 @@ inline string & EncodeBase64( unsigned char const * const bytes,
 }
 }
 
-#endif /* STRINGUTILITIES_HPP_ */
+#endif /* GEOSX_CODINGUTILITIES_STRINGUTILITIES_HPP_ */

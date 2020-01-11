@@ -1,103 +1,80 @@
-language: cpp
+language: minimal
+
 env:
   global:
-  - OMP_NUM_THREADS=3
-  - DO_BUILD=yes
-  - DO_TEST=yes
-  - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14 -DENABLE_WARNINGS_AS_ERRORS=ON"
-  - DOCKER_DATE=2019-09-22
-matrix:
-  include:
-  - os: osx
-    osx_image: xcode10.2
-    env:
-    - CC=clang
-    - CXX=clang++
-    - FC=gfortran
-    - MPICC=mpicc
-    - MPICXX=mpicxx
-    - MPIFC=mpifort
-    - MPIEXEC=/usr/local/bin/mpirun
-    - GEOSX_TPL_DIR=/Users/travis/build/GEOSX/thirdPartyLibs/install-environment-release
-    - CMAKE_BUILD_TYPE=Release
-  - compiler: clang6-LC-toss3
-    sudo: required
-    services: docker
-    dist: trusty
-    env:
-    - IMG=clang6-LC-toss3
-    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-environment-release
-    - CMAKE_BUILD_TYPE=Release
-  - compiler: clang7-LC-toss3
-    sudo: required
-    services: docker
-    dist: trusty
-    env:
-    - IMG=clang7-LC-toss3
-    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-environment-release
-    - CMAKE_BUILD_TYPE=Release
-  - compiler: clang7-LC-toss3-debug
-    sudo: required
-    services: docker
-    dist: trusty
-    env:
-    - IMG=clang7-LC-toss3
-    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-environment-release
-    - CMAKE_BUILD_TYPE=Debug
-  - compiler: gcc7-ubuntu18
-    sudo: required
-    services: docker
-    dist: trusty
-    env:
-    - IMG=gcc7-ubuntu18
-    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-environment-release
-    - CMAKE_BUILD_TYPE=Release
-  - compiler: gcc8-ubuntu18
-    sudo: required
-    services: docker
-    dist: trusty
-    env:
-    - IMG=gcc8-ubuntu18
-    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-environment-release
-    - CMAKE_BUILD_TYPE=Release
-  - compiler: gcc8-ubuntu18-debug
-    sudo: required
-    services: docker
-    dist: trusty
-    env:
-    - IMG=gcc8-ubuntu18
-    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-environment-release
-    - CMAKE_BUILD_TYPE=Debug
+  - GEOSX_TPL_TAG=88-282
+
+# The integrated test repository contains large data (using git lfs) and we do not use them here.
+# To save time (and money) we do not let travis automatically clone all our (lfs) subrepositories and do it by hand.
 git:
   submodules: false
-before_script:
+geosx_before_script: &geosx_before_script
+  before_script:
   - git submodule update --init --recursive src/coreComponents/cxx-utilities
   - git submodule update --init --recursive src/cmake/blt
   - git submodule update --init --recursive src/externalComponents/PVTPackage
   - git submodule update --init --recursive src/externalComponents/PAMELA
   - git submodule update --init --recursive src/coreComponents/fileIO/coupling/hdf5_interface
-  - git submodule update --init --recursive src/externalComponents/GEOSX_PTP
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-      docker run --rm --user='root' -v ${TRAVIS_BUILD_DIR}:/home/geosx/geosx_repo geosx/compiler:$IMG-$DOCKER_DATE  chown -R geosx /home/geosx;
-    fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-      brew install openmpi;
-      ln -s /usr/local/Cellar/open-mpi/4.0.1_2 /usr/local/Cellar/open-mpi/4.0.1_1;
-      cd ..;
-      mkdir thirdPartyLibs;
-      cd thirdPartyLibs;
-      wget https://www.dropbox.com/s/xrpjakpkkzq4ydt/tpl-osx-clang10-20190918.tar.gz;
-      tar -xf tpl-osx-clang10-20190918.tar.gz;
-      sudo mkdir -p /Users/settgast1/Codes/geosx/;
-      sudo ln -s /Users/travis/build/GEOSX/thirdPartyLibs /Users/settgast1/Codes/geosx/thirdPartyLibs;
-      cd /Users/travis/build/GEOSX/GEOSX ;
-    fi
-script: 
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-      python ${TRAVIS_BUILD_DIR}/scripts/config-build.py -hc ${TRAVIS_BUILD_DIR}/host-configs/darwin-clang.cmake -DBLT_MPI_COMMAND_APPEND:STRING="--oversubscribe";
-      cd build-darwin-clang-debug;
-      make -j2 VERBOSE=1;
-      ctest -V;
-    else
-      docker run --rm -v ${TRAVIS_BUILD_DIR}:/home/geosx/GEOSX  -e GEOSX_TPL_DIR -e CMAKE_BUILD_TYPE geosx/compiler:$IMG-$DOCKER_DATE  /home/geosx/GEOSX/scripts/travis_build_and_test.sh;
-    fi
+  - git submodule update --init --recursive src/coreComponents/physicsSolvers/GEOSX_PTP
+
+geosx_linux_build: &geosx_linux_build
+  stage: build
+  services: docker
+  <<: *geosx_before_script
+  script:
+    # The linux build relies on two environment variables DOCKER_REPOSITORY and GEOSX_TPL_TAG to define the TPL version.
+    # And another CMAKE_BUILD_TYPE to define the build type we want for GEOSX.
+    # Optional BUILD_AND_TEST_ARGS to pass arguments to travis_build_and_test.sh script.
+  - docker run --rm -v ${TRAVIS_BUILD_DIR}:/tmp/GEOSX -e CMAKE_BUILD_TYPE ${DOCKER_REPOSITORY}:${GEOSX_TPL_TAG} /tmp/GEOSX/scripts/travis_build_and_test.sh ${BUILD_AND_TEST_ARGS};
+
+geosx_osx_build: &geosx_osx_build
+  stage: build
+  os: osx
+  osx_image: xcode10.2
+  install:
+  - mkdir ../thirdPartyLibs
+  - TPL_METADATA_URL=https://www.googleapis.com/storage/v1/b/geosx/o/TPL%2Fosx-${GEOSX_TPL_TAG}.tar
+  - TPL_BULK_URL=${TPL_METADATA_URL}?alt=media
+  - curl -s "${TPL_BULK_URL}" | tar --directory=../thirdPartyLibs -xf -
+  - BREW_HASH=$(curl -s "${TPL_METADATA_URL}" | python3 -c "import sys, json; print(json.load(sys.stdin)['metadata']['BREW_HASH'], end='')")
+  - BREW_URL=https://raw.github.com/Homebrew/homebrew-core/${BREW_HASH}
+  - brew install ${BREW_URL}/Formula/open-mpi.rb
+  <<: *geosx_before_script
+  script:
+  - python ${TRAVIS_BUILD_DIR}/scripts/config-build.py -hc ${TRAVIS_BUILD_DIR}/host-configs/darwin-clang.cmake -DBLT_MPI_COMMAND_APPEND:STRING="--oversubscribe" -DENABLE_GEOSX_PTP:BOOL=ON -DENABLE_DOXYGEN:BOOL=OFF
+  - cd build-darwin-clang-debug
+  - make -j $(nproc) VERBOSE=1
+  - ctest -V
+
+jobs:
+  include:
+  - <<: *geosx_osx_build
+  - <<: *geosx_linux_build
+    env:
+    - DOCKER_REPOSITORY=geosx/ubuntu18.04-clang8.0.0-cuda10.1.243
+    - CMAKE_BUILD_TYPE=Release
+    - BUILD_AND_TEST_ARGS=-disable-unit-tests
+  - <<: *geosx_linux_build
+    env:
+    - DOCKER_REPOSITORY=geosx/centos7.5.1804-clang6.0.1
+    - CMAKE_BUILD_TYPE=Release
+  - <<: *geosx_linux_build
+    env:
+    - DOCKER_REPOSITORY=geosx/centos7.5.1804-clang7.0.0
+    - CMAKE_BUILD_TYPE=Release
+  - <<: *geosx_linux_build
+    env:
+    - DOCKER_REPOSITORY=geosx/centos7.5.1804-clang7.0.0
+    - CMAKE_BUILD_TYPE=Debug
+  - <<: *geosx_linux_build
+    env:
+    - DOCKER_REPOSITORY=geosx/ubuntu18.04-gcc7
+    - CMAKE_BUILD_TYPE=Release
+  - <<: *geosx_linux_build
+    env:
+    - DOCKER_REPOSITORY=geosx/ubuntu18.04-gcc8
+    - CMAKE_BUILD_TYPE=Release
+  - <<: *geosx_linux_build
+    env:
+    - DOCKER_REPOSITORY=geosx/ubuntu18.04-gcc8
+    - CMAKE_BUILD_TYPE=Debug

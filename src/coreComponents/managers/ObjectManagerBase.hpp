@@ -16,8 +16,8 @@
  * @file ObjectManagerBase.hpp
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_MANAGERS_OBJECTMANAGERBASE_HPP_
-#define SRC_COMPONENTS_CORE_SRC_MANAGERS_OBJECTMANAGERBASE_HPP_
+#ifndef GEOSX_MANAGERS_OBJECTMANAGERBASE_HPP_
+#define GEOSX_MANAGERS_OBJECTMANAGERBASE_HPP_
 
 #include "dataRepository/Group.hpp"
 
@@ -45,7 +45,7 @@ public:
    */
   ///@{
 
-  using CatalogInterface = cxx_utilities::CatalogInterface< ObjectManagerBase, std::string const &, dataRepository::Group * const >;
+  using CatalogInterface = dataRepository::CatalogInterface< ObjectManagerBase, std::string const &, dataRepository::Group * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 
   virtual const string getCatalogName() const = 0;
@@ -56,17 +56,20 @@ public:
 
   virtual localIndex PackSize( string_array const & wrapperNames,
                                arrayView1d<localIndex const> const & packList,
-                               integer const recursive ) const override;
+                               integer const recursive,
+                               bool on_device = false ) const override;
 
 
   virtual localIndex Pack( buffer_unit_type * & buffer,
                            string_array const & wrapperNames,
                            arrayView1d<localIndex const> const & packList,
-                           integer const recursive )  const override;
+                           integer const recursive,
+                           bool on_device = false)  const override;
 
   virtual localIndex Unpack( buffer_unit_type const *& buffer,
                              arrayView1d<localIndex> & packList,
-                             integer const recursive )  override;
+                             integer const recursive,
+                             bool on_device = false ) override;
 
   template< bool DOPACK >
   localIndex PackSets( buffer_unit_type * & buffer,
@@ -128,7 +131,8 @@ private:
   localIndex PackPrivate( buffer_unit_type * & buffer,
                           string_array const & wrapperNames,
                           arrayView1d<localIndex const> const & packList,
-                          integer const recursive ) const;
+                          integer const recursive,
+                          bool on_device) const;
 
   template< bool DOPACK >
   localIndex PackGlobalMapsPrivate( buffer_unit_type * & buffer,
@@ -207,7 +211,7 @@ public:
   {
     for( auto index : indicesToSend )
     {
-      GEOS_ERROR_IF( m_ghostRank[index] >= 0,
+      GEOSX_ERROR_IF( m_ghostRank[index] >= 0,
                      "trying to set ghostRank of non-locally owned index: "
                      "m_ghostRank[" << index << "]=" << m_ghostRank[index] );
       m_ghostRank[index] = -1;
@@ -252,23 +256,23 @@ public:
 
   static void CleanUpMap( std::set<localIndex> const & targetIndices,
                           array1d<set<localIndex> > & upmap,
-                          array2d<localIndex> const & downmap );
+                          arrayView2d<localIndex const> const & downmap );
 
   static void CleanUpMap( std::set<localIndex> const & targetIndices,
                           ArrayOfSetsView< localIndex > const & upmap,
-                          array2d< localIndex const > const & downmap );
+                          arrayView2d< localIndex const > const & downmap );
 
   static void CleanUpMap( std::set<localIndex> const & targetIndices,
                           array1d<set<localIndex> > & upmap,
-                          array1d< array1d<localIndex > > const & downmap );
+                          arrayView1d< arrayView1d<localIndex const > const > const & downmap );
 
   static void CleanUpMap( std::set<localIndex> const & targetIndices,
                           ArrayOfSetsView< localIndex > const & upmap,
-                          array1d< array1d<localIndex> > const & downmap );
+                          arrayView1d< arrayView1d< localIndex const > const > const & downmap );
 
   static void CleanUpMap( std::set<localIndex> const & targetIndices,
                           ArrayOfSetsView< localIndex > const & upmap,
-ArrayOfArraysView< localIndex const > const & downmap );
+                          ArrayOfArraysView< localIndex const > const & downmap );
 
   virtual void enforceStateFieldConsistencyPostTopologyChange( std::set<localIndex> const & targetIndices );
 
@@ -410,10 +414,10 @@ void ObjectManagerBase::FixUpDownMaps( TYPE_RELATION & relation,
           allValuesMapped = false;
         }
       }
-      GEOS_ERROR_IF( relation[li][a]==unmappedLocalIndexValue, "Index not set");
+      GEOSX_ERROR_IF( relation[li][a]==unmappedLocalIndexValue, "Index not set");
     }
   }
-  GEOS_ERROR_IF( !allValuesMapped, "some values of unmappedIndices were not used");
+  GEOSX_ERROR_IF( !allValuesMapped, "some values of unmappedIndices were not used");
   unmappedIndices.clear();
 }
 
@@ -492,4 +496,4 @@ void ObjectManagerBase::FixUpDownMaps( ArrayOfSets< localIndex > & relation,
 
 typedef geosx::ObjectManagerBase ObjectDataStructureBaseT;
 
-#endif /* SRC_COMPONENTS_CORE_SRC_MANAGERS_OBJECTMANAGERBASE_HPP_ */
+#endif /* GEOSX_MANAGERS_OBJECTMANAGERBASE_HPP_ */

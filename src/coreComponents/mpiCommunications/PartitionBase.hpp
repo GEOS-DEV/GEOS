@@ -16,8 +16,8 @@
  * @file PartitionBase.hpp
  */
 
-#ifndef PARTITIONBASE_H_
-#define PARTITIONBASE_H_
+#ifndef GEOSX_MPICOMMUNICATIONS_PARTITIONBASE_HPP_
+#define GEOSX_MPICOMMUNICATIONS_PARTITIONBASE_HPP_
 
 #include "common/DataTypes.hpp"
 
@@ -123,7 +123,7 @@ protected:
   virtual void InitializePostSubGroups( dataRepository::Group * const ) = 0;
 
 //
-  array1d<NeighborCommunicator> m_neighbors;
+  std::vector<NeighborCommunicator> m_neighbors;
 
   array1d<MPI_Request> m_mpiRequest;
   array1d<MPI_Status> m_mpiStatus;
@@ -166,4 +166,4 @@ private:
 
 }
 
-#endif /* PARTITIONBASE_H_ */
+#endif /* GEOSX_MPICOMMUNICATIONS_PARTITIONBASE_HPP_ */

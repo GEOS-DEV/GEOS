@@ -1,18 +1,20 @@
-
 #
 # Specify all headers
 #
 set(dataRepository_headers
     BufferOps_inline.hpp
     BufferOps.hpp
+    BufferOpsDevice.hpp
     ExecutableGroup.hpp
     Group.hpp
     InputFlags.hpp
     KeyIndexT.hpp
     MappedVector.hpp
+    ObjectCatalog.hpp
     ReferenceWrapper.hpp
     RestartFlags.hpp
-    SidreWrapper.hpp
+    ConduitRestart.hpp
+    WrapperHelpers.hpp
     Wrapper.hpp
     WrapperBase.hpp
     xmlWrapper.hpp
@@ -22,8 +24,10 @@ set(dataRepository_headers
 # Specify all sources
 #
 set(dataRepository_sources
+    BufferOpsDevice.cpp
+    ExecutableGroup.cpp
     Group.cpp
-    SidreWrapper.cpp
+    ConduitRestart.cpp
     Wrapper.cpp
     WrapperBase.cpp
     xmlWrapper.cpp
@@ -35,24 +39,29 @@ if( ENABLE_MPI )
   set( extraComponentsLinkList ${extraComponentsLinkList} mpi )
 endif()
 
+if( BUILD_OBJ_LIBS )
+  set (dependencyList common cxx-utilities codingUtilities pugixml fileIO)
+else()
+  set( dependencyList common codingUtilities)
+endif()
 
+if ( ENABLE_OPENMP )
+  set( dependencyList ${dependencyList} openmp )
+endif()
 
-set( dependencyList common cxx-utilities codingUtilities pugixml fileIO )
+if ( ENABLE_CUDA )
+  set( dependencyList ${dependencyList} cuda )
+endif()
 
 if( CONDUIT_FOUND )
-  set( dependencyList ${dependencyList} conduit )
-endif()
-
-if( ATK_FOUND )
-  set( dependencyList ${dependencyList} axom )
-endif()
-
+  set( dependencyList ${dependencyList} common conduit fmt )
+endif( )
 
 blt_add_library( NAME                  dataRepository
                  SOURCES               ${dataRepository_sources}
                  HEADERS               ${dataRepository_headers}
                  DEPENDS_ON            ${dependencyList}
-                 #OBJECT                TRUE
+                 OBJECT                ${buildAsObj}
                )
 
 target_include_directories( dataRepository PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)

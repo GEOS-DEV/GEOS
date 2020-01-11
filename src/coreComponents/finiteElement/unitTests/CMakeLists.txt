@@ -3,7 +3,7 @@
 #
 
 set(testSources
-    testShapeFunctionKernel.cpp
+#    testShapeFunctionKernel.cpp
    )
 
 if( ENABLE_OPENMP )
@@ -36,6 +36,6 @@ foreach(test ${testSources})
 endforeach()
 
 if ( ENABLE_CUDA )
-blt_add_target_compile_flags( TO testShapeFunctionKernel
-                              FLAGS "--maxrregcount=64") 
+#blt_add_target_compile_flags( TO testShapeFunctionKernel
+#                              FLAGS "--maxrregcount=64") 
 endif()

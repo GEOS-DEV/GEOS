@@ -16,8 +16,8 @@
  * @file ConstitutiveManager.hpp
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_CONSTITUTIVEMANAGER_HPP_
-#define SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_CONSTITUTIVEMANAGER_HPP_
+#ifndef GEOSX_CONSTITUTIVE_CONSTITUTIVEMANAGER_HPP_
+#define GEOSX_CONSTITUTIVE_CONSTITUTIVEMANAGER_HPP_
 
 #include "dataRepository/Group.hpp"
 #include "dataRepository/ReferenceWrapper.hpp"
@@ -115,7 +115,7 @@ ConstitutiveManager::GetConstitutiveData( string const & name,
   for( localIndex a=0 ; a<this->GetSubGroups().size() ; ++a )
   {
     ConstitutiveBase const * const material = relationGroup->GetGroup<ConstitutiveBase>( a );
-    if( material->hasView( name ) )
+    if( material->hasWrapper( name ) )
     {
       rval[a] = material->getReference<T>( name );
     }
@@ -135,4 +135,4 @@ ConstitutiveManager::GetConstitutiveData( string const & name,
 }
 } /* namespace geosx */
 
-#endif /* SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_CONSTITUTIVEMANAGER_HPP_ */
+#endif /* GEOSX_CONSTITUTIVE_CONSTITUTIVEMANAGER_HPP_ */

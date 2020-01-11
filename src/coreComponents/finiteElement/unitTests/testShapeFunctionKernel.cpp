@@ -17,7 +17,8 @@
  */
 
 
-#include "cxx-utilities/src/tests/testUtils.hpp"
+#include "cxx-utilities/src/Array.hpp"
+#include "cxx-utilities/unitTests/testUtils.hpp"
 #include "finiteElement/FiniteElementShapeFunctionKernel.hpp"
 
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"

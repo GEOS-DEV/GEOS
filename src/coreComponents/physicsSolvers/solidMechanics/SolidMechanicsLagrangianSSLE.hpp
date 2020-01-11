@@ -16,8 +16,8 @@
  * @file SolidMechanicsLagrangianSSLE.hpp
  */
 
-#ifndef CORECOMPONENTS_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSLAGRANGIANSSLE_HPP_
-#define CORECOMPONENTS_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSLAGRANGIANSSLE_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSLAGRANGIANSSLE_HPP_
+#define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSLAGRANGIANSSLE_HPP_
 
 #include "SolidMechanicsLagrangianFEM.hpp"
 #include "SolidMechanicsLagrangianSSLEKernels.hpp"
@@ -40,6 +40,8 @@ public:
 
   static string CatalogName() { return "SolidMechanicsLagrangianSSLE"; }
 
+  virtual void
+  updateStress( DomainPartition * const domain ) override;
 
 
   virtual void ApplySystemSolution( DofManager const & dofManager,
@@ -52,15 +54,14 @@ public:
                                localIndex NUM_QUADRATURE_POINTS,
                                constitutive::ConstitutiveBase * const constitutiveRelation,
                                set<localIndex> const & elementList,
-                               arrayView2d<localIndex const> const & elemsToNodes,
+                               arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & elemsToNodes,
                                arrayView3d< R1Tensor const> const & dNdX,
                                arrayView2d<real64 const> const & detJ,
                                arrayView1d<R1Tensor const> const & X,
                                arrayView1d<R1Tensor const> const & u,
-                               arrayView1d<R1Tensor const> const & GEOSX_UNUSED_ARG( vel ),
+                               arrayView1d<R1Tensor const> const & vel,
                                arrayView1d<R1Tensor> const & acc,
-                               arrayView2d<real64> const & meanStress,
-                               arrayView2d<R2SymTensor> const & devStress,
+                               arrayView2d<R2SymTensor> const & stress,
                                real64 const dt ) const override
   {
     using ExplicitKernel = SolidMechanicsLagrangianSSLEKernels::ExplicitKernel;
@@ -74,9 +75,9 @@ public:
                                                         detJ,
                                                         X,
                                                         u,
+                                                        vel,
                                                         acc,
-                                                        meanStress,
-                                                        devStress,
+                                                        stress,
                                                         dt );
   }
 
@@ -90,7 +91,7 @@ public:
                                arrayView2d<real64 const > const& detJ,
                                FiniteElementBase const * const fe,
                                arrayView1d< integer const > const & elemGhostRank,
-                               arrayView2d< localIndex const > const & elemsToNodes,
+                               arrayView2d< localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM > const & elemsToNodes,
                                arrayView1d< globalIndex const > const & globalDofNumber,
                                arrayView1d< R1Tensor const > const & disp,
                                arrayView1d< R1Tensor const > const & uhat,
@@ -143,4 +144,4 @@ public:
 
 } /* namespace geosx */
 
-#endif /* CORECOMPONENTS_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSLAGRANGIANSSLE_HPP_ */
+#endif /* GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSLAGRANGIANSSLE_HPP_ */

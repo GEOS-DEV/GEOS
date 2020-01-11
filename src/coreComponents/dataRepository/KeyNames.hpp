@@ -16,8 +16,8 @@
  * @file KeyNames.hpp
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_DATAREPOSITORY_KEYNAMES_HPP_
-#define SRC_COMPONENTS_CORE_SRC_DATAREPOSITORY_KEYNAMES_HPP_
+#ifndef GEOSX_DATAREPOSITORY__KEYNAMES_HPP_
+#define GEOSX_DATAREPOSITORY__KEYNAMES_HPP_
 
 #include <string>
 
@@ -27,6 +27,8 @@ namespace dataRepository
 {
 namespace keys
 {
+
+/// @cond DO_NOT_DOCUMENT
 
 //static constexpr auto ReferencePosition = "ReferencePosition";
 static constexpr auto referencePositionString = "ReferencePosition";
@@ -64,7 +66,9 @@ static constexpr auto FE_Space    = "FE_Space";
 static constexpr auto cellManager = "cellManager";
 static constexpr auto functionManager = "FunctionManager";
 
+/// @endcond
+
 }
 }
 }
-#endif /* SRC_COMPONENTS_CORE_SRC_DATAREPOSITORY_KEYNAMES_HPP_ */
+#endif /* GEOSX_DATAREPOSITORY__KEYNAMES_HPP_ */

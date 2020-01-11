@@ -61,8 +61,8 @@ EpetraMatrix::EpetraMatrix()
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 EpetraMatrix::EpetraMatrix( EpetraMatrix const & src )
 {
-  GEOS_ERROR_IF( src.unwrappedPointer() == nullptr, "Input matrix looks empty" );
-  //TODO GEOS_ERROR_IF( !src.isClosed(), "Input matrix hasn't been properly closed before copy");
+  GEOSX_ERROR_IF( src.unwrappedPointer() == nullptr, "Input matrix looks empty" );
+  //TODO GEOSX_ERROR_IF( !src.isClosed(), "Input matrix hasn't been properly closed before copy");
 
   m_matrix = std::make_unique< Epetra_FECrsMatrix >( *src.unwrappedPointer() );
   m_src_map = std::make_unique< Epetra_Map >( m_matrix->DomainMap() );
@@ -343,12 +343,24 @@ void EpetraMatrix::multiply( EpetraMatrix const & src,
 // Matrix/matrix multiplication
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Perform the matrix-matrix product this^T * src = dst.
-void EpetraMatrix::multiplyTranspose( geosx::EpetraMatrix const & src,
-                                      geosx::EpetraMatrix & dst,
-                                      bool const closeResult ) const
+void EpetraMatrix::leftMultiplyTranspose( EpetraMatrix const & src,
+                                          EpetraMatrix & dst,
+                                          bool const closeResult ) const
 {
   this->multiply( true, src, false, dst, closeResult );
 }
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Matrix/matrix multiplication
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Perform the matrix-matrix product src * this^T = dst.
+void EpetraMatrix::rightMultiplyTranspose( EpetraMatrix const & src,
+                                           EpetraMatrix & dst,
+                                           bool const closeResult ) const
+{
+  src.multiply( false, *this, true, dst, closeResult );
+}
+
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Compute residual.
@@ -415,8 +427,8 @@ void EpetraMatrix::getRowCopy( globalIndex globalRow,
                                array1d< globalIndex > & colIndices,
                                array1d< real64 > & values ) const
 {
-  GEOS_ERROR_IF( !m_assembled, "Attempting to call " << __FUNCTION__ << " before close() is illegal" );
-  GEOS_ASSERT( m_matrix->IndicesAreLocal() ); // internal consistency check
+  GEOSX_ERROR_IF( !m_assembled, "Attempting to call " << __FUNCTION__ << " before close() is illegal" );
+  GEOSX_ASSERT( m_matrix->IndicesAreLocal() ); // internal consistency check
 
   int n_entries;
   int * indices_ptr;
@@ -424,7 +436,7 @@ void EpetraMatrix::getRowCopy( globalIndex globalRow,
 
   int const localRow = m_matrix->LRID( globalRow );
   int const err = m_matrix->ExtractMyRowView( localRow, n_entries, values_ptr, indices_ptr );
-  GEOS_ERROR_IF( err != 0,
+  GEOSX_ERROR_IF( err != 0,
                  "getRowCopy failed. This often happens if the requested global row "
                  "is not local to this processor, or if close() hasn't been called." );
 
@@ -441,15 +453,15 @@ void EpetraMatrix::getRowCopy( globalIndex globalRow,
 
 real64 EpetraMatrix::getDiagValue( globalIndex globalRow ) const
 {
-  GEOS_ERROR_IF( !m_assembled, "Attempting to call " << __FUNCTION__ << " before close() is illegal" );
-  GEOS_ASSERT( m_matrix->IndicesAreLocal() ); // internal consistency check
+  GEOSX_ERROR_IF( !m_assembled, "Attempting to call " << __FUNCTION__ << " before close() is illegal" );
+  GEOSX_ASSERT( m_matrix->IndicesAreLocal() ); // internal consistency check
 
   double * values = nullptr;
   int * indices = nullptr;
   int length;
 
   int err = m_matrix->ExtractMyRowView( m_matrix->LRID( globalRow ), length, values, indices );
-  GEOS_ERROR_IF( err != 0,
+  GEOSX_ERROR_IF( err != 0,
                  "getRowView failed. This often happens if the requested global row "
                  "is not local to this processor, or if close() hasn't been called." );
 
@@ -476,7 +488,7 @@ void EpetraMatrix::clearRow( globalIndex const globalRow,
   int length;
 
   int err = m_matrix->ExtractGlobalRowView( globalRow, length, values );
-  GEOS_ERROR_IF( err != 0,
+  GEOSX_ERROR_IF( err != 0,
                  "getRowView failed. This often happens if the requested global row is not local to this processor, or if close() hasn't been called." );
 
   for( int j = 0; j < length; ++j )
@@ -642,12 +654,14 @@ void EpetraMatrix::multiply( bool const transA,
                                                *C.unwrappedPointer(),
                                                closeResult );
 
-  GEOS_ERROR_IF( err != 0, "Error thrown in matrix/matrix multiply routine" );
+  GEOSX_ERROR_IF( err != 0, "Error thrown in matrix/matrix multiply routine" );
   if( closeResult )
   {
     C.m_assembled = true;
   }
 }
+
+
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // getLocalRowID

@@ -165,3 +165,10 @@ The following examples are provided:
       int const * const d = &b; // const pointer to const int
       int & e = a; // reference to int
       int const & f = b; // reference to const int
+
+      
+Header Guards
+=============
+Header guard names should consist of the name `GEOSX`, followed by the component name (e.g. dataRepository),
+and finally the name of the header file.
+All characters in the macro should be capitalized.
