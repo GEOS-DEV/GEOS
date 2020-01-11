@@ -1,6 +1,5 @@
 
-<Problem>
-  
+<Problem>  
   <Solvers>
     <SolidMechanicsLagrangianSSLE name="lagsolve" 
                                   cflFactor="0.25"
@@ -9,19 +8,20 @@
                                   solidMaterialName="shale"/>
   </Solvers>
 
-    <Mesh>
-      <InternalMesh name="mesh1"
-                    elementTypes="{C3D8}" 
-                    xCoords="{ 0, 10 }"
-                    yCoords="{ 0, 10 }"
-                    zCoords="{ 0, 10 }"
-                    nx="{100}"
-                    ny="{100}"
-                    nz="{100}"
-                    cellBlockNames="{cb1}"/>
-    </Mesh>
+  <Mesh>
+    <InternalMesh name="mesh1"
+                  elementTypes="{C3D8}" 
+                  xCoords="{ 0, 10 }"
+                  yCoords="{ 0, 10 }"
+                  zCoords="{ 0, 10 }"
+                  nx="{100}"
+                  ny="{100}"
+                  nz="{100}"
+                  cellBlockNames="{cb1}"/>
+  </Mesh>
 
-  <Events maxTime="1.0e-5">
+
+  <Events maxTime="1.0e-3">
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
     <PeriodicEvent name="solverApplications"
@@ -50,32 +50,57 @@
   </ElementRegions>
 
   <Constitutive>
-      <LinearElasticIsotropic name="granite"
-                              defaultDensity="2700"
-                              defaultBulkModulus="5.5556e9"
-                              defaultShearModulus="4.16667e9"/>
-
       <LinearElasticIsotropic name="shale"
                               defaultDensity="2700"
                               defaultBulkModulus="5.5556e9"
                               defaultShearModulus="4.16667e9"/>
-
-      <LinearElasticIsotropic name="water"
-                              defaultDensity="1000"
-                              defaultBulkModulus="2.0e9"
-                              defaultShearModulus="0.0"/>
   </Constitutive>
 
 
   <FieldSpecifications>
-    <FieldSpecification name="source"  
+    <FieldSpecification name="source0"
                initialCondition="1"  
                setNames="{source}"
                objectPath="ElementRegions"
-               fieldName="shale_MeanStress"
-               component="-1"
+               fieldName="shale_stress"
+               component="0"
                scale="-1.0e6"/>
-               <!--objectPath="ElementRegions/Region2/cb1" -->
+    <FieldSpecification name="source1"  
+               initialCondition="1"  
+               setNames="{source}"
+               objectPath="ElementRegions"
+               fieldName="shale_stress"
+               component="2"
+               scale="-1.0e6"/>
+    <FieldSpecification name="source2"  
+               initialCondition="1"  
+               setNames="{source}"
+               objectPath="ElementRegions"
+               fieldName="shale_stress"
+               component="5"
+               scale="-1.0e6"/>
+
+    <FieldSpecification name="xconstraint" 
+               objectPath="nodeManager"
+               fieldName="Velocity"
+               component="0"  
+               scale="0.0" 
+               setNames="{xneg}"/>
+               
+    <FieldSpecification name="yconstraint" 
+               objectPath="nodeManager"
+               fieldName="Velocity"
+               component="1"  
+               scale="0.0" 
+               setNames="{yneg}"/>
+               
+    <FieldSpecification name="zconstraint" 
+               objectPath="nodeManager"
+               fieldName="Velocity"
+               component="2"  
+               scale="0.0" 
+               setNames="{zneg}"/>
+
   </FieldSpecifications>
 
   <Geometry>
