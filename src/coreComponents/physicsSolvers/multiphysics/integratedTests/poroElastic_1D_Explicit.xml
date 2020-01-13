@@ -1,0 +1,242 @@
+<?xml version="1.0" ?>
+<!--# # -->
+
+<Problem>
+
+  <Solvers
+    gravityVector="0.0,0.0,-0.0"
+    >
+  
+    <Hydrofracture 
+      name="hydrofracture" 
+      solidSolverName="lagsolve"
+      fluidSolverName="SinglePhaseFlow"
+      couplingTypeOption="ExplicitlyCoupled"
+      targetRegions="{Region2}"
+      contactRelationName="fractureContact"
+      >
+    </Hydrofracture>
+  
+    <SolidMechanics_LagrangianFEM
+      name="lagsolve" 
+      timeIntegrationOption="ExplicitDynamic"
+      cflFactor="0.1"
+      discretization="FE1"
+      targetRegions="{Region2}"
+      solidMaterialName="rock"
+      massDamping="0"
+      >
+    </SolidMechanics_LagrangianFEM>
+  
+    <SinglePhaseFlow 
+         name="SinglePhaseFlow"
+         timeIntegrationOption="ExplicitTransient"
+         cflFactor="0.1"
+         gravityFlag="1"
+         discretization="singlePhaseTPFA"
+         targetRegions="{Region2}"
+         fluidName="water"
+         solidName="rock"
+      >
+    </SinglePhaseFlow>
+    
+  </Solvers>
+  
+  <Mesh>
+    <InternalMesh name="mesh1"
+                  elementTypes="{C3D8}"
+                  xCoords="{0, 1}"
+                  yCoords="{0, 1}"
+                  zCoords="{0, 1}"
+                  nx="{1}"
+                  ny="{10}"
+                  nz="{1}"
+                  cellBlockNames="{cb1}"/>
+  </Mesh>
+
+  <Geometry>
+    <Box name="Inlet"
+         xMin="-0.01, 0.89, -0.01"
+         xMax=" 1.01, 1.01, 1.01"/>
+  </Geometry>
+
+
+  <Events maxTime="100.0"
+          maxCycle="10000000">
+  
+    <PeriodicEvent 
+      name="solverApplications1"
+      target="/Solvers/hydrofracture" />
+
+    <PeriodicEvent name="outputs"
+                   timeFrequency="0.1"
+                   targetExactTimestep="0"
+                   target="/Outputs/siloOutput" />
+  </Events>
+
+  <NumericalMethods>
+    <BasisFunctions> 
+        <LagrangeBasis3 name="linearBasis"  degree = "1"  />
+    </BasisFunctions>
+    
+    <QuadratureRules>
+        <GaussQuadrature3 name="gaussian"   degree="2"  />    
+    </QuadratureRules>
+    
+    <FiniteElements>
+        <FiniteElementSpace name="FE1" parentSpace="C3D8" basis="linearBasis" quadrature="gaussian" />
+    </FiniteElements>
+
+    <FiniteVolume>
+      <TwoPointFluxApproximation name="singlePhaseTPFA"
+                                 fieldName="pressure"
+                                 coefficientName="permeability"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion name="Region2"
+                   cellBlocks="{cb1}"
+                   materialList="{water, rock}"/>
+                   
+    <FaceElementRegion name="Fracture"
+                       defaultAperture="1.0e-3"
+                       materialList="{water, rock}"/>
+  </ElementRegions>
+
+  <Constitutive>
+
+    <CompressibleSinglePhaseFluid name="water"
+                                  defaultDensity="1000"
+                                  defaultViscosity="0.35"
+                                  referencePressure="0"
+                                  referenceDensity="1000"
+                                  compressibility="2.76e-6"
+                                  referenceViscosity="0.35"
+                                  viscosibility="0.0"/>
+
+    <PoroLinearElasticIsotropic name="rock"
+                                    defaultDensity="1000e2"
+                                    defaultBulkModulus="4e6"
+                                    defaultShearModulus="0.4e6"
+                                    BiotCoefficient="1"
+                                    referencePressure="0"
+                                    />
+                                
+    <Contact name="fractureContact"
+      penaltyStiffness="4e10" >
+      <TableFunction 
+        name="aperTable" 
+        coordinates = "{ -1.0e-2, 0.0}"
+        values      = "{  1.0e-5, 1.0e-3}" 
+        />
+    </Contact>
+  </Constitutive>
+
+  <InitialConditions>
+    
+  </InitialConditions>
+
+  <FieldSpecifications>
+
+        <FieldSpecification 
+            name="permx"
+            component="0"
+            initialCondition="1"
+            setNames="{all}"
+            objectPath="ElementRegions/Region2/cb1"
+            fieldName="permeability"
+            scale="4.0e-9" />
+
+        <FieldSpecification
+            name="permy"
+            component="1"
+            initialCondition="1"
+            setNames="{all}"
+            objectPath="ElementRegions/Region2/cb1"
+            fieldName="permeability"
+            scale="4.0e-9" />
+
+        <FieldSpecification
+            name="permz"
+            component="2"
+            initialCondition="1"
+            setNames="{all}"
+            objectPath="ElementRegions/Region2/cb1"
+            fieldName="permeability"
+            scale="4.0e-9" />
+
+        <FieldSpecification
+            name="referencePorosity"
+            initialCondition="1"
+            setNames="{all}"
+            objectPath="ElementRegions/Region2/cb1"
+            fieldName="referencePorosity"
+            scale="0.5" />
+
+    <FieldSpecification name="xconstraint"
+               objectPath="nodeManager"
+               fieldName="Velocity"
+               component="0"
+               scale="0.0"
+               setNames="{xneg, xpos}"/>
+
+    <FieldSpecification name="yconstraint"
+               objectPath="nodeManager"
+               fieldName="Velocity"
+               component="1"
+               scale="0.0"
+               setNames="{yneg}"/>
+
+    <FieldSpecification name="zconstraint"
+               objectPath="nodeManager"
+               fieldName="Velocity"
+               component="2"
+               scale="0.0"
+               setNames="{zneg, zpos}"/>          
+
+    <FieldSpecification name="initialMass"
+               initialCondition="1"
+               setNames="{all}"
+               objectPath="ElementRegions/Region2/cb1"
+               fieldName="mass"
+               scale="50"/>
+
+        <FieldSpecification 
+               name="yloading"
+               objectPath="nodeManager"
+               fieldName="Velocity"
+               component="1"
+               scale="-3e-3"
+               setNames="{ypos}"
+               beginTime="10"/>  
+
+        <SourceFlux 
+            name="sourceTerm"
+            objectPath="ElementRegions/Region2/cb1"
+            scale="-8"
+            setNames="{Inlet}"
+            functionName="sourceTimeFunction"/>
+
+
+  </FieldSpecifications>
+
+  <Functions> 
+    <TableFunction name="sourceTimeFunction"
+                   inputVarNames="{time}"
+                   coordinates= "{0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.0e9}"
+                   values     = "{0.0, 0.028, 0.104, 0.216, 0.352, 0.5, 0.648, 0.784, 0.896, 0.972, 1.0, 1.0}" />      
+  </Functions>
+
+  <Partition>
+    <SpatialPartition xPar="1" yPar="1" zPar="1"/>
+  </Partition>
+
+  <Outputs>
+      <Silo name="siloOutput"
+            plotFileRoot="poroElastic_1D_Explicit"
+          plotLevel="3"/>
+  </Outputs>
+
+
+</Problem>
