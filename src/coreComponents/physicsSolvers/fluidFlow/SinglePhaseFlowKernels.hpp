@@ -371,6 +371,7 @@ struct FluxKernel
           ElementView < arrayView1d<real64 const> > const & aperture,
           ElementView < arrayView1d<real64 const> > const & poro,
           ElementView < arrayView1d<real64 const> > const & totalCompressibility,
+          ElementView < arrayView1d<real64 const> > const & referencePressure,
           ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> * const mass,
           real64 * const maxStableDt);
 
@@ -593,6 +594,7 @@ struct FluxKernel
            ElementView <arrayView1d<real64 const>> const & mob,
            ElementView <arrayView1d<real64 const>> const & poro,
            ElementView <arrayView1d<real64 const>> const & totalCompressibility,
+           ElementView <arrayView1d<real64 const>> const & referencePressure,
            localIndex const fluidIndex,
            integer const gravityFlag,
            real64 const dt,
@@ -600,7 +602,6 @@ struct FluxKernel
            real64 * const maxStableDt)
   {
     localIndex constexpr numElems = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
-    real64 minPressure = 1e5;
 
     stackArray1d<real64, numElems>   densWeight(numElems);
 
@@ -623,7 +624,7 @@ struct FluxKernel
     R1Tensor faceConormal, cellToFaceVec;
     R2SymTensor coefTensor;
     bool faceToCellConnector = false;
-    bool isMassTransfer = false;
+    bool hasMassTransfer = false;
     for (localIndex ke = 0; ke < stencilSize; ++ke)
     {
       localIndex const er  = seri[ke];
@@ -635,18 +636,15 @@ struct FluxKernel
       real64 const gravD = gravDepth[er][esr][ei];
       real64 const gravTerm = gravityFlag ? densMean * gravD : 0.0;
 
-      potDif += weight * (std::max(pres[er][esr][ei], minPressure) - gravTerm);
+      potDif += weight * (std::max(pres[er][esr][ei], referencePressure[er][esr][ei]) - gravTerm);
 
       weightedSum += stencilWeightedElementCenterToConnectorCenter[ke];
 
-      if (stencilWeightedElementCenterToConnectorCenter[ke] < 1e-30) faceToCellConnector = true;
-      real64 temp = pres[er][esr][ei];
-      if (temp > minPressure)
-        isMassTransfer = true;
+      if (stencilWeightedElementCenterToConnectorCenter[ke] < 1e-30)
+        faceToCellConnector = true;
+      if (pres[er][esr][ei] > referencePressure[er][esr][ei])
+        hasMassTransfer = true;
     }
-
-    if (!isMassTransfer)
-      return;
 
     // upwinding of fluid properties (make this an option?)
     localIndex const k_up = (potDif >= 0) ? 0 : 1;
@@ -666,16 +664,11 @@ struct FluxKernel
 //    }
 
     // populate local flux
-    if (std::abs(potDif) > std::numeric_limits<real64>::min())
+    if (std::abs(potDif) > std::numeric_limits<real64>::min() && hasMassTransfer)
     {
       (*mass)[seri[0]][sesri[0]][sei[0]] -= mob[er_up][esr_up][ei_up] * potDif * dt;
       (*mass)[seri[1]][sesri[1]][sei[1]] += mob[er_up][esr_up][ei_up] * potDif * dt;
     }
-
-//    if (faceToCellConnector)
-//      std::cout<< "\n Mass transfer between face and CellConnector: mob = " << mob[er_up][esr_up][ei_up] << ", poro = " << poro[er_up][esr_up][ei_up]
-//       << ", ei_up = " << ei_up << ", mass transfer = " << mob[er_up][esr_up][ei_up] * potDif * dt << ", potDif = " << potDif ;
-
   }
 
 
@@ -685,73 +678,74 @@ struct FluxKernel
    * This is a specialized version for fluxes within the same region.
    * See above for a general version.
    */
-  inline static void
-  Compute( localIndex const stencilSize,
-           arraySlice1d<localIndex const> const &,
-           arraySlice1d<localIndex const> const &,
-           arraySlice1d<localIndex const> const & stencilElementIndices,
-           arraySlice1d<real64 const> const & stencilWeights,
-           arraySlice1d<real64 const> const & stencilWeightedElementCenterToConnectorCenter,
-           arrayView1d<real64 const> const & pres,
-           arrayView1d<real64 const> const & gravDepth,
-           arrayView2d<real64 const> const & dens,
-           arrayView2d<real64 const> const & GEOSX_UNUSED_ARG( dDens_dPres ),
-           arrayView1d<real64 const> const & mob,
-           arrayView1d<real64 const> const & visc,
-           arrayView1d<real64 const> const & poro,
-           arrayView1d<real64 const> const & totalCompressibility,
-           localIndex const GEOSX_UNUSED_ARG( fluidIndex ),
-           integer const gravityFlag,
-           real64 const dt,
-           arrayView1d<real64> * const mass,
-           real64 * const maxStableDt)
-  {
-    localIndex constexpr numElems = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
-
-    stackArray1d<real64, numElems> densWeight(numElems);
-
-    // density averaging weights
-    densWeight = 1.0 / numElems;
-
-    // calculate quantities on primary connected cells
-    real64 densMean = 0.0;
-    for (localIndex i = 0; i < numElems; ++i)
-    {
-      // density
-      real64 const density = dens[stencilElementIndices[i]][0];
-
-      // average density
-      densMean += densWeight[i] * density;
-    }
-
-    // compute potential difference MPFA-style
-    real64 potDif = 0.0, weightedSum = 0.0;
-    R1Tensor faceConormal, cellToFaceVec;
-    R2SymTensor coefTensor;
-    for (localIndex ke = 0; ke < stencilSize; ++ke)
-    {
-      localIndex const ei = stencilElementIndices[ke];
-      real64 const weight = stencilWeights[ke];
-
-      real64 const gravD = gravDepth[ei];
-      real64 const gravTerm = gravityFlag ? densMean * gravD : 0.0;
-      potDif += weight * (pres[ei] - gravTerm);
-
-      weightedSum += stencilWeightedElementCenterToConnectorCenter[ke];
-    }
-
-    // upwinding of fluid properties (make this an option?)
-    localIndex const k_up = (potDif >= 0) ? 0 : 1;
-
-    localIndex ei_up  = stencilElementIndices[k_up];
-
-    *maxStableDt = std::min( totalCompressibility[ei_up] * visc[ei_up] * poro[ei_up] / 2.0 * weightedSum * weightedSum, *maxStableDt);
-
-    // populate local flux
-    (*mass)[stencilElementIndices[0]] -= mob[ei_up] * potDif * dt;
-    (*mass)[stencilElementIndices[1]] += mob[ei_up] * potDif * dt;
-
-  }
+//  inline static void
+//  Compute( localIndex const stencilSize,
+//           arraySlice1d<localIndex const> const &,
+//           arraySlice1d<localIndex const> const &,
+//           arraySlice1d<localIndex const> const & stencilElementIndices,
+//           arraySlice1d<real64 const> const & stencilWeights,
+//           arraySlice1d<real64 const> const & stencilWeightedElementCenterToConnectorCenter,
+//           arrayView1d<real64 const> const & pres,
+//           arrayView1d<real64 const> const & gravDepth,
+//           arrayView2d<real64 const> const & dens,
+//           arrayView2d<real64 const> const & GEOSX_UNUSED_ARG( dDens_dPres ),
+//           arrayView1d<real64 const> const & mob,
+//           arrayView1d<real64 const> const & visc,
+//           arrayView1d<real64 const> const & poro,
+//           arrayView1d<real64 const> const & totalCompressibility,
+//           localIndex const GEOSX_UNUSED_ARG( fluidIndex ),
+//           integer const gravityFlag,
+//           real64 const dt,
+//           real64 const referencePressure,
+//           arrayView1d<real64> * const mass,
+//           real64 * const maxStableDt)
+//  {
+//    localIndex constexpr numElems = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
+//
+//    stackArray1d<real64, numElems> densWeight(numElems);
+//
+//    // density averaging weights
+//    densWeight = 1.0 / numElems;
+//
+//    // calculate quantities on primary connected cells
+//    real64 densMean = 0.0;
+//    for (localIndex i = 0; i < numElems; ++i)
+//    {
+//      // density
+//      real64 const density = dens[stencilElementIndices[i]][0];
+//
+//      // average density
+//      densMean += densWeight[i] * density;
+//    }
+//
+//    // compute potential difference MPFA-style
+//    real64 potDif = 0.0, weightedSum = 0.0;
+//    R1Tensor faceConormal, cellToFaceVec;
+//    R2SymTensor coefTensor;
+//    for (localIndex ke = 0; ke < stencilSize; ++ke)
+//    {
+//      localIndex const ei = stencilElementIndices[ke];
+//      real64 const weight = stencilWeights[ke];
+//
+//      real64 const gravD = gravDepth[ei];
+//      real64 const gravTerm = gravityFlag ? densMean * gravD : 0.0;
+//      potDif += weight * (pres[ei] - gravTerm);
+//
+//      weightedSum += stencilWeightedElementCenterToConnectorCenter[ke];
+//    }
+//
+//    // upwinding of fluid properties (make this an option?)
+//    localIndex const k_up = (potDif >= 0) ? 0 : 1;
+//
+//    localIndex ei_up  = stencilElementIndices[k_up];
+//
+//    *maxStableDt = std::min( totalCompressibility[ei_up] * visc[ei_up] * poro[ei_up] / 2.0 * weightedSum * weightedSum, *maxStableDt);
+//
+//    // populate local flux
+//    (*mass)[stencilElementIndices[0]] -= mob[ei_up] * potDif * dt;
+//    (*mass)[stencilElementIndices[1]] += mob[ei_up] * potDif * dt;
+//
+//  }
 
   /**
      * @brief Compute flux and its derivatives for a given multi-element connector.
@@ -876,6 +870,7 @@ struct FluxKernel
                    arrayView1d<real64 const> const & aperture0,
                    arrayView1d<real64 const> const & aperture,
                    arrayView1d<real64 const> const & totalCompressibility,
+                   arrayView1d<real64 const> const & referencePressure,
                    localIndex const GEOSX_UNUSED_ARG( fluidIndex ),
                    integer const GEOSX_UNUSED_ARG( gravityFlag ),
                    real64 const dt,
@@ -884,8 +879,7 @@ struct FluxKernel
   {
     real64 sumOfWeights = 0, dAperTerm_dAper;
     real64 aperTerm[10];
-    real64 maxApertureForPermeablity = 4e-1;
-    real64 minPressure = 1e5;
+    real64 maxApertureForPermeablity = 0.5;
 
     for( localIndex k=0 ; k<numFluxElems ; ++k )
     {
@@ -897,22 +891,6 @@ struct FluxKernel
 
       sumOfWeights += aperTerm[k] * stencilWeights[k];
     }
-/*
-    // for capped
-    real64 sumOfWeightsCapped = 0;
-    real64 aperTermCapped [10];
-    real64 maxApertureForPermeablity = 1e-4;
-    for( localIndex k=0 ; k<numFluxElems ; ++k )
-    {
-      FluxKernelHelper::
-      apertureForPermeablityCalculation<0>( std::min(aperture0[stencilElementIndices[k]], maxApertureForPermeablity),
-                                            std::min(aperture[stencilElementIndices[k]], maxApertureForPermeablity),
-                                            aperTermCapped [k],
-                                            dAperTerm_dAper);
-
-      sumOfWeightsCapped += aperTermCapped [k] * stencilWeights[k];
-    }
-*/
 
     localIndex k[2];
     for( k[0]=0 ; k[0]<numFluxElems ; ++k[0] )
@@ -928,7 +906,7 @@ struct FluxKernel
         // average density
         real64 const densMean = 0.5 * ( dens[ei[0]][0] + dens[ei[1]][0] );
 
-        real64 const potDif =  ( std::max(pres[ei[0]], minPressure) - std::max(pres[ei[1]], minPressure) -
+        real64 const potDif =  ( std::max(pres[ei[0]], referencePressure[ei[0]]) - std::max(pres[ei[1]], referencePressure[ei[1]]) -
                                  densMean * ( gravDepth[ei[0]] - gravDepth[ei[1]] ) );
 
         // upwinding of fluid properties (make this an option?)
@@ -958,12 +936,8 @@ struct FluxKernel
 //          GEOSX_ERROR("ComputeJunction::negative maxStableDt");
 //        }
 
-        // isMassTransfer
-        if (pres[ei[0]] <= minPressure && pres[ei[1]] <= minPressure)
-          return;
-
         // populate local flux
-        if (std::abs(potDif) > std::numeric_limits<real64>::min())
+        if (std::abs(potDif) > std::numeric_limits<real64>::min() && (pres[ei[0]] > referencePressure[ei[0]] || pres[ei[1]] > referencePressure[ei[1]]))
         {
           (*mass)[stencilElementIndices[k[0]]] -= mob[ei_up] * weight * potDif * dt;
           (*mass)[stencilElementIndices[k[1]]] += mob[ei_up] * weight * potDif * dt;

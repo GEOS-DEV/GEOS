@@ -160,10 +160,11 @@ void CompressibleSinglePhaseFluid::PointUpdate( real64 const & pressure, localIn
 void CompressibleSinglePhaseFluid::PointUpdateViscosityExplicit( real64 const & pressure, localIndex const k, localIndex const q )
 {
   // In explicit solver, density is calculated from mass, not pressure
-  makeExponentialRelation( m_viscosityModelType, m_referencePressure, m_referenceViscosity, m_viscosibility, [&] ( auto relation )
-  {
-    Compute( std::max(pressure, m_referencePressure), m_viscosity[k][q], m_dViscosity_dPressure[k][q], relation );
-  } );
+  if (pressure > m_referencePressure)
+    makeExponentialRelation( m_viscosityModelType, m_referencePressure, m_referenceViscosity, m_viscosibility, [&] ( auto relation )
+    {
+      Compute( pressure, m_viscosity[k][q], m_dViscosity_dPressure[k][q], relation );
+    } );
 }
 
 void CompressibleSinglePhaseFluid::PointUpdateDensityExplicit( real64 const & pressure, localIndex const k, localIndex const q )
@@ -198,12 +199,12 @@ void CompressibleSinglePhaseFluid::PointInverseUpdate( real64 & pressure, real64
     {
       case ExponentApproximationType::Full:
       {
-        pressure = std::log( value ) / totalCompressibility + referencePressure();
+        pressure = std::log( value ) / totalCompressibility + m_referencePressure;
         break;
       }
       case ExponentApproximationType::Linear:
       {
-        pressure = ( value - 1) / totalCompressibility + referencePressure();
+        pressure = ( value - 1) / totalCompressibility + m_referencePressure;
         break;
       }
       default:

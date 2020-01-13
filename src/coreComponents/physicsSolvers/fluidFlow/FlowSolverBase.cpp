@@ -41,7 +41,6 @@ FlowSolverBase::FlowSolverBase( std::string const & name,
     m_poroElasticFlag(0),
     m_coupledWellsFlag(0),
     m_numDofPerCell(0),
-    m_relaxationCoefficient(1),
     m_timeIntegrationOptionString(),
     m_timeIntegrationOption(timeIntegrationOption::ImplicitTransient),
     m_explicitSolverInitializationFlag(),
@@ -78,11 +77,6 @@ FlowSolverBase::FlowSolverBase( std::string const & name,
   setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("flag to determine whether or not to initialize using pressure field in explicit flow solver.");
-
-  this->registerWrapper( viewKeyStruct::relaxationCoefficientString, &m_relaxationCoefficient,  false )->
-	setApplyDefaultValue(1)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Relaxation Coefficient for mass flux in explicit flow solver.");
   
   this->registerWrapper( viewKeyStruct::inputFluxEstimateString,  &m_fluxEstimate,  false )->
     setApplyDefaultValue(1.0)->

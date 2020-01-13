@@ -373,6 +373,7 @@ private:
   ElementRegionManager::MaterialViewAccessor<arrayView1d<real64>> m_bulkModulus;
   ElementRegionManager::MaterialViewAccessor<real64> m_biotCoefficient;
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_totalCompressibility;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_referencePressure;
 };
 
 
