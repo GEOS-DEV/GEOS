@@ -13,15 +13,19 @@
  */
 
 /**
- * @file GeosxTraits.hpp
+ * @file traits.hpp
  */
 
-#ifndef GEOSX_CODINGUTILITIES_GEOSXTRAITS_HPP_
-#define GEOSX_CODINGUTILITIES_GEOSXTRAITS_HPP_
+#ifndef GEOSX_CODINGUTILITIES_TRAITS_HPP_
+#define GEOSX_CODINGUTILITIES_TRAITS_HPP_
 
-#include <type_traits>
+// Source includes
 #include "common/DataTypes.hpp"
-#include "templateHelpers.hpp"
+#include "cxx-utilities/src/templateHelpers.hpp"
+#include "SFINAE_Macros.hpp"
+
+// System includes
+#include <type_traits>
 
 namespace geosx
 {
@@ -114,7 +118,6 @@ namespace internal
     static constexpr bool value = has_memberfunction_resize< T >::value;
   };
 
-  
 } // namespace internal
 
 template< typename T >
@@ -174,27 +177,27 @@ template< typename T >
 constexpr bool has_resize_dimensions_method = internal::has_resize_dimensions_method< T >::value;
 
 template< typename T >
-constexpr bool is_string = is_instance_of_v< std::string, T >;
+constexpr bool is_string = is_base_of_v< std::string, T >;
 
 template< typename T >
-constexpr bool is_std_vector = is_instantiation_of_v< std::vector, T >;
+constexpr bool is_std_vector = is_instantiation_of< std::vector, T >;
 
 template< typename T >
-constexpr bool is_pair = is_instantiation_of_v< std::pair, T >;
+constexpr bool is_pair = is_instantiation_of< std::pair, T >;
 
 template< typename T >
-constexpr bool is_map = is_instantiation_of_v< mapBase, T >;
+constexpr bool is_map = is_instantiation_of< mapBase, T >;
 
 template< typename T >
-constexpr bool is_set = is_instantiation_of_v< LvArray::SortedArray, T >;
+constexpr bool is_set = is_instantiation_of< LvArray::SortedArray, T >;
 
 template< typename T >
 constexpr bool is_array = LvArray::isArray< T >;
 
 template< typename T >
-constexpr bool is_tensorT = is_instance_of_v< R1Tensor, T > ||
-                            is_instance_of_v< R2Tensor, T > ||
-                            is_instance_of_v< R2SymTensor, T >;
+constexpr bool is_tensorT = is_same_v< std::remove_const_t< T >, R1Tensor > ||
+                            is_same_v< std::remove_const_t< T >, R2Tensor > ||
+                            is_same_v< std::remove_const_t< T >, R2SymTensor >;
 
 } /* namespace traits */
 
@@ -209,4 +212,4 @@ using add_const_if_t = typename add_const_if<T, COND>::type;
 
 } /* namespace geosx */
 
-#endif /* GEOSX_CODINGUTILITIES_GEOSXTRAITS_HPP_ */
+#endif /* GEOSX_CODINGUTILITIES_TRAITS_HPP_ */

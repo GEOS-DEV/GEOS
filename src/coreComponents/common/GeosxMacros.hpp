@@ -19,6 +19,7 @@
  */
 
 #include "common/GeosxConfig.hpp"
+#include "cxx-utilities/src/Macros.hpp"
 
 #ifndef GEOSX_COMMON_GEOSXMACROS_HPP_
 #define GEOSX_COMMON_GEOSXMACROS_HPP_
@@ -43,15 +44,6 @@
 /// Mark a debug variable and silence compiler warnings.
 #define GEOSX_DEBUG_VAR( X ) GEOSX_UNUSED_VAR( X )
 
-///@}
-
-/// Interpret A as a string constant.
-#define STRINGIZE_NX( A ) #A
-
-/// Expand A and then interpret that as a string.
-#define STRINGIZE( A ) STRINGIZE_NX( A )
-
-/// Add an OpenMP clause to a statement.
 #if defined(GEOSX_USE_OPENMP)
   #define PRAGMA_OMP( clause ) _Pragma(STRINGIZE(clause))
 #else

@@ -45,7 +45,7 @@ void SchemaUtilities::ConvertDocumentationToSchema(std::string const & fname,
                                                    Group * const group,
                                                    integer documentationType)
 {
-  GEOS_LOG_RANK_0("Generating XML Schema...");
+  GEOSX_LOG_RANK_0("Generating XML Schema...");
 
   std::string schemaBase=
     "<?xml version=\"1.1\" encoding=\"ISO-8859-1\" ?>\
@@ -60,18 +60,18 @@ void SchemaUtilities::ConvertDocumentationToSchema(std::string const & fname,
   xmlWrapper::xmlNode schemaRoot = schemaTree.child("xsd:schema");
 
   // Build the simple schema types
-  GEOS_LOG_RANK_0("  Basic datatypes");
+  GEOSX_LOG_RANK_0("  Basic datatypes");
   BuildSimpleSchemaTypes(schemaRoot);
 
   // Recursively build the schema from the data structure skeleton
-  GEOS_LOG_RANK_0("  Data structure layout");
+  GEOSX_LOG_RANK_0("  Data structure layout");
   SchemaConstruction(group, schemaRoot, schemaRoot, documentationType);
 
   // Write the schema to file
-  GEOS_LOG_RANK_0("  Saving file");
+  GEOSX_LOG_RANK_0("  Saving file");
   schemaTree.save_file(fname.c_str());
 
-  GEOS_LOG_RANK_0("  Done!");
+  GEOSX_LOG_RANK_0("  Done!");
 }
 
 
@@ -90,7 +90,7 @@ void SchemaUtilities::BuildSimpleSchemaTypes(xmlWrapper::xmlNode schemaRoot)
     // Handle the default regex 
     if( regex->second.empty())
     {
-      GEOS_WARNING("schema regex not defined for " << regex->first);
+      GEOSX_WARNING("schema regex not defined for " << regex->first);
       patternNode.append_attribute("value") = "(?s).*";
     }
     else
@@ -230,23 +230,15 @@ void SchemaUtilities::SchemaConstruction(Group * const group,
             // (Optional) Default Value
             if ( (flag == InputFlags::OPTIONAL_NONUNIQUE) || (flag == InputFlags::REQUIRED_NONUNIQUE))
             {
-              GEOS_LOG_RANK_0(attributeName << " has an invalid input flag");
-              GEOS_ERROR("SchemaUtilities::SchemaConstruction: duplicate xml attributes are not allowed");
+              GEOSX_LOG_RANK_0(attributeName << " has an invalid input flag");
+              GEOSX_ERROR("SchemaUtilities::SchemaConstruction: duplicate xml attributes are not allowed");
             }
             else if ( flag == InputFlags::OPTIONAL )
             {
-              rtTypes::TypeIDs const wrapperTypeID = rtTypes::typeID(wrapper->get_typeid());
-              rtTypes::ApplyIntrinsicTypeLambda2( wrapperTypeID,
-                                                  [&]( auto a, auto GEOSX_UNUSED_ARG( b ) ) -> void
+              if ( wrapper->hasDefaultValue() )
               {
-                using COMPOSITE_TYPE = decltype(a);
-                Wrapper<COMPOSITE_TYPE>& typedWrapper = Wrapper<COMPOSITE_TYPE>::cast( *wrapper );
-                
-                if( typedWrapper.getDefaultValueStruct().has_default_value )
-                {
-                  SetDefaultValueString( typedWrapper.getDefaultValueStruct(), attributeNode );
-                }
-              });
+                attributeNode.append_attribute("default") = wrapper->getDefaultValueString().c_str();
+              }
             }
             else if (documentationType == 0)
             {

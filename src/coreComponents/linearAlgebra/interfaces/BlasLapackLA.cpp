@@ -62,7 +62,7 @@ real64 BlasLapackLA::vectorNormInf( array1d<real64> const & X )
 real64 BlasLapackLA::determinant( array2d<real64> const & A )
                                   {
   // --- check that matrix is square
-  GEOS_ASSERT_MSG( A.size( 0 ) == A.size( 1 ) &&
+  GEOSX_ASSERT_MSG( A.size( 0 ) == A.size( 1 ) &&
                    A.size( 0 ) > 0,
                    "Matrix must be square with order greater than zero" );
 
@@ -121,7 +121,7 @@ real64 BlasLapackLA::determinant( array2d<real64> const & A )
       // LAPACK_ROW_MAJOR ordering.
       GEOSX_dgetrf( &NN, &NN,  LUFactor.data(), &NN, IPIV.data(), &INFO);
 
-      GEOS_ASSERT_MSG( INFO == 0, "LAPACK dgetrf error code: " << INFO );
+      GEOSX_ASSERT_MSG( INFO == 0, "LAPACK dgetrf error code: " << INFO );
 
       det = 1.0;
       for( int i = 0 ; i < NN ; ++i )
@@ -184,7 +184,7 @@ void BlasLapackLA::vectorVectorAdd( array1d<real64> const & X,
                                     real64 const alpha )
 {
 
-  GEOS_ASSERT_MSG( X.size() == Y.size(),
+  GEOSX_ASSERT_MSG( X.size() == Y.size(),
                    "Vector dimensions not compatible for sum" );
 
   int const INCX = 1;
@@ -200,7 +200,7 @@ void BlasLapackLA::matrixMatrixAdd( array2d<real64> const & A,
                                     real64 const alpha )
 {
 
-  GEOS_ASSERT_MSG( A.size( 0 ) == B.size( 0 ) &&
+  GEOSX_ASSERT_MSG( A.size( 0 ) == B.size( 0 ) &&
                    A.size( 1 ) == B.size( 1 ),
                    "Matrix dimensions not compatible for sum" );
 
@@ -237,7 +237,7 @@ void BlasLapackLA::matrixScale( real64 alpha,
 real64 BlasLapackLA::vectorDot( array1d<real64> const & X,
                                 array1d<real64> const & Y )
 {
-  GEOS_ASSERT_MSG( X.size() == Y.size(),
+  GEOSX_ASSERT_MSG( X.size() == Y.size(),
                    "Vector dimensions not compatible for dot product" );
 
   int const INCX = 1;
@@ -253,7 +253,7 @@ void BlasLapackLA::matrixVectorMultiply( array2d<real64> const & A,
                                          real64 const alpha,
                                          real64 const beta )
 {
-  GEOS_ASSERT_MSG( A.size( 1 ) == X.size() &&
+  GEOSX_ASSERT_MSG( A.size( 1 ) == X.size() &&
                    A.size( 0 ) == Y.size(),
                    "Matrix, source vector and destination vector not compatible" );
 
@@ -277,7 +277,7 @@ void BlasLapackLA::matrixTVectorMultiply( array2d<real64> const & A,
                                           real64 const alpha,
                                           real64 const beta )
 {
-  GEOS_ASSERT_MSG( A.size( 0 ) == X.size() &&
+  GEOSX_ASSERT_MSG( A.size( 0 ) == X.size() &&
                        A.size( 1 ) == Y.size(),
                    "Matrix, source vector and destination vector not compatible" );
 
@@ -302,7 +302,7 @@ void BlasLapackLA::matrixMatrixMultiply( array2d<real64> const & A,
                                          real64 const beta )
 {
 
-  GEOS_ASSERT_MSG( C.size( 0 ) == A.size( 0 ) &&
+  GEOSX_ASSERT_MSG( C.size( 0 ) == A.size( 0 ) &&
                    C.size( 1 ) == B.size( 1 ) &&
                    A.size( 1 ) == B.size( 0 ),
                    "Matrix dimensions not compatible for product" );
@@ -328,7 +328,7 @@ void BlasLapackLA::matrixTMatrixMultiply( array2d<real64> const & A,
                                           real64 const beta )
 {
 
-  GEOS_ASSERT_MSG( C.size( 0 ) == A.size( 1 ) &&
+  GEOSX_ASSERT_MSG( C.size( 0 ) == A.size( 1 ) &&
                    C.size( 1 ) == B.size( 1 ) &&
                    A.size( 0 ) == B.size( 0 ),
                    "Matrix dimensions not compatible for product" );
@@ -355,7 +355,7 @@ void BlasLapackLA::matrixMatrixTMultiply( array2d<real64> const & A,
                                           real64 const beta )
 {
 
-  GEOS_ASSERT_MSG( C.size( 0 ) == A.size( 0 ) &&
+  GEOSX_ASSERT_MSG( C.size( 0 ) == A.size( 0 ) &&
                    C.size( 1 ) == B.size( 0 ) &&
                    A.size( 1 ) == B.size( 1 ),
                    "Matrix dimensions not compatible for product" );
@@ -382,7 +382,7 @@ void BlasLapackLA::matrixTMatrixTMultiply( array2d<real64> const & A,
                                            real64 const beta )
 {
 
-  GEOS_ASSERT_MSG( C.size( 0 ) == A.size( 1 ) &&
+  GEOSX_ASSERT_MSG( C.size( 0 ) == A.size( 1 ) &&
                        C.size( 1 ) == B.size( 0 ) &&
                        A.size( 0 ) == B.size( 1 ),
                    "Matrix dimensions not compatible for product" );
@@ -415,12 +415,12 @@ void BlasLapackLA::matrixInverse( array2d<real64> const & A,
 {
   // --- Check that source matrix is square
   int const NN = integer_conversion<int>(A.size( 0 ));
-  GEOS_ASSERT_MSG( NN > 0 &&
+  GEOSX_ASSERT_MSG( NN > 0 &&
                    NN == A.size( 1 ),
                    "Matrix must be square" );
 
   // --- Check that inverse matrix has appropriate dimension
-  GEOS_ASSERT_MSG( Ainv.size( 0 ) == NN &&
+  GEOSX_ASSERT_MSG( Ainv.size( 0 ) == NN &&
                    Ainv.size( 1 ) == NN,
                    "Inverse matrix has wrong dimensions" );
 
@@ -452,7 +452,7 @@ void BlasLapackLA::matrixInverse( array2d<real64> const & A,
     int INFO;
     GEOSX_dgetrf( &NN, &NN, Ainv.data(), &NN, IPIV.data(), &INFO);
 
-    GEOS_ASSERT_MSG( INFO == 0, "LAPACK dgetrf error code: " << INFO );
+    GEOSX_ASSERT_MSG( INFO == 0, "LAPACK dgetrf error code: " << INFO );
 
     detA = 1.0;
     for( int i = 0 ; i < NN ; ++i )
@@ -469,7 +469,7 @@ void BlasLapackLA::matrixInverse( array2d<real64> const & A,
   }
 
   // Check if matrix is singular
-  GEOS_ASSERT_MSG( std::abs(detA) >
+  GEOSX_ASSERT_MSG( std::abs(detA) >
                    std::numeric_limits<real64>::epsilon() *
                    matrixNormFrobenius(A),
                    "Matrix is singular" );
@@ -522,7 +522,7 @@ void BlasLapackLA::matrixInverse( array2d<real64> const & A,
     int INFO;
     GEOSX_dgetri( &NN, Ainv.data(), &NN, IPIV.data(), INV_WORK.data(), &NN, &INFO);
 
-    GEOS_ASSERT_MSG( INFO == 0, "LAPACK dgetri error code: " << INFO );
+    GEOSX_ASSERT_MSG( INFO == 0, "LAPACK dgetri error code: " << INFO );
 
     break;
     }
@@ -533,7 +533,7 @@ void BlasLapackLA::matrixInverse( array2d<real64> const & A,
 void BlasLapackLA::vectorCopy( array1d<real64> const & X,
                                array1d<real64> & Y )
 {
-  GEOS_ASSERT_MSG( X.size() == Y.size(),
+  GEOSX_ASSERT_MSG( X.size() == Y.size(),
                    "Vector dimensions not compatible for copying" );
 
   int const INCX = 1;
@@ -547,7 +547,7 @@ void BlasLapackLA::vectorCopy( array1d<real64> const & X,
 void BlasLapackLA::matrixCopy( array2d<real64> const & A,
                                array2d<real64> & B )
 {
-  GEOS_ASSERT_MSG( A.size(0) == B.size(0) &&
+  GEOSX_ASSERT_MSG( A.size(0) == B.size(0) &&
                    A.size(1) == B.size(1),
                    "Matrix dimensions not compatible for copying" );
 
@@ -562,16 +562,16 @@ void BlasLapackLA::matrixCopy( array2d<real64> const & A,
 void BlasLapackLA::setRandomNumberGeneratorSeed( array1d<int> const & seed)
 {
   // Error checking
-  GEOS_ASSERT_MSG( seed.size() >= 4,
+  GEOSX_ASSERT_MSG( seed.size() >= 4,
                    "Seed array must have size at least four");
 
-  GEOS_ASSERT_MSG( 0 <= seed(0) && seed(0) <= 4095 &&
+  GEOSX_ASSERT_MSG( 0 <= seed(0) && seed(0) <= 4095 &&
                    0 <= seed(1) && seed(1) <= 4095 &&
                    0 <= seed(2) && seed(2) <= 4095 &&
                    0 <= seed(3) && seed(3) <= 4095,
                   "Seed array integer entries must be in interval [0,4095]");
 
-  GEOS_ASSERT_MSG( seed(3) % 2 > 0,
+  GEOSX_ASSERT_MSG( seed(3) % 2 > 0,
                    "Seed array 4th element must be odd");
 
   for (int i = 0; i < 4; ++i)
@@ -583,7 +583,7 @@ void BlasLapackLA::setRandomNumberGeneratorSeed( array1d<int> const & seed)
 void BlasLapackLA::getRandomNumberGeneratorSeed( array1d<int> & seed)
 {
   // Error checking
-  GEOS_ASSERT_MSG( seed.size() >= 4,
+  GEOSX_ASSERT_MSG( seed.size() >= 4,
                    "Seed array must have size at least four");
 
   for (int i = 0; i < 4; ++i)
@@ -599,7 +599,7 @@ void BlasLapackLA::vectorRand( array1d<real64> & X,
   int IDIST = static_cast<int>(idist);
   int const N = static_cast<int>( X.size() );
 
-  GEOS_ASSERT_MSG( N > 0,
+  GEOSX_ASSERT_MSG( N > 0,
                    "The vector cannot be empty");
 
   GEOSX_dlarnv( &IDIST, ISEED, &N, X.data());
@@ -614,7 +614,7 @@ void BlasLapackLA::matrixRand( array2d<real64> & A,
   int IDIST = static_cast<int>(idist);
   int const NN = static_cast<int>( A.size() );
 
-  GEOS_ASSERT_MSG( NN > 0,
+  GEOSX_ASSERT_MSG( NN > 0,
                    "The matrix cannot be empty");
 
   GEOSX_dlarnv( &IDIST, ISEED, &NN, A.data());

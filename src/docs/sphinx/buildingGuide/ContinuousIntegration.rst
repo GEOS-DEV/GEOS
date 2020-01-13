@@ -3,22 +3,28 @@ Continuous Integration process
 
 To save building time, the third party libraries (that do not change so often) and GEOSX are build separately.
 
-Everytime a pull is requested in the TPL repository, a docker image is generated and deployed on `dockerhub <https://hub.docker.com/r/geosx/compiler>`_.
-The date (`YYYY-MM-DD`) is appended to the tag name so the client code (i.e. GEOSX) can select the version it needs
-(the `DOCKER_DATE` env variable is defined in the `GEOSX's .travis.yml <https://github.com/GEOSX/GEOSX/blob/develop/.travis.yml>`_).
+Everytime a pull is requested in the TPL repository, docker images are generated and deployed on `dockerhub <https://hub.docker.com/r/geosx>`_.
+The repository names (`ubuntu18.04-gcc7 <https://hub.docker.com/r/geosx/ubuntu18.04-gcc7>`_, `ubuntu18.04-gcc8 <https://hub.docker.com/r/geosx/ubuntu18.04-gcc8>`_,
+`centos7.5.1804-clang6.0.1 <https://hub.docker.com/r/geosx/centos7.5.1804-clang6.0.1>`_ and `centos7.5.1804-clang7.0.0 <https://hub.docker.com/r/geosx/centos7.5.1804-clang7.0.0>`_)
+obviously reflect the OS and the compiler flavour used.
+For each image, the unique `${TRAVIS_PULL_REQUEST}-${TRAVIS_BUILD_NUMBER}` tag is used so we can connect the related code source in a rather convenient way.
+Each docker contains the `org.opencontainers.image.created` and `org.opencontainers.image.revision` labels to provide additional information.
 
-For the OSX builds, we build a tarball of the TPLs and save them a remote location.
-The client (GEOSX again) will select the version it needs by defining the  `TPL_OSX_TRAVIS_BUILD_NUMBER` environment variable in the `.travis.yml <https://github.com/GEOSX/GEOSX/blob/develop/.travis.yml>`_ file.
+For the OSX builds, we construct a tarball of the TPLs and save them in a remote cloud storage.
+There is currently only one mac osx tested environment (xcode 10.2) and the same `${TRAVIS_PULL_REQUEST}-${TRAVIS_BUILD_NUMBER}` pattern is used as an identifier for the build. 
 An important counterpart to using a tarball and not a docker image is that the tarball does not provide the whole system the precompiled binaries rely on.
 Problems may arise since we use the rolling release `Homebrew <https://brew.sh/>`_ (to install open-mpi in particular).
-To circumvent this potential issue, the brew version is fixed to a specific commit (see BREW_HASH variable in `third party's .travis.yml <https://github.com/GEOSX/thirdPartyLibs/blob/master/.travis.yml>`_) and stored in a `brew_hash.txt` file at the root folder of the TPLs.
-It is therefore possible for GEOSX to build against the same revision of brew packages.
+To circumvent this potential issue, the brew version is fixed to a specific commit (see BREW_HASH variable in `third party's .travis.yml <https://github.com/GEOSX/thirdPartyLibs/blob/master/.travis.yml>`_)
+and stored as a metainformation of the tarball blob inside the cloud storage.
+It is therefore possible for GEOSX to recover this informatiom and build against the same revision of brew packages.
+Note that the `TRAVIS_PULL_REQUEST`, `TRAVIS_BUILD_NUMBER` and `TRAVIS_COMMIT` are also stored as metainformation in the same way
+(have a look at the OSX build section of `GEOSX's .travis.yml <https://github.com/GEOSX/GEOSX/blob/develop/.travis.yml>`_ to see how to retrieve these informations).
+
+There thus is only one unique identifier for both dockers and mac osx builds for one TPL code base.
+It is needed to define the global environment GEOSX_TPL_TAG (`e.g.` something like `82-254`) to build against one selecetd version of the TPL.
 
 It must be mentionned that one and only one version of the compiled TPL tarball is stored per pull request (older ones are removed automatically).
 Therefore, a client building against a work in progress PR may experience a 404 error sooner or later.
-
-It must be noted that there are now two different ways to designate the same version of the TPL.
-An effort should be done to make this homogemneous.
 
 Building docker images
 ----------------------

@@ -93,7 +93,7 @@ localIndex DofManager::getFieldIndex( string const & key ) const
       return i;
     }
   }
-  GEOS_ERROR( "Field's string key not found in list of active fields." );
+  GEOSX_ERROR( "Field's string key not found in list of active fields." );
   return -1;
 }
 
@@ -112,7 +112,7 @@ bool DofManager::keyInUse( string const & key ) const
 string DofManager::getKey( string const & fieldName ) const
 {
   // check if the field name is already added
-  GEOS_ERROR_IF( !keyInUse( fieldName ), "getKey: requested field name must be already existing." );
+  GEOSX_ERROR_IF( !keyInUse( fieldName ), "getKey: requested field name must be already existing." );
 
   // get field index
   localIndex fieldIndex = getFieldIndex( fieldName );
@@ -125,7 +125,7 @@ globalIndex DofManager::numGlobalDofs( string const & fieldName ) const
   if( fieldName.length() > 0 )
   {
     // check if the field name is already added
-    GEOS_ERROR_IF( !keyInUse( fieldName ), "numGlobalDofs: requested field name must be already existing." );
+    GEOSX_ERROR_IF( !keyInUse( fieldName ), "numGlobalDofs: requested field name must be already existing." );
 
     // get field index
     localIndex fieldIndex = getFieldIndex( fieldName );
@@ -148,7 +148,7 @@ localIndex DofManager::numLocalDofs( string const & fieldName ) const
   if( fieldName.length() > 0 )
   {
     // check if the field name is already added
-    GEOS_ERROR_IF( !keyInUse( fieldName ), "numLocalDofs: requested field name must be already existing." );
+    GEOSX_ERROR_IF( !keyInUse( fieldName ), "numLocalDofs: requested field name must be already existing." );
 
     // get field index
     localIndex fieldIndex = getFieldIndex( fieldName );
@@ -171,7 +171,7 @@ localIndex DofManager::offsetLocalDofs( string const & fieldName ) const
   if( fieldName.length() > 0 )
   {
     // check if the field name is already added
-    GEOS_ERROR_IF( !keyInUse( fieldName ), "offsetLocalDofs: requested field name must be already existing." );
+    GEOSX_ERROR_IF( !keyInUse( fieldName ), "offsetLocalDofs: requested field name must be already existing." );
 
     // get field index
     localIndex fieldIndex = getFieldIndex( fieldName );
@@ -523,9 +523,9 @@ template< DofManager::Location LOC >
 typename MeshHelper<LOC>::ManagerType const * getObjectManager( MeshLevel const * const meshLevel )
 {
   using ObjectManager = typename MeshHelper<LOC>::ManagerType;
-  GEOS_ASSERT( meshLevel != nullptr );
+  GEOSX_ASSERT( meshLevel != nullptr );
   ObjectManager const * manager = meshLevel->GetGroup<ObjectManager>( MeshHelper<LOC>::managerGroupName );
-  GEOS_ASSERT( manager != nullptr );
+  GEOSX_ASSERT( manager != nullptr );
   return manager;
 }
 
@@ -802,7 +802,7 @@ struct IndexArrayHelper
   static void
   create( Mesh * const mesh, DofManager::FieldDescription & field )
   {
-    GEOS_ASSERT( field.location == LOC );
+    GEOSX_ASSERT( field.location == LOC );
 
     ObjectManagerBase * baseManager = getObjectManager<LOC>( mesh );
     baseManager->registerWrapper<ArrayType>( field.key )->
@@ -848,7 +848,7 @@ struct IndexArrayHelper< INDEX, DofManager::Location::Elem >
   static void
   create( Mesh * const mesh, DofManager::FieldDescription & field )
   {
-    GEOS_ASSERT( field.location == DofManager::Location::Elem );
+    GEOSX_ASSERT( field.location == DofManager::Location::Elem );
 
     mesh->getElemManager()->
       template forElementSubRegionsComplete<SUBREGIONTYPES...>( field.regionNames,
@@ -891,7 +891,7 @@ struct IndexArrayHelper< INDEX, DofManager::Location::Elem >
   static void
   remove( Mesh * const mesh, DofManager::FieldDescription const & field )
   {
-    GEOS_ASSERT( field.location == DofManager::Location::Elem );
+    GEOSX_ASSERT( field.location == DofManager::Location::Elem );
 
     mesh->getElemManager()->
       template forElementSubRegionsComplete<SUBREGIONTYPES...>( field.regionNames,
@@ -962,7 +962,7 @@ void DofManager::createIndexArray( FieldDescription & field )
     Location constexpr LOC = decltype(loc)::value;
     createIndexArrayImpl<LOC, SUBREGIONTYPES...>( m_domain, m_mesh, field );
   } );
-  GEOS_ERROR_IF( !success, "createIndexArray: invalid location type" );
+  GEOSX_ERROR_IF( !success, "createIndexArray: invalid location type" );
 }
 
 template< typename ... SUBREGIONTYPES >
@@ -1008,9 +1008,9 @@ void DofManager::addField( string const & fieldName,
                            localIndex const components,
                            string_array const & regions )
 {
-  GEOS_ERROR_IF( m_closed, "addField: cannot add fields after DofManager has been closed." );
-  GEOS_ERROR_IF( keyInUse( fieldName ), "addField: requested field name matches an existing field in the DofManager." );
-  GEOS_ERROR_IF( m_fields.size() >= MAX_NUM_FIELDS, "addField: limit on DofManager's MAX_NUM_FIELDS exceeded." );
+  GEOSX_ERROR_IF( m_closed, "addField: cannot add fields after DofManager has been closed." );
+  GEOSX_ERROR_IF( keyInUse( fieldName ), "addField: requested field name matches an existing field in the DofManager." );
+  GEOSX_ERROR_IF( m_fields.size() >= MAX_NUM_FIELDS, "addField: limit on DofManager's MAX_NUM_FIELDS exceeded." );
 
   localIndex fieldIndex = m_fields.size();
   m_fields.resize( fieldIndex + 1 );
@@ -1059,7 +1059,7 @@ void DofManager::addField( string const & fieldName,
   // check region existence
   for( string const & regionName : field.regionNames )
   {
-    GEOS_ERROR_IF( elemManager->GetRegion( regionName ) == nullptr,
+    GEOSX_ERROR_IF( elemManager->GetRegion( regionName ) == nullptr,
                    "addField: specified element region not found: " << regionName );
   }
 
@@ -1088,9 +1088,9 @@ void DofManager::addField( string const & fieldName,
   // log some basic info
   if( m_logLevel > 0 )
   {
-    GEOS_LOG_RANK_0( "DofManager :: Added field .... " << field.docstring );
-    GEOS_LOG_RANK_0( "DofManager :: Global dofs .... " << field.numGlobalRows );
-    GEOS_LOG_RANK_0( "DofManager :: Field offset ... " << field.fieldOffset );
+    GEOSX_LOG_RANK_0( "DofManager :: Added field .... " << field.docstring );
+    GEOSX_LOG_RANK_0( "DofManager :: Global dofs .... " << field.numGlobalRows );
+    GEOSX_LOG_RANK_0( "DofManager :: Field offset ... " << field.fieldOffset );
   }
 }
 
@@ -1133,9 +1133,9 @@ void DofManager::addField( string const & fieldName,
                            localIndex const components,
                            Connectivity const connectivity )
 {
-  GEOS_ERROR_IF( m_closed, "addField: cannot add fields after DofManager has been closed." );
-  GEOS_ERROR_IF( keyInUse( fieldName ), "addField: requested field name matches an existing field in the DofManager." );
-  GEOS_ERROR_IF( m_fields.size() > MAX_NUM_FIELDS, "addField: limit on DofManager's MAX_NUM_FIELDS exceeded." );
+  GEOSX_ERROR_IF( m_closed, "addField: cannot add fields after DofManager has been closed." );
+  GEOSX_ERROR_IF( keyInUse( fieldName ), "addField: requested field name matches an existing field in the DofManager." );
+  GEOSX_ERROR_IF( m_fields.size() > MAX_NUM_FIELDS, "addField: limit on DofManager's MAX_NUM_FIELDS exceeded." );
 
   localIndex const fieldIndex = m_fields.size();
   m_fields.resize( fieldIndex + 1 );
@@ -1209,9 +1209,9 @@ void DofManager::addField( string const & fieldName,
   // log some basic info
   if( m_logLevel > 0 )
   {
-    GEOS_LOG_RANK_0( "DofManager :: Added field .... " << field.docstring );
-    GEOS_LOG_RANK_0( "DofManager :: Global dofs .... " << field.numGlobalRows );
-    GEOS_LOG_RANK_0( "DofManager :: Field offset ... " << field.fieldOffset );
+    GEOSX_LOG_RANK_0( "DofManager :: Added field .... " << field.docstring );
+    GEOSX_LOG_RANK_0( "DofManager :: Global dofs .... " << field.numGlobalRows );
+    GEOSX_LOG_RANK_0( "DofManager :: Field offset ... " << field.fieldOffset );
   }
 }
 
@@ -1226,7 +1226,7 @@ void DofManager::setSparsityPattern( ParallelMatrix & matrix,
   if( rowFieldName.length() > 0 )
   {
     // check if the row field name is already added
-    GEOS_ERROR_IF( !keyInUse( rowFieldName ), "setSparsityPattern: requested field name must be already existing." );
+    GEOSX_ERROR_IF( !keyInUse( rowFieldName ), "setSparsityPattern: requested field name must be already existing." );
 
     // get row field index
     rowFieldIndex = getFieldIndex( rowFieldName );
@@ -1239,7 +1239,7 @@ void DofManager::setSparsityPattern( ParallelMatrix & matrix,
   if( colFieldName.length() > 0 )
   {
     // check if the col field name is already added
-    GEOS_ERROR_IF( !keyInUse( colFieldName ), "setSparsityPattern: requested field name must be already existing." );
+    GEOSX_ERROR_IF( !keyInUse( colFieldName ), "setSparsityPattern: requested field name must be already existing." );
 
     // get col field index
     colFieldIndex = getFieldIndex( colFieldName );
@@ -1251,7 +1251,7 @@ void DofManager::setSparsityPattern( ParallelMatrix & matrix,
 
   if( rowFieldIndex * colFieldIndex < 0 )
   {
-    GEOS_ERROR( "setSparsityPattern accepts both two field names and none, instead just one is provided." );
+    GEOSX_ERROR( "setSparsityPattern accepts both two field names and none, instead just one is provided." );
   }
 
   // Call the low level routine
@@ -1264,8 +1264,8 @@ void DofManager::setSparsityPatternOneBlock( ParallelMatrix & pattern,
                                              localIndex const colFieldIndex,
                                              bool const closePattern ) const
 {
-  GEOS_ASSERT( rowFieldIndex >= 0 );
-  GEOS_ASSERT( colFieldIndex >= 0 );
+  GEOSX_ASSERT( rowFieldIndex >= 0 );
+  GEOSX_ASSERT( colFieldIndex >= 0 );
 
   pattern.createWithLocalSize( m_fields[rowFieldIndex].numLocalRows,
                                m_fields[colFieldIndex].numLocalRows,
@@ -1315,9 +1315,9 @@ void DofManager::setSparsityPattern( ParallelMatrix & matrix,
                                      localIndex const colFieldIndex,
                                      bool const closePattern ) const
 {
-  GEOS_ASSERT( rowFieldIndex < m_fields.size() );
-  GEOS_ASSERT( colFieldIndex < m_fields.size() );
-  GEOS_ERROR_IF( (rowFieldIndex >= 0 && colFieldIndex < 0) || (rowFieldIndex < 0 && colFieldIndex >= 0),
+  GEOSX_ASSERT( rowFieldIndex < m_fields.size() );
+  GEOSX_ASSERT( colFieldIndex < m_fields.size() );
+  GEOSX_ERROR_IF( (rowFieldIndex >= 0 && colFieldIndex < 0) || (rowFieldIndex < 0 && colFieldIndex >= 0),
                  "setSparsityPattern accepts either two non-negative values (existing field indices) or "
                  "two negative values (entire Jacobian rows/columns), instead just one index is non-negative." );
 
@@ -1339,7 +1339,7 @@ void DofManager::setSparsityPattern( ParallelMatrix & matrix,
   }
   else // both negative, multiple fields
   {
-    GEOS_ERROR_IF( !m_closed, "setSparsityPattern: DofManager needs to be closed first" );
+    GEOSX_ERROR_IF( !m_closed, "setSparsityPattern: DofManager needs to be closed first" );
 
     // Create the matrix
     globalIndex const sumLocalDofs = numLocalDofs();
@@ -1405,7 +1405,7 @@ void DofManager::setVector( ParallelVector & vector,
 
   if( !fieldName.empty() )
   {
-    GEOS_ERROR_IF( !keyInUse( fieldName ), "setVector: requested field name must be already existing." );
+    GEOSX_ERROR_IF( !keyInUse( fieldName ), "setVector: requested field name must be already existing." );
     fieldIndex = getFieldIndex( fieldName );
   }
   else
@@ -1427,7 +1427,7 @@ void DofManager::setVector( ParallelVector & vector,
   }
   else
   {
-    GEOS_ERROR_IF( !m_closed, "setVector: DofManager needs to be closed first" );
+    GEOSX_ERROR_IF( !m_closed, "setVector: DofManager needs to be closed first" );
 
     // Create the global vector
     globalIndex const sumLocalDofs = numLocalDofs();
@@ -1445,7 +1445,7 @@ void DofManager::vectorToField( ParallelVector const & vector,
                                 localIndex const loCompIndex,
                                 localIndex const hiCompIndex ) const
 {
-  GEOS_ERROR_IF( !keyInUse( srcFieldName ), "copyVectorToField: requested field does not exist: " << srcFieldName );
+  GEOSX_ERROR_IF( !keyInUse( srcFieldName ), "copyVectorToField: requested field does not exist: " << srcFieldName );
 
   FieldDescription const & fieldDesc = m_fields[ getFieldIndex( srcFieldName ) ];
 
@@ -1455,7 +1455,7 @@ void DofManager::vectorToField( ParallelVector const & vector,
   {
     hiComp = fieldDesc.numComponents;
   }
-  GEOS_ASSERT( loComp >= 0 && hiComp <= fieldDesc.numComponents && loComp < hiComp );
+  GEOSX_ASSERT( loComp >= 0 && hiComp <= fieldDesc.numComponents && loComp < hiComp );
 
   arrayView1d<globalIndex const> const & indexArray = manager->getReference< array1d<globalIndex> >( fieldDesc.key );
   arrayView1d<integer const> const & ghostRank = manager->GhostRank();
@@ -1465,7 +1465,7 @@ void DofManager::vectorToField( ParallelVector const & vector,
   real64 const * localVector = vector.extractLocalVector();
 
   WrapperBase * const wrapper = manager->getWrapperBase( dstFieldName );
-  GEOS_ASSERT( wrapper != nullptr );
+  GEOSX_ASSERT( wrapper != nullptr );
   std::type_index typeIndex = std::type_index( wrapper->get_typeid() );
 
   rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( typeIndex ),
@@ -1481,7 +1481,7 @@ void DofManager::vectorToField( ParallelVector const & vector,
       if( ghostRank[i] < 0 )
       {
         localIndex const lid = indexArray[i] - rankOffset;
-        GEOS_ASSERT( lid >= 0 ); // since vectors are partitioned same as the mesh
+        GEOSX_ASSERT( lid >= 0 ); // since vectors are partitioned same as the mesh
         for( localIndex c = loComp; c < hiComp; ++c )
         {
           FIELD_OP::template SpecifyFieldValue( field,
@@ -1539,7 +1539,7 @@ void DofManager::fieldToVector( ObjectManagerBase const * const manager,
                                 localIndex const loCompIndex,
                                 localIndex const hiCompIndex ) const
 {
-  GEOS_ERROR_IF( !keyInUse( dstFieldName ), "copyVectorToField: requested field does not exist: " << dstFieldName );
+  GEOSX_ERROR_IF( !keyInUse( dstFieldName ), "copyVectorToField: requested field does not exist: " << dstFieldName );
 
   FieldDescription const & fieldDesc = m_fields[ getFieldIndex( dstFieldName ) ];
 
@@ -1549,7 +1549,7 @@ void DofManager::fieldToVector( ObjectManagerBase const * const manager,
   {
     hiComp = fieldDesc.numComponents;
   }
-  GEOS_ASSERT( loComp >= 0 && hiComp <= fieldDesc.numComponents && loComp < hiComp );
+  GEOSX_ASSERT( loComp >= 0 && hiComp <= fieldDesc.numComponents && loComp < hiComp );
 
   arrayView1d<globalIndex const> const & indexArray = manager->getReference< array1d<globalIndex> >( fieldDesc.key );
   arrayView1d<integer const> const & ghostRank = manager->GhostRank();
@@ -1559,7 +1559,7 @@ void DofManager::fieldToVector( ObjectManagerBase const * const manager,
   real64 * localVector = vector.extractLocalVector();
 
   WrapperBase const * const wrapper = manager->getWrapperBase( srcFieldName );
-  GEOS_ASSERT( wrapper != nullptr );
+  GEOSX_ASSERT( wrapper != nullptr );
   std::type_index typeIndex = std::type_index( wrapper->get_typeid() );
 
   rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( typeIndex ),
@@ -1575,7 +1575,7 @@ void DofManager::fieldToVector( ObjectManagerBase const * const manager,
       if( ghostRank[i] < 0 )
       {
         localIndex const lid = indexArray[i] - rankOffset;
-        GEOS_ASSERT( lid >= 0 ); // since vectors are partitioned same as the mesh
+        GEOSX_ASSERT( lid >= 0 ); // since vectors are partitioned same as the mesh
         for( localIndex c = loComp; c < hiComp; ++c )
         {
           FIELD_OP::template ReadFieldValue( field,
@@ -1657,9 +1657,9 @@ void DofManager::addCoupling( string const & rowFieldName,
                               string_array const & regions,
                               bool const symmetric )
 {
-  GEOS_ERROR_IF( m_closed, "addCoupling: cannot add coupling after DofManager has been closed." );
-  GEOS_ERROR_IF( !keyInUse( rowFieldName ), "addCoupling: field does not exist: " << rowFieldName );
-  GEOS_ERROR_IF( !keyInUse( colFieldName ), "addCoupling: field does not exist: " << colFieldName );
+  GEOSX_ERROR_IF( m_closed, "addCoupling: cannot add coupling after DofManager has been closed." );
+  GEOSX_ERROR_IF( !keyInUse( rowFieldName ), "addCoupling: field does not exist: " << rowFieldName );
+  GEOSX_ERROR_IF( !keyInUse( colFieldName ), "addCoupling: field does not exist: " << colFieldName );
 
   // get row/col field index
   localIndex const rowFieldIndex = getFieldIndex( rowFieldName );
@@ -1668,7 +1668,7 @@ void DofManager::addCoupling( string const & rowFieldName,
   // Check if already defined
   if( m_connectivity[rowFieldIndex][colFieldIndex] != Connectivity::None )
   {
-    GEOS_ERROR( "addCoupling: coupling already defined with another connectivity" );
+    GEOSX_ERROR( "addCoupling: coupling already defined with another connectivity" );
     return;
   }
 
@@ -1696,9 +1696,9 @@ void DofManager::addCoupling( string const & rowFieldName,
     // Check that both fields are defined on all regions in the list
     for( string const & regionName : regionList )
     {
-      GEOS_ERROR_IF( std::find( rowRegions.begin(), rowRegions.end(), regionName ) == rowRegions.end(),
+      GEOSX_ERROR_IF( std::find( rowRegions.begin(), rowRegions.end(), regionName ) == rowRegions.end(),
                      "addCoupling: region " << regionName << " does not belong to the domain of field " << rowFieldName );
-      GEOS_ERROR_IF( std::find( colRegions.begin(), colRegions.end(), regionName ) == colRegions.end(),
+      GEOSX_ERROR_IF( std::find( colRegions.begin(), colRegions.end(), regionName ) == colRegions.end(),
                      "addCoupling: region " << regionName << " does not belong to the domain of field " << colFieldName );
     }
   }
@@ -1915,7 +1915,7 @@ void DofManager::makeConnLocPattern( FieldDescription const & fieldDesc,
                                   auto const,
                                   localIndex const )
       {
-        GEOS_ASSERT( ArrayHelperCon::value( indexArrayCon, faceIdx ) >= 0 );
+        GEOSX_ASSERT( ArrayHelperCon::value( indexArrayCon, faceIdx ) >= 0 );
         ArrayHelperCon::reference( indexArrayCon, faceIdx ) += fieldEdge.firstLocalRow;
       } );
 
@@ -1925,7 +1925,7 @@ void DofManager::makeConnLocPattern( FieldDescription const & fieldDesc,
                                                         auto const,
                                                         localIndex const )
       {
-        GEOS_ASSERT( ArrayHelperEdge::value( indexArrayEdge, edgeIdx ) >= 0 );
+        GEOSX_ASSERT( ArrayHelperEdge::value( indexArrayEdge, edgeIdx ) >= 0 );
         ArrayHelperEdge::reference( indexArrayEdge, edgeIdx ) += fieldConn.firstLocalRow + fieldConn.numLocalRows;
       } );
 
@@ -1946,8 +1946,8 @@ void DofManager::makeConnLocPattern( FieldDescription const & fieldDesc,
       {
         globalIndex const indexElem = ArrayHelperLoc::value( indexArrayLoc, elemIdx );
         globalIndex const indexEdge = ArrayHelperEdge::value( indexArrayEdge, edgeIdx );
-        GEOS_ASSERT( indexEdge >= 0 );
-        GEOS_ASSERT( indexElem >= 0 );
+        GEOSX_ASSERT( indexEdge >= 0 );
+        GEOSX_ASSERT( indexElem >= 0 );
 
         for( localIndex c = 0; c < NC; ++c )
         {
@@ -1966,8 +1966,8 @@ void DofManager::makeConnLocPattern( FieldDescription const & fieldDesc,
       {
         globalIndex const indexElem = ArrayHelperLoc::value( indexArrayLoc, elemIdx );
         globalIndex const indexConn = ArrayHelperCon::value( indexArrayCon, faceIdx );
-        GEOS_ASSERT( indexElem >= 0 );
-        GEOS_ASSERT( indexConn >= 0 );
+        GEOSX_ASSERT( indexElem >= 0 );
+        GEOSX_ASSERT( indexConn >= 0 );
 
         for( localIndex c = 0; c < NC; ++c )
         {
@@ -1984,7 +1984,7 @@ void DofManager::makeConnLocPattern( FieldDescription const & fieldDesc,
     {
       globalIndex const indexConn = ArrayHelperCon::value( indexArrayCon, connIdx );
       globalIndex const indexLoc  = ArrayHelperLoc::value( indexArrayLoc, locIdx );
-      GEOS_ASSERT( indexConn >= 0 );
+      GEOSX_ASSERT( indexConn >= 0 );
 
       if( indexLoc >= 0 )
       {
@@ -2066,7 +2066,7 @@ void DofManager::close()
     // synchronize index arrays for all fields across ranks
     CommunicationTools::
     SynchronizeFields( fieldNames, m_mesh,
-                       m_domain->getReference< array1d< NeighborCommunicator > >( m_domain->viewKeys.neighbors ) );
+                       m_domain->getReference< array1d<NeighborCommunicator > >( m_domain->viewKeys.neighbors ) );
   }
 
   m_closed = true;
@@ -2075,7 +2075,7 @@ void DofManager::close()
 void DofManager::printConnectivityLocationPattern( string const & fieldName, string const & fileName ) const
 {
   // check if the field name is already added
-  GEOS_ERROR_IF( !keyInUse( fieldName ),
+  GEOSX_ERROR_IF( !keyInUse( fieldName ),
                  "printConnectivityLocationPattern: requested field name must be already existing." );
 
   string const name = !fileName.empty() ? fileName : "pattern_" + fieldName + ".mtx" ;

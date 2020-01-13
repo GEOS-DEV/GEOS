@@ -44,7 +44,7 @@ Perforation::Perforation(string const & name, Group * const parent)
 
 void Perforation::PostProcessInput()
 {
-  GEOS_ERROR_IF( m_distanceFromHead <= 0,
+  GEOSX_ERROR_IF( m_distanceFromHead <= 0,
                  "Invalid distance well head to perforation " << getName() );
 
 }

@@ -66,7 +66,7 @@ void MultiFluidPVTPackageWrapper::PostProcessInput()
   for (localIndex ip = 0; ip < NP; ++ip)
   {
     auto it = PVTPackage_phaseDict.find( m_phaseNames[ip] );
-    GEOS_ERROR_IF( it == PVTPackage_phaseDict.end(), "Phase not supported by PVTPackage: " << m_phaseNames[ip] );
+    GEOSX_ERROR_IF( it == PVTPackage_phaseDict.end(), "Phase not supported by PVTPackage: " << m_phaseNames[ip] );
     m_pvtPackagePhaseTypes[ip] = it->second;
   }
 }
@@ -230,12 +230,12 @@ void MultiFluidPVTPackageWrapper::Compute( localIndex const NC, localIndex const
     }
   }
 
-  GEOS_ERROR_IF( fluid == nullptr, "PVTPackage fluid object has not been created" );
+  GEOSX_ERROR_IF( fluid == nullptr, "PVTPackage fluid object has not been created" );
 
   // 2. Trigger PVTPackage compute and get back phase split
   fluid->Update( pressure, temperature, compMoleFrac );
 
-  GEOS_WARNING_IF( fluid->getState() != MultiphaseSystem::State::SUCCESS,
+  GEOSX_WARNING_IF( fluid->getState() != MultiphaseSystem::State::SUCCESS,
                    "Phase equilibrium calculations not converged");
 
   MultiphaseSystemProperties const & split = fluid->get_MultiphaseSystemProperties();
