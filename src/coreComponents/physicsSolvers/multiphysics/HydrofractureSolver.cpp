@@ -1236,7 +1236,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
 
 #ifdef GEOSX_USE_HYPRE_MGR
   // ordering = 0: reduce U first; 1: reduce P first.
-  integer ordering = 1;
+  integer ordering = 0;
   timeval tim;
   gettimeofday(&tim, nullptr);
   const real64 t_start = tim.tv_sec + (tim.tv_usec / 1000000.0);
@@ -1262,6 +1262,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
   std::vector<globalIndex>    col_indices(nnz_max);
 
   //############################################# BEGIN COPYING HYPRE MATRIX ###############################################
+  clock.start(true);
   std::vector<globalIndex> offset(2*num_processes, 0);
   std::vector<globalIndex> iDOF_offset(num_processes, 0);
 
@@ -1283,8 +1284,6 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
       HYPRE_IJVectorDestroy(IJ_lhs);
       IJ_lhs = nullptr;
     }
-
-    clock.start(true);
 
     for(int iDOF=0; iDOF<2; ++iDOF)
     {
@@ -1460,12 +1459,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
     }
   }
   */
-
-  auxTime = clock.stop();
-  GEOSX_MARK_END(COPY_HYPRE_MATRIX);
-
   //######################################### END COPYING HYPRE MATRIX #########################################
-
 
   //########################################## BEGIN COPYING UU MATRIX #########################################
   if (ordering == 0)
@@ -1501,24 +1495,10 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
       HYPRE_IJMatrixAssemble(IJ_matrix_uu);
       HYPRE_IJMatrixGetObject(IJ_matrix_uu, (void**) &parcsr_uu);
     } 
-    //########################################## END COPYING UU MATRIX #########################################
-
-    //#################################### SETUP AMG FOR UU BLOCK ######################################
-    HYPRE_BoomerAMGCreate(&uu_amg_solver); 
-    HYPRE_BoomerAMGSetPrintLevel(uu_amg_solver, 0);
-    HYPRE_BoomerAMGSetRelaxOrder(uu_amg_solver, 1);
-    HYPRE_BoomerAMGSetMaxIter(uu_amg_solver, 1);
-    HYPRE_BoomerAMGSetNumFunctions(uu_amg_solver, 3);
-    //HYPRE_BoomerAMGSetStrongThreshold(uu_amg_solver, 0.25);
-    HYPRE_BoomerAMGSetAggNumLevels(uu_amg_solver, 1);
-    HYPRE_BoomerAMGSetNumSweeps(uu_amg_solver, 3);
-    //HYPRE_BoomerAMGSetRelaxType(uu_amg_solver, 3);
-
-    clock.start(true);
-    HYPRE_BoomerAMGSetup
-      (uu_amg_solver, parcsr_uu, par_rhs_uu, par_lhs_uu);
-    setupTime = clock.stop();
   }
+  //########################################## END COPYING UU MATRIX #########################################
+  auxTime = clock.stop();
+  GEOSX_MARK_END(COPY_HYPRE_MATRIX);
 
   // ############# MGR OPTIONS ******************
   /* mgr options */
@@ -1626,7 +1606,25 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
 
   // set fine grid solver
   if (ordering == 0)
+  {
+    clock.start(true);
+    /* create AMG solver for F-relaxation */
+    HYPRE_BoomerAMGCreate(&uu_amg_solver); 
+    HYPRE_BoomerAMGSetPrintLevel(uu_amg_solver, 0);
+    HYPRE_BoomerAMGSetRelaxOrder(uu_amg_solver, 1);
+    HYPRE_BoomerAMGSetMaxIter(uu_amg_solver, 1);
+    HYPRE_BoomerAMGSetNumFunctions(uu_amg_solver, 3);
+    //HYPRE_BoomerAMGSetStrongThreshold(uu_amg_solver, 0.25);
+    HYPRE_BoomerAMGSetAggNumLevels(uu_amg_solver, 1);
+    HYPRE_BoomerAMGSetNumSweeps(uu_amg_solver, 1);
+    //HYPRE_BoomerAMGSetRelaxType(uu_amg_solver, 3);
+
+    HYPRE_BoomerAMGSetup
+      (uu_amg_solver, parcsr_uu, par_rhs_uu, par_lhs_uu);
+    setupTime = clock.stop();
+
     HYPRE_MGRSetFSolver(mgr_precond, HYPRE_BoomerAMGSolve, HYPRE_BoomerAMGSetup, uu_amg_solver);
+  }
 
   /* setup MGR-PCG solver */
   HYPRE_GMRESSetPrecond(pgmres_solver,
