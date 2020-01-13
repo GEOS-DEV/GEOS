@@ -273,7 +273,6 @@ void SurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
           setApplyDefaultValue(1.0e99)->
           setPlotLevel(dataRepository::PlotLevel::LEVEL_0)->
           setDescription("Rate of rupture for a given face.");
-
       });
     });
 
@@ -4585,7 +4584,14 @@ SurfaceGenerator::calculateRuptureRate( FaceElementRegion const & faceElementReg
     maxRuptureRate = std::max( maxRuptureRate, ruptureRate(faceElemIndex) );
   }
 
-  return maxRuptureRate;
+  real64 globalMaxRuptureRate;
+  MpiWrapper::allReduce( &maxRuptureRate,
+                         &globalMaxRuptureRate,
+                         1,
+                         MPI_MAX,
+                         MPI_COMM_GEOSX );
+
+  return globalMaxRuptureRate;
 }
 
 

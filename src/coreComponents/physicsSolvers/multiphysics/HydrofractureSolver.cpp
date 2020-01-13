@@ -33,6 +33,7 @@
 #include "mesh/FaceElementRegion.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
+#include "mpiCommunications/NeighborCommunicator.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
@@ -76,6 +77,8 @@ HydrofractureSolver::HydrofractureSolver( const std::string& name,
     setApplyDefaultValue(10)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Value to indicate how many resolves may be executed to perform surface generation after the execution of flow and mechanics solver. ");
+
+  m_numResolves[0] = 0;
 }
 
 void HydrofractureSolver::RegisterDataOnMesh( dataRepository::Group * const GEOSX_UNUSED_ARG( MeshBodies ) )
@@ -196,7 +199,9 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
                        m_solution );
 
     int const maxIter = m_maxNumResolves + 1;
-    for( int solveIter=0 ; solveIter<maxIter ; ++solveIter )
+    m_numResolves[1] = m_numResolves[0];
+    int solveIter;
+    for( solveIter=0 ; solveIter<maxIter ; ++solveIter )
     {
       int locallyFractured = 0;
       int globallyFractured = 0;
@@ -238,23 +243,39 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
       }
       if( globallyFractured == 0 )
       {
+        // surfaceGenerator->group_cast<SurfaceGenerator*>()->getSurfaceElementsRupturedThisSolve().clear();
+        // set < localIndex > surfaceElemsRupturedThisSolve = surfaceGenerator->group_cast<surfaceGenerator*>()->getSurfaceElementsRupturedThisSolve();
+        // surfaceElemsRupturedThisSolve.clear();
         break;
       }
       else
       {
+        std::map<string, string_array > fieldNames;
+        fieldNames["node"].push_back( keys::IncrementalDisplacement );
+        fieldNames["node"].push_back( keys::TotalDisplacement );
+        fieldNames["elems"].push_back( FlowSolverBase::viewKeyStruct::pressureString );
+        fieldNames["elems"].push_back( "elementAperture" );
+
+        CommunicationTools::SynchronizeFields( fieldNames,
+                                               domain->getMeshBody(0)->getMeshLevel(0),
+                                               domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
+
+
         if( getLogLevel() >= 1 )
         {
           GEOSX_LOG_RANK_0("++ Fracture propagation. Re-entering Newton Solve.");
         }
         m_flowSolver->ResetViews(domain);
+        this->UpdateDeformationForCoupling(domain);
       }
     }
 
     // final step for completion of timestep. typically secondary variable updates and cleanup.
     ImplicitStepComplete( time_n, dtReturn, domain );
-
     n_cycles++;
+    m_numResolves[1] = solveIter;
   }
+
   return dtReturn;
 }
 
@@ -297,7 +318,6 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
           temp += u[faceToNodeMap(kf0, a)];
           temp -= u[faceToNodeMap(kf1, a)];
         }
-        //area[kfe] = faceArea[kf0];
 
         // TODO this needs a proper contact based strategy for aperture
         aperture[kfe] = -Dot(temp,faceNormal[kf0]) / numNodesPerFace;
@@ -815,8 +835,7 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
 
   if( getLogLevel() >= 10 )
   {
-    SystemSolverParameters * const solverParams = getSystemSolverParameters();
-    integer newtonIter = solverParams->numNewtonIterations();
+    integer newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
 
     {
       string filename = "matrix00_" + std::to_string( time ) + "_" + std::to_string( newtonIter ) + ".mtx";
@@ -872,7 +891,15 @@ CalculateResidualNorm( DomainPartition const * const domain,
                                                                      m_solidSolver->getDofManager(),
                                                                      m_solidSolver->getSystemRhs() );
 
-  GEOSX_LOG_RANK_0("residuals for fluid, solid: "<<fluidResidual<<", "<<solidResidual);
+  if( getLogLevel() >= 1 && logger::internal::rank==0 )
+  {
+    char output[200] = {0};
+    sprintf( output,
+             "( Rfluid, Rsolid ) = (%4.2e, %4.2e) ; ",
+             fluidResidual,
+             solidResidual);
+    std::cout<<output;
+  }
 
   return fluidResidual + solidResidual;
 }
@@ -1193,11 +1220,12 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
   */
 
   SystemSolverParameters * const params = &m_systemSolverParameters;
-  integer newtonIter = params->numNewtonIterations();
   double setupTime, solveTime, auxTime;
   setupTime = 0.0;
   solveTime = 0.0;
   auxTime = 0.0;
+
+  integer const newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
 
   using namespace Teuchos;
   using namespace Thyra;
@@ -2044,13 +2072,24 @@ HydrofractureSolver::ScalingForSystemSolution( DomainPartition const * const dom
                                                   m_solidSolver->getSystemSolution() );
 }
 
-void HydrofractureSolver::SetNextDt( SystemSolverParameters * const GEOSX_UNUSED_ARG(solverParams),
-                                     real64 const & currentDt ,
+void HydrofractureSolver::SetNextDt( real64 const & currentDt ,
                                      real64 & nextDt )
 {
   SolverBase * const surfaceGenerator =  this->getParent()->GetGroup<SolverBase>("SurfaceGen");
-  nextDt = surfaceGenerator->GetTimestepRequest() < 1e99 ? surfaceGenerator->GetTimestepRequest() : currentDt;
-  GEOSX_LOG_RANK_0("nextDt surfaceGen " << nextDt);
+
+  if (m_numResolves[0] == 0 & m_numResolves[1] == 0)
+  {
+    this->SetNextDtBasedOnNewtonIter(currentDt, nextDt);
+  } else
+  {
+    nextDt = surfaceGenerator->GetTimestepRequest() < 1e99 ? surfaceGenerator->GetTimestepRequest() : currentDt;
+  }
+  GEOSX_LOG_RANK_0(this->getName() << ": nextDt request is "  << nextDt);
+}
+
+void HydrofractureSolver::initializeNewFaceElements( DomainPartition const &  )
+{
+//  m_flowSolver->
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, HydrofractureSolver, std::string const &, Group * const )

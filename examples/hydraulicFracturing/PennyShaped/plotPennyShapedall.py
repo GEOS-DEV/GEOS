@@ -65,7 +65,7 @@ for i in range(0,numFiles):
 
     labels.append(prefix[i])
 
-    Radius[i] = (Area[i]*4/math.pi)**0.5
+    Radius[i] = (Area[i]/math.pi)**0.5
     
 #print Aperture[0]
     

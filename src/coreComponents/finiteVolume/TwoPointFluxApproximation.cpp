@@ -23,6 +23,8 @@
 #include "FaceElementStencil.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 
+#include <cmath>
+
 namespace geosx
 {
 
@@ -218,7 +220,12 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
   arrayView1d<real64 const>   const & faceArea   = faceManager->faceArea();
   arrayView1d<R1Tensor const> const & faceCenter = faceManager->faceCenter();
   arrayView1d<R1Tensor const> const & faceNormal = faceManager->faceNormal();
+  ArrayOfArraysView<localIndex const> const & faceToNodesMap = faceManager->nodeList();
+
   arrayView1d<R1Tensor const> const & X = nodeManager->referencePosition();
+
+  arrayView1d<R1Tensor> const & incrementalDisplacement = nodeManager->getReference<array1d<R1Tensor>>(keys::IncrementalDisplacement);
+  arrayView1d<R1Tensor> const & totalDisplacement = nodeManager->getReference<array1d<R1Tensor>>(keys::TotalDisplacement);
 
   FaceElementStencil & fractureStencil = getReference<FaceElementStencil>(viewKeyStruct::fractureStencilString);
   CellElementStencilTPFA & cellStencil = getReference<CellElementStencilTPFA>(viewKeyStruct::cellStencilString);
@@ -252,6 +259,23 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
 
   arrayView1d<integer const> const & edgeGhostRank = edgeManager->GhostRank();
 
+  arrayView1d< real64 > const &
+  fluidPressure = fractureSubRegion->getReference<array1d<real64>>("pressure");
+
+  arrayView1d< real64 > const &
+  aperture = fractureSubRegion->getReference<array1d<real64>>("elementAperture");
+
+//  dataRepository::Group const * const constitutiveRelation = fractureSubRegion->GetConstitutiveModels()->GetGroup("water");
+  arrayView1d<real64> const &
+  dens = fractureSubRegion->getReference<array1d<real64>>("densityOld");
+
+  for( localIndex const kfe : fractureSubRegion->m_newFaceElements )
+  {
+    fluidPressure[kfe] = 1.0e99;
+    aperture[kfe] = 1.0e99;
+  }
+  set<localIndex> allNewElems;
+
   // add new connectors/connections between face elements to the fracture stencil
   for( auto const fci : edgeManager->m_recalculateFractureConnectorEdges )
   {
@@ -273,10 +297,13 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
       edgeManager->calculateCenter( edgeIndex, X, edgeCenter );
       edgeManager->calculateLength( edgeIndex, X, edgeLength );
 
+      real64 initialPressure = 1.0e99;
+      real64 initialAperture = 1.0e99;
+      set<localIndex> newElems;
+
       // loop over all face elements attached to the connector and add them to the stencil
       for( localIndex kfe=0 ; kfe<numElems ; ++kfe )
       {
-
         localIndex const fractureElementIndex = fractureConnectorsToFaceElements[fci][kfe];
 
         // use straight difference between the edge center and face center for gradient length...maybe do something
@@ -290,7 +317,52 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
         stencilCellsIndex[kfe] = fractureElementIndex;
 
         stencilWeights[kfe] =  1.0 / 12.0 * edgeLength.L2_Norm() / cellCenterToEdgeCenter.L2_Norm();
+
+        // code to initialize new face elements with pressures from neighbors
+        if( fractureSubRegion->m_newFaceElements.count(fractureElementIndex)==0 )
+        {
+          initialPressure = std::min(initialPressure, fluidPressure[fractureElementIndex]);
+          initialAperture = std::min(initialAperture, aperture[fractureElementIndex] );
+        }
+        else
+        {
+          newElems.insert(fractureElementIndex);
+          allNewElems.insert(fractureElementIndex);
+        }
       }
+
+      for( localIndex const newElemIndex : newElems )
+      {
+        fluidPressure[newElemIndex] = std::min(fluidPressure[newElemIndex], initialPressure);
+        if( fluidPressure[newElemIndex] > 1.0e98 )
+        {
+          fluidPressure[newElemIndex] = 0.0;
+        }
+        dens[newElemIndex] = 0.0;
+        aperture[newElemIndex] = std::min(aperture[newElemIndex], initialAperture);
+
+        localIndex const faceIndex0 = faceMap(newElemIndex,0);
+        localIndex const faceIndex1 = faceMap(newElemIndex,1);
+
+        localIndex const numNodesPerFace = faceToNodesMap.sizeOfArray(faceIndex0);
+
+        bool zeroDisp = true;
+        for( localIndex a=0 ; a<numNodesPerFace ; ++a )
+        {
+          localIndex const node0 = faceToNodesMap(faceIndex0,a);
+          localIndex const node1 = faceToNodesMap(faceIndex1, a==0 ? a : numNodesPerFace-a );
+          if( fabs( totalDisplacement[node0].L2_Norm() ) > 1.0e-99 &&
+              fabs( totalDisplacement[node1].L2_Norm() ) > 1.0e-99 )
+          {
+            zeroDisp = false;
+          }
+        }
+        if( zeroDisp )
+        {
+          aperture[newElemIndex] = 0;
+        }
+      }
+
       // add/overwrite the stencil for index fci
       fractureStencil.add( numElems,
                            stencilCellsRegionIndex,
@@ -298,7 +370,42 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
                            stencilCellsIndex,
                            stencilWeights.data(),
                            fci );
+
     }
+  }
+
+  for( localIndex const newElemIndex : allNewElems )
+  {
+    localIndex const faceIndex0 = faceMap(newElemIndex,0);
+    localIndex const faceIndex1 = faceMap(newElemIndex,1);
+
+    R1Tensor newDisp = faceNormal(faceIndex0);
+    if (aperture[newElemIndex] < 1e98)
+    {
+      newDisp *= -0.5 * aperture[newElemIndex] ;
+      localIndex const numNodesPerFace = faceToNodesMap.sizeOfArray(faceIndex0);
+      for( localIndex a=0 ; a<numNodesPerFace ; ++a )
+      {
+        localIndex const node0 = faceToNodesMap(faceIndex0,a);
+        localIndex const node1 = faceToNodesMap(faceIndex1, a==0 ? a : numNodesPerFace-a );
+        if( node0 != node1 )
+        {
+          incrementalDisplacement[node0] += newDisp;
+          totalDisplacement[node0] += newDisp;
+          incrementalDisplacement[node1] -= newDisp;
+          totalDisplacement[node1] -= newDisp;
+        }
+      }
+    }
+
+    if( this->getLogLevel() > 1 )
+    {
+      printf( "New elem index, init aper, init press = %4ld, %4.2e, %4.2e \n",
+              newElemIndex,
+              aperture[newElemIndex] ,
+              fluidPressure[newElemIndex] );
+    }
+
   }
 
   // add connections for FaceElements to/from CellElements.

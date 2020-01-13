@@ -276,7 +276,24 @@ FluxKernelHelper::apertureForPermeablityCalculation<1>( real64 const aper0,
   dAperTerm_dAper = 0.25 * ( aper0*aper0 +
                              2*aper0*aper +
                              3*aper*aper );
+
+
+  //printf( "aper0, aper, Kf = %4.2e, %4.2e, %4.2e \n", aper0, aper, aperTerm );
 }
+
+
+template<>
+inline void
+FluxKernelHelper::apertureForPermeablityCalculation<2>( real64 const aper0,
+                                                        real64 const aper,
+                                                        real64 & aperTerm,
+                                                        real64 & dAperTerm_dAper )
+{
+  aperTerm = aper0 * aper0 * aper;
+
+  dAperTerm_dAper = aper0 * aper0;
+}
+
 
 struct FluxKernel
 {
@@ -570,11 +587,31 @@ struct FluxKernel
 
     for( localIndex k=0 ; k<numFluxElems ; ++k )
     {
+
+#define PERM_CALC 1
+#if PERM_CALC==0
       FluxKernelHelper::
       apertureForPermeablityCalculation<1>( aperture0[stencilElementIndices[k]],
                                             aperture[stencilElementIndices[k]],
                                             aperTerm[k],
                                             dAperTerm_dAper[k] );
+
+#elif PERM_CALC==1
+      real64 const aperAdd = 2.0e-4;
+      FluxKernelHelper::
+      apertureForPermeablityCalculation<1>( aperture0[stencilElementIndices[k]],
+                                            aperture[stencilElementIndices[k]],
+                                            aperTerm[k],
+                                            dAperTerm_dAper[k] );
+
+      aperTerm[k] += aperAdd*aperAdd*aperAdd;
+
+#elif PERMCALC==2
+
+
+
+#endif
+
 
       sumOfWeights += aperTerm[k] * stencilWeights[k];
     }

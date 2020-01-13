@@ -21,11 +21,12 @@
       contactRelationName="fractureContact"
       maxNumResolves="1"
       >
+      <NonlinearSolverParameters name="nlsp"
+                                 newtonTol="1.0e-5"
+                                 newtonMaxIter="10"
+                                 lineSearchMaxCuts="4"/>
       <SystemSolverParameters
-        maxIterNewton="50"
-        newtonTol="1e-5"
-        logLevel="1"
-        maxLineSearchCuts="10"
+        logLevel="0"
         useMLPrecond="1"
         scalingOption="2"
         />
@@ -40,10 +41,11 @@
       solidMaterialName="rock"
       contactRelationName="fractureContact"
       >
+      <NonlinearSolverParameters name="nlsp"
+                                 newtonTol="1.0e-6"
+                                 newtonMaxIter="5"/>
       <SystemSolverParameters 
         krylovTol="1.0e-10"
-        newtonTol="1.0e-6"
-        maxIterNewton="5"
         logLevel="0"
         />
     </SolidMechanicsLagrangianSSLE>
@@ -58,11 +60,12 @@
       solidName="rock"
       inputFluxEstimate="1"
       >
+      <NonlinearSolverParameters name="nlsp"
+                                 newtonTol="1.0e-5"
+                                 newtonMaxIter="10"/>
       <SystemSolverParameters 
         name="SystemSolverParameters"
         krylovTol="1.0e-12"
-        newtonTol="1.0e-5"
-        maxIterNewton="10"
         logLevel="0"
         />
     </SinglePhaseFlow>
@@ -87,7 +90,7 @@
                    materialList="{water, rock}"/>
                    
     <FaceElementRegion name="Fracture"
-                       defaultAperture="0.1e-3"
+                       defaultAperture="0.02e-3"
                        materialList="{water, rock}"/>
   </ElementRegions>
 
@@ -101,21 +104,18 @@
                                   referenceViscosity="5.0e-3"
                                   viscosibility="0.0"/>
 
-    <PoroLinearElasticIsotropic name="rock"
-                                defaultDensity="2700"
-                                defaultBulkModulus="20.0e9"
-                                defaultShearModulus="12.0e9"
-                                BiotCoefficient="1"
-                                compressibility="1.6155088853e-18"
-                                referencePressure="2.125e6"
-                                />
+    <LinearElasticIsotropic name="rock"
+                            defaultDensity="2700"
+                            defaultBulkModulus="20.0e9"
+                            defaultShearModulus="12.0e9"
+                            />
                                 
     <Contact name="fractureContact"
       penaltyStiffness="1.0e0" >
       <TableFunction 
         name="aperTable" 
         coordinates = "{ -1.0e-3, 0.0}"
-        values      = "{  1.0e-6, 0.1e-3}" 
+        values      = "{  1.0e-6, 0.02e-3}" 
         />
     </Contact>
   </Constitutive>

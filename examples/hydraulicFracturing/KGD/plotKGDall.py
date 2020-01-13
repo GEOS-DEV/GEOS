@@ -17,8 +17,9 @@ E  = float(sys.argv[2])
 q  = float(sys.argv[3])
 KI = float(sys.argv[4])
 x_source = float(sys.argv[5])
+aper_cutoff = float(sys.argv[6])
 
-numFiles = len(sys.argv) - 6
+numFiles = len(sys.argv) - 7
 #print numFiles
 prefix = []
 t_sim = []
@@ -33,7 +34,7 @@ Aperture = []
 labels = []
 symbols = ['ko','rs','k^','gs','rD','bx']
 for i in range(0,numFiles):
-    prefix.append(sys.argv[6+i])
+    prefix.append(sys.argv[7+i])
 
     t_sim.append(np.empty([0]))
     aper0.append(np.empty([0]))
@@ -49,6 +50,18 @@ for i in range(0,numFiles):
     
     radP[i], Pressure[i] = np.loadtxt(prefix[i]+'_pressure.ply',skiprows=11, usecols = (0,1), unpack=True)
     radA[i], Aperture[i] = np.loadtxt(prefix[i]+'_aperture.ply',skiprows=11, usecols = (0,1), unpack=True)
+
+
+    cutoffList = []
+    for j in range(0,len(radP[i])):
+        if Aperture[i][j] < aper_cutoff:
+            cutoffList.append(j)
+
+    #print cutoffList
+    radP[i] = np.delete( radP[i], cutoffList )
+    radA[i] = np.delete( radA[i], cutoffList )
+    Aperture[i] = np.delete( Aperture[i], cutoffList )
+    Pressure[i] = np.delete( Pressure[i], cutoffList )
 
     labels.append(prefix[i])
 

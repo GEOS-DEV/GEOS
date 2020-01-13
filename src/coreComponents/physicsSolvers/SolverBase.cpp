@@ -33,7 +33,8 @@ SolverBase::SolverBase( std::string const & name,
   m_cflFactor(),
   m_maxStableDt{ 1e99 },
   m_nextDt(1e99),
-  m_dofManager( name )
+  m_dofManager( name ),
+  m_nonlinearSolverParameters( groupKeyStruct::nonlinearSolverParametersString, this)
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
@@ -94,6 +95,10 @@ Group * SolverBase::CreateChild( string const & childKey, string const & childNa
   if( childKey == SystemSolverParameters::CatalogName() )
   {
     rval = RegisterGroup( childName, &m_systemSolverParameters, 0 );
+  }
+  else if(childKey == NonlinearSolverParameters::CatalogName() )
+  {
+    rval = RegisterGroup( childName, &m_nonlinearSolverParameters, 0 );
   }
   else
   {
@@ -189,8 +194,7 @@ void SolverBase::Execute( real64 const time_n,
   real64 dtRemaining = dt;
   real64 nextDt = dt;
 
-  SystemSolverParameters * const solverParams = getSystemSolverParameters();
-  integer const maxSubSteps = solverParams->maxSubSteps();
+  integer const maxSubSteps = m_nonlinearSolverParameters.m_maxSubSteps;
   integer subStep = 0;
 
   for( ; subStep < maxSubSteps && dtRemaining > 0.0; ++subStep )
@@ -208,7 +212,7 @@ void SolverBase::Execute( real64 const time_n,
 
     if( dtRemaining > 0.0 )
     {
-      SetNextDt(solverParams, dtAccepted, nextDt);
+      SetNextDt( dtAccepted, nextDt);
       nextDt = std::min(nextDt, dtRemaining);
     }
 
@@ -223,16 +227,21 @@ void SolverBase::Execute( real64 const time_n,
   GEOSX_ERROR_IF( dtRemaining > 0.0, "Maximum allowed number of sub-steps reached. Consider increasing maxSubSteps." );
 
   // Decide what to do with the next Dt for the event running the solver.
-  SetNextDt(solverParams, nextDt, m_nextDt);
+  SetNextDt( nextDt, m_nextDt);
 }
 
-void SolverBase::SetNextDt( SystemSolverParameters * const solverParams,
-                            real64 const & currentDt,
+void SolverBase::SetNextDt( real64 const & currentDt,
                             real64 & nextDt )
 {
-  integer & newtonIter = solverParams->numNewtonIterations();
-  int iterCutLimit = std::ceil(solverParams->dtCutIterLimit());
-  int iterIncLimit = std::ceil(solverParams->dtIncIterLimit());
+  SetNextDtBasedOnNewtonIter(currentDt, nextDt);
+}
+
+void SolverBase::SetNextDtBasedOnNewtonIter( real64 const & currentDt,
+                                             real64 & nextDt )
+{
+  integer & newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
+  int const iterCutLimit = m_nonlinearSolverParameters.dtCutIterLimit();
+  int const iterIncLimit = m_nonlinearSolverParameters.dtIncIterLimit();
 
   if (newtonIter <  iterIncLimit )
   {
@@ -294,11 +303,8 @@ bool SolverBase::LineSearch( real64 const & time_n,
                              real64 const scaleFactor,
                              real64 & lastResidual )
 {
-  //GEOSX_LOG_LEVEL_RANK_0(1, "    Beginning line search with last residual = " << std::scientific << lastResidual );
-  SystemSolverParameters * const solverParams = getSystemSolverParameters();
-
-  integer const maxNumberLineSearchCuts = solverParams->maxLineSearchCuts();
-  real64 const lineSearchCutFactor = solverParams->lineSearchCutFactor();
+  integer const maxNumberLineSearchCuts = m_nonlinearSolverParameters.m_lineSearchMaxCuts;
+  real64 const lineSearchCutFactor = m_nonlinearSolverParameters.m_lineSearchCutFactor;
 
   // flag to determine if we should solve the system and apply the solution. If the line
   // search fails we just bail.
@@ -314,8 +320,6 @@ bool SolverBase::LineSearch( real64 const & time_n,
   // main loop for the line search.
   for( integer lineSearchIteration = 0; lineSearchIteration < maxNumberLineSearchCuts; ++lineSearchIteration )
   {
-    m_nlSolverOutputLog.clear();
-
     // cut the scale factor by half. This means that the scale factors will
     // have values of -0.5, -0.25, -0.125, ...
     localScaleFactor *= lineSearchCutFactor;
@@ -323,7 +327,7 @@ bool SolverBase::LineSearch( real64 const & time_n,
 
     if( !CheckSystemSolution( domain, dofManager, solution, localScaleFactor ) )
     {
-      GEOSX_LOG_LEVEL_RANK_0( 1, "---- Line search " << lineSearchIteration << ", solution check failed" );
+      GEOSX_LOG_LEVEL_RANK_0( 1, "        Line search " << lineSearchIteration << ", solution check failed" );
       continue;
     }
 
@@ -335,13 +339,19 @@ bool SolverBase::LineSearch( real64 const & time_n,
     // apply boundary conditions to system
     ApplyBoundaryConditions( time_n, dt, domain, dofManager, matrix, rhs );
 
+    if( getLogLevel() >= 1 && logger::internal::rank==0 )
+    {
+      char output[100];
+      sprintf(output, "        Line search @ %0.3f:      ",cumulativeScale);
+      std::cout<<output;
+    }
+
     // get residual norm
     residualNorm = CalculateResidualNorm( domain, dofManager, rhs );
 
+    if( getLogLevel() >= 1 && logger::internal::rank==0 )
     {
-      char output[100];
-      sprintf(output,"---- Line search @ %.3f, R_abs = %.3e",cumulativeScale,residualNorm);
-      GEOSX_LOG_LEVEL_RANK_0(1,output);
+      std::cout<<std::endl;
     }
 
     // if the residual norm is less than the last residual, we can proceed to the
@@ -372,18 +382,16 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
   // value to track the achieved dt for this step.
   real64 stepDt = dt;
 
-  SystemSolverParameters * const solverParams = getSystemSolverParameters();
+  integer const maxNewtonIter = m_nonlinearSolverParameters.m_maxIterNewton;
+  integer const minNewtonIter = m_nonlinearSolverParameters.m_minIterNewton;
+  real64 const newtonTol = m_nonlinearSolverParameters.m_newtonTol;
 
-  integer const maxNewtonIter = solverParams->maxIterNewton();
-  integer const minNewtonIter = solverParams->minIterNewton();
-  real64 const newtonTol = solverParams->newtonTol();
+  integer const maxNumberDtCuts = m_nonlinearSolverParameters.m_maxTimeStepCuts;
+  real64 const dtCutFactor = m_nonlinearSolverParameters.m_timeStepCutFactor;
 
-  integer const maxNumberDtCuts = solverParams->maxTimeStepCuts();
-  real64 const dtCutFactor = solverParams->timeStepCutFactor();
+  bool const allowNonConverged = m_nonlinearSolverParameters.m_allowNonConverged > 0;
 
-  bool const allowNonConverged = solverParams->allowNonConverged() > 0;
-
-  integer & dtAttempt = solverParams->numdtAttempts();
+  integer & dtAttempt = m_nonlinearSolverParameters.m_numdtAttempts;
 
   // a flag to denote whether we have converged
   integer isConverged = 0;
@@ -400,12 +408,19 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
 
     // keep residual from previous iteration in case we need to do a line search
     real64 lastResidual = 1e99;
-    integer & newtonIter = solverParams->numNewtonIterations();
+    integer & newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
     real64 scaleFactor = 1.0;
 
     // main Newton loop
     for( newtonIter = 0; newtonIter < maxNewtonIter; ++newtonIter )
     {
+      if( getLogLevel() >= 1 && logger::internal::rank==0 )
+      {
+        char output[200] = {0};
+        sprintf( output, "    Attempt: %2d, NewtonIter: %2d ; ",
+                 dtAttempt, newtonIter );
+        std::cout<<output;
+      }
       // call assemble to fill the matrix and the rhs
       AssembleSystem( time_n, stepDt, domain, dofManager, matrix, rhs );
 
@@ -418,18 +433,22 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       // get residual norm
       real64 residualNorm = CalculateResidualNorm( domain, dofManager, rhs );
 
+
+      if( getLogLevel() >= 1 && logger::internal::rank==0 )
       {
-        char output[100];
-        sprintf(output,"-- Attempt %2d, Newton %2d, R_abs = %.3e",dtAttempt,newtonIter,residualNorm);
-        GEOSX_LOG_LEVEL_RANK_0(1,output);
+        if( newtonIter!=0 )
+        {
+          char output[200] = {0};
+          sprintf( output,
+                   "Last LinSolve(iter,tol) = (%4d, %4.2e) ; ",
+                   m_systemSolverParameters.m_numKrylovIter,
+                   m_systemSolverParameters.m_krylovTol);
+          std::cout<<output;
+        }
+        std::cout<<std::endl;
+
       }
 
-      /* 
-      GEOSX_LOG_LEVEL_RANK_0( 1, " Attempt: " << dtAttempt <<
-                                ", Newton: " << newtonIter << 
-                                ", R_abs = " << std::scientific << residualNorm <<  
-                                " (R_rel = " << residualNorm / residualNormZero << ")" );
-      */
 
       // if the residual norm is less than the Newton tolerance we denote that we have
       // converged and break from the Newton loop immediately.
@@ -437,66 +456,51 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       {
         isConverged = 1;
 
-        /*
-        if( getLogLevel() >= 1 )
-        {
-          char output[100] = {0};
-          sprintf( output, " Attempt: %2d, NewtonIter: %2d, R = %4.2e ; ", dtAttempt, newtonIter, residualNorm );
-          GEOSX_LOG_LEVEL_RANK_0( 1, output << m_nlSolverOutputLog );
-          m_nlSolverOutputLog.clear();
-        }
-        */
-
         break;
       }
 
       // do line search in case residual has increased
-      if( residualNorm > lastResidual )
+      if( m_nonlinearSolverParameters.m_lineSearchAction>0 && residualNorm > lastResidual )
       {
         residualNorm = lastResidual;
         bool lineSearchSuccess = LineSearch( time_n, stepDt, cycleNumber, domain, dofManager,
                                              matrix, rhs, solution, scaleFactor, residualNorm );
 
-        // if line search failed, then break out of the main Newton loop. Timestep will be cut.
+
         if( !lineSearchSuccess )
         {
-          GEOSX_LOG_LEVEL_RANK_0 ( 1, "---- The Line search failed!" );
-          break;
+          if( m_nonlinearSolverParameters.m_lineSearchAction==1 )
+          {
+            GEOSX_LOG_LEVEL_RANK_0( 1, "        Line search failed to produce reduced residual. Accepting iteration.");
+          }
+          else if( m_nonlinearSolverParameters.m_lineSearchAction==2 )
+          {
+            // if line search failed, then break out of the main Newton loop. Timestep will be cut.
+            GEOSX_LOG_LEVEL_RANK_0( 1, "        Line search failed to produce reduced residual. Exiting Newton Loop.");
+            break;
+          }
         }
+
       }
 
       // if using adaptive Krylov tolerance scheme, update tolerance.
       // TODO: need to combine overlapping usage on LinearSolverParameters and SystemSolverParamters
-      if(solverParams->useAdaptiveKrylovTol())
+      if( m_systemSolverParameters.useAdaptiveKrylovTol())
       {
-        solverParams->m_krylovTol = LinearSolverParameters::eisenstatWalker(residualNorm,lastResidual);
+        m_systemSolverParameters.m_krylovTol = LinearSolverParameters::eisenstatWalker(residualNorm,lastResidual);
       }
 
       // call the default linear solver on the system
       SolveSystem( dofManager, matrix, rhs, solution );
 
-      {
-        char output[100];
-        sprintf(output,"---- Linear solve, Tol = %.2e, Iter = %3d",solverParams->m_krylovTol,solverParams->m_numKrylovIter);
-        GEOSX_LOG_LEVEL_RANK_0(1,output);
-      }
 
-      /*
-      if( getLogLevel() >= 1 )
-      {
-        char output[100] = {0};
-        sprintf( output, " Attempt: %2d, NewtonIter: %2d, R = %4.2e ; ", dtAttempt, newtonIter, residualNorm );
-        GEOSX_LOG_LEVEL_RANK_0( 1, output << m_nlSolverOutputLog );
-        m_nlSolverOutputLog.clear();
-      }
-      */
 
       scaleFactor = ScalingForSystemSolution( domain, dofManager, solution );
 
       if( !CheckSystemSolution( domain, dofManager, solution, scaleFactor ) )
       {
         // TODO try chopping (similar to line search)
-        GEOSX_LOG_RANK_0( "  Solution check failed. Newton loop terminated." );
+        GEOSX_LOG_RANK_0( "    Solution check failed. Newton loop terminated." );
         break;
       }
 

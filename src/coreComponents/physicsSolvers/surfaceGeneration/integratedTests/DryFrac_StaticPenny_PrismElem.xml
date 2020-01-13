@@ -11,9 +11,11 @@
                                   targetRegions="{Region2}"
                                   solidMaterialName="granite"
                                   >
-      <SystemSolverParameters krylovTol="1.0e-10"
-                              newtonTol="1.0e-3"
-                              maxIterNewton="8"
+      <NonlinearSolverParameters name="nlsp"
+                                 newtonTol="1.0e-3"
+                                 newtonMaxIter="8"/>
+      <SystemSolverParameters name="ssp"
+                              krylovTol="1.0e-10"
                               logLevel="0"/>
      </SolidMechanicsLagrangianSSLE>
   

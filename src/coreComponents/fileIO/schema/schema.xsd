@@ -568,6 +568,7 @@
 	<xsd:complexType name="FiniteElementsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="FiniteElementSpace" type="FiniteElementSpaceType" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
 	</xsd:complexType>
@@ -581,13 +582,39 @@
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:complexType name="SystemSolverParametersType">
-		<!--allowNonConverged => Allow non-converged solution to be accepted-->
+	<xsd:complexType name="NonlinearSolverParametersType">
+		<!--allowNonConverged => Allow non-converged solution to be accepted. (i.e. exit from the Newton loop without achieving the desired tolerance)-->
 		<xsd:attribute name="allowNonConverged" type="integer" default="0" />
 		<!--dtCutIterLimit => Fraction of the Max Newton iterations above which the solver asks for the time-step to be cut for the next dt.-->
 		<xsd:attribute name="dtCutIterLimit" type="real64" default="0.7" />
 		<!--dtIncIterLimit => Fraction of the Max Newton iterations below which the solver asks for the time-step to be doubled for the next dt.-->
 		<xsd:attribute name="dtIncIterLimit" type="real64" default="0.4" />
+		<!--lineSearchAction => How the line search is to be used. Options are: 
+ 0 - Do not use line search.
+1 - Use line search. Allow exit from line search without achieving smaller residual than starting residual.
+2 - Use line search. If smaller residual than starting resdual is not achieved, cut time step.
+-->
+		<xsd:attribute name="lineSearchAction" type="integer" default="1" />
+		<!--lineSearchCutFactor => Line search cut factor. For instance, a value of 0.5 will result in the effective application of the last solution by a factor of (0.5, 0.25, 0.125, ...)-->
+		<xsd:attribute name="lineSearchCutFactor" type="real64" default="0.5" />
+		<!--lineSearchMaxCuts => Maximum number of line search cuts.-->
+		<xsd:attribute name="lineSearchMaxCuts" type="integer" default="4" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--maxSubSteps => Maximum number of time sub-steps allowed for the solver-->
+		<xsd:attribute name="maxSubSteps" type="integer" default="10" />
+		<!--maxTimeStepCuts => Max number of time step cuts-->
+		<xsd:attribute name="maxTimeStepCuts" type="integer" default="2" />
+		<!--newtonMaxIter => Maximum number of iterations that are allowed in a Newton loop.-->
+		<xsd:attribute name="newtonMaxIter" type="integer" default="5" />
+		<!--newtonMinIter => Minimum number of iterations that are required before exiting the Newton loop.-->
+		<xsd:attribute name="newtonMinIter" type="integer" default="1" />
+		<!--newtonTol => The required tolerance in order to exit the Newton iteration loop.-->
+		<xsd:attribute name="newtonTol" type="real64" default="1e-06" />
+		<!--timestepCutFactor => Factor by which the time step will be cut if a timestep cut is required.-->
+		<xsd:attribute name="timestepCutFactor" type="real64" default="0.5" />
+	</xsd:complexType>
+	<xsd:complexType name="SystemSolverParametersType">
 		<!--ilut_drop => (no description available)-->
 		<xsd:attribute name="ilut_drop" type="real64" default="0" />
 		<!--ilut_fill => (no description available)-->
@@ -596,30 +623,14 @@
 		<xsd:attribute name="krylovTol" type="real64" default="1e-06" />
 		<!--kspace => (no description available)-->
 		<xsd:attribute name="kspace" type="integer" default="300" />
-		<!--lineSearchCutFactor => Line search cut factor-->
-		<xsd:attribute name="lineSearchCutFactor" type="real64" default="0.5" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--maxIterNewton => Maximum number of Newton iterations-->
-		<xsd:attribute name="maxIterNewton" type="integer" default="5" />
-		<!--maxLineSearchCuts => Max number of line search cuts-->
-		<xsd:attribute name="maxLineSearchCuts" type="integer" default="4" />
-		<!--maxSubSteps => Maximum number of time sub-steps allowed for the solver-->
-		<xsd:attribute name="maxSubSteps" type="integer" default="10" />
-		<!--maxTimeStepCuts => Max number of time step cuts-->
-		<xsd:attribute name="maxTimeStepCuts" type="integer" default="2" />
-		<!--minIterNewton => Minimum number of Newton iterations.-->
-		<xsd:attribute name="minIterNewton" type="integer" default="1" />
-		<!--newtonTol => (no description available)-->
-		<xsd:attribute name="newtonTol" type="real64" default="1e-06" />
 		<!--numKrylovIter => Maximum number of Krylov Iterations-->
 		<xsd:attribute name="numKrylovIter" type="integer" default="100" />
 		<!--scalingOption => (no description available)-->
 		<xsd:attribute name="scalingOption" type="integer" default="0" />
 		<!--solverType => (no description available)-->
 		<xsd:attribute name="solverType" type="string" default="" />
-		<!--timestepCutFactor => Time step cut factor-->
-		<xsd:attribute name="timestepCutFactor" type="real64" default="0.5" />
 		<!--useAdaptiveKrylovTol => Enable Eisenstat-Walker adaptive Krylov tolerance-->
 		<xsd:attribute name="useAdaptiveKrylovTol" type="integer" default="0" />
 		<!--useBicgstab => (no description available)-->
@@ -630,8 +641,6 @@
 		<xsd:attribute name="useInnerSolver" type="integer" default="0" />
 		<!--useMLPrecond => (no description available)-->
 		<xsd:attribute name="useMLPrecond" type="integer" default="0" />
-		<!--useNewtonSolve => (no description available)-->
-		<xsd:attribute name="useNewtonSolve" type="integer" default="0" />
 	</xsd:complexType>
 	<xsd:complexType name="FiniteVolumeType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -1194,8 +1203,8 @@
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ContactType">
-		<!--penaltyStiffness => Value of the penetration penalty stiffness. Units of Pressure/length-->
-		<xsd:attribute name="penaltyStiffness" type="real64" use="required" />
+		<!--penaltyStiffness => Value to be used to avoid floating point errors in expressions involving aperture. For example in the case of dividing by the actual aperture (not the effective aperture that results from the aperture function) this value may be used to avoid 1/0 errors. Note that this value may have some physical significance in its usage, as it may be used to smooth out highly nonlinear behavior associated with 1/0 in addition to avoiding the 1/0 error.-->
+		<xsd:attribute name="penaltyStiffness" type="real64" default="1e-09" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

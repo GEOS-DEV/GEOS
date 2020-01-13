@@ -35,6 +35,8 @@ FaceElementRegion::FaceElementRegion( string const & name, Group * const parent 
   registerWrapper( viewKeyStruct::defaultApertureString, &m_defaultAperture, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("The default aperture of for new faceElements.");
+
+
 }
 
 FaceElementRegion::~FaceElementRegion()
@@ -75,7 +77,7 @@ localIndex FaceElementRegion::AddToFractureMesh( real64 const time_np1,
   rval = subRegion->size() - 1;
 
 
-  arrayView1d<real64> &
+  arrayView1d<real64> const &
   ruptureTime = subRegion->getReference<real64_array>( viewKeyStruct::ruptureTimeString );
 
 
@@ -169,6 +171,7 @@ localIndex FaceElementRegion::AddToFractureMesh( real64 const time_np1,
 
 
   subRegion->CalculateElementGeometricQuantities( kfe, faceManager->faceArea() );
+
 
   // update the sets
   for( auto const & setIter : faceManager->sets()->wrappers() )

@@ -2,14 +2,24 @@
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="{C3D8}"
-                  xCoords="{-180, -40, 40, 180}"
+                  xCoords="{-240, -40, 40, 240}"
                   yCoords="{0, 100, 180}"
                   zCoords="{0, 1}"
-                  nx="{50, 80, 50}"
+                  nx="{100, 80, 100}"
                   ny="{100, 40}"
                   nz="{2}"
                   cellBlockNames="{cb1}"/>
-                  
+
+    <!-- InternalMesh name="mesh1"
+                  elementTypes="{C3D8}"
+                  xCoords="{-840, -40, 40, 840}"
+                  yCoords="{-380, -100.5, 100.5, 380}"
+                  zCoords="{0, 1}"
+                  nx="{140, 80, 140}"
+                  ny="{90, 201, 90}"
+                  nz="{2}"
+                  cellBlockNames="{cb1}"/-->
+
     <!--InternalMesh name="mesh1"
                   elementTypes="{C3D8}"
                   xCoords="{ -20, 20 }"
@@ -23,13 +33,13 @@
 
   <Geometry>
     <Box name="fracture" 
-         xMin="-0.01,  -0.01, -0.01"
+         xMin="-0.01,  -4.01, -0.01"
          xMax=" 0.01,   4.01,  1.01"/>
     <Box name="source"
-         xMin="-0.01, -0.01, -0.01"
+         xMin="-0.01, -1.01, -0.01"
          xMax=" 0.01,  1.01, 1.01"/>
     <Box name="core"
-         xMin="-0.01, -0.01, -0.01"
+         xMin="-0.01, -100.01, -0.01"
          xMax=" 0.01,  100.01, 1.01"/>
   </Geometry>
 
@@ -71,7 +81,7 @@
     flag allows this event to request a dt modification to match an
     integer multiple of the timeFrequency. -->
     <PeriodicEvent name="outputs"
-                   timeFrequency="2"
+                   timeFrequency="0.000001"
                    targetExactTimestep="0"
                    target="/Outputs/siloOutput" />
 
@@ -118,37 +128,13 @@
   </InitialConditions>
 
   <FieldSpecifications>
-    <!--FieldSpecification name="initialMeanStress"
+    <!-- FieldSpecification name="initialMeanStress"
                initialCondition="1"
                setNames="{all}"
                objectPath="ElementRegions"
-               fieldName="rock_MeanStress"
-               component="-1"
-               scale="-1e7"/>
-
-    <FieldSpecification name="initialDevStressX"
-               initialCondition="1"
-               setNames="{all}"
-               objectPath="ElementRegions"
-               fieldName="rock_DeviatorStress"
+               fieldName="rock_stress"
                component="0"
-               scale="-1.1e7"/>
-
-    <FieldSpecification name="initialDevStressY"
-               initialCondition="1"
-               setNames="{all}"
-               objectPath="ElementRegions"
-               fieldName="rock_DeviatorStress"
-               component="1"
-               scale="-1.1e7"/>
-
-    <FieldSpecification name="initialDevStressZ"
-               initialCondition="1"
-               setNames="{all}"
-               objectPath="ElementRegions"
-               fieldName="rock_DeviatorStress"
-               component="2"
-               scale="-1.1e7"/-->
+               scale="-60e6"/-->
 
     <FieldSpecification name="waterDensity"
                initialCondition="1"
@@ -185,28 +171,21 @@
                fieldName="TotalDisplacement"
                component="1"
                scale="0.0"
-               setNames="{yneg, ypos}"/>
+               setNames="{yneg,ypos}"/>
 
     <FieldSpecification name="zconstraint"
                objectPath="nodeManager"
                fieldName="TotalDisplacement"
                component="2"
                scale="0.0"
-               setNames="{zneg, zpos}"/>
+               setNames="{all}"/>
                
-    <FieldSpecification name="left"
+    <FieldSpecification name="xConstraint"
                objectPath="nodeManager"
                fieldName="TotalDisplacement"
                component="0"
                scale="0.0"
-               setNames="{xneg}"/>
-
-    <FieldSpecification name="right"
-               objectPath="nodeManager"
-               fieldName="TotalDisplacement"
-               component="0"
-               scale="-0.0"
-               setNames="{xpos}"/>
+               setNames="{xneg, xpos}"/>
 
 
     <!-- FieldSpecification name="source"

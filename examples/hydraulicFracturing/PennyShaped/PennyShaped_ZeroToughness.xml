@@ -19,14 +19,15 @@
       logLevel="1"
       targetRegions="{Region2, Fracture}"
       contactRelationName="fractureContact"
-      maxNumResolves="10"
+      maxNumResolves="1"
       >
+      <NonlinearSolverParameters name="nlsp"
+                                 newtonTol="1.0e-4"
+                                 newtonMaxIter="50"
+                                 lineSearchMaxCuts="4"/>
       <SystemSolverParameters
-        maxIterNewton="50"
-        newtonTol="1e-3"
         logLevel="1"
         useAdaptiveKrylovTol="1"
-        maxLineSearchCuts="10"
         useMLPrecond="1"
         scalingOption="2"
         />
@@ -41,10 +42,11 @@
       solidMaterialName="rock"
       contactRelationName="fractureContact"
       >
+      <NonlinearSolverParameters name="nlsp"
+                                 newtonTol="1.0e-6"
+                                 newtonMaxIter="5"/>
       <SystemSolverParameters 
         krylovTol="1.0e-10"
-        newtonTol="1.0e-6"
-        maxIterNewton="5"
         logLevel="0"
         />
     </SolidMechanicsLagrangianSSLE>
@@ -59,11 +61,12 @@
       solidName="rock"
       inputFluxEstimate="1.0"
       >
+      <NonlinearSolverParameters name="nlsp"
+                                 newtonTol="1.0e-5"
+                                 newtonMaxIter="10"/>
       <SystemSolverParameters 
         name="SystemSolverParameters"
         krylovTol="1.0e-12"
-        newtonTol="1.0e-5"
-        maxIterNewton="10"
         logLevel="0"
         />
     </SinglePhaseFlow>
@@ -76,7 +79,7 @@
       targetRegions="{Region2}"
       nodeBasedSIF="1"
       solidMaterialName="rock"
-      rockToughness="0.3e6"
+      rockToughness="0.4e6"
       >
     </SurfaceGenerator>
     
@@ -117,7 +120,7 @@
       <TableFunction 
         name="aperTable" 
         coordinates = "{ -1.0e-3, 0.0}"
-        values      = "{  1.0e-6, 0.1e-3}" 
+        values      = "{  0.01e-3, 0.1e-3}" 
         />
     </Contact>
   </Constitutive>

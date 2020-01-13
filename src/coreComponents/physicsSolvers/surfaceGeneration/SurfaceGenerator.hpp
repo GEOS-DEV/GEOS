@@ -120,6 +120,8 @@ public:
   AssignNewGlobalIndicesSerial( ElementRegionManager & elementManager,
                                 map< std::pair<localIndex,localIndex>, std::set<localIndex> > const & indexList );
 
+  // set< localIndex > & getSurfaceElementsRupturedThisSolve() { return m_faceElemsRupturedThisSolve; }
+
 protected:
 
   virtual void InitializePostInitialConditions_PreSubGroups( Group * const problemManager ) override final;

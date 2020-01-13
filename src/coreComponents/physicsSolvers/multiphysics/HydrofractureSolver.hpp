@@ -120,9 +120,8 @@ public:
                              int const cycleNumber,
                              DomainPartition * const domain ) override;
 
-  virtual void SetNextDt(SystemSolverParameters * const solverParams,
-                         real64 const & currentDt,
-                         real64 & nextDt) override;
+  virtual void SetNextDt( real64 const & currentDt,
+                          real64 & nextDt) override;
 
 
   virtual real64 ExplicitStep( real64 const & time_n,
@@ -148,6 +147,8 @@ public:
                             real64 const& dt,
                             integer const cycleNumber,
                             DomainPartition * const domain );
+
+  void initializeNewFaceElements( DomainPartition const & domain );
 
   enum class couplingTypeOption : int
   {
@@ -200,7 +201,6 @@ private:
   ParallelMatrix m_permutationMatrix1; // it's used to have the output based on global ordering
 
   integer m_maxNumResolves;
-
   integer n_cycles = 0;
 
 #ifdef GEOSX_USE_HYPRE_MGR
@@ -224,6 +224,8 @@ private:
   HYPRE_Solver uu_amg_solver;
 #endif
   int print_matrix = 0;
+
+  integer m_numResolves[2];
 };
 
 } /* namespace geosx */

@@ -27,6 +27,7 @@
 #include "managers/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
 #include "physicsSolvers/SystemSolverParameters.hpp"
+#include "physicsSolvers/NonlinearSolverParameters.hpp"
 
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
@@ -140,9 +141,19 @@ public:
      *
      * T
      */
-  virtual void SetNextDt(SystemSolverParameters * const solverParams,
-  		                 real64 const & currentDt,
-  		                 real64 & nextDt);
+  virtual void SetNextDt( real64 const & currentDt,
+                          real64 & nextDt);
+
+  /**
+       * @brief entry function to perform a solver step
+       * @param [in]  time_n time at the beginning of the step
+       * @param [in]  dt the perscribed timestep
+       * @param [out] return the timestep that was achieved during the step.
+       *
+       * T
+       */
+  void SetNextDtBasedOnNewtonIter( real64 const & currentDt,
+                                   real64 & nextDt);
 
 
   /**
@@ -498,6 +509,7 @@ public:
   struct groupKeyStruct
   {
     constexpr static auto systemSolverParametersString = "SystemSolverParameters";
+    constexpr static auto nonlinearSolverParametersString = "NonlinearSolverParameters";
   } groupKeys;
 
 
@@ -520,6 +532,17 @@ public:
   SystemSolverParameters const * getSystemSolverParameters() const
   {
     return &m_systemSolverParameters;
+  }
+
+
+  NonlinearSolverParameters & getNonlinearSolverParameters()
+  {
+    return m_nonlinearSolverParameters;
+  }
+
+  NonlinearSolverParameters const & getNonlinearSolverParameters() const
+  {
+    return m_nonlinearSolverParameters;
   }
 
   string getDiscretization() const {return m_discretizationName;}
@@ -590,8 +613,7 @@ protected:
 
   /// Linear solver parameters
   LinearSolverParameters m_linearSolverParameters;
-
-  string m_nlSolverOutputLog;
+  NonlinearSolverParameters m_nonlinearSolverParameters;
 
 };
 
