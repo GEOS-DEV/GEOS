@@ -22,7 +22,7 @@ def extract_cmake_location(file_path):
             if line.startswith(cmake_line_prefix):
                 return line.split(" ")[4].strip()
         print "Could not find a cmake entry in host config file."
-    return None
+    return "cmake"
 
 
 def setup_ats(scriptsdir, buildpath):
@@ -174,7 +174,6 @@ if not args.noinstall:
 ############################
 
 cmakeline = extract_cmake_location(cachefile)
-cmakeline = "cmake"
 assert cmakeline, "Host config file doesn't contain valid cmake location, value was %s" % cmakeline
 
 # Add cache file option
