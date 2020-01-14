@@ -196,7 +196,7 @@ void SinglePhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( tim
   
   // node data (for transmissibility computation)
 
-  arrayView1d<R1Tensor const> const & nodePosition = nodeManager->referencePosition();
+  arrayView2d<real64 const> const & nodePosition = nodeManager->referencePosition();
 
   
   // face data
@@ -849,7 +849,7 @@ void makeFullTensor(R1Tensor const & values, R2SymTensor & result)
 
 // this function is obviously redundant with computeCellStencil in the TwoPointFluxApproximation class
 // this is here for now, but I will have to find a better place for this type of function at some point 
-void SinglePhaseHybridFVM::ComputeTPFAInnerProduct( arrayView1d<R1Tensor const> const & nodePosition, 
+void SinglePhaseHybridFVM::ComputeTPFAInnerProduct( arrayView2d<real64 const> const & nodePosition, 
                                                     ArrayOfArraysView<localIndex const> const & faceToNodes, 
                                                     arraySlice1d<localIndex const> const elemToFaces,
                                                     R1Tensor const & elemCenter,
@@ -913,7 +913,7 @@ void SinglePhaseHybridFVM::ComputeTPFAInnerProduct( arrayView1d<R1Tensor const> 
   }
 }
 
-void SinglePhaseHybridFVM::ComputeQFamilyInnerProduct( arrayView1d<R1Tensor const> const & nodePosition, 
+void SinglePhaseHybridFVM::ComputeQFamilyInnerProduct( arrayView2d<real64 const> const & nodePosition, 
                                                        ArrayOfArraysView<localIndex const> const & faceToNodes, 
                                                        arraySlice1d<localIndex const> const elemToFaces,
                                                        R1Tensor const & elemCenter,
@@ -1111,7 +1111,7 @@ void SinglePhaseHybridFVM::ComputeQFamilyInnerProduct( arrayView1d<R1Tensor cons
 
 // TODO: template on the type of inner product
 // TODO: template on the type of subRegion to have a special treatment for fractures
-void SinglePhaseHybridFVM::ComputeTransmissibilityMatrix( arrayView1d<R1Tensor const> const & nodePosition, 
+void SinglePhaseHybridFVM::ComputeTransmissibilityMatrix( arrayView2d<real64 const> const & nodePosition, 
                                                           ArrayOfArraysView<localIndex const> const & faceToNodes, 
                                                           arraySlice1d<localIndex const> const elemToFaces,
                                                           R1Tensor const & elemCenter,

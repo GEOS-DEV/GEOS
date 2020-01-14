@@ -213,9 +213,9 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
   ConstitutiveManager * const constitutiveManager =
     domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
 
-  arrayView1d<R1Tensor> const & X = nodeManager->getReference<r1_array>(nodeManager->viewKeys.referencePosition);
-  arrayView1d<R1Tensor> const & u = nodeManager->getReference<r1_array>(keys::TotalDisplacement);
-  arrayView1d<R1Tensor> const & uhat = nodeManager->getReference<r1_array>(keys::IncrementalDisplacement);
+  arrayView2d<real64 const> const & X = nodeManager->referencePosition();
+  arrayView2d<real64 const> const & u = nodeManager->getReference<array2d<real64>>(keys::TotalDisplacement);
+  arrayView2d<real64 const> const & uhat = nodeManager->getReference<array2d<real64>>(keys::IncrementalDisplacement);
 
   ElementRegionManager::ElementViewAccessor<arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM>> const elemsToNodes = 
     elemManager->ConstructViewAccessor<CellBlock::NodeMapType, arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM>>( CellElementSubRegion::viewKeyStruct::nodeListString );
@@ -273,7 +273,12 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
 
       for( localIndex ei=0 ; ei<cellElementSubRegion->size() ; ++ei )
       {
-        CopyGlobalToLocal<R1Tensor>( elemsToNodes[er][esr][ei], u, uhat, u_local, uhat_local, numNodesPerElement );
+        for ( localIndex i = 0; i < numNodesPerElement; ++i )
+        {
+          localIndex const nodeIndex = elemsToNodes[ er ][ esr ]( ei, i );
+          u_local[ i ] = u[ nodeIndex ];
+          uhat_local[ i ] = uhat[ nodeIndex ];
+        }
 
         real64 volumetricStrain = 0.0;
         localIndex const numQuadraturePoints = feDiscretization->m_finiteElement->n_quadrature_points() ;
