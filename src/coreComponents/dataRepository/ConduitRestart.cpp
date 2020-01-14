@@ -54,11 +54,7 @@ std::string writeRootNode( std::string const & rootPath )
 
     std::string cmd = "mkdir -p " + rootPath;
     int ret = std::system( cmd.c_str());
-    if( ret != 0 )
-    {
-      GEOSX_LOG( "Failed to initialize Logger: command '" << cmd << "' exited with code " << std::to_string( ret ));
-      abort();
-    }
+    GEOSX_WARNING_IF( ret != 0, "Failed to create directory: command '" << cmd << "' exited with code " << std::to_string( ret ) );
   }
 
   MpiWrapper::Barrier( MPI_COMM_GEOSX );
