@@ -31,11 +31,10 @@ namespace constitutive
 SolidBase::SolidBase( string const & name,
                       Group * const parent ):
   ConstitutiveBase( name, parent ),
-  m_defaultDensity{0},
-  m_density{},
-  m_stress{}
+  m_defaultDensity( 0 ),
+  m_density(),
+  m_stress( 0, 0, 6 )
 {
-
   registerWrapper( viewKeyStruct::defaultDensityString, &m_defaultDensity, 0 )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Default Material Density");
@@ -46,8 +45,7 @@ SolidBase::SolidBase( string const & name,
 
   registerWrapper( viewKeyStruct::stressString, &m_stress, 0 )->
     setPlotLevel(PlotLevel::LEVEL_0)->
-    setDescription("Stress Deviator");
-
+    setDescription("Material Stress");
 }
 
 SolidBase::~SolidBase()
@@ -76,9 +74,7 @@ void SolidBase::AllocateConstitutiveData( dataRepository::Group * const parent,
   m_density.resize( parent->size(), numConstitutivePointsPerParentIndex );
   m_density = m_defaultDensity;
 
-  m_stress.resize( parent->size(), numConstitutivePointsPerParentIndex );
-
-
+  m_stress.resize( parent->size(), numConstitutivePointsPerParentIndex, 6 );
 }
 
 }

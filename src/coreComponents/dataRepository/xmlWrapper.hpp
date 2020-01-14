@@ -225,7 +225,7 @@ void xmlWrapper::StringToInputVariable( T & target, string inputValue )
 template< typename T, int NDIM >
 void xmlWrapper::StringToInputVariable( Array< T, NDIM > & array, string valueString )
 {
-  cxx_utilities::stringToArray( array, valueString );
+  LvArray::stringToArray( array, valueString );
 }
 
 template< typename T >

@@ -58,7 +58,7 @@ SolidMechanicsLagrangianSSLE::updateStress( DomainPartition * const domain )
   NumericalMethodsManager const * numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(dataRepository::keys::numericalMethodsManager);
   FiniteElementDiscretizationManager const * feDiscretizationManager = numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(dataRepository::keys::finiteElementDiscretizations);
 
-  arrayView1d<R1Tensor const> const & incDisp = nodeManager->getReference<r1_array>(dataRepository::keys::IncrementalDisplacement);
+  arrayView2d<real64 const> const & incDisp = nodeManager->getReference<array2d<real64>>(dataRepository::keys::IncrementalDisplacement);
 
   ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase>
   constitutiveRelations = elemManager->ConstructFullConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);

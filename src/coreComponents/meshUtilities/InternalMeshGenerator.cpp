@@ -541,7 +541,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
   }
 
   nodeManager->resize( numNodes );
-  r1_array& X = nodeManager->getReference<r1_array>( keys::referencePositionString );
+  arrayView2d< real64 > const & X = nodeManager->referencePosition();
 
   {
     localIndex localNodeIndex = 0;
@@ -557,13 +557,17 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
           {
             index[a] += firstElemIndexInPartition[a];
           }
-
-          X[localNodeIndex] = NodePosition( index, m_trianglePattern );
+          
+          R1Tensor const pos = NodePosition( index, m_trianglePattern );
+          for ( int a = 0; a < 3; ++a )
+          {
+            X( localNodeIndex, a ) = pos[ a ];
+          }
 
           // alter global node map for radial mesh
           if( m_mapToRadial > 0 )
           {
-            if( isEqual( X[localNodeIndex][1], m_max[1], 1e-10 ) )
+            if( isEqual( X( localNodeIndex, 1 ), m_max[1], 1e-10 ) )
             {
               index[1] = 0;
             }
@@ -574,19 +578,19 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
           // cartesian-specific nodesets
           if( m_mapToRadial == 0 )
           {
-            if( isEqual( X[localNodeIndex][0], m_min[0], 1e-10 ) )
+            if( isEqual( X( localNodeIndex, 0 ), m_min[0], 1e-10 ) )
             {
               xnegNodes.insert( localNodeIndex );
             }
-            if( isEqual( X[localNodeIndex][0], m_max[0], 1e-10 ) )
+            if( isEqual( X( localNodeIndex, 0 ), m_max[0], 1e-10 ) )
             {
               xposNodes.insert( localNodeIndex );
             }
-            if( isEqual( X[localNodeIndex][1], m_min[1], 1e-10 ) )
+            if( isEqual( X( localNodeIndex, 1 ), m_min[1], 1e-10 ) )
             {
               ynegNodes.insert( localNodeIndex );
             }
-            if( isEqual( X[localNodeIndex][1], m_max[1], 1e-10 ) )
+            if( isEqual( X( localNodeIndex, 1 ), m_max[1], 1e-10 ) )
             {
               yposNodes.insert( localNodeIndex );
             }
@@ -594,22 +598,22 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
           else
           {
             // radial-specific nodesets
-            if( isEqual( X[localNodeIndex][0], m_min[0], 1e-10 ) )
+            if( isEqual( X( localNodeIndex, 0 ), m_min[0], 1e-10 ) )
             {
               xnegNodes.insert( localNodeIndex );
             }
-            if( isEqual( X[localNodeIndex][0], m_max[0], 1e-10 ) )
+            if( isEqual( X( localNodeIndex, 0 ), m_max[0], 1e-10 ) )
             {
               xposNodes.insert( localNodeIndex );
             }
           }
 
           // general nodesets
-          if( isEqual( X[localNodeIndex][2], m_min[2], 1e-10 ) )
+          if( isEqual( X( localNodeIndex, 2 ), m_min[2], 1e-10 ) )
           {
             znegNodes.insert( localNodeIndex );
           }
-          if( isEqual( X[localNodeIndex][2], m_max[2], 1e-10 ) )
+          if( isEqual( X( localNodeIndex, 2 ), m_max[2], 1e-10 ) )
           {
             zposNodes.insert( localNodeIndex );
           }

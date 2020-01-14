@@ -166,7 +166,7 @@ TEST_F( MeshGenerationTest, sizes )
 
 TEST_F( MeshGenerationTest, nodePositions )
 {
-  arrayView1d< R1Tensor const > const & X = m_nodeManager->referencePosition();
+  arrayView2d< real64 const > const & X = m_nodeManager->referencePosition();
 
   localIndex nodeID = 0;
   for ( localIndex i = 0; i < numNodesInX; ++i )
@@ -175,9 +175,9 @@ TEST_F( MeshGenerationTest, nodePositions )
     {
       for ( localIndex k = 0; k < numNodesInZ; ++k )
       {
-        EXPECT_DOUBLE_EQ( X[ nodeID ][ 0 ], i * dx );
-        EXPECT_DOUBLE_EQ( X[ nodeID ][ 1 ], j * dy );
-        EXPECT_DOUBLE_EQ( X[ nodeID ][ 2 ], k * dz );
+        EXPECT_DOUBLE_EQ( X( nodeID, 0 ), i * dx );
+        EXPECT_DOUBLE_EQ( X( nodeID, 1 ), j * dy );
+        EXPECT_DOUBLE_EQ( X( nodeID, 2 ), k * dz );
         ++nodeID;
       }
     }

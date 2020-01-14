@@ -220,15 +220,6 @@ public:
               targetGroup = elemSubRegionSubGroup;
             }
 
-//            if( targetGroup->getName() == MeshLevel::groupStructKeys::elemManagerString )
-//            {
-//              targetGroup = targetGroup->GetGroup( dataRepository::keys::elementRegions );
-//            }
-//            if( targetGroup->getName() == ElementRegion::viewKeyStruct::elementSubRegions )
-//            {
-//              targetGroup = targetGroup->GetGroup( ElementRegion::viewKeyStruct::elementSubRegions );
-//            }
-
             if( targetPath[pathLevel] == ElementRegionManager::groupKeyStruct::elementRegionsGroup ||
                 targetPath[pathLevel] == ElementRegionBase::viewKeyStruct::elementSubRegions )
             {
@@ -241,7 +232,7 @@ public:
             GEOSX_ERROR_IF( targetGroup == nullptr,
                 "ApplyBoundaryCondition(): Last entry in objectPath ("<<processedPath<<") is not found" );
           }
-          ApplyOnTargetRecursive( targetGroup, fs, targetName, std::forward< LAMBDA >( lambda ) );
+          ApplyOnTargetRecursive( targetGroup, fs, targetName, lambda );
         }
       }
     }
@@ -284,7 +275,7 @@ private:
     }
     else
     {
-      target->forSubGroups([&]( Group * subTarget ) -> void
+      target->forSubGroups([&]( Group * subTarget )
       {
         ApplyOnTargetRecursive( subTarget, fs, targetName, lambda );
       });

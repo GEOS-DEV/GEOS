@@ -40,7 +40,7 @@ using namespace dataRepository;
 NodeManager::NodeManager( std::string const & name,
                           Group * const parent ):
   ObjectManagerBase( name, parent ),
-  m_referencePosition()
+  m_referencePosition( 0, 3 )
 {
   registerWrapper(viewKeyStruct::referencePositionString, &m_referencePosition, false );
 

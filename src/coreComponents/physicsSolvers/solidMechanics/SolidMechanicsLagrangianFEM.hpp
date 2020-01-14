@@ -180,12 +180,12 @@ public:
                                constitutive::ConstitutiveBase * const constitutiveRelation,
                                set<localIndex> const & elementList,
                                arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & elemsToNodes,
-                               arrayView3d< R1Tensor const> const & dNdX,
+                               arrayView3d<R1Tensor const> const & dNdX,
                                arrayView2d<real64 const> const & detJ,
-                               arrayView1d<R1Tensor const> const & u,
-                               arrayView1d<R1Tensor const> const & vel,
-                               arrayView1d<R1Tensor> const & acc,
-                               arrayView2d<R2SymTensor> const & stress,
+                               arrayView2d<real64 const> const & u,
+                               arrayView2d<real64 const> const & vel,
+                               arrayView2d<real64> const & acc,
+                               arrayView3d<real64> const & stress,
                                real64 const dt ) const
   {
     using ExplicitKernel = SolidMechanicsLagrangianFEMKernels::ExplicitKernel;
@@ -248,8 +248,8 @@ public:
                                arrayView1d< integer const > const & elemGhostRank,
                                arrayView2d< localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM > const & elemsToNodes,
                                arrayView1d< globalIndex const > const & globalDofNumber,
-                               arrayView1d< R1Tensor const > const & disp,
-                               arrayView1d< R1Tensor const > const & uhat,
+                               arrayView2d< real64 const > const & disp,
+                               arrayView2d< real64 const > const & uhat,
                                arrayView1d< R1Tensor const > const & vtilde,
                                arrayView1d< R1Tensor const > const & uhattilde,
                                arrayView2d< real64 const > const & density,
