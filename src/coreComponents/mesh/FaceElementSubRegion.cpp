@@ -111,27 +111,6 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
 FaceElementSubRegion::~FaceElementSubRegion()
 {}
 
-
-R1Tensor const & FaceElementSubRegion::calculateElementCenter( localIndex k,
-                                                               const NodeManager& nodeManager,
-                                                               const bool useReferencePos ) const
-{
-  r1_array const & X = nodeManager.referencePosition();
-  m_elementCenter[k] = 0;
-  localIndex const numNodes = numNodesPerElement( k );
-  for ( localIndex a = 0 ; a < numNodes ; ++a)
-  {
-    const localIndex b = m_toNodesRelation[k][a];
-    m_elementCenter[k] += X[b];
-    if(!useReferencePos)
-      m_elementCenter[k] += X[b];
-  }
-  m_elementCenter[k] /= numNodes;
-
-  return m_elementCenter[k];
-
-}
-
 void FaceElementSubRegion::setupRelatedObjectsInRelations( MeshLevel const * const mesh )
 {
   this->m_toNodesRelation.SetRelatedObject( mesh->getNodeManager() );

@@ -74,7 +74,7 @@ public:
 
 
   template< typename SUBREGION_TYPE >
-  void CalculateShapeFunctionGradients( arrayView1d<R1Tensor const> const & X,
+  void CalculateShapeFunctionGradients( arrayView2d<real64 const> const & X,
                                         SUBREGION_TYPE * const elementSubRegion ) const
   {
     GEOSX_MARK_FUNCTION;

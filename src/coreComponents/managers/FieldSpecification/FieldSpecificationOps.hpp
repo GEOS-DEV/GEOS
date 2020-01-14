@@ -244,7 +244,7 @@ struct FieldSpecificationOp
    * @tparam T The type of the array2d field variable specified in @p field.
    * @param[in] field The array2d field variable to apply @p value to.
    * @param[in] index The index in field to apply @p value to.
-   * @param[in] component not used.
+   * @param[in] component The index along third dimension of 3d array.
    * @param[in] value The value to apply to @p field.
    *
    * This function performs field[index] (+)= value for all values of field[index].
@@ -254,14 +254,24 @@ struct FieldSpecificationOp
   static inline typename std::enable_if< !traits::is_tensorT < T >, void>::type
   SpecifyFieldValue( arrayView3d <T> const & field,
                      localIndex const index,
-                     integer const GEOSX_UNUSED_ARG( component ),
+                     integer const component,
                      real64 const value )
   {
-    for( localIndex a = 0; a < field.size( 1 ); ++a )
+    if ( component >= 0 )
     {
-      for( localIndex b = 0; b < field.size( 2 ); ++b )
+      for ( localIndex a = 0; a < field.size( 1 ); ++a )
       {
-        OP::template apply( field( index, a, b ), value );
+        OP::template apply( field( index, a, component), value );
+      }
+    }
+    else
+    {
+      for( localIndex a = 0; a < field.size( 1 ); ++a )
+      {
+        for( localIndex b = 0; b < field.size( 2 ); ++b )
+        {
+          OP::template apply( field( index, a, b ), value );
+        }
       }
     }
   }

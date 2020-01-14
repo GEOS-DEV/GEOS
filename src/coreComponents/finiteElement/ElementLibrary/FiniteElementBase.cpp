@@ -37,8 +37,8 @@ FiniteElementBase::FiniteElementBase( const int dim,
     data[q].parent_q_weight = 1;
 
     data[q].parent_values.resize(n_dofs);
-    data[q].parent_gradients.resize(n_dofs);
-    data[q].mapped_gradients.resize(n_dofs);
+    data[q].parent_gradients.resize(n_dofs, 3);
+    data[q].mapped_gradients.resize(n_dofs, 3);
 
   }
 }
