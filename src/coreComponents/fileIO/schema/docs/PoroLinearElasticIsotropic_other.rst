@@ -8,7 +8,7 @@ ShearModulus         real64_array   Elastic Shear Modulus
 dPVMult_dDensity     real64_array2d (no description available) 
 density              real64_array2d Material Density           
 poreVolumeMultiplier real64_array2d (no description available) 
-stress               r2Sym_array2d  Stress Deviator            
+stress               real64_array3d Material Stress            
 ==================== ============== ========================== 
 
 

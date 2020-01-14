@@ -109,18 +109,7 @@ public:
                      const localIndex localFaceIndex,
                      localIndex_array& nodeIndicies) const;
 
-  /**
-   * @brief function to return element center. this should be depricated.
-   * @param k
-   * @param nodeManager
-   * @param useReferencePos
-   * @return
-   */
-  R1Tensor const & calculateElementCenter( localIndex k,
-                                           const NodeManager& nodeManager,
-                                           const bool useReferencePos = true) const override;
-
-  void calculateElementCenters( arrayView1d<R1Tensor const> const & X ) const
+  void calculateElementCenters( arrayView2d< real64 const> const & X ) const
   {
     arrayView1d<R1Tensor> const & elementCenters = m_elementCenter;
     localIndex nNodes = numNodesPerElement();
@@ -146,7 +135,7 @@ public:
                                                     FaceManager const & facemanager ) override;
 
   inline void CalculateCellVolumesKernel( localIndex const k,
-                                          array1d<R1Tensor> const & X ) const
+                                          arrayView2d<real64 const> const & X ) const
   {
     R1Tensor & center = m_elementCenter[k];
     center = 0.0;
