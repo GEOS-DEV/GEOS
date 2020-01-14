@@ -632,7 +632,7 @@ struct FluxKernel
 
         localIndex const ei[2] = { stencilElementIndices[k[0]],
                                    stencilElementIndices[k[1]] };
-#if 0
+#if 1
         real64 const weight = ( stencilWeights[k[0]]*aperTerm[k[0]] ) *
                               ( stencilWeights[k[1]]*aperTerm[k[1]] ) / sumOfWeights;
 

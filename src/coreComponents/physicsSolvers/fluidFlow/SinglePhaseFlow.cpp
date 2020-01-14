@@ -686,7 +686,7 @@ void SinglePhaseFlow::AccumulationLaunch( localIndex const er,
 #if ALLOW_CREATION_MASS>0
       if( volume[ei] * densOld[ei] > 1.1 * creationMass[ei] )
       {
-        localAccum += creationMass[ei] * 0.25;
+//        localAccum += creationMass[ei] * 0.25;
       }
 #endif
       // add contribution to global residual and jacobian

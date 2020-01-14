@@ -88,10 +88,11 @@ void SiloOutput::Execute(real64 const time_n,
   DomainPartition* domainPartition = Group::group_cast<DomainPartition*>(domain);
   SiloFile silo;
 
+  int const size = MpiWrapper::Comm_size(MPI_COMM_GEOSX);
   int const rank = MpiWrapper::Comm_rank(MPI_COMM_GEOSX);
   MpiWrapper::Barrier( MPI_COMM_GEOSX );
 
-  integer numFiles = this->parallelThreads();
+  integer const numFiles = parallelThreads() == 0 ? size : parallelThreads() ;
 
   silo.setPlotLevel( m_plotLevel );
   silo.setWriteEdgeMesh( m_writeEdgeMesh );

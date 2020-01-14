@@ -1651,13 +1651,14 @@ HydrofractureSolver::ScalingForSystemSolution( DomainPartition const * const dom
 void HydrofractureSolver::SetNextDt( real64 const & currentDt ,
                                      real64 & nextDt )
 {
-  SolverBase * const surfaceGenerator =  this->getParent()->GetGroup<SolverBase>("SurfaceGen");
 
-  if (m_numResolves[0] == 0 & m_numResolves[1] == 0)
+  if (m_numResolves[0] == 0 && m_numResolves[1] == 0)
   {
     this->SetNextDtBasedOnNewtonIter(currentDt, nextDt);
-  } else
+  }
+  else
   {
+    SolverBase * const surfaceGenerator =  this->getParent()->GetGroup<SolverBase>("SurfaceGen");
     nextDt = surfaceGenerator->GetTimestepRequest() < 1e99 ? surfaceGenerator->GetTimestepRequest() : currentDt;
   }
   GEOSX_LOG_RANK_0(this->getName() << ": nextDt request is "  << nextDt);
