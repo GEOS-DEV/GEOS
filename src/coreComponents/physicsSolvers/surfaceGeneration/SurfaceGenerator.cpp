@@ -3168,7 +3168,7 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
           {
             if (edgeToNodeMap[edgeIndex][0] == nodeIndex || edgeToNodeMap[edgeIndex][1] == nodeIndex)
             {
-              realT SIF_I, SIF_II, /*SIF_III,*/ SIF_Face;
+              realT SIF_I = 0, SIF_II = 0, /*SIF_III,*/ SIF_Face;
               R1Tensor vecTipNorm, vecTip, vecEdge, tipForce, tipOpening;
               vecTipNorm = faceNormal[trailingFaceIndex];
               vecTipNorm -= faceNormal[childFaceIndices[trailingFaceIndex]];
@@ -3202,9 +3202,12 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
               tipOpening[1] = Dot( trailingNodeDisp, vecTip );
               tipOpening[2] = Dot( trailingNodeDisp, vecEdge );
 
-              SIF_I = pow( fabs( tipForce[0] * tipOpening[0] / 2.0 / tipArea ), 0.5 );
-              SIF_II = pow( fabs( tipForce[1] * tipOpening[1] / 2.0 / tipArea ), 0.5 );
+//              if( tipForce[0] > 0.0 )
+              {
+                SIF_I = pow( fabs( tipForce[0] * tipOpening[0] / 2.0 / tipArea ), 0.5 );
+                SIF_II = pow( fabs( tipForce[1] * tipOpening[1] / 2.0 / tipArea ), 0.5 );
 //              SIF_III = pow( fabs( tipForce[2] * tipOpening[2] / 2.0 / tipArea ), 0.5 );
+              }
 
               if( tipOpening[0] < 0 )
               {

@@ -248,6 +248,15 @@ void SinglePhaseFlow::InitializePostInitialConditions_PreSubGroups( Group * cons
     }
   } );
 
+  ElementRegionManager * const elemManager = mesh->getElemManager();
+   elemManager->forElementRegions<FaceElementRegion>( [&] ( FaceElementRegion * const region )
+   {
+     region->forElementSubRegions<FaceElementSubRegion>( [&]( FaceElementSubRegion * const subRegion )
+     {
+       subRegion->getWrapper<real64_array>(FaceElementSubRegion::viewKeyStruct::creationMassString)->
+         setApplyDefaultValue(defaultDensity * region->getDefaultAperture() );
+     });
+   });
 }
 
 real64 SinglePhaseFlow::SolverStep( real64 const& time_n,
@@ -445,6 +454,36 @@ void SinglePhaseFlow::ImplicitStepComplete( real64 const & GEOSX_UNUSED_ARG( tim
       vol[ei] += dVol[ei];
     } );
   } );
+
+
+  ElementRegionManager * const elemManager = mesh->getElemManager();
+  elemManager->forElementSubRegionsComplete<FaceElementSubRegion>( this->m_targetRegions,
+                                                                   [&] ( localIndex er,
+                                                                         localIndex esr,
+                                                                         ElementRegionBase const * const GEOSX_UNUSED_ARG( region ),
+                                                                         FaceElementSubRegion * const subRegion )
+  {
+
+    arrayView1d<integer const> const & elemGhostRank = m_elemGhostRank[er][esr];
+    arrayView1d<real64 const> const & densOld = m_densityOld[er][esr];
+    arrayView1d<real64 const> const & volume = m_volume[er][esr];
+    arrayView1d<real64> const &
+    creationMass = subRegion->getReference<real64_array>( FaceElementSubRegion::viewKeyStruct::creationMassString);
+
+    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+    {
+      if (elemGhostRank[ei] < 0)
+      {
+        if( volume[ei] * densOld[ei] > 1.1 * creationMass[ei] )
+        {
+          creationMass[ei] *= 0.25;
+          if( creationMass[ei]<1.0e-20 )
+          {
+            creationMass[ei] = 0.0;
+          }
+        }
+      }});
+  });
 }
 
 void SinglePhaseFlow::SetupDofs( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
@@ -465,13 +504,13 @@ void SinglePhaseFlow::AssembleSystem( real64 const time_n,
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel * mesh = domain->getMeshBody(0)->getMeshLevel(0);
-  applyToSubRegions( mesh, [&] ( localIndex , localIndex ,
-                                 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
-                                 ElementSubRegionBase * const subRegion )
-  {
-    UpdateState( subRegion );
-  } );
+//  MeshLevel * mesh = domain->getMeshBody(0)->getMeshLevel(0);
+//  applyToSubRegions( mesh, [&] ( localIndex , localIndex ,
+//                                 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
+//                                 ElementSubRegionBase * const subRegion )
+//  {
+//    UpdateState( subRegion );
+//  } );
 
 
 
@@ -616,9 +655,13 @@ void SinglePhaseFlow::AccumulationLaunch( localIndex const er,
   arrayView2d<real64 const> const & dens          = m_density[er][esr][m_fluidIndex];
   arrayView2d<real64 const> const & dDens_dPres   = m_dDens_dPres[er][esr][m_fluidIndex];
 
-//  arrayView1d<real64 const> const &
-//  creationMass = subRegion->getReference<real64_array>(FaceElementSubRegion::viewKeyStruct::creationMassString);
-
+#if !defined(ALLOW_CREATION_MASS)
+  static_assert(true,"must have ALLOW_CREATION_MASS defined");
+#endif
+#if ALLOW_CREATION_MASS>0
+  arrayView1d<real64 const> const &
+  creationMass = subRegion->getReference<real64_array>(FaceElementSubRegion::viewKeyStruct::creationMassString);
+#endif
   forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
   {
     if (elemGhostRank[ei] < 0)
@@ -637,11 +680,15 @@ void SinglePhaseFlow::AccumulationLaunch( localIndex const er,
                                                                           dVol[ei],
                                                                           localAccum,
                                                                           localAccumJacobian );
-
-//      if( volume[ei] * densOld[ei] > 1.1 * creationMass[ei] )
-//      {
-//        localAccum += creationMass[ei] * 0.5;
-//      }
+#if !defined(ALLOW_CREATION_MASS)
+  static_assert(true,"must have ALLOW_CREATION_MASS defined");
+#endif
+#if ALLOW_CREATION_MASS>0
+      if( volume[ei] * densOld[ei] > 1.1 * creationMass[ei] )
+      {
+        localAccum += creationMass[ei] * 0.25;
+      }
+#endif
       // add contribution to global residual and jacobian
       matrix->add( elemDOF, elemDOF, localAccumJacobian );
       rhs->add( elemDOF, localAccum );
@@ -712,6 +759,11 @@ void SinglePhaseFlow::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time_n )
   FluxKernel::ElementView < arrayView1d<real64 const> > const & aperture0  = m_elementAperture0.toViewConst();
   FluxKernel::ElementView < arrayView1d<real64 const> > const & aperture  = m_elementAperture.toViewConst();
 
+#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+  FluxKernel::ElementView < arrayView1d<real64 const> > const & separationCoeff  = m_elementSeparationCoefficient.toViewConst();
+
+  FluxKernel::ElementView < arrayView1d<real64 const> > const & dseparationCoeff_dAper  = m_element_dSeparationCoefficient_dAperture.toViewConst();
+#endif
   integer const gravityFlag = m_gravityFlag;
   localIndex const fluidIndex = m_fluidIndex;
 
@@ -735,6 +787,10 @@ void SinglePhaseFlow::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time_n )
                         dMob_dPres,
                         aperture0,
                         aperture,
+#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+                        separationCoeff,
+                        dseparationCoeff_dAper,
+#endif
                         matrix,
                         rhs,
                         *m_derivativeFluxResidual_dAperture );

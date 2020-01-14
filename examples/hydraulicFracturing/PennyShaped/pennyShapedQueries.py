@@ -75,7 +75,7 @@ def TimehistQuery( state, timehist ):
     injectionPressure = ZonePick(coord=(0.5, 0.5, 0.0), vars=("Fracture_Solid_ElementFields/pressure"))['Fracture_Solid_ElementFields/pressure']
     injectionAperture = ZonePick(coord=(0.5, 0.5, 0.0), vars=("Fracture_Solid_ElementFields/elementAperture"))['Fracture_Solid_ElementFields/elementAperture']
     fractureArea = Query("Variable Sum").split(' ')[-1]
-    timehist.append([float(time), float(injectionPressure), float(injectionAperture), float(fractureArea)])
+    timehist.append([float(time), float(injectionPressure), float(injectionAperture), 4*float(fractureArea)])
 
 
     
@@ -130,11 +130,11 @@ ThresholdAtts.outputMeshType = 0
 ThresholdAtts.boundsInputType = 0
 ThresholdAtts.listedVarNames = ("Fracture_Solid_ElementFields/ghostRank", "Fracture_Solid_ElementFields/elementAperture")
 ThresholdAtts.zonePortions = (1, 1)
-ThresholdAtts.lowerBounds = (-1e+37, 0.00012)
+ThresholdAtts.lowerBounds = (-1e+37, 0.11e-3)
 ThresholdAtts.upperBounds = (-1, 1e+37)
 ThresholdAtts.defaultVarName = "Fracture_Solid_ElementFields/elementArea"
 ThresholdAtts.defaultVarIsScalar = 1
-ThresholdAtts.boundsRange = ("-1e+37:-1", "0.00012:1e+37")
+ThresholdAtts.boundsRange = ("-1e+37:-1", "0.1e-3:1e+37")
 SetOperatorOptions(ThresholdAtts, 1)
 DrawPlots()
 

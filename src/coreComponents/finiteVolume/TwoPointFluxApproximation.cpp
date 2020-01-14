@@ -224,7 +224,12 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
 
   arrayView1d<R1Tensor const> const & X = nodeManager->referencePosition();
 
+#if !defined(SET_CREATION_DISPLACEMENT)
+    static_assert(true,"must have SET_CREATION_DISPLACEMENT defined");
+#endif
+#if SET_CREATION_DISPLACEMENT==1
   arrayView1d<R1Tensor> const & incrementalDisplacement = nodeManager->getReference<array1d<R1Tensor>>(keys::IncrementalDisplacement);
+#endif
   arrayView1d<R1Tensor> const & totalDisplacement = nodeManager->getReference<array1d<R1Tensor>>(keys::TotalDisplacement);
 
   FaceElementStencil & fractureStencil = getReference<FaceElementStencil>(viewKeyStruct::fractureStencilString);
@@ -265,16 +270,41 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
   arrayView1d< real64 > const &
   aperture = fractureSubRegion->getReference<array1d<real64>>("elementAperture");
 
-//  dataRepository::Group const * const constitutiveRelation = fractureSubRegion->GetConstitutiveModels()->GetGroup("water");
+#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+  arrayView1d<real64> const &
+  apertureF = fractureSubRegion->getReference< array1d<real64> >( "apertureAtFailure" );
+#endif
+
+#if !defined(ALLOW_CREATION_MASS)
+  static_assert(true,"must have ALLOW_CREATION_MASS defined");
+#endif
+#if ALLOW_CREATION_MASS==0
   arrayView1d<real64> const &
   dens = fractureSubRegion->getReference<array1d<real64>>("densityOld");
+#endif
 
+  // Set the new face elements to some unphysical numbers to make sure they get set by the following routines.
   for( localIndex const kfe : fractureSubRegion->m_newFaceElements )
   {
+#if !defined(SET_CREATION_PRESSURE)
+    static_assert(true,"must have SET_CREATION_PRESSURE defined");
+#endif
+#if SET_CREATION_PRESSURE==1
     fluidPressure[kfe] = 1.0e99;
+#endif
+#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+    apertureF[kfe] = aperture[kfe];
+#endif
+#if !defined(SET_CREATION_DISPLACEMENT)
+    static_assert(true,"must have SET_CREATION_DISPLACEMENT defined");
+#endif
+#if SET_CREATION_DISPLACEMENT==1
     aperture[kfe] = 1.0e99;
+#endif
   }
-  set<localIndex> allNewElems;
+  std::set<localIndex> allNewElems( fractureSubRegion->m_newFaceElements.begin(),
+                                    fractureSubRegion->m_newFaceElements.end() );
+
 
   // add new connectors/connections between face elements to the fracture stencil
   for( auto const fci : edgeManager->m_recalculateFractureConnectorEdges )
@@ -331,15 +361,19 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
         }
       }
 
+      // loop over new face elements attached to this connector
       for( localIndex const newElemIndex : newElems )
       {
+        // set the aperture/fluid pressure for the new face element to be the minimum
+        // of the existing value, smallest aperture/pressure from a connected face element.
+//        aperture[newElemIndex] = std::min(aperture[newElemIndex], initialAperture);
+#if !defined(SET_CREATION_PRESSURE)
+        static_assert(true,"must have SET_CREATION_PRESSURE defined");
+#endif
+#if SET_CREATION_PRESSURE==1
         fluidPressure[newElemIndex] = std::min(fluidPressure[newElemIndex], initialPressure);
-        if( fluidPressure[newElemIndex] > 1.0e98 )
-        {
-          fluidPressure[newElemIndex] = 0.0;
-        }
-        dens[newElemIndex] = 0.0;
-        aperture[newElemIndex] = std::min(aperture[newElemIndex], initialAperture);
+#endif
+
 
         localIndex const faceIndex0 = faceMap(newElemIndex,0);
         localIndex const faceIndex1 = faceMap(newElemIndex,1);
@@ -347,6 +381,7 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
         localIndex const numNodesPerFace = faceToNodesMap.sizeOfArray(faceIndex0);
 
         bool zeroDisp = true;
+
         for( localIndex a=0 ; a<numNodesPerFace ; ++a )
         {
           localIndex const node0 = faceToNodesMap(faceIndex0,a);
@@ -359,7 +394,12 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
         }
         if( zeroDisp )
         {
+#if !defined(SET_CREATION_DISPLACEMENT)
+    static_assert(true,"must have SET_CREATION_DISPLACEMENT defined");
+#endif
+#if SET_CREATION_DISPLACEMENT==1
           aperture[newElemIndex] = 0;
+#endif
         }
       }
 
@@ -374,26 +414,50 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
     }
   }
 
+  set<localIndex> touchedNodes;
   for( localIndex const newElemIndex : allNewElems )
   {
-    localIndex const faceIndex0 = faceMap(newElemIndex,0);
-    localIndex const faceIndex1 = faceMap(newElemIndex,1);
+    // if the value of pressure was not set, then set it to zero and punt.
+    if( fluidPressure[newElemIndex] > 1.0e98 )
+    {
+      fluidPressure[newElemIndex] = 0.0;
+    }
+#if !defined(ALLOW_CREATION_MASS)
+    static_assert(true,"must have ALLOW_CREATION_MASS defined");
+#endif
+#if ALLOW_CREATION_MASS==0
+    // set the initial density of the face element to 0 to enforce mass conservation ( i.e. no creation of mass)
+    dens[newElemIndex] = 0.0;
+#endif
 
-    R1Tensor newDisp = faceNormal(faceIndex0);
+    // If the aperture has been set, then we can set the estimate of displacements.
     if (aperture[newElemIndex] < 1e98)
     {
-      newDisp *= -0.5 * aperture[newElemIndex] ;
+      localIndex const faceIndex0 = faceMap(newElemIndex,0);
+      localIndex const faceIndex1 = faceMap(newElemIndex,1);
+
+      R1Tensor newDisp = faceNormal(faceIndex0);
+      newDisp *= -aperture[newElemIndex];
       localIndex const numNodesPerFace = faceToNodesMap.sizeOfArray(faceIndex0);
       for( localIndex a=0 ; a<numNodesPerFace ; ++a )
       {
         localIndex const node0 = faceToNodesMap(faceIndex0,a);
         localIndex const node1 = faceToNodesMap(faceIndex1, a==0 ? a : numNodesPerFace-a );
-        if( node0 != node1 )
+
+        touchedNodes.insert(node0);
+        touchedNodes.insert(node1);
+
+        if( node0 != node1 && touchedNodes.count(node0)==0 )
         {
+#if !defined(SET_CREATION_DISPLACEMENT)
+    static_assert(true,"must have ALLOW_CREATION_MASS defined");
+#endif
+#if SET_CREATION_DISPLACEMENT==1
           incrementalDisplacement[node0] += newDisp;
           totalDisplacement[node0] += newDisp;
           incrementalDisplacement[node1] -= newDisp;
           totalDisplacement[node1] -= newDisp;
+#endif
         }
       }
     }

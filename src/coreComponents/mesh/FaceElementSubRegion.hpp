@@ -92,6 +92,12 @@ public:
     static constexpr auto faceElementsToCellRegionsString    = "fractureElementsToCellRegions";
     static constexpr auto faceElementsToCellSubRegionsString    = "fractureElementsToCellSubRegions";
     static constexpr auto faceElementsToCellIndexString    = "fractureElementsToCellIndices";
+    constexpr static auto creationMassString = "creationMass";
+
+#if GEOSX_USE_SEPARATION_COEFFICIENT
+    constexpr static auto separationCoeffString = "separationCoeff";
+    constexpr static auto dSeparationCoeffdAperString = "dSeparationCoeffdAper";
+#endif
 
   };
 
@@ -147,6 +153,11 @@ public:
   arrayView1d< real64 > const &       getElementArea()       { return m_elementArea; }
   arrayView1d< real64 const > const & getElementArea() const { return m_elementArea; }
 
+#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+  arrayView1d< real64 > const &       getSeparationCoefficient()       { return m_separationCoefficient; }
+  arrayView1d< real64 const > const & getSeparationCoefficient() const { return m_separationCoefficient; }
+#endif
+
   map< localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInToNodes;
   map< localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInToEdges;
   map< localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInToFaces;
@@ -175,6 +186,9 @@ private:
   /// The member level field for the element center
   array1d< real64 > m_elementArea;
 
+#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+  array1d< real64 > m_separationCoefficient;
+#endif
 
 };
 

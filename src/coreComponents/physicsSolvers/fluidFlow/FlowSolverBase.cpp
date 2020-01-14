@@ -221,7 +221,13 @@ void FlowSolverBase::ResetViews( DomainPartition * const domain )
   m_elementAperture0 =
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( viewKeyStruct::aperture0String );
 
+#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+  m_elementSeparationCoefficient =
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( FaceElementSubRegion::viewKeyStruct::separationCoeffString );
 
+  m_element_dSeparationCoefficient_dAperture =
+      elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( FaceElementSubRegion::viewKeyStruct::dSeparationCoeffdAperString );
+#endif
 }
 
 

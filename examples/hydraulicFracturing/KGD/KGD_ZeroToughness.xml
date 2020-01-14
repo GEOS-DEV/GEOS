@@ -19,11 +19,11 @@
       logLevel="1"
       targetRegions="{Region2, Fracture}"
       contactRelationName="fractureContact"
-      maxNumResolves="1"
+      maxNumResolves="2"
       >
       <NonlinearSolverParameters name="nlsp"
                                  newtonTol="1.0e-5"
-                                 newtonMaxIter="10"
+                                 newtonMaxIter="20"
                                  lineSearchMaxCuts="4"/>
       <SystemSolverParameters
         logLevel="0"
@@ -78,7 +78,7 @@
       targetRegions="{Region2}"
       nodeBasedSIF="1"
       solidMaterialName="rock"
-      rockToughness="0.5e6"
+      rockToughness="0.3e6"
       >
     </SurfaceGenerator>
     
@@ -90,7 +90,7 @@
                    materialList="{water, rock}"/>
                    
     <FaceElementRegion name="Fracture"
-                       defaultAperture="0.02e-3"
+                       defaultAperture="0.1e-3"
                        materialList="{water, rock}"/>
   </ElementRegions>
 
@@ -115,7 +115,7 @@
       <TableFunction 
         name="aperTable" 
         coordinates = "{ -1.0e-3, 0.0}"
-        values      = "{  1.0e-6, 0.02e-3}" 
+        values      = "{  0.01e-3, 0.1e-3}" 
         />
     </Contact>
   </Constitutive>

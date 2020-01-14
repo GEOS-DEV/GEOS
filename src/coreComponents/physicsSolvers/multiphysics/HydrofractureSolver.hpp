@@ -45,7 +45,9 @@ public:
     return "Hydrofracture";
   }
 
+#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
   virtual void RegisterDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
+#endif
 
   virtual void SetupDofs( DomainPartition const * const domain,
                           DofManager & dofManager ) const override;
@@ -159,7 +161,13 @@ public:
     constexpr static auto fluidSolverNameString = "fluidSolverName";
 
     constexpr static auto contactRelationNameString = "contactRelationName";
-    static constexpr auto maxNumResolvesString = "maxNumResolves";
+    constexpr static auto maxNumResolvesString = "maxNumResolves";
+
+#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+    constexpr static auto separationCoeff0String = "separationCoeff0";
+    constexpr static auto apertureAtFailureString = "apertureAtFailure";
+#endif
+
   } HydrofractureSolverViewKeys;
 
 protected:

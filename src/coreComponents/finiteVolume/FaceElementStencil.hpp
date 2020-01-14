@@ -24,6 +24,10 @@
 namespace geosx
 {
 
+#define ALLOW_CREATION_MASS 1
+#define SET_CREATION_PRESSURE 1
+#define SET_CREATION_DISPLACEMENT 0
+
 
 /**
  * @struct FaceElementStencil_Traits

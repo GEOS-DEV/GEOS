@@ -1211,6 +1211,8 @@
 			<xsd:element name="neighborData" type="neighborDataType" />
 			<xsd:element name="sets" type="setsType" />
 		</xsd:choice>
+		<!--creationMass => The amount of remaining mass that was introduced when the FaceElement was created.-->
+		<xsd:attribute name="creationMass" type="real64_array" />
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--edgeList => Map to the edges attached to each FaceElement.-->

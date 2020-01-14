@@ -204,6 +204,11 @@ protected:
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_elementAperture0;
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_elementAperture;
 
+#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_elementSeparationCoefficient;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_element_dSeparationCoefficient_dAperture;
+#endif
+
 };
 
 }

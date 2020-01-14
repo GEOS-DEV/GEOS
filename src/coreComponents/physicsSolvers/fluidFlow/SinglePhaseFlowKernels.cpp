@@ -149,6 +149,10 @@ Launch<CellElementStencilTPFA>( CellElementStencilTPFA const & stencil,
                                 FluxKernel::ElementView < arrayView1d<real64 const> > const & dMob_dPres,
                                 FluxKernel::ElementView < arrayView1d<real64 const> > const &,
                                 FluxKernel::ElementView < arrayView1d<real64 const> > const &,
+#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+                                FluxKernel::ElementView < arrayView1d<real64 const> > const &,
+                                FluxKernel::ElementView < arrayView1d<real64 const> > const &,
+#endif
                                 ParallelMatrix * const jacobian,
                                 ParallelVector * const residual,
                                 CRSMatrixView<real64,localIndex,localIndex const > const & )
@@ -229,6 +233,10 @@ Launch<FaceElementStencil>( FaceElementStencil const & stencil,
                             FluxKernel::ElementView < arrayView1d<real64 const> > const & dMob_dPres,
                             FluxKernel::ElementView < arrayView1d<real64 const> > const & aperture0,
                             FluxKernel::ElementView < arrayView1d<real64 const> > const & aperture,
+#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+                            FluxKernel::ElementView < arrayView1d<real64 const> > const & s,
+                            FluxKernel::ElementView < arrayView1d<real64 const> > const & dSdAper,
+#endif
                             ParallelMatrix * const jacobian,
                             ParallelVector * const residual,
                             CRSMatrixView<real64,localIndex,localIndex const > const & dR_dAper )
@@ -293,6 +301,10 @@ Launch<FaceElementStencil>( FaceElementStencil const & stencil,
                                  dMob_dPres[er][esr],
                                  aperture0[er][esr],
                                  aperture[er][esr],
+#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+                                 s[er][esr],
+                                 dSdAper[er][esr],
+#endif
                                  fluidIndex,
                                  gravityFlag,
                                  dt,
