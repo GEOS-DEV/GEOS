@@ -1616,7 +1616,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
     HYPRE_BoomerAMGSetRelaxOrder(cg_amg_solver, 1);
     HYPRE_BoomerAMGSetAggNumLevels(cg_amg_solver, 1);
     HYPRE_BoomerAMGSetNumFunctions(cg_amg_solver, 3);
-    HYPRE_BoomerAMGSetNumSweeps(cg_amg_solver, 3);
+    HYPRE_BoomerAMGSetNumSweeps(cg_amg_solver, 1);
     //HYPRE_BoomerAMGSetCoarsenType(cg_amg_solver, 6);
     //HYPRE_BoomerAMGSetRelaxType(cg_amg_solver, 3);
     //HYPRE_BoomerAMGSetInterpType(cg_amg_solver, 0);
@@ -1646,6 +1646,8 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
     HYPRE_BoomerAMGSetAggNumLevels(uu_amg_solver, 1);
     HYPRE_BoomerAMGSetNumSweeps(uu_amg_solver, 1);
     //HYPRE_BoomerAMGSetRelaxType(uu_amg_solver, 3);
+    if (n_cycles == 0 && newtonIter == 0)
+      HYPRE_BoomerAMGSetPrintLevel(uu_amg_solver, 1);
 
     HYPRE_BoomerAMGSetup
       (uu_amg_solver, parcsr_uu, par_rhs_uu, par_lhs_uu);
@@ -1685,6 +1687,10 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
 
   HYPRE_MGRDestroy(mgr_precond);
   HYPRE_BoomerAMGDestroy(cg_amg_solver);
+  if (ordering == 0)
+  {
+    HYPRE_BoomerAMGDestroy(uu_amg_solver);
+  }
   HYPRE_ParCSRGMRESDestroy(pgmres_solver);
   hypre_TFree(lv1, HYPRE_MEMORY_HOST);
   hypre_TFree(mgr_cindexes, HYPRE_MEMORY_HOST);
@@ -2010,7 +2016,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
                       " | AuxTime " << auxTime <<
                       " | SetupTime " << setupTime <<
                       " | SolveTime " << solveTime <<
-                      " | TotalTime" << t_end - t_start);
+                      " | TotalTime " << t_end - t_start);
     }
   }
   delete schurApproxPP;
@@ -2077,7 +2083,7 @@ void HydrofractureSolver::SetNextDt( real64 const & currentDt ,
 {
   SolverBase * const surfaceGenerator =  this->getParent()->GetGroup<SolverBase>("SurfaceGen");
 
-  if (m_numResolves[0] == 0 & m_numResolves[1] == 0)
+  if (m_numResolves[0] == 0 && m_numResolves[1] == 0)
   {
     this->SetNextDtBasedOnNewtonIter(currentDt, nextDt);
   } else

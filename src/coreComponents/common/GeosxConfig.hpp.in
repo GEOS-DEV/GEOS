@@ -54,6 +54,9 @@
 /// Choice of global linear algebra interface (CMake option GEOSX_LA_INTERFACE)
 #cmakedefine GEOSX_LA_INTERFACE @GEOSX_LA_INTERFACE@
 
+/// Enables use of local Hypre MGR
+#cmakedefine GEOSX_USE_HYPRE_MGR
+
 /// Platform-dependent mangling of fortran function names (CMake option FORTRAN_MANGLE_NO_UNDERSCORE)
 #cmakedefine FORTRAN_MANGLE_NO_UNDERSCORE
 

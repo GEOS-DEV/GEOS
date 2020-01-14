@@ -54,6 +54,9 @@
 /// Choice of global linear algebra interface (CMake option GEOSX_LA_INTERFACE)
 #define GEOSX_LA_INTERFACE Trilinos
 
+/// Enables use of local Hypre MGR
+#define GEOSX_USE_HYPRE_MGR
+
 /// Platform-dependent mangling of fortran function names (CMake option FORTRAN_MANGLE_NO_UNDERSCORE)
 #define FORTRAN_MANGLE_NO_UNDERSCORE
 
