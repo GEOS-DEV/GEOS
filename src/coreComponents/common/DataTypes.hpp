@@ -973,6 +973,10 @@ public:
       {
         return lambda( r2Sym_array( 1 ) );
       }
+      case ( TypeIDs::real64_array2d_id ):
+      {
+        return lambda( array2d< real64 > {} );
+      }
       default:
       {
         GEOSX_ERROR( "TypeID not recognized." );

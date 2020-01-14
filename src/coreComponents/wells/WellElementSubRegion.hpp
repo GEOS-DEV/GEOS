@@ -77,13 +77,6 @@ public:
    * @return the name of this type in the catalog
    */
   virtual const string getCatalogName() const override { return WellElementSubRegion::CatalogName(); }
-    
-  virtual R1Tensor const & calculateElementCenter( localIndex k,
-                                                   const NodeManager& GEOSX_UNUSED_ARG( nodeManager ),
-                                                   const bool GEOSX_UNUSED_ARG( useReferencePos ) = true) const override
-  { 
-    return m_elementCenter[k]; 
-  }
 
   virtual void CalculateElementGeometricQuantities( NodeManager const & GEOSX_UNUSED_ARG( nodeManager ),
                                                     FaceManager const & GEOSX_UNUSED_ARG( faceManager ) ) override 

@@ -183,14 +183,14 @@ public:
    * @brief const accessor to the reference position array
    * @return const reference to reference position
    */
-  array1d<R1Tensor> const & referencePosition() const
+  array2d<real64> const & referencePosition() const
   { return m_referencePosition; }
 
   /**
    * @brief accessor to the reference position array
    * @return reference to reference position
    */
-  array1d<R1Tensor> & referencePosition()
+  array2d<real64> & referencePosition()
   { return m_referencePosition; }
 
 protected:
@@ -208,8 +208,8 @@ private:
   localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,
                                     arrayView1d<localIndex const> const & packList ) const;
 
-  /// reference position of the nodes
-  array1d<R1Tensor> m_referencePosition;
+   /// reference position of the nodes
+  array2d<real64> m_referencePosition;
 
   /// nodeToEdge relation
   EdgeMapType m_toEdgesRelation;

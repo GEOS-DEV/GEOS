@@ -22,6 +22,7 @@
 #include "dataRepository/xmlWrapper.hpp"
 #include "SimpleGeometricObjects/SimpleGeometricObjectBase.hpp"
 #include "common/TimingMacros.hpp"
+#include "mesh/NodeManager.hpp"
 
 namespace geosx
 {
@@ -41,33 +42,20 @@ MeshUtilities::~MeshUtilities()
 
 
 void MeshUtilities::GenerateNodesets( dataRepository::Group const * geometries,
-                                      ObjectManagerBase * const nodeManager )
+                                      NodeManager * const nodeManager )
 {
-  array1d<R1Tensor>& X = nodeManager->getReference<r1_array>(keys::referencePositionString);
+  arrayView2d< real64 const > const & X = nodeManager->referencePosition();
+  localIndex const numNodes = nodeManager->size();
   Group * sets = nodeManager->sets();
 
   for (int i = 0 ; i < geometries->GetSubGroups().size() ; ++i)
   {
-//    Wrapper<SimpleGeometricObjectBase> const * const wrapper = geometries->getGroup<SimpleGeometricObjectBase>(i);
-//    if (wrapper!=nullptr)
-//    {
-//      SimpleGeometricObjectBase const & object = wrapper->reference();
-//      string name = wrapper->getName();
-//      set<localIndex> & set = sets->registerWrapper<set<localIndex>>(name)->reference();
-//      for (localIndex a=0 ; a<X.size() ; ++a)
-//      {
-//        if (object.IsCoordInObject(X[a]))
-//        {
-//          set.insert(a);
-//        }
-//      }
-//    }
         SimpleGeometricObjectBase const * const object = geometries->GetGroup<SimpleGeometricObjectBase>(i);
         if (object!=nullptr)
         {
           string name = object->getName();
           set<localIndex> & targetSet = sets->registerWrapper< set<localIndex> >(name)->reference();
-          for (localIndex a=0 ; a<X.size() ; ++a)
+          for (localIndex a=0 ; a<numNodes ; ++a)
           {
             if (object->IsCoordInObject(X[a]))
             {
