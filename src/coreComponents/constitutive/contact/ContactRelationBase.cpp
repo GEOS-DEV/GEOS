@@ -71,6 +71,26 @@ ContactRelationBase::CreateChild( string const & catalogKey, string const & chil
   return rval;
 }
 
+
+void ContactRelationBase::SetSchemaDeviations(xmlWrapper::xmlNode,
+                                              xmlWrapper::xmlNode schemaParent,
+                                              integer)
+{
+  xmlWrapper::xmlNode targetChoiceNode = schemaParent.child("xsd:choice");
+  if( targetChoiceNode.empty() )
+  {
+    targetChoiceNode = schemaParent.prepend_child("xsd:choice");
+    targetChoiceNode.append_attribute("minOccurs") = "0";
+    targetChoiceNode.append_attribute("maxOccurs") = "1";
+
+    xmlWrapper::xmlNode tableFunctionNode = targetChoiceNode.prepend_child("xsd:element");
+    tableFunctionNode.append_attribute("name") = "TableFunction";
+    tableFunctionNode.append_attribute("type") = "TableFunctionType";
+  }
+}
+
+
+
 void ContactRelationBase::InitializePreSubGroups( Group * const )
 {
   TableFunction * const apertureTable = dynamic_cast<TableFunction*>(m_apertureFunction);

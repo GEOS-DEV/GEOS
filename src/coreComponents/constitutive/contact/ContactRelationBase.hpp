@@ -70,6 +70,15 @@ public:
   virtual Group * CreateChild( string const & catalogKey,
                                       string const & name ) override;
 
+
+  /**
+   * This function is used to inform the schema generator
+   * that table functions are allowed as children.
+   */
+  virtual void SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
+                                   xmlWrapper::xmlNode schemaParent,
+                                   integer documentationType) override;
+
   virtual void InitializePreSubGroups( Group * const ) override;
 
 
