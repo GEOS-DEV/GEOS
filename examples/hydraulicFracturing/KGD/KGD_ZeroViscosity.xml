@@ -24,7 +24,8 @@
       <NonlinearSolverParameters name="nlsp"
                                  newtonTol="1.0e-5"
                                  newtonMaxIter="50"
-                                 lineSearchMaxCuts="10"/>
+                                 lineSearchAction="1"
+                                 lineSearchMaxCuts="3"/>
       <SystemSolverParameters
         logLevel="0"
         useMLPrecond="1"
@@ -90,7 +91,7 @@
                    materialList="{water, rock}"/>
                    
     <FaceElementRegion name="Fracture"
-                       defaultAperture="0.01e-3"
+                       defaultAperture="0.02e-3"
                        materialList="{water, rock}"/>
   </ElementRegions>
 
@@ -100,7 +101,7 @@
                                   defaultViscosity="1.0e-6"
                                   referencePressure="0.0"
                                   referenceDensity="1000"
-                                  compressibility="5e-13"
+                                  compressibility="5e-10"
                                   referenceViscosity="1.0e-6"
                                   viscosibility="0.0"/>
 
@@ -115,7 +116,7 @@
       <TableFunction 
         name="aperTable" 
         coordinates = "{ -1.0e-3, 0.0}"
-        values      = "{  1.0e-6, 0.01e-3}" 
+        values      = "{  0.002e-3, 0.02e-3}" 
         />
     </Contact>
   </Constitutive>

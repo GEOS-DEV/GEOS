@@ -263,7 +263,7 @@ struct ImplicitKernel
           arrayView1d< R1Tensor const > const & uhat,
           arrayView1d< R1Tensor const > const & vtilde,
           arrayView1d< R1Tensor const > const & uhattilde,
-          arrayView1d< real64 const > const & density,
+          arrayView2d< real64 const > const & density,
           arrayView1d< real64 const > const & fluidPressure,
           arrayView1d< real64 const > const & deltaFluidPressure,
           arrayView1d< real64 const > const & biotCoefficient,
@@ -272,6 +272,7 @@ struct ImplicitKernel
           real64 const massDamping,
           real64 const newmarkBeta,
           real64 const newmarkGamma,
+          R1Tensor const & gravityVector,
           DofManager const * const GEOSX_UNUSED_ARG( dofManager ),
           ParallelMatrix * const matrix,
           ParallelVector * const rhs )
@@ -380,7 +381,7 @@ struct ImplicitKernel
               if( tiOption == timeIntegrationOption::ImplicitDynamic )
               {
 
-                real64 integrationFactor = density[k] * N[a] * N[b] * detJq;
+                real64 integrationFactor = density(k,q) * N[a] * N[b] * detJq;
                 real64 temp1 = ( massDamping * newmarkGamma/( newmarkBeta * dt ) + 1.0 / ( newmarkBeta * dt * dt ) )* integrationFactor;
 
                 for( int i=0 ; i<dim ; ++i )
@@ -397,31 +398,38 @@ struct ImplicitKernel
         }
 
 
-          R1Tensor temp;
-          for( integer q=0 ; q<NUM_QUADRATURE_POINTS ; ++q )
+        R1Tensor temp;
+        for( integer q=0 ; q<NUM_QUADRATURE_POINTS ; ++q )
+        {
+          R2SymTensor referenceStress = stress(k,q);
+          if( !fluidPressure.empty() )
           {
-            R2SymTensor referenceStress = stress(k,q);
-            if( !fluidPressure.empty() )
-            {
-              referenceStress.PlusIdentity( - biotCoefficient[0] * (fluidPressure[k] + deltaFluidPressure[k]));
-            }
-
-            const realT detJq = detJ[k][q];
-            R2SymTensor stress0 = referenceStress;
-            stress0 *= detJq;
-            for( integer a=0 ; a<NUM_NODES_PER_ELEM ; ++a )
-            {
-              dNdXa = dNdX[k][q][a];
-
-              temp.AijBj(stress0,dNdXa);
-              realT maxF = temp.MaxVal();
-              maxForce.max( maxF );
-
-              R(a*dim+0) -= temp[0];
-              R(a*dim+1) -= temp[1];
-              R(a*dim+2) -= temp[2];
-            }
+            referenceStress.PlusIdentity( - biotCoefficient[0] * (fluidPressure[k] + deltaFluidPressure[k]));
           }
+
+          const realT detJq = detJ[k][q];
+          R2SymTensor stress0 = referenceStress;
+          stress0 *= detJq;
+
+          for( integer a=0 ; a<NUM_NODES_PER_ELEM ; ++a )
+          {
+            dNdXa = dNdX[k][q][a];
+
+            temp.AijBj(stress0,dNdXa);
+            realT maxF = temp.MaxVal();
+            maxForce.max( maxF );
+
+            R(a*dim+0) -= temp[0];
+            R(a*dim+1) -= temp[1];
+            R(a*dim+2) -= temp[2];
+          }
+
+          R1Tensor gravityForce = gravityVector;
+          gravityForce *= detJq * density(k,q);
+          R(q*dim+0) += gravityForce[0];
+          R(q*dim+1) += gravityForce[1];
+          R(q*dim+2) += gravityForce[2];
+        }
 
 
       // TODO It is simpler to do this...try it.

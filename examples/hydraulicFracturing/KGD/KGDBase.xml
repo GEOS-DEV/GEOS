@@ -20,14 +20,14 @@
                   nz="{2}"
                   cellBlockNames="{cb1}"/-->
 
-    <!--InternalMesh name="mesh1"
+    <!-- InternalMesh name="mesh1"
                   elementTypes="{C3D8}"
-                  xCoords="{ -20, 20 }"
-                  yCoords="{0, 40}"
+                  xCoords="{ -2, 2 }"
+                  yCoords="{0, 4}"
                   zCoords="{0, 1}"
-                  nx="{40}"
-                  ny="{40}"
-                  nz="{2}"
+                  nx="{4}"
+                  ny="{4}"
+                  nz="{1}"
                   cellBlockNames="{cb1}"/-->
   </Mesh>
 
@@ -66,12 +66,21 @@
     <PeriodicEvent 
       name="solverApplications0"
       beginTime="0.0"
-      endTime="20.0"
-      forceDt="0.5"
+      endTime="1.0"
+      forceDt="0.2"
+      targetExactStartStop="1"
       target="/Solvers/hydrofracture" />
 
     <PeriodicEvent 
       name="solverApplications1"
+      beginTime="1.0"
+      endTime="20.0"
+      forceDt="0.5"
+      targetExactStartStop="1"
+      target="/Solvers/hydrofracture" />
+      
+    <PeriodicEvent 
+      name="solverApplications2"
       beginTime="20.0"
       endTime="100.0"
       forceDt="1.0"
@@ -81,7 +90,7 @@
     flag allows this event to request a dt modification to match an
     integer multiple of the timeFrequency. -->
     <PeriodicEvent name="outputs"
-                   timeFrequency="1.0"
+                   timeFrequency="1.0e-3"
                    targetExactTimestep="0"
                    target="/Outputs/siloOutput" />
 

@@ -1055,9 +1055,10 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_ARG(
   ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase>
   constitutiveRelations = elemManager->ConstructFullConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
 
-  ElementRegionManager::MaterialViewAccessor< real64 > const
-  density = elemManager->ConstructFullMaterialViewAccessor< real64 >( "density0",
-                                                                  constitutiveManager );
+  ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const
+  density = elemManager->ConstructFullMaterialViewAccessor< array2d<real64>,
+                                                            arrayView2d<real64> >( SolidBase::viewKeyStruct::densityString,
+                                                                                   constitutiveManager );
 
   // begin region loop
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
@@ -1098,7 +1099,7 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_ARG(
                                                 uhat,
                                                 vtilde,
                                                 uhattilde,
-                                                density[er][esr],
+                                                density[er][esr][m_solidMaterialFullIndex],
                                                 fluidPres[er][esr],
                                                 dPres[er][esr],
                                                 biotCoefficient[er][esr],
@@ -1107,6 +1108,7 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_ARG(
                                                 this->m_massDamping,
                                                 this->m_newmarkBeta,
                                                 this->m_newmarkGamma,
+                                                m_gravityVector,
                                                 &dofManager,
                                                 &matrix,
                                                 &rhs );

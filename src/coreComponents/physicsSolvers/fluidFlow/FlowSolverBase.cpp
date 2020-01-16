@@ -96,13 +96,20 @@ void FlowSolverBase::RegisterDataOnMesh( Group * const MeshBodies )
 
     ElementRegionManager * const elemManager = mesh->getElemManager();
 
-    elemManager->forElementSubRegions<FaceElementSubRegion>( [&] ( FaceElementSubRegion * const subRegion )
+    elemManager->forElementRegions<FaceElementRegion>( [&] ( FaceElementRegion * const region )
     {
-      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::referencePorosityString )->
-        setApplyDefaultValue( 1.0 );
+      region->forElementSubRegions<FaceElementSubRegion>( [&]( FaceElementSubRegion * const subRegion )
+      {
+        subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::referencePorosityString )->
+          setApplyDefaultValue( 1.0 );
 
-      subRegion->registerWrapper< array1d<R1Tensor> >( viewKeyStruct::permeabilityString )->setPlotLevel(PlotLevel::LEVEL_0);
-      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::gravityDepthString )->setApplyDefaultValue( 0.0 );
+        subRegion->registerWrapper< array1d<R1Tensor> >( viewKeyStruct::permeabilityString )->setPlotLevel(PlotLevel::LEVEL_0);
+        subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::gravityDepthString )->setApplyDefaultValue( 0.0 );
+        subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::aperture0String )->
+          setDefaultValue( region->getDefaultAperture() );
+        subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::effectiveApertureString )->setPlotLevel(PlotLevel::LEVEL_0);
+
+      });
     });
 
     FaceManager * const faceManager = mesh->getFaceManager();
@@ -220,6 +227,9 @@ void FlowSolverBase::ResetViews( DomainPartition * const domain )
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( FaceElementSubRegion::viewKeyStruct::elementApertureString );
   m_elementAperture0 =
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( viewKeyStruct::aperture0String );
+
+  m_effectiveAperture =
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( viewKeyStruct::effectiveApertureString );
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
   m_elementSeparationCoefficient =

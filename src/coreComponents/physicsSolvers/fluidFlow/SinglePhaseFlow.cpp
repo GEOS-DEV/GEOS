@@ -85,8 +85,6 @@ void SinglePhaseFlow::RegisterDataOnMesh(Group * const MeshBodies)
         subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::porosityOldString )->
           setDefaultValue(1.0);
         subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::densityOldString );
-        subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::aperture0String )->
-          setDefaultValue( region->getDefaultAperture() );
       });
     });
 
@@ -399,7 +397,7 @@ void SinglePhaseFlow::ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n
     arrayView1d<real64> const & poroOld = m_porosityOld[er][esr];
 
     // This should fix NaN density in newly created fracture elements
-    //UpdateState( subRegion );
+    UpdateState( subRegion );
 
     forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
@@ -418,7 +416,7 @@ void SinglePhaseFlow::ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n
                                                                 FaceElementSubRegion * subRegion )
   {
     arrayView1d<real64> const & aper0 = subRegion->getReference<array1d<real64>>( viewKeyStruct::aperture0String );
-    arrayView1d<real64 const> const & aper = m_elementAperture[er][esr];
+    arrayView1d<real64 const> const & aper = m_effectiveAperture[er][esr];
 
     forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
@@ -686,7 +684,7 @@ void SinglePhaseFlow::AccumulationLaunch( localIndex const er,
 #if ALLOW_CREATION_MASS>0
       if( volume[ei] * densOld[ei] > 1.1 * creationMass[ei] )
       {
-//        localAccum += creationMass[ei] * 0.25;
+        localAccum += creationMass[ei] * 0.25;
       }
 #endif
       // add contribution to global residual and jacobian
@@ -757,7 +755,7 @@ void SinglePhaseFlow::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time_n )
   FluxKernel::ElementView < arrayView1d<real64 const> > const & dMob_dPres  = m_dMobility_dPres.toViewConst();
 
   FluxKernel::ElementView < arrayView1d<real64 const> > const & aperture0  = m_elementAperture0.toViewConst();
-  FluxKernel::ElementView < arrayView1d<real64 const> > const & aperture  = m_elementAperture.toViewConst();
+  FluxKernel::ElementView < arrayView1d<real64 const> > const & aperture  = m_effectiveAperture.toViewConst();
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
   FluxKernel::ElementView < arrayView1d<real64 const> > const & separationCoeff  = m_elementSeparationCoefficient.toViewConst();

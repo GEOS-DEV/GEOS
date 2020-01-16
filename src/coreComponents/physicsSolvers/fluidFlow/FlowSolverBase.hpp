@@ -103,6 +103,7 @@ public:
     static constexpr auto deltaVolumeString = "deltaVolume";
 
     static constexpr auto aperture0String  = "aperture_n";
+    static constexpr auto effectiveApertureString = "effectiveAperture";
 
     static constexpr auto inputFluxEstimateString  = "inputFluxEstimate";
 
@@ -203,6 +204,7 @@ protected:
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_elementArea;
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_elementAperture0;
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_elementAperture;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_effectiveAperture;
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_elementSeparationCoefficient;

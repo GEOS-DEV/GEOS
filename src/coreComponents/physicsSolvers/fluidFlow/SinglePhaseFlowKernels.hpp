@@ -200,10 +200,11 @@ struct AccumulationKernel<FaceElementSubRegion>
     // Residual contribution is mass conservation in the cell
     localAccum = densNew * volNew - densOld * volume;
 
-//    std::cout<<"localAccum = "<<densNew<<" * "<<volNew<<" - "<< densOld <<" * "<< volume<<" = "<<localAccum<<std::endl;
+//    std::cout<<"\nlocalAccum = "<<densNew<<" * "<<volNew<<" - "<< densOld <<" * "<< volume<<" = "<<localAccum<<std::endl;
 
     // Derivative of residual wrt to pressure in the cell
     localAccumJacobian =  dDens_dPres * volNew ;
+//    std::cout<<"localAccumJacobian = "<<dDens_dPres<<" * "<<volNew<<" = "<<localAccumJacobian<<std::endl;
   }
 };
 
@@ -632,7 +633,7 @@ struct FluxKernel
 
         localIndex const ei[2] = { stencilElementIndices[k[0]],
                                    stencilElementIndices[k[1]] };
-#if 1
+#if 0
         real64 const weight = ( stencilWeights[k[0]]*aperTerm[k[0]] ) *
                               ( stencilWeights[k[1]]*aperTerm[k[1]] ) / sumOfWeights;
 
@@ -641,7 +642,7 @@ struct FluxKernel
         { ( 1 / aperTerm[k[0]]  - stencilWeights[k[0]] / sumOfWeights ) * weight * dAperTerm_dAper[k[0]],
           ( 1 / aperTerm[k[1]]  - stencilWeights[k[1]] / sumOfWeights ) * weight * dAperTerm_dAper[k[1]]};
 #else
-        real64 c = 0.95;
+        real64 c = 0.8;
 
         real64 const harmonicWeight = ( stencilWeights[k[0]]*aperTerm[k[0]] ) *
                                       ( stencilWeights[k[1]]*aperTerm[k[1]] ) / sumOfWeights;

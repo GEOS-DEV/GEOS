@@ -283,6 +283,8 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
   dens = fractureSubRegion->getReference<array1d<real64>>("densityOld");
 #endif
 
+
+#if SET_CREATION_PRESSURE==1
   // Set the new face elements to some unphysical numbers to make sure they get set by the following routines.
   for( localIndex const kfe : fractureSubRegion->m_newFaceElements )
   {
@@ -302,6 +304,7 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
     aperture[kfe] = 1.0e99;
 #endif
   }
+#endif
   std::set<localIndex> allNewElems( fractureSubRegion->m_newFaceElements.begin(),
                                     fractureSubRegion->m_newFaceElements.end() );
 
