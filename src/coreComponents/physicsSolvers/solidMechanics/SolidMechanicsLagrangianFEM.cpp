@@ -127,7 +127,7 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const std::string& nam
     setDescription("Name of contact relation to enforce constraints on fracture boundary.");
 
   registerWrapper(viewKeyStruct::maxForce, &m_maxForce, false )->
-    setInputFlag(InputFlags::FALSE)->
+    setInputFlag(InputFlags::NOT_READ)->
     setDescription( "The maximum force contribution in the problem domain.");
 }
 

@@ -41,7 +41,6 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
-using namespace CompositionalMultiphaseFlowKernels;
 
 CompositionalMultiphaseFlow::CompositionalMultiphaseFlow( const string & name,
                                                           Group * const parent )
@@ -226,7 +225,7 @@ void CompositionalMultiphaseFlow::ResizeFields( MeshLevel * const meshLevel )
 void CompositionalMultiphaseFlow::UpdateComponentFraction( Group * const dataGroup ) const
 {
   GEOSX_MARK_FUNCTION;
-
+  using namespace CompositionalMultiphaseFlowKernels;
   // outputs
 
   arrayView2d<real64> const & compFrac =
@@ -254,7 +253,7 @@ void CompositionalMultiphaseFlow::UpdateComponentFraction( Group * const dataGro
 void CompositionalMultiphaseFlow::UpdateComponentFraction( localIndex er, localIndex esr ) const
 {
   GEOSX_MARK_FUNCTION;
-
+  using namespace CompositionalMultiphaseFlowKernels;
   KernelLaunchSelector1<ComponentFractionKernel>( m_numComponents,
                                                   0, m_compFrac[er][esr].size(0),
                                                   m_globalCompDensity[er][esr],
@@ -266,7 +265,7 @@ void CompositionalMultiphaseFlow::UpdateComponentFraction( localIndex er, localI
 void CompositionalMultiphaseFlow::UpdatePhaseVolumeFraction( Group * const dataGroup ) const
 {
   GEOSX_MARK_FUNCTION;
-
+  using namespace CompositionalMultiphaseFlowKernels;
   // outputs
 
   arrayView2d<real64> const & phaseVolFrac =
@@ -328,6 +327,7 @@ void CompositionalMultiphaseFlow::UpdatePhaseVolumeFraction( Group * const dataG
 void CompositionalMultiphaseFlow::UpdatePhaseVolumeFraction( localIndex er, localIndex esr ) const
 {
   GEOSX_MARK_FUNCTION;
+  using namespace CompositionalMultiphaseFlowKernels;
 
   KernelLaunchSelector2<PhaseVolumeFractionKernel>( m_numComponents, m_numPhases,
                                                     0, m_phaseVolFrac[er][esr].size(0),
@@ -348,7 +348,7 @@ void CompositionalMultiphaseFlow::UpdatePhaseVolumeFraction( localIndex er, loca
 void CompositionalMultiphaseFlow::UpdatePhaseMobility( Group * const dataGroup ) const
 {
   GEOSX_MARK_FUNCTION;
-
+  using namespace CompositionalMultiphaseFlowKernels;
   // outputs
 
   arrayView2d<real64> const & phaseMob =
@@ -420,7 +420,7 @@ void CompositionalMultiphaseFlow::UpdatePhaseMobility( Group * const dataGroup )
 void CompositionalMultiphaseFlow::UpdatePhaseMobility( localIndex er, localIndex esr ) const
 {
   GEOSX_MARK_FUNCTION;
-
+  using namespace CompositionalMultiphaseFlowKernels;
   KernelLaunchSelector2<PhaseMobilityKernel>( m_numComponents, m_numPhases,
                                               0, m_phaseMob[er][esr].size(0),
                                               m_dCompFrac_dCompDens[er][esr],
@@ -759,6 +759,7 @@ void CompositionalMultiphaseFlow::AssembleAccumulationTerms( real64 const GEOSX_
                                                              ParallelVector * const rhs )
 {
   GEOSX_MARK_FUNCTION;
+  using namespace CompositionalMultiphaseFlowKernels;
 
   MeshLevel const * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
 
@@ -861,6 +862,7 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( real64 const GEOSX_UNUSED_P
                                                      ParallelVector * const rhs )
 {
   GEOSX_MARK_FUNCTION;
+  using namespace CompositionalMultiphaseFlowKernels;
 
   MeshLevel const * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager const * const elemManager = mesh->getElemManager();
@@ -935,7 +937,7 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( real64 const GEOSX_UNUSED_P
       stackArray1d<real64, maxSize1>            localFlux( numElems * NC );
       stackArray2d<real64, maxSize1 * maxSize2> localFluxJacobian( numElems * NC, stencilSize * NDOF );
 
-      FluxKernel::Compute( NC, NP,
+      CompositionalMultiphaseFlowKernels::FluxKernel::Compute( NC, NP,
                            stencilSize,
                            eri[iconn],
                            esri[iconn],
@@ -1011,6 +1013,7 @@ void CompositionalMultiphaseFlow::AssembleVolumeBalanceTerms( real64 const GEOSX
                                                               ParallelVector * const rhs )
 {
   GEOSX_MARK_FUNCTION;
+  using namespace CompositionalMultiphaseFlowKernels;
 
   MeshLevel const * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
 

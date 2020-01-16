@@ -38,7 +38,6 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
-using namespace SinglePhaseKernels;
 
 SinglePhaseBase::SinglePhaseBase( const std::string& name,
                                   Group * const parent ):
@@ -133,6 +132,8 @@ void SinglePhaseBase::UpdateSolidModel(Group * const dataGroup) const
 void SinglePhaseBase::UpdateMobility( Group * const dataGroup ) const
 {
   GEOSX_MARK_FUNCTION;
+  using namespace SinglePhaseKernels;
+
 
   // output
 
@@ -574,6 +575,8 @@ void SinglePhaseBase::AccumulationLaunch( localIndex const er,
                                           ParallelMatrix * const matrix,
                                           ParallelVector * const rhs )
 {
+  using namespace SinglePhaseKernels;
+
   string const dofKey = dofManager->getKey( viewKeyStruct::pressureString );
   arrayView1d<globalIndex const> const & dofNumber = subRegion->getReference< array1d<globalIndex> >( dofKey );
 
@@ -639,6 +642,8 @@ void SinglePhaseBase::AccumulationLaunch( localIndex const er,
                                           ParallelMatrix * const matrix,
                                           ParallelVector * const rhs )
 {
+  using namespace SinglePhaseKernels;
+
   string const dofKey = dofManager->getKey( viewKeyStruct::pressureString );
   arrayView1d<globalIndex const> const & dofNumber = subRegion->getReference< array1d<globalIndex> >( dofKey );
 
