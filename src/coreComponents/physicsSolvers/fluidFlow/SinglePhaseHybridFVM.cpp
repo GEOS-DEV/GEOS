@@ -138,6 +138,7 @@ void SinglePhaseHybridFVM::ImplicitStepComplete( real64 const & time_n,
     {
       facePres[iface] += dFacePres[iface];
     }
+    dFacePres[iface] = 0;    
   });
 }
 
@@ -218,7 +219,7 @@ void SinglePhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( tim
 
   
   // max number of faces allowed in an element 
-  localIndex constexpr maxNumFaces = MAX_NUM_FACES_IN_ELEM;
+  localIndex constexpr maxNumFaces = MAX_NUM_FACES;
 
   // tolerance for transmissibility calculation
   real64 const lengthTolerance = domain->getMeshBody( 0 )->getGlobalLengthScale() * m_areaRelTol; 
@@ -388,57 +389,73 @@ void SinglePhaseHybridFVM::ComputeOneSidedVolFluxes( arrayView1d<real64 const> c
                                                      real64 const & elemGravDepth,
                                                      real64 const & elemDens,
                                                      real64 const & dElemDens_dp,
-                                                     stackArray2d<real64, MAX_NUM_FACES_IN_ELEM
-                                                                         *MAX_NUM_FACES_IN_ELEM> const & transMatrix,
-                                                     stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> & oneSidedVolFlux,
-                                                     stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> & dOneSidedVolFlux_dp,
-                                                     stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> & dOneSidedVolFlux_dfp ) const
+                                                     stackArray2d<real64, MAX_NUM_FACES
+                                                                         *MAX_NUM_FACES> const & transMatrix,
+                                                     stackArray1d<real64, MAX_NUM_FACES> & oneSidedVolFlux,
+                                                     stackArray1d<real64, MAX_NUM_FACES> & dOneSidedVolFlux_dp,
+                                                     stackArray1d<real64, MAX_NUM_FACES> & dOneSidedVolFlux_dfp ) const
 {
-  localIndex const numFacesInElem = elemToFaces.size();
+  localIndex constexpr maxNumFaces = MAX_NUM_FACES;
   
-  // for this element, loop over the local (one-sided) faces
+  localIndex const numFacesInElem = elemToFaces.size();
+
+  oneSidedVolFlux      = 0;
+  dOneSidedVolFlux_dp  = 0;
+  dOneSidedVolFlux_dfp = 0;
+  
+  stackArray1d<real64, maxNumFaces> potDif( numFacesInElem );
+  stackArray1d<real64, maxNumFaces> dPotDif_dp( numFacesInElem );
+  stackArray1d<real64, maxNumFaces> dPotDif_dfp( numFacesInElem );
+  potDif      = 0;
+  dPotDif_dp  = 0;
+  dPotDif_dfp = 0;
+  
+  // 1) precompute the potential difference at each one-sided face
   for (localIndex ifaceLoc = 0; ifaceLoc < numFacesInElem; ++ifaceLoc)
   {
-    oneSidedVolFlux[ifaceLoc]      = 0;
-    dOneSidedVolFlux_dp[ifaceLoc]  = 0;
-    dOneSidedVolFlux_dfp[ifaceLoc] = 0;
          
-    // now in the following nested loop,
-    // we compute the contribution of face jfaceLoc to the one sided flux at face iface
+    // 1) compute the potential diff between the cell center and the face center
+    real64 const ccPres = elemPres + dElemPres;
+    real64 const fPres  = facePres[elemToFaces[ifaceLoc]] + dFacePres[elemToFaces[ifaceLoc]];
+
+    real64 const ccGravDepth = elemGravDepth;
+    real64 const fGravDepth  = faceGravDepth[elemToFaces[ifaceLoc]];
+
+    real64 const ccDens     = elemDens;
+    real64 const dCcDens_dp = dElemDens_dp; 
+    // no density evaluated at the face center
+          
+    // pressure difference
+    real64 const presDif      = ccPres - fPres;
+    real64 const dPresDif_dp  =  1;
+    real64 const dPresDif_dfp = -1;
+
+    // gravity term
+    real64 const depthDif     = ccGravDepth - fGravDepth; 
+    real64 const gravTerm     = ccDens     * depthDif;
+    real64 const dGravTerm_dp = dCcDens_dp * depthDif;
+
+    // potential difference
+    potDif[ifaceLoc]      = presDif     - gravTerm;
+    dPotDif_dp[ifaceLoc]  = dPresDif_dp - dGravTerm_dp;    
+    dPotDif_dfp[ifaceLoc] = dPresDif_dfp; 
+
+  }
+
+  // 2) multiply the potential difference by the transmissibility
+  //    to obtain the total volumetrix flux
+  for (localIndex ifaceLoc = 0; ifaceLoc < numFacesInElem; ++ifaceLoc)
+  {
+    // now in the following nested loop, 
+    // we compute the contribution of face jfaceLoc to the one sided total volumetric flux at face iface
     for (localIndex jfaceLoc = 0; jfaceLoc < numFacesInElem; ++jfaceLoc)
     {
-      // 1) compute the potential diff between the cell center and the face center
-      real64 const ccPres = elemPres + dElemPres;
-      real64 const fPres  = facePres[elemToFaces[jfaceLoc]] + dFacePres[elemToFaces[jfaceLoc]];
-
-      real64 const ccGravDepth = elemGravDepth;
-      real64 const fGravDepth  = faceGravDepth[elemToFaces[jfaceLoc]];
-
-      real64 const ccDens     = elemDens;
-      real64 const dCcDens_dp = dElemDens_dp; 
-      // no density evaluated at the face center
-          
-      // pressure difference
-      real64 const presDif      = ccPres - fPres;
-      real64 const dPresDif_dp  =  1;
-      real64 const dPresDif_dfp = -1;
-
-      // gravity term
-      real64 const depthDif     = ccGravDepth - fGravDepth; 
-      real64 const gravTerm     = ccDens     * depthDif;
-      real64 const dGravTerm_dp = dCcDens_dp * depthDif;
-
-      // potential difference
-      real64 const potDif      = presDif     - gravTerm;
-      real64 const dPotDif_dp  = dPresDif_dp - dGravTerm_dp;    
-      real64 const dPotDif_dfp = dPresDif_dfp; 
-
-      // 2) compute the contribution of this face to the volumetric fluxes in the cell
-      oneSidedVolFlux[ifaceLoc]      += transMatrix[ifaceLoc][jfaceLoc] * potDif;
-      dOneSidedVolFlux_dp[ifaceLoc]  += transMatrix[ifaceLoc][jfaceLoc] * dPotDif_dp;
-      dOneSidedVolFlux_dfp[ifaceLoc] += transMatrix[ifaceLoc][jfaceLoc] * dPotDif_dfp;
+      // this is going to store T \sum_p \lambda_p (\nabla p - \rho_p g \nabla d)
+      oneSidedVolFlux[ifaceLoc]      += transMatrix[ifaceLoc][jfaceLoc] * potDif[jfaceLoc];
+      dOneSidedVolFlux_dp[ifaceLoc]  += transMatrix[ifaceLoc][jfaceLoc] * dPotDif_dp[jfaceLoc];
+      dOneSidedVolFlux_dfp[ifaceLoc] += transMatrix[ifaceLoc][jfaceLoc] * dPotDif_dfp[jfaceLoc];
     }
-  }  
+  }
 }
 
 void SinglePhaseHybridFVM::UpdateUpwindedCoefficients( MeshLevel const * const mesh,
@@ -447,17 +464,17 @@ void SinglePhaseHybridFVM::UpdateUpwindedCoefficients( MeshLevel const * const m
                                                        array2d<localIndex> const & elemList,
                                                        set<localIndex> const & regionFilter,
                                                        arraySlice1d<localIndex const> const elemToFaces,
-                                                       ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const & domainMobility,
-                                                       ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const & dDomainMobility_dp,
+                                                       ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const & mob,
+                                                       ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const & dMob_dp,
                                                        localIndex const er,
                                                        localIndex const esr,
                                                        localIndex const ei,
                                                        globalIndex const elemDofNumber,
                                                        string const elemDofKey,    
-                                                       stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> const & oneSidedVolFlux,
-                                                       stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> & upwMobility,
-                                                       stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> & dUpwMobility_dp,
-                                                       stackArray1d<globalIndex, MAX_NUM_FACES_IN_ELEM> & upwDofNumber ) const
+                                                       stackArray1d<real64, MAX_NUM_FACES> const & oneSidedVolFlux,
+                                                       stackArray1d<real64, MAX_NUM_FACES> & upwMobility,
+                                                       stackArray1d<real64, MAX_NUM_FACES> & dUpwMobility_dp,
+                                                       stackArray1d<globalIndex, MAX_NUM_FACES> & upwDofNumber ) const
 {
   localIndex const numFacesInElem = elemToFaces.size();
   
@@ -466,8 +483,8 @@ void SinglePhaseHybridFVM::UpdateUpwindedCoefficients( MeshLevel const * const m
   {
 
     // we initialize these upw quantities with the values of the local elem
-    upwMobility[ifaceLoc]     = domainMobility[er][esr][ei];
-    dUpwMobility_dp[ifaceLoc] = dDomainMobility_dp[er][esr][ei];
+    upwMobility[ifaceLoc]     = mob[er][esr][ei];
+    dUpwMobility_dp[ifaceLoc] = dMob_dp[er][esr][ei];
     upwDofNumber[ifaceLoc]    = elemDofNumber;
 
     // if the local elem if upstream, we are done, we can proceed to the next one-sided face
@@ -491,7 +508,7 @@ void SinglePhaseHybridFVM::UpdateUpwindedCoefficients( MeshLevel const * const m
         if ( erNeighbor != er || esrNeighbor != esr || eiNeighbor != ei ) 
         {
 
-          bool const onBoundary       = (erNeighbor == -1 || esrNeighbor == -1 || eiNeighbor != -1);
+          bool const onBoundary       = (erNeighbor == -1 || esrNeighbor == -1 || eiNeighbor == -1);
           bool const neighborInTarget = regionFilter.contains(erNeighbor); 
 
           // if not on boundary, save the mobility and the upwDofNumber  
@@ -505,8 +522,8 @@ void SinglePhaseHybridFVM::UpdateUpwindedCoefficients( MeshLevel const * const m
             arrayView1d<globalIndex const> const & neighborDofNumber =
               neighborSubRegion->getReference<array1d<globalIndex>>( elemDofKey );  
 
-            upwMobility[ifaceLoc]     = domainMobility[erNeighbor][esrNeighbor][eiNeighbor];
-            dUpwMobility_dp[ifaceLoc] = dDomainMobility_dp[erNeighbor][esrNeighbor][eiNeighbor];
+            upwMobility[ifaceLoc]     = mob[erNeighbor][esrNeighbor][eiNeighbor];
+            dUpwMobility_dp[ifaceLoc] = dMob_dp[erNeighbor][esrNeighbor][eiNeighbor];
             upwDofNumber[ifaceLoc]    = neighborDofNumber[eiNeighbor];
           }
           // if the face is on the boundary, use the properties of the local elem
@@ -521,32 +538,32 @@ void SinglePhaseHybridFVM::AssembleOneSidedMassFluxes( real64 const & dt,
                                                        arrayView1d<globalIndex const> const & faceDofNumber,
                                                        arraySlice1d<localIndex const> const elemToFaces,
                                                        globalIndex const elemDofNumber,
-                                                       stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> const & oneSidedVolFlux,
-                                                       stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> const & dOneSidedVolFlux_dp,
-                                                       stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> const & dOneSidedVolFlux_dfp,
-                                                       stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> const & upwMobility,
-                                                       stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> const & dUpwMobility_dp,
-                                                       stackArray1d<globalIndex, MAX_NUM_FACES_IN_ELEM> const & upwDofNumber,
+                                                       stackArray1d<real64, MAX_NUM_FACES> const & oneSidedVolFlux,
+                                                       stackArray1d<real64, MAX_NUM_FACES> const & dOneSidedVolFlux_dp,
+                                                       stackArray1d<real64, MAX_NUM_FACES> const & dOneSidedVolFlux_dfp,
+                                                       stackArray1d<real64, MAX_NUM_FACES> const & upwMobility,
+                                                       stackArray1d<real64, MAX_NUM_FACES> const & dUpwMobility_dp,
+                                                       stackArray1d<globalIndex, MAX_NUM_FACES> const & upwDofNumber,
                                                        ParallelMatrix * const matrix,
                                                        ParallelVector * const rhs ) const
 {
-  localIndex constexpr maxNumFaces = MAX_NUM_FACES_IN_ELEM;
+  localIndex constexpr maxNumFaces = MAX_NUM_FACES;
 
   localIndex const numFacesInElem = elemToFaces.size();
   
   // fluxes
   real64 sumLocalMassFluxes     = 0;
-  real64 dSumLocalMassFluxes_dp = 0;
-  stackArray1d<real64, maxNumFaces> dSumLocalMassFluxes_dp_neighbor( numFacesInElem );
-  stackArray1d<real64, maxNumFaces> dSumLocalMassFluxes_dfp( numFacesInElem );
-  dSumLocalMassFluxes_dp_neighbor = 0;
-  dSumLocalMassFluxes_dfp = 0;
-          
-  // dof numbers 
-  globalIndex const eqnRowIndex         = elemDofNumber;
-  globalIndex const dofColIndexElemPres = elemDofNumber;
-  stackArray1d<globalIndex, maxNumFaces> dofColIndicesNeighborPres( numFacesInElem );
-  stackArray1d<globalIndex, maxNumFaces> dofColIndicesFacePres( numFacesInElem );
+  stackArray1d<real64, 1+maxNumFaces> dSumLocalMassFluxes_dElemVars( 1+numFacesInElem );
+  stackArray1d<real64, maxNumFaces>   dSumLocalMassFluxes_dFaceVars( numFacesInElem );
+  sumLocalMassFluxes = 0;
+  dSumLocalMassFluxes_dElemVars = 0;
+  dSumLocalMassFluxes_dFaceVars = 0;
+  
+  // dof numbers
+  globalIndex const eqnRowIndex = elemDofNumber;
+  stackArray1d<globalIndex, 1+maxNumFaces> elemDofColIndices( 1+numFacesInElem );
+  stackArray1d<globalIndex, maxNumFaces>   faceDofColIndices( numFacesInElem );
+  elemDofColIndices[0] = elemDofNumber;
 
   // for each element, loop over the one-sided faces
   for (localIndex ifaceLoc = 0; ifaceLoc < numFacesInElem; ++ifaceLoc)
@@ -554,22 +571,14 @@ void SinglePhaseHybridFVM::AssembleOneSidedMassFluxes( real64 const & dt,
 
     // compute the mass flux at the one-sided face plus its derivatives
     // add the newly computed flux to the sum
-    sumLocalMassFluxes      += dt * upwMobility[ifaceLoc] * oneSidedVolFlux[ifaceLoc];
-    dSumLocalMassFluxes_dp  += dt * upwMobility[ifaceLoc] * dOneSidedVolFlux_dp[ifaceLoc];
-    if (elemDofNumber == upwDofNumber[ifaceLoc])
-    {
-      dSumLocalMassFluxes_dp  += dt * dUpwMobility_dp[ifaceLoc] * oneSidedVolFlux[ifaceLoc];
-    }
-    else
-    {
-      dSumLocalMassFluxes_dp_neighbor[ifaceLoc] = dt * dUpwMobility_dp[ifaceLoc] * oneSidedVolFlux[ifaceLoc];
-    }
-    dSumLocalMassFluxes_dfp[ifaceLoc] = dt * upwMobility[ifaceLoc] * dOneSidedVolFlux_dfp[ifaceLoc];
+    sumLocalMassFluxes                        += dt * upwMobility[ifaceLoc] * oneSidedVolFlux[ifaceLoc];
+    dSumLocalMassFluxes_dElemVars[0]          += dt * upwMobility[ifaceLoc] * dOneSidedVolFlux_dp[ifaceLoc];
+    dSumLocalMassFluxes_dElemVars[ifaceLoc+1] = dt * dUpwMobility_dp[ifaceLoc] * oneSidedVolFlux[ifaceLoc];
+    dSumLocalMassFluxes_dFaceVars[ifaceLoc]   = dt * upwMobility[ifaceLoc] * dOneSidedVolFlux_dfp[ifaceLoc];
 
     // collect the relevant dof numbers
-    dofColIndicesNeighborPres[ifaceLoc] = upwDofNumber[ifaceLoc]; // if upwDofNumber == elemDofNumber, the derivative is zero 
-    dofColIndicesFacePres[ifaceLoc] = faceDofNumber[elemToFaces[ifaceLoc]];
-
+    elemDofColIndices[ifaceLoc+1] = upwDofNumber[ifaceLoc]; // if upwDofNumber == elemDofNumber, the derivative is zero
+    faceDofColIndices[ifaceLoc] = faceDofNumber[elemToFaces[ifaceLoc]];    
   }
   
   // we are ready to assemble the local flux and its derivatives
@@ -578,37 +587,30 @@ void SinglePhaseHybridFVM::AssembleOneSidedMassFluxes( real64 const & dt,
   rhs->add( &eqnRowIndex,
             &sumLocalMassFluxes,
             1 );
-                  
-  // jacobian -- derivative wrt local cell centered pressure term
-  matrix->add( &eqnRowIndex,
-               &dofColIndexElemPres,
-               &dSumLocalMassFluxes_dp,
-               1,
-               1 );
 
-  // jacobian -- derivatives wrt neighbor cell centered pressure terms
+  // jacobian -- derivative wrt elem centered vars
   matrix->add( &eqnRowIndex,
-               dofColIndicesNeighborPres.data(),
-               dSumLocalMassFluxes_dp_neighbor.data(),
+               elemDofColIndices.data(),
+               dSumLocalMassFluxes_dElemVars.data(),
+               1,
+               1+numFacesInElem );
+
+  // jacobian -- derivatives wrt face centered vars
+  matrix->add( &eqnRowIndex,
+               faceDofColIndices.data(),
+               dSumLocalMassFluxes_dFaceVars.data(),
                1,
                numFacesInElem );
-        
-  // jacobian -- derivatives wrt face pressure terms
-  matrix->add( &eqnRowIndex,
-               dofColIndicesFacePres.data(),
-               dSumLocalMassFluxes_dfp.data(),
-               1,
-               numFacesInElem );
-
+  
 }
 
 
 void SinglePhaseHybridFVM::AssembleConstraints( arrayView1d<globalIndex const> const & faceDofNumber,
                                                 arraySlice1d<localIndex const> const elemToFaces,
                                                 globalIndex const elemDofNumber,
-                                                stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> const & oneSidedVolFlux,
-                                                stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> const & dOneSidedVolFlux_dp,
-                                                stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> const & dOneSidedVolFlux_dfp,
+                                                stackArray1d<real64, MAX_NUM_FACES> const & oneSidedVolFlux,
+                                                stackArray1d<real64, MAX_NUM_FACES> const & dOneSidedVolFlux_dp,
+                                                stackArray1d<real64, MAX_NUM_FACES> const & dOneSidedVolFlux_dfp,
                                                 ParallelMatrix * const matrix,
                                                 ParallelVector * const rhs ) const 
 {
@@ -856,8 +858,8 @@ void SinglePhaseHybridFVM::ComputeTPFAInnerProduct( arrayView1d<R1Tensor const> 
                                                     R1Tensor const & elemCenter,
                                                     R1Tensor const & elemPerm,
                                                     real64   const & lengthTolerance,
-                                                    stackArray2d<real64, MAX_NUM_FACES_IN_ELEM
-                                                                        *MAX_NUM_FACES_IN_ELEM> const & transMatrix ) const
+                                                    stackArray2d<real64, MAX_NUM_FACES
+                                                                        *MAX_NUM_FACES> const & transMatrix ) const
 {
   R1Tensor faceCenter, faceNormal, faceConormal, cellToFaceVec;
   R2SymTensor permeabilityTensor;
@@ -922,8 +924,8 @@ void SinglePhaseHybridFVM::ComputeQFamilyInnerProduct( arrayView1d<R1Tensor cons
                                                        R1Tensor const & elemPerm,
                                                        real64   const & tParam, 
                                                        real64   const & lengthTolerance,
-                                                       stackArray2d<real64, MAX_NUM_FACES_IN_ELEM
-                                                                           *MAX_NUM_FACES_IN_ELEM> const & transMatrix ) const
+                                                       stackArray2d<real64, MAX_NUM_FACES
+                                                                           *MAX_NUM_FACES> const & transMatrix ) const
 {
   R1Tensor faceCenter, faceNormal, cellToFaceVec;
   real64 const areaTolerance = lengthTolerance * lengthTolerance;
@@ -1119,8 +1121,8 @@ void SinglePhaseHybridFVM::ComputeTransmissibilityMatrix( arrayView1d<R1Tensor c
                                                           real64   const & elemVolume,
                                                           R1Tensor const & elemPerm,
                                                           real64   const & lengthTolerance,
-                                                          stackArray2d<real64, MAX_NUM_FACES_IN_ELEM
-                                                                              *MAX_NUM_FACES_IN_ELEM> const & transMatrix ) const
+                                                          stackArray2d<real64, MAX_NUM_FACES
+                                                                              *MAX_NUM_FACES> const & transMatrix ) const
 {
   switch (m_ipType)
   {

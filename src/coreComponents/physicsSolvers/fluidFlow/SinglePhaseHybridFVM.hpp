@@ -35,7 +35,7 @@ class SinglePhaseHybridFVM : public SinglePhaseBase
 {
 public:
 
-  static constexpr localIndex MAX_NUM_FACES_IN_ELEM = 15;
+  static constexpr localIndex MAX_NUM_FACES = 15;
 
   struct EquationType
   {
@@ -207,11 +207,11 @@ private:
                                  real64 const & elemGravDepth,
                                  real64 const & elemDens,
                                  real64 const & dElemDens_dp,
-                                 stackArray2d<real64, MAX_NUM_FACES_IN_ELEM
-                                                     *MAX_NUM_FACES_IN_ELEM> const & transMatrix,
-                                 stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> & oneSidedVolFlux,
-                                 stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> & dOneSidedVolFlux_dp,
-                                 stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> & dOneSidedVolFlux_dfp ) const;
+                                 stackArray2d<real64, MAX_NUM_FACES
+                                                     *MAX_NUM_FACES> const & transMatrix,
+                                 stackArray1d<real64, MAX_NUM_FACES> & oneSidedVolFlux,
+                                 stackArray1d<real64, MAX_NUM_FACES> & dOneSidedVolFlux_dp,
+                                 stackArray1d<real64, MAX_NUM_FACES> & dOneSidedVolFlux_dfp ) const;
 
   /**
    * @brief In a given element, collect the upwinded mobilities at this element's faces 
@@ -221,8 +221,8 @@ private:
    * @param[in] elemList face-to-elemIds map
    * @param[in] regionFilter set containing the indices of the target regions
    * @param[in] elemToFaces elem-to-faces maps
-   * @param[in] domainMobility the mobilities in the domain (non-local)
-   * @param[in] dDomainMobility_dp the derivatives of the mobilities in the domain wrt cell-centered pressure (non-local)
+   * @param[in] mob the mobilities in the domain (non-local)
+   * @param[in] dMob_dp the derivatives of the mobilities in the domain wrt cell-centered pressure (non-local)
    * @param[in] er index of this element's region
    * @param[in] esr index of this element's subregion  
    * @param[in] ei index of this element 
@@ -236,22 +236,22 @@ private:
    * Note: because of the upwinding, this function requires non-local information
    */
   void UpdateUpwindedCoefficients( MeshLevel const * const mesh,
-				   array2d<localIndex> const & elemRegionList,
- 	     	                   array2d<localIndex> const & elemSubRegionList,
-			           array2d<localIndex> const & elemList,
-				   set<localIndex> const & regionFilter,
-	                           arraySlice1d<localIndex const> const elemToFaces,
-                                   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const & domainMobility,
-                                   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const & dDomainMobility_dp,
-			           localIndex const er,
-			           localIndex const esr,
- 	 		           localIndex const ei,
+                                   array2d<localIndex> const & elemRegionList,
+                                   array2d<localIndex> const & elemSubRegionList,
+                                   array2d<localIndex> const & elemList,
+                                   set<localIndex> const & regionFilter,
+                                   arraySlice1d<localIndex const> const elemToFaces,
+                                   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const & mob,
+                                   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const & dMob_dp,
+                                   localIndex const er,
+                                   localIndex const esr,
+                                   localIndex const ei,
                                    globalIndex const elemDofNumber,
                                    string const elemDofKey,    
-                                   stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> const & oneSidedVolFlux,
-                                   stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> & upwMobility,
-                                   stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> & dUpwMobility_dp,
- 			           stackArray1d<globalIndex, MAX_NUM_FACES_IN_ELEM> & upwDofNumber ) const;
+                                   stackArray1d<real64, MAX_NUM_FACES> const & oneSidedVolFlux,
+                                   stackArray1d<real64, MAX_NUM_FACES> & upwMobility,
+                                   stackArray1d<real64, MAX_NUM_FACES> & dUpwMobility_dp,
+                                   stackArray1d<globalIndex, MAX_NUM_FACES> & upwDofNumber ) const;
 
   /**
    * @brief In a given element, assemble the mass conservation equation
@@ -272,12 +272,12 @@ private:
                                    arrayView1d<globalIndex const> const & faceDofNumber,
                                    arraySlice1d<localIndex const> const elemToFaces,
                                    globalIndex const elemDofNumber,
-                                   stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> const & oneSidedVolFlux,
-                                   stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> const & dOneSidedVolFlux_dp,
-                                   stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> const & dOneSidedVolFlux_dfp,
-                                   stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> const & upwMobility,
-                                   stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> const & dUpwMobility_dp,
-                                   stackArray1d<globalIndex, MAX_NUM_FACES_IN_ELEM> const & upwDofNumber,
+                                   stackArray1d<real64, MAX_NUM_FACES> const & oneSidedVolFlux,
+                                   stackArray1d<real64, MAX_NUM_FACES> const & dOneSidedVolFlux_dp,
+                                   stackArray1d<real64, MAX_NUM_FACES> const & dOneSidedVolFlux_dfp,
+                                   stackArray1d<real64, MAX_NUM_FACES> const & upwMobility,
+                                   stackArray1d<real64, MAX_NUM_FACES> const & dUpwMobility_dp,
+                                   stackArray1d<globalIndex, MAX_NUM_FACES> const & upwDofNumber,
                                    ParallelMatrix * const matrix,
                                    ParallelVector * const rhs ) const;
 
@@ -296,9 +296,9 @@ private:
   void AssembleConstraints( arrayView1d<globalIndex const> const & faceDofNumber,
                             arraySlice1d<localIndex const> const elemToFaces,
                             globalIndex const elemDofNumber,
-                            stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> const & oneSidedVolFlux,
-                            stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> const & dOneSidedVolFlux_dp,
-                            stackArray1d<real64, MAX_NUM_FACES_IN_ELEM> const & dOneSidedVolFlux_dfp,
+                            stackArray1d<real64, MAX_NUM_FACES> const & oneSidedVolFlux,
+                            stackArray1d<real64, MAX_NUM_FACES> const & dOneSidedVolFlux_dp,
+                            stackArray1d<real64, MAX_NUM_FACES> const & dOneSidedVolFlux_dfp,
                             ParallelMatrix * const matrix,
                             ParallelVector * const rhs ) const; 
 
@@ -321,11 +321,11 @@ private:
                                       ArrayOfArraysView<localIndex const> const & faceToNodes, 
                                       arraySlice1d<localIndex const> const elemToFaces,
                                       R1Tensor const & elemCenter,
-     				      real64   const & elemVolume,
+                                      real64   const & elemVolume,
                                       R1Tensor const & elemPerm,
                                       real64   const & lengthTolerance,
-                                      stackArray2d<real64, MAX_NUM_FACES_IN_ELEM
-            	                                          *MAX_NUM_FACES_IN_ELEM> const & transMatrix ) const; 
+                                      stackArray2d<real64, MAX_NUM_FACES
+                                                          *MAX_NUM_FACES> const & transMatrix ) const; 
 
   
   /**
@@ -347,8 +347,8 @@ private:
                                 R1Tensor const & elemCenter,
                                 R1Tensor const & elemPerm,
                                 real64   const & lengthTolerance,
-                                stackArray2d<real64, MAX_NUM_FACES_IN_ELEM
-   			                            *MAX_NUM_FACES_IN_ELEM> const & transMatrix ) const; 
+                                stackArray2d<real64, MAX_NUM_FACES
+                                                    *MAX_NUM_FACES> const & transMatrix ) const; 
 
   /**
    * @brief In a given element, recompute the transmissibility matrix using a consistent inner product
@@ -373,10 +373,10 @@ private:
                                    R1Tensor const & elemCenter,
                                    real64   const & elemVolume,
                                    R1Tensor const & elemPerm,
- 	                           real64   const & tParam, 
+                                   real64   const & tParam, 
                                    real64   const & lengthTolerance,
-                                   stackArray2d<real64, MAX_NUM_FACES_IN_ELEM
- 				                       *MAX_NUM_FACES_IN_ELEM> const & transMatrix ) const; 
+                                   stackArray2d<real64, MAX_NUM_FACES
+                                                       *MAX_NUM_FACES> const & transMatrix ) const; 
 
 
   
