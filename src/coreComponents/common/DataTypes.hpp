@@ -740,7 +740,17 @@ private:
         subPattern = constructArrayRegex( subPattern, dimension-1 );
       }
 
-      std::string arrayPattern = "\\{(" + subPattern + ",\\s*)*" + subPattern + "\\}";
+      std::string arrayPattern;
+      if (dimension == 1)
+      {
+        // Allow the bottom-level to be empty
+        arrayPattern = "\\{((" + subPattern + ",\\s*)*" + subPattern + ")?\\}";
+      }
+      else
+      {
+        arrayPattern = "\\{(" + subPattern + ",\\s*)*" + subPattern + "\\}";
+      }
+
       return arrayPattern;
     }
 
