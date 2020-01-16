@@ -24,7 +24,9 @@
 
 // Source includes
 #include "common/GeosxConfig.hpp"
-#include "common/Logger.hpp"
+#include "common/GeosxMacros.hpp"
+#include "common/BufferAllocator.hpp"
+#include "Logger.hpp"
 #include "cxx-utilities/src/Macros.hpp"
 #include "cxx-utilities/src/Array.hpp"
 #include "cxx-utilities/src/StackBuffer.hpp"
@@ -36,7 +38,6 @@
 
 // TPL includes
 #include <camp/camp.hpp>
-
 
 // System includes
 #ifdef GEOSX_USE_MPI
@@ -150,8 +151,14 @@ using real64 = double;
 
 /// Type stored in communication buffers.
 using buffer_unit_type = signed char;
+
+#ifdef USE_CHAI
+/// Type of storage for communication buffers.
+using buffer_type = std::vector< buffer_unit_type, buffer_allocator< buffer_unit_type > >;
+#else
 /// Type of storage for communication buffers.
 using buffer_type = std::vector< buffer_unit_type >;
+#endif
 
 ///@}
 
@@ -164,14 +171,14 @@ using buffer_type = std::vector< buffer_unit_type >;
 template< typename T,
           int NDIM,
           typename PERMUTATION=camp::make_idx_seq_t< NDIM >,
-          template< typename > class DATA_VECTOR_TYPE=LvArray::ChaiBuffer >
+          template< typename > class DATA_VECTOR_TYPE=LvArray::NewChaiBuffer >
 using Array = LvArray::Array< T, NDIM, PERMUTATION, localIndex, DATA_VECTOR_TYPE >;
 
 /// Multidimensional array view type. See LvArray:ArrayView for details.
 template< typename T,
           int NDIM,
           int UNIT_STRIDE_DIM = NDIM - 1,
-          template< typename > class DATA_VECTOR_TYPE=LvArray::ChaiBuffer >
+          template< typename > class DATA_VECTOR_TYPE=LvArray::NewChaiBuffer >
 using ArrayView = LvArray::ArrayView< T, NDIM, UNIT_STRIDE_DIM, localIndex, DATA_VECTOR_TYPE >;
 
 /// Multidimensional array slice type. See LvArray:ArraySlice for details.
