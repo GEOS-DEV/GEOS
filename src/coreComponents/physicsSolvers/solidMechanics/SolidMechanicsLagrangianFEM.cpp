@@ -561,7 +561,7 @@ void SolidMechanicsLagrangianFEM::ExplicitStepDisplacementUpdate( real64 const& 
   std::map<string, string_array > fieldNames;
   fieldNames["node"].push_back("Velocity");
 
-  CommunicationTools::SynchronizePackSendRecvSizes( fieldNames, mesh, neighbors, m_iComm );
+  CommunicationTools::SynchronizePackSendRecvSizes( fieldNames, mesh, neighbors, m_iComm, true );
 
   fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Acceleration );
 
@@ -715,9 +715,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStepVelocityUpdate( real64 const& ti
 
   fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n + dt, domain, "nodeManager", keys::Velocity );
 
-  // HACK: Move velocity back to the CPU to be packed. It is not modified so we don't touch it.
-  if (neighbors.size() > 0) velocityArray.move(chai::CPU, false);
-  CommunicationTools::SynchronizePackSendRecv( fieldNames, mesh, neighbors, m_iComm );
+  CommunicationTools::SynchronizePackSendRecv( fieldNames, mesh, neighbors, m_iComm, true );
 
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
   {
@@ -762,9 +760,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStepVelocityUpdate( real64 const& ti
 
   fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n + dt, domain, "nodeManager", keys::Velocity );
 
-  // HACK: Move velocity back to the CPU to be unpacked. It is modified so we touch it.
-  if (neighbors.size() > 0) velocityArray.move(chai::CPU, true);
-  CommunicationTools::SynchronizeUnpack( mesh, neighbors, m_iComm );
+  CommunicationTools::SynchronizeUnpack( mesh, neighbors, m_iComm, true );
 
   return dt;
 }
