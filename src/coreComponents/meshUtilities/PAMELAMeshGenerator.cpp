@@ -41,7 +41,7 @@ PAMELAMeshGenerator::PAMELAMeshGenerator( string const & name, Group * const par
 
   registerWrapper(viewKeyStruct::filePathString, &m_filePath, false)->
     setInputFlag(InputFlags::REQUIRED)->
-    setInputFlag(InputFlags::REQUIRED)->
+    setRestartFlags(RestartFlags::NO_WRITE)->
     setDescription("path to the mesh file");
   registerWrapper(viewKeyStruct::fieldsToImportString, &m_fieldsToImport, false)->
     setInputFlag(InputFlags::OPTIONAL)->
