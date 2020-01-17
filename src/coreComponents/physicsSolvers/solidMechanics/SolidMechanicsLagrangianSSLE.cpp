@@ -88,7 +88,7 @@ SolidMechanicsLagrangianSSLE::updateStress( DomainPartition * const domain )
       // space for element matrix and rhs
 
       using Kernels = SolidMechanicsLagrangianSSLEKernels::StressCalculationKernel;
-      return SolidMechanicsLagrangianFEMKernels::
+      real64 rval = SolidMechanicsLagrangianFEMKernels::
              ElementKernelLaunchSelector<Kernels>( numNodesPerElement,
                                                    fe->n_quadrature_points(),
                                                    constitutiveRelations[er][esr][m_solidMaterialFullIndex],
@@ -97,6 +97,11 @@ SolidMechanicsLagrangianSSLE::updateStress( DomainPartition * const domain )
                                                    dNdX,
                                                    detJ,
                                                    incDisp );
+
+      SolidBase * solidModel =  constitutiveRelations[er][esr][m_solidMaterialFullIndex]->group_cast<SolidBase*>();
+      solidModel->calculateStrainEnergyDensity();
+
+      return rval;
 
     });
   }
