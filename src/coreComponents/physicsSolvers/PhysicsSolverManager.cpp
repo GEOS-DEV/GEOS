@@ -36,11 +36,14 @@ PhysicsSolverManager::PhysicsSolverManager( std::string const & name,
 
   this->registerWrapper( viewKeyStruct::gravityVectorString, &m_gravityVector, 0 )->
     setApplyDefaultValue({0,0,-9.81})->
-    setInputFlag(InputFlags::OPTIONAL);
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Gravity vector used in the physics solvers");
 
   this->registerWrapper( viewKeyStruct::applyGravityString, &m_applyGravity, 0 )->
     setApplyDefaultValue("on")->
-    setInputFlag(InputFlags::OPTIONAL);
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Flag to specify whether gravity is applied in the physics solvers. "
+		   "Can be set to either on or off. ");
   
 }
 
