@@ -88,6 +88,7 @@ public:
   struct viewKeyStruct : ElementSubRegionBase::viewKeyStruct
   {
     static constexpr auto elementApertureString        = "elementAperture";
+    static constexpr auto elementApertureOffsetString  = "elementApertureOffset";
     static constexpr auto elementAreaString            = "elementArea";
     static constexpr auto faceElementsToCellRegionsString    = "fractureElementsToCellRegions";
     static constexpr auto faceElementsToCellSubRegionsString    = "fractureElementsToCellSubRegions";
@@ -143,6 +144,9 @@ public:
   arrayView1d< real64 > const &       getElementAperture()       { return m_elementAperture; }
   arrayView1d< real64 const > const & getElementAperture() const { return m_elementAperture; }
 
+  arrayView1d< real64 > const &       getElementApertureOffset()       { return m_elementApertureOffset; }
+  arrayView1d< real64 const > const & getElementApertureOffset() const { return m_elementApertureOffset; }
+
   arrayView1d< real64 > const &       getElementArea()       { return m_elementArea; }
   arrayView1d< real64 const > const & getElementArea() const { return m_elementArea; }
 
@@ -170,6 +174,9 @@ private:
 
   /// The member level field for the element center
   array1d< real64 > m_elementAperture;
+
+  /// The member level field for the element center
+  array1d< real64 > m_elementApertureOffset;
 
   /// The member level field for the element center
   array1d< real64 > m_elementArea;

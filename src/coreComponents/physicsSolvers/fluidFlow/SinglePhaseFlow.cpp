@@ -398,10 +398,10 @@ void SinglePhaseFlow::UpdateEOS( real64 const time_n,
       SingleFluidBase * const fluid = GetConstitutiveModel<SingleFluidBase>( subRegion, m_fluidName );
       arrayView1d<real64> const & pres = m_pressure[er][esr];
       arrayView1d<real64> const & dPres = m_deltaPressure[er][esr];
-//      arrayView2d<real64> const & dens = m_density[er][esr][m_fluidIndex];
-//      arrayView1d<real64> const & vol  = m_volume[er][esr];
-//      arrayView1d<real64> const & poro = m_porosity[er][esr];
-//      arrayView1d<real64> const & mass = m_mass[er][esr];
+      arrayView2d<real64> const & dens = m_density[er][esr][m_fluidIndex];
+      arrayView1d<real64> const & vol  = m_volume[er][esr];
+      arrayView1d<real64> const & poro = m_porosity[er][esr];
+      arrayView1d<real64> const & mass = m_mass[er][esr];
 
       forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
       {
@@ -409,11 +409,10 @@ void SinglePhaseFlow::UpdateEOS( real64 const time_n,
         fluid->PointInverseUpdate( pres[ei], ei, 0);
         dPres[ei] = pres[ei] - dPres[ei];
 
-////        if ( std::abs(mass[ei]) > 0 && poro[ei] > 0.999 )
-//        if ( std::abs(mass[ei]) > 0 )
+//        if ( std::abs(mass[ei]) > 0 && poro[ei] > 0.999 )
 //        {
-//          std::cout << "\n Fluid Update in poroElastic:  ei = " << ei << ", mass = " << mass[ei] << ", poro= " << poro[ei] << ", vol = " << vol[ei]
-//                    << ", calculated dens = " << dens[ei][0] << ", new pres = " << pres[ei] << "\n";
+          std::cout << "\n Fluid Update in poroElastic:  ei = " << ei << ", mass = " << mass[ei] << ", poro= " << poro[ei] << ", vol = " << vol[ei]
+                    << ", calculated dens = " << dens[ei][0] << ", new pres = " << pres[ei] << "\n";
 //        }
 
       } );
@@ -525,8 +524,8 @@ real64 SinglePhaseFlow::ExplicitStep( real64 const& time_n,
   return dt;
 }
 
-void SinglePhaseFlow::ExplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n ),
-                                         real64 const & GEOSX_UNUSED_ARG( dt ),
+void SinglePhaseFlow::ExplicitStepSetup( real64 const & time_n,
+                                         real64 const & dt,
                                          DomainPartition * const domain)
 {
   ResetViews( domain );
@@ -572,6 +571,8 @@ void SinglePhaseFlow::ExplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n
 //        });
 //      }
 
+      UpdateEOS( time_n, dt, domain );
+
     } );
   }
 
@@ -584,9 +585,22 @@ void SinglePhaseFlow::ExplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n
   {
     arrayView1d<real64> const & aper0 = subRegion->getReference<array1d<real64>>( viewKeyStruct::aperture0String );
     arrayView1d<real64 const> const & aper = m_elementAperture[er][esr];
+
     forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
       aper0[ei] = aper[ei];
+    } );
+  } );
+
+  applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
+                                 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
+                                 ElementSubRegionBase * const subRegion )
+  {
+    arrayView1d<real64> const & dPres   = m_deltaPressure[er][esr];
+
+    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+    {
+      dPres[ei] = 0.0;
     } );
   } );
 

@@ -7,7 +7,7 @@ defaultStiffness StiffnessTensor                                                
 density          real64_array2d                                                        Material Density                                   
 elasticStress    r2Sym_array2d                                                         Elastic Stress                                     
 stiffness        Array< StiffnessTensor, 1, int_seq< long, 0l >, long, NewChaiBuffer > Elastic Stiffness Field in Voigt notation          
-stress           r2Sym_array2d                                                         Total Stress                                       
+stress           r2Sym_array2d                                                         Stress Deviator                                    
 ================ ===================================================================== ================================================== 
 
 

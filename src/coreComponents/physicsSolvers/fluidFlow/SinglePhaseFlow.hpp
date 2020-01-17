@@ -232,7 +232,7 @@ public:
    */
   void CalculateAndApplyMassFlux( real64 const time_n,
                                   real64 const dt,
-								  DomainPartition * const domain ) override;
+                                  DomainPartition * const domain ) override;
 
   /**@}*/
 
@@ -255,7 +255,7 @@ public:
    * @param domain the physical domain object
    */
   void UpdateEOS( real64 const time_n,
-				  real64 const dt,
+                  real64 const dt,
                   DomainPartition * const domain ) override;
 
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct

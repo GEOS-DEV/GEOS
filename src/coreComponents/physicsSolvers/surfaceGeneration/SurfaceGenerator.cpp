@@ -670,6 +670,27 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
                                                   FaceElementSubRegion::viewKeyStruct::elementApertureString );
   });
 
+  fsManager.Apply( time, domain, "ElementRegions", FaceElementSubRegion::viewKeyStruct::elementApertureOffsetString,
+                    [&]( FieldSpecificationBase const * const fs,
+                         string const &,
+                         set<localIndex> const & lset,
+                         Group * const targetGroup,
+                         string const & ) -> void
+  {
+    set<localIndex> newSet;
+    for( localIndex index : newFaceElems )
+    {
+      if( lset.count(index) > 0 )
+      {
+        newSet.insert(index);
+      }
+    }
+    fs->ApplyFieldValue<FieldSpecificationEqual>( newSet,
+                                                  time,
+                                                  targetGroup,
+                                                  FaceElementSubRegion::viewKeyStruct::elementApertureOffsetString );
+  });
+
   ElementRegionManager * const elemManager = mesh->getElemManager();
   elemManager->forElementRegions<FaceElementRegion>([&]( FaceElementRegion * const faceElemRegion )
   {

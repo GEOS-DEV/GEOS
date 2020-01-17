@@ -214,9 +214,6 @@ void CompressibleSinglePhaseFluid::PointInverseUpdate( real64 & pressure, real64
     }
   else
     pressure = 0;
-
-  real64 pressureCap = 4e7;
-  pressure = min(pressure, pressureCap);
 }
 
 void CompressibleSinglePhaseFluid::BatchUpdate( arrayView1d<double const> const & pressure )

@@ -47,7 +47,7 @@ SolidBase::SolidBase( string const & name,
 
   registerWrapper( viewKeyStruct::stressString, &m_stress, 0 )->
     setPlotLevel(PlotLevel::LEVEL_0)->
-    setDescription("Total Stress");
+    setDescription("Stress Deviator");
 
   registerWrapper( viewKeyStruct::elasticStressString, &m_elasticStress, 0 )->
     setPlotLevel(PlotLevel::LEVEL_0)->

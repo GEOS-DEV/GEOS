@@ -825,7 +825,7 @@
 		<xsd:attribute name="density" type="real64_array2d" />
 		<!--elasticStress => Elastic Stress-->
 		<xsd:attribute name="elasticStress" type="r2Sym_array2d" />
-		<!--stress => Total Stress-->
+		<!--stress => Stress Deviator-->
 		<xsd:attribute name="stress" type="r2Sym_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="LinearElasticIsotropicType">
@@ -837,7 +837,7 @@
 		<xsd:attribute name="density" type="real64_array2d" />
 		<!--elasticStress => Elastic Stress-->
 		<xsd:attribute name="elasticStress" type="r2Sym_array2d" />
-		<!--stress => Total Stress-->
+		<!--stress => Stress Deviator-->
 		<xsd:attribute name="stress" type="r2Sym_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="LinearViscoElasticAnisotropicType">
@@ -849,7 +849,7 @@
 		<xsd:attribute name="elasticStress" type="r2Sym_array2d" />
 		<!--stiffness => Elastic Stiffness Field in Voigt notation-->
 		<xsd:attribute name="stiffness" type="LvArray::Array&lt;geosx::constitutive::LinearViscoElasticAnisotropic::StiffnessTensor, 1, camp::int_seq&lt;long, 0l&gt;, long, LvArray::NewChaiBuffer&gt;" />
-		<!--stress => Total Stress-->
+		<!--stress => Stress Deviator-->
 		<xsd:attribute name="stress" type="r2Sym_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="LinearViscoElasticIsotropicType">
@@ -861,7 +861,7 @@
 		<xsd:attribute name="density" type="real64_array2d" />
 		<!--elasticStress => Elastic Stress-->
 		<xsd:attribute name="elasticStress" type="r2Sym_array2d" />
-		<!--stress => Total Stress-->
+		<!--stress => Stress Deviator-->
 		<xsd:attribute name="stress" type="r2Sym_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="MultiPhaseMultiComponentFluidType">
@@ -915,7 +915,7 @@
 		<xsd:attribute name="elasticStress" type="r2Sym_array2d" />
 		<!--poreVolumeMultiplier => (no description available)-->
 		<xsd:attribute name="poreVolumeMultiplier" type="real64_array2d" />
-		<!--stress => Total Stress-->
+		<!--stress => Stress Deviator-->
 		<xsd:attribute name="stress" type="r2Sym_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="PoroLinearElasticAnisotropicType">
@@ -1001,7 +1001,7 @@
 		<xsd:attribute name="elasticStress" type="r2Sym_array2d" />
 		<!--poreVolumeMultiplier => (no description available)-->
 		<xsd:attribute name="poreVolumeMultiplier" type="real64_array2d" />
-		<!--stress => Total Stress-->
+		<!--stress => Stress Deviator-->
 		<xsd:attribute name="stress" type="r2Sym_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="PoroLinearElasticIsotropicType">
@@ -1017,7 +1017,7 @@
 		<xsd:attribute name="elasticStress" type="r2Sym_array2d" />
 		<!--poreVolumeMultiplier => (no description available)-->
 		<xsd:attribute name="poreVolumeMultiplier" type="real64_array2d" />
-		<!--stress => Total Stress-->
+		<!--stress => Stress Deviator-->
 		<xsd:attribute name="stress" type="r2Sym_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="PoroLinearViscoElasticAnisotropicType">
@@ -1033,7 +1033,7 @@
 		<xsd:attribute name="poreVolumeMultiplier" type="real64_array2d" />
 		<!--stiffness => Elastic Stiffness Field in Voigt notation-->
 		<xsd:attribute name="stiffness" type="LvArray::Array&lt;geosx::constitutive::LinearViscoElasticAnisotropic::StiffnessTensor, 1, camp::int_seq&lt;long, 0l&gt;, long, LvArray::NewChaiBuffer&gt;" />
-		<!--stress => Total Stress-->
+		<!--stress => Stress Deviator-->
 		<xsd:attribute name="stress" type="r2Sym_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="PoroLinearViscoElasticIsotropicType">
@@ -1049,7 +1049,7 @@
 		<xsd:attribute name="elasticStress" type="r2Sym_array2d" />
 		<!--poreVolumeMultiplier => (no description available)-->
 		<xsd:attribute name="poreVolumeMultiplier" type="real64_array2d" />
-		<!--stress => Total Stress-->
+		<!--stress => Stress Deviator-->
 		<xsd:attribute name="stress" type="r2Sym_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="VanGenuchtenBakerRelativePermeabilityType">
@@ -1332,6 +1332,8 @@
 		<xsd:attribute name="edgeList" type="geosx::InterObjectRelation&lt;LvArray::Array&lt;LvArray::Array&lt;long, 1, camp::int_seq&lt;long, 0l&gt;, long, LvArray::NewChaiBuffer&gt;, 1, camp::int_seq&lt;long, 0l&gt;, long, LvArray::NewChaiBuffer&gt; &gt;" />
 		<!--elementAperture => The aperture of each FaceElement.-->
 		<xsd:attribute name="elementAperture" type="real64_array" />
+		<!--elementApertureOffset => The aperture offset of each FaceElement.-->
+		<xsd:attribute name="elementApertureOffset" type="real64_array" />
 		<!--elementArea => The area of each FaceElement.-->
 		<xsd:attribute name="elementArea" type="real64_array" />
 		<!--elementCenter => The center of each FaceElement.-->

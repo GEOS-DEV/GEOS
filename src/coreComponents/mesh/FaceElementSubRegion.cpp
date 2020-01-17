@@ -57,6 +57,11 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
     setPlotLevel(dataRepository::PlotLevel::LEVEL_0)->
     setDescription("The aperture of each FaceElement.");
 
+  registerWrapper( viewKeyStruct::elementApertureOffsetString, &m_elementApertureOffset, false )->
+    setApplyDefaultValue(0.0)->
+    setPlotLevel(dataRepository::PlotLevel::LEVEL_0)->
+    setDescription("The aperture offset of each FaceElement.");
+
   registerWrapper( viewKeyStruct::elementAreaString, &m_elementArea, false )->
     setApplyDefaultValue(-1.0)->
     setPlotLevel(dataRepository::PlotLevel::LEVEL_2)->
@@ -132,7 +137,7 @@ void FaceElementSubRegion::CalculateElementGeometricQuantities( localIndex const
                                                                 arrayView1d<real64 const> const & faceArea )
 {
   m_elementArea[k] = faceArea[ m_toFacesRelation[k][0] ];
-  m_elementVolume[k] = m_elementAperture[k] * faceArea[m_toFacesRelation[k][0]];
+  m_elementVolume[k] = (m_elementAperture[k] + m_elementApertureOffset[k]) * faceArea[m_toFacesRelation[k][0]];
 }
 
 void FaceElementSubRegion::CalculateElementGeometricQuantities( NodeManager const & GEOSX_UNUSED_ARG( nodeManager ),
@@ -143,7 +148,7 @@ void FaceElementSubRegion::CalculateElementGeometricQuantities( NodeManager cons
   forall_in_range<serialPolicy>( 0, this->size(), GEOSX_LAMBDA ( localIndex const k )
   {
     m_elementArea[k] = faceArea[ m_toFacesRelation[k][0] ];
-    m_elementVolume[k] = m_elementAperture[k] * faceArea[m_toFacesRelation[k][0]];
+    m_elementVolume[k] = (m_elementAperture[k] + m_elementApertureOffset[k]) * faceArea[m_toFacesRelation[k][0]];
   });
 }
 

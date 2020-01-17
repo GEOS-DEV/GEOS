@@ -126,6 +126,8 @@ public:
 
   void UpdateDeformationForCoupling( DomainPartition * const domain );
 
+  void UpdatePorosityForCoupling( DomainPartition * const domain );
+
 //  void ApplyFractureFluidCoupling( DomainPartition * const domain,
 //                                   systemSolverInterface::EpetraBlockSystem & blockSystem );
 
