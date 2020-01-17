@@ -741,7 +741,7 @@ private:
       }
 
       std::string arrayPattern;
-      if (dimension == 1)
+      if( dimension == 1 )
       {
         // Allow the bottom-level to be empty
         arrayPattern = "\\{\\s*((" + subPattern + ",\\s*)*" + subPattern + ")?\\}";
