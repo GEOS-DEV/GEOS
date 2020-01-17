@@ -67,6 +67,7 @@ BlackOilFluid::BlackOilFluid( std::string const & name, Group * const parent )
 
   registerWrapper( viewKeyStruct::tableFilesString, &m_tableFiles, false )->
     setInputFlag(InputFlags::REQUIRED)->
+    setRestartFlags(RestartFlags::NO_WRITE)->
     setDescription("List of filenames with input PVT tables");
 
   registerWrapper( viewKeyStruct::fluidTypeString, &m_fluidTypeString, false )->
