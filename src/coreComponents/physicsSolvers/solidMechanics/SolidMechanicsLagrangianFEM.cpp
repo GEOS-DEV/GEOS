@@ -493,7 +493,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
   std::map<string, string_array > fieldNames;
   fieldNames["node"].push_back("Velocity");
 
-  CommunicationTools::SynchronizePackSendRecvSizes( fieldNames, mesh, neighbors, m_iComm );
+  CommunicationTools::SynchronizePackSendRecvSizes( fieldNames, mesh, neighbors, m_iComm, true );
 
   fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Acceleration );
 
@@ -580,9 +580,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
 
   fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
 
-  // HACK: Move velocity back to the CPU to be packed. It is not modified so we don't touch it.
-  if (neighbors.size() > 0) velocityArray.move(chai::CPU, false);
-  CommunicationTools::SynchronizePackSendRecv( fieldNames, mesh, neighbors, m_iComm );
+  CommunicationTools::SynchronizePackSendRecv( fieldNames, mesh, neighbors, m_iComm, true );
 
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
   {
@@ -623,9 +621,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
 
   fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
 
-  // HACK: Move velocity back to the CPU to be unpacked. It is modified so we touch it.
-  if (neighbors.size() > 0) velocityArray.move(chai::CPU, true);
-  CommunicationTools::SynchronizeUnpack( mesh, neighbors, m_iComm );
+  CommunicationTools::SynchronizeUnpack( mesh, neighbors, m_iComm, true );
 
   return dt;
 }
@@ -653,7 +649,6 @@ void SolidMechanicsLagrangianFEM::ApplyDisplacementBC_implicit( real64 const tim
                         string const fieldName )
   {
     bc->ApplyBoundaryConditionToSystem<FieldSpecificationEqual, LAInterface>( targetSet,
-                                                                              false,
                                                                               time,
                                                                               targetGroup,
                                                                               fieldName,
@@ -1162,7 +1157,6 @@ ApplyBoundaryConditions( real64 const time_n,
                         string const GEOSX_UNUSED_ARG( fieldName ) )
   {
     bc->ApplyBoundaryConditionToSystem<FieldSpecificationAdd, LAInterface>( targetSet,
-                                                                            false,
                                                                             time_n + dt,
                                                                             targetGroup,
                                                                             keys::TotalDisplacement, // TODO fix use of dummy name for

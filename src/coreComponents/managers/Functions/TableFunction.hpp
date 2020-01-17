@@ -32,23 +32,41 @@ namespace geosx
 class TableFunction : public FunctionBase
 {
 public:
-  /// Main constructor
+  /**
+   * @brief The constructor
+   * @param[in] name the name of this object manager
+   * @param[in] parent the parent Group
+   */
   TableFunction( const std::string& name,
                  dataRepository::Group * const parent );
 
-  /// Destructor
+  /**
+   * @brief The destructor
+   */
   virtual ~TableFunction() override;
 
-  /// Catalog name interface
+  /// 
+  /**
+   * @brief The catalog name interface
+   * @return name of the TableFunction in the FunctionBase catalog
+   */
   static string CatalogName() { return "TableFunction"; }
   
-
+  /**
+   * @brief Parse a table file.
+   *
+   * @tparam T The type for table or axis values.
+   * @param[in] target The place to store values.
+   * @param[in] filename The name of the file to read.
+   * @param[in] delimiter The delimiter used for file entries.
+   */
   template< typename T >
   void parse_file( array1d<T> & target, string const & filename, char delimiter );
 
-  /// Initialize the function
+  /// Initialize the table function
   virtual void InitializeFunction() override;
 
+  /// Build the maps used to evaluate the table function
   void reInitializeFunction();
 
   /**
@@ -69,31 +87,82 @@ public:
   /**
    * @brief Method to evaluate a function
    * @param input a scalar input
+   * @return the function result
    */
   virtual real64 Evaluate( real64 const * const input) const override final;
 
-
+  /**
+   * @brief Get the table axes definitions
+   * @return a reference to an array of arrays that define each table axis
+   */
   array1d<real64_array> const & getCoordinates() const { return m_coordinates; }
+  
+  /**
+   * @copydoc const & getCoordinates() const
+   */
   array1d<real64_array>       & getCoordinates()       { return m_coordinates; }
 
+  /**
+   * @brief Get the table values
+   * @return a reference to the 1d array of table values.  For ND arrays, values are stored in Fortran order.
+   */
   array1d<real64> const & getValues() const { return m_values; }
+  
+  /**
+   * @copydoc const & getValues() const
+   */
   array1d<real64>       & getValues()       { return m_values; }
 
+  /// Enumerator of available interpolation types
+  enum class InterpolationType
+  {
+    Linear,
+    Nearest,
+    Upper,
+    Lower
+  };
+
 private:
+  /// Coordinates for 1D table
+  real64_array m_tableCoordinates1D;
+
+  /// List of table coordinate file names
+  string_array m_coordinateFiles;
+
+  /// Table voxel file names
+  string m_voxelFile;
+
+  /// Table interpolation method input string
+  string m_interpolationMethodString;
+
+  /// Table interpolation method
+  InterpolationType m_interpolationMethod;
+
   /// An array of table axes
   array1d<real64_array> m_coordinates;
 
   /// Table values (in fortran order)
   real64_array m_values;
-
-  /// Table size indicators
+ 
+  /// Maximum number of table dimensions
   static localIndex constexpr m_maxDimensions = 4;
+
+  /// Number of active table dimensions
   localIndex m_dimensions;
+
+  /// Size of the table
   localIndex_array m_size;
+
+  /// Array used to locate values within ND tables
   localIndex_array m_indexIncrement;
 
-  // m_corners should be of size m_maxDimensions x (2^m_maxDimensions)
+  /**
+   * @brief The corners of the box that surround the value in N dimensions
+   * m_corners should be of size m_maxDimensions x (2^m_maxDimensions)
+   */
   localIndex m_corners[m_maxDimensions][16];
+
+  /// The number of active table corners
   localIndex m_numCorners;
 };
 

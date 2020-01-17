@@ -20,6 +20,7 @@
 #define GEOSX_MANAGERS_OBJECTMANAGERBASE_HPP_
 
 #include "dataRepository/Group.hpp"
+#include "common/TimingMacros.hpp"
 
 namespace geosx
 {
@@ -56,17 +57,20 @@ public:
 
   virtual localIndex PackSize( string_array const & wrapperNames,
                                arrayView1d<localIndex const> const & packList,
-                               integer const recursive ) const override;
+                               integer const recursive,
+                               bool on_device = false ) const override;
 
 
   virtual localIndex Pack( buffer_unit_type * & buffer,
                            string_array const & wrapperNames,
                            arrayView1d<localIndex const> const & packList,
-                           integer const recursive )  const override;
+                           integer const recursive,
+                           bool on_device = false)  const override;
 
   virtual localIndex Unpack( buffer_unit_type const *& buffer,
                              arrayView1d<localIndex> & packList,
-                             integer const recursive )  override;
+                             integer const recursive,
+                             bool on_device = false ) override;
 
   template< bool DOPACK >
   localIndex PackSets( buffer_unit_type * & buffer,
@@ -128,7 +132,8 @@ private:
   localIndex PackPrivate( buffer_unit_type * & buffer,
                           string_array const & wrapperNames,
                           arrayView1d<localIndex const> const & packList,
-                          integer const recursive ) const;
+                          integer const recursive,
+                          bool on_device) const;
 
   template< bool DOPACK >
   localIndex PackGlobalMapsPrivate( buffer_unit_type * & buffer,
@@ -389,6 +394,8 @@ void ObjectManagerBase::FixUpDownMaps( TYPE_RELATION & relation,
                                        map< localIndex, array1d<globalIndex> > & unmappedIndices,
                                        bool const  )
 {
+  GEOSX_MARK_FUNCTION;
+
   bool allValuesMapped = true;
   unordered_map<globalIndex,localIndex> const & globalToLocal = relation.RelatedObjectGlobalToLocal();
   for( map< localIndex, array1d<globalIndex> >::iterator iter = unmappedIndices.begin() ;
@@ -423,6 +430,8 @@ void ObjectManagerBase::FixUpDownMaps( TYPE_RELATION & relation,
                                        map< localIndex, set<globalIndex> > & unmappedIndices,
                                        bool const clearIfUnmapped )
 {
+  GEOSX_MARK_FUNCTION;
+
   unordered_map<globalIndex,localIndex> const & globalToLocal = relation.RelatedObjectGlobalToLocal();
   for( map< localIndex, set<globalIndex> >::iterator iter = unmappedIndices.begin() ;
        iter != unmappedIndices.end() ;
@@ -458,6 +467,8 @@ void ObjectManagerBase::FixUpDownMaps( ArrayOfSets< localIndex > & relation,
                                        map< localIndex, set<globalIndex> > & unmappedIndices,
                                        bool const clearIfUnmapped )
 {
+  GEOSX_MARK_FUNCTION;
+
   for( map< localIndex, set<globalIndex> >::iterator iter = unmappedIndices.begin() ;
        iter != unmappedIndices.end() ;
        ++iter )

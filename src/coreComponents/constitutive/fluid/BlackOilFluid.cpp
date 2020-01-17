@@ -20,7 +20,7 @@
 
 #include "codingUtilities/Utilities.hpp"
 #include "managers/ProblemManager.hpp"
-#include "fileIO/utils/utils.hpp"
+#include "common/Path.hpp"
 
 // PVTPackage includes
 #include "MultiphaseSystem/BlackOilMultiphaseSystem.hpp"
@@ -67,6 +67,7 @@ BlackOilFluid::BlackOilFluid( std::string const & name, Group * const parent )
 
   registerWrapper( viewKeyStruct::tableFilesString, &m_tableFiles, false )->
     setInputFlag(InputFlags::REQUIRED)->
+    setRestartFlags(RestartFlags::NO_WRITE)->
     setDescription("List of filenames with input PVT tables");
 
   registerWrapper( viewKeyStruct::fluidTypeString, &m_fluidTypeString, false )->
@@ -137,29 +138,6 @@ void BlackOilFluid::createFluid()
   std::vector<std::string> tableFiles( m_tableFiles.begin(), m_tableFiles.end() );
   std::vector<double> densities( m_surfaceDensities.begin(), m_surfaceDensities.end() );
   std::vector<double> molarWeights( m_componentMolarWeight.begin(), m_componentMolarWeight.end() );
-
-  // if table file names are not absolute paths, convert them to such, based on path to main input/restart file
-  ProblemManager const * const problemManager = this->GetGroupByPath<ProblemManager>("/");
-  if (problemManager != nullptr)
-  {
-    // hopefully at least one of input or restart file names is provided, otherwise '.' will be used
-    string inputFileName = problemManager->getInputFileName();
-    if (inputFileName.empty())
-    {
-      inputFileName = problemManager->getRestartFileName();
-    }
-    string inputFileDir;
-    splitPath( inputFileName, inputFileDir, inputFileName );
-
-    // if table file names are not full paths, convert them to such
-    for (std::string & filename : tableFiles)
-    {
-      if (!isAbsolutePath(filename))
-      {
-        getAbsolutePath( inputFileDir + '/' + filename, filename );
-      }
-    }
-  }
 
   switch (m_fluidType)
   {

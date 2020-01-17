@@ -84,7 +84,7 @@ if( BUILD_OBJ_LIBS )
                     DEPENDS_ON  ${coreLibs}
                     SHARED TRUE
                   )
-else()                  
+else()
   blt_combine_static_libraries( NAME          geosx_core
                                 SOURCE_LIBS   ${coreLibs}
                                 LIB_TYPE SHARED

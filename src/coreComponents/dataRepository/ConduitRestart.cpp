@@ -16,15 +16,20 @@
  * @file ConduitRestart.cpp
  */
 
+// HACK: the fmt/fmt.hpp include needs to come before the ConduitRestart.hpp or
+//       it is *possible* to get a compile error where
+//       umpire::util::FixedMallocPool::Pool is used in a template in
+//       axom fmt. I have no idea why this is occuring and don't have
+//       the time to diagnose the issue right now.
+#include <fmt/fmt.hpp>
 // Source includes
 #include "ConduitRestart.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
 #include "common/TimingMacros.hpp"
-#include "fileIO/utils/utils.hpp"
+#include "common/Path.hpp"
 
 // TPL includes
 #include <conduit_relay.hpp>
-#include <fmt/fmt.hpp>
 
 namespace geosx
 {
@@ -49,11 +54,7 @@ std::string writeRootNode( std::string const & rootPath )
 
     std::string cmd = "mkdir -p " + rootPath;
     int ret = std::system( cmd.c_str());
-    if( ret != 0 )
-    {
-      GEOSX_LOG( "Failed to initialize Logger: command '" << cmd << "' exited with code " << std::to_string( ret ));
-      abort();
-    }
+    GEOSX_WARNING_IF( ret != 0, "Failed to create directory: command '" << cmd << "' exited with code " << std::to_string( ret ) );
   }
 
   MpiWrapper::Barrier( MPI_COMM_GEOSX );
