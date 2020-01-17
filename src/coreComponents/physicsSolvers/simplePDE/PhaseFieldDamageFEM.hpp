@@ -36,13 +36,13 @@ class FieldSpecificationBase;
 class FiniteElementBase;
 class DomainPartition;
 
-class ReactionDiffusionFEM : public SolverBase {
+class PhaseFieldDamageFEM : public SolverBase {
 public:
-  ReactionDiffusionFEM(const std::string &name, Group *const parent);
+  PhaseFieldDamageFEM(const std::string &name, Group *const parent);
 
-  virtual ~ReactionDiffusionFEM() override;
+  virtual ~PhaseFieldDamageFEM() override;
 
-  static string CatalogName() { return "ReactionDiffusionFEM"; }
+  static string CatalogName() { return "PhaseFieldDamageFEM"; }
 
   virtual void RegisterDataOnMesh(Group *const MeshBodies) override final;
 
@@ -112,14 +112,14 @@ public:
 
   struct viewKeyStruct : public SolverBase::viewKeyStruct
   {
-    // static constexpr auto coeffFieldName = "coeffFieldName";
-    // static constexpr auto coeffName = "coeffField";
+    static constexpr auto coeffFieldName = "coeffFieldName";
+    static constexpr auto coeffName = "coeffField";
 
 
     dataRepository::ViewKey timeIntegrationOption = {"timeIntegrationOption"};
     dataRepository::ViewKey fieldVarName = {"fieldName"};
 
-  } reactionDiffusionFEMViewKeys;
+  } PhaseFieldDamageFEMViewKeys;
 
   inline ParallelVector const *getSolution() const { return &m_solution; }
 
@@ -135,7 +135,7 @@ private:
 
 //  string m_coeffFieldName;
 
-  ReactionDiffusionFEM();
+  PhaseFieldDamageFEM();
 };
 
 } /* namespace geosx */

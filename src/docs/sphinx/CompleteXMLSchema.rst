@@ -357,6 +357,13 @@ Element: PeriodicEvent
 .. include:: ../../coreComponents/fileIO/schema/docs/PeriodicEvent.rst
 
 
+.. _XML_PhaseFieldDamageFEM:
+
+Element: PhaseFieldDamageFEM
+============================
+.. include:: ../../coreComponents/fileIO/schema/docs/PhaseFieldDamageFEM.rst
+
+
 .. _XML_PhaseFieldFracture:
 
 Element: PhaseFieldFracture
@@ -933,6 +940,13 @@ Datastructure: Parameters
 Datastructure: PeriodicEvent
 ============================
 .. include:: ../../coreComponents/fileIO/schema/docs/PeriodicEvent_other.rst
+
+
+.. _DATASTRUCTURE_PhaseFieldDamageFEM:
+
+Datastructure: PhaseFieldDamageFEM
+==================================
+.. include:: ../../coreComponents/fileIO/schema/docs/PhaseFieldDamageFEM_other.rst
 
 
 .. _DATASTRUCTURE_PhaseFieldFracture:

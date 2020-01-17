@@ -12,15 +12,8 @@
   </Solvers>
 
   <Mesh>
-    <InternalMesh name="mesh1"
-                  elementTypes="{C3D4}"
-                  xCoords="{0, 8}"
-                  yCoords="{0, 8}"
-                  zCoords="{0, 8}"
-                  nx="{8}"
-                  ny="{8}"
-                  nz="{8}"
-                  cellBlockNames="{cb1}"/>
+    <PAMELAMeshGenerator name="mesh1"
+                         file="wobbly_meshes/tet_sample_8.msh"/>
   </Mesh>
 
   <Events maxTime="1.0">
@@ -63,7 +56,7 @@
   </NumericalMethods>
 
   <ElementRegions>
-    <CellElementRegion name="Region1" cellBlocks="{cb1}" materialList="{shale}" />
+    <CellElementRegion name="Region1" cellBlocks="{0_TETRA}" materialList="{shale}" />
   </ElementRegions>
 
   <Constitutive>
@@ -78,11 +71,41 @@
   </Constitutive>
 
   <FieldSpecifications>
-    <FieldSpecification name="boundary"
+    <!-- <FieldSpecification name="boundary"
                         fieldName="Temperature"
                         objectPath="nodeManager"
                         scale="0"
-                        setNames="{xneg, xpos, yneg, ypos, zneg, zpos}"/>
+                        setNames="{xneg, xpos, yneg, ypos, zneg, zpos}"/> -->
+    <FieldSpecification name="wallX0Term"
+           fieldName="Temperature"
+           objectPath="nodeManager"
+           scale="0"
+           setNames="{wallX0}"/>
+    <FieldSpecification name="wallX1Term"
+           fieldName="Temperature"
+           objectPath="nodeManager"
+           scale="0"
+           setNames="{wallX1}"/>
+    <FieldSpecification name="wallY0Term"
+           fieldName="Temperature"
+           objectPath="nodeManager"
+           scale="0"
+           setNames="{wallY0}"/>
+    <FieldSpecification name="wallY1Term"
+           fieldName="Temperature"
+           objectPath="nodeManager"
+           scale="0"
+           setNames="{wallY1}"/>
+    <FieldSpecification name="wallZ0Term"
+           fieldName="Temperature"
+           objectPath="nodeManager"
+           scale="0"
+           setNames="{wallZ0}"/>
+    <FieldSpecification name="wallZ1Term"
+           fieldName="Temperature"
+           objectPath="nodeManager"
+           scale="0"
+           setNames="{wallZ1}"/>
 
     <!-- <FieldSpecification name="pointSource"
                         fieldName="Temperature"
@@ -119,6 +142,12 @@
 
   <Geometry>
     <Box name="centerLine" xMin="-0.001, -1.001, -1.001" xMax="+0.001, +1.001, +1.001"/>
+    <Box name="wallX0" xMin="-0.01, -0.01, -0.01" xMax="+0.01, +8.01, +8.01"/>
+    <Box name="wallX1"   xMin="+7.99, -0.01, -0.01" xMax="+8.01, +8.01, +8.01"/>
+    <Box name="wallY0" xMin="-0.01, -0.01, -0.01" xMax="+8.01, +0.01, +8.01"/>
+    <Box name="wallY1"   xMin="-0.01, +7.99, -0.01" xMax="+8.01, +8.01, +8.01"/>
+    <Box name="wallZ0" xMin="-0.01, -0.01, -0.01" xMax="+8.01, +8.01, +0.01"/>
+    <Box name="wallZ1"   xMin="-0.01, -0.01, 7.99" xMax="+8.01, +8.01, +8.01"/>
   </Geometry>
 
 </Problem>
