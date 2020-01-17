@@ -485,6 +485,7 @@ public:
   struct viewKeyStruct
   {
     constexpr static auto gravityVectorString = "gravityVector";
+    constexpr static auto applyGravityString = "applyGravity";
     constexpr static auto cflFactorString = "cflFactor";
     constexpr static auto initialDtString = "initialDt";
     constexpr static auto maxStableDtString = "maxStableDt";
@@ -501,10 +502,12 @@ public:
 
 
 
-  R1Tensor const & getGravityVector() const { return m_gravityVector; }
-  R1Tensor       & getGravityVector()       { return m_gravityVector; }
+  R1Tensor const & gravityVector() const { return m_gravityVector; }
+  R1Tensor       & gravityVector()       { return m_gravityVector; }
   R1Tensor const * globalGravityVector() const;
 
+  integer          applyGravity() const     { return m_applyGravity; } 
+  string const *   globalApplyGravity() const;
 
   /**
    * accessor for the system solver parameters.
@@ -579,6 +582,7 @@ protected:
 
   integer m_logLevel = 0;
   R1Tensor m_gravityVector;
+  integer m_applyGravity;
   SystemSolverParameters m_systemSolverParameters;
 
   real64 m_cflFactor;

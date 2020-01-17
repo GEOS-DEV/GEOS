@@ -3,6 +3,7 @@
 ====================== ========== ===================================================== 
 Name                   Type       Description                                           
 ====================== ========== ===================================================== 
+applyGravity           integer    (no description available)                            
 capPressureIndex       localIndex (no description available)                            
 fluidIndex             localIndex (no description available)                            
 gravityVector          R1Tensor   (no description available)                            

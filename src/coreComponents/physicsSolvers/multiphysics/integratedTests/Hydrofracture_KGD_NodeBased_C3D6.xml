@@ -1,9 +1,7 @@
 
 <Problem>
 
-  <Solvers
-    gravityVector="0.0,0.0,-0.0"
-    >
+  <Solvers applyGravity="off">
   
     <Hydrofracture 
       name="hydrofracture" 
@@ -48,7 +46,6 @@
     <SinglePhaseFlow 
       name="SinglePhaseFlow"
       logLevel="0"
-      gravityFlag="1"
       discretization="singlePhaseTPFA"
       targetRegions="{Fracture}"
       fluidName="water"

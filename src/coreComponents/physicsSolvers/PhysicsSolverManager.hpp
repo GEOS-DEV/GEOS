@@ -42,6 +42,7 @@ public:
   struct viewKeyStruct
   {
       constexpr static auto gravityVectorString = "gravityVector";
+      constexpr static auto applyGravityString  = "applyGravity"; 
   } viewKeys;
 
   struct groupKeyStruct
@@ -50,14 +51,17 @@ public:
 
   R1Tensor const & gravityVector() const { return m_gravityVector; }
   R1Tensor       & gravityVector()       { return m_gravityVector; }
-
+  
+  string   const & applyGravity() const { return m_applyGravity; }
+  string         & applyGravity()       { return m_applyGravity; } 
 
 
 private:
   PhysicsSolverManager() = delete;
 
   R1Tensor m_gravityVector;
-
+  string   m_applyGravity;
+  
 };
 
 } /* namespace geosx */

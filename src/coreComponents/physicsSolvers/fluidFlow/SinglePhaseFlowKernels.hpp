@@ -310,7 +310,7 @@ struct FluxKernel
    * @param[in] dofNumber The dofNumbers for each element
    * @param[in] pres The pressures in each element
    * @param[in] dPres The change in pressure for each element
-   * @param[in] gravDepth The factor for gravity calculations (g*H)
+   * @param[in] gravCoef The factor for gravity calculations (g*H)
    * @param[in] dens The material density in each element
    * @param[in] dDens_dPres The change in material density for each element
    * @param[in] mob The fluid mobility in each element
@@ -327,7 +327,7 @@ struct FluxKernel
           ElementView < arrayView1d<globalIndex const > > const & dofNumber,
           ElementView < arrayView1d<real64 const> > const & pres,
           ElementView < arrayView1d<real64 const> > const & dPres,
-          ElementView < arrayView1d<real64 const> > const & gravDepth,
+          ElementView < arrayView1d<real64 const> > const & gravCoef,
           MaterialView< arrayView2d<real64 const> > const & dens,
           MaterialView< arrayView2d<real64 const> > const & dDens_dPres,
           ElementView < arrayView1d<real64 const> > const & mob,
@@ -352,7 +352,7 @@ struct FluxKernel
            arraySlice1d<real64 const> const & stencilWeights,
            ElementView <arrayView1d<real64 const>> const & pres,
            ElementView <arrayView1d<real64 const>> const & dPres,
-           ElementView <arrayView1d<real64 const>> const & gravDepth,
+           ElementView <arrayView1d<real64 const>> const & gravCoef,
            MaterialView<arrayView2d<real64 const>> const & dens,
            MaterialView<arrayView2d<real64 const>> const & dDens_dPres,
            ElementView <arrayView1d<real64 const>> const & mob,
@@ -400,7 +400,7 @@ struct FluxKernel
 
       real64 weight = stencilWeights[ke];
 
-      real64 const gravD = gravDepth[er][esr][ei];
+      real64 const gravD = gravCoef[er][esr][ei];
       real64 const gravTerm = gravityFlag ? densMean * gravD : 0.0;
       sumWeightGrav += weight * gravD * gravityFlag;
 
@@ -453,7 +453,7 @@ struct FluxKernel
            arraySlice1d<real64 const> const & stencilWeights,
            arrayView1d<real64 const> const & pres,
            arrayView1d<real64 const> const & dPres,
-           arrayView1d<real64 const> const & gravDepth,
+           arrayView1d<real64 const> const & gravCoef,
            arrayView2d<real64 const> const & dens,
            arrayView2d<real64 const> const & dDens_dPres,
            arrayView1d<real64 const> const & mob,
@@ -498,7 +498,7 @@ struct FluxKernel
       localIndex const ei = stencilElementIndices[ke];
       real64 const weight = stencilWeights[ke];
 
-      real64 const gravD = gravDepth[ei];
+      real64 const gravD = gravCoef[ei];
       real64 const gravTerm = gravityFlag ? densMean * gravD : 0.0;
       sumWeightGrav += weight * gravD * gravityFlag;
       potDif += weight * (pres[ei] + dPres[ei] - gravTerm);
@@ -549,7 +549,7 @@ struct FluxKernel
                    arraySlice1d<real64 const> const & stencilWeights,
                    arrayView1d<real64 const> const & pres,
                    arrayView1d<real64 const> const & dPres,
-                   arrayView1d<real64 const> const & gravDepth,
+                   arrayView1d<real64 const> const & gravCoef,
                    arrayView2d<real64 const> const & dens,
                    arrayView2d<real64 const> const & dDens_dPres,
                    arrayView1d<real64 const> const & mob,
@@ -606,7 +606,7 @@ struct FluxKernel
                                          0.5 * dDens_dPres[ei[1]][0] };
 
         real64 const potDif =  ( ( pres[ei[0]] + dPres[ei[0]] ) - ( pres[ei[1]] + dPres[ei[1]] ) -
-                                 densMean * ( gravDepth[ei[0]] - gravDepth[ei[1]] ) );
+                                 densMean * ( gravCoef[ei[0]] - gravCoef[ei[1]] ) );
 
         // upwinding of fluid properties (make this an option?)
         localIndex const k_up = (potDif >= 0) ? 0 : 1;
@@ -622,8 +622,8 @@ struct FluxKernel
         flux[k[1]] -= fluxVal;
 
         // compute and fill dFlux_dP
-        dFlux_dP[0] = mobility * weight * (  1 - dDensMean_dP[0] * ( gravDepth[ei[0]] - gravDepth[ei[1]] ) ) * dt;
-        dFlux_dP[1] = mobility * weight * ( -1 - dDensMean_dP[1] * ( gravDepth[ei[0]] - gravDepth[ei[1]] ) ) * dt;
+        dFlux_dP[0] = mobility * weight * (  1 - dDensMean_dP[0] * ( gravCoef[ei[0]] - gravCoef[ei[1]] ) ) * dt;
+        dFlux_dP[1] = mobility * weight * ( -1 - dDensMean_dP[1] * ( gravCoef[ei[0]] - gravCoef[ei[1]] ) ) * dt;
         dFlux_dP[k_up] += dMobility_dP * weight * potDif * dt;
 
         fluxJacobian[k[0]][k[0]] += dFlux_dP[0];

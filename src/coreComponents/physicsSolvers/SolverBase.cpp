@@ -29,6 +29,7 @@ SolverBase::SolverBase( std::string const & name,
   :
   ExecutableGroup( name, parent ),
   m_gravityVector( R1Tensor( 0.0 ) ),
+  m_applyGravity( 0 ),
   m_systemSolverParameters( groupKeyStruct::systemSolverParametersString, this ),
   m_cflFactor(),
   m_maxStableDt{ 1e99 },
@@ -42,6 +43,7 @@ SolverBase::SolverBase( std::string const & name,
   enableLogLevelInput();
 
   this->registerWrapper( viewKeyStruct::gravityVectorString, &m_gravityVector, false );
+  this->registerWrapper( viewKeyStruct::applyGravityString, &m_applyGravity, false );  
 
   // This sets a flag to indicate that this object increments time
   this->SetTimestepBehavior( 1 );
@@ -118,7 +120,24 @@ void SolverBase::PostProcessInput()
   {
     m_gravityVector = *globalGravityVector();
   }
-
+  
+  if( this->globalApplyGravity() != nullptr )
+  {
+    string const gravityFlag = *globalApplyGravity();
+    if (gravityFlag.compare("on") == 0)
+    {
+      m_applyGravity = 1;
+    }
+    else if (gravityFlag.compare("off") == 0)
+    {
+      m_applyGravity = 0;
+    }
+    else
+    {
+      GEOSX_ERROR( "The applyGravity flag can only be set to on or off");
+    }
+  }
+  
   SetLinearSolverParameters();
 }
 
@@ -614,6 +633,17 @@ R1Tensor const * SolverBase::globalGravityVector() const
   if( getParent()->getName() == "Solvers" )
   {
     rval = &(getParent()->getReference<R1Tensor>( viewKeyStruct::gravityVectorString ));
+  }
+
+  return rval;
+}
+
+string const * SolverBase::globalApplyGravity() const
+{
+  string const * rval = nullptr;
+  if( getParent()->getName() == "Solvers" )
+  {
+    rval = &(getParent()->getReference<string>( viewKeyStruct::applyGravityString ));
   }
 
   return rval;
