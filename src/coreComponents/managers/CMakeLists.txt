@@ -34,7 +34,7 @@ set(managers_headers
 # Specify all sources
 #
 set(managers_sources
-  	DomainPartition.cpp
+    DomainPartition.cpp
     EventManager.cpp
     Events/EventBase.cpp
     Events/PeriodicEvent.cpp
@@ -70,7 +70,6 @@ if( BUILD_OBJ_LIBS )
 else()
   set( dependencyList common fileIO linearAlgebra optionparser RAJA mpiCommunications )
 endif()
-
 
 if( ENABLE_MATHPRESSO )
    set( dependencyList ${dependencyList} mathpresso )
