@@ -223,8 +223,8 @@ struct MapHelperImpl
 {
 };
 
-template< typename T >
-struct MapHelperImpl< array2d<T> >
+template< typename T, typename PERMUTATION >
+struct MapHelperImpl< array2d<T, PERMUTATION> >
 {
   static localIndex size0( array2d<T> const & map )
   {
