@@ -540,8 +540,8 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
           deltaVolume[er][esr][ei] = computationalGeometry::HexVolume(Xlocal) - volume[er][esr][ei];
 //
 //          if (dPres[er][esr][ei] > 0)
-            std::cout<< "\n Solid Matrix Update Deformation: ei = " << ei << ", cell dVol= "<< deltaVolume[er][esr][ei] <<", poro = "<< poro[er][esr][ei] <<", poroOld = "<< poroOld[er][esr][ei]
-                      << "\n                totalMeanStress = "<< totalMeanStress[er][esr][ei]  << ", oldTotalMeanStress = "<< oldTotalMeanStress[er][esr][ei] << std::endl;
+//            std::cout<< "\n Solid Matrix Update Deformation: ei = " << ei << ", cell dVol= "<< deltaVolume[er][esr][ei] <<", poro = "<< poro[er][esr][ei] <<", poroOld = "<< poroOld[er][esr][ei]
+//                      << "\n                totalMeanStress = "<< totalMeanStress[er][esr][ei]  << ", oldTotalMeanStress = "<< oldTotalMeanStress[er][esr][ei] << std::endl;
 
           volume[er][esr][ei] += deltaVolume[er][esr][ei];
 //          poroOld[er][esr][ei] = poro[er][esr][ei];
@@ -613,7 +613,7 @@ void HydrofractureSolver::UpdatePorosityForCoupling( DomainPartition * const dom
 
         poroOld[er][esr][ei] = poro[er][esr][ei];
 
-        std::cout<< "\n Solid Matrix Update Porosity: ei = " << ei <<", poro = "<< poro[er][esr][ei]  << "\n                totalMeanStress = "<< totalMeanStress[er][esr][ei]  << ", oldTotalMeanStress = "<< oldTotalMeanStress[er][esr][ei] << std::endl;
+//        std::cout<< "\n Solid Matrix Update Porosity: ei = " << ei <<", poro = "<< poro[er][esr][ei]  << "\n                totalMeanStress = "<< totalMeanStress[er][esr][ei]  << ", oldTotalMeanStress = "<< oldTotalMeanStress[er][esr][ei] << std::endl;
       }
     });
   }

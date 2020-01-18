@@ -19,7 +19,7 @@
 #ifndef GEOSX_CONSTITUTIVE_SOLID_POREVOLUMECOMPRESSIBLESOLID_HPP_
 #define GEOSX_CONSTITUTIVE_SOLID_POREVOLUMECOMPRESSIBLESOLID_HPP_
 
-#include "SolidBase.hpp"
+#include "constitutive/ConstitutiveBase.hpp"
 
 #include "constitutive/ExponentialRelation.hpp"
 
@@ -29,7 +29,7 @@ namespace constitutive
 {
 
 
-class PoreVolumeCompressibleSolid : public SolidBase
+class PoreVolumeCompressibleSolid : public ConstitutiveBase
 {
 public:
   PoreVolumeCompressibleSolid( std::string const & name, Group * const parent );
@@ -52,15 +52,7 @@ public:
                                         localIndex const k,
                                         localIndex const q) override final;
 
-
-  virtual void StateUpdatePoint( localIndex const k,
-                                 localIndex const q,
-                                 R2SymTensor const & D,
-                                 R2Tensor const & Rot,
-                                 real64 const dt,
-                                 integer const updateStiffnessFlag ) override;
-
-  struct viewKeyStruct : public SolidBase::viewKeyStruct
+  struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
     dataRepository::ViewKey compressibility   = { "compressibility"   };
     dataRepository::ViewKey referencePressure = { "referencePressure" };

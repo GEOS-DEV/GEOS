@@ -1450,8 +1450,6 @@
 	<xsd:complexType name="PoreVolumeCompressibleSolidType">
 		<!--compressibility => Solid compressibility-->
 		<xsd:attribute name="compressibility" type="real64" use="required" />
-		<!--defaultDensity => Default Material Density-->
-		<xsd:attribute name="defaultDensity" type="real64" use="required" />
 		<!--referencePressure => Reference pressure for fluid compressibility-->
 		<xsd:attribute name="referencePressure" type="real64" use="required" />
 		<!--name => A name is required for any non-unique nodes-->

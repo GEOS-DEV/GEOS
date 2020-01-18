@@ -909,14 +909,8 @@
 	<xsd:complexType name="PoreVolumeCompressibleSolidType">
 		<!--dPVMult_dDensity => (no description available)-->
 		<xsd:attribute name="dPVMult_dDensity" type="real64_array2d" />
-		<!--density => Material Density-->
-		<xsd:attribute name="density" type="real64_array2d" />
-		<!--elasticStress => Elastic Stress-->
-		<xsd:attribute name="elasticStress" type="r2Sym_array2d" />
 		<!--poreVolumeMultiplier => (no description available)-->
 		<xsd:attribute name="poreVolumeMultiplier" type="real64_array2d" />
-		<!--stress => Stress Deviator-->
-		<xsd:attribute name="stress" type="r2Sym_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="PoroLinearElasticAnisotropicType">
 		<!--c11 => The 11 component of the Elastic Stiffness Tensor in Voigt notation-->

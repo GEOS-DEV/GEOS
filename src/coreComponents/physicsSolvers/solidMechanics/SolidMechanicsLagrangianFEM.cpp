@@ -247,6 +247,7 @@ void SolidMechanicsLagrangianFEM::SetInitialTimeStep(Group * const domain )
   if( setMechanicsSolverTimeStep == 0 && m_timeIntegrationOption == timeIntegrationOption::ExplicitDynamic )
   {
     updateIntrinsicNodalData( domain->group_cast<DomainPartition *>() );
+    ExplicitStepDisplacementUpdate( 0, 0, 0, domain->group_cast<DomainPartition *>() );
     ExplicitStepVelocityUpdate( 0, 0, 0, domain->group_cast<DomainPartition *>() );
     setMechanicsSolverTimeStep = 1;
   }
@@ -535,9 +536,9 @@ real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const& time_n,
 }
 
 void SolidMechanicsLagrangianFEM::ExplicitStepDisplacementUpdate( real64 const& time_n,
-                                                              real64 const& dt,
-                                                              const int GEOSX_UNUSED_ARG( cycleNumber ),
-                                                              DomainPartition * const domain )
+                                                                  real64 const& dt,
+                                                                  const int GEOSX_UNUSED_ARG( cycleNumber ),
+                                                                  DomainPartition * const domain )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -559,7 +560,8 @@ void SolidMechanicsLagrangianFEM::ExplicitStepDisplacementUpdate( real64 const& 
 
   array1d<NeighborCommunicator> & neighbors = domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors );
   std::map<string, string_array > fieldNames;
-  fieldNames["node"].push_back("Velocity");
+  fieldNames["node"].push_back( keys::Velocity);
+  fieldNames["node"].push_back( keys::Acceleration);
 
   CommunicationTools::SynchronizePackSendRecvSizes( fieldNames, mesh, neighbors, m_iComm, true );
 
@@ -628,7 +630,8 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStepVelocityUpdate( real64 const& ti
 
   array1d<NeighborCommunicator> & neighbors = domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors );
   std::map<string, string_array > fieldNames;
-  fieldNames["node"].push_back("Velocity");
+  fieldNames["node"].push_back( keys::Velocity);
+  fieldNames["node"].push_back( keys::Acceleration);
 
   ElementRegionManager::MaterialViewAccessor<real64> const biotCoefficient =
     elemManager->ConstructFullMaterialViewAccessor<real64>( "BiotCoefficient", constitutiveManager);
