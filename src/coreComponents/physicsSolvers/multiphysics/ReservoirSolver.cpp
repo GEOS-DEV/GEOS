@@ -110,8 +110,6 @@ void ReservoirSolver::ImplicitStepSetup( real64 const & time_n,
                                    rhs,
                                    solution );
 
-  // setup the coupled linear system
-  //SetupSystem( domain, dofManager, matrix, rhs, solution );
 }
 
 void ReservoirSolver::SetupDofs( DomainPartition const * const domain,

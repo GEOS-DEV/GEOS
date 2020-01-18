@@ -44,10 +44,12 @@ MultiPhaseMultiComponentFluid::MultiPhaseMultiComponentFluid( std::string const 
 
   registerWrapper( viewKeyStruct::phasePVTParaFilesString, &m_phasePVTParaFiles, false )->
     setInputFlag(InputFlags::REQUIRED)->
+    setRestartFlags(RestartFlags::NO_WRITE)->
     setDescription("List of the names of the files including PVT function parameters");
 
   registerWrapper( viewKeyStruct::flashModelParaFileString, &m_flashModelParaFile, false )->
     setInputFlag(InputFlags::REQUIRED)->
+    setRestartFlags(RestartFlags::NO_WRITE)->
     setDescription("name of the filen including flash calculation function parameters");
 
 }
