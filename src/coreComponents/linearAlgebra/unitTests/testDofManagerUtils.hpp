@@ -97,7 +97,8 @@ struct testMeshHelper<DofManager::Location::Face>
   template<typename SUBREGION> using ElemToObjMap = typename SUBREGION::FaceMapType;
 };
 
-localIndex size1( InterObjectRelation<array2d<localIndex>> const & map, localIndex const GEOSX_UNUSED_ARG( i0 ) )
+template<typename PERM>
+localIndex size1( InterObjectRelation<array2d<localIndex, PERM>> const & map, localIndex const GEOSX_UNUSED_ARG( i0 ) )
 {
   return map.size( 1 );
 }
@@ -163,8 +164,7 @@ struct forLocalObjectsImpl<DofManager::Location::Elem>
 
     elemManager->forElementSubRegionsComplete( regions, [&]( localIndex const er,
                                                              localIndex const esr,
-                                                             ElementRegionBase const * const
-                                                             GEOSX_UNUSED_ARG( region ),
+                                                             ElementRegionBase const * const GEOSX_UNUSED_ARG( region ),
                                                              ElementSubRegionBase const * const subRegion )
     {
       arrayView1d<integer const> ghostRank =

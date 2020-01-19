@@ -182,7 +182,8 @@ SET_MAX_MESH_INCIDENCE( Elem, Face, 6 );
 template< DofManager::Location LOC, typename MANAGER, bool >
 struct MapTypeHelper
 {
-  using type = FixedOneToManyRelation; // dummy type
+  //using type = FixedOneToManyRelation; // dummy type
+  using type = array1d< array1d<localIndex> >;
 };
 
 template< DofManager::Location LOC, typename MANAGER >
@@ -226,17 +227,17 @@ struct MapHelperImpl
 template< typename T, typename PERMUTATION >
 struct MapHelperImpl< array2d<T, PERMUTATION> >
 {
-  static localIndex size0( array2d<T> const & map )
+  static localIndex size0( array2d<T, PERMUTATION> const & map )
   {
     return map.size( 0 );
   }
 
-  static localIndex size1( array2d<T> const & map, localIndex const GEOSX_UNUSED_ARG( i0 ) )
+  static localIndex size1( array2d<T, PERMUTATION> const & map, localIndex const GEOSX_UNUSED_ARG( i0 ) )
   {
     return map.size( 1 );
   }
 
-  static T const & value( array2d<T> const & map, localIndex const i0, localIndex const i1 )
+  static T const & value( array2d<T, PERMUTATION> const & map, localIndex const i0, localIndex const i1 )
   {
     return map( i0, i1 );
   }
