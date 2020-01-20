@@ -1,10 +1,9 @@
-<!-- This solves a manufactured problem, Lap(U) + U = F, with U = 0 in all the walls. F is constructed such that the analytical solution is simply U(x,y,z) = xyz(1-x)(1-y)(1-z)-->
 <Problem>
 
   <Solvers>
-    <PhaseFieldFracture name="PhaseFieldSolve" 
+    <PhaseFieldFracture name="PhaseFieldSolve"
                  solidSolverName="SolidMechSolve"
-                 damageSolverName="RDSolve"
+                 damageSolverName="DamageSolve"
                  couplingTypeOption="FixedStress"
                  logLevel="1"
                  discretization="FE1"
@@ -12,8 +11,8 @@
       <SystemSolverParameters maxIterNewton="40"
                               logLevel="2"/>
     </PhaseFieldFracture>
-    
-    <SolidMechanicsLagrangianSSLE name="SolidMechSolve" 
+
+    <SolidMechanicsLagrangianSSLE name="SolidMechSolve"
                                   timeIntegrationOption="QuasiStatic"
                                   logLevel="1"
                                   discretization="FE1"
@@ -26,13 +25,14 @@
                               logLevel="2"/>
     </SolidMechanicsLagrangianSSLE>
 
-    <ReactionDiffusionFEM name="RDSolve"
+    <PhaseFieldDamageFEM name="RDSolve"
                 discretization="FE1"
                 timeIntegrationOption="SteadyState"
-                fieldName="Temperature"
+                fieldName="Damage"
+                localDissipation = "Quadratic"
                 logLevel="0"
                 targetRegions="{Region1}">
-    </ReactionDiffusionFEM>
+    </PhaseFieldDamageFEM>
   </Solvers>
 
   <Mesh>
@@ -103,39 +103,39 @@
                         objectPath="nodeManager"
                         scale="0"
                         setNames="{xneg, xpos, yneg, ypos, zneg, zpos}"/> -->
-    <FieldSpecification name="xconstraint0" 
-               objectPath="nodeManager" 
-               fieldName="TotalDisplacement" 
-               component="0" 
-               scale="-0.10" 
+    <FieldSpecification name="xconstraint0"
+               objectPath="nodeManager"
+               fieldName="TotalDisplacement"
+               component="0"
+               scale="-0.10"
                setNames="{xneg}"/>
 
-    <FieldSpecification name="xconstraint1" 
-               objectPath="nodeManager" 
-               fieldName="TotalDisplacement" 
-               component="0" 
-               scale="0.10" 
+    <FieldSpecification name="xconstraint1"
+               objectPath="nodeManager"
+               fieldName="TotalDisplacement"
+               component="0"
+               scale="0.10"
                setNames="{xpos}"/>
 
-    <FieldSpecification name="yconstraint"    
-               objectPath="nodeManager" 
-               fieldName="TotalDisplacement" 
-               component="1" 
-               scale="0.0" 
+    <FieldSpecification name="yconstraint"
+               objectPath="nodeManager"
+               fieldName="TotalDisplacement"
+               component="1"
+               scale="0.0"
                setNames="{yneg, ypos}"/>
-               
-    <FieldSpecification name="zconstraint"    
-               objectPath="nodeManager" 
-               fieldName="TotalDisplacement" 
-               component="2" 
-               scale="0.0" 
+
+    <FieldSpecification name="zconstraint"
+               objectPath="nodeManager"
+               fieldName="TotalDisplacement"
+               component="2"
+               scale="0.0"
                setNames="{zneg, zpos}"/>
-               
-    <FieldSpecification name="pointSource"
+
+    <!-- <FieldSpecification name="pointSource"
                         fieldName="Temperature"
                         objectPath="nodeManager"
                         scale="1"
-                        setNames="{centerLine}"/>
+                        setNames="{centerLine}"/> -->
 
     <FieldSpecification name="diffusionCoeff"
                         initialCondition="1"

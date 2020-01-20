@@ -26,7 +26,7 @@
 #include "managers/DomainPartition.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
-#include "physicsSolvers/simplePDE/ReactionDiffusionFEM.hpp"
+#include "physicsSolvers/simplePDE/PhaseFieldDamageFEM.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
 
@@ -51,7 +51,7 @@ PhaseFieldFractureSolver::PhaseFieldFractureSolver( const std::string& name,
 
   registerWrapper(viewKeyStruct::damageSolverNameString, &m_damageSolverName, 0)->
     setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Name of the fluid mechanics solver to use in the PhaseFieldFracture solver");
+    setDescription("Name of the damage mechanics solver to use in the PhaseFieldFracture solver");
 
   registerWrapper(viewKeyStruct::couplingTypeOptionStringString, &m_couplingTypeOptionString, 0)->
     setInputFlag(InputFlags::REQUIRED)->
@@ -122,8 +122,8 @@ void PhaseFieldFractureSolver::PostProcessInput()
       solidSolver = *(this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolidMechanicsLagrangianFEM*>());
       integer & minNewtonIterSolid = solidSolver.getSystemSolverParameters()->minIterNewton();
 
-    ReactionDiffusionFEM &
-      damageSolver = *(this->getParent()->GetGroup(m_damageSolverName)->group_cast<ReactionDiffusionFEM*>());
+    PhaseFieldDamageFEM &
+      damageSolver = *(this->getParent()->GetGroup(m_damageSolverName)->group_cast<PhaseFieldDamageFEM*>());
     integer & minNewtonIterFluid = damageSolver.getSystemSolverParameters()->minIterNewton();
 
     minNewtonIterSolid = 0;
@@ -200,8 +200,8 @@ real64 PhaseFieldFractureSolver::SplitOperatorStep( real64 const& time_n,
   SolidMechanicsLagrangianFEM &
   solidSolver = *(this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolidMechanicsLagrangianFEM*>());
 
-  ReactionDiffusionFEM &
-  damageSolver = *(this->getParent()->GetGroup(m_damageSolverName)->group_cast<ReactionDiffusionFEM*>());
+  PhaseFieldDamageFEM &
+  damageSolver = *(this->getParent()->GetGroup(m_damageSolverName)->group_cast<PhaseFieldDamageFEM*>());
 
   damageSolver.SetupSystem( domain,
                            damageSolver.getDofManager(),

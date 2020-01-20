@@ -6,7 +6,7 @@
                 discretization="FE1"
                 timeIntegrationOption="SteadyState"
                 fieldName="Damage"
-                localDissipation = "Quadratick"
+                localDissipation = "Quadratic"
                 logLevel="0"
                 targetRegions="{Region1}">
     </PhaseFieldDamageFEM>
