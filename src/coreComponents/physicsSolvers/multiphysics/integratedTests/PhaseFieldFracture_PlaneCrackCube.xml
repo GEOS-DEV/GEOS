@@ -25,7 +25,7 @@
                               logLevel="2"/>
     </SolidMechanicsLagrangianSSLE>
 
-    <PhaseFieldDamageFEM name="RDSolve"
+    <PhaseFieldDamageFEM name="DamageSolve"
                 discretization="FE1"
                 timeIntegrationOption="SteadyState"
                 fieldName="Damage"
@@ -57,15 +57,15 @@
     <!-- This event is applied every 1.0s.  The targetExactTimestep
     flag allows this event to request a dt modification to match an
     integer multiple of the timeFrequency. -->
-    <!--PeriodicEvent name="outputs"
-                   timeFrequency="1.0"
-                   targetExactTimestep="1"
-                   target="/Outputs/VTKOutput" /-->
-
     <PeriodicEvent name="outputs"
                    timeFrequency="1.0"
                    targetExactTimestep="1"
-                   target="/Outputs/SiloOutput"/>
+                   target="/Outputs/VTKOutput" />
+
+    <!-- <PeriodicEvent name="outputs"
+                   timeFrequency="1.0"
+                   targetExactTimestep="1"
+                   target="/Outputs/SiloOutput"/> -->
 
     <PeriodicEvent name="restarts"
                    timeFrequency="1e99"
@@ -159,7 +159,7 @@
 
   </Functions>
   <Outputs>
-    <Silo name="SiloOutput" parallelThreads="1" plotFileRoot="plot"/>
+    <!-- <Silo name="SiloOutput" parallelThreads="1" plotFileRoot="plot"/> -->
     <VTK name="VTKOutput" parallelThreads="1" plotFileRoot="plot"/>
     <Restart name="restartOutput"/>
   </Outputs>
