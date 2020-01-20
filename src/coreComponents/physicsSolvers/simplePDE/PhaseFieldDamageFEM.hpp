@@ -114,6 +114,7 @@ public:
   {
     static constexpr auto coeffFieldName = "coeffFieldName";
     static constexpr auto coeffName = "coeffField";
+    static constexpr auto localDissipationOption = "localDissipation";
 
 
     dataRepository::ViewKey timeIntegrationOption = {"timeIntegrationOption"};
@@ -132,6 +133,7 @@ private:
   string m_fieldName;
   stabledt m_stabledt;
   timeIntegrationOption m_timeIntegrationOption;
+  string m_localDissipationOption;
 
 //  string m_coeffFieldName;
 

@@ -71,6 +71,9 @@ PhaseFieldDamageFEM::PhaseFieldDamageFEM(const std::string &name,
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("name of field variable");
 
+  registerWrapper(viewKeyStruct::localDissipationOption, &m_localDissipationOption, false)->
+      setInputFlag(InputFlags::REQUIRED)->
+      setDescription("Type of local dissipation function. Can be Linear or Quadratic");
 //  registerWrapper(viewKeyStruct::coeffFieldName,
 //                          &m_coeffFieldName, false)->
 //    setInputFlag(InputFlags::REQUIRED)->
@@ -125,6 +128,10 @@ void PhaseFieldDamageFEM::PostProcessInput() {
     this->m_timeIntegrationOption = timeIntegrationOption::ExplicitTransient;
   } else {
     GEOS_ERROR("invalid time integration option");
+  }
+
+  if(m_localDissipationOption != "Linear" && m_localDissipationOption != "Quadratic"){
+    GEOS_ERROR("invalid local dissipation option - must be Linear or Quadratic");
   }
 
   // Set basic parameters for solver
@@ -244,10 +251,9 @@ void PhaseFieldDamageFEM::AssembleSystem(real64 const time_n,
           localIndex const n_q_points =
               feDiscretization->m_finiteElement->n_quadrature_points();
 
-          real64 ell = 0.05; //phase-field lenghtscale
+          real64 ell = 0.05; //phase-field lenght scale
           real64 Gc = 1; //energy release rate
-          bool linearLocalDissipation = true;
-          double threshold = 3 * Gc / (16 * ell); //elastic energy threshold - use when linearLocalDissipation=true
+          double threshold = 3 * Gc / (16 * ell); //elastic energy threshold - use when LocalDissipation is Linear
           //real64 diffusion = 1.0;
           // begin element loop, skipping ghost elements
           for (localIndex k = 0; k < elementSubRegion->size(); ++k) {
@@ -256,7 +262,7 @@ void PhaseFieldDamageFEM::AssembleSystem(real64 const time_n,
               element_matrix = 0.0;
               for (localIndex q = 0; q < n_q_points; ++q) {
                 double D = 0; //max between threshold and Elastic energy
-                if(linearLocalDissipation){
+                if(m_localDissipationOption == "Linear"){
                   D = max(threshold, coeff(k));
                 }
                 /*real64 Xq = 0;
@@ -277,24 +283,24 @@ void PhaseFieldDamageFEM::AssembleSystem(real64 const time_n,
                   //real64 diffusion = 1.0;
                   real64 Na = feDiscretization->m_finiteElement->value(a, q);
                   //element_rhs(a) += detJ[k][q] * Na * myFunc(Xq, Yq, Zq); //older reaction diffusion solver
-                  if (linearLocalDissipation){
-                    element_rhs(a) += detJ[k][q] * Na * (-2 * ell * D + 0.375 * Gc )/ Gc;
+                  if (m_localDissipationOption == "Linear"){
+                    element_rhs(a) += -detJ[k][q] * Na * (- ell * D + 3 * Gc / 16 )/ Gc;
                   }
                   else{
-                    element_rhs(a) += detJ[k][q] * Na * (4 * ell) * coeff(k) / Gc;
+                    element_rhs(a) += detJ[k][q] * Na * (2 * ell) * coeff(k) / Gc;
                   }
                   for (localIndex b = 0; b < numNodesPerElement; ++b) {
                     real64 Nb = feDiscretization->m_finiteElement->value(b, q);
-                    if(linearLocalDissipation){
+                    if(m_localDissipationOption == "Linear"){
                        element_matrix(a, b) += detJ[k][q] *
-                       (0.75*pow(ell,2) * -Dot(dNdX[k][q][a], dNdX[k][q][b]) -
-                        (2 * ell * D/Gc) * Na * Nb);
+                       (0.375*pow(ell,2) * -Dot(dNdX[k][q][a], dNdX[k][q][b]) -
+                        (ell * D/Gc) * Na * Nb);
                     }
                     else{
                         element_matrix(a, b) +=
                         detJ[k][q] *
-                        (pow((2*ell),2) * -Dot(dNdX[k][q][a], dNdX[k][q][b]) -
-                         Na * Nb * (1 + 4 * ell*coeff(k)/Gc));
+                        (pow(ell,2) * -Dot(dNdX[k][q][a], dNdX[k][q][b]) -
+                         Na * Nb * (1 + 2 * ell*coeff(k)/Gc));
                     }
                 }
               }

@@ -6,6 +6,7 @@
                 discretization="FE1"
                 timeIntegrationOption="SteadyState"
                 fieldName="Damage"
+                localDissipation = "Quadratick"
                 logLevel="0"
                 targetRegions="{Region1}">
     </PhaseFieldDamageFEM>
@@ -84,18 +85,18 @@
                         scale="0"
                         setNames="{xneg, xpos}"/> -->
 
-    <FieldSpecification name="pointSource"
+    <!-- <FieldSpecification name="pointSource"
                         fieldName="Damage"
                         objectPath="nodeManager"
                         scale="1"
-                        setNames="{centerPlane}"/>
+                        setNames="{centerPlane}"/> -->
 
     <FieldSpecification name="diffusionCoeff"
                         initialCondition="1"
                         setNames="{all}"
                         objectPath="ElementRegions"
                         fieldName="coeffField"
-                        scale="2e3"
+                        scale="4"
                         functionName="f_b"
                         />
   </FieldSpecifications>
@@ -108,7 +109,7 @@
     <SymbolicFunction name="f_b"
                       inputVarNames="{elementCenter}"
                       variableNames="{x, y, z}"
-                      expression="0"/>
+                      expression="1/((1+x*x)*(1+y*y)*(1+z*z*z*z))"/>
 
   </Functions>
   <Outputs>
