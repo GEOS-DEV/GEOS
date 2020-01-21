@@ -29,6 +29,10 @@
 #include <omp.h>
 #endif
 
+#ifdef GEOSX_USE_CUDA
+#include <cuda_runtime_api.h>
+#endif
+
 namespace geosx
 {
 
@@ -51,6 +55,14 @@ void setupMPI( int argc, char * argv[] )
   MpiWrapper::Init( &argc, &argv );
 #ifdef GEOSX_USE_MPI
   MPI_Comm_dup( MPI_COMM_WORLD, &MPI_COMM_GEOSX );
+#endif
+
+// determine whether to prefer use of pinned memory
+// for the mpi communication buffers
+#if defined(GEOSX_USE_CUDA) and defined(USE_CHAI)
+  int dev_cnt = 0;
+  cudaGetDeviceCount( &dev_cnt );
+  buffer_allocator<buffer_unit_type>::preferPinned((dev_cnt > 0));
 #endif
 }
 
