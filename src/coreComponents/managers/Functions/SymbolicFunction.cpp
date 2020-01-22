@@ -71,9 +71,9 @@ void SymbolicFunction::InitializeFunction()
   parserContext.addBuiltIns();
   std::string const& expression = getReference<std::string>(keys::expression);
   mathpresso::Error err = parserExpression.compile(parserContext, expression.c_str(), mathpresso::kNoOptions);
-  GEOS_ERROR_IF(err != mathpresso::kErrorOk, "JIT Compiler Error");
+  GEOSX_ERROR_IF(err != mathpresso::kErrorOk, "JIT Compiler Error");
 #else
-  GEOS_ERROR("GEOSX was not built with mathpresso!");
+  GEOSX_ERROR("GEOSX was not built with mathpresso!");
 #endif
 }
 

@@ -71,17 +71,17 @@ void FluxApproximationBase::compute( DomainPartition const & domain )
 
   computeCellStencil( domain );
 
-  FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
 
-  fsManager->Apply( 0.0,
-                    const_cast<DomainPartition *>( &domain ), // hack, but guaranteed we won't modify it
-                    "faceManager",
-                    m_boundaryFieldName,
-                    [&] ( FieldSpecificationBase const * GEOSX_UNUSED_ARG( bc ),
-                          string const & setName,
-                          set<localIndex> const & targetSet,
-                          Group const * GEOSX_UNUSED_ARG( targetGroup ),
-                          string const & GEOSX_UNUSED_ARG( targetName ))
+  fsManager.Apply( 0.0,
+                   const_cast<DomainPartition *>( &domain ), // hack, but guaranteed we won't modify it
+                   "faceManager",
+                   m_boundaryFieldName,
+                   [&] ( FieldSpecificationBase const * GEOSX_UNUSED_ARG( bc ),
+                         string const & setName,
+                         set<localIndex> const & targetSet,
+                         Group const * GEOSX_UNUSED_ARG( targetGroup ),
+                         string const & GEOSX_UNUSED_ARG( targetName ))
   {
     Wrapper<BoundaryStencil> * stencil = this->registerWrapper<BoundaryStencil>( setName );
     stencil->setRestartFlags(RestartFlags::NO_WRITE);
@@ -104,7 +104,7 @@ FluxApproximationBase::getBoundaryStencil(string const & setName)
 
 bool FluxApproximationBase::hasBoundaryStencil(string const & setName) const
 {
-  return this->hasView(setName);
+  return this->hasWrapper( setName );
 }
 
 void FluxApproximationBase::InitializePostInitialConditions_PreSubGroups( Group * const rootGroup )

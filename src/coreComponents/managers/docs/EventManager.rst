@@ -50,7 +50,7 @@ Event Manager Configuration
 
 Event
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-The children of the Event block define the events that may execute during a simulation.  These may be of type ``HaltEvent``, ``PeriodicEvent``, or ``SoloEvent``.  The exit criteria for the global event loop are defined by the attributes ``maxTime`` and ``maxCycle`` (which by default are set to their max values).  If the optional verbosity flag is set, the EventManager will report additional information with regards to timestep requests and event forecasts for its children.
+The children of the Event block define the events that may execute during a simulation.  These may be of type ``HaltEvent``, ``PeriodicEvent``, or ``SoloEvent``.  The exit criteria for the global event loop are defined by the attributes ``maxTime`` and ``maxCycle`` (which by default are set to their max values).  If the optional logLevel flag is set, the EventManager will report additional information with regards to timestep requests and event forecasts for its children.
 
 .. include:: ../../../coreComponents/fileIO/schema/docs/Events.rst
 

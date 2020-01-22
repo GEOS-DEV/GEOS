@@ -20,7 +20,7 @@
 #define GEOSX_MANAGERS_FIELDSPECIFICATION_FIELDSPECIFICATIONBASE_HPP
 
 #include "common/DataTypes.hpp"
-#include "codingUtilities/GeosxTraits.hpp"
+#include "codingUtilities/traits.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "dataRepository/Group.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
@@ -365,7 +365,7 @@ void FieldSpecificationBase::ApplyFieldValueKernel( LvArray::ArrayView< T, N, UN
 {
   integer const component = GetComponent();
   string const & functionName = getReference<string>( viewKeyStruct::functionNameString );
-  FunctionManager * functionManager = FunctionManager::Instance();
+  FunctionManager & functionManager = FunctionManager::Instance();
 
   if( functionName.empty() )
   {
@@ -377,9 +377,9 @@ void FieldSpecificationBase::ApplyFieldValueKernel( LvArray::ArrayView< T, N, UN
   }
   else
   {
-    FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>( functionName );
+    FunctionBase const * const function  = functionManager.GetGroup<FunctionBase>( functionName );
 
-    GEOS_ERROR_IF( function == nullptr, "Function '" << functionName << "' not found" );
+    GEOSX_ERROR_IF( function == nullptr, "Function '" << functionName << "' not found" );
 
     if( function->isFunctionOfTime()==2 )
     {
@@ -437,8 +437,8 @@ void FieldSpecificationBase::ApplyBoundaryConditionToSystem( set<localIndex> con
                                                              typename LAI::ParallelMatrix & matrix,
                                                              typename LAI::ParallelVector & rhs ) const
 {
-  dataRepository::WrapperBase * wrapper = dataGroup->getWrapperBase( fieldName );
-  std::type_index typeIndex = std::type_index( wrapper->get_typeid());
+  dataRepository::WrapperBase * wrapperBase = dataGroup->getWrapperBase( fieldName );
+  std::type_index typeIndex = std::type_index( wrapperBase->get_typeid());
   arrayView1d<globalIndex> const & dofMap = dataGroup->getReference<array1d<globalIndex>>( dofMapName );
   integer const component = GetComponent();
 
@@ -446,13 +446,16 @@ void FieldSpecificationBase::ApplyBoundaryConditionToSystem( set<localIndex> con
     [&]( auto type ) -> void
     {
       using fieldType = decltype(type);
-      dataRepository::Wrapper<fieldType> & view = dynamic_cast< dataRepository::Wrapper<fieldType> & >(*wrapper);
-      fieldType & field = view.reference();
+      dataRepository::Wrapper<fieldType> & wrapper = dynamic_cast< dataRepository::Wrapper<fieldType> & >(*wrapperBase);
+      typename dataRepository::Wrapper<fieldType>::ViewTypeConst fieldView = wrapper.referenceAsView();
 
       this->ApplyBoundaryConditionToSystem<FIELD_OP, LAI>( targetSet, normalizeBySetSize, time, dataGroup, dofMap, dofDim, matrix, rhs,
         [&]( localIndex const a )->real64
         {
-          return static_cast<real64>(rtTypes::value( field[a], component ));
+          //return static_cast<real64>(rtTypes::value( field[a], component ));
+          real64 value = 0.0;
+          FieldSpecificationEqual::ReadFieldValue( fieldView, a, component, value );
+          return value;
         }
       );
     }
@@ -474,7 +477,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
 {
   integer const component = GetComponent();
   string const & functionName = getReference<string>( viewKeyStruct::functionNameString );
-  FunctionManager * functionManager = FunctionManager::Instance();
+  FunctionManager & functionManager = FunctionManager::Instance();
 
   globalIndex_array  dof( targetSet.size() );
   real64_array rhsContribution( targetSet.size() );
@@ -500,9 +503,9 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
   }
   else
   {
-    FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>( functionName );
+    FunctionBase const * const function  = functionManager.GetGroup<FunctionBase>( functionName );
 
-    GEOS_ERROR_IF( function == nullptr, "Function '" << functionName << "' not found" );
+    GEOSX_ERROR_IF( function == nullptr, "Function '" << functionName << "' not found" );
 
     if( function->isFunctionOfTime()==2 )
     {
@@ -557,7 +560,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
 {
   integer const component = GetComponent();
   string const & functionName = getReference<string>( viewKeyStruct::functionNameString );
-  FunctionManager * functionManager = FunctionManager::Instance();
+  FunctionManager & functionManager = FunctionManager::Instance();
 
   globalIndex_array  dof( targetSet.size() );
   real64_array rhsContribution( targetSet.size() );
@@ -588,9 +591,9 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
   }
   else
   {
-    FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>( functionName );
+    FunctionBase const * const function  = functionManager.GetGroup<FunctionBase>( functionName );
 
-    GEOS_ERROR_IF( function == nullptr, "Function '" << functionName << "' not found" );
+    GEOSX_ERROR_IF( function == nullptr, "Function '" << functionName << "' not found" );
 
     if( function->isFunctionOfTime()==2 )
     {

@@ -159,7 +159,7 @@ void InternalMeshGenerator::PostProcessInput()
   }
   else
   {
-    GEOS_ERROR("InternalMeshGenerator: incorrect element type!");
+    GEOSX_ERROR("InternalMeshGenerator: incorrect element type!");
   }
 
   {
@@ -170,7 +170,7 @@ void InternalMeshGenerator::PostProcessInput()
     }
     if( failFlag )
     {
-      GEOS_ERROR("vertex/element mismatch InternalMeshGenerator::ReadXMLPost()");
+      GEOSX_ERROR("vertex/element mismatch InternalMeshGenerator::ReadXMLPost()");
     }
   }
 
@@ -188,7 +188,7 @@ void InternalMeshGenerator::PostProcessInput()
     }
     else
     {
-      GEOS_ERROR("InternalMeshGenerator: The number of element types is inconsistent with the number of total block.");
+      GEOSX_ERROR("InternalMeshGenerator: The number of element types is inconsistent with the number of total block.");
     }
   }
 
@@ -242,7 +242,7 @@ void InternalMeshGenerator::PostProcessInput()
       }
       else
       {
-        GEOS_ERROR("Incorrect number of regionLayout entries specified in InternalMeshGenerator::ReadXML()");
+        GEOSX_ERROR("Incorrect number of regionLayout entries specified in InternalMeshGenerator::ReadXML()");
       }
     }
   }

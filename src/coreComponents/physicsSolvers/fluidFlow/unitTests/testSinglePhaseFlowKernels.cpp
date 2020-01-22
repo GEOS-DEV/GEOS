@@ -12,18 +12,18 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include "gtest/gtest.h"
-
-#include "SetSignalHandling.hpp"
-#include "stackTrace.hpp"
-#include "Logger.hpp"
-
+// Source includes
+#include "managers/initialization.hpp"
+#include "common/Logger.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseFlowKernels.hpp"
+#include "physicsSolvers/fluidFlow/unitTests/testFlowKernelHelpers.hpp"
+
+// TPL includes
+#include <gtest/gtest.h>
 
 using namespace geosx;
 using namespace geosx::SinglePhaseFlowKernels;
 
-#include "physicsSolvers/fluidFlow/unitTests/testFlowKernelHelpers.hpp"
 
 TEST( SinglePhaseFlowKernels, mobility )
 {
@@ -346,30 +346,11 @@ int main( int argc, char** argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
 
-#ifdef GEOSX_USE_MPI
-  int rank = 0;
-  int nranks = 1;
-
-  MPI_Init( &argc, &argv );
-  MPI_Comm_dup( MPI_COMM_WORLD, &MPI_COMM_GEOSX );
-  MPI_Comm_rank( MPI_COMM_GEOSX, &rank );
-  MPI_Comm_size( MPI_COMM_GEOSX, &nranks );
-
-  logger::InitializeLogger( MPI_COMM_GEOSX );
-#else
-  logger::InitializeLogger();
-#endif
-
-  cxx_utilities::setSignalHandling( cxx_utilities::handler1 );
+  geosx::basicSetup( argc, argv );
 
   int const result = RUN_ALL_TESTS();
 
-  logger::FinalizeLogger();
-
-#ifdef GEOSX_USE_MPI
-  MPI_Comm_free( &MPI_COMM_GEOSX );
-  MPI_Finalize();
-#endif
+  geosx::basicCleanup();
 
   return result;
 }
