@@ -80,17 +80,14 @@
                                         {14.5, 0.5, 0.2  } }"
                   polylineSegmentConn="{ {0, 1},
                                          {1, 2} }"
-                  crossSectionArea="0.3"
+                  crossSectionArea="0.05"
                   numElementsPerSegment="20">
         <Perforation name="producer1_perf1"
-                     distanceFromHead="14"
-                     transmissibility="5e-9"/> 
+                     distanceFromHead="14"/> 
         <Perforation name="producer1_perf2"
-                     distanceFromHead="11"
-                     transmissibility="5e-9"/> 
+                     distanceFromHead="11"/> 
         <Perforation name="producer1_perf3"
-                     distanceFromHead="8"
-                     transmissibility="5e-9"/> 
+                     distanceFromHead="8"/> 
     </InternalWell> 
 
     <InternalWell name="well_producer2"
@@ -102,17 +99,14 @@
                                         { 0.5, 14.5, 0.2  } }"
                   polylineSegmentConn="{ {0, 1},
                                          {1, 2} }"
-                  crossSectionArea="0.3"
+                  crossSectionArea="0.05"
                   numElementsPerSegment="17">
         <Perforation name="producer2_perf1"
-                     distanceFromHead="14."
-                     transmissibility="5e-9"/> 
+                     distanceFromHead="14."/> 
         <Perforation name="producer2_perf2"
-                     distanceFromHead="10"
-                     transmissibility="5e-9"/> 
+                     distanceFromHead="10"/> 
         <Perforation name="producer2_perf3"
-                     distanceFromHead="6"
-                     transmissibility="5e-9"/> 
+                     distanceFromHead="6"/> 
     </InternalWell> 
 
     <InternalWell name="well_injector1"
@@ -122,14 +116,12 @@
                   polylineNodeCoords="{ {0.5,   0.5, 0.5  }, 
                                         {14.5, 14.5, 0.2  } }"
                   polylineSegmentConn="{ {0, 1} }"
-                  crossSectionArea="0.3"
+                  crossSectionArea="0.05"
                   numElementsPerSegment="30">
         <Perforation name="injector1_perf1"
-                     distanceFromHead="19.5"
-                     transmissibility="1e-9"/> 
+                     distanceFromHead="19.5"/> 
         <Perforation name="injector1_perf2"
-                     distanceFromHead="10.45"
-                     transmissibility="1e-9"/> 
+                     distanceFromHead="10.45"/> 
     </InternalWell> 
 
   </Mesh>

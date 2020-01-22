@@ -121,17 +121,16 @@ void PerforationData::ComputeWellTransmissibility( MeshLevel const & mesh,
     arrayView1d<real64 const> const & wellElemRadius =
       wellElemSubRegion->getReference<array1d<real64>>( WellElementSubRegion::viewKeyStruct::radiusString );
 
-    GEOS_ERROR_IF( rEq < wellElemRadius[wellElemIndex],
-                   "The equivalent radius r_eq = " << rEq <<
-                   " is smaller than the well radius (r = " << wellElemRadius[wellElemIndex] <<
-                   ") in " << getName() );
+    GEOSX_ERROR_IF( rEq < wellElemRadius[wellElemIndex],
+                    "The equivalent radius r_eq = " << rEq <<
+                    " is smaller than the well radius (r = " << wellElemRadius[wellElemIndex] <<
+                    ") in " << getName() );
 
     // compute the well Peaceman index 
     m_transmissibility[iperf] = 2 * M_PI * kh / std::log(rEq / wellElemRadius[wellElemIndex]);
-    std::cout << "m_transmissibility[" << iperf << "] = " << m_transmissibility[iperf] << std::endl; 
-
-    GEOS_ERROR_IF( m_transmissibility[iperf] <= 0,
-                   "The well index is negative or equal to zero in " << getName() );
+    
+    GEOSX_ERROR_IF( m_transmissibility[iperf] <= 0,
+                    "The well index is negative or equal to zero in " << getName() );
   }
 }
   
@@ -145,46 +144,20 @@ void PerforationData::GetReservoirElementDimensions( MeshLevel  const & mesh,
   CellElementRegion const * const region    = Group::group_cast<CellElementRegion const *>(elemManager->GetRegion(er));
   CellBlock         const * const subRegion = Group::group_cast<CellElementSubRegion const *>(region->GetSubRegion(esr));
 
-  // these arrays will store the coordinates of the bounding box in the xy planee  
-  stackArray1d<real64, 2> minCoords(2);
-  minCoords[0] = 1e99;
-  minCoords[1] = 1e99;
+  // compute the bounding box of the element
+  R1Tensor const box = computationalGeometry::GetBoundingBox( subRegion->nodeList()[ei],
+                                                              nodeManager->referencePosition() );  
 
-  stackArray1d<real64, 2> maxCoords(2);
-  maxCoords[0] = - 1e99;
-  maxCoords[1] = - 1e99;
-
-  // find a bounding box for the reservoir element in xy plane
-  for (localIndex a = 0; a < subRegion->numNodesPerElement(); ++a)
-  {
-    localIndex const inode  = subRegion->nodeList(ei,a);
-    R1Tensor const location = nodeManager->referencePosition()[inode];
-
-    for (localIndex dim = 0; dim < 2; ++dim)
-    {  
-    
-      if (location[dim] < minCoords[dim])
-      {
-        minCoords[dim] = location[dim];
-      }
-      else if (location[dim] > maxCoords[dim])
-      {
-        maxCoords[dim] = location[dim];
-      }
-      
-    }
-  }
+  // dx and dz from bounding box
+  dx = box[0];
+  dy = box[1];
   
-  // dx and dy are chosen from the bounding box of the element 
-  dx = maxCoords[0] - minCoords[0];
-  dy = maxCoords[1] - minCoords[1];
-
   // dz is computed as vol / (dx * dy)
   dz  = subRegion->getElementVolume()[ei];
   dz /= dx * dy;
-
-  GEOS_ERROR_IF( dx <= 0 || dy <= 0 || dz <= 0 ,
-                 "The reservoir element dimensions (dx, dy, and dz) should be positive in " << getName() );
+  
+  GEOSX_ERROR_IF( dx <= 0 || dy <= 0 || dz <= 0 ,
+                  "The reservoir element dimensions (dx, dy, and dz) should be positive in " << getName() );
 
 }
 

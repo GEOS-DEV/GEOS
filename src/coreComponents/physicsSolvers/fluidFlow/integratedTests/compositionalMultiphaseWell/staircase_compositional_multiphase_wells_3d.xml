@@ -95,19 +95,19 @@
 
   </Mesh>
 
-  <Events maxTime="2.5e4">
+  <Events maxTime="2.5e5">
 
     <PeriodicEvent name="outputs"
-                   timeFrequency="5e3.0"
+                   timeFrequency="5e4.0"
                    targetExactTimestep="1"
                    target="/Outputs/siloOutput" />
 
     <PeriodicEvent name="solverApplications"
-                   forceDt="5e3"
+                   forceDt="5e4"
                    target="/Solvers/reservoirSystem" />
 
     <PeriodicEvent name="restarts"
-                   timeFrequency="1.5e3"
+                   timeFrequency="1.5e4"
                    targetExactTimestep="0"
                    target="/Outputs/restartOutput"/>
   </Events>

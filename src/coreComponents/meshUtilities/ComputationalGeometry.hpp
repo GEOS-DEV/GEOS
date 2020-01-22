@@ -112,6 +112,17 @@ bool IsPointInsidePolyhedron( arrayView1d<R1Tensor const> const & nodeCoordinate
                               R1Tensor const & point,
                               real64 const areaTolerance = 0.0 );
 
+/**
+ * @brief Compute the dimensions of the bounding box containing the element
+          defined here by the coordinates of its vertices  
+ * @param[in] pointIndices the indices of this element's vertices in pointCoordinates 
+ * @param[in] pointCoordinates the vertices coordinates
+ * @return an R1Tensor containing the dimensions of the box
+ */
+R1Tensor GetBoundingBox( arraySlice1d<localIndex const> const pointIndices,
+                         arrayView1d<R1Tensor const> const & pointCoordinates );
+  
+
 real64 HexVolume( R1Tensor const * const points );
 
 real64 TetVolume( R1Tensor const * const points );
@@ -119,7 +130,7 @@ real64 TetVolume( R1Tensor const * const points );
 real64 WedgeVolume( R1Tensor const * const points );
 
 real64 PyramidVolume( R1Tensor const * const points );
-
+  
 inline void VectorDifference( array1d< R1Tensor > const & X,
                               localIndex const index0,
                               localIndex const index1,
