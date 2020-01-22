@@ -448,6 +448,15 @@ private:
                                   ParallelMatrix * const matrix,
                                   ParallelVector * const rhs );
 
+
+  void ApplySourceFluxBC( real64 const time,
+			  real64 const dt,
+			  DofManager const * const dofManager,
+			  DomainPartition * const domain,
+			  ParallelMatrix * const matrix,
+			  ParallelVector * const rhs );
+
+  
   /// the max number of fluid phases
   localIndex m_numPhases;
 

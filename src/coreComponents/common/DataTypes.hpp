@@ -24,18 +24,20 @@
 
 // Source includes
 #include "common/GeosxConfig.hpp"
-#include "Macros.hpp"
+#include "common/GeosxMacros.hpp"
+#include "common/BufferAllocator.hpp"
 #include "Logger.hpp"
-#include "Array.hpp"
-#include "StackBuffer.hpp"
-#include "SortedArray.hpp"
-#include "ArrayOfArrays.hpp"
-#include "ArrayOfSets.hpp"
+#include "cxx-utilities/src/Macros.hpp"
+#include "cxx-utilities/src/Array.hpp"
+#include "cxx-utilities/src/StackBuffer.hpp"
+#include "cxx-utilities/src/SortedArray.hpp"
+#include "cxx-utilities/src/ArrayOfArrays.hpp"
+#include "cxx-utilities/src/ArrayOfSets.hpp"
 #include "math/TensorT/TensorT.h"
+#include "Path.hpp"
 
 // TPL includes
 #include <camp/camp.hpp>
-
 
 // System includes
 #ifdef GEOSX_USE_MPI
@@ -107,7 +109,7 @@ NEW_TYPE dynamicCast( EXISTING_TYPE & val )
 
   using POINTER_TO_NEW_TYPE = std::remove_reference_t< NEW_TYPE > *;
   POINTER_TO_NEW_TYPE ptr = dynamicCast< POINTER_TO_NEW_TYPE >( &val );
-  GEOS_ERROR_IF( ptr == nullptr, "Cast failed." );
+  GEOSX_ERROR_IF( ptr == nullptr, "Cast failed." );
 
   return *ptr;
 }
@@ -149,8 +151,14 @@ using real64 = double;
 
 /// Type stored in communication buffers.
 using buffer_unit_type = signed char;
+
+#ifdef USE_CHAI
+/// Type of storage for communication buffers.
+using buffer_type = std::vector< buffer_unit_type, buffer_allocator< buffer_unit_type > >;
+#else
 /// Type of storage for communication buffers.
 using buffer_type = std::vector< buffer_unit_type >;
+#endif
 
 ///@}
 
@@ -163,14 +171,14 @@ using buffer_type = std::vector< buffer_unit_type >;
 template< typename T,
           int NDIM,
           typename PERMUTATION=camp::make_idx_seq_t< NDIM >,
-          template< typename > class DATA_VECTOR_TYPE=LvArray::ChaiBuffer >
+          template< typename > class DATA_VECTOR_TYPE=LvArray::NewChaiBuffer >
 using Array = LvArray::Array< T, NDIM, PERMUTATION, localIndex, DATA_VECTOR_TYPE >;
 
 /// Multidimensional array view type. See LvArray:ArrayView for details.
 template< typename T,
           int NDIM,
           int UNIT_STRIDE_DIM = NDIM - 1,
-          template< typename > class DATA_VECTOR_TYPE=LvArray::ChaiBuffer >
+          template< typename > class DATA_VECTOR_TYPE=LvArray::NewChaiBuffer >
 using ArrayView = LvArray::ArrayView< T, NDIM, UNIT_STRIDE_DIM, localIndex, DATA_VECTOR_TYPE >;
 
 /// Multidimensional array slice type. See LvArray:ArraySlice for details.
@@ -386,6 +394,9 @@ using real64_const_array  = array1d< real64 const >;
 using string_array        = array1d< string >;
 using string_const_array  = array1d< string const >;
 
+using path_array        = array1d< Path >;
+using path_const_array  = array1d< Path const >;
+
 using localIndex_array        = array1d< localIndex >;
 using localIndex_const_array  = array1d< localIndex const >;
 
@@ -530,7 +541,9 @@ public:
       {std::type_index( typeid(r2_array2d)), "r2_array2d"},
       {std::type_index( typeid(r2Sym_array2d)), "r2Sym_array2d"},
       {std::type_index( typeid(string)), "string"},
+      {std::type_index( typeid(Path)), "path"},
       {std::type_index( typeid(string_array)), "string_array"},
+      {std::type_index( typeid(path_array)), "path_array"},
       {std::type_index( typeid(mapPair_array)), "mapPair_array"}
     };
 
@@ -585,7 +598,9 @@ public:
     real64_array3d_id,     //!< real64_array3d_id
 
     string_id,           //!< string_id
+    Path_id,             //!< Path_id
     string_array_id,     //!< string_array_id
+    path_array_id,       //!< path_array_Iid
     mapPair_array_id,    //!< mapPair_array_id
     none_id              //!< none_id
   };
@@ -632,7 +647,10 @@ public:
       { "real64_array3d", TypeIDs::real64_array3d_id },
 
       { "string", TypeIDs::string_id },
+      { "Path", TypeIDs::Path_id },
       { "string_array", TypeIDs::string_array_id },
+      { "path_array", TypeIDs::path_array_id },
+      { "map_array", TypeIDs::path_array_id },
       { "mapPair_array", TypeIDs::mapPair_array_id },
       { "", TypeIDs::none_id }
     };
@@ -681,7 +699,9 @@ public:
       { std::type_index( typeid(real64_array3d)), TypeIDs::real64_array3d_id },
 
       { std::type_index( typeid(string)), TypeIDs::string_id },
+      { std::type_index( typeid(Path)), TypeIDs::Path_id },
       { std::type_index( typeid(string_array)), TypeIDs::string_array_id },
+      { std::type_index( typeid(path_array)), TypeIDs::path_array_id },
       { std::type_index( typeid(mapPair_array)), TypeIDs::mapPair_array_id }
     };
     auto iterType = type_names.find( typeIndex );
@@ -782,7 +802,9 @@ private:
       {"real32_array3d", constructArrayRegex( rr, 3 )},
       {"real64_array3d", constructArrayRegex( rr, 3 )},
       {"string", rs},
+      {"Path", rs},
       {"string_array", constructArrayRegex( rs, 1 )},
+      {"path_array", constructArrayRegex( rs, 1 )},
       {"mapPair", rs},
       {"mapPair_array", constructArrayRegex( rs, 1 )}
     };
@@ -869,9 +891,13 @@ public:
       {
         return lambda( string( "" ) );
       }
+      case ( TypeIDs::Path_id ):
+      {
+        return lambda( Path( "" ) );
+      }
       default:
       {
-        GEOS_ERROR( "TypeID not recognized." );
+        GEOSX_ERROR( "TypeID not recognized." );
       }
     }
   }
@@ -926,7 +952,7 @@ public:
       }
       default:
       {
-        GEOS_ERROR( "TypeID not recognized." );
+        GEOSX_ERROR( "TypeID not recognized." );
       }
     }
   }
@@ -1037,7 +1063,7 @@ public:
       {
         if( errorIfTypeNotFound )
         {
-          GEOS_ERROR( "TypeID not recognized." );
+          GEOSX_ERROR( "TypeID not recognized." );
         }
       }
     }
@@ -1169,9 +1195,17 @@ public:
       {
         return lambda( string( "" ) );
       }
+      case ( TypeIDs::Path_id ):
+      {
+        return lambda( Path( "" ) );
+      }
       case ( TypeIDs::string_array_id ):
       {
         return lambda( string_array( 1 ) );
+      }
+      case ( TypeIDs::path_array_id ):
+      {
+        return lambda( path_array( 1 ) );
       }
       case ( TypeIDs::mapPair_array_id ):
       {
@@ -1179,7 +1213,7 @@ public:
       }
       default:
       {
-        GEOS_ERROR( "TypeID not recognized." );
+        GEOSX_ERROR( "TypeID not recognized." );
         return lambda( double(1) );
       }
     }
@@ -1260,9 +1294,17 @@ public:
       {
         return lambda( string( "" ), string( "" ) );
       }
+      case ( TypeIDs::Path_id ):
+      {
+        return lambda( Path( "" ), Path( "" ) );
+      }
       case ( TypeIDs::string_array_id ):
       {
         return lambda( string_array( 1 ), string( "" ) );
+      }
+      case ( TypeIDs::path_array_id ):
+      {
+        return lambda( path_array( 1 ), Path( "" ) );
       }
       // case ( TypeIDs::mapPair_array_id ):
       // {
@@ -1270,7 +1312,7 @@ public:
       // }
       default:
       {
-        GEOS_ERROR( "TypeID not recognized." );
+        GEOSX_ERROR( "TypeID not recognized." );
       }
     }
   }
@@ -1330,9 +1372,17 @@ public:
       {
         return lambda( string( "" ), string( "" ) );
       }
+      case ( TypeIDs::Path_id ):
+      {
+        return lambda( Path( "" ), Path( "" ) );
+      }
       case ( TypeIDs::string_array_id ):
       {
         return lambda( string_array( 1 ), string( "" ) );
+      }
+      case ( TypeIDs::path_array_id ):
+      {
+        return lambda( path_array( 1 ), Path( "" ) );
       }
       case ( TypeIDs::integer_array2d_id ):
       {
@@ -1360,7 +1410,7 @@ public:
       //  }
       default:
       {
-        GEOS_ERROR( "TypeID not recognized." );
+        GEOSX_ERROR( "TypeID not recognized." );
       }
     }
   }

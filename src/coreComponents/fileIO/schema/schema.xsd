@@ -3,6 +3,11 @@
 	<xsd:annotation>
 		<xsd:documentation xml:lang="en">GEOSX Input Schema</xsd:documentation>
 	</xsd:annotation>
+	<xsd:simpleType name="Path">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[^,\{\}]*" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:simpleType name="string">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value="[^,\{\}]*" />
@@ -151,6 +156,11 @@
 	<xsd:simpleType name="globalIndex">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value="[+-]?[\d]+" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="path_array">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="\{([^,\{\}]*,\s*)*[^,\{\}]*\}" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="localIndex">
@@ -406,17 +416,17 @@
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="TableFunctionType">
-		<!--coordinateFiles => List of coordinate file names-->
+		<!--coordinateFiles => List of coordinate file names for ND Table-->
 		<xsd:attribute name="coordinateFiles" type="string_array" default="" />
-		<!--coordinates => Table coordinates inputs for 1D tables-->
-		<xsd:attribute name="coordinates" type="real64_array" use="required" />
+		<!--coordinates => Coordinates inputs for 1D tables-->
+		<xsd:attribute name="coordinates" type="real64_array" default="0" />
 		<!--inputVarNames => Name of fields are input to function.-->
 		<xsd:attribute name="inputVarNames" type="string_array" default="" />
-		<!--interpolation => Interpolation method-->
-		<xsd:attribute name="interpolation" type="string" default="" />
-		<!--values => Table Values for 1D tables-->
-		<xsd:attribute name="values" type="real64_array" use="required" />
-		<!--voxelFile => Voxel file name-->
+		<!--interpolation => Interpolation method (options = linear, nearest, upper, lower)-->
+		<xsd:attribute name="interpolation" type="string" default="linear" />
+		<!--values => Values for 1D tables-->
+		<xsd:attribute name="values" type="real64_array" default="0" />
+		<!--voxelFile => Voxel file name for ND Table-->
 		<xsd:attribute name="voxelFile" type="string" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
@@ -479,18 +489,18 @@
 		<xsd:attribute name="nz" type="integer_array" use="required" />
 		<!--trianglePattern => pattern by which to decompose the hex mesh into prisms (more explanation required)-->
 		<xsd:attribute name="trianglePattern" type="integer" default="0" />
+		<!--xBias => bias of element sizes in the x-direction within each mesh block (dx_left=(1+b)*L/N, dx_right=(1-b)*L/N)-->
+		<xsd:attribute name="xBias" type="real64_array" default="1" />
 		<!--xCoords => x-coordinates of each mesh block vertex-->
 		<xsd:attribute name="xCoords" type="real64_array" use="required" />
-		<!--xbias => (no description available)-->
-		<xsd:attribute name="xbias" type="real64_array" default="1" />
+		<!--yBias => bias of element sizes in the y-direction within each mesh block (dy_left=(1+b)*L/N, dx_right=(1-b)*L/N)-->
+		<xsd:attribute name="yBias" type="real64_array" default="1" />
 		<!--yCoords => y-coordinates of each mesh block vertex-->
 		<xsd:attribute name="yCoords" type="real64_array" use="required" />
-		<!--ybias => (no description available)-->
-		<xsd:attribute name="ybias" type="real64_array" default="1" />
+		<!--zBias => bias of element sizes in the z-direction within each mesh block (dz_left=(1+b)*L/N, dz_right=(1-b)*L/N)-->
+		<xsd:attribute name="zBias" type="real64_array" default="1" />
 		<!--zCoords => z-coordinates of each mesh block vertex-->
 		<xsd:attribute name="zCoords" type="real64_array" use="required" />
-		<!--zbias => (no description available)-->
-		<xsd:attribute name="zbias" type="real64_array" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -524,7 +534,7 @@
 		<!--fieldsToImport => Fields to be imported from the external mesh file-->
 		<xsd:attribute name="fieldsToImport" type="string_array" default="" />
 		<!--file => path to the mesh file-->
-		<xsd:attribute name="file" type="string" use="required" />
+		<xsd:attribute name="file" type="path" use="required" />
 		<!--reverseZ => 0 : Z coordinate is upward, 1 : Z coordinate is downward-->
 		<xsd:attribute name="reverseZ" type="integer" default="0" />
 		<!--scale => Scale the coordinates of the vertices-->
@@ -568,6 +578,7 @@
 	<xsd:complexType name="FiniteElementsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="FiniteElementSpace" type="FiniteElementSpaceType" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
 	</xsd:complexType>
@@ -581,13 +592,39 @@
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:complexType name="SystemSolverParametersType">
-		<!--allowNonConverged => Allow non-converged solution to be accepted-->
+	<xsd:complexType name="NonlinearSolverParametersType">
+		<!--allowNonConverged => Allow non-converged solution to be accepted. (i.e. exit from the Newton loop without achieving the desired tolerance)-->
 		<xsd:attribute name="allowNonConverged" type="integer" default="0" />
 		<!--dtCutIterLimit => Fraction of the Max Newton iterations above which the solver asks for the time-step to be cut for the next dt.-->
 		<xsd:attribute name="dtCutIterLimit" type="real64" default="0.7" />
 		<!--dtIncIterLimit => Fraction of the Max Newton iterations below which the solver asks for the time-step to be doubled for the next dt.-->
 		<xsd:attribute name="dtIncIterLimit" type="real64" default="0.4" />
+		<!--lineSearchAction => How the line search is to be used. Options are: 
+ 0 - Do not use line search.
+1 - Use line search. Allow exit from line search without achieving smaller residual than starting residual.
+2 - Use line search. If smaller residual than starting resdual is not achieved, cut time step.
+-->
+		<xsd:attribute name="lineSearchAction" type="integer" default="1" />
+		<!--lineSearchCutFactor => Line search cut factor. For instance, a value of 0.5 will result in the effective application of the last solution by a factor of (0.5, 0.25, 0.125, ...)-->
+		<xsd:attribute name="lineSearchCutFactor" type="real64" default="0.5" />
+		<!--lineSearchMaxCuts => Maximum number of line search cuts.-->
+		<xsd:attribute name="lineSearchMaxCuts" type="integer" default="4" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--maxSubSteps => Maximum number of time sub-steps allowed for the solver-->
+		<xsd:attribute name="maxSubSteps" type="integer" default="10" />
+		<!--maxTimeStepCuts => Max number of time step cuts-->
+		<xsd:attribute name="maxTimeStepCuts" type="integer" default="2" />
+		<!--newtonMaxIter => Maximum number of iterations that are allowed in a Newton loop.-->
+		<xsd:attribute name="newtonMaxIter" type="integer" default="5" />
+		<!--newtonMinIter => Minimum number of iterations that are required before exiting the Newton loop.-->
+		<xsd:attribute name="newtonMinIter" type="integer" default="1" />
+		<!--newtonTol => The required tolerance in order to exit the Newton iteration loop.-->
+		<xsd:attribute name="newtonTol" type="real64" default="1e-06" />
+		<!--timestepCutFactor => Factor by which the time step will be cut if a timestep cut is required.-->
+		<xsd:attribute name="timestepCutFactor" type="real64" default="0.5" />
+	</xsd:complexType>
+	<xsd:complexType name="SystemSolverParametersType">
 		<!--ilut_drop => (no description available)-->
 		<xsd:attribute name="ilut_drop" type="real64" default="0" />
 		<!--ilut_fill => (no description available)-->
@@ -596,28 +633,14 @@
 		<xsd:attribute name="krylovTol" type="real64" default="1e-06" />
 		<!--kspace => (no description available)-->
 		<xsd:attribute name="kspace" type="integer" default="0" />
-		<!--lineSearchCutFactor => Line search cut factor-->
-		<xsd:attribute name="lineSearchCutFactor" type="real64" default="0.5" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--maxIterNewton => Maximum number of Newton iterations-->
-		<xsd:attribute name="maxIterNewton" type="integer" default="5" />
-		<!--maxLineSearchCuts => Max number of line search cuts-->
-		<xsd:attribute name="maxLineSearchCuts" type="integer" default="4" />
-		<!--maxSubSteps => Maximum number of time sub-steps allowed for the solver-->
-		<xsd:attribute name="maxSubSteps" type="integer" default="10" />
-		<!--maxTimeStepCuts => Max number of time step cuts-->
-		<xsd:attribute name="maxTimeStepCuts" type="integer" default="2" />
-		<!--newtonTol => (no description available)-->
-		<xsd:attribute name="newtonTol" type="real64" default="1e-06" />
 		<!--numKrylovIter => Maximum number of Krylov Iterations-->
 		<xsd:attribute name="numKrylovIter" type="integer" default="100" />
 		<!--scalingOption => (no description available)-->
 		<xsd:attribute name="scalingOption" type="integer" default="0" />
 		<!--solverType => (no description available)-->
 		<xsd:attribute name="solverType" type="string" default="" />
-		<!--timestepCutFactor => Time step cut factor-->
-		<xsd:attribute name="timestepCutFactor" type="real64" default="0.5" />
 		<!--useBicgstab => (no description available)-->
 		<xsd:attribute name="useBicgstab" type="integer" default="0" />
 		<!--useDirectSolver => (no description available)-->
@@ -626,8 +649,6 @@
 		<xsd:attribute name="useInnerSolver" type="integer" default="0" />
 		<!--useMLPrecond => (no description available)-->
 		<xsd:attribute name="useMLPrecond" type="integer" default="0" />
-		<!--useNewtonSolve => (no description available)-->
-		<xsd:attribute name="useNewtonSolve" type="integer" default="0" />
 	</xsd:complexType>
 	<xsd:complexType name="FiniteVolumeType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -770,6 +791,8 @@
 		<xsd:attribute name="gravityFlag" type="integer" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--inputFluxEstimate => Initial estimate of the input flux used only for residual scaling. This should be essentially equivalent to the input flux * dt.-->
+		<xsd:attribute name="inputFluxEstimate" type="real64" default="1" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--relPermName => Name of the relative permeability constitutive model to use-->
@@ -918,6 +941,8 @@
 		<xsd:attribute name="gravityFlag" type="integer" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--inputFluxEstimate => Initial estimate of the input flux used only for residual scaling. This should be essentially equivalent to the input flux * dt.-->
+		<xsd:attribute name="inputFluxEstimate" type="real64" default="1" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--solidName => Name of solid constitutive object to use for this solver-->
@@ -1070,6 +1095,7 @@
 			<xsd:element name="Contact" type="ContactType" />
 			<xsd:element name="LinearElasticAnisotropic" type="LinearElasticAnisotropicType" />
 			<xsd:element name="LinearElasticIsotropic" type="LinearElasticIsotropicType" />
+			<xsd:element name="MultiPhaseMultiComponentFluid" type="MultiPhaseMultiComponentFluidType" />
 			<xsd:element name="PoreVolumeCompressibleSolid" type="PoreVolumeCompressibleSolidType" />
 			<xsd:element name="PoroLinearElasticAnisotropic" type="PoroLinearElasticAnisotropicType" />
 			<xsd:element name="PoroLinearElasticIsotropic" type="PoroLinearElasticIsotropicType" />
@@ -1089,7 +1115,7 @@
 		<!--surfaceDensities => List of surface densities for each phase-->
 		<xsd:attribute name="surfaceDensities" type="real64_array" use="required" />
 		<!--tableFiles => List of filenames with input PVT tables-->
-		<xsd:attribute name="tableFiles" type="string_array" use="required" />
+		<xsd:attribute name="tableFiles" type="path_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -1274,6 +1300,20 @@
 		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
 		<!--defaultYoungsModulus => Elastic Young's Modulus.-->
 		<xsd:attribute name="defaultYoungsModulus" type="real64" default="-1" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="MultiPhaseMultiComponentFluidType">
+		<!--componentMolarWeight => Component molar weights-->
+		<xsd:attribute name="componentMolarWeight" type="real64_array" default="0" />
+		<!--componentNames => List of component names-->
+		<xsd:attribute name="componentNames" type="string_array" default="" />
+		<!--flashModelParaFile => name of the filen including flash calculation function parameters-->
+		<xsd:attribute name="flashModelParaFile" type="string" use="required" />
+		<!--phaseNames => List of fluid phases-->
+		<xsd:attribute name="phaseNames" type="string_array" default="" />
+		<!--phasePVTParaFiles => List of the names of the files including PVT function parameters-->
+		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

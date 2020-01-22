@@ -10,7 +10,9 @@
                  couplingTypeOption="FixedStress"
                  logLevel="1"
                  targetRegions="{Region2}">
-      <SystemSolverParameters maxIterNewton="40"
+      <NonlinearSolverParameters name="nlsp"
+                                 newtonMaxIter="40"/>
+      <SystemSolverParameters name="ssp"
                               logLevel="2"/>
     </Poroelastic>
 
@@ -20,9 +22,11 @@
                                   logLevel="1"
                                   solidMaterialName="shale"
                                   targetRegions="{Region2}">
-      <SystemSolverParameters krylovTol="1.0e-10"
-                              newtonTol="1.0e-6"
-                              maxIterNewton="5"
+      <NonlinearSolverParameters name="nlsp"
+                                 newtonTol="1.0e-6"
+                                 newtonMaxIter="5"/>
+      <SystemSolverParameters name="ssp"
+                              krylovTol="1.0e-10"
                               logLevel="2"/>
     </SolidMechanics_LagrangianFEM>
   
@@ -33,9 +37,11 @@
                      fluidName="water"
                      solidName="shale"
                      targetRegions="{Region2}">
-      <SystemSolverParameters krylovTol="1.0e-10"
-                              newtonTol="1.0e-6"
-                              maxIterNewton="8"/>
+      <NonlinearSolverParameters name="nlsp"
+                                 newtonTol="1.0e-6"
+                                 newtonMaxIter="8"/>
+      <SystemSolverParameters name="ssp"
+                              krylovTol="1.0e-10"/>
     </SinglePhaseFlow>
   </Solvers>
   
@@ -205,8 +211,6 @@
 
   <Functions>
     <TableFunction     name="timeFunction"         inputVarNames="{time}" coordinates="{1.0, 2.0, 6e4}" values="{1.0, 2.0, 2.0}" />
-    <!--SymbolicFunction  name="spaceFunction"        inputVarNames="ReferencePosition" variableNames="x y z" expression="sqrt(pow(x,2)+pow(y,2)+pow(z,2))"/>
-    <CompositeFunction name="timeSpaceFunction" variableNames="timeTable1 spaceFunction" expression="timeTable1*spaceFunction"/-->
   </Functions>
 
   <!-- <Partition>

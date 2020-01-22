@@ -317,7 +317,7 @@ void PerforationData::ConnectToWellElements( InternalWellGenerator const & wellG
   {
     globalIndex const iwelemGlobal = perfElemIndexGlobal[m_localToGlobalMap[iperfLocal]];
     globalIndex const ielemGlobal  = elemOffsetGlobal + iwelemGlobal;
-    GEOS_ASSERT( globalToLocalWellElemMap.count( ielemGlobal ) > 0 );
+    GEOSX_ASSERT( globalToLocalWellElemMap.count( ielemGlobal ) > 0 );
     m_wellElementIndex[iperfLocal] = globalToLocalWellElemMap.at( ielemGlobal ); 
   }
 

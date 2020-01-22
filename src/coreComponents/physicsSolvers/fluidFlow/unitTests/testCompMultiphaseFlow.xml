@@ -15,9 +15,11 @@
                                  temperature="297.15"
                                  useMass="1">
                                  
-      <SystemSolverParameters krylovTol="1.0e-10"
-                              newtonTol="1.0e-6"
-                              maxIterNewton="2"
+      <NonlinearSolverParameters name="nlsp"
+                                 newtonTol="1.0e-6"
+                                 newtonMaxIter="2"/>
+      <SystemSolverParameters name="ssp"
+                              krylovTol="1.0e-10"
                               useDirectSolver="0"
                               solverType="Klu"
                               ilut_fill="0"
@@ -266,10 +268,25 @@
   </FieldSpecifications>
 
   <Functions>
-    <SymbolicFunction name="initialPressureFunc"
+    <!-- Note: symbolic functions are not available on all systems, so use a table function instead. -->
+    <!-- <SymbolicFunction name="initialPressureFunc"
                       inputVarNames="{elementCenter}"
                       variableNames="{x, y, z}"
-                      expression="(6-x)/6"/>
+                      expression="(6-x)/6"/> -->
+
+    <!-- Note: because the expression "(6-x)/6" uses only the first component of elementCenter
+          we can use a 1D table instead of a proper ND table.  The inputs with dims larger
+          than the function are simply ignored. -->
+    <TableFunction name="initialPressureFunc"
+                   inputVarNames="{elementCenter}"
+                   coordinates="{0.0, 3.0}"
+                   values="{1.0, 0.5}"/>
+
+    <!-- This is what the equivalent 3D table function would look like -->
+    <!-- <TableFunction name="initialPressureFunc"
+                   inputVarNames="{elementCenter}"
+                   coordinateFiles="{x.geos, y.geos, z.geos}"
+                   voxelFile="{pressure.geos}"/> -->
   </Functions>
 
   <!-- <Partition>
