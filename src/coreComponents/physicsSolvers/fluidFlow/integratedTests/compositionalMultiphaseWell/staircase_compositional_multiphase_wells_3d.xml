@@ -47,7 +47,7 @@
         <WellControls name="wellControls2"
                       type="injector"
                       control="liquidRate" 
-                      targetBHP="3e6"
+                      targetBHP="1e8"
                       targetRate="1e-2" 
                	      injectionStream="{0.1, 0.1, 0.1, 0.7}"
                       referenceDepth="0.5"/>
@@ -98,7 +98,7 @@
   <Events maxTime="2.5e5">
 
     <PeriodicEvent name="outputs"
-                   timeFrequency="5e4.0"
+                   timeFrequency="5e4"
                    targetExactTimestep="1"
                    target="/Outputs/siloOutput" />
 
