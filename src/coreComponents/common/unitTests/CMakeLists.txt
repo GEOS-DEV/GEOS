@@ -19,8 +19,8 @@ foreach(test ${gtest_geosx_tests})
                         DEPENDS_ON ${dependencyList}
                         )
 
-    blt_add_test( NAME ${test_name} 
+    blt_add_test( NAME ${test_name}
                   COMMAND ${test_name}
                   )
-                  
+
 endforeach()
