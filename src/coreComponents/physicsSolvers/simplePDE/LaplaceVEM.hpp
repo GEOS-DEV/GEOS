@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_LAGRANGIAN_FEM_HPP_
-#define GEOSX_PHYSICSSOLVERS_LAGRANGIAN_FEM_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_LAGRANGIAN_VEM_HPP_
+#define GEOSX_PHYSICSSOLVERS_LAGRANGIAN_VEM_HPP_
 
 #include "physicsSolvers/SolverBase.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
@@ -145,7 +145,7 @@ public:
     dataRepository::ViewKey timeIntegrationOption = { "timeIntegrationOption" };
     dataRepository::ViewKey fieldVarName = { "fieldName" };
 
-  } LaplaceVEMViewKeys;
+  } laplaceVEMViewKeys;
   //END_SPHINX_INCLUDE_04
 
   inline ParallelVector const * getSolution() const {
