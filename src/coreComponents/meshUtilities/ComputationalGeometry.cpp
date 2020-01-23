@@ -388,7 +388,8 @@ real64 PyramidVolume( R1Tensor const * const X ) {
     return TetVolume(tet1) + TetVolume(tet2);
 }
 
-R1Tensor GetBoundingBox( arraySlice1d<localIndex const> const pointIndices,
+R1Tensor GetBoundingBox( localIndex elemIndex,
+                         NodeMapType const & pointIndices,
                          arrayView1d<R1Tensor const> const & pointCoordinates )
 {
   localIndex constexpr dim = 3;
@@ -398,9 +399,9 @@ R1Tensor GetBoundingBox( arraySlice1d<localIndex const> const pointIndices,
   R1Tensor maxCoords( -1e99 );
 
   // loop over all the vertices of the element to get the min and max coords
-  for (localIndex a = 0; a < pointIndices.size(); ++a)
+  for (localIndex a = 0; a < pointIndices[elemIndex].size(); ++a)
   {
-    localIndex const id   = pointIndices[a];
+    localIndex const id = pointIndices[elemIndex][a];
     R1Tensor const coords = pointCoordinates[id];
 
     for (localIndex d = 0; d < dim; ++d)

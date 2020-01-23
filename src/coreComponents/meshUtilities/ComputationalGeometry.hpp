@@ -20,12 +20,24 @@
 #define GEOSX_MESHUTILITIES_COMPUTATIONALGEOMETRY_HPP_
 
 #include "common/DataTypes.hpp"
+#include "mesh/InterObjectRelation.hpp"
 
 namespace geosx
 {
 namespace computationalGeometry
 {
 
+#if defined( GEOSX_USE_CUDA )
+  using NODE_MAP_PERMUTATION = RAJA::PERM_JI;
+#else
+  using NODE_MAP_PERMUTATION = RAJA::PERM_IJ;
+#endif
+
+  static constexpr int NODE_MAP_UNIT_STRIDE_DIM = LvArray::getStrideOneDimension( NODE_MAP_PERMUTATION {} );
+
+  using NodeMapType = InterObjectRelation< array2d< localIndex, NODE_MAP_PERMUTATION > >;
+
+  
 /**
  * Calculates the centroid of a convex 3D polygon as well as the normal
  * @param[in] pointIndices list of index references for the points array in
@@ -115,11 +127,13 @@ bool IsPointInsidePolyhedron( arrayView1d<R1Tensor const> const & nodeCoordinate
 /**
  * @brief Compute the dimensions of the bounding box containing the element
           defined here by the coordinates of its vertices  
- * @param[in] pointIndices the indices of this element's vertices in pointCoordinates 
+ * @param[in] elemIndex index of the element in pointIndices
+ * @param[in] pointIndices the indices of the vertices in pointCoordinates 
  * @param[in] pointCoordinates the vertices coordinates
  * @return an R1Tensor containing the dimensions of the box
  */
-R1Tensor GetBoundingBox( arraySlice1d<localIndex const> const pointIndices,
+R1Tensor GetBoundingBox( localIndex elemIndex, 
+                         NodeMapType const & pointIndices,
                          arrayView1d<R1Tensor const> const & pointCoordinates );
   
 

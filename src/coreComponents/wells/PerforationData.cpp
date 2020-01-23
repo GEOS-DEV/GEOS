@@ -145,7 +145,8 @@ void PerforationData::GetReservoirElementDimensions( MeshLevel  const & mesh,
   CellBlock         const * const subRegion = Group::group_cast<CellElementSubRegion const *>(region->GetSubRegion(esr));
 
   // compute the bounding box of the element
-  R1Tensor const box = computationalGeometry::GetBoundingBox( subRegion->nodeList()[ei],
+  R1Tensor const box = computationalGeometry::GetBoundingBox( ei,
+                                                              subRegion->nodeList(),
                                                               nodeManager->referencePosition() );  
 
   // dx and dz from bounding box
