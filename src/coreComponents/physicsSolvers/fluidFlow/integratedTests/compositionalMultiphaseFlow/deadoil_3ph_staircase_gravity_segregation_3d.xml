@@ -10,7 +10,6 @@
                                  fluidName="fluid1"
                                  solidName="rock"
                                  relPermName="relperm"
-                                 initialDt="1e4"
                                  temperature="300"
                                  useMass="0">
       <NonlinearSolverParameters name="nlsp"
@@ -35,19 +34,19 @@
                   cellBlockNames="{b00,b01,b02,b03,b04,b05,b06,b07,b08,b09,b10,b11,b12,b13,b14,b15}"/>
   </Mesh>
 
-  <Events maxTime="1e11">
+  <Events maxTime="1e10">
 
     <PeriodicEvent name="outputs"
-                   timeFrequency="3e9"
+                   timeFrequency="5e9"
                    targetExactTimestep="1"
                    target="/Outputs/siloOutput" />
 
     <PeriodicEvent name="solverApplications"
-                   beginTime="0"
+                   forceDt="1e9"
                    target="/Solvers/compflow"/>
 
     <PeriodicEvent name="restarts"
-                   timeFrequency="3e9"
+                   timeFrequency="5e9"
                    targetExactTimestep="0"
                    target="/Outputs/restartOutput"/>
 

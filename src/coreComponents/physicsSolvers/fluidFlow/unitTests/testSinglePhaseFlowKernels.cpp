@@ -107,7 +107,6 @@ void computeFlux( arraySlice1d<real64 const> const & weight,
                   real64 const * dens,
                   real64 const * dDens_dPres,
                   real64 const dt,
-                  integer const gravityFlag,
                   real64 & flux,
                   real64 (& dFlux_dP)[stencilSize] )
 {
@@ -124,8 +123,8 @@ void computeFlux( arraySlice1d<real64 const> const & weight,
   real64 sumWeightGrav = 0;
   for (localIndex i = 0; i < stencilSize; ++i)
   {
-    potDif += weight[i] * (pres[i] + dPres[i] - gravityFlag * densMean * gravCoef[i]);
-    sumWeightGrav += weight[i] * gravityFlag * gravCoef[i];
+    potDif += weight[i] * (pres[i] + dPres[i] - densMean * gravCoef[i]);
+    sumWeightGrav += weight[i] * gravCoef[i];
   }
   localIndex const k_up = (potDif >= 0) ? 0 : 1;
   flux = dt * potDif * mob[k_up];
@@ -145,8 +144,7 @@ void testFluxKernel( CellElementStencilTPFA const & stencil,
                      real64 const * dMob_dPres,
                      real64 const * dens,
                      real64 const * dDens_dPres,
-                     real64 const dt,
-                     integer const gravityFlag )
+                     real64 const dt )
 {
   localIndex constexpr numElems = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
   localIndex constexpr fluidIndex = 0;
@@ -212,7 +210,6 @@ void testFluxKernel( CellElementStencilTPFA const & stencil,
                        mobView.toViewConst(),
                        dMob_dPresView.toViewConst(),
                        fluidIndex,
-                       gravityFlag,
                        dt,
                        flux,
                        fluxJacobian );
@@ -230,7 +227,6 @@ void testFluxKernel( CellElementStencilTPFA const & stencil,
                dens,
                dDens_dPres,
                dt,
-               gravityFlag,
                flux_et,
                dFlux_dP_et );
 
@@ -273,7 +269,6 @@ TEST( SinglePhaseFlowKernels, fluxFull )
   real64  const densData       [NTEST][stencilSize] = { { 1e+3, 2e+3 }, { 2e+3, 3e+3 }, { 2e+3, 1e+3 } };
   real64  const dDens_dPresData[NTEST][stencilSize] = { { 1e-6, 2e-6 }, { 2e-6, 3e-6 }, { 2e-6, 2e-6 } };
   real64  const dt             [NTEST]              = { 1.0,            1e+5,           1e+8           };
-  integer const gravityFlag    [NTEST]              = { 1,              1,              0              };
 
 
   for (int i = 0; i < NTEST; ++i)
@@ -288,8 +283,7 @@ TEST( SinglePhaseFlowKernels, fluxFull )
                           dMob_dPresData[i],
                           densData[i],
                           dDens_dPresData[i],
-                          dt[i],
-                          gravityFlag[i] );
+                          dt[i] );
 
   }
 }
@@ -321,7 +315,6 @@ TEST( SinglePhaseFlowKernels, fluxRegion )
   real64  const densData       [NTEST][stencilSize] = { { 1e+3, 2e+3 }, { 2e+3, 3e+3 }, { 2e+3, 1e+3 } };
   real64  const dDens_dPresData[NTEST][stencilSize] = { { 1e-6, 2e-6 }, { 2e-6, 3e-6 }, { 2e-6, 2e-6 } };
   real64  const dt             [NTEST]              = { 1.0,            1e+5,           1e+8           };
-  integer const gravityFlag    [NTEST]              = { 1,              1,              0              };
 
 
   for (int i = 0; i < NTEST; ++i)
@@ -336,8 +329,7 @@ TEST( SinglePhaseFlowKernels, fluxRegion )
                            dMob_dPresData[i],
                            densData[i],
                            dDens_dPresData[i],
-                           dt[i],
-                           gravityFlag[i] );
+                           dt[i] );
 
   }
 }

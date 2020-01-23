@@ -1,7 +1,7 @@
 
 <Problem>
 
-  <Solvers applyGravity="on">
+  <Solvers>
   
     <CompositionalMultiphaseFlow name="compflow"
                                  logLevel="1"

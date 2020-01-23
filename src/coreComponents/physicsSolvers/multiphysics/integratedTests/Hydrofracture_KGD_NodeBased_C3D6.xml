@@ -1,7 +1,7 @@
 
 <Problem>
 
-  <Solvers applyGravity="off">
+  <Solvers gravityVector="0.0, 0.0, 0.0">
   
     <Hydrofracture 
       name="hydrofracture" 

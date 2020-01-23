@@ -29,22 +29,14 @@ using namespace cxx_utilities;
 PhysicsSolverManager::PhysicsSolverManager( std::string const & name,
                                             Group * const parent ):
   Group( name, parent),
-  m_gravityVector( R1Tensor(0.0) ),
-  m_applyGravity( "" )
+  m_gravityVector( R1Tensor(0.0) )
 {
   setInputFlags(InputFlags::REQUIRED);
 
   this->registerWrapper( viewKeyStruct::gravityVectorString, &m_gravityVector, 0 )->
-    setApplyDefaultValue({0,0,-9.81})->
+    setApplyDefaultValue({0.0,0.0,-9.81})->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Gravity vector used in the physics solvers");
-
-  this->registerWrapper( viewKeyStruct::applyGravityString, &m_applyGravity, 0 )->
-    setApplyDefaultValue("on")->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Flag to specify whether gravity is applied in the physics solvers. "
-		   "Can be set to either on or off. ");
-  
 }
 
 PhysicsSolverManager::~PhysicsSolverManager()

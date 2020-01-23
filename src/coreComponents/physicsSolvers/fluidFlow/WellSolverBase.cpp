@@ -185,7 +185,7 @@ void WellSolverBase::InitializePostInitialConditions_PreSubGroups(Group * const 
 
 void WellSolverBase::PrecomputeData(DomainPartition * const domain)
 {
-  R1Tensor const & gravVector = gravityVector();
+  R1Tensor const gravVector = gravityVector();
   
   MeshLevel * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = meshLevel->getElemManager();

@@ -590,7 +590,6 @@ void SinglePhaseFlow::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time_n )
   FluxKernel::ElementView < arrayView1d<real64 const> > const & aperture0  = m_elementAperture0.toViewConst();
   FluxKernel::ElementView < arrayView1d<real64 const> > const & aperture  = m_elementAperture.toViewConst();
 
-  integer const gravityFlag = applyGravity();
   localIndex const fluidIndex = m_fluidIndex;
 
 
@@ -602,7 +601,6 @@ void SinglePhaseFlow::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time_n )
     FluxKernel::Launch( stencil,
                         dt,
                         fluidIndex,
-                        gravityFlag,
                         dofNumber,
                         pres,
                         dPres,
@@ -967,8 +965,8 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit( real64 const time_n,
           GEOSX_ERROR("Unsupported point type in stencil");
         }
 
-        real64 const gravTerm = applyGravity() ? densMean * gravD : 0.0;
-        real64 const dGrav_dP = applyGravity() ? dDensMean_dP[i] * gravD : 0.0;
+        real64 const gravTerm = densMean * gravD;
+        real64 const dGrav_dP = dDensMean_dP[i] * gravD;
 
         potDif += entry.weight * (pressure + gravTerm);
         dFlux_dP[i] = entry.weight * (1.0 + dGrav_dP);

@@ -28,8 +28,6 @@ SolverBase::SolverBase( std::string const & name,
                         Group * const parent )
   :
   ExecutableGroup( name, parent ),
-  m_gravityVector( R1Tensor( 0.0 ) ),
-  m_applyGravity( 0 ),
   m_systemSolverParameters( groupKeyStruct::systemSolverParametersString, this ),
   m_cflFactor(),
   m_maxStableDt{ 1e99 },
@@ -41,9 +39,6 @@ SolverBase::SolverBase( std::string const & name,
 
   // This enables logLevel filtering
   enableLogLevelInput();
-
-  this->registerWrapper( viewKeyStruct::gravityVectorString, &m_gravityVector, false );
-  this->registerWrapper( viewKeyStruct::applyGravityString, &m_applyGravity, false );  
 
   // This sets a flag to indicate that this object increments time
   this->SetTimestepBehavior( 1 );
@@ -116,28 +111,6 @@ void SolverBase::ExpandObjectCatalogs()
 
 void SolverBase::PostProcessInput()
 {
-  if( this->globalGravityVector() != nullptr )
-  {
-    m_gravityVector = *globalGravityVector();
-  }
-  
-  if( this->globalApplyGravity() != nullptr )
-  {
-    string const gravityFlag = *globalApplyGravity();
-    if (gravityFlag.compare("on") == 0)
-    {
-      m_applyGravity = 1;
-    }
-    else if (gravityFlag.compare("off") == 0)
-    {
-      m_applyGravity = 0;
-    }
-    else
-    {
-      GEOSX_ERROR( "The applyGravity flag can only be set to on or off");
-    }
-  }
-  
   SetLinearSolverParameters();
 }
 
@@ -627,25 +600,17 @@ void SolverBase::ImplicitStepComplete( real64 const & GEOSX_UNUSED_ARG( time ),
   GEOSX_ERROR( "SolverBase::ImplicitStepComplete called!. Should be overridden." );
 }
 
-R1Tensor const * SolverBase::globalGravityVector() const
+R1Tensor const SolverBase::gravityVector() const
 {
-  R1Tensor const * rval = nullptr;
-  if( getParent()->getName() == "Solvers" )
+  R1Tensor rval;
+  if (getParent()->group_cast<PhysicsSolverManager const *>() != nullptr)
   {
-    rval = &(getParent()->getReference<R1Tensor>( viewKeyStruct::gravityVectorString ));
+    rval = getParent()->getReference<R1Tensor>( PhysicsSolverManager::viewKeyStruct::gravityVectorString );
   }
-
-  return rval;
-}
-
-string const * SolverBase::globalApplyGravity() const
-{
-  string const * rval = nullptr;
-  if( getParent()->getName() == "Solvers" )
+  else
   {
-    rval = &(getParent()->getReference<string>( viewKeyStruct::applyGravityString ));
+    rval = {0.0,0.0,-9.81};
   }
-
   return rval;
 }
 

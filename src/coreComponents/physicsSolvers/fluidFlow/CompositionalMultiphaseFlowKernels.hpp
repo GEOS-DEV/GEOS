@@ -680,7 +680,6 @@ struct FluxKernel
            MaterialView<arrayView4d<real64 const>> const & dPhaseCapPressure_dPhaseVolFrac,
            localIndex const fluidIndex,
            localIndex const capPressureIndex,
-           integer const gravityFlag,
            integer const capPressureFlag,
            real64 const dt,
            arraySlice1d<real64> const & localFlux,
@@ -712,8 +711,8 @@ struct FluxKernel
     stackArray1d<real64, maxStencil>              dPresGrad_dP( stencilSize );
     stackArray2d<real64, maxStencil * maxNumComp> dPresGrad_dC( stencilSize, NC );
 
-    stackArray1d<real64, numElems>                dGravGrad_dP( numElems );
-    stackArray2d<real64, numElems * maxNumComp>   dGravGrad_dC( numElems, NC );
+    stackArray1d<real64, numElems>                dGravHead_dP( numElems );
+    stackArray2d<real64, numElems * maxNumComp>   dGravHead_dC( numElems, NC );
 
     // reset the local values to zero
     compFlux = 0.0;
@@ -741,9 +740,9 @@ struct FluxKernel
       dPresGrad_dP = 0.0;
       dPresGrad_dC = 0.0;
 
-      real64 gravGrad = 0.0;
-      dGravGrad_dP = 0.0;
-      dGravGrad_dC = 0.0;
+      real64 gravHead = 0.0;
+      dGravHead_dP = 0.0;
+      dGravHead_dC = 0.0;
 
       real64 phaseFlux;
       dPhaseFlux_dP = 0.0;
@@ -814,19 +813,16 @@ struct FluxKernel
           dPresGrad_dC[i][jc] += - weight * dCapPressure_dC[jc];
         }
 
-        if (gravityFlag)
-        {
-          real64 const gravD = weight * gravCoef[er][esr][ei];
-          gravGrad += densMean * gravD;
+        real64 const gravD = weight * gravCoef[er][esr][ei];
+        gravHead += densMean * gravD;
 
-          // need to add contributions from both cells the mean density depends on
-          for (localIndex j = 0; j < numElems; ++j)
+        // need to add contributions from both cells the mean density depends on
+        for (localIndex j = 0; j < numElems; ++j)
+        {
+          dGravHead_dP[j] += dDensMean_dP[j] * gravD;
+          for (localIndex jc = 0; jc < NC; ++jc)
           {
-            dGravGrad_dP[j] += dDensMean_dP[j] * gravD;
-            for (localIndex jc = 0; jc < NC; ++jc)
-            {
-              dGravGrad_dC[j][jc] += dDensMean_dC[j][jc] * gravD;
-            }
+            dGravHead_dC[j][jc] += dDensMean_dC[j][jc] * gravD;
           }
         }
       }
@@ -837,7 +833,7 @@ struct FluxKernel
       // TODO isolate into a kernel?
 
       // compute phase potential gradient
-      real64 potGrad = presGrad - gravGrad;
+      real64 potGrad = presGrad - gravHead;
 
       // choose upstream cell
       localIndex const k_up = (potGrad >= 0) ? 0 : 1;
@@ -868,10 +864,10 @@ struct FluxKernel
       // gravitational head depends only on the two cells connected (same as mean density)
       for (localIndex ke = 0; ke < numElems; ++ke)
       {
-        dPhaseFlux_dP[ke] -= dGravGrad_dP[ke];
+        dPhaseFlux_dP[ke] -= dGravHead_dP[ke];
         for (localIndex jc = 0; jc < NC; ++jc)
         {
-          dPhaseFlux_dC[ke][jc] -= dGravGrad_dC[ke][jc];
+          dPhaseFlux_dC[ke][jc] -= dGravHead_dC[ke][jc];
         }
       }
 

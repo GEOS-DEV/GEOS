@@ -1,8 +1,7 @@
 
 <Problem>
 <!-- START_SPHINX_INCLUDE_SOLVER_BLOCK -->
-  <Solvers gravityVector="0.0, 0.0, -9.81"
-           applyGravity="on">
+  <Solvers>
 
     <CompositionalMultiphaseFlow name="compflow"
                                  logLevel="1"

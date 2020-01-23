@@ -157,7 +157,7 @@ void FlowSolverBase::PrecomputeData( DomainPartition * const domain )
   MeshLevel * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
   FaceManager * const faceManager = mesh->getFaceManager();
 
-  R1Tensor const & gravVector = gravityVector();
+  R1Tensor const gravVector = gravityVector();
   
   applyToSubRegions( mesh, [&] ( ElementSubRegionBase * const subRegion )
   {

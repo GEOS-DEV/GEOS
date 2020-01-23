@@ -772,8 +772,6 @@
 			<xsd:element name="SolidMechanics_LagrangianFEM" type="SolidMechanics_LagrangianFEMType" />
 			<xsd:element name="SurfaceGenerator" type="SurfaceGeneratorType" />
 		</xsd:choice>
-		<!--applyGravity => Flag to specify whether gravity is applied in the physics solvers. Can be set to either on or off. -->
-		<xsd:attribute name="applyGravity" type="string" default="on" />
 		<!--gravityVector => Gravity vector used in the physics solvers-->
 		<xsd:attribute name="gravityVector" type="R1Tensor" default="0 0 -9.81" />
 	</xsd:complexType>

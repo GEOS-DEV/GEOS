@@ -306,7 +306,6 @@ struct FluxKernel
    * @param[in] stencil The stencil object.
    * @param[in] dt The timestep for the integration step.
    * @param[in] fluidIndex The index of the fluid being fluxed.
-   * @param[in] gravityFlag Flag to indicate whether or not to use gravity.
    * @param[in] dofNumber The dofNumbers for each element
    * @param[in] pres The pressures in each element
    * @param[in] dPres The change in pressure for each element
@@ -323,7 +322,6 @@ struct FluxKernel
   Launch( STENCIL_TYPE const & stencil,
           real64 const dt,
           localIndex const fluidIndex,
-          integer const gravityFlag,
           ElementView < arrayView1d<globalIndex const > > const & dofNumber,
           ElementView < arrayView1d<real64 const> > const & pres,
           ElementView < arrayView1d<real64 const> > const & dPres,
@@ -358,7 +356,6 @@ struct FluxKernel
            ElementView <arrayView1d<real64 const>> const & mob,
            ElementView <arrayView1d<real64 const>> const & dMob_dPres,
            localIndex const fluidIndex,
-           integer const gravityFlag,
            real64 const dt,
            arraySlice1d<real64> const & flux,
            arraySlice2d<real64> const & fluxJacobian )
@@ -401,8 +398,8 @@ struct FluxKernel
       real64 weight = stencilWeights[ke];
 
       real64 const gravD = gravCoef[er][esr][ei];
-      real64 const gravTerm = gravityFlag ? densMean * gravD : 0.0;
-      sumWeightGrav += weight * gravD * gravityFlag;
+      real64 const gravTerm = densMean * gravD;
+      sumWeightGrav += weight * gravD;
 
       potDif += weight * (pres[er][esr][ei] + dPres[er][esr][ei] - gravTerm);
     }
@@ -459,7 +456,6 @@ struct FluxKernel
            arrayView1d<real64 const> const & mob,
            arrayView1d<real64 const> const & dMob_dPres,
            localIndex const GEOSX_UNUSED_ARG( fluidIndex ),
-           integer const gravityFlag,
            real64 const dt,
            arraySlice1d<real64> const & flux,
            arraySlice2d<real64> const & fluxJacobian )
@@ -499,8 +495,8 @@ struct FluxKernel
       real64 const weight = stencilWeights[ke];
 
       real64 const gravD = gravCoef[ei];
-      real64 const gravTerm = gravityFlag ? densMean * gravD : 0.0;
-      sumWeightGrav += weight * gravD * gravityFlag;
+      real64 const gravTerm = densMean * gravD;
+      sumWeightGrav += weight * gravD;
       potDif += weight * (pres[ei] + dPres[ei] - gravTerm);
     }
 
@@ -557,7 +553,6 @@ struct FluxKernel
                    arrayView1d<real64 const> const & aperture0,
                    arrayView1d<real64 const> const & aperture,
                    localIndex const GEOSX_UNUSED_ARG( fluidIndex ),
-                   integer const GEOSX_UNUSED_ARG( gravityFlag ),
                    real64 const dt,
                    arraySlice1d<real64> const & flux,
                    arraySlice2d<real64> const & fluxJacobian,

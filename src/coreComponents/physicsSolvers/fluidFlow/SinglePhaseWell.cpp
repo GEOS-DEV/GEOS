@@ -219,14 +219,10 @@ void SinglePhaseWell::InitializeWells( DomainPartition * const domain )
     GEOSX_ERROR_IF( pressureControl <= 0, "Invalid well initialization: negative pressure was found" );
 
     // 3) Estimate the pressures in the well elements using this avgDensity
-    integer const gravityFlag = applyGravity();
-
     forall_in_range( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex const iwelem )
     {
       wellElemPressure[iwelem] = pressureControl
-        + ( gravityFlag 
-          ? avgDensity * ( wellElemGravCoef[iwelem] - gravCoefControl ) 
-          : 0 );
+        + avgDensity * ( wellElemGravCoef[iwelem] - gravCoefControl );
     });
 
     // 4) Recompute the pressure-dependent properties
@@ -573,7 +569,7 @@ void SinglePhaseWell::FormPressureRelations( DomainPartition const * const domai
         real64 const dAvgDensity_dPresCurrent = 0.5 * dWellElemDensity_dPres[iwelem][0];
 
         // compute depth diff times acceleration
-        real64 const gravD = applyGravity() ? wellElemGravCoef[iwelemNext] - wellElemGravCoef[iwelem] : 0;
+        real64 const gravD = wellElemGravCoef[iwelemNext] - wellElemGravCoef[iwelem];
 
         // compute the current pressure in the two well elements
         real64 const pressureCurrent = wellElemPressure[iwelem]     + dWellElemPressure[iwelem];
@@ -1031,12 +1027,9 @@ void SinglePhaseWell::ComputeAllPerforationRates( WellElementSubRegion const * c
     pressure[SubRegionTag::WELL] = wellElemPressure[iwelem] + dWellElemPressure[iwelem];
     dPressure_dP[SubRegionTag::WELL] = 1.0;
 
-    if (applyGravity())
-    {
-      real64 const gravD = ( perfGravCoef[iperf] - wellElemGravCoef[iwelem] );
-      pressure[SubRegionTag::WELL]     += wellElemDensity[iwelem][0] * gravD;
-      dPressure_dP[SubRegionTag::WELL] += dWellElemDensity_dPres[iwelem][0] * gravD;
-    }
+    real64 const gravD = ( perfGravCoef[iperf] - wellElemGravCoef[iwelem] );
+    pressure[SubRegionTag::WELL]     += wellElemDensity[iwelem][0] * gravD;
+    dPressure_dP[SubRegionTag::WELL] += dWellElemDensity_dPres[iwelem][0] * gravD;
 
     // multiplier for well side in the flux
     multiplier[SubRegionTag::WELL] = -1;

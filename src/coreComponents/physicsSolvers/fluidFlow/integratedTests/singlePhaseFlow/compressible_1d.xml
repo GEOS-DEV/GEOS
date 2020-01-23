@@ -1,8 +1,7 @@
 
 <Problem>
 
-  <Solvers gravityVector="0.0, 0.0, -9.81"
-           applyGravity="on">
+  <Solvers gravityVector="0.0, 0.0, -9.81">
   
     <SinglePhaseFlow name="SinglePhaseFlow"
                      logLevel="0"

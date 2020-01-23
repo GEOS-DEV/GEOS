@@ -911,7 +911,6 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( real64 const GEOSX_UNUSED_A
   localIndex const fluidIndex       = m_fluidIndex;
   localIndex const capPressureIndex = m_capPressureIndex;
 
-  integer const gravityFlag     = applyGravity();
   integer const capPressureFlag = m_capPressureFlag;
 
   fluxApprox->forCellStencils( [&] ( auto const & stencil )
@@ -958,7 +957,6 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( real64 const GEOSX_UNUSED_A
                            dPhaseCapPres_dPhaseVolFrac,
                            fluidIndex,
                            capPressureIndex,
-                           gravityFlag,
                            capPressureFlag,
                            dt,
                            localFlux,

@@ -484,8 +484,6 @@ public:
 
   struct viewKeyStruct
   {
-    constexpr static auto gravityVectorString = "gravityVector";
-    constexpr static auto applyGravityString = "applyGravity";
     constexpr static auto cflFactorString = "cflFactor";
     constexpr static auto initialDtString = "initialDt";
     constexpr static auto maxStableDtString = "maxStableDt";
@@ -501,13 +499,15 @@ public:
   } groupKeys;
 
 
-
-  R1Tensor const & gravityVector() const { return m_gravityVector; }
-  R1Tensor       & gravityVector()       { return m_gravityVector; }
-  R1Tensor const * globalGravityVector() const;
-
-  integer          applyGravity() const     { return m_applyGravity; } 
-  string const *   globalApplyGravity() const;
+  /**
+   * @brief return the value of the gravity vector specified in PhysicsSolverManager 
+   * @return the value of the gravity vector
+   *
+   * @note if the solver is instantiated outside of a simulation (for instance for a unit test)
+   *       and therefore does not have a parent of type PhysicsSolverManager, this function returns
+   *       {0.0,0.0,-9.81}  
+   */
+  R1Tensor const gravityVector() const;
 
   /**
    * accessor for the system solver parameters.
@@ -581,8 +581,6 @@ protected:
   static BASETYPE * GetConstitutiveModel( dataRepository::Group * dataGroup, string const & name );
 
   integer m_logLevel = 0;
-  R1Tensor m_gravityVector;
-  integer m_applyGravity;
   SystemSolverParameters m_systemSolverParameters;
 
   real64 m_cflFactor;

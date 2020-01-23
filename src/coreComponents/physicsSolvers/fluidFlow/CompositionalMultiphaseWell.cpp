@@ -478,14 +478,10 @@ void CompositionalMultiphaseWell::InitializeWells( DomainPartition * const domai
     GEOSX_ERROR_IF( pressureControl <= 0, "Invalid well initialization: negative pressure was found" );
 
     // 3) Estimate the pressures in the well elements using this avgDensity
-    integer const gravityFlag = applyGravity();
-
     forall_in_range( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex const iwelem )
     {
       wellElemPressure[iwelem] = pressureControl
-        + ( gravityFlag 
-          ? avgMixtureDensity * ( wellElemGravCoef[iwelem] - gravCoefControl ) 
-          : 0 );
+        + avgMixtureDensity * ( wellElemGravCoef[iwelem] - gravCoefControl );
 
     });
 
@@ -1455,7 +1451,7 @@ void CompositionalMultiphaseWell::FormPressureRelations( DomainPartition const *
         }
 
         // compute depth diff times acceleration
-        real64 const gravD = applyGravity() ? wellElemGravCoef[iwelemNext] - wellElemGravCoef[iwelem] : 0;
+        real64 const gravD = wellElemGravCoef[iwelemNext] - wellElemGravCoef[iwelem];
 
         // compute the current pressure in the two well elements
         real64 const pressureNext    = wellElemPressure[iwelemNext] + dWellElemPressure[iwelemNext];
@@ -1837,15 +1833,12 @@ void CompositionalMultiphaseWell::ComputeAllPerforationRates( WellElementSubRegi
 
     multiplier[SubRegionTag::WELL] = -1.0;
 
-    if (applyGravity())
+    real64 const gravD = ( perfGravCoef[iperf] - wellElemGravCoef[iwelem] );
+    pressure[SubRegionTag::WELL]  += wellElemMixtureDensity[iwelem] * gravD;
+    dPressure_dP[SubRegionTag::WELL] += dWellElemMixtureDensity_dPres[iwelem] * gravD;
+    for (localIndex ic = 0; ic < NC; ++ic)
     {
-      real64 const gravD = ( perfGravCoef[iperf] - wellElemGravCoef[iwelem] );
-      pressure[SubRegionTag::WELL]  += wellElemMixtureDensity[iwelem] * gravD;
-      dPressure_dP[SubRegionTag::WELL] += dWellElemMixtureDensity_dPres[iwelem] * gravD;
-      for (localIndex ic = 0; ic < NC; ++ic)
-      {
-        dPressure_dC[SubRegionTag::WELL][ic] += dWellElemMixtureDensity_dComp[iwelem][ic] * gravD;
-      }
+      dPressure_dC[SubRegionTag::WELL][ic] += dWellElemMixtureDensity_dComp[iwelem][ic] * gravD;
     }
 
     // get transmissibility at the interface
