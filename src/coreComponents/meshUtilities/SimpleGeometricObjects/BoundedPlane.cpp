@@ -96,10 +96,13 @@ void BoundedPlane::findRectangleLimits()
   m_points[3] -= lengthVec;
   m_points[3] += widthVec;
 
-  std::cout << "Point A: " << m_points[0] << std::endl;
-  std::cout << "Point B: " << m_points[1] << std::endl;
-  std::cout << "Point C: " << m_points[2] << std::endl;
-  std::cout << "Point D: " << m_points[3] << std::endl;
+  if (getLogLevel() > 1)
+  {
+	  GEOSX_LOG_RANK_0( "Point A: " << m_points[0] );
+	  GEOSX_LOG_RANK_0( "Point B: " << m_points[1] );
+	  GEOSX_LOG_RANK_0( "Point C: " << m_points[2] );
+	  GEOSX_LOG_RANK_0( "Point D: " << m_points[3] );
+  }
 }
 
 bool BoundedPlane::IsCoordInObject( const R1Tensor& coord ) const
