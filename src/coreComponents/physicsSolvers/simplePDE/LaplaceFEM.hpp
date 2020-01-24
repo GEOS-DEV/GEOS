@@ -17,7 +17,6 @@
 
 #include "physicsSolvers/SolverBase.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
-#include "linearAlgebra/DofManager.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 //START_SPHINX_INCLUDE_00
 struct stabledt

@@ -216,7 +216,7 @@ public:
 
   template< typename T >
   static int allGather( arrayView1d< T const > const & sendbuf,
-                        array1d< T > const & recvbuf );
+                        array1d< T > & recvbuf );
 
   /**
    * @brief Strongly typed wrapper around MPI_Allreduce.
@@ -466,7 +466,7 @@ void MpiWrapper::allGather( T const myValue, array1d< T > & allValues )
 
 template< typename T >
 int MpiWrapper::allGather( arrayView1d< T const > const & sendValues,
-                           array1d< T > const & allValues )
+                           array1d< T > & allValues )
 {
   int const sendSize = integer_conversion<int>( sendValues.size() );
 #ifdef GEOSX_USE_MPI

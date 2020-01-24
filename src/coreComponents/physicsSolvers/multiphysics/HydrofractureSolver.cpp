@@ -88,9 +88,6 @@ void HydrofractureSolver::ImplicitStepSetup( real64 const & time_n,
                                              ParallelVector & GEOSX_UNUSED_ARG( rhs ),
                                              ParallelVector & GEOSX_UNUSED_ARG( solution ) )
 {
-  m_solidSolver = this->getParent()->GetGroup<SolidMechanicsLagrangianFEM>(m_solidSolverName);
-  m_flowSolver = this->getParent()->GetGroup<FlowSolverBase>(m_flowSolverName);
-
   m_solidSolver->ImplicitStepSetup( time_n, dt, domain,
                                     m_solidSolver->getDofManager(),
                                     m_solidSolver->getSystemMatrix(),
@@ -128,6 +125,12 @@ void HydrofractureSolver::PostProcessInput()
   {
     GEOSX_ERROR("invalid coupling type option");
   }
+
+  m_solidSolver = this->getParent()->GetGroup<SolidMechanicsLagrangianFEM>( m_solidSolverName );
+  GEOSX_ERROR_IF( m_solidSolver == nullptr, this->getName() << ": invalid solid solver name: " << m_solidSolverName );
+
+  m_flowSolver = this->getParent()->GetGroup<FlowSolverBase>( m_flowSolverName );
+  GEOSX_ERROR_IF( m_flowSolver == nullptr, this->getName() << ": invalid flow solver name: " << m_flowSolverName );
 
 }
 
@@ -415,13 +418,22 @@ void HydrofractureSolver::SetupDofs( DomainPartition const * const domain,
   m_solidSolver->SetupDofs( domain, dofManager );
   m_flowSolver->SetupDofs( domain, dofManager );
 
+  // restrict coupling to fracture regions only (as done originally in SetupSystem)
+  ElementRegionManager const * const elemManager = domain->getMeshBody( 0 )->getMeshLevel( 0 )->getElemManager();
+  string_array fractureRegions;
+  elemManager->forElementRegions<FaceElementRegion>([&]( FaceElementRegion const * const elementRegion )
+  {
+    fractureRegions.push_back( elementRegion->getName() );
+  } );
+
   dofManager.addCoupling( keys::TotalDisplacement,
                           FlowSolverBase::viewKeyStruct::pressureString,
-                          DofManager::Connectivity::Elem );
+                          DofManager::Connectivity::Elem,
+                          fractureRegions );
 }
 
 void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
-                                       DofManager & GEOSX_UNUSED_ARG( dofManager ),
+                                       DofManager & dofManager,
                                        ParallelMatrix & GEOSX_UNUSED_ARG( matrix ),
                                        ParallelVector & GEOSX_UNUSED_ARG( rhs ),
                                        ParallelVector & GEOSX_UNUSED_ARG( solution ) )
@@ -430,30 +442,24 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
   m_flowSolver->ResetViews( domain );
 
   m_solidSolver->SetupSystem( domain,
-                           m_solidSolver->getDofManager(),
-                           m_solidSolver->getSystemMatrix(),
-                           m_solidSolver->getSystemRhs(),
-                           m_solidSolver->getSystemSolution() );
+                              m_solidSolver->getDofManager(),
+                              m_solidSolver->getSystemMatrix(),
+                              m_solidSolver->getSystemRhs(),
+                              m_solidSolver->getSystemSolution() );
 
   m_flowSolver->SetupSystem( domain,
-                           m_flowSolver->getDofManager(),
-                           m_flowSolver->getSystemMatrix(),
-                           m_flowSolver->getSystemRhs(),
-                           m_flowSolver->getSystemSolution() );
+                             m_flowSolver->getDofManager(),
+                             m_flowSolver->getSystemMatrix(),
+                             m_flowSolver->getSystemRhs(),
+                             m_flowSolver->getSystemSolution() );
 
+  // setup coupled DofManager
+  m_dofManager.setMesh( domain, 0, 0 );
+  SetupDofs( domain, dofManager );
 
-  // TODO: once we move to a monolithic matrix, we can just use SolverBase implementation
-
-//  dofManager.setSparsityPattern( m_matrix01,
-//                                 keys::TotalDisplacement,
-//                                 FlowSolverBase::viewKeyStruct::pressureString );
-//
-//  dofManager.setSparsityPattern( m_matrix10,
-//                                 FlowSolverBase::viewKeyStruct::pressureString,
-//                                 keys::TotalDisplacement );
-
-
-
+  // By not calling dofManager.reorderByRank(), we keep separate dof numbering for each field,
+  // which allows constructing separate sparsity patterns for off-diagonal blocks of the matrix.
+  // Once the solver moves to monolithic matrix, we can remove this method and just use SolverBase::SetupSystem.
 
   m_matrix01.createWithLocalSize( m_solidSolver->getSystemMatrix().localRows(),
                                   m_flowSolver->getSystemMatrix().localCols(),
@@ -464,64 +470,8 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
                                   24,
                                   MPI_COMM_GEOSX);
 
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  NodeManager * const nodeManager = mesh->getNodeManager();
-  ElementRegionManager * const elemManager = mesh->getElemManager();
-
-
-
-
-  string const presDofKey = m_flowSolver->getDofManager().getKey( FlowSolverBase::viewKeyStruct::pressureString );
-  string const dispDofKey = m_solidSolver->getDofManager().getKey( keys::TotalDisplacement );
-
-  arrayView1d<globalIndex> const &
-  dispDofNumber =  nodeManager->getReference<globalIndex_array>( dispDofKey );
-
-  elemManager->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion const * const elementSubRegion )
-  {
-    localIndex const numElems = elementSubRegion->size();
-    array1d<array1d<localIndex > > const & elemsToNodes = elementSubRegion->nodeList();
-    arrayView1d<globalIndex> const &
-    faceElementDofNumber = elementSubRegion->getReference< array1d<globalIndex> >( presDofKey );
-
-    for( localIndex k=0 ; k<numElems ; ++k )
-    {
-      globalIndex const activeFlowDOF = faceElementDofNumber[k];
-      localIndex const numNodesPerElement = elemsToNodes[k].size();
-      array1d<globalIndex> activeDisplacementDOF(3 * numNodesPerElement);
-      array1d<real64> values( 3*numNodesPerElement );
-      values = 1;
-
-      for( localIndex a=0 ; a<numNodesPerElement ; ++a )
-      {
-        for( int d=0 ; d<3 ; ++d )
-        {
-          activeDisplacementDOF[a * 3 + d] = dispDofNumber[elemsToNodes[k][a]] + d;
-        }
-      }
-
-      m_matrix01.insert( activeDisplacementDOF.data(),
-                         &activeFlowDOF,
-                         values.data(),
-                         activeDisplacementDOF.size(),
-                         1 );
-
-      m_matrix10.insert( &activeFlowDOF,
-                         activeDisplacementDOF.data(),
-                         values.data(),
-                         1,
-                         activeDisplacementDOF.size() );
-
-    }
-  });
-
-  m_matrix01.close();
-  m_matrix10.close();
-
-
-
-
-
+  dofManager.setSparsityPattern( m_matrix01, keys::TotalDisplacement, FlowSolverBase::viewKeyStruct::pressureString );
+  dofManager.setSparsityPattern( m_matrix10, FlowSolverBase::viewKeyStruct::pressureString, keys::TotalDisplacement );
 }
 
 void HydrofractureSolver::AssembleSystem( real64 const time,
