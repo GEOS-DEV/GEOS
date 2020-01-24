@@ -19,6 +19,7 @@
 #ifndef GEOSX_LINEARALGEBRA_DOFMANAGER_HPP_
 #define GEOSX_LINEARALGEBRA_DOFMANAGER_HPP_
 
+#include "cxx-utilities/src/SparsityPattern.hpp"
 #include "common/DataTypes.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 
@@ -49,8 +50,7 @@ public:
     Elem, //!< location is element (like pressure in finite volumes)
     Face, //!< location is face (like flux in mixed finite elements)
     Edge, //!< location is edge (like flux between fracture elements)
-    Node, //!< location is node (like displacements in finite elements)
-    USER_DEFINED //!< user defined location (for input connectivity pattern)
+    Node  //!< location is node (like displacements in finite elements)
   };
 
   /**
@@ -64,30 +64,30 @@ public:
     Face, //!< connectivity is face (like in finite volumes TPFA)
     Edge, //!< connectivity is edge (like fracture element connectors)
     Node, //!< connectivity is node (like in finite volumes MPFA)
-    None, //!< there is no connectivity (self connected field, like a mass matrix)
-    USER_DEFINED //!< user defined connectivity (for input connectivity pattern)
+    None  //!< there is no connectivity (self connected field, like a lumped mass matrix)
   };
+
+  /**
+   * Limit on max number of fields
+   */
+  static localIndex constexpr MAX_FIELDS = 10;
 
   /**
    * Field description
    */
   struct FieldDescription
   {
-    FieldDescription()
-      : numComponents( 1 )
-    {}
-
     string name; //!< field name
-    array1d<string> regionNames; //!< active element regions
     Location location; //!< support location
+    string_array regions; //!< list of support region names
     localIndex numComponents; //!< number of vector components
     string key; //!< string key for index array
     string docstring; //!< documentation string
-    localIndex numLocalNodes; //!< number of local nodes
-    localIndex numLocalRows; //!< number of local rows
-    globalIndex numGlobalRows; //!< number of global rows
-    globalIndex firstLocalRow; //!< field's first row on current processor (in its block, not considering other fields)
-    globalIndex fieldOffset; //!< global offset of field's DOFs on current processor for multi-field problems
+    localIndex numLocalDof; //!< number of local rows
+    globalIndex numGlobalDof; //!< number of global rows
+    globalIndex blockOffset;  //!< offset of this field's block in a block-wise ordered system
+    globalIndex rankOffset; //!< field's first DoF on current processor (within its block, ignoring other fields)
+    globalIndex globalOffset; //!< global offset of field's DOFs on current processor for multi-field problems
   };
 
   /**
@@ -98,7 +98,7 @@ public:
    *                       - 0: nothing (default)
    *                       - >0: minimal info
    */
-  DofManager( string name, localIndex const verbosity = 0 );
+  DofManager( string name );
 
   /**
    * @brief Destructor.
@@ -126,23 +126,19 @@ public:
    *
    * @param [in] fieldName string the name of the field.
    * @param [in] location Location where it is defined.
-   * @param [in] connectivity Connectivity through what it is connected.
    */
   void addField( string const & fieldName,
-                 Location const location,
-                 Connectivity const connectivity );
+                 Location const location );
 
   /**
    * @brief Just another interface to allow four parameters (no regions, default is everywhere).
    *
    * @param [in] fieldName string the name of the field.
    * @param [in] location Location where it is defined.
-   * @param [in] connectivity Connectivity through what it is connected.
    * @param [in] components localIndex number of components (for vector fields).
    */
   void addField( string const & fieldName,
                  Location const location,
-                 Connectivity const connectivity,
                  localIndex const components );
 
   /**
@@ -150,12 +146,10 @@ public:
    *
    * @param [in] fieldName string the name of the field.
    * @param [in] location Location where it is defined.
-   * @param [in] connectivity Connectivity through what it is connected.
    * @param [in] regions string_array where this field is defined.
    */
   void addField( string const & fieldName,
                  Location const location,
-                 Connectivity const connectivity,
                  string_array const & regions );
 
   /**
@@ -180,60 +174,13 @@ public:
    *
    * @param [in] field string the name of the field.
    * @param [in] location Location where it is defined.
-   * @param [in] connectivity Connectivity through what it is connected.
    * @param [in] components localIndex number of components (for vector fields).
    * @param [in] regions string_array where this field is defined.
    */
   void addField( string const & fieldName,
                  Location const location,
-                 Connectivity const connectivity,
                  localIndex const components,
                  string_array const & regions );
-
-  /**
-   * @brief Interface to allow only two parameters.
-   *
-   * @param [in] fieldName string the name of the field.
-   * @param [in] connLocInput ParallelMatrix input LC pattern.
-   */
-  void addField( string const & fieldName,
-                 ParallelMatrix const & connLocInput );
-
-  /**
-   * @brief Just another interface to allow three parameters (no connectivity, default is USER_DEFINED).
-   *
-   * @param [in] fieldName string the name of the field.
-   * @param [in] connLocInput ParallelMatrix input LC pattern.
-   * @param [in] components localIndex number of components (for vector fields).
-   */
-  void addField( string const & fieldName,
-                 ParallelMatrix const & connLocInput,
-                 localIndex const components );
-
-  /**
-   * @brief Just another interface to allow three parameters (no components, default is 1).
-   *
-   * @param [in] fieldName string the name of the field.
-   * @param [in] connLocInput ParallelMatrix input LC pattern.
-   * @param [in] connectivity Connectivity through what it is connected.
-   */
-  void addField( string const & fieldName,
-                 ParallelMatrix const & connLocInput,
-                 Connectivity const connectivity );
-
-  /**
-   * @brief addField with an input pattern.
-   * Allow the usage of a predefined location-connection pattern (user-defined).
-   *
-   * @param [in] field string the name of the field.
-   * @param [in] connLocInput ParallelMatrix input LC pattern.
-   * @param [in] components localIndex number of components (for vector fields).
-   * @param [in] connectivity Connectivity through what it is connected.
-   */
-  void addField( string const & fieldName,
-                 ParallelMatrix const & connLocInput,
-                 localIndex const components,
-                 Connectivity const connectivity );
 
   /**
    * @brief Just an interface to allow only three parameters.
@@ -281,13 +228,13 @@ public:
    * @note After DofManager has been closed, new fields and coupling cannot be added, until
    *       @ref clear or @ref setMesh is called.
    *
-   * @note After close() is called, the meaning of FieldDescription::fieldOffset changes from
+   * @note After reorderByRank() is called, the meaning of FieldDescription::globalOffset changes from
    *       "global offset of field's block in a global field-wise ordered (block) system" to
    *       "global offset of field's block on current processor in a rank-wise ordered system".
    *       This meaning is consistent with its use throughout. For example, this is the row/col
    *       global offset used to insert the field's sparsity block into a global coupled system.
    */
-  void close();
+  void reorderByRank();
 
   /**
    * @brief Add coupling between two fields.
@@ -312,6 +259,11 @@ public:
                     Connectivity const connectivity,
                     string_array const & regions,
                     bool const symmetric );
+
+  /**
+   * @brief Check if string key is already being used
+   */
+  bool fieldExists( string const & name ) const;
 
   /**
    * @brief Return the key used to record the field in the DofManager.
@@ -342,57 +294,31 @@ public:
    *
    * @param [in] fieldName Optional string the name of the field.
    */
-  localIndex offsetLocalDofs( string const & fieldName = "" ) const;
+  localIndex rankOffset( string const & fieldName = "" ) const;
 
   /**
-   * @brief Set a sparsity pattern. Without additional arguments, this function provides the sparsity
-   * pattern for the monolithic matrix. Sub-patterns can be extracted, however, using row and column
-   * field keys.
+   * @brief Populate sparsity pattern of the entire system matrix.
    *
-   * @param [out] matrix ParallelMatrix the location-location sparsity pattern (LC*CL).
-   * @param [in]  rowFieldName Optional string the name of the row field.
-   * @param [in]  colFieldName Optional string the name of the col field.
-   * @param [in]  closePattern Whether to close the matrix upon pattern assembly
+   * @param [out] matrix the target matrix
+   * @param [in]  closePattern whether to reorderByRank the matrix upon pattern assembly
    */
-  void setSparsityPattern( ParallelMatrix & matrix,
-                           string const & rowFieldName = "",
-                           string const & colFieldName = "",
-                           bool const closePattern = true ) const;
+  template< typename MATRIX >
+  void setSparsityPattern( MATRIX & matrix,
+                           bool closePattern = true ) const;
 
   /**
-   * @brief Set a sparsity pattern. Low level version.
+   * @brief Populate sparsity pattern for one block of the system matrix.
    *
-   * @param [out] matrix ParallelMatrix the location-location sparsity pattern (LC*CL).
-   * @param [in]  rowFieldIndex localIndex row field index (-1 means all fields).
-   * @param [in]  colFieldIndex localIndex col field index (-1 means all fields).
-   * @param [in]  closePattern Whether to close the matrix upon pattern assembly
+   * @param [out] matrix the the target matrix
+   * @param [in]  rowFieldName the name of the row field.
+   * @param [in]  colFieldName the name of the col field.
+   * @param [in]  closePattern whether to reorderByRank the matrix upon pattern assembly
    */
-  void setSparsityPattern( ParallelMatrix & matrix,
-                           localIndex const rowFieldIndex,
-                           localIndex const colFieldIndex,
-                           bool const closePattern = true ) const;
-
-  /**
-   * @brief Allocate a vector. Without additional arguments, this function provides the a vector
-   * consistent with the sparsity pattern for the monolithic matrix. Sub-vectors can be extracted,
-   * however, using row and column field keys.
-   *
-   * @param [out] vector ParallelVector the output vector.
-   * @param [in]  rowField Optional string the name of the row field.
-   * @param [in]  colField Optional string the name of the col field.
-   */
-  void setVector( ParallelVector & vector,
-                  string const & fieldName = "" ) const;
-
-  /**
-   * @brief Allocate a vector. Low level version.
-   *
-   * @param [out] vector ParallelVector the output vector.
-   * @param [in]  rowFieldIndex localIndex row field index (-1 means all fields).
-   * @param [in]  colFieldIndex localIndex col field index (-1 means all fields).
-   */
-  void setVector( ParallelVector & vector,
-                  localIndex const fieldIndex ) const;
+  template< typename MATRIX >
+  void setSparsityPattern( MATRIX & matrix,
+                           string const & rowFieldName,
+                           string const & colFieldName,
+                           bool closePattern = true ) const;
 
   /**
    * @brief Copy values from DOFs to nodes.
@@ -410,11 +336,11 @@ public:
    * @note [@p loCompIndex , @p hiCompIndex) form a half-open interval.
    *       Negative value of @p hiCompIndex means use full number of field components
    */
-  void copyVectorToField( ParallelVector const & vector,
+  template< typename VECTOR >
+  void copyVectorToField( VECTOR const & vector,
                           string const & srcFieldName,
-                          real64 const scalingFactor,
-                          ObjectManagerBase * const manager,
                           string const & dstFieldName,
+                          real64 const scalingFactor,
                           localIndex const loCompIndex = 0,
                           localIndex const hiCompIndex = -1 ) const;
 
@@ -434,11 +360,11 @@ public:
    * @note [@p loCompIndex , @p hiCompIndex) form a half-open interval.
    *       Negative value of @p hiCompIndex means use full number of field components
    */
-  void addVectorToField( ParallelVector const & vector,
+  template< typename VECTOR >
+  void addVectorToField( VECTOR const & vector,
                          string const & srcFieldName,
-                         real64 const scalingFactor,
-                         ObjectManagerBase * const manager,
                          string const & dstFieldName,
+                         real64 const scalingFactor,
                          localIndex const loCompIndex = 0,
                          localIndex const hiCompIndex = -1 ) const;
 
@@ -458,11 +384,11 @@ public:
    * @note [@p loCompIndex , @p hiCompIndex) form a half-open interval.
    *       Negative value of @p hiCompIndex means use full number of field components
    */
-  void copyFieldToVector( ObjectManagerBase const * const manager,
+  template< typename VECTOR >
+  void copyFieldToVector( VECTOR & vector,
                           string const & srcFieldName,
-                          real64 const scalingFactor,
-                          ParallelVector & vector,
                           string const & dstFieldName,
+                          real64 const scalingFactor,
                           localIndex const loCompIndex = 0,
                           localIndex const hiCompIndex = -1 ) const;
 
@@ -482,27 +408,18 @@ public:
    * @note [@p loCompIndex , @p hiCompIndex) form a half-open interval.
    *       Negative value of @p hiCompIndex means use full number of field components
    */
-  void addFieldToVector( ObjectManagerBase const * const manager,
+  template< typename VECTOR >
+  void addFieldToVector( VECTOR & vector,
                          string const & srcFieldName,
-                         real64 const scalingFactor,
-                         ParallelVector & vector,
                          string const & dstFieldName,
+                         real64 const scalingFactor,
                          localIndex const loCompIndex = 0,
                          localIndex const hiCompIndex = -1 ) const;
 
   /**
-   * @brief Print the global connectivity matrix.
+   * @brief Print the summary of declared fields and coupling.
    */
-  void printConnectivityMatrix( std::ostream & os = std::cout ) const;
-
-  /**
-   * @brief Print the connectivity-location pattern for a specific field.
-   *
-   * @param [in] fieldName string the name of the field.
-   * @param [in] fileName Optional string the name of the output file (if empty, fileName is
-   *                      formed based on field name).
-   */
-  void printConnectivityLocationPattern( string const & fieldName, string const & fileName = "" ) const;
+  void printFieldInfo( std::ostream & os = std::cout ) const;
 
 private:
 
@@ -512,34 +429,19 @@ private:
   void initializeDataStructure();
 
   /**
-   * @brief Check if string key is already being used
-   */
-  bool keyInUse( string const & key ) const;
-
-  /**
    * @brief Get field index from string key
    */
-  localIndex getFieldIndex( string const & key ) const;
+  localIndex getFieldIndex( string const & name ) const;
 
   /**
    * @brief Create index array for the field
    */
-  template< typename ... SUBREGIONTYPES >
   void createIndexArray( FieldDescription & field );
 
   /**
    * @brief Remove an index array for the field
    */
-  template< typename ... SUBREGIONTYPES >
   void removeIndexArray( FieldDescription const & field );
-
-  /**
-   * @brief Create a connector-location sparsity pattern for a field
-   */
-  void makeConnLocPattern( FieldDescription const & fieldDesc,
-                           Connectivity const connectivity,
-                           array1d <string> const & regions,
-                           ParallelMatrix & connLocPattern );
 
   /**
    * @brief Populate the sparsity pattern for a coupling block between given fields.
@@ -549,10 +451,10 @@ private:
    *
    * This private function is used as a building block by higher-level SetSparsityPattern()
    */
-  void setSparsityPatternOneBlock( ParallelMatrix & pattern,
+  template< typename MATRIX >
+  void setSparsityPatternOneBlock( MATRIX & pattern,
                                    localIndex const rowFieldIndex,
-                                   localIndex const colFieldIndex,
-                                   bool const closePattern = true ) const;
+                                   localIndex const colFieldIndex ) const;
 
   /**
    * @brief Generic implementation for @ref copyVectorToField and @ref addVectorToField
@@ -569,12 +471,11 @@ private:
    * @note [@p loCompIndex , @p hiCompIndex) form a half-open interval.
    *       Negative value of @p hiCompIndex means use full number of field components
    */
-  template< typename FIELD_OP, typename POLICY >
-  void vectorToField( ParallelVector const & vector,
+  template< typename FIELD_OP, typename POLICY, typename VECTOR >
+  void vectorToField( VECTOR const & vector,
                       string const & srcFieldName,
-                      real64 const scalingFactor,
-                      ObjectManagerBase * const manager,
                       string const & dstFieldName,
+                      real64 const scalingFactor,
                       localIndex const loCompIndex,
                       localIndex const hiCompIndex ) const;
 
@@ -593,70 +494,36 @@ private:
    * @note [@p loCompIndex , @p hiCompIndex) form a half-open interval.
    *       Negative value of @p hiCompIndex means use full number of field components
    */
-  template< typename FIELD_OP, typename POLICY >
-  void fieldToVector( ObjectManagerBase const * const manager,
+  template< typename FIELD_OP, typename POLICY, typename VECTOR >
+  void fieldToVector( VECTOR & vector,
                       string const & srcFieldName,
-                      real64 const scalingFactor,
-                      ParallelVector & vector,
                       string const & dstFieldName,
+                      real64 const scalingFactor,
                       localIndex const loCompIndex,
                       localIndex const hiCompIndex ) const;
 
-  /**
-   * Name of the manager
-   */
+  /// Name of the manager (unique, for unique identification of index array keys)
   string m_name;
 
-  /**
-   * Verbosity level
-   */
-  localIndex m_logLevel;
-
-  /**
-   *  Limit on max number of fields
-   */
-  static localIndex constexpr MAX_NUM_FIELDS = 10;
-
-  /**
-   * Pointer to domain manager
-   */
+  /// Pointer to domain manager
   DomainPartition * m_domain = nullptr;
 
-  /**
-   * Pointer to corresponding MeshLevel
-   */
+  /// Pointer to corresponding MeshLevel
   MeshLevel * m_mesh = nullptr;
 
-  /**
-   * Array of field descriptions
-   */
+  /// Array of field descriptions
   array1d<FieldDescription> m_fields;
 
-  /**
-   * Table of connectivities within and between fields
-   */
+  /// Table of connector types within and between fields
   array2d<Connectivity> m_connectivity;
 
-  /**
-   * Definition for entries of sparse matrices collection
-   */
-  struct matrixPair
-  {
-    std::unique_ptr<ParallelMatrix> first;
-    std::unique_ptr<ParallelMatrix> second;
-  };
+  /// For each field-field coupling, list of regions where coupling is defined
+  array2d< string_array > m_couplingRegions;
 
-  /**
-   * Table of sparsity patterns within and between fields
-   */
-  array2d<matrixPair> m_sparsityPattern;
-
-  /**
-   * Indicates that the manager is closed for adding new fields
-   */
-  bool m_closed;
+  /// Flag indicating that DOFs have been reordered rank-wise.
+  bool m_reordered;
 };
 
 } /* namespace geosx */
 
-#endif /* GEOSX_LINEARALGEBRA_DOFMANAGER_HPP_ */
+#endif /*GEOSX_LINEARALGEBRA_DOFMANAGER_HPP_*/

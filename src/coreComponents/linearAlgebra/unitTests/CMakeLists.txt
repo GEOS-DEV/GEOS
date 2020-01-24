@@ -5,7 +5,7 @@ set( LAI_tests
      testLAOperations.cpp 
      testArrayLAOperations.cpp
      testKrylovSolvers.cpp
-     testDofManager.cpp 
+     testDofManager.cpp
      testLAIHelperFunctions.cpp)
 
 set( nranks 2 )
