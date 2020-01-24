@@ -387,45 +387,6 @@ real64 PyramidVolume( R1Tensor const * const X ) {
     tet2[3] = X[4];
     return TetVolume(tet1) + TetVolume(tet2);
 }
-
-R1Tensor GetBoundingBox( localIndex elemIndex,
-                         NodeMapType const & pointIndices,
-                         arrayView1d<R1Tensor const> const & pointCoordinates )
-{
-  localIndex constexpr dim = 3;
-  
-  // these arrays will store the min and max coordinates of the elem in each direction
-  R1Tensor minCoords(  1e99 );
-  R1Tensor maxCoords( -1e99 );
-
-  // loop over all the vertices of the element to get the min and max coords
-  for (localIndex a = 0; a < pointIndices[elemIndex].size(); ++a)
-  {
-    localIndex const id = pointIndices[elemIndex][a];
-    R1Tensor const coords = pointCoordinates[id];
-
-    for (localIndex d = 0; d < dim; ++d)
-    {  
-      if (coords[d] < minCoords[d])
-      {
-        minCoords[d] = coords[d];
-      }
-      else if (coords[d] > maxCoords[d])
-      {
-        maxCoords[d] = coords[d];
-      }
-    }
-  }
-
-  // compute the dimensions of the bounding box
-  R1Tensor box( 0 );
-  for (localIndex d = 0; d < dim; ++d)
-  {
-    box[d] = maxCoords[d] - minCoords[d];
-  }
  
-  return box;
-}
-  
 }
 } /* namespace geosx */

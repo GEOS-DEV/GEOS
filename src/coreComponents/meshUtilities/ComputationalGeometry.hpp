@@ -27,16 +27,6 @@ namespace geosx
 namespace computationalGeometry
 {
 
-#if defined( GEOSX_USE_CUDA )
-  using NODE_MAP_PERMUTATION = RAJA::PERM_JI;
-#else
-  using NODE_MAP_PERMUTATION = RAJA::PERM_IJ;
-#endif
-
-  static constexpr int NODE_MAP_UNIT_STRIDE_DIM = LvArray::getStrideOneDimension( NODE_MAP_PERMUTATION {} );
-
-  using NodeMapType = InterObjectRelation< array2d< localIndex, NODE_MAP_PERMUTATION > >;
-
   
 /**
  * Calculates the centroid of a convex 3D polygon as well as the normal
@@ -132,10 +122,10 @@ bool IsPointInsidePolyhedron( arrayView1d<R1Tensor const> const & nodeCoordinate
  * @param[in] pointCoordinates the vertices coordinates
  * @return an R1Tensor containing the dimensions of the box
  */
-R1Tensor GetBoundingBox( localIndex elemIndex, 
-                         NodeMapType const & pointIndices,
+template<typename NODEMAP>
+R1Tensor GetBoundingBox( localIndex elemIndex,
+                         NODEMAP const & pointIndices,
                          arrayView1d<R1Tensor const> const & pointCoordinates );
-  
 
 real64 HexVolume( R1Tensor const * const points );
 
@@ -167,7 +157,51 @@ inline void VectorMean( array1d< R1Tensor > const & X,
   vec /= N;
 }
 
+
 }
+
+
+template<typename NODEMAP>
+R1Tensor computationalGeometry::GetBoundingBox( localIndex elemIndex,
+                                                NODEMAP const & pointIndices,
+                                                arrayView1d<R1Tensor const> const & pointCoordinates )
+{
+  localIndex constexpr dim = 3;
+  
+  // these arrays will store the min and max coordinates of the elem in each direction
+  R1Tensor minCoords(  1e99 );
+  R1Tensor maxCoords( -1e99 );
+
+  // loop over all the vertices of the element to get the min and max coords
+  for (localIndex a = 0; a < pointIndices.size( 1 ); ++a)
+  {
+    localIndex const id = pointIndices( elemIndex, a );
+    R1Tensor const coords = pointCoordinates[id];
+
+    for (localIndex d = 0; d < dim; ++d)
+    {  
+      if (coords[d] < minCoords[d])
+      {
+        minCoords[d] = coords[d];
+      }
+      else if (coords[d] > maxCoords[d])
+      {
+        maxCoords[d] = coords[d];
+      }
+    }
+  }
+
+  // compute the dimensions of the bounding box
+  R1Tensor box( 0 );
+  for (localIndex d = 0; d < dim; ++d)
+  {
+    box[d] = maxCoords[d] - minCoords[d];
+  }
+ 
+  return box;
+}
+
+
 } /* namespace geosx */
 
 #endif /* GEOSX_MESHUTILITIES_COMPUTATIONALGEOMETRY_HPP_ */
