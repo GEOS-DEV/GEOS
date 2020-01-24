@@ -137,7 +137,7 @@ void EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface (localIndex const cellIndex
 
   bool addEmbeddedElem = true;
   array1d<R1Tensor> const & nodesCoord = nodeManager.referencePosition();
-  array2d<localIndex> const & edgeToNodes = edgeManager.nodeList();
+  EdgeManager::NodeMapType::ViewTypeConst const & edgeToNodes = edgeManager.nodeList();
   R1Tensor origin  = fracture->getCenter();
   localIndex edgeIndex;
   R1Tensor lineDir, dist, point;

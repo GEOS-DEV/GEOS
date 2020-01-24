@@ -122,7 +122,7 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
   // Loop over all the fracture planes
   geometricObjManager->forSubGroups<BoundedPlane>( [&]( BoundedPlane * const fracture ) -> void
   {
-    /* 1. Find out if an element is cut but the fracture or not.
+    /* 1. Find out if an element is cut by the fracture or not.
      * Loop over all the elements and for each one of them loop over the nodes and compute the
      * dot product between the distance between the plane center and the node and the normal
      * vector defining the plane. If two scalar products have different signs the plane cuts the
@@ -140,7 +140,7 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
       Group * subRegions = region->GetGroup(ElementRegionBase::viewKeyStruct::elementSubRegions);
       subRegions->forSubGroups<CellElementSubRegion>( [&]( CellElementSubRegion * const subRegion ) -> void
       {
-        FixedOneToManyRelation const & cellToNodes = subRegion->nodeList();
+        CellElementSubRegion::NodeMapType::ViewTypeConst const & cellToNodes = subRegion->nodeList();
         FixedOneToManyRelation const & cellToEdges = subRegion->edgeList();
         for(localIndex cellIndex =0; cellIndex<subRegion->size(); cellIndex++)
         {
@@ -161,8 +161,6 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
             }
           } // end loop over nodes
           if (isPositive * isNegative == 1)
-            // TODO in reality this condition is not sufficient because the fracture is a bounded plane. I should also check
-            // that the cell is inside the actual fracture plane. For now let us assume the plane is not bounded.
           {
             embeddedSurfaceSubRegion->AddNewEmbeddedSurface( cellIndex,
                                                              normalVector,
