@@ -524,11 +524,15 @@ void SolverBase::SetupSystem( DomainPartition * const domain,
   dofManager.setMesh( domain, 0, 0 );
 
   SetupDofs( domain, dofManager );
-  dofManager.close();
+  dofManager.reorderByRank();
+
+  localIndex const numLocalDof = dofManager.numLocalDofs();
+
+  matrix.createWithLocalSize( numLocalDof, numLocalDof, 8, MPI_COMM_GEOSX );
+  rhs.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
+  solution.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
 
   dofManager.setSparsityPattern( matrix );
-  dofManager.setVector( rhs );
-  dofManager.setVector( solution );
 }
 
 void SolverBase::AssembleSystem( real64 const GEOSX_UNUSED_ARG( time ),
