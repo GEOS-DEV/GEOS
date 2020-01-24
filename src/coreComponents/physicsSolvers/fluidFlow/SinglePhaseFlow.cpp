@@ -362,8 +362,11 @@ void SinglePhaseFlow::SetupDofs( DomainPartition const * const GEOSX_UNUSED_ARG(
 {
   dofManager.addField( viewKeyStruct::pressureString,
                        DofManager::Location::Elem,
-                       DofManager::Connectivity::Face,
                        m_targetRegions );
+
+  dofManager.addCoupling( viewKeyStruct::pressureString,
+                          viewKeyStruct::pressureString,
+                          DofManager::Connectivity::Face );
 }
 
 void SinglePhaseFlow::AssembleSystem( real64 const time_n,
@@ -1067,17 +1070,10 @@ void SinglePhaseFlow::ApplySystemSolution( DofManager const & dofManager,
 {
   MeshLevel * mesh = domain->getMeshBody(0)->getMeshLevel(0);
 
-  applyToSubRegions( mesh, [&] ( localIndex const GEOSX_UNUSED_ARG( er ),
-                                 localIndex const GEOSX_UNUSED_ARG( esr ),
-                                 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
-                                 ElementSubRegionBase * const subRegion )
-  {
-    dofManager.addVectorToField( solution,
-                                 viewKeyStruct::pressureString,
-                                 scalingFactor,
-                                 subRegion,
-                                 viewKeyStruct::deltaPressureString );
-  } );
+  dofManager.addVectorToField( solution,
+                               viewKeyStruct::pressureString,
+                               viewKeyStruct::deltaPressureString,
+                               scalingFactor );
 
   std::map<string, string_array> fieldNames;
   fieldNames["elems"].push_back( viewKeyStruct::deltaPressureString );

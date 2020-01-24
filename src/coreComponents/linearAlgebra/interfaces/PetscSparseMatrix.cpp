@@ -320,6 +320,21 @@ void PetscSparseMatrix::insert( array1d<globalIndex> const & rowIndices,
                 INSERT_VALUES );
 }
 
+void PetscSparseMatrix::insert( globalIndex const * rowIndices,
+                                globalIndex const * colIndices,
+                                real64 const * values,
+                                localIndex const numRows,
+                                localIndex const numCols )
+{
+  MatSetValues( m_mat,
+                numRows,
+                toPetscInt(rowIndices),
+                numCols,
+                toPetscInt(colIndices),
+                values,
+                INSERT_VALUES );
+}
+
 // -------------------------
 // Linear Algebra
 // -------------------------
@@ -744,6 +759,25 @@ Mat PetscSparseMatrix::getConstMat() const
 Mat PetscSparseMatrix::getMat()
 {
   return m_mat;
+}
+
+localIndex PetscSparseMatrix::localNonzeros() const
+{
+  PetscInt firstrow, lastrow;
+  MatGetOwnershipRange( m_mat, &firstrow, &lastrow );
+
+  PetscInt numEntries;
+  localIndex result = 0;
+
+  // loop over rows
+  for( PetscInt row = firstrow; row < lastrow; ++row )
+  {
+    MatGetRow( m_mat, row, &numEntries, nullptr, nullptr );
+    result += numEntries;
+    MatRestoreRow( m_mat, row, &numEntries, nullptr, nullptr );
+  }
+
+  return result;
 }
 
 } // end geosx namespace

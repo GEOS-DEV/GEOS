@@ -263,9 +263,12 @@ void SinglePhaseWell::SetupDofs( DomainPartition const * const domain,
 
   dofManager.addField( WellElementDofName(),
                        DofManager::Location::Elem,
-                       DofManager::Connectivity::Node,
                        NumDofPerWellElement(),
                        regions );
+
+  dofManager.addCoupling( WellElementDofName(),
+                          WellElementDofName(),
+                          DofManager::Connectivity::Node );
 }
 
 void SinglePhaseWell::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time_n ),
@@ -828,25 +831,17 @@ SinglePhaseWell::ApplySystemSolution( DofManager const & dofManager,
                                       real64 const scalingFactor,
                                       DomainPartition * const domain )
 {
-  MeshLevel * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ElementRegionManager * const elemManager = meshLevel->getElemManager();
+  dofManager.addVectorToField( solution,
+                               WellElementDofName(),
+                               viewKeyStruct::deltaPressureString,
+                               scalingFactor,
+                               0, 1 );
 
-  elemManager->forElementSubRegions<WellElementSubRegion>( [&]( WellElementSubRegion * const subRegion )
-  {
-    dofManager.addVectorToField( solution,
-                                 WellElementDofName(),
-                                 scalingFactor,
-                                 subRegion,
-                                 viewKeyStruct::deltaPressureString,
-                                 0, 1 );
-
-    dofManager.addVectorToField( solution,
-                                 WellElementDofName(),
-                                 scalingFactor,
-                                 subRegion,
-                                 viewKeyStruct::deltaConnRateString,
-                                 1, m_numDofPerWellElement );
-  });
+  dofManager.addVectorToField( solution,
+                               WellElementDofName(),
+                               viewKeyStruct::deltaConnRateString,
+                               scalingFactor,
+                               1, m_numDofPerWellElement );
 
   std::map<string, string_array > fieldNames;
   fieldNames["elems"].push_back( viewKeyStruct::deltaPressureString );

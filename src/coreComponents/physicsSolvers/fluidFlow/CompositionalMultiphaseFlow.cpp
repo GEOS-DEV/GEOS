@@ -691,9 +691,12 @@ void CompositionalMultiphaseFlow::SetupDofs( DomainPartition const * const GEOSX
 {
   dofManager.addField( viewKeyStruct::dofFieldString,
                        DofManager::Location::Elem,
-                       DofManager::Connectivity::Face,
                        m_numDofPerCell,
                        m_targetRegions );
+
+  dofManager.addCoupling( viewKeyStruct::dofFieldString,
+                          viewKeyStruct::dofFieldString,
+                          DofManager::Connectivity::Face );
 }
 
 void CompositionalMultiphaseFlow::AssembleSystem( real64 const time_n,
@@ -1480,25 +1483,17 @@ CompositionalMultiphaseFlow::ApplySystemSolution( DofManager const & dofManager,
 {
   MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
-  applyToSubRegions( mesh, [&] ( localIndex const GEOSX_UNUSED_ARG( er ),
-                                 localIndex const GEOSX_UNUSED_ARG( esr ),
-                                 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
-                                 ElementSubRegionBase * const subRegion )
-  {
-    dofManager.addVectorToField( solution,
-                                 viewKeyStruct::dofFieldString,
-                                 scalingFactor,
-                                 subRegion,
-                                 viewKeyStruct::deltaPressureString,
-                                 0, 1 );
+  dofManager.addVectorToField( solution,
+                               viewKeyStruct::dofFieldString,
+                               viewKeyStruct::deltaPressureString,
+                               scalingFactor,
+                               0, 1 );
 
-    dofManager.addVectorToField( solution,
-                                 viewKeyStruct::dofFieldString,
-                                 scalingFactor,
-                                 subRegion,
-                                 viewKeyStruct::deltaGlobalCompDensityString,
-                                 1, m_numDofPerCell );
-  } );
+  dofManager.addVectorToField( solution,
+                               viewKeyStruct::dofFieldString,
+                               viewKeyStruct::deltaGlobalCompDensityString,
+                               scalingFactor,
+                               1, m_numDofPerCell );
 
   std::map<string, string_array > fieldNames;
   fieldNames["elems"].push_back( viewKeyStruct::deltaPressureString );
