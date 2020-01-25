@@ -34,8 +34,9 @@ PhysicsSolverManager::PhysicsSolverManager( std::string const & name,
   setInputFlags(InputFlags::REQUIRED);
 
   this->registerWrapper( viewKeyStruct::gravityVectorString, &m_gravityVector, 0 )->
-    setApplyDefaultValue({0,0,0})->
-    setInputFlag(InputFlags::OPTIONAL);
+    setApplyDefaultValue({0.0,0.0,-9.81})->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Gravity vector used in the physics solvers");
 }
 
 PhysicsSolverManager::~PhysicsSolverManager()
