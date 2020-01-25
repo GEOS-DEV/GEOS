@@ -72,12 +72,37 @@ public:
   /**
    * @brief Copy constructor.
    *
-   * \param vec Vector to be copied.
+   * @param src PetscVector to be copied.
    *
    */
-  PetscVector( PetscVector const & vec );
+  PetscVector( PetscVector const & src );
 
-  /* Construct from Petsc vector */
+  /**
+   * @brief Move constructor
+   *
+   * @param src PetscVector to move from
+   */
+  PetscVector( PetscVector && src ) noexcept;
+
+  /**
+   * @brief Copy assignment.
+   *
+   * @param src PetscVector to be copied.
+   *
+   */
+  PetscVector & operator=( PetscVector const & src );
+
+  /**
+   * @brief Move assignment.
+   *
+   * @param src PetscVector to be moved from.
+   *
+   */
+  PetscVector & operator=( PetscVector && src ) noexcept;
+
+  /**
+   * @brief Construct from Petsc vector
+   */
   explicit PetscVector( Vec vec );
 
   /**
@@ -92,7 +117,7 @@ public:
   /**
    * @brief Create a vector based on a previous vector.
    *
-   * \param vector an already formed PetscVector.
+   * @param vector an already formed PetscVector.
    *
    */
   void create( PetscVector const & src );
@@ -104,7 +129,7 @@ public:
    * the sum across processors.  For specifying a global size and having
    * automatic partitioning, see createGlobal().
    *
-   * \param localSize local number of elements.
+   * @param localSize local number of elements.
    *
    */
   void createWithLocalSize( localIndex const localSize, MPI_Comm const & comm  );
@@ -116,7 +141,7 @@ public:
    * gets the same number of local elements except proc 0, which gets any
    * remainder elements as well if the split can't be done evenly.
    *
-   * \param globalSize Global number of elements.
+   * @param globalSize Global number of elements.
    *
    */
   void createWithGlobalSize( globalIndex const globalSize, MPI_Comm const & comm  );
@@ -126,7 +151,7 @@ public:
    *
    * Create a vector from local data, must assemble vector after use.
    *
-   * \param localValues local data to put into vector
+   * @param localValues local data to put into vector
    *
    */
   void create( array1d<real64> const & localValues, MPI_Comm const & comm  );
@@ -156,8 +181,8 @@ public:
    *
    * Set vector value at given element.
    *
-   * \param globalRow global row index
-   * \param value Value to add at given row.
+   * @param globalRow global row index
+   * @param value Value to add at given row.
    *
    * NOTE: set() and add() can't be interchanged without assembly.
    * 
@@ -170,8 +195,8 @@ public:
    *
    * Add into vector value at given element.
    *
-   * \param globalRow global row.
-   * \param value Values to add in given row.
+   * @param globalRow global row.
+   * @param value Values to add in given row.
    * 
    * NOTE: set() and add() can't be interchanged without assembly.
    *
@@ -184,9 +209,9 @@ public:
    *
    * Set vector values at given elements.
    *
-   * \param globalIndices global row indices.
-   * \param values Values to add in given rows.
-   * \param size Number of elements
+   * @param globalIndices global row indices.
+   * @param values Values to add in given rows.
+   * @param size Number of elements
    *
    * NOTE: set() and add() can't be interchanged without assembly.
    * 
@@ -200,9 +225,9 @@ public:
    *
    * Add vector values at given elements.
    *
-   * \param globalIndices global row indices.
-   * \param values Values to add in given rows.
-   * \param size Number of elements
+   * @param globalIndices global row indices.
+   * @param values Values to add in given rows.
+   * @param size Number of elements
    *
    * NOTE: set() and add() can't be interchanged without assembly.
    * 
@@ -216,8 +241,8 @@ public:
    *
    * Set vector values at given elements.
    *
-   * \param globalIndices global row indices.
-   * \param values Values to add in given rows.
+   * @param globalIndices global row indices.
+   * @param values Values to add in given rows.
    *
    * NOTE: set() and add() can't be interchanged without assembly.
    * 
@@ -231,8 +256,8 @@ public:
    *
    * Add into vector values at given rows.
    *
-   * \param globalIndices global rows indices
-   * \param values Values to add in given rows.
+   * @param globalIndices global rows indices
+   * @param values Values to add in given rows.
    *
    * NOTE: set() and add() can't be interchanged without assembly.
    * 
@@ -243,7 +268,7 @@ public:
   /**
    * @brief Set all elements to a constant value.
    *
-   * \param value Values to set vector elements to.
+   * @param value Values to set vector elements to.
    *
    * NOTE: set() and add() can't be interchanged without assembly.
    * 
@@ -260,7 +285,7 @@ public:
    * @brief Set vector elements to random entries.
    *
    */
-  void rand( unsigned long seed = 1984 );
+  void rand( unsigned const seed = 1984 );
 
   //@}
 
@@ -270,7 +295,7 @@ public:
   /**
    * @brief Multiply all elements by scalingFactor.
    *
-   * \param scalingFactor Scaling Factor.
+   * @param scalingFactor Scaling Factor.
    *
    */
   void scale( real64 const scalingFactor );
@@ -278,45 +303,45 @@ public:
   /**
    * @brief Dot product with the vector vec.
    *
-   * \param vec EpetraVector to dot-product with.
+   * @param vec EpetraVector to dot-product with.
    *
    */
-  real64 dot( PetscVector const &vec );
+  real64 dot( PetscVector const & vec );
 
   /**
    * @brief Update vector <tt>y</tt> as <tt>y</tt> = <tt>x</tt>.
    *
    * @note The naming convention follows the BLAS library.
    *
-   * \param x PetscVector to copy.
+   * @param x PetscVector to copy.
    *
    */
-  void copy(PetscVector const &x);
+  void copy(PetscVector const & x);
 
   /**
    * @brief Update vector <tt>y</tt> as <tt>y</tt> = <tt>alpha*x + y</tt>.
    *
    * @note The naming convention follows the logic of the BLAS library.
    *
-   * \param alpha Scaling factor for added vector.
-   * \param x Vector to add.
+   * @param alpha Scaling factor for added vector.
+   * @param x Vector to add.
    *
    */
   void axpy( real64 const alpha,
-             PetscVector const &x );
+             PetscVector const & x );
 
   /**
    * @brief Update vector <tt>y</tt> as <tt>y</tt> = <tt>alpha*x + beta*y</tt>.
    *
    * @note The naming convention follows the logic of the BLAS library.
    *
-   * \param alpha Scaling factor for added vector.
-   * \param x Vector to add.
-   * \param beta Scaling factor for self vector.
+   * @param alpha Scaling factor for added vector.
+   * @param x Vector to add.
+   * @param beta Scaling factor for self vector.
    *
    */
   void axpby( real64 const alpha, 
-              PetscVector &x, 
+              PetscVector const & x,
               real64 const beta);
 
   /**
@@ -367,15 +392,15 @@ public:
    /**
    * @brief Returns a single element. 
    * 
-   * \param globalRow Global location of element to return
+   * @param globalRow Global location of element to return
    */
   real64 get(globalIndex globalRow) const;
 
   /**
    * @brief Returns array of values at globalIndices of the vector.
    * 
-   * \param globalIndices Global index array of local portion of the vector
-   * \param values Array of values of local portion of the vector
+   * @param globalIndices Global index array of local portion of the vector
+   * @param values Array of values of local portion of the vector
    * 
    * NOTE: not yet implemented
    */
@@ -415,13 +440,13 @@ public:
   /**
    * @brief Print the vector in PETSc format to the terminal.
    */
-  void print() const;
+  void print( std::ostream & os = std::cout ) const;
 
   /**
    * @brief Write the vector to a matlab-compatible file
    * 
-   * \param filename Name of output file
-   * \param mtxFormat True if Matrix Market file format, false for Matlab
+   * @param filename Name of output file
+   * @param mtxFormat True if Matrix Market file format, false for Matlab
    */
   void write( string const & filename,
               bool const mtxFormat = true ) const;
@@ -430,14 +455,14 @@ public:
    * Map a global row index to local row index. 
    * Error if requesting processor does not own row index. 
    * 
-   * \param index Global index of row
+   * @param index Global index of row
    */
   localIndex getLocalRowID( globalIndex const index ) const;
 
   /**
    * Extract a view of the local portion of the array.
    * 
-   * \param localVector Pointer to array of local values. Caller allocates memory. 
+   * @param localVector Pointer to array of local values. Caller allocates memory.
    */
   real64 const * extractLocalVector() const;
 
@@ -453,6 +478,14 @@ protected:
   // Underlying Petsc Vec
   Vec m_vec;
 };
+
+/**
+ * @brief Stream insertion operator for PetscVector
+ * @param os the output stream
+ * @param vec the vector to be printed
+ * @return reference to the output stream
+ */
+std::ostream & operator<<( std::ostream & os, PetscVector const & vec );
 
 } // end geosx namespace
 

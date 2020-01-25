@@ -35,67 +35,42 @@ namespace geosx
 // Constructors
 // ----------------------------
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Empty constructor
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-template< typename LAI >
-BlockVectorView<LAI>::BlockVectorView()
-{}
-
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Size constructor
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Constructor with a size (number of vectors)
-template< typename LAI >
-BlockVectorView<LAI>::BlockVectorView( localIndex const nBlocks )
+template< typename VECTOR >
+BlockVectorView<VECTOR>::BlockVectorView( localIndex const nBlocks )
 {
   m_vectors.resize( nBlocks );
 }
 
+template< typename VECTOR >
+BlockVectorView<VECTOR>::BlockVectorView( BlockVectorView< VECTOR > const & x ) = default;
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// (Shallow) copy constructor
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// DISABLED: The view usage can be non-intuitive, and most users will
-// probably expect they are creating a deep copy.  People can use the
-// explicit shallowCopy() function below if really needed.
-/*
-   template< typename LAI >
-   BlockVectorView<LAI>::BlockVectorView( BlockVectorView<LAI> const &src )
-   {
-   shallowCopy(src);
-   }
- */
+template< typename VECTOR >
+BlockVectorView<VECTOR>::BlockVectorView( BlockVectorView< VECTOR > && x ) = default;
+
+template< typename VECTOR >
+BlockVectorView< VECTOR > & BlockVectorView< VECTOR >::operator=( BlockVectorView< VECTOR > const & x ) = default;
+
+template< typename VECTOR >
+BlockVectorView< VECTOR > & BlockVectorView< VECTOR >::operator=( BlockVectorView< VECTOR > && x ) = default;
 
 // ----------------------------
 // Setters
 // ----------------------------
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Shallow copy
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Copy the input block vector pointers
-template< typename LAI >
-void BlockVectorView<LAI>::shallowCopy( BlockVectorView<LAI> const &src )
+template< typename VECTOR >
+void BlockVectorView< VECTOR >::copy( BlockVectorView< VECTOR > const & src )
 {
-  m_vectors.resize( src.blockSize()  );
+  GEOSX_ERROR_IF( blockSize() != src.blockSize(), "Incompatible block size" );
   for( localIndex i = 0 ; i < m_vectors.size() ; i++ )
-    m_vectors[i] = &(src.block( i ));
+  {
+    m_vectors[i]->copy( *src.m_vectors[i] );
+  }
 }
-
-
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Setter
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Setter for block.
-template< typename LAI >
-void BlockVectorView<LAI>::set( localIndex const blockIndex,
-                                ParallelVector &vector )
-{
-  m_vectors[blockIndex] = &vector;
-}
-
 
 // ----------------------------
 // Linear Algebra
@@ -105,25 +80,52 @@ void BlockVectorView<LAI>::set( localIndex const blockIndex,
 // Scale
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Scale the whole block vector by factor.
-template< typename LAI >
-void BlockVectorView<LAI>::scale( real64 const factor )
+template< typename VECTOR >
+void BlockVectorView<VECTOR>::scale( real64 const factor )
 {
   for( localIndex i = 0 ; i < m_vectors.size() ; i++ )
+  {
     m_vectors[i]->scale( factor );
+  }
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Zero
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Zero out the whole block vector.
+template< typename VECTOR >
+void BlockVectorView<VECTOR>::zero( )
+{
+  for( localIndex i = 0 ; i < m_vectors.size() ; i++ )
+  {
+    m_vectors[i]->zero();
+  }
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Rand
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Randomize the whole block vector.
+template< typename VECTOR >
+void BlockVectorView<VECTOR>::rand( unsigned const seed )
+{
+  for( localIndex i = 0 ; i < m_vectors.size() ; i++ )
+  {
+    m_vectors[i]->rand( seed );
+  }
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Dot
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Perform a dot product.
-template< typename LAI >
-real64 BlockVectorView<LAI>::dot( BlockVectorView<LAI> const &src ) const
+template< typename VECTOR >
+real64 BlockVectorView<VECTOR>::dot( BlockVectorView<VECTOR> const & src ) const
 {
   real64 accum = 0;
   for( localIndex i = 0 ; i < m_vectors.size() ; i++ )
   {
-    real64 temp = m_vectors[i]->dot( src.block( i ));
-    accum = accum + temp;
+    accum += m_vectors[i]->dot( src.block( i ));
   }
   return accum;
 }
@@ -132,13 +134,13 @@ real64 BlockVectorView<LAI>::dot( BlockVectorView<LAI> const &src ) const
 // 2-norm
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Compute the 2 norm of the whole block vector.
-template< typename LAI >
-real64 BlockVectorView<LAI>::norm2() const
+template< typename VECTOR >
+real64 BlockVectorView<VECTOR>::norm2() const
 {
   real64 accum = 0;
   for( localIndex i = 0 ; i < m_vectors.size() ; i++ )
   {
-    real64 temp = m_vectors[i]->norm2();
+    real64 const temp = m_vectors[i]->norm2();
     accum = accum + temp*temp;
   }
   return std::sqrt( accum );
@@ -148,16 +150,13 @@ real64 BlockVectorView<LAI>::norm2() const
 // Inf-norm
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Compute the inf norm of the whole block vector.
-template< typename LAI >
-real64 BlockVectorView<LAI>::normInf() const
+template< typename VECTOR >
+real64 BlockVectorView<VECTOR>::normInf() const
 {
-  real64 temp = 0;
-  real64 result = 0;
+  real64 result = 0.0;
   for( localIndex i = 0 ; i < m_vectors.size() ; i++ )
   {
-    temp = m_vectors[i]->normInf();
-    if( temp > result )
-      result = temp;
+    result = std::fmax( result, m_vectors[i]->normInf() );
   }
   return result;
 }
@@ -166,12 +165,14 @@ real64 BlockVectorView<LAI>::normInf() const
 // Axpy
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Update the whole block vector with y = alpha*x + y
-template< typename LAI >
-void BlockVectorView<LAI>::axpy( real64 const alpha,
-                                 BlockVectorView<LAI> const &x )
+template< typename VECTOR >
+void BlockVectorView<VECTOR>::axpy( real64 const alpha,
+                                    BlockVectorView<VECTOR> const & x )
 {
   for( localIndex i = 0 ; i < m_vectors.size() ; i++ )
-    m_vectors[i]->axpby( alpha, x.block( i ), 1. );
+  {
+    m_vectors[i]->axpy( alpha, x.block( i ) );
+  }
 }
 
 
@@ -179,13 +180,15 @@ void BlockVectorView<LAI>::axpy( real64 const alpha,
 // Axpby
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Update the whole block vector with y = alpha*x + beta*y
-template< typename LAI >
-void BlockVectorView<LAI>::axpby( real64 const alpha,
-                                  BlockVectorView<LAI> const &x,
-                                  real64 const beta )
+template< typename VECTOR >
+void BlockVectorView<VECTOR>::axpby( real64 const alpha,
+                                     BlockVectorView<VECTOR> const &x,
+                                     real64 const beta )
 {
   for( localIndex i = 0 ; i < m_vectors.size() ; i++ )
+  {
     m_vectors[i]->axpby( alpha, x.block( i ), beta );
+  }
 }
 
 
@@ -197,8 +200,8 @@ void BlockVectorView<LAI>::axpby( real64 const alpha,
 // Get the number of blocks
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Accessor for block size (number of blocks)
-template< typename LAI >
-localIndex BlockVectorView<LAI>::blockSize() const
+template< typename VECTOR >
+localIndex BlockVectorView<VECTOR>::blockSize() const
 {
   return m_vectors.size();
 }
@@ -207,38 +210,50 @@ localIndex BlockVectorView<LAI>::blockSize() const
 // Get the global number of elements
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Accessor for global size across blocks
-template< typename LAI >
-globalIndex BlockVectorView<LAI>::globalSize(  ) const
+template< typename VECTOR >
+globalIndex BlockVectorView<VECTOR>::globalSize() const
 {
   globalIndex size = 0;
   for( localIndex i = 0 ; i < m_vectors.size() ; i++ )
-    size = m_vectors[i]->globalSize() + size;
+  {
+    size += m_vectors[i]->globalSize();
+  }
   return size;
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Get block.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-template< typename LAI >
-typename LAI::ParallelVector & BlockVectorView<LAI>::block( localIndex blockIndex ) const
+template< typename VECTOR >
+VECTOR & BlockVectorView<VECTOR>::block( localIndex blockIndex ) const
 {
   return *m_vectors[blockIndex];
 }
 
+template< typename VECTOR >
+void BlockVectorView< VECTOR >::print( std::ostream & os ) const
+{
+  for( localIndex i = 0 ; i < m_vectors.size() ; i++ )
+  {
+    os << "Block " << i << " of " << m_vectors.size() << ":" << std::endl;
+    os << "=============" << std::endl;
+    m_vectors[i]->print( os );
+  }
+}
 
 // -----------------------
 // Explicit Instantiations
 // -----------------------
 #ifdef GEOSX_USE_TRILINOS
-template class BlockVectorView<TrilinosInterface>;
+template class BlockVectorView<TrilinosInterface::ParallelVector>;
 #endif
 
 #ifdef GEOSX_USE_HYPRE
-//template class BlockVectorView<HypreInterface>;
+//template class BlockVectorView<HypreInterface::ParallelVector>;
 #endif
 
 #ifdef GEOSX_USE_PETSC
-template class BlockVectorView<PetscInterface>;
+template class BlockVectorView<PetscInterface::ParallelVector>;
 #endif
 
 } //end geosx namespace

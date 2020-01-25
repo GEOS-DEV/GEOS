@@ -16,14 +16,14 @@
  * @file BlockMatrixView.cpp
  */
 
-#include "BlockMatrixView.hpp"
+#include "BlockOperatorView.hpp"
 
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 
 namespace geosx
 {
 
-// BEGIN_RST_NARRATIVE BlockMatrixView.rst
+// BEGIN_RST_NARRATIVE BlockOperatorView.rst
 // ==============================
 // Block Matrix View
 // ==============================
@@ -38,17 +38,17 @@ namespace geosx
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Empty constructor
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-template< typename LAI >
-BlockMatrixView<LAI>::BlockMatrixView()
-{}
+template< typename VECTOR, typename OPERATOR >
+BlockOperatorView< VECTOR, OPERATOR >::BlockOperatorView()
+{ }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Sized constructor
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Constructor with a size (number of rows and columns)
-template< typename LAI >
-BlockMatrixView<LAI>::BlockMatrixView( localIndex const nRows,
-                                       localIndex const nCols )
+template< typename VECTOR, typename OPERATOR >
+BlockOperatorView< VECTOR, OPERATOR >::BlockOperatorView( localIndex const nRows,
+                                                          localIndex const nCols )
 {
   m_matrices.resize( nRows, nCols );
 }
@@ -61,15 +61,15 @@ BlockMatrixView<LAI>::BlockMatrixView( localIndex const nRows,
 // Multiply
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Apply the block matrix to a block vector and compute the result.
-template< typename LAI >
-void BlockMatrixView<LAI>::multiply( BlockVectorView<LAI> const &x,
-                                     BlockVectorView<LAI> &b ) const
+template< typename VECTOR, typename OPERATOR >
+void BlockOperatorView< VECTOR, OPERATOR >::multiply( BlockVectorView< VECTOR > const & x,
+                                                      BlockVectorView< VECTOR > & b ) const
 {
-  for( localIndex row = 0 ; row < m_matrices.size( 0 ) ; row++ )
+  for( localIndex row = 0; row < m_matrices.size( 0 ); row++ )
   {
     b.block( row ).zero();
-    ParallelVector temp( b.block( row ));
-    for( localIndex col = 0 ; col < m_matrices.size( 1 ) ; col++ )
+    VECTOR temp( b.block( row ) );
+    for( localIndex col = 0; col < m_matrices.size( 1 ); col++ )
     {
       if( m_matrices[row][col] != nullptr )
       {
@@ -80,52 +80,6 @@ void BlockMatrixView<LAI>::multiply( BlockVectorView<LAI> const &x,
   }
 }
 
-
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Residual
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Compute the residual r = b - Ax.
-template< typename LAI >
-void BlockMatrixView<LAI>::residual( BlockVectorView<LAI> const &x,
-                                     BlockVectorView<LAI> const &b,
-                                     BlockVectorView<LAI> &r ) const
-{
-  for( localIndex row = 0 ; row < m_matrices.size( 0 ) ; row++ )
-  {
-    r.block( row ).copy( b.block( row ));
-    ParallelVector temp( b.block( row ));
-    for( localIndex col = 0 ; col < m_matrices.size( 1 ) ; col++ )
-    {
-      if( m_matrices[row][col] != nullptr )
-      {
-        m_matrices[row][col]->multiply( x.block( col ), temp );
-        r.block( row ).axpy( -1.0, temp );
-      }
-    }
-  }
-}
-
-
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Scale
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Scale the matrix with the factor <tt>factor</tt>.
-template< typename LAI >
-void BlockMatrixView<LAI>::scale( real64 const factor )
-{
-  for( localIndex row = 0 ; row < m_matrices.size( 0 ) ; row++ )
-  {
-    for( localIndex col = 0 ; col < m_matrices.size( 1 ) ; col++ )
-    {
-      if( m_matrices[row][col] != nullptr )
-      {
-        m_matrices[row][col]->scale( factor );
-      }
-    }
-  }
-}
-
-
 // ----------------------------
 // Accessors
 // ----------------------------
@@ -133,9 +87,9 @@ void BlockMatrixView<LAI>::scale( real64 const factor )
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Get block
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-template< typename LAI >
-typename LAI::ParallelMatrix & BlockMatrixView<LAI>::block( localIndex const blockRowIndex,
-                                                            localIndex const blockColIndex ) const
+template< typename VECTOR, typename OPERATOR >
+OPERATOR & BlockOperatorView< VECTOR, OPERATOR >::block( localIndex const blockRowIndex,
+                                                         localIndex const blockColIndex ) const
 {
   return *m_matrices[blockRowIndex][blockColIndex];
 }
@@ -147,10 +101,10 @@ typename LAI::ParallelMatrix & BlockMatrixView<LAI>::block( localIndex const blo
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Set block
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-template< typename LAI >
-void BlockMatrixView<LAI>::set( localIndex const blockRowIndex,
-                                localIndex const blockColIndex,
-                                typename LAI::ParallelMatrix &matrix )
+template< typename VECTOR, typename OPERATOR >
+void BlockOperatorView< VECTOR, OPERATOR >::set( localIndex const blockRowIndex,
+                                                 localIndex const blockColIndex,
+                                                 OPERATOR & matrix )
 {
   m_matrices[blockRowIndex][blockColIndex] = &matrix;
 }
@@ -159,15 +113,15 @@ void BlockMatrixView<LAI>::set( localIndex const blockRowIndex,
 // Explicit Instantiations
 // -----------------------
 #ifdef GEOSX_USE_TRILINOS
-template class BlockMatrixView<TrilinosInterface>;
+template class BlockOperatorView<TrilinosInterface::ParallelVector>;
 #endif
 
 #ifdef GEOSX_USE_HYPRE
-//template class BlockMatrixView<HypreInterface>;
+//template class BlockOperatorView<HypreInterface::ParallelVector>;
 #endif
 
 #ifdef GEOSX_USE_PETSC
-template class BlockMatrixView<PetscInterface>;
+template class BlockOperatorView<PetscInterface::ParallelVector>;
 #endif
 
 } // end geosx namespace

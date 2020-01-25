@@ -34,6 +34,8 @@
 #include <petscvec.h>
 #include <petscmat.h>
 
+#include "mpiCommunications/MpiWrapper.hpp"
+
 // Put everything under the geosx namespace.
 namespace geosx
 {
@@ -59,6 +61,7 @@ inline PetscInt const * toPetscInt( globalIndex const * const index )
 // Create an empty matrix (meant to be used for declaration)
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 PetscSparseMatrix::PetscSparseMatrix()
+: m_mat()
 {}
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -74,7 +77,7 @@ PetscSparseMatrix::PetscSparseMatrix( PetscSparseMatrix const &src )
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 PetscSparseMatrix::~PetscSparseMatrix()
 {
-  //MatDestroy( &m_mat );
+  MatDestroy( &m_mat );
 }
 
 // -----------------------------
@@ -137,40 +140,47 @@ void PetscSparseMatrix::set( real64 const value )
   MatGetOwnershipRange( m_mat, &firstrow, &lastrow );
 
   PetscInt numEntries;
-  const PetscInt* inds;
-  const PetscScalar* vals;
+  const PetscInt * inds;
+  const PetscScalar * vals;
 
   PetscInt numEntries_;
-  PetscScalar* vals_;
-  PetscInt* inds_;
+  array1d<PetscScalar> vals_;
+  array1d<PetscInt> inds_;
+
+  PetscInt const maxNumRows = MpiWrapper::Max( lastrow - firstrow );
 
   // loop over rows
-  for( PetscInt row = firstrow; row < lastrow; row++){
-
+  for( PetscInt row = firstrow; row < lastrow; row++)
+  {
     // get entries in row
-    close(); 
     MatGetRow( m_mat, row, &numEntries, &inds, &vals );
     numEntries_ = numEntries;
-    inds_ = new PetscInt[numEntries_];
+    inds_.resize( numEntries_ );
     for ( int i = 0; i < numEntries_; i++ ) 
     {
       inds_[i] = inds[i];
     }   
     MatRestoreRow( m_mat, row, &numEntries, &inds, &vals );
-    close(); 
 
     // set entries to value
-    if( numEntries_ > 0 ) {
-
-      vals_ = new PetscScalar[numEntries_];
+    if( numEntries_ > 0 )
+    {
+      vals_.resize( numEntries_ );
       for ( int i = 0; i < numEntries_; i++ ) 
       {
         vals_[i] = value;
       }
-
-      PetscInt rows[1] = {row};
-      MatSetValues( m_mat, 1, rows, numEntries_, inds_, vals_, INSERT_VALUES );
+      MatSetValues( m_mat, 1, &row, numEntries_, inds_, vals_, INSERT_VALUES );
     }
+    close();
+  }
+
+  // TODO: is there a way to set local rows without global ops?
+  // ensure all ranks call close() the same number of times
+  PetscInt const numExtra = maxNumRows - (lastrow - firstrow);
+  for( PetscInt i = 0; i < numExtra; ++i )
+  {
+    close();
   }
 }
 
@@ -234,7 +244,7 @@ void PetscSparseMatrix::add( globalIndex const rowIndex,
                              localIndex size )
 {
   PetscInt rows[1] = {rowIndex};
-  MatSetValues( m_mat, 1, rows, size, toPetscInt( colIndices), values, ADD_VALUES );
+  MatSetValues( m_mat, 1, rows, size, toPetscInt( colIndices ), values, ADD_VALUES );
 }
 
 void PetscSparseMatrix::set( globalIndex const rowIndex,

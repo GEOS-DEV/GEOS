@@ -23,7 +23,7 @@
 #include "mpiCommunications/MpiWrapper.hpp"
 
 class Epetra_FEVector;
-class Epetra_Map;
+class Epetra_BlockMap;
 
 namespace geosx
 {
@@ -50,10 +50,33 @@ public:
   /**
    * @brief Copy constructor.
    *
-   * \param src EpetraVector to be copied.
+   * @param src EpetraVector to be copied.
    *
    */
   EpetraVector( EpetraVector const & src );
+
+  /**
+   * @brief Move constructor
+   *
+   * @param src EpetraVector to move from
+   */
+  EpetraVector( EpetraVector && src ) noexcept;
+
+  /**
+   * @brief Copy assignment.
+   *
+   * @param src EpetraVector to be copied.
+   *
+   */
+  EpetraVector & operator=( EpetraVector const & src );
+
+  /**
+   * @brief Move assignment.
+   *
+   * @param src EpetraVector to be moved from.
+   *
+   */
+  EpetraVector & operator=( EpetraVector && src ) noexcept;
 
   /**
    * @brief Destructor.
@@ -68,7 +91,7 @@ public:
   /**
    * @brief Create a vector based on a previous vector.
    *
-   * \param vector an already formed EpetraVector.
+   * @param vector an already formed EpetraVector.
    *
    */
   void create( EpetraVector const & src );
@@ -80,7 +103,7 @@ public:
    * the sum across processors.  For specifying a global size and having
    * automatic partitioning, see createGlobal().
    *
-   * \param localSize local number of elements.
+   * @param localSize local number of elements.
    *
    */
   void createWithLocalSize( localIndex const localSize, MPI_Comm const & comm = MPI_COMM_WORLD );
@@ -92,7 +115,7 @@ public:
    * gets the same number of local elements except proc 0, which gets any
    * remainder elements as well if the split can't be done evenly.
    *
-   * \param globalSize Global number of elements.
+   * @param globalSize Global number of elements.
    *
    */
   void createWithGlobalSize( globalIndex const globalSize, MPI_Comm const & comm = MPI_COMM_WORLD );
@@ -102,7 +125,7 @@ public:
    *
    * Create a vector from local data
    *
-   * \param localValues local data to put into vector
+   * @param localValues local data to put into vector
    *
    */
   void create( array1d<real64> const & localValues, MPI_Comm const & comm = MPI_COMM_WORLD );
@@ -133,8 +156,8 @@ public:
    *
    * Set vector value at given element.
    *
-   * \param globalRow global row index
-   * \param value Value to add at given row.
+   * @param globalRow global row index
+   * @param value Value to add at given row.
    *
    */
   void set( globalIndex const globalRow,
@@ -145,8 +168,8 @@ public:
    *
    * Add into vector value at given row.
    *
-   * \param globalRow global row.
-   * \param value Values to add in given row.
+   * @param globalRow global row.
+   * @param value Values to add in given row.
    *
    */
   void add( globalIndex const globalRow,
@@ -157,9 +180,9 @@ public:
    *
    * Set vector values at given elements.
    *
-   * \param globalIndices global row indices.
-   * \param values Values to add in given rows.
-   * \param size Number of elements
+   * @param globalIndices global row indices.
+   * @param values Values to add in given rows.
+   * @param size Number of elements
    *
    */
   void set( globalIndex const * globalIndices,
@@ -171,9 +194,9 @@ public:
    *
    * Add vector values at given elements.
    *
-   * \param globalIndices global row indices.
-   * \param values Values to add in given rows.
-   * \param size Number of elements
+   * @param globalIndices global row indices.
+   * @param values Values to add in given rows.
+   * @param size Number of elements
    *
    */
   void add( globalIndex const * globalIndices,
@@ -185,8 +208,8 @@ public:
    *
    * Set vector values at given elements.
    *
-   * \param globalIndices global row indices.
-   * \param values Values to add in given rows.
+   * @param globalIndices global row indices.
+   * @param values Values to add in given rows.
    *
    */
   void set( array1d<globalIndex> const & globalIndices,
@@ -198,8 +221,8 @@ public:
    *
    * Add into vector values at given rows.
    *
-   * \param globalIndices global rows indices
-   * \param values Values to add in given rows.
+   * @param globalIndices global rows indices
+   * @param values Values to add in given rows.
    *
    */
   void add( array1d<globalIndex> const & globalIndices,
@@ -208,7 +231,7 @@ public:
   /**
    * @brief Set all elements to a constant value.
    *
-   * \param value Values to set vector elements to.
+   * @param value Values to set vector elements to.
    *
    */
   void set( real64 const value );
@@ -223,7 +246,7 @@ public:
    * @brief Set vector elements to random entries.
    *
    */
-  void rand();
+  void rand( unsigned const seed = 1984 );
 
   //@}
 
@@ -233,7 +256,7 @@ public:
   /**
    * @brief Multiply all elements by scalingFactor.
    *
-   * \param scalingFactor Scaling Factor.
+   * @param scalingFactor Scaling Factor.
    *
    */
   void scale( real64 const scalingFactor );
@@ -241,7 +264,7 @@ public:
   /**
    * @brief Dot product with the vector vec.
    *
-   * \param vec EpetraVector to dot-product with.
+   * @param vec EpetraVector to dot-product with.
    *
    */
   real64 dot( EpetraVector const &vec );
@@ -251,7 +274,7 @@ public:
    *
    * @note The naming convention follows the BLAS library.
    *
-   * \param x EpetraVector to copy.
+   * @param x EpetraVector to copy.
    *
    */
   void copy( EpetraVector const &x );
@@ -261,8 +284,8 @@ public:
    *
    * @note The naming convention follows the logic of the BLAS library.
    *
-   * \param alpha Scaling factor for added vector.
-   * \param x EpetraVector to add.
+   * @param alpha Scaling factor for added vector.
+   * @param x EpetraVector to add.
    *
    */
   void axpy( real64 const alpha,
@@ -273,13 +296,13 @@ public:
    *
    * @note The naming convention follows the logic of the BLAS library.
    *
-   * \param alpha Scaling factor for added vector.
-   * \param x EpetraVector to add.
-   * \param beta Scaling factor for self vector.
+   * @param alpha Scaling factor for added vector.
+   * @param x EpetraVector to add.
+   * @param beta Scaling factor for self vector.
    *
    */
   void axpby( real64 const alpha,
-              EpetraVector const &x,
+              EpetraVector const & x,
               real64 const beta );
 
   /**
@@ -389,19 +412,19 @@ public:
 private:
 
   /**
-   * Unique pointer to underlying Epetra_FEVector type.
-   */
-  std::unique_ptr<Epetra_FEVector> m_vector;
-
-  /**
    * @brief Create a vector from an Epetra_Map.
    *
    * Create a vector from an Epetra_Map.  Allows for maximum flexibility
    * for advanced users.
    *
-   * \param map Input Epetra Map.
+   * @param map Input Epetra Map.
    */
-  void create( Epetra_Map const & map );
+  void create( Epetra_BlockMap const & map );
+
+  /**
+   * Unique pointer to underlying Epetra_FEVector type.
+   */
+  std::unique_ptr<Epetra_FEVector> m_vector;
 };
 
 /**

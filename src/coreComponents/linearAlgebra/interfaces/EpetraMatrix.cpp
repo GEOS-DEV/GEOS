@@ -361,19 +361,6 @@ void EpetraMatrix::rightMultiplyTranspose( EpetraMatrix const & src,
   src.multiply( false, *this, true, dst, closeResult );
 }
 
-
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Compute residual.
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Compute res = b - Ax (residual form).
-void EpetraMatrix::residual( EpetraVector const & x,
-                             EpetraVector const & b,
-                             EpetraVector & r ) const
-{
-  m_matrix->Multiply( false, *x.unwrappedPointer(), *r.unwrappedPointer() );
-  r.axpby( 1.0, b, -1.0 );
-}
-
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Generalized matrix/vector product.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -647,14 +634,14 @@ void EpetraMatrix::multiply( bool const transA,
                              EpetraMatrix & C,
                              bool const closeResult ) const
 {
-  int err = EpetraExt::MatrixMatrix::Multiply( *m_matrix,
-                                               transA,
-                                               *B.unwrappedPointer(),
-                                               transB,
-                                               *C.unwrappedPointer(),
-                                               closeResult );
+  int const err = EpetraExt::MatrixMatrix::Multiply( *m_matrix,
+                                                     transA,
+                                                     *B.unwrappedPointer(),
+                                                     transB,
+                                                     *C.unwrappedPointer(),
+                                                     closeResult );
 
-  GEOSX_ERROR_IF( err != 0, "Error thrown in matrix/matrix multiply routine" );
+  GEOSX_ERROR_IF( err != 0, "Error thrown in matrix/matrix multiply routine: " << err );
   if( closeResult )
   {
     C.m_assembled = true;

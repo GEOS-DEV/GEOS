@@ -16,26 +16,25 @@
  * @file BlockMatrixView.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_UTILITIES_BLOCKMATRIXVIEW_HPP_
-#define GEOSX_LINEARALGEBRA_UTILITIES_BLOCKMATRIXVIEW_HPP_
+#ifndef GEOSX_LINEARALGEBRA_UTILITIES_BLOCKOPERATORVIEW_HPP_
+#define GEOSX_LINEARALGEBRA_UTILITIES_BLOCKOPERATORVIEW_HPP_
 
-#include "BlockVectorView.hpp"
+#include "linearAlgebra/interfaces/LinearOperator.hpp"
+#include "linearAlgebra/utilities/BlockVectorView.hpp"
 
 namespace geosx
 {
 
 /**
- * \class BlockMatrixView
- * \brief This class creates and provides basic support for block
- *        matrices objects (templated on the LA interface).
+ * @brief This class creates and provides basic support for block operator objects.
+ * @tparam Vector type of vector that sub-blocks of this view can operate on
  */
 
-template< typename LAI >
-class BlockMatrixView
+template< typename VECTOR, typename OPERATOR = LinearOperator<VECTOR> >
+class BlockOperatorView : public LinearOperator< BlockVectorView<VECTOR> >
 {
-
-  using ParallelMatrix = typename LAI::ParallelMatrix;
-  using ParallelVector = typename LAI::ParallelVector;
+  using Vector = typename LinearOperator< BlockVectorView<VECTOR> >::Vector;
+  using Operator = OPERATOR;
 
 public:
 
@@ -46,20 +45,20 @@ public:
    *
    * Create an empty block matrix.
    */
-  BlockMatrixView();
+  BlockOperatorView();
 
   /**
    * @brief Matrix of (<tt>nRows</tt>,<tt>nCols</tt>) blocks.
    *
    * Create a block matrix of size (<tt>nRows</tt>,<tt>nCols</tt>).
    */
-  BlockMatrixView( localIndex const nRows,
-                   localIndex const nCols );
+  BlockOperatorView( localIndex const nRows,
+                     localIndex const nCols );
 
   /**
    * @brief Destructor.
    */
-  ~BlockMatrixView() = default;
+  virtual ~BlockOperatorView() override = default;
   //@}
 
   //! @name Linear Algebra Methods
@@ -69,30 +68,12 @@ public:
    *
    * Computes the matrix-vector product <tt>Ax = b</tt>.
    *
-   * \param x Input vector.
-   * \param b Output vector.
+   * @param x Input vector.
+   * @param b Output vector.
    *
    */
-  void multiply( BlockVectorView<LAI> const &x,
-                 BlockVectorView<LAI> &b ) const;
-
-  /**
-   * @brief Compute residual <tt>r = b - Ax</tt>.
-   *
-   * \param x Input solution.
-   * \param b Input right hand size.
-   * \param r Output residual.
-   *
-   */
-  void residual( BlockVectorView<LAI> const &x,
-                 BlockVectorView<LAI> const &b,
-                 BlockVectorView<LAI> &r ) const;
-
-  /**
-   * @brief Scale matrix using <tt>factor</tt>.
-   */
-  void scale( real64 const factor );
-
+  virtual void multiply( BlockVectorView<VECTOR> const & x,
+                         BlockVectorView<VECTOR> & b ) const override;
 
   //@}
   //! @name Accessors/Setters
@@ -101,25 +82,25 @@ public:
   /**
    * @brief Get the matrix corresponding to block (<tt>blockRowIndex</tt>,<tt>blockColIndex</tt>).
    */
-  ParallelMatrix & block( localIndex const blockRowIndex,
-                          localIndex const blockColIndex ) const;
+  OPERATOR & block( localIndex const blockRowIndex,
+                    localIndex const blockColIndex ) const;
 
   /**
    * @brief Set block (<tt>i</tt>,<tt>j</tt>) using <tt>matrix</tt>.
    */
   void set( localIndex const blockRowIndex,
             localIndex const blockColIndex,
-            ParallelMatrix &matrix );
+            OPERATOR & matrix );
 
   //@}
 
 private:
 
-  array2d<ParallelMatrix *> m_matrices;
+  array2d< OPERATOR * > m_matrices;
 
 };
 
 }// end geosx namespace
 
 
-#endif /*GEOSX_LINEARALGEBRA_UTILITIES_BLOCKMATRIXVIEW_HPP_*/
+#endif /*GEOSX_LINEARALGEBRA_UTILITIES_BLOCKOPERATORVIEW_HPP_*/

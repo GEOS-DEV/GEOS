@@ -70,6 +70,24 @@ PetscVector::PetscVector( PetscVector const & vec )
   VecCopy( vec.m_vec, m_vec );
 }
 
+PetscVector::PetscVector( PetscVector && src ) noexcept
+{
+  std::swap( m_vec, src.m_vec );
+}
+
+PetscVector & PetscVector::operator=( PetscVector const & src )
+{
+  VecDuplicate( src.m_vec, &m_vec );
+  VecCopy( src.m_vec, m_vec );
+  return *this;
+}
+
+PetscVector & PetscVector::operator=( PetscVector && src ) noexcept
+{
+  std::swap( m_vec, src.m_vec );
+  return *this;
+}
+
 // Create a unique PetscVector from a PETSc Vec.  
 PetscVector::PetscVector( Vec vec )
 {
@@ -201,7 +219,7 @@ void PetscVector::add( array1d<globalIndex> const & globalIndices,
 }
 
 // additional convenience options
-void PetscVector::set( real64 value )
+void PetscVector::set( real64 const value )
 {
   VecSet( m_vec, value );
 }
@@ -211,7 +229,7 @@ void PetscVector::zero()
   set( 0.0 );
 }
 
-void PetscVector::rand( unsigned long seed )
+void PetscVector::rand( unsigned const seed )
 {
   // create random context
   PetscRandom ran;
@@ -257,7 +275,7 @@ void PetscVector::scale( real64 const scalingFactor )
 // Dot
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Dot product with the vector vec.
-real64 PetscVector::dot( PetscVector const &vec )
+real64 PetscVector::dot( PetscVector const & vec )
 {
   real64 dot;
   VecDot( m_vec, vec.m_vec, &dot );
@@ -268,8 +286,9 @@ real64 PetscVector::dot( PetscVector const &vec )
 // Copy
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Update vector as this = x.
-void PetscVector::copy( PetscVector const &x )
+void PetscVector::copy( PetscVector const & x )
 {
+  //VecCopy( x.m_vec, m_vec );
   VecSet( m_vec, 0 );
   VecAXPY( m_vec, 1.0, x.m_vec );
 }
@@ -278,7 +297,7 @@ void PetscVector::copy( PetscVector const &x )
 // Axpy
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Update vector as this = alpha*x + this.
-void PetscVector::axpy( real64 const alpha, PetscVector const &x )
+void PetscVector::axpy( real64 const alpha, PetscVector const & x )
 {
   VecAXPY( m_vec, alpha, x.m_vec );
 }
@@ -288,7 +307,7 @@ void PetscVector::axpy( real64 const alpha, PetscVector const &x )
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Update vector as this = alpha*x + beta*this.
 void PetscVector::axpby( real64 const alpha,
-                         PetscVector &x,
+                         PetscVector const & x,
                          real64 const beta )
 {
   VecScale( m_vec, beta );
@@ -332,9 +351,20 @@ real64 PetscVector::normInf() const
 // Print
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Print vector to the terminal in PETSc format.
-void PetscVector::print() const
+void PetscVector::print( std::ostream & os ) const
 {
-  VecView( m_vec, PETSC_VIEWER_STDOUT_WORLD );
+  if( &os == &std::cout )
+  {
+    VecView( m_vec, PETSC_VIEWER_STDOUT_WORLD );
+  }
+  else if( &os == &std::cerr )
+  {
+    VecView( m_vec, PETSC_VIEWER_STDERR_WORLD );
+  }
+  else
+  {
+    GEOSX_ERROR( "Output to a generic stream not implemented" );
+  }
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -497,6 +527,13 @@ globalIndex PetscVector::iupper() const
   PetscInt low, high;
   VecGetOwnershipRange( m_vec, &low, &high );
   return high;
+}
+
+std::ostream & operator<<( std::ostream & os,
+                           PetscVector const & vec )
+{
+  vec.print( os );
+  return os;
 }
 
 } // end geosx

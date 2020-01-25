@@ -60,8 +60,44 @@ EpetraVector::EpetraVector() = default;
 // copied to a new memory location. Checks if the vector to be copied is empty.
 EpetraVector::EpetraVector( EpetraVector const & src )
 {
-  GEOSX_ERROR_IF( src.unwrappedPointer() == nullptr, "source vector appears to be empty" );
-  m_vector = std::make_unique< Epetra_FEVector >( *src.unwrappedPointer() );
+  if( src.m_vector )
+  {
+    m_vector = std::make_unique< Epetra_FEVector >( *src.m_vector );
+  }
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Move constructor
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+EpetraVector::EpetraVector( EpetraVector && src ) noexcept
+{
+  m_vector = std::move( src.m_vector );
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Copy assignment
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+EpetraVector & EpetraVector::operator=( EpetraVector const & src )
+{
+  GEOSX_ERROR_IF( !src.m_vector, "source vector is empty" );
+  if( m_vector )
+  {
+    *m_vector = *src.m_vector; // use Epetra's copy assignment
+  }
+  else
+  {
+    create( src ); // use Epetra's copy construction
+  }
+  return *this;
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Move assignment
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+EpetraVector & EpetraVector::operator=( EpetraVector && src ) noexcept
+{
+  m_vector = std::move( src.m_vector );
+  return *this;
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -79,15 +115,15 @@ EpetraVector::~EpetraVector() = default;
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 void EpetraVector::create( EpetraVector const & src )
 {
-  GEOSX_ERROR_IF( src.unwrappedPointer() == nullptr, "source vector appears to be empty" );
-  m_vector = std::make_unique< Epetra_FEVector >( *src.unwrappedPointer() );
+  GEOSX_ERROR_IF( !src.m_vector, "source vector is empty" );
+  m_vector = std::make_unique< Epetra_FEVector >( *src.m_vector );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Create from Epetra_Map
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Create a vector from an Epetra_Map.
-void EpetraVector::create( Epetra_Map const & map )
+void EpetraVector::create( Epetra_BlockMap const & map )
 {
   m_vector = std::make_unique< Epetra_FEVector >( map );
 }
@@ -105,17 +141,17 @@ void EpetraVector::create( Epetra_Map const & map )
 void EpetraVector::createWithLocalSize( localIndex const localSize,
                                         MPI_Comm const & MPI_PARAM(comm) )
 {
-  Epetra_Map map = Epetra_Map( integer_conversion< globalIndex >( -1 ),
-                               integer_conversion< int >( localSize ),
-                               0,
-                               Epetra_MpiComm( MPI_PARAM(comm) ) );
+  Epetra_Map const map( integer_conversion< globalIndex >( -1 ),
+                        integer_conversion< int >( localSize ),
+                        0,
+                        Epetra_MpiComm( MPI_PARAM( comm ) ) );
   create( map );
 }
 
 void EpetraVector::createWithGlobalSize( globalIndex const globalSize,
                                          MPI_Comm const & MPI_PARAM(comm) )
 {
-  Epetra_Map map = Epetra_Map( globalSize, 0, Epetra_MpiComm( MPI_PARAM(comm) ) );
+  Epetra_Map const map( globalSize, 0, Epetra_MpiComm( MPI_PARAM( comm ) ) );
   create( map );
 }
 
@@ -128,7 +164,7 @@ void EpetraVector::create( array1d< real64 > const & localValues,
                            MPI_Comm const & MPI_PARAM(comm) )
 {
   int const localSize = integer_conversion< int >( localValues.size() );
-  Epetra_Map map = Epetra_Map( -1, localSize, 0, Epetra_MpiComm( MPI_PARAM(comm) ) );
+  Epetra_Map const map( -1, localSize, 0, Epetra_MpiComm( MPI_PARAM( comm ) ) );
   m_vector = std::make_unique< Epetra_FEVector >( View, map, localValues.data(), localSize, 1 );
 }
 
@@ -192,9 +228,9 @@ void EpetraVector::zero()
   set( 0.0 );
 }
 
-void EpetraVector::rand()
+void EpetraVector::rand( unsigned const seed )
 {
-  m_vector->SetSeed( 1984 );
+  m_vector->SetSeed( seed );
   m_vector->Random();
 }
 
@@ -233,7 +269,7 @@ void EpetraVector::scale( real64 const scalingFactor )
 real64 EpetraVector::dot( EpetraVector const & vec )
 {
   real64 tmp;
-  m_vector.get()->Dot( *vec.unwrappedPointer(), &tmp );
+  m_vector->Dot( *vec.unwrappedPointer(), &tmp );
   return tmp;
 }
 
@@ -243,7 +279,7 @@ real64 EpetraVector::dot( EpetraVector const & vec )
 // Update vector as this = x.
 void EpetraVector::copy( EpetraVector const & x )
 {
-  m_vector.get()->Update( 1., *x.unwrappedPointer(), 0. );
+  m_vector->Update( 1., *x.unwrappedPointer(), 0. );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -253,7 +289,7 @@ void EpetraVector::copy( EpetraVector const & x )
 void EpetraVector::axpy( real64 const alpha,
                          EpetraVector const & x )
 {
-  m_vector.get()->Update( alpha, *x.unwrappedPointer(), 1. );
+  m_vector->Update( alpha, *x.unwrappedPointer(), 1. );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -264,7 +300,7 @@ void EpetraVector::axpby( real64 const alpha,
                           EpetraVector const & x,
                           real64 const beta )
 {
-  m_vector.get()->Update( alpha, *x.unwrappedPointer(), beta );
+  m_vector->Update( alpha, *x.unwrappedPointer(), beta );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -274,7 +310,7 @@ void EpetraVector::axpby( real64 const alpha,
 real64 EpetraVector::norm1() const
 {
   real64 tmp;
-  m_vector.get()->Norm1( &tmp );
+  m_vector->Norm1( &tmp );
   return tmp;
 }
 
@@ -285,7 +321,7 @@ real64 EpetraVector::norm1() const
 real64 EpetraVector::norm2() const
 {
   real64 tmp;
-  m_vector.get()->Norm2( &tmp );
+  m_vector->Norm2( &tmp );
   return tmp;
 }
 
@@ -296,7 +332,7 @@ real64 EpetraVector::norm2() const
 real64 EpetraVector::normInf() const
 {
   real64 tmp;
-  m_vector.get()->NormInf( &tmp );
+  m_vector->NormInf( &tmp );
   return tmp;
 }
 

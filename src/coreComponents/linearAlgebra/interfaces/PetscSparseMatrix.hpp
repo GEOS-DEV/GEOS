@@ -20,7 +20,8 @@
 #define GEOSX_LINEARALGEBRA_INTERFACES_PETSCSPARSEMATRIX_HPP_
 
 #include "common/DataTypes.hpp"
-#include "PetscVector.hpp"
+#include "linearAlgebra/interfaces/PetscVector.hpp"
+#include "linearAlgebra/interfaces/LinearOperator.hpp"
 
 /*
  * See comment in PetscVector.hpp about the rationale for this definiton.
@@ -36,7 +37,7 @@ namespace geosx
  * \brief This class creates and provides basic support for the Mat
  *        matrix object type used in PETSc.
  */
-class PetscSparseMatrix
+class PetscSparseMatrix : public LinearOperator<PetscVector>
 {
 #if !defined(GEOSX_USE_MPI)
   typedef int MPI_Comm;
@@ -64,7 +65,7 @@ public:
   /**
    * @brief Destructor.
    */
-  ~PetscSparseMatrix();
+  virtual ~PetscSparseMatrix() override;
   //@}
 
   //! @name Create Methods
@@ -73,9 +74,9 @@ public:
   /**
    * @brief Create a square matrix from local number of rows.
    *
-   * \param localSize local number of rows for square matrix.
-   * \param maxEntriesPerRow Maximum number of non-zero entries per row.
-   * \param comm MPI communicator.
+   * @param localSize local number of rows for square matrix.
+   * @param maxEntriesPerRow Maximum number of non-zero entries per row.
+   * @param comm MPI communicator.
    *
    */
   void createWithLocalSize( localIndex const localSize,
@@ -87,9 +88,9 @@ public:
    *
    * Create a square matrix with an (approximately) even partitioning of rows.
    *
-   * \param globalSize Global dimensions for a square matrix.
-   * \param maxEntriesPerRow Maximum number of non-zero entries per row.
-   * \param comm MPI communicator.
+   * @param globalSize Global dimensions for a square matrix.
+   * @param maxEntriesPerRow Maximum number of non-zero entries per row.
+   * @param comm MPI communicator.
    *
    */
   void createWithGlobalSize( globalIndex const globalSize,
@@ -99,10 +100,10 @@ public:
   /**
    * @brief Create a rectangular matrix from number of rows/columns.
    *
-   * \param comm MPI communicator.
-   * \param localRows Local number of rows.
-   * \param localCols Local number of columns.
-   * \param maxEntriesPerRow Maximum number of entries per row (hint).
+   * @param comm MPI communicator.
+   * @param localRows Local number of rows.
+   * @param localCols Local number of columns.
+   * @param maxEntriesPerRow Maximum number of entries per row (hint).
    */
   void createWithLocalSize( localIndex const localRows,
                             localIndex const localCols,
@@ -112,10 +113,10 @@ public:
   /**
    * @brief Create a rectangular matrix from number of rows/columns.
    *
-   * \param comm MPI communicator.
-   * \param globalRows Global number of rows.
-   * \param globalCols Global number of columns.
-   * \param maxEntriesPerRow Maximum number of entries per row (hint).
+   * @param comm MPI communicator.
+   * @param globalRows Global number of rows.
+   * @param globalCols Global number of columns.
+   * @param maxEntriesPerRow Maximum number of entries per row (hint).
    */
   void createWithGlobalSize( globalIndex const globalRows,
                              globalIndex const globalCols,
@@ -165,9 +166,9 @@ public:
    /**
    * @brief Add to one element.
    *
-   * \param rowIndex Global row index.
-   * \param colIndex Global column index.
-   * \param value Value to add to prescribed location.
+   * @param rowIndex Global row index.
+   * @param colIndex Global column index.
+   * @param value Value to add to prescribed location.
    *
    * NOTE: set()/add()/insert() can't be interchanged without assembly.
    * 
@@ -179,9 +180,9 @@ public:
    /**
    * @brief Set one element.
    *
-   * \param rowIndex Global row index.
-   * \param colIndex Global column index.
-   * \param value Value to set at prescribed location.
+   * @param rowIndex Global row index.
+   * @param colIndex Global column index.
+   * @param value Value to set at prescribed location.
    *
    * NOTE: set()/add()/insert() can't be interchanged without assembly.
    * 
@@ -193,9 +194,9 @@ public:
    /**
    * @brief Insert one element.
    *
-   * \param rowIndex Global row index.
-   * \param colIndex Global column index.
-   * \param value Value to insert at prescribed location.
+   * @param rowIndex Global row index.
+   * @param colIndex Global column index.
+   * @param value Value to insert at prescribed location.
    * 
    * NOTE: set()/add()/insert() can't be interchanged without assembly.
    *
@@ -207,10 +208,10 @@ public:
   /**
    * @brief Add elements to one row using c-style arrays
    *
-   * \param rowIndex Global row index.
-   * \param colIndices Global column indices
-   * \param values Values to add to prescribed locations.
-   * \param size Number of elements
+   * @param rowIndex Global row index.
+   * @param colIndices Global column indices
+   * @param values Values to add to prescribed locations.
+   * @param size Number of elements
    * 
    * NOTE: set()/add()/insert() can't be interchanged without assembly.
    * 
@@ -223,10 +224,10 @@ public:
    /**
    * @brief Set elements to one row using c-style arrays
    *
-   * \param rowIndex Global row index.
-   * \param colIndices Global column indices
-   * \param values Values to add to prescribed locations.
-   * \param size Number of elements
+   * @param rowIndex Global row index.
+   * @param colIndices Global column indices
+   * @param values Values to add to prescribed locations.
+   * @param size Number of elements
    * 
    * NOTE: set()/add()/insert() can't be interchanged without assembly.
    * 
@@ -239,10 +240,10 @@ public:
   /**
    * @brief Insert elements to one row using c-style arrays
    *
-   * \param rowIndex Global row index.
-   * \param colIndices Global column indices
-   * \param values Values to add to prescribed locations.
-   * \param size Number of elements
+   * @param rowIndex Global row index.
+   * @param colIndices Global column indices
+   * @param values Values to add to prescribed locations.
+   * @param size Number of elements
    * 
    * NOTE: set()/add()/insert() can't be interchanged without assembly.
    * 
@@ -255,9 +256,9 @@ public:
   /**
    * @brief Add elements to one row using array1d
    *
-   * \param rowIndex Global row index.
-   * \param colIndices Global column indices
-   * \param values Values to add to prescribed locations.
+   * @param rowIndex Global row index.
+   * @param colIndices Global column indices
+   * @param values Values to add to prescribed locations.
    * 
    * NOTE: set()/add()/insert() can't be interchanged without assembly.
    * 
@@ -269,9 +270,9 @@ public:
   /**
    * @brief Set elements of one row using array1d
    *
-   * \param rowIndex Global row index.
-   * \param colIndices Global column indices
-   * \param values Values to add to prescribed locations.
+   * @param rowIndex Global row index.
+   * @param colIndices Global column indices
+   * @param values Values to add to prescribed locations.
    * 
    * NOTE: set()/add()/insert() can't be interchanged without assembly.
    * 
@@ -283,9 +284,9 @@ public:
   /**
    * @brief Insert elements of one row using array1d
    *
-   * \param rowIndex Global row index.
-   * \param colIndices Global column indices
-   * \param values Values to add to prescribed locations.
+   * @param rowIndex Global row index.
+   * @param colIndices Global column indices
+   * @param values Values to add to prescribed locations.
    * 
    * NOTE: set()/add()/insert() can't be interchanged without assembly.
    * 
@@ -297,9 +298,9 @@ public:
    /**
    * @brief Add dense matrix.
    *
-   * \param rowIndices Global row indices.
-   * \param colIndices Global col indices
-   * \param values Dense local matrix of values.
+   * @param rowIndices Global row indices.
+   * @param colIndices Global col indices
+   * @param values Dense local matrix of values.
    * 
    * NOTE: set()/add()/insert() can't be interchanged without assembly.
    * 
@@ -311,9 +312,9 @@ public:
   /**
    * @brief Set dense matrix.
    *
-   * \param rowIndices Global row indices.
-   * \param colIndices Global col indices
-   * \param values Dense local matrix of values.
+   * @param rowIndices Global row indices.
+   * @param colIndices Global col indices
+   * @param values Dense local matrix of values.
    * 
    * NOTE: set()/add()/insert() can't be interchanged without assembly.
    * 
@@ -325,9 +326,9 @@ public:
   /**
    * @brief Insert dense matrix.
    *
-   * \param rowIndices Global row indices.
-   * \param colIndices Global col indices
-   * \param values Dense local matrix of values.
+   * @param rowIndices Global row indices.
+   * @param colIndices Global col indices
+   * @param values Dense local matrix of values.
    * 
    * NOTE: set()/add()/insert() can't be interchanged without assembly.
    * 
@@ -339,11 +340,11 @@ public:
   /**
    * @brief Insert dense matrix.
    *
-   * \param rowIndices Global row indices.
-   * \param colIndices Global col indices
-   * \param values Dense local matrix of values.
-   * \param numRows Number of row indices.
-   * \param numCols Number of column indices.
+   * @param rowIndices Global row indices.
+   * @param colIndices Global col indices
+   * @param values Dense local matrix of values.
+   * @param numRows Number of row indices.
+   * @param numCols Number of column indices.
    *
    * @note Row major layout assumed in values
    */
@@ -362,21 +363,21 @@ public:
    *
    * Compute <tt>Ax = b<tt>.
    *
-   * \param src Input vector (x).
-   * \param dst Output vector (b).
+   * @param src Input vector (x).
+   * @param dst Output vector (b).
    *
    */
-  void multiply( PetscVector const & src,
-                 PetscVector & dst ) const;
+  virtual void multiply( PetscVector const & src,
+                         PetscVector & dst ) const override;
 
    /**
    * @brief Matrix/Matrix multiplication.
    *
    * Compute <tt>this*B = C<tt>.
    *
-   * \param src Input matrix (B).
-   * \param dst Output matrix (C).
-    * \param closeResult whether to close @p dst for additional entries.
+   * @param src Input matrix (B).
+   * @param dst Output matrix (C).
+    * @param closeResult whether to close @p dst for additional entries.
    *
    * Note that the output matrix C should have the same 
    * row-map as this.  If close() has already been called
@@ -392,9 +393,9 @@ public:
    *
    * Compute <tt>this^T * B = C<tt>.
    *
-   * \param src Input matrix (B).
-   * \param dst Output matrix (C).
-   * \param closeResult whether to close @p dst for additional entries.
+   * @param src Input matrix (B).
+   * @param dst Output matrix (C).
+   * @param closeResult whether to close @p dst for additional entries.
    *
    * Note that the output matrix C should have the same
    * row-map as this.  If close() has already been called
@@ -411,9 +412,9 @@ public:
    *
    * Compute <tt>this^T * B = C<tt>.
    *
-   * \param src Input matrix (B).
-   * \param dst Output matrix (C).
-   * \param closeResult whether to close @p dst for additional entries.
+   * @param src Input matrix (B).
+   * @param dst Output matrix (C).
+   * @param closeResult whether to close @p dst for additional entries.
    *
    * Note that the output matrix C should have the same
    * row-map as this.  If close() has already been called
@@ -428,9 +429,9 @@ public:
   /**
    * @brief Compute residual <tt>r = Ax - b</tt>.
    *
-   * \param x Input solution.
-   * \param b Input right hand side.
-   * \param r Output residual.
+   * @param x Input solution.
+   * @param b Input right hand side.
+   * @param r Output residual.
    *
    */
   void residual( PetscVector const & x,
@@ -442,11 +443,11 @@ public:
    *
    * @note The naming convention follows the BLAS library.
    *
-   * \param alpha Scalar factor for added matvec product.
-   * \param x Input vector.
-   * \param beta Scalar factor for right hand side.
-   * \param y Output vector.
-   * \param useTranspose Boolean, set to true to use <tt>A^T</tt>.
+   * @param alpha Scalar factor for added matvec product.
+   * @param x Input vector.
+   * @param beta Scalar factor for right hand side.
+   * @param y Output vector.
+   * @param useTranspose Boolean, set to true to use <tt>A^T</tt>.
    *
    */
  void gemv( real64 const alpha,
@@ -458,7 +459,7 @@ public:
   /**
    * @brief Multiply all elements by scalingFactor.
    *
-   * \param scalingFactor Scaling factor.
+   * @param scalingFactor Scaling factor.
    *
    */
   void scale( real64 const scalingFactor );
@@ -466,7 +467,7 @@ public:
   /**
    * @brief Pre-multiplies (left) with diagonal matrix consisting of the values in vec.
    *
-   * \param vec Vector to pre-multiply with.
+   * @param vec Vector to pre-multiply with.
    *
    */
   void leftScale( PetscVector const & vec );
@@ -474,7 +475,7 @@ public:
   /**
    * @brief Post-multiplies (right) with diagonal matrix consisting of the values in vec.
    *
-   * \param vec Vector to post-multiply with.
+   * @param vec Vector to post-multiply with.
    *
    */
   void rightScale( PetscVector const & vec );
@@ -483,8 +484,8 @@ public:
    * @brief Post-multiplies (right) with diagonal matrix consisting of the values in vecRight
    * and pre-multiplies (left) with diagonal matrix consisting of the values in vec.
    *
-   * \param vec vecLeft to pre-multiply with.
-   * \param vec vecRight to post-multiply with.
+   * @param vec vecLeft to pre-multiply with.
+   * @param vec vecRight to post-multiply with.
    *
    */
   void leftRightScale( PetscVector const & vecLeft,
@@ -493,8 +494,8 @@ public:
   /**
    * @brief Clear a row and multiplies the diagonal term by <tt>factor</tt>.
    *
-   * \param row Index of the row to be cleared.
-   * \param factor Scaling factor for diagonal element.
+   * @param row Index of the row to be cleared.
+   * @param factor Scaling factor for diagonal element.
    *
    */
   void clearRow( globalIndex const globalRow,
@@ -600,8 +601,8 @@ public:
   /**
    * @brief Write the matrix to filename in a matlab-compatible format.
    * 
-   * \param filename Name of output file
-   * \param mtxFormat True if Matrix Market file format, false for Matlab
+   * @param filename Name of output file
+   * @param mtxFormat True if Matrix Market file format, false for Matlab
    *
    * Within octave / matlab:
    * >> load filename

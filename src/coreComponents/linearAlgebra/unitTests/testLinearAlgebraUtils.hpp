@@ -22,6 +22,18 @@
 #include "common/DataTypes.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
 
+/*! @name Utility functions.
+ * @brief Functions used to construct useful matrices in the test files.
+ */
+//@{
+
+/**
+ * @brief Compute an identity matrix
+ *
+ * @param comm MPI communicator.
+ * @param N global size of the square identity matrix.
+ */
+
 // BEGIN_RST_NARRATIVE testLAOperations.rst
 // ==============================
 // Compute Identity
@@ -55,8 +67,8 @@ typename LAI::ParallelMatrix computeIdentity( MPI_Comm comm,
 /**
  * @brief Compute the 2D Laplace operator
  *
- * \param comm MPI communicator.
- * \param n size of the nxn mesh for the square 2D Laplace operator matrix. Matrix size will be N=n^2.
+ * @param comm MPI communicator.
+ * @param n size of the nxn mesh for the square 2D Laplace operator matrix. Matrix size will be N=n^2.
  */
 
 // ==============================
@@ -135,6 +147,8 @@ typename LAI::ParallelMatrix compute2DLaplaceOperator( MPI_Comm comm,
   // Return the matrix
   return laplace2D;
 }
+
+// END_RST_NARRATIVE
 
 //@}
 

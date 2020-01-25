@@ -143,6 +143,19 @@ localIndex DofManager::rankOffset( string const & fieldName ) const
   }
 }
 
+localIndex DofManager::numComponents( string const & fieldName ) const
+{
+  if( !fieldName.empty() )
+  {
+    return m_fields[getFieldIndex( fieldName )].numComponents;
+  }
+  else
+  {
+    return std::accumulate( m_fields.begin(), m_fields.end(), 0,
+                            []( globalIndex const & n, FieldDescription const & f ) { return n + f.numComponents; } );
+  }
+}
+
 void DofManager::createIndexArray( FieldDescription & field )
 {
   bool const success =
@@ -931,6 +944,49 @@ void DofManager::reorderByRank()
   m_reordered = true;
 }
 
+template< typename MATRIX >
+void DofManager::makeRestrictor( string const & fieldName,
+                                 MATRIX & restrictor,
+                                 bool const transpose,
+                                 localIndex const loCompIndex,
+                                 localIndex const hiCompIndex ) const
+{
+  GEOSX_ERROR_IF( !m_reordered, "Cannot make restrictors before reorderByRank() has been called." );
+
+  FieldDescription const & field = m_fields[getFieldIndex( fieldName )];
+
+  localIndex const loComp = loCompIndex;
+  localIndex const hiComp = (hiCompIndex >= 0) ? hiCompIndex : field.numComponents;
+  GEOSX_ASSERT( loComp >= 0 && hiComp <= field.numComponents && loComp < hiComp );
+
+  localIndex const numComp = hiComp - loComp;
+  localIndex const numLoc = field.numLocalDof / field.numComponents;
+
+  globalIndex rowOffset = field.rankOffset / field.numComponents * numComp - loComp;
+  globalIndex colOffset = field.globalOffset;
+  localIndex rowStride = numComp;
+  localIndex colStride = field.numComponents;
+  localIndex rowSize = field.numLocalDof;
+  localIndex colSize = numLocalDofs();
+
+  if( transpose )
+  {
+    std::swap( rowOffset, colOffset );
+    std::swap( rowStride, colStride );
+    std::swap( rowSize, colSize );
+  }
+
+  restrictor.createWithLocalSize( rowSize, colSize, 1, MPI_COMM_GEOSX );
+  for( localIndex i = 0; i < numLoc; ++i )
+  {
+    for( localIndex c = loComp; c < hiComp; ++c )
+    {
+      restrictor.insert( rowOffset + i * rowStride + c, colOffset + i * colStride + c, 1.0 );
+    }
+  }
+  restrictor.close();
+}
+
 // Print the coupling table on screen
 void DofManager::printFieldInfo( std::ostream & os ) const
 {
@@ -1023,7 +1079,12 @@ template void DofManager::addFieldToVector( LAI::ParallelVector &, \
                                             string const &, \
                                             real64 const, \
                                             localIndex const, \
-                                            localIndex const ) const;
+                                            localIndex const ) const; \
+template void DofManager::makeRestrictor( string const & fieldName, \
+                                          LAI::ParallelMatrix & restrictor, \
+                                          bool const transpose, \
+                                          localIndex const loCompIndex, \
+                                          localIndex const hiCompIndex ) const;
 
 #ifdef GEOSX_USE_TRILINOS
 MAKE_DOFMANAGER_METHOD_INST( TrilinosInterface )

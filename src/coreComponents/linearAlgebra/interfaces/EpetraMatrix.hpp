@@ -20,7 +20,8 @@
 #define GEOSX_LINEARALGEBRA_INTERFACES_EPETRAMATRIX_HPP_
 
 #include "common/DataTypes.hpp"
-#include "EpetraVector.hpp"
+#include "linearAlgebra/interfaces/EpetraVector.hpp"
+#include "linearAlgebra/interfaces/LinearOperator.hpp"
 
 class Epetra_Map;
 class Epetra_FECrsGraph;
@@ -34,7 +35,7 @@ namespace geosx
  * \brief This class creates and provides basic support for the Epetra_CrsMatrix
  *        matrix object type used in Trilinos.
  */
-class EpetraMatrix
+class EpetraMatrix : public LinearOperator<EpetraVector>
 {
 public:
 
@@ -58,7 +59,7 @@ public:
   /**
    * @brief Virtual destructor.
    */
-  ~EpetraMatrix();
+  virtual ~EpetraMatrix() override;
 
   //@}
   //! @name Create Methods
@@ -69,16 +70,16 @@ public:
    *
    * TODO change this to whatever format the sparsity pattern will be.
    *
-   * \param Epetra_FECrsGraph existing graph.
+   * @param Epetra_FECrsGraph existing graph.
    */
   void create( Epetra_FECrsGraph const & graph );
 
   /**
    * @brief Create a square matrix from local number of rows.
    *
-   * \param localSize local number of rows for square matrix.
-   * \param maxEntriesPerRow Maximum number of non-zero entries per row.
-   * \param comm MPI communicator.
+   * @param localSize local number of rows for square matrix.
+   * @param maxEntriesPerRow Maximum number of non-zero entries per row.
+   * @param comm MPI communicator.
    *
    */
   void createWithLocalSize( localIndex const localSize,
@@ -90,9 +91,9 @@ public:
    *
    * Create a square matrix with an (approximately) even partitioning of rows.
    *
-   * \param globalSize Global dimensions for a square matrix.
-   * \param maxEntriesPerRow Maximum number of non-zero entries per row.
-   * \param comm MPI communicator.
+   * @param globalSize Global dimensions for a square matrix.
+   * @param maxEntriesPerRow Maximum number of non-zero entries per row.
+   * @param comm MPI communicator.
    *
    */
   void createWithGlobalSize( globalIndex const globalSize,
@@ -102,10 +103,10 @@ public:
   /**
    * @brief Create a rectangular matrix from number of rows/columns.
    *
-   * \param comm MPI communicator.
-   * \param localRows Local number of rows.
-   * \param localCols Local number of columns.
-   * \param maxEntriesPerRow Maximum number of entries per row (hint).
+   * @param comm MPI communicator.
+   * @param localRows Local number of rows.
+   * @param localCols Local number of columns.
+   * @param maxEntriesPerRow Maximum number of entries per row (hint).
    */
   void createWithLocalSize( localIndex const localRows,
                             localIndex const localCols,
@@ -115,10 +116,10 @@ public:
   /**
    * @brief Create a rectangular matrix from number of rows/columns.
    *
-   * \param comm MPI communicator.
-   * \param globalRows Global number of rows.
-   * \param globalCols Global number of columns.
-   * \param maxEntriesPerRow Maximum number of entries per row (hint).
+   * @param comm MPI communicator.
+   * @param globalRows Global number of rows.
+   * @param globalCols Global number of columns.
+   * @param maxEntriesPerRow Maximum number of entries per row (hint).
    */
   void createWithGlobalSize( globalIndex const globalRows,
                              globalIndex const globalCols,
@@ -170,9 +171,9 @@ public:
   /**
    * @brief Add to one element.
    *
-   * \param rowIndex Global row index.
-   * \param colIndex Global column index.
-   * \param value Value to add to prescribed location.
+   * @param rowIndex Global row index.
+   * @param colIndex Global column index.
+   * @param value Value to add to prescribed location.
    *
    */
   void add( globalIndex const rowIndex,
@@ -182,9 +183,9 @@ public:
   /**
    * @brief Set one element.
    *
-   * \param rowIndex Global row index.
-   * \param colIndex Global column index.
-   * \param value Value to set at prescribed location.
+   * @param rowIndex Global row index.
+   * @param colIndex Global column index.
+   * @param value Value to set at prescribed location.
    *
    */
   void set( globalIndex const rowIndex,
@@ -194,9 +195,9 @@ public:
   /**
    * @brief Insert one element.
    *
-   * \param rowIndex Global row index.
-   * \param colIndex Global column index.
-   * \param value Value to insert at prescribed location.
+   * @param rowIndex Global row index.
+   * @param colIndex Global column index.
+   * @param value Value to insert at prescribed location.
    *
    */
   void insert( globalIndex const rowIndex,
@@ -206,10 +207,10 @@ public:
   /**
    * @brief Add elements to one row using c-style arrays
    *
-   * \param rowIndex Global row index.
-   * \param colIndices Global column indices
-   * \param values Values to add to prescribed locations.
-   * \param size Number of elements
+   * @param rowIndex Global row index.
+   * @param colIndices Global column indices
+   * @param values Values to add to prescribed locations.
+   * @param size Number of elements
    */
   void add( globalIndex const rowIndex,
             globalIndex const * colIndices,
@@ -219,10 +220,10 @@ public:
   /**
    * @brief Set elements to one row using c-style arrays
    *
-   * \param rowIndex Global row index.
-   * \param colIndices Global column indices
-   * \param values Values to add to prescribed locations.
-   * \param size Number of elements
+   * @param rowIndex Global row index.
+   * @param colIndices Global column indices
+   * @param values Values to add to prescribed locations.
+   * @param size Number of elements
    */
   void set( globalIndex const rowIndex,
             globalIndex const * colIndices,
@@ -232,10 +233,10 @@ public:
   /**
    * @brief Insert elements to one row using c-style arrays
    *
-   * \param rowIndex Global row index.
-   * \param colIndices Global column indices
-   * \param values Values to add to prescribed locations.
-   * \param size Number of elements
+   * @param rowIndex Global row index.
+   * @param colIndices Global column indices
+   * @param values Values to add to prescribed locations.
+   * @param size Number of elements
    */
   void insert( globalIndex const rowIndex,
                globalIndex const * colIndices,
@@ -245,9 +246,9 @@ public:
   /**
    * @brief Add elements to one row using array1d
    *
-   * \param rowIndex Global row index.
-   * \param colIndices Global column indices
-   * \param values Values to add to prescribed locations.
+   * @param rowIndex Global row index.
+   * @param colIndices Global column indices
+   * @param values Values to add to prescribed locations.
    */
   void add( globalIndex const rowIndex,
             array1d< globalIndex > const & colIndices,
@@ -256,9 +257,9 @@ public:
   /**
    * @brief Set elements of one row using array1d
    *
-   * \param rowIndex Global row index.
-   * \param colIndices Global column indices
-   * \param values Values to add to prescribed locations.
+   * @param rowIndex Global row index.
+   * @param colIndices Global column indices
+   * @param values Values to add to prescribed locations.
    */
   void set( globalIndex const rowIndex,
             array1d< globalIndex > const & colIndices,
@@ -267,9 +268,9 @@ public:
   /**
    * @brief Insert elements of one row using array1d
    *
-   * \param rowIndex Global row index.
-   * \param colIndices Global column indices
-   * \param values Values to add to prescribed locations.
+   * @param rowIndex Global row index.
+   * @param colIndices Global column indices
+   * @param values Values to add to prescribed locations.
    */
   void insert( globalIndex const rowIndex,
                array1d< globalIndex > const & colIndices,
@@ -278,9 +279,9 @@ public:
   /**
    * @brief Add dense matrix.
    *
-   * \param rowIndices Global row indices.
-   * \param colIndices Global col indices
-   * \param values Dense local matrix of values.
+   * @param rowIndices Global row indices.
+   * @param colIndices Global col indices
+   * @param values Dense local matrix of values.
    *
    * @note Row major layout assumed in values
    */
@@ -291,9 +292,9 @@ public:
   /**
    * @brief Set dense matrix.
    *
-   * \param rowIndices Global row indices.
-   * \param colIndices Global col indices
-   * \param values Dense local matrix of values.
+   * @param rowIndices Global row indices.
+   * @param colIndices Global col indices
+   * @param values Dense local matrix of values.
    *
    * @note Row major layout assumed in values
    */
@@ -304,9 +305,9 @@ public:
   /**
    * @brief Insert dense matrix.
    *
-   * \param rowIndices Global row indices.
-   * \param colIndices Global col indices
-   * \param values Dense local matrix of values.
+   * @param rowIndices Global row indices.
+   * @param colIndices Global col indices
+   * @param values Dense local matrix of values.
    *
    * @note Row major layout assumed in values
    */
@@ -317,11 +318,11 @@ public:
   /**
    * @brief Add dense matrix.
    *
-   * \param rowIndices Global row indices.
-   * \param colIndices Global col indices
-   * \param values Dense local matrix of values.
-   * \param numRows Number of row indices.
-   * \param numCols Number of column indices.
+   * @param rowIndices Global row indices.
+   * @param colIndices Global col indices
+   * @param values Dense local matrix of values.
+   * @param numRows Number of row indices.
+   * @param numCols Number of column indices.
    *
    * @note Row major layout assumed in values
    */
@@ -334,11 +335,11 @@ public:
   /**
    * @brief Set dense matrix.
    *
-   * \param rowIndices Global row indices.
-   * \param colIndices Global col indices
-   * \param values Dense local matrix of values.
-   * \param numRows Number of row indices.
-   * \param numCols Number of column indices.
+   * @param rowIndices Global row indices.
+   * @param colIndices Global col indices
+   * @param values Dense local matrix of values.
+   * @param numRows Number of row indices.
+   * @param numCols Number of column indices.
    *
    * @note Row major layout assumed in values
    */
@@ -351,11 +352,11 @@ public:
   /**
    * @brief Insert dense matrix.
    *
-   * \param rowIndices Global row indices.
-   * \param colIndices Global col indices
-   * \param values Dense local matrix of values.
-   * \param numRows Number of row indices.
-   * \param numCols Number of column indices.
+   * @param rowIndices Global row indices.
+   * @param colIndices Global col indices
+   * @param values Dense local matrix of values.
+   * @param numRows Number of row indices.
+   * @param numCols Number of column indices.
    *
    * @note Row major layout assumed in values
    */
@@ -373,12 +374,12 @@ public:
    *
    * Compute <tt>Ax = b<tt>.
    *
-   * \param src Input vector (x).
-   * \param dst Output vector (b).
+   * @param src Input vector (x).
+   * @param dst Output vector (b).
    *
    */
-  void multiply( EpetraVector const & src,
-                 EpetraVector & dst ) const;
+  virtual void multiply( EpetraVector const & src,
+                         EpetraVector & dst ) const override;
 
 
   /**
@@ -386,9 +387,9 @@ public:
    *
    * Compute <tt>this * B = C<tt>.
    *
-   * \param src Input matrix (B).
-   * \param dst Output matrix (C).
-   * \param closeResult whether to close @p dst for additional entries.
+   * @param src Input matrix (B).
+   * @param dst Output matrix (C).
+   * @param closeResult whether to close @p dst for additional entries.
    *
    * Note that the output matrix C should have the same
    * row-map as this.  If close() has already been called
@@ -404,9 +405,9 @@ public:
    *
    * Compute <tt>this^T * B = C<tt>.
    *
-   * \param src Input matrix (B).
-   * \param dst Output matrix (C).
-   * \param closeResult whether to close @p dst for additional entries.
+   * @param src Input matrix (B).
+   * @param dst Output matrix (C).
+   * @param closeResult whether to close @p dst for additional entries.
    *
    * Note that the output matrix C should have the same
    * row-map as this.  If close() has already been called
@@ -422,9 +423,9 @@ public:
      *
      * Compute <tt>B * this^T = C<tt>.
      *
-     * \param src Input matrix (B).
-     * \param dst Output matrix (C).
-     * \param closeResult whether to close @p dst for additional entries.
+     * @param src Input matrix (B).
+     * @param dst Output matrix (C).
+     * @param closeResult whether to close @p dst for additional entries.
      *
      * Note that the output matrix C should have the same
      * row-map as this.  If close() has already been called
@@ -435,29 +436,16 @@ public:
                                  EpetraMatrix & dst,
                                  bool const closeResult = true ) const;
 
-
-  /**
-   * @brief Compute residual <tt>r = Ax - b</tt>.
-   *
-   * \param x Input solution.
-   * \param b Input right hand side.
-   * \param r Output residual.
-   *
-   */
-  void residual( EpetraVector const & x,
-                 EpetraVector const & b,
-                 EpetraVector & r ) const;
-
   /**
    * @brief Compute gemv <tt>y = alpha*A*x + beta*y</tt>.
    *
    * @note The naming convention follows the BLAS library.
    *
-   * \param alpha Scalar factor for added matvec product.
-   * \param x Input vector.
-   * \param beta Scalar factor for right hand side.
-   * \param y Output vector.
-   * \param useTranspose Boolean, set to true to use <tt>A^T</tt>.
+   * @param alpha Scalar factor for added matvec product.
+   * @param x Input vector.
+   * @param beta Scalar factor for right hand side.
+   * @param y Output vector.
+   * @param useTranspose Boolean, set to true to use <tt>A^T</tt>.
    *
    */
   void gemv( real64 const alpha,
@@ -469,7 +457,7 @@ public:
   /**
    * @brief Multiply all elements by scalingFactor.
    *
-   * \param scalingFactor Scaling factor.
+   * @param scalingFactor Scaling factor.
    *
    */
   void scale( real64 const scalingFactor );
@@ -477,7 +465,7 @@ public:
   /**
    * @brief Pre-multiplies (left) with diagonal matrix consisting of the values in vec.
    *
-   * \param vec Vector to pre-multiply with.
+   * @param vec Vector to pre-multiply with.
    *
    */
   void leftScale( EpetraVector const & vec );
@@ -485,7 +473,7 @@ public:
   /**
    * @brief Post-multiplies (right) with diagonal matrix consisting of the values in vec.
    *
-   * \param vec Vector to post-multiply with.
+   * @param vec Vector to post-multiply with.
    *
    */
   void rightScale( EpetraVector const & vec );
@@ -494,8 +482,8 @@ public:
    * @brief Post-multiplies (right) with diagonal matrix consisting of the values in vecRight
    * and pre-multiplies (left) with diagonal matrix consisting of the values in vec.
    *
-   * \param vec vecLeft to pre-multiply with.
-   * \param vec vecRight to post-multiply with.
+   * @param vec vecLeft to pre-multiply with.
+   * @param vec vecRight to post-multiply with.
    *
    */
   void leftRightScale( EpetraVector const & vecLeft,
@@ -504,8 +492,8 @@ public:
   /**
    * @brief Clear a row, and optionally set diagonal element to <tt>diagValue</tt>.
    *
-   * \param row globalIndex of the row to be cleared.
-   * \param diagValue (Optional) set diagonal element to desired value.
+   * @param row globalIndex of the row to be cleared.
+   * @param diagValue (Optional) set diagonal element to desired value.
    *
    */
   void clearRow( globalIndex const row,

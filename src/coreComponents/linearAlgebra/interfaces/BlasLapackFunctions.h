@@ -16,6 +16,9 @@
  * @file BlasLapackFunctions.h
  */
 
+#ifndef GEOSX_LINEARALGEBRA_INTERFACES_BLASLAPACKFUNCTIONS_HPP_
+#define GEOSX_LINEARALGEBRA_INTERFACES_BLASLAPACKFUNCTIONS_HPP_
+
 #ifdef FORTRAN_MANGLE_NO_UNDERSCORE
 #define FORTRAN_MANGLE(name) name
 #else
@@ -116,3 +119,5 @@ void GEOSX_dscal( int const * N,
                   int const * INCX );
 }
 #endif
+
+#endif //GEOSX_LINEARALGEBRA_INTERFACES_BLASLAPACKFUNCTIONS_HPP_

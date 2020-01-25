@@ -350,7 +350,7 @@ protected:
                                 string const & dofIndexKey,
                                 string_array const & regions,
                                 localIndex const numComp,
-                                ParallelMatrix & sparsity );
+                                typename LAI::ParallelMatrix & sparsity );
 
   using CoupledPatternFunc = void (*)( MeshLevel const * const mesh,
                                        string const & dofIndexKey1,
@@ -358,7 +358,7 @@ protected:
                                        string_array const & regions,
                                        localIndex const numComp1,
                                        localIndex const numComp2,
-                                       ParallelMatrix & sparsity );
+                                       typename LAI::ParallelMatrix & sparsity );
 
   struct FieldDesc
   {
@@ -435,6 +435,7 @@ void DofManagerSparsityTest<LAI>::testPattern( std::vector<FieldDesc> fields,
   this->dofManager.setSparsityPattern( pattern );
 
   patternExpected.createWithLocalSize( numLocalDof, numLocalDof, 27 * numCompTotal, MPI_COMM_GEOSX );
+  patternExpected.open();
 
   for( FieldDesc const & f : fields )
   {
@@ -637,7 +638,7 @@ INSTANTIATE_TYPED_TEST_CASE_P( Trilinos, DofManagerSparsityTest, TrilinosInterfa
 
 #ifdef GEOSX_USE_PETSC
 // Does not work. Remove this comment when fixed.
-//INSTANTIATE_TYPED_TEST_CASE_P( Petsc, DofManagerSparsityTest, PetscInterface );
+INSTANTIATE_TYPED_TEST_CASE_P( Petsc, DofManagerSparsityTest, PetscInterface );
 #endif
 
 #ifdef GEOSX_USE_HYPRE

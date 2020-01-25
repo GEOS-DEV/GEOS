@@ -19,75 +19,64 @@
 #ifndef GEOSX_LINEARALGEBRA_SOLVERS_BICGSTABSOLVER_HPP_
 #define GEOSX_LINEARALGEBRA_SOLVERS_BICGSTABSOLVER_HPP_
 
+#include "linearAlgebra/solvers/KrylovSolver.hpp"
+
 namespace geosx
 {
 
-template< typename LAI > class BlockMatrixView;
-template< typename LAI > class BlockVectorView;
-
 /**
- * \class BiCGSTABsolver
- * \brief This class creates and provides basic support for block
- *        BiCGSTAB (templated on the LA interface).
- * \note  The notation is consistent with "Iterative Methods for
+ * @brief This class implements Bi-Conjugate Gradient Stabilized method
+ *        for monolithic and block linear operators.
+ * @tparam VECTOR type of vectors this solver operates on.
+ * @note  The notation is consistent with "Iterative Methods for
  *        Linear and Non-Linear Equations" from C.T. Kelley (1995)
  *        and "Iterative Methods for Sparse Linear Systems"
  *        from Y. Saad (2003).
  */
-
-template< typename LAI >
-class BiCGSTABsolver
+template< typename VECTOR >
+class BiCGSTABsolver : public KrylovSolver<VECTOR>
 {
-
-  using ParallelMatrix = typename LAI::ParallelMatrix;
-  using ParallelVector = typename LAI::ParallelVector;
-
 public:
+
+  using Vector = typename KrylovSolver<VECTOR>::Vector;
 
   //! @name Constructor/Destructor Methods
   //@{
+
   /**
-   * @brief Empty solver object constructor.
-   *
-   * Create an empty solver object.
+   * @brief Solver object constructor.
    */
-  BiCGSTABsolver();
+  BiCGSTABsolver( LinearOperator<Vector> const & A,
+                  LinearOperator<Vector> const & M,
+                  real64 const tolerance,
+                  localIndex const maxIterations,
+                  integer const verbosity = 0 );
 
   /**
    * @brief Virtual destructor.
    */
-  ~BiCGSTABsolver() = default;
+  virtual ~BiCGSTABsolver() override;
+
   //@}
 
-  /**
-   * @brief Solve the system <tt>M^{-1}(Ax - b) = 0</tt> with BiCGSTAB
-   * using monolithic GEOSX matrices.
-   *
-   * \param A system matrix.
-   * \param x system solution (input = initial guess, output = solution).
-   * \param b system right hand side.
-   * \param M preconditioner.
-   */
-  void solve( ParallelMatrix const &A,
-              ParallelVector &x,
-              ParallelVector const &b,
-              ParallelMatrix const &M );
+  //! @name KrylovSolver interface
+  //@{
 
-  /**
-   * @brief Solve the system <tt>M^{-1}(Ax - b) = 0</tt> with BiCGSTAB
-   * using block GEOSX matrices.
-   *
-   * \param A system block matrix.
-   * \param x system block solution (input = initial guess, output = solution).
-   * \param b system block right hand side.
-   * \param M block preconditioner.
-   */
-  void solve( BlockMatrixView<LAI> const &A,
-              BlockVectorView<LAI> &x,
-              BlockVectorView<LAI> const &b,
-              BlockMatrixView<LAI> const &M );
+  virtual void
+  solve( Vector const & b,
+         Vector & x ) const override final;
 
-private:
+  //@}
+
+protected:
+
+  using VectorTemp = typename KrylovSolver<VECTOR>::VectorTemp;
+
+  using KrylovSolver<VECTOR>::m_operator;
+  using KrylovSolver<VECTOR>::m_precond;
+  using KrylovSolver<VECTOR>::m_tolerance;
+  using KrylovSolver<VECTOR>::m_maxIterations;
+  using KrylovSolver<VECTOR>::m_verbosity;
 
 };
 

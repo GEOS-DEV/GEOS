@@ -7,10 +7,16 @@ set( linearAlgebra_headers
      interfaces/BlasLapackFunctions.h
      interfaces/BlasLapackLA.hpp
      interfaces/InterfaceTypes.hpp
+     solvers/KrylovSolver.hpp
      solvers/CGsolver.hpp
      solvers/BiCGSTABsolver.hpp
-     utilities/BlockMatrixView.hpp
+     solvers/PreconditionerBase.hpp
+     solvers/MultiphaseFlowPreconditioner.hpp
+     interfaces/LinearOperator.hpp
      utilities/BlockVectorView.hpp
+     utilities/BlockVectorWrapper.hpp
+     utilities/BlockVector.hpp
+     utilities/BlockOperatorView.hpp
      utilities/LinearSolverParameters.hpp
      DofManager.hpp
      DofManagerHelpers.hpp
@@ -21,12 +27,16 @@ set( linearAlgebra_headers
 #
 set( linearAlgebra_sources
      interfaces/BlasLapackLA.cpp
+     solvers/KrylovSolver.cpp
      solvers/CGsolver.cpp
      solvers/BiCGSTABsolver.cpp
+     solvers/MultiphaseFlowPreconditioner.cpp
      utilities/BlockVectorView.cpp
-     utilities/BlockMatrixView.cpp
-     DofManager.cpp
-     utilities/LAIHelperFunctions.cpp)
+     utilities/BlockVectorWrapper.cpp
+     utilities/BlockVector.cpp
+     utilities/BlockOperatorView.cpp
+     utilities/LAIHelperFunctions.cpp
+     DofManager.cpp )
 
 if( BUILD_OBJ_LIBS )
   set( dependencyList common blas lapack raja managers)

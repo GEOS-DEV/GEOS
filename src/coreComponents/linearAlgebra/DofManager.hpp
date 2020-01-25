@@ -297,6 +297,14 @@ public:
   localIndex rankOffset( string const & fieldName = "" ) const;
 
   /**
+   * @brief Return the number of components in a field. If @p fieldName is empty, return
+   * total number of components across all fields.
+   * @param fieldName the name of the field
+   * @return the number of dof components
+   */
+  localIndex numComponents( string const & fieldName = "") const;
+
+  /**
    * @brief Populate sparsity pattern of the entire system matrix.
    *
    * @param [out] matrix the target matrix
@@ -415,6 +423,25 @@ public:
                          real64 const scalingFactor,
                          localIndex const loCompIndex = 0,
                          localIndex const hiCompIndex = -1 ) const;
+
+  /**
+   * @brief Create a matrix that restricts full vectors to one field vectors
+   * @param fieldName name of the target field
+   * @param restrictor resulting operator
+   * @param loCompIndex starting DOF component index (for partial restriction)
+   * @param hiCompIndex index past the ending DOF component (for partial restriction)
+   *
+   * @note [@p loCompIndex , @p hiCompIndex) form a half-open interval.
+   *       Negative value of @p hiCompIndex means use full number of field components
+   *
+   * @note Can only be called after close()
+   */
+  template<typename MATRIX>
+  void makeRestrictor( string const & fieldName,
+                       MATRIX & restrictor,
+                       bool const transpose = false,
+                       localIndex const loCompIndex = 0,
+                       localIndex const hiCompIndex = -1 ) const;
 
   /**
    * @brief Print the summary of declared fields and coupling.

@@ -35,7 +35,7 @@ void PetscInterface::initialize( int & argc, char **& argv )
   {
     PetscInitializeNoArguments();
   }
-  PetscPopSignalHandler();
+  //PetscPopSignalHandler();
 }
 
 void PetscInterface::finalize()

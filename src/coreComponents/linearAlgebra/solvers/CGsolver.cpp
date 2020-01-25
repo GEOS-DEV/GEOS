@@ -20,8 +20,9 @@
 #include "CGsolver.hpp"
 
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
-#include "linearAlgebra/utilities/BlockMatrixView.hpp"
+#include "linearAlgebra/interfaces/LinearOperator.hpp"
 #include "linearAlgebra/utilities/BlockVectorView.hpp"
+#include "linearAlgebra/utilities/BlockOperatorView.hpp"
 
 namespace geosx
 {
@@ -40,68 +41,67 @@ namespace geosx
 // Constructor
 // ----------------------------
 // Empty constructor.
-template< typename LAI >
-CGsolver<LAI>::CGsolver()
-{}
+template< typename VECTOR >
+CGsolver<VECTOR>::CGsolver( LinearOperator<Vector> const & A,
+                            LinearOperator< Vector > const & M,
+                            real64 const tolerance,
+                            localIndex const maxIterations,
+                            integer const verbosity )
+: KrylovSolver<VECTOR>( A, M, tolerance, maxIterations, verbosity )
+{
+
+}
+
+// ----------------------------
+// Destructor
+// ----------------------------
+template< typename VECTOR >
+CGsolver<VECTOR>::~CGsolver() = default;
 
 // ----------------------------
 // Monolithic CG solver
 // ----------------------------
-template< typename LAI >
-void CGsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
-                           typename LAI::ParallelVector &x,
-                           typename LAI::ParallelVector const &b,
-                           typename LAI::ParallelMatrix const &M )
+template< typename VECTOR >
+void CGsolver<VECTOR>::solve( Vector const & b,
+                              Vector & x ) const
 
 {
+  // Shortcuts for operators
+  LinearOperator< VECTOR > const & A = m_operator;
+  LinearOperator< VECTOR > const & M = m_precond;
 
   // Get the global size
-  globalIndex N = x.globalSize();
-
-  // Placeholder for the number of iterations
-  localIndex numIt = 0;
+  localIndex const N = ( m_maxIterations > 0 ) ? m_maxIterations : integer_conversion<localIndex>( x.globalSize() );
 
   // Get the norm of the right hand side
-  real64 normb = b.norm2();
+  real64 const normb = b.norm2();
 
   // Define residual vector
-  ParallelVector rk( x );
+  VectorTemp rk( x );
 
   // Compute initial rk =  b - Ax
   A.residual( x, b, rk );
 
   // Preconditioning
-  ParallelVector zk( x );
+  VectorTemp zk( x );
   M.multiply( rk, zk );
 
   // pk = zk
-  ParallelVector pk( zk );
-  ParallelVector Apk( zk );
-
-  // Declare alpha and beta scalars
-  real64 alpha, beta;
-
-  // Convergence check
-  real64 convCheck = rk.norm2();
-
-  // Declare temp scalar for alpha computation.
-  real64 temp;
+  VectorTemp pk( zk );
+  VectorTemp Apk( zk );
 
   // Declare older vectors
-  ParallelVector rkold( rk );
-  ParallelVector zkold( zk );
+  VectorTemp rkold( rk );
+  VectorTemp zkold( zk );
 
-  for( globalIndex k = 0 ; k < N ; k++ ) // TODO: this needs a max_iter param of type localIndex
+  localIndex k;
+  for( k = 0 ; k < N ; k++ )
   {
-    // Compute rkT.rk
-    alpha = rk.dot( zk );
-
     // Compute Apk
     A.multiply( pk, Apk );
 
     // compute alpha
-    temp = pk.dot( Apk );
-    alpha = alpha/temp;
+    real64 const alpha = rk.dot( zk ) / pk.dot( Apk );
 
     // Update x = x + alpha*ph
     x.axpby( alpha, pk, 1.0 );
@@ -112,10 +112,8 @@ void CGsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
     rk.axpby( -alpha, Apk, 1.0 );
 
     // Convergence check on ||rk||/||b||
-    convCheck = rk.norm2();
-    if( convCheck/normb < 1e-8 )
+    if( rk.norm2() / normb < 1e-8 )
     {
-      numIt = k;
       break;
     }
 
@@ -123,139 +121,36 @@ void CGsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
     M.multiply( rk, zk );
 
     // Compute beta
-    beta = zk.dot( rk );
-    temp = zkold.dot( rkold );
-    beta = beta/temp;
+    real64 const beta = zk.dot( rk ) / zkold.dot( rkold );
 
     // Update pk = pk + beta*zk
     pk.axpby( 1.0, zk, beta );
-
   }
 
-  GEOSX_LOG_RANK_0( "Native CG (no preconditioner) converged in " << numIt << " iterations.");
-  return;
-
-}
-
-// ----------------------------
-// Block CG solver
-// ----------------------------
-template< typename LAI >
-void CGsolver<LAI>::solve( BlockMatrixView<LAI> const & GEOSX_UNUSED_ARG( A ),
-                           BlockVectorView<LAI> & GEOSX_UNUSED_ARG( x ),
-                           BlockVectorView<LAI> const & GEOSX_UNUSED_ARG( b ),
-                           BlockMatrixView<LAI> const & GEOSX_UNUSED_ARG( M ) )
-
-{
-  GEOSX_ERROR( "Not implemented" );
-
-  // TODO: BlockVectorView is a view that doesn't handle any vector
-  //       storage.  The copy and copy constructor functions below
-  //       won't work.
-
-#if 0
-  // Get the global size
-  globalIndex N = x.globalSize();
-
-  // Placeholder for the number of iterations
-  localIndex numIt = 0;
-
-  // Get the norm of the right hand side
-  real64 normb = b.norm2();
-
-  // Define vectors
-  BlockVectorView<LAI> rk( x );
-
-  // Compute initial rk =  b - Ax
-  A.residual( x, b, rk );
-
-  // Preconditioning
-  BlockVectorView<LAI> zk( x );
-  M.multiply( rk, zk );
-
-  // pk = zk
-  BlockVectorView<LAI> pk( zk );
-  BlockVectorView<LAI> Apk( zk );
-
-  // Declare alpha and beta scalars
-  real64 alpha, beta;
-
-  // Convergence check
-  real64 convCheck = rk.norm2();
-
-  // Declare temp scalar for alpha computation
-  real64 temp;
-
-  // Declare older vectors
-  BlockVectorView<LAI> rkold( rk );
-  BlockVectorView<LAI> zkold( zk );
-
-  for( globalIndex k = 0 ; k < N ; k++ ) // TODO: needs maxIter param of type localIndex
+  if( m_verbosity >= 1 )
   {
-    // Compute rkT.rk
-    alpha = rk.dot( zk );
-
-    // Compute Apk
-    A.multiply( pk, Apk );
-
-    // compute alpha
-    temp = pk.dot( Apk );
-
-    alpha = alpha/temp;
-
-    // Update x = x + alpha*pk
-    x.axpby( alpha, pk, 1.0 );
-
-    // Update rk = rk - alpha*Apk
-    rkold.copy( rk );
-    zkold.copy( zk );
-    rk.axpby( -alpha, Apk, 1.0 );
-
-    // Convergence check on ||rk||/||b||
-    convCheck = rk.norm2();
-    if( convCheck/normb < 1e-8 )
-    {
-      numIt = k;
-      break;
-    }
-
-    // Update zk = Mrk
-    M.multiply( rk, zk );
-
-    // Compute beta
-    beta = zk.dot( rk );
-    temp = zkold.dot( rkold );
-    beta = beta/temp;
-
-    // Update pk = pk + beta*zk
-    pk.axpby( 1.0, zk, beta );
-
+    GEOSX_LOG_RANK_0( "CG " << (k < N ? "converged" : "did not converge") << " in " << k << " iterations." );
   }
-
-  // Get the MPI rank
-  int rank;
-  MPI_Comm_rank( MPI_COMM_WORLD, &rank );
-
-  // verbose output (TODO verbosity manager?)
-  if( rank == 1 )
-    std::cout << std::endl << "Block CG converged in " << numIt << " iterations." << std::endl;
-  return;
-
-#endif
 }
 
 // END_RST_NARRATIVE
 
+// -----------------------
+// Explicit Instantiations
+// -----------------------
 #ifdef GEOSX_USE_TRILINOS
-template class CGsolver<TrilinosInterface>;
+template class CGsolver<TrilinosInterface::ParallelVector>;
+template class CGsolver<BlockVectorView<TrilinosInterface::ParallelVector>>;
 #endif
 
 #ifdef GEOSX_USE_HYPRE
-//template class CGsolver<HypreInterface>;
+//template class CGsolver<HypreInterface::ParallelVector>;
+//template class CGsolver<BlockVectorView<HypreInterface::ParallelVector>>;
 #endif
 
 #ifdef GEOSX_USE_PETSC
-template class CGsolver<PetscInterface>;
+template class CGsolver<PetscInterface::ParallelVector>;
+template class CGsolver<BlockVectorView<PetscInterface::ParallelVector>>;
 #endif
 
 } //namespace geosx
