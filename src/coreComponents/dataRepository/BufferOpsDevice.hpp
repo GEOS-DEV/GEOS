@@ -33,17 +33,17 @@ namespace bufferOps
 {
 
 //------------------------------------------------------------------------------
-template< typename POLICY, bool DO_PACKING, typename T, int NDIM, int UNIT_STRIDE_DIM, typename INDEX_TYPE >
+template< typename POLICY, bool DO_PACKING, typename T, int NDIM, int UNIT_STRIDE_DIM >
 typename std::enable_if< can_memcpy< T >, localIndex >::type
 PackDevice( buffer_unit_type * & buffer,
-            LvArray::ArrayView< T, NDIM, UNIT_STRIDE_DIM, INDEX_TYPE > const & var );
+            ArrayView< T, NDIM, UNIT_STRIDE_DIM > const & var );
 
 //------------------------------------------------------------------------------
-template< bool DO_PACKING, typename T, int NDIM, int UNIT_STRIDE_DIM, typename INDEX_TYPE >
+template< bool DO_PACKING, typename T, int NDIM, int UNIT_STRIDE_DIM >
 GEOSX_HOST_DEVICE
 typename std::enable_if< (!can_memcpy< T > || (NDIM > 1)), localIndex >::type
 PackDevice( buffer_unit_type * & GEOSX_UNUSED_ARG( buffer ),
-            LvArray::ArraySlice< T, NDIM, UNIT_STRIDE_DIM, INDEX_TYPE > const & GEOSX_UNUSED_ARG( var ))
+            ArraySlice< T, NDIM, UNIT_STRIDE_DIM > const & GEOSX_UNUSED_ARG( var ))
 {
   GEOSX_ERROR( "Trying to pack data type ("<<typeid(T).name()<<") on device but type is not memcpy-able." );
   return 0;
@@ -64,7 +64,7 @@ PackDevice( buffer_unit_type * & GEOSX_UNUSED_ARG( buffer ),
 template< typename POLICY, bool DO_PACKING, typename T, int NDIM, typename T_INDICES >
 typename std::enable_if< can_memcpy< T >, localIndex >::type
 PackByIndexDevice( buffer_unit_type * & buffer,
-                   LvArray::ArrayView< T, NDIM > const & var,
+                   ArrayView< T, NDIM > const & var,
                    T_INDICES const & indices );
 
 //------------------------------------------------------------------------------
@@ -79,10 +79,10 @@ PackByIndexDevice( buffer_unit_type * & GEOSX_UNUSED_ARG( buffer ),
 }
 
 //------------------------------------------------------------------------------
-template< typename POLICY, typename T, int NDIM, int UNIT_STRIDE_DIM, typename INDEX_TYPE >
+template< typename POLICY, typename T, int NDIM, int UNIT_STRIDE_DIM >
 typename std::enable_if< can_memcpy< T >, localIndex >::type
 UnpackDevice( buffer_unit_type const * & buffer,
-              LvArray::ArrayView< T, NDIM, UNIT_STRIDE_DIM, INDEX_TYPE > const & var );
+              ArrayView< T, NDIM, UNIT_STRIDE_DIM > const & var );
 
 //------------------------------------------------------------------------------
 template< typename POLICY, typename T >
@@ -98,7 +98,7 @@ UnpackDevice( buffer_unit_type const * & GEOSX_UNUSED_ARG( buffer ),
 template< typename POLICY, typename T, int NDIM, typename T_INDICES >
 typename std::enable_if< can_memcpy< T >, localIndex >::type
 UnpackByIndexDevice ( buffer_unit_type const * & buffer,
-                      LvArray::ArrayView< T, NDIM > const & var,
+                      ArrayView< T, NDIM > const & var,
                       T_INDICES const & indices );
 
 //------------------------------------------------------------------------------
