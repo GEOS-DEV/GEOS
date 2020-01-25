@@ -31,18 +31,7 @@
     <PeriodicEvent name="restarts"
                    timeFrequency="5.0e-4"
                    targetExactTimestep="0"
-<<<<<<< HEAD
-                   target="/Outputs/sidreRestart"/>
-                   
-    <SoloEvent 
-      name="siloPlot"
-      target="/Outputs/siloOutput"
-      />
-
-                   
-=======
                    target="/Outputs/restartOutput"/>
->>>>>>> develop
   </Events>
 
 
@@ -110,7 +99,7 @@
                objectPath="nodeManager"
                fieldName="Velocity"
                component="0"  
-               scale="1.0" 
+               scale="0.0" 
                setNames="{xneg}"/>
                
     <FieldSpecification name="yconstraint" 

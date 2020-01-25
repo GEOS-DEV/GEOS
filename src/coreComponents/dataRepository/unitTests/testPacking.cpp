@@ -194,7 +194,7 @@ TEST( testPacking, testPackByIndexDevice )
 
   buffer_unit_type * null_buf = NULL;
   // [ num_dim, stride_i.. , tensor_0, tensor_1, ..., tensor_n ]
-  LvArray::ArrayView< R1Tensor const, 1 > const & veloc_view = veloc.toViewConst();
+  arrayView1d< R1Tensor const > const & veloc_view = veloc.toViewConst();
   localIndex calc_size = bufferOps::PackByIndexDevice< policy, false >( null_buf, veloc_view, indices.toViewConst());
   localIndex expected_size = sizeof(int) + // num_dim = 1
                              sizeof(localIndex) + // stride_i
