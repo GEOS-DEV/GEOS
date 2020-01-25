@@ -446,8 +446,6 @@
 		<xsd:attribute name="capPressureIndex" type="localIndex" />
 		<!--fluidIndex => (no description available)-->
 		<xsd:attribute name="fluidIndex" type="localIndex" />
-		<!--gravityVector => (no description available)-->
-		<xsd:attribute name="gravityVector" type="R1Tensor" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--relPermIndex => (no description available)-->
@@ -461,8 +459,6 @@
 		</xsd:choice>
 		<!--elementRelPermIndex => (no description available)-->
 		<xsd:attribute name="elementRelPermIndex" type="localIndex" />
-		<!--gravityVector => (no description available)-->
-		<xsd:attribute name="gravityVector" type="R1Tensor" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--resFluidIndex => (no description available)-->
@@ -472,8 +468,6 @@
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
-		<!--gravityVector => (no description available)-->
-		<xsd:attribute name="gravityVector" type="R1Tensor" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 	</xsd:complexType>
@@ -481,8 +475,6 @@
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
-		<!--gravityVector => (no description available)-->
-		<xsd:attribute name="gravityVector" type="R1Tensor" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 	</xsd:complexType>
@@ -490,8 +482,6 @@
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
-		<!--gravityVector => (no description available)-->
-		<xsd:attribute name="gravityVector" type="R1Tensor" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 	</xsd:complexType>
@@ -499,8 +489,6 @@
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
-		<!--gravityVector => (no description available)-->
-		<xsd:attribute name="gravityVector" type="R1Tensor" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 	</xsd:complexType>
@@ -510,8 +498,6 @@
 		</xsd:choice>
 		<!--fluidIndex => (no description available)-->
 		<xsd:attribute name="fluidIndex" type="localIndex" />
-		<!--gravityVector => (no description available)-->
-		<xsd:attribute name="gravityVector" type="R1Tensor" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--solidIndex => (no description available)-->
@@ -521,8 +507,6 @@
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
-		<!--gravityVector => (no description available)-->
-		<xsd:attribute name="gravityVector" type="R1Tensor" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--resFluidIndex => (no description available)-->
@@ -532,8 +516,6 @@
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
-		<!--gravityVector => (no description available)-->
-		<xsd:attribute name="gravityVector" type="R1Tensor" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--timeIntegrationOptionEnum => Time integration enum class value.-->
@@ -543,8 +525,6 @@
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
-		<!--gravityVector => (no description available)-->
-		<xsd:attribute name="gravityVector" type="R1Tensor" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--timeIntegrationOptionEnum => Time integration enum class value.-->
@@ -556,8 +536,6 @@
 		</xsd:choice>
 		<!--failCriterion => (no description available)-->
 		<xsd:attribute name="failCriterion" type="integer" />
-		<!--gravityVector => (no description available)-->
-		<xsd:attribute name="gravityVector" type="R1Tensor" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--tipEdges => Set containing all the tip edges-->
@@ -1115,8 +1093,8 @@
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
 		<xsd:attribute name="globalToLocalMap" type="geosx::mapBase&lt;long long, long, std::integral_constant&lt;bool, false&gt; &gt;" />
-		<!--gravityDepth => (no description available)-->
-		<xsd:attribute name="gravityDepth" type="real64_array" />
+		<!--gravityCoefficient => (no description available)-->
+		<xsd:attribute name="gravityCoefficient" type="real64_array" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--isFaceSeparable => A flag to mark if the face is separable-->

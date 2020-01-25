@@ -882,7 +882,7 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( real64 const GEOSX_UNUSED_A
 
   FluxKernel::ElementView< arrayView1d<real64 const> > const & pres                = m_pressure.toViewConst();
   FluxKernel::ElementView< arrayView1d<real64 const> > const & dPres               = m_deltaPressure.toViewConst();
-  FluxKernel::ElementView< arrayView1d<real64 const> > const & gravDepth           = m_gravDepth.toViewConst();
+  FluxKernel::ElementView< arrayView1d<real64 const> > const & gravCoef            = m_gravCoef.toViewConst();
   FluxKernel::ElementView< arrayView2d<real64 const> > const & phaseMob            = m_phaseMob.toViewConst();
   FluxKernel::ElementView< arrayView2d<real64 const> > const & dPhaseMob_dPres     = m_dPhaseMob_dPres.toViewConst();
   FluxKernel::ElementView< arrayView3d<real64 const> > const & dPhaseMob_dComp     = m_dPhaseMob_dCompDens.toViewConst();
@@ -913,7 +913,7 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( real64 const GEOSX_UNUSED_A
 
   localIndex const fluidIndex       = m_fluidIndex;
   localIndex const capPressureIndex = m_capPressureIndex;
-  integer const gravityFlag     = m_gravityFlag;
+
   integer const capPressureFlag = m_capPressureFlag;
 
   fluxApprox->forCellStencils( [&] ( auto const & stencil )
@@ -943,7 +943,7 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( real64 const GEOSX_UNUSED_A
                            weights[iconn],
                            pres,
                            dPres,
-                           gravDepth,
+                           gravCoef,
                            phaseMob,
                            dPhaseMob_dPres,
                            dPhaseMob_dComp,
@@ -960,7 +960,6 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( real64 const GEOSX_UNUSED_A
                            dPhaseCapPres_dPhaseVolFrac,
                            fluidIndex,
                            capPressureIndex,
-                           gravityFlag,
                            capPressureFlag,
                            dt,
                            localFlux,

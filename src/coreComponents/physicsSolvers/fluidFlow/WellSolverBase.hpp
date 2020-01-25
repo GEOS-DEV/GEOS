@@ -268,8 +268,7 @@ public:
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     // gravity term precomputed values
-    static constexpr auto gravityFlagString  = FlowSolverBase::viewKeyStruct::gravityFlagString;
-    static constexpr auto gravityDepthString = FlowSolverBase::viewKeyStruct::gravityDepthString;
+    static constexpr auto gravityCoefString = FlowSolverBase::viewKeyStruct::gravityCoefString;
 
     // misc inputs
     static constexpr auto fluidNameString      = "wellFluidName";
@@ -278,8 +277,7 @@ public:
     using ViewKey = dataRepository::ViewKey;
 
     // gravity term precomputed values
-    ViewKey gravityFlag  = { gravityFlagString };
-    ViewKey gravityDepth = { gravityDepthString };
+    ViewKey gravityCoef = { gravityCoefString };
 
     // misc inputs
     ViewKey fluidName  = { fluidNameString };
@@ -325,9 +323,6 @@ protected:
   /// name of the flow solver
   string m_flowSolverName;
   
-  /// flag to determine whether or not to apply gravity
-  integer m_gravityFlag;
-
   /// name of the fluid constitutive model
   string m_fluidName;
 
@@ -341,7 +336,7 @@ protected:
   localIndex m_numDofPerResElement;
 
   /// views into reservoir constant data fields
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_resGravDepth;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_resGravCoef;
 };
 
 }
