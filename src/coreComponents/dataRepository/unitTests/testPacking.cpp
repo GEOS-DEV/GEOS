@@ -159,7 +159,7 @@ TEST( testPacking, testPackingDevice )
       veloc[ii][jj] = drand();
 
   buffer_unit_type * null_buf = NULL;
-  localIndex expected_size = (sizeof(int) + sizeof(localIndex))*2 + (sizeof(R1Tensor)*size);
+  localIndex expected_size = 4 * sizeof( localIndex ) + size * sizeof( R1Tensor );
   localIndex calc_size = bufferOps::PackDevice< policy, false >( null_buf, veloc.toViewConst() );
   EXPECT_EQ( calc_size, expected_size );
 
@@ -194,9 +194,9 @@ TEST( testPacking, testPackByIndexDevice )
 
   buffer_unit_type * null_buf = NULL;
   // [ num_dim, stride_i.. , tensor_0, tensor_1, ..., tensor_n ]
-  LvArray::ArrayView< R1Tensor const, 1 > const & veloc_view = veloc.toViewConst();
+  arrayView1d< R1Tensor const > const & veloc_view = veloc.toViewConst();
   localIndex calc_size = bufferOps::PackByIndexDevice< policy, false >( null_buf, veloc_view, indices.toViewConst());
-  localIndex expected_size = sizeof(int) + // num_dim = 1
+  localIndex expected_size = sizeof(localIndex) + // num_dim = 1
                              sizeof(localIndex) + // stride_i
                              sizeof(R1Tensor) * pack_count; // len_j + data (3 * double)
   EXPECT_EQ( calc_size, expected_size );
