@@ -314,8 +314,8 @@ void CompositionalMultiphaseWell::InitializeWells( DomainPartition * const domai
     arrayView2d<real64> const & wellElemCompFrac =
       subRegion->getReference<array2d<real64>>( viewKeyStruct::globalCompFractionString );
 
-    arrayView1d<real64 const> const & wellElemGravDepth =
-      subRegion->getReference<array1d<real64>>( viewKeyStruct::gravityDepthString );
+    arrayView1d<real64 const> const & wellElemGravCoef =
+      subRegion->getReference<array1d<real64>>( viewKeyStruct::gravityCoefString );
     
     // get the element region, subregion, index
     arrayView1d<localIndex const> const & resElementRegion =
@@ -443,14 +443,14 @@ void CompositionalMultiphaseWell::InitializeWells( DomainPartition * const domai
       }
     }
 
-    real64 pressureControl  = 0.0;
-    real64 gravDepthControl = 0.0;
+    real64 pressureControl = 0.0;
+    real64 gravCoefControl = 0.0;
   
     if (subRegion->IsLocallyOwned())
     {
       
       localIndex const iwelemControl = wellControls->GetReferenceWellElementIndex();
-      gravDepthControl = wellElemGravDepth[iwelemControl];
+      gravCoefControl = wellElemGravCoef[iwelemControl];
 
       // 2) Initialize the reference pressure
       real64 const & targetBHP = wellControls->GetTargetBHP();
@@ -473,19 +473,15 @@ void CompositionalMultiphaseWell::InitializeWells( DomainPartition * const domai
 
     // TODO optimize
     MpiWrapper::Broadcast( pressureControl, subRegion->GetTopRank() );
-    MpiWrapper::Broadcast( gravDepthControl, subRegion->GetTopRank() );
+    MpiWrapper::Broadcast( gravCoefControl, subRegion->GetTopRank() );
 
     GEOSX_ERROR_IF( pressureControl <= 0, "Invalid well initialization: negative pressure was found" );
 
     // 3) Estimate the pressures in the well elements using this avgDensity
-    integer const gravityFlag = m_gravityFlag;
-
     forall_in_range( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex const iwelem )
     {
       wellElemPressure[iwelem] = pressureControl
-        + ( gravityFlag 
-          ? avgMixtureDensity * ( wellElemGravDepth[iwelem] - gravDepthControl ) 
-          : 0 );
+        + avgMixtureDensity * ( wellElemGravCoef[iwelem] - gravCoefControl );
 
     });
 
@@ -542,9 +538,12 @@ void CompositionalMultiphaseWell::SetupDofs( DomainPartition const * const domai
 
   dofManager.addField( WellElementDofName(),
                        DofManager::Location::Elem,
-                       DofManager::Connectivity::Node,
                        NumDofPerWellElement(),
                        regions );
+
+  dofManager.addCoupling( WellElementDofName(),
+                          WellElementDofName(),
+                          DofManager::Connectivity::Node );
 }
 
 void CompositionalMultiphaseWell::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time_n ),
@@ -1198,32 +1197,23 @@ CompositionalMultiphaseWell::ApplySystemSolution( DofManager const & dofManager,
                                                   real64 const scalingFactor,
                                                   DomainPartition * const domain )
 {
-  MeshLevel * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ElementRegionManager * const elemManager = meshLevel->getElemManager();
+  dofManager.addVectorToField( solution,
+                               WellElementDofName(),
+                               viewKeyStruct::deltaPressureString,
+                               scalingFactor,
+                               0, 1 );
 
-  elemManager->forElementSubRegions<WellElementSubRegion>( [&]( WellElementSubRegion * const subRegion )
-  {
-    dofManager.addVectorToField( solution,
-                                 WellElementDofName(),
-                                 scalingFactor,
-                                 subRegion,
-                                 viewKeyStruct::deltaPressureString,
-                                 0, 1 );
+  dofManager.addVectorToField( solution,
+                               WellElementDofName(),
+                               viewKeyStruct::deltaGlobalCompDensityString,
+                               scalingFactor,
+                               1, m_numDofPerWellElement - 1 );
 
-    dofManager.addVectorToField( solution,
-                                 WellElementDofName(),
-                                 scalingFactor,
-                                 subRegion,
-                                 viewKeyStruct::deltaGlobalCompDensityString,
-                                 1, m_numDofPerWellElement - 1 );
-
-    dofManager.addVectorToField( solution,
-                                 WellElementDofName(),
-                                 scalingFactor,
-                                 subRegion,
-                                 viewKeyStruct::deltaMixtureConnRateString,
-                                 m_numDofPerWellElement - 1, m_numDofPerWellElement );
-  });  
+  dofManager.addVectorToField( solution,
+                               WellElementDofName(),
+                               viewKeyStruct::deltaMixtureConnRateString,
+                               scalingFactor,
+                               m_numDofPerWellElement - 1, m_numDofPerWellElement );
 
   std::map<string, string_array > fieldNames;
   fieldNames["elems"].push_back( viewKeyStruct::deltaPressureString );
@@ -1395,8 +1385,8 @@ void CompositionalMultiphaseWell::FormPressureRelations( DomainPartition const *
     arrayView1d<integer const> const & wellElemGhostRank =
       subRegion->getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
-    arrayView1d<real64 const> const & wellElemGravDepth =
-      subRegion->getReference<array1d<real64>>( viewKeyStruct::gravityDepthString );
+    arrayView1d<real64 const> const & wellElemGravCoef =
+      subRegion->getReference<array1d<real64>>( viewKeyStruct::gravityCoefString );
 
     arrayView1d<localIndex const> const & nextWellElemIndex =
       subRegion->getReference<array1d<localIndex>>( WellElementSubRegion::viewKeyStruct::nextWellElementIndexString );
@@ -1453,9 +1443,9 @@ void CompositionalMultiphaseWell::FormPressureRelations( DomainPartition const *
           dAvgDensity_dCompNext[ic]    = 0.5 * dWellElemMixtureDensity_dComp[iwelemNext][ic];
           dAvgDensity_dCompCurrent[ic] = 0.5 * dWellElemMixtureDensity_dComp[iwelem][ic];
         }
-        
+
         // compute depth diff times acceleration
-        real64 const gravD = ( wellElemGravDepth[iwelemNext] - wellElemGravDepth[iwelem] );
+        real64 const gravD = wellElemGravCoef[iwelemNext] - wellElemGravCoef[iwelem];
 
         // compute the current pressure in the two well elements
         real64 const pressureNext    = wellElemPressure[iwelemNext] + dWellElemPressure[iwelemNext];
@@ -1705,8 +1695,8 @@ void CompositionalMultiphaseWell::ComputeAllPerforationRates( WellElementSubRegi
   PerforationData const * const perforationData = subRegion->GetPerforationData();
 
   // get depth
-  arrayView1d<real64 const> const & wellElemGravDepth =
-    subRegion->getReference<array1d<real64>>( viewKeyStruct::gravityDepthString );
+  arrayView1d<real64 const> const & wellElemGravCoef =
+    subRegion->getReference<array1d<real64>>( viewKeyStruct::gravityCoefString );
     
   // get well primary variables on well elements
   arrayView1d<real64 const> const & wellElemPressure =
@@ -1732,8 +1722,8 @@ void CompositionalMultiphaseWell::ComputeAllPerforationRates( WellElementSubRegi
     subRegion->getReference<array3d<real64>>( viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString );
 
   // get well variables on perforations
-  arrayView1d<real64 const> const & perfGravDepth =
-    perforationData->getReference<array1d<real64>>( viewKeyStruct::gravityDepthString );
+  arrayView1d<real64 const> const & perfGravCoef =
+    perforationData->getReference<array1d<real64>>( viewKeyStruct::gravityCoefString );
 
   arrayView1d<localIndex const> const & perfWellElemIndex =
     perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::wellElementIndexString );
@@ -1837,15 +1827,12 @@ void CompositionalMultiphaseWell::ComputeAllPerforationRates( WellElementSubRegi
 
     multiplier[SubRegionTag::WELL] = -1.0;
 
-    if (m_gravityFlag)
+    real64 const gravD = ( perfGravCoef[iperf] - wellElemGravCoef[iwelem] );
+    pressure[SubRegionTag::WELL]  += wellElemMixtureDensity[iwelem] * gravD;
+    dPressure_dP[SubRegionTag::WELL] += dWellElemMixtureDensity_dPres[iwelem] * gravD;
+    for (localIndex ic = 0; ic < NC; ++ic)
     {
-      real64 const gravD = ( perfGravDepth[iperf] - wellElemGravDepth[iwelem] );
-      pressure[SubRegionTag::WELL]  += wellElemMixtureDensity[iwelem] * gravD;
-      dPressure_dP[SubRegionTag::WELL] += dWellElemMixtureDensity_dPres[iwelem] * gravD;
-      for (localIndex ic = 0; ic < NC; ++ic)
-      {
-        dPressure_dC[SubRegionTag::WELL][ic] += dWellElemMixtureDensity_dComp[iwelem][ic] * gravD;
-      }
+      dPressure_dC[SubRegionTag::WELL][ic] += dWellElemMixtureDensity_dComp[iwelem][ic] * gravD;
     }
 
     // get transmissibility at the interface

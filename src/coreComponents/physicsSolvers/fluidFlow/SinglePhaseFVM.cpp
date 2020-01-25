@@ -50,8 +50,11 @@ void SinglePhaseFVM::SetupDofs( DomainPartition const * const GEOSX_UNUSED_ARG( 
 {
   dofManager.addField( viewKeyStruct::pressureString,
                        DofManager::Location::Elem,
-                       DofManager::Connectivity::Face, 
                        m_targetRegions );
+
+  dofManager.addCoupling( viewKeyStruct::pressureString,
+                          viewKeyStruct::pressureString,
+                          DofManager::Connectivity::Face );
 }
   
 
@@ -112,17 +115,10 @@ void SinglePhaseFVM::ApplySystemSolution( DofManager const & dofManager,
 {
   MeshLevel * mesh = domain->getMeshBody(0)->getMeshLevel(0);
 
-  applyToSubRegions( mesh, [&] ( localIndex const GEOSX_UNUSED_ARG( er ),
-                                 localIndex const GEOSX_UNUSED_ARG( esr ),
-                                 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
-                                 ElementSubRegionBase * const subRegion )
-  {
-    dofManager.addVectorToField( solution,
-                                 viewKeyStruct::pressureString,
-                                 scalingFactor,
-                                 subRegion,
-                                 viewKeyStruct::deltaPressureString );
-  } );
+  dofManager.addVectorToField( solution,
+                               viewKeyStruct::pressureString,
+                               viewKeyStruct::deltaPressureString,
+                               scalingFactor );
 
   std::map<string, string_array> fieldNames;
   fieldNames["elems"].push_back( viewKeyStruct::deltaPressureString );
@@ -168,7 +164,7 @@ void SinglePhaseFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time_n ),
 
   FluxKernel::ElementView < arrayView1d<real64 const> > const & dPres       = m_deltaPressure.toViewConst();
   FluxKernel::ElementView < arrayView1d<real64 const> > const & pres        = m_pressure.toViewConst();
-  FluxKernel::ElementView < arrayView1d<real64 const> > const & gravDepth   = m_gravDepth.toViewConst();
+  FluxKernel::ElementView < arrayView1d<real64 const> > const & gravCoef    = m_gravCoef.toViewConst();
   FluxKernel::MaterialView< arrayView2d<real64 const> > const & dens        = m_density.toViewConst();
   FluxKernel::MaterialView< arrayView2d<real64 const> > const & dDens_dPres = m_dDens_dPres.toViewConst();
   FluxKernel::ElementView < arrayView1d<real64 const> > const & mob         = m_mobility.toViewConst();
@@ -177,23 +173,20 @@ void SinglePhaseFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time_n ),
   FluxKernel::ElementView < arrayView1d<real64 const> > const & aperture0  = m_elementAperture0.toViewConst();
   FluxKernel::ElementView < arrayView1d<real64 const> > const & aperture  = m_elementAperture.toViewConst();
 
-  integer const gravityFlag = m_gravityFlag;
   localIndex const fluidIndex = m_fluidIndex;
 
 
   fluxApprox->forCellStencils( [&]( auto const & stencil )
   {
 
-//    typedef TYPEOFREF( stencil ) STENCIL_TYPE;
 
     FluxKernel::Launch( stencil,
                         dt,
                         fluidIndex,
-                        gravityFlag,
                         dofNumber,
                         pres,
                         dPres,
-                        gravDepth,
+                        gravCoef,
                         dens,
                         dDens_dPres,
                         mob,
@@ -362,7 +355,7 @@ void SinglePhaseFVM::ApplyFaceDirichletBC_implicit( real64 const time_n,
 
   ElementRegionManager::ElementViewAccessor< arrayView1d<real64> >  const & pres        = m_pressure;
   ElementRegionManager::ElementViewAccessor< arrayView1d<real64> >  const & dPres       = m_deltaPressure;
-  ElementRegionManager::ElementViewAccessor< arrayView1d<real64> >  const & gravDepth   = m_gravDepth;
+  ElementRegionManager::ElementViewAccessor< arrayView1d<real64> >  const & gravCoef    = m_gravCoef;
   ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const & dens        = m_density;
   ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const & dDens_dPres = m_dDens_dPres;
   ElementRegionManager::ElementViewAccessor< arrayView1d<real64> >  const & mob         = m_mobility;
@@ -376,7 +369,7 @@ void SinglePhaseFVM::ApplyFaceDirichletBC_implicit( real64 const time_n,
   arrayView2d<real64>       const & densFace      = faceManager->getReference< array2d<real64> >( viewKeyStruct::boundaryFaceDensityString );
   arrayView2d<real64>       const & viscFace      = faceManager->getReference< array2d<real64> >( viewKeyStruct::boundaryFaceViscosityString );
   arrayView1d<real64>       const & mobFace       = faceManager->getReference< array1d<real64> >( viewKeyStruct::boundaryFaceMobilityString );
-  arrayView1d<real64 const> const & gravDepthFace = faceManager->getReference< array1d<real64> >( viewKeyStruct::gravityDepthString );
+  arrayView1d<real64 const> const & gravCoefFace  = faceManager->getReference< array1d<real64> >( viewKeyStruct::gravityCoefString );
 
   dataRepository::Group const * sets = faceManager->sets();
 
@@ -537,7 +530,7 @@ void SinglePhaseFVM::ApplyFaceDirichletBC_implicit( real64 const time_n,
 
             dofColIndices[i] = dofNumber[er][esr][ei];
             pressure = pres[er][esr][ei] + dPres[er][esr][ei];
-            gravD = gravDepth[er][esr][ei];
+            gravD = gravCoef[er][esr][ei];
 
             break;
           }
@@ -546,7 +539,7 @@ void SinglePhaseFVM::ApplyFaceDirichletBC_implicit( real64 const time_n,
             localIndex const kf = point.faceIndex;
 
             pressure = presFace[kf];
-            gravD = gravDepthFace[kf];
+            gravD = gravCoefFace[kf];
 
             break;
           }
@@ -554,8 +547,8 @@ void SinglePhaseFVM::ApplyFaceDirichletBC_implicit( real64 const time_n,
           GEOSX_ERROR("Unsupported point type in stencil");
         }
 
-        real64 const gravTerm = m_gravityFlag ? densMean * gravD : 0.0;
-        real64 const dGrav_dP = m_gravityFlag ? dDensMean_dP[i] * gravD : 0.0;
+        real64 const gravTerm = densMean * gravD;
+        real64 const dGrav_dP = dDensMean_dP[i] * gravD;
 
         potDif += entry.weight * (pressure + gravTerm);
         dFlux_dP[i] = entry.weight * (1.0 + dGrav_dP);

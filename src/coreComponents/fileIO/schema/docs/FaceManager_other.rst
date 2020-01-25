@@ -20,7 +20,7 @@ faceCenter              r1_array                                                
 faceNormal              r1_array                                                                                               (no description available)                                                         
 ghostRank               integer_array                                                                                          (no description available)                                                         
 globalToLocalMap        mapBase< long long, long, integral_constant< bool, false > >                                           (no description available)                                                         
-gravityDepth            real64_array                                                                                           (no description available)                                                         
+gravityCoefficient      real64_array                                                                                           (no description available)                                                         
 isExternal              integer_array                                                                                          (no description available)                                                         
 isFaceSeparable         integer_array                                                                                          A flag to mark if the face is separable                                            
 localToGlobalMap        globalIndex_array                                                                                      Array that contains a map from localIndex to globalIndex.                          

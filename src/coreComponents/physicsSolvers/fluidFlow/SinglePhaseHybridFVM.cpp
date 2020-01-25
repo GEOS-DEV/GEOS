@@ -151,20 +151,26 @@ void SinglePhaseHybridFVM::SetupDofs( DomainPartition const * const GEOSX_UNUSED
   // in AssembleOneSidedMassFluxes
   dofManager.addField( viewKeyStruct::pressureString,
                        DofManager::Location::Elem,
-                       DofManager::Connectivity::Face, 
                        m_targetRegions );
 
+  dofManager.addCoupling( viewKeyStruct::pressureString,
+                          viewKeyStruct::pressureString,
+                          DofManager::Connectivity::Face );
+  
   // setup the connectivity of face fields
   dofManager.addField( viewKeyStruct::facePressureString,
                        DofManager::Location::Face,
-                       DofManager::Connectivity::Elem,
                        m_targetRegions );
 
+  dofManager.addCoupling( viewKeyStruct::facePressureString,
+                          viewKeyStruct::facePressureString,
+                          DofManager::Connectivity::Elem );
+  
   // setup coupling between pressure and face pressure
   dofManager.addCoupling( viewKeyStruct::facePressureString,
                           viewKeyStruct::pressureString,
                           DofManager::Connectivity::Elem,
-                          true );
+                          true);
 
 }
 
@@ -207,8 +213,8 @@ void SinglePhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( tim
     faceManager->getReference< array1d<real64> >( viewKeyStruct::deltaFacePressureString );
 
   // get the face-centered depth 
-  arrayView1d<real64> const & faceGravDepth =
-    faceManager->getReference<array1d<real64>>(viewKeyStruct::gravityDepthString);
+  arrayView1d<real64> const & faceGravCoef =
+    faceManager->getReference<array1d<real64>>(viewKeyStruct::gravityCoefString);
   
   // get the face-to-nodes connectivity for the transmissibility calculation
   ArrayOfArraysView<localIndex const> const & faceToNodes = faceManager->nodeList();
@@ -262,8 +268,8 @@ void SinglePhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( tim
      subRegion->template getReference< array1d<R1Tensor> >( viewKeyStruct::permeabilityString ); 
 
     // get the cell-centered depth 
-    arrayView1d<real64> const & elemGravDepth =
-      subRegion->template getReference<array1d<real64>>(viewKeyStruct::gravityDepthString);
+    arrayView1d<real64> const & elemGravCoef =
+      subRegion->template getReference<array1d<real64>>(viewKeyStruct::gravityCoefString);
 
     
     // assemble the residual and Jacobian element by element
@@ -312,11 +318,11 @@ void SinglePhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( tim
         // compute the volumetric flux using transMatrix
         ComputeOneSidedVolFluxes( facePres,
                                   dFacePres,
-                                  faceGravDepth,
+                                  faceGravCoef,
                                   elemToFaces[ei],          
                                   elemPres[ei],
                                   dElemPres[ei],
-                                  elemGravDepth[ei],
+                                  elemGravCoef[ei],
                                   elemDens[ei][0],
                                   dElemDens_dp[ei][0],
                                   transMatrix,
@@ -382,11 +388,11 @@ void SinglePhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( tim
 
 void SinglePhaseHybridFVM::ComputeOneSidedVolFluxes( arrayView1d<real64 const> const & facePres,
                                                      arrayView1d<real64 const> const & dFacePres,
-                                                     arrayView1d<real64 const> const & faceGravDepth,
+                                                     arrayView1d<real64 const> const & faceGravCoef,
                                                      arraySlice1d<localIndex const> const elemToFaces,
                                                      real64 const & elemPres,
                                                      real64 const & dElemPres,
-                                                     real64 const & elemGravDepth,
+                                                     real64 const & elemGravCoef,
                                                      real64 const & elemDens,
                                                      real64 const & dElemDens_dp,
                                                      stackArray2d<real64, MAX_NUM_FACES
@@ -418,8 +424,8 @@ void SinglePhaseHybridFVM::ComputeOneSidedVolFluxes( arrayView1d<real64 const> c
     real64 const ccPres = elemPres + dElemPres;
     real64 const fPres  = facePres[elemToFaces[ifaceLoc]] + dFacePres[elemToFaces[ifaceLoc]];
 
-    real64 const ccGravDepth = elemGravDepth;
-    real64 const fGravDepth  = faceGravDepth[elemToFaces[ifaceLoc]];
+    real64 const ccGravCoef = elemGravCoef;
+    real64 const fGravCoef  = faceGravCoef[elemToFaces[ifaceLoc]];
 
     real64 const ccDens     = elemDens;
     real64 const dCcDens_dp = dElemDens_dp; 
@@ -431,9 +437,9 @@ void SinglePhaseHybridFVM::ComputeOneSidedVolFluxes( arrayView1d<real64 const> c
     real64 const dPresDif_dfp = -1;
 
     // gravity term
-    real64 const depthDif     = ccGravDepth - fGravDepth; 
-    real64 const gravTerm     = ccDens     * depthDif;
-    real64 const dGravTerm_dp = dCcDens_dp * depthDif;
+    real64 const gravCoefDif  = ccGravCoef - fGravCoef; 
+    real64 const gravTerm     = ccDens     * gravCoefDif;
+    real64 const dGravTerm_dp = dCcDens_dp * gravCoefDif;
 
     // potential difference
     potDif[ifaceLoc]      = presDif     - gravTerm;
@@ -756,32 +762,23 @@ void SinglePhaseHybridFVM::ApplySystemSolution( DofManager const & dofManager,
                                                 DomainPartition * const domain )
 {
   MeshLevel * const mesh          = domain->getMeshBody(0)->getMeshLevel(0);
-  FaceManager * const faceManager = mesh->getFaceManager();
 
   // here we apply the cell-centered update in the derived class
   // to avoid duplicating a synchronization point 
   
   // 1. apply the cell-centered update
 
-  applyToSubRegions( mesh, [&] ( localIndex const GEOSX_UNUSED_ARG( er ),
-                                 localIndex const GEOSX_UNUSED_ARG( esr ),
-                                 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
-                                 ElementSubRegionBase * const subRegion )
-  {
-    dofManager.addVectorToField( solution,
-                                 viewKeyStruct::pressureString,
-                                 scalingFactor,
-                                 subRegion,
-                                 viewKeyStruct::deltaPressureString );
-  } );
+  dofManager.addVectorToField( solution,
+                               viewKeyStruct::pressureString,
+                               viewKeyStruct::deltaPressureString,
+                               scalingFactor );
 
   // 2. apply the face-based update
 
   dofManager.addVectorToField( solution,
                                viewKeyStruct::facePressureString,
-                               scalingFactor,
-                               faceManager,
-                               viewKeyStruct::deltaFacePressureString );
+                               viewKeyStruct::deltaFacePressureString,
+                               scalingFactor );
   
   // 3. synchronize
 

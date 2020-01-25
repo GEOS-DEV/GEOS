@@ -2,16 +2,14 @@
 <!--# # -->
 
 <!-- SPHINX_TUT_INT_HEX_PROBLEM_OPEN -->
-<Problem xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="geos_v0.0.xsd">
+<Problem>
 <!-- SPHINX_TUT_INT_HEX_PROBLEM_OPEN_END -->
 
  <!-- SPHINX_TUT_INT_HEX_SOLVERS -->
- <Solvers
-    gravityVector="0.0, 0.0, -9.81">
+ <Solvers>
   
     <SinglePhaseFVM name="SinglePhaseFlow"
                      verboseLevel="1"
-                     gravityFlag="1"
                      discretization="singlePhaseTPFA"
                      fluidName="water"
                      solidName="rock"
