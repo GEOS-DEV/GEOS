@@ -89,8 +89,7 @@ public:
     static constexpr auto permeabilityString      = "permeability";
 
     // gravity term precomputed values
-    static constexpr auto gravityFlagString  = "gravityFlag";
-    static constexpr auto gravityDepthString = "gravityDepth";
+    static constexpr auto gravityCoefString = "gravityCoefficient";
 
     // misc inputs
     static constexpr auto fluidNameString      = "fluidName";
@@ -113,8 +112,7 @@ public:
     ViewKey permeability      = { permeabilityString };
 
     // gravity term precomputed values
-    ViewKey gravityFlag  = { gravityFlagString };
-    ViewKey gravityDepth = { gravityDepthString };
+    ViewKey gravityCoef = { gravityCoefString };
 
     // misc inputs
     ViewKey discretization = { discretizationString };
@@ -150,9 +148,6 @@ protected:
   virtual void InitializePostInitialConditions_PreSubGroups(Group * const rootGroup) override;
 
 
-  /// flag to determine whether or not to apply gravity
-  integer m_gravityFlag;
-
   /// name of the fluid constitutive model
   string m_fluidName;
 
@@ -179,7 +174,7 @@ protected:
   /// views into constant data fields
   ElementRegionManager::ElementViewAccessor<arrayView1d<integer>> m_elemGhostRank;
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_volume;
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_gravDepth;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_gravCoef;
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_porosityRef;
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_elementArea;

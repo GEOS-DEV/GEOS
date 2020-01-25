@@ -1,11 +1,9 @@
 <Problem>
 
-  <Solvers
-    gravityVector="0.0, -9.81, 0.0">
+  <Solvers>
   
     <CompositionalMultiphaseFlow name="compflow"
                                  logLevel="1"
-                                 gravityFlag="1"
                                  discretization="fluidTPFA"
                                  fluidName="fluid1"
                                  solidName="rock"
