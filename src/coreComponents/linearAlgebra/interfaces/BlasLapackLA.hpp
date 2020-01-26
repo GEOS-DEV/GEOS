@@ -450,6 +450,28 @@ public:
   static void matrixRand( array2d<real64> & A,
                           RandomNumberDistribution const & idist = RandomNumberDistribution::UNIFORM_01) ;
 
+
+  /**
+   * @brief Computes the singular value decomposition of A 
+   *
+   * If size(A) = (M,N), this function expects:
+   * size(U) = (M,min(M,N)), 
+   * size(VT) = (min(M,N),N), and 
+   * size(S) = min(M,N)
+   * On exit, S contains the singular values of A 
+   * and U contains an orthonormal basis of range(A) 
+   *
+   * @param [in]    A GEOSX array2d.
+   * @param [out]   U GEOSX array2d.
+   * @param [out]   S GEOSX array1d.
+   * @param [out]   VT GEOSX array2d.
+   */
+  static void matrixSVD( array2d<real64> const & A,
+	                 array2d<real64> & U,
+	   	         array1d<real64> & S,
+		         array2d<real64> & VT ) ;
+
+  
 };
 
 }

@@ -1,20 +1,47 @@
 
 <Problem>
 
-  <Solvers gravityVector="0.0, 0.0, -9.81">
+  <Solvers>
+
+    <Reservoir name="reservoirSystem"
+               flowSolverName="SinglePhaseFlow"
+               wellSolverName="SinglePhaseWell"
+               logLevel="1"
+               targetRegions="{Channel,wellRegion1,wellRegion2}">
+      <NonlinearSolverParameters name="nlsp"
+				 lineSearchAction="0"
+                                 newtonMaxIter="40"/>
+      <SystemSolverParameters name="ssp"
+                              useDirectSolver="1"
+                              logLevel="0"/>
+    </Reservoir>
   
-    <SinglePhaseFVM name="SinglePhaseFlow"
+    <SinglePhaseHybridFVM name="SinglePhaseFlow"
                      logLevel="0"
                      discretization="singlePhaseTPFA"
                      fluidName="water"
                      solidName="rock"
                      targetRegions="{Channel}">
-      <NonlinearSolverParameters name="nlsp"
-                                 newtonTol="1.0e-6"
-                                 newtonMaxIter="8"/>
-      <SystemSolverParameters name="ssp"
-                              krylovTol="1.0e-10"/>
-    </SinglePhaseFVM>
+    </SinglePhaseHybridFVM>
+
+    <SinglePhaseWell name="SinglePhaseWell"
+                     logLevel="1"
+                     wellFluidName="water"
+                     targetRegions="{wellRegion1,wellRegion2}">
+        <WellControls name="wellControls1"
+                      type="producer"
+                      control="BHP"
+                      targetBHP="5e5"
+                      targetRate="1e-1"
+                      referenceDepth="0.5"/>
+        <WellControls name="wellControls2"
+                      type="injector"
+                      control="liquidRate"
+                      targetBHP="1e7"
+                      targetRate="1e-3"
+                      referenceDepth="0.5"/>
+    </SinglePhaseWell>
+
   </Solvers>
   
   <Mesh>
@@ -27,27 +54,51 @@
                   ny="{5, 5}"
                   nz="{3, 3, 3, 3}"
                   cellBlockNames="{b00,b01,b02,b03,b04,b05,b06,b07,b08,b09,b10,b11,b12,b13,b14,b15}"/>
+
+    <InternalWell name="well_producer1"
+                  wellRegionName="wellRegion1"
+                  wellControlsName="wellControls1"
+                  meshName="mesh1"
+                  polylineNodeCoords="{ {9.5,  0.5, 12  }, 
+                                        {9.5,  0.5, 0.05 } }"
+                  polylineSegmentConn="{ {0, 1} }"
+                  crossSectionArea="0.3"
+                  numElementsPerSegment="20">
+        <Perforation name="producer1_perf1"
+                     distanceFromHead="11.95"
+                     transmissibility="1e-12"/> 
+    </InternalWell> 
+
+    <InternalWell name="well_injector1"
+                  wellRegionName="wellRegion2"
+                  wellControlsName="wellControls2"
+                  meshName="mesh1"
+                  polylineNodeCoords="{ {9.5, 0.2, 12  }, 
+                                        {9.5, 0.2, 9.5 } }"
+                  polylineSegmentConn="{ {0, 1} }"
+                  crossSectionArea="0.3"
+                  numElementsPerSegment="30">
+        <Perforation name="injector1_perf1"
+                     distanceFromHead="2.45"
+                     transmissibility="1e-12"/> 
+    </InternalWell> 
+
+
   </Mesh>
 
-  <Geometry>
-    <Box name="source" xMin=" 8.99, -0.01,  7.49" xMax="10.01,  0.01, 10.01"/>
-    <Box name="sink"   xMin=" 9.99, -0.01, -0.01" xMax="10.01,  1.01,  2.51"/>
-  </Geometry>
-
-
-  <Events maxTime="1e5">
+  <Events maxTime="5e4">
 
     <PeriodicEvent name="outputs"
-                   timeFrequency="5000.0"
+                   timeFrequency="5e3"
                    targetExactTimestep="1"
                    target="/Outputs/siloOutput" />
 
     <PeriodicEvent name="solverApplications"
                    forceDt="5e3"
-                   target="/Solvers/SinglePhaseFlow" />
+                   target="/Solvers/reservoirSystem" />
 
     <PeriodicEvent name="restarts"
-                   timeFrequency="5e4"
+                   timeFrequency="2.5e4"
                    targetExactTimestep="0"
                    target="/Outputs/restartOutput"/>
   </Events>
@@ -59,13 +110,17 @@
     <CellElementRegion name="Barrier"
                    cellBlocks="{b04,b12,b13,b09,b10,b02,b03,b07}"
                    materialList="{}"/>
+    <WellElementRegion name="wellRegion1"
+                       materialList="{water}"/> 
+    <WellElementRegion name="wellRegion2"
+                       materialList="{water}"/> 
   </ElementRegions>
 
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation name="singlePhaseTPFA"
                                  fieldName="pressure"
-                                 boundaryFieldName="boundaryFacePressure"
+                                 boundaryFieldName="facePressure"
                                  targetRegions="{Channel}"
                                  coefficientName="permeability"/>
     </FiniteVolume>
@@ -123,19 +178,7 @@
                         setNames="{all}"
                         objectPath="ElementRegions/Channel"
                         fieldName="pressure"
-                        scale="0.0"/>
-
-    <FieldSpecification name="sourceTerm"
-                        objectPath="faceManager"
-                        fieldName="boundaryFacePressure"
-                        scale="5e6"
-                        setNames="{source}"/>
-
-    <FieldSpecification name="sinkTerm"
-                        objectPath="faceManager"
-                        fieldName="boundaryFacePressure"
-                        scale="-5e6"
-                        setNames="{sink}"/>
+                        scale="1e6"/>
   </FieldSpecifications>
 
   <Outputs>
