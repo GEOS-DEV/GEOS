@@ -3,7 +3,8 @@
 
   <Solvers>
   
-    <SinglePhaseFlow name="SinglePhaseFlow"
+    <SinglePhaseFVM
+	             name="SinglePhaseFlow"
                      logLevel="0"
                      discretization="singlePhaseTPFA"
                      targetRegions="{Fracture}"
@@ -14,7 +15,7 @@
                                  newtonMaxIter="8"/>
       <SystemSolverParameters name="SystemSolverParameters"
                               krylovTol="1.0e-12"/>
-    </SinglePhaseFlow>
+    </SinglePhaseFVM>
     
     <SurfaceGenerator name="SurfaceGen"
                       logLevel="0"

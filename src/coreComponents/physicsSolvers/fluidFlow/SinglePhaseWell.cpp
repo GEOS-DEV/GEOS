@@ -93,7 +93,7 @@ void SinglePhaseWell::InitializePreSubGroups( Group * const rootGroup )
   
 void SinglePhaseWell::UpdateState( WellElementSubRegion * const subRegion )
 {
-  SinglePhaseFlow * const flowSolver = getParent()->GetGroup<SinglePhaseFlow>( GetFlowSolverName() );
+  SinglePhaseBase * const flowSolver = getParent()->GetGroup<SinglePhaseBase>( GetFlowSolverName() );
 
   GEOSX_ERROR_IF( flowSolver == nullptr,
                  "Flow solver " << GetFlowSolverName() << " not found in well solver " << getName() );
@@ -891,10 +891,10 @@ void SinglePhaseWell::ResetViews(DomainPartition * const domain)
   ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
 
   m_resPressure =
-    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( SinglePhaseFlow::viewKeyStruct::pressureString );
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( SinglePhaseBase::viewKeyStruct::pressureString );
 
   m_deltaResPressure =
-    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( SinglePhaseFlow::viewKeyStruct::deltaPressureString );
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( SinglePhaseBase::viewKeyStruct::deltaPressureString );
 
   m_resDensity =
     elemManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64>>( SingleFluidBase::viewKeyStruct::densityString,

@@ -15,13 +15,13 @@
                               logLevel="0"/>
     </Reservoir>
   
-    <SinglePhaseFlow name="singlePhaseFlow"
+    <SinglePhaseFVM name="singlePhaseFlow"
                      logLevel="1"
                      discretization="singlePhaseTPFA"
                      fluidName="water"
                      solidName="rock"
                      targetRegions="{Region1}">
-    </SinglePhaseFlow>
+    </SinglePhaseFVM>
 
     <SinglePhaseWell name="singlePhaseWell"
                      logLevel="1"
@@ -135,7 +135,7 @@
     <WellElementRegion name="wellRegion1"
                        materialList="{water}"/> 
    <WellElementRegion name="wellRegion2"
-                       materialList="{water}"/> 
+                      materialList="{water}"/> 
 
   </ElementRegions>
 
