@@ -13,11 +13,11 @@
  */
 
 /**
- * @file SinglePhaseFlowKernels.hpp
+ * @file SinglePhaseKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FINITEVOLUME_SINGLEPHASEFLOWKERNELS_HPP
-#define GEOSX_PHYSICSSOLVERS_FINITEVOLUME_SINGLEPHASEFLOWKERNELS_HPP
+#ifndef GEOSX_PHYSICSSOLVERS_FINITEVOLUME_SINGLEPHASEKERNELS_HPP
+#define GEOSX_PHYSICSSOLVERS_FINITEVOLUME_SINGLEPHASEKERNELS_HPP
 
 #include "common/DataTypes.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
@@ -27,7 +27,7 @@
 namespace geosx
 {
 
-namespace SinglePhaseFlowKernels
+namespace SinglePhaseKernels
 {
 
 /******************************** MobilityKernel ********************************/
@@ -643,8 +643,8 @@ struct FluxKernel
 
 
 
-} // namespace SinglePhaseFlowKernels
+} // namespace SinglePhaseKernels
 
 } // namespace geosx
 
-#endif //GEOSX_PHYSICSSOLVERS_FINITEVOLUME_SINGLEPHASEFLOWKERNELS_HPP
+#endif //GEOSX_PHYSICSSOLVERS_FINITEVOLUME_SINGLEPHASEKERNELS_HPP

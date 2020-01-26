@@ -1047,6 +1047,132 @@ void performance_test()
   }
 }
 
+template<typename LAI>
+void matrix_svd_test()
+{
+  array1d<INDEX_TYPE> M_indices;
+  M_indices.push_back(1);
+  M_indices.push_back(2);
+  M_indices.push_back(3);
+  M_indices.push_back(4);
+  M_indices.push_back(5);
+  M_indices.push_back(6);
+  M_indices.push_back(7);
+  M_indices.push_back(8);
+  array1d<INDEX_TYPE> N_indices(M_indices);
+
+  array2d<real64> A;
+  array2d<real64> U;
+  array1d<real64> S_vec;
+  array2d<real64> VT;
+
+  array2d<real64> A_svd;
+  array2d<real64> UTU;
+  array2d<real64> U_extended;
+  array2d<real64> S_extended;
+  array2d<real64> VT_extended;
+  array2d<real64> work0;
+  
+  for (INDEX_TYPE M : M_indices)
+  {
+    for (INDEX_TYPE N : N_indices)
+    {
+
+      int const minDim = ( M > N ) ? N : M;
+      
+      // Resize matrices
+      A.resize(M,N);
+      A_svd.resize(M,N);
+      U.resize(M,minDim);
+      S_vec.resize(minDim);
+      VT.resize(minDim,N);
+      UTU.resize(minDim,minDim);
+      U_extended.resize(M,M);
+      S_extended.resize(M,N); 
+      VT_extended.resize(N,N);
+      work0.resize(M,N); 
+      
+      // Populate matrix A with random coefficients
+      LAI::matrixRand( A,
+                       LAI::RandomNumberDistribution::UNIFORM_01 );
+
+      // Compute the SVD of A
+      LAI::matrixSVD( A, U, S_vec, VT );
+
+      // 1) Check that we recover the matrix with the decomposition
+
+      // fill U_extended
+      for (int i = 0; i < U_extended.size(0); ++i)
+      {
+        for (int j = 0; j < U_extended.size(1); ++j)
+        {
+          U_extended(i,j) = 0.0;
+        }
+      }
+      for (int i = 0; i < U.size(0); ++i)
+      {
+        for (int j = 0; j < U.size(1); ++j)
+        {
+          U_extended(i,j) = U(i,j);
+        }
+      }
+
+      // fill VT_extended
+      for (int i = 0; i < VT_extended.size(0); ++i)
+      {
+        for (int j = 0; j < VT_extended.size(1); ++j)
+        {
+          VT_extended(i,j) = 0.0;
+        }
+      }
+      for (int i = 0; i < VT.size(0); ++i)
+      {
+        for (int j = 0; j < VT.size(1); ++j)
+        {
+          VT_extended(i,j) = VT(i,j);
+        }
+      }
+      
+      // fill S_extended
+      for (int i = 0; i < S_extended.size(0); ++i)
+      {
+        for (int j = 0; j < S_extended.size(1); ++j)
+        {
+          S_extended(i,j) = 0.0;
+        }
+      }
+      for (int i = 0; i < S_vec.size(); ++i)
+      {
+        S_extended(i,i) = S_vec(i);
+      }
+      
+      LAI::matrixMatrixMultiply( S_extended, VT_extended, work0 );
+      LAI::matrixMatrixMultiply( U_extended, work0, A_svd );
+
+      for( INDEX_TYPE i = 0 ; i < M ; ++i )
+      {
+        for( INDEX_TYPE j = 0 ; j < N ; ++j )
+        {
+          EXPECT_NEAR( A_svd(i,j),
+                       A(i,j),
+                       machinePrecision);
+        }
+      }
+      
+      // 2) Check that U is orthonormal
+      LAI::matrixTMatrixMultiply( U, U, UTU );
+      for (int i = 0; i < UTU.size(0); ++i)
+      {
+        UTU(i,i) = 1 - UTU(i,i); 
+      }
+
+      EXPECT_NEAR( 0.0,
+                   LAI::matrixNormFrobenius( UTU ),
+                   machinePrecision );
+    }
+  }
+}
+
 TEST( Array1D, vectorNorm1)
 {
   vector_norm1_test<BlasLapackLA>();
@@ -1173,6 +1299,11 @@ TEST( DenseLAInterface, performanceTest)
   SUCCEED();
 }
 
+TEST( DenseLAInterface, matrixSVD)
+{
+  matrix_svd_test<BlasLapackLA>();
+}
+  
 int main( int argc, char** argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
