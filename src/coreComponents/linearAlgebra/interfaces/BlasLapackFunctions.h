@@ -114,5 +114,22 @@ void GEOSX_dscal( int const * N,
                   double const * DA,
                   double * DX,
                   int const * INCX );
+
+#define GEOSX_dgesvd FORTRAN_MANGLE(dgesvd)
+void GEOSX_dgesvd( char const * JOBU,
+                   char const * JOBVT,
+                   int const * M,
+                   int const * N,
+                   double * A,
+                   int const * LDA,
+                   double * S,
+                   double * U,
+                   int const * LDU,
+                   double * VT,
+                   int const * LDVT,
+                   double * WKOPT,
+                   int const * LWORK,
+                   int * INFO );
+  
 }
 #endif

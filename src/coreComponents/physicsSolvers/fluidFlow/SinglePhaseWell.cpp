@@ -93,7 +93,7 @@ void SinglePhaseWell::InitializePreSubGroups( Group * const rootGroup )
   
 void SinglePhaseWell::UpdateState( WellElementSubRegion * const subRegion )
 {
-  SinglePhaseFlow * const flowSolver = getParent()->GetGroup<SinglePhaseFlow>( GetFlowSolverName() );
+  SinglePhaseBase * const flowSolver = getParent()->GetGroup<SinglePhaseBase>( GetFlowSolverName() );
 
   GEOSX_ERROR_IF( flowSolver == nullptr,
                  "Flow solver " << GetFlowSolverName() << " not found in well solver " << getName() );
@@ -118,8 +118,8 @@ void SinglePhaseWell::InitializeWells( DomainPartition * const domain )
     PerforationData const * const perforationData = subRegion->GetPerforationData();
 
     // get the info stored on well elements
-    arrayView1d<real64 const> const & wellElemGravDepth =
-      subRegion->getReference<array1d<real64>>( viewKeyStruct::gravityDepthString );
+    arrayView1d<real64 const> const & wellElemGravCoef =
+      subRegion->getReference<array1d<real64>>( viewKeyStruct::gravityCoefString );
 
     // get well primary variables on well elements
     arrayView1d<real64> const & wellElemPressure =
@@ -184,13 +184,13 @@ void SinglePhaseWell::InitializeWells( DomainPartition * const domain )
     avgDensity /= numPerforationsGlobal;
 
     real64 pressureControl = 0.0;
-    real64 gravDepthControl = 0.0;
+    real64 gravCoefControl = 0.0;
     if (subRegion->IsLocallyOwned())
     {
 
       // get the reference data for this well
       localIndex const iwelemControl = wellControls->GetReferenceWellElementIndex();
-      gravDepthControl = wellElemGravDepth[iwelemControl];
+      gravCoefControl = wellElemGravCoef[iwelemControl];
 
       // 2) Initialize the reference pressure
       real64 const & targetBHP = wellControls->GetTargetBHP();
@@ -214,19 +214,15 @@ void SinglePhaseWell::InitializeWells( DomainPartition * const domain )
 
     // TODO optimize
     MpiWrapper::Broadcast( pressureControl, subRegion->GetTopRank() );
-    MpiWrapper::Broadcast( gravDepthControl, subRegion->GetTopRank() );
+    MpiWrapper::Broadcast( gravCoefControl, subRegion->GetTopRank() );
 
     GEOSX_ERROR_IF( pressureControl <= 0, "Invalid well initialization: negative pressure was found" );
 
     // 3) Estimate the pressures in the well elements using this avgDensity
-    integer const gravityFlag = m_gravityFlag;
-
     forall_in_range( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex const iwelem )
     {
       wellElemPressure[iwelem] = pressureControl
-        + ( gravityFlag 
-          ? avgDensity * ( wellElemGravDepth[iwelem] - gravDepthControl ) 
-          : 0 );
+        + avgDensity * ( wellElemGravCoef[iwelem] - gravCoefControl );
     });
 
     // 4) Recompute the pressure-dependent properties
@@ -267,9 +263,12 @@ void SinglePhaseWell::SetupDofs( DomainPartition const * const domain,
 
   dofManager.addField( WellElementDofName(),
                        DofManager::Location::Elem,
-                       DofManager::Connectivity::Node,
                        NumDofPerWellElement(),
                        regions );
+
+  dofManager.addCoupling( WellElementDofName(),
+                          WellElementDofName(),
+                          DofManager::Connectivity::Node );
 }
 
 void SinglePhaseWell::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time_n ),
@@ -524,8 +523,8 @@ void SinglePhaseWell::FormPressureRelations( DomainPartition const * const domai
     arrayView1d<integer const> const & wellElemGhostRank =
       subRegion->getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
-    arrayView1d<real64 const> const & wellElemGravDepth =
-      subRegion->getReference<array1d<real64>>( viewKeyStruct::gravityDepthString );
+    arrayView1d<real64 const> const & wellElemGravCoef =
+      subRegion->getReference<array1d<real64>>( viewKeyStruct::gravityCoefString );
 
     arrayView1d<localIndex const> const & nextWellElemIndex =
       subRegion->getReference<array1d<localIndex>>( WellElementSubRegion::viewKeyStruct::nextWellElementIndexString );
@@ -573,7 +572,7 @@ void SinglePhaseWell::FormPressureRelations( DomainPartition const * const domai
         real64 const dAvgDensity_dPresCurrent = 0.5 * dWellElemDensity_dPres[iwelem][0];
 
         // compute depth diff times acceleration
-        real64 const gravD = ( wellElemGravDepth[iwelemNext] - wellElemGravDepth[iwelem] );
+        real64 const gravD = wellElemGravCoef[iwelemNext] - wellElemGravCoef[iwelem];
 
         // compute the current pressure in the two well elements
         real64 const pressureCurrent = wellElemPressure[iwelem]     + dWellElemPressure[iwelem];
@@ -832,25 +831,17 @@ SinglePhaseWell::ApplySystemSolution( DofManager const & dofManager,
                                       real64 const scalingFactor,
                                       DomainPartition * const domain )
 {
-  MeshLevel * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ElementRegionManager * const elemManager = meshLevel->getElemManager();
+  dofManager.addVectorToField( solution,
+                               WellElementDofName(),
+                               viewKeyStruct::deltaPressureString,
+                               scalingFactor,
+                               0, 1 );
 
-  elemManager->forElementSubRegions<WellElementSubRegion>( [&]( WellElementSubRegion * const subRegion )
-  {
-    dofManager.addVectorToField( solution,
-                                 WellElementDofName(),
-                                 scalingFactor,
-                                 subRegion,
-                                 viewKeyStruct::deltaPressureString,
-                                 0, 1 );
-
-    dofManager.addVectorToField( solution,
-                                 WellElementDofName(),
-                                 scalingFactor,
-                                 subRegion,
-                                 viewKeyStruct::deltaConnRateString,
-                                 1, m_numDofPerWellElement );
-  });
+  dofManager.addVectorToField( solution,
+                               WellElementDofName(),
+                               viewKeyStruct::deltaConnRateString,
+                               scalingFactor,
+                               1, m_numDofPerWellElement );
 
   std::map<string, string_array > fieldNames;
   fieldNames["elems"].push_back( viewKeyStruct::deltaPressureString );
@@ -900,10 +891,10 @@ void SinglePhaseWell::ResetViews(DomainPartition * const domain)
   ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
 
   m_resPressure =
-    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( SinglePhaseFlow::viewKeyStruct::pressureString );
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( SinglePhaseBase::viewKeyStruct::pressureString );
 
   m_deltaResPressure =
-    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( SinglePhaseFlow::viewKeyStruct::deltaPressureString );
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( SinglePhaseBase::viewKeyStruct::deltaPressureString );
 
   m_resDensity =
     elemManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64>>( SingleFluidBase::viewKeyStruct::densityString,
@@ -935,8 +926,8 @@ void SinglePhaseWell::ComputeAllPerforationRates( WellElementSubRegion const * c
   PerforationData const * const perforationData = subRegion->GetPerforationData();
 
   // get the degrees of freedom and depth
-  arrayView1d<real64 const> const & wellElemGravDepth =
-    subRegion->getReference<array1d<real64>>( viewKeyStruct::gravityDepthString );
+  arrayView1d<real64 const> const & wellElemGravCoef =
+    subRegion->getReference<array1d<real64>>( viewKeyStruct::gravityCoefString );
 
   // get well primary variables on well elements
   arrayView1d<real64 const> const & wellElemPressure =
@@ -961,8 +952,8 @@ void SinglePhaseWell::ComputeAllPerforationRates( WellElementSubRegion const * c
     fluid->getReference<array2d<real64>>( SingleFluidBase::viewKeyStruct::dVisc_dPresString );
 
   // get well variables on perforations
-  arrayView1d<real64 const> const & perfGravDepth =
-    perforationData->getReference<array1d<real64>>( viewKeyStruct::gravityDepthString );
+  arrayView1d<real64 const> const & perfGravCoef =
+    perforationData->getReference<array1d<real64>>( viewKeyStruct::gravityCoefString );
 
   arrayView1d<localIndex const> const & perfWellElemIndex =
     perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::wellElementIndexString );
@@ -1031,12 +1022,9 @@ void SinglePhaseWell::ComputeAllPerforationRates( WellElementSubRegion const * c
     pressure[SubRegionTag::WELL] = wellElemPressure[iwelem] + dWellElemPressure[iwelem];
     dPressure_dP[SubRegionTag::WELL] = 1.0;
 
-    if (m_gravityFlag)
-    {
-      real64 const gravD = ( perfGravDepth[iperf] - wellElemGravDepth[iwelem] );
-      pressure[SubRegionTag::WELL]     += wellElemDensity[iwelem][0] * gravD;
-      dPressure_dP[SubRegionTag::WELL] += dWellElemDensity_dPres[iwelem][0] * gravD;
-    }
+    real64 const gravD = ( perfGravCoef[iperf] - wellElemGravCoef[iwelem] );
+    pressure[SubRegionTag::WELL]     += wellElemDensity[iwelem][0] * gravD;
+    dPressure_dP[SubRegionTag::WELL] += dWellElemDensity_dPres[iwelem][0] * gravD;
 
     // multiplier for well side in the flux
     multiplier[SubRegionTag::WELL] = -1;

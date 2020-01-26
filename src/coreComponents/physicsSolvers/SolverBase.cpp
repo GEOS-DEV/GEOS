@@ -28,7 +28,6 @@ SolverBase::SolverBase( std::string const & name,
                         Group * const parent )
   :
   ExecutableGroup( name, parent ),
-  m_gravityVector( R1Tensor( 0.0 ) ),
   m_systemSolverParameters( groupKeyStruct::systemSolverParametersString, this ),
   m_cflFactor(),
   m_maxStableDt{ 1e99 },
@@ -40,8 +39,6 @@ SolverBase::SolverBase( std::string const & name,
 
   // This enables logLevel filtering
   enableLogLevelInput();
-
-  this->registerWrapper( viewKeyStruct::gravityVectorString, &m_gravityVector, false );
 
   // This sets a flag to indicate that this object increments time
   this->SetTimestepBehavior( 1 );
@@ -114,11 +111,6 @@ void SolverBase::ExpandObjectCatalogs()
 
 void SolverBase::PostProcessInput()
 {
-  if( this->globalGravityVector() != nullptr )
-  {
-    m_gravityVector = *globalGravityVector();
-  }
-
   SetLinearSolverParameters();
 }
 
@@ -524,11 +516,15 @@ void SolverBase::SetupSystem( DomainPartition * const domain,
   dofManager.setMesh( domain, 0, 0 );
 
   SetupDofs( domain, dofManager );
-  dofManager.close();
+  dofManager.reorderByRank();
+
+  localIndex const numLocalDof = dofManager.numLocalDofs();
+
+  matrix.createWithLocalSize( numLocalDof, numLocalDof, 8, MPI_COMM_GEOSX );
+  rhs.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
+  solution.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
 
   dofManager.setSparsityPattern( matrix );
-  dofManager.setVector( rhs );
-  dofManager.setVector( solution );
 }
 
 void SolverBase::AssembleSystem( real64 const GEOSX_UNUSED_ARG( time ),
@@ -608,14 +604,17 @@ void SolverBase::ImplicitStepComplete( real64 const & GEOSX_UNUSED_ARG( time ),
   GEOSX_ERROR( "SolverBase::ImplicitStepComplete called!. Should be overridden." );
 }
 
-R1Tensor const * SolverBase::globalGravityVector() const
+R1Tensor const SolverBase::gravityVector() const
 {
-  R1Tensor const * rval = nullptr;
-  if( getParent()->getName() == "Solvers" )
+  R1Tensor rval;
+  if (getParent()->group_cast<PhysicsSolverManager const *>() != nullptr)
   {
-    rval = &(getParent()->getReference<R1Tensor>( viewKeyStruct::gravityVectorString ));
+    rval = getParent()->getReference<R1Tensor>( PhysicsSolverManager::viewKeyStruct::gravityVectorString );
   }
-
+  else
+  {
+    rval = {0.0,0.0,-9.81};
+  }
   return rval;
 }
 

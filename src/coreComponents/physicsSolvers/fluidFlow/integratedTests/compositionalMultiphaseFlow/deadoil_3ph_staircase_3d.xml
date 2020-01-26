@@ -1,12 +1,10 @@
 
 <Problem>
 <!-- START_SPHINX_INCLUDE_SOLVER_BLOCK -->
-  <Solvers
-    gravityVector="0.0, 0.0, -9.81">
+  <Solvers>
 
     <CompositionalMultiphaseFlow name="compflow"
                                  logLevel="1"
-                                 gravityFlag="1"
                                  discretization="fluidTPFA"
                                  targetRegions="{Channel}"
                                  fluidName="fluid1"
