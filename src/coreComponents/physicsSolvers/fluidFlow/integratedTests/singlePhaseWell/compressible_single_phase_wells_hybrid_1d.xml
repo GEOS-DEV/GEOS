@@ -1,7 +1,7 @@
 
 <Problem>
 
-  <Solvers gravityVector="0.0, 0.0, -9.81">
+  <Solvers>
 
     <Reservoir name="reservoirSystem"
                flowSolverName="singlePhaseFlow"
@@ -9,19 +9,20 @@
                logLevel="1"
                targetRegions="{Region1,wellRegion1,wellRegion2}">
       <NonlinearSolverParameters name="nlsp"
+				 lineSearchAction="0"
                                  newtonMaxIter="40"/>
       <SystemSolverParameters name="ssp"
                               useDirectSolver="1"
-                              logLevel="2"/>
+                              logLevel="0"/>
     </Reservoir>
   
-    <SinglePhaseFVM name="singlePhaseFlow"
-                             logLevel="1"
-                             discretization="singlePhaseTPFA"
-                             fluidName="water"
-                             solidName="rock"
-                             targetRegions="{Region1}">
-    </SinglePhaseFVM>
+    <SinglePhaseHybridFVM name="singlePhaseFlow"
+                     logLevel="1"
+                     discretization="singlePhaseTPFA"
+                     fluidName="water"
+                     solidName="rock"
+                     targetRegions="{Region1}">
+    </SinglePhaseHybridFVM>
 
     <SinglePhaseWell name="singlePhaseWell"
                      logLevel="1"
@@ -31,13 +32,13 @@
                       type="producer"
                       control="BHP"
                       targetBHP="5e5"
-                      targetRate="1e-3"
+                      targetRate="1e-1"
                       referenceDepth="0.5"/>
         <WellControls name="wellControls2"
                       type="injector"
                       control="liquidRate" 
-                      targetBHP="1e7"
-                      targetRate="1e-4" 
+                      targetBHP="1e8"
+                      targetRate="1e-3" 
                       referenceDepth="0.5"/>
     </SinglePhaseWell>
 
@@ -49,7 +50,7 @@
                   xCoords="{0, 5}"
                   yCoords="{0, 1}"
                   zCoords="{0, 1}"
-                  nx="{3}"
+                  nx="{5}"
                   ny="{1}"
                   nz="{1}"
                   cellBlockNames="{cb1}"/>
@@ -67,8 +68,8 @@
                                          {1, 2},
                                          {2, 3},
                                          {3, 4} }"
-                  crossSectionArea="0.35"
-                  numElementsPerSegment="1">
+                  crossSectionArea="0.3"
+                  numElementsPerSegment="2">
         <Perforation name="producer1_perf1"
                      distanceFromHead="19.4"
                      transmissibility="1e-12"/> 
@@ -90,7 +91,7 @@
                                          {1, 2},
                                          {2, 3},
                                          {3, 4} }"
-                  crossSectionArea="0.25"
+                  crossSectionArea="0.3"
                   numElementsPerSegment="3">
         <Perforation name="injector1_perf1"
                      distanceFromHead="19.52"
@@ -99,7 +100,6 @@
                      distanceFromHead="20.45"
                      transmissibility="1e-12"/> 
     </InternalWell> 
-
   </Mesh>
 
 
@@ -112,6 +112,12 @@
                    timeFrequency="1e5"
                    targetExactTimestep="1"
                    target="/Outputs/siloOutput" />
+
+    <PeriodicEvent name="restarts"
+                   timeFrequency="5e5"
+                   targetExactTimestep="0"
+                   target="/Outputs/restartOutput"/>
+
   </Events>
 
   <NumericalMethods>
@@ -124,13 +130,13 @@
 
   <ElementRegions>
     <CellElementRegion name="Region1"
-                       cellBlocks="{cb1}"
-                       materialList="{water, rock}"/>
+                   cellBlocks="{cb1}"
+                   materialList="{water, rock}"/>
 
     <WellElementRegion name="wellRegion1"
                        materialList="{water}"/> 
-    <WellElementRegion name="wellRegion2"
-                       materialList="{water}"/> 
+   <WellElementRegion name="wellRegion2"
+                      materialList="{water}"/> 
 
   </ElementRegions>
 
@@ -140,8 +146,8 @@
                                   defaultViscosity="0.001"
                                   referencePressure="0.0"
                                   referenceDensity="1000"
-                                  compressibility="5e-10"
-                                  referenceViscosity="0.001"
+                                  compressibility="5e-9"
+                                  referenceViscosity="0.005"
                                   viscosibility="0.0"/>
 
     <PoreVolumeCompressibleSolid name="rock"
@@ -200,6 +206,7 @@
 
   <Outputs>
       <Silo name="siloOutput"/>
+      <Restart name="restartOutput"/>
   </Outputs>
 
 </Problem>

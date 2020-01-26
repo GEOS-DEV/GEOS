@@ -32,7 +32,7 @@
                               logLevel="2"/>
     </SolidMechanicsLagrangianSSLE>
   
-    <SinglePhaseFlow name="SinglePhaseFlow"
+    <SinglePhaseFVM name="SinglePhaseFlow"
                      logLevel="1"
                      discretization="singlePhaseTPFA"
                      targetRegions="{Region2}"
@@ -43,7 +43,7 @@
                                  newtonMaxIter="8"/>
       <SystemSolverParameters name="ssp"
                               krylovTol="1.0e-10"/>
-    </SinglePhaseFlow>
+    </SinglePhaseFVM>
   </Solvers>
   
   <Mesh>

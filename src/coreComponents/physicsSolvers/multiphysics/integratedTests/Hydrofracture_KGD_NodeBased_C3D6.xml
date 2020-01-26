@@ -43,7 +43,7 @@
         />
     </SolidMechanicsLagrangianSSLE>
   
-    <SinglePhaseFlow 
+    <SinglePhaseFVM 
       name="SinglePhaseFlow"
       logLevel="0"
       discretization="singlePhaseTPFA"
@@ -57,7 +57,7 @@
       <SystemSolverParameters name="SystemSolverParameters"
                               krylovTol="1.0e-12"
                               logLevel="0"/>
-    </SinglePhaseFlow>
+    </SinglePhaseFVM>
     
     <SurfaceGenerator
       name="SurfaceGen"

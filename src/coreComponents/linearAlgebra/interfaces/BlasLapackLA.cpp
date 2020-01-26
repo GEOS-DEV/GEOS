@@ -622,4 +622,87 @@ void BlasLapackLA::matrixRand( array2d<real64> & A,
   return;
 }
 
+void BlasLapackLA::matrixSVD( array2d<real64> const & A,
+		              array2d<real64> & U,
+			      array1d<real64> & S,
+			      array2d<real64> & VT )
+{
+  int const minDim = (A.size(0) < A.size(1))
+                   ? static_cast<int>( A.size(0) )
+                   : static_cast<int>( A.size(1) );
+
+  GEOSX_ASSERT_MSG( A.size(0) == U.size(0) && minDim == U.size(1),
+                   "The matrices A and U have an incompatible size");
+
+  GEOSX_ASSERT_MSG( minDim == VT.size(0) && A.size(1) == VT.size(1),
+                   "The matrices A and V have an incompatible size");
+
+  GEOSX_ASSERT_MSG( S.size() == minDim,
+                   "The matrix A and vector S have an incompatible size");
+
+  
+  // note: this is *not* an optimized implementation
+  // this is just a temporary solution to have something that works
+
+  array2d<real64> AT( A.size(1), A.size(0) );
+  array2d<real64> UT( U.size(1), U.size(0) );
+  array2d<real64> V( VT.size(1), VT.size(0) ); 
+
+  // fill the transpose of A
+  // this is done because Lapack expects column-major
+  for (int i = 0; i < A.size(0); ++i)
+  {
+    for (int j = 0; j < A.size(1); ++j)
+    {
+      AT(j,i) = A(i,j); 
+    }
+  }
+
+  // define the arguments of dgesvd
+  int M     = static_cast<int>( A.size(0) );
+  int N     = static_cast<int>( A.size(1) ); 
+  int LDA   = M;
+  int LDU   = M;
+  int LDVT  = minDim;
+  int LWORK = 0;
+  int INFO  = 0;
+  double WKOPT = 0.0;
+
+  // 1) query and allocate the optimal workspace
+  LWORK = -1;
+  GEOSX_dgesvd( "S", "S",
+		&M, &N, AT.data(), &LDA,
+		S.data(), UT.data(), &LDU, V.data(), &LDVT,
+		&WKOPT, &LWORK, &INFO );
+
+  LWORK = static_cast<int>( WKOPT );
+  array1d<real64> WORK( LWORK );
+  
+  // 2) compute svd 
+  GEOSX_dgesvd( "S", "S",
+		&M, &N, AT.data(), &LDA,
+		S.data(), UT.data(), &LDU, V.data(), &LDVT,
+		WORK.data(), &LWORK, &INFO );
+  
+  GEOSX_ASSERT_MSG( INFO == 0, 
+                    "The algorithm computing SVD failed to converge." );
+  
+  // fill the transpose of U and VT
+  // this is done because Lapack uses column-major
+  for (int i = 0; i < UT.size(0); ++i)
+  {
+    for (int j = 0; j < UT.size(1); ++j)
+    {
+      U(j,i) = UT(i,j); 
+    }
+  }
+  for (int i = 0; i < V.size(0); ++i)
+  {
+    for (int j = 0; j < V.size(1); ++j)
+    {
+      VT(j,i) = V(i,j); 
+    }
+  }
+}
+  
 } // end geosx namespace
