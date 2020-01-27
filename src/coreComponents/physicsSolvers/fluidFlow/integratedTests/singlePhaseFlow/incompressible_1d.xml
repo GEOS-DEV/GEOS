@@ -1,22 +1,21 @@
 
 <Problem>
 
-  <Solvers
-    gravityVector="0.0, 0.0, -9.81">
+
+  <Solvers>
   
-    <SinglePhaseFlow name="SinglePhaseFlow"
-                     logLevel="0"
-                     gravityFlag="1"
-                     discretization="singlePhaseTPFA"
-                     fluidName="water"
-                     solidName="rock"
-                     targetRegions="{Region1}">
+    <SinglePhaseFVM name="SinglePhaseFlow"
+                    logLevel="0"
+                    discretization="singlePhaseTPFA"
+                    fluidName="water"
+                    solidName="rock"
+                    targetRegions="{Region1}">
       <NonlinearSolverParameters name="nlsp"
                                  newtonTol="1.0e-6"
                                  newtonMaxIter="8"/>
       <SystemSolverParameters name="ssp"
                               krylovTol="1.0e-10"/>
-    </SinglePhaseFlow>
+    </SinglePhaseFVM>
   </Solvers>
   
   <Mesh>
