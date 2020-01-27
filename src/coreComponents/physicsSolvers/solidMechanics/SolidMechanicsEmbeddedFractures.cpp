@@ -43,12 +43,7 @@ SolidMechanicsEmbeddedFractures::SolidMechanicsEmbeddedFractures( const std::str
                                                                   Group * const parent ):
       SolverBase(name,parent),
       m_solidSolverName(),
-      m_flowSolverName(),
-      m_couplingTypeOptionString("FixedStress"),
-      m_couplingTypeOption(),
-      m_solidSolver(nullptr),
-      m_flowSolver(nullptr),
-      m_maxNumResolves(10)
+      m_solidSolver(nullptr)
 {
   registerWrapper(viewKeyStruct::solidSolverNameString, &m_solidSolverName, 0)->
       setInputFlag(InputFlags::REQUIRED)->
@@ -57,11 +52,6 @@ SolidMechanicsEmbeddedFractures::SolidMechanicsEmbeddedFractures( const std::str
   registerWrapper(viewKeyStruct::contactRelationNameString, &m_contactRelationName, 0)->
       setInputFlag(InputFlags::REQUIRED)->
       setDescription("Name of contact relation to enforce constraints on fracture boundary.");
-
-  registerWrapper(viewKeyStruct::maxNumResolvesString, &m_maxNumResolves, 0)->
-      setApplyDefaultValue(10)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("Value to indicate how many resolves may be executed to perform surface generation after the execution of flow and mechanics solver. ");
 
 }
 
@@ -109,11 +99,6 @@ void SolidMechanicsEmbeddedFractures::InitializePostInitialConditions_PreSubGrou
 
 }
 
-void SolidMechanicsEmbeddedFractures::ResetStateToBeginningOfStep( DomainPartition * const domain )
-{
-  m_solidSolver->ResetStateToBeginningOfStep(domain);
-}
-
 real64 SolidMechanicsEmbeddedFractures::SolverStep( real64 const & time_n,
                                                     real64 const & dt,
                                                     int const cycleNumber,
@@ -121,73 +106,35 @@ real64 SolidMechanicsEmbeddedFractures::SolverStep( real64 const & time_n,
 {
   real64 dtReturn = dt;
 
-  SolverBase * const surfaceGenerator =  this->getParent()->GetGroup<SolverBase>("SurfaceGen");
+  ImplicitStepSetup( time_n,
+                     dt,
+                     domain,
+                     m_dofManager,
+                     m_matrix,
+                     m_rhs,
+                     m_solution );
 
-  if( m_couplingTypeOption == couplingTypeOption::FixedStress )
-  {
-    dtReturn = SplitOperatorStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>() );
-  }
-  else if( m_couplingTypeOption == couplingTypeOption::TightlyCoupled )
-  {
+  SetupSystem( domain,
+               m_dofManager,
+               m_matrix,
+               m_rhs,
+               m_solution  );
 
-    ImplicitStepSetup( time_n,
-                       dt,
-                       domain,
-                       m_dofManager,
-                       m_matrix,
-                       m_rhs,
-                       m_solution );
+  // currently the only method is implicit time integration
+  dtReturn = this->NonlinearImplicitStep( time_n,
+                                          dt,
+                                          cycleNumber,
+                                          domain,
+                                          m_dofManager,
+                                          m_matrix,
+                                          m_rhs,
+                                          m_solution );
 
-    int const maxNumResolves = m_maxNumResolves;
-    for( int solveIter=0 ; solveIter<maxNumResolves ; ++solveIter )
-    {
-      int locallyFractured = 0;
-      int globallyFractured = 0;
+  m_solidSolver->updateStress( domain );
 
-      SetupSystem( domain,
-                   m_dofManager,
-                   m_matrix,
-                   m_rhs,
-                   m_solution  );
+  // final step for completion of timestep. typically secondary variable updates and cleanup.
+  ImplicitStepComplete( time_n, dtReturn, domain );
 
-      if( solveIter>0 )
-      {
-        m_solidSolver->ResetStressToBeginningOfStep( domain );
-      }
-
-      // currently the only method is implicit time integration
-      dtReturn = this->NonlinearImplicitStep( time_n,
-                                              dt,
-                                              cycleNumber,
-                                              domain,
-                                              m_dofManager,
-                                              m_matrix,
-                                              m_rhs,
-                                              m_solution );
-
-      m_solidSolver->updateStress( domain );
-
-      if( surfaceGenerator!=nullptr )
-      {
-        if( surfaceGenerator->SolverStep( time_n, dt, cycleNumber, domain ) > 0 )
-        {
-          locallyFractured = 1;
-        }
-        MpiWrapper::allReduce( &locallyFractured,
-                               &globallyFractured,
-                               1,
-                               MPI_MAX,
-                               MPI_COMM_GEOSX );
-      }
-      if( globallyFractured == 0 )
-      {
-        break;
-      }
-    }
-
-    // final step for completion of timestep. typically secondary variable updates and cleanup.
-    ImplicitStepComplete( time_n, dtReturn, domain );
-  }
   return dtReturn;
 }
 
@@ -225,71 +172,6 @@ void SolidMechanicsEmbeddedFractures::SetupSystem( DomainPartition * const domai
   //                                 keys::TotalDisplacement );
 
 
-
-
-  m_matrix01.createWithLocalSize( m_solidSolver->getSystemMatrix().localRows(),
-                                  m_flowSolver->getSystemMatrix().localCols(),
-                                  9,
-                                  MPI_COMM_GEOSX);
-  m_matrix10.createWithLocalSize( m_flowSolver->getSystemMatrix().localCols(),
-                                  m_solidSolver->getSystemMatrix().localRows(),
-                                  24,
-                                  MPI_COMM_GEOSX);
-
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  NodeManager * const nodeManager = mesh->getNodeManager();
-  ElementRegionManager * const elemManager = mesh->getElemManager();
-
-
-
-
-  string const presDofKey = m_flowSolver->getDofManager().getKey( FlowSolverBase::viewKeyStruct::pressureString );
-  string const dispDofKey = m_solidSolver->getDofManager().getKey( keys::TotalDisplacement );
-
-  arrayView1d<globalIndex> const &
-  dispDofNumber =  nodeManager->getReference<globalIndex_array>( dispDofKey );
-
-  elemManager->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion const * const elementSubRegion )
-                                                          {
-    localIndex const numElems = elementSubRegion->size();
-    array1d<array1d<localIndex > > const & elemsToNodes = elementSubRegion->nodeList();
-    arrayView1d<globalIndex> const &
-    faceElementDofNumber = elementSubRegion->getReference< array1d<globalIndex> >( presDofKey );
-
-    for( localIndex k=0 ; k<numElems ; ++k )
-    {
-      globalIndex const activeFlowDOF = faceElementDofNumber[k];
-      localIndex const numNodesPerElement = elemsToNodes[k].size();
-      array1d<globalIndex> activeDisplacementDOF(3 * numNodesPerElement);
-      array1d<real64> values( 3*numNodesPerElement );
-      values = 1;
-
-      for( localIndex a=0 ; a<numNodesPerElement ; ++a )
-      {
-        for( int d=0 ; d<3 ; ++d )
-        {
-          activeDisplacementDOF[a * 3 + d] = dispDofNumber[elemsToNodes[k][a]] + d;
-        }
-      }
-
-      m_matrix01.insert( activeDisplacementDOF.data(),
-                         &activeFlowDOF,
-                         values.data(),
-                         activeDisplacementDOF.size(),
-                         1 );
-
-      m_matrix10.insert( &activeFlowDOF,
-                         activeDisplacementDOF.data(),
-                         values.data(),
-                         1,
-                         activeDisplacementDOF.size() );
-
-    }
-                                                          });
-
-  m_matrix01.close();
-  m_matrix10.close();
-
 }
 
 void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
@@ -306,11 +188,6 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
                                  m_solidSolver->getDofManager(),
                                  m_solidSolver->getSystemMatrix(),
                                  m_solidSolver->getSystemRhs() );
-
-
-  AssembleForceResidualDerivativeWrtPressure( domain, &m_matrix01, &(m_solidSolver->getSystemRhs()) );
-
-  AssembleFluidMassResidualDerivativeWrtDisplacement( domain, &m_matrix10, &(m_flowSolver->getSystemRhs()) );
 
 }
 
@@ -342,9 +219,9 @@ CalculateResidualNorm( DomainPartition const * const domain,
                                                                      m_solidSolver->getDofManager(),
                                                                      m_solidSolver->getSystemRhs() );
 
-  GEOSX_LOG_RANK_0("residuals for fluid, solid: "<<fluidResidual<<", "<<solidResidual);
+  GEOSX_LOG_RANK_0("residual for solid:, "<<solidResidual);
 
-  return fluidResidual + solidResidual;
+  return solidResidual;
 }
 
 

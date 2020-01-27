@@ -527,6 +527,13 @@ Element: SolidMechanicsLagrangianSSLE
 .. include:: ../../coreComponents/fileIO/schema/docs/SolidMechanicsLagrangianSSLE.rst
 
 
+.. _XML_SolidMechanics_FEM_AES:
+
+Element: SolidMechanics_FEM_AES
+===============================
+.. include:: ../../coreComponents/fileIO/schema/docs/SolidMechanics_FEM_AES.rst
+
+
 .. _XML_SolidMechanics_LagrangianFEM:
 
 Element: SolidMechanics_LagrangianFEM
@@ -1180,6 +1187,13 @@ Datastructure: SinglePhaseWell
 Datastructure: SolidMechanicsLagrangianSSLE
 ===========================================
 .. include:: ../../coreComponents/fileIO/schema/docs/SolidMechanicsLagrangianSSLE_other.rst
+
+
+.. _DATASTRUCTURE_SolidMechanics_FEM_AES:
+
+Datastructure: SolidMechanics_FEM_AES
+=====================================
+.. include:: ../../coreComponents/fileIO/schema/docs/SolidMechanics_FEM_AES_other.rst
 
 
 .. _DATASTRUCTURE_SolidMechanics_LagrangianFEM:

@@ -25,7 +25,6 @@
 namespace geosx
 {
 
-class FlowSolverBase;
 class SolidMechanicsLagrangianFEM;
 
 class SolidMechanicsEmbeddedFractures : public SolverBase
@@ -42,7 +41,7 @@ public:
    */
   static string CatalogName()
   {
-    return "EmbFracMechanicsSolv";
+    return "SolidMechanics_FEM_AES";
   }
 
   virtual void RegisterDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
@@ -88,53 +87,21 @@ public:
                          DofManager const & dofManager,
                          ParallelVector const & rhs ) override;
 
-  virtual void SolveSystem( DofManager const & dofManager,
-                            ParallelMatrix & matrix,
-                            ParallelVector & rhs,
-                            ParallelVector & solution ) override;
-
-  virtual real64
-  ScalingForSystemSolution( DomainPartition const * const domain,
-                            DofManager const & dofManager,
-                            ParallelVector const & solution ) override;
-
   virtual void
   ApplySystemSolution( DofManager const & dofManager,
                        ParallelVector const & solution,
                        real64 const scalingFactor,
                        DomainPartition * const domain ) override;
 
-  virtual void ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
-
   virtual real64 SolverStep( real64 const & time_n,
                              real64 const & dt,
                              int const cycleNumber,
                              DomainPartition * const domain ) override;
 
-  virtual real64 ExplicitStep( real64 const & time_n,
-                               real64 const & dt,
-                               integer const cycleNumber,
-                               DomainPartition * const domain ) override;
-
-  void UpdateDeformationForCoupling( DomainPartition * const domain );
-
-//  void ApplyFractureFluidCoupling( DomainPartition * const domain,
-//                                   systemSolverInterface::EpetraBlockSystem & blockSystem );
-
-  void AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
-                                                   ParallelMatrix * const matrix01,
-                                                   ParallelVector * const rhs0 );
 
   void AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const * const domain,
                                                            ParallelMatrix * const matrix10,
                                                            ParallelVector * const rhs0 );
-
-
-  real64 SplitOperatorStep( real64 const& time_n,
-                            real64 const& dt,
-                            integer const cycleNumber,
-                            DomainPartition * const domain );
-
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
@@ -165,8 +132,6 @@ private:
 
   ParallelMatrix m_permutationMatrix0; // it's used to have the output based on global ordering
   ParallelMatrix m_permutationMatrix1; // it's used to have the output based on global ordering
-
-  integer m_maxNumResolves;
 
 };
 

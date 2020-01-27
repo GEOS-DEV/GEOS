@@ -141,8 +141,6 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface (localIndex const cellIndex
    * - Heaviside:
    */
 
-  // std::cout << "cell " << cellIndex  << std::endl;
-
   bool addEmbeddedElem = true;
   arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodesCoord = nodeManager.referencePosition();
   EdgeManager::NodeMapType::ViewTypeConst const & edgeToNodes = edgeManager.nodeList();
@@ -165,7 +163,6 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface (localIndex const cellIndex
 
     if (prodScalarProd < 0)
     {
-      // std::cout << "node 1: " << nodesCoord[edgeToNodes[edgeIndex][0]] <<  " node 2: " << nodesCoord[edgeToNodes[edgeIndex][1]] << std::endl;
       lineDir  = nodesCoord[edgeToNodes[edgeIndex][0]];
       lineDir -= nodesCoord[edgeToNodes[edgeIndex][1]];
       lineDir.Normalize();
@@ -173,7 +170,6 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface (localIndex const cellIndex
                                                            nodesCoord[edgeToNodes[edgeIndex][0]],
                                                            normalVector,
                                                            origin);
-      // std::cout << "origin " << origin <<  " point " << point << std::endl;
       // Check if the point is inside the fracture (bounded plane)
       if ( !fracture->IsCoordInObject(point) )
       {
@@ -195,7 +191,6 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface (localIndex const cellIndex
     this->resize(this->size() + 1);
     this->CalculateElementGeometricQuantities(intersectionPoints, this->size()-1);
   }
-
   return addEmbeddedElem;
 }
 
