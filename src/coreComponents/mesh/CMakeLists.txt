@@ -41,7 +41,13 @@ set(mesh_sources
     ToElementRelation.cpp
    )
 
-if( BUILD_OBJ_LIBS)
+# Difficulty compiling ElementRegionManager.cpp & FaceElementSubRegion.cpp
+if( CMAKE_UNITY_BUILD )
+  set_source_files_properties (ElementRegionManager.cpp 
+                               PROPERTIES SKIP_UNITY_BUILD_INCLUSION TRUE)
+endif()
+
+if( BUILD_OBJ_LIBS )
   set(dependencyList managers metis)
 else()
   set(dependencyList common metis)
@@ -52,7 +58,7 @@ if( ENABLE_OPENMP )
     set( dependencyList ${dependencyList} openmp )
 endif()
 
-if ( ENABLE_CUDA )
+if( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
 endif()
 
