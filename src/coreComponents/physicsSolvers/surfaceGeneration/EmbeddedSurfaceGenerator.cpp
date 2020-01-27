@@ -162,19 +162,21 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
           } // end loop over nodes
           if (isPositive * isNegative == 1)
           {
-            embeddedSurfaceSubRegion->AddNewEmbeddedSurface( cellIndex,
-                                                             normalVector,
-                                                             *nodeManager,
-                                                             *edgeManager,
-                                                             cellToEdges,
-                                                             fracture );
+            bool added = embeddedSurfaceSubRegion->AddNewEmbeddedSurface( cellIndex,
+                                                                          normalVector,
+                                                                          *nodeManager,
+                                                                          *edgeManager,
+                                                                          cellToEdges,
+                                                                          fracture );
+            if (added)
+              GEOSX_LOG_LEVEL_RANK_0(2, "Element " << cellIndex << " is fractured");
           }
         } // end loop over cells
       });// end loop over subregions
     });// end loop over elementRegions
   });// end loop over thick planes
 
-  std::cout << "Number of embedded surface elements: " << embeddedSurfaceSubRegion->size() << std::endl;
+  GEOSX_LOG_LEVEL_RANK_0(1, "Number of embedded surface elements: " << embeddedSurfaceSubRegion->size() );
 }
 
 void EmbeddedSurfaceGenerator::InitializePostInitialConditions_PreSubGroups( Group * const  GEOSX_UNUSED_ARG ( problemManager ) )

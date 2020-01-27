@@ -24,6 +24,7 @@ set( physicsSolvers_headers
      simplePDE/LaplaceFEM.hpp
      solidMechanics/SolidMechanicsLagrangianFEM.hpp
      solidMechanics/SolidMechanicsLagrangianSSLE.hpp
+     solidMechanics/SolidMechanicsEmbeddedFractures.hpp
      surfaceGeneration/SurfaceGenerator.hpp
      surfaceGeneration/EmbeddedSurfaceGenerator.hpp
      )
@@ -50,6 +51,7 @@ set( physicsSolvers_sources
      simplePDE/LaplaceFEM.cpp
      solidMechanics/SolidMechanicsLagrangianFEM.cpp
      solidMechanics/SolidMechanicsLagrangianSSLE.cpp
+     solidMechanics/SolidMechanicsEmbeddedFractures.cpp
      surfaceGeneration/SurfaceGenerator.cpp
      surfaceGeneration/EmbeddedSurfaceGenerator.cpp
      )
