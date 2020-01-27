@@ -75,7 +75,7 @@ public:
     void AddNewEmbeddedSurface(localIndex const cellIndex,
                                R1Tensor normalVector);
 
-    void AddNewEmbeddedSurface(localIndex const cellIndex,
+    bool AddNewEmbeddedSurface(localIndex const cellIndex,
                                R1Tensor normalVector,
                                NodeManager const & nodeManager,
                                EdgeManager const & edgeManager,
