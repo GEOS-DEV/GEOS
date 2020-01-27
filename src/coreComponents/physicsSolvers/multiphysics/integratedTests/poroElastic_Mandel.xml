@@ -1,8 +1,7 @@
 
 <Problem>
 
-  <Solvers
-    gravityVector="0.0, 0.0, -9.81">
+  <Solvers>
 
     <Poroelastic name="poroSolve" 
                  solidSolverName="lagsolve"
@@ -33,9 +32,8 @@
                               logLevel="2"/>
     </SolidMechanicsLagrangianSSLE>
   
-    <SinglePhaseFlow name="SinglePhaseFlow"
+    <SinglePhaseFVM name="SinglePhaseFlow"
                      logLevel="1"
-                     gravityFlag="1"
                      discretization="singlePhaseTPFA"
                      targetRegions="{Region2}"
                      fluidName="water"
@@ -45,7 +43,7 @@
                                  newtonMaxIter="8"/>
       <SystemSolverParameters name="ssp"
                               krylovTol="1.0e-10"/>
-    </SinglePhaseFlow>
+    </SinglePhaseFVM>
   </Solvers>
   
   <Mesh>
