@@ -17,8 +17,6 @@ Welcome to the GEOSX developer guide.
 
    /coreComponents/dataRepository/dataRepository.rst
 
-   /coreComponents/fileIO/schema/docs/SchemaGeneration
-
    UnitTests
 
    IntegratedTests
