@@ -279,6 +279,15 @@ using arraySlice5d = ArraySlice< T, 5 >;
 template< typename T, int MAXSIZE >
 using stackArray5d = StackArray< T, 5, MAXSIZE >;
 
+
+/// Alias for CRS Matrix class.
+template< typename T, typename ROWINDEX, typename COLINDEX >
+using CRSMatrix = LvArray::CRSMatrix< T, COLINDEX, ROWINDEX >;
+
+/// Alias for CRS Matrix View.
+template< typename T, typename COLINDEX, typename LINEEARINDEX >
+using CRSMatrixView = LvArray::CRSMatrixView< T, COLINDEX, LINEEARINDEX >;
+
 ///@}
 
 /**
@@ -323,11 +332,6 @@ using ArrayOfSetsView = LvArray::ArrayOfSetsView< T, localIndex const >;
 
 ///@}
 
-template< typename T, typename ROWINDEX, typename COLINDEX >
-using CRSMatrix = LvArray::CRSMatrix< T, COLINDEX, ROWINDEX >;
-
-template< typename T, typename COLINDEX, typename LINEEARINDEX >
-using CRSMatrixView = LvArray::CRSMatrixView< T, COLINDEX, LINEEARINDEX >;
 
 /**
  * @name Ordered and unordered map types.

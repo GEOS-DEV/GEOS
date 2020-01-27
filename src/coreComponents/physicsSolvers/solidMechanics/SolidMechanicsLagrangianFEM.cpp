@@ -456,6 +456,10 @@ real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const& time_n,
       {
         break;
       }
+      else
+      {
+        GEOSX_LOG_RANK_0("Fracture Occurred. Resolve");
+      }
     }
     ImplicitStepComplete( time_n, dt,  domain );
   }
@@ -1244,7 +1248,22 @@ CalculateResidualNorm( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
 
   MpiWrapper::bcast( globalResidualNorm, 2, 0, MPI_COMM_GEOSX );
 
-  return sqrt(globalResidualNorm[0])/(globalResidualNorm[1]+1); // the + 1 is for the first time-step when maxForce = 0;
+
+  real64 const residual = sqrt(globalResidualNorm[0])/(globalResidualNorm[1]+1);  // the + 1 is for the first time-step when maxForce = 0;
+  std::cout<<globalResidualNorm[0]<<", "<<globalResidualNorm[1]<<std::endl;
+
+
+  if( getLogLevel() >= 1 && logger::internal::rank==0 )
+  {
+    char output[200] = {0};
+    sprintf( output,
+             "( RSolid ) = (%4.2e) ; ",
+             residual);
+    std::cout<<output;
+  }
+
+
+  return residual;
 }
 
 
@@ -1259,7 +1278,7 @@ SolidMechanicsLagrangianFEM::ApplySystemSolution( DofManager const & dofManager,
   NodeManager * const nodeManager = mesh->getNodeManager();
 
   arrayView1d<R1Tensor> const & disp = nodeManager->getReference<array1d<R1Tensor> >(keys::TotalDisplacement);
-  if( getLogLevel() >= 1 )
+  if( getLogLevel() >= 3 )
   {
     std::cout<<"Displacement - presolution"<<std::endl;
     for( localIndex a=0 ; a<disp.size() ; ++a )
@@ -1272,7 +1291,7 @@ SolidMechanicsLagrangianFEM::ApplySystemSolution( DofManager const & dofManager,
   dofManager.addVectorToField( solution, fieldName, -scalingFactor, nodeManager, keys::IncrementalDisplacement );
   dofManager.addVectorToField( solution, fieldName, -scalingFactor, nodeManager, keys::TotalDisplacement );
 
-  if( getLogLevel() >= 1 )
+  if( getLogLevel() >= 3 )
   {
     std::cout<<"Displacement - postsolution"<<std::endl;
     for( localIndex a=0 ; a<disp.size() ; ++a )

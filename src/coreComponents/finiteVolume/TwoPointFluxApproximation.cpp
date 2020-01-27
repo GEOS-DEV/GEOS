@@ -220,7 +220,6 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
   arrayView1d<real64 const>   const & faceArea   = faceManager->faceArea();
   arrayView1d<R1Tensor const> const & faceCenter = faceManager->faceCenter();
   arrayView1d<R1Tensor const> const & faceNormal = faceManager->faceNormal();
-  ArrayOfArraysView<localIndex const> const & faceToNodesMap = faceManager->nodeList();
 
   arrayView1d<R1Tensor const> const & X = nodeManager->referencePosition();
 
@@ -228,9 +227,10 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
     static_assert(true,"must have SET_CREATION_DISPLACEMENT defined");
 #endif
 #if SET_CREATION_DISPLACEMENT==1
+  ArrayOfArraysView<localIndex const> const & faceToNodesMap = faceManager->nodeList();
   arrayView1d<R1Tensor> const & incrementalDisplacement = nodeManager->getReference<array1d<R1Tensor>>(keys::IncrementalDisplacement);
-#endif
   arrayView1d<R1Tensor> const & totalDisplacement = nodeManager->getReference<array1d<R1Tensor>>(keys::TotalDisplacement);
+#endif
 
   FaceElementStencil & fractureStencil = getReference<FaceElementStencil>(viewKeyStruct::fractureStencilString);
   CellElementStencilTPFA & cellStencil = getReference<CellElementStencilTPFA>(viewKeyStruct::cellStencilString);
@@ -264,11 +264,7 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
 
   arrayView1d<integer const> const & edgeGhostRank = edgeManager->GhostRank();
 
-  arrayView1d< real64 > const &
-  fluidPressure = fractureSubRegion->getReference<array1d<real64>>("pressure");
 
-  arrayView1d< real64 > const &
-  aperture = fractureSubRegion->getReference<array1d<real64>>("elementAperture");
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
   arrayView1d<real64> const &
@@ -285,6 +281,8 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
 
 
 #if SET_CREATION_PRESSURE==1
+  arrayView1d< real64 > const &
+  fluidPressure = fractureSubRegion->getReference<array1d<real64>>("pressure");
   // Set the new face elements to some unphysical numbers to make sure they get set by the following routines.
   for( localIndex const kfe : fractureSubRegion->m_newFaceElements )
   {
@@ -301,6 +299,8 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
     static_assert(true,"must have SET_CREATION_DISPLACEMENT defined");
 #endif
 #if SET_CREATION_DISPLACEMENT==1
+    arrayView1d< real64 > const &
+    aperture = fractureSubRegion->getReference<array1d<real64>>("elementAperture");
     aperture[kfe] = 1.0e99;
 #endif
   }
@@ -331,7 +331,9 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
       edgeManager->calculateLength( edgeIndex, X, edgeLength );
 
       real64 initialPressure = 1.0e99;
+#if SET_CREATION_DISPLACEMENT==1
       real64 initialAperture = 1.0e99;
+#endif
       set<localIndex> newElems;
 
       // loop over all face elements attached to the connector and add them to the stencil
@@ -355,7 +357,9 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
         if( fractureSubRegion->m_newFaceElements.count(fractureElementIndex)==0 )
         {
           initialPressure = std::min(initialPressure, fluidPressure[fractureElementIndex]);
+#if SET_CREATION_DISPLACEMENT==1
           initialAperture = std::min(initialAperture, aperture[fractureElementIndex] );
+#endif
         }
         else
         {
@@ -377,6 +381,10 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
         fluidPressure[newElemIndex] = std::min(fluidPressure[newElemIndex], initialPressure);
 #endif
 
+#if !defined(SET_CREATION_DISPLACEMENT)
+    static_assert(true,"must have SET_CREATION_DISPLACEMENT defined");
+#endif
+#if SET_CREATION_DISPLACEMENT==1
 
         localIndex const faceIndex0 = faceMap(newElemIndex,0);
         localIndex const faceIndex1 = faceMap(newElemIndex,1);
@@ -397,13 +405,11 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
         }
         if( zeroDisp )
         {
-#if !defined(SET_CREATION_DISPLACEMENT)
-    static_assert(true,"must have SET_CREATION_DISPLACEMENT defined");
-#endif
-#if SET_CREATION_DISPLACEMENT==1
           aperture[newElemIndex] = 0;
-#endif
         }
+
+#endif
+
       }
 
       // add/overwrite the stencil for index fci
@@ -433,6 +439,10 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
     dens[newElemIndex] = 0.0;
 #endif
 
+#if !defined(SET_CREATION_DISPLACEMENT)
+    static_assert(true,"must have ALLOW_CREATION_MASS defined");
+#endif
+#if SET_CREATION_DISPLACEMENT==1
     // If the aperture has been set, then we can set the estimate of displacements.
     if (aperture[newElemIndex] < 1e98)
     {
@@ -452,19 +462,13 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
 
         if( node0 != node1 && touchedNodes.count(node0)==0 )
         {
-#if !defined(SET_CREATION_DISPLACEMENT)
-    static_assert(true,"must have ALLOW_CREATION_MASS defined");
-#endif
-#if SET_CREATION_DISPLACEMENT==1
           incrementalDisplacement[node0] += newDisp;
           totalDisplacement[node0] += newDisp;
           incrementalDisplacement[node1] -= newDisp;
           totalDisplacement[node1] -= newDisp;
-#endif
         }
       }
     }
-
     if( this->getLogLevel() > 1 )
     {
       printf( "New elem index, init aper, init press = %4ld, %4.2e, %4.2e \n",
@@ -472,6 +476,8 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
               aperture[newElemIndex] ,
               fluidPressure[newElemIndex] );
     }
+#endif
+
 
   }
 

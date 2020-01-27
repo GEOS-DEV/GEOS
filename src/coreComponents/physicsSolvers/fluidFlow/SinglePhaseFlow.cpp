@@ -251,6 +251,9 @@ void SinglePhaseFlow::InitializePostInitialConditions_PreSubGroups( Group * cons
    {
      region->forElementSubRegions<FaceElementSubRegion>( [&]( FaceElementSubRegion * const subRegion )
      {
+       subRegion->getWrapper<real64_array>(viewKeyStruct::effectiveApertureString)->
+         setApplyDefaultValue(region->getDefaultAperture() );
+
        subRegion->getWrapper<real64_array>(FaceElementSubRegion::viewKeyStruct::creationMassString)->
          setApplyDefaultValue(defaultDensity * region->getDefaultAperture() );
      });
@@ -1231,7 +1234,20 @@ real64 SinglePhaseFlow::CalculateResidualNorm( DomainPartition const * const dom
                          MPI_SUM,
                          MPI_COMM_GEOSX);
 
-  return sqrt(globalResidualNorm[0]) / ( ( globalResidualNorm[1] + m_fluxEstimate ) / (globalResidualNorm[2]+1) );
+
+  real64 const residual = sqrt(globalResidualNorm[0]) / ( ( globalResidualNorm[1] + m_fluxEstimate ) / (globalResidualNorm[2]+1) );
+
+  if( getLogLevel() >= 1 && logger::internal::rank==0 )
+  {
+    char output[200] = {0};
+    sprintf( output,
+             "( Rfluid ) = (%4.2e) ; ",
+             residual);
+    std::cout<<output;
+  }
+
+
+  return residual;
 }
 
 void SinglePhaseFlow::ApplySystemSolution( DofManager const & dofManager,
@@ -1242,21 +1258,21 @@ void SinglePhaseFlow::ApplySystemSolution( DofManager const & dofManager,
   MeshLevel * mesh = domain->getMeshBody(0)->getMeshLevel(0);
 
 
-  applyToSubRegions( mesh, [&] ( localIndex const er,
-                                 localIndex const esr,
+  applyToSubRegions( mesh, [&] ( localIndex const GEOSX_UNUSED_ARG( er ),
+                                 localIndex const GEOSX_UNUSED_ARG( esr ),
                                  ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
                                  ElementSubRegionBase * const subRegion )
   {
-    arrayView1d<real64 const> const & pressure = m_pressure[er][esr] ;
-    arrayView1d<real64 const> const & dp = m_deltaPressure[er][esr] ;
-    if( getLogLevel() >= 1 )
-    {
-      std::cout<<"Pressure - Presolution"<<std::endl;
-      for( localIndex a=0 ; a<pressure.size(0) ; ++a )
-      {
-        std::cout<<MpiWrapper::Comm_rank(MPI_COMM_GEOSX)<<" "<<a<<", "<<pressure[a]<<" + "<<dp[a]<<std::endl;
-      }
-    }
+//    arrayView1d<real64 const> const & pressure = m_pressure[er][esr] ;
+//    arrayView1d<real64 const> const & dp = m_deltaPressure[er][esr] ;
+//    if( getLogLevel() >= 1 )
+//    {
+//      std::cout<<"Pressure - Presolution"<<std::endl;
+//      for( localIndex a=0 ; a<pressure.size(0) ; ++a )
+//      {
+//        std::cout<<MpiWrapper::Comm_rank(MPI_COMM_GEOSX)<<" "<<a<<", "<<pressure[a]<<" + "<<dp[a]<<std::endl;
+//      }
+//    }
 
     dofManager.addVectorToField( solution,
                                  viewKeyStruct::pressureString,
@@ -1264,14 +1280,14 @@ void SinglePhaseFlow::ApplySystemSolution( DofManager const & dofManager,
                                  subRegion,
                                  viewKeyStruct::deltaPressureString );
 
-    if( getLogLevel() >= 1 )
-    {
-      std::cout<<"Pressure - Postsolution"<<std::endl;
-      for( localIndex a=0 ; a<pressure.size(0) ; ++a )
-      {
-        std::cout<<MpiWrapper::Comm_rank(MPI_COMM_GEOSX)<<" "<<a<<", "<<pressure[a]<<" + "<<dp[a]<<std::endl;
-      }
-    }
+//    if( getLogLevel() >= 1 )
+//    {
+//      std::cout<<"Pressure - Postsolution"<<std::endl;
+//      for( localIndex a=0 ; a<pressure.size(0) ; ++a )
+//      {
+//        std::cout<<MpiWrapper::Comm_rank(MPI_COMM_GEOSX)<<" "<<a<<", "<<pressure[a]<<" + "<<dp[a]<<std::endl;
+//      }
+//    }
 
 
   } );

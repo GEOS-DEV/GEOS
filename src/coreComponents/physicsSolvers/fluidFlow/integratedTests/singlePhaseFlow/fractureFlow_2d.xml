@@ -5,7 +5,7 @@
 
         <SinglePhaseFlow
             name="SinglePhaseFlow"
-            logLevel="0"
+            logLevel="1"
             gravityFlag="1"
             discretization="singlePhaseTPFA"
             targetRegions="{Fracture}"
@@ -13,7 +13,7 @@
             solidName="rock">
             <NonlinearSolverParameters
                 name="nlsp"
-                newtonTol="1.0e-8"
+                newtonTol="1.0e-2"
                 newtonMaxIter="8"/>
             <SystemSolverParameters
                 name="SystemSolverParameters"
@@ -157,7 +157,7 @@
             name="source"
             objectPath="ElementRegions/Fracture"
             fieldName="pressure"
-            scale="1.0e7"
+            scale="1.0e6"
             setNames="{source}" />
         <!-- SourceFlux name="sourceTerm"
             objectPath="ElementRegions/Fracture"

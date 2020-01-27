@@ -107,7 +107,11 @@ void FlowSolverBase::RegisterDataOnMesh( Group * const MeshBodies )
         subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::gravityDepthString )->setApplyDefaultValue( 0.0 );
         subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::aperture0String )->
           setDefaultValue( region->getDefaultAperture() );
-        subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::effectiveApertureString )->setPlotLevel(PlotLevel::LEVEL_0);
+        subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::effectiveApertureString )->
+          setApplyDefaultValue( subRegion->getWrapper<array1d<real64>>( FaceElementSubRegion::
+                                                                        viewKeyStruct::
+                                                                        elementApertureString)->getDefaultValue() )->
+          setPlotLevel(PlotLevel::LEVEL_0);
 
       });
     });
