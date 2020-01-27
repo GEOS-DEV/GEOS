@@ -51,10 +51,9 @@
         />
     </SolidMechanicsLagrangianSSLE>
   
-    <SinglePhaseFlow 
+    <SinglePhaseFVM 
       name="SinglePhaseFlow"
       logLevel="0"
-      gravityFlag="0"
       discretization="singlePhaseTPFA"
       targetRegions="{Fracture}"
       fluidName="water"
@@ -69,7 +68,7 @@
         krylovTol="1.0e-12"
         logLevel="0"
         />
-    </SinglePhaseFlow>
+    </SinglePhaseFVM>
     
     <SurfaceGenerator
       name="SurfaceGen"

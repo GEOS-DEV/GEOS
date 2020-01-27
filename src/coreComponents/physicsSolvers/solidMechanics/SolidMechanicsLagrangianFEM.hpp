@@ -115,13 +115,6 @@ public:
              DofManager & dofManager ) const override;
 
   virtual void
-  SetupSystem( DomainPartition * const domain,
-               DofManager & dofManager,
-               ParallelMatrix & matrix,
-               ParallelVector & rhs,
-               ParallelVector & solution ) override;
-
-  virtual void
   AssembleSystem( real64 const time,
                   real64 const dt,
                   DomainPartition * const domain,

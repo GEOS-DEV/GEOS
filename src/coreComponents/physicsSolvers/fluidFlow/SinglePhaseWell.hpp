@@ -20,7 +20,7 @@
 #define GEOSX_PHYSICSSOLVERS_WELLS_SINGLEPHASEWELLSOLVER_HPP_
 
 #include "WellSolverBase.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseFlow.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 
 namespace geosx
 {
@@ -135,7 +135,7 @@ public:
 
   virtual string WellElementDofName() const override { return viewKeyStruct::dofFieldString; }
 
-  virtual string ResElementDofName() const override { return SinglePhaseFlow::viewKeyStruct::pressureString; }
+  virtual string ResElementDofName() const override { return SinglePhaseBase::viewKeyStruct::pressureString; }
 
   virtual localIndex NumFluidComponents() const override { return 1; }
 
@@ -224,8 +224,8 @@ public:
     static constexpr auto dofFieldString = "singlePhaseWellVars";
 
     // primary solution field
-    static constexpr auto pressureString      = SinglePhaseFlow::viewKeyStruct::pressureString;
-    static constexpr auto deltaPressureString = SinglePhaseFlow::viewKeyStruct::deltaPressureString;
+    static constexpr auto pressureString      = SinglePhaseBase::viewKeyStruct::pressureString;
+    static constexpr auto deltaPressureString = SinglePhaseBase::viewKeyStruct::deltaPressureString;
     static constexpr auto connRateString      = "connectionRate";
     static constexpr auto deltaConnRateString = "deltaConnectionRate";
 

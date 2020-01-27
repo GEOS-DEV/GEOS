@@ -33,7 +33,6 @@ using namespace constitutive;
 FlowSolverBase::FlowSolverBase( std::string const & name,
                                 Group * const parent ):
   SolverBase( name, parent ),
-  m_gravityFlag(1),
   m_fluidName(),
   m_solidName(),
   m_fluidIndex(),
@@ -45,17 +44,12 @@ FlowSolverBase::FlowSolverBase( std::string const & name,
   m_fluxEstimate(),
   m_elemGhostRank(),
   m_volume(),
-  m_gravDepth(),
+  m_gravCoef(),
   m_porosityRef(),
   m_elementArea(),
   m_elementAperture0(),
   m_elementAperture()
 {
-  registerWrapper( viewKeyStruct::gravityFlagString, &m_gravityFlag, false )->
-    setApplyDefaultValue(1)->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Flag that enables/disables gravity");
-  
   this->registerWrapper( viewKeyStruct::discretizationString, &m_discretizationName, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Name of discretization object to use for this solver.");
@@ -91,7 +85,7 @@ void FlowSolverBase::RegisterDataOnMesh( Group * const MeshBodies )
     {
       subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::referencePorosityString )->setPlotLevel(PlotLevel::LEVEL_0);
       subRegion->registerWrapper< array1d<R1Tensor> >( viewKeyStruct::permeabilityString )->setPlotLevel(PlotLevel::LEVEL_0);
-      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::gravityDepthString )->setApplyDefaultValue( 0.0 );
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::gravityCoefString )->setApplyDefaultValue( 0.0 );
     });
 
     ElementRegionManager * const elemManager = mesh->getElemManager();
@@ -104,7 +98,7 @@ void FlowSolverBase::RegisterDataOnMesh( Group * const MeshBodies )
           setApplyDefaultValue( 1.0 );
 
         subRegion->registerWrapper< array1d<R1Tensor> >( viewKeyStruct::permeabilityString )->setPlotLevel(PlotLevel::LEVEL_0);
-        subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::gravityDepthString )->setApplyDefaultValue( 0.0 );
+        subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::gravityCoefString )->setApplyDefaultValue( 0.0 );
         subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::aperture0String )->
           setDefaultValue( region->getDefaultAperture() );
         subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::effectiveApertureString )->
@@ -112,12 +106,11 @@ void FlowSolverBase::RegisterDataOnMesh( Group * const MeshBodies )
                                                                         viewKeyStruct::
                                                                         elementApertureString)->getDefaultValue() )->
           setPlotLevel(PlotLevel::LEVEL_0);
-
       });
     });
 
     FaceManager * const faceManager = mesh->getFaceManager();
-    faceManager->registerWrapper< array1d<real64> >( viewKeyStruct::gravityDepthString )->setApplyDefaultValue( 0.0 );
+    faceManager->registerWrapper< array1d<real64> >( viewKeyStruct::gravityCoefString )->setApplyDefaultValue( 0.0 );
   }
 }
 
@@ -179,19 +172,19 @@ void FlowSolverBase::PrecomputeData( DomainPartition * const domain )
   MeshLevel * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
   FaceManager * const faceManager = mesh->getFaceManager();
 
-  R1Tensor const & gravityVector = getGravityVector();
-
+  R1Tensor const gravVector = gravityVector();
+  
   applyToSubRegions( mesh, [&] ( ElementSubRegionBase * const subRegion )
   {
     arrayView1d<R1Tensor const> const & elemCenter =
       subRegion->getReference<array1d<R1Tensor>>( CellBlock::viewKeyStruct::elementCenterString );
 
-    arrayView1d<real64> const & gravityDepth =
-      subRegion->getReference<array1d<real64>>( viewKeyStruct::gravityDepthString );
+    arrayView1d<real64> const & gravityCoef =
+      subRegion->getReference<array1d<real64>>( viewKeyStruct::gravityCoefString );
 
     forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex a )
     {
-      gravityDepth[a] = Dot( elemCenter[a], gravityVector );
+      gravityCoef[a] = Dot( elemCenter[a], gravVector );
     } );
   } );
 
@@ -199,12 +192,12 @@ void FlowSolverBase::PrecomputeData( DomainPartition * const domain )
     arrayView1d<R1Tensor const> const & faceCenter =
       faceManager->getReference<array1d<R1Tensor>>(FaceManager::viewKeyStruct::faceCenterString);
 
-    arrayView1d<real64> const & gravityDepth =
-      faceManager->getReference<array1d<real64>>(viewKeyStruct::gravityDepthString);
+    arrayView1d<real64> const & gravityCoef =
+      faceManager->getReference<array1d<real64>>(viewKeyStruct::gravityCoefString);
 
     forall_in_range<serialPolicy>( 0, faceManager->size(), GEOSX_LAMBDA ( localIndex a )
     {
-      gravityDepth[a] = Dot( faceCenter[a], gravityVector );
+      gravityCoef[a] = Dot( faceCenter[a], gravVector );
     } );
   }
 }
@@ -220,8 +213,8 @@ void FlowSolverBase::ResetViews( DomainPartition * const domain )
     elemManager->ConstructViewAccessor<array1d<integer>, arrayView1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
   m_volume =
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( ElementSubRegionBase::viewKeyStruct::elementVolumeString );
-  m_gravDepth =
-    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( viewKeyStruct::gravityDepthString );
+  m_gravCoef =
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( viewKeyStruct::gravityCoefString );
   m_porosityRef =
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( viewKeyStruct::referencePorosityString );
 
