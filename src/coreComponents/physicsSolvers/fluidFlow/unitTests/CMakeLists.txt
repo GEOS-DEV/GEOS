@@ -4,7 +4,7 @@
 #
 
 set( gtest_geosx_tests
-     testSinglePhaseFlowKernels.cpp
+     testSinglePhaseKernels.cpp
    )
 
 if(ENABLE_PVTPackage)

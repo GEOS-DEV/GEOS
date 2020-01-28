@@ -1,12 +1,11 @@
 
 <Problem>
 
-  <Solvers
-    gravityVector="0.0, 0.0, -9.81">
+  <Solvers>
   
-    <SinglePhaseFlow name="SinglePhaseFlow"
+    <SinglePhaseFVM
+	             name="SinglePhaseFlow"
                      logLevel="0"
-                     gravityFlag="1"
                      discretization="singlePhaseTPFA"
                      fluidName="water"
                      solidName="rock"
@@ -16,7 +15,7 @@
                                  newtonMaxIter="8"/>
       <SystemSolverParameters name="ssp"
                               krylovTol="1.0e-10"/>
-    </SinglePhaseFlow>
+    </SinglePhaseFVM>
   </Solvers>
   
   <Mesh>
