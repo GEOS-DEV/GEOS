@@ -449,11 +449,6 @@ protected:
     return m_conduitNode;
   }
 
-  Group const * getParent() const
-  {
-    return m_parent;
-  }
-
   /// @endcond
 
 private:
