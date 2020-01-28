@@ -201,7 +201,8 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
 
 
 void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & domain,
-                                                      string const & faceElementRegionName )
+                                                      string const & faceElementRegionName,
+                                                      bool const initFlag )
 {
   MeshLevel const * const mesh = domain.getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   NodeManager const * const nodeManager = mesh->getNodeManager();
@@ -290,7 +291,10 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
     static_assert(true,"must have SET_CREATION_PRESSURE defined");
 #endif
 #if SET_CREATION_PRESSURE==1
-    fluidPressure[kfe] = 1.0e99;
+    if( initFlag )
+    {
+      fluidPressure[kfe] = 1.0e99;
+    }
 #endif
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
     apertureF[kfe] = aperture[kfe];
@@ -301,7 +305,10 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
 #if SET_CREATION_DISPLACEMENT==1
     arrayView1d< real64 > const &
     aperture = fractureSubRegion->getReference<array1d<real64>>("elementAperture");
-    aperture[kfe] = 1.0e99;
+    if( initFlag )
+    {
+      aperture[kfe] = 1.0e99;
+    }
 #endif
   }
 #endif
@@ -378,38 +385,41 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
         static_assert(true,"must have SET_CREATION_PRESSURE defined");
 #endif
 #if SET_CREATION_PRESSURE==1
-        fluidPressure[newElemIndex] = std::min(fluidPressure[newElemIndex], initialPressure);
+        if( initFlag )
+        {
+          fluidPressure[newElemIndex] = std::min(fluidPressure[newElemIndex], initialPressure);
+        }
 #endif
 
 #if !defined(SET_CREATION_DISPLACEMENT)
-    static_assert(true,"must have SET_CREATION_DISPLACEMENT defined");
+        static_assert(true,"must have SET_CREATION_DISPLACEMENT defined");
 #endif
 #if SET_CREATION_DISPLACEMENT==1
-
-        localIndex const faceIndex0 = faceMap(newElemIndex,0);
-        localIndex const faceIndex1 = faceMap(newElemIndex,1);
-
-        localIndex const numNodesPerFace = faceToNodesMap.sizeOfArray(faceIndex0);
-
-        bool zeroDisp = true;
-
-        for( localIndex a=0 ; a<numNodesPerFace ; ++a )
+        if( initFlag )
         {
-          localIndex const node0 = faceToNodesMap(faceIndex0,a);
-          localIndex const node1 = faceToNodesMap(faceIndex1, a==0 ? a : numNodesPerFace-a );
-          if( fabs( totalDisplacement[node0].L2_Norm() ) > 1.0e-99 &&
-              fabs( totalDisplacement[node1].L2_Norm() ) > 1.0e-99 )
+          localIndex const faceIndex0 = faceMap(newElemIndex,0);
+          localIndex const faceIndex1 = faceMap(newElemIndex,1);
+
+          localIndex const numNodesPerFace = faceToNodesMap.sizeOfArray(faceIndex0);
+
+          bool zeroDisp = true;
+
+          for( localIndex a=0 ; a<numNodesPerFace ; ++a )
           {
-            zeroDisp = false;
+            localIndex const node0 = faceToNodesMap(faceIndex0,a);
+            localIndex const node1 = faceToNodesMap(faceIndex1, a==0 ? a : numNodesPerFace-a );
+            if( fabs( totalDisplacement[node0].L2_Norm() ) > 1.0e-99 &&
+                fabs( totalDisplacement[node1].L2_Norm() ) > 1.0e-99 )
+            {
+              zeroDisp = false;
+            }
+          }
+          if( zeroDisp )
+          {
+            aperture[newElemIndex] = 0;
           }
         }
-        if( zeroDisp )
-        {
-          aperture[newElemIndex] = 0;
-        }
-
 #endif
-
       }
 
       // add/overwrite the stencil for index fci
@@ -423,62 +433,63 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
     }
   }
 
-  set<localIndex> touchedNodes;
-  for( localIndex const newElemIndex : allNewElems )
+  if( initFlag )
   {
-    // if the value of pressure was not set, then set it to zero and punt.
-    if( fluidPressure[newElemIndex] > 1.0e98 )
+    set<localIndex> touchedNodes;
+    for( localIndex const newElemIndex : allNewElems )
     {
-      fluidPressure[newElemIndex] = 0.0;
-    }
+      // if the value of pressure was not set, then set it to zero and punt.
+      if( fluidPressure[newElemIndex] > 1.0e98 )
+      {
+        fluidPressure[newElemIndex] = 0.0;
+      }
 #if !defined(ALLOW_CREATION_MASS)
-    static_assert(true,"must have ALLOW_CREATION_MASS defined");
+      static_assert(true,"must have ALLOW_CREATION_MASS defined");
 #endif
 #if ALLOW_CREATION_MASS==0
-    // set the initial density of the face element to 0 to enforce mass conservation ( i.e. no creation of mass)
-    dens[newElemIndex] = 0.0;
+      // set the initial density of the face element to 0 to enforce mass conservation ( i.e. no creation of mass)
+      dens[newElemIndex] = 0.0;
 #endif
 
 #if !defined(SET_CREATION_DISPLACEMENT)
-    static_assert(true,"must have ALLOW_CREATION_MASS defined");
+      static_assert(true,"must have ALLOW_CREATION_MASS defined");
 #endif
 #if SET_CREATION_DISPLACEMENT==1
-    // If the aperture has been set, then we can set the estimate of displacements.
-    if (aperture[newElemIndex] < 1e98)
-    {
-      localIndex const faceIndex0 = faceMap(newElemIndex,0);
-      localIndex const faceIndex1 = faceMap(newElemIndex,1);
-
-      R1Tensor newDisp = faceNormal(faceIndex0);
-      newDisp *= -aperture[newElemIndex];
-      localIndex const numNodesPerFace = faceToNodesMap.sizeOfArray(faceIndex0);
-      for( localIndex a=0 ; a<numNodesPerFace ; ++a )
+      // If the aperture has been set, then we can set the estimate of displacements.
+      if (aperture[newElemIndex] < 1e98)
       {
-        localIndex const node0 = faceToNodesMap(faceIndex0,a);
-        localIndex const node1 = faceToNodesMap(faceIndex1, a==0 ? a : numNodesPerFace-a );
+        localIndex const faceIndex0 = faceMap(newElemIndex,0);
+        localIndex const faceIndex1 = faceMap(newElemIndex,1);
 
-        touchedNodes.insert(node0);
-        touchedNodes.insert(node1);
-
-        if( node0 != node1 && touchedNodes.count(node0)==0 )
+        R1Tensor newDisp = faceNormal(faceIndex0);
+        newDisp *= -aperture[newElemIndex];
+        localIndex const numNodesPerFace = faceToNodesMap.sizeOfArray(faceIndex0);
+        for( localIndex a=0 ; a<numNodesPerFace ; ++a )
         {
-          incrementalDisplacement[node0] += newDisp;
-          totalDisplacement[node0] += newDisp;
-          incrementalDisplacement[node1] -= newDisp;
-          totalDisplacement[node1] -= newDisp;
+          localIndex const node0 = faceToNodesMap(faceIndex0,a);
+          localIndex const node1 = faceToNodesMap(faceIndex1, a==0 ? a : numNodesPerFace-a );
+
+          touchedNodes.insert(node0);
+          touchedNodes.insert(node1);
+
+          if( node0 != node1 && touchedNodes.count(node0)==0 )
+          {
+            incrementalDisplacement[node0] += newDisp;
+            totalDisplacement[node0] += newDisp;
+            incrementalDisplacement[node1] -= newDisp;
+            totalDisplacement[node1] -= newDisp;
+          }
         }
       }
-    }
-    if( this->getLogLevel() > 1 )
-    {
-      printf( "New elem index, init aper, init press = %4ld, %4.2e, %4.2e \n",
-              newElemIndex,
-              aperture[newElemIndex] ,
-              fluidPressure[newElemIndex] );
-    }
+      if( this->getLogLevel() > 1 )
+      {
+        printf( "New elem index, init aper, init press = %4ld, %4.2e, %4.2e \n",
+                newElemIndex,
+                aperture[newElemIndex] ,
+                fluidPressure[newElemIndex] );
+      }
 #endif
-
-
+    }
   }
 
   // add connections for FaceElements to/from CellElements.

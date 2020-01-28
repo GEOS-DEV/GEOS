@@ -617,6 +617,9 @@ struct FluxKernel
 
 
       sumOfWeights += aperTerm[k] * stencilWeights[k];
+
+      localIndex const ei = stencilElementIndices[k];
+      std::cout<<"ei, pres, dPres = "<<ei<<", "<<pres[ei]<<", "<<dPres[ei]<<std::endl;
     }
 
     localIndex k[2];

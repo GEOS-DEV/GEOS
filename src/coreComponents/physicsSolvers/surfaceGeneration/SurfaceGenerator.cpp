@@ -520,7 +520,8 @@ void SurfaceGenerator::postRestartInitialization( Group * const domain0 )
       if( fluxApprox!=nullptr )
       {
         fluxApprox->addToFractureStencil( *domain,
-                                          this->m_fractureRegionName );
+                                          this->m_fractureRegionName,
+                                          false );
         edgeManager->m_recalculateFractureConnectorEdges.clear();
         fractureSubRegion->m_newFaceElements.clear();
       }
@@ -575,7 +576,8 @@ real64 SurfaceGenerator::SolverStep( real64 const & time_n,
         if( fluxApprox!=nullptr )
         {
           fluxApprox->addToFractureStencil( *domain,
-                                            this->m_fractureRegionName );
+                                            this->m_fractureRegionName,
+                                            true);
           edgeManager->m_recalculateFractureConnectorEdges.clear();
           fractureRegion->GetSubRegion<FaceElementSubRegion>(0)->m_newFaceElements.clear();
         }

@@ -387,6 +387,11 @@ pullDataFromConduitNode( Array< T, NDIM, PERMUTATION > & var,
   localIndex numBytesFromArray =  var.size() * sizeof( T );
   GEOSX_ERROR_IF_NE( numBytesFromArray, valuesNode.dtype().strided_bytes() );
   std::memcpy( var.data(), valuesNode.data_ptr(), numBytesFromArray );
+
+  for( localIndex a=0 ; a<var.size() ; ++a )
+  {
+    std::cout<<var.data()[a]<<std::endl;
+  }
 }
 
 template< typename T >

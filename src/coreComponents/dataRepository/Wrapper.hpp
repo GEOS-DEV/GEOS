@@ -813,6 +813,8 @@ public:
 
     setSizedFromParent( getConduitNode()["__sizedFromParent__"].value() );
 
+    std::cout<<"reading "<<this->getParent()->getName()<<"/"<<this->getName()<<" from conduit"<<std::endl;
+
     wrapperHelpers::pullDataFromConduitNode( *m_data, getConduitNode() );
 
     getConduitNode().reset();
