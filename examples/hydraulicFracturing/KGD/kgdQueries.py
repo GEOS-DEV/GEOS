@@ -57,7 +57,7 @@ def RadiusScatterPlot( field ):
     AddOperator("Threshold", 0)
     ThresholdAtts = ThresholdAttributes()
     ThresholdAtts.outputMeshType = 0
-    ThresholdAtts.listedVarNames = ("Fracture_Solid_ElementFields/elementAperture", "Fracture_Solid_ElementFields/ghostRank")
+    ThresholdAtts.listedVarNames = ("Fracture_ElementFields/elementAperture", "Fracture_ElementFields/ghostRank")
     ThresholdAtts.zonePortions = (1, 1)
     ThresholdAtts.lowerBounds = (1.2e-8, -1e+37)
     ThresholdAtts.upperBounds = (1e+37, -1)
@@ -97,12 +97,12 @@ header   = [['      time', '  pressure', '  aperture', '      area']]
 timehist = []
 
 
-AddPlot("Pseudocolor", "Fracture_Solid_ElementFields/elementArea", 1, 1)
+AddPlot("Pseudocolor", "Fracture_ElementFields/elementArea", 1, 1)
 AddOperator("Threshold", 1)
 ThresholdAtts = ThresholdAttributes()
 ThresholdAtts.outputMeshType = 0
 ThresholdAtts.boundsInputType = 0
-ThresholdAtts.listedVarNames = ("Fracture_Solid_ElementFields/elementAperture", "Fracture_Solid_ElementFields/ghostRank")
+ThresholdAtts.listedVarNames = ("Fracture_ElementFields/elementAperture", "Fracture_ElementFields/ghostRank")
 ThresholdAtts.zonePortions = (1, 1)
 ThresholdAtts.lowerBounds = (1.2e-5, -1e+37)
 ThresholdAtts.upperBounds = (1e+37, -1)
@@ -118,8 +118,8 @@ for state in range(TimeSliderGetNStates()):
     SetTimeSliderState(state)
     SetQueryFloatFormat("%g")
     time = Query("Time")[:-1].split(' ')[-1]
-    injectionPressure = ZonePick(coord=(0, 0.1, 0.5), vars=("Fracture_Solid_ElementFields/pressure"))['Fracture_Solid_ElementFields/pressure']
-    injectionAperture = ZonePick(coord=(0, 0.1, 0.5), vars=("Fracture_Solid_ElementFields/elementAperture"))['Fracture_Solid_ElementFields/elementAperture']
+    injectionPressure = ZonePick(coord=(0, 0.1, 0.5), vars=("Fracture_ElementFields/pressure"))['Fracture_ElementFields/pressure']
+    injectionAperture = ZonePick(coord=(0, 0.1, 0.5), vars=("Fracture_ElementFields/elementAperture"))['Fracture_ElementFields/elementAperture']
     fractureArea = Query("Variable Sum").split(' ')[-1]
     timehist.append([float(time), float(injectionPressure), float(injectionAperture), float(fractureArea)])
 
@@ -131,10 +131,10 @@ DefineScalarExpression("node_radius", "cylindrical_radius(Fracture_Fluid)")
 DefineScalarExpression("face_radius", "recenter(node_radius, \"zonal\")")
 
 DeleteActivePlots()
-RadiusScatterPlot("Fracture_Solid_ElementFields/elementAperture")
+RadiusScatterPlot("Fracture_ElementFields/elementAperture")
 SaveWindowPlot( outputroot+"_aperture", 1 )
 DeleteActivePlots()
-RadiusScatterPlot("Fracture_Solid_ElementFields/pressure")
+RadiusScatterPlot("Fracture_ElementFields/pressure")
 SaveWindowPlot( outputroot+"_pressure", 1 )
 DeleteActivePlots()
 

@@ -393,8 +393,6 @@ void SinglePhaseBase::ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n
     arrayView2d<real64 const> const & dens = m_density[er][esr][m_fluidIndex];
     arrayView1d<real64 const> const & poro = m_porosity[er][esr];
 
-    arrayView1d<real64 const > const & pres   = m_pressure[er][esr];
-
     arrayView1d<real64> const & dPres   = m_deltaPressure[er][esr];
     arrayView1d<real64> const & dVol    = m_deltaVolume[er][esr];
     arrayView1d<real64> const & densOld = m_densityOld[er][esr];
@@ -402,7 +400,6 @@ void SinglePhaseBase::ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n
 
     forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
-      std::cout<<"pres["<<er<<"]["<<esr<<"]["<<ei<<"]="<<pres[ei]<<std::endl;
       dPres[ei] = 0.0;
       dVol[ei] = 0.0;
       densOld[ei] = dens[ei][0];
@@ -664,10 +661,6 @@ void SinglePhaseBase::AccumulationLaunch( localIndex const er,
   {
     if (elemGhostRank[ei] < 0)
     {
-
-      printf( "element, densOld, dens = %4ld, %4.2e, %4.2e \n", ei, densOld[ei], dens[ei][0] );
-      printf( "element, volume, dvol = %4ld, %4.2e, %4.2e \n", ei, volume[ei], dVol[ei] );
-
       real64 localAccum, localAccumJacobian;
       globalIndex const elemDOF = dofNumber[ei];
 

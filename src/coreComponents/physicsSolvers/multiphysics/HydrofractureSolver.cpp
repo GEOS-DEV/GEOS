@@ -375,8 +375,6 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
         }
 #endif
         deltaVolume[kfe] = effectiveAperture[kfe] * area[kfe] - volume[kfe];
-//        deltaVolume[kfe] = aperture[kfe] * area[kfe] * separationCoeff[kfe] - volume[kfe];
-//        std::cout<<"        "<<kfe<<": "<<aperture[kfe]<<"-->"<<effectiveAperture[kfe]<<", "<<deltaVolume[kfe]<<std::endl;
       }
 
     });
@@ -575,42 +573,6 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
   NodeManager * const nodeManager = mesh->getNodeManager();
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
-  std::unique_ptr<CRSMatrix<real64,localIndex,localIndex> > &
-  derivativeFluxResidual_dAperture = m_flowSolver->getRefDerivativeFluxResidual_dAperture();
-  {
-
-    localIndex numRows = 0;
-    localIndex numCols = 0;
-    string_array const & flowRegions = m_flowSolver->getTargetRegions();
-    elemManager->forElementSubRegions( flowRegions, [&]( ElementSubRegionBase const * const elementSubRegion )
-    {
-      numRows += elementSubRegion->size();
-      numCols += elementSubRegion->size();
-    });
-
-    derivativeFluxResidual_dAperture = std::make_unique<CRSMatrix<real64,localIndex,localIndex>>( numRows, numCols );
-
-    derivativeFluxResidual_dAperture->reserveNonZeros( m_flowSolver->getSystemMatrix().localNonzeros() );
-    localIndex maxRowSize = -1;
-    for( localIndex row=0 ; row<m_flowSolver->getSystemMatrix().localRows() ; ++row )
-    {
-      localIndex const rowSize = m_flowSolver->getSystemMatrix().getLocalRowGlobalLength( row );
-      maxRowSize = maxRowSize > rowSize ? maxRowSize : rowSize;
-
-      derivativeFluxResidual_dAperture->reserveNonZeros( row,
-                                                         rowSize );
-    }
-    for( localIndex row=m_flowSolver->getSystemMatrix().localRows() ; row<numRows ; ++row )
-    {
-      derivativeFluxResidual_dAperture->reserveNonZeros( row,
-                                                         maxRowSize );
-    }
-
-
-  }
-//  CRSMatrixView<real64,localIndex,localIndex const> const &
-//  derivativeFluxResidual_dAperture = m_flowSolver->getDerivativeFluxResidual_dAperture();
-
   string const presDofKey = m_flowSolver->getDofManager().getKey( FlowSolverBase::viewKeyStruct::pressureString );
   string const dispDofKey = m_solidSolver->getDofManager().getKey( keys::TotalDisplacement );
 
@@ -676,12 +638,7 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
       FaceElementSubRegion const * const
       elementSubRegion = elemManager->GetRegion(seri[iconn][0])->GetSubRegion<FaceElementSubRegion>(sesri[iconn][0]);
 
-//      GEOS_LOG_RANK("connector, numLocal, numGhost: "<<iconn<<", "<<elementSubRegion->size()-elementSubRegion->GetNumberOfGhosts()<<", "<<elementSubRegion->GetNumberOfGhosts());
-//      GEOS_LOG_RANK("connector, numRows, numCols: "<<iconn<<", "<<derivativeFluxResidual_dAperture->numRows()<<", "<<derivativeFluxResidual_dAperture->numColumns());
-
       array1d<array1d<localIndex > > const & elemsToNodes = elementSubRegion->nodeList();
-
-//      arrayView1d<integer const> const & ghostRank = elementSubRegion->GhostRank();
 
       arrayView1d<globalIndex> const &
       faceElementDofNumber = elementSubRegion->getReference< array1d<globalIndex> >( presDofKey );
@@ -691,9 +648,6 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
 
         for( localIndex k1=0 ; k1<numFluxElems ; ++k1 )
         {
-//          GEOS_LOG_RANK("ei0, ei1, nonZeroCapacitys: "<<sei[iconn][k0]<<", "<<sei[iconn][k1]<<", "<<derivativeFluxResidual_dAperture->nonZeroCapacity(sei[iconn][k0]));
-          derivativeFluxResidual_dAperture->insertNonZero( sei[iconn][k0],sei[iconn][k1], 0.0 );
-
           localIndex const numNodesPerElement = elemsToNodes[sei[iconn][k1]].size();
           array1d<globalIndex> activeDisplacementDOF(3 * numNodesPerElement);
           array1d<real64> values( 3*numNodesPerElement );
@@ -748,35 +702,6 @@ void HydrofractureSolver::AssembleSystem( real64 const time,
 
   AssembleForceResidualDerivativeWrtPressure( domain, &m_matrix01, &(m_solidSolver->getSystemRhs()) );
   AssembleFluidMassResidualDerivativeWrtDisplacement( domain, &m_matrix10, &(m_flowSolver->getSystemRhs()) );
-
-//  if( getLogLevel()==2 )
-//  {
-//
-//    GEOSX_LOG_RANK_0("***********************************************************");
-//    GEOSX_LOG_RANK_0("matrix01");
-//    GEOSX_LOG_RANK_0("***********************************************************");
-//    m_matrix01.print(std::cout);
-//    MpiWrapper::Barrier();
-//
-//    GEOSX_LOG_RANK_0("***********************************************************");
-//    GEOSX_LOG_RANK_0("matrix10");
-//    GEOSX_LOG_RANK_0("***********************************************************");
-//    m_matrix10.print(std::cout);
-//    MpiWrapper::Barrier();
-//
-//    GEOSX_LOG_RANK_0("***********************************************************");
-//    GEOSX_LOG_RANK_0("matrix11");
-//    GEOSX_LOG_RANK_0("***********************************************************");
-//    m_flowSolver->getSystemMatrix().print(std::cout);
-//    MpiWrapper::Barrier();
-//
-//    GEOSX_LOG_RANK_0("***********************************************************");
-//    GEOSX_LOG_RANK_0("residual1");
-//    GEOSX_LOG_RANK_0("***********************************************************");
-//    m_flowSolver->getSystemRhs().print(std::cout);
-//    MpiWrapper::Barrier();
-//  }
-
 }
 
 void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
