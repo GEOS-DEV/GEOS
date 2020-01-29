@@ -631,18 +631,20 @@ REGISTER_TYPED_TEST_CASE_P( DofManagerSparsityTest,
                             FEM_TPFA_Full,
                             FEM_TPFA_Partial );
 
-#ifdef GEOSX_USE_TRILINOS
-INSTANTIATE_TYPED_TEST_CASE_P( Trilinos, DofManagerSparsityTest, TrilinosInterface );
-#endif
+//#ifdef GEOSX_USE_TRILINOS
+//INSTANTIATE_TYPED_TEST_CASE_P( Trilinos, DofManagerSparsityTest, TrilinosInterface );
+//#endif
+//
+//#ifdef GEOSX_USE_PETSC
+//// Does not work. Remove this comment when fixed.
+////INSTANTIATE_TYPED_TEST_CASE_P( Petsc, DofManagerSparsityTest, PetscInterface );
+//#endif
+//
+//#ifdef GEOSX_USE_HYPRE
+////INSTANTIATE_TYPED_TEST_CASE_P( Hypre, DofManagerSparsityTest, HypreInterface );
+//#endif
 
-#ifdef GEOSX_USE_PETSC
-// Does not work. Remove this comment when fixed.
-//INSTANTIATE_TYPED_TEST_CASE_P( Petsc, DofManagerSparsityTest, PetscInterface );
-#endif
-
-#ifdef GEOSX_USE_HYPRE
-//INSTANTIATE_TYPED_TEST_CASE_P( Hypre, DofManagerSparsityTest, HypreInterface );
-#endif
+INSTANTIATE_TYPED_TEST_CASE_P( GEOSX_LA_INTERFACE, DofManagerSparsityTest, CONCAT( GEOSX_LA_INTERFACE, Interface ) );
 
 int main( int argc, char** argv )
 {
