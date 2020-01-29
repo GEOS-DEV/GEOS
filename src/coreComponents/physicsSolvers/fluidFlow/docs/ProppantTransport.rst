@@ -196,10 +196,10 @@ The proppant particle and carrying fluid velocities are related by the slip velo
 
 The slip velocity between the proppant and carrying fluid includes gravitational and collisional components, which take account of particle settling and collision effects, respectively.
 
-The gravitational component of the slip velocity is written as a form as
+The gravitational component of the slip velocity :math:`\boldsymbol{u}_{slipG}` is written as a form as
 
 .. math::
-    \boldsymbol{u}_{slip} = F(c) \boldsymbol{u}_{settling},
+    \boldsymbol{u}_{slipG} = F(c) \boldsymbol{u}_{settling},
 
 
 where :math:`\boldsymbol{u}_{settling}` is the settling velocity for a single particle, :math:`d_p` is the particle diameter, and :math:`F(c)` is the correction factor to the particle settling velocity in order to account for hindered settling effects as a result of particle-particle interactions,
@@ -217,7 +217,7 @@ The settling velocity for a single particle, :math:`\boldsymbol{u}_{settling}` ,
 Single-particle settling under intermediate Reynolds-number and turbulent flow conditions can also be described respectively by the Allen's equation (Barree & Conway, 1995),
 
 .. math::
-    \boldsymbol{u}_{settling} = 0.2 d^{1.18} \left [ \frac{g ( \rho_p - \rho_f)}{\rho_f} \right ]^{0.72} \left ( \frac{\rho_f}{\mu_f} \right )^{0.45} \boldsymbol{e},
+    \boldsymbol{u}_{settling} = 0.2 d_{p}^{1.18} \left [ \frac{g ( \rho_p - \rho_f)}{\rho_f} \right ]^{0.72} \left ( \frac{\rho_f}{\mu_f} \right )^{0.45} \boldsymbol{e},
  
 and Newton's equation(Barree & Conway, 1995),       
 
@@ -225,13 +225,14 @@ and Newton's equation(Barree & Conway, 1995),
     \boldsymbol{u}_{settling} = 1.74 d{_p}^{0.5}\left [ \frac{g ( \rho_p - \rho_f)}{\rho_f}\right]^{0.5} \boldsymbol{e}.
 
 
-:math:`\boldsymbol{e}` is the unit gravity vector.
+:math:`\boldsymbol{e}` is the unit gravity vector and :math:`d_p` is the particle diameter.
     
-The collisional component of the slip velocity is modeled by defining :math:`\lambda`, the ratio of the particle velocity to the volume averaged mixture velocity as a function of the proppant concentration. From this the particle slip velocity is related to the mixed fluid velocity by,
+The collisional component of the slip velocity is modeled by defining :math:`\lambda`, the ratio of the particle velocity to the volume averaged mixture velocity as a function of the proppant concentration. From this the particle slip velocity in horizontal direction is related to the mixed fluid velocity by,
 
 .. math::
-    \boldsymbol{u}_{slip} =  \frac{\lambda - 1}{1 - c} \boldsymbol{u}_{m}
+    \boldsymbol{u}_{slipH} =  \frac{\lambda - 1}{1 - c} \boldsymbol{v}_{m}
 
+with :math:`\boldsymbol{v}_{m}` denoting volume averaged mixture velocity.    
 We use a simple expression of :math:`\lambda` proposed by Barree & Conway (1995) to correct the particle slip velocity in horizontal direction,
 
 .. math::
@@ -247,19 +248,24 @@ In addition to suspended particle flow the GEOSX has the option to model proppan
 Although proppant becomes immobile fluid can continue to flow through the settled proppant pack. The pack permeability `K` is defined based on the Kozeny-Carmen relationship:  
 
 .. math::
-   K = \frac{(sd_p)^2}{180}\frac{(1-c_{s})^{3}}{c_{s}^{2}},
+   K = \frac{(sd_p)^2}{180}\frac{\phi^{3}}{(1-\phi)^{2}}
 
-where :math:`c_{s}` is the saturation or maximum fraction for proppant packing, :math:`s` is the sphericity and :math:`d_p` is the particle diameter.
+and
+
+.. math::
+   \phi = 1 - c_{s}
+
+where :math:`\phi` is the porosity of particle pack and :math:`c_{s}` is the saturation or maximum fraction for proppant packing, :math:`s` is the sphericity and :math:`d_p` is the particle diameter.
 
 
 The growth of the settled pack in an "inter-facial" element is controlled by the interplay between proppant gravitational settling and shear-force induced lifting as (Hu et al., 2018),
 
 .. math:: 
-    \frac{d H}{d t} =  \frac{c u_{p}}{c_{s}} - \frac{Q_{lift}}{A c_{s}},
+    \frac{d H}{d t} =  \frac{c u_{settling} F(c)}{c_{s}} - \frac{Q_{lift}}{A c_{s}},
 
 where :math:`H`, :math:`t`, :math:`c_{s}`, :math:`Q_{lift}`, and :math:`A` represent the height of the proppant bed, time, saturation or maximum proppant concnetration in the proppant bed, proppant-bed load (wash-out) flux, and cross-sectional area, respectively.
 
-The rate of proppant bed load transport (or wash out) due to shear force is calculated by the correlation proposed by Wiberg and Smith (1989),
+The rate of proppant bed load transport (or wash out) due to shear force is calculated by the correlation proposed by Wiberg and Smith (1989) and McClure (2018),
 
 .. math:: 
     Q_{lift} = a \left ( d{_p} \sqrt{\frac{g d{_p} ( \rho_p - \rho_f)}{\rho_f}} \right ) (9.64 N_{sh}^{0.166})(N_{sh} - N_{sh, c})^{1.5}. 
@@ -272,7 +278,7 @@ The rate of proppant bed load transport (or wash out) due to shear force is calc
 and  
 
 .. math::
-   \tau = 0.125 f \rho_f V^2
+   \tau = 0.125 f \rho_f u_{m}^2
 
 where :math:`\tau` is the shear stress acting on the top of the proppant bed and :math:`f` is the Darcy friction coefficient. :math:`N_{sh, c}` is the critical Shields number for the onset of bed load transport.  
 
@@ -293,7 +299,7 @@ slurry fluid viscosity
 The viscosity of the bulk fluid, :math:`\mu_m`, is calculated as a function of proppant concentration as (Keck et al., 1992),
 
 .. math::
-     \mu_{m} =  \mu_{f}\left [1 + 1.25 \left ( \frac{c}{1-c/c_{max}} \right) \right ]^{2}.
+     \mu_{m} =  \mu_{f}\left [1 + 1.25 \left ( \frac{c}{1-c/c_{s}} \right) \right ]^{2}.
 
 
 Note that continued model development and improvement are underway and additional empirical correlations or functions will be added to support the above calculations.       
