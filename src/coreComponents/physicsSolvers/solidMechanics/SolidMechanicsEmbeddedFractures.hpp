@@ -93,6 +93,8 @@ public:
                        real64 const scalingFactor,
                        DomainPartition * const domain ) override;
 
+  virtual void ResetStateToBeginningOfStep( DomainPartition * const domain ) override final;
+
   virtual real64 SolverStep( real64 const & time_n,
                              real64 const & dt,
                              int const cycleNumber,
@@ -111,6 +113,11 @@ public:
     constexpr static auto solidSolverNameString = "solidSolverName";
 
     constexpr static auto contactRelationNameString = "contactRelationName";
+
+    constexpr static auto dispJumpString = "displacementJump";
+
+    constexpr static auto deltaDispJumpString = "deltaDisplacementJump";
+
   } SolidMechanicsEmbeddedFracturesViewKeys;
 
 protected:
@@ -127,8 +134,11 @@ private:
 
   string m_contactRelationName;
 
+  ParallelMatrix m_matrix11;
   ParallelMatrix m_matrix01;
   ParallelMatrix m_matrix10;
+
+  ParallelVector m_residual1; // Traction balance on the fracture
 
   ParallelMatrix m_permutationMatrix0; // it's used to have the output based on global ordering
   ParallelMatrix m_permutationMatrix1; // it's used to have the output based on global ordering

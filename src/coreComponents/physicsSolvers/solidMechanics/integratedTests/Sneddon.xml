@@ -3,33 +3,35 @@
 	<Solvers>
 		<SolidMechanics_FEM_AES 
 		name="mechSolve" 
-		targetRegions="{Region1, Fracture}"
+		targetRegions="{Region1}"
 		initialDt="10"
 		solidSolverName="matrixSolver"
-		contactRelationName="fractureContact"/>
+		contactRelationName="fractureContact"
+		logLevel="2"
+		>
+		<NonlinearSolverParameters 
+        name="nlsp"
+        newtonTol="1.0e-6"
+        newtonMaxIter="5"
+        maxTimeStepCuts="2"/>
+        <SystemSolverParameters 
+        name="ssp"
+        krylovTol="1.0e-10"
+        logLevel="2"/>
+		</SolidMechanics_FEM_AES>
 		<SolidMechanicsLagrangianSSLE 
 		name="matrixSolver" 
         timeIntegrationOption="QuasiStatic"
         logLevel="1"
         discretization="FE1"
         targetRegions="{Region1}"
-        solidMaterialName="rock"
-        >
-        <NonlinearSolverParameters 
-        name="nlsp"
-        newtonTol="1.0e-6"
-        newtonMaxIter="5"/>
-        <SystemSolverParameters 
-        name="ssp"
-        krylovTol="1.0e-10"
-        logLevel="2"/>
-        </SolidMechanicsLagrangianSSLE>
-		<EmbeddedSurfaceGenerator
+        solidMaterialName="rock"/>
+		<!--EmbeddedSurfaceGenerator
         name="SurfaceGenerator"
         solidMaterialName="rock"
         targetRegions="{Region1, Fracture}"
         fractureRegion="Fracture"
-        logLevel="2"/>
+        logLevel="2"/-->
 	</Solvers>
 
 	<Mesh>
@@ -39,7 +41,7 @@
 		xCoords="{0, 10}"
 		yCoords="{0, 10}" 
 		zCoords="{0, 10}" 
-		nx="{3}" ny="{3}" nz="{1}"
+		nx="{2}" ny="{2}" nz="{1}"
 		cellBlockNames="{cb1}" />
 	</Mesh>
 
@@ -51,28 +53,28 @@
 		<Box name="zneg" xMin="-0.01, -0.01, -0.01" xMax="10.01,  10.01, 0.01" />
 		<Box name="zpos" xMin="-0.01, -0.01,  9.99" xMax="10.01, 10.01, 10.01" />
 		
-		<BoundedPlane 
+		<!--BoundedPlane 
 		name="FracturePlane" 
 		normal="0, 1, 0"
 		origin="0.0, 5, 5" 
 		lengthVector="1, 0, 0" 
 		widthVector="0, 0, 1"
-		dimensions="{10, 10}" />
+		dimensions="{10, 10}" /-->
 	</Geometry>
 
 
 	<Events maxTime="10">
-		<!--SoloEvent 
+		<SoloEvent 
 		name="output0" 
-		target="/Outputs/siloOutput" /-->
+		target="/Outputs/siloOutput" />
+
+		<!--SoloEvent 
+		name="preFracture" 
+		target="/Solvers/SurfaceGenerator" /-->
 
 		<SoloEvent 
-		name="preFracture" 
-		target="/Solvers/SurfaceGenerator" />
-
-		<!--SoloEvent 
 		name="output1" 
-		target="/Outputs/siloOutput" /-->
+		target="/Outputs/siloOutput" />
 
 		<PeriodicEvent 
 		name="solverApplications" 
@@ -105,9 +107,9 @@
 		name="Region1" 
 		cellBlocks="{cb1}"
 		materialList="{rock}" />
-		<EmbeddedSurfaceRegion 
+		<!--EmbeddedSurfaceRegion 
 		name="Fracture"
-		materialList="{rock}"/>
+		materialList="{rock}"/-->
 	</ElementRegions>
 
 	<Constitutive>
@@ -134,12 +136,19 @@
       scale="0.0" 
       setNames="{xneg, xpos}"/>
 
-      <FieldSpecification name="yconstraint"    
+      <FieldSpecification name="yposconstraint"    
       objectPath="nodeManager" 
       fieldName="TotalDisplacement" 
       component="1" 
       scale="0.0" 
       setNames="{ypos}"/>
+      
+      <FieldSpecification name="ynegconstraint"    
+      objectPath="nodeManager" 
+      fieldName="TotalDisplacement" 
+      component="1" 
+      scale="-0.1" 
+      setNames="{yneg}"/>
                
       <FieldSpecification name="zconstraint"    
       objectPath="nodeManager" 
@@ -159,7 +168,7 @@
 	<Outputs>
 		<Silo name="siloOutput" 
 		plotFileRoot="Sneddon"
-		plotLevel="1" />
+		plotLevel="4" />
 		<Restart name="sidreRestart" />
 	</Outputs>
 
