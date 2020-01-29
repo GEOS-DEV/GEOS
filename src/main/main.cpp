@@ -85,7 +85,7 @@ int main( int argc, char *argv[] )
 
   problemManager.ClosePythonInterpreter();
 
-  //basicCleanup();
+  basicCleanup();
 
   return 0;
 }

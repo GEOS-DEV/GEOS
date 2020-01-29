@@ -104,7 +104,7 @@ void CalculateGradients( R2Tensor & Gradient0,
   real64 * const restrict g0 = Gradient0.Data();
   real64 * const restrict g1 = Gradient1.Data();
 
-  for( int a=1 ; a<N ; ++a )
+  for( int a=0 ; a<N ; ++a )
   {
     real64 const * const restrict v0 = var0[a].Data();
     real64 const * const restrict v1 = var1[a].Data();

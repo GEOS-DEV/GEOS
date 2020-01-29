@@ -104,7 +104,7 @@ struct StressCalculationKernel
  */
 struct ExplicitKernel
 {
-#if 0
+#if 1
   /**
    * @brief Launch of the element processing kernel for explicit time integration.
    * @tparam NUM_NODES_PER_ELEM The number of nodes/dof per element.
@@ -130,6 +130,7 @@ struct ExplicitKernel
           arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & elemsToNodes,
           arrayView3d< R1Tensor const> const & dNdX,
           arrayView2d<real64 const> const & detJ,
+          arrayView1d<R1Tensor const> const & GEOSX_UNUSED_ARG( X ),
           arrayView1d<R1Tensor const> const & GEOSX_UNUSED_ARG( u ),
           arrayView1d<R1Tensor const> const & vel,
           arrayView1d<R1Tensor> const & acc,
@@ -166,16 +167,16 @@ struct ExplicitKernel
         real64 p_stress[ 6 ] = { 0 };
         for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
         {
-          real64 const v0_x_dNdXa0 = v_local[ a ][ 0 ] * DNDX[ k ][ q ][ a ][ 0 ];
-          real64 const v1_x_dNdXa1 = v_local[ a ][ 1 ] * DNDX[ k ][ q ][ a ][ 1 ];
-          real64 const v2_x_dNdXa2 = v_local[ a ][ 2 ] * DNDX[ k ][ q ][ a ][ 2 ];
+          real64 const v0_x_dNdXa0 = v_local[ a ][ 0 ] * dNdX[ k ][ q ][ a ][ 0 ];
+          real64 const v1_x_dNdXa1 = v_local[ a ][ 1 ] * dNdX[ k ][ q ][ a ][ 1 ];
+          real64 const v2_x_dNdXa2 = v_local[ a ][ 2 ] * dNdX[ k ][ q ][ a ][ 2 ];
 
           p_stress[ 0 ] += ( v0_x_dNdXa0 * c[ 0 ][ 0 ] + v1_x_dNdXa1 * c[ 0 ][ 1 ] + v2_x_dNdXa2*c[ 0 ][ 2 ] ) * dt;
           p_stress[ 1 ] += ( v0_x_dNdXa0 * c[ 1 ][ 0 ] + v1_x_dNdXa1 * c[ 1 ][ 1 ] + v2_x_dNdXa2*c[ 1 ][ 2 ] ) * dt;
           p_stress[ 2 ] += ( v0_x_dNdXa0 * c[ 2 ][ 0 ] + v1_x_dNdXa1 * c[ 2 ][ 1 ] + v2_x_dNdXa2*c[ 2 ][ 2 ] ) * dt;
-          p_stress[ 3 ] += ( v_local[ a ][ 2 ] * DNDX[ k ][ q ][ a ][ 1 ] + v_local[ a ][ 1 ] * DNDX[ k ][ q ][ a ][ 2 ] ) * c[ 3 ][ 3 ] * dt;
-          p_stress[ 4 ] += ( v_local[ a ][ 2 ] * DNDX[ k ][ q ][ a ][ 0 ] + v_local[ a ][ 0 ] * DNDX[ k ][ q ][ a ][ 2 ] ) * c[ 4 ][ 4 ] * dt;
-          p_stress[ 5 ] += ( v_local[ a ][ 1 ] * DNDX[ k ][ q ][ a ][ 0 ] + v_local[ a ][ 0 ] * DNDX[ k ][ q ][ a ][ 1 ] ) * c[ 5 ][ 5 ] * dt;
+          p_stress[ 3 ] += ( v_local[ a ][ 2 ] * dNdX[ k ][ q ][ a ][ 1 ] + v_local[ a ][ 1 ] * dNdX[ k ][ q ][ a ][ 2 ] ) * c[ 3 ][ 3 ] * dt;
+          p_stress[ 4 ] += ( v_local[ a ][ 2 ] * dNdX[ k ][ q ][ a ][ 0 ] + v_local[ a ][ 0 ] * dNdX[ k ][ q ][ a ][ 2 ] ) * c[ 4 ][ 4 ] * dt;
+          p_stress[ 5 ] += ( v_local[ a ][ 1 ] * dNdX[ k ][ q ][ a ][ 0 ] + v_local[ a ][ 0 ] * dNdX[ k ][ q ][ a ][ 1 ] ) * c[ 5 ][ 5 ] * dt;
         }
 
         real64 * const restrict p_Stress = stress[ k ][ q ].Data();
@@ -213,6 +214,7 @@ struct ExplicitKernel
   }
 #else
 
+//#define UPDATE_STRESS
   template< localIndex NUM_NODES_PER_ELEM, localIndex NUM_QUADRATURE_POINTS, typename CONSTITUTIVE_TYPE >
   static inline real64
   Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
@@ -221,8 +223,13 @@ struct ExplicitKernel
           arrayView3d< R1Tensor const> const & ,//dNdX,
           arrayView2d<real64 const> const & ,//detJ,
           arrayView1d<R1Tensor const> const & X,
+#if defined(UPDATE_STRESS)
+          arrayView1d<R1Tensor const> const & ,//u,
+          arrayView1d<R1Tensor const> const & vel,
+#else
           arrayView1d<R1Tensor const> const & u,
           arrayView1d<R1Tensor const> const & ,//vel,
+#endif
           arrayView1d<R1Tensor> const & acc,
           arrayView2d<R2SymTensor> const & ,
           real64 const dt )
@@ -265,21 +272,20 @@ struct ExplicitKernel
 
 #define ULOCAL
 #ifdef ULOCAL
-  #if 0 && defined(USE_SHMEM) && defined(__CUDACC__)
-      __shared__ real64 uLocal[8][3][NUM_THREAD_PER_BLOCK];
-    #define U(i,b) uLocal[b][i][threadIdx.x]
-  #else
       real64 uLocal[8][3];
       real64 xLocal[8][3];
-    #define U(i,b) uLocal[b][i]
-    #define XLOCAL(i,b) xLocal[b][i]
-  #endif
+#define U(i,b) uLocal[b][i]
+#define XLOCAL(i,b) xLocal[b][i]
       for( localIndex a=0 ; a< NUM_NODES_PER_ELEM ; ++a )
       {
         localIndex const nib = elemsToNodes(k, a);
         for( int i=0 ; i<3 ; ++i )
         {
+#if defined(UPDATE_STRESS)
+          U(i,a) = vel[nib][i];
+#else
           U(i,a) = u[nib][i];
+#endif
           XLOCAL(i,a) = X[nib][i];
         }
       }
@@ -290,7 +296,6 @@ struct ExplicitKernel
       real64 const G = constitutive.m_shearModulus[k];
       real64 const Lame = constitutive.m_bulkModulus[k] - 2.0/3.0 * G;
       real64 const Lame2G = 2*G + Lame;
-
 
       //Compute Quadrature
       for ( localIndex q = 0; q < NUM_QUADRATURE_POINTS; ++q )
@@ -304,8 +309,6 @@ struct ExplicitKernel
                                                             xLocal,
                                                             dNdX_data );
 
-//        constitutive.m_deviatorStress[k][q] = 0;
-//        real64 * const stress = constitutive.m_deviatorStress[k][q].Data();
         real64 stress[6] = {0,0,0,0,0,0};
         for( localIndex b=0 ; b< NUM_NODES_PER_ELEM ; ++b )
         {
@@ -315,28 +318,33 @@ struct ExplicitKernel
           stress[0] = stress[0] + ( DNDX(k,q,b,1)*U(1,b) + DNDX(k,q,b,2)*U(2,b) )*Lame + DNDX(k,q,b,0)*U(0,b)*(Lame2G);
           stress[1] = stress[1] + ( DNDX(k,q,b,0)*U(0,b) + DNDX(k,q,b,2)*U(2,b) )*Lame + DNDX(k,q,b,1)*U(1,b)*(Lame2G);
           stress[2] = stress[2] + ( DNDX(k,q,b,0)*U(0,b) + DNDX(k,q,b,1)*U(1,b) )*Lame + DNDX(k,q,b,2)*U(2,b)*(Lame2G);
-          stress[3] = stress[3] + DNDX(k,q,b,2)*U(1,b) + DNDX(k,q,b,1)*U(2,b);
-          stress[4] = stress[4] + DNDX(k,q,b,2)*U(0,b) + DNDX(k,q,b,0)*U(2,b);
-          stress[5] = stress[5] + DNDX(k,q,b,1)*U(0,b) + DNDX(k,q,b,0)*U(1,b);
+          stress[3] = stress[3] + ( DNDX(k,q,b,2)*U(1,b) + DNDX(k,q,b,1)*U(2,b) ) * G;
+          stress[4] = stress[4] + ( DNDX(k,q,b,2)*U(0,b) + DNDX(k,q,b,0)*U(2,b) ) * G;
+          stress[5] = stress[5] + ( DNDX(k,q,b,1)*U(0,b) + DNDX(k,q,b,0)*U(1,b) ) * G;
         }
-        //#define UPDATE_STRESS
 #if defined(UPDATE_STRESS)
-        constitutive.m_meanStress[k][q] = ( stress[0] + stress[1] + stress[2] ) / 3.0;
-        real64 * GEOSX_RESTRICT const devStress = constitutive.m_deviatorStress[k][q].Data();
-        devStress[0] = stress[0] - constitutive.m_meanStress[k][q];
-        devStress[2] = stress[1] - constitutive.m_meanStress[k][q];
-        devStress[5] = stress[2] - constitutive.m_meanStress[k][q];
-        devStress[4] = stress[3];
-        devStress[3] = stress[4];
-        devStress[1] = stress[5];
+        real64 * GEOSX_RESTRICT const m_stress = constitutive.m_stress[k][q].Data();
+        m_stress[0] += stress[0]*dt;
+        m_stress[2] += stress[1]*dt;
+        m_stress[5] += stress[2]*dt;
+        m_stress[4] += stress[3]*dt;
+        m_stress[3] += stress[4]*dt;
+        m_stress[1] += stress[5]*dt;
+
+        stress[0] = m_stress[0];
+        stress[1] = m_stress[2] ;
+        stress[2] = m_stress[5];
+        stress[3] = m_stress[4];
+        stress[4] = m_stress[3];
+        stress[5] = m_stress[1];
 #endif
 
         stress[0] *= -detJ_k_q;
         stress[1] *= -detJ_k_q;
         stress[2] *= -detJ_k_q;
-        stress[3] *= -G * detJ_k_q;
-        stress[4] *= -G * detJ_k_q;
-        stress[5] *= -G * detJ_k_q;
+        stress[3] *= -detJ_k_q;
+        stress[4] *= -detJ_k_q;
+        stress[5] *= -detJ_k_q;
 
         for( localIndex a=0 ; a< NUM_NODES_PER_ELEM ; ++a )
         {

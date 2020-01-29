@@ -1325,7 +1325,7 @@
 		<!--nextWellElementIndexGlobal => (no description available)-->
 		<xsd:attribute name="nextWellElementIndexGlobal" type="localIndex_array" />
 		<!--nodeList => (no description available)-->
-		<xsd:attribute name="nodeList" type="geosx::InterObjectRelation&lt;LvArray::Array&lt;long, 2, camp::int_seq&lt;long, 0l, 1l&gt;, long, LvArray::NewChaiBuffer&gt; &gt;" />
+		<xsd:attribute name="nodeList" type="geosx::InterObjectRelation&lt;LvArray::Array&lt;long, 2, camp::int_seq&lt;long, 1l, 0l&gt;, long, LvArray::NewChaiBuffer&gt; &gt;" />
 		<!--topRank => (no description available)-->
 		<xsd:attribute name="topRank" type="integer" />
 		<!--topWellElementIndex => (no description available)-->

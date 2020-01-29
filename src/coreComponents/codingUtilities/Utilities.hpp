@@ -60,10 +60,10 @@ void CopyGlobalToLocal( arraySlice1d< localIndex const, UNIT_STRIDE_DIM > const 
 template< localIndex N, typename T, int UNIT_STRIDE_DIM >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void CopyGlobalToLocal( arraySlice1d< localIndex, UNIT_STRIDE_DIM > const & globalToLocalRelation,
-                        arraySlice1d< T > const & globalField1,
-                        arraySlice1d< T > const & globalField2,
-                        arraySlice1d< T > const & globalField3,
+void CopyGlobalToLocal( arraySlice1d< localIndex const, UNIT_STRIDE_DIM > const & globalToLocalRelation,
+                        arraySlice1d< T const> const & globalField1,
+                        arraySlice1d< T const> const & globalField2,
+                        arraySlice1d< T const> const & globalField3,
                         T * const restrict localField1,
                         T * const restrict localField2,
                         T * const restrict localField3 )

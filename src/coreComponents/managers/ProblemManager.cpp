@@ -745,7 +745,7 @@ void ProblemManager::GenerateMesh()
       MeshLevel * const meshLevel = meshBody->GetGroup<MeshLevel>(b);
 
       NodeManager * const nodeManager = meshLevel->getNodeManager();
-//      EdgeManager * edgeManager = meshLevel->getEdgeManager();
+      EdgeManager * edgeManager = meshLevel->getEdgeManager();
       FaceManager * const faceManager = meshLevel->getFaceManager();
       ElementRegionManager * const elemManager = meshLevel->getElemManager();
 
@@ -756,13 +756,13 @@ void ProblemManager::GenerateMesh()
       nodeManager->ConstructGlobalToLocalMap();
 
       elemManager->GenerateMesh( cellBlockManager );
-//      nodeManager->SetElementMaps( meshLevel->getElemManager() );
-//
-//      faceManager->BuildFaces( nodeManager, elemManager );
-//      nodeManager->SetFaceMaps( meshLevel->getFaceManager() );
-//
-//      edgeManager->BuildEdges( faceManager, nodeManager );
-//      nodeManager->SetEdgeMaps( meshLevel->getEdgeManager() );
+      nodeManager->SetElementMaps( meshLevel->getElemManager() );
+
+      faceManager->BuildFaces( nodeManager, elemManager );
+      nodeManager->SetFaceMaps( meshLevel->getFaceManager() );
+
+      edgeManager->BuildEdges( faceManager, nodeManager );
+      nodeManager->SetEdgeMaps( meshLevel->getEdgeManager() );
 
       domain->GenerateSets();
 

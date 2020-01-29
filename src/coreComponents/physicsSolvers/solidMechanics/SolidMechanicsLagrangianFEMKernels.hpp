@@ -192,6 +192,8 @@ ElementKernelLaunchSelector( localIndex NUM_NODES_PER_ELEM,
 struct ExplicitKernel
 {
 
+
+#define CALC_DNDX 0
   /**
    * @brief Launch of the element processing kernel for explicit time integration.
    * @tparam NUM_NODES_PER_ELEM The number of nodes/dof per element.
@@ -215,9 +217,14 @@ struct ExplicitKernel
   Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
           LvArray::SortedArrayView<localIndex const, localIndex> const & elementList,
           arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & elemsToNodes,
-          arrayView3d< R1Tensor const> const & ,//dNdX,
-          arrayView2d<real64 const> const & ,//detJ,
-          arrayView1d<R1Tensor const> const & ,//X,
+#if CALC_DNDX==0
+          arrayView3d< R1Tensor const> const & dNdX,
+          arrayView2d<real64 const> const & detJ,
+#else
+          arrayView3d< R1Tensor const> const & ,
+          arrayView2d<real64 const> const & ,
+#endif
+          arrayView1d<R1Tensor const> const & X,
           arrayView1d<R1Tensor const> const & u,
           arrayView1d<R1Tensor const> const & vel,
           arrayView1d<R1Tensor> const & acc,
@@ -227,8 +234,8 @@ struct ExplicitKernel
 
 #if defined(__CUDACC__)
     using ELEM_KERNEL_POLICY = RAJA::cuda_exec< 256 >;
-#elif defined(GEOSX_USE_OPENMP)
-    using ELEM_KERNEL_POLICY = RAJA::omp_parallel_for_exec;
+//#elif defined(GEOSX_USE_OPENMP)
+//    using ELEM_KERNEL_POLICY = RAJA::omp_parallel_for_exec;
 #else
     using ELEM_KERNEL_POLICY = RAJA::loop_exec;
 #endif
@@ -248,23 +255,42 @@ struct ExplicitKernel
                                                       u, vel,
                                                       u_local, v_local );
 
+      for( localIndex a=0 ; a< NUM_NODES_PER_ELEM ; ++a )
+      {
+        localIndex const nib = elemsToNodes(k, a);
+        for( int i=0 ; i<3 ; ++i )
+        {
+          X_local[a][i] = X[nib][i];
+        }
+      }
+
+
       //Compute Quadrature
       for( localIndex q = 0 ; q<NUM_QUADRATURE_POINTS ; ++q)
       {
+
+#if CALC_DNDX
         real64 dNdX_data[8][3];
 #define DNDXKQ(k,q) dNdX_data
 
 
-        real64 const detJ_k_q = 0;
+        real64 const detJ_k_q =
         FiniteElementShapeKernel::shapeFunctionDerivatives( k,
                                                             q,
                                                             X_local,
                                                             dNdX_data );
-
 #define DETJ(k,q) detJ_k_q
+
+#else
+
+#define DNDXKQ(k,q) dNdX[k][q]
+#define DETJ(k,q) detJ(k,q)
+
+#endif
 
         R2Tensor dUhatdX, dUdX;
         CalculateGradients<NUM_NODES_PER_ELEM>( dUhatdX, dUdX, v_local, u_local, DNDXKQ(k,q));
+
         dUhatdX *= dt;
 
         R2Tensor F,Ldt, fInv;
