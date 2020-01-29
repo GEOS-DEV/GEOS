@@ -35,7 +35,7 @@ public:
   constexpr static bool isOdd( T const a )
   {
     return a % 2;
-  };
+  }
 
   template< typename T >
   GEOSX_HOST_DEVICE
@@ -43,7 +43,7 @@ public:
   constexpr static bool isEven( T const a )
   {
     return !(a % 2);
-  };
+  }
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
