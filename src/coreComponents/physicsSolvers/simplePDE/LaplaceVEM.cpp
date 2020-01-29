@@ -185,8 +185,6 @@ namespace geosx
   {
     MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
     NodeManager const * const nodeManager = mesh->getNodeManager();
-    // EdgeManager const * const edgeManager = mesh->getEdgeManager();
-    FaceManager const * const faceManager = mesh->getFaceManager();
     ElementRegionManager * const elemManager = mesh->getElemManager();
     NumericalMethodsManager const *
       numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
@@ -194,8 +192,8 @@ namespace geosx
       feDiscretizationManager = numericalMethodManager->
       GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
 
-    array1d<globalIndex> const &
-      dofIndex = nodeManager->getReference< array1d<globalIndex> >( dofManager.getKey( m_fieldName ) );
+    array1d<globalIndex> const & dofIndex =
+      nodeManager->getReference< array1d<globalIndex> >( dofManager.getKey( m_fieldName ) );
 
     // Initialize all entries to zero
     matrix.zero();
@@ -204,11 +202,24 @@ namespace geosx
     matrix.open();
     rhs.open();
 
-    // arrayView1d<R1Tensor const> const & X = nodeManager->referencePosition();
-    // arrayView1d<real64 const> const & faceArea = faceManager->faceArea();
-    // arrayView1d<R1Tensor const> const & faceCenter = faceManager->faceCenter();
-    // arrayView1d<R1Tensor const> const & faceNormal = faceManager->faceNormal();
-    // arrayView1d<R1Tensor const> const & edgeCenter = edgeManager->edgeCenter();
+    // get node properties
+    arrayView1d<R1Tensor const> const & nodeCoords = nodeManager->referencePosition();
+    GEOSX_UNUSED_VAR(nodeCoords);
+
+    // get face properties
+    FaceManager const * const faceManager = mesh->getFaceManager();
+    arrayView1d<real64 const> const & faceArea = faceManager->faceArea();
+    GEOSX_UNUSED_VAR(faceArea);
+    arrayView1d<R1Tensor const> const & faceCenter = faceManager->faceCenter();
+    GEOSX_UNUSED_VAR(faceCenter);
+    arrayView1d<R1Tensor const> const & faceNormal = faceManager->faceNormal();
+    GEOSX_UNUSED_VAR(faceNormal);
+
+    // get edge properties
+    EdgeManager const * const edgeManager = mesh->getEdgeManager();
+    R1Tensor edgeCenter;
+    edgeManager->calculateCenter(0, nodeCoords, edgeCenter);
+    GEOSX_UNUSED_VAR(edgeCenter);
 
     // begin region loop
     for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
@@ -237,36 +248,9 @@ namespace geosx
         integer_array const & elemGhostRank = elementSubRegion->m_ghostRank;
         localIndex const n_q_points = feDiscretization->m_finiteElement->n_quadrature_points();
 
-        arrayView2d<localIndex> elemsToFaces = elementSubRegion->faceList();
-
-        localIndex const numFacesPerElem = elemsToFaces.size(1);
-
-        ArrayOfArraysView< localIndex const > const & facesToNodes = faceManager->nodeList();
-
         // begin element loop, skipping ghost elements
         for( localIndex k=0 ; k<elementSubRegion->size() ; ++k )
         {
-          for( localIndex kf=0 ; kf<numFacesPerElem ; kf++ )
-          {
-            localIndex const faceIndex = elemsToFaces(k,kf);
-            // double area = faceArea(faceIndex);
-            // R1Tensor center = faceCenter(faceIndex);
-            // R1Tensor normal = faceNormal(faceIndex);
-
-            localIndex const numNodesPerFace = facesToNodes.sizeOfArray(faceIndex);
-            for( localIndex a=0 ; a<numNodesPerFace ; ++a )
-            {
-              // localIndex nodeIndex = facesToNodes(faceIndex,a);
-
-              // R1Tensor nodeCoords = X[nodeIndex];
-
-            }
-
-          }
-
-
-
-
           if(elemGhostRank[k] < 0)
           {
             element_rhs = 0.0;
