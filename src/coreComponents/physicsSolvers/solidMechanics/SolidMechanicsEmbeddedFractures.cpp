@@ -47,7 +47,7 @@ SolidMechanicsEmbeddedFractures::SolidMechanicsEmbeddedFractures( const std::str
 {
   registerWrapper(viewKeyStruct::solidSolverNameString, &m_solidSolverName, 0)->
       setInputFlag(InputFlags::REQUIRED)->
-      setDescription("Name of the solid mechanics solver to use in the poroelastic solver");
+      setDescription("Name of the solid mechanics solver in the rock matrix");
 
   registerWrapper(viewKeyStruct::contactRelationNameString, &m_contactRelationName, 0)->
       setInputFlag(InputFlags::REQUIRED)->
@@ -60,9 +60,26 @@ SolidMechanicsEmbeddedFractures::~SolidMechanicsEmbeddedFractures()
   // TODO Auto-generated destructor stub
 }
 
-void SolidMechanicsEmbeddedFractures::RegisterDataOnMesh( dataRepository::Group * const GEOSX_UNUSED_ARG( MeshBodies ) )
+void SolidMechanicsEmbeddedFractures::RegisterDataOnMesh( dataRepository::Group * const  MeshBodies )
 {
+  for( auto & mesh : MeshBodies->GetSubGroups() )
+  {
 
+    elemManager->forElementRegions<EmbeddedSurfaceRegion>( [&] ( EmbeddedSurfaceRegion * const region )
+       {
+         region->forElementSubRegions<EmbeddedSurfaceSubRegion>( [&]( EmbeddedSurfaceSubRegion * const subRegion )
+         {
+           subRegion->registerWrapper< array1d<R1Tensor> >( viewKeyStruct::dispJumpString )->setPlotLevel(PlotLevel::LEVEL_0)->
+               setDefaultValue( region->getDefaultAperture() );
+           subRegion->registerWrapper< array1d<R1Tensor> >( viewKeyStruct::deltaDispJumpString );
+         });
+       });
+  }
+}
+
+void SolidMechanicsEmbeddedFractures::ResetStateToBeginningOfStep( DomainPartition * const domain )
+{
+  m_solidSolver->ResetStateToBeginningOfStep(domain);
 }
 
 void SolidMechanicsEmbeddedFractures::ImplicitStepSetup( real64 const & time_n,
@@ -144,9 +161,23 @@ void SolidMechanicsEmbeddedFractures::SetupDofs( DomainPartition const * const d
   GEOSX_MARK_FUNCTION;
   m_solidSolver->SetupDofs( domain, dofManager );
 
-  dofManager.addCoupling( keys::TotalDisplacement,
-                          FlowSolverBase::viewKeyStruct::pressureString,
-                          DofManager::Connectivity::Elem );
+  MeshLevel const * const meshLevel = domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  ElementRegionManager const * const elemManager = meshLevel->getElemManager();
+
+  array1d<string> regions;
+  elemManager->forElementRegions<EmbeddeSurfaceRegion>( [&]( EmbeddeSurfaceRegion const * const region ) {
+    regions.push_back( region->getName() );
+  } );
+
+  dofManager.addField( keys::DispJump,
+                       DofManager::Location::Elem,
+                       3,
+                       regions );
+
+  dofManager.addCoupling( viewKeyStruct::dispJumpString,
+                          viewKeyStruct::dispJumpString,
+                          DofManager::Connectivity::Elem,
+                          regions );
 }
 
 void SolidMechanicsEmbeddedFractures::SetupSystem( DomainPartition * const domain,
@@ -164,14 +195,31 @@ void SolidMechanicsEmbeddedFractures::SetupSystem( DomainPartition * const domai
                               m_solidSolver->getSystemSolution() );
 
 
+  // setup coupled DofManager
+  m_dofManager.setMesh( domain, 0, 0 );
+  SetupDofs( domain, dofManager );
 
-  // TODO: once we move to a monolithic matrix, we can just use SolverBase implementation
+  // By not calling dofManager.reorderByRank(), we keep separate dof numbering for each field,
+  // which allows constructing separate sparsity patterns for off-diagonal blocks of the matrix.
+  // Once the solver moves to monolithic matrix, we can remove this method and just use SolverBase::SetupSystem.
 
-  //  dofManager.setSparsityPattern( m_matrix10,
-  //                                 FlowSolverBase::viewKeyStruct::pressureString,
-  //                                 keys::TotalDisplacement );
+  m_matrix11.createWithLocalSize( m_dofManager.numLocalDofs(viewKeyStruct::dispJumpString),
+                                  m_dofManager.numLocalDofs(viewKeyStruct::dispJumpString),
+                                  1,
+                                  MPI_COMM_GEOSX);
 
+  m_matrix01.createWithLocalSize( m_solidSolver->getSystemMatrix().localRows(),
+                                  m_dofManager.numLocalDofs(viewKeyStruct::dispJumpString),
+                                  9,
+                                  MPI_COMM_GEOSX);
 
+  m_matrix10.createWithLocalSize( m_dofManager.numLocalDofs(viewKeyStruct::dispJumpString),
+                                  m_solidSolver->getSystemMatrix().localRows(),
+                                  24,
+                                  MPI_COMM_GEOSX);
+
+  //dofManager.setSparsityPattern( m_matrix01, keys::TotalDisplacement, keys::DispJump ); I am guessing that this won't work coz coupling has not been created.
+  //dofManager.setSparsityPattern( m_matrix10, keys::DispJump, keys::TotalDisplacement );
 }
 
 void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
@@ -183,11 +231,11 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
 {
   GEOSX_MARK_FUNCTION;
   m_solidSolver->AssembleSystem( time,
-                                 dt,
-                                 domain,
-                                 m_solidSolver->getDofManager(),
-                                 m_solidSolver->getSystemMatrix(),
-                                 m_solidSolver->getSystemRhs() );
+                                      dt,
+                                      domain,
+                                      m_solidSolver->getDofManager(),
+                                      m_solidSolver->getSystemMatrix(),
+                                      m_solidSolver->getSystemRhs() );
 
 }
 
@@ -200,11 +248,38 @@ void SolidMechanicsEmbeddedFractures::ApplyBoundaryConditions( real64 const time
 {
   GEOSX_MARK_FUNCTION;
   m_solidSolver->ApplyBoundaryConditions( time,
-                                          dt,
-                                          domain,
-                                          m_solidSolver->getDofManager(),
-                                          m_solidSolver->getSystemMatrix(),
-                                          m_solidSolver->getSystemRhs() );
+                                               dt,
+                                               domain,
+                                               m_solidSolver->getDofManager(),
+                                               m_solidSolver->getSystemMatrix(),
+                                               m_solidSolver->getSystemRhs() );
+
+
+  if( getLogLevel() == 2 )
+    {
+      // Before outputting anything generate permuation matrix and permute.
+      MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+      NodeManager * const nodeManager = mesh->getNodeManager();
+
+      LAIHelperFunctions::CreatePermutationMatrix(nodeManager,
+                                                  m_solidSolver->getSystemMatrix().localRows(),
+                                                  m_solidSolver->getSystemMatrix().localCols(),
+                                                  3,
+                                                  m_solidSolver->getDofManager().getKey( keys::TotalDisplacement ),
+                                                  m_permutationMatrix0);
+
+      GEOSX_LOG_RANK_0("***********************************************************");
+      GEOSX_LOG_RANK_0("matrix00");
+      GEOSX_LOG_RANK_0("***********************************************************");
+      LAIHelperFunctions::PrintPermutedMatrix(m_solidSolver->getSystemMatrix(), m_permutationMatrix0, std::cout);
+      MpiWrapper::Barrier();
+
+      GEOSX_LOG_RANK_0("***********************************************************");
+      GEOSX_LOG_RANK_0("residual0");
+      GEOSX_LOG_RANK_0("***********************************************************");
+      LAIHelperFunctions::PrintPermutedVector(m_solidSolver->getSystemRhs(), m_permutationMatrix0, std::cout);
+      MpiWrapper::Barrier();
+    }
 }
 
 real64
@@ -215,13 +290,13 @@ CalculateResidualNorm( DomainPartition const * const domain,
 {
   GEOSX_MARK_FUNCTION;
 
-  real64 const solidResidual = m_solidSolver->CalculateResidualNorm( domain,
+  real64 const solidResidualNorm = m_solidSolver->CalculateResidualNorm( domain,
                                                                      m_solidSolver->getDofManager(),
                                                                      m_solidSolver->getSystemRhs() );
 
-  GEOSX_LOG_RANK_0("residual for solid:, "<<solidResidual);
+  GEOSX_LOG_RANK_0("residual = "<< solidResidualNorm);
 
-  return solidResidual;
+  return solidResidualNorm;
 }
 
 

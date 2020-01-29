@@ -39,7 +39,7 @@ void CreatePermutationMatrix(NodeManager* const nodeManager,
    */
 
   // Create permuation matrix based on size provided.
-  permutationMatrix.createWithGlobalSize(nRows, nCols, 1, MPI_COMM_GEOSX);
+  permutationMatrix.createWithLocalSize(nRows, nCols, 1, MPI_COMM_GEOSX);
 
   arrayView1d<globalIndex> const &  DofNumber =  nodeManager->getReference<globalIndex_array>( DofKey );
 
@@ -75,7 +75,7 @@ void CreatePermutationMatrix(ElementRegionManager* const elemManager,
    */
 
   // Create permuation matrix based on size provided.
-  permutationMatrix.createWithGlobalSize(nRows, nCols, 1, MPI_COMM_GEOSX);
+  permutationMatrix.createWithLocalSize(nRows, nCols, 1, MPI_COMM_GEOSX);
 
   elemManager->forElementSubRegions([&]( ElementSubRegionBase const * const elementSubRegion )
   {
