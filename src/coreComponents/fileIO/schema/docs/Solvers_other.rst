@@ -8,7 +8,8 @@ CompositionalMultiphaseWell  node :ref:`DATASTRUCTURE_CompositionalMultiphaseWel
 LaplaceFEM                   node :ref:`DATASTRUCTURE_LaplaceFEM`                   
 Poroelastic                  node :ref:`DATASTRUCTURE_Poroelastic`                  
 Reservoir                    node :ref:`DATASTRUCTURE_Reservoir`                    
-SinglePhaseFlow              node :ref:`DATASTRUCTURE_SinglePhaseFlow`              
+SinglePhaseFVM               node :ref:`DATASTRUCTURE_SinglePhaseFVM`               
+SinglePhaseHybridFVM         node :ref:`DATASTRUCTURE_SinglePhaseHybridFVM`         
 SinglePhaseWell              node :ref:`DATASTRUCTURE_SinglePhaseWell`              
 SolidMechanicsLagrangianSSLE node :ref:`DATASTRUCTURE_SolidMechanicsLagrangianSSLE` 
 SolidMechanics_LagrangianFEM node :ref:`DATASTRUCTURE_SolidMechanics_LagrangianFEM` 

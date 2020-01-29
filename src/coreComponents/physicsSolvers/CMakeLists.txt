@@ -14,8 +14,10 @@ set( physicsSolvers_headers
      fluidFlow/CompositionalMultiphaseFlowKernels.hpp
      fluidFlow/CompositionalMultiphaseWell.hpp
      fluidFlow/FlowSolverBase.hpp
-     fluidFlow/SinglePhaseFlow.hpp
-     fluidFlow/SinglePhaseFlowKernels.hpp
+     fluidFlow/SinglePhaseBase.hpp
+     fluidFlow/SinglePhaseHybridFVM.hpp
+     fluidFlow/SinglePhaseFVM.hpp
+     fluidFlow/SinglePhaseKernels.hpp
      fluidFlow/SinglePhaseWell.hpp
      fluidFlow/WellSolverBase.hpp
      multiphysics/PoroelasticSolver.hpp
@@ -41,8 +43,10 @@ set( physicsSolvers_sources
      fluidFlow/CompositionalMultiphaseFlowKernels.cpp
      fluidFlow/CompositionalMultiphaseWell.cpp
      fluidFlow/FlowSolverBase.cpp
-     fluidFlow/SinglePhaseFlow.cpp
-     fluidFlow/SinglePhaseFlowKernels.cpp
+     fluidFlow/SinglePhaseBase.cpp
+     fluidFlow/SinglePhaseHybridFVM.cpp
+     fluidFlow/SinglePhaseFVM.cpp     
+     fluidFlow/SinglePhaseKernels.cpp
      fluidFlow/SinglePhaseWell.cpp
      fluidFlow/WellSolverBase.cpp
      multiphysics/PoroelasticSolver.cpp

@@ -218,6 +218,8 @@
 		<xsd:attribute name="beginTime" type="real64" default="0" />
 		<!--endTime => End time of this event.-->
 		<xsd:attribute name="endTime" type="real64" default="1e+100" />
+		<!--finalDtStretch => Allow the final dt request for this event to grow by this percentage to match the endTime exactly.-->
+		<xsd:attribute name="finalDtStretch" type="real64" default="0.001" />
 		<!--forceDt => While active, this event will request this timestep value (ignoring any children/targets requests).-->
 		<xsd:attribute name="forceDt" type="real64" default="-1" />
 		<!--logLevel => Log level-->
@@ -245,6 +247,8 @@
 		<xsd:attribute name="cycleFrequency" type="integer" default="1" />
 		<!--endTime => End time of this event.-->
 		<xsd:attribute name="endTime" type="real64" default="1e+100" />
+		<!--finalDtStretch => Allow the final dt request for this event to grow by this percentage to match the endTime exactly.-->
+		<xsd:attribute name="finalDtStretch" type="real64" default="0.001" />
 		<!--forceDt => While active, this event will request this timestep value (ignoring any children/targets requests).-->
 		<xsd:attribute name="forceDt" type="real64" default="-1" />
 		<!--function => Name of an optional function to evaluate when the time/cycle criteria are met.If the result is greater than the specified eventThreshold, the function will continue to execute.-->
@@ -282,6 +286,8 @@
 		<xsd:attribute name="beginTime" type="real64" default="0" />
 		<!--endTime => End time of this event.-->
 		<xsd:attribute name="endTime" type="real64" default="1e+100" />
+		<!--finalDtStretch => Allow the final dt request for this event to grow by this percentage to match the endTime exactly.-->
+		<xsd:attribute name="finalDtStretch" type="real64" default="0.001" />
 		<!--forceDt => While active, this event will request this timestep value (ignoring any children/targets requests).-->
 		<xsd:attribute name="forceDt" type="real64" default="-1" />
 		<!--logLevel => Log level-->
@@ -765,14 +771,15 @@
 			<xsd:element name="LaplaceFEM" type="LaplaceFEMType" />
 			<xsd:element name="Poroelastic" type="PoroelasticType" />
 			<xsd:element name="Reservoir" type="ReservoirType" />
-			<xsd:element name="SinglePhaseFlow" type="SinglePhaseFlowType" />
+			<xsd:element name="SinglePhaseFVM" type="SinglePhaseFVMType" />
+			<xsd:element name="SinglePhaseHybridFVM" type="SinglePhaseHybridFVMType" />
 			<xsd:element name="SinglePhaseWell" type="SinglePhaseWellType" />
 			<xsd:element name="SolidMechanicsLagrangianSSLE" type="SolidMechanicsLagrangianSSLEType" />
 			<xsd:element name="SolidMechanics_LagrangianFEM" type="SolidMechanics_LagrangianFEMType" />
 			<xsd:element name="SurfaceGenerator" type="SurfaceGeneratorType" />
 		</xsd:choice>
-		<!--gravityVector => (no description available)-->
-		<xsd:attribute name="gravityVector" type="R1Tensor" default="0 0 0" />
+		<!--gravityVector => Gravity vector used in the physics solvers-->
+		<xsd:attribute name="gravityVector" type="R1Tensor" default="0 0 -9.81" />
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseFlowType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -786,8 +793,6 @@
 		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--fluidName => Name of fluid constitutive object to use for this solver.-->
 		<xsd:attribute name="fluidName" type="string" use="required" />
-		<!--gravityFlag => Flag that enables/disables gravity-->
-		<xsd:attribute name="gravityFlag" type="integer" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--inputFluxEstimate => Initial estimate of the input flux used only for residual scaling. This should be essentially equivalent to the input flux * dt.-->
@@ -815,8 +820,6 @@
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="string" default="none" />
-		<!--gravityFlag => Flag that enables/disables gravity-->
-		<xsd:attribute name="gravityFlag" type="integer" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Log level-->
@@ -899,7 +902,7 @@
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:complexType name="SinglePhaseFlowType">
+	<xsd:complexType name="SinglePhaseFVMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
@@ -909,8 +912,29 @@
 		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--fluidName => Name of fluid constitutive object to use for this solver.-->
 		<xsd:attribute name="fluidName" type="string" use="required" />
-		<!--gravityFlag => Flag that enables/disables gravity-->
-		<xsd:attribute name="gravityFlag" type="integer" use="required" />
+		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
+		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--inputFluxEstimate => Initial estimate of the input flux used only for residual scaling. This should be essentially equivalent to the input flux * dt.-->
+		<xsd:attribute name="inputFluxEstimate" type="real64" default="1" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--solidName => Name of solid constitutive object to use for this solver-->
+		<xsd:attribute name="solidName" type="string" use="required" />
+		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
+		<xsd:attribute name="targetRegions" type="string_array" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="SinglePhaseHybridFVMType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
+		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
+		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--discretization => Name of discretization object to use for this solver.-->
+		<xsd:attribute name="discretization" type="string" use="required" />
+		<!--fluidName => Name of fluid constitutive object to use for this solver.-->
+		<xsd:attribute name="fluidName" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--inputFluxEstimate => Initial estimate of the input flux used only for residual scaling. This should be essentially equivalent to the input flux * dt.-->
@@ -932,8 +956,6 @@
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="string" default="none" />
-		<!--gravityFlag => Flag that enables/disables gravity-->
-		<xsd:attribute name="gravityFlag" type="integer" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Log level-->
