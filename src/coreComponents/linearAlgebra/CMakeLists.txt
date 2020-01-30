@@ -11,7 +11,6 @@ set( linearAlgebra_headers
      solvers/CGsolver.hpp
      solvers/BiCGSTABsolver.hpp
      solvers/PreconditionerBase.hpp
-     solvers/MultiphaseFlowPreconditioner.hpp
      interfaces/LinearOperator.hpp
      utilities/BlockVectorView.hpp
      utilities/BlockVectorWrapper.hpp
@@ -30,7 +29,6 @@ set( linearAlgebra_sources
      solvers/KrylovSolver.cpp
      solvers/CGsolver.cpp
      solvers/BiCGSTABsolver.cpp
-     solvers/MultiphaseFlowPreconditioner.cpp
      utilities/BlockVectorView.cpp
      utilities/BlockVectorWrapper.cpp
      utilities/BlockVector.cpp
