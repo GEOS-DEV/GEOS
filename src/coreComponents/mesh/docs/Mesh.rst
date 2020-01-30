@@ -17,8 +17,16 @@ with unstructured mesh data and a variety of element types.
 Internal Mesh Generation
 ************************
 
+Basic Example
+=================
+
 The Internal Mesh Generator allows one to quickly build simple cartesian grids and divide
-them into several regions.  The following is an example XML ``<mesh>`` block:
+them into several regions.  The following attributes are supported in the input block for InternalMesh:
+
+.. include:: /coreComponents/fileIO/schema/docs/InternalMesh.rst
+
+
+The following is an example XML ``<mesh>`` block, which will generate a vertical beam with two ``CellBlocks`` (one in red and one in blue in the following picture).
 
 .. code-block:: xml
 
@@ -34,21 +42,57 @@ them into several regions.  The following is an example XML ``<mesh>`` block:
                   cellBlockNames="cb1 cb2"/>
   </Mesh>
 
-- ``name`` the name of the mesh body
-- ``elementTypes`` the type of the elements that will be generated.
-- ``xCoord`` List of ``x`` coordinates of the boundaries of the ``CellBlocks``
-- ``yCoord`` List of ``y`` coordinates of the boundaries of the ``CellBlocks``
-- ``zCoord`` List of ``z`` coordinates of the boundaries of the ``CellBlocks``
-- ``nx`` List containing the number of cells in ``x`` direction within the ``CellBlocks``
-- ``ny`` List containing the number of cells in ``x`` direction within the ``CellBlocks``
-- ``nz`` List containing the number of cells in ``x`` direction within the ``CellBlocks``
-- ``cellBlockNames`` List containing the names of the ``CellBlocks``
-
-The previous sample of XML file will generate a vertical beam with two ``CellBlocks``
-(one in red and one in blue in the following picture).
-
 .. image:: ../../../coreComponents/mesh/docs/beam.png
 
+
+Mesh Bias
+===========
+
+The internal mesh generator is capable of producing meshes with element sizes that vary smoothly over space.
+This is achieved by specifying ``xBias``, ``yBias``, and/or ``zBias`` fields.
+(Note: if present, the length of these must match ``nx``, ``ny``, and ``nz``, respectively, and each individual value must be in the range (-1, 1).)
+
+For a given element block, the average element size will be
+
+.. math::
+   dx_{average}[i] = \frac{xCoords[i+1]-xCoords[i]}{nx[i]},
+
+the element on the left-most side of the block will have size
+
+.. math::
+   dx_{left}[i] = (1 + xBias[i]) \cdot dx_{average}[i],
+
+and the element on the right-most side will have size
+
+.. math::
+   dx_{right}[i] = (1 - xBias[i]) \cdot dx_{average}[i].
+
+
+The following are the two most common scenarios that occur while designing a mesh with bias:
+
+1. The size of the block and the element size on an adjacent region are known.  Assuming that we are to the left of the target block, the appropriate bias would be:
+
+.. math::
+   xBias[i] = 1 - \frac{nx[i] \cdot dx_{left}[i+1]}{xCoords[i+1]-xCoords[i]}
+
+2. The bias of the block and the element size on an adjacent region are known.  Again, assuming that we are to the left of the target block, the appropriate size for the block would be:
+
+.. math::
+   xCoords[i+1]-xCoords[i] = \frac{nx[i] \cdot dx_{left}[i+1]}{1 - xBias[i]}
+
+
+The following is an example of a mesh block along each dimension, and an image showing the corresponding mesh.  Note that there is a core region of elements with zero bias, and that the transitions between element blocks are smooth.
+
+.. literalinclude:: ../../physicsSolvers/solidMechanics/integratedTests/sedov_with_bias.xml
+  :language: xml
+  :start-after: <!-- SPHINX_MESH_BIAS -->
+  :end-before: <!-- SPHINX_MESH_BIAS_END -->
+
+.. image:: ../../../coreComponents/mesh/docs/mesh_with_bias.png
+
+
+Advanced Cell Block Specification
+==================================
 It's possible to generate more complex ``CellBlock`` using the ``InternalMeshGenerator``.
 For instance, the staircase example is a model which is often used in GEOSX as an integrated
 test. It defines ``CellBlocks`` in the three directions to generate a staircase-like model
@@ -133,7 +177,7 @@ The mesh block has the following syntax.
                          file="/path/to/the/mesh/file.msh"/>
   </Mesh>
 
-We strongly recommand to use absolute path to the mesh file.
+The path mentionned has to be either relative to the XML file, or absolute.
 
 GEOSX uses ``ElementRegions`` to support different physics, or to define different constitutive properties.
 An ``ElementRegion`` is defined as a set of ``CellBlocks``.

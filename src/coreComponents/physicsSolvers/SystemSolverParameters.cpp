@@ -37,11 +37,7 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
   m_useBicgstab(),
   m_useDirectSolver(),
   m_KrylovResidualInit(),
-  m_KrylovResidualFinal(),
-  m_useNewtonSolve(),
-  m_newtonTol(),
-  m_maxIterNewton(),
-  m_numNewtonIterations()
+  m_KrylovResidualFinal()
 {
   setInputFlags(InputFlags::OPTIONAL);
   
@@ -102,56 +98,6 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("");
 
-  registerWrapper(viewKeysStruct::useNewtonSolveString, &m_useNewtonSolve, false )->
-    setApplyDefaultValue(0)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("");
-
-  registerWrapper(viewKeysStruct::newtonTolString, &m_newtonTol, false )->
-    setApplyDefaultValue(1.0e-6)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("");
-
-  registerWrapper(viewKeysStruct::maxIterNewtonString, &m_maxIterNewton, false )->
-    setApplyDefaultValue(5)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Maximum number of Newton iterations");
-
-  registerWrapper(viewKeysStruct::minIterNewtonString, &m_minIterNewton, false )->
-      setApplyDefaultValue(1)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("Minimum number of Newton iterations.");
-
-  registerWrapper( viewKeysStruct::maxTimeStepCutsString, &m_maxTimeStepCuts, false )->
-    setApplyDefaultValue(2)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Max number of time step cuts");
-
-  registerWrapper( viewKeysStruct::timeStepCutFactorString, &m_timeStepCutFactor, false )->
-    setApplyDefaultValue(0.5)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Time step cut factor");
-
-  registerWrapper( viewKeysStruct::maxLineSearchCutsString, &m_maxLineSearchCuts, false )->
-    setApplyDefaultValue(4)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Max number of line search cuts");
-
-  registerWrapper( viewKeysStruct::lineSearchCutFactorString, &m_lineSearchCutFactor, false )->
-    setApplyDefaultValue(0.5)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Line search cut factor");
-
-  registerWrapper( viewKeysStruct::allowNonConvergedString, &m_allowNonConverged, false )->
-    setApplyDefaultValue(0)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Allow non-converged solution to be accepted");
-
-  registerWrapper( viewKeysStruct::maxSubStepsString, &m_maxSubSteps, false )->
-    setApplyDefaultValue(10)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Maximum number of time sub-steps allowed for the solver");
-
   registerWrapper(viewKeysStruct::KrylovResidualInitString, &m_KrylovResidualInit, false )->
     setApplyDefaultValue(0)->
     setDescription("Initial Krylov solver residual.");
@@ -160,28 +106,10 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
     setApplyDefaultValue(0)->
     setDescription("Final Krylov solver residual.");
 
-  registerWrapper(viewKeysStruct::numNewtonIterationsString, &m_numNewtonIterations, false )->
-    setApplyDefaultValue(0)->
-    setDescription("Number of Newton's iterations.");
-
-  registerWrapper(viewKeysStruct::dtCutIterLimString, &m_dtCutIterLimit, false )->
-    setApplyDefaultValue(0.7)->
-  setInputFlag(InputFlags::OPTIONAL)->
-  setDescription("Fraction of the Max Newton iterations above which the solver asks for the time-step to be cut for the next dt.");
-
-  registerWrapper(viewKeysStruct::dtIncIterLimString, &m_dtIncIterLimit, false )->
-      setApplyDefaultValue(0.4)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Fraction of the Max Newton iterations below which the solver asks for the time-step to be doubled for the next dt.");
-
 }
 
 void SystemSolverParameters::PostProcessInput()
 {
-  if (m_dtCutIterLimit <= m_dtIncIterLimit)
-  {
-    GEOSX_ERROR(" dtIncIterLimit should be smaller than dtCutIterLimit!!" );
-  }
 }
 
 REGISTER_CATALOG_ENTRY( Group, SystemSolverParameters, std::string const &, Group * const )

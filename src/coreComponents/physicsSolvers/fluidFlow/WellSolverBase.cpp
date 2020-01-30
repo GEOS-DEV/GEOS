@@ -34,17 +34,11 @@ WellSolverBase::WellSolverBase( std::string const & name,
                                 Group * const parent )
   : SolverBase( name, parent ),
     m_flowSolverName(""),
-    m_gravityFlag(1),
     m_fluidName(),
     m_resFluidIndex(),
     m_numDofPerWellElement(0),
     m_numDofPerResElement(0)
 {
-  registerWrapper( viewKeyStruct::gravityFlagString, &m_gravityFlag, false )->
-    setApplyDefaultValue(1)->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Flag that enables/disables gravity");
-
   this->registerWrapper( viewKeyStruct::fluidNameString,  &m_fluidName,  false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Name of fluid constitutive object to use for this solver.");
@@ -80,10 +74,10 @@ void WellSolverBase::RegisterDataOnMesh( Group * const meshBodies )
   // loop over the wells
   elemManager->forElementSubRegions<WellElementSubRegion>( [&]( WellElementSubRegion * const subRegion )
   {
-    subRegion->registerWrapper<array1d<real64>>( viewKeyStruct::gravityDepthString );
+    subRegion->registerWrapper<array1d<real64>>( viewKeyStruct::gravityCoefString );
 
     PerforationData * const perforationData = subRegion->GetPerforationData();
-    perforationData->registerWrapper<array1d<real64>>( viewKeyStruct::gravityDepthString );
+    perforationData->registerWrapper<array1d<real64>>( viewKeyStruct::gravityCoefString );
   });
 }
 
@@ -97,9 +91,6 @@ void WellSolverBase::ImplicitStepSetup( real64 const & time_n,
 {
   // bind the stored reservoir views to the current domain
   ResetViews( domain );
-
-  FlowSolverBase const * const flowSolver = getParent()->GetGroup<FlowSolverBase>( GetFlowSolverName() );
-  m_numDofPerResElement = flowSolver->numDofPerCell();
 
   // Initialize the primary and secondary variables for the first time step
   if (time_n <= 0.0)
@@ -163,8 +154,11 @@ void WellSolverBase::InitializePreSubGroups(Group * const rootGroup)
 
   ConstitutiveBase const * fluid  = cm->GetConstitutiveRelation<ConstitutiveBase>( m_fluidName );
   GEOSX_ERROR_IF( fluid == nullptr, "Fluid model " + m_fluidName + " not found" );
+  
+  m_resFluidIndex = fluid->getIndexInParent();
 
-  m_resFluidIndex = fluid->getIndexInParent(); 
+  FlowSolverBase const * const flowSolver = getParent()->GetGroup<FlowSolverBase>( GetFlowSolverName() );
+  m_numDofPerResElement = flowSolver->numDofPerCell();
 }
   
 void WellSolverBase::InitializePostInitialConditions_PreSubGroups(Group * const rootGroup)
@@ -185,14 +179,14 @@ void WellSolverBase::InitializePostInitialConditions_PreSubGroups(Group * const 
   // bind the stored reservoir views to the current domain
   ResetViews( domain );
   
-  // Precompute solver-specific constant data (e.g. gravity-depth)
+  // Precompute solver-specific constant data (e.g. gravity-coefficient)
   PrecomputeData(domain);
 }
 
 void WellSolverBase::PrecomputeData(DomainPartition * const domain)
 {
-  R1Tensor const & gravityVector = getGravityVector();
-
+  R1Tensor const gravVector = gravityVector();
+  
   MeshLevel * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = meshLevel->getElemManager();
 
@@ -206,26 +200,26 @@ void WellSolverBase::PrecomputeData(DomainPartition * const domain)
     arrayView1d<R1Tensor const> const & wellElemLocation = 
       subRegion->getReference<array1d<R1Tensor>>( ElementSubRegionBase::viewKeyStruct::elementCenterString );
 
-    arrayView1d<real64> const & wellElemGravDepth = 
-      subRegion->getReference<array1d<real64>>( viewKeyStruct::gravityDepthString );
+    arrayView1d<real64> const & wellElemGravCoef = 
+      subRegion->getReference<array1d<real64>>( viewKeyStruct::gravityCoefString );
 
     arrayView1d<R1Tensor const> const & perfLocation = 
       perforationData->getReference<array1d<R1Tensor>>( PerforationData::viewKeyStruct::locationString );
 
-    arrayView1d<real64> const & perfGravDepth = 
-      perforationData->getReference<array1d<real64>>( viewKeyStruct::gravityDepthString );
+    arrayView1d<real64> const & perfGravCoef = 
+      perforationData->getReference<array1d<real64>>( viewKeyStruct::gravityCoefString );
 
     for (localIndex iwelem = 0; iwelem < subRegion->size(); ++iwelem)
     {
       // precompute the depth of the well elements
-      wellElemGravDepth[iwelem] = Dot( wellElemLocation[iwelem], gravityVector );
+      wellElemGravCoef[iwelem] = Dot( wellElemLocation[iwelem], gravVector );
 
     }
 
     forall_in_range( 0, perforationData->size(), GEOSX_LAMBDA ( localIndex const iperf )
     {
       // precompute the depth of the perforations
-      perfGravDepth[iperf] = Dot( perfLocation[iperf], gravityVector );
+      perfGravCoef[iperf] = Dot( perfLocation[iperf], gravVector );
     });
 
 
@@ -250,8 +244,8 @@ void WellSolverBase::ResetViews( DomainPartition * const domain )
   MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
-  m_resGravDepth =
-    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( FlowSolverBase::viewKeyStruct::gravityDepthString );
+  m_resGravCoef =
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( FlowSolverBase::viewKeyStruct::gravityCoefString );
 }
   
 WellControls * WellSolverBase::GetWellControls( WellElementSubRegion const * const subRegion )

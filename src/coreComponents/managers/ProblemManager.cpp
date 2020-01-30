@@ -16,6 +16,7 @@
 #include "ProblemManager.hpp"
 
 #include <vector>
+#include <regex>
 
 #include "mpiCommunications/CommunicationTools.hpp"
 #include "mpiCommunications/SpatialPartition.hpp"
@@ -30,7 +31,7 @@
 #include "meshUtilities/SimpleGeometricObjects/GeometricObjectManager.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "managers/Outputs/OutputManager.hpp"
-#include "fileIO/utils/utils.hpp"
+#include "common/Path.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "meshUtilities/SimpleGeometricObjects/SimpleGeometricObjectBase.hpp"
 #include "dataRepository/ConduitRestart.hpp"
@@ -309,6 +310,10 @@ void ProblemManager::ParseCommandLineInput( int argc, char** argv)
   if (schemaName.empty())
   {
     getAbsolutePath(inputFileName, inputFileName);
+    string xmlFolder;
+    string notUsed;
+    splitPath( inputFileName, xmlFolder, notUsed );
+    Path::pathPrefix() = xmlFolder;
 
     if (problemName == "") 
     {

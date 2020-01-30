@@ -28,19 +28,17 @@ SolverBase::SolverBase( std::string const & name,
                         Group * const parent )
   :
   ExecutableGroup( name, parent ),
-  m_gravityVector( R1Tensor( 0.0 ) ),
   m_systemSolverParameters( groupKeyStruct::systemSolverParametersString, this ),
   m_cflFactor(),
   m_maxStableDt{ 1e99 },
   m_nextDt(1e99),
-  m_dofManager( name )
+  m_dofManager( name ),
+  m_nonlinearSolverParameters( groupKeyStruct::nonlinearSolverParametersString, this)
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
   // This enables logLevel filtering
   enableLogLevelInput();
-
-  this->registerWrapper( viewKeyStruct::gravityVectorString, &m_gravityVector, false );
 
   // This sets a flag to indicate that this object increments time
   this->SetTimestepBehavior( 1 );
@@ -95,6 +93,10 @@ Group * SolverBase::CreateChild( string const & childKey, string const & childNa
   {
     rval = RegisterGroup( childName, &m_systemSolverParameters, 0 );
   }
+  else if(childKey == NonlinearSolverParameters::CatalogName() )
+  {
+    rval = RegisterGroup( childName, &m_nonlinearSolverParameters, 0 );
+  }
   else
   {
     GEOSX_ERROR( childKey << " is an invalid key to SolverBase child group." );
@@ -109,11 +111,6 @@ void SolverBase::ExpandObjectCatalogs()
 
 void SolverBase::PostProcessInput()
 {
-  if( this->globalGravityVector() != nullptr )
-  {
-    m_gravityVector = *globalGravityVector();
-  }
-
   SetLinearSolverParameters();
 }
 
@@ -189,8 +186,7 @@ void SolverBase::Execute( real64 const time_n,
   real64 dtRemaining = dt;
   real64 nextDt = dt;
 
-  SystemSolverParameters * const solverParams = getSystemSolverParameters();
-  integer const maxSubSteps = solverParams->maxSubSteps();
+  integer const maxSubSteps = m_nonlinearSolverParameters.m_maxSubSteps;
   integer subStep = 0;
 
   for( ; subStep < maxSubSteps && dtRemaining > 0.0; ++subStep )
@@ -208,7 +204,7 @@ void SolverBase::Execute( real64 const time_n,
 
     if( dtRemaining > 0.0 )
     {
-      SetNextDt(solverParams, dtAccepted, nextDt);
+      SetNextDt( dtAccepted, nextDt);
       nextDt = std::min(nextDt, dtRemaining);
     }
 
@@ -223,31 +219,30 @@ void SolverBase::Execute( real64 const time_n,
   GEOSX_ERROR_IF( dtRemaining > 0.0, "Maximum allowed number of sub-steps reached. Consider increasing maxSubSteps." );
 
   // Decide what to do with the next Dt for the event running the solver.
-  SetNextDt(solverParams, nextDt, m_nextDt);
+  SetNextDt( nextDt, m_nextDt);
 }
 
-void SolverBase::SetNextDt( SystemSolverParameters * const solverParams,
-                            real64 const & currentDt,
+void SolverBase::SetNextDt( real64 const & currentDt,
                             real64 & nextDt )
 {
-	integer & newtonIter = solverParams->numNewtonIterations();
-	int iterCutLimit = std::ceil(solverParams->dtCutIterLimit());
-	int iterIncLimit = std::ceil(solverParams->dtIncIterLimit());
+  integer & newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
+  int const iterCutLimit = m_nonlinearSolverParameters.dtCutIterLimit();
+  int const iterIncLimit = m_nonlinearSolverParameters.dtIncIterLimit();
 
-	if (newtonIter <  iterIncLimit )
-	{
-		// Easy convergence, let's double the time-step.
-		nextDt = 2*currentDt;
-		GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ": Newton solver converged in less than " << iterIncLimit << " iterations, time-step required will be doubled.");
-	}else if (newtonIter >  iterCutLimit)
-	{
-		// Tough convergence let us make the time-step smaller!
-		nextDt = currentDt/2;
-		GEOSX_LOG_LEVEL_RANK_0(1, getName() << ": Newton solver converged in more than " << iterCutLimit << " iterations, time-step required will be halved.");
-	}else
-	{
-		nextDt = currentDt;
-	}
+  if (newtonIter <  iterIncLimit )
+  {
+    // Easy convergence, let's double the time-step.
+    nextDt = 2*currentDt;
+    GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ": Newton solver converged in less than " << iterIncLimit << " iterations, time-step required will be doubled.");
+  }else if (newtonIter >  iterCutLimit)
+  {
+    // Tough convergence let us make the time-step smaller!
+    nextDt = currentDt/2;
+    GEOSX_LOG_LEVEL_RANK_0(1, getName() << ": Newton solver converged in more than " << iterCutLimit << " iterations, time-step required will be halved.");
+  }else
+  {
+    nextDt = currentDt;
+  }
 }
 
 real64 SolverBase::LinearImplicitStep( real64 const & time_n,
@@ -292,10 +287,8 @@ bool SolverBase::LineSearch( real64 const & time_n,
                              real64 const scaleFactor,
                              real64 & lastResidual )
 {
-  SystemSolverParameters * const solverParams = getSystemSolverParameters();
-
-  integer const maxNumberLineSearchCuts = solverParams->maxLineSearchCuts();
-  real64 const lineSearchCutFactor = solverParams->lineSearchCutFactor();
+  integer const maxNumberLineSearchCuts = m_nonlinearSolverParameters.m_lineSearchMaxCuts;
+  real64 const lineSearchCutFactor = m_nonlinearSolverParameters.m_lineSearchCutFactor;
 
   // flag to determine if we should solve the system and apply the solution. If the line
   // search fails we just bail.
@@ -361,18 +354,16 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
   // value to track the achieved dt for this step.
   real64 stepDt = dt;
 
-  SystemSolverParameters * const solverParams = getSystemSolverParameters();
+  integer const maxNewtonIter = m_nonlinearSolverParameters.m_maxIterNewton;
+  integer const minNewtonIter = m_nonlinearSolverParameters.m_minIterNewton;
+  real64 const newtonTol = m_nonlinearSolverParameters.m_newtonTol;
 
-  integer const maxNewtonIter = solverParams->maxIterNewton();
-  integer const minNewtonIter = solverParams->minIterNewton();
-  real64 const newtonTol = solverParams->newtonTol();
+  integer const maxNumberDtCuts = m_nonlinearSolverParameters.m_maxTimeStepCuts;
+  real64 const dtCutFactor = m_nonlinearSolverParameters.m_timeStepCutFactor;
 
-  integer const maxNumberDtCuts = solverParams->maxTimeStepCuts();
-  real64 const dtCutFactor = solverParams->timeStepCutFactor();
+  bool const allowNonConverged = m_nonlinearSolverParameters.m_allowNonConverged > 0;
 
-  bool const allowNonConverged = solverParams->allowNonConverged() > 0;
-
-  integer & dtAttempt = solverParams->numdtAttempts();
+  integer & dtAttempt = m_nonlinearSolverParameters.m_numdtAttempts;
 
   // a flag to denote whether we have converged
   integer isConverged = 0;
@@ -389,7 +380,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
 
     // keep residual from previous iteration in case we need to do a line search
     real64 lastResidual = 1e99;
-    integer & newtonIter = solverParams->numNewtonIterations();
+    integer & newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
     real64 scaleFactor = 1.0;
 
     // main Newton loop
@@ -417,17 +408,27 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
 
 
       // do line search in case residual has increased
-      if( residualNorm > lastResidual )
+      if( m_nonlinearSolverParameters.m_lineSearchAction>0 && residualNorm > lastResidual )
       {
 
         residualNorm = lastResidual;
         bool lineSearchSuccess = LineSearch( time_n, stepDt, cycleNumber, domain, dofManager,
                                              matrix, rhs, solution, scaleFactor, residualNorm );
 
-        // if line search failed, then break out of the main Newton loop. Timestep will be cut.
+
         if( !lineSearchSuccess )
         {
-          break;
+
+          if( m_nonlinearSolverParameters.m_lineSearchAction==1 )
+          {
+            GEOSX_LOG_LEVEL_RANK_0( 1, "Line search failed to produce reduced residual. Accepting iteration.");
+          }
+          else if( m_nonlinearSolverParameters.m_lineSearchAction==2 )
+          {
+            // if line search failed, then break out of the main Newton loop. Timestep will be cut.
+            GEOSX_LOG_LEVEL_RANK_0( 1, "Line search failed to produce reduced residual. Exiting Newton Loop.");
+            break;
+          }
         }
       }
 
@@ -515,11 +516,15 @@ void SolverBase::SetupSystem( DomainPartition * const domain,
   dofManager.setMesh( domain, 0, 0 );
 
   SetupDofs( domain, dofManager );
-  dofManager.close();
+  dofManager.reorderByRank();
+
+  localIndex const numLocalDof = dofManager.numLocalDofs();
+
+  matrix.createWithLocalSize( numLocalDof, numLocalDof, 8, MPI_COMM_GEOSX );
+  rhs.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
+  solution.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
 
   dofManager.setSparsityPattern( matrix );
-  dofManager.setVector( rhs );
-  dofManager.setVector( solution );
 }
 
 void SolverBase::AssembleSystem( real64 const GEOSX_UNUSED_ARG( time ),
@@ -599,14 +604,17 @@ void SolverBase::ImplicitStepComplete( real64 const & GEOSX_UNUSED_ARG( time ),
   GEOSX_ERROR( "SolverBase::ImplicitStepComplete called!. Should be overridden." );
 }
 
-R1Tensor const * SolverBase::globalGravityVector() const
+R1Tensor const SolverBase::gravityVector() const
 {
-  R1Tensor const * rval = nullptr;
-  if( getParent()->getName() == "Solvers" )
+  R1Tensor rval;
+  if (getParent()->group_cast<PhysicsSolverManager const *>() != nullptr)
   {
-    rval = &(getParent()->getReference<R1Tensor>( viewKeyStruct::gravityVectorString ));
+    rval = getParent()->getReference<R1Tensor>( PhysicsSolverManager::viewKeyStruct::gravityVectorString );
   }
-
+  else
+  {
+    rval = {0.0,0.0,-9.81};
+  }
   return rval;
 }
 

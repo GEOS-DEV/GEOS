@@ -171,8 +171,11 @@ void LaplaceFEM::SetupDofs( DomainPartition const * const GEOSX_UNUSED_ARG( doma
                             DofManager & dofManager ) const
 {
   dofManager.addField( m_fieldName,
-                       DofManager::Location::Node,
-                       DofManager::Connectivity::Elem );
+                       DofManager::Location::Node );
+
+  dofManager.addCoupling( m_fieldName,
+                          m_fieldName,
+                          DofManager::Connectivity::Elem );
 }
 
 //START_SPHINX_INCLUDE_04
@@ -269,8 +272,7 @@ void LaplaceFEM::AssembleSystem( real64 const time_n,
 
   if( getLogLevel() >= 3 )
   {
-    SystemSolverParameters * const solverParams = getSystemSolverParameters();
-    integer newtonIter = solverParams->numNewtonIterations();
+    integer newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
 
     string filename_mat = "matrix_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
     matrix.write( filename_mat, true );
@@ -289,17 +291,15 @@ void LaplaceFEM::ApplySystemSolution( DofManager const & dofManager,
                                       real64 const scalingFactor,
                                       DomainPartition * const domain )
 {
-  MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
-  NodeManager * const nodeManager = mesh->getNodeManager();
+  dofManager.addVectorToField( solution, m_fieldName, m_fieldName, scalingFactor );
 
-  dofManager.copyVectorToField( solution, m_fieldName, scalingFactor, nodeManager, m_fieldName );
-
-  // Syncronize ghost nodes
+  // Synchronize ghost nodes
   std::map<string, string_array> fieldNames;
   fieldNames["node"].push_back( m_fieldName );
 
   CommunicationTools::
-  SynchronizeFields( fieldNames, mesh,
+  SynchronizeFields( fieldNames,
+                     domain->getMeshBody( 0 )->getMeshLevel( 0 ),
                      domain->getReference<array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
 }
 
@@ -319,8 +319,7 @@ void LaplaceFEM::ApplyBoundaryConditions( real64 const time_n,
 
   if( getLogLevel() >= 3 )
   {
-    SystemSolverParameters * const solverParams = getSystemSolverParameters();
-    integer newtonIter = solverParams->numNewtonIterations();
+    integer newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
 
     string filename_mat = "matrix_bc_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
     matrix.write( filename_mat, true );
@@ -368,7 +367,6 @@ void LaplaceFEM::ApplyDirichletBC_implicit( real64 const time,
                         string const GEOSX_UNUSED_ARG( fieldName ) )->void
   {
     bc->ApplyBoundaryConditionToSystem<FieldSpecificationEqual, LAInterface>( targetSet,
-                                                                              false,
                                                                               time,
                                                                               targetGroup,
                                                                               m_fieldName,

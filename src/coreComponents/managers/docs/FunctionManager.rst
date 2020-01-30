@@ -106,6 +106,26 @@ The following would define a simple 2D function ``c = a + 2*b``:
 - c.csv: "0, 1, 1, 2, 2, 3"
 
 
+
+Interpolation Methods
+************************
+
+There are four interpolation methods available for table functions.
+Within the table axes, these will return a value:
+
+- linear: using piecewise-linear interpolation
+- upper: equal to the value of the next table vertex
+- nearest: equal to the value of the nearest table vertex
+- lower: equal to the value of the previous table vertex
+
+Outside of the table axes, these functions will return the edge-values.
+The following figure illustrates how each of these methods work along a single dimension, given identical table values:
+
+.. image:: interp_methods.png
+   :width: 400px
+
+
+
 Table Generation Example
 **************************
 
