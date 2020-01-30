@@ -88,9 +88,6 @@ void HydrofractureSolver::ImplicitStepSetup( real64 const & time_n,
                                              ParallelVector & GEOSX_UNUSED_ARG( rhs ),
                                              ParallelVector & GEOSX_UNUSED_ARG( solution ) )
 {
-  m_solidSolver = this->getParent()->GetGroup<SolidMechanicsLagrangianFEM>(m_solidSolverName);
-  m_flowSolver = this->getParent()->GetGroup<FlowSolverBase>(m_flowSolverName);
-
   m_solidSolver->ImplicitStepSetup( time_n, dt, domain,
                                     m_solidSolver->getDofManager(),
                                     m_solidSolver->getSystemMatrix(),
@@ -126,8 +123,14 @@ void HydrofractureSolver::PostProcessInput()
   }
   else
   {
-    GEOS_ERROR("invalid coupling type option");
+    GEOSX_ERROR("invalid coupling type option");
   }
+
+  m_solidSolver = this->getParent()->GetGroup<SolidMechanicsLagrangianFEM>( m_solidSolverName );
+  GEOSX_ERROR_IF( m_solidSolver == nullptr, this->getName() << ": invalid solid solver name: " << m_solidSolverName );
+
+  m_flowSolver = this->getParent()->GetGroup<FlowSolverBase>( m_flowSolverName );
+  GEOSX_ERROR_IF( m_flowSolver == nullptr, this->getName() << ": invalid flow solver name: " << m_flowSolverName );
 
 }
 
@@ -344,13 +347,13 @@ real64 HydrofractureSolver::SplitOperatorStep( real64 const & GEOSX_UNUSED_ARG( 
 //
 ////    if (m_fluidSolver->getSystemSolverParameters()->numNewtonIterations() == 0 && iter > 0 && getLogLevel() >= 1)
 ////    {
-////      GEOS_LOG_RANK_0( "***** The iterative coupling has converged in " << iter  << " iterations! *****\n" );
+////      GEOSX_LOG_RANK_0( "***** The iterative coupling has converged in " << iter  << " iterations! *****\n" );
 ////      break;
 ////    }
 //
 //    if (getLogLevel() >= 1)
 //    {
-//      GEOS_LOG_RANK_0( "\tIteration: " << iter+1  << ", MechanicsSolver: " );
+//      GEOSX_LOG_RANK_0( "\tIteration: " << iter+1  << ", MechanicsSolver: " );
 //    }
 //
 //    // call assemble to fill the matrix and the rhs
@@ -372,7 +375,7 @@ real64 HydrofractureSolver::SplitOperatorStep( real64 const & GEOSX_UNUSED_ARG( 
 //    if( m_flowSolver->CalculateResidualNorm( getLinearSystemRepository(), domain ) < solverParams->newtonTol() &&
 //        m_solidSolver->CalculateResidualNorm( getLinearSystemRepository(), domain ) < solverParams->newtonTol() )
 //    {
-//      GEOS_LOG_RANK_0( "***** The iterative coupling has converged in " << iter  << " iterations! *****\n" );
+//      GEOSX_LOG_RANK_0( "***** The iterative coupling has converged in " << iter  << " iterations! *****\n" );
 //      break;
 //    }
 //
@@ -415,13 +418,22 @@ void HydrofractureSolver::SetupDofs( DomainPartition const * const domain,
   m_solidSolver->SetupDofs( domain, dofManager );
   m_flowSolver->SetupDofs( domain, dofManager );
 
+  // restrict coupling to fracture regions only (as done originally in SetupSystem)
+  ElementRegionManager const * const elemManager = domain->getMeshBody( 0 )->getMeshLevel( 0 )->getElemManager();
+  string_array fractureRegions;
+  elemManager->forElementRegions<FaceElementRegion>([&]( FaceElementRegion const * const elementRegion )
+  {
+    fractureRegions.push_back( elementRegion->getName() );
+  } );
+
   dofManager.addCoupling( keys::TotalDisplacement,
                           FlowSolverBase::viewKeyStruct::pressureString,
-                          DofManager::Connectivity::Elem );
+                          DofManager::Connectivity::Elem,
+                          fractureRegions );
 }
 
 void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
-                                       DofManager & GEOSX_UNUSED_ARG( dofManager ),
+                                       DofManager & dofManager,
                                        ParallelMatrix & GEOSX_UNUSED_ARG( matrix ),
                                        ParallelVector & GEOSX_UNUSED_ARG( rhs ),
                                        ParallelVector & GEOSX_UNUSED_ARG( solution ) )
@@ -430,30 +442,24 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
   m_flowSolver->ResetViews( domain );
 
   m_solidSolver->SetupSystem( domain,
-                           m_solidSolver->getDofManager(),
-                           m_solidSolver->getSystemMatrix(),
-                           m_solidSolver->getSystemRhs(),
-                           m_solidSolver->getSystemSolution() );
+                              m_solidSolver->getDofManager(),
+                              m_solidSolver->getSystemMatrix(),
+                              m_solidSolver->getSystemRhs(),
+                              m_solidSolver->getSystemSolution() );
 
   m_flowSolver->SetupSystem( domain,
-                           m_flowSolver->getDofManager(),
-                           m_flowSolver->getSystemMatrix(),
-                           m_flowSolver->getSystemRhs(),
-                           m_flowSolver->getSystemSolution() );
+                             m_flowSolver->getDofManager(),
+                             m_flowSolver->getSystemMatrix(),
+                             m_flowSolver->getSystemRhs(),
+                             m_flowSolver->getSystemSolution() );
 
+  // setup coupled DofManager
+  m_dofManager.setMesh( domain, 0, 0 );
+  SetupDofs( domain, dofManager );
 
-  // TODO: once we move to a monolithic matrix, we can just use SolverBase implementation
-
-//  dofManager.setSparsityPattern( m_matrix01,
-//                                 keys::TotalDisplacement,
-//                                 FlowSolverBase::viewKeyStruct::pressureString );
-//
-//  dofManager.setSparsityPattern( m_matrix10,
-//                                 FlowSolverBase::viewKeyStruct::pressureString,
-//                                 keys::TotalDisplacement );
-
-
-
+  // By not calling dofManager.reorderByRank(), we keep separate dof numbering for each field,
+  // which allows constructing separate sparsity patterns for off-diagonal blocks of the matrix.
+  // Once the solver moves to monolithic matrix, we can remove this method and just use SolverBase::SetupSystem.
 
   m_matrix01.createWithLocalSize( m_solidSolver->getSystemMatrix().localRows(),
                                   m_flowSolver->getSystemMatrix().localCols(),
@@ -464,64 +470,8 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
                                   24,
                                   MPI_COMM_GEOSX);
 
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  NodeManager * const nodeManager = mesh->getNodeManager();
-  ElementRegionManager * const elemManager = mesh->getElemManager();
-
-
-
-
-  string const presDofKey = m_flowSolver->getDofManager().getKey( FlowSolverBase::viewKeyStruct::pressureString );
-  string const dispDofKey = m_solidSolver->getDofManager().getKey( keys::TotalDisplacement );
-
-  arrayView1d<globalIndex> const &
-  dispDofNumber =  nodeManager->getReference<globalIndex_array>( dispDofKey );
-
-  elemManager->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion const * const elementSubRegion )
-  {
-    localIndex const numElems = elementSubRegion->size();
-    array1d<array1d<localIndex > > const & elemsToNodes = elementSubRegion->nodeList();
-    arrayView1d<globalIndex> const &
-    faceElementDofNumber = elementSubRegion->getReference< array1d<globalIndex> >( presDofKey );
-
-    for( localIndex k=0 ; k<numElems ; ++k )
-    {
-      globalIndex const activeFlowDOF = faceElementDofNumber[k];
-      localIndex const numNodesPerElement = elemsToNodes[k].size();
-      array1d<globalIndex> activeDisplacementDOF(3 * numNodesPerElement);
-      array1d<real64> values( 3*numNodesPerElement );
-      values = 1;
-
-      for( localIndex a=0 ; a<numNodesPerElement ; ++a )
-      {
-        for( int d=0 ; d<3 ; ++d )
-        {
-          activeDisplacementDOF[a * 3 + d] = dispDofNumber[elemsToNodes[k][a]] + d;
-        }
-      }
-
-      m_matrix01.insert( activeDisplacementDOF.data(),
-                         &activeFlowDOF,
-                         values.data(),
-                         activeDisplacementDOF.size(),
-                         1 );
-
-      m_matrix10.insert( &activeFlowDOF,
-                         activeDisplacementDOF.data(),
-                         values.data(),
-                         1,
-                         activeDisplacementDOF.size() );
-
-    }
-  });
-
-  m_matrix01.close();
-  m_matrix10.close();
-
-
-
-
-
+  dofManager.setSparsityPattern( m_matrix01, keys::TotalDisplacement, FlowSolverBase::viewKeyStruct::pressureString );
+  dofManager.setSparsityPattern( m_matrix10, FlowSolverBase::viewKeyStruct::pressureString, keys::TotalDisplacement );
 }
 
 void HydrofractureSolver::AssembleSystem( real64 const time,
@@ -599,78 +549,77 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
                                                 m_flowSolver->getDofManager().getKey( FlowSolverBase::viewKeyStruct::pressureString ),
                                                 m_permutationMatrix1);
 
-    GEOS_LOG_RANK_0("***********************************************************");
-    GEOS_LOG_RANK_0("matrix00");
-    GEOS_LOG_RANK_0("***********************************************************");
+    GEOSX_LOG_RANK_0("***********************************************************");
+    GEOSX_LOG_RANK_0("matrix00");
+    GEOSX_LOG_RANK_0("***********************************************************");
     LAIHelperFunctions::PrintPermutedMatrix(m_solidSolver->getSystemMatrix(), m_permutationMatrix0, std::cout);
     MpiWrapper::Barrier();
 
-    GEOS_LOG_RANK_0("***********************************************************");
-    GEOS_LOG_RANK_0("matrix01");
-    GEOS_LOG_RANK_0("***********************************************************");
+    GEOSX_LOG_RANK_0("***********************************************************");
+    GEOSX_LOG_RANK_0("matrix01");
+    GEOSX_LOG_RANK_0("***********************************************************");
     LAIHelperFunctions::PrintPermutedMatrix(m_matrix01, m_permutationMatrix0, m_permutationMatrix1, std::cout);
     m_matrix01.print(std::cout);
     MpiWrapper::Barrier();
 
-    GEOS_LOG_RANK_0("***********************************************************");
-    GEOS_LOG_RANK_0("matrix10");
-    GEOS_LOG_RANK_0("***********************************************************");
+    GEOSX_LOG_RANK_0("***********************************************************");
+    GEOSX_LOG_RANK_0("matrix10");
+    GEOSX_LOG_RANK_0("***********************************************************");
     LAIHelperFunctions::PrintPermutedMatrix(m_matrix10, m_permutationMatrix1, m_permutationMatrix0, std::cout);
     MpiWrapper::Barrier();
 
-    GEOS_LOG_RANK_0("***********************************************************");
-    GEOS_LOG_RANK_0("matrix11");
-    GEOS_LOG_RANK_0("***********************************************************");
+    GEOSX_LOG_RANK_0("***********************************************************");
+    GEOSX_LOG_RANK_0("matrix11");
+    GEOSX_LOG_RANK_0("***********************************************************");
     LAIHelperFunctions::PrintPermutedMatrix(m_flowSolver->getSystemMatrix(), m_permutationMatrix1, std::cout);
     MpiWrapper::Barrier();
 
-    GEOS_LOG_RANK_0("***********************************************************");
-    GEOS_LOG_RANK_0("residual0");
-    GEOS_LOG_RANK_0("***********************************************************");
+    GEOSX_LOG_RANK_0("***********************************************************");
+    GEOSX_LOG_RANK_0("residual0");
+    GEOSX_LOG_RANK_0("***********************************************************");
     LAIHelperFunctions::PrintPermutedVector(m_solidSolver->getSystemRhs(), m_permutationMatrix0, std::cout);
     MpiWrapper::Barrier();
 
-    GEOS_LOG_RANK_0("***********************************************************");
-    GEOS_LOG_RANK_0("residual1");
-    GEOS_LOG_RANK_0("***********************************************************");
+    GEOSX_LOG_RANK_0("***********************************************************");
+    GEOSX_LOG_RANK_0("residual1");
+    GEOSX_LOG_RANK_0("***********************************************************");
     LAIHelperFunctions::PrintPermutedVector(m_flowSolver->getSystemRhs(), m_permutationMatrix1, std::cout);
     MpiWrapper::Barrier();
   }
 
   if( getLogLevel() >= 3 )
   {
-    SystemSolverParameters * const solverParams = getSystemSolverParameters();
-    integer newtonIter = solverParams->numNewtonIterations();
+    integer newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
 
     {
       string filename = "matrix00_" + std::to_string( time ) + "_" + std::to_string( newtonIter ) + ".mtx";
       m_solidSolver->getSystemMatrix().write( filename, true );
-      GEOS_LOG_RANK_0( "matrix00: written to " << filename );
+      GEOSX_LOG_RANK_0( "matrix00: written to " << filename );
     }
     {
       string filename = "matrix01_" + std::to_string( time ) + "_" + std::to_string( newtonIter ) + ".mtx";
       m_matrix01.write( filename, true );
-      GEOS_LOG_RANK_0( "matrix01: written to " << filename );
+      GEOSX_LOG_RANK_0( "matrix01: written to " << filename );
     }
     {
       string filename = "matrix10_" + std::to_string( time ) + "_" + std::to_string( newtonIter ) + ".mtx";
       m_matrix10.write( filename, true );
-      GEOS_LOG_RANK_0( "matrix10: written to " << filename );
+      GEOSX_LOG_RANK_0( "matrix10: written to " << filename );
     }
     {
       string filename = "matrix11_" + std::to_string( time ) + "_" + std::to_string( newtonIter ) + ".mtx";
       m_flowSolver->getSystemMatrix().write( filename, true );
-      GEOS_LOG_RANK_0( "matrix11: written to " << filename );
+      GEOSX_LOG_RANK_0( "matrix11: written to " << filename );
     }
     {
       string filename = "residual0_" + std::to_string( time ) + "_" + std::to_string( newtonIter ) + ".mtx";
       m_solidSolver->getSystemRhs().write( filename, true );
-      GEOS_LOG_RANK_0( "residual0: written to " << filename );
+      GEOSX_LOG_RANK_0( "residual0: written to " << filename );
     }
     {
       string filename = "residual1_" + std::to_string( time ) + "_" + std::to_string( newtonIter ) + ".mtx";
       m_flowSolver->getSystemRhs().write( filename, true );
-      GEOS_LOG_RANK_0( "residual1: written to " << filename );
+      GEOSX_LOG_RANK_0( "residual1: written to " << filename );
     }
   }
 
@@ -690,7 +639,7 @@ CalculateResidualNorm( DomainPartition const * const domain,
                                                                      m_solidSolver->getDofManager(),
                                                                      m_solidSolver->getSystemRhs() );
 
-  GEOS_LOG_RANK_0("residuals for fluid, solid: "<<fluidResidual<<", "<<solidResidual);
+  GEOSX_LOG_RANK_0("residuals for fluid, solid: "<<fluidResidual<<", "<<solidResidual);
 
   return fluidResidual + solidResidual;
 }
@@ -1627,15 +1576,15 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
   if( getLogLevel() == 2 )
   {
 
-    GEOS_LOG_RANK_0("***********************************************************");
-    GEOS_LOG_RANK_0("solution0");
-    GEOS_LOG_RANK_0("***********************************************************");
+    GEOSX_LOG_RANK_0("***********************************************************");
+    GEOSX_LOG_RANK_0("solution0");
+    GEOSX_LOG_RANK_0("***********************************************************");
     p_solution[0]->Print(std::cout);
     MpiWrapper::Barrier();
 
-    GEOS_LOG_RANK_0("***********************************************************");
-    GEOS_LOG_RANK_0("solution1");
-    GEOS_LOG_RANK_0("***********************************************************");
+    GEOSX_LOG_RANK_0("***********************************************************");
+    GEOSX_LOG_RANK_0("solution1");
+    GEOSX_LOG_RANK_0("***********************************************************");
     p_solution[1]->Print(std::cout);
     MpiWrapper::Barrier();
   }

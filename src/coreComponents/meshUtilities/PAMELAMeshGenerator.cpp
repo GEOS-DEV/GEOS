@@ -41,7 +41,7 @@ PAMELAMeshGenerator::PAMELAMeshGenerator( string const & name, Group * const par
 
   registerWrapper(viewKeyStruct::filePathString, &m_filePath, false)->
     setInputFlag(InputFlags::REQUIRED)->
-    setInputFlag(InputFlags::REQUIRED)->
+    setRestartFlags(RestartFlags::NO_WRITE)->
     setDescription("path to the mesh file");
   registerWrapper(viewKeyStruct::fieldsToImportString, &m_fieldsToImport, false)->
     setInputFlag(InputFlags::OPTIONAL)->
@@ -89,7 +89,7 @@ Group * PAMELAMeshGenerator::CreateChild( string const & GEOSX_UNUSED_ARG( child
 
 void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
 {
-  GEOS_LOG_RANK_0("Writing into the GEOSX mesh data structure");
+  GEOSX_LOG_RANK_0("Writing into the GEOSX mesh data structure");
   domain->getMetisNeighborList() = m_pamelaMesh->getNeighborList();
   Group * const meshBodies = domain->GetGroup( std::string( "MeshBodies" ));
   MeshBody * const meshBody = meshBodies->RegisterGroup<MeshBody>( this->getName() );
@@ -309,7 +309,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
           if( dimension == PAMELA::VARIABLE_DIMENSION::SCALAR )
           {
             real64_array & property = cellBlock->AddProperty< real64_array >( m_fieldNamesInGEOSX[fieldIndex] );
-            GEOS_ERROR_IF(property.size() != integer_conversion< localIndex >( meshProperty->size() ),
+            GEOSX_ERROR_IF(property.size() != integer_conversion< localIndex >( meshProperty->size() ),
                 "Viewer size (" << property.size() << ") mismatch with property size in PAMELA ("
                 << meshProperty->size() << ") on " <<cellBlock->getName() );
             for( int cellIndex = 0; cellIndex < property.size(); cellIndex++ )
@@ -320,7 +320,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
           else if( dimension == PAMELA::VARIABLE_DIMENSION::VECTOR )
           {
             array1d< R1Tensor > & property = cellBlock->AddProperty< array1d< R1Tensor > >( m_fieldNamesInGEOSX[fieldIndex] );
-            GEOS_ERROR_IF(property.size() * 3 != integer_conversion< localIndex >( meshProperty->size() ),
+            GEOSX_ERROR_IF(property.size() * 3 != integer_conversion< localIndex >( meshProperty->size() ),
                 "Viewer size (" << property.size() * 3<< ") mismatch with property size in PAMELA ("
                 << meshProperty->size() << ") on " <<cellBlock->getName() );
             for( int cellIndex = 0; cellIndex < cellBlock->size(); cellIndex++ )
@@ -333,7 +333,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
           }
           else
           {
-            GEOS_ERROR("Dimension of " <<  m_fieldNamesInGEOSX[fieldIndex] << " is not supported for import in GEOSX");
+            GEOSX_ERROR("Dimension of " <<  m_fieldNamesInGEOSX[fieldIndex] << " is not supported for import in GEOSX");
           }
         }
       }

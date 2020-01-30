@@ -1,16 +1,16 @@
-
 #
 # Specify all headers
 #
 set(dataRepository_headers
     BufferOps_inline.hpp
     BufferOps.hpp
+    BufferOpsDevice.hpp
     ExecutableGroup.hpp
     Group.hpp
     InputFlags.hpp
     KeyIndexT.hpp
     MappedVector.hpp
-    ObjectCatalog.hpp 
+    ObjectCatalog.hpp
     ReferenceWrapper.hpp
     RestartFlags.hpp
     ConduitRestart.hpp
@@ -24,6 +24,7 @@ set(dataRepository_headers
 # Specify all sources
 #
 set(dataRepository_sources
+    BufferOpsDevice.cpp
     ExecutableGroup.cpp
     Group.cpp
     ConduitRestart.cpp
@@ -38,16 +39,23 @@ if( ENABLE_MPI )
   set( extraComponentsLinkList ${extraComponentsLinkList} mpi )
 endif()
 
-
 if( BUILD_OBJ_LIBS )
   set (dependencyList common cxx-utilities codingUtilities pugixml fileIO)
 else()
-  set( dependencyList common )
+  set( dependencyList common codingUtilities)
+endif()
+
+if ( ENABLE_OPENMP )
+  set( dependencyList ${dependencyList} openmp )
+endif()
+
+if ( ENABLE_CUDA )
+  set( dependencyList ${dependencyList} cuda )
 endif()
 
 if( CONDUIT_FOUND )
-  set( dependencyList ${dependencyList} conduit )
-endif()
+  set( dependencyList ${dependencyList} common conduit fmt )
+endif( )
 
 blt_add_library( NAME                  dataRepository
                  SOURCES               ${dataRepository_sources}

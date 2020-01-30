@@ -19,7 +19,6 @@
 
 #include "gtest/gtest.h"
 
-#include "codingUtilities/UnitTestUtilities.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "dataRepository/Group.hpp"
@@ -33,13 +32,6 @@
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 
 using namespace geosx;
-using namespace geosx::testing;
-
-namespace
-{
-int global_argc;
-char** global_argv;
-}
 
 class LAIHelperFunctionsTest : public ::testing::Test
 {
@@ -97,9 +89,9 @@ protected:
       xmlWrapper::xmlResult xmlResult = xmlDocument.load_buffer( inputStream.c_str(), inputStream.size() );
       if (!xmlResult)
       {
-        GEOS_LOG_RANK_0("XML parsed with errors!");
-        GEOS_LOG_RANK_0("Error description: " << xmlResult.description());
-        GEOS_LOG_RANK_0("Error offset: " << xmlResult.offset);
+        GEOSX_LOG_RANK_0("XML parsed with errors!");
+        GEOSX_LOG_RANK_0("Error description: " << xmlResult.description());
+        GEOSX_LOG_RANK_0("Error offset: " << xmlResult.offset);
       }
 
       int mpiSize = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
@@ -151,9 +143,9 @@ TEST_F(LAIHelperFunctionsTest, Test_NodalVectorPermutation)
   string_array Region;
   Region.push_back( "region1" );
 
-  dofManager.addField( "nodalVariable", DofManager::Location::Node, DofManager::Connectivity::Elem, 3,
-                       Region );
-  dofManager.close();
+  dofManager.addField( "nodalVariable", DofManager::Location::Node, 3, Region );
+  dofManager.addCoupling( "nodalVariable", "nodalVariable", DofManager::Connectivity::Elem );
+  dofManager.reorderByRank();
 
   // ParallelMatrix pattern;
   // dofManager.setSparsityPattern( pattern, "displacement", "displacement" );
@@ -225,8 +217,9 @@ TEST_F(LAIHelperFunctionsTest, Test_CellCenteredVectorPermutation)
   string_array region;
   region.push_back( "region1" );
 
-  dofManager.addField( "cellCentered", DofManager::Location::Elem, DofManager::Connectivity::Face, region );
-  dofManager.close();
+  dofManager.addField( "cellCentered", DofManager::Location::Elem, region );
+  dofManager.addCoupling( "cellCentered", "cellCentered", DofManager::Connectivity::Face );
+  dofManager.reorderByRank();
 
   integer nDof = dofManager.numGlobalDofs("cellCentered");
 
@@ -288,24 +281,9 @@ TEST_F(LAIHelperFunctionsTest, Test_CellCenteredVectorPermutation)
 int main( int argc, char** argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
-
-  // Global call will not work because CXXUtils has already been initialized in problemManager
   geosx::basicSetup( argc, argv );
-
-  global_argc = argc;
-  global_argv = new char*[static_cast<unsigned int>( global_argc )];
-  for( int i = 0 ; i < argc ; ++i )
-  {
-    global_argv[i] = argv[i];
-  }
-
   int const result = RUN_ALL_TESTS();
-
-  delete[] global_argv;
-
-  // Global call will not work because CXXUtils will be destructed by problemManager
   geosx::basicCleanup();
-
   return result;
 }
 

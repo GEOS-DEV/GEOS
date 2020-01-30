@@ -493,7 +493,7 @@ protected:
 
     solver = problemManager->GetPhysicsSolverManager().GetGroup<ReservoirSolver>( "reservoirSystem" );
 
-    GEOS_ERROR_IF( solver == nullptr, "ReservoirSystem not found" );
+    GEOSX_ERROR_IF( solver == nullptr, "ReservoirSystem not found" );
 
   }
 
@@ -519,7 +519,7 @@ TEST_F(ReservoirSolverTest, derivativeNumericalCheck_mixtureDensity)
 
   //DomainPartition * domain = problemManager->getDomainPartition();
 
-  //GEOS_ERROR_IF( solver == nullptr, "ReservoirSystem not found" );
+  //GEOSX_ERROR_IF( solver == nullptr, "ReservoirSystem not found" );
 
   //CompositionalMultiphaseWell * wellSolver = solver->GetWellSolver()->group_cast<CompositionalMultiphaseWell*>();
   
@@ -537,6 +537,12 @@ TEST_F(ReservoirSolverTest, jacobianNumericalCheck_Perforation)
 
   DomainPartition * domain = problemManager->getDomainPartition();
 
+  solver->SetupSystem( domain,
+		       solver->getDofManager(),
+                       solver->getSystemMatrix(),
+                       solver->getSystemRhs(),
+                       solver->getSystemSolution() );
+  
   solver->ImplicitStepSetup( time,
                              dt,
                              domain,
@@ -566,6 +572,12 @@ TEST_F(ReservoirSolverTest, jacobianNumericalCheck_Flux)
   real64 const dt = 1e4;
 
   DomainPartition * domain = problemManager->getDomainPartition();
+
+  solver->SetupSystem( domain,
+		       solver->getDofManager(),
+                       solver->getSystemMatrix(),
+                       solver->getSystemRhs(),
+                       solver->getSystemSolution() );
   
   solver->ImplicitStepSetup( time,
                              dt,
@@ -597,6 +609,12 @@ TEST_F(ReservoirSolverTest, jacobianNumericalCheck_Control)
   real64 const dt = 1e4;
 
   DomainPartition * domain = problemManager->getDomainPartition();
+
+  solver->SetupSystem( domain,
+		       solver->getDofManager(),
+                       solver->getSystemMatrix(),
+                       solver->getSystemRhs(),
+                       solver->getSystemSolution() );
   
   solver->ImplicitStepSetup( time,
                              dt,
@@ -628,6 +646,12 @@ TEST_F(ReservoirSolverTest, jacobianNumericalCheck_VolumeBalance)
 
   DomainPartition * domain = problemManager->getDomainPartition();
 
+  solver->SetupSystem( domain,
+		       solver->getDofManager(),
+                       solver->getSystemMatrix(),
+                       solver->getSystemRhs(),
+                       solver->getSystemSolution() );
+  
   solver->ImplicitStepSetup( time,
                              dt,
                              domain,
@@ -657,6 +681,12 @@ TEST_F(ReservoirSolverTest, jacobianNumericalCheck_PressureRel)
 
   DomainPartition * domain = problemManager->getDomainPartition();
 
+  solver->SetupSystem( domain,
+		       solver->getDofManager(),
+                       solver->getSystemMatrix(),
+                       solver->getSystemRhs(),
+                       solver->getSystemSolution() );
+  
   solver->ImplicitStepSetup( time,
                              dt,
                              domain,

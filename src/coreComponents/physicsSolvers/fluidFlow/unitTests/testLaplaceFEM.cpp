@@ -113,16 +113,6 @@ protected:
     "                        scale=\"0.0\""
     "                        setNames=\"sink\" />"
     "  </FieldSpecifications>"
-    "  <Functions>"
-    "    <TableFunction name=\"timeFunction\""
-    "                   inputVarNames=\"time\""
-    "                   coordinates=\"0.0 1.0e-6 2.0e-6 1.0e9\""
-    "                   values=\"0.0 1.0 1.0 1.0\" />"
-    "    <SymbolicFunction name=\"spaceFunction\""
-    "                      inputVarNames=\"ReferencePosition\""
-    "                      variableNames=\"x y z\""
-    "                      expression=\"sqrt(pow(x,2)+pow(y,2)+pow(z,2))\" />"
-    "  </Functions>"
     "  <Outputs>"
     "    <Silo name=\"siloOutput\" parallelThreads=\"32\" plotFileRoot=\"plot\" />"
     "  </Outputs>"
@@ -136,9 +126,9 @@ protected:
     xmlWrapper::xmlResult xmlResult = xmlDocument.load_buffer( inputStream.c_str(), inputStream.size() );
     if (!xmlResult)
     {
-      GEOS_LOG_RANK_0("XML parsed with errors!");
-      GEOS_LOG_RANK_0("Error description: " << xmlResult.description());
-      GEOS_LOG_RANK_0("Error offset: " << xmlResult.offset);
+      GEOSX_LOG_RANK_0("XML parsed with errors!");
+      GEOSX_LOG_RANK_0("Error description: " << xmlResult.description());
+      GEOSX_LOG_RANK_0("Error offset: " << xmlResult.offset);
     }
 
     dataRepository::Group * commandLine =

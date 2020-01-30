@@ -65,10 +65,10 @@ namespace timingHelpers
 #define GEOSX_MARK_FUNCTION GEOSX_MARK_FUNCTION_SCOPED
 
 /// Mark the beginning of timed statement group
-#define GEOSX_MARK_BEGIN(name) CALI_MARK_BEGIN(DO_STRINGIFY(name))
+#define GEOSX_MARK_BEGIN(name) CALI_MARK_BEGIN(STRINGIZE(name))
 
 /// Mark the end of timed statements group
-#define GEOSX_MARK_END(name) CALI_MARK_END(DO_STRINGIFY(name))
+#define GEOSX_MARK_END(name) CALI_MARK_END(STRINGIZE(name))
 
 #else
 /// @cond DO_NOT_DOCUMENT

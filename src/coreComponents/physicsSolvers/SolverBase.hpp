@@ -21,12 +21,13 @@
 #include <limits>
 
 #include "dataRepository/Group.hpp"
-#include "codingUtilities/GeosxTraits.hpp"
+#include "codingUtilities/traits.hpp"
 #include "common/DataTypes.hpp"
 #include "dataRepository/ExecutableGroup.hpp"
 #include "managers/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
 #include "physicsSolvers/SystemSolverParameters.hpp"
+#include "physicsSolvers/NonlinearSolverParameters.hpp"
 
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
@@ -140,9 +141,8 @@ public:
      *
      * T
      */
-  virtual void SetNextDt(SystemSolverParameters * const solverParams,
-  		                 real64 const & currentDt,
-  		                 real64 & nextDt);
+  virtual void SetNextDt( real64 const & currentDt,
+                          real64 & nextDt);
 
 
   /**
@@ -484,7 +484,6 @@ public:
 
   struct viewKeyStruct
   {
-    constexpr static auto gravityVectorString = "gravityVector";
     constexpr static auto cflFactorString = "cflFactor";
     constexpr static auto initialDtString = "initialDt";
     constexpr static auto maxStableDtString = "maxStableDt";
@@ -496,14 +495,19 @@ public:
   struct groupKeyStruct
   {
     constexpr static auto systemSolverParametersString = "SystemSolverParameters";
+    constexpr static auto nonlinearSolverParametersString = "NonlinearSolverParameters";
   } groupKeys;
 
 
-
-  R1Tensor const & getGravityVector() const { return m_gravityVector; }
-  R1Tensor       & getGravityVector()       { return m_gravityVector; }
-  R1Tensor const * globalGravityVector() const;
-
+  /**
+   * @brief return the value of the gravity vector specified in PhysicsSolverManager 
+   * @return the value of the gravity vector
+   *
+   * @note if the solver is instantiated outside of a simulation (for instance for a unit test)
+   *       and therefore does not have a parent of type PhysicsSolverManager, this function returns
+   *       {0.0,0.0,-9.81}  
+   */
+  R1Tensor const gravityVector() const;
 
   /**
    * accessor for the system solver parameters.
@@ -518,6 +522,17 @@ public:
   SystemSolverParameters const * getSystemSolverParameters() const
   {
     return &m_systemSolverParameters;
+  }
+
+
+  NonlinearSolverParameters & getNonlinearSolverParameters()
+  {
+    return m_nonlinearSolverParameters;
+  }
+
+  NonlinearSolverParameters const & getNonlinearSolverParameters() const
+  {
+    return m_nonlinearSolverParameters;
   }
 
   string getDiscretization() const {return m_discretizationName;}
@@ -566,7 +581,6 @@ protected:
   static BASETYPE * GetConstitutiveModel( dataRepository::Group * dataGroup, string const & name );
 
   integer m_logLevel = 0;
-  R1Tensor m_gravityVector;
   SystemSolverParameters m_systemSolverParameters;
 
   real64 m_cflFactor;
@@ -590,6 +604,8 @@ protected:
   /// Linear solver parameters
   LinearSolverParameters m_linearSolverParameters;
 
+  NonlinearSolverParameters m_nonlinearSolverParameters;
+
 };
 
 template<typename BASETYPE>
@@ -597,10 +613,10 @@ BASETYPE const * SolverBase::GetConstitutiveModel( dataRepository::Group const *
 {
   Group const * const constitutiveModels =
     dataGroup->GetGroup( constitutive::ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
-  GEOS_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
+  GEOSX_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
 
   BASETYPE const * const model = constitutiveModels->GetGroup<BASETYPE>( name );
-  GEOS_ERROR_IF( model == nullptr, "Target group does not contain model " << name );
+  GEOSX_ERROR_IF( model == nullptr, "Target group does not contain model " << name );
 
   return model;
 }
@@ -610,10 +626,10 @@ BASETYPE * SolverBase::GetConstitutiveModel( dataRepository::Group * dataGroup, 
 {
   Group * const constitutiveModels =
     dataGroup->GetGroup( constitutive::ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
-  GEOS_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
+  GEOSX_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
 
   BASETYPE * const model = constitutiveModels->GetGroup<BASETYPE>( name );
-  GEOS_ERROR_IF( model == nullptr, "Target group does not contain model " << name );
+  GEOSX_ERROR_IF( model == nullptr, "Target group does not contain model " << name );
 
   return model;
 }
