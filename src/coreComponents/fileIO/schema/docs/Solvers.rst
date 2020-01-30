@@ -1,5 +1,3 @@
-
-
 ============================ ======== ======= ======================================= 
 Name                         Type     Default Description                             
 ============================ ======== ======= ======================================= 
@@ -17,5 +15,4 @@ SolidMechanicsLagrangianSSLE node             :ref:`XML_SolidMechanicsLagrangian
 SolidMechanics_LagrangianFEM node             :ref:`XML_SolidMechanics_LagrangianFEM` 
 SurfaceGenerator             node             :ref:`XML_SurfaceGenerator`             
 ============================ ======== ======= ======================================= 
-
 
