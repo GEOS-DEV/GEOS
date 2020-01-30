@@ -149,15 +149,8 @@
     <PeriodicEvent 
       name="solverApplications8"
       beginTime="200.0"
-      endTime="380.0"
-      forceDt="20.0"
-      target="/Solvers/hydrofracture" />
-
-    <PeriodicEvent 
-      name="solverApplications9"
-      beginTime="380.0"
       endTime="400.0"
-      forceDt="1.0"
+      forceDt="20.0"
       target="/Solvers/hydrofracture" />
       
     <!-- This event is applied every 1.0s.  The targetExactTimestep
@@ -171,7 +164,7 @@
                    target="/Outputs/siloOutput" /-->
 
     <PeriodicEvent name="outputs2"
-                   beginTime="0.0"
+                   beginTime="2.0"
                    timeFrequency="2.0"
                    targetExactTimestep="0"
                    target="/Outputs/siloOutput" />

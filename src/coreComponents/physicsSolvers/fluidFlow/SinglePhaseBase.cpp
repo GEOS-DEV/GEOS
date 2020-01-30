@@ -474,7 +474,7 @@ void SinglePhaseBase::ImplicitStepComplete( real64 const & GEOSX_UNUSED_ARG( tim
       {
         if( volume[ei] * densOld[ei] > 1.1 * creationMass[ei] )
         {
-          creationMass[ei] *= 0.25;
+          creationMass[ei] *= 0.75;
           if( creationMass[ei]<1.0e-20 )
           {
             creationMass[ei] = 0.0;
