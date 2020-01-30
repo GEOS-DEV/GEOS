@@ -57,9 +57,9 @@ public:
    */
   virtual void PointUpdate( real64 const & pressure, localIndex const k, localIndex const q ) = 0;
 
-  virtual void PointUpdateViscosityExplicit( real64 const & pressure, localIndex const k, localIndex const q ) = 0;
+  virtual void PointUpdateViscosity( real64 const & pressure, localIndex const k, localIndex const q ) = 0;
 
-  virtual void PointUpdateDensityExplicit( real64 const & pressure, localIndex const k, localIndex const q ) = 0;
+  virtual void PointUpdateDensity( real64 const & pressure, localIndex const k, localIndex const q ) = 0;
 
   /**
    * @brief Perform an inverse single point constitutive update.
@@ -69,9 +69,9 @@ public:
    *
    * @note This function should generally not be called from a kernel, use BatchUpdate instead
    */
-  virtual void PointInverseUpdate( real64 & pressure, localIndex const k, localIndex const q ) = 0;
+  virtual void PointUpdatePressureExplicit( real64 & pressure, localIndex const k, localIndex const q ) = 0;
 
-  virtual void PointInverseUpdate( real64 & pressure, real64 const & mass, real64 const & volume, real64 const & poroRef, real64 const & totalCompressibility) = 0;
+  virtual void PointUpdatePressure( real64 & pressure, real64 const & mass, real64 const & volume, real64 const & poroRef, real64 const & totalCompressibility) = 0;
   /**
    * @brief Perform a batch constitutive update (all points).
    * @param[in] pressure array containing target pressure values
@@ -96,10 +96,10 @@ public:
                         real64 & viscosity,
                         real64 & dViscosity_dPressure ) const = 0;
 
-  virtual void Compute( real64 & pressure,
-                        real64 const & density,
-                        real64 & viscosity,
-                        real64 & dViscosity_dPressure ) const = 0;
+//  virtual void Compute( real64 & pressure,
+//                        real64 const & density,
+//                        real64 & viscosity,
+//                        real64 & dViscosity_dPressure ) const = 0;
 
   array2d<real64> const & density() const { return m_density; }
   array2d<real64>       & density()       { return m_density; }

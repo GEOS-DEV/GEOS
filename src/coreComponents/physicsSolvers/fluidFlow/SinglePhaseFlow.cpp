@@ -133,7 +133,7 @@ void SinglePhaseFlow::UpdateFluidModel(Group * const dataGroup) const
   {
     forall_in_range<RAJA::seq_exec>( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a )
     {
-      fluid->PointUpdateViscosityExplicit( pres[a], a, 0 );
+      fluid->PointUpdateViscosity( pres[a], a, 0 );
     } );
   }
   else
@@ -350,8 +350,8 @@ real64 SinglePhaseFlow::SolverStep( real64 const& time_n,
 }
 
 void SinglePhaseFlow::UpdateEOS( real64 const time_n,
-								 real64 const dt,
-								 DomainPartition * const domain )
+                                 real64 const dt,
+                                 DomainPartition * const domain )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -398,6 +398,7 @@ void SinglePhaseFlow::UpdateEOS( real64 const time_n,
       SingleFluidBase * const fluid = GetConstitutiveModel<SingleFluidBase>( subRegion, m_fluidName );
       arrayView1d<real64> const & pres = m_pressure[er][esr];
       arrayView1d<real64> const & dPres = m_deltaPressure[er][esr];
+
 //      arrayView2d<real64> const & dens = m_density[er][esr][m_fluidIndex];
 //      arrayView1d<real64> const & vol  = m_volume[er][esr];
 //      arrayView1d<real64> const & poro = m_porosity[er][esr];
@@ -406,10 +407,11 @@ void SinglePhaseFlow::UpdateEOS( real64 const time_n,
       forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
       {
         dPres[ei] = pres[ei];
-        fluid->PointInverseUpdate( pres[ei], ei, 0);
+        fluid->PointUpdatePressureExplicit( pres[ei], ei, 0);
         dPres[ei] = pres[ei] - dPres[ei];
 
 //        if ( std::abs(mass[ei]) > 0 && poro[ei] > 0.999 )
+//        if ( std::abs(mass[ei]) > 0 )
 //        {
 //          std::cout << "\n Fluid Update in poroElastic:  ei = " << ei << ", mass = " << mass[ei] << ", poro= " << poro[ei] << ", vol = " << vol[ei]
 //                    << ", calculated dens = " << dens[ei][0] << ", new pres = " << pres[ei] << "\n";
@@ -441,12 +443,12 @@ void SinglePhaseFlow::UpdateEOS( real64 const time_n,
 //        dens[ei][0] = mass[ei] / ( vol[ei] * poro[ei] );
 //
 //        dPres[ei] = pres[ei];
-//        fluid->PointInverseUpdate( pres[ei], ei, 0);
+//        fluid->PointUpdatePressure( pres[ei], ei, 0);
 //        dPres[ei] = pres[ei] - dPres[ei];
 
         dPres[ei] = pres[ei];
-        fluid->PointInverseUpdate( pres[ei], mass[ei], vol[ei], poroRef[ei], totalCompressibility[ei]);
-        fluid->PointUpdateDensityExplicit( pres[ei], ei, 0 );
+        fluid->PointUpdatePressure( pres[ei], mass[ei], vol[ei], poroRef[ei], totalCompressibility[ei]);
+        fluid->PointUpdateDensity( pres[ei], ei, 0 );
         dPres[ei] = pres[ei] - dPres[ei];
 
 //        if ( mass[ei] > 0 )
@@ -474,7 +476,7 @@ void SinglePhaseFlow::UpdateEOS( real64 const time_n,
       forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
       {
         dPres[ei] = pres[ei];
-        fluid->PointInverseUpdate( pres[ei], ei, 0);
+        fluid->PointUpdatePressureExplicit( pres[ei], ei, 0);
         dPres[ei] = pres[ei] - dPres[ei];
 
 //        if ( mass[ei] > 0 )
@@ -537,8 +539,8 @@ void SinglePhaseFlow::ExplicitStepSetup( real64 const & time_n,
   if( setFlowSolverTimeStep == 0 )
   {
     applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-								   ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
-								   ElementSubRegionBase * const subRegion )
+                       ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
+                       ElementSubRegionBase * const subRegion )
     {
       UpdateState( subRegion );
 
@@ -1012,6 +1014,19 @@ void SinglePhaseFlow::CalculateAndApplyMassFlux( real64 const time_n,
 
   AssembleFluxTermsExplicit( time_n, dt, domain, &m_dofManager );
 
+//  int rank = -1;
+//  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+//
+//  applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
+//                     ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
+//                     ElementSubRegionBase * const subRegion )
+//  {
+//    forall_in_range<RAJA::seq_exec>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex const ei )
+//    {
+//      std::cout << "\n After assemble: rank = " << rank << ", ei = " << ei << ", mass = " << m_mass[er][esr][ei] << "\n";
+//    });
+//  } );
+
   // apply mass flux boundary condition
   FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
 
@@ -1039,6 +1054,18 @@ void SinglePhaseFlow::CalculateAndApplyMassFlux( real64 const time_n,
     domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors );
 
   CommunicationTools::SynchronizeFields( fieldNames, mesh, comms );
+
+
+//  applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
+//                     ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
+//                     ElementSubRegionBase * const subRegion )
+//  {
+//    forall_in_range<RAJA::seq_exec>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex const ei )
+//    {
+//      std::cout << "\n After SynchronizeFields: rank = " << rank << ", ei = " << ei << ", mass = " << m_mass[er][esr][ei] << "\n";
+//    });
+//  } );
+
 }
 
 void

@@ -653,15 +653,9 @@ struct FluxKernel
     localIndex esr_up = sesri[k_up];
     localIndex ei_up  = sei[k_up];
 
+    // currently ignore the critical time dictated by faceToCellConnector (need to fix later)
     if (!faceToCellConnector)
       *maxStableDt = std::min( totalCompressibility[er_up][esr_up][ei_up] * visc[er_up][esr_up][fluidIndex][ei_up][0] * poro[er_up][esr_up][ei_up] / 2.0 * weightedSum * weightedSum, *maxStableDt);
-
-//    if (*maxStableDt <= 1e-20)
-//    {
-//      std::cout<< "\n In Compute: Porosity = " << poro[er_up][esr_up][ei_up] << ", viscosity = " << visc[er_up][esr_up][fluidIndex][ei_up][0]
-//       << ", weightedSum = " << weightedSum << ", totalCompressibility = " << totalCompressibility[er_up][esr_up][ei_up] << ", potDif = " << potDif ;
-//      GEOSX_ERROR("ComputeMatrix::negative maxStableDt");
-//    }
 
     // populate local flux
     if (std::abs(potDif) > std::numeric_limits<real64>::min() && hasMassTransfer)
@@ -914,12 +908,6 @@ struct FluxKernel
 
         localIndex ei_up  = stencilElementIndices[k[k_up]];
 
-//        std::cout<< "\n Fracture mass transfer between " << stencilElementIndices[k[0]] << " and " << stencilElementIndices[k[1]]
-//				 << " = " << mob[ei_up] * weight * potDif * dt << ", weigth = " << weight << ", potDif = " << potDif ;
-
-//        real64 const weightCapped = ( stencilWeights[k[0]]*aperTermCapped[k[0]] ) *
-//                                    ( stencilWeights[k[1]]*aperTermCapped[k[1]] ) / sumOfWeightsCapped;
-
         real64 const edgeLength = 12 * stencilWeightedElementCenterToConnectorCenter[k[0]] * stencilWeights[k[0]];
 
         real64 const areaAlongFlowDirection = stencilWeightedElementCenterToConnectorCenter[k[0]] * std::min(aperture[stencilElementIndices[k[0]]], maxApertureForPermeablity)
@@ -928,13 +916,6 @@ struct FluxKernel
         real64 weightedSum = edgeLength * areaAlongFlowDirection / weight;
 
         *maxStableDt = std::min(totalCompressibility[ei_up] * visc[ei_up][0] / 2.0 * weightedSum, *maxStableDt);
-
-//        if (*maxStableDt <= 1e-20)
-//        {
-//          std::cout<< "\n In ComputeJunction: Density = " << dens[ei_up][0] << ", pres = " << pres[ei_up] << ", visc = " << visc[ei_up][0]
-//           << ", weightedSum = " << weightedSum << ", totalCompressibility = " << totalCompressibility[ei_up] << ", potDif = " << potDif ;
-//          GEOSX_ERROR("ComputeJunction::negative maxStableDt");
-//        }
 
         // populate local flux
         if (std::abs(potDif) > std::numeric_limits<real64>::min() && (pres[ei[0]] > referencePressure[ei[0]] || pres[ei[1]] > referencePressure[ei[1]]))

@@ -86,8 +86,8 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
   ElementRegionManager::ElementViewAccessor<arrayView1d<R1Tensor>> const coefficient =
     elemManager->ConstructViewAccessor< array1d<R1Tensor>, arrayView1d<R1Tensor> >( m_coeffName );
 
-  arrayView1d<integer const> const & faceGhostRank =
-    faceManager->getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
+//  arrayView1d<integer const> const & faceGhostRank =
+//    faceManager->getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
   ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager->nodeList();
 
@@ -119,7 +119,8 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
 
   for (localIndex kf = 0; kf < faceManager->size(); ++kf)
   {
-    if (faceGhostRank[kf] >= 0 || elemRegionList[kf][0] == -1 || elemRegionList[kf][1] == -1)
+    if (elemRegionList[kf][0] == -1 || elemRegionList[kf][1] == -1)
+//    if (faceGhostRank[kf] >= 0 || elemRegionList[kf][0] == -1 || elemRegionList[kf][1] == -1)
       continue;
 
     if ( !(regionFilter.contains(elemRegionList[kf][0]) && regionFilter.contains(elemRegionList[kf][1])) )
@@ -255,7 +256,7 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
   stackArray1d<localIndex, maxElems> stencilCellsIndex;
   stackArray1d<real64, maxElems> stencilWeights;
   stackArray1d<real64, maxElems> stencilWeightedElementCenterToConnectorCenter;
-  arrayView1d<integer const> const & edgeGhostRank = edgeManager->GhostRank();
+//  arrayView1d<integer const> const & edgeGhostRank = edgeManager->GhostRank();
 
   // add new connectors/connections between face elements to the fracture stencil
   for( auto const fci : edgeManager->m_recalculateFractureConnectorEdges )
@@ -264,7 +265,8 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
     // only do this if there are more than one element attached to the connector
     localIndex const edgeIndex = fractureConnectorsToEdges[fci];
 
-    if( edgeGhostRank[edgeIndex] < 0 && numElems > 1 )
+    if( numElems > 1 )
+//    if( edgeGhostRank[edgeIndex] < 0 && numElems > 1 )
     {
 
       GEOSX_ERROR_IF(numElems > maxElems, "Max stencil size exceeded by fracture-fracture connector " << fci);
@@ -318,7 +320,7 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
     for( localIndex const kfe : fractureSubRegion->m_newFaceElements )
 //    for( localIndex kfe=0 ; kfe<faceElementsToCells.size(0) ; ++kfe )
     {
-      if( fractureSubRegion->GhostRank()[kfe] < 0 )
+//      if( fractureSubRegion->GhostRank()[kfe] < 0 )
       {
         localIndex const numElems = faceElementsToCells.size(1);
 
@@ -404,9 +406,9 @@ void TwoPointFluxApproximation::computeBoundaryStencil( DomainPartition const & 
   ElementRegionManager::ElementViewAccessor<arrayView1d<R1Tensor>> const coefficient =
     elemManager->ConstructViewAccessor< array1d<R1Tensor>, arrayView1d<R1Tensor> >(m_coeffName);
 
-  integer_array const & faceGhostRank = faceManager->getReference<integer_array>(ObjectManagerBase::
-                                                                                 viewKeyStruct::
-                                                                                 ghostRankString);
+//  integer_array const & faceGhostRank = faceManager->getReference<integer_array>(ObjectManagerBase::
+//                                                                                 viewKeyStruct::
+//                                                                                 ghostRankString);
 
   ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager->nodeList();
 
@@ -435,8 +437,8 @@ void TwoPointFluxApproximation::computeBoundaryStencil( DomainPartition const & 
   stencil.reserve(faceSet.size(), 2);
   for (localIndex kf : faceSet)
   {
-    if (faceGhostRank[kf] >= 0)
-      continue;
+//    if (faceGhostRank[kf] >= 0)
+//      continue;
 
     faceArea = computationalGeometry::Centroid_3DPolygon( faceToNodes[kf], faceToNodes.sizeOfArray( kf ), X, faceCenter, faceNormal, areaTolerance );
 
