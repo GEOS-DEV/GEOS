@@ -66,8 +66,8 @@
   #define GEOSX_DEVICE_LAMBDA [=] __device__
   #define GEOSX_HOST_DEVICE_LAMBDA [=] __host__ __device__
   #define GEOSX_FORCE_INLINE __forceinline__
-  #define GEOSX_CUDA_PARAM( X ) X
-  #define GEOSX_RESTRICT __restrict__
+  #define restrict __restrict__
+  #define PRAGMA_UNROLL _Pragma("unroll")
 #else
 /// Marks a host-only function.
   #define GEOSX_HOST
@@ -75,14 +75,14 @@
   #define GEOSX_DEVICE
 /// Marks a host-device function.
   #define GEOSX_HOST_DEVICE
-/// Marks a device-only lambda
+/// Marks a device-only lambda.
   #define GEOSX_DEVICE_LAMBDA [=]
 /// Marks a host-device lambda
   #define GEOSX_HOST_DEVICE_LAMBDA [=]
-/// Marks a function or lambda for inlining
+/// Marks a function or lambda for inlining.
   #define GEOSX_FORCE_INLINE inline
-  #define GEOSX_CUDA_PARAM( X )
-  #define GEOSX_RESTRICT
+/// Compiler directive specifying to unroll the loop.
+  #define PRAGMA_UNROLL
 #endif
 
 ///@}

@@ -79,24 +79,6 @@ void CalculateGradients( R2Tensor & Gradient0,
                          R2Tensor & Gradient1,
                          R1Tensor const * restrict const var0,
                          R1Tensor const * restrict const var1,
-                         arraySlice1d<R1Tensor const> const & dNdX )
-{
-  Gradient0.dyadic_ab( var0[0], dNdX[0] );
-  Gradient1.dyadic_ab( var1[0], dNdX[0] );
-  for( localIndex a=1 ; a<N ; ++a )
-  {
-    Gradient0.plus_dyadic_ab( var0[a], dNdX[a] );
-    Gradient1.plus_dyadic_ab( var1[a], dNdX[a] );
-  }
-}
-
-template< int N >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void CalculateGradients( R2Tensor & Gradient0,
-                         R2Tensor & Gradient1,
-                         R1Tensor const * restrict const var0,
-                         R1Tensor const * restrict const var1,
                          real64 const (&dNdX)[8][3] )
 {
   Gradient0 = 0;

@@ -256,7 +256,7 @@ public:
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  static real64 inverse( real64 (&J)[3][3], real64 * GEOSX_RESTRICT const scratch  )
+  static real64 inverse( real64 (&J)[3][3], real64 * restrict const scratch  )
   {
     scratch[0] = J[1][1]*J[2][2] - J[1][2]*J[2][1];
     scratch[1] = J[0][2]*J[2][1] - J[0][1]*J[2][2];

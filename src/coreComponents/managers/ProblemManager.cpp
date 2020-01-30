@@ -766,10 +766,10 @@ void ProblemManager::GenerateMesh()
 
       domain->GenerateSets();
 
-      elemManager->forElementRegions( [&](ElementRegionBase * const region )->void
+      elemManager->forElementRegions( [&](ElementRegionBase * const region )
       {
         Group * subRegions = region->GetGroup(ElementRegionBase::viewKeyStruct::elementSubRegions);
-        subRegions->forSubGroups<ElementSubRegionBase>( [&]( ElementSubRegionBase * const subRegion ) -> void
+        subRegions->forSubGroups<ElementSubRegionBase>( [&]( ElementSubRegionBase * const subRegion )
         {
           subRegion->setupRelatedObjectsInRelations( meshLevel );
           subRegion->CalculateElementGeometricQuantities( *nodeManager,

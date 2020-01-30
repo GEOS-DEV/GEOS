@@ -40,6 +40,7 @@ bool constitutiveUpdatePassThru( constitutive::ConstitutiveBase * const constitu
   }
   else if( dynamic_cast<LinearElasticAnisotropic * >( constitutiveRelation ) )
   {
+    GEOSX_ERROR( "Not yet implemented!" );
 //#if !defined(__CUDA_ARCH__)
 //    lambda( static_cast<LinearElasticAnisotropic & >( *constitutiveRelation) );
 //#else

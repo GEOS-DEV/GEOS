@@ -60,11 +60,9 @@ class R1TensorT : public TensorBaseT< T_dim >
 public:
   //**** CONSTRUCTORS AND DESTRUCTORS ******************************************
 
-  /**
-   */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  R1TensorT( void ): TensorBaseT< T_dim > () {}
+  R1TensorT() = default;
+  R1TensorT( R1TensorT const & ) = default;
+  ~R1TensorT() = default;
 
   /**
    * @param[in] data use for initialization of t_data
@@ -85,34 +83,22 @@ public:
   // *******************************************
 
   /**
-   * @param[in] rhs reference to R1TensorT object to use in initialization
-   */
-  R1TensorT( const R1TensorT< T_dim >& rhs ) = default;
-
-  /**
    * Explicit constructors - will throw compile-time errors if not called with
    * the correct dimension
    */
   R1TensorT(realT x,realT y);  //2D only
   R1TensorT(realT x,realT y, realT z); //3D only
 
-  /// non-virtual destructor
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  ~R1TensorT( void ) {}
-
   //***** ASSIGNMENT OPERATORS *************************************************
   /// assignment of all data to an integer
-  R1TensorT< T_dim >& operator=( const int& rhs );
+  R1TensorT& operator=( const int& rhs );
 
   /// assignment to all data to a realT
   GEOSX_HOST_DEVICE
-  R1TensorT< T_dim >& operator=( const realT& rhs );
+  R1TensorT& operator=( const realT& rhs );
 
   /// assignment to another R1TensorT
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  R1TensorT< T_dim >& operator=( const R1TensorT< T_dim >& rhs );
+  R1TensorT& operator=( const R1TensorT& rhs ) = default;
 
   //***** ACCESS OPERATORS ****************************************************
   /// const access to data
@@ -129,35 +115,35 @@ public:
 
   //***** MULTIPLICATION OPERATIONS *******************************************
   /// multiply (inner product) Rank2 tensor with Rank 1 tensor
-  void AijBj( const R2TensorT< T_dim >& A, const R1TensorT< T_dim >& B );
+  void AijBj( const R2TensorT< T_dim >& A, const R1TensorT& B );
 
   realT ProductOfSquares() const;
 
   /// subtract inner product of Rank2 tensor with Rank 1 tensor
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  void minusAijBj( const R2TensorT< T_dim >& A, const R1TensorT< T_dim >& B );
+  void minusAijBj( const R2TensorT< T_dim >& A, const R1TensorT& B );
 
   /// subtract inner product of Rank2 tensor with Rank 1 tensor
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  void minusAijBj( const R2SymTensorT< T_dim >& A, const R1TensorT< T_dim >& B );
+  void minusAijBj( const R2SymTensorT< T_dim >& A, const R1TensorT& B );
 
   /// multiply (inner product) transpose Rank2 tensor with Rank 1 tensor
 
-  void AijBi( const R2TensorT< T_dim >& A, const R1TensorT< T_dim >& B );
+  void AijBi( const R2TensorT< T_dim >& A, const R1TensorT& B );
 
   /// multiply (inner product) Symmetric Rank2 tensor with Rank 1 tensor
-  void AijBj( const R2SymTensorT< T_dim >& A, const R1TensorT< T_dim >& B );
+  void AijBj( const R2SymTensorT< T_dim >& A, const R1TensorT& B );
 
   /// Hadamard product between two Rank1 tensors
-  void AiBi( const R1TensorT< T_dim >& A, const R1TensorT< T_dim >& B );
+  void AiBi( const R1TensorT& A, const R1TensorT& B );
 
   /// permutation operator contracted on a Rank2 tensor
   void eijkAjk( const R2TensorT< T_dim >& A );
 
   /// cross product of 2 rank1 tensors
-  void Cross( const R1TensorT< T_dim >& a, const R1TensorT< T_dim >& b );
+  void Cross( const R1TensorT& a, const R1TensorT& b );
 
   /// get a row from a symmetric rank2 tensor
   void GetRow( const R2SymTensorT< T_dim >& A, const int row );
@@ -273,18 +259,6 @@ inline R1TensorT< T_dim >& R1TensorT< T_dim >::operator=( const int& rhs )
 template<int T_dim>
 GEOSX_HOST_DEVICE
 inline R1TensorT< T_dim >& R1TensorT< T_dim >::operator=( const realT& rhs )
-{
-  TensorBaseT< T_dim >::operator=( rhs );
-  return *this;
-}
-
-
-/**
- * @param[in] rhs tensor to copy
- * @return reference to *this
- */
-template<int T_dim>
-inline R1TensorT< T_dim >& R1TensorT< T_dim >::operator=( const R1TensorT< T_dim >& rhs )
 {
   TensorBaseT< T_dim >::operator=( rhs );
   return *this;

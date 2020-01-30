@@ -67,8 +67,7 @@ class R2SymTensorT : public TensorBaseT< SymSize< T_dim >::value >
 public:
   //**** CONSTRUCTORS AND DESTRUCTORS *****************************************
   /// default constructor
-  GEOSX_HOST_DEVICE
-  R2SymTensorT(void);
+  R2SymTensorT(void) = default;
 
   /**
 
@@ -77,12 +76,10 @@ public:
   explicit R2SymTensorT( const realT data ): TensorBaseT< SymSize< T_dim >::value >(data) {}
 
   /// default destructor
-  GEOSX_HOST_DEVICE
-  ~R2SymTensorT(void);
+  ~R2SymTensorT(void) = default;
 
   /// copy constructor
-  GEOSX_HOST_DEVICE
-  R2SymTensorT(const R2SymTensorT< T_dim >& rhs);
+  R2SymTensorT(const R2SymTensorT< T_dim >& rhs) = default;
 
   explicit R2SymTensorT( const TensorBaseT< SymSize< T_dim >::value  >& rhs ): TensorBaseT< SymSize< T_dim >::value  > ()
   { TensorBaseT< SymSize< T_dim >::value  >::operator=( rhs ); }
@@ -232,24 +229,6 @@ void R2SymTensorT< T_dim >::print(std::ostream& os) const
         os << (*this)( i, j ) << '\t';
   }
   //  }
-}
-
-template<int T_dim>
-GEOSX_HOST_DEVICE
-R2SymTensorT< T_dim >::R2SymTensorT(void):
-  TensorBaseT< SymSize< T_dim >::value > ()
-{}
-
-template<int T_dim>
-GEOSX_HOST_DEVICE
-R2SymTensorT< T_dim >::~R2SymTensorT(void)
-{}
-
-template<int T_dim>
-R2SymTensorT< T_dim >::R2SymTensorT(const R2SymTensorT< T_dim >& rhs):
-  TensorBaseT< SymSize< T_dim >::value > ()
-{
-  TensorBaseT< SymSize< T_dim >::value >::operator=( rhs );
 }
 
 //***** ASSIGNMENT OPERATORS **************************************************

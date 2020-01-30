@@ -42,8 +42,7 @@ class R2TensorT : public TensorBaseT< T_dim*T_dim >
 public:
   //**** CONSTRUCTORS AND DESTRUCTORS *****************************************
   /// default constructor
-  GEOSX_HOST_DEVICE
-  R2TensorT(void);
+  R2TensorT() = default;
 
   /**
      * @param[in] data use for initialization of t_data
@@ -67,8 +66,7 @@ public:
                                                                                                         // otherwise
 
   /// non-virtual destructor
-  GEOSX_HOST_DEVICE
-  ~R2TensorT(void);
+  ~R2TensorT(void) = default;
 
   //***** ASSIGNMENT OPERATORS ************************************************
   /// assignment of all data to an integer
@@ -82,9 +80,7 @@ public:
   R2TensorT<T_dim>& operator=( const realT& rhs );
 
   /// assignment to another R2TensorT
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  R2TensorT<T_dim>& operator=( const R2TensorT<T_dim>& rhs );
+  R2TensorT<T_dim>& operator=( const R2TensorT<T_dim>& rhs ) = default;
 
   /// assignment to another R2SymTensorT
   R2TensorT<T_dim>& operator=( const R2SymTensorT<T_dim>& rhs );
@@ -258,14 +254,6 @@ void R2TensorT<T_dim>::print( std::ostream& os ) const
 //*****************************************************************************
 
 //**** CONSTRUCTORS AND DESTRUCTORS *******************************************
-/**
- * @return none
- */
-template< int T_dim >
-GEOSX_HOST_DEVICE
-R2TensorT<T_dim>::R2TensorT(void):
-  TensorBaseT< T_dim*T_dim >()
-{}
 
 /// Explicit 2D constructor
 ///
@@ -303,14 +291,6 @@ inline R2TensorT<3>::R2TensorT(realT Txx,realT Txy,realT Txz,
   this->t_data[7] = Tzy;
   this->t_data[8] = Tzz;
 }
-
-/**
- * @return none
- */
-template< int T_dim >
-GEOSX_HOST_DEVICE
-R2TensorT<T_dim>::~R2TensorT(void)
-{}
 
 //***** ACCESS OPERATORS ******************************************************
 /**
@@ -363,19 +343,6 @@ inline R2TensorT<T_dim>& R2TensorT<T_dim>::operator=( const realT& rhs )
   return *this;
 }
 
-
-/**
- * @param[in] rhs tensor to copy
- * @return reference to *this
- */
-template< int T_dim >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-R2TensorT<T_dim>& R2TensorT<T_dim>::operator=( const R2TensorT<T_dim>& rhs )
-{
-  TensorBaseT< T_dim*T_dim >::operator=(rhs);
-  return *this;
-}
 
 /**
  * @param[in] rhs symmetic tensor to copy

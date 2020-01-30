@@ -70,7 +70,7 @@ public:
 
   /// default constructor
   GEOSX_HOST_DEVICE
-  TensorBaseT( void );
+  TensorBaseT();
 
   /// constructor initialized by single value
   GEOSX_HOST_DEVICE
@@ -81,13 +81,11 @@ public:
   explicit TensorBaseT( const realT data[T_length] );
 
   /// constructor initialized by another TensorBaseT object
-  GEOSX_HOST_DEVICE
-  TensorBaseT( const TensorBaseT< T_length >& rhs );
+  TensorBaseT( const TensorBaseT< T_length >& rhs ) = default;
 
   /// non-virtual destructor. This means that this class in NOT intended to be
   /// used as a polymorphically.
-  GEOSX_HOST_DEVICE
-  ~TensorBaseT( void );
+  ~TensorBaseT() = default;
 
   //***** ASSIGNMENT OPERATORS *************************************************
   /// assignment of all data to an integer
@@ -99,8 +97,7 @@ public:
   TensorBaseT& operator=( const realT& rhs );
 
   /// assignment to another TensorBaseT
-  GEOSX_HOST_DEVICE
-  TensorBaseT& operator=( const TensorBaseT& rhs );
+  TensorBaseT& operator=( const TensorBaseT& rhs ) = default;
 
   /// add a realT to data
   GEOSX_HOST_DEVICE
@@ -416,16 +413,6 @@ TensorBaseT< T_length >::TensorBaseT( void )//:
 }
 
 /**
- * @param[in] rhs reference to TensorBaseT object to use in initialization     * @param[in] rhs reference to TensorBaseT object to use in initialization
- * @return none    * @return none
- */
-template<int T_length>
-TensorBaseT< T_length >::TensorBaseT( const TensorBaseT< T_length >& rhs )
-{
-  TensorBaseT< T_length >::operator=( rhs );
-}
-
-/**
  * @param[in] data naked array used for initialization of t_data
  * @return none
  */
@@ -446,13 +433,6 @@ TensorBaseT< T_length >::TensorBaseT( const realT data[T_length] )
   for (int i = 0 ; i < T_length ; ++i)
     t_data[i] = data[i];
 }
-
-/**
- * @return none
- */
-template<int T_length>
-TensorBaseT< T_length >::~TensorBaseT( void )
-{}
 
 //***** ASSIGNMENT OPERATORS **************************************************
 
@@ -480,16 +460,6 @@ TensorBaseT< T_length >::operator=( const realT& rhs )
 {
   for (int i = 0 ; i < T_length ; ++i)
     t_data[i] = rhs;
-  return *this;
-}
-
-template<int T_length>
-GEOSX_FORCE_INLINE
-TensorBaseT< T_length >&
-TensorBaseT< T_length >::operator=( const TensorBaseT< T_length >& rhs )
-{
-  for (int i = 0 ; i < T_length ; ++i)
-    t_data[i] = rhs.t_data[i];
   return *this;
 }
 

@@ -504,7 +504,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
   SolidMechanicsLagrangianFEMKernels::displacementUpdate( vel, uhat, u, dt );
 
   fsManager.ApplyFieldValue( time_n + dt, domain, "nodeManager", keys::TotalDisplacement,
-    [&]( FieldSpecificationBase const * const bc, SortedArrayView<localIndex const> const & targetSet )->void
+    [&]( FieldSpecificationBase const * const bc, SortedArrayView<localIndex const> const & targetSet )
     {
       integer const component = bc->GetComponent();
       forall_in_range< parallelDevicePolicy< 1024 > >(0, targetSet.size(),
@@ -515,7 +515,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
         }
       );
     },
-    [&]( FieldSpecificationBase const * const bc, SortedArrayView<localIndex const> const & targetSet )->void
+    [&]( FieldSpecificationBase const * const bc, SortedArrayView<localIndex const> const & targetSet )
     {
       integer const component = bc->GetComponent();
       forall_in_range< parallelDevicePolicy< 1024 > >(0, targetSet.size(),
@@ -546,10 +546,6 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
 
     elementRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr, CellElementSubRegion const * const elementSubRegion )
     {
-      arrayView3d< R1Tensor > const & dNdX = elementSubRegion->getReference< array3d< R1Tensor > >(keys::dNdX);
-
-      arrayView2d<real64> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
-
       arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & elemsToNodes = elementSubRegion->nodeList();
 
       localIndex const numNodesPerElement = elemsToNodes.size(1);
@@ -561,8 +557,6 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
                                    constitutiveRelations[er][esr][m_solidMaterialFullIndex],
                                    this->m_elemsAttachedToSendOrReceiveNodes[er][esr],
                                    elemsToNodes,
-                                   dNdX,
-                                   detJ,
                                    X,
                                    u,
                                    vel,
@@ -589,10 +583,6 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
 
     elementRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr, CellElementSubRegion const * const elementSubRegion )
     {
-      arrayView3d< R1Tensor > const & dNdX = elementSubRegion->getReference< array3d< R1Tensor > >(keys::dNdX);
-
-      arrayView2d<real64> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
-
       arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & elemsToNodes = elementSubRegion->nodeList();
 
       localIndex const numNodesPerElement = elemsToNodes.size(1);
@@ -604,8 +594,6 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
                                    constitutiveRelations[er][esr][m_solidMaterialFullIndex],
                                    this->m_elemsNotAttachedToSendOrReceiveNodes[er][esr],
                                    elemsToNodes,
-                                   dNdX,
-                                   detJ,
                                    X,
                                    u,
                                    vel,
