@@ -149,8 +149,15 @@
     <PeriodicEvent 
       name="solverApplications8"
       beginTime="200.0"
-      endTime="400.0"
+      endTime="380.0"
       forceDt="20.0"
+      target="/Solvers/hydrofracture" />
+
+    <PeriodicEvent 
+      name="solverApplications9"
+      beginTime="380.0"
+      endTime="400.0"
+      forceDt="1.0"
       target="/Solvers/hydrofracture" />
       
     <!-- This event is applied every 1.0s.  The targetExactTimestep

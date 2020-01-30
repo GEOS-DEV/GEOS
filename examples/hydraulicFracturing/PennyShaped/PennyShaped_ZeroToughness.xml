@@ -52,10 +52,9 @@
         />
     </SolidMechanicsLagrangianSSLE>
   
-    <SinglePhaseFlow 
+    <SinglePhaseFVM
       name="SinglePhaseFlow"
       logLevel="0"
-      gravityFlag="0"
       discretization="singlePhaseTPFA"
       targetRegions="{Fracture}"
       fluidName="water"
@@ -70,7 +69,7 @@
         krylovTol="1.0e-12"
         logLevel="0"
         />
-    </SinglePhaseFlow>
+    </SinglePhaseFVM>
     
     <SurfaceGenerator
       name="SurfaceGen"
@@ -93,7 +92,7 @@
                    materialList="{water, rock}"/>
                    
     <FaceElementRegion name="Fracture"
-                       defaultAperture="0.02e-3"
+                       defaultAperture="0.03e-3"
                        materialList="{water, rock}"/>
   </ElementRegions>
 
@@ -121,7 +120,7 @@
       <TableFunction 
         name="aperTable" 
         coordinates = "{ -1.0e-3, 0.0}"
-        values      = "{  0.002e-3, 0.02e-3}" 
+        values      = "{  0.002e-3, 0.03e-3}" 
         />
     </Contact>
   </Constitutive>
