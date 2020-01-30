@@ -135,7 +135,7 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
     integer isPositive, isNegative;
     R1Tensor distVec;
 
-    elemManager-> forElementRegionsComplete<CellElementRegion>( [&]( localIndex const er, auto * const region )->void
+    elemManager->forElementRegionsComplete<CellElementRegion>( [&]( localIndex const er, CellElementRegion * const region )->void
     {
       region->forElementSubRegionsIndex<CellElementSubRegion>( [&]( localIndex const esr, CellElementSubRegion * const subRegion )->void
       {

@@ -76,6 +76,8 @@ public:
                                R1Tensor normalVector);
 
     bool AddNewEmbeddedSurface(localIndex const cellIndex,
+                               localIndex const regionIndex,
+                               localIndex const subRegionIndex,
                                R1Tensor normalVector,
                                NodeManager const & nodeManager,
                                EdgeManager const & edgeManager,
