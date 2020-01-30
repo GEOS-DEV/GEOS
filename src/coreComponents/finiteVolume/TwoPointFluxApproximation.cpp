@@ -256,6 +256,8 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
 
   arrayView1d<integer const> const & edgeGhostRank = edgeManager->GhostRank();
 
+  // TODO Note that all of this initialization should be performed elsewhere. This is just here because it was
+  // convenient, but it is not appropriate to have physics based initialization in the flux approximator.
 #if !defined(SET_CREATION_DISPLACEMENT)
     static_assert(true,"must have SET_CREATION_DISPLACEMENT defined");
 #endif
