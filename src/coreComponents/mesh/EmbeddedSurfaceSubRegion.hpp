@@ -96,12 +96,9 @@ public:
       static constexpr auto elementApertureString        = "elementAperture";
       static constexpr auto elementAreaString            = "elementArea";
       static constexpr auto cellListString               = "fractureElementsToCellIndices";
+      static constexpr auto regionListString             = "fractureElementsToRegionIndex";
+      static constexpr auto subregionListString          = "fractureElementsToSubRegionIndex";
       static constexpr auto normalVectorString           = "normalVector";
-
-      //
-      //static constexpr auto faceElementsToCellRegionsString    = "fractureElementsToCellRegions";
-      //static constexpr auto faceElementsToCellSubRegionsString    = "fractureElementsToCellSubRegions";
-      //static constexpr auto faceElementsToCellIndexString    = "fractureElementsToCellIndices";
     };
 
     virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override;
@@ -137,6 +134,12 @@ public:
     arrayView1d< real64 > const &       getElementArea()       { return m_elementArea; }
     arrayView1d< real64 const > const & getElementArea() const { return m_elementArea; }
 
+    arrayView1d< localIndex > const &       getSurfaceToRegionList()       { return m_embeddedSurfaceToRegion; }
+    arrayView1d< localIndex const > const & getSurfaceToRegionList() const { return m_embeddedSurfaceToRegion; }
+
+    arrayView1d< localIndex > const &       getSurfaceToSubRegionList()       { return m_embeddedSurfaceToSubRegion; }
+    arrayView1d< localIndex const > const & getSurfaceToSubRegionList() const { return m_embeddedSurfaceToSubRegion; }
+
     arrayView1d< localIndex > const &       getSurfaceToCellList()       { return m_embeddedSurfaceToCell; }
     arrayView1d< localIndex const > const & getSurfaceToCellList() const { return m_embeddedSurfaceToCell; }
 
@@ -147,14 +150,18 @@ private:
     /// normal vector to the embedded surface element
     array1d < R1Tensor > m_normalVector;
 
-    /// list of elements cut by the embedded surface el
+    /// list of regions
+    array1d< localIndex > m_embeddedSurfaceToRegion;
+    /// list of subregions
+    array1d< localIndex > m_embeddedSurfaceToSubRegion;
+    /// list of elements cut by the embedded surface elem
     array1d< localIndex > m_embeddedSurfaceToCell;
 
     /// list of nodes
-    NodeMapType  m_toNodesRelation; // ?
+    NodeMapType  m_toNodesRelation; // Not used for now. Will need for Flow?
 
     /// list of edges (if necessary)
-    EdgeMapType  m_toEdgesRelation; // ?
+    EdgeMapType  m_toEdgesRelation; // Not used for now. Will need for Flow?
 
     /// The member level field for the element center
     array1d< real64 > m_elementAperture;
