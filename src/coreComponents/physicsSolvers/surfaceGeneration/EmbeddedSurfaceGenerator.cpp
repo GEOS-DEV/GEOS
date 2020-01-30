@@ -135,10 +135,9 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
     integer isPositive, isNegative;
     R1Tensor distVec;
 
-    elemManager->forElementRegions( [&](ElementRegionBase * const region )->void
+    elemManager-> forElementRegionsComplete<CellElementRegion>( [&]( localIndex const er, auto * const region )->void
     {
-      Group * subRegions = region->GetGroup(ElementRegionBase::viewKeyStruct::elementSubRegions);
-      subRegions->forSubGroups<CellElementSubRegion>( [&]( CellElementSubRegion * const subRegion ) -> void
+      region->forElementSubRegionsIndex<CellElementSubRegion>( [&]( localIndex const esr, CellElementSubRegion * const subRegion )->void
       {
         CellElementSubRegion::NodeMapType::ViewTypeConst const & cellToNodes = subRegion->nodeList();
         FixedOneToManyRelation const & cellToEdges = subRegion->edgeList();

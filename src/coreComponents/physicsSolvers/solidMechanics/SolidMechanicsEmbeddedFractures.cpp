@@ -21,14 +21,11 @@
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/contact/ContactRelationBase.hpp"
-#include "constitutive/fluid/SingleFluidBase.hpp"
-#include "finiteElement/Kinematics.h"
 #include "managers/DomainPartition.hpp"
 #include "managers/NumericalMethodsManager.hpp"
-#include "mesh/FaceElementRegion.hpp"
+#include "mesh/EmbeddedSurfaceRegion.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
@@ -220,6 +217,54 @@ void SolidMechanicsEmbeddedFractures::SetupSystem( DomainPartition * const domai
 
   //dofManager.setSparsityPattern( m_matrix01, keys::TotalDisplacement, keys::DispJump ); I am guessing that this won't work coz coupling has not been created.
   //dofManager.setSparsityPattern( m_matrix10, keys::DispJump, keys::TotalDisplacement );
+
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  NodeManager * const nodeManager = mesh->getNodeManager();
+  ElementRegionManager * const elemManager = mesh->getElemManager();
+
+  string const jumpDofKey = m_dofManager.getKey( viewKeyStruct::dispJumpString );
+  string const dispDofKey = m_solidSolver->getDofManager().getKey( keys::TotalDisplacement );
+
+  arrayView1d<globalIndex> const &
+  dispDofNumber =  nodeManager->getReference<globalIndex_array>( dispDofKey );
+
+  elemManager->forElementSubRegions<EmbeddedSurfaceSubRegion>([&]( EmbeddedSurfaceSubRegion const * const embeddedSurfaceSubRegion )
+    {
+    localIndex const numEmbeddedElems = embeddedSurfaceSubRegion->size();
+    array1d< localIndex >     const & embeddedSurfaceToCell = embeddedSurfaceSubRegion->getSurfaceToCellList();
+    arrayView1d<globalIndex> const &
+    embeddedElementDofNumber = embeddedSurfaceSubRegion->getReference< array1d<globalIndex> >( jumpDofKey );
+
+    for( localIndex k=0 ; k<numEmbeddedElems ; ++k )
+    {
+      globalIndex const activeJumpDOF = embeddedElementDofNumber[k];
+      localIndex const numNodesPerElement = elemsToNodes[k].size();
+      array1d<globalIndex> activeDisplacementDOF(3 * numNodesPerElement);
+      array1d<real64> values( 3*numNodesPerElement );
+      values = 1;
+
+      for( localIndex a=0 ; a<numNodesPerElement ; ++a )
+      {
+        for( int d=0 ; d<3 ; ++d )
+        {
+          activeDisplacementDOF[a * 3 + d] = dispDofNumber[elemsToNodes[k][a]] + d;
+        }
+      }
+
+      m_matrix01.insert( activeDisplacementDOF.data(),
+                         &activeFlowDOF,
+                         values.data(),
+                         activeDisplacementDOF.size(),
+                         1 );
+
+      m_matrix10.insert( &activeFlowDOF,
+                         activeDisplacementDOF.data(),
+                         values.data(),
+                         1,
+                         activeDisplacementDOF.size() );
+    }
+    });
+
 }
 
 void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
