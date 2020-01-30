@@ -1630,7 +1630,7 @@ void HydrofractureSolver::SetNextDt( real64 const & currentDt ,
     SolverBase * const surfaceGenerator =  this->getParent()->GetGroup<SolverBase>("SurfaceGen");
     nextDt = surfaceGenerator->GetTimestepRequest() < 1e99 ? surfaceGenerator->GetTimestepRequest() : currentDt;
   }
-  GEOSX_LOG_RANK_0(this->getName() << ": nextDt request is "  << nextDt);
+  GEOSX_LOG_LEVEL_RANK_0( 3, this->getName() << ": nextDt request is "  << nextDt);
 }
 
 void HydrofractureSolver::initializeNewFaceElements( DomainPartition const &  )

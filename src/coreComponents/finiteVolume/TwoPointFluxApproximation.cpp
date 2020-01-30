@@ -224,15 +224,6 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
 
   arrayView1d<R1Tensor const> const & X = nodeManager->referencePosition();
 
-#if !defined(SET_CREATION_DISPLACEMENT)
-    static_assert(true,"must have SET_CREATION_DISPLACEMENT defined");
-#endif
-#if SET_CREATION_DISPLACEMENT==1
-  ArrayOfArraysView<localIndex const> const & faceToNodesMap = faceManager->nodeList();
-  arrayView1d<R1Tensor> const & incrementalDisplacement = nodeManager->getReference<array1d<R1Tensor>>(keys::IncrementalDisplacement);
-  arrayView1d<R1Tensor> const & totalDisplacement = nodeManager->getReference<array1d<R1Tensor>>(keys::TotalDisplacement);
-#endif
-
   FaceElementStencil & fractureStencil = getReference<FaceElementStencil>(viewKeyStruct::fractureStencilString);
   CellElementStencilTPFA & cellStencil = getReference<CellElementStencilTPFA>(viewKeyStruct::cellStencilString);
 
@@ -265,6 +256,15 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
 
   arrayView1d<integer const> const & edgeGhostRank = edgeManager->GhostRank();
 
+#if !defined(SET_CREATION_DISPLACEMENT)
+    static_assert(true,"must have SET_CREATION_DISPLACEMENT defined");
+#endif
+#if SET_CREATION_DISPLACEMENT==1
+  ArrayOfArraysView<localIndex const> const & faceToNodesMap = faceManager->nodeList();
+  arrayView1d<R1Tensor> const & incrementalDisplacement = nodeManager->getReference<array1d<R1Tensor>>(keys::IncrementalDisplacement);
+  arrayView1d<R1Tensor> const & totalDisplacement = nodeManager->getReference<array1d<R1Tensor>>(keys::TotalDisplacement);
+  arrayView1d< real64 > const & aperture = fractureSubRegion->getReference<array1d<real64>>("elementAperture");
+#endif
 
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
@@ -303,8 +303,6 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
     static_assert(true,"must have SET_CREATION_DISPLACEMENT defined");
 #endif
 #if SET_CREATION_DISPLACEMENT==1
-    arrayView1d< real64 > const &
-    aperture = fractureSubRegion->getReference<array1d<real64>>("elementAperture");
     if( initFlag )
     {
       aperture[kfe] = 1.0e99;
