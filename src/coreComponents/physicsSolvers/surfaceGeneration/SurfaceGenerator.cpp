@@ -3158,8 +3158,20 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
           tipNodeSIF = pow( (fabs(tipNodeForce[0] * trailingNodeDisp[0] / 2.0 / tipArea) + fabs(tipNodeForce[1] * trailingNodeDisp[1] / 2.0 / tipArea)
               + fabs(tipNodeForce[2] * trailingNodeDisp[2] / 2.0 / tipArea)), 0.5 );
 
-          //wu40: the tip node may be included in two trailing faces and SIF of the node will be calculated twice. We chose the larger one.
-          if (SIFNode[nodeIndex] < tipNodeSIF)
+          //wu40: the tip node may be included in two trailing faces and SIF of the node will be calculated twice. We chose the smaller one.
+//          if (SIFNode[nodeIndex] < tipNodeSIF)
+//          {
+//            SIFNode[nodeIndex] = tipNodeSIF;
+//          }
+
+          if (SIFNode[nodeIndex] > 0)
+          {
+            if (SIFNode[nodeIndex] > tipNodeSIF)
+            {
+              SIFNode[nodeIndex] = tipNodeSIF;
+            }
+          }
+          else
           {
             SIFNode[nodeIndex] = tipNodeSIF;
           }
