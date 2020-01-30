@@ -36,12 +36,20 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
                                       dataRepository::Group * const parent ):
   ElementSubRegionBase( name, parent ),
   m_normalVector(),
+  m_embeddedSurfaceToRegion(),
+  m_embeddedSurfaceToSubRegion(),
   m_embeddedSurfaceToCell(),
   m_toNodesRelation(),
   m_toEdgesRelation(),
   m_elementAperture(),
   m_elementArea()
 {
+  registerWrapper( viewKeyStruct::regionListString, &m_embeddedSurfaceToRegion, false )->
+      setDescription("Map to the region cut by each EmbeddedSurface.");
+
+  registerWrapper( viewKeyStruct::subregionListString, &m_embeddedSurfaceToSubRegion, false )->
+      setDescription("Map to the subregion cut by each EmbeddedSurface.");
+
   registerWrapper( viewKeyStruct::nodeListString, &m_toNodesRelation, false )->
     setDescription("Map to the nodes attached to each EmbeddedSurface.");
 
@@ -106,6 +114,8 @@ void EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface (localIndex const cellIndex
 }
 
 bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface (localIndex const cellIndex,
+                                                      localIndex const regionIndex,
+                                                      localIndex const subRegionIndex,
                                                       R1Tensor normalVector,
                                                       NodeManager const & nodeManager,
                                                       EdgeManager const & edgeManager,
@@ -133,6 +143,7 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface (localIndex const cellIndex
    * - Heaviside:
    */
 
+  // std::cout << "cell " << cellIndex  << std::endl;
   bool addEmbeddedElem = true;
   array1d<R1Tensor> const & nodesCoord = nodeManager.referencePosition();
   EdgeManager::NodeMapType::ViewTypeConst const & edgeToNodes = edgeManager.nodeList();
@@ -154,6 +165,7 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface (localIndex const cellIndex
 
     if (prodScalarProd < 0)
     {
+      // std::cout << "node 1: " << nodesCoord[edgeToNodes[edgeIndex][0]] <<  " node 2: " << nodesCoord[edgeToNodes[edgeIndex][1]] << std::endl;
       lineDir  = nodesCoord[edgeToNodes[edgeIndex][0]];
       lineDir -= nodesCoord[edgeToNodes[edgeIndex][1]];
       lineDir.Normalize();
@@ -162,6 +174,7 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface (localIndex const cellIndex
                                                            normalVector,
                                                            origin);
 
+      // std::cout << "origin " << origin <<  " point " << point << std::endl;
       // Check if the point is inside the fracture (bounded plane)
       if ( !fracture->IsCoordInObject(point) )
       {
@@ -174,11 +187,17 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface (localIndex const cellIndex
   if (addEmbeddedElem)
   {
     m_embeddedSurfaceToCell.push_back(cellIndex);
+    m_embeddedSurfaceToRegion.push_back(regionIndex);
+    m_embeddedSurfaceToSubRegion.push_back(subRegionIndex);
     m_normalVector.push_back(normalVector);
     // resize
     this->resize(this->size() + 1);
     this->CalculateElementGeometricQuantities(intersectionPoints, this->size()-1);
   }
+<<<<<<< HEAD
+=======
+
+>>>>>>> feature/cusini/EmbeddedFractures
   return addEmbeddedElem;
 }
 

@@ -22,12 +22,12 @@ PackDevice( buffer_unit_type * & buffer,
 }
 
 
-template< bool DO_PACKING, typename T, typename INDEX_TYPE >
+template< bool DO_PACKING, typename T >
 GEOSX_HOST_DEVICE
 typename std::enable_if< can_memcpy< T >, localIndex >::type
 PackRawPointerDevice( buffer_unit_type * & buffer,
                       T const * const restrict var,
-                      INDEX_TYPE const length )
+                      localIndex const length )
 {
   localIndex const sizeOfPackedChars = length * sizeof(T);
   if( DO_PACKING )
@@ -42,7 +42,7 @@ template< bool DO_PACKING, typename T >
 GEOSX_HOST_DEVICE
 typename std::enable_if< can_memcpy< T >, localIndex >::type
 PackDevice( buffer_unit_type * & buffer,
-            LvArray::ArraySlice< T, 1 > const & var )
+            ArraySlice< T, 1 > const & var )
 {
   localIndex length = var.size();
   localIndex sizeOfPackedChars = PackDevice< DO_PACKING >( buffer, length );
@@ -59,12 +59,12 @@ PackDevice( buffer_unit_type * & buffer,
   return sizeOfPackedChars;
 }
 
-template< bool DO_PACKING, typename T, typename INDEX_TYPE >
+template< bool DO_PACKING, typename T >
 GEOSX_HOST_DEVICE
 typename std::enable_if< can_memcpy< T >, localIndex >::type
 PackPointerDevice( buffer_unit_type * & buffer,
                    T const * const restrict var,
-                   INDEX_TYPE const length )
+                   localIndex const length )
 {
   localIndex sizeOfPackedChars = PackDevice< DO_PACKING >( buffer, length );
   sizeOfPackedChars += length * sizeof(T);
@@ -76,15 +76,15 @@ PackPointerDevice( buffer_unit_type * & buffer,
   return sizeOfPackedChars;
 }
 
-template< bool DO_PACKING, typename T, typename INDEX_TYPE >
+template< bool DO_PACKING, typename T >
 GEOSX_HOST_DEVICE
 typename std::enable_if< !can_memcpy< T >, localIndex >::type
 PackPointerDevice( buffer_unit_type * & buffer,
                    T const * const restrict var,
-                   INDEX_TYPE const length )
+                   localIndex const length )
 {
   localIndex sizeOfPackedChars = PackDevice< DO_PACKING >( buffer, length );
-  for( INDEX_TYPE ii = 0 ; ii < length ; ++ii )
+  for( localIndex ii = 0 ; ii < length ; ++ii )
     sizeOfPackedChars += PackDevice< DO_PACKING >( buffer, var[ii] );
   return sizeOfPackedChars;
 }
@@ -105,7 +105,7 @@ template< typename T, int NDIM >
 GEOSX_HOST_DEVICE
 typename std::enable_if< can_memcpy< T >, localIndex >::type
 UnpackDevice( buffer_unit_type const * & buffer,
-              LvArray::ArraySlice< T, NDIM > const & var )
+              ArraySlice< T, NDIM > const & var )
 {
   localIndex length;
   localIndex sizeOfPackedChars = UnpackDevice( buffer, length );
@@ -117,14 +117,14 @@ UnpackDevice( buffer_unit_type const * & buffer,
   return sizeOfPackedChars;
 }
 
-template< typename T, typename INDEX_TYPE >
+template< typename T >
 GEOSX_HOST_DEVICE
 typename std::enable_if< can_memcpy< T >, localIndex >::type
 UnpackPointerDevice( buffer_unit_type const * & buffer,
                      T * const restrict var,
-                     INDEX_TYPE const expectedLength )
+                     localIndex const expectedLength )
 {
-  INDEX_TYPE length = 0;
+  localIndex length = 0;
   localIndex sizeOfUnpackedChars = UnpackDevice( buffer, length );
   GEOSX_ASSERT_MSG( length == expectedLength, "expectedLength != length: " <<
                     expectedLength << " != " << length );
@@ -135,30 +135,30 @@ UnpackPointerDevice( buffer_unit_type const * & buffer,
   return sizeOfUnpackedChars;
 }
 
-template< typename T, typename INDEX_TYPE >
+template< typename T >
 GEOSX_HOST_DEVICE
 typename std::enable_if< !can_memcpy< T >, localIndex >::type
 UnpackPointerDevice( buffer_unit_type const * & buffer,
                      T * const restrict var,
-                     INDEX_TYPE const expectedLength )
+                     localIndex const expectedLength )
 {
   localIndex sizeOfUnpackedChars = 0;
-  INDEX_TYPE length = 0;
+  localIndex length = 0;
   UnpackDevice( buffer, length );
   GEOSX_ASSERT_MSG( length == expectedLength, "expectedLength != length: " <<
                     expectedLength << " != " << length );
   GEOSX_DEBUG_VAR( expectedLength );
-  for( INDEX_TYPE ii = 0 ; ii < length ; ++ii )
+  for( localIndex ii = 0 ; ii < length ; ++ii )
     sizeOfUnpackedChars += UnpackDevice( buffer, var[ii] );
   return sizeOfUnpackedChars;
 }
 
-template< typename T, typename INDEX_TYPE >
+template< typename T >
 GEOSX_HOST_DEVICE
 typename std::enable_if< can_memcpy< T >, localIndex >::type
 UnpackRawPointerDevice( buffer_unit_type const * & buffer,
                         T * const restrict var,
-                        INDEX_TYPE const length )
+                        localIndex const length )
 {
   localIndex sizeOfUnpackedChars = 0;
   memcpy( var, buffer, length * sizeof(T) );
@@ -167,10 +167,10 @@ UnpackRawPointerDevice( buffer_unit_type const * & buffer,
   return sizeOfUnpackedChars;
 }
 
-template< typename POLICY, bool DO_PACKING, typename T, int NDIM, int UNIT_STRIDE_DIM, typename INDEX_TYPE >
+template< typename POLICY, bool DO_PACKING, typename T, int NDIM, int UNIT_STRIDE_DIM >
 typename std::enable_if< can_memcpy< T >, localIndex >::type
 PackDevice( buffer_unit_type * & buffer,
-            LvArray::ArrayView< T, NDIM, UNIT_STRIDE_DIM, INDEX_TYPE > const & var )
+            ArrayView< T, NDIM, UNIT_STRIDE_DIM > const & var )
 {
   localIndex packedSize = PackPointerDevice< DO_PACKING >( buffer, var.dims(), NDIM );
   packedSize += PackPointerDevice< DO_PACKING >( buffer, var.strides(), NDIM );
@@ -189,14 +189,14 @@ PackDevice( buffer_unit_type * & buffer,
   return packedSize;
 }
 
-template< typename POLICY, typename T, int NDIM, int UNIT_STRIDE_DIM, typename INDEX_TYPE >
+template< typename POLICY, typename T, int NDIM, int UNIT_STRIDE_DIM >
 typename std::enable_if< can_memcpy< T >, localIndex >::type
 UnpackDevice( buffer_unit_type const * & buffer,
-              LvArray::ArrayView< T, NDIM, UNIT_STRIDE_DIM, INDEX_TYPE > const & var )
+              ArrayView< T, NDIM, UNIT_STRIDE_DIM > const & var )
 {
-  INDEX_TYPE dims[NDIM];
+  localIndex dims[NDIM];
   localIndex packedSize = UnpackPointerDevice( buffer, dims, NDIM );
-  INDEX_TYPE strides[NDIM];
+  localIndex strides[NDIM];
   packedSize += UnpackPointerDevice( buffer, strides, NDIM );
   for( int dd = 0 ; dd < NDIM ; ++dd )
   {
@@ -215,7 +215,7 @@ UnpackDevice( buffer_unit_type const * & buffer,
 template< typename POLICY, bool DO_PACKING, typename T, int NDIM, typename T_INDICES >
 typename std::enable_if< can_memcpy< T >, localIndex >::type
 PackByIndexDevice ( buffer_unit_type * & buffer,
-                    LvArray::ArrayView< T, NDIM > const & var,
+                    ArrayView< T, NDIM > const & var,
                     const T_INDICES & indices )
 {
   localIndex numIndices = indices.size();
@@ -242,7 +242,7 @@ PackByIndexDevice ( buffer_unit_type * & buffer,
 template< typename POLICY, typename T, int NDIM, typename T_INDICES >
 typename std::enable_if< can_memcpy< T >, localIndex >::type
 UnpackByIndexDevice ( buffer_unit_type const * & buffer,
-                      LvArray::ArrayView< T, NDIM > const & var,
+                      ArrayView< T, NDIM > const & var,
                       T_INDICES const & indices )
 {
   localIndex strides[NDIM];
@@ -269,26 +269,24 @@ UnpackByIndexDevice ( buffer_unit_type const * & buffer,
 }
 
 #define pd( DO_PACKING, TYPE, NDIM, UNIT_STRIDE_DIM ) \
-  template localIndex PackDevice< parallelDevicePolicy< >, DO_PACKING, TYPE, NDIM, UNIT_STRIDE_DIM, localIndex > \
-    ( buffer_unit_type * &buffer, \
-    LvArray::ArrayView< TYPE, NDIM, UNIT_STRIDE_DIM, localIndex > const & var );
+  template localIndex PackDevice< parallelDevicePolicy< >, DO_PACKING, TYPE, NDIM, UNIT_STRIDE_DIM > \
+    ( buffer_unit_type * &buffer, ArrayView< TYPE, NDIM, UNIT_STRIDE_DIM > const & var );
 
 #define upd( TYPE, NDIM, UNIT_STRIDE_DIM ) \
-  template localIndex UnpackDevice< parallelDevicePolicy< >, TYPE, NDIM, UNIT_STRIDE_DIM, localIndex > \
-    ( buffer_unit_type const * & buffer, \
-    LvArray::ArrayView< TYPE, NDIM, UNIT_STRIDE_DIM, localIndex > const & var );
+  template localIndex UnpackDevice< parallelDevicePolicy< >, TYPE, NDIM, UNIT_STRIDE_DIM > \
+    ( buffer_unit_type const * & buffer, ArrayView< TYPE, NDIM, UNIT_STRIDE_DIM > const & var );
 
 #define pbid( DO_PACKING, TYPE, NDIM ) \
   template localIndex PackByIndexDevice< parallelDevicePolicy< >, DO_PACKING, TYPE, NDIM > \
     ( buffer_unit_type * &buffer, \
-    LvArray::ArrayView< TYPE, NDIM > const & var, \
-    LvArray::ArrayView< const localIndex, 1, 0, localIndex > const & indices );
+    ArrayView< TYPE, NDIM > const & var, \
+    ArrayView< const localIndex, 1, 0 > const & indices );
 
 #define upbid( TYPE, NDIM ) \
   template localIndex UnpackByIndexDevice< parallelDevicePolicy< >, TYPE, NDIM > \
     ( buffer_unit_type const * & buffer, \
-    LvArray::ArrayView< TYPE, NDIM > const & var, \
-    LvArray::ArrayView< const localIndex, 1, 0, localIndex > const & indices );
+    ArrayView< TYPE, NDIM > const & var, \
+    ArrayView< const localIndex, 1, 0 > const & indices );
 
 // 1d native types
 pd( false, const int, 1, 0 )
