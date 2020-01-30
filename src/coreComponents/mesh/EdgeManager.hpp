@@ -81,6 +81,8 @@ public:
 
   void FixUpDownMaps( bool const clearIfUnmapped );
 
+  void CompressRelationMaps();
+
   void depopulateUpMaps( std::set<localIndex> const & receivedEdges,
                          ArrayOfArraysView< localIndex const > const & facesToEdges );
 

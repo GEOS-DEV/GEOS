@@ -224,7 +224,7 @@ void resizeEdgeToFaceMap( ArrayOfArraysView< EdgeBuilder const > const & edgesBy
   {
     localIndex curEdgeID = uniqueEdgeOffsets[ nodeID ];
     localIndex const numEdges = edgesByLowestNode.sizeOfArray( nodeID );
-    
+
     // loop over all the EdgeBuilders associated with the node
     localIndex j = 0;
     while (j < numEdges - 1)
@@ -262,7 +262,9 @@ void resizeEdgeToFaceMap( ArrayOfArraysView< EdgeBuilder const > const & edgesBy
   edgeToFaceMap.reserve( totalEdgeFaces.get() );
   for ( localIndex faceID = 0; faceID < numUniqueEdges; ++faceID )
   {
-    edgeToFaceMap.appendSet( numFacesPerEdge[ faceID ] );
+    // + 4 is to allow a small amount of buffer room in each set for ghost information
+    //     a better/more reasonable heuristic should be established.
+    edgeToFaceMap.appendSet( numFacesPerEdge[ faceID ] + 4 );
   }
 }
 
@@ -287,7 +289,7 @@ void addEdge( ArrayOfArraysView< EdgeBuilder const > const & edgesByLowestNode,
               localIndex const firstMatch,
               localIndex const numMatches )
 {
-  GEOSX_ASSERT_EQ( edgeToFaceMap.capacityOfSet( edgeID ), numMatches );
+  GEOSX_ASSERT_GT( edgeToFaceMap.capacityOfSet( edgeID ), numMatches );
 
   // Populate the edge to node map.
   edgeToNodeMap( edgeID, 0 ) = firstNodeID;
@@ -1021,6 +1023,7 @@ localIndex EdgeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                           bool const overwriteUpMaps,
                                           bool const GEOSX_UNUSED_ARG( overwriteDownMaps ) )
 {
+  GEOSX_MARK_FUNCTION;
   localIndex unPackedSize = 0;
 
   string nodeListString;
@@ -1058,6 +1061,13 @@ void EdgeManager::FixUpDownMaps( bool const clearIfUnmapped )
                                     m_toFacesRelation.RelatedObjectGlobalToLocal(),
                                     m_unmappedGlobalIndicesInToFaces,
                                     clearIfUnmapped );
+}
+
+//**************************************************************************************************
+void EdgeManager::CompressRelationMaps()
+{
+  //GEOSX_MARK_FUNCTION;
+  m_toFacesRelation.compress();
 }
 
 

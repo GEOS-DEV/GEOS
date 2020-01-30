@@ -328,8 +328,8 @@ void resizeFaceToNodeMap( ElementRegionManager const & elementManager,
   // Calculate the total number of nodes in the face to node map.
   RAJA::ReduceSum<parallelHostReduce, localIndex> totalFaceNodes(0.0);
   forall_in_range< parallelHostPolicy >( 0, numUniqueFaces, [&]( localIndex const faceID )
-  { 
-    totalFaceNodes += numNodesPerFace[ faceID ]; 
+  {
+    totalFaceNodes += numNodesPerFace[ faceID ];
   } );
 
   // Resize the face to node map
@@ -888,6 +888,7 @@ localIndex FaceManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                           bool const overwriteUpMaps,
                                           bool const GEOSX_UNUSED_ARG( overwriteDownMaps ) )
 {
+  GEOSX_MARK_FUNCTION;
   localIndex unPackedSize = 0;
 
   string nodeListString;

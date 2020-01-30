@@ -143,11 +143,30 @@ int MpiWrapper::Wait( MPI_Request * request, MPI_Status * status )
   return 0;
 }
 
+int MpiWrapper::Test( MPI_Request * request, int * flag, MPI_Status * status )
+{
+#ifdef GEOSX_USE_MPI
+  return MPI_Test( request, flag, status );
+#endif 
+  *flag = 0;
+  return 0;
+}
+
 int MpiWrapper::Waitany( int count, MPI_Request array_of_requests[], int * indx, MPI_Status * status )
 {
 #ifdef GEOSX_USE_MPI
   return MPI_Waitany( count, array_of_requests, indx, status );
 #endif
+  // *indx = 0;
+  return 0;
+}
+
+int MpiWrapper::Waitsome( int count, MPI_Request array_of_requests[], int * outcount, int array_of_indices[], MPI_Status array_of_statuses[] )
+{
+#ifdef GEOSX_USE_MPI
+  return MPI_Waitsome( count, array_of_requests, outcount, array_of_indices, array_of_statuses );
+#endif
+  // *outcount = 0;
   return 0;
 }
 

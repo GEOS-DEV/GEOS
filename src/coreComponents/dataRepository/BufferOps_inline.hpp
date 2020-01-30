@@ -770,6 +770,7 @@ inline
 localIndex Unpack( buffer_unit_type const * & buffer,
                    ArrayOfSets< localIndex > & var,
                    localIndex const setIndex,
+                   set< localIndex > & mappedLocalIndices,
                    set< globalIndex > & unmappedGlobalIndices,
                    mapBase< globalIndex, localIndex, SORTED > const & globalToLocalMap,
                    bool const clearExistingSet )
@@ -785,14 +786,14 @@ localIndex Unpack( buffer_unit_type const * & buffer,
   {
     globalIndex temp;
     sizeOfUnpackedChars += Unpack( buffer, temp );
-    typename mapBase< globalIndex, localIndex, SORTED >::const_iterator iter = globalToLocalMap.find( temp );
-    if( iter==globalToLocalMap.end() )
+    auto iter = globalToLocalMap.find( temp );
+    if( iter == globalToLocalMap.end() )
     {
       unmappedGlobalIndices.insert( temp );
     }
     else
     {
-      var.insertIntoSet( setIndex, iter->second );
+      mappedLocalIndices.insert( iter->second );
     }
   }
 
@@ -1439,6 +1440,9 @@ Unpack( buffer_unit_type const * & buffer,
 
   indices.resize( numIndicesUnpacked );
 
+  SortedArray< localIndex > mapped;
+  SortedArray< globalIndex > unmapped;
+
   for( localIndex a=0 ; a<numIndicesUnpacked ; ++a )
   {
 
@@ -1457,16 +1461,40 @@ Unpack( buffer_unit_type const * & buffer,
       li = globalToLocalMap.at( gi );
     }
 
-    SortedArray< globalIndex > unmappedIndices;
-    sizeOfUnpackedChars += Unpack( buffer,
-                                   var,
-                                   li,
-                                   unmappedIndices,
-                                   relatedObjectGlobalToLocalMap,
-                                   clearFlag );
+    if( clearFlag )
+    {
+      var.clearSet( li );
+    }
 
-    unmappedGlobalIndices[li].insert( unmappedIndices.values(), unmappedIndices.size() );
+    localIndex set_length;
+    sizeOfUnpackedChars += Unpack( buffer, set_length );
+
+    mapped.reserve( set_length );
+    unmapped.reserve( set_length );
+
+    mapped.clear();
+    unmapped.clear();
+
+    for( localIndex b = 0 ; b < set_length; ++b )
+    {
+      globalIndex temp;
+      sizeOfUnpackedChars += Unpack( buffer, temp );
+      auto iter = relatedObjectGlobalToLocalMap.find( temp );
+      if( iter == relatedObjectGlobalToLocalMap.end() )
+      {
+        unmapped.insert( temp );
+      }
+      else
+      {
+        mapped.insert( iter->second );
+      }
+    }
+
+    // sortedarray
+    var.insertSortedIntoSet( li, mapped.values(), mapped.size() );
+    unmappedGlobalIndices[li].insertSorted( unmapped.values(), unmapped.size() );
   }
+
   return sizeOfUnpackedChars;
 }
 

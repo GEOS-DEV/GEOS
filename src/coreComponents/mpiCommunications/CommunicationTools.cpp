@@ -545,29 +545,57 @@ void CommunicationTools::FindGhosts( MeshLevel * const meshLevel,
                                      array1d<NeighborCommunicator> & neighbors )
 {
   GEOSX_MARK_FUNCTION;
-  int commID = CommunicationTools::reserveCommID();
+  int commID = CommunicationTools::reserveCommID( );
 
-  for( auto & neighbor : neighbors )
+  GEOSX_MARK_BEGIN("GHOST_LOOP");
   {
-    neighbor.FindAndPackGhosts( false, 1, meshLevel, commID );
+    int neighbor_count = neighbors.size( );
+    auto send = [&] ( int idx )
+    {
+      neighbors[idx].PrepareAndSendGhosts( false, 1, meshLevel, commID );
+      return neighbors[idx].GetSizeRecvRequest( commID );
+    };
+    auto post_recv = [&] ( int idx )
+    {
+      neighbors[idx].PostRecv( commID );
+      return neighbors[idx].GetRecvRequest( commID );
+    };
+    auto proc_recv = [&] ( int idx )
+    {
+      neighbors[idx].UnpackGhosts( meshLevel, commID );
+      return MPI_REQUEST_NULL;
+    };
+    std::vector<std::function<MPI_Request (int)>> phases = { send, post_recv, proc_recv };
+    MpiWrapper::ActiveWaitSomeCompletePhase( neighbor_count, phases );
   }
-
-  GEOSX_MARK_BEGIN("Neighbor wait loop");
-  for( auto & neighbor : neighbors )
-  {
-    neighbor.MPI_WaitAll( commID );
-    neighbor.UnpackGhosts( meshLevel, commID );
-  }
-  GEOSX_MARK_END("Neighbor wait loop");
+  GEOSX_MARK_END("GHOST_LOOP");
 
   meshLevel->getNodeManager()->SetReceiveLists();
   meshLevel->getEdgeManager()->SetReceiveLists();
   meshLevel->getFaceManager()->SetReceiveLists();
 
-  for( auto & neighbor : neighbors )
+  GEOSX_MARK_BEGIN("SYNC_LOOP");
   {
-    neighbor.RebuildSyncLists( meshLevel, commID );
+    int neighbor_count = neighbors.size( );
+    auto send = [&] ( int idx )
+      {
+        neighbors[idx].PrepareAndSendSyncLists( meshLevel, commID );
+        return neighbors[idx].GetSizeRecvRequest( commID );
+      };
+    auto post_recv  = [&] ( int idx )
+      {
+        neighbors[idx].PostRecv( commID );
+        return neighbors[idx].GetRecvRequest( commID );
+      };
+    auto proc_recv = [&] ( int idx )
+      {
+        neighbors[idx].UnpackAndRebuildSyncLists( meshLevel, commID );
+        return MPI_REQUEST_NULL;
+      };
+    std::vector< std::function< MPI_Request (int) > > phases = {  send, post_recv, proc_recv };
+    MpiWrapper::ActiveWaitSomeCompletePhase( neighbor_count, phases );
   }
+  GEOSX_MARK_END("SYNC_LOOP");
 
   meshLevel->getNodeManager()->FixUpDownMaps(false);
   meshLevel->getEdgeManager()->FixUpDownMaps(false);
@@ -581,6 +609,12 @@ void CommunicationTools::FindGhosts( MeshLevel * const meshLevel,
       subRegion->FixUpDownMaps(false);
     }
   }
+
+  // compress the relationship maps that were populated during the ghosting process as
+  //  we currently over-allocate the maps while setting up local mesh information in each manager
+  meshLevel->getNodeManager()->CompressRelationMaps();
+  meshLevel->getEdgeManager()->CompressRelationMaps();
+  //meshLevel->getFaceManager()->CompressRelationMaps(); //unimplemented
 
   CommunicationTools::releaseCommID( commID );
 }
