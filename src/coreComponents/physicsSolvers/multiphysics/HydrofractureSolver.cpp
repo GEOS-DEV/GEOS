@@ -465,14 +465,14 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
         }
 
         // TODO this needs a proper contact based strategy for aperture
-        aperture[kfe] = -Dot(temp,faceNormal[kf0]) / numNodesPerFace + apertureOffset[kfe];
+        aperture[kfe] = -Dot(temp,faceNormal[kf0]) / numNodesPerFace;
         contactStress[kfe] = std::max(- aperture[kfe] * contactRelation->stiffness(), 0.0);
 
 //        if (kfe >=2 && kfe <= 3)
 //        if (ghostRank[kfe] > -1)
 //          std::cout << "\n UpdateDeformationForCoupling: Mechanical aperture[kfe] = " << aperture[kfe] << ", kfe = " << kfe << "\n";
 
-        aperture[kfe] = contactRelation->effectiveAperture( aperture[kfe] );
+        aperture[kfe] = contactRelation->effectiveAperture( aperture[kfe] + apertureOffset[kfe]);
 
 //        if (kfe >=2 && kfe <= 3)
 ////        if (ghostRank[kfe] > -1)
