@@ -1475,7 +1475,7 @@ Unpack( buffer_unit_type const * & buffer,
     mapped.clear();
     unmapped.clear();
 
-    for( localIndex b = 0 ; b < set_length; ++b )
+    for( localIndex b = 0 ; b < set_length ; ++b )
     {
       globalIndex temp;
       sizeOfUnpackedChars += Unpack( buffer, temp );

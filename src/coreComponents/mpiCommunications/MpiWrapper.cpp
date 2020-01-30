@@ -120,7 +120,7 @@ std::size_t MpiWrapper::getSizeofMpiType( MPI_Datatype const type )
   }
   else
   {
-      GEOSX_ERROR("No conversion implemented for MPI_Datatype "<<type);
+    GEOSX_ERROR( "No conversion implemented for MPI_Datatype "<<type );
   }
   return 0;
 }
@@ -147,7 +147,7 @@ int MpiWrapper::Test( MPI_Request * request, int * flag, MPI_Status * status )
 {
 #ifdef GEOSX_USE_MPI
   return MPI_Test( request, flag, status );
-#endif 
+#endif
   *flag = 0;
   return 0;
 }
