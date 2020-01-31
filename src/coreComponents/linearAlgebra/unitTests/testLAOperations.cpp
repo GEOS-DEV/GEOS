@@ -699,16 +699,13 @@ int main( int argc, char ** argv )
   ::testing::InitGoogleTest( &argc, argv );
 
   // Avoid setting up signal handlers, due to mysterious ML FPE crashes on Mac
-#if defined(__APPLE__) && defined(__MACH__)
+  //geosx::basicSetup( argc, argv );
   setupMPI( argc, argv );
   setupLogger();
   setupOpenMP();
   setupMKL();
   setupLogger();
   setupLAI( argc, argv );
-#else
-  geosx::basicSetup( argc, argv );
-#endif
 
   int const result = RUN_ALL_TESTS();
   geosx::basicCleanup();

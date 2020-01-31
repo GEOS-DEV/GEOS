@@ -25,17 +25,8 @@ namespace geosx
 
 void PetscInterface::initialize( int & argc, char **& argv )
 {
-  // PetscOptionsSetValue( nullptr, "-log_view", "" );
-  // PetscOptionsSetValue( nullptr, "-ksp_monitor", nullptr );
-  if( argc > 0 )
-  {
-    PetscInitialize( &argc, &argv, nullptr, nullptr );
-  }
-  else
-  {
-    PetscInitializeNoArguments();
-  }
-  //PetscPopSignalHandler();
+  PetscOptionsSetValue( nullptr, "-no_signal_handler", "" );
+  PetscInitialize( &argc, &argv, nullptr, nullptr );
 }
 
 void PetscInterface::finalize()
