@@ -29,7 +29,9 @@
 
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
+#include "constitutive/ConstitutiveBase.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
+#include "constitutive/solid/SolidBase.hpp"
 #include "finiteElement/ElementLibrary/FiniteElement.h"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteElement/Kinematics.h"
@@ -90,7 +92,7 @@ PhaseFieldDamageFEM::~PhaseFieldDamageFEM() {
 void PhaseFieldDamageFEM::RegisterDataOnMesh(Group *const MeshBodies) {
   for (auto &mesh : MeshBodies->GetSubGroups()) {
 
-    MeshLevel * meshLevel = Group::group_cast<MeshBody *>(mesh.second)->getMeshLevel(0);
+    // MeshLevel * meshLevel = Group::group_cast<MeshBody *>(mesh.second)->getMeshLevel(0);
 
     NodeManager *const nodes = mesh.second->group_cast<MeshBody *>()
                                    ->getMeshLevel(0)
@@ -101,15 +103,15 @@ void PhaseFieldDamageFEM::RegisterDataOnMesh(Group *const MeshBodies) {
         ->setPlotLevel(PlotLevel::LEVEL_0)
         ->setDescription("Primary field variable");
 
-    ElementRegionManager * const elemManager = meshLevel->getElemManager();
-
-    elemManager->forElementSubRegions<CellElementSubRegion>( [&]( CellElementSubRegion * const subRegion )
-    {
-      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::coeffName)->
-        setApplyDefaultValue(0.0)->
-        setPlotLevel(PlotLevel::LEVEL_0)->
-        setDescription("field variable representing the diffusion coefficient");
-    });
+    // ElementRegionManager * const elemManager = meshLevel->getElemManager();
+    //
+    // elemManager->forElementSubRegions<CellElementSubRegion>( [&]( CellElementSubRegion * const subRegion )
+    //  {
+    // //   subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::coeffName)->
+    // //     setApplyDefaultValue(0.0)->
+    // //     setPlotLevel(PlotLevel::LEVEL_0)->
+    // //     setDescription("field variable representing the diffusion coefficient");
+    //  });
 
   }
 }
@@ -197,6 +199,7 @@ void PhaseFieldDamageFEM::AssembleSystem(real64 const time_n,
       domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   NodeManager *const nodeManager = mesh->getNodeManager();
   ElementRegionManager *const elemManager = mesh->getElemManager();
+  ConstitutiveManager  * const constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
   NumericalMethodsManager const *numericalMethodManager =
       domain->getParent()->GetGroup<NumericalMethodsManager>(
           keys::numericalMethodsManager);
@@ -207,6 +210,9 @@ void PhaseFieldDamageFEM::AssembleSystem(real64 const time_n,
   arrayView1d<globalIndex const> const &dofIndex =
       nodeManager->getReference<array1d<globalIndex>>(
           dofManager.getKey(m_fieldName));
+
+  ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase>
+  constitutiveRelations = elemManager->ConstructFullConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
 
   //arrayView1d<R1Tensor> &X = nodeManager->referencePosition();
 
@@ -226,8 +232,16 @@ void PhaseFieldDamageFEM::AssembleSystem(real64 const time_n,
             m_discretizationName);
 
     elementRegion->forElementSubRegionsIndex<CellElementSubRegion>(
-        [&](localIndex const GEOSX_UNUSED_ARG(esr),
+        [&](localIndex const esr,
             CellElementSubRegion const *const elementSubRegion) {
+
+          localIndex m_solidMaterialFullIndex = 0;
+
+          SolidBase * solidModel =  constitutiveRelations[er][esr][m_solidMaterialFullIndex]->group_cast<SolidBase*>();
+
+          arrayView2d<real64 const> const & strainEnergy =
+          elementSubRegion->getReference<array2d<real64> >(SolidBase::viewKeyStruct::strainEnergyDensityString);
+
           array3d<R1Tensor> const &dNdX =
               elementSubRegion->getReference<array3d<R1Tensor>>(keys::dNdX);
 
@@ -240,8 +254,8 @@ void PhaseFieldDamageFEM::AssembleSystem(real64 const time_n,
                       CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const &elemNodes =
               elementSubRegion->nodeList();
 
-          arrayView1d<real64 const> const &
-          coeff = elementSubRegion->getReference<array1d<real64> >(viewKeyStruct::coeffName);
+          // arrayView1d<real64 const> const &
+          // coeff = elementSubRegion->getReference<array1d<real64> >(viewKeyStruct::coeffName);
 
           globalIndex_array elemDofIndex(numNodesPerElement);
           real64_array element_rhs(numNodesPerElement);
@@ -263,7 +277,7 @@ void PhaseFieldDamageFEM::AssembleSystem(real64 const time_n,
               for (localIndex q = 0; q < n_q_points; ++q) {
                 double D = 0; //max between threshold and Elastic energy
                 if(m_localDissipationOption == "Linear"){
-                  D = max(threshold, coeff(k));
+                  D = max(threshold, strainEnergy[k][q]);
                 }
                 /*real64 Xq = 0;
                 real64 Yq = 0;
@@ -287,7 +301,7 @@ void PhaseFieldDamageFEM::AssembleSystem(real64 const time_n,
                     element_rhs(a) += -detJ[k][q] * Na * (- ell * D + 3 * Gc / 16 )/ Gc;
                   }
                   else{
-                    element_rhs(a) += detJ[k][q] * Na * (2 * ell) * coeff(k) / Gc;
+                    element_rhs(a) += detJ[k][q] * Na * (2 * ell) * strainEnergy[k][q] / Gc;
                   }
                   for (localIndex b = 0; b < numNodesPerElement; ++b) {
                     real64 Nb = feDiscretization->m_finiteElement->value(b, q);
@@ -300,7 +314,7 @@ void PhaseFieldDamageFEM::AssembleSystem(real64 const time_n,
                         element_matrix(a, b) +=
                         detJ[k][q] *
                         (pow(ell,2) * -Dot(dNdX[k][q][a], dNdX[k][q][b]) -
-                         Na * Nb * (1 + 2 * ell*coeff(k)/Gc));
+                         Na * Nb * (1 + 2 * ell*strainEnergy[k][q]/Gc));
                     }
                 }
               }
