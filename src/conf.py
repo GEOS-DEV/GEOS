@@ -14,7 +14,6 @@
 #
 import os
 import sys
-import subprocess
 import shutil
 # sys.path.insert(0, os.path.abspath('.'))
 
@@ -113,13 +112,6 @@ exclude_patterns = [u'_build', 'Thumbs.db', '.DS_Store','cmake/*']
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
 
-
-# Doxygen options
-#read_the_docs_build = os.environ.get('READTHEDOCS', None) == 'True'
-#if read_the_docs_build:
-#    subprocess.call('cd ../doxygen; doxygen ', shell=True)
-#else:
-    
 
 # -- Options for HTML output -------------------------------------------------
 

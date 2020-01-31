@@ -9,21 +9,12 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-<<<<<<< HEAD
    width="111.97229mm"
    height="124.07838mm"
    viewBox="0 0 396.75221 439.64779"
    id="svg2"
    version="1.1"
    inkscape:version="0.92.4 5da689c313, 2019-01-14"
-=======
-   width="112.50903mm"
-   height="123.90681mm"
-   viewBox="0 0 398.65405 439.03989"
-   id="svg2"
-   version="1.1"
-   inkscape:version="0.92.3 (2405546, 2018-03-11)"
->>>>>>> develop
    sodipodi:docname="SimplePartitioning_GEOSX.svg"
    inkscape:export-filename="/Users/fu4/GEOS_Git/gpacdocs/DeveloperTutorial/Figures/SimplePartitioning.png"
    inkscape:export-xdpi="400"
@@ -37,24 +28,14 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-<<<<<<< HEAD
      inkscape:zoom="0.45254835"
      inkscape:cx="-482.92112"
      inkscape:cy="74.481926"
-=======
-     inkscape:zoom="1.28"
-     inkscape:cx="23.380697"
-     inkscape:cy="217.9068"
->>>>>>> develop
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
      inkscape:window-width="1920"
-<<<<<<< HEAD
      inkscape:window-height="1007"
-=======
-     inkscape:window-height="1015"
->>>>>>> develop
      inkscape:window-x="0"
      inkscape:window-y="0"
      inkscape:window-maximized="1"
@@ -65,13 +46,8 @@
     <inkscape:grid
        type="xygrid"
        id="grid4136"
-<<<<<<< HEAD
        originx="-142.67222"
        originy="-486.39327" />
-=======
-       originx="-142.24498"
-       originy="-486.40305" />
->>>>>>> develop
   </sodipodi:namedview>
   <metadata
      id="metadata7">
@@ -89,11 +65,7 @@
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1"
-<<<<<<< HEAD
      transform="translate(-142.67223,-126.32114)">
-=======
-     transform="translate(-142.24498,-126.91928)">
->>>>>>> develop
     <path
        style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        d="M 177.16535,148.78003 H 531.49606"
