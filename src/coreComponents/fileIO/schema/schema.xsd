@@ -635,10 +635,10 @@
 		<xsd:attribute name="ilut_drop" type="real64" default="0" />
 		<!--ilut_fill => (no description available)-->
 		<xsd:attribute name="ilut_fill" type="real64" default="3" />
-		<!--krylovTol => Allowable tolerance for krylov solve-->
+		<!--krylovTol => Desired tolerance for Krylov solve-->
 		<xsd:attribute name="krylovTol" type="real64" default="1e-06" />
 		<!--kspace => (no description available)-->
-		<xsd:attribute name="kspace" type="integer" default="0" />
+		<xsd:attribute name="kspace" type="integer" default="300" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--numKrylovIter => Maximum number of Krylov Iterations-->
@@ -647,6 +647,8 @@
 		<xsd:attribute name="scalingOption" type="integer" default="0" />
 		<!--solverType => (no description available)-->
 		<xsd:attribute name="solverType" type="string" default="" />
+		<!--useAdaptiveKrylovTol => Enable Eisenstat-Walker adaptive Krylov tolerance-->
+		<xsd:attribute name="useAdaptiveKrylovTol" type="integer" default="0" />
 		<!--useBicgstab => (no description available)-->
 		<xsd:attribute name="useBicgstab" type="integer" default="0" />
 		<!--useDirectSolver => (no description available)-->
@@ -743,8 +745,14 @@
 		<xsd:attribute name="plotLevel" type="integer" default="1" />
 		<!--slaveDirectory => slave directory path-->
 		<xsd:attribute name="slaveDirectory" type="string" default="" />
+		<!--writeCellElementMesh => (no description available)-->
+		<xsd:attribute name="writeCellElementMesh" type="integer" default="1" />
+		<!--writeEdgeMesh => (no description available)-->
+		<xsd:attribute name="writeEdgeMesh" type="integer" default="0" />
 		<!--writeFEMFaces => (no description available)-->
 		<xsd:attribute name="writeFEMFaces" type="integer" default="0" />
+		<!--writeFaceElementMesh => (no description available)-->
+		<xsd:attribute name="writeFaceElementMesh" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -1240,9 +1248,14 @@
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ContactType">
+<<<<<<< HEAD
 		<xsd:choice minOccurs="0" maxOccurs="1">
 			<xsd:element name="TableFunction" type="TableFunctionType" />
 		</xsd:choice>
+=======
+		<!--apertureTolerance => Value to be used to avoid floating point errors in expressions involving aperture. For example in the case of dividing by the actual aperture (not the effective aperture that results from the aperture function) this value may be used to avoid 1/0 errors. Note that this value may have some physical significance in its usage, as it may be used to smooth out highly nonlinear behavior associated with 1/0 in addition to avoiding the 1/0 error.-->
+		<xsd:attribute name="apertureTolerance" type="real64" default="1e-09" />
+>>>>>>> develop
 		<!--penaltyStiffness => Value of the penetration penalty stiffness. Units of Pressure/length-->
 		<xsd:attribute name="penaltyStiffness" type="real64" use="required" />
 		<!--name => A name is required for any non-unique nodes-->

@@ -10,7 +10,7 @@
  <Solvers>
   
     <SinglePhaseFVM name="SinglePhaseFlow"
-                     verboseLevel="1"
+                     logLevel="1"
                      discretization="singlePhaseTPFA"
                      fluidName="water"
                      solidName="rock"
