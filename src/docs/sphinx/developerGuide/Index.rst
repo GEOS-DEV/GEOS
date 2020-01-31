@@ -17,13 +17,8 @@ Welcome to the GEOSX developer guide.
 
    /coreComponents/dataRepository/dataRepository.rst
 
-<<<<<<< HEAD
-=======
    /coreComponents/mesh/docs/meshDeveloperGuide.rst
 
-   /coreComponents/fileIO/schema/docs/SchemaGeneration
-
->>>>>>> develop
    UnitTests
 
    IntegratedTests
