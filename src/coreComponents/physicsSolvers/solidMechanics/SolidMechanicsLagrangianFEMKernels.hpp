@@ -25,7 +25,7 @@
 #include "Epetra_FEVector.h"
 #include "common/DataTypes.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
-#include "constitutive/Solid/solidSelector.hpp"
+#include "constitutive/solid/solidSelector.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "finiteElement/Kinematics.h"
 #include "common/TimingMacros.hpp"
@@ -48,28 +48,20 @@ enum class timeIntegrationOption : int
 namespace SolidMechanicsLagrangianFEMKernels
 {
 
-#if defined(__CUDACC__)
-  using KERNEL_POLICY = RAJA::cuda_exec< 256 >;
-#elif defined(GEOSX_USE_OPENMP)
-  using KERNEL_POLICY = RAJA::omp_parallel_for_exec;
-#else
-  using KERNEL_POLICY = RAJA::loop_exec;
-#endif
-
 inline void velocityUpdate( arrayView1d<R1Tensor> const & acceleration,
                             arrayView1d<R1Tensor> const & velocity,
                             real64 const dt )
 {
   GEOSX_MARK_FUNCTION;
 
-  RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, acceleration.size() ),
-                                 GEOSX_DEVICE_LAMBDA ( localIndex const i )
+  RAJA::forall< parallelDevicePolicy< 256 > >( RAJA::TypedRangeSegment< localIndex >( 0, acceleration.size() ),
+                                               GEOSX_DEVICE_LAMBDA ( localIndex const i )
   {
     for (int j = 0; j < 3; ++j)
     {
       velocity[ i ][ j ] += dt * acceleration[ i ][ j ];
       acceleration[ i ][ j ] = 0;
-    } 
+    }
   });
 }
 
@@ -81,8 +73,8 @@ inline void velocityUpdate( arrayView1d<R1Tensor> const & acceleration,
 {
   GEOSX_MARK_FUNCTION;
 
-  RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, indices.size() ),
-                                 GEOSX_DEVICE_LAMBDA ( localIndex const i )
+  RAJA::forall< parallelDevicePolicy< 256 > >( RAJA::TypedRangeSegment< localIndex >( 0, indices.size() ),
+                                               GEOSX_DEVICE_LAMBDA ( localIndex const i )
   {
     localIndex const a = indices[ i ];
     for (int j = 0; j < 3; ++j)
@@ -100,8 +92,8 @@ inline void displacementUpdate( arrayView1d<R1Tensor const> const & velocity,
 {
   GEOSX_MARK_FUNCTION;
 
-  RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, velocity.size() ),
-                                 GEOSX_DEVICE_LAMBDA ( localIndex const i )
+  RAJA::forall< parallelDevicePolicy< 256 > >( RAJA::TypedRangeSegment< localIndex >( 0, velocity.size() ),
+                                               GEOSX_DEVICE_LAMBDA ( localIndex const i )
   {
     for (int j = 0; j < 3; ++j)
     {
@@ -301,9 +293,8 @@ struct ExplicitKernel
   {
    GEOSX_MARK_FUNCTION;
 
-    // RAJA::kernel<KERNEL_POLICY>( RAJA::make_tuple( RAJA::TypedRangeSegment<localIndex>( 0, elementList.size() ) ),
-    RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, elementList.size() ),
-                                   GEOSX_DEVICE_LAMBDA ( localIndex const i )
+    RAJA::forall< parallelDevicePolicy< 256 > >( RAJA::TypedRangeSegment< localIndex >( 0, elementList.size() ),
+                                                 GEOSX_DEVICE_LAMBDA ( localIndex const i )
     {
       localIndex const k = elementList[ i ];
 
@@ -383,7 +374,7 @@ struct ImplicitKernel
           arrayView1d< R1Tensor const > const & GEOSX_UNUSED_ARG( uhat ),
           arrayView1d< R1Tensor const > const & GEOSX_UNUSED_ARG( vtilde ),
           arrayView1d< R1Tensor const > const & GEOSX_UNUSED_ARG( uhattilde ),
-          arrayView1d< real64 const > const & GEOSX_UNUSED_ARG( density ),
+          arrayView2d< real64 const > const & GEOSX_UNUSED_ARG( density ),
           arrayView1d< real64 const > const & GEOSX_UNUSED_ARG( fluidPressure ),
           arrayView1d< real64 const > const & GEOSX_UNUSED_ARG( deltaFluidPressure ),
           arrayView1d< real64 const > const & GEOSX_UNUSED_ARG( biotCoefficient ),
@@ -392,11 +383,12 @@ struct ImplicitKernel
           real64 const GEOSX_UNUSED_ARG( massDamping ),
           real64 const GEOSX_UNUSED_ARG( newmarkBeta ),
           real64 const GEOSX_UNUSED_ARG( newmarkGamma ),
+          R1Tensor const & GEOSX_UNUSED_ARG(gravityVector),
           DofManager const * const GEOSX_UNUSED_ARG( dofManager ),
           ParallelMatrix * const GEOSX_UNUSED_ARG( matrix ),
           ParallelVector * const GEOSX_UNUSED_ARG( rhs ) )
   {
-    GEOS_ERROR("SolidMechanicsLagrangianFEM::ImplicitElementKernelWrapper::Launch() not implemented");
+    GEOSX_ERROR("SolidMechanicsLagrangianFEM::ImplicitElementKernelWrapper::Launch() not implemented");
     return 0;
   }
 

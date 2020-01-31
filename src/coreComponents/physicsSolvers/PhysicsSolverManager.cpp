@@ -34,20 +34,22 @@ PhysicsSolverManager::PhysicsSolverManager( std::string const & name,
   setInputFlags(InputFlags::REQUIRED);
 
   this->registerWrapper( viewKeyStruct::gravityVectorString, &m_gravityVector, 0 )->
-    setApplyDefaultValue({0,0,0})->
-    setInputFlag(InputFlags::OPTIONAL);
+    setApplyDefaultValue({0.0,0.0,-9.81})->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Gravity vector used in the physics solvers");
 }
 
 PhysicsSolverManager::~PhysicsSolverManager()
 {}
 
 
+//START_SPHINX_INCLUDE_00
 Group * PhysicsSolverManager::CreateChild( string const & childKey, string const & childName )
 {
   Group * rval = nullptr;
   if( SolverBase::CatalogInterface::hasKeyName(childKey) )
   {
-    GEOS_LOG_RANK_0("Adding Solver of type " << childKey << ", named " << childName);
+    GEOSX_LOG_RANK_0("Adding Solver of type " << childKey << ", named " << childName);
     rval = RegisterGroup( childName,
                           SolverBase::CatalogInterface::Factory( childKey, childName, this ) );
   }

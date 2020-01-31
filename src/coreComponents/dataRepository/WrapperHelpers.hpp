@@ -19,15 +19,19 @@
 #ifndef GEOSX_DATAREPOSITORY_WRAPPERHELPERS_HPP_
 #define GEOSX_DATAREPOSITORY_WRAPPERHELPERS_HPP_
 
+/**
+ * @brief Enables verbose logging of restart output
+ */
 #define RESTART_TYPE_LOGGING 0
 
 // Source includes
 #include "BufferOps.hpp"
+#include "BufferOpsDevice.hpp"
 #include "DefaultValue.hpp"
 #include "ConduitRestart.hpp"
 #include "common/DataTypes.hpp"
 #include "common/GeosxMacros.hpp"
-#include "codingUtilities/GeosxTraits.hpp"
+#include "codingUtilities/traits.hpp"
 
 // TPL includes
 #include <conduit.hpp>
@@ -54,7 +58,7 @@ inline void logOutputType( std::string const & typeString, std::string const & m
   if( !m_types.count( typeString ) )
   {
     m_types.insert( typeString );
-    GEOS_LOG( msg << typeString );
+    GEOSX_LOG( msg << typeString );
   }
 #else
   GEOSX_DEBUG_VAR( typeString );
@@ -76,20 +80,22 @@ size( T const & GEOSX_UNUSED_ARG( value ) )
   return 1;
 }
 
-inline char * dataPtr( std::string & var )
+template< typename T >
+inline std::enable_if_t< traits::is_string< T >, char * >
+dataPtr( T & var )
 {
   return const_cast< char * >( var.data() );
 }
 
 template< typename T >
-inline std::enable_if_t< traits::has_data_method< T >, typename traits::Pointer< T > >
+inline std::enable_if_t< !traits::is_string< T > && traits::has_data_method< T >, typename traits::Pointer< T > >
 dataPtr( T & value )
 {
   return value.data();
 }
 
 template< typename T >
-inline std::enable_if_t< !traits::has_data_method< T >, typename traits::Pointer< T > >
+inline std::enable_if_t< !traits::is_string< T > && !traits::has_data_method< T >, typename traits::Pointer< T > >
 dataPtr( T & value )
 {
   return &value;
@@ -149,7 +155,7 @@ resizeDimensions( T & value, int num_dims, localIndex const * const dims )
 {
   if( num_dims != 1 )
   {
-    GEOS_ERROR( "Data is only 1D" );
+    GEOSX_ERROR( "Data is only 1D" );
     return;
   }
   resize( value, dims[ 0 ] );
@@ -173,7 +179,7 @@ template< typename T >
 inline std::enable_if_t< traits::has_alias_value_type< T >, localIndex >
 numElementsFromByteSize( localIndex const byteSize )
 {
-  GEOS_ERROR_IF_NE( byteSize % sizeof( typename T::value_type ), 0 );
+  GEOSX_ERROR_IF_NE( byteSize % sizeof( typename T::value_type ), 0 );
   return byteSize / sizeof( typename T::value_type );
 }
 
@@ -182,10 +188,9 @@ template< typename T >
 inline std::enable_if_t< !traits::has_alias_value_type< T >, localIndex >
 numElementsFromByteSize( localIndex const byteSize )
 {
-  GEOS_ERROR_IF_NE( byteSize % sizeof( T ), 0 );
+  GEOSX_ERROR_IF_NE( byteSize % sizeof( T ), 0 );
   return byteSize / sizeof( T );
 }
-
 
 
 // This is for an object that needs to be packed.
@@ -223,7 +228,7 @@ pullDataFromConduitNode( T & var, conduit::Node const & node )
 
   // Unpack the object from the array.
   localIndex const bytesRead = bufferOps::Unpack( buffer, var );
-  GEOS_ERROR_IF_NE( bytesRead, byteSize );
+  GEOSX_ERROR_IF_NE( bytesRead, byteSize );
 }
 
 // This is for an std::string since the type of char is different on different platforms :(.
@@ -349,30 +354,30 @@ pullDataFromConduitNode( Array< T, NDIM, PERMUTATION > & var,
 
   // Check that the permutations match.
   conduit::Node const & permutationNode = node.fetch_child( "__permutation__" );
-  GEOS_ERROR_IF_NE( permutationNode.dtype().number_of_elements(), totalNumDimensions );
+  GEOSX_ERROR_IF_NE( permutationNode.dtype().number_of_elements(), totalNumDimensions );
 
   constexpr std::array< camp::idx_t, NDIM > const perm = RAJA::as_array< PERMUTATION >::get();
   camp::idx_t const * const permFromConduit = permutationNode.value();
   for( int i = 0 ; i < NDIM ; ++i )
   {
-    GEOS_ERROR_IF_NE_MSG( permFromConduit[ i ], perm[ i ],
-                          "The permutation of the data in conduit and the provided Array don't match." );
+    GEOSX_ERROR_IF_NE_MSG( permFromConduit[ i ], perm[ i ],
+                           "The permutation of the data in conduit and the provided Array don't match." );
   }
 
   if( hasImplicitDimension )
   {
-    GEOS_ERROR_IF_NE_MSG( permFromConduit[ NDIM ], NDIM,
-                          "The permutation of the data in conduit and the provided Array don't match." );
+    GEOSX_ERROR_IF_NE_MSG( permFromConduit[ NDIM ], NDIM,
+                           "The permutation of the data in conduit and the provided Array don't match." );
   }
 
   // Now pull out the dimensions and resize the array.
   conduit::Node const & dimensionNode = node.fetch_child( "__dimensions__" );
-  GEOS_ERROR_IF_NE( dimensionNode.dtype().number_of_elements(), totalNumDimensions );
+  GEOSX_ERROR_IF_NE( dimensionNode.dtype().number_of_elements(), totalNumDimensions );
   localIndex const * const dims = dimensionNode.value();
 
   if( hasImplicitDimension )
   {
-    GEOS_ERROR_IF_NE( dims[ NDIM ], implicitDimensionLength );
+    GEOSX_ERROR_IF_NE( dims[ NDIM ], implicitDimensionLength );
   }
 
   var.resize( NDIM, dims );
@@ -380,7 +385,7 @@ pullDataFromConduitNode( Array< T, NDIM, PERMUTATION > & var,
   // Finally memcpy
   conduit::Node const & valuesNode = node.fetch_child( "__values__" );
   localIndex numBytesFromArray =  var.size() * sizeof( T );
-  GEOS_ERROR_IF_NE( numBytesFromArray, valuesNode.dtype().strided_bytes() );
+  GEOSX_ERROR_IF_NE( numBytesFromArray, valuesNode.dtype().strided_bytes() );
   std::memcpy( var.data(), valuesNode.data_ptr(), numBytesFromArray );
 }
 
@@ -398,6 +403,92 @@ void pullDataFromConduitNode( InterObjectRelation< T > & var,
   return pullDataFromConduitNode( var.Base(), node );
 }
 
+template< bool DO_PACKING, typename T, typename IDX >
+inline std::enable_if_t< bufferOps::is_packable_by_index< T >, localIndex >
+PackByIndex( buffer_unit_type * & buffer, T & var, IDX & idx )
+{
+  return bufferOps::PackByIndex< DO_PACKING >( buffer, var, idx );
+}
+
+template< bool DO_PACKING, typename T, typename IDX >
+inline std::enable_if_t< !bufferOps::is_packable_by_index< T >, localIndex >
+PackByIndex( buffer_unit_type * &, T &, IDX & )
+{
+  return 0;
+}
+
+template< typename T, typename IDX >
+inline std::enable_if_t< bufferOps::is_packable_by_index< T >, localIndex >
+UnpackByIndex( buffer_unit_type const * & buffer, T & var, IDX & idx )
+{
+  return bufferOps::UnpackByIndex( buffer, var, idx );
+}
+
+template< typename T, typename IDX >
+inline std::enable_if_t< !bufferOps::is_packable_by_index< T >, localIndex >
+UnpackByIndex( buffer_unit_type const * &, T &, IDX & )
+{
+  return 0;
+}
+
+
+template< bool DO_PACKING, typename T >
+inline std::enable_if_t< bufferOps::is_container< T > && bufferOps::can_memcpy< T >, localIndex >
+PackDevice( buffer_unit_type * & buffer, T & var )
+{
+  return bufferOps::PackDevice< parallelDevicePolicy< >, DO_PACKING >( buffer, var );
+}
+
+template< bool DO_PACKING, typename T >
+inline std::enable_if_t< !bufferOps::is_container< T > || !bufferOps::can_memcpy< T >, localIndex >
+PackDevice( buffer_unit_type * &, T & )
+{
+  GEOSX_ERROR( "Trying to pack data type ("<<typeid(T).name()<<") on device but type is not packable on device." );
+  return 0;
+}
+
+template< bool DO_PACKING, typename T, typename IDX >
+inline std::enable_if_t< bufferOps::is_container< T >, localIndex >
+PackByIndexDevice( buffer_unit_type * & buffer, T & var, IDX & idx )
+{
+  return bufferOps::PackByIndexDevice< parallelDevicePolicy< >, DO_PACKING >( buffer, var, idx );
+}
+
+template< bool DO_PACKING, typename T, typename IDX >
+inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
+PackByIndexDevice( buffer_unit_type * &, T &, IDX & )
+{
+  GEOSX_ERROR( "Trying to pack data type ("<<typeid(T).name()<<") on device but type is not packable by index." );
+  return 0;
+}
+
+template< typename T >
+inline std::enable_if_t< bufferOps::is_container< T >, localIndex >
+UnpackDevice( buffer_unit_type const * & buffer, T & var )
+{
+  return bufferOps::UnpackDevice< parallelDevicePolicy< > >( buffer, var );
+}
+
+template< typename T >
+inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
+UnpackDevice( buffer_unit_type const * &, T & )
+{
+  return 0;
+}
+
+template< typename T, typename IDX >
+inline std::enable_if_t< bufferOps::is_container< T >, localIndex >
+UnpackByIndexDevice( buffer_unit_type const * & buffer, T & var, IDX & idx )
+{
+  return bufferOps::UnpackByIndexDevice< parallelDevicePolicy< > >( buffer, var, idx );
+}
+
+template< typename T, typename IDX >
+inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
+UnpackByIndexDevice( buffer_unit_type const * &, T &, IDX & )
+{
+  return 0;
+}
 
 } // namespace WrapperHelpers
 } // namespace dataRepository

@@ -1,19 +1,21 @@
 
 <Problem>
   
-  <Solvers>
+  <Solvers gravityVector="0.0, 0.0, 0.0">
     <SolidMechanics_LagrangianFEM name="lagsolve" 
                                   timeIntegrationOption="QuasiStatic"
-                                  verboseLevel="0"
+                                  logLevel="0"
                                   discretization="FE1"
                                   targetRegions="{Region2}"
                                   >
-      <SystemSolverParameters useMLPrecond="1"
+      <NonlinearSolverParameters name="nlsp"
+                                 newtonTol="1.0e-4"
+                                 newtonMaxIter="8"/>
+      <SystemSolverParameters name="ssp"
+                              useMLPrecond="1"
                               scalingOption="0"
                               krylovTol="1.0e-8"
-                              newtonTol="1.0e-4"
-                              maxIterNewton="8"
-                              verbosityFlag="0"/>
+                              logLevel="0"/>
     </SolidMechanics_LagrangianFEM>
   </Solvers>
 

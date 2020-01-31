@@ -57,7 +57,7 @@ dataRepository::Group const * NumericalMethodsManager::FindNumericalMethodByName
       return iterNumericalMethod.second;
     }
   }
-  GEOS_ERROR("Can't find subgroup named " + name + " in " + this->getName());
+  GEOSX_ERROR("Can't find subgroup named " + name + " in " + this->getName());
   return nullptr;
 }
 

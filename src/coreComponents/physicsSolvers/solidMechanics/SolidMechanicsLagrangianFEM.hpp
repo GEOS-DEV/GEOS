@@ -19,12 +19,13 @@
 #ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSLAGRANGIANFEM_HPP_
 #define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSLAGRANGIANFEM_HPP_
 
+#include "common/TimingMacros.hpp"
+#include "mesh/MeshForLoopInterface.hpp"
 #include "mpiCommunications/CommunicationTools.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 
-#include "common/TimingMacros.hpp"
-#include "mesh/MeshForLoopInterface.hpp"
 #include "SolidMechanicsLagrangianFEMKernels.hpp"
+
 
 
 namespace geosx
@@ -77,6 +78,11 @@ public:
 
   void updateIntrinsicNodalData( DomainPartition * const domain );
 
+  virtual void
+  updateStress( DomainPartition * const domain );
+
+
+
   /**
    * @defgroup Solver Interface Functions
    *
@@ -107,13 +113,6 @@ public:
   virtual void
   SetupDofs( DomainPartition const * const domain,
              DofManager & dofManager ) const override;
-
-  virtual void
-  SetupSystem( DomainPartition * const domain,
-               DofManager & dofManager,
-               ParallelMatrix & matrix,
-               ParallelVector & rhs,
-               ParallelVector & solution ) override;
 
   virtual void
   AssembleSystem( real64 const time,
@@ -148,6 +147,8 @@ public:
                          ParallelVector const & rhs ) override;
 
   virtual void ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
+
+  void ResetStressToBeginningOfStep( DomainPartition * const domain );
 
   virtual void ImplicitStepComplete( real64 const & time,
                                      real64 const & dt,
@@ -251,7 +252,7 @@ public:
                                arrayView1d< R1Tensor const > const & uhat,
                                arrayView1d< R1Tensor const > const & vtilde,
                                arrayView1d< R1Tensor const > const & uhattilde,
-                               arrayView1d< real64 const > const & density,
+                               arrayView2d< real64 const > const & density,
                                arrayView1d< real64 const > const & fluidPressure,
                                arrayView1d< real64 const > const & deltaFluidPressure,
                                arrayView1d< real64 const > const & biotCoefficient,
@@ -260,10 +261,12 @@ public:
                                real64 const massDamping,
                                real64 const newmarkBeta,
                                real64 const newmarkGamma,
+                               R1Tensor const & gravityVector,
                                DofManager const * const dofManager,
                                ParallelMatrix * const matrix,
                                ParallelVector * const rhs ) const
   {
+    GEOSX_MARK_FUNCTION;
     using ImplicitKernel = SolidMechanicsLagrangianFEMKernels::ImplicitKernel;
     return SolidMechanicsLagrangianFEMKernels::
            ElementKernelLaunchSelector<ImplicitKernel>( NUM_NODES_PER_ELEM,
@@ -290,6 +293,7 @@ public:
                                                         massDamping,
                                                         newmarkBeta,
                                                         newmarkGamma,
+                                                        gravityVector,
                                                         dofManager,
                                                         matrix,
                                                         rhs );
@@ -348,7 +352,7 @@ public:
     }
     else
     {
-      GEOS_ERROR("Invalid time integration option: " << stringVal);
+      GEOSX_ERROR("Invalid time integration option: " << stringVal);
     }
   }
 
@@ -368,10 +372,12 @@ public:
     static constexpr auto strainTheoryString = "strainTheory";
     static constexpr auto solidMaterialNameString = "solidMaterialName";
     static constexpr auto solidMaterialFullIndexString = "solidMaterialFullIndex";
+    static constexpr auto stress_n = "beginningOfStepStress";
     static constexpr auto forceExternal = "externalForce";
     static constexpr auto contactRelationNameString = "contactRelationName";
     static constexpr auto noContactRelationNameString = "NOCONTACT";
     static constexpr auto contactForceString = "contactForce";
+    static constexpr auto maxForce = "maxForce";
 
     dataRepository::ViewKey vTilde = { vTildeString };
     dataRepository::ViewKey uhatTilde = { uhatTildeString };

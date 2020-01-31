@@ -89,5 +89,6 @@ Input example
     <LinearElasticIsotropic name="shale"
                             defaultDensity="2700"
                             defaultBulkModulus="61.9e6"
-                            defaultShearModulus="28.57e6"
+                            defaultShearModulus="28.57e6" />
   </Constitutive>
+

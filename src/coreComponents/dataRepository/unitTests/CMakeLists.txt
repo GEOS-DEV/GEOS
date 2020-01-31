@@ -10,9 +10,19 @@ set( dataRepository_tests
      testWrapper.cpp
      testXmlWrapper.cpp
      testBufferOps.cpp
+     testPacking.cpp
    )
 
-set( dependencyList dataRepository gtest cxx-utilities managers mpiCommunications mesh wells constitutive meshUtilities )
+set( dependencyList gtest cxx-utilities managers dataRepository mpiCommunications common mesh wells constitutive meshUtilities)
+
+if ( ENABLE_OPENMP )
+  set( dependencyList ${dependencyList} openmp )
+endif()
+
+if ( ENABLE_CUDA )
+  set( dependencyList ${dependencyList} cuda )
+endif()
+
 #
 # Add gtest C++ based tests
 #
@@ -24,7 +34,7 @@ foreach(test ${dataRepository_tests})
                         DEPENDS_ON ${dependencyList}
                         )
 
-    blt_add_test( NAME ${test_name} 
-                  COMMAND ${test_name}
-                  )
+    blt_add_test( NAME ${test_name}
+                  COMMAND ${test_name} )
 endforeach()
+

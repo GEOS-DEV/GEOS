@@ -126,13 +126,6 @@ Element: Dirichlet
 .. include:: ../../coreComponents/fileIO/schema/docs/Dirichlet.rst
 
 
-.. _XML_DummySolver:
-
-Element: DummySolver
-====================
-.. include:: ../../coreComponents/fileIO/schema/docs/DummySolver.rst
-
-
 .. _XML_ElementRegions:
 
 Element: ElementRegions
@@ -322,6 +315,20 @@ Element: MeshFile
 .. include:: ../../coreComponents/fileIO/schema/docs/MeshFile.rst
 
 
+.. _XML_MultiPhaseMultiComponentFluid:
+
+Element: MultiPhaseMultiComponentFluid
+======================================
+.. include:: ../../coreComponents/fileIO/schema/docs/MultiPhaseMultiComponentFluid.rst
+
+
+.. _XML_NonlinearSolverParameters:
+
+Element: NonlinearSolverParameters
+==================================
+.. include:: ../../coreComponents/fileIO/schema/docs/NonlinearSolverParameters.rst
+
+
 .. _XML_NumericalMethods:
 
 Element: NumericalMethods
@@ -427,11 +434,18 @@ Element: Silo
 .. include:: ../../coreComponents/fileIO/schema/docs/Silo.rst
 
 
-.. _XML_SinglePhaseFlow:
+.. _XML_SinglePhaseFVM:
 
-Element: SinglePhaseFlow
-========================
-.. include:: ../../coreComponents/fileIO/schema/docs/SinglePhaseFlow.rst
+Element: SinglePhaseFVM
+=======================
+.. include:: ../../coreComponents/fileIO/schema/docs/SinglePhaseFVM.rst
+
+
+.. _XML_SinglePhaseHybridFVM:
+
+Element: SinglePhaseHybridFVM
+=============================
+.. include:: ../../coreComponents/fileIO/schema/docs/SinglePhaseHybridFVM.rst
 
 
 .. _XML_SinglePhaseWell:
@@ -676,13 +690,6 @@ Datastructure: Dirichlet
 .. include:: ../../coreComponents/fileIO/schema/docs/Dirichlet_other.rst
 
 
-.. _DATASTRUCTURE_DummySolver:
-
-Datastructure: DummySolver
-==========================
-.. include:: ../../coreComponents/fileIO/schema/docs/DummySolver_other.rst
-
-
 .. _DATASTRUCTURE_ElementRegions:
 
 Datastructure: ElementRegions
@@ -893,6 +900,20 @@ Datastructure: MeshFile
 .. include:: ../../coreComponents/fileIO/schema/docs/MeshFile_other.rst
 
 
+.. _DATASTRUCTURE_MultiPhaseMultiComponentFluid:
+
+Datastructure: MultiPhaseMultiComponentFluid
+============================================
+.. include:: ../../coreComponents/fileIO/schema/docs/MultiPhaseMultiComponentFluid_other.rst
+
+
+.. _DATASTRUCTURE_NonlinearSolverParameters:
+
+Datastructure: NonlinearSolverParameters
+========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/NonlinearSolverParameters_other.rst
+
+
 .. _DATASTRUCTURE_NumericalMethods:
 
 Datastructure: NumericalMethods
@@ -998,11 +1019,18 @@ Datastructure: Silo
 .. include:: ../../coreComponents/fileIO/schema/docs/Silo_other.rst
 
 
-.. _DATASTRUCTURE_SinglePhaseFlow:
+.. _DATASTRUCTURE_SinglePhaseFVM:
 
-Datastructure: SinglePhaseFlow
-==============================
-.. include:: ../../coreComponents/fileIO/schema/docs/SinglePhaseFlow_other.rst
+Datastructure: SinglePhaseFVM
+=============================
+.. include:: ../../coreComponents/fileIO/schema/docs/SinglePhaseFVM_other.rst
+
+
+.. _DATASTRUCTURE_SinglePhaseHybridFVM:
+
+Datastructure: SinglePhaseHybridFVM
+===================================
+.. include:: ../../coreComponents/fileIO/schema/docs/SinglePhaseHybridFVM_other.rst
 
 
 .. _DATASTRUCTURE_SinglePhaseWell:

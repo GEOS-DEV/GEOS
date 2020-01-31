@@ -76,7 +76,7 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( SortedArrayView<localIndex co
   newset.clear();
 
   localIndex const numObjects = size();
-  GEOS_ERROR_IF( map.size( 0 ) != numObjects, "Size mismatch. " << map.size( 0 ) << " != " << numObjects );
+  GEOSX_ERROR_IF( map.size( 0 ) != numObjects, "Size mismatch. " << map.size( 0 ) << " != " << numObjects );
 
   if ( setName == "all" )
   {
@@ -108,7 +108,7 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( SortedArrayView<localIndex co
   newset.clear();
 
   localIndex const numObjects = size();
-  GEOS_ERROR_IF( map.size() != numObjects, "Size mismatch. " << map.size() << " != " << numObjects );
+  GEOSX_ERROR_IF( map.size() != numObjects, "Size mismatch. " << map.size() << " != " << numObjects );
 
   if ( setName == "all" )
   {
@@ -139,7 +139,7 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( SortedArrayView<localIndex co
   newset.clear();
 
   localIndex const numObjects = size();
-  GEOS_ERROR_IF( map.size() != numObjects, "Size mismatch. " << map.size() << " != " << numObjects );
+  GEOSX_ERROR_IF( map.size() != numObjects, "Size mismatch. " << map.size() << " != " << numObjects );
 
   if ( setName == "all" )
   {
@@ -203,14 +203,16 @@ void ObjectManagerBase::ConstructGlobalToLocalMap()
 
 localIndex ObjectManagerBase::PackSize( string_array const & wrapperNames,
                                         arrayView1d<localIndex const> const & packList,
-                                        integer const recursive ) const
+                                        integer const recursive,
+                                        bool on_device ) const
 {
   localIndex packedSize = 0;
   buffer_unit_type * junk;
   packedSize += this->PackPrivate<false>( junk,
                                           wrapperNames,
                                           packList,
-                                          recursive );
+                                          recursive,
+                                          on_device );
 
   return packedSize;
 }
@@ -218,11 +220,12 @@ localIndex ObjectManagerBase::PackSize( string_array const & wrapperNames,
 localIndex ObjectManagerBase::Pack( buffer_unit_type * & buffer,
                                     string_array const & wrapperNames,
                                     arrayView1d<localIndex const> const & packList,
-                                    integer const recursive ) const
+                                    integer const recursive,
+                                    bool on_device ) const
 {
   localIndex packedSize = 0;
 
-  packedSize += this->PackPrivate<true>( buffer, wrapperNames, packList, recursive );
+  packedSize += this->PackPrivate<true>( buffer, wrapperNames, packList, recursive, on_device );
 
   return packedSize;
 }
@@ -231,7 +234,8 @@ template< bool DOPACK >
 localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
                                            string_array const & wrapperNames,
                                            arrayView1d<localIndex const> const & packList,
-                                           integer const recursive ) const
+                                           integer const recursive,
+                                           bool on_device ) const
 {
   localIndex packedSize = 0;
   packedSize += bufferOps::Pack<DOPACK>( buffer, this->getName() );
@@ -277,11 +281,11 @@ localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
         packedSize += bufferOps::Pack<DOPACK>( buffer, wrapperName );
         if(DOPACK)
         {
-          packedSize += wrapper->Pack( buffer, packList );
+          packedSize += wrapper->PackByIndex( buffer, packList, on_device );
         }
         else
         {
-          packedSize += wrapper->PackSize( packList );
+          packedSize += wrapper->PackByIndexSize( packList, on_device );
         }
       }
       else
@@ -300,7 +304,7 @@ localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
     for( auto const & keyGroupPair : this->GetSubGroups() )
     {
       packedSize += bufferOps::Pack<DOPACK>( buffer, keyGroupPair.first );
-      packedSize += keyGroupPair.second->Pack( buffer, wrapperNames, packList, recursive );
+      packedSize += keyGroupPair.second->Pack( buffer, wrapperNames, packList, recursive, on_device);
     }
   }
 
@@ -313,12 +317,13 @@ localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
 
 localIndex ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
                                       arrayView1d<localIndex> & packList,
-                                      integer const recursive )
+                                      integer const recursive,
+                                      bool on_device )
 {
   localIndex unpackedSize = 0;
   string groupName;
   unpackedSize += bufferOps::Unpack( buffer, groupName );
-  GEOS_ERROR_IF( groupName != this->getName(), "ObjectManagerBase::Unpack(): group names do not match");
+  GEOSX_ERROR_IF( groupName != this->getName(), "ObjectManagerBase::Unpack(): group names do not match");
 
   int sendingRank;
   unpackedSize += bufferOps::Unpack( buffer, sendingRank );
@@ -330,7 +335,7 @@ localIndex ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
 
     string wrappersLabel;
     unpackedSize += bufferOps::Unpack( buffer, wrappersLabel);
-    GEOS_ERROR_IF( wrappersLabel != "Wrappers", "ObjectManagerBase::Unpack(): wrapper label incorrect");
+    GEOSX_ERROR_IF( wrappersLabel != "Wrappers", "ObjectManagerBase::Unpack(): wrapper label incorrect");
 
     localIndex numWrappers;
     unpackedSize += bufferOps::Unpack( buffer, numWrappers);
@@ -341,7 +346,7 @@ localIndex ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
       if( wrapperName != "nullptr" )
       {
         WrapperBase * const wrapper = this->getWrapperBase(wrapperName);
-        unpackedSize += wrapper->Unpack(buffer,packList);
+        unpackedSize += wrapper->UnpackByIndex(buffer,packList,on_device);
       }
     }
   }
@@ -350,23 +355,23 @@ localIndex ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
   {
     string subGroups;
     unpackedSize += bufferOps::Unpack( buffer, subGroups );
-    GEOS_ERROR_IF( subGroups != "SubGroups", "Group::Unpack(): group names do not match");
+    GEOSX_ERROR_IF( subGroups != "SubGroups", "Group::Unpack(): group names do not match");
 
     decltype( this->GetSubGroups().size()) numSubGroups;
     unpackedSize += bufferOps::Unpack( buffer, numSubGroups );
-    GEOS_ERROR_IF( numSubGroups != this->GetSubGroups().size(), "Group::Unpack(): incorrect number of subGroups");
+    GEOSX_ERROR_IF( numSubGroups != this->GetSubGroups().size(), "Group::Unpack(): incorrect number of subGroups");
 
     for( auto const & index : this->GetSubGroups() )
     {
       GEOSX_UNUSED_VAR( index );
       string subGroupName;
       unpackedSize += bufferOps::Unpack( buffer, subGroupName );
-      unpackedSize += this->GetGroup(subGroupName)->Unpack(buffer,packList,recursive);
+      unpackedSize += this->GetGroup(subGroupName)->Unpack(buffer,packList,recursive,on_device);
     }
   }
 
   unpackedSize += bufferOps::Unpack( buffer, groupName );
-  GEOS_ERROR_IF( groupName != this->getName(), "ObjectManagerBase::Unpack(): group names do not match");
+  GEOSX_ERROR_IF( groupName != this->getName(), "ObjectManagerBase::Unpack(): group names do not match");
 
   return unpackedSize;
 }
@@ -422,7 +427,7 @@ localIndex ObjectManagerBase::UnpackParentChildMaps( buffer_unit_type const * & 
   {
     string shouldBeParentIndexString;
     unpackedSize += bufferOps::Unpack( buffer, shouldBeParentIndexString );
-    GEOS_ERROR_IF( shouldBeParentIndexString != viewKeyStruct::parentIndexString,
+    GEOSX_ERROR_IF( shouldBeParentIndexString != viewKeyStruct::parentIndexString,
                    "value read from buffer is:"<<shouldBeParentIndexString<<". It should be "<<viewKeyStruct::parentIndexString);
     unpackedSize += bufferOps::Unpack( buffer,
                                        *parentIndex,
@@ -437,7 +442,7 @@ localIndex ObjectManagerBase::UnpackParentChildMaps( buffer_unit_type const * & 
   {
     string shouldBeChildIndexString;
     unpackedSize += bufferOps::Unpack( buffer, shouldBeChildIndexString );
-    GEOS_ERROR_IF( shouldBeChildIndexString != viewKeyStruct::childIndexString,
+    GEOSX_ERROR_IF( shouldBeChildIndexString != viewKeyStruct::childIndexString,
                    "value read from buffer is:"<<shouldBeChildIndexString<<". It should be "<<viewKeyStruct::childIndexString);
     unpackedSize += bufferOps::Unpack( buffer,
                                        *childIndex,
@@ -485,7 +490,7 @@ localIndex ObjectManagerBase::UnpackSets( buffer_unit_type const *& buffer )
   localIndex unpackedSize = 0;
   string name;
   unpackedSize += bufferOps::Unpack( buffer, name );
-  GEOS_ERROR_IF( name != m_sets.getName(), "ObjectManagerBase::UnpackSets(): group names do not match");
+  GEOSX_ERROR_IF( name != m_sets.getName(), "ObjectManagerBase::UnpackSets(): group names do not match");
 
   localIndex numUnpackedSets;
   unpackedSize += bufferOps::Unpack( buffer, numUnpackedSets );
@@ -591,11 +596,11 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer
   localIndex unpackedSize = 0;
   string groupName;
   unpackedSize += bufferOps::Unpack( buffer, groupName );
-  GEOS_ERROR_IF( groupName != this->getName(), "ObjectManagerBase::Unpack(): group names do not match");
+  GEOSX_ERROR_IF( groupName != this->getName(), "ObjectManagerBase::Unpack(): group names do not match");
 
   string localToGlobalString;
   unpackedSize += bufferOps::Unpack( buffer, localToGlobalString);
-  GEOS_ERROR_IF( localToGlobalString != viewKeyStruct::localToGlobalMapString, "ObjectManagerBase::Unpack(): label incorrect");
+  GEOSX_ERROR_IF( localToGlobalString != viewKeyStruct::localToGlobalMapString, "ObjectManagerBase::Unpack(): label incorrect");
 
   int const rank = MpiWrapper::Comm_rank(MPI_COMM_GEOSX );
   int sendingRank;
@@ -633,7 +638,7 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer
 
         ++numNewIndices;
 
-        GEOS_ERROR_IF( packList.size() != 0,
+        GEOSX_ERROR_IF( packList.size() != 0,
                        "ObjectManagerBase::Unpack(): packList specified, "
                        "but a new globalIndex is unpacked");
       }
@@ -675,7 +680,7 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer
   {
     string parentIndicesString;
     unpackedSize += bufferOps::Unpack( buffer, parentIndicesString );
-    GEOS_ERROR_IF( parentIndicesString != viewKeyStruct::parentIndexString, "ObjectManagerBase::Unpack(): label incorrect");
+    GEOSX_ERROR_IF( parentIndicesString != viewKeyStruct::parentIndexString, "ObjectManagerBase::Unpack(): label incorrect");
     unpackedSize += bufferOps::Unpack( buffer,
                                        *parentIndices,
                                        packList,
@@ -688,11 +693,11 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer
   {
     string subGroups;
     unpackedSize += bufferOps::Unpack( buffer, subGroups );
-    GEOS_ERROR_IF( subGroups != "SubGroups", "Group::Unpack(): group names do not match");
+    GEOSX_ERROR_IF( subGroups != "SubGroups", "Group::Unpack(): group names do not match");
 
     decltype( this->GetSubGroups().size()) numSubGroups;
     unpackedSize += bufferOps::Unpack( buffer, numSubGroups );
-    GEOS_ERROR_IF( numSubGroups != this->GetSubGroups().size(), "Group::Unpack(): incorrect number of subGroups");
+    GEOSX_ERROR_IF( numSubGroups != this->GetSubGroups().size(), "Group::Unpack(): incorrect number of subGroups");
 
     for( auto const & index : this->GetSubGroups() )
     {

@@ -23,20 +23,21 @@
 // This class implements solvers from the Trilinos library. Iterative solvers come from
 // the AztecOO package, and direct solvers from the Amesos package.
 
-// Include the corresponding header file.
+// Source inclues
 #include "TrilinosSolver.hpp"
-
 #include "linearAlgebra/interfaces/EpetraMatrix.hpp"
 #include "linearAlgebra/interfaces/EpetraVector.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
+#include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 
+// TPL includes
 #include <Epetra_Map.h>
 #include <Epetra_FECrsGraph.h>
 #include <Epetra_FECrsMatrix.h>
 #include <Epetra_FEVector.h>
-#include "AztecOO.h"
-#include "Amesos.h"
-#include "ml_MultiLevelPreconditioner.h"
+#include <AztecOO.h>
+#include <Amesos.h>
+#include <ml_MultiLevelPreconditioner.h>
 
 // Put everything under the geosx namespace.
 namespace geosx
@@ -50,11 +51,15 @@ namespace geosx
 // Constructor
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-TrilinosSolver::TrilinosSolver( LinearSolverParameters const & parameters )
-  :
+TrilinosSolver::TrilinosSolver( LinearSolverParameters const & parameters ) :
   m_parameters( parameters )
 {}
 
+TrilinosSolver::~TrilinosSolver()
+{
+  delete m_solver;
+  m_solver = nullptr;
+}
 
 // ----------------------------
 // Top-Level Solver
@@ -101,25 +106,27 @@ void TrilinosSolver::solve_direct( EpetraMatrix & mat,
                                 sol.unwrappedPointer(),
                                 rhs.unwrappedPointer() );
 
-  // Instantiate the Amesos solver.
-  Amesos_BaseSolver* solver;
-  Amesos Factory;
+  if ( m_solver == nullptr )
+  {
+    // Instantiate the Amesos solver.
+    Amesos Factory;
 
-  // Select KLU solver (only one available as of 9/20/2018)
-  solver = Factory.Create( "Klu", problem );
+    // Select KLU solver (only one available as of 9/20/2018)
+    m_solver = Factory.Create( "Klu", problem );
+  }
 
   // Factorize the matrix
-  solver->SymbolicFactorization();
-  solver->NumericFactorization();
+  m_solver->SymbolicFactorization();
+  m_solver->NumericFactorization();
 
   // Solve the system
-  solver->Solve();
+  m_solver->Solve();
 
   // Basic output
-  if( m_parameters.verbosity > 0 )
+  if( m_parameters.logLevel > 0 )
   {
-    solver->PrintStatus();
-    solver->PrintTiming();
+    m_solver->PrintStatus();
+    m_solver->PrintTiming();
   }
 }
 
@@ -140,6 +147,9 @@ void TrilinosSolver::solve_krylov( EpetraMatrix & mat,
   // Instantiate the AztecOO solver.
   AztecOO solver( problem );
 
+  // Extra scratch matrix, may or may not be used
+  std::unique_ptr<EpetraMatrix> scratch;
+
   // Choose the solver type
   if( m_parameters.solverType == "gmres" )
   {
@@ -155,7 +165,7 @@ void TrilinosSolver::solve_krylov( EpetraMatrix & mat,
     solver.SetAztecOption( AZ_solver, AZ_cg );
   }
   else
-    GEOS_ERROR( "The requested linear solverType doesn't seem to exist" );
+    GEOSX_ERROR( "The requested linear solverType doesn't seem to exist" );
 
   // Create a null pointer to an ML amg preconditioner
   std::unique_ptr<ML_Epetra::MultiLevelPreconditioner> ml_preconditioner;
@@ -211,8 +221,9 @@ void TrilinosSolver::solve_krylov( EpetraMatrix & mat,
     translate.insert( std::make_pair( "chebyshev", "Chebyshev" ));
     translate.insert( std::make_pair( "ilu", "ILU" ));
     translate.insert( std::make_pair( "ilut", "ILUT" ));
+    translate.insert( std::make_pair( "icc", "IC" ));
 
-    list.set( "ML output", m_parameters.verbosity );
+    list.set( "ML output", m_parameters.logLevel );
     list.set( "max levels", m_parameters.amg.maxLevels );
     list.set( "aggregation: type", "Uncoupled" );
     list.set( "PDE equations", m_parameters.dofsPerNode );
@@ -220,23 +231,35 @@ void TrilinosSolver::solve_krylov( EpetraMatrix & mat,
     list.set( "prec type", translate[m_parameters.amg.cycleType] );
     list.set( "smoother: type", translate[m_parameters.amg.smootherType] );
     list.set( "coarse: type", translate[m_parameters.amg.coarseType] );
+    //list.set( "aggregation: threshold", 0.0 );
+    //list.set( "smoother: pre or post", "post" );
 
     //TODO: add user-defined null space / rigid body mode support
     //list.set("null space: type","pre-computed");
     //list.set("null space: vectors",&rigid_body_modes[0]);
     //list.set("null space: dimension", n_rbm);
 
-    ml_preconditioner.reset( new ML_Epetra::MultiLevelPreconditioner( *mat.unwrappedPointer(), list ));
+    if(m_parameters.amg.separateComponents) // apply separate displacement component filter
+    {
+      scratch.reset(new EpetraMatrix());
+      LAIHelperFunctions::SeparateComponentFilter(mat,*scratch,m_parameters.dofsPerNode);
+      ml_preconditioner.reset( new ML_Epetra::MultiLevelPreconditioner( *scratch->unwrappedPointer(), list ));
+    }
+    else // just use original matrix to construct amg operator
+    {
+      ml_preconditioner.reset( new ML_Epetra::MultiLevelPreconditioner( *mat.unwrappedPointer(), list ));
+    }
+
     solver.SetPrecOperator( ml_preconditioner.get() );
   }
   else
-    GEOS_ERROR( "The requested preconditionerType doesn't seem to exist" );
+    GEOSX_ERROR( "The requested preconditionerType doesn't seem to exist" );
 
   // Ask for a convergence normalized by the right hand side
   solver.SetAztecOption( AZ_conv, AZ_rhs );
 
   // Control output
-  switch( m_parameters.verbosity )
+  switch( m_parameters.logLevel )
   {
   case 1:
     solver.SetAztecOption( AZ_output, AZ_summary );

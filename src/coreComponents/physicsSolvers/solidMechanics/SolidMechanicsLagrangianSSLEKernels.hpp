@@ -76,7 +76,6 @@ struct StressCalculationKernel
       //Compute Quadrature
       for ( localIndex q = 0; q < NUM_QUADRATURE_POINTS; ++q )
       {
-        stress[ k ][ q ] = 0.0;
         real64 * const restrict p_stress = stress[ k ][ q ].Data();
         for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
         {
@@ -264,7 +263,7 @@ struct ImplicitKernel
           arrayView1d< R1Tensor const > const & uhat,
           arrayView1d< R1Tensor const > const & vtilde,
           arrayView1d< R1Tensor const > const & uhattilde,
-          arrayView1d< real64 const > const & density,
+          arrayView2d< real64 const > const & density,
           arrayView1d< real64 const > const & fluidPressure,
           arrayView1d< real64 const > const & deltaFluidPressure,
           arrayView1d< real64 const > const & biotCoefficient,
@@ -273,41 +272,47 @@ struct ImplicitKernel
           real64 const massDamping,
           real64 const newmarkBeta,
           real64 const newmarkGamma,
+          R1Tensor const & gravityVector,
           DofManager const * const GEOSX_UNUSED_ARG( dofManager ),
           ParallelMatrix * const matrix,
           ParallelVector * const rhs )
   {
+    GEOSX_MARK_FUNCTION;
     constexpr int dim = 3;
+
+    // if the following is not static, then gcc8.1 gives a "error: use of 'this' in a constant expression"
+    static constexpr int ndof = dim * NUM_NODES_PER_ELEM;
     RAJA::ReduceMax< serialReduce, double > maxForce( 0 );
 
     typename CONSTITUTIVE_TYPE::KernelWrapper const & constitutive = constitutiveRelation->createKernelWrapper();
 
+    arrayView2d<R2SymTensor const> const & stress = constitutiveRelation->getStress();
+
     RAJA::forall< serialPolicy >( RAJA::TypedRangeSegment< localIndex >( 0, numElems ),
                                   GEOSX_LAMBDA ( localIndex const k )
     {
-      Epetra_LongLongSerialDenseVector elementLocalDofIndex( dim * NUM_NODES_PER_ELEM );
-      Epetra_SerialDenseVector         R                   ( dim * NUM_NODES_PER_ELEM );
-      Epetra_SerialDenseMatrix         dRdU                ( dim * NUM_NODES_PER_ELEM,
-                                                             dim * NUM_NODES_PER_ELEM );
-      Epetra_SerialDenseVector         element_dof_np1     ( dim * NUM_NODES_PER_ELEM );
+      stackArray1d<globalIndex, ndof>       elementLocalDofIndex( ndof );
+      stackArray1d<real64, ndof>            R( ndof );
+      stackArray2d<real64, ndof*ndof>  dRdU( ndof,ndof );
+      stackArray1d<real64, ndof>       element_dof_np1( ndof );
 
-      Epetra_SerialDenseVector R_InertiaMassDamping(R);
-      Epetra_SerialDenseMatrix dRdU_InertiaMassDamping(dRdU);
-      Epetra_SerialDenseVector R_StiffnessDamping(R);
-      Epetra_SerialDenseMatrix dRdU_StiffnessDamping(dRdU);
+      stackArray1d<real64, ndof> R_InertiaMassDamping(ndof);
+      stackArray2d<real64, ndof*ndof> dRdU_InertiaMassDamping(ndof,ndof);
+      stackArray1d<real64, ndof> R_StiffnessDamping(ndof);
+      stackArray2d<real64, ndof*ndof> dRdU_StiffnessDamping(ndof,ndof);
 
       R1Tensor u_local[NUM_NODES_PER_ELEM];
       R1Tensor uhat_local[NUM_NODES_PER_ELEM];
       R1Tensor vtilde_local[NUM_NODES_PER_ELEM];
       R1Tensor uhattilde_local[NUM_NODES_PER_ELEM];
 
-      dRdU.Scale(0);
-      R.Scale(0);
+      dRdU = 0.0;
+      R = 0.0;
 
-      dRdU_InertiaMassDamping.Scale(0);
-      R_InertiaMassDamping.Scale(0);
-      dRdU_StiffnessDamping.Scale(0);
-      R_StiffnessDamping.Scale(0);
+      dRdU_InertiaMassDamping = 0.0;
+      R_InertiaMassDamping = 0.0;
+      dRdU_StiffnessDamping = 0.0;
+      R_StiffnessDamping = 0.0;
 
       real64 c[6][6];
       constitutive.GetStiffness( k, c );
@@ -330,7 +335,7 @@ struct ImplicitKernel
 
         if( tiOption == timeIntegrationOption::ImplicitDynamic )
         {
-          GEOS_ERROR("Option not supported");
+          GEOSX_ERROR("Option not supported");
           CopyGlobalToLocal< NUM_NODES_PER_ELEM, R1Tensor>( elemsToNodes[k],
                                       disp, uhat, vtilde, uhattilde,
                                       u_local, uhat_local, vtilde_local, uhattilde_local );
@@ -340,16 +345,11 @@ struct ImplicitKernel
           CopyGlobalToLocal<NUM_NODES_PER_ELEM,R1Tensor>( elemsToNodes[k], disp, uhat, u_local, uhat_local );
         }
 
-        R2SymTensor referenceStress;
-        if( !fluidPressure.empty() )
-        {
-          referenceStress.PlusIdentity( - biotCoefficient[0] * (fluidPressure[k] + deltaFluidPressure[k]));
-        }
+
 
 
         R1Tensor dNdXa;
         R1Tensor dNdXb;
-
 
         for( integer q=0 ; q<NUM_QUADRATURE_POINTS ; ++q )
         {
@@ -381,13 +381,13 @@ struct ImplicitKernel
               if( tiOption == timeIntegrationOption::ImplicitDynamic )
               {
 
-                real64 integrationFactor = density[k] * N[a] * N[b] * detJq;
+                real64 integrationFactor = density(k,q) * N[a] * N[b] * detJq;
                 real64 temp1 = ( massDamping * newmarkGamma/( newmarkBeta * dt ) + 1.0 / ( newmarkBeta * dt * dt ) )* integrationFactor;
 
                 for( int i=0 ; i<dim ; ++i )
                 {
-                  realT const acc = 1.0 / ( newmarkBeta * dt * dt ) * ( uhat[b][i] - uhattilde[b][i] );
-                  realT const vel = vtilde[b][i] + newmarkGamma/( newmarkBeta * dt ) *( uhat[b][i] - uhattilde[b][i] );
+                  realT const acc = 1.0 / ( newmarkBeta * dt * dt ) * ( uhat_local[b][i] - uhattilde_local[b][i] );
+                  realT const vel = vtilde_local[b][i] + newmarkGamma/( newmarkBeta * dt ) *( uhat_local[b][i] - uhattilde_local[b][i] );
 
                   dRdU_InertiaMassDamping(a*dim+i,b*dim+i) -= temp1;
                   R_InertiaMassDamping(a*dim+i) -= ( massDamping * vel + acc ) * integrationFactor;
@@ -398,26 +398,38 @@ struct ImplicitKernel
         }
 
 
-
-          R1Tensor temp;
-          for( integer q=0 ; q<NUM_QUADRATURE_POINTS ; ++q )
+        R1Tensor temp;
+        for( integer q=0 ; q<NUM_QUADRATURE_POINTS ; ++q )
+        {
+          R2SymTensor referenceStress = stress(k,q);
+          if( !fluidPressure.empty() )
           {
-            const realT detJq = detJ[k][q];
-            R2SymTensor stress0 = referenceStress;
-            stress0 *= detJq;
-            for( integer a=0 ; a<NUM_NODES_PER_ELEM ; ++a )
-            {
-              dNdXa = dNdX[k][q][a];
-
-              temp.AijBj(stress0,dNdXa);
-              realT maxF = temp.MaxVal();
-              maxForce.max( maxF );
-
-              R(a*dim+0) -= temp[0];
-              R(a*dim+1) -= temp[1];
-              R(a*dim+2) -= temp[2];
-            }
+            referenceStress.PlusIdentity( - biotCoefficient[0] * (fluidPressure[k] + deltaFluidPressure[k]));
           }
+
+          const realT detJq = detJ[k][q];
+          R2SymTensor stress0 = referenceStress;
+          stress0 *= detJq;
+
+          for( integer a=0 ; a<NUM_NODES_PER_ELEM ; ++a )
+          {
+            dNdXa = dNdX[k][q][a];
+
+            temp.AijBj(stress0,dNdXa);
+            realT maxF = temp.MaxVal();
+            maxForce.max( maxF );
+
+            R(a*dim+0) -= temp[0];
+            R(a*dim+1) -= temp[1];
+            R(a*dim+2) -= temp[2];
+          }
+
+          R1Tensor gravityForce = gravityVector;
+          gravityForce *= detJq * density(k,q);
+          R(q*dim+0) += gravityForce[0];
+          R(q*dim+1) += gravityForce[1];
+          R(q*dim+2) += gravityForce[2];
+        }
 
 
       // TODO It is simpler to do this...try it.
@@ -431,7 +443,7 @@ struct ImplicitKernel
             {
               for( int j=0 ; j<dim ; ++j )
               {
-                R(a*dim+i) += dRdU(a*dim+i,b*dim+j) * u_local[b][j];
+                R(a*dim+i) += dRdU(a*dim+i,b*dim+j) * uhat_local[b][j];
               }
             }
 
@@ -441,7 +453,7 @@ struct ImplicitKernel
               {
                 for( int j=0 ; j<dim ; ++j )
                 {
-                  R_StiffnessDamping(a*dim+i) += stiffnessDamping * dRdU(a*dim+i,b*dim+j) * ( vtilde[b][j] + newmarkGamma/(newmarkBeta * dt)*(uhat[b][j]-uhattilde[b][j]) );
+                  R_StiffnessDamping(a*dim+i) += stiffnessDamping * dRdU(a*dim+i,b*dim+j) * ( vtilde_local[b][j] + newmarkGamma/(newmarkBeta * dt)*(uhat_local[b][j]-uhattilde_local[b][j]) );
                 }
               }
             }
@@ -455,18 +467,19 @@ struct ImplicitKernel
 
         if( tiOption == timeIntegrationOption::ImplicitDynamic )
         {
-          dRdU_StiffnessDamping = dRdU;
-          dRdU_StiffnessDamping.Scale( stiffnessDamping * newmarkGamma / ( newmarkBeta * dt ) );
-
-          dRdU += dRdU_InertiaMassDamping;
-          dRdU += dRdU_StiffnessDamping;
-          R    += R_InertiaMassDamping;
-          R    += R_StiffnessDamping;
+          GEOSX_ERROR("NOT IMPLEMENTED");
+//          dRdU_StiffnessDamping = dRdU;
+//          dRdU_StiffnessDamping.Scale( stiffnessDamping * newmarkGamma / ( newmarkBeta * dt ) );
+//
+//          dRdU += dRdU_InertiaMassDamping;
+//          dRdU += dRdU_StiffnessDamping;
+//          R    += R_InertiaMassDamping;
+//          R    += R_StiffnessDamping;
         }
 
         // TODO remove local epetra objects, remove use of unwrappedPointer()
-        matrix->unwrappedPointer()->SumIntoGlobalValues( elementLocalDofIndex, dRdU);
-        rhs->unwrappedPointer()->SumIntoGlobalValues( elementLocalDofIndex, R);
+        matrix->add( elementLocalDofIndex.data(), elementLocalDofIndex.data(), dRdU.data(), ndof, ndof );
+        rhs->add( elementLocalDofIndex.data(), R.data(), ndof );
       }
     });
 

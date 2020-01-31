@@ -17,6 +17,7 @@ include(cmake/thirdparty/setupThirdPartyDirectory.cmake)
 ################################
 # Include blt
 ################################
+option(ENABLE_BENCHMARKS "Enables benchmarks" ON)
 include(cmake/blt/SetupBLT.cmake)
 
 ################################
@@ -35,8 +36,6 @@ add_subdirectory(thirdparty)
 ################################
 # Add components
 ################################
-#add_subdirectory(components)
-
 set( externalComponentsLinkList "" ) 
 add_subdirectory(externalComponents)
 add_subdirectory(coreComponents)

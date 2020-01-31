@@ -16,10 +16,17 @@
 
 /* UNCRUSTIFY-OFF */
 
+/**
+ * @file TimingMacros.hpp
+ *
+ * A collection of timing-related macros that wrap Caliper.
+ */
+
 #ifndef GEOSX_COMMON_TIMINGMACROS_HPP_
 #define GEOSX_COMMON_TIMINGMACROS_HPP_
 
 #include "common/GeosxConfig.hpp"
+#include "common/GeosxMacros.hpp"
 
 #ifdef GEOSX_USE_CALIPER
 #include <caliper/cali.h>
@@ -38,22 +45,33 @@ namespace timingHelpers
   }
 }
 
-#define DO_STRINGIFY(arg) #arg
-#define GEOSX_MARK_LOOP_BEGIN(loop, loopName) CALI_CXX_MARK_LOOP_BEGIN(loop,DO_STRINGIFY(loopName))
+/// Mark the beginning of a loop with a given id and assign a name to it
+#define GEOSX_MARK_LOOP_BEGIN(loop, loopName) CALI_CXX_MARK_LOOP_BEGIN(loop,STRINGIZE_NX(loopName))
+
+/// Mark the beginning of a loop with a given id
 #define GEOSX_MARK_LOOP_END(loop) CALI_CXX_MARK_LOOP_END(loop)
+
+/// Mark an iteration of a loop with a given id
 #define GEOSX_MARK_LOOP_ITERATION(loop, iter) CALI_CXX_MARK_LOOP_ITERATION(loop, iter)
 
-#define GEOSX_MARK_FUNCTION_TAG(name) cali::Function __cali_ann##__LINE__(DO_STRINGIFY(name))
+/// Mark a function or scope for timing with a given name
+#define GEOSX_MARK_FUNCTION_TAG(name) cali::Function __cali_ann##__LINE__(STRINGIZE_NX(name))
 
+/// Mark a function for timing using a compiler-provided name
 #define GEOSX_MARK_FUNCTION_SCOPED cali::Function __cali_ann##__func__(timingHelpers::stripPF(__PRETTY_FUNCTION__).c_str())
 
+/// Mark a function for timing using a compiler-provided name
 //#define GEOSX_MARK_FUNCTION CALI_CXX_MARK_FUNCTION
 #define GEOSX_MARK_FUNCTION GEOSX_MARK_FUNCTION_SCOPED
 
-#define GEOSX_MARK_BEGIN(name) CALI_MARK_BEGIN(DO_STRINGIFY(name))
-#define GEOSX_MARK_END(name) CALI_MARK_END(DO_STRINGIFY(name))
+/// Mark the beginning of timed statement group
+#define GEOSX_MARK_BEGIN(name) CALI_MARK_BEGIN(STRINGIZE(name))
+
+/// Mark the end of timed statements group
+#define GEOSX_MARK_END(name) CALI_MARK_END(STRINGIZE(name))
 
 #else
+/// @cond DO_NOT_DOCUMENT
 #define GEOSX_MARK_FUNCTION_TAG(name)
 #define GEOSX_MARK_FUNCTION_SCOPED
 #define GEOSX_MARK_FUNCTION
@@ -63,8 +81,10 @@ namespace timingHelpers
 #define GEOSX_MARK_LOOP_ITERATION(loop, iter)
 #define GEOSX_MARK_BEGIN(name)
 #define GEOSX_MARK_END(name)
+/// @endcond
 #endif
 
+/// Get current time of day as a floating point number of seconds in a variable @p time.
 #ifdef GEOSX_USE_TIMERS
 #define GEOSX_GET_TIME( time )                                                 \
   real64 time;                                                                 \

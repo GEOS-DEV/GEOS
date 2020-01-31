@@ -25,7 +25,6 @@ using namespace dataRepository;
 SystemSolverParameters::SystemSolverParameters( std::string const & name,
                                                 Group * const parent ):
   Group(name,parent),
-  m_verbose(0),
   m_solverType("Klu"),
   m_krylovTol(),
   m_numKrylovIter(),
@@ -36,21 +35,12 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
   m_useInnerSolver(),
   m_scalingOption(),
   m_useBicgstab(),
-  m_useDirectSolver(),
-  m_KrylovResidualInit(),
-  m_KrylovResidualFinal(),
-  m_useNewtonSolve(),
-  m_newtonTol(),
-  m_maxIterNewton(),
-  m_numNewtonIterations()
+  m_useDirectSolver()
 {
   setInputFlags(InputFlags::OPTIONAL);
   
-  setRestartFlags(RestartFlags::NO_WRITE);
-  registerWrapper(viewKeysStruct::verbosityString, &m_verbose, false )->
-    setApplyDefaultValue(0)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("verbosity level");
+  // This enables logLevel filtering
+  enableLogLevelInput();
 
   registerWrapper(viewKeysStruct::solverTypeString, &m_solverType, false )->
     setInputFlag(InputFlags::OPTIONAL)->
@@ -59,7 +49,12 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
   registerWrapper(viewKeysStruct::krylovTolString, &m_krylovTol, false )->
     setApplyDefaultValue(1.0e-6)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Allowable tolerance for krylov solve");
+    setDescription("Desired tolerance for Krylov solve");
+
+  registerWrapper(viewKeysStruct::useAdaptiveKrylovString, &m_useAdaptiveKrylovTol, false )->
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Enable Eisenstat-Walker adaptive Krylov tolerance");
 
   registerWrapper(viewKeysStruct::numKrylovIterString, &m_numKrylovIter, false )->
     setApplyDefaultValue(100)->
@@ -67,7 +62,7 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
     setDescription("Maximum number of Krylov Iterations");
 
   registerWrapper(viewKeysStruct::kspaceString, &m_kspace, false )->
-    setApplyDefaultValue(0)->
+    setApplyDefaultValue(300)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("");
 
@@ -106,67 +101,19 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("");
 
-  registerWrapper(viewKeysStruct::useNewtonSolveString, &m_useNewtonSolve, false )->
+  registerWrapper(viewKeysStruct::krylovResidualInitString, &m_krylovResidualInit, false )->
     setApplyDefaultValue(0)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("");
+    setDescription("Initial Krylov solver residual.");
 
-  registerWrapper(viewKeysStruct::newtonTolString, &m_newtonTol, false )->
-    setApplyDefaultValue(1.0e-6)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("");
-
-  registerWrapper(viewKeysStruct::maxIterNewtonString, &m_maxIterNewton, false )->
-    setApplyDefaultValue(5)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Maximum number of Newton iterations");
-
-
-  registerWrapper( viewKeysStruct::maxTimeStepCutsString, &m_maxTimeStepCuts, false )->
-    setApplyDefaultValue(2)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Max number of time step cuts");
-
-  registerWrapper( viewKeysStruct::timeStepCutFactorString, &m_timeStepCutFactor, false )->
-    setApplyDefaultValue(0.5)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Time step cut factor");
-
-  registerWrapper( viewKeysStruct::maxLineSearchCutsString, &m_maxLineSearchCuts, false )->
-    setApplyDefaultValue(4)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Max number of line search cuts");
-
-  registerWrapper( viewKeysStruct::lineSearchCutFactorString, &m_lineSearchCutFactor, false )->
-    setApplyDefaultValue(0.5)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Line search cut factor");
-
-  registerWrapper( viewKeysStruct::allowNonConvergedString, &m_allowNonConverged, false )->
+  registerWrapper(viewKeysStruct::krylovResidualFinalString, &m_krylovResidualFinal, false )->
     setApplyDefaultValue(0)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Allow non-converged solution to be accepted");
-
-  registerWrapper( viewKeysStruct::maxSubStepsString, &m_maxSubSteps, false )->
-    setApplyDefaultValue(10)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Maximum number of time sub-steps allowed for the solver");
-
-  registerWrapper(viewKeysStruct::KrylovResidualInitString, &m_KrylovResidualInit, false )->
-    setApplyDefaultValue(0)->
-    setDescription("verbosity level");
-
-  registerWrapper(viewKeysStruct::KrylovResidualFinalString, &m_KrylovResidualFinal, false )->
-    setApplyDefaultValue(0)->
-    setDescription("verbosity level");
-
-  registerWrapper(viewKeysStruct::numNewtonIterationsString, &m_numNewtonIterations, false )->
-    setApplyDefaultValue(0)->
-    setDescription("verbosity level");
-
+    setDescription("Final Krylov solver residual.");
 
 }
 
+void SystemSolverParameters::PostProcessInput()
+{
+}
 
 REGISTER_CATALOG_ENTRY( Group, SystemSolverParameters, std::string const &, Group * const )
 

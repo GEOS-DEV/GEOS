@@ -60,12 +60,12 @@ public:
 
   virtual void GenerateMesh( Group const * const GEOSX_UNUSED_ARG( cellBlocks ) )
   {
-    GEOS_ERROR( "ElementRegionBase::GenerateMesh() should be overriden if called.");
+    GEOSX_ERROR( "ElementRegionBase::GenerateMesh() should be overriden if called.");
   }
 
 //  void GenerateAggregates( FaceManager const * const faceManager, NodeManager const * const NodeManager )
 //  {
-//    GEOS_ERROR( "ElementRegionBase::GenerateAggregates() should be overriden if called.");
+//    GEOSX_ERROR( "ElementRegionBase::GenerateAggregates() should be overriden if called.");
 //  }
 
   subGroupMap & GetSubRegions()
@@ -217,7 +217,7 @@ string_array ElementRegionBase::getConstitutiveNames() const
   for( string const & matName : m_materialList )
   {
     Group const * const matModel = this->GetSubRegion(0)->GetConstitutiveModels()->GetGroup( matName );
-    if( matModel->group_cast<CONSTITUTIVE_TYPE const *>() != nullptr )
+    if( dynamic_cast< CONSTITUTIVE_TYPE const * >( matModel ) != nullptr )
     {
       rval.push_back( matName );
     }

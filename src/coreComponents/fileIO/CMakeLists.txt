@@ -7,8 +7,7 @@ set( fileIO_headers
      silo/SiloFile.hpp
      vtk/VTKFile.hpp
      vtm/VtmFile.hpp
-     schema/SchemaUtilities.hpp
-     utils/utils.hpp )
+     schema/SchemaUtilities.hpp )
 
 #
 # Specify all sources
@@ -19,7 +18,11 @@ set( fileIO_sources
      vtm/VtmFile.cpp
      schema/SchemaUtilities.cpp )
 
-set( dependencyList common silo hdf5 pugixml RAJA  )
+if( BUILD_OBJ_LIBS)
+  set( dependencyList common silo hdf5 pugixml RAJA  )
+else()
+  set( dependencyList common silo pugixml RAJA  )
+endif()
 
 if( ENABLE_MPI )
   add_subdirectory(coupling/hdf5_interface)
@@ -44,11 +47,9 @@ blt_add_library( NAME                  fileIO
                  SOURCES               ${fileIO_sources}
                  HEADERS               ${fileIO_headers}
                  DEPENDS_ON            ${dependencyList}
-                 #OBJECT                TRUE
+                 OBJECT                ${buildAsObj}
                )
                
 target_include_directories( fileIO PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
 geosx_add_code_checks(PREFIX fileIO )
-
-add_subdirectory( unitTests )

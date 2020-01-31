@@ -26,7 +26,7 @@
 #include <exception>
 #include <limits>
 #include "TensorOps.h"
-#include "Logger.hpp"
+#include "common/Logger.hpp"
 #include "common/GeosxMacros.hpp"
 
 /**
@@ -78,11 +78,7 @@ public:
   explicit TensorBaseT( const realT data[T_length] );
 
   /// constructor initialized by another TensorBaseT object
-  TensorBaseT( const TensorBaseT< T_length >& rhs );
-
-  /// non-virtual destructor. This means that this class in NOT intended to be
-  /// used as a polymorphically.
-  ~TensorBaseT( void );
+  TensorBaseT( const TensorBaseT< T_length >& rhs ) = default;
 
   //***** ASSIGNMENT OPERATORS *************************************************
   /// assignment of all data to an integer
@@ -94,8 +90,7 @@ public:
   TensorBaseT& operator=( const realT& rhs );
 
   /// assignment to another TensorBaseT
-  GEOSX_HOST_DEVICE
-  TensorBaseT& operator=( const TensorBaseT& rhs );
+  TensorBaseT& operator=( const TensorBaseT& rhs ) = default;
 
   /// add a realT to data
   TensorBaseT& operator+=( const realT& rhs );
@@ -225,7 +220,7 @@ public:
   {
     std::istringstream iss(str, std::istringstream::in);
     for ( int i = 0 ; i < T_length ; i++ )
-      GEOS_ERROR_IF(!(iss >> t_data[i]), "Error");
+      GEOSX_ERROR_IF(!(iss >> t_data[i]), "Error");
   }
 
 /*
@@ -394,17 +389,6 @@ TensorBaseT< T_length >::TensorBaseT( void )//:
 
 
 /**
- * @param[in] rhs reference to TensorBaseT object to use in initialization
- * @return none
- */
-template<int T_length>
-TensorBaseT< T_length >::TensorBaseT( const TensorBaseT< T_length >& rhs )
-{
-  TensorBaseT< T_length >::operator=( rhs );
-}
-
-
-/**
  * @param[in] data naked array used for initialization of t_data
  * @return none
  */
@@ -425,13 +409,6 @@ TensorBaseT< T_length >::TensorBaseT( const realT data[T_length] )
   for (int i = 0 ; i < T_length ; ++i)
     t_data[i] = data[i];
 }
-
-/**
- * @return none
- */
-template<int T_length>
-TensorBaseT< T_length >::~TensorBaseT( void )
-{}
 
 //***** ASSIGNMENT OPERATORS **************************************************
 
@@ -461,36 +438,6 @@ TensorBaseT< T_length >::operator=( const realT& rhs )
     t_data[i] = rhs;
   return *this;
 }
-
-/**
- * @param[in] rhs tensor to copy
- * @return none
- */
-template<int T_length>
-GEOSX_HOST_DEVICE
-inline TensorBaseT< T_length >&
-TensorBaseT< T_length >::operator=( const TensorBaseT< T_length >& rhs )
-{
-  for (int i = 0 ; i < T_length ; ++i)
-    t_data[i] = rhs.t_data[i];
-
-//  memcpy(t_data,rhs.t_data,sizeof(realT)*T_length);
-
-  return *this;
-}
-
-
-// intel compiler doesn't seem to be unrolling these loops
-template<>
-inline TensorBaseT< 3 >&
-TensorBaseT<3>::operator=( const TensorBaseT< 3 >& rhs )
-{
-  t_data[0] = rhs.t_data[0];
-  t_data[1] = rhs.t_data[1];
-  t_data[2] = rhs.t_data[2];
-  return *this;
-}
-
 
 /**
  * @param[in] rhs value to add to t_data

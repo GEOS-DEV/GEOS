@@ -31,15 +31,20 @@ void basicSetup( int argc, char * argv[] );
 void basicCleanup();
 
 /**
- * @brief Setup the cxx-utilities library. This initializes the logger,
- * signal handling and the floating point environment.
+ * @brief Initialize the logger.
  */
-void setupCXXUtils();
+void setupLogger();
 
 /**
- * @brief Finalize the cxx-utilities library. This finalizes the logger and chai.
+ * @brief Finalize the logger.
  */
-void finalizeCXXUtils();
+void finalizeLogger();
+
+/**
+ * @brief Setup the cxx-utilities library. This initializes signal handling
+ *        and the floating point environment.
+ */
+void setupCXXUtils();
 
 /**
  * @brief Setup MKL if in use.
@@ -62,18 +67,6 @@ void setupMPI( int argc, char * argv[] );
  * @brief Finalize MPI.
  */
 void finalizeMPI();
-
-/**
- * @brief Setup PETSc.
- * @param [in] argc the number of command line arguments.
- * @param [in/out] argv the command line arguments.
- */
-void setupPetsc( int argc, char * argv[] );
-
-/**
- * @brief Finalize PETSc.
- */
-void finalizePetsc();
 
 } // namespace geosx
 

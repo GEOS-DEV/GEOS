@@ -2,19 +2,21 @@
 <Problem>
   
   <Solvers
-    gravityVector="0.0, 0.0, -9.81">
+    gravityVector="0.0, 0.0, 0.0">
 
     <SolidMechanicsLagrangianSSLE name="lagSolve" 
                                   timeIntegrationOption="QuasiStatic"
-                                  verboseLevel="0"
+                                  logLevel="1"
                                   discretization="FE1"
                                   targetRegions="{Region2}"
                                   solidMaterialName="granite"
                                   >
-      <SystemSolverParameters krylovTol="1.0e-10"
-                              newtonTol="1.0e-3"
-                              maxIterNewton="8"
-                              verbosityFlag="0"/>
+      <NonlinearSolverParameters name="nlsp"
+                                 newtonTol="1.0e-3"
+                                 newtonMaxIter="8"/>
+      <SystemSolverParameters name="ssp"
+                              krylovTol="1.0e-10"
+                              logLevel="0"/>
      </SolidMechanicsLagrangianSSLE>
   
     <SurfaceGenerator name="SurfaceGen"
@@ -23,8 +25,9 @@
                       nodeBasedSIF="1"
                       discretization="FE1"
                       fractureRegion="Fracture"
-                      verboseLevel="1"
-                      targetRegions="{Region2}">
+                      logLevel="1"
+                      targetRegions="{Region2}"
+                      mpiCommOrder="1">
     </SurfaceGenerator>
   </Solvers>
 
@@ -143,7 +146,14 @@
                objectPath="faceManager"
                fieldName="Traction" 
                scale="-1e6" 
-               setNames="{zneg}"/>                             
+               setNames="{zneg}"/>
+               
+    <FieldSpecification name="znegconstraint" 
+               component="2" 
+               objectPath="nodeManager"
+               fieldName="TotalDisplacement" 
+               scale="0.0" 
+               setNames="{zneg}"/>
                
   </FieldSpecifications>
 

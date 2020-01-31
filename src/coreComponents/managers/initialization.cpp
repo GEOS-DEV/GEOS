@@ -15,11 +15,9 @@
 #include "initialization.hpp"
 
 #include "common/DataTypes.hpp"
-#include "SetFPE.hpp"
-#include "SetSignalHandling.hpp"
-#include "stackTrace.hpp"
-#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
-#include "managers/Functions/FunctionManager.hpp"
+#include "cxx-utilities/src/SetFPE.hpp"
+#include "cxx-utilities/src/SetSignalHandling.hpp"
+#include "cxx-utilities/src/stackTrace.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 
@@ -37,14 +35,14 @@ namespace geosx
 void setupMKL()
 {
 #ifdef GEOSX_USE_MKL
-  GEOS_LOG_RANK_0( "MKL max threads: " << mkl_get_max_threads());
+  GEOSX_LOG_RANK_0( "MKL max threads: " << mkl_get_max_threads() );
 #endif
 }
 
 void setupOpenMP()
 {
 #ifdef GEOSX_USE_OPENMP
-  GEOS_LOG_RANK_0( "Max threads: " << omp_get_max_threads());
+  GEOSX_LOG_RANK_0( "Max threads: " << omp_get_max_threads() );
 #endif
 }
 
@@ -64,43 +62,40 @@ void finalizeMPI()
 #endif
 }
 
-void setupCXXUtils()
+void setupLogger()
 {
 #ifdef GEOSX_USE_MPI
   logger::InitializeLogger( MPI_COMM_GEOSX );
 #else
   logger::InitializeLogger();
 #endif
+}
 
+void setupCXXUtils()
+{
   cxx_utilities::setSignalHandling( cxx_utilities::handler1 );
   cxx_utilities::SetFPE();
 }
 
-void finalizeCXXUtils()
+void finalizeLogger()
 {
-#ifdef GEOSX_USE_CHAI
-  chai::ArrayManager::finalize();
-#endif
-
   logger::FinalizeLogger();
 }
 
 void basicSetup( int argc, char * argv[] )
 {
   setupMPI( argc, argv );
+  setupLogger();
+  setupCXXUtils();
   setupOpenMP();
   setupMKL();
-  setupCXXUtils();
   setupLAI( argc, argv );
 }
 
 void basicCleanup()
 {
-  FieldSpecificationManager::finalize();
-  FunctionManager::finalize();
-
   finalizeLAI();
-  finalizeCXXUtils();
+  finalizeLogger();
   finalizeMPI();
 }
 

@@ -19,8 +19,9 @@
 #ifndef GEOSX_DATAREPOSITORY_DEFAULTVALUE_HPP_
 #define GEOSX_DATAREPOSITORY_DEFAULTVALUE_HPP_
 
+// Source includes
 #include "common/DataTypes.hpp"
-#include "SFINAE_Macros.hpp"
+#include "codingUtilities/traits.hpp"
 
 namespace geosx
 {
@@ -38,7 +39,7 @@ namespace wrapperDefaultValue
 /**
  * @struct is_defaultable
  * @tparam T type to check
- * @brief trait to determine if type \p T should have a default value
+ * @brief trait to determine if type @p T should have a default value
  */
 template< typename T >
 struct is_defaultable
@@ -52,6 +53,7 @@ struct is_defaultable
                                 std::is_same< T, unsigned long long int >::value ||
                                 std::is_floating_point< T >::value ||
                                 std::is_same< T, string >::value ||
+                                std::is_same< T, Path >::value ||
                                 std::is_same< T, R1Tensor >::value ||
                                 std::is_same< T, R2Tensor >::value ||
                                 std::is_same< T, R2SymTensor >::value;
@@ -69,6 +71,8 @@ struct Helper
 {
   /// attribute to indicate whether type \p T has a default value
   static constexpr bool has_default_value = false;
+
+  /// alias for default value type (void be default)
   using value_type = void;
 };
 
@@ -81,7 +85,7 @@ struct Helper
  * a member to hold a default value.
  */
 template< typename T >
-struct Helper< T, typename std::enable_if< is_defaultable< T >::value >::type >
+struct Helper< T, std::enable_if_t< is_defaultable< T >::value > >
 {
   /// attribute to indicate whether type \p T has a default value
   static constexpr bool has_default_value = true;
@@ -93,7 +97,6 @@ struct Helper< T, typename std::enable_if< is_defaultable< T >::value >::type >
   value_type value = value_type();
 };
 
-HAS_ALIAS( value_type )
 /**
  * @struct Helper
  * @tparam T type to check
@@ -104,8 +107,8 @@ HAS_ALIAS( value_type )
  * containers.
  */
 template< typename T >
-struct Helper< T, typename std::enable_if< has_alias_value_type< T >::value &&
-                                           ( is_defaultable< typename T::value_type >::value) >::type >
+struct Helper< T, std::enable_if_t< traits::has_alias_value_type< T > &&
+                                    is_defaultable< typename T::value_type >::value > >
 {
   /// attribute to indicate whether type \p T has a default value
   static constexpr bool has_default_value = true;
@@ -117,7 +120,21 @@ struct Helper< T, typename std::enable_if< has_alias_value_type< T >::value &&
   value_type value = value_type();
 };
 
+template< typename T >
+std::enable_if_t< !Helper< T >::has_default_value, std::ostream & >
+operator<<( std::ostream & stream, Helper< T > const & GEOSX_UNUSED_ARG( value ) )
+{
+  return stream;
 }
+
+template< typename T >
+std::enable_if_t< Helper< T >::has_default_value, std::ostream & >
+operator<<( std::ostream & stream, Helper< T > const & value )
+{
+  return stream << value.value;
+}
+
+} // namespace wrapperDefaultValue
 
 /**
  * @tparam T the type to check
@@ -126,9 +143,8 @@ struct Helper< T, typename std::enable_if< has_alias_value_type< T >::value &&
 template< typename T >
 using DefaultValue = wrapperDefaultValue::Helper< T >;
 
-
-}
-}
+} // namespace dataRepository
+} // namespace geosx
 
 
 #endif /* GEOSX_DATAREPOSITORY_DEFAULTVALUE_HPP_ */

@@ -39,9 +39,9 @@ string const zCoords = "zCoords";
 string const xElems  = "nx";
 string const yElems  = "ny";
 string const zElems  = "nz";
-string const xBias  = "xbias";
-string const yBias  = "ybias";
-string const zBias  = "zbias";
+string const xBias  = "xBias";
+string const yBias  = "yBias";
+string const zBias  = "zBias";
 string const cellBlockNames = "cellBlockNames";
 string const elementTypes = "elementTypes";
 string const trianglePattern = "trianglePattern";
@@ -201,7 +201,7 @@ private:
 
       if ( m_useBias && ( !isZero(m_nElemBias[i][block]) ) & (m_nElems[i][block]>1))
       {
-        GEOS_ERROR_IF(fabs(m_nElemBias[i][block]) >= 1, "Mesh bias must between -1 and 1!");
+        GEOSX_ERROR_IF(fabs(m_nElemBias[i][block]) >= 1, "Mesh bias must between -1 and 1!");
 
         realT len = max -  min;
         realT xmean = len / m_nElems[i][block];

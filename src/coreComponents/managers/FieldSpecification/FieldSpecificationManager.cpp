@@ -37,17 +37,11 @@ FieldSpecificationManager::FieldSpecificationManager( string const & name, Group
 }
 
 
-FieldSpecificationManager * FieldSpecificationManager::get()
+FieldSpecificationManager & FieldSpecificationManager::get()
 {
-  static FieldSpecificationManager * bcman = new FieldSpecificationManager( "FieldSpecifications", nullptr );
+  static FieldSpecificationManager bcman( "FieldSpecifications", nullptr );
   return bcman;
 }
-
-void FieldSpecificationManager::finalize()
-{
-  delete get();
-}
-
 
 FieldSpecificationManager::~FieldSpecificationManager()
 {

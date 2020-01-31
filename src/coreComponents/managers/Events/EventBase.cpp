@@ -38,6 +38,7 @@ EventBase::EventBase( const std::string& name,
   m_endTime(1e100),
   m_forceDt(-1.0),
   m_maxEventDt(-1.0),
+  m_finalDtStretch(1e-3),
   m_targetExactStartStop(0),
   m_currentSubEvent(0),
   m_targetExecFlag(0),
@@ -46,11 +47,13 @@ EventBase::EventBase( const std::string& name,
   m_eventCount(0),
   m_timeStepEventCount(0),
   m_eventProgress(0),
-  m_verbosity(0),
   m_currentEventDtRequest(0.0),
   m_target(nullptr)
 {
   setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
+
+  // This enables logLevel filtering
+  enableLogLevelInput();
   
   registerWrapper(viewKeyStruct::eventTargetString, &m_eventTarget, false )->
     setInputFlag(InputFlags::OPTIONAL)->
@@ -76,6 +79,11 @@ EventBase::EventBase( const std::string& name,
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("While active, this event will request a timestep <= this value (depending upon any child/target requests).");
 
+  registerWrapper(viewKeyStruct::finalDtStretchString, &m_finalDtStretch, false )->
+    setApplyDefaultValue(1e-3)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Allow the final dt request for this event to grow by this percentage to match the endTime exactly.");
+
   registerWrapper(viewKeyStruct::targetExactStartStopString, &m_targetExactStartStop, false )->
     setApplyDefaultValue(1)->
     setInputFlag(InputFlags::OPTIONAL)->
@@ -94,11 +102,6 @@ EventBase::EventBase( const std::string& name,
 
   registerWrapper(viewKeyStruct::isTargetExecutingString, &m_targetExecFlag, false )->
     setDescription("Index of the current subevent");
-
-  registerWrapper(viewKeyStruct::verbosityString, &m_verbosity, false )->
-    setApplyDefaultValue(0)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Verbosity level");
 }
 
 
@@ -114,7 +117,7 @@ EventBase::CatalogInterface::CatalogType& EventBase::GetCatalog()
 
 Group * EventBase::CreateChild( string const & childKey, string const & childName )
 {
-  GEOS_LOG_RANK_0("Adding Event: " << childKey << ", " << childName);
+  GEOSX_LOG_RANK_0("Adding Event: " << childKey << ", " << childName);
   std::unique_ptr<EventBase> event = EventBase::CatalogInterface::Factory( childKey, childName, this );
   return this->RegisterGroup<EventBase>( childName, std::move(event) );
 }
@@ -140,7 +143,7 @@ void EventBase::GetTargetReferences()
   {
     Group * tmp = this->GetGroupByPath(m_eventTarget);
     m_target = Group::group_cast<ExecutableGroup*>(tmp);
-    GEOS_ERROR_IF(m_target == nullptr, "The target of an event must be executable! " << m_target);
+    GEOSX_ERROR_IF(m_target == nullptr, "The target of an event must be executable! " << m_target);
   }
 
   this->forSubGroups<EventBase>([]( EventBase * subEvent ) -> void
@@ -228,10 +231,8 @@ void EventBase::Execute(real64 const time_n,
     EventBase * subEvent = static_cast<EventBase *>( this->GetSubGroups()[m_currentSubEvent] );
     integer subEventForecast = subEvent->GetForecast();
 
-    if (m_verbosity > 0)
-    {
-      GEOS_LOG_RANK_0("          SubEvent: " << m_currentSubEvent << " (" << subEvent->getName() << "), dt_request=" << subEvent->GetCurrentEventDtRequest() << ", forecast=" << subEventForecast);
-    }
+    // Print debug information for logLevel >= 1
+    GEOSX_LOG_LEVEL_RANK_0(1, "          SubEvent: " << m_currentSubEvent << " (" << subEvent->getName() << "), dt_request=" << subEvent->GetCurrentEventDtRequest() << ", forecast=" << subEventForecast);
 
     if (subEventForecast <= 0)
     {
@@ -249,7 +250,7 @@ void EventBase::Execute(real64 const time_n,
 
 real64 EventBase::GetTimestepRequest(real64 const time)
 {
-  m_currentEventDtRequest = std::numeric_limits<real64>::max();
+  m_currentEventDtRequest = std::numeric_limits<real64>::max() / 2.0;
 
   // Events and their targets may request a max dt when active
   if ((time >= m_beginTime) && (time < m_endTime))
@@ -296,7 +297,12 @@ real64 EventBase::GetTimestepRequest(real64 const time)
     }
     else if (tmp_t < m_endTime)
     {
-      m_currentEventDtRequest = std::min(m_endTime - time, m_currentEventDtRequest);
+      // If the current dt request exceeds the end time, cut it
+      // Otherwise, if it falls just short of the end time, grow it.
+      if (time + m_currentEventDtRequest * (1.0 + m_finalDtStretch) > m_endTime)
+      {
+        m_currentEventDtRequest = m_endTime - time;
+      }
     }
   }
 

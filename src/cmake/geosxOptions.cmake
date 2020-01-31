@@ -20,18 +20,13 @@ option( RAJA_ENABLE_OPENMP "" OFF )
 option( RAJA_ENABLE_CUDA "" OFF )
 option( RAJA_ENABLE_TESTS "" OFF )
 
-option( ENABLE_GEOSX_PTP "" OFF)
+option( ENABLE_GEOSX_PTP "" ON)
 option( ENABLE_PAMELA "" ON )
 option( ENABLE_PVTPackage "" ON )
-
-option( ENABLE_FPARSER "Enables FPARSER" OFF )
 
 option( ENABLE_UNCRUSTIFY "" ON )
 
 option( ENABLE_FORTRAN "Enables Fortran support" OFF)
-
-
-option(ENABLE_CONTAINERARRAY_RETURN_PTR     "Enables Wrapper to return pointers instead of references" ON )
 
 option( ENABLE_TRILINOS "Enables TRILINOS" ON )
 option( ENABLE_METIS "Enables METIS" ON )
@@ -75,6 +70,8 @@ if( CMAKE_HOST_APPLE AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang" )
 else()
   option(ENABLE_OPENMP     "Enables OpenMP compiler support" ON)
 endif()
+
+option ( BUILD_OBJ_LIBS "Builds coreComponent modules as object libraries" OFF)
 
 #set( BUILD_SHARED_LIBS ON CACHE PATH "" FORCE)
 #set( ENABLE_SHARED_LIBS ON CACHE PATH "" FORCE )

@@ -1,37 +1,64 @@
+/**
+ * @file GeosxConfig.hpp
+ *
+ * GEOSX build configuration file.
+ * Contains a CMake-generated list of macros that define a particular build configuration.
+ */
+
 #ifndef GEOSX_COMMON_CONFIG_HPP
 #define GEOSX_COMMON_CONFIG_HPP
 
-
+/// GEOSX major version number
 #define GEOSX_VERSION_MAJOR @GEOSX_VERSION_MAJOR@
+/// GEOSX minor version number
 #define GEOSX_VERSION_MINOR @GEOSX_VERSION_MINOR@
+/// GEOSX patch version number
 #define GEOSX_VERSION_PATCH @GEOSX_VERSION_PATCH@
+/// GEOSX full version number string
 #define GEOSX_VERSION_FULL  "@GEOSX_VERSION_FULL@"
 
-
+/// Enables bounds check in LvArray classes (CMake option ARRAY_BOUNDS_CHECK)
 #cmakedefine GEOSX_USE_ARRAY_BOUNDS_CHECK
+/// Enables use of Axom (CMake option ENABLE_ATK)
 #cmakedefine GEOSX_USE_ATK
+/// Enables use of Caliper (CMake option ENABLE_CALIPER)
 #cmakedefine GEOSX_USE_CALIPER
+/// Enables use of CHAI (CMake option ENABLE_CHAI)
 #cmakedefine GEOSX_USE_CHAI
-#cmakedefine USE_CONTAINERARRAY_RETURN_PTR
-#cmakedefine USE_FPARSER
+/// Enables use of Mathpresso library (CMake option ENABLE_MATHPRESSO)
 #cmakedefine GEOSX_USE_MATHPRESSO
+/// Enables use of MPI (CMake option ENABLE_MPI)
 #cmakedefine GEOSX_USE_MPI
+/// Enables use of OpenMP (CMake option ENABLE_OPENMP)
 #cmakedefine GEOSX_USE_OPENMP
+/// Enables use of CUDA (CMake option ENABLE_CUDA)
 #cmakedefine GEOSX_USE_CUDA
+/// Enables use of Python (CMake option ENABLE_PYTHON)
 #cmakedefine GEOSX_USE_PYTHON
+/// Enables use of GEOSX PTP module (CMake option ENABLE_GEOSX_PTP)
 #cmakedefine USE_GEOSX_PTP
-#cmakedefine GEOSX_USE_PVT_PACKAGE
+/// Enables use of RAJA (CMake option ENABLE_RAJA)
 #cmakedefine GEOSX_USE_RAJA
+/// Enables use of sys/time.h based timers (CMake option ENABLE_TIMERS)
 #cmakedefine GEOSX_USE_TIMERS
+/// Enables use of additional debugging interface for TotalView (Cmake option ENABLE_TOTALVIEW_OUTPUT)
 #cmakedefine GEOSX_USE_TOTALVIEW_OUTPUT
+/// Enables use of Intel MKL (CMake option ENABLE_MKL)
 #cmakedefine GEOSX_USE_MKL
+/// Enables use of Trilinos library (CMake option ENABLE_TRILINOS)
 #cmakedefine GEOSX_USE_TRILINOS
+/// Enables use of Hypre library (CMake option ENABLE_HYPRE)
 #cmakedefine GEOSX_USE_HYPRE
+/// Enables use of PETSc library (CMake option ENABLE_PETSC)
 #cmakedefine GEOSX_USE_PETSC
+/// Choice of global linear algebra interface (CMake option GEOSX_LA_INTERFACE)
 #cmakedefine GEOSX_LA_INTERFACE @GEOSX_LA_INTERFACE@
 
+/// Platform-dependent mangling of fortran function names (CMake option FORTRAN_MANGLE_NO_UNDERSCORE)
 #cmakedefine FORTRAN_MANGLE_NO_UNDERSCORE
 
+/// USE OF SEPARATION COEFFICIENT IN FRACTURE FLOW
+#cmakedefine GEOSX_USE_SEPARATION_COEFFICIENT
 
 #endif  /* GEOSX_CONFIG_HPP */
 

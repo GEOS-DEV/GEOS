@@ -6,7 +6,13 @@ set( gtest_geosx_tests
      testStencilCollection.cpp
    )
 
-set( dependencyList geosx_core gtest axom )
+if( BUILD_OBJ_LIBS )
+  message(FATAL_ERROR "BUILDING OBJECT_LIBS")
+  set( dependencyList geosx_core gtest )
+else()
+  set( dependencyList finiteVolume gtest managers )
+endif()
+
 
 if( ENABLE_OPENMP )
     set( dependencyList ${dependencyList} openmp )

@@ -60,7 +60,7 @@ EpetraVector::EpetraVector() = default;
 // copied to a new memory location. Checks if the vector to be copied is empty.
 EpetraVector::EpetraVector( EpetraVector const & src )
 {
-  GEOS_ERROR_IF( src.unwrappedPointer() == nullptr, "source vector appears to be empty" );
+  GEOSX_ERROR_IF( src.unwrappedPointer() == nullptr, "source vector appears to be empty" );
   m_vector = std::make_unique< Epetra_FEVector >( *src.unwrappedPointer() );
 }
 
@@ -79,7 +79,7 @@ EpetraVector::~EpetraVector() = default;
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 void EpetraVector::create( EpetraVector const & src )
 {
-  GEOS_ERROR_IF( src.unwrappedPointer() == nullptr, "source vector appears to be empty" );
+  GEOSX_ERROR_IF( src.unwrappedPointer() == nullptr, "source vector appears to be empty" );
   m_vector = std::make_unique< Epetra_FEVector >( *src.unwrappedPointer() );
 }
 
@@ -337,7 +337,7 @@ void EpetraVector::write( string const & filename,
 }
 
 // ----------------------------
-// Acessors
+// Accessors
 // ----------------------------
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""

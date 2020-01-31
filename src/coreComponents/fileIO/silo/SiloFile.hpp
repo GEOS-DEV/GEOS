@@ -20,7 +20,7 @@
 #define GEOSX_FILEIO_SILO_SILOFILE_HPP_
 
 #include "common/DataTypes.hpp"
-#include "constitutive/Solid/SolidBase.hpp"
+#include "constitutive/solid/SolidBase.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
 #include "mesh/ElementRegionManager.hpp"
 #include "mesh/CellElementSubRegion.hpp"
@@ -517,6 +517,7 @@ private:
   string m_baseFileName;
 
   string_array m_emptyMeshes;
+//  string_array m_emptyMaterials;
   string_array m_emptyVariables;
 
   integer m_writeEdgeMesh;

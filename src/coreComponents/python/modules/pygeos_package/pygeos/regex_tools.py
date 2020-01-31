@@ -1,3 +1,5 @@
+"""Tools for managing regular expressions in pygeos"""
+
 import re
 
 
@@ -26,9 +28,11 @@ patterns = {'parameters': r"\$:?([a-zA-Z_]*)\$?",
 symbolic_format = '%1.6e'
 
 
-# This function is used to evaluate symbolic expressions that are identified
-# using the patterns['symbolic'] regex
 def SymbolicMathRegexHandler(match):
+  """Evaluate symbolic expressions that are identified using the regex_tools.patterns['symbolic'].
+
+     @param match A matching string identified by the regex.
+  """
   k = match.group(1)
   if k:
     # Sanitize the input
@@ -43,13 +47,22 @@ def SymbolicMathRegexHandler(match):
     return
 
 
-# This class is used to substitute matched values with those stored in a dict
 class DictRegexHandler():
+  """This class is used to substitute matched values with those stored in a dict."""
+
   def __init__(self):
-    # Substitution definitions
+    """Initialize the handler with an empty target list.
+       The key/value pairs of self.target indicate which values
+       to look for and the values they will replace with.
+    """
     self.target = {}
 
   def __call__(self, match):
+    """Replace the matching strings with their target.
+
+       @param match A matching string identified by the regex.
+    """
+
     k = match.group(1)
     if k:
       if (k not in self.target.keys()):
