@@ -262,7 +262,7 @@ void resizeEdgeToFaceMap( ArrayOfArraysView< EdgeBuilder const > const & edgesBy
   edgeToFaceMap.reserve( totalEdgeFaces.get() );
   for ( localIndex faceID = 0; faceID < numUniqueEdges; ++faceID )
   {
-    edgeToFaceMap.appendSet( numFacesPerEdge[ faceID ] );
+    edgeToFaceMap.appendSet( numFacesPerEdge[ faceID ] + 4 );
   }
 }
 
@@ -287,7 +287,7 @@ void addEdge( ArrayOfArraysView< EdgeBuilder const > const & edgesByLowestNode,
               localIndex const firstMatch,
               localIndex const numMatches )
 {
-  GEOSX_ASSERT_EQ( edgeToFaceMap.capacityOfSet( edgeID ), numMatches );
+  GEOSX_ASSERT_GT( edgeToFaceMap.capacityOfSet( edgeID ), numMatches );
 
   // Populate the edge to node map.
   edgeToNodeMap( edgeID, 0 ) = firstNodeID;
@@ -1067,5 +1067,10 @@ void EdgeManager::depopulateUpMaps( std::set<localIndex> const & receivedEdges,
   ObjectManagerBase::CleanUpMap( receivedEdges, m_toFacesRelation, facesToEdges );
 }
 
+void EdgeManager::CompressRelationMaps()
+{
+  //GEOSX_MARK_FUNCTION;
+  m_toFacesRelation.compress();
+}
 
 }

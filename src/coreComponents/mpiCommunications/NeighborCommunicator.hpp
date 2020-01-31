@@ -147,16 +147,63 @@ public:
 
   void MPI_WaitAll( int const commID );
 
-  void FindAndPackGhosts( bool const contactActive,
-                          integer const depth,
-                          MeshLevel * const meshLevel,
-                          int const commID );
+  int PostSizeRecv( int const commID );
 
+  MPI_Request GetSizeRecvRequest( int const commID );
+
+  int PostSizeSend( int const commID );
+
+  int PostRecv( int const commID );
+
+  MPI_Request GetRecvRequest( int const commID );
+
+  int PostSend( int const commID );
+
+  /**
+   * Posts non-blocking sends to m_neighborRank for
+   *  both the size and regular communication buffers
+   *  to exchange ghost information.
+   *  Additionally posts a non-blocking recv for size
+   *  information from m_neighborRank, this size recv
+   *  must be completed before PostRecv is called in order
+   *  to correctly resize the receive buffer.
+   */
+  void PrepareAndSendGhosts( bool const contactActive,
+                             int const depth,
+                             MeshLevel * const meshLevel,
+                             int const commID );
+
+  /**
+   * Unpack the receive buffer and process ghosting
+   *  information recieved from m_neighborRank.
+   *  This must be called after PostRecv is called, and
+   *  the request associated with that recv has
+   *  completed (retrieve the request using GetRecvRequest)
+   */
   void UnpackGhosts( MeshLevel * const meshLevel,
                      int const commID );
 
-  void RebuildSyncLists( MeshLevel * const meshLevel,
-                         int const commID );
+  /**
+   * Posts non-blocking sends to m_neighborRank for
+   *  both the size and regular communication buffers
+   *  to exchange synchronization lists.
+   *  Additionally posts a non-blocking recv for size
+   *  information from m_neighborRank, this size recv
+   *  must be completed before PostRecv is called in order
+   *  to correctly resize the receive buffer.
+   */
+  void PrepareAndSendSyncLists( MeshLevel * const meshLevel,
+                                int const commID );
+
+  /**
+   * Unpack the receive buffer and process synchronization
+   *  list information recieved from m_neighborRank.
+   *  This must be called after PostRecv is called, and
+   *  the request associated with that recv has
+   *  completed (retrieve the request using GetRecvRequest)
+   */
+  void UnpackAndRebuildSyncLists( MeshLevel * const meshLevel,
+                                  int const CommID );
 
   void PackCommBufferForSync( std::map<string, string_array > const & fieldNames,
                               MeshLevel * const meshLevel,
@@ -233,14 +280,20 @@ private:
   int m_sendBufferSize[maxComm];
   int m_receiveBufferSize[maxComm];
 
-  std::vector<buffer_type> m_sendBuffer;
-  std::vector<buffer_type> m_receiveBuffer;
+  std::vector< buffer_type > m_sendBuffer;
+  std::vector< buffer_type > m_receiveBuffer;
 
   MPI_Request m_mpiSendBufferRequest[maxComm];
   MPI_Request m_mpiRecvBufferRequest[maxComm];
+
+  MPI_Request m_mpiSendSizeRequest[maxComm];
+  MPI_Request m_mpiRecvSizeRequest[maxComm];
+
   MPI_Status m_mpiSendBufferStatus[maxComm];
   MPI_Status m_mpiRecvBufferStatus[maxComm];
 
+  MPI_Status m_mpiSendSizeStatus[maxComm];
+  MPI_Status m_mpiRecvSizeStatus[maxComm];
 };
 
 

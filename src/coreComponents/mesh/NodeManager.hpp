@@ -91,6 +91,8 @@ public:
 
   void SetElementMaps( ElementRegionManager const * const elementRegionManager );
 
+  void CompressRelationMaps( );
+
 //  void Initialize();
 
   virtual void ViewPackingExclusionList( set<localIndex> & exclusionList ) const override;

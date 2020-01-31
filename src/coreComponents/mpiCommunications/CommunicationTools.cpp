@@ -548,16 +548,26 @@ void CommunicationTools::FindGhosts( MeshLevel * const meshLevel,
   GEOSX_MARK_FUNCTION;
   int commID = CommunicationTools::reserveCommID();
 
-  for( auto & neighbor : neighbors )
-  {
-    neighbor.FindAndPackGhosts( false, 1, meshLevel, commID );
-  }
-
   GEOSX_MARK_BEGIN("Neighbor wait loop");
-  for( auto & neighbor : neighbors )
   {
-    neighbor.MPI_WaitAll( commID );
-    neighbor.UnpackGhosts( meshLevel, commID );
+    int neighbor_count = neighbors.size( );
+    auto send = [&] ( int idx )
+      {
+        neighbors[idx].PrepareAndSendGhosts( false, 1, meshLevel, commID );
+        return neighbors[idx].GetSizeRecvRequest( commID );
+      };
+    auto post_recv = [&] ( int idx )
+      {
+        neighbors[idx].PostRecv( commID );
+        return neighbors[idx].GetRecvRequest( commID );
+      };
+    auto proc_recv = [&] ( int idx )
+      {
+        neighbors[idx].UnpackGhosts( meshLevel, commID );
+        return MPI_REQUEST_NULL;
+      };
+    std::vector< std::function< MPI_Request ( int ) > > phases = { send, post_recv, proc_recv };
+    MpiWrapper::ActiveWaitSomeCompletePhase( neighbor_count, phases );
   }
   GEOSX_MARK_END("Neighbor wait loop");
 
@@ -565,9 +575,37 @@ void CommunicationTools::FindGhosts( MeshLevel * const meshLevel,
   meshLevel->getEdgeManager()->SetReceiveLists();
   meshLevel->getFaceManager()->SetReceiveLists();
 
-  for( auto & neighbor : neighbors )
+  // at present removing this barrier allows a nondeterministic mpi error to happen on lassen
+  //   it occurs less than 5% of the time and happens when a process enters the recv phase in
+  //   the sync list exchange while another process still has not unpacked the ghosts received from
+  //   the first process. Depending on the mpi implementation the sync send from the first process
+  //   can be recv'd by the second process instead of the ghost send which has already been sent but
+  //   not necessarily recieved.
+  // Some restructuring to ensure this can't happen ( can also probably just change the send/recv tagging )
+  //   can eliminate this. But at present runtimes are the same in either case, as time is mostly just
+  //   shifted from the waitall in UnpackAndRebuildSyncLists since the processes are more 'in-sync' when
+  //   hitting that point after introducing this barrier.
+  MpiWrapper::Barrier( );
+
   {
-    neighbor.RebuildSyncLists( meshLevel, commID );
+    int neighbor_count = neighbors.size( );
+    auto send = [&] ( int idx )
+      {
+        neighbors[idx].PrepareAndSendSyncLists( meshLevel, commID );
+        return neighbors[idx].GetSizeRecvRequest( commID );
+      };
+    auto post_recv  = [&] ( int idx )
+      {
+        neighbors[idx].PostRecv( commID );
+        return neighbors[idx].GetRecvRequest( commID );
+      };
+    auto proc_recv = [&] ( int idx )
+      {
+        neighbors[idx].UnpackAndRebuildSyncLists( meshLevel, commID );
+        return MPI_REQUEST_NULL;
+      };
+    std::vector< std::function< MPI_Request ( int ) > > phases = {  send, post_recv, proc_recv };
+    MpiWrapper::ActiveWaitSomeCompletePhase( neighbor_count, phases );
   }
 
   meshLevel->getNodeManager()->FixUpDownMaps(false);
@@ -582,7 +620,8 @@ void CommunicationTools::FindGhosts( MeshLevel * const meshLevel,
       subRegion->FixUpDownMaps(false);
     }
   }
-
+  meshLevel->getNodeManager()->CompressRelationMaps();
+  meshLevel->getEdgeManager()->CompressRelationMaps();
   CommunicationTools::releaseCommID( commID );
 }
 

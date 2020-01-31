@@ -103,7 +103,7 @@ void NodeManager::SetEdgeMaps( EdgeManager const * const edgeManager )
   m_toEdgesRelation.reserve( totalNodeEdges.get() );
   for ( localIndex nodeID = 0; nodeID < numNodes; ++nodeID )
   {
-    m_toEdgesRelation.appendSet( toEdgesTemp.sizeOfArray( nodeID ) );
+    m_toEdgesRelation.appendSet( toEdgesTemp.sizeOfArray( nodeID ) + 4 );
   }
 
   ArrayOfSetsView< localIndex > const & toEdgesView = m_toEdgesRelation;
@@ -149,7 +149,7 @@ void NodeManager::SetFaceMaps( FaceManager const * const faceManager )
   m_toFacesRelation.reserve( totalNodeFaces.get() );
   for ( localIndex nodeID = 0; nodeID < numNodes; ++nodeID )
   {
-    m_toFacesRelation.appendSet( toFacesTemp.sizeOfArray( nodeID ) );
+    m_toFacesRelation.appendSet( toFacesTemp.sizeOfArray( nodeID ) + 4 );
   }
 
   forall_in_range< parallelHostPolicy >( 0, numNodes, [&]( localIndex const nodeID )
@@ -214,6 +214,16 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
   }
 
   this->m_toElements.setElementRegionManager( elementRegionManager );
+}
+
+void NodeManager::CompressRelationMaps()
+{
+  //GEOSX_MARK_FUNCTION;
+  m_toEdgesRelation.compress();
+  m_toFacesRelation.compress();
+  m_toElements.m_toElementRegion.compress();
+  m_toElements.m_toElementSubRegion.compress();
+  m_toElements.m_toElementIndex.compress();
 }
 
 //**************************************************************************************************
