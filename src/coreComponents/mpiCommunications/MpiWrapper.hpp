@@ -129,7 +129,7 @@ public:
    */
   ///@{
 
-  static void Barrier( MPI_Comm const & MPI_PARAM(comm)=MPI_COMM_GEOSX)
+  static void Barrier( MPI_Comm const & MPI_PARAM( comm )=MPI_COMM_GEOSX )
   {
   #ifdef GEOSX_USE_MPI
     MPI_Barrier( comm );
@@ -147,7 +147,7 @@ public:
 
   static int Comm_free( MPI_Comm * comm );
 
-  inline static int Comm_rank( MPI_Comm const & MPI_PARAM(comm)=MPI_COMM_GEOSX )
+  inline static int Comm_rank( MPI_Comm const & MPI_PARAM( comm )=MPI_COMM_GEOSX )
   {
     int rank = 0;
   #ifdef GEOSX_USE_MPI
@@ -156,7 +156,7 @@ public:
     return rank;
   }
 
-  inline static int Comm_size( MPI_Comm const & MPI_PARAM(comm)=MPI_COMM_GEOSX )
+  inline static int Comm_size( MPI_Comm const & MPI_PARAM( comm )=MPI_COMM_GEOSX )
   {
     int size = 1;
 #ifdef GEOSX_USE_MPI
@@ -311,9 +311,9 @@ public:
   ///@}
 
 #if !defined(GEOSX_USE_MPI)
-  static std::map< int, std::pair< int , void * > > & getTagToPointersMap()
+  static std::map< int, std::pair< int, void * > > & getTagToPointersMap()
   {
-    static std::map< int, std::pair< int , void * > > tagToPointers;
+    static std::map< int, std::pair< int, void * > > tagToPointers;
     return tagToPointers;
   }
 #endif
@@ -564,10 +564,10 @@ int MpiWrapper::Allgather( T_SEND const * const sendbuf,
                            int sendcount,
                            T_RECV * const recvbuf,
                            int recvcount,
-                           MPI_Comm MPI_PARAM(comm) )
+                           MPI_Comm MPI_PARAM( comm ) )
 {
 #ifdef GEOSX_USE_MPI
-  return MPI_Allgather( sendbuf, sendcount, getMpiType<T_SEND>(), recvbuf, recvcount, getMpiType<T_RECV>(), comm );
+  return MPI_Allgather( sendbuf, sendcount, getMpiType< T_SEND >(), recvbuf, recvcount, getMpiType< T_RECV >(), comm );
 #else
   static_assert( std::is_same< T_SEND, T_RECV >::value,
                  "MpiWrapper::Allgather() for serial run requires send and receive buffers are of the same type" );
@@ -599,7 +599,7 @@ template< typename T >
 int MpiWrapper::allGather( arrayView1d< T const > const & sendValues,
                            array1d< T > & allValues )
 {
-  int const sendSize = integer_conversion<int>( sendValues.size() );
+  int const sendSize = integer_conversion< int >( sendValues.size() );
 #ifdef GEOSX_USE_MPI
   int const mpiSize = Comm_size( MPI_COMM_GEOSX );
   allValues.resize( mpiSize * sendSize );
@@ -625,8 +625,8 @@ template< typename T >
 int MpiWrapper::allReduce( T const * const sendbuf,
                            T * const recvbuf,
                            int count,
-                           MPI_Op MPI_PARAM(op),
-                           MPI_Comm MPI_PARAM(comm) )
+                           MPI_Op MPI_PARAM( op ),
+                           MPI_Comm MPI_PARAM( comm ) )
 {
 #ifdef GEOSX_USE_MPI
   MPI_Datatype const MPI_TYPE = getMpiType< T >();
@@ -638,10 +638,10 @@ int MpiWrapper::allReduce( T const * const sendbuf,
 }
 
 template< typename T >
-int MpiWrapper::bcast( T * const MPI_PARAM(buffer),
-                       int MPI_PARAM(count),
-                       int MPI_PARAM(root),
-                       MPI_Comm MPI_PARAM(comm) )
+int MpiWrapper::bcast( T * const MPI_PARAM( buffer ),
+                       int MPI_PARAM( count ),
+                       int MPI_PARAM( root ),
+                       MPI_Comm MPI_PARAM( comm ) )
 {
 #ifdef GEOSX_USE_MPI
   return MPI_Bcast( buffer, count, getMpiType< T >(), root, comm );
@@ -662,7 +662,7 @@ void MpiWrapper::Broadcast( T & MPI_PARAM( value ), int MPI_PARAM( srcRank ) )
 
 template<>
 inline
-void MpiWrapper::Broadcast<std::string>( std::string & MPI_PARAM( value ), int MPI_PARAM( srcRank ) )
+void MpiWrapper::Broadcast< std::string >( std::string & MPI_PARAM( value ), int MPI_PARAM( srcRank ) )
 {
 #ifdef GEOSX_USE_MPI
   int size = value.size();
@@ -679,8 +679,8 @@ int MpiWrapper::gather( TS const * const sendbuf,
                         int sendcount,
                         TR * const recvbuf,
                         int recvcount,
-                        int MPI_PARAM(root),
-                        MPI_Comm MPI_PARAM(comm) )
+                        int MPI_PARAM( root ),
+                        MPI_Comm MPI_PARAM( comm ) )
 {
 #ifdef GEOSX_USE_MPI
   return MPI_Gather( sendbuf, sendcount, getMpiType< TS >(), recvbuf, recvcount, getMpiType< TR >(), root, comm );
@@ -700,9 +700,9 @@ int MpiWrapper::gatherv( TS const * const sendbuf,
                          int sendcount,
                          TR * const recvbuf,
                          const int * recvcounts,
-                         const int * MPI_PARAM(displs),
-                         int MPI_PARAM(root),
-                         MPI_Comm MPI_PARAM(comm) )
+                         const int * MPI_PARAM( displs ),
+                         int MPI_PARAM( root ),
+                         MPI_Comm MPI_PARAM( comm ) )
 {
 #ifdef GEOSX_USE_MPI
   return MPI_Gatherv( sendbuf, sendcount, getMpiType< TS >(), recvbuf, recvcounts, displs, getMpiType< TR >(), root, comm );
@@ -720,25 +720,26 @@ int MpiWrapper::gatherv( TS const * const sendbuf,
 template< typename T >
 int MpiWrapper::iRecv( T * const buf,
                        int count,
-                       int MPI_PARAM(source),
+                       int MPI_PARAM( source ),
                        int tag,
-                       MPI_Comm MPI_PARAM(comm),
-                       MPI_Request * MPI_PARAM(request) )
+                       MPI_Comm MPI_PARAM( comm ),
+                       MPI_Request * MPI_PARAM( request ) )
 {
 #ifdef GEOSX_USE_MPI
   return MPI_Irecv( buf, count, getMpiType< T >(), source, tag, comm, request );
 #else
-  std::map<int,std::pair< int , void * > > & pointerMap = getTagToPointersMap();
-  std::map<int,std::pair< int , void * > >::iterator iPointer = pointerMap.find( tag );
+  std::map< int, std::pair< int, void * > > & pointerMap = getTagToPointersMap();
+  std::map< int, std::pair< int, void * > >::iterator iPointer = pointerMap.find( tag );
 
   if( iPointer==pointerMap.end() )
   {
-    pointerMap.insert( {tag,{1,buf}} );
+    pointerMap.insert( {tag, {1, buf}
+                       } );
   }
   else
   {
     GEOSX_ERROR_IF( iPointer->second.first != 0,
-                   "Tag does is assigned, but pointer was not set by iSend." );
+                    "Tag does is assigned, but pointer was not set by iSend." );
     memcpy( buf, iPointer->second.second, count*sizeof(T) );
     pointerMap.erase( iPointer );
   }
@@ -749,25 +750,26 @@ int MpiWrapper::iRecv( T * const buf,
 template< typename T >
 int MpiWrapper::iSend( T const * const buf,
                        int count,
-                       int MPI_PARAM(dest),
+                       int MPI_PARAM( dest ),
                        int tag,
-                       MPI_Comm MPI_PARAM(comm),
-                       MPI_Request * MPI_PARAM(request) )
+                       MPI_Comm MPI_PARAM( comm ),
+                       MPI_Request * MPI_PARAM( request ) )
 {
 #ifdef GEOSX_USE_MPI
   return MPI_Isend( buf, count, getMpiType< T >(), dest, tag, comm, request );
 #else
-  std::map<int,std::pair< int , void * > > & pointerMap = getTagToPointersMap();
-  std::map<int,std::pair< int , void * > >::iterator iPointer = pointerMap.find( tag );
+  std::map< int, std::pair< int, void * > > & pointerMap = getTagToPointersMap();
+  std::map< int, std::pair< int, void * > >::iterator iPointer = pointerMap.find( tag );
 
   if( iPointer==pointerMap.end() )
   {
-    pointerMap.insert( {tag,{0,const_cast<T *>(buf)}} );
+    pointerMap.insert( {tag, {0, const_cast< T * >(buf)}
+                       } );
   }
   else
   {
     GEOSX_ERROR_IF( iPointer->second.first != 1,
-                   "Tag does is assigned, but pointer was not set by iRecv." );
+                    "Tag does is assigned, but pointer was not set by iRecv." );
     memcpy( iPointer->second.second, buf, count*sizeof(T) );
     pointerMap.erase( iPointer );
   }
