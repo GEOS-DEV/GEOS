@@ -53,16 +53,9 @@ endif()
 
 
 ################################
-# install targets from build
-################################s
-#install(DIRECTORY ${PROJECT_BINARY_DIR}/bin DESTINATION .)
+# Deploy headers
+################################
 install(DIRECTORY ${PROJECT_BINARY_DIR}/include DESTINATION .)
-#install(DIRECTORY ${PROJECT_BINARY_DIR}/lib DESTINATION . FILES_MATCHING PATTERN "*.so")
-# By default in our build system, `geosx` is linked (rpath) against the libgeosx_core.so lib _in_the_build_directory_.
-# Defining the following variable adds the destination library directory to the `geosx` binary.
-# It does no remove the link to the build directory though.
-# Probably a better knowledge of BLT would help on this.
-#set(BLT_GEOSX_CORE_LINK_FLAGS "-Wl,-rpath,${CMAKE_INSTALL_PREFIX}/lib")
 
 ################################
 # Create header of configuration options
