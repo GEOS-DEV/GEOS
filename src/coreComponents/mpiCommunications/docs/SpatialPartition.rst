@@ -7,20 +7,21 @@ Parallel Partitioning
 Parallel GEOSX simulations involves multiple ``partitions`` and there are ``ghost`` objects in each partition. 
 Users need to understand these concepts to effectively design models and visualize results.
 
-Partitions
-========================
+Partition and ghosting : simple examples
+=========================================
 
 A model, or more strictly, a computational domain, is stored in a distributed fashion among many processors. 
-In the following simple example, the computational domain has 10 elements and the simulation involves two processors.
-The first processor, "partition 0" ("0" is called the "rank" of the processor) owns the first five elements (0 to 4) while "partition 1" owns 5 to 9. 
-When the whole domain is divided into partitions, each partition will number the elements and other objects such as nodes, faces, and edges in the partition . 
-Therefore, in both partitions, the element IDs start from zero. 
-Element 0 in partition 1 is element 5 (or the sixth element) of the original domain. 
-In parallel computing, each partition does not only need to know information about its own elements, 
-but it also needs to know information about some elements owned by the neighbor partitions if these elements are directly connected to objects in this partition. 
-For example, elements 0 in partition 1 (i.e. element 5 in the original whole domain) is connected to element 4 in partition 0. 
-Therefore, partition 0 will keep a copy of this element (including the data associated with this element) which is synchronized with the corresponding information in the partition that actually owns this element. 
-In summary, a partition owns a number of elements and other objects (e.g. faces) and also keeps copies of objects from neighbor partitions. 
+In the following simple example, the computational domain has 10 cells and the simulation involves two processors.
+The first processor, "partition 0" ("0" is called the "rank" of the processor) owns the first five cells (0 to 4) while "partition 1" owns 5 to 9. 
+When the whole domain is divided into partitions, each partition will number the cells and other objects such as nodes, faces, and edges in the partition . 
+Therefore, in both partitions, the cells IDs start from zero. 
+Element 0 in partition 1 is cell 5 (or the sixthc cell) of the original domain. 
+In parallel computing, each partition does not only need to know information about its own cells, 
+but it also needs to know information about some cells owned by the neighbor partitions if these cells are directly connected to objects in this partition. 
+For example, cell 0 in partition 1 (i.e. cell 5 in the original whole domain) is connected to cell 4 in partition 0. 
+Therefore, partition 0 will keep a copy of this cell (including the data associated with this cell) which is synchronized with the corresponding information in the partition that actually owns this cell.
+
+In summary, a partition owns a number of cells and other objects (e.g. faces) and also keeps copies of objects from neighbor partitions. 
 Partitioning is automatically handled by GEOSX once the user specifies how the domain should be divided.
 
 The following figure show the partitioning of a simple mesh. 
@@ -29,6 +30,15 @@ Real nodes appear as solid red circles in the owning partition and ghost nodes a
 .. image:: SimplePartitioning_GEOSX.svg
    :align: center
    :width: 55%
+
+This concept of ghosting and communications between owned cells and ghost cells can also be applied to the
+other types of elements in GEOSX (Faces, Edges, Nodes).
+The next figure summarizes the way nodes, edges, faces and cells are ghosted.
+
+.. figure:: ../../../coreComponents/mpiCommunications/docs/split.svg
+   :align: center
+   :width: 700
+   :figclass: align-center
 
 Specifying partitioning pattern
 =================================
@@ -47,7 +57,7 @@ TODO ...
 
 Ghost ranks
 ===============
-Each object (node, edge, face, or element) has a ``ghost rank`` attribute, stored in the ``ghostRank`` field. 
+Each object (node, edge, face, or cell) has a ``ghost rank`` attribute, stored in the ``ghostRank`` field. 
 If a object does not appear in any other partition as a ghost, its ghost rank is a large negative number, -2.14e9 in a typical system.
 If a object is real (owned by the current partition) but exists in other partitions as ghosts, its ghost rank is -1.
 The ghost rank of a ghost object is the rank of the partition that owns the corresponding real object.
