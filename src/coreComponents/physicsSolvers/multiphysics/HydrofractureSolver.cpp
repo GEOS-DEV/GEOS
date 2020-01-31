@@ -445,8 +445,6 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
       arrayView1d<real64 const> const & area = subRegion->getElementArea();
       arrayView2d< localIndex const > const & elemsToFaces = subRegion->faceList();
       arrayView1d<real64> const & contactStress = subRegion->getReference<array1d<real64> >(viewKeyStruct::contactStressString);
-//      arrayView1d<integer const> const & ghostRank = subRegion->GhostRank();
-  //    std::cout.precision(16);
 
       for( localIndex kfe=0 ; kfe<subRegion->size() ; ++kfe )
       {
@@ -458,33 +456,20 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
         {
           temp += u[faceToNodeMap(kf0, a)];
           temp -= u[faceToNodeMap(kf1, a)];
-
-//          if (kfe >=2 && kfe <= 3)
-//          if (ghostRank[kfe] > -1)
-//            std::cout << "\n a = " << a << ", u = "  << u[faceToNodeMap(kf0, a)] << " @ kfo = " << kf0 <<", " << u[faceToNodeMap(kf1, a)] << " @ kf1= " << kf1 <<", temp = " << temp << "\n";
         }
 
         // TODO this needs a proper contact based strategy for aperture
         aperture[kfe] = -Dot(temp,faceNormal[kf0]) / numNodesPerFace;
         contactStress[kfe] = std::max(- aperture[kfe] * contactRelation->stiffness(), 0.0);
 
-//        if (kfe >=2 && kfe <= 3)
-//        if (ghostRank[kfe] > -1)
-//          std::cout << "\n UpdateDeformationForCoupling: Mechanical aperture[kfe] = " << aperture[kfe] << ", kfe = " << kfe << "\n";
-
         aperture[kfe] = contactRelation->effectiveAperture( aperture[kfe] + apertureOffset[kfe]);
 
-//        if (kfe >=2 && kfe <= 3)
-////        if (ghostRank[kfe] > -1)
-//          std::cout << "\n UpdateDeformationForCoupling:  kfe = " << kfe << ", temp = " << temp << ", aperture[kfe] = " << aperture[kfe] << "\n";
-
         deltaVolume[kfe] = aperture[kfe] * area[kfe] - volume[kfe];
-
       }
     });
   });
 
-/*
+
   if( m_couplingTypeOption == couplingTypeOption::ExplicitlyCoupled )
   {
     // update fracture volume
@@ -581,7 +566,7 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
       });
     }
   }  // end of if
-*/
+
 }
 
 void HydrofractureSolver::UpdatePorosityForCoupling( DomainPartition * const domain )
