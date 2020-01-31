@@ -9,7 +9,7 @@ import HydrofactureSolutions
 
 
 
-if len(sys.argv) < 8:
+if len(sys.argv) < 9:
     sys.exit('Usage: %s prefix mu E\' q KI r_source aper_cutoff' % sys.argv[0])
 
 mu = float(sys.argv[1])
@@ -18,8 +18,9 @@ q  = float(sys.argv[3])
 KI = float(sys.argv[4])
 x_source = float(sys.argv[5])
 aper_cutoff = float(sys.argv[6])
+P0 = float(sys.argv[7])
 
-numFiles = len(sys.argv) - 7
+numFiles = len(sys.argv) - 8
 #print numFiles
 prefix = []
 t_sim = []
@@ -34,7 +35,7 @@ Aperture = []
 labels = []
 symbols = ['ko','rs','k^','gs','rD','bx']
 for i in range(0,numFiles):
-    prefix.append(sys.argv[7+i])
+    prefix.append(sys.argv[8+i])
 
     t_sim.append(np.empty([0]))
     aper0.append(np.empty([0]))
@@ -131,13 +132,13 @@ ax1 = fig1.add_subplot(3, 2, 5)  # specify (nrows, ncols, axnum)
 plt.plot(time,P_Tdom/1.0e6, 'k-', label='$\mu$ => 0' )
 plt.plot(time,P_Vdom/1.0e6, 'r-', label='$K_{Ic}$ => 0' )
 for i in range(0,numFiles):
-    plt.plot(t_sim[i][1::N1],press0[i][1::N1]/1.0e6,symbols[i],fillstyle='none', markersize=4, label=labels[i] )
+    plt.plot(t_sim[i][1::N1],(press0[i][1::N1]-P0)/1.0e6,symbols[i],fillstyle='none', markersize=4, label=labels[i] )
 plt.xlabel('time (s)')
 plt.ylabel('Pressure(@L=0.5m) \n (MPa)', multialignment='center')
 #plt.xticks(np.arange(min(t_sim[0]), max(t_sim[0]), 20.0))
 plt.xlim([0, max(t_sim[0]) ])
 #plt.yticks(np.arange(0.3, 1.01, 0.1))
-plt.ylim([ 0.0  , 4 ])
+plt.ylim([ 0.0  , 1 ])
 
 
 
@@ -161,7 +162,7 @@ plt.xlim([0, 1 ])
 #print np.append(Pressure[i][1::N1],Pressure[i][-1])
 ax2 = fig2.add_subplot(3, 2, 6)  # specify (nrows, ncols, axnum)
 for i in range(0,numFiles):
-    plt.plot(radP[i]/np.amax(radP[i]),Pressure[i]/1.0e6,symbols[i],fillstyle='none', markersize=4, label=labels[i] )
+    plt.plot(radP[i]/np.amax(radP[i]),(Pressure[i]-P0)/1.0e6,symbols[i],fillstyle='none', markersize=4, label=labels[i] )
 #plt.plot(solns[0],p_tough[0]/1.0e6,  'k-', label='$\mu$ => 0' )
 plt.plot(solns[0],p_viscous[0]/1.0e6,'r-', label='$K_{Ic}$ => 0' )
 plt.plot(solns[0],p_tough[0]/1.0e6,'k-', label='$\mu$ => 0' )

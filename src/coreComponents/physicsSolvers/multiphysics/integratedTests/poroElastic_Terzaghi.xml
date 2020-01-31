@@ -1,8 +1,7 @@
 
 <Problem>
 
-  <Solvers
-    gravityVector="0.0, 0.0, -9.81">
+  <Solvers gravityVector="0.0, 0.0, 0.0">
 
 <!-- SPHINX_POROELASTIC_SOLVER -->
     <Poroelastic name="poroSolve" 
@@ -34,9 +33,8 @@
                               logLevel="2"/>
     </SolidMechanicsLagrangianSSLE>
   
-    <SinglePhaseFlow name="SinglePhaseFlow"
+    <SinglePhaseFVM name="SinglePhaseFlow"
                      logLevel="1"
-                     gravityFlag="1"
                      discretization="singlePhaseTPFA"
                      targetRegions="{Region2}"
                      fluidName="water"
@@ -46,7 +44,7 @@
                                  newtonMaxIter="8"/>
       <SystemSolverParameters name="ssp"
                               krylovTol="1.0e-10"/>
-    </SinglePhaseFlow>
+    </SinglePhaseFVM>
   </Solvers>
 <!-- SPHINX_POROELASTIC_SOLVER_END -->  
 
@@ -223,8 +221,6 @@
 
   <Functions>
     <TableFunction     name="timeFunction"         inputVarNames="{time}" coordinates="{1.0, 2.0, 6e4}" values="{1.0, 2.0, 2.0}" />
-    <!--SymbolicFunction  name="spaceFunction"        inputVarNames="ReferencePosition"  variableNames="x y z" expression="sqrt(pow(x,2)+pow(y,2)+pow(z,2))"/>
-    <CompositeFunction name="timeSpaceFunction" variableNames="timeTable1 spaceFunction" expression="timeTable1*spaceFunction"/-->
   </Functions>
 
   <!-- <Partition>

@@ -135,7 +135,7 @@ plt.ylabel('Pressure(@L=0.5m) \n (MPa)', multialignment='center')
 #plt.xticks(np.arange(min(t_sim[0]), max(t_sim[0]), 20.0))
 plt.xlim([min(t_sim[0]), max(t_sim[0]) ])
 #plt.yticks(np.arange(0.3, 1.01, 0.1))
-plt.ylim([ 0.0  , 1.5 ])
+plt.ylim([ 0.0  , 2.5 ])
 
 
 

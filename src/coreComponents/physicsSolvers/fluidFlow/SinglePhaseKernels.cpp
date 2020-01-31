@@ -13,15 +13,15 @@
  */
 
 /**
- * @file SinglePhaseFlowKernels.cpp
+ * @file SinglePhaseKernels.cpp
  */
 
-#include "SinglePhaseFlowKernels.hpp"
+#include "SinglePhaseKernels.hpp"
 
 namespace geosx
 {
 
-namespace SinglePhaseFlowKernels
+namespace SinglePhaseKernels
 {
 
 /******************************** MobilityKernel ********************************/
@@ -138,17 +138,20 @@ void FluxKernel::
 Launch<CellElementStencilTPFA>( CellElementStencilTPFA const & stencil,
                                 real64 const dt,
                                 localIndex const fluidIndex,
-                                integer const gravityFlag,
                                 FluxKernel::ElementView< arrayView1d<globalIndex> > const & dofNumber,
                                 FluxKernel::ElementView < arrayView1d<real64 const> > const & pres,
                                 FluxKernel::ElementView < arrayView1d<real64 const> > const & dPres,
-                                FluxKernel::ElementView < arrayView1d<real64 const> > const & gravDepth,
+                                FluxKernel::ElementView < arrayView1d<real64 const> > const & gravCoef,
                                 FluxKernel::MaterialView< arrayView2d<real64 const> > const & dens,
                                 FluxKernel::MaterialView< arrayView2d<real64 const> > const & dDens_dPres,
                                 FluxKernel::ElementView < arrayView1d<real64 const> > const & mob,
                                 FluxKernel::ElementView < arrayView1d<real64 const> > const & dMob_dPres,
                                 FluxKernel::ElementView < arrayView1d<real64 const> > const &,
                                 FluxKernel::ElementView < arrayView1d<real64 const> > const &,
+#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+                                FluxKernel::ElementView < arrayView1d<real64 const> > const &,
+                                FluxKernel::ElementView < arrayView1d<real64 const> > const &,
+#endif
                                 ParallelMatrix * const jacobian,
                                 ParallelVector * const residual,
                                 CRSMatrixView<real64,localIndex,localIndex const > const & )
@@ -179,13 +182,12 @@ Launch<CellElementStencilTPFA>( CellElementStencilTPFA const & stencil,
                          weights[iconn],
                          pres,
                          dPres,
-                         gravDepth,
+                         gravCoef,
                          dens,
                          dDens_dPres,
                          mob,
                          dMob_dPres,
                          fluidIndex,
-                         gravityFlag,
                          dt,
                          localFlux,
                          localFluxJacobian );
@@ -218,17 +220,20 @@ void FluxKernel::
 Launch<FaceElementStencil>( FaceElementStencil const & stencil,
                             real64 const dt,
                             localIndex const fluidIndex,
-                            integer const gravityFlag,
                             FluxKernel::ElementView < arrayView1d<globalIndex const> > const & dofNumber,
                             FluxKernel::ElementView < arrayView1d<real64 const> > const & pres,
                             FluxKernel::ElementView < arrayView1d<real64 const> > const & dPres,
-                            FluxKernel::ElementView < arrayView1d<real64 const> > const & gravDepth,
+                            FluxKernel::ElementView < arrayView1d<real64 const> > const & gravCoef,
                             FluxKernel::MaterialView< arrayView2d<real64 const> > const & dens,
                             FluxKernel::MaterialView< arrayView2d<real64 const> > const & dDens_dPres,
                             FluxKernel::ElementView < arrayView1d<real64 const> > const & mob,
                             FluxKernel::ElementView < arrayView1d<real64 const> > const & dMob_dPres,
                             FluxKernel::ElementView < arrayView1d<real64 const> > const & aperture0,
                             FluxKernel::ElementView < arrayView1d<real64 const> > const & aperture,
+#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+                            FluxKernel::ElementView < arrayView1d<real64 const> > const & s,
+                            FluxKernel::ElementView < arrayView1d<real64 const> > const & dSdAper,
+#endif
                             ParallelMatrix * const jacobian,
                             ParallelVector * const residual,
                             CRSMatrixView<real64,localIndex,localIndex const > const & dR_dAper )
@@ -286,15 +291,18 @@ Launch<FaceElementStencil>( FaceElementStencil const & stencil,
                                  weights[iconn],
                                  pres[er][esr],
                                  dPres[er][esr],
-                                 gravDepth[er][esr],
+                                 gravCoef[er][esr],
                                  dens[er][esr][fluidIndex],
                                  dDens_dPres[er][esr][fluidIndex],
                                  mob[er][esr],
                                  dMob_dPres[er][esr],
                                  aperture0[er][esr],
                                  aperture[er][esr],
+#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+                                 s[er][esr],
+                                 dSdAper[er][esr],
+#endif
                                  fluidIndex,
-                                 gravityFlag,
                                  dt,
                                  localFlux,
                                  localFluxJacobian,
@@ -360,6 +368,6 @@ Launch<FaceElementStencil>( FaceElementStencil const & stencil,
 
 
 
-} // namespace SinglePhaseFlowKernels
+} // namespace SinglePhaseKernels
 
 } // namespace geosx

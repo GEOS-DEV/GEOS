@@ -115,13 +115,6 @@ public:
              DofManager & dofManager ) const override;
 
   virtual void
-  SetupSystem( DomainPartition * const domain,
-               DofManager & dofManager,
-               ParallelMatrix & matrix,
-               ParallelVector & rhs,
-               ParallelVector & solution ) override;
-
-  virtual void
   AssembleSystem( real64 const time,
                   real64 const dt,
                   DomainPartition * const domain,
@@ -259,7 +252,7 @@ public:
                                arrayView1d< R1Tensor const > const & uhat,
                                arrayView1d< R1Tensor const > const & vtilde,
                                arrayView1d< R1Tensor const > const & uhattilde,
-                               arrayView1d< real64 const > const & density,
+                               arrayView2d< real64 const > const & density,
                                arrayView1d< real64 const > const & fluidPressure,
                                arrayView1d< real64 const > const & deltaFluidPressure,
                                arrayView1d< real64 const > const & biotCoefficient,
@@ -268,6 +261,7 @@ public:
                                real64 const massDamping,
                                real64 const newmarkBeta,
                                real64 const newmarkGamma,
+                               R1Tensor const & gravityVector,
                                DofManager const * const dofManager,
                                ParallelMatrix * const matrix,
                                ParallelVector * const rhs ) const
@@ -299,6 +293,7 @@ public:
                                                         massDamping,
                                                         newmarkBeta,
                                                         newmarkGamma,
+                                                        gravityVector,
                                                         dofManager,
                                                         matrix,
                                                         rhs );

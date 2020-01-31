@@ -43,7 +43,7 @@ ContactRelationBase::ContactRelationBase( string const & name,
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Value of the penetration penalty stiffness. Units of Pressure/length");
 
-  registerWrapper( viewKeyStruct::penaltyStiffnessString, &m_penaltyStiffness, 0 )->
+  registerWrapper( viewKeyStruct::apertureToleranceString, &m_apertureTolerance, 0 )->
     setApplyDefaultValue(1.0e-9)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Value to be used to avoid floating point errors in expressions involving aperture. "

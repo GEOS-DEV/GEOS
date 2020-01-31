@@ -114,7 +114,8 @@ public:
   void compute( DomainPartition const & domain );
 
   virtual void addToFractureStencil( DomainPartition const & GEOSX_UNUSED_ARG( domain ),
-                                     string const & GEOSX_UNUSED_ARG( faceElementRegionName ) ) {}
+                                     string const & GEOSX_UNUSED_ARG( faceElementRegionName ),
+                                     bool const GEOSX_UNUSED_ARG(initFlag) ) {}
 
 
   struct viewKeyStruct

@@ -158,6 +158,7 @@ public:
     static constexpr auto targetExactStartStopString = "targetExactStartStop";
     static constexpr auto currentSubEventString = "currentSubEvent";
     static constexpr auto isTargetExecutingString = "isTargetExecuting";
+    static constexpr auto finalDtStretchString = "finalDtStretch";
 
     dataRepository::ViewKey eventTarget = { "target" };
     dataRepository::ViewKey beginTime = { "beginTime" };
@@ -199,6 +200,7 @@ private:
   real64 m_endTime;
   real64 m_forceDt;
   real64 m_maxEventDt;
+  real64 m_finalDtStretch;
   integer m_targetExactStartStop;
   integer m_currentSubEvent;
   integer m_targetExecFlag;
@@ -208,6 +210,7 @@ private:
   integer m_timeStepEventCount;
   real64 m_eventProgress;
   real64 m_currentEventDtRequest;
+
 
   /// A pointer to the optional event target
   ExecutableGroup * m_target;

@@ -20,6 +20,7 @@
       targetRegions="{Region2, Fracture}"
       contactRelationName="fractureContact"
       maxNumResolves="1"
+      initialDt="0.1"
       >
       <NonlinearSolverParameters name="nlsp"
                                  newtonTol="1.0e-4"
@@ -51,10 +52,9 @@
         />
     </SolidMechanicsLagrangianSSLE>
   
-    <SinglePhaseFlow 
+    <SinglePhaseFVM
       name="SinglePhaseFlow"
       logLevel="0"
-      gravityFlag="0"
       discretization="singlePhaseTPFA"
       targetRegions="{Fracture}"
       fluidName="water"
@@ -69,7 +69,7 @@
         krylovTol="1.0e-12"
         logLevel="0"
         />
-    </SinglePhaseFlow>
+    </SinglePhaseFVM>
     
     <SurfaceGenerator
       name="SurfaceGen"
@@ -79,7 +79,7 @@
       targetRegions="{Region2}"
       nodeBasedSIF="1"
       solidMaterialName="rock"
-      rockToughness="0.4e6"
+      rockToughness="0.3e6"
       >
     </SurfaceGenerator>
     
@@ -92,7 +92,7 @@
                    materialList="{water, rock}"/>
                    
     <FaceElementRegion name="Fracture"
-                       defaultAperture="0.1e-3"
+                       defaultAperture="0.03e-3"
                        materialList="{water, rock}"/>
   </ElementRegions>
 
@@ -116,11 +116,11 @@
                                 />
                                 
     <Contact name="fractureContact"
-      penaltyStiffness="1.0e10" >
+      penaltyStiffness="1.0e0" >
       <TableFunction 
         name="aperTable" 
         coordinates = "{ -1.0e-3, 0.0}"
-        values      = "{  0.01e-3, 0.1e-3}" 
+        values      = "{  0.002e-3, 0.03e-3}" 
         />
     </Contact>
   </Constitutive>

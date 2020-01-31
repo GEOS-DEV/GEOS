@@ -520,7 +520,8 @@ void SurfaceGenerator::postRestartInitialization( Group * const domain0 )
       if( fluxApprox!=nullptr )
       {
         fluxApprox->addToFractureStencil( *domain,
-                                          this->m_fractureRegionName );
+                                          this->m_fractureRegionName,
+                                          false );
         edgeManager->m_recalculateFractureConnectorEdges.clear();
         fractureSubRegion->m_newFaceElements.clear();
       }
@@ -575,7 +576,8 @@ real64 SurfaceGenerator::SolverStep( real64 const & time_n,
         if( fluxApprox!=nullptr )
         {
           fluxApprox->addToFractureStencil( *domain,
-                                            this->m_fractureRegionName );
+                                            this->m_fractureRegionName,
+                                            true);
           edgeManager->m_recalculateFractureConnectorEdges.clear();
           fractureRegion->GetSubRegion<FaceElementSubRegion>(0)->m_newFaceElements.clear();
         }
@@ -764,9 +766,9 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
 
   real64 ruptureRate = calculateRuptureRate( *(elementManager.GetRegion<FaceElementRegion>(this->m_fractureRegionName)), edgeManager);
 
-  GEOSX_LOG_RANK_0( "rupture rate is " << ruptureRate);
+  GEOSX_LOG_LEVEL_RANK_0( 3, "rupture rate is " << ruptureRate);
   if ( ruptureRate > 0 )
-    m_nextDt = ruptureRate < 1e99 ? 1 / ruptureRate: 1e99;
+    m_nextDt = ruptureRate < 1e99 ? m_cflFactor / ruptureRate : 1e99;
 
   return rval;
 }
@@ -3156,8 +3158,20 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
           tipNodeSIF = pow( (fabs(tipNodeForce[0] * trailingNodeDisp[0] / 2.0 / tipArea) + fabs(tipNodeForce[1] * trailingNodeDisp[1] / 2.0 / tipArea)
               + fabs(tipNodeForce[2] * trailingNodeDisp[2] / 2.0 / tipArea)), 0.5 );
 
-          //wu40: the tip node may be included in two trailing faces and SIF of the node will be calculated twice. We chose the larger one.
-          if (SIFNode[nodeIndex] < tipNodeSIF)
+          //wu40: the tip node may be included in two trailing faces and SIF of the node will be calculated twice. We chose the smaller one.
+//          if (SIFNode[nodeIndex] < tipNodeSIF)
+//          {
+//            SIFNode[nodeIndex] = tipNodeSIF;
+//          }
+
+          if (SIFNode[nodeIndex] > 0)
+          {
+            if (SIFNode[nodeIndex] > tipNodeSIF)
+            {
+              SIFNode[nodeIndex] = tipNodeSIF;
+            }
+          }
+          else
           {
             SIFNode[nodeIndex] = tipNodeSIF;
           }
@@ -3168,7 +3182,7 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
           {
             if (edgeToNodeMap[edgeIndex][0] == nodeIndex || edgeToNodeMap[edgeIndex][1] == nodeIndex)
             {
-              realT SIF_I, SIF_II, /*SIF_III,*/ SIF_Face;
+              realT SIF_I = 0, SIF_II = 0, /*SIF_III,*/ SIF_Face;
               R1Tensor vecTipNorm, vecTip, vecEdge, tipForce, tipOpening;
               vecTipNorm = faceNormal[trailingFaceIndex];
               vecTipNorm -= faceNormal[childFaceIndices[trailingFaceIndex]];
@@ -3202,9 +3216,12 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
               tipOpening[1] = Dot( trailingNodeDisp, vecTip );
               tipOpening[2] = Dot( trailingNodeDisp, vecEdge );
 
-              SIF_I = pow( fabs( tipForce[0] * tipOpening[0] / 2.0 / tipArea ), 0.5 );
-              SIF_II = pow( fabs( tipForce[1] * tipOpening[1] / 2.0 / tipArea ), 0.5 );
+//              if( tipForce[0] > 0.0 )
+              {
+                SIF_I = pow( fabs( tipForce[0] * tipOpening[0] / 2.0 / tipArea ), 0.5 );
+                SIF_II = pow( fabs( tipForce[1] * tipOpening[1] / 2.0 / tipArea ), 0.5 );
 //              SIF_III = pow( fabs( tipForce[2] * tipOpening[2] / 2.0 / tipArea ), 0.5 );
+              }
 
               if( tipOpening[0] < 0 )
               {

@@ -1,3 +1,4 @@
+  <!-- SPHINX_INTERNAL_MESH -->
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="{C3D8}" 
@@ -9,6 +10,7 @@
                   nz="{10}"
                   cellBlockNames="{cb1}"/>
   </Mesh>
+  <!-- SPHINX_INTERNAL_MESH_END -->
 
 
   <Events maxTime="1.0e-3">

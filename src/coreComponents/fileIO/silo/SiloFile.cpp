@@ -27,8 +27,8 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
+#include "constitutive/solid/PoreVolumeCompressibleSolid.hpp"
 #include "managers/DomainPartition.hpp"
-#include "mesh/MeshBody.hpp"
 #include "mesh/MeshBody.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
 
@@ -1656,8 +1656,60 @@ void SiloFile::WriteElementMesh( ElementRegionBase const * const elementRegion,
       ++count;
     });
 
-    string_array const regionSolidMaterialList = elementRegion->getConstitutiveNames<constitutive::SolidBase>();
+    string_array
+    regionSolidMaterialList = elementRegion->getConstitutiveNames<constitutive::SolidBase>();
+    string_array const
+    regionSolidMaterialList2 = elementRegion->getConstitutiveNames<constitutive::PoreVolumeCompressibleSolid>();
+
+    for( string const & entry : regionSolidMaterialList2 )
+    {
+      regionSolidMaterialList.push_back(entry);
+    }
     localIndex const numSolids = regionSolidMaterialList.size();
+
+    string_array regionFluidMaterialList = elementRegion->getConstitutiveNames<constitutive::SingleFluidBase>();
+    string_array regionMultiPhaseFluidList = elementRegion->getConstitutiveNames<constitutive::MultiFluidBase>();
+
+    for( string const & matName : regionMultiPhaseFluidList )
+    {
+      regionFluidMaterialList.push_back(matName);
+    }
+    localIndex const numFluids = regionFluidMaterialList.size();
+
+    if( numSolids + numFluids > 0 )
+    {
+      WriteMeshObject( meshName,
+                       numNodes,
+                       coords,
+                       globalNodeNum,
+                       ghostNodeFlag,
+                       ghostZoneFlag.data(),
+                       integer_conversion<int>(numElementShapes),
+                       shapecnt.data(),
+                       meshConnectivity.data(),
+                       nullptr /*globalElementNumbers.data()*/,
+                       shapetype.data(),
+                       shapesize.data(),
+                       cycleNumber,
+                       problemTime );
+
+      WriteGroupSilo( nodeManager,
+                      meshName + "_NodalFields",
+                      meshName,
+                      DB_NODECENT,
+                      cycleNumber,
+                      problemTime,
+                      false,
+                      localIndex_array() );
+
+      WriteElementRegionSilo( elementRegion,
+                              meshName + "_ElementFields",
+                              meshName,
+                              cycleNumber,
+                              problemTime,
+                              false );
+    }
+
     if( numSolids > 0 )
     {
       string const solidMeshName = meshName + "_Solid";
@@ -1681,33 +1733,8 @@ void SiloFile::WriteElementMesh( ElementRegionBase const * const elementRegion,
                                     regionSolidMaterialList,
                                     cycleNumber,
                                     problemTime );
-
-      WriteGroupSilo( nodeManager,
-                      solidMeshName + "_NodalFields",
-                      solidMeshName,
-                      DB_NODECENT,
-                      cycleNumber,
-                      problemTime,
-                      false,
-                      localIndex_array() );
-
-      WriteElementRegionSilo( elementRegion,
-                              solidMeshName + "_ElementFields",
-                              solidMeshName,
-                              cycleNumber,
-                              problemTime,
-                              false );
-
     }
 
-    string_array regionFluidMaterialList = elementRegion->getConstitutiveNames<constitutive::SingleFluidBase>();
-    string_array regionMultiPhaseFluidList = elementRegion->getConstitutiveNames<constitutive::MultiFluidBase>();
-
-    for( string const & matName : regionMultiPhaseFluidList )
-    {
-      regionFluidMaterialList.push_back(matName);
-    }
-    localIndex const numFluids = regionFluidMaterialList.size();
     if( numFluids > 0 )
     {
       string const fluidMeshName = meshName + "_Fluid";
@@ -1731,25 +1758,6 @@ void SiloFile::WriteElementMesh( ElementRegionBase const * const elementRegion,
                                     regionFluidMaterialList,
                                     cycleNumber,
                                     problemTime );
-
-      if( numSolids==0 )
-      {
-        WriteGroupSilo( nodeManager,
-                        fluidMeshName + "_NodalFields",
-                        fluidMeshName,
-                        DB_NODECENT,
-                        cycleNumber,
-                        problemTime,
-                        false,
-                        localIndex_array() );
-
-        WriteElementRegionSilo( elementRegion,
-                                fluidMeshName + "_ElementFields",
-                                fluidMeshName,
-                                cycleNumber,
-                                problemTime,
-                                false );
-      }
     }
   }
 }

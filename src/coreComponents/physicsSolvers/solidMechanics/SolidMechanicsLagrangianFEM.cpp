@@ -456,6 +456,10 @@ real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const& time_n,
       {
         break;
       }
+      else
+      {
+        GEOSX_LOG_RANK_0("Fracture Occurred. Resolve");
+      }
     }
     ImplicitStepComplete( time_n, dt,  domain );
   }
@@ -491,9 +495,10 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
 
   array1d<NeighborCommunicator> & neighbors = domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors );
   std::map<string, string_array > fieldNames;
-  fieldNames["node"].push_back("Velocity");
+  fieldNames["node"].push_back( keys::Velocity);
+  fieldNames["node"].push_back( keys::Acceleration);
 
-  CommunicationTools::SynchronizePackSendRecvSizes( fieldNames, mesh, neighbors, m_iComm );
+  CommunicationTools::SynchronizePackSendRecvSizes( fieldNames, mesh, neighbors, m_iComm, true );
 
   fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Acceleration );
 
@@ -580,9 +585,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
 
   fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
 
-  // HACK: Move velocity back to the CPU to be packed. It is not modified so we don't touch it.
-  if (neighbors.size() > 0) velocityArray.move(chai::CPU, false);
-  CommunicationTools::SynchronizePackSendRecv( fieldNames, mesh, neighbors, m_iComm );
+  CommunicationTools::SynchronizePackSendRecv( fieldNames, mesh, neighbors, m_iComm, true );
 
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
   {
@@ -623,9 +626,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
 
   fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
 
-  // HACK: Move velocity back to the CPU to be unpacked. It is modified so we touch it.
-  if (neighbors.size() > 0) velocityArray.move(chai::CPU, true);
-  CommunicationTools::SynchronizeUnpack( mesh, neighbors, m_iComm );
+  CommunicationTools::SynchronizeUnpack( mesh, neighbors, m_iComm, true );
 
   return dt;
 }
@@ -653,7 +654,6 @@ void SolidMechanicsLagrangianFEM::ApplyDisplacementBC_implicit( real64 const tim
                         string const fieldName )
   {
     bc->ApplyBoundaryConditionToSystem<FieldSpecificationEqual, LAInterface>( targetSet,
-                                                                              false,
                                                                               time,
                                                                               targetGroup,
                                                                               fieldName,
@@ -955,59 +955,11 @@ void SolidMechanicsLagrangianFEM::SetupDofs( DomainPartition const * const GEOSX
 {
   dofManager.addField( keys::TotalDisplacement,
                        DofManager::Location::Node,
-                       DofManager::Connectivity::Elem,
                        3 );
-}
 
-void SolidMechanicsLagrangianFEM::SetupSystem( DomainPartition * const domain,
-                                               DofManager & dofManager,
-                                               ParallelMatrix & matrix,
-                                               ParallelVector & rhs,
-                                               ParallelVector & solution )
-{
-  GEOSX_MARK_FUNCTION;
-  SolverBase::SetupSystem( domain, dofManager, matrix, rhs, solution );
-
-  matrix.open();
-
-  // need this for contact enforcement in the fracture
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  Group * const nodeManager = mesh->getNodeManager();
-
-  constexpr int dim = 3;
-  string const dofKey = dofManager.getKey( keys::TotalDisplacement );
-  globalIndex_array const & dofNumber = nodeManager->getReference<globalIndex_array>( dofKey );
-
-  ElementRegionManager const * const elemRegionManager = mesh->getElemManager();
-  elemRegionManager->forElementSubRegions<FaceElementSubRegion>( [&]( FaceElementSubRegion const * const elementSubRegion)
-  {
-    localIndex const numElems = elementSubRegion->size();
-    array1d<array1d<localIndex > > const & elemsToNodes = elementSubRegion->nodeList();
-
-
-    for( localIndex k=0 ; k<numElems ; ++k )
-    {
-      localIndex const numNodesPerElement = elemsToNodes[k].size();
-      array1d<globalIndex> elementLocalDofIndex(dim * numNodesPerElement);
-      array2d<real64> values( dim * numNodesPerElement, dim * numNodesPerElement );
-      values = 1.0;
-
-      for( localIndex a=0 ; a<numNodesPerElement ; ++a )
-      {
-        for( int d=0 ; d<dim ; ++d )
-        {
-          elementLocalDofIndex[a * dim + d] = dofNumber[elemsToNodes[k][a]] + d;
-        }
-      }
-      matrix.insert( elementLocalDofIndex.data(),
-                     elementLocalDofIndex.data(),
-                     values.data(),
-                     elementLocalDofIndex.size(),
-                     elementLocalDofIndex.size() );
-    }
-  });
-  matrix.close();
-
+  dofManager.addCoupling( keys::TotalDisplacement,
+                          keys::TotalDisplacement,
+                          DofManager::Connectivity::Elem );
 }
 
 void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_ARG( time_n ),
@@ -1055,9 +1007,10 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_ARG(
   ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase>
   constitutiveRelations = elemManager->ConstructFullConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
 
-  ElementRegionManager::MaterialViewAccessor< real64 > const
-  density = elemManager->ConstructFullMaterialViewAccessor< real64 >( "density0",
-                                                                  constitutiveManager );
+  ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const
+  density = elemManager->ConstructFullMaterialViewAccessor< array2d<real64>,
+                                                            arrayView2d<real64> >( SolidBase::viewKeyStruct::densityString,
+                                                                                   constitutiveManager );
 
   // begin region loop
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
@@ -1098,7 +1051,7 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_ARG(
                                                 uhat,
                                                 vtilde,
                                                 uhattilde,
-                                                density[er][esr],
+                                                density[er][esr][m_solidMaterialFullIndex],
                                                 fluidPres[er][esr],
                                                 dPres[er][esr],
                                                 biotCoefficient[er][esr],
@@ -1107,6 +1060,7 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_ARG(
                                                 this->m_massDamping,
                                                 this->m_newmarkBeta,
                                                 this->m_newmarkGamma,
+                                                gravityVector(),
                                                 &dofManager,
                                                 &matrix,
                                                 &rhs );
@@ -1160,7 +1114,6 @@ ApplyBoundaryConditions( real64 const time_n,
                         string const GEOSX_UNUSED_ARG( fieldName ) )
   {
     bc->ApplyBoundaryConditionToSystem<FieldSpecificationAdd, LAInterface>( targetSet,
-                                                                            false,
                                                                             time_n + dt,
                                                                             targetGroup,
                                                                             keys::TotalDisplacement, // TODO fix use of dummy name for
@@ -1248,7 +1201,20 @@ CalculateResidualNorm( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
 
   MpiWrapper::bcast( globalResidualNorm, 2, 0, MPI_COMM_GEOSX );
 
-  return sqrt(globalResidualNorm[0])/(globalResidualNorm[1]+1); // the + 1 is for the first time-step when maxForce = 0;
+
+  real64 const residual = sqrt(globalResidualNorm[0])/(globalResidualNorm[1]+1);  // the + 1 is for the first time-step when maxForce = 0;
+
+  if( getLogLevel() >= 1 && logger::internal::rank==0 )
+  {
+    char output[200] = {0};
+    sprintf( output,
+             "( RSolid ) = (%4.2e) ; ",
+             residual);
+    std::cout<<output;
+  }
+
+
+  return residual;
 }
 
 
@@ -1259,38 +1225,15 @@ SolidMechanicsLagrangianFEM::ApplySystemSolution( DofManager const & dofManager,
                                                   real64 const scalingFactor,
                                                   DomainPartition * const domain )
 {
-  MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
-  NodeManager * const nodeManager = mesh->getNodeManager();
-
-  arrayView1d<R1Tensor> const & disp = nodeManager->getReference<array1d<R1Tensor> >(keys::TotalDisplacement);
-  if( getLogLevel() >= 1 )
-  {
-    std::cout<<"Displacement - presolution"<<std::endl;
-    for( localIndex a=0 ; a<disp.size() ; ++a )
-    {
-      std::cout<<MpiWrapper::Comm_rank(MPI_COMM_GEOSX)<<" "<<a<<", "<<disp[a]<<std::endl;
-    }
-  }
-
-  string fieldName = keys::TotalDisplacement;
-  dofManager.addVectorToField( solution, fieldName, -scalingFactor, nodeManager, keys::IncrementalDisplacement );
-  dofManager.addVectorToField( solution, fieldName, -scalingFactor, nodeManager, keys::TotalDisplacement );
-
-  if( getLogLevel() >= 1 )
-  {
-    std::cout<<"Displacement - postsolution"<<std::endl;
-    for( localIndex a=0 ; a<disp.size() ; ++a )
-    {
-      std::cout<<MpiWrapper::Comm_rank(MPI_COMM_GEOSX)<<" "<<a<<", "<<disp[a]<<std::endl;
-    }
-  }
-
+  dofManager.addVectorToField( solution, keys::TotalDisplacement, keys::IncrementalDisplacement, -scalingFactor );
+  dofManager.addVectorToField( solution, keys::TotalDisplacement, keys::TotalDisplacement, -scalingFactor );
 
   std::map<string, string_array > fieldNames;
   fieldNames["node"].push_back( keys::IncrementalDisplacement );
   fieldNames["node"].push_back( keys::TotalDisplacement );
 
-  CommunicationTools::SynchronizeFields( fieldNames, mesh,
+  CommunicationTools::SynchronizeFields( fieldNames,
+                                         domain->getMeshBody( 0 )->getMeshLevel( 0 ),
                                          domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
 }
 
@@ -1492,7 +1435,7 @@ SolidMechanicsLagrangianFEM::ScalingForSystemSolution( DomainPartition const * c
 //
 //  real64 const * soln = nullptr;
 //  solution.extractLocalVector( &( const_cast<real64*&>(soln) ) );
-//  globalIndex const rankOffset = dofManager.offsetLocalDofs();
+//  globalIndex const rankOffset = dofManager.rankOffset();
 //
 //
 //

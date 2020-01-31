@@ -13,11 +13,11 @@
  */
 
 /**
- * @file SinglePhaseFlowKernels.hpp
+ * @file SinglePhaseKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FINITEVOLUME_SINGLEPHASEFLOWKERNELS_HPP
-#define GEOSX_PHYSICSSOLVERS_FINITEVOLUME_SINGLEPHASEFLOWKERNELS_HPP
+#ifndef GEOSX_PHYSICSSOLVERS_FINITEVOLUME_SINGLEPHASEKERNELS_HPP
+#define GEOSX_PHYSICSSOLVERS_FINITEVOLUME_SINGLEPHASEKERNELS_HPP
 
 #include "common/DataTypes.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
@@ -27,7 +27,7 @@
 namespace geosx
 {
 
-namespace SinglePhaseFlowKernels
+namespace SinglePhaseKernels
 {
 
 /******************************** MobilityKernel ********************************/
@@ -200,10 +200,11 @@ struct AccumulationKernel<FaceElementSubRegion>
     // Residual contribution is mass conservation in the cell
     localAccum = densNew * volNew - densOld * volume;
 
-//    std::cout<<"localAccum = "<<densNew<<" * "<<volNew<<" - "<< densOld <<" * "<< volume<<" = "<<localAccum<<std::endl;
+//    std::cout<<"\nlocalAccum = "<<densNew<<" * "<<volNew<<" - "<< densOld <<" * "<< volume<<" = "<<localAccum<<std::endl;
 
     // Derivative of residual wrt to pressure in the cell
     localAccumJacobian =  dDens_dPres * volNew ;
+//    std::cout<<"localAccumJacobian = "<<dDens_dPres<<" * "<<volNew<<" = "<<localAccumJacobian<<std::endl;
   }
 };
 
@@ -284,14 +285,13 @@ FluxKernelHelper::apertureForPermeablityCalculation<1>( real64 const aper0,
 
 template<>
 inline void
-FluxKernelHelper::apertureForPermeablityCalculation<2>( real64 const aper0,
+FluxKernelHelper::apertureForPermeablityCalculation<2>( real64 const,
                                                         real64 const aper,
                                                         real64 & aperTerm,
                                                         real64 & dAperTerm_dAper )
 {
-  aperTerm = aper0 * aper0 * aper;
-
-  dAperTerm_dAper = aper0 * aper0;
+  aperTerm = aper*aper*aper;
+  dAperTerm_dAper = 3.0*aper*aper;
 }
 
 
@@ -323,11 +323,10 @@ struct FluxKernel
    * @param[in] stencil The stencil object.
    * @param[in] dt The timestep for the integration step.
    * @param[in] fluidIndex The index of the fluid being fluxed.
-   * @param[in] gravityFlag Flag to indicate whether or not to use gravity.
    * @param[in] dofNumber The dofNumbers for each element
    * @param[in] pres The pressures in each element
    * @param[in] dPres The change in pressure for each element
-   * @param[in] gravDepth The factor for gravity calculations (g*H)
+   * @param[in] gravCoef The factor for gravity calculations (g*H)
    * @param[in] dens The material density in each element
    * @param[in] dDens_dPres The change in material density for each element
    * @param[in] mob The fluid mobility in each element
@@ -340,17 +339,20 @@ struct FluxKernel
   Launch( STENCIL_TYPE const & stencil,
           real64 const dt,
           localIndex const fluidIndex,
-          integer const gravityFlag,
           ElementView < arrayView1d<globalIndex const > > const & dofNumber,
           ElementView < arrayView1d<real64 const> > const & pres,
           ElementView < arrayView1d<real64 const> > const & dPres,
-          ElementView < arrayView1d<real64 const> > const & gravDepth,
+          ElementView < arrayView1d<real64 const> > const & gravCoef,
           MaterialView< arrayView2d<real64 const> > const & dens,
           MaterialView< arrayView2d<real64 const> > const & dDens_dPres,
           ElementView < arrayView1d<real64 const> > const & mob,
           ElementView < arrayView1d<real64 const> > const & dMob_dPres,
           ElementView < arrayView1d<real64 const> > const & aperture0,
           ElementView < arrayView1d<real64 const> > const & aperture,
+#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+          ElementView < arrayView1d<real64 const> > const & s,
+          ElementView < arrayView1d<real64 const> > const & dSdAper,
+#endif
           ParallelMatrix * const jacobian,
           ParallelVector * const residual,
           CRSMatrixView<real64,localIndex,localIndex const > const & dR_dAper );
@@ -370,13 +372,12 @@ struct FluxKernel
            arraySlice1d<real64 const> const & stencilWeights,
            ElementView <arrayView1d<real64 const>> const & pres,
            ElementView <arrayView1d<real64 const>> const & dPres,
-           ElementView <arrayView1d<real64 const>> const & gravDepth,
+           ElementView <arrayView1d<real64 const>> const & gravCoef,
            MaterialView<arrayView2d<real64 const>> const & dens,
            MaterialView<arrayView2d<real64 const>> const & dDens_dPres,
            ElementView <arrayView1d<real64 const>> const & mob,
            ElementView <arrayView1d<real64 const>> const & dMob_dPres,
            localIndex const fluidIndex,
-           integer const gravityFlag,
            real64 const dt,
            arraySlice1d<real64> const & flux,
            arraySlice2d<real64> const & fluxJacobian )
@@ -418,9 +419,9 @@ struct FluxKernel
 
       real64 weight = stencilWeights[ke];
 
-      real64 const gravD = gravDepth[er][esr][ei];
-      real64 const gravTerm = gravityFlag ? densMean * gravD : 0.0;
-      sumWeightGrav += weight * gravD * gravityFlag;
+      real64 const gravD = gravCoef[er][esr][ei];
+      real64 const gravTerm = densMean * gravD;
+      sumWeightGrav += weight * gravD;
 
       potDif += weight * (pres[er][esr][ei] + dPres[er][esr][ei] - gravTerm);
     }
@@ -471,13 +472,12 @@ struct FluxKernel
            arraySlice1d<real64 const> const & stencilWeights,
            arrayView1d<real64 const> const & pres,
            arrayView1d<real64 const> const & dPres,
-           arrayView1d<real64 const> const & gravDepth,
+           arrayView1d<real64 const> const & gravCoef,
            arrayView2d<real64 const> const & dens,
            arrayView2d<real64 const> const & dDens_dPres,
            arrayView1d<real64 const> const & mob,
            arrayView1d<real64 const> const & dMob_dPres,
            localIndex const GEOSX_UNUSED_ARG( fluidIndex ),
-           integer const gravityFlag,
            real64 const dt,
            arraySlice1d<real64> const & flux,
            arraySlice2d<real64> const & fluxJacobian )
@@ -516,9 +516,9 @@ struct FluxKernel
       localIndex const ei = stencilElementIndices[ke];
       real64 const weight = stencilWeights[ke];
 
-      real64 const gravD = gravDepth[ei];
-      real64 const gravTerm = gravityFlag ? densMean * gravD : 0.0;
-      sumWeightGrav += weight * gravD * gravityFlag;
+      real64 const gravD = gravCoef[ei];
+      real64 const gravTerm = densMean * gravD;
+      sumWeightGrav += weight * gravD;
       potDif += weight * (pres[ei] + dPres[ei] - gravTerm);
     }
 
@@ -567,15 +567,18 @@ struct FluxKernel
                    arraySlice1d<real64 const> const & stencilWeights,
                    arrayView1d<real64 const> const & pres,
                    arrayView1d<real64 const> const & dPres,
-                   arrayView1d<real64 const> const & gravDepth,
+                   arrayView1d<real64 const> const & gravCoef,
                    arrayView2d<real64 const> const & dens,
                    arrayView2d<real64 const> const & dDens_dPres,
                    arrayView1d<real64 const> const & mob,
                    arrayView1d<real64 const> const & dMob_dPres,
                    arrayView1d<real64 const> const & aperture0,
                    arrayView1d<real64 const> const & aperture,
+#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+                   arrayView1d<real64 const> const & ,//s,
+                   arrayView1d<real64 const> const & ,//dSdAper,
+#endif
                    localIndex const GEOSX_UNUSED_ARG( fluidIndex ),
-                   integer const GEOSX_UNUSED_ARG( gravityFlag ),
                    real64 const dt,
                    arraySlice1d<real64> const & flux,
                    arraySlice2d<real64> const & fluxJacobian,
@@ -589,28 +592,28 @@ struct FluxKernel
     {
 
 #define PERM_CALC 1
-#if PERM_CALC==0
+//      real64 const aperAdd = aperture0[stencilElementIndices[k]] < 0.09e-3 ? ( 0.09e-3 - aperture0[stencilElementIndices[k]] ) : 0.0;
+#if PERM_CALC==1
       FluxKernelHelper::
       apertureForPermeablityCalculation<1>( aperture0[stencilElementIndices[k]],
                                             aperture[stencilElementIndices[k]],
                                             aperTerm[k],
                                             dAperTerm_dAper[k] );
+#elif PERM_CALC==2
 
-#elif PERM_CALC==1
-      real64 const aperAdd = 2.0e-4;
-      FluxKernelHelper::
-      apertureForPermeablityCalculation<1>( aperture0[stencilElementIndices[k]],
-                                            aperture[stencilElementIndices[k]],
-                                            aperTerm[k],
-                                            dAperTerm_dAper[k] );
-
-      aperTerm[k] += aperAdd*aperAdd*aperAdd;
-
-#elif PERMCALC==2
-
-
-
+      if( s[k] >= 1.0 )
+      {
+        aperTerm[k] = aperture[stencilElementIndices[k]] * aperture[stencilElementIndices[k]] * aperture[stencilElementIndices[k]];
+        dAperTerm_dAper[k] = 3*aperture[stencilElementIndices[k]]*aperture[stencilElementIndices[k]];
+      }
+      else
+      {
+        aperTerm[k] = aperture[stencilElementIndices[k]] * aperture[stencilElementIndices[k]] * aperture[stencilElementIndices[k]]/s[k];
+        dAperTerm_dAper[k] = 3*aperture[stencilElementIndices[k]]*aperture[stencilElementIndices[k]]/s[k]
+                           - aperture[stencilElementIndices[k]] * aperture[stencilElementIndices[k]] * aperture[stencilElementIndices[k]]/(s[k]*s[k]) * dSdAper[k];
+      }
 #endif
+//      aperTerm[k] += aperAdd*aperAdd*aperAdd;
 
 
       sumOfWeights += aperTerm[k] * stencilWeights[k];
@@ -625,7 +628,7 @@ struct FluxKernel
 
         localIndex const ei[2] = { stencilElementIndices[k[0]],
                                    stencilElementIndices[k[1]] };
-
+#if 0
         real64 const weight = ( stencilWeights[k[0]]*aperTerm[k[0]] ) *
                               ( stencilWeights[k[1]]*aperTerm[k[1]] ) / sumOfWeights;
 
@@ -633,7 +636,26 @@ struct FluxKernel
         dWeight_dAper[2] =
         { ( 1 / aperTerm[k[0]]  - stencilWeights[k[0]] / sumOfWeights ) * weight * dAperTerm_dAper[k[0]],
           ( 1 / aperTerm[k[1]]  - stencilWeights[k[1]] / sumOfWeights ) * weight * dAperTerm_dAper[k[1]]};
+#else
+        real64 c = 0.8;
 
+        real64 const harmonicWeight = ( stencilWeights[k[0]]*aperTerm[k[0]] ) *
+                                      ( stencilWeights[k[1]]*aperTerm[k[1]] ) / sumOfWeights;
+
+        real64 const weight = c * harmonicWeight
+                            + (1.0 - c) * 0.25 * ( stencilWeights[k[0]]*aperTerm[k[0]] + stencilWeights[k[1]]*aperTerm[k[1]] ) ;
+
+        real64 const
+        dHarmonicWeight_dAper[2] =
+        { ( 1 / aperTerm[k[0]]  - stencilWeights[k[0]] / sumOfWeights ) * harmonicWeight * dAperTerm_dAper[k[0]],
+          ( 1 / aperTerm[k[1]]  - stencilWeights[k[1]] / sumOfWeights ) * harmonicWeight * dAperTerm_dAper[k[1]]};
+
+        real64 const
+        dWeight_dAper[2] =
+        { c * dHarmonicWeight_dAper[0] + 0.25 * ( 1.0 - c )*stencilWeights[k[0]]*dAperTerm_dAper[k[0]],
+          c * dHarmonicWeight_dAper[1] + 0.25 * ( 1.0 - c )*stencilWeights[k[1]]*dAperTerm_dAper[k[1]] };
+
+#endif
         // average density
         real64 const densMean = 0.5 * ( dens[ei[0]][0] + dens[ei[1]][0] );
 
@@ -641,7 +663,7 @@ struct FluxKernel
                                          0.5 * dDens_dPres[ei[1]][0] };
 
         real64 const potDif =  ( ( pres[ei[0]] + dPres[ei[0]] ) - ( pres[ei[1]] + dPres[ei[1]] ) -
-                                 densMean * ( gravDepth[ei[0]] - gravDepth[ei[1]] ) );
+                                 densMean * ( gravCoef[ei[0]] - gravCoef[ei[1]] ) );
 
         // upwinding of fluid properties (make this an option?)
         localIndex const k_up = (potDif >= 0) ? 0 : 1;
@@ -657,8 +679,8 @@ struct FluxKernel
         flux[k[1]] -= fluxVal;
 
         // compute and fill dFlux_dP
-        dFlux_dP[0] = mobility * weight * (  1 - dDensMean_dP[0] * ( gravDepth[ei[0]] - gravDepth[ei[1]] ) ) * dt;
-        dFlux_dP[1] = mobility * weight * ( -1 - dDensMean_dP[1] * ( gravDepth[ei[0]] - gravDepth[ei[1]] ) ) * dt;
+        dFlux_dP[0] = mobility * weight * (  1 - dDensMean_dP[0] * ( gravCoef[ei[0]] - gravCoef[ei[1]] ) ) * dt;
+        dFlux_dP[1] = mobility * weight * ( -1 - dDensMean_dP[1] * ( gravCoef[ei[0]] - gravCoef[ei[1]] ) ) * dt;
         dFlux_dP[k_up] += dMobility_dP * weight * potDif * dt;
 
         fluxJacobian[k[0]][k[0]] += dFlux_dP[0];
@@ -683,8 +705,8 @@ struct FluxKernel
 
 
 
-} // namespace SinglePhaseFlowKernels
+} // namespace SinglePhaseKernels
 
 } // namespace geosx
 
-#endif //GEOSX_PHYSICSSOLVERS_FINITEVOLUME_SINGLEPHASEFLOWKERNELS_HPP
+#endif //GEOSX_PHYSICSSOLVERS_FINITEVOLUME_SINGLEPHASEKERNELS_HPP

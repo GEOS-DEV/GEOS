@@ -20,6 +20,7 @@
 
 #include "mpiCommunications/CommunicationTools.hpp"
 #include "mpiCommunications/NeighborCommunicator.hpp"
+#include "mpiCommunications/MpiWrapper.hpp"
 #include "dataRepository/Group.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "common/DataTypes.hpp"
@@ -690,9 +691,12 @@ void CompositionalMultiphaseFlow::SetupDofs( DomainPartition const * const GEOSX
 {
   dofManager.addField( viewKeyStruct::dofFieldString,
                        DofManager::Location::Elem,
-                       DofManager::Connectivity::Face,
                        m_numDofPerCell,
                        m_targetRegions );
+
+  dofManager.addCoupling( viewKeyStruct::dofFieldString,
+                          viewKeyStruct::dofFieldString,
+                          DofManager::Connectivity::Face );
 }
 
 void CompositionalMultiphaseFlow::AssembleSystem( real64 const time_n,
@@ -878,7 +882,7 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( real64 const GEOSX_UNUSED_A
 
   FluxKernel::ElementView< arrayView1d<real64 const> > const & pres                = m_pressure.toViewConst();
   FluxKernel::ElementView< arrayView1d<real64 const> > const & dPres               = m_deltaPressure.toViewConst();
-  FluxKernel::ElementView< arrayView1d<real64 const> > const & gravDepth           = m_gravDepth.toViewConst();
+  FluxKernel::ElementView< arrayView1d<real64 const> > const & gravCoef            = m_gravCoef.toViewConst();
   FluxKernel::ElementView< arrayView2d<real64 const> > const & phaseMob            = m_phaseMob.toViewConst();
   FluxKernel::ElementView< arrayView2d<real64 const> > const & dPhaseMob_dPres     = m_dPhaseMob_dPres.toViewConst();
   FluxKernel::ElementView< arrayView3d<real64 const> > const & dPhaseMob_dComp     = m_dPhaseMob_dCompDens.toViewConst();
@@ -909,7 +913,7 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( real64 const GEOSX_UNUSED_A
 
   localIndex const fluidIndex       = m_fluidIndex;
   localIndex const capPressureIndex = m_capPressureIndex;
-  integer const gravityFlag     = m_gravityFlag;
+
   integer const capPressureFlag = m_capPressureFlag;
 
   fluxApprox->forCellStencils( [&] ( auto const & stencil )
@@ -939,7 +943,7 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( real64 const GEOSX_UNUSED_A
                            weights[iconn],
                            pres,
                            dPres,
-                           gravDepth,
+                           gravCoef,
                            phaseMob,
                            dPhaseMob_dPres,
                            dPhaseMob_dComp,
@@ -956,7 +960,6 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( real64 const GEOSX_UNUSED_A
                            dPhaseCapPres_dPhaseVolFrac,
                            fluidIndex,
                            capPressureIndex,
-                           gravityFlag,
                            capPressureFlag,
                            dt,
                            localFlux,
@@ -1096,6 +1099,11 @@ void CompositionalMultiphaseFlow::ApplyBoundaryConditions( real64 const time_n,
   // apply pressure boundary conditions.
   ApplyDirichletBC_implicit( time_n, dt, &dofManager, domain, &matrix, &rhs );
 
+  // apply flux boundary conditions
+
+  ApplySourceFluxBC( time_n, dt, &dofManager, domain, &matrix, &rhs );
+
+  
   matrix.close();
   rhs.close();
 
@@ -1122,8 +1130,63 @@ void CompositionalMultiphaseFlow::ApplyBoundaryConditions( real64 const time_n,
     GEOSX_LOG_RANK_0( "Jacobian: written to " << filename_mat );
     GEOSX_LOG_RANK_0( "Residual: written to " << filename_rhs );
   }
+
+
 }
 
+void
+CompositionalMultiphaseFlow::ApplySourceFluxBC( real64 const time,
+                                                real64 const dt,
+                                                DofManager const * const dofManager,
+                                                DomainPartition * const domain,
+                                                ParallelMatrix * const matrix,
+                                                ParallelVector * const rhs )
+{
+  
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
+
+  string const dofKey = dofManager->getKey( viewKeyStruct::dofFieldString );
+  
+  fsManager.Apply( time + dt, domain, "ElementRegions", FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString,
+                    [&]( FieldSpecificationBase const * const fs,
+                    string const &,
+                    set<localIndex> const & lset,
+                    Group * subRegion,
+                    string const & ) -> void
+  {
+
+    arrayView1d<globalIndex const> const &
+    dofNumber = subRegion->getReference< array1d<globalIndex> >( dofKey );
+
+    arrayView1d< integer const > const &
+    ghostRank = subRegion->getReference<array1d<integer> >( ObjectManagerBase::viewKeyStruct::ghostRankString);
+
+    set< localIndex > localSet;
+    for( localIndex const a : lset )
+    {
+      if( ghostRank[a] < 0 )
+      {
+        localSet.insert(a);
+      }
+    }
+   
+    fs->ApplyBoundaryConditionToSystem<FieldSpecificationAdd, LAInterface>( localSet,
+                                                                            time + dt,
+                                                                            dt,
+                                                                            subRegion,
+                                                                            dofNumber,
+                                                                            integer_conversion<int>(m_numDofPerCell),
+                                                                            *matrix,
+                                                                            *rhs,
+                                                                            [&] (localIndex const GEOSX_UNUSED_ARG(a)) -> real64
+                                                                            {
+                                                                              return 0;
+                                                                            });
+
+  });
+}
+
+  
 void
 CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( real64 const time,
                                                         real64 const dt,
@@ -1336,6 +1399,8 @@ void CompositionalMultiphaseFlow::SolveSystem( DofManager const & dofManager,
     GEOSX_LOG_RANK_0("\nSolution\n");
     std::cout << solution;
   }
+
+  
 }
 
 bool
@@ -1376,6 +1441,7 @@ CompositionalMultiphaseFlow::CheckSystemSolution( DomainPartition const * const 
       {
         localIndex const lid = solution.getLocalRowID( offset );
         real64 const newPres = pres[ei] + dPres[ei] + scalingFactor * localSolution[lid];
+
         if (newPres < 0.0)
         {
         	localCheck = 0;
@@ -1417,25 +1483,17 @@ CompositionalMultiphaseFlow::ApplySystemSolution( DofManager const & dofManager,
 {
   MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
-  applyToSubRegions( mesh, [&] ( localIndex const GEOSX_UNUSED_ARG( er ),
-                                 localIndex const GEOSX_UNUSED_ARG( esr ),
-                                 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
-                                 ElementSubRegionBase * const subRegion )
-  {
-    dofManager.addVectorToField( solution,
-                                 viewKeyStruct::dofFieldString,
-                                 scalingFactor,
-                                 subRegion,
-                                 viewKeyStruct::deltaPressureString,
-                                 0, 1 );
+  dofManager.addVectorToField( solution,
+                               viewKeyStruct::dofFieldString,
+                               viewKeyStruct::deltaPressureString,
+                               scalingFactor,
+                               0, 1 );
 
-    dofManager.addVectorToField( solution,
-                                 viewKeyStruct::dofFieldString,
-                                 scalingFactor,
-                                 subRegion,
-                                 viewKeyStruct::deltaGlobalCompDensityString,
-                                 1, m_numDofPerCell );
-  } );
+  dofManager.addVectorToField( solution,
+                               viewKeyStruct::dofFieldString,
+                               viewKeyStruct::deltaGlobalCompDensityString,
+                               scalingFactor,
+                               1, m_numDofPerCell );
 
   std::map<string, string_array > fieldNames;
   fieldNames["elems"].push_back( viewKeyStruct::deltaPressureString );
