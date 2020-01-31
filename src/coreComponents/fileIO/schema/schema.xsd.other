@@ -379,10 +379,10 @@
 		<xsd:attribute name="newtonNumberOfIterations" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="SystemSolverParametersType">
-		<!--KrylovResidualFinal => Final Krylov solver residual.-->
-		<xsd:attribute name="KrylovResidualFinal" type="real64" />
-		<!--KrylovResidualInit => Initial Krylov solver residual.-->
-		<xsd:attribute name="KrylovResidualInit" type="real64" />
+		<!--krylovResidualFinal => Final Krylov solver residual.-->
+		<xsd:attribute name="krylovResidualFinal" type="real64" />
+		<!--krylovResidualInit => Initial Krylov solver residual.-->
+		<xsd:attribute name="krylovResidualInit" type="real64" />
 	</xsd:complexType>
 	<xsd:complexType name="FiniteVolumeType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -528,6 +528,8 @@
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
+		<!--maxForce => The maximum force contribution in the problem domain.-->
+		<xsd:attribute name="maxForce" type="real64" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--timeIntegrationOptionEnum => Time integration enum class value.-->
@@ -537,6 +539,8 @@
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
+		<!--maxForce => The maximum force contribution in the problem domain.-->
+		<xsd:attribute name="maxForce" type="real64" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--timeIntegrationOptionEnum => Time integration enum class value.-->
@@ -1085,6 +1089,8 @@
 		<xsd:attribute name="boundaryFaceViscosity" type="real64_array2d" />
 		<!--childIndex => child index of the face.-->
 		<xsd:attribute name="childIndex" type="localIndex_array" />
+		<!--degreeFromCrackTip => degree of connectivity separation from crack tip.-->
+		<xsd:attribute name="degreeFromCrackTip" type="integer_array" />
 		<!--deltaFacePressure => An array that holds the accumulated pressure updates at the faces. => SinglePhaseHybridFVM-->
 		<xsd:attribute name="deltaFacePressure" type="real64_array" />
 		<!--domainBoundaryIndicator => (no description available)-->
@@ -1125,6 +1131,8 @@
 		<xsd:attribute name="primaryCandidateFace" type="localIndex_array" />
 		<!--ruptureState => Rupture state of the face.0=not ready for rupture. 1=ready for rupture. 2=ruptured-->
 		<xsd:attribute name="ruptureState" type="integer_array" />
+		<!--ruptureTime => Time that the face was ruptured.-->
+		<xsd:attribute name="ruptureTime" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="nodeManagerType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -1151,6 +1159,8 @@
 		<xsd:attribute name="contactForce" type="r1_array" />
 		<!--degreeFromCrack => connectivity distance from crack.-->
 		<xsd:attribute name="degreeFromCrack" type="integer_array" />
+		<!--degreeFromCrackTip => degree of connectivity separation from crack tip.-->
+		<xsd:attribute name="degreeFromCrackTip" type="integer_array" />
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--edgeList => (no description available)-->
@@ -1177,6 +1187,8 @@
 		<xsd:attribute name="parentIndex" type="localIndex_array" />
 		<!--primaryField => Primary field variable-->
 		<xsd:attribute name="primaryField" type="real64_array" />
+		<!--ruptureTime => Time that the node was ruptured.-->
+		<xsd:attribute name="ruptureTime" type="real64_array" />
 		<!--uhatTilde => An array that holds the incremental displacement predictors on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
 		<xsd:attribute name="uhatTilde" type="r1_array" />
 		<!--velocityTilde => An array that holds the velocity predictors on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
@@ -1246,6 +1258,8 @@
 			<xsd:element name="neighborData" type="neighborDataType" />
 			<xsd:element name="sets" type="setsType" />
 		</xsd:choice>
+		<!--creationMass => The amount of remaining mass that was introduced when the FaceElement was created.-->
+		<xsd:attribute name="creationMass" type="real64_array" />
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--edgeList => Map to the edges attached to each FaceElement.-->

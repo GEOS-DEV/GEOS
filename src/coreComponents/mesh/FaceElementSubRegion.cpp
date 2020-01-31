@@ -90,6 +90,17 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
     setPlotLevel(PlotLevel::NOPLOT)->
     setDescription( "A map of face element local indices to the cell local indices");
 
+  registerWrapper<real64_array>(viewKeyStruct::creationMassString)->
+    setApplyDefaultValue(0.0)->
+    setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
+    setDescription("The amount of remaining mass that was introduced when the FaceElement was created.");
+
+#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+  registerWrapper(viewKeyStruct::separationCoeffString, &m_separationCoefficient, false)->
+    setApplyDefaultValue(0.0)->
+    setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
+    setDescription("Scalar indicator of level of separation for a fracturing face.");
+#endif
 
   m_faceElementsToCells.resize(0,2);
   m_faceElementsToCells.setElementRegionManager( getParent()->getParent()->getParent()->getParent()->group_cast<ElementRegionManager*>() );

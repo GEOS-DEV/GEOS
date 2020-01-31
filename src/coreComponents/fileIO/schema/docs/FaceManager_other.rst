@@ -10,6 +10,7 @@ boundaryFaceMobility    real64_array                                            
 boundaryFacePressure    real64_array                                                                                           (no description available)                                                         
 boundaryFaceViscosity   real64_array2d                                                                                         (no description available)                                                         
 childIndex              localIndex_array                                                                                       child index of the face.                                                           
+degreeFromCrackTip      integer_array                                                                                          degree of connectivity separation from crack tip.                                  
 domainBoundaryIndicator integer_array                                                                                          (no description available)                                                         
 edgeList                InterObjectRelation< ArrayOfArrays< long, long > >                                                     (no description available)                                                         
 elemList                localIndex_array2d                                                                                     (no description available)                                                         
@@ -28,6 +29,7 @@ nodeList                InterObjectRelation< ArrayOfArrays< long, long > >      
 parentIndex             localIndex_array                                                                                       Parent index of the face.                                                          
 primaryCandidateFace    localIndex_array                                                                                       The face that has the highest score for splitability                               
 ruptureState            integer_array                                                                                          Rupture state of the face.0=not ready for rupture. 1=ready for rupture. 2=ruptured 
+ruptureTime             real64_array                                                                                           Time that the face was ruptured.                                                   
 deltaFacePressure       real64_array                                                 :ref:`DATASTRUCTURE_SinglePhaseHybridFVM` An array that holds the accumulated pressure updates at the faces.                 
 facePressure            real64_array                                                 :ref:`DATASTRUCTURE_SinglePhaseHybridFVM` An array that holds the pressures at the faces.                                    
 neighborData            node                                                                                                   :ref:`DATASTRUCTURE_neighborData`                                                  
