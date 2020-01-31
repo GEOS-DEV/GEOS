@@ -10,11 +10,11 @@ set( finiteElement_headers
      basis/BasisBase.hpp
      basis/LagrangeBasis.hpp
      basis/Polynomial.hpp
-     quadrature/QuadratureBase.hpp
      quadrature/GaussQuadrature.hpp
+     quadrature/QuadratureBase.hpp
+     quadrature/QuadratureRuleManager.hpp
      FiniteElementDiscretizationManager.hpp
      basis/BasisFunctionManager.hpp
-     quadrature/QuadratureRuleManager.hpp
    )
 #
 # Specify all sources
@@ -28,11 +28,11 @@ set( finiteElement_sources
      basis/BasisBase.cpp
      basis/LagrangeBasis.cpp
      basis/Polynomial.cpp
-     quadrature/QuadratureBase.cpp
      quadrature/GaussQuadrature.cpp
+     quadrature/QuadratureBase.cpp
+     quadrature/QuadratureRuleManager.cpp
      FiniteElementDiscretizationManager.cpp
      basis/BasisFunctionManager.cpp
-     quadrature/QuadratureRuleManager.cpp
    )
 
 if( BUILD_OBJ_LIBS)

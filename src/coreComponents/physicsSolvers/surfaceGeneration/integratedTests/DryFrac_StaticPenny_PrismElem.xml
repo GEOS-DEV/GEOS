@@ -2,11 +2,11 @@
 <Problem>
   
   <Solvers
-    gravityVector="0.0, 0.0, -9.81">
+    gravityVector="0.0, 0.0, 0.0">
 
     <SolidMechanicsLagrangianSSLE name="lagSolve" 
                                   timeIntegrationOption="QuasiStatic"
-                                  logLevel="0"
+                                  logLevel="1"
                                   discretization="FE1"
                                   targetRegions="{Region2}"
                                   solidMaterialName="granite"
@@ -146,7 +146,14 @@
                objectPath="faceManager"
                fieldName="Traction" 
                scale="-1e6" 
-               setNames="{zneg}"/>                             
+               setNames="{zneg}"/>
+               
+    <FieldSpecification name="znegconstraint" 
+               component="2" 
+               objectPath="nodeManager"
+               fieldName="TotalDisplacement" 
+               scale="0.0" 
+               setNames="{zneg}"/>
                
   </FieldSpecifications>
 

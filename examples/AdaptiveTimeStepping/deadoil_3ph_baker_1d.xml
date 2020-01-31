@@ -5,7 +5,7 @@
     gravityVector="0.0, 0.0, -9.81">
   
     <CompositionalMultiphaseFlow name="compflow"
-                                 verboseLevel="1"
+                                 logLevel="1"
                                  gravityFlag="1"
                                  discretization="fluidTPFA"
                                  targetRegions="{Region1}"
@@ -46,7 +46,7 @@
   </Geometry>
 
 
-  <Events maxTime="2e8" verbosity="1">
+  <Events maxTime="2e8" logLevel="1">
 
     <!--  PeriodicEvent name="outputs"
                    timeFrequency="1e8"

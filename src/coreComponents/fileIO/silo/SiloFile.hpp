@@ -517,6 +517,7 @@ private:
   string m_baseFileName;
 
   string_array m_emptyMeshes;
+//  string_array m_emptyMaterials;
   string_array m_emptyVariables;
 
   integer m_writeEdgeMesh;

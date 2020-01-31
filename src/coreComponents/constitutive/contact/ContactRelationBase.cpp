@@ -36,13 +36,22 @@ ContactRelationBase::ContactRelationBase( string const & name,
                                           Group * const parent ):
   ConstitutiveBase(name, parent),
   m_penaltyStiffness(0.0),
-  m_apertureFunction(nullptr)
+  m_apertureFunction(nullptr),
+  m_apertureTolerance(1.0e-99)
 {
   registerWrapper( viewKeyStruct::penaltyStiffnessString, &m_penaltyStiffness, 0 )->
-    setApplyDefaultValue(0.0)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Value of the penetration penalty stiffness. Units of Pressure/length");
 
+  registerWrapper( viewKeyStruct::apertureToleranceString, &m_apertureTolerance, 0 )->
+    setApplyDefaultValue(1.0e-9)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Value to be used to avoid floating point errors in expressions involving aperture. "
+                   "For example in the case of dividing by the actual aperture (not the effective aperture "
+                   "that results from the aperture function) this value may be used to avoid 1/0 errors. "
+                   "Note that this value may have some physical significance in its usage, as it may be used "
+                   "to smooth out highly nonlinear behavior associated with 1/0 in addition to avoiding the "
+                   "1/0 error.");
 
 }
 
@@ -62,7 +71,7 @@ ContactRelationBase::CreateChild( string const & catalogKey, string const & chil
   if( functionCatalog.count(catalogKey) )
   {
     m_apertureFunction = (FunctionBase::CatalogInterface::Factory( catalogKey, childName, this )).release();
-    rval =  FunctionManager::Instance().RegisterGroup( childName, m_apertureFunction, 0 );
+    rval =  FunctionManager::Instance().RegisterGroup( childName, m_apertureFunction, 1 );
   }
   else
   {

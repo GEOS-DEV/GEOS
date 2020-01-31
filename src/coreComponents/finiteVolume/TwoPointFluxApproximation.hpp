@@ -40,7 +40,8 @@ protected:
   virtual void computeCellStencil( DomainPartition const & domain ) override;
 
   virtual void addToFractureStencil( DomainPartition const & domain,
-                                     string const & faceElementRegionName ) override;
+                                     string const & faceElementRegionName,
+                                     bool const initFlag ) override;
 
   virtual void computeBoundaryStencil( DomainPartition const & domain,
                                        set<localIndex> const & faceSet,

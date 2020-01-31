@@ -31,19 +31,24 @@ using namespace dataRepository;
 using namespace constitutive;
 
 FlowSolverBase::FlowSolverBase( std::string const & name,
-                                Group * const parent )
-  : SolverBase( name, parent ),
-    m_fluidName(),
-    m_solidName(),
-    m_fluidIndex(),
-    m_solidIndex(),
-    m_poroElasticFlag(0),
-    m_coupledWellsFlag(0),
-    m_numDofPerCell(0),
-    m_elemGhostRank(),
-    m_volume(),
-    m_gravCoef(),
-    m_porosityRef()
+                                Group * const parent ):
+  SolverBase( name, parent ),
+  m_fluidName(),
+  m_solidName(),
+  m_fluidIndex(),
+  m_solidIndex(),
+  m_poroElasticFlag(0),
+  m_coupledWellsFlag(0),
+  m_numDofPerCell(0),
+  m_derivativeFluxResidual_dAperture(),
+  m_fluxEstimate(),
+  m_elemGhostRank(),
+  m_volume(),
+  m_gravCoef(),
+  m_porosityRef(),
+  m_elementArea(),
+  m_elementAperture0(),
+  m_elementAperture()
 {
   this->registerWrapper( viewKeyStruct::discretizationString, &m_discretizationName, false )->
     setInputFlag(InputFlags::REQUIRED)->
@@ -85,13 +90,23 @@ void FlowSolverBase::RegisterDataOnMesh( Group * const MeshBodies )
 
     ElementRegionManager * const elemManager = mesh->getElemManager();
 
-    elemManager->forElementSubRegions<FaceElementSubRegion>( [&] ( FaceElementSubRegion * const subRegion )
+    elemManager->forElementRegions<FaceElementRegion>( [&] ( FaceElementRegion * const region )
     {
-      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::referencePorosityString )->
-        setApplyDefaultValue( 1.0 );
+      region->forElementSubRegions<FaceElementSubRegion>( [&]( FaceElementSubRegion * const subRegion )
+      {
+        subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::referencePorosityString )->
+          setApplyDefaultValue( 1.0 );
 
-      subRegion->registerWrapper< array1d<R1Tensor> >( viewKeyStruct::permeabilityString )->setPlotLevel(PlotLevel::LEVEL_0);
-      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::gravityCoefString )->setApplyDefaultValue( 0.0 );
+        subRegion->registerWrapper< array1d<R1Tensor> >( viewKeyStruct::permeabilityString )->setPlotLevel(PlotLevel::LEVEL_0);
+        subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::gravityCoefString )->setApplyDefaultValue( 0.0 );
+        subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::aperture0String )->
+          setDefaultValue( region->getDefaultAperture() );
+        subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::effectiveApertureString )->
+          setApplyDefaultValue( subRegion->getWrapper<array1d<real64>>( FaceElementSubRegion::
+                                                                        viewKeyStruct::
+                                                                        elementApertureString)->getDefaultValue() )->
+          setPlotLevel(PlotLevel::LEVEL_0);
+      });
     });
 
     FaceManager * const faceManager = mesh->getFaceManager();
@@ -210,7 +225,16 @@ void FlowSolverBase::ResetViews( DomainPartition * const domain )
   m_elementAperture0 =
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( viewKeyStruct::aperture0String );
 
+  m_effectiveAperture =
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( viewKeyStruct::effectiveApertureString );
 
+#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+  m_elementSeparationCoefficient =
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( FaceElementSubRegion::viewKeyStruct::separationCoeffString );
+
+  m_element_dSeparationCoefficient_dAperture =
+      elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( FaceElementSubRegion::viewKeyStruct::dSeparationCoeffdAperString );
+#endif
 }
 
 

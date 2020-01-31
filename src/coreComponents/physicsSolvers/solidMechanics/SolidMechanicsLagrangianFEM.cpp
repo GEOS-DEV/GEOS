@@ -126,6 +126,10 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const std::string& nam
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Name of contact relation to enforce constraints on fracture boundary.");
 
+  registerWrapper(viewKeyStruct::maxForce, &m_maxForce, false )->
+    setInputFlag(InputFlags::FALSE)->
+    setDescription( "The maximum force contribution in the problem domain.");
+
 
 }
 
@@ -451,6 +455,10 @@ real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const& time_n,
       if( globallyFractured == 0 )
       {
         break;
+      }
+      else
+      {
+        GEOSX_LOG_RANK_0("Fracture Occurred. Resolve");
       }
     }
     ImplicitStepComplete( time_n, dt,  domain );
@@ -999,9 +1007,10 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_ARG(
   ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase>
   constitutiveRelations = elemManager->ConstructFullConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
 
-  ElementRegionManager::MaterialViewAccessor< real64 > const
-  density = elemManager->ConstructFullMaterialViewAccessor< real64 >( "density0",
-                                                                  constitutiveManager );
+  ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const
+  density = elemManager->ConstructFullMaterialViewAccessor< array2d<real64>,
+                                                            arrayView2d<real64> >( SolidBase::viewKeyStruct::densityString,
+                                                                                   constitutiveManager );
 
   // begin region loop
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
@@ -1042,7 +1051,7 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_ARG(
                                                 uhat,
                                                 vtilde,
                                                 uhattilde,
-                                                density[er][esr],
+                                                density[er][esr][m_solidMaterialFullIndex],
                                                 fluidPres[er][esr],
                                                 dPres[er][esr],
                                                 biotCoefficient[er][esr],
@@ -1051,6 +1060,7 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_ARG(
                                                 this->m_massDamping,
                                                 this->m_newmarkBeta,
                                                 this->m_newmarkGamma,
+                                                gravityVector(),
                                                 &dofManager,
                                                 &matrix,
                                                 &rhs );
@@ -1153,16 +1163,12 @@ CalculateResidualNorm( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
   {
   // sum(rhs^2) on each rank.
     localResidualNorm[0] += localResidual[i] * localResidual[i];
-    //infNorm
   }
 
 
   // globalResidualNorm[0]: the sum of all the local sum(rhs^2).
   // globalResidualNorm[1]: max of max force of each rank. Basically max force globally
   real64 globalResidualNorm[2] = {0,0};
-//  MPI_Allreduce (&localResidual,&globalResidualNorm,1,MPI_DOUBLE,MPI_SUM ,MPI_COMM_GEOSX);
-
-
 
   int const rank = MpiWrapper::Comm_rank(MPI_COMM_GEOSX);
   int const size = MpiWrapper::Comm_size(MPI_COMM_GEOSX);
@@ -1195,7 +1201,20 @@ CalculateResidualNorm( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
 
   MpiWrapper::bcast( globalResidualNorm, 2, 0, MPI_COMM_GEOSX );
 
-  return sqrt(globalResidualNorm[0])/(globalResidualNorm[1]+1); // the + 1 is for the first time-step when maxForce = 0;
+
+  real64 const residual = sqrt(globalResidualNorm[0])/(globalResidualNorm[1]+1);  // the + 1 is for the first time-step when maxForce = 0;
+
+  if( getLogLevel() >= 1 && logger::internal::rank==0 )
+  {
+    char output[200] = {0};
+    sprintf( output,
+             "( RSolid ) = (%4.2e) ; ",
+             residual);
+    std::cout<<output;
+  }
+
+
+  return residual;
 }
 
 

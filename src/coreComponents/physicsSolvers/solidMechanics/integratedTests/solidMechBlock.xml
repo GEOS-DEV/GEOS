@@ -1,7 +1,7 @@
 
 <Problem>
   
-  <Solvers>
+  <Solvers gravityVector="0.0, 0.0, 0.0">
     <SolidMechanics_LagrangianFEM name="lagsolve" 
                                   timeIntegrationOption="QuasiStatic"
                                   logLevel="0"

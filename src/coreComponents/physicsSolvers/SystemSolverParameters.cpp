@@ -35,9 +35,7 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
   m_useInnerSolver(),
   m_scalingOption(),
   m_useBicgstab(),
-  m_useDirectSolver(),
-  m_KrylovResidualInit(),
-  m_KrylovResidualFinal()
+  m_useDirectSolver()
 {
   setInputFlags(InputFlags::OPTIONAL);
   
@@ -51,7 +49,12 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
   registerWrapper(viewKeysStruct::krylovTolString, &m_krylovTol, false )->
     setApplyDefaultValue(1.0e-6)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Allowable tolerance for krylov solve");
+    setDescription("Desired tolerance for Krylov solve");
+
+  registerWrapper(viewKeysStruct::useAdaptiveKrylovString, &m_useAdaptiveKrylovTol, false )->
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Enable Eisenstat-Walker adaptive Krylov tolerance");
 
   registerWrapper(viewKeysStruct::numKrylovIterString, &m_numKrylovIter, false )->
     setApplyDefaultValue(100)->
@@ -59,7 +62,7 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
     setDescription("Maximum number of Krylov Iterations");
 
   registerWrapper(viewKeysStruct::kspaceString, &m_kspace, false )->
-    setApplyDefaultValue(0)->
+    setApplyDefaultValue(300)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("");
 
@@ -98,11 +101,11 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("");
 
-  registerWrapper(viewKeysStruct::KrylovResidualInitString, &m_KrylovResidualInit, false )->
+  registerWrapper(viewKeysStruct::krylovResidualInitString, &m_krylovResidualInit, false )->
     setApplyDefaultValue(0)->
     setDescription("Initial Krylov solver residual.");
 
-  registerWrapper(viewKeysStruct::KrylovResidualFinalString, &m_KrylovResidualFinal, false )->
+  registerWrapper(viewKeysStruct::krylovResidualFinalString, &m_krylovResidualFinal, false )->
     setApplyDefaultValue(0)->
     setDescription("Final Krylov solver residual.");
 

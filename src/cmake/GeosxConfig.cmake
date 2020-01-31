@@ -32,6 +32,7 @@ set( PREPROCESSOR_DEFINES ARRAY_BOUNDS_CHECK
                           TRILINOS
                           MKL
                           GEOSX_PTP
+                          SEPARATION_COEFFICIENT
                           ${externalComponentsList} )
 
 foreach( DEP in ${PREPROCESSOR_DEFINES})

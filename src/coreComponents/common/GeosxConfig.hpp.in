@@ -57,6 +57,8 @@
 /// Platform-dependent mangling of fortran function names (CMake option FORTRAN_MANGLE_NO_UNDERSCORE)
 #cmakedefine FORTRAN_MANGLE_NO_UNDERSCORE
 
+/// USE OF SEPARATION COEFFICIENT IN FRACTURE FLOW
+#cmakedefine GEOSX_USE_SEPARATION_COEFFICIENT
 
 #endif  /* GEOSX_CONFIG_HPP */
 

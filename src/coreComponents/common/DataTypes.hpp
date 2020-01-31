@@ -29,10 +29,13 @@
 #include "Logger.hpp"
 #include "cxx-utilities/src/Macros.hpp"
 #include "cxx-utilities/src/Array.hpp"
-#include "cxx-utilities/src/StackBuffer.hpp"
-#include "cxx-utilities/src/SortedArray.hpp"
 #include "cxx-utilities/src/ArrayOfArrays.hpp"
 #include "cxx-utilities/src/ArrayOfSets.hpp"
+#include "cxx-utilities/src/CRSMatrix.hpp"
+#include "cxx-utilities/src/Macros.hpp"
+#include "cxx-utilities/src/SortedArray.hpp"
+#include "cxx-utilities/src/StackBuffer.hpp"
+
 #include "math/TensorT/TensorT.h"
 #include "Path.hpp"
 
@@ -276,6 +279,15 @@ using arraySlice5d = ArraySlice< T, 5 >;
 template< typename T, int MAXSIZE >
 using stackArray5d = StackArray< T, 5, MAXSIZE >;
 
+
+/// Alias for CRS Matrix class.
+template< typename T, typename ROWINDEX, typename COLINDEX >
+using CRSMatrix = LvArray::CRSMatrix< T, COLINDEX, ROWINDEX >;
+
+/// Alias for CRS Matrix View.
+template< typename T, typename COLINDEX, typename LINEEARINDEX >
+using CRSMatrixView = LvArray::CRSMatrixView< T, COLINDEX, LINEEARINDEX >;
+
 ///@}
 
 /**
@@ -319,6 +331,7 @@ template< typename T >
 using ArrayOfSetsView = LvArray::ArrayOfSetsView< T, localIndex const >;
 
 ///@}
+
 
 /**
  * @name Ordered and unordered map types.

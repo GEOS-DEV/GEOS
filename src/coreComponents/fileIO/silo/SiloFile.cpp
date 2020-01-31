@@ -27,8 +27,8 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
+#include "constitutive/solid/PoreVolumeCompressibleSolid.hpp"
 #include "managers/DomainPartition.hpp"
-#include "mesh/MeshBody.hpp"
 #include "mesh/MeshBody.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
 
@@ -322,6 +322,7 @@ SiloFile::SiloFile():
   m_fileName(),
   m_baseFileName(),
   m_emptyMeshes(),
+//  m_emptyMaterials(),
   m_emptyVariables(),
   m_writeEdgeMesh(0),
   m_writeFaceMesh(0),
@@ -330,6 +331,7 @@ SiloFile::SiloFile():
   m_plotLevel(dataRepository::PlotLevel::LEVEL_1),
   m_ghostFlags(true)
 {
+  DBSetAllowEmptyObjects(1);
 }
 
 // *********************************************************************************************************************
@@ -874,6 +876,15 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionBase const * const ele
       });
     }
 
+//    if( nmat == 0 )
+//    {
+//      char pwd[256];
+//      DBGetDir(m_dbFilePtr, pwd);
+//      string emptyObject = pwd;
+//      emptyObject += "/" + fieldName;
+//      m_emptyVariables.push_back(emptyObject);
+//    }
+//    else
     {
       DBoptlist* optlist = DBMakeOptlist(3);
       DBAddOption(optlist, DBOPT_MATNAMES, materialNames.data());
@@ -906,10 +917,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionBase const * const ele
     if( rank == 0 )
     {
 
-      int size = 1;
-  #ifdef GEOSX_USE_MPI
-      MPI_Comm_size(MPI_COMM_GEOSX, &size);
-  #endif
+      int const size = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
 
       array1d<string> vBlockNames(size);
       std::vector<char*> BlockNames(size);
@@ -1096,13 +1104,12 @@ void SiloFile::WriteMaterialVarDefinition( string const & subDir,
 void SiloFile::ClearEmptiesFromMultiObjects(int const cycleNum)
 {
 
-  int size = 1;
-  int rank = 0;
-  MPI_Comm_size(MPI_COMM_GEOSX, &size);
-  MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
+  int const size = MpiWrapper::Comm_size(MPI_COMM_GEOSX);
+  int const rank = MpiWrapper::Comm_rank(MPI_COMM_GEOSX);
 
   string sendbufferVars;
   string sendbufferMesh;
+//  string sendbufferMaterials;
 
   if( rank != 0 )
   {
@@ -1117,6 +1124,12 @@ void SiloFile::ClearEmptiesFromMultiObjects(int const cycleNum)
     {
       sendbufferMesh += *emptyObject + ' ';
     }
+
+//    for( string_array::const_iterator emptyObject=m_emptyMaterials.begin() ;
+//         emptyObject!=m_emptyMaterials.end() ; ++emptyObject )
+//    {
+//      sendbufferMesh += *emptyObject + ' ';
+//    }
 
   }
 
@@ -1567,7 +1580,7 @@ void SiloFile::WriteElementMesh( ElementRegionBase const * const elementRegion,
     numElements += subRegion->size();
   });
 
-  if( numElements>0 )
+  //if( numElements>0 )
   {
     array1d<localIndex*> meshConnectivity(numElementShapes);
     array1d<globalIndex*> globalElementNumbers(numElementShapes);
@@ -1643,8 +1656,60 @@ void SiloFile::WriteElementMesh( ElementRegionBase const * const elementRegion,
       ++count;
     });
 
-    string_array const regionSolidMaterialList = elementRegion->getConstitutiveNames<constitutive::SolidBase>();
+    string_array
+    regionSolidMaterialList = elementRegion->getConstitutiveNames<constitutive::SolidBase>();
+    string_array const
+    regionSolidMaterialList2 = elementRegion->getConstitutiveNames<constitutive::PoreVolumeCompressibleSolid>();
+
+    for( string const & entry : regionSolidMaterialList2 )
+    {
+      regionSolidMaterialList.push_back(entry);
+    }
     localIndex const numSolids = regionSolidMaterialList.size();
+
+    string_array regionFluidMaterialList = elementRegion->getConstitutiveNames<constitutive::SingleFluidBase>();
+    string_array regionMultiPhaseFluidList = elementRegion->getConstitutiveNames<constitutive::MultiFluidBase>();
+
+    for( string const & matName : regionMultiPhaseFluidList )
+    {
+      regionFluidMaterialList.push_back(matName);
+    }
+    localIndex const numFluids = regionFluidMaterialList.size();
+
+    if( numSolids + numFluids > 0 )
+    {
+      WriteMeshObject( meshName,
+                       numNodes,
+                       coords,
+                       globalNodeNum,
+                       ghostNodeFlag,
+                       ghostZoneFlag.data(),
+                       integer_conversion<int>(numElementShapes),
+                       shapecnt.data(),
+                       meshConnectivity.data(),
+                       nullptr /*globalElementNumbers.data()*/,
+                       shapetype.data(),
+                       shapesize.data(),
+                       cycleNumber,
+                       problemTime );
+
+      WriteGroupSilo( nodeManager,
+                      meshName + "_NodalFields",
+                      meshName,
+                      DB_NODECENT,
+                      cycleNumber,
+                      problemTime,
+                      false,
+                      localIndex_array() );
+
+      WriteElementRegionSilo( elementRegion,
+                              meshName + "_ElementFields",
+                              meshName,
+                              cycleNumber,
+                              problemTime,
+                              false );
+    }
+
     if( numSolids > 0 )
     {
       string const solidMeshName = meshName + "_Solid";
@@ -1668,33 +1733,8 @@ void SiloFile::WriteElementMesh( ElementRegionBase const * const elementRegion,
                                     regionSolidMaterialList,
                                     cycleNumber,
                                     problemTime );
-
-      WriteGroupSilo( nodeManager,
-                      solidMeshName + "_NodalFields",
-                      solidMeshName,
-                      DB_NODECENT,
-                      cycleNumber,
-                      problemTime,
-                      false,
-                      localIndex_array() );
-
-      WriteElementRegionSilo( elementRegion,
-                              solidMeshName + "_ElementFields",
-                              solidMeshName,
-                              cycleNumber,
-                              problemTime,
-                              false );
-
     }
 
-    string_array regionFluidMaterialList = elementRegion->getConstitutiveNames<constitutive::SingleFluidBase>();
-    string_array regionMultiPhaseFluidList = elementRegion->getConstitutiveNames<constitutive::MultiFluidBase>();
-
-    for( string const & matName : regionMultiPhaseFluidList )
-    {
-      regionFluidMaterialList.push_back(matName);
-    }
-    localIndex const numFluids = regionFluidMaterialList.size();
     if( numFluids > 0 )
     {
       string const fluidMeshName = meshName + "_Fluid";
@@ -1718,25 +1758,6 @@ void SiloFile::WriteElementMesh( ElementRegionBase const * const elementRegion,
                                     regionFluidMaterialList,
                                     cycleNumber,
                                     problemTime );
-
-      if( numSolids==0 )
-      {
-        WriteGroupSilo( nodeManager,
-                        fluidMeshName + "_NodalFields",
-                        fluidMeshName,
-                        DB_NODECENT,
-                        cycleNumber,
-                        problemTime,
-                        false,
-                        localIndex_array() );
-
-        WriteElementRegionSilo( elementRegion,
-                                fluidMeshName + "_ElementFields",
-                                fluidMeshName,
-                                cycleNumber,
-                                problemTime,
-                                false );
-      }
     }
   }
 }
@@ -2312,12 +2333,12 @@ void SiloFile::WriteDataField( string const & meshName,
   {
     if( std::is_same<OUTTYPE,TYPE>::value )
     {
-      vars[i] = const_cast<void*>(static_cast<void const*> (&(field[0])+i));
+      vars[i] = const_cast<void*>(static_cast<void const*> (field.data()+i));
     }
     else
     {
       castedField[i].resize(nels);
-      vars[i] = static_cast<void*> (&(castedField[i][0]));
+      vars[i] = static_cast<void*>( (castedField[i]).data() );
       for( int k = 0 ; k < nels ; ++k )
       {
         castedField[i][k] = SiloFileUtilities::CastField<OUTTYPE>(field[k], i);
@@ -2343,8 +2364,8 @@ void SiloFile::WriteDataField( string const & meshName,
 
 
     int err = -2;
-    if( meshType == DB_UCDMESH )
-    {
+//    if( meshType == DB_UCDMESH )
+//    {
       err = DBPutUcdvar( m_dbFilePtr,
                          fieldName.c_str(),
                          meshName.c_str(),
@@ -2357,18 +2378,18 @@ void SiloFile::WriteDataField( string const & meshName,
                          SiloFileUtilities::DB_TYPE<OUTTYPE>(),
                          centering,
                          optlist);
-    }
-    else if( meshType == DB_POINTMESH )
-    {
-      err = DBPutPointvar( m_dbFilePtr,
-                           fieldName.c_str(),
-                           meshName.c_str(),
-                           nvars,
-                           reinterpret_cast<float**>(vars.data()),
-                           nels,
-                           SiloFileUtilities::DB_TYPE<OUTTYPE>(),
-                           optlist);
-    }
+//    }
+//    else if( meshType == DB_POINTMESH )
+//    {
+//      err = DBPutPointvar( m_dbFilePtr,
+//                           fieldName.c_str(),
+//                           meshName.c_str(),
+//                           nvars,
+//                           reinterpret_cast<float**>(vars.data()),
+//                           nels,
+//                           SiloFileUtilities::DB_TYPE<OUTTYPE>(),
+//                           optlist);
+//    }
     if( err < 0 )
     {
       if( err < -1 )
@@ -2409,7 +2430,7 @@ void SiloFile::WriteDataField( string const & meshName,
     }
     else
     {
-      GEOSX_ERROR("unhandled case in SiloFile::WriteDataField B\n");
+      vartype = DB_UCDVAR;
     }
 
 
@@ -2502,12 +2523,16 @@ void SiloFile::WriteMaterialDataField2d( string const & meshName,
                                        string const & multiRoot,
                                        string_array const & materialNames )
 {
+  array1d< array1d < array2d<TYPE> > > fieldData(elemRegion->numSubRegions());
   array1d< array1d < arrayView2d<TYPE const> > > field(elemRegion->numSubRegions());
+
+
   elemRegion->forElementSubRegionsIndex([&]( localIndex const esr,
                                              ElementSubRegionBase const * const subRegion )
   {
     localIndex const nmat = materialNames.size();
     field[esr].resize(nmat);
+    fieldData[esr].resize(nmat);
     for( int matIndex=0 ; matIndex<nmat ; ++matIndex )
     {
       Group const * const
@@ -2518,7 +2543,19 @@ void SiloFile::WriteMaterialDataField2d( string const & meshName,
 
       if( wrapper != nullptr )
       {
-        field[esr][matIndex] = wrapper->reference();
+        arrayView2d<TYPE const> const & fieldView = wrapper->referenceAsView();
+
+        fieldData[esr][matIndex].resize( fieldView.size(0), 1 );
+        field[esr][matIndex] = fieldData[esr][matIndex].toViewConst();
+        for( localIndex k = 0 ; k<fieldView.size(0) ; ++k )
+        {
+          fieldData[esr][matIndex](k,0) = 0;
+          for( localIndex q=0 ; q<fieldView.size(1) ; ++q )
+          {
+            fieldData[esr][matIndex](k,0) += fieldView(k,q);
+          }
+          fieldData[esr][matIndex](k,0) *= 1.0 / fieldView.size(1);
+        }
       }
     }
   });
@@ -2666,8 +2703,8 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
     DBAddOption(optlist, DBOPT_REGION_PNAMES, &regionpnames );
 
     int err = -2;
-    if( meshType == DB_UCDMESH )
-    {
+//    if( meshType == DB_UCDMESH )
+//    {
       err = DBPutUcdvar( m_dbFilePtr,
                          fieldName.c_str(),
                          meshName.c_str(),
@@ -2680,18 +2717,18 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
                          SiloFileUtilities::DB_TYPE<OUTTYPE>(),
                          centering,
                          optlist);
-    }
-    else if( meshType == DB_POINTMESH )
-    {
-      err = DBPutPointvar( m_dbFilePtr,
-                           fieldName.c_str(),
-                           meshName.c_str(),
-                           nvars,
-                           vars.data(),
-                           nels,
-                           SiloFileUtilities::DB_TYPE<OUTTYPE>(),
-                           optlist);
-    }
+//    }
+//    else if( meshType == DB_POINTMESH )
+//    {
+//      err = DBPutPointvar( m_dbFilePtr,
+//                           fieldName.c_str(),
+//                           meshName.c_str(),
+//                           nvars,
+//                           vars.data(),
+//                           nels,
+//                           SiloFileUtilities::DB_TYPE<OUTTYPE>(),
+//                           optlist);
+//    }
     if( err < 0 )
     {
       if( err < -1 )
@@ -2732,7 +2769,8 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
     }
     else
     {
-      GEOSX_ERROR("unhandled case in SiloFile::WriteDataField B\n");
+      vartype = DB_UCDVAR;
+//      GEOS_ERROR("unhandled case in SiloFile::WriteDataField B\n");
     }
 
     WriteMultiXXXX(vartype, DBPutMultivar, centering, fieldName.c_str(), cycleNumber, multiRoot,
@@ -2979,13 +3017,18 @@ int SiloFile::GetMeshType( string const & meshName ) const
     // before we can find the mesh.
     char pwd[256];
     DBGetDir(m_dbFilePtr, pwd);
+
     for( int i=0 ; i<3 ; ++i )
     {
       meshType = DBInqMeshtype(m_dbFilePtr,meshName.c_str());
       if( meshType != -1 && meshType != 610 )
+      {
         break;
+      }
       else
+      {
         DBSetDir(m_dbFilePtr,"..");
+      }
     }
     DBSetDir(m_dbFilePtr,pwd);
   }

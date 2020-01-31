@@ -102,6 +102,10 @@ public:
   template<typename LAMBDA>
   void forCellStencils(LAMBDA && lambda) const;
 
+
+  template<typename TYPE, typename ... TYPES, typename LAMBDA>
+  void forStencils(LAMBDA && lambda) const;
+
   /// call a user-provided function for each boundary stencil
   template<typename LAMBDA>
   void forBoundaryStencils(LAMBDA && lambda) const;
@@ -110,7 +114,8 @@ public:
   void compute( DomainPartition const & domain );
 
   virtual void addToFractureStencil( DomainPartition const & GEOSX_UNUSED_ARG( domain ),
-                                     string const & GEOSX_UNUSED_ARG( faceElementRegionName ) ) {}
+                                     string const & GEOSX_UNUSED_ARG( faceElementRegionName ),
+                                     bool const GEOSX_UNUSED_ARG(initFlag) ) {}
 
 
   struct viewKeyStruct
@@ -170,6 +175,16 @@ void FluxApproximationBase::forCellStencils(LAMBDA && lambda) const
     lambda(wrapper->reference());
   });
 }
+
+template<typename TYPE, typename ... TYPES, typename LAMBDA>
+void FluxApproximationBase::forStencils(LAMBDA && lambda) const
+{
+  this->forWrappers<TYPE,TYPES...>([&] (auto const * const wrapper) -> void
+  {
+    lambda(wrapper->reference());
+  });
+}
+
 
 template<typename LAMBDA>
 void FluxApproximationBase::forBoundaryStencils(LAMBDA && lambda) const

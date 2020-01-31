@@ -19,12 +19,13 @@
 
 #include "mpiCommunications/CommunicationTools.hpp"
 
-#include <algorithm>
 
-#include "mpiCommunications/NeighborCommunicator.hpp"
 #include "common/TimingMacros.hpp"
+#include "mpiCommunications/NeighborCommunicator.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/ObjectManagerBase.hpp"
+
+#include <algorithm>
 
 namespace geosx
 {
