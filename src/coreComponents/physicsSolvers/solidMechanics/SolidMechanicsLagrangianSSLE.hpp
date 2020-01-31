@@ -95,7 +95,7 @@ public:
                                arrayView1d< R1Tensor const > const & uhat,
                                arrayView1d< R1Tensor const > const & vtilde,
                                arrayView1d< R1Tensor const > const & uhattilde,
-                               arrayView1d< real64 const > const & density,
+                               arrayView2d< real64 const > const & density,
                                arrayView1d< real64 const > const & fluidPressure,
                                arrayView1d< real64 const > const & deltaFluidPressure,
                                arrayView1d< real64 const > const & biotCoefficient,
@@ -104,10 +104,12 @@ public:
                                real64 const massDamping,
                                real64 const newmarkBeta,
                                real64 const newmarkGamma,
+                               R1Tensor const & gravityVector,
                                DofManager const * const dofManager,
                                ParallelMatrix * const matrix,
                                ParallelVector * const rhs ) const override
   {
+    GEOSX_MARK_FUNCTION;
     using ImplicitKernel = SolidMechanicsLagrangianSSLEKernels::ImplicitKernel;
     return SolidMechanicsLagrangianFEMKernels::
            ElementKernelLaunchSelector<ImplicitKernel>( NUM_NODES_PER_ELEM,
@@ -134,6 +136,7 @@ public:
                                                         massDamping,
                                                         newmarkBeta,
                                                         newmarkGamma,
+                                                        gravityVector,
                                                         dofManager,
                                                         matrix,
                                                         rhs );
