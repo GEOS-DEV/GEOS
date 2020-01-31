@@ -65,6 +65,12 @@ public:
 
   virtual void RegisterDataOnMesh( Group * const MeshBodies ) override;
 
+  virtual void SetupSystem( DomainPartition * const domain,
+                            DofManager & dofManager,
+                            ParallelMatrix & matrix,
+                            ParallelVector & rhs,
+                            ParallelVector & solution ) override;
+
   virtual real64
   SolverStep( real64 const & time_n,
               real64 const & dt,
@@ -193,7 +199,6 @@ public:
     //backup fields
     static constexpr auto porosityOldString = "porosityOld";
     static constexpr auto densityOldString = "densityOld";
-
   } viewKeysSinglePhaseBase;
 
   viewKeyStruct & viewKeys()

@@ -1,7 +1,8 @@
 
 <Problem>
   
-  <Solvers>
+  <Solvers gravityVector="0.0,0.0,0.0">
+    
     <SolidMechanicsLagrangianSSLE name="lagsolve" 
                                   timeIntegrationOption="QuasiStatic"
                                   discretization="FE1"
@@ -43,10 +44,10 @@
     <!-- This event is applied every 5.0e-5s.  The targetExactTimestep
     flag allows this event to request a dt modification to match an
     integer multiple of the timeFrequency. -->
-    <!-- PeriodicEvent name="outputs"
+    <PeriodicEvent name="outputs"
                    timeFrequency="1.0"
                    targetExactTimestep="1"
-                   target="/Outputs/siloOutput" /-->
+                   target="/Outputs/siloOutput" />
 
     <PeriodicEvent name="restarts"
                    timeFrequency="1e99"

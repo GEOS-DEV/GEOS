@@ -80,10 +80,12 @@ public:
 
   static string CatalogName() { return "C3D8"; }
 
-  void reinit( arrayView1d< R1Tensor const > const & X, arraySlice1d< localIndex const, -1 > const & mapped_support_points ) override
+  void reinit( arrayView1d< R1Tensor const > const & X,
+               arraySlice1d< localIndex const, -1 > const & mapped_support_points ) override
   { return reinitPrivate( X, mapped_support_points ); }
 
-  void reinit( arrayView1d< R1Tensor const > const & X, arraySlice1d< localIndex const, 0 > const & mapped_support_points ) override
+  void reinit( arrayView1d< R1Tensor const > const & X,
+               arraySlice1d< localIndex const, 0 > const & mapped_support_points ) override
   { return reinitPrivate( X, mapped_support_points ); }
 
 private:
@@ -97,7 +99,8 @@ private:
    * element).
    */
   template< int UNIT_STRIDE_DIM >
-  void reinitPrivate( arrayView1d< R1Tensor const > const & X, arraySlice1d< localIndex const, UNIT_STRIDE_DIM > const & mapped_support_points )
+  void reinitPrivate( arrayView1d< R1Tensor const > const & X,
+                      arraySlice1d< localIndex const, UNIT_STRIDE_DIM > const & mapped_support_points )
   {
     for(int q=0 ; q<n_q_points ; ++q)
     {

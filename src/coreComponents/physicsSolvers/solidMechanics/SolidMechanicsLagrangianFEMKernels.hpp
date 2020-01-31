@@ -374,7 +374,7 @@ struct ImplicitKernel
           arrayView1d< R1Tensor const > const & GEOSX_UNUSED_ARG( uhat ),
           arrayView1d< R1Tensor const > const & GEOSX_UNUSED_ARG( vtilde ),
           arrayView1d< R1Tensor const > const & GEOSX_UNUSED_ARG( uhattilde ),
-          arrayView1d< real64 const > const & GEOSX_UNUSED_ARG( density ),
+          arrayView2d< real64 const > const & GEOSX_UNUSED_ARG( density ),
           arrayView1d< real64 const > const & GEOSX_UNUSED_ARG( fluidPressure ),
           arrayView1d< real64 const > const & GEOSX_UNUSED_ARG( deltaFluidPressure ),
           arrayView1d< real64 const > const & GEOSX_UNUSED_ARG( biotCoefficient ),
@@ -383,6 +383,7 @@ struct ImplicitKernel
           real64 const GEOSX_UNUSED_ARG( massDamping ),
           real64 const GEOSX_UNUSED_ARG( newmarkBeta ),
           real64 const GEOSX_UNUSED_ARG( newmarkGamma ),
+          R1Tensor const & GEOSX_UNUSED_ARG(gravityVector),
           DofManager const * const GEOSX_UNUSED_ARG( dofManager ),
           ParallelMatrix * const GEOSX_UNUSED_ARG( matrix ),
           ParallelVector * const GEOSX_UNUSED_ARG( rhs ) )

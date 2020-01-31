@@ -64,14 +64,20 @@ public:
   struct viewKeysStruct : OutputBase::viewKeysStruct
   {
     static constexpr auto plotFileRoot = "plotFileRoot";
-    static constexpr auto writeFEMFaces = "writeFEMFaces";
+    static constexpr auto writeEdgeMesh = "writeEdgeMesh";
+    static constexpr auto writeFaceMesh = "writeFEMFaces";
+    static constexpr auto writeCellElementMesh = "writeCellElementMesh";
+    static constexpr auto writeFaceElementMesh = "writeFaceElementMesh";
     static constexpr auto plotLevel = "plotLevel";
 
   } siloOutputViewKeys;
 
 private:
   string m_plotFileRoot;
+  integer m_writeEdgeMesh;
   integer m_writeFaceMesh;
+  integer m_writeCellElementMesh;
+  integer m_writeFaceElementMesh;
   integer m_plotLevel;
 
 };

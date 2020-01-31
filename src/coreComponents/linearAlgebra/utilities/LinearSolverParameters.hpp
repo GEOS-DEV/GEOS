@@ -38,12 +38,13 @@ public:
   string  solverType = "cg";           //!< Solver type [direct, cg, gmres, bicgstab]
   string  preconditionerType = "ilut"; //!< Preconditioner type [none, ilu, ilut, icc, amg]
   integer dofsPerNode = 1;             //!< Can be used to enable dense-block algorithms if available
-
+ 
   struct
   {
     real64  tolerance = 1e-6;
     integer maxIterations = 200;
     integer maxRestart = 200;
+    bool    useAdaptiveTol = false;
   }
   krylov;
 
@@ -62,6 +63,7 @@ public:
     string  coarseType = "direct";
     integer numSweeps = 2;
     bool    isSymmetric = true;
+    bool    separateComponents = false;
     string  nullSpaceType = "constantModes";
   }
   amg;
@@ -89,6 +91,30 @@ public:
    *
    */
   ~LinearSolverParameters() = default;
+
+   /**
+    * @brief Einsenstat-Walker adaptive tolerance
+    *
+    */
+   static real64 eisenstatWalker(real64 newNewtonNorm, real64 oldNewtonNorm)
+   {
+     const real64 weakTol = 1e-3;
+     const real64 strongTol = 1e-8; 
+     const real64 exponent = 2.0;
+     const real64 gamma = 0.9;
+
+     real64 normRatio = newNewtonNorm / oldNewtonNorm;
+     if(normRatio > 1) normRatio = 1;
+
+     real64 newKrylovTol = gamma*std::pow(normRatio,exponent);
+     real64 altKrylovTol = gamma*std::pow(oldNewtonNorm,exponent);
+      
+     real64 krylovTol = std::max(newKrylovTol,altKrylovTol);
+            krylovTol = std::min(krylovTol,weakTol);
+            krylovTol = std::max(krylovTol,strongTol);
+
+     return krylovTol;
+   };
 };
 
 } /* namespace geosx */

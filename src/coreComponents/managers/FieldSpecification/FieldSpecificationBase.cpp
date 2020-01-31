@@ -65,7 +65,6 @@ FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * par
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Scale factor for value of BC.");
 
-
   registerWrapper( viewKeyStruct::initialConditionString, &m_initialCondition, 0 )->
     setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
@@ -98,6 +97,7 @@ FieldSpecificationBase::GetCatalog()
   
 void FieldSpecificationBase::PostProcessInput()
 {}
+
 
 
 REGISTER_CATALOG_ENTRY( FieldSpecificationBase, FieldSpecificationBase, string const &, Group * const )

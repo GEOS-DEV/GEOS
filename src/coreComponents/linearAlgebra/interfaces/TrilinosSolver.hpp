@@ -51,7 +51,7 @@ public:
   ~TrilinosSolver();
 
   /**
-   * @brief Solve system with an iterative solver (HARD CODED PARAMETERS, GMRES).
+   * @brief Solve system with an iterative solver.
    *
    * Solve Ax=b with A an EpetraMatrix, x and b EpetraVector.
    */

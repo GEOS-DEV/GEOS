@@ -59,7 +59,6 @@ public:
   { return FaceElementRegion::CatalogName(); }
 
 
-
   virtual void GenerateMesh( Group const * ) override {}
 
   /**
@@ -69,7 +68,8 @@ public:
    * @param faceIndices The local indices of the new faces that define the face element.
    * @return The local index of the new FaceElement entry.
    */
-  localIndex AddToFractureMesh( EdgeManager * const edgeManager,
+  localIndex AddToFractureMesh( real64 const time_np1,
+                                EdgeManager * const edgeManager,
                                 FaceManager const * const faceManager,
                                 ArrayOfArraysView< localIndex const > const & originalFaceToEdges,
                                 string const & subRegionName,
@@ -83,6 +83,8 @@ public:
   {
     static constexpr auto fractureSetString = "fractureSet";
     static constexpr auto defaultApertureString = "defaultAperture";
+    constexpr static auto ruptureTimeString = "ruptureTime";
+
   };
 
 protected:
@@ -92,7 +94,6 @@ protected:
 private:
   /// The
   real64 m_defaultAperture;
-
 };
 
 } /* namespace geosx */

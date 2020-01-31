@@ -1,0 +1,15 @@
+#!/bin/csh
+#MSUB -A hfts_pre
+#MSUB -l nodes=3
+#MSUB -l partition=quartz
+#MSUB -l walltime=4:00:00
+#MSUB -q pbatch
+#MSUB -m be
+#MSUB -V
+#MSUB -o /g/g91/wu40/GEOSX_Hydrofracture/GEOSX/examples/hydraulicFracturing/PennyShaped/out_ZeroViscosity
+
+##### These are shell commands
+date
+cd /g/g91/wu40/GEOSX_Hydrofracture/GEOSX/examples/hydraulicFracturing/PennyShaped
+srun -n 108 ~/GEOSX_Hydrofracture/GEOSX/build-toss_3_x86_64_ib-clang@6.0.0-release/bin/geosx -i PennyShaped_ZeroViscosity.xml -x 6 -y 6 -z 3
+date
