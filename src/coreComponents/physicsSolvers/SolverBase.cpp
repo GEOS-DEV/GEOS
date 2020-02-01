@@ -181,7 +181,7 @@ void SolverBase::Execute( real64 const time_n,
                           integer const cycleNumber,
                           integer const GEOSX_UNUSED_PARAM( eventCounter ),
                           real64 const GEOSX_UNUSED_PARAM( eventProgress ),
-                          Group * const domain )
+                          DomainPartition * const domain )
 {
   GEOSX_MARK_FUNCTION;
   real64 dtRemaining = dt;
@@ -195,7 +195,7 @@ void SolverBase::Execute( real64 const time_n,
     real64 const dtAccepted = SolverStep( time_n + (dt - dtRemaining),
                                           nextDt,
                                           cycleNumber,
-                                          domain->group_cast<DomainPartition *>() );
+                                          domain );
     /*
      * Let us check convergence history of previous solve:
      * - number of nonlinear iter.
@@ -483,7 +483,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       {
         m_systemSolverParameters.m_krylovTol = LinearSolverParameters::eisenstatWalker(residualNorm,lastResidual);
       }
-    
+
       // call the default linear solver on the system
       SolveSystem( dofManager, matrix, rhs, solution );
 

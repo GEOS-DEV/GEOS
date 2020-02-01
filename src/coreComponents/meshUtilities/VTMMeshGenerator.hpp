@@ -65,7 +65,7 @@ public:
                                              int nodeIDInBox[],
                                              const int size) override;
 
-  virtual void RemapMesh ( dataRepository::Group * const domain ) override;
+  virtual void RemapMesh ( DomainPartition * const domain ) override;
 
 //  int m_delayMeshDeformation;
 

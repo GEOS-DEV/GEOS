@@ -51,7 +51,7 @@ public:
   virtual void EstimateEventTiming(real64 const time,
                                    real64 const dt, 
                                    integer const cycle,
-                                   dataRepository::Group * domain) override;
+                                   DomainPartition * domain) override;
 
   /// Timing values
   real64 m_externalStartTime;

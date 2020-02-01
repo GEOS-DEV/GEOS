@@ -18,7 +18,6 @@
  */
 #include "ChomboIO.hpp"
 #include "mesh/MeshLevel.hpp"
-#include "managers/DomainPartition.hpp"
 #include "fileIO/coupling/ChomboCoupler.hpp"
 #include <string>
 #include <fstream>
@@ -74,14 +73,13 @@ void ChomboIO::Execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
                         integer const cycleNumber,
                         integer const GEOSX_UNUSED_PARAM( eventCounter ),
                         real64 const GEOSX_UNUSED_PARAM( eventProgress ),
-                        dataRepository::Group * const domain )
+                        DomainPartition * const domain )
 {
   if (m_coupler == nullptr)
   {
     GEOSX_ERROR_IF(m_waitForInput && m_inputPath == "/INVALID_INPUT_PATH", "Waiting for input but no input path was specified.");
 
-    DomainPartition * const domainPartition = Group::group_cast<DomainPartition*>(domain);
-    MeshLevel * const meshLevel = domainPartition->getMeshBody(0)->getMeshLevel(0);
+    MeshLevel * const meshLevel = domain->getMeshBody(0)->getMeshLevel(0);
     m_coupler = new ChomboCoupler(MPI_COMM_GEOSX, m_outputPath, m_inputPath, *meshLevel);
   }
 

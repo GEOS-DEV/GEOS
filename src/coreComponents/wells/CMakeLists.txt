@@ -22,12 +22,10 @@ set( wells_sources
    )
 
 if( BUILD_OBJ_LIBS )
-  set( dependencyList dataRepository codingUtilities managers)
+  set( dependencyList dataRepository codingUtilities managers )
 else()
-  set( dependencyList common)
+  set( dependencyList common managers meshUtilities )
 endif()
-
-
 
 if ( ENABLE_OPENMP )
    set( dependencyList ${dependencyList} openmp )

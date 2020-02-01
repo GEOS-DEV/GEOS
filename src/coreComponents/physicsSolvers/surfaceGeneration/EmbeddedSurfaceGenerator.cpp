@@ -105,7 +105,7 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
   // Get meshLevel
   Group     * const meshBodies = domain->getMeshBodies();
   MeshBody  * const meshBody   = meshBodies->GetGroup<MeshBody>(0);
-  MeshLevel * const meshLevel  = meshBody->GetGroup<MeshLevel>(0);
+  MeshLevel * const meshLevel  = meshBody->getMeshLevel(0);
 
   // Get managers
   ElementRegionManager * const elemManager = meshLevel->getElemManager();
@@ -185,7 +185,7 @@ void EmbeddedSurfaceGenerator::InitializePostInitialConditions_PreSubGroups( Gro
 }
 
 
-void EmbeddedSurfaceGenerator::postRestartInitialization( Group * const GEOSX_UNUSED_PARAM( domain0 ) )
+void EmbeddedSurfaceGenerator::postRestartInitialization( DomainPartition * const GEOSX_UNUSED_PARAM( domain0 ) )
 {
   // Not sure about this for now.
   std::cout << "postRestartInitialization \n";

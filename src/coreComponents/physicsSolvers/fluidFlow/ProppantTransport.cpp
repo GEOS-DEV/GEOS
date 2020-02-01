@@ -953,7 +953,7 @@ void ProppantTransport::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM(time_
   ElementRegionManager const * const elemManager = mesh->getElemManager();
 
   NumericalMethodsManager const * numericalMethodManager =
-    domain->getParent()->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
+    domain->GetProblemManager()->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
 
   FiniteVolumeManager const * fvManager =
     numericalMethodManager->GetGroup<FiniteVolumeManager>( keys::finiteVolumeManager );
@@ -1546,7 +1546,7 @@ void ProppantTransport::UpdateCellBasedFlux( real64 const GEOSX_UNUSED_PARAM(tim
   MeshLevel * mesh = domain->getMeshBody(0)->getMeshLevel(0);  
 
   NumericalMethodsManager const * numericalMethodManager =
-    domain->getParent()->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
+    domain->GetProblemManager()->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
 
   FiniteVolumeManager const * fvManager =
     numericalMethodManager->GetGroup<FiniteVolumeManager>( keys::finiteVolumeManager );
@@ -1607,7 +1607,7 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
   MeshLevel * mesh = domain->getMeshBody(0)->getMeshLevel(0);  
 
   NumericalMethodsManager const * numericalMethodManager =
-    domain->getParent()->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
+    domain->GetProblemManager()->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
 
   FiniteVolumeManager const * fvManager =
     numericalMethodManager->GetGroup<FiniteVolumeManager>( keys::finiteVolumeManager );

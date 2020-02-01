@@ -12,8 +12,6 @@ set(CMAKE_ENABLE_EXPORTS ON)
 
 include(cmake/thirdparty/setupThirdPartyDirectory.cmake)
 
-
-
 ################################
 # Include blt
 ################################

@@ -81,11 +81,9 @@ void SiloOutput::Execute(real64 const time_n,
                          integer const cycleNumber,
                          integer const eventCounter,
                          real64 const eventProgress,
-                         Group * domain)
+                         DomainPartition * domain)
 {
   GEOSX_MARK_FUNCTION;
-
-  DomainPartition* domainPartition = Group::group_cast<DomainPartition*>(domain);
   SiloFile silo;
 
   int const size = MpiWrapper::Comm_size(MPI_COMM_GEOSX);
@@ -102,7 +100,7 @@ void SiloOutput::Execute(real64 const time_n,
   silo.setPlotFileRoot( m_plotFileRoot );
   silo.Initialize( numFiles );
   silo.WaitForBatonWrite( rank, cycleNumber, eventCounter, false );
-  silo.WriteDomainPartition( *domainPartition, cycleNumber,  time_n + dt * eventProgress, 0 );
+  silo.WriteDomainPartition( *domain, cycleNumber,  time_n + dt * eventProgress, 0 );
   silo.HandOffBaton();
   silo.ClearEmptiesFromMultiObjects( cycleNumber );
   silo.Finish();

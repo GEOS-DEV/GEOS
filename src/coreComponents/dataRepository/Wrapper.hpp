@@ -19,7 +19,7 @@
 #ifndef GEOSX_DATAREPOSITORY_WRAPPER_HPP_
 #define GEOSX_DATAREPOSITORY_WRAPPER_HPP_
 
-// Source inclues
+// Source includes
 #include "WrapperHelpers.hpp"
 #include "KeyNames.hpp"
 #include "cxx-utilities/src/IntegerConversion.hpp"
@@ -34,6 +34,7 @@
 #include "DefaultValue.hpp"
 #include "cxx-utilities/src/StringUtilities.hpp"
 #include "WrapperBase.hpp"
+#include "DynamicCasts.hpp"
 
 // System includes
 #include <type_traits>
@@ -235,7 +236,7 @@ public:
    */
   static Wrapper< T > * cast( WrapperBase * const base )
   {
-    return dynamicCast< Wrapper< T > * >( base );
+    return details::DynamicCast< Wrapper< T > * >( base );
   }
 
   /**
@@ -246,7 +247,7 @@ public:
    */
   static Wrapper< T > const * cast( WrapperBase const * const base )
   {
-    return dynamicCast< Wrapper< T > const * >( base );
+    return details::DynamicCast< Wrapper< T > const * >( base );
   }
 
   /**
@@ -257,7 +258,7 @@ public:
    */
   static Wrapper< T > & cast( WrapperBase & base )
   {
-    return dynamicCast< Wrapper< T > & >( base );
+    return details::DynamicCast< Wrapper< T > & >( base );
   }
 
   /**
@@ -267,7 +268,7 @@ public:
    */
   static Wrapper< T > const & cast( WrapperBase const & base )
   {
-    return dynamicCast< Wrapper< T > const & >( base );
+    return details::DynamicCast< Wrapper< T > const & >( base );
   }
 
   ///@}

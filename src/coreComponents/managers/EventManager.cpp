@@ -44,29 +44,29 @@ EventManager::EventManager( std::string const & name,
   // This enables logLevel filtering
   enableLogLevelInput();
   
-  registerWrapper(viewKeyStruct::maxTimeString, &m_maxTime, false )->
+  registerWrapper(viewKeys.maxTime.Key(), &m_maxTime, false )->
     setApplyDefaultValue(std::numeric_limits<real64>::max())->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Maximum simulation time for the global event loop.");
 
-  registerWrapper(viewKeyStruct::maxCycleString, &m_maxCycle, false )->
+  registerWrapper(viewKeys.maxCycle.Key(), &m_maxCycle, false )->
     setApplyDefaultValue(std::numeric_limits<integer>::max())->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Maximum simulation cycle for the global event loop.");
 
-  registerWrapper(viewKeyStruct::timeString, &m_time, false )->
+  registerWrapper(viewKeys.time.Key(), &m_time, false )->
     setRestartFlags(RestartFlags::WRITE_AND_READ)->
     setDescription("Current simulation time.");
 
-  registerWrapper(viewKeyStruct::dtString, &m_dt, false )->
+  registerWrapper(viewKeys.dt.Key(), &m_dt, false )->
     setRestartFlags(RestartFlags::WRITE_AND_READ)->
     setDescription("Current simulation timestep.");
 
-  registerWrapper(viewKeyStruct::cycleString, &m_cycle, false )->
+  registerWrapper(viewKeys.cycle.Key(), &m_cycle, false )->
     setRestartFlags(RestartFlags::WRITE_AND_READ)->
     setDescription("Current simulation cycle number.");
 
-  registerWrapper(viewKeyStruct::currentSubEventString, &m_currentSubEvent, false )->
+  registerWrapper(viewKeys.currentSubEvent.Key(), &m_currentSubEvent, false )->
     setRestartFlags(RestartFlags::WRITE_AND_READ)->
     setDescription("Index of the current subevent.");
 
@@ -96,7 +96,7 @@ void EventManager::ExpandObjectCatalogs()
 }
 
 
-void EventManager::Run(dataRepository::Group * domain)
+void EventManager::Run(DomainPartition * domain)
 {
   GEOSX_MARK_FUNCTION;
 

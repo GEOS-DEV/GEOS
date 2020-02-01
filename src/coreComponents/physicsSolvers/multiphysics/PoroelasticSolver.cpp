@@ -183,7 +183,7 @@ real64 PoroelasticSolver::SolverStep( real64 const & time_n,
   real64 dtReturn = dt;
   if( m_couplingTypeOption == couplingTypeOption::FixedStress )
   {
-    dtReturn = SplitOperatorStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>() );
+    dtReturn = SplitOperatorStep( time_n, dt, cycleNumber, domain );
   }
   else if( m_couplingTypeOption == couplingTypeOption::TightlyCoupled )
   {
@@ -202,7 +202,7 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
   NodeManager * const nodeManager = domain->getMeshBody(0)->getMeshLevel(0)->getNodeManager();
 
   NumericalMethodsManager const * const numericalMethodManager =
-    domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
+    domain->GetProblemManager()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
 
   FiniteElementDiscretizationManager const * const feDiscretizationManager =
     numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);

@@ -19,6 +19,7 @@
 #ifndef GEOSX_MANAGERS_OUTPUTS_CHOMBOIO_HPP_
 #define GEOSX_MANAGERS_OUTPUTS_CHOMBOIO_HPP_
 
+#include "managers/DomainPartition.hpp"
 #include "OutputBase.hpp"
 #include "fileIO/coupling/ChomboCoupler.hpp"
 
@@ -44,19 +45,19 @@ public:
   { return "ChomboIO"; }
 
   /// This method will be called by the event manager if triggered
-  virtual void Execute( real64 const time_n,
-                        real64 const dt,
-                        integer const cycleNumber,
-                        integer const eventCounter,
-                        real64 const eventProgress,
-                        dataRepository::Group * const domain ) final override;
+  virtual void Execute(real64 const time_n,
+                       real64 const dt,
+                       integer const cycleNumber,
+                       integer const eventCounter,
+                       real64 const eventProgress,
+                       DomainPartition *const domain ) final override;
 
   /// Write one final output as the code exits
-  virtual void Cleanup( real64 const time_n,
-                        integer const cycleNumber,
-                        integer const eventCounter,
-                        real64 const eventProgress,
-                        dataRepository::Group * const domain ) final override 
+  virtual void Cleanup(real64 const time_n,
+                       integer const cycleNumber,
+                       integer const eventCounter,
+                       real64 const eventProgress,
+                       DomainPartition *const domain ) final override
   { 
     m_waitForInput = 0;
     Execute(time_n, 0.0, cycleNumber, eventCounter, eventProgress, domain);

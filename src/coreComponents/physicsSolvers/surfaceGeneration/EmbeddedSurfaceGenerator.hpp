@@ -69,9 +69,9 @@ public:
                         integer const cycleNumber,
                         integer const GEOSX_UNUSED_PARAM( eventCounter ),
                         real64 const  GEOSX_UNUSED_PARAM( eventProgress ),
-                        dataRepository::Group * domain ) override
+                        DomainPartition * domain ) override
   {
-    SolverStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>());
+    SolverStep( time_n, dt, cycleNumber, domain );
   }
 
   /**
@@ -109,7 +109,7 @@ protected:
          *
          */
   virtual void InitializePostInitialConditions_PreSubGroups( Group * const problemManager ) override final;
-  virtual void postRestartInitialization( Group * const domain ) override final;
+  virtual void postRestartInitialization( DomainPartition * const domain ) override final;
 
 private:
 

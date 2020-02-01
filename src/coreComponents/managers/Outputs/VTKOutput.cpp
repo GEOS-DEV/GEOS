@@ -67,10 +67,9 @@ void VTKOutput::Execute(real64 const time_n,
                          integer const GEOSX_UNUSED_PARAM( cycleNumber ),
                          integer const GEOSX_UNUSED_PARAM( eventCounter ),
                          real64 const GEOSX_UNUSED_PARAM( eventProgress ),
-                         Group * domain)
+                         DomainPartition * domain)
 {
-  DomainPartition* domainPartition = Group::group_cast<DomainPartition*>(domain);
-  m_vtkFile.Write( time_n, *domainPartition);
+  m_vtkFile.Write( time_n, *domain);
 }
 
 

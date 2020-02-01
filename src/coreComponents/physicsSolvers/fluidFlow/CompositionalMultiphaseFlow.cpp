@@ -862,8 +862,7 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( real64 const GEOSX_UNUSED_P
   MeshLevel const * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager const * const elemManager = mesh->getElemManager();
 
-  NumericalMethodsManager const * const numericalMethodManager =
-    domain->getParent()->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
+  NumericalMethodsManager const * const numericalMethodManager = domain->GetProblemManager()->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
 
   FiniteVolumeManager const * const fvManager =
     numericalMethodManager->GetGroup<FiniteVolumeManager>( keys::finiteVolumeManager );

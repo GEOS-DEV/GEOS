@@ -92,10 +92,8 @@ public:
                                              int const GEOSX_UNUSED_PARAM( size )) override {}
 
   /// not implemented
-  virtual void RemapMesh ( dataRepository::Group * const GEOSX_UNUSED_PARAM( domain ) ) override {}
+  virtual void RemapMesh( DomainPartition  * const GEOSX_UNUSED_PARAM(domain) ) override {}
 
-
-     
   // getters for element data
 
   /**

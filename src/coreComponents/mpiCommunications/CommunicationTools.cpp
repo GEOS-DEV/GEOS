@@ -577,7 +577,7 @@ void fixReceiveLists( ObjectManagerBase & objectManager,
 
   Group & neighborGroup = *( objectManager.GetGroup( objectManager.groupKeys().neighborData ) );
   std::vector< MPI_Request > nonLocalGhostsRequests( neighbors.size() );
-  
+
   /// For each neighbor send them the indices of their ghosts that they mistakenly believe are owned by this rank.
   for ( std::size_t i = 0; i < neighbors.size(); ++i )
   {
@@ -597,7 +597,7 @@ void fixReceiveLists( ObjectManagerBase & objectManager,
   for ( NeighborCommunicator const & neighbor : neighbors )
   {
     int const neighborRank = neighbor.NeighborRank();
-    
+
     /// Receive the lists of ghosts we mistakenly though were owned by this neighbor.
     array1d< std::pair< globalIndex, int > > ghostsFromSecondNeighbor;
     MpiWrapper::recv( ghostsFromSecondNeighbor,
@@ -682,7 +682,7 @@ void removeUnusedNeighborsAndNonLocalGhosts( NodeManager & nodeManager,
     std::string const neighborString = std::to_string( neighborRank );
 
     bool used = false;
-    
+
     used = used || usesNeighbor( neighborString, nodeManager );
     removeNonLocalGhosts( neighborString, nodeManager );
 
@@ -707,7 +707,7 @@ void removeUnusedNeighborsAndNonLocalGhosts( NodeManager & nodeManager,
       nodeManager.GetGroup( nodeManager.groupKeys.neighborData )->deregisterGroup( neighborString );
       edgeManager.GetGroup( edgeManager.groupKeys.neighborData )->deregisterGroup( neighborString );
       faceManager.GetGroup( faceManager.groupKeys.neighborData )->deregisterGroup( neighborString );
-      
+
       elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase * const subRegion )
       {
         subRegion->GetGroup( subRegion->groupKeys().neighborData )->deregisterGroup( neighborString );
@@ -763,7 +763,7 @@ void CommunicationTools::FindGhosts( MeshLevel & meshLevel,
       neighbors[idx].UnpackGhosts( meshLevel, commID );
       return MPI_REQUEST_NULL;
     };
-  
+
   waitOrderedOrWaitAll( neighbors.size(), { sendGhosts, postRecv, unpackGhosts }, unorderedComms );
 
   nodeManager.SetReceiveLists();
@@ -792,7 +792,7 @@ void CommunicationTools::FindGhosts( MeshLevel & meshLevel,
       neighbors[idx].UnpackAndRebuildSyncLists( meshLevel, commID );
       return MPI_REQUEST_NULL;
     };
-  
+
   waitOrderedOrWaitAll( neighbors.size(), { sendSyncLists, postRecv, rebuildSyncLists }, unorderedComms );
 
   fixReceiveLists( nodeManager, neighbors );

@@ -55,7 +55,7 @@ public:
                                              int nodeIDInBox[],
                                              const int size) = 0;
 
-  virtual void RemapMesh ( dataRepository::Group * const domain ) = 0;
+  virtual void RemapMesh( DomainPartition * const domain ) = 0;
 
   int m_delayMeshDeformation = 0;
 

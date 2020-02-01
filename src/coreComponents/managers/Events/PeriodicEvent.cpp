@@ -91,7 +91,7 @@ PeriodicEvent::~PeriodicEvent()
 void PeriodicEvent::EstimateEventTiming(real64 const time,
                                         real64 const dt, 
                                         integer const cycle,
-                                        Group * domain)
+                                        DomainPartition * domain)
 {
   // Check event status
   if (cycle == 0)
@@ -124,9 +124,9 @@ void PeriodicEvent::EstimateEventTiming(real64 const time,
 
 
 void PeriodicEvent::CheckOptionalFunctionThreshold(real64 const time,
-                                                   real64 const GEOSX_UNUSED_PARAM( dt ), 
+                                                   real64 const GEOSX_UNUSED_PARAM( dt ),
                                                    integer const GEOSX_UNUSED_PARAM( cycle ),
-                                                   Group * GEOSX_UNUSED_PARAM( domain ))
+                                                   DomainPartition * GEOSX_UNUSED_PARAM( domain ))
 {
   // Grab the function
   FunctionManager & functionManager = FunctionManager::Instance();

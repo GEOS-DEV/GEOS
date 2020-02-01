@@ -138,7 +138,7 @@ void FlowSolverBase::InitializePreSubGroups(Group * const rootGroup)
 
   // fill stencil targetRegions
   NumericalMethodsManager * const
-  numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
+  numericalMethodManager = domain->GetProblemManager()->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
 
   FiniteVolumeManager * const
   fvManager = numericalMethodManager->GetGroup<FiniteVolumeManager>( keys::finiteVolumeManager );

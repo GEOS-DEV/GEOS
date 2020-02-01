@@ -161,8 +161,7 @@ void SinglePhaseFVM<BASE>::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
   MeshLevel const * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager const * const elemManager=  mesh->getElemManager();
 
-  NumericalMethodsManager const * numericalMethodManager =
-    domain->getParent()->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
+  NumericalMethodsManager const * numericalMethodManager = domain->GetProblemManager()->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
 
   FiniteVolumeManager const * fvManager =
     numericalMethodManager->GetGroup<FiniteVolumeManager>( keys::finiteVolumeManager );
@@ -361,11 +360,9 @@ void SinglePhaseFVM<BASE>::ApplyFaceDirichletBC_implicit( real64 const time_n,
   arrayView2d<localIndex> const & elemRegionList     = faceManager->elementRegionList();
   arrayView2d<localIndex> const & elemSubRegionList  = faceManager->elementSubRegionList();
 
-  ConstitutiveManager * const constitutiveManager =
-    domain->GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
+  ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
 
-  NumericalMethodsManager * const numericalMethodManager =
-    domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
+  NumericalMethodsManager * const numericalMethodManager = domain->GetProblemManager()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
 
   FiniteVolumeManager * const fvManager = numericalMethodManager->GetGroup<FiniteVolumeManager>(keys::finiteVolumeManager);
 

@@ -107,14 +107,14 @@ void SinglePhaseBase::RegisterDataOnMesh(Group * const MeshBodies)
 void SinglePhaseBase::UpdateFluidModel(Group * const dataGroup) const
 {
   GEOSX_MARK_FUNCTION;
-  
+
   arrayView1d<real64 const> const & pres = dataGroup->getReference< array1d<real64> >( viewKeyStruct::pressureString );
   arrayView1d<real64 const> const & dPres = dataGroup->getReference< array1d<real64> >( viewKeyStruct::deltaPressureString );
 
   SingleFluidBase * const fluid = GetConstitutiveModel<SingleFluidBase>( dataGroup, m_fluidName );
 
   forall_in_range<RAJA::seq_exec>( 0, dataGroup->size(), [=] ( localIndex const a )
-  {                                      
+  {
     fluid->PointUpdate( pres[a] + dPres[a], a, 0 );
   });}
 
@@ -227,7 +227,7 @@ real64 SinglePhaseBase::SolverStep( real64 const& time_n,
   GEOSX_MARK_FUNCTION;
 
   real64 dt_return;
-  
+
   // setup dof numbers and linear system
   if( !m_coupledWellsFlag )
   {
@@ -235,7 +235,7 @@ real64 SinglePhaseBase::SolverStep( real64 const& time_n,
   }
 
 
-  
+
 
   ImplicitStepSetup( time_n, dt, domain, m_dofManager, m_matrix, m_rhs, m_solution );
 
@@ -300,7 +300,7 @@ void SinglePhaseBase::SetupSystem( DomainPartition * const domain,
   string const presDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString );
 
   NumericalMethodsManager const *
-  numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
+  numericalMethodManager = domain->GetProblemManager()->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
 
   FiniteVolumeManager const *
   fvManager = numericalMethodManager->GetGroup<FiniteVolumeManager>( keys::finiteVolumeManager );
@@ -363,7 +363,7 @@ void SinglePhaseBase::ImplicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time
       dVol[ei] = 0.0;
 
     } );
-    
+
     // This should fix NaN density in newly created fracture elements
     UpdateState( subRegion );
 
@@ -497,8 +497,7 @@ void SinglePhaseBase::AssembleSystem( real64 const time_n,
   }
 
   AssembleFluxTerms( time_n, dt, domain, &dofManager, &matrix, &rhs );
- 
-  
+
   if (!m_coupledWellsFlag)
   {
     // these functions will be called by the ReservoirSolver
@@ -506,7 +505,7 @@ void SinglePhaseBase::AssembleSystem( real64 const time_n,
     matrix.close();
     rhs.close();
   }
-  
+
 
   if( getLogLevel() == 2 )
   {
@@ -619,7 +618,7 @@ void SinglePhaseBase::AccumulationLaunch( localIndex const er,
   arrayView2d<real64 const> const & dDens_dPres   = m_dDens_dPres[er][esr][m_fluidIndex];
 
   arrayView1d<real64 const> const & poroMultiplier        = m_poroMultiplier[er][esr];
-  
+
 #if !defined(ALLOW_CREATION_MASS)
   static_assert(true,"must have ALLOW_CREATION_MASS defined");
 #endif
@@ -635,7 +634,7 @@ void SinglePhaseBase::AccumulationLaunch( localIndex const er,
       globalIndex const elemDOF = dofNumber[ei];
 
       real64 effectiveVolume = volume[ei] * poroMultiplier[ei];
-      
+
       AccumulationKernel<FaceElementSubRegion>::template Compute<ISPORO>( dens[ei][0],
                                                                           densOld[ei],
                                                                           dDens_dPres[ei][0],
@@ -756,7 +755,7 @@ void SinglePhaseBase::ResetViews( DomainPartition * const domain )
     elemManager->ConstructViewAccessor< array1d<real64>, arrayView1d<real64> >( viewKeyStruct::porosityString );
 
   ResetViewsPrivate( elemManager, constitutiveManager );
-      
+
   if (m_poroElasticFlag)
   {
     // TODO where are these strings defined?

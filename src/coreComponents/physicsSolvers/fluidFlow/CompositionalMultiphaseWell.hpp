@@ -231,7 +231,7 @@ public:
                                     DofManager const * const dofManager,
                                     ParallelMatrix * const matrix,
                                     ParallelVector * const rhs ) override;
-  
+
   struct viewKeyStruct : WellSolverBase::viewKeyStruct
   {
     static constexpr auto dofFieldString = "compositionalWellVars";
@@ -269,48 +269,7 @@ public:
     static constexpr auto compPerforationRateString = "compPerforationRate";
     static constexpr auto dCompPerforationRate_dPresString = "dCompPerforationRate_dPres";
     static constexpr auto dCompPerforationRate_dCompString = "dCompPerforationRate_dComp";
-    
-    using ViewKey = dataRepository::ViewKey;
-
-    // inputs
-    ViewKey temperature = { temperatureString };
-    ViewKey useMassFlag = { useMassFlagString };
-
-    ViewKey resRelPermName  = { resRelPermNameString };
-    ViewKey resRelPermIndex = { resRelPermIndexString };
-    
-    // primary solution field
-    ViewKey pressure               = { pressureString };
-    ViewKey deltaPressure          = { deltaPressureString };
-    ViewKey globalCompDensity      = { globalCompDensityString };
-    ViewKey deltaGlobalCompDensity = { deltaGlobalCompDensityString };
-    ViewKey mixtureRate            = { mixtureConnRateString };
-    ViewKey deltaMixtureRate       = { deltaMixtureConnRateString };
-    
-    // saturation
-    ViewKey phaseVolFrac        = { phaseVolumeFractionString };
-    ViewKey dPhaseVolFrac_dPres = { dPhaseVolumeFraction_dPressureString };
-    ViewKey dPhaseVolFrac_dComp = { dPhaseVolumeFraction_dGlobalCompDensityString };
-    
-    // mixture density
-    ViewKey mixtureDensity        = { mixtureDensityString };
-    ViewKey dMixtureDensity_dPres = { dMixtureDensity_dPressureString };
-    ViewKey dMixtureDensity_dComp = { dMixtureDensity_dGlobalCompDensityString };
-
-    // global component fractions
-    ViewKey globalComponentFrac        = { globalCompFractionString };
-    ViewKey dGlobalComponentFrac_dComp = { dGlobalCompFraction_dGlobalCompDensityString };
-
-    // perforation rates
-    ViewKey compPerforationRate        = { compPerforationRateString };
-    ViewKey dCompPerforationRate_dPres = { dCompPerforationRate_dPresString };
-    ViewKey dCompPerforationRate_dComp = { dCompPerforationRate_dCompString };
-    
-  } viewKeysCompMultiphaseWell;
-
-  struct groupKeyStruct : SolverBase::groupKeyStruct
-  {
-  } groupKeysCompMultiphaseWell;
+  } ;
 
 protected:
 

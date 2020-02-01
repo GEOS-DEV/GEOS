@@ -228,7 +228,7 @@ void SinglePhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
   localIndex constexpr maxNumFaces = MAX_NUM_FACES;
 
   // tolerance for transmissibility calculation
-  real64 const lengthTolerance = domain->getMeshBody( 0 )->getGlobalLengthScale() * m_areaRelTol; 
+  real64 const lengthTolerance = domain->getMeshBody( 0 )->getGlobalLengthScale() * m_areaRelTol;
 
 
   elemManager->
@@ -846,7 +846,7 @@ void makeFullTensor(R1Tensor const & values, R2SymTensor & result)
 
 // this function is obviously redundant with computeCellStencil in the TwoPointFluxApproximation class
 // this is here for now, but I will have to find a better place for this type of function at some point 
-void SinglePhaseHybridFVM::ComputeTPFAInnerProduct( arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodePosition, 
+void SinglePhaseHybridFVM::ComputeTPFAInnerProduct( arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodePosition,
                                                     ArrayOfArraysView<localIndex const> const & faceToNodes, 
                                                     arraySlice1d<localIndex const> const elemToFaces,
                                                     R1Tensor const & elemCenter,
@@ -910,7 +910,7 @@ void SinglePhaseHybridFVM::ComputeTPFAInnerProduct( arrayView2d<real64 const, no
   }
 }
 
-void SinglePhaseHybridFVM::ComputeQFamilyInnerProduct( arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodePosition, 
+void SinglePhaseHybridFVM::ComputeQFamilyInnerProduct( arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodePosition,
                                                        ArrayOfArraysView<localIndex const> const & faceToNodes, 
                                                        arraySlice1d<localIndex const> const elemToFaces,
                                                        R1Tensor const & elemCenter,
@@ -1108,7 +1108,7 @@ void SinglePhaseHybridFVM::ComputeQFamilyInnerProduct( arrayView2d<real64 const,
 
 // TODO: template on the type of inner product
 // TODO: template on the type of subRegion to have a special treatment for fractures
-void SinglePhaseHybridFVM::ComputeTransmissibilityMatrix( arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodePosition, 
+void SinglePhaseHybridFVM::ComputeTransmissibilityMatrix( arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodePosition,
                                                           ArrayOfArraysView<localIndex const> const & faceToNodes, 
                                                           arraySlice1d<localIndex const> const elemToFaces,
                                                           R1Tensor const & elemCenter,

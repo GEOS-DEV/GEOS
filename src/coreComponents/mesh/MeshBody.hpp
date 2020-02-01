@@ -19,22 +19,20 @@
 #ifndef GEOSX_MESH_MESHBODY_HPP_
 #define GEOSX_MESH_MESHBODY_HPP_
 
+#include "dataRepository/Group.hpp"
 #include "MeshLevel.hpp"
-
 
 namespace geosx
 {
 
-
-
 class MeshLevel;
 
-class MeshBody : public dataRepository::Group
+class MeshBody :  private dataRepository::GroupDownCastHelper<MeshBody>
 {
 public:
   MeshBody( string const & name,
             Group * const parent );
-  virtual ~MeshBody();
+  virtual ~MeshBody() ;
 
   MeshLevel * CreateMeshLevel( localIndex const newLevel );
 
@@ -48,22 +46,29 @@ public:
     return m_globalLengthScale;
   }
 
+  /**
+   * Create, register and returns a new MeshLevel instance named @p level
+   * @param level The mesh level name
+   * @return The created and registered instance
+   */
+  MeshLevel * RegisterMeshLevel(std::string const level) ;
+
+  /**
+   * Returns the number of mesh levels
+   * @return the number of mesh levels
+   */
+  localIndex GetNumMeshLevels() const ;
+
+private:
+
   struct viewKeysStruct
   {
-
-
     dataRepository::ViewKey meshLevels                = { "meshLevels" };
   } viewKeys;
 
-  struct groupStructKeys
-  {} groupKeys;
-
-private:
   /// By default, an absolute tolerance
   /// Can be set to another value
   real64 m_globalLengthScale { 0. };
-
-
 };
 
 } /* namespace geosx */

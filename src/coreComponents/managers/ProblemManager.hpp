@@ -27,10 +27,11 @@
 #include <numpy/arrayobject.h>
 #endif
 
-#include "ObjectManagerBase.hpp"
-#include "EventManager.hpp"
-#include "managers/Functions/FunctionManager.hpp"
 #include "fileIO/schema/SchemaUtilities.hpp"
+#include "managers/EventManager.hpp"
+#include "managers/Functions/FunctionManager.hpp"
+#include "managers/NumericalMethodsManager.hpp"
+#include "managers/ObjectManagerBase.hpp"
 
 namespace geosx
 {
@@ -101,9 +102,6 @@ public:
 
   void ApplyInitialConditions();
 
-  DomainPartition * getDomainPartition();
-  DomainPartition const * getDomainPartition() const;
-
   const string & getProblemName() const
   { return GetGroup<Group>(groupKeys.commandLine)->getReference<string>(viewKeys.problemName); }
 
@@ -161,6 +159,9 @@ public:
     return *m_physicsSolverManager;
   }
 
+  DomainPartition * getDomainPartition() ;
+  DomainPartition const * getDomainPartition() const ;
+
 protected:
   virtual void PostProcessInput() override final;
 
@@ -171,6 +172,10 @@ private:
   PhysicsSolverManager * m_physicsSolverManager;
   EventManager * m_eventManager;
   FunctionManager * m_functionManager;
+
+  const NumericalMethodsManager * getNumericalMethodsManager() const {
+    return this->GetGroup<NumericalMethodsManager>(dataRepository::keys::numericalMethodsManager) ;
+  }
 };
 
 } /* namespace geosx */

@@ -23,7 +23,6 @@
 #include "dataRepository/ExecutableGroup.hpp"
 #include "fileIO/schema/SchemaUtilities.hpp"
 
-
 namespace geosx
 {
 
@@ -36,7 +35,7 @@ class EventBase : public ExecutableGroup
 public:
   /// Main constructor
   explicit EventBase( std::string const & name,
-                       Group * const parent );
+                      dataRepository::Group * const parent );
 
   /// Destructor
   virtual ~EventBase() override;
@@ -51,7 +50,7 @@ public:
   virtual void SignalToPrepareForExecution(real64 const time,
                                            real64 const dt,  
                                            integer const cycle,
-                                           dataRepository::Group * domain) override;
+                                           DomainPartition * domain) override;
   /**
    * If the event forecast is equal to 0, then call the step function on its target and/or children.
    */
@@ -60,16 +59,7 @@ public:
                         integer const cycleNumber,
                         integer const,
                         real64 const,
-                        dataRepository::Group * domain ) override;
-
-  /**
-   * This method will call the execute method on the target
-   * and/or children if present.
-   */
-  void Step(real64 const time,
-            real64 const dt,  
-            integer const cycle,
-            dataRepository::Group * domain );
+                        DomainPartition * domain ) override;
 
   /*
    * This method is called as the code exits the main run loop
@@ -78,7 +68,7 @@ public:
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::Group * domain ) override;
+                        DomainPartition * domain ) override;
 
   /**
    * An event may have an arbitrary number of sub-events defined as children in the input xml.
@@ -89,7 +79,7 @@ public:
    *         </PeriodicEvent>
    *       </Events>
    */
-  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
+  virtual dataRepository::Group * CreateChild( string const & childKey, string const & childName ) override;
 
 
   /// This function is used to expand any catalogs in the data structure
@@ -110,15 +100,15 @@ public:
    * its children.
    */
   virtual void CheckEvents(real64 const time, 
-                              real64 const dt,
-                              integer const cycle,
-                              dataRepository::Group * domain);
+                           real64 const dt,
+                           integer const cycle,
+                           DomainPartition * domain);
 
   /// Method to estimate the timing of the event
   virtual void EstimateEventTiming(real64 const time, 
-                                      real64 const dt,
-                                      integer const cycle,
-                                      dataRepository::Group * domain) = 0;
+                                   real64 const dt,
+                                   integer const cycle,
+                                   DomainPartition * domain) = 0;
 
   /**
    * This method will collect time-step size requests from its
@@ -173,7 +163,7 @@ public:
     } viewKeys;
 
   ///Catalog interface
-  using CatalogInterface = dataRepository::CatalogInterface< EventBase, std::string const &, Group * const >;
+  using CatalogInterface = dataRepository::CatalogInterface< EventBase, std::string const &, dataRepository::Group * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 
   /// Access functions

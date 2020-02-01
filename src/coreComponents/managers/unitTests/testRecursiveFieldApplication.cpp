@@ -61,12 +61,12 @@ TEST(FieldSpecification, Recursive)
   localIndex nbHexReg0 = 60;
   localIndex nbTetReg1 = 40;
   localIndex nbHexReg1 = 50;
-  auto domain = std::unique_ptr< DomainPartition >( new DomainPartition( "domain", nullptr ) );
+  auto domain = std::make_unique< DomainPartition >( "domain", nullptr );
   auto meshBodies = domain->getMeshBodies();
   MeshBody * const meshBody = meshBodies->RegisterGroup<MeshBody>( "body" );
-  MeshLevel * const meshLevel0 = meshBody->RegisterGroup<MeshLevel>(std::string("Level0"));
+  MeshLevel * const meshLevel0 = meshBody->RegisterMeshLevel(std::string("Level0"));
 
-  CellBlockManager * cellBlockManager = domain->GetGroup<CellBlockManager>( keys::cellManager );
+  CellBlockManager * cellBlockManager = domain->GetCellManager();
 
   CellBlock * reg0Hex = cellBlockManager->GetGroup(keys::cellBlocks)->RegisterGroup<CellBlock>("reg0hex");
   reg0Hex->SetElementType("C3D8");

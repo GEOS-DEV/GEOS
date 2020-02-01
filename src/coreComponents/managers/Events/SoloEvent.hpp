@@ -48,7 +48,7 @@ public:
   virtual void EstimateEventTiming(real64 const time,
                                    real64 const dt, 
                                    integer const cycle,
-                                   dataRepository::Group * domain) override;
+                                   DomainPartition * domain) override;
 
   /**
    * Grab the next time-step.  If requested, then limit the requested

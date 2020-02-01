@@ -41,12 +41,12 @@ void TestMeshImport( string const& inputStringMesh,
   meshManager.PostProcessInputRecursive();
 
   // Create the domain and generate the Mesh
-  auto domain = std::unique_ptr< DomainPartition >( new DomainPartition( "domain", nullptr ) );
+  auto domain = std::make_unique< DomainPartition >( "domain", nullptr );
   meshManager.GenerateMeshes( domain.get() );
 
   Group * const meshBodies = domain->getMeshBodies();
   MeshBody * const meshBody = meshBodies->GetGroup<MeshBody>(0);
-  MeshLevel * const meshLevel = meshBody->GetGroup<MeshLevel>(0);
+  MeshLevel * const meshLevel = meshBody->getMeshLevel(0);
   NodeManager const & nodeManager = *meshLevel->getNodeManager();
   FaceManager const & faceManager = *meshLevel->getFaceManager();
   ElementRegionManager * const elemManager = meshLevel->getElemManager();
@@ -58,7 +58,7 @@ void TestMeshImport( string const& inputStringMesh,
   elemManager->ProcessInputFileRecursive( xmlRegionNode );
   elemManager->PostProcessInputRecursive();
 
-  Group * const cellBlockManager = domain->GetGroup(keys::cellManager);
+  Group * const cellBlockManager = domain->GetCellManager();
 
   // This method will call the CopyElementSubRegionFromCellBlocks that will trigger the property transfer.
   elemManager->GenerateMesh( cellBlockManager );

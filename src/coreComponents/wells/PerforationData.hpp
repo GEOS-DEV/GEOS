@@ -23,7 +23,7 @@
 #include "dataRepository/Group.hpp"
 #include "managers/ObjectManagerBase.hpp"
 #include "mesh/ToElementRelation.hpp"
-#include "InternalWellGenerator.hpp"
+#include "wells/InternalWellGenerator.hpp"
 
 namespace geosx
 {

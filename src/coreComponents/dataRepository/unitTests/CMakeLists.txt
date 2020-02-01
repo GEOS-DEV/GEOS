@@ -11,6 +11,7 @@ set( dataRepository_tests
      testXmlWrapper.cpp
      testBufferOps.cpp
      testPacking.cpp
+     testDynamicCasts.cpp
    )
 
 set( dependencyList gtest cxx-utilities managers dataRepository mpiCommunications common mesh wells constitutive meshUtilities)
