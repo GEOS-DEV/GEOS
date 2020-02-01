@@ -848,7 +848,7 @@ SinglePhaseWell::ApplySystemSolution( DofManager const & dofManager,
   fieldNames["elems"].push_back( viewKeyStruct::deltaConnRateString );
   CommunicationTools::SynchronizeFields(fieldNames,
                                         domain->getMeshBody(0)->getMeshLevel(0),
-                                        domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
+                                        domain->GetNeighborCommunicators() );
 
   // update properties
   UpdateStateAll( domain );
@@ -888,7 +888,7 @@ void SinglePhaseWell::ResetViews(DomainPartition * const domain)
 
   MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager * const elemManager = mesh->getElemManager();
-  ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
+  ConstitutiveManager * const constitutiveManager = domain->GetConstitutiveManager();
 
   m_resPressure =
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( SinglePhaseBase::viewKeyStruct::pressureString );

@@ -190,7 +190,7 @@ void LaplaceFEM::AssembleSystem( real64 const time_n,
   Group * const nodeManager = mesh->getNodeManager();
   ElementRegionManager * const elemManager = mesh->getElemManager();
   NumericalMethodsManager const *
-  numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
+  numericalMethodManager = domain->GetProblemManager()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
   FiniteElementDiscretizationManager const *
   feDiscretizationManager = numericalMethodManager->
     GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
@@ -297,10 +297,8 @@ void LaplaceFEM::ApplySystemSolution( DofManager const & dofManager,
   std::map<string, string_array> fieldNames;
   fieldNames["node"].push_back( m_fieldName );
 
-  CommunicationTools::
-  SynchronizeFields( fieldNames,
-                     domain->getMeshBody( 0 )->getMeshLevel( 0 ),
-                     domain->getReference<array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
+  CommunicationTools::SynchronizeFields(fieldNames,
+                                        domain->getMeshBody( 0 )->getMeshLevel( 0 ), domain->GetNeighborCommunicators() );
 }
 
 void LaplaceFEM::ApplyBoundaryConditions( real64 const time_n,

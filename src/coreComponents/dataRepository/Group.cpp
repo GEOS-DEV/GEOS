@@ -550,7 +550,7 @@ void Group::loadFromConduit()
       } );
 }
 
-void Group::postRestartInitializationRecursive( Group * const domain )
+void Group::postRestartInitializationRecursive( DomainPartition * const domain )
 {
   forSubGroups( [&]( Group * const subGroup )
       {

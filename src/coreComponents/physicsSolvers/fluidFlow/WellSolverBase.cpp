@@ -150,11 +150,11 @@ void WellSolverBase::InitializePreSubGroups(Group * const rootGroup)
   SolverBase::InitializePreSubGroups(rootGroup);
 
   DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
-  ConstitutiveManager * const cm = domain->getConstitutiveManager();
+  ConstitutiveManager * const cm = domain->GetConstitutiveManager();
 
   ConstitutiveBase const * fluid  = cm->GetConstitutiveRelation<ConstitutiveBase>( m_fluidName );
   GEOSX_ERROR_IF( fluid == nullptr, "Fluid model " + m_fluidName + " not found" );
-  
+
   m_resFluidIndex = fluid->getIndexInParent();
 
   FlowSolverBase const * const flowSolver = getParent()->GetGroup<FlowSolverBase>( GetFlowSolverName() );
@@ -186,7 +186,7 @@ void WellSolverBase::InitializePostInitialConditions_PreSubGroups(Group * const 
 void WellSolverBase::PrecomputeData(DomainPartition * const domain)
 {
   R1Tensor const gravVector = gravityVector();
-  
+
   MeshLevel * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = meshLevel->getElemManager();
 
@@ -200,13 +200,13 @@ void WellSolverBase::PrecomputeData(DomainPartition * const domain)
     arrayView1d<R1Tensor const> const & wellElemLocation = 
       subRegion->getReference<array1d<R1Tensor>>( ElementSubRegionBase::viewKeyStruct::elementCenterString );
 
-    arrayView1d<real64> const & wellElemGravCoef = 
+    arrayView1d<real64> const & wellElemGravCoef =
       subRegion->getReference<array1d<real64>>( viewKeyStruct::gravityCoefString );
 
     arrayView1d<R1Tensor const> const & perfLocation = 
       perforationData->getReference<array1d<R1Tensor>>( PerforationData::viewKeyStruct::locationString );
 
-    arrayView1d<real64> const & perfGravCoef = 
+    arrayView1d<real64> const & perfGravCoef =
       perforationData->getReference<array1d<real64>>( viewKeyStruct::gravityCoefString );
 
     for (localIndex iwelem = 0; iwelem < subRegion->size(); ++iwelem)

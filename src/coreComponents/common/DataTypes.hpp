@@ -60,62 +60,11 @@
 #include <vector>
 #include <set>
 
-/// macro definition to specify whether or not to use dynamic_cast
-#ifndef USE_DYNAMIC_CASTING
-  #define USE_DYNAMIC_CASTING 1
-#endif
-
 /**
  * top level geosx namespace contains all code that is specific to GEOSX
  */
 namespace geosx
 {
-
-/**
- * @brief Perform a type cast of base to derived pointer.
- * @tparam NEW_TYPE      derived pointer type
- * @tparam EXISTING_TYPE base type
- * @param val            base pointer to cast
- * @return               pointer cast to derived type or @p nullptr
- *
- * Depending on value of @p USE_DYNAMIC_CASTING, will use either
- * @p dynamic_cast or @p static_cast. The latter could result in undefined
- * behavior if the cast is invalid (e.g. EXISTING_TYPE not base of @p NEW_TYPE)
- */
-template< typename NEW_TYPE, typename EXISTING_TYPE >
-NEW_TYPE dynamicCast( EXISTING_TYPE * const val )
-{
-  static_assert( std::is_pointer< NEW_TYPE >::value, "NEW_TYPE must be a pointer." );
-
-#if USE_DYNAMIC_CASTING
-  return dynamic_cast< NEW_TYPE >( val );
-#else
-  return static_cast< NEW_TYPE >( val );
-#endif
-}
-
-/**
- * @brief Perform a type cast of base to derived reference.
- * @tparam NEW_TYPE      derived reference type
- * @tparam EXISTING_TYPE base type
- * @param val            base reference to cast
- * @return               reference cast to derived type or @p nullptr
- *
- * Depending on value of @p USE_DYNAMIC_CASTING, will use either
- * @p dynamic_cast or @p static_cast. The latter could result in undefined
- * behavior if the cast is invalid (e.g. EXISTING_TYPE not base of @p NEW_TYPE)
- */
-template< typename NEW_TYPE, typename EXISTING_TYPE >
-NEW_TYPE dynamicCast( EXISTING_TYPE & val )
-{
-  static_assert( std::is_reference< NEW_TYPE >::value, "NEW_TYPE must be a reference." );
-
-  using POINTER_TO_NEW_TYPE = std::remove_reference_t< NEW_TYPE > *;
-  POINTER_TO_NEW_TYPE ptr = dynamicCast< POINTER_TO_NEW_TYPE >( &val );
-  GEOSX_ERROR_IF( ptr == nullptr, "Cast failed." );
-
-  return *ptr;
-}
 
 /// Global MPI communicator used by GEOSX.
 #ifdef GEOSX_USE_MPI
@@ -1430,8 +1379,6 @@ public:
 
 };
 
-}
-
-
+} /* enf of namespace geosx */
 
 #endif /* GEOSX_COMMON_DATATYPES_HPP */

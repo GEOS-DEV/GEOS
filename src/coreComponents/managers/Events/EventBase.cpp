@@ -141,7 +141,7 @@ void EventBase::GetTargetReferences()
 {
   if (!m_eventTarget.empty())
   {
-    Group * tmp = this->GetGroupByPath(m_eventTarget);
+    dataRepository::Group * tmp = this->GetGroupByPath(m_eventTarget);
     m_target = Group::group_cast<ExecutableGroup*>(tmp);
     GEOSX_ERROR_IF(m_target == nullptr, "The target of an event must be executable! " << m_target);
   }
@@ -156,7 +156,7 @@ void EventBase::GetTargetReferences()
 void EventBase::CheckEvents(real64 const time,
                             real64 const dt, 
                             integer const cycle,
-                            Group * domain)
+                            DomainPartition * domain)
 {
   // Check event status
   if (time < m_beginTime)
@@ -190,7 +190,7 @@ void EventBase::CheckEvents(real64 const time,
 void EventBase::SignalToPrepareForExecution(real64 const time,
                                         real64 const dt, 
                                         integer const cycle,
-                                        dataRepository::Group * domain)
+                                        DomainPartition * domain)
 {
   if (m_target != nullptr)
   {
@@ -212,7 +212,7 @@ void EventBase::Execute(real64 const time_n,
                         const integer cycleNumber,
                         integer const,
                         real64 const,
-                        Group * domain)
+                        DomainPartition * domain)
 {
   GEOSX_MARK_FUNCTION;
   
@@ -314,7 +314,7 @@ void EventBase::Cleanup(real64 const time_n,
                         integer const cycleNumber,
                         integer const GEOSX_UNUSED_ARG( eventCounter ),
                         real64 const GEOSX_UNUSED_ARG( eventProgress ),
-                        Group * domain)
+                        DomainPartition * domain)
 {
   if (m_target != nullptr)
   {

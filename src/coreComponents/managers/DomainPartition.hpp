@@ -19,27 +19,30 @@
 #ifndef GEOSX_MANAGERS_DOMAINPARTITION_HPP_
 #define GEOSX_MANAGERS_DOMAINPARTITION_HPP_
 
-#include "dataRepository/Group.hpp"
-#include "mesh/MeshBody.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
+#include "dataRepository/Group.hpp"
+#include "managers/ProblemManager.hpp"
+#include "mesh/MeshBody.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
+#include "mpiCommunications/NeighborCommunicator.hpp"
+#include "mpiCommunications/SpatialPartition.hpp"
 
 namespace geosx
 {
 
 class SiloFile;
-namespace dataRepository
-{
-namespace keys
-{
-string const partitionManager("partitionManager");
-}
-}
 
-class ObjectManagerBase;
+namespace dataRepository {
+namespace keys {
+
+string const partitionManager("partitionManager");
+
+} /* end of namespace keys */
+} /* end of namespace dataRepository */
+
 class PartitionBase;
 
-class DomainPartition : public dataRepository::Group
+class DomainPartition : private dataRepository::GroupDownCastHelper<DomainPartition>
 {
 public:
   DomainPartition( std::string const & name,
@@ -55,11 +58,9 @@ public:
 
   virtual void RegisterDataOnMeshRecursive( Group * const MeshBodies ) override final;
 
-
   void InitializationOrder( string_array & order ) override final;
 
   void GenerateSets();
-
 
   /**
    * @name MPI functionality
@@ -80,7 +81,6 @@ public:
                     int* ncoords);
   ///@}
 
-
   void ReadSilo( const SiloFile& siloFile,
                  const int cycleNum,
                  const realT problemTime,
@@ -96,53 +96,56 @@ public:
                               const realT problemTime,
                               const bool isRestart );
 
-  struct viewKeysStruct
-  {
-    dataRepository::ViewKey neighbors = { "Neighbors" };
-  } viewKeys;
+  constitutive::ConstitutiveManager const * GetConstitutiveManager() const ;
+  constitutive::ConstitutiveManager * GetConstitutiveManager() ;
 
-  struct groupKeysStruct
-  {
-    static constexpr auto meshBodiesString = "MeshBodies";
-    static constexpr auto constitutiveManagerString = "Constitutive";
+  Group const * getMeshBodies() const ;
+  Group * getMeshBodies() ;
 
-    dataRepository::GroupKey meshBodies           = { meshBodiesString };
-    dataRepository::GroupKey constitutiveManager  = { constitutiveManagerString };
-    dataRepository::GroupKey communicationManager    = { "communicationManager" };
-  } groupKeys;
+  MeshBody const * getMeshBody(string const & meshName ) const ;
+  MeshBody * getMeshBody(string const & meshName ) ;
 
+  MeshBody const * getMeshBody(localIndex const index ) const ;
+  MeshBody * getMeshBody(localIndex const index ) ;
 
-  constitutive::ConstitutiveManager const * getConstitutiveManager() const
-  { return this->GetGroup<constitutive::ConstitutiveManager>(groupKeys.constitutiveManager); }
+  ProblemManager const * GetProblemManager() const ;
+  ProblemManager * GetProblemManager() ;
 
-  constitutive::ConstitutiveManager * getConstitutiveManager()
-  { return this->GetGroup<constitutive::ConstitutiveManager>(groupKeys.constitutiveManager); }
+  array1d<NeighborCommunicator> const & GetNeighborCommunicators() const;
+  array1d<NeighborCommunicator> & GetNeighborCommunicators() ;
 
+  PartitionBase const & GetPartitionBase() const ;
+  PartitionBase & GetPartitionBase() ;
 
-  Group const * getMeshBodies() const
-  { return this->GetGroup(groupKeys.meshBodies); }
-  Group * getMeshBodies()
-  { return this->GetGroup(groupKeys.meshBodies); }
+  CellBlockManager const * GetCellManager() const ;
+  CellBlockManager * GetCellManager() ;
 
-  MeshBody const * getMeshBody( string const & meshName ) const
-  { return this->GetGroup(groupKeys.meshBodies)->GetGroup<MeshBody>(meshName); }
-  MeshBody * getMeshBody( string const & meshName )
-  { return this->GetGroup(groupKeys.meshBodies)->GetGroup<MeshBody>(meshName); }
+  SpatialPartition const & GetSpatialPartition() const ;
+  SpatialPartition & GetSpatialPartition();
 
-  MeshBody const * getMeshBody( localIndex const index ) const
-  { return this->GetGroup(groupKeys.meshBodies)->GetGroup<MeshBody>(index); }
-  MeshBody * getMeshBody( localIndex const index )
-  { return this->GetGroup(groupKeys.meshBodies)->GetGroup<MeshBody>(index); }
-
-  std::set<int>       & getMetisNeighborList()       {return m_metisNeighborList;}
-  std::set<int> const & getMetisNeighborList() const {return m_metisNeighborList;}
+  void SetMetisNeighborList(std::set<int> const & others) ;
 
 private:
 
-  std::set<int> m_metisNeighborList;
+    struct viewKeysStruct
+    {
+      dataRepository::ViewKey neighbors = { "Neighbors" };
+    } viewKeys;
 
-};
+    struct groupKeysStruct
+    {
+      static constexpr auto meshBodiesString = "MeshBodies";
+      static constexpr auto constitutiveManagerString = "Constitutive";
 
-} /* namespace geosx */
+      dataRepository::GroupKey meshBodies           = { meshBodiesString };
+      dataRepository::GroupKey constitutiveManager  = { constitutiveManagerString };
+      dataRepository::GroupKey communicationManager    = { "communicationManager" };
+    } groupKeys;
+
+    std::set<int> m_metisNeighborList;
+
+  };
+
+} /* end of namespace geosx */
 
 #endif /* GEOSX_MANAGERS_DOMAINPARTITION_HPP_ */

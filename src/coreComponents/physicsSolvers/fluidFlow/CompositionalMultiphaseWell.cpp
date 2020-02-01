@@ -106,7 +106,7 @@ void CompositionalMultiphaseWell::InitializePreSubGroups( Group * const rootGrou
   
   DomainPartition * const domain = rootGroup->GetGroup<DomainPartition>( keys::domain );
 
-  ConstitutiveManager const * const cm = domain->getConstitutiveManager();
+  ConstitutiveManager const * const cm = domain->GetConstitutiveManager();
 
   RelativePermeabilityBase const * relPerm = cm->GetConstitutiveRelation<RelativePermeabilityBase>( m_resRelPermName );
   GEOSX_ERROR_IF( relPerm == nullptr, "Relative permeability model " + m_resRelPermName + " not found" );
@@ -1221,7 +1221,7 @@ CompositionalMultiphaseWell::ApplySystemSolution( DofManager const & dofManager,
   fieldNames["elems"].push_back( viewKeyStruct::deltaMixtureConnRateString );
   CommunicationTools::SynchronizeFields( fieldNames,
                                          domain->getMeshBody(0)->getMeshLevel(0),
-                                         domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
+                                         domain->GetNeighborCommunicators() );
 
   // update properties
   UpdateStateAll( domain );
@@ -1267,9 +1267,9 @@ void CompositionalMultiphaseWell::ResetViews(DomainPartition * const domain)
 {
   WellSolverBase::ResetViews(domain);
 
-  MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel * const mesh = domain->getMeshBody(0)->getMeshLevel(0 );
   ElementRegionManager * const elemManager = mesh->getElemManager();
-  ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
+  ConstitutiveManager * const constitutiveManager = domain->GetConstitutiveManager();
 
   m_resPressure =
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::pressureString );

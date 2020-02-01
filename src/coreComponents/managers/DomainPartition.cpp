@@ -35,7 +35,7 @@ using namespace dataRepository;
 
 DomainPartition::DomainPartition( std::string const & name,
                                   Group * const parent ):
-  Group( name, parent )
+  GroupDownCastHelper( name, parent )
 {
   this->registerWrapper< array1d<NeighborCommunicator> >(viewKeys.neighbors)->setRestartFlags( RestartFlags::NO_WRITE );
   this->registerWrapper<SpatialPartition,PartitionBase>(keys::partitionManager)->setRestartFlags( RestartFlags::NO_WRITE );
@@ -192,7 +192,7 @@ void DomainPartition::SetupCommunications()
 
   Group * const meshBodies = getMeshBodies();
   MeshBody * const meshBody = meshBodies->GetGroup<MeshBody>(0);
-  MeshLevel * const meshLevel = meshBody->GetGroup<MeshLevel>(0);
+  MeshLevel * const meshLevel = meshBody->getMeshLevel(0);
 
   for( auto const & neighbor : allNeighbors )
   {
@@ -314,8 +314,80 @@ void DomainPartition::ReadFiniteElementMesh( const SiloFile& GEOSX_UNUSED_ARG( s
 
 }
 
+constitutive::ConstitutiveManager const *DomainPartition::GetConstitutiveManager() const {
+  return this->GetGroup<constitutive::ConstitutiveManager>(groupKeys.constitutiveManager);
+}
 
+constitutive::ConstitutiveManager *DomainPartition::GetConstitutiveManager() {
+  return this->GetGroup<constitutive::ConstitutiveManager>(groupKeys.constitutiveManager);
+}
 
+Group const *DomainPartition::getMeshBodies() const {
+  return this->GetGroup(groupKeys.meshBodies);
+}
 
+Group *DomainPartition::getMeshBodies() {
+  return this->GetGroup(groupKeys.meshBodies);
+}
+
+MeshBody const *DomainPartition::getMeshBody(string const &meshName) const {
+  return this->getMeshBodies()->GetGroup<MeshBody>(meshName);
+}
+
+MeshBody *DomainPartition::getMeshBody(string const &meshName) {
+  return this->getMeshBodies()->GetGroup<MeshBody>(meshName);
+}
+
+MeshBody const *DomainPartition::getMeshBody(localIndex const index) const {
+  return this->getMeshBodies()->GetGroup<MeshBody>(index);
+}
+
+MeshBody *DomainPartition::getMeshBody(localIndex const index) {
+  return this->getMeshBodies()->GetGroup<MeshBody>(index);
+}
+
+ProblemManager const * DomainPartition::GetProblemManager() const {
+  return group_cast<ProblemManager const *>(this->getParent()) ;
+}
+
+ProblemManager * DomainPartition::GetProblemManager(){
+  return group_cast<ProblemManager*>(this->getParent()) ;
+}
+
+array1d<NeighborCommunicator> const & DomainPartition::GetNeighborCommunicators() const{
+  return this->getReference<array1d<NeighborCommunicator>>( this->viewKeys.neighbors );
+}
+
+array1d<NeighborCommunicator> & DomainPartition::GetNeighborCommunicators() {
+  return this->getReference<array1d<NeighborCommunicator>>( this->viewKeys.neighbors );
+}
+
+PartitionBase const & DomainPartition::GetPartitionBase() const {
+  return this->getReference<PartitionBase>(keys::partitionManager);
+}
+
+PartitionBase & DomainPartition::GetPartitionBase() {
+  return this->getReference<PartitionBase>(keys::partitionManager);
+}
+
+CellBlockManager const * DomainPartition::GetCellManager() const {
+  return group_cast<const CellBlockManager *>(GetGroup(keys::cellManager));
+}
+
+CellBlockManager * DomainPartition::GetCellManager() {
+  return group_cast<CellBlockManager *>(GetGroup(keys::cellManager));
+}
+
+void DomainPartition::SetMetisNeighborList(std::set<int> const & other) {
+  m_metisNeighborList = other;
+}
+
+SpatialPartition & DomainPartition::GetSpatialPartition() {
+  return this->getReference<SpatialPartition,PartitionBase>(dataRepository::keys::partitionManager);
+}
+
+SpatialPartition const & DomainPartition::GetSpatialPartition() const {
+  return this->getReference<SpatialPartition,PartitionBase>(dataRepository::keys::partitionManager);
+}
 
 } /* namespace geosx */

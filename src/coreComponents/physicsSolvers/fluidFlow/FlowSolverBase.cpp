@@ -119,7 +119,7 @@ void FlowSolverBase::InitializePreSubGroups(Group * const rootGroup)
   SolverBase::InitializePreSubGroups(rootGroup);
 
   DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
-  ConstitutiveManager * const cm = domain->getConstitutiveManager();
+  ConstitutiveManager * const cm = domain->GetConstitutiveManager();
 
   ConstitutiveBase const * fluid  = cm->GetConstitutiveRelation<ConstitutiveBase>( m_fluidName );
   GEOSX_ERROR_IF( fluid == nullptr, "Fluid model " + m_fluidName + " not found" );
@@ -131,7 +131,7 @@ void FlowSolverBase::InitializePreSubGroups(Group * const rootGroup)
 
   // fill stencil targetRegions
   NumericalMethodsManager * const
-  numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
+  numericalMethodManager = domain->GetProblemManager()->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
 
   FiniteVolumeManager * const
   fvManager = numericalMethodManager->GetGroup<FiniteVolumeManager>( keys::finiteVolumeManager );

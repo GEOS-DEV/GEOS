@@ -5,6 +5,7 @@ set(dataRepository_headers
     BufferOps_inline.hpp
     BufferOps.hpp
     BufferOpsDevice.hpp
+    DynamicCasts.hpp
     ExecutableGroup.hpp
     Group.hpp
     InputFlags.hpp
@@ -28,7 +29,6 @@ set(dataRepository_sources
     ExecutableGroup.cpp
     Group.cpp
     ConduitRestart.cpp
-    Wrapper.cpp
     WrapperBase.cpp
     xmlWrapper.cpp
     )
@@ -40,9 +40,9 @@ if( ENABLE_MPI )
 endif()
 
 if( BUILD_OBJ_LIBS )
-  set (dependencyList common cxx-utilities codingUtilities pugixml fileIO)
+  set (dependencyList common cxx-utilities codingUtilities pugixml fileIO )
 else()
-  set( dependencyList common codingUtilities)
+  set (dependencyList fileIO )
 endif()
 
 if ( ENABLE_OPENMP )

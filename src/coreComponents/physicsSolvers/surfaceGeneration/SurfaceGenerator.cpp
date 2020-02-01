@@ -385,8 +385,10 @@ void SurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
 
 void SurfaceGenerator::InitializePostInitialConditions_PreSubGroups( Group * const problemManager )
 {
-  DomainPartition * domain = problemManager->GetGroup<DomainPartition>( dataRepository::keys::domain );
-  for( auto & mesh : domain->group_cast<DomainPartition *>()->getMeshBodies()->GetSubGroups() )
+  ProblemManager * pm = problemManager->group_cast<ProblemManager *>();
+  DomainPartition * domain = pm->getDomainPartition();
+
+  for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
   {
     MeshLevel * meshLevel = Group::group_cast<MeshBody*>( mesh.second )->getMeshLevel( 0 );
     NodeManager * const nodeManager = meshLevel->getNodeManager();
@@ -417,7 +419,7 @@ void SurfaceGenerator::InitializePostInitialConditions_PreSubGroups( Group * con
     m_originalFacesToElemIndex = faceManager->elementList();
   }
 
-  for( auto & mesh : domain->group_cast<DomainPartition *>()->getMeshBodies()->GetSubGroups() )
+  for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
   {
     MeshLevel * meshLevel = Group::group_cast<MeshBody*>( mesh.second )->getMeshLevel( 0 );
     FaceManager * const faceManager = meshLevel->getFaceManager();
@@ -484,12 +486,10 @@ void SurfaceGenerator::InitializePostInitialConditions_PreSubGroups( Group * con
 }
 
 
-void SurfaceGenerator::postRestartInitialization( Group * const domain0 )
+void SurfaceGenerator::postRestartInitialization( DomainPartition * const domain )
 {
-  DomainPartition * const domain = domain0->group_cast<DomainPartition *>();
-
   NumericalMethodsManager * const
-  numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>( dataRepository::keys::numericalMethodsManager );
+  numericalMethodManager = domain->GetProblemManager()->GetGroup<NumericalMethodsManager>( dataRepository::keys::numericalMethodsManager );
 
   FiniteVolumeManager * const
   fvManager = numericalMethodManager->GetGroup<FiniteVolumeManager>( dataRepository::keys::finiteVolumeManager );
@@ -536,14 +536,14 @@ real64 SurfaceGenerator::SolverStep( real64 const & time_n,
                                      DomainPartition * const domain )
 {
   int rval = 0;
-  array1d<NeighborCommunicator> & neighbors = domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors );
+  array1d<NeighborCommunicator> & neighbors = domain->GetNeighborCommunicators();
 
-  for( auto & mesh : domain->group_cast<DomainPartition *>()->getMeshBodies()->GetSubGroups() )
+  for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
   {
     MeshLevel * meshLevel = Group::group_cast<MeshBody*>( mesh.second )->getMeshLevel( 0 );
 
     {
-      SpatialPartition & partition = domain->getReference<SpatialPartition,PartitionBase>(dataRepository::keys::partitionManager);
+      SpatialPartition & partition = domain->GetSpatialPartition();
 
       rval = SeparationDriver( domain,
                                meshLevel,
@@ -556,12 +556,12 @@ real64 SurfaceGenerator::SolverStep( real64 const & time_n,
   }
 
   NumericalMethodsManager * const
-  numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>( dataRepository::keys::numericalMethodsManager );
+  numericalMethodManager = domain->GetProblemManager()->GetGroup<NumericalMethodsManager>( dataRepository::keys::numericalMethodsManager );
 
   FiniteVolumeManager * const
   fvManager = numericalMethodManager->GetGroup<FiniteVolumeManager>( dataRepository::keys::finiteVolumeManager );
 
-  for( auto & mesh : domain->group_cast<DomainPartition *>()->getMeshBodies()->GetSubGroups() )
+  for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
   {
     MeshLevel * meshLevel = Group::group_cast<MeshBody*>( mesh.second )->getMeshLevel( 0 );
 
@@ -617,9 +617,7 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
   fieldNames["face"].push_back(viewKeyStruct::ruptureStateString);
   fieldNames["node"].push_back( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternal );
 
-  CommunicationTools::SynchronizeFields( fieldNames, mesh,
-                                         domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
-
+  CommunicationTools::SynchronizeFields( fieldNames, mesh, domain->GetNeighborCommunicators() );
 
   if( !prefrac )
   {
@@ -2911,13 +2909,12 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
   arrayView1d<localIndex> const &
   parentNodeIndices = nodeManager.getReference<array1d<localIndex>>( nodeManager.viewKeys.parentIndex );
 
-  ConstitutiveManager const * const cm = domain->getConstitutiveManager();
+  ConstitutiveManager const * const cm = domain->GetConstitutiveManager();
   ConstitutiveBase const * const solid  = cm->GetConstitutiveRelation<ConstitutiveBase>( m_solidMaterialName );
   GEOSX_ERROR_IF( solid == nullptr, "constitutive model " + m_solidMaterialName + " not found" );
   m_solidMaterialFullIndex = solid->getIndexInParent();
 
-  ConstitutiveManager * const constitutiveManager =
-      domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
+  ConstitutiveManager * const constitutiveManager = domain->GetConstitutiveManager() ;
 
   ElementRegionManager::MaterialViewAccessor< arrayView1d<real64> > const shearModulus =
       elementManager.ConstructFullMaterialViewAccessor< array1d<real64>, arrayView1d<real64> >( "ShearModulus", constitutiveManager);
@@ -2930,7 +2927,7 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
                                                              arrayView2d<R2SymTensor> >( SolidBase::viewKeyStruct::stressString,
                                                                                          constitutiveManager);
 
-  NumericalMethodsManager const * numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
+  NumericalMethodsManager const * numericalMethodManager = domain->GetProblemManager()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
 
   FiniteElementDiscretizationManager const *
   feDiscretizationManager = numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
@@ -3740,13 +3737,12 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition * domain,
 
   array1d<R1Tensor> const & X = nodeManager.referencePosition();
 
-  ConstitutiveManager const * const cm = domain->getConstitutiveManager();
+  ConstitutiveManager const * const cm = domain->GetConstitutiveManager();
   ConstitutiveBase const * const solid  = cm->GetConstitutiveRelation<ConstitutiveBase>( m_solidMaterialName );
   GEOSX_ERROR_IF( solid == nullptr, "constitutive model " + m_solidMaterialName + " not found" );
   m_solidMaterialFullIndex = solid->getIndexInParent();
 
-  ConstitutiveManager * const constitutiveManager =
-      domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
+  ConstitutiveManager * const constitutiveManager = domain->GetConstitutiveManager() ;
 
   ElementRegionManager::MaterialViewAccessor< arrayView1d<real64> > const shearModulus =
       elementManager.ConstructFullMaterialViewAccessor< array1d<real64>, arrayView1d<real64> >( "ShearModulus", constitutiveManager);
@@ -3765,7 +3761,7 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition * domain,
                                                                                          constitutiveManager);
 
 
-  NumericalMethodsManager const * numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
+  NumericalMethodsManager const * numericalMethodManager = domain->GetProblemManager()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
 
   FiniteElementDiscretizationManager const *
   feDiscretizationManager = numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);

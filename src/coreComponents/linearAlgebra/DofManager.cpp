@@ -176,9 +176,7 @@ void DofManager::createIndexArray( FieldDescription & field )
     std::map<string, string_array> fieldNames;
     fieldNames[ MeshHelper<LOC>::syncObjName ].push_back( field.key );
 
-    CommunicationTools::
-    SynchronizeFields( fieldNames, m_mesh,
-                       m_domain->getReference< array1d<NeighborCommunicator> >( m_domain->viewKeys.neighbors ) );
+    CommunicationTools::SynchronizeFields( fieldNames, m_mesh, m_domain->GetNeighborCommunicators());
   } );
   GEOSX_ERROR_IF( !success, "Invalid location type: " << static_cast<int>(field.location) );
 }
@@ -923,10 +921,9 @@ void DofManager::reorderByRank()
     } );
   }
 
-  // synchronize index arrays for all fields across ranks
-  CommunicationTools::
-  SynchronizeFields( fieldToSync, m_mesh,
-                     m_domain->getReference< array1d< NeighborCommunicator > >( m_domain->viewKeys.neighbors ) );
+    // synchronize index arrays for all fields across ranks
+    CommunicationTools::SynchronizeFields( fieldToSync, m_mesh, m_domain->GetNeighborCommunicators() );
+
 
   m_reordered = true;
 }

@@ -19,7 +19,6 @@
 #include "dataRepository/Group.hpp"
 #include "managers/Events/EventBase.hpp"
 
-
 namespace geosx
 {
 namespace dataRepository
@@ -59,26 +58,20 @@ public:
    *   - Determine dt for the next cycle
    *   - Advance time, cycle, etc.
    */
-  void Run(dataRepository::Group * domain);
+  void Run(DomainPartition * domain);
 
+private:
   struct viewKeyStruct
   {
-    static constexpr auto maxTimeString = "maxTime";
-    static constexpr auto maxCycleString = "maxCycle";
-
-    static constexpr auto timeString = "time";
-    static constexpr auto dtString = "dt";
-    static constexpr auto cycleString = "cycle";
-    static constexpr auto currentSubEventString = "currentSubEvent";
-
     dataRepository::ViewKey time = { "time" };
     dataRepository::ViewKey dt = { "dt" };
     dataRepository::ViewKey cycle = { "cycle" };
     dataRepository::ViewKey maxTime = { "maxTime" };
     dataRepository::ViewKey maxCycle = { "maxCycle" };
     dataRepository::ViewKey currentSubEvent = { "currentSubEvent" };
-  } viewKeys;
+  } viewKeys ;
 
+public:
   /// Catalog interface
   using CatalogInterface = dataRepository::CatalogInterface< EventBase, std::string const &, Group * const >;
   static CatalogInterface::CatalogType& GetCatalog();

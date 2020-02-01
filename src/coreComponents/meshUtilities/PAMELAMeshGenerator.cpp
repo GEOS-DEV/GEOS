@@ -77,7 +77,7 @@ void PAMELAMeshGenerator::PostProcessInput()
                                                              PAMELA::ELEMENTS::FAMILY::POLYGON ));
 }
 
-void PAMELAMeshGenerator::RemapMesh( dataRepository::Group * const GEOSX_UNUSED_ARG( domain ) )
+void PAMELAMeshGenerator::RemapMesh( DomainPartition  * const GEOSX_UNUSED_ARG( domain ) )
 {
   return;
 }
@@ -90,15 +90,14 @@ Group * PAMELAMeshGenerator::CreateChild( string const & GEOSX_UNUSED_ARG( child
 void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
 {
   GEOSX_LOG_RANK_0("Writing into the GEOSX mesh data structure");
-  domain->getMetisNeighborList() = m_pamelaMesh->getNeighborList();
-  Group * const meshBodies = domain->GetGroup( std::string( "MeshBodies" ));
+  domain->SetMetisNeighborList(m_pamelaMesh->getNeighborList());
+  Group * const meshBodies = domain->getMeshBodies();
   MeshBody * const meshBody = meshBodies->RegisterGroup<MeshBody>( this->getName() );
 
   //TODO for the moment we only consider on mesh level "Level0"
-  MeshLevel * const meshLevel0 = meshBody->RegisterGroup<MeshLevel>( std::string( "Level0" ));
+  MeshLevel * const meshLevel0 = meshBody->RegisterMeshLevel( std::string( "Level0" ));
   NodeManager * nodeManager = meshLevel0->getNodeManager();
-  CellBlockManager * cellBlockManager = domain->GetGroup<CellBlockManager>( keys::cellManager );
-
+  CellBlockManager * cellBlockManager = domain->GetCellManager();
 
   // Use the PartMap of PAMELA to get the mesh
   auto polyhedronPartMap = std::get<0>( PAMELA::getPolyhedronPartMap( m_pamelaMesh.get(), 0));

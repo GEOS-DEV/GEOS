@@ -12,7 +12,6 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-
 /**
  * @file Group.hpp
  */
@@ -26,8 +25,11 @@
 #include "RestartFlags.hpp"
 #include "Wrapper.hpp"
 #include "xmlWrapper.hpp"
+#include "dataRepository/DynamicCasts.hpp"
+#include "DynamicCasts.hpp"
 
 #include <iostream>
+#include <string>
 
 #ifndef NOCHARTOSTRING_KEYLOOKUP
 /// macro definition to enable/disable char * lookups
@@ -46,6 +48,12 @@ class Node;
  */
 namespace geosx
 {
+
+// This forward declaration is imposed by the `postRestartInitialization*` member functions
+// that take a `DomainPartition` as argument.
+// `DomainPartition` was a `Group` and the API implicitly waiting this group instance to be a `DomainParition`.
+// Breaking the DomainPartition/Group inheritance relationship imposes this forward declaration.
+class DomainPartition;
 
 /**
  * Encapsulates all dataRepository classes and functionality.
@@ -85,9 +93,7 @@ public:
    * @param[in] name the name of this object manager
    * @param[in] parent the parent Group
    */
-  explicit Group( std::string const & name,
-                  Group * const parent );
-
+  explicit Group( std::string const & name, Group * const parent );
 
   /**
    * @brief Move constructor
@@ -128,7 +134,6 @@ public:
   Group & operator=( Group && ) = delete;
 
   ///@}
-
 
   /**
    * @name Static Factory Catalog Functions
@@ -233,9 +238,13 @@ public:
    * Creates and registers a Group or class derived from Group as a subgroup of this Group.
    */
   template< typename T = Group >
-  T * RegisterGroup( std::string const & name )
+  typename std::enable_if< std::is_base_of< Group, T >::value, T * >::type
+  RegisterGroup( std::string const & name )
   {
-    return RegisterGroup< T >( name, std::move( std::make_unique< T >( name, this )) );
+    // FIXME Comment (or factorise with below?)
+    T * t = new T( name, this );
+    std::unique_ptr< Group > ptr( reinterpret_cast< Group * >(t) );
+    return RegisterGroup< T >( name, std::move( ptr ) );
   }
 
   /**
@@ -249,10 +258,21 @@ public:
    * Creates and registers a Group or class derived from Group as a subgroup of this Group.
    */
   template< typename T = Group >
-  T * RegisterGroup( subGroupMap::KeyIndex & keyIndex )
+  typename std::enable_if< std::is_base_of< Group, T >::value, T * >::type
+  RegisterGroup( subGroupMap::KeyIndex & keyIndex )
   {
-    T * rval = RegisterGroup< T >( keyIndex.Key(), std::move( std::make_unique< T >( keyIndex.Key(), this )) );
+    // Some classes (e.g. DomainPartition) inherit from `Group` *privately*,
+    // making impossible to transparently up-cast (unless using friendship which would be quite impacting).
+    // A reinterpret_cast is however safe since the combined std::enable_if and
+    // std::is_base_of traits guarantee T being a sub-class of Group
+    // (std::is_base_of has no concern about private inheritance).
+    // The reinterpret_cast is performed even when it's non-mandatory,
+    // in order not to make the code heavier than it is already.
+    T * t = new T( keyIndex.Key(), this );
+    std::unique_ptr< Group > ptr( reinterpret_cast< Group * >(t) );
+    T * rval = RegisterGroup< T >( keyIndex.Key(), std::move( ptr ) );
     keyIndex.setIndex( this->m_subGroups.getIndex( keyIndex.Key()) );
+
     return rval;
   }
 
@@ -302,7 +322,7 @@ public:
   template< typename T >
   static T group_cast( Group * group )
   {
-    return dynamicCast< T >( group );
+    return details::DynamicCast< T >( group );
   }
 
   /**
@@ -314,7 +334,7 @@ public:
   template< typename T >
   static T group_cast( Group const * group )
   {
-    return dynamicCast< T >( group );
+    return details::DynamicCast< T >( group );
   }
 
   /**
@@ -325,7 +345,7 @@ public:
   template< typename T >
   T group_cast()
   {
-    return dynamicCast< T >( this );
+    return details::DynamicCast< T >( this );
   }
 
   /**
@@ -336,7 +356,7 @@ public:
   template< typename T >
   T group_cast() const
   {
-    return dynamicCast< T >( this );
+    return details::DynamicCast< T >( this );
   }
 
   ///@}
@@ -483,10 +503,26 @@ public:
   }
 
   /**
+   * @brief return the number of sub groups in this Group matching @p predicate
+   * @tparam P UnaryPredicate type
+   * @param predicate an UnaryPredicate on `Group const *`
+   * @return number of sub groups in this Group matching @p predicate
+   */
+  template< class P >
+  localIndex numSubGroups( P predicate ) const {
+    auto p = [predicate]( const auto & kv ){
+          return predicate( kv.second );
+        };
+    return std::count_if( m_subGroups.begin(), m_subGroups.end(), p );
+  }
+
+  /**
    * @brief return the number of sub groups in this Group
    * @return number of sub groups in this Group
    */
-  localIndex numSubGroups() const { return m_subGroups.size(); }
+  localIndex numSubGroups() const {
+    return numSubGroups( []( const auto ){return true;} );
+  }
 
   /**
    * @brief Check whether a sub-group exists.
@@ -536,7 +572,7 @@ public:
   static bool applyLambdaToContainer( CONTAINERTYPE const * const container, LAMBDA && lambda )
   {
     bool rval = false;
-    CASTTYPE const * const castedContainer = dynamic_cast< CASTTYPE const * >( container );
+    CASTTYPE const * const castedContainer = details::DynamicCast< CASTTYPE const * >( container );
     if( castedContainer!= nullptr )
     {
       lambda( castedContainer );
@@ -556,7 +592,7 @@ public:
   static bool applyLambdaToContainer( CONTAINERTYPE * const container, LAMBDA && lambda )
   {
     bool rval = false;
-    CASTTYPE * const castedContainer = dynamic_cast< CASTTYPE * >( container );
+    CASTTYPE * const castedContainer = details::DynamicCast< CASTTYPE * >( container );
     if( castedContainer!= nullptr )
     {
       lambda( castedContainer );
@@ -758,7 +794,6 @@ public:
    */
   virtual void InitializationOrder( string_array & order );
 
-
   /**
    * @brief Initialization routine to be called after calling
    *        ApplyInitialConditions().
@@ -784,7 +819,7 @@ public:
    * This functions recurses and calls postRestartInitialization() on nested sub-groups
    * at any depth, providing a capability to add custom post-restart initialization.
    */
-  void postRestartInitializationRecursive( Group * const domain );
+  void postRestartInitializationRecursive( DomainPartition * const domain );
 
   /**
    * @brief Recursively read values using ProcessInputFile() from the input
@@ -1145,7 +1180,7 @@ public:
   template< typename T, typename LOOKUP_TYPE >
   Wrapper< T > const * getWrapper( LOOKUP_TYPE const & index ) const
   {
-    return dynamicCast< Wrapper< T > const * >( m_wrappers[index] );
+    return details::DynamicCast< Wrapper< T > const * >( m_wrappers[index] );
   }
 
   /**
@@ -1230,7 +1265,7 @@ public:
       GEOSX_ERROR( "call to getWrapper results in nullptr and a view does not exist. lookup : " << lookup );
     }
 
-    return dynamicCast< T const & >( wrapper->reference() );
+    return details::DynamicCast< T const & >( wrapper->reference() );
   }
 
   /**
@@ -1503,11 +1538,10 @@ protected:
    * @brief Performs initialization required after reading from a restart file.
    * @param domain A pointer to the domain partition.
    */
-  virtual void postRestartInitialization( Group * const domain )
+  virtual void postRestartInitialization( DomainPartition * const domain )
   {
     GEOSX_UNUSED_VAR( domain );
   }
-
   ///@}
 
 private:
@@ -1567,7 +1601,7 @@ template< typename T >
 T * Group::RegisterGroup( std::string const & name,
                           std::unique_ptr< Group > newObject )
 {
-  return dynamicCast< T * >( m_subGroups.insert( name, newObject.release(), true ) );
+  return details::DynamicCast< T * >( m_subGroups.insert( name, newObject.release(), true ) );
 }
 
 
@@ -1576,7 +1610,7 @@ T * Group::RegisterGroup( std::string const & name,
                           T * newObject,
                           bool const takeOwnership )
 {
-  return dynamicCast< T * >( m_subGroups.insert( name, newObject, takeOwnership ) );
+  return details::DynamicCast< T * >( m_subGroups.insert( name, newObject, takeOwnership ) );
 }
 
 // Doxygen bug - sees this as a separate function
@@ -1698,6 +1732,27 @@ T const * Group::GetGroupByPath( string const & path ) const
     }
   }
 }
+
+/**
+ * @brief An additional inheritance class that helps hiding @a Group while allowing down casting.
+ * @tparam T Any type that technically wants to use @a Group implementations.
+ *
+ * In order to use the powerful and flexible Group class, lots of business objects inherit from it,
+ * making all its technical members accessible.
+ * In order to reduce this visibility while not modifying and breaking the whole pattern,
+ * the Group inheritance can be set private.
+ * Doing so absolutely prevents from down casting, while its a central element of the current pattern
+ * of the dataRepository. Using the in-between templated class GroupDownCastHelper inheritance
+ * (e.g. `class Any: private GroupDownCastHelper<Any>`) will allow to down cast a group to `GroupDownCastHelper<Any>`,
+ * knowing it's an `Any` instance and perfoming the down cast anyhow. This may not be the cleanest pattern,
+ * but this offers a convenient and efficient way to isolate the dataRepository, not breaking everything.
+ */
+template< class T >
+class GroupDownCastHelper : public Group
+{
+public:
+  using Group::Group;
+};
 
 } /* end namespace dataRepository */
 } /* end namespace geosx */

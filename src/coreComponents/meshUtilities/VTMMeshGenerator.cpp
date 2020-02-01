@@ -87,7 +87,7 @@ void VTMMeshGenerator::PostProcessInput()
 
 
 
-void VTMMeshGenerator::RemapMesh(dataRepository::Group * const GEOSX_UNUSED_ARG( domain ) )
+void VTMMeshGenerator::RemapMesh( DomainPartition  * const GEOSX_UNUSED_ARG( domain ) )
 {
 
 }
@@ -100,11 +100,11 @@ Group * VTMMeshGenerator::CreateChild( string const & GEOSX_UNUSED_ARG( childKey
 void VTMMeshGenerator::GenerateMesh( DomainPartition * const domain )
 {
     /// Basic mesh registration
-    Group * const meshBodies = domain->GetGroup(std::string("MeshBodies"));
+    Group * const meshBodies = domain->getMeshBodies();
     MeshBody * const meshBody = meshBodies->RegisterGroup<MeshBody>( this->getName() );
-    MeshLevel * const meshLevel0 = meshBody->RegisterGroup<MeshLevel>(std::string("Level0"));
+    MeshLevel * const meshLevel0 = meshBody->RegisterMeshLevel(std::string("Level0"));
     NodeManager * nodeManager = meshLevel0->getNodeManager();
-    CellBlockManager * elementManager = domain->GetGroup<CellBlockManager>( keys::cellManager );
+    CellBlockManager * elementManager = domain->GetCellManager();
 
     /// Region registrations
     for( localIndex rankBlockIndex = 0 ; rankBlockIndex < m_vtmFile.NumRankBlocks(); rankBlockIndex++) {

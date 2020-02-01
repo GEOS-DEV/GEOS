@@ -331,7 +331,7 @@ TEST_F(ReservoirSolverTest, jacobianNumericalCheck_Perforation)
                        solver->getSystemMatrix(),
                        solver->getSystemRhs(),
                        solver->getSystemSolution() );
-  
+
   solver->ImplicitStepSetup( time,
                              dt,
                              domain,
@@ -367,7 +367,7 @@ TEST_F(ReservoirSolverTest, jacobianNumericalCheck_Flux)
                        solver->getSystemMatrix(),
                        solver->getSystemRhs(),
                        solver->getSystemSolution() );
-  
+
   solver->ImplicitStepSetup( time,
                              dt,
                              domain,
@@ -439,7 +439,7 @@ TEST_F(ReservoirSolverTest, jacobianNumericalCheck_PressureRel)
                        solver->getSystemMatrix(),
                        solver->getSystemRhs(),
                        solver->getSystemSolution() );
-  
+
   solver->ImplicitStepSetup( time,
                              dt,
                              domain,

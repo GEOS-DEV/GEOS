@@ -328,9 +328,9 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
 
   // This cannot find groupkeys:
   // Group * const meshBodies = domain->GetGroup(domain->groupKeys.meshBodies);
-  Group * const meshBodies = domain->GetGroup(std::string("MeshBodies"));
+  Group * const meshBodies = domain->getMeshBodies();
   MeshBody * const meshBody = meshBodies->RegisterGroup<MeshBody>( this->getName() );
-  MeshLevel * const meshLevel0 = meshBody->RegisterGroup<MeshLevel>(std::string("Level0"));
+  MeshLevel * const meshLevel0 = meshBody->RegisterMeshLevel(std::string("Level0"));
 
   // special case
   //  bool isRadialWithOneThetaPartition = (m_mapToRadial > 0) &&
@@ -340,10 +340,10 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
 
   // Make sure that the node manager fields are initialized
 
-  CellBlockManager * elementManager = domain->GetGroup<CellBlockManager>( keys::cellManager );
+  CellBlockManager * elementManager = domain->GetCellManager();
   Group * nodeSets = nodeManager->sets();
 
-  PartitionBase & partition = domain->getReference<PartitionBase>(keys::partitionManager);
+  PartitionBase & partition = domain->GetPartitionBase();
 
   bool isRadialWithOneThetaPartition = false;
 
@@ -1220,7 +1220,7 @@ void InternalMeshGenerator::GetElemToNodesRelationInBox( const std::string& elem
   }
 }
 
-void InternalMeshGenerator::RemapMesh( dataRepository::Group * const GEOSX_UNUSED_ARG( domain ) )
+void InternalMeshGenerator::RemapMesh(DomainPartition  * const GEOSX_UNUSED_ARG(domain ) )
 {
   //  // Node mapping
   //  if (!m_meshDx.empty())

@@ -44,12 +44,10 @@ void RestartOutput::Execute(real64 const GEOSX_UNUSED_ARG( time_n ),
                             integer const cycleNumber,
                             integer const GEOSX_UNUSED_ARG( eventCounter ),
                             real64 const GEOSX_UNUSED_ARG( eventProgress ),
-                            Group * domain)
+                            DomainPartition * domain)
 {
   GEOSX_MARK_FUNCTION;
-
-  DomainPartition* domainPartition = Group::group_cast<DomainPartition*>(domain);
-  ProblemManager* problemManager = Group::group_cast<ProblemManager*>(domainPartition->getParent());
+  ProblemManager* problemManager = domain->GetProblemManager();
 
   // Ignoring the eventProgress indicator for now to be compliant with the integrated test repo
   // integer const eventProgressPercent = static_cast<integer const>(eventProgress * 100.0);

@@ -228,7 +228,7 @@ void SinglePhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( tim
   localIndex constexpr maxNumFaces = MAX_NUM_FACES;
 
   // tolerance for transmissibility calculation
-  real64 const lengthTolerance = domain->getMeshBody( 0 )->getGlobalLengthScale() * m_areaRelTol; 
+  real64 const lengthTolerance = domain->getMeshBody( 0 )->getGlobalLengthScale() * m_areaRelTol;
 
 
   elemManager->
@@ -787,8 +787,7 @@ void SinglePhaseHybridFVM::ApplySystemSolution( DofManager const & dofManager,
   fieldNames["face"].push_back( viewKeyStruct::deltaFacePressureString );
   fieldNames["elems"].push_back( viewKeyStruct::deltaPressureString );
 
-  array1d<NeighborCommunicator> & comms =
-    domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors );
+  array1d<NeighborCommunicator> & comms = domain->GetNeighborCommunicators() ;
 
   CommunicationTools::SynchronizeFields( fieldNames, mesh, comms );
   

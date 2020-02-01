@@ -90,7 +90,7 @@ public:
    */
   template< typename POLICY=parallelHostPolicy >
   void ApplyFieldValue( real64 const time,
-                        dataRepository::Group * domain,
+                        DomainPartition * domain,
                         string const & fieldPath,
                         string const & fieldName ) const
   {
@@ -132,14 +132,14 @@ public:
    */
   template< typename POLICY=parallelHostPolicy, typename LAMBDA=void >
   void ApplyFieldValue( real64 const time,
-                        dataRepository::Group * domain,
+                        DomainPartition * domain,
                         string const & fieldPath,
                         string const & fieldName,
                         LAMBDA && lambda ) const;
 
   template< typename POLICY=parallelHostPolicy, typename PRELAMBDA=void, typename POSTLAMBDA=void >
   void ApplyFieldValue( real64 const time,
-                        dataRepository::Group * domain,
+                        DomainPartition * domain,
                         string const & fieldPath,
                         string const & fieldName,
                         PRELAMBDA && preLambda,
@@ -150,7 +150,7 @@ public:
    * @brief function to apply initial conditions
    * @param domain the DomainParition object
    */
-  void ApplyInitialConditions( dataRepository::Group * domain ) const;
+  void ApplyInitialConditions( DomainPartition * domain ) const;
 
 
   /**
@@ -178,7 +178,7 @@ public:
    */
   template< typename LAMBDA >
   void Apply( real64 const time,
-              dataRepository::Group * domain,
+              DomainPartition * domain,
               string const & fieldPath,
               string const & fieldName,
               LAMBDA && lambda ) const
@@ -200,8 +200,7 @@ public:
         if( ( isInitialCondition && fieldName=="" ) ||
             ( !isInitialCondition && time >= fs->GetStartTime() && time < fs->GetEndTime() && targetName==fieldName ) )
         {
-          MeshLevel * const meshLevel = domain->group_cast<DomainPartition*>()->
-                                        getMeshBody( 0 )->getMeshLevel( 0 );
+          MeshLevel * const meshLevel = domain->getMeshBody(0)->getMeshLevel(0);
 
           dataRepository::Group * targetGroup = meshLevel;
 
@@ -296,7 +295,7 @@ template< typename POLICY, typename LAMBDA >
 void
 FieldSpecificationManager::
 ApplyFieldValue( real64 const time,
-                 dataRepository::Group * domain,
+                 DomainPartition * domain,
                  string const & fieldPath,
                  string const & fieldName,
                  LAMBDA && lambda ) const
@@ -319,7 +318,7 @@ template< typename POLICY, typename PRELAMBDA, typename POSTLAMBDA >
 void
 FieldSpecificationManager::
 ApplyFieldValue( real64 const time,
-                 dataRepository::Group * domain,
+                 DomainPartition * domain,
                  string const & fieldPath,
                  string const & fieldName,
                  PRELAMBDA && preLambda,

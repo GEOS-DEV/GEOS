@@ -181,7 +181,7 @@ real64 PoroelasticSolver::SolverStep( real64 const & time_n,
   real64 dtReturn = dt;
   if( m_couplingTypeOption == couplingTypeOption::FixedStress )
   {
-    dtReturn = SplitOperatorStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>() );
+    dtReturn = SplitOperatorStep( time_n, dt, cycleNumber, domain );
   }
   else if( m_couplingTypeOption == couplingTypeOption::TightlyCoupled )
   {
@@ -205,13 +205,12 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
   NodeManager * const nodeManager = domain->getMeshBody(0)->getMeshLevel(0)->getNodeManager();
 
   NumericalMethodsManager const * const numericalMethodManager =
-    domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
+    domain->GetProblemManager()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
 
   FiniteElementDiscretizationManager const * const feDiscretizationManager =
     numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
 
-  ConstitutiveManager * const constitutiveManager =
-    domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
+  ConstitutiveManager * const constitutiveManager = domain->GetConstitutiveManager();
 
   arrayView1d<R1Tensor> const & X = nodeManager->getReference<r1_array>(nodeManager->viewKeys.referencePosition);
   arrayView1d<R1Tensor> const & u = nodeManager->getReference<r1_array>(keys::TotalDisplacement);
@@ -253,7 +252,7 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
   ElementRegionManager::MaterialViewAccessor<real64> const biotCoefficient =
     elemManager->ConstructFullMaterialViewAccessor<real64>( "BiotCoefficient", constitutiveManager);
 
-  localIndex const solidIndex = domain->getConstitutiveManager()->GetConstitutiveRelation( fluidSolver.solidIndex() )->getIndexInParent();
+  localIndex const solidIndex = domain->GetConstitutiveManager()->GetConstitutiveRelation(fluidSolver.solidIndex() )->getIndexInParent();
 
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
   {

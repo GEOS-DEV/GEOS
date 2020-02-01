@@ -90,10 +90,8 @@ public:
                                              int const GEOSX_UNUSED_ARG( size )) override {}
 
   /// not implemented
-  virtual void RemapMesh ( dataRepository::Group * const GEOSX_UNUSED_ARG( domain ) ) override {}
+  virtual void RemapMesh( DomainPartition  * const GEOSX_UNUSED_ARG(domain) ) override {}
 
-
-     
   // getters for element data
 
   /**

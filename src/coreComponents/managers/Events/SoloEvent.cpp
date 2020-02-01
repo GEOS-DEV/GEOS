@@ -55,7 +55,7 @@ SoloEvent::~SoloEvent()
 void SoloEvent::EstimateEventTiming(real64 const time,
                                     real64 const dt, 
                                     integer const cycle,
-                                    Group * GEOSX_UNUSED_ARG( domain ))
+                                    DomainPartition * GEOSX_UNUSED_ARG( domain ))
 {
   // Check event status
   if (m_lastCycle < 0)

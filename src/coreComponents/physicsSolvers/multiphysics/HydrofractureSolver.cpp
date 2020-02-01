@@ -208,7 +208,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 
   if( m_couplingTypeOption == couplingTypeOption::FixedStress )
   {
-    dtReturn = SplitOperatorStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>() );
+    dtReturn = SplitOperatorStep( time_n, dt, cycleNumber, domain );
   }
   else if( m_couplingTypeOption == couplingTypeOption::TightlyCoupled )
   {
@@ -278,7 +278,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 
         CommunicationTools::SynchronizeFields( fieldNames,
                                                domain->getMeshBody(0)->getMeshLevel(0),
-                                               domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
+                                               domain->GetNeighborCommunicators() );
 
         this->UpdateDeformationForCoupling(domain);
 
@@ -311,7 +311,7 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
   ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
 
   ConstitutiveManager const * const
-  constitutiveManager = domain->GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
+  constitutiveManager = domain->GetConstitutiveManager();
 
   ContactRelationBase const * const
   contactRelation = constitutiveManager->GetGroup<ContactRelationBase>(m_contactRelationName);
@@ -617,7 +617,7 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
   });
 
   NumericalMethodsManager const * numericalMethodManager =
-    domain->getParent()->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
+    domain->GetProblemManager()->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
 
   FiniteVolumeManager const * fvManager =
     numericalMethodManager->GetGroup<FiniteVolumeManager>( keys::finiteVolumeManager );
@@ -1052,7 +1052,7 @@ AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const * cons
   ElementRegionManager const * const elemManager = mesh->getElemManager();
   FaceManager const * const faceManager = mesh->getFaceManager();
   NodeManager const * const nodeManager = mesh->getNodeManager();
-  ConstitutiveManager const * const constitutiveManager = domain->getConstitutiveManager();
+  ConstitutiveManager const * const constitutiveManager = domain->GetConstitutiveManager();
 
   string const constitutiveName = constitutiveManager->GetGroup(m_flowSolver->fluidIndex())->getName();
   string const presDofKey = m_flowSolver->getDofManager().getKey( FlowSolverBase::viewKeyStruct::pressureString );
@@ -1229,7 +1229,7 @@ ApplySystemSolution( DofManager const & GEOSX_UNUSED_ARG( dofManager ),
 
 namespace geosx
 {
-  
+
 void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofManager ),
                                        ParallelMatrix & ,
                                        ParallelVector & ,
@@ -1249,7 +1249,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
   using namespace Teuchos;
   using namespace Thyra;
 
-  Teuchos::Time clock("solveClock");  
+  Teuchos::Time clock("solveClock");
 
   GEOSX_MARK_BEGIN(Setup);
   Epetra_FECrsMatrix * p_matrix[2][2];
@@ -1282,7 +1282,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
     // there are several flags to control solver behavior.
     // these should be compared in a scaling study.
     //
-    // -- whether to use a block diagonal or a 
+    // -- whether to use a block diagonal or a
     //    block triangular preconditioner.
     // -- whether to use BiCGstab or GMRES for the
     //    krylov solver.  GMRES is generally more robust,
@@ -1312,15 +1312,15 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
   {
     Epetra_Vector diag(p_matrix[0][0]->RowMap());
     Epetra_Vector diagInv(p_matrix[0][0]->RowMap());
- 
-    p_matrix[0][0]->ExtractDiagonalCopy(diag); 
+
+    p_matrix[0][0]->ExtractDiagonalCopy(diag);
     diagInv.Reciprocal(diag);
- 
+
     Epetra_FECrsMatrix DB(*p_matrix[0][1]);
     DB.LeftScale(diagInv);
     DB.FillComplete();
 
-    Epetra_FECrsMatrix BtDB(Epetra_DataAccess::Copy,p_matrix[1][1]->RowMap(),1); 
+    Epetra_FECrsMatrix BtDB(Epetra_DataAccess::Copy,p_matrix[1][1]->RowMap(),1);
     EpetraExt::MatrixMatrix::Multiply(*p_matrix[1][0],false,DB,false,BtDB);
     EpetraExt::MatrixMatrix::Add(BtDB,false,-1.0,*p_matrix[1][1],false,1.0,schurApproxPP);
 
@@ -1380,7 +1380,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
                                                                    matrix_block[1][1]);
 
     // creating a representation of the blocked
-    // rhs and lhs is a little uglier. 
+    // rhs and lhs is a little uglier.
 
   RCP<Thyra::ProductMultiVectorBase<double> > rhs;
   {
@@ -1472,7 +1472,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
 
     sub_op[i] = tmp->getUnspecifiedPrecOp();
   }
- 
+
 
     // create zero operators for off diagonal blocks
 
@@ -1525,7 +1525,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
 
   {
     RCP<Teuchos::ParameterList> list = rcp(new Teuchos::ParameterList("list"));
-    
+
       list->set("Linear Solver Type","AztecOO");
       list->set("Preconditioner Type","None"); // will use user-defined P
       list->sublist("Linear Solver Types").sublist("AztecOO").sublist("Forward Solve").set("Max Iterations",params->m_maxIters);

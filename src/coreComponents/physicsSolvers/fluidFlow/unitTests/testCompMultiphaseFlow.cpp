@@ -191,7 +191,7 @@ void testCompositionNumericalDerivatives( CompositionalMultiphaseFlow * solver,
 
   MeshLevel * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
 
-  ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
+  ConstitutiveManager * const constitutiveManager = domain->GetConstitutiveManager();
   MultiFluidBase * const fluid = constitutiveManager->GetGroup<MultiFluidBase>( solver->fluidIndex() );
   ASSERT_NE( fluid, nullptr );
 
@@ -277,7 +277,7 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFlow * 
 
   MeshLevel * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
 
-  ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
+  ConstitutiveManager * const constitutiveManager = domain->GetConstitutiveManager();
   MultiFluidBase * const fluid = constitutiveManager->GetGroup<MultiFluidBase>( solver->fluidIndex() );
   ASSERT_NE( fluid, nullptr );
 
@@ -400,7 +400,7 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFlow * solver
 
   MeshLevel * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
 
-  ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
+  ConstitutiveManager * const constitutiveManager = domain->GetConstitutiveManager();
   MultiFluidBase * const fluid = constitutiveManager->GetGroup<MultiFluidBase>( solver->fluidIndex() );
   ASSERT_NE( fluid, nullptr );
 

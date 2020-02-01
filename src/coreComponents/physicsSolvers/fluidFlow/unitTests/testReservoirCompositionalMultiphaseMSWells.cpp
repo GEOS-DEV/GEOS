@@ -56,7 +56,7 @@ void testMixtureDensityNumericalDerivatives( CompositionalMultiphaseWell * solve
   MeshLevel * mesh = domain->getMeshBody(0)->getMeshLevel(0);
   ElementRegionManager * elemManager = mesh->getElemManager();
 
-  ConstitutiveManager * constitutiveManager = domain->getConstitutiveManager();
+  ConstitutiveManager * constitutiveManager = domain->GetConstitutiveManager();
   CompositionalMultiphaseFlow * flowSolver = solver->getParent()->GetGroup("compositionalMultiphaseFlow")->group_cast<CompositionalMultiphaseFlow*>();
 
   MultiFluidBase * fluid = constitutiveManager->GetGroup<MultiFluidBase>( flowSolver->fluidIndex() );
@@ -542,7 +542,7 @@ TEST_F(ReservoirSolverTest, jacobianNumericalCheck_Perforation)
                        solver->getSystemMatrix(),
                        solver->getSystemRhs(),
                        solver->getSystemSolution() );
-  
+
   solver->ImplicitStepSetup( time,
                              dt,
                              domain,
@@ -578,7 +578,7 @@ TEST_F(ReservoirSolverTest, jacobianNumericalCheck_Flux)
                        solver->getSystemMatrix(),
                        solver->getSystemRhs(),
                        solver->getSystemSolution() );
-  
+
   solver->ImplicitStepSetup( time,
                              dt,
                              domain,
@@ -651,7 +651,7 @@ TEST_F(ReservoirSolverTest, jacobianNumericalCheck_VolumeBalance)
                        solver->getSystemMatrix(),
                        solver->getSystemRhs(),
                        solver->getSystemSolution() );
-  
+
   solver->ImplicitStepSetup( time,
                              dt,
                              domain,
@@ -686,7 +686,7 @@ TEST_F(ReservoirSolverTest, jacobianNumericalCheck_PressureRel)
                        solver->getSystemMatrix(),
                        solver->getSystemRhs(),
                        solver->getSystemSolution() );
-  
+
   solver->ImplicitStepSetup( time,
                              dt,
                              domain,

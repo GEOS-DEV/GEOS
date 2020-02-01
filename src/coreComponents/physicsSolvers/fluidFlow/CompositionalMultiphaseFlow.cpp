@@ -145,7 +145,7 @@ void CompositionalMultiphaseFlow::InitializePreSubGroups( Group * const rootGrou
   FlowSolverBase::InitializePreSubGroups( rootGroup );
 
   DomainPartition * const domain = rootGroup->GetGroup<DomainPartition>( keys::domain );
-  ConstitutiveManager const * const cm = domain->getConstitutiveManager();
+  ConstitutiveManager const * const cm = domain->GetConstitutiveManager();
 
   MultiFluidBase const * fluid = cm->GetConstitutiveRelation<MultiFluidBase>( m_fluidName );
   m_numPhases     = fluid->numFluidPhases();
@@ -571,12 +571,11 @@ void CompositionalMultiphaseFlow::InitializePostInitialConditions_PreSubGroups( 
   fieldNames["elems"].push_back( viewKeyStruct::pressureString );
   fieldNames["elems"].push_back( viewKeyStruct::globalCompDensityString );
 
-  array1d<NeighborCommunicator> & comms =
-    domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors );
+  array1d<NeighborCommunicator> & comms = domain->GetNeighborCommunicators();
 
   CommunicationTools::SynchronizeFields( fieldNames, mesh, comms );
 
-  ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
+  ConstitutiveManager * const constitutiveManager = domain->GetConstitutiveManager();
 
   // set mass fraction flag on main model
   // TODO find a way to set this before constitutive model is duplicated and attached to subregions?
@@ -865,8 +864,7 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( real64 const GEOSX_UNUSED_A
   MeshLevel const * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager const * const elemManager = mesh->getElemManager();
 
-  NumericalMethodsManager const * const numericalMethodManager =
-    domain->getParent()->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
+  NumericalMethodsManager const * const numericalMethodManager = domain->GetProblemManager()->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
 
   FiniteVolumeManager const * const fvManager =
     numericalMethodManager->GetGroup<FiniteVolumeManager>( keys::finiteVolumeManager );
@@ -1498,9 +1496,7 @@ CompositionalMultiphaseFlow::ApplySystemSolution( DofManager const & dofManager,
   std::map<string, string_array > fieldNames;
   fieldNames["elems"].push_back( viewKeyStruct::deltaPressureString );
   fieldNames["elems"].push_back( viewKeyStruct::deltaGlobalCompDensityString );
-  CommunicationTools::SynchronizeFields( fieldNames,
-                                         mesh,
-                                         domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
+  CommunicationTools::SynchronizeFields( fieldNames, mesh, domain->GetNeighborCommunicators() );
 
   applyToSubRegions( mesh, [&] ( ElementSubRegionBase * const subRegion )
   {
@@ -1564,7 +1560,7 @@ void CompositionalMultiphaseFlow::ResetViews( DomainPartition * const domain )
 
   MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager * const elemManager = mesh->getElemManager();
-  ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
+  ConstitutiveManager * const constitutiveManager = domain->GetConstitutiveManager();
 
   m_pressure =
     elemManager->ConstructViewAccessor< array1d<real64>, arrayView1d<real64> >( viewKeyStruct::pressureString );

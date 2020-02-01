@@ -54,7 +54,7 @@ public:
   virtual void EstimateEventTiming(real64 const time,
                                    real64 const dt, 
                                    integer const cycle,
-                                   dataRepository::Group * domain) override;
+                                   DomainPartition * domain) override;
 
   /**
    * If the event forecast is zero, and an optional function (f) is specified, then
@@ -75,7 +75,7 @@ public:
   void CheckOptionalFunctionThreshold(real64 const time,
                                       real64 const dt, 
                                       integer const cycle,
-                                      dataRepository::Group * domain);
+                                      DomainPartition * domain);
 
   /**
    * Grab the next time-step.  If requested, then limit the requested

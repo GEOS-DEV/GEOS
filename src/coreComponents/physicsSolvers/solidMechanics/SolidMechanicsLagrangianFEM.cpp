@@ -231,7 +231,7 @@ void SolidMechanicsLagrangianFEM::InitializePreSubGroups(Group * const rootGroup
   SolverBase::InitializePreSubGroups(rootGroup);
 
   DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
-  ConstitutiveManager const * const cm = domain->getConstitutiveManager();
+  ConstitutiveManager const * const cm = domain->GetConstitutiveManager();
 
   ConstitutiveBase const * const solid  = cm->GetConstitutiveRelation<ConstitutiveBase>( m_solidMaterialName );
   GEOSX_ERROR_IF( solid == nullptr, "constitutive model " + m_solidMaterialName + " not found" );
@@ -248,13 +248,13 @@ void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * co
   //FaceManager * const faceManager = mesh->getFaceManager();
 
   ElementRegionManager const * const elementRegionManager = mesh->getElemManager();
-  ConstitutiveManager const * const constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
+  ConstitutiveManager const * const constitutiveManager = domain->GetConstitutiveManager();
 
   arrayView1d<real64> & mass = nodes->getReference<array1d<real64>>(keys::Mass);
   mass = 0.0;
 
   NumericalMethodsManager const *
-  numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
+  numericalMethodManager = domain->GetProblemManager()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
 
   FiniteElementDiscretizationManager const *
   feDiscretizationManager = numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
@@ -317,7 +317,7 @@ void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( 
 
 
   ElementRegionManager * elementRegionManager = mesh->getElemManager();
-  ConstitutiveManager * constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
+  ConstitutiveManager * constitutiveManager = domain->GetConstitutiveManager();
 
   arrayView1d<real64> & mass = nodes->getReference<array1d<real64>>(keys::Mass);
 
@@ -326,7 +326,7 @@ void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( 
 
 
   NumericalMethodsManager const *
-  numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
+  numericalMethodManager = domain->GetProblemManager()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
 
   FiniteElementDiscretizationManager const *
   feDiscretizationManager = numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
@@ -412,7 +412,7 @@ real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const& time_n,
 
   if( m_timeIntegrationOption == timeIntegrationOption::ExplicitDynamic )
   {
-    dtReturn = ExplicitStep( time_n, dt, cycleNumber, Group::group_cast<DomainPartition*>(domain) );
+    dtReturn = ExplicitStep( time_n, dt, cycleNumber, domain );
 
     if( surfaceGenerator!=nullptr )
     {
@@ -436,7 +436,7 @@ real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const& time_n,
         ResetStressToBeginningOfStep(domain);
       }
 
-      dtReturn = NonlinearImplicitStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition *>(), m_dofManager,
+      dtReturn = NonlinearImplicitStep( time_n, dt, cycleNumber, domain, m_dofManager,
                                         m_matrix, m_rhs, m_solution );
 
       updateStress( domain );
@@ -479,9 +479,9 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   NodeManager * const nodes = mesh->getNodeManager();
   ElementRegionManager * const elemManager = mesh->getElemManager();
-  NumericalMethodsManager const * const numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
+  NumericalMethodsManager const * const numericalMethodManager = domain->GetProblemManager()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
   FiniteElementDiscretizationManager const * const feDiscretizationManager = numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
-  ConstitutiveManager * const constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
+  ConstitutiveManager * const constitutiveManager = domain->GetConstitutiveManager();
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
 
@@ -493,7 +493,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
   arrayView1d<R1Tensor> const & uhat = nodes->getReference<array1d<R1Tensor>>(keys::IncrementalDisplacement);
   arrayView1d<R1Tensor> const & acc = nodes->getReference<array1d<R1Tensor>>(keys::Acceleration);
 
-  array1d<NeighborCommunicator> & neighbors = domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors );
+  array1d<NeighborCommunicator> & neighbors = domain->GetNeighborCommunicators();
   std::map<string, string_array > fieldNames;
   fieldNames["node"].push_back( keys::Velocity);
   fieldNames["node"].push_back( keys::Acceleration);
@@ -874,8 +874,7 @@ ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n ),
   }
 
   ElementRegionManager * const elementRegionManager = mesh->getElemManager();
-  ConstitutiveManager  * const
-  constitutiveManager = domain->GetGroup<ConstitutiveManager >(dataRepository::keys::ConstitutiveManager);
+  ConstitutiveManager  * const constitutiveManager = domain->GetConstitutiveManager();
   ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase>
   constitutiveRelations = elementRegionManager->ConstructFullConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
 
@@ -972,9 +971,9 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_ARG(
   GEOSX_MARK_FUNCTION;
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   Group * const nodeManager = mesh->getNodeManager();
-  ConstitutiveManager  * const constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
+  ConstitutiveManager * const constitutiveManager = domain->GetConstitutiveManager();
   ElementRegionManager * const elemManager = mesh->getElemManager();
-  NumericalMethodsManager const * numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
+  NumericalMethodsManager const * numericalMethodManager = domain->GetProblemManager()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
   FiniteElementDiscretizationManager const * feDiscretizationManager = numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
 
   ElementRegionManager::MaterialViewAccessor<real64> const biotCoefficient =
@@ -1232,9 +1231,8 @@ SolidMechanicsLagrangianFEM::ApplySystemSolution( DofManager const & dofManager,
   fieldNames["node"].push_back( keys::IncrementalDisplacement );
   fieldNames["node"].push_back( keys::TotalDisplacement );
 
-  CommunicationTools::SynchronizeFields( fieldNames,
-                                         domain->getMeshBody( 0 )->getMeshLevel( 0 ),
-                                         domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
+  CommunicationTools::SynchronizeFields(fieldNames,
+                                        domain->getMeshBody( 0 )->getMeshLevel( 0 ), domain->GetNeighborCommunicators());
 }
 
 void SolidMechanicsLagrangianFEM::SolveSystem( DofManager const & dofManager,
@@ -1275,7 +1273,7 @@ void SolidMechanicsLagrangianFEM::ResetStressToBeginningOfStep( DomainPartition 
 
   ElementRegionManager * const elementRegionManager = mesh->getElemManager();
   ConstitutiveManager  * const
-  constitutiveManager = domain->GetGroup<ConstitutiveManager >(dataRepository::keys::ConstitutiveManager);
+  constitutiveManager = domain->GetConstitutiveManager();
   ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase>
   constitutiveRelations = elementRegionManager->ConstructFullConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
 
@@ -1318,10 +1316,7 @@ void SolidMechanicsLagrangianFEM::ApplyContactConstraint( DofManager const & dof
     FaceManager const * const faceManager = mesh->getFaceManager();
     NodeManager * const nodeManager = mesh->getNodeManager();
     ElementRegionManager * const elemManager = mesh->getElemManager();
-
-
-    ConstitutiveManager const * const
-    constitutiveManager = domain.GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
+    ConstitutiveManager const * const constitutiveManager = domain.GetConstitutiveManager();
 
     ContactRelationBase const * const
     contactRelation = constitutiveManager->GetGroup<ContactRelationBase>(m_contactRelationName);

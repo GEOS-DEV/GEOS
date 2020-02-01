@@ -42,9 +42,9 @@ set(mesh_sources
    )
 
 if( BUILD_OBJ_LIBS)
-  set(dependencyList managers metis)
+  set(dependencyList managers metis )
 else()
-  set(dependencyList common metis)
+  set(dependencyList common managers metis meshUtilities wells)
 endif()
 
 

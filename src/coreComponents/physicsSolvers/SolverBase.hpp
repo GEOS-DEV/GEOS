@@ -78,7 +78,7 @@ public:
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::Group * const domain ) override;
+                        DomainPartition * const domain ) override;
 
   /**
    * @brief Getter for system matrix
@@ -495,30 +495,13 @@ public:
   using CatalogInterface = dataRepository::CatalogInterface< SolverBase, std::string const &, Group * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 
-  struct viewKeyStruct
-  {
-    constexpr static auto cflFactorString = "cflFactor";
-    constexpr static auto initialDtString = "initialDt";
-    constexpr static auto maxStableDtString = "maxStableDt";
-    static constexpr auto discretizationString = "discretization";
-    constexpr static auto targetRegionsString = "targetRegions";
-
-  } viewKeys;
-
-  struct groupKeyStruct
-  {
-    constexpr static auto systemSolverParametersString = "SystemSolverParameters";
-    constexpr static auto nonlinearSolverParametersString = "NonlinearSolverParameters";
-  } groupKeys;
-
-
   /**
-   * @brief return the value of the gravity vector specified in PhysicsSolverManager 
+   * @brief return the value of the gravity vector specified in PhysicsSolverManager
    * @return the value of the gravity vector
    *
    * @note if the solver is instantiated outside of a simulation (for instance for a unit test)
    *       and therefore does not have a parent of type PhysicsSolverManager, this function returns
-   *       {0.0,0.0,-9.81}  
+   *       {0.0,0.0,-9.81}
    */
   R1Tensor const gravityVector() const;
 
@@ -552,9 +535,17 @@ public:
 
   string_array const & getTargetRegions() const {return m_targetRegions;}
 
+private:
 
-  template<bool CONST>
-  using SubregionFunc = std::function<void ( add_const_if_t<ElementSubRegionBase, CONST> * )>;
+  template<bool IS_CONST>
+  using SubregionFunc = std::function<void ( add_const_if_t<ElementSubRegionBase, IS_CONST> * )>;
+
+  template<bool IS_CONST>
+  using SubregionFuncComplete = std::function<void ( localIndex, localIndex,
+                                                     add_const_if_t<ElementRegionBase, IS_CONST> *,
+                                                     add_const_if_t<ElementSubRegionBase, IS_CONST> * )>;
+
+public:
 
   template<typename MESH, typename LAMBDA>
   typename std::enable_if<std::is_same<typename std::remove_cv<MESH>::type, MeshLevel>::value &&
@@ -564,11 +555,6 @@ public:
   {
     mesh->getElemManager()->forElementSubRegions( m_targetRegions, std::forward<LAMBDA>(lambda) );
   }
-
-  template<bool CONST>
-  using SubregionFuncComplete = std::function<void ( localIndex, localIndex,
-                                                     add_const_if_t<ElementRegionBase, CONST> *,
-                                                     add_const_if_t<ElementSubRegionBase, CONST> * )>;
 
   template<typename MESH, typename LAMBDA>
   typename std::enable_if<std::is_same<typename std::remove_cv<MESH>::type, MeshLevel>::value &&
@@ -580,6 +566,21 @@ public:
   }
 
 protected:
+
+  struct viewKeyStruct
+  {
+    constexpr static auto cflFactorString = "cflFactor";
+    constexpr static auto initialDtString = "initialDt";
+    constexpr static auto maxStableDtString = "maxStableDt";
+    constexpr static auto discretizationString = "discretization";
+    constexpr static auto targetRegionsString = "targetRegions";
+  } ;
+
+  struct groupKeyStruct
+  {
+    constexpr static auto systemSolverParametersString = "SystemSolverParameters";
+    constexpr static auto nonlinearSolverParametersString = "NonlinearSolverParameters";
+  } ;
 
   void PostProcessInput() override;
 

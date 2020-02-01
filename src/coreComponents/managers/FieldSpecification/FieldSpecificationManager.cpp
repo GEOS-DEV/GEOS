@@ -65,7 +65,7 @@ void FieldSpecificationManager::ExpandObjectCatalogs()
 }
 
 
-void FieldSpecificationManager::ApplyInitialConditions( Group * domain ) const
+void FieldSpecificationManager::ApplyInitialConditions( DomainPartition * domain ) const
 {
 
   Apply( 0.0, domain, "", "",

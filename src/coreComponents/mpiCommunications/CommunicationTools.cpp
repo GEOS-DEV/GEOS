@@ -694,7 +694,7 @@ void CommunicationTools::SynchronizeUnpack( MeshLevel * const mesh,
 
 }
 
-void CommunicationTools::SynchronizeFields( const std::map<string, string_array >& fieldNames,
+void CommunicationTools::SynchronizeFields( const std::map<string, string_array> & fieldNames,
                                             MeshLevel * const mesh,
                                             array1d<NeighborCommunicator> & neighbors,
                                             bool on_device )

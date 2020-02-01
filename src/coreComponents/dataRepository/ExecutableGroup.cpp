@@ -24,7 +24,7 @@ namespace geosx
 void ExecutableGroup::SignalToPrepareForExecution( real64 const GEOSX_UNUSED_ARG( time_n ),
                                                    real64 const GEOSX_UNUSED_ARG( dt ),
                                                    integer const GEOSX_UNUSED_ARG( cycle ),
-                                                   dataRepository::Group *
+                                                   DomainPartition *
                                                    GEOSX_UNUSED_ARG( domain ) )
 {}
 
@@ -32,7 +32,7 @@ void ExecutableGroup::Cleanup( real64 const GEOSX_UNUSED_ARG( time_n ),
                                integer const GEOSX_UNUSED_ARG( cycleNumber ),
                                integer const GEOSX_UNUSED_ARG( eventCounter ),
                                real64 const GEOSX_UNUSED_ARG( eventProgress ),
-                               dataRepository::Group * GEOSX_UNUSED_ARG( domain ) )
+                               DomainPartition * GEOSX_UNUSED_ARG( domain ) )
 {}
 
 }

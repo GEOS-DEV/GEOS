@@ -17,12 +17,13 @@
 #ifndef GEOSX_DATAREPOSITORY_WRAPPERBASE_HPP_
 #define GEOSX_DATAREPOSITORY_WRAPPERBASE_HPP_
 
-#include <string>
-#include <memory>
 #include "common/DataTypes.hpp"
 #include "InputFlags.hpp"
 #include "RestartFlags.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
+
+#include <string>
+#include <memory>
 
 namespace conduit
 {
