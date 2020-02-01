@@ -109,15 +109,24 @@ namespace solid
 /// Constitutive model stress permutation when using cuda.
 using STRESS_PERMUTATION = RAJA::PERM_KJI;
 
+/// Constitutive model stiffness permutation when using cuda.
+using STIFFNESS_PERMUTATION = RAJA::PERM_KJI;
+
 #else
 
 /// Constitutive model stress permutation when not using cuda.
 using STRESS_PERMUTATION = RAJA::PERM_IJK;
 
+/// Constitutive model stiffness permutation when not using cuda.
+using STIFFNESS_PERMUTATION = RAJA::PERM_IJK;
+
 #endif
 
 /// Constitutive model stress unit stride dimension.
 static constexpr int STRESS_USD = LvArray::getStrideOneDimension( STRESS_PERMUTATION {} );
+
+/// Constitutive model stiffness unit stride dimension.
+static constexpr int STIFFNESS_USD = LvArray::getStrideOneDimension( STIFFNESS_PERMUTATION {} );
 
 } // namespace solid
 

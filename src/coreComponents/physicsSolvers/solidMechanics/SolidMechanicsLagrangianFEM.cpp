@@ -544,11 +544,6 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
     }
   );
 
-  ElementRegionManager::MaterialViewAccessor< arrayView3d<real64, solid::STRESS_USD> >
-  stress = elemManager->ConstructFullMaterialViewAccessor< array3d<real64, solid::STRESS_PERMUTATION>,
-                                                           arrayView3d<real64, solid::STRESS_USD> >( SolidBase::viewKeyStruct::stressString,
-                                                                                                     constitutiveManager);
-
   ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase>
   constitutiveRelations = elemManager->ConstructFullConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
 
@@ -581,7 +576,6 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
                                    u,
                                    vel,
                                    acc,
-                                   stress[er][esr][m_solidMaterialFullIndex],
                                    dt );
 
     }); //Element Region
@@ -623,7 +617,6 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
                                    u,
                                    vel,
                                    acc,
-                                   stress[er][esr][m_solidMaterialFullIndex],
                                    dt );
     }); //Element Region
 

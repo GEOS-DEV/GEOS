@@ -69,6 +69,7 @@ public:
 
   //**** CONSTRUCTORS AND DESTRUCTORS *****************************************
   /// default constructor
+  GEOSX_HOST_DEVICE
   R2SymTensorT(void);
 
   /**
@@ -182,6 +183,8 @@ public:
   void AijAkj_plus_Aik_plus_Aki(const R2TensorT< T_dim >& A);
   void AjiAjk_plus_Aik_plus_Aki(const R2TensorT< T_dim >& A);
   void AijAkj_m_Aik_m_Aki(const R2TensorT< T_dim >& A);
+
+  GEOSX_HOST_DEVICE
   void QijAjkQlk(const R2SymTensorT& A, const R2TensorT< T_dim >& Q);
 
   void dyadic_aa(const R1TensorT< T_dim >& a);
@@ -289,6 +292,7 @@ void R2SymTensorT< T_dim >::print(std::ostream& os) const
 }
 
 template<int T_dim>
+GEOSX_HOST_DEVICE
 R2SymTensorT< T_dim >::R2SymTensorT(void):
   TensorBaseT< SIZE > ()
 {}
@@ -1213,6 +1217,7 @@ inline void R2SymTensorT< T_dim >::AijAkj_m_Aik_m_Aki(const R2TensorT< T_dim >& 
  * matrix.
  */
 template<int T_dim>
+GEOSX_HOST_DEVICE
 inline void R2SymTensorT< T_dim >::QijAjkQlk(const R2SymTensorT< T_dim >& A, const R2TensorT< T_dim >& Q)
 {
 //  if (T_dim == 2)

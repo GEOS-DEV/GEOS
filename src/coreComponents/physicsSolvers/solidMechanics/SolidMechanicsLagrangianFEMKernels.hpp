@@ -188,9 +188,11 @@ struct ExplicitKernel
           arrayView2d<real64 const, nodes::TOTAL_DISPLACEMENT_USD> const & u,
           arrayView2d<real64 const, nodes::VELOCITY_USD> const & vel,
           arrayView2d<real64, nodes::ACCELERATION_USD> const & acc,
-          arrayView3d<real64 const, solid::STRESS_USD> const & stress,
           real64 const dt )
   {
+
+    typename CONSTITUTIVE_TYPE::KernelWrapper const & constitutive = constitutiveRelation->createKernelWrapper();
+
     forall_in_set<serialPolicy>( elementList.values(),
                                  elementList.size(),
                                  GEOSX_LAMBDA ( localIndex const k )
@@ -237,9 +239,12 @@ struct ExplicitKernel
         R2SymTensor Dadt;
         HughesWinget(Rot, Dadt, Ldt);
 
-        constitutiveRelation->StateUpdatePoint( k, q, Dadt, Rot, 0);
+//        real64 const * const pDadt = Dadt.Data();
+//        real64 const Ddt[6] = { pDadt[0], pDadt[2], pDadt[5], pDadt[4], pDadt[3], pDadt[1] };
 
-        Integrate<NUM_NODES_PER_ELEM>( stress[k][q], dNdX[k][q], detJ[k][q], detF, fInv, f_local );
+        constitutive.HypoElastic( k, q, Dadt.Data(), Rot );
+
+        Integrate<NUM_NODES_PER_ELEM>( constitutive.m_stress[k][q], dNdX[k][q], detJ[k][q], detF, fInv, f_local );
       }//quadrature loop
      
       for( localIndex a = 0 ; a < NUM_NODES_PER_ELEM ; ++a )

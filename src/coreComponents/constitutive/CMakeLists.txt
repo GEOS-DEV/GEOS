@@ -27,6 +27,7 @@ set( constitutive_headers
      fluid/ParticleFluid.hpp          
      solid/LinearElasticAnisotropic.hpp
      solid/LinearElasticIsotropic.hpp
+     solid/LinearElasticTransverseIsotropic.hpp
      solid/PoroElastic.hpp
      solid/PoreVolumeCompressibleSolid.hpp
      solid/SolidBase.hpp
@@ -66,6 +67,7 @@ set( constitutive_sources
      fluid/ParticleFluid.cpp               
      solid/LinearElasticAnisotropic.cpp
      solid/LinearElasticIsotropic.cpp
+     solid/LinearElasticTransverseIsotropic.cpp
      solid/PoroElastic.cpp
      solid/PoreVolumeCompressibleSolid.cpp
      solid/SolidBase.cpp
