@@ -291,9 +291,6 @@ private:
 
   MPI_Status m_mpiSendBufferStatus[maxComm];
   MPI_Status m_mpiRecvBufferStatus[maxComm];
-
-  MPI_Status m_mpiSendSizeStatus[maxComm];
-  MPI_Status m_mpiRecvSizeStatus[maxComm];
 };
 
 
