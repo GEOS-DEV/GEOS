@@ -765,45 +765,6 @@ localIndex Unpack( buffer_unit_type const * & buffer,
   return sizeOfUnpackedChars;
 }
 
-template< typename SORTED >
-inline
-localIndex Unpack( buffer_unit_type const * & buffer,
-                   ArrayOfSets< localIndex > & var,
-                   localIndex const setIndex,
-                   set< localIndex > & mappedLocalIndices,
-                   set< globalIndex > & unmappedGlobalIndices,
-                   mapBase< globalIndex, localIndex, SORTED > const & globalToLocalMap,
-                   bool const clearExistingSet )
-{
-  if( clearExistingSet )
-  {
-    var.clearSet( setIndex );
-  }
-  localIndex set_length;
-  localIndex sizeOfUnpackedChars = Unpack( buffer, set_length );
-  mappedLocalIndices.reserve( set_length );
-  unmappedGlobalIndices.reserve( set_length );
-  mappedLocalIndices.clear();
-  unmappedGlobalIndices.clear();
-
-  for( localIndex a=0 ; a<set_length ; ++a )
-  {
-    globalIndex temp;
-    sizeOfUnpackedChars += Unpack( buffer, temp );
-    auto iter = globalToLocalMap.find( temp );
-    if( iter == globalToLocalMap.end() )
-    {
-      unmappedGlobalIndices.insert( temp );
-    }
-    else
-    {
-      mappedLocalIndices.insert( iter->second );
-    }
-  }
-
-  return sizeOfUnpackedChars;
-}
-
 template< bool DO_PACKING >
 localIndex Pack( buffer_unit_type * & buffer,
                  set< localIndex > const & var,
