@@ -617,7 +617,8 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer
     globalIndex_array globalIndices;
     unpackedSize += bufferOps::Unpack( buffer, globalIndices );
     localIndex numNewIndices = 0;
-    globalIndex_array newGlobalIndices( numUnpackedIndices );
+    globalIndex_array newGlobalIndices;
+    newGlobalIndices.reserve( numUnpackedIndices );
     localIndex const oldSize = this->size();
     for( localIndex a = 0 ; a < numUnpackedIndices ; ++a )
     {
@@ -634,7 +635,7 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer
 
         unpackedLocalIndices(a) = newLocalIndex;
 
-        newGlobalIndices[numNewIndices] = globalIndices[a];
+        newGlobalIndices.push_back(globalIndices[a]);
 
         ++numNewIndices;
 
