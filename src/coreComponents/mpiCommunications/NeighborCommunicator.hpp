@@ -147,16 +147,72 @@ public:
 
   void MPI_WaitAll( int const commID );
 
+  /**
+   * @brief Post a non-blocking recieve for the buffer size
+   *        information for a later call to PostRecv.
+   * @note Get the receive MPI_Request by calling
+   *       GetSizeRecvRequest with the same CommID
+   * @param commID The identifier for the pseudo-comm
+   *               the communication is taking place in
+   * @return The return code from the interal call to
+   *         MPI_iRecv.
+   */
   int PostSizeRecv( int const commID );
 
+  /**
+   * @brief Get the MPI_Request associated with the last
+   *        size-recieve request.
+   * @param commID The identifier for the pseudo-comm
+   *               the communication is taking place in.
+   * @return The MPI_Request for the size receive
+   */
   MPI_Request GetSizeRecvRequest( int const commID );
 
+  /**
+   * @brief Post a non-blocking send for the buffer
+   *        size information so the neighbor knows
+   *        how much data it will recieve from a
+   *        subsequent call to PostSend.
+   * @param commID The identifier for the pseudo-comm
+   *               the communication is taking place in.
+   * @return The return code from the internal call to
+   *         MPI_iSend.
+   */
   int PostSizeSend( int const commID );
 
+  /**
+   * @brief Post a non-blocking receive for the actual
+   *        information being recieved from the neighbor.
+   * @note Get the receive request by calling GetRecvRequest
+   *       with the same commID.
+   * @note Make sure the request for any required size recvs
+   *       has completed prior to calling this function, as
+   *       it uses the size recv information to resize the
+   *       internal recv buffer.
+   * @param commID The identifier for the pseudo-comm
+   *               the communication is taking place in.
+   * @return The return code from the internal call to
+   *         MPI_iRecv.
+   */
   int PostRecv( int const commID );
 
+  /**
+   * @brief Get the MPI_Request associated with the last
+   *        recieve request posted.
+   * @param commID The identifier for the pseudo-comm
+   *               the communication is taking place in.
+   * @return The MPI_Request for the receive.
+   */
   MPI_Request GetRecvRequest( int const commID );
 
+  /**
+   * @brief Post a non-blocking send for the actual information
+   *        being sent to the neighboring rank.
+   * @param commID The identifier for the pseudo-comm
+   *               the communication is taking place in.
+   * @return The return code from the internal call to
+   *         MPI_iSend.
+   */
   int PostSend( int const commID );
 
   /**

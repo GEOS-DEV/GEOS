@@ -48,9 +48,10 @@ public:
    virtual const string getCatalogName() const override final
    { return EdgeManager::CatalogName(); }
 
-
    ///@}
 
+   static inline localIndex GetUpDownMapOverallocation( localIndex GEOSX_UNUSED_ARG( dim ) )
+   { return 4; }
 
   EdgeManager( std::string const & name,
                Group * const parent );

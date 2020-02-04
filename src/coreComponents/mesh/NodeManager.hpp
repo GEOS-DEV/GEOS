@@ -58,6 +58,9 @@ public:
   using ElemMapType = OrderedVariableToManyElementRelation;
   //END_SPHINX_INCLUDE_01
 
+  static inline localIndex GetUpDownMapOverallocation( localIndex GEOSX_UNUSED_ARG( dim ) )
+  { return 4; }
+
   /**
    * @brief main constructor for NodeManager Objects
    * @param name the name of this instantiation of NodeManager in the repository

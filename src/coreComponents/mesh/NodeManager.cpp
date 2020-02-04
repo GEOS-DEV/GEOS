@@ -103,7 +103,7 @@ void NodeManager::SetEdgeMaps( EdgeManager const * const edgeManager )
   m_toEdgesRelation.reserve( totalNodeEdges.get() );
   for ( localIndex nodeID = 0; nodeID < numNodes; ++nodeID )
   {
-    m_toEdgesRelation.appendSet( toEdgesTemp.sizeOfArray( nodeID ) + 4 );
+    m_toEdgesRelation.appendSet( toEdgesTemp.sizeOfArray( nodeID ) + NodeManager::GetUpDownMapOverallocation( 1 ) );
   }
 
   ArrayOfSetsView< localIndex > const & toEdgesView = m_toEdgesRelation;
@@ -149,7 +149,7 @@ void NodeManager::SetFaceMaps( FaceManager const * const faceManager )
   m_toFacesRelation.reserve( totalNodeFaces.get() );
   for ( localIndex nodeID = 0; nodeID < numNodes; ++nodeID )
   {
-    m_toFacesRelation.appendSet( toFacesTemp.sizeOfArray( nodeID ) + 4 );
+    m_toFacesRelation.appendSet( toFacesTemp.sizeOfArray( nodeID ) + NodeManager::GetUpDownMapOverallocation( 2 ) );
   }
 
   forall_in_range< parallelHostPolicy >( 0, numNodes, [&]( localIndex const nodeID )
