@@ -186,70 +186,31 @@ public:
   /**
    * Wait on MPI_Requests to complete on at a time and trigger a callback to
    *  process the completion.
-   *  @param count The number of MPI_Requests being processed.
-   *  @param array_of_requests The MPI_Requests to actively wait on.
-   *  @param func A callable object accepting an integer denoting the MPI_Request index
+   * @param[in] count The number of MPI_Requests being processed.
+   * @param[inout] array_of_requests The MPI_Requests to actively wait on.
+   * @param[in] func A callable object accepting an integer denoting the MPI_Request index
    *              which has completed.
-   *  @return MPI_SUCCESS or an MPI_ERROR returned by internal calls to MPI_WaitAny.
+   * @return MPI_SUCCESS or an MPI_ERROR returned by internal calls to MPI_WaitAny.
    */
-  static int ActiveWaitAny( const int count, MPI_Request array_of_requests[], std::function< void ( int ) > func )
-  {
-    int cmp = 0;
-    while( cmp < count )
-    {
-      int idx = 0;
-      MPI_Status stat;
-      int err = Waitany( count, array_of_requests, &idx, &stat );
-      if( err != MPI_SUCCESS ) return err;
-      if( idx != MPI_UNDEFINED ) // only if all(requests == MPI_REQUEST_NULL)
-      {
-        func( idx );
-      }
-      cmp++;
-    }
-    return MPI_SUCCESS;
-  }
+  static int ActiveWaitAny( const int count, MPI_Request array_of_requests[], std::function< void ( int ) > func );
 
   /**
    * Wait on MPI_Requests to complete on or more at a time and trigger a callback to
    *  process the completion.
-   *  @param count The number of MPI_Requests being processed.
-   *  @param array_of_requests The MPI_Requests to actively wait on.
-   *  @param func A callable object accepting an integer denoting the MPI_Request index
+   * @param[in] count The number of MPI_Requests being processed.
+   * @param[inout] array_of_requests The MPI_Requests to actively wait on.
+   * @param[in] func A callable object accepting an integer denoting the MPI_Request index
    *              which has completed.
-   *  @return MPI_SUCCESS or an MPI_ERROR returned by internal calls to MPI_WaitSome.
+   * @return MPI_SUCCESS or an MPI_ERROR returned by internal calls to MPI_WaitSome.
    */
-  static int ActiveWaitSome( const int count, MPI_Request array_of_requests[], std::function< void ( int ) > func )
-  {
-    int cmp = 0;
-    while( cmp < count )
-    {
-      int rcvd = 0;
-      std::vector< int > indices( count, -1 );
-      std::vector< MPI_Status > stats( count );
-      int err = Waitsome( count, array_of_requests, &rcvd, &indices[0], &stats[0] );
-      if( err != MPI_SUCCESS ) return err;
-      if( rcvd > 0 )
-      {
-        for( int ii = 0 ; ii < rcvd ; ++ii )
-        {
-          if( indices[ii] != MPI_UNDEFINED )
-          {
-            func( indices[ii] );
-          }
-        }
-      }
-      cmp += rcvd;
-    }
-    return MPI_SUCCESS;
-  }
+  static int ActiveWaitSome( const int count, MPI_Request array_of_requests[], std::function< void ( int ) > func );
 
   /**
    * Active non-blocking phased communication with multiple participants,
    *  each participant in each phase cannot depend on the previous phases
    *  being complete for any participant other than itself.
-   * @param participants The number of participants in each phase
-   * @param phases A vector of function objects taking int and returning MPI_Requests
+   * @param[in] participants The number of participants in each phase
+   * @param[in] phases A vector of function objects taking int and returning MPI_Requests
    *               denoting the state of that participant in that phase.
    * @note The only restriction on phase[N](index) being called is that phase[N-1](index)
    *       has been called and the MPI_Request returned by that call has completed.
@@ -257,29 +218,14 @@ public:
    * @return MPI_SUCCESS or and MPI_ERROR from internal calls to MPI_WaitAny.
    */
   static int ActiveWaitSomePartialPhase( const int participants,
-                                         std::vector< std::function< MPI_Request ( int ) > > & phases )
-  {
-    const int num_phases = sizeof(phases.size());
-    std::vector< MPI_Request > phase_requests( participants * num_phases, MPI_REQUEST_NULL );
-    for( int idx = 0 ; idx < participants ; ++idx )
-    {
-      phase_requests[idx] = phases[0]( idx );
-    }
-    auto phase_invocation = [&] ( int idx )
-      {
-        int phase = (idx / participants) + 1;
-        int phase_idx = idx % participants;
-        phase_requests[idx + participants] = phases[phase]( phase_idx );
-      };
-    return ActiveWaitSome( participants * num_phases, &phase_requests[0], phase_invocation );
-  }
+                                         std::vector< std::function< MPI_Request ( int ) > > & phases );
 
   /**
    * Active non-blocking phased communication with multiple participants,
    *  each participant in each phase may depend on the previous phases
    *  being fully complete prior to entry into a subsequent phase.
-   * @param participants The number of participants in each phase
-   * @param phases A vector of function objects taking int and returning MPI_Requests
+   * @param[in] participants The number of participants in each phase
+   * @param[in] phases A vector of function objects taking int and returning MPI_Requests
    *               denoting the state of that participant in that phase.
    * @note The restriction on phase[N](index) being called is that phase[N-1](0 - (particpants-1))
    *       have all been called and the MPI_Requests from those calls have all been completed.
@@ -287,24 +233,7 @@ public:
    * @return MPI_SUCCESS or and MPI_ERROR from internal calls to MPI_WaitAny.
    */
   static int ActiveWaitSomeCompletePhase( const int participants,
-                                          std::vector< std::function< MPI_Request ( int ) > > & phases )
-  {
-    const int num_phases = phases.size();
-    std::vector< MPI_Request > phase_requests( num_phases * participants, MPI_REQUEST_NULL );
-    for( int idx = 0 ; idx < participants ; ++idx )
-    {
-      phase_requests[idx] = phases[0]( idx );
-    }
-    int err = 0;
-    for( int phase = 1 ; phase < num_phases ; ++phase )
-    {
-      int prev_phase = phase - 1;
-      auto phase_wrapper = [&] ( int idx ) { phase_requests[ ( phase * participants ) + idx ] = phases[phase]( idx ); };
-      err = ActiveWaitSome( participants, &phase_requests[prev_phase * participants], phase_wrapper );
-      if( err != MPI_SUCCESS ) break;
-    }
-    return err;
-  }
+                                          std::vector< std::function< MPI_Request ( int ) > > & phases );
 
   ///@}
 
