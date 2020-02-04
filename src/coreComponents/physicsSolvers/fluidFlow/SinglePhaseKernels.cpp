@@ -13,15 +13,15 @@
  */
 
 /**
- * @file SinglePhaseFlowKernels.cpp
+ * @file SinglePhaseKernels.cpp
  */
 
-#include "SinglePhaseFlowKernels.hpp"
+#include "SinglePhaseKernels.hpp"
 
 namespace geosx
 {
 
-namespace SinglePhaseFlowKernels
+namespace SinglePhaseKernels
 {
 
 /******************************** MobilityKernel ********************************/
@@ -138,19 +138,23 @@ void FluxKernel::
 Launch<CellElementStencilTPFA>( CellElementStencilTPFA const & stencil,
                                 real64 const dt,
                                 localIndex const fluidIndex,
-                                integer const gravityFlag,
                                 FluxKernel::ElementView< arrayView1d<globalIndex> > const & dofNumber,
                                 FluxKernel::ElementView < arrayView1d<real64 const> > const & pres,
                                 FluxKernel::ElementView < arrayView1d<real64 const> > const & dPres,
-                                FluxKernel::ElementView < arrayView1d<real64 const> > const & gravDepth,
+                                FluxKernel::ElementView < arrayView1d<real64 const> > const & gravCoef,
                                 FluxKernel::MaterialView< arrayView2d<real64 const> > const & dens,
                                 FluxKernel::MaterialView< arrayView2d<real64 const> > const & dDens_dPres,
                                 FluxKernel::ElementView < arrayView1d<real64 const> > const & mob,
                                 FluxKernel::ElementView < arrayView1d<real64 const> > const & dMob_dPres,
                                 FluxKernel::ElementView < arrayView1d<real64 const> > const &,
                                 FluxKernel::ElementView < arrayView1d<real64 const> > const &,
+#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+                                FluxKernel::ElementView < arrayView1d<real64 const> > const &,
+                                FluxKernel::ElementView < arrayView1d<real64 const> > const &,
+#endif
                                 ParallelMatrix * const jacobian,
-                                ParallelVector * const residual )
+                                ParallelVector * const residual,
+                                CRSMatrixView<real64,localIndex,localIndex const > const & )
 {
   constexpr localIndex maxNumFluxElems = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
   constexpr localIndex numFluxElems = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
@@ -178,13 +182,12 @@ Launch<CellElementStencilTPFA>( CellElementStencilTPFA const & stencil,
                          weights[iconn],
                          pres,
                          dPres,
-                         gravDepth,
+                         gravCoef,
                          dens,
                          dDens_dPres,
                          mob,
                          dMob_dPres,
                          fluidIndex,
-                         gravityFlag,
                          dt,
                          localFlux,
                          localFluxJacobian );
@@ -217,19 +220,23 @@ void FluxKernel::
 Launch<FaceElementStencil>( FaceElementStencil const & stencil,
                             real64 const dt,
                             localIndex const fluidIndex,
-                            integer const gravityFlag,
                             FluxKernel::ElementView < arrayView1d<globalIndex const> > const & dofNumber,
                             FluxKernel::ElementView < arrayView1d<real64 const> > const & pres,
                             FluxKernel::ElementView < arrayView1d<real64 const> > const & dPres,
-                            FluxKernel::ElementView < arrayView1d<real64 const> > const & gravDepth,
+                            FluxKernel::ElementView < arrayView1d<real64 const> > const & gravCoef,
                             FluxKernel::MaterialView< arrayView2d<real64 const> > const & dens,
                             FluxKernel::MaterialView< arrayView2d<real64 const> > const & dDens_dPres,
                             FluxKernel::ElementView < arrayView1d<real64 const> > const & mob,
                             FluxKernel::ElementView < arrayView1d<real64 const> > const & dMob_dPres,
                             FluxKernel::ElementView < arrayView1d<real64 const> > const & aperture0,
                             FluxKernel::ElementView < arrayView1d<real64 const> > const & aperture,
+#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+                            FluxKernel::ElementView < arrayView1d<real64 const> > const & s,
+                            FluxKernel::ElementView < arrayView1d<real64 const> > const & dSdAper,
+#endif
                             ParallelMatrix * const jacobian,
-                            ParallelVector * const residual )
+                            ParallelVector * const residual,
+                            CRSMatrixView<real64,localIndex,localIndex const > const & dR_dAper )
 {
   constexpr localIndex maxNumFluxElems = FaceElementStencil::NUM_POINT_IN_FLUX;
   constexpr localIndex maxStencilSize = FaceElementStencil::MAX_STENCIL_SIZE;
@@ -240,6 +247,23 @@ Launch<FaceElementStencil>( FaceElementStencil const & stencil,
   typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
   typename FaceElementStencil::WeightContainerViewConstType const & weights = stencil.getWeights();
 
+//  {
+//    localIndex const numRows = dR_dAper.numRows();
+//    for( localIndex ei=0 ; ei<numRows ; ++ei )
+//    {
+//      localIndex const numColumns = dR_dAper.numNonZeros(ei);
+//      arraySlice1d<localIndex const> const & columns = dR_dAper.getColumns( ei );
+//      arraySlice1d<real64 const> const & values = dR_dAper.getEntries( ei );
+//
+//      for( localIndex kfe2=0 ; kfe2<numColumns ; ++kfe2 )
+//      {
+//        real64 dRdAper = values[kfe2];
+//        localIndex const ei2 = columns[kfe2];
+//        GEOS_LOG_RANK( "dR_dAper("<<ei<<", "<<ei2<<") = "<<dRdAper );
+//      }
+//    }
+//  }
+
   forall_in_range<serialPolicy>( 0, stencil.size(), GEOSX_LAMBDA ( localIndex iconn )
   {
     localIndex const numFluxElems = stencil.stencilSize(iconn);
@@ -248,6 +272,9 @@ Launch<FaceElementStencil>( FaceElementStencil const & stencil,
     // working arrays
     stackArray1d<globalIndex, maxNumFluxElems> eqnRowIndices(numFluxElems);
     stackArray1d<globalIndex, maxStencilSize> dofColIndices(stencilSize);
+
+    stackArray1d<localIndex, maxNumFluxElems> localRowIndices(numFluxElems);
+    stackArray1d<localIndex, maxNumFluxElems> localColIndices(numFluxElems);
 
     stackArray1d<real64, maxNumFluxElems> localFlux(numFluxElems);
     stackArray2d<real64, maxNumFluxElems*maxStencilSize> localFluxJacobian(numFluxElems, stencilSize);
@@ -264,15 +291,18 @@ Launch<FaceElementStencil>( FaceElementStencil const & stencil,
                                  weights[iconn],
                                  pres[er][esr],
                                  dPres[er][esr],
-                                 gravDepth[er][esr],
+                                 gravCoef[er][esr],
                                  dens[er][esr][fluidIndex],
                                  dDens_dPres[er][esr][fluidIndex],
                                  mob[er][esr],
                                  dMob_dPres[er][esr],
                                  aperture0[er][esr],
                                  aperture[er][esr],
+#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+                                 s[er][esr],
+                                 dSdAper[er][esr],
+#endif
                                  fluidIndex,
-                                 gravityFlag,
                                  dt,
                                  localFlux,
                                  localFluxJacobian,
@@ -283,11 +313,13 @@ Launch<FaceElementStencil>( FaceElementStencil const & stencil,
     for (localIndex i = 0; i < numFluxElems; ++i)
     {
       eqnRowIndices[i] = dofNumber[seri(iconn,i)][sesri(iconn,i)][sei(iconn,i)];
+      localRowIndices[i] = sei(iconn,i);
     }
 
     for (localIndex i = 0; i < stencilSize; ++i)
     {
       dofColIndices[i] = dofNumber[seri(iconn,i)][sesri(iconn,i)][sei(iconn,i)];
+      localColIndices[i] = sei(iconn,i);
     }
 
     addLocalContributionsToGlobalSystem( numFluxElems,
@@ -298,12 +330,44 @@ Launch<FaceElementStencil>( FaceElementStencil const & stencil,
                                          localFlux.data(),
                                          jacobian,
                                          residual );
+
+//    for( localIndex a=0 ;a<numFluxElems ; ++a )
+//    {
+//      for( localIndex b=0 ; b<stencilSize ; ++b )
+//      {
+//        GEOS_LOG_RANK("dFlux_dAper("<<localRowIndices[a]<<", "<<localColIndices[b]<<") = "<<dFlux_dAper(a,b) );
+//      }
+//    }
+    for( localIndex row=0 ; row<numFluxElems ; ++row )
+    {
+      dR_dAper.addToRowBinarySearch( localRowIndices[row],
+                                     localColIndices.data(),
+                                     dFlux_dAper.data() + (stencilSize * row),
+                                     stencilSize );
+    }
+
   } );
+
+//  localIndex const numRows = dR_dAper.numRows();
+//  for( localIndex ei=0 ; ei<numRows ; ++ei )
+//  {
+//    localIndex const numColumns = dR_dAper.numNonZeros(ei);
+//    arraySlice1d<localIndex const> const & columns = dR_dAper.getColumns( ei );
+//    arraySlice1d<real64 const> const & values = dR_dAper.getEntries( ei );
+//
+//    for( localIndex kfe2=0 ; kfe2<numColumns ; ++kfe2 )
+//    {
+//      real64 dRdAper = values[kfe2];
+//      localIndex const ei2 = columns[kfe2];
+//      GEOS_LOG_RANK( "dR_dAper("<<ei<<", "<<ei2<<") = "<<dRdAper );
+//    }
+//  }
+
 }
 
 
 
 
-} // namespace SinglePhaseFlowKernels
+} // namespace SinglePhaseKernels
 
 } // namespace geosx

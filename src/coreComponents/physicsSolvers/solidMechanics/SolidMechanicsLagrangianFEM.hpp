@@ -115,13 +115,6 @@ public:
              DofManager & dofManager ) const override;
 
   virtual void
-  SetupSystem( DomainPartition * const domain,
-               DofManager & dofManager,
-               ParallelMatrix & matrix,
-               ParallelVector & rhs,
-               ParallelVector & solution ) override;
-
-  virtual void
   AssembleSystem( real64 const time,
                   real64 const dt,
                   DomainPartition * const domain,
@@ -259,7 +252,7 @@ public:
                                arrayView1d< R1Tensor const > const & uhat,
                                arrayView1d< R1Tensor const > const & vtilde,
                                arrayView1d< R1Tensor const > const & uhattilde,
-                               arrayView1d< real64 const > const & density,
+                               arrayView2d< real64 const > const & density,
                                arrayView1d< real64 const > const & fluidPressure,
                                arrayView1d< real64 const > const & deltaFluidPressure,
                                arrayView1d< real64 const > const & biotCoefficient,
@@ -268,10 +261,12 @@ public:
                                real64 const massDamping,
                                real64 const newmarkBeta,
                                real64 const newmarkGamma,
+                               R1Tensor const & gravityVector,
                                DofManager const * const dofManager,
                                ParallelMatrix * const matrix,
                                ParallelVector * const rhs ) const
   {
+    GEOSX_MARK_FUNCTION;
     using ImplicitKernel = SolidMechanicsLagrangianFEMKernels::ImplicitKernel;
     return SolidMechanicsLagrangianFEMKernels::
            ElementKernelLaunchSelector<ImplicitKernel>( NUM_NODES_PER_ELEM,
@@ -298,6 +293,7 @@ public:
                                                         massDamping,
                                                         newmarkBeta,
                                                         newmarkGamma,
+                                                        gravityVector,
                                                         dofManager,
                                                         matrix,
                                                         rhs );
@@ -381,6 +377,7 @@ public:
     static constexpr auto contactRelationNameString = "contactRelationName";
     static constexpr auto noContactRelationNameString = "NOCONTACT";
     static constexpr auto contactForceString = "contactForce";
+    static constexpr auto maxForce = "maxForce";
 
     dataRepository::ViewKey vTilde = { vTildeString };
     dataRepository::ViewKey uhatTilde = { uhatTildeString };
