@@ -210,7 +210,7 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
   FiniteElementDiscretizationManager const * const feDiscretizationManager =
     numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
 
-  ConstitutiveManager * const constitutiveManager = domain->GetConstitutiveManager();
+  ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
 
   arrayView1d<R1Tensor> const & X = nodeManager->getReference<r1_array>(nodeManager->viewKeys.referencePosition);
   arrayView1d<R1Tensor> const & u = nodeManager->getReference<r1_array>(keys::TotalDisplacement);
@@ -252,7 +252,7 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
   ElementRegionManager::MaterialViewAccessor<real64> const biotCoefficient =
     elemManager->ConstructFullMaterialViewAccessor<real64>( "BiotCoefficient", constitutiveManager);
 
-  localIndex const solidIndex = domain->GetConstitutiveManager()->GetConstitutiveRelation(fluidSolver.solidIndex() )->getIndexInParent();
+  localIndex const solidIndex = domain->getConstitutiveManager()->GetConstitutiveRelation(fluidSolver.solidIndex() )->getIndexInParent();
 
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
   {

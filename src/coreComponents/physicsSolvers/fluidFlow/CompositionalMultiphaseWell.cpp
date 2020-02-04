@@ -106,7 +106,7 @@ void CompositionalMultiphaseWell::InitializePreSubGroups( Group * const rootGrou
   
   DomainPartition * const domain = rootGroup->GetGroup<DomainPartition>( keys::domain );
 
-  ConstitutiveManager const * const cm = domain->GetConstitutiveManager();
+  ConstitutiveManager const * const cm = domain->getConstitutiveManager();
 
   RelativePermeabilityBase const * relPerm = cm->GetConstitutiveRelation<RelativePermeabilityBase>( m_resRelPermName );
   GEOSX_ERROR_IF( relPerm == nullptr, "Relative permeability model " + m_resRelPermName + " not found" );
@@ -1267,9 +1267,9 @@ void CompositionalMultiphaseWell::ResetViews(DomainPartition * const domain)
 {
   WellSolverBase::ResetViews(domain);
 
-  MeshLevel * const mesh = domain->getMeshBody(0)->getMeshLevel(0 );
+  MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager * const elemManager = mesh->getElemManager();
-  ConstitutiveManager * const constitutiveManager = domain->GetConstitutiveManager();
+  ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
 
   m_resPressure =
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::pressureString );

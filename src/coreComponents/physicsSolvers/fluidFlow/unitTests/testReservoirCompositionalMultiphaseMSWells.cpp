@@ -56,7 +56,7 @@ void testMixtureDensityNumericalDerivatives( CompositionalMultiphaseWell * solve
   MeshLevel * mesh = domain->getMeshBody(0)->getMeshLevel(0);
   ElementRegionManager * elemManager = mesh->getElemManager();
 
-  ConstitutiveManager * constitutiveManager = domain->GetConstitutiveManager();
+  ConstitutiveManager * constitutiveManager = domain->getConstitutiveManager();
   CompositionalMultiphaseFlow * flowSolver = solver->getParent()->GetGroup("compositionalMultiphaseFlow")->group_cast<CompositionalMultiphaseFlow*>();
 
   MultiFluidBase * fluid = constitutiveManager->GetGroup<MultiFluidBase>( flowSolver->fluidIndex() );

@@ -66,9 +66,9 @@ if( ENABLE_MPI )
 endif()
 
 if( BUILD_OBJ_LIBS )
-    set( dependencyList dataRepository fileIO optionparser RAJA linearAlgebra )
+  set( dependencyList dataRepository fileIO optionparser RAJA linearAlgebra )
 else()
- set( dependencyList common codingUtilities optionparser mpiCommunications finiteElement physicsSolvers finiteVolume )
+  set( dependencyList common codingUtilities optionparser mpiCommunications finiteElement physicsSolvers finiteVolume )
 endif()
 
 if( ENABLE_MATHPRESSO )

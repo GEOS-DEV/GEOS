@@ -96,8 +96,8 @@ public:
                               const realT problemTime,
                               const bool isRestart );
 
-  constitutive::ConstitutiveManager const * GetConstitutiveManager() const ;
-  constitutive::ConstitutiveManager * GetConstitutiveManager() ;
+  constitutive::ConstitutiveManager const * getConstitutiveManager() const ;
+  constitutive::ConstitutiveManager * getConstitutiveManager() ;
 
   Group const * getMeshBodies() const ;
   Group * getMeshBodies() ;

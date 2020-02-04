@@ -119,7 +119,7 @@ void FlowSolverBase::InitializePreSubGroups(Group * const rootGroup)
   SolverBase::InitializePreSubGroups(rootGroup);
 
   DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
-  ConstitutiveManager * const cm = domain->GetConstitutiveManager();
+  ConstitutiveManager * const cm = domain->getConstitutiveManager();
 
   ConstitutiveBase const * fluid  = cm->GetConstitutiveRelation<ConstitutiveBase>( m_fluidName );
   GEOSX_ERROR_IF( fluid == nullptr, "Fluid model " + m_fluidName + " not found" );

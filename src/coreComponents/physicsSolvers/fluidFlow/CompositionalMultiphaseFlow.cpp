@@ -145,7 +145,7 @@ void CompositionalMultiphaseFlow::InitializePreSubGroups( Group * const rootGrou
   FlowSolverBase::InitializePreSubGroups( rootGroup );
 
   DomainPartition * const domain = rootGroup->GetGroup<DomainPartition>( keys::domain );
-  ConstitutiveManager const * const cm = domain->GetConstitutiveManager();
+  ConstitutiveManager const * const cm = domain->getConstitutiveManager();
 
   MultiFluidBase const * fluid = cm->GetConstitutiveRelation<MultiFluidBase>( m_fluidName );
   m_numPhases     = fluid->numFluidPhases();
@@ -575,7 +575,7 @@ void CompositionalMultiphaseFlow::InitializePostInitialConditions_PreSubGroups( 
 
   CommunicationTools::SynchronizeFields( fieldNames, mesh, comms );
 
-  ConstitutiveManager * const constitutiveManager = domain->GetConstitutiveManager();
+  ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
 
   // set mass fraction flag on main model
   // TODO find a way to set this before constitutive model is duplicated and attached to subregions?
@@ -1560,7 +1560,7 @@ void CompositionalMultiphaseFlow::ResetViews( DomainPartition * const domain )
 
   MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager * const elemManager = mesh->getElemManager();
-  ConstitutiveManager * const constitutiveManager = domain->GetConstitutiveManager();
+  ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
 
   m_pressure =
     elemManager->ConstructViewAccessor< array1d<real64>, arrayView1d<real64> >( viewKeyStruct::pressureString );

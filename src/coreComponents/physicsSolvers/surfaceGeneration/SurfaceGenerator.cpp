@@ -2909,12 +2909,12 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
   arrayView1d<localIndex> const &
   parentNodeIndices = nodeManager.getReference<array1d<localIndex>>( nodeManager.viewKeys.parentIndex );
 
-  ConstitutiveManager const * const cm = domain->GetConstitutiveManager();
+  ConstitutiveManager const * const cm = domain->getConstitutiveManager();
   ConstitutiveBase const * const solid  = cm->GetConstitutiveRelation<ConstitutiveBase>( m_solidMaterialName );
   GEOSX_ERROR_IF( solid == nullptr, "constitutive model " + m_solidMaterialName + " not found" );
   m_solidMaterialFullIndex = solid->getIndexInParent();
 
-  ConstitutiveManager * const constitutiveManager = domain->GetConstitutiveManager() ;
+  ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager() ;
 
   ElementRegionManager::MaterialViewAccessor< arrayView1d<real64> > const shearModulus =
       elementManager.ConstructFullMaterialViewAccessor< array1d<real64>, arrayView1d<real64> >( "ShearModulus", constitutiveManager);
@@ -3737,12 +3737,12 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition * domain,
 
   array1d<R1Tensor> const & X = nodeManager.referencePosition();
 
-  ConstitutiveManager const * const cm = domain->GetConstitutiveManager();
+  ConstitutiveManager const * const cm = domain->getConstitutiveManager();
   ConstitutiveBase const * const solid  = cm->GetConstitutiveRelation<ConstitutiveBase>( m_solidMaterialName );
   GEOSX_ERROR_IF( solid == nullptr, "constitutive model " + m_solidMaterialName + " not found" );
   m_solidMaterialFullIndex = solid->getIndexInParent();
 
-  ConstitutiveManager * const constitutiveManager = domain->GetConstitutiveManager() ;
+  ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager() ;
 
   ElementRegionManager::MaterialViewAccessor< arrayView1d<real64> > const shearModulus =
       elementManager.ConstructFullMaterialViewAccessor< array1d<real64>, arrayView1d<real64> >( "ShearModulus", constitutiveManager);

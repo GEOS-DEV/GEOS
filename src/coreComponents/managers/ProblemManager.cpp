@@ -548,7 +548,7 @@ void ProblemManager::SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
   bcManager.GenerateDataStructureSkeleton(0);
   SchemaUtilities::SchemaConstruction(&bcManager, schemaRoot, targetChoiceNode, documentationType);
 
-  ConstitutiveManager * constitutiveManager = domain->GetConstitutiveManager();
+  ConstitutiveManager * constitutiveManager = domain->getConstitutiveManager();
   SchemaUtilities::SchemaConstruction(constitutiveManager, schemaRoot, targetChoiceNode, documentationType);
 
   MeshManager * meshManager = this->GetGroup<MeshManager>(groupKeys.meshManager);
@@ -632,7 +632,7 @@ void ProblemManager::ParseInputFile()
 
   // The objects in domain are handled separately for now
   {
-    ConstitutiveManager * constitutiveManager = domain->GetConstitutiveManager();
+    ConstitutiveManager * constitutiveManager = domain->getConstitutiveManager();
     xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child(constitutiveManager->getName().c_str());
     constitutiveManager->ProcessInputFileRecursive( topLevelNode );
     constitutiveManager->PostProcessInputRecursive();
@@ -789,7 +789,7 @@ void ProblemManager::ApplyNumericalMethods()
   NumericalMethodsManager const * const numericalMethodManager = this->getNumericalMethodsManager();
 
   DomainPartition * domain = getDomainPartition();
-  ConstitutiveManager const * constitutiveManager = domain->GetConstitutiveManager();
+  ConstitutiveManager const * constitutiveManager = domain->getConstitutiveManager();
   Group * const meshBodies = domain->getMeshBodies();
 
   map<string,localIndex> regionQuadrature;

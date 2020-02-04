@@ -314,11 +314,11 @@ void DomainPartition::ReadFiniteElementMesh( const SiloFile& GEOSX_UNUSED_ARG( s
 
 }
 
-constitutive::ConstitutiveManager const *DomainPartition::GetConstitutiveManager() const {
+constitutive::ConstitutiveManager const *DomainPartition::getConstitutiveManager() const {
   return this->GetGroup<constitutive::ConstitutiveManager>(groupKeys.constitutiveManager);
 }
 
-constitutive::ConstitutiveManager *DomainPartition::GetConstitutiveManager() {
+constitutive::ConstitutiveManager *DomainPartition::getConstitutiveManager() {
   return this->GetGroup<constitutive::ConstitutiveManager>(groupKeys.constitutiveManager);
 }
 

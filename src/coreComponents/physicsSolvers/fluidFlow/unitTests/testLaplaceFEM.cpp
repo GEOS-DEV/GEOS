@@ -141,7 +141,7 @@ protected:
     problemManager.ProcessInputFileRecursive( xmlProblemNode );
 
     // The objects in domain are handled separately for now
-    DomainPartition * domain  = problemManager.GetDomainPartition();
+    DomainPartition * domain  = problemManager.getDomainPartition();
     constitutive::ConstitutiveManager *
     constitutiveManager = domain->GetGroup<constitutive::ConstitutiveManager>( problemManager.groupKeys.constitutiveManager );
     xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child(constitutiveManager->getName().c_str());
@@ -181,7 +181,7 @@ TEST_F(LaplaceFEMTest, laplaceSolverCheckSolution)
   real64 const dt = 1.0;
   int const cycleNumber = 0;
 
-  DomainPartition * domain = problemManager.GetDomainPartition();
+  DomainPartition * domain = problemManager.getDomainPartition();
 
   // Create and solve the problem
   LaplaceFEM laplaceFEM( fieldName, domain );

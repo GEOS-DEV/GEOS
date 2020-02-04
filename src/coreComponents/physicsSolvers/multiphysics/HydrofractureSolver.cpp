@@ -311,7 +311,7 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
   ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
 
   ConstitutiveManager const * const
-  constitutiveManager = domain->GetConstitutiveManager();
+  constitutiveManager = domain->getConstitutiveManager();
 
   ContactRelationBase const * const
   contactRelation = constitutiveManager->GetGroup<ContactRelationBase>(m_contactRelationName);
@@ -1052,7 +1052,7 @@ AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const * cons
   ElementRegionManager const * const elemManager = mesh->getElemManager();
   FaceManager const * const faceManager = mesh->getFaceManager();
   NodeManager const * const nodeManager = mesh->getNodeManager();
-  ConstitutiveManager const * const constitutiveManager = domain->GetConstitutiveManager();
+  ConstitutiveManager const * const constitutiveManager = domain->getConstitutiveManager();
 
   string const constitutiveName = constitutiveManager->GetGroup(m_flowSolver->fluidIndex())->getName();
   string const presDofKey = m_flowSolver->getDofManager().getKey( FlowSolverBase::viewKeyStruct::pressureString );

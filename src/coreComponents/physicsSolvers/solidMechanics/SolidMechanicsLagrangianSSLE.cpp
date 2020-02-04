@@ -53,7 +53,7 @@ SolidMechanicsLagrangianSSLE::updateStress( DomainPartition * const domain )
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   Group * const nodeManager = mesh->getNodeManager();
-  ConstitutiveManager  * const constitutiveManager = domain->GetConstitutiveManager();
+  ConstitutiveManager  * const constitutiveManager = domain->getConstitutiveManager();
   ElementRegionManager * const elemManager = mesh->getElemManager();
   NumericalMethodsManager const * numericalMethodManager = domain->GetProblemManager()->GetGroup<NumericalMethodsManager>(dataRepository::keys::numericalMethodsManager);
   FiniteElementDiscretizationManager const * feDiscretizationManager = numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(dataRepository::keys::finiteElementDiscretizations);
