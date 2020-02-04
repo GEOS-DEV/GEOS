@@ -259,10 +259,10 @@ void resizeEdgeToFaceMap( ArrayOfArraysView< EdgeBuilder const > const & edgesBy
   // Resize the edge to face map
   edgeToFaceMap.resize( 0 );
   edgeToFaceMap.reserve( numUniqueEdges );
-  edgeToFaceMap.reserve( totalEdgeFaces.get() );
+  edgeToFaceMap.reserveValues( totalEdgeFaces.get() + numUniqueEdges * EdgeManager::GetFaceMapOverallocation() );
   for ( localIndex faceID = 0; faceID < numUniqueEdges; ++faceID )
   {
-    edgeToFaceMap.appendSet( numFacesPerEdge[ faceID ] + EdgeManager::GetUpDownMapOverallocation( 2 ) );
+    edgeToFaceMap.appendSet( numFacesPerEdge[ faceID ] + EdgeManager::GetFaceMapOverallocation() );
   }
 }
 

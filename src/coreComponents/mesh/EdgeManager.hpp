@@ -50,7 +50,7 @@ public:
 
    ///@}
 
-   static inline localIndex GetUpDownMapOverallocation( localIndex GEOSX_UNUSED_ARG( dim ) )
+   static inline localIndex GetFaceMapOverallocation()
    { return 4; }
 
   EdgeManager( std::string const & name,

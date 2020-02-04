@@ -58,7 +58,10 @@ public:
   using ElemMapType = OrderedVariableToManyElementRelation;
   //END_SPHINX_INCLUDE_01
 
-  static inline localIndex GetUpDownMapOverallocation( localIndex GEOSX_UNUSED_ARG( dim ) )
+  inline localIndex GetEdgeMapOverallocation()
+  { return 4; }
+
+  inline localIndex GetFaceMapOverallocation()
   { return 4; }
 
   /**
