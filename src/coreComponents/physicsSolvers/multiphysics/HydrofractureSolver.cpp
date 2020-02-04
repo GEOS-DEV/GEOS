@@ -414,12 +414,6 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
   NodeManager * const nodeManager = meshLevel->getNodeManager();
   FaceManager * const faceManager = meshLevel->getFaceManager();
 
-  // synchronize nodal fields
-  std::map<string, string_array> fieldNames;
-  fieldNames["node"].push_back( keys::TotalDisplacement );
-  array1d<NeighborCommunicator> & comms = domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors );
-  CommunicationTools::SynchronizeFields( fieldNames, meshLevel, comms );
-
   arrayView1d<R1Tensor> const & u = nodeManager->getReference< array1d<R1Tensor> >( keys::TotalDisplacement );
   arrayView1d<R1Tensor const> const & faceNormal = faceManager->faceNormal();
   ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();

@@ -1014,19 +1014,6 @@ void SinglePhaseFlow::CalculateAndApplyMassFlux( real64 const time_n,
 
   AssembleFluxTermsExplicit( time_n, dt, domain, &m_dofManager );
 
-//  int rank = -1;
-//  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-//
-//  applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-//                     ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
-//                     ElementSubRegionBase * const subRegion )
-//  {
-//    forall_in_range<RAJA::seq_exec>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex const ei )
-//    {
-//      std::cout << "\n After assemble: rank = " << rank << ", ei = " << ei << ", mass = " << m_mass[er][esr][ei] << "\n";
-//    });
-//  } );
-
   // apply mass flux boundary condition
   FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
 
@@ -1054,18 +1041,6 @@ void SinglePhaseFlow::CalculateAndApplyMassFlux( real64 const time_n,
     domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors );
 
   CommunicationTools::SynchronizeFields( fieldNames, mesh, comms );
-
-
-//  applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-//                     ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
-//                     ElementSubRegionBase * const subRegion )
-//  {
-//    forall_in_range<RAJA::seq_exec>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex const ei )
-//    {
-//      std::cout << "\n After SynchronizeFields: rank = " << rank << ", ei = " << ei << ", mass = " << m_mass[er][esr][ei] << "\n";
-//    });
-//  } );
-
 }
 
 void
