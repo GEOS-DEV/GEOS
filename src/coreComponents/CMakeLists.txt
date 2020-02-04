@@ -93,6 +93,12 @@ else()
                               )
 endif()
 
+# To install the library with the runtime path used during the building
+set_target_properties( geosx_core PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE )
+
+# To install the shared library
+install(TARGETS geosx_core LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
+
 #set( geosx_core_libs geosx_core CACHE PATH "" FORCE)
 
 target_include_directories( geosx_core PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
