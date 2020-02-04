@@ -192,8 +192,7 @@ public:
    *              which has completed.
    *  @return MPI_SUCCESS or an MPI_ERROR returned by internal calls to MPI_WaitAny.
    */
-  template< typename L >
-  static int ActiveWaitAny( const int count, MPI_Request array_of_requests[], L func )
+  static int ActiveWaitAny( const int count, MPI_Request array_of_requests[], std::function< void ( int ) > func )
   {
     int cmp = 0;
     while( cmp < count )
@@ -220,8 +219,7 @@ public:
    *              which has completed.
    *  @return MPI_SUCCESS or an MPI_ERROR returned by internal calls to MPI_WaitSome.
    */
-  template< typename L >
-  static int ActiveWaitSome( const int count, MPI_Request array_of_requests[], L func )
+  static int ActiveWaitSome( const int count, MPI_Request array_of_requests[], std::function< void ( int ) > func )
   {
     int cmp = 0;
     while( cmp < count )
