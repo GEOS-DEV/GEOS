@@ -235,6 +235,8 @@ public:
   static int ActiveWaitSomeCompletePhase( const int participants,
                                           std::vector< std::function< MPI_Request ( int ) > > & phases );
 
+  static int ActiveWaitOrderedCompletePhase( const int participants,
+                                             std::vector< std::function< MPI_Request ( int ) > > & phases );
   ///@}
 
 #if !defined(GEOSX_USE_MPI)

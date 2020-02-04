@@ -570,7 +570,7 @@ void CommunicationTools::FindGhosts( MeshLevel * const meshLevel,
         return MPI_REQUEST_NULL;
       };
     std::vector< std::function< MPI_Request ( int ) > > phases = { send, post_recv, proc_recv };
-    MpiWrapper::ActiveWaitSomeCompletePhase( neighbor_count, phases );
+    MpiWrapper::ActiveWaitOrderedCompletePhase( neighbor_count, phases );
   }
   GEOSX_MARK_END( "Neighbor wait loop" );
 
@@ -608,7 +608,7 @@ void CommunicationTools::FindGhosts( MeshLevel * const meshLevel,
         return MPI_REQUEST_NULL;
       };
     std::vector< std::function< MPI_Request ( int ) > > phases = {  send, post_recv, proc_recv };
-    MpiWrapper::ActiveWaitSomeCompletePhase( neighbor_count, phases );
+    MpiWrapper::ActiveWaitOrderedCompletePhase( neighbor_count, phases );
   }
 
   meshLevel->getNodeManager()->FixUpDownMaps( false );

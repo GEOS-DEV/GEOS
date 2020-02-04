@@ -271,7 +271,26 @@ int MpiWrapper::ActiveWaitSomeCompletePhase( const int participants,
   return err;
 }
 
-
+int MpiWrapper::ActiveWaitOrderedCompletePhase( const int participants,
+                                                std::vector< std::function< MPI_Request ( int ) > > & phases )
+{
+  const int num_phases = phases.size();
+  std::vector< MPI_Request > phase_requests( participants );
+  for( int idx = 0 ; idx < participants ; ++idx )
+  {
+    phase_requests[idx] = phases[0]( idx );
+  }
+  for( int phase = 1 ; phase < num_phases ; ++phase )
+  {
+    for( int idx = 0 ; idx < participants ; ++idx )
+    {
+      MPI_Status stat;
+      Wait( &phase_requests[idx], &stat );
+      phase_requests[idx] = phases[phase]( idx );
+    }
+  }
+  return MPI_SUCCESS;
+}
 
 } /* namespace geosx */
 
