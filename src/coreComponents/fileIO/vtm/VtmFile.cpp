@@ -777,7 +777,7 @@ void RankBlock::TransferRankBlockToGEOSMesh( MeshLevel * const meshLevel ) const
           ElementRegionManager * const elemRegManager = meshLevel->getElemManager();
 
           nodeManager->resize(mesh.NumVertices());
-          arrayView2d<real64> & X = nodeManager->referencePosition();
+          arrayView2d<real64, nodes::REFERENCE_POSITION_USD> & X = nodeManager->referencePosition();
 
           for( localIndex a=0 ; a< mesh.NumVertices() ; ++a )
           {

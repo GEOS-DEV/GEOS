@@ -208,7 +208,7 @@ TEST_F(LaplaceFEMTest, laplaceSolverCheckSolution)
   real64 const vMax = 0.0;
 
   // Compute domain bounds (x direction)
-  arrayView2d< real64 const > const & referencePosition = nodeManager->referencePosition();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & referencePosition = nodeManager->referencePosition();
   for( localIndex a = 0 ; a < numNodes ; ++a )
   {
     R1Tensor nodePosition;

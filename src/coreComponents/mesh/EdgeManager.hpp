@@ -103,10 +103,10 @@ public:
   bool hasNode( const localIndex edgeID, const localIndex nodeID ) const;
 
   R1Tensor calculateCenter( localIndex const edgeIndex,
-                            arrayView2d<real64 const> const & X ) const;
+                            arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & X ) const;
 
   R1Tensor calculateLength( localIndex const edgeIndex,
-                            arrayView2d<real64 const> const & X ) const;
+                            arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & X ) const;
 
 
 
@@ -187,7 +187,7 @@ private:
 };
 
 inline R1Tensor EdgeManager::calculateCenter( localIndex const edgeIndex,
-                                              arrayView2d<real64 const> const & X ) const
+                                              arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & X ) const
 {
   R1Tensor center = X[m_toNodesRelation[edgeIndex][0]];
   center += X[m_toNodesRelation[edgeIndex][1]];
@@ -196,7 +196,7 @@ inline R1Tensor EdgeManager::calculateCenter( localIndex const edgeIndex,
 }
 
 inline R1Tensor EdgeManager::calculateLength( localIndex const edgeIndex,
-                                              arrayView2d<real64 const> const & X ) const
+                                              arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & X ) const
 {
   R1Tensor length = X[m_toNodesRelation[edgeIndex][1]];
   length -= X[m_toNodesRelation[edgeIndex][0]];

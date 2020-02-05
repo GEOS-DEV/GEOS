@@ -39,7 +39,7 @@ TEST( LinearElasticIsotropicTests, testAllocation )
 
   arrayView1d<real64 const> const & bulkModulus = cm.bulkModulus() ;
   arrayView1d<real64 const> const & shearModulus = cm.shearModulus() ;
-  arrayView3d<real64 const> const & stress = cm.getStress();
+  arrayView3d<real64 const, solid::STRESS_USD> const & stress = cm.getStress();
 
   EXPECT_EQ( bulkModulus.size(), numElems );
   EXPECT_EQ( shearModulus.size(), numElems );
@@ -64,7 +64,7 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
 //  cm.bulkModulus() = cm.setDefaultBulkModulus();
 //  cm.shearModulus() = cm.setDefaultShearModulus();
 
-  arrayView3d<real64> const & stress = cm.getStress();
+  arrayView3d<real64, solid::STRESS_USD> const & stress = cm.getStress();
 
   real64 const strain = 0.1;
   R2SymTensor Ddt;

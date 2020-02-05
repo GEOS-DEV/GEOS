@@ -129,8 +129,6 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const std::string& nam
   registerWrapper(viewKeyStruct::maxForce, &m_maxForce, false )->
     setInputFlag(InputFlags::FALSE)->
     setDescription( "The maximum force contribution in the problem domain.");
-
-
 }
 
 void SolidMechanicsLagrangianFEM::PostProcessInput()
@@ -159,30 +157,30 @@ void SolidMechanicsLagrangianFEM::RegisterDataOnMesh( Group * const MeshBodies )
     NodeManager * const nodes = mesh.second->group_cast<MeshBody*>()->getMeshLevel(0)->getNodeManager();
 
 
-    nodes->registerWrapper< array2d< real64 > >( keys::TotalDisplacement )->
+    nodes->registerWrapper< array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > >( keys::TotalDisplacement )->
       setPlotLevel(PlotLevel::LEVEL_0)->
       setRegisteringObjects(this->getName())->
       setDescription( "An array that holds the total displacements on the nodes.");
-    nodes->getReference< array2d< real64 > >( keys::TotalDisplacement ).resizeDimension< 1 >( 3 );
+    nodes->totalDisplacement().resizeDimension< 1 >( 3 );
 
-    nodes->registerWrapper< array2d< real64 > >( keys::IncrementalDisplacement )->
+    nodes->registerWrapper< array2d< real64, nodes::INCR_DISPLACEMENT_PERM > >( keys::IncrementalDisplacement )->
       setPlotLevel(PlotLevel::LEVEL_3)->
       setRegisteringObjects(this->getName())->
       setDescription( "An array that holds the incremental displacements for the current time step on the nodes.");
-    nodes->getReference< array2d< real64 > >( keys::IncrementalDisplacement ).resizeDimension< 1 >( 3 );
+    nodes->incrementalDisplacement().resizeDimension< 1 >( 3 );
 
-    nodes->registerWrapper< array2d< real64 > >( keys::Velocity )->
+    nodes->registerWrapper< array2d< real64, nodes::VELOCITY_PERM > >( keys::Velocity )->
       setPlotLevel(PlotLevel::LEVEL_0)->
       setRegisteringObjects(this->getName())->
       setDescription( "An array that holds the current velocity on the nodes.");
-    nodes->getReference< array2d< real64 > >( keys::Velocity ).resizeDimension< 1 >( 3 );
+    nodes->velocity().resizeDimension< 1 >( 3 );
 
-    nodes->registerWrapper< array2d< real64 > >( keys::Acceleration )->
+    nodes->registerWrapper< array2d< real64, nodes::ACCELERATION_PERM > >( keys::Acceleration )->
       setPlotLevel(PlotLevel::LEVEL_1)->
       setRegisteringObjects(this->getName())->
       setDescription( "An array that holds the current acceleration on the nodes. This array also is used "
                       "to hold the summation of nodal forces resulting from the governing equations.");
-    nodes->getReference< array2d< real64 > >( keys::Acceleration ).resizeDimension< 1 >( 3 );
+    nodes->acceleration().resizeDimension< 1 >( 3 );
 
     nodes->registerWrapper<array1d<R1Tensor> >( viewKeyStruct::forceExternal )->
       setPlotLevel(PlotLevel::LEVEL_0)->
@@ -276,7 +274,7 @@ void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * co
     elemRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr, CellElementSubRegion const * const elementSubRegion )
     {
       arrayView2d<real64> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
-      arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & elemsToNodes = elementSubRegion->nodeList();
+      arrayView2d<localIndex const, cells::NODE_MAP_USD> const & elemsToNodes = elementSubRegion->nodeList();
 
       std::unique_ptr<FiniteElementBase>
       fe = feDiscretization->getFiniteElement( elementSubRegion->GetElementTypeString() );
@@ -358,7 +356,7 @@ void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( 
         + std::to_string(er) + "][" + std::to_string(esr) + "]" );
 
       arrayView2d<real64> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
-      arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & elemsToNodes = elementSubRegion->nodeList();
+      arrayView2d<localIndex const, cells::NODE_MAP_USD> const & elemsToNodes = elementSubRegion->nodeList();
 
       std::unique_ptr<FiniteElementBase>
       fe = feDiscretization->getFiniteElement( elementSubRegion->GetElementTypeString() );
@@ -490,11 +488,11 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
   FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
 
   arrayView1d<real64 const> const & mass = nodes->getReference<array1d<real64>>(keys::Mass);
-  arrayView2d<real64> const & vel = nodes->getReference<array2d<real64>>(keys::Velocity);
+  arrayView2d<real64, nodes::VELOCITY_USD> const & vel = nodes->velocity();
 
-  arrayView2d<real64> const & u = nodes->getReference<array2d<real64>>(keys::TotalDisplacement);
-  arrayView2d<real64> const & uhat = nodes->getReference<array2d<real64>>(keys::IncrementalDisplacement);
-  arrayView2d<real64> const & acc = nodes->getReference<array2d<real64>>(keys::Acceleration);
+  arrayView2d<real64, nodes::TOTAL_DISPLACEMENT_USD> const & u = nodes->totalDisplacement();
+  arrayView2d<real64, nodes::INCR_DISPLACEMENT_USD> const & uhat = nodes->incrementalDisplacement();
+  arrayView2d<real64, nodes::ACCELERATION_USD> const & acc = nodes->acceleration();
 
   array1d<NeighborCommunicator> & neighbors = domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors );
   std::map<string, string_array > fieldNames;
@@ -539,9 +537,9 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
     }
   );
 
-  ElementRegionManager::MaterialViewAccessor< arrayView3d<real64> > const
-  stress = elemManager->ConstructFullMaterialViewAccessor< array3d<real64>,
-                                                           arrayView3d<real64> >( SolidBase::viewKeyStruct::stressString,
+  ElementRegionManager::MaterialViewAccessor< arrayView3d<real64, solid::STRESS_USD> > const
+  stress = elemManager->ConstructFullMaterialViewAccessor< array3d<real64, solid::STRESS_PERMUTATION>,
+                                                           arrayView3d<real64, solid::STRESS_USD> >( SolidBase::viewKeyStruct::stressString,
                                                                                        constitutiveManager);
 
   ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase>
@@ -560,7 +558,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
 
       arrayView2d<real64> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
 
-      arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & elemsToNodes = elementSubRegion->nodeList();
+      arrayView2d<localIndex const, cells::NODE_MAP_USD> const & elemsToNodes = elementSubRegion->nodeList();
 
       localIndex const numNodesPerElement = elemsToNodes.size(1);
 
@@ -602,7 +600,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
 
       arrayView2d<real64> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
 
-      arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & elemsToNodes = elementSubRegion->nodeList();
+      arrayView2d<localIndex const, cells::NODE_MAP_USD> const & elemsToNodes = elementSubRegion->nodeList();
 
       localIndex const numNodesPerElement = elemsToNodes.size(1);
 
@@ -822,15 +820,15 @@ ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n ),
                    ParallelVector & GEOSX_UNUSED_ARG( solution ) )
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  Group * const nodeManager = mesh->getNodeManager();
+  NodeManager * const nodeManager = mesh->getNodeManager();
 
-  arrayView2d<real64 const> const & v_n = nodeManager->getReference<array2d<real64>>(keys::Velocity);
-  arrayView2d<real64> const & uhat = nodeManager->getReference<array2d<real64>>(keys::IncrementalDisplacement);
-  arrayView2d<real64> const & disp = nodeManager->getReference<array2d<real64>>(keys::TotalDisplacement);
+  arrayView2d<real64 const, nodes::VELOCITY_USD> const & v_n = nodeManager->velocity();
+  arrayView2d<real64, nodes::INCR_DISPLACEMENT_USD> const & uhat = nodeManager->incrementalDisplacement();
+  arrayView2d<real64, nodes::TOTAL_DISPLACEMENT_USD> const & disp = nodeManager->totalDisplacement();
 
   if( this->m_timeIntegrationOption == timeIntegrationOption::ImplicitDynamic )
   {
-    arrayView2d<real64 const> const & a_n = nodeManager->getReference<array2d<real64>>(keys::Acceleration);
+    arrayView2d<real64 const, nodes::ACCELERATION_USD> const & a_n = nodeManager->acceleration();
     arrayView1d<R1Tensor> const & vtilde   = nodeManager->getReference<array1d<R1Tensor>>(solidMechanicsViewKeys.vTilde);
     arrayView1d<R1Tensor> const & uhatTilde   = nodeManager->getReference<array1d<R1Tensor>>(solidMechanicsViewKeys.uhatTilde);
 
@@ -895,7 +893,7 @@ ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n ),
     SolidBase * const
     constitutiveRelation = constitutiveRelations[er][esr][m_solidMaterialFullIndex]->group_cast<SolidBase*>();
 
-    arrayView3d<real64 const> const & stress = constitutiveRelation->getStress();
+    arrayView3d<real64 const, solid::STRESS_USD> const & stress = constitutiveRelation->getStress();
 
     array2d<R2SymTensor> &
     stress_n = subRegion->getReference<array2d<R2SymTensor>>(viewKeyStruct::stress_n);
@@ -919,15 +917,15 @@ void SolidMechanicsLagrangianFEM::ImplicitStepComplete( real64 const & GEOSX_UNU
                                                         DomainPartition * const domain)
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  Group * const nodeManager = mesh->getNodeManager();
+  NodeManager * const nodeManager = mesh->getNodeManager();
   localIndex const numNodes = nodeManager->size();
 
-  arrayView2d< real64 > const & v_n = nodeManager->getReference<array2d<real64>>(keys::Velocity);
-  arrayView2d< real64 const > const & uhat  = nodeManager->getReference<array2d<real64>>(keys::IncrementalDisplacement);
+  arrayView2d< real64, nodes::VELOCITY_USD > const & v_n = nodeManager->velocity();
+  arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const & uhat  = nodeManager->incrementalDisplacement();
 
   if( this->m_timeIntegrationOption == timeIntegrationOption::ImplicitDynamic )
   {
-    arrayView2d< real64 > const & a_n = nodeManager->getReference<array2d<real64>>(keys::Acceleration);
+    arrayView2d< real64, nodes::ACCELERATION_USD > const & a_n = nodeManager->acceleration();
     arrayView1d< R1Tensor const > const & vtilde    = nodeManager->getReference<r1_array>(solidMechanicsViewKeys.vTilde);
     arrayView1d< R1Tensor const > const & uhatTilde = nodeManager->getReference<r1_array>(solidMechanicsViewKeys.uhatTilde);
     real64 const newmarkGamma = this->getReference<real64>(solidMechanicsViewKeys.newmarkGamma);
@@ -977,7 +975,7 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_ARG(
 {
   GEOSX_MARK_FUNCTION;
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  Group * const nodeManager = mesh->getNodeManager();
+  NodeManager const * const nodeManager = mesh->getNodeManager();
   ConstitutiveManager  * const constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
   ElementRegionManager * const elemManager = mesh->getElemManager();
   NumericalMethodsManager const * numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
@@ -998,8 +996,8 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_ARG(
   matrix.open();
   rhs.open();
 
-  arrayView2d< real64 const > const & disp = nodeManager->getReference< array2d< real64 > >(keys::TotalDisplacement);
-  arrayView2d< real64 const > const & uhat = nodeManager->getReference< array2d< real64 > >(keys::IncrementalDisplacement);
+  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & disp = nodeManager->totalDisplacement();
+  arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const & uhat = nodeManager->incrementalDisplacement();
 
   r1_array const uhattilde;
   r1_array const vtilde;
@@ -1033,7 +1031,7 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_ARG(
 
       arrayView2d<real64> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
 
-      arrayView2d< localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM > const & elemsToNodes = elementSubRegion->nodeList();
+      arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion->nodeList();
       localIndex const numNodesPerElement = elemsToNodes.size(1);
 
       std::unique_ptr<FiniteElementBase>
@@ -1261,8 +1259,8 @@ void SolidMechanicsLagrangianFEM::ResetStateToBeginningOfStep( DomainPartition *
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   NodeManager * const nodeManager = mesh->getNodeManager();
 
-  arrayView2d<real64> const & incdisp  = nodeManager->getReference<array2d<real64>>(keys::IncrementalDisplacement);
-  arrayView2d<real64> const & disp     = nodeManager->getReference<array2d<real64>>(keys::TotalDisplacement);
+  arrayView2d<real64, nodes::INCR_DISPLACEMENT_USD> const & incdisp  = nodeManager->incrementalDisplacement();
+  arrayView2d<real64, nodes::TOTAL_DISPLACEMENT_USD> const & disp = nodeManager->totalDisplacement();
 
   // TODO need to finish this rewind
   forAll< serialPolicy >( nodeManager->size(), GEOSX_LAMBDA (localIndex const a)
@@ -1297,7 +1295,7 @@ void SolidMechanicsLagrangianFEM::ResetStressToBeginningOfStep( DomainPartition 
     SolidBase * const
     constitutiveRelation = constitutiveRelations[er][esr][m_solidMaterialFullIndex]->group_cast<SolidBase*>();
 
-    arrayView3d<real64> const & stress = constitutiveRelation->getStress();
+    arrayView3d<real64, solid::STRESS_USD> const & stress = constitutiveRelation->getStress();
 
     array2d<R2SymTensor> &
     stress_n = subRegion->getReference<array2d<R2SymTensor>>(viewKeyStruct::stress_n);
@@ -1339,7 +1337,7 @@ void SolidMechanicsLagrangianFEM::ApplyContactConstraint( DofManager const & dof
 
     real64 const contactStiffness = contactRelation->stiffness();
 
-    arrayView2d<real64 const> const & u = nodeManager->getReference< array2d<real64> >( keys::TotalDisplacement );
+    arrayView2d<real64 const, nodes::TOTAL_DISPLACEMENT_USD> const & u = nodeManager->totalDisplacement();
     arrayView1d<R1Tensor> const & fc = nodeManager->getReference< array1d<R1Tensor> >( viewKeyStruct::contactForceString );
     fc = {0,0,0};
 

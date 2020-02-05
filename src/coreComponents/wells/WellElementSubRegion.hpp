@@ -31,15 +31,7 @@ class WellElementSubRegion : public ElementSubRegionBase
 {
 public:
 
-#if defined( GEOSX_USE_CUDA )
-  using NODE_MAP_PERMUTATION = RAJA::PERM_JI;
-#else
-  using NODE_MAP_PERMUTATION = RAJA::PERM_IJ;
-#endif
-
-  static constexpr int NODE_MAP_UNIT_STRIDE_DIM = LvArray::getStrideOneDimension( NODE_MAP_PERMUTATION {} );
-
-  using NodeMapType = InterObjectRelation< array2d< localIndex, NODE_MAP_PERMUTATION > >;
+  using NodeMapType = InterObjectRelation< array2d< localIndex, cells::NODE_MAP_PERMUTATION > >;
   using EdgeMapType = FixedOneToManyRelation; // unused but needed in MeshLevel::GenerateAdjacencyLists
   using FaceMapType = FixedOneToManyRelation; // unused but needed in MeshLevel::GenerateAdjacencyLists
 

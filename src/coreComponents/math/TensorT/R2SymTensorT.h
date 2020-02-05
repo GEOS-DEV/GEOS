@@ -83,13 +83,13 @@ public:
   explicit R2SymTensorT( const TensorBaseT< SIZE  >& rhs ): TensorBaseT< SIZE  > ()
   { TensorBaseT< SIZE  >::operator=( rhs ); }
 
-  template< int UNIT_STRIDE_DIM >
-  R2SymTensorT( LvArray::ArraySlice< realT const, 1, UNIT_STRIDE_DIM > const & src ):
+  template< int USD >
+  R2SymTensorT( LvArray::ArraySlice< realT const, 1, USD > const & src ):
     TensorBaseT< SIZE > ()
   { *this = src; }
 
-  template< int UNIT_STRIDE_DIM >
-  R2SymTensorT( LvArray::ArraySlice< realT, 1, UNIT_STRIDE_DIM > const & src ):
+  template< int USD >
+  R2SymTensorT( LvArray::ArraySlice< realT, 1, USD > const & src ):
     TensorBaseT< SIZE > ()
   { *this = src; }
 
@@ -107,9 +107,9 @@ public:
   /// assignment to another R2SymTensorT
   R2SymTensorT& operator=(const R2SymTensorT& rhs) = default;
 
-  template< int UNIT_STRIDE_DIM >
+  template< int USD >
   GEOSX_HOST_DEVICE constexpr inline
-  R2SymTensorT & operator=( LvArray::ArraySlice< realT const, 1, UNIT_STRIDE_DIM > const & src )
+  R2SymTensorT & operator=( LvArray::ArraySlice< realT const, 1, USD > const & src )
   {
     GEOSX_ASSERT_EQ( src.size(), SIZE );
 
@@ -121,9 +121,9 @@ public:
     return *this;
   }
 
-  template< int UNIT_STRIDE_DIM >
+  template< int USD >
   GEOSX_HOST_DEVICE constexpr inline
-  R2SymTensorT & operator=( LvArray::ArraySlice< realT, 1, UNIT_STRIDE_DIM > const & src )
+  R2SymTensorT & operator=( LvArray::ArraySlice< realT, 1, USD > const & src )
   {
     GEOSX_ASSERT_EQ( src.size(), SIZE );
 
@@ -137,9 +137,9 @@ public:
 
   R2SymTensorT& operator+=( const R2SymTensorT& rhs );
 
-  template< int UNIT_STRIDE_DIM >
+  template< int USD >
   GEOSX_HOST_DEVICE constexpr inline
-  R2SymTensorT & operator+=( LvArray::ArraySlice< realT const, 1, UNIT_STRIDE_DIM > const & src )
+  R2SymTensorT & operator+=( LvArray::ArraySlice< realT const, 1, USD > const & src )
   {
     GEOSX_ASSERT_EQ( src.size(), SIZE );
 
@@ -151,9 +151,9 @@ public:
     return *this;
   }
 
-  template< int UNIT_STRIDE_DIM >
+  template< int USD >
   GEOSX_HOST_DEVICE constexpr inline
-  R2SymTensorT & operator+=( LvArray::ArraySlice< realT, 1, UNIT_STRIDE_DIM > const & src )
+  R2SymTensorT & operator+=( LvArray::ArraySlice< realT, 1, USD > const & src )
   {
     GEOSX_ASSERT_EQ( src.size(), SIZE );
 
