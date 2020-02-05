@@ -59,13 +59,16 @@ public:
   virtual const string getCatalogName() const override final
   { return EmbeddedSurfaceRegion::CatalogName(); }
 
+
   struct viewKeyStruct : public ElementRegionBase::viewKeyStruct
   {
-    static constexpr auto fractureSetString = "fractureSet";
+    static constexpr auto defaultApertureString = "defaultAperture";
   };
 
 
 private:
+
+  real64 m_defaultAperture;
 
 };
 

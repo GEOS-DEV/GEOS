@@ -40,7 +40,8 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
   m_toNodesRelation(),
   m_toEdgesRelation(),
   m_elementAperture(),
-  m_elementArea()
+  m_elementArea(),
+  m_numOfJumpEnrichments(1)
 {
   registerWrapper( viewKeyStruct::regionListString, &m_embeddedSurfaceToRegion, false )->
       setDescription("Map to the region cut by each EmbeddedSurface.");
@@ -170,6 +171,7 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface (localIndex const cellIndex
                                                            nodesCoord[edgeToNodes[edgeIndex][0]],
                                                            normalVector,
                                                            origin);
+      
       // Check if the point is inside the fracture (bounded plane)
       if ( !fracture->IsCoordInObject(point) )
       {
