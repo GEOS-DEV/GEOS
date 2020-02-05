@@ -6,7 +6,6 @@ Name                         Type     Default   Description
 gravityVector                R1Tensor 0 0 -9.81 Gravity vector used in the physics solvers 
 CompositionalMultiphaseFlow  node               :ref:`XML_CompositionalMultiphaseFlow`     
 CompositionalMultiphaseWell  node               :ref:`XML_CompositionalMultiphaseWell`     
-Hydrofracture                node               :ref:`XML_Hydrofracture`                   
 LaplaceFEM                   node               :ref:`XML_LaplaceFEM`                      
 Poroelastic                  node               :ref:`XML_Poroelastic`                     
 Reservoir                    node               :ref:`XML_Reservoir`                       

@@ -255,7 +255,7 @@ public:
    * \param vec HypreVector to dot-product with.
    *
    */
-  real64 dot( HypreVector const &vec );
+  real64 dot( HypreVector const &vec ) const;
 
   /**
    * @brief Update vector <tt>y</tt> as <tt>y</tt> = <tt>x</tt>.
@@ -405,7 +405,7 @@ public:
   //@{
 
   /**
-   * @brief Print the vector in Trilinos format to the terminal.
+   * @brief Print the vector in Hypre format to the terminal.
    */
   void print( std::ostream & os = std::cout ) const;
 
@@ -428,6 +428,7 @@ private:
    * Pointer to underlying HYPRE_ParVector type.
    */
   HYPRE_ParVector m_par_vector = nullptr;
+
 };
 
 /**

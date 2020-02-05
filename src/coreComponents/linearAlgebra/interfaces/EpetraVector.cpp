@@ -230,7 +230,7 @@ void EpetraVector::scale( real64 const scalingFactor )
 // Dot
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Dot product with the vector vec.
-real64 EpetraVector::dot( EpetraVector const & vec )
+real64 EpetraVector::dot( EpetraVector const & vec ) const
 {
   real64 tmp;
   m_vector.get()->Dot( *vec.unwrappedPointer(), &tmp );

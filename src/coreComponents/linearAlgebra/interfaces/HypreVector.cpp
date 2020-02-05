@@ -16,12 +16,6 @@
  * @file HypreVector.cpp
  */
 
-// BEGIN_RST_NARRATIVE HypreVector.rst
-// ==============================
-// Hypre-based Vector Object
-// ==============================
-// ... .
-// Include the corresponding header file.
 #include "HypreVector.hpp"
 
 // Include required Hypre headers
@@ -43,45 +37,78 @@ inline HYPRE_Int const * toHYPRE_Int( globalIndex const * const index )
   return reinterpret_cast<HYPRE_Int const*>(index);
 }
 
+// Helper function that performs the following sequence of IJVEctor
+// call: Assemble, GetObject.
+static void initialize( MPI_Comm const & comm,
+                        HYPRE_Int const & jlower,
+                        HYPRE_Int const & jupper,
+                        HYPRE_IJVector & ij_vector )
+{
+  HYPRE_IJVectorCreate( comm,
+                        jlower,
+                        jupper,
+                        &ij_vector );
+  HYPRE_IJVectorSetObjectType( ij_vector,
+                               HYPRE_PARCSR );
+  HYPRE_IJVectorInitialize( ij_vector );
+}
+
+// Helper function that performs the following sequence of IJVEctor
+// call: Create, SetObjectType, Initialize.
+static void finalize( HYPRE_IJVector & ij_vector,
+                      HYPRE_ParVector & par_vector )
+{
+  HYPRE_IJVectorAssemble( ij_vector );
+  HYPRE_IJVectorGetObject( ij_vector,
+                           (void **) &par_vector );
+}
+
 // ----------------------------
 // Constructors
 // ----------------------------
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Empty constructor
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Construct as an empty vector
-
 HypreVector::HypreVector()
 {
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Copy constructor
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Create a pointer to the raw vector.  The data from the input vector is
-// copied to a new memory location. Checks if the vector to be copied is empty.
-
 HypreVector::HypreVector( HypreVector const &src )
 {
-  GEOSX_ERROR_IF( src.unwrappedPointer() == nullptr,
-                 "source vector appears to be empty" );
-  // Note: every vector is created initialized to 0 and then 'closed',
-  //       i.e. made ready to use
-
+  GEOSX_ASSERT_MSG( src.m_ij_vector != nullptr,
+                    "source vector appears to be empty (not created)" );
   this->create( src );
-
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Destructor
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 HypreVector::~HypreVector()
 {
   if( m_ij_vector )
   {
     HYPRE_IJVectorDestroy( m_ij_vector );
   }
+}
+
+// Create from HypreVector
+void HypreVector::create( HypreVector const & src )
+{
+  GEOSX_ASSERT_MSG( src.m_ij_vector != nullptr,
+                    "source vector appears to be empty (not created)" );
+
+  HYPRE_Int jlower, jupper;
+  HYPRE_IJVectorGetLocalRange( src.m_ij_vector,
+                               &jlower,
+                               &jupper );
+
+  initialize( hypre_IJVectorComm( src.m_ij_vector ),
+              jlower,
+              jupper,
+              m_ij_vector );
+
+  finalize( m_ij_vector,
+            m_par_vector );
+
+  this->copy( src );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -95,129 +122,81 @@ HypreVector::~HypreVector()
 // elements necessary when the number of processors does not divide evenly
 // into the vector length.
 //
-// Vector are created initialized to 0.
-
-void HypreVector::create( HypreVector const & src )
-{
-  GEOSX_ERROR_IF( src.unwrappedPointer() == nullptr,
-                 "source vector appears to be empty" );
-  // Note: every vector is created initialized to 0 and then 'closed',
-  //       i.e. made ready to use
-
-  MPI_Comm comm = hypre_IJVectorComm( *src.unwrappedPointer() );
-  HYPRE_Int jlower, jupper;
-  HYPRE_Int objectType;
-
-  HYPRE_IJVectorGetLocalRange( *src.unwrappedPointer(),
-                               &jlower,
-                               &jupper );
-  HYPRE_IJVectorGetObjectType( *src.unwrappedPointer(),
-                               &objectType );
-
-  HYPRE_IJVectorCreate( comm,
-                        jlower,
-                        jupper,
-                        &m_ij_vector );
-  HYPRE_IJVectorSetObjectType( m_ij_vector,
-                               objectType );
-  HYPRE_IJVectorInitialize( m_ij_vector );
-
-  HYPRE_IJVectorAssemble( m_ij_vector );
-  HYPRE_IJVectorGetObject( m_ij_vector,
-                           (void **) &m_par_vector );
-
-  this->copy( src );
-}
+// Note: every vector is created initialized to 0 and then 'closed',
+//       i.e. made ready to use
 
 void HypreVector::createWithLocalSize( localIndex const localSize,
                                        MPI_Comm const & comm )
 {
-  GEOSX_ERROR_IF( localSize < 1,
-                 "local size is lower than 1" );
+  GEOSX_ASSERT_MSG( localSize >= 0,
+                    "local size is lower than 0" );
 
-  int this_mpi_process;
-  int n_mpi_process;
-  MPI_Comm_rank( comm, &this_mpi_process );
-  MPI_Comm_size( comm, &n_mpi_process );
+  int this_mpi_process = MpiWrapper::Comm_rank( comm );
+  int n_mpi_process = MpiWrapper::Comm_size( comm );
 
   array1d<int> localSizeArray( n_mpi_process );
   int tmp = integer_conversion<int>( localSize );
 
-  MPI_Allgather( &tmp,
-                 1,
-                 MPI_INT,
-                 localSizeArray.data(),
-                 1,
-                 MPI_INT,
-                 comm );
+  MpiWrapper::allGather( tmp,
+                         localSizeArray );
+  HYPRE_Int jlower, jupper;
 
-  HYPRE_Int jLower, jUpper;
-
-  jLower = 0;
+  jlower = 0;
   for( int i = 0 ; i < this_mpi_process ; ++i )
   {
-    jLower += integer_conversion<HYPRE_Int>( localSizeArray[i] );
+    jlower += integer_conversion<HYPRE_Int>( localSizeArray[i] );
   }
-  jUpper = jLower + integer_conversion<HYPRE_Int>( localSize ) - 1;
+  jupper = jlower + integer_conversion<HYPRE_Int>( localSize ) - 1;
 
-  HYPRE_IJVectorCreate( comm,
-                        jLower,
-                        jUpper,
-                        &m_ij_vector );
-  HYPRE_IJVectorSetObjectType( m_ij_vector,
-                               HYPRE_PARCSR );
-  HYPRE_IJVectorInitialize( m_ij_vector );
+  initialize( comm,
+              jlower,
+              jupper,
+              m_ij_vector );
 
   hypre_IJVectorZeroValues( m_ij_vector );
 
-  HYPRE_IJVectorAssemble( m_ij_vector );
-  HYPRE_IJVectorGetObject( m_ij_vector,
-                           (void **) &m_par_vector );
-
+  finalize( m_ij_vector,
+            m_par_vector );
 }
 
 void HypreVector::createWithGlobalSize( globalIndex const globalSize,
                                         MPI_Comm const & comm )
 {
-  int this_mpi_process;
-  int n_mpi_process;
-  MPI_Comm_rank( comm, &this_mpi_process );
-  MPI_Comm_size( comm, &n_mpi_process );
+  int this_mpi_process = MpiWrapper::Comm_rank( comm );
+  int n_mpi_process = MpiWrapper::Comm_size( comm );
 
   HYPRE_Int localSize = integer_conversion<HYPRE_Int>( globalSize )
                       / integer_conversion<HYPRE_Int>( n_mpi_process );
   HYPRE_Int residual = integer_conversion<HYPRE_Int>( globalSize )
                      % integer_conversion<HYPRE_Int>( n_mpi_process );
 
-  GEOSX_ERROR_IF( localSize < 1,
-                 "local size is lower than 1: less that one processor per component" );
+  GEOSX_ASSERT_MSG( localSize >= 0,
+                    "local size is lower than 0" );
 
-  HYPRE_Int jLower;
-  HYPRE_Int jUpper;
+  HYPRE_Int jlower;
+  HYPRE_Int jupper;
   HYPRE_Int rank = integer_conversion<HYPRE_Int>( this_mpi_process );
 
   if( this_mpi_process == 0 )
   {
-    jLower = 0;
-    jUpper = localSize + residual - 1;
+    jlower = 0;
+    jupper = localSize + residual - 1;
   }
   else
   {
-    jLower = rank * localSize + residual;
-    jUpper = jLower + localSize - 1;
+    jlower = rank * localSize + residual;
+    jupper = jlower + localSize - 1;
   }
 
-  HYPRE_IJVectorCreate( comm,
-                        jLower,
-                        jUpper,
-                        &m_ij_vector );
-  HYPRE_IJVectorSetObjectType( m_ij_vector, HYPRE_PARCSR );
-  HYPRE_IJVectorInitialize( m_ij_vector );
+  initialize( comm,
+              jlower,
+              jupper,
+              m_ij_vector );
 
   hypre_IJVectorZeroValues( m_ij_vector );
 
-  HYPRE_IJVectorAssemble( m_ij_vector );
-  HYPRE_IJVectorGetObject( m_ij_vector, (void **) &m_par_vector );
+  finalize( m_ij_vector,
+            m_par_vector );
 
 }
 
@@ -227,49 +206,39 @@ void HypreVector::createWithGlobalSize( globalIndex const globalSize,
 // Create a vector from local array data.  The global vector contains
 // local arrays stitched together.
 
-//TODO: add integer_conversion
-
 void HypreVector::create( array1d<real64> const & localValues,
                           MPI_Comm const & comm )
 {
   HYPRE_Int localSize = integer_conversion<HYPRE_Int>( localValues.size() );
 
-  GEOSX_ERROR_IF( localSize < 1, "local size is lower than 1" );
+  GEOSX_ASSERT_MSG( localSize >= 0,
+                    "local size is lower than 0" );
 
-  int this_mpi_process;
-  int n_mpi_process;
-  MPI_Comm_rank( comm, &this_mpi_process );
-  MPI_Comm_size( comm, &n_mpi_process );
+  int this_mpi_process = MpiWrapper::Comm_rank( comm );
+  int n_mpi_process = MpiWrapper::Comm_size( comm );
 
   array1d<int> localSizeArray( n_mpi_process );
   int tmp = integer_conversion<int>( localSize );
 
-  MPI_Allgather( &tmp,
-                 1,
-                 MPI_INT,
-                 localSizeArray.data(),
-                 1,
-                 MPI_INT,
-                 comm );
+  MpiWrapper::allGather( tmp,
+                         localSizeArray );
 
-  HYPRE_Int jLower, jUpper;
+  HYPRE_Int jlower, jupper;
 
-  jLower = 0;
+  jlower = 0;
   for( int i = 0 ; i < this_mpi_process ; ++i )
   {
-    jLower += integer_conversion<HYPRE_Int>( localSizeArray[i] );
+    jlower += integer_conversion<HYPRE_Int>( localSizeArray[i] );
   }
-  jUpper = jLower + integer_conversion<HYPRE_Int>( localSize ) - 1;
+  jupper = jlower + integer_conversion<HYPRE_Int>( localSize ) - 1;
 
-  HYPRE_IJVectorCreate( comm,
-                        jLower,
-                        jUpper,
-                        &m_ij_vector );
-  HYPRE_IJVectorSetObjectType( m_ij_vector, HYPRE_PARCSR );
-  HYPRE_IJVectorInitialize( m_ij_vector );
+  initialize( comm,
+              jlower,
+              jupper,
+              m_ij_vector );
 
-  HYPRE_IJVectorAssemble( m_ij_vector );
-  HYPRE_IJVectorGetObject( m_ij_vector, (void **) &m_par_vector );
+  finalize( m_ij_vector,
+            m_par_vector );
 
   double * local_data = this->extractLocalVector();
 
@@ -288,26 +257,29 @@ void HypreVector::create( array1d<real64> const & localValues,
 void HypreVector::set( globalIndex const globalRow,
                        real64 const value )
 {
-  GEOSX_ERROR_IF( m_ij_vector == nullptr,
-                 "vector appears to be empty (not created)" );
-  GEOSX_ASSERT_MSG( this->ilower() <= globalRow &&
-                   globalRow < this->iupper(),
-                   "HypreVector, it is not possible to set values on other processors");
-  HYPRE_IJVectorSetValues( m_ij_vector,
-                           1,
-                           &globalRow,
-                           &value );
+  GEOSX_ASSERT_MSG( this->getLocalRowID( globalRow ) >= 0,
+                    "HypreVector, it is not possible to set values on other processors");
+  HYPRE_Int ierr;
+  ierr = HYPRE_IJVectorSetValues( m_ij_vector,
+                                  1,
+                                  &globalRow,
+                                  &value );
+  GEOSX_ASSERT_MSG( ierr == 0,
+                    "Error setting values HypreVector - error code: " +
+                    std::to_string( ierr ) );
 }
 
 void HypreVector::add( globalIndex const globalRow,
                        real64 const value )
 {
-  GEOSX_ERROR_IF( m_ij_vector == nullptr,
-                 "vector appears to be empty (not created)" );
-  HYPRE_IJVectorAddToValues( m_ij_vector,
+  HYPRE_Int ierr;
+  ierr = HYPRE_IJVectorAddToValues( m_ij_vector,
                              1,
                              &globalRow,
                              &value );
+  GEOSX_ASSERT_MSG( ierr == 0,
+                    "Error adding values HypreVector - error code: " +
+                    std::to_string( ierr ) );
 }
 
 // n-element, c-style options
@@ -316,27 +288,31 @@ void HypreVector::set( globalIndex const * globalIndices,
                        real64 const * values,
                        localIndex size )
 {
-  GEOSX_ASSERT_MSG( m_ij_vector != nullptr,
-                    "vector appears to be empty (not created)" );
-  GEOSX_ASSERT_MSG( this->ilower() <= *std::min_element(globalIndices, globalIndices + size) &&
-                   *std::max_element(globalIndices, globalIndices + size) < this->iupper(),
-                   "HypreVector, it is not possible to set values on other processors");
-  HYPRE_IJVectorSetValues( m_ij_vector,
-                           integer_conversion<HYPRE_Int>( size ),
-                           toHYPRE_Int( globalIndices ),
-                           values );
+  GEOSX_ASSERT_MSG( this->getLocalRowID( *std::min_element(globalIndices, globalIndices + size) ) >= 0 &&
+                    this->getLocalRowID( *std::max_element(globalIndices, globalIndices + size) ) >= 0,
+                    "HypreVector, it is not possible to set values on other processors");
+  HYPRE_Int ierr;
+  ierr = HYPRE_IJVectorSetValues( m_ij_vector,
+                                  integer_conversion<HYPRE_Int>( size ),
+                                  toHYPRE_Int( globalIndices ),
+                                  values );
+  GEOSX_ASSERT_MSG( ierr == 0,
+                    "Error setting values HypreVector - error code: " +
+                    std::to_string( ierr ) );
 }
 
 void HypreVector::add( globalIndex const * globalIndices,
                        real64 const * values,
                        localIndex size )
 {
-  GEOSX_ERROR_IF( m_ij_vector == nullptr,
-                 "vector appears to be empty (not created)" );
-  HYPRE_IJVectorAddToValues( m_ij_vector,
-                             integer_conversion<HYPRE_Int>( size ),
-                             toHYPRE_Int( globalIndices ),
-                             values );
+  HYPRE_Int ierr;
+  ierr = HYPRE_IJVectorAddToValues( m_ij_vector,
+                                    integer_conversion<HYPRE_Int>( size ),
+                                    toHYPRE_Int( globalIndices ),
+                                    values );
+  GEOSX_ASSERT_MSG( ierr == 0,
+                    "Error adding values HypreVector - error code: " +
+                    std::to_string( ierr ) );
 }
 
 // n-element, array1d options
@@ -344,28 +320,40 @@ void HypreVector::add( globalIndex const * globalIndices,
 void HypreVector::set( array1d<globalIndex> const & globalIndices,
                        array1d<real64> const & values )
 {
-  GEOSX_ERROR_IF( m_ij_vector == nullptr,
-                 "vector appears to be empty (not created)" );
+
   GEOSX_ASSERT_MSG( this->ilower() <= *std::min_element(globalIndices.data(),
                                                        globalIndices.data() + globalIndices.size() ) &&
                    *std::max_element(globalIndices.data(),
                                      globalIndices.data() + globalIndices.size()) < this->iupper(),
                    "HypreVector, it is not possible to set values on other processors");
-  HYPRE_IJVectorSetValues( m_ij_vector,
-                           integer_conversion<HYPRE_Int>( values.size() ),
-                           toHYPRE_Int( globalIndices.data() ),
-                           values.data() );
+
+//  GEOSX_ASSERT_MSG( ( this->getLocalRowID( *std::min_element( globalIndices.data(),
+//                                                            globalIndices.data() + globalIndices.size() ) >= 0 ) &&
+//                    ( this->getLocalRowID( *std::max_element( globalIndices.data(),
+//                                                            globalIndices.data() + globalIndices.size() ) >= 0 ),
+//                    "HypreVector, it is not possible to set values on other processors");
+
+  HYPRE_Int ierr;
+  ierr = HYPRE_IJVectorSetValues( m_ij_vector,
+                                  integer_conversion<HYPRE_Int>( values.size() ),
+                                  toHYPRE_Int( globalIndices.data() ),
+                                  values.data() );
+  GEOSX_ASSERT_MSG( ierr == 0,
+                    "Error setting values HypreVector - error code: " +
+                    std::to_string( ierr ) );
 }
 
 void HypreVector::add( array1d<globalIndex> const & globalIndices,
                        array1d<real64> const & values )
 {
-  GEOSX_ERROR_IF( m_ij_vector == nullptr,
-                 "vector appears to be empty (not created)" );
-  HYPRE_IJVectorAddToValues( m_ij_vector,
-                             integer_conversion<HYPRE_Int>( values.size() ),
-                             toHYPRE_Int( globalIndices.data() ),
-                             values.data() );
+  HYPRE_Int ierr;
+  ierr = HYPRE_IJVectorAddToValues( m_ij_vector,
+                                    integer_conversion<HYPRE_Int>( values.size() ),
+                                    toHYPRE_Int( globalIndices.data() ),
+                                    values.data() );
+  GEOSX_ASSERT_MSG( ierr == 0,
+                    "Error adding values HypreVector - error code: " +
+                    std::to_string( ierr ) );
 }
 
 //additional options:
@@ -416,9 +404,14 @@ void HypreVector::close()
 
 void HypreVector::scale( real64 const scalingFactor )
 {
-  GEOSX_ERROR_IF( m_ij_vector == nullptr,
-                 "vector appears to be empty (not created)" );
-  HYPRE_ParVectorScale( scalingFactor, m_par_vector );
+  GEOSX_ASSERT_MSG( m_ij_vector != nullptr,
+                    "vector appears to be empty (not created)" );
+  HYPRE_Int ierr;
+  ierr = HYPRE_ParVectorScale( scalingFactor,
+                               m_par_vector );
+  GEOSX_ASSERT_MSG( ierr == 0,
+                    "Error scaling HypreVector - error code: " +
+                    std::to_string( ierr ) );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -426,15 +419,23 @@ void HypreVector::scale( real64 const scalingFactor )
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Dot product with the vector vec.
 
-real64 HypreVector::dot( HypreVector const &vec )
+real64 HypreVector::dot( HypreVector const &vec ) const
 {
-  GEOSX_ERROR_IF( m_ij_vector == nullptr,
-                 "vector this appears to be empty (not created)" );
-  GEOSX_ERROR_IF( m_ij_vector == nullptr,
-                 "vector vec appears to be empty (not created)" );
-
-  return hypre_ParVectorInnerProd( m_par_vector,
-                                   *vec.getHypreParVectorPointer() );
+  GEOSX_ASSERT_MSG( m_ij_vector != nullptr,
+                    "vector this appears to be empty (not created)" );
+  GEOSX_ASSERT_MSG( vec.m_ij_vector != nullptr,
+                    "vector vec appears to be empty (not created)" );
+  GEOSX_ASSERT_MSG( this->localSize() == vec.localSize(),
+                    "HypreVector lengths not compatible for dot product" );
+  HYPRE_Int ierr;
+  HYPRE_Real result;
+  ierr = HYPRE_ParVectorInnerProd( m_par_vector,
+                                   vec.m_par_vector,
+                                   &result);
+  GEOSX_ASSERT_MSG( ierr == 0,
+                    "Error dot product HypreVector - error code: " +
+                    std::to_string( ierr ) );
+  return static_cast<real64>( result );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -444,12 +445,18 @@ real64 HypreVector::dot( HypreVector const &vec )
 
 void HypreVector::copy( HypreVector const &x )
 {
-  GEOSX_ERROR_IF( m_ij_vector == nullptr,
-                 "destination vector appears to be empty (not created)" );
-  GEOSX_ERROR_IF( *x.unwrappedPointer() == nullptr,
-                 "source vector appears to be empty (not created)" );
-  // TODO: add dimension checks?
-  HYPRE_ParVectorCopy( *x.getHypreParVectorPointer(), m_par_vector );
+  GEOSX_ASSERT_MSG( m_ij_vector != nullptr,
+                    "destination vector appears to be empty (not created)" );
+  GEOSX_ASSERT_MSG( x.m_ij_vector != nullptr,
+                    "source vector appears to be empty (not created)" );
+  GEOSX_ASSERT_MSG( this->localSize() == x.localSize(),
+                    "HypreVector lengths not compatible for copying" );
+  HYPRE_Int ierr;
+  ierr = HYPRE_ParVectorCopy( x.m_par_vector,
+                              m_par_vector );
+  GEOSX_ASSERT_MSG( ierr == 0,
+                    "Error copying HypreVector - error code: " +
+                    std::to_string( ierr ) );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -460,11 +467,19 @@ void HypreVector::copy( HypreVector const &x )
 void HypreVector::axpy( real64 const alpha,
                         HypreVector const &x )
 {
-  GEOSX_ERROR_IF( m_ij_vector == nullptr,
-                 "destination vector appears to be empty (not created)" );
-  GEOSX_ERROR_IF( *x.unwrappedPointer() == nullptr,
-                 "source vector appears to be empty (not created)" );
-  HYPRE_ParVectorAxpy( alpha, *x.getHypreParVectorPointer(), m_par_vector );
+  GEOSX_ASSERT_MSG( m_ij_vector != nullptr,
+                    "this vector appears to be empty (not created)" );
+  GEOSX_ASSERT_MSG( x.m_ij_vector != nullptr,
+                    "source vector appears to be empty (not created)" );
+  GEOSX_ASSERT_MSG( this->localSize() == x.localSize(),
+                    "HypreVector lengths not compatible for axpy operation" );
+  HYPRE_Int ierr;
+  ierr = HYPRE_ParVectorAxpy( alpha,
+                              x.m_par_vector,
+                              m_par_vector );
+  GEOSX_ASSERT_MSG( ierr == 0,
+                    "Error axpy operation on HypreVectors - error code: " +
+                    std::to_string( ierr ) );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -476,10 +491,6 @@ void HypreVector::axpby( real64 const alpha,
                          HypreVector const &x,
                          real64 const beta )
 {
-  GEOSX_ERROR_IF( m_ij_vector == nullptr,
-                 "destination vector appears to be empty (not created)" );
-  GEOSX_ERROR_IF( *x.unwrappedPointer() == nullptr,
-                 "source vector appears to be empty (not created)" );
   this->scale( beta );
   this->axpy( alpha, x );
 }
@@ -491,25 +502,21 @@ void HypreVector::axpby( real64 const alpha,
 
 real64 HypreVector::norm1() const
 {
-  GEOSX_ERROR_IF( m_ij_vector == nullptr,
-                 "vector appears to be empty (not created)" );
-
-  MPI_Comm comm = hypre_IJVectorComm( m_ij_vector );
+  GEOSX_ASSERT_MSG( m_ij_vector != nullptr,
+                    "this vector appears to be empty (not created)" );
 
   real64 const * local_data = this->extractLocalVector();
-//  double * local_data = hypre_VectorData( hypre_ParVectorLocalVector (m_par_vector) );
 
-  real64 norm1 = 0;
-  real64 loc_norm1 = 0;
+  real64 norm1 = 0.0;
+  real64 loc_norm1 = 0.0;
   for( int i = 0 ; i < integer_conversion<int>( this->localSize() ) ; ++i )
     loc_norm1 += std::fabs( local_data[i] );
 
-  MPI_Allreduce( &loc_norm1,
-                 &norm1,
-                 1,
-                 MPI_DOUBLE,
-                 MPI_SUM,
-                 comm );
+  MpiWrapper::allReduce( &loc_norm1,
+                         &norm1,
+                         1,
+                         MPI_SUM,
+                         hypre_IJVectorComm( m_ij_vector ) );
 
   return norm1;
 }
@@ -521,11 +528,9 @@ real64 HypreVector::norm1() const
 
 real64 HypreVector::norm2() const
 {
-  GEOSX_ERROR_IF( m_ij_vector == nullptr,
-                 "vector appears to be empty (not created)" );
-
-  return std::sqrt( hypre_ParVectorInnerProd( m_par_vector,
-                                              m_par_vector ) );
+  GEOSX_ASSERT_MSG( m_ij_vector != nullptr,
+                    "this vector appears to be empty (not created)" );
+  return std::sqrt( this->dot(*this) );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -535,22 +540,21 @@ real64 HypreVector::norm2() const
 
 real64 HypreVector::normInf() const
 {
-  MPI_Comm comm = hypre_IJVectorComm( m_ij_vector );
+  GEOSX_ASSERT_MSG( m_ij_vector != nullptr,
+                    "this vector appears to be empty (not created)" );
 
   real64 const * local_data = this->extractLocalVector();
 
-  real64 normInf = 0;
-  real64 loc_normInf = std::fabs( local_data[0] );
-  for( int i = 1 ; i < integer_conversion<int>( this->localSize() ) ; ++i )
+  real64 normInf = 0.0;
+  real64 loc_normInf = 0.0;
+  for( int i = 0 ; i < integer_conversion<int>( this->localSize() ) ; ++i )
     loc_normInf = std::max( loc_normInf, std::fabs( local_data[i] ) );
 
-
-  MPI_Allreduce( &loc_normInf,
-                 &normInf,
-                 1,
-                 MPI_DOUBLE,
-                 MPI_MAX,
-                 comm );
+  MpiWrapper::allReduce( &loc_normInf,
+                         &normInf,
+                         1,
+                         MPI_MAX,
+                         hypre_IJVectorComm( m_ij_vector ) );
 
   return normInf;
 }
