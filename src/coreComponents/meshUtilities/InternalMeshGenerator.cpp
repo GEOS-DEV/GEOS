@@ -541,7 +541,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
   }
 
   nodeManager->resize( numNodes );
-  arrayView2d< real64 > const & X = nodeManager->referencePosition();
+  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & X = nodeManager->referencePosition();
 
   {
     localIndex localNodeIndex = 0;
@@ -663,7 +663,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
           int const numNodesPerElem = integer_conversion<int>(elemRegion->numNodesPerElement());
           integer_array nodeIDInBox( numNodesPerElem );
 
-           arrayView2d< localIndex, CellBlock::NODE_MAP_UNIT_STRIDE_DIM > elemsToNodes = elemRegion->nodeList();
+           arrayView2d< localIndex, cells::NODE_MAP_USD > elemsToNodes = elemRegion->nodeList();
 
           int numElemsInDirForRegion[3] =
           { lastElemIndexForBlockInPartition[0][iblock] - firstElemIndexForBlockInPartition[0][iblock] + 1,

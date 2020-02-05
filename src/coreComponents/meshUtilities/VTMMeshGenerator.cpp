@@ -115,7 +115,7 @@ void VTMMeshGenerator::GenerateMesh( DomainPartition * const domain )
                 const auto & mesh = meshBlock.mesh();
                 /// Write nodes
                 nodeManager->resize(mesh.NumVertices());
-                arrayView2d<real64> const & X = nodeManager->referencePosition();
+                arrayView2d<real64, nodes::REFERENCE_POSITION_USD> const & X = nodeManager->referencePosition();
                 for( localIndex a=0 ; a< mesh.NumVertices() ; ++a )
                 {
                   for( int i = 0; i < 3; ++i )
