@@ -42,7 +42,8 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
   m_toNodesRelation(),
   m_toEdgesRelation(),
   m_elementAperture(),
-  m_elementArea()
+  m_elementArea(),
+  m_numOfJumpEnrichments(1)
 {
   registerWrapper( viewKeyStruct::regionListString, &m_embeddedSurfaceToRegion, false )->
       setDescription("Map to the region cut by each EmbeddedSurface.");
@@ -173,7 +174,6 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface (localIndex const cellIndex
                                                            nodesCoord[edgeToNodes[edgeIndex][0]],
                                                            normalVector,
                                                            origin);
-
       // std::cout << "origin " << origin <<  " point " << point << std::endl;
       // Check if the point is inside the fracture (bounded plane)
       if ( !fracture->IsCoordInObject(point) )
@@ -194,10 +194,7 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface (localIndex const cellIndex
     this->resize(this->size() + 1);
     this->CalculateElementGeometricQuantities(intersectionPoints, this->size()-1);
   }
-<<<<<<< HEAD
-=======
 
->>>>>>> feature/cusini/EmbeddedFractures
   return addEmbeddedElem;
 }
 

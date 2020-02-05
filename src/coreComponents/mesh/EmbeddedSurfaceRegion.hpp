@@ -87,14 +87,18 @@ public:
      */
   string const & GetEmbeddedSurfaceGeneratorName() const { return m_embeddedSurfaceName; }
 
+  real64 getDefaultAperture() const { return m_defaultAperture; }
+
   struct viewKeyStruct : public ElementRegionBase::viewKeyStruct
   {
-    static constexpr auto fractureSetString = "fractureSet";
+    static constexpr auto defaultApertureString = "defaultAperture";
   };
 
 
 private:
   string m_embeddedSurfaceName;
+
+  real64 m_defaultAperture;
 
 };
 
