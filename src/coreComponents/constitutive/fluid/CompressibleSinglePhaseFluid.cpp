@@ -170,7 +170,7 @@ void CompressibleSinglePhaseFluid::PointUpdatePressureExplicit( real64 & pressur
 {
   real64 pressureCap = 1e8;
   pressure = m_density[k][q] < m_referenceDensity ? 0 : (pressure <= 0.5 * pressureCap
-                                                        ? (1 - m_referenceDensity / m_density[k][q]) / m_compressibility
+                                                        ? (1 - m_referenceDensity / m_density[k][q]) / m_compressibility + m_referencePressure
                                                         : 0.5 * pressureCap + ( pressure - 0.5 * pressureCap) / (1.0 / m_compressibility - 0.5 * pressureCap) * 0.5 * pressureCap);
 
   // In explicit solver, density is calculated from mass, not pressure; below may only be used for pressure-initialization

@@ -87,14 +87,14 @@ void HydrofractureSolver::RegisterDataOnMesh( dataRepository::Group * const Mesh
 	{
 	  ElementRegionManager * const elemManager = mesh.second->group_cast<MeshBody*>()->getMeshLevel(0)->getElemManager();
 
-	  elemManager->forElementSubRegions<CellElementSubRegion,
-										FaceElementSubRegion>( [&]( auto * const elementSubRegion ) -> void
-		{
-		  elementSubRegion->template registerWrapper< array1d<real64> >( viewKeyStruct::totalMeanStressString )->
-			setDescription("Total Mean Stress");
-		  elementSubRegion->template registerWrapper< array1d<real64> >( viewKeyStruct::oldTotalMeanStressString )->
-			setDescription("Old total Mean Stress");
-		});
+//	  elemManager->forElementSubRegions<CellElementSubRegion,
+//										FaceElementSubRegion>( [&]( auto * const elementSubRegion ) -> void
+//		{
+//		  elementSubRegion->template registerWrapper< array1d<real64> >( viewKeyStruct::totalMeanStressString )->
+//			setDescription("Total Mean Stress");
+//		  elementSubRegion->template registerWrapper< array1d<real64> >( viewKeyStruct::oldTotalMeanStressString )->
+//			setDescription("Old total Mean Stress");
+//		});
 	  elemManager->forElementSubRegions<FaceElementSubRegion>( [&]( auto * const elementSubRegion ) -> void
 		{
 		  elementSubRegion->template registerWrapper< array1d<real64> >( viewKeyStruct::contactStressString )->
@@ -130,11 +130,11 @@ void HydrofractureSolver::ExplicitStepSetup( real64 const & time_n,
   MeshLevel * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const totalMeanStress =
-    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::totalMeanStressString);
-
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> oldTotalMeanStress =
-    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::oldTotalMeanStressString);
+//  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const totalMeanStress =
+//    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::totalMeanStressString);
+//
+//  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> oldTotalMeanStress =
+//    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::oldTotalMeanStressString);
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const poro =
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(FlowSolverBase::viewKeyStruct::porosityString);
@@ -151,34 +151,34 @@ void HydrofractureSolver::ExplicitStepSetup( real64 const & time_n,
   static int setHydrofractureSolverTimeStep = 0;
   if( setHydrofractureSolverTimeStep == 0 )
   {
-    ConstitutiveManager const * const
-      constitutiveManager = domain->GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
-
-    ElementRegionManager::MaterialViewAccessor< arrayView2d<R2SymTensor> > const stress =
-      elemManager->ConstructFullMaterialViewAccessor< array2d<R2SymTensor>, arrayView2d<R2SymTensor> >(SolidBase::viewKeyStruct::stressString, constitutiveManager);
-
-    ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const pres =
-      elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(FlowSolverBase::viewKeyStruct::pressureString);
-
-    ElementRegionManager::MaterialViewAccessor<real64> const biotCoefficient =
-      elemManager->ConstructFullMaterialViewAccessor<real64>( "BiotCoefficient", constitutiveManager);
-
-    localIndex const solidIndex = domain->getConstitutiveManager()->
-                                  GetConstitutiveRelation( this->getParent()->GetGroup(m_flowSolverName)->group_cast<FlowSolverBase*>()->solidIndex() )->getIndexInParent();
-
-    for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
-    {
-      ElementRegionBase const * const elemRegion = elemManager->GetRegion(er);
-
-      elemRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr,
-                                                                          CellElementSubRegion const * const elementSubRegion )
-      {
-        for( localIndex ei=0 ; ei<elementSubRegion->size() ; ++ei )
-        {
-          totalMeanStress[er][esr][ei] = stress[er][esr][solidIndex][ei][0].Trace() / 3.0 - biotCoefficient[er][esr][solidIndex] * pres[er][esr][ei];
-        }
-      });
-    }
+//    ConstitutiveManager const * const
+//      constitutiveManager = domain->GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
+//
+//    ElementRegionManager::MaterialViewAccessor< arrayView2d<R2SymTensor> > const stress =
+//      elemManager->ConstructFullMaterialViewAccessor< array2d<R2SymTensor>, arrayView2d<R2SymTensor> >(SolidBase::viewKeyStruct::stressString, constitutiveManager);
+//
+//    ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const pres =
+//      elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(FlowSolverBase::viewKeyStruct::pressureString);
+//
+//    ElementRegionManager::MaterialViewAccessor<real64> const biotCoefficient =
+//      elemManager->ConstructFullMaterialViewAccessor<real64>( "BiotCoefficient", constitutiveManager);
+//
+//    localIndex const solidIndex = domain->getConstitutiveManager()->
+//                                  GetConstitutiveRelation( this->getParent()->GetGroup(m_flowSolverName)->group_cast<FlowSolverBase*>()->solidIndex() )->getIndexInParent();
+//
+//    for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
+//    {
+//      ElementRegionBase const * const elemRegion = elemManager->GetRegion(er);
+//
+//      elemRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr,
+//                                                                          CellElementSubRegion const * const elementSubRegion )
+//      {
+//        for( localIndex ei=0 ; ei<elementSubRegion->size() ; ++ei )
+//        {
+//          totalMeanStress[er][esr][ei] = stress[er][esr][solidIndex][ei][0].Trace() / 3.0 - biotCoefficient[er][esr][solidIndex] * pres[er][esr][ei];
+//        }
+//      });
+//    }
 
     elemManager->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion * const subRegion )->void
     {
@@ -205,7 +205,7 @@ void HydrofractureSolver::ExplicitStepSetup( real64 const & time_n,
                                 localIndex const esr,
                                 localIndex const k)->void
   {
-    oldTotalMeanStress[er][esr][k] = totalMeanStress[er][esr][k];
+//    oldTotalMeanStress[er][esr][k] = totalMeanStress[er][esr][k];
     poroOld[er][esr][k] = poro[er][esr][k];
   });
 
@@ -285,11 +285,11 @@ void HydrofractureSolver::ResetStateToBeginningOfStep( DomainPartition * const d
     MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
     ElementRegionManager * const elemManager = mesh->getElemManager();
 
-    ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const totalMeanStress =
-      elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::totalMeanStressString);
-
-    ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> oldTotalMeanStress =
-      elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::oldTotalMeanStressString);
+//    ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const totalMeanStress =
+//      elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::totalMeanStressString);
+//
+//    ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> oldTotalMeanStress =
+//      elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::oldTotalMeanStressString);
 
     ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const poro =
       elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(FlowSolverBase::viewKeyStruct::porosityString);
@@ -302,7 +302,7 @@ void HydrofractureSolver::ResetStateToBeginningOfStep( DomainPartition * const d
                                   localIndex const esr,
                                   localIndex const k)->void
     {
-      totalMeanStress[er][esr][k] = oldTotalMeanStress[er][esr][k];
+//      totalMeanStress[er][esr][k] = oldTotalMeanStress[er][esr][k];
       poro[er][esr][k] = poroOld[er][esr][k];
     });
   }
@@ -489,23 +489,23 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
     ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> deltaVolume =
       elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(FlowSolverBase::viewKeyStruct::deltaVolumeString);
 
-    ElementRegionManager::MaterialViewAccessor< arrayView2d<R2SymTensor> > const stress =
-      elemManager->ConstructFullMaterialViewAccessor< array2d<R2SymTensor>, arrayView2d<R2SymTensor> >(SolidBase::viewKeyStruct::stressString, constitutiveManager);
+//    ElementRegionManager::MaterialViewAccessor< arrayView2d<R2SymTensor> > const stress =
+//      elemManager->ConstructFullMaterialViewAccessor< array2d<R2SymTensor>, arrayView2d<R2SymTensor> >(SolidBase::viewKeyStruct::stressString, constitutiveManager);
 
-    ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> totalMeanStress =
-      elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::totalMeanStressString);
+//    ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> totalMeanStress =
+//      elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::totalMeanStressString);
+//
+//    ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const oldTotalMeanStress =
+//      elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::oldTotalMeanStressString);
 
-    ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const oldTotalMeanStress =
-      elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::oldTotalMeanStressString);
-
-    ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const pres =
-      elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(FlowSolverBase::viewKeyStruct::pressureString);
-
+//    ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const pres =
+//      elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(FlowSolverBase::viewKeyStruct::pressureString);
+//
 //    ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const dPres =
 //      elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(FlowSolverBase::viewKeyStruct::deltaPressureString);
-
-    ElementRegionManager::MaterialViewAccessor<real64> const biotCoefficient =
-      elemManager->ConstructFullMaterialViewAccessor<real64>( "BiotCoefficient", constitutiveManager);
+//
+//    ElementRegionManager::MaterialViewAccessor<real64> const biotCoefficient =
+//      elemManager->ConstructFullMaterialViewAccessor<real64>( "BiotCoefficient", constitutiveManager);
 
     ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> poro =
       elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(FlowSolverBase::viewKeyStruct::porosityString);
@@ -513,11 +513,11 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
     ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const poroOld =
       elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(FlowSolverBase::viewKeyStruct::porosityOldString);
 
-    ElementRegionManager::MaterialViewAccessor< arrayView1d<real64> > const bulkModulus =
-      elemManager->ConstructFullMaterialViewAccessor< array1d<real64>, arrayView1d<real64> >( "BulkModulus", constitutiveManager);
+//    ElementRegionManager::MaterialViewAccessor< arrayView1d<real64> > const bulkModulus =
+//      elemManager->ConstructFullMaterialViewAccessor< array1d<real64>, arrayView1d<real64> >( "BulkModulus", constitutiveManager);
 
-    localIndex const solidIndex = domain->getConstitutiveManager()->
-                                  GetConstitutiveRelation( this->getParent()->GetGroup(m_flowSolverName)->group_cast<FlowSolverBase*>()->solidIndex() )->getIndexInParent();
+//    localIndex const solidIndex = domain->getConstitutiveManager()->
+//                                  GetConstitutiveRelation( this->getParent()->GetGroup(m_flowSolverName)->group_cast<FlowSolverBase*>()->solidIndex() )->getIndexInParent();
 
     for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
     {
@@ -530,17 +530,6 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
 
         for( localIndex ei=0 ; ei<elementSubRegion->size() ; ++ei )
         {
-          totalMeanStress[er][esr][ei] = stress[er][esr][solidIndex][ei][0].Trace() / 3.0 - biotCoefficient[er][esr][solidIndex] * pres[er][esr][ei];
-
-//          poro[er][esr][ei] = poroOld[er][esr][ei] * std::exp( (biotCoefficient[er][esr][solidIndex] - poroOld[er][esr][ei]) / bulkModulus[er][esr][solidIndex][ei]
-//                                                             * (totalMeanStress[er][esr][ei] - oldTotalMeanStress[er][esr][ei] + dPres[er][esr][ei]) );
-
-//          poro[er][esr][ei] = poroOld[er][esr][ei] + (biotCoefficient[er][esr][solidIndex] - poroOld[er][esr][ei]) / bulkModulus[er][esr][solidIndex][ei]
-//                                                   * (totalMeanStress[er][esr][ei] - oldTotalMeanStress[er][esr][ei] + dPres[er][esr][ei]);
-
-            poro[er][esr][ei] = poroOld[er][esr][ei] + (biotCoefficient[er][esr][solidIndex] - poroOld[er][esr][ei]) / bulkModulus[er][esr][solidIndex][ei]
-                                                     * (totalMeanStress[er][esr][ei] - oldTotalMeanStress[er][esr][ei]);
-
           // update cell element deltaVoume
           R1Tensor Xlocal[ElementRegionManager::maxNumNodesPerElem];
           for (localIndex a = 0; a < elemsToNodes.size(1); ++a)
@@ -551,63 +540,17 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
 
           deltaVolume[er][esr][ei] = computationalGeometry::HexVolume(Xlocal) - volume[er][esr][ei];
 
-//          if (dPres[er][esr][ei] > 0)
-//            std::cout<< "\n Solid Matrix Update Deformation: ei = " << ei << ", cell dVol= "<< deltaVolume[er][esr][ei] <<", poro = "<< poro[er][esr][ei] <<", poroOld = "<< poroOld[er][esr][ei]
-//                      << "\n                totalMeanStress = "<< totalMeanStress[er][esr][ei]  << ", oldTotalMeanStress = "<< oldTotalMeanStress[er][esr][ei] << std::endl;
+          real64 volStrain = deltaVolume[er][esr][ei] / volume[er][esr][ei];
 
           volume[er][esr][ei] += deltaVolume[er][esr][ei];
+
+          poro[er][esr][ei] = (poroOld[er][esr][ei] + volStrain) / (1 + volStrain);
+
+//          std::cout<< "\n Matrix Deformation Update: ei = " << ei << ", Vol Strain= " << volStrain  << ", new poro = "<< poro[er][esr][ei] << std::endl;
         }
       });
     }
   }  // end of if
-
-}
-
-void HydrofractureSolver::UpdatePorosityForCoupling( DomainPartition * const domain )
-{
-  MeshLevel * const meshLevel = domain->getMeshBody(0)->getMeshLevel(0);
-  ElementRegionManager * const elemManager = meshLevel->getElemManager();
-  NodeManager * const nodeManager = meshLevel->getNodeManager();
-  FaceManager * const faceManager = meshLevel->getFaceManager();
-
-  ConstitutiveManager const * const
-  constitutiveManager = domain->GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
-
-  // update face area
-  faceManager->computeGeometry(nodeManager);
-
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const dPres =
-    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(FlowSolverBase::viewKeyStruct::deltaPressureString);
-
-  ElementRegionManager::MaterialViewAccessor<real64> const biotCoefficient =
-    elemManager->ConstructFullMaterialViewAccessor<real64>( "BiotCoefficient", constitutiveManager);
-
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> poro =
-    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(FlowSolverBase::viewKeyStruct::porosityString);
-
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const poroOld =
-    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(FlowSolverBase::viewKeyStruct::porosityOldString);
-
-  ElementRegionManager::MaterialViewAccessor< arrayView1d<real64> > const bulkModulus =
-    elemManager->ConstructFullMaterialViewAccessor< array1d<real64>, arrayView1d<real64> >( "BulkModulus", constitutiveManager);
-
-  localIndex const solidIndex = domain->getConstitutiveManager()->
-                                GetConstitutiveRelation( this->getParent()->GetGroup(m_flowSolverName)->group_cast<FlowSolverBase*>()->solidIndex() )->getIndexInParent();
-
-  for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
-  {
-    ElementRegionBase const * const elemRegion = elemManager->GetRegion(er);
-
-    elemRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr,
-                                                                     CellElementSubRegion const * const elementSubRegion )
-    {
-      for( localIndex ei=0 ; ei<elementSubRegion->size() ; ++ei )
-      {
-        poro[er][esr][ei] += (biotCoefficient[er][esr][solidIndex] - poroOld[er][esr][ei]) / bulkModulus[er][esr][solidIndex][ei] * dPres[er][esr][ei];
-//        std::cout<< "\n Solid Matrix Update Porosity: ei = " << ei <<", poro = "<< poro[er][esr][ei]  << "\n                totalMeanStress = "<< totalMeanStress[er][esr][ei]  << ", oldTotalMeanStress = "<< oldTotalMeanStress[er][esr][ei] << std::endl;
-      }
-    });
-  }
 
 }
 
@@ -738,8 +681,6 @@ real64 HydrofractureSolver::ExplicitStep( real64 const& time_n,
   this->UpdateDeformationForCoupling(domain);
 
   m_flowSolver->UpdateEOS( time_n, dt, domain );
-
-  this->UpdatePorosityForCoupling(domain);
 
   this->ApplyContactAndPressureToFacesInExplicitSolver( domain );
 
