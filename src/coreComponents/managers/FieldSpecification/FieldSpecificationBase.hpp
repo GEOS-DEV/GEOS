@@ -85,8 +85,8 @@ public:
    */
   virtual ~FieldSpecificationBase() override;
 
-  template < typename FIELD_OP, typename POLICY, typename T, int N, int UNIT_STRIDE_DIM >
-  void ApplyFieldValueKernel( ArrayView< T, N, UNIT_STRIDE_DIM > const & field,
+  template < typename FIELD_OP, typename POLICY, typename T, int N, int USD >
+  void ApplyFieldValueKernel( ArrayView< T, N, USD > const & field,
                               SortedArrayView< localIndex const > const & targetSet,
                               real64 const time,
                               Group * dataGroup ) const;
@@ -365,8 +365,8 @@ private:
 };
 
 
-template < typename FIELD_OP, typename POLICY, typename T, int N, int UNIT_STRIDE_DIM >
-void FieldSpecificationBase::ApplyFieldValueKernel( ArrayView< T, N, UNIT_STRIDE_DIM > const & field,
+template < typename FIELD_OP, typename POLICY, typename T, int N, int USD >
+void FieldSpecificationBase::ApplyFieldValueKernel( ArrayView< T, N, USD > const & field,
                                                     SortedArrayView< localIndex const > const & targetSet,
                                                     real64 const time,
                                                     Group * dataGroup ) const

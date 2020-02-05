@@ -48,8 +48,8 @@ enum class timeIntegrationOption : int
 namespace SolidMechanicsLagrangianFEMKernels
 {
 
-inline void velocityUpdate( arrayView2d<real64> const & acceleration,
-                            arrayView2d<real64> const & velocity,
+inline void velocityUpdate( arrayView2d<real64, nodes::ACCELERATION_USD> const & acceleration,
+                            arrayView2d<real64, nodes::VELOCITY_USD> const & velocity,
                             real64 const dt )
 {
   GEOSX_MARK_FUNCTION;
@@ -65,9 +65,9 @@ inline void velocityUpdate( arrayView2d<real64> const & acceleration,
   });
 }
 
-inline void velocityUpdate( arrayView2d<real64> const & acceleration,
+inline void velocityUpdate( arrayView2d<real64, nodes::ACCELERATION_USD> const & acceleration,
                             arrayView1d<real64 const> const & mass,
-                            arrayView2d<real64> const & velocity,
+                            arrayView2d<real64, nodes::VELOCITY_USD> const & velocity,
                             real64 const dt,
                             LvArray::SortedArrayView<localIndex const, localIndex> const & indices )
 {
@@ -84,9 +84,9 @@ inline void velocityUpdate( arrayView2d<real64> const & acceleration,
   });
 }
 
-inline void displacementUpdate( arrayView2d<real64 const> const & velocity,
-                                arrayView2d<real64> const & uhat,
-                                arrayView2d<real64> const & u,
+inline void displacementUpdate( arrayView2d<real64 const, nodes::VELOCITY_USD> const & velocity,
+                                arrayView2d<real64, nodes::INCR_DISPLACEMENT_USD> const & uhat,
+                                arrayView2d<real64, nodes::TOTAL_DISPLACEMENT_USD> const & u,
                                 real64 const dt )
 {
   GEOSX_MARK_FUNCTION;
@@ -182,13 +182,13 @@ struct ExplicitKernel
   static inline real64
   Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
           LvArray::SortedArrayView<localIndex const, localIndex> const & elementList,
-          arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & elemsToNodes,
+          arrayView2d<localIndex const, cells::NODE_MAP_USD> const & elemsToNodes,
           arrayView3d< R1Tensor const> const & dNdX,
           arrayView2d<real64 const> const & detJ,
-          arrayView2d<real64 const> const & u,
-          arrayView2d<real64 const> const & vel,
-          arrayView2d<real64> const & acc,
-          arrayView3d<real64 const> const & stress,
+          arrayView2d<real64 const, nodes::TOTAL_DISPLACEMENT_USD> const & u,
+          arrayView2d<real64 const, nodes::VELOCITY_USD> const & vel,
+          arrayView2d<real64, nodes::ACCELERATION_USD> const & acc,
+          arrayView3d<real64 const, solid::STRESS_USD> const & stress,
           real64 const dt )
   {
     forall_in_set<serialPolicy>( elementList.values(),
@@ -262,7 +262,7 @@ struct ExplicitKernel
                              localIndex const numQuadraturePoints,
                              arrayView3d< R1Tensor const> const & dNdX,
                              arrayView2d<real64 const> const & detJ,
-                             arrayView3d<real64 const> const & stress,
+                             arrayView3d<real64 const, solid::STRESS_USD> const & stress,
                              R1Tensor & force )
   {
     GEOSX_MARK_FUNCTION;
@@ -333,10 +333,10 @@ struct ImplicitKernel
           arrayView2d<real64 const > const& GEOSX_UNUSED_ARG( detJ ),
           FiniteElementBase const * const GEOSX_UNUSED_ARG( fe ),
           arrayView1d< integer const > const & GEOSX_UNUSED_ARG( elemGhostRank ),
-          arrayView2d< localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM > const & GEOSX_UNUSED_ARG( elemsToNodes ),
+          arrayView2d< localIndex const, cells::NODE_MAP_USD > const & GEOSX_UNUSED_ARG( elemsToNodes ),
           arrayView1d< globalIndex const > const & GEOSX_UNUSED_ARG( globalDofNumber ),
-          arrayView2d< real64 const > const & GEOSX_UNUSED_ARG( disp ),
-          arrayView2d< real64 const > const & GEOSX_UNUSED_ARG( uhat ),
+          arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & GEOSX_UNUSED_ARG( disp ),
+          arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const & GEOSX_UNUSED_ARG( uhat ),
           arrayView1d< R1Tensor const > const & GEOSX_UNUSED_ARG( vtilde ),
           arrayView1d< R1Tensor const > const & GEOSX_UNUSED_ARG( uhattilde ),
           arrayView2d< real64 const > const & GEOSX_UNUSED_ARG( density ),

@@ -109,7 +109,7 @@ class CustomVTUXMLWriter
    * @param[in] vertices table of vertice coordinates
    * @param[in] binary tells wether or not the data should be written in binary format
    */
-  void WriteVertices( arrayView2d< real64 const > const & vertices, bool binary )
+  void WriteVertices( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & vertices, bool binary )
   {
     if( binary )
     {
@@ -236,7 +236,7 @@ class CustomVTUXMLWriter
 
   private:
 
-    void WriteBinaryVertices( arrayView2d< real64 const > const & vertices )
+    void WriteBinaryVertices( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & vertices )
     {
       std::stringstream stream;
       std::uint32_t size = integer_conversion< std::uint32_t >( vertices.size() ) * sizeof( real64 );
@@ -254,7 +254,7 @@ class CustomVTUXMLWriter
       DumpBuffer( stream );
     }
 
-    void WriteAsciiVertices( arrayView2d< real64 const > const & vertices )
+    void WriteAsciiVertices( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & vertices )
     {
       for ( localIndex i = 0; i < vertices.size( 0 ); ++i )
       {

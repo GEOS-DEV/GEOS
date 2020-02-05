@@ -306,7 +306,7 @@ void CellBlock::setupRelatedObjectsInRelations( MeshLevel const * const mesh )
 void CellBlock::CalculateElementGeometricQuantities( NodeManager const & nodeManager,
                                                      FaceManager const & GEOSX_UNUSED_ARG( facemanager ) )
 {
-  arrayView2d< real64 const > const & X = nodeManager.referencePosition();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
 
   forall_in_range<serialPolicy>( 0, this->size(), GEOSX_LAMBDA ( localIndex const k )
   {
