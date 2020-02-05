@@ -104,7 +104,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
   auto polyhedronPartMap = std::get<0>( PAMELA::getPolyhedronPartMap( m_pamelaMesh.get(), 0));
 
   // Vertices are written first
-  arrayView2d< real64 > const & X = nodeManager->referencePosition();
+  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & X = nodeManager->referencePosition();
   nodeManager->resize(m_pamelaMesh->get_PointCollection()->size_all());
     R1Tensor xMax( std::numeric_limits< real64 >::min(),
                    std::numeric_limits< real64 >::min(),

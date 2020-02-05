@@ -80,10 +80,10 @@ public:
 
   static string CatalogName() { return "C3D8"; }
 
-  void reinit( arrayView2d< real64 const > const & X, arraySlice1d< localIndex const, -1 > const & mapped_support_points ) override
+  void reinit( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X, arraySlice1d< localIndex const, -1 > const & mapped_support_points ) override
   { return reinitPrivate( X, mapped_support_points ); }
 
-  void reinit( arrayView2d< real64 const > const & X, arraySlice1d< localIndex const, 0 > const & mapped_support_points ) override
+  void reinit( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X, arraySlice1d< localIndex const, 0 > const & mapped_support_points ) override
   { return reinitPrivate( X, mapped_support_points ); }
 
 private:
@@ -96,8 +96,8 @@ private:
    * the y, then z (depending on the desired spatial dimension of the
    * element).
    */
-  template< int UNIT_STRIDE_DIM >
-  void reinitPrivate( arrayView2d< real64 const > const & X, arraySlice1d< localIndex const, UNIT_STRIDE_DIM > const & mapped_support_points )
+  template< int USD >
+  void reinitPrivate( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X, arraySlice1d< localIndex const, USD > const & mapped_support_points )
   {
     StackArray< real64, 2, 9 > jacobian( 3, 3 );
 

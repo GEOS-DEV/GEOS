@@ -110,8 +110,8 @@ public:
       return ElementType::INVALID;
   }
 
-  virtual void reinit( arrayView2d< real64 const > const & X, arraySlice1d< localIndex const, -1 > const & mapped_support_points ) = 0;
-  virtual void reinit( arrayView2d< real64 const > const & X, arraySlice1d< localIndex const, 0 > const & mapped_support_points ) = 0;
+  virtual void reinit( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X, arraySlice1d< localIndex const, -1 > const & mapped_support_points ) = 0;
+  virtual void reinit( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X, arraySlice1d< localIndex const, 0 > const & mapped_support_points ) = 0;
 
 
 

@@ -37,15 +37,7 @@ class CellBlock : public ElementSubRegionBase
 {
 public:
 
-#if defined( GEOSX_USE_CUDA )
-  using NODE_MAP_PERMUTATION = RAJA::PERM_JI;
-#else
-  using NODE_MAP_PERMUTATION = RAJA::PERM_IJ;
-#endif
-
-  static constexpr int NODE_MAP_UNIT_STRIDE_DIM = LvArray::getStrideOneDimension( NODE_MAP_PERMUTATION {} );
-
-  using NodeMapType = InterObjectRelation< array2d< localIndex, NODE_MAP_PERMUTATION > >;
+  using NodeMapType = InterObjectRelation< array2d< localIndex, cells::NODE_MAP_PERMUTATION > >;
   using FaceMapType = FixedOneToManyRelation;
 
   /**
@@ -109,7 +101,7 @@ public:
                      const localIndex localFaceIndex,
                      localIndex_array& nodeIndicies) const;
 
-  void calculateElementCenters( arrayView2d< real64 const> const & X ) const
+  void calculateElementCenters( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const
   {
     arrayView1d<R1Tensor> const & elementCenters = m_elementCenter;
     localIndex nNodes = numNodesPerElement();
@@ -135,7 +127,7 @@ public:
                                                     FaceManager const & facemanager ) override;
 
   inline void CalculateCellVolumesKernel( localIndex const k,
-                                          arrayView2d<real64 const> const & X ) const
+                                          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const
   {
     R1Tensor & center = m_elementCenter[k];
     center = 0.0;

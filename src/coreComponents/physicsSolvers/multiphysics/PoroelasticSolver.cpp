@@ -213,12 +213,12 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
   ConstitutiveManager * const constitutiveManager =
     domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
 
-  arrayView2d<real64 const> const & X = nodeManager->referencePosition();
-  arrayView2d<real64 const> const & u = nodeManager->getReference<array2d<real64>>(keys::TotalDisplacement);
-  arrayView2d<real64 const> const & uhat = nodeManager->getReference<array2d<real64>>(keys::IncrementalDisplacement);
+  arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & X = nodeManager->referencePosition();
+  arrayView2d<real64 const, nodes::TOTAL_DISPLACEMENT_USD> const & u = nodeManager->totalDisplacement();
+  arrayView2d<real64 const, nodes::INCR_DISPLACEMENT_USD> const & uhat = nodeManager->incrementalDisplacement();
 
-  ElementRegionManager::ElementViewAccessor<arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM>> const elemsToNodes = 
-    elemManager->ConstructViewAccessor<CellBlock::NodeMapType, arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM>>( CellElementSubRegion::viewKeyStruct::nodeListString );
+  ElementRegionManager::ElementViewAccessor<arrayView2d<localIndex const, cells::NODE_MAP_USD>> const elemsToNodes = 
+    elemManager->ConstructViewAccessor<CellBlock::NodeMapType, arrayView2d<localIndex const, cells::NODE_MAP_USD>>( CellElementSubRegion::viewKeyStruct::nodeListString );
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> totalMeanStress =
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::totalMeanStressString);

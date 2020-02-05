@@ -62,13 +62,13 @@ public:
   arrayView2d<real64>       const & density()       { return m_density; }
   arrayView2d<real64 const> const & density() const { return m_density; }
 
-  arrayView3d<real64>       const & getStress()       { return m_stress; }
-  arrayView3d<real64 const> const & getStress() const { return m_stress; }
+  arrayView3d<real64, solid::STRESS_USD>       const & getStress()       { return m_stress; }
+  arrayView3d<real64 const, solid::STRESS_USD> const & getStress() const { return m_stress; }
 
 protected:
   real64 m_defaultDensity = 0;
   array2d<real64> m_density;
-  array3d<real64> m_stress;
+  array3d<real64, solid::STRESS_PERMUTATION> m_stress;
 };
 
 } // namespace constitutive

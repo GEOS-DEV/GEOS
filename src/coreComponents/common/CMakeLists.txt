@@ -10,6 +10,7 @@ set(common_headers
     GeosxMacros.hpp
     TimingMacros.hpp
     Logger.hpp
+    DataLayouts.hpp
    )
 
 #

@@ -817,7 +817,7 @@ void ProblemManager::ApplyNumericalMethods()
         MeshLevel * const meshLevel = meshBody->GetGroup<MeshLevel>(b);
         NodeManager * const nodeManager = meshLevel->getNodeManager();
         ElementRegionManager * const elemManager = meshLevel->getElemManager();
-        arrayView2d<real64 const> const & X = nodeManager->referencePosition();
+        arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & X = nodeManager->referencePosition();
 
         for( auto const & regionName : targetRegions )
         {

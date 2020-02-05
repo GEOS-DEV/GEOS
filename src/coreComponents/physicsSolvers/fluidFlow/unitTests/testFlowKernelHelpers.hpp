@@ -30,13 +30,14 @@ void setArrayElement( ArrayView<T, NDIM> const & arr,
                       T const * const data )
 {
   localIndex const elemSize = arr.size() / arr.size(0); // assume singleParameterResizeIndex == 0
-  T * const elemPtr = arr.data(dstIndex);
   T const * const dataPtr = data + srcIndex * elemSize;
 
-  for (localIndex i = 0; i < elemSize; ++i)
+  localIndex i = 0;
+  LvArray::forValuesInSlice( arr[ dstIndex ], [&i, dataPtr]( T & value )
   {
-    elemPtr[i] = dataPtr[i];
-  }
+    value = dataPtr[ i ];
+    ++i;
+  });
 }
 
 }
