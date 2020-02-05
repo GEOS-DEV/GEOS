@@ -22,11 +22,10 @@ static PyObject * parse_file(PyObject *self, PyObject *args, PyObject *keywords)
   const char *field_type = "Fracture_ElementFields";
   PyObject *field_names;
   const char *parallel_folder="";
-  size_t npar=1;
 
-  static char *keywordlist[] = {"file_name", "field_type", "field_names", "parallel_folder", "npar", NULL};
-  if (!PyArg_ParseTupleAndKeywords(args, keywords, "ssO|si", keywordlist, &file_name,
-                                   &field_type, &field_names, &parallel_folder, &npar))
+  static char *keywordlist[] = {"file_name", "field_type", "field_names", "parallel_folder", NULL};
+  if (!PyArg_ParseTupleAndKeywords(args, keywords, "ssOs", keywordlist, &file_name,
+                                   &field_type, &field_names, &parallel_folder))
   {
     std::cout << "Error: inputs were not specified correctly!  Correct argments:" << std::endl;
     std::cout << "parse_file(file_name, field_type, field_names)" << std::endl;

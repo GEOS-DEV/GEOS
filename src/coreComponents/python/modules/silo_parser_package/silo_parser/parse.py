@@ -17,10 +17,10 @@ def sig_handler(signum, frame):
 signal.signal(signal.SIGSEGV, sig_handler)
 
 
-def parse_single(field_type, field_names, parallel_folder, npar, f):
+def parse_single(field_type, field_names, parallel_folder, f):
     # Parse the silo file
     print('  %s' % (f))
-    data = simple_silo_parser.parse_file(f, field_type, field_names, parallel_folder=parallel_folder, npar=npar)
+    data = simple_silo_parser.parse_file(f, field_type, field_names, parallel_folder=parallel_folder)
 
     # Write to an hdf5 database
     cycle = data['cycle']
@@ -31,21 +31,18 @@ def parse_single(field_type, field_names, parallel_folder, npar, f):
 
 
 def parse_multiple(plot_root, field_type, field_names, parallel_folder='data', npar_proc=1):
-  fnames = sorted(glob.glob(plot_root + '*'))
-  npar_sub = len(glob.glob('%s/%s.*' % (parallel_folder, fnames[0])))
-
-  os.system('mkdir -p sub_hdf5')
-
   print('Processing files...')
+  os.makedirs('sub_hdf5', exist_ok=True)
+  fnames = sorted(glob.glob(plot_root + '*'))
   if (npar_proc > 1):
-    pfunc = partial(parse_single, field_type, field_names, parallel_folder, npar_sub)
+    pfunc = partial(parse_single, field_type, field_names, parallel_folder)
     pool = multiprocessing.Pool(processes=npar_proc)
     pool.map(pfunc, fnames)
     pool.close()
     pool.join()
   else:
     for f in fnames:
-      parse_single(field_type, field_names, parallel_folder, npar_sub, f)
+      parse_single(field_type, field_names, parallel_folder, f)
 
   print('Linking files...')
   with hdf5_wrapper.hdf5_wrapper('post_database.hdf5', mode='w') as database:
