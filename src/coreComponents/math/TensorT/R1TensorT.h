@@ -63,8 +63,8 @@ public:
    */
   explicit R1TensorT( const int data ): TensorBaseT< T_dim >( realT(data) ) {}
 
-  template< int UNIT_STRIDE_DIM >
-  R1TensorT( LvArray::ArraySlice< realT const, 1, UNIT_STRIDE_DIM > const & src ):
+  template< int USD >
+  R1TensorT( LvArray::ArraySlice< realT const, 1, USD > const & src ):
     TensorBaseT< T_dim > ()
   { *this = src; }
 
@@ -95,9 +95,9 @@ public:
   R1TensorT & operator=( const R1TensorT & rhs ) = default;
 
 
-  template< int UNIT_STRIDE_DIM >
+  template< int USD >
   GEOSX_HOST_DEVICE constexpr inline
-  R1TensorT & operator=( LvArray::ArraySlice< realT const, 1, UNIT_STRIDE_DIM > const & src )
+  R1TensorT & operator=( LvArray::ArraySlice< realT const, 1, USD > const & src )
   {
     GEOSX_ASSERT_EQ( src.size(), T_dim );
 
@@ -111,9 +111,9 @@ public:
 
   using TensorBaseT< T_dim >::operator+=;
 
-  template< int UNIT_STRIDE_DIM >
+  template< int USD >
   GEOSX_HOST_DEVICE constexpr inline
-  R1TensorT & operator+=( LvArray::ArraySlice< realT const, 1, UNIT_STRIDE_DIM > const & src )
+  R1TensorT & operator+=( LvArray::ArraySlice< realT const, 1, USD > const & src )
   {
     GEOSX_ASSERT_EQ( src.size(), T_dim );
 
@@ -125,18 +125,18 @@ public:
     return *this;
   }
 
-  template< int UNIT_STRIDE_DIM >
+  template< int USD >
   GEOSX_HOST_DEVICE constexpr inline
-  R1TensorT & operator+=( LvArray::ArraySlice< realT, 1, UNIT_STRIDE_DIM > const & src )
+  R1TensorT & operator+=( LvArray::ArraySlice< realT, 1, USD > const & src )
   {
-    return (*this) += reinterpret_cast< LvArray::ArraySlice< realT const, 1, UNIT_STRIDE_DIM > const & >( src );
+    return (*this) += reinterpret_cast< LvArray::ArraySlice< realT const, 1, USD > const & >( src );
   }
 
   using TensorBaseT< T_dim >::operator-=;
 
-  template< int UNIT_STRIDE_DIM >
+  template< int USD >
   GEOSX_HOST_DEVICE constexpr inline
-  R1TensorT & operator-=( LvArray::ArraySlice< realT const, 1, UNIT_STRIDE_DIM > const & src )
+  R1TensorT & operator-=( LvArray::ArraySlice< realT const, 1, USD > const & src )
   {
     GEOSX_ASSERT_EQ( src.size(), T_dim );
 

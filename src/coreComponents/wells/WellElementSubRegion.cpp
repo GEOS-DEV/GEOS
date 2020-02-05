@@ -379,7 +379,7 @@ void WellElementSubRegion::UpdateNodeManagerSize( MeshLevel                   & 
   localIndex iwellNodeLocal = 0; 
   // loop over global *well* indices
 
-  arrayView2d< real64 > const & X = nodeManager->referencePosition();
+  arrayView2d< real64,nodes::REFERENCE_POSITION_USD > const & X = nodeManager->referencePosition();
   for ( globalIndex iwellNodeGlobal : localNodes ) 
   {
     // local *nodeManager* index

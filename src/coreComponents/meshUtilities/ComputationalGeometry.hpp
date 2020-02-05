@@ -20,6 +20,7 @@
 #define GEOSX_MESHUTILITIES_COMPUTATIONALGEOMETRY_HPP_
 
 #include "common/DataTypes.hpp"
+#include "common/DataLayouts.hpp"
 
 namespace geosx
 {
@@ -38,7 +39,7 @@ namespace computationalGeometry
  */
 real64 Centroid_3DPolygon( localIndex const * const pointsIndices,
                            localIndex const numPoints,
-                           arrayView2d<real64 const> const & points,
+                           arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & points,
                            R1Tensor & center,
                            R1Tensor & normal,
                            real64 areaTolerance = 0.0 );
@@ -54,7 +55,7 @@ real64 Centroid_3DPolygon( localIndex const * const pointsIndices,
  * @return area of the convex 3D polygon
  */
 real64 Centroid_3DPolygon( arrayView1d<localIndex const> const & pointsIndices,
-                           arrayView2d<real64 const> const & points,
+                           arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & points,
                            R1Tensor & center,
                            R1Tensor & normal,
                            real64 areaTolerance = 0.0 );
@@ -107,7 +108,7 @@ real64 Centroid_3DPolygon( arrayView1d<localIndex const> const & pointsIndices,
  *
  * @note For faces with n>3 nodes that are non-planar, average normal is used
  */
-bool IsPointInsidePolyhedron( arrayView2d<real64 const> const & nodeCoordinates,
+bool IsPointInsidePolyhedron( arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodeCoordinates,
                               array1d<array1d<localIndex>> const & faceNodeIndicies,
                               R1Tensor const & point,
                               real64 const areaTolerance = 0.0 );

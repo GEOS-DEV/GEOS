@@ -302,10 +302,10 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
 {
   MeshLevel * const meshLevel = domain->getMeshBody(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = meshLevel->getElemManager();
-  NodeManager * const nodeManager = meshLevel->getNodeManager();
+  NodeManager const * const nodeManager = meshLevel->getNodeManager();
   FaceManager * const faceManager = meshLevel->getFaceManager();
 
-  arrayView2d<real64 const> const & u = nodeManager->getReference< array2d<real64> >( keys::TotalDisplacement );
+  arrayView2d<real64 const, nodes::TOTAL_DISPLACEMENT_USD> const & u = nodeManager->totalDisplacement();
   arrayView1d<R1Tensor const> const & faceNormal = faceManager->faceNormal();
   // arrayView1d<real64 const> const & faceArea = faceManager->faceArea();
   ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
