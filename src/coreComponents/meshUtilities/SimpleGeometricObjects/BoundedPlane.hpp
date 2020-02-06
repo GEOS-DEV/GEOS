@@ -51,13 +51,23 @@ public:
 
   R1Tensor const & getCenter() const {return m_origin;}
 
+  // width vector
+  R1Tensor & getWidthVector() {return m_widthVector;}
+
+  R1Tensor const & getWidthVector() const {return m_widthVector;}
+
+  // length vector
+  R1Tensor & getLengthVector() {return m_lengthVector;}
+
+  R1Tensor const & getLengthVector() const {return m_lengthVector;}
+
 
 protected:
   virtual void PostProcessInput() override final;
 
 private:
-  R1Tensor m_origin;
-  R1Tensor m_normal;
+  R1Tensor             m_origin;
+  R1Tensor             m_normal;
   R1Tensor             m_lengthVector;
   R1Tensor             m_widthVector;
   array1d < real64 >   m_dimensions;
