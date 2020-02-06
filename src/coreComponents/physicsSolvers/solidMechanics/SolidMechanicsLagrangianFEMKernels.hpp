@@ -205,8 +205,8 @@ struct ExplicitKernel
       return dt;
 
     arrayView2d<real64 const> const & density =  constitutiveRelation->density();
-    arrayView1d<real64 const> const & bulkModulus =  constitutiveRelation->bulkModulus();
-    arrayView1d<real64 const> const & shearModulus =  constitutiveRelation->shearModulus();
+//    arrayView1d<real64 const> const & bulkModulus =  constitutiveRelation->bulkModulus();
+//    arrayView1d<real64 const> const & shearModulus =  constitutiveRelation->shearModulus();
 
     forall_in_set<serialPolicy>( elementList.values(),
                               elementList.size(),
@@ -279,7 +279,9 @@ struct ExplicitKernel
         BB += Dot( s_dNdx[a], s_dNdx[a] ) ;
       }
 
-      *maxStableDt = std::min(*maxStableDt, sqrt( density[k][0] / ( bulkModulus[k] + 4 / 3.0 * shearModulus[k] ) / 2 /BB ));
+//      *maxStableDt = std::min(*maxStableDt, sqrt( density[k][0] / ( bulkModulus[k] + 4 / 3.0 * shearModulus[k] ) / 2 /BB ));
+      real64 constrainedModulus =  constitutiveRelation->constrainedModulus(k);
+      *maxStableDt = std::min(*maxStableDt, sqrt( density[k][0] / constrainedModulus / 2 /BB ));
       if (*maxStableDt <= 1e-20)
       {
         std::cout << "\n eleID = " << k+1 << " : \n maxStableDt=" << *maxStableDt << " , density[k][0]=" << density[k][0] << ", BB=" << BB;

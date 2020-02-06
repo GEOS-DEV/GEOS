@@ -553,8 +553,14 @@ void SinglePhaseFlow::ExplicitStepSetup( real64 const & time_n,
       arrayView1d<real64> const & poro = m_porosity[er][esr];
       if (poro[0] > 0.999999 )
         totalCompressibility = fluid->compressibility();
-      else if (m_poroElasticFlag)
+      else if( dynamic_cast<LinearElasticIsotropic * >( solid ) )
+      {
         totalCompressibility = dynamic_cast<LinearElasticIsotropic*>(solid)->compressibility() + fluid->compressibility();
+      }
+      else if( dynamic_cast<LinearElasticAnisotropic * >( solid ) )
+      {
+        totalCompressibility = dynamic_cast<LinearElasticAnisotropic*>(solid)->compressibility() + fluid->compressibility();
+      }
       else
         totalCompressibility = dynamic_cast<PoreVolumeCompressibleSolid*>(solid)->compressibility() + fluid->compressibility();
 

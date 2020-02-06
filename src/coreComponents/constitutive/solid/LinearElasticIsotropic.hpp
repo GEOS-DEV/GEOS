@@ -87,6 +87,8 @@ public:
   arrayView1d<real64> const &       shearModulus()       { return m_shearModulus; }
   arrayView1d<real64 const> const & shearModulus() const { return m_shearModulus; }
 
+  real64 constrainedModulus(localIndex k) const { return ( m_bulkModulus[k] + 4 / 3.0 * m_shearModulus[k] ); }
+
   real64 &       compressibility()       { return m_compressibility; }
   real64 const & compressibility() const { return m_compressibility; }
 
