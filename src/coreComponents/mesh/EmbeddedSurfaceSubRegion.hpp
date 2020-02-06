@@ -130,7 +130,8 @@ public:
      */
     //virtual localIndex numNodesPerElement( localIndex const k ) const override { return m_toNodesRelation[k].size(); }
 
-    localIndex numOfJumpEnrichments(m_numOfJumpEnrichments);
+    localIndex       & numOfJumpEnrichments()       {return m_numOfJumpEnrichments;}
+    localIndex const & numOfJumpEnrichments() const {return m_numOfJumpEnrichments;}
 
     arrayView1d< real64 > const &       getElementAperture()       { return m_elementAperture; }
     arrayView1d< real64 const > const & getElementAperture() const { return m_elementAperture; }
