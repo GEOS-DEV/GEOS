@@ -6,9 +6,9 @@
   <Solvers
     gravityVector="0.0,0.0,-0.0"
     >
-  
-    <Hydrofracture 
-      name="hydrofracture" 
+
+    <Hydrofracture
+      name="hydrofracture"
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
       couplingTypeOption="TightlyCoupled"
@@ -17,17 +17,14 @@
       contactRelationName="fractureContact"
       >
       <SystemSolverParameters
-        maxIterNewton="50"
-        newtonTol="1e-5"
         logLevel="1"
-        maxLineSearchCuts="10"
         useMLPrecond="1"
         scalingOption="2"
         />
     </Hydrofracture>
-  
-    <SolidMechanicsLagrangianSSLE 
-      name="lagsolve" 
+
+    <SolidMechanicsLagrangianSSLE
+      name="lagsolve"
       timeIntegrationOption="QuasiStatic"
       logLevel="0"
       discretization="FE1"
@@ -35,33 +32,28 @@
       solidMaterialName="rock"
       contactRelationName="fractureContact"
       >
-      <SystemSolverParameters 
+      <SystemSolverParameters
         krylovTol="1.0e-10"
-        newtonTol="1.0e-6"
-        maxIterNewton="5"
         logLevel="0"
         />
     </SolidMechanicsLagrangianSSLE>
-  
-    <SinglePhaseFlow 
+
+    <SinglePhaseFVM
       name="SinglePhaseFlow"
       logLevel="0"
-      gravityFlag="0"
       discretization="singlePhaseTPFA"
       targetRegions="{Fracture}"
       fluidName="water"
       solidName="rock"
       inputFluxEstimate="1"
       >
-      <SystemSolverParameters 
+      <SystemSolverParameters
         name="SystemSolverParameters"
         krylovTol="1.0e-12"
-        newtonTol="1.0e-5"
-        maxIterNewton="10"
         logLevel="0"
         />
-    </SinglePhaseFlow>
-    
+    </SinglePhaseFVM>
+
     <SurfaceGenerator
       name="SurfaceGen"
       logLevel="0"
@@ -73,9 +65,9 @@
       rockToughness="0.01e6"
       >
     </SurfaceGenerator>
-    
+
   </Solvers>
-  
+
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="{C3D8}"
@@ -89,7 +81,7 @@
   </Mesh>
 
   <Geometry>
-    <Box name="fracture" 
+    <Box name="fracture"
          xMin="-0.01,  -0.01, -0.01"
          xMax=" 0.01,   4.01,  1.01"/>
     <Box name="source"
@@ -102,32 +94,32 @@
 
 
   <Events maxTime="100.0">
-  
-    <!-- SoloEvent 
+
+    <!-- SoloEvent
       name="initialPlot"
       target="/Outputs/siloOutput"
       /-->
 
-    <SoloEvent 
+    <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGen"
       />
-  
-    <!-- SoloEvent 
+
+    <!-- SoloEvent
       name="preFracturePlot"
       target="/Outputs/siloOutput"
       /-->
 
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
-    <PeriodicEvent 
+    <PeriodicEvent
       name="solverApplications0"
       beginTime="0.0"
       endTime="20.0"
       forceDt="0.5"
       target="/Solvers/hydrofracture" />
 
-    <PeriodicEvent 
+    <PeriodicEvent
       name="solverApplications1"
       beginTime="20.0"
       endTime="100.0"
@@ -150,14 +142,14 @@
   </Events>
 
   <NumericalMethods>
-    <BasisFunctions> 
+    <BasisFunctions>
         <LagrangeBasis3 name="linearBasis"  degree = "1"  />
     </BasisFunctions>
-    
+
     <QuadratureRules>
-        <GaussQuadrature3 name="gaussian"   degree="2"  />    
+        <GaussQuadrature3 name="gaussian"   degree="2"  />
     </QuadratureRules>
-    
+
     <FiniteElements>
         <FiniteElementSpace name="FE1" parentSpace="C3D8" basis="linearBasis" quadrature="gaussian" />
     </FiniteElements>
@@ -173,7 +165,7 @@
     <CellElementRegion name="Region2"
                    cellBlocks="{cb1}"
                    materialList="{water, rock}"/>
-                   
+
     <FaceElementRegion name="Fracture"
                        defaultAperture="0.1e-3"
                        materialList="{water, rock}"/>
@@ -197,19 +189,19 @@
                                 compressibility="1.6155088853e-18"
                                 referencePressure="2.125e6"
                                 />
-                                
+
     <Contact name="fractureContact"
       penaltyStiffness="1.0e0" >
-      <TableFunction 
-        name="aperTable" 
+      <TableFunction
+        name="aperTable"
         coordinates = "{ -1.0e-3, 0.0}"
-        values      = "{  1.0e-6, 0.1e-3}" 
+        values      = "{  1.0e-6, 0.1e-3}"
         />
     </Contact>
   </Constitutive>
 
   <InitialConditions>
-    
+
   </InitialConditions>
 
   <FieldSpecifications>
@@ -243,7 +235,7 @@
                fieldName="elementAperture"
                scale="1.0e-4"/-->
 
-               
+
     <FieldSpecification name="yconstraint"
                objectPath="nodeManager"
                fieldName="TotalDisplacement"
@@ -257,7 +249,7 @@
                component="2"
                scale="0.0"
                setNames="{all}"/>
-               
+
     <FieldSpecification name="left"
                objectPath="nodeManager"
                fieldName="TotalDisplacement"
@@ -278,7 +270,7 @@
                fieldName="pressure"
                scale="0.0"
                setNames="{all}"/-->
-               
+
     <SourceFlux name="sourceTerm"
                 objectPath="ElementRegions/Fracture"
                 scale="-1.0"
