@@ -20,6 +20,7 @@ set( physicsSolvers_headers
      fluidFlow/SinglePhaseKernels.hpp
      fluidFlow/SinglePhaseWell.hpp
      fluidFlow/WellSolverBase.hpp
+     multiphysics/HydrofractureSolver.hpp
      multiphysics/PoroelasticSolver.hpp
      multiphysics/ReservoirSolver.hpp
      simplePDE/LaplaceFEM.hpp
@@ -29,7 +30,6 @@ set( physicsSolvers_headers
      solidMechanics/SolidMechanicsLagrangianSSLEKernels.hpp     
      surfaceGeneration/SurfaceGenerator.hpp
      )
-     #multiphysics/HydrofractureSolver.hpp
 
 #
 # Specify solver sources
@@ -49,6 +49,7 @@ set( physicsSolvers_sources
      fluidFlow/SinglePhaseKernels.cpp
      fluidFlow/SinglePhaseWell.cpp
      fluidFlow/WellSolverBase.cpp
+     multiphysics/HydrofractureSolver.cpp
      multiphysics/PoroelasticSolver.cpp
      multiphysics/ReservoirSolver.cpp
      simplePDE/LaplaceFEM.cpp
@@ -56,7 +57,6 @@ set( physicsSolvers_sources
      solidMechanics/SolidMechanicsLagrangianSSLE.cpp
      surfaceGeneration/SurfaceGenerator.cpp
      )
-     #multiphysics/HydrofractureSolver.cpp
 
 if( BUILD_OBJ_LIBS)
   set( dependencyList common constitutive dataRepository linearAlgebra )
