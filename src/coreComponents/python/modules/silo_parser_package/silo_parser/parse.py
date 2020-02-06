@@ -49,7 +49,8 @@ def parse_multiple(plot_root, field_type, field_names, parallel_folder='data', n
     # Link in sub-databases
     for k in glob.glob('./sub_hdf5/*.hdf5'):
       sub_name = k[k.rfind('/')+1:k.rfind('.')]
-      database.link(sub_name, os.path.abspath(k))
+      # database.link(sub_name, os.path.abspath(k))
+      database.link(sub_name, k)
 
     # Build the metadata
     build_metadata_hdf5(database)
