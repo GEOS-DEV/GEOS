@@ -266,6 +266,7 @@ void HypreVector::set( globalIndex const globalRow,
                                   1,
                                   &globalRow,
                                   &value );
+  GEOSX_UNUSED_VAR( ierr );
   GEOSX_ASSERT_MSG( ierr == 0,
                     "Error setting values HypreVector - error code: " +
                     std::to_string( ierr ) );
@@ -279,6 +280,7 @@ void HypreVector::add( globalIndex const globalRow,
                              1,
                              &globalRow,
                              &value );
+  GEOSX_UNUSED_VAR( ierr );
   GEOSX_ASSERT_MSG( ierr == 0,
                     "Error adding values HypreVector - error code: " +
                     std::to_string( ierr ) );
@@ -298,6 +300,7 @@ void HypreVector::set( globalIndex const * globalIndices,
                                   integer_conversion<HYPRE_Int>( size ),
                                   toHYPRE_Int( globalIndices ),
                                   values );
+  GEOSX_UNUSED_VAR( ierr );
   GEOSX_ASSERT_MSG( ierr == 0,
                     "Error setting values HypreVector - error code: " +
                     std::to_string( ierr ) );
@@ -312,6 +315,7 @@ void HypreVector::add( globalIndex const * globalIndices,
                                     integer_conversion<HYPRE_Int>( size ),
                                     toHYPRE_Int( globalIndices ),
                                     values );
+  GEOSX_UNUSED_VAR( ierr );
   GEOSX_ASSERT_MSG( ierr == 0,
                     "Error adding values HypreVector - error code: " +
                     std::to_string( ierr ) );
@@ -340,6 +344,7 @@ void HypreVector::set( array1d<globalIndex> const & globalIndices,
                                   integer_conversion<HYPRE_Int>( values.size() ),
                                   toHYPRE_Int( globalIndices.data() ),
                                   values.data() );
+  GEOSX_UNUSED_VAR( ierr );
   GEOSX_ASSERT_MSG( ierr == 0,
                     "Error setting values HypreVector - error code: " +
                     std::to_string( ierr ) );
@@ -353,6 +358,7 @@ void HypreVector::add( array1d<globalIndex> const & globalIndices,
                                     integer_conversion<HYPRE_Int>( values.size() ),
                                     toHYPRE_Int( globalIndices.data() ),
                                     values.data() );
+  GEOSX_UNUSED_VAR( ierr );
   GEOSX_ASSERT_MSG( ierr == 0,
                     "Error adding values HypreVector - error code: " +
                     std::to_string( ierr ) );
@@ -411,6 +417,7 @@ void HypreVector::scale( real64 const scalingFactor )
   HYPRE_Int ierr;
   ierr = HYPRE_ParVectorScale( scalingFactor,
                                m_par_vector );
+  GEOSX_UNUSED_VAR( ierr );
   GEOSX_ASSERT_MSG( ierr == 0,
                     "Error scaling HypreVector - error code: " +
                     std::to_string( ierr ) );
@@ -434,6 +441,7 @@ real64 HypreVector::dot( HypreVector const &vec ) const
   ierr = HYPRE_ParVectorInnerProd( m_par_vector,
                                    vec.m_par_vector,
                                    &result);
+  GEOSX_UNUSED_VAR( ierr );
   GEOSX_ASSERT_MSG( ierr == 0,
                     "Error dot product HypreVector - error code: " +
                     std::to_string( ierr ) );
@@ -456,6 +464,7 @@ void HypreVector::copy( HypreVector const &x )
   HYPRE_Int ierr;
   ierr = HYPRE_ParVectorCopy( x.m_par_vector,
                               m_par_vector );
+  GEOSX_UNUSED_VAR( ierr );
   GEOSX_ASSERT_MSG( ierr == 0,
                     "Error copying HypreVector - error code: " +
                     std::to_string( ierr ) );
@@ -479,6 +488,7 @@ void HypreVector::axpy( real64 const alpha,
   ierr = HYPRE_ParVectorAxpy( alpha,
                               x.m_par_vector,
                               m_par_vector );
+  GEOSX_UNUSED_VAR( ierr );
   GEOSX_ASSERT_MSG( ierr == 0,
                     "Error axpy operation on HypreVectors - error code: " +
                     std::to_string( ierr ) );

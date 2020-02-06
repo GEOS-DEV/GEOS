@@ -993,6 +993,7 @@ localIndex HypreMatrix::maxRowLength() const
                                      nrows,
                                      rows.data(),
                                      ncols.data() );
+  GEOSX_UNUSED_VAR( ierr );
   GEOSX_ASSERT_MSG( ierr == 0,
                     "Error getting row counts - error code: " +
                     std::to_string( ierr ) );
@@ -1024,6 +1025,7 @@ localIndex HypreMatrix::rowLength( globalIndex globalRow )
                                      1,
                                      &row,
                                      &ncols );
+  GEOSX_UNUSED_VAR( ierr );
   GEOSX_ASSERT_MSG( ierr == 0,
                     "Error getting row counts - error code: " +
                     std::to_string( ierr ) );
