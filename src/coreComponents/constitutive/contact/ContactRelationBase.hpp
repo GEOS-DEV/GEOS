@@ -96,6 +96,8 @@ public:
     return slope;
   }
 
+  inline real64 apertureTolerance() const { return m_apertureTolerance; }
+
 
   /**
    * @struct Structure to hold scoped key names
@@ -103,6 +105,7 @@ public:
   struct viewKeyStruct: public ConstitutiveBase::viewKeyStruct
   {
     static constexpr auto penaltyStiffnessString  = "penaltyStiffness";
+    static constexpr auto apertureToleranceString  = "apertureTolerance";
   };
 
 private:
@@ -112,6 +115,8 @@ private:
 
   /// pointer to the function that limits the model aperture to a physically admissible value.
   FunctionBase * m_apertureFunction;
+
+  real64 m_apertureTolerance;
 
 };
 

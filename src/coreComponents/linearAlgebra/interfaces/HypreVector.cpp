@@ -243,7 +243,9 @@ void HypreVector::create( array1d<real64> const & localValues,
   double * local_data = this->extractLocalVector();
 
   for( localIndex i = 0 ; i < localValues.size() ; ++i )
+  {
     local_data[i] = localValues[i];
+  }
 
 }
 

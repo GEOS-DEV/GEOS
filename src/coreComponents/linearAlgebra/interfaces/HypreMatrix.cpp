@@ -975,6 +975,62 @@ void HypreMatrix::leftScale( HypreVector const &vec )
 //  rightScale(vecRight);
 //}
 
+localIndex HypreMatrix::maxRowLength() const
+{
+
+  HYPRE_Int nrows = integer_conversion<HYPRE_Int>(this->localRows());
+
+  array1d<HYPRE_BigInt> rows( nrows );
+  array1d<HYPRE_Int> ncols( nrows );
+
+  for ( HYPRE_Int i = 0; i < nrows; ++i)
+  {
+    rows[i] = integer_conversion<HYPRE_BigInt>( this->ilower() + i );
+  }
+
+  HYPRE_Int ierr;
+  ierr = HYPRE_IJMatrixGetRowCounts( m_ij_mat,
+                                     nrows,
+                                     rows.data(),
+                                     ncols.data() );
+  GEOSX_ASSERT_MSG( ierr == 0,
+                    "Error getting row counts - error code: " +
+                    std::to_string( ierr ) );
+
+  HYPRE_Int maxRowLength;
+  HYPRE_Int localMaxRowLength = *std::max_element( ncols.data(), ncols.data() + nrows );
+
+  MpiWrapper::allReduce( &localMaxRowLength,
+                         &maxRowLength,
+                         1,
+                         MPI_MAX,
+                         hypre_IJMatrixComm( m_ij_mat ) );
+
+  return integer_conversion<localIndex>( maxRowLength );
+}
+
+localIndex HypreMatrix::rowLength( localIndex localRow )
+{
+  return this->rowLength( this->getGlobalRowID( localRow ) );
+}
+
+localIndex HypreMatrix::rowLength( globalIndex globalRow )
+{
+  HYPRE_BigInt row = integer_conversion<HYPRE_BigInt>( globalRow );
+  HYPRE_Int ncols;
+
+  HYPRE_Int ierr;
+  ierr = HYPRE_IJMatrixGetRowCounts( m_ij_mat,
+                                     1,
+                                     &row,
+                                     &ncols );
+  GEOSX_ASSERT_MSG( ierr == 0,
+                    "Error getting row counts - error code: " +
+                    std::to_string( ierr ) );
+
+  return integer_conversion<localIndex>( ncols );
+}
+
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Get global row copy
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
