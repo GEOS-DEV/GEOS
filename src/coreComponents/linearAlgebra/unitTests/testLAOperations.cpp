@@ -591,7 +591,7 @@ TYPED_TEST_P( LAOperationsTest, InterfaceSolvers )
 
   double diagValue = 100.0;
   globalIndex firstRow = matrix.ilower();
-
+  matrix.open();
   matrix.clearRow( firstRow, diagValue );
   matrix.close();
 
@@ -617,13 +617,9 @@ TYPED_TEST_P( LAOperationsTest, MatrixMatrixOperations )
   using Matrix = typename TypeParam::ParallelMatrix;
 
   globalIndex const n = 100;
-  globalIndex const N = n * n;
-
   Matrix A = compute2DLaplaceOperator<TypeParam>( MPI_COMM_WORLD, n );
 
   Matrix A_squared;
-  A_squared.createWithGlobalSize( N, 1, MPI_COMM_WORLD );
-
   A.multiply( A, A_squared );
 
   real64 const a = A.normInf();
@@ -649,6 +645,7 @@ TYPED_TEST_P( LAOperationsTest, RectangularMatrixOperations )
   Matrix A;
   A.createWithGlobalSize( nRows, nCols, 2, MPI_COMM_WORLD );
 
+  A.open();
   for( globalIndex i = A.ilower() ; i < A.iupper() ; ++i )
   {
     real64 const entry = static_cast<real64>( i + 1 );

@@ -20,6 +20,7 @@
 #define GEOSX_LINEARALGEBRA_INTERFACES_PETSCVECTOR_HPP_
 
 #include "common/DataTypes.hpp"
+#include "mpiCommunications/MpiWrapper.hpp"
 
 /*
  * This definition of Vec is copied from <petscvec.h>.

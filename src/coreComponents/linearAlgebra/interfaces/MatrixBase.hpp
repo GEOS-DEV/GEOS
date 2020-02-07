@@ -50,10 +50,10 @@ public:
   using Matrix = MATRIX;
   using Vector = VECTOR;
 
-  inline MPI_Comm const & comm() const { return m_comm; }
-
-  /// @name Create Methods
-  //@{
+  /**
+   * @name Create Methods
+   */
+  ///@{
 
   /**
    * @brief Create a square matrix from local number of rows.
@@ -113,7 +113,9 @@ public:
 
   ///@}
 
-  /// @name Open/close methods
+  /**
+   * @name Open/close methods
+   */
   ///@{
 
   /**
@@ -133,14 +135,28 @@ public:
   virtual void close() = 0;
 
   /**
-   * @brief Query matrix status
+   * @brief Query matrix open status
    * @return @p true if matrix has been opened and has not been closed since; @p false otherwise
    */
   inline bool isOpen() const { return m_open; }
 
+  /**
+   * @brief Query matrix assembled status
+   * @return @p true if matrix has been opened and closed since creation; @p false otherwise
+   */
+  inline bool isAssembled() const { return m_assembled; }
+
+  /**
+   * @brief Query matrix creation status
+   * @return @p true if matrix has been created
+   */
+  virtual bool isCreated() const = 0;
+
   ///@}
 
-  /// @name Global modification methods
+  /**
+   * @name Global modification methods
+   */
   ///@{
 
   /**
@@ -158,11 +174,12 @@ public:
   /**
    * @name Add/Set/Insert Methods
    *
-   * The add and set methods assume entries already exist in the sparsity pattern.
-   * Insert methods allow for dynamic allocation, but will temporarily use
-   * extra memory if one attempts to insert multiple values to the same location.
+   * @p insert method can only be used while the matrix is being filled for the first time,
+   * e.g. during sparsity pattern construction. @p add and @p set methods can only be used
+   * after the matrix has been assembled, and both only accept entries that already exist
+   * in the sparsity pattern.
    *
-   * Caution: these methods are not thread-safe.
+   * @note Caution: these methods are not thread-safe.
    */
   ///@{
 
@@ -405,20 +422,272 @@ public:
 
   ///@}
 
+  /**
+   * @name Linear Algebra Methods
+   */
+  ///@{
+
+  /**
+   * @brief Apply operator to a vector
+   * @param src Input vector (x).
+   * @param dst Output vector (b).
+   */
+  virtual void
+  multiply( Vector const & src,
+            Vector & dst ) const override = 0;
+
+  /**
+   * @brief Matrix/Matrix multiplication.
+   *
+   * Compute <tt>this * B = C<tt>.
+   *
+   * @param src Input matrix (B).
+   * @param dst Output matrix (C).
+   * @param closeResult whether to close @p dst for additional entries.
+   *
+   * Note that the output matrix C should have the same
+   * row-map as this.  If close() has already been called
+   * on C, then C's sparsity pattern must already contain
+   * the nonzero entries produced by the product this*B.
+   */
+  virtual void multiply( Matrix const & src,
+                         Matrix & dst,
+                         bool const closeResult = true ) const = 0;
+
+  /**
+   * @brief Matrix/Matrix transpose multiplication.
+   *
+   * Compute <tt>this^T * B = C<tt>.
+   *
+   * @param src Input matrix (B).
+   * @param dst Output matrix (C).
+   * @param closeResult whether to close @p dst for additional entries.
+   *
+   * Note that the output matrix C should have the same
+   * row-map as this.  If close() has already been called
+   * on C, then C's sparsity pattern must already contain
+   * the nonzero entries produced by the product this*B.
+   */
+  virtual void leftMultiplyTranspose( Matrix const & src,
+                                      Matrix & dst,
+                                      bool const closeResult = true ) const = 0;
+
+  /**
+   * @brief Matrix/Matrix transpose multiplication.
+   *
+   * Compute <tt>B * this^T = C<tt>.
+   *
+   * @param src Input matrix (B).
+   * @param dst Output matrix (C).
+   * @param closeResult whether to close @p dst for additional entries.
+   *
+   * Note that the output matrix C should have the same
+   * row-map as this.  If close() has already been called
+   * on C, then C's sparsity pattern must already contain
+   * the nonzero entries produced by the product this*B.
+   */
+  virtual void rightMultiplyTranspose( Matrix const & src,
+                                       Matrix & dst,
+                                       bool const closeResult = true ) const = 0;
+
+  /**
+   * @brief Compute gemv <tt>y = alpha*A*x + beta*y</tt>.
+   *
+   * @note The naming convention follows the BLAS library.
+   *
+   * @param alpha Scalar factor for added matvec product.
+   * @param x Input vector.
+   * @param beta Scalar factor for right hand side.
+   * @param y Output vector.
+   * @param useTranspose Boolean, set to true to use <tt>A^T</tt>.
+   *
+   */
+  virtual void gemv( real64 const alpha,
+                     Vector const & x,
+                     real64 const beta,
+                     Vector & y,
+                     bool useTranspose = false ) const = 0;
+
+  /**
+   * @brief Multiply all elements by scalingFactor.
+   * @param scalingFactor Scaling factor.
+   */
+  virtual void scale( real64 const scalingFactor ) = 0;
+
+  /**
+   * @brief Pre-multiplies (left) with diagonal matrix consisting of the values in vec.
+   * @param vec Vector to pre-multiply with.
+   */
+  virtual void leftScale( Vector const & vec ) = 0;
+
+  /**
+   * @brief Post-multiplies (right) with diagonal matrix consisting of the values in vec.
+   * @param vec Vector to post-multiply with.
+   */
+  virtual void rightScale( Vector const & vec ) = 0;
+
+  /**
+   * @brief Post-multiplies (right) with diagonal matrix consisting of the values in vecRight
+   * and pre-multiplies (left) with diagonal matrix consisting of the values in vec.
+   * @param vec vecLeft to pre-multiply with.
+   * @param vec vecRight to post-multiply with.
+   *
+   */
+  virtual void leftRightScale( Vector const & vecLeft,
+                               Vector const & vecRight ) = 0;
+
+  /**
+   * @brief Clear a row, and optionally set diagonal element to <tt>diagValue</tt>.
+   * @param row globalIndex of the row to be cleared.
+   * @param diagValue (Optional) set diagonal element to desired value.
+   *
+   */
+  virtual void clearRow( globalIndex const row,
+                         real64 const diagValue = 0.0 ) = 0;
+
+  ///@}
+
+  /**
+   * @name Accessors Methods
+   */
+  ///@{
+
+  /**
+   * @brief Returns a copy of the data in row <tt>globalRow</tt>.
+   * Note that the input arrays will be resized internally to fit the number of entries.
+   */
+  virtual void getRowCopy( globalIndex globalRow,
+                           array1d< globalIndex > & colIndices,
+                           array1d< real64 > & values ) const = 0;
+
+  /**
+   * @brief get diagonal element value on a given row
+   * @param globalRow global row index
+   * @return value of diagonal element on the row
+   */
+  virtual real64 getDiagValue( globalIndex globalRow ) const = 0;
+
+  /**
+   * @brief Returns the number of global rows.
+   */
+  virtual globalIndex globalRows() const = 0;
+
+  /**
+   * @brief Returns the number of global columns.
+   */
+  virtual globalIndex globalCols() const = 0;
+
+  /**
+   * @brief Return the local number of columns on each processor
+   */
+  virtual localIndex localRows() const = 0;
+
+  /**
+   * @brief Return the local number of columns on each processor
+   */
+  virtual localIndex localCols() const = 0;
+
+  /**
+   * @brief Returns the index of the first global row owned by that processor.
+   */
+  virtual globalIndex ilower() const = 0;
+
+  /**
+   * @brief Returns the next index after last global row owned by that processor.
+   *
+   * @note The intention is for [ilower; iupper) to be used as a half-open index range
+   */
+  virtual globalIndex iupper() const = 0;
+
+  /**
+   * @brief Returns the number of nonzeros in the local portion of the matrix
+   */
+  virtual localIndex localNonzeros() const = 0;
+
+  /**
+   * @brief Returns the total number of nonzeros in the matrix
+   */
+  virtual globalIndex globalNonzeros() const = 0;
+
+  /**
+   * @brief Returns the infinity norm of the matrix.
+   */
+  virtual real64 normInf() const = 0;
+
+  /**
+   * @brief Returns the one norm of the matrix.
+   */
+  virtual real64 norm1() const = 0;
+
+  /**
+   * @brief Returns the Frobenius norm of the matrix.
+   */
+  virtual real64 normFrobenius() const = 0;
+
+  /**
+   * @brief Map a global row index to local row index
+   */
+  virtual localIndex getLocalRowID( globalIndex const index ) const = 0;
+
+  /**
+   * @brief Map a local row index to global row index
+   */
+  virtual globalIndex getGlobalRowID( localIndex const index ) const = 0;
+
+  /**
+   * @brief Get the MPI communicator the matrix was created with
+   * @return MPI communicator passed in @p create...()
+   *
+   * @note when build without MPI, may return anything
+   *       (MPI_Comm will be a mock type defined in MpiWrapper)
+   */
+  virtual MPI_Comm getComm() const = 0;
+
+  ///@}
+
+  /**
+   * @name I/O Methods
+   */
+  ///@{
+
+  /**
+   * @brief Print the matrix in Trilinos format to the terminal.
+   */
+  virtual void print( std::ostream & os = std::cout ) const = 0;
+
+  /**
+   * @brief Write the matrix to filename in a matlab-compatible format.
+   * @param mtxFormat if @p true, MatrixMarket format is used, otherwise MATLAB
+   *
+   * Within octave / matlab:
+   * >> load filename
+   * >> M = spconvert(filename_root)
+   */
+  virtual void write( string const & filename,
+                      bool const mtxFormat = true ) const = 0;
+
+  ///@}
+
 protected:
 
   MatrixBase()
-  : m_comm{},
-    m_open(false)
+  : m_open(false),
+    m_assembled(false)
   {}
 
   ~MatrixBase() = default;
 
-  /// Communicator passed at creation; can be queried for
-  MPI_Comm m_comm;
+  void reset()
+  {
+    m_open = false;
+    m_assembled = false;
+  }
 
   /// Flag indicating whether the matrix is currently open for adding new entries
   bool m_open;
+
+  /// Flag indicating whether the matrix (sparsity pattern) has been assembled
+  bool m_assembled;
 
 };
 

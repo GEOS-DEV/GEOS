@@ -94,6 +94,9 @@ typename LAI::ParallelMatrix compute2DLaplaceOperator( MPI_Comm comm,
   geosx::real64 values[5];
   geosx::globalIndex cols[5];
 
+  // Open the matrix
+  laplace2D.open();
+
   // Loop over rows to fill the matrix
   for( geosx::globalIndex i = laplace2D.ilower() ; i < laplace2D.iupper() ; i++ )
   {
