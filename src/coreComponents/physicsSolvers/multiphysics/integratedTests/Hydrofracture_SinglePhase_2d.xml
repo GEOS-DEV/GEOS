@@ -2,7 +2,7 @@
 <Problem>
 
   <Solvers
-    applyGravity="off"
+     gravityVector="0.0, 0.0, 0.0"
     >
   
     <Hydrofracture 
@@ -44,7 +44,7 @@
         />
     </SolidMechanicsLagrangianSSLE>
   
-    <SinglePhaseFlow 
+    <SinglePhaseFVM 
       name="SinglePhaseFlow"
       logLevel="0"
       discretization="singlePhaseTPFA"
@@ -60,7 +60,7 @@
         krylovTol="1.0e-12"
         logLevel="0"
         />
-    </SinglePhaseFlow>
+    </SinglePhaseFVM>
     
     <SurfaceGenerator
       name="SurfaceGen"

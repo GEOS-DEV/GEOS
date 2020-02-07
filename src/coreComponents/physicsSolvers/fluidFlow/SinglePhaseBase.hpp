@@ -13,11 +13,11 @@
  */
 
 /**
- * @file SinglePhaseFlow.hpp
+ * @file SinglePhaseBase.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FINITEVOLUME_SINGLEPHASEFLOW_HPP_
-#define GEOSX_PHYSICSSOLVERS_FINITEVOLUME_SINGLEPHASEFLOW_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEBASE_HPP_
+#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEBASE_HPP_
 
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
@@ -25,22 +25,13 @@
 namespace geosx
 {
 
-namespace dataRepository
-{
-class Group;
-}
-class FieldSpecificationBase;
-
-class FiniteElementBase;
-
-class DomainPartition;
 
 /**
- * @class SinglePhaseFlow
+ * @class SinglePhaseBase
  *
- * class to perform a single phase finite volume solve.
+ * base class to perform a single phase finite volume solve.
  */
-class SinglePhaseFlow : public FlowSolverBase
+class SinglePhaseBase : public FlowSolverBase
 {
 public:
   /**
@@ -48,38 +39,37 @@ public:
    * @param name the name of this instantiation of Group in the repository
    * @param parent the parent group of this instantiation of Group
    */
-  SinglePhaseFlow( const std::string & name,
-                   Group * const parent );
+  SinglePhaseBase( const std::string & name,
+                       Group * const parent );
 
 
   /// deleted default constructor
-  SinglePhaseFlow() = delete;
+  SinglePhaseBase() = delete;
 
   /// deleted copy constructor
-  SinglePhaseFlow( SinglePhaseFlow const & ) = delete;
+  SinglePhaseBase( SinglePhaseBase const & ) = delete;
 
   /// default move constructor
-  SinglePhaseFlow( SinglePhaseFlow && ) = default;
+  SinglePhaseBase( SinglePhaseBase && ) = default;
 
   /// deleted assignment operator
-  SinglePhaseFlow & operator=( SinglePhaseFlow const & ) = delete;
+  SinglePhaseBase & operator=( SinglePhaseBase const & ) = delete;
 
   /// deleted move operator
-  SinglePhaseFlow & operator=( SinglePhaseFlow && ) = delete;
+  SinglePhaseBase & operator=( SinglePhaseBase && ) = delete;
 
   /**
    * @brief default destructor
    */
-  virtual ~SinglePhaseFlow() override = default;
-
-  /**
-   * @brief name of the node manager in the object catalog
-   * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
-   */
-  static string CatalogName()
-  { return "SinglePhaseFlow"; }
+  virtual ~SinglePhaseBase() override = default;
 
   virtual void RegisterDataOnMesh( Group * const MeshBodies ) override;
+
+  virtual void SetupSystem( DomainPartition * const domain,
+                            DofManager & dofManager,
+                            ParallelMatrix & matrix,
+                            ParallelVector & rhs,
+                            ParallelVector & solution ) override;
 
   virtual real64
   SolverStep( real64 const & time_n,
@@ -104,10 +94,6 @@ public:
                      ParallelVector & solution ) override;
 
   virtual void
-  SetupDofs( DomainPartition const * const domain,
-             DofManager & dofManager ) const override;
-
-  virtual void
   AssembleSystem( real64 const time_n,
                   real64 const dt,
                   DomainPartition * const domain,
@@ -115,30 +101,12 @@ public:
                   ParallelMatrix & matrix,
                   ParallelVector & rhs ) override;
 
-  virtual void
-  ApplyBoundaryConditions( real64 const time_n,
-                           real64 const dt,
-                           DomainPartition * const domain,
-                           DofManager const & dofManager,
-                           ParallelMatrix & matrix,
-                           ParallelVector & rhs ) override;
-
-  virtual real64
-  CalculateResidualNorm( DomainPartition const * const domain,
-                         DofManager const & dofManager,
-                         ParallelVector const & rhs ) override;
-
+  
   virtual void
   SolveSystem( DofManager const & dofManager,
                ParallelMatrix & matrix,
                ParallelVector & rhs,
                ParallelVector & solution ) override;
-
-  virtual void
-  ApplySystemSolution( DofManager const & dofManager,
-                       ParallelVector const & solution,
-                       real64 const scalingFactor,
-                       DomainPartition * const domain ) override;
 
   virtual void
   ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
@@ -189,12 +157,13 @@ public:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  void AssembleFluxTerms( real64 const time_n,
-                          real64 const dt,
-                          DomainPartition const * const domain,
-                          DofManager const * const dofManager,
-                          ParallelMatrix * const matrix,
-                          ParallelVector * const rhs );
+  virtual void
+  AssembleFluxTerms( real64 const time_n,
+                     real64 const dt,
+                     DomainPartition const * const domain,
+                     DofManager const * const dofManager,
+                     ParallelMatrix * const matrix,
+                     ParallelVector * const rhs ) = 0;
 
 
 
@@ -215,7 +184,7 @@ public:
 
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {
-    static constexpr auto facePressureString = "facePressure";
+    static constexpr auto boundaryFacePressureString = "boundaryFacePressure";
 
     // intermediate fields
     static constexpr auto mobilityString = "mobility";
@@ -223,31 +192,30 @@ public:
     static constexpr auto porosityString = "porosity";
 
     // face fields
-    static constexpr auto faceDensityString = "faceDensity";
-    static constexpr auto faceViscosityString = "faceViscosity";
-    static constexpr auto faceMobilityString = "faceMobility";
+    static constexpr auto boundaryFaceDensityString = "boundaryFaceDensity";
+    static constexpr auto boundaryFaceViscosityString = "boundaryFaceViscosity";
+    static constexpr auto boundaryFaceMobilityString = "boundaryFaceMobility";
 
     //backup fields
     static constexpr auto porosityOldString = "porosityOld";
     static constexpr auto densityOldString = "densityOld";
-
-  } viewKeysSinglePhaseFlow;
+  } viewKeysSinglePhaseBase;
 
   viewKeyStruct & viewKeys()
-  { return viewKeysSinglePhaseFlow; }
+  { return viewKeysSinglePhaseBase; }
 
   viewKeyStruct const & viewKeys() const
-  { return viewKeysSinglePhaseFlow; }
+  { return viewKeysSinglePhaseBase; }
 
   struct groupKeyStruct : SolverBase::groupKeyStruct
   {
-  } groupKeysSinglePhaseFlow;
+  } groupKeysSinglePhaseBase;
 
   groupKeyStruct & groupKeys()
-  { return groupKeysSinglePhaseFlow; }
+  { return groupKeysSinglePhaseBase; }
 
   groupKeyStruct const & groupKeys() const
-  { return groupKeysSinglePhaseFlow; }
+  { return groupKeysSinglePhaseBase; }
 
   /**
    * @brief Setup stored views into domain data for the current step
@@ -257,25 +225,6 @@ public:
 protected:
 
   virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const rootGroup ) override;
-
-private:
-
-
-  /**
-   * @brief Function to perform the application of Dirichlet BCs on faces
-   * @param time_n current time
-   * @param dt time step
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param domain the domain
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
-   */
-  void ApplyFaceDirichletBC_implicit( real64 const time_n,
-                                      real64 const dt,
-                                      DofManager const * const dofManager,
-                                      DomainPartition * const domain,
-                                      ParallelMatrix * const matrix,
-                                      ParallelVector * const rhs );
 
   /**
    * @brief Function to update all constitutive models
@@ -288,7 +237,6 @@ private:
    * @param dataGroup group that contains the fields
    */
   void UpdateMobility( Group * const dataGroup ) const;
-
 
 
   /// views into primary variable fields
@@ -333,4 +281,4 @@ private:
 
 } /* namespace geosx */
 
-#endif //GEOSX_PHYSICSSOLVERS_FINITEVOLUME_SINGLEPHASEFLOW_HPP_
+#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEBASE_HPP_

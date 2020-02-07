@@ -488,6 +488,21 @@ void EpetraMatrix::leftRightScale( EpetraVector const & vecLeft,
   rightScale( vecRight );
 }
 
+localIndex EpetraMatrix::maxRowLength() const
+{
+  return m_matrix->MaxNumEntries();
+}
+
+localIndex EpetraMatrix::getLocalRowLocalLength( localIndex localRow )
+{
+  return m_matrix->NumMyEntries( localRow );
+}
+
+localIndex EpetraMatrix::getLocalRowGlobalLength( localIndex localRow )
+{
+  return m_matrix->NumGlobalEntries( m_matrix->GRID64(localRow) );
+}
+
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Get global row copy
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""

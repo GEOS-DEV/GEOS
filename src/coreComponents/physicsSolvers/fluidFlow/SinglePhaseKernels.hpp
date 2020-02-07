@@ -13,11 +13,11 @@
  */
 
 /**
- * @file SinglePhaseFlowKernels.hpp
+ * @file SinglePhaseKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FINITEVOLUME_SINGLEPHASEFLOWKERNELS_HPP
-#define GEOSX_PHYSICSSOLVERS_FINITEVOLUME_SINGLEPHASEFLOWKERNELS_HPP
+#ifndef GEOSX_PHYSICSSOLVERS_FINITEVOLUME_SINGLEPHASEKERNELS_HPP
+#define GEOSX_PHYSICSSOLVERS_FINITEVOLUME_SINGLEPHASEKERNELS_HPP
 
 #include "common/DataTypes.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
@@ -27,7 +27,7 @@
 namespace geosx
 {
 
-namespace SinglePhaseFlowKernels
+namespace SinglePhaseKernels
 {
 
 /******************************** MobilityKernel ********************************/
@@ -200,10 +200,11 @@ struct AccumulationKernel<FaceElementSubRegion>
     // Residual contribution is mass conservation in the cell
     localAccum = densNew * volNew - densOld * volume;
 
-//    std::cout<<"localAccum = "<<densNew<<" * "<<volNew<<" - "<< densOld <<" * "<< volume<<" = "<<localAccum<<std::endl;
+//    std::cout<<"\nlocalAccum = "<<densNew<<" * "<<volNew<<" - "<< densOld <<" * "<< volume<<" = "<<localAccum<<std::endl;
 
     // Derivative of residual wrt to pressure in the cell
     localAccumJacobian =  dDens_dPres * volNew ;
+//    std::cout<<"localAccumJacobian = "<<dDens_dPres<<" * "<<volNew<<" = "<<localAccumJacobian<<std::endl;
   }
 };
 
@@ -276,7 +277,23 @@ FluxKernelHelper::apertureForPermeablityCalculation<1>( real64 const aper0,
   dAperTerm_dAper = 0.25 * ( aper0*aper0 +
                              2*aper0*aper +
                              3*aper*aper );
+
+
+  //printf( "aper0, aper, Kf = %4.2e, %4.2e, %4.2e \n", aper0, aper, aperTerm );
 }
+
+
+template<>
+inline void
+FluxKernelHelper::apertureForPermeablityCalculation<2>( real64 const,
+                                                        real64 const aper,
+                                                        real64 & aperTerm,
+                                                        real64 & dAperTerm_dAper )
+{
+  aperTerm = aper*aper*aper;
+  dAperTerm_dAper = 3.0*aper*aper;
+}
+
 
 struct FluxKernel
 {
@@ -332,8 +349,13 @@ struct FluxKernel
           ElementView < arrayView1d<real64 const> > const & dMob_dPres,
           ElementView < arrayView1d<real64 const> > const & aperture0,
           ElementView < arrayView1d<real64 const> > const & aperture,
+#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+          ElementView < arrayView1d<real64 const> > const & s,
+          ElementView < arrayView1d<real64 const> > const & dSdAper,
+#endif
           ParallelMatrix * const jacobian,
-          ParallelVector * const residual );
+          ParallelVector * const residual,
+          CRSMatrixView<real64,localIndex,localIndex const > const & dR_dAper );
 
 
   /**
@@ -552,6 +574,10 @@ struct FluxKernel
                    arrayView1d<real64 const> const & dMob_dPres,
                    arrayView1d<real64 const> const & aperture0,
                    arrayView1d<real64 const> const & aperture,
+#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+                   arrayView1d<real64 const> const & ,//s,
+                   arrayView1d<real64 const> const & ,//dSdAper,
+#endif
                    localIndex const GEOSX_UNUSED_ARG( fluidIndex ),
                    real64 const dt,
                    arraySlice1d<real64> const & flux,
@@ -561,19 +587,36 @@ struct FluxKernel
     real64 sumOfWeights = 0;
     real64 aperTerm[10];
     real64 dAperTerm_dAper[10];
-    real64 dSumOfWeights_dAper[10];
 
     for( localIndex k=0 ; k<numFluxElems ; ++k )
     {
+
+#define PERM_CALC 1
+//      real64 const aperAdd = aperture0[stencilElementIndices[k]] < 0.09e-3 ? ( 0.09e-3 - aperture0[stencilElementIndices[k]] ) : 0.0;
+#if PERM_CALC==1
       FluxKernelHelper::
-      apertureForPermeablityCalculation<0>( aperture0[stencilElementIndices[k]],
+      apertureForPermeablityCalculation<1>( aperture0[stencilElementIndices[k]],
                                             aperture[stencilElementIndices[k]],
                                             aperTerm[k],
                                             dAperTerm_dAper[k] );
+#elif PERM_CALC==2
+
+      if( s[k] >= 1.0 )
+      {
+        aperTerm[k] = aperture[stencilElementIndices[k]] * aperture[stencilElementIndices[k]] * aperture[stencilElementIndices[k]];
+        dAperTerm_dAper[k] = 3*aperture[stencilElementIndices[k]]*aperture[stencilElementIndices[k]];
+      }
+      else
+      {
+        aperTerm[k] = aperture[stencilElementIndices[k]] * aperture[stencilElementIndices[k]] * aperture[stencilElementIndices[k]]/s[k];
+        dAperTerm_dAper[k] = 3*aperture[stencilElementIndices[k]]*aperture[stencilElementIndices[k]]/s[k]
+                           - aperture[stencilElementIndices[k]] * aperture[stencilElementIndices[k]] * aperture[stencilElementIndices[k]]/(s[k]*s[k]) * dSdAper[k];
+      }
+#endif
+//      aperTerm[k] += aperAdd*aperAdd*aperAdd;
+
 
       sumOfWeights += aperTerm[k] * stencilWeights[k];
-
-      dSumOfWeights_dAper[k] = stencilWeights[k] * dAperTerm_dAper[k];
     }
 
     localIndex k[2];
@@ -585,15 +628,34 @@ struct FluxKernel
 
         localIndex const ei[2] = { stencilElementIndices[k[0]],
                                    stencilElementIndices[k[1]] };
-
+#if 0
         real64 const weight = ( stencilWeights[k[0]]*aperTerm[k[0]] ) *
                               ( stencilWeights[k[1]]*aperTerm[k[1]] ) / sumOfWeights;
 
         real64 const
         dWeight_dAper[2] =
-        { weight * dAperTerm_dAper[k[0]] / aperTerm[k[0]] - dSumOfWeights_dAper[k[0]] / sumOfWeights,
-          weight * dAperTerm_dAper[k[1]] / aperTerm[k[1]] - dSumOfWeights_dAper[k[1]] / sumOfWeights };
+        { ( 1 / aperTerm[k[0]]  - stencilWeights[k[0]] / sumOfWeights ) * weight * dAperTerm_dAper[k[0]],
+          ( 1 / aperTerm[k[1]]  - stencilWeights[k[1]] / sumOfWeights ) * weight * dAperTerm_dAper[k[1]]};
+#else
+        real64 c = 0.8;
 
+        real64 const harmonicWeight = ( stencilWeights[k[0]]*aperTerm[k[0]] ) *
+                                      ( stencilWeights[k[1]]*aperTerm[k[1]] ) / sumOfWeights;
+
+        real64 const weight = c * harmonicWeight
+                            + (1.0 - c) * 0.25 * ( stencilWeights[k[0]]*aperTerm[k[0]] + stencilWeights[k[1]]*aperTerm[k[1]] ) ;
+
+        real64 const
+        dHarmonicWeight_dAper[2] =
+        { ( 1 / aperTerm[k[0]]  - stencilWeights[k[0]] / sumOfWeights ) * harmonicWeight * dAperTerm_dAper[k[0]],
+          ( 1 / aperTerm[k[1]]  - stencilWeights[k[1]] / sumOfWeights ) * harmonicWeight * dAperTerm_dAper[k[1]]};
+
+        real64 const
+        dWeight_dAper[2] =
+        { c * dHarmonicWeight_dAper[0] + 0.25 * ( 1.0 - c )*stencilWeights[k[0]]*dAperTerm_dAper[k[0]],
+          c * dHarmonicWeight_dAper[1] + 0.25 * ( 1.0 - c )*stencilWeights[k[1]]*dAperTerm_dAper[k[1]] };
+
+#endif
         // average density
         real64 const densMean = 0.5 * ( dens[ei[0]][0] + dens[ei[1]][0] );
 
@@ -643,8 +705,8 @@ struct FluxKernel
 
 
 
-} // namespace SinglePhaseFlowKernels
+} // namespace SinglePhaseKernels
 
 } // namespace geosx
 
-#endif //GEOSX_PHYSICSSOLVERS_FINITEVOLUME_SINGLEPHASEFLOWKERNELS_HPP
+#endif //GEOSX_PHYSICSSOLVERS_FINITEVOLUME_SINGLEPHASEKERNELS_HPP

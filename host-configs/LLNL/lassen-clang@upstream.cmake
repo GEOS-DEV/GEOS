@@ -27,6 +27,8 @@ set(ESSL_LIBRARIES /usr/tcetmp/packages/essl/essl-6.2/lib64/libesslsmpcuda.so
                    /usr/tce/packages/xl/xl-beta-2019.06.20/alllibs/libxl.a
                    CACHE PATH "")
 
+set(DOXYGEN_EXECUTABLE /usr/bin/doxygen CACHE PATH "")
+
 set(PETSC_OMP_DIR ${GEOSX_TPL_ROOT_DIR}/omp-links-for-petsc CACHE STRING "")
 
 # PETSc doesn't seem to work correctly with clang.

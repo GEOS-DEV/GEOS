@@ -211,6 +211,18 @@ public:
   void clearRow( globalIndex const row,
                  real64 const diagValue = 0 ) final;
 
+  /**
+   * @brief Returns the number of nozero entries in the longest
+   * row of the matrix.
+   */
+  localIndex maxRowLength() const;
+
+  // TODO: These break the goal of hiding local row indexing from user.  Revise
+  // use cases to use ilower() and iupper();
+  localIndex getLocalRowLocalLength( localIndex localRow );
+  localIndex getLocalRowGlobalLength( localIndex localRow );
+
+
   void getRowCopy( globalIndex globalRow,
                    array1d< globalIndex > & colIndices,
                    array1d< real64 > & values ) const final;

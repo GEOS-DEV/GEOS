@@ -15,13 +15,13 @@
                               logLevel="2"/>
     </Reservoir>
   
-    <SinglePhaseFlow name="singlePhaseFlow"
-                     logLevel="1"
-                     discretization="singlePhaseTPFA"
-                     fluidName="water"
-                     solidName="rock"
-                     targetRegions="{Region1}">
-    </SinglePhaseFlow>
+    <SinglePhaseFVM name="singlePhaseFlow"
+                             logLevel="1"
+                             discretization="singlePhaseTPFA"
+                             fluidName="water"
+                             solidName="rock"
+                             targetRegions="{Region1}">
+    </SinglePhaseFVM>
 
     <SinglePhaseWell name="singlePhaseWell"
                      logLevel="1"

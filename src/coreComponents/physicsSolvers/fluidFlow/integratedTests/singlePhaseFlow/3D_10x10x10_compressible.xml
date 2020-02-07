@@ -8,8 +8,8 @@
  <!-- SPHINX_TUT_INT_HEX_SOLVERS -->
  <Solvers>
   
-    <SinglePhaseFlow name="SinglePhaseFlow"
-                     verboseLevel="1"
+    <SinglePhaseFVM name="SinglePhaseFlow"
+                     logLevel="1"
                      discretization="singlePhaseTPFA"
                      fluidName="water"
                      solidName="rock"
@@ -19,7 +19,7 @@
                                  newtonMaxIter="8"/>
       <SystemSolverParameters name="ssp"
                               krylovTol="1.0e-10"/>
-    </SinglePhaseFlow>
+    </SinglePhaseFVM>
   </Solvers>
  <!-- SPHINX_TUT_INT_HEX_SOLVERS_END -->
   
