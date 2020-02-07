@@ -6,6 +6,8 @@ GEOSX Data Structure
 Input Schema Definitions
 ********************************
 
+:download:`XML Schema <../../coreComponents/fileIO/schema/docs/../schema.xsd>`
+
 
 .. _XML_BasisFunctions:
 
