@@ -61,7 +61,7 @@ inline PetscInt const * toPetscInt( globalIndex const * const index )
 // Create an empty matrix (meant to be used for declaration)
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 PetscSparseMatrix::PetscSparseMatrix()
-: m_mat()
+: m_mat{}
 {}
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""

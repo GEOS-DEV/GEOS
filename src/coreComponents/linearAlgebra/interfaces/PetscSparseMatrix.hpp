@@ -23,8 +23,8 @@
 #include "linearAlgebra/interfaces/PetscVector.hpp"
 #include "linearAlgebra/interfaces/LinearOperator.hpp"
 
-/*
- * See comment in PetscVector.hpp about the rationale for this definiton.
+/**
+ * See comment in PetscVector.hpp about the rationale for this declaration.
  */
 struct _p_Mat;
 typedef struct _p_Mat * Mat;
@@ -647,11 +647,6 @@ public:
   //@}
 
 private:
-
-   /**
-   * Boolean value, true if the matrix had been finalized, false if not.
-   */
-  bool m_assembled = false;
 
   /**
    * Underlying Petsc object.

@@ -7,11 +7,12 @@ set( linearAlgebra_headers
      interfaces/BlasLapackFunctions.h
      interfaces/BlasLapackLA.hpp
      interfaces/InterfaceTypes.hpp
+     interfaces/LinearOperator.hpp
+     interfaces/MatrixBase.hpp
      solvers/KrylovSolver.hpp
      solvers/CGsolver.hpp
      solvers/BiCGSTABsolver.hpp
      solvers/PreconditionerBase.hpp
-     interfaces/LinearOperator.hpp
      utilities/BlockVectorView.hpp
      utilities/BlockVectorWrapper.hpp
      utilities/BlockVector.hpp

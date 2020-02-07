@@ -22,7 +22,6 @@
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "linearAlgebra/interfaces/LinearOperator.hpp"
 #include "linearAlgebra/utilities/BlockVectorView.hpp"
-#include "linearAlgebra/utilities/BlockOperatorView.hpp"
 
 namespace geosx
 {

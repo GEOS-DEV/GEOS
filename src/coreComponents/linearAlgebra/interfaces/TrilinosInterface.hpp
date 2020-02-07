@@ -19,9 +19,9 @@
 #ifndef GEOSX_LINEARALGEBRA_INTERFACES_TRILINOSINTERFACE_HPP_
 #define GEOSX_LINEARALGEBRA_INTERFACES_TRILINOSINTERFACE_HPP_
 
-#include "TrilinosSolver.hpp"
-#include "EpetraMatrix.hpp"
 #include "EpetraVector.hpp"
+#include "EpetraMatrix.hpp"
+#include "TrilinosSolver.hpp"
 
 namespace geosx
 {

@@ -21,7 +21,7 @@
 
 #include "common/DataTypes.hpp"
 #include "linearAlgebra/interfaces/EpetraVector.hpp"
-#include "linearAlgebra/interfaces/LinearOperator.hpp"
+#include "linearAlgebra/interfaces/MatrixBase.hpp"
 
 class Epetra_Map;
 class Epetra_FECrsGraph;
@@ -35,9 +35,11 @@ namespace geosx
  * \brief This class creates and provides basic support for the Epetra_CrsMatrix
  *        matrix object type used in Trilinos.
  */
-class EpetraMatrix : public LinearOperator<EpetraVector>
+class EpetraMatrix : public MatrixBase<EpetraMatrix, EpetraVector>
 {
 public:
+
+  using Base = MatrixBase<EpetraMatrix, EpetraVector>;
 
   //! @name Constructor/Destructor Methods
   //@{
@@ -61,312 +63,41 @@ public:
    */
   virtual ~EpetraMatrix() override;
 
-  //@}
-  //! @name Create Methods
-  //@{
+  ///@}
 
-  /**
-   * @brief Create a matrix from an existing Epetra_CrsGraph.
-   *
-   * TODO change this to whatever format the sparsity pattern will be.
-   *
-   * @param Epetra_FECrsGraph existing graph.
-   */
-  void create( Epetra_FECrsGraph const & graph );
+  using Base::comm;
+  using Base::isOpen;
 
-  /**
-   * @brief Create a square matrix from local number of rows.
-   *
-   * @param localSize local number of rows for square matrix.
-   * @param maxEntriesPerRow Maximum number of non-zero entries per row.
-   * @param comm MPI communicator.
-   *
-   */
   void createWithLocalSize( localIndex const localSize,
                             localIndex const maxEntriesPerRow,
-                            MPI_Comm const & comm = MPI_COMM_WORLD );
+                            MPI_Comm const & comm ) final;
 
-  /**
-   * @brief Create a square matrix from global number of rows.
-   *
-   * Create a square matrix with an (approximately) even partitioning of rows.
-   *
-   * @param globalSize Global dimensions for a square matrix.
-   * @param maxEntriesPerRow Maximum number of non-zero entries per row.
-   * @param comm MPI communicator.
-   *
-   */
   void createWithGlobalSize( globalIndex const globalSize,
                              localIndex const maxEntriesPerRow,
-                             MPI_Comm const & comm );
+                             MPI_Comm const & comm ) final;
 
-  /**
-   * @brief Create a rectangular matrix from number of rows/columns.
-   *
-   * @param comm MPI communicator.
-   * @param localRows Local number of rows.
-   * @param localCols Local number of columns.
-   * @param maxEntriesPerRow Maximum number of entries per row (hint).
-   */
   void createWithLocalSize( localIndex const localRows,
                             localIndex const localCols,
                             localIndex const maxEntriesPerRow,
-                            MPI_Comm const & comm );
+                            MPI_Comm const & comm ) final;
 
-  /**
-   * @brief Create a rectangular matrix from number of rows/columns.
-   *
-   * @param comm MPI communicator.
-   * @param globalRows Global number of rows.
-   * @param globalCols Global number of columns.
-   * @param maxEntriesPerRow Maximum number of entries per row (hint).
-   */
   void createWithGlobalSize( globalIndex const globalRows,
                              globalIndex const globalCols,
                              localIndex const maxEntriesPerRow,
-                             MPI_Comm const & comm );
+                             MPI_Comm const & comm ) final;
 
-  /**
-   * @brief Reinitialize the matrix.
-   *
-   * Keeps the parallel partitioning and the sparsity pattern but sets all elements to user-defined value.
-   *
-   */
-  void set( real64 const value );
+  void open() final;
 
-  /**
-   * @brief Reinitialize the matrix.
-   *
-   * Keeps the parallel partitioning and the sparsity pattern but sets all elements to zero.
-   *
-   */
-  void zero();
+  void close() final;
 
-  /**
-   * @brief Empty function for Trilinos implementation. Is required when the HYPRE library is used.
-   *
-   */
-  void open();
+  void set( real64 const value ) final;
 
-  /**
-   * @brief Assemble and compress the matrix.
-   *
-   * Compresses the matrix to CSR format with contiguous memory on each processor. Prevents from
-   * adding new entries in the sparsity pattern but allows for modification of existing entries.
-   *
-   */
-  void close();
+  void zero() final;
 
-  //@}
-  /** @name Add/Set/Insert Methods
-   *
-   * The add and set methods assume entries already exist in the sparsity pattern.
-   * Insert methods allow for dynamic allocation, but will temporarily use
-   * extra memory if one attempts to insert multiple values to the same location.
-   *
-   * Caution: In Trilinos these methods are not thread-safe.  //TODO: add thread safety
-   */
-  //@{
+  ///@}
 
-  /**
-   * @brief Add to one element.
-   *
-   * @param rowIndex Global row index.
-   * @param colIndex Global column index.
-   * @param value Value to add to prescribed location.
-   *
-   */
-  void add( globalIndex const rowIndex,
-            globalIndex const colIndex,
-            real64 const value );
 
-  /**
-   * @brief Set one element.
-   *
-   * @param rowIndex Global row index.
-   * @param colIndex Global column index.
-   * @param value Value to set at prescribed location.
-   *
-   */
-  void set( globalIndex const rowIndex,
-            globalIndex const colIndex,
-            real64 const value );
 
-  /**
-   * @brief Insert one element.
-   *
-   * @param rowIndex Global row index.
-   * @param colIndex Global column index.
-   * @param value Value to insert at prescribed location.
-   *
-   */
-  void insert( globalIndex const rowIndex,
-               globalIndex const colIndex,
-               real64 const value );
-
-  /**
-   * @brief Add elements to one row using c-style arrays
-   *
-   * @param rowIndex Global row index.
-   * @param colIndices Global column indices
-   * @param values Values to add to prescribed locations.
-   * @param size Number of elements
-   */
-  void add( globalIndex const rowIndex,
-            globalIndex const * colIndices,
-            real64 const * values,
-            localIndex const size );
-
-  /**
-   * @brief Set elements to one row using c-style arrays
-   *
-   * @param rowIndex Global row index.
-   * @param colIndices Global column indices
-   * @param values Values to add to prescribed locations.
-   * @param size Number of elements
-   */
-  void set( globalIndex const rowIndex,
-            globalIndex const * colIndices,
-            real64 const * values,
-            localIndex const size );
-
-  /**
-   * @brief Insert elements to one row using c-style arrays
-   *
-   * @param rowIndex Global row index.
-   * @param colIndices Global column indices
-   * @param values Values to add to prescribed locations.
-   * @param size Number of elements
-   */
-  void insert( globalIndex const rowIndex,
-               globalIndex const * colIndices,
-               real64 const * values,
-               localIndex const size );
-
-  /**
-   * @brief Add elements to one row using array1d
-   *
-   * @param rowIndex Global row index.
-   * @param colIndices Global column indices
-   * @param values Values to add to prescribed locations.
-   */
-  void add( globalIndex const rowIndex,
-            array1d< globalIndex > const & colIndices,
-            array1d< real64 > const & values );
-
-  /**
-   * @brief Set elements of one row using array1d
-   *
-   * @param rowIndex Global row index.
-   * @param colIndices Global column indices
-   * @param values Values to add to prescribed locations.
-   */
-  void set( globalIndex const rowIndex,
-            array1d< globalIndex > const & colIndices,
-            array1d< real64 > const & values );
-
-  /**
-   * @brief Insert elements of one row using array1d
-   *
-   * @param rowIndex Global row index.
-   * @param colIndices Global column indices
-   * @param values Values to add to prescribed locations.
-   */
-  void insert( globalIndex const rowIndex,
-               array1d< globalIndex > const & colIndices,
-               array1d< real64 > const & values );
-
-  /**
-   * @brief Add dense matrix.
-   *
-   * @param rowIndices Global row indices.
-   * @param colIndices Global col indices
-   * @param values Dense local matrix of values.
-   *
-   * @note Row major layout assumed in values
-   */
-  void add( array1d< globalIndex > const & rowIndices,
-            array1d< globalIndex > const & colIndices,
-            array2d< real64 > const & values );
-
-  /**
-   * @brief Set dense matrix.
-   *
-   * @param rowIndices Global row indices.
-   * @param colIndices Global col indices
-   * @param values Dense local matrix of values.
-   *
-   * @note Row major layout assumed in values
-   */
-  void set( array1d< globalIndex > const & rowIndices,
-            array1d< globalIndex > const & colIndices,
-            array2d< real64 > const & values );
-
-  /**
-   * @brief Insert dense matrix.
-   *
-   * @param rowIndices Global row indices.
-   * @param colIndices Global col indices
-   * @param values Dense local matrix of values.
-   *
-   * @note Row major layout assumed in values
-   */
-  void insert( array1d< globalIndex > const & rowIndices,
-               array1d< globalIndex > const & colIndices,
-               array2d< real64 > const & values );
-
-  /**
-   * @brief Add dense matrix.
-   *
-   * @param rowIndices Global row indices.
-   * @param colIndices Global col indices
-   * @param values Dense local matrix of values.
-   * @param numRows Number of row indices.
-   * @param numCols Number of column indices.
-   *
-   * @note Row major layout assumed in values
-   */
-  void add( globalIndex const * rowIndices,
-            globalIndex const * colIndices,
-            real64 const * values,
-            localIndex const numRows,
-            localIndex const numCols );
-
-  /**
-   * @brief Set dense matrix.
-   *
-   * @param rowIndices Global row indices.
-   * @param colIndices Global col indices
-   * @param values Dense local matrix of values.
-   * @param numRows Number of row indices.
-   * @param numCols Number of column indices.
-   *
-   * @note Row major layout assumed in values
-   */
-  void set( globalIndex const * rowIndices,
-            globalIndex const * colIndices,
-            real64 const * values,
-            localIndex const numRows,
-            localIndex const numCols );
-
-  /**
-   * @brief Insert dense matrix.
-   *
-   * @param rowIndices Global row indices.
-   * @param colIndices Global col indices
-   * @param values Dense local matrix of values.
-   * @param numRows Number of row indices.
-   * @param numCols Number of column indices.
-   *
-   * @note Row major layout assumed in values
-   */
-  void insert( globalIndex const * rowIndices,
-               globalIndex const * colIndices,
-               real64 const * values,
-               localIndex const numRows,
-               localIndex const numCols );
-
-  //@}
   //! @name Linear Algebra Methods
   //@{
   /**
