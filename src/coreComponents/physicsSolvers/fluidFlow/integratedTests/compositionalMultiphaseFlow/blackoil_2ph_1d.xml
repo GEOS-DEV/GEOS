@@ -2,7 +2,7 @@
 <Problem>
 
   <Solvers>
-  
+
     <CompositionalMultiphaseFlow name="compflow"
                                  logLevel="1"
                                  discretization="fluidTPFA"
@@ -21,10 +21,10 @@
                               useDirectSolver="1"/>
     </CompositionalMultiphaseFlow>
   </Solvers>
-  
+
   <Mesh>
     <InternalMesh name="mesh1"
-                  elementTypes="{C3D8}" 
+                  elementTypes="{C3D8}"
                   xCoords="{0, 10}"
                   yCoords="{0, 1}"
                   zCoords="{0, 1}"
@@ -104,7 +104,7 @@
   <FieldSpecifications>
     <FieldSpecification name="permx"
                component="0"
-               initialCondition="1"  
+               initialCondition="1"
                setNames="{all}"
                objectPath="ElementRegions/Region1/block1"
                fieldName="permeability"
