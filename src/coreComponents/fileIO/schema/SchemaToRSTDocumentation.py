@@ -265,6 +265,8 @@ with open('%s.rst' % (complete_output), 'w') as output_handle:
   output_handle.write('Input Schema Definitions\n')
   output_handle.write('********************************\n\n')
 
+  output_handle.write(':download:`XML Schema <%s/../schema.xsd>`\n\n' % (sphinx_path))
+
   for type_name in sorted(input_attribute_map.keys()):
     # Write the individual tables
     table_values = buildTableValues(input_attribute_map[type_name])
