@@ -29,7 +29,7 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
   m_krylovTol(),
   m_numKrylovIter(),
   m_kspace(),
-  m_ilut_fill(),
+  m_ilut_fill(3.0),
   m_ilut_drop(),
   m_useMLPrecond(),
   m_useInnerSolver(),
@@ -67,12 +67,12 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
     setDescription("");
 
   registerWrapper(viewKeysStruct::ilut_fillString, &m_ilut_fill, false )->
-    setApplyDefaultValue(3)->
+    setApplyDefaultValue(3.0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("");
 
   registerWrapper(viewKeysStruct::ilut_dropString, &m_ilut_drop, false )->
-    setApplyDefaultValue(1.e-2)->
+    setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("");
 

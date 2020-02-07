@@ -66,7 +66,7 @@ public:
   integer useAdaptiveKrylovTol() const        { return m_useAdaptiveKrylovTol; }
   integer  numKrylovIter() const              { return m_numKrylovIter; }
   integer  kspace() const                     { return m_kspace; }
-  integer ilut_fill() const                    { return m_ilut_fill; }
+  real64 ilut_fill() const                    { return m_ilut_fill; }
   real64 ilut_drop() const                    { return m_ilut_drop; }
   integer   useMLPrecond() const              { return m_useMLPrecond; }
   integer   useInnerSolver() const            { return m_useInnerSolver; }
@@ -81,7 +81,7 @@ public:
   integer m_useAdaptiveKrylovTol;
   integer m_numKrylovIter;
   integer m_kspace;
-  integer  m_ilut_fill;
+  real64  m_ilut_fill;
   real64  m_ilut_drop;
   integer m_useMLPrecond;
   integer m_useInnerSolver;

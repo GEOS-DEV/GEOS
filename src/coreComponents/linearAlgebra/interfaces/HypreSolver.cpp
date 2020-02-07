@@ -183,7 +183,7 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
     if (m_parameters.ilu.fill >= 0 )
     {
       HYPRE_ParCSRPilutSetFactorRowSize( precond,
-                                         m_parameters.ilu.fill );
+                                         integer_conversion<HYPRE_Int>(m_parameters.ilu.fill) );
     }
 
     precondApplyFunction = (HYPRE_PtrToSolverFcn) HYPRE_ParCSRPilutSolve;
