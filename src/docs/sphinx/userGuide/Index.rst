@@ -25,5 +25,7 @@ Welcome to the GEOSX user guide.
 
    /coreComponents/fileIO/doc/Outputs.rst
 
+   /coreComponents/fileIO/doc/InputValidation.rst
+
    /coreComponents/python/modules/pygeos_package/pygeos/pygeos_documentation
 

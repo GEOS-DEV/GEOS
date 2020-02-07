@@ -107,6 +107,7 @@ Group * SolverBase::CreateChild( string const & childKey, string const & childNa
 void SolverBase::ExpandObjectCatalogs()
 {
   CreateChild( SystemSolverParameters::CatalogName(), SystemSolverParameters::CatalogName() );
+  CreateChild( NonlinearSolverParameters::CatalogName(), NonlinearSolverParameters::CatalogName() );
 }
 
 void SolverBase::PostProcessInput()
