@@ -660,7 +660,7 @@ public:
       { "real64_array3d", TypeIDs::real64_array3d_id },
 
       { "string", TypeIDs::string_id },
-      { "Path", TypeIDs::Path_id },
+      { "path", TypeIDs::Path_id },
       { "string_array", TypeIDs::string_array_id },
       { "path_array", TypeIDs::path_array_id },
       { "map_array", TypeIDs::path_array_id },
@@ -753,7 +753,17 @@ private:
         subPattern = constructArrayRegex( subPattern, dimension-1 );
       }
 
-      std::string arrayPattern = "\\{(" + subPattern + ",\\s*)*" + subPattern + "\\}";
+      std::string arrayPattern;
+      if( dimension == 1 )
+      {
+        // Allow the bottom-level to be empty
+        arrayPattern = "\\{\\s*((" + subPattern + ",\\s*)*" + subPattern + ")?\\}";
+      }
+      else
+      {
+        arrayPattern = "\\{\\s*(" + subPattern + ",\\s*)*" + subPattern + "\\}";
+      }
+
       return arrayPattern;
     }
 
@@ -778,9 +788,9 @@ private:
 
     // Regexes to match a R1Tensor, R2Tensor, and R2SymTensor
     // These are identical aside from the number of repetitions in the curly brackets
-    std::string r1 = "(" + rr + ",\\s*){2}" + rr;
-    std::string r2 = "(" + rr + ",\\s*){8}" + rr;
-    std::string r2s = "(" + rr + ",\\s*){5}" + rr;
+    std::string r1 = "\\s*(" + rr + ",\\s*){2}" + rr;
+    std::string r2 = "\\s*(" + rr + ",\\s*){8}" + rr;
+    std::string r2s = "\\s*(" + rr + ",\\s*){5}" + rr;
 
     // Build master list of regexes
     std::unordered_map< std::string, std::string > regexMap =
@@ -815,7 +825,7 @@ private:
       {"real32_array3d", constructArrayRegex( rr, 3 )},
       {"real64_array3d", constructArrayRegex( rr, 3 )},
       {"string", rs},
-      {"Path", rs},
+      {"path", rs},
       {"string_array", constructArrayRegex( rs, 1 )},
       {"path_array", constructArrayRegex( rs, 1 )},
       {"mapPair", rs},

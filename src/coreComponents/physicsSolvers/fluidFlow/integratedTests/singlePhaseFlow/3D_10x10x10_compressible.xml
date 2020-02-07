@@ -2,7 +2,8 @@
 <!--# # -->
 
 <!-- SPHINX_TUT_INT_HEX_PROBLEM_OPEN -->
-<Problem>
+<Problem xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="https://geosx-geosx.readthedocs-hosted.com/en/latest/_downloads/schema.xsd">
 <!-- SPHINX_TUT_INT_HEX_PROBLEM_OPEN_END -->
 
  <!-- SPHINX_TUT_INT_HEX_SOLVERS -->
