@@ -115,7 +115,6 @@ void EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface (localIndex const cellIndex
 bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface (localIndex const cellIndex,
                                                       localIndex const regionIndex,
                                                       localIndex const subRegionIndex,
-                                                      R1Tensor normalVector,
                                                       NodeManager const & nodeManager,
                                                       EdgeManager const & edgeManager,
                                                       FixedOneToManyRelation const & cellToEdges,
@@ -145,8 +144,8 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface (localIndex const cellIndex
   bool addEmbeddedElem = true;
   arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodesCoord = nodeManager.referencePosition();
   EdgeManager::NodeMapType::ViewTypeConst const & edgeToNodes = edgeManager.nodeList();
-  R1Tensor origin  = fracture->getCenter();
-  R1Tensor normalVector = fracture->getNormal();
+  R1Tensor origin        = fracture->getCenter();
+  R1Tensor normalVector  = fracture->getNormal();
   localIndex edgeIndex;
   R1Tensor lineDir, dist, point;
   real64 prodScalarProd;

@@ -67,11 +67,10 @@ public:
     bool AddNewEmbeddedSurface(localIndex const cellIndex,
                                localIndex const regionIndex,
                                localIndex const subRegionIndex,
-                               R1Tensor normalVector,
                                NodeManager const & nodeManager,
                                EdgeManager const & edgeManager,
                                FixedOneToManyRelation const & cellToEdges,
-                               BoundedPlane const * plane);
+                               BoundedPlane const * fracture);
 
     void CalculateElementGeometricQuantities( array1d<R1Tensor> const  intersectionPoints,
                                               localIndex k );

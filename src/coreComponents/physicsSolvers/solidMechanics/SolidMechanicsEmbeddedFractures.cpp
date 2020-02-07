@@ -346,6 +346,7 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
                                                                        constitutiveManager );
 
    constexpr int dim = 3;
+   static constexpr int nUdof = dim * 8; // this is hard-coded for now.
    // begin region loop
    elemManager->forElementRegions<EmbeddedSurfaceRegion>( [&]( EmbeddedSurfaceRegion * const embeddedRegion )->void
    {
@@ -359,41 +360,45 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
        arrayView1d< localIndex const>  const & embeddedSurfaceToSubRegion = embeddedSurfaceSubRegion->getSurfaceToSubRegionList();
        arrayView1d< localIndex const>  const & embeddedSurfaceToCell      = embeddedSurfaceSubRegion->getSurfaceToCellList();
 
-       // arrayView1d<globalIndex> const &
-       // embeddedElementDofNumber = embeddedSurfaceSubRegion->getReference< array1d<globalIndex> >( jumpDofKey );
+       arrayView1d<globalIndex> const &
+       embeddedElementDofNumber = embeddedSurfaceSubRegion->getReference< array1d<globalIndex> >( jumpDofKey );
 
+       // loop over embedded surfaces
        for( localIndex k=0 ; k<numEmbeddedElems ; ++k )
        {
+         // Get rock matrix element subregion
          CellBlock const * const elementSubRegion = Group::group_cast<CellBlock const * const>(elemManager->GetRegion(embeddedSurfaceToRegion[k])->
              GetSubRegion(embeddedSurfaceToSubRegion[k]));
-
-         // Basis functions derivatives
-         array3d<R1Tensor> const &
-         dNdX = elementSubRegion->getReference< array3d<R1Tensor> >(keys::dNdX);
-         // transformation determinant
-         arrayView2d<real64> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
-
          arrayView2d< localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM > const & elemsToNodes = elementSubRegion->nodeList();
+         // Get the number of nodes per element
          localIndex const numNodesPerElement = elemsToNodes.size(1);
-
+         // Get finite element discretization info
          std::unique_ptr<FiniteElementBase>
          fe = feDiscretization->getFiniteElement( elementSubRegion->GetElementTypeString() );
 
          // Initialise local matrices and vectors
-         Epetra_LongLongSerialDenseVector elementLocalDofIndex ( dim * numNodesPerElement );
-         Epetra_SerialDenseVector         R1                   ( dim * numNodesPerElement );
-         Epetra_SerialDenseMatrix         dR1dU                ( 3, dim * numNodesPerElement );
-         Epetra_SerialDenseMatrix         dR0dw                ( dim * numNodesPerElement, 3 );
-         Epetra_SerialDenseMatrix         dR1dw                ( 3, 3 );
+         stackArray1d<globalIndex, nUdof>         elementLocalDofIndex ( nUdof );
+         stackArray1d<globalIndex, 3>             jumpLocalDofIndex    (   3   );
+         stackArray1d<real64, nUdof>              R1                   ( nUdof );
+         stackArray2d<real64, 3*nUdof>            dR1dU                ( 3, nUdof );
+         stackArray2d<real64, nUdof*3>            dR0dw                ( nUdof, 3 );
+         stackArray2d<real64, 3*3>                dR1dw                ( 3, 3 );
+
+         // Equilibrium and compatibility operators for the element
+         // number of strain components x number of jump enrichments.
+         stackArray2d<real64, 6*3>                eqMatrix             ( 3, 6 );
+         stackArray2d<real64, 6*3>                compMatrix           ( 6, 3 );
 
          R1Tensor u_local[8];
          R1Tensor du_local[8];
          R1Tensor uhattilde_local[8];
 
-         dR1dU.Scale(0);
-         dR0dw.Scale(0);
-         dR1dw.Scale(0);
-         R1.Scale(0);
+         dR1dU = 0.0;
+         dR0dw = 0.0;
+         dR1dw = 0.0;
+         R1    = 0.0;
+         eqMatrix   = 0.0;
+         compMatrix = 0.0;
 
          // Get mechanical moduli tensor
          real64 c[6][6];
@@ -402,8 +407,43 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
              createKernelWrapper();
          solidConstitutive.GetStiffness( embeddedSurfaceToCell[k], c );
 
+         // Basis functions derivatives
+         array3d<R1Tensor> const &
+         dNdX = elementSubRegion->getReference< array3d<R1Tensor> >(keys::dNdX);
+
+         // transformation determinant
+         arrayView2d<real64> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
+
+         // Normal and tangent unit vectors
+         R1Tensor const nVec  = embeddedSurfaceSubRegion->getNormalVector(k);
+         R1Tensor const t1Vec = embeddedSurfaceSubRegion->getTangentVector1(k);
+         R1Tensor const t2Vec = embeddedSurfaceSubRegion->getTangentVector2(k);
+
+         // Fill in equilibrium operator
+         int VoigtIndex;
+         for (int i = 0; i < 3; ++i)
+         {
+           for (int j=0; j < 3; ++j)
+           {
+             if (i == j)
+             {
+               eqMatrix(0, i) += 0.5 * (nVec[i]  * nVec[j]);
+               eqMatrix(1, i) += 0.5 * (tVec1[i] * nVec[j]);
+               eqMatrix(2, i) += 0.5 * (tVec2[i] * nVec[j]);
+             }else
+             {
+               VoigtIndex = 6 - i - j;
+               eqMatrix(0, VoigtIndex) += nVec[i]  * nVec[j];
+               eqMatrix(1, VoigtIndex) += tVec1[i] * nVec[j];
+               eqMatrix(2, VoigtIndex) += tVec2[i] * nVec[j];
+             }
+           }
+         }
+
+
         // if(elemGhostRank[k] < 0)
          {
+           // Dof index of nodal displacements
            for( localIndex a=0 ; a<numNodesPerElement ; ++a)
            {
 
@@ -413,6 +453,12 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
              {
                elementLocalDofIndex[static_cast<int>(a)*dim+i] = globalDofNumber[localNodeIndex]+i;
              }
+           }
+
+           // Dof number of jump enrichment
+           for (int i= 0 ; i < dim ; i++ )
+           {
+             jumpLocalDofIndex[i] = embeddedElementDofNumber[k] + i;
            }
 
            CopyGlobalToLocal<8,R1Tensor>( elemsToNodes[embeddedSurfaceToCell[k]], disp, dDisp, u_local, du_local );
@@ -447,7 +493,12 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
              }
            }
          }
-       }
+
+         m_matrix11.add  ( jumpLocalDofIndex.data(), jumpLocalDofIndex.data(), dR1dw.data(), 3, 3 );
+         m_matrix10.add  ( jumpLocalDofIndex.data(), elementLocalDofIndex.data(), dR1dU.data(), 3, nUdof );
+         m_matrix01.add  ( jumpLocalDofIndex.data(), jumpLocalDofIndex.data(), dR0dw.data(), nUdof, 3  );
+         m_residual1.add ( jumpLocalDofIndex.data(), R1.data(), 3 );
+       }   // loop over embedded surfaces
      }); // subregion loop
    }); // region loop
 
@@ -487,15 +538,39 @@ void SolidMechanicsEmbeddedFractures::ApplyBoundaryConditions( real64 const time
                                                   m_permutationMatrix0);
 
       GEOSX_LOG_RANK_0("***********************************************************");
-      GEOSX_LOG_RANK_0("matrix00");
+      GEOSX_LOG_RANK_0("matrixUU");
       GEOSX_LOG_RANK_0("***********************************************************");
       LAIHelperFunctions::PrintPermutedMatrix(m_solidSolver->getSystemMatrix(), m_permutationMatrix0, std::cout);
+      MpiWrapper::Barrier();
+
+      GEOSX_LOG_RANK_0("***********************************************************");
+      GEOSX_LOG_RANK_0("matrixWW");
+      GEOSX_LOG_RANK_0("***********************************************************");
+      m_matrix11.print(std::cout);
+      MpiWrapper::Barrier();
+
+      GEOSX_LOG_RANK_0("***********************************************************");
+      GEOSX_LOG_RANK_0("matrixUw");
+      GEOSX_LOG_RANK_0("***********************************************************");
+      m_matrix01.print(std::cout);
+      MpiWrapper::Barrier();
+
+      GEOSX_LOG_RANK_0("***********************************************************");
+      GEOSX_LOG_RANK_0("matrixwU");
+      GEOSX_LOG_RANK_0("***********************************************************");
+      m_matrix10.print(std::cout);
       MpiWrapper::Barrier();
 
       GEOSX_LOG_RANK_0("***********************************************************");
       GEOSX_LOG_RANK_0("residual0");
       GEOSX_LOG_RANK_0("***********************************************************");
       LAIHelperFunctions::PrintPermutedVector(m_solidSolver->getSystemRhs(), m_permutationMatrix0, std::cout);
+      MpiWrapper::Barrier();
+
+      GEOSX_LOG_RANK_0("***********************************************************");
+      GEOSX_LOG_RANK_0("residual1");
+      GEOSX_LOG_RANK_0("***********************************************************");
+      m_residual1.print(std::cout);
       MpiWrapper::Barrier();
     }
 }
