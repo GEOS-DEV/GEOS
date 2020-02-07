@@ -479,7 +479,7 @@ public:
              HypreVector const &x,
              real64 const beta,
              HypreVector &y,
-             bool useTranspose=false );
+             bool useTranspose=false ) const;
 
   /**
    * @brief Multiply all elements by scalingFactor.
@@ -540,8 +540,8 @@ public:
 
   // TODO: These break the goal of hiding local row indexing from user.  Revise
   // use cases to use ilower() and iupper();
-  localIndex rowLength( localIndex localRow );
-  localIndex rowLength( globalIndex globalRow );
+  localIndex rowLength( localIndex localRow ) const;
+  localIndex rowLength( globalIndex globalRow ) const;
 
   /**
    * @brief Returns a copy of the data in row <tt>globalRow</tt>.

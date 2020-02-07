@@ -70,20 +70,6 @@ void HypreSolver::solve( HypreMatrix & mat,
   GEOSX_ASSERT_MSG( rhs.unwrappedPointer() != nullptr,
                    "Invalid right-hand side vector");
 
-//{
-//  if( m_parameters.scaling.useRowScaling )
-//  {
-//    Epetra_FECrsMatrix * mat_ptr = mat.unwrappedPointer();
-//    Epetra_MultiVector * rhs_ptr = rhs.unwrappedPointer();
-//
-//    Epetra_Vector scaling( mat_ptr->RowMap() );
-//    mat_ptr->InvRowSums( scaling );
-//    mat_ptr->LeftScale( scaling );
-//
-//    Epetra_MultiVector tmp( *rhs_ptr );
-//    rhs_ptr->Multiply( 1.0, scaling, tmp, 0.0 );
-//  }
-
   if( m_parameters.solverType == "direct" )
   {
     solve_direct( mat, sol, rhs );
@@ -197,10 +183,10 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
     HYPRE_BoomerAMGSetPrintLevel(precond, -1); /* print amg solution info */
     HYPRE_BoomerAMGSetCoarsenType(precond, 6);
     HYPRE_BoomerAMGSetOldDefault(precond);
-    HYPRE_BoomerAMGSetRelaxType(precond, 6); /* Sym G.S./Jacobi hybrid */
+    HYPRE_BoomerAMGSetRelaxType(precond, 6);   /* Sym G.S./Jacobi hybrid */
     HYPRE_BoomerAMGSetNumSweeps(precond, 1);
-    HYPRE_BoomerAMGSetTol(precond, 0.0); /* conv. tolerance zero */
-    HYPRE_BoomerAMGSetMaxIter(precond, 1); /* do only one iteration! */
+    HYPRE_BoomerAMGSetTol(precond, 0.0);       /* conv. tolerance zero */
+    HYPRE_BoomerAMGSetMaxIter(precond, 1);     /* do only one iteration! */
 
     precondApplyFunction = (HYPRE_PtrToSolverFcn) HYPRE_BoomerAMGSolve;
     precondSetupFunction = (HYPRE_PtrToSolverFcn) HYPRE_BoomerAMGSetup;
@@ -248,7 +234,35 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
   }
   else if( m_parameters.solverType == "bicgstab" )
   {
-//    solver.SetAztecOption( AZ_solver, AZ_bicgstab );
+    HYPRE_ParCSRBiCGSTABCreate( comm, &solver);
+    HYPRE_BiCGSTABSetMaxIter(solver, m_parameters.krylov.maxIterations);
+    HYPRE_BiCGSTABSetTol(solver, m_parameters.krylov.tolerance);
+
+    // Default for now
+    HYPRE_BiCGSTABSetPrintLevel(solver, 2); /* prints out the iteration info */
+    HYPRE_BiCGSTABSetLogging(solver, 1);    /* needed to get run info later */
+
+    // Set the preconditioner
+    HYPRE_BiCGSTABSetPrecond( solver,
+                              precondApplyFunction,
+                              precondSetupFunction,
+                                precond);
+
+    // Setup
+    HYPRE_ParCSRBiCGSTABSetup( solver,
+                               HYPRE_ParCSRMatrix(mat),
+                               HYPRE_ParVector( rhs ),
+                               HYPRE_ParVector( sol ));
+
+    // Solve
+    HYPRE_ParCSRBiCGSTABSolve( solver,
+                               HYPRE_ParCSRMatrix(mat),
+                               HYPRE_ParVector( rhs ),
+                               HYPRE_ParVector( sol ));
+
+
+    /* Destroy solver and preconditioner */
+    HYPRE_ParCSRBiCGSTABDestroy(solver);
   }
   else if( m_parameters.solverType == "cg" )
   {
@@ -258,8 +272,8 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
 
     // Default for now
     HYPRE_PCGSetPrintLevel(solver, 2); /* prints out the iteration info */
-    HYPRE_PCGSetLogging(solver, 1); /* needed to get run info later */
-    HYPRE_PCGSetTwoNorm(solver, 1); /* use the two norm as the stopping criteria */
+    HYPRE_PCGSetLogging(solver, 1);    /* needed to get run info later */
+    HYPRE_PCGSetTwoNorm(solver, 1);    /* use the two norm as the stopping criteria */
 
     // Set the preconditioner
     HYPRE_PCGSetPrecond( solver,

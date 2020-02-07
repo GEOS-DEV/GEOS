@@ -521,7 +521,7 @@ real64 HypreVector::norm1() const
 
   real64 norm1 = 0.0;
   real64 loc_norm1 = 0.0;
-  for( int i = 0 ; i < integer_conversion<int>( this->localSize() ) ; ++i )
+  for( HYPRE_Int i = 0 ; i < this->localSize(); ++i )
     loc_norm1 += std::fabs( local_data[i] );
 
   MpiWrapper::allReduce( &loc_norm1,
@@ -559,7 +559,7 @@ real64 HypreVector::normInf() const
 
   real64 normInf = 0.0;
   real64 loc_normInf = 0.0;
-  for( int i = 0 ; i < integer_conversion<int>( this->localSize() ) ; ++i )
+  for( HYPRE_Int i = 0 ; i < this->localSize(); ++i )
     loc_normInf = std::max( loc_normInf, std::fabs( local_data[i] ) );
 
   MpiWrapper::allReduce( &loc_normInf,

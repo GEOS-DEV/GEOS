@@ -406,7 +406,7 @@ void PetscSparseMatrix::gemv( real64 const alpha,
                               PetscVector const & x,
                               real64 const beta,
                               PetscVector & y,
-                              bool useTranspose )
+                              bool useTranspose ) const
 {
   PetscVector x_( x );
   PetscVector b_( x );

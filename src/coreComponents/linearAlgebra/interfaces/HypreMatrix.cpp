@@ -259,41 +259,34 @@ void HypreMatrix::createWithLocalSize( localIndex const localRows,
                  "local columns are lower than 0" );
   this->reset();
 
-  int this_mpi_process;
-  int n_mpi_process;
-  MPI_Comm_rank( comm, &this_mpi_process );
-  MPI_Comm_size( comm, &n_mpi_process );
+  int this_mpi_process = MpiWrapper::Comm_rank( comm );
+  int n_mpi_process = MpiWrapper::Comm_size( comm );
 
   array1d<int> localSizeArray( n_mpi_process * 2 );
   array1d<int> tmp( 2 );
   tmp[0] = integer_conversion<int>( localRows );
   tmp[1] = integer_conversion<int>( localCols );
 
-  MPI_Allgather( tmp.data(),
-                 2,
-                 MPI_INT,
-                 localSizeArray.data(),
-                 2,
-                 MPI_INT,
-                 comm );
+  MpiWrapper::allGather( tmp.toViewConst(),
+                         localSizeArray );
 
-  globalIndex ilower, iupper, jlower, jupper;
+  HYPRE_BigInt ilower, iupper, jlower, jupper;
 
   ilower = 0;
   jlower = 0;
   for( int i = 0 ; i < this_mpi_process * 2 ; i += 2 )
   {
-    ilower += integer_conversion<long long int>( localSizeArray[i] );
-    jlower += integer_conversion<long long int>( localSizeArray[i + 1] );
+    ilower += integer_conversion<HYPRE_BigInt>( localSizeArray[i] );
+    jlower += integer_conversion<HYPRE_BigInt>( localSizeArray[i + 1] );
   }
-  iupper = ilower + integer_conversion<long long int>( localRows ) - 1;
-  jupper = jlower + integer_conversion<long long int>( localCols ) - 1;
+  iupper = ilower + integer_conversion<HYPRE_BigInt>( localRows ) - 1;
+  jupper = jlower + integer_conversion<HYPRE_BigInt>( localCols ) - 1;
 
   HYPRE_IJMatrixCreate( comm,
-                        integer_conversion<HYPRE_Int>( ilower ),
-                        integer_conversion<HYPRE_Int>( iupper ),
-                        integer_conversion<HYPRE_Int>( jlower ),
-                        integer_conversion<HYPRE_Int>( jupper ),
+                        ilower,
+                        iupper,
+                        jlower,
+                        jupper,
                         &m_ij_mat );
   HYPRE_IJMatrixSetObjectType( m_ij_mat, HYPRE_PARCSR );
 
@@ -884,7 +877,7 @@ void HypreMatrix::gemv( real64 const alpha,
                         HypreVector const &x,
                         real64 const beta,
                         HypreVector &y,
-                        bool useTranspose )
+                        bool useTranspose ) const
 {
 
   if( !useTranspose )
@@ -1010,12 +1003,12 @@ localIndex HypreMatrix::maxRowLength() const
   return integer_conversion<localIndex>( maxRowLength );
 }
 
-localIndex HypreMatrix::rowLength( localIndex localRow )
+localIndex HypreMatrix::rowLength( localIndex localRow ) const
 {
   return this->rowLength( this->getGlobalRowID( localRow ) );
 }
 
-localIndex HypreMatrix::rowLength( globalIndex globalRow )
+localIndex HypreMatrix::rowLength( globalIndex globalRow ) const
 {
   HYPRE_BigInt row = integer_conversion<HYPRE_BigInt>( globalRow );
   HYPRE_Int ncols;
@@ -1371,8 +1364,6 @@ void HypreMatrix::write( string const & filename,
 // Returns the Frobenius norm of the matrix.
 real64 HypreMatrix::normFrobenius() const
 {
-  MPI_Comm comm = hypre_IJMatrixComm( m_ij_mat );
-
   hypre_CSRMatrix * prt_diag_CSR = hypre_ParCSRMatrixDiag( m_parcsr_mat );
   HYPRE_Int diag_nnz = hypre_CSRMatrixNumNonzeros( prt_diag_CSR );
   double * ptr_diag_data = hypre_CSRMatrixData( prt_diag_CSR );
@@ -1390,12 +1381,11 @@ real64 HypreMatrix::normFrobenius() const
   for( HYPRE_Int i = 0 ; i < offdiag_nnz ; ++i )
     local_normFrob += ptr_offdiag_data[i] * ptr_offdiag_data[i];
 
-  MPI_Allreduce( &local_normFrob,
-                 &normFrob,
-                 1,
-                 MPI_DOUBLE,
-                 MPI_SUM,
-                 comm );
+  MpiWrapper::allReduce( &local_normFrob,
+                         &normFrob,
+                         1,
+                         MPI_SUM,
+                         hypre_IJVectorComm( m_ij_mat ) );
 
   normFrob = sqrt( normFrob );
   return static_cast<real64>( normFrob );
