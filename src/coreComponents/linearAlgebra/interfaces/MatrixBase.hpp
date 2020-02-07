@@ -162,7 +162,7 @@ public:
    * Insert methods allow for dynamic allocation, but will temporarily use
    * extra memory if one attempts to insert multiple values to the same location.
    *
-   * Caution: these methods are not thread-safe. TODO: add thread safety
+   * Caution: these methods are not thread-safe.
    */
   ///@{
 
@@ -174,9 +174,9 @@ public:
    * @param value Value to add to prescribed location.
    *
    */
-  void add( globalIndex const rowIndex,
-            globalIndex const colIndex,
-            real64 const value );
+  virtual void add( globalIndex const rowIndex,
+                    globalIndex const colIndex,
+                    real64 const value ) = 0;
 
   /**
    * @brief Set one element.
@@ -186,9 +186,9 @@ public:
    * @param value Value to set at prescribed location.
    *
    */
-  void set( globalIndex const rowIndex,
-            globalIndex const colIndex,
-            real64 const value );
+  virtual void set( globalIndex const rowIndex,
+                    globalIndex const colIndex,
+                    real64 const value ) = 0;
 
   /**
    * @brief Insert one element.
@@ -198,9 +198,9 @@ public:
    * @param value Value to insert at prescribed location.
    *
    */
-  void insert( globalIndex const rowIndex,
-               globalIndex const colIndex,
-               real64 const value );
+  virtual void insert( globalIndex const rowIndex,
+                       globalIndex const colIndex,
+                       real64 const value ) = 0;
 
   /**
    * @brief Add elements to one row using c-style arrays
@@ -210,10 +210,10 @@ public:
    * @param values Values to add to prescribed locations.
    * @param size Number of elements
    */
-  void add( globalIndex const rowIndex,
-            globalIndex const * colIndices,
-            real64 const * values,
-            localIndex const size );
+  virtual void add( globalIndex const rowIndex,
+                    globalIndex const * colIndices,
+                    real64 const * values,
+                    localIndex const size ) = 0;
 
   /**
    * @brief Set elements to one row using c-style arrays
@@ -223,10 +223,10 @@ public:
    * @param values Values to add to prescribed locations.
    * @param size Number of elements
    */
-  void set( globalIndex const rowIndex,
-            globalIndex const * colIndices,
-            real64 const * values,
-            localIndex const size );
+  virtual void set( globalIndex const rowIndex,
+                    globalIndex const * colIndices,
+                    real64 const * values,
+                    localIndex const size ) = 0;
 
   /**
    * @brief Insert elements to one row using c-style arrays
@@ -236,10 +236,10 @@ public:
    * @param values Values to add to prescribed locations.
    * @param size Number of elements
    */
-  void insert( globalIndex const rowIndex,
-               globalIndex const * colIndices,
-               real64 const * values,
-               localIndex const size );
+  virtual void insert( globalIndex const rowIndex,
+                       globalIndex const * colIndices,
+                       real64 const * values,
+                       localIndex const size ) = 0;
 
   /**
    * @brief Add elements to one row using array1d
@@ -248,9 +248,9 @@ public:
    * @param colIndices Global column indices
    * @param values Values to add to prescribed locations.
    */
-  void add( globalIndex const rowIndex,
-            array1d< globalIndex > const & colIndices,
-            array1d< real64 > const & values );
+  virtual void add( globalIndex const rowIndex,
+                    arraySlice1d<globalIndex const> const & colIndices,
+                    arraySlice1d<real64 const> const & values ) = 0;
 
   /**
    * @brief Set elements of one row using array1d
@@ -259,9 +259,9 @@ public:
    * @param colIndices Global column indices
    * @param values Values to add to prescribed locations.
    */
-  void set( globalIndex const rowIndex,
-            array1d< globalIndex > const & colIndices,
-            array1d< real64 > const & values );
+  virtual void set( globalIndex const rowIndex,
+                    arraySlice1d<globalIndex const> const & colIndices,
+                    arraySlice1d<real64 const> const & values ) = 0;
 
   /**
    * @brief Insert elements of one row using array1d
@@ -270,9 +270,9 @@ public:
    * @param colIndices Global column indices
    * @param values Values to add to prescribed locations.
    */
-  void insert( globalIndex const rowIndex,
-               array1d< globalIndex > const & colIndices,
-               array1d< real64 > const & values );
+  virtual void insert( globalIndex const rowIndex,
+                       arraySlice1d<globalIndex const> const & colIndices,
+                       arraySlice1d<real64 const> const & values ) = 0;
 
   /**
    * @brief Add dense matrix.
@@ -283,9 +283,9 @@ public:
    *
    * @note Row major layout assumed in values
    */
-  void add( array1d< globalIndex > const & rowIndices,
-            array1d< globalIndex > const & colIndices,
-            array2d< real64 > const & values );
+  virtual void add( arraySlice1d<globalIndex const> const & rowIndices,
+                    arraySlice1d<globalIndex const> const & colIndices,
+                    arraySlice2d<real64 const, 1> const & values ) = 0;
 
   /**
    * @brief Set dense matrix.
@@ -296,9 +296,9 @@ public:
    *
    * @note Row major layout assumed in values
    */
-  void set( array1d< globalIndex > const & rowIndices,
-            array1d< globalIndex > const & colIndices,
-            array2d< real64 > const & values );
+  virtual void set( arraySlice1d<globalIndex const> const & rowIndices,
+                    arraySlice1d<globalIndex const> const & colIndices,
+                    arraySlice2d<real64 const, 1> const & values ) = 0;
 
   /**
    * @brief Insert dense matrix.
@@ -309,9 +309,48 @@ public:
    *
    * @note Row major layout assumed in values
    */
-  void insert( array1d< globalIndex > const & rowIndices,
-               array1d< globalIndex > const & colIndices,
-               array2d< real64 > const & values );
+  virtual void insert( arraySlice1d<globalIndex const> const & rowIndices,
+                       arraySlice1d<globalIndex const> const & colIndices,
+                       arraySlice2d<real64 const, 1> const & values ) = 0;
+
+  /**
+   * @brief Add dense matrix.
+   *
+   * @param rowIndices Global row indices.
+   * @param colIndices Global col indices
+   * @param values Dense local matrix of values.
+   *
+   * @note Column major layout assumed in values
+   */
+  virtual void add( arraySlice1d<globalIndex const> const & rowIndices,
+                    arraySlice1d<globalIndex const> const & colIndices,
+                    arraySlice2d<real64 const, 0> const & values ) = 0;
+
+  /**
+   * @brief Set dense matrix.
+   *
+   * @param rowIndices Global row indices.
+   * @param colIndices Global col indices
+   * @param values Dense local matrix of values.
+   *
+   * @note Column major layout assumed in values
+   */
+  virtual void set( arraySlice1d<globalIndex const> const & rowIndices,
+                    arraySlice1d<globalIndex const> const & colIndices,
+                    arraySlice2d<real64 const, 0> const & values ) = 0;
+
+  /**
+   * @brief Insert dense matrix.
+   *
+   * @param rowIndices Global row indices.
+   * @param colIndices Global col indices
+   * @param values Dense local matrix of values.
+   *
+   * @note Column major layout assumed in values
+   */
+  virtual void insert( arraySlice1d<globalIndex const> const & rowIndices,
+                       arraySlice1d<globalIndex const> const & colIndices,
+                       arraySlice2d<real64 const, 0> const & values ) = 0;
 
   /**
    * @brief Add dense matrix.
@@ -324,11 +363,11 @@ public:
    *
    * @note Row major layout assumed in values
    */
-  void add( globalIndex const * rowIndices,
-            globalIndex const * colIndices,
-            real64 const * values,
-            localIndex const numRows,
-            localIndex const numCols );
+  virtual void add( globalIndex const * rowIndices,
+                    globalIndex const * colIndices,
+                    real64 const * values,
+                    localIndex const numRows,
+                    localIndex const numCols ) = 0;
 
   /**
    * @brief Set dense matrix.
@@ -341,11 +380,11 @@ public:
    *
    * @note Row major layout assumed in values
    */
-  void set( globalIndex const * rowIndices,
-            globalIndex const * colIndices,
-            real64 const * values,
-            localIndex const numRows,
-            localIndex const numCols );
+  virtual void set( globalIndex const * rowIndices,
+                    globalIndex const * colIndices,
+                    real64 const * values,
+                    localIndex const numRows,
+                    localIndex const numCols ) = 0;
 
   /**
    * @brief Insert dense matrix.
@@ -358,11 +397,11 @@ public:
    *
    * @note Row major layout assumed in values
    */
-  void insert( globalIndex const * rowIndices,
-               globalIndex const * colIndices,
-               real64 const * values,
-               localIndex const numRows,
-               localIndex const numCols );
+  virtual void insert( globalIndex const * rowIndices,
+                       globalIndex const * colIndices,
+                       real64 const * values,
+                       localIndex const numRows,
+                       localIndex const numCols ) = 0;
 
   ///@}
 

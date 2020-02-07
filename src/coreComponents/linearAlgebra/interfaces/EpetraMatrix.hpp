@@ -68,6 +68,11 @@ public:
   using Base::comm;
   using Base::isOpen;
 
+  /**
+   * @name Implementation of the MatrixBase interface
+   */
+  ///@{
+
   void createWithLocalSize( localIndex const localSize,
                             localIndex const maxEntriesPerRow,
                             MPI_Comm const & comm ) final;
@@ -94,9 +99,88 @@ public:
 
   void zero() final;
 
+  void add( globalIndex const rowIndex,
+            globalIndex const colIndex,
+            real64 const value ) final;
+
+  void set( globalIndex const rowIndex,
+            globalIndex const colIndex,
+            real64 const value ) final;
+
+  void insert( globalIndex const rowIndex,
+               globalIndex const colIndex,
+               real64 const value ) final;
+
+  void add( globalIndex const rowIndex,
+            globalIndex const * colIndices,
+            real64 const * values,
+            localIndex const size ) final;
+
+  void set( globalIndex const rowIndex,
+            globalIndex const * colIndices,
+            real64 const * values,
+            localIndex const size ) final;
+
+  void insert( globalIndex const rowIndex,
+               globalIndex const * colIndices,
+               real64 const * values,
+               localIndex const size ) final;
+
+  void add( globalIndex const rowIndex,
+            arraySlice1d< globalIndex const > const & colIndices,
+            arraySlice1d< real64 const > const & values ) final;
+
+  void set( globalIndex const rowIndex,
+            arraySlice1d< globalIndex const > const & colIndices,
+            arraySlice1d< real64 const > const & values ) final;
+
+  void insert( globalIndex const rowIndex,
+               arraySlice1d< globalIndex const > const & colIndices,
+               arraySlice1d< real64 const > const & values ) final;
+
+  void add( arraySlice1d< globalIndex const > const & rowIndices,
+            arraySlice1d< globalIndex const > const & colIndices,
+            arraySlice2d< real64 const, 1 > const & values ) final;
+
+  void set( arraySlice1d< globalIndex const > const & rowIndices,
+            arraySlice1d< globalIndex const > const & colIndices,
+            arraySlice2d< real64 const, 1 > const & values ) final;
+
+  void insert( arraySlice1d< globalIndex const > const & rowIndices,
+               arraySlice1d< globalIndex const > const & colIndices,
+               arraySlice2d< real64 const, 1 > const & values ) final;
+
+  void add( arraySlice1d< globalIndex const > const & rowIndices,
+            arraySlice1d< globalIndex const > const & colIndices,
+            arraySlice2d< real64 const, 0 > const & values ) final;
+
+  void set( arraySlice1d< globalIndex const > const & rowIndices,
+            arraySlice1d< globalIndex const > const & colIndices,
+            arraySlice2d< real64 const, 0 > const & values ) final;
+
+  void insert( arraySlice1d< globalIndex const > const & rowIndices,
+               arraySlice1d< globalIndex const > const & colIndices,
+               arraySlice2d< real64 const, 0 > const & values ) final;
+
+  void add( globalIndex const * rowIndices,
+            globalIndex const * colIndices,
+            real64 const * values,
+            localIndex const numRows,
+            localIndex const numCols ) final;
+
+  void set( globalIndex const * rowIndices,
+            globalIndex const * colIndices,
+            real64 const * values,
+            localIndex const numRows,
+            localIndex const numCols ) final;
+
+  void insert( globalIndex const * rowIndices,
+               globalIndex const * colIndices,
+               real64 const * values,
+               localIndex const numRows,
+               localIndex const numCols ) final;
+
   ///@}
-
-
 
   //! @name Linear Algebra Methods
   //@{

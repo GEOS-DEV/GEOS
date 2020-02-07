@@ -233,61 +233,88 @@ void EpetraMatrix::insert( globalIndex const rowIndex,
 
 // 1xN array1d style
 void EpetraMatrix::add( globalIndex const rowIndex,
-                        array1d< globalIndex > const & colIndices,
-                        array1d< real64 > const & values )
+                        arraySlice1d< globalIndex const > const & colIndices,
+                        arraySlice1d< real64 const > const & values )
 {
   GEOSX_ASSERT( isOpen() );
-  m_matrix->SumIntoGlobalValues( rowIndex, integer_conversion< int >( colIndices.size() ), values.data(),
-                                 colIndices.data() );
+  m_matrix->SumIntoGlobalValues( rowIndex, integer_conversion< int >( colIndices.size() ), values, colIndices );
 }
 
 void EpetraMatrix::set( globalIndex const rowIndex,
-                        array1d< globalIndex > const & colIndices,
-                        array1d< real64 > const & values )
+                        arraySlice1d< globalIndex const > const & colIndices,
+                        arraySlice1d< real64 const > const & values )
 {
   GEOSX_ASSERT( isOpen() );
-  m_matrix->ReplaceGlobalValues( rowIndex, integer_conversion< int >( colIndices.size() ), values.data(),
-                                 colIndices.data() );
+  m_matrix->ReplaceGlobalValues( rowIndex, integer_conversion< int >( colIndices.size() ), values, colIndices );
 }
 
 void EpetraMatrix::insert( globalIndex const rowIndex,
-                           array1d< globalIndex > const & colIndices,
-                           array1d< real64 > const & values )
+                           arraySlice1d< globalIndex const > const & colIndices,
+                           arraySlice1d< real64 const > const & values )
 {
   GEOSX_ASSERT( isOpen() );
-  m_matrix->InsertGlobalValues( rowIndex, integer_conversion< int >( colIndices.size() ), values.data(),
-                                colIndices.data() );
+  m_matrix->InsertGlobalValues( rowIndex, integer_conversion< int >( colIndices.size() ), values, colIndices );
 }
 
 // MxN array2d style
-void EpetraMatrix::add( array1d< globalIndex > const & rowIndices,
-                        array1d< globalIndex > const & colIndices,
-                        array2d< real64 > const & values )
+void EpetraMatrix::add( arraySlice1d< globalIndex const > const & rowIndices,
+                        arraySlice1d< globalIndex const > const & colIndices,
+                        arraySlice2d< real64 const, 1 > const & values )
 {
   GEOSX_ASSERT( isOpen() );
-  m_matrix->SumIntoGlobalValues( integer_conversion< int >( rowIndices.size() ), rowIndices.data(),
-                                 integer_conversion< int >( colIndices.size() ), colIndices.data(),
+  m_matrix->SumIntoGlobalValues( integer_conversion< int >( rowIndices.size() ), rowIndices,
+                                 integer_conversion< int >( colIndices.size() ), colIndices,
                                  values.data(), Epetra_FECrsMatrix::ROW_MAJOR );
 }
 
-void EpetraMatrix::set( array1d< globalIndex > const & rowIndices,
-                        array1d< globalIndex > const & colIndices,
-                        array2d< real64 > const & values )
+void EpetraMatrix::set( arraySlice1d< globalIndex const > const & rowIndices,
+                        arraySlice1d< globalIndex const > const & colIndices,
+                        arraySlice2d< real64 const, 1 > const & values )
 {
   GEOSX_ASSERT( isOpen() );
-  m_matrix->ReplaceGlobalValues( integer_conversion< int >( rowIndices.size() ), rowIndices.data(),
-                                 integer_conversion< int >( colIndices.size() ), colIndices.data(),
+  m_matrix->ReplaceGlobalValues( integer_conversion< int >( rowIndices.size() ), rowIndices,
+                                 integer_conversion< int >( colIndices.size() ), colIndices,
                                  values.data(), Epetra_FECrsMatrix::ROW_MAJOR );
 }
 
-void EpetraMatrix::insert( array1d< globalIndex > const & rowIndices,
-                           array1d< globalIndex > const & colIndices,
-                           array2d< real64 > const & values )
+void EpetraMatrix::insert( arraySlice1d< globalIndex const > const & rowIndices,
+                           arraySlice1d< globalIndex const > const & colIndices,
+                           arraySlice2d< real64 const, 1 > const & values )
 {
   GEOSX_ASSERT( isOpen() );
-  m_matrix->InsertGlobalValues( integer_conversion< int >( rowIndices.size() ), rowIndices.data(),
-                                integer_conversion< int >( colIndices.size() ), colIndices.data(),
+  m_matrix->InsertGlobalValues( integer_conversion< int >( rowIndices.size() ), rowIndices,
+                                integer_conversion< int >( colIndices.size() ), colIndices,
                                 values.data(), Epetra_FECrsMatrix::ROW_MAJOR );
+}
+
+void EpetraMatrix::add( arraySlice1d< globalIndex const > const & rowIndices,
+                        arraySlice1d< globalIndex const > const & colIndices,
+                        arraySlice2d< real64 const, 0 > const & values )
+{
+  GEOSX_ASSERT( isOpen() );
+  m_matrix->SumIntoGlobalValues( integer_conversion< int >( rowIndices.size() ), rowIndices,
+                                 integer_conversion< int >( colIndices.size() ), colIndices,
+                                 values.data(), Epetra_FECrsMatrix::COLUMN_MAJOR );
+}
+
+void EpetraMatrix::set( arraySlice1d< globalIndex const > const & rowIndices,
+                        arraySlice1d< globalIndex const > const & colIndices,
+                        arraySlice2d< real64 const, 0 > const & values )
+{
+  GEOSX_ASSERT( isOpen() );
+  m_matrix->ReplaceGlobalValues( integer_conversion< int >( rowIndices.size() ), rowIndices,
+                                 integer_conversion< int >( colIndices.size() ), colIndices,
+                                 values.data(), Epetra_FECrsMatrix::COLUMN_MAJOR );
+}
+
+void EpetraMatrix::insert( arraySlice1d< globalIndex const > const & rowIndices,
+                           arraySlice1d< globalIndex const > const & colIndices,
+                           arraySlice2d< real64 const, 0 > const & values )
+{
+  GEOSX_ASSERT( isOpen() );
+  m_matrix->InsertGlobalValues( integer_conversion< int >( rowIndices.size() ), rowIndices,
+                                integer_conversion< int >( colIndices.size() ), colIndices,
+                                values.data(), Epetra_FECrsMatrix::COLUMN_MAJOR );
 }
 
 void EpetraMatrix::add( globalIndex const * rowIndices,
