@@ -36,6 +36,8 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
                                       dataRepository::Group * const parent ):
   ElementSubRegionBase( name, parent ),
   m_normalVector(),
+  m_tangentVector1(),
+  m_tangentVector2(),
   m_embeddedSurfaceToRegion(),
   m_embeddedSurfaceToSubRegion(),
   m_embeddedSurfaceToCell(),
@@ -117,7 +119,6 @@ void EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface (localIndex const cellIndex
 bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface (localIndex const cellIndex,
                                                       localIndex const regionIndex,
                                                       localIndex const subRegionIndex,
-                                                      R1Tensor normalVector,
                                                       NodeManager const & nodeManager,
                                                       EdgeManager const & edgeManager,
                                                       FixedOneToManyRelation const & cellToEdges,
@@ -148,7 +149,8 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface (localIndex const cellIndex
   bool addEmbeddedElem = true;
   array1d<R1Tensor> const & nodesCoord = nodeManager.referencePosition();
   EdgeManager::NodeMapType::ViewTypeConst const & edgeToNodes = edgeManager.nodeList();
-  R1Tensor origin  = fracture->getCenter();
+  R1Tensor origin        = fracture->getCenter();
+  R1Tensor normalVector  = fracture->getNormal();
   localIndex edgeIndex;
   R1Tensor lineDir, dist, point;
   real64 prodScalarProd;
@@ -190,6 +192,8 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface (localIndex const cellIndex
     m_embeddedSurfaceToRegion.push_back(regionIndex);
     m_embeddedSurfaceToSubRegion.push_back(subRegionIndex);
     m_normalVector.push_back(normalVector);
+    m_tangentVector1.push_back(fracture->getWidthVector());
+    m_tangentVector2.push_back(fracture->getLengthVector());
     // resize
     this->resize(this->size() + 1);
     this->CalculateElementGeometricQuantities(intersectionPoints, this->size()-1);

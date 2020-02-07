@@ -164,7 +164,6 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
             bool added = embeddedSurfaceSubRegion->AddNewEmbeddedSurface( cellIndex,
                                                                           er,
                                                                           esr,
-                                                                          normalVector,
                                                                           *nodeManager,
                                                                           *edgeManager,
                                                                           cellToEdges,

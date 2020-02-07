@@ -78,11 +78,10 @@ public:
     bool AddNewEmbeddedSurface(localIndex const cellIndex,
                                localIndex const regionIndex,
                                localIndex const subRegionIndex,
-                               R1Tensor normalVector,
                                NodeManager const & nodeManager,
                                EdgeManager const & edgeManager,
                                FixedOneToManyRelation const & cellToEdges,
-                               BoundedPlane const * plane);
+                               BoundedPlane const * fracture);
 
     void CalculateElementGeometricQuantities( array1d<R1Tensor> const  intersectionPoints,
                                               localIndex k );
@@ -151,9 +150,28 @@ public:
     array1d< R1Tensor >  &       getNormalVector()       { return m_normalVector; }
     array1d< R1Tensor > const &  getNormalVector() const { return m_normalVector; }
 
+    R1Tensor &       getNormalVector(localIndex k)       { return m_normalVector[k];}
+    R1Tensor const & getNormalVector(localIndex k) const { return m_normalVector[k];}
+
+    array1d< R1Tensor >  &       getTangentVector1()       { return m_tangentVector1; }
+    array1d< R1Tensor > const &  getTangentVector1() const { return m_tangentVector1; }
+
+    R1Tensor &       getTangentVector1(localIndex k)       { return m_tangentVector1[k];}
+    R1Tensor const & getTangentVector1(localIndex k) const { return m_tangentVector1[k];}
+
+    array1d< R1Tensor >  &       getTangentVector2()       { return m_tangentVector2; }
+    array1d< R1Tensor > const &  getTangentVector2() const { return m_tangentVector2; }
+
+    R1Tensor &       getTangentVector2(localIndex k)       { return m_tangentVector2[k];}
+    R1Tensor const & getTangentVector2(localIndex k) const { return m_tangentVector2[k];}
+
 private:
     /// normal vector to the embedded surface element
     array1d < R1Tensor > m_normalVector;
+    // tangential direction 1
+    array1d < R1Tensor > m_tangentVector1;
+    // tangential direction 2
+    array1d < R1Tensor > m_tangentVector2;
 
     /// list of regions
     array1d< localIndex > m_embeddedSurfaceToRegion;
