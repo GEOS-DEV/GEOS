@@ -29,8 +29,7 @@ namespace dataRepository
 {
 class Group;
 }
-
-class ObjectManagerBase;
+class NodeManager;
 class xmlWrapper;
 class NodeManager;
 

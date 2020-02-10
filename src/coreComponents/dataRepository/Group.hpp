@@ -1177,7 +1177,7 @@ public:
   /**
    * @name Wrapper data access methods.
    *
-   * These functions can be used to get referece/pointer access to the data
+   * These functions can be used to get reference/pointer access to the data
    * stored by wrappers in this group. They are essentially just shortcuts for
    * @p Group::getWrapper() and @p Wrapper<T>::getReference()/getPointer().
    * An additional template parameter can be provided to cast the return pointer

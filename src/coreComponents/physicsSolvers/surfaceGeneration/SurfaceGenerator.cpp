@@ -3294,7 +3294,7 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
 realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
                                           const localIndex edgeID,
                                           localIndex& trailFaceID,
-                                          NodeManager & nodeManager,
+                                          NodeManager const & nodeManager,
                                           EdgeManager & edgeManager,
                                           FaceManager & faceManager,
                                           ElementRegionManager & elementManager,
@@ -3310,7 +3310,6 @@ realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
   ArrayOfSetsView< localIndex const > const & nodeToEdgeMap = nodeManager.edgeList();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & displacement = nodeManager.totalDisplacement();
-
   arrayView2d< localIndex > const & edgeToNodeMap = edgeManager.nodeList();
   ArrayOfSetsView< localIndex const > const & edgeToFaceMap = edgeManager.faceList();
 
@@ -3718,7 +3717,7 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition * domain,
                                           const localIndex edgeID,
                                           realT edgeLength,
                                           localIndex_array & nodeIndices,
-                                          NodeManager & nodeManager,
+                                          NodeManager const & nodeManager,
                                           EdgeManager & edgeManager,
                                           ElementRegionManager & elementManager,
                                           R1Tensor& vecTipNorm,

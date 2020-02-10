@@ -1779,9 +1779,11 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
     array1d<char> ghostNodeFlag( nodeGhostRank.size() );
     array1d<char> ghostZoneFlag;
 
-    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & referencePosition = nodeManager->referencePosition();
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const &
+    referencePosition = nodeManager->referencePosition();
 
-    array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > const * const totalDisplacement = nodeManager->getPointer< array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > >(keys::TotalDisplacement);
+    array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > const * const
+    totalDisplacement = nodeManager->getPointer< array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > >(NodeManager::viewKeyStruct::totalDisplacementString);
 
     bool writeArbitraryPolygon(false);
     string const meshName("MeshLevel");

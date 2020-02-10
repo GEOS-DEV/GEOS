@@ -122,25 +122,21 @@ public:
 
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
-    static constexpr auto referencePositionString       = "ReferencePosition";
-    static constexpr auto totalDisplacementString       = "TotalDisplacement";
-    static constexpr auto incrementalDisplacementString = "IncrementalDisplacement";
-    static constexpr auto edgeListString                = "edgeList";
-    static constexpr auto faceListString                = "faceList";
-    static constexpr auto elementRegionListString       = "elemRegionList";
-    static constexpr auto elementSubRegionListString    = "elemSubRegionList";
-    static constexpr auto elementListString             = "elemList";
+    static constexpr auto edgeListString              = "edgeList";
+    static constexpr auto elementRegionListString     = "elemRegionList";
+    static constexpr auto elementSubRegionListString  = "elemSubRegionList";
+    static constexpr auto elementListString           = "elemList";
+    static constexpr auto faceListString              = "faceList";
+    static constexpr auto incrementalDisplacementString = "incrementalDisplacement";
+    static constexpr auto referencePositionString     = "ReferencePosition";
 
-    dataRepository::ViewKey referencePosition       = { referencePositionString };
-    dataRepository::ViewKey totalDisplacement       = { totalDisplacementString };
-    dataRepository::ViewKey incrementalDisplacement = { incrementalDisplacementString };
     dataRepository::ViewKey edgeList                = { edgeListString };
-    dataRepository::ViewKey faceList                = { faceListString };
     dataRepository::ViewKey elementRegionList       = { elementRegionListString };
     dataRepository::ViewKey elementSubRegionList    = { elementSubRegionListString };
     dataRepository::ViewKey elementList             = { elementListString };
-    dataRepository::ViewKey velocity                = { dataRepository::keys::Velocity };
-    dataRepository::ViewKey acceleration            = { dataRepository::keys::Acceleration };
+    dataRepository::ViewKey faceList                = { faceListString };
+    dataRepository::ViewKey incrementalDisplacement = { incrementalDisplacementString };
+    dataRepository::ViewKey referencePosition       = { referencePositionString };
   } viewKeys;
 
 
