@@ -596,9 +596,9 @@ public:
     for( auto & subGroupIter : m_subGroups )
     {
       applyLambdaToContainer< Group, GROUPTYPE, GROUPTYPES... >( subGroupIter.second, [&]( auto * const castedSubGroup )
-          {
-            lambda( castedSubGroup );
-          } );
+      {
+        lambda( castedSubGroup );
+      } );
     }
   }
 
@@ -611,9 +611,9 @@ public:
     for( auto const & subGroupIter : m_subGroups )
     {
       applyLambdaToContainer< Group, GROUPTYPE, GROUPTYPES... >( subGroupIter.second, [&]( auto const * const castedSubGroup )
-          {
-            lambda( castedSubGroup );
-          } );
+      {
+        lambda( castedSubGroup );
+      } );
     }
   }
 
@@ -631,9 +631,9 @@ public:
     for( string const & subgroupName : subgroupNames )
     {
       applyLambdaToContainer< Group, GROUPTYPE, GROUPTYPES... >( GetGroup( subgroupName ), [&]( auto * const castedSubGroup )
-          {
-            lambda( castedSubGroup );
-          } );
+      {
+        lambda( castedSubGroup );
+      } );
     }
   }
 
@@ -646,9 +646,9 @@ public:
     for( string const & subgroupName : subgroupNames )
     {
       applyLambdaToContainer< Group, GROUPTYPE, GROUPTYPES... >( GetGroup( subgroupName ), [&]( auto const * const castedSubGroup )
-          {
-            lambda( castedSubGroup );
-          } );
+      {
+        lambda( castedSubGroup );
+      } );
     }
   }
   ///@}
