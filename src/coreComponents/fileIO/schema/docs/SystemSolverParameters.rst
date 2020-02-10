@@ -3,8 +3,8 @@
 ==================== ======= ======= ================================================= 
 Name                 Type    Default Description                                       
 ==================== ======= ======= ================================================= 
-ilut_drop            real64  0.01    (no description available)                        
-ilut_fill            integer 3       (no description available)                        
+ilut_drop            real64  0       (no description available)                        
+ilut_fill            real64  3       (no description available)                        
 krylovTol            real64  1e-06   Desired tolerance for Krylov solve                
 kspace               integer 300     (no description available)                        
 logLevel             integer 0       Log level                                         
