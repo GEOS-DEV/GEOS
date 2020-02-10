@@ -213,12 +213,12 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
   ConstitutiveManager * const constitutiveManager =
     domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
 
-  arrayView1d<R1Tensor> const & X = nodeManager->getReference<r1_array>(nodeManager->viewKeys.referencePosition);
-  arrayView1d<R1Tensor> const & u = nodeManager->getReference<r1_array>(keys::TotalDisplacement);
-  arrayView1d<R1Tensor> const & uhat = nodeManager->getReference<r1_array>(keys::IncrementalDisplacement);
+  arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & X = nodeManager->referencePosition();
+  arrayView2d<real64 const, nodes::TOTAL_DISPLACEMENT_USD> const & u = nodeManager->totalDisplacement();
+  arrayView2d<real64 const, nodes::INCR_DISPLACEMENT_USD> const & uhat = nodeManager->incrementalDisplacement();
 
-  ElementRegionManager::ElementViewAccessor<arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM>> const elemsToNodes = 
-    elemManager->ConstructViewAccessor<CellBlock::NodeMapType, arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM>>( CellElementSubRegion::viewKeyStruct::nodeListString );
+  ElementRegionManager::ElementViewAccessor<arrayView2d<localIndex const, cells::NODE_MAP_USD>> const elemsToNodes = 
+    elemManager->ConstructViewAccessor<CellBlock::NodeMapType, arrayView2d<localIndex const, cells::NODE_MAP_USD>>( CellElementSubRegion::viewKeyStruct::nodeListString );
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> totalMeanStress =
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::totalMeanStressString);
@@ -273,7 +273,12 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
 
       for( localIndex ei=0 ; ei<cellElementSubRegion->size() ; ++ei )
       {
-        CopyGlobalToLocal<R1Tensor>( elemsToNodes[er][esr][ei], u, uhat, u_local, uhat_local, numNodesPerElement );
+        for ( localIndex i = 0; i < numNodesPerElement; ++i )
+        {
+          localIndex const nodeIndex = elemsToNodes[ er ][ esr ]( ei, i );
+          u_local[ i ] = u[ nodeIndex ];
+          uhat_local[ i ] = uhat[ nodeIndex ];
+        }
 
         real64 volumetricStrain = 0.0;
         localIndex const numQuadraturePoints = feDiscretization->m_finiteElement->n_quadrature_points() ;

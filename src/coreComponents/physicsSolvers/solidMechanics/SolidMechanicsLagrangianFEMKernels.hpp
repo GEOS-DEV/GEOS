@@ -49,49 +49,57 @@ enum class timeIntegrationOption : int
 namespace SolidMechanicsLagrangianFEMKernels
 {
 
-inline void velocityUpdate( arrayView1d<R1Tensor> const & acceleration,
-                            arrayView1d<R1Tensor> const & velocity,
+inline void velocityUpdate( arrayView2d<real64, nodes::ACCELERATION_USD> const & acceleration,
+                            arrayView2d<real64, nodes::VELOCITY_USD> const & velocity,
                             real64 const dt )
 {
   GEOSX_MARK_FUNCTION;
-  
-  forall_in_range< parallelDevicePolicy< 256 > >( localIndex(0), acceleration.size(),
-                                                  GEOSX_DEVICE_LAMBDA ( localIndex const a )
+
+  localIndex const N = acceleration.size( 0 );
+  forAll< parallelDevicePolicy<> >( N, GEOSX_DEVICE_LAMBDA ( localIndex const i )
   {
-    velocity[ a ].plus_cA( dt, acceleration[ a ] );
-    acceleration[ a ] = 0.0;
+    for (int j = 0; j < 3; ++j)
+    {
+      velocity( i, j ) += dt * acceleration( i, j );
+      acceleration( i, j ) = 0;
+    }
   });
 }
 
-inline void velocityUpdate( arrayView1d<R1Tensor> const & acceleration,
-                            arrayView1d<real64 const> const & mass, 
-                            arrayView1d<R1Tensor> const & velocity,
+inline void velocityUpdate( arrayView2d<real64, nodes::ACCELERATION_USD> const & acceleration,
+                            arrayView1d<real64 const> const & mass,
+                            arrayView2d<real64, nodes::VELOCITY_USD> const & velocity,
                             real64 const dt,
                             LvArray::SortedArrayView<localIndex const, localIndex> const & indices )
 {
   GEOSX_MARK_FUNCTION;
 
-  forall_in_range< parallelDevicePolicy< 256 > >( localIndex(0), indices.size(),
-                                                   GEOSX_DEVICE_LAMBDA ( localIndex const i )
+  forAll< parallelDevicePolicy<> >( indices.size(), GEOSX_DEVICE_LAMBDA ( localIndex const i )
   {
     localIndex const a = indices[ i ];
-    acceleration[ a ] /= mass[ a ];
-    velocity[ a ].plus_cA( dt, acceleration[ a ]);
+    for (int j = 0; j < 3; ++j)
+    {
+      acceleration( a, j ) /= mass[ a ];
+      velocity( a, j ) += dt * acceleration( a, j );
+    }
   });
 }
 
-inline void displacementUpdate( arrayView1d<R1Tensor const> const & velocity,
-                                arrayView1d<R1Tensor> const & uhat,
-                                arrayView1d<R1Tensor> const & u,
+inline void displacementUpdate( arrayView2d<real64 const, nodes::VELOCITY_USD> const & velocity,
+                                arrayView2d<real64, nodes::INCR_DISPLACEMENT_USD> const & uhat,
+                                arrayView2d<real64, nodes::TOTAL_DISPLACEMENT_USD> const & u,
                                 real64 const dt )
 {
   GEOSX_MARK_FUNCTION;
 
-  forall_in_range< parallelDevicePolicy< 256 > >( localIndex(0), velocity.size(),
-                                                   GEOSX_DEVICE_LAMBDA ( localIndex const i )
+  localIndex const N = velocity.size( 0 );
+  forAll< parallelDevicePolicy<> >( N, GEOSX_DEVICE_LAMBDA ( localIndex const i )
   {
-    uhat[ i ].cA( dt, velocity[ i ] );
-    u[ i ] += uhat[ i ];
+    for (int j = 0; j < 3; ++j)
+    {
+      uhat( i, j ) = velocity( i, j ) * dt;
+      u( i, j ) += uhat( i, j );
+    }
   });
 }
 
@@ -179,8 +187,7 @@ struct ExplicitKernel
    * @param u The nodal array of total displacements.
    * @param vel The nodal array of velocity.
    * @param acc The nodal array of force/acceleration.
-   * @param meanStress The mean stress at each element quadrature point
-   * @param devStress The deviator stress at each element quadrature point.
+   * @param stress The stress at each element quadrature point
    * @param dt The timestep
    * @return The achieved timestep.
    */
@@ -188,28 +195,30 @@ struct ExplicitKernel
   static inline real64
   Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
           LvArray::SortedArrayView<localIndex const, localIndex> const & elementList,
-          arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & elemsToNodes,
-          arrayView1d<R1Tensor const> const & X,
-          arrayView1d<R1Tensor const> const & u,
-          arrayView1d<R1Tensor const> const & vel,
-          arrayView1d<R1Tensor> const & acc,
-          arrayView2d<R2SymTensor> const & stress,
+          arrayView2d<localIndex const, cells::NODE_MAP_USD> const & elemsToNodes,
+          arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & X,
+          arrayView2d<real64 const, nodes::TOTAL_DISPLACEMENT_USD> const & u,
+          arrayView2d<real64 const, nodes::VELOCITY_USD> const & vel,
+          arrayView2d<real64, nodes::ACCELERATION_USD> const & acc,
+          arrayView3d<real64 const, solid::STRESS_USD> const & stress,
           real64 const dt )
   {
-
     typename CONSTITUTIVE_TYPE::KernelWrapper constitutive = constitutiveRelation->createKernelWrapper();
 
-    forall_in_range< parallelDevicePolicy< 256 > >( localIndex( 0 ), elementList.size(),
-                                                    GEOSX_DEVICE_LAMBDA ( localIndex const index )
+    forAll< parallelDevicePolicy< 256 > >( elementList.size(),
+                                           GEOSX_DEVICE_LAMBDA ( localIndex const index )
     {
       localIndex const k = elementList[ index ];
       R1Tensor v_local[NUM_NODES_PER_ELEM];
       R1Tensor u_local[NUM_NODES_PER_ELEM];
       R1Tensor f_local[NUM_NODES_PER_ELEM];
 
-      CopyGlobalToLocal<NUM_NODES_PER_ELEM,R1Tensor>( elemsToNodes[k],
-                                                      u, vel,
-                                                      u_local, v_local );
+      for( localIndex i = 0; i < NUM_NODES_PER_ELEM; ++i )
+      {
+        localIndex const nodeIndex = elemsToNodes( k, i );
+        u_local[ i ] = u[ nodeIndex ];
+        v_local[ i ] = vel[ nodeIndex ];
+      }
 
       real64 X_local[8][3];
       for( localIndex a=0 ; a< NUM_NODES_PER_ELEM ; ++a )
@@ -261,15 +270,19 @@ struct ExplicitKernel
 
         Integrate<NUM_NODES_PER_ELEM>( stress[k][q], dNdX, detJ, detF, fInv, f_local );
       }//quadrature loop
+     
+      for( localIndex a = 0 ; a < NUM_NODES_PER_ELEM ; ++a )
+      {
+        localIndex const i = elemsToNodes( k, a );
+        RAJA::atomicAdd<parallelDeviceAtomic>( &acc( i, 0 ), f_local[ a ][ 0 ] );
+        RAJA::atomicAdd<parallelDeviceAtomic>( &acc( i, 1 ), f_local[ a ][ 1 ] );
+        RAJA::atomicAdd<parallelDeviceAtomic>( &acc( i, 2 ), f_local[ a ][ 2 ] );
+      }
 
-
-      AddLocalToGlobal<NUM_NODES_PER_ELEM>( elemsToNodes[k], f_local, acc );
     });
 
     return dt;
   }
-
-
 
 
   static inline real64
@@ -278,7 +291,7 @@ struct ExplicitKernel
                              localIndex const numQuadraturePoints,
                              arrayView3d< R1Tensor const> const & dNdX,
                              arrayView2d<real64 const> const & detJ,
-                             arrayView2d<R2SymTensor const> const & stress,
+                             arrayView3d<real64 const, solid::STRESS_USD> const & stress,
                              R1Tensor & force )
   {
     GEOSX_MARK_FUNCTION;
@@ -287,56 +300,16 @@ struct ExplicitKernel
     //Compute Quadrature
     for ( localIndex q = 0; q < numQuadraturePoints; ++q )
     {
-      real64 const * const restrict p_stress = stress[ k ][ q ].Data();
-
-      force[ 0 ] -= ( p_stress[ 1 ] * dNdX[ k ][ q ][ a ][ 1 ] +
-                      p_stress[ 3 ] * dNdX[ k ][ q ][ a ][ 2 ] +
-                      dNdX[ k ][ q ][ a ][ 0 ] * ( p_stress[ 0 ] ) ) * detJ[ k ][ q ];
-      force[ 1 ] -= ( p_stress[ 1 ] * dNdX[ k ][ q ][ a ][ 0 ] +
-                      p_stress[ 4 ] * dNdX[ k ][ q ][ a ][ 2 ] +
-                      dNdX[ k ][ q ][ a ][ 1 ] * ( p_stress[ 2 ] ) ) * detJ[ k ][ q ];
-      force[ 2 ] -= ( p_stress[ 3 ] * dNdX[ k ][ q ][ a ][ 0 ] +
-                      p_stress[ 4 ] * dNdX[ k ][ q ][ a ][ 1 ] +
-                      dNdX[ k ][ q ][ a ][ 2 ] * ( p_stress[ 5 ] ) ) * detJ[ k ][ q ];
+      force[ 0 ] -= ( stress( k, q, 1 ) * dNdX( k, q, a )[ 1 ] +
+                      stress( k, q, 3 ) * dNdX( k, q, a )[ 2 ] +
+                      stress( k, q, 0 ) * dNdX( k, q, a )[ 0 ] ) * detJ( k, q );
+      force[ 1 ] -= ( stress( k, q, 1 ) * dNdX( k, q, a )[ 0 ] +
+                      stress( k, q, 4 ) * dNdX( k, q, a )[ 2 ] +
+                      stress( k, q, 2 ) * dNdX( k, q, a )[ 1 ] ) * detJ( k, q );
+      force[ 2 ] -= ( stress( k, q, 3 ) * dNdX( k, q, a )[ 0 ] +
+                      stress( k, q, 4 ) * dNdX( k, q, a )[ 1 ] +
+                      stress( k, q, 5 ) * dNdX( k, q, a )[ 2 ] ) * detJ( k, q );
     }//quadrature loop
-
-    return 0;
-  }
-
-  template< localIndex NUM_QUADRATURE_POINTS >
-  static inline real64
-  CalculateSingleNodalForce( arrayView1d<localIndex const> const & elementList,
-                             arrayView1d<localIndex const> const & targetNodeInElemList,
-                             arrayView3d< R1Tensor const> const & dNdX,
-                             arrayView2d<real64 const> const & detJ,
-                             arrayView2d<R2SymTensor const> const & stress,
-                             arrayView1d< R1Tensor > const & force )
-  {
-   GEOSX_MARK_FUNCTION;
-
-    RAJA::forall< parallelDevicePolicy< 256 > >( RAJA::TypedRangeSegment< localIndex >( 0, elementList.size() ),
-                                                 GEOSX_DEVICE_LAMBDA ( localIndex const i )
-    {
-      localIndex const k = elementList[ i ];
-
-      //Compute Quadrature
-      for ( localIndex q = 0; q < NUM_QUADRATURE_POINTS; ++q )
-      {
-        real64 const * const restrict p_stress = stress[ k ][ q ].Data();
-
-        localIndex const a = targetNodeInElemList[ i ];
-
-        force[i][ 0 ] -= ( p_stress[ 1 ] * dNdX[ k ][ q ][ a ][ 1 ] +
-                           p_stress[ 3 ] * dNdX[ k ][ q ][ a ][ 2 ] +
-                           dNdX[ k ][ q ][ a ][ 0 ] * ( p_stress[ 0 ]  ) ) * detJ[ k ][ q ];
-        force[i][ 1 ] -= ( p_stress[ 1 ] * dNdX[ k ][ q ][ a ][ 0 ] +
-                           p_stress[ 4 ] * dNdX[ k ][ q ][ a ][ 2 ] +
-                           dNdX[ k ][ q ][ a ][ 1 ] * ( p_stress[ 2 ]  ) ) * detJ[ k ][ q ];
-        force[i][ 2 ] -= ( p_stress[ 3 ] * dNdX[ k ][ q ][ a ][ 0 ] +
-                           p_stress[ 4 ] * dNdX[ k ][ q ][ a ][ 1 ] +
-                           dNdX[ k ][ q ][ a ][ 2 ] * ( p_stress[ 5 ]  ) ) * detJ[ k ][ q ];
-      }//quadrature loop
-    });
 
     return 0;
   }
@@ -389,13 +362,13 @@ struct ImplicitKernel
           arrayView2d<real64 const > const& GEOSX_UNUSED_ARG( detJ ),
           FiniteElementBase const * const GEOSX_UNUSED_ARG( fe ),
           arrayView1d< integer const > const & GEOSX_UNUSED_ARG( elemGhostRank ),
-          arrayView2d< localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM > const & GEOSX_UNUSED_ARG( elemsToNodes ),
+          arrayView2d< localIndex const, cells::NODE_MAP_USD > const & GEOSX_UNUSED_ARG( elemsToNodes ),
           arrayView1d< globalIndex const > const & GEOSX_UNUSED_ARG( globalDofNumber ),
-          arrayView1d< R1Tensor const > const & GEOSX_UNUSED_ARG( disp ),
-          arrayView1d< R1Tensor const > const & GEOSX_UNUSED_ARG( uhat ),
+          arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & GEOSX_UNUSED_ARG( disp ),
+          arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const & GEOSX_UNUSED_ARG( uhat ),
           arrayView1d< R1Tensor const > const & GEOSX_UNUSED_ARG( vtilde ),
           arrayView1d< R1Tensor const > const & GEOSX_UNUSED_ARG( uhattilde ),
-          arrayView1d< real64 const > const & GEOSX_UNUSED_ARG( density ),
+          arrayView2d< real64 const > const & GEOSX_UNUSED_ARG( density ),
           arrayView1d< real64 const > const & GEOSX_UNUSED_ARG( fluidPressure ),
           arrayView1d< real64 const > const & GEOSX_UNUSED_ARG( deltaFluidPressure ),
           arrayView1d< real64 const > const & GEOSX_UNUSED_ARG( biotCoefficient ),
@@ -404,6 +377,7 @@ struct ImplicitKernel
           real64 const GEOSX_UNUSED_ARG( massDamping ),
           real64 const GEOSX_UNUSED_ARG( newmarkBeta ),
           real64 const GEOSX_UNUSED_ARG( newmarkGamma ),
+          R1Tensor const & GEOSX_UNUSED_ARG(gravityVector),
           DofManager const * const GEOSX_UNUSED_ARG( dofManager ),
           ParallelMatrix * const GEOSX_UNUSED_ARG( matrix ),
           ParallelVector * const GEOSX_UNUSED_ARG( rhs ) )

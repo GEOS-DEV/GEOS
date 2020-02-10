@@ -65,6 +65,8 @@ template<int T_dim>
 class R2SymTensorT : public TensorBaseT< SymSize< T_dim >::value >
 {
 public:
+  static constexpr int SIZE = SymSize< T_dim >::value;
+
   //**** CONSTRUCTORS AND DESTRUCTORS *****************************************
   /// default constructor
   R2SymTensorT(void) = default;
@@ -73,34 +75,98 @@ public:
 
    * @param[in] data use for initialization of t_data
    */
-  explicit R2SymTensorT( const realT data ): TensorBaseT< SymSize< T_dim >::value >(data) {}
+  explicit R2SymTensorT( const realT data ): TensorBaseT< SIZE >(data) {}
 
   /// default destructor
   ~R2SymTensorT(void) = default;
 
   /// copy constructor
-  R2SymTensorT(const R2SymTensorT< T_dim >& rhs) = default;
+  R2SymTensorT(const R2SymTensorT& rhs) = default;
 
-  explicit R2SymTensorT( const TensorBaseT< SymSize< T_dim >::value  >& rhs ): TensorBaseT< SymSize< T_dim >::value  > ()
-  { TensorBaseT< SymSize< T_dim >::value  >::operator=( rhs ); }
+  explicit R2SymTensorT( const TensorBaseT< SIZE  >& rhs ): TensorBaseT< SIZE  > ()
+  { TensorBaseT< SIZE  >::operator=( rhs ); }
+
+  template< int USD >
+  R2SymTensorT( LvArray::ArraySlice< realT const, 1, USD > const & src ):
+    TensorBaseT< SIZE > ()
+  { *this = src; }
+
+  template< int USD >
+  R2SymTensorT( LvArray::ArraySlice< realT, 1, USD > const & src ):
+    TensorBaseT< SIZE > ()
+  { *this = src; }
 
   //***** ASSIGNMENT OPERATORS
   // **************************************************
 
   /// assignment of all data to an integer
   GEOSX_HOST_DEVICE
-  R2SymTensorT< T_dim >& operator=(const int& rhs);
+  R2SymTensorT& operator=(const int& rhs);
 
   /// assignment of all data to a realT
   GEOSX_HOST_DEVICE
-  R2SymTensorT< T_dim >& operator=(const realT& rhs);
+  R2SymTensorT& operator=(const realT& rhs);
 
   /// assignment to another R2SymTensorT
-  R2SymTensorT< T_dim >& operator=(const R2SymTensorT< T_dim >& rhs) = default;
+  R2SymTensorT& operator=(const R2SymTensorT& rhs) = default;
 
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  R2SymTensorT& operator+=( const R2SymTensorT<T_dim>& rhs );
+  template< int USD >
+  GEOSX_HOST_DEVICE constexpr inline
+  R2SymTensorT & operator=( LvArray::ArraySlice< realT const, 1, USD > const & src )
+  {
+    GEOSX_ASSERT_EQ( src.size(), SIZE );
+
+    for ( int i = 0; i < SIZE; ++i )
+    {
+      this->t_data[ i ] = src[ i ];
+    }
+
+    return *this;
+  }
+
+  template< int USD >
+  GEOSX_HOST_DEVICE constexpr inline
+  R2SymTensorT & operator=( LvArray::ArraySlice< realT, 1, USD > const & src )
+  {
+    GEOSX_ASSERT_EQ( src.size(), SIZE );
+
+    for ( int i = 0; i < SIZE; ++i )
+    {
+      this->t_data[ i ] = src[ i ];
+    }
+
+    return *this;
+  }
+
+  R2SymTensorT& operator+=( const R2SymTensorT& rhs );
+
+  template< int USD >
+  GEOSX_HOST_DEVICE constexpr inline
+  R2SymTensorT & operator+=( LvArray::ArraySlice< realT const, 1, USD > const & src )
+  {
+    GEOSX_ASSERT_EQ( src.size(), SIZE );
+
+    for ( int i = 0; i < SIZE; ++i )
+    {
+      this->t_data[ i ] += src[ i ];
+    }
+
+    return *this;
+  }
+
+  template< int USD >
+  GEOSX_HOST_DEVICE constexpr inline
+  R2SymTensorT & operator+=( LvArray::ArraySlice< realT, 1, USD > const & src )
+  {
+    GEOSX_ASSERT_EQ( src.size(), SIZE );
+
+    for ( int i = 0; i < SIZE; ++i )
+    {
+      this->t_data[ i ] += src[ i ];
+    }
+
+    return *this;
+  }
 
   //***** ACCESS OPERATORS ****************************************************
   /// const access to data
@@ -110,31 +176,29 @@ public:
   realT& operator()(const int i, const int j);
 
   //***** MULTIPLICATION OPERATIONS *******************************************
-  realT AijBij(const R2SymTensorT< T_dim >& A, const R2SymTensorT< T_dim >& B);
-  void AijBjk(const R2SymTensorT< T_dim >& A, const R2SymTensorT< T_dim >& B);
+  realT AijBij(const R2SymTensorT& A, const R2SymTensorT& B);
+  void AijBjk(const R2SymTensorT& A, const R2SymTensorT& B);
   void AijAkj(const R2TensorT< T_dim >& A);
   void AjiAjk(const R2TensorT< T_dim >& A);
-  void AijAjk(const R2SymTensorT< T_dim >& A);
+  void AijAjk(const R2SymTensorT& A);
 
   void AijAkj_plus_Aik_plus_Aki(const R2TensorT< T_dim >& A);
   void AjiAjk_plus_Aik_plus_Aki(const R2TensorT< T_dim >& A);
   void AijAkj_m_Aik_m_Aki(const R2TensorT< T_dim >& A);
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  void QijAjkQlk(const R2SymTensorT< T_dim >& A, const R2TensorT< T_dim >& Q);
+  void QijAjkQlk(const R2SymTensorT& A, const R2TensorT< T_dim >& Q);
 
   void dyadic_aa(const R1TensorT< T_dim >& a);
   void dyadic_ab_plus_ba(const R1TensorT< T_dim >& a, const R1TensorT< T_dim >& b);
 
-  void AijklBkl(const R4minSymTensorT< T_dim >&A, const R2SymTensorT< T_dim >& B );
-  void AijklBij(const R4minSymTensorT< T_dim >&A, const R2SymTensorT< T_dim >& B );
+  void AijklBkl(const R4minSymTensorT< T_dim >&A, const R2SymTensorT& B );
+  void AijklBij(const R4minSymTensorT< T_dim >&A, const R2SymTensorT& B );
 
   //**** Overloaded arithmetic operators
   //  ******************************************
 
   // Scalar product
-  friend R2SymTensorT<T_dim> operator*(realT k, const R2SymTensorT<T_dim> &V){ return R2SymTensorT<T_dim>(V*k); }
-  friend R2SymTensorT<T_dim> operator*(R2SymTensorT<T_dim> V, realT k){return static_cast< R2SymTensorT<T_dim> >(V*=k); }
+  friend R2SymTensorT operator*(realT k, const R2SymTensorT &V){ return R2SymTensorT(V*k); }
+  friend R2SymTensorT operator*(R2SymTensorT V, realT k){return static_cast< R2SymTensorT >(V*=k); }
 
   //****** TENSOR OPERATIONS **************************************************
   realT Inner(void) const;
@@ -172,7 +236,7 @@ public:
 
 
   inline realT
-  Inverse(R2SymTensorT< T_dim >& tensor);
+  Inverse(R2SymTensorT & tensor);
 
   /// add identity
   GEOSX_HOST_DEVICE
@@ -200,7 +264,7 @@ public:
 private:
 //  R2SymTensorT(R2SymTensorT< T_dim >&);
 
-//  static constexpr int map[SymSize< T_dim >::value] = {{0,1,2,0,1,2,0,1,2}};
+//  static constexpr int map[SIZE] = {{0,1,2,0,1,2,0,1,2}};
 
 
 };
@@ -239,7 +303,7 @@ GEOSX_HOST_DEVICE
 R2SymTensorT< T_dim >&
 R2SymTensorT< T_dim >::operator=(const int& rhs)
 {
-  TensorBaseT< SymSize< T_dim >::value >::operator=( rhs );
+  TensorBaseT< SIZE >::operator=( rhs );
   return *this;
 }
 
@@ -249,7 +313,7 @@ GEOSX_HOST_DEVICE
 R2SymTensorT< T_dim >&
 R2SymTensorT< T_dim >::operator=(const realT& rhs)
 {
-  TensorBaseT< SymSize< T_dim >::value >::operator=( rhs );
+  TensorBaseT< SIZE >::operator=( rhs );
   return *this;
 }
 
@@ -259,7 +323,7 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 R2SymTensorT<T_dim>& R2SymTensorT<T_dim>::operator+=( const R2SymTensorT<T_dim>& rhs )
 {
-  TensorBaseT< SymSize< T_dim >::value >::operator+=(rhs);
+  TensorBaseT< SIZE >::operator+=(rhs);
   return *this;
 }
 
@@ -637,7 +701,7 @@ inline void R2SymTensorT< T_dim >::EigenVecs(const realT lambda[T_dim], R1Tensor
 
       maxmag = 0.0;
       int imax = -1;
-      for (int i = 0 ; i < SymSize< T_dim >::value ; ++i)
+      for (int i = 0 ; i < SIZE ; ++i)
         if (maxmag < fabs( M.t_data[i] ))
         {
           maxmag = fabs( M.t_data[i] );

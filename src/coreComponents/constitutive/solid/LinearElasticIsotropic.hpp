@@ -88,7 +88,7 @@ public:
   public:
     KernelWrapper( arrayView1d<real64 const> const & bulkModulus,
                    arrayView1d<real64 const> const & shearModulus,
-                   arrayView2d<R2SymTensor> const & stress) :
+                   arrayView3d<real64, solid::STRESS_USD> const & stress) :
       m_bulkModulus( bulkModulus ),
       m_shearModulus( shearModulus ),
       m_stress(stress)
@@ -135,7 +135,7 @@ public:
 
     arrayView1d<real64 const> const m_bulkModulus;
     arrayView1d<real64 const> const m_shearModulus;
-    arrayView2d<R2SymTensor> const m_stress;
+    arrayView3d<real64, solid::STRESS_USD> const m_stress;
 
   };
 
@@ -171,10 +171,15 @@ void LinearElasticIsotropic::KernelWrapper::StateUpdatePoint( localIndex const k
   meanStresIncrement *= m_bulkModulus[k];
   temp.PlusIdentity( meanStresIncrement );
 
-  m_stress[k][q] += temp;
+  R2SymTensor temp2 = m_stress[ k ][ q ];
+  temp2 += temp;
 
-  temp.QijAjkQlk( m_stress[k][q], Rot );
-  m_stress[k][q] = temp;
+  temp.QijAjkQlk( temp2, Rot );
+
+  for ( localIndex i = 0; i < 6; ++i )
+  {
+    m_stress( k, q, i ) = temp.Data()[ i ];
+  }
 }
 
 }

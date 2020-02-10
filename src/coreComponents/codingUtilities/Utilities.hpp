@@ -98,11 +98,11 @@ void CopyGlobalToLocal( arraySlice1d< localIndex const, UNIT_STRIDE_DIM > const 
   }
 }
 
-inline bool isEven(int x) {
+inline constexpr bool isEven(int x) {
   return !(x&1);
 }
 
-inline bool isOdd(int x) {
+inline constexpr bool isOdd(int x) {
   return (x&1);
 }
 

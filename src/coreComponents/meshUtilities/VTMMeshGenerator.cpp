@@ -115,13 +115,13 @@ void VTMMeshGenerator::GenerateMesh( DomainPartition * const domain )
                 const auto & mesh = meshBlock.mesh();
                 /// Write nodes
                 nodeManager->resize(mesh.NumVertices());
-                arrayView1d<R1Tensor> & X = nodeManager->referencePosition();
+                arrayView2d<real64, nodes::REFERENCE_POSITION_USD> const & X = nodeManager->referencePosition();
                 for( localIndex a=0 ; a< mesh.NumVertices() ; ++a )
                 {
-                    real64 * const tensorData = X[a].Data();
-                    tensorData[0] = mesh.Vertex(a)[0];
-                    tensorData[1] = mesh.Vertex(a)[1];
-                    tensorData[2] = mesh.Vertex(a)[2];
+                  for( int i = 0; i < 3; ++i )
+                  {
+                    X(a, i) = mesh.Vertex(a)[i];
+                  }
                 }
                 /// Cell blocks registrations
                 if( mesh.NumHex() > 0) {

@@ -166,7 +166,7 @@ TEST_F( MeshGenerationTest, sizes )
 
 TEST_F( MeshGenerationTest, nodePositions )
 {
-  arrayView1d< R1Tensor const > const & X = m_nodeManager->referencePosition();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = m_nodeManager->referencePosition();
 
   localIndex nodeID = 0;
   for ( localIndex i = 0; i < numNodesInX; ++i )
@@ -175,9 +175,9 @@ TEST_F( MeshGenerationTest, nodePositions )
     {
       for ( localIndex k = 0; k < numNodesInZ; ++k )
       {
-        EXPECT_DOUBLE_EQ( X[ nodeID ][ 0 ], i * dx );
-        EXPECT_DOUBLE_EQ( X[ nodeID ][ 1 ], j * dy );
-        EXPECT_DOUBLE_EQ( X[ nodeID ][ 2 ], k * dz );
+        EXPECT_DOUBLE_EQ( X( nodeID, 0 ), i * dx );
+        EXPECT_DOUBLE_EQ( X( nodeID, 1 ), j * dy );
+        EXPECT_DOUBLE_EQ( X( nodeID, 2 ), k * dz );
         ++nodeID;
       }
     }
@@ -210,7 +210,7 @@ TEST_F( MeshGenerationTest, elementCentersAndVolumes )
 
 TEST_F( MeshGenerationTest, elemToNodeMap )
 {
-  arrayView2d< localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM > const & nodeMap = m_subRegion->nodeList();
+  arrayView2d< localIndex const, cells::NODE_MAP_USD > const & nodeMap = m_subRegion->nodeList();
   GEOSX_ERROR_IF_NE( nodeMap.size( 1 ), 8 );
 
   localIndex elemID = 0;

@@ -317,7 +317,7 @@ private:
    * This function is in this class until we find a better place for it
    * 
    */
-  void ComputeTransmissibilityMatrix( arrayView1d<R1Tensor const> const & nodePosition, 
+  void ComputeTransmissibilityMatrix( arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodePosition, 
                                       ArrayOfArraysView<localIndex const> const & faceToNodes, 
                                       arraySlice1d<localIndex const> const elemToFaces,
                                       R1Tensor const & elemCenter,
@@ -341,7 +341,7 @@ private:
    * This function is in this class until we find a better place for it
    * 
    */
-  void ComputeTPFAInnerProduct( arrayView1d<R1Tensor const> const & nodePosition, 
+  void ComputeTPFAInnerProduct( arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodePosition, 
                                 ArrayOfArraysView<localIndex const> const & faceToNodes, 
                                 arraySlice1d<localIndex const> const elemToFaces,
                                 R1Tensor const & elemCenter,
@@ -367,7 +367,7 @@ private:
    * This function is in this class until we find a better place for it
    * 
    */
-  void ComputeQFamilyInnerProduct( arrayView1d<R1Tensor const> const & nodePosition, 
+  void ComputeQFamilyInnerProduct( arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodePosition, 
                                    ArrayOfArraysView<localIndex const> const & faceToNodes, 
                                    arraySlice1d<localIndex const> const elemToFaces,
                                    R1Tensor const & elemCenter,
