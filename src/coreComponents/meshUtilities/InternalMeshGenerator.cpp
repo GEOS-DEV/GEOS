@@ -541,7 +541,6 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
 
   nodeManager->resize( numNodes );
   arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & X = nodeManager->referencePosition();
-
   {
     localIndex localNodeIndex = 0;
     for( int i = 0 ; i < numNodesInDir[0] ; ++i )

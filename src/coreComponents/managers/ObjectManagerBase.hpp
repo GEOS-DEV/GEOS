@@ -326,6 +326,22 @@ public:
     dataRepository::ViewKey localToGlobalMap = { localToGlobalMapString };
     dataRepository::ViewKey matchedPartitionBoundaryObjects = { matchedPartitionBoundaryObjectsString };
     dataRepository::ViewKey parentIndex = { parentIndexString };
+
+
+    static constexpr auto accelerationString            = "acceleration";
+    static constexpr auto forceString                   = "force";
+    static constexpr auto massString                    = "mass";
+    static constexpr auto referencePositionString       = "referencePosition";
+    static constexpr auto totalDisplacementString       = "totalDisplacement";
+    static constexpr auto velocityString                = "velocity";
+
+    dataRepository::ViewKey acceleration            = { accelerationString };
+    dataRepository::ViewKey force                   = { forceString };
+    dataRepository::ViewKey mass                    = { massString };
+    dataRepository::ViewKey referencePosition       = { referencePositionString };
+    dataRepository::ViewKey totalDisplacement       = { totalDisplacementString };
+    dataRepository::ViewKey velocity                = { velocityString };
+
   } m_ObjectManagerBaseViewKeys;
 
 
@@ -371,6 +387,59 @@ public:
 
   integer_array const & GhostRank() const
   { return this->m_ghostRank; }
+
+
+//  template< typename T >
+//  auto & getAcceleration()
+//  { return this->getReference<T>(m_ObjectManagerBaseViewKeys.acceleration); }
+//
+//  template< typename T >
+//  auto const & getAcceleration() const
+//  { return this->getReference<T>(m_ObjectManagerBaseViewKeys.acceleration); }
+//
+//  template< typename T >
+//  auto & getForce()
+//  { return this->getReference<T>(m_ObjectManagerBaseViewKeys.force); }
+//
+//  template< typename T >
+//  auto const & getForce() const
+//  { return this->getReference<T>(m_ObjectManagerBaseViewKeys.force); }
+//
+//
+//  template< typename T >
+//  auto & getIncrementalDisplacement()
+//  { return this->getReference<T>(m_ObjectManagerBaseViewKeys.incrementalDisplacement); }
+//
+//  template< typename T >
+//  auto const & getIncrementalDisplacement() const
+//  { return this->getReference<T>(m_ObjectManagerBaseViewKeys.incrementalDisplacement); }
+//
+//
+  template< typename T >
+  auto & getMass()
+  { return this->getReference<T>( m_ObjectManagerBaseViewKeys.mass); }
+
+  template< typename T >
+  auto const & getMass() const
+  { return this->getReference<T>(m_ObjectManagerBaseViewKeys.mass); }
+//
+//  template< typename T >
+//  auto & getTotalDisplacement()
+//  { return this->getReference<T>(m_ObjectManagerBaseViewKeys.totalDisplacement); }
+//
+//  template< typename T >
+//  auto const & getTotalDisplacement() const
+//  { return this->getReference<T>(m_ObjectManagerBaseViewKeys.totalDisplacement); }
+//
+//  template< typename T >
+//  auto & getVelocity()
+//  { return this->getReference<T>(m_ObjectManagerBaseViewKeys.velocity); }
+//
+//  template< typename T >
+//  auto const & getVelocity() const
+//  { return this->getReference<T>(m_ObjectManagerBaseViewKeys.velocity); }
+
+
 
   Group m_sets;
 

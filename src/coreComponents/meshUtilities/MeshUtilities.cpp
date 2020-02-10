@@ -18,8 +18,9 @@
  */
 
 #include "MeshUtilities.hpp"
-#include "managers/ObjectManagerBase.hpp"
+#include "common/TimingMacros.hpp"
 #include "dataRepository/xmlWrapper.hpp"
+#include "mesh/NodeManager.hpp"
 #include "SimpleGeometricObjects/SimpleGeometricObjectBase.hpp"
 #include "common/TimingMacros.hpp"
 #include "mesh/NodeManager.hpp"

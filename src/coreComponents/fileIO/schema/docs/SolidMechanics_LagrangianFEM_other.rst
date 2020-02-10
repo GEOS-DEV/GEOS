@@ -1,5 +1,6 @@
 
 
+<<<<<<< HEAD
 ========================= ================================================================ ================================ ================================================================================================================================================================ 
 Name                      Type                                                             Registered On                    Description                                                                                                                                                      
 ========================= ================================================================ ================================ ================================================================================================================================================================ 
@@ -18,5 +19,24 @@ velocityTilde             r1_array                                              
 NonlinearSolverParameters node                                                                                              :ref:`DATASTRUCTURE_NonlinearSolverParameters`                                                                                                                   
 SystemSolverParameters    node                                                                                              :ref:`DATASTRUCTURE_SystemSolverParameters`                                                                                                                      
 ========================= ================================================================ ================================ ================================================================================================================================================================ 
+=======
+========================= ===================== ================================ ================================================================================================================================================================ 
+Name                      Type                  Registered On                    Description                                                                                                                                                      
+========================= ===================== ================================ ================================================================================================================================================================ 
+maxForce                  real64                                                 The maximum force contribution in the problem domain.                                                                                                            
+maxStableDt               real64                                                 Value of the Maximum Stable Timestep for this solver.                                                                                                            
+timeIntegrationOptionEnum timeIntegrationOption                                  Time integration enum class value.                                                                                                                               
+acceleration              r1_array              :ref:`DATASTRUCTURE_nodeManager` An array that holds the current acceleration on the nodes. This array also is used to hold the summation of nodal forces resulting from the governing equations. 
+contactForce              r1_array              :ref:`DATASTRUCTURE_nodeManager` An array that holds the contact force.                                                                                                                           
+externalForce             r1_array              :ref:`DATASTRUCTURE_nodeManager` An array that holds the external forces on the nodes. This includes any boundary conditions as well as coupling forces such as hydraulic forces.                 
+incrementalDisplacement   r1_array              :ref:`DATASTRUCTURE_nodeManager` An array that holds the incremental displacements for the current time step on the nodes.                                                                        
+mass                      real64_array          :ref:`DATASTRUCTURE_nodeManager` An array that holds the mass on the nodes.                                                                                                                       
+totalDisplacement         r1_array              :ref:`DATASTRUCTURE_nodeManager` An array that holds the total displacements on the nodes.                                                                                                        
+uhatTilde                 r1_array              :ref:`DATASTRUCTURE_nodeManager` An array that holds the incremental displacement predictors on the nodes.                                                                                        
+velocity                  r1_array              :ref:`DATASTRUCTURE_nodeManager` An array that holds the current velocity on the nodes.                                                                                                           
+velocityTilde             r1_array              :ref:`DATASTRUCTURE_nodeManager` An array that holds the velocity predictors on the nodes.                                                                                                        
+SystemSolverParameters    node                                                   :ref:`DATASTRUCTURE_SystemSolverParameters`                                                                                                                      
+========================= ===================== ================================ ================================================================================================================================================================ 
+>>>>>>> moved keys to ObjectManagerBase
 
 

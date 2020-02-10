@@ -157,25 +157,25 @@ void SolidMechanicsLagrangianFEM::RegisterDataOnMesh( Group * const MeshBodies )
     NodeManager * const nodes = mesh.second->group_cast<MeshBody*>()->getMeshLevel(0)->getNodeManager();
 
 
-    nodes->registerWrapper< array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > >( keys::TotalDisplacement )->
+    nodes->registerWrapper< array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > >( ObjectManagerBase::viewKeyStruct::totalDisplacementString )->
       setPlotLevel(PlotLevel::LEVEL_0)->
       setRegisteringObjects(this->getName())->
       setDescription( "An array that holds the total displacements on the nodes.");
     nodes->totalDisplacement().resizeDimension< 1 >( 3 );
 
-    nodes->registerWrapper< array2d< real64, nodes::INCR_DISPLACEMENT_PERM > >( keys::IncrementalDisplacement )->
+    nodes->registerWrapper< array2d< real64, nodes::INCR_DISPLACEMENT_PERM > >( NodeManager::viewKeyStruct::incrementalDisplacementString )->
       setPlotLevel(PlotLevel::LEVEL_3)->
       setRegisteringObjects(this->getName())->
       setDescription( "An array that holds the incremental displacements for the current time step on the nodes.");
     nodes->incrementalDisplacement().resizeDimension< 1 >( 3 );
 
-    nodes->registerWrapper< array2d< real64, nodes::VELOCITY_PERM > >( keys::Velocity )->
+    nodes->registerWrapper< array2d< real64, nodes::VELOCITY_PERM > >( ObjectManagerBase::viewKeyStruct::velocityString )->
       setPlotLevel(PlotLevel::LEVEL_0)->
       setRegisteringObjects(this->getName())->
       setDescription( "An array that holds the current velocity on the nodes.");
     nodes->velocity().resizeDimension< 1 >( 3 );
 
-    nodes->registerWrapper< array2d< real64, nodes::ACCELERATION_PERM > >( keys::Acceleration )->
+    nodes->registerWrapper< array2d< real64, nodes::ACCELERATION_PERM > >( ObjectManagerBase::viewKeyStruct::accelerationString )->
       setPlotLevel(PlotLevel::LEVEL_1)->
       setRegisteringObjects(this->getName())->
       setDescription( "An array that holds the current acceleration on the nodes. This array also is used "
@@ -188,7 +188,7 @@ void SolidMechanicsLagrangianFEM::RegisterDataOnMesh( Group * const MeshBodies )
       setDescription( "An array that holds the external forces on the nodes. This includes any boundary"
                       " conditions as well as coupling forces such as hydraulic forces.");
 
-    nodes->registerWrapper<array1d<real64> >( keys::Mass )->
+    nodes->registerWrapper<array1d<real64> >( ObjectManagerBase::viewKeyStruct::massString )->
         setPlotLevel(PlotLevel::LEVEL_0)->
         setRegisteringObjects(this->getName())->
         setDescription( "An array that holds the mass on the nodes.");
@@ -252,7 +252,7 @@ void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * co
   ElementRegionManager const * const elementRegionManager = mesh->getElemManager();
   ConstitutiveManager const * const constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
 
-  arrayView1d<real64> & mass = nodes->getReference<array1d<real64>>(keys::Mass);
+  arrayView1d<real64> & mass = nodes->getMass<array1d<real64>>();
   mass = 0.0;
 
   NumericalMethodsManager const *
@@ -323,7 +323,7 @@ void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( 
   ElementRegionManager * elementRegionManager = mesh->getElemManager();
   ConstitutiveManager * constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
 
-  arrayView1d<real64> & mass = nodes->getReference<array1d<real64>>(keys::Mass);
+  arrayView1d<real64> & mass = nodes->getMass<array1d<real64>>();
 
   ElementRegionManager::MaterialViewAccessor< arrayView2d<real64 const> >
   rho = elementRegionManager->ConstructFullMaterialViewAccessor< array2d<real64>,
@@ -491,7 +491,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
 
-  arrayView1d<real64 const> const & mass = nodes->getReference<array1d<real64>>(keys::Mass);
+  arrayView1d<real64 const> const & mass = nodes->getMass<array1d<real64>>();
   arrayView2d<real64, nodes::VELOCITY_USD> const & vel = nodes->velocity();
 
   arrayView2d<real64, nodes::TOTAL_DISPLACEMENT_USD> const & u = nodes->totalDisplacement();
@@ -500,17 +500,17 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
 
   array1d<NeighborCommunicator> & neighbors = domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors );
   std::map<string, string_array > fieldNames;
-  fieldNames["node"].push_back( keys::Velocity);
-  fieldNames["node"].push_back( keys::Acceleration);
+  fieldNames["node"].push_back( ObjectManagerBase::viewKeyStruct::velocityString);
+  fieldNames["node"].push_back( ObjectManagerBase::viewKeyStruct::accelerationString);
 
   CommunicationTools::SynchronizePackSendRecvSizes( fieldNames, mesh, neighbors, m_iComm, true );
 
-  fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Acceleration );
+  fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", ObjectManagerBase::viewKeyStruct::accelerationString );
 
   //3: v^{n+1/2} = v^{n} + a^{n} dt/2
   SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, vel, dt/2 );
 
-  fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
+  fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", ObjectManagerBase::viewKeyStruct::velocityString );
 
   //4. x^{n+1} = x^{n} + v^{n+{1}/{2}} dt (x is displacement)
   SolidMechanicsLagrangianFEMKernels::displacementUpdate( vel, uhat, u, dt );
@@ -592,7 +592,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
   // apply this over a set
   SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_sendOrReceiveNodes );
 
-  fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
+  fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", ObjectManagerBase::viewKeyStruct::velocityString );
 
   CommunicationTools::SynchronizePackSendRecv( fieldNames, mesh, neighbors, m_iComm, true );
 
@@ -633,7 +633,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
   // apply this over a set
   SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_nonSendOrReceiveNodes );
 
-  fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
+  fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", ObjectManagerBase::viewKeyStruct::velocityString );
 
   CommunicationTools::SynchronizeUnpack( mesh, neighbors, m_iComm, true );
 
@@ -648,14 +648,14 @@ void SolidMechanicsLagrangianFEM::ApplyDisplacementBC_implicit( real64 const tim
                                                                 ParallelMatrix & matrix,
                                                                 ParallelVector & rhs )
 {
-  string const dofKey = dofManager.getKey( keys::TotalDisplacement );
+  string const dofKey = dofManager.getKey( ObjectManagerBase::viewKeyStruct::totalDisplacementString );
 
   FieldSpecificationManager const & fsManager = FieldSpecificationManager::get();
 
   fsManager.Apply( time,
                    &domain,
                    "nodeManager",
-                   keys::TotalDisplacement,
+                   ObjectManagerBase::viewKeyStruct::totalDisplacementString,
                    [&]( FieldSpecificationBase const * const bc,
                         string const &,
                         SortedArrayView<localIndex const> const & targetSet,
@@ -688,7 +688,7 @@ void SolidMechanicsLagrangianFEM::ApplyTractionBC( real64 const time,
   real64_array const & faceArea  = faceManager->getReference<real64_array>("faceArea");
   ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
 
-  string const dofKey = dofManager.getKey( keys::TotalDisplacement );
+  string const dofKey = dofManager.getKey( ObjectManagerBase::viewKeyStruct::totalDisplacementString );
 
   arrayView1d<globalIndex> const &
   blockLocalDofNumber = nodeManager->getReference<globalIndex_array>( dofKey );
@@ -789,7 +789,7 @@ void SolidMechanicsLagrangianFEM::ApplyChomboPressure( DofManager const & dofMan
   arrayView1d<R1Tensor const> const & faceNormal  = faceManager->faceNormal();
   ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
 
-  string const dofKey = dofManager.getKey( keys::TotalDisplacement );
+  string const dofKey = dofManager.getKey( ObjectManagerBase::viewKeyStruct::totalDisplacementString );
 
   arrayView1d<globalIndex> const &
   blockLocalDofNumber =  nodeManager->getReference<globalIndex_array>( dofKey );
@@ -965,12 +965,12 @@ void SolidMechanicsLagrangianFEM::ImplicitStepComplete( real64 const & GEOSX_UNU
 void SolidMechanicsLagrangianFEM::SetupDofs( DomainPartition const * const GEOSX_UNUSED_PARAM( domain ),
                                              DofManager & dofManager ) const
 {
-  dofManager.addField( keys::TotalDisplacement,
+  dofManager.addField( ObjectManagerBase::viewKeyStruct::totalDisplacementString,
                        DofManager::Location::Node,
                        3 );
 
-  dofManager.addCoupling( keys::TotalDisplacement,
-                          keys::TotalDisplacement,
+  dofManager.addCoupling( ObjectManagerBase::viewKeyStruct::totalDisplacementString,
+                          ObjectManagerBase::viewKeyStruct::totalDisplacementString,
                           DofManager::Connectivity::Elem );
 }
 
@@ -1010,7 +1010,7 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARA
   r1_array const uhattilde;
   r1_array const vtilde;
 
-  string const dofKey = dofManager.getKey( keys::TotalDisplacement );
+  string const dofKey = dofManager.getKey( ObjectManagerBase::viewKeyStruct::totalDisplacementString );
 
   arrayView1d<globalIndex const> const & dofNumber = nodeManager->getReference<globalIndex_array>( dofKey );
 
@@ -1109,7 +1109,7 @@ ApplyBoundaryConditions( real64 const time_n,
   FaceManager * const faceManager = mesh->getFaceManager();
   FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
 
-  string const dofKey = dofManager.getKey( keys::TotalDisplacement );
+  string const dofKey = dofManager.getKey( ObjectManagerBase::viewKeyStruct::totalDisplacementString );
 
   matrix.open();
   rhs.open();
@@ -1117,7 +1117,7 @@ ApplyBoundaryConditions( real64 const time_n,
   fsManager.Apply( time_n + dt,
                    domain,
                    "nodeManager",
-                   keys::Force,
+                   ObjectManagerBase::viewKeyStruct::forceString,
                    [&]( FieldSpecificationBase const * const bc,
                         string const &,
                         SortedArrayView< localIndex const> const & targetSet,
@@ -1127,7 +1127,7 @@ ApplyBoundaryConditions( real64 const time_n,
     bc->ApplyBoundaryConditionToSystem<FieldSpecificationAdd, LAInterface>( targetSet,
                                                                             time_n + dt,
                                                                             targetGroup,
-                                                                            keys::TotalDisplacement, // TODO fix use of dummy name for
+                                                                            ObjectManagerBase::viewKeyStruct::totalDisplacementString, // TODO fix use of dummy name for
                                                                             dofKey,
                                                                             3,
                                                                             matrix,
@@ -1236,12 +1236,19 @@ SolidMechanicsLagrangianFEM::ApplySystemSolution( DofManager const & dofManager,
                                                   real64 const scalingFactor,
                                                   DomainPartition * const domain )
 {
-  dofManager.addVectorToField( solution, keys::TotalDisplacement, keys::IncrementalDisplacement, -scalingFactor );
-  dofManager.addVectorToField( solution, keys::TotalDisplacement, keys::TotalDisplacement, -scalingFactor );
+  dofManager.addVectorToField( solution,
+                               ObjectManagerBase::viewKeyStruct::totalDisplacementString,
+                               NodeManager::viewKeyStruct::incrementalDisplacementString,
+                               -scalingFactor );
+
+  dofManager.addVectorToField( solution,
+                               ObjectManagerBase::viewKeyStruct::totalDisplacementString,
+                               ObjectManagerBase::viewKeyStruct::totalDisplacementString,
+                               -scalingFactor );
 
   std::map<string, string_array > fieldNames;
-  fieldNames["node"].push_back( keys::IncrementalDisplacement );
-  fieldNames["node"].push_back( keys::TotalDisplacement );
+  fieldNames["node"].push_back( NodeManager::viewKeyStruct::incrementalDisplacementString );
+  fieldNames["node"].push_back( ObjectManagerBase::viewKeyStruct::totalDisplacementString );
 
   CommunicationTools::SynchronizeFields( fieldNames,
                                          domain->getMeshBody( 0 )->getMeshLevel( 0 ),
@@ -1352,7 +1359,7 @@ void SolidMechanicsLagrangianFEM::ApplyContactConstraint( DofManager const & dof
     arrayView1d<R1Tensor const> const & faceNormal = faceManager->faceNormal();
     ArrayOfArraysView<localIndex const> const & facesToNodes = faceManager->nodeList();
 
-    string const dofKey = dofManager.getKey( keys::TotalDisplacement );
+    string const dofKey = dofManager.getKey( ObjectManagerBase::viewKeyStruct::totalDisplacementString );
     arrayView1d<globalIndex> const & nodeDofNumber = nodeManager->getReference<globalIndex_array>( dofKey );
 
 

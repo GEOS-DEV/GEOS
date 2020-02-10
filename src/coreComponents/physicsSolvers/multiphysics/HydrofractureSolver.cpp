@@ -271,8 +271,8 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
       else
       {
         std::map<string, string_array > fieldNames;
-        fieldNames["node"].push_back( keys::IncrementalDisplacement );
-        fieldNames["node"].push_back( keys::TotalDisplacement );
+        fieldNames["node"].push_back( NodeManager::viewKeyStruct::incrementalDisplacementString );
+        fieldNames["node"].push_back( ObjectManagerBase::viewKeyStruct::totalDisplacementString );
         fieldNames["elems"].push_back( FlowSolverBase::viewKeyStruct::pressureString );
         fieldNames["elems"].push_back( "elementAperture" );
 
@@ -522,7 +522,7 @@ void HydrofractureSolver::SetupDofs( DomainPartition const * const domain,
     fractureRegions.push_back( elementRegion->getName() );
   } );
 
-  dofManager.addCoupling( keys::TotalDisplacement,
+  dofManager.addCoupling( ObjectManagerBase::viewKeyStruct::totalDisplacementString,
                           FlowSolverBase::viewKeyStruct::pressureString,
                           DofManager::Connectivity::Elem,
                           fractureRegions );
@@ -574,7 +574,7 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
   string const presDofKey = m_flowSolver->getDofManager().getKey( FlowSolverBase::viewKeyStruct::pressureString );
-  string const dispDofKey = m_solidSolver->getDofManager().getKey( keys::TotalDisplacement );
+  string const dispDofKey = m_solidSolver->getDofManager().getKey( ObjectManagerBase::viewKeyStruct::totalDisplacementString );
 
   arrayView1d<globalIndex> const &
   dispDofNumber =  nodeManager->getReference<globalIndex_array>( dispDofKey );
@@ -722,7 +722,7 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
 
   FieldSpecificationManager const & fsManager = FieldSpecificationManager::get();
-  string const dispDofKey = m_solidSolver->getDofManager().getKey( keys::TotalDisplacement );
+  string const dispDofKey = m_solidSolver->getDofManager().getKey( ObjectManagerBase::viewKeyStruct::totalDisplacementString );
   NodeManager const * const nodeManager = mesh->getNodeManager();
   arrayView1d<globalIndex const> const & dispDofNumber = nodeManager->getReference<globalIndex_array>( dispDofKey );
   arrayView1d<integer const> const & nodeGhostRank = nodeManager->GhostRank();
@@ -730,7 +730,7 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
   fsManager.Apply( time + dt,
                    domain,
                    "nodeManager",
-                   keys::TotalDisplacement,
+                   ObjectManagerBase::viewKeyStruct::totalDisplacementString,
                    [&]( FieldSpecificationBase const * const bc,
                         string const &,
                         SortedArrayView<localIndex const> const & targetSet,
@@ -945,7 +945,7 @@ AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
   fext = {0,0,0};
 
   string const presDofKey = m_flowSolver->getDofManager().getKey( FlowSolverBase::viewKeyStruct::pressureString );
-  string const dispDofKey = m_solidSolver->getDofManager().getKey( keys::TotalDisplacement );
+  string const dispDofKey = m_solidSolver->getDofManager().getKey( ObjectManagerBase::viewKeyStruct::totalDisplacementString );
 
   arrayView1d<globalIndex> const &
   dispDofNumber =  nodeManager->getReference<globalIndex_array>( dispDofKey );
@@ -1056,7 +1056,7 @@ AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const * cons
 
   string const constitutiveName = constitutiveManager->GetGroup(m_flowSolver->fluidIndex())->getName();
   string const presDofKey = m_flowSolver->getDofManager().getKey( FlowSolverBase::viewKeyStruct::pressureString );
-  string const dispDofKey = m_solidSolver->getDofManager().getKey( keys::TotalDisplacement );
+  string const dispDofKey = m_solidSolver->getDofManager().getKey( ObjectManagerBase::viewKeyStruct::totalDisplacementString );
 
   CRSMatrixView<real64 const,localIndex const,localIndex const> const &
   dFluxResidual_dAperture = m_flowSolver->getDerivativeFluxResidual_dAperture();
