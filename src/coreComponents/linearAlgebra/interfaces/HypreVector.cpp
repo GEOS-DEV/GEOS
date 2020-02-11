@@ -22,20 +22,11 @@
 #include "HYPRE.h"
 #include "_hypre_IJ_mv.h"
 #include "_hypre_parcsr_mv.h"
+#include "HypreUtils.hpp"
 
 // Put everything under the geosx namespace.
 namespace geosx
 {
-
-inline HYPRE_Int * toHYPRE_Int( globalIndex * const index )
-{
-  return reinterpret_cast<HYPRE_Int*>(index);
-}
-
-inline HYPRE_Int const * toHYPRE_Int( globalIndex const * const index )
-{
-  return reinterpret_cast<HYPRE_Int const*>(index);
-}
 
 // Helper function that performs the following sequence of IJVEctor
 // call: Assemble, GetObject.
@@ -95,7 +86,7 @@ void HypreVector::create( HypreVector const & src )
   GEOSX_ASSERT_MSG( src.m_ij_vector != nullptr,
                     "source vector appears to be empty (not created)" );
 
-  HYPRE_Int jlower, jupper;
+  HYPRE_BigInt jlower, jupper;
   HYPRE_IJVectorGetLocalRange( src.m_ij_vector,
                                &jlower,
                                &jupper );
@@ -211,11 +202,11 @@ void HypreVector::create( array1d<real64> const & localValues,
   finalize( m_ij_vector,
             m_par_vector );
 
-  double * local_data = this->extractLocalVector();
+  HYPRE_Real * local_data = this->extractLocalVector();
 
   for( localIndex i = 0 ; i < localValues.size() ; ++i )
   {
-    local_data[i] = localValues[i];
+    local_data[i] = static_cast<HYPRE_Real>( localValues[i] );
   }
 
 }
@@ -236,7 +227,7 @@ void HypreVector::set( globalIndex const globalRow,
   ierr = HYPRE_IJVectorSetValues( m_ij_vector,
                                   1,
                                   &globalRow,
-                                  &value );
+                                  toHYPRE_Real( &value ) );
   GEOSX_UNUSED_VAR( ierr );
   GEOSX_ASSERT_MSG( ierr == 0,
                     "Error setting values HypreVector - error code: " +
@@ -250,7 +241,7 @@ void HypreVector::add( globalIndex const globalRow,
   ierr = HYPRE_IJVectorAddToValues( m_ij_vector,
                              1,
                              &globalRow,
-                             &value );
+                             toHYPRE_Real( &value ) );
   GEOSX_UNUSED_VAR( ierr );
   GEOSX_ASSERT_MSG( ierr == 0,
                     "Error adding values HypreVector - error code: " +
@@ -269,8 +260,8 @@ void HypreVector::set( globalIndex const * globalIndices,
   HYPRE_Int ierr;
   ierr = HYPRE_IJVectorSetValues( m_ij_vector,
                                   integer_conversion<HYPRE_Int>( size ),
-                                  toHYPRE_Int( globalIndices ),
-                                  values );
+                                  toHYPRE_BigInt( globalIndices ),
+                                  toHYPRE_Real( values ) );
   GEOSX_UNUSED_VAR( ierr );
   GEOSX_ASSERT_MSG( ierr == 0,
                     "Error setting values HypreVector - error code: " +
@@ -284,8 +275,8 @@ void HypreVector::add( globalIndex const * globalIndices,
   HYPRE_Int ierr;
   ierr = HYPRE_IJVectorAddToValues( m_ij_vector,
                                     integer_conversion<HYPRE_Int>( size ),
-                                    toHYPRE_Int( globalIndices ),
-                                    values );
+                                    toHYPRE_BigInt( globalIndices ),
+                                    toHYPRE_Real( values ) );
   GEOSX_UNUSED_VAR( ierr );
   GEOSX_ASSERT_MSG( ierr == 0,
                     "Error adding values HypreVector - error code: " +
@@ -302,17 +293,11 @@ void HypreVector::set( array1d<globalIndex> const & globalIndices,
                    *std::max_element(globalIndices.begin(), globalIndices.end()) < this->iupper(),
                    "HypreVector, it is not possible to set values on other processors");
 
-//  GEOSX_ASSERT_MSG( ( this->getLocalRowID( *std::min_element( globalIndices.data(),
-//                                                            globalIndices.data() + globalIndices.size() ) >= 0 ) &&
-//                    ( this->getLocalRowID( *std::max_element( globalIndices.data(),
-//                                                            globalIndices.data() + globalIndices.size() ) >= 0 ),
-//                    "HypreVector, it is not possible to set values on other processors");
-
   HYPRE_Int ierr;
   ierr = HYPRE_IJVectorSetValues( m_ij_vector,
                                   integer_conversion<HYPRE_Int>( values.size() ),
-                                  toHYPRE_Int( globalIndices.data() ),
-                                  values.data() );
+                                  toHYPRE_BigInt( globalIndices.data() ),
+                                  toHYPRE_Real( values.data() ) );
   GEOSX_UNUSED_VAR( ierr );
   GEOSX_ASSERT_MSG( ierr == 0,
                     "Error setting values HypreVector - error code: " +
@@ -325,8 +310,8 @@ void HypreVector::add( array1d<globalIndex> const & globalIndices,
   HYPRE_Int ierr;
   ierr = HYPRE_IJVectorAddToValues( m_ij_vector,
                                     integer_conversion<HYPRE_Int>( values.size() ),
-                                    toHYPRE_Int( globalIndices.data() ),
-                                    values.data() );
+                                    toHYPRE_BigInt( globalIndices.data() ),
+                                    toHYPRE_Real( values.data() ) );
   GEOSX_UNUSED_VAR( ierr );
   GEOSX_ASSERT_MSG( ierr == 0,
                     "Error adding values HypreVector - error code: " +
@@ -339,7 +324,8 @@ void HypreVector::set( real64 value )
 {
   GEOSX_ERROR_IF( m_ij_vector == nullptr,
                  "vector appears to be empty (not created)" );
-  HYPRE_ParVectorSetConstantValues( m_par_vector, value );
+  HYPRE_ParVectorSetConstantValues( m_par_vector,
+                                    static_cast< HYPRE_Real> ( value ) );
 }
 
 void HypreVector::zero()
@@ -384,7 +370,7 @@ void HypreVector::scale( real64 const scalingFactor )
   GEOSX_ASSERT_MSG( m_ij_vector != nullptr,
                     "vector appears to be empty (not created)" );
   HYPRE_Int ierr;
-  ierr = HYPRE_ParVectorScale( scalingFactor,
+  ierr = HYPRE_ParVectorScale( static_cast< HYPRE_Real >( scalingFactor ),
                                m_par_vector );
   GEOSX_UNUSED_VAR( ierr );
   GEOSX_ASSERT_MSG( ierr == 0,
@@ -454,7 +440,7 @@ void HypreVector::axpy( real64 const alpha,
   GEOSX_ASSERT_MSG( this->localSize() == x.localSize(),
                     "HypreVector lengths not compatible for axpy operation" );
   HYPRE_Int ierr;
-  ierr = HYPRE_ParVectorAxpy( alpha,
+  ierr = HYPRE_ParVectorAxpy( static_cast< HYPRE_Real >( alpha ),
                               x.m_par_vector,
                               m_par_vector );
   GEOSX_UNUSED_VAR( ierr );
@@ -472,8 +458,8 @@ void HypreVector::axpby( real64 const alpha,
                          HypreVector const &x,
                          real64 const beta )
 {
-  this->scale( beta );
-  this->axpy( alpha, x );
+  this->scale( static_cast< HYPRE_Real >( beta ) );
+  this->axpy( static_cast< HYPRE_Real >( alpha ), x );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -588,8 +574,8 @@ real64 HypreVector::get( globalIndex globalRow ) const
   HYPRE_Int ierr;
   GEOSX_UNUSED_VAR( ierr );
   ierr = HYPRE_IJVectorGetValues( m_ij_vector,
-	                              1,
-	    						  &globalRow,
+	                                1,
+	    						                &globalRow,
 								  &value );
   GEOSX_ASSERT_MSG( ierr == 0,
                    "Error getting IJVector values - error code: " +
@@ -699,12 +685,12 @@ globalIndex HypreVector::getGlobalRowID( localIndex const index ) const
 // Extract a view of the local portion of the array
 real64 const * HypreVector::extractLocalVector() const
 {
-  return hypre_VectorData( hypre_ParVectorLocalVector (m_par_vector) );
+  return toGEOSX_real64( hypre_VectorData( hypre_ParVectorLocalVector (m_par_vector) ) );
 }
 
 real64 * HypreVector::extractLocalVector()
 {
-  return hypre_VectorData( hypre_ParVectorLocalVector (m_par_vector) );
+  return toGEOSX_real64( hypre_VectorData( hypre_ParVectorLocalVector (m_par_vector) ) );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""

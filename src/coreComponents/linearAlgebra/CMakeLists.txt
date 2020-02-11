@@ -62,7 +62,8 @@ if( ENABLE_HYPRE )
                  interfaces/HypreMatrix.hpp
                  interfaces/HypreVector.hpp
                  interfaces/HypreSolver.hpp
-                 interfaces/HypreInterface.hpp )
+                 interfaces/HypreInterface.hpp
+                 interfaces/HypreUtils.hpp)
 
     list( APPEND linearAlgebra_sources
                  interfaces/HypreMatrix.cpp
