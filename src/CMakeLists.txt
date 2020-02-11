@@ -94,8 +94,20 @@ blt_add_executable(NAME geosx
                               ${externalComponentsLinkList}
                   )
 
-# Forcing a PRIVATE link to circumvent an issue with the BLT registered libraries.
-target_link_libraries(geosx PRIVATE geosx_core)
+# Removing (by hand) all trilinos dependencies from geosx_core target
+set(_trilinos_libs "BLT_TRILINOS_LIBRARIES")
+# Filter to get variables of the form trilinos BLT targer
+get_cmake_property(_variable_names VARIABLES)
+foreach (prop ${_variable_names})
+  if(prop MATCHES "^${_trilinos_libs}")
+    set(trilinosLibs ${${prop}} )
+  endif()
+endforeach()
+get_target_property(list geosx_core INTERFACE_LINK_LIBRARIES)
+foreach (lib ${trilinosLibs})
+  list(REMOVE_ITEM list ${lib})
+endforeach()
+set_target_properties(geosx_core PROPERTIES INTERFACE_LINK_LIBRARIES "${list}")
 
 target_include_directories( geosx PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
