@@ -12,9 +12,9 @@ if(ENABLE_PVTPackage)
          ${gtest_geosx_tests}
          testCompMultiphaseFlow.cpp
          testCompMultiphaseFlowCapPressure.cpp
+         testReservoirCompositionalMultiphaseMSWells.cpp
          testReservoirSinglePhaseMSWells.cpp
        )
-	 #testReservoirCompositionalMultiphaseMSWells.cpp
 endif()
 
 set( dependencyList geosx_core gtest )

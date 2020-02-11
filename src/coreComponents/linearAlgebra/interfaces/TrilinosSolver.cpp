@@ -240,16 +240,16 @@ void TrilinosSolver::solve_krylov( EpetraMatrix & mat,
     //list.set("null space: dimension", n_rbm);
 
     //TODO: templatization for LAIHelperFunctions needed
-//    if(m_parameters.amg.separateComponents) // apply separate displacement component filter
-//    {
-//      scratch.reset(new EpetraMatrix());
-//      LAIHelperFunctions::SeparateComponentFilter(mat,*scratch,m_parameters.dofsPerNode);
-//      ml_preconditioner.reset( new ML_Epetra::MultiLevelPreconditioner( *scratch->unwrappedPointer(), list ));
-//    }
-//    else // just use original matrix to construct amg operator
-//    {
+    if(m_parameters.amg.separateComponents) // apply separate displacement component filter
+    {
+      scratch.reset(new EpetraMatrix());
+      LAIHelperFunctions::SeparateComponentFilter<TrilinosInterface>(mat,*scratch,m_parameters.dofsPerNode);
+      ml_preconditioner.reset( new ML_Epetra::MultiLevelPreconditioner( *scratch->unwrappedPointer(), list ));
+    }
+    else // just use original matrix to construct amg operator
+    {
       ml_preconditioner.reset( new ML_Epetra::MultiLevelPreconditioner( *mat.unwrappedPointer(), list ));
-//    }
+    }
 
     solver.SetPrecOperator( ml_preconditioner.get() );
   }

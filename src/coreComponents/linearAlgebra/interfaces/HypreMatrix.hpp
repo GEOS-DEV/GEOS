@@ -540,8 +540,8 @@ public:
 
   // TODO: These break the goal of hiding local row indexing from user.  Revise
   // use cases to use ilower() and iupper();
-  localIndex rowLength( localIndex localRow ) const;
-  localIndex rowLength( globalIndex globalRow ) const;
+  localIndex localRowLength( localIndex localRowIndex ) const;
+  localIndex globalRowLength( globalIndex globalRowIndex ) const;
 
   /**
    * @brief Returns a copy of the data in row <tt>globalRow</tt>.
@@ -627,15 +627,15 @@ public:
    */
   localIndex localNonzeros() const;
 
-//  /**
-//   * @brief Returns the infinity norm of the matrix.
-//   */
-//  real64 normInf() const;
-//
-//  /**
-//   * @brief Returns the one norm of the matrix.
-//   */
-//  real64 norm1() const;
+  /**
+   * @brief Returns the infinity norm of the matrix.
+   */
+  real64 normInf() const;
+
+  /**
+   * @brief Returns the one norm of the matrix.
+   */
+  real64 norm1() const;
 
   /**
    * @brief Returns the Frobenius norm of the matrix.
@@ -707,20 +707,6 @@ private:
    */
   HYPRE_ParCSRMatrix m_parcsr_mat = nullptr;
 
-//  /**
-//   * Pointer to the underlying Epetra_CrsMatrix.
-//   */
-//  std::unique_ptr<Epetra_FECrsMatrix> m_matrix = nullptr;
-//
-//  /*
-//   * Map representing the parallel partitioning of a source vector (x in y=Ax)
-//   */
-//  std::unique_ptr<Epetra_Map> m_src_map = nullptr;
-//
-//  /*
-//   * Map representing the parallel partitioning of a destination vector (y in y=Ax)
-//   */
-//  std::unique_ptr<Epetra_Map> m_dst_map = nullptr;
 };
 
 /**

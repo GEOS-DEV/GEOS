@@ -525,8 +525,8 @@ public:
 
   // TODO: These break the goal of hiding local row indexing from user.  Revise
   // use cases to use ilower() and iupper();
-  localIndex rowLength( localIndex localRow ) const;
-  localIndex rowLength( globalIndex globalRow ) const;
+  localIndex localRowLength( localIndex localRowIndex ) const;
+  localIndex globalRowLength( globalIndex globalRowIndex ) const;
 
   /**
    * @brief Returns a copy of the data in row <tt>globalRow</tt>.

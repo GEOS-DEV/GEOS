@@ -143,18 +143,10 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
   }
   else if( m_parameters.preconditionerType == "ilu" )
   {
-//    solver.SetAztecOption( AZ_precond, AZ_dom_decomp );
-//    solver.SetAztecOption( AZ_overlap, m_parameters.dd.overlap );
-//    solver.SetAztecOption( AZ_subdomain_solve, AZ_ilu );
-//    solver.SetAztecOption( AZ_graph_fill, m_parameters.ilu.fill );
     GEOSX_ERROR( "precond ilu: Not implemented yet" );
   }
   else if( m_parameters.preconditionerType == "icc" )
   {
-//    solver.SetAztecOption( AZ_precond, AZ_dom_decomp );
-//    solver.SetAztecOption( AZ_overlap, m_parameters.dd.overlap );
-//    solver.SetAztecOption( AZ_subdomain_solve, AZ_icc );
-//    solver.SetAztecOption( AZ_graph_fill, m_parameters.ilu.fill );
     GEOSX_ERROR( "precond icc: Not implemented yet" );
   }
   else if( m_parameters.preconditionerType == "ilut" )
@@ -305,31 +297,6 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
   // Destroy preconditioner
   precondDestroyFunction(precond);
 
-//  // Ask for a convergence normalized by the right hand side
-//  solver.SetAztecOption( AZ_conv, AZ_rhs );
-//
-//  // Control output
-//  switch( m_parameters.verbosity )
-//  {
-//  case 1:
-//    solver.SetAztecOption( AZ_output, AZ_summary );
-//    solver.SetAztecOption( AZ_diagnostics, AZ_all );
-//    break;
-//  case 2:
-//    solver.SetAztecOption( AZ_output, AZ_all );
-//    solver.SetAztecOption( AZ_diagnostics, AZ_all );
-//    break;
-//  default:
-//    solver.SetAztecOption( AZ_output, AZ_none );
-//  }
-//
-  // Actually solve
-
-
-
-//  solver.Iterate( m_parameters.krylov.maxIterations,
-//                  m_parameters.krylov.tolerance );
-//
 //  //TODO: should we return performance feedback to have GEOSX pretty print details?:
 //  //      i.e. iterations to convergence, residual reduction, etc.
 }

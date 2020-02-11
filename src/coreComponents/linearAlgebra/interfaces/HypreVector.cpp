@@ -131,22 +131,8 @@ void HypreVector::createWithLocalSize( localIndex const localSize,
   GEOSX_ASSERT_MSG( localSize >= 0,
                     "local size is lower than 0" );
 
-  int this_mpi_process = MpiWrapper::Comm_rank( comm );
-  int n_mpi_process = MpiWrapper::Comm_size( comm );
-
-  array1d<int> localSizeArray( n_mpi_process );
-  int tmp = integer_conversion<int>( localSize );
-
-  MpiWrapper::allGather( tmp,
-                         localSizeArray );
-  HYPRE_Int jlower, jupper;
-
-  jlower = 0;
-  for( int i = 0 ; i < this_mpi_process ; ++i )
-  {
-    jlower += integer_conversion<HYPRE_Int>( localSizeArray[i] );
-  }
-  jupper = jlower + integer_conversion<HYPRE_Int>( localSize ) - 1;
+  HYPRE_Int const jlower = MpiWrapper::PrefixSum<HYPRE_Int>( integer_conversion<HYPRE_Int>( localSize ) ).first;
+  HYPRE_Int const jupper = jlower + integer_conversion<HYPRE_Int>( localSize ) - 1;
 
   initialize( comm,
               jlower,
@@ -214,23 +200,8 @@ void HypreVector::create( array1d<real64> const & localValues,
   GEOSX_ASSERT_MSG( localSize >= 0,
                     "local size is lower than 0" );
 
-  int this_mpi_process = MpiWrapper::Comm_rank( comm );
-  int n_mpi_process = MpiWrapper::Comm_size( comm );
-
-  array1d<int> localSizeArray( n_mpi_process );
-  int tmp = integer_conversion<int>( localSize );
-
-  MpiWrapper::allGather( tmp,
-                         localSizeArray );
-
-  HYPRE_Int jlower, jupper;
-
-  jlower = 0;
-  for( int i = 0 ; i < this_mpi_process ; ++i )
-  {
-    jlower += integer_conversion<HYPRE_Int>( localSizeArray[i] );
-  }
-  jupper = jlower + integer_conversion<HYPRE_Int>( localSize ) - 1;
+  HYPRE_Int const jlower = MpiWrapper::PrefixSum<HYPRE_Int>( localSize ).first;
+  HYPRE_Int const jupper = jlower + integer_conversion<HYPRE_Int>( localSize ) - 1;
 
   initialize( comm,
               jlower,
@@ -327,10 +298,8 @@ void HypreVector::set( array1d<globalIndex> const & globalIndices,
                        array1d<real64> const & values )
 {
 
-  GEOSX_ASSERT_MSG( this->ilower() <= *std::min_element(globalIndices.data(),
-                                                       globalIndices.data() + globalIndices.size() ) &&
-                   *std::max_element(globalIndices.data(),
-                                     globalIndices.data() + globalIndices.size()) < this->iupper(),
+  GEOSX_ASSERT_MSG( this->ilower() <= *std::min_element(globalIndices.begin(), globalIndices.end() ) &&
+                   *std::max_element(globalIndices.begin(), globalIndices.end()) < this->iupper(),
                    "HypreVector, it is not possible to set values on other processors");
 
 //  GEOSX_ASSERT_MSG( ( this->getLocalRowID( *std::min_element( globalIndices.data(),

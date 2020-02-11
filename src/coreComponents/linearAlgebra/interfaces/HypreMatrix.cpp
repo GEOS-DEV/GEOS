@@ -379,6 +379,16 @@ void HypreMatrix::close()
     {
       HYPRE_IJMatrixGetObject( m_ij_mat, (void**) &m_parcsr_mat );
       m_is_pattern_fixed = true;
+
+      // Compute column partitioning if needed for src matrix
+      if ( hypre_IJMatrixRowPartitioning( m_ij_mat ) !=
+           hypre_IJMatrixColPartitioning( m_ij_mat ) )
+      {
+        if (!hypre_ParCSRMatrixCommPkg( m_parcsr_mat ))
+        {
+          hypre_MatvecCommPkgCreate( m_parcsr_mat );
+        }
+      }
     }
 
     m_is_ready_to_use = true;
@@ -694,14 +704,14 @@ void HypreMatrix::leftMultiplyTranspose( HypreMatrix const & src,
 //                              1 ,
 //  							"mat_B_mtx" );
 
-  if ( hypre_IJMatrixRowPartitioning( m_ij_mat ) !=
-       hypre_IJMatrixColPartitioning( m_ij_mat ) )
-  {
-    if (!hypre_ParCSRMatrixCommPkg(m_parcsr_mat))
-    {
-      hypre_MatvecCommPkgCreate(m_parcsr_mat);
-    }
-  }
+//  if ( hypre_IJMatrixRowPartitioning( m_ij_mat ) !=
+//       hypre_IJMatrixColPartitioning( m_ij_mat ) )
+//  {
+//    if (!hypre_ParCSRMatrixCommPkg(m_parcsr_mat))
+//    {
+//      hypre_MatvecCommPkgCreate(m_parcsr_mat);
+//    }
+//  }
 
   dst_parcsr = hypre_ParTMatmul( m_parcsr_mat,
                                  src.m_parcsr_mat );
@@ -726,15 +736,15 @@ void HypreMatrix::rightMultiplyTranspose( HypreMatrix const & src,
   GEOSX_ASSERT_MSG( src.globalCols() == this->globalCols(),
                    "Incompatible matrix dimensions");
 
-  // Compute column partitioning if needed for src matrix
-  if ( hypre_IJMatrixRowPartitioning( src.m_ij_mat ) !=
-       hypre_IJMatrixColPartitioning( src.m_ij_mat ) )
-  {
-    if (!hypre_ParCSRMatrixCommPkg(src.m_parcsr_mat))
-    {
-      hypre_MatvecCommPkgCreate(src.m_parcsr_mat);
-    }
-  }
+//  // Compute column partitioning if needed for src matrix
+//  if ( hypre_IJMatrixRowPartitioning( src.m_ij_mat ) !=
+//       hypre_IJMatrixColPartitioning( src.m_ij_mat ) )
+//  {
+//    if (!hypre_ParCSRMatrixCommPkg(src.m_parcsr_mat))
+//    {
+//      hypre_MatvecCommPkgCreate(src.m_parcsr_mat);
+//    }
+//  }
 
   // Transpose this
   HYPRE_ParCSRMatrix tmp;
@@ -796,9 +806,6 @@ void HypreMatrix::parCSRtoIJ( HYPRE_ParCSRMatrix &parCSRMatrix )
   MpiWrapper::bcast( info.data(), 2, 0, hypre_IJMatrixComm( ijmatrix ) );
   hypre_IJMatrixGlobalFirstRow( ijmatrix ) = info(0);
   hypre_IJMatrixGlobalFirstCol( ijmatrix ) = info(1);
-
-//  hypre_IJMatrixGlobalFirstRow( ijmatrix ) = MpiWrapper::Min( hypre_ParCSRMatrixFirstRowIndex( parCSRMatrix ) );
-//  hypre_IJMatrixGlobalFirstCol( ijmatrix ) = MpiWrapper::Min( hypre_ParCSRMatrixFirstColDiag( parCSRMatrix ) );
 
   hypre_IJMatrixGlobalNumRows( ijmatrix ) = hypre_ParCSRMatrixGlobalNumRows( parCSRMatrix );
   hypre_IJMatrixGlobalNumCols( ijmatrix ) = hypre_ParCSRMatrixGlobalNumCols( parCSRMatrix );
@@ -937,8 +944,12 @@ void HypreMatrix::leftScale( HypreVector const &vec )
   HYPRE_Int * IA = hypre_CSRMatrixI( prt_diag_CSR );
 
   for( HYPRE_Int i = 0 ; i < nrows ; ++i )
+  {
     for( HYPRE_Int j = IA[i] ; j < IA[i + 1] ; ++j )
+    {
       ptr_diag_data[j] *= ptr_vec_data[i];
+    }
+  }
 
   hypre_CSRMatrix * prt_offdiag_CSR = hypre_ParCSRMatrixOffd( m_parcsr_mat );
   //HYPRE_Int offdiag_nnz = hypre_CSRMatrixNumNonzeros( prt_offdiag_CSR );
@@ -948,25 +959,14 @@ void HypreMatrix::leftScale( HypreVector const &vec )
   IA = hypre_CSRMatrixI( prt_offdiag_CSR );
 
   for( HYPRE_Int i = 0 ; i < nrows ; ++i )
+  {
     for( HYPRE_Int j = IA[i] ; j < IA[i + 1] ; ++j )
+    {
       ptr_offdiag_data[j] *= ptr_vec_data[i];
+    }
+  }
 
 }
-
-//void EpetraMatrix::rightScale( EpetraVector const &vec )
-//{
-
-// --- CREATE SCRATCH DIAGONAL MATRIX
-
-//  m_matrix->RightScale( *(*vec.unwrappedPointer())(0) );
-//}
-//
-//void EpetraMatrix::leftRightScale( EpetraVector const &vecLeft,
-//                                   EpetraVector const &vecRight )
-//{
-//  leftScale(vecLeft);
-//  rightScale(vecRight);
-//}
 
 localIndex HypreMatrix::maxRowLength() const
 {
@@ -1003,14 +1003,14 @@ localIndex HypreMatrix::maxRowLength() const
   return integer_conversion<localIndex>( maxRowLength );
 }
 
-localIndex HypreMatrix::rowLength( localIndex localRow ) const
+localIndex HypreMatrix::localRowLength( localIndex localRowIndex ) const
 {
-  return this->rowLength( this->getGlobalRowID( localRow ) );
+  return this->globalRowLength( this->getGlobalRowID( localRowIndex ) );
 }
 
-localIndex HypreMatrix::rowLength( globalIndex globalRow ) const
+localIndex HypreMatrix::globalRowLength( globalIndex globalRowIndex ) const
 {
-  HYPRE_BigInt row = integer_conversion<HYPRE_BigInt>( globalRow );
+  HYPRE_BigInt row = integer_conversion<HYPRE_BigInt>( globalRowIndex );
   HYPRE_Int ncols;
 
   HYPRE_Int ierr;
@@ -1340,23 +1340,89 @@ void HypreMatrix::write( string const & filename,
                              filename.c_str() );
 }
 
-//// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-//// Inf-norm.
-//// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-//// Returns the infinity norm of the matrix.
-//real64 EpetraMatrix::normInf() const
-//{
-//  return m_matrix->NormInf();
-//}
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Inf-norm.
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Returns the infinity norm of the matrix.
+real64 HypreMatrix::normInf() const
+{
+  /*
+   * @warning
+   * The norm is computed correctly. However, the method parCSRtoIJ leads to a
+   * deallocation error when calling the destructor.
+   */
+
+  // Transpose this and compute its norm1
+  HypreMatrix matT;
+//  HYPRE_ParCSRMatrix tmp;
+  hypre_ParCSRMatrixTranspose( m_parcsr_mat,
+                               &matT.m_parcsr_mat,
+                               1 );
+//  matT.parCSRtoIJ( tmp );
 //
-//// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-//// 1-norm.
-//// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-//// Returns the one norm of the matrix.
-//real64 EpetraMatrix::norm1() const
-//{
-//  return m_matrix->NormOne();
-//}
+//  matT.write("matA_T");
+//
+  real64 normInf = matT.norm1();
+//
+//  std::cout << matT.m_ij_mat << std::endl;
+//
+////  // Destroy temporary matrix
+////  hypre_ParCSRMatrixDestroy( tmp );
+//  matT.reset();
+
+//  real64 normInf = hypre_ParCSRMatrixGlobalNumRows( tmp );
+  hypre_ParCSRMatrixDestroy( matT.m_parcsr_mat );
+  return normInf;
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// 1-norm.
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Returns the one norm of the matrix.
+real64 HypreMatrix::norm1() const
+{
+  hypre_CSRMatrix * prt_diag_CSR = hypre_ParCSRMatrixDiag( m_parcsr_mat );
+  HYPRE_Real * ptr_diag_data = hypre_CSRMatrixData( prt_diag_CSR );
+
+  HYPRE_Int nrows = hypre_CSRMatrixNumRows( prt_diag_CSR );
+  HYPRE_Int * IA = hypre_CSRMatrixI( prt_diag_CSR );
+
+  array1d<HYPRE_Real> row_abs_sum( nrows );
+  row_abs_sum = 0.0;
+
+  for( HYPRE_Int i = 0 ; i < nrows ; ++i )
+  {
+    for( HYPRE_Int j = IA[i] ; j < IA[i + 1] ; ++j )
+    {
+      row_abs_sum[i] += std::fabs( ptr_diag_data[j] );
+    }
+  }
+
+  hypre_CSRMatrix * prt_offdiag_CSR = hypre_ParCSRMatrixOffd( m_parcsr_mat );
+  HYPRE_Real * ptr_offdiag_data = hypre_CSRMatrixData( prt_offdiag_CSR );
+
+  nrows = hypre_CSRMatrixNumRows( prt_offdiag_CSR );
+  IA = hypre_CSRMatrixI( prt_offdiag_CSR );
+
+  for( HYPRE_Int i = 0 ; i < nrows ; ++i )
+  {
+    for( HYPRE_Int j = IA[i] ; j < IA[i + 1] ; ++j )
+    {
+      row_abs_sum[i] += std::fabs( ptr_offdiag_data[j] );
+    }
+  }
+
+  real64 norm1;
+  real64 local_norm1 = static_cast< real64 > ( *std::max_element( row_abs_sum.begin(), row_abs_sum.end() ) );
+  MpiWrapper::allReduce( &local_norm1,
+                         &norm1,
+                         1,
+                         MPI_MAX,
+                         hypre_ParCSRMatrixComm(m_parcsr_mat) );
+
+  return norm1;
+
+}
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Frobenius-norm.
@@ -1385,7 +1451,7 @@ real64 HypreMatrix::normFrobenius() const
                          &normFrob,
                          1,
                          MPI_SUM,
-                         hypre_IJVectorComm( m_ij_mat ) );
+                         hypre_ParCSRMatrixComm(m_parcsr_mat) );
 
   normFrob = sqrt( normFrob );
   return static_cast<real64>( normFrob );

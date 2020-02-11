@@ -360,7 +360,7 @@ public:
     // Define some vectors, matrices
     Vector vec1, vec2, vec3;
     Matrix mat1, mat2, mat3, mat4;
-    if( false )
+    if( true )
     {
       mat1.createWithLocalSize( 2, 2, MPI_COMM_WORLD ); // 2*numranks x 2*numranks
       mat2.createWithGlobalSize( 2, 2, MPI_COMM_WORLD ); // 2x2
@@ -653,7 +653,10 @@ public:
     globalIndex N = n * n;
 
     // Compute a 2D Laplace operator
-    Matrix matrix = compute2DLaplaceOperator<LAI>( MPI_COMM_WORLD, n );
+    Matrix matrix;
+    compute2DLaplaceOperator<LAI>( MPI_COMM_WORLD,
+                                   n,
+                                   matrix );
 
     // Define some vectors
     Vector x_true;
@@ -793,6 +796,8 @@ public:
     }
     A.close();
 
+    A.write("matrice_A");
+
     // Check on sizes
     EXPECT_EQ( A.globalRows(), nRows );
     EXPECT_EQ( A.globalCols(), nCols );
@@ -802,8 +807,8 @@ public:
     real64 const b = A.normInf();
     real64 const c = A.normFrobenius();
 
-    EXPECT_DOUBLE_EQ( a, nRows );
-    EXPECT_DOUBLE_EQ( b, nCols );
+    EXPECT_DOUBLE_EQ( a, static_cast< real64 > ( 2*nRows ) );
+    EXPECT_DOUBLE_EQ( b, nRows );
     EXPECT_DOUBLE_EQ( c, std::sqrt( static_cast<real64>( nRows * ( nRows + 1 ) * ( 2 * nRows + 1 ) ) / 3.0 ) );
   }
 }
@@ -832,20 +837,20 @@ TYPED_TEST( LinearAlgebraOperationsTest, Matrix )
    this->testMatrixFunctions();
 }
 
-TYPED_TEST( LinearAlgebraOperationsTest, Interface )
-{
-  this->testInterfaceSolvers();
-}
+//TYPED_TEST( LinearAlgebraOperationsTest, Interface )
+//{
+//  this->testInterfaceSolvers();
+//}
 
 //TYPED_TEST( LinearAlgebraOperationsTest, MatrixMatrix )
 //{
 //  this->testMatrixMatrixOperations();
 //}
 //
-//TYPED_TEST( LinearAlgebraOperationsTest, RectangularMatrix )
-//{
-//  this->testRectangularMatrixOperations();
-//}
+TYPED_TEST( LinearAlgebraOperationsTest, RectangularMatrix )
+{
+  this->testRectangularMatrixOperations();
+}
 
 int main( int argc, char ** argv )
 {
