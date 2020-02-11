@@ -837,10 +837,10 @@ TYPED_TEST( LinearAlgebraOperationsTest, Matrix )
    this->testMatrixFunctions();
 }
 
-//TYPED_TEST( LinearAlgebraOperationsTest, Interface )
-//{
-//  this->testInterfaceSolvers();
-//}
+TYPED_TEST( LinearAlgebraOperationsTest, Interface )
+{
+  this->testInterfaceSolvers();
+}
 
 //TYPED_TEST( LinearAlgebraOperationsTest, MatrixMatrix )
 //{
