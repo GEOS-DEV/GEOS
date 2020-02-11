@@ -57,7 +57,8 @@ public:
                           std::map< std::pair< localIndex, localIndex >, std::set< localIndex > > const & newElems );
 
   static void FindGhosts( MeshLevel * const meshLevel,
-                          array1d< NeighborCommunicator > & neighbors );
+                          array1d< NeighborCommunicator > & neighbors,
+                          bool use_nonblocking );
 
   static std::set< int > & getFreeCommIDs();
   static int reserveCommID();

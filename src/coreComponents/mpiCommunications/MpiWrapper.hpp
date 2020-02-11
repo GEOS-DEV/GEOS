@@ -235,6 +235,19 @@ public:
   static int ActiveWaitSomeCompletePhase( const int participants,
                                           std::vector< std::function< MPI_Request ( int ) > > & phases );
 
+  /**
+   * Active blocking phased communication with multiple participants,
+   *  each participant in each phase may depend on the previous phases
+   *  being fully complete prior to entry into a subsequent phase.
+   * @param[in] participants The number of participants in each phase
+   * @param[in] phases A vector of function objects taking int and returning MPI_Requests
+   *               denoting the state of that participant in that phase.
+   * @note The restriction on phase[N](index) being called is that phase[N-1](0 - (particpants-1))
+   *       and phase[N](0..index) have all been called and the MPI_Requests from those calls have all
+   *       been completed.
+   * @note One can add a final recv phase by having that phase return MPI_REQUEST_NULL.
+   * @return MPI_SUCCESS or and MPI_ERROR from internal calls to MPI_WaitAny.
+   */
   static int ActiveWaitOrderedCompletePhase( const int participants,
                                              std::vector< std::function< MPI_Request ( int ) > > & phases );
   ///@}

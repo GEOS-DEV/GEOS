@@ -546,7 +546,8 @@ CommunicationTools::
 
 
 void CommunicationTools::FindGhosts( MeshLevel * const meshLevel,
-                                     array1d< NeighborCommunicator > & neighbors )
+                                     array1d< NeighborCommunicator > & neighbors,
+                                     bool use_nonblocking )
 {
   GEOSX_MARK_FUNCTION;
   int commID = CommunicationTools::reserveCommID();
@@ -570,7 +571,14 @@ void CommunicationTools::FindGhosts( MeshLevel * const meshLevel,
         return MPI_REQUEST_NULL;
       };
     std::vector< std::function< MPI_Request ( int ) > > phases = { send, post_recv, proc_recv };
-    MpiWrapper::ActiveWaitOrderedCompletePhase( neighbor_count, phases );
+    if( use_nonblocking )
+    {
+      MpiWrapper::ActiveWaitSomeCompletePhase( neighbor_count, phases );
+    }
+    else
+    {
+      MpiWrapper::ActiveWaitOrderedCompletePhase( neighbor_count, phases );
+    }
   }
   GEOSX_MARK_END( "Neighbor wait loop" );
 
@@ -607,8 +615,15 @@ void CommunicationTools::FindGhosts( MeshLevel * const meshLevel,
         neighbors[idx].UnpackAndRebuildSyncLists( meshLevel, commID );
         return MPI_REQUEST_NULL;
       };
-    std::vector< std::function< MPI_Request ( int ) > > phases = {  send, post_recv, proc_recv };
-    MpiWrapper::ActiveWaitOrderedCompletePhase( neighbor_count, phases );
+    std::vector< std::function< MPI_Request ( int ) > > phases = { send, post_recv, proc_recv };
+    if( use_nonblocking )
+    {
+      MpiWrapper::ActiveWaitSomeCompletePhase( neighbor_count, phases );
+    }
+    else
+    {
+      MpiWrapper::ActiveWaitOrderedCompletePhase( neighbor_count, phases );
+    }
   }
 
   meshLevel->getNodeManager()->FixUpDownMaps( false );
