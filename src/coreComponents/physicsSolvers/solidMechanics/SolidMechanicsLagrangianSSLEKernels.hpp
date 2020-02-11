@@ -56,9 +56,11 @@ struct StressCalculationKernel
 
     arrayView3d< real64, solid::STRESS_USD > const & stress = constitutiveRelation->getStress();
 
-    using KERNEL_POLICY = parallelDevicePolicy< 256 >;
+
+//    using KERNEL_POLICY = parallelDevicePolicy< 256 >;
+    using KERNEL_POLICY = parallelHostPolicy;
     RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, numElems ),
-                                   GEOSX_DEVICE_LAMBDA ( localIndex const k )
+                                   GEOSX_HOST_DEVICE_LAMBDA ( localIndex const k )
     {
       real64 uhat_local[ NUM_NODES_PER_ELEM ][ 3 ];
 

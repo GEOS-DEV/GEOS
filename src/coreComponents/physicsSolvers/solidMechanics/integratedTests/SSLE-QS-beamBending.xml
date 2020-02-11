@@ -10,12 +10,12 @@
                                   solidMaterialName="shale"
                                   >
       <NonlinearSolverParameters name="nlsp"
-                                 newtonTol="1.0e-6"
+                                 newtonTol="1.0e-10"
                                  newtonMaxIter="8"/>
       <SystemSolverParameters name="ssp"
                               useMLPrecond="1"
                               scalingOption="0"
-                              krylovTol="1.0e-10"
+                              krylovTol="1.0e-12"
                               logLevel="0"/>
      </SolidMechanicsLagrangianSSLE>
   </Solvers>
