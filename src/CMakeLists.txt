@@ -89,10 +89,13 @@ endif()
 
 blt_add_executable(NAME geosx
                    SOURCES main/main.cpp
-                   DEPENDS_ON geosx_core axom
+                   DEPENDS_ON axom
                               ${extraComponentsLinkList}
                               ${externalComponentsLinkList}
                   )
+
+# Forcing a PRIVATE link to circumvent an issue with the BLT registered libraries.
+target_link_libraries(geosx PRIVATE geosx_core)
 
 target_include_directories( geosx PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
