@@ -94,9 +94,13 @@ public:
 
   //***** ACCESS OPERATORS ****************************************************
   /// const access to data
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   const realT& operator()( const int i, const int j ) const;
 
   /// non-const access to data
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   realT& operator()( const int i, const int j );
 
 
@@ -299,7 +303,9 @@ inline R2TensorT<3>::R2TensorT(realT Txx,realT Txy,realT Txz,
  * @return non-modifiable reference to the tensor data at index (i,j)
  */
 template< int T_dim >
-inline const realT& R2TensorT<T_dim>::operator()( const int i, const int j ) const
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+const realT& R2TensorT<T_dim>::operator()( const int i, const int j ) const
 {
   return (this->t_data[ i*T_dim + j ]);
 }
@@ -310,7 +316,9 @@ inline const realT& R2TensorT<T_dim>::operator()( const int i, const int j ) con
  * @return modifiable reference to the tensor data at index (i,j)
  */
 template< int T_dim >
-inline realT& R2TensorT<T_dim>::operator()( const int i, const int j )
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+realT& R2TensorT<T_dim>::operator()( const int i, const int j )
 {
   return (this->t_data[ i*T_dim + j ]);
 }

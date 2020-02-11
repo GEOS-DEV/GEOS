@@ -161,13 +161,7 @@ struct ExplicitKernel
 
 #if defined(UPDATE_STRESS)
       #define POS vel
-
-      real64 * const restrict stressPtr = constitutive.m_stress.data();
-      #define STRESS( k, q, c ) stressPtr[ 6 * NUM_QUADRATURE_POINTS * k + 6 * q + c ]
-
-      /// Use the stress accessor below to test out the impact of permuted layout (faster but gives wrong answers).
-      // localIndex const numElems = elemsToNodes.size( 0 );
-      // #define STRESS( k, q, c ) stressPtr[ numElems * NUM_QUADRATURE_POINTS * c + numElems * q + k ]
+      arrayView3d< real64, solid::STRESS_USD > const & stress = constitutive.m_stress;
 #else
       #define POS u
 #endif
@@ -197,8 +191,8 @@ struct ExplicitKernel
         for ( localIndex c = 0; c < 6; ++c )
         {
 #if defined(UPDATE_STRESS)
-          STRESS( k, q, c ) = STRESS( k, q, c ) + stressLocal[ c ] * dt;
-          stressLocal[ c ] = STRESS( k, q, c ) * -detJ;
+          stress( k, q, c ) = stress( k, q, c ) + stressLocal[ c ] * dt;
+          stressLocal[ c ] = stress( k, q, c ) * -detJ;
 #else
           stressLocal[ c ] *= -detJ;
 #endif

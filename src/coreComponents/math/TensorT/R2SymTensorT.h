@@ -87,11 +87,13 @@ public:
   { TensorBaseT< SIZE  >::operator=( rhs ); }
 
   template< int USD >
+  GEOSX_HOST_DEVICE
   R2SymTensorT( LvArray::ArraySlice< realT const, 1, USD > const & src ):
     TensorBaseT< SIZE > ()
   { *this = src; }
 
   template< int USD >
+  GEOSX_HOST_DEVICE
   R2SymTensorT( LvArray::ArraySlice< realT, 1, USD > const & src ):
     TensorBaseT< SIZE > ()
   { *this = src; }
@@ -138,6 +140,7 @@ public:
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
   R2SymTensorT& operator+=( const R2SymTensorT& rhs );
 
   template< int USD >
@@ -185,6 +188,7 @@ public:
   void AijAkj_plus_Aik_plus_Aki(const R2TensorT< T_dim >& A);
   void AjiAjk_plus_Aik_plus_Aki(const R2TensorT< T_dim >& A);
   void AijAkj_m_Aik_m_Aki(const R2TensorT< T_dim >& A);
+  GEOSX_HOST_DEVICE
   void QijAjkQlk(const R2SymTensorT& A, const R2TensorT< T_dim >& Q);
 
   void dyadic_aa(const R1TensorT< T_dim >& a);

@@ -22,8 +22,6 @@
 #include "RAJA/RAJA.hpp"
 #include "cxx-utilities/src/Array.hpp"
 
-// #define GEOSX_USE_CUDA
-
 namespace geosx
 {
 
@@ -124,7 +122,5 @@ static constexpr int STRESS_USD = LvArray::getStrideOneDimension( STRESS_PERMUTA
 } // namespace solid
 
 } // namespace geosx
-
-// #undef GEOSX_USE_CUDA
 
 #endif // GEOSX_COMMON_DATALAYOUTS_HPP_
