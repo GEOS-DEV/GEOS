@@ -89,7 +89,7 @@ endif()
 
 blt_add_executable(NAME geosx
                    SOURCES main/main.cpp
-                   DEPENDS_ON axom
+                   DEPENDS_ON geosx_core axom
                               ${extraComponentsLinkList}
                               ${externalComponentsLinkList}
                   )
