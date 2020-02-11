@@ -117,7 +117,7 @@ real64 HydrofractureSolver::GetTimestepRequest(real64 const time)
     real64 maxDtSolid = m_solidSolver->GetTimestepRequest( time );
     real64 maxDtflow = m_flowSolver->GetTimestepRequest( time );
 
- //   std::cout << "GetTimestepRequest: maxDtSolid = " << maxDtSolid << ", maxDtflow = " << maxDtflow << std::endl;
+//    std::cout << "GetTimestepRequest: maxDtSolid = " << maxDtSolid << ", maxDtflow = " << maxDtflow << std::endl;
 
     return std::min(maxDtSolid, maxDtflow);
   }

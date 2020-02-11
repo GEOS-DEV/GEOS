@@ -340,26 +340,27 @@ void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * co
 //    mass[index] *= m_fractureNodalMassScaling;
 //  }
 
-//  Group * nodeSets = nodes->sets();
-//  localIndex_set & xnegNodes = nodeSets->registerWrapper<localIndex_set>( std::string("xneg") )->reference();
-//  localIndex_set & xposNodes = nodeSets->registerWrapper<localIndex_set>( std::string("xpos") )->reference();
-//  localIndex_set & ynegNodes = nodeSets->registerWrapper<localIndex_set>( std::string("yneg") )->reference();
-//  localIndex_set & yposNodes = nodeSets->registerWrapper<localIndex_set>( std::string("ypos") )->reference();
-//  localIndex_set & znegNodes = nodeSets->registerWrapper<localIndex_set>( std::string("zneg") )->reference();
-//  localIndex_set & zposNodes = nodeSets->registerWrapper<localIndex_set>( std::string("zpos") )->reference();
+  // Double the mass of nodes at external boundary
+  Group * nodeSets = nodes->sets();
+  localIndex_set & xnegNodes = nodeSets->registerWrapper<localIndex_set>( std::string("xneg") )->reference();
+  localIndex_set & xposNodes = nodeSets->registerWrapper<localIndex_set>( std::string("xpos") )->reference();
+  localIndex_set & ynegNodes = nodeSets->registerWrapper<localIndex_set>( std::string("yneg") )->reference();
+  localIndex_set & yposNodes = nodeSets->registerWrapper<localIndex_set>( std::string("ypos") )->reference();
+  localIndex_set & znegNodes = nodeSets->registerWrapper<localIndex_set>( std::string("zneg") )->reference();
+  localIndex_set & zposNodes = nodeSets->registerWrapper<localIndex_set>( std::string("zpos") )->reference();
 
-//  for( localIndex index : xnegNodes )
-//    mass[index] *= 2;
-//  for( localIndex index : xposNodes )
-//    mass[index] *= 2;
-//  for( localIndex index : ynegNodes )
-//    mass[index] *= 2;
-//  for( localIndex index : yposNodes )
-//    mass[index] *= 2;
-//  for( localIndex index : znegNodes )
-//    mass[index] *= 2;
-//  for( localIndex index : zposNodes )
-//    mass[index] *= 2;
+  for( localIndex index : xnegNodes )
+    mass[index] *= 2;
+  for( localIndex index : xposNodes )
+    mass[index] *= 2;
+  for( localIndex index : ynegNodes )
+    mass[index] *= 2;
+  for( localIndex index : yposNodes )
+    mass[index] *= 2;
+  for( localIndex index : znegNodes )
+    mass[index] *= 2;
+  for( localIndex index : zposNodes )
+    mass[index] *= 2;
 
 }
 
@@ -560,8 +561,8 @@ void SolidMechanicsLagrangianFEM::ExplicitStepDisplacementUpdate( real64 const& 
 
   array1d<NeighborCommunicator> & neighbors = domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors );
   std::map<string, string_array > fieldNames;
-  fieldNames["node"].push_back( keys::Velocity);
-  fieldNames["node"].push_back( keys::Acceleration);
+  fieldNames["node"].push_back(keys::Velocity);
+  fieldNames["node"].push_back(keys::Acceleration);
 
   CommunicationTools::SynchronizePackSendRecvSizes( fieldNames, mesh, neighbors, m_iComm, true );
 
@@ -630,8 +631,8 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStepVelocityUpdate( real64 const& ti
 
   array1d<NeighborCommunicator> & neighbors = domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors );
   std::map<string, string_array > fieldNames;
-  fieldNames["node"].push_back( keys::Velocity);
-  fieldNames["node"].push_back( keys::Acceleration);
+  fieldNames["node"].push_back(keys::Velocity);
+  fieldNames["node"].push_back(keys::Acceleration);
 
   ElementRegionManager::MaterialViewAccessor<real64> const biotCoefficient =
     elemManager->ConstructFullMaterialViewAccessor<real64>( "BiotCoefficient", constitutiveManager);
@@ -695,10 +696,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStepVelocityUpdate( real64 const& ti
   // apply traction BC
   ApplyTractionBC_explicit( time_n + dt, domain );
 
-//  // apply acceleration BC
-//  fsManager->ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n + dt, domain, "nodeManager", keys::Acceleration );
-
-  // convert acceleration BC to force BC
+   // apply acceleration BC (convert to force BC)
   fsManager.ApplyFieldValue( time_n + dt, domain, "nodeManager", keys::Acceleration,
     [&]( FieldSpecificationBase const * const bc, SortedArrayView<localIndex const> const & targetSet )->void
     {
@@ -707,7 +705,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStepVelocityUpdate( real64 const& ti
         GEOSX_DEVICE_LAMBDA( localIndex const i )
         {
           localIndex const a = targetSet[ i ];
-          acc[a][component] *= mass[a];
+          acc[a][component] = bc->GetScale() * mass[a];
         }
       );
     }
@@ -940,7 +938,8 @@ void SolidMechanicsLagrangianFEM::ApplyTractionBC_explicit( real64 const time,
 
   arrayView1d<R1Tensor> const & acc = nodeManager->getReference<array1d<R1Tensor>>(keys::Acceleration);
 
-  arrayView1d<integer const> const & faceGhostRank = faceManager->GhostRank();
+//  arrayView1d<integer const> const & faceGhostRank = faceManager->GhostRank();
+
   fsManager.Apply( time,
                     domain,
                     "faceManager",
@@ -959,14 +958,14 @@ void SolidMechanicsLagrangianFEM::ApplyTractionBC_explicit( real64 const time,
     {
       for( auto kf : targetSet )
       {
-        if( faceGhostRank[kf] < 0 )
-        {
+//        if( faceGhostRank[kf] < 0 )
+//        {
           localIndex const numNodes = faceToNodeMap.sizeOfArray( kf );
           for( localIndex a=0 ; a<numNodes ; ++a )
           {
-            acc[a][component] += bc->GetScale() * faceArea[kf] / numNodes;
+            acc[faceToNodeMap(kf, a)][component] += bc->GetScale() * faceArea[kf] / numNodes;
           }
-        }
+//        }
       }
     }
     else
@@ -979,14 +978,14 @@ void SolidMechanicsLagrangianFEM::ApplyTractionBC_explicit( real64 const time,
           real64 value = bc->GetScale() * function->Evaluate( &time );
           for( auto kf : targetSet )
           {
-            if( faceGhostRank[kf] < 0 )
-            {
+//            if( faceGhostRank[kf] < 0 )
+//            {
               localIndex const numNodes = faceToNodeMap.sizeOfArray( kf );
               for( localIndex a=0 ; a<numNodes ; ++a )
               {
-                acc[a][component] += value * faceArea[kf] / numNodes;
+                acc[faceToNodeMap(kf, a)][component] += value * faceArea[kf] / numNodes;
               }
-            }
+//            }
           }
         }
         else
@@ -997,14 +996,14 @@ void SolidMechanicsLagrangianFEM::ApplyTractionBC_explicit( real64 const time,
 
           for( auto kf : targetSet )
           {
-            if( faceGhostRank[kf] < 0 )
-            {
+//            if( faceGhostRank[kf] < 0 )
+//            {
               localIndex const numNodes = faceToNodeMap.sizeOfArray( kf );
               for( localIndex a=0 ; a<numNodes ; ++a )
               {
-                acc[a][component] += result[kf] * faceArea[kf] / numNodes;
+                acc[faceToNodeMap(kf, a)][component] += result[kf] * faceArea[kf] / numNodes;
               }
-            }
+//            }
           }
       }
     }

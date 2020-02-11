@@ -86,8 +86,8 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
   ElementRegionManager::ElementViewAccessor<arrayView1d<R1Tensor>> const coefficient =
     elemManager->ConstructViewAccessor< array1d<R1Tensor>, arrayView1d<R1Tensor> >( m_coeffName );
 
-//  arrayView1d<integer const> const & faceGhostRank =
-//    faceManager->getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
+  arrayView1d<integer const> const & faceGhostRank =
+    faceManager->getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
   ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager->nodeList();
 
@@ -119,8 +119,8 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
 
   for (localIndex kf = 0; kf < faceManager->size(); ++kf)
   {
-    if (elemRegionList[kf][0] == -1 || elemRegionList[kf][1] == -1)
-//    if (faceGhostRank[kf] >= 0 || elemRegionList[kf][0] == -1 || elemRegionList[kf][1] == -1)
+  //  if (elemRegionList[kf][0] == -1 || elemRegionList[kf][1] == -1)
+    if (faceGhostRank[kf] >= 0 || elemRegionList[kf][0] == -1 || elemRegionList[kf][1] == -1)
       continue;
 
     if ( !(regionFilter.contains(elemRegionList[kf][0]) && regionFilter.contains(elemRegionList[kf][1])) )

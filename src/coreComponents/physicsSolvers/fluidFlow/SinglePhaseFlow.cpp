@@ -412,6 +412,7 @@ void SinglePhaseFlow::UpdateEOS( real64 const time_n,
 
 //        if ( std::abs(mass[ei]) > 0 && poro[ei] > 0.999 )
 //        if ( std::abs(mass[ei]) > 0 )
+//        if ( pres[ei] > 0 )
 //        {
 //          std::cout << "\n Fluid Update in poroElastic:  ei = " << ei << ", mass = " << mass[ei] << ", poro= " << poro[ei] << ", vol = " << vol[ei]
 //                    << ", calculated dens = " << dens[ei][0] << ", new pres = " << pres[ei] << "\n";
