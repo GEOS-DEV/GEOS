@@ -685,7 +685,7 @@ private:
   /**
    * @brief Perform a matrix matrix product with Parallel Matrix
    */
-  void parCSRtoIJ( HYPRE_ParCSRMatrix & parCSRMatrix );
+  void parCSRtoIJ( HYPRE_ParCSRMatrix const & parCSRMatrix );
 
   /**
    * Boolean value, true if the matrix sparsity pattern has been fixed.

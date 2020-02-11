@@ -170,10 +170,11 @@ void HypreMatrix::createWithGlobalSize( globalIndex const globalSize,
                                         MPI_Comm const & comm )
 {
   this->reset();
+  // just call general version
   this->createWithGlobalSize( globalSize,
                               globalSize,
                               maxEntriesPerRow,
-                              comm ); // just call general version
+                              comm );
 
 }
 
@@ -242,10 +243,11 @@ void HypreMatrix::createWithLocalSize( localIndex const localSize,
                                        MPI_Comm const & comm )
 {
   this->reset();
+  // just call general version
   this->createWithLocalSize( localSize,
                              localSize,
                              maxEntriesPerRow,
-                             comm ); // just call general version
+                             comm );
 }
 
 void HypreMatrix::createWithLocalSize( localIndex const localRows,
@@ -324,6 +326,7 @@ void HypreMatrix::reset()
   if( m_ij_mat )
   {
     HYPRE_IJMatrixDestroy( m_ij_mat );
+    m_ij_mat = nullptr;
   }
   m_is_pattern_fixed = false;
   m_is_ready_to_use = false;
@@ -695,24 +698,6 @@ void HypreMatrix::leftMultiplyTranspose( HypreMatrix const & src,
   // Compute product
   HYPRE_ParCSRMatrix dst_parcsr;
 
-//  hypre_ParCSRMatrixPrintIJ ( HYPRE_ParCSRMatrix(m_parcsr_mat) ,
-//                              1 ,
-//                              1 ,
-//  							"mat_A_mtx" );
-//  hypre_ParCSRMatrixPrintIJ ( HYPRE_ParCSRMatrix(src.m_parcsr_mat) ,
-//                              1 ,
-//                              1 ,
-//  							"mat_B_mtx" );
-
-//  if ( hypre_IJMatrixRowPartitioning( m_ij_mat ) !=
-//       hypre_IJMatrixColPartitioning( m_ij_mat ) )
-//  {
-//    if (!hypre_ParCSRMatrixCommPkg(m_parcsr_mat))
-//    {
-//      hypre_MatvecCommPkgCreate(m_parcsr_mat);
-//    }
-//  }
-
   dst_parcsr = hypre_ParTMatmul( m_parcsr_mat,
                                  src.m_parcsr_mat );
 
@@ -735,16 +720,6 @@ void HypreMatrix::rightMultiplyTranspose( HypreMatrix const & src,
   // Error check
   GEOSX_ASSERT_MSG( src.globalCols() == this->globalCols(),
                    "Incompatible matrix dimensions");
-
-//  // Compute column partitioning if needed for src matrix
-//  if ( hypre_IJMatrixRowPartitioning( src.m_ij_mat ) !=
-//       hypre_IJMatrixColPartitioning( src.m_ij_mat ) )
-//  {
-//    if (!hypre_ParCSRMatrixCommPkg(src.m_parcsr_mat))
-//    {
-//      hypre_MatvecCommPkgCreate(src.m_parcsr_mat);
-//    }
-//  }
 
   // Transpose this
   HYPRE_ParCSRMatrix tmp;
@@ -772,9 +747,8 @@ void HypreMatrix::rightMultiplyTranspose( HypreMatrix const & src,
 }
 
 
-void HypreMatrix::parCSRtoIJ( HYPRE_ParCSRMatrix &parCSRMatrix )
+void HypreMatrix::parCSRtoIJ( HYPRE_ParCSRMatrix const &parCSRMatrix )
 {
-
   this->reset();
 
   hypre_IJMatrix *ijmatrix;
@@ -829,25 +803,37 @@ void HypreMatrix::parCSRtoIJ( HYPRE_ParCSRMatrix &parCSRMatrix )
     hypre_IJMatrixRowPartitioning( ijmatrix ) = row_partitioning;
     hypre_ParCSRMatrixRowStarts( parCSRMatrix ) = row_partitioning;
   }
+  hypre_ParCSRMatrixOwnsRowStarts( parCSRMatrix ) = 0;
 
-  // Set column partitioning
-  if( hypre_ParCSRMatrixOwnsColStarts( parCSRMatrix ) )
+  if( hypre_IJMatrixGlobalNumRows( ijmatrix ) != hypre_IJMatrixGlobalNumCols( ijmatrix ) )
   {
-    hypre_IJMatrixColPartitioning( ijmatrix ) = hypre_ParCSRMatrixColStarts( parCSRMatrix );
+    // Rectangular matrix
+    // Set column partitioning
+    if( hypre_ParCSRMatrixOwnsColStarts( parCSRMatrix ) )
+    {
+      hypre_IJMatrixColPartitioning( ijmatrix ) = hypre_ParCSRMatrixColStarts( parCSRMatrix );
+    }
+    else
+    {
+      HYPRE_Int *col_partitioning;
+      HYPRE_Int *col_starts = hypre_ParCSRMatrixColStarts( parCSRMatrix );
+#ifdef HYPRE_NO_GLOBAL_PARTITION
+      col_partitioning = hypre_CTAlloc( HYPRE_Int, 2, HYPRE_MEMORY_HOST );
+      col_partitioning[0] = col_starts[0];
+      col_partitioning[1] = col_starts[1];
+#else
+      GEOS_ERROR( "HYPRE intended to be used only with HYPRE_NO_GLOBAL_PARTITION" )
+#endif
+      hypre_IJMatrixColPartitioning( ijmatrix ) = col_partitioning;
+      hypre_ParCSRMatrixColStarts( parCSRMatrix ) = col_partitioning;
+    }
+    hypre_ParCSRMatrixOwnsColStarts( parCSRMatrix ) = 0;
   }
   else
   {
-    HYPRE_Int *col_partitioning;
-    HYPRE_Int *col_starts = hypre_ParCSRMatrixColStarts( parCSRMatrix );
-#ifdef HYPRE_NO_GLOBAL_PARTITION
-    col_partitioning = hypre_CTAlloc( HYPRE_Int, 2, HYPRE_MEMORY_HOST );
-    col_partitioning[0] = col_starts[0];
-    col_partitioning[1] = col_starts[1];
-#else
-    GEOS_ERROR( "HYPRE intended to be used only with HYPRE_NO_GLOBAL_PARTITION" )
-#endif
-    hypre_IJMatrixColPartitioning( ijmatrix ) = col_partitioning;
-    hypre_ParCSRMatrixColStarts( parCSRMatrix ) = col_partitioning;
+    // Square matrix
+    hypre_IJMatrixColPartitioning( ijmatrix ) = hypre_IJMatrixRowPartitioning( ijmatrix );
+    hypre_ParCSRMatrixOwnsColStarts( parCSRMatrix ) = hypre_ParCSRMatrixOwnsRowStarts( parCSRMatrix );
   }
 
   m_ij_mat = (HYPRE_IJMatrix) ijmatrix;
@@ -937,7 +923,6 @@ void HypreMatrix::leftScale( HypreVector const &vec )
   double * ptr_vec_data = hypre_VectorData( ptr_vec );
 
   hypre_CSRMatrix * prt_diag_CSR = hypre_ParCSRMatrixDiag( m_parcsr_mat );
-  //HYPRE_Int diag_nnz = hypre_CSRMatrixNumNonzeros( prt_diag_CSR );
   double * ptr_diag_data = hypre_CSRMatrixData( prt_diag_CSR );
 
   HYPRE_Int nrows = hypre_CSRMatrixNumRows( prt_diag_CSR );
@@ -952,7 +937,6 @@ void HypreMatrix::leftScale( HypreVector const &vec )
   }
 
   hypre_CSRMatrix * prt_offdiag_CSR = hypre_ParCSRMatrixOffd( m_parcsr_mat );
-  //HYPRE_Int offdiag_nnz = hypre_CSRMatrixNumNonzeros( prt_offdiag_CSR );
   double * ptr_offdiag_data = hypre_CSRMatrixData( prt_offdiag_CSR );
 
   nrows = hypre_CSRMatrixNumRows( prt_offdiag_CSR );
@@ -1049,8 +1033,6 @@ void HypreMatrix::getRowCopy( globalIndex globalRow,
                               toHYPRE_Int( &globalRow ),
                               &n_entries );
 
-//	localIndex length = integer_conversion<localIndex>(n_entries);
-
   values.resize( n_entries );
   colIndices.resize( n_entries );
   hypre_IJMatrixGetValuesParCSR( m_ij_mat,
@@ -1081,7 +1063,6 @@ real64 HypreMatrix::getDiagValue( globalIndex globalRow ) const
   HYPRE_Int *       JA       = hypre_CSRMatrixJ( prt_CSR );
   double *          ptr_data = hypre_CSRMatrixData( prt_CSR );
 
-  //std::cout << "\n\n Getting diagonal value: ";
   for( HYPRE_Int j = IA[localRow] ; j < IA[localRow + 1] ; ++j )
   {
     if ( JA[j] == localRow )
@@ -1331,9 +1312,8 @@ void HypreMatrix::write( string const & filename,
                  "matrix appears to be empty (not created) or not finalized" );
   if (mtxFormat)
   {
-    std::cout << "MatrixMarket not available for HypreMatrix, default used\n";
+    GEOSX_WARNING( "MatrixMarket not available for HypreMatrix, default used" );
   }
-//  HYPRE_IJMatrixPrint( m_ij_mat, filename.c_str() );
   hypre_ParCSRMatrixPrintIJ( m_parcsr_mat,
                              1,
                              1,
@@ -1346,32 +1326,15 @@ void HypreMatrix::write( string const & filename,
 // Returns the infinity norm of the matrix.
 real64 HypreMatrix::normInf() const
 {
-  /*
-   * @warning
-   * The norm is computed correctly. However, the method parCSRtoIJ leads to a
-   * deallocation error when calling the destructor.
-   */
-
-  // Transpose this and compute its norm1
   HypreMatrix matT;
-//  HYPRE_ParCSRMatrix tmp;
+  HYPRE_ParCSRMatrix parCSRT;
   hypre_ParCSRMatrixTranspose( m_parcsr_mat,
-                               &matT.m_parcsr_mat,
+                               &parCSRT,
                                1 );
-//  matT.parCSRtoIJ( tmp );
-//
-//  matT.write("matA_T");
-//
-  real64 normInf = matT.norm1();
-//
-//  std::cout << matT.m_ij_mat << std::endl;
-//
-////  // Destroy temporary matrix
-////  hypre_ParCSRMatrixDestroy( tmp );
-//  matT.reset();
+  matT.parCSRtoIJ( parCSRT );
 
-//  real64 normInf = hypre_ParCSRMatrixGlobalNumRows( tmp );
-  hypre_ParCSRMatrixDestroy( matT.m_parcsr_mat );
+  real64 normInf = matT.norm1();
+  matT.reset();
   return normInf;
 }
 
