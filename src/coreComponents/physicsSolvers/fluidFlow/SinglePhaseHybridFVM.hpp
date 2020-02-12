@@ -121,6 +121,12 @@ public:
                          DofManager const & dofManager,
                          ParallelVector const & rhs ) override;
 
+  virtual bool
+  CheckSystemSolution( DomainPartition const * const domain,
+                       DofManager const & dofManager,
+                       ParallelVector const & solution,
+                       real64 const scalingFactor ) override;
+  
   virtual void
   ApplySystemSolution( DofManager const & dofManager,
                        ParallelVector const & solution,
@@ -211,7 +217,8 @@ private:
                                                      *MAX_NUM_FACES> const & transMatrix,
                                  stackArray1d<real64, MAX_NUM_FACES> & oneSidedVolFlux,
                                  stackArray1d<real64, MAX_NUM_FACES> & dOneSidedVolFlux_dp,
-                                 stackArray1d<real64, MAX_NUM_FACES> & dOneSidedVolFlux_dfp ) const;
+                                 stackArray2d<real64, MAX_NUM_FACES
+                                                     *MAX_NUM_FACES> & dOneSidedVolFlux_dfp ) const;
 
   /**
    * @brief In a given element, collect the upwinded mobilities at this element's faces 
@@ -274,7 +281,8 @@ private:
                                    globalIndex const elemDofNumber,
                                    stackArray1d<real64, MAX_NUM_FACES> const & oneSidedVolFlux,
                                    stackArray1d<real64, MAX_NUM_FACES> const & dOneSidedVolFlux_dp,
-                                   stackArray1d<real64, MAX_NUM_FACES> const & dOneSidedVolFlux_dfp,
+                                   stackArray2d<real64, MAX_NUM_FACES
+                                                       *MAX_NUM_FACES> const & dOneSidedVolFlux_dfp,
                                    stackArray1d<real64, MAX_NUM_FACES> const & upwMobility,
                                    stackArray1d<real64, MAX_NUM_FACES> const & dUpwMobility_dp,
                                    stackArray1d<globalIndex, MAX_NUM_FACES> const & upwDofNumber,
@@ -298,7 +306,8 @@ private:
                             globalIndex const elemDofNumber,
                             stackArray1d<real64, MAX_NUM_FACES> const & oneSidedVolFlux,
                             stackArray1d<real64, MAX_NUM_FACES> const & dOneSidedVolFlux_dp,
-                            stackArray1d<real64, MAX_NUM_FACES> const & dOneSidedVolFlux_dfp,
+                            stackArray2d<real64, MAX_NUM_FACES
+                                                *MAX_NUM_FACES> const & dOneSidedVolFlux_dfp,
                             ParallelMatrix * const matrix,
                             ParallelVector * const rhs ) const; 
 
@@ -341,7 +350,7 @@ private:
    * This function is in this class until we find a better place for it
    * 
    */
-  void ComputeTPFAInnerProduct( arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodePosition, 
+  void ComputeTPFAInnerProduct( arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodePosition,   
                                 ArrayOfArraysView<localIndex const> const & faceToNodes, 
                                 arraySlice1d<localIndex const> const elemToFaces,
                                 R1Tensor const & elemCenter,
@@ -367,7 +376,7 @@ private:
    * This function is in this class until we find a better place for it
    * 
    */
-  void ComputeQFamilyInnerProduct( arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodePosition, 
+  void ComputeQFamilyInnerProduct( arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodePosition,   
                                    ArrayOfArraysView<localIndex const> const & faceToNodes, 
                                    arraySlice1d<localIndex const> const elemToFaces,
                                    R1Tensor const & elemCenter,
