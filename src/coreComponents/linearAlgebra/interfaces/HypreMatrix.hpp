@@ -61,7 +61,7 @@ public:
    *
    * Create new matrix from matrix <tt>src</tt>.
    */
-  HypreMatrix( HypreMatrix const &src );
+  HypreMatrix( HypreMatrix const & src );
 
   /**
    * @brief Virtual destructor.
@@ -92,7 +92,7 @@ public:
    */
   void createWithLocalSize( localIndex const localSize,
                             localIndex const maxEntriesPerRow,
-                            MPI_Comm const & comm = MPI_COMM_WORLD);
+                            MPI_Comm const & comm = MPI_COMM_WORLD );
 
   /**
    * @brief Create a square matrix from global number of rows.
@@ -106,7 +106,7 @@ public:
    */
   void createWithGlobalSize( globalIndex const globalSize,
                              localIndex const maxEntriesPerRow,
-                             MPI_Comm const & comm = MPI_COMM_WORLD);
+                             MPI_Comm const & comm = MPI_COMM_WORLD );
 
   /**
    * @brief Create a rectangular matrix from number of rows/columns.
@@ -236,7 +236,7 @@ public:
   void add( globalIndex const rowIndex,
             globalIndex const * colIndices,
             real64 const * values,
-            localIndex const size);
+            localIndex const size );
 
   /**
    * @brief Set elements to one row using c-style arrays
@@ -249,7 +249,7 @@ public:
   void set( globalIndex const rowIndex,
             globalIndex const * colIndices,
             real64 const * values,
-            localIndex const size);
+            localIndex const size );
 
   /**
    * @brief Insert elements to one row using c-style arrays
@@ -262,7 +262,7 @@ public:
   void insert( globalIndex const rowIndex,
                globalIndex const * colIndices,
                real64 const * values,
-               localIndex const size);
+               localIndex const size );
 
   /**
    * @brief Add elements to one row using array1d
@@ -272,8 +272,8 @@ public:
    * \param values Values to add to prescribed locations.
    */
   void add( globalIndex const rowIndex,
-            array1d<globalIndex> const & colIndices,
-            array1d<real64> const & values);
+            array1d< globalIndex > const & colIndices,
+            array1d< real64 > const & values );
 
   /**
    * @brief Set elements of one row using array1d
@@ -283,8 +283,8 @@ public:
    * \param values Values to add to prescribed locations.
    */
   void set( globalIndex const rowIndex,
-            array1d<globalIndex> const & colIndices,
-            array1d<real64> const & values);
+            array1d< globalIndex > const & colIndices,
+            array1d< real64 > const & values );
 
   /**
    * @brief Insert elements of one row using array1d
@@ -294,8 +294,8 @@ public:
    * \param values Values to add to prescribed locations.
    */
   void insert( globalIndex const rowIndex,
-               array1d<globalIndex> const & colIndices,
-               array1d<real64> const & values);
+               array1d< globalIndex > const & colIndices,
+               array1d< real64 > const & values );
 
   /**
    * @brief Add dense matrix.
@@ -304,9 +304,9 @@ public:
    * \param colIndices Global col indices
    * \param values Dense local matrix of values.
    */
-  void add( array1d<globalIndex> const & rowIndices,
-            array1d<globalIndex> const & colIndices,
-            array2d<real64> const & values);
+  void add( array1d< globalIndex > const & rowIndices,
+            array1d< globalIndex > const & colIndices,
+            array2d< real64 > const & values );
 
   /**
    * @brief Set dense matrix.
@@ -315,9 +315,9 @@ public:
    * \param colIndices Global col indices
    * \param values Dense local matrix of values.
    */
-  void set( array1d<globalIndex> const & rowIndices,
-            array1d<globalIndex> const & colIndices,
-            array2d<real64> const & values);
+  void set( array1d< globalIndex > const & rowIndices,
+            array1d< globalIndex > const & colIndices,
+            array2d< real64 > const & values );
 
   /**
    * @brief Insert dense matrix.
@@ -326,9 +326,9 @@ public:
    * \param colIndices Global col indices
    * \param values Dense local matrix of values.
    */
-  void insert( array1d<globalIndex> const & rowIndices,
-               array1d<globalIndex> const & colIndices,
-               array2d<real64> const & values);
+  void insert( array1d< globalIndex > const & rowIndices,
+               array1d< globalIndex > const & colIndices,
+               array2d< real64 > const & values );
 
   /**
    * @brief Add dense matrix.
@@ -394,8 +394,8 @@ public:
    * \param dst Output vector (b).
    *
    */
-  void multiply( HypreVector const &src,
-                 HypreVector &dst ) const;
+  void multiply( HypreVector const & src,
+                 HypreVector & dst ) const;
 
   /**
    * @brief Matrix/Matrix multiplication.
@@ -412,7 +412,7 @@ public:
    * the nonzero entries produced by the product this*B.
    */
   void multiply( HypreMatrix const & src,
-		             HypreMatrix & dst,
+                 HypreMatrix & dst,
                  bool const closeResult = true ) const;
 
   /**
@@ -434,19 +434,19 @@ public:
                               bool const closeResult = true ) const;
 
   /**
-     * @brief Matrix/Matrix transpose multiplication.
-     *
-     * Compute <tt>B * this^T = C<tt>.
-     *
-     * \param src Input matrix (B).
-     * \param dst Output matrix (C).
-     * \param closeResult whether to close @p dst for additional entries.
-     *
-     * Note that the output matrix C should have the same
-     * row-map as this.  If close() has already been called
-     * on C, then C's sparsity pattern must already contain
-     * the nonzero entries produced by the product this*B.
-     */
+   * @brief Matrix/Matrix transpose multiplication.
+   *
+   * Compute <tt>B * this^T = C<tt>.
+   *
+   * \param src Input matrix (B).
+   * \param dst Output matrix (C).
+   * \param closeResult whether to close @p dst for additional entries.
+   *
+   * Note that the output matrix C should have the same
+   * row-map as this.  If close() has already been called
+   * on C, then C's sparsity pattern must already contain
+   * the nonzero entries produced by the product this*B.
+   */
   void rightMultiplyTranspose( HypreMatrix const & src,
                                HypreMatrix & dst,
                                bool const closeResult = true ) const;
@@ -459,9 +459,9 @@ public:
    * \param r Output residual.
    *
    */
-  void residual( HypreVector const &x,
-                 HypreVector const &b,
-                 HypreVector &r ) const;
+  void residual( HypreVector const & x,
+                 HypreVector const & b,
+                 HypreVector & r ) const;
 
   /**
    * @brief Compute gemv <tt>y = alpha*A*x + beta*y</tt>.
@@ -476,9 +476,9 @@ public:
    *
    */
   void gemv( real64 const alpha,
-             HypreVector const &x,
+             HypreVector const & x,
              real64 const beta,
-             HypreVector &y,
+             HypreVector & y,
              bool useTranspose=false ) const;
 
   /**
@@ -495,7 +495,7 @@ public:
    * \param vec Vector to pre-multiply with.
    *
    */
-  void leftScale( HypreVector const &vec );
+  void leftScale( HypreVector const & vec );
 
 //  /**
 //   * @brief Post-multiplies (right) with diagonal matrix consisting of the values in vec.
@@ -548,8 +548,8 @@ public:
    * Note that the input arrays will be resized internally to fit the number of entries.
    */
   void getRowCopy( globalIndex globalRow,
-                   array1d<globalIndex> & colIndices,
-                   array1d<real64> & values) const;
+                   array1d< globalIndex > & colIndices,
+                   array1d< real64 > & values ) const;
 
   /**
    * @brief get diagonal element value on a given row
@@ -586,15 +586,14 @@ public:
   globalIndex globalCols() const;
 
   /**
- * @brief Return the local number of rows on each processor
- */
+   * @brief Return the local number of rows on each processor
+   */
   localIndex localRows() const;
 
   /**
    * @brief Return the local number of columns on each processor
    */
   localIndex localCols() const;
-
 
 
 
@@ -664,8 +663,8 @@ public:
   /**
    * @brief Write the matrix to filename in a HYPRE format.
    */
-  void write(string const & filename,
-             bool const mtxFormat = true ) const;
+  void write( string const & filename,
+              bool const mtxFormat = true ) const;
 
   /**
    * @brief Map a global row index to local row index

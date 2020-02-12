@@ -62,7 +62,7 @@ public:
    * \param src HypreVector to be copied.
    *
    */
-  HypreVector( HypreVector const &src );
+  HypreVector( HypreVector const & src );
 
   /**
    * @brief Destructor.
@@ -92,7 +92,7 @@ public:
    *
    */
   void createWithLocalSize( localIndex const localSize,
-                            MPI_Comm const &comm = MPI_COMM_WORLD );
+                            MPI_Comm const & comm = MPI_COMM_WORLD );
 
   /**
    * @brief Create a vector based on global number of elements.
@@ -105,7 +105,7 @@ public:
    *
    */
   void createWithGlobalSize( globalIndex const globalSize,
-                             MPI_Comm const &comm = MPI_COMM_WORLD );
+                             MPI_Comm const & comm = MPI_COMM_WORLD );
 
   /**
    * @brief Construct parallel vector from a local array.
@@ -115,8 +115,8 @@ public:
    * \param localValues local data to put into vector
    *
    */
-  void create( array1d<real64> const &localValues,
-               MPI_Comm const &comm = MPI_COMM_WORLD );
+  void create( array1d< real64 > const & localValues,
+               MPI_Comm const & comm = MPI_COMM_WORLD );
 
   //@}
   //! @name Open / close
@@ -201,8 +201,8 @@ public:
    * \param values Values to add in given rows.
    *
    */
-  void set( array1d<globalIndex> const & globalIndices,
-            array1d<real64> const & values );
+  void set( array1d< globalIndex > const & globalIndices,
+            array1d< real64 > const & values );
 
   /**
    * @brief Add into vector values using array1d
@@ -213,8 +213,8 @@ public:
    * \param values Values to add in given rows.
    *
    */
-  void add( array1d<globalIndex> const & globalIndices,
-            array1d<real64> const & values );
+  void add( array1d< globalIndex > const & globalIndices,
+            array1d< real64 > const & values );
 
   /**
    * @brief Set all elements to a constant value.
@@ -255,7 +255,7 @@ public:
    * \param vec HypreVector to dot-product with.
    *
    */
-  real64 dot( HypreVector const &vec ) const;
+  real64 dot( HypreVector const & vec ) const;
 
   /**
    * @brief Update vector <tt>y</tt> as <tt>y</tt> = <tt>x</tt>.
@@ -265,7 +265,7 @@ public:
    * \param x HypreVector to copy.
    *
    */
-  void copy( HypreVector const &x );
+  void copy( HypreVector const & x );
 
   /**
    * @brief Update vector <tt>y</tt> as <tt>y</tt> = <tt>alpha*x + y</tt>.
@@ -277,7 +277,7 @@ public:
    *
    */
   void axpy( real64 const alpha,
-             HypreVector const &x );
+             HypreVector const & x );
 
   /**
    * @brief Update vector <tt>y</tt> as <tt>y</tt> = <tt>alpha*x + beta*y</tt>.
@@ -290,7 +290,7 @@ public:
    *
    */
   void axpby( real64 const alpha,
-              HypreVector const &x,
+              HypreVector const & x,
               real64 const beta );
 
   /**
@@ -341,13 +341,13 @@ public:
   /**
    * @brief Returns value globalRow of the vector. TODO: Not yet implemented, since not built-in
    */
-  real64 get(globalIndex globalRow) const;
+  real64 get( globalIndex globalRow ) const;
 
   /**
    * @brief Returns array of values at globalIndices of the vector. TODO: Not yet implemented, since not built-in
    */
-  void get( array1d<globalIndex> const & globalIndices,
-            array1d<real64> & values ) const;
+  void get( array1d< globalIndex > const & globalIndices,
+            array1d< real64 > & values ) const;
 
   /**
    * @brief Returns a const pointer to the underlying HYPRE_IJVector object.
@@ -357,7 +357,7 @@ public:
   /**
    * @brief Returns a non-const pointer to the underlying HYPRE_IJVector object.
    */
-  HYPRE_IJVector* unwrappedPointer();
+  HYPRE_IJVector * unwrappedPointer();
 
   /**
    * @brief Returns a const pointer to the underlying HYPRE_IJVector object.
@@ -367,7 +367,7 @@ public:
   /**
    * @brief Returns a non-const pointer to the underlying HYPRE_IJVector object.
    */
-  HYPRE_ParVector* getHypreParVectorPointer();
+  HYPRE_ParVector * getHypreParVectorPointer();
 
   operator HYPRE_IJVector()
   {
@@ -412,8 +412,8 @@ public:
   /**
    * @brief Write the vector to file in HYPRE format
    */
-  void write(string const & filename,
-             bool const mtxFormat = true ) const;
+  void write( string const & filename,
+              bool const mtxFormat = true ) const;
 
   //@}
 

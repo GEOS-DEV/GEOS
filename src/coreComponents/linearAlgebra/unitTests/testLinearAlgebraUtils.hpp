@@ -23,34 +23,6 @@
 #include "mpiCommunications/MpiWrapper.hpp"
 
 // BEGIN_RST_NARRATIVE testLAOperations.rst
-// ==============================
-// Compute Identity
-// ==============================
-// This function computes the identity matrix. It can be used to generate a dummy
-// preconditioner.
-template<typename LAI>
-typename LAI::ParallelMatrix computeIdentity( MPI_Comm comm,
-                                              geosx::globalIndex N )
-{
-  // Declare matrix
-  typename LAI::ParallelMatrix I;
-
-  // Create a matrix of size N with 1 non-zero per row
-  I.createWithGlobalSize( N, 1, comm );
-
-  // Loop over rows to fill the matrix
-  for( geosx::globalIndex i = I.ilower() ; i < I.iupper() ; i++ )
-  {
-    // Set the value for element (i,i) to 1
-    I.insert( i, i, 1.0 );
-  }
-
-  // Close the matrix (make data contiguous in memory)
-  I.close();
-
-  // Return the matrix.
-  return I;
-}
 
 // ==============================
 // Compute Identity
