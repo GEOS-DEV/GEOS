@@ -19,8 +19,6 @@ Welcome to the GEOSX developer guide.
 
    /coreComponents/mesh/docs/meshDeveloperGuide.rst
 
-   /coreComponents/fileIO/schema/docs/SchemaGeneration
-
    UnitTests
 
    IntegratedTests

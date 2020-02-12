@@ -40,7 +40,7 @@ using namespace dataRepository;
 NodeManager::NodeManager( std::string const & name,
                           Group * const parent ):
   ObjectManagerBase( name, parent ),
-  m_referencePosition()
+  m_referencePosition( 0, 3 )
 {
   registerWrapper(viewKeyStruct::referencePositionString, &m_referencePosition, false );
 
@@ -191,7 +191,7 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
     elemRegion->forElementSubRegionsIndex<CellElementSubRegion>( [&]( localIndex const kSubReg,
                                                                       CellElementSubRegion const * const subRegion )
     {
-      arrayView2d< localIndex const, CellElementSubRegion::NODE_MAP_UNIT_STRIDE_DIM > const & elemToNodeMap = subRegion->nodeList();
+      arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemToNodeMap = subRegion->nodeList();
 
       for( localIndex k=0 ; k<subRegion->size() ; ++k )
       {
@@ -361,7 +361,7 @@ void NodeManager::depopulateUpMaps( std::set<localIndex> const & receivedNodes,
 
       CellElementSubRegion const * subRegion = elemRegionManager.GetRegion(elemRegionIndex)->
                                                GetSubRegion<CellElementSubRegion>(elemSubRegionIndex);
-      arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & downmap = subRegion->nodeList();
+      arrayView2d<localIndex const, cells::NODE_MAP_USD> const & downmap = subRegion->nodeList();
       bool hasTargetIndex = false;
 
       for( localIndex a=0 ; a<downmap.size(1) ; ++a )

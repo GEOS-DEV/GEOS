@@ -830,7 +830,7 @@ void ProblemManager::ApplyNumericalMethods()
         MeshLevel * const meshLevel = meshBody->GetGroup<MeshLevel>(b);
         NodeManager * const nodeManager = meshLevel->getNodeManager();
         ElementRegionManager * const elemManager = meshLevel->getElemManager();
-        arrayView1d<R1Tensor> const & X = nodeManager->referencePosition();
+        arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & X = nodeManager->referencePosition();
 
         for( auto const & regionName : targetRegions )
         {
@@ -841,12 +841,12 @@ void ProblemManager::ApplyNumericalMethods()
             regionQuadrature[regionName] = quadratureSize;
           }
           elemRegion->forElementSubRegions<CellElementSubRegion,
-                                           FaceElementSubRegion>([&]( auto * const subRegion )->void
+                                           FaceElementSubRegion>([&]( auto * const subRegion )
           {
             if( feDiscretization != nullptr )
             {
-              feDiscretization->ApplySpaceToTargetCells(subRegion);
-              feDiscretization->CalculateShapeFunctionGradients( X, subRegion);
+              feDiscretization->ApplySpaceToTargetCells( subRegion );
+              feDiscretization->CalculateShapeFunctionGradients( X, subRegion );
             }
           });
         }
@@ -871,7 +871,7 @@ void ProblemManager::ApplyNumericalMethods()
         if( elemRegion != nullptr )
         {
           string_array const & materialList = elemRegion->getMaterialList();
-          elemRegion->forElementSubRegions([&]( auto * const subRegion )->void
+          elemRegion->forElementSubRegions([&]( auto * const subRegion )
           {
             for( auto & materialName : materialList )
             {

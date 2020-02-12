@@ -1680,7 +1680,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
 {
   int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
 
-  arrayView1d<R1Tensor> const & X = nodeManager.referencePosition();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
   ArrayOfSets< localIndex > & nodeToEdgeMap = nodeManager.edgeList();
   ArrayOfSets< localIndex > & nodeToFaceMap = nodeManager.faceList();
   ArrayOfArrays< localIndex > & nodeToRegionMap = nodeManager.elementRegionList();
@@ -2013,7 +2013,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
       modifiedObjects.modifiedElements[{regionIndex,subRegionIndex}].insert( elemIndex );
 
 
-      arrayView2d<localIndex, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & elemsToNodes = elemSubRegion.nodeList();
+      arrayView2d<localIndex, cells::NODE_MAP_USD> const & elemsToNodes = elemSubRegion.nodeList();
       arrayView2d<localIndex> & elemsToFaces = elemSubRegion.faceList();
 
       if( getLogLevel() > 1 )
@@ -2365,7 +2365,7 @@ void SurfaceGenerator::MapConsistencyCheck( localIndex const GEOSX_UNUSED_ARG( n
       CellElementSubRegion& elemSubRegion = *(elem.first);
       const localIndex elemIndex = elem.second;
 
-      arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & elemsToNodes = elemSubRegion.nodeList();
+      arrayView2d<localIndex const, cells::NODE_MAP_USD> const & elemsToNodes = elemSubRegion.nodeList();
       arrayView2d<localIndex> & elemsToFaces = elemSubRegion.faceList();
 
 
@@ -2521,7 +2521,7 @@ void SurfaceGenerator::MapConsistencyCheck( localIndex const GEOSX_UNUSED_ARG( n
         CellElementSubRegion const * const subRegion = elemRegion.GetSubRegion<CellElementSubRegion>( esr );
         if( subRegion != nullptr )
         {
-          arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & elemsToNodes = subRegion->nodeList();
+          arrayView2d<localIndex const, cells::NODE_MAP_USD> const & elemsToNodes = subRegion->nodeList();
           for( localIndex k=0 ; k<subRegion->size() ; ++k )
           {
             std::pair<CellElementSubRegion const *, localIndex > elem = std::make_pair( subRegion, k );
@@ -2885,11 +2885,11 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
 
   arrayView1d<R1Tensor> const &
     fext = nodeManager.getReference< array1d<R1Tensor> >( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternal );
-  arrayView1d<R1Tensor> const & displacement = nodeManager.getReference<r1_array>(keys::TotalDisplacement);
+  arrayView2d<real64 const, nodes::TOTAL_DISPLACEMENT_USD> const & displacement = nodeManager.totalDisplacement();
   ArrayOfArraysView< localIndex const > const & nodeToRegionMap = nodeManager.elementRegionList();
   ArrayOfArraysView< localIndex const > const & nodeToSubRegionMap = nodeManager.elementSubRegionList();
   ArrayOfArraysView< localIndex const > const & nodeToElementMap = nodeManager.elementList();
-  array1d<R1Tensor> const & X = nodeManager.referencePosition();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
   ArrayOfSetsView< localIndex const > const & nodeToEdgeMap = nodeManager.edgeList();
    const arrayView1d<integer>& isNodeGhost = nodeManager.GhostRank();
 
@@ -2925,9 +2925,9 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
   ElementRegionManager::MaterialViewAccessor< arrayView1d<real64> > const bulkModulus =
       elementManager.ConstructFullMaterialViewAccessor< array1d<real64>, arrayView1d<real64> >( "BulkModulus", constitutiveManager);
 
-  ElementRegionManager::MaterialViewAccessor< arrayView2d<R2SymTensor> > const
-  stress = elementManager.ConstructFullMaterialViewAccessor< array2d<R2SymTensor>,
-                                                             arrayView2d<R2SymTensor> >( SolidBase::viewKeyStruct::stressString,
+  ElementRegionManager::MaterialViewAccessor< arrayView3d<real64, solid::STRESS_USD> > const
+  stress = elementManager.ConstructFullMaterialViewAccessor< array3d<real64, solid::STRESS_PERMUTATION>,
+                                                             arrayView3d<real64, solid::STRESS_USD> >( SolidBase::viewKeyStruct::stressString,
                                                                                          constitutiveManager);
 
   NumericalMethodsManager const * numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
@@ -2999,7 +2999,7 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
             string const elementRegionName = elementRegion->getName();
             localIndex const er = elementManager.GetRegions().getIndex( elementRegionName );
             localIndex const esr = elementRegion->GetSubRegions().getIndex( elementSubRegion->getName() );
-            arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & elementsToNodes = elementSubRegion->nodeList();
+            arrayView2d<localIndex const, cells::NODE_MAP_USD> const & elementsToNodes = elementSubRegion->nodeList();
 
             xEle = elementSubRegion->getElementCenter()[iEle];
 
@@ -3183,23 +3183,18 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
             if (edgeToNodeMap[edgeIndex][0] == nodeIndex || edgeToNodeMap[edgeIndex][1] == nodeIndex)
             {
               realT SIF_I = 0, SIF_II = 0, /*SIF_III,*/ SIF_Face;
-              R1Tensor vecTipNorm, vecTip, vecEdge, tipForce, tipOpening;
+              R1Tensor vecTipNorm, vecTip, tipForce, tipOpening;
               vecTipNorm = faceNormal[trailingFaceIndex];
               vecTipNorm -= faceNormal[childFaceIndices[trailingFaceIndex]];
               vecTipNorm.Normalize();
 
-              computationalGeometry::
-              VectorDifference( X,
-                                edgeToNodeMap[edgeIndex][0],
-                                edgeToNodeMap[edgeIndex][1],
-                                vecEdge );
+              R1Tensor vecEdge = edgeManager.calculateLength( edgeIndex, X );
               vecEdge.Normalize();
 
               vecTip.Cross( vecTipNorm, vecEdge );
               vecTip.Normalize();
-              R1Tensor v0;
-              edgeManager.calculateCenter( edgeIndex, X, v0 );
-              v0 -= faceCenter[trailingFaceIndex];
+              R1Tensor v0 = edgeManager.calculateCenter( edgeIndex, X );
+              v0 -= faceCenter[ trailingFaceIndex ];
 
               if( Dot( v0, vecTip ) < 0 )
                 vecTip *= -1.0;
@@ -3299,8 +3294,8 @@ realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
   real64_array& SIF_III = edgeManager.getReference<real64_array>( "SIF_III" );
 
   ArrayOfSetsView< localIndex const > const & nodeToEdgeMap = nodeManager.edgeList();
-  array1d< R1Tensor > const & X = nodeManager.referencePosition();
-  arrayView1d< R1Tensor > const & displacement = nodeManager.getReference<r1_array>(keys::TotalDisplacement);
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
+  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & displacement = nodeManager.totalDisplacement();
 
   arrayView2d< localIndex > const & edgeToNodeMap = edgeManager.nodeList();
   ArrayOfSetsView< localIndex const > const & edgeToFaceMap = edgeManager.faceList();
@@ -3354,19 +3349,12 @@ realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
   vecTipNorm.Normalize();
 
   //TODO: wu40: There is a function for EdgeVector in EdgeManager.cpp but has been commented.
-  R1Tensor vecEdge;
-  realT edgeLength;
-  computationalGeometry::
-  VectorDifference( X,
-                    edgeToNodeMap[edgeID][0],
-                    edgeToNodeMap[edgeID][1],
-                    vecEdge );
-  edgeLength = vecEdge.Normalize();
+  R1Tensor vecEdge = edgeManager.calculateLength( edgeID, X );
+  realT const edgeLength = vecEdge.Normalize();
 
   vecTip.Cross( vecTipNorm, vecEdge );
   vecTip.Normalize();
-  R1Tensor v0;
-  edgeManager.calculateCenter( edgeID, X, v0 );
+  R1Tensor v0 = edgeManager.calculateCenter( edgeID, X );
   v0 -= faceCenter[faceA];
 
   if( Dot( v0, vecTip ) < 0 )
@@ -3541,8 +3529,7 @@ realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
         localIndex pickedTrailingEdge = std::numeric_limits<localIndex>::max();
         for( localIndex const iedge : nodeToEdgeMap.getIterableSet( trailingNodes[0] ) )
         {
-          R1Tensor xTrailingEdge;
-          edgeManager.calculateCenter( iedge, X, xTrailingEdge );
+          R1Tensor const xTrailingEdge = edgeManager.calculateCenter( iedge, X );
 
           realT udist;
           R1Tensor x0_x1(X[edgeToNodeMap[edgeID][0]]), x0_xTrailingEdge(xTrailingEdge);
@@ -3553,13 +3540,7 @@ realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
 
           if( udist <= edgeLength && udist > 0.0 )
           {
-            R1Tensor vEdge;
-
-            computationalGeometry::
-            VectorDifference( X,
-                              edgeToNodeMap[iedge][0],
-                              edgeToNodeMap[iedge][1],
-                              vEdge );
+            R1Tensor vEdge = edgeManager.calculateLength( iedge, X );
             vEdge.Normalize();
 
             realT cosEdge = std::fabs( Dot( vEdge, vecEdge ));
@@ -3738,7 +3719,7 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition * domain,
 
   arrayView2d<localIndex> const & edgeToNodeMap = edgeManager.nodeList();
 
-  array1d<R1Tensor> const & X = nodeManager.referencePosition();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
 
   ConstitutiveManager const * const cm = domain->getConstitutiveManager();
   ConstitutiveBase const * const solid  = cm->GetConstitutiveRelation<ConstitutiveBase>( m_solidMaterialName );
@@ -3759,9 +3740,9 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition * domain,
                                                                arrayView2d<real64> >("MeanStress",
                                                                                      constitutiveManager);
 
-  ElementRegionManager::MaterialViewAccessor< arrayView2d<R2SymTensor> > const
-  stress = elementManager.ConstructFullMaterialViewAccessor< array2d<R2SymTensor>,
-                                                             arrayView2d<R2SymTensor> >( SolidBase::viewKeyStruct::stressString,
+  ElementRegionManager::MaterialViewAccessor< arrayView3d<real64, solid::STRESS_USD> > const
+  stress = elementManager.ConstructFullMaterialViewAccessor< array3d<real64, solid::STRESS_PERMUTATION>,
+                                                             arrayView3d<real64, solid::STRESS_USD> >( SolidBase::viewKeyStruct::stressString,
                                                                                          constitutiveManager);
 
 
@@ -3791,7 +3772,7 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition * domain,
 
   if (!calculatef_u)
   {
-    edgeManager.calculateCenter( edgeID, X, xEdge );
+    xEdge = edgeManager.calculateCenter( edgeID, X );
   }
 
   for (localIndex i=0; i < nodeIndices.size() ; ++i)
@@ -3832,7 +3813,7 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition * domain,
         realT youngsModulus = 9 * K * G / ( 3 * K + G );
         realT poissonRatio = ( 3 * K - 2 * G ) / ( 2 * ( 3 * K + G ) );
 
-        arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & elementsToNodes = elementSubRegion->nodeList();
+        arrayView2d<localIndex const, cells::NODE_MAP_USD> const & elementsToNodes = elementSubRegion->nodeList();
         for (localIndex n=0 ; n<elementsToNodes.size( 1 ) ; ++n)
         {
           if (elementsToNodes(iEle, n) == nodeID)
@@ -3975,7 +3956,7 @@ void SurfaceGenerator::MarkRuptureFaceFromNode ( const localIndex nodeIndex,
   arrayView1d<R1Tensor> const & faceCenter = faceManager.faceCenter();
 
   ArrayOfSetsView< localIndex const > const & nodeToFaceMap = nodeManager.faceList();
-  array1d<R1Tensor> const & X = nodeManager.referencePosition();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
 
   localIndex_array eligibleFaces;
   real64_array faceSIFToToughnessRatio;
@@ -3996,8 +3977,8 @@ void SurfaceGenerator::MarkRuptureFaceFromNode ( const localIndex nodeIndex,
       {
         if (m_tipEdges.contains(edgeIndex))
         {
-          R1Tensor direction( fc ), edgeCenter;
-          edgeManager.calculateCenter( edgeIndex, X, edgeCenter );
+          R1Tensor direction( fc );
+          R1Tensor const edgeCenter = edgeManager.calculateCenter( edgeIndex, X );
           direction -= edgeCenter;
           direction.Normalize();
           faceToughness = std::fabs( Dot( direction, KIC[faceIndex] ));
@@ -4093,7 +4074,7 @@ void SurfaceGenerator::MarkRuptureFaceFromEdge ( localIndex const edgeID,
   arrayView2d<localIndex> const & edgeToNodeMap = edgeManager.nodeList();
   ArrayOfSetsView< localIndex const > const & edgeToFaceMap = edgeManager.faceList();
 
-  array1d<R1Tensor> const & X = nodeManager.referencePosition();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
 
   arrayView2d<localIndex> const & faceToElementMap = faceManager.elementList();
   arrayView1d<R1Tensor> const & faceCenter = faceManager.faceCenter();
@@ -4107,16 +4088,8 @@ void SurfaceGenerator::MarkRuptureFaceFromEdge ( localIndex const edgeID,
   localIndex faceWithHighestScore = std::numeric_limits<localIndex>::max();
   localIndex faceWithSecondScore = std::numeric_limits<localIndex>::max();
 
-  R1Tensor vecEdge, edgeCenter;
-//  realT edgeLength;
-  computationalGeometry::
-  VectorDifference( X,
-                    edgeToNodeMap[edgeID][0],
-                    edgeToNodeMap[edgeID][1],
-                    vecEdge );
-//  edgeLength = vecEdge.Normalize();
-
-  edgeManager.calculateCenter( edgeID, X, edgeCenter );
+  R1Tensor const vecEdge = edgeManager.calculateLength( edgeID, X );
+  R1Tensor const edgeCenter = edgeManager.calculateCenter( edgeID, X );
 
 
   for( localIndex const iface : edgeToFaceMap.getIterableSet( edgeID ) )
@@ -4437,7 +4410,7 @@ realT SurfaceGenerator::MinimumToughnessOnEdge( const localIndex edgeID,
   R1Tensor edgeCenter( 0.0 );
   R1Tensor faceCenter( 0.0 );
 
-  arrayView1d<R1Tensor> const & X = nodeManager.referencePosition();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
   edgeCenter += X[edgeManager.nodeList( edgeID, 0 )];
   edgeCenter += X[edgeManager.nodeList( edgeID, 1 )];
   edgeCenter *= 0.5;
@@ -4468,7 +4441,7 @@ realT SurfaceGenerator::MinimumToughnessOnNode( const localIndex nodeID,
                                                 EdgeManager & edgeManager,
                                                 FaceManager & faceManager )
 {
-  array1d<R1Tensor> const & X = nodeManager.referencePosition();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
   ArrayOfSetsView< localIndex const > const & nodeToFaceMap = nodeManager.faceList();
 
   array1d<R1Tensor> & KIC = faceManager.getReference<array1d<R1Tensor>>( "K_IC" );
@@ -4488,8 +4461,8 @@ realT SurfaceGenerator::MinimumToughnessOnNode( const localIndex nodeID,
       {
         if (m_tipEdges.contains(edgeIndex))
         {
-          R1Tensor direction( fc ), edgeCenter;
-          edgeManager.calculateCenter( edgeIndex, X, edgeCenter );
+          R1Tensor direction( fc );
+          R1Tensor const edgeCenter = edgeManager.calculateCenter( edgeIndex, X );
           direction -= edgeCenter;
           direction.Normalize();
 

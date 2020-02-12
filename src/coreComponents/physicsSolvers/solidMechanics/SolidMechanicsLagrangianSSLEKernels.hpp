@@ -45,28 +45,28 @@ struct StressCalculationKernel
   static inline real64
   Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
           localIndex const numElems,
-          arrayView2d< localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM > const & elemsToNodes,
-          arrayView3d< R1Tensor const> const & dNdX,
-          arrayView2d<real64 const> const & GEOSX_UNUSED_ARG( detJ ),
-          arrayView1d< R1Tensor const > const & u )
+          arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
+          arrayView3d< R1Tensor const > const & dNdX,
+          arrayView2d< real64 const > const & GEOSX_UNUSED_ARG( detJ ),
+          arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const & uhat )
   {
     GEOSX_MARK_FUNCTION;
 
     typename CONSTITUTIVE_TYPE::KernelWrapper const & constitutive = constitutiveRelation->createKernelWrapper();
 
-    arrayView2d< R2SymTensor > const & stress = constitutiveRelation->getStress();
+    arrayView3d< real64, solid::STRESS_USD > const & stress = constitutiveRelation->getStress();
 
     using KERNEL_POLICY = parallelDevicePolicy< 256 >;
     RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, numElems ),
                                    GEOSX_DEVICE_LAMBDA ( localIndex const k )
     {
-      real64 u_local[ NUM_NODES_PER_ELEM ][ 3 ];
+      real64 uhat_local[ NUM_NODES_PER_ELEM ][ 3 ];
 
       for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
       {
         for ( int b = 0; b < 3; ++b )
         {
-          u_local[ a ][ b ] = u[ elemsToNodes[ k ][ a ] ][ b ];
+          uhat_local[ a ][ b ] = uhat( elemsToNodes( k, a ), b );
         }
       }
 
@@ -76,19 +76,18 @@ struct StressCalculationKernel
       //Compute Quadrature
       for ( localIndex q = 0; q < NUM_QUADRATURE_POINTS; ++q )
       {
-        real64 * const restrict p_stress = stress[ k ][ q ].Data();
         for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
         {
-          real64 const v0_x_dNdXa0 = u_local[ a ][ 0 ] * dNdX[ k ][ q ][ a ][ 0 ];
-          real64 const v1_x_dNdXa1 = u_local[ a ][ 1 ] * dNdX[ k ][ q ][ a ][ 1 ];
-          real64 const v2_x_dNdXa2 = u_local[ a ][ 2 ] * dNdX[ k ][ q ][ a ][ 2 ];
+          real64 const v0_x_dNdXa0 = uhat_local[ a ][ 0 ] * dNdX[ k ][ q ][ a ][ 0 ];
+          real64 const v1_x_dNdXa1 = uhat_local[ a ][ 1 ] * dNdX[ k ][ q ][ a ][ 1 ];
+          real64 const v2_x_dNdXa2 = uhat_local[ a ][ 2 ] * dNdX[ k ][ q ][ a ][ 2 ];
 
-          p_stress[ 0 ] += ( v0_x_dNdXa0 * c[ 0 ][ 0 ] + v1_x_dNdXa1 * c[ 0 ][ 1 ] + v2_x_dNdXa2*c[ 0 ][ 2 ] ) ;
-          p_stress[ 2 ] += ( v0_x_dNdXa0 * c[ 1 ][ 0 ] + v1_x_dNdXa1 * c[ 1 ][ 1 ] + v2_x_dNdXa2*c[ 1 ][ 2 ] ) ;
-          p_stress[ 5 ] += ( v0_x_dNdXa0 * c[ 2 ][ 0 ] + v1_x_dNdXa1 * c[ 2 ][ 1 ] + v2_x_dNdXa2*c[ 2 ][ 2 ] ) ;
-          p_stress[ 4 ] += ( u_local[ a ][ 2 ] * dNdX[ k ][ q ][ a ][ 1 ] + u_local[ a ][ 1 ] * dNdX[ k ][ q ][ a ][ 2 ] ) * c[ 3 ][ 3 ] ;
-          p_stress[ 3 ] += ( u_local[ a ][ 2 ] * dNdX[ k ][ q ][ a ][ 0 ] + u_local[ a ][ 0 ] * dNdX[ k ][ q ][ a ][ 2 ] ) * c[ 4 ][ 4 ] ;
-          p_stress[ 1 ] += ( u_local[ a ][ 1 ] * dNdX[ k ][ q ][ a ][ 0 ] + u_local[ a ][ 0 ] * dNdX[ k ][ q ][ a ][ 1 ] ) * c[ 5 ][ 5 ] ;
+          stress( k, q, 0 ) += ( v0_x_dNdXa0 * c[ 0 ][ 0 ] + v1_x_dNdXa1 * c[ 0 ][ 1 ] + v2_x_dNdXa2*c[ 0 ][ 2 ] ) ;
+          stress( k, q, 2 ) += ( v0_x_dNdXa0 * c[ 1 ][ 0 ] + v1_x_dNdXa1 * c[ 1 ][ 1 ] + v2_x_dNdXa2*c[ 1 ][ 2 ] ) ;
+          stress( k, q, 5 ) += ( v0_x_dNdXa0 * c[ 2 ][ 0 ] + v1_x_dNdXa1 * c[ 2 ][ 1 ] + v2_x_dNdXa2*c[ 2 ][ 2 ] ) ;
+          stress( k, q, 4 ) += ( uhat_local[ a ][ 2 ] * dNdX[ k ][ q ][ a ][ 1 ] + uhat_local[ a ][ 1 ] * dNdX[ k ][ q ][ a ][ 2 ] ) * c[ 3 ][ 3 ] ;
+          stress( k, q, 3 ) += ( uhat_local[ a ][ 2 ] * dNdX[ k ][ q ][ a ][ 0 ] + uhat_local[ a ][ 0 ] * dNdX[ k ][ q ][ a ][ 2 ] ) * c[ 4 ][ 4 ] ;
+          stress( k, q, 1 ) += ( uhat_local[ a ][ 1 ] * dNdX[ k ][ q ][ a ][ 0 ] + uhat_local[ a ][ 0 ] * dNdX[ k ][ q ][ a ][ 1 ] ) * c[ 5 ][ 5 ] ;
         }
       }//quadrature loop
 
@@ -108,7 +107,7 @@ struct ExplicitKernel
    * @tparam NUM_NODES_PER_ELEM The number of nodes/dof per element.
    * @tparam NUM_QUADRATURE_POINTS The number of quadrature points per element.
    * @tparam CONSTITUTIVE_TYPE the type of the constitutive relation that is being used.
-   * @param A pointer to the constitutive relation that is being used.
+   * @param constitutiveRelation A pointer to the constitutive relation that is being used.
    * @param elementList The list of elements to be processed
    * @param elemsToNodes The map from the elements to the nodes that form that element.
    * @param dNdX The derivatives of the shape functions wrt the reference configuration.
@@ -116,8 +115,7 @@ struct ExplicitKernel
    * @param u The nodal array of total displacements.
    * @param vel The nodal array of velocity.
    * @param acc The nodal array of force/acceleration.
-   * @param meanStress The mean stress at each element quadrature point
-   * @param devStress The deviator stress at each element quadrature point.
+   * @param stress The stress at each element quadrature point.
    * @param dt The timestep
    * @return The achieved timestep.
    */
@@ -125,13 +123,13 @@ struct ExplicitKernel
   static inline real64
   Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
           LvArray::SortedArrayView<localIndex const, localIndex> const & elementList,
-          arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & elemsToNodes,
-          arrayView3d< R1Tensor const> const & dNdX,
+          arrayView2d<localIndex const, cells::NODE_MAP_USD> const & elemsToNodes,
+          arrayView3d<R1Tensor const> const & dNdX,
           arrayView2d<real64 const> const & detJ,
-          arrayView1d<R1Tensor const> const & GEOSX_UNUSED_ARG( u ),
-          arrayView1d<R1Tensor const> const & vel,
-          arrayView1d<R1Tensor> const & acc,
-          arrayView2d<R2SymTensor> const & stress,
+          arrayView2d<real64 const, nodes::TOTAL_DISPLACEMENT_USD> const & GEOSX_UNUSED_ARG( u ),
+          arrayView2d<real64 const, nodes::VELOCITY_USD> const & vel,
+          arrayView2d<real64, nodes::ACCELERATION_USD> const & acc,
+          arrayView3d<real64, solid::STRESS_USD> const & stress,
           real64 const dt )
   {
     GEOSX_MARK_FUNCTION;
@@ -149,9 +147,10 @@ struct ExplicitKernel
 
       for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
       {
+        localIndex const nodeIndex = elemsToNodes( k, a );
         for ( int b = 0; b < 3; ++b )
         {
-          v_local[ a ][ b ] = vel[ elemsToNodes[ k ][ a ] ][ b ];
+          v_local[ a ][ b ] = vel( nodeIndex, b );
         }
       }
 
@@ -176,33 +175,33 @@ struct ExplicitKernel
           p_stress[ 5 ] += ( v_local[ a ][ 1 ] * dNdX[ k ][ q ][ a ][ 0 ] + v_local[ a ][ 0 ] * dNdX[ k ][ q ][ a ][ 1 ] ) * c[ 5 ][ 5 ] * dt;
         }
 
-        real64 * const restrict p_Stress = stress[ k ][ q ].Data();
-        p_Stress[ 0 ] += p_stress[ 0 ];
-        p_Stress[ 2 ] += p_stress[ 1 ];
-        p_Stress[ 5 ] += p_stress[ 2 ];
-        p_Stress[ 4 ] += p_stress[ 3 ];
-        p_Stress[ 3 ] += p_stress[ 4 ];
-        p_Stress[ 1 ] += p_stress[ 5 ];
+        stress( k, q, 0 ) += p_stress[ 0 ];
+        stress( k, q, 2 ) += p_stress[ 1 ];
+        stress( k, q, 5 ) += p_stress[ 2 ];
+        stress( k, q, 4 ) += p_stress[ 3 ];
+        stress( k, q, 3 ) += p_stress[ 4 ];
+        stress( k, q, 1 ) += p_stress[ 5 ];
 
         for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
         {
-          f_local[ a ][ 0 ] -= ( p_Stress[ 1 ] * dNdX[ k ][ q ][ a ][ 1 ]
-                               + p_Stress[ 3 ] * dNdX[ k ][ q ][ a ][ 2 ]
-                               + p_Stress[ 0 ] * dNdX[ k ][ q ][ a ][ 0 ] ) * detJ[ k ][ q ];
-          f_local[ a ][ 1 ] -= ( p_Stress[ 1 ] * dNdX[ k ][ q ][ a ][ 0 ]
-                               + p_Stress[ 4 ] * dNdX[ k ][ q ][ a ][ 2 ]
-                               + p_Stress[ 2 ] * dNdX[ k ][ q ][ a ][ 1 ] ) * detJ[ k ][ q ];
-          f_local[ a ][ 2 ] -= ( p_Stress[ 3 ] * dNdX[ k ][ q ][ a ][ 0 ]
-                               + p_Stress[ 4 ] * dNdX[ k ][ q ][ a ][ 1 ]
-                               + p_Stress[ 5 ] * dNdX[ k ][ q ][ a ][ 2 ] ) * detJ[ k ][ q ];
+          f_local[ a ][ 0 ] -= ( stress( k, q, 1 ) * dNdX[ k ][ q ][ a ][ 1 ]
+                               + stress( k, q, 3 ) * dNdX[ k ][ q ][ a ][ 2 ]
+                               + stress( k, q, 0 ) * dNdX[ k ][ q ][ a ][ 0 ] ) * detJ[ k ][ q ];
+          f_local[ a ][ 1 ] -= ( stress( k, q, 1 ) * dNdX[ k ][ q ][ a ][ 0 ]
+                               + stress( k, q, 4 ) * dNdX[ k ][ q ][ a ][ 2 ]
+                               + stress( k, q, 2 ) * dNdX[ k ][ q ][ a ][ 1 ] ) * detJ[ k ][ q ];
+          f_local[ a ][ 2 ] -= ( stress( k, q, 3 ) * dNdX[ k ][ q ][ a ][ 0 ]
+                               + stress( k, q, 4 ) * dNdX[ k ][ q ][ a ][ 1 ]
+                               + stress( k, q, 5 ) * dNdX[ k ][ q ][ a ][ 2 ] ) * detJ[ k ][ q ];
         }
       }//quadrature loop
 
       for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
       {
+        localIndex const nodeIndex = elemsToNodes( k, a );
         for ( int b = 0; b < 3; ++b )
         {
-          RAJA::atomicAdd<RAJA::auto_atomic>( &acc[ elemsToNodes[ k ][ a ] ][ b ], f_local[ a ][ b ] );
+          RAJA::atomicAdd<parallelDeviceAtomic>( &acc( nodeIndex, b ), f_local[ a ][ b ] );
         }
       }
     });
@@ -257,10 +256,10 @@ struct ImplicitKernel
           arrayView2d<real64 const > const& detJ,
           FiniteElementBase const * const fe,
           arrayView1d< integer const > const & elemGhostRank,
-          arrayView2d< localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM > const & elemsToNodes,
+          arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
           arrayView1d< globalIndex const > const & globalDofNumber,
-          arrayView1d< R1Tensor const > const & disp,
-          arrayView1d< R1Tensor const > const & uhat,
+          arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & disp,
+          arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const & uhat,
           arrayView1d< R1Tensor const > const & vtilde,
           arrayView1d< R1Tensor const > const & uhattilde,
           arrayView2d< real64 const > const & density,
@@ -286,7 +285,7 @@ struct ImplicitKernel
 
     typename CONSTITUTIVE_TYPE::KernelWrapper const & constitutive = constitutiveRelation->createKernelWrapper();
 
-    arrayView2d<R2SymTensor const> const & stress = constitutiveRelation->getStress();
+    arrayView3d<real64 const, solid::STRESS_USD> const & stress = constitutiveRelation->getStress();
 
     RAJA::forall< serialPolicy >( RAJA::TypedRangeSegment< localIndex >( 0, numElems ),
                                   GEOSX_LAMBDA ( localIndex const k )
@@ -336,13 +335,23 @@ struct ImplicitKernel
         if( tiOption == timeIntegrationOption::ImplicitDynamic )
         {
           GEOSX_ERROR("Option not supported");
-          CopyGlobalToLocal< NUM_NODES_PER_ELEM, R1Tensor>( elemsToNodes[k],
-                                      disp, uhat, vtilde, uhattilde,
-                                      u_local, uhat_local, vtilde_local, uhattilde_local );
+          for ( localIndex i = 0; i < NUM_NODES_PER_ELEM; ++i )
+          {
+            localIndex const nodeID = elemsToNodes( k, i );
+            u_local[ i ] = disp[ nodeID ];
+            uhat_local[ i ] = uhat[ nodeID ];
+            vtilde_local[ i ] = vtilde[ i ];
+            uhattilde_local[ i ] = uhattilde[ i ]; 
+          }
         }
         else
         {
-          CopyGlobalToLocal<NUM_NODES_PER_ELEM,R1Tensor>( elemsToNodes[k], disp, uhat, u_local, uhat_local );
+          for ( localIndex i = 0; i < NUM_NODES_PER_ELEM; ++i )
+          {
+            localIndex const nodeID = elemsToNodes( k, i );
+            u_local[ i ] = disp[ nodeID ];
+            uhat_local[ i ] = uhat[ nodeID ];
+          }
         }
 
 
@@ -401,7 +410,7 @@ struct ImplicitKernel
         R1Tensor temp;
         for( integer q=0 ; q<NUM_QUADRATURE_POINTS ; ++q )
         {
-          R2SymTensor referenceStress = stress(k,q);
+          R2SymTensor referenceStress = stress[ k ][ q ];
           if( !fluidPressure.empty() )
           {
             referenceStress.PlusIdentity( - biotCoefficient[0] * (fluidPressure[k] + deltaFluidPressure[k]));

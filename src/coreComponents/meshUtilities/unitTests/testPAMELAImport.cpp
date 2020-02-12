@@ -47,7 +47,8 @@ void TestMeshImport( string const& inputStringMesh,
   Group * const meshBodies = domain->getMeshBodies();
   MeshBody * const meshBody = meshBodies->GetGroup<MeshBody>(0);
   MeshLevel * const meshLevel = meshBody->GetGroup<MeshLevel>(0);
-  NodeManager * const nodeManager = meshLevel->getNodeManager();
+  NodeManager const & nodeManager = *meshLevel->getNodeManager();
+  FaceManager const & faceManager = *meshLevel->getFaceManager();
   ElementRegionManager * const elemManager = meshLevel->getElemManager();
 
   // Create the ElementRegions
@@ -72,14 +73,15 @@ void TestMeshImport( string const& inputStringMesh,
       localIndex er = elemRegion->getIndexInParent();
       elemRegion->forElementSubRegionsIndex( [&]( localIndex const esr, auto * const elemSubRegion )
       {
+        elemSubRegion->CalculateElementGeometricQuantities( nodeManager, faceManager );
         for( localIndex ei = 0; ei < elemSubRegion->size(); ei++ )
         {
-          R1Tensor center = elemSubRegion->calculateElementCenter( ei, *nodeManager );
+          R1Tensor center = elemSubRegion->getElementCenter()[ ei ];
           R1Tensor centerFromProperty( centerProperty[er][esr][ei][0], 
                                        centerProperty[er][esr][ei][1],
                                        centerProperty[er][esr][ei][2] );
           center -= centerFromProperty;
-          GEOSX_ERROR_IF( center.L2_Norm() > meshBody->getGlobalLengthScale() * 1e-8, "Property import of centers if wrong");
+          GEOSX_ERROR_IF_GT_MSG( center.L2_Norm(), meshBody->getGlobalLengthScale() * 1e-8, "Property import of centers if wrong");
         }
       });
     });

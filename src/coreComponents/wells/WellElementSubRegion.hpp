@@ -31,15 +31,7 @@ class WellElementSubRegion : public ElementSubRegionBase
 {
 public:
 
-#if defined( GEOSX_USE_CUDA )
-  using NODE_MAP_PERMUTATION = RAJA::PERM_JI;
-#else
-  using NODE_MAP_PERMUTATION = RAJA::PERM_IJ;
-#endif
-
-  static constexpr int NODE_MAP_UNIT_STRIDE_DIM = LvArray::getStrideOneDimension( NODE_MAP_PERMUTATION {} );
-
-  using NodeMapType = InterObjectRelation< array2d< localIndex, NODE_MAP_PERMUTATION > >;
+  using NodeMapType = InterObjectRelation< array2d< localIndex, cells::NODE_MAP_PERMUTATION > >;
   using EdgeMapType = FixedOneToManyRelation; // unused but needed in MeshLevel::GenerateAdjacencyLists
   using FaceMapType = FixedOneToManyRelation; // unused but needed in MeshLevel::GenerateAdjacencyLists
 
@@ -77,13 +69,6 @@ public:
    * @return the name of this type in the catalog
    */
   virtual const string getCatalogName() const override { return WellElementSubRegion::CatalogName(); }
-    
-  virtual R1Tensor const & calculateElementCenter( localIndex k,
-                                                   const NodeManager& GEOSX_UNUSED_ARG( nodeManager ),
-                                                   const bool GEOSX_UNUSED_ARG( useReferencePos ) = true) const override
-  { 
-    return m_elementCenter[k]; 
-  }
 
   virtual void CalculateElementGeometricQuantities( NodeManager const & GEOSX_UNUSED_ARG( nodeManager ),
                                                     FaceManager const & GEOSX_UNUSED_ARG( faceManager ) ) override 
