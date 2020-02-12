@@ -242,20 +242,6 @@ void CompressibleSinglePhaseFluid::Compute( real64 const & pressure,
   } );
 }
 
-//void CompressibleSinglePhaseFluid::Compute( real64 & pressure,
-//                                            real64 const & density,
-//                                            real64 & viscosity, real64 & dViscosity_dPressure ) const
-//{
-//  makeExponentialRelation( m_densityModelType, m_referencePressure, m_referenceDensity, m_compressibility, [&] ( auto relation )
-//  {
-//    Inverse( density, pressure, relation );
-//  } );
-//  makeExponentialRelation( m_viscosityModelType, m_referencePressure, m_referenceViscosity, m_viscosibility, [&] ( auto relation )
-//  {
-//    Compute( pressure, viscosity, dViscosity_dPressure, relation );
-//  } );
-//}
-
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompressibleSinglePhaseFluid, std::string const &, Group * const )
 
 } /* namespace constitutive */

@@ -68,11 +68,6 @@ LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, Group 
     setApplyDefaultValue(-1)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Rock Compressibilty");
-
-  registerWrapper( viewKeyStruct::referencePressureString, &m_referencePressure, 0 )->
-    setApplyDefaultValue(0)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("ReferencePressure");
 }
 
 

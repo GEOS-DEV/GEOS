@@ -341,26 +341,26 @@ void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * co
 //  }
 
   // Double the mass of nodes at external boundary
-  Group * nodeSets = nodes->sets();
-  localIndex_set & xnegNodes = nodeSets->registerWrapper<localIndex_set>( std::string("xneg") )->reference();
-  localIndex_set & xposNodes = nodeSets->registerWrapper<localIndex_set>( std::string("xpos") )->reference();
-  localIndex_set & ynegNodes = nodeSets->registerWrapper<localIndex_set>( std::string("yneg") )->reference();
-  localIndex_set & yposNodes = nodeSets->registerWrapper<localIndex_set>( std::string("ypos") )->reference();
-  localIndex_set & znegNodes = nodeSets->registerWrapper<localIndex_set>( std::string("zneg") )->reference();
-  localIndex_set & zposNodes = nodeSets->registerWrapper<localIndex_set>( std::string("zpos") )->reference();
-
-  for( localIndex index : xnegNodes )
-    mass[index] *= 2;
-  for( localIndex index : xposNodes )
-    mass[index] *= 2;
-  for( localIndex index : ynegNodes )
-    mass[index] *= 2;
-  for( localIndex index : yposNodes )
-    mass[index] *= 2;
-  for( localIndex index : znegNodes )
-    mass[index] *= 2;
-  for( localIndex index : zposNodes )
-    mass[index] *= 2;
+//  Group * nodeSets = nodes->sets();
+//  localIndex_set & xnegNodes = nodeSets->registerWrapper<localIndex_set>( std::string("xneg") )->reference();
+//  localIndex_set & xposNodes = nodeSets->registerWrapper<localIndex_set>( std::string("xpos") )->reference();
+//  localIndex_set & ynegNodes = nodeSets->registerWrapper<localIndex_set>( std::string("yneg") )->reference();
+//  localIndex_set & yposNodes = nodeSets->registerWrapper<localIndex_set>( std::string("ypos") )->reference();
+//  localIndex_set & znegNodes = nodeSets->registerWrapper<localIndex_set>( std::string("zneg") )->reference();
+//  localIndex_set & zposNodes = nodeSets->registerWrapper<localIndex_set>( std::string("zpos") )->reference();
+//
+//  for( localIndex index : xnegNodes )
+//    mass[index] *= 2;
+//  for( localIndex index : xposNodes )
+//    mass[index] *= 2;
+//  for( localIndex index : ynegNodes )
+//    mass[index] *= 2;
+//  for( localIndex index : yposNodes )
+//    mass[index] *= 2;
+//  for( localIndex index : znegNodes )
+//    mass[index] *= 2;
+//  for( localIndex index : zposNodes )
+//    mass[index] *= 2;
 
 }
 

@@ -87,14 +87,6 @@ void HydrofractureSolver::RegisterDataOnMesh( dataRepository::Group * const Mesh
 	{
 	  ElementRegionManager * const elemManager = mesh.second->group_cast<MeshBody*>()->getMeshLevel(0)->getElemManager();
 
-//	  elemManager->forElementSubRegions<CellElementSubRegion,
-//										FaceElementSubRegion>( [&]( auto * const elementSubRegion ) -> void
-//		{
-//		  elementSubRegion->template registerWrapper< array1d<real64> >( viewKeyStruct::totalMeanStressString )->
-//			setDescription("Total Mean Stress");
-//		  elementSubRegion->template registerWrapper< array1d<real64> >( viewKeyStruct::oldTotalMeanStressString )->
-//			setDescription("Old total Mean Stress");
-//		});
 	  elemManager->forElementSubRegions<FaceElementSubRegion>( [&]( auto * const elementSubRegion ) -> void
 		{
 		  elementSubRegion->template registerWrapper< array1d<real64> >( viewKeyStruct::contactStressString )->
@@ -117,7 +109,7 @@ real64 HydrofractureSolver::GetTimestepRequest(real64 const time)
     real64 maxDtSolid = m_solidSolver->GetTimestepRequest( time );
     real64 maxDtflow = m_flowSolver->GetTimestepRequest( time );
 
-//    std::cout << "GetTimestepRequest: maxDtSolid = " << maxDtSolid << ", maxDtflow = " << maxDtflow << std::endl;
+  //  std::cout << "GetTimestepRequest: maxDtSolid = " << maxDtSolid << ", maxDtflow = " << maxDtflow << std::endl;
 
     return std::min(maxDtSolid, maxDtflow);
   }
@@ -131,12 +123,6 @@ void HydrofractureSolver::ExplicitStepSetup( real64 const & time_n,
 {
   MeshLevel * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = mesh->getElemManager();
-
-//  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const totalMeanStress =
-//    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::totalMeanStressString);
-//
-//  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> oldTotalMeanStress =
-//    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::oldTotalMeanStressString);
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const poro =
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(FlowSolverBase::viewKeyStruct::porosityString);
@@ -153,35 +139,6 @@ void HydrofractureSolver::ExplicitStepSetup( real64 const & time_n,
   static int setHydrofractureSolverTimeStep = 0;
   if( setHydrofractureSolverTimeStep == 0 )
   {
-//    ConstitutiveManager const * const
-//      constitutiveManager = domain->GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
-//
-//    ElementRegionManager::MaterialViewAccessor< arrayView2d<R2SymTensor> > const stress =
-//      elemManager->ConstructFullMaterialViewAccessor< array2d<R2SymTensor>, arrayView2d<R2SymTensor> >(SolidBase::viewKeyStruct::stressString, constitutiveManager);
-//
-//    ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const pres =
-//      elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(FlowSolverBase::viewKeyStruct::pressureString);
-//
-//    ElementRegionManager::MaterialViewAccessor<real64> const biotCoefficient =
-//      elemManager->ConstructFullMaterialViewAccessor<real64>( "BiotCoefficient", constitutiveManager);
-//
-//    localIndex const solidIndex = domain->getConstitutiveManager()->
-//                                  GetConstitutiveRelation( this->getParent()->GetGroup(m_flowSolverName)->group_cast<FlowSolverBase*>()->solidIndex() )->getIndexInParent();
-//
-//    for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
-//    {
-//      ElementRegionBase const * const elemRegion = elemManager->GetRegion(er);
-//
-//      elemRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr,
-//                                                                          CellElementSubRegion const * const elementSubRegion )
-//      {
-//        for( localIndex ei=0 ; ei<elementSubRegion->size() ; ++ei )
-//        {
-//          totalMeanStress[er][esr][ei] = stress[er][esr][solidIndex][ei][0].Trace() / 3.0 - biotCoefficient[er][esr][solidIndex] * pres[er][esr][ei];
-//        }
-//      });
-//    }
-
     elemManager->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion * const subRegion )->void
     {
       arrayView1d<real64 const> const & fluidPressure = subRegion->getReference<array1d<real64> >(FlowSolverBase::viewKeyStruct::pressureString);
@@ -207,7 +164,6 @@ void HydrofractureSolver::ExplicitStepSetup( real64 const & time_n,
                                 localIndex const esr,
                                 localIndex const k)->void
   {
-//    oldTotalMeanStress[er][esr][k] = totalMeanStress[er][esr][k];
     poroOld[er][esr][k] = poro[er][esr][k];
   });
 
@@ -287,12 +243,6 @@ void HydrofractureSolver::ResetStateToBeginningOfStep( DomainPartition * const d
     MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
     ElementRegionManager * const elemManager = mesh->getElemManager();
 
-//    ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const totalMeanStress =
-//      elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::totalMeanStressString);
-//
-//    ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> oldTotalMeanStress =
-//      elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::oldTotalMeanStressString);
-
     ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const poro =
       elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(FlowSolverBase::viewKeyStruct::porosityString);
 
@@ -304,7 +254,6 @@ void HydrofractureSolver::ResetStateToBeginningOfStep( DomainPartition * const d
                                   localIndex const esr,
                                   localIndex const k)->void
     {
-//      totalMeanStress[er][esr][k] = oldTotalMeanStress[er][esr][k];
       poro[er][esr][k] = poroOld[er][esr][k];
     });
   }
@@ -343,8 +292,6 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
     ExplicitStepSetup( time_n, dt, domain);
 
     ExplicitStep( time_n, dt, cycleNumber, domain );
-
-//    std::cout << std::endl << "*************************************************" << std::endl;
   }
   else if( m_couplingTypeOption == couplingTypeOption::TightlyCoupled )
   {
@@ -491,35 +438,11 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
     ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> deltaVolume =
       elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(FlowSolverBase::viewKeyStruct::deltaVolumeString);
 
-//    ElementRegionManager::MaterialViewAccessor< arrayView2d<R2SymTensor> > const stress =
-//      elemManager->ConstructFullMaterialViewAccessor< array2d<R2SymTensor>, arrayView2d<R2SymTensor> >(SolidBase::viewKeyStruct::stressString, constitutiveManager);
-
-//    ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> totalMeanStress =
-//      elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::totalMeanStressString);
-//
-//    ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const oldTotalMeanStress =
-//      elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::oldTotalMeanStressString);
-
-//    ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const pres =
-//      elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(FlowSolverBase::viewKeyStruct::pressureString);
-//
-//    ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const dPres =
-//      elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(FlowSolverBase::viewKeyStruct::deltaPressureString);
-//
-//    ElementRegionManager::MaterialViewAccessor<real64> const biotCoefficient =
-//      elemManager->ConstructFullMaterialViewAccessor<real64>( "BiotCoefficient", constitutiveManager);
-
     ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> poro =
       elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(FlowSolverBase::viewKeyStruct::porosityString);
 
     ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const poroOld =
       elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(FlowSolverBase::viewKeyStruct::porosityOldString);
-
-//    ElementRegionManager::MaterialViewAccessor< arrayView1d<real64> > const bulkModulus =
-//      elemManager->ConstructFullMaterialViewAccessor< array1d<real64>, arrayView1d<real64> >( "BulkModulus", constitutiveManager);
-
-//    localIndex const solidIndex = domain->getConstitutiveManager()->
-//                                  GetConstitutiveRelation( this->getParent()->GetGroup(m_flowSolverName)->group_cast<FlowSolverBase*>()->solidIndex() )->getIndexInParent();
 
     for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
     {
@@ -562,109 +485,6 @@ real64 HydrofractureSolver::SplitOperatorStep( real64 const & GEOSX_UNUSED_ARG( 
                                                DomainPartition * const GEOSX_UNUSED_ARG( domain ) )
 {
   real64 dtReturn = dt;
-//  real64 dtReturnTemporary = dtReturn;
-//
-//  m_flowSolver->ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
-//  m_solidSolver->ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
-//  this->ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
-//
-//
-//
-//  fluidSolver.ImplicitStepSetup( time_n, dt, domain,
-//                                 fluidSolver.getDofManager(),
-//                                 fluidSolver.getSystemMatrix(),
-//                                 fluidSolver.getSystemRhs(),
-//                                 fluidSolver.getSystemSolution() );
-//
-//  solidSolver.ImplicitStepSetup( time_n, dt, domain,
-//                                 solidSolver.getDofManager(),
-//                                 solidSolver.getSystemMatrix(),
-//                                 solidSolver.getSystemRhs(),
-//                                 solidSolver.getSystemSolution() );
-//
-//  this->UpdateDeformationForCoupling(domain);
-//
-//  int iter = 0;
-//  while (iter < solverParams->maxIterNewton() )
-//  {
-//    if (iter == 0)
-//    {
-//      // reset the states of all slave solvers if any of them has been reset
-//      m_flowSolver->ResetStateToBeginningOfStep( domain );
-//      m_solidSolver->ResetStateToBeginningOfStep( domain );
-//      ResetStateToBeginningOfStep( domain );
-//    }
-//    LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1  << ", FlowSolver: " );
-//
-//    // call assemble to fill the matrix and the rhs
-//    m_flowSolver->AssembleSystem( domain, getLinearSystemRepository(), time_n+dt, dt );
-//
-//    // apply boundary conditions to system
-//    m_flowSolver->ApplyBoundaryConditions( domain, getLinearSystemRepository(), time_n, dt );
-//
-//    // call the default linear solver on the system
-//    m_flowSolver->SolveSystem( getLinearSystemRepository(),
-//                 getSystemSolverParameters() );
-//
-//    // apply the system solution to the fields/variables
-//    m_flowSolver->ApplySystemSolution( getLinearSystemRepository(), 1.0, domain );
-//
-//    if (dtReturnTemporary < dtReturn)
-//    {
-//      iter = 0;
-//      dtReturn = dtReturnTemporary;
-//      continue;
-//    }
-//
-////    if (m_fluidSolver->getSystemSolverParameters()->numNewtonIterations() == 0 && iter > 0 && getLogLevel() >= 1)
-////    {
-////      GEOSX_LOG_RANK_0( "***** The iterative coupling has converged in " << iter  << " iterations! *****\n" );
-////      break;
-////    }
-//
-//    if (getLogLevel() >= 1)
-//    {
-//      GEOSX_LOG_RANK_0( "\tIteration: " << iter+1  << ", MechanicsSolver: " );
-//    }
-//
-//    // call assemble to fill the matrix and the rhs
-//    m_solidSolver->AssembleSystem( domain, getLinearSystemRepository(), time_n+dt, dt );
-//
-//
-//    ApplyFractureFluidCoupling( domain, *getLinearSystemRepository() );
-//
-//    // apply boundary conditions to system
-//    m_solidSolver->ApplyBoundaryConditions( domain, getLinearSystemRepository(), time_n, dt );
-//
-//    // call the default linear solver on the system
-//    m_solidSolver->SolveSystem( getLinearSystemRepository(),
-//                 getSystemSolverParameters() );
-//
-//    // apply the system solution to the fields/variables
-//    m_solidSolver->ApplySystemSolution( getLinearSystemRepository(), 1.0, domain );
-//
-//    if( m_flowSolver->CalculateResidualNorm( getLinearSystemRepository(), domain ) < solverParams->newtonTol() &&
-//        m_solidSolver->CalculateResidualNorm( getLinearSystemRepository(), domain ) < solverParams->newtonTol() )
-//    {
-//      GEOSX_LOG_RANK_0( "***** The iterative coupling has converged in " << iter  << " iterations! *****\n" );
-//      break;
-//    }
-//
-//    if (dtReturnTemporary < dtReturn)
-//    {
-//      iter = 0;
-//      dtReturn = dtReturnTemporary;
-//      continue;
-//    }
-////    if (m_solidSolver->getSystemSolverParameters()->numNewtonIterations() > 0)
-//    {
-//      this->UpdateDeformationForCoupling(domain);
-////      m_fluidSolver->UpdateState(domain);
-//    }
-//    ++iter;
-//  }
-//
-//  this->ImplicitStepComplete( time_n, dt, domain );
 
   return dtReturn;
 }

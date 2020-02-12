@@ -145,9 +145,6 @@ protected:
   virtual void PostProcessInput() override;
 
 private:
-  /// reference pressure parameter
-  real64 m_referencePressure;
-
   /// scalar compressibility parameter
   real64 m_compressibility;
 

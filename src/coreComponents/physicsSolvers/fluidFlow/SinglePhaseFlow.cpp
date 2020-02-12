@@ -601,18 +601,6 @@ void SinglePhaseFlow::ExplicitStepSetup( real64 const & time_n,
     } );
   } );
 
-//  applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-//                                 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
-//                                 ElementSubRegionBase * const subRegion )
-//  {
-//    arrayView1d<real64> const & dPres   = m_deltaPressure[er][esr];
-//
-//    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
-//    {
-//      dPres[ei] = 0.0;
-//    } );
-//  } );
-
   // get the maxStableDt for the first time step
   if( setFlowSolverTimeStep == 0 )
   {

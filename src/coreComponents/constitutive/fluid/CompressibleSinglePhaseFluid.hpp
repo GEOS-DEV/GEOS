@@ -70,11 +70,6 @@ public:
                         real64 & viscosity,
                         real64 & dViscosity_dPressure ) const override;
 
-//  virtual void Compute( real64 & pressure,
-//                        real64 const & density,
-//                        real64 & viscosity,
-//                        real64 & dViscosity_dPressure ) const override;
-
   // *** Compute kernels
   /**
    * @brief Compute kernel for the full constitutive update
@@ -96,18 +91,6 @@ public:
                               real64 & dViscosity_dPressure,
                               ExponentialRelation<real64, DENS_EAT> const & densityRelation,
                               ExponentialRelation<real64, VISC_EAT> const & viscosityRelation );
-
-  /**
-   * @brief Compute kernel for the partial constitutive update (single property)
-   * @tparam EAT exponential approximation type
-   * @param[in] property
-   * @param[out] pressure
-   * @param[in]  propertyRelation property exponential relation
-   */
-  template<ExponentApproximationType EAT>
-  inline static void Inverse( real64 const & property,
-                              real64 & pressure,
-                              ExponentialRelation<real64, EAT> const & propertyRelation );
 
   /**
    * @brief Compute kernel for the partial constitutive update (single property)
@@ -205,14 +188,6 @@ inline void CompressibleSinglePhaseFluid::Compute( real64 const & pressure,
 {
   Compute( pressure, density, dDensity_dPressure, densityRelation );
   Compute( pressure, viscosity, dViscosity_dPressure, viscosityRelation );
-}
-
-template<ExponentApproximationType EAT>
-inline void CompressibleSinglePhaseFluid::Inverse( real64 const & property,
-                                                   real64 & pressure,
-                                                   ExponentialRelation<real64, EAT> const & propertyRelation )
-{
-  propertyRelation.Inverse( property, pressure );
 }
 
 } /* namespace constitutive */
