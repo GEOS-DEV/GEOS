@@ -101,10 +101,6 @@ public:
                              DomainPartition * const domain ) override;
 
 
-  void AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const * const domain,
-                                                           ParallelMatrix * const matrix10,
-                                                           ParallelVector * const rhs0 );
-
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     constexpr static auto totalMeanStressString = "totalMeanStress";
@@ -125,6 +121,28 @@ protected:
 
   virtual void
   InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const problemManager ) override final;
+
+  void AssembleEquilibriumOperator(array2d<real64> & eqMatrix,
+                                   EmbeddedSurfaceSubRegion * const embeddedSurfaceSubRegion,
+                                   const localIndex k,
+                                   const real64 hInv);
+
+  void AssembleCompatibilityOperator(array2d<real64> & compMatrix,
+                                     EmbeddedSurfaceSubRegion * const embeddedSurfaceSubRegion,
+                                     localIndex const k,
+                                     localIndex const q,
+                                     arrayView2d< localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM > const & elemsToNodes,
+                                     array1d<R1Tensor> const & nodesCoord,
+                                     arrayView1d< localIndex const> const & embeddedSurfaceToCell,
+                                     localIndex const numNodesPerElement,
+                                     array3d<R1Tensor> const & dNdX);
+
+  void AssembleStrainOperator(array2d<real64> & strainMatrix,
+                              localIndex const elIndex,
+                              localIndex const q,
+                              localIndex const numNodesPerElement,
+                              array3d<R1Tensor> const & dNdX);
+
 
 private:
 

@@ -73,7 +73,10 @@ public:
                                BoundedPlane const * fracture);
 
     void CalculateElementGeometricQuantities( array1d<R1Tensor> const  intersectionPoints,
-                                              localIndex k );
+                                              localIndex const k );
+
+    real64 ComputeHeavisideFunction( R1Tensor   const nodeCoord,
+                                     localIndex const k         );
 
     /**
      * @brief function to set the ghostRank for a list of FaceElements and set them to the value of their bounding faces.
