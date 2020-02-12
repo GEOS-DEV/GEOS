@@ -39,13 +39,13 @@ TEST( LinearElasticIsotropicTests, testAllocation )
 
   arrayView1d<real64 const> const & bulkModulus = cm.bulkModulus() ;
   arrayView1d<real64 const> const & shearModulus = cm.shearModulus() ;
-  arrayView2d<R2SymTensor const> const & stress = cm.getStress();
+  arrayView3d<real64 const, solid::STRESS_USD> const & stress = cm.getStress();
 
   EXPECT_EQ( bulkModulus.size(), numElems );
   EXPECT_EQ( shearModulus.size(), numElems );
   EXPECT_EQ( stress.size(0), numElems );
   EXPECT_EQ( stress.size(1), numQuadraturePoints );
-
+  EXPECT_EQ( stress.size(2), 6 );
 }
 
 TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
@@ -64,12 +64,11 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
 //  cm.bulkModulus() = cm.setDefaultBulkModulus();
 //  cm.shearModulus() = cm.setDefaultShearModulus();
 
-  arrayView2d<R2SymTensor> const & stress = cm.getStress();
+  arrayView3d<real64, solid::STRESS_USD> const & stress = cm.getStress();
 
   real64 const strain = 0.1;
   R2SymTensor Ddt;
   R2Tensor Rot;
-  R2SymTensor zero;
 
   {
     Ddt(0,0) = strain;
@@ -79,16 +78,16 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
 
     cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0 );
 
-    ASSERT_DOUBLE_EQ( stress[0][0](0,0) , (2.0/3.0*strain)*2*G + strain*K );
-    ASSERT_DOUBLE_EQ( stress[0][0](1,1) , (-1.0/3.0*strain)*2*G + strain*K );
-    ASSERT_DOUBLE_EQ( stress[0][0](2,2) , (-1.0/3.0*strain)*2*G + strain*K );
-    ASSERT_DOUBLE_EQ( stress[0][0](1,2) , 0.0 );
-    ASSERT_DOUBLE_EQ( stress[0][0](0,2) , 0.0 );
-    ASSERT_DOUBLE_EQ( stress[0][0](0,1) , 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 0 ), (2.0/3.0*strain)*2*G + strain*K );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 2 ), (-1.0/3.0*strain)*2*G + strain*K );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 5 ), (-1.0/3.0*strain)*2*G + strain*K );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 4 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 3 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 1 ), 0.0 );
   }
 
   {
-    stress = zero;
+    stress = 0;
     Ddt = 0;
 
     Ddt(1,1) = strain;
@@ -98,16 +97,16 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
 
     cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0 );
 
-    ASSERT_DOUBLE_EQ( stress[0][0](0,0) , (-1.0/3.0*strain)*2*G + strain*K );
-    ASSERT_DOUBLE_EQ( stress[0][0](1,1) ,  (2.0/3.0*strain)*2*G + strain*K );
-    ASSERT_DOUBLE_EQ( stress[0][0](2,2) , (-1.0/3.0*strain)*2*G + strain*K );
-    ASSERT_DOUBLE_EQ( stress[0][0](1,2) , 0.0 );
-    ASSERT_DOUBLE_EQ( stress[0][0](0,2) , 0.0 );
-    ASSERT_DOUBLE_EQ( stress[0][0](0,1) , 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 0 ), (-1.0/3.0*strain)*2*G + strain*K );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 2 ), (2.0/3.0*strain)*2*G + strain*K );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 5 ), (-1.0/3.0*strain)*2*G + strain*K );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 4 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 3 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 1 ), 0.0 );
   }
 
   {
-    stress = zero;
+    stress = 0;
     Ddt = 0;
 
     Ddt(2,2) = strain;
@@ -117,16 +116,16 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
 
     cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0 );
 
-    ASSERT_DOUBLE_EQ( stress[0][0](0,0) , (-1.0/3.0*strain)*2*G + strain*K );
-    ASSERT_DOUBLE_EQ( stress[0][0](1,1) , (-1.0/3.0*strain)*2*G + strain*K );
-    ASSERT_DOUBLE_EQ( stress[0][0](2,2) ,  (2.0/3.0*strain)*2*G + strain*K );
-    ASSERT_DOUBLE_EQ( stress[0][0](1,2) , 0.0 );
-    ASSERT_DOUBLE_EQ( stress[0][0](0,2) , 0.0 );
-    ASSERT_DOUBLE_EQ( stress[0][0](0,1) , 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 0 ), (-1.0/3.0*strain)*2*G + strain*K );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 2 ), (-1.0/3.0*strain)*2*G + strain*K );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 5 ),  (2.0/3.0*strain)*2*G + strain*K );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 4 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 3 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 1 ), 0.0 );
   }
 
   {
-    stress = zero;
+    stress = 0;
     Ddt = 0;
 
     Ddt(0,1) = strain;
@@ -136,16 +135,16 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
 
     cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0 );
 
-    ASSERT_DOUBLE_EQ( stress[0][0](0,0) , 0.0 );
-    ASSERT_DOUBLE_EQ( stress[0][0](1,1) , 0.0 );
-    ASSERT_DOUBLE_EQ( stress[0][0](2,2) , 0.0 );
-    ASSERT_DOUBLE_EQ( stress[0][0](1,2) , 0.0 );
-    ASSERT_DOUBLE_EQ( stress[0][0](0,2) , 0.0 );
-    ASSERT_DOUBLE_EQ( stress[0][0](0,1) , strain*2*G );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 0 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 2 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 5 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 4 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 3 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 1 ), strain*2*G );
   }
 
   {
-    stress = zero;
+    stress = 0;
     Ddt = 0;
 
     Ddt(0,2) = strain;
@@ -155,16 +154,16 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
 
     cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0 );
 
-    ASSERT_DOUBLE_EQ( stress[0][0](0,0) , 0.0 );
-    ASSERT_DOUBLE_EQ( stress[0][0](1,1) , 0.0 );
-    ASSERT_DOUBLE_EQ( stress[0][0](2,2) , 0.0 );
-    ASSERT_DOUBLE_EQ( stress[0][0](1,2) , 0.0 );
-    ASSERT_DOUBLE_EQ( stress[0][0](0,2) , strain*2*G );
-    ASSERT_DOUBLE_EQ( stress[0][0](0,1) , 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 0 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 2 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 5 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 4 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 3 ), strain*2*G );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 1 ), 0.0 );
   }
 
   {
-    stress = zero;
+    stress = 0;
     Ddt = 0;
 
     Ddt(1,2) = strain;
@@ -174,12 +173,12 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
 
     cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0 );
 
-    ASSERT_DOUBLE_EQ( stress[0][0](0,0) , 0.0 );
-    ASSERT_DOUBLE_EQ( stress[0][0](1,1) , 0.0 );
-    ASSERT_DOUBLE_EQ( stress[0][0](2,2) , 0.0 );
-    ASSERT_DOUBLE_EQ( stress[0][0](1,2) , strain*2*G );
-    ASSERT_DOUBLE_EQ( stress[0][0](0,2) , 0.0 );
-    ASSERT_DOUBLE_EQ( stress[0][0](0,1) , 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 0 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 2 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 5 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 4 ), strain*2*G );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 3 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 1 ), 0.0 );
   }
 }
 

@@ -54,10 +54,6 @@ public:
                      dataRepository::Group * const parent );
   virtual ~FaceElementSubRegion() override;
 
-  virtual R1Tensor const & calculateElementCenter( localIndex k,
-                                     const NodeManager& nodeManager,
-                                     const bool useReferencePos = true) const override;
-
   virtual void CalculateElementGeometricQuantities( NodeManager const & nodeManager,
                                                     FaceManager const & facemanager ) override;
 

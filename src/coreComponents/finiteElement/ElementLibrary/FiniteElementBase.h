@@ -110,8 +110,8 @@ public:
       return ElementType::INVALID;
   }
 
-  virtual void reinit( arrayView1d< R1Tensor const > const & X, arraySlice1d< localIndex const, -1 > const & mapped_support_points ) = 0;
-  virtual void reinit( arrayView1d< R1Tensor const > const & X, arraySlice1d< localIndex const, 0 > const & mapped_support_points ) = 0;
+  virtual void reinit( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X, arraySlice1d< localIndex const, -1 > const & mapped_support_points ) = 0;
+  virtual void reinit( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X, arraySlice1d< localIndex const, 0 > const & mapped_support_points ) = 0;
 
 
 
@@ -154,8 +154,8 @@ public:
     return data[q_index].parent_values;
   }
 
-  inline R1Tensor gradient( const localIndex shape_index,
-                     const localIndex q_index ) const
+  inline arraySlice1d< real64 const > gradient( const localIndex shape_index,
+                                                const localIndex q_index ) const
   {
     GEOSX_ASSERT(q_index < n_q_points);
     GEOSX_ASSERT(shape_index < n_dofs);
@@ -188,9 +188,9 @@ protected:
     R1TensorT<3>                 parent_q_point;
     double                       parent_q_weight;
     std::vector<double>          parent_values;
-    std::vector<R1TensorT<3> >   parent_gradients;
+    array2d< real64 >            parent_gradients;
 
-    std::vector<R1TensorT<3> >   mapped_gradients;
+    array2d< real64 >            mapped_gradients;
     double                       jacobian_determinant;
   };
 

@@ -114,22 +114,25 @@ public:
 
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
-    static constexpr auto referencePositionString     = "ReferencePosition";
-    static constexpr auto totalDisplacementString     = "TotalDisplacement";
-    static constexpr auto edgeListString              = "edgeList";
-    static constexpr auto faceListString              = "faceList";
-    static constexpr auto elementRegionListString     = "elemRegionList";
-    static constexpr auto elementSubRegionListString  = "elemSubRegionList";
-    static constexpr auto elementListString           = "elemList";
+    static constexpr auto referencePositionString       = "ReferencePosition";
+    static constexpr auto totalDisplacementString       = "TotalDisplacement";
+    static constexpr auto incrementalDisplacementString = "IncrementalDisplacement";
+    static constexpr auto edgeListString                = "edgeList";
+    static constexpr auto faceListString                = "faceList";
+    static constexpr auto elementRegionListString       = "elemRegionList";
+    static constexpr auto elementSubRegionListString    = "elemSubRegionList";
+    static constexpr auto elementListString             = "elemList";
 
-    dataRepository::ViewKey referencePosition = { referencePositionString };
-    dataRepository::ViewKey totalDisplacement = { totalDisplacementString };
-    dataRepository::ViewKey edgeList           = { edgeListString };
-    dataRepository::ViewKey faceList           = { faceListString };
-    dataRepository::ViewKey elementRegionList     = { elementRegionListString };
-    dataRepository::ViewKey elementSubRegionList  = { elementSubRegionListString };
-    dataRepository::ViewKey elementList           = { elementListString };
-
+    dataRepository::ViewKey referencePosition       = { referencePositionString };
+    dataRepository::ViewKey totalDisplacement       = { totalDisplacementString };
+    dataRepository::ViewKey incrementalDisplacement = { incrementalDisplacementString };
+    dataRepository::ViewKey edgeList                = { edgeListString };
+    dataRepository::ViewKey faceList                = { faceListString };
+    dataRepository::ViewKey elementRegionList       = { elementRegionListString };
+    dataRepository::ViewKey elementSubRegionList    = { elementSubRegionListString };
+    dataRepository::ViewKey elementList             = { elementListString };
+    dataRepository::ViewKey velocity                = { dataRepository::keys::Velocity };
+    dataRepository::ViewKey acceleration            = { dataRepository::keys::Acceleration };
   } viewKeys;
 
 
@@ -180,20 +183,64 @@ public:
   { return m_toElements.m_toElementIndex.toViewCC(); }
 
   /**
-   * @brief const accessor to the reference position array
-   * @return const reference to reference position
+   * @brief Return the reference position array.
    */
-  array1d<R1Tensor> const & referencePosition() const
+  array2d<real64, nodes::REFERENCE_POSITION_PERM> & referencePosition()
   { return m_referencePosition; }
 
   /**
-   * @brief accessor to the reference position array
-   * @return reference to reference position
+   * @brief Return an immutable arrayView of the reference position.
    */
-  array1d<R1Tensor> & referencePosition()
+  arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & referencePosition() const
   { return m_referencePosition; }
 
-protected:
+  /**
+   * @brief Return the total displacement array if it exists, if not an error is thrown.
+   */
+  array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > & totalDisplacement()
+  { return getReference< array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > >( viewKeys.totalDisplacement ); }
+
+  /**
+   * @brief Return an immutable arrayView of the total displacement if it exists, if not an error is thrown.
+   */
+  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & totalDisplacement() const
+  { return getReference< array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > >( viewKeys.totalDisplacement ).toViewConst(); }
+
+  /**
+   * @brief Return the incremental displacement array if it exists, if not an error is thrown.
+   */
+  array2d< real64, nodes::INCR_DISPLACEMENT_PERM > & incrementalDisplacement()
+  { return getReference< array2d< real64, nodes::INCR_DISPLACEMENT_PERM > >( viewKeys.incrementalDisplacement ); }
+
+  /**
+   * @brief Return an immutable arrayView of the incremental displacement if it exists, if not an error is thrown.
+   */
+  arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const & incrementalDisplacement() const
+  { return getReference< array2d< real64, nodes::INCR_DISPLACEMENT_PERM > >( viewKeys.incrementalDisplacement ).toViewConst(); }
+
+  /**
+   * @brief Return the velocity array if it exists, if not an error is thrown.
+   */
+  array2d< real64, nodes::VELOCITY_PERM > & velocity()
+  { return getReference< array2d< real64, nodes::VELOCITY_PERM > >( viewKeys.velocity ); }
+
+  /**
+   * @brief Return an immutable arrayView of the velocity if it exists, if not an error is thrown.
+   */
+  arrayView2d< real64 const, nodes::VELOCITY_USD > const & velocity() const
+  { return getReference< array2d< real64, nodes::VELOCITY_PERM > >( viewKeys.velocity ).toViewConst(); }
+
+  /**
+   * @brief Return the accleration array if it exists, if not an error is thrown.
+   */
+  array2d< real64, nodes::ACCELERATION_PERM > & acceleration()
+  { return getReference< array2d< real64, nodes::ACCELERATION_PERM > >( viewKeys.acceleration ); }
+
+  /**
+   * @brief Return an immutable arrayView of the acceleration if it exists, if not an error is thrown.
+   */
+  arrayView2d< real64 const, nodes::ACCELERATION_USD > const & acceleration() const
+  { return getReference< array2d< real64, nodes::ACCELERATION_PERM > >( viewKeys.acceleration ).toViewConst(); }
 
 private:
   /**
@@ -208,8 +255,8 @@ private:
   localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,
                                     arrayView1d<localIndex const> const & packList ) const;
 
-  /// reference position of the nodes
-  array1d<R1Tensor> m_referencePosition;
+   /// reference position of the nodes
+  array2d<real64, nodes::REFERENCE_POSITION_PERM> m_referencePosition;
 
   /// nodeToEdge relation
   EdgeMapType m_toEdgesRelation;

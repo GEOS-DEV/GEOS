@@ -78,10 +78,10 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
 
   CellElementStencilTPFA & stencil = this->getReference<CellElementStencilTPFA>(viewKeyStruct::cellStencilString);
 
-  arrayView2d<localIndex const> const & elemRegionList     = faceManager->elementRegionList();
-  arrayView2d<localIndex const> const & elemSubRegionList  = faceManager->elementSubRegionList();
-  arrayView2d<localIndex const> const & elemList           = faceManager->elementList();
-  arrayView1d<R1Tensor const>   const & X = nodeManager->referencePosition();
+  arrayView2d<localIndex const> const & elemRegionList = faceManager->elementRegionList();
+  arrayView2d<localIndex const> const & elemSubRegionList = faceManager->elementSubRegionList();
+  arrayView2d<localIndex const> const & elemList = faceManager->elementList();
+  arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & X = nodeManager->referencePosition();
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<R1Tensor>> const elemCenter =
     elemManager->ConstructViewAccessor< array1d<R1Tensor>, arrayView1d<R1Tensor> >(
@@ -218,11 +218,10 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
   ElementRegionManager::ElementViewAccessor<arrayView1d<R1Tensor> > const
   coefficient = elemManager->ConstructViewAccessor< array1d<R1Tensor>, arrayView1d<R1Tensor> >(m_coeffName);
 
-  arrayView1d<real64 const>   const & faceArea   = faceManager->faceArea();
+  arrayView1d<real64 const>   const & faceArea = faceManager->faceArea();
   arrayView1d<R1Tensor const> const & faceCenter = faceManager->faceCenter();
   arrayView1d<R1Tensor const> const & faceNormal = faceManager->faceNormal();
-
-  arrayView1d<R1Tensor const> const & X = nodeManager->referencePosition();
+  arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & X = nodeManager->referencePosition();
 
   FaceElementStencil & fractureStencil = getReference<FaceElementStencil>(viewKeyStruct::fractureStencilString);
   CellElementStencilTPFA & cellStencil = getReference<CellElementStencilTPFA>(viewKeyStruct::cellStencilString);
@@ -263,8 +262,8 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
 #endif
 #if SET_CREATION_DISPLACEMENT==1
   ArrayOfArraysView<localIndex const> const & faceToNodesMap = faceManager->nodeList();
-  arrayView1d<R1Tensor> const & incrementalDisplacement = nodeManager->getReference<array1d<R1Tensor>>(keys::IncrementalDisplacement);
-  arrayView1d<R1Tensor> const & totalDisplacement = nodeManager->getReference<array1d<R1Tensor>>(keys::TotalDisplacement);
+  arrayView2d<real64 nodes::INCR_DISPLACEMENT_USD> const & incrementalDisplacement = nodeManager->incrementalDisplacement();
+  arrayView2d<real64, nodes::TOTAL_DISPLACEMENT_UNIT_STIRDE> const & totalDisplacement = nodeManager->totalDisplacement();
   arrayView1d< real64 > const & aperture = fractureSubRegion->getReference<array1d<real64>>("elementAperture");
 #endif
 
@@ -333,9 +332,8 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
       stencilWeights.resize(numElems);
 
       // get edge geometry
-      R1Tensor edgeCenter, edgeLength;
-      edgeManager->calculateCenter( edgeIndex, X, edgeCenter );
-      edgeManager->calculateLength( edgeIndex, X, edgeLength );
+      R1Tensor const edgeCenter = edgeManager->calculateCenter( edgeIndex, X );
+      real64 const edgeLength = edgeManager->calculateLength( edgeIndex, X ).L2_Norm();
 
       real64 initialPressure = 1.0e99;
 #if SET_CREATION_DISPLACEMENT==1
@@ -358,7 +356,7 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
         stencilCellsSubRegionIndex[kfe] = 0;
         stencilCellsIndex[kfe] = fractureElementIndex;
 
-        stencilWeights[kfe] =  1.0 / 12.0 * edgeLength.L2_Norm() / cellCenterToEdgeCenter.L2_Norm();
+        stencilWeights[kfe] =  1.0 / 12.0 * edgeLength / cellCenterToEdgeCenter.L2_Norm();
 
         // code to initialize new face elements with pressures from neighbors
         if( fractureSubRegion->m_newFaceElements.count(fractureElementIndex)==0 )
@@ -569,10 +567,10 @@ void TwoPointFluxApproximation::computeBoundaryStencil( DomainPartition const & 
   FaceManager const * const faceManager = mesh->getFaceManager();
   ElementRegionManager const * const elemManager = mesh->getElemManager();
 
-  array2d<localIndex> const & elemRegionList     = faceManager->elementRegionList();
-  array2d<localIndex> const & elemSubRegionList  = faceManager->elementSubRegionList();
-  array2d<localIndex> const & elemList           = faceManager->elementList();
-  r1_array const & X = nodeManager->referencePosition();
+  arrayView2d< localIndex const > const & elemRegionList     = faceManager->elementRegionList();
+  arrayView2d< localIndex const > const & elemSubRegionList  = faceManager->elementSubRegionList();
+  arrayView2d< localIndex const > const & elemList           = faceManager->elementList();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager->referencePosition();
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<R1Tensor>> const elemCenter =
     elemManager->ConstructViewAccessor< array1d<R1Tensor>, arrayView1d<R1Tensor> >(

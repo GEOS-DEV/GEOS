@@ -62,7 +62,7 @@ struct FieldSpecificationOp
   template< typename T >
   GEOSX_HOST_DEVICE
   static inline typename std::enable_if< !traits::is_tensorT < T >, void>::type
-  SpecifyFieldValue( arrayView1d <T> const & field,
+  SpecifyFieldValue( arrayView1d< T > const & field,
                      localIndex const index,
                      integer const GEOSX_UNUSED_ARG( component ),
                      real64 const value )
@@ -84,7 +84,7 @@ struct FieldSpecificationOp
   template< typename T >
   GEOSX_HOST_DEVICE
   static inline typename std::enable_if< traits::is_tensorT < T >, void>::type
-  SpecifyFieldValue( arrayView1d <T> const & field,
+  SpecifyFieldValue( arrayView1d< T > const & field,
                      localIndex const index,
                      integer const component,
                      real64 const value )
@@ -137,6 +137,7 @@ struct FieldSpecificationOp
   /**
    * @brief Pointwise application of a value to a field variable.
    * @tparam T The type of the array2d field variable specified in @p field.
+   * @tparam USD the unit stride dimension of the array @p field.
    * @param[in] field The array2d field variable to apply @p value to.
    * @param[in] index The index in field to apply @p value to.
    * @param[in] component The index along second dimension of 2d array.
@@ -144,10 +145,10 @@ struct FieldSpecificationOp
    *
    * This function performs field[index][component] (+)= value.
    */
-  template< typename T >
+  template< typename T, int USD >
   GEOSX_HOST_DEVICE
   static inline typename std::enable_if< !traits::is_tensorT < T >, void>::type
-  SpecifyFieldValue( arrayView2d <T> const & field,
+  SpecifyFieldValue( arrayView2d< T, USD > const & field,
                      localIndex const index,
                      integer const component,
                      real64 const value )
@@ -168,6 +169,7 @@ struct FieldSpecificationOp
   /**
    * @brief Pointwise application of a value to a field variable.
    * @tparam T The type of the array2d field variable specified in @p field.
+   * @tparam USD the unit stride dimension of the array @p field.
    * @param[in] field The array2d field variable to apply @p value to.
    * @param[in] index The index in field to apply @p value to.
    * @param[in] component The component of @p field to apply @p value to. If @p T is a scalar type,
@@ -176,10 +178,10 @@ struct FieldSpecificationOp
    *
    * This function performs field[index][component] (+)= value for all values of field[index].
    */
-  template< typename T >
+  template< typename T, int USD >
   GEOSX_HOST_DEVICE
   static inline typename std::enable_if< traits::is_tensorT < T >, void>::type
-  SpecifyFieldValue( arrayView2d <T> const & field,
+  SpecifyFieldValue( arrayView2d< T, USD > const & field,
                      localIndex const index,
                      integer const component,
                      real64 const value )
@@ -206,6 +208,7 @@ struct FieldSpecificationOp
   /**
    * @brief Read value from a 2d field.
    * @tparam T The type of the array2d field variable specified in @p field.
+   * @tparam USD the unit stride dimension of the array @p field.
    * @param[in] field The array2d field variable to read @p value from.
    * @param[in] index The index in field to read @p value from.
    * @param[in] component The index along second dimension of 2d array.
@@ -213,10 +216,10 @@ struct FieldSpecificationOp
    *
    * This function performs value (+)= field[index][component].
    */
-  template< typename T >
+  template< typename T, int USD >
   GEOSX_HOST_DEVICE
   static inline typename std::enable_if< !traits::is_tensorT < T >, void>::type
-  ReadFieldValue( arrayView2d< T const > const & field,
+  ReadFieldValue( arrayView2d< T const, USD > const & field,
                   localIndex const index,
                   integer const component,
                   real64 & value )
@@ -228,10 +231,10 @@ struct FieldSpecificationOp
   /**
    * @brief This function is not meaningful. It exists for generic purposes, but will result in an error if called.
    */
-  template< typename T >
+  template< typename T, int USD >
   GEOSX_HOST_DEVICE
   static inline typename std::enable_if< traits::is_tensorT < T >, void>::type
-  ReadFieldValue( arrayView2d< T const > const & GEOSX_UNUSED_ARG( field ),
+  ReadFieldValue( arrayView2d< T const, USD > const & GEOSX_UNUSED_ARG( field ),
                   localIndex const GEOSX_UNUSED_ARG( index ),
                   integer const GEOSX_UNUSED_ARG( component ),
                   real64 & GEOSX_UNUSED_ARG( value ) )
@@ -242,26 +245,37 @@ struct FieldSpecificationOp
   /**
    * @brief Pointwise application of a value to a field variable.
    * @tparam T The type of the array2d field variable specified in @p field.
+   * @tparam USD the unit stride dimension of the array @p field.
    * @param[in] field The array2d field variable to apply @p value to.
    * @param[in] index The index in field to apply @p value to.
-   * @param[in] component not used.
+   * @param[in] component The index along third dimension of 3d array.
    * @param[in] value The value to apply to @p field.
    *
    * This function performs field[index] (+)= value for all values of field[index].
    */
-  template< typename T >
+  template< typename T, int USD >
   GEOSX_HOST_DEVICE
   static inline typename std::enable_if< !traits::is_tensorT < T >, void>::type
-  SpecifyFieldValue( arrayView3d <T> const & field,
+  SpecifyFieldValue( arrayView3d< T, USD > const & field,
                      localIndex const index,
-                     integer const GEOSX_UNUSED_ARG( component ),
+                     integer const component,
                      real64 const value )
   {
-    for( localIndex a = 0; a < field.size( 1 ); ++a )
+    if ( component >= 0 )
     {
-      for( localIndex b = 0; b < field.size( 2 ); ++b )
+      for ( localIndex a = 0; a < field.size( 1 ); ++a )
       {
-        OP::template apply( field( index, a, b ), value );
+        OP::template apply( field( index, a, component), value );
+      }
+    }
+    else
+    {
+      for( localIndex a = 0; a < field.size( 1 ); ++a )
+      {
+        for( localIndex b = 0; b < field.size( 2 ); ++b )
+        {
+          OP::template apply( field( index, a, b ), value );
+        }
       }
     }
   }
@@ -269,6 +283,7 @@ struct FieldSpecificationOp
   /**
    * @brief Pointwise application of a value to a field variable.
    * @tparam T The type of the array2d field variable specified in @p field.
+   * @tparam USD the unit stride dimension of the array @p field.
    * @param[in] field The array2d field variable to apply @p value to.
    * @param[in] index The index in field to apply @p value to.
    * @param[in] component The component of @p field to apply @p value to. If @p T is a scalar type,
@@ -277,10 +292,10 @@ struct FieldSpecificationOp
    *
    * This function performs field[index][component] (+)= value for all values of field[index].
    */
-  template< typename T >
+  template< typename T, int USD >
   GEOSX_HOST_DEVICE
   static inline typename std::enable_if< traits::is_tensorT < T >, void>::type
-  SpecifyFieldValue( arrayView3d <T> const & field,
+  SpecifyFieldValue( arrayView3d< T, USD > const & field,
                      localIndex const index,
                      integer const component,
                      real64 const value )
@@ -313,10 +328,10 @@ struct FieldSpecificationOp
   /**
    * @brief This function is not meaningful. It exists for generic purposes, but will result in an error if called.
    */
-  template< typename T >
+  template< typename T, int USD >
   GEOSX_HOST_DEVICE
   static inline void
-  ReadFieldValue( arrayView3d< T const > const & GEOSX_UNUSED_ARG( field ),
+  ReadFieldValue( arrayView3d< T const, USD > const & GEOSX_UNUSED_ARG( field ),
                   localIndex const GEOSX_UNUSED_ARG( index ),
                   integer const GEOSX_UNUSED_ARG( component ),
                   real64 & GEOSX_UNUSED_ARG( value ) )
