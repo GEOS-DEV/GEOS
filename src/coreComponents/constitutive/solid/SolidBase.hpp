@@ -62,7 +62,6 @@ public:
     static constexpr auto densityString  = "density";
 
     static constexpr auto stressString = "stress";
-    static constexpr auto elasticStressString = "elasticStress";
 
   };
 
@@ -85,7 +84,6 @@ protected:
   array2d<real64> m_density;
 
   array2d<R2SymTensor> m_stress;
-  array2d<R2SymTensor> m_elasticStress;
 
 };
 

@@ -33,8 +33,7 @@ SolidBase::SolidBase( string const & name,
   ConstitutiveBase( name, parent ),
   m_defaultDensity{0},
   m_density{},
-  m_stress{},
-  m_elasticStress{}
+  m_stress{}
 {
 
   registerWrapper( viewKeyStruct::defaultDensityString, &m_defaultDensity, 0 )->
@@ -48,11 +47,6 @@ SolidBase::SolidBase( string const & name,
   registerWrapper( viewKeyStruct::stressString, &m_stress, 0 )->
     setPlotLevel(PlotLevel::LEVEL_0)->
     setDescription("Stress Deviator");
-
-  registerWrapper( viewKeyStruct::elasticStressString, &m_elasticStress, 0 )->
-    setPlotLevel(PlotLevel::LEVEL_0)->
-    setDescription("Elastic Stress");
-
 }
 
 SolidBase::~SolidBase()
@@ -69,7 +63,6 @@ SolidBase::DeliverClone( string const & GEOSX_UNUSED_ARG( name ),
   newConstitutiveRelation->m_density = m_density;
 
   newConstitutiveRelation->m_stress = m_stress;
-  newConstitutiveRelation->m_elasticStress = m_elasticStress;
 }
 
 
@@ -83,9 +76,6 @@ void SolidBase::AllocateConstitutiveData( dataRepository::Group * const parent,
   m_density = m_defaultDensity;
 
   m_stress.resize( parent->size(), numConstitutivePointsPerParentIndex );
-  m_elasticStress.resize( parent->size(), numConstitutivePointsPerParentIndex );
-
-
 }
 
 }

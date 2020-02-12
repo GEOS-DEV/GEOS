@@ -262,7 +262,7 @@ public:
 protected:
   virtual void PostProcessInput() override;
 
-private:
+protected:
 
 
   StiffnessTensor m_defaultStiffness; /// default value for stiffness tensor

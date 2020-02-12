@@ -144,7 +144,7 @@ public:
 protected:
   virtual void PostProcessInput() override;
 
-private:
+protected:
   /// scalar compressibility parameter
   real64 m_compressibility;
 

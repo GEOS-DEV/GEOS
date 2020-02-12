@@ -301,20 +301,6 @@ Element: LinearElasticIsotropic
 .. include:: ../../coreComponents/fileIO/schema/docs/LinearElasticIsotropic.rst
 
 
-.. _XML_LinearViscoElasticAnisotropic:
-
-Element: LinearViscoElasticAnisotropic
-======================================
-.. include:: ../../coreComponents/fileIO/schema/docs/LinearViscoElasticAnisotropic.rst
-
-
-.. _XML_LinearViscoElasticIsotropic:
-
-Element: LinearViscoElasticIsotropic
-====================================
-.. include:: ../../coreComponents/fileIO/schema/docs/LinearViscoElasticIsotropic.rst
-
-
 .. _XML_Mesh:
 
 Element: Mesh
@@ -898,20 +884,6 @@ Datastructure: LinearElasticAnisotropic
 Datastructure: LinearElasticIsotropic
 =====================================
 .. include:: ../../coreComponents/fileIO/schema/docs/LinearElasticIsotropic_other.rst
-
-
-.. _DATASTRUCTURE_LinearViscoElasticAnisotropic:
-
-Datastructure: LinearViscoElasticAnisotropic
-============================================
-.. include:: ../../coreComponents/fileIO/schema/docs/LinearViscoElasticAnisotropic_other.rst
-
-
-.. _DATASTRUCTURE_LinearViscoElasticIsotropic:
-
-Datastructure: LinearViscoElasticIsotropic
-==========================================
-.. include:: ../../coreComponents/fileIO/schema/docs/LinearViscoElasticIsotropic_other.rst
 
 
 .. _DATASTRUCTURE_Mesh:
