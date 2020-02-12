@@ -18,13 +18,13 @@
                   xCoords="{-1, 1}"
                   yCoords="{-1, 1}"
                   zCoords="{-1, 1}"
-                  nx="{30}"
-                  ny="{30}"
-                  nz="{30}"
+                  nx="{3}"
+                  ny="{3}"
+                  nz="{3}"
                   cellBlockNames="{cb1}"/>
   </Mesh>
 
-  <Events maxTime="1.0">
+  <Events maxTime="2.0">
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
     <PeriodicEvent name="solverApplications"
@@ -34,15 +34,15 @@
     <!-- This event is applied every 1.0s.  The targetExactTimestep
     flag allows this event to request a dt modification to match an
     integer multiple of the timeFrequency. -->
+    <!-- PeriodicEvent name="outputs"
+                   timeFrequency="1.0"
+                   targetExactTimestep="1"
+                   target="/Outputs/VTKOutput" /-->
+
     <PeriodicEvent name="outputs"
                    timeFrequency="1.0"
                    targetExactTimestep="1"
-                   target="/Outputs/VTKOutput" />
-
-    <!--PeriodicEvent name="outputs"
-                   timeFrequency="1.0"
-                   targetExactTimestep="1"
-                   target="/Outputs/SiloOutput" /-->
+                   target="/Outputs/SiloOutput" />
 
     <PeriodicEvent name="restarts"
                    timeFrequency="1e99"
@@ -92,7 +92,7 @@
                         setNames="{centerPlane}"/> -->
 
     <FieldSpecification name="diffusionCoeff"
-                        initialCondition="1"
+                        initialCondition="0"
                         setNames="{all}"
                         objectPath="ElementRegions"
                         fieldName="coeffField"
@@ -107,13 +107,13 @@
     symbolic math function should expect the variables to be given, and an expression that it will compile.
     A list of available functions is given here: https://github.com/kobalicek/mathpresso -->
     <SymbolicFunction name="f_b"
-                      inputVarNames="{elementCenter}"
-                      variableNames="{x, y, z}"
-                      expression="1/((1+x*x)*(1+y*y)*(1+z*z*z*z))"/>
+                      inputVarNames="{time, elementCenter}"
+                      variableNames="{t, x, y, z}"
+                      expression="t/((1+x*x)*(1+y*y)*(1+z*z*z*z))"/>
 
   </Functions>
   <Outputs>
-    <!-- <Silo name="SiloOutput" parallelThreads="1" plotFileRoot="plot"/> -->
+    <Silo name="SiloOutput" parallelThreads="1" plotFileRoot="plot"/> 
     <VTK name="VTKOutput" parallelThreads="1" plotFileRoot="plot"/>
     <Restart name="restartOutput"/>
   </Outputs>

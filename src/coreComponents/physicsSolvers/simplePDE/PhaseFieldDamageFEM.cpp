@@ -62,7 +62,9 @@ using namespace constitutive;
 
 PhaseFieldDamageFEM::PhaseFieldDamageFEM(const std::string &name,
                                            Group *const parent):
-  SolverBase(name, parent), m_fieldName("primaryField")
+  SolverBase(name, parent),
+  m_fieldName("primaryField"),
+  m_solidModelName()
 {
 
   registerWrapper<string>(PhaseFieldDamageFEMViewKeys.timeIntegrationOption.Key())->
@@ -92,26 +94,24 @@ PhaseFieldDamageFEM::~PhaseFieldDamageFEM() {
 void PhaseFieldDamageFEM::RegisterDataOnMesh(Group *const MeshBodies) {
   for (auto &mesh : MeshBodies->GetSubGroups()) {
 
-    // MeshLevel * meshLevel = Group::group_cast<MeshBody *>(mesh.second)->getMeshLevel(0);
+    MeshLevel * meshLevel = Group::group_cast<MeshBody *>(mesh.second)->getMeshLevel(0);
 
-    NodeManager *const nodes = mesh.second->group_cast<MeshBody *>()
-                                   ->getMeshLevel(0)
-                                   ->getNodeManager();
+    NodeManager *const nodes = meshLevel->getNodeManager();
 
     nodes->registerWrapper<real64_array>(m_fieldName)
         ->setApplyDefaultValue(0.0)
         ->setPlotLevel(PlotLevel::LEVEL_0)
         ->setDescription("Primary field variable");
 
-    // ElementRegionManager * const elemManager = meshLevel->getElemManager();
-    //
-    // elemManager->forElementSubRegions<CellElementSubRegion>( [&]( CellElementSubRegion * const subRegion )
-    //  {
-    // //   subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::coeffName)->
-    // //     setApplyDefaultValue(0.0)->
-    // //     setPlotLevel(PlotLevel::LEVEL_0)->
-    // //     setDescription("field variable representing the diffusion coefficient");
-    //  });
+     ElementRegionManager * const elemManager = meshLevel->getElemManager();
+
+     elemManager->forElementSubRegions<CellElementSubRegion>( [&]( CellElementSubRegion * const subRegion )
+     {
+        subRegion->registerWrapper( viewKeyStruct::coeffName, &m_coeff, false )->
+          setApplyDefaultValue(0.0)->
+          setPlotLevel(PlotLevel::LEVEL_0)->
+          setDescription("field variable representing the diffusion coefficient");
+     });
 
   }
 }
@@ -189,7 +189,7 @@ void PhaseFieldDamageFEM::SetupDofs(
                       DofManager::Connectivity::Elem);
 }
 
-void PhaseFieldDamageFEM::AssembleSystem(real64 const time_n,
+void PhaseFieldDamageFEM::AssembleSystem( real64 const time_n,
                                           real64 const GEOSX_UNUSED_ARG(dt),
                                           DomainPartition *const domain,
                                           DofManager const &dofManager,
@@ -232,18 +232,20 @@ void PhaseFieldDamageFEM::AssembleSystem(real64 const time_n,
             m_discretizationName);
 
     elementRegion->forElementSubRegionsIndex<CellElementSubRegion>(
-        [&](localIndex const esr,
+        [&](localIndex const GEOSX_UNUSED_ARG(esr),
             CellElementSubRegion const *const elementSubRegion) {
 
-          localIndex m_solidMaterialFullIndex = 0;
+//          localIndex m_solidMaterialFullIndex = 0;
+//          SolidBase * solidModel =  constitutiveRelations[er][esr][m_solidMaterialFullIndex]->group_cast<SolidBase*>();
 
-          SolidBase * solidModel =  constitutiveRelations[er][esr][m_solidMaterialFullIndex]->group_cast<SolidBase*>();
-
+#if 0
           arrayView2d<real64 const> const & strainEnergy =
-          elementSubRegion->getReference<array2d<real64> >(SolidBase::viewKeyStruct::strainEnergyDensityString);
-
-          array3d<R1Tensor> const &dNdX =
-              elementSubRegion->getReference<array3d<R1Tensor>>(keys::dNdX);
+          elementSubRegion->GetConstitutiveModels()->GetGroup(m_solidModelName)->getReference<array2d<real64> >(SolidBase::viewKeyStruct::strainEnergyDensityString);
+#else
+#define strainEnergy( k, q ) m_coeff[k]
+#endif
+          array3d<R1Tensor> const &
+          dNdX = elementSubRegion->getReference<array3d<R1Tensor>>(keys::dNdX);
 
           arrayView2d<real64> const &detJ =
               elementSubRegion->getReference<array2d<real64>>(keys::detJ);
@@ -277,7 +279,7 @@ void PhaseFieldDamageFEM::AssembleSystem(real64 const time_n,
               for (localIndex q = 0; q < n_q_points; ++q) {
                 double D = 0; //max between threshold and Elastic energy
                 if(m_localDissipationOption == "Linear"){
-                  D = max(threshold, strainEnergy[k][q]);
+                  D = max(threshold, strainEnergy(k,q));
                 }
                 /*real64 Xq = 0;
                 real64 Yq = 0;
@@ -301,7 +303,7 @@ void PhaseFieldDamageFEM::AssembleSystem(real64 const time_n,
                     element_rhs(a) += -detJ[k][q] * Na * (- ell * D + 3 * Gc / 16 )/ Gc;
                   }
                   else{
-                    element_rhs(a) += detJ[k][q] * Na * (2 * ell) * strainEnergy[k][q] / Gc;
+                    element_rhs(a) += detJ[k][q] * Na * (2 * ell) * strainEnergy(k,q) / Gc;
                   }
                   for (localIndex b = 0; b < numNodesPerElement; ++b) {
                     real64 Nb = feDiscretization->m_finiteElement->value(b, q);
@@ -314,7 +316,7 @@ void PhaseFieldDamageFEM::AssembleSystem(real64 const time_n,
                         element_matrix(a, b) +=
                         detJ[k][q] *
                         (pow(ell,2) * -Dot(dNdX[k][q][a], dNdX[k][q][b]) -
-                         Na * Nb * (1 + 2 * ell*strainEnergy[k][q]/Gc));
+                         Na * Nb * (1 + 2 * ell*strainEnergy(k,q)/Gc));
                     }
                 }
               }
@@ -376,8 +378,11 @@ void PhaseFieldDamageFEM::ApplySystemSolution(DofManager const &dofManager,
 
 void PhaseFieldDamageFEM::ApplyBoundaryConditions(
     real64 const time_n, real64 const dt, DomainPartition *const domain,
-    DofManager const &dofManager, ParallelMatrix &matrix, ParallelVector &rhs) {
+    DofManager const &dofManager, ParallelMatrix &matrix, ParallelVector &rhs)
+{
   ApplyDirichletBC_implicit(time_n + dt, dofManager, *domain, m_matrix, m_rhs);
+
+
 
   if (getLogLevel() == 2) {
     GEOS_LOG_RANK_0("After PhaseFieldDamageFEM::ApplyBoundaryConditions");
@@ -421,22 +426,29 @@ void PhaseFieldDamageFEM::SolveSystem(DofManager const &dofManager,
   }
 }
 
-void PhaseFieldDamageFEM::ApplyDirichletBC_implicit(
-    real64 const time, DofManager const &dofManager, DomainPartition &domain,
-    ParallelMatrix &matrix, ParallelVector &rhs) {
-  FieldSpecificationManager const *const fsManager =
+void PhaseFieldDamageFEM::ApplyDirichletBC_implicit( real64 const time,
+                                                     DofManager const &dofManager, DomainPartition &domain,
+                                                     ParallelMatrix &matrix,
+                                                     ParallelVector &rhs )
+
+{
+  FieldSpecificationManager const * const fsManager =
       FieldSpecificationManager::get();
 
-  fsManager->Apply(time, &domain, "nodeManager", m_fieldName,
-                   [&](FieldSpecificationBase const *const bc, string const &,
-                       set<localIndex> const &targetSet,
-                       Group *const targetGroup,
-                       string const GEOSX_UNUSED_ARG(fieldName)) -> void {
-                     bc->ApplyBoundaryConditionToSystem<FieldSpecificationEqual,
-                                                        LAInterface>(
-                         targetSet, false, time, targetGroup, m_fieldName,
-                         dofManager.getKey(m_fieldName), 1, matrix, rhs);
-                   });
+  fsManager->Apply( time, &domain, "nodeManager", m_fieldName,
+                    [&](FieldSpecificationBase const *const bc, string const &,
+                        set<localIndex> const &targetSet,
+                        Group *const targetGroup,
+                        string const GEOSX_UNUSED_ARG(fieldName)) -> void
+  {
+                      bc->ApplyBoundaryConditionToSystem<FieldSpecificationEqual,
+                      LAInterface>(
+                          targetSet, false, time, targetGroup, m_fieldName,
+                          dofManager.getKey(m_fieldName), 1, matrix, rhs);
+  } );
+
+  fsManager->ApplyFieldValue< serialPolicy >( time, &domain, "ElementRegions", viewKeyStruct::coeffName );
+
 }
 
 REGISTER_CATALOG_ENTRY(SolverBase, PhaseFieldDamageFEM, std::string const &,

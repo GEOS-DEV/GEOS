@@ -112,7 +112,7 @@ public:
 
   struct viewKeyStruct : public SolverBase::viewKeyStruct
   {
-    static constexpr auto coeffFieldName = "coeffFieldName";
+//    static constexpr auto coeffFieldName = "coeffFieldName";
     static constexpr auto coeffName = "coeffField";
     static constexpr auto localDissipationOption = "localDissipation";
 
@@ -126,6 +126,11 @@ public:
 
   inline globalIndex getSize() const { return m_matrix.globalRows(); }
 
+  void setSolidModelName( string const & name )
+  {
+    m_solidModelName = name;
+  }
+
 protected:
   virtual void PostProcessInput() override final;
 
@@ -134,7 +139,9 @@ private:
   stabledt m_stabledt;
   timeIntegrationOption m_timeIntegrationOption;
   string m_localDissipationOption;
+  string m_solidModelName;
 
+  array1d<real64> m_coeff;
 //  string m_coeffFieldName;
 
   PhaseFieldDamageFEM();
