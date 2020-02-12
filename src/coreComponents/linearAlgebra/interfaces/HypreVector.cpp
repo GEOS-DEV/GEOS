@@ -76,6 +76,7 @@ HypreVector::~HypreVector()
   if( m_ij_vector )
   {
     HYPRE_IJVectorDestroy( m_ij_vector );
+    m_ij_vector = nullptr;
   }
 }
 

@@ -425,7 +425,7 @@ localIndex EpetraMatrix::maxRowLength() const
 
 localIndex EpetraMatrix::localRowLength( localIndex localRowIndex ) const
 {
-  return m_matrix->NumMyEntries( localRowIndex );
+  return m_matrix->NumMyEntries( integer_conversion< int >( localRowIndex ) );
 }
 
 localIndex EpetraMatrix::globalRowLength( globalIndex globalRowIndex ) const
