@@ -203,7 +203,7 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface (localIndex const cellIndex
 }
 
 void EmbeddedSurfaceSubRegion::CalculateElementGeometricQuantities( array1d<R1Tensor> const  intersectionPoints,
-                                                                    localIndex k )
+                                                                    localIndex const k )
 {
       for (localIndex p = 0; p < intersectionPoints.size(); p++)
       {
@@ -218,6 +218,18 @@ void EmbeddedSurfaceSubRegion::CalculateElementGeometricQuantities( array1d<R1Te
 void EmbeddedSurfaceSubRegion::setupRelatedObjectsInRelations( MeshLevel const * const mesh )
 {
   this->m_toNodesRelation.SetRelatedObject( mesh->getNodeManager() );
+}
+
+real64 EmbeddedSurfaceSubRegion::ComputeHeavisideFunction(R1Tensor const nodeCoord,
+                                                          localIndex const k)
+{
+  real64 heaviside;
+  R1Tensor distanceVector = nodeCoord;
+  distanceVector -= m_elementCenter[k];
+
+  heaviside = Dot(distanceVector, m_normalVector[k]) > 0 ? 1 : 0;
+
+  return heaviside;
 }
 
 } /* namespace geosx */
