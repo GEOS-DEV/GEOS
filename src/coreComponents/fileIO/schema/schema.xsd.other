@@ -590,6 +590,8 @@
 		<xsd:attribute name="restartFileName" type="string" />
 		<!--schemaFileName => Name of the output schema-->
 		<xsd:attribute name="schemaFileName" type="string" />
+		<!--useNonblockingMPI => Whether to prefer using non-blocking MPI communication where implemented (results in non-deterministic DOF numbering).-->
+		<xsd:attribute name="useNonblockingMPI" type="integer" />
 		<!--xPartitionsOverride => Number of partitions in the x-direction-->
 		<xsd:attribute name="xPartitionsOverride" type="integer" />
 		<!--yPartitionsOverride => Number of partitions in the y-direction-->

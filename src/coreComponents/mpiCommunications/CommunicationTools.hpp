@@ -47,46 +47,47 @@ public:
 
   static void AssignGlobalIndices( ObjectManagerBase & object,
                                    ObjectManagerBase const & compositionObject,
-                                   array1d<NeighborCommunicator> & neighbors );
+                                   array1d< NeighborCommunicator > & neighbors );
 
   static void AssignNewGlobalIndices( ObjectManagerBase & object,
-                                      std::set<localIndex> const & indexList );
+                                      std::set< localIndex > const & indexList );
 
   static void
   AssignNewGlobalIndices( ElementRegionManager & elementManager,
-                          std::map< std::pair<localIndex,localIndex>, std::set<localIndex> > const & newElems );
+                          std::map< std::pair< localIndex, localIndex >, std::set< localIndex > > const & newElems );
 
   static void FindGhosts( MeshLevel * const meshLevel,
-                          array1d<NeighborCommunicator> & neighbors );
+                          array1d< NeighborCommunicator > & neighbors,
+                          bool use_nonblocking );
 
-  static std::set<int> & getFreeCommIDs();
+  static std::set< int > & getFreeCommIDs();
   static int reserveCommID();
   static void releaseCommID( int & ID );
 
   static void FindMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
-                                                   array1d<NeighborCommunicator> & allNeighbors );
+                                                   array1d< NeighborCommunicator > & allNeighbors );
 
-  static void SynchronizeFields( const std::map<string, string_array >& fieldNames,
+  static void SynchronizeFields( const std::map< string, string_array > & fieldNames,
                                  MeshLevel * const mesh,
-                                 array1d<NeighborCommunicator> & allNeighbors,
+                                 array1d< NeighborCommunicator > & allNeighbors,
                                  bool on_device = false );
 
-  static void SynchronizePackSendRecvSizes( const std::map<string, string_array >& fieldNames,
+  static void SynchronizePackSendRecvSizes( const std::map< string, string_array > & fieldNames,
                                             MeshLevel * const mesh,
-                                            array1d<NeighborCommunicator> & neighbors,
+                                            array1d< NeighborCommunicator > & neighbors,
                                             MPI_iCommData & icomm,
                                             bool on_device = false );
 
-  static void SynchronizePackSendRecv( const std::map<string, string_array >& fieldNames,
+  static void SynchronizePackSendRecv( const std::map< string, string_array > & fieldNames,
                                        MeshLevel * const mesh,
-                                       array1d<NeighborCommunicator> & allNeighbors,
+                                       array1d< NeighborCommunicator > & allNeighbors,
                                        MPI_iCommData & icomm,
                                        bool on_device = false );
 
   static void SynchronizeUnpack( MeshLevel * const mesh,
-                                 array1d<NeighborCommunicator> & neighbors,
+                                 array1d< NeighborCommunicator > & neighbors,
                                  MPI_iCommData & icomm,
-                                 bool on_device = false);
+                                 bool on_device = false );
 
 
 };
@@ -97,9 +98,9 @@ class MPI_iCommData
 public:
 
   MPI_iCommData():
-    size(0),
-    commID(-1),
-    sizeCommID(-1),
+    size( 0 ),
+    commID( -1 ),
+    sizeCommID( -1 ),
     fieldNames(),
     mpiSendBufferRequest(),
     mpiRecvBufferRequest(),
@@ -114,12 +115,12 @@ public:
   {
     if( commID >= 0 )
     {
-      CommunicationTools::releaseCommID(commID);
+      CommunicationTools::releaseCommID( commID );
     }
 
     if( sizeCommID >= 0 )
     {
-      CommunicationTools::releaseCommID(sizeCommID);
+      CommunicationTools::releaseCommID( sizeCommID );
     }
 
   }
@@ -134,25 +135,24 @@ public:
     mpiSizeRecvBufferRequest.resize( numMessages );
     mpiSizeSendBufferStatus.resize( numMessages );
     mpiSizeRecvBufferStatus.resize( numMessages );
-    size = static_cast<int>(numMessages);
+    size = static_cast< int >(numMessages);
   }
 
   int size;
   int commID;
   int sizeCommID;
-  std::map<string, string_array > fieldNames;
+  std::map< string, string_array > fieldNames;
 
-  array1d<MPI_Request> mpiSendBufferRequest;
-  array1d<MPI_Request> mpiRecvBufferRequest;
-  array1d<MPI_Status>  mpiSendBufferStatus;
-  array1d<MPI_Status>  mpiRecvBufferStatus;
+  array1d< MPI_Request > mpiSendBufferRequest;
+  array1d< MPI_Request > mpiRecvBufferRequest;
+  array1d< MPI_Status >  mpiSendBufferStatus;
+  array1d< MPI_Status >  mpiRecvBufferStatus;
 
-  array1d<MPI_Request> mpiSizeSendBufferRequest;
-  array1d<MPI_Request> mpiSizeRecvBufferRequest;
-  array1d<MPI_Status>  mpiSizeSendBufferStatus;
-  array1d<MPI_Status>  mpiSizeRecvBufferStatus;
+  array1d< MPI_Request > mpiSizeSendBufferRequest;
+  array1d< MPI_Request > mpiSizeRecvBufferRequest;
+  array1d< MPI_Status >  mpiSizeSendBufferStatus;
+  array1d< MPI_Status >  mpiSizeRecvBufferStatus;
 };
-
 
 
 
