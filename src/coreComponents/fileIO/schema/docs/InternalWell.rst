@@ -11,6 +11,7 @@ polylineNodeCoords    real64_array2d      required physical coordinates of the w
 polylineSegmentConn   globalIndex_array2d required connectivity of the polyline segments                    
 wellControlsName      string              required name of the set of constraints associated with this well 
 wellRegionName        string              required name of the well element region                          
+Perforation           node                         :ref:`XML_Perforation`                                   
 ===================== =================== ======== ======================================================== 
 
 
