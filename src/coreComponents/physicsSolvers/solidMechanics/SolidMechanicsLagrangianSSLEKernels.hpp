@@ -60,7 +60,7 @@ struct StressCalculationKernel
 //    using KERNEL_POLICY = parallelDevicePolicy< 256 >;
     using KERNEL_POLICY = parallelHostPolicy;
     RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, numElems ),
-                                   GEOSX_HOST_DEVICE_LAMBDA ( localIndex const k )
+                                   [&] ( localIndex const k )
     {
       real64 uhat_local[ NUM_NODES_PER_ELEM ][ 3 ];
 
