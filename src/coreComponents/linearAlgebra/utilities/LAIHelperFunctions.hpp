@@ -39,12 +39,12 @@ namespace LAIHelperFunctions
  * @param[in]  DofKey
  * @param[out] permutationMatrix
  */
-void CreatePermutationMatrix(NodeManager* const nodeManager,
-                             localIndex const nRows,
-                             localIndex const nCols,
-                             int const nDofPerNode,
-                             string const DofKey,
-                             ParallelMatrix & permutationMatrix);
+void CreatePermutationMatrix( NodeManager const * const nodeManager,
+                              localIndex const nRows,
+                              localIndex const nCols,
+                              int const nDofPerNode,
+                              string const DofKey,
+                              ParallelMatrix & permutationMatrix);
 
 /**
  * Create a permuation matrix for a given nodal variable.
@@ -55,12 +55,12 @@ void CreatePermutationMatrix(NodeManager* const nodeManager,
  * @param[in]  DofKey
  * @param[out] permutationMatrix
  */
-void CreatePermutationMatrix(ElementRegionManager* const elemManager,
-                             localIndex const nRows,
-                             localIndex const nCols,
-                             int const nDofPerNode,
-                             string const DofKey,
-                             ParallelMatrix & permutationMatrix);
+void CreatePermutationMatrix( ElementRegionManager const * const elemManager,
+                              localIndex const nRows,
+                              localIndex const nCols,
+                              int const nDofPerNode,
+                              string const DofKey,
+                              ParallelMatrix & permutationMatrix);
 
 /**
  * Create a permuation matrix for a given nodal variable.
@@ -109,6 +109,10 @@ void PrintPermutedMatrix(ParallelMatrix const & matrix,
                          ParallelMatrix const & permutationMatrixRight,
                          std::ostream & os);
 
+
+void SeparateComponentFilter(ParallelMatrix const & src,
+                             ParallelMatrix & dst,
+                             const localIndex dofsPerNode);
 
 } // LAIHelperFunctions namespace
 

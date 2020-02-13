@@ -145,6 +145,11 @@ Group * InternalWellGenerator::CreateChild( string const & childKey, string cons
   return nullptr;
 }
 
+void InternalWellGenerator::ExpandObjectCatalogs()
+{
+  CreateChild( keys::perforation, keys::perforation );
+}
+
 void InternalWellGenerator::GenerateMesh( DomainPartition * const domain )
 {
   // count the number of well elements to create

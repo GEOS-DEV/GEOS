@@ -11,6 +11,7 @@ polylineSegmentConn   globalIndex_array2d required Connectivity of the polyline 
 radius                real64              required Radius of the well                                       
 wellControlsName      string              required Name of the set of constraints associated with this well 
 wellRegionName        string              required Name of the well element region                          
+Perforation           node                         :ref:`XML_Perforation`                                   
 ===================== =================== ======== ======================================================== 
 
 

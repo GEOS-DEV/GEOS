@@ -2,23 +2,22 @@
 <!--# # -->
 
 <!-- SPHINX_TUT_INT_HEX_PROBLEM_OPEN -->
-<Problem>
+<Problem xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="https://geosx-geosx.readthedocs-hosted.com/en/latest/_downloads/schema.xsd">
 <!-- SPHINX_TUT_INT_HEX_PROBLEM_OPEN_END -->
 
  <!-- SPHINX_TUT_INT_HEX_SOLVERS -->
  <Solvers>
   
     <SinglePhaseFVM name="SinglePhaseFlow"
-                     verboseLevel="1"
+                     logLevel="1"
                      discretization="singlePhaseTPFA"
                      fluidName="water"
                      solidName="rock"
                      targetRegions="{Region2}">
-      <NonlinearSolverParameters name="nlsp"
-                                 newtonTol="1.0e-6"
+      <NonlinearSolverParameters newtonTol="1.0e-6"
                                  newtonMaxIter="8"/>
-      <SystemSolverParameters name="ssp"
-                              krylovTol="1.0e-10"/>
+      <SystemSolverParameters krylovTol="1.0e-10"/>
     </SinglePhaseFVM>
   </Solvers>
  <!-- SPHINX_TUT_INT_HEX_SOLVERS_END -->
@@ -159,9 +158,6 @@
 
   </Functions>
 
-  <!-- <Partition>
-    <SpatialPartition xPar="1" yPar="1" zPar="1"/>
-  </Partition> -->
  <!-- SPHINX_TUT_INT_HEX_BLANKS_END -->
 
  <!-- SPHINX_TUT_INT_HEX_OUTPUTS -->

@@ -52,13 +52,13 @@ void
 SolidMechanicsLagrangianSSLE::updateStress( DomainPartition * const domain )
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  Group * const nodeManager = mesh->getNodeManager();
+  NodeManager * const nodeManager = mesh->getNodeManager();
   ConstitutiveManager  * const constitutiveManager = domain->GetGroup<ConstitutiveManager >(dataRepository::keys::ConstitutiveManager);
   ElementRegionManager * const elemManager = mesh->getElemManager();
   NumericalMethodsManager const * numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(dataRepository::keys::numericalMethodsManager);
   FiniteElementDiscretizationManager const * feDiscretizationManager = numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(dataRepository::keys::finiteElementDiscretizations);
 
-  arrayView1d<R1Tensor const> const & incDisp = nodeManager->getReference<r1_array>(dataRepository::keys::IncrementalDisplacement);
+  arrayView2d<real64 const, nodes::INCR_DISPLACEMENT_USD> const & incDisp = nodeManager->incrementalDisplacement();
 
   ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase>
   constitutiveRelations = elemManager->ConstructFullConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
@@ -79,7 +79,7 @@ SolidMechanicsLagrangianSSLE::updateStress( DomainPartition * const domain )
 
       arrayView2d<real64> const & detJ = elementSubRegion->getReference< array2d<real64> >(dataRepository::keys::detJ);
 
-      arrayView2d< localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM > const & elemsToNodes = elementSubRegion->nodeList();
+      arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion->nodeList();
       localIndex const numNodesPerElement = elemsToNodes.size(1);
 
       std::unique_ptr<FiniteElementBase>

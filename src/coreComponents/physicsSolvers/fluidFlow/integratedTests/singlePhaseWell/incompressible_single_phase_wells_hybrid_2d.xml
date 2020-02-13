@@ -8,11 +8,9 @@
                wellSolverName="singlePhaseWell"
                logLevel="1"
                targetRegions="{Region1,wellRegion1,wellRegion2,wellRegion3}">
-      <NonlinearSolverParameters name="nlsp"
-				 lineSearchAction="0"
+      <NonlinearSolverParameters lineSearchAction="0"
                                  newtonMaxIter="40"/>
-      <SystemSolverParameters name="ssp"
-                              useDirectSolver="1"
+      <SystemSolverParameters useDirectSolver="1"
                               logLevel="0"/>
     </Reservoir>
   
@@ -32,20 +30,17 @@
                       type="producer"
                       control="BHP"
                       targetBHP="5e5"
-                      targetRate="1e-1"
-                      referenceDepth="0.5"/>
+                      targetRate="1e-1"/>
         <WellControls name="wellControls2"
                       type="producer"
                       control="BHP"
                       targetBHP="5e5"
-                      targetRate="1e-1"
-                      referenceDepth="0.5"/>
+                      targetRate="1e-1"/>
         <WellControls name="wellControls3"
                       type="injector"
                       control="liquidRate" 
                       targetBHP="1e8"
-                      targetRate="1e-2" 
-                      referenceDepth="0.5"/>
+                      targetRate="1e-2"/>
     </SinglePhaseWell>
 
   </Solvers>
@@ -70,17 +65,17 @@
                                         {14.5, 0.5, 0.2  } }"
                   polylineSegmentConn="{ {0, 1},
                                          {1, 2} }"
-                  crossSectionArea="0.3"
+                  radius="0.05"
                   numElementsPerSegment="20">
         <Perforation name="producer1_perf1"
                      distanceFromHead="14"
-                     transmissibility="1e-12"/> 
+                     wellPeacemanIndex="1e-12"/> 
         <Perforation name="producer1_perf2"
                      distanceFromHead="11"
-                     transmissibility="1e-12"/> 
+                     wellPeacemanIndex="1e-12"/> 
         <Perforation name="producer1_perf3"
                      distanceFromHead="8"
-                     transmissibility="1e-12"/> 
+                     wellPeacemanIndex="1e-12"/> 
     </InternalWell> 
 
     <InternalWell name="well_producer2"
@@ -92,17 +87,17 @@
                                         { 0.5, 14.5, 0.2  } }"
                   polylineSegmentConn="{ {0, 1},
                                          {1, 2} }"
-                  crossSectionArea="0.3"
+                  radius="0.3"
                   numElementsPerSegment="17">
         <Perforation name="producer2_perf1"
                      distanceFromHead="14."
-                     transmissibility="1e-12"/> 
+                     wellPeacemanIndex="1e-12"/> 
         <Perforation name="producer2_perf2"
                      distanceFromHead="10"
-                     transmissibility="1e-12"/> 
+                     wellPeacemanIndex="1e-12"/> 
         <Perforation name="producer2_perf3"
                      distanceFromHead="6"
-                     transmissibility="1e-12"/> 
+                     wellPeacemanIndex="1e-12"/> 
     </InternalWell> 
 
     <InternalWell name="well_injector1"
@@ -112,14 +107,14 @@
                   polylineNodeCoords="{ {0.5,   0.5, 0.5  }, 
                                         {14.5, 14.5, 0.2  } }"
                   polylineSegmentConn="{ {0, 1} }"
-                  crossSectionArea="0.3"
+                  radius="0.3"
                   numElementsPerSegment="30">
         <Perforation name="injector1_perf1"
                      distanceFromHead="19.5"
-                     transmissibility="1e-12"/> 
+                     wellPeacemanIndex="1e-12"/> 
         <Perforation name="injector1_perf2"
                      distanceFromHead="10.45"
-                     transmissibility="1e-12"/> 
+                     wellPeacemanIndex="1e-12"/> 
     </InternalWell> 
   </Mesh>
 
@@ -223,10 +218,6 @@
   <Functions>
     <TableFunction     name="timeFunction"         inputVarNames="{time}" coordinates="{1.0, 2.0, 6e4}" values="{1.0, 2.0, 2.0}" />
   </Functions>
-
-  <Partition>
-    <SpatialPartition xPar="1" yPar="1" zPar="1"/>
-  </Partition> 
 
   <Outputs>
       <Silo name="siloOutput"/>

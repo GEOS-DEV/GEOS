@@ -37,6 +37,7 @@ WellControls::WellControls(string const & name, Group * const parent)
     m_targetBHP( 0.0 ),
     m_targetRate( 0.0 )
 {
+  setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
   registerWrapper( viewKeyStruct::typeString, &m_typeString, false )->
     setInputFlag(InputFlags::REQUIRED)->

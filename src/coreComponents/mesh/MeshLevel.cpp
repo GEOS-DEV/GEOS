@@ -120,8 +120,7 @@ void MeshLevel::GenerateAdjacencyLists( localIndex_array & seedNodeList,
                                             WellElementSubRegion>([&]( localIndex const kSubReg, 
                                                                        auto const * const subRegion )
       {
-        using SubRegionType = std::remove_pointer_t< decltype( subRegion ) >;
-        arrayView2d< localIndex const, SubRegionType::NODE_MAP_UNIT_STRIDE_DIM > const & elemsToNodes = subRegion->nodeList();
+        arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = subRegion->nodeList();
         arrayView2d< localIndex const > const & elemsToFaces = subRegion->faceList();
         for( auto const elementIndex : elementAdjacencySet[kReg][kSubReg] )
         {
