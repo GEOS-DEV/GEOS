@@ -1,8 +1,7 @@
 
 <Problem>
 
-  <Solvers
-    gravityVector="0.0, 0.0, -9.81">
+  <Solvers>
 
 
     <Reservoir name="reservoirSystem"
@@ -20,7 +19,6 @@
     
     <CompositionalMultiphaseFlow name="compositionalMultiphaseFlow"
                                  logLevel="1"
-                                 gravityFlag="1"
                                  discretization="fluidTPFA"
                                  targetRegions="{Channel}"
                                  fluidName="fluid1"
@@ -32,7 +30,6 @@
 
     <CompositionalMultiphaseWell name="compositionalMultiphaseWell"
                                  logLevel="1"
-                                 gravityFlag="1"
                                  targetRegions="{wellRegion1,wellRegion2}"
                                  wellFluidName="fluid1"
                                  wellRelPermName="relperm"

@@ -39,7 +39,7 @@ using namespace geosx;
     if( COND ) \
     { \
       GEOSX_WARNING( "This test is currently known to fail when " #COND " because:\n" REASON "\n" \
-                     "Therefore, we skip it entirely for this run (may show as PASSED or SKIPPED)" ); \
+                                                                                             "Therefore, we skip it entirely for this run (may show as PASSED or SKIPPED)" ); \
       GTEST_SKIP(); \
     } \
   } while( 0 )
@@ -63,47 +63,47 @@ char crand( )
   return 'a' + rand()%26;
 }
 
-TEST(TestNeighborComms, testBuffers )
+TEST( TestNeighborComms, testBuffers )
 {
   {
     size_t sz = 100;
-    std::vector<char> sd(sz);
-    for(size_t ii = 0; ii < sz; ++ii)
+    std::vector< char > sd( sz );
+    for( size_t ii = 0 ; ii < sz ; ++ii )
       sd[ii] = crand();
 
     auto nc = NeighborCommunicator();
-    nc.resizeSendBuffer(0,sz);
+    nc.resizeSendBuffer( 0, sz );
 
-    auto & sb = nc.SendBuffer(0);
-    for(size_t ii = 0; ii < sz; ++ii)
+    auto & sb = nc.SendBuffer( 0 );
+    for( size_t ii = 0 ; ii < sz ; ++ii )
       sb[ii] = sd[ii];
 
-    for(size_t ii = 0; ii < sz; ++ii)
+    for( size_t ii = 0 ; ii < sz ; ++ii )
       EXPECT_EQ( sb[ii], sd[ii] );
   }
 }
 
 
 #if defined(UMPIRE_ENABLE_CUDA) && defined(USE_CHAI)
-void pack(buffer_unit_type * buf, arrayView1d< const int > & veloc_view, localIndex size)
+void pack( buffer_unit_type * buf, arrayView1d< const int > & veloc_view, localIndex size )
 {
-  forall_in_range< parallelDevicePolicy< > >(0, size, GEOSX_HOST_DEVICE_LAMBDA( localIndex ii )
-      {
-        reinterpret_cast< int *>(buf)[ii] = veloc_view.data()[ii];
-      });  
+  forall_in_range< parallelDevicePolicy< > >( 0, size, GEOSX_HOST_DEVICE_LAMBDA( localIndex ii )
+  {
+    reinterpret_cast< int * >(buf)[ii] = veloc_view.data()[ii];
+  } );
 }
 
-void unpack(buffer_unit_type * buf, arrayView1d< int > & veloc_view, localIndex size)
+void unpack( buffer_unit_type * buf, arrayView1d< int > & veloc_view, localIndex size )
 {
-  forall_in_range< parallelDevicePolicy< > >(0, size, GEOSX_HOST_DEVICE_LAMBDA( localIndex ii )
-        {
-          veloc_view.data()[ii] = reinterpret_cast< int *>(buf)[ii];
-        } );
+  forall_in_range< parallelDevicePolicy< > >( 0, size, GEOSX_HOST_DEVICE_LAMBDA( localIndex ii )
+  {
+    veloc_view.data()[ii] = reinterpret_cast< int * >(buf)[ii];
+  } );
 }
 
-TEST(TestNeighborComms, testMPICommunication_fromPinnedSetOnDevice )
+TEST( TestNeighborComms, testMPICommunication_fromPinnedSetOnDevice )
 {
-  SKIP_TEST_IN_SERIAL("Parallel test");
+  SKIP_TEST_IN_SERIAL( "Parallel test" );
   {
     int rnk = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
 
@@ -114,8 +114,8 @@ TEST(TestNeighborComms, testMPICommunication_fromPinnedSetOnDevice )
       veloc[ii] = rnk == 0 ? ii : 0;
 
     auto nc = NeighborCommunicator();
-    nc.resizeSendBuffer(0,byte_size);
-    auto & sb = nc.SendBuffer(0);
+    nc.resizeSendBuffer( 0, byte_size );
+    auto & sb = nc.SendBuffer( 0 );
     buffer_unit_type * buf = &sb[0];
 
     MPI_Request request;
@@ -123,18 +123,18 @@ TEST(TestNeighborComms, testMPICommunication_fromPinnedSetOnDevice )
     {
       veloc.move( chai::GPU );
       auto veloc_view = veloc.toViewConst();
-      pack(buf,veloc_view,size);
-      MpiWrapper::iSend(buf, byte_size, 1, 0, MPI_COMM_GEOSX, &request );
+      pack( buf, veloc_view, size );
+      MpiWrapper::iSend( buf, byte_size, 1, 0, MPI_COMM_GEOSX, &request );
     }
     else
     {
-      int err = MpiWrapper::iRecv(buf, byte_size, 0, 0, MPI_COMM_GEOSX, &request );
+      int err = MpiWrapper::iRecv( buf, byte_size, 0, 0, MPI_COMM_GEOSX, &request );
       EXPECT_EQ( err, MPI_SUCCESS );
       MPI_Status status;
-      err = MpiWrapper::Wait(&request,&status);
+      err = MpiWrapper::Wait( &request, &status );
       EXPECT_EQ( err, MPI_SUCCESS );
       auto veloc_view = veloc.toView();
-      unpack(buf,veloc_view,size);
+      unpack( buf, veloc_view, size );
       veloc.move( chai::CPU );
       for( int ii = 0 ; ii < size ; ++ii )
         EXPECT_EQ( veloc[ii], ii );

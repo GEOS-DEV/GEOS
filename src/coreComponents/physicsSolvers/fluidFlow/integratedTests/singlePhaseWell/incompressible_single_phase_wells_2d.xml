@@ -1,8 +1,7 @@
 
 <Problem>
 
-  <Solvers
-    gravityVector="0.0, 0.0, -9.81">
+  <Solvers>
 
     <Reservoir name="reservoirSystem"
                flowSolverName="singlePhaseFlow"
@@ -16,18 +15,16 @@
                               logLevel="0"/>
     </Reservoir>
   
-    <SinglePhaseFlow name="singlePhaseFlow"
+    <SinglePhaseFVM name="singlePhaseFlow"
                      logLevel="1"
-                     gravityFlag="1"
                      discretization="singlePhaseTPFA"
                      fluidName="water"
                      solidName="rock"
                      targetRegions="{Region1}">
-    </SinglePhaseFlow>
+    </SinglePhaseFVM>
 
     <SinglePhaseWell name="singlePhaseWell"
                      logLevel="1"
-                     gravityFlag="1"
                      wellFluidName="water"
                      targetRegions="{wellRegion1,wellRegion2,wellRegion3}">
         <WellControls name="wellControls1"

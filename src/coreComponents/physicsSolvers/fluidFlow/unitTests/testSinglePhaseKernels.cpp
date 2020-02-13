@@ -15,17 +15,17 @@
 // Source includes
 #include "managers/initialization.hpp"
 #include "common/Logger.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseFlowKernels.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/unitTests/testFlowKernelHelpers.hpp"
 
 // TPL includes
 #include <gtest/gtest.h>
 
 using namespace geosx;
-using namespace geosx::SinglePhaseFlowKernels;
+using namespace geosx::SinglePhaseKernels;
 
 
-TEST( SinglePhaseFlowKernels, mobility )
+TEST( SinglePhaseKernels, mobility )
 {
   int constexpr NTEST = 3;
 
@@ -58,7 +58,7 @@ TEST( SinglePhaseFlowKernels, mobility )
  * @note This only tests uncoupled version.
  * In future, porosity update will be elsewhere and this will be simplified.
  */
-TEST( SinglePhaseFlowKernels, accumulation )
+TEST( SinglePhaseKernels, accumulation )
 {
   int constexpr NTEST = 3;
 
@@ -101,13 +101,12 @@ template<localIndex stencilSize>
 void computeFlux( arraySlice1d<real64 const> const & weight,
                   real64 const * pres,
                   real64 const * dPres,
-                  real64 const * gravDepth,
+                  real64 const * gravCoef,
                   real64 const * mob,
                   real64 const * dMob_dPres,
                   real64 const * dens,
                   real64 const * dDens_dPres,
                   real64 const dt,
-                  integer const gravityFlag,
                   real64 & flux,
                   real64 (& dFlux_dP)[stencilSize] )
 {
@@ -124,8 +123,8 @@ void computeFlux( arraySlice1d<real64 const> const & weight,
   real64 sumWeightGrav = 0;
   for (localIndex i = 0; i < stencilSize; ++i)
   {
-    potDif += weight[i] * (pres[i] + dPres[i] - gravityFlag * densMean * gravDepth[i]);
-    sumWeightGrav += weight[i] * gravityFlag * gravDepth[i];
+    potDif += weight[i] * (pres[i] + dPres[i] - densMean * gravCoef[i]);
+    sumWeightGrav += weight[i] * gravCoef[i];
   }
   localIndex const k_up = (potDif >= 0) ? 0 : 1;
   flux = dt * potDif * mob[k_up];
@@ -140,13 +139,12 @@ template<bool FULL, localIndex stencilSize>
 void testFluxKernel( CellElementStencilTPFA const & stencil,
                      real64 const * pres,
                      real64 const * dPres,
-                     real64 const * gravDepth,
+                     real64 const * gravCoef,
                      real64 const * mob,
                      real64 const * dMob_dPres,
                      real64 const * dens,
                      real64 const * dDens_dPres,
-                     real64 const dt,
-                     integer const gravityFlag )
+                     real64 const dt )
 {
   localIndex constexpr numElems = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
   localIndex constexpr fluidIndex = 0;
@@ -166,7 +164,7 @@ void testFluxKernel( CellElementStencilTPFA const & stencil,
                                                                                  seri[0],
                                                                                  sesri[0],
                                                                                  sei[0]);
-  auto gravDepthView   = AccessorHelper<FULL>::template makeElementAccessor<1> ( gravDepth,
+  auto gravCoefView    = AccessorHelper<FULL>::template makeElementAccessor<1> ( gravCoef,
                                                                                  stencilSize,
                                                                                  seri[0],
                                                                                  sesri[0],
@@ -206,13 +204,12 @@ void testFluxKernel( CellElementStencilTPFA const & stencil,
                        weights[0],
                        presView.toViewConst(),
                        dPresView.toViewConst(),
-                       gravDepthView.toViewConst(),
+                       gravCoefView.toViewConst(),
                        densView.toViewConst(),
                        dDens_dPresView.toViewConst(),
                        mobView.toViewConst(),
                        dMob_dPresView.toViewConst(),
                        fluidIndex,
-                       gravityFlag,
                        dt,
                        flux,
                        fluxJacobian );
@@ -224,13 +221,12 @@ void testFluxKernel( CellElementStencilTPFA const & stencil,
   computeFlux( weights[0],
                pres,
                dPres,
-               gravDepth,
+               gravCoef,
                mob,
                dMob_dPres,
                dens,
                dDens_dPres,
                dt,
-               gravityFlag,
                flux_et,
                dFlux_dP_et );
 
@@ -243,7 +239,7 @@ void testFluxKernel( CellElementStencilTPFA const & stencil,
   }
 }
 
-TEST( SinglePhaseFlowKernels, fluxFull )
+TEST( SinglePhaseKernels, fluxFull )
 {
   localIndex constexpr stencilSize = 2;
 
@@ -267,13 +263,12 @@ TEST( SinglePhaseFlowKernels, fluxFull )
   // we keep these around for easy aggregate initialization
   real64  const presData       [NTEST][stencilSize] = { { 1e+6, 2e+6 }, { 2e+6, 2e+6 }, { 2e+6, 2e+6 } };
   real64  const dPresData      [NTEST][stencilSize] = { { 1e+5, 1e+5 }, { 1e+5, 2e+5 }, { 1e+5, 1e+5 } };
-  real64  const gravDepthData  [NTEST][stencilSize] = { { 1e+3, 5e+2 }, { 1e+3, 1e+3 }, { 0.0,  1e+3 } };
+  real64  const gravCoefData   [NTEST][stencilSize] = { { 1e+3, 5e+2 }, { 1e+3, 1e+3 }, { 0.0,  1e+3 } };
   real64  const mobData        [NTEST][stencilSize] = { { 1e+6, 2e+6 }, { 2e+6, 1e+6 }, { 2e+6, 5e+6 } };
   real64  const dMob_dPresData [NTEST][stencilSize] = { { 1e-6, 2e-6 }, { 1e-6, 2e-6 }, { 1e-6, 2e-6 } };
   real64  const densData       [NTEST][stencilSize] = { { 1e+3, 2e+3 }, { 2e+3, 3e+3 }, { 2e+3, 1e+3 } };
   real64  const dDens_dPresData[NTEST][stencilSize] = { { 1e-6, 2e-6 }, { 2e-6, 3e-6 }, { 2e-6, 2e-6 } };
   real64  const dt             [NTEST]              = { 1.0,            1e+5,           1e+8           };
-  integer const gravityFlag    [NTEST]              = { 1,              1,              0              };
 
 
   for (int i = 0; i < NTEST; ++i)
@@ -283,18 +278,17 @@ TEST( SinglePhaseFlowKernels, fluxFull )
     testFluxKernel<true,2>( stencil,
                           presData[i],
                           dPresData[i],
-                          gravDepthData[i],
+                          gravCoefData[i],
                           mobData[i],
                           dMob_dPresData[i],
                           densData[i],
                           dDens_dPresData[i],
-                          dt[i],
-                          gravityFlag[i] );
+                          dt[i] );
 
   }
 }
 
-TEST( SinglePhaseFlowKernels, fluxRegion )
+TEST( SinglePhaseKernels, fluxRegion )
 {
   localIndex constexpr stencilSize = 2;
   CellElementStencilTPFA stencil;
@@ -315,13 +309,12 @@ TEST( SinglePhaseFlowKernels, fluxRegion )
   // we keep these around for easy aggregate initialization
   real64  const presData       [NTEST][stencilSize] = { { 1e+6, 2e+6 }, { 2e+6, 2e+6 }, { 2e+6, 2e+6 } };
   real64  const dPresData      [NTEST][stencilSize] = { { 1e+5, 1e+5 }, { 1e+5, 2e+5 }, { 1e+5, 1e+5 } };
-  real64  const gravDepthData  [NTEST][stencilSize] = { { 1e+3, 5e+2 }, { 1e+3, 1e+3 }, { 0.0,  1e+3 } };
+  real64  const gravCoefData   [NTEST][stencilSize] = { { 1e+3, 5e+2 }, { 1e+3, 1e+3 }, { 0.0,  1e+3 } };
   real64  const mobData        [NTEST][stencilSize] = { { 1e+6, 2e+6 }, { 2e+6, 1e+6 }, { 2e+6, 5e+6 } };
   real64  const dMob_dPresData [NTEST][stencilSize] = { { 1e-6, 2e-6 }, { 1e-6, 2e-6 }, { 1e-6, 2e-6 } };
   real64  const densData       [NTEST][stencilSize] = { { 1e+3, 2e+3 }, { 2e+3, 3e+3 }, { 2e+3, 1e+3 } };
   real64  const dDens_dPresData[NTEST][stencilSize] = { { 1e-6, 2e-6 }, { 2e-6, 3e-6 }, { 2e-6, 2e-6 } };
   real64  const dt             [NTEST]              = { 1.0,            1e+5,           1e+8           };
-  integer const gravityFlag    [NTEST]              = { 1,              1,              0              };
 
 
   for (int i = 0; i < NTEST; ++i)
@@ -331,13 +324,12 @@ TEST( SinglePhaseFlowKernels, fluxRegion )
     testFluxKernel<false,2>( stencil,
                            presData[i],
                            dPresData[i],
-                           gravDepthData[i],
+                           gravCoefData[i],
                            mobData[i],
                            dMob_dPresData[i],
                            densData[i],
                            dDens_dPresData[i],
-                           dt[i],
-                           gravityFlag[i] );
+                           dt[i] );
 
   }
 }

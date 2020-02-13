@@ -53,11 +53,9 @@ endif()
 
 
 ################################
-# install targets from build
-################################s
-install(DIRECTORY ${PROJECT_BINARY_DIR}/bin DESTINATION . OPTIONAL)
-install(DIRECTORY ${PROJECT_BINARY_DIR}/include DESTINATION . OPTIONAL)
-
+# Deploy headers
+################################
+install(DIRECTORY ${PROJECT_BINARY_DIR}/include DESTINATION .)
 
 ################################
 # Create header of configuration options
@@ -98,8 +96,12 @@ blt_add_executable(NAME geosx
 
 target_include_directories( geosx PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
+# To change the runtime path during installation
+set_target_properties( geosx PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib" )
 
-if( ENABLE_MPI )
+install(TARGETS geosx RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
+
+if( ENABLE_MPI AND UNIX AND NOT APPLE AND NOT ENABLE_CUDA )
   add_custom_target( geosx_update_rst_tables
                      ALL
                      COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/updateRstTables.bash ${CMAKE_SOURCE_DIR} > updateRstTables.log

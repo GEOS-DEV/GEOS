@@ -436,7 +436,7 @@ template< bool DO_PACKING, typename T >
 inline std::enable_if_t< bufferOps::is_container< T > && bufferOps::can_memcpy< T >, localIndex >
 PackDevice( buffer_unit_type * & buffer, T & var )
 {
-  return bufferOps::PackDevice< parallelDevicePolicy< >, DO_PACKING >( buffer, var );
+  return bufferOps::PackDevice< DO_PACKING >( buffer, var );
 }
 
 template< bool DO_PACKING, typename T >
@@ -451,7 +451,7 @@ template< bool DO_PACKING, typename T, typename IDX >
 inline std::enable_if_t< bufferOps::is_container< T >, localIndex >
 PackByIndexDevice( buffer_unit_type * & buffer, T & var, IDX & idx )
 {
-  return bufferOps::PackByIndexDevice< parallelDevicePolicy< >, DO_PACKING >( buffer, var, idx );
+  return bufferOps::PackByIndexDevice< DO_PACKING >( buffer, var, idx );
 }
 
 template< bool DO_PACKING, typename T, typename IDX >
@@ -466,7 +466,7 @@ template< typename T >
 inline std::enable_if_t< bufferOps::is_container< T >, localIndex >
 UnpackDevice( buffer_unit_type const * & buffer, T & var )
 {
-  return bufferOps::UnpackDevice< parallelDevicePolicy< > >( buffer, var );
+  return bufferOps::UnpackDevice( buffer, var );
 }
 
 template< typename T >
@@ -480,7 +480,7 @@ template< typename T, typename IDX >
 inline std::enable_if_t< bufferOps::is_container< T >, localIndex >
 UnpackByIndexDevice( buffer_unit_type const * & buffer, T & var, IDX & idx )
 {
-  return bufferOps::UnpackByIndexDevice< parallelDevicePolicy< > >( buffer, var, idx );
+  return bufferOps::UnpackByIndexDevice( buffer, var, idx );
 }
 
 template< typename T, typename IDX >

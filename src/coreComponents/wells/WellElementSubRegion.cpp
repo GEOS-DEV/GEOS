@@ -20,6 +20,7 @@
 #include "mesh/NodeManager.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
+#include "cxx-utilities/src/ArrayUtilities.hpp"
 
 namespace geosx
 {
@@ -377,6 +378,8 @@ void WellElementSubRegion::UpdateNodeManagerSize( MeshLevel                   & 
   // local *well* index
   localIndex iwellNodeLocal = 0; 
   // loop over global *well* indices
+
+  arrayView2d< real64,nodes::REFERENCE_POSITION_USD > const & X = nodeManager->referencePosition();
   for ( globalIndex iwellNodeGlobal : localNodes ) 
   {
     // local *nodeManager* index
@@ -384,7 +387,10 @@ void WellElementSubRegion::UpdateNodeManagerSize( MeshLevel                   & 
  
     // update node manager maps and position 
     nodeManager->m_localToGlobalMap[inodeLocal]  = nodeOffsetGlobal + iwellNodeGlobal; // global *nodeManager* index
-    nodeManager->referencePosition()[inodeLocal] = nodeCoordsGlobal[iwellNodeGlobal];
+    for ( localIndex i = 0; i < 3; ++i )
+    {
+      X( inodeLocal, i ) = nodeCoordsGlobal[ iwellNodeGlobal ][ i ];
+    }
 
     // mark the boundary nodes for ghosting in DomainPartition::SetupCommunications
     if ( boundaryNodes.contains( iwellNodeGlobal ) )
@@ -610,6 +616,7 @@ void WellElementSubRegion::FixUpDownMaps( bool const clearIfUnmapped )
 void WellElementSubRegion::DebugNodeManager( MeshLevel const & mesh ) const
 {
   NodeManager const * const nodeManager = mesh.getNodeManager();
+  // arrayView2d< real64 const > const & X = nodeManager->referencePosition();
 
   if ( MpiWrapper::Comm_rank( MPI_COMM_GEOSX ) != 1)
   {
@@ -630,7 +637,7 @@ void WellElementSubRegion::DebugNodeManager( MeshLevel const & mesh ) const
   for (localIndex inodeLocal = 0; inodeLocal < nodeManager->size(); ++inodeLocal)
   {
     std::cout << "nodeManager->localToGlobalMap["    << inodeLocal << "] = " << nodeManager->m_localToGlobalMap[inodeLocal]  << std::endl;
-    std::cout << "nodeManager->referencePosition()[" << inodeLocal << "] = " << nodeManager->referencePosition()[inodeLocal] << std::endl;
+    // std::cout << "nodeManager->referencePosition()[" << inodeLocal << "] = " << X[inodeLocal] << std::endl;
   }
 }
  
