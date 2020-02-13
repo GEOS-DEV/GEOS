@@ -8,11 +8,9 @@
                wellSolverName="SinglePhaseWell"
                logLevel="1"
                targetRegions="{Channel,wellRegion1,wellRegion2}">
-      <NonlinearSolverParameters name="nlsp"
-				 lineSearchAction="0"
+      <NonlinearSolverParameters lineSearchAction="0"
                                  newtonMaxIter="40"/>
-      <SystemSolverParameters name="ssp"
-                              useDirectSolver="1"
+      <SystemSolverParameters useDirectSolver="1"
                               logLevel="0"/>
     </Reservoir>
   

@@ -101,12 +101,19 @@ set_target_properties( geosx PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/l
 
 install(TARGETS geosx RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 
-if( ENABLE_MPI )
+if( ENABLE_MPI AND UNIX AND NOT APPLE AND NOT ENABLE_CUDA )
   add_custom_target( geosx_update_rst_tables
                      ALL
                      COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/updateRstTables.bash ${CMAKE_SOURCE_DIR} > updateRstTables.log
                      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
                      DEPENDS geosx
+                     )
+
+  add_custom_target( geosx_validate_all_xml_files
+                     ALL
+                     COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/validateAllXMLFiles.bash ${CMAKE_SOURCE_DIR}
+                     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+                     DEPENDS geosx_update_rst_tables
                      )
 endif()
 

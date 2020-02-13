@@ -85,8 +85,8 @@ public:
    */
   virtual ~FieldSpecificationBase() override;
 
-  template < typename FIELD_OP, typename POLICY, typename T, int N, int UNIT_STRIDE_DIM >
-  void ApplyFieldValueKernel( ArrayView< T, N, UNIT_STRIDE_DIM > const & field,
+  template < typename FIELD_OP, typename POLICY, typename T, int N, int USD >
+  void ApplyFieldValueKernel( ArrayView< T, N, USD > const & field,
                               SortedArrayView< localIndex const > const & targetSet,
                               real64 const time,
                               Group * dataGroup ) const;
@@ -365,8 +365,8 @@ private:
 };
 
 
-template < typename FIELD_OP, typename POLICY, typename T, int N, int UNIT_STRIDE_DIM >
-void FieldSpecificationBase::ApplyFieldValueKernel( ArrayView< T, N, UNIT_STRIDE_DIM > const & field,
+template < typename FIELD_OP, typename POLICY, typename T, int N, int USD >
+void FieldSpecificationBase::ApplyFieldValueKernel( ArrayView< T, N, USD > const & field,
                                                     SortedArrayView< localIndex const > const & targetSet,
                                                     real64 const time,
                                                     Group * dataGroup ) const
@@ -423,8 +423,8 @@ void FieldSpecificationBase::ApplyFieldValue( set<localIndex> const & targetSet,
   std::type_index typeIndex = std::type_index( wrapper->get_typeid());
 
   rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( typeIndex ),
-                                 false,
-                                 [&]( auto arrayInstance, auto GEOSX_UNUSED_ARG( dataTypeInstance ) )
+                                  true,
+                                  [&]( auto arrayInstance, auto GEOSX_UNUSED_ARG( dataTypeInstance ) )
   {
     using ArrayType = decltype(arrayInstance);
     dataRepository::Wrapper<ArrayType> & view = dataRepository::Wrapper<ArrayType>::cast( *wrapper );
@@ -450,14 +450,14 @@ void FieldSpecificationBase::ApplyBoundaryConditionToSystem( set<localIndex> con
   integer const component = GetComponent();
 
   rtTypes::ApplyArrayTypeLambda1( rtTypes::typeID( typeIndex ),
-    [&]( auto type ) -> void
+    [&]( auto type )
     {
       using fieldType = decltype(type);
       dataRepository::Wrapper<fieldType> & wrapper = dynamic_cast< dataRepository::Wrapper<fieldType> & >(*wrapperBase);
       typename dataRepository::Wrapper<fieldType>::ViewTypeConst fieldView = wrapper.referenceAsView();
 
       this->ApplyBoundaryConditionToSystem<FIELD_OP, LAI>( targetSet, time, dataGroup, dofMap, dofDim, matrix, rhs,
-        [&]( localIndex const a )->real64
+        [&]( localIndex const a )
         {
           real64 value = 0.0;
           FieldSpecificationEqual::ReadFieldValue( fieldView, a, component, value );

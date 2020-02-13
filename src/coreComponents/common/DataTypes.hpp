@@ -26,6 +26,7 @@
 #include "common/GeosxConfig.hpp"
 #include "common/GeosxMacros.hpp"
 #include "common/BufferAllocator.hpp"
+#include "common/DataLayouts.hpp"
 #include "Logger.hpp"
 #include "cxx-utilities/src/Macros.hpp"
 #include "cxx-utilities/src/Array.hpp"
@@ -180,13 +181,13 @@ using Array = LvArray::Array< T, NDIM, PERMUTATION, localIndex, DATA_VECTOR_TYPE
 /// Multidimensional array view type. See LvArray:ArrayView for details.
 template< typename T,
           int NDIM,
-          int UNIT_STRIDE_DIM = NDIM - 1,
+          int USD = NDIM - 1,
           template< typename > class DATA_VECTOR_TYPE=LvArray::NewChaiBuffer >
-using ArrayView = LvArray::ArrayView< T, NDIM, UNIT_STRIDE_DIM, localIndex, DATA_VECTOR_TYPE >;
+using ArrayView = LvArray::ArrayView< T, NDIM, USD, localIndex, DATA_VECTOR_TYPE >;
 
 /// Multidimensional array slice type. See LvArray:ArraySlice for details.
-template< typename T, int NDIM, int UNIT_STRIDE_DIM = NDIM - 1 >
-using ArraySlice = LvArray::ArraySlice< T, NDIM, UNIT_STRIDE_DIM, localIndex >;
+template< typename T, int NDIM, int USD = NDIM - 1 >
+using ArraySlice = LvArray::ArraySlice< T, NDIM, USD, localIndex >;
 
 /// Multidimensional stack-based array type. See LvArray:StackArray for details.
 template< typename T, int NDIM, int MAXSIZE, typename PERMUTATION=camp::make_idx_seq_t< NDIM > >
@@ -208,8 +209,8 @@ template< typename T >
 using arrayView1d = ArrayView< T, 1 >;
 
 /// Alias for 1D array slice.
-template< typename T, int UNIT_STRIDE_DIM = 0 >
-using arraySlice1d = ArraySlice< T, 1, UNIT_STRIDE_DIM >;
+template< typename T, int USD = 0 >
+using arraySlice1d = ArraySlice< T, 1, USD >;
 
 /// Alias for 1D stack array.
 template< typename T, int MAXSIZE >
@@ -220,12 +221,12 @@ template< typename T, typename PERMUTATION=camp::make_idx_seq_t< 2 > >
 using array2d = Array< T, 2, PERMUTATION >;
 
 /// Alias for 2D array view.
-template< typename T, int UNIT_STRIDE_DIM = 1 >
-using arrayView2d = ArrayView< T, 2, UNIT_STRIDE_DIM >;
+template< typename T, int USD = 1 >
+using arrayView2d = ArrayView< T, 2, USD >;
 
 /// Alias for 2D array slice.
-template< typename T, int UNIT_STRIDE_DIM = 1 >
-using arraySlice2d = ArraySlice< T, 2, UNIT_STRIDE_DIM >;
+template< typename T, int USD = 1 >
+using arraySlice2d = ArraySlice< T, 2, USD >;
 
 /// Alias for 2D stack array.
 template< typename T, int MAXSIZE >
@@ -236,12 +237,12 @@ template< typename T, typename PERMUTATION=camp::make_idx_seq_t< 3 > >
 using array3d = Array< T, 3, PERMUTATION >;
 
 /// Alias for 3D array view.
-template< typename T, int UNIT_STRIDE_DIM=2 >
-using arrayView3d = ArrayView< T, 3, UNIT_STRIDE_DIM >;
+template< typename T, int USD=2 >
+using arrayView3d = ArrayView< T, 3, USD >;
 
 /// Alias for 3D array slice.
-template< typename T, int UNIT_STRIDE_DIM=2 >
-using arraySlice3d = ArraySlice< T, 3, UNIT_STRIDE_DIM >;
+template< typename T, int USD=2 >
+using arraySlice3d = ArraySlice< T, 3, USD >;
 
 /// Alias for 3D stack array.
 template< typename T, int MAXSIZE >
@@ -600,6 +601,7 @@ public:
     globalIndex_array2d_id,//!< globalIndex_array2d_id
     real32_array2d_id,     //!< real32_array2d_id
     real64_array2d_id,     //!< real64_array2d_id
+    real64_array2d_ji_id,   //!< real64_array2d_ji_id
     r1_array2d_id,         //!< r1_array2d_id
     r2_array2d_id,         //!< r2_array2d_id
     r2Sym_array2d_id,      //!< r2Sym_array2d_id
@@ -609,6 +611,7 @@ public:
     globalIndex_array3d_id,//!< globalIndex_array3d_id
     real32_array3d_id,     //!< real32_array3d_id
     real64_array3d_id,     //!< real64_array3d_id
+    real64_array3d_kji_id,  //!< real64_array3d_kji_id
 
     string_id,           //!< string_id
     Path_id,             //!< Path_id
@@ -649,6 +652,7 @@ public:
       { "globalIndex_array2d", TypeIDs::globalIndex_array2d_id },
       { "real32_array2d", TypeIDs::real32_array2d_id },
       { "real64_array2d", TypeIDs::real64_array2d_id },
+      { "real64_array2d_ji", TypeIDs::real64_array2d_ji_id },
       { "r1_array2d", TypeIDs::r1_array2d_id },
       { "r2_array2d", TypeIDs::r2_array2d_id },
       { "r2Sym_array2d", TypeIDs::r2Sym_array2d_id },
@@ -658,9 +662,10 @@ public:
       { "globalIndex_array3d", TypeIDs::globalIndex_array3d_id },
       { "real32_array3d", TypeIDs::real32_array3d_id },
       { "real64_array3d", TypeIDs::real64_array3d_id },
+      { "real64_array3d_kji", TypeIDs::real64_array3d_kji_id },
 
       { "string", TypeIDs::string_id },
-      { "Path", TypeIDs::Path_id },
+      { "path", TypeIDs::Path_id },
       { "string_array", TypeIDs::string_array_id },
       { "path_array", TypeIDs::path_array_id },
       { "map_array", TypeIDs::path_array_id },
@@ -701,6 +706,7 @@ public:
       { std::type_index( typeid(globalIndex_array2d)), TypeIDs::globalIndex_array2d_id },
       { std::type_index( typeid(real32_array2d)), TypeIDs::real32_array2d_id },
       { std::type_index( typeid(real64_array2d)), TypeIDs::real64_array2d_id },
+      { std::type_index( typeid(array2d< real64, RAJA::PERM_JI >)), TypeIDs::real64_array2d_ji_id },
       { std::type_index( typeid(r1_array2d)), TypeIDs::r1_array2d_id },
       { std::type_index( typeid(r2_array2d)), TypeIDs::r2_array2d_id },
       { std::type_index( typeid(r2Sym_array2d)), TypeIDs::r2Sym_array2d_id },
@@ -710,6 +716,7 @@ public:
       { std::type_index( typeid(globalIndex_array3d)), TypeIDs::globalIndex_array3d_id },
       { std::type_index( typeid(real32_array3d)), TypeIDs::real32_array3d_id },
       { std::type_index( typeid(real64_array3d)), TypeIDs::real64_array3d_id },
+      { std::type_index( typeid(array3d< real64, RAJA::PERM_KJI >)), TypeIDs::real64_array3d_kji_id },
 
       { std::type_index( typeid(string)), TypeIDs::string_id },
       { std::type_index( typeid(Path)), TypeIDs::Path_id },
@@ -753,7 +760,17 @@ private:
         subPattern = constructArrayRegex( subPattern, dimension-1 );
       }
 
-      std::string arrayPattern = "\\{(" + subPattern + ",\\s*)*" + subPattern + "\\}";
+      std::string arrayPattern;
+      if( dimension == 1 )
+      {
+        // Allow the bottom-level to be empty
+        arrayPattern = "\\{\\s*((" + subPattern + ",\\s*)*" + subPattern + ")?\\s*\\}";
+      }
+      else
+      {
+        arrayPattern = "\\{\\s*(" + subPattern + ",\\s*)*" + subPattern + "\\s*\\}";
+      }
+
       return arrayPattern;
     }
 
@@ -778,9 +795,9 @@ private:
 
     // Regexes to match a R1Tensor, R2Tensor, and R2SymTensor
     // These are identical aside from the number of repetitions in the curly brackets
-    std::string r1 = "(" + rr + ",\\s*){2}" + rr;
-    std::string r2 = "(" + rr + ",\\s*){8}" + rr;
-    std::string r2s = "(" + rr + ",\\s*){5}" + rr;
+    std::string r1 = "\\s*(" + rr + ",\\s*){2}" + rr;
+    std::string r2 = "\\s*(" + rr + ",\\s*){8}" + rr;
+    std::string r2s = "\\s*(" + rr + ",\\s*){5}" + rr;
 
     // Build master list of regexes
     std::unordered_map< std::string, std::string > regexMap =
@@ -815,7 +832,7 @@ private:
       {"real32_array3d", constructArrayRegex( rr, 3 )},
       {"real64_array3d", constructArrayRegex( rr, 3 )},
       {"string", rs},
-      {"Path", rs},
+      {"path", rs},
       {"string_array", constructArrayRegex( rs, 1 )},
       {"path_array", constructArrayRegex( rs, 1 )},
       {"mapPair", rs},
@@ -963,6 +980,14 @@ public:
       {
         return lambda( r2Sym_array( 1 ) );
       }
+      case ( TypeIDs::real64_array2d_id ):
+      {
+        return lambda( array2d< real64 > {} );
+      }
+      case ( TypeIDs::real64_array2d_ji_id ):
+      {
+        return lambda( array2d< real64, RAJA::PERM_JI > {} );
+      }
       default:
       {
         GEOSX_ERROR( "TypeID not recognized." );
@@ -1040,6 +1065,10 @@ public:
       {
         return lambda( real64_array2d(), real64( 1 ) );
       }
+      case ( TypeIDs::real64_array2d_ji_id ):
+      {
+        return lambda( array2d< real64, RAJA::PERM_JI >(), real64( 1 ) );
+      }
       case ( TypeIDs::r1_array2d_id ):
       {
         return lambda( r1_array2d(), R1Tensor() );
@@ -1071,6 +1100,10 @@ public:
       case ( TypeIDs::real64_array3d_id ):
       {
         return lambda( real64_array3d(), real64( 1 ) );
+      }
+      case ( TypeIDs::real64_array3d_kji_id ):
+      {
+        return lambda( array3d< real64, RAJA::PERM_KJI >(), real64( 1 ) );
       }
       default:
       {
@@ -1172,6 +1205,10 @@ public:
       {
         return lambda( real64_array2d( 1, 1 ) );
       }
+      case ( TypeIDs::real64_array2d_ji_id ):
+      {
+        return lambda( array2d< real64, RAJA::PERM_JI >( 1, 1 ) );
+      }
       case ( TypeIDs::r1_array2d_id ):
       {
         return lambda( r1_array2d( 1, 1 ) );
@@ -1203,6 +1240,10 @@ public:
       case ( TypeIDs::real64_array3d_id ):
       {
         return lambda( real64_array3d( 1, 1, 1 ) );
+      }
+      case ( TypeIDs::real64_array3d_kji_id ):
+      {
+        return lambda( array3d< real64, RAJA::PERM_KJI >( 1, 1, 1 ) );
       }
       case ( TypeIDs::string_id ):
       {
@@ -1416,6 +1457,10 @@ public:
       case ( TypeIDs::real64_array2d_id ):
       {
         return lambda( real64_array2d(), real64( 1 ) );
+      }
+      case ( TypeIDs::real64_array2d_ji_id ):
+      {
+        return lambda( array2d< real64, RAJA::PERM_JI >(), real64( 1 ) );
       }
       //  case ( TypeIDs::mapPair_array_id ):
       //  {

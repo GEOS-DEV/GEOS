@@ -37,15 +37,7 @@ class CellBlock : public ElementSubRegionBase
 {
 public:
 
-#if defined( GEOSX_USE_CUDA )
-  using NODE_MAP_PERMUTATION = RAJA::PERM_JI;
-#else
-  using NODE_MAP_PERMUTATION = RAJA::PERM_IJ;
-#endif
-
-  static constexpr int NODE_MAP_UNIT_STRIDE_DIM = LvArray::getStrideOneDimension( NODE_MAP_PERMUTATION {} );
-
-  using NodeMapType = InterObjectRelation< array2d< localIndex, NODE_MAP_PERMUTATION > >;
+  using NodeMapType = InterObjectRelation< array2d< localIndex, cells::NODE_MAP_PERMUTATION > >;
   using FaceMapType = FixedOneToManyRelation;
 
   /**
@@ -109,18 +101,7 @@ public:
                      const localIndex localFaceIndex,
                      localIndex_array& nodeIndicies) const;
 
-  /**
-   * @brief function to return element center. this should be depricated.
-   * @param k
-   * @param nodeManager
-   * @param useReferencePos
-   * @return
-   */
-  R1Tensor const & calculateElementCenter( localIndex k,
-                                           const NodeManager& nodeManager,
-                                           const bool useReferencePos = true) const override;
-
-  void calculateElementCenters( arrayView1d<R1Tensor const> const & X ) const
+  void calculateElementCenters( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const
   {
     arrayView1d<R1Tensor> const & elementCenters = m_elementCenter;
     localIndex nNodes = numNodesPerElement();
@@ -146,7 +127,7 @@ public:
                                                     FaceManager const & facemanager ) override;
 
   inline void CalculateCellVolumesKernel( localIndex const k,
-                                          array1d<R1Tensor> const & X ) const
+                                          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const
   {
     R1Tensor & center = m_elementCenter[k];
     center = 0.0;
