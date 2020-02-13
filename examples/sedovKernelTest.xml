@@ -17,9 +17,9 @@
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="{C3D8}" 
-                  xCoords="{ 0, 200 }"
-                  yCoords="{ 0, 200 }"
-                  zCoords="{ 0, 200 }"
+                  xCoords="{ 0, 10 }"
+                  yCoords="{ 0, 10 }"
+                  zCoords="{ 0, 10 }"
                   nx="{200}"
                   ny="{200}"
                   nz="{200}"

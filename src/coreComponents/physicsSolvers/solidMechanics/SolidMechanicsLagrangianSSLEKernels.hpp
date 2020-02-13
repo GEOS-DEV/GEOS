@@ -142,8 +142,8 @@ struct ExplicitKernel
 
     typename CONSTITUTIVE_TYPE::KernelWrapper const & constitutive = constitutiveRelation->createKernelWrapper();
 
-    forall_in_range< parallelDevicePolicy< 32 > >( localIndex(0), elementList.size(),
-                                                    GEOSX_DEVICE_LAMBDA ( localIndex const index )
+    forAll< parallelDevicePolicy< 32 > >( elementList.size(),
+                                          GEOSX_DEVICE_LAMBDA ( localIndex const index )
     {
       localIndex const k = elementList[ index ];
 
@@ -211,7 +211,7 @@ struct ExplicitKernel
         localIndex const nib = elemsToNodes( k, a );
         for ( int b = 0; b < 3; ++b )
         {
-          RAJA::atomicAdd<RAJA::auto_atomic>( &acc[ nib ][ b ], fLocal[ a ][ b ] );
+          RAJA::atomicAdd< parallelDeviceAtomic >( &acc( nib, b ), fLocal[ a ][ b ] );
         }
       }
     });
