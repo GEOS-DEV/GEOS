@@ -1,3 +1,5 @@
+<Problem>
+
   <!-- SPHINX_INTERNAL_MESH -->
   <Mesh>
     <InternalMesh name="mesh1"
@@ -130,3 +132,4 @@
   <Geometry>
     <Box name="source" xMin="-1, -1, -1" xMax="1.1, 1.1, 1.1"/>
   </Geometry>
+</Problem>
