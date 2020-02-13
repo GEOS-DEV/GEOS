@@ -2,7 +2,7 @@
 <Problem>
 
   <Solvers
-    gravityVector="0.0,0.0,-0.0"
+     gravityVector="0.0, 0.0, 0.0"
     >
   
     <Hydrofracture 
@@ -14,8 +14,7 @@
       targetRegions="{Region2, Fracture}"
       contactRelationName="fractureContact"
       >
-      <NonlinearSolverParameters name="nlsp"
-                                 newtonTol="1.0e-5"
+      <NonlinearSolverParameters newtonTol="1.0e-5"
                                  newtonMaxIter="50"
                                  lineSearchMaxCuts="10"/>
       <SystemSolverParameters
@@ -34,34 +33,29 @@
       solidMaterialName="rock"
       contactRelationName="fractureContact"
       >
-      <NonlinearSolverParameters name="nlsp"
-                                 newtonTol="1.0e-6"
+      <NonlinearSolverParameters newtonTol="1.0e-6"
                                  newtonMaxIter="5"/>
       <SystemSolverParameters 
-        name="ssp"
         krylovTol="1.0e-10"
         logLevel="0"
         />
     </SolidMechanicsLagrangianSSLE>
   
-    <SinglePhaseFlow 
+    <SinglePhaseFVM 
       name="SinglePhaseFlow"
       logLevel="0"
-      gravityFlag="1"
       discretization="singlePhaseTPFA"
       targetRegions="{Fracture}"
       fluidName="water"
       solidName="rock"
       >
-      <NonlinearSolverParameters name="nlsp"
-                                 newtonTol="1.0e-5"
+      <NonlinearSolverParameters newtonTol="1.0e-5"
                                  newtonMaxIter="10"/>
       <SystemSolverParameters
-        name="SystemSolverParameters"
         krylovTol="1.0e-12"
         logLevel="0"
         />
-    </SinglePhaseFlow>
+    </SinglePhaseFVM>
     
     <SurfaceGenerator
       name="SurfaceGen"
@@ -164,7 +158,8 @@
                    materialList="{water, rock}"/>
                    
     <FaceElementRegion name="Fracture"
-                       materialList="{water, rock}"/>
+                       materialList="{water, rock}"
+                       defaultAperture="1e-4"/>
   </ElementRegions>
 
   <Constitutive>
@@ -195,10 +190,6 @@
         />
     </Contact>
   </Constitutive>
-
-  <InitialConditions>
-    
-  </InitialConditions>
 
   <FieldSpecifications>
 
@@ -268,10 +259,6 @@
 
   <Functions>
   </Functions>
-
-  <Partition>
-    <SpatialPartition xPar="1" yPar="1" zPar="1"/>
-  </Partition>
 
   <Outputs>
       <Silo name="siloOutput"

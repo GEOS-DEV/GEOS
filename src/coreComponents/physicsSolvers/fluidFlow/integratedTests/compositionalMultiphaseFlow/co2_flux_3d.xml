@@ -1,11 +1,9 @@
 <Problem>
 
-  <Solvers
-    gravityVector="0.0, -9.81, 0.0">
+  <Solvers>
   
     <CompositionalMultiphaseFlow name="compflow"
                                  logLevel="1"
-                                 gravityFlag="1"
                                  discretization="fluidTPFA"
                                  fluidName="fluid1"
                                  solidName="rock"
@@ -13,13 +11,11 @@
                                  temperature="368.15"
                                  useMass="1"
                                  targetRegions="{Region1}">
-      <NonlinearSolverParameters name="nlsp"
-				 newtonTol="1.0e-5"
+      <NonlinearSolverParameters newtonTol="1.0e-5"
 				 newtonMaxIter="100"
                                  maxTimeStepCuts="5"
                                  lineSearchAction="0"/>
-      <SystemSolverParameters name="ssp"
- 			      krylovTol="1.0e-7"
+      <SystemSolverParameters krylovTol="1.0e-7"
                               useDirectSolver="0"
 			      useBicgstab="1"/>      
     </CompositionalMultiphaseFlow>

@@ -1,24 +1,20 @@
 
 <Problem>
 
-  <Solvers
-    gravityVector="0.0, 0.0, -9.81">
+  <Solvers>
 
     <Reservoir name="reservoirSystem"
                flowSolverName="compositionalMultiphaseFlow"
                wellSolverName="compositionalMultiphaseWell"
                logLevel="1"
                targetRegions="{Region1,wellRegion1,wellRegion2,wellRegion3}">
-      <NonlinearSolverParameters name="nlsp"
-                                 newtonMaxIter="40"/>
-      <SystemSolverParameters name="ssp"
-                              useDirectSolver="1"
+      <NonlinearSolverParameters newtonMaxIter="40"/>
+      <SystemSolverParameters useDirectSolver="1"
                               logLevel="0"/>
     </Reservoir>
     
     <CompositionalMultiphaseFlow name="compositionalMultiphaseFlow"
                                  logLevel="1"
-                                 gravityFlag="1"
                                  discretization="fluidTPFA"
                                  targetRegions="{Region1}"
                                  fluidName="fluid1"
@@ -30,7 +26,6 @@
 
     <CompositionalMultiphaseWell name="compositionalMultiphaseWell"
                                  logLevel="1"
-                                 gravityFlag="1"
                                  targetRegions="{wellRegion1,wellRegion2,wellRegion3}"
                                  wellFluidName="fluid1"
                                  wellRelPermName="relperm"

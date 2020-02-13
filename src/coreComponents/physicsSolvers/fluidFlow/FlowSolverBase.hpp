@@ -89,8 +89,7 @@ public:
     static constexpr auto permeabilityString      = "permeability";
 
     // gravity term precomputed values
-    static constexpr auto gravityFlagString  = "gravityFlag";
-    static constexpr auto gravityDepthString = "gravityDepth";
+    static constexpr auto gravityCoefString = "gravityCoefficient";
 
     // misc inputs
     static constexpr auto fluidNameString      = "fluidName";
@@ -103,6 +102,7 @@ public:
     static constexpr auto deltaVolumeString = "deltaVolume";
 
     static constexpr auto aperture0String  = "aperture_n";
+    static constexpr auto effectiveApertureString = "effectiveAperture";
 
     static constexpr auto inputFluxEstimateString  = "inputFluxEstimate";
 
@@ -113,8 +113,7 @@ public:
     ViewKey permeability      = { permeabilityString };
 
     // gravity term precomputed values
-    ViewKey gravityFlag  = { gravityFlagString };
-    ViewKey gravityDepth = { gravityDepthString };
+    ViewKey gravityCoef = { gravityCoefString };
 
     // misc inputs
     ViewKey discretization = { discretizationString };
@@ -134,11 +133,27 @@ public:
    */
   virtual void ResetViews( DomainPartition * const domain );
 
+
+  std::unique_ptr< CRSMatrix<real64,localIndex,localIndex> > & getRefDerivativeFluxResidual_dAperture()
+  {
+    return m_derivativeFluxResidual_dAperture;
+  }
+
+  CRSMatrixView<real64,localIndex,localIndex const > const &  getDerivativeFluxResidual_dAperture()
+  {
+    return m_derivativeFluxResidual_dAperture->toView();
+  }
+
+  CRSMatrixView<real64 const,localIndex const,localIndex const> const & getDerivativeFluxResidual_dAperture() const
+  {
+    return m_derivativeFluxResidual_dAperture->toViewCC();
+  }
+
 private:
 
   /**
    * @brief This function generates various discretization information for later use.
-   * @param domain the domain parition
+   * @param domain the domain partition
    */
   void PrecomputeData(DomainPartition *const domain);
 
@@ -149,9 +164,6 @@ protected:
 
   virtual void InitializePostInitialConditions_PreSubGroups(Group * const rootGroup) override;
 
-
-  /// flag to determine whether or not to apply gravity
-  integer m_gravityFlag;
 
   /// name of the fluid constitutive model
   string m_fluidName;
@@ -174,17 +186,25 @@ protected:
   /// the number of Degrees of Freedom per cell
   localIndex m_numDofPerCell;
 
+  std::unique_ptr< CRSMatrix<real64,localIndex,localIndex> > m_derivativeFluxResidual_dAperture;
+
   real64 m_fluxEstimate;
   
   /// views into constant data fields
   ElementRegionManager::ElementViewAccessor<arrayView1d<integer>> m_elemGhostRank;
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_volume;
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_gravDepth;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_gravCoef;
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_porosityRef;
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_elementArea;
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_elementAperture0;
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_elementAperture;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_effectiveAperture;
+
+#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_elementSeparationCoefficient;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_element_dSeparationCoefficient_dAperture;
+#endif
 
 };
 

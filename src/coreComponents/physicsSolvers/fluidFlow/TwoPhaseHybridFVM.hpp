@@ -147,8 +147,8 @@ public:
     static constexpr auto faceDofFieldString = "faceCenteredVariables";
 
     // weighted gravity for the transport gravity term
-    static constexpr auto weightedGravityDepthString = "weightedGravityDepth";
-    static constexpr auto sumTransmissibilityString  = "sumTransmissibility"; 
+    static constexpr auto weightedGravityCoefString = "weightedGravityCoef";
+    static constexpr auto sumTransmissibilityString = "sumTransmissibility"; 
     
     // primary face-based field
     static constexpr auto facePressureString      = "facePressure";
@@ -183,11 +183,11 @@ private:
    * @brief In a given element, compute the one-sided total volumetric fluxes at this element's faces
    * @param[in] facePres the pressure at the mesh faces at the beginning of the time step
    * @param[in] dFacePres the accumulated pressure updates at the mesh face 
-   * @param[in] faceGravDepth the depth at the mesh faces
+   * @param[in] faceGravCoef the depth at the mesh faces
    * @param[in] elemToFaces elem-to-faces maps
    * @param[in] elemPres the pressure at this element's center
    * @param[in] dElemPres the accumulated pressure updates at this element's center
-   * @param[in] elemGravDepth the depth at this element's center
+   * @param[in] elemGravCoef the depth at this element's center
    * @param[in] elemMob the phase mobilities at this elenent's center  
    * @param[in] dElemMob_dp the derivative of the mobilities at this element's center 
    * @param[in] dElemMob_dS the derivative of the mobilities at this element's center 
@@ -204,11 +204,11 @@ private:
    */
   void ComputeTotalVolFluxes( arrayView1d<real64 const> const & facePres,
                               arrayView1d<real64 const> const & dFacePres,
-                              arrayView1d<real64 const> const & faceGravDepth,
+                              arrayView1d<real64 const> const & faceGravCoef,
                               arraySlice1d<localIndex const> const elemToFaces,
                               real64 const & elemPres,
                               real64 const & dElemPres,
-                              real64 const & elemGravDepth,
+                              real64 const & elemGravCoef,
                               arraySlice1d<real64 const> const elemMob,
                               arraySlice1d<real64 const> const dElemMob_dp,
                               arraySlice1d<real64 const> const dElemMob_dS,
@@ -222,7 +222,7 @@ private:
 
   /**
    * @brief In a given element, compute the difference between phase gravity heads at this element's faces
-   * @param[in] weightedFaceGravDepth the trans-weighted depth at the mesh faces
+   * @param[in] weightedFaceGravCoef the trans-weighted depth at the mesh faces
    * @param[in] elemToFaces elem-to-faces maps
    * @param[in] dens the densities in the domain (non-local)
    * @param[in] dDens_dp the derivatives of the densities in the domain wrt elem-centered pressure (non-local)
@@ -237,9 +237,9 @@ private:
    *
    * Note: because of the averaging of the densities across the face, this function requires non-local information
    */
-  void ComputeGravityHead( arrayView1d<real64 const> const & weightedFaceGravDepth,
+  void ComputeGravityHead( arrayView1d<real64 const> const & weightedFaceGravCoef,
                            arraySlice1d<localIndex const> const elemToFaces,
-                           real64 const & elemGravDepth,
+                           real64 const & elemGravCoef,
                            ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> const & dens,
                            ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> const & dDens_dp,
                            stackArray1d<localIndex, 3>                       const & elemIds,
@@ -459,7 +459,7 @@ private:
    * This function is in this class until we find a better place for it
    * 
    */  
-  void ComputeTransmissibilityMatrix( arrayView1d<R1Tensor const> const & nodePosition, 
+  void ComputeTransmissibilityMatrix( arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodePosition, 
                                       ArrayOfArraysView<localIndex const> const & faceToNodes, 
                                       arraySlice1d<localIndex const> const elemToFaces,
                                       R1Tensor const & elemCenter,
@@ -482,7 +482,7 @@ private:
    * This function is in this class until we find a better place for it
    * 
    */
-  void ComputeTPFAInnerProduct( arrayView1d<R1Tensor const> const & nodePosition, 
+  void ComputeTPFAInnerProduct( arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodePosition, 
                                 ArrayOfArraysView<localIndex const> const & faceToNodes, 
                                 arraySlice1d<localIndex const> const elemToFaces,
                                 R1Tensor const & elemCenter,

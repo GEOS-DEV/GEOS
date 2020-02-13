@@ -48,9 +48,10 @@ public:
    virtual const string getCatalogName() const override final
    { return EdgeManager::CatalogName(); }
 
-
    ///@}
 
+   static inline localIndex GetFaceMapOverallocation()
+   { return 4; }
 
   EdgeManager( std::string const & name,
                Group * const parent );
@@ -81,6 +82,8 @@ public:
 
   void FixUpDownMaps( bool const clearIfUnmapped );
 
+  void CompressRelationMaps( );
+
   void depopulateUpMaps( std::set<localIndex> const & receivedEdges,
                          ArrayOfArraysView< localIndex const > const & facesToEdges );
 
@@ -102,13 +105,11 @@ public:
 
   bool hasNode( const localIndex edgeID, const localIndex nodeID ) const;
 
-  void calculateCenter( localIndex const edgeIndex,
-                        arraySlice1d<R1Tensor const> const & X,
-                        R1Tensor & center ) const;
+  R1Tensor calculateCenter( localIndex const edgeIndex,
+                            arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & X ) const;
 
-  void calculateLength( localIndex const edgeIndex,
-                        arraySlice1d<R1Tensor const> const & X,
-                        R1Tensor & center ) const;
+  R1Tensor calculateLength( localIndex const edgeIndex,
+                            arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & X ) const;
 
 
 
@@ -188,21 +189,21 @@ private:
 
 };
 
-inline void EdgeManager::calculateCenter( localIndex const edgeIndex,
-                                          arraySlice1d<R1Tensor const> const & X,
-                                          R1Tensor & center ) const
+inline R1Tensor EdgeManager::calculateCenter( localIndex const edgeIndex,
+                                              arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & X ) const
 {
-  center = X[m_toNodesRelation[edgeIndex][0]];
+  R1Tensor center = X[m_toNodesRelation[edgeIndex][0]];
   center += X[m_toNodesRelation[edgeIndex][1]];
   center *= 0.5;
+  return center;
 }
 
-inline void EdgeManager::calculateLength( localIndex const edgeIndex,
-                                          arraySlice1d<R1Tensor const> const & X,
-                                          R1Tensor & center ) const
+inline R1Tensor EdgeManager::calculateLength( localIndex const edgeIndex,
+                                              arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & X ) const
 {
-  center = X[m_toNodesRelation[edgeIndex][1]];
-  center -= X[m_toNodesRelation[edgeIndex][0]];
+  R1Tensor length = X[m_toNodesRelation[edgeIndex][1]];
+  length -= X[m_toNodesRelation[edgeIndex][0]];
+  return length;
 }
 
 }

@@ -3,22 +3,21 @@
 
     <Solvers gravityVector="0.0,0.0,-9.81">
 
-        <SinglePhaseFlow
+        <SinglePhaseFVM
             name="SinglePhaseFlow"
-            logLevel="0"
-            gravityFlag="1"
+            logLevel="1"
             discretization="singlePhaseTPFA"
             targetRegions="{Region2, Fracture}"
             fluidName="water"
             solidName="rock">
             <NonlinearSolverParameters
-                name="nlsp"
-                newtonTol="1.0e-8"
-                newtonMaxIter="8"/>
+                newtonTol="1.0e-2"
+                newtonMaxIter="8"
+                allowNonConverged="1"/>
             <SystemSolverParameters
-                name="SystemSolverParameters"
                 krylovTol="1.0e-12"/>
-        </SinglePhaseFlow>
+        </SinglePhaseFVM>
+
         <SurfaceGenerator
             name="SurfaceGen"
             logLevel="0"
@@ -89,11 +88,11 @@
             forceDt="1e3"
             target="/Solvers/SinglePhaseFlow" />
 
-        <!--PeriodicEvent
+        <PeriodicEvent
             name="outputs"
             cycleFrequency="1"
             targetExactTimestep="1"
-            target="/Outputs/siloOutput" / -->
+            target="/Outputs/siloOutput" />
 
         <PeriodicEvent
             name="restarts"
@@ -197,19 +196,12 @@
             name="source"
             objectPath="ElementRegions/Fracture"
             fieldName="pressure"
-            scale="1.0e7"
+            scale="2.0e6"
             setNames="{source}" />
     </FieldSpecifications>
 
     <Functions>
     </Functions>
-
-    <Partition>
-        <SpatialPartition
-            xPar="1"
-            yPar="1"
-            zPar="1" />
-    </Partition>
 
     <Outputs>
         <Silo

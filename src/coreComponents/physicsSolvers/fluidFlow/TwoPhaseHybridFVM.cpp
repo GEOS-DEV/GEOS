@@ -68,7 +68,7 @@ void TwoPhaseHybridFVM::RegisterDataOnMesh(Group * const MeshBodies)
       setDescription( "An array that holds the accumulated pressure updates at the faces.");
 
     faceManager->registerWrapper<array1d<real64> >( viewKeyStruct::sumTransmissibilityString );    
-    faceManager->registerWrapper<array1d<real64> >( viewKeyStruct::weightedGravityDepthString );
+    faceManager->registerWrapper<array1d<real64> >( viewKeyStruct::weightedGravityCoefString );
     
   }
 }
@@ -155,16 +155,22 @@ void TwoPhaseHybridFVM::SetupDofs( DomainPartition const * const GEOSX_UNUSED_AR
   // in AssembleOneSidedMassFluxes
   dofManager.addField( viewKeyStruct::elemDofFieldString,
                        DofManager::Location::Elem,
-                       DofManager::Connectivity::Face,
                        numDof,
                        m_targetRegions );
 
+  dofManager.addCoupling( viewKeyStruct::elemDofFieldString,
+                          viewKeyStruct::elemDofFieldString,
+                          DofManager::Connectivity::Face );
+  
   // setup the connectivity of face fields
   dofManager.addField( viewKeyStruct::faceDofFieldString,
                        DofManager::Location::Face,
-                       DofManager::Connectivity::Elem,
                        m_targetRegions );
 
+  dofManager.addCoupling( viewKeyStruct::faceDofFieldString,
+                          viewKeyStruct::faceDofFieldString,
+                          DofManager::Connectivity::Elem );
+  
   // setup coupling between pressure and face pressure
   dofManager.addCoupling( viewKeyStruct::faceDofFieldString,
                           viewKeyStruct::elemDofFieldString,
@@ -205,7 +211,8 @@ void TwoPhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time_n
   
   // node data (for transmissibility computation)
 
-  arrayView1d<R1Tensor const> const & nodePosition = nodeManager->referencePosition();
+  arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodePosition =
+    nodeManager->referencePosition();
 
   
   // face data
@@ -220,10 +227,10 @@ void TwoPhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time_n
     faceManager->getReference< array1d<real64> >( viewKeyStruct::deltaFacePressureString );
   
   // get the face-centered depth 
-  arrayView1d<real64> const & faceGravDepth =
-    faceManager->getReference<array1d<real64>>(viewKeyStruct::gravityDepthString);
-  arrayView1d<real64> const & weightedFaceGravDepth =
-    faceManager->getReference<array1d<real64>>(viewKeyStruct::weightedGravityDepthString);
+  arrayView1d<real64> const & faceGravCoef =
+    faceManager->getReference<array1d<real64>>(viewKeyStruct::gravityCoefString);
+  arrayView1d<real64> const & weightedFaceGravCoef =
+    faceManager->getReference<array1d<real64>>(viewKeyStruct::weightedGravityCoefString);
   
   // get the face-to-nodes connectivity for the transmissibility calculation
   ArrayOfArraysView<localIndex const> const & faceToNodes = faceManager->nodeList();
@@ -281,8 +288,8 @@ void TwoPhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time_n
      subRegion->template getReference< array1d<R1Tensor> >( viewKeyStruct::permeabilityString ); 
 
     // get the elem-centered depth 
-    arrayView1d<real64 const> const & elemGravDepth =
-      subRegion->template getReference<array1d<real64>>(viewKeyStruct::gravityDepthString);
+    arrayView1d<real64 const> const & elemGravCoef =
+      subRegion->template getReference<array1d<real64>>(viewKeyStruct::gravityCoefString);
 
     
     // assemble the residual and Jacobian element by element
@@ -366,11 +373,11 @@ void TwoPhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time_n
         // Compute the total volumetric flux using transMatrix
         ComputeTotalVolFluxes( facePres,
                                dFacePres,
-                               faceGravDepth,
+                               faceGravCoef,
                                elemToFaces[ei],          
                                elemPres[ei],
                                dElemPres[ei],
-                               elemGravDepth[ei],
+                               elemGravCoef[ei],
                                elemPhaseMob[ei],
                                dElemPhaseMob_dp[ei],
                                dElemPhaseMob_dS[ei],
@@ -386,9 +393,9 @@ void TwoPhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time_n
         // For each one-sided face of the elem,
         // Compute the grav term T (\rho_p - \rho_m) g \nabla g using transMatrix
         // ** this function needs non-local information because (\rho_p - \rho_m) is averaged across the faces 
-        ComputeGravityHead( weightedFaceGravDepth,
+        ComputeGravityHead( weightedFaceGravCoef,
                             elemToFaces[ei],          
-                            elemGravDepth[ei],
+                            elemGravCoef[ei],
                             m_phaseDens,
                             m_dPhaseDens_dPres,
                             elemIds,
@@ -467,11 +474,11 @@ void TwoPhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time_n
 
 void TwoPhaseHybridFVM::ComputeTotalVolFluxes( arrayView1d<real64 const> const & facePres,
                                                arrayView1d<real64 const> const & dFacePres,
-                                               arrayView1d<real64 const> const & faceGravDepth,
+                                               arrayView1d<real64 const> const & faceGravCoef,
                                                arraySlice1d<localIndex const> const elemToFaces,
                                                real64 const & elemPres,
                                                real64 const & dElemPres,
-                                               real64 const & elemGravDepth,
+                                               real64 const & elemGravCoef,
                                                arraySlice1d<real64 const> const elemMob,
                                                arraySlice1d<real64 const> const dElemMob_dp,
                                                arraySlice1d<real64 const> const dElemMob_dS,
@@ -511,8 +518,8 @@ void TwoPhaseHybridFVM::ComputeTotalVolFluxes( arrayView1d<real64 const> const &
     real64 const ccPres = elemPres + dElemPres;
     real64 const fPres  = facePres[elemToFaces[ifaceLoc]] + dFacePres[elemToFaces[ifaceLoc]];
       
-    real64 const ccGravDepth = elemGravDepth;
-    real64 const fGravDepth  = faceGravDepth[elemToFaces[ifaceLoc]];
+    real64 const ccGravCoef = elemGravCoef;
+    real64 const fGravCoef  = faceGravCoef[elemToFaces[ifaceLoc]];
 
     // pressure difference
     real64 const presDif      = ccPres - fPres;
@@ -520,7 +527,7 @@ void TwoPhaseHybridFVM::ComputeTotalVolFluxes( arrayView1d<real64 const> const &
     real64 const dPresDif_dfp = -1;
 
     // depth difference between element center and face center
-    real64 const depthDif = ccGravDepth - fGravDepth;
+    real64 const depthDif = ccGravCoef - fGravCoef;
 
     for (localIndex ip = 0; ip < numPhases; ++ip)
     {
@@ -561,9 +568,9 @@ void TwoPhaseHybridFVM::ComputeTotalVolFluxes( arrayView1d<real64 const> const &
 }
 
 
-void TwoPhaseHybridFVM::ComputeGravityHead( arrayView1d<real64 const> const & weightedFaceGravDepth,
+void TwoPhaseHybridFVM::ComputeGravityHead( arrayView1d<real64 const> const & weightedFaceGravCoef,
                                             arraySlice1d<localIndex const> const elemToFaces,
-                                            real64 const & elemGravDepth,
+                                            real64 const & elemGravCoef,
                                             ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> const & dens,
                                             ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> const & dDens_dp,
                                             stackArray1d<localIndex, 3>                       const & elemIds,
@@ -592,10 +599,10 @@ void TwoPhaseHybridFVM::ComputeGravityHead( arrayView1d<real64 const> const & we
     
       // 1) multiply the depth by the transmissibility
       // note: flux continuity at the face is guaranteed
-      // because we use this weightedFaceGravDepth (a static Lagrange multiplier)
+      // because we use this weightedFaceGravCoef (a static Lagrange multiplier)
       // precomputed such that the two gravity fluxes match.
       // TODO: investigate the impact of this (so far not tested with a consistent inner product)
-      real64 depthDif = elemGravDepth - weightedFaceGravDepth[faceId];
+      real64 depthDif = elemGravCoef - weightedFaceGravCoef[faceId];
       difGravHead[ifaceLoc][m_ipw] += transMatrix[ifaceLoc][jfaceLoc] * depthDif;
     }
 
@@ -1149,38 +1156,27 @@ void TwoPhaseHybridFVM::ApplySystemSolution( DofManager const & dofManager,
                                              DomainPartition * const domain )
 {
   MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
-  FaceManager * const faceManager = mesh->getFaceManager();
   
   // 1. apply the elem-based update
 
-  applyToSubRegions( mesh, [&] ( localIndex const GEOSX_UNUSED_ARG( er ),
-                                 localIndex const GEOSX_UNUSED_ARG( esr ),
-                                 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
-                                 ElementSubRegionBase * const subRegion )
-  {
-    dofManager.addVectorToField( solution,
-                                 viewKeyStruct::elemDofFieldString,
-                                 scalingFactor,
-                                 subRegion,
-                                 viewKeyStruct::deltaPressureString,
-                                 0, 1 );
+  dofManager.addVectorToField( solution,
+                               viewKeyStruct::elemDofFieldString,
+                               viewKeyStruct::deltaPressureString,
+                               scalingFactor,
+                               0, 1 );
 
-    dofManager.addVectorToField( solution,
-                                 viewKeyStruct::elemDofFieldString,
-                                 scalingFactor,
-                                 subRegion,
-                                 viewKeyStruct::deltaWettingPhaseSatString,
-                                 1, 2 );
-
-  } );
+  dofManager.addVectorToField( solution,
+                               viewKeyStruct::elemDofFieldString,
+                               viewKeyStruct::deltaWettingPhaseSatString,				 
+                               scalingFactor,
+                               1, 2 );
 
   // 2. apply the face-based update
 
   dofManager.addVectorToField( solution,
                                viewKeyStruct::faceDofFieldString,
-                               scalingFactor,
-                               faceManager,
-                               viewKeyStruct::deltaFacePressureString );
+                               viewKeyStruct::deltaFacePressureString,
+                               scalingFactor );
 
   // 3. synchronize
   
@@ -1300,17 +1296,18 @@ void TwoPhaseHybridFVM::PrecomputeData( DomainPartition * const domain )
 
   // node data (for transmissibility computation)
 
-  arrayView1d<R1Tensor const> const & nodePosition = nodeManager->referencePosition();
+  arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodePosition =
+    nodeManager->referencePosition();
 
   // get the face-to-nodes connectivity for the transmissibility calculation
   ArrayOfArraysView<localIndex const> const & faceToNodes = faceManager->nodeList();
   
   // get the face-centered depth
-  arrayView1d<real64> const & weightedFaceGravDepth =
-    faceManager->getReference<array1d<real64>>(viewKeyStruct::weightedGravityDepthString);
+  arrayView1d<real64> const & weightedFaceGravCoef =
+    faceManager->getReference<array1d<real64>>(viewKeyStruct::weightedGravityCoefString);
   arrayView1d<real64> const & sumTrans =
     faceManager->getReference<array1d<real64>>(viewKeyStruct::sumTransmissibilityString);
-  weightedFaceGravDepth = 0;
+  weightedFaceGravCoef = 0;
   sumTrans = 0;
   
   // tolerance for transmissibility calculation
@@ -1328,8 +1325,8 @@ void TwoPhaseHybridFVM::PrecomputeData( DomainPartition * const domain )
     arrayView2d< localIndex const > const & elemToFaces = subRegion->faceList();
 
     // get the elem-centered depth 
-    arrayView1d<real64 const> const & elemGravDepth =
-      subRegion->template getReference<array1d<real64>>(viewKeyStruct::gravityDepthString);
+    arrayView1d<real64 const> const & elemGravCoef =
+      subRegion->template getReference<array1d<real64>>(viewKeyStruct::gravityCoefString);
     
     // get the element data needed for transmissibility computation
     arrayView1d<R1Tensor const> const & elemCenter =
@@ -1360,14 +1357,14 @@ void TwoPhaseHybridFVM::PrecomputeData( DomainPartition * const domain )
       {
         localIndex faceId = elemToFaces[ei][ifaceLoc];
         sumTrans[faceId] += transMatrix[ifaceLoc][ifaceLoc];
-        weightedFaceGravDepth[faceId] += transMatrix[ifaceLoc][ifaceLoc] * elemGravDepth[ei];
+        weightedFaceGravCoef[faceId] += transMatrix[ifaceLoc][ifaceLoc] * elemGravCoef[ei];
       }
     });
   });
 
   forall_in_range<serialPolicy>( 0, faceManager->size(), GEOSX_LAMBDA ( localIndex iface )
   {
-    weightedFaceGravDepth[iface] /= sumTrans[iface];
+    weightedFaceGravCoef[iface] /= sumTrans[iface];
   });  
 
 }
@@ -1376,7 +1373,7 @@ void TwoPhaseHybridFVM::PrecomputeData( DomainPartition * const domain )
 
 // this function is obviously redundant with computeCellStencil in the TwoPointFluxApproximation class
 // this is here for now, but I will have to find a better place for this type of function at some point 
-void TwoPhaseHybridFVM::ComputeTransmissibilityMatrix( arrayView1d<R1Tensor const> const & nodePosition, 
+void TwoPhaseHybridFVM::ComputeTransmissibilityMatrix( arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodePosition, 
                                                        ArrayOfArraysView<localIndex const> const & faceToNodes, 
                                                        arraySlice1d<localIndex const> const elemToFaces,
                                                        R1Tensor const & elemCenter,
@@ -1423,7 +1420,7 @@ void makeFullTensor(R1Tensor const & values, R2SymTensor & result)
 
 // this function is obviously redundant with computeCellStencil in the TwoPointFluxApproximation class
 // this is here for now, but I will have to find a better place for this type of function at some point 
-void TwoPhaseHybridFVM::ComputeTPFAInnerProduct( arrayView1d<R1Tensor const> const & nodePosition, 
+void TwoPhaseHybridFVM::ComputeTPFAInnerProduct( arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodePosition, 
                                                  ArrayOfArraysView<localIndex const> const & faceToNodes, 
                                                  arraySlice1d<localIndex const> const elemToFaces,
                                                  R1Tensor const & elemCenter,

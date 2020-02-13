@@ -1,12 +1,10 @@
 
 <Problem>
 
-  <Solvers
-    gravityVector="0.0, 0.0, -9.81">
+  <Solvers gravityVector="0.0, 0.0, -9.81">
   
     <CompositionalMultiphaseFlow name="compflow"
                                  logLevel="0"
-                                 gravityFlag="1"
                                  discretization="fluidTPFA"
                                  targetRegions="{Region2}"
                                  fluidName="fluid1"
@@ -15,11 +13,9 @@
                                  temperature="297.15"
                                  useMass="1">
                                  
-      <NonlinearSolverParameters name="nlsp"
-                                 newtonTol="1.0e-6"
+      <NonlinearSolverParameters newtonTol="1.0e-6"
                                  newtonMaxIter="2"/>
-      <SystemSolverParameters name="ssp"
-                              krylovTol="1.0e-10"
+      <SystemSolverParameters krylovTol="1.0e-10"
                               useDirectSolver="0"
                               solverType="Klu"
                               ilut_fill="0"
@@ -288,10 +284,6 @@
                    coordinateFiles="{x.geos, y.geos, z.geos}"
                    voxelFile="{pressure.geos}"/> -->
   </Functions>
-
-  <!-- <Partition>
-    <SpatialPartition xPar="1" yPar="1" zPar="1"/>
-  </Partition> -->
 
   <Outputs>
       <Silo name="siloOutput"/>

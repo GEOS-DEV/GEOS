@@ -17,7 +17,7 @@ Welcome to the GEOSX developer guide.
 
    /coreComponents/dataRepository/dataRepository.rst
 
-   /coreComponents/fileIO/schema/docs/SchemaGeneration
+   /coreComponents/mesh/docs/meshDeveloperGuide.rst
 
    UnitTests
 
@@ -38,7 +38,6 @@ Overview of the code structure
 Managed Groups
 Arrays
 Data Repository
-Mesh Infrastructure
 Physics Solvers
 Constitutive Models
 Linear Algebra Interface

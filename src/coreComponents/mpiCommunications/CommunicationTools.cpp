@@ -19,12 +19,13 @@
 
 #include "mpiCommunications/CommunicationTools.hpp"
 
-#include <algorithm>
 
-#include "mpiCommunications/NeighborCommunicator.hpp"
 #include "common/TimingMacros.hpp"
+#include "mpiCommunications/NeighborCommunicator.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/ObjectManagerBase.hpp"
+
+#include <algorithm>
 
 namespace geosx
 {
@@ -42,9 +43,9 @@ CommunicationTools::~CommunicationTools()
 }
 
 
-std::set<int> & CommunicationTools::getFreeCommIDs()
+std::set< int > & CommunicationTools::getFreeCommIDs()
 {
-  static std::set<int> commIDs;
+  static std::set< int > commIDs;
   static bool isInitialized = false;
 
   if( !isInitialized )
@@ -62,7 +63,7 @@ std::set<int> & CommunicationTools::getFreeCommIDs()
 
 int CommunicationTools::reserveCommID()
 {
-  std::set<int> & commIDs = getFreeCommIDs();
+  std::set< int > & commIDs = getFreeCommIDs();
 
   int rval = *( commIDs.begin() );
   commIDs.erase( rval );
@@ -71,7 +72,7 @@ int CommunicationTools::reserveCommID()
 
 void CommunicationTools::releaseCommID( int & ID )
 {
-  std::set<int> & commIDs = getFreeCommIDs();
+  std::set< int > & commIDs = getFreeCommIDs();
 
   if( commIDs.count( ID ) > 0 )
   {
@@ -83,10 +84,10 @@ void CommunicationTools::releaseCommID( int & ID )
 
 void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
                                               ObjectManagerBase const & compositionObject,
-                                              array1d<NeighborCommunicator> & neighbors )
+                                              array1d< NeighborCommunicator > & neighbors )
 {
   GEOSX_MARK_FUNCTION;
-  integer_array & ghostRank = object.getReference<integer_array>( object.m_ObjectManagerBaseViewKeys.ghostRank );
+  integer_array & ghostRank = object.getReference< integer_array >( object.m_ObjectManagerBaseViewKeys.ghostRank );
   ghostRank = -2;
 
   int const commSize = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
@@ -116,9 +117,10 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
 
   // now arrange the data from objectToCompositionObject into a map "indexByFirstCompositionIndex", such that the key
   // is the lowest global index of the composition object that make up this object. The value of the map is a pair, with
-  // the array being the remaining composition object global indices, and the second being the global index of the object
+  // the array being the remaining composition object global indices, and the second being the global index of the
+  // object
   // itself.
-  map<globalIndex, std::vector<std::pair<std::vector<globalIndex>, localIndex> > > indexByFirstCompositionIndex;
+  map< globalIndex, std::vector< std::pair< std::vector< globalIndex >, localIndex > > > indexByFirstCompositionIndex;
 
   localIndex bufferSize = 0;
   for( std::size_t a = 0 ; a < objectToCompositionObject.size() ; ++a )
@@ -132,16 +134,16 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
       const globalIndex firstCompositionIndex = nodeList[0];
 
       // create a temporary to hold the pair
-      std::pair<std::vector<globalIndex>, globalIndex> tempComp;
+      std::pair< std::vector< globalIndex >, globalIndex > tempComp;
 
       // fill the array with the remaining composition object global indices
-      tempComp.first.insert(tempComp.first.begin(), nodeList.begin() + 1, nodeList.end() );
+      tempComp.first.insert( tempComp.first.begin(), nodeList.begin() + 1, nodeList.end() );
 
       // set the second value of the pair to the localIndex of the object.
       tempComp.second = a;
 
       // push the tempComp onto the map.
-      indexByFirstCompositionIndex[firstCompositionIndex].push_back( std::move(tempComp) );
+      indexByFirstCompositionIndex[firstCompositionIndex].push_back( std::move( tempComp ) );
       bufferSize += 2 + nodeList.size();
     }
   }
@@ -166,12 +168,13 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
 
 
   MPI_iCommData commData;
-  commData.resize(neighbors.size());
+  commData.resize( neighbors.size());
 //  int commID = reserveCommID();
 //
 //  // send the composition buffers
 //  {
-//    int const sendSize = integer_conversion<int const>( objectToCompositionObjectSendBuffer.size() * sizeof(globalIndex));
+//    int const sendSize = integer_conversion<int const>( objectToCompositionObjectSendBuffer.size() *
+// sizeof(globalIndex));
 //
 //    for( localIndex in = 0 ; in < neighbors.size() ; ++in )
 //    {
@@ -188,10 +191,10 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
 //    }
 //  }
 
-  array1d<int>  receiveBufferSizes(neighbors.size());
-  array1d< globalIndex_array > receiveBuffers(neighbors.size());
+  array1d< int >  receiveBufferSizes( neighbors.size());
+  array1d< globalIndex_array > receiveBuffers( neighbors.size());
 
-  int const sendSize = integer_conversion<int const>( objectToCompositionObjectSendBuffer.size() );
+  int const sendSize = integer_conversion< int const >( objectToCompositionObjectSendBuffer.size() );
 
   for( localIndex neighborIndex = 0 ; neighborIndex < neighbors.size() ; ++neighborIndex )
   {
@@ -211,9 +214,9 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
   {
     int neighborIndex;
     MpiWrapper::Waitany( commData.size,
-                 commData.mpiSizeRecvBufferRequest.data(),
-                 &neighborIndex,
-                 commData.mpiSizeRecvBufferStatus.data() );
+                         commData.mpiSizeRecvBufferRequest.data(),
+                         &neighborIndex,
+                         commData.mpiSizeRecvBufferStatus.data() );
 
     NeighborCommunicator & neighbor = neighbors[neighborIndex];
 
@@ -234,49 +237,50 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
 
   // object to receive the neighbor data
   // this baby is an Array (for each neighbor) of maps, with the key of lowest composition index, and a value
-  // containing an array containing the std::pairs of the remaining composition indices, and the globalIndex of the object.
-  std::vector<map<globalIndex, std::vector<std::pair<std::vector<globalIndex>, globalIndex> > > >
+  // containing an array containing the std::pairs of the remaining composition indices, and the globalIndex of the
+  // object.
+  std::vector< map< globalIndex, std::vector< std::pair< std::vector< globalIndex >, globalIndex > > > >
   neighborCompositionObjects( neighbors.size() );
 
-    for( localIndex count=0 ; count<neighbors.size() ; ++count )
+  for( localIndex count=0 ; count<neighbors.size() ; ++count )
+  {
+    int neighborIndex;
+    MpiWrapper::Waitany( commData.size,
+                         commData.mpiRecvBufferRequest.data(),
+                         &neighborIndex,
+                         commData.mpiRecvBufferStatus.data() );
+
+    NeighborCommunicator & neighbor = neighbors[neighborIndex];
+
+    globalIndex const * recBuffer = receiveBuffers[neighborIndex].data();
+    localIndex recBufferSize = receiveBufferSizes[neighborIndex];
+    globalIndex const * endBuffer = recBuffer + recBufferSize;
+    // iterate over data that was just received
+    while( recBuffer < endBuffer )
     {
-      int neighborIndex;
-      MpiWrapper::Waitany( commData.size,
-                   commData.mpiRecvBufferRequest.data(),
-                   &neighborIndex,
-                   commData.mpiRecvBufferStatus.data() );
+      // the first thing packed was the data size for a given object
+      localIndex dataSize = integer_conversion< localIndex >( *recBuffer++ );
 
-      NeighborCommunicator & neighbor = neighbors[neighborIndex];
+      // the second thing packed was the globalIndex of that object
+      const globalIndex neighborGlobalIndex = *( recBuffer++ );
 
-      globalIndex const * recBuffer = receiveBuffers[neighborIndex].data();
-      localIndex recBufferSize = receiveBufferSizes[neighborIndex];
-      globalIndex const * endBuffer = recBuffer + recBufferSize;
-      // iterate over data that was just received
-      while( recBuffer < endBuffer )
+      // the global indices of the composition objects were next. they are ordered, so the lowest one is first.
+      const globalIndex firstCompositionIndex = *( recBuffer++ );
+
+      // the remaining composition object indices.
+      std::vector< globalIndex > temp;
+      for( localIndex b = 1 ; b < dataSize ; ++b )
       {
-        // the first thing packed was the data size for a given object
-        localIndex dataSize = integer_conversion<localIndex>( *recBuffer++ );
+        temp.push_back( *( recBuffer++ ) );
+      }
 
-        // the second thing packed was the globalIndex of that object
-        const globalIndex neighborGlobalIndex = *( recBuffer++ );
-
-        // the global indices of the composition objects were next. they are ordered, so the lowest one is first.
-        const globalIndex firstCompositionIndex = *( recBuffer++ );
-
-        // the remaining composition object indices.
-        std::vector<globalIndex> temp;
-        for( localIndex b = 1 ; b < dataSize ; ++b )
-        {
-          temp.push_back( *( recBuffer++ ) );
-        }
-
-        // fill neighborCompositionObjects
-        std::pair<std::vector<globalIndex>, globalIndex>
-        tempComp( std::make_pair( std::move(temp), std::move(neighborGlobalIndex) ) );
+      // fill neighborCompositionObjects
+      std::pair< std::vector< globalIndex >, globalIndex >
+      tempComp( std::make_pair( std::move( temp ), std::move( neighborGlobalIndex ) ) );
 //        tempComp( std::make_pair( temp, neighborGlobalIndex ) );
 
-        neighborCompositionObjects[neighborIndex][firstCompositionIndex].push_back( tempComp );
-      }
+      neighborCompositionObjects[neighborIndex][firstCompositionIndex].push_back( tempComp );
+    }
 //    }
 //
 //
@@ -288,28 +292,28 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
 
     // Set iterators to the beginning of each indexByFirstCompositionIndex,
     // and neighborCompositionObjects[neighborNum].
-    map<globalIndex, std::vector<std::pair<std::vector<globalIndex>, localIndex> > >::const_iterator
-    iter_local = indexByFirstCompositionIndex.begin();
-    map<globalIndex, std::vector<std::pair<std::vector<globalIndex>, globalIndex> > >::const_iterator
-    iter_neighbor = neighborCompositionObjects[neighborIndex].begin();
+    map< globalIndex, std::vector< std::pair< std::vector< globalIndex >, localIndex > > >::const_iterator
+      iter_local = indexByFirstCompositionIndex.begin();
+    map< globalIndex, std::vector< std::pair< std::vector< globalIndex >, globalIndex > > >::const_iterator
+      iter_neighbor = neighborCompositionObjects[neighborIndex].begin();
 
     // now we continue the while loop as long as both of our iterators are in range.
     while( iter_local != indexByFirstCompositionIndex.end() &&
-        iter_neighbor != neighborCompositionObjects[neighborIndex].end() )
+           iter_neighbor != neighborCompositionObjects[neighborIndex].end() )
     {
       // check to see if the map keys (first composition index) are the same.
       if( iter_local->first == iter_neighbor->first )
       {
         // first we loop over all local composition arrays (objects with the matched key)
-        for( std::vector<std::pair<std::vector<globalIndex>, localIndex> >::const_iterator
-            iter_local2 = iter_local->second.begin() ;
-            iter_local2 != iter_local->second.end() ; ++iter_local2 )
+        for( std::vector< std::pair< std::vector< globalIndex >, localIndex > >::const_iterator
+             iter_local2 = iter_local->second.begin() ;
+             iter_local2 != iter_local->second.end() ; ++iter_local2 )
         {
           // and loop over all of the neighbor composition arrays (objects with the matched key)
-          for( std::vector<std::pair<std::vector<globalIndex>, globalIndex> >::const_iterator
-              iter_neighbor2 = iter_neighbor->second.begin() ;
-              iter_neighbor2 != iter_neighbor->second.end() ;
-              ++iter_neighbor2 )
+          for( std::vector< std::pair< std::vector< globalIndex >, globalIndex > >::const_iterator
+               iter_neighbor2 = iter_neighbor->second.begin() ;
+               iter_neighbor2 != iter_neighbor->second.end() ;
+               ++iter_neighbor2 )
           {
             // now compare the composition arrays
             if( iter_local2->first.size() == iter_neighbor2->first.size() &&
@@ -368,14 +372,14 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
 }
 
 void CommunicationTools::AssignNewGlobalIndices( ObjectManagerBase & object,
-                                                 std::set<localIndex> const & indexList )
+                                                 std::set< localIndex > const & indexList )
 {
   int const thisRank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
   int const commSize = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
   localIndex numberOfNewObjectsHere = indexList.size();
   localIndex_array numberOfNewObjects( commSize );
   localIndex_array glocalIndexOffset( commSize );
-  MpiWrapper::allGather( numberOfNewObjectsHere , numberOfNewObjects );
+  MpiWrapper::allGather( numberOfNewObjectsHere, numberOfNewObjects );
 
 
   glocalIndexOffset[0] = 0;
@@ -385,11 +389,11 @@ void CommunicationTools::AssignNewGlobalIndices( ObjectManagerBase & object,
   }
 
   localIndex nIndicesAssigned = 0;
-  for ( localIndex const newLocalIndex : indexList )
+  for( localIndex const newLocalIndex : indexList )
   {
     GEOSX_ERROR_IF( object.m_localToGlobalMap[newLocalIndex] != -1,
-                   "Local object " << newLocalIndex << " should be new but already has a global index "
-                   << object.m_localToGlobalMap[newLocalIndex] );
+                    "Local object " << newLocalIndex << " should be new but already has a global index "
+                                    << object.m_localToGlobalMap[newLocalIndex] );
 
     object.m_localToGlobalMap[newLocalIndex] = object.m_maxGlobalIndex + glocalIndexOffset[thisRank] + nIndicesAssigned + 1;
     object.m_globalToLocalMap[object.m_localToGlobalMap[newLocalIndex]] = newLocalIndex;
@@ -412,8 +416,8 @@ void CommunicationTools::AssignNewGlobalIndices( ObjectManagerBase & object,
 
 void
 CommunicationTools::
-AssignNewGlobalIndices( ElementRegionManager & elementManager,
-                        std::map< std::pair<localIndex,localIndex>, std::set<localIndex> > const & newElems )
+  AssignNewGlobalIndices( ElementRegionManager & elementManager,
+                          std::map< std::pair< localIndex, localIndex >, std::set< localIndex > > const & newElems )
 {
   int const thisRank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
   int const commSize = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
@@ -422,7 +426,7 @@ AssignNewGlobalIndices( ElementRegionManager & elementManager,
 
   for( auto const & iter : newElems )
   {
-    std::set<localIndex> const & indexList = iter.second;
+    std::set< localIndex > const & indexList = iter.second;
     numberOfNewObjectsHere += indexList.size();
   }
 
@@ -444,15 +448,15 @@ AssignNewGlobalIndices( ElementRegionManager & elementManager,
   {
     localIndex const er = iter.first.first;
     localIndex const esr = iter.first.second;
-    std::set<localIndex> const & indexList = iter.second;
+    std::set< localIndex > const & indexList = iter.second;
 
-    ElementSubRegionBase * const subRegion = elementManager.GetRegion(er)->GetSubRegion(esr);
+    ElementSubRegionBase * const subRegion = elementManager.GetRegion( er )->GetSubRegion( esr );
 
-    for ( localIndex const newLocalIndex : indexList )
+    for( localIndex const newLocalIndex : indexList )
     {
       GEOSX_ERROR_IF( subRegion->m_localToGlobalMap[newLocalIndex] != -1,
-                     "Local object " << newLocalIndex << " should be new but already has a global index "
-                     << subRegion->m_localToGlobalMap[newLocalIndex] );
+                      "Local object " << newLocalIndex << " should be new but already has a global index "
+                                      << subRegion->m_localToGlobalMap[newLocalIndex] );
 
       subRegion->m_localToGlobalMap[newLocalIndex] = elementManager.m_maxGlobalIndex + glocalIndexOffset[thisRank] + nIndicesAssigned + 1;
       subRegion->m_globalToLocalMap[subRegion->m_localToGlobalMap[newLocalIndex]] = newLocalIndex;
@@ -475,14 +479,14 @@ AssignNewGlobalIndices( ElementRegionManager & elementManager,
 
 void
 CommunicationTools::
-FindMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
-                                     array1d<NeighborCommunicator> & allNeighbors )//,
+  FindMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
+                                       array1d< NeighborCommunicator > & allNeighbors )//,
 //array1d< array1d<localIndex> > & matchedPartitionBoundaryObjects )
 {
   GEOSX_MARK_FUNCTION;
-  integer_array & domainBoundaryIndicator = group->getReference<integer_array>( group->m_ObjectManagerBaseViewKeys.domainBoundaryIndicator );
+  integer_array & domainBoundaryIndicator = group->getReference< integer_array >( group->m_ObjectManagerBaseViewKeys.domainBoundaryIndicator );
 
-  array1d<globalIndex> globalPartitionBoundaryObjectsIndices;
+  array1d< globalIndex > globalPartitionBoundaryObjectsIndices;
   group->ConstructGlobalListOfBoundaryObjects( globalPartitionBoundaryObjectsIndices );
 
 
@@ -491,7 +495,7 @@ FindMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
 
   // send the size of the partitionBoundaryObjects to neighbors
   {
-    array1d< array1d<globalIndex> > neighborPartitionBoundaryObjects( allNeighbors.size() );
+    array1d< array1d< globalIndex > > neighborPartitionBoundaryObjects( allNeighbors.size() );
 //    matchedPartitionBoundaryObjects.resize( allNeighbors.size() );
 
     int commID = reserveCommID();
@@ -508,8 +512,8 @@ FindMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
       NeighborCommunicator const & neighbor = allNeighbors[i];
       localIndex_array &
       matchedPartitionBoundaryObjects = group->GetGroup( group->m_ObjectManagerBaseGroupKeys.neighborData )->
-                                        GetGroup( std::to_string( neighbor.NeighborRank()))->
-                                        getReference<localIndex_array>( group->m_ObjectManagerBaseViewKeys.matchedPartitionBoundaryObjects );
+                                          GetGroup( std::to_string( neighbor.NeighborRank()))->
+                                          getReference< localIndex_array >( group->m_ObjectManagerBaseViewKeys.matchedPartitionBoundaryObjects );
 
       allNeighbors[i].MPI_WaitAll( commID );
       localIndex localCounter = 0;
@@ -542,58 +546,112 @@ FindMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
 
 
 void CommunicationTools::FindGhosts( MeshLevel * const meshLevel,
-                                     array1d<NeighborCommunicator> & neighbors )
+                                     array1d< NeighborCommunicator > & neighbors,
+                                     bool use_nonblocking )
 {
   GEOSX_MARK_FUNCTION;
   int commID = CommunicationTools::reserveCommID();
 
-  for( auto & neighbor : neighbors )
+  GEOSX_MARK_BEGIN( "Neighbor wait loop" );
   {
-    neighbor.FindAndPackGhosts( false, 1, meshLevel, commID );
+    int neighbor_count = neighbors.size( );
+    auto send = [&] ( int idx )
+      {
+        neighbors[idx].PrepareAndSendGhosts( false, 1, meshLevel, commID );
+        return neighbors[idx].GetSizeRecvRequest( commID );
+      };
+    auto post_recv = [&] ( int idx )
+      {
+        neighbors[idx].PostRecv( commID );
+        return neighbors[idx].GetRecvRequest( commID );
+      };
+    auto proc_recv = [&] ( int idx )
+      {
+        neighbors[idx].UnpackGhosts( meshLevel, commID );
+        return MPI_REQUEST_NULL;
+      };
+    std::vector< std::function< MPI_Request ( int ) > > phases = { send, post_recv, proc_recv };
+    if( use_nonblocking )
+    {
+      MpiWrapper::ActiveWaitSomeCompletePhase( neighbor_count, phases );
+    }
+    else
+    {
+      MpiWrapper::ActiveWaitOrderedCompletePhase( neighbor_count, phases );
+    }
   }
-
-  GEOSX_MARK_BEGIN("Neighbor wait loop");
-  for( auto & neighbor : neighbors )
-  {
-    neighbor.MPI_WaitAll( commID );
-    neighbor.UnpackGhosts( meshLevel, commID );
-  }
-  GEOSX_MARK_END("Neighbor wait loop");
+  GEOSX_MARK_END( "Neighbor wait loop" );
 
   meshLevel->getNodeManager()->SetReceiveLists();
   meshLevel->getEdgeManager()->SetReceiveLists();
   meshLevel->getFaceManager()->SetReceiveLists();
 
-  for( auto & neighbor : neighbors )
-  {
-    neighbor.RebuildSyncLists( meshLevel, commID );
-  }
+  // at present removing this barrier allows a nondeterministic mpi error to happen on lassen
+  //   it occurs less than 5% of the time and happens when a process enters the recv phase in
+  //   the sync list exchange while another process still has not unpacked the ghosts received from
+  //   the first process. Depending on the mpi implementation the sync send from the first process
+  //   can be recv'd by the second process instead of the ghost send which has already been sent but
+  //   not necessarily recieved.
+  // Some restructuring to ensure this can't happen ( can also probably just change the send/recv tagging )
+  //   can eliminate this. But at present runtimes are the same in either case, as time is mostly just
+  //   shifted from the waitall in UnpackAndRebuildSyncLists since the processes are more 'in-sync' when
+  //   hitting that point after introducing this barrier.
+  MpiWrapper::Barrier( );
 
-  meshLevel->getNodeManager()->FixUpDownMaps(false);
-  meshLevel->getEdgeManager()->FixUpDownMaps(false);
-  meshLevel->getFaceManager()->FixUpDownMaps(false);
-  for( localIndex er=0 ; er<meshLevel->getElemManager()->numRegions() ; ++er )
   {
-    ElementRegionBase * const elemRegion = meshLevel->getElemManager()->GetRegion(er);
-    for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
+    int neighbor_count = neighbors.size( );
+    auto send = [&] ( int idx )
+      {
+        neighbors[idx].PrepareAndSendSyncLists( meshLevel, commID );
+        return neighbors[idx].GetSizeRecvRequest( commID );
+      };
+    auto post_recv  = [&] ( int idx )
+      {
+        neighbors[idx].PostRecv( commID );
+        return neighbors[idx].GetRecvRequest( commID );
+      };
+    auto proc_recv = [&] ( int idx )
+      {
+        neighbors[idx].UnpackAndRebuildSyncLists( meshLevel, commID );
+        return MPI_REQUEST_NULL;
+      };
+    std::vector< std::function< MPI_Request ( int ) > > phases = { send, post_recv, proc_recv };
+    if( use_nonblocking )
     {
-      ElementSubRegionBase * const subRegion = elemRegion->GetSubRegion(esr);
-      subRegion->FixUpDownMaps(false);
+      MpiWrapper::ActiveWaitSomeCompletePhase( neighbor_count, phases );
+    }
+    else
+    {
+      MpiWrapper::ActiveWaitOrderedCompletePhase( neighbor_count, phases );
     }
   }
 
+  meshLevel->getNodeManager()->FixUpDownMaps( false );
+  meshLevel->getEdgeManager()->FixUpDownMaps( false );
+  meshLevel->getFaceManager()->FixUpDownMaps( false );
+  for( localIndex er=0 ; er<meshLevel->getElemManager()->numRegions() ; ++er )
+  {
+    ElementRegionBase * const elemRegion = meshLevel->getElemManager()->GetRegion( er );
+    for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
+    {
+      ElementSubRegionBase * const subRegion = elemRegion->GetSubRegion( esr );
+      subRegion->FixUpDownMaps( false );
+    }
+  }
+  meshLevel->getNodeManager()->CompressRelationMaps();
+  meshLevel->getEdgeManager()->CompressRelationMaps();
   CommunicationTools::releaseCommID( commID );
 }
 
 
-void CommunicationTools::SynchronizePackSendRecvSizes( const std::map<string, string_array >& fieldNames,
+void CommunicationTools::SynchronizePackSendRecvSizes( const std::map< string, string_array > & fieldNames,
                                                        MeshLevel * const mesh,
-                                                       array1d<NeighborCommunicator> & neighbors,
+                                                       array1d< NeighborCommunicator > & neighbors,
                                                        MPI_iCommData & icomm,
                                                        bool on_device )
 {
   GEOSX_MARK_FUNCTION;
-  icomm.fieldNames.insert(fieldNames.begin(), fieldNames.end() );
+  icomm.fieldNames.insert( fieldNames.begin(), fieldNames.end() );
   icomm.resize( neighbors.size() );
 
   for( localIndex neighborIndex=0 ; neighborIndex<neighbors.size() ; ++neighborIndex )
@@ -611,9 +669,9 @@ void CommunicationTools::SynchronizePackSendRecvSizes( const std::map<string, st
 }
 
 
-void CommunicationTools::SynchronizePackSendRecv( const std::map<string, string_array >& fieldNames,
+void CommunicationTools::SynchronizePackSendRecv( const std::map< string, string_array > & fieldNames,
                                                   MeshLevel * const mesh,
-                                                  array1d<NeighborCommunicator> & neighbors,
+                                                  array1d< NeighborCommunicator > & neighbors,
                                                   MPI_iCommData & icomm,
                                                   bool on_device )
 {
@@ -630,9 +688,9 @@ void CommunicationTools::SynchronizePackSendRecv( const std::map<string, string_
   {
     int neighborIndex;
     MpiWrapper::Waitany( icomm.size,
-                 icomm.mpiSizeRecvBufferRequest.data(),
-                 &neighborIndex,
-                 icomm.mpiSizeRecvBufferStatus.data() );
+                         icomm.mpiSizeRecvBufferRequest.data(),
+                         &neighborIndex,
+                         icomm.mpiSizeRecvBufferStatus.data() );
 
     NeighborCommunicator & neighbor = neighbors[neighborIndex];
 
@@ -646,7 +704,7 @@ void CommunicationTools::SynchronizePackSendRecv( const std::map<string, string_
 }
 
 void CommunicationTools::SynchronizeUnpack( MeshLevel * const mesh,
-                                            array1d<NeighborCommunicator> & neighbors,
+                                            array1d< NeighborCommunicator > & neighbors,
                                             MPI_iCommData & icomm,
                                             bool on_device )
 {
@@ -674,9 +732,9 @@ void CommunicationTools::SynchronizeUnpack( MeshLevel * const mesh,
   {
     int neighborIndex;
     MpiWrapper::Waitany( icomm.size,
-                 icomm.mpiRecvBufferRequest.data(),
-                 &neighborIndex,
-                 icomm.mpiRecvBufferStatus.data() );
+                         icomm.mpiRecvBufferRequest.data(),
+                         &neighborIndex,
+                         icomm.mpiRecvBufferStatus.data() );
 
     NeighborCommunicator & neighbor = neighbors[neighborIndex];
     neighbor.UnpackBufferForSync( icomm.fieldNames, mesh, icomm.commID, on_device );
@@ -684,18 +742,18 @@ void CommunicationTools::SynchronizeUnpack( MeshLevel * const mesh,
 
 #endif
   MpiWrapper::Waitall( icomm.size,
-               icomm.mpiSizeSendBufferRequest.data(),
-               icomm.mpiSizeSendBufferStatus.data() );
+                       icomm.mpiSizeSendBufferRequest.data(),
+                       icomm.mpiSizeSendBufferStatus.data() );
 
   MpiWrapper::Waitall( icomm.size,
-               icomm.mpiSendBufferRequest.data(),
-               icomm.mpiSendBufferStatus.data() );
+                       icomm.mpiSendBufferRequest.data(),
+                       icomm.mpiSendBufferStatus.data() );
 
 }
 
-void CommunicationTools::SynchronizeFields( const std::map<string, string_array >& fieldNames,
+void CommunicationTools::SynchronizeFields( const std::map< string, string_array > & fieldNames,
                                             MeshLevel * const mesh,
-                                            array1d<NeighborCommunicator> & neighbors,
+                                            array1d< NeighborCommunicator > & neighbors,
                                             bool on_device )
 {
   MPI_iCommData icomm;

@@ -1,22 +1,19 @@
 
 <Problem>
 
-  <Solvers
-    gravityVector="0.0,0.0,-9.81">
+  <Solvers>
   
-    <SinglePhaseFlow name="SinglePhaseFlow"
+    <SinglePhaseFVM
+	             name="SinglePhaseFlow"
                      logLevel="0"
-                     gravityFlag="1"
                      discretization="singlePhaseTPFA"
                      targetRegions="{Fracture}"
                      fluidName="water"
                      solidName="rock">
-      <NonlinearSolverParameters name="nlsp"
-                                 newtonTol="1.0e-8"
+      <NonlinearSolverParameters newtonTol="1.0e-8"
                                  newtonMaxIter="8"/>
-      <SystemSolverParameters name="SystemSolverParameters"
-                              krylovTol="1.0e-12"/>
-    </SinglePhaseFlow>
+      <SystemSolverParameters krylovTol="1.0e-12"/>
+    </SinglePhaseFVM>
     
     <SurfaceGenerator name="SurfaceGen"
                       logLevel="0"
@@ -126,10 +123,6 @@
 
   <Functions>
   </Functions>
-
-  <Partition>
-    <SpatialPartition xPar="1" yPar="1" zPar="1"/>
-  </Partition>
 
   <Outputs>
     <Silo name="siloOutput"/>

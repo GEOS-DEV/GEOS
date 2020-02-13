@@ -1,33 +1,28 @@
 
 <Problem>
 
-  <Solvers
-    gravityVector="0.0, 0.0, -9.81">
+  <Solvers gravityVector="0.0, 0.0, -9.81">
 
     <Reservoir name="reservoirSystem"
                flowSolverName="singlePhaseFlow"
                wellSolverName="singlePhaseWell"
                logLevel="1"
                targetRegions="{Region1,wellRegion1,wellRegion2}">
-      <NonlinearSolverParameters name="nlsp"
-                                 newtonMaxIter="40"/>
-      <SystemSolverParameters name="ssp"
-                              useDirectSolver="1"
+      <NonlinearSolverParameters newtonMaxIter="40"/>
+      <SystemSolverParameters useDirectSolver="1"
                               logLevel="2"/>
     </Reservoir>
   
-    <SinglePhaseFlow name="singlePhaseFlow"
-                     logLevel="1"
-                     gravityFlag="1"
-                     discretization="singlePhaseTPFA"
-                     fluidName="water"
-                     solidName="rock"
-                     targetRegions="{Region1}">
-    </SinglePhaseFlow>
+    <SinglePhaseFVM name="singlePhaseFlow"
+                             logLevel="1"
+                             discretization="singlePhaseTPFA"
+                             fluidName="water"
+                             solidName="rock"
+                             targetRegions="{Region1}">
+    </SinglePhaseFVM>
 
     <SinglePhaseWell name="singlePhaseWell"
                      logLevel="1"
-                     gravityFlag="1"
                      wellFluidName="water"
                      targetRegions="{wellRegion1,wellRegion2}">
         <WellControls name="wellControls1"
@@ -196,10 +191,6 @@
   <Functions>
     <TableFunction     name="timeFunction"         inputVarNames="{time}" coordinates="{1.0, 2.0, 6e4}" values="{1.0, 2.0, 2.0}" />
   </Functions>
-
-  <Partition>
-    <SpatialPartition xPar="1" yPar="1" zPar="1"/>
-  </Partition> 
 
   <Outputs>
       <Silo name="siloOutput"/>

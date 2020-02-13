@@ -1,8 +1,7 @@
 
 <Problem>
 
-  <Solvers
-    gravityVector="0.0, 0.0, -9.81">
+  <Solvers>
 
 
     <Reservoir name="reservoirSystem"
@@ -10,17 +9,14 @@
                wellSolverName="compositionalMultiphaseWell"
                logLevel="1"
                targetRegions="{Channel,wellRegion1,wellRegion2}">
-      <NonlinearSolverParameters name="nlsp"
-                                 newtonTol="1.0e-4"
+      <NonlinearSolverParameters newtonTol="1.0e-4"
                                  newtonMaxIter="40"/>
-      <SystemSolverParameters name="ssp"
-                              useDirectSolver="1"
+      <SystemSolverParameters useDirectSolver="1"
                               logLevel="0"/>
     </Reservoir>
     
     <CompositionalMultiphaseFlow name="compositionalMultiphaseFlow"
                                  logLevel="1"
-                                 gravityFlag="1"
                                  discretization="fluidTPFA"
                                  targetRegions="{Channel}"
                                  fluidName="fluid1"
@@ -32,7 +28,6 @@
 
     <CompositionalMultiphaseWell name="compositionalMultiphaseWell"
                                  logLevel="1"
-                                 gravityFlag="1"
                                  targetRegions="{wellRegion1,wellRegion2}"
                                  wellFluidName="fluid1"
                                  wellRelPermName="relperm"
@@ -100,7 +95,7 @@
   <Events maxTime="2.5e4">
 
     <PeriodicEvent name="outputs"
-                   timeFrequency="5e3.0"
+                   timeFrequency="5e3"
                    targetExactTimestep="1"
                    target="/Outputs/siloOutput" />
 
