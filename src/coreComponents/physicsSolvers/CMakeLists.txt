@@ -15,9 +15,11 @@ set( physicsSolvers_headers
      fluidFlow/CompositionalMultiphaseWell.hpp
      fluidFlow/FlowSolverBase.hpp
      fluidFlow/SinglePhaseBase.hpp
-     fluidFlow/SinglePhaseHybridFVM.hpp
      fluidFlow/SinglePhaseFVM.hpp
-     fluidFlow/SinglePhaseKernels.hpp
+     fluidFlow/SinglePhaseHybridFVM.hpp     
+     fluidFlow/SinglePhaseBaseKernels.hpp
+     fluidFlow/SinglePhaseFVMKernels.hpp          
+     fluidFlow/SinglePhaseHybridFVMKernels.hpp     
      fluidFlow/SinglePhaseWell.hpp
      fluidFlow/WellSolverBase.hpp
      multiphysics/HydrofractureSolver.hpp
@@ -44,9 +46,11 @@ set( physicsSolvers_sources
      fluidFlow/CompositionalMultiphaseWell.cpp
      fluidFlow/FlowSolverBase.cpp
      fluidFlow/SinglePhaseBase.cpp
-     fluidFlow/SinglePhaseHybridFVM.cpp
-     fluidFlow/SinglePhaseFVM.cpp     
-     fluidFlow/SinglePhaseKernels.cpp
+     fluidFlow/SinglePhaseFVM.cpp
+     fluidFlow/SinglePhaseHybridFVM.cpp     
+     fluidFlow/SinglePhaseBaseKernels.cpp
+     fluidFlow/SinglePhaseFVMKernels.cpp
+     fluidFlow/SinglePhaseHybridFVMKernels.cpp
      fluidFlow/SinglePhaseWell.cpp
      fluidFlow/WellSolverBase.cpp
      multiphysics/HydrofractureSolver.cpp
