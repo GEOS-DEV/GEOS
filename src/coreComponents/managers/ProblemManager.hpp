@@ -132,6 +132,7 @@ public:
     dataRepository::ViewKey schemaFileName           = {"schemaFileName"};
     dataRepository::ViewKey problemName              = {"problemName"};
     dataRepository::ViewKey outputDirectory          = {"outputDirectory"};
+    dataRepository::ViewKey useNonblockingMPI        = {"useNonblockingMPI"};
   } viewKeys;
 
   struct groupKeysStruct
