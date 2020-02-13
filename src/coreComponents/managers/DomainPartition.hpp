@@ -73,7 +73,7 @@ public:
 //  static int reserveCommID();
 //  static void releaseCommID( int & ID );
 
-  void SetupCommunications();
+  void SetupCommunications( bool use_nonblocking );
 
   void AddNeighbors(const unsigned int idim,
                     MPI_Comm& cartcomm,

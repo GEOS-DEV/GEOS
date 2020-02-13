@@ -63,9 +63,8 @@ void PartitionBase::SetDomain( DomainPartition * domain )
   // set the const pointer "m_domain" by casting away the the const
   // on the address of the pointer, and modifying what the address of
   // the pointer.
-  DomainPartition** temp = const_cast<DomainPartition**>(&m_domain);
+  DomainPartition * * temp = const_cast< DomainPartition * * >(&m_domain);
   *temp = domain;
 }
 
 }
-
