@@ -177,20 +177,27 @@ void WellElementSubRegion::AssignUnownedElementsInReservoir( MeshLevel          
   {
     R1Tensor const & location = wellElemCoordsGlobal[currGlobal];
 
+    // this will contain the indices of the reservoir element
+    // in which the center of the well element is located
     localIndex erMatched  = -1;
     localIndex esrMatched = -1;
     localIndex eiMatched  = -1;
 
+    // this will contain the indices of the reservoir element
+    // from which we are going to start the search
     localIndex erInit     = -1;
     localIndex esrInit    = -1;
     localIndex eiInit     = -1;
-    
-    // find the reservoir element that is the closest from the well element
-    // this will be used next to search around the closest reservoir element
+
+    // Step 1: first, we search for the reservoir element that is the *closest* from the center of well element
+    //         note that this reservoir element does not necessarily contain the center of the well element    
+    //         this "init" reservoir element will be used in SearchLocalElements to find the reservoir element that
+    //         contains the well element
     InitializeLocalSearch( mesh, location,
                            erInit, esrInit, eiInit );
 
-    // search locally, starting from the reservoir element found above
+    // Step 2: then, search for the reservoir element that contains the well element
+    //         to do that, we loop over the reservoir elements that are in the neighborhood of (erInit,esrInit,eiInit)
     bool resElemFound = SearchLocalElements( mesh, location,
                                              erInit, esrInit, eiInit,
                                              erMatched, esrMatched, eiMatched );
@@ -198,7 +205,7 @@ void WellElementSubRegion::AssignUnownedElementsInReservoir( MeshLevel          
     // if the element was found
     if (resElemFound)
     {
-      // the well element is in the reservoir element (er,esr,ei), so tag it as local
+      // the well element is in the reservoir element (erMatched,esrMatched,eiMatched), so tag it as local
       localElems.insert( currGlobal );
       elemStatusGlobal[currGlobal] = WellElemStatus::LOCAL;
     }
@@ -529,6 +536,8 @@ void WellElementSubRegion::ConnectPerforationsToMeshElements( MeshLevel         
     localIndex erInit     = -1;
     localIndex esrInit    = -1;
     localIndex eiInit     = -1;
+
+    // for each perforation, we have to find the reservoir element that contains the perforation
     
     if (iperfLocal > 0)
     {
@@ -540,13 +549,16 @@ void WellElementSubRegion::ConnectPerforationsToMeshElements( MeshLevel         
     }   
     else
     {
-      // find the reservoir element that is the closest from the perforation
-      // this will be used next to search around the closest reservoir element
+      // Step 1: first, we search for the reservoir element that is the *closest* from the center of well element
+      //         note that this reservoir element does not necessarily contain the center of the well element    
+      //         this "init" reservoir element will be used in SearchLocalElements to find the reservoir element that
+      //         contains the well element
       InitializeLocalSearch( mesh, location,
                              erInit, esrInit, eiInit );
     }   
 
-    // search locally, starting from the reservoir element found above
+    // Step 2: then, search for the reservoir element that contains the well element
+    //         to do that, we loop over the reservoir elements that are in the neighborhood of (erInit,esrInit,eiInit)
     bool resElemFound = SearchLocalElements( mesh, location,
                                              erInit, esrInit, eiInit,
                                              erMatched, esrMatched, eiMatched );
@@ -554,7 +566,7 @@ void WellElementSubRegion::ConnectPerforationsToMeshElements( MeshLevel         
     // if the element was found
     if (resElemFound)
     {
-      // set the indices for the matched element
+      // set the indices for the matched reservoir element
       m_perforationData.GetMeshElements().m_toElementRegion   [iperfLocal] = erMatched;
       m_perforationData.GetMeshElements().m_toElementSubRegion[iperfLocal] = esrMatched;
       m_perforationData.GetMeshElements().m_toElementIndex    [iperfLocal] = eiMatched;
@@ -584,7 +596,7 @@ void WellElementSubRegion::InitializeLocalSearch( MeshLevel const & mesh,
                                                                                                                 viewKeyStruct::
                                                                                                                 elementCenterString );
   // to initialize the local search for the reservoir element that contains "location", 
-  // we find the reservoir element that minimizes the distance from "location" to the element center
+  // we find the reservoir element that minimizes the distance from "location" to the reservoir element center
   auto ret = minLocOverElemsInMesh( &mesh, [&] ( localIndex const er,
                                                  localIndex const esr,
                                                  localIndex const ei ) -> real64
@@ -620,18 +632,24 @@ bool WellElementSubRegion::SearchLocalElements( MeshLevel  const & mesh,
   set<localIndex>  nodes;
   set<globalIndex> elements;
 
+  // here is how the search is done:
+  //   1 - We check if "location" is within the "init" reservoir element defined by (erInit,esrMatched,eiMatched)
+  //   2 - If yes, stop
+  //     - If not, a) collect the nodes of the reservoir element defined by (erInit,esrMatched,eiMatched)
+  //               b) use these nodes to grab the neighbors of (erInit,esrMatched,eiMatched)
+  //               c) check if "location" is within the neighbors. If not, grab the neighbors of the neighbors, and so on...    
+
   // collect the nodes of the current element
   // they will be used to access the neighbors and check if they contain the perforation
   CollectElementNodes( subRegion, eiInit, nodes); 
 
-  // enlarge the neighborhoods four times (if no match is found)
-  // before switching to the other strategy
+  // if no match is found, enlarge the neighborhood m_searchDepth'th times 
   for (localIndex d = 0; d < m_searchDepth; ++d)
   {
     localIndex nNodes = nodes.size();
     
-    // search the elements that can be access from the set "nodes"
-    // stop if an element containing the perforation is found
+    // search the reservoir elements that can be accessed from the set "nodes"
+    // stop if a reservoir element containing the perforation is found
     // if not, enlarge the set "nodes"
     resElemFound = VisitNeighborElements( mesh, location, nodes, elements,
                                           erMatched, esrMatched, eiMatched );
@@ -660,9 +678,16 @@ bool WellElementSubRegion::VisitNeighborElements( MeshLevel const  & mesh,
 
   bool matched = false;
 
+  // In this function, we loop over all the nodes that we have collected so far.
+  // For each node, we grab all the reservoir elements that contain the node
+  //     For reservoir element that has not been visited yet, we check if it contains "location"
+  //           If the reservoir element contains "location" we can stop the search
+  //           If the reservoir element does not contain "location", we collect its nodes        
+  
   // we will enlarge the set of nodes in the loop below
-  // to do this we have to create a new set that will
-  // contain the already visited nodes only
+  // to do this we have to create a new set, "currNodes"
+  // that contains only the nodes that have already been visited
+  // the newly added nodes will be added to "nodes" 
   set<localIndex> currNodes = nodes;
   
   // for all the nodes already visited
@@ -684,8 +709,8 @@ bool WellElementSubRegion::VisitNeighborElements( MeshLevel const  & mesh,
       {
         elements.insert(eiGlobal);
         
-        // perform the test to see if the point is in this element
-        // if the point is in the element, save the indices and stop the search
+        // perform the test to see if the point is in this reservoir element
+        // if the point is in the resevoir element, save the indices and stop the search
         if (IsPointInsideElement( nodeManager, location, subRegion, eiLocal ))
         {  
           erMatched  = er;
