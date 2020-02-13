@@ -36,17 +36,16 @@ XML Symbolic Math:
   <Solvers
     gravityVector="0.0, 0.0, -9.81">
 
-    <SinglePhaseFlow name="SinglePhaseFlow"
-                     verboseLevel="0"
-                     gravityFlag="1"
-                     discretization="singlePhaseTPFA"
-                     fluidName="water"
-                     solidName="rock"
-                     targetRegions="{Region1}">
-      <SystemSolverParameters krylovTol="1.0e-10"
-                              newtonTol="1.0e-6"
-                              maxIterNewton="8"/>
-    </SinglePhaseFlow>
+    <SinglePhaseFVM name="SinglePhaseFlow"
+                    logLevel="0"
+                    discretization="singlePhaseTPFA"
+                    targetRegions="{Fracture}"
+                    fluidName="water"
+                    solidName="rock"
+                    inputFluxEstimate="1">
+      <SystemSolverParameters krylovTol="1.0e-12"
+                              logLevel="0"/>
+    </SinglePhaseFVM>
   </Solvers>
 
   <Mesh>

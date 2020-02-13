@@ -172,7 +172,7 @@ array1d<R1Tensor> orderPointsCCW(array1d<R1Tensor> const & points,
  */
 real64 Centroid_3DPolygon( localIndex const * const pointsIndices,
                            localIndex const numPoints,
-                           arrayView1d<R1Tensor const> const & points,
+                           arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & points,
                            R1Tensor & center,
                            R1Tensor & normal,
                            real64 areaTolerance )
@@ -184,7 +184,7 @@ real64 Centroid_3DPolygon( localIndex const * const pointsIndices,
 
   if( numPoints > 2 )
   {
-    const R1Tensor& x0 = points[pointsIndices[0]];
+    R1Tensor const x0 = points[pointsIndices[0]];
     for( localIndex a=0 ; a<(numPoints-2) ; ++a )
     {
       v1  = points[pointsIndices[a+1]];
@@ -253,7 +253,7 @@ real64 Centroid_3DPolygon( localIndex const * const pointsIndices,
 }
 
 real64 Centroid_3DPolygon( arrayView1d<localIndex const> const & pointsIndices,
-                           arrayView1d<R1Tensor const> const & points,
+                           arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & points,
                            R1Tensor & center,
                            R1Tensor & normal,
                            real64 areaTolerance )
@@ -415,7 +415,7 @@ int sgn( T val )
   return (T(0) < val) - (val < T(0));
 }
 
-bool IsPointInsidePolyhedron( arrayView1d<R1Tensor const> const & nodeCoordinates,
+bool IsPointInsidePolyhedron( arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodeCoordinates,
                               array1d<array1d<localIndex>> const & faceNodeIndicies,
                               R1Tensor const & point,
                               real64 const areaTolerance )

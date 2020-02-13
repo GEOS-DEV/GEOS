@@ -3,10 +3,9 @@
 
   <Solvers
     gravityVector="0.0, 0.0, -9.81">
-  
+
     <CompositionalMultiphaseFlow name="compflow"
-                                 verboseLevel="1"
-                                 gravityFlag="1"
+                                 logLevel="1"
                                  discretization="fluidTPFA"
                                  targetRegions="{Region1}"
                                  fluidName="fluid1"
@@ -16,21 +15,20 @@
                                  useMass="0"
                                  initialDt="1e7">
       <NonlinearSolverParameters
-           name="nlsp"
            newtonTol="1.0e-10"
            newtonMaxIter="15"
            maxTimeStepCuts="10"
-           maxLineSearchCuts="2"
+           lineSearchMaxCuts="2"
            maxSubSteps="100"
            dtCutIterLimit = "0.7"
            dtIncIterLimit = "0.3"/>
       <SystemSolverParameters useDirectSolver="1"/>
     </CompositionalMultiphaseFlow>
   </Solvers>
-  
+
   <Mesh>
     <InternalMesh name="mesh1"
-                  elementTypes="{C3D8}" 
+                  elementTypes="{C3D8}"
                   xCoords="{0, 10}"
                   yCoords="{0, 1}"
                   zCoords="{0, 1}"
@@ -46,7 +44,7 @@
   </Geometry>
 
 
-  <Events maxTime="2e8" verbosity="1">
+  <Events maxTime="2e8" logLevel="1">
 
     <!--  PeriodicEvent name="outputs"
                    timeFrequency="1e8"
@@ -102,7 +100,7 @@
   <FieldSpecifications>
     <FieldSpecification name="permx"
                component="0"
-               initialCondition="1"  
+               initialCondition="1"
                setNames="{all}"
                objectPath="ElementRegions/Region1/block1"
                fieldName="permeability"

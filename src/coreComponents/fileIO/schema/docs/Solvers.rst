@@ -3,7 +3,7 @@
 ============================ ======== ========= ========================================== 
 Name                         Type     Default   Description                                
 ============================ ======== ========= ========================================== 
-gravityVector                R1Tensor 0 0 -9.81 Gravity vector used in the physics solvers 
+gravityVector                R1Tensor 0,0,-9.81 Gravity vector used in the physics solvers 
 CompositionalMultiphaseFlow  node               :ref:`XML_CompositionalMultiphaseFlow`     
 CompositionalMultiphaseWell  node               :ref:`XML_CompositionalMultiphaseWell`     
 EmbeddedSurfaceGenerator     node               :ref:`XML_EmbeddedSurfaceGenerator`        

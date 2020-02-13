@@ -24,77 +24,11 @@
 namespace geosx
 {
 
-template< typename T, int UNIT_STRIDE_DIM >
-inline void CopyGlobalToLocal(arraySlice1d< localIndex const, UNIT_STRIDE_DIM> const & globalToLocalRelation,
-                              arraySlice1d< T const> const& globalField1,
-                              arraySlice1d< T const> const& globalField2,
-                              arraySlice1d< T > const & localField1,
-                              arraySlice1d< T > const & localField2,
-                              localIndex const N)
-{
-  for( localIndex a=0 ; a<N ; ++a )
-  {
-    localField1[a] = globalField1[ globalToLocalRelation[a] ];
-    localField2[a] = globalField2[ globalToLocalRelation[a] ];
-  }
-}
-
-template< localIndex N, typename T, int UNIT_STRIDE_DIM >
-inline void CopyGlobalToLocal(arraySlice1d< localIndex const, UNIT_STRIDE_DIM > const & globalToLocalRelation,
-                              arraySlice1d< T const > const & globalField1,
-                              arraySlice1d< T const > const & globalField2,
-                              T * const restrict localField1,
-                              T * const restrict localField2 )
-{
-  for( localIndex a=0 ; a<N ; ++a )
-  {
-    localField1[a] = globalField1[ globalToLocalRelation[a] ];
-    localField2[a] = globalField2[ globalToLocalRelation[a] ];
-  }
-}
-
-template< localIndex N, typename T, int UNIT_STRIDE_DIM >
-inline void CopyGlobalToLocal(arraySlice1d< localIndex, UNIT_STRIDE_DIM > const & globalToLocalRelation,
-                              arraySlice1d< T > const & globalField1,
-                              arraySlice1d< T > const & globalField2,
-                              arraySlice1d< T > const & globalField3,
-                              T * const restrict localField1,
-                              T * const restrict localField2,
-                              T * const restrict localField3 )
-{
-  for( localIndex a=0 ; a<N ; ++a )
-  {
-    localField1[a] = globalField1[ globalToLocalRelation[a] ];
-    localField2[a] = globalField2[ globalToLocalRelation[a] ];
-    localField3[a] = globalField3[ globalToLocalRelation[a] ];
-  }
-}
-
-template< int N, typename T, int UNIT_STRIDE_DIM >
-inline void CopyGlobalToLocal(arraySlice1d< localIndex const, UNIT_STRIDE_DIM > const & globalToLocalRelation,
-                              arraySlice1d< T const > const & globalField1,
-                              arraySlice1d< T const > const & globalField2,
-                              arraySlice1d< T const > const & globalField3,
-                              arraySlice1d< T const > const & globalField4,
-                              T * const localField1,
-                              T * const localField2,
-                              T * const localField3,
-                              T * const localField4 )
-{
-  for( localIndex a=0 ; a<N ; ++a )
-  {
-    localField1[a] = globalField1[ globalToLocalRelation[a] ];
-    localField2[a] = globalField2[ globalToLocalRelation[a] ];
-    localField3[a] = globalField3[ globalToLocalRelation[a] ];
-    localField4[a] = globalField4[ globalToLocalRelation[a] ];
-  }
-}
-
-inline bool isEven(int x) {
+inline constexpr bool isEven(int x) {
   return !(x&1);
 }
 
-inline bool isOdd(int x) {
+inline constexpr bool isOdd(int x) {
   return (x&1);
 }
 

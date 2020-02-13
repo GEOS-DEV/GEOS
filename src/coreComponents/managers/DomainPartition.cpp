@@ -151,7 +151,7 @@ void DomainPartition::GenerateSets()
 }
 
 
-void DomainPartition::SetupCommunications()
+void DomainPartition::SetupCommunications( bool use_nonblocking )
 {
   GEOSX_MARK_FUNCTION;
   array1d<NeighborCommunicator> & allNeighbors = this->getReference< array1d<NeighborCommunicator> >( viewKeys.neighbors );
@@ -215,7 +215,7 @@ void DomainPartition::SetupCommunications()
   CommunicationTools::FindMatchedPartitionBoundaryObjects( nodeManager,
                                                            allNeighbors );
 
-  CommunicationTools::FindGhosts( meshLevel, allNeighbors );
+  CommunicationTools::FindGhosts( meshLevel, allNeighbors, use_nonblocking );
 
   faceManager->SortAllFaceNodes( nodeManager, meshLevel->getElemManager() );
   faceManager->computeGeometry( nodeManager );

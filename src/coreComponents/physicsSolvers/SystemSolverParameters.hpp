@@ -44,6 +44,7 @@ public:
   {
     static constexpr auto solverTypeString          = "solverType";
     static constexpr auto krylovTolString           = "krylovTol";
+    static constexpr auto useAdaptiveKrylovString   = "useAdaptiveKrylovTol";
     static constexpr auto numKrylovIterString       = "numKrylovIter";
     static constexpr auto kspaceString              = "kspace";
     static constexpr auto ilut_fillString           = "ilut_fill";
@@ -53,8 +54,8 @@ public:
     static constexpr auto scalingOptionString       = "scalingOption";
     static constexpr auto useBicgstabString         = "useBicgstab";
     static constexpr auto useDirectSolverString     = "useDirectSolver";
-    static constexpr auto KrylovResidualInitString  = "KrylovResidualInit";
-    static constexpr auto KrylovResidualFinalString = "KrylovResidualFinal";
+    static constexpr auto krylovResidualInitString  = "krylovResidualInit";
+    static constexpr auto krylovResidualFinalString = "krylovResidualFinal";
   } viewKeys;
 
   struct groupKeysStruct
@@ -62,6 +63,7 @@ public:
 
   string  solverType() const                  { return m_solverType; }
   real64 krylovTol() const                    { return m_krylovTol; }
+  integer useAdaptiveKrylovTol() const        { return m_useAdaptiveKrylovTol; }
   integer  numKrylovIter() const              { return m_numKrylovIter; }
   integer  kspace() const                     { return m_kspace; }
   real64 ilut_fill() const                    { return m_ilut_fill; }
@@ -71,12 +73,12 @@ public:
   integer  scalingOption() const              { return m_scalingOption; }
   integer   useBicgstab() const               { return m_useBicgstab; }
   integer   useDirectSolver() const           { return m_useDirectSolver; }
-  real64 KrylovResidualInit() const           { return m_KrylovResidualInit; }
-  real64 KrylovResidualFinal() const          { return m_KrylovResidualFinal; }
-
+  real64 krylovResidualInit() const           { return m_krylovResidualInit; }
+  real64 krylovResidualFinal() const          { return m_krylovResidualFinal; }
 
   string  m_solverType;
   real64  m_krylovTol;
+  integer m_useAdaptiveKrylovTol;
   integer m_numKrylovIter;
   integer m_kspace;
   real64  m_ilut_fill;
@@ -86,8 +88,11 @@ public:
   integer m_scalingOption;
   integer m_useBicgstab;
   integer m_useDirectSolver;
-  real64  m_KrylovResidualInit;
-  real64  m_KrylovResidualFinal;
+  real64  m_krylovResidualInit;
+  real64  m_krylovResidualFinal;
+  real64  m_krylovAuxTime;
+  real64  m_krylovSetupTime;
+  real64  m_krylovSolveTime;
   integer m_maxIters = 1000;
 
 

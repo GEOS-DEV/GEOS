@@ -24,10 +24,8 @@
 
 namespace geosx
 {
-
 namespace constitutive
 {
-
 
 
 class SolidBase : public constitutive::ConstitutiveBase
@@ -51,10 +49,6 @@ public:
                                  R2Tensor const & Rot,
                                  integer const updateStiffnessFlag ) = 0;
 
-//  virtual void BatchUpdate( arrayView2d<real64 const> const & Dadt,
-//                            arrayView2d<real64 const> const & Rot )
-
-
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
     static constexpr auto defaultDensityString  = "defaultDensity";
@@ -68,33 +62,16 @@ public:
   arrayView2d<real64>       const & density()       { return m_density; }
   arrayView2d<real64 const> const & density() const { return m_density; }
 
-  arrayView2d<R2SymTensor>       const & getStress()       { return m_stress; }
-  arrayView2d<R2SymTensor const> const & getStress() const { return m_stress; }
+  arrayView3d<real64, solid::STRESS_USD>       const & getStress()       { return m_stress; }
+  arrayView3d<real64 const, solid::STRESS_USD> const & getStress() const { return m_stress; }
 
 protected:
-
-//  template< typename LEAFCLASS, typename POLICY=materialUpdatePolicy, typename ... ARGS >
-//  void BatchUpdateKernel( ARGS && ... args );
-
-
-  real64 m_defaultDensity;
+  real64 m_defaultDensity = 0;
   array2d<real64> m_density;
-
-  array2d<R2SymTensor> m_stress;
-
+  array3d<real64, solid::STRESS_PERMUTATION> m_stress;
 };
 
-
-//template< typename LEAFCLASS, typename POLICY, typename ... ARGS >
-//void SolidBase::BatchUpdateKernel( ARGS && ... args )
-//{
-//  LaunchKernel<POLICY>( GEOSX_LAMBDA ( localIndex const k, localIndex const q )
-//  {
-//    LEAFCLASS::Compute( args... );
-//  } );
-//}
-
-}
-} /* namespace geosx */
+} // namespace constitutive
+} // namespace geosx
 
 #endif /* GEOSX_CONSTITUTIVE_SOLID_SOLIDBASE_HPP_ */
