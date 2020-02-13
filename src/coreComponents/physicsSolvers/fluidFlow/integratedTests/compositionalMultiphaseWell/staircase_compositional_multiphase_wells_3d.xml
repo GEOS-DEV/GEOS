@@ -43,7 +43,7 @@
                       control="liquidRate" 
                       targetBHP="3e6"
                       targetRate="1e-2" 
-               	      injectionStream="{0.1, 0.1, 0.1, 0.7}"/>
+                      injectionStream="{0.1, 0.1, 0.1, 0.7}"/>
     </CompositionalMultiphaseWell>
 
   </Solvers>

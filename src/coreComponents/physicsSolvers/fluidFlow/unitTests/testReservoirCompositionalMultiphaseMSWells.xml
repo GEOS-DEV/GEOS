@@ -4,7 +4,7 @@
   <Solvers gravityVector="0.0, 0.0, -9.81">
 
     <Reservoir name="reservoirSystem"
-	       flowSolverName="compositionalMultiphaseFlow"
+               flowSolverName="compositionalMultiphaseFlow"
                wellSolverName="compositionalMultiphaseWell"
                logLevel="1"
                targetRegions="{Region1,wellRegion1,wellRegion2}">
@@ -41,7 +41,7 @@
                       control="liquidRate" 
                       targetBHP="1e7"
                       targetRate="1e-5" 
-               	      injectionStream="{0.1, 0.1, 0.1, 0.7}"/>
+                      injectionStream="{0.1, 0.1, 0.1, 0.7}"/>
     </CompositionalMultiphaseWell>
 
     

@@ -48,7 +48,7 @@
                       control="BHP" 
                       targetBHP="1e7"
                       targetRate="1e4" 
-               	      injectionStream="{0.1, 0.1, 0.1, 0.7}"/>
+                      injectionStream="{0.1, 0.1, 0.1, 0.7}"/>
     </CompositionalMultiphaseWell>
  <!-- SPHINX_COMP_WELL_SOLVER_END -->
     
