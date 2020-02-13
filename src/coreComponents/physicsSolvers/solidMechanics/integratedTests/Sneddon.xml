@@ -12,7 +12,7 @@
 		<NonlinearSolverParameters 
         name="nlsp"
         newtonTol="1.0e-6"
-        newtonMaxIter="2"
+        newtonMaxIter="1"
         maxTimeStepCuts="1"/>
         <SystemSolverParameters 
         name="ssp"
