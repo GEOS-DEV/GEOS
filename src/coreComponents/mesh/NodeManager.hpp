@@ -58,6 +58,12 @@ public:
   using ElemMapType = OrderedVariableToManyElementRelation;
   //END_SPHINX_INCLUDE_01
 
+  inline localIndex GetEdgeMapOverallocation()
+  { return 4; }
+
+  inline localIndex GetFaceMapOverallocation()
+  { return 4; }
+
   /**
    * @brief main constructor for NodeManager Objects
    * @param name the name of this instantiation of NodeManager in the repository
@@ -90,6 +96,8 @@ public:
   void SetFaceMaps( FaceManager const * const faceManager );
 
   void SetElementMaps( ElementRegionManager const * const elementRegionManager );
+
+  void CompressRelationMaps( );
 
 //  void Initialize();
 
