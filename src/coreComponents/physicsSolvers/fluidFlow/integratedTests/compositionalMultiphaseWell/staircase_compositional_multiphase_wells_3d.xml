@@ -9,11 +9,9 @@
                wellSolverName="compositionalMultiphaseWell"
                logLevel="1"
                targetRegions="{Channel,wellRegion1,wellRegion2}">
-      <NonlinearSolverParameters name="nlsp"
-                                 newtonTol="1.0e-4"
+      <NonlinearSolverParameters newtonTol="1.0e-4"
                                  newtonMaxIter="40"/>
-      <SystemSolverParameters name="ssp"
-                              useDirectSolver="1"
+      <SystemSolverParameters useDirectSolver="1"
                               logLevel="0"/>
     </Reservoir>
     
