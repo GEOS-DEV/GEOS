@@ -94,6 +94,8 @@ public:
 
   bool isCreated() const final;
 
+  void reset() final;
+
   void set( real64 const value ) final;
 
   void zero() final;
@@ -253,7 +255,7 @@ public:
   void print( std::ostream & os = std::cout ) const final;
 
   void write( string const & filename,
-              bool const mtxFormat = true ) const final;
+              MatrixOutputFormat const format ) const final;
 
   /// @}
 

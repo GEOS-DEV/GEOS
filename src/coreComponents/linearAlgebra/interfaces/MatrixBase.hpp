@@ -24,6 +24,15 @@
 namespace geosx
 {
 
+enum class MatrixOutputFormat
+{
+  NATIVE_ASCII,
+  NATIVE_BINARY,
+  MATLAB_ASCII,
+  MATLAB_BINARY,
+  MATRIX_MARKET
+};
+
 /**
  * @brief Common base template for all matrix wrapper types.
  * @tparam MATRIX derived matrix type
@@ -151,6 +160,15 @@ public:
    * @return @p true if matrix has been created
    */
   virtual bool isCreated() const = 0;
+
+  /**
+   * @brief Reset the matrix to default state
+   */
+  virtual void reset()
+  {
+    m_open = false;
+    m_assembled = false;
+  }
 
   ///@}
 
@@ -664,7 +682,7 @@ public:
    * >> M = spconvert(filename_root)
    */
   virtual void write( string const & filename,
-                      bool const mtxFormat = true ) const = 0;
+                      MatrixOutputFormat const format ) const = 0;
 
   ///@}
 
@@ -676,12 +694,6 @@ protected:
   {}
 
   ~MatrixBase() = default;
-
-  void reset()
-  {
-    m_open = false;
-    m_assembled = false;
-  }
 
   /// Flag indicating whether the matrix is currently open for adding new entries
   bool m_open;

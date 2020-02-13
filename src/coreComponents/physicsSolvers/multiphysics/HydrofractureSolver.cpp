@@ -857,22 +857,22 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
 
     {
       string filename = "matrix00_" + std::to_string( time ) + "_" + std::to_string( newtonIter ) + ".mtx";
-      m_solidSolver->getSystemMatrix().write( filename, true );
+      m_solidSolver->getSystemMatrix().write( filename, MatrixOutputFormat::MATRIX_MARKET );
       GEOSX_LOG_RANK_0( "matrix00: written to " << filename );
     }
     {
       string filename = "matrix01_" + std::to_string( time ) + "_" + std::to_string( newtonIter ) + ".mtx";
-      m_matrix01.write( filename, true );
+      m_matrix01.write( filename, MatrixOutputFormat::MATRIX_MARKET );
       GEOSX_LOG_RANK_0( "matrix01: written to " << filename );
     }
     {
       string filename = "matrix10_" + std::to_string( time ) + "_" + std::to_string( newtonIter ) + ".mtx";
-      m_matrix10.write( filename, true );
+      m_matrix10.write( filename, MatrixOutputFormat::MATRIX_MARKET );
       GEOSX_LOG_RANK_0( "matrix10: written to " << filename );
     }
     {
       string filename = "matrix11_" + std::to_string( time ) + "_" + std::to_string( newtonIter ) + ".mtx";
-      m_flowSolver->getSystemMatrix().write( filename, true );
+      m_flowSolver->getSystemMatrix().write( filename, MatrixOutputFormat::MATRIX_MARKET );
       GEOSX_LOG_RANK_0( "matrix11: written to " << filename );
     }
     {

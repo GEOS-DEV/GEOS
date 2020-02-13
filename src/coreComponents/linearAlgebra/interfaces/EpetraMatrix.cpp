@@ -64,12 +64,12 @@ EpetraMatrix::EpetraMatrix( EpetraMatrix const & src )
 : EpetraMatrix()
 {
   GEOSX_ASSERT( !src.isOpen() );
-  GEOSX_ASSERT_MSG( src.m_matrix, "The matrix has not been created" );
+  GEOSX_ASSERT( src.isAssembled() );
 
   m_matrix = std::make_unique< Epetra_FECrsMatrix >( *src.m_matrix );
   m_src_map = std::make_unique< Epetra_Map >( m_matrix->DomainMap() );
   m_dst_map = std::make_unique< Epetra_Map >( m_matrix->RangeMap() );
-  m_assembled = src.isAssembled();
+  m_assembled = true;
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -97,6 +97,7 @@ void EpetraMatrix::createWithGlobalSize( globalIndex const globalRows,
                                          localIndex const maxEntriesPerRow,
                                          MPI_Comm const & comm )
 {
+  GEOSX_ASSERT( !isOpen() );
   reset();
 
   m_dst_map = std::make_unique< Epetra_Map >( globalRows,
@@ -123,6 +124,7 @@ void EpetraMatrix::createWithLocalSize( localIndex const localRows,
                                         localIndex const maxEntriesPerRow,
                                         MPI_Comm const & comm )
 {
+  GEOSX_ASSERT( !isOpen() );
   reset();
 
   m_dst_map = std::make_unique< Epetra_Map >( integer_conversion< globalIndex >( -1 ),
@@ -142,6 +144,14 @@ void EpetraMatrix::createWithLocalSize( localIndex const localRows,
 bool EpetraMatrix::isCreated() const
 {
   return bool(m_matrix);
+}
+
+void EpetraMatrix::reset()
+{
+  MatrixBase::reset();
+  m_matrix.reset();
+  m_dst_map.reset();
+  m_src_map.reset();
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -173,7 +183,7 @@ void EpetraMatrix::zero()
 void EpetraMatrix::open()
 {
   GEOSX_ASSERT( !isOpen() );
-  GEOSX_ASSERT_MSG( isCreated(), "The matrix has not been created" );
+  GEOSX_ASSERT( isCreated() );
   m_open = true;
 }
 
@@ -596,7 +606,7 @@ void EpetraMatrix::clearRow( globalIndex const globalRow,
 // Accessor for the pointer to the raw Epetra matrix
 Epetra_FECrsMatrix * EpetraMatrix::unwrappedPointer() const
 {
-  GEOSX_ASSERT_MSG( isCreated(), "Matrix has not been created" );
+  GEOSX_ASSERT( isCreated() );
   return m_matrix.get();
 }
 
@@ -606,7 +616,7 @@ Epetra_FECrsMatrix * EpetraMatrix::unwrappedPointer() const
 // Accessor for the number of global rows
 globalIndex EpetraMatrix::globalRows() const
 {
-  GEOSX_ASSERT_MSG( isCreated(), "Matrix has not been created" );
+  GEOSX_ASSERT( isCreated() );
   return m_matrix->NumGlobalRows64();
 }
 
@@ -616,7 +626,7 @@ globalIndex EpetraMatrix::globalRows() const
 // Accessor for the number of global columns
 globalIndex EpetraMatrix::globalCols() const
 {
-  GEOSX_ASSERT_MSG( isCreated(), "Matrix has not been created" );
+  GEOSX_ASSERT( isCreated() );
   return m_matrix->NumGlobalCols64();
 }
 
@@ -626,7 +636,7 @@ globalIndex EpetraMatrix::globalCols() const
 // Accessor for the index of the first global row
 globalIndex EpetraMatrix::ilower() const
 {
-  GEOSX_ASSERT_MSG( isCreated(), "Matrix has not been created" );
+  GEOSX_ASSERT( isCreated() );
   return m_matrix->RowMap().MinMyGID64();
 }
 
@@ -636,7 +646,7 @@ globalIndex EpetraMatrix::ilower() const
 // Accessor for the index of the last global row
 globalIndex EpetraMatrix::iupper() const
 {
-  GEOSX_ASSERT_MSG( isCreated(), "Matrix has not been created" );
+  GEOSX_ASSERT( isCreated() );
   return m_matrix->RowMap().MaxMyGID64() + 1;
 }
 
@@ -699,7 +709,7 @@ real64 EpetraMatrix::normFrobenius() const
 // Map a global row index to local row index
 localIndex EpetraMatrix::getLocalRowID( globalIndex const index ) const
 {
-  GEOSX_ASSERT_MSG( isCreated(), "Matrix has not been created" );
+  GEOSX_ASSERT( isCreated() );
   GEOSX_ASSERT_GE( index, ilower() );
   GEOSX_ASSERT_GT( iupper(), index );
   return m_matrix->LRID( index );
@@ -711,7 +721,7 @@ localIndex EpetraMatrix::getLocalRowID( globalIndex const index ) const
 // Map a local row index to global row index
 globalIndex EpetraMatrix::getGlobalRowID( localIndex const index ) const
 {
-  GEOSX_ASSERT_MSG( isCreated(), "Matrix has not been created" );
+  GEOSX_ASSERT( isCreated() );
   GEOSX_ASSERT_GE( index, 0 );
   GEOSX_ASSERT_GT( localRows(), index );
   return m_matrix->GRID64( integer_conversion< int >( index ) );
@@ -724,7 +734,7 @@ globalIndex EpetraMatrix::getGlobalRowID( localIndex const index ) const
 // NOTE: direct use of NumMyCols() counts also for overlays. To avoid those, DomainMap() is needed
 localIndex EpetraMatrix::localCols() const
 {
-  GEOSX_ASSERT_MSG( isCreated(), "Matrix has not been created" );
+  GEOSX_ASSERT( isCreated() );
   return m_matrix->DomainMap().NumMyElements();
 }
 
@@ -734,7 +744,7 @@ localIndex EpetraMatrix::localCols() const
 // Return the local number of columns on each processor
 localIndex EpetraMatrix::localRows() const
 {
-  GEOSX_ASSERT_MSG( isCreated(), "Matrix has not been created" );
+  GEOSX_ASSERT( isCreated() );
   return m_matrix->RowMap().NumMyElements();
 }
 
@@ -747,7 +757,7 @@ std::ostream & operator<<( std::ostream & os,
 
 MPI_Comm EpetraMatrix::getComm() const
 {
-  GEOSX_ASSERT_MSG( isCreated(), "Matrix has not been created" );
+  GEOSX_ASSERT( isCreated() );
 #ifdef GEOSX_USE_MPI
   return dynamic_cast<Epetra_MpiComm const &>( m_matrix->RowMap().Comm() ).Comm();
 #else
@@ -761,7 +771,7 @@ MPI_Comm EpetraMatrix::getComm() const
 // Wrapper to print the trilinos output of the matrix
 void EpetraMatrix::print( std::ostream & os ) const
 {
-  GEOSX_ASSERT_MSG( isCreated(), "Matrix has not been created" );
+  GEOSX_ASSERT( isCreated() );
   m_matrix->Print( os );
 }
 
@@ -770,22 +780,29 @@ void EpetraMatrix::print( std::ostream & os ) const
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Note: EpetraExt also supports a MatrixMarket format as well
 void EpetraMatrix::write( string const & filename,
-                          bool const mtxFormat ) const
+                          MatrixOutputFormat const format ) const
 {
-  GEOSX_ASSERT_MSG( isCreated(), "Matrix has not been created" );
-  if( mtxFormat )
+  GEOSX_ASSERT( isCreated() );
+  switch( format )
   {
-    // Ensure the ".mtx" extension
-    string name( filename );
-    if( filename.substr( filename.find_last_of( "." ) + 1 ) != "mtx" )
+    case MatrixOutputFormat::NATIVE_ASCII:
     {
-      name = filename.substr( 0, filename.find_last_of( "." ) ) + ".mtx";
+      std::ofstream ofs( filename );
+      print( ofs );
+      break;
     }
-    EpetraExt::RowMatrixToMatrixMarketFile( name.c_str(), *m_matrix );
-  }
-  else
-  {
-    EpetraExt::RowMatrixToMatlabFile( filename.c_str(), *m_matrix );
+    case MatrixOutputFormat::MATRIX_MARKET:
+    {
+      EpetraExt::RowMatrixToMatrixMarketFile( filename.c_str(), *m_matrix );
+      break;
+    }
+    case MatrixOutputFormat::MATLAB_ASCII:
+    {
+      EpetraExt::RowMatrixToMatlabFile( filename.c_str(), *m_matrix );
+      break;
+    }
+    default:
+      GEOSX_ERROR( "Unsupported matrix output format" );
   }
 }
 

@@ -72,8 +72,10 @@ PetscSparseMatrix::PetscSparseMatrix( PetscSparseMatrix const & src )
 : PetscSparseMatrix()
 {
   GEOSX_ASSERT( !src.isOpen() );
-  GEOSX_ASSERT_MSG( src.m_mat != nullptr, "The matrix has not been created" );
+  GEOSX_ASSERT( src.isAssembled() );
+
   MatDuplicate( src.m_mat, MAT_COPY_VALUES, &m_mat );
+  m_assembled = true;
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -112,7 +114,9 @@ void PetscSparseMatrix::createWithLocalSize( localIndex const localRows,
                                              localIndex const maxEntriesPerRow,
                                              MPI_Comm const & comm )
 {
+  GEOSX_ASSERT( !isOpen() );
   reset();
+
   // set up matrix
   MatCreate( comm, &m_mat );
   MatSetType( m_mat, MATMPIAIJ );
@@ -126,7 +130,9 @@ void PetscSparseMatrix::createWithGlobalSize( globalIndex const globalRows,
                                               localIndex const maxEntriesPerRow,
                                               MPI_Comm const & comm )
 {
+  GEOSX_ASSERT( !isOpen() );
   reset();
+
   // set up matrix
   MatCreate( comm, &m_mat );
   MatSetType( m_mat, MATMPIAIJ );
@@ -138,6 +144,12 @@ void PetscSparseMatrix::createWithGlobalSize( globalIndex const globalRows,
 bool PetscSparseMatrix::isCreated() const
 {
   return m_mat != nullptr;
+}
+
+void PetscSparseMatrix::reset()
+{
+  MatrixBase::reset();
+  MatDestroy( &m_mat );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -808,29 +820,38 @@ void PetscSparseMatrix::print( std::ostream & os ) const
 // Write to matlab-compatible file
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 void PetscSparseMatrix::write( string const & filename,
-                               bool const mtxFormat ) const
+                               MatrixOutputFormat const format ) const
 {
-  GEOSX_ASSERT_MSG( isCreated(), "Matrix has not been created" );
+  GEOSX_ASSERT( isCreated() );
+
   PetscViewer viewer;
+  PetscViewerASCIIOpen( getComm(), filename.c_str(), &viewer );
+  PetscViewerFormat petscFormat;
 
-  if( mtxFormat )
+  switch( format )
   {
-    // ".mtx" extension
-    string name( filename );
-    if( filename.substr( filename.find_last_of( '.' ) + 1 ) != "mtx" )
-    {
-      name = filename.substr( 0, filename.find_last_of( '.' ) ) + ".mtx";
-    }
-    PetscViewerASCIIOpen( getComm(), name.c_str(), &viewer);
-    PetscViewerPushFormat( viewer, PETSC_VIEWER_ASCII_MATRIXMARKET );
-  }
-  else
-  {
-    PetscViewerASCIIOpen( getComm(), filename.c_str(), &viewer);
-    PetscViewerPushFormat( viewer, PETSC_VIEWER_ASCII_MATLAB );
+    case MatrixOutputFormat::NATIVE_ASCII:
+      petscFormat = PETSC_VIEWER_DEFAULT;
+      break;
+    case MatrixOutputFormat::NATIVE_BINARY:
+      petscFormat = PETSC_VIEWER_NATIVE;
+      break;
+    case MatrixOutputFormat::MATLAB_ASCII:
+      petscFormat = PETSC_VIEWER_ASCII_MATLAB;
+      break;
+    case MatrixOutputFormat::MATLAB_BINARY:
+      petscFormat = PETSC_VIEWER_BINARY_MATLAB;
+      break;
+    case MatrixOutputFormat::MATRIX_MARKET:
+      petscFormat = PETSC_VIEWER_ASCII_MATRIXMARKET;
+      break;
+    default:
+      GEOSX_ERROR( "Unsupported matrix output format" );
   }
 
+  PetscViewerPushFormat( viewer, petscFormat );
   MatView( m_mat, viewer );
+  PetscViewerDestroy( &viewer );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -878,7 +899,7 @@ real64 PetscSparseMatrix::normFrobenius() const
 // Map a global row index to local row index
 localIndex PetscSparseMatrix::getLocalRowID( globalIndex const index ) const
 {
-  GEOSX_ASSERT_MSG( isCreated(), "Matrix has not been created" );
+  GEOSX_ASSERT( isCreated() );
   GEOSX_ASSERT_GE( index, ilower() );
   GEOSX_ASSERT_GT( iupper(), index );
   PetscInt low, high;
@@ -892,7 +913,7 @@ localIndex PetscSparseMatrix::getLocalRowID( globalIndex const index ) const
 // Map a local row index to global row index
 globalIndex PetscSparseMatrix::getGlobalRowID( localIndex const index ) const
 {
-  GEOSX_ASSERT_MSG( isCreated(), "Matrix has not been created" );
+  GEOSX_ASSERT( isCreated() );
   GEOSX_ASSERT_GE( index, 0 );
   GEOSX_ASSERT_GT( localRows(), index );
   PetscInt low, high;
@@ -909,7 +930,7 @@ globalIndex PetscSparseMatrix::getGlobalRowID( localIndex const index ) const
 // of columns is the global number.
 localIndex PetscSparseMatrix::localCols() const
 {
-  GEOSX_ASSERT_MSG( isCreated(), "Matrix has not been created" );
+  GEOSX_ASSERT( isCreated());
   PetscInt cols;
   MatGetSize( m_mat, nullptr, &cols );
   return integer_conversion<localIndex>( cols );
@@ -921,7 +942,7 @@ localIndex PetscSparseMatrix::localCols() const
 // Return the local number of rows on each processor
 localIndex PetscSparseMatrix::localRows() const
 {
-  GEOSX_ASSERT_MSG( isCreated(), "Matrix has not been created" );
+  GEOSX_ASSERT( isCreated() );
   PetscInt low, high;
   MatGetOwnershipRange( m_mat, &low, &high);
   return integer_conversion<localIndex >( high - low );

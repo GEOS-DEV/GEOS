@@ -740,7 +740,7 @@ void CompositionalMultiphaseFlow::AssembleSystem( real64 const time_n,
     integer newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
 
     string filename_mat = "matrix_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
-    matrix.write( filename_mat, true );
+    matrix.write( filename_mat, MatrixOutputFormat::MATRIX_MARKET );
 
     string filename_rhs = "rhs_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
     rhs.write( filename_rhs, true );
@@ -1121,7 +1121,7 @@ void CompositionalMultiphaseFlow::ApplyBoundaryConditions( real64 const time_n,
     integer newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
 
     string filename_mat = "matrix_bc_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
-    matrix.write( filename_mat, true );
+    matrix.write( filename_mat, MatrixOutputFormat::MATRIX_MARKET  );
 
     string filename_rhs = "rhs_bc_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
     rhs.write( filename_rhs, true );
