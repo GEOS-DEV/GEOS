@@ -28,7 +28,7 @@
 #include "managers/DomainPartition.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseKernels.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
 
 /**
  * @namespace the geosx namespace that encapsulates the majority of the code
@@ -38,7 +38,7 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
-using namespace SinglePhaseKernels;
+using namespace SinglePhaseBaseKernels;
 
 SinglePhaseBase::SinglePhaseBase( const std::string& name,
                                   Group * const parent ):

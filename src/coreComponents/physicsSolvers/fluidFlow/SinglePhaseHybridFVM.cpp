@@ -30,7 +30,8 @@ namespace geosx
 {
 
 using namespace dataRepository;
-
+using namespace SinglePhaseHybridFVMKernels;
+  
 SinglePhaseHybridFVM::SinglePhaseHybridFVM( const std::string& name,
                                             Group * const parent ):
   SinglePhaseBase(name, parent),
@@ -223,10 +224,7 @@ void SinglePhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( tim
   array2d<localIndex> const & elemSubRegionList = faceManager->elementSubRegionList();
   array2d<localIndex> const & elemList          = faceManager->elementList(); 
 
-  
-  // max number of faces allowed in an element 
-  localIndex constexpr maxNumFaces = MAX_NUM_FACES;
-
+ 
   // tolerance for transmissibility calculation
   real64 const lengthTolerance = domain->getMeshBody( 0 )->getGlobalLengthScale() * m_areaRelTol; 
 
@@ -239,441 +237,161 @@ void SinglePhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( tim
                                                            ElementRegionBase const * const,
                                                            auto const * const subRegion )
   {
-
-    // elem data
-    
-    // get the cell-centered DOF numbers and ghost rank for the assembly
-    string const elemDofKey = dofManager->getKey( viewKeyStruct::pressureString );
-    arrayView1d<globalIndex const> const & elemDofNumber =
-      subRegion->template getReference< array1d<globalIndex> >( elemDofKey ); 
-    arrayView1d<integer const>     const & elemGhostRank = m_elemGhostRank[er][esr];   
-
-    // get the map from elem to faces
-    arrayView2d< localIndex const > const & elemToFaces = subRegion->faceList();
-    
-    // get the cell-centered pressures
-    arrayView1d<real64 const> const & elemPres  = m_pressure[er][esr];
-    arrayView1d<real64 const> const & dElemPres = m_deltaPressure[er][esr];
-    
-    // get the cell centered densities
-    arrayView2d<real64 const> const & elemDens     = m_density[er][esr][m_fluidIndex];
-    arrayView2d<real64 const> const & dElemDens_dp = m_dDens_dPres[er][esr][m_fluidIndex];
-    
-    // get the element data needed for transmissibility computation
-    arrayView1d<R1Tensor const> const & elemCenter =
-     subRegion->template getReference< array1d<R1Tensor> >( CellBlock::viewKeyStruct::elementCenterString );
-    arrayView1d<real64 const> const & elemVolume =
-     subRegion->template getReference< array1d<real64> >( CellBlock::viewKeyStruct::elementVolumeString ); 
-    arrayView1d<R1Tensor const> const & elemPerm =
-     subRegion->template getReference< array1d<R1Tensor> >( viewKeyStruct::permeabilityString ); 
-
-    // get the cell-centered depth 
-    arrayView1d<real64> const & elemGravCoef =
-      subRegion->template getReference<array1d<real64>>(viewKeyStruct::gravityCoefString);
-
-    
-    // assemble the residual and Jacobian element by element
-    // in this loop we assemble both equation types: mass conservation in the elements and constraints at the faces
-    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
-    {
-
-      if (elemGhostRank[ei] < 0)
-      {
-        
-        localIndex const numFacesInElem = elemToFaces.size(1);
-
-        // transmissibility matrix
-        stackArray2d<real64, maxNumFaces*maxNumFaces> transMatrix( numFacesInElem,
-                                                                   numFacesInElem );
-      
-        // one sided flux
-        stackArray1d<real64, maxNumFaces> oneSidedVolFlux( numFacesInElem );
-        stackArray1d<real64, maxNumFaces> dOneSidedVolFlux_dp( numFacesInElem );
-        stackArray2d<real64, maxNumFaces*maxNumFaces> dOneSidedVolFlux_dfp( numFacesInElem, numFacesInElem );
-      
-        // upwinded mobility
-        stackArray1d<real64, maxNumFaces> upwMobility( numFacesInElem );
-        stackArray1d<real64, maxNumFaces> dUpwMobility_dp( numFacesInElem );
-        stackArray1d<globalIndex, maxNumFaces> upwDofNumber( numFacesInElem ); 
-      
-        // recompute the local transmissibility matrix at each iteration
-        // we can decide later to precompute transMatrix if needed
-        ComputeTransmissibilityMatrix( nodePosition,     
-                                       faceToNodes,        
-                                       elemToFaces[ei],
-                                       elemCenter[ei],
-                                       elemVolume[ei],
-                                       elemPerm[ei],
-                                       lengthTolerance,
-                                       transMatrix );   
-
-        /*
-         * compute auxiliary quantities at the one sided faces of this element:
-         * 1) One-sided volumetric fluxes
-         * 2) Upwinded mobilities
-         */     
- 
-        // for each one-sided face of the elem,
-        // compute the volumetric flux using transMatrix
-        ComputeOneSidedVolFluxes( facePres,
-                                  dFacePres,
-                                  faceGravCoef,
-                                  elemToFaces[ei],          
-                                  elemPres[ei],
-                                  dElemPres[ei],
-                                  elemGravCoef[ei],
-                                  elemDens[ei][0],
-                                  dElemDens_dp[ei][0],
-                                  transMatrix,
-                                  oneSidedVolFlux,             
-                                  dOneSidedVolFlux_dp,
-                                  dOneSidedVolFlux_dfp );
-
-          
-        // at this point, we know the local flow direction in the element
-        // so we can upwind the transport coefficients (mobilities) at the one sided faces 
-        // ** this function needs non-local information **
-        UpdateUpwindedCoefficients( mesh,
-                                    elemRegionList, 
-                                    elemSubRegionList,
-                                    elemList,
-                                    regionFilter,
-                                    elemToFaces[ei],
-                                    m_mobility, 
-                                    m_dMobility_dPres,
-                                    er, esr, ei,
-                                    elemDofNumber[ei],
-                                    elemDofKey,
-                                    oneSidedVolFlux,
-                                    upwMobility,      
-                                    dUpwMobility_dp,
-                                    upwDofNumber );
-
-        /*
-         * perform assembly in this element in two steps:
-         * 1) mass conservation equations
-         * 2) face constraints
-         */
-        
-        // use the computed one sided vol fluxes and the upwinded mobilities
-        // to assemble the upwinded mass fluxes in the mass conservation eqn of the elem
-        AssembleOneSidedMassFluxes( dt,
-                                    faceDofNumber,
-                                    elemToFaces[ei],
-                                    elemDofNumber[ei],
-                                    oneSidedVolFlux,
-                                    dOneSidedVolFlux_dp,
-                                    dOneSidedVolFlux_dfp,
-                                    upwMobility,
-                                    dUpwMobility_dp,
-                                    upwDofNumber,
-                                    matrix,
-                                    rhs );
-
-        // use the computed one sided vol fluxes to assemble the constraints
-        // enforcing flux continuity at this element's faces
-        AssembleConstraints( faceDofNumber,
-                             elemToFaces[ei],
-                             elemDofNumber[ei],
-                             oneSidedVolFlux,
-                             dOneSidedVolFlux_dp,
-                             dOneSidedVolFlux_dfp,
-                             matrix,
-                             rhs );
-
-      }
-    });
+    FluxLaunch( er,
+		esr,
+		subRegion,
+		regionFilter,
+                mesh,		
+		nodePosition,
+		elemRegionList,
+		elemSubRegionList,
+		elemList,
+		faceToNodes,	
+		faceDofNumber,
+		facePres,
+		dFacePres,
+		faceGravCoef,
+		lengthTolerance,
+		dt,		
+		dofManager,
+		matrix,
+		rhs );
   });
 }
 
-void SinglePhaseHybridFVM::ComputeOneSidedVolFluxes( arrayView1d<real64 const> const & facePres,
-                                                     arrayView1d<real64 const> const & dFacePres,
-                                                     arrayView1d<real64 const> const & faceGravCoef,
-                                                     arraySlice1d<localIndex const> const elemToFaces,
-                                                     real64 const & elemPres,
-                                                     real64 const & dElemPres,
-                                                     real64 const & elemGravCoef,
-                                                     real64 const & elemDens,
-                                                     real64 const & dElemDens_dp,
-                                                     stackArray2d<real64, MAX_NUM_FACES
-                                                                         *MAX_NUM_FACES> const & transMatrix,
-                                                     stackArray1d<real64, MAX_NUM_FACES> & oneSidedVolFlux,
-                                                     stackArray1d<real64, MAX_NUM_FACES> & dOneSidedVolFlux_dp,
-                                                     stackArray2d<real64, MAX_NUM_FACES
-                                                                         *MAX_NUM_FACES> & dOneSidedVolFlux_dfp ) const
+
+void SinglePhaseHybridFVM::FluxLaunch( localIndex GEOSX_UNUSED_ARG( er ),
+				       localIndex GEOSX_UNUSED_ARG( esr ),
+				       FaceElementSubRegion const * const GEOSX_UNUSED_ARG( subRegion ),
+                                       set<localIndex> GEOSX_UNUSED_ARG( regionFilter ),
+                                       MeshLevel const * const GEOSX_UNUSED_ARG( mesh ),
+                                       arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & GEOSX_UNUSED_ARG( nodePosition ),
+                                       array2d<localIndex> const & GEOSX_UNUSED_ARG( elemRegionList ),
+                                       array2d<localIndex> const & GEOSX_UNUSED_ARG( elemSubRegionList ),
+                                       array2d<localIndex> const & GEOSX_UNUSED_ARG( elemList ),
+                                       ArrayOfArraysView<localIndex const> const & GEOSX_UNUSED_ARG( faceToNodes ),
+				       arrayView1d<globalIndex const> const & GEOSX_UNUSED_ARG( faceDofNumber ),
+                                       arrayView1d<real64 const> const & GEOSX_UNUSED_ARG( facePres ),
+                                       arrayView1d<real64 const> const & GEOSX_UNUSED_ARG( dFacePres ),
+                                       arrayView1d<real64> const & GEOSX_UNUSED_ARG( faceGravCoef ),
+                                       real64 const GEOSX_UNUSED_ARG( lengthTolerance ),
+                                       real64 const GEOSX_UNUSED_ARG( dt ),				       
+				       DofManager const * const GEOSX_UNUSED_ARG( dofManager ),
+                                       ParallelMatrix * const GEOSX_UNUSED_ARG( matrix ),
+                                       ParallelVector * const GEOSX_UNUSED_ARG( rhs ) )
 {
-  localIndex constexpr maxNumFaces = MAX_NUM_FACES;
-  
-  localIndex const numFacesInElem = elemToFaces.size();
-
-  oneSidedVolFlux      = 0;
-  dOneSidedVolFlux_dp  = 0;
-  dOneSidedVolFlux_dfp = 0;
-  
-  stackArray1d<real64, maxNumFaces> potDif( numFacesInElem );
-  stackArray1d<real64, maxNumFaces> dPotDif_dp( numFacesInElem );
-  stackArray1d<real64, maxNumFaces> dPotDif_dfp( numFacesInElem );
-  potDif      = 0;
-  dPotDif_dp  = 0;
-  dPotDif_dfp = 0;
-  
-  // 1) precompute the potential difference at each one-sided face
-  for (localIndex ifaceLoc = 0; ifaceLoc < numFacesInElem; ++ifaceLoc)
-  {
-         
-    // 1) compute the potential diff between the cell center and the face center
-    real64 const ccPres = elemPres + dElemPres;
-    real64 const fPres  = facePres[elemToFaces[ifaceLoc]] + dFacePres[elemToFaces[ifaceLoc]];
-
-    real64 const ccGravCoef = elemGravCoef;
-    real64 const fGravCoef  = faceGravCoef[elemToFaces[ifaceLoc]];
-
-    real64 const ccDens     = elemDens;
-    real64 const dCcDens_dp = dElemDens_dp; 
-    // no density evaluated at the face center
-          
-    // pressure difference
-    real64 const presDif      = ccPres - fPres;
-    real64 const dPresDif_dp  =  1;
-    real64 const dPresDif_dfp = -1;
-
-    // gravity term
-    real64 const gravCoefDif  = ccGravCoef - fGravCoef; 
-    real64 const gravTerm     = ccDens     * gravCoefDif;
-    real64 const dGravTerm_dp = dCcDens_dp * gravCoefDif;
-
-    // potential difference
-    potDif[ifaceLoc]      = presDif     - gravTerm;
-    dPotDif_dp[ifaceLoc]  = dPresDif_dp - dGravTerm_dp;    
-    dPotDif_dfp[ifaceLoc] = dPresDif_dfp; 
-
-  }
-
-  // 2) multiply the potential difference by the transmissibility
-  //    to obtain the total volumetrix flux
-  for (localIndex ifaceLoc = 0; ifaceLoc < numFacesInElem; ++ifaceLoc)
-  {
-    // now in the following nested loop, 
-    // we compute the contribution of face jfaceLoc to the one sided total volumetric flux at face iface
-    for (localIndex jfaceLoc = 0; jfaceLoc < numFacesInElem; ++jfaceLoc)
-    {
-      // this is going to store T \sum_p \lambda_p (\nabla p - \rho_p g \nabla d)
-      oneSidedVolFlux[ifaceLoc]                += transMatrix[ifaceLoc][jfaceLoc] * potDif[jfaceLoc];
-      dOneSidedVolFlux_dp[ifaceLoc]            += transMatrix[ifaceLoc][jfaceLoc] * dPotDif_dp[jfaceLoc];
-      dOneSidedVolFlux_dfp[ifaceLoc][jfaceLoc] += transMatrix[ifaceLoc][jfaceLoc] * dPotDif_dfp[jfaceLoc];
-    }
-  }
+  // not implemented yet
 }
 
-void SinglePhaseHybridFVM::UpdateUpwindedCoefficients( MeshLevel const * const mesh,
-                                                       array2d<localIndex> const & elemRegionList,
-                                                       array2d<localIndex> const & elemSubRegionList,
-                                                       array2d<localIndex> const & elemList,
-                                                       set<localIndex> const & regionFilter,
-                                                       arraySlice1d<localIndex const> const elemToFaces,
-                                                       ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const & mob,
-                                                       ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const & dMob_dp,
-                                                       localIndex const er,
-                                                       localIndex const esr,
-                                                       localIndex const ei,
-                                                       globalIndex const elemDofNumber,
-                                                       string const elemDofKey,    
-                                                       stackArray1d<real64, MAX_NUM_FACES> const & oneSidedVolFlux,
-                                                       stackArray1d<real64, MAX_NUM_FACES> & upwMobility,
-                                                       stackArray1d<real64, MAX_NUM_FACES> & dUpwMobility_dp,
-                                                       stackArray1d<globalIndex, MAX_NUM_FACES> & upwDofNumber ) const
+void SinglePhaseHybridFVM::FluxLaunch( localIndex er,
+				       localIndex esr,
+				       CellElementSubRegion const * const subRegion,
+                                       set<localIndex> regionFilter,
+                                       MeshLevel const * const mesh,
+                                       arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodePosition,
+                                       array2d<localIndex> const & elemRegionList,
+                                       array2d<localIndex> const & elemSubRegionList,
+                                       array2d<localIndex> const & elemList, 
+                                       ArrayOfArraysView<localIndex const> const & faceToNodes,				       
+                                       arrayView1d<globalIndex const> const & faceDofNumber,
+                                       arrayView1d<real64 const> const & facePres,
+                                       arrayView1d<real64 const> const & dFacePres,
+                                       arrayView1d<real64> const & faceGravCoef,
+                                       real64 const lengthTolerance,
+                                       real64 const dt,	       
+				       DofManager const * const dofManager,
+                                       ParallelMatrix * const matrix,
+                                       ParallelVector * const rhs )
 {
-  localIndex const numFacesInElem = elemToFaces.size();
-  
-  // for this element, loop over the local (one-sided) faces
-  for (localIndex ifaceLoc = 0; ifaceLoc < numFacesInElem; ++ifaceLoc)
+  // max number of faces allowed in an element 
+  localIndex constexpr maxNumFaces = MAX_NUM_FACES;
+
+  // elem data
+    
+  // get the cell-centered DOF numbers and ghost rank for the assembly
+  string const elemDofKey = dofManager->getKey( viewKeyStruct::pressureString );
+  arrayView1d<globalIndex const> const & elemDofNumber =
+    subRegion->template getReference< array1d<globalIndex> >( elemDofKey ); 
+  arrayView1d<integer const>     const & elemGhostRank = m_elemGhostRank[er][esr];   
+
+  // get the map from elem to faces
+  arrayView2d< localIndex const > const & elemToFaces = subRegion->faceList();
+    
+  // get the cell-centered pressures
+  arrayView1d<real64 const> const & elemPres  = m_pressure[er][esr];
+  arrayView1d<real64 const> const & dElemPres = m_deltaPressure[er][esr];
+    
+  // get the cell centered densities
+  arrayView2d<real64 const> const & elemDens     = m_density[er][esr][m_fluidIndex];
+  arrayView2d<real64 const> const & dElemDens_dp = m_dDens_dPres[er][esr][m_fluidIndex];
+    
+  // get the element data needed for transmissibility computation
+  arrayView1d<R1Tensor const> const & elemCenter =
+   subRegion->template getReference< array1d<R1Tensor> >( CellBlock::viewKeyStruct::elementCenterString );
+  arrayView1d<real64 const> const & elemVolume =
+   subRegion->template getReference< array1d<real64> >( CellBlock::viewKeyStruct::elementVolumeString ); 
+  arrayView1d<R1Tensor const> const & elemPerm =
+   subRegion->template getReference< array1d<R1Tensor> >( viewKeyStruct::permeabilityString ); 
+
+  // get the cell-centered depth 
+  arrayView1d<real64> const & elemGravCoef =
+    subRegion->template getReference<array1d<real64>>(viewKeyStruct::gravityCoefString);
+
+  // assemble the residual and Jacobian element by element
+  // in this loop we assemble both equation types: mass conservation in the elements and constraints at the faces
+  forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
   {
 
-    // we initialize these upw quantities with the values of the local elem
-    upwMobility[ifaceLoc]     = mob[er][esr][ei];
-    dUpwMobility_dp[ifaceLoc] = dMob_dp[er][esr][ei];
-    upwDofNumber[ifaceLoc]    = elemDofNumber;
-
-    // if the local elem if upstream, we are done, we can proceed to the next one-sided face
-    // otherwise, we have to access the properties of the neighbor element
-    // this is done on the fly below
-    if (oneSidedVolFlux[ifaceLoc] < 0)
+    if (elemGhostRank[ei] < 0)
     {
-    
-      // the face has at most two adjacent elements
-      // one of these two elements is the current element indexed by er, esr, ei
-      // but here we are interested in the indices of the other element
-      // this other element is "the neighbor" for this one-sided face 
-      for (localIndex k=0; k<elemRegionList.size(1); ++k)
-      {
         
-        localIndex const erNeighbor  = elemRegionList[elemToFaces[ifaceLoc]][k];
-        localIndex const esrNeighbor = elemSubRegionList[elemToFaces[ifaceLoc]][k];
-        localIndex const eiNeighbor  = elemList[elemToFaces[ifaceLoc]][k];
+      localIndex const numFacesInElem = elemToFaces.size(1);
 
-        // this element is not the current element
-        // we have found the neighbor or we are at the boundary 
-        if ( erNeighbor != er || esrNeighbor != esr || eiNeighbor != ei ) 
-        {
-          bool const onBoundary       = (erNeighbor == -1 || esrNeighbor == -1 || eiNeighbor == -1);
-          bool const neighborInTarget = regionFilter.contains(erNeighbor); 
+      // transmissibility matrix
+      stackArray2d<real64, maxNumFaces*maxNumFaces> transMatrix( numFacesInElem,
+                                                                 numFacesInElem );
 
-          // if not on boundary, save the mobility and the upwDofNumber  
-          if ( !onBoundary && neighborInTarget )
-          {
-            ElementRegionBase const * const neighborRegion =
-              Group::group_cast<ElementRegionBase const *>(mesh->getElemManager()->GetRegion(erNeighbor));
-            ElementSubRegionBase const * const neighborSubRegion =
-              Group::group_cast<ElementSubRegionBase const *>(neighborRegion->GetSubRegion(esrNeighbor));
+      // recompute the local transmissibility matrix at each iteration
+      // we can decide later to precompute transMatrix if needed
+      ComputeTransmissibilityMatrix( nodePosition,     
+                                     faceToNodes,        
+                                     elemToFaces[ei],
+                                     elemCenter[ei],
+                                     elemVolume[ei],
+                                     elemPerm[ei],
+                                     lengthTolerance,
+                                     transMatrix );   
 
-            arrayView1d<globalIndex const> const & neighborDofNumber =
-              neighborSubRegion->getReference<array1d<globalIndex>>( elemDofKey );  
-
-            upwMobility[ifaceLoc]     = mob[erNeighbor][esrNeighbor][eiNeighbor];
-            dUpwMobility_dp[ifaceLoc] = dMob_dp[erNeighbor][esrNeighbor][eiNeighbor];
-            upwDofNumber[ifaceLoc]    = neighborDofNumber[eiNeighbor];
-          }
-          // if the face is on the boundary, use the properties of the local elem
-        }
-      }
+      // perform flux assembly in this element in two steps:
+      SinglePhaseHybridFVMKernels::FluxKernel<CellElementSubRegion>::Compute( er, esr, ei,
+			    						      regionFilter,
+									      mesh,
+									      elemRegionList,
+									      elemSubRegionList,
+									      elemList,
+									      faceDofNumber,
+									      facePres,
+									      dFacePres,
+  									      faceGravCoef,
+									      elemToFaces[ei],
+									      elemDofNumber[ei],
+									      elemDofKey,
+									      elemPres[ei],
+									      dElemPres[ei],
+									      elemGravCoef[ei],
+									      elemDens[ei][0],
+									      dElemDens_dp[ei][0],
+                                                                              m_mobility, 
+                                                                              m_dMobility_dPres,
+									      transMatrix,
+									      dt,
+									      matrix,
+									      rhs );
+									   
     }
-  }   
+  });
 }
 
-
-void SinglePhaseHybridFVM::AssembleOneSidedMassFluxes( real64 const & dt,
-                                                       arrayView1d<globalIndex const> const & faceDofNumber,
-                                                       arraySlice1d<localIndex const> const elemToFaces,
-                                                       globalIndex const elemDofNumber,
-                                                       stackArray1d<real64, MAX_NUM_FACES> const & oneSidedVolFlux,
-                                                       stackArray1d<real64, MAX_NUM_FACES> const & dOneSidedVolFlux_dp,
-                                                       stackArray2d<real64, MAX_NUM_FACES
-                                                                           *MAX_NUM_FACES> const & dOneSidedVolFlux_dfp,
-                                                       stackArray1d<real64, MAX_NUM_FACES> const & upwMobility,
-                                                       stackArray1d<real64, MAX_NUM_FACES> const & dUpwMobility_dp,
-                                                       stackArray1d<globalIndex, MAX_NUM_FACES> const & upwDofNumber,
-                                                       ParallelMatrix * const matrix,
-                                                       ParallelVector * const rhs ) const
-{
-  localIndex constexpr maxNumFaces = MAX_NUM_FACES;
-
-  localIndex const numFacesInElem = elemToFaces.size();
-  
-  // fluxes
-  real64 sumLocalMassFluxes     = 0;
-  stackArray1d<real64, 1+maxNumFaces> dSumLocalMassFluxes_dElemVars( 1+numFacesInElem );
-  stackArray1d<real64, maxNumFaces>   dSumLocalMassFluxes_dFaceVars( numFacesInElem );
-  sumLocalMassFluxes = 0;
-  dSumLocalMassFluxes_dElemVars = 0;
-  dSumLocalMassFluxes_dFaceVars = 0;
-  
-  // dof numbers
-  globalIndex const eqnRowIndex = elemDofNumber;
-  stackArray1d<globalIndex, 1+maxNumFaces> elemDofColIndices( 1+numFacesInElem );
-  stackArray1d<globalIndex, maxNumFaces>   faceDofColIndices( numFacesInElem );
-  elemDofColIndices[0] = elemDofNumber;
-
-  // for each element, loop over the one-sided faces
-  for (localIndex ifaceLoc = 0; ifaceLoc < numFacesInElem; ++ifaceLoc)
-  {
-
-    // compute the mass flux at the one-sided face plus its derivatives
-    // add the newly computed flux to the sum
-    sumLocalMassFluxes                        += dt * upwMobility[ifaceLoc] * oneSidedVolFlux[ifaceLoc];
-    dSumLocalMassFluxes_dElemVars[0]          += dt * upwMobility[ifaceLoc] * dOneSidedVolFlux_dp[ifaceLoc];
-    dSumLocalMassFluxes_dElemVars[ifaceLoc+1]  = dt * dUpwMobility_dp[ifaceLoc] * oneSidedVolFlux[ifaceLoc];
-    for (localIndex jfaceLoc = 0; jfaceLoc < numFacesInElem; ++jfaceLoc)
-    {
-      dSumLocalMassFluxes_dFaceVars[jfaceLoc] += dt * upwMobility[ifaceLoc] * dOneSidedVolFlux_dfp[ifaceLoc][jfaceLoc];
-    }
-
-    // collect the relevant dof numbers
-    elemDofColIndices[ifaceLoc+1] = upwDofNumber[ifaceLoc]; // if upwDofNumber == elemDofNumber, the derivative is zero
-    faceDofColIndices[ifaceLoc] = faceDofNumber[elemToFaces[ifaceLoc]];    
-  }
-  
-  // we are ready to assemble the local flux and its derivatives
-
-  // residual
-  rhs->add( &eqnRowIndex,
-            &sumLocalMassFluxes,
-            1 );
-
-  // jacobian -- derivative wrt elem centered vars
-  matrix->add( &eqnRowIndex,
-               elemDofColIndices.data(),
-               dSumLocalMassFluxes_dElemVars.data(),
-               1,
-               1+numFacesInElem );
-
-  // jacobian -- derivatives wrt face centered vars
-  matrix->add( &eqnRowIndex,
-               faceDofColIndices.data(),
-               dSumLocalMassFluxes_dFaceVars.data(),
-               1,
-               numFacesInElem );
-
-}
-
-
-void SinglePhaseHybridFVM::AssembleConstraints( arrayView1d<globalIndex const> const & faceDofNumber,
-                                                arraySlice1d<localIndex const> const elemToFaces,
-                                                globalIndex const elemDofNumber,
-                                                stackArray1d<real64, MAX_NUM_FACES> const & oneSidedVolFlux,
-                                                stackArray1d<real64, MAX_NUM_FACES> const & dOneSidedVolFlux_dp,
-                                                stackArray2d<real64, MAX_NUM_FACES
-                                                                    *MAX_NUM_FACES> const & dOneSidedVolFlux_dfp,
-                                                ParallelMatrix * const matrix,
-                                                ParallelVector * const rhs ) const 
-{
-  localIndex constexpr maxNumFaces = MAX_NUM_FACES;
-  
-  localIndex const numFacesInElem = elemToFaces.size();
-
-  // fluxes
-  stackArray1d<real64, maxNumFaces> dFlux_dfp( numFacesInElem );
-
-  // dof numbers
-  stackArray1d<globalIndex, maxNumFaces> dofColIndicesFacePres( numFacesInElem );
-  globalIndex const dofColIndexElemPres = elemDofNumber; 
- 
-  
-  // for each element, loop over the local (one-sided) faces
-  for (localIndex ifaceLoc = 0; ifaceLoc < numFacesInElem; ++ifaceLoc)
-  {
-    // flux at this face  
-    real64 const flux      = oneSidedVolFlux[ifaceLoc];
-    real64 const dFlux_dp  = dOneSidedVolFlux_dp[ifaceLoc];
-    
-    // dof number of this face constraint  
-    globalIndex const eqnRowIndex = faceDofNumber[elemToFaces[ifaceLoc]];  
-
-    dFlux_dfp = 0.0;
-    for (localIndex jfaceLoc = 0; jfaceLoc < numFacesInElem; ++jfaceLoc)
-    {
-      dFlux_dfp[jfaceLoc] = dOneSidedVolFlux_dfp[ifaceLoc][jfaceLoc]; 
-      dofColIndicesFacePres[jfaceLoc] = faceDofNumber[elemToFaces[jfaceLoc]];                    
-    }
-    
-    // residual
-    rhs->add( &eqnRowIndex,
-              &flux,
-              1 );
-
-    // jacobian -- derivative wrt local cell centered pressure term
-    matrix->add( &eqnRowIndex,
-                 &dofColIndexElemPres,
-                 &dFlux_dp,
-                 1, 1 );
-
-    // jacobian -- derivatives wrt face pressure terms
-    matrix->add( &eqnRowIndex,
-                 dofColIndicesFacePres.data(),
-                 dFlux_dfp.data(),
-                 1, numFacesInElem );
-  }      
-}
-  
 
 void
 SinglePhaseHybridFVM::ApplyBoundaryConditions( real64 const GEOSX_UNUSED_ARG( time_n ),
