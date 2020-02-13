@@ -50,6 +50,8 @@ typename LAI::ParallelMatrix computeIdentity( MPI_Comm comm,
   // Create a matrix of size N with 1 non-zero per row
   I.createWithGlobalSize( N, 1, comm );
 
+  I.open();
+
   // Loop over rows to fill the matrix
   for( geosx::globalIndex i = I.ilower() ; i < I.iupper() ; i++ )
   {

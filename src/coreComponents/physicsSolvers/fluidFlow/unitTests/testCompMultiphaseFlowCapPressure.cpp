@@ -62,7 +62,12 @@ void testNumericalJacobian( CompositionalMultiphaseFlow * solver,
   // assemble the analytical residual
   solver->ResetStateToBeginningOfStep( domain );
   residual.zero();
+  jacobian.zero();
+  residual.open();
+  jacobian.open();
   assembleFunction( solver, domain, &jacobian, &residual, &dofManager );
+  residual.close();
+  jacobian.close();
 
   // copy the analytical residual
   ParallelVector residualOrig( residual );
@@ -72,6 +77,7 @@ void testNumericalJacobian( CompositionalMultiphaseFlow * solver,
   // create the numerical jacobian
   ParallelMatrix jacobianFD( jacobian );
   jacobianFD.zero();
+  jacobianFD.open();
 
   string const dofKey = dofManager.getKey( CompositionalMultiphaseFlow::viewKeyStruct::dofFieldString );
 
@@ -123,7 +129,12 @@ void testNumericalJacobian( CompositionalMultiphaseFlow * solver,
         });
 
         residual.zero();
+        jacobian.zero();
+        residual.open();
+        jacobian.open();
         assembleFunction( solver, domain, &jacobian, &residual, &dofManager );
+        residual.close();
+        jacobian.close();
 
         for (localIndex lid = 0; lid < residual.localSize(); ++lid)
         {
@@ -149,7 +160,12 @@ void testNumericalJacobian( CompositionalMultiphaseFlow * solver,
         });
 
         residual.zero();
+        jacobian.zero();
+        residual.open();
+        jacobian.open();
         assembleFunction( solver, domain, &jacobian, &residual, &dofManager );
+        residual.close();
+        jacobian.close();
 
         for (localIndex lid = 0; lid < residual.localSize(); ++lid)
         {
@@ -168,8 +184,13 @@ void testNumericalJacobian( CompositionalMultiphaseFlow * solver,
 
   // assemble the analytical jacobian
   solver->ResetStateToBeginningOfStep( domain );
+  residual.zero();
   jacobian.zero();
+  residual.open();
+  jacobian.open();
   assembleFunction( solver, domain, &jacobian, &residual, &dofManager );
+  residual.close();
+  jacobian.close();
 
   compareMatrices( jacobian, jacobianFD, relTol );
 

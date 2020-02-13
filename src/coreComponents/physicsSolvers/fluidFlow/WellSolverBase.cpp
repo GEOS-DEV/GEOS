@@ -113,6 +113,9 @@ void WellSolverBase::AssembleSystem( real64 const time,
   // first deal with the well control and switch if necessary
   CheckWellControlSwitch( domain );
 
+  matrix.open();
+  rhs.open();
+
   // then assemble the mass balance equations
   AssembleFluxTerms( time, dt, domain, &dofManager, &matrix, &rhs );
   AssemblePerforationTerms( time, dt, domain, &dofManager, &matrix, &rhs );
@@ -125,6 +128,9 @@ void WellSolverBase::AssembleSystem( real64 const time,
 
   // finally assemble the well control equation
   FormControlEquation( domain, &dofManager, &matrix, &rhs );
+
+  matrix.close();
+  rhs.close();
 
   // Log messages for logLevel >= 2
   GEOSX_LOG_LEVEL_RANK_0(2, "After WellSolverBase::AssembleSystem" );
