@@ -45,7 +45,7 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
   m_toEdgesRelation(),
   m_elementAperture(),
   m_elementArea(),
-  m_numOfJumpEnrichments(1)
+  m_numOfJumpEnrichments(3)
 {
   registerWrapper( viewKeyStruct::regionListString, &m_embeddedSurfaceToRegion, false )->
       setDescription("Map to the region cut by each EmbeddedSurface.");

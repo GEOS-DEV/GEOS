@@ -3,7 +3,7 @@
 	<Solvers>
 		<SolidMechanics_FEM_AES 
 		name="mechSolve" 
-		targetRegions="{Region1}"
+		targetRegions="{Region1,Fracture}"
 		initialDt="10"
 		solidSolverName="matrixSolver"
 		contactRelationName="fractureContact"
@@ -12,8 +12,8 @@
 		<NonlinearSolverParameters 
         name="nlsp"
         newtonTol="1.0e-6"
-        newtonMaxIter="5"
-        maxTimeStepCuts="2"/>
+        newtonMaxIter="2"
+        maxTimeStepCuts="1"/>
         <SystemSolverParameters 
         name="ssp"
         krylovTol="1.0e-10"
@@ -26,12 +26,12 @@
         discretization="FE1"
         targetRegions="{Region1}"
         solidMaterialName="rock"/>
-		<!--EmbeddedSurfaceGenerator
+		<EmbeddedSurfaceGenerator
         name="SurfaceGenerator"
         solidMaterialName="rock"
         targetRegions="{Region1, Fracture}"
         fractureRegion="Fracture"
-        logLevel="2"/-->
+        logLevel="2"/>
 	</Solvers>
 
 	<Mesh>
@@ -53,28 +53,28 @@
 		<Box name="zneg" xMin="-0.01, -0.01, -0.01" xMax="10.01,  10.01, 0.01" />
 		<Box name="zpos" xMin="-0.01, -0.01,  9.99" xMax="10.01, 10.01, 10.01" />
 		
-		<!--BoundedPlane 
+		<BoundedPlane 
 		name="FracturePlane" 
 		normal="0, 1, 0"
-		origin="0.0, 5, 5" 
+		origin="0, 5.5, 5.5" 
 		lengthVector="1, 0, 0" 
 		widthVector="0, 0, 1"
-		dimensions="{10, 10}" /-->
+		dimensions="{30, 30}" />
 	</Geometry>
 
 
 	<Events maxTime="10">
-		<SoloEvent 
+		<!--SoloEvent 
 		name="output0" 
-		target="/Outputs/siloOutput" />
+		target="/Outputs/siloOutput" /-->
+
+		<SoloEvent 
+		name="preFracture" 
+		target="/Solvers/SurfaceGenerator" />
 
 		<!--SoloEvent 
-		name="preFracture" 
-		target="/Solvers/SurfaceGenerator" /-->
-
-		<SoloEvent 
 		name="output1" 
-		target="/Outputs/siloOutput" />
+		target="/Outputs/siloOutput" /-->
 
 		<PeriodicEvent 
 		name="solverApplications" 
@@ -107,9 +107,10 @@
 		name="Region1" 
 		cellBlocks="{cb1}"
 		materialList="{rock}" />
-		<!--EmbeddedSurfaceRegion 
+		<EmbeddedSurfaceRegion 
 		name="Fracture"
-		materialList="{rock}"/-->
+		materialList="{rock}"
+		defaultAperture="1e-3"/>
 	</ElementRegions>
 
 	<Constitutive>
