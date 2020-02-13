@@ -159,6 +159,7 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
               isNegative = 1;
             }
           } // end loop over nodes
+
           if (isPositive * isNegative == 1)
           {
             bool added = embeddedSurfaceSubRegion->AddNewEmbeddedSurface( cellIndex,

@@ -118,8 +118,8 @@
 
         <EmbeddedSurfaceElementRegion
             name="Fracture"
-            materialList="{water}" />
-
+            materialList="{water}" 
+            defaultAperture="1e-3"/>
     </ElementRegions>
 
     <Constitutive>
