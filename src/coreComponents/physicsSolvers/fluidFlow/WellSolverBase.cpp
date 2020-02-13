@@ -62,6 +62,12 @@ Group * WellSolverBase::CreateChild( string const & childKey, string const & chi
   return rval;
 }
 
+void WellSolverBase::ExpandObjectCatalogs()
+{
+  CreateChild( keys::wellControls, keys::wellControls );
+}
+
+
 WellSolverBase::~WellSolverBase() = default;
 
 void WellSolverBase::RegisterDataOnMesh( Group * const meshBodies )

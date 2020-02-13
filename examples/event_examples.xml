@@ -1,14 +1,6 @@
 
 <Problem>
 
-  <Solvers>
-    <!-- This solver will request a random dt > 1 -->
-    <DummySolver name="solver_a"
-                 targetRegions="{Region2}"
-                 seed="1"/>
-  </Solvers>
-
-
   <Events maxTime="10" logLevel="1">
     <!-- This event will execute every cycle, and will always request dt = 1 -->
     <PeriodicEvent name="periodic_a"
@@ -74,50 +66,5 @@
     <!-- <HaltEvent name="halt_a"
                maxRuntime="10.0"/> -->
   </Events>
-
-
-  <Outputs>
-    <Restart name="restartOutput"/>
-  </Outputs>
-
-
-
-  <Mesh>
-    <InternalMesh name="mesh1"
-                  elementTypes="{C3D8}"
-                  xCoords="{0, 1}"
-                  yCoords="{0, 1}"
-                  zCoords="{0, 1}"
-                  nx="{1}"
-                  ny="{1}"
-                  nz="{1}"
-                  cellBlockNames="{cb1}"/>
-  </Mesh>
-
-  <NumericalMethods>
-    <BasisFunctions>
-        <LagrangeBasis3 name="linearBasis"  degree = "1"  />
-    </BasisFunctions>
-
-    <QuadratureRules>
-        <GaussQuadrature3 name="gaussian"   degree="2"  />
-    </QuadratureRules>
-
-    <FiniteElements>
-        <FiniteElementSpace name="FE1" basis="linearBasis" quadrature="gaussian" />
-    </FiniteElements>
-  </NumericalMethods>
-
-  <ElementRegions>
-    <CellElementRegion name="Region2" cellBlocks="{cb1}" materialList="{shale}" />
-  </ElementRegions>
-
-  <Constitutive>
-      <LinearElasticIsotropic name="shale"
-                              defaultDensity="2700"
-                              defaultBulkModulus="5.5556e9"
-                              defaultShearModulus="4.16667e9"/>
-  </Constitutive>
-
 
 </Problem>
