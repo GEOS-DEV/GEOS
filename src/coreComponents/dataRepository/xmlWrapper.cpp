@@ -68,7 +68,9 @@ void xmlWrapper::addIncludedXML( xmlNode & targetNode )
     result = includedXmlDocument.load_file( filePathName.c_str());
     GEOSX_ERROR_IF( !result, "Attempt to include file ("<<filePathName.c_str()<<") failed\n" );
 
-    for( xmlNode importNode=includedXmlDocument.first_child() ; importNode ; importNode=importNode.next_sibling())
+    // To validate correctly, included files should contain the root Problem node
+    xmlNode includedRootNode = includedXmlDocument.child( "Problem" );
+    for( xmlNode importNode=includedRootNode.first_child() ; importNode ; importNode=importNode.next_sibling())
     {
       targetNode.append_copy( importNode );
     }

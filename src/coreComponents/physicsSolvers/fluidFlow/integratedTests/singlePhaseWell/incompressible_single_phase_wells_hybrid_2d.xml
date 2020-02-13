@@ -8,11 +8,9 @@
                wellSolverName="singlePhaseWell"
                logLevel="1"
                targetRegions="{Region1,wellRegion1,wellRegion2,wellRegion3}">
-      <NonlinearSolverParameters name="nlsp"
-				 lineSearchAction="0"
+      <NonlinearSolverParameters lineSearchAction="0"
                                  newtonMaxIter="40"/>
-      <SystemSolverParameters name="ssp"
-                              useDirectSolver="1"
+      <SystemSolverParameters useDirectSolver="1"
                               logLevel="0"/>
     </Reservoir>
   
@@ -223,10 +221,6 @@
   <Functions>
     <TableFunction     name="timeFunction"         inputVarNames="{time}" coordinates="{1.0, 2.0, 6e4}" values="{1.0, 2.0, 2.0}" />
   </Functions>
-
-  <Partition>
-    <SpatialPartition xPar="1" yPar="1" zPar="1"/>
-  </Partition> 
 
   <Outputs>
       <Silo name="siloOutput"/>
