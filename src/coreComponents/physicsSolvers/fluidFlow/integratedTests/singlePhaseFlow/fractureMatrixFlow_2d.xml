@@ -11,12 +11,10 @@
             fluidName="water"
             solidName="rock">
             <NonlinearSolverParameters
-                name="nlsp"
                 newtonTol="1.0e-2"
                 newtonMaxIter="8"
                 allowNonConverged="1"/>
             <SystemSolverParameters
-                name="SystemSolverParameters"
                 krylovTol="1.0e-12"/>
         </SinglePhaseFVM>
 
@@ -204,13 +202,6 @@
 
     <Functions>
     </Functions>
-
-    <Partition>
-        <SpatialPartition
-            xPar="1"
-            yPar="1"
-            zPar="1" />
-    </Partition>
 
     <Outputs>
         <Silo
