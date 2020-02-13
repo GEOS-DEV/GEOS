@@ -203,6 +203,8 @@ void HydrofractureSolver::ImplicitStepComplete( real64 const& time_n,
 
 void HydrofractureSolver::PostProcessInput()
 {
+  SolverBase::PostProcessInput();
+
   string ctOption = this->getReference<string>(viewKeyStruct::couplingTypeOptionStringString);
 
   if( ctOption == "FixedStress" )
@@ -816,13 +818,13 @@ ApplyContactAndPressureToFacesInExplicitSolver( DomainPartition * const domain )
 
   elemManager->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion * const subRegion )->void
   {
-      arrayView1d<real64 const> const & fluidPressure = subRegion->getReference<array1d<real64> >("pressure");
+    arrayView1d<real64 const> const & fluidPressure = subRegion->getReference<array1d<real64> >("pressure");
 //      arrayView1d<real64 const> const & deltaFluidPressure = subRegion->getReference<array1d<real64> >("deltaPressure");
-      arrayView1d<real64> const & appliedFacePressure = subRegion->getReference<array1d<real64> >(viewKeyStruct::appliedFacePressureString);
-      arrayView1d<real64 const> const & contactStress = subRegion->getReference<array1d<real64> >(viewKeyStruct::contactStressString);
+    arrayView1d<real64> const & appliedFacePressure = subRegion->getReference<array1d<real64> >(viewKeyStruct::appliedFacePressureString);
+    arrayView1d<real64 const> const & contactStress = subRegion->getReference<array1d<real64> >(viewKeyStruct::contactStressString);
 //      arrayView1d<integer const> const & ghostRank = subRegion->GhostRank();
-      arrayView1d<real64> const & area = subRegion->getElementArea();
-      arrayView2d< localIndex const > const & elemsToFaces = subRegion->faceList();
+    arrayView1d<real64> const & area = subRegion->getElementArea();
+    arrayView2d< localIndex const > const & elemsToFaces = subRegion->faceList();
 
       forall_in_range<serialPolicy>( 0,
                                      subRegion->size(),

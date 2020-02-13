@@ -76,7 +76,7 @@ void SinglePhaseFlow::RegisterDataOnMesh(Group * const MeshBodies)
       subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::densityOldString );
       subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::totalCompressibilityString );
       subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::referencePressureString );
-      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::massString )->setPlotLevel(PlotLevel::LEVEL_0);
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::fluidMassString )->setPlotLevel(PlotLevel::LEVEL_0);
     });
 
     elemManager->forElementRegions<FaceElementRegion>( [&] ( FaceElementRegion * const region )
@@ -95,7 +95,7 @@ void SinglePhaseFlow::RegisterDataOnMesh(Group * const MeshBodies)
         subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::densityOldString );
         subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::totalCompressibilityString );
         subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::referencePressureString );
-        subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::massString )->setPlotLevel(PlotLevel::LEVEL_0);
+        subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::fluidMassString )->setPlotLevel(PlotLevel::LEVEL_0);
         subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::aperture0String )->
           setDefaultValue( region->getDefaultAperture() );
       });
@@ -365,7 +365,7 @@ void SinglePhaseFlow::UpdateEOS( real64 const time_n,
     arrayView2d<real64> const & dens = m_density[er][esr][m_fluidIndex];
     arrayView1d<real64> const & vol  = m_volume[er][esr];
     arrayView1d<real64> const & poro = m_porosity[er][esr];
-    arrayView1d<real64> const & mass = m_mass[er][esr];
+    arrayView1d<real64> const & mass = m_fluidMass[er][esr];
 
     forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
@@ -402,7 +402,7 @@ void SinglePhaseFlow::UpdateEOS( real64 const time_n,
 //      arrayView2d<real64> const & dens = m_density[er][esr][m_fluidIndex];
 //      arrayView1d<real64> const & vol  = m_volume[er][esr];
 //      arrayView1d<real64> const & poro = m_porosity[er][esr];
-//      arrayView1d<real64> const & mass = m_mass[er][esr];
+//      arrayView1d<real64> const & mass = m_fluidMass[er][esr];
 
       forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
       {
@@ -432,7 +432,7 @@ void SinglePhaseFlow::UpdateEOS( real64 const time_n,
     {
       SingleFluidBase * const fluid = GetConstitutiveModel<SingleFluidBase>( subRegion, m_fluidName );
       arrayView1d<real64> const & vol  = m_volume[er][esr];
-      arrayView1d<real64> const & mass = m_mass[er][esr];
+      arrayView1d<real64> const & mass = m_fluidMass[er][esr];
       arrayView1d<real64> const & pres = m_pressure[er][esr];
       arrayView1d<real64> const & dPres = m_deltaPressure[er][esr];
 
@@ -571,7 +571,7 @@ void SinglePhaseFlow::ExplicitStepSetup( real64 const & time_n,
 //      {
 //        arrayView2d<real64> const & dens = m_density[er][esr][m_fluidIndex];
 //        arrayView1d<real64> const & vol  = m_volume[er][esr];
-//        arrayView1d<real64> const & mass = m_mass[er][esr];
+//        arrayView1d<real64> const & mass = m_fluidMass[er][esr];
 //        arrayView1d<real64> const & pres = m_pressure[er][esr];
 //        forall_in_range<RAJA::seq_exec>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex const ei )
 //        {
@@ -996,7 +996,7 @@ void SinglePhaseFlow::AssembleFluxTermsExplicit( real64 const GEOSX_UNUSED_ARG( 
                         poro,
                         totalCompressibility,
                         referencePressure,
-                        &m_mass,
+                        &m_fluidMass,
                         &m_maxStableDt);
   });
 }
@@ -1024,13 +1024,13 @@ void SinglePhaseFlow::CalculateAndApplyMassFlux( real64 const time_n,
                                                       time_n + dt,
                                                       dt,
                                                       subRegion,
-                                                      viewKeyStruct::massString );
+                                                      viewKeyStruct::fluidMassString );
 
   } );
 
   // synchronize element fields
   std::map<string, string_array> fieldNames;
-  fieldNames["elems"].push_back( viewKeyStruct::massString );
+  fieldNames["elems"].push_back( viewKeyStruct::fluidMassString );
 
   array1d<NeighborCommunicator> & comms =
     domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors );
@@ -1579,8 +1579,8 @@ void SinglePhaseFlow::ResetViews( DomainPartition * const domain )
   m_referencePressure =
     elemManager->ConstructViewAccessor< array1d<real64>, arrayView1d<real64> >( viewKeyStruct::referencePressureString );
 
-  m_mass =
-    elemManager->ConstructViewAccessor< array1d<real64>, arrayView1d<real64> >( viewKeyStruct::massString );
+  m_fluidMass =
+    elemManager->ConstructViewAccessor< array1d<real64>, arrayView1d<real64> >( viewKeyStruct::fluidMassString );
 
   m_pvMult =
     elemManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64> >( ConstitutiveBase::viewKeyStruct::poreVolumeMultiplierString,

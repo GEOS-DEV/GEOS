@@ -266,8 +266,6 @@ public:
     static constexpr auto mobilityString = "mobility";
     static constexpr auto dMobility_dPressureString = "dMobility_dPressure";
 
-    static constexpr auto massString = "mass";
-
     // face fields
     static constexpr auto faceDensityString = "faceDensity";
     static constexpr auto faceViscosityString = "faceViscosity";
@@ -340,7 +338,7 @@ private:
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_deltaVolume;
 
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_mass;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_fluidMass;
 
   /// views into intermediate fields
 

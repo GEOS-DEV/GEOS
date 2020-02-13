@@ -157,6 +157,8 @@ public:
     static constexpr auto maximumApertureString      = "maximumAperture";
     static constexpr auto inputFluxEstimateString  = "inputFluxEstimate";
 
+    static constexpr auto fluidMassString = "fluidMass";
+
     using ViewKey = dataRepository::ViewKey;
 
     // input data
