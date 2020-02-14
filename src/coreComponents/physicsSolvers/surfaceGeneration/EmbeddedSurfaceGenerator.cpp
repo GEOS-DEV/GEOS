@@ -111,7 +111,7 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
   ElementRegionManager * const elemManager = meshLevel->getElemManager();
   NodeManager * const nodeManager = meshLevel->getNodeManager();
   EdgeManager * const edgeManager = meshLevel->getEdgeManager();
-  array1d<R1Tensor> const & nodesCoord = nodeManager->referencePosition();
+  arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodesCoord = nodeManager->referencePosition();
 
   // Get EmbeddedSurfaceSubRegions
   EmbeddedSurfaceRegion    * const    embeddedSurfaceRegion =

@@ -60,13 +60,6 @@ public:
 
     virtual ~EmbeddedSurfaceSubRegion() override;
 
-    virtual R1Tensor const & calculateElementCenter(localIndex k,
-                                                    const NodeManager& GEOSX_UNUSED_ARG( nodeManager ),
-                                                    const bool GEOSX_UNUSED_ARG( useReferencePos ) = true) const override
-    {
-      return m_elementCenter[k];
-    }
-
     virtual void CalculateElementGeometricQuantities( NodeManager const & nodeManager,
                                                       FaceManager const & facemanager ) override;
 

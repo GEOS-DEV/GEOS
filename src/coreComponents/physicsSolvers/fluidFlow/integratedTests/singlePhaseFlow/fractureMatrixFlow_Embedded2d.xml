@@ -5,22 +5,19 @@
 
     <Solvers gravityVector="0.0,0.0,-9.81">
 
-        <SinglePhaseFlow
+        <SinglePhaseFVM
             name="SinglePhaseFlow"
             logLevel="0"
-            gravityFlag="1"
             discretization="singlePhaseTPFA"
             targetRegions="{Region2, Fracture}"
             fluidName="water"
             solidName="rock">
             <NonlinearSolverParameters
-                name="nlsp"
                 newtonTol="1.0e-8"
                 newtonMaxIter="8"/>
             <SystemSolverParameters
-                name="SystemSolverParameters"
                 krylovTol="1.0e-12"/>
-        </SinglePhaseFlow>
+        </SinglePhaseFVM>
         <EmbeddedSurfaceGenerator
             name="SurfaceGenerator"
             solidMaterialName="rock"
@@ -119,7 +116,7 @@
             cellBlocks="{cb1}"
             materialList="{water, rock}" />
 
-        <EmbeddedSurfaceRegion
+        <EmbeddedSurfaceElementRegion
             name="Fracture"
             materialList="{water}" />
 
@@ -196,13 +193,6 @@
 
     <Functions>
     </Functions>
-
-    <Partition>
-        <SpatialPartition
-            xPar="1"
-            yPar="1"
-            zPar="1" />
-    </Partition>
 
     <Outputs>
         <Silo

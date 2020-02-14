@@ -21,8 +21,8 @@
  *
  */
 
-#ifndef CORECOMPONENTS_MESH_EMBEDDEDSURFACEREGION_HPP_
-#define CORECOMPONENTS_MESH_EMBEDDEDSURFACEREGION_HPP_
+#ifndef GEOSX_MESH_EMBEDDEDSURFACEREGION_HPP_
+#define GEOSX_MESH_EMBEDDEDSURFACEREGION_HPP_
 
 #include "ElementRegionBase.hpp"
 
@@ -58,7 +58,7 @@ public:
    * @return A string containing the key name.
    */
   static const string CatalogName()
-  { return "EmbeddedSurfaceRegion"; }
+  { return "EmbeddedSurfaceElementRegion"; }
 
   virtual const string getCatalogName() const override final
   { return EmbeddedSurfaceRegion::CatalogName(); }

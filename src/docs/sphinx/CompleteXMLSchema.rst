@@ -142,6 +142,13 @@ Element: ElementRegions
 .. include:: ../../coreComponents/fileIO/schema/docs/ElementRegions.rst
 
 
+.. _XML_EmbeddedSurfaceElementRegion:
+
+Element: EmbeddedSurfaceElementRegion
+=====================================
+.. include:: ../../coreComponents/fileIO/schema/docs/EmbeddedSurfaceElementRegion.rst
+
+
 .. _XML_EmbeddedSurfaceGenerator:
 
 Element: EmbeddedSurfaceGenerator
@@ -732,6 +739,13 @@ Datastructure: Dirichlet
 Datastructure: ElementRegions
 =============================
 .. include:: ../../coreComponents/fileIO/schema/docs/ElementRegions_other.rst
+
+
+.. _DATASTRUCTURE_EmbeddedSurfaceElementRegion:
+
+Datastructure: EmbeddedSurfaceElementRegion
+===========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/EmbeddedSurfaceElementRegion_other.rst
 
 
 .. _DATASTRUCTURE_EmbeddedSurfaceGenerator:

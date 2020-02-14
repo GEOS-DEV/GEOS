@@ -37,20 +37,6 @@ EmbeddedSurfaceRegion::EmbeddedSurfaceRegion( string const & name, Group * const
 EmbeddedSurfaceRegion::~EmbeddedSurfaceRegion()
 {}
 
-/*
-
-localIndex EmbeddedSurfaceRegion::AddToFractureMesh( EdgeManager * const edgeManager,
-                                                 FaceManager const * const faceManager,
-                                                 array1d< array1d<localIndex> > const & originalFaceToEdges,
-                                                 string const & subRegionName,
-                                                 localIndex const faceIndices[2]  )
-{
-  localIndex rval = -1;
-  // Matteo: has to be filled in
-  return rval;
-}
-*/
-
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, EmbeddedSurfaceRegion, std::string const &, Group * const )
 
 } /* namespace geosx */

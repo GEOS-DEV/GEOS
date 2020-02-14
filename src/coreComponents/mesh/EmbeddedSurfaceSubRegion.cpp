@@ -147,7 +147,7 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface (localIndex const cellIndex
   // std::cout << "cell " << cellIndex  << std::endl;
 
   bool addEmbeddedElem = true;
-  array1d<R1Tensor> const & nodesCoord = nodeManager.referencePosition();
+  arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodesCoord = nodeManager.referencePosition();
   EdgeManager::NodeMapType::ViewTypeConst const & edgeToNodes = edgeManager.nodeList();
   R1Tensor origin  = fracture->getCenter();
   R1Tensor normalVector = fracture->getNormal();

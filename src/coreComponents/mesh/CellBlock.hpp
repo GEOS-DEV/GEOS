@@ -39,6 +39,7 @@ public:
 
 
   using NodeMapType = InterObjectRelation< array2d< localIndex, cells::NODE_MAP_PERMUTATION > >;
+  using EdgeMapType = FixedOneToManyRelation;
   using FaceMapType = FixedOneToManyRelation;
 
 
