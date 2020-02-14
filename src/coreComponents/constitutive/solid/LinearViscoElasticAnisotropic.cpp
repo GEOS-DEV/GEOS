@@ -75,19 +75,27 @@ void LinearViscoElasticAnisotropic::StateUpdatePoint( localIndex const k,
   Tdata[3] += m_c40[k]*Ddata[0] + m_c41[k]*Ddata[2] + m_c42[k]*Ddata[5] + m_c43[k]*(2*Ddata[4]) + m_c44[k]*(2*Ddata[3]) + m_c45[k]*(2*Ddata[1]);
   Tdata[1] += m_c50[k]*Ddata[0] + m_c51[k]*Ddata[2] + m_c52[k]*Ddata[5] + m_c53[k]*(2*Ddata[4]) + m_c54[k]*(2*Ddata[3]) + m_c55[k]*(2*Ddata[1]);
 
-  m_elasticStress[k][q] += T;
-
-  // store elastic stress and add viscous stress into total stress
   R2SymTensor deviatorStrain = D;
   deviatorStrain.PlusIdentity( -D.Trace() / 3.0 );
-  m_stress[k][q] = m_elasticStress[k][q];
-  m_stress[k][q] += m_viscosity / dt * deviatorStrain;
-  T.QijAjkQlk( m_elasticStress[k][q], Rot );
-  m_elasticStress[k][q] = T;
 
-  T.QijAjkQlk( m_stress[k][q], Rot );
-  m_stress[k][q] = T;
+  R2SymTensor temp2 = m_elasticStress[ k ][ q ];
+  temp2 += T;
 
+  T.QijAjkQlk( temp2, Rot );
+
+  for ( localIndex i = 0; i < 6; ++i )
+  {
+    m_elasticStress( k, q, i ) = T.Data()[ i ];
+  }
+
+  temp2 += m_viscosity / dt * deviatorStrain;
+
+  T.QijAjkQlk( temp2, Rot );
+
+  for ( localIndex i = 0; i < 6; ++i )
+  {
+    m_stress( k, q, i ) = T.Data()[ i ];
+  }
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, LinearViscoElasticAnisotropic, std::string const &, Group * const )

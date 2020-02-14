@@ -2,7 +2,7 @@
 <Problem>
   
   <Solvers
-    gravityVector="0.0, 0.0, -9.81">
+    gravityVector="0.0, 0.0, 0.0">
 
     <SolidMechanicsLagrangianSSLE name="lagSolve" 
                                   timeIntegrationOption="QuasiStatic"
@@ -11,11 +11,9 @@
                                   targetRegions="{Region2}"
                                   solidMaterialName="granite"
                                   >
-      <NonlinearSolverParameters name="nlsp"
-                                 newtonTol="1.0e-3"
+      <NonlinearSolverParameters newtonTol="1.0e-3"
                                  newtonMaxIter="8"/>
-      <SystemSolverParameters name="ssp"
-                              krylovTol="1.0e-10"
+      <SystemSolverParameters krylovTol="1.0e-10"
                               logLevel="0"/>
      </SolidMechanicsLagrangianSSLE>
   
@@ -172,11 +170,6 @@
                    values     = "{0.0, 1.0, 1.0}" />
     
   </Functions>
-
-  <!-- <Partition>
-    <SpatialPartition xPar="1" yPar="1" zPar="1"/>
-  </Partition> -->
-
  
   <Outputs>
     <Silo name="siloOutput" plotLevel="5" parallelThreads="1" plotFileRoot="plot"/>

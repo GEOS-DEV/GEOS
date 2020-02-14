@@ -33,7 +33,10 @@ SiloOutput::SiloOutput( std::string const & name,
                         Group * const parent ):
   OutputBase( name, parent),
   m_plotFileRoot("plot"),
-  m_writeFaceMesh(),
+  m_writeEdgeMesh(0),
+  m_writeFaceMesh(0),
+  m_writeCellElementMesh(1),
+  m_writeFaceElementMesh(1),
   m_plotLevel()
 {
   registerWrapper(viewKeysStruct::plotFileRoot, &m_plotFileRoot, false )->
@@ -41,7 +44,23 @@ SiloOutput::SiloOutput( std::string const & name,
     setApplyDefaultValue("plot")->
     setDescription("");
 
-  registerWrapper(viewKeysStruct::writeFEMFaces, &m_writeFaceMesh, false )->
+  registerWrapper(viewKeysStruct::writeEdgeMesh, &m_writeEdgeMesh, false )->
+    setDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("");
+
+  registerWrapper(viewKeysStruct::writeFaceMesh, &m_writeFaceMesh, false )->
+    setDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("");
+
+  registerWrapper(viewKeysStruct::writeCellElementMesh, &m_writeCellElementMesh, false )->
+    setDefaultValue(1)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("");
+
+  registerWrapper(viewKeysStruct::writeFaceElementMesh, &m_writeFaceElementMesh, false )->
+    setDefaultValue(1)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("");
 
@@ -69,12 +88,17 @@ void SiloOutput::Execute(real64 const time_n,
   DomainPartition* domainPartition = Group::group_cast<DomainPartition*>(domain);
   SiloFile silo;
 
+  int const size = MpiWrapper::Comm_size(MPI_COMM_GEOSX);
   int const rank = MpiWrapper::Comm_rank(MPI_COMM_GEOSX);
   MpiWrapper::Barrier( MPI_COMM_GEOSX );
 
-  integer numFiles = this->parallelThreads();
+  integer const numFiles = parallelThreads() == 0 ? size : parallelThreads() ;
 
   silo.setPlotLevel( m_plotLevel );
+  silo.setWriteEdgeMesh( m_writeEdgeMesh );
+  silo.setWriteFaceMesh( m_writeFaceMesh );
+  silo.setWriteCellElementMesh( m_writeCellElementMesh );
+  silo.setWriteFaceElementMesh( m_writeFaceElementMesh );
   silo.setPlotFileRoot( m_plotFileRoot );
   silo.Initialize( numFiles );
   silo.WaitForBatonWrite( rank, cycleNumber, eventCounter, false );

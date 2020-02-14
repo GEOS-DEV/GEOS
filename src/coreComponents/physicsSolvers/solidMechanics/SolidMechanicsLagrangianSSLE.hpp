@@ -54,16 +54,16 @@ public:
                                localIndex NUM_QUADRATURE_POINTS,
                                constitutive::ConstitutiveBase * const constitutiveRelation,
                                set<localIndex> const & elementList,
-                               arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & elemsToNodes,
+                               arrayView2d<localIndex const, cells::NODE_MAP_USD> const & elemsToNodes,
                                arrayView3d< R1Tensor const> const & dNdX,
                                arrayView2d<real64 const> const & detJ,
-                               arrayView1d<R1Tensor const> const & u,
-                               arrayView1d<R1Tensor const> const & vel,
-                               arrayView1d<R1Tensor> const & acc,
+                               arrayView2d<real64 const, nodes::TOTAL_DISPLACEMENT_USD> const & u,
+                               arrayView2d<real64 const, nodes::VELOCITY_USD> const & vel,
+                               arrayView2d<real64, nodes::ACCELERATION_USD> const & acc,
                                arrayView1d< real64 const > const & GEOSX_UNUSED_ARG( fluidPressure ),
                                arrayView1d< real64 const > const & GEOSX_UNUSED_ARG( deltaFluidPressure ),
                                real64 const biotCoefficient,
-                               arrayView2d<R2SymTensor> const & stress,
+                               arrayView3d<real64, solid::STRESS_USD> const & stress,
                                real64 const dt,
                                real64 * const maxStableDt) const override
   {
@@ -95,13 +95,13 @@ public:
                                arrayView2d<real64 const > const& detJ,
                                FiniteElementBase const * const fe,
                                arrayView1d< integer const > const & elemGhostRank,
-                               arrayView2d< localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM > const & elemsToNodes,
+                               arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
                                arrayView1d< globalIndex const > const & globalDofNumber,
-                               arrayView1d< R1Tensor const > const & disp,
-                               arrayView1d< R1Tensor const > const & uhat,
+                               arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & disp,
+                               arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const & uhat,
                                arrayView1d< R1Tensor const > const & vtilde,
                                arrayView1d< R1Tensor const > const & uhattilde,
-                               arrayView1d< real64 const > const & density,
+                               arrayView2d< real64 const > const & density,
                                arrayView1d< real64 const > const & fluidPressure,
                                arrayView1d< real64 const > const & deltaFluidPressure,
                                real64 const biotCoefficient,
@@ -110,10 +110,12 @@ public:
                                real64 const massDamping,
                                real64 const newmarkBeta,
                                real64 const newmarkGamma,
+                               R1Tensor const & gravityVector,
                                DofManager const * const dofManager,
                                ParallelMatrix * const matrix,
                                ParallelVector * const rhs ) const override
   {
+    GEOSX_MARK_FUNCTION;
     using ImplicitKernel = SolidMechanicsLagrangianSSLEKernels::ImplicitKernel;
     return SolidMechanicsLagrangianFEMKernels::
            ElementKernelLaunchSelector<ImplicitKernel>( NUM_NODES_PER_ELEM,
@@ -140,6 +142,7 @@ public:
                                                         massDamping,
                                                         newmarkBeta,
                                                         newmarkGamma,
+                                                        gravityVector,
                                                         dofManager,
                                                         matrix,
                                                         rhs );

@@ -58,11 +58,11 @@ LinearViscoElasticIsotropic::DeliverClone( string const & name,
 }
 
 void LinearViscoElasticIsotropic::StateUpdatePoint( localIndex const k,
-                                                   localIndex const q,
-                                                   R2SymTensor const & D,
-                                                   R2Tensor const & Rot,
-                                                   real64 const dt,
-                                                   integer const GEOSX_UNUSED_ARG( updateStiffnessFlag ) )
+                                                    localIndex const q,
+                                                    R2SymTensor const & D,
+                                                    R2Tensor const & Rot,
+                                                    real64 const dt,
+                                                    integer const GEOSX_UNUSED_ARG( updateStiffnessFlag ) )
 {
   real64 meanStresIncrement = D.Trace();
 
@@ -73,16 +73,25 @@ void LinearViscoElasticIsotropic::StateUpdatePoint( localIndex const k,
   meanStresIncrement *= m_bulkModulus[k];
   temp.PlusIdentity( meanStresIncrement );
 
-  m_elasticStress[k][q] += temp;
+  R2SymTensor temp2 = m_elasticStress[ k ][ q ];
+  temp2 += temp;
 
-  // store elastic stress and add viscous stress into total stress
-  m_stress[k][q] = m_elasticStress[k][q];
-  m_stress[k][q] += m_viscosity / dt * deviatorStrain;
-  temp.QijAjkQlk( m_elasticStress[k][q], Rot );
-  m_elasticStress[k][q] = temp;
+  temp.QijAjkQlk( temp2, Rot );
 
-  temp.QijAjkQlk( m_stress[k][q], Rot );
-  m_stress[k][q] = temp;
+  for ( localIndex i = 0; i < 6; ++i )
+  {
+    m_elasticStress( k, q, i ) = temp.Data()[ i ];
+  }
+
+  temp2 += m_viscosity / dt * deviatorStrain;
+
+  temp.QijAjkQlk( temp2, Rot );
+
+  for ( localIndex i = 0; i < 6; ++i )
+  {
+    m_stress( k, q, i ) = temp.Data()[ i ];
+  }
+
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, LinearViscoElasticIsotropic, std::string const &, Group * const )

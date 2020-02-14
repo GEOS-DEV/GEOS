@@ -63,7 +63,7 @@ private:
   /// scalar viscosity parameter
   real64 m_viscosity;
 
-  array2d<R2SymTensor> m_elasticStress;
+  array3d<real64, solid::STRESS_PERMUTATION> m_elasticStress;
 };
 
 

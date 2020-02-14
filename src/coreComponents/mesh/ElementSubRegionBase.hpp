@@ -36,10 +36,6 @@ public:
   ElementSubRegionBase( string const & name, dataRepository::Group * const parent );
   ~ElementSubRegionBase();
 
-  virtual R1Tensor const & calculateElementCenter( localIndex k,
-                                                   const NodeManager& nodeManager,
-                                                   const bool useReferencePos = true) const = 0;
-
   virtual void CalculateElementGeometricQuantities( NodeManager const & nodeManager,
                                                     FaceManager const & faceManager ) = 0;
 

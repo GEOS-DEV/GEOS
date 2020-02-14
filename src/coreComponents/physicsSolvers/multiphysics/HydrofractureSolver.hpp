@@ -17,8 +17,8 @@
  *
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_COUPLEDSOLVERS_HYDROFRACTURESOLVER_HPP_
-#define GEOSX_PHYSICSSOLVERS_COUPLEDSOLVERS_HYDROFRACTURESOLVER_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_HYDROFRACTURESOLVER_HPP_
+#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_HYDROFRACTURESOLVER_HPP_
 
 #include "physicsSolvers/SolverBase.hpp"
 
@@ -119,6 +119,10 @@ public:
                              int const cycleNumber,
                              DomainPartition * const domain ) override;
 
+  virtual void SetNextDt( real64 const & currentDt,
+                          real64 & nextDt) override;
+
+
   virtual real64 ExplicitStep( real64 const & time_n,
                                real64 const & dt,
                                integer const cycleNumber,
@@ -145,6 +149,8 @@ public:
                             integer const cycleNumber,
                             DomainPartition * const domain );
 
+  void initializeNewFaceElements( DomainPartition const & domain );
+
   enum class couplingTypeOption : int
   {
     FixedStress,
@@ -166,8 +172,14 @@ public:
     constexpr static auto fluidSolverNameString = "fluidSolverName";
 
     constexpr static auto contactRelationNameString = "contactRelationName";
-    static constexpr auto maxNumResolvesString = "maxNumResolves";
-    static constexpr auto relaxationCoefficientString = "relaxationCoefficient";
+    constexpr static auto maxNumResolvesString = "maxNumResolves";
+    constexpr static auto relaxationCoefficientString = "relaxationCoefficient";
+
+#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+    constexpr static auto separationCoeff0String = "separationCoeff0";
+    constexpr static auto apertureAtFailureString = "apertureAtFailure";
+#endif
+
   } HydrofractureSolverViewKeys;
 
 protected:
@@ -180,13 +192,18 @@ private:
 
   string m_solidSolverName;
   string m_flowSolverName;
+  string m_contactRelationName;
   string m_couplingTypeOptionString;
+
   couplingTypeOption m_couplingTypeOption;
 
   SolidMechanicsLagrangianFEM * m_solidSolver;
   FlowSolverBase * m_flowSolver;
 
-  string m_contactRelationName;
+  real64 m_densityScaling;
+  real64 m_pressureScaling;
+
+  std::unique_ptr<ParallelMatrix> m_blockDiagUU;
 
   ParallelMatrix m_matrix01;
   ParallelMatrix m_matrix10;
@@ -195,9 +212,9 @@ private:
   ParallelMatrix m_permutationMatrix1; // it's used to have the output based on global ordering
 
   integer m_maxNumResolves;
-  real64 m_relaxationCoefficient;
+  integer m_numResolves[2];
 };
 
 } /* namespace geosx */
 
-#endif /* GEOSX_PHYSICSSOLVERS_COUPLEDSOLVERS_HYDROFRACTURESOLVER_HPP_ */
+#endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_HYDROFRACTURESOLVER_HPP_ */

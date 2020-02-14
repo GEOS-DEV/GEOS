@@ -12,7 +12,8 @@ set( linearAlgebra_headers
      utilities/BlockMatrixView.hpp
      utilities/BlockVectorView.hpp
      utilities/LinearSolverParameters.hpp
-     DofManager.hpp 
+     DofManager.hpp
+     DofManagerHelpers.hpp
      utilities/LAIHelperFunctions.hpp)
 
 #
@@ -24,7 +25,7 @@ set( linearAlgebra_sources
      solvers/BiCGSTABsolver.cpp
      utilities/BlockVectorView.cpp
      utilities/BlockMatrixView.cpp
-     DofManager.cpp 
+     DofManager.cpp
      utilities/LAIHelperFunctions.cpp)
 
 if( BUILD_OBJ_LIBS )

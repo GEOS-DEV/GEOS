@@ -1,12 +1,11 @@
 
 
-====================== ========== ===================================================== 
-Name                   Type       Description                                           
-====================== ========== ===================================================== 
-gravityVector          R1Tensor   (no description available)                            
-maxStableDt            real64     Value of the Maximum Stable Timestep for this solver. 
-resFluidIndex          localIndex (no description available)                            
-SystemSolverParameters node       :ref:`DATASTRUCTURE_SystemSolverParameters`           
-====================== ========== ===================================================== 
+============= ========== ===================================================== 
+Name          Type       Description                                           
+============= ========== ===================================================== 
+maxStableDt   real64     Value of the Maximum Stable Timestep for this solver. 
+resFluidIndex localIndex (no description available)                            
+WellControls  node       :ref:`DATASTRUCTURE_WellControls`                     
+============= ========== ===================================================== 
 
 

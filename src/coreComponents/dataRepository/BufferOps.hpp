@@ -51,17 +51,17 @@ constexpr bool is_container = !is_noncontainer_type_packable< T >;
 template< typename >
 constexpr bool is_packable_array = false;
 
-template< typename T, int NDIM, typename PERMUTATION, typename INDEX_TYPE >
-constexpr bool is_packable_array< LvArray::Array< T, NDIM, PERMUTATION, INDEX_TYPE > > = is_packable_helper< T >::value;
+template< typename T, int NDIM, typename PERMUTATION >
+constexpr bool is_packable_array< Array< T, NDIM, PERMUTATION > > = is_packable_helper< T >::value;
 
-template< typename T, int NDIM, int UNIT_STRIDE_DIM, typename INDEX_TYPE >
-constexpr bool is_packable_array< LvArray::ArrayView< T, NDIM, UNIT_STRIDE_DIM, INDEX_TYPE > > = is_packable_helper< T >::value;
+template< typename T, int NDIM, int USD >
+constexpr bool is_packable_array< ArrayView< T, NDIM, USD > > = is_packable_helper< T >::value;
 
-template< typename T, int NDIM, int UNIT_STRIDE_DIM, typename INDEX_TYPE >
-constexpr bool is_packable_array< LvArray::ArraySlice< T, NDIM, UNIT_STRIDE_DIM, INDEX_TYPE > > = is_packable_helper< T >::value;
+template< typename T, int NDIM, int USD >
+constexpr bool is_packable_array< ArraySlice< T, NDIM, USD > > = is_packable_helper< T >::value;
 
-template< typename T, typename INDEX_TYPE >
-constexpr bool is_packable_array< LvArray::ArrayOfArrays< T, INDEX_TYPE > > = is_packable_helper< T >::value;
+template< typename T >
+constexpr bool is_packable_array< ArrayOfArrays< T > > = is_packable_helper< T >::value;
 
 template< typename >
 constexpr bool is_packable_set = false;
@@ -134,22 +134,22 @@ Pack( buffer_unit_type * & buffer,
       T const & var );
 
 //------------------------------------------------------------------------------
-template< bool DO_PACKING, typename T, int NDIM, int UNIT_STRIDE_DIM, typename INDEX_TYPE >
+template< bool DO_PACKING, typename T, int NDIM, int USD >
 typename std::enable_if< is_packable< T >, localIndex >::type
 Pack( buffer_unit_type * & buffer,
-      LvArray::ArrayView< T, NDIM, UNIT_STRIDE_DIM, INDEX_TYPE > const & var );
+      ArrayView< T, NDIM, USD > const & var );
 
 //------------------------------------------------------------------------------
-template< bool DO_PACKING, typename T, typename INDEX_TYPE >
+template< bool DO_PACKING, typename T >
 localIndex
 Pack( buffer_unit_type * & buffer,
-      LvArray::ArrayOfArrays< T, INDEX_TYPE > const & var );
+      ArrayOfArrays< T > const & var );
 
 //------------------------------------------------------------------------------
-template< bool DO_PACKING, typename T, typename INDEX_TYPE >
+template< bool DO_PACKING, typename T >
 localIndex
 Pack( buffer_unit_type * & buffer,
-      LvArray::ArrayOfSets< T, INDEX_TYPE > const & var );
+      ArrayOfSets< T > const & var );
 
 //------------------------------------------------------------------------------
 template< bool DO_PACKING, typename MAP_TYPE >
@@ -197,32 +197,32 @@ PackPointer( buffer_unit_type * & buffer,
              INDEX_TYPE const length );
 
 //------------------------------------------------------------------------------
-template< bool DO_PACKING, typename T, typename INDEX_TYPE, int UNIT_STRIDE_DIM >
+template< bool DO_PACKING, typename T, typename INDEX_TYPE, int USD >
 typename std::enable_if< std::is_trivial< T >::value, localIndex >::type
 PackArray( buffer_unit_type * & buffer,
-           arraySlice1d< T, UNIT_STRIDE_DIM > const & var,
+           arraySlice1d< T, USD > const & var,
            INDEX_TYPE const length );
 
 //------------------------------------------------------------------------------
-template< bool DO_PACKING, typename T, typename INDEX_TYPE, int UNIT_STRIDE_DIM >
+template< bool DO_PACKING, typename T, typename INDEX_TYPE, int USD >
 typename std::enable_if< !std::is_trivial< T >::value, localIndex >::type
 PackArray( buffer_unit_type * & buffer,
-           arraySlice1d< T, UNIT_STRIDE_DIM > const & var,
+           arraySlice1d< T, USD > const & var,
            INDEX_TYPE const length );
 
 //------------------------------------------------------------------------------
 // PackByIndex(buffer,var,indices)
 //------------------------------------------------------------------------------
-template< bool DO_PACKING, typename T, int NDIM, int UNIT_STRIDE_DIM, typename T_indices, typename INDEX_TYPE >
+template< bool DO_PACKING, typename T, int NDIM, int USD, typename T_indices >
 typename std::enable_if< is_packable< T >, localIndex >::type
 PackByIndex( buffer_unit_type * & buffer,
-             LvArray::ArrayView< T, NDIM, UNIT_STRIDE_DIM, INDEX_TYPE > const & var,
+             ArrayView< T, NDIM, USD > const & var,
              const T_indices & indices );
 
 //------------------------------------------------------------------------------
-template< bool DO_PACKING, typename T, typename INDEX_TYPE, typename T_indices >
+template< bool DO_PACKING, typename T, typename T_indices >
 localIndex PackByIndex( buffer_unit_type * & buffer,
-                        LvArray::ArrayOfArrays< T, INDEX_TYPE > const & var,
+                        ArrayOfArrays< T > const & var,
                         T_indices const & indices );
 
 //------------------------------------------------------------------------------
@@ -270,20 +270,20 @@ Unpack( buffer_unit_type const * & buffer,
         set< T > & var );
 
 //------------------------------------------------------------------------------
-template< typename T, int NDIM, typename PERMUTATION, typename INDEX_TYPE >
+template< typename T, int NDIM, typename PERMUTATION >
 typename std::enable_if< is_packable< T >, localIndex >::type
 Unpack( buffer_unit_type const * & buffer,
-        LvArray::Array< T, NDIM, PERMUTATION, INDEX_TYPE > & var );
+        Array< T, NDIM, PERMUTATION > & var );
 
 //------------------------------------------------------------------------------
-template< typename T, typename INDEX_TYPE >
+template< typename T >
 localIndex Unpack( buffer_unit_type const * & buffer,
-                   LvArray::ArrayOfArrays< T, INDEX_TYPE > & var );
+                   ArrayOfArrays< T > & var );
 
 //------------------------------------------------------------------------------
-template< typename T, typename INDEX_TYPE >
+template< typename T >
 localIndex Unpack( buffer_unit_type const * & buffer,
-                   LvArray::ArrayOfSets< T, INDEX_TYPE > & var );
+                   ArrayOfSets< T > & var );
 
 //------------------------------------------------------------------------------
 template< typename MAP_TYPE >
@@ -330,33 +330,33 @@ UnpackPointer( buffer_unit_type const * & buffer,
                INDEX_TYPE const expectedLength );
 
 //------------------------------------------------------------------------------
-template< typename T, typename INDEX_TYPE, int UNIT_STRIDE_DIM >
+template< typename T, typename INDEX_TYPE, int USD >
 typename std::enable_if< std::is_trivial< T >::value, localIndex >::type
 UnpackArray( buffer_unit_type const * & buffer,
-             arraySlice1d< T, UNIT_STRIDE_DIM > const & var,
+             arraySlice1d< T, USD > const & var,
              INDEX_TYPE const length );
 
 //------------------------------------------------------------------------------
-template< typename T, typename INDEX_TYPE, int UNIT_STRIDE_DIM >
+template< typename T, typename INDEX_TYPE, int USD >
 typename std::enable_if< !std::is_trivial< T >::value, localIndex >::type
 UnpackArray( buffer_unit_type const * & buffer,
-             arraySlice1d< T, UNIT_STRIDE_DIM > const & var,
+             arraySlice1d< T, USD > const & var,
              INDEX_TYPE const length );
 
 //------------------------------------------------------------------------------
 // UnpackByIndex(buffer,var,indices)
 //------------------------------------------------------------------------------
-template< typename T, int NDIM, int UNIT_STRIDE_DIM, typename T_indices, typename INDEX_TYPE >
+template< typename T, int NDIM, int USD, typename T_indices >
 localIndex
 UnpackByIndex( buffer_unit_type const * & buffer,
-               LvArray::ArrayView< T, NDIM, UNIT_STRIDE_DIM, INDEX_TYPE > & var,
+               ArrayView< T, NDIM, USD > & var,
                const T_indices & indices );
 
 //------------------------------------------------------------------------------
-template< typename T, typename INDEX_TYPE, typename T_indices >
+template< typename T, typename T_indices >
 localIndex
 UnpackByIndex( buffer_unit_type const * & buffer,
-               LvArray::ArrayOfArrays< T, INDEX_TYPE > & var,
+               ArrayOfArrays< T > & var,
                T_indices const & indices );
 
 //------------------------------------------------------------------------------
@@ -392,11 +392,11 @@ localIndex Unpack( buffer_unit_type const * & buffer,
                    INDEX_TYPE & length );
 
 //------------------------------------------------------------------------------
-template< bool DO_PACKING, int UNIT_STRIDE_DIM >
+template< bool DO_PACKING, int USD >
 localIndex Pack( buffer_unit_type * & buffer,
                  set< localIndex > const & var,
                  set< globalIndex > const & unmappedGlobalIndices,
-                 arraySlice1d< globalIndex const, UNIT_STRIDE_DIM > const & localToGlobal );
+                 arraySlice1d< globalIndex const, USD > const & localToGlobal );
 
 //------------------------------------------------------------------------------
 template< typename SORTED >
@@ -407,23 +407,23 @@ inline localIndex Unpack( buffer_unit_type const * & buffer,
                           bool const clearExistingSet );
 
 //------------------------------------------------------------------------------
-template< typename T, typename INDEX_TYPE >
+template< typename T >
 localIndex
 Pack( buffer_unit_type * & buffer,
-      LvArray::ArrayOfSets< T, INDEX_TYPE > const & var );
+      ArrayOfSets< T > const & var );
 
 //------------------------------------------------------------------------------
-template< typename T, typename INDEX_TYPE >
+template< typename T >
 localIndex
 Unpack( buffer_unit_type const * & buffer,
-        LvArray::ArrayOfSets< T, INDEX_TYPE > & var );
+        ArrayOfSets< T > & var );
 
 
 //------------------------------------------------------------------------------
-template< bool DO_PACKING, int UNIT_STRIDE_DIM >
+template< bool DO_PACKING, int USD >
 localIndex
 Pack( buffer_unit_type * & buffer,
-      arraySlice1d< localIndex const, UNIT_STRIDE_DIM > const & var,
+      arraySlice1d< localIndex const, USD > const & var,
       globalIndex const * const unmappedGlobalIndices,
       localIndex const length,
       arraySlice1d< globalIndex const > const & localToGlobalMap );
@@ -436,11 +436,11 @@ inline localIndex Unpack( buffer_unit_type const * & buffer,
                           mapBase< globalIndex, localIndex, SORTED > const & globalToLocalMap );
 
 //------------------------------------------------------------------------------
-template< typename SORTED, int UNIT_STRIDE_DIM >
+template< typename SORTED, int USD >
 inline
 localIndex
 Unpack( buffer_unit_type const * & buffer,
-        arraySlice1d< localIndex, UNIT_STRIDE_DIM > & var,
+        arraySlice1d< localIndex, USD > & var,
         array1d< globalIndex > & unmappedGlobalIndices,
         localIndex const expectedLength,
         mapBase< globalIndex, localIndex, SORTED > const & globalToLocalMap );
@@ -509,38 +509,38 @@ Unpack( buffer_unit_type const * & buffer,
         bool const clearFlag );
 
 //------------------------------------------------------------------------------
-template< bool DO_PACKING, int UNIT_STRIDE_DIM0, int UNIT_STRIDE_DIM1 >
+template< bool DO_PACKING, int USD0, int USD1 >
 localIndex
 Pack( buffer_unit_type * & buffer,
-      arrayView2d< localIndex const, UNIT_STRIDE_DIM0 > const & var,
+      arrayView2d< localIndex const, USD0 > const & var,
       arrayView1d< localIndex > const & indices,
-      arraySlice1d< globalIndex const, UNIT_STRIDE_DIM1 > const & localToGlobalMap );
+      arraySlice1d< globalIndex const, USD1 > const & localToGlobalMap );
 
 //------------------------------------------------------------------------------
-template< typename SORTED, int UNIT_STRIDE_DIM >
+template< typename SORTED, int USD >
 inline
 localIndex
 Unpack( buffer_unit_type const * & buffer,
-        arrayView2d< localIndex, UNIT_STRIDE_DIM > const & var,
+        arrayView2d< localIndex, USD > const & var,
         array1d< localIndex > & indices,
         mapBase< globalIndex, localIndex, SORTED > const & globalToLocalMap );
 
 //------------------------------------------------------------------------------
-template< bool DO_PACKING, typename SORTED, int UNIT_STRIDE_DIM0 >
+template< bool DO_PACKING, typename SORTED, int USD0 >
 localIndex
 Pack( buffer_unit_type * & buffer,
-      arrayView2d< localIndex const, UNIT_STRIDE_DIM0 > const & var,
+      arrayView2d< localIndex const, USD0 > const & var,
       mapBase< localIndex, array1d< globalIndex >, SORTED > const & unmappedGlobalIndices,
       arrayView1d< localIndex const > const & indices,
       arraySlice1d< globalIndex const > const & localToGlobalMap,
       arraySlice1d< globalIndex const > const & relatedObjectLocalToGlobalMap );
 
 //------------------------------------------------------------------------------
-template< typename SORTED0, typename SORTED1, typename SORTED2, int UNIT_STRIDE_DIM >
+template< typename SORTED0, typename SORTED1, typename SORTED2, int USD >
 inline
 localIndex
 Unpack( buffer_unit_type const * & buffer,
-        arrayView2d< localIndex, UNIT_STRIDE_DIM > const & var,
+        arrayView2d< localIndex, USD > const & var,
         localIndex_array & indices,
         mapBase< localIndex, array1d< globalIndex >, SORTED0 > & unmappedGlobalIndices,
         mapBase< globalIndex, localIndex, SORTED1 > const & globalToLocalMap,

@@ -516,6 +516,18 @@ public:
   //! @name Accessors Methods
   //@{
 
+
+  /**
+   * @brief Returns the number of nozero entries in the longest
+   * row of the matrix.
+   */
+  localIndex maxRowLength() const;
+
+  // TODO: These break the goal of hiding local row indexing from user.  Revise
+  // use cases to use ilower() and iupper();
+  localIndex getLocalRowLocalLength( localIndex localRow );
+  localIndex getLocalRowGlobalLength( localIndex localRow );
+
   /**
    * @brief Returns a copy of the data in row <tt>globalRow</tt>.
    * Note that the input arrays will be resized internally to fit the number of entries.

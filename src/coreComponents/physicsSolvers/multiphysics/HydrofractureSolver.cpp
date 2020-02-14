@@ -25,16 +25,21 @@
 #include "constitutive/contact/ContactRelationBase.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "finiteElement/Kinematics.h"
+#include "finiteVolume/FiniteVolumeManager.hpp"
+#include "finiteVolume/FluxApproximationBase.hpp"
 #include "managers/DomainPartition.hpp"
+#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "mesh/FaceElementRegion.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
+#include "mpiCommunications/NeighborCommunicator.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
+
 
 namespace geosx
 {
@@ -51,8 +56,7 @@ HydrofractureSolver::HydrofractureSolver( const std::string& name,
   m_couplingTypeOption(),
   m_solidSolver(nullptr),
   m_flowSolver(nullptr),
-  m_maxNumResolves(10),
-  m_relaxationCoefficient(1)
+  m_maxNumResolves(10)
 {
   registerWrapper(viewKeyStruct::solidSolverNameString, &m_solidSolverName, 0)->
     setInputFlag(InputFlags::REQUIRED)->
@@ -75,28 +79,44 @@ HydrofractureSolver::HydrofractureSolver( const std::string& name,
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Value to indicate how many resolves may be executed to perform surface generation after the execution of flow and mechanics solver. ");
 
-  registerWrapper( viewKeyStruct::relaxationCoefficientString, &m_relaxationCoefficient, 0)->
-	setApplyDefaultValue(1)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Relaxation Coefficient for applied fracture face pressure in Hydrofracture solver");
+  m_numResolves[0] = 0;
 }
 
 void HydrofractureSolver::RegisterDataOnMesh( dataRepository::Group * const MeshBodies )
 {
-	for( auto & mesh : MeshBodies->GetSubGroups() )
-	{
-	  ElementRegionManager * const elemManager = mesh.second->group_cast<MeshBody*>()->getMeshLevel(0)->getElemManager();
+  for( auto & mesh : MeshBodies->GetSubGroups() )
+  {
+    ElementRegionManager * const elemManager = mesh.second->group_cast<MeshBody*>()->getMeshLevel(0)->getElemManager();
 
-	  elemManager->forElementSubRegions<FaceElementSubRegion>( [&]( auto * const elementSubRegion ) -> void
-		{
-		  elementSubRegion->template registerWrapper< array1d<real64> >( viewKeyStruct::contactStressString )->
+    elemManager->forElementSubRegions<FaceElementSubRegion>( [&]( auto * const elementSubRegion ) -> void
+    {
+      elementSubRegion->template registerWrapper< array1d<real64> >( viewKeyStruct::contactStressString )->
       setPlotLevel(PlotLevel::LEVEL_0)->
-			setDescription("Contact stress");
-		  elementSubRegion->template registerWrapper< array1d<real64> >( viewKeyStruct::appliedFacePressureString )->
-      setPlotLevel(PlotLevel::LEVEL_0)->
-			setDescription("Applied fluid pressure on fracture faces");
-		});
-	}
+      setDescription("Contact stress");
+    });
+  }
+  #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+  for( auto & mesh : MeshBodies->GetSubGroups() )
+  {
+    MeshLevel * meshLevel = Group::group_cast<MeshBody *>(mesh.second)->getMeshLevel(0);
+
+    ElementRegionManager * const elemManager = meshLevel->getElemManager();
+    elemManager->forElementRegions<FaceElementRegion>( [&] ( FaceElementRegion * const region )
+    {
+      region->forElementSubRegions<FaceElementSubRegion>( [&]( FaceElementSubRegion * const subRegion )
+      {
+        subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::separationCoeff0String )->
+          setRestartFlags(RestartFlags::NO_WRITE);
+        subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::apertureAtFailureString )->
+          setApplyDefaultValue(-1.0)->
+          setPlotLevel(PlotLevel::LEVEL_0);
+
+        subRegion->registerWrapper< array1d<real64> >( FaceElementSubRegion::viewKeyStruct::dSeparationCoeffdAperString )->
+            setRestartFlags(RestartFlags::NO_WRITE);
+      });
+    });
+  }
+  #endif
 }
 
 real64 HydrofractureSolver::GetTimestepRequest(real64 const time)
@@ -114,7 +134,7 @@ real64 HydrofractureSolver::GetTimestepRequest(real64 const time)
     return std::min(maxDtSolid, maxDtflow);
   }
   else
-    return std::numeric_limits<real64>::max();
+    return SolverBase::GetTimestepRequest(time);
 }
 
 void HydrofractureSolver::ExplicitStepSetup( real64 const & time_n,
@@ -136,29 +156,6 @@ void HydrofractureSolver::ExplicitStepSetup( real64 const & time_n,
   m_flowSolver->ExplicitStepSetup( time_n, dt, domain);
   m_solidSolver->ExplicitStepSetup( time_n, dt, domain);
 
-  static int setHydrofractureSolverTimeStep = 0;
-  if( setHydrofractureSolverTimeStep == 0 )
-  {
-    elemManager->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion * const subRegion )->void
-    {
-      arrayView1d<real64 const> const & fluidPressure = subRegion->getReference<array1d<real64> >(FlowSolverBase::viewKeyStruct::pressureString);
-      arrayView1d<real64> const & appliedFacePressure = subRegion->getReference<array1d<real64> >(viewKeyStruct::appliedFacePressureString);
-      arrayView1d<integer const> const & ghostRank = subRegion->GhostRank();
-
-      forall_in_range<serialPolicy>( 0,
-                                     subRegion->size(),
-                                     GEOSX_LAMBDA ( localIndex const kfe )
-      {
-        if( ghostRank[kfe] < 0 )
-        {
-          appliedFacePressure[kfe] = fluidPressure[kfe];
-        }
-      });
-    });
-
-    setHydrofractureSolverTimeStep = 1;
-  }
-
   //***** loop over all elements and initialize the derivative arrays *****
   forAllElemsInMesh( mesh, [&]( localIndex const er,
                                 localIndex const esr,
@@ -166,7 +163,6 @@ void HydrofractureSolver::ExplicitStepSetup( real64 const & time_n,
   {
     poroOld[er][esr][k] = poro[er][esr][k];
   });
-
 }
 
 void HydrofractureSolver::ImplicitStepSetup( real64 const & time_n,
@@ -177,8 +173,7 @@ void HydrofractureSolver::ImplicitStepSetup( real64 const & time_n,
                                              ParallelVector & GEOSX_UNUSED_ARG( rhs ),
                                              ParallelVector & GEOSX_UNUSED_ARG( solution ) )
 {
-  m_solidSolver = this->getParent()->GetGroup<SolidMechanicsLagrangianFEM>(m_solidSolverName);
-  m_flowSolver = this->getParent()->GetGroup<FlowSolverBase>(m_flowSolverName);
+  this->UpdateDeformationForCoupling(domain);
 
   m_solidSolver->ImplicitStepSetup( time_n, dt, domain,
                                     m_solidSolver->getDofManager(),
@@ -186,11 +181,30 @@ void HydrofractureSolver::ImplicitStepSetup( real64 const & time_n,
                                     m_solidSolver->getSystemRhs(),
                                     m_solidSolver->getSystemSolution() );
 
+
   m_flowSolver->ImplicitStepSetup( time_n, dt, domain,
                                    m_flowSolver->getDofManager(),
                                    m_flowSolver->getSystemMatrix(),
                                    m_flowSolver->getSystemRhs(),
                                    m_flowSolver->getSystemSolution() );
+
+#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+  domain->getMeshBody(0)->getMeshLevel(0)->getElemManager()->forElementRegions<FaceElementRegion>([&]( FaceElementRegion * const faceElemRegion )
+  {
+    faceElemRegion->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion * const subRegion )
+    {
+      arrayView1d< real64 > const &
+      separationCoeff0 = subRegion->getReference<array1d<real64> >( viewKeyStruct::separationCoeff0String );
+      arrayView1d< real64 const > const &
+      separationCoeff = subRegion->getSeparationCoefficient();
+      for( localIndex k=0 ; k<separationCoeff0.size() ; ++k )
+      {
+        separationCoeff0[k] = separationCoeff[k];
+      }
+    });
+  });
+#endif
+
 }
 
 void HydrofractureSolver::ImplicitStepComplete( real64 const& time_n,
@@ -224,6 +238,11 @@ void HydrofractureSolver::PostProcessInput()
     GEOSX_ERROR("invalid coupling type option");
   }
 
+  m_solidSolver = this->getParent()->GetGroup<SolidMechanicsLagrangianFEM>( m_solidSolverName );
+  GEOSX_ERROR_IF( m_solidSolver == nullptr, this->getName() << ": invalid solid solver name: " << m_solidSolverName );
+
+  m_flowSolver = this->getParent()->GetGroup<FlowSolverBase>( m_flowSolverName );
+  GEOSX_ERROR_IF( m_flowSolver == nullptr, this->getName() << ": invalid flow solver name: " << m_flowSolverName );
 }
 
 void HydrofractureSolver::InitializePostInitialConditions_PreSubGroups(Group * const GEOSX_UNUSED_ARG( problemManager ))
@@ -305,8 +324,10 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
                        m_rhs,
                        m_solution );
 
-    int const maxNumResolves = m_maxNumResolves;
-    for( int solveIter=0 ; solveIter<maxNumResolves ; ++solveIter )
+    int const maxIter = m_maxNumResolves + 1;
+    m_numResolves[1] = m_numResolves[0];
+    int solveIter;
+    for( solveIter=0 ; solveIter<maxIter ; ++solveIter )
     {
       int locallyFractured = 0;
       int globallyFractured = 0;
@@ -350,11 +371,33 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
       {
         break;
       }
+      else
+      {
+        std::map<string, string_array > fieldNames;
+        fieldNames["node"].push_back( keys::IncrementalDisplacement );
+        fieldNames["node"].push_back( keys::TotalDisplacement );
+        fieldNames["elems"].push_back( FlowSolverBase::viewKeyStruct::pressureString );
+        fieldNames["elems"].push_back( "elementAperture" );
+
+        CommunicationTools::SynchronizeFields( fieldNames,
+                                               domain->getMeshBody(0)->getMeshLevel(0),
+                                               domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
+
+        this->UpdateDeformationForCoupling(domain);
+
+        if( getLogLevel() >= 1 )
+        {
+          GEOSX_LOG_RANK_0("++ Fracture propagation. Re-entering Newton Solve.");
+        }
+        m_flowSolver->ResetViews(domain);
+      }
     }
 
     // final step for completion of timestep. typically secondary variable updates and cleanup.
     ImplicitStepComplete( time_n, dtReturn, domain );
+    m_numResolves[1] = solveIter;
   }
+
   return dtReturn;
 }
 
@@ -362,10 +405,10 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
 {
   MeshLevel * const meshLevel = domain->getMeshBody(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = meshLevel->getElemManager();
-  NodeManager * const nodeManager = meshLevel->getNodeManager();
+  NodeManager const * const nodeManager = meshLevel->getNodeManager();
   FaceManager * const faceManager = meshLevel->getFaceManager();
 
-  arrayView1d<R1Tensor> const & u = nodeManager->getReference< array1d<R1Tensor> >( keys::TotalDisplacement );
+  arrayView2d<real64 const, nodes::TOTAL_DISPLACEMENT_USD> const & u = nodeManager->totalDisplacement();
   arrayView1d<R1Tensor const> const & faceNormal = faceManager->faceNormal();
   ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
 
@@ -385,11 +428,25 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
     {
       arrayView1d<real64> const & aperture = subRegion->getElementAperture();
       arrayView1d<real64> const & apertureOffset = subRegion->getElementApertureOffset();
+      arrayView1d<real64> const & effectiveAperture = subRegion->getReference<array1d<real64>>(FlowSolverBase::viewKeyStruct::effectiveApertureString);
       arrayView1d<real64> const & volume = subRegion->getElementVolume();
       arrayView1d<real64> const & deltaVolume = subRegion->getReference<array1d<real64> >(FlowSolverBase::viewKeyStruct::deltaVolumeString);
       arrayView1d<real64 const> const & area = subRegion->getElementArea();
       arrayView2d< localIndex const > const & elemsToFaces = subRegion->faceList();
       arrayView1d<real64> const & contactStress = subRegion->getReference<array1d<real64> >(viewKeyStruct::contactStressString);
+
+#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+      arrayView1d<real64 const> const &
+      apertureF = subRegion->getReference< array1d<real64> >( viewKeyStruct::apertureAtFailureString );
+
+      arrayView1d< real64 > const &
+      separationCoeff = subRegion->getSeparationCoefficient();
+
+      arrayView1d< real64 > const &
+      dSeparationCoeff_dAper = subRegion->getReference<array1d<real64> >( FaceElementSubRegion::viewKeyStruct::dSeparationCoeffdAperString );
+      arrayView1d< real64 const > const &
+      separationCoeff0 = subRegion->getReference<array1d<real64> >( viewKeyStruct::separationCoeff0String );
+#endif
 
       for( localIndex kfe=0 ; kfe<subRegion->size() ; ++kfe )
       {
@@ -405,15 +462,33 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
 
         // TODO this needs a proper contact based strategy for aperture
         aperture[kfe] = -Dot(temp,faceNormal[kf0]) / numNodesPerFace;
+
         contactStress[kfe] = std::max(- aperture[kfe] * contactRelation->stiffness(), 0.0);
 
-        aperture[kfe] = contactRelation->effectiveAperture( aperture[kfe] + apertureOffset[kfe]);
+        effectiveAperture[kfe] = contactRelation->effectiveAperture( aperture[kfe] + apertureOffset[kfe]);
 
-        deltaVolume[kfe] = aperture[kfe] * area[kfe] - volume[kfe];
+
+#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+        real64 const s = aperture[kfe] / apertureF[kfe];
+        if( separationCoeff0[kfe]<1.0 && s>separationCoeff0[kfe] )
+        {
+          if( s >= 1.0)
+          {
+            separationCoeff[kfe] = 1.0;
+            dSeparationCoeff_dAper[kfe] = 0.0;
+          }
+          else
+          {
+            separationCoeff[kfe] = s;
+            dSeparationCoeff_dAper[kfe] = 1.0/apertureF[kfe];
+          }
+        }
+#endif
+        deltaVolume[kfe] = effectiveAperture[kfe] * area[kfe] - volume[kfe];
       }
+
     });
   });
-
 
   if( m_couplingTypeOption == couplingTypeOption::ExplicitlyCoupled )
   {
@@ -472,8 +547,6 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
           volume[er][esr][ei] += deltaVolume[er][esr][ei];
 
           poro[er][esr][ei] = (poroOld[er][esr][ei] + volStrain) / (1 + volStrain);
-
-//          std::cout<< "\n Matrix Deformation Update: ei = " << ei << ", Vol Strain= " << volStrain  << ", new poro = "<< poro[er][esr][ei] << std::endl;
         }
       });
     }
@@ -521,13 +594,22 @@ void HydrofractureSolver::SetupDofs( DomainPartition const * const domain,
   m_solidSolver->SetupDofs( domain, dofManager );
   m_flowSolver->SetupDofs( domain, dofManager );
 
+  // restrict coupling to fracture regions only (as done originally in SetupSystem)
+  ElementRegionManager const * const elemManager = domain->getMeshBody( 0 )->getMeshLevel( 0 )->getElemManager();
+  string_array fractureRegions;
+  elemManager->forElementRegions<FaceElementRegion>([&]( FaceElementRegion const * const elementRegion )
+  {
+    fractureRegions.push_back( elementRegion->getName() );
+  } );
+
   dofManager.addCoupling( keys::TotalDisplacement,
                           FlowSolverBase::viewKeyStruct::pressureString,
-                          DofManager::Connectivity::Elem );
+                          DofManager::Connectivity::Elem,
+                          fractureRegions );
 }
 
 void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
-                                       DofManager & GEOSX_UNUSED_ARG( dofManager ),
+                                       DofManager & dofManager,
                                        ParallelMatrix & GEOSX_UNUSED_ARG( matrix ),
                                        ParallelVector & GEOSX_UNUSED_ARG( rhs ),
                                        ParallelVector & GEOSX_UNUSED_ARG( solution ) )
@@ -536,31 +618,24 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
   m_flowSolver->ResetViews( domain );
 
   m_solidSolver->SetupSystem( domain,
-                           m_solidSolver->getDofManager(),
-                           m_solidSolver->getSystemMatrix(),
-                           m_solidSolver->getSystemRhs(),
-                           m_solidSolver->getSystemSolution() );
+                              m_solidSolver->getDofManager(),
+                              m_solidSolver->getSystemMatrix(),
+                              m_solidSolver->getSystemRhs(),
+                              m_solidSolver->getSystemSolution() );
 
   m_flowSolver->SetupSystem( domain,
-                           m_flowSolver->getDofManager(),
-                           m_flowSolver->getSystemMatrix(),
-                           m_flowSolver->getSystemRhs(),
-                           m_flowSolver->getSystemSolution() );
+                             m_flowSolver->getDofManager(),
+                             m_flowSolver->getSystemMatrix(),
+                             m_flowSolver->getSystemRhs(),
+                             m_flowSolver->getSystemSolution() );
 
+  // setup coupled DofManager
+  m_dofManager.setMesh( domain, 0, 0 );
+  SetupDofs( domain, dofManager );
 
-  // TODO: once we move to a monolithic matrix, we can just use SolverBase implementation
-
-//  dofManager.setSparsityPattern( m_matrix01,
-//                                 keys::TotalDisplacement,
-//                                 FlowSolverBase::viewKeyStruct::pressureString );
-//
-//  dofManager.setSparsityPattern( m_matrix10,
-//                                 FlowSolverBase::viewKeyStruct::pressureString,
-//                                 keys::TotalDisplacement );
-
-
-
-
+  // By not calling dofManager.reorderByRank(), we keep separate dof numbering for each field,
+  // which allows constructing separate sparsity patterns for off-diagonal blocks of the matrix.
+  // Once the solver moves to monolithic matrix, we can remove this method and just use SolverBase::SetupSystem.
   m_matrix01.createWithLocalSize( m_solidSolver->getSystemMatrix().localRows(),
                                   m_flowSolver->getSystemMatrix().localCols(),
                                   9,
@@ -570,12 +645,13 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
                                   24,
                                   MPI_COMM_GEOSX);
 
+#if 0
+  dofManager.setSparsityPattern( m_matrix01, keys::TotalDisplacement, FlowSolverBase::viewKeyStruct::pressureString );
+  dofManager.setSparsityPattern( m_matrix10, FlowSolverBase::viewKeyStruct::pressureString, keys::TotalDisplacement );
+#else
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   NodeManager * const nodeManager = mesh->getNodeManager();
   ElementRegionManager * const elemManager = mesh->getElemManager();
-
-
-
 
   string const presDofKey = m_flowSolver->getDofManager().getKey( FlowSolverBase::viewKeyStruct::pressureString );
   string const dispDofKey = m_solidSolver->getDofManager().getKey( keys::TotalDisplacement );
@@ -617,17 +693,67 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
                          values.data(),
                          1,
                          activeDisplacementDOF.size() );
-
     }
+  });
+
+  NumericalMethodsManager const * numericalMethodManager =
+    domain->getParent()->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
+
+  FiniteVolumeManager const * fvManager =
+    numericalMethodManager->GetGroup<FiniteVolumeManager>( keys::finiteVolumeManager );
+
+  FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation( m_flowSolver->getDiscretization() );
+
+
+  fluxApprox->forStencils<FaceElementStencil>( [&]( FaceElementStencil const & stencil )
+  {
+//    forall_in_range<serialPolicy>( 0, stencil.size(), GEOSX_LAMBDA ( localIndex iconn )
+    for( localIndex iconn=0 ; iconn<stencil.size() ; ++iconn)
+    {
+      localIndex const numFluxElems = stencil.stencilSize(iconn);
+      typename FaceElementStencil::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
+      typename FaceElementStencil::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
+      typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+
+      FaceElementSubRegion const * const
+      elementSubRegion = elemManager->GetRegion(seri[iconn][0])->GetSubRegion<FaceElementSubRegion>(sesri[iconn][0]);
+
+      array1d<array1d<localIndex > > const & elemsToNodes = elementSubRegion->nodeList();
+
+      arrayView1d<globalIndex> const &
+      faceElementDofNumber = elementSubRegion->getReference< array1d<globalIndex> >( presDofKey );
+      for( localIndex k0=0 ; k0<numFluxElems ; ++k0 )
+      {
+        globalIndex const activeFlowDOF = faceElementDofNumber[sei[iconn][k0]];
+
+        for( localIndex k1=0 ; k1<numFluxElems ; ++k1 )
+        {
+          localIndex const numNodesPerElement = elemsToNodes[sei[iconn][k1]].size();
+          array1d<globalIndex> activeDisplacementDOF(3 * numNodesPerElement);
+          array1d<real64> values( 3*numNodesPerElement );
+          values = 1;
+
+          for( localIndex a=0 ; a<numNodesPerElement ; ++a )
+          {
+            for( int d=0 ; d<3 ; ++d )
+            {
+              activeDisplacementDOF[a * 3 + d] = dispDofNumber[elemsToNodes[sei[iconn][k1]][a]] + d;
+            }
+          }
+
+          m_matrix10.insert( &activeFlowDOF,
+                             activeDisplacementDOF.data(),
+                             values.data(),
+                             1,
+                             activeDisplacementDOF.size() );
+        }
+      }
+    }//);
   });
 
   m_matrix01.close();
   m_matrix10.close();
-
-
-
-
-
+#endif
 }
 
 void HydrofractureSolver::AssembleSystem( real64 const time,
@@ -652,10 +778,10 @@ void HydrofractureSolver::AssembleSystem( real64 const time,
                                 m_flowSolver->getSystemMatrix(),
                                 m_flowSolver->getSystemRhs() );
 
+
+
   AssembleForceResidualDerivativeWrtPressure( domain, &m_matrix01, &(m_solidSolver->getSystemRhs()) );
-
   AssembleFluidMassResidualDerivativeWrtDisplacement( domain, &m_matrix10, &(m_flowSolver->getSystemRhs()) );
-
 }
 
 void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
@@ -673,6 +799,38 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
                                           m_solidSolver->getSystemMatrix(),
                                           m_solidSolver->getSystemRhs() );
 
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+
+  FieldSpecificationManager const & fsManager = FieldSpecificationManager::get();
+  string const dispDofKey = m_solidSolver->getDofManager().getKey( keys::TotalDisplacement );
+  NodeManager const * const nodeManager = mesh->getNodeManager();
+  arrayView1d<globalIndex const> const & dispDofNumber = nodeManager->getReference<globalIndex_array>( dispDofKey );
+  arrayView1d<integer const> const & nodeGhostRank = nodeManager->GhostRank();
+
+  fsManager.Apply( time + dt,
+                   domain,
+                   "nodeManager",
+                   keys::TotalDisplacement,
+                   [&]( FieldSpecificationBase const * const bc,
+                        string const &,
+                        set<localIndex> const & targetSet,
+                        Group * const ,
+                        string const )
+  {
+    set<localIndex> localSet;
+    for( auto const & a : targetSet )
+    {
+      if( nodeGhostRank[a]<0 )
+      {
+        localSet.insert(a);
+      }
+    }
+    bc->ZeroSystemRowsForBoundaryCondition<LAInterface>( localSet,
+                                                         dispDofNumber,
+                                                         m_matrix01 );
+  } );
+
+
   m_flowSolver->ApplyBoundaryConditions( time,
                                          dt,
                                          domain,
@@ -680,70 +838,100 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
                                          m_flowSolver->getSystemMatrix(),
                                          m_flowSolver->getSystemRhs() );
 
+  string const presDofKey = m_flowSolver->getDofManager().getKey( FlowSolverBase::viewKeyStruct::pressureString );
 
-//  std::cout.precision(7);
-//  std::cout.setf(std::ios_base::scientific);
+  fsManager.Apply( time + dt,
+                    domain,
+                    "ElementRegions",
+                    FlowSolverBase::viewKeyStruct::pressureString,
+                    [&]( FieldSpecificationBase const * const fs,
+                         string const &,
+                         set<localIndex> const & lset,
+                         Group * subRegion,
+                         string const & ) -> void
+  {
+    arrayView1d<globalIndex const> const &
+    dofNumber = subRegion->getReference< array1d<globalIndex> >( presDofKey );
+    arrayView1d<integer const> const & ghostRank = subRegion->group_cast<ObjectManagerBase*>()->GhostRank();
 
-  if( getLogLevel() == 2 )
+    set<localIndex> localSet;
+    for( auto const & a : lset )
+    {
+      if( ghostRank[a]<0 )
+      {
+        localSet.insert(a);
+      }
+    }
+
+    fs->ZeroSystemRowsForBoundaryCondition<LAInterface>( localSet,
+                                                         dofNumber,
+                                                         m_matrix10 );
+  });
+
+  // debugging info.  can be trimmed once everything is working.
+  if( getLogLevel()==2 )
   {
     // Before outputting anything generate permuation matrix and permute.
-    MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-    NodeManager * const nodeManager = mesh->getNodeManager();
-    ElementRegionManager * const elemManager = mesh->getElemManager();
+//    ElementRegionManager * const elemManager = mesh->getElemManager();
 
-    LAIHelperFunctions::CreatePermutationMatrix(nodeManager,
-                                                m_solidSolver->getSystemMatrix().globalRows(),
-                                                m_solidSolver->getSystemMatrix().globalCols(),
-                                                3,
-                                                m_solidSolver->getDofManager().getKey( keys::TotalDisplacement ),
-                                                m_permutationMatrix0);
+//    LAIHelperFunctions::CreatePermutationMatrix(nodeManager,
+//                                                m_solidSolver->getSystemMatrix().globalRows(),
+//                                                m_solidSolver->getSystemMatrix().globalCols(),
+//                                                3,
+//                                                m_solidSolver->getDofManager().getKey( keys::TotalDisplacement ),
+//                                                m_permutationMatrix0);
+//
+//    LAIHelperFunctions::CreatePermutationMatrix(elemManager,
+//                                                m_flowSolver->getSystemMatrix().globalRows(),
+//                                                m_flowSolver->getSystemMatrix().globalCols(),
+//                                                1,
+//                                                m_flowSolver->getDofManager().getKey( FlowSolverBase::viewKeyStruct::pressureString ),
+//                                                m_permutationMatrix1);
 
-    LAIHelperFunctions::CreatePermutationMatrix(elemManager,
-                                                m_flowSolver->getSystemMatrix().globalRows(),
-                                                m_flowSolver->getSystemMatrix().globalCols(),
-                                                1,
-                                                m_flowSolver->getDofManager().getKey( FlowSolverBase::viewKeyStruct::pressureString ),
-                                                m_permutationMatrix1);
-
-    GEOSX_LOG_RANK_0("***********************************************************");
-    GEOSX_LOG_RANK_0("matrix00");
-    GEOSX_LOG_RANK_0("***********************************************************");
-    LAIHelperFunctions::PrintPermutedMatrix(m_solidSolver->getSystemMatrix(), m_permutationMatrix0, std::cout);
+//    GEOSX_LOG_RANK_0("***********************************************************");
+//    GEOSX_LOG_RANK_0("matrix00");
+//    GEOSX_LOG_RANK_0("***********************************************************");
+//    LAIHelperFunctions::PrintPermutedMatrix(m_solidSolver->getSystemMatrix(), m_permutationMatrix0, std::cout);
+//    m_solidSolver->getSystemMatrix().print(std::cout);
     MpiWrapper::Barrier();
 
     GEOSX_LOG_RANK_0("***********************************************************");
     GEOSX_LOG_RANK_0("matrix01");
     GEOSX_LOG_RANK_0("***********************************************************");
-    LAIHelperFunctions::PrintPermutedMatrix(m_matrix01, m_permutationMatrix0, m_permutationMatrix1, std::cout);
+//    LAIHelperFunctions::PrintPermutedMatrix(m_matrix01, m_permutationMatrix0, m_permutationMatrix1, std::cout);
     m_matrix01.print(std::cout);
     MpiWrapper::Barrier();
 
     GEOSX_LOG_RANK_0("***********************************************************");
     GEOSX_LOG_RANK_0("matrix10");
     GEOSX_LOG_RANK_0("***********************************************************");
-    LAIHelperFunctions::PrintPermutedMatrix(m_matrix10, m_permutationMatrix1, m_permutationMatrix0, std::cout);
+//    LAIHelperFunctions::PrintPermutedMatrix(m_matrix10, m_permutationMatrix1, m_permutationMatrix0, std::cout);
+    m_matrix10.print(std::cout);
     MpiWrapper::Barrier();
 
     GEOSX_LOG_RANK_0("***********************************************************");
     GEOSX_LOG_RANK_0("matrix11");
     GEOSX_LOG_RANK_0("***********************************************************");
-    LAIHelperFunctions::PrintPermutedMatrix(m_flowSolver->getSystemMatrix(), m_permutationMatrix1, std::cout);
+//    LAIHelperFunctions::PrintPermutedMatrix(m_flowSolver->getSystemMatrix(), m_permutationMatrix1, std::cout);
+    m_flowSolver->getSystemMatrix().print(std::cout);
     MpiWrapper::Barrier();
 
-    GEOSX_LOG_RANK_0("***********************************************************");
-    GEOSX_LOG_RANK_0("residual0");
-    GEOSX_LOG_RANK_0("***********************************************************");
-    LAIHelperFunctions::PrintPermutedVector(m_solidSolver->getSystemRhs(), m_permutationMatrix0, std::cout);
+//    GEOSX_LOG_RANK_0("***********************************************************");
+//    GEOSX_LOG_RANK_0("residual0");
+//    GEOSX_LOG_RANK_0("***********************************************************");
+//    LAIHelperFunctions::PrintPermutedVector(m_solidSolver->getSystemRhs(), m_permutationMatrix0, std::cout);
+//    m_solidSolver->getSystemRhs().print(std::cout);
     MpiWrapper::Barrier();
 
     GEOSX_LOG_RANK_0("***********************************************************");
     GEOSX_LOG_RANK_0("residual1");
     GEOSX_LOG_RANK_0("***********************************************************");
-    LAIHelperFunctions::PrintPermutedVector(m_flowSolver->getSystemRhs(), m_permutationMatrix1, std::cout);
+//    LAIHelperFunctions::PrintPermutedVector(m_flowSolver->getSystemRhs(), m_permutationMatrix1, std::cout);
+    m_flowSolver->getSystemRhs().print(std::cout);
     MpiWrapper::Barrier();
   }
 
-  if( getLogLevel() >= 3 )
+  if( getLogLevel() >= 10 )
   {
     integer newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
 
@@ -778,7 +966,6 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
       GEOSX_LOG_RANK_0( "residual1: written to " << filename );
     }
   }
-
 }
 
 real64
@@ -788,14 +975,29 @@ CalculateResidualNorm( DomainPartition const * const domain,
                        ParallelVector const & GEOSX_UNUSED_ARG( rhs ) )
 {
   GEOSX_MARK_FUNCTION;
+
+  /*
+  real64 const fluidResidual = m_flowSolver->getSystemRhs().norm2();
+  real64 const solidResidual = m_solidSolver->getSystemRhs().norm2();
+  */
+
   real64 const fluidResidual = m_flowSolver->CalculateResidualNorm( domain,
                                                                     m_flowSolver->getDofManager(),
                                                                     m_flowSolver->getSystemRhs() );
+
   real64 const solidResidual = m_solidSolver->CalculateResidualNorm( domain,
                                                                      m_solidSolver->getDofManager(),
                                                                      m_solidSolver->getSystemRhs() );
 
-  GEOSX_LOG_RANK_0("residuals for fluid, solid: "<<fluidResidual<<", "<<solidResidual);
+  if( getLogLevel() >= 1 && logger::internal::rank==0 )
+  {
+    char output[200] = {0};
+    sprintf( output,
+             "( Rfluid, Rsolid ) = (%4.2e, %4.2e) ; ",
+             fluidResidual,
+             solidResidual);
+    std::cout<<output;
+  }
 
   return fluidResidual + solidResidual;
 }
@@ -819,10 +1021,7 @@ ApplyContactAndPressureToFacesInExplicitSolver( DomainPartition * const domain )
   elemManager->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion * const subRegion )->void
   {
     arrayView1d<real64 const> const & fluidPressure = subRegion->getReference<array1d<real64> >("pressure");
-//      arrayView1d<real64 const> const & deltaFluidPressure = subRegion->getReference<array1d<real64> >("deltaPressure");
-    arrayView1d<real64> const & appliedFacePressure = subRegion->getReference<array1d<real64> >(viewKeyStruct::appliedFacePressureString);
     arrayView1d<real64 const> const & contactStress = subRegion->getReference<array1d<real64> >(viewKeyStruct::contactStressString);
-//      arrayView1d<integer const> const & ghostRank = subRegion->GhostRank();
     arrayView1d<real64> const & area = subRegion->getElementArea();
     arrayView2d< localIndex const > const & elemsToFaces = subRegion->faceList();
 
@@ -839,9 +1038,7 @@ ApplyContactAndPressureToFacesInExplicitSolver( DomainPartition * const domain )
 
         real64 const Ja = area[kfe] / numNodesPerFace;
 
-        // In explicit solver, fluidPressure is already the pressure at time_n+1
-        appliedFacePressure[kfe] = m_relaxationCoefficient * fluidPressure[kfe] + (1.0 - m_relaxationCoefficient) * appliedFacePressure[kfe];
-        real64 nodalForceMag = (contactStress[kfe] + appliedFacePressure[kfe]) * Ja;
+        real64 nodalForceMag = (contactStress[kfe] + fluidPressure[kfe]) * Ja;
         R1Tensor nodalForce(Nbar);
         nodalForce *= nodalForceMag;
 
@@ -890,6 +1087,7 @@ AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
 
   matrix01->open();
   matrix01->zero();
+  rhs0->open();
 
   elemManager->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion * const subRegion )->void
   {
@@ -909,49 +1107,56 @@ AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
                                    subRegion->size(),
                                    GEOSX_LAMBDA ( localIndex const kfe )
       {
-        if( ghostRank[kfe] < 0 )
+        R1Tensor Nbar = faceNormal[elemsToFaces[kfe][0]];
+        Nbar -= faceNormal[elemsToFaces[kfe][1]];
+        Nbar.Normalize();
+
+        localIndex const kf0 = elemsToFaces[kfe][0];
+        localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray(kf0);
+
+        globalIndex rowDOF[24];
+        real64 nodeRHS[24];
+        stackArray2d<real64, 12*12> dRdP(numNodesPerFace*3, 1);
+        globalIndex colDOF = faceElementDofNumber[kfe];
+
+        real64 const Ja = area[kfe] / numNodesPerFace;
+
+        //          std::cout<<"fluidPressure["<<kfe<<"] = "<<fluidPressure[kfe]+deltaFluidPressure[kfe]<<std::endl;
+        real64 nodalForceMag = ( fluidPressure[kfe]+deltaFluidPressure[kfe] ) * Ja ;
+        R1Tensor nodalForce(Nbar);
+        nodalForce *= nodalForceMag;
+
+        //          std::cout << "    rank " << MpiWrapper::Comm_rank(MPI_COMM_GEOSX) << ", faceElement " << kfe << std::endl;
+        //          std::cout << "    fluid pressure " << fluidPressure[kfe]+deltaFluidPressure[kfe] << std::endl;
+        //          std::cout << "    nodalForce " << nodalForce << std::endl;
+        for( localIndex kf=0 ; kf<2 ; ++kf )
         {
-          R1Tensor Nbar = faceNormal[elemsToFaces[kfe][0]];
-          Nbar -= faceNormal[elemsToFaces[kfe][1]];
-          Nbar.Normalize();
-
-          localIndex const kf0 = elemsToFaces[kfe][0];
-          localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray(kf0);
-
-          globalIndex rowDOF[24];
-          real64 nodeRHS[24];
-          stackArray2d<real64, 12*12> dRdP(numNodesPerFace*3, 1);
-          globalIndex colDOF = faceElementDofNumber[kfe];
+          localIndex const faceIndex = elemsToFaces[kfe][kf];
 
 
-          real64 const Ja = area[kfe] / numNodesPerFace;
-
-//          std::cout<<"fluidPressure["<<kfe<<"] = "<<fluidPressure[kfe]+deltaFluidPressure[kfe]<<std::endl;
-          real64 nodalForceMag = ( fluidPressure[kfe]+deltaFluidPressure[kfe] ) * Ja;
-          R1Tensor nodalForce(Nbar);
-          nodalForce *= nodalForceMag;
-
-
-          for( localIndex kf=0 ; kf<2 ; ++kf )
+          for( localIndex a=0 ; a<numNodesPerFace ; ++a )
           {
-            localIndex const faceIndex = elemsToFaces[kfe][kf];
 
-
-            for( localIndex a=0 ; a<numNodesPerFace ; ++a )
+            for( int i=0 ; i<3 ; ++i )
             {
-              for( int i=0 ; i<3 ; ++i )
-              {
-                rowDOF[3*a+i] = dispDofNumber[faceToNodeMap(faceIndex, a)] + i;
-                nodeRHS[3*a+i] = - nodalForce[i] * pow(-1,kf);
-                fext[faceToNodeMap(faceIndex, a)][i] += - nodalForce[i] * pow(-1,kf);
+              rowDOF[3*a+i] = dispDofNumber[faceToNodeMap(faceIndex, a)] + i;
+              nodeRHS[3*a+i] = - nodalForce[i] * pow(-1,kf);
+              fext[faceToNodeMap(faceIndex, a)][i] += - nodalForce[i] * pow(-1,kf);
 
-                dRdP(3*a+i,0) = - Ja * Nbar[i] * pow(-1,kf);
-              }
+              dRdP(3*a+i,0) = - Ja * Nbar[i] * pow(-1,kf) ;
+              // this is for debugging
+              //                if (dispDofNumber[faceToNodeMap(faceIndex, a)] == 0 || dispDofNumber[faceToNodeMap(faceIndex, a)] == 6 || dispDofNumber[faceToNodeMap(faceIndex, a)] == 12 || dispDofNumber[faceToNodeMap(faceIndex, a)] == 18)
+              //                  std::cout << "rank " << MpiWrapper::Comm_rank(MPI_COMM_GEOSX) << "DOF index " << dispDofNumber[faceToNodeMap(faceIndex, a)] + i << " contribution " << nodeRHS[3*a+i] << std::endl;
+
             }
+          }
+          if( ghostRank[kfe] < 0 )
+          {
 
             rhs0->add( rowDOF,
                        nodeRHS,
                        numNodesPerFace*3 );
+
 
             matrix01->add( rowDOF,
                            &colDOF,
@@ -964,10 +1169,10 @@ AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
     }
   });
 
+  rhs0->close();
   matrix01->close();
-
+  rhs0->close();
 }
-
 
 void
 HydrofractureSolver::
@@ -986,6 +1191,9 @@ AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const * cons
   string const constitutiveName = constitutiveManager->GetGroup(m_flowSolver->fluidIndex())->getName();
   string const presDofKey = m_flowSolver->getDofManager().getKey( FlowSolverBase::viewKeyStruct::pressureString );
   string const dispDofKey = m_solidSolver->getDofManager().getKey( keys::TotalDisplacement );
+
+  CRSMatrixView<real64 const,localIndex const,localIndex const> const &
+  dFluxResidual_dAperture = m_flowSolver->getDerivativeFluxResidual_dAperture();
 
   ContactRelationBase const * const
   contactRelation = constitutiveManager->GetGroup<ContactRelationBase>( m_contactRelationName );
@@ -1019,16 +1227,20 @@ AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const * cons
 
     arrayView1d<R1Tensor const> const & faceNormal = faceManager->faceNormal();
 
+//    arrayView1d< real64 const > const & separationCoeff = subRegion->getSeparationCoefficient();
+//    arrayView1d<real64 const> const &
+//    dseparationCoeff_dAper  = subRegion->getReference<array1d<real64>>(FaceElementSubRegion::viewKeyStruct::dSeparationCoeffdAperString);
+
 
     forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
-      if (elemGhostRank[ei] < 0)
+      //if (elemGhostRank[ei] < 0)
       {
         globalIndex const elemDOF = presDofNumber[ei];
-
         localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray(elemsToFaces[ei][0]);
-
-        real64 const dRdAper = dens[ei][0] * area[ei];
+        real64 const
+        dAccumulationResidualdAperture = dens[ei][0] * area[ei] ;//* ( separationCoeff[ei] +
+                                                                 //   aperture[ei] * dseparationCoeff_dAper[ei] );
 
 
         globalIndex nodeDOF[8*3];
@@ -1039,30 +1251,66 @@ AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const * cons
 
         stackArray1d<real64, 24> dRdU(2*numNodesPerFace*3);
 
-        for( localIndex kf=0 ; kf<2 ; ++kf )
+        // Accumulation derivative
+        if (elemGhostRank[ei] < 0)
         {
-          for( localIndex a=0 ; a<numNodesPerFace ; ++a )
+          //GEOS_LOG_RANK( "dAccumulationResidualdAperture("<<ei<<") = "<<dAccumulationResidualdAperture );
+          for( localIndex kf=0 ; kf<2 ; ++kf )
           {
-            for( int i=0 ; i<3 ; ++i )
+            for( localIndex a=0 ; a<numNodesPerFace ; ++a )
             {
-              nodeDOF[ kf*3*numNodesPerFace + 3*a+i] = dispDofNumber[faceToNodeMap(elemsToFaces[ei][kf],a)] +i;
-              real64 const dGap_dU = - pow(-1,kf) * Nbar[i] / numNodesPerFace;
-              real64 const dAper_dU = contactRelation->dEffectiveAperture_dAperture( aperture[ei] ) * dGap_dU;
-              dRdU(kf*3*numNodesPerFace + 3*a+i) = dRdAper * dAper_dU;
+              for( int i=0 ; i<3 ; ++i )
+              {
+                nodeDOF[ kf*3*numNodesPerFace + 3*a+i] = dispDofNumber[faceToNodeMap(elemsToFaces[ei][kf],a)] +i;
+                real64 const dGap_dU = - pow(-1,kf) * Nbar[i] / numNodesPerFace;
+                real64 const dAper_dU = contactRelation->dEffectiveAperture_dAperture( aperture[ei] ) * dGap_dU;
+                dRdU(kf*3*numNodesPerFace + 3*a+i) = dAccumulationResidualdAperture * dAper_dU;
+              }
             }
           }
+          matrix10->add( elemDOF,
+                         nodeDOF,
+                         dRdU.data(),
+                         2*numNodesPerFace*3 );
         }
-        matrix10->add( elemDOF,
-                       nodeDOF,
-                       dRdU.data(),
-                       2*numNodesPerFace*3 );
 
+        // flux derivative
+        localIndex const numColumns = dFluxResidual_dAperture.numNonZeros(ei);
+        arraySlice1d<localIndex const> const & columns = dFluxResidual_dAperture.getColumns( ei );
+        arraySlice1d<real64 const> const & values = dFluxResidual_dAperture.getEntries( ei );
+
+        for( localIndex kfe2=0 ; kfe2<numColumns ; ++kfe2 )
+        {
+          real64 dRdAper = values[kfe2];
+          localIndex const ei2 = columns[kfe2];
+//          GEOS_LOG_RANK( "dRdAper("<<ei<<", "<<ei2<<") = "<<dRdAper );
+
+          for( localIndex kf=0 ; kf<2 ; ++kf )
+          {
+            for( localIndex a=0 ; a<numNodesPerFace ; ++a )
+            {
+              for( int i=0 ; i<3 ; ++i )
+              {
+                nodeDOF[ kf*3*numNodesPerFace + 3*a+i] = dispDofNumber[faceToNodeMap(elemsToFaces[ei2][kf],a)] +i;
+                real64 const dGap_dU = - pow(-1,kf) * Nbar[i] / numNodesPerFace;
+                real64 const dAper_dU = contactRelation->dEffectiveAperture_dAperture( aperture[ei2] ) * dGap_dU;
+                dRdU(kf*3*numNodesPerFace + 3*a+i) = dRdAper * dAper_dU;
+              }
+            }
+          }
+          matrix10->add( elemDOF,
+                         nodeDOF,
+                         dRdU.data(),
+                         2*numNodesPerFace*3 );
+
+        }
       }
-    } );
-  } );
+    });
+  });
 
   matrix10->close();
 }
+
 void
 HydrofractureSolver::
 ApplySystemSolution( DofManager const & GEOSX_UNUSED_ARG( dofManager ),
@@ -1081,10 +1329,10 @@ ApplySystemSolution( DofManager const & GEOSX_UNUSED_ARG( dofManager ),
                                      domain );
 
   this->UpdateDeformationForCoupling(domain);
-
 }
 
 }
+
 #include "EpetraExt_MatrixMatrix.h"
 #include "Thyra_OperatorVectorClientSupport.hpp"
 #include "Thyra_AztecOOLinearOpWithSolveFactory.hpp"
@@ -1108,227 +1356,14 @@ ApplySystemSolution( DofManager const & GEOSX_UNUSED_ARG( dofManager ),
 #include "Thyra_PreconditionerFactoryBase.hpp"
 #include "Thyra_get_Epetra_Operator.hpp"
 #include "Thyra_MLPreconditionerFactory.hpp"
-
-
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_RCP.hpp"
-
+#include "Teuchos_Time.hpp"
 #include "Stratimikos_DefaultLinearSolverBuilder.hpp"
 
 namespace geosx
 {
-
-void print_norms( Epetra_FECrsMatrix * m_matrix[2][2],
-                  Epetra_FEVector * m_rhs[2],
-                  std::string nametag )
-{
-   int const rank = MpiWrapper::Comm_rank(MPI_COMM_WORLD );
-
-   double matnorm[2][2];
-   double rhsnorm[2];
-
-   matnorm[0][0] = m_matrix[0][0]->NormInf();
-   matnorm[0][1] = m_matrix[0][1]->NormInf();
-   matnorm[1][0] = m_matrix[1][0]->NormInf();
-   matnorm[1][1] = m_matrix[1][1]->NormInf();
-
-   m_rhs[0]->NormInf(&(rhsnorm[0]));
-   m_rhs[1]->NormInf(&(rhsnorm[1]));
-
-   if( rank==0 )
-   {
-     printf("SolverBase :: Linear system inf-norms (%s)\n",nametag.c_str());
-     printf("           ::   | %.1e %.1e | = | %.1e |\n",matnorm[0][0],matnorm[0][1],rhsnorm[0]);
-     printf("           ::   | %.1e %.1e |   | %.1e |\n",matnorm[1][0],matnorm[1][1],rhsnorm[1]);
-   }
-}
-using namespace Teuchos;
-using namespace Thyra;
-
-void scale2x2System( int const use_scaling,
-                     Epetra_FECrsMatrix * m_matrix[2][2],
-                     Epetra_FEVector * m_rhs[2],
-                     RCP<Epetra_Vector> scaling [2][2] )
-{
-  GEOSX_MARK_FUNCTION;
-
-  // ROW & COLUMN SCALING
-  //
-  // Scale the linear system with row and column scaling
-  // matrices R and C.  The resulting linear system is
-  //  (R.A.C).(Cinv.x) = R.b
-  // We use the iterative method of Ruiz (2001) to
-  // repeatedly update R and C until the desired scaling
-  // is found. Note also that C must be saved to later
-  // compute the true solution from the temporary solution
-  //  x = C.x' where x' = Cinv.x
-
-  // The diagonal scaling matrices are stored as four
-  // vectors, one for each combination of row/column and
-  // block 0/block 1.  We store them in a 2x2 array as
-  // [ R0 C0 ;
-  //   R1 C1 ]
-
-  // note that we can extend this methodology to larger
-  // block systems by storing a (n_blocks x 2) array:
-  // [ R0 C0 ;
-  //   R1 C1 ;
-  //   .. ..
-  //   Rn Cn ]
-
-  const unsigned n_blocks = 2;           // algorithm *should* work for any block size n
-  enum {ROW,COL};            // indexing to improve readability (ROW=0,COL=1)
-
-    // complete scaling
-  RCP<Epetra_Vector> scaling_k [n_blocks][2];  // scaling at iteration k
-
-  if(use_scaling == 2)
-  {
-    // first print unscaled norms
-
-    //    if(params->m_verbose >= 2)
-    //    {
-    //      print_norms(epetraSystem,"unscaled");
-    //    }
-
-    // allocate storage for our scaling vectors, and initialize
-    // them to identity scalings (R=C=I).
-
-    for(unsigned b=0; b<n_blocks; ++b)
-    {
-      scaling[b][ROW] = rcp(new Epetra_Vector(m_matrix[b][b]->RangeMap()));
-      scaling[b][COL] = rcp(new Epetra_Vector(m_matrix[b][b]->DomainMap()));
-
-      scaling[b][ROW]->PutScalar(1.0);
-      scaling[b][COL]->PutScalar(1.0);
-
-      scaling_k[b][ROW] = rcp(new Epetra_Vector(m_matrix[b][b]->RangeMap()));
-      scaling_k[b][COL] = rcp(new Epetra_Vector(m_matrix[b][b]->DomainMap()));
-    }
-
-    // begin scaling iterations
-
-    for(unsigned k=0; k<20; ++k)
-    {
-      // get row and column max norms for scaling
-
-      for(unsigned a=0; a<n_blocks; ++a)
-      {
-
-        scaling_k[a][ROW]->PutScalar(0.0); // clear
-        scaling_k[a][COL]->PutScalar(0.0); // clear
-
-        Epetra_Vector tmp_row(m_matrix[a][a]->RangeMap());
-        Epetra_Vector tmp_col(m_matrix[a][a]->DomainMap());
-
-        for(unsigned b=0; b<n_blocks; ++b)
-        {
-          m_matrix[a][b]->InvRowMaxs(tmp_row); // 1/row_norms for block
-          m_matrix[b][a]->InvColMaxs(tmp_col); // 1/col_norms for block
-
-          tmp_row.Reciprocal(tmp_row); // row_norms for block
-          tmp_col.Reciprocal(tmp_col); // col_norms for block
-
-          scaling_k[a][ROW]->Update(1.0,tmp_row,1.0);  // add across blocks (A and B) or (C and D)
-          scaling_k[a][COL]->Update(1.0,tmp_col,1.0);  // add across blocks (A and C) or (B and D)
-
-          // note this last step defines a weird norm, i.e. the sum inf_norm(A)+inf_norm(B)
-          // rather than inf_norm([A B]).  the first is just easier to compute using
-          // built in operations.  this should not make much of a difference in terms
-          // of actual performance, as we're just trying to get a reasonable scaling.
-        }
-
-        for(int i=0; i<scaling_k[a][ROW]->MyLength(); ++i)
-          (*scaling_k[a][ROW])[i] = 1./sqrt((*scaling_k[a][ROW])[i]);  // use 1/sqrt(norm) for scaling
-        for(int i=0; i<scaling_k[a][COL]->MyLength(); ++i)
-          (*scaling_k[a][COL])[i] = 1./sqrt((*scaling_k[a][COL])[i]);  // use 1/sqrt(norm) for scaling
-
-        scaling[a][ROW]->Multiply(1.0,*scaling[a][ROW],*scaling_k[a][ROW],0.0); // save total row scaling over all iterations
-        scaling[a][COL]->Multiply(1.0,*scaling[a][COL],*scaling_k[a][COL],0.0); // save total col scaling over all iterations
-      }
-
-      // actually scale matrix A(k) = R(k).A(k-1).C(k)
-      // also scale rhs b(k) = R(k)*b(k-1)
-      // will scale solution x = C*x' after solve
-
-      for(unsigned a=0; a<n_blocks; ++a)
-      {
-        for(unsigned b=0; b<n_blocks; ++b)
-        {
-          m_matrix[a][b]->LeftScale(*scaling_k[a][ROW]);
-          m_matrix[a][b]->RightScale(*scaling_k[b][COL]);
-        }
-        m_rhs[a]->Multiply(1.0,*scaling_k[a][ROW],*m_rhs[a],0.0);
-      }
-
-      // check for convergence in desired row and column norms
-      // and print info in verbose mode > 0
-
-      double convergence = 0.0;
-      double norm_threshold = 0.2;
-
-      for(unsigned a=0; a<n_blocks; ++a)
-        for(unsigned b=0; b<2; ++b)
-        {
-          double tmp[1];
-          scaling_k[a][b]->Reciprocal(*scaling_k[a][b]);
-          scaling_k[a][b]->NormInf(&(tmp[0]));
-          tmp[0] = abs(1-pow(tmp[0],2));
-          convergence = std::max(convergence,tmp[0]);
-        }
-
-      //if( partition.m_rank == 0 && params->m_verbose >= 2 )
-//      {
-//        if(k==0)
-//        {
-//          printf("SolverBase :: Re-scaling matrix \n");
-//          printf("           ::   %d ... %.1e\n",k,convergence);
-//        }
-//        else
-//          printf("           ::   %d ... %.1e\n",k,convergence);
-//      }
-
-      if(convergence < norm_threshold && k > 1) break;
-    }
-
-    //    if(params->m_verbose >= 2)
-    //    {
-    //      print_norms(epetraSystem,"scaled");
-    //    }
-  } // end scaling
-  else if( use_scaling==1 )
-  {
-
-    // perform an explicit row scaling of the linear system,
-    // R*A*x = R*b, where R is a diagonal scaling matrix.
-    // we will use inverse row sums for the scaling.
-
-    for(unsigned b=0; b<2; ++b)
-    {
-      Epetra_Vector scale_one(m_matrix[b][b]->RowMap());
-      Epetra_Vector scale_two(m_matrix[b][b]->RowMap());
-
-      Epetra_Vector scale_one_inv(m_matrix[b][b]->RowMap());
-      Epetra_Vector scale_two_inv(m_matrix[b][b]->RowMap());
-
-      m_matrix[b][0]->InvRowSums(scale_one_inv);
-      m_matrix[b][1]->InvRowSums(scale_two_inv);
-      scale_one.Reciprocal(scale_one_inv);
-      scale_two.Reciprocal(scale_two_inv);  // not ideal, could choke if 1/0 or 1/NaN appears
-      scale_one.Update(1.0,scale_two,1.0);
-      scale_one_inv.Reciprocal(scale_one);
-
-      for(unsigned c=0; c<2; ++c)
-      {
-        m_matrix[b][c]->LeftScale(scale_one_inv);
-      }
-
-      Epetra_MultiVector tmp (*m_rhs[b]);
-      m_rhs[b]->Multiply(1.0,scale_one_inv,tmp,0.0);
-    }
-  }
-}
-
+  
 void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofManager ),
                                        ParallelMatrix & ,
                                        ParallelVector & ,
@@ -1336,11 +1371,21 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
 {
   GEOSX_MARK_FUNCTION;
 
+  /*
+  globalIndex numU = m_solidSolver->getSystemRhs().globalSize();
+  globalIndex numP = m_flowSolver->getSystemRhs().globalSize();
+  GEOSX_LOG_RANK_0("size = " << numU << " + " << numP);
+  */
+
   SystemSolverParameters * const params = &m_systemSolverParameters;
+  integer const newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
 
   using namespace Teuchos;
   using namespace Thyra;
 
+  Teuchos::Time clock("solveClock");  
+
+  GEOSX_MARK_BEGIN(Setup);
   Epetra_FECrsMatrix * p_matrix[2][2];
   Epetra_FEVector * p_rhs[2];
   Epetra_FEVector * p_solution[2];
@@ -1352,116 +1397,71 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
   p_solution[1] = m_flowSolver->getSystemSolution().unwrappedPointer();
 
   p_matrix[0][0] = m_solidSolver->getSystemMatrix().unwrappedPointer();
-
   p_matrix[0][1] = m_matrix01.unwrappedPointer();
-
   p_matrix[1][0] = m_matrix10.unwrappedPointer();
-
   p_matrix[1][1] = m_flowSolver->getSystemMatrix().unwrappedPointer();
+
+  // scale and symmetrize
+
+  m_densityScaling = 1e-3;
+  m_pressureScaling = 1e9;
+
+  p_matrix[0][1]->Scale(m_pressureScaling);
+  p_matrix[1][0]->Scale(m_pressureScaling*m_densityScaling);
+  p_matrix[1][1]->Scale(m_pressureScaling*m_pressureScaling*m_densityScaling);
+  p_rhs[1]->Scale(m_pressureScaling*m_densityScaling);
 
     // SCHEME CHOICES
     //
     // there are several flags to control solver behavior.
     // these should be compared in a scaling study.
     //
-    // 1. whether to use inner solvers or just the
-    //    sub-block preconditioners directly. false
-    //    is probably better.
-    // 2. whether to use a block diagonal or a full
-    //    block triangular preconditioner.  false is
-    //    probably better.
-    // 3. whether to perform an explicit scaling
-    //    of the linear system before solving.  note
-    //    that the matrix and rhs are modified in place
-    //    by this operation.  true is probably better.
-    // 4. whether to use BiCGstab or GMRES for the
+    // -- whether to use a block diagonal or a 
+    //    block triangular preconditioner.
+    // -- whether to use BiCGstab or GMRES for the
     //    krylov solver.  GMRES is generally more robust,
     //    BiCGstab sometimes shows better parallel performance.
     //    false is probably better.
 
-  const bool use_inner_solver  = params->m_useInnerSolver;
-  const int use_scaling        = params->m_scalingOption;  // no longer just row
+  const bool use_diagonal_prec = true;
   const bool use_bicgstab      = params->m_useBicgstab;
-  const bool use_diagonal_prec = false;
 
-
-    // DEBUGGING
-    // Write out unscaled linear system to matlab
-
-    // TODO: Josh: I noticed we seem to be storing a lot of
-    // zero-valued entries in our sparsity pattern.  We should
-    // follow up on this to make sure we are not over-allocating
-    // space in our matrices.
-  /*
-  {
-    EpetraExt::RowMatrixToMatlabFile("umatrix00.dat",*epetraSystem.m_matrix[0][0]);
-    EpetraExt::RowMatrixToMatlabFile("umatrix01.dat",*epetraSystem.m_matrix[0][1]);
-    EpetraExt::RowMatrixToMatlabFile("umatrix10.dat",*epetraSystem.m_matrix[1][0]);
-    EpetraExt::RowMatrixToMatlabFile("umatrix11.dat",*epetraSystem.m_matrix[1][1]);
-    EpetraExt::MultiVectorToMatlabFile("urhs0.dat",*epetraSystem.m_rhs[0]);
-    EpetraExt::MultiVectorToMatlabFile("urhs1.dat",*epetraSystem.m_rhs[1]);
-  }
-  */
-  const unsigned n_blocks = 2;           // algorithm *should* work for any block size n
-  enum {ROW,COL};            // indexing to improve readability (ROW=0,COL=1)
-  RCP<Epetra_Vector> scaling   [n_blocks][2];  // complete scaling
-  scale2x2System( use_scaling, p_matrix, p_rhs, scaling );
-
-
-    // set initial guess to zero.  this is not strictly
-    // necessary but is good for comparing solver performance.
+    // set initial guess to zero
 
   p_solution[0]->PutScalar(0.0);
   p_solution[1]->PutScalar(0.0);
 
-    // The standard AMG aggregation strategy based on
-    // the system matrix A can struggle when using
-    // grids with large element aspect ratios.  To fix
-    // this, we can instead build the AMG hierarchy
-    // using an alternative matrix L built using information
-    // about nodal positions.  Once the aggregates are
-    // determined, A is then used to construct the actual
-    // coarse / fine scale operations. For more details
-    // see: ML USER GUIDE V5, sec. 6.4.12, p. 33
+    // create separate displacement component matrix
 
-    // Here, we simply extract three arrays of nodal
-    // positions for the locally owned nodes, for later use.
-    // For vector-valued problems (with multiple dofs per node)
-    // ML is going to assume degrees of freedom are ordered as
-    // [u_x_0, u_y_0, u_z_0, u_x_1, u_y_1, u_z_1, ... ]
-    // where dof components are grouped "node-wise."
-
-#define AGGREGATION 0
-#if     AGGREGATION==1
-
-  Array1dT<double> x_coord;
-  Array1dT<double> y_coord; // set to to 0 for 1D problems
-  Array1dT<double> z_coord; // set to to 0 for 2D problems
-
-  if(params->m_useMLPrecond)
+  clock.start(true);
+  if(newtonIter==0)
   {
-    const iArray1d & is_ghost = domain.m_feNodeManager.GetFieldData<FieldInfo::ghostRank>();
-    //iArray1d const & trilinos_index = domain.m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);
-    const Array1dT<R1Tensor> & X = domain.m_feNodeManager.GetFieldData<FieldInfo::referencePosition>();
-    x_coord.resize(domain.m_feNodeManager.m_numNodes);
-    y_coord.resize(domain.m_feNodeManager.m_numNodes);
-    z_coord.resize(domain.m_feNodeManager.m_numNodes);
-    localIndex b=0;
-    for( auto a=0u ; a<domain.m_feNodeManager.m_numNodes ; ++a )
-    {
-      if(is_ghost[a] < 0)
-      {
-        realT const * const X_ref = X[a].Data();
-
-        x_coord[b] = X_ref[0];// + 0.1*((double) rand() / (RAND_MAX));
-        y_coord[b] = X_ref[1];// + 0.1*((double) rand() / (RAND_MAX));
-        z_coord[b] = X_ref[2];// + 0.1*((double) rand() / (RAND_MAX));
-        ++b;
-      }
-    }
+    m_blockDiagUU.reset(new ParallelMatrix());
+    LAIHelperFunctions::SeparateComponentFilter(m_solidSolver->getSystemMatrix(),*m_blockDiagUU,3);
   }
 
-#endif
+    // create schur complement approximation matrix
+
+  Epetra_CrsMatrix* schurApproxPP = NULL; // confirm we delete this at end of function!
+  {
+    Epetra_Vector diag(p_matrix[0][0]->RowMap());
+    Epetra_Vector diagInv(p_matrix[0][0]->RowMap());
+ 
+    p_matrix[0][0]->ExtractDiagonalCopy(diag); 
+    diagInv.Reciprocal(diag);
+ 
+    Epetra_FECrsMatrix DB(*p_matrix[0][1]);
+    DB.LeftScale(diagInv);
+    DB.FillComplete();
+
+    Epetra_FECrsMatrix BtDB(Epetra_DataAccess::Copy,p_matrix[1][1]->RowMap(),1); 
+    EpetraExt::MatrixMatrix::Multiply(*p_matrix[1][0],false,DB,false,BtDB);
+    EpetraExt::MatrixMatrix::Add(BtDB,false,-1.0,*p_matrix[1][1],false,1.0,schurApproxPP);
+
+    schurApproxPP->FillComplete();
+  }
+  double auxTime = clock.stop();
+  GEOSX_MARK_END(Setup);
 
     // we want to use thyra to wrap epetra operators and vectors
     // for individual blocks.  this is an ugly conversion, but
@@ -1477,6 +1477,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
     // where "false" implies the RCP does not own the object and
     // should not attempt to delete it when finished.
 
+  GEOSX_MARK_BEGIN(THYRA_SETUP);
 
   RCP<const Thyra::LinearOpBase<double> >  matrix_block[2][2];
   RCP<Thyra::MultiVectorBase<double> >     lhs_block[2];
@@ -1489,6 +1490,11 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
     matrix_block[i][j] = Thyra::epetraLinearOp(mmm);
   }
 
+  RCP<Epetra_Operator> bbb(m_blockDiagUU->unwrappedPointer(),false);
+  RCP<Epetra_Operator> ppp(schurApproxPP,false);
+
+  RCP<const Thyra::LinearOpBase<double> >  blockDiagOp = Thyra::epetraLinearOp(bbb);
+  RCP<const Thyra::LinearOpBase<double> >  schurOp = Thyra::epetraLinearOp(ppp);
 
   for(unsigned i=0; i<2; ++i)
   {
@@ -1508,8 +1514,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
                                                                    matrix_block[1][1]);
 
     // creating a representation of the blocked
-    // rhs is a little uglier. (todo: check if there is
-    // a cleaner way to do this.)
+    // rhs and lhs is a little uglier. 
 
   RCP<Thyra::ProductMultiVectorBase<double> > rhs;
   {
@@ -1526,8 +1531,6 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
 
     rhs = Thyra::defaultProductMultiVector<double>(vs,mva);
   }
-
-    // do the identical operation for the lhs
 
   RCP<Thyra::ProductMultiVectorBase<double> > lhs;
 
@@ -1546,110 +1549,64 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
     lhs = Thyra::defaultProductMultiVector<double>(vs,mva);
   }
 
+  GEOSX_MARK_END(THYRA_SETUP);
 
     // for the preconditioner, we need two approximate inverses,
-    // one for the (0,0) block and one for the approximate
-    // schur complement.  for now, we will use the (1,1) block
-    // as our schur complement approximation, though we should
-    // explore better approaches later.
-
     // we store both "sub operators" in a 1x2 array:
 
   RCP<const Thyra::LinearOpBase<double> > sub_op[2];
 
-    // each implicit "inverse" is based on an inner krylov solver,
-    // with their own sub-preconditioners.  this leads to a very
-    // accurate approximation of the inverse operator, but can be
-    // overly expensive.  the other option is to ditch the inner
-    // krylov solver, and just use the sub-preconditioners directly.
-
-    // the implicit inverse for each diagonal block is built in
-    // three steps
-    //   1.  define solver parameters
-    //   2.  build a solver factory
-    //   3.  build the inner solver operator
-
+  clock.start(true);
+  GEOSX_MARK_BEGIN(PRECONDITIONER);
 
   for(unsigned i=0; i<2; ++i) // loop over diagonal blocks
   {
-    RCP<Teuchos::ParameterList> list = rcp(new Teuchos::ParameterList("solver_list"),true);
+    RCP<Teuchos::ParameterList> list = rcp(new Teuchos::ParameterList("precond_list"),true);
 
-      list->set("Linear Solver Type","AztecOO");
-      list->sublist("Linear Solver Types").sublist("AztecOO").sublist("Forward Solve").set("Max Iterations",params->m_maxIters);
-      list->sublist("Linear Solver Types").sublist("AztecOO").sublist("Forward Solve").set("Tolerance",1e-1*params->m_krylovTol);
-      if(use_bicgstab)
-        list->sublist("Linear Solver Types").sublist("AztecOO").sublist("Forward Solve").sublist("AztecOO Settings").set("Aztec Solver","BiCGStab");
-      else
-        list->sublist("Linear Solver Types").sublist("AztecOO").sublist("Forward Solve").sublist("AztecOO Settings").set("Aztec Solver","GMRES");
-      list->sublist("Linear Solver Types").sublist("AztecOO").sublist("Forward Solve").sublist("AztecOO Settings").set("Output Frequency",0);//int(params->m_verbose));
+    if(params->m_useMLPrecond)
+    {
+      list->set("Preconditioner Type","ML");
+      list->sublist("Preconditioner Types").sublist("ML").set("Base Method Defaults","SA");
+      list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("PDE equations",(i==0?3:1));
+      list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("ML output", 0);
+      list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("aggregation: type","Uncoupled");
+      list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("aggregation: threshold",1e-3);
 
-      if(params->m_useMLPrecond && i==0 )
+      if(i==0) // smoother for mechanics block
       {
-        if( params->getLogLevel() >=2 )
-        {
-          std::cout<< "SolverBase :: Using ML preconditioner for block " << i << i <<std::endl;
-        }
-
-        list->set("Preconditioner Type","ML");
-        list->sublist("Preconditioner Types").sublist("ML").set("Base Method Defaults","SA");
-        list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("PDE equations",(i==0?3:1));
-        list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("smoother: type","block Gauss-Seidel");
-        //list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("smoother: type","Gauss-Seidel");
-        //list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("smoother: type","Chebyshev");
-        list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("ML output", 0);
-        list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("aggregation: type","Uncoupled");
+        list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("smoother: type","Chebyshev");
         list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("smoother: sweeps",3);
-
-#if AGGREGATION==1
-          list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("x-coordinates",x_coord.data());
-          list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("y-coordinates",y_coord.data());
-          list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("z-coordinates",z_coord.data());
-          list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("null space: type",(i==0?"elasticity from coordinates":"default vectors"));
-#endif
-
+        list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("coarse: type","Chebyshev");
+        list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("coarse: sweeps",3);
       }
-      else
+      else // smoother for flow block
       {
-        if( params->getLogLevel() >=2 )
-        {
-          std::cout<< "SolverBase :: Using ILU preconditioner for block " << i << i <<std::endl;
-        }
-
-        list->set("Preconditioner Type","Ifpack");
-        list->sublist("Preconditioner Types").sublist("Ifpack").set("Prec Type","ILU");
+        list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("smoother: type","Chebyshev");
+        list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("smoother: sweeps",3);
       }
+
+    }
+    else // use ILU for both blocks
+    {
+      list->set("Preconditioner Type","Ifpack");
+      list->sublist("Preconditioner Types").sublist("Ifpack").set("Prec Type","ILU");
+    }
 
     Stratimikos::DefaultLinearSolverBuilder builder;
+    builder.setParameterList(list);
 
-      builder.setParameterList(list);
+    RCP<const Thyra::PreconditionerFactoryBase<double> > strategy = createPreconditioningStrategy(builder);
+    RCP<Thyra::PreconditionerBase<double> > tmp;
 
-    if(use_inner_solver)
-    {
-      RCP<const Thyra::LinearOpWithSolveFactoryBase<double> > strategy = createLinearSolveStrategy(builder);
-
-      //if(i==0)
-        sub_op[i] = Thyra::inverse(*strategy,matrix_block[i][i]);
-      //else
-      //{
-      //  RCP<const Thyra::LinearOpBase<double> > BAinvBt = Thyra::multiply(matrix_block[0][1],sub_op[0],matrix_block[1][0]);
-      //  RCP<const Thyra::LinearOpBase<double> > schur = Thyra::add(matrix_block[1][1],Thyra::scale(-1.0,BAinvBt));
-      //  sub_op[i] = Thyra::inverse(*strategy,schur);
-      //}
-    }
+    if(i==0)
+      tmp = prec(*strategy,blockDiagOp);
     else
-    {
-      RCP<const Thyra::PreconditionerFactoryBase<double> > strategy = createPreconditioningStrategy(builder);
-      RCP<Thyra::PreconditionerBase<double> > tmp;
+      tmp = prec(*strategy,schurOp);
+      //tmp = prec(*strategy,matrix_block[i][i]);
 
-      //if(i==0)
-        tmp = prec(*strategy,matrix_block[i][i]);
-      //else
-      //  tmp = prec(*strategy,SchurEstimate);
-
-     sub_op[i] = tmp->getUnspecifiedPrecOp();
-    }
+    sub_op[i] = tmp->getUnspecifiedPrecOp();
   }
-
+ 
 
     // create zero operators for off diagonal blocks
 
@@ -1684,47 +1641,42 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
 
     RCP<const Thyra::LinearOpBase<double> > Linv,Dinv,Uinv,Eye;
 
-    //Eye = Thyra::block2x2(eye_00,zero_01,zero_10,eye_11);
-    //Linv = Thyra::block2x2(eye_00,zero_01,mB2Ainv,eye_11);
+    Linv = Thyra::block2x2(eye_00,zero_01,mB2Ainv,eye_11);
     Dinv = Thyra::block2x2(sub_op[0],zero_01,zero_10,sub_op[1]);
     Uinv = Thyra::block2x2(eye_00,mAinvB1,zero_10,eye_11);
 
-    //preconditioner = Eye;
-    //preconditioner = Dinv;
-    preconditioner = Thyra::multiply(Uinv,Dinv);
+    //preconditioner = Thyra::multiply(Uinv,Dinv);
     //preconditioner = Thyra::multiply(Dinv,Linv);
-    //preconditioner = Thyra::multiply(Uinv,Dinv,Linv);
+    preconditioner = Thyra::multiply(Uinv,Dinv,Linv);
   }
 
+  GEOSX_MARK_END(PRECONDITIONER);
+  double setupTime = clock.stop();
 
     // define solver strategy for blocked system. this is
     // similar but slightly different from the sub operator
     // construction, since now we have a user defined preconditioner
 
   {
-    RCP<Teuchos::ParameterList> list = rcp(new Teuchos::ParameterList("list"),true);
-
+    RCP<Teuchos::ParameterList> list = rcp(new Teuchos::ParameterList("list"));
+    
       list->set("Linear Solver Type","AztecOO");
+      list->set("Preconditioner Type","None"); // will use user-defined P
       list->sublist("Linear Solver Types").sublist("AztecOO").sublist("Forward Solve").set("Max Iterations",params->m_maxIters);
       list->sublist("Linear Solver Types").sublist("AztecOO").sublist("Forward Solve").set("Tolerance",params->m_krylovTol);
+
       if(use_bicgstab)
         list->sublist("Linear Solver Types").sublist("AztecOO").sublist("Forward Solve").sublist("AztecOO Settings").set("Aztec Solver","BiCGStab");
       else
         list->sublist("Linear Solver Types").sublist("AztecOO").sublist("Forward Solve").sublist("AztecOO Settings").set("Aztec Solver","GMRES");
 
-      if( params->getLogLevel() >=3 )
+      if( params->getLogLevel()>=2 )
         list->sublist("Linear Solver Types").sublist("AztecOO").sublist("Forward Solve").sublist("AztecOO Settings").set("Output Frequency",1);
-      else
-        list->sublist("Linear Solver Types").sublist("AztecOO").sublist("Forward Solve").sublist("AztecOO Settings").set("Output Frequency",0);
-
-      list->set("Preconditioner Type","None"); // will use user-defined P
 
     Stratimikos::DefaultLinearSolverBuilder builder;
-
-      builder.setParameterList(list);
+    builder.setParameterList(list);
 
     RCP<const Thyra::LinearOpWithSolveFactoryBase<double> > strategy = createLinearSolveStrategy(builder);
-
     RCP<Thyra::LinearOpWithSolveBase<double> > solver = strategy->createOp();
 
     Thyra::initializePreconditionedOp<double>(*strategy,
@@ -1732,79 +1684,62 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
                                                Thyra::rightPrec<double>(preconditioner),
                                                solver.ptr());
 
+    clock.start(true);
+    GEOSX_MARK_BEGIN(SOLVER);
 
-        // JAW: check "true" residual before solve.
-        //      should remove after debugging because this is potentially slow
-        //      and should just use iterative residual
+      // !!!! Actual Solve !!!!
+      Thyra::SolveStatus<double> status = solver->solve(Thyra::NOTRANS,*rhs,lhs.ptr());
 
-    RCP<Thyra::VectorBase<double> > Ax = Thyra::createMember(matrix->range());
-    RCP<Thyra::VectorBase<double> > r  = Thyra::createMember(matrix->range());
-    {
-      Thyra::apply(*matrix, Thyra::NOTRANS,*lhs,Ax.ptr());
-      Thyra::V_VmV<double>(r.ptr(),*rhs,*Ax);
-      params->m_KrylovResidualInit = Thyra::norm(*r);
-    }
-
-    // !!!! Actual Solve !!!!
-
-    Thyra::SolveStatus<double> status = solver->solve(Thyra::NOTRANS,*rhs,lhs.ptr());
+    GEOSX_MARK_END(SOLVER);
+    double solveTime = clock.stop();
     params->m_numKrylovIter = status.extraParameters->get<int>("Iteration Count");
 
-        // JAW: check "true" residual after
-        //      should remove after debugging because this is potentially slow
-
+    if( getLogLevel()>=2 )
     {
-      Thyra::apply(*matrix, Thyra::NOTRANS,*lhs,Ax.ptr());
-      Thyra::V_VmV<double>(r.ptr(),*rhs,*Ax);
-      params->m_KrylovResidualFinal = Thyra::norm(*r);
+      GEOSX_LOG_RANK_0("\t\tLinear Solver | Iter = " << params->m_numKrylovIter <<
+                      " | TargetReduction " << params->m_krylovTol <<
+                      " | AuxTime " << auxTime <<
+                      " | SetupTime " << setupTime <<
+                      " | SolveTime " << solveTime );
     }
 
-    // write a solver profile file
-
-    if( params->getLogLevel() >= 3 )
-    {
-      FILE* fp = fopen("solver_profile.txt","a");
-      fprintf(fp,"%d %.9e %.9e\n", params->m_numKrylovIter, params->m_KrylovResidualInit, params->m_KrylovResidualFinal);
-      fclose(fp);
-    }
-
-    // apply column scaling C to get true solution x from x' = Cinv*x
-
-    if(use_scaling==2)
-    {
-      for(unsigned b=0; b<n_blocks; ++b)
-        p_solution[b]->Multiply(1.0,*scaling[b][COL],*p_solution[b],0.0);
-    }
+    p_solution[1]->Scale(m_pressureScaling);
+    p_rhs[1]->Scale(1/(m_pressureScaling*m_densityScaling));
   }
 
-    // put 00 matrix back to unscaled form
+  delete schurApproxPP;
 
-  if(use_scaling==2)
-  {
-    scaling[0][ROW]->Reciprocal(*scaling[0][ROW]);
-    scaling[0][COL]->Reciprocal(*scaling[0][COL]);
-
-    p_matrix[0][0]->LeftScale(*scaling[0][ROW]);
-    p_matrix[0][0]->RightScale(*scaling[0][COL]);
-  }
-
+  //TODO: remove all this once everything is working
   if( getLogLevel() == 2 )
   {
+    /*
+    ParallelVector permutedSol;
+    ParallelVector const & solution = m_solidSolver->getSystemSolution();
+    permutedSol.createWithLocalSize(m_solidSolver->getSystemMatrix().localRows(), MPI_COMM_GEOSX);
+    m_permutationMatrix0.multiply(solution, permutedSol);
+    permutedSol.close();
+    */
+
+    /*
+    GEOSX_LOG_RANK_0("***********************************************************");
+    GEOSX_LOG_RANK_0("solution0");
+    GEOSX_LOG_RANK_0("***********************************************************");
+    solution.print(std::cout);
+    std::cout<<std::endl;
+    MPI_Barrier(MPI_COMM_GEOSX);
 
     GEOSX_LOG_RANK_0("***********************************************************");
     GEOSX_LOG_RANK_0("solution0");
     GEOSX_LOG_RANK_0("***********************************************************");
-    p_solution[0]->Print(std::cout);
-    MpiWrapper::Barrier();
-
+    permutedSol.print(std::cout);
+*/
     GEOSX_LOG_RANK_0("***********************************************************");
     GEOSX_LOG_RANK_0("solution1");
     GEOSX_LOG_RANK_0("***********************************************************");
     p_solution[1]->Print(std::cout);
-    MpiWrapper::Barrier();
+
   }
 }
-
 
 real64
 HydrofractureSolver::ScalingForSystemSolution( DomainPartition const * const domain,
@@ -1814,6 +1749,27 @@ HydrofractureSolver::ScalingForSystemSolution( DomainPartition const * const dom
   return m_solidSolver->ScalingForSystemSolution( domain,
                                                   m_solidSolver->getDofManager(),
                                                   m_solidSolver->getSystemSolution() );
+}
+
+void HydrofractureSolver::SetNextDt( real64 const & currentDt ,
+                                     real64 & nextDt )
+{
+
+  if (m_numResolves[0] == 0 && m_numResolves[1] == 0)
+  {
+    this->SetNextDtBasedOnNewtonIter(currentDt, nextDt);
+  }
+  else
+  {
+    SolverBase * const surfaceGenerator =  this->getParent()->GetGroup<SolverBase>("SurfaceGen");
+    nextDt = surfaceGenerator->GetTimestepRequest() < 1e99 ? surfaceGenerator->GetTimestepRequest() : currentDt;
+  }
+  GEOSX_LOG_LEVEL_RANK_0( 3, this->getName() << ": nextDt request is "  << nextDt);
+}
+
+void HydrofractureSolver::initializeNewFaceElements( DomainPartition const &  )
+{
+//  m_flowSolver->
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, HydrofractureSolver, std::string const &, Group * const )

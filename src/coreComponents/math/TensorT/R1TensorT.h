@@ -21,6 +21,7 @@
 #define R1_TENSOR_T_H_
 
 #include "TensorBaseT.h"
+#include "cxx-utilities/src/ArraySlice.hpp"
 
 #include <cstdlib>
 
@@ -39,23 +40,6 @@ template<int T_dim> class R2TensorT;
 template<int T_dim>
 class R1TensorT : public TensorBaseT< T_dim >
 {
-
-//**** Overloaded arithmetic operators
-//  ******************************************
-
-//// Scalar product
-//  friend R1TensorT<T_dim> operator*(realT k, const R1TensorT<T_dim> &V){
-// return V*k; }
-//  friend R1TensorT<T_dim> operator*(R1TensorT<T_dim> V, realT k){return V*=k;
-// }
-//// Dot product *
-//  friend realT operator*(const R1TensorT<T_dim> &Va, const R1TensorT<T_dim>
-// &Vb){return Dot(Va,Vb); }
-//
-//// Division by scalar
-//  friend R1TensorT<T_dim> operator/(R1TensorT<T_dim> V, realT k){return V/=k;
-// }
-
 
 public:
   //**** CONSTRUCTORS AND DESTRUCTORS ******************************************
@@ -79,13 +63,18 @@ public:
    */
   explicit R1TensorT( const int data ): TensorBaseT< T_dim >( realT(data) ) {}
 
+  template< int USD >
+  R1TensorT( LvArray::ArraySlice< realT const, 1, USD > const & src ):
+    TensorBaseT< T_dim > ()
+  { *this = src; }
+
   //**** CONSTRUCTORS AND DESTRUCTORS
   // *******************************************
 
   /**
    * @param[in] rhs reference to R1TensorT object to use in initialization
    */
-  R1TensorT( const R1TensorT< T_dim >& rhs ) = default;
+  R1TensorT( const R1TensorT & rhs ) = default;
 
   /**
    * Explicit constructors - will throw compile-time errors if not called with
@@ -96,14 +85,68 @@ public:
 
   //***** ASSIGNMENT OPERATORS *************************************************
   /// assignment of all data to an integer
-  R1TensorT< T_dim >& operator=( const int& rhs );
+  R1TensorT & operator=( const int & rhs );
 
   /// assignment to all data to a realT
   GEOSX_HOST_DEVICE
-  R1TensorT< T_dim >& operator=( const realT& rhs );
+  R1TensorT & operator=( const realT & rhs );
 
   /// assignment to another R1TensorT
-  R1TensorT< T_dim >& operator=( const R1TensorT< T_dim >& rhs ) = default;
+  R1TensorT & operator=( const R1TensorT & rhs ) = default;
+
+
+  template< int USD >
+  GEOSX_HOST_DEVICE constexpr inline
+  R1TensorT & operator=( LvArray::ArraySlice< realT const, 1, USD > const & src )
+  {
+    GEOSX_ASSERT_EQ( src.size(), T_dim );
+
+    for ( int i = 0; i < T_dim; ++i )
+    {
+      this->t_data[ i ] = src[ i ];
+    }
+
+    return *this;
+  }
+
+  using TensorBaseT< T_dim >::operator+=;
+
+  template< int USD >
+  GEOSX_HOST_DEVICE constexpr inline
+  R1TensorT & operator+=( LvArray::ArraySlice< realT const, 1, USD > const & src )
+  {
+    GEOSX_ASSERT_EQ( src.size(), T_dim );
+
+    for ( int i = 0; i < T_dim; ++i )
+    {
+      this->t_data[ i ] += src[ i ];
+    }
+
+    return *this;
+  }
+
+  template< int USD >
+  GEOSX_HOST_DEVICE constexpr inline
+  R1TensorT & operator+=( LvArray::ArraySlice< realT, 1, USD > const & src )
+  {
+    return (*this) += reinterpret_cast< LvArray::ArraySlice< realT const, 1, USD > const & >( src );
+  }
+
+  using TensorBaseT< T_dim >::operator-=;
+
+  template< int USD >
+  GEOSX_HOST_DEVICE constexpr inline
+  R1TensorT & operator-=( LvArray::ArraySlice< realT const, 1, USD > const & src )
+  {
+    GEOSX_ASSERT_EQ( src.size(), T_dim );
+
+    for ( int i = 0; i < T_dim; ++i )
+    {
+      this->t_data[ i ] -= src[ i ];
+    }
+
+    return *this;
+  }
 
   //***** ACCESS OPERATORS ****************************************************
   /// const access to data
