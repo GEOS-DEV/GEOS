@@ -33,7 +33,7 @@ namespace geosx
 
 struct TrilinosInterface
 {
-  static void initialize( int & GEOSX_UNUSED_ARG( argc ), char ** & GEOSX_UNUSED_ARG( argv ) ) {}
+  static void initialize( int & GEOSX_UNUSED_PARAM( argc ), char ** & GEOSX_UNUSED_PARAM( argv ) ) {}
 
   static void finalize() {}
 

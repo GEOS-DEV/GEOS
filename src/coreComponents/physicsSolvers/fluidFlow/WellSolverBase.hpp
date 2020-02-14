@@ -163,9 +163,9 @@ public:
                                   ParallelVector & rhs,
                                   ParallelVector & solution ) override;
 
-  virtual void ImplicitStepComplete( real64 const & GEOSX_UNUSED_ARG( time ),
-                                     real64 const & GEOSX_UNUSED_ARG( dt ),
-                                     DomainPartition * const GEOSX_UNUSED_ARG( domain ) ) override {}
+  virtual void ImplicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time ),
+                                     real64 const & GEOSX_UNUSED_PARAM( dt ),
+                                     DomainPartition * const GEOSX_UNUSED_PARAM( domain ) ) override {}
 
 
   /**@}*/
