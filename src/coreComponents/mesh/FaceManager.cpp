@@ -243,7 +243,7 @@ localIndex calculateTotalNumberOfFaces( ArrayOfArraysView< FaceBuilder const > c
   forall_in_range< parallelHostPolicy >( 0, numNodes, [&]( localIndex const nodeID )
   {
     localIndex const numFaces = facesByLowestNode.sizeOfArray( nodeID );
-    
+
     // If there are no faces associated with this node we can skip it.
     if ( numFaces == 0 ) return;
 
