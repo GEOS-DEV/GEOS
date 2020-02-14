@@ -124,9 +124,9 @@ void PeriodicEvent::EstimateEventTiming(real64 const time,
 
 
 void PeriodicEvent::CheckOptionalFunctionThreshold(real64 const time,
-                                                   real64 const GEOSX_UNUSED_ARG( dt ), 
-                                                   integer const GEOSX_UNUSED_ARG( cycle ),
-                                                   Group * GEOSX_UNUSED_ARG( domain ))
+                                                   real64 const GEOSX_UNUSED_PARAM( dt ), 
+                                                   integer const GEOSX_UNUSED_PARAM( cycle ),
+                                                   Group * GEOSX_UNUSED_PARAM( domain ))
 {
   // Grab the function
   FunctionManager & functionManager = FunctionManager::Instance();

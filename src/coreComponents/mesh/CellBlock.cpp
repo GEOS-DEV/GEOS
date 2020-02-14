@@ -45,7 +45,7 @@ CellBlock::CellBlock( string const & name, Group * const parent ):
 CellBlock::~CellBlock()
 {}
 
-localIndex CellBlock::GetNumFaceNodes( localIndex const GEOSX_UNUSED_ARG( elementIndex ),
+localIndex CellBlock::GetNumFaceNodes( localIndex const GEOSX_UNUSED_PARAM( elementIndex ),
                                        localIndex const localFaceIndex ) const
 {
   if (!m_elementTypeString.compare(0, 4, "C3D8")) return 4;
@@ -304,7 +304,7 @@ void CellBlock::setupRelatedObjectsInRelations( MeshLevel const * const mesh )
 }
 
 void CellBlock::CalculateElementGeometricQuantities( NodeManager const & nodeManager,
-                                                     FaceManager const & GEOSX_UNUSED_ARG( facemanager ) )
+                                                     FaceManager const & GEOSX_UNUSED_PARAM( facemanager ) )
 {
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
 

@@ -103,7 +103,7 @@ void FenghourCO2ViscosityFunction::MakeTable(string_array const & inputPara)
 
 }
 
-  void FenghourCO2ViscosityFunction::Evaluation(EvalVarArgs const & pressure, EvalVarArgs const & temperature, arraySlice1d<EvalVarArgs const> const & GEOSX_UNUSED_ARG( phaseComposition ), EvalVarArgs & value, bool GEOSX_UNUSED_ARG( useMass )) const
+  void FenghourCO2ViscosityFunction::Evaluation(EvalVarArgs const & pressure, EvalVarArgs const & temperature, arraySlice1d<EvalVarArgs const> const & GEOSX_UNUSED_PARAM( phaseComposition ), EvalVarArgs & value, bool GEOSX_UNUSED_PARAM( useMass )) const
 {
   EvalArgs2D P, T, viscosity;
   P.m_var = pressure.m_var;

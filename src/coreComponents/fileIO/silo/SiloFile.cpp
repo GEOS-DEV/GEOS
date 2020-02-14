@@ -1477,7 +1477,7 @@ void SiloFile::WriteElementRegionSilo( ElementRegionBase const * elemRegion,
 
         rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID(typeID),
                                         false,
-                                        [&]( auto array, auto GEOSX_UNUSED_ARG( Type ) )->void
+                                        [&]( auto array, auto GEOSX_UNUSED_PARAM( Type ) )->void
         {
           typedef decltype(array) arrayType;
           Wrapper<arrayType> const &
@@ -1504,7 +1504,7 @@ void SiloFile::WriteElementRegionSilo( ElementRegionBase const * elemRegion,
 
     rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID(typeID),
                                     false,
-                                    [&]( auto array, auto GEOSX_UNUSED_ARG( scalar ) )->void
+                                    [&]( auto array, auto GEOSX_UNUSED_PARAM( scalar ) )->void
     {
       typedef decltype(array) arrayType;
       Wrapper<arrayType> & wrapperT = Wrapper<arrayType>::cast( *wrapper );
@@ -2162,9 +2162,9 @@ void SiloFile::WriteWrappersToSilo( string const & meshname,
                                     int const centering,
                                     int const cycleNum,
                                     real64 const problemTime,
-                                    bool const GEOSX_UNUSED_ARG( isRestart ),
+                                    bool const GEOSX_UNUSED_PARAM( isRestart ),
                                     string const & multiRoot,
-                                    const localIndex_array& GEOSX_UNUSED_ARG( mask ) )
+                                    const localIndex_array& GEOSX_UNUSED_PARAM( mask ) )
 {
 
   // iterate over all entries in the member map

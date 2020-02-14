@@ -394,11 +394,11 @@ void LinearElasticAnisotropic::StateUpdatePoint( localIndex const k,
                                                  localIndex const q,
                                                  R2SymTensor const & D,
                                                  R2Tensor const & Rot,
-                                                 integer const GEOSX_UNUSED_ARG( updateStiffnessFlag ) )
+                                                 integer const GEOSX_UNUSED_PARAM( updateStiffnessFlag ) )
 {
   R2SymTensor T;
-  real64 * const restrict Tdata = T.Data();
-  real64 const * const restrict Ddata = D.Data();
+  real64 * const GEOSX_RESTRICT Tdata = T.Data();
+  real64 const * const GEOSX_RESTRICT Ddata = D.Data();
 //  real64 const (&c)[6][6] = m_stiffness[k].m_data;
 
   Tdata[0] += m_c00[k]*Ddata[0] + m_c01[k]*Ddata[2] + m_c02[k]*Ddata[5] + m_c03[k]*(2*Ddata[4]) + m_c04[k]*(2*Ddata[3]) + m_c05[k]*(2*Ddata[1]);

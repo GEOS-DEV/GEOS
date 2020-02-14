@@ -10,7 +10,7 @@ template< bool DO_PACKING, typename T >
 GEOSX_HOST_DEVICE
 localIndex
 PackPointerDevice( buffer_unit_type * & buffer,
-                   T const * const restrict var,
+                   T const * const GEOSX_RESTRICT var,
                    localIndex const length )
 {
   localIndex const sizeOfPackedChars = sizeof( localIndex ) + length * sizeof( T );
@@ -31,7 +31,7 @@ template< typename T >
 GEOSX_HOST_DEVICE
 localIndex
 UnpackPointerDevice( buffer_unit_type const * & buffer,
-                     T * const restrict var,
+                     T * const GEOSX_RESTRICT var,
                      localIndex const expectedLength )
 {
   localIndex length = 0;
