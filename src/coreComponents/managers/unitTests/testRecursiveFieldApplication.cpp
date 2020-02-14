@@ -164,7 +164,7 @@ TEST(FieldSpecification, Recursive)
   auto field2 = elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( "field2" );
   auto field3 = elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( "field3" );
   elemManager->forElementSubRegionsComplete( [&] ( localIndex er, localIndex esr,
-                                                   ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
+                                                   ElementRegionBase * const GEOSX_UNUSED_PARAM( region ),
                                                    ElementSubRegionBase const * const subRegion )
   {
     forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )

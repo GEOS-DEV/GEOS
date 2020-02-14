@@ -63,10 +63,10 @@ VTKOutput::~VTKOutput()
 
 
 void VTKOutput::Execute(real64 const time_n,
-                         real64 const GEOSX_UNUSED_ARG( dt ),
-                         integer const GEOSX_UNUSED_ARG( cycleNumber ),
-                         integer const GEOSX_UNUSED_ARG( eventCounter ),
-                         real64 const GEOSX_UNUSED_ARG( eventProgress ),
+                         real64 const GEOSX_UNUSED_PARAM( dt ),
+                         integer const GEOSX_UNUSED_PARAM( cycleNumber ),
+                         integer const GEOSX_UNUSED_PARAM( eventCounter ),
+                         real64 const GEOSX_UNUSED_PARAM( eventProgress ),
                          Group * domain)
 {
   DomainPartition* domainPartition = Group::group_cast<DomainPartition*>(domain);

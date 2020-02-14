@@ -47,7 +47,7 @@ struct StressCalculationKernel
           localIndex const numElems,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
           arrayView3d< R1Tensor const > const & dNdX,
-          arrayView2d< real64 const > const & GEOSX_UNUSED_ARG( detJ ),
+          arrayView2d< real64 const > const & GEOSX_UNUSED_PARAM( detJ ),
           arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const & uhat )
   {
     GEOSX_MARK_FUNCTION;
@@ -128,7 +128,7 @@ struct ExplicitKernel
           arrayView2d<localIndex const, cells::NODE_MAP_USD> const & elemsToNodes,
           arrayView3d<R1Tensor const> const & dNdX,
           arrayView2d<real64 const> const & detJ,
-          arrayView2d<real64 const, nodes::TOTAL_DISPLACEMENT_USD> const & GEOSX_UNUSED_ARG( u ),
+          arrayView2d<real64 const, nodes::TOTAL_DISPLACEMENT_USD> const & GEOSX_UNUSED_PARAM( u ),
           arrayView2d<real64 const, nodes::VELOCITY_USD> const & vel,
           arrayView2d<real64, nodes::ACCELERATION_USD> const & acc,
           arrayView3d<real64, solid::STRESS_USD> const & stress,
@@ -274,7 +274,7 @@ struct ImplicitKernel
           real64 const newmarkBeta,
           real64 const newmarkGamma,
           R1Tensor const & gravityVector,
-          DofManager const * const GEOSX_UNUSED_ARG( dofManager ),
+          DofManager const * const GEOSX_UNUSED_PARAM( dofManager ),
           ParallelMatrix * const matrix,
           ParallelVector * const rhs )
   {

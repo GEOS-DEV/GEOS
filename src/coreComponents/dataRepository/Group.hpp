@@ -513,11 +513,11 @@ public:
 
   /** @cond DO_NOT_DOCUMENT */
   template< typename CONTAINERTYPE, typename LAMBDA >
-  static bool applyLambdaToContainer( CONTAINERTYPE const * const GEOSX_UNUSED_ARG( group ), LAMBDA && GEOSX_UNUSED_ARG( lambda ) )
+  static bool applyLambdaToContainer( CONTAINERTYPE const * const GEOSX_UNUSED_PARAM( group ), LAMBDA && GEOSX_UNUSED_PARAM( lambda ) )
   { return false; }
 
   template< typename CONTAINERTYPE, typename LAMBDA >
-  static bool applyLambdaToContainer( CONTAINERTYPE * const GEOSX_UNUSED_ARG( group ), LAMBDA && GEOSX_UNUSED_ARG( lambda ) )
+  static bool applyLambdaToContainer( CONTAINERTYPE * const GEOSX_UNUSED_PARAM( group ), LAMBDA && GEOSX_UNUSED_PARAM( lambda ) )
   { return false; }
   /** @endcond */
 

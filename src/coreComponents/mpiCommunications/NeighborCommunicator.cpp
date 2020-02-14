@@ -178,7 +178,7 @@ void NeighborCommunicator::MPI_iSendReceive( buffer_unit_type const * const send
                     mpiComm );
 }
 
-void NeighborCommunicator::MPI_WaitAll( int const GEOSX_UNUSED_ARG( commID ),
+void NeighborCommunicator::MPI_WaitAll( int const GEOSX_UNUSED_PARAM( commID ),
                                         MPI_Request & mpiSendRequest,
                                         MPI_Status & mpiSendStatus,
                                         MPI_Request & mpiRecvRequest,
@@ -368,7 +368,7 @@ inline int PackGhosts( buffer_unit_type * sendBufferPtr,
   return packedSize;
 }
 
-void NeighborCommunicator::PrepareAndSendGhosts( bool const GEOSX_UNUSED_ARG( contactActive ),
+void NeighborCommunicator::PrepareAndSendGhosts( bool const GEOSX_UNUSED_PARAM( contactActive ),
                                                  integer const depth,
                                                  MeshLevel * const mesh,
                                                  int const commID )
