@@ -94,7 +94,7 @@ private:
   integer_array m_nElems[3];
   array1d<real64> m_nElemScaling[3];
 
-  bool m_useBias = false;
+  //bool m_useBias = false;
   array1d<real64> m_nElemBias[3];
 
   string_array m_regionNames;
@@ -199,16 +199,21 @@ private:
 
       X[i] = min + (max-min) * ( double( a[i] - startingIndex ) / m_nElems[i][block] );
 
-      if ( m_useBias && ( !isZero(m_nElemBias[i][block]) ) & (m_nElems[i][block]>1))
-      {
-        GEOSX_ERROR_IF(fabs(m_nElemBias[i][block]) >= 1, "Mesh bias must between -1 and 1!");
+      // First check if m_nElemBias contains values
+      // Otherwise the next test will cause a segfault when looking for "block"
+      if(m_nElemBias[i].size()>0){
+        // Verify that the bias is non-zero and applied to more than one block:
+        if ( ( !isZero(m_nElemBias[i][block]) ) && (m_nElems[i][block]>1))
+        {
+          GEOSX_ERROR_IF(fabs(m_nElemBias[i][block]) >= 1, "Mesh bias must between -1 and 1!");
 
-        realT len = max -  min;
-        realT xmean = len / m_nElems[i][block];
-        realT x0 = xmean * double( a[i] - startingIndex );
-        realT chi = m_nElemBias[i][block]/(xmean/len - 1.0);
-        realT dx = -x0*chi + x0*x0*chi/len;
-        X[i] += dx;
+          realT len = max -  min;
+          realT xmean = len / m_nElems[i][block];
+          realT x0 = xmean * double( a[i] - startingIndex );
+          realT chi = m_nElemBias[i][block]/(xmean/len - 1.0);
+          realT dx = -x0*chi + x0*x0*chi/len;
+          X[i] += dx;
+        }
       }
 
       // This is for creating regular triangle pattern
