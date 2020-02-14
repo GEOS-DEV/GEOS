@@ -239,10 +239,11 @@ void TrilinosSolver::solve_krylov( EpetraMatrix & mat,
     //list.set("null space: vectors",&rigid_body_modes[0]);
     //list.set("null space: dimension", n_rbm);
 
+    //TODO: templatization for LAIHelperFunctions needed
     if(m_parameters.amg.separateComponents) // apply separate displacement component filter
     {
       scratch.reset(new EpetraMatrix());
-      LAIHelperFunctions::SeparateComponentFilter(mat,*scratch,m_parameters.dofsPerNode);
+      LAIHelperFunctions::SeparateComponentFilter<TrilinosInterface>(mat,*scratch,m_parameters.dofsPerNode);
       ml_preconditioner.reset( new ML_Epetra::MultiLevelPreconditioner( *scratch->unwrappedPointer(), list ));
     }
     else // just use original matrix to construct amg operator
