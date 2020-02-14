@@ -858,7 +858,7 @@ unsigned int EdgeManager::UnpackEdges( const char*& buffer,
 
 void EdgeManager::ConnectivityFromGlobalToLocal( const set<localIndex>& indices,
                                                  const map<globalIndex,localIndex>& nodeGlobalToLocal,
-                                                 const map<globalIndex,localIndex>& GEOSX_UNUSED_ARG( faceGlobalToLocal ) )
+                                                 const map<globalIndex,localIndex>& GEOSX_UNUSED_PARAM( faceGlobalToLocal ) )
 {
 
 
@@ -1019,7 +1019,7 @@ localIndex EdgeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
 localIndex EdgeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                           localIndex_array & packList,
                                           bool const overwriteUpMaps,
-                                          bool const GEOSX_UNUSED_ARG( overwriteDownMaps ) )
+                                          bool const GEOSX_UNUSED_PARAM( overwriteDownMaps ) )
 {
   localIndex unPackedSize = 0;
 

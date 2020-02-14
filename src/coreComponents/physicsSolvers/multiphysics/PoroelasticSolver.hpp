@@ -25,6 +25,10 @@
 namespace geosx
 {
 
+
+class SolidMechanicsLagrangianFEM;
+class FlowSolverBase;
+
 class PoroelasticSolver : public SolverBase
 {
 public:
@@ -91,6 +95,12 @@ public:
     constexpr static auto fluidSolverNameString = "fluidSolverName";
   } poroElasticSolverViewKeys;
 
+
+  SolidMechanicsLagrangianFEM * getSolidSolver()             { return this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolidMechanicsLagrangianFEM *>(); }
+  SolidMechanicsLagrangianFEM const * getSolidSolver() const { return this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolidMechanicsLagrangianFEM const *>(); }
+
+  FlowSolverBase * getFlowSolver()             { return this->getParent()->GetGroup(m_flowSolverName)->group_cast<FlowSolverBase *>(); }
+  FlowSolverBase const * getFlowSolver() const { return this->getParent()->GetGroup(m_flowSolverName)->group_cast<FlowSolverBase const *>(); }
 
 protected:
   virtual void PostProcessInput() override final;

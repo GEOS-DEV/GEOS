@@ -43,7 +43,7 @@ ElementRegionManager::~ElementRegionManager()
 localIndex ElementRegionManager::numCellBlocks() const
 {
   localIndex numCellBlocks = 0;
-  this->forElementSubRegions([&]( Group const * GEOSX_UNUSED_ARG( cellBlock ) )
+  this->forElementSubRegions([&]( Group const * GEOSX_UNUSED_PARAM( cellBlock ) )
     {
     numCellBlocks += 1;
   });
@@ -52,7 +52,7 @@ localIndex ElementRegionManager::numCellBlocks() const
 
 void ElementRegionManager::resize( integer_array const & numElements,
                                    string_array const & regionNames,
-                                   string_array const & GEOSX_UNUSED_ARG( elementTypes ) )
+                                   string_array const & GEOSX_UNUSED_PARAM( elementTypes ) )
 {
   localIndex const n_regions = integer_conversion<localIndex>(regionNames.size());
 //  Group * elementRegions = this->GetGroup(keys::cellBlocks);

@@ -113,9 +113,9 @@ void DomainPartition::GenerateSets()
 
 
   ElementRegionManager * const elementRegionManager = mesh->getElemManager();
-  elementRegionManager->forElementSubRegionsComplete( [&]( localIndex const GEOSX_UNUSED_ARG( er ),
-                                                           localIndex const GEOSX_UNUSED_ARG( esr ),
-                                                           ElementRegionBase const * const GEOSX_UNUSED_ARG( region ),
+  elementRegionManager->forElementSubRegionsComplete( [&]( localIndex const GEOSX_UNUSED_PARAM( er ),
+                                                           localIndex const GEOSX_UNUSED_PARAM( esr ),
+                                                           ElementRegionBase const * const GEOSX_UNUSED_PARAM( region ),
                                                            auto * const subRegion )
   {
     dataRepository::Group * elementSets = subRegion->sets();
@@ -291,10 +291,10 @@ void DomainPartition::ReadSilo( const SiloFile& siloFile,
 }
 
 
-void DomainPartition::ReadFiniteElementMesh( const SiloFile& GEOSX_UNUSED_ARG( siloFile ),
-                                             const int GEOSX_UNUSED_ARG( cycleNum ),
-                                             const realT GEOSX_UNUSED_ARG( problemTime ),
-                                             const bool GEOSX_UNUSED_ARG( isRestart ) )
+void DomainPartition::ReadFiniteElementMesh( const SiloFile& GEOSX_UNUSED_PARAM( siloFile ),
+                                             const int GEOSX_UNUSED_PARAM( cycleNum ),
+                                             const realT GEOSX_UNUSED_PARAM( problemTime ),
+                                             const bool GEOSX_UNUSED_PARAM( isRestart ) )
 {
 
 
