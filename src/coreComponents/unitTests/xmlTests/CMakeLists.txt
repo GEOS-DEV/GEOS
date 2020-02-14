@@ -17,10 +17,6 @@ endforeach()
 
 set( dependencyList geosx_core gtest optionparser )
 
-if ( ENABLE_MPI )
-  set ( dependencyList ${dependencyList} mpi )
-endif()
-
 if( ENABLE_OPENMP )
     set( dependencyList ${dependencyList} openmp )
 endif()

@@ -94,11 +94,35 @@ blt_add_executable(NAME geosx
                               ${externalComponentsLinkList}
                   )
 
-# Removing all dependencies from geosx_core target
-set(EMPTY_LIST "")
-set_target_properties(geosx_core PROPERTIES INTERFACE_LINK_LIBRARIES "${EMPTY_LIST}")
+# Removing all third party dependencies from geosx_core target
+# Retrieving INTERFACE_LINK_LIBRARIES from geosx_core
+get_target_property(linking_list geosx_core INTERFACE_LINK_LIBRARIES)
+# Get all CMAKE variables
+get_cmake_property(_variable_names VARIABLES)
+# Loop over third party libraries
+foreach(tpl_library ${thirdPartyLibs})
+  string(TOUPPER ${tpl_library} tpl_library_upper)
+  set(_tpl_lib "BLT_${tpl_library_upper}_LIBRARIES")
+  # Filter to get variables of the form specific BLT targer
+  foreach(prop ${_variable_names})
+    if(prop MATCHES "^${_tpl_lib}")
+      # Save libraries associated to this specific third party dependency
+      set(tpl_lib_list ${${prop}})
+    endif()
+  endforeach()
+  # Remove all these items from the main interface linking list
+  foreach(_lib ${tpl_lib_list})
+    if(${_lib} IN_LIST linking_list)
+      list(REMOVE_ITEM linking_list ${_lib})
+    endif()
+  endforeach()
+endforeach()
+# Set the new list as INTERFACE_LINK_LIBRARIES variable
+set_target_properties(geosx_core PROPERTIES INTERFACE_LINK_LIBRARIES "${linking_list}")
 
 target_include_directories( geosx PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
+
+set_target_properties( geosx PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE )
 
 # To change the runtime path during installation
 set_target_properties( geosx PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib" )
