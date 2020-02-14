@@ -1030,7 +1030,7 @@ MAKE_DOFMANAGER_METHOD_INST( TrilinosInterface )
 #endif
 
 #ifdef GEOSX_USE_HYPRE
-//MAKE_DOFMANAGER_METHOD_INST( HypreInterface )
+MAKE_DOFMANAGER_METHOD_INST( HypreInterface )
 #endif
 
 #ifdef GEOSX_USE_PETSC

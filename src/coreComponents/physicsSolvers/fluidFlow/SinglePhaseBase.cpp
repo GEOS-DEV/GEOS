@@ -324,7 +324,7 @@ void SinglePhaseBase::SetupSystem( DomainPartition * const domain,
     localIndex maxRowSize = -1;
     for( localIndex row=0 ; row<matrix.localRows() ; ++row )
     {
-      localIndex const rowSize = matrix.getLocalRowGlobalLength( row );
+      localIndex const rowSize = matrix.localRowLength( row );
       maxRowSize = maxRowSize > rowSize ? maxRowSize : rowSize;
 
       derivativeFluxResidual_dAperture->reserveNonZeros( row,
