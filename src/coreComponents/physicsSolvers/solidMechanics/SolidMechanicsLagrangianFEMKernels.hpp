@@ -108,7 +108,7 @@ inline void Integrate( const R2SymTensor& fieldvar,
                        real64 const& detJ,
                        real64 const& detF,
                        const R2Tensor& fInv,
-                       R1Tensor * restrict const result )
+                       R1Tensor * GEOSX_RESTRICT const result )
 {
   real64 const integrationFactor = detJ * detF;
 

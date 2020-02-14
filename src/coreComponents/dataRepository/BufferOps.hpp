@@ -186,14 +186,14 @@ Pack( buffer_unit_type * & GEOSX_UNUSED_ARG( buffer ),
 template< bool DO_PACKING, typename T, typename INDEX_TYPE >
 typename std::enable_if< std::is_trivial< T >::value, localIndex >::type
 PackPointer( buffer_unit_type * & buffer,
-             T const * const restrict var,
+             T const * const GEOSX_RESTRICT var,
              INDEX_TYPE const length );
 
 //------------------------------------------------------------------------------
 template< bool DO_PACKING, typename T, typename INDEX_TYPE >
 typename std::enable_if< !std::is_trivial< T >::value, localIndex >::type
 PackPointer( buffer_unit_type * & buffer,
-             T const * const restrict var,
+             T const * const GEOSX_RESTRICT var,
              INDEX_TYPE const length );
 
 //------------------------------------------------------------------------------
@@ -319,14 +319,14 @@ Unpack( buffer_unit_type const * & GEOSX_UNUSED_ARG( buffer ),
 template< typename T, typename INDEX_TYPE >
 typename std::enable_if< std::is_trivial< T >::value, localIndex >::type
 UnpackPointer( buffer_unit_type const * & buffer,
-               T * const restrict var,
+               T * const GEOSX_RESTRICT var,
                INDEX_TYPE const expectedLength );
 
 //------------------------------------------------------------------------------
 template< typename T, typename INDEX_TYPE >
 typename std::enable_if< !std::is_trivial< T >::value, localIndex >::type
 UnpackPointer( buffer_unit_type const * & buffer,
-               T * const restrict var,
+               T * const GEOSX_RESTRICT var,
                INDEX_TYPE const expectedLength );
 
 //------------------------------------------------------------------------------
@@ -380,14 +380,14 @@ UnpackByIndex( buffer_unit_type const * & GEOSX_UNUSED_ARG( buffer ),
 //------------------------------------------------------------------------------
 template< bool DO_PACKING, typename T, typename INDEX_TYPE >
 localIndex Pack( buffer_unit_type * & buffer,
-                 T const * const restrict var,
+                 T const * const GEOSX_RESTRICT var,
                  arraySlice1d< INDEX_TYPE const > const & indices,
                  INDEX_TYPE const length );
 
 //------------------------------------------------------------------------------
 template< typename T, typename INDEX_TYPE >
 localIndex Unpack( buffer_unit_type const * & buffer,
-                   T * const restrict var,
+                   T * const GEOSX_RESTRICT var,
                    arraySlice1d< INDEX_TYPE const > const & indices,
                    INDEX_TYPE & length );
 
