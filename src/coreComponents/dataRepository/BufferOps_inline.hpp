@@ -786,40 +786,6 @@ localIndex Unpack( buffer_unit_type const * & buffer,
   return sizeOfUnpackedChars;
 }
 
-template< typename SORTED >
-inline
-localIndex Unpack( buffer_unit_type const * & buffer,
-                   ArrayOfSets< localIndex > & var,
-                   localIndex const setIndex,
-                   set< globalIndex > & unmappedGlobalIndices,
-                   mapBase< globalIndex, localIndex, SORTED > const & globalToLocalMap,
-                   bool const clearExistingSet )
-{
-  if( clearExistingSet )
-  {
-    var.clearSet( setIndex );
-  }
-  localIndex set_length;
-  localIndex sizeOfUnpackedChars = Unpack( buffer, set_length );
-
-  for( localIndex a=0 ; a<set_length ; ++a )
-  {
-    globalIndex temp;
-    sizeOfUnpackedChars += Unpack( buffer, temp );
-    typename mapBase< globalIndex, localIndex, SORTED >::const_iterator iter = globalToLocalMap.find( temp );
-    if( iter==globalToLocalMap.end() )
-    {
-      unmappedGlobalIndices.insert( temp );
-    }
-    else
-    {
-      var.insertIntoSet( setIndex, iter->second );
-    }
-  }
-
-  return sizeOfUnpackedChars;
-}
-
 template< bool DO_PACKING >
 localIndex Pack( buffer_unit_type * & buffer,
                  set< localIndex > const & var,
@@ -1478,15 +1444,54 @@ Unpack( buffer_unit_type const * & buffer,
       li = globalToLocalMap.at( gi );
     }
 
-    SortedArray< globalIndex > unmappedIndices;
-    sizeOfUnpackedChars += Unpack( buffer,
-                                   var,
-                                   li,
-                                   unmappedIndices,
-                                   relatedObjectGlobalToLocalMap,
-                                   clearFlag );
+    // for objects related to the above local index li (e.g. up/down mappings)
+    // global indices not yet known on the local rank
+    SortedArray< globalIndex > unmapped;
+    // local indices of known global indices
+    SortedArray< localIndex > mapped;
 
-    unmappedGlobalIndices[li].insert( unmappedIndices.values(), unmappedIndices.size() );
+    if( clearFlag )
+    {
+      var.clearSet( li );
+    }
+
+    localIndex set_length;
+    sizeOfUnpackedChars += Unpack( buffer, set_length );
+
+    mapped.reserve( set_length );
+    unmapped.reserve( set_length );
+
+    mapped.clear();
+    unmapped.clear();
+
+    // again, the global indices being unpacked here are for
+    //  objects related to the global index recvd and
+    //  mapped to a local index above (e.g. up/down maps)
+    for( localIndex b = 0 ; b < set_length ; ++b )
+    {
+      globalIndex temp;
+      sizeOfUnpackedChars += Unpack( buffer, temp );
+      auto iter = relatedObjectGlobalToLocalMap.find( temp );
+      // if we have no existing global-to-local information
+      //  for the recv'd global index
+      if( iter == relatedObjectGlobalToLocalMap.end() )
+      {
+        unmapped.insert( temp );
+      }
+      // if we have existing global-to-local information
+      //  use that mapping and store the local index
+      else
+      {
+        mapped.insert( iter->second );
+      }
+    }
+
+    // insert known local indices into the set of indices
+    //  related to the local index
+    var.insertSortedIntoSet( li, mapped.values(), mapped.size() );
+    // insert unknown global indices related to the local index
+    //  into an additional mapping to resolve externally
+    unmappedGlobalIndices[li].insertSorted( unmapped.values(), unmapped.size() );
   }
   return sizeOfUnpackedChars;
 }

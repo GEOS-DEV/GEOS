@@ -41,8 +41,9 @@ inline void CalculateGradient( R2Tensor& Gradient,
     Gradient.plus_dyadic_ab( disp[bConnectivity[a]], dNdX[a]);
 }
 
+GEOSX_HOST_DEVICE
 inline void CalculateGradient(R2Tensor& Gradient,
-                              arraySlice1d<R1Tensor const> const & disp,
+                              R1Tensor const * const disp,
                               arraySlice1d<R1Tensor const> const & dNdX,
                               localIndex numNodes)
 {
