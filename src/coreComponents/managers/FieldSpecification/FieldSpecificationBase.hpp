@@ -259,7 +259,7 @@ public:
     return m_component;
   }
 
-  virtual const R1Tensor& GetDirection( realT GEOSX_UNUSED_ARG( time ) )
+  virtual const R1Tensor& GetDirection( realT GEOSX_UNUSED_PARAM( time ) )
   {
     return m_direction;
   }
@@ -424,7 +424,7 @@ void FieldSpecificationBase::ApplyFieldValue( set<localIndex> const & targetSet,
 
   rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( typeIndex ),
                                   true,
-                                  [&]( auto arrayInstance, auto GEOSX_UNUSED_ARG( dataTypeInstance ) )
+                                  [&]( auto arrayInstance, auto GEOSX_UNUSED_PARAM( dataTypeInstance ) )
   {
     using ArrayType = decltype(arrayInstance);
     dataRepository::Wrapper<ArrayType> & view = dataRepository::Wrapper<ArrayType>::cast( *wrapper );
@@ -475,7 +475,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                                 real64 const time,
                                 dataRepository::Group * dataGroup,
                                 arrayView1d<globalIndex const> const & dofMap,
-                                integer const & GEOSX_UNUSED_ARG( dofDim ),
+                                integer const & GEOSX_UNUSED_PARAM( dofDim ),
                                 typename LAI::ParallelMatrix & matrix,
                                 typename LAI::ParallelVector & rhs,
                                 LAMBDA && lambda ) const
@@ -574,7 +574,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                                 real64 const dt,
                                 dataRepository::Group * dataGroup,
                                 arrayView1d<globalIndex const> const & dofMap,
-                                integer const & GEOSX_UNUSED_ARG( dofDim ),
+                                integer const & GEOSX_UNUSED_PARAM( dofDim ),
                                 typename LAI::ParallelMatrix & matrix,
                                 typename LAI::ParallelVector & rhs,
                                 LAMBDA && lambda ) const

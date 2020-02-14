@@ -55,7 +55,7 @@ OutputBase::CatalogInterface::CatalogType& OutputBase::GetCatalog()
 }
 
 
-void OutputBase::InitializePreSubGroups( Group * const GEOSX_UNUSED_ARG( group ) )
+void OutputBase::InitializePreSubGroups( Group * const GEOSX_UNUSED_PARAM( group ) )
 {
   // This command doesn't seem to work anymore
   // SetupDirectoryStructure();

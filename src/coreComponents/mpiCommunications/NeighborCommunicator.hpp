@@ -27,8 +27,8 @@
 
 namespace geosx
 {
-inline int CommTag( int const GEOSX_UNUSED_ARG( senderRank ),
-                    int const GEOSX_UNUSED_ARG( receiverRank ),
+inline int CommTag( int const GEOSX_UNUSED_PARAM( senderRank ),
+                    int const GEOSX_UNUSED_PARAM( receiverRank ),
                     int const comm )
 {
 //  int m_size;

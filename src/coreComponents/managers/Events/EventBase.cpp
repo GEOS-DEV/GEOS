@@ -312,8 +312,8 @@ real64 EventBase::GetTimestepRequest(real64 const time)
 
 void EventBase::Cleanup(real64 const time_n,
                         integer const cycleNumber,
-                        integer const GEOSX_UNUSED_ARG( eventCounter ),
-                        real64 const GEOSX_UNUSED_ARG( eventProgress ),
+                        integer const GEOSX_UNUSED_PARAM( eventCounter ),
+                        real64 const GEOSX_UNUSED_PARAM( eventProgress ),
                         Group * domain)
 {
   if (m_target != nullptr)

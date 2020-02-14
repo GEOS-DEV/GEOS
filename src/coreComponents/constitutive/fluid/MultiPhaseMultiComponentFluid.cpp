@@ -237,14 +237,14 @@ void MultiPhaseMultiComponentFluid::PointUpdate( real64 const & pressure,
            m_flashModel);
 }
 
-void MultiPhaseMultiComponentFluid::BatchUpdate( arrayView1d<real64 const> const & GEOSX_UNUSED_ARG( pressure ),
-                                                 arrayView1d<real64 const> const & GEOSX_UNUSED_ARG( temperature ),
-                                                 arrayView2d<real64 const> const & GEOSX_UNUSED_ARG( composition ) )
+void MultiPhaseMultiComponentFluid::BatchUpdate( arrayView1d<real64 const> const & GEOSX_UNUSED_PARAM( pressure ),
+                                                 arrayView1d<real64 const> const & GEOSX_UNUSED_PARAM( temperature ),
+                                                 arrayView2d<real64 const> const & GEOSX_UNUSED_PARAM( composition ) )
 {
 }
 
 void MultiPhaseMultiComponentFluid::Compute( localIndex const NC, localIndex const NP, bool const useMass,
-                                             arrayView1d<string const> const & GEOSX_UNUSED_ARG( phaseNames ),
+                                             arrayView1d<string const> const & GEOSX_UNUSED_PARAM( phaseNames ),
                                              arrayView1d<real64 const> const & componentMolarWeight,
                                              real64 const & pressure,
                                              real64 const & temperature,
@@ -478,28 +478,28 @@ void MultiPhaseMultiComponentFluid::Compute( localIndex const NC, localIndex con
   }
 }
 
-void MultiPhaseMultiComponentFluid::Compute( real64 const & GEOSX_UNUSED_ARG( pressure ), real64 const & GEOSX_UNUSED_ARG( temperature ),
-                                             arraySlice1d<double const> const & GEOSX_UNUSED_ARG( composition ),
-                                             arraySlice1d<real64> const & GEOSX_UNUSED_ARG( phaseFraction ),
-                                             arraySlice1d<real64> const & GEOSX_UNUSED_ARG( dPhaseFraction_dPressure ),
-                                             arraySlice1d<real64> const & GEOSX_UNUSED_ARG( dPhaseFraction_dTemperature ),
-                                             arraySlice2d<real64> const & GEOSX_UNUSED_ARG( dPhaseFraction_dGlobalCompFraction ),
-                                             arraySlice1d<real64> const & GEOSX_UNUSED_ARG( phaseDensity ),
-                                             arraySlice1d<real64> const & GEOSX_UNUSED_ARG( dPhaseDensity_dPressure ),
-                                             arraySlice1d<real64> const & GEOSX_UNUSED_ARG( dPhaseDensity_dTemperature ),
-                                             arraySlice2d<real64> const & GEOSX_UNUSED_ARG( dPhaseDensity_dGlobalCompFraction ),
-                                             arraySlice1d<real64> const & GEOSX_UNUSED_ARG( phaseViscosity ),
-                                             arraySlice1d<real64> const & GEOSX_UNUSED_ARG( dPhaseViscosity_dPressure ),
-                                             arraySlice1d<real64> const & GEOSX_UNUSED_ARG( dPhaseViscosity_dTemperature ),
-                                             arraySlice2d<real64> const & GEOSX_UNUSED_ARG( dPhaseViscosity_dGlobalCompFraction ),
-                                             arraySlice2d<real64> const & GEOSX_UNUSED_ARG( phaseCompFraction ),
-                                             arraySlice2d<real64> const & GEOSX_UNUSED_ARG( dPhaseCompFraction_dPressure ),
-                                             arraySlice2d<real64> const & GEOSX_UNUSED_ARG( dPhaseCompFraction_dTemperature ),
-                                             arraySlice3d<real64> const & GEOSX_UNUSED_ARG( dPhaseCompFraction_dGlobalCompFraction ),
-                                             real64 & GEOSX_UNUSED_ARG( totalDensity ),
-                                             real64 & GEOSX_UNUSED_ARG( dTotalDensity_dPressure ),
-                                             real64 & GEOSX_UNUSED_ARG( dTotalDensity_dTemperature ),
-                                             arraySlice1d<real64> const & GEOSX_UNUSED_ARG( dTotalDensity_dGlobalCompFraction) ) const
+void MultiPhaseMultiComponentFluid::Compute( real64 const & GEOSX_UNUSED_PARAM( pressure ), real64 const & GEOSX_UNUSED_PARAM( temperature ),
+                                             arraySlice1d<double const> const & GEOSX_UNUSED_PARAM( composition ),
+                                             arraySlice1d<real64> const & GEOSX_UNUSED_PARAM( phaseFraction ),
+                                             arraySlice1d<real64> const & GEOSX_UNUSED_PARAM( dPhaseFraction_dPressure ),
+                                             arraySlice1d<real64> const & GEOSX_UNUSED_PARAM( dPhaseFraction_dTemperature ),
+                                             arraySlice2d<real64> const & GEOSX_UNUSED_PARAM( dPhaseFraction_dGlobalCompFraction ),
+                                             arraySlice1d<real64> const & GEOSX_UNUSED_PARAM( phaseDensity ),
+                                             arraySlice1d<real64> const & GEOSX_UNUSED_PARAM( dPhaseDensity_dPressure ),
+                                             arraySlice1d<real64> const & GEOSX_UNUSED_PARAM( dPhaseDensity_dTemperature ),
+                                             arraySlice2d<real64> const & GEOSX_UNUSED_PARAM( dPhaseDensity_dGlobalCompFraction ),
+                                             arraySlice1d<real64> const & GEOSX_UNUSED_PARAM( phaseViscosity ),
+                                             arraySlice1d<real64> const & GEOSX_UNUSED_PARAM( dPhaseViscosity_dPressure ),
+                                             arraySlice1d<real64> const & GEOSX_UNUSED_PARAM( dPhaseViscosity_dTemperature ),
+                                             arraySlice2d<real64> const & GEOSX_UNUSED_PARAM( dPhaseViscosity_dGlobalCompFraction ),
+                                             arraySlice2d<real64> const & GEOSX_UNUSED_PARAM( phaseCompFraction ),
+                                             arraySlice2d<real64> const & GEOSX_UNUSED_PARAM( dPhaseCompFraction_dPressure ),
+                                             arraySlice2d<real64> const & GEOSX_UNUSED_PARAM( dPhaseCompFraction_dTemperature ),
+                                             arraySlice3d<real64> const & GEOSX_UNUSED_PARAM( dPhaseCompFraction_dGlobalCompFraction ),
+                                             real64 & GEOSX_UNUSED_PARAM( totalDensity ),
+                                             real64 & GEOSX_UNUSED_PARAM( dTotalDensity_dPressure ),
+                                             real64 & GEOSX_UNUSED_PARAM( dTotalDensity_dTemperature ),
+                                             arraySlice1d<real64> const & GEOSX_UNUSED_PARAM( dTotalDensity_dGlobalCompFraction) ) const
 {
 }
 
