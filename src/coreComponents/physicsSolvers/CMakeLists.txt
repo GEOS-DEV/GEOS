@@ -26,6 +26,8 @@ set( physicsSolvers_headers
      simplePDE/LaplaceFEM.hpp
      solidMechanics/SolidMechanicsLagrangianFEM.hpp
      solidMechanics/SolidMechanicsLagrangianSSLE.hpp
+     solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp
+     solidMechanics/SolidMechanicsLagrangianSSLEKernels.hpp     
      surfaceGeneration/SurfaceGenerator.hpp
      surfaceGeneration/EmbeddedSurfaceGenerator.hpp
      )
