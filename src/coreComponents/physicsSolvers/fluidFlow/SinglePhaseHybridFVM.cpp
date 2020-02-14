@@ -143,7 +143,7 @@ void SinglePhaseHybridFVM::ImplicitStepComplete( real64 const & time_n,
   });
 }
 
-void SinglePhaseHybridFVM::SetupDofs( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
+void SinglePhaseHybridFVM::SetupDofs( DomainPartition const * const GEOSX_UNUSED_PARAM( domain ),
                                       DofManager & dofManager ) const
 {
   
@@ -175,7 +175,7 @@ void SinglePhaseHybridFVM::SetupDofs( DomainPartition const * const GEOSX_UNUSED
 
 }
 
-void SinglePhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time_n ),
+void SinglePhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                               real64 const dt,
                                               DomainPartition const * const domain,
                                               DofManager const * const dofManager,
@@ -394,12 +394,12 @@ void SinglePhaseHybridFVM::FluxLaunch( localIndex er,
 
 
 void
-SinglePhaseHybridFVM::ApplyBoundaryConditions( real64 const GEOSX_UNUSED_ARG( time_n ),
-                                               real64 const GEOSX_UNUSED_ARG( dt ),
-                                               DomainPartition * const GEOSX_UNUSED_ARG( domain ),
-                                               DofManager const & GEOSX_UNUSED_ARG( dofManager ),
-                                               ParallelMatrix & GEOSX_UNUSED_ARG( matrix ),
-                                               ParallelVector & GEOSX_UNUSED_ARG( rhs ) )
+SinglePhaseHybridFVM::ApplyBoundaryConditions( real64 const GEOSX_UNUSED_PARAM( time_n ),
+                                               real64 const GEOSX_UNUSED_PARAM( dt ),
+                                               DomainPartition * const GEOSX_UNUSED_PARAM( domain ),
+                                               DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
+                                               ParallelMatrix & GEOSX_UNUSED_PARAM( matrix ),
+                                               ParallelVector & GEOSX_UNUSED_PARAM( rhs ) )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -435,7 +435,7 @@ real64 SinglePhaseHybridFVM::CalculateResidualNorm( DomainPartition const * cons
 
   // compute the norm of local residual scaled by cell pore volume
   applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                 ElementRegionBase const * const GEOSX_UNUSED_ARG( region ),
+                                 ElementRegionBase const * const GEOSX_UNUSED_PARAM( region ),
                                  ElementSubRegionBase const * const subRegion )
   {
     arrayView1d<globalIndex const> const & elemDofNumber =
