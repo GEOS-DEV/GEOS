@@ -323,7 +323,7 @@ struct ConnLocPatternBuilder
     forMeshLocation< CONN, LOC, true, SUBREGIONTYPES... >( mesh, regions,
                                                            [&]( auto const & connIdx,
                                                                 auto const & locIdx,
-                                                                localIndex const GEOSX_UNUSED_ARG( k ) )
+                                                                localIndex const GEOSX_UNUSED_PARAM( k ) )
     {
       if( connIdx != connIdxPrev )
       {
@@ -382,7 +382,7 @@ struct ConnLocPatternBuilder< DofManager::Location::Elem, DofManager::Location::
     forMeshLocation< ELEM, EDGE, true, SUBREGIONTYPES... >( mesh, regions,
                                                             [&]( auto const & elemIdx,
                                                                  auto const & edgeIdx,
-                                                                 localIndex const GEOSX_UNUSED_ARG( k ) )
+                                                                 localIndex const GEOSX_UNUSED_PARAM( k ) )
     {
       globalIndex const dofOffset = dofIndex[elemIdx[0]][elemIdx[1]][elemIdx[2]];
       if( dofOffset >= 0 )
@@ -573,7 +573,7 @@ void vectorToFieldImpl( VECTOR const & vector,
   rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( std::type_index( wrapper->get_typeid() ) ),
                                   false,
                                   [&]( auto arrayInstance,
-                                       auto GEOSX_UNUSED_ARG( dataTypeInstance ) )
+                                       auto GEOSX_UNUSED_PARAM( dataTypeInstance ) )
   {
     using ArrayType = decltype( arrayInstance );
     Wrapper< ArrayType > & view = Wrapper< ArrayType >::cast( *wrapper );
@@ -602,7 +602,7 @@ void fieldToVectorImpl( VECTOR & vector,
                         ObjectManagerBase const * const manager,
                         string const & dofKey,
                         string const & fieldName,
-                        real64 const GEOSX_UNUSED_ARG( scalingFactor ),
+                        real64 const GEOSX_UNUSED_PARAM( scalingFactor ),
                         localIndex const dofOffset,
                         localIndex const loComp,
                         localIndex const hiComp )
@@ -618,7 +618,7 @@ void fieldToVectorImpl( VECTOR & vector,
   rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( std::type_index( wrapper->get_typeid() ) ),
                                   false,
                                   [&]( auto arrayInstance,
-                                       auto GEOSX_UNUSED_ARG( dataTypeInstance ) )
+                                       auto GEOSX_UNUSED_PARAM( dataTypeInstance ) )
   {
     using ArrayType = decltype( arrayInstance );
     Wrapper< ArrayType > const & view = Wrapper< ArrayType >::cast( *wrapper );

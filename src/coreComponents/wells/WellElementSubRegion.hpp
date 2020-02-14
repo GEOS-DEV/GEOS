@@ -70,8 +70,8 @@ public:
    */
   virtual const string getCatalogName() const override { return WellElementSubRegion::CatalogName(); }
 
-  virtual void CalculateElementGeometricQuantities( NodeManager const & GEOSX_UNUSED_ARG( nodeManager ),
-                                                    FaceManager const & GEOSX_UNUSED_ARG( faceManager ) ) override 
+  virtual void CalculateElementGeometricQuantities( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
+                                                    FaceManager const & GEOSX_UNUSED_PARAM( faceManager ) ) override 
   {}
 
   virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override;

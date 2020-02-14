@@ -134,7 +134,7 @@ InternalMeshGenerator::~InternalMeshGenerator()
 /**
  * @param domain
  */
-void InternalMeshGenerator::GenerateElementRegions( DomainPartition& GEOSX_UNUSED_ARG( domain ) )
+void InternalMeshGenerator::GenerateElementRegions( DomainPartition& GEOSX_UNUSED_PARAM( domain ) )
 {
   //  lvector numElements;
   //
@@ -312,7 +312,7 @@ void InternalMeshGenerator::PostProcessInput()
 
 
 
-Group * InternalMeshGenerator::CreateChild( string const & GEOSX_UNUSED_ARG( childKey ), string const & GEOSX_UNUSED_ARG( childName ) )
+Group * InternalMeshGenerator::CreateChild( string const & GEOSX_UNUSED_PARAM( childKey ), string const & GEOSX_UNUSED_PARAM( childName ) )
 {
   return nullptr;
 }
@@ -1224,7 +1224,7 @@ void InternalMeshGenerator::GetElemToNodesRelationInBox( const std::string& elem
   }
 }
 
-void InternalMeshGenerator::RemapMesh( dataRepository::Group * const GEOSX_UNUSED_ARG( domain ) )
+void InternalMeshGenerator::RemapMesh( dataRepository::Group * const GEOSX_UNUSED_PARAM( domain ) )
 {
   //  // Node mapping
   //  if (!m_meshDx.empty())
