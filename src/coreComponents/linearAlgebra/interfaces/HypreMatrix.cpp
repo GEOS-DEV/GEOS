@@ -95,7 +95,7 @@ HypreMatrix::HypreMatrix( HypreMatrix const & src )
                                &jupper );
 
   // Get number of non-zeroes per row
-  HYPRE_Int nrows = static_cast< HYPRE_Int >( iupper - ilower + 1 );
+  HYPRE_Int nrows = integer_conversion< HYPRE_Int >( iupper - ilower + 1 );
   array1d< HYPRE_BigInt > rows( nrows );
   array1d< HYPRE_Int > row_sizes( nrows );
 
@@ -200,14 +200,14 @@ void HypreMatrix::createWithGlobalSize( globalIndex const globalRows,
   int this_mpi_process = MpiWrapper::Comm_rank( comm );
   int n_mpi_process = MpiWrapper::Comm_size( comm );
 
-  HYPRE_Int localRowSize = static_cast< HYPRE_Int >( globalRows / n_mpi_process );
-  HYPRE_Int rowResidual = static_cast< HYPRE_Int >( globalRows % n_mpi_process );
+  HYPRE_Int localRowSize = integer_conversion< HYPRE_Int >( globalRows / n_mpi_process );
+  HYPRE_Int rowResidual = integer_conversion< HYPRE_Int >( globalRows % n_mpi_process );
 
   GEOSX_ASSERT_MSG( localRowSize >= 0,
                     "localRowSize is is lower than 0" );
 
-  HYPRE_Int localColSize = static_cast< HYPRE_Int >( globalCols / n_mpi_process );
-  HYPRE_Int colResidual = static_cast< HYPRE_Int >( globalCols % n_mpi_process );
+  HYPRE_Int localColSize = integer_conversion< HYPRE_Int >( globalCols / n_mpi_process );
+  HYPRE_Int colResidual = integer_conversion< HYPRE_Int >( globalCols % n_mpi_process );
 
   GEOSX_ASSERT_MSG( localColSize >= 0,
                     "localColSize is is lower than 0" );
@@ -218,21 +218,21 @@ void HypreMatrix::createWithGlobalSize( globalIndex const globalRows,
   {
     ilower = 0;
     localRowSize = localRowSize + rowResidual;
-    iupper = static_cast< HYPRE_BigInt >( localRowSize - 1 );
+    iupper = integer_conversion< HYPRE_BigInt >( localRowSize - 1 );
     jlower = 0;
     localColSize = localColSize + colResidual;
-    jupper =  static_cast< HYPRE_BigInt >( localColSize - 1 );
+    jupper =  integer_conversion< HYPRE_BigInt >( localColSize - 1 );
   }
   else
   {
-    ilower = static_cast< HYPRE_BigInt >( this_mpi_process * localRowSize + rowResidual );
-    iupper = ilower + static_cast< HYPRE_BigInt >( localRowSize ) - 1;
-    jlower = static_cast< HYPRE_BigInt >( this_mpi_process * localColSize + colResidual );
-    jupper = jlower + static_cast< HYPRE_BigInt >( localColSize ) - 1;
+    ilower = integer_conversion< HYPRE_BigInt >( this_mpi_process * localRowSize + rowResidual );
+    iupper = ilower + integer_conversion< HYPRE_BigInt >( localRowSize ) - 1;
+    jlower = integer_conversion< HYPRE_BigInt >( this_mpi_process * localColSize + colResidual );
+    jupper = jlower + integer_conversion< HYPRE_BigInt >( localColSize ) - 1;
   }
 
   array1d< HYPRE_Int > row_sizes( localRowSize );
-  row_sizes = integer_conversion< HYPRE_Int >( static_cast< HYPRE_Int >( maxEntriesPerRow ) );
+  row_sizes = integer_conversion< HYPRE_Int >( integer_conversion< HYPRE_Int >( maxEntriesPerRow ) );
 
   initialize( comm,
               ilower,
