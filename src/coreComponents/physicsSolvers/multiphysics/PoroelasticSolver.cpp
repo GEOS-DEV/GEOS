@@ -79,13 +79,13 @@ void PoroelasticSolver::RegisterDataOnMesh( dataRepository::Group * const MeshBo
   }
 }
 
-void PoroelasticSolver::ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n ),
-                                           real64 const & GEOSX_UNUSED_ARG( dt ),
+void PoroelasticSolver::ImplicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+                                           real64 const & GEOSX_UNUSED_PARAM( dt ),
                                            DomainPartition * const domain,
-                                           DofManager & GEOSX_UNUSED_ARG( dofManager ),
-                                           ParallelMatrix & GEOSX_UNUSED_ARG( matrix ),
-                                           ParallelVector & GEOSX_UNUSED_ARG( rhs ),
-                                           ParallelVector & GEOSX_UNUSED_ARG( solution ) )
+                                           DofManager & GEOSX_UNUSED_PARAM( dofManager ),
+                                           ParallelMatrix & GEOSX_UNUSED_PARAM( matrix ),
+                                           ParallelVector & GEOSX_UNUSED_PARAM( rhs ),
+                                           ParallelVector & GEOSX_UNUSED_PARAM( solution ) )
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = mesh->getElemManager();
@@ -105,9 +105,9 @@ void PoroelasticSolver::ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time
   });
 }
 
-void PoroelasticSolver::ImplicitStepComplete( real64 const& GEOSX_UNUSED_ARG( time_n ),
-                                              real64 const& GEOSX_UNUSED_ARG( dt ),
-                                              DomainPartition * const GEOSX_UNUSED_ARG( domain ) )
+void PoroelasticSolver::ImplicitStepComplete( real64 const& GEOSX_UNUSED_PARAM( time_n ),
+                                              real64 const& GEOSX_UNUSED_PARAM( dt ),
+                                              DomainPartition * const GEOSX_UNUSED_PARAM( domain ) )
 {
 }
 

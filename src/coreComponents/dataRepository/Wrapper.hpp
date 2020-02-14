@@ -508,7 +508,7 @@ public:
 
     template< class U=T >
     static typename std::enable_if< !traits::is_array< U >, void >::type
-    copy( T * const GEOSX_UNUSED_ARG( data ), localIndex const GEOSX_UNUSED_ARG( sourceIndex ), localIndex const GEOSX_UNUSED_ARG( destIndex ) )
+    copy( T * const GEOSX_UNUSED_PARAM( data ), localIndex const GEOSX_UNUSED_PARAM( sourceIndex ), localIndex const GEOSX_UNUSED_PARAM( destIndex ) )
     {}
 
   };

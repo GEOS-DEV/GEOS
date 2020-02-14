@@ -64,7 +64,7 @@ struct FieldSpecificationOp
   static inline typename std::enable_if< !traits::is_tensorT < T >, void>::type
   SpecifyFieldValue( arrayView1d< T > const & field,
                      localIndex const index,
-                     integer const GEOSX_UNUSED_ARG( component ),
+                     integer const GEOSX_UNUSED_PARAM( component ),
                      real64 const value )
   {
     OP::template apply( field( index ), value );
@@ -107,7 +107,7 @@ struct FieldSpecificationOp
   static inline typename std::enable_if< !traits::is_tensorT < T >, void>::type
   ReadFieldValue( arrayView1d< T const > const & field,
                   localIndex const index,
-                  integer const GEOSX_UNUSED_ARG( component ),
+                  integer const GEOSX_UNUSED_PARAM( component ),
                   real64 & value )
   {
     OP::template apply( value, field( index ) );
@@ -234,10 +234,10 @@ struct FieldSpecificationOp
   template< typename T, int USD >
   GEOSX_HOST_DEVICE
   static inline typename std::enable_if< traits::is_tensorT < T >, void>::type
-  ReadFieldValue( arrayView2d< T const, USD > const & GEOSX_UNUSED_ARG( field ),
-                  localIndex const GEOSX_UNUSED_ARG( index ),
-                  integer const GEOSX_UNUSED_ARG( component ),
-                  real64 & GEOSX_UNUSED_ARG( value ) )
+  ReadFieldValue( arrayView2d< T const, USD > const & GEOSX_UNUSED_PARAM( field ),
+                  localIndex const GEOSX_UNUSED_PARAM( index ),
+                  integer const GEOSX_UNUSED_PARAM( component ),
+                  real64 & GEOSX_UNUSED_PARAM( value ) )
   {
     GEOSX_ERROR( "ReadFieldValue: unsupported operation" );
   }
@@ -331,10 +331,10 @@ struct FieldSpecificationOp
   template< typename T, int USD >
   GEOSX_HOST_DEVICE
   static inline void
-  ReadFieldValue( arrayView3d< T const, USD > const & GEOSX_UNUSED_ARG( field ),
-                  localIndex const GEOSX_UNUSED_ARG( index ),
-                  integer const GEOSX_UNUSED_ARG( component ),
-                  real64 & GEOSX_UNUSED_ARG( value ) )
+  ReadFieldValue( arrayView3d< T const, USD > const & GEOSX_UNUSED_PARAM( field ),
+                  localIndex const GEOSX_UNUSED_PARAM( index ),
+                  integer const GEOSX_UNUSED_PARAM( component ),
+                  real64 & GEOSX_UNUSED_PARAM( value ) )
   {
     GEOSX_ERROR( "ReadFieldValue: unsupported operation" );
   }
@@ -424,11 +424,11 @@ struct FieldSpecificationAdd : public FieldSpecificationOp<OpAdd>
    *
    */
   template< typename LAI >
-  static inline void SpecifyFieldValue( globalIndex const GEOSX_UNUSED_ARG( dof ),
-                                        typename LAI::ParallelMatrix & GEOSX_UNUSED_ARG( matrix ),
+  static inline void SpecifyFieldValue( globalIndex const GEOSX_UNUSED_PARAM( dof ),
+                                        typename LAI::ParallelMatrix & GEOSX_UNUSED_PARAM( matrix ),
                                         real64 & rhs,
                                         real64 const & bcValue,
-                                        real64 const GEOSX_UNUSED_ARG( fieldValue ) )
+                                        real64 const GEOSX_UNUSED_PARAM( fieldValue ) )
   {
     rhs += bcValue;
   }

@@ -41,7 +41,7 @@ public:
 
   virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) = 0;
 
-  virtual void FixUpDownMaps( bool const GEOSX_UNUSED_ARG( clearIfUnmapped ) ) {}
+  virtual void FixUpDownMaps( bool const GEOSX_UNUSED_PARAM( clearIfUnmapped ) ) {}
 
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {

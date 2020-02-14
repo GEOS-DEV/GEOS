@@ -36,7 +36,7 @@
 ///@{
 
 /// Mark an unused argument and silence compiler warnings.
-#define GEOSX_UNUSED_ARG( X )
+#define GEOSX_UNUSED_PARAM( X )
 
 /// Mark an unused variable and silence compiler warnings.
 #define GEOSX_UNUSED_VAR( X ) ( ( void ) X )
@@ -82,5 +82,11 @@
 #endif
 
 ///@}
+
+/// preprocessor variable for the C99 restrict keyword for use with pointers
+#define GEOSX_RESTRICT LVARRAY_RESTRICT
+
+/// preprocessor variable for the C99 restrict keyword for use with the "this" pointer
+#define GEOSX_RESTRICT_THIS LVARRAY_RESTRICT_THIS
 
 #endif // GEOSX_COMMON_GEOSXMACROS_HPP_

@@ -60,7 +60,7 @@ void CellElementSubRegion::CopyFromCellBlock( CellBlock const * source )
     std::type_index typeIndex = std::type_index( wrapper->get_typeid());
     rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( typeIndex ),
                                     true,
-                                    [&]( auto type, auto GEOSX_UNUSED_ARG( baseType ) ) -> void
+                                    [&]( auto type, auto GEOSX_UNUSED_PARAM( baseType ) ) -> void
     {
       using fieldType = decltype(type);
       const dataRepository::Wrapper<fieldType> & field = dataRepository::Wrapper< fieldType >::cast( *wrapper );
@@ -128,8 +128,8 @@ localIndex CellElementSubRegion::PackUpDownMapsPrivate( buffer_unit_type * & buf
 
 localIndex CellElementSubRegion::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                                  localIndex_array & packList,
-                                                 bool const GEOSX_UNUSED_ARG( overwriteUpMaps ),
-                                                 bool const GEOSX_UNUSED_ARG( overwriteDownMaps ) )
+                                                 bool const GEOSX_UNUSED_PARAM( overwriteUpMaps ),
+                                                 bool const GEOSX_UNUSED_PARAM( overwriteDownMaps ) )
 {
   localIndex unPackedSize = 0;
   unPackedSize += bufferOps::Unpack( buffer,

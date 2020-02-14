@@ -130,7 +130,7 @@ public:
   /**
    * This method is used to get event-specifit dt requests
    */
-  virtual real64 GetEventTypeDtRequest(real64 const GEOSX_UNUSED_ARG( time ) ) { return std::numeric_limits<real64>::max(); }
+  virtual real64 GetEventTypeDtRequest(real64 const GEOSX_UNUSED_PARAM( time ) ) { return std::numeric_limits<real64>::max(); }
 
 
   /// This method is used to count the number of events/sub-events

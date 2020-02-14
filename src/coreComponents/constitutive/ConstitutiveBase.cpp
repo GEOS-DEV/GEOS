@@ -99,8 +99,8 @@ void ConstitutiveBase::resize( localIndex newsize )
   Group::resize( newsize );
 }
 
-void ConstitutiveBase::DeliverClone( string const & GEOSX_UNUSED_ARG( name ),
-                                     Group * const GEOSX_UNUSED_ARG( parent ),
+void ConstitutiveBase::DeliverClone( string const & GEOSX_UNUSED_PARAM( name ),
+                                     Group * const GEOSX_UNUSED_PARAM( parent ),
                                      std::unique_ptr<ConstitutiveBase> & clone ) const
 {
   clone->forWrappers([&]( WrapperBase & wrapper )
