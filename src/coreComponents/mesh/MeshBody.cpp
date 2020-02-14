@@ -38,7 +38,7 @@ MeshBody::~MeshBody()
 
 
 
-MeshLevel * MeshBody::CreateMeshLevel( localIndex const GEOSX_UNUSED_ARG( newLevel ) )
+MeshLevel * MeshBody::CreateMeshLevel( localIndex const GEOSX_UNUSED_PARAM( newLevel ) )
 {
   return this->RegisterGroup<MeshLevel>( "Level0" );
 }

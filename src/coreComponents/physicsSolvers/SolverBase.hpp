@@ -482,7 +482,7 @@ public:
   /*
    * Returns the requirement for the next time-step to the event executing the solver.
    */
-  virtual real64 GetTimestepRequest( real64 const GEOSX_UNUSED_ARG( time ) ) override
+  virtual real64 GetTimestepRequest( real64 const GEOSX_UNUSED_PARAM( time ) ) override
 		  {return m_nextDt;};
   /**@}*/
 

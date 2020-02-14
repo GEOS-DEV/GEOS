@@ -43,7 +43,7 @@ NumericalMethodsManager::~NumericalMethodsManager()
   // TODO Auto-generated destructor stub
 }
 
-Group * NumericalMethodsManager::CreateChild( string const & GEOSX_UNUSED_ARG( childKey ), string const & GEOSX_UNUSED_ARG( childName ) )
+Group * NumericalMethodsManager::CreateChild( string const & GEOSX_UNUSED_PARAM( childKey ), string const & GEOSX_UNUSED_PARAM( childName ) )
 {
   return nullptr;
 }
