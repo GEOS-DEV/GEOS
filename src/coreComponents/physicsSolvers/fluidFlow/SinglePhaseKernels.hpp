@@ -381,14 +381,17 @@ struct FluxKernel
   Launch( STENCIL_TYPE & stencil,
           real64 const dt,
           localIndex const fluidIndex,
-          integer const gravityFlag,
           ElementView < arrayView1d<real64 const> > const & pres,
-          ElementView < arrayView1d<real64 const> > const & gravDepth,
+          ElementView < arrayView1d<real64 const> > const & gravCoef,
           MaterialView< arrayView2d<real64 const> > const & dens,
           MaterialView< arrayView2d<real64 const> > const & visc,
           ElementView < arrayView1d<real64 const> > const & mob,
           ElementView < arrayView1d<real64 const> > const & aperture0,
           ElementView < arrayView1d<real64 const> > const & aperture,
+#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+          ElementView < arrayView1d<real64 const> > const & s,
+          ElementView < arrayView1d<real64 const> > const & dSdAper,
+#endif
           ElementView < arrayView1d<real64 const> > const & poro,
           ElementView < arrayView1d<real64 const> > const & totalCompressibility,
           ElementView < arrayView1d<real64 const> > const & referencePressure,
@@ -606,7 +609,7 @@ struct FluxKernel
            arraySlice1d<real64 const> const & stencilWeights,
            arraySlice1d<real64 const> const & stencilWeightedElementCenterToConnectorCenter,
            ElementView <arrayView1d<real64 const>> const & pres,
-           ElementView <arrayView1d<real64 const>> const & gravDepth,
+           ElementView <arrayView1d<real64 const>> const & gravCoef,
            MaterialView<arrayView2d<real64 const>> const & dens,
            MaterialView<arrayView2d<real64 const>> const & visc,
            ElementView <arrayView1d<real64 const>> const & mob,
@@ -614,7 +617,6 @@ struct FluxKernel
            ElementView <arrayView1d<real64 const>> const & totalCompressibility,
            ElementView <arrayView1d<real64 const>> const & referencePressure,
            localIndex const fluidIndex,
-           integer const gravityFlag,
            real64 const dt,
            ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> * const mass,
            real64 * const maxStableDt)
@@ -651,8 +653,8 @@ struct FluxKernel
 
       real64 weight = stencilWeights[ke];
 
-      real64 const gravD = gravDepth[er][esr][ei];
-      real64 const gravTerm = gravityFlag ? densMean * gravD : 0.0;
+      real64 const gravD = gravCoef[er][esr][ei];
+      real64 const gravTerm = densMean * gravD;
 
       potDif += weight * (std::max(pres[er][esr][ei], referencePressure[er][esr][ei]) - gravTerm);
 
@@ -914,16 +916,19 @@ struct FluxKernel
                    arraySlice1d<real64 const> const & stencilWeights,
                    arraySlice1d<real64 const> const & stencilWeightedElementCenterToConnectorCenter,
                    arrayView1d<real64 const> const & pres,
-                   arrayView1d<real64 const> const & gravDepth,
+                   arrayView1d<real64 const> const & gravCoef,
                    arrayView2d<real64 const> const & dens,
                    arrayView2d<real64 const> const & visc,
                    arrayView1d<real64 const> const & mob,
                    arrayView1d<real64 const> const & aperture0,
                    arrayView1d<real64 const> const & aperture,
+#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+                   arrayView1d<real64 const> const & ,//s,
+                   arrayView1d<real64 const> const & ,//dSdAper,
+#endif
                    arrayView1d<real64 const> const & totalCompressibility,
                    arrayView1d<real64 const> const & referencePressure,
                    localIndex const GEOSX_UNUSED_ARG( fluidIndex ),
-                   integer const GEOSX_UNUSED_ARG( gravityFlag ),
                    real64 const dt,
                    arrayView1d<real64> * const mass,
                    real64 * const maxStableDt)
@@ -934,11 +939,31 @@ struct FluxKernel
 
     for( localIndex k=0 ; k<numFluxElems ; ++k )
     {
+
+#define PERM_CALC 1
+//      real64 const aperAdd = aperture0[stencilElementIndices[k]] < 0.09e-3 ? ( 0.09e-3 - aperture0[stencilElementIndices[k]] ) : 0.0;
+#if PERM_CALC==1
       FluxKernelHelper::
-      apertureForPermeablityCalculation<0>( std::min(aperture0[stencilElementIndices[k]], maxApertureForPermeablity),
+      apertureForPermeablityCalculation<1>( std::min(aperture0[stencilElementIndices[k]], maxApertureForPermeablity),
                                             std::min(aperture[stencilElementIndices[k]], maxApertureForPermeablity),
                                             aperTerm[k],
-                                            dAperTerm_dAper);
+                                            dAperTerm_dAper );
+#elif PERM_CALC==2
+
+      if( s[k] >= 1.0 )
+      {
+        aperTerm[k] = aperture[stencilElementIndices[k]] * aperture[stencilElementIndices[k]] * aperture[stencilElementIndices[k]];
+        dAperTerm_dAper[k] = 3*aperture[stencilElementIndices[k]]*aperture[stencilElementIndices[k]];
+      }
+      else
+      {
+        aperTerm[k] = aperture[stencilElementIndices[k]] * aperture[stencilElementIndices[k]] * aperture[stencilElementIndices[k]]/s[k];
+        dAperTerm_dAper[k] = 3*aperture[stencilElementIndices[k]]*aperture[stencilElementIndices[k]]/s[k]
+                           - aperture[stencilElementIndices[k]] * aperture[stencilElementIndices[k]] * aperture[stencilElementIndices[k]]/(s[k]*s[k]) * dSdAper[k];
+      }
+#endif
+//      aperTerm[k] += aperAdd*aperAdd*aperAdd;
+
 
       sumOfWeights += aperTerm[k] * stencilWeights[k];
     }
@@ -950,15 +975,24 @@ struct FluxKernel
       {
         localIndex const ei[2] = { stencilElementIndices[k[0]],
                                    stencilElementIndices[k[1]] };
-
+#if 0
         real64 const weight = ( stencilWeights[k[0]]*aperTerm[k[0]] ) *
                               ( stencilWeights[k[1]]*aperTerm[k[1]] ) / sumOfWeights;
+#else
+        real64 c = 0.8;
+
+        real64 const harmonicWeight = ( stencilWeights[k[0]]*aperTerm[k[0]] ) *
+                                      ( stencilWeights[k[1]]*aperTerm[k[1]] ) / sumOfWeights;
+
+        real64 const weight = c * harmonicWeight
+                            + (1.0 - c) * 0.25 * ( stencilWeights[k[0]]*aperTerm[k[0]] + stencilWeights[k[1]]*aperTerm[k[1]] ) ;
+#endif
 
         // average density
         real64 const densMean = 0.5 * ( dens[ei[0]][0] + dens[ei[1]][0] );
 
         real64 const potDif =  ( std::max(pres[ei[0]], referencePressure[ei[0]]) - std::max(pres[ei[1]], referencePressure[ei[1]]) -
-                                 densMean * ( gravDepth[ei[0]] - gravDepth[ei[1]] ) );
+                                 densMean * ( gravCoef[ei[0]] - gravCoef[ei[1]] ) );
 
         // upwinding of fluid properties (make this an option?)
         localIndex const k_up = (potDif >= 0) ? 0 : 1;

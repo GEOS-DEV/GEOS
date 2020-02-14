@@ -578,7 +578,7 @@ void SolidMechanicsLagrangianFEM::ExplicitStepDisplacementUpdate( real64 const& 
   fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Acceleration );
 
   //3: v^{n+1/2} = v^{n} + a^{n} dt/2
-  SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, this->getGravityVector(), dt/2 );
+  SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, gravityVector(), dt/2 );
 
   fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
 
@@ -632,11 +632,10 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStepVelocityUpdate( real64 const& ti
   FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
 
   arrayView1d<real64 const> const & mass = nodes->getReference<array1d<real64>>(keys::Mass);
-  array1d<R1Tensor> & velocityArray = nodes->getReference<array1d<R1Tensor>>(keys::Velocity);
-  arrayView1d<R1Tensor> const & vel = velocityArray;
+  arrayView2d<real64, nodes::VELOCITY_USD> const & vel = nodes->velocity();
 
-  arrayView1d<R1Tensor> const & u = nodes->getReference<array1d<R1Tensor>>(keys::TotalDisplacement);
-  arrayView1d<R1Tensor> const & acc = nodes->getReference<array1d<R1Tensor>>(keys::Acceleration);
+  arrayView2d<real64, nodes::TOTAL_DISPLACEMENT_USD> const & u = nodes->totalDisplacement();
+  arrayView2d<real64, nodes::ACCELERATION_USD> const & acc = nodes->acceleration();
 
   array1d<NeighborCommunicator> & neighbors = domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors );
   std::map<string, string_array > fieldNames;
@@ -693,7 +692,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStepVelocityUpdate( real64 const& ti
                                    acc,
                                    fluidPres[er][esr],
                                    dPres[er][esr],
-                                   biotCoefficient[er][esr][m_solidMaterialFullIndex],
+                                   biotCoefficient[er][esr],
                                    stress[er][esr][m_solidMaterialFullIndex],
                                    dt,
                                    &m_maxStableDt);
@@ -757,7 +756,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStepVelocityUpdate( real64 const& ti
                                    acc,
                                    fluidPres[er][esr],
                                    dPres[er][esr],
-                                   biotCoefficient[er][esr][m_solidMaterialFullIndex],
+                                   biotCoefficient[er][esr],
                                    stress[er][esr][m_solidMaterialFullIndex],
                                    dt,
                                    &m_maxStableDt );
@@ -1306,7 +1305,7 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_ARG(
                                                 density[er][esr][m_solidMaterialFullIndex],
                                                 fluidPres[er][esr],
                                                 dPres[er][esr],
-                                                biotCoefficient[er][esr][m_solidMaterialFullIndex],
+                                                biotCoefficient[er][esr],
                                                 m_timeIntegrationOption,
                                                 this->m_stiffnessDamping,
                                                 this->m_massDamping,

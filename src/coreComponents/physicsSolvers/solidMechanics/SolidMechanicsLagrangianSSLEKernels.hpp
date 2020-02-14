@@ -129,7 +129,7 @@ struct ExplicitKernel
           arrayView2d<real64 const, nodes::TOTAL_DISPLACEMENT_USD> const & GEOSX_UNUSED_ARG( u ),
           arrayView2d<real64 const, nodes::VELOCITY_USD> const & vel,
           arrayView2d<real64, nodes::ACCELERATION_USD> const & acc,
-          real64 const GEOSX_UNUSED_ARG( biotCoefficient ),
+          arrayView1d< real64 const > const & GEOSX_UNUSED_ARG( biotCoefficient ),
           arrayView3d<real64, solid::STRESS_USD> const & stress,
           real64 const dt,
           real64 * const GEOSX_UNUSED_ARG(maxStableDt) )
@@ -267,7 +267,7 @@ struct ImplicitKernel
           arrayView2d< real64 const > const & density,
           arrayView1d< real64 const > const & fluidPressure,
           arrayView1d< real64 const > const & deltaFluidPressure,
-          real64 const biotCoefficient,
+          arrayView1d< real64 const > const & biotCoefficient,
           timeIntegrationOption const tiOption,
           real64 const stiffnessDamping,
           real64 const massDamping,

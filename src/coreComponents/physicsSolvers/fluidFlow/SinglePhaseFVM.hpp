@@ -118,6 +118,40 @@ public:
                      ParallelMatrix * const matrix,
                      ParallelVector * const rhs ) override;
 
+  /**
+   * @brief assembles the flux terms for all cells in the explicit solver
+   * @param time_n previous time value
+   * @param dt time step
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   */
+  void AssembleFluxTermsExplicit( real64 const time_n,
+                                  real64 const dt,
+                                  DomainPartition * domain,
+                                  DofManager const * const dofManager);
+
+  /**
+   * @brief assemble the flux terms for all cells and then apply flux BC in the explicit solver
+   * @param time_n previous time value
+   * @param dt time step
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   */
+  void CalculateAndApplyMassFlux( real64 const time_n,
+                                  real64 const dt,
+                                  DomainPartition * const domain ) override;
+
+  virtual real64
+  ExplicitStep( real64 const & time_n,
+                real64 const & dt,
+                integer const cycleNumber,
+                DomainPartition * domain ) override;
+
+  virtual void
+  ExplicitStepSetup( real64 const & time_n,
+                     real64 const & dt,
+                     DomainPartition * const domain) override;
+
   /**@}*/
 
   struct viewKeyStruct : SinglePhaseBase::viewKeyStruct

@@ -763,7 +763,7 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
       }
     });
   }
-
+/*
   // apply aperture boundary condition in the explicit solver
   FaceElementSubRegion const * const faceElementSubRegion = elementManager.GetRegion(m_fractureRegionName)->GetSubRegion<FaceElementSubRegion>(0);
   set<localIndex> const & newFaceElems = faceElementSubRegion->m_newFaceElements;
@@ -819,7 +819,7 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
       subRegion->CalculateElementGeometricQuantities( nodeManager, faceManager );
     });
   });
-
+*/
   real64 ruptureRate = calculateRuptureRate( *(elementManager.GetRegion<FaceElementRegion>(this->m_fractureRegionName)), edgeManager);
 
   GEOSX_LOG_LEVEL_RANK_0( 3, "rupture rate is " << ruptureRate);

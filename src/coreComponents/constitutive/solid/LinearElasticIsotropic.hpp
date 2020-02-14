@@ -73,9 +73,6 @@ public:
 
     static constexpr auto bulkModulusString  = "BulkModulus";
     static constexpr auto shearModulusString = "ShearModulus";
-
-    static constexpr auto compressibilityString =  "compressibility" ;
-    static constexpr auto referencePressureString =  "referencePressure" ;
   };
 
   void setDefaultBulkModulus (real64 const bulkModulus) {m_defaultBulkModulus = bulkModulus;}
@@ -89,8 +86,8 @@ public:
 
   real64 constrainedModulus(localIndex k) const { return ( m_bulkModulus[k] + 4 / 3.0 * m_shearModulus[k] ); }
 
-  real64 &       compressibility()       { return m_compressibility; }
-  real64 const & compressibility() const { return m_compressibility; }
+  real64 compressibility()       { return 1 / m_defaultBulkModulus; }
+  real64 compressibility() const { return 1 / m_defaultBulkModulus; }
 
   class KernelWrapper
   {
@@ -145,8 +142,6 @@ protected:
   virtual void PostProcessInput() override;
 
 protected:
-  /// scalar compressibility parameter
-  real64 m_compressibility;
 
   real64 m_defaultBulkModulus;
   real64 m_defaultShearModulus;

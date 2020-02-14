@@ -903,8 +903,6 @@
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxNumResolves => Value to indicate how many resolves may be executed to perform surface generation after the execution of flow and mechanics solver. -->
 		<xsd:attribute name="maxNumResolves" type="integer" default="10" />
-		<!--relaxationCoefficient => Relaxation Coefficient for applied fracture face pressure in Hydrofracture solver-->
-		<xsd:attribute name="relaxationCoefficient" type="real64" default="1" />
 		<!--solidSolverName => Name of the solid mechanics solver to use in the poroelastic solver-->
 		<xsd:attribute name="solidSolverName" type="string" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
@@ -1029,10 +1027,18 @@
 		<xsd:attribute name="inputFluxEstimate" type="real64" default="1" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--solidName => Name of solid constitutive object to use for this solver-->
+		<!--pressureInitialization => flag to determine whether or not to initialize using pressure field in explicit flow solver.-->
+		<xsd:attribute name="pressureInitialization" type="integer" default="0" />
+		<!--solidName => Name of solid constitutive object to use for this solver.-->
 		<xsd:attribute name="solidName" type="string" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
+		<!--timeIntegrationOption => Time integration method. Options are: 
+ SteadyState 
+ ImplicitTransient 
+ ExplicitTransient 
+ InertialTransient-->
+		<xsd:attribute name="timeIntegrationOption" type="string" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -1386,8 +1392,6 @@
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="LinearElasticIsotropicType">
-		<!--compressibility => Rock Compressibilty-->
-		<xsd:attribute name="compressibility" type="real64" default="-1" />
 		<!--defaultBulkModulus => Elastic Bulk Modulus Parameter-->
 		<xsd:attribute name="defaultBulkModulus" type="real64" default="-1" />
 		<!--defaultDensity => Default Material Density-->
@@ -1506,8 +1510,6 @@
 	<xsd:complexType name="PoroLinearElasticIsotropicType">
 		<!--BiotCoefficient => Biot's coefficient-->
 		<xsd:attribute name="BiotCoefficient" type="real64" default="0" />
-		<!--compressibility => Rock Compressibilty-->
-		<xsd:attribute name="compressibility" type="real64" default="-1" />
 		<!--defaultBulkModulus => Elastic Bulk Modulus Parameter-->
 		<xsd:attribute name="defaultBulkModulus" type="real64" default="-1" />
 		<!--defaultDensity => Default Material Density-->
@@ -1606,8 +1608,6 @@
 	<xsd:complexType name="PoroLinearViscoElasticIsotropicType">
 		<!--BiotCoefficient => Biot's coefficient-->
 		<xsd:attribute name="BiotCoefficient" type="real64" default="0" />
-		<!--compressibility => Rock Compressibilty-->
-		<xsd:attribute name="compressibility" type="real64" default="-1" />
 		<!--defaultBulkModulus => Elastic Bulk Modulus Parameter-->
 		<xsd:attribute name="defaultBulkModulus" type="real64" default="-1" />
 		<!--defaultDensity => Default Material Density-->
