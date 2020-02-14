@@ -20,8 +20,7 @@
       targetRegions="{Region2, Fracture}"
       contactRelationName="fractureContact"
       >
-      <NonlinearSolverParameters name="nlsp"
-                                 newtonTol="1.0e-5"
+      <NonlinearSolverParameters newtonTol="1.0e-5"
                                  newtonMaxIter="50"
                                  lineSearchMaxCuts="10"/>
       <SystemSolverParameters
@@ -32,7 +31,7 @@
     </Hydrofracture>
   
     <SolidMechanicsLagrangianSSLE 
-      name="lagsolve" 
+      name="lagsolve"
       timeIntegrationOption="QuasiStatic"
       logLevel="0"
       discretization="FE1"
@@ -40,8 +39,7 @@
       solidMaterialName="rock"
       contactRelationName="fractureContact"
       >
-      <NonlinearSolverParameters name="nlsp"
-                                 newtonTol="1.0e-6"
+      <NonlinearSolverParameters newtonTol="1.0e-6"
                                  newtonMaxIter="5"/>
       <SystemSolverParameters 
         krylovTol="1.0e-10"
@@ -49,25 +47,22 @@
         />
     </SolidMechanicsLagrangianSSLE>
   
-    <SinglePhaseFlow 
+    <SinglePhaseFVM
       name="SinglePhaseFlow"
       logLevel="0"
-      gravityFlag="0"
       discretization="singlePhaseTPFA"
       targetRegions="{Fracture}"
       fluidName="water"
       solidName="rock"
       inputFluxEstimate="1"
       >
-      <NonlinearSolverParameters name="nlsp"
-                                 newtonTol="1.0e-5"
+      <NonlinearSolverParameters newtonTol="1.0e-5"
                                  newtonMaxIter="10"/>
       <SystemSolverParameters 
-        name="SystemSolverParameters"
         krylovTol="1.0e-12"
         logLevel="0"
         />
-    </SinglePhaseFlow>
+    </SinglePhaseFVM>
     
     <SurfaceGenerator
       name="SurfaceGen"

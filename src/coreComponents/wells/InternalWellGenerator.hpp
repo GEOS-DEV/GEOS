@@ -75,6 +75,8 @@ public:
   virtual Group * CreateChild( string const & childKey, 
                                       string const & childName ) override;
 
+  /// Expand object catalogs for schema generation
+  virtual void ExpandObjectCatalogs() override;
 
   /**
    * @brief main function of this class: processes the well input and creates the globla well topology

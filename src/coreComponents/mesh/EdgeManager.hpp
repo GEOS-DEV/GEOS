@@ -48,9 +48,10 @@ public:
    virtual const string getCatalogName() const override final
    { return EdgeManager::CatalogName(); }
 
-
    ///@}
 
+   static inline localIndex GetFaceMapOverallocation()
+   { return 4; }
 
   EdgeManager( std::string const & name,
                Group * const parent );
@@ -80,6 +81,8 @@ public:
                                        bool const overwriteDownMaps ) override;
 
   void FixUpDownMaps( bool const clearIfUnmapped );
+
+  void CompressRelationMaps( );
 
   void depopulateUpMaps( std::set<localIndex> const & receivedEdges,
                          ArrayOfArraysView< localIndex const > const & facesToEdges );

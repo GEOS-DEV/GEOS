@@ -16,11 +16,8 @@
       contactRelationName="fractureContact"
       >
       <SystemSolverParameters
-        maxIterNewton="100"
-        newtonTol="1e-6"
         krylovTol="1.0e-8"
         logLevel="0"
-        maxLineSearchCuts="5"
         useMLPrecond="1"
         scalingOption="2"
         />
@@ -37,16 +34,13 @@
       >
       <SystemSolverParameters 
         krylovTol="1.0e-10"
-        newtonTol="1.0e-6"
-        maxIterNewton="5"
         logLevel="0"
         />
     </SolidMechanicsLagrangianSSLE>
   
-    <SinglePhaseFlow 
+    <SinglePhaseFVM 
       name="SinglePhaseFlow"
       logLevel="0"
-      gravityFlag="0"
       discretization="singlePhaseTPFA"
       targetRegions="{Fracture}"
       fluidName="water"
@@ -54,13 +48,10 @@
       inputFluxEstimate="1.0"
       >
       <SystemSolverParameters 
-        name="SystemSolverParameters"
         krylovTol="1.0e-12"
-        newtonTol="1.0e-5"
-        maxIterNewton="10"
         logLevel="0"
         />
-    </SinglePhaseFlow>
+    </SinglePhaseFVM>
     
     <SurfaceGenerator
       name="SurfaceGen"
@@ -205,10 +196,6 @@
     </Contact>
   </Constitutive>
 
-  <InitialConditions>
-    
-  </InitialConditions>
-
   <FieldSpecifications>
 
     <FieldSpecification name="waterDensity"
@@ -292,10 +279,6 @@
 
   <Functions>
   </Functions>
-
-  <Partition>
-    <SpatialPartition xPar="1" yPar="1" zPar="1"/>
-  </Partition>
 
   <Outputs>
       <Silo name="siloOutput"
