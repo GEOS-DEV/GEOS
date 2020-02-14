@@ -62,6 +62,12 @@ Group * WellSolverBase::CreateChild( string const & childKey, string const & chi
   return rval;
 }
 
+void WellSolverBase::ExpandObjectCatalogs()
+{
+  CreateChild( keys::wellControls, keys::wellControls );
+}
+
+
 WellSolverBase::~WellSolverBase() = default;
 
 void WellSolverBase::RegisterDataOnMesh( Group * const meshBodies )
@@ -82,12 +88,12 @@ void WellSolverBase::RegisterDataOnMesh( Group * const meshBodies )
 }
 
 void WellSolverBase::ImplicitStepSetup( real64 const & time_n,
-                                        real64 const & GEOSX_UNUSED_ARG( dt ),
+                                        real64 const & GEOSX_UNUSED_PARAM( dt ),
                                         DomainPartition * const domain,
-                                        DofManager & GEOSX_UNUSED_ARG( dofManager ),
-                                        ParallelMatrix & GEOSX_UNUSED_ARG( matrix ),
-                                        ParallelVector & GEOSX_UNUSED_ARG( rhs ),
-                                        ParallelVector & GEOSX_UNUSED_ARG( solution ) )
+                                        DofManager & GEOSX_UNUSED_PARAM( dofManager ),
+                                        ParallelMatrix & GEOSX_UNUSED_PARAM( matrix ),
+                                        ParallelVector & GEOSX_UNUSED_PARAM( rhs ),
+                                        ParallelVector & GEOSX_UNUSED_PARAM( solution ) )
 {
   // bind the stored reservoir views to the current domain
   ResetViews( domain );

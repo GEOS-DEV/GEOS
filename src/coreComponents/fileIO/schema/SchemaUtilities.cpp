@@ -78,6 +78,7 @@ void SchemaUtilities::ConvertDocumentationToSchema(std::string const & fname,
 void SchemaUtilities::BuildSimpleSchemaTypes(xmlWrapper::xmlNode schemaRoot)
 {
   rtTypes::typeRegex typeRegex;
+  std::string advanced_match_string = ".*[\\[\\]`$].*|";
 
   for( auto regex=typeRegex.begin() ; regex!=typeRegex.end() ; ++regex )
   {
@@ -95,7 +96,10 @@ void SchemaUtilities::BuildSimpleSchemaTypes(xmlWrapper::xmlNode schemaRoot)
     }
     else
     {
-      patternNode.append_attribute("value") = regex->second.c_str();
+      // patternNode.append_attribute("value") = regex->second.c_str();
+
+      std::string patternString = advanced_match_string + regex->second;
+      patternNode.append_attribute("value") = patternString.c_str();
     }
   }
 }

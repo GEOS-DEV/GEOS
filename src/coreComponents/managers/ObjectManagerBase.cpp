@@ -618,12 +618,14 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer
     unpackedSize += bufferOps::Unpack( buffer, globalIndices );
     localIndex numNewIndices = 0;
     globalIndex_array newGlobalIndices;
+    newGlobalIndices.reserve( numUnpackedIndices );
     localIndex const oldSize = this->size();
-    for( localIndex a=0 ; a<numUnpackedIndices ; ++a )
+    for( localIndex a = 0 ; a < numUnpackedIndices ; ++a )
     {
       // check to see if the object already exists by checking for the global
       // index in m_globalToLocalMap. If it doesn't, then add the object
-      unordered_map<globalIndex,localIndex>::iterator iterG2L = m_globalToLocalMap.find(globalIndices[a]);
+      unordered_map<globalIndex,localIndex>::iterator iterG2L =
+        m_globalToLocalMap.find(globalIndices[a]);
       if( iterG2L == m_globalToLocalMap.end() )
       {
         // object does not exist on this domain
@@ -634,7 +636,7 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer
 
         unpackedLocalIndices(a) = newLocalIndex;
 
-        newGlobalIndices.push_back( globalIndices[a] );
+        newGlobalIndices.push_back(globalIndices[a]);
 
         ++numNewIndices;
 
@@ -654,8 +656,6 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer
         }
       }
     }
-    newGlobalIndices.resize(numNewIndices);
-    //  newLocalIndices.resize(numNewIndices);
 
     // figure out new size of object container, and resize it
     const localIndex newSize = oldSize + numNewIndices;
@@ -666,7 +666,6 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer
     {
       localIndex const b = oldSize + a;
       m_localToGlobalMap[b] = newGlobalIndices(a);
-      //    newLocalIndices[a] = b;
       m_ghostRank[b] = sendingRank;
     }
 
@@ -778,7 +777,7 @@ void ObjectManagerBase::SetReceiveLists()
 }
 
 integer ObjectManagerBase::SplitObject( localIndex const indexToSplit,
-                                        int const GEOSX_UNUSED_ARG( rank ),
+                                        int const GEOSX_UNUSED_PARAM( rank ),
                                         localIndex & newIndex )
 {
 

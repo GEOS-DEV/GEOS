@@ -112,6 +112,13 @@ if( ENABLE_MPI AND UNIX AND NOT APPLE AND NOT ENABLE_CUDA )
                      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
                      DEPENDS geosx
                      )
+
+  add_custom_target( geosx_validate_all_xml_files
+                     ALL
+                     COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/validateAllXMLFiles.bash ${CMAKE_SOURCE_DIR}
+                     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+                     DEPENDS geosx_update_rst_tables
+                     )
 endif()
 
 if( ${SPHINX_FOUND} )

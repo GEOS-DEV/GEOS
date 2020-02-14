@@ -120,7 +120,7 @@ std::size_t MpiWrapper::getSizeofMpiType( MPI_Datatype const type )
   }
   else
   {
-      GEOSX_ERROR("No conversion implemented for MPI_Datatype "<<type);
+    GEOSX_ERROR( "No conversion implemented for MPI_Datatype "<<type );
   }
   return 0;
 }
@@ -133,6 +133,15 @@ int MpiWrapper::Init( int * argc, char * * * argv )
 #else
   return 0;
 #endif
+}
+
+int MpiWrapper::Test( MPI_Request * request, int * flag, MPI_Status * status )
+{
+#ifdef GEOSX_USE_MPI
+  return MPI_Test( request, flag, status );
+#endif
+  *flag = 0;
+  return 0;
 }
 
 int MpiWrapper::Wait( MPI_Request * request, MPI_Status * status )
@@ -148,6 +157,15 @@ int MpiWrapper::Waitany( int count, MPI_Request array_of_requests[], int * indx,
 #ifdef GEOSX_USE_MPI
   return MPI_Waitany( count, array_of_requests, indx, status );
 #endif
+  return 0;
+}
+
+int MpiWrapper::Waitsome( int count, MPI_Request array_of_requests[], int * outcount, int array_of_indices[], MPI_Status array_of_statuses[] )
+{
+#ifdef GEOSX_USE_MPI
+  return MPI_Waitsome( count, array_of_requests, outcount, array_of_indices, array_of_statuses );
+#endif
+  // *outcount = 0;
   return 0;
 }
 
@@ -169,6 +187,110 @@ double MpiWrapper::Wtime( void )
 
 }
 
+int MpiWrapper::ActiveWaitAny( const int count, MPI_Request array_of_requests[], std::function< void ( int ) > func )
+{
+  int cmp = 0;
+  while( cmp < count )
+  {
+    int idx = 0;
+    MPI_Status stat;
+    int err = Waitany( count, array_of_requests, &idx, &stat );
+    if( err != MPI_SUCCESS )
+      return err;
+    if( idx != MPI_UNDEFINED )   // only if all(requests == MPI_REQUEST_NULL)
+    {
+      func( idx );
+    }
+    cmp++;
+  }
+  return MPI_SUCCESS;
+}
+
+int MpiWrapper::ActiveWaitSome( const int count, MPI_Request array_of_requests[], std::function< void ( int ) > func )
+{
+  int cmp = 0;
+  while( cmp < count )
+  {
+    int rcvd = 0;
+    std::vector< int > indices( count, -1 );
+    std::vector< MPI_Status > stats( count );
+    int err = Waitsome( count, array_of_requests, &rcvd, &indices[0], &stats[0] );
+    if( err != MPI_SUCCESS )
+      return err;
+    if( rcvd > 0 )
+    {
+      for( int ii = 0 ; ii < rcvd ; ++ii )
+      {
+        if( indices[ii] != MPI_UNDEFINED )
+        {
+          func( indices[ii] );
+        }
+      }
+    }
+    cmp += rcvd;
+  }
+  return MPI_SUCCESS;
+}
+
+int MpiWrapper::ActiveWaitSomePartialPhase( const int participants,
+                                            std::vector< std::function< MPI_Request ( int ) > > & phases )
+{
+  const int num_phases = sizeof(phases.size());
+  std::vector< MPI_Request > phase_requests( participants * num_phases, MPI_REQUEST_NULL );
+  for( int idx = 0 ; idx < participants ; ++idx )
+  {
+    phase_requests[idx] = phases[0]( idx );
+  }
+  auto phase_invocation = [&] ( int idx )
+    {
+      int phase = (idx / participants) + 1;
+      int phase_idx = idx % participants;
+      phase_requests[idx + participants] = phases[phase]( phase_idx );
+    };
+  return ActiveWaitSome( participants * num_phases, &phase_requests[0], phase_invocation );
+}
+
+int MpiWrapper::ActiveWaitSomeCompletePhase( const int participants,
+                                             std::vector< std::function< MPI_Request ( int ) > > & phases )
+{
+  const int num_phases = phases.size();
+  std::vector< MPI_Request > phase_requests( num_phases * participants, MPI_REQUEST_NULL );
+  for( int idx = 0 ; idx < participants ; ++idx )
+  {
+    phase_requests[idx] = phases[0]( idx );
+  }
+  int err = 0;
+  for( int phase = 1 ; phase < num_phases ; ++phase )
+  {
+    int prev_phase = phase - 1;
+    auto phase_wrapper = [&] ( int idx ) { phase_requests[ ( phase * participants ) + idx ] = phases[phase]( idx ); };
+    err = ActiveWaitSome( participants, &phase_requests[prev_phase * participants], phase_wrapper );
+    if( err != MPI_SUCCESS )
+      break;
+  }
+  return err;
+}
+
+int MpiWrapper::ActiveWaitOrderedCompletePhase( const int participants,
+                                                std::vector< std::function< MPI_Request ( int ) > > & phases )
+{
+  const int num_phases = phases.size();
+  std::vector< MPI_Request > phase_requests( participants );
+  for( int idx = 0 ; idx < participants ; ++idx )
+  {
+    phase_requests[idx] = phases[0]( idx );
+  }
+  for( int phase = 1 ; phase < num_phases ; ++phase )
+  {
+    for( int idx = 0 ; idx < participants ; ++idx )
+    {
+      MPI_Status stat;
+      Wait( &phase_requests[idx], &stat );
+      phase_requests[idx] = phases[phase]( idx );
+    }
+  }
+  return MPI_SUCCESS;
+}
 
 } /* namespace geosx */
 

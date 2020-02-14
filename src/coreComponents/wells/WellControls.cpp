@@ -38,6 +38,7 @@ WellControls::WellControls(string const & name, Group * const parent)
     m_targetBHP( 0.0 ),
     m_targetRate( 0.0 )
 {
+  setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
   registerWrapper( viewKeyStruct::typeString, &m_typeString, false )->
     setInputFlag(InputFlags::REQUIRED)->
@@ -174,7 +175,7 @@ void WellControls::PostProcessInput()
   }
 }
 
-void WellControls::InitializePostInitialConditions_PreSubGroups( Group * const GEOSX_UNUSED_ARG( rootGroup ) )
+void WellControls::InitializePostInitialConditions_PreSubGroups( Group * const GEOSX_UNUSED_PARAM( rootGroup ) )
 {
   // for a producer, the solvers compute negative rates, so we adjust the input here
   if (GetType() == Type::PRODUCER && m_targetRate > 0.0)

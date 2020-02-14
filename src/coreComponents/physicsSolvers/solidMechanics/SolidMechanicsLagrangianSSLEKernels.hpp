@@ -47,7 +47,7 @@ struct StressCalculationKernel
           localIndex const numElems,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
           arrayView3d< R1Tensor const > const & dNdX,
-          arrayView2d< real64 const > const & GEOSX_UNUSED_ARG( detJ ),
+          arrayView2d< real64 const > const & GEOSX_UNUSED_PARAM( detJ ),
           arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const & uhat )
   {
     GEOSX_MARK_FUNCTION;
@@ -56,9 +56,11 @@ struct StressCalculationKernel
 
     arrayView3d< real64, solid::STRESS_USD > const & stress = constitutiveRelation->getStress();
 
-    using KERNEL_POLICY = parallelDevicePolicy< 256 >;
+
+//    using KERNEL_POLICY = parallelDevicePolicy< 256 >;
+    using KERNEL_POLICY = parallelHostPolicy;
     RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, numElems ),
-                                   GEOSX_DEVICE_LAMBDA ( localIndex const k )
+                                   [&] ( localIndex const k )
     {
       real64 uhat_local[ NUM_NODES_PER_ELEM ][ 3 ];
 
@@ -126,7 +128,7 @@ struct ExplicitKernel
           arrayView2d<localIndex const, cells::NODE_MAP_USD> const & elemsToNodes,
           arrayView3d<R1Tensor const> const & dNdX,
           arrayView2d<real64 const> const & detJ,
-          arrayView2d<real64 const, nodes::TOTAL_DISPLACEMENT_USD> const & GEOSX_UNUSED_ARG( u ),
+          arrayView2d<real64 const, nodes::TOTAL_DISPLACEMENT_USD> const & GEOSX_UNUSED_PARAM( u ),
           arrayView2d<real64 const, nodes::VELOCITY_USD> const & vel,
           arrayView2d<real64, nodes::ACCELERATION_USD> const & acc,
           arrayView3d<real64, solid::STRESS_USD> const & stress,
@@ -272,7 +274,7 @@ struct ImplicitKernel
           real64 const newmarkBeta,
           real64 const newmarkGamma,
           R1Tensor const & gravityVector,
-          DofManager const * const GEOSX_UNUSED_ARG( dofManager ),
+          DofManager const * const GEOSX_UNUSED_PARAM( dofManager ),
           ParallelMatrix * const matrix,
           ParallelVector * const rhs )
   {
