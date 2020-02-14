@@ -173,8 +173,8 @@ Pack( buffer_unit_type * & buffer,
 // fallthrough-implementation
 template< bool DO_PACKING, typename T >
 typename std::enable_if< !is_packable< T >, localIndex >::type
-Pack( buffer_unit_type * & GEOSX_UNUSED_ARG( buffer ),
-      T const & GEOSX_UNUSED_ARG( var ) )
+Pack( buffer_unit_type * & GEOSX_UNUSED_PARAM( buffer ),
+      T const & GEOSX_UNUSED_PARAM( var ) )
 {
   GEOSX_ERROR( "Trying to pack data type ("<<typeid(T).name()<<") but type is not packable." );
   return 0;
@@ -235,9 +235,9 @@ PackByIndex( buffer_unit_type * & buffer,
 //------------------------------------------------------------------------------
 template< bool DO_PACKING, typename T, typename T_INDICES >
 typename std::enable_if< !is_packable_by_index< T > && !is_map_packable_by_index< T >, localIndex >::type
-PackByIndex( buffer_unit_type * & GEOSX_UNUSED_ARG( buffer ),
-             T const & GEOSX_UNUSED_ARG( var ),
-             T_INDICES const & GEOSX_UNUSED_ARG( indices ) )
+PackByIndex( buffer_unit_type * & GEOSX_UNUSED_PARAM( buffer ),
+             T const & GEOSX_UNUSED_PARAM( var ),
+             T_INDICES const & GEOSX_UNUSED_PARAM( indices ) )
 {
   GEOSX_ERROR( "Trying to pack data type ("<<typeid(T).name()<<") but type is not packable by index." );
   return 0;
@@ -306,8 +306,8 @@ Unpack( buffer_unit_type const * & buffer,
 //------------------------------------------------------------------------------
 template< typename T >
 typename std::enable_if< !is_packable< T >, localIndex >::type
-Unpack( buffer_unit_type const * & GEOSX_UNUSED_ARG( buffer ),
-        T & GEOSX_UNUSED_ARG( var ) )
+Unpack( buffer_unit_type const * & GEOSX_UNUSED_PARAM( buffer ),
+        T & GEOSX_UNUSED_PARAM( var ) )
 {
   GEOSX_ERROR( "Trying to unpack data type ("<<typeid(T).name()<<") but type is not packable." );
   return 0;
@@ -369,9 +369,9 @@ UnpackByIndex( buffer_unit_type const * & buffer,
 //------------------------------------------------------------------------------
 template< typename T, typename T_INDICES >
 typename std::enable_if< !is_packable_by_index< T > && !is_map_packable_by_index< T >, localIndex >::type
-UnpackByIndex( buffer_unit_type const * & GEOSX_UNUSED_ARG( buffer ),
-               T & GEOSX_UNUSED_ARG( var ),
-               T_INDICES const & GEOSX_UNUSED_ARG( indices ) )
+UnpackByIndex( buffer_unit_type const * & GEOSX_UNUSED_PARAM( buffer ),
+               T & GEOSX_UNUSED_PARAM( var ),
+               T_INDICES const & GEOSX_UNUSED_PARAM( indices ) )
 {
   GEOSX_ERROR( "Trying to unpack data type ("<<typeid(T).name()<<") but type is not packable by index." );
   return 0;
@@ -603,7 +603,7 @@ PackSize( VARPACK && ... pack )
 template< bool DO_PACKING, typename T, typename T_INDICES >
 typename std::enable_if< !is_packable_by_index< T > &&
                          !is_map_packable_by_index< T >, localIndex >::type
-Pack( buffer_unit_type * & GEOSX_UNUSED_ARG( buffer ), T const & GEOSX_UNUSED_ARG( var ), T_INDICES const & GEOSX_UNUSED_ARG( indices ) )
+Pack( buffer_unit_type * & GEOSX_UNUSED_PARAM( buffer ), T const & GEOSX_UNUSED_PARAM( var ), T_INDICES const & GEOSX_UNUSED_PARAM( indices ) )
 {
   GEOSX_ERROR( "Trying to pack data type ("<<typeid(T).name()<<") but type is not packable by index." );
   return 0;
@@ -613,7 +613,7 @@ Pack( buffer_unit_type * & GEOSX_UNUSED_ARG( buffer ), T const & GEOSX_UNUSED_AR
 template< typename T, typename T_INDICES >
 typename std::enable_if< !is_packable_by_index< T > &&
                          !is_map_packable_by_index< T >, localIndex >::type
-Unpack( buffer_unit_type const * & GEOSX_UNUSED_ARG( buffer ), T & GEOSX_UNUSED_ARG( var ), T_INDICES const & GEOSX_UNUSED_ARG( indices ) )
+Unpack( buffer_unit_type const * & GEOSX_UNUSED_PARAM( buffer ), T & GEOSX_UNUSED_PARAM( var ), T_INDICES const & GEOSX_UNUSED_PARAM( indices ) )
 {
   GEOSX_ERROR( "Trying to unpack data type ("<<typeid(T).name()<<") but type is not packable by index." );
   return 0;

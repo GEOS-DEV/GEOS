@@ -394,7 +394,7 @@ void LinearElasticAnisotropic::StateUpdatePoint( localIndex const k,
                                                  localIndex const q,
                                                  R2SymTensor const & D,
                                                  R2Tensor const & Rot,
-                                                 integer const GEOSX_UNUSED_ARG( updateStiffnessFlag ) )
+                                                 integer const GEOSX_UNUSED_PARAM( updateStiffnessFlag ) )
 {
   R2SymTensor T;
   real64 * const GEOSX_RESTRICT Tdata = T.Data();
