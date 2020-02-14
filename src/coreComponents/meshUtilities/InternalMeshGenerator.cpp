@@ -182,7 +182,6 @@ void InternalMeshGenerator::PostProcessInput()
     {
       if (m_nElemBias[i].size() > 0)
       {
-        m_useBias = true;
         failFlag += ( m_nElems[i].size() != m_nElemBias[i].size() );
       }
     }
