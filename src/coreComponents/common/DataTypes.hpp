@@ -764,11 +764,11 @@ private:
       if( dimension == 1 )
       {
         // Allow the bottom-level to be empty
-        arrayPattern = "\\{\\s*((" + subPattern + ",\\s*)*" + subPattern + ")?\\}";
+        arrayPattern = "\\{\\s*((" + subPattern + ",\\s*)*" + subPattern + ")?\\s*\\}";
       }
       else
       {
-        arrayPattern = "\\{\\s*(" + subPattern + ",\\s*)*" + subPattern + "\\}";
+        arrayPattern = "\\{\\s*(" + subPattern + ",\\s*)*" + subPattern + "\\s*\\}";
       }
 
       return arrayPattern;

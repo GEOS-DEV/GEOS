@@ -50,18 +50,18 @@ public:
   void SetDomain( DomainPartition * domain );
 
 
-  virtual bool IsCoordInPartition( const R1Tensor& elemCenter ) = 0;
-  virtual bool IsCoordInPartition( const R1Tensor& elemCenter,
+  virtual bool IsCoordInPartition( const R1Tensor & elemCenter ) = 0;
+  virtual bool IsCoordInPartition( const R1Tensor & elemCenter,
                                    const int numDistPartition ) = 0;
-  virtual bool IsCoordInPartition( const realT& coord, const int dir ) = 0;
+  virtual bool IsCoordInPartition( const realT & coord, const int dir ) = 0;
 
-  virtual void setSizes( const R1Tensor& min, const R1Tensor& max ) = 0;
+  virtual void setSizes( const R1Tensor & min, const R1Tensor & max ) = 0;
 
   virtual void setPartitions( unsigned int xPartitions,
                               unsigned int yPartitions,
                               unsigned int zPartitions ) = 0;
 
-  virtual bool IsCoordInContactGhostRange( const R1Tensor& elemCenter ) = 0;
+  virtual bool IsCoordInContactGhostRange( const R1Tensor & elemCenter ) = 0;
 
 //  virtual void ReadXML( xmlWrapper::xmlNode const & targetNode ) = 0;
 
@@ -82,13 +82,13 @@ public:
 //  virtual void ModifyGhostsAndNeighborLists( const ModifiedObjectLists& modifiedObjects );
 
   template< typename T >
-  void SendReceive( const array1d<array1d<T> >& sendArray, array1d<array1d<T> >& recvArray );
+  void SendReceive( const array1d< array1d< T > > & sendArray, array1d< array1d< T > > & recvArray );
 
 //  void SynchronizeFields( const std::map<std::string, string_array >& fieldNames,
 //                          const CommRegistry::commID commID = CommRegistry::genericComm01 );
 
-  void SetOwnedByRank( const std::map< std::string, globalIndex_array>& localBoundaryGlobalIndices,
-                       std::map<std::string, std::map< globalIndex, int > >& boundaryOwnership );
+  void SetOwnedByRank( const std::map< std::string, globalIndex_array > & localBoundaryGlobalIndices,
+                       std::map< std::string, std::map< globalIndex, int > > & boundaryOwnership );
 
   void SetGhostArrays( DomainPartition * domain );
 
@@ -123,10 +123,10 @@ protected:
   virtual void InitializePostSubGroups( dataRepository::Group * const ) = 0;
 
 //
-  std::vector<NeighborCommunicator> m_neighbors;
+  std::vector< NeighborCommunicator > m_neighbors;
 
-  array1d<MPI_Request> m_mpiRequest;
-  array1d<MPI_Status> m_mpiStatus;
+  array1d< MPI_Request > m_mpiRequest;
+  array1d< MPI_Status > m_mpiStatus;
 
   R1Tensor m_contactGhostMin;
   R1Tensor m_contactGhostMax;
@@ -143,11 +143,11 @@ public:
   realT m_t4;
 
   bool m_hasLocalGhosts;
-  std::map<std::string, localIndex_array> m_localGhosts;
-  std::map< std::string, localIndex_array> m_elementRegionsLocalGhosts;
+  std::map< std::string, localIndex_array > m_localGhosts;
+  std::map< std::string, localIndex_array > m_elementRegionsLocalGhosts;
 
-  std::map<std::string, localIndex_array> m_localGhostSources;
-  std::map< std::string, localIndex_array> m_elementRegionsLocalGhostSources;
+  std::map< std::string, localIndex_array > m_localGhostSources;
+  std::map< std::string, localIndex_array > m_elementRegionsLocalGhostSources;
 
   int m_ghostDepth;
 

@@ -48,7 +48,6 @@
       inputFluxEstimate="1"
       >
       <SystemSolverParameters
-        name="SystemSolverParameters"
         krylovTol="1.0e-12"
         logLevel="0"
         />
@@ -200,10 +199,6 @@
     </Contact>
   </Constitutive>
 
-  <InitialConditions>
-
-  </InitialConditions>
-
   <FieldSpecifications>
 
     <FieldSpecification name="waterDensity"
@@ -279,10 +274,6 @@
 
   <Functions>
   </Functions>
-
-  <Partition>
-    <SpatialPartition xPar="1" yPar="1" zPar="1"/>
-  </Partition>
 
   <Outputs>
       <Silo name="siloOutput"

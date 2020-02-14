@@ -4,19 +4,16 @@
   <Solvers
     gravityVector="0.0, 0.0, -9.81">
   
-    <SinglePhaseFlow name="SinglePhaseFlow"
+    <SinglePhaseFVM name="SinglePhaseFlow"
                           logLevel="0"
-                          gravityFlag="1"
                           fluidName="water"
                           solidName="rock"
                           discretization="singlePhaseTPFA"
                           targetRegions="{Domain}">
-      <NonlinearSolverParameters name="nlsp"
-                                 newtonTol="1.0e-6"
+      <NonlinearSolverParameters newtonTol="1.0e-6"
                                  newtonMaxIter="8"/>
-      <SystemSolverParameters name="ssp"
-                              krylovTol="1.0e-10"/>
-    </SinglePhaseFlow>
+      <SystemSolverParameters krylovTol="1.0e-10"/>
+    </SinglePhaseFVM>
   </Solvers>
   
   <Mesh>
@@ -130,10 +127,6 @@
   <Functions>
 
   </Functions>
-
-  <!-- <Partition>
-    <SpatialPartition xPar="1" yPar="1" zPar="1"/>
-  </Partition> -->
 
   <Outputs>
       <Silo name="siloWellPump"/>

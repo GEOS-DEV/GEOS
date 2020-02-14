@@ -46,6 +46,7 @@ public:
 
   /**
    */
+  GEOSX_HOST_DEVICE
   R1TensorT( void ): TensorBaseT< T_dim > () {}
 
   /**
@@ -187,6 +188,7 @@ public:
   void eijkAjk( const R2TensorT< T_dim >& A );
 
   /// cross product of 2 rank1 tensors
+  GEOSX_HOST_DEVICE
   void Cross( const R1TensorT< T_dim >& a, const R1TensorT< T_dim >& b );
 
   /// get a row from a symmetric rank2 tensor
@@ -224,6 +226,7 @@ public:
 
   // define cross product
   friend inline
+  GEOSX_HOST_DEVICE
   R1TensorT< T_dim > Cross( const R1TensorT< T_dim >& a, const R1TensorT< T_dim >& b )
   {
     R1TensorT< T_dim > c;
@@ -528,6 +531,7 @@ inline void R1TensorT< T_dim >::eijkAjk( const R2TensorT< T_dim >& A )
  * result into this->tdata
  */
 template<int T_dim>
+GEOSX_HOST_DEVICE
 inline void R1TensorT< T_dim >::Cross( const R1TensorT< T_dim >& a, const R1TensorT< T_dim >& b )
 {
   if (T_dim == 3)
@@ -536,8 +540,8 @@ inline void R1TensorT< T_dim >::Cross( const R1TensorT< T_dim >& a, const R1Tens
     this->t_data[1] = -(a.t_data[0] * b.t_data[2] - a.t_data[2] * b.t_data[0]);
     this->t_data[2] = a.t_data[0] * b.t_data[1] - a.t_data[1] * b.t_data[0];
   }
-  else
-    std::cout << "R1TensorT not implemented for nsdof>3";
+//  else
+//    std::cout << "R1TensorT not implemented for nsdof>3";
 
 }
 

@@ -1,4 +1,4 @@
-
+<Problem>
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="{C3D8}"
@@ -132,10 +132,6 @@
     </FiniteVolume>
   </NumericalMethods>
 
-  <InitialConditions>
-    
-  </InitialConditions>
-
   <FieldSpecifications>
     <!-- FieldSpecification name="initialMeanStress"
                initialCondition="1"
@@ -212,7 +208,4 @@
   <Functions>
   </Functions>
 
-  <Partition>
-    <SpatialPartition xPar="1" yPar="1" zPar="1"/>
-  </Partition>
-
+</Problem>

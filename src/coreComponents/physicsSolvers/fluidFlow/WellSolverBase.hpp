@@ -86,6 +86,10 @@ public:
 
   virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 
+  /// Expand catalog for schema generation
+  virtual void ExpandObjectCatalogs() override;
+
+
   /**
    * @brief setter for the name of the flow solver (needed to use the flow kernels like UpdateFluid)
    * @param name the name of the flow solver

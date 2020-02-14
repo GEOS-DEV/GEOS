@@ -21,8 +21,7 @@
       contactRelationName="fractureContact"
       maxNumResolves="2"
       >
-      <NonlinearSolverParameters name="nlsp"
-                                 newtonTol="1.0e-5"
+      <NonlinearSolverParameters newtonTol="1.0e-5"
                                  newtonMaxIter="50"
                                  lineSearchAction="1"
                                  lineSearchMaxCuts="3"/>
@@ -42,8 +41,7 @@
       solidMaterialName="rock"
       contactRelationName="fractureContact"
       >
-      <NonlinearSolverParameters name="nlsp"
-                                 newtonTol="1.0e-6"
+      <NonlinearSolverParameters newtonTol="1.0e-6"
                                  newtonMaxIter="5"/>
       <SystemSolverParameters 
         krylovTol="1.0e-10"
@@ -60,11 +58,9 @@
       solidName="rock"
       inputFluxEstimate="1"
       >
-      <NonlinearSolverParameters name="nlsp"
-                                 newtonTol="1.0e-5"
+      <NonlinearSolverParameters newtonTol="1.0e-5"
                                  newtonMaxIter="10"/>
       <SystemSolverParameters 
-        name="SystemSolverParameters"
         krylovTol="1.0e-12"
         logLevel="0"
         />
