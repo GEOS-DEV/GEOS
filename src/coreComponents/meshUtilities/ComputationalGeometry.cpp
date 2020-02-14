@@ -312,39 +312,40 @@ real64 Centroid_3DPolygon( arrayView1d<localIndex const> const & pointsIndices,
                            R1Tensor & normal )
 { return Centroid_3DPolygon( pointsIndices.data(), pointsIndices.size(), pointReferences, pointDisplacements, center, normal ); }
 
-real64 HexVolume( R1Tensor const * const X )
-{
-  R1Tensor X7_X1( X[7] );
-  X7_X1 -= X[1];
-
-  R1Tensor X6_X0( X[6] );
-  X6_X0 -= X[0];
-
-  R1Tensor X7_X2( X[7] );
-  X7_X2 -= X[2];
-
-  R1Tensor X3_X0( X[3] );
-  X3_X0 -= X[0];
-
-  R1Tensor X5_X0( X[5] );
-  X5_X0 -= X[0];
-
-  R1Tensor X7_X4( X[7] );
-  X7_X4 -= X[4];
-
-  R1Tensor X7_X1plusX6_X0( X7_X1 );
-  X7_X1plusX6_X0 += X6_X0;
-
-  R1Tensor X7_X2plusX5_X0( X7_X2 );
-  X7_X2plusX5_X0 += X5_X0;
-
-  R1Tensor X7_X4plusX3_X0( X7_X4 );
-  X7_X4plusX3_X0 += X3_X0;
-
-  return 1.0/12.0 * ( Dot( X7_X1plusX6_X0, Cross( X7_X2, X3_X0 ) ) +
-                      Dot( X6_X0, Cross( X7_X2plusX5_X0, X7_X4 ) ) +
-                      Dot( X7_X1, Cross( X5_X0, X7_X4plusX3_X0 ) ) );
-}
+//GEOSX_HOST_DEVICE
+//real64 HexVolume( R1Tensor const * const X )
+//{
+//  R1Tensor X7_X1( X[7] );
+//  X7_X1 -= X[1];
+//
+//  R1Tensor X6_X0( X[6] );
+//  X6_X0 -= X[0];
+//
+//  R1Tensor X7_X2( X[7] );
+//  X7_X2 -= X[2];
+//
+//  R1Tensor X3_X0( X[3] );
+//  X3_X0 -= X[0];
+//
+//  R1Tensor X5_X0( X[5] );
+//  X5_X0 -= X[0];
+//
+//  R1Tensor X7_X4( X[7] );
+//  X7_X4 -= X[4];
+//
+//  R1Tensor X7_X1plusX6_X0( X7_X1 );
+//  X7_X1plusX6_X0 += X6_X0;
+//
+//  R1Tensor X7_X2plusX5_X0( X7_X2 );
+//  X7_X2plusX5_X0 += X5_X0;
+//
+//  R1Tensor X7_X4plusX3_X0( X7_X4 );
+//  X7_X4plusX3_X0 += X3_X0;
+//
+//  return 1.0/12.0 * ( Dot( X7_X1plusX6_X0, Cross( X7_X2, X3_X0 ) ) +
+//                      Dot( X6_X0, Cross( X7_X2plusX5_X0, X7_X4 ) ) +
+//                      Dot( X7_X1, Cross( X5_X0, X7_X4plusX3_X0 ) ) );
+//}
 
 real64 TetVolume( R1Tensor const * const X ) {
     R1Tensor X1_X0( X[1] );
