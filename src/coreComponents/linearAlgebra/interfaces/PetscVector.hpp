@@ -281,7 +281,7 @@ public:
    * \param vec EpetraVector to dot-product with.
    *
    */
-  real64 dot( PetscVector const &vec );
+  real64 dot( PetscVector const &vec ) const;
 
   /**
    * @brief Update vector <tt>y</tt> as <tt>y</tt> = <tt>x</tt>.
