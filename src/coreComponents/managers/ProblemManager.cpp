@@ -181,7 +181,7 @@ ProblemManager::~ProblemManager()
 {}
 
 
-Group * ProblemManager::CreateChild( string const & GEOSX_UNUSED_ARG( childKey ), string const & GEOSX_UNUSED_ARG( childName ) )
+Group * ProblemManager::CreateChild( string const & GEOSX_UNUSED_PARAM( childKey ), string const & GEOSX_UNUSED_PARAM( childName ) )
 { return nullptr; }
 
 
@@ -885,7 +885,7 @@ void ProblemManager::ApplyNumericalMethods()
 }
 
 
-void ProblemManager::InitializePostSubGroups( Group * const GEOSX_UNUSED_ARG( group ) )
+void ProblemManager::InitializePostSubGroups( Group * const GEOSX_UNUSED_PARAM( group ) )
 {
 
 //  ObjectManagerBase::InitializePostSubGroups(nullptr);
