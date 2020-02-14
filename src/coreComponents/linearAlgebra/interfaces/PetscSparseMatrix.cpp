@@ -359,7 +359,7 @@ void PetscSparseMatrix::multiply( PetscVector const &src,
 // NOTE: src and dst must be different vectors
 void PetscSparseMatrix::multiply( PetscSparseMatrix const & src, 
                                   PetscSparseMatrix & dst,
-                                  bool const GEOSX_UNUSED_ARG( closeResult ) ) const
+                                  bool const GEOSX_UNUSED_PARAM( closeResult ) ) const
 {
   MatMatMult( m_mat, src.getConstMat(), MAT_INITIAL_MATRIX, PETSC_DEFAULT, dst.unwrappedNonConstPointer() );
 }
@@ -370,7 +370,7 @@ void PetscSparseMatrix::multiply( PetscSparseMatrix const & src,
 // Perform the matrix-matrix product this^T * src = dst.
 void PetscSparseMatrix::leftMultiplyTranspose( PetscSparseMatrix const & src,
                                                PetscSparseMatrix & dst,
-                                               bool const GEOSX_UNUSED_ARG( closeResult ) ) const
+                                               bool const GEOSX_UNUSED_PARAM( closeResult ) ) const
 {
   MatTransposeMatMult( m_mat, src.getConstMat(), MAT_INITIAL_MATRIX, PETSC_DEFAULT, dst.unwrappedNonConstPointer() );
 }
@@ -381,7 +381,7 @@ void PetscSparseMatrix::leftMultiplyTranspose( PetscSparseMatrix const & src,
 // Perform the matrix-matrix product src * this^T  = dst.
 void PetscSparseMatrix::rightMultiplyTranspose( PetscSparseMatrix const & src,
                                                 PetscSparseMatrix & dst,
-                                                bool const GEOSX_UNUSED_ARG( closeResult ) ) const
+                                                bool const GEOSX_UNUSED_PARAM( closeResult ) ) const
 {
   MatMatTransposeMult( m_mat, src.getConstMat(), MAT_INITIAL_MATRIX, PETSC_DEFAULT, dst.unwrappedNonConstPointer() );
 }

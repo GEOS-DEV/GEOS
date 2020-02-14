@@ -65,7 +65,7 @@ VTMMeshGenerator::~VTMMeshGenerator()
 /**
  * @param domain
  */
-void VTMMeshGenerator::GenerateElementRegions( DomainPartition& GEOSX_UNUSED_ARG( domain ) )
+void VTMMeshGenerator::GenerateElementRegions( DomainPartition& GEOSX_UNUSED_PARAM( domain ) )
 {
   //  lvector numElements;
   //
@@ -87,12 +87,12 @@ void VTMMeshGenerator::PostProcessInput()
 
 
 
-void VTMMeshGenerator::RemapMesh(dataRepository::Group * const GEOSX_UNUSED_ARG( domain ) )
+void VTMMeshGenerator::RemapMesh(dataRepository::Group * const GEOSX_UNUSED_PARAM( domain ) )
 {
 
 }
 
-Group * VTMMeshGenerator::CreateChild( string const & GEOSX_UNUSED_ARG( childKey ), string const & GEOSX_UNUSED_ARG( childName ) )
+Group * VTMMeshGenerator::CreateChild( string const & GEOSX_UNUSED_PARAM( childKey ), string const & GEOSX_UNUSED_PARAM( childName ) )
 {
   return nullptr;
 }
@@ -196,11 +196,11 @@ void VTMMeshGenerator::GenerateMesh( DomainPartition * const domain )
     }
 }
 
-void VTMMeshGenerator::GetElemToNodesRelationInBox( const std::string& GEOSX_UNUSED_ARG( elementType ),
-                                                    const int GEOSX_UNUSED_ARG( index )[],
-                                                    const int& GEOSX_UNUSED_ARG( iEle ),
-                                                    int GEOSX_UNUSED_ARG( nodeIDInBox )[],
-                                                    const int GEOSX_UNUSED_ARG( node_size ) )
+void VTMMeshGenerator::GetElemToNodesRelationInBox( const std::string& GEOSX_UNUSED_PARAM( elementType ),
+                                                    const int GEOSX_UNUSED_PARAM( index )[],
+                                                    const int& GEOSX_UNUSED_PARAM( iEle ),
+                                                    int GEOSX_UNUSED_PARAM( nodeIDInBox )[],
+                                                    const int GEOSX_UNUSED_PARAM( node_size ) )
 
 {
 

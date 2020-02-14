@@ -546,7 +546,7 @@ void CompositionalMultiphaseWell::SetupDofs( DomainPartition const * const domai
                           DofManager::Connectivity::Node );
 }
 
-void CompositionalMultiphaseWell::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time_n ),
+void CompositionalMultiphaseWell::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                                      real64 const dt,
                                                      DomainPartition const * const domain,
                                                      DofManager const * const dofManager,
@@ -826,8 +826,8 @@ void CompositionalMultiphaseWell::AssembleFluxTerms( real64 const GEOSX_UNUSED_A
   });
 }
 
-void CompositionalMultiphaseWell::AssembleVolumeBalanceTerms( real64 const GEOSX_UNUSED_ARG( time_n ),
-                                                              real64 const GEOSX_UNUSED_ARG( dt ),
+void CompositionalMultiphaseWell::AssembleVolumeBalanceTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
+                                                              real64 const GEOSX_UNUSED_PARAM( dt ),
                                                               DomainPartition const * const domain,
                                                               DofManager const * const dofManager,
                                                               ParallelMatrix * const matrix,
@@ -926,7 +926,7 @@ void CompositionalMultiphaseWell::AssembleVolumeBalanceTerms( real64 const GEOSX
 }
 
 
-void CompositionalMultiphaseWell::AssemblePerforationTerms( real64 const GEOSX_UNUSED_ARG( time_n ),
+void CompositionalMultiphaseWell::AssemblePerforationTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                                             real64 const dt,
                                                             DomainPartition const * const domain, 
                                                             DofManager const * const dofManager,
@@ -1616,8 +1616,8 @@ void CompositionalMultiphaseWell::FormControlEquation( DomainPartition const * c
 }
 
 
-void CompositionalMultiphaseWell::ImplicitStepComplete( real64 const & GEOSX_UNUSED_ARG( time ),
-                                                        real64 const & GEOSX_UNUSED_ARG( dt ),
+void CompositionalMultiphaseWell::ImplicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time ),
+                                                        real64 const & GEOSX_UNUSED_PARAM( dt ),
                                                         DomainPartition * const domain )
 {
 

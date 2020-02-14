@@ -271,7 +271,7 @@ void SinglePhaseWell::SetupDofs( DomainPartition const * const domain,
                           DofManager::Connectivity::Node );
 }
 
-void SinglePhaseWell::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time_n ),
+void SinglePhaseWell::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                          real64 const dt,
                                          DomainPartition const * const domain,
                                          DofManager const * const dofManager,
@@ -388,7 +388,7 @@ void SinglePhaseWell::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time_n )
 }
 
 
-void SinglePhaseWell::AssemblePerforationTerms( real64 const GEOSX_UNUSED_ARG( time_n ),
+void SinglePhaseWell::AssemblePerforationTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                                 real64 const dt,
                                                 DomainPartition const * const domain,
                                                 DofManager const * const dofManager,
@@ -611,12 +611,12 @@ void SinglePhaseWell::FormPressureRelations( DomainPartition const * const domai
   });
 }
 
-void SinglePhaseWell::AssembleVolumeBalanceTerms( real64 const GEOSX_UNUSED_ARG( time_n ),
-                                                  real64 const GEOSX_UNUSED_ARG( dt ),
-                                                  DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
-                                                  DofManager const * const GEOSX_UNUSED_ARG( dofManager ),
-                                                  ParallelMatrix * const GEOSX_UNUSED_ARG( matrix ),
-                                                  ParallelVector * const GEOSX_UNUSED_ARG( rhs ) )
+void SinglePhaseWell::AssembleVolumeBalanceTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
+                                                  real64 const GEOSX_UNUSED_PARAM( dt ),
+                                                  DomainPartition const * const GEOSX_UNUSED_PARAM( domain ),
+                                                  DofManager const * const GEOSX_UNUSED_PARAM( dofManager ),
+                                                  ParallelMatrix * const GEOSX_UNUSED_PARAM( matrix ),
+                                                  ParallelVector * const GEOSX_UNUSED_PARAM( rhs ) )
 {
   // not implemented for single phase flow
 }
@@ -1188,8 +1188,8 @@ void SinglePhaseWell::FormControlEquation( DomainPartition const * const domain,
 }
 
 
-void SinglePhaseWell::ImplicitStepComplete( real64 const & GEOSX_UNUSED_ARG( time ),
-                                            real64 const & GEOSX_UNUSED_ARG( dt ),
+void SinglePhaseWell::ImplicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time ),
+                                            real64 const & GEOSX_UNUSED_PARAM( dt ),
                                             DomainPartition * const domain )
 {
   MeshLevel const * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);

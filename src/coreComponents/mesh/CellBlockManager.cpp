@@ -42,7 +42,7 @@ CellBlockManager::~CellBlockManager()
 
 void CellBlockManager::resize( integer_array const & numElements,
                                string_array const & regionNames,
-                               string_array const & GEOSX_UNUSED_ARG( elementTypes ) )
+                               string_array const & GEOSX_UNUSED_PARAM( elementTypes ) )
 {
   localIndex const numRegions = integer_conversion<localIndex>(regionNames.size());
 //  Group * elementRegions = this->GetGroup(keys::cellBlocks);
@@ -62,7 +62,7 @@ void CellBlockManager::resize( integer_array const & numElements,
 ////  elemRegion->resize(numElements);
 //}
 
-Group * CellBlockManager::CreateChild( string const & GEOSX_UNUSED_ARG( childKey ), string const & GEOSX_UNUSED_ARG( childName ) )
+Group * CellBlockManager::CreateChild( string const & GEOSX_UNUSED_PARAM( childKey ), string const & GEOSX_UNUSED_PARAM( childName ) )
 {
   return nullptr;
 }

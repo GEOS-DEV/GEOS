@@ -298,7 +298,7 @@ struct FluxKernel
            arrayView2d<real64 const> const & dDens_dPres,
            arrayView1d<real64 const> const & mob,
            arrayView1d<real64 const> const & dMob_dPres,
-           localIndex const GEOSX_UNUSED_ARG( fluidIndex ),
+           localIndex const GEOSX_UNUSED_PARAM( fluidIndex ),
            real64 const dt,
            arraySlice1d<real64> const & flux,
            arraySlice2d<real64> const & fluxJacobian )
@@ -399,7 +399,7 @@ struct FluxKernel
                    arrayView1d<real64 const> const & ,//s,
                    arrayView1d<real64 const> const & ,//dSdAper,
 #endif
-                   localIndex const GEOSX_UNUSED_ARG( fluidIndex ),
+                   localIndex const GEOSX_UNUSED_PARAM( fluidIndex ),
                    real64 const dt,
                    arraySlice1d<real64> const & flux,
                    arraySlice2d<real64> const & fluxJacobian,

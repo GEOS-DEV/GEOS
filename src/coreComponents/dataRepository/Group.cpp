@@ -147,7 +147,7 @@ void Group::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
       rtTypes::TypeIDs const wrapperTypeID = rtTypes::typeID( wrapper->get_typeid());
 
       rtTypes::ApplyIntrinsicTypeLambda2( wrapperTypeID,
-                                          [&]( auto a, auto GEOSX_UNUSED_ARG( b ) )
+                                          [&]( auto a, auto GEOSX_UNUSED_PARAM( b ) )
       {
         using COMPOSITE_TYPE = decltype( a );
 
@@ -560,12 +560,12 @@ void Group::postRestartInitializationRecursive( Group * const domain )
   this->postRestartInitialization( domain );
 }
 
-void Group::SetSchemaDeviations( xmlWrapper::xmlNode GEOSX_UNUSED_ARG( schemaRoot ),
-                                 xmlWrapper::xmlNode GEOSX_UNUSED_ARG( schemaParent ),
-                                 integer GEOSX_UNUSED_ARG( documentationType ) )
+void Group::SetSchemaDeviations( xmlWrapper::xmlNode GEOSX_UNUSED_PARAM( schemaRoot ),
+                                 xmlWrapper::xmlNode GEOSX_UNUSED_PARAM( schemaParent ),
+                                 integer GEOSX_UNUSED_PARAM( documentationType ) )
 {}
 
-void Group::RegisterDataOnMesh( Group * const GEOSX_UNUSED_ARG( MeshBody ) )
+void Group::RegisterDataOnMesh( Group * const GEOSX_UNUSED_PARAM( MeshBody ) )
 {}
 
 

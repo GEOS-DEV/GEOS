@@ -75,7 +75,7 @@ size( T const & value )
 
 template< typename T >
 inline std::enable_if_t< !traits::has_size_method< T >, localIndex >
-size( T const & GEOSX_UNUSED_ARG( value ) )
+size( T const & GEOSX_UNUSED_PARAM( value ) )
 {
   return 1;
 }
@@ -124,8 +124,8 @@ resize( T & value, localIndex const newSize )
 
 template< typename T >
 inline std::enable_if_t< !traits::has_resize_method< T > >
-resize( T & GEOSX_UNUSED_ARG( value ),
-        localIndex const GEOSX_UNUSED_ARG( newSize ) )
+resize( T & GEOSX_UNUSED_PARAM( value ),
+        localIndex const GEOSX_UNUSED_PARAM( newSize ) )
 {}
 
 template< typename T >
@@ -137,7 +137,7 @@ resizeDefault( T & value, localIndex const newSize, DefaultValue< T > const & de
 
 template< typename T >
 inline std::enable_if_t< !traits::has_resize_default_method< T, typename DefaultValue< T >::value_type > >
-resizeDefault( T & value, localIndex const newSize, DefaultValue< T > const & GEOSX_UNUSED_ARG( defaultValue ) )
+resizeDefault( T & value, localIndex const newSize, DefaultValue< T > const & GEOSX_UNUSED_PARAM( defaultValue ) )
 {
   resize( value, newSize );
 }
