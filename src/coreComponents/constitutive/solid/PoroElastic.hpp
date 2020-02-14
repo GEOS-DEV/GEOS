@@ -60,11 +60,20 @@ public:
 
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
+
+    static constexpr auto compressibilityString =  "compressibility" ;
+    static constexpr auto referencePressureString =  "referencePressure" ;
     static constexpr auto biotCoefficientString =  "BiotCoefficient" ;
   };
 
 
 protected:
+  /// scalar compressibility parameter
+  real64 m_compressibility;
+
+  /// reference pressure parameter
+  real64 m_referencePressure;
+
   /// scalar Biot's coefficient
   real64 m_biotCoefficient;
 

@@ -944,19 +944,19 @@ void SolidMechanicsLagrangianFEM::ApplyTractionBC_explicit( real64 const time,
   real64_array const & faceArea  = faceManager->getReference<real64_array>("faceArea");
   ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
 
-  arrayView1d<R1Tensor> const & acc = nodeManager->getReference<array1d<R1Tensor>>(keys::Acceleration);
+  arrayView2d<real64, nodes::ACCELERATION_USD> const & acc = nodeManager->acceleration();
 
 //  arrayView1d<integer const> const & faceGhostRank = faceManager->GhostRank();
 
   fsManager.Apply( time,
-                    domain,
-                    "faceManager",
-                    string("Traction"),
-                    [&]( FieldSpecificationBase const * const bc,
-                    string const &,
-                    set<localIndex> const & targetSet,
-                    Group * const GEOSX_UNUSED_ARG( targetGroup ),
-                    string const GEOSX_UNUSED_ARG( fieldName ) ) -> void
+                   domain,
+                   "faceManager",
+                   string("Traction"),
+                   [&]( FieldSpecificationBase const * const bc,
+                        string const &,
+                        set<localIndex> const & targetSet,
+                        Group * const GEOSX_UNUSED_ARG( targetGroup ),
+                        string const GEOSX_UNUSED_ARG( fieldName ) )
   {
     string const & functionName = bc->getReference<string>( FieldSpecificationBase::viewKeyStruct::functionNameString);
 
@@ -971,7 +971,7 @@ void SolidMechanicsLagrangianFEM::ApplyTractionBC_explicit( real64 const time,
           localIndex const numNodes = faceToNodeMap.sizeOfArray( kf );
           for( localIndex a=0 ; a<numNodes ; ++a )
           {
-            acc[faceToNodeMap(kf, a)][component] += bc->GetScale() * faceArea[kf] / numNodes;
+            acc(faceToNodeMap(kf, a), component) += bc->GetScale() * faceArea[kf] / numNodes;
           }
 //        }
       }
@@ -991,7 +991,7 @@ void SolidMechanicsLagrangianFEM::ApplyTractionBC_explicit( real64 const time,
               localIndex const numNodes = faceToNodeMap.sizeOfArray( kf );
               for( localIndex a=0 ; a<numNodes ; ++a )
               {
-                acc[faceToNodeMap(kf, a)][component] += value * faceArea[kf] / numNodes;
+                acc(faceToNodeMap(kf, a), component) += value * faceArea[kf] / numNodes;
               }
 //            }
           }
@@ -1009,7 +1009,7 @@ void SolidMechanicsLagrangianFEM::ApplyTractionBC_explicit( real64 const time,
               localIndex const numNodes = faceToNodeMap.sizeOfArray( kf );
               for( localIndex a=0 ; a<numNodes ; ++a )
               {
-                acc[faceToNodeMap(kf, a)][component] += result[kf] * faceArea[kf] / numNodes;
+                acc(faceToNodeMap(kf, a), component) += result[kf] * faceArea[kf] / numNodes;
               }
 //            }
           }

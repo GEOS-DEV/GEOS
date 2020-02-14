@@ -1430,6 +1430,8 @@
 	<xsd:complexType name="PoroLinearElasticAnisotropicType">
 		<!--BiotCoefficient => Biot's coefficient-->
 		<xsd:attribute name="BiotCoefficient" type="real64" default="0" />
+		<!--compressibility => Fluid Compressibilty-->
+		<xsd:attribute name="compressibility" type="real64" default="-1" />
 		<!--defaultC11 => Default for the 11 component of the Elastic Stiffness Tensor in Voigt notation-->
 		<xsd:attribute name="defaultC11" type="real64" use="required" />
 		<!--defaultC12 => Default for the 12 component of the Elastic Stiffness Tensor in Voigt notation-->
@@ -1504,12 +1506,16 @@
 		<xsd:attribute name="defaultC66" type="real64" use="required" />
 		<!--defaultDensity => Default Material Density-->
 		<xsd:attribute name="defaultDensity" type="real64" use="required" />
+		<!--referencePressure => ReferencePressure-->
+		<xsd:attribute name="referencePressure" type="real64" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="PoroLinearElasticIsotropicType">
 		<!--BiotCoefficient => Biot's coefficient-->
 		<xsd:attribute name="BiotCoefficient" type="real64" default="0" />
+		<!--compressibility => Fluid Compressibilty-->
+		<xsd:attribute name="compressibility" type="real64" default="-1" />
 		<!--defaultBulkModulus => Elastic Bulk Modulus Parameter-->
 		<xsd:attribute name="defaultBulkModulus" type="real64" default="-1" />
 		<!--defaultDensity => Default Material Density-->
@@ -1520,12 +1526,16 @@
 		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
 		<!--defaultYoungsModulus => Elastic Young's Modulus.-->
 		<xsd:attribute name="defaultYoungsModulus" type="real64" default="-1" />
+		<!--referencePressure => ReferencePressure-->
+		<xsd:attribute name="referencePressure" type="real64" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="PoroLinearViscoElasticAnisotropicType">
 		<!--BiotCoefficient => Biot's coefficient-->
 		<xsd:attribute name="BiotCoefficient" type="real64" default="0" />
+		<!--compressibility => Fluid Compressibilty-->
+		<xsd:attribute name="compressibility" type="real64" default="-1" />
 		<!--defaultC11 => Default for the 11 component of the Elastic Stiffness Tensor in Voigt notation-->
 		<xsd:attribute name="defaultC11" type="real64" use="required" />
 		<!--defaultC12 => Default for the 12 component of the Elastic Stiffness Tensor in Voigt notation-->
@@ -1600,6 +1610,8 @@
 		<xsd:attribute name="defaultC66" type="real64" use="required" />
 		<!--defaultDensity => Default Material Density-->
 		<xsd:attribute name="defaultDensity" type="real64" use="required" />
+		<!--referencePressure => ReferencePressure-->
+		<xsd:attribute name="referencePressure" type="real64" default="0" />
 		<!--viscosity => Material Viscosity-->
 		<xsd:attribute name="viscosity" type="real64" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -1608,6 +1620,8 @@
 	<xsd:complexType name="PoroLinearViscoElasticIsotropicType">
 		<!--BiotCoefficient => Biot's coefficient-->
 		<xsd:attribute name="BiotCoefficient" type="real64" default="0" />
+		<!--compressibility => Fluid Compressibilty-->
+		<xsd:attribute name="compressibility" type="real64" default="-1" />
 		<!--defaultBulkModulus => Elastic Bulk Modulus Parameter-->
 		<xsd:attribute name="defaultBulkModulus" type="real64" default="-1" />
 		<!--defaultDensity => Default Material Density-->
@@ -1618,6 +1632,8 @@
 		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
 		<!--defaultYoungsModulus => Elastic Young's Modulus.-->
 		<xsd:attribute name="defaultYoungsModulus" type="real64" default="-1" />
+		<!--referencePressure => ReferencePressure-->
+		<xsd:attribute name="referencePressure" type="real64" default="0" />
 		<!--viscosity => Material Viscosity-->
 		<xsd:attribute name="viscosity" type="real64" default="0" />
 		<!--name => A name is required for any non-unique nodes-->

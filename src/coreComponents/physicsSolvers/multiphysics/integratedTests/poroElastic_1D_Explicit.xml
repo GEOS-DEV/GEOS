@@ -28,17 +28,16 @@
       >
     </SolidMechanics_LagrangianFEM>
   
-    <SinglePhaseFlow 
+    <SinglePhaseFVM 
          name="SinglePhaseFlow"
          timeIntegrationOption="ExplicitTransient"
          cflFactor="0.25"
-         gravityFlag="1"
          discretization="singlePhaseTPFA"
          targetRegions="{Region2}"
          fluidName="water"
          solidName="rock"
       >
-    </SinglePhaseFlow>
+    </SinglePhaseFVM>
     
   </Solvers>
   
@@ -183,29 +182,23 @@
                fieldName="fluidMass"
                scale="320"/>
 
-	<FieldSpecification name="xposconstraint" 
+	<!--FieldSpecification name="xposconstraint" 
                objectPath="faceManager" 
                fieldName="Traction" 
                component="0" 
                scale="-10000" 
                setNames="{xneg}"
-               functionName="timeFunction"/>
-
+               functionName="timeFunction"/-->
 
   </FieldSpecifications>
 
   <Functions>   
     <TableFunction     name="timeFunction"         inputVarNames="{time}" coordinates="{0.0, 1.0, 6e4}" values="{0.0, 1.0, 1.0}" />
   </Functions>
-  
-  <Partition>
-    <SpatialPartition xPar="1" yPar="1" zPar="1"/>
-  </Partition>
 
   <Outputs>
       <Silo name="siloOutput"
-            plotFileRoot="poroElastic_1D_Explicit"
-            plotLevel="3"/>
+            plotFileRoot="poroElastic_1D_Explicit"/>
   </Outputs>
 
 </Problem>

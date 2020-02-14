@@ -763,18 +763,18 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
       }
     });
   }
-/*
+
   // apply aperture boundary condition in the explicit solver
   FaceElementSubRegion const * const faceElementSubRegion = elementManager.GetRegion(m_fractureRegionName)->GetSubRegion<FaceElementSubRegion>(0);
   set<localIndex> const & newFaceElems = faceElementSubRegion->m_newFaceElements;
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
-  fsManager.Apply( time, domain, "ElementRegions", FaceElementSubRegion::viewKeyStruct::elementApertureString,
+  fsManager.Apply( time_np1, domain, "ElementRegions", FaceElementSubRegion::viewKeyStruct::elementApertureString,
                     [&]( FieldSpecificationBase const * const fs,
                          string const &,
                          set<localIndex> const & lset,
                          Group * const targetGroup,
-                         string const & ) -> void
+                         string const & )
   {
     set<localIndex> newSet;
     for( localIndex index : newFaceElems )
@@ -785,17 +785,17 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
       }
     }
     fs->ApplyFieldValue<FieldSpecificationEqual>( newSet,
-                                                  time,
+                                                  time_np1,
                                                   targetGroup,
                                                   FaceElementSubRegion::viewKeyStruct::elementApertureString );
   });
 
-  fsManager.Apply( time, domain, "ElementRegions", FaceElementSubRegion::viewKeyStruct::elementApertureOffsetString,
+  fsManager.Apply( time_np1, domain, "ElementRegions", FaceElementSubRegion::viewKeyStruct::elementApertureOffsetString,
                     [&]( FieldSpecificationBase const * const fs,
                          string const &,
                          set<localIndex> const & lset,
                          Group * const targetGroup,
-                         string const & ) -> void
+                         string const & )
   {
     set<localIndex> newSet;
     for( localIndex index : newFaceElems )
@@ -806,7 +806,7 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
       }
     }
     fs->ApplyFieldValue<FieldSpecificationEqual>( newSet,
-                                                  time,
+                                                  time_np1,
                                                   targetGroup,
                                                   FaceElementSubRegion::viewKeyStruct::elementApertureOffsetString );
   });
@@ -819,7 +819,7 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
       subRegion->CalculateElementGeometricQuantities( nodeManager, faceManager );
     });
   });
-*/
+
   real64 ruptureRate = calculateRuptureRate( *(elementManager.GetRegion<FaceElementRegion>(this->m_fractureRegionName)), edgeManager);
 
   GEOSX_LOG_LEVEL_RANK_0( 3, "rupture rate is " << ruptureRate);

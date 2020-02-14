@@ -507,7 +507,7 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
     });
 
     // update matrix volume and porosity
-    arrayView1d<R1Tensor> const & X = nodeManager->getReference<r1_array>(nodeManager->viewKeys.referencePosition);
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager->referencePosition();
 
     ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const volume =
       elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(CellElementSubRegion::viewKeyStruct::elementVolumeString);
@@ -1016,7 +1016,7 @@ ApplyContactAndPressureToFacesInExplicitSolver( DomainPartition * const domain )
   arrayView1d<R1Tensor const> const & faceNormal = faceManager->faceNormal();
   ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
 
-  arrayView1d<R1Tensor> const & acc = nodeManager->getReference<array1d<R1Tensor>>(keys::Acceleration);
+  arrayView2d<real64, nodes::ACCELERATION_USD> const & acc = nodeManager->acceleration();
 
   elemManager->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion * const subRegion )->void
   {
@@ -1050,7 +1050,7 @@ ApplyContactAndPressureToFacesInExplicitSolver( DomainPartition * const domain )
           {
             for( int i=0 ; i<3 ; ++i )
             {
-              acc[faceToNodeMap(faceIndex, a)][i] += - nodalForce[i] * pow(-1,kf);
+              acc(faceToNodeMap(faceIndex, a), i) += - nodalForce[i] * pow(-1,kf);
             }
           }
         }
