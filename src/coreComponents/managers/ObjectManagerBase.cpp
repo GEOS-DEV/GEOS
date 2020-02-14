@@ -777,7 +777,7 @@ void ObjectManagerBase::SetReceiveLists()
 }
 
 integer ObjectManagerBase::SplitObject( localIndex const indexToSplit,
-                                        int const GEOSX_UNUSED_ARG( rank ),
+                                        int const GEOSX_UNUSED_PARAM( rank ),
                                         localIndex & newIndex )
 {
 

@@ -70,8 +70,8 @@ public:
    */
   virtual const string getCatalogName() const override { return WellElementSubRegion::CatalogName(); }
 
-  virtual void CalculateElementGeometricQuantities( NodeManager const & GEOSX_UNUSED_ARG( nodeManager ),
-                                                    FaceManager const & GEOSX_UNUSED_ARG( faceManager ) ) override 
+  virtual void CalculateElementGeometricQuantities( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
+                                                    FaceManager const & GEOSX_UNUSED_PARAM( faceManager ) ) override 
   {}
 
   virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override;
@@ -327,7 +327,6 @@ private:
    * @param[in] meshLevel the mesh object (single level only)
    * @param[in] wellGeometry the InternalWellGenerator containing the global well topology
    * @param[in] localElems set of local well elems. At this point all the well elems have been assigned
-   * @param[in] localNodes set of local well nodes (includes boundary nodes)
    * @param[in] nodeOffsetGlobal the offset of the first global well node ( = offset of last global mesh node + 1 )
    * @param[in] elemOffsetGlobal the offset of the first global well element ( = offset of last global mesh elem + 1 )
    */ 

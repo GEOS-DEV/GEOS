@@ -198,7 +198,7 @@ void SpanWagnerCO2DensityFunction::MakeTable(string_array const & inputPara)
 }
 
 
-void SpanWagnerCO2DensityFunction::Evaluation(EvalVarArgs const & pressure, EvalVarArgs const & temperature, arraySlice1d<EvalVarArgs const> const & GEOSX_UNUSED_ARG( phaseComposition ), EvalVarArgs & value, bool useMass) const
+void SpanWagnerCO2DensityFunction::Evaluation(EvalVarArgs const & pressure, EvalVarArgs const & temperature, arraySlice1d<EvalVarArgs const> const & GEOSX_UNUSED_PARAM( phaseComposition ), EvalVarArgs & value, bool useMass) const
 {
 
   EvalArgs2D P, T, density;

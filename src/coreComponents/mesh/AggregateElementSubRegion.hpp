@@ -66,13 +66,13 @@ public:
     return m_fineToCoarse;
   }
 
-  virtual void CalculateElementGeometricQuantities( NodeManager const & GEOSX_UNUSED_ARG( nodeManager ),
-                                                    FaceManager const & GEOSX_UNUSED_ARG( faceManager ) ) override
+  virtual void CalculateElementGeometricQuantities( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
+                                                    FaceManager const & GEOSX_UNUSED_PARAM( faceManager ) ) override
   {
       //TODO ?
   }
 
-  virtual void setupRelatedObjectsInRelations( MeshLevel const * const GEOSX_UNUSED_ARG( mesh ) ) override
+  virtual void setupRelatedObjectsInRelations( MeshLevel const * const GEOSX_UNUSED_PARAM( mesh ) ) override
   {
     //TODO ?
   }
