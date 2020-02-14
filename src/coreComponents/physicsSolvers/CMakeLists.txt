@@ -27,7 +27,7 @@ set( physicsSolvers_headers
      solidMechanics/SolidMechanicsLagrangianFEM.hpp
      solidMechanics/SolidMechanicsLagrangianSSLE.hpp
      solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp
-     solidMechanics/SolidMechanicsLagrangianSSLEKernels.hpp
+     solidMechanics/SolidMechanicsLagrangianSSLEKernels.hpp     
      surfaceGeneration/SurfaceGenerator.hpp
      )
 

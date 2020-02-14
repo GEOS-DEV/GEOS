@@ -382,7 +382,7 @@ void EpetraMatrix::gemv( real64 const alpha,
                          EpetraVector const & x,
                          real64 const beta,
                          EpetraVector & y,
-                         bool useTranspose )
+                         bool useTranspose ) const
 {
   EpetraVector Ax( y );
   m_matrix->Multiply( useTranspose, *x.unwrappedPointer(), *Ax.unwrappedPointer() );
@@ -423,14 +423,14 @@ localIndex EpetraMatrix::maxRowLength() const
   return m_matrix->MaxNumEntries();
 }
 
-localIndex EpetraMatrix::getLocalRowLocalLength( localIndex localRow )
+localIndex EpetraMatrix::localRowLength( localIndex localRowIndex ) const
 {
-  return m_matrix->NumMyEntries( localRow );
+  return m_matrix->NumMyEntries( integer_conversion< int >( localRowIndex ) );
 }
 
-localIndex EpetraMatrix::getLocalRowGlobalLength( localIndex localRow )
+localIndex EpetraMatrix::globalRowLength( globalIndex globalRowIndex ) const
 {
-  return m_matrix->NumGlobalEntries( m_matrix->GRID64(localRow) );
+  return m_matrix->NumGlobalEntries( globalRowIndex );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""

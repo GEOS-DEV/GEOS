@@ -257,7 +257,7 @@ void PetscVector::scale( real64 const scalingFactor )
 // Dot
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Dot product with the vector vec.
-real64 PetscVector::dot( PetscVector const &vec )
+real64 PetscVector::dot( PetscVector const &vec ) const
 {
   real64 dot;
   VecDot( m_vec, vec.m_vec, &dot );

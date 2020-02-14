@@ -23,17 +23,19 @@
 #include "mpiCommunications/MpiWrapper.hpp"
 
 // BEGIN_RST_NARRATIVE testLAOperations.rst
+
 // ==============================
 // Compute Identity
 // ==============================
 // This function computes the identity matrix. It can be used to generate a dummy
 // preconditioner.
 template<typename LAI>
-typename LAI::ParallelMatrix computeIdentity( MPI_Comm comm,
-                                              geosx::globalIndex N )
+void computeIdentity( MPI_Comm comm,
+                      geosx::globalIndex n,
+                      typename LAI::ParallelMatrix &I )
 {
-  // Declare matrix
-  typename LAI::ParallelMatrix I;
+  // total dofs = n^2
+  geosx::globalIndex N = n * n;
 
   // Create a matrix of size N with 1 non-zero per row
   I.createWithGlobalSize( N, 1, comm );
@@ -47,9 +49,6 @@ typename LAI::ParallelMatrix computeIdentity( MPI_Comm comm,
 
   // Close the matrix (make data contiguous in memory)
   I.close();
-
-  // Return the matrix.
-  return I;
 }
 
 /**
@@ -66,14 +65,12 @@ typename LAI::ParallelMatrix computeIdentity( MPI_Comm comm,
 // matrices arise from a classical finite volume formulation on a cartesian mesh
 // (5-point stencil).  Input is the mesh size, n, from which the total dofs is N = n^2;
 template<typename LAI>
-typename LAI::ParallelMatrix compute2DLaplaceOperator( MPI_Comm comm,
-                                                       geosx::globalIndex n )
+void compute2DLaplaceOperator( MPI_Comm comm,
+                               geosx::globalIndex n,
+			        		             typename LAI::ParallelMatrix &laplace2D )
 {
   // total dofs = n^2
   geosx::globalIndex N = n * n;
-
-  // Declare matrix
-  typename LAI::ParallelMatrix laplace2D;
 
   // Create a matrix of global size N with 5 non-zeros per row
   laplace2D.createWithGlobalSize( N, 5, comm );
@@ -132,8 +129,6 @@ typename LAI::ParallelMatrix compute2DLaplaceOperator( MPI_Comm comm,
   // Close the matrix (make data contiguous in memory)
   laplace2D.close();
 
-  // Return the matrix
-  return laplace2D;
 }
 
 //@}
