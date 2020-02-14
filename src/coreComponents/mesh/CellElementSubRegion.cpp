@@ -80,16 +80,6 @@ void CellElementSubRegion::ConstructSubRegionFromFaceSet( FaceManager const * co
 
 }
 
-void CellElementSubRegion::MaterialPassThru( string const & GEOSX_UNUSED_ARG( matName ),
-                                             string const & GEOSX_UNUSED_ARG( setName ),
-                                             set<localIndex> & GEOSX_UNUSED_ARG( materialSet ),
-                                             Group * GEOSX_UNUSED_ARG( material ) )
-{}
-
-
-
-
-
 void CellElementSubRegion::ViewPackingExclusionList( set<localIndex> & exclusionList ) const
 {
   ObjectManagerBase::ViewPackingExclusionList(exclusionList);
