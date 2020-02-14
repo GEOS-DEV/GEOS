@@ -246,10 +246,12 @@ class CustomVTUXMLWriter
       outputString.resize(FindBase64StringLength( sizeof( real64 ) * 3 ) );
       for ( localIndex i = 0; i < vertices.size( 0 ); ++i )
       {
+        real64_array vertex(3);
         for ( localIndex j = 0; j < 3; ++j )
         {
-          stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( &vertices( i, j ) ), outputString, sizeof( real64 ) );
+          vertex[j] = vertices( i, j );
         }
+          stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( vertex.data() ), outputString, 3 * sizeof( real64 ) );
       }
       DumpBuffer( stream );
     }
