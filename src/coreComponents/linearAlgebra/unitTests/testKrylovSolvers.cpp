@@ -64,8 +64,14 @@ void testGEOSXSolvers()
   globalIndex N = n * n;
 
   // Compute a 2D Laplace operator and identity matrix
-  Matrix matrix = compute2DLaplaceOperator<LAI>( MPI_COMM_WORLD, n );
-  Matrix identity = computeIdentity<LAI>( MPI_COMM_WORLD, N );
+  Matrix matrix;
+  Matrix identity;
+  compute2DLaplaceOperator<LAI>( MPI_COMM_WORLD,
+                                 n,
+                                 matrix );
+  computeIdentity<LAI>( MPI_COMM_WORLD,
+                        n,
+                        identity );
 
   // Define vectors
   Vector x_true,
@@ -127,8 +133,14 @@ void testGEOSXBlockSolvers()
   globalIndex n = 100;
   globalIndex N = n * n;
 
-  Matrix matrix = compute2DLaplaceOperator<LAI>( MPI_COMM_WORLD, n );
-  Matrix identity = computeIdentity<LAI>( MPI_COMM_WORLD, N );
+  Matrix matrix;
+  Matrix identity;
+  compute2DLaplaceOperator<LAI>( MPI_COMM_WORLD,
+                                 n,
+                                 matrix );
+  computeIdentity<LAI>( MPI_COMM_WORLD,
+                        n,
+                        identity );
 
   Vector x_true,
     x_comp_0,
