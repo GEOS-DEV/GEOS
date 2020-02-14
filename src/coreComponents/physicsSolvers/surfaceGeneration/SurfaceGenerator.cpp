@@ -2947,8 +2947,22 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
   detJ = elementManager.ConstructViewAccessor< array2d<real64> >(keys::detJ);
 
 
-  for (localIndex const trailingFaceIndex : m_trailingFaces)
+
+  nodeManager.totalDisplacement().move( chai::CPU, false );
+  elementManager.forElementSubRegions<CellElementSubRegion>( [&]( CellElementSubRegion * const subRegion )
   {
+    subRegion->GetConstitutiveModels()->GetGroup(m_solidMaterialName)->
+    getReference<array3d<real64, solid::STRESS_PERMUTATION> >( SolidBase::viewKeyStruct::stressString ).move( chai::CPU,
+                                                                                                              false );
+  });
+
+
+
+  for (localIndex const trailingFaceIndex : m_trailingFaces)
+//  RAJA::forall< parallelHostPolicy >( RAJA::TypedRangeSegment< localIndex >( 0, m_trailingFaces.size() ),
+//                                      GEOSX_HOST_DEVICE_LAMBDA ( localIndex const trailingFacesCounter )
+  {
+//    localIndex const trailingFaceIndex = m_trailingFaces[ trailingFacesCounter ];
     R1Tensor faceNormalVector = faceNormal[trailingFaceIndex];//TODO: check if a ghost face still has the correct attributes such as normal vector, face center, face index.
     localIndex_array unpinchedNodeID;
     localIndex_array pinchedNodeID;
@@ -3274,7 +3288,7 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
         }
       }
     }
-  }
+  } //);
 }
 
 realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
