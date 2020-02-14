@@ -512,7 +512,7 @@ if( ENABLE_SUPERLU_DIST)
     endif()
 
     blt_register_library( NAME superlu_dist
-                          DEPENDS_ON lapack blas
+                          DEPENDS_ON parmetis metis lapack blas
                           INCLUDES ${SUPERLU_DIST_INCLUDE_DIRS} 
                           LIBRARIES ${SUPERLU_DIST_LIBRARY}
                           TREAT_INCLUDES_AS_SYSTEM ON )

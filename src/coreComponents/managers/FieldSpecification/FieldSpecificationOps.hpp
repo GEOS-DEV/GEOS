@@ -400,7 +400,13 @@ struct FieldSpecificationEqual : public FieldSpecificationOp<OpEqual>
                                          globalIndex * const dof,
                                          real64 * const values )
   {
-    rhs.set( dof, values, num );
+    for( localIndex a = 0 ; a < num ; ++a )
+    {
+      if( rhs.getLocalRowID( dof[a] ) >= 0 )
+      {
+        rhs.set( dof[a], values[a] );
+      }
+    }
   }
 };
 
