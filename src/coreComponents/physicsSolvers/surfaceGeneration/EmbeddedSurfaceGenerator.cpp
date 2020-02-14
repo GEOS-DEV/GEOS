@@ -179,23 +179,23 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
   GEOSX_LOG_LEVEL_RANK_0(1, "Number of embedded surface elements: " << embeddedSurfaceSubRegion->size() );
 }
 
-void EmbeddedSurfaceGenerator::InitializePostInitialConditions_PreSubGroups( Group * const  GEOSX_UNUSED_ARG ( problemManager ) )
+void EmbeddedSurfaceGenerator::InitializePostInitialConditions_PreSubGroups( Group * const  GEOSX_UNUSED_PARAM ( problemManager ) )
 {
   // I don't think there is  much to do here.
 }
 
 
-void EmbeddedSurfaceGenerator::postRestartInitialization( Group * const GEOSX_UNUSED_ARG( domain0 ) )
+void EmbeddedSurfaceGenerator::postRestartInitialization( Group * const GEOSX_UNUSED_PARAM( domain0 ) )
 {
   // Not sure about this for now.
   std::cout << "postRestartInitialization \n";
 }
 
 
-real64 EmbeddedSurfaceGenerator::SolverStep( real64 const & GEOSX_UNUSED_ARG( time_n),
-                                             real64 const & GEOSX_UNUSED_ARG( dt ),
-                                             const int GEOSX_UNUSED_ARG( cycleNumber ),
-                                             DomainPartition * const  GEOSX_UNUSED_ARG( domain ) )
+real64 EmbeddedSurfaceGenerator::SolverStep( real64 const & GEOSX_UNUSED_PARAM( time_n),
+                                             real64 const & GEOSX_UNUSED_PARAM( dt ),
+                                             const int GEOSX_UNUSED_PARAM( cycleNumber ),
+                                             DomainPartition * const  GEOSX_UNUSED_PARAM( domain ) )
 {
   real64 rval = 0;
   /*

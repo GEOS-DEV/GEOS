@@ -71,8 +71,8 @@ public:
   virtual void Execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
-                        integer const GEOSX_UNUSED_ARG( eventCounter ),
-                        real64 const  GEOSX_UNUSED_ARG( eventProgress ),
+                        integer const GEOSX_UNUSED_PARAM( eventCounter ),
+                        real64 const  GEOSX_UNUSED_PARAM( eventProgress ),
                         dataRepository::Group * domain ) override
   {
     SolverStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>());

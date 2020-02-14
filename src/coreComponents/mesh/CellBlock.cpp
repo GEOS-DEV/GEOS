@@ -253,39 +253,6 @@ void CellBlock::SetElementType( string const & elementType)
   if (!m_elementTypeString.compare(0, 4, "C3D8"))
   {
     // Hexahedron
-    m_toNodesRelation.resize(0,8);
-    m_toEdgesRelation.resize(0,12);
-    m_toFacesRelation.resize(0,6);
-  }
-  else if (!m_elementTypeString.compare(0, 4, "C3D4"))
-  {
-    // Tetrahedron
-    m_toNodesRelation.resize(0,4);
-    m_toEdgesRelation.resize(0,6);
-    m_toFacesRelation.resize(0,4);
-  }
-  else if (!m_elementTypeString.compare(0, 4, "C3D6"))
-  {
-    // Triangular prism
-    m_toNodesRelation.resize(0,8);
-    m_toEdgesRelation.resize(0,9);
-    m_toFacesRelation.resize(0,5);
-  }
-  else if (!m_elementTypeString.compare(0, 4, "C3D5"))
-  {
-    // Pyramid
-    m_toNodesRelation.resize(0,5);
-    m_toEdgesRelation.resize(0,8);
-    m_toFacesRelation.resize(0,5);
-  }
-  else
-  {
-    GEOSX_ERROR("Error.  Don't know what kind of element this is.");
-  }
-
-  if (!m_elementTypeString.compare(0, 4, "C3D8"))
-  {
-    // Hexahedron
     this->numNodesPerElement() = 8;
     this->numEdgesPerElement() = 12;
     this->numFacesPerElement() = 6;
@@ -310,7 +277,14 @@ void CellBlock::SetElementType( string const & elementType)
     this->numNodesPerElement() = 5;
     this->numEdgesPerElement() = 8;
     this->numFacesPerElement() = 5;
+  }else
+  {
+    GEOSX_ERROR("Error.  Don't know what kind of element this is.");
   }
+
+  m_toNodesRelation.resize(0, m_numNodesPerElement);
+  m_toEdgesRelation.resize(0, m_numEdgesPerElement);
+  m_toFacesRelation.resize(0, m_numFacesPerElement);
 
 }
 

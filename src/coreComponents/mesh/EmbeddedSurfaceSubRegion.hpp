@@ -43,9 +43,9 @@ class EmbeddedSurfaceSubRegion : public ElementSubRegionBase
 {
 public:
 
-    using NodeMapType = InterObjectRelation<array1d<array1d<localIndex>>>;
-    using EdgeMapType = InterObjectRelation<array1d<array1d<localIndex>>>;
-    using FaceMapType = InterObjectRelation<array2d<localIndex>>;
+    using NodeMapType = InterObjectRelation< array2d< localIndex, cells::NODE_MAP_PERMUTATION > >;
+    using FaceMapType = FixedOneToManyRelation;
+    using EdgeMapType = InterObjectRelation<ArrayOfArrays<localIndex>>;
 
     static const string CatalogName()
     { return "EmbeddedSurfaceSubRegion"; }
