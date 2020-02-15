@@ -65,7 +65,7 @@ void MeshLevel::InitializePostInitialConditions_PostSubGroups( Group * const )
 }
 
 
-void MeshLevel::GenerateAdjacencyLists( localIndex_array & seedNodeList,
+void MeshLevel::GenerateAdjacencyLists( arrayView1d< localIndex const > const & seedNodeList,
                                         localIndex_array & nodeAdjacencyList,
                                         localIndex_array & edgeAdjacencyList,
                                         localIndex_array & faceAdjacencyList,
@@ -74,11 +74,11 @@ void MeshLevel::GenerateAdjacencyLists( localIndex_array & seedNodeList,
 {
   NodeManager * const nodeManager = getNodeManager();
 
-  ArrayOfArraysView<localIndex> const & nodeToElementRegionList = nodeManager->elementRegionList();
+  ArrayOfArraysView<localIndex const> const & nodeToElementRegionList = nodeManager->elementRegionList();
 
-  ArrayOfArraysView<localIndex> const & nodeToElementSubRegionList = nodeManager->elementSubRegionList();
+  ArrayOfArraysView<localIndex const> const & nodeToElementSubRegionList = nodeManager->elementSubRegionList();
 
-  ArrayOfArraysView<localIndex> const & nodeToElementList = nodeManager->elementList();
+  ArrayOfArraysView<localIndex const> const & nodeToElementList = nodeManager->elementList();
 
 
   FaceManager * const faceManager = this->getFaceManager();
@@ -145,21 +145,14 @@ void MeshLevel::GenerateAdjacencyLists( localIndex_array & seedNodeList,
         }
       });
     }
-    nodeAdjacencyList.clear();
-    nodeAdjacencyList.resize( integer_conversion<localIndex>(nodeAdjacencySet.size()));
-    std::copy(nodeAdjacencySet.begin(), nodeAdjacencySet.end(), nodeAdjacencyList.begin() );
-
   }
 
-  nodeAdjacencyList.clear();
   nodeAdjacencyList.resize(integer_conversion<localIndex>(nodeAdjacencySet.size()));
   std::copy(nodeAdjacencySet.begin(), nodeAdjacencySet.end(), nodeAdjacencyList.begin() );
 
-  edgeAdjacencyList.clear();
   edgeAdjacencyList.resize(integer_conversion<localIndex>(edgeAdjacencySet.size()));
   std::copy(edgeAdjacencySet.begin(), edgeAdjacencySet.end(), edgeAdjacencyList.begin() );
 
-  faceAdjacencyList.clear();
   faceAdjacencyList.resize(integer_conversion<localIndex>(faceAdjacencySet.size()));
   std::copy(faceAdjacencySet.begin(), faceAdjacencySet.end(), faceAdjacencyList.begin() );
 

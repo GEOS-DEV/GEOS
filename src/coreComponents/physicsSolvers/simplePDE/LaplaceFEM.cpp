@@ -300,7 +300,7 @@ void LaplaceFEM::ApplySystemSolution( DofManager const & dofManager,
   CommunicationTools::
   SynchronizeFields( fieldNames,
                      domain->getMeshBody( 0 )->getMeshLevel( 0 ),
-                     domain->getReference<array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
+                     domain->getNeighbors() );
 }
 
 void LaplaceFEM::ApplyBoundaryConditions( real64 const time_n,

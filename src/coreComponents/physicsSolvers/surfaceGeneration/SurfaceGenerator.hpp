@@ -96,7 +96,7 @@ public:
 
   int SeparationDriver( DomainPartition * domain,
                         MeshLevel * const mesh,
-                        array1d<NeighborCommunicator> & neighbors,
+                        std::vector<NeighborCommunicator> & neighbors,
                         int const tileColor,
                         int const numTileColors,
                         const bool prefrac,
