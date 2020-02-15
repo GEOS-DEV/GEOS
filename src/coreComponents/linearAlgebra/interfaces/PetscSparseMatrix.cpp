@@ -544,7 +544,7 @@ void PetscSparseMatrix::multiply( PetscSparseMatrix const & src,
 // Perform the matrix-matrix product this^T * src = dst.
 void PetscSparseMatrix::leftMultiplyTranspose( PetscSparseMatrix const & src,
                                                PetscSparseMatrix & dst,
-                                               bool const GEOSX_UNUSED_ARG( closeResult ) ) const
+                                               bool const closeResult ) const
 {
   GEOSX_ASSERT( !isOpen() );
   GEOSX_ASSERT( isAssembled() );
@@ -558,6 +558,8 @@ void PetscSparseMatrix::leftMultiplyTranspose( PetscSparseMatrix const & src,
   }
 
   MatTransposeMatMult( m_mat, src.unwrappedPointer(), reuse, PETSC_DEFAULT, &dst.unwrappedPointer() );
+  dst.m_assembled = closeResult;
+  dst.m_open = !closeResult;
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -566,7 +568,7 @@ void PetscSparseMatrix::leftMultiplyTranspose( PetscSparseMatrix const & src,
 // Perform the matrix-matrix product src * this^T  = dst.
 void PetscSparseMatrix::rightMultiplyTranspose( PetscSparseMatrix const & src,
                                                 PetscSparseMatrix & dst,
-                                                bool const GEOSX_UNUSED_ARG( closeResult ) ) const
+                                                bool const closeResult ) const
 {
   GEOSX_ASSERT( !isOpen() );
   GEOSX_ASSERT( isAssembled() );
@@ -580,6 +582,8 @@ void PetscSparseMatrix::rightMultiplyTranspose( PetscSparseMatrix const & src,
   }
 
   MatMatTransposeMult( m_mat, src.unwrappedPointer(), reuse, PETSC_DEFAULT, &dst.unwrappedPointer() );
+  dst.m_assembled = closeResult;
+  dst.m_open = !closeResult;
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""

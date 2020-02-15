@@ -42,6 +42,7 @@ class R2TensorT : public TensorBaseT< T_dim*T_dim >
 public:
   //**** CONSTRUCTORS AND DESTRUCTORS *****************************************
   /// default constructor
+  GEOSX_HOST_DEVICE
   R2TensorT(void);
 
   /**
@@ -119,12 +120,14 @@ public:
   void AjiBjk( const R2TensorT<T_dim>& A, const R2SymTensorT<T_dim>& B );
 
   /// multiply (dyadic product) Rank1 tensor with Rank 1 tensor
+  GEOSX_HOST_DEVICE
   void dyadic_ab( const R1TensorT<T_dim>& a, const R1TensorT<T_dim>& b );
 
   /// multiply (dyadic product) Rank1 tensor with itself
   void dyadic_aa( const R1TensorT<T_dim>& a );
 
   /// multiply (dyadic product) Rank1 tensor with Rank 1 tensor and add
+  GEOSX_HOST_DEVICE
   void plus_dyadic_ab( const R1TensorT<T_dim>& a, const R1TensorT<T_dim>& b );
 
   void FillColumn( const int col, const R1TensorT<T_dim>& a );
@@ -149,6 +152,7 @@ public:
   realT Inner(void) const;
 
   /// Trace
+  GEOSX_HOST_DEVICE
   realT Trace(void) const;
 
   /// Determinant
@@ -234,6 +238,7 @@ void R2TensorT<T_dim>::print( std::ostream& os ) const
  * @return none
  */
 template< int T_dim >
+GEOSX_HOST_DEVICE
 R2TensorT<T_dim>::R2TensorT(void):
   TensorBaseT< T_dim*T_dim >()
 {}
@@ -778,6 +783,7 @@ inline void R2TensorT<T_dim>::AjiBjk( const R2TensorT<T_dim>& A, const R2SymTens
  *\otimes b}\f$ -or- \f$a_i b_j\f$
  */
 template< int T_dim >
+GEOSX_HOST_DEVICE
 inline void R2TensorT<T_dim>::dyadic_ab( const R1TensorT<T_dim>& a, const R1TensorT<T_dim>& b )
 {
 //  if( T_dim == 2 )
@@ -857,6 +863,7 @@ inline void R2TensorT<T_dim>::dyadic_aa( const R1TensorT<T_dim>& a )
  * tensor.
  */
 template< int T_dim >
+GEOSX_HOST_DEVICE
 inline void R2TensorT<T_dim>::plus_dyadic_ab( const R1TensorT<T_dim>& a, const R1TensorT<T_dim>& b )
 {
 //  if( T_dim == 2 )
@@ -893,6 +900,7 @@ inline void R2TensorT<T_dim>::plus_dyadic_ab( const R1TensorT<T_dim>& a, const R
  * This function returns the trace of the tensor that it is called from.
  */
 template< int T_dim >
+GEOSX_HOST_DEVICE
 inline realT R2TensorT<T_dim>::Trace(void) const
 {
   realT trace=0;

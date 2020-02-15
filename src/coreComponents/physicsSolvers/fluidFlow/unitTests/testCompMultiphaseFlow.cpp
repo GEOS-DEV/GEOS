@@ -81,9 +81,9 @@ void testNumericalJacobian( CompositionalMultiphaseFlow * solver,
 
   string const dofKey = dofManager.getKey( CompositionalMultiphaseFlow::viewKeyStruct::dofFieldString );
 
-  solver->applyToSubRegions( mesh, [&] ( localIndex const GEOSX_UNUSED_ARG( er ),
-                                         localIndex const GEOSX_UNUSED_ARG( esr ),
-                                         ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
+  solver->applyToSubRegions( mesh, [&] ( localIndex const GEOSX_UNUSED_PARAM( er ),
+                                         localIndex const GEOSX_UNUSED_PARAM( esr ),
+                                         ElementRegionBase * const GEOSX_UNUSED_PARAM( region ),
                                          ElementSubRegionBase * const subRegion )
   {
     arrayView1d<integer> & elemGhostRank =
@@ -218,8 +218,8 @@ void testCompositionNumericalDerivatives( CompositionalMultiphaseFlow * solver,
 
   auto const & components = fluid->getReference<string_array>( MultiFluidBase::viewKeyStruct::componentNamesString );
 
-  solver->applyToSubRegions( mesh, [&] ( localIndex const GEOSX_UNUSED_ARG( er ),
-                                         localIndex const GEOSX_UNUSED_ARG( esr ),
+  solver->applyToSubRegions( mesh, [&] ( localIndex const GEOSX_UNUSED_PARAM( er ),
+                                         localIndex const GEOSX_UNUSED_PARAM( esr ),
                                          ElementRegionBase * const region,
                                          ElementSubRegionBase * const subRegion )
   {
@@ -305,8 +305,8 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFlow * 
   auto const & components = fluid->getReference<string_array>( MultiFluidBase::viewKeyStruct::componentNamesString );
   auto const & phases     = fluid->getReference<string_array>( MultiFluidBase::viewKeyStruct::phaseNamesString );
 
-  solver->applyToSubRegions( mesh, [&] ( localIndex const GEOSX_UNUSED_ARG( er ),
-                                         localIndex const GEOSX_UNUSED_ARG( esr ),
+  solver->applyToSubRegions( mesh, [&] ( localIndex const GEOSX_UNUSED_PARAM( er ),
+                                         localIndex const GEOSX_UNUSED_PARAM( esr ),
                                          ElementRegionBase * const region,
                                          ElementSubRegionBase * const subRegion )
   {
@@ -428,8 +428,8 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFlow * solver
   auto const & components = fluid->getReference<string_array>( MultiFluidBase::viewKeyStruct::componentNamesString );
   auto const & phases     = fluid->getReference<string_array>( MultiFluidBase::viewKeyStruct::phaseNamesString );
 
-  solver->applyToSubRegions( mesh, [&] ( localIndex const GEOSX_UNUSED_ARG( er ),
-                                         localIndex const GEOSX_UNUSED_ARG( esr ),
+  solver->applyToSubRegions( mesh, [&] ( localIndex const GEOSX_UNUSED_PARAM( er ),
+                                         localIndex const GEOSX_UNUSED_PARAM( esr ),
                                          ElementRegionBase * const region,
                                          ElementSubRegionBase * const subRegion )
   {

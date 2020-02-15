@@ -96,7 +96,7 @@ void testNumericalJacobian( ReservoirSolver * solver,
   for (localIndex er = 0; er < elemManager->numRegions(); ++er)
   {
     ElementRegionBase * const elemRegion = elemManager->GetRegion(er);
-    elemRegion->forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const GEOSX_UNUSED_ARG( esr ),
+    elemRegion->forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const GEOSX_UNUSED_PARAM( esr ),
                                                                         auto * const subRegion )
     {
       // get the dof numbers and ghosting information

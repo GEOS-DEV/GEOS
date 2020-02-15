@@ -503,14 +503,14 @@ localIndex EpetraMatrix::maxRowLength() const
   return m_matrix->MaxNumEntries();
 }
 
-localIndex EpetraMatrix::getLocalRowLocalLength( localIndex localRow )
+localIndex EpetraMatrix::localRowLength( localIndex localRowIndex ) const
 {
-  return m_matrix->NumMyEntries( localRow );
+  return m_matrix->NumMyEntries( integer_conversion< int >( localRowIndex ) );
 }
 
-localIndex EpetraMatrix::getLocalRowGlobalLength( localIndex localRow )
+localIndex EpetraMatrix::globalRowLength( globalIndex globalRowIndex ) const
 {
-  return m_matrix->NumGlobalEntries( m_matrix->GRID64(localRow) );
+  return m_matrix->NumGlobalEntries( globalRowIndex );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""

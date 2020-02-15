@@ -39,7 +39,7 @@ void CreatePermutationMatrix(NodeManager const * const nodeManager,
    */
 
   // Create permuation matrix based on size provided.
-  permutationMatrix.createWithGlobalSize(nRows, nCols, 1, MPI_COMM_GEOSX);
+  permutationMatrix.createWithLocalSize(nRows, nCols, 1, MPI_COMM_GEOSX);
   permutationMatrix.open();
 
   arrayView1d<globalIndex const> const &  DofNumber =  nodeManager->getReference<globalIndex_array>( DofKey );
@@ -76,7 +76,7 @@ void CreatePermutationMatrix(ElementRegionManager const * const elemManager,
    */
 
   // Create permuation matrix based on size provided.
-  permutationMatrix.createWithGlobalSize(nRows, nCols, 1, MPI_COMM_GEOSX);
+  permutationMatrix.createWithLocalSize(nRows, nCols, 1, MPI_COMM_GEOSX);
   permutationMatrix.open();
 
   elemManager->forElementSubRegions([&]( ElementSubRegionBase const * const elementSubRegion )
@@ -196,46 +196,6 @@ void PrintPermutedMatrix(ParallelMatrix const & matrix,
 }
 
 
-void SeparateComponentFilter(ParallelMatrix const & src,
-                             ParallelMatrix & dst,
-                             const localIndex dofsPerNode)
-{
-  GEOSX_ERROR_IF(dofsPerNode < 2,"Function requires dofsPerNode > 1");
-
-  const localIndex  localRows  = src.localRows();
-  const localIndex  maxEntries = src.maxRowLength();
-  const localIndex  maxDstEntries = maxEntries / dofsPerNode;
-
-  dst.createWithLocalSize(localRows,maxEntries,MPI_COMM_WORLD);
-  dst.open();
-
-  array1d<real64> srcValues;
-  array1d<real64> dstValues( maxDstEntries );
-
-  array1d<globalIndex> srcIndices;
-  array1d<globalIndex> dstIndices( maxDstEntries );
-
-  for(globalIndex row=src.ilower(); row<src.iupper(); ++row)
-  {
-     const globalIndex rowComponent = row % dofsPerNode;
-
-     src.getRowCopy(row,srcIndices,srcValues);
-
-     localIndex k=0;
-     for(localIndex col=0; col<srcIndices.size(); ++col)
-     {
-        const globalIndex colComponent = srcIndices[col] % dofsPerNode;
-        if( rowComponent == colComponent ) 
-        {
-          dstValues[k] = srcValues[col];
-          dstIndices[k] = srcIndices[col];
-          k++;
-        } 
-     }
-     dst.insert(row,dstIndices.data(),dstValues.data(),k);
-  }
-  dst.close();
-}
 
 } // namespace LAIHelperFunctions
 

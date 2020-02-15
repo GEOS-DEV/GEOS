@@ -36,7 +36,6 @@ using namespace geosx;
 using namespace geosx::testing;
 using namespace geosx::dataRepository;
 
-
 char const * xmlInput =
 "<Problem>"
 "  <Mesh>"
@@ -480,7 +479,7 @@ TYPED_TEST_P( DofManagerSparsityTest, TPFA_Full )
   TestFixture::testPattern( { { "pressure",
                                 DofManager::Location::Elem,
                                 DofManager::Connectivity::Face,
-                                2, makeSparsityTPFA } } );
+                                2, makeSparsityTPFA<TypeParam> } } );
 }
 
 /**
@@ -492,7 +491,7 @@ TYPED_TEST_P( DofManagerSparsityTest, TPFA_Partial )
   TestFixture::testPattern( { { "pressure",
                                 DofManager::Location::Elem,
                                 DofManager::Connectivity::Face,
-                                2, makeSparsityTPFA,
+                                2, makeSparsityTPFA<TypeParam>,
                                 { "region1", "region3", "region4" } } } );
 }
 
@@ -505,7 +504,7 @@ TYPED_TEST_P( DofManagerSparsityTest, FEM_Full )
   TestFixture::testPattern( { { "displacement",
                                 DofManager::Location::Node,
                                 DofManager::Connectivity::Elem,
-                                3, makeSparsityFEM } } );
+                                3, makeSparsityFEM<TypeParam> } } );
 }
 
 /**
@@ -517,7 +516,7 @@ TYPED_TEST_P( DofManagerSparsityTest, FEM_Partial )
   TestFixture::testPattern( { { "displacement",
                                 DofManager::Location::Node,
                                 DofManager::Connectivity::Elem,
-                                3, makeSparsityFEM,
+                                3, makeSparsityFEM<TypeParam>,
                                 { "region1", "region3", "region4" } } } );
 }
 
@@ -530,7 +529,7 @@ TYPED_TEST_P( DofManagerSparsityTest, Mass_Full )
   TestFixture::testPattern( { { "mass",
                                 DofManager::Location::Elem,
                                 DofManager::Connectivity::None,
-                                2, makeSparsityMass } } );
+                                2, makeSparsityMass<TypeParam> } } );
 }
 
 /**
@@ -542,7 +541,7 @@ TYPED_TEST_P( DofManagerSparsityTest, Mass_Partial )
   TestFixture::testPattern( { { "mass",
                                 DofManager::Location::Elem,
                                 DofManager::Connectivity::None,
-                                2, makeSparsityMass,
+                                2, makeSparsityMass<TypeParam>,
                                 { "region1", "region3", "region4" } } } );
 }
 
@@ -555,7 +554,7 @@ TYPED_TEST_P( DofManagerSparsityTest, Flux_Full )
   TestFixture::testPattern( { { "flux",
                                 DofManager::Location::Face,
                                 DofManager::Connectivity::Elem,
-                                2, makeSparsityFlux } } );
+                                2, makeSparsityFlux<TypeParam> } } );
 }
 
 /**
@@ -567,7 +566,7 @@ TYPED_TEST_P( DofManagerSparsityTest, Flux_Partial )
   TestFixture::testPattern( { { "flux",
                                 DofManager::Location::Face,
                                 DofManager::Connectivity::Elem,
-                                2, makeSparsityFlux,
+                                2, makeSparsityFlux<TypeParam>,
                                 { "region1", "region3", "region4" } } } );
 }
 
@@ -580,15 +579,15 @@ TYPED_TEST_P( DofManagerSparsityTest, FEM_TPFA_Full )
   TestFixture::testPattern( { { "displacement",
                                 DofManager::Location::Node,
                                 DofManager::Connectivity::Elem,
-                                3, makeSparsityFEM },
+                                3, makeSparsityFEM<TypeParam> },
                               { "pressure",
                                 DofManager::Location::Elem,
                                 DofManager::Connectivity::Face,
-                                2, makeSparsityTPFA }
+                                2, makeSparsityTPFA<TypeParam> }
                             },
                             { { { "displacement", "pressure" },
                                 { DofManager::Connectivity::Elem,
-                                  makeSparsityFEM_FVM,
+                                  makeSparsityFEM_FVM<TypeParam>,
                                   true } }
                             } );
 
@@ -603,17 +602,17 @@ TYPED_TEST_P( DofManagerSparsityTest, FEM_TPFA_Partial )
   TestFixture::testPattern( { { "displacement",
                                 DofManager::Location::Node,
                                 DofManager::Connectivity::Elem,
-                                3, makeSparsityFEM,
+                                3, makeSparsityFEM<TypeParam>,
                                 { "region1", "region3", "region4" } },
                               { "pressure",
                                 DofManager::Location::Elem,
                                 DofManager::Connectivity::Face,
-                                2, makeSparsityTPFA,
+                                2, makeSparsityTPFA<TypeParam>,
                                 { "region1", "region2", "region4" }}
                             },
                             { { { "displacement", "pressure" },
                                 { DofManager::Connectivity::Elem,
-                                  makeSparsityFEM_FVM,
+                                  makeSparsityFEM_FVM<TypeParam>,
                                   true,
                                   { "region4" } } }
                             } );
@@ -642,7 +641,7 @@ INSTANTIATE_TYPED_TEST_CASE_P( Petsc, DofManagerSparsityTest, PetscInterface );
 #endif
 
 #ifdef GEOSX_USE_HYPRE
-//INSTANTIATE_TYPED_TEST_CASE_P( Hypre, DofManagerSparsityTest, HypreInterface );
+INSTANTIATE_TYPED_TEST_CASE_P( Hypre, DofManagerSparsityTest, HypreInterface );
 #endif
 
 int main( int argc, char** argv )

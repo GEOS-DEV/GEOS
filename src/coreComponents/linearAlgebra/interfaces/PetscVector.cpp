@@ -88,7 +88,7 @@ PetscVector & PetscVector::operator=( PetscVector && src ) noexcept
   return *this;
 }
 
-// Create a unique PetscVector from a PETSc Vec.  
+// Create a unique PetscVector from a PETSc Vec.
 PetscVector::PetscVector( Vec vec )
 {
   m_vec = vec;
@@ -275,7 +275,7 @@ void PetscVector::scale( real64 const scalingFactor )
 // Dot
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Dot product with the vector vec.
-real64 PetscVector::dot( PetscVector const & vec )
+real64 PetscVector::dot( PetscVector const & vec ) const
 {
   real64 dot;
   VecDot( m_vec, vec.m_vec, &dot );

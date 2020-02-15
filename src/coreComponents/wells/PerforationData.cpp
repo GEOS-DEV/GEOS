@@ -146,7 +146,7 @@ void PerforationData::ConnectToWellElements( InternalWellGenerator const & wellG
   //DebugLocalPerforations();
 }
  
-void PerforationData::InitializePostInitialConditions_PreSubGroups( Group * const GEOSX_UNUSED_ARG( problemManager ) )
+void PerforationData::InitializePostInitialConditions_PreSubGroups( Group * const GEOSX_UNUSED_PARAM( problemManager ) )
 {
   for (localIndex iperf = 0; iperf < size(); ++iperf)
   {

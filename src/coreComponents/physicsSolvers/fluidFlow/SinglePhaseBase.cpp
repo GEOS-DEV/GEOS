@@ -207,7 +207,7 @@ void SinglePhaseBase::InitializePostInitialConditions_PreSubGroups( Group * cons
                                 getDefaultValue();
 
   applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                                 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
+                                 ElementRegionBase * const GEOSX_UNUSED_PARAM( region ),
                                  ElementSubRegionBase * const subRegion )
   {
 
@@ -324,7 +324,7 @@ void SinglePhaseBase::SetupSystem( DomainPartition * const domain,
     localIndex maxRowSize = -1;
     for( localIndex row=0 ; row<matrix.localRows() ; ++row )
     {
-      localIndex const rowSize = matrix.getLocalRowGlobalLength( row );
+      localIndex const rowSize = matrix.localRowLength( row );
       maxRowSize = maxRowSize > rowSize ? maxRowSize : rowSize;
 
       derivativeFluxResidual_dAperture->reserveNonZeros( row,
@@ -374,20 +374,20 @@ void SinglePhaseBase::SetupSystem( DomainPartition * const domain,
   });
 }
 
-void SinglePhaseBase::ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n ),
-                                         real64 const & GEOSX_UNUSED_ARG( dt ),
+void SinglePhaseBase::ImplicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+                                         real64 const & GEOSX_UNUSED_PARAM( dt ),
                                          DomainPartition * const domain,
-                                         DofManager & GEOSX_UNUSED_ARG( dofManager ),
-                                         ParallelMatrix & GEOSX_UNUSED_ARG( matrix ),
-                                         ParallelVector & GEOSX_UNUSED_ARG( rhs ),
-                                         ParallelVector & GEOSX_UNUSED_ARG( solution ) )
+                                         DofManager & GEOSX_UNUSED_PARAM( dofManager ),
+                                         ParallelMatrix & GEOSX_UNUSED_PARAM( matrix ),
+                                         ParallelVector & GEOSX_UNUSED_PARAM( rhs ),
+                                         ParallelVector & GEOSX_UNUSED_PARAM( solution ) )
 {
   ResetViews( domain );
 
   MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
   applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                                 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
+                                 ElementRegionBase * const GEOSX_UNUSED_PARAM( region ),
                                  ElementSubRegionBase * const subRegion )
   {
     arrayView2d<real64 const> const & dens = m_density[er][esr][m_fluidIndex];
@@ -428,8 +428,8 @@ void SinglePhaseBase::ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n
 
 }
 
-void SinglePhaseBase::ImplicitStepComplete( real64 const & GEOSX_UNUSED_ARG( time_n ),
-                                            real64 const & GEOSX_UNUSED_ARG( dt ),
+void SinglePhaseBase::ImplicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+                                            real64 const & GEOSX_UNUSED_PARAM( dt ),
                                             DomainPartition * const domain )
 {
   GEOSX_MARK_FUNCTION;
@@ -437,7 +437,7 @@ void SinglePhaseBase::ImplicitStepComplete( real64 const & GEOSX_UNUSED_ARG( tim
   MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
   applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                                 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
+                                 ElementRegionBase * const GEOSX_UNUSED_PARAM( region ),
                                  ElementSubRegionBase * const subRegion )
   {
     arrayView1d<real64> const & pres = m_pressure[er][esr];
@@ -458,7 +458,7 @@ void SinglePhaseBase::ImplicitStepComplete( real64 const & GEOSX_UNUSED_ARG( tim
   elemManager->forElementSubRegionsComplete<FaceElementSubRegion>( this->m_targetRegions,
                                                                    [&] ( localIndex er,
                                                                          localIndex esr,
-                                                                         ElementRegionBase const * const GEOSX_UNUSED_ARG( region ),
+                                                                         ElementRegionBase const * const GEOSX_UNUSED_PARAM( region ),
                                                                          FaceElementSubRegion * const subRegion )
   {
 
@@ -496,7 +496,7 @@ void SinglePhaseBase::AssembleSystem( real64 const time_n,
 
 //  MeshLevel * mesh = domain->getMeshBody(0)->getMeshLevel(0);
 //  applyToSubRegions( mesh, [&] ( localIndex , localIndex ,
-//                                 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
+//                                 ElementRegionBase * const GEOSX_UNUSED_PARAM( region ),
 //                                 ElementSubRegionBase * const subRegion )
 //  {
 //    UpdateState( subRegion );
@@ -704,7 +704,7 @@ void SinglePhaseBase::AssembleAccumulationTerms( DomainPartition const * const d
                                             FaceElementSubRegion>( this->m_targetRegions,
                                                                    [&] ( localIndex er,
                                                                          localIndex esr,
-                                                                         ElementRegionBase const * const GEOSX_UNUSED_ARG( region ),
+                                                                         ElementRegionBase const * const GEOSX_UNUSED_PARAM( region ),
                                                                          auto const * const subRegion )
   {
     AccumulationLaunch<ISPORO>( er, esr, subRegion, dofManager, matrix, rhs );
@@ -734,7 +734,7 @@ void SinglePhaseBase::ResetStateToBeginningOfStep( DomainPartition * const domai
   MeshLevel * mesh = domain->getMeshBody(0)->getMeshLevel(0);
 
   applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                                 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
+                                 ElementRegionBase * const GEOSX_UNUSED_PARAM( region ),
                                  ElementSubRegionBase * const subRegion )
   {
     arrayView1d<real64> const & dPres = m_deltaPressure[er][esr];
