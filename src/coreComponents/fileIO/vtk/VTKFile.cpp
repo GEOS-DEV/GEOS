@@ -600,16 +600,6 @@ class CustomVTUXMLWriter
       return multiplier;
     }
 
-    integer FindBase64StringLength( integer dataSize )
-    {
-      integer base64StringLength = (dataSize * 8) / 6;
-      while( base64StringLength % 4 )
-      {
-        base64StringLength++;
-      }
-      return base64StringLength;
-    }
-
     void DumpBuffer( std::stringstream const & stream )
     {
       m_outFile << stream.rdbuf() << '\n';

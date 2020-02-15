@@ -158,5 +158,54 @@ string_array Split(const std::string& str, const std::string& delimiters)
   return tokens;
 }
 
+
+integer FindBase64StringLength( integer dataSize )
+{
+  integer base64StringLength = (dataSize * 8) / 6;
+  while( base64StringLength % 4 )
+  {
+    base64StringLength++;
+  }
+  return base64StringLength;
+}
+
+string EncodeBase64( unsigned char const * const bytes,
+                       integer outputSize,
+                       integer dataSize )
+{
+  GEOSX_ASSERT( 8 * dataSize == outputSize );
+  string outputString( outputSize, ' ');
+  char * out = &outputString[0];
+  integer val = 0;
+  integer valB = -6;
+  integer size = 0;
+
+  for( integer i = 0 ; i < outputSize ; i++ )
+  {
+    val = ( val << 8 ) + bytes[i];
+    valB += 8;
+    while ( valB >= 0 )
+    {
+      *out = base64Chars[ ( val>>valB ) &0x3F ] ; //0x3f is the Hexadecimal for 63
+      ++out;
+      ++size;
+      valB -= 6;
+    }
+  }
+  if( valB > -6 )
+  {
+    *out = base64Chars[ ( ( val << 8 ) >> ( valB + 8 ) ) &0x3F ];
+    ++out;
+    ++size;
+  }
+  while( size % 4 )
+  {
+    *out = '=';
+    ++out;
+    ++size;
+  }
+  return outputString;
+}
+
 }
 }
