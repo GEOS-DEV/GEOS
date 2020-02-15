@@ -71,7 +71,9 @@ typedef int MPI_Op;
   #define MPI_NO_OP   (MPI_Op)(0x5800000e)
 
   #define MPI_SUCCESS          0      /* Successful return code */
-
+  #define MPI_UNDEFINED (-32766)
+  #define MPI_STATUS_IGNORE (MPI_Status *)1
+  #define MPI_REQUEST_NULL  ((MPI_Request)0x2c000000)
 typedef int MPI_Request;
 
 struct MPI_Status
@@ -81,6 +83,12 @@ struct MPI_Status
 
 
 
+#endif
+
+#if defined(NDEBUG)
+  #define MPI_CHECK_ERROR( error ) ((void) error) 
+#else
+  #define MPI_CHECK_ERROR( error ) GEOSX_ERROR_IF_NE( error, MPI_SUCCESS );
 #endif
 
 
@@ -218,7 +226,7 @@ public:
    * @return MPI_SUCCESS or and MPI_ERROR from internal calls to MPI_WaitAny.
    */
   static int ActiveWaitSomePartialPhase( const int participants,
-                                         std::vector< std::function< MPI_Request ( int ) > > & phases );
+                                         std::vector< std::function< MPI_Request ( int ) > > const & phases );
 
   /**
    * Active non-blocking phased communication with multiple participants,
@@ -233,7 +241,7 @@ public:
    * @return MPI_SUCCESS or and MPI_ERROR from internal calls to MPI_WaitAny.
    */
   static int ActiveWaitSomeCompletePhase( const int participants,
-                                          std::vector< std::function< MPI_Request ( int ) > > & phases );
+                                          std::vector< std::function< MPI_Request ( int ) > > const & phases );
 
   /**
    * Active blocking phased communication with multiple participants,
@@ -249,7 +257,7 @@ public:
    * @return MPI_SUCCESS or and MPI_ERROR from internal calls to MPI_WaitAny.
    */
   static int ActiveWaitOrderedCompletePhase( const int participants,
-                                             std::vector< std::function< MPI_Request ( int ) > > & phases );
+                                             std::vector< std::function< MPI_Request ( int ) > > const & phases );
   ///@}
 
 #if !defined(GEOSX_USE_MPI)
@@ -385,6 +393,19 @@ public:
    */
   static MPI_Op getMpiOp( Reduction const op );
 
+  template< typename T >
+  static int recv( array1d< T > & buf,
+                   int MPI_PARAM( source ),
+                   int tag,
+                   MPI_Comm MPI_PARAM( comm ),
+                   MPI_Status * MPI_PARAM( request ) );
+
+  template< typename T >
+  static int iSend( arrayView1d< T const > const & buf,
+                    int MPI_PARAM( dest ),
+                    int tag,
+                    MPI_Comm MPI_PARAM( comm ),
+                    MPI_Request * MPI_PARAM( request ) );
 
   /**
    * @brief Strongly typed wrapper around MPI_Irecv()
@@ -446,7 +467,7 @@ public:
    * @return a pair where first is the prefix sum, second is the full sum
    */
   template< typename U, typename T >
-  static std::pair< U, U > PrefixSum( T const & value );
+  static U PrefixSum( T const value );
 
   /**
    * @brief Convenience function for the MPI_Reduce function.
@@ -690,6 +711,56 @@ int MpiWrapper::iRecv( T * const buf,
 }
 
 template< typename T >
+int MpiWrapper::recv( array1d< T > & buf,
+                      int MPI_PARAM( source ),
+                      int tag,
+                      MPI_Comm MPI_PARAM( comm ),
+                      MPI_Status * MPI_PARAM( request ) )
+{
+#ifdef GEOSX_USE_MPI
+  MPI_Status status;
+  int count;
+  MPI_Probe( source, tag, comm, &status );
+  MPI_Get_count( &status, MPI_CHAR, &count );
+
+  GEOSX_ASSERT_EQ( count % sizeof( T ), 0 );
+  buf.resize( count / sizeof( T ) );
+  
+  return MPI_Recv( reinterpret_cast< char * >( buf.data() ),
+                   count,
+                   MPI_CHAR,
+                   source,
+                   tag,
+                   comm,
+                   request );
+#else
+  GEOSX_ERROR("Not implemented!");
+  return MPI_SUCCESS;
+#endif
+}
+
+template< typename T >
+int MpiWrapper::iSend( arrayView1d< T const > const & buf,
+                       int MPI_PARAM( dest ),
+                       int tag,
+                       MPI_Comm MPI_PARAM( comm ),
+                       MPI_Request * MPI_PARAM( request ) )
+{
+#ifdef GEOSX_USE_MPI
+  return MPI_Isend( reinterpret_cast< char const * >( buf.data() ),
+                    buf.size() * sizeof( T ),
+                    MPI_CHAR,
+                    dest,
+                    tag,
+                    comm,
+                    request );
+#else
+  GEOSX_ERROR("Not implemented.");
+  return MPI_SUCCESS;
+#endif
+}
+
+template< typename T >
 int MpiWrapper::iSend( T const * const buf,
                        int count,
                        int MPI_PARAM( dest ),
@@ -720,26 +791,20 @@ int MpiWrapper::iSend( T const * const buf,
 }
 
 template< typename U, typename T >
-std::pair< U, U > MpiWrapper::PrefixSum( T const & value )
+U MpiWrapper::PrefixSum( T const value )
 {
-  array1d< T > gather;
-  allGather( value, gather );
+  U const convertedValue = value;
+  U localResult;
 
-  std::pair< U, U > rval( 0, 0 );
+  int const error = MPI_Exscan( &convertedValue, &localResult, 1, getMpiType< U >(), MPI_SUM, MPI_COMM_GEOSX );
+  MPI_CHECK_ERROR( error );
 
-  int const mpiSize = Comm_size( MPI_COMM_GEOSX );
-  int const mpiRank = Comm_rank( MPI_COMM_GEOSX );
-
-  for( localIndex p = 0 ; p < mpiSize ; ++p )
+  if ( Comm_rank() == 0 )
   {
-    if( p < mpiRank )
-    {
-      rval.first += static_cast< U >( gather[p] );
-    }
-    rval.second += static_cast< U >( gather[p] );
+    localResult = 0;
   }
 
-  return rval;
+  return localResult;
 }
 
 

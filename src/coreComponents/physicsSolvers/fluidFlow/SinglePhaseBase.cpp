@@ -192,10 +192,7 @@ void SinglePhaseBase::InitializePostInitialConditions_PreSubGroups( Group * cons
   std::map<string, string_array > fieldNames;
   fieldNames["elems"].push_back( viewKeyStruct::pressureString );
 
-  array1d<NeighborCommunicator> & comms =
-    domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors );
-
-  CommunicationTools::SynchronizeFields( fieldNames, mesh, comms );
+  CommunicationTools::SynchronizeFields( fieldNames, mesh, domain->getNeighbors() );
 
   ResetViews( domain );
 

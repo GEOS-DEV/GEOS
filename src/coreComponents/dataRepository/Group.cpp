@@ -263,6 +263,12 @@ string Group::dumpInputOptions()
   return rval;
 }
 
+void Group::deregisterGroup( std::string const & name )
+{
+  GEOSX_ERROR_IF( !hasGroup( name ), "Group " << name << " doesn't exist." );
+  m_subGroups.erase( name );
+  m_conduitNode.remove( name );
+}
 
 void Group::InitializationOrder( string_array & order )
 {

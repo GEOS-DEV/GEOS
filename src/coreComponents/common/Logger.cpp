@@ -33,6 +33,7 @@ namespace internal
 {
 
 int rank = 0;
+std::string rankString = "0";
 
 int n_ranks = 1;
 
@@ -52,6 +53,8 @@ void InitializeLogger( MPI_Comm mpi_comm, const std::string & rankOutputDir )
   MPI_Comm_rank( mpi_comm, &internal::rank );
   MPI_Comm_size( mpi_comm, &internal::n_ranks );
 
+  internal::rankString = std::to_string( internal::rank );
+
   if( rankOutputDir != "" )
   {
     if( internal::rank != 0 )
@@ -69,7 +72,7 @@ void InitializeLogger( MPI_Comm mpi_comm, const std::string & rankOutputDir )
       MPI_Barrier( mpi_comm );
     }
 
-    std::string outputFilePath = rankOutputDir + "/rank_" + std::to_string( internal::rank ) + ".out";
+    std::string outputFilePath = rankOutputDir + "/rank_" + internal::rankString + ".out";
     internal::rankStream = new std::ofstream( outputFilePath );
   }
   else
@@ -92,7 +95,7 @@ void InitializeLogger( const std::string & rankOutputDir )
       abort();
     }
 
-    std::string outputFilePath = rankOutputDir + "/rank_" + std::to_string( internal::rank ) + ".out";
+    std::string outputFilePath = rankOutputDir + "/rank_" + internal::rankString + ".out";
     internal::rankStream = new std::ofstream( outputFilePath );
   }
   else

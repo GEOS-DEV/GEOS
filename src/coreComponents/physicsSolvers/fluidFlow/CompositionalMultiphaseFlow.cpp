@@ -571,10 +571,7 @@ void CompositionalMultiphaseFlow::InitializePostInitialConditions_PreSubGroups( 
   fieldNames["elems"].push_back( viewKeyStruct::pressureString );
   fieldNames["elems"].push_back( viewKeyStruct::globalCompDensityString );
 
-  array1d<NeighborCommunicator> & comms =
-    domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors );
-
-  CommunicationTools::SynchronizeFields( fieldNames, mesh, comms );
+  CommunicationTools::SynchronizeFields( fieldNames, mesh, domain->getNeighbors() );
 
   ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
 
@@ -1501,7 +1498,7 @@ CompositionalMultiphaseFlow::ApplySystemSolution( DofManager const & dofManager,
   fieldNames["elems"].push_back( viewKeyStruct::deltaGlobalCompDensityString );
   CommunicationTools::SynchronizeFields( fieldNames,
                                          mesh,
-                                         domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
+                                         domain->getNeighbors() );
 
   applyToSubRegions( mesh, [&] ( ElementSubRegionBase * const subRegion )
   {

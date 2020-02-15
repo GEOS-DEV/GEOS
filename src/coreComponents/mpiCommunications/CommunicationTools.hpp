@@ -47,7 +47,7 @@ public:
 
   static void AssignGlobalIndices( ObjectManagerBase & object,
                                    ObjectManagerBase const & compositionObject,
-                                   array1d< NeighborCommunicator > & neighbors );
+                                   std::vector< NeighborCommunicator > & neighbors );
 
   static void AssignNewGlobalIndices( ObjectManagerBase & object,
                                       std::set< localIndex > const & indexList );
@@ -56,8 +56,8 @@ public:
   AssignNewGlobalIndices( ElementRegionManager & elementManager,
                           std::map< std::pair< localIndex, localIndex >, std::set< localIndex > > const & newElems );
 
-  static void FindGhosts( MeshLevel * const meshLevel,
-                          array1d< NeighborCommunicator > & neighbors,
+  static void FindGhosts( MeshLevel & meshLevel,
+                          std::vector< NeighborCommunicator > & neighbors,
                           bool use_nonblocking );
 
   static std::set< int > & getFreeCommIDs();
@@ -65,27 +65,27 @@ public:
   static void releaseCommID( int & ID );
 
   static void FindMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
-                                                   array1d< NeighborCommunicator > & allNeighbors );
+                                                   std::vector< NeighborCommunicator > & allNeighbors );
 
   static void SynchronizeFields( const std::map< string, string_array > & fieldNames,
                                  MeshLevel * const mesh,
-                                 array1d< NeighborCommunicator > & allNeighbors,
+                                 std::vector< NeighborCommunicator > & allNeighbors,
                                  bool on_device = false );
 
   static void SynchronizePackSendRecvSizes( const std::map< string, string_array > & fieldNames,
                                             MeshLevel * const mesh,
-                                            array1d< NeighborCommunicator > & neighbors,
+                                            std::vector< NeighborCommunicator > & neighbors,
                                             MPI_iCommData & icomm,
                                             bool on_device = false );
 
   static void SynchronizePackSendRecv( const std::map< string, string_array > & fieldNames,
                                        MeshLevel * const mesh,
-                                       array1d< NeighborCommunicator > & allNeighbors,
+                                       std::vector< NeighborCommunicator > & allNeighbors,
                                        MPI_iCommData & icomm,
                                        bool on_device = false );
 
   static void SynchronizeUnpack( MeshLevel * const mesh,
-                                 array1d< NeighborCommunicator > & neighbors,
+                                 std::vector< NeighborCommunicator > & neighbors,
                                  MPI_iCommData & icomm,
                                  bool on_device = false );
 
