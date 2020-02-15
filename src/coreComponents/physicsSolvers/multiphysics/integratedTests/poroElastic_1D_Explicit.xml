@@ -60,7 +60,7 @@
   </Geometry>
 
 
-  <Events maxTime="2"
+  <Events maxTime="4"
           maxCycle="100000000">
   
     <PeriodicEvent 
@@ -159,7 +159,7 @@
                fieldName="Velocity"
                component="0"
                scale="0.0"
-               setNames="{xpos}"/>
+               setNames="{xneg}"/>
 
     <FieldSpecification name="yconstraint"
                objectPath="nodeManager"
@@ -180,15 +180,15 @@
                setNames="{all}"
                objectPath="ElementRegions/Region2/cb1"
                fieldName="fluidMass"
-               scale="320"/>
+               scale="305"/>
 
-	<!--FieldSpecification name="xposconstraint" 
+	<FieldSpecification name="xposconstraint" 
                objectPath="faceManager" 
                fieldName="Traction" 
                component="0" 
                scale="-10000" 
-               setNames="{xneg}"
-               functionName="timeFunction"/-->
+               setNames="{xpos}"
+               functionName="timeFunction"/>
 
   </FieldSpecifications>
 
