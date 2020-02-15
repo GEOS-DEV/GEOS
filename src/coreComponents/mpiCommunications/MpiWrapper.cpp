@@ -233,7 +233,7 @@ int MpiWrapper::ActiveWaitSome( const int count, MPI_Request array_of_requests[]
 }
 
 int MpiWrapper::ActiveWaitSomePartialPhase( const int participants,
-                                            std::vector< std::function< MPI_Request ( int ) > > & phases )
+                                            std::vector< std::function< MPI_Request ( int ) > > const & phases )
 {
   const int num_phases = sizeof(phases.size());
   std::vector< MPI_Request > phase_requests( participants * num_phases, MPI_REQUEST_NULL );
@@ -251,7 +251,7 @@ int MpiWrapper::ActiveWaitSomePartialPhase( const int participants,
 }
 
 int MpiWrapper::ActiveWaitSomeCompletePhase( const int participants,
-                                             std::vector< std::function< MPI_Request ( int ) > > & phases )
+                                             std::vector< std::function< MPI_Request ( int ) > > const & phases )
 {
   const int num_phases = phases.size();
   std::vector< MPI_Request > phase_requests( num_phases * participants, MPI_REQUEST_NULL );
@@ -272,7 +272,7 @@ int MpiWrapper::ActiveWaitSomeCompletePhase( const int participants,
 }
 
 int MpiWrapper::ActiveWaitOrderedCompletePhase( const int participants,
-                                                std::vector< std::function< MPI_Request ( int ) > > & phases )
+                                                std::vector< std::function< MPI_Request ( int ) > > const & phases )
 {
   const int num_phases = phases.size();
   std::vector< MPI_Request > phase_requests( participants );
