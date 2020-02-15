@@ -65,7 +65,7 @@ public:
   /**
    * @brief Destructor.
    */
-  virtual ~PetscSparseMatrix() override;
+  ~PetscSparseMatrix() final;
 
   ///@}
 

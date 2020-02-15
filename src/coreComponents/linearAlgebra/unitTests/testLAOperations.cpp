@@ -261,12 +261,13 @@ TYPED_TEST_P( LAOperationsTest, VectorFunctions )
   }
 }
 
-  /**
-   * @function testMatrixFunctions
-   *
-   * @brief Test matrix functions including create, add/set, accessors,
-   * and linear algebra operations.
-   */
+#if 0
+/**
+ * @function testMatrixFunctions
+ *
+ * @brief Test matrix functions including create, add/set, accessors,
+ * and linear algebra operations.
+ */
 // -----------------------------------------
 // Test matrix functions
 // -----------------------------------------
@@ -304,33 +305,24 @@ TYPED_TEST_P( LAOperationsTest, MatrixFunctions )
   mat4.createWithGlobalSize( 3, 4, 3, MPI_COMM_WORLD ); // 3x4
 
   // Testing create, globalRows, globalCols
-  localIndex rows1 = mat1.globalRows();
-  localIndex cols1 = mat1.globalCols();
-  localIndex rows2 = mat2.globalRows();
-  localIndex cols2 = mat2.globalCols();
-  localIndex rows3 = mat3.globalRows();
-  localIndex cols3 = mat3.globalCols();
-  localIndex rows4 = mat4.globalRows();
-  localIndex cols4 = mat4.globalCols();
-  EXPECT_EQ( rows1, 2 * numranks );
-  EXPECT_EQ( cols1, 2 * numranks );
-  EXPECT_EQ( rows2, 2 );
-  EXPECT_EQ( cols2, 2 );
-  EXPECT_EQ( rows3, 2 * numranks );
-  EXPECT_EQ( cols3, 3 * numranks );
-  EXPECT_EQ( rows4, 3 );
-  EXPECT_EQ( cols4, 4 );
+  EXPECT_EQ( mat1.globalRows(), 2 * numranks );
+  EXPECT_EQ( mat1.globalCols(), 2 * numranks );
+  EXPECT_EQ( mat2.globalRows(), 2 );
+  EXPECT_EQ( mat2.globalCols(), 2 );
+  EXPECT_EQ( mat3.globalRows(), 2 * numranks );
+  EXPECT_EQ( mat3.globalCols(), 3 * numranks );
+  EXPECT_EQ( mat4.globalRows(), 3 );
+  EXPECT_EQ( mat4.globalCols(), 4 );
 
   // Testing add/set/insert element
   //  mat1.insert( 1, 0, .5 );
   //  mat1.close();
   //  mat1.set( 1, 0, 5 );
   //  mat1.close();
+  mat1.open();
   mat1.add( 1, 0, 1 );
   mat1.add( 1, 0, 2 );
   mat1.close();
-
-  //mat1.write( "mat1" );
 
   // Testing add/set/insert c-style, getRowCopy
   globalIndex inds1[2] = { 0, 2 };
@@ -437,12 +429,9 @@ TYPED_TEST_P( LAOperationsTest, MatrixFunctions )
   vec2.createWithGlobalSize( 2, MPI_COMM_WORLD );
   vec1.set( 1 );
   vec1.close();
-  globalIndex inds4[2] =
-  { 0, 1 };
-  real64 vals4[2] =
-  { 1, 3 };
-  real64 vals5[2] =
-  { 2, 1 };
+  globalIndex inds4[2] = { 0, 1 };
+  real64 vals4[2] = { 1, 3 };
+  real64 vals5[2] = { 2, 1 };
 
   if( ( mat2.ilower() <= 0 ) && ( 0 < mat2.iupper() ) )
   {
@@ -474,6 +463,7 @@ TYPED_TEST_P( LAOperationsTest, MatrixFunctions )
     mat22.multiply( mat22, mat2mat2 );
   }
 }
+#endif
 
 // -------------------------------------
 // Test libraries operations and solvers
@@ -495,14 +485,13 @@ TYPED_TEST_P( LAOperationsTest, InterfaceSolvers )
   using Vector = typename TypeParam::ParallelVector;
   using Solver = typename TypeParam::LinearSolver;
 
-  int rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
-
   // Use an nxn cartesian mesh to generate the Laplace 2D operator.
   globalIndex n = 100;
   globalIndex N = n * n;
 
   // Compute a 2D Laplace operator
-  Matrix matrix = compute2DLaplaceOperator<TypeParam>( MPI_COMM_WORLD, n );
+  Matrix matrix;
+  compute2DLaplaceOperator( MPI_COMM_WORLD, n, matrix );
 
   // Define some vectors
   Vector x_true;
@@ -541,7 +530,7 @@ TYPED_TEST_P( LAOperationsTest, InterfaceSolvers )
   // Test the residual function by computing r = b - Ax = 0
   matrix.residual( x_true, b, r );
   real64 normRes = r.normInf();
-  EXPECT_NEAR( normRes, 0., machinePrecision);
+  EXPECT_NEAR( normRes, 0., machinePrecision );
 
   // Now create a solver parameter list and solver
   LinearSolverParameters parameters;
@@ -584,7 +573,8 @@ TYPED_TEST_P( LAOperationsTest, MatrixMatrixOperations )
   using Matrix = typename TypeParam::ParallelMatrix;
 
   globalIndex const n = 100;
-  Matrix A = compute2DLaplaceOperator<TypeParam>( MPI_COMM_WORLD, n );
+  Matrix A;
+  compute2DLaplaceOperator( MPI_COMM_WORLD, n, A );
 
   Matrix A_squared;
   A.multiply( A, A_squared );
@@ -630,11 +620,10 @@ TYPED_TEST_P( LAOperationsTest, RectangularMatrixOperations )
   real64 const b = A.normInf();
   real64 const c = A.normFrobenius();
 
-    EXPECT_DOUBLE_EQ( a, static_cast< real64 >( 2*nRows ) );
-    EXPECT_DOUBLE_EQ( b, static_cast< real64 >( nCols ) );
-    EXPECT_DOUBLE_EQ( c, std::sqrt( static_cast<real64>( nRows * ( nRows + 1 ) * ( 2 * nRows + 1 ) ) / 3.0 ) );
-  }
-};
+  EXPECT_DOUBLE_EQ( a, static_cast< real64 >( nRows ) );
+  EXPECT_DOUBLE_EQ( b, static_cast< real64 >( nCols ) );
+  EXPECT_DOUBLE_EQ( c, std::sqrt( static_cast<real64>( nRows * ( nRows + 1 ) * ( 2 * nRows + 1 ) ) / 3.0 ) );
+}
 
 // END_RST_NARRATIVE
 

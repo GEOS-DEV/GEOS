@@ -41,10 +41,10 @@
 // ==============================
 // This function computes the identity matrix. It can be used to generate a dummy
 // preconditioner.
-template<typename LAI>
+template<typename MATRIX>
 void computeIdentity( MPI_Comm comm,
                       geosx::globalIndex n,
-                      typename LAI::ParallelMatrix &I )
+                      MATRIX & I )
 {
   // total dofs = n^2
   geosx::globalIndex N = n * n;
@@ -78,10 +78,10 @@ void computeIdentity( MPI_Comm comm,
 // This function computes the matrix corresponding to a 2D Laplace operator. These
 // matrices arise from a classical finite volume formulation on a cartesian mesh
 // (5-point stencil).  Input is the mesh size, n, from which the total dofs is N = n^2;
-template<typename LAI>
+template<typename MATRIX>
 void compute2DLaplaceOperator( MPI_Comm comm,
                                geosx::globalIndex n,
-			        		             typename LAI::ParallelMatrix &laplace2D )
+			        		             MATRIX & laplace2D )
 {
   // total dofs = n^2
   geosx::globalIndex N = n * n;

@@ -57,8 +57,8 @@ template class KrylovSolver<BlockVectorView<TrilinosInterface::ParallelVector>>;
 #endif
 
 #ifdef GEOSX_USE_HYPRE
-//template class KrylovSolver<HypreInterface::ParallelVector>;
-//template class KrylovSolver<BlockVectorView<HypreInterface::ParallelVector>>;
+template class KrylovSolver<HypreInterface::ParallelVector>;
+template class KrylovSolver<BlockVectorView<HypreInterface::ParallelVector>>;
 #endif
 
 #ifdef GEOSX_USE_PETSC

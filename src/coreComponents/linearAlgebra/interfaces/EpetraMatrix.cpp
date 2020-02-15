@@ -627,7 +627,7 @@ globalIndex EpetraMatrix::globalRows() const
 globalIndex EpetraMatrix::globalCols() const
 {
   GEOSX_ASSERT( isCreated() );
-  return m_matrix->NumGlobalCols64();
+  return m_src_map->NumGlobalElements64();
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -735,7 +735,7 @@ globalIndex EpetraMatrix::getGlobalRowID( localIndex const index ) const
 localIndex EpetraMatrix::localCols() const
 {
   GEOSX_ASSERT( isCreated() );
-  return m_matrix->DomainMap().NumMyElements();
+  return m_src_map->NumMyElements();
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""

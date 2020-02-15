@@ -65,8 +65,8 @@ void testGEOSXSolvers()
   // Compute a 2D Laplace operator and identity matrix
   Matrix matrix;
   Matrix identity;
-  compute2DLaplaceOperator<LAI>( MPI_COMM_WORLD, n, matrix );
-  computeIdentity<LAI>( MPI_COMM_WORLD, n, identity );
+  compute2DLaplaceOperator( MPI_COMM_WORLD, n, matrix );
+  computeIdentity( MPI_COMM_WORLD, n, identity );
 
   // Define vectors
   Vector x_true, x_comp, b;
@@ -116,8 +116,8 @@ void testGEOSXBlockSolvers()
 
   Matrix matrix;
   Matrix identity;
-  compute2DLaplaceOperator<LAI>( MPI_COMM_WORLD, n, matrix );
-  computeIdentity<LAI>( MPI_COMM_WORLD, n, identity );
+  compute2DLaplaceOperator( MPI_COMM_WORLD, n, matrix );
+  computeIdentity( MPI_COMM_WORLD, n, identity );
 
   BlockVector<Vector> x_true(2);
   BlockVector<Vector> x_comp( 2);
@@ -207,7 +207,7 @@ INSTANTIATE_TYPED_TEST_CASE_P( Trilinos, KrylovSolverTest, TrilinosInterface );
 #endif
 
 #ifdef GEOSX_USE_HYPRE
-//INSTANTIATE_TYPED_TEST_CASE_P( Hypre, KrylovSolverTest, HypreInterface );
+INSTANTIATE_TYPED_TEST_CASE_P( Hypre, KrylovSolverTest, HypreInterface );
 #endif
 
 #ifdef GEOSX_USE_PETSC

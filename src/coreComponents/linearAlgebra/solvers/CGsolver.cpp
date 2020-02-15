@@ -143,8 +143,8 @@ template class CGsolver<BlockVectorView<TrilinosInterface::ParallelVector>>;
 #endif
 
 #ifdef GEOSX_USE_HYPRE
-//template class CGsolver<HypreInterface::ParallelVector>;
-//template class CGsolver<BlockVectorView<HypreInterface::ParallelVector>>;
+template class CGsolver<HypreInterface::ParallelVector>;
+template class CGsolver<BlockVectorView<HypreInterface::ParallelVector>>;
 #endif
 
 #ifdef GEOSX_USE_PETSC

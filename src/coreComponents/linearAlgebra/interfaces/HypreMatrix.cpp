@@ -159,15 +159,6 @@ HypreMatrix::~HypreMatrix()
 // Allocate matrix (prepare to be filled with data).
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Create a matrix from an HYPRE_IJMatrix.
-// """""""""""""""""""""""""""""""""""""""""""""""
-
-void HypreMatrix::create()
-{
-  //TODO:
-}
-
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Create a matrix from number of elements
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
@@ -1425,6 +1416,17 @@ bool HypreMatrix::isAssembled() const
 bool HypreMatrix::isClosed() const
 {
   return m_is_ready_to_use;
+}
+
+void HypreMatrix::rightScale( HypreVector const & GEOSX_UNUSED_PARAM( vec ) )
+{
+  GEOSX_ERROR( "Not implemented" );
+}
+
+void HypreMatrix::leftRightScale( HypreVector const & GEOSX_UNUSED_PARAM( vecLeft ),
+                                  HypreVector const & GEOSX_UNUSED_PARAM( vecRight ) )
+{
+  GEOSX_ERROR( "Not implemented" );
 }
 
 std::ostream & operator<<( std::ostream & os,

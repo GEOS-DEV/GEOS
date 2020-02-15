@@ -173,8 +173,8 @@ template class BiCGSTABsolver<BlockVectorView<TrilinosInterface::ParallelVector>
 #endif
 
 #ifdef GEOSX_USE_HYPRE
-//template class BiCGSTABsolver<HypreInterface::ParallelVector>;
-//template class BiCGSTABsolver<BlockVectorView<HypreInterface::ParallelVector>>;
+template class BiCGSTABsolver<HypreInterface::ParallelVector>;
+template class BiCGSTABsolver<BlockVectorView<HypreInterface::ParallelVector>>;
 #endif
 
 #ifdef GEOSX_USE_PETSC

@@ -571,6 +571,27 @@ public:
   ///@{
 
   /**
+   * @brief Returns the number of nozero entries in the longest
+   * row of the matrix.
+   */
+  virtual localIndex maxRowLength() const = 0;
+
+  /**
+   * @brief Get row length via local row index.
+   * @return the number of nonzero entries in the row
+   *
+   * TODO: Breaks the goal of hiding local row indexing from user.
+   *       Revise use cases to use ilower() and iupper().
+   */
+  virtual localIndex localRowLength( localIndex localRowIndex ) const = 0;
+
+  /**
+   * @brief Get row length via global row index.
+   * @return the number of nonzero entries in the row
+   */
+  virtual localIndex globalRowLength( globalIndex globalRowIndex ) const = 0;
+
+  /**
    * @brief Returns a copy of the data in row <tt>globalRow</tt>.
    * Note that the input arrays will be resized internally to fit the number of entries.
    */
