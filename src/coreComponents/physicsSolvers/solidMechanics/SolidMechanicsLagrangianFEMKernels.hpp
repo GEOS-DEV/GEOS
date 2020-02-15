@@ -194,7 +194,7 @@ struct ExplicitKernel
           arrayView2d<real64, nodes::ACCELERATION_USD> const & acc,
           arrayView1d< real64 const > const & fluidPressure,
           arrayView1d< real64 const > const & GEOSX_UNUSED_ARG( deltaFluidPressure ) ,
-          arrayView1d< real64 const > const & biotCoefficient,
+          real64 const biotCoefficient,
           arrayView3d<real64 const, solid::STRESS_USD> const & stress,
           real64 const dt,
           real64 * const maxStableDt)
@@ -259,7 +259,7 @@ struct ExplicitKernel
 
         if( !fluidPressure.empty() )
         {
-          TotalStress.PlusIdentity( - biotCoefficient[0] * ( fluidPressure[k]) );
+          TotalStress.PlusIdentity( - biotCoefficient * ( fluidPressure[k]) );
         }
 
         Integrate<NUM_NODES_PER_ELEM>( TotalStress, dNdX[k][q], detJ[k][q], detF, fInv, f_local );
@@ -381,7 +381,7 @@ struct ImplicitKernel
           arrayView2d< real64 const > const & GEOSX_UNUSED_ARG( density ),
           arrayView1d< real64 const > const & GEOSX_UNUSED_ARG( fluidPressure ),
           arrayView1d< real64 const > const & GEOSX_UNUSED_ARG( deltaFluidPressure ),
-          arrayView1d< real64 const > const & GEOSX_UNUSED_ARG( biotCoefficient ),
+          real64 const GEOSX_UNUSED_ARG( biotCoefficient ),
           timeIntegrationOption const GEOSX_UNUSED_ARG( tiOption ),
           real64 const GEOSX_UNUSED_ARG( stiffnessDamping ),
           real64 const GEOSX_UNUSED_ARG( massDamping ),

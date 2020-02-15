@@ -692,7 +692,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStepVelocityUpdate( real64 const& ti
                                    acc,
                                    fluidPres[er][esr],
                                    dPres[er][esr],
-                                   biotCoefficient[er][esr],
+                                   biotCoefficient[er][esr][m_solidMaterialFullIndex],
                                    stress[er][esr][m_solidMaterialFullIndex],
                                    dt,
                                    &m_maxStableDt);
@@ -756,7 +756,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStepVelocityUpdate( real64 const& ti
                                    acc,
                                    fluidPres[er][esr],
                                    dPres[er][esr],
-                                   biotCoefficient[er][esr],
+                                   biotCoefficient[er][esr][m_solidMaterialFullIndex],
                                    stress[er][esr][m_solidMaterialFullIndex],
                                    dt,
                                    &m_maxStableDt );
@@ -1305,7 +1305,7 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_ARG(
                                                 density[er][esr][m_solidMaterialFullIndex],
                                                 fluidPres[er][esr],
                                                 dPres[er][esr],
-                                                biotCoefficient[er][esr],
+                                                biotCoefficient[er][esr][m_solidMaterialFullIndex],
                                                 m_timeIntegrationOption,
                                                 this->m_stiffnessDamping,
                                                 this->m_massDamping,
