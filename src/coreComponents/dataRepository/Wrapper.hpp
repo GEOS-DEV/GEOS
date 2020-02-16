@@ -608,12 +608,24 @@ public:
   T & reference()
   { return *m_data; }
 
+#if 0
   /**
    * @brief Accessor for m_data
    * @return reference to const T
    */
   T const & reference() const
   { return *m_data; }
+#else
+  template< class U=T >
+  typename std::enable_if< has_alias_ViewType< U >::value, ViewTypeConst >::type
+  reference() const
+  { return referenceAsView(); }
+
+  template< class U=T >
+  typename std::enable_if< !has_alias_ViewType< U >::value, ViewType >::type
+  reference() const
+  { return referenceAsView(); }
+#endif
 
   /**
    * @brief Accessor for m_data
