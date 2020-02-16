@@ -1196,10 +1196,36 @@ public:
    * @note An error will be raised if wrapper does not exist or type cast is invalid.
    */
   template< typename T, typename WRAPPEDTYPE=T, typename LOOKUP_TYPE >
-  typename std::enable_if< std::is_same< T, WRAPPEDTYPE >::value, T const & >::type
+  typename Wrapper<WRAPPEDTYPE>::ViewTypeConst
   getReference( LOOKUP_TYPE const & lookup ) const
   {
-    Wrapper< WRAPPEDTYPE > const * wrapper = getWrapper< WRAPPEDTYPE >( lookup );
+    Wrapper< WRAPPEDTYPE > const * const wrapper = getWrapper< WRAPPEDTYPE >( lookup );
+    if( wrapper == nullptr )
+    {
+      if( hasWrapper( lookup ) )
+      {
+        GEOSX_ERROR( "call to getWrapper results in nullptr but a view exists. Most likely given the incorrect type. lookup : " << lookup );
+      }
+      GEOSX_ERROR( "call to getWrapper results in nullptr and a view does not exist. lookup : " << lookup );
+    }
+
+    if( std::is_base_of< WRAPPEDTYPE, T >::value )
+    {
+      return dynamicCast< typename Wrapper<WRAPPEDTYPE>::ViewTypeConst >( wrapper->reference() );
+    }
+    else
+    {
+      return wrapper->reference();
+    }
+  }
+
+  /**
+   * @copydoc getReference(LOOKUP_TYPE const &) const
+   */
+  template< typename T, typename WRAPPEDTYPE=T, typename LOOKUP_TYPE >
+  T & getReference( LOOKUP_TYPE const & lookup )
+  {
+    Wrapper< WRAPPEDTYPE > * const wrapper = getWrapper< WRAPPEDTYPE >( lookup );
     if( wrapper == nullptr )
     {
       if( hasWrapper( lookup ) )
@@ -1213,34 +1239,6 @@ public:
   }
 
   /**
-   * @copydoc getReference(LOOKUP_TYPE const &) const
-   */
-  template< typename T, typename WRAPPEDTYPE=T, typename LOOKUP_TYPE >
-  typename std::enable_if< !std::is_same< T, WRAPPEDTYPE >::value, T const & >::type
-  getReference( LOOKUP_TYPE const & lookup ) const
-  {
-    static_assert( std::is_base_of< WRAPPEDTYPE, T >::value, "incorrect template arguments" );
-    Wrapper< WRAPPEDTYPE > const * wrapper = getWrapper< WRAPPEDTYPE >( lookup );
-    if( wrapper == nullptr )
-    {
-      if( hasWrapper( lookup ) )
-      {
-        GEOSX_ERROR( "call to getWrapper results in nullptr but a view exists. Most likely given the incorrect type. lookup : " << lookup );
-      }
-      GEOSX_ERROR( "call to getWrapper results in nullptr and a view does not exist. lookup : " << lookup );
-    }
-
-    return dynamicCast< T const & >( wrapper->reference() );
-  }
-
-  /**
-   * @copydoc getReference(LOOKUP_TYPE const &) const
-   */
-  template< typename T, typename WRAPPEDTYPE=T, typename LOOKUP_TYPE >
-  T & getReference( LOOKUP_TYPE const & lookup )
-  { return const_cast< T & >( const_cast< const Group * >(this)->template getReference< T, WRAPPEDTYPE, LOOKUP_TYPE >( lookup ) ); }
-
-  /**
    * @copybrief getReference(LOOKUP_TYPE const &) const
    * @tparam T           return value type
    * @tparam WRAPPEDTYPE wrapped value type (by default, same as return)
@@ -1250,7 +1248,8 @@ public:
    * @note An error will be raised if wrapper does not exist or type cast is invalid.
    */
   template< typename T, typename WRAPPEDTYPE=T >
-  T const & getReference( char const * const name ) const
+  typename Wrapper<WRAPPEDTYPE>::ViewTypeConst
+  getReference( char const * const name ) const
   { return getReference< T, WRAPPEDTYPE >( string( name ) ); }
 
   /**

@@ -373,8 +373,8 @@ public:
   SortedArray<localIndex> & externalSet()
   {return m_sets.getReference<SortedArray<localIndex>>(m_ObjectManagerBaseViewKeys.externalSet);}
 
-  SortedArray<localIndex> const & externalSet() const
-  {return m_sets.getReference<SortedArray<localIndex>>(m_ObjectManagerBaseViewKeys.externalSet);}
+  SortedArrayView<localIndex const> const & externalSet() const
+  {return m_sets.getReference<set<localIndex>>(m_ObjectManagerBaseViewKeys.externalSet);}
 
   integer_array & isExternal()
   { return this->m_isExternal; }
