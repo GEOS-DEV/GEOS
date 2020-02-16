@@ -147,7 +147,7 @@ void PeriodicEvent::CheckOptionalFunctionThreshold(real64 const time,
     }
 
     // Get the set
-    set<localIndex> mySet;
+    SortedArray<localIndex> mySet;
     if (m_functionInputSetname.empty())
     {
       for(localIndex ii=0; ii<m_functionTarget->size(); ++ii)
@@ -158,7 +158,7 @@ void PeriodicEvent::CheckOptionalFunctionThreshold(real64 const time,
     else
     {
       dataRepository::Group const * sets = m_functionTarget->GetGroup(periodicEventViewKeys.functionSetNames);
-      mySet = sets->getReference< set<localIndex> >(m_functionInputSetname);
+      mySet = sets->getReference< SortedArray<localIndex> >(m_functionInputSetname);
     }
 
     // Find the function (min, average, max)

@@ -96,11 +96,11 @@ localIndex Pack( buffer_unit_type * & buffer, const std::string & var )
 }
 
 template< bool DO_PACKING, typename T >
-localIndex Pack( buffer_unit_type * & buffer, set< T > const & var )
+localIndex Pack( buffer_unit_type * & buffer, SortedArray< T > const & var )
 {
   const localIndex length = integer_conversion< localIndex >( var.size() );
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
-  for( typename set< T >::const_iterator i=var.begin() ; i!=var.end() ; ++i )
+  for( typename SortedArray< T >::const_iterator i=var.begin() ; i!=var.end() ; ++i )
   {
     sizeOfPackedChars += Pack< DO_PACKING >( buffer, *i );
   }
@@ -354,7 +354,7 @@ Unpack( buffer_unit_type const * & buffer,
 template< typename T >
 localIndex
 Unpack( buffer_unit_type const * & buffer,
-        set< T > & var )
+        SortedArray< T > & var )
 {
   var.clear();
   localIndex set_length;
@@ -731,19 +731,19 @@ Unpack( buffer_unit_type const * & buffer,
 
 template< bool DO_PACKING, int USD >
 localIndex Pack( buffer_unit_type * & buffer,
-                 set< localIndex > const & var,
-                 set< globalIndex > const & unmappedGlobalIndices,
+                 SortedArray< localIndex > const & var,
+                 SortedArray< globalIndex > const & unmappedGlobalIndices,
                  arraySlice1d< globalIndex const, USD > const & localToGlobal )
 {
   const localIndex length = integer_conversion< localIndex >( var.size()+unmappedGlobalIndices.size());
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
 
-  for( typename set< localIndex >::const_iterator i=var.begin() ; i!=var.end() ; ++i )
+  for( typename SortedArray< localIndex >::const_iterator i=var.begin() ; i!=var.end() ; ++i )
   {
     sizeOfPackedChars += Pack< DO_PACKING >( buffer, localToGlobal[*i] );
   }
 
-  for( typename set< globalIndex >::const_iterator i=unmappedGlobalIndices.begin() ;
+  for( typename SortedArray< globalIndex >::const_iterator i=unmappedGlobalIndices.begin() ;
        i!=unmappedGlobalIndices.end() ; ++i )
   {
     sizeOfPackedChars += Pack< DO_PACKING >( buffer, *i );
@@ -756,8 +756,8 @@ localIndex Pack( buffer_unit_type * & buffer,
 template< typename SORTED >
 inline
 localIndex Unpack( buffer_unit_type const * & buffer,
-                   set< localIndex > & var,
-                   set< globalIndex > & unmappedGlobalIndices,
+                   SortedArray< localIndex > & var,
+                   SortedArray< globalIndex > & unmappedGlobalIndices,
                    mapBase< globalIndex, localIndex, SORTED > const & globalToLocalMap,
                    bool const clearExistingSet )
 {
@@ -788,9 +788,9 @@ localIndex Unpack( buffer_unit_type const * & buffer,
 
 template< bool DO_PACKING >
 localIndex Pack( buffer_unit_type * & buffer,
-                 set< localIndex > const & var,
+                 SortedArray< localIndex > const & var,
                  arrayView1d< localIndex const > const & packList,
-                 set< globalIndex > const & unmappedGlobalIndices,
+                 SortedArray< globalIndex > const & unmappedGlobalIndices,
                  arraySlice1d< globalIndex const > const & localToGlobal )
 {
 
@@ -814,7 +814,7 @@ localIndex Pack( buffer_unit_type * & buffer,
     sizeOfPackedChars += Pack< DO_PACKING >( buffer, localToGlobal[temp[a]] );
   }
 
-  for( typename set< globalIndex >::const_iterator i=unmappedGlobalIndices.begin() ;
+  for( typename SortedArray< globalIndex >::const_iterator i=unmappedGlobalIndices.begin() ;
        i!=unmappedGlobalIndices.end() ; ++i )
   {
     sizeOfPackedChars += Pack< DO_PACKING >( buffer, *i );
@@ -1321,8 +1321,8 @@ Unpack( buffer_unit_type const * & buffer,
 template< bool DO_PACKING, typename SORTED >
 localIndex
 Pack( buffer_unit_type * & buffer,
-      arrayView1d< set< localIndex > const > const & var,
-      mapBase< localIndex, set< globalIndex >, SORTED > const & unmappedGlobalIndices,
+      arrayView1d< SortedArray< localIndex > const > const & var,
+      mapBase< localIndex, SortedArray< globalIndex >, SORTED > const & unmappedGlobalIndices,
       arrayView1d< localIndex const > const & indices,
       arrayView1d< globalIndex const > const & localToGlobalMap,
       arrayView1d< globalIndex const > const & relatedObjectLocalToGlobalMap )
@@ -1334,11 +1334,11 @@ Pack( buffer_unit_type * & buffer,
     localIndex li = indices[a];
     sizeOfPackedChars += Pack< DO_PACKING >( buffer, localToGlobalMap[li] );
 
-    typename mapBase< localIndex, set< globalIndex >, SORTED >::const_iterator
+    typename mapBase< localIndex, SortedArray< globalIndex >, SORTED >::const_iterator
       iterUnmappedGI = unmappedGlobalIndices.find( li );
 
-    set< globalIndex > junk;
-    set< globalIndex > const & unmappedGI = iterUnmappedGI==unmappedGlobalIndices.end() ?
+    SortedArray< globalIndex > junk;
+    SortedArray< globalIndex > const & unmappedGI = iterUnmappedGI==unmappedGlobalIndices.end() ?
                                             junk :
                                             iterUnmappedGI->second;
 
@@ -1356,9 +1356,9 @@ template< typename SORTED0, typename SORTED1, typename SORTED2 >
 inline
 localIndex
 Unpack( buffer_unit_type const * & buffer,
-        arrayView1d< set< localIndex > > & var,
+        arrayView1d< SortedArray< localIndex > > & var,
         localIndex_array & indices,
-        mapBase< localIndex, set< globalIndex >, SORTED0 > & unmappedGlobalIndices,
+        mapBase< localIndex, SortedArray< globalIndex >, SORTED0 > & unmappedGlobalIndices,
         mapBase< globalIndex, localIndex, SORTED1 > const & globalToLocalMap,
         mapBase< globalIndex, localIndex, SORTED2 > const & relatedObjectGlobalToLocalMap,
         bool const clearFlag )
@@ -1392,7 +1392,7 @@ Unpack( buffer_unit_type const * & buffer,
       li = globalToLocalMap.at( gi );
     }
 
-    set< globalIndex > unmappedIndices;
+    SortedArray< globalIndex > unmappedIndices;
     sizeOfUnpackedChars += Unpack( buffer,
                                    var[li],
                                    unmappedIndices,
