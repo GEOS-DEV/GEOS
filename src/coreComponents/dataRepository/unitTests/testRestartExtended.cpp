@@ -120,7 +120,7 @@ void checkArray2dView( const Wrapper< array2d< T > > * view, int sfp, const arra
 
 template< typename T >
 Wrapper< SortedArray< T > > * createSetView( Group * parent, const string & name,
-                                     localIndex sfp, const SortedArray< T > & data )
+                                             localIndex sfp, const SortedArray< T > & data )
 {
   Wrapper< SortedArray< T > > * view = parent->registerWrapper< SortedArray< T > >( name );
   view->setSizedFromParent( int(sfp) );

@@ -1339,8 +1339,8 @@ Pack( buffer_unit_type * & buffer,
 
     SortedArray< globalIndex > junk;
     SortedArray< globalIndex > const & unmappedGI = iterUnmappedGI==unmappedGlobalIndices.end() ?
-                                            junk :
-                                            iterUnmappedGI->second;
+                                                    junk :
+                                                    iterUnmappedGI->second;
 
     sizeOfPackedChars += Pack< DO_PACKING >( buffer,
                                              var[li],
