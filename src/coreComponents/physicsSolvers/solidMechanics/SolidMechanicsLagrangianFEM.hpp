@@ -177,7 +177,7 @@ public:
   ExplicitElementKernelLaunch( localIndex NUM_NODES_PER_ELEM,
                                localIndex NUM_QUADRATURE_POINTS,
                                constitutive::ConstitutiveBase * const constitutiveRelation,
-                               set<localIndex> const & elementList,
+                               SortedArray<localIndex> const & elementList,
                                arrayView2d<localIndex const, cells::NODE_MAP_USD> const & elemsToNodes,
                                arrayView3d<R1Tensor const> const & dNdX,
                                arrayView2d<real64 const> const & detJ,
@@ -415,10 +415,10 @@ protected:
   string m_contactRelationName;
 
 
-  array1d< array1d < set<localIndex> > > m_elemsAttachedToSendOrReceiveNodes;
-  array1d< array1d < set<localIndex> > > m_elemsNotAttachedToSendOrReceiveNodes;
-  set<localIndex> m_sendOrReceiveNodes;
-  set<localIndex> m_nonSendOrReceiveNodes;
+  array1d< array1d < SortedArray<localIndex> > > m_elemsAttachedToSendOrReceiveNodes;
+  array1d< array1d < SortedArray<localIndex> > > m_elemsNotAttachedToSendOrReceiveNodes;
+  SortedArray<localIndex> m_sendOrReceiveNodes;
+  SortedArray<localIndex> m_nonSendOrReceiveNodes;
   MPI_iCommData m_iComm;
 
   SolidMechanicsLagrangianFEM();

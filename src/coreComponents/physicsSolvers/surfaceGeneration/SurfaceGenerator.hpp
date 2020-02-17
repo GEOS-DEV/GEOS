@@ -120,7 +120,7 @@ public:
   AssignNewGlobalIndicesSerial( ElementRegionManager & elementManager,
                                 map< std::pair<localIndex,localIndex>, std::set<localIndex> > const & indexList );
 
-  // set< localIndex > & getSurfaceElementsRupturedThisSolve() { return m_faceElemsRupturedThisSolve; }
+  // SortedArray< localIndex > & getSurfaceElementsRupturedThisSolve() { return m_faceElemsRupturedThisSolve; }
 
 protected:
 
@@ -563,7 +563,7 @@ private:
   int m_mpiCommOrder;
 
   /// set of separable faces
-  localIndex_set m_separableFaceSet;
+  SortedArray<localIndex> m_separableFaceSet;
 
   /// copy of the original node->face mapping prior to any separation
   ArrayOfSets< localIndex > m_originalNodetoFaces;
@@ -575,7 +575,7 @@ private:
   ArrayOfArrays< localIndex>  m_originalFaceToEdges;
 
   /// collection of faces that have been used for separation of each node
-  array1d< set<localIndex> > m_usedFacesForNode;
+  array1d< SortedArray<localIndex> > m_usedFacesForNode;
 
   /// copy of the original face->elemRegion mapping prior to any separation
   array2d< localIndex > m_originalFacesToElemRegion;
@@ -589,15 +589,15 @@ private:
   /// name of the element region to place all new fractures
   string m_fractureRegionName;
 
-  set< localIndex > m_tipNodes;
+  SortedArray< localIndex > m_tipNodes;
 
-  set< localIndex > m_tipEdges;
+  SortedArray< localIndex > m_tipEdges;
 
-  set< localIndex > m_tipFaces;
+  SortedArray< localIndex > m_tipFaces;
 
-  set< localIndex > m_trailingFaces;
+  SortedArray< localIndex > m_trailingFaces;
 
-  set< localIndex > m_faceElemsRupturedThisSolve;
+  SortedArray< localIndex > m_faceElemsRupturedThisSolve;
 
 };
 

@@ -733,11 +733,11 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
                    keys::TotalDisplacement,
                    [&]( FieldSpecificationBase const * const bc,
                         string const &,
-                        set<localIndex> const & targetSet,
+                        SortedArray<localIndex> const & targetSet,
                         Group * const ,
                         string const )
   {
-    set<localIndex> localSet;
+    SortedArray<localIndex> localSet;
     for( auto const & a : targetSet )
     {
       if( nodeGhostRank[a]<0 )
@@ -766,7 +766,7 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
                     FlowSolverBase::viewKeyStruct::pressureString,
                     [&]( FieldSpecificationBase const * const fs,
                          string const &,
-                         set<localIndex> const & lset,
+                         SortedArray<localIndex> const & lset,
                          Group * subRegion,
                          string const & ) -> void
   {
@@ -774,7 +774,7 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
     dofNumber = subRegion->getReference< array1d<globalIndex> >( presDofKey );
     arrayView1d<integer const> const & ghostRank = subRegion->group_cast<ObjectManagerBase*>()->GhostRank();
 
-    set<localIndex> localSet;
+    SortedArray<localIndex> localSet;
     for( auto const & a : lset )
     {
       if( ghostRank[a]<0 )

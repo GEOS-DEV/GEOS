@@ -73,7 +73,7 @@ integer FunctionBase::isFunctionOfTime() const
 
 real64_array FunctionBase::EvaluateStats( dataRepository::Group const * const group,
                                           real64 const time,
-                                          set<localIndex> const & set) const
+                                          SortedArray<localIndex> const & set) const
 {
   localIndex N = set.size();
   real64_array sub(N);
