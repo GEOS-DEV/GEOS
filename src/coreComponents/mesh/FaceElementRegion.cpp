@@ -64,7 +64,7 @@ localIndex FaceElementRegion::AddToFractureMesh( real64 const time_np1,
 {
   localIndex rval = -1;
 
-  set<localIndex> connectedEdges;
+  SortedArray<localIndex> connectedEdges;
 
   array2d<localIndex > const & faceToElementRegion = faceManager->elementRegionList();
   array2d<localIndex > const & faceToElementSubRegion = faceManager->elementSubRegionList();
@@ -180,8 +180,8 @@ localIndex FaceElementRegion::AddToFractureMesh( real64 const time_np1,
   // update the sets
   for( auto const & setIter : faceManager->sets()->wrappers() )
   {
-    set<localIndex> const & faceSet = faceManager->sets()->getReference<set<localIndex> >( setIter.first );
-    set<localIndex> & faceElementSet = subRegion->sets()->registerWrapper< set<localIndex> >( setIter.first )->reference();
+    SortedArray<localIndex> const & faceSet = faceManager->sets()->getReference<SortedArray<localIndex> >( setIter.first );
+    SortedArray<localIndex> & faceElementSet = subRegion->sets()->registerWrapper< SortedArray<localIndex> >( setIter.first )->reference();
     for( localIndex a=0 ; a<faceMap.size(0) ; ++a )
     {
       localIndex const faceIndex = faceMap[a][0];

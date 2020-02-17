@@ -79,7 +79,7 @@ void FluxApproximationBase::compute( DomainPartition const & domain )
                    m_boundaryFieldName,
                    [&] ( FieldSpecificationBase const * GEOSX_UNUSED_PARAM( bc ),
                          string const & setName,
-                         set<localIndex> const & targetSet,
+                         SortedArray<localIndex> const & targetSet,
                          Group const * GEOSX_UNUSED_PARAM( targetGroup ),
                          string const & GEOSX_UNUSED_PARAM( targetName ))
   {
