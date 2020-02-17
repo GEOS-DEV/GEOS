@@ -268,7 +268,7 @@ private:
         dataRepository::Wrapper<SortedArray<localIndex> > const * const setWrapper = setGroup->getWrapper<SortedArray<localIndex> >( setName );
         if( setWrapper != nullptr )
         {
-          SortedArray<localIndex> const & targetSet = setWrapper->reference();
+          SortedArrayView<localIndex const> const & targetSet = setWrapper->reference();
           lambda( fs, setName, targetSet, target, targetName );
         }
       } 

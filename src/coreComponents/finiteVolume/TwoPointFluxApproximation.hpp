@@ -39,12 +39,12 @@ protected:
 
   virtual void computeCellStencil( DomainPartition const & domain ) override;
 
-  virtual void addToFractureStencil( DomainPartition const & domain,
+  virtual void addToFractureStencil( DomainPartition & domain,
                                      string const & faceElementRegionName,
                                      bool const initFlag ) override;
 
   virtual void computeBoundaryStencil( DomainPartition const & domain,
-                                       SortedArray<localIndex> const & faceSet,
+                                       SortedArrayView<localIndex const> const & faceSet,
                                        BoundaryStencil & stencil ) override;
 
 };

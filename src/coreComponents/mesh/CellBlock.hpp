@@ -214,7 +214,7 @@ public:
   {
     for( auto & externalPropertyName : m_externalPropertyNames )
     {
-      const dataRepository::WrapperBase * wrapper = this->getWrapperBase( externalPropertyName );
+      dataRepository::WrapperBase const * const wrapper = this->getWrapperBase( externalPropertyName );
       lambda( wrapper );
     }
   }

@@ -1482,7 +1482,7 @@ void SiloFile::WriteElementRegionSilo( ElementRegionBase const * elemRegion,
           typedef decltype(array) arrayType;
           Wrapper<arrayType> const &
           sourceWrapper = Wrapper<arrayType>::cast( *wrapper );
-          arrayType const & sourceArray = sourceWrapper.reference();
+          typename arrayType::ViewTypeConst const & sourceArray = sourceWrapper.reference();
 
           Wrapper<arrayType> * const
           newWrapper = fakeGroup.registerWrapper<arrayType>( fieldName );
@@ -1519,7 +1519,7 @@ void SiloFile::WriteElementRegionSilo( ElementRegionBase const * elemRegion,
         {
           Wrapper<arrayType> const &
           sourceWrapper = Wrapper<arrayType>::cast(*(viewPointers[esr][fieldName]));
-          arrayType const & sourceArray = sourceWrapper.reference();
+          typename arrayType::ViewTypeConst const & sourceArray = sourceWrapper.reference();
 
           targetArray.copy(counter, sourceArray);
           counter += sourceArray.size(0);
@@ -2307,7 +2307,7 @@ void SiloFile::WriteMultiXXXX( const DBObjectType type,
 template<typename OUTTYPE, typename TYPE>
 void SiloFile::WriteDataField( string const & meshName,
                                string const & fieldName,
-                               const array1d<TYPE>& field,
+                               arrayView1d<TYPE const> const & field,
                                int const centering,
                                int const cycleNumber,
                                real64 const problemTime,
@@ -2447,14 +2447,14 @@ void SiloFile::WriteDataField( string const & meshName,
 template<typename OUTTYPE, typename TYPE>
 void SiloFile::WriteDataField( string const & meshName,
                                string const & fieldName,
-                               const array2d<TYPE>& field,
+                               arrayView2d<TYPE const> const& field,
                                int const centering,
                                int const cycleNumber,
                                real64 const problemTime,
                                string const & multiRoot )
 {
-  int const primaryDimIndex = field.getSingleParameterResizeIndex();
-  int const secondaryDimIndex = 1 - primaryDimIndex;
+  int const primaryDimIndex = 0;
+  int const secondaryDimIndex = 1;
 
   localIndex const npts = field.size( primaryDimIndex );
   localIndex const nvar = field.size( secondaryDimIndex );
@@ -2471,23 +2471,28 @@ void SiloFile::WriteDataField( string const & meshName,
       indices[primaryDimIndex] = ip;
       data[ip] = field( indices[0], indices[1] );
     }
-    WriteDataField<OUTTYPE>( meshName, fieldName + "_" + std::to_string(ivar), data,
-                             centering, cycleNumber, problemTime, multiRoot );
+    WriteDataField<OUTTYPE>( meshName,
+                             fieldName + "_" + std::to_string(ivar),
+                             data.toViewConst(),
+                             centering,
+                             cycleNumber,
+                             problemTime,
+                             multiRoot );
   }
 }
 
 template<typename OUTTYPE, typename TYPE>
 void SiloFile::WriteDataField( string const & meshName,
                                string const & fieldName,
-                               const array3d<TYPE>& field,
+                               arrayView3d<TYPE const> const & field,
                                int const centering,
                                int const cycleNumber,
                                real64 const problemTime,
                                string const & multiRoot )
 {
-  int const primaryDimIndex = field.getSingleParameterResizeIndex();
-  int const secondaryDimIndex1 = (primaryDimIndex < 1) ? 1 : 0;
-  int const secondaryDimIndex2 = (primaryDimIndex < 2) ? 2 : 1;
+  int const primaryDimIndex = 0;
+  int const secondaryDimIndex1 = 1;
+  int const secondaryDimIndex2 = 2;
 
   localIndex const npts  = field.size( primaryDimIndex );
   localIndex const nvar1 = field.size( secondaryDimIndex1 );
@@ -2508,8 +2513,13 @@ void SiloFile::WriteDataField( string const & meshName,
         indices[primaryDimIndex] = ip;
         data[ip] = field( indices[0], indices[1], indices[2] );
       }
-      WriteDataField<OUTTYPE>( meshName, fieldName + "_" + std::to_string(ivar) + "_" + std::to_string(jvar), data,
-                               centering, cycleNumber, problemTime, multiRoot );
+      WriteDataField<OUTTYPE>( meshName,
+                               fieldName + "_" + std::to_string(ivar) + "_" + std::to_string(jvar),
+                               data.toViewConst(),
+                               centering,
+                               cycleNumber,
+                               problemTime,
+                               multiRoot );
     }
   }
 }
@@ -2808,7 +2818,7 @@ void SiloFile::WriteMaterialDataField3d( string const & meshName,
     fieldView[esr].resize( numMat );
     for( localIndex matIndex = 0 ; matIndex<numMat ; ++matIndex )
     {
-      arrayView3d<TYPE> const &
+      arrayView3d<TYPE const> const &
       fieldData = subRegion->GetConstitutiveModels()->GetGroup(materialNames[matIndex])->getReference<array3d<TYPE>>(fieldName);
       if (fieldData.size() > 0)
       {
