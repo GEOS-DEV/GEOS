@@ -250,7 +250,7 @@ void SinglePhaseFVM::AssembleFluxTermsExplicit( real64 const GEOSX_UNUSED_ARG( t
   FluxKernel::ElementView < arrayView1d<real64 const> > const & referencePressure = m_referencePressure.toViewConst();
 
   FluxKernel::ElementView < arrayView1d<real64 const> > const & aperture0  = m_elementAperture0.toViewConst();
-  FluxKernel::ElementView < arrayView1d<real64 const> > const & aperture   = m_elementAperture.toViewConst();
+  FluxKernel::ElementView < arrayView1d<real64 const> > const & aperture   = m_effectiveAperture.toViewConst();
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
   FluxKernel::ElementView < arrayView1d<real64 const> > const & separationCoeff  = m_elementSeparationCoefficient.toViewConst();
@@ -790,7 +790,7 @@ void SinglePhaseFVM::ExplicitStepSetup( real64 const & time_n,
                                                                 FaceElementSubRegion * subRegion )
   {
     arrayView1d<real64> const & aper0 = subRegion->getReference<array1d<real64>>( viewKeyStruct::aperture0String );
-    arrayView1d<real64 const> const & aper = m_elementAperture[er][esr];
+    arrayView1d<real64 const> const & aper = m_effectiveAperture[er][esr];
 
     forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
