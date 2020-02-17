@@ -29,7 +29,7 @@ TEST( testGeosxTraits, test_is_noncontainer_type_packable )
 
   static_assert( !is_noncontainer_type_packable< void >, "Should be false." );
   static_assert( !is_noncontainer_type_packable< array1d< double > >, "Should be false." );
-  static_assert( !is_noncontainer_type_packable< set< double > >, "Should be false." );
+  static_assert( !is_noncontainer_type_packable< SortedArray< double > >, "Should be false." );
   static_assert( !is_noncontainer_type_packable< map< string, int > >, "Should be false." );
   static_assert( !is_noncontainer_type_packable< std::pair< string, int > >, "Should be false." );
 }

@@ -298,7 +298,7 @@ using CRSMatrixView = LvArray::CRSMatrixView< T, COLINDEX, LINEEARINDEX >;
 
 /// A set of local indices.
 template< typename T >
-using set = LvArray::SortedArray< T, localIndex >;
+using set = std::set< T >;
 
 /// A sorted array of local indices.
 template< typename T >

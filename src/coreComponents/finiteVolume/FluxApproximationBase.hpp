@@ -146,7 +146,7 @@ protected:
 
   /// actual computation of the boundary stencil, to be overridden by implementations
   virtual void computeBoundaryStencil( DomainPartition const & domain,
-                                       set<localIndex> const & faceSet,
+                                       SortedArray<localIndex> const & faceSet,
                                        BoundaryStencil & stencil ) = 0;
 
   /// name of the primary solution field

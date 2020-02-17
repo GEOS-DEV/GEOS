@@ -220,9 +220,9 @@ void SpatialPartition::AddNeighbors( const unsigned int idim,
   }
 }
 
-void SpatialPartition::AddNeighborsMetis( set< globalIndex > & neighborList )
+void SpatialPartition::AddNeighborsMetis( SortedArray< globalIndex > & neighborList )
 {
-  set< globalIndex >::iterator itNeighbor = neighborList.begin();
+  SortedArray< globalIndex >::iterator itNeighbor = neighborList.begin();
   for( ; itNeighbor != neighborList.end() ; itNeighbor++ )
   {
     m_neighbors.push_back( NeighborCommunicator());

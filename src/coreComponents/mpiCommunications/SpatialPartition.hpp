@@ -37,7 +37,7 @@ public:
 //  void ReadXML( xmlWrapper::xmlNode const & targetNode );
 
   virtual void InitializeMetis();
-  void AddNeighborsMetis( set< globalIndex > & neighborList );
+  void AddNeighborsMetis( SortedArray< globalIndex > & neighborList );
   virtual bool IsCoordInPartition( const realT & coord, const int dir );
   virtual bool IsCoordInPartition( const R1Tensor & elemCenter );
   virtual bool IsCoordInPartition( const R1Tensor & elemCenter,
