@@ -326,7 +326,7 @@ public:
   template<typename OUTTYPE, typename TYPE>
   void WriteDataField( string const & meshName,
                        string const & fieldName,
-                       const array1d<TYPE>& field,
+                       arrayView1d<TYPE const> const & field,
                        int const centering,
                        int const cycleNumber,
                        real64 const problemTime,
@@ -345,7 +345,7 @@ public:
   template<typename OUTTYPE, typename TYPE>
   void WriteDataField( string const & meshName,
                        string const & fieldName,
-                       const array2d<TYPE>& field,
+                       arrayView2d<TYPE const> const & field,
                        int const centering,
                        int const cycleNumber,
                        real64 const problemTime,
@@ -364,7 +364,7 @@ public:
   template<typename OUTTYPE, typename TYPE>
   void WriteDataField( string const & meshName,
                        string const & fieldName,
-                       const array3d<TYPE>& field,
+                       arrayView3d<TYPE const> const & field,
                        int const centering,
                        int const cycleNumber,
                        real64 const problemTime,

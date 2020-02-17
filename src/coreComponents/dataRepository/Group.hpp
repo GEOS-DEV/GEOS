@@ -1257,7 +1257,7 @@ public:
    */
   template< typename T, typename WRAPPEDTYPE=T >
   T & getReference( char const * const name )
-  { return const_cast< T & >( const_cast< const Group * >(this)->getReference< T, WRAPPEDTYPE >( name ) ); }
+  { return getReference< T, WRAPPEDTYPE >( string( name ) ); }
 
   /**
    * @brief Look up a wrapper and get reference to wrapped object.
