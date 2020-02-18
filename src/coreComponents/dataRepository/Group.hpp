@@ -1196,7 +1196,7 @@ public:
    * @note An error will be raised if wrapper does not exist or type cast is invalid.
    */
   template< typename T, typename WRAPPEDTYPE=T, typename LOOKUP_TYPE >
-  typename std::enable_if< std::is_same< WRAPPEDTYPE, T >::value, typename Wrapper<WRAPPEDTYPE>::ViewTypeConst>::type
+  typename std::enable_if< std::is_same< WRAPPEDTYPE, T >::value, typename Wrapper< WRAPPEDTYPE >::ViewTypeConst >::type
   getReference( LOOKUP_TYPE const & lookup ) const
   {
     Wrapper< WRAPPEDTYPE > const * const wrapper = getWrapper< WRAPPEDTYPE >( lookup );
@@ -1216,11 +1216,11 @@ public:
    * @copydoc getReference(LOOKUP_TYPE const &) const
    */
   template< typename T, typename WRAPPEDTYPE=T, typename LOOKUP_TYPE >
-  typename std::enable_if< !std::is_same< WRAPPEDTYPE, T >::value, typename Wrapper<WRAPPEDTYPE>::ViewTypeConst>::type
+  typename std::enable_if< !std::is_same< WRAPPEDTYPE, T >::value, typename Wrapper< WRAPPEDTYPE >::ViewTypeConst >::type
   getReference( LOOKUP_TYPE const & lookup ) const
   {
     static_assert( std::is_base_of< WRAPPEDTYPE, T >::value, "incorrect template arguments" );
-    return dynamicCast< typename Wrapper<WRAPPEDTYPE>::ViewTypeConst >( getReference(lookup) );
+    return dynamicCast< typename Wrapper< WRAPPEDTYPE >::ViewTypeConst >( getReference< T, WRAPPEDTYPE >( lookup ) );
   }
 
   /**
@@ -1251,7 +1251,7 @@ public:
   getReference( LOOKUP_TYPE const & lookup )
   {
     static_assert( std::is_base_of< WRAPPEDTYPE, T >::value, "incorrect template arguments" );
-    return dynamicCast< T & >( getReference(lookup) );
+    return dynamicCast< T & >( getReference< T, WRAPPEDTYPE >( lookup ) );
   }
 
   /**
@@ -1264,7 +1264,7 @@ public:
    * @note An error will be raised if wrapper does not exist or type cast is invalid.
    */
   template< typename T, typename WRAPPEDTYPE=T >
-  typename Wrapper<WRAPPEDTYPE>::ViewTypeConst
+  typename Wrapper< WRAPPEDTYPE >::ViewTypeConst
   getReference( char const * const name ) const
   { return getReference< T, WRAPPEDTYPE >( string( name ) ); }
 
