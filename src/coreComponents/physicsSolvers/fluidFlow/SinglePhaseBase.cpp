@@ -237,6 +237,16 @@ void SinglePhaseBase::SetInitialTimeStep(Group * const domain )
   }
 }
 
+real64 SinglePhaseBase::GetTimestepRequest(real64 const time)
+{
+  if( m_timeIntegrationOption == timeIntegrationOption::ExplicitTransient )
+  {
+    return m_maxStableDt * m_cflFactor;
+  }
+  else
+    return SolverBase::GetTimestepRequest(time);
+}
+
 void SinglePhaseBase::InitializePostInitialConditions_PreSubGroups( Group * const rootGroup )
 {
   GEOSX_MARK_FUNCTION;

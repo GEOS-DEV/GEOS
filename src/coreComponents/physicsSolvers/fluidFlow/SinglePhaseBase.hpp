@@ -69,6 +69,8 @@ public:
 
   virtual void SetInitialTimeStep( Group * const domain ) override;
 
+  virtual real64 GetTimestepRequest( real64 const time ) override;
+
   virtual void SetupSystem( DomainPartition * const domain,
                             DofManager & dofManager,
                             ParallelMatrix & matrix,

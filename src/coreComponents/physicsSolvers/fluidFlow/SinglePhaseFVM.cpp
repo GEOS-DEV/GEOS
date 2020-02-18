@@ -736,8 +736,8 @@ real64 SinglePhaseFVM::ExplicitStep( real64 const& time_n,
 }
 
 void SinglePhaseFVM::ExplicitStepSetup( real64 const & time_n,
-                                         real64 const & dt,
-                                         DomainPartition * const domain)
+                                        real64 const & dt,
+                                        DomainPartition * const domain)
 {
   ResetViews( domain );
 

@@ -78,12 +78,12 @@ public:
 
   virtual void SetInitialTimeStep( Group * const domain ) override;
 
+  virtual real64 GetTimestepRequest(real64 const time) override;
+
   void updateIntrinsicNodalData( DomainPartition * const domain );
 
   virtual void
   updateStress( DomainPartition * const domain );
-
-
 
   /**
    * @defgroup Solver Interface Functions

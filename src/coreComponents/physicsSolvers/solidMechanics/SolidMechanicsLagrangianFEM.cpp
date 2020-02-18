@@ -259,6 +259,16 @@ void SolidMechanicsLagrangianFEM::SetInitialTimeStep(Group * const domain )
   }
 }
 
+real64 SolidMechanicsLagrangianFEM::GetTimestepRequest(real64 const time)
+{
+  if( m_timeIntegrationOption == timeIntegrationOption::ExplicitDynamic )
+  {
+    return m_maxStableDt * m_cflFactor;
+  }
+  else
+    return SolverBase::GetTimestepRequest(time);
+}
+
 void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * const domain )
 {
   GEOSX_MARK_FUNCTION;
