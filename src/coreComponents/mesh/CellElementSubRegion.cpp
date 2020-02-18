@@ -73,14 +73,14 @@ void CellElementSubRegion::CopyFromCellBlock( CellBlock const * source )
 void CellElementSubRegion::ConstructSubRegionFromFaceSet( FaceManager const * const faceManager,
                                                         string const & setName )
 {
-  set<localIndex> const & targetSet = faceManager->sets()->getReference<set<localIndex> >(setName);
+  SortedArray<localIndex> const & targetSet = faceManager->sets()->getReference<SortedArray<localIndex> >(setName);
   m_toFacesRelation.resize(0,2);
   this->resize( targetSet.size() );
 
 
 }
 
-void CellElementSubRegion::ViewPackingExclusionList( set<localIndex> & exclusionList ) const
+void CellElementSubRegion::ViewPackingExclusionList( SortedArray<localIndex> & exclusionList ) const
 {
   ObjectManagerBase::ViewPackingExclusionList(exclusionList);
   exclusionList.insert(this->getWrapperIndex(viewKeyStruct::nodeListString));

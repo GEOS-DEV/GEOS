@@ -332,7 +332,7 @@ SinglePhaseFVM::ApplyBoundaryConditions( real64 const time_n,
   fsManager.Apply( time_n + dt, domain, "ElementRegions", FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString,
                    [&]( FieldSpecificationBase const * const fs,
                         string const &,
-                        set<localIndex> const & lset,
+                        SortedArray<localIndex> const & lset,
                         Group * subRegion,
                         string const & ) -> void
   {
@@ -342,7 +342,7 @@ SinglePhaseFVM::ApplyBoundaryConditions( real64 const time_n,
     arrayView1d< integer const > const &
     ghostRank = subRegion->getReference<array1d<integer> >( ObjectManagerBase::viewKeyStruct::ghostRankString);
 
-    set< localIndex > localSet;
+    SortedArray< localIndex > localSet;
     for( localIndex const a : lset )
     {
       if( ghostRank[a] < 0 )
@@ -370,7 +370,7 @@ SinglePhaseFVM::ApplyBoundaryConditions( real64 const time_n,
   fsManager.Apply( time_n + dt, domain, "ElementRegions", viewKeyStruct::pressureString,
                    [&]( FieldSpecificationBase const * const fs,
                         string const &,
-                        set<localIndex> const & lset,
+                        SortedArray<localIndex> const & lset,
                         Group * subRegion,
                         string const & ) -> void
   {
@@ -452,7 +452,7 @@ void SinglePhaseFVM::ApplyFaceDirichletBC_implicit( real64 const time_n,
   FluxApproximationBase const * const fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
 
   // make a list of region indices to be included
-  set<localIndex> regionFilter;
+  SortedArray<localIndex> regionFilter;
   for (string const & regionName : m_targetRegions)
   {
     regionFilter.insert( elemManager->GetRegions().getIndex( regionName ) );
@@ -493,7 +493,7 @@ void SinglePhaseFVM::ApplyFaceDirichletBC_implicit( real64 const time_n,
                     viewKeyStruct::boundaryFacePressureString,
                     [&] ( FieldSpecificationBase const * const fs,
                           string const &,
-                          set<localIndex> const & targetSet,
+                          SortedArray<localIndex> const & targetSet,
                           Group * const targetGroup,
                           string const fieldName )
   {
@@ -508,7 +508,7 @@ void SinglePhaseFVM::ApplyFaceDirichletBC_implicit( real64 const time_n,
                     viewKeyStruct::boundaryFacePressureString,
                     [&] ( FieldSpecificationBase const * GEOSX_UNUSED_PARAM( bc ),
                           string const &,
-                          set<localIndex> const & targetSet,
+                          SortedArray<localIndex> const & targetSet,
                           Group * const,
                           string const & )
   {
@@ -549,7 +549,7 @@ void SinglePhaseFVM::ApplyFaceDirichletBC_implicit( real64 const time_n,
                     viewKeyStruct::boundaryFacePressureString,
                     [&] ( FieldSpecificationBase const * GEOSX_UNUSED_PARAM( bc ),
                           string const & setName,
-                          set<localIndex> const &,
+                          SortedArray<localIndex> const &,
                           Group * const,
                           string const & )
   {

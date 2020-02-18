@@ -114,7 +114,7 @@ void ComponentFractionKernel::Launch( localIndex const NC,
 }
 
 template<localIndex NC>
-void ComponentFractionKernel::Launch( set<localIndex> const & targetSet,
+void ComponentFractionKernel::Launch( SortedArray<localIndex> const & targetSet,
                                       arrayView2d<real64 const> const & compDens,
                                       arrayView2d<real64 const> const & dCompDens,
                                       arrayView2d<real64> const & compFrac,
@@ -130,7 +130,7 @@ void ComponentFractionKernel::Launch( set<localIndex> const & targetSet,
 }
 
 void ComponentFractionKernel::Launch( localIndex const NC,
-                                      set<localIndex> const & targetSet,
+                                      SortedArray<localIndex> const & targetSet,
                                       arrayView2d<real64 const> const & compDens,
                                       arrayView2d<real64 const> const & dCompDens,
                                       arrayView2d<real64> const & compFrac,
@@ -154,7 +154,7 @@ void ComponentFractionKernel::Launch<NC>( localIndex const begin, localIndex con
                                           arrayView2d<real64> const & compFrac, \
                                           arrayView3d<real64> const & dCompFrac_dCompDens ); \
 template \
-void ComponentFractionKernel::Launch<NC>( set<localIndex> const & targetSet, \
+void ComponentFractionKernel::Launch<NC>( SortedArray<localIndex> const & targetSet, \
                                           arrayView2d<real64 const> const & compDens, \
                                           arrayView2d<real64 const> const & dCompDens, \
                                           arrayView2d<real64> const & compFrac, \
@@ -352,7 +352,7 @@ void PhaseVolumeFractionKernel::Launch( localIndex const NC, localIndex const NP
 }
 
 template<localIndex NC, localIndex NP>
-void PhaseVolumeFractionKernel::Launch( set<localIndex> const & targetSet,
+void PhaseVolumeFractionKernel::Launch( SortedArray<localIndex> const & targetSet,
                                         arrayView2d<real64 const> const & compDens,
                                         arrayView2d<real64 const> const & dCompDens,
                                         arrayView3d<real64 const> const & dCompFrac_dCompDens,
@@ -384,7 +384,7 @@ void PhaseVolumeFractionKernel::Launch( set<localIndex> const & targetSet,
 }
 
 void PhaseVolumeFractionKernel::Launch( localIndex const NC, localIndex const NP,
-                                        set<localIndex> const & targetSet,
+                                        SortedArray<localIndex> const & targetSet,
                                         arrayView2d<real64 const> const & compDens,
                                         arrayView2d<real64 const> const & dCompDens,
                                         arrayView3d<real64 const> const & dCompFrac_dCompDens,
@@ -432,7 +432,7 @@ void PhaseVolumeFractionKernel::Launch<NC,NP>( localIndex const begin, localInde
                                                arrayView2d<real64> const & dPhaseVolFrac_dPres, \
                                                arrayView3d<real64> const & dPhaseVolFrac_dComp ); \
 template \
-void PhaseVolumeFractionKernel::Launch<NC,NP>( set<localIndex> const & targetSet, \
+void PhaseVolumeFractionKernel::Launch<NC,NP>( SortedArray<localIndex> const & targetSet, \
                                                arrayView2d<real64 const> const & compDens, \
                                                arrayView2d<real64 const> const & dCompDens, \
                                                arrayView3d<real64 const> const & dCompFrac_dCompDens, \
@@ -666,7 +666,7 @@ void PhaseMobilityKernel::Launch( localIndex const NC, localIndex const NP,
 }
 
 template<localIndex NC, localIndex NP>
-void PhaseMobilityKernel::Launch( set<localIndex> const & targetSet,
+void PhaseMobilityKernel::Launch( SortedArray<localIndex> const & targetSet,
                                   arrayView3d<real64 const> const & dCompFrac_dCompDens,
                                   arrayView3d<real64 const> const & phaseDens,
                                   arrayView3d<real64 const> const & dPhaseDens_dPres,
@@ -702,7 +702,7 @@ void PhaseMobilityKernel::Launch( set<localIndex> const & targetSet,
 }
 
 void PhaseMobilityKernel::Launch( localIndex const NC, localIndex const NP,
-                                  set<localIndex> const & targetSet,
+                                  SortedArray<localIndex> const & targetSet,
                                   arrayView3d<real64 const> const & dCompFrac_dCompDens,
                                   arrayView3d<real64 const> const & phaseDens,
                                   arrayView3d<real64 const> const & dPhaseDens_dPres,
@@ -756,7 +756,7 @@ void PhaseMobilityKernel::Launch<NC,NP>( localIndex const begin, localIndex cons
                                          arrayView2d<real64> const & dPhaseMob_dPres, \
                                          arrayView3d<real64> const & dPhaseMob_dComp ); \
 template \
-void PhaseMobilityKernel::Launch<NC,NP>( set<localIndex> const & targetSet, \
+void PhaseMobilityKernel::Launch<NC,NP>( SortedArray<localIndex> const & targetSet, \
                                          arrayView3d<real64 const> const & dCompFrac_dCompDens, \
                                          arrayView3d<real64 const> const & phaseDens, \
                                          arrayView3d<real64 const> const & dPhaseDens_dPres, \

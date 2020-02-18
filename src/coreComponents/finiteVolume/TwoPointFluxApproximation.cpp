@@ -96,7 +96,7 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
   ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager->nodeList();
 
   // make a list of region indices to be included
-  set<localIndex> regionFilter;
+  SortedArray<localIndex> regionFilter;
   for (string const & regionName : m_targetRegions)
   {
     regionFilter.insert( elemManager->GetRegions().getIndex( regionName ) );
@@ -339,7 +339,7 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
 #if SET_CREATION_DISPLACEMENT==1
       real64 initialAperture = 1.0e99;
 #endif
-      set<localIndex> newElems;
+      SortedArray<localIndex> newElems;
 
       // loop over all face elements attached to the connector and add them to the stencil
       for( localIndex kfe=0 ; kfe<numElems ; ++kfe )
@@ -433,7 +433,7 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
 
   if( initFlag )
   {
-    set<localIndex> touchedNodes;
+    SortedArray<localIndex> touchedNodes;
     for( localIndex const newElemIndex : allNewElems )
     {
       // if the value of pressure was not set, then set it to zero and punt.
@@ -558,7 +558,7 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
 }
 
 void TwoPointFluxApproximation::computeBoundaryStencil( DomainPartition const & domain,
-                                                        set<localIndex> const & faceSet,
+                                                        SortedArray<localIndex> const & faceSet,
                                                         BoundaryStencil & stencil )
 {
   MeshBody const * const meshBody = domain.getMeshBody(0);
@@ -586,7 +586,7 @@ void TwoPointFluxApproximation::computeBoundaryStencil( DomainPartition const & 
   ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager->nodeList();
 
   // make a list of region indices to be included
-  set<localIndex> regionFilter;
+  SortedArray<localIndex> regionFilter;
   for (string const & regionName : m_targetRegions)
   {
     regionFilter.insert( elemManager->GetRegions().getIndex( regionName ) );

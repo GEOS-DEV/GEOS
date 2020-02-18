@@ -276,7 +276,7 @@ void FaceElementSubRegion::inheritGhostRankFromParentFace( FaceManager const * c
   }
 }
 
-void FaceElementSubRegion::ViewPackingExclusionList( set<localIndex> & exclusionList ) const
+void FaceElementSubRegion::ViewPackingExclusionList( SortedArray<localIndex> & exclusionList ) const
 {
   ObjectManagerBase::ViewPackingExclusionList(exclusionList);
   exclusionList.insert(this->getWrapperIndex(viewKeyStruct::nodeListString));
