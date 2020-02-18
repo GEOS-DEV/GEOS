@@ -54,7 +54,7 @@ void MeshUtilities::GenerateNodesets( dataRepository::Group const * geometries,
         if (object!=nullptr)
         {
           string name = object->getName();
-          set<localIndex> & targetSet = sets->registerWrapper< set<localIndex> >(name)->reference();
+          SortedArray<localIndex> & targetSet = sets->registerWrapper< SortedArray<localIndex> >(name)->reference();
           for (localIndex a=0 ; a<numNodes ; ++a)
           {
             if (object->IsCoordInObject(X[a]))
@@ -75,8 +75,8 @@ void MeshUtilities::GenerateNodesets( dataRepository::Group const * geometries,
 // nodeManager )
 //{
 //
-////  std::map< std::string, set<localIndex> >& nodeSets = nodeManager->m_Sets;
-//  std::map< std::string, set<localIndex> >& faceSets = faceManager->m_Sets;
+////  std::map< std::string, SortedArray<localIndex> >& nodeSets = nodeManager->m_Sets;
+//  std::map< std::string, SortedArray<localIndex> >& faceSets = faceManager->m_Sets;
 ////  array1d<R1Tensor>& X = *(nodeManager->m_refposition);
 //
 //  //We calculate face centers here. This is cheaper than calculating it when
@@ -110,8 +110,8 @@ void MeshUtilities::GenerateNodesets( dataRepository::Group const * geometries,
 //      */
 //
 //      std::string name = hdnNode->GetAttributeString("name");
-////      set<localIndex>& currentNodeset = nodeSets[name];
-//      set<localIndex>& currentFaceset = faceSets[name];
+////      SortedArray<localIndex>& currentNodeset = nodeSets[name];
+//      SortedArray<localIndex>& currentFaceset = faceSets[name];
 //
 //      SimpleGeometricObjectBase* object;
 //
@@ -230,10 +230,10 @@ void MeshUtilities::GenerateNodesets( dataRepository::Group const * geometries,
 //        ElementRegionT& elemRegion = elementRegionIter->second;
 //        localIndex numEle = elemRegion.DataLengths();
 //
-//        std::map< std::string, set<localIndex> >& sets = elemRegion.m_Sets;
+//        std::map< std::string, SortedArray<localIndex> >& sets = elemRegion.m_Sets;
 //
 //        std::string name = hdnNode->GetAttributeString("name");
-//        set<localIndex>& set = sets[name];
+//        SortedArray<localIndex>& set = sets[name];
 //
 //        for (localIndex iElm=0 ; iElm<numEle ; ++iElm)
 //        {
