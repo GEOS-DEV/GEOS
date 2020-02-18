@@ -145,7 +145,7 @@ void TwoPhaseHybridFVM::ImplicitStepComplete( real64 const & time_n,
   });
 }
 
-void TwoPhaseHybridFVM::SetupDofs( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
+void TwoPhaseHybridFVM::SetupDofs( DomainPartition const * const GEOSX_UNUSED_PARAM( domain ),
                                    DofManager & dofManager ) const
 {
   localIndex constexpr numDof = NUM_DOF;
@@ -180,7 +180,7 @@ void TwoPhaseHybridFVM::SetupDofs( DomainPartition const * const GEOSX_UNUSED_AR
  
 }
 
-void TwoPhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time_n ),
+void TwoPhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                            real64 const dt,
                                            DomainPartition const * const domain,
                                            DofManager const * const dofManager,
@@ -203,7 +203,7 @@ void TwoPhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time_n
   
   // in this function we need to make sure that we act only on the target regions
   // for that, we need the following region filter
-  set<localIndex> regionFilter;
+  SortedArray<localIndex> regionFilter;
   for (string const & regionName : m_targetRegions)
   {
     regionFilter.insert( elemManager->GetRegions().getIndex( regionName ) );
@@ -1041,12 +1041,12 @@ void TwoPhaseHybridFVM::AssembleConstraints( arrayView1d<globalIndex const> cons
 }
 
 void
-TwoPhaseHybridFVM::ApplyBoundaryConditions( real64 const GEOSX_UNUSED_ARG( time_n ),
-                                            real64 const GEOSX_UNUSED_ARG( dt ),
-                                            DomainPartition * const GEOSX_UNUSED_ARG( domain ),
-                                            DofManager const & GEOSX_UNUSED_ARG( dofManager ),
-                                            ParallelMatrix & GEOSX_UNUSED_ARG( matrix ),
-                                            ParallelVector & GEOSX_UNUSED_ARG( rhs ) )
+TwoPhaseHybridFVM::ApplyBoundaryConditions( real64 const GEOSX_UNUSED_PARAM( time_n ),
+                                            real64 const GEOSX_UNUSED_PARAM( dt ),
+                                            DomainPartition * const GEOSX_UNUSED_PARAM( domain ),
+                                            DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
+                                            ParallelMatrix & GEOSX_UNUSED_PARAM( matrix ),
+                                            ParallelVector & GEOSX_UNUSED_PARAM( rhs ) )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -1081,7 +1081,7 @@ real64 TwoPhaseHybridFVM::CalculateResidualNorm( DomainPartition const * const d
 
   // compute the norm of local residual scaled by elem pore volume
   applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                 ElementRegionBase const * const GEOSX_UNUSED_ARG( region ),
+                                 ElementRegionBase const * const GEOSX_UNUSED_PARAM( region ),
                                  ElementSubRegionBase const * const subRegion )
   {
     arrayView1d<globalIndex const> const & elemDofNumber =
@@ -1217,7 +1217,7 @@ void TwoPhaseHybridFVM::FindAllNeighborsInTarget( MeshLevel const * const mesh,
                                                   array2d<localIndex> const & elemRegionList,
                                                   array2d<localIndex> const & elemSubRegionList,
                                                   array2d<localIndex> const & elemList,
-                                                  set<localIndex>     const & regionFilter,
+                                                  SortedArray<localIndex> const & regionFilter,
                                                   arraySlice1d<localIndex const> const elemToFaces,
                                                   stackArray1d<localIndex, 3> const & elemIds,
                                                   globalIndex const elemDofNumber,   
@@ -1316,8 +1316,8 @@ void TwoPhaseHybridFVM::PrecomputeData( DomainPartition * const domain )
   elemManager->
     forElementSubRegionsComplete<CellElementSubRegion,
                                  FaceElementSubRegion>( m_targetRegions,
-                                                      [&]( localIndex const GEOSX_UNUSED_ARG( er ),
-                                                           localIndex const GEOSX_UNUSED_ARG( esr ),
+                                                      [&]( localIndex const GEOSX_UNUSED_PARAM( er ),
+                                                           localIndex const GEOSX_UNUSED_PARAM( esr ),
                                                            ElementRegionBase const * const,
                                                            auto const * const subRegion )
   {
@@ -1377,7 +1377,7 @@ void TwoPhaseHybridFVM::ComputeTransmissibilityMatrix( arrayView2d<real64 const,
                                                        ArrayOfArraysView<localIndex const> const & faceToNodes, 
                                                        arraySlice1d<localIndex const> const elemToFaces,
                                                        R1Tensor const & elemCenter,
-                                                       real64   const & GEOSX_UNUSED_ARG( elemVolume ),
+                                                       real64   const & GEOSX_UNUSED_PARAM( elemVolume ),
                                                        R1Tensor const & elemPerm,
                                                        real64   const & lengthTolerance,
                                                        stackArray2d<real64, MAX_NUM_FACES*MAX_NUM_FACES> & transMatrix ) const 

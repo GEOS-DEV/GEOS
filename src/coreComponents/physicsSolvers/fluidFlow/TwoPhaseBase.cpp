@@ -395,8 +395,8 @@ real64 TwoPhaseBase::SolverStep( real64 const& time_n,
 }
 
 
-void TwoPhaseBase::ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n ),
-                                      real64 const & GEOSX_UNUSED_ARG( dt ),
+void TwoPhaseBase::ImplicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+                                      real64 const & GEOSX_UNUSED_PARAM( dt ),
                                       DomainPartition * const domain,
                                       DofManager & dofManager,
                                       ParallelMatrix & matrix,
@@ -419,14 +419,14 @@ void TwoPhaseBase::ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n ),
 
 }
 
-void TwoPhaseBase::ImplicitStepComplete( real64 const & GEOSX_UNUSED_ARG( time_n ),
-                                         real64 const & GEOSX_UNUSED_ARG( dt ),
+void TwoPhaseBase::ImplicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+                                         real64 const & GEOSX_UNUSED_PARAM( dt ),
                                          DomainPartition * const domain )
 {
   MeshLevel * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
 
   applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
+                                 ElementRegionBase * const GEOSX_UNUSED_PARAM( region ),
                                  ElementSubRegionBase * const subRegion )
   {
     arrayView1d<real64 const> const & dPres = m_deltaPressure[er][esr];
@@ -503,7 +503,7 @@ void TwoPhaseBase::AssembleAccumulationTerms( DomainPartition const * const doma
   string const dofKey = dofManager->getKey( viewKeyStruct::elemDofFieldString );
 
   applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                 ElementRegionBase const * const GEOSX_UNUSED_ARG( region ),
+                                 ElementRegionBase const * const GEOSX_UNUSED_PARAM( region ),
                                  ElementSubRegionBase const * const subRegion )
   {
     arrayView1d<globalIndex const> const & dofNumber = subRegion->getReference< array1d<globalIndex> >( dofKey );
@@ -600,7 +600,7 @@ bool TwoPhaseBase::CheckSystemSolution( DomainPartition const * const domain,
   string const elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString );
 
   applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                 ElementRegionBase const * const GEOSX_UNUSED_ARG( region ),
+                                 ElementRegionBase const * const GEOSX_UNUSED_PARAM( region ),
                                  ElementSubRegionBase const * const subRegion )
   {
     arrayView1d<globalIndex const> const & elemDofNumber =
@@ -681,7 +681,7 @@ void TwoPhaseBase::ResetStateToBeginningOfStep( DomainPartition * const domain )
   MeshLevel * mesh = domain->getMeshBody(0)->getMeshLevel(0);
 
   applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                                 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
+                                 ElementRegionBase * const GEOSX_UNUSED_PARAM( region ),
                                  ElementSubRegionBase * const subRegion )
   {
     arrayView1d<real64> const & dPres = m_deltaPressure[er][esr];
@@ -753,7 +753,7 @@ void TwoPhaseBase::BackupFields( DomainPartition * const domain )
   
   // backup some fields used in time derivative approximation
   applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
+                                 ElementRegionBase * const GEOSX_UNUSED_PARAM( region ),
                                  ElementSubRegionBase * const subRegion )
   {
     arrayView1d<integer const> const & elemGhostRank = m_elemGhostRank[er][esr];

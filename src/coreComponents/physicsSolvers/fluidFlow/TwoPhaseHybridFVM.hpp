@@ -431,7 +431,7 @@ private:
                                  array2d<localIndex> const & elemRegionList,
                                  array2d<localIndex> const & elemSubRegionList,
                                  array2d<localIndex> const & elemList,
-                                 set<localIndex>     const & regionFilter,
+                                 SortedArray<localIndex> const & regionFilter,
                                  arraySlice1d<localIndex const> const elemToFaces,
                                  stackArray1d<localIndex, 3> const & elemIds,
                                  globalIndex const elemDofNumber,   
