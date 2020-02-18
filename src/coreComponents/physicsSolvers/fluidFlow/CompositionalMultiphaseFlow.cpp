@@ -875,8 +875,9 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( real64 const GEOSX_UNUSED_P
 
   string const dofKey = dofManager->getKey( viewKeyStruct::dofFieldString );
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d<globalIndex> > dofNumberAccessor =
-    elemManager->ConstructViewAccessor< array1d<globalIndex>, arrayView1d<globalIndex> >( dofKey );
+  ElementRegionManager::ElementViewAccessor< arrayView1d<globalIndex const> >
+  dofNumberAccessor = elemManager->ConstructViewAccessor< array1d<globalIndex>,
+                                                          arrayView1d<globalIndex const> >( dofKey );
 
   FluxKernel::ElementView< arrayView1d<globalIndex const> > const & dofNumber = dofNumberAccessor.toViewConst();
 

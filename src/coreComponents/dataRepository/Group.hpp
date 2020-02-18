@@ -1196,7 +1196,7 @@ public:
    * @note An error will be raised if wrapper does not exist or type cast is invalid.
    */
   template< typename T, typename WRAPPEDTYPE=T, typename LOOKUP_TYPE >
-  typename Wrapper<WRAPPEDTYPE>::ViewTypeConst
+  typename std::enable_if< std::is_same< WRAPPEDTYPE, T >::value, typename Wrapper<WRAPPEDTYPE>::ViewTypeConst>::type
   getReference( LOOKUP_TYPE const & lookup ) const
   {
     Wrapper< WRAPPEDTYPE > const * const wrapper = getWrapper< WRAPPEDTYPE >( lookup );
@@ -1209,21 +1209,26 @@ public:
       GEOSX_ERROR( "call to getWrapper results in nullptr and a view does not exist. lookup : " << lookup );
     }
 
-    if( std::is_base_of< WRAPPEDTYPE, T >::value )
-    {
-      return dynamicCast< typename Wrapper<WRAPPEDTYPE>::ViewTypeConst >( wrapper->reference() );
-    }
-    else
-    {
-      return wrapper->reference();
-    }
+    return wrapper->reference();
   }
 
   /**
    * @copydoc getReference(LOOKUP_TYPE const &) const
    */
   template< typename T, typename WRAPPEDTYPE=T, typename LOOKUP_TYPE >
-  T & getReference( LOOKUP_TYPE const & lookup )
+  typename std::enable_if< !std::is_same< WRAPPEDTYPE, T >::value, typename Wrapper<WRAPPEDTYPE>::ViewTypeConst>::type
+  getReference( LOOKUP_TYPE const & lookup ) const
+  {
+    static_assert( std::is_base_of< WRAPPEDTYPE, T >::value, "incorrect template arguments" );
+    return dynamicCast< typename Wrapper<WRAPPEDTYPE>::ViewTypeConst >( getReference(lookup) );
+  }
+
+  /**
+   * @copydoc getReference(LOOKUP_TYPE const &) const
+   */
+  template< typename T, typename WRAPPEDTYPE=T, typename LOOKUP_TYPE >
+  typename std::enable_if< std::is_same< WRAPPEDTYPE, T >::value, T & >::type
+  getReference( LOOKUP_TYPE const & lookup )
   {
     Wrapper< WRAPPEDTYPE > * const wrapper = getWrapper< WRAPPEDTYPE >( lookup );
     if( wrapper == nullptr )
@@ -1236,6 +1241,17 @@ public:
     }
 
     return wrapper->reference();
+  }
+
+  /**
+   * @copydoc getReference(LOOKUP_TYPE const &) const
+   */
+  template< typename T, typename WRAPPEDTYPE=T, typename LOOKUP_TYPE >
+  typename std::enable_if< !std::is_same< WRAPPEDTYPE, T >::value, T & >::type
+  getReference( LOOKUP_TYPE const & lookup )
+  {
+    static_assert( std::is_base_of< WRAPPEDTYPE, T >::value, "incorrect template arguments" );
+    return dynamicCast< T & >( getReference(lookup) );
   }
 
   /**
