@@ -58,6 +58,87 @@ void SinglePhaseFVM::SetupDofs( DomainPartition const * const GEOSX_UNUSED_PARAM
                           viewKeyStruct::pressureString,
                           DofManager::Connectivity::Face );
 }
+
+
+void SinglePhaseFVM::SetupSystem( DomainPartition * const domain,
+                                  DofManager & dofManager,
+                                  ParallelMatrix & matrix,
+                                  ParallelVector & rhs,
+                                  ParallelVector & solution )
+{
+  GEOSX_MARK_FUNCTION;
+  SinglePhaseBase::SetupSystem( domain,
+                                dofManager,
+                                matrix,
+                                rhs,
+                                solution );
+
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  ElementRegionManager * const elemManager = mesh->getElemManager();
+
+  std::unique_ptr<CRSMatrix<real64,localIndex,localIndex> > &
+  derivativeFluxResidual_dAperture = getRefDerivativeFluxResidual_dAperture();
+  {
+
+    localIndex numRows = 0;
+    localIndex numCols = 0;
+    string_array const & flowRegions = getTargetRegions();
+    elemManager->forElementSubRegions( flowRegions, [&]( ElementSubRegionBase const * const elementSubRegion )
+    {
+      numRows += elementSubRegion->size();
+      numCols += elementSubRegion->size();
+    });
+
+    derivativeFluxResidual_dAperture = std::make_unique<CRSMatrix<real64,localIndex,localIndex>>( numRows, numCols );
+
+    derivativeFluxResidual_dAperture->reserveNonZeros( matrix.localNonzeros() );
+    localIndex maxRowSize = -1;
+    for( localIndex row=0 ; row<matrix.localRows() ; ++row )
+    {
+      localIndex const rowSize = matrix.localRowLength( row );
+      maxRowSize = maxRowSize > rowSize ? maxRowSize : rowSize;
+
+      derivativeFluxResidual_dAperture->reserveNonZeros( row,
+                                                         rowSize );
+    }
+    for( localIndex row=matrix.localRows() ; row<numRows ; ++row )
+    {
+      derivativeFluxResidual_dAperture->reserveNonZeros( row,
+                                                         maxRowSize );
+    }
+
+
+  }
+
+
+  string const presDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString );
+
+  NumericalMethodsManager const *
+  numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
+
+  FiniteVolumeManager const *
+  fvManager = numericalMethodManager->GetGroup<FiniteVolumeManager>( keys::finiteVolumeManager );
+
+  FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation( getDiscretization() );
+
+
+  fluxApprox->forStencils<FaceElementStencil>( [&]( FaceElementStencil const & stencil )
+  {
+    for( localIndex iconn=0 ; iconn<stencil.size() ; ++iconn)
+    {
+      localIndex const numFluxElems = stencil.stencilSize(iconn);
+      typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+
+      for( localIndex k0=0 ; k0<numFluxElems ; ++k0 )
+      {
+        for( localIndex k1=0 ; k1<numFluxElems ; ++k1 )
+        {
+          derivativeFluxResidual_dAperture->insertNonZero( sei[iconn][k0],sei[iconn][k1], 0.0 );
+        }
+      }
+    }
+  });
+}   
   
 
 real64 SinglePhaseFVM::CalculateResidualNorm( DomainPartition const * const domain,
@@ -157,6 +238,13 @@ void SinglePhaseFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time_n 
                                         ParallelVector * const rhs )
 {
   GEOSX_MARK_FUNCTION;
+
+  if( m_derivativeFluxResidual_dAperture==nullptr )
+  {
+    m_derivativeFluxResidual_dAperture = std::make_unique<CRSMatrix<real64,localIndex,localIndex>>( matrix->localRows(),
+                                                                                                    matrix->localCols() );
+  }
+  m_derivativeFluxResidual_dAperture->setValues(0.0);
 
   MeshLevel const * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager const * const elemManager=  mesh->getElemManager();
