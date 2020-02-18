@@ -190,10 +190,20 @@ HydrofractureSolver::~HydrofractureSolver()
 {
   // TODO Auto-generated destructor stub
 #ifdef GEOSX_USE_HYPRE_MGR
+  if (uu_amg_solver != nullptr)
+  {
+    HYPRE_BoomerAMGDestroy(uu_amg_solver);
+    uu_amg_solver = nullptr;
+  }
   if (IJ_matrix != nullptr)
   {
     HYPRE_IJMatrixDestroy(IJ_matrix);
     IJ_matrix = nullptr;
+  }
+  if (IJ_precond!= nullptr)
+  {
+    HYPRE_IJMatrixDestroy(IJ_precond);
+    IJ_precond= nullptr;
   }
   if (IJ_matrix_uu != nullptr)
   {
@@ -814,6 +824,7 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
   // debugging info.  can be trimmed once everything is working.
   if( getLogLevel()==2 )
   {
+/*
     // Before outputting anything generate permuation matrix and permute.
 //    ElementRegionManager * const elemManager = mesh->getElemManager();
 
@@ -872,6 +883,7 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
 //    LAIHelperFunctions::PrintPermutedVector(m_flowSolver->getSystemRhs(), m_permutationMatrix1, std::cout);
     m_flowSolver->getSystemRhs().print(std::cout);
     MpiWrapper::Barrier();
+*/
   }
 
   if( getLogLevel() >= 10 )
@@ -1267,8 +1279,9 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
   */
 
   SystemSolverParameters * const params = &m_systemSolverParameters;
-  double setupTime, solveTime, auxTime;
+  double setupTime, solveTime, auxTime, uuSetupTime;
   setupTime = 0.0;
+  uuSetupTime = 0.0;
   solveTime = 0.0;
   auxTime = 0.0;
 
@@ -1348,6 +1361,11 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
     {
       HYPRE_IJMatrixDestroy(IJ_matrix);
       IJ_matrix = nullptr;
+    }
+    if (IJ_precond != nullptr)
+    {
+      HYPRE_IJMatrixDestroy(IJ_precond);
+      IJ_precond = nullptr;
     }
     if (IJ_rhs != nullptr)
     {
@@ -1431,11 +1449,17 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
     }
     GID_trilinos_to_hypre[1] = std::move(GID_trilinos_to_hypre_P);
 
+    // .... create SDC matrix
+    m_blockDiagUU.reset(new ParallelMatrix());
+    LAIHelperFunctions::SeparateComponentFilter(m_solidSolver->getSystemMatrix(),*m_blockDiagUU,3);
+    const Epetra_FECrsMatrix *blockDiagUU = m_blockDiagUU->unwrappedPointer();
+
     // .... Create the matrix
     HYPRE_Int ilower = GID_trilinos_to_hypre[0].at(p_matrix[0][0]->GRID64(0));
     HYPRE_Int iupper = ilower + n_local_rows[0] + n_local_rows[1] - 1;
 
     std::vector<HYPRE_Int> nnz_local_rows(n_local_rows_all);
+    std::vector<HYPRE_Int> nnz_local_rows_precond(n_local_rows_all);
     int shift = n_local_rows[0];
     for (int iDOF=0; iDOF<2; ++iDOF)
     {
@@ -1445,6 +1469,14 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
         {
           int row_idx = row + (iDOF == 0 ? 0 : 1) * shift;
           nnz_local_rows[row_idx] += p_matrix[iDOF][jDOF]->NumMyEntries(row);
+          if (iDOF == 0 && jDOF == 0)
+          {
+            nnz_local_rows_precond[row_idx] += blockDiagUU->NumMyEntries(row);
+          }
+          else
+          {
+            nnz_local_rows_precond[row_idx] += p_matrix[iDOF][jDOF]->NumMyEntries(row);
+          }
         }
       }
     }
@@ -1454,6 +1486,11 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
     HYPRE_IJMatrixSetRowSizes(IJ_matrix, nnz_local_rows.data());
     //printf("Done creating matrix\n");
 
+    HYPRE_IJMatrixCreate(MPI_COMM_GEOSX, ilower, iupper, ilower, iupper, &IJ_precond);
+    HYPRE_IJMatrixSetObjectType(IJ_precond, HYPRE_PARCSR);
+    HYPRE_IJMatrixSetRowSizes(IJ_precond, nnz_local_rows_precond.data());
+    //printf("Done creating precond matrix\n");
+
     // .... Create rhs and lhs
     HYPRE_IJVectorCreate(MPI_COMM_GEOSX, ilower, iupper,&IJ_rhs);
     HYPRE_IJVectorSetObjectType(IJ_rhs, HYPRE_PARCSR);
@@ -1461,35 +1498,61 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
     HYPRE_IJVectorCreate(MPI_COMM_GEOSX, ilower, iupper,&IJ_lhs);
     HYPRE_IJVectorSetObjectType(IJ_lhs, HYPRE_PARCSR);
     //printf("Done creating lhs and rhs\n");
+
   }
 
   // copy entries
   // .... matrix and vector
   HYPRE_IJMatrixInitialize(IJ_matrix);
+  HYPRE_IJMatrixInitialize(IJ_precond);
   HYPRE_IJVectorInitialize(IJ_rhs);
   HYPRE_IJVectorInitialize(IJ_lhs);
 
   std::vector<HYPRE_BigInt>    row_hypre_GIDs(n_local_rows_all);
-  std::vector<double> rhs_values(n_local_rows_all);
+  std::vector<HYPRE_Real> rhs_values(n_local_rows_all);
+  const Epetra_FECrsMatrix *blockDiagUU = m_blockDiagUU->unwrappedPointer();
+  //std::vector<HYPRE_BigInt> col_indices_hypre;
+  //std::vector<HYPRE_Real> col_values_hypre;
 
   for(int iDOF=0; iDOF<2; ++iDOF)
   {
     for(int row=0; row<n_local_rows[iDOF]; ++row)
     {
       const globalIndex global_row = p_matrix[iDOF][iDOF]->GRID64(row);
-      const HYPRE_Int hypre_row = GID_trilinos_to_hypre[iDOF].at(global_row);
+      const HYPRE_BigInt hypre_row = GID_trilinos_to_hypre[iDOF].at(global_row);
       int n_entries;
 
       // fill hypre matrix row-by-row
       for (int jDOF=0; jDOF<2; ++jDOF)
       {
+        // matrix
         p_matrix[iDOF][jDOF]->ExtractGlobalRowCopy(global_row, nnz_max, n_entries, col_values.data(), col_indices.data());
+        //col_indices_hypre.resize(col_indices.size());
+        //col_values_hypre.resize(col_values.size());
         for (int col = 0; col < n_entries; ++col)
         {
           col_indices[col] = GID_trilinos_to_hypre[jDOF].at(col_indices[col]);
+          //col_indices_hypre[col] = GID_trilinos_to_hypre[jDOF].at(col_indices[col]);
+          //col_values_hypre[col] = col_values[col];
         }
         HYPRE_Int num_entries = n_entries;
+        //HYPRE_IJMatrixSetValues(IJ_matrix, 1, &num_entries, &hypre_row, col_indices_hypre.data(), col_values.data());
         HYPRE_IJMatrixSetValues(IJ_matrix, 1, &num_entries, &hypre_row, col_indices.data(), col_values.data());
+
+        // precond
+        if (iDOF == 0 && jDOF == 0)
+          blockDiagUU->ExtractGlobalRowCopy(global_row, nnz_max, n_entries, col_values.data(), col_indices.data());
+        else
+          p_matrix[iDOF][jDOF]->ExtractGlobalRowCopy(global_row, nnz_max, n_entries, col_values.data(), col_indices.data());
+        for (int col = 0; col < n_entries; ++col)
+        {
+          col_indices[col] = GID_trilinos_to_hypre[jDOF].at(col_indices[col]);
+          //col_indices_hypre[col] = GID_trilinos_to_hypre[jDOF].at(col_indices[col]);
+          //col_values_hypre[col] = col_values[col];
+        }
+        num_entries = n_entries;
+        //HYPRE_IJMatrixSetValues(IJ_precond, 1, &num_entries, &hypre_row, col_indices_hypre.data(), col_values.data());
+        HYPRE_IJMatrixSetValues(IJ_precond, 1, &num_entries, &hypre_row, col_indices.data(), col_values.data());
       }
     }
 
@@ -1513,27 +1576,13 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
   // finalize matrix and make it ready to use
   HYPRE_IJMatrixAssemble(IJ_matrix);
   HYPRE_IJMatrixGetObject(IJ_matrix, (void**) &parcsr_matrix); // Get the parcsr matrix object to use
+  // finalize precond matrix and make it ready to use
+  HYPRE_IJMatrixAssemble(IJ_precond);
+  HYPRE_IJMatrixGetObject(IJ_precond, (void**) &parcsr_precond); // Get the parcsr matrix object to use
+  // finalize rhs and lhs
   HYPRE_IJVectorGetObject(IJ_rhs, (void **) &par_rhs);
   HYPRE_IJVectorGetObject(IJ_lhs, (void **) &par_lhs);
 
-  /*
-  if (print_matrix < 1)
-  {
-    print_matrix++;
-    //hypre_ParCSRMatrixPrintIJ(parcsr_matrix,0,0,"full_mat");
-    //hypre_ParVectorPrintIJ(par_rhs,0,"full_rhs");
-    for (int i=0; i<2; i++)
-    for (int j=0; j<2; j++)
-    {
-      char fname[256];
-      sprintf(fname,"%s%s_block.%05d",i==0?"U":"P",j==0?"U":"P",my_id);
-      std::ofstream myfile(fname, std::ios::out);
-      p_matrix[i][j]->Print(myfile);
-      myfile.close();
-      //EpetraExt::RowMatrixToMatrixMarketFile(fname,*p_matrix[i][j]);
-    }
-  }
-  */
   //######################################### END COPYING HYPRE MATRIX #########################################
 
   //########################################## BEGIN COPYING UU MATRIX #########################################
@@ -1546,10 +1595,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
         HYPRE_IJMatrixDestroy(IJ_matrix_uu);
         IJ_matrix_uu = nullptr;
       }
-      m_blockDiagUU.reset(new ParallelMatrix());
-      LAIHelperFunctions::SeparateComponentFilter(m_solidSolver->getSystemMatrix(),*m_blockDiagUU,3);
-      const Epetra_FECrsMatrix *blockDiagUU = m_blockDiagUU->unwrappedPointer();
-      
+  
       HYPRE_Int ilower = blockDiagUU->RowMatrixRowMap().MinMyGID64();
       HYPRE_Int iupper = blockDiagUU->RowMatrixRowMap().MaxMyGID64();
       HYPRE_IJMatrixCreate(MPI_COMM_GEOSX, ilower, iupper, ilower, iupper, &IJ_matrix_uu);
@@ -1557,14 +1603,24 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
       HYPRE_IJMatrixInitialize(IJ_matrix_uu);
       for(int i = 0; i < blockDiagUU->NumMyRows(); i++)
       {
-        int numElements;
+        int numElements, numEntries;
         blockDiagUU->NumMyRowEntries(i,numElements);
         globalIndex global_row = blockDiagUU->GRID64(i);
-        std::vector<HYPRE_Int> indices; indices.resize(numElements);
+        std::vector<globalIndex> indices; indices.resize(numElements);
         std::vector<double> values; values.resize(numElements);
-        int numEntries;
+        /*
+        std::vector<HYPRE_BigInt> indices_hypre; indices_hypre.resize(numElements);
+        std::vector<HYPRE_Real> values_hypre; values_hypre.resize(numElements);
+        for (int row = 0; row < numElements; row++)
+        {
+          indices_hypre[row] = indices[row];
+          values_hypre[row] = values[row];
+        }
+        */
         blockDiagUU->ExtractGlobalRowCopy(global_row, numElements, numEntries, values.data(), indices.data());
         HYPRE_Int n_entries = numEntries;
+        //HYPRE_BigInt global_row_hypre = global_row;
+        //HYPRE_IJMatrixSetValues(IJ_matrix_uu, 1, &n_entries, &global_row_hypre, indices_hypre.data(), values.data());
         HYPRE_IJMatrixSetValues(IJ_matrix_uu, 1, &n_entries, &global_row, indices.data(), values.data());
       }
       HYPRE_IJMatrixAssemble(IJ_matrix_uu);
@@ -1572,6 +1628,28 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
     } 
   }
   //########################################## END COPYING UU MATRIX #########################################
+  if (print_matrix < 1)
+  {
+    hypre_ParCSRMatrixPrintIJ(parcsr_uu,0,0,"UU_block");
+    print_matrix++;
+  /*
+    hypre_ParCSRMatrixPrintIJ(parcsr_uu,0,0,"UU_mat");
+    hypre_ParCSRMatrixPrintIJ(parcsr_matrix,0,0,"full_mat");
+    hypre_ParCSRMatrixPrintIJ(parcsr_precond,0,0,"full_precond");
+    hypre_ParVectorPrintIJ(par_rhs,0,"full_rhs");
+    for (int i=0; i<2; i++)
+    for (int j=0; j<2; j++)
+    {
+      char fname[256];
+      sprintf(fname,"%s%s_block.%05d",i==0?"U":"P",j==0?"U":"P",my_id);
+      //std::ofstream myfile(fname, std::ios::out);
+      //p_matrix[i][j]->Print(myfile);
+      //myfile.close();
+      EpetraExt::RowMatrixToMatrixMarketFile(fname,*p_matrix[i][j]);
+    }
+  */
+  }
+
   auxTime = clock.stop();
   GEOSX_MARK_END(COPY_HYPRE_MATRIX);
 
@@ -1580,7 +1658,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
   HYPRE_Int mgr_bsize = 2;
   HYPRE_Int mgr_nlevels = 1;
   HYPRE_Int mgr_non_c_to_f = 1;
-  HYPRE_Int *mgr_idx_array = NULL;
+  HYPRE_BigInt *mgr_idx_array = NULL;
   HYPRE_Int *mgr_num_cindexes = NULL; 
   HYPRE_Int **mgr_cindexes = NULL;
   HYPRE_Int mgr_relax_type = 0;
@@ -1603,10 +1681,18 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
   mgr_num_cindexes = hypre_CTAlloc(HYPRE_Int, mgr_nlevels, HYPRE_MEMORY_HOST);
   mgr_num_cindexes[0] = 1;
 
-  mgr_idx_array = hypre_CTAlloc(HYPRE_Int, mgr_bsize, HYPRE_MEMORY_HOST);
-  HYPRE_Int ilower = GID_trilinos_to_hypre[0].at(p_matrix[0][0]->GRID64(0));
+  mgr_idx_array = hypre_CTAlloc(HYPRE_BigInt, mgr_bsize, HYPRE_MEMORY_HOST);
+  HYPRE_BigInt ilower = GID_trilinos_to_hypre[0].at(p_matrix[0][0]->GRID64(0));
   mgr_idx_array[0] = ilower;
   mgr_idx_array[1] = n_local_rows[0] + ilower;
+  /*
+  FILE *fout;
+  char fname[256];
+  sprintf(fname, "block_cf.%05d", my_id);
+  fout = fopen(fname,"w");
+  fprintf(fout, "%d\n%d", mgr_idx_array[0], mgr_idx_array[1]);
+  fclose(fout);
+  */
 
   HYPRE_Int *mgr_level_frelax_method = hypre_CTAlloc(HYPRE_Int, mgr_nlevels, HYPRE_MEMORY_HOST);
   mgr_level_frelax_method[0] = 99;
@@ -1650,7 +1736,8 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
   HYPRE_BoomerAMGCreate(&cg_amg_solver); 
   if (ordering == 0)
   {
-    HYPRE_BoomerAMGSetPrintLevel(cg_amg_solver, 0);
+    if (n_cycles == 0 && newtonIter == 0)
+      HYPRE_BoomerAMGSetPrintLevel(cg_amg_solver, 0);
     HYPRE_BoomerAMGSetRelaxOrder(cg_amg_solver, 1);
     HYPRE_BoomerAMGSetMaxIter(cg_amg_solver, 1);
     HYPRE_BoomerAMGSetNumFunctions(cg_amg_solver, 1);
@@ -1658,12 +1745,14 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
   }
   else
   {
-    HYPRE_BoomerAMGSetPrintLevel(cg_amg_solver, 0);
+    if (n_cycles == 0 && newtonIter == 0)
+      HYPRE_BoomerAMGSetPrintLevel(cg_amg_solver, 1);
     HYPRE_BoomerAMGSetMaxIter(cg_amg_solver, 1);
     HYPRE_BoomerAMGSetRelaxOrder(cg_amg_solver, 1);
-    HYPRE_BoomerAMGSetAggNumLevels(cg_amg_solver, 1);
+    //HYPRE_BoomerAMGSetAggNumLevels(cg_amg_solver, 1);
     HYPRE_BoomerAMGSetNumFunctions(cg_amg_solver, 3);
     HYPRE_BoomerAMGSetNumSweeps(cg_amg_solver, 1);
+    HYPRE_BoomerAMGSetStrongThreshold(cg_amg_solver, 0.05);
     //HYPRE_BoomerAMGSetCoarsenType(cg_amg_solver, 6);
     //HYPRE_BoomerAMGSetRelaxType(cg_amg_solver, 3);
     //HYPRE_BoomerAMGSetInterpType(cg_amg_solver, 0);
@@ -1682,23 +1771,33 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
   // set fine grid solver
   if (ordering == 0)
   {
-    clock.start(true);
-    /* create AMG solver for F-relaxation */
-    HYPRE_BoomerAMGCreate(&uu_amg_solver); 
-    HYPRE_BoomerAMGSetPrintLevel(uu_amg_solver, 0);
-    HYPRE_BoomerAMGSetRelaxOrder(uu_amg_solver, 1);
-    HYPRE_BoomerAMGSetMaxIter(uu_amg_solver, 1);
-    HYPRE_BoomerAMGSetNumFunctions(uu_amg_solver, 3);
-    //HYPRE_BoomerAMGSetStrongThreshold(uu_amg_solver, 0.25);
-    HYPRE_BoomerAMGSetAggNumLevels(uu_amg_solver, 1);
-    HYPRE_BoomerAMGSetNumSweeps(uu_amg_solver, 1);
-    //HYPRE_BoomerAMGSetRelaxType(uu_amg_solver, 3);
-    if (n_cycles == 0 && newtonIter == 0)
-      HYPRE_BoomerAMGSetPrintLevel(uu_amg_solver, 1);
+    if (newtonIter == 0)
+    {
+      if (uu_amg_solver != nullptr)
+      {
+        HYPRE_BoomerAMGDestroy(uu_amg_solver);
+      }
+      clock.start(true);
+      /* create AMG solver for F-relaxation */
+      HYPRE_BoomerAMGCreate(&uu_amg_solver); 
+      if (n_cycles == 0 && newtonIter == 0)
+        HYPRE_BoomerAMGSetPrintLevel(uu_amg_solver, 1);
+      HYPRE_BoomerAMGSetMaxIter(uu_amg_solver, 1);
+      HYPRE_BoomerAMGSetRelaxOrder(uu_amg_solver, 1);
+      HYPRE_BoomerAMGSetAggNumLevels(uu_amg_solver, 1);
+      HYPRE_BoomerAMGSetNumFunctions(uu_amg_solver, 3);
+      HYPRE_BoomerAMGSetNumSweeps(uu_amg_solver, 1);
+      //HYPRE_BoomerAMGSetStrongThreshold(uu_amg_solver, 0.005);
+      HYPRE_BoomerAMGSetPMaxElmts(uu_amg_solver, 4);
+      HYPRE_BoomerAMGSetCoarsenType(uu_amg_solver, 8);
+      HYPRE_BoomerAMGSetRelaxType(uu_amg_solver, 18);
+      HYPRE_BoomerAMGSetInterpType(uu_amg_solver, 3);
 
-    HYPRE_BoomerAMGSetup
-      (uu_amg_solver, parcsr_uu, par_rhs_uu, par_lhs_uu);
-    setupTime = clock.stop();
+      HYPRE_BoomerAMGSetup
+        (uu_amg_solver, parcsr_uu, par_rhs_uu, par_lhs_uu);
+      setupTime = clock.stop();
+      uuSetupTime = setupTime;
+    }
 
     HYPRE_MGRSetFSolver(mgr_precond, HYPRE_BoomerAMGSolve, HYPRE_BoomerAMGSetup, uu_amg_solver);
   }
@@ -1711,7 +1810,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
 
   GEOSX_MARK_BEGIN(MGR_SETUP);
   clock.start(true);
-  HYPRE_GMRESSetup(pgmres_solver, (HYPRE_Matrix)parcsr_matrix, (HYPRE_Vector)par_rhs, (HYPRE_Vector)par_lhs);
+  HYPRE_GMRESSetup(pgmres_solver, (HYPRE_Matrix)parcsr_precond, (HYPRE_Vector)par_rhs, (HYPRE_Vector)par_lhs);
   setupTime += clock.stop();
   GEOSX_MARK_END(MGR_SETUP);
 
@@ -1727,26 +1826,34 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
   HYPRE_GMRESGetNumIterations(pgmres_solver, &num_iterations);
   HYPRE_GMRESGetFinalRelativeResidualNorm(pgmres_solver, &final_res_norm);
 
-  if (my_id == 0)
-    printf("Using hypreMGR, cycle = %d, iters = %lld, Final Residual = %1.5e\n", n_cycles, num_iterations, final_res_norm);
+  //if (my_id == 0)
+  //  printf("Using hypreMGR, cycle = %d, iters = %lld, Final Residual = %1.5e\n", n_cycles, num_iterations, final_res_norm);
 
   params->m_numKrylovIter = num_iterations;
 
   HYPRE_MGRDestroy(mgr_precond);
   HYPRE_BoomerAMGDestroy(cg_amg_solver);
+  /*
   if (ordering == 0)
   {
     HYPRE_BoomerAMGDestroy(uu_amg_solver);
   }
+  */
   HYPRE_ParCSRGMRESDestroy(pgmres_solver);
   hypre_TFree(lv1, HYPRE_MEMORY_HOST);
   hypre_TFree(mgr_cindexes, HYPRE_MEMORY_HOST);
   hypre_TFree(mgr_num_cindexes, HYPRE_MEMORY_HOST);
   hypre_TFree(mgr_idx_array, HYPRE_MEMORY_HOST);
+  hypre_TFree(mgr_level_interp_type, HYPRE_MEMORY_HOST);
+  hypre_TFree(mgr_level_restrict_type, HYPRE_MEMORY_HOST);
+  hypre_TFree(mgr_level_frelax_method, HYPRE_MEMORY_HOST);
+  hypre_TFree(mgr_coarse_grid_method, HYPRE_MEMORY_HOST);
 
   //############################################ BEGIN COPYING SOLUTION #####################################
   // copy the hypre solution mapping back to the original Trilinos ordering
-  HYPRE_IJVectorGetValues(IJ_lhs, n_local_rows_all, row_hypre_GIDs.data(), rhs_values.data());
+  std::vector<HYPRE_Real> rhs_values_hypre;
+  rhs_values_hypre.resize(rhs_values.size());
+  HYPRE_IJVectorGetValues(IJ_lhs, n_local_rows_all, row_hypre_GIDs.data(), rhs_values_hypre.data());
 
   for(int iDOF=0; iDOF<2; ++iDOF)
   {
@@ -1754,7 +1861,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
     for (int row=0; row<n_local_rows[iDOF]; ++row)
     {
       int row_idx = (iDOF == 0) ? row : row + n_local_rows[0];
-      p_solution[iDOF]->Values()[row] = *(rhs_values.begin() + row_idx);
+      p_solution[iDOF]->Values()[row] = *(rhs_values_hypre.begin() + row_idx);
     }
   }
 
@@ -1762,10 +1869,12 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
   const real64 t_end = tim.tv_sec + (tim.tv_usec / 1000000.0);
   if( getLogLevel()>=2 )
   {
-    GEOSX_LOG_RANK_0("\t\tLinear Solver | Iter = " << params->m_numKrylovIter <<
+    GEOSX_LOG_RANK_0("\t\tLinear Solver (MGR) | Iter = " << params->m_numKrylovIter <<
                     " | TargetReduction " << params->m_krylovTol <<
+                    " | RelativeResidual " << final_res_norm <<
                     " | AuxTime " << auxTime <<
                     " | SetupTime " << setupTime <<
+                    " | uuSetupTime " << uuSetupTime <<
                     " | SolveTime " << solveTime <<
                     " | TotalTime " << t_end - t_start);
   }
@@ -2058,7 +2167,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
 
     if( getLogLevel()>=2 )
     {
-      GEOSX_LOG_RANK_0("\t\tLinear Solver | Iter = " << params->m_numKrylovIter <<
+      GEOSX_LOG_RANK_0("\t\tLinear Solver (ML) | Iter = " << params->m_numKrylovIter <<
                       " | TargetReduction " << params->m_krylovTol <<
                       " | AuxTime " << auxTime <<
                       " | SetupTime " << setupTime <<
@@ -2106,12 +2215,11 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
     GEOSX_LOG_RANK_0("solution0");
     GEOSX_LOG_RANK_0("***********************************************************");
     permutedSol.print(std::cout);
-*/
     GEOSX_LOG_RANK_0("***********************************************************");
     GEOSX_LOG_RANK_0("solution1");
     GEOSX_LOG_RANK_0("***********************************************************");
     p_solution[1]->Print(std::cout);
-
+*/
   }
 }
 

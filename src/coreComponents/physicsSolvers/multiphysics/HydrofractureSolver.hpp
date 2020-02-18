@@ -214,8 +214,10 @@ private:
 #ifdef GEOSX_USE_HYPRE_MGR
   // HYPRE variables
   HYPRE_IJMatrix IJ_matrix=nullptr;
+  HYPRE_IJMatrix IJ_precond=nullptr;
   HYPRE_IJMatrix IJ_matrix_uu=nullptr;
   HYPRE_ParCSRMatrix parcsr_matrix=nullptr;
+  HYPRE_ParCSRMatrix parcsr_precond=nullptr;
   HYPRE_ParCSRMatrix parcsr_uu=nullptr;
   HYPRE_IJVector IJ_rhs=nullptr;
   HYPRE_ParVector par_rhs=nullptr;
@@ -226,10 +228,10 @@ private:
 
   std::map<int, std::map<globalIndex, globalIndex>> GID_trilinos_to_hypre;
 
-  HYPRE_Solver pgmres_solver;
-  HYPRE_Solver mgr_precond;
-  HYPRE_Solver cg_amg_solver;
-  HYPRE_Solver uu_amg_solver;
+  HYPRE_Solver pgmres_solver=nullptr;
+  HYPRE_Solver mgr_precond=nullptr;
+  HYPRE_Solver cg_amg_solver=nullptr;
+  HYPRE_Solver uu_amg_solver=nullptr;
 #endif
   int print_matrix = 0;
 
