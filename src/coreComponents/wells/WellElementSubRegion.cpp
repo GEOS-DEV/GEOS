@@ -147,7 +147,6 @@ void WellElementSubRegion::Generate( MeshLevel                        & mesh,
   ConstructSubRegionLocalElementMaps( mesh,
                                       wellGeometry,
                                       localElems,
-                                      localNodes,
                                       nodeOffsetGlobal,
                                       elemOffsetGlobal );
 
@@ -161,11 +160,11 @@ void WellElementSubRegion::Generate( MeshLevel                        & mesh,
 }
 
 
-void WellElementSubRegion::AssignUnownedElementsInReservoir( MeshLevel                   & mesh,
-                                                             InternalWellGenerator const & wellGeometry,
-                                                             SortedArray<globalIndex>      const & unownedElems,
-                                                             SortedArray<globalIndex>            & localElems,
-                                                             arrayView1d<integer>        & elemStatusGlobal ) const
+void WellElementSubRegion::AssignUnownedElementsInReservoir( MeshLevel                      & mesh,
+                                                             InternalWellGenerator const    & wellGeometry,
+                                                             SortedArray<globalIndex> const & unownedElems,
+                                                             SortedArray<globalIndex>       & localElems,
+                                                             arrayView1d<integer>           & elemStatusGlobal ) const
 {
   // get the well and reservoir element coordinates
   arrayView1d<R1Tensor const> const & wellElemCoordsGlobal = wellGeometry.GetElemCoords();
@@ -214,7 +213,7 @@ void WellElementSubRegion::AssignUnownedElementsInReservoir( MeshLevel          
 
 
 void WellElementSubRegion::CheckPartitioningValidity( InternalWellGenerator const & wellGeometry,
-                                                      SortedArray<globalIndex>            & localElems,
+                                                      SortedArray<globalIndex>    & localElems,
                                                       arrayView1d<integer>        & elemStatusGlobal ) const
 {
   arrayView1d< arrayView1d< globalIndex const > const > const & prevElemIdsGlobal = wellGeometry.GetPrevElemIndices();
@@ -307,10 +306,10 @@ void WellElementSubRegion::CheckPartitioningValidity( InternalWellGenerator cons
 }
 
 
-void WellElementSubRegion::CollectLocalAndBoundaryNodes( InternalWellGenerator const & wellGeometry, 
-                                                         SortedArray<globalIndex>      const & localElems,
-                                                         SortedArray<globalIndex>            & localNodes,
-                                                         SortedArray<globalIndex>            & boundaryNodes ) const
+void WellElementSubRegion::CollectLocalAndBoundaryNodes( InternalWellGenerator    const & wellGeometry, 
+                                                         SortedArray<globalIndex> const & localElems,
+                                                         SortedArray<globalIndex>       & localNodes,
+                                                         SortedArray<globalIndex>       & boundaryNodes ) const
 {
   // get the well connectivity
   arrayView1d< globalIndex const >                      const & nextElemIdGlobal  = wellGeometry.GetNextElemIndex();
@@ -348,11 +347,11 @@ void WellElementSubRegion::CollectLocalAndBoundaryNodes( InternalWellGenerator c
   }
 }
 
-void WellElementSubRegion::UpdateNodeManagerSize( MeshLevel                   & mesh,
-                                                  InternalWellGenerator const & wellGeometry,
-                                                  SortedArray<globalIndex>      const & localNodes,
-                                                  SortedArray<globalIndex>      const & boundaryNodes, 
-                                                  globalIndex                   nodeOffsetGlobal )
+void WellElementSubRegion::UpdateNodeManagerSize( MeshLevel                      & mesh,
+                                                  InternalWellGenerator const    & wellGeometry,
+                                                  SortedArray<globalIndex> const & localNodes,
+                                                  SortedArray<globalIndex> const & boundaryNodes, 
+                                                  globalIndex                      nodeOffsetGlobal )
 {
 
  // get the node manager to compute the total number of mesh nodes
@@ -404,12 +403,11 @@ void WellElementSubRegion::UpdateNodeManagerSize( MeshLevel                   & 
   }
 }
 
-void WellElementSubRegion::ConstructSubRegionLocalElementMaps( MeshLevel                   & mesh,
-                                                               InternalWellGenerator const & wellGeometry,
-                                                               SortedArray<globalIndex>      const & localElems, 
-                                                               SortedArray<globalIndex>      const & GEOSX_UNUSED_PARAM( localNodes ),
-                                                               globalIndex                   nodeOffsetGlobal,
-                                                               globalIndex                   elemOffsetGlobal )
+void WellElementSubRegion::ConstructSubRegionLocalElementMaps( MeshLevel                      & mesh,
+                                                               InternalWellGenerator const    & wellGeometry,
+                                                               SortedArray<globalIndex> const & localElems, 
+                                                               globalIndex                      nodeOffsetGlobal,
+                                                               globalIndex                      elemOffsetGlobal )
 {
   // get the well geometry
   arrayView1d<globalIndex const> const & nextElemIdGlobal  = wellGeometry.GetNextElemIndex();
@@ -629,8 +627,8 @@ bool WellElementSubRegion::SearchLocalElements( MeshLevel  const & mesh,
   CellElementRegion const * region = Group::group_cast<CellElementRegion const *>(mesh.getElemManager()->GetRegion(erInit));
   CellBlock const * subRegion      = Group::group_cast<CellBlock const *>(region->GetSubRegion(esrInit));
            
-  set<localIndex>  nodes;
-  set<globalIndex> elements;
+  SortedArray<localIndex>  nodes;
+  SortedArray<globalIndex> elements;
 
   // here is how the search is done:
   //   1 - We check if "location" is within the "init" reservoir element defined by (erInit,esrMatched,eiMatched)
@@ -663,8 +661,8 @@ bool WellElementSubRegion::SearchLocalElements( MeshLevel  const & mesh,
 
 bool WellElementSubRegion::VisitNeighborElements( MeshLevel const  & mesh,
                                                   R1Tensor  const  & location,
-                                                  set<localIndex>  & nodes,
-                                                  set<globalIndex> & elements,
+                                                  SortedArray<localIndex>  & nodes,
+                                                  SortedArray<globalIndex> & elements,
                                                   localIndex       & erMatched,
                                                   localIndex       & esrMatched,
                                                   localIndex       & eiMatched ) const
@@ -688,7 +686,7 @@ bool WellElementSubRegion::VisitNeighborElements( MeshLevel const  & mesh,
   // to do this we have to create a new set, "currNodes"
   // that contains only the nodes that have already been visited
   // the newly added nodes will be added to "nodes" 
-  set<localIndex> currNodes = nodes;
+  SortedArray<localIndex> currNodes = nodes;
   
   // for all the nodes already visited
   for (localIndex currNode : currNodes)
@@ -738,9 +736,9 @@ bool WellElementSubRegion::VisitNeighborElements( MeshLevel const  & mesh,
 }
 
 
-void WellElementSubRegion::CollectElementNodes( CellBlock const * subRegion,
-                                                localIndex        ei,
-                                                set<localIndex> & nodes ) const
+void WellElementSubRegion::CollectElementNodes( CellBlock const *         subRegion,
+                                                localIndex                ei,
+                                                SortedArray<localIndex> & nodes ) const
 {
   // get all the nodes belonging to this element 
   for (localIndex a = 0; a < subRegion->numNodesPerElement(); ++a)

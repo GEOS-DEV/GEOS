@@ -336,12 +336,11 @@ private:
    * @param[in] nodeOffsetGlobal the offset of the first global well node ( = offset of last global mesh node + 1 )
    * @param[in] elemOffsetGlobal the offset of the first global well element ( = offset of last global mesh elem + 1 )
    */ 
-  void ConstructSubRegionLocalElementMaps( MeshLevel                   & mesh, 
-                                           InternalWellGenerator const & wellGeometry,
-                                           SortedArray<globalIndex>      const & localElems,
-                                           SortedArray<globalIndex>      const & localNodes,
-                                           globalIndex                   nodeOffsetGlobal,
-                                           globalIndex                   elemOffsetGlobal );
+  void ConstructSubRegionLocalElementMaps( MeshLevel                      & mesh, 
+                                           InternalWellGenerator    const & wellGeometry,
+                                           SortedArray<globalIndex> const & localElems,
+                                           globalIndex                      nodeOffsetGlobal,
+                                           globalIndex                      elemOffsetGlobal );
 
   /**
    * @brief This function is the equivalent of NodeManager::SetElementMaps for well elements.
@@ -401,13 +400,13 @@ private:
    * @param[inout] esrMatched the subregion index of the reservoir element that contains "location", if any
    * @param[inout] eiMatched the element index of the reservoir element that contains "location", if any
    */ 
-  bool VisitNeighborElements( MeshLevel const  & mesh,
-                              R1Tensor  const  & location,
-                              set<localIndex>  & nodes,
-                              set<globalIndex> & elements,
-                              localIndex       & erMatched,
-                              localIndex       & esrMatched,
-                              localIndex       & eiMatched ) const;
+  bool VisitNeighborElements( MeshLevel const          & mesh,
+                              R1Tensor  const          & location,
+                              SortedArray<localIndex>  & nodes,
+                              SortedArray<globalIndex> & elements,
+                              localIndex               & erMatched,
+                              localIndex               & esrMatched,
+                              localIndex               & eiMatched ) const;
 
   /**
    * @brief Collect the nodes of reservoir element ei
@@ -415,9 +414,9 @@ private:
    * @param[in] ei the index of the reservoir element
    * @param[inout] nodes the nodes that have already been visited
    */ 
-  void CollectElementNodes( CellBlock const * subRegion,
-                            localIndex        ei,
-                            set<localIndex> & nodes ) const;
+  void CollectElementNodes( CellBlock const *         subRegion,
+                            localIndex                ei,
+                            SortedArray<localIndex> & nodes ) const;
 
   /**
    * @brief Check if "location" is contained in reservoir element ei
