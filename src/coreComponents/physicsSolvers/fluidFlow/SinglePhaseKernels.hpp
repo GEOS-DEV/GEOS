@@ -57,7 +57,7 @@ struct MobilityKernel
                       arrayView1d<real64> const & mob,
                       arrayView1d<real64> const & dMob_dPres );
 
-  static void Launch( set<localIndex> targetSet,
+  static void Launch( SortedArray<localIndex> targetSet,
                       arrayView2d<real64 const> const & dens,
                       arrayView2d<real64 const> const & dDens_dPres,
                       arrayView2d<real64 const> const & visc,
@@ -70,7 +70,7 @@ struct MobilityKernel
                       arrayView2d<real64 const> const & visc,
                       arrayView1d<real64> const & mob );
 
-  static void Launch( set<localIndex> targetSet,
+  static void Launch( SortedArray<localIndex> targetSet,
                       arrayView2d<real64 const> const & dens,
                       arrayView2d<real64 const> const & visc,
                       arrayView1d<real64> const & mob );
@@ -93,9 +93,9 @@ struct AssembleAccumulationTermsHelper<true>
                   real64 const totalMeanStress,
                   real64 const oldTotalMeanStress,
                   real64 const dPres,
-                  real64 const GEOSX_UNUSED_ARG( poroRef ),
-                  real64 const GEOSX_UNUSED_ARG( pvmult ),
-                  real64 const GEOSX_UNUSED_ARG( dPVMult_dPres ) )
+                  real64 const GEOSX_UNUSED_PARAM( poroRef ),
+                  real64 const GEOSX_UNUSED_PARAM( pvmult ),
+                  real64 const GEOSX_UNUSED_PARAM( dPVMult_dPres ) )
   {
     dPoro_dPres = (biotCoefficient - poroOld) / bulkModulus;
     poro = poroOld + dPoro_dPres * (totalMeanStress - oldTotalMeanStress + dPres);
@@ -108,12 +108,12 @@ struct AssembleAccumulationTermsHelper<false>
   inline static constexpr void
   porosityUpdate( real64 & poro,
                   real64 & dPoro_dPres,
-                  real64 const GEOSX_UNUSED_ARG( biotCoefficient ),
-                  real64 const GEOSX_UNUSED_ARG( poroOld ),
-                  real64 const GEOSX_UNUSED_ARG( bulkModulus ),
-                  real64 const GEOSX_UNUSED_ARG( totalMeanStress ),
-                  real64 const GEOSX_UNUSED_ARG( oldTotalMeanStress ),
-                  real64 const GEOSX_UNUSED_ARG( dPres ),
+                  real64 const GEOSX_UNUSED_PARAM( biotCoefficient ),
+                  real64 const GEOSX_UNUSED_PARAM( poroOld ),
+                  real64 const GEOSX_UNUSED_PARAM( bulkModulus ),
+                  real64 const GEOSX_UNUSED_PARAM( totalMeanStress ),
+                  real64 const GEOSX_UNUSED_PARAM( oldTotalMeanStress ),
+                  real64 const GEOSX_UNUSED_PARAM( dPres ),
                   real64 const poroRef,
                   real64 const pvmult,
                   real64 const dPVMult_dPres )
@@ -519,7 +519,7 @@ struct FluxKernel
            arrayView2d<real64 const> const & dDens_dPres,
            arrayView1d<real64 const> const & mob,
            arrayView1d<real64 const> const & dMob_dPres,
-           localIndex const GEOSX_UNUSED_ARG( fluidIndex ),
+           localIndex const GEOSX_UNUSED_PARAM( fluidIndex ),
            real64 const dt,
            arraySlice1d<real64> const & flux,
            arraySlice2d<real64> const & fluxJacobian )
@@ -702,12 +702,12 @@ struct FluxKernel
 //           arrayView1d<real64 const> const & pres,
 //           arrayView1d<real64 const> const & gravDepth,
 //           arrayView2d<real64 const> const & dens,
-//           arrayView2d<real64 const> const & GEOSX_UNUSED_ARG( dDens_dPres ),
+//           arrayView2d<real64 const> const & GEOSX_UNUSED_PARAM( dDens_dPres ),
 //           arrayView1d<real64 const> const & mob,
 //           arrayView1d<real64 const> const & visc,
 //           arrayView1d<real64 const> const & poro,
 //           arrayView1d<real64 const> const & totalCompressibility,
-//           localIndex const GEOSX_UNUSED_ARG( fluidIndex ),
+//           localIndex const GEOSX_UNUSED_PARAM( fluidIndex ),
 //           integer const gravityFlag,
 //           real64 const dt,
 //           real64 const referencePressure,
@@ -784,7 +784,7 @@ struct FluxKernel
                    arrayView1d<real64 const> const & ,//s,
                    arrayView1d<real64 const> const & ,//dSdAper,
 #endif
-                   localIndex const GEOSX_UNUSED_ARG( fluidIndex ),
+                   localIndex const GEOSX_UNUSED_PARAM( fluidIndex ),
                    real64 const dt,
                    arraySlice1d<real64> const & flux,
                    arraySlice2d<real64> const & fluxJacobian,
@@ -928,7 +928,7 @@ struct FluxKernel
 #endif
                    arrayView1d<real64 const> const & totalCompressibility,
                    arrayView1d<real64 const> const & referencePressure,
-                   localIndex const GEOSX_UNUSED_ARG( fluidIndex ),
+                   localIndex const GEOSX_UNUSED_PARAM( fluidIndex ),
                    real64 const dt,
                    arrayView1d<real64> * const mass,
                    real64 * const maxStableDt)

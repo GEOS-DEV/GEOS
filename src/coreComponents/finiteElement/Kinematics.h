@@ -41,8 +41,9 @@ inline void CalculateGradient( R2Tensor& Gradient,
     Gradient.plus_dyadic_ab( disp[bConnectivity[a]], dNdX[a]);
 }
 
+GEOSX_HOST_DEVICE
 inline void CalculateGradient(R2Tensor& Gradient,
-                              arraySlice1d<R1Tensor const> const & disp,
+                              R1Tensor const * const disp,
                               arraySlice1d<R1Tensor const> const & dNdX,
                               localIndex numNodes)
 {
@@ -68,8 +69,8 @@ inline void CalculateGradient(R2Tensor& Gradient,
 template< int N >
 inline void CalculateGradients( R2Tensor & Gradient0,
                                 R2Tensor & Gradient1,
-                                R1Tensor const * restrict const var0,
-                                R1Tensor const * restrict const var1,
+                                R1Tensor const * GEOSX_RESTRICT const var0,
+                                R1Tensor const * GEOSX_RESTRICT const var1,
                                 arraySlice1d<R1Tensor const> const & dNdX )
 {
   Gradient0.dyadic_ab( var0[0], dNdX[0] );
@@ -84,9 +85,9 @@ inline void CalculateGradients( R2Tensor & Gradient0,
 inline void HughesWinget( R2Tensor &Rot, R2SymTensor & Dadt, R2Tensor const & G)
 {
 
-  real64 * restrict const Dadt_data = Dadt.Data();
-  real64 * restrict const Rot_data = Rot.Data();
-  real64 const * restrict const G_data = G.Data();
+  real64 * GEOSX_RESTRICT const Dadt_data = Dadt.Data();
+  real64 * GEOSX_RESTRICT const Rot_data = Rot.Data();
+  real64 const * GEOSX_RESTRICT const G_data = G.Data();
 
 
   //Dadt = 0.5*(G + GT);

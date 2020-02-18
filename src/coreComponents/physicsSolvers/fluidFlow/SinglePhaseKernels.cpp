@@ -65,7 +65,7 @@ void MobilityKernel::Launch( localIndex begin, localIndex end,
   } );
 }
 
-void MobilityKernel::Launch( set<localIndex> targetSet,
+void MobilityKernel::Launch( SortedArray<localIndex> targetSet,
                              arrayView2d<real64 const> const & dens,
                              arrayView2d<real64 const> const & dDens_dPres,
                              arrayView2d<real64 const> const & visc,
@@ -97,7 +97,7 @@ void MobilityKernel::Launch( localIndex begin, localIndex end,
   } );
 }
 
-void MobilityKernel::Launch( set<localIndex> targetSet,
+void MobilityKernel::Launch( SortedArray<localIndex> targetSet,
                              arrayView2d<real64 const> const & dens,
                              arrayView2d<real64 const> const & visc,
                              arrayView1d<real64> const & mob )
@@ -377,8 +377,8 @@ Launch<CellElementStencilTPFA>( CellElementStencilTPFA & stencil,
                                 FluxKernel::MaterialView< arrayView2d<real64 const> > const & dens,
                                 FluxKernel::MaterialView< arrayView2d<real64 const> > const & visc,
                                 FluxKernel::ElementView < arrayView1d<real64 const> > const & mob,
-                                FluxKernel::ElementView < arrayView1d<real64 const> > const & GEOSX_UNUSED_ARG( aperture0 ),
-                                FluxKernel::ElementView < arrayView1d<real64 const> > const & GEOSX_UNUSED_ARG( aperture ),
+                                FluxKernel::ElementView < arrayView1d<real64 const> > const & GEOSX_UNUSED_PARAM( aperture0 ),
+                                FluxKernel::ElementView < arrayView1d<real64 const> > const & GEOSX_UNUSED_PARAM( aperture ),
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
                                 FluxKernel::ElementView < arrayView1d<real64 const> > const &,
                                 FluxKernel::ElementView < arrayView1d<real64 const> > const &,
@@ -437,7 +437,7 @@ Launch<FaceElementStencil>( FaceElementStencil & stencil,
                             FluxKernel::ElementView < arrayView1d<real64 const> > const & s,
                             FluxKernel::ElementView < arrayView1d<real64 const> > const & dSdAper,
 #endif
-                            FluxKernel::ElementView < arrayView1d<real64 const> > const & GEOSX_UNUSED_ARG( poro ),
+                            FluxKernel::ElementView < arrayView1d<real64 const> > const & GEOSX_UNUSED_PARAM( poro ),
                             FluxKernel::ElementView < arrayView1d<real64 const> > const & totalCompressibility,
                             FluxKernel::ElementView < arrayView1d<real64 const> > const & referencePressure,
                             ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> * const mass,

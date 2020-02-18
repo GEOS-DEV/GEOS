@@ -85,7 +85,7 @@ SolverBase::CatalogInterface::CatalogType & SolverBase::GetCatalog()
   return catalog;
 }
 
-void SolverBase::SetInitialTimeStep(Group * GEOSX_UNUSED_ARG( domain ))
+void SolverBase::SetInitialTimeStep(Group * GEOSX_UNUSED_PARAM( domain ))
 {
 }
 
@@ -170,10 +170,10 @@ void SolverBase::SetLinearSolverParameters()
   }
 }
 
-real64 SolverBase::SolverStep( real64 const & GEOSX_UNUSED_ARG( time_n ),
-                               real64 const & GEOSX_UNUSED_ARG( dt ),
-                               const integer GEOSX_UNUSED_ARG( cycleNumber ),
-                               DomainPartition * const GEOSX_UNUSED_ARG( domain ) )
+real64 SolverBase::SolverStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+                               real64 const & GEOSX_UNUSED_PARAM( dt ),
+                               const integer GEOSX_UNUSED_PARAM( cycleNumber ),
+                               DomainPartition * const GEOSX_UNUSED_PARAM( domain ) )
 {
   return 0;
 }
@@ -182,8 +182,8 @@ real64 SolverBase::SolverStep( real64 const & GEOSX_UNUSED_ARG( time_n ),
 void SolverBase::Execute( real64 const time_n,
                           real64 const dt,
                           integer const cycleNumber,
-                          integer const GEOSX_UNUSED_ARG( eventCounter ),
-                          real64 const GEOSX_UNUSED_ARG( eventProgress ),
+                          integer const GEOSX_UNUSED_PARAM( eventCounter ),
+                          real64 const GEOSX_UNUSED_PARAM( eventProgress ),
                           Group * const domain )
 {
   GEOSX_MARK_FUNCTION;
@@ -259,7 +259,7 @@ void SolverBase::SetNextDtBasedOnNewtonIter( real64 const & currentDt,
 
 real64 SolverBase::LinearImplicitStep( real64 const & time_n,
                                        real64 const & dt,
-                                       integer const GEOSX_UNUSED_ARG( cycleNumber ),
+                                       integer const GEOSX_UNUSED_PARAM( cycleNumber ),
                                        DomainPartition * const domain,
                                        DofManager & dofManager,
                                        ParallelMatrix & matrix,
@@ -290,7 +290,7 @@ real64 SolverBase::LinearImplicitStep( real64 const & time_n,
 
 bool SolverBase::LineSearch( real64 const & time_n,
                              real64 const & dt,
-                             integer const GEOSX_UNUSED_ARG( cycleNumber ),
+                             integer const GEOSX_UNUSED_PARAM( cycleNumber ),
                              DomainPartition * const domain,
                              DofManager const & dofManager,
                              ParallelMatrix & matrix,
@@ -536,35 +536,35 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
   return stepDt;
 }
 
-void SolverBase::ExplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n ),
-                                    real64 const & GEOSX_UNUSED_ARG( dt ),
-                                    DomainPartition * const GEOSX_UNUSED_ARG( domain ) )
+void SolverBase::ExplicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+                                    real64 const & GEOSX_UNUSED_PARAM( dt ),
+                                    DomainPartition * const GEOSX_UNUSED_PARAM( domain ) )
 {
   GEOSX_ERROR( "SolverBase::ExplicitStepSetup called!. Should be overridden." );
 }
 
-real64 SolverBase::ExplicitStep( real64 const & GEOSX_UNUSED_ARG( time_n ),
-                                 real64 const & GEOSX_UNUSED_ARG( dt ),
-                                 integer const GEOSX_UNUSED_ARG( cycleNumber ),
-                                 DomainPartition * const GEOSX_UNUSED_ARG( domain ) )
+real64 SolverBase::ExplicitStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+                                 real64 const & GEOSX_UNUSED_PARAM( dt ),
+                                 integer const GEOSX_UNUSED_PARAM( cycleNumber ),
+                                 DomainPartition * const GEOSX_UNUSED_PARAM( domain ) )
 {
   GEOSX_ERROR( "SolverBase::ExplicitStep called!. Should be overridden." );
   return 0;
 }
 
-void SolverBase::ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n ),
-                                    real64 const & GEOSX_UNUSED_ARG( dt ),
-                                    DomainPartition * const GEOSX_UNUSED_ARG( domain ),
-                                    DofManager & GEOSX_UNUSED_ARG( dofManager ),
-                                    ParallelMatrix & GEOSX_UNUSED_ARG( matrix ),
-                                    ParallelVector & GEOSX_UNUSED_ARG( rhs ),
-                                    ParallelVector & GEOSX_UNUSED_ARG( solution ) )
+void SolverBase::ImplicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+                                    real64 const & GEOSX_UNUSED_PARAM( dt ),
+                                    DomainPartition * const GEOSX_UNUSED_PARAM( domain ),
+                                    DofManager & GEOSX_UNUSED_PARAM( dofManager ),
+                                    ParallelMatrix & GEOSX_UNUSED_PARAM( matrix ),
+                                    ParallelVector & GEOSX_UNUSED_PARAM( rhs ),
+                                    ParallelVector & GEOSX_UNUSED_PARAM( solution ) )
 {
   GEOSX_ERROR( "SolverBase::ImplicitStepSetup called!. Should be overridden." );
 }
 
-void SolverBase::SetupDofs( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
-                            DofManager & GEOSX_UNUSED_ARG( dofManager ) ) const
+void SolverBase::SetupDofs( DomainPartition const * const GEOSX_UNUSED_PARAM( domain ),
+                            DofManager & GEOSX_UNUSED_PARAM( dofManager ) ) const
 {
   GEOSX_ERROR( "SolverBase::SetupDofs called!. Should be overridden." );
 }
@@ -591,36 +591,36 @@ void SolverBase::SetupSystem( DomainPartition * const domain,
   dofManager.setSparsityPattern( matrix );
 }
 
-void SolverBase::AssembleSystem( real64 const GEOSX_UNUSED_ARG( time ),
-                                 real64 const GEOSX_UNUSED_ARG( dt ),
-                                 DomainPartition * const GEOSX_UNUSED_ARG( domain ),
-                                 DofManager const & GEOSX_UNUSED_ARG( dofManager ),
-                                 ParallelMatrix & GEOSX_UNUSED_ARG( matrix ),
-                                 ParallelVector & GEOSX_UNUSED_ARG( rhs ) )
+void SolverBase::AssembleSystem( real64 const GEOSX_UNUSED_PARAM( time ),
+                                 real64 const GEOSX_UNUSED_PARAM( dt ),
+                                 DomainPartition * const GEOSX_UNUSED_PARAM( domain ),
+                                 DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
+                                 ParallelMatrix & GEOSX_UNUSED_PARAM( matrix ),
+                                 ParallelVector & GEOSX_UNUSED_PARAM( rhs ) )
 {
   GEOSX_ERROR( "SolverBase::Assemble called!. Should be overridden." );
 }
 
-void SolverBase::ApplyBoundaryConditions( real64 const GEOSX_UNUSED_ARG( time ),
-                                          real64 const GEOSX_UNUSED_ARG( dt ),
-                                          DomainPartition * const GEOSX_UNUSED_ARG( domain ),
-                                          DofManager const & GEOSX_UNUSED_ARG( dofManager ),
-                                          ParallelMatrix & GEOSX_UNUSED_ARG( matrix ),
-                                          ParallelVector & GEOSX_UNUSED_ARG( rhs ) )
+void SolverBase::ApplyBoundaryConditions( real64 const GEOSX_UNUSED_PARAM( time ),
+                                          real64 const GEOSX_UNUSED_PARAM( dt ),
+                                          DomainPartition * const GEOSX_UNUSED_PARAM( domain ),
+                                          DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
+                                          ParallelMatrix & GEOSX_UNUSED_PARAM( matrix ),
+                                          ParallelVector & GEOSX_UNUSED_PARAM( rhs ) )
 {
   GEOSX_ERROR( "SolverBase::SolveSystem called!. Should be overridden." );
 }
 
 real64
-SolverBase::CalculateResidualNorm( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
-                                   DofManager const & GEOSX_UNUSED_ARG( dofManager ),
-                                   ParallelVector const & GEOSX_UNUSED_ARG( rhs ) )
+SolverBase::CalculateResidualNorm( DomainPartition const * const GEOSX_UNUSED_PARAM( domain ),
+                                   DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
+                                   ParallelVector const & GEOSX_UNUSED_PARAM( rhs ) )
 {
   GEOSX_ERROR( "SolverBase::CalculateResidualNorm called!. Should be overridden." );
   return 0;
 }
 
-void SolverBase::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofManager ),
+void SolverBase::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
                               ParallelMatrix & matrix,
                               ParallelVector & rhs,
                               ParallelVector & solution )
@@ -633,37 +633,37 @@ void SolverBase::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofManager ),
   solver.solve( matrix, solution, rhs );
 }
 
-bool SolverBase::CheckSystemSolution( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
-                                      DofManager const & GEOSX_UNUSED_ARG( dofManager ),
-                                      ParallelVector const & GEOSX_UNUSED_ARG( solution ),
-                                      real64 const GEOSX_UNUSED_ARG( scalingFactor ) )
+bool SolverBase::CheckSystemSolution( DomainPartition const * const GEOSX_UNUSED_PARAM( domain ),
+                                      DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
+                                      ParallelVector const & GEOSX_UNUSED_PARAM( solution ),
+                                      real64 const GEOSX_UNUSED_PARAM( scalingFactor ) )
 {
   return true;
 }
 
-real64 SolverBase::ScalingForSystemSolution( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
-                                             DofManager const & GEOSX_UNUSED_ARG( dofManager ),
-                                             ParallelVector const & GEOSX_UNUSED_ARG( solution ) )
+real64 SolverBase::ScalingForSystemSolution( DomainPartition const * const GEOSX_UNUSED_PARAM( domain ),
+                                             DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
+                                             ParallelVector const & GEOSX_UNUSED_PARAM( solution ) )
 {
   return 1.0;
 }
 
-void SolverBase::ApplySystemSolution( DofManager const & GEOSX_UNUSED_ARG( dofManager ),
-                                      ParallelVector const & GEOSX_UNUSED_ARG( solution ),
-                                      real64 const GEOSX_UNUSED_ARG( scalingFactor ),
-                                      DomainPartition * const GEOSX_UNUSED_ARG( domain ) )
+void SolverBase::ApplySystemSolution( DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
+                                      ParallelVector const & GEOSX_UNUSED_PARAM( solution ),
+                                      real64 const GEOSX_UNUSED_PARAM( scalingFactor ),
+                                      DomainPartition * const GEOSX_UNUSED_PARAM( domain ) )
 {
   GEOSX_ERROR( "SolverBase::ApplySystemSolution called!. Should be overridden." );
 }
 
-void SolverBase::ResetStateToBeginningOfStep( DomainPartition * GEOSX_UNUSED_ARG( const ) )
+void SolverBase::ResetStateToBeginningOfStep( DomainPartition * GEOSX_UNUSED_PARAM( const ) )
 {
   GEOSX_ERROR( "SolverBase::ResetStateToBeginningOfStep called!. Should be overridden." );
 }
 
-void SolverBase::ImplicitStepComplete( real64 const & GEOSX_UNUSED_ARG( time ),
-                                       real64 const & GEOSX_UNUSED_ARG( dt ),
-                                       DomainPartition * const GEOSX_UNUSED_ARG( domain ) )
+void SolverBase::ImplicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time ),
+                                       real64 const & GEOSX_UNUSED_PARAM( dt ),
+                                       DomainPartition * const GEOSX_UNUSED_PARAM( domain ) )
 {
   GEOSX_ERROR( "SolverBase::ImplicitStepComplete called!. Should be overridden." );
 }

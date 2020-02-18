@@ -78,7 +78,7 @@ public:
 
   localIndex UnpackSets( buffer_unit_type const *& buffer );
 
-  virtual void ViewPackingExclusionList( set<localIndex> & exclusionList ) const;
+  virtual void ViewPackingExclusionList( SortedArray<localIndex> & exclusionList ) const;
 
 
   virtual localIndex PackGlobalMapsSize( arrayView1d<localIndex> const & packList,
@@ -92,17 +92,17 @@ public:
 
 
 
-  virtual localIndex PackUpDownMapsSize( arrayView1d<localIndex const> const & GEOSX_UNUSED_ARG( packList ) ) const
+  virtual localIndex PackUpDownMapsSize( arrayView1d<localIndex const> const & GEOSX_UNUSED_PARAM( packList ) ) const
   { return 0; }
 
-  virtual localIndex PackUpDownMaps( buffer_unit_type * & GEOSX_UNUSED_ARG( buffer ),
-                                     arrayView1d<localIndex const> const & GEOSX_UNUSED_ARG( packList ) ) const
+  virtual localIndex PackUpDownMaps( buffer_unit_type * & GEOSX_UNUSED_PARAM( buffer ),
+                                     arrayView1d<localIndex const> const & GEOSX_UNUSED_PARAM( packList ) ) const
   { return 0; }
 
-  virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & GEOSX_UNUSED_ARG( buffer ),
-                                       array1d<localIndex> & GEOSX_UNUSED_ARG( packList ),
-                                       bool const GEOSX_UNUSED_ARG( overwriteUpMaps ),
-                                       bool const GEOSX_UNUSED_ARG( overwriteDownMaps ) )
+  virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & GEOSX_UNUSED_PARAM( buffer ),
+                                       array1d<localIndex> & GEOSX_UNUSED_PARAM( packList ),
+                                       bool const GEOSX_UNUSED_PARAM( overwriteUpMaps ),
+                                       bool const GEOSX_UNUSED_PARAM( overwriteDownMaps ) )
   { return 0; }
 
 
@@ -247,16 +247,16 @@ public:
 
   template< typename TYPE_RELATION >
   static void FixUpDownMaps( TYPE_RELATION & relation,
-                             map< localIndex, set<globalIndex> > & unmappedIndices,
+                             map< localIndex, SortedArray<globalIndex> > & unmappedIndices,
                              bool const clearIfUnmapped );
 
   static void FixUpDownMaps( ArrayOfSets< localIndex > & relation,
                              unordered_map<globalIndex,localIndex> const & globalToLocal,
-                             map< localIndex, set<globalIndex> > & unmappedIndices,
+                             map< localIndex, SortedArray<globalIndex> > & unmappedIndices,
                              bool const clearIfUnmapped );
 
   static void CleanUpMap( std::set<localIndex> const & targetIndices,
-                          array1d<set<localIndex> > & upmap,
+                          array1d<SortedArray<localIndex> > & upmap,
                           arrayView2d<localIndex const> const & downmap );
 
   static void CleanUpMap( std::set<localIndex> const & targetIndices,
@@ -264,7 +264,7 @@ public:
                           arrayView2d< localIndex const > const & downmap );
 
   static void CleanUpMap( std::set<localIndex> const & targetIndices,
-                          array1d<set<localIndex> > & upmap,
+                          array1d<SortedArray<localIndex> > & upmap,
                           arrayView1d< arrayView1d<localIndex const > const > const & downmap );
 
   static void CleanUpMap( std::set<localIndex> const & targetIndices,
@@ -354,11 +354,11 @@ public:
   Group * sets()             {return &m_sets;}
   Group const * sets() const {return &m_sets;}
 
-  set<localIndex> & externalSet()
-  {return m_sets.getReference<set<localIndex>>(m_ObjectManagerBaseViewKeys.externalSet);}
+  SortedArray<localIndex> & externalSet()
+  {return m_sets.getReference<SortedArray<localIndex>>(m_ObjectManagerBaseViewKeys.externalSet);}
 
-  set<localIndex> const & externalSet() const
-  {return m_sets.getReference<set<localIndex>>(m_ObjectManagerBaseViewKeys.externalSet);}
+  SortedArray<localIndex> const & externalSet() const
+  {return m_sets.getReference<SortedArray<localIndex>>(m_ObjectManagerBaseViewKeys.externalSet);}
 
   integer_array & isExternal()
   { return this->m_isExternal; }
@@ -427,13 +427,13 @@ void ObjectManagerBase::FixUpDownMaps( TYPE_RELATION & relation,
 
 template< typename TYPE_RELATION >
 void ObjectManagerBase::FixUpDownMaps( TYPE_RELATION & relation,
-                                       map< localIndex, set<globalIndex> > & unmappedIndices,
+                                       map< localIndex, SortedArray<globalIndex> > & unmappedIndices,
                                        bool const clearIfUnmapped )
 {
   GEOSX_MARK_FUNCTION;
 
   unordered_map<globalIndex,localIndex> const & globalToLocal = relation.RelatedObjectGlobalToLocal();
-  for( map< localIndex, set<globalIndex> >::iterator iter = unmappedIndices.begin() ;
+  for( map< localIndex, SortedArray<globalIndex> >::iterator iter = unmappedIndices.begin() ;
        iter != unmappedIndices.end() ;
        ++iter )
   {
@@ -444,7 +444,7 @@ void ObjectManagerBase::FixUpDownMaps( TYPE_RELATION & relation,
     }
     else
     {
-      set<globalIndex> const & globalIndices = iter->second;
+      SortedArray<globalIndex> const & globalIndices = iter->second;
       for( auto const newGlobalIndex : globalIndices )
       {
         // NOTE: This simply ignores if newGlobalIndex is not found. This is OK if this function is
@@ -464,12 +464,12 @@ void ObjectManagerBase::FixUpDownMaps( TYPE_RELATION & relation,
 inline
 void ObjectManagerBase::FixUpDownMaps( ArrayOfSets< localIndex > & relation,
                                        unordered_map<globalIndex,localIndex> const & globalToLocal,
-                                       map< localIndex, set<globalIndex> > & unmappedIndices,
+                                       map< localIndex, SortedArray<globalIndex> > & unmappedIndices,
                                        bool const clearIfUnmapped )
 {
   GEOSX_MARK_FUNCTION;
 
-  for( map< localIndex, set<globalIndex> >::iterator iter = unmappedIndices.begin() ;
+  for( map< localIndex, SortedArray<globalIndex> >::iterator iter = unmappedIndices.begin() ;
        iter != unmappedIndices.end() ;
        ++iter )
   {
@@ -480,7 +480,7 @@ void ObjectManagerBase::FixUpDownMaps( ArrayOfSets< localIndex > & relation,
     }
     else
     {
-      set<globalIndex> const & globalIndices = iter->second;
+      SortedArray<globalIndex> const & globalIndices = iter->second;
       for( globalIndex const newGlobalIndex : globalIndices )
       {
         // NOTE: This simply ignores if newGlobalIndex is not found. This is OK if this function is

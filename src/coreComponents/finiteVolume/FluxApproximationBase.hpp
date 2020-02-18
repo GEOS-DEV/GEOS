@@ -117,9 +117,9 @@ public:
   /// triggers computation of the stencil, implemented in derived classes
   void compute( DomainPartition const & domain );
 
-  virtual void addToFractureStencil( DomainPartition const & GEOSX_UNUSED_ARG( domain ),
-                                     string const & GEOSX_UNUSED_ARG( faceElementRegionName ),
-                                     bool const GEOSX_UNUSED_ARG(initFlag) ) {}
+  virtual void addToFractureStencil( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
+                                     string const & GEOSX_UNUSED_PARAM( faceElementRegionName ),
+                                     bool const GEOSX_UNUSED_PARAM(initFlag) ) {}
 
 
   struct viewKeyStruct
@@ -151,7 +151,7 @@ protected:
 
   /// actual computation of the boundary stencil, to be overridden by implementations
   virtual void computeBoundaryStencil( DomainPartition const & domain,
-                                       set<localIndex> const & faceSet,
+                                       SortedArray<localIndex> const & faceSet,
                                        BoundaryStencil & stencil ) = 0;
 
   /// name of the primary solution field

@@ -62,7 +62,7 @@ void LinearViscoElasticIsotropic::StateUpdatePoint( localIndex const k,
                                                     R2SymTensor const & D,
                                                     R2Tensor const & Rot,
                                                     real64 const dt,
-                                                    integer const GEOSX_UNUSED_ARG( updateStiffnessFlag ) )
+                                                    integer const GEOSX_UNUSED_PARAM( updateStiffnessFlag ) )
 {
   real64 meanStresIncrement = D.Trace();
 

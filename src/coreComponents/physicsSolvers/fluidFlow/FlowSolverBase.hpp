@@ -76,15 +76,15 @@ public:
 
   void setReservoirWellsCoupling() { m_coupledWellsFlag = 1; }
 
-  virtual void CalculateAndApplyMassFlux( real64 const GEOSX_UNUSED_ARG( time_n ),
-										  real64 const GEOSX_UNUSED_ARG( dt ),
-										  DomainPartition * const GEOSX_UNUSED_ARG( domain )) {}
+  virtual void CalculateAndApplyMassFlux( real64 const GEOSX_UNUSED_PARAM( time_n ),
+										  real64 const GEOSX_UNUSED_PARAM( dt ),
+										  DomainPartition * const GEOSX_UNUSED_PARAM( domain )) {}
 
   localIndex fluidIndex() const { return m_fluidIndex; }
 
-  virtual void UpdateEOS( real64 const GEOSX_UNUSED_ARG( time_n ),
-                          real64 const GEOSX_UNUSED_ARG( dt ),
-                          DomainPartition * const GEOSX_UNUSED_ARG( domain )) {}
+  virtual void UpdateEOS( real64 const GEOSX_UNUSED_PARAM( time_n ),
+                          real64 const GEOSX_UNUSED_PARAM( dt ),
+                          DomainPartition * const GEOSX_UNUSED_PARAM( domain )) {}
 
   localIndex solidIndex() const { return m_solidIndex; }
 

@@ -112,7 +112,7 @@ inline void Integrate( const R2SymTensor& fieldvar,
                        real64 const& detJ,
                        real64 const& detF,
                        const R2Tensor& fInv,
-                       R1Tensor * restrict const result )
+                       R1Tensor * GEOSX_RESTRICT const result )
 {
   real64 const integrationFactor = detJ * detF;
 
@@ -193,7 +193,7 @@ struct ExplicitKernel
           arrayView2d<real64 const, nodes::VELOCITY_USD> const & vel,
           arrayView2d<real64, nodes::ACCELERATION_USD> const & acc,
           arrayView1d< real64 const > const & fluidPressure,
-          arrayView1d< real64 const > const & GEOSX_UNUSED_ARG( deltaFluidPressure ) ,
+          arrayView1d< real64 const > const & GEOSX_UNUSED_PARAM( deltaFluidPressure ) ,
           real64 const biotCoefficient,
           arrayView3d<real64 const, solid::STRESS_USD> const & stress,
           real64 const dt,
@@ -365,32 +365,32 @@ struct ImplicitKernel
    */
   template< localIndex NUM_NODES_PER_ELEM, localIndex NUM_QUADRATURE_POINTS, typename CONSTITUTIVE_TYPE >
   static inline real64
-  Launch( CONSTITUTIVE_TYPE * const GEOSX_UNUSED_ARG( constitutiveRelation ),
-          localIndex const GEOSX_UNUSED_ARG( numElems ),
-          real64 const GEOSX_UNUSED_ARG( dt ),
-          arrayView3d<R1Tensor const> const & GEOSX_UNUSED_ARG( dNdX ),
-          arrayView2d<real64 const > const& GEOSX_UNUSED_ARG( detJ ),
-          FiniteElementBase const * const GEOSX_UNUSED_ARG( fe ),
-          arrayView1d< integer const > const & GEOSX_UNUSED_ARG( elemGhostRank ),
-          arrayView2d< localIndex const, cells::NODE_MAP_USD > const & GEOSX_UNUSED_ARG( elemsToNodes ),
-          arrayView1d< globalIndex const > const & GEOSX_UNUSED_ARG( globalDofNumber ),
-          arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & GEOSX_UNUSED_ARG( disp ),
-          arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const & GEOSX_UNUSED_ARG( uhat ),
-          arrayView1d< R1Tensor const > const & GEOSX_UNUSED_ARG( vtilde ),
-          arrayView1d< R1Tensor const > const & GEOSX_UNUSED_ARG( uhattilde ),
-          arrayView2d< real64 const > const & GEOSX_UNUSED_ARG( density ),
-          arrayView1d< real64 const > const & GEOSX_UNUSED_ARG( fluidPressure ),
-          arrayView1d< real64 const > const & GEOSX_UNUSED_ARG( deltaFluidPressure ),
-          real64 const GEOSX_UNUSED_ARG( biotCoefficient ),
-          timeIntegrationOption const GEOSX_UNUSED_ARG( tiOption ),
-          real64 const GEOSX_UNUSED_ARG( stiffnessDamping ),
-          real64 const GEOSX_UNUSED_ARG( massDamping ),
-          real64 const GEOSX_UNUSED_ARG( newmarkBeta ),
-          real64 const GEOSX_UNUSED_ARG( newmarkGamma ),
-          R1Tensor const & GEOSX_UNUSED_ARG(gravityVector),
-          DofManager const * const GEOSX_UNUSED_ARG( dofManager ),
-          ParallelMatrix * const GEOSX_UNUSED_ARG( matrix ),
-          ParallelVector * const GEOSX_UNUSED_ARG( rhs ) )
+  Launch( CONSTITUTIVE_TYPE * const GEOSX_UNUSED_PARAM( constitutiveRelation ),
+          localIndex const GEOSX_UNUSED_PARAM( numElems ),
+          real64 const GEOSX_UNUSED_PARAM( dt ),
+          arrayView3d<R1Tensor const> const & GEOSX_UNUSED_PARAM( dNdX ),
+          arrayView2d<real64 const > const& GEOSX_UNUSED_PARAM( detJ ),
+          FiniteElementBase const * const GEOSX_UNUSED_PARAM( fe ),
+          arrayView1d< integer const > const & GEOSX_UNUSED_PARAM( elemGhostRank ),
+          arrayView2d< localIndex const, cells::NODE_MAP_USD > const & GEOSX_UNUSED_PARAM( elemsToNodes ),
+          arrayView1d< globalIndex const > const & GEOSX_UNUSED_PARAM( globalDofNumber ),
+          arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & GEOSX_UNUSED_PARAM( disp ),
+          arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const & GEOSX_UNUSED_PARAM( uhat ),
+          arrayView1d< R1Tensor const > const & GEOSX_UNUSED_PARAM( vtilde ),
+          arrayView1d< R1Tensor const > const & GEOSX_UNUSED_PARAM( uhattilde ),
+          arrayView2d< real64 const > const & GEOSX_UNUSED_PARAM( density ),
+          arrayView1d< real64 const > const & GEOSX_UNUSED_PARAM( fluidPressure ),
+          arrayView1d< real64 const > const & GEOSX_UNUSED_PARAM( deltaFluidPressure ),
+          real64 const GEOSX_UNUSED_PARAM( biotCoefficient ),
+          timeIntegrationOption const GEOSX_UNUSED_PARAM( tiOption ),
+          real64 const GEOSX_UNUSED_PARAM( stiffnessDamping ),
+          real64 const GEOSX_UNUSED_PARAM( massDamping ),
+          real64 const GEOSX_UNUSED_PARAM( newmarkBeta ),
+          real64 const GEOSX_UNUSED_PARAM( newmarkGamma ),
+          R1Tensor const & GEOSX_UNUSED_PARAM(gravityVector),
+          DofManager const * const GEOSX_UNUSED_PARAM( dofManager ),
+          ParallelMatrix * const GEOSX_UNUSED_PARAM( matrix ),
+          ParallelVector * const GEOSX_UNUSED_PARAM( rhs ) )
   {
     GEOSX_ERROR("SolidMechanicsLagrangianFEM::ImplicitElementKernelWrapper::Launch() not implemented");
     return 0;

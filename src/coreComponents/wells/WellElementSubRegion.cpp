@@ -69,7 +69,7 @@ void WellElementSubRegion::Generate( MeshLevel                        & mesh,
                                      globalIndex                        elemOffsetGlobal )
 {
 
-  map< integer, set<globalIndex> > elemSetsByStatus;
+  map< integer, SortedArray<globalIndex> > elemSetsByStatus;
  
   // convert elemStatus list into sets of indices
   for (localIndex iwelemGlobal = 0; iwelemGlobal < elemStatusGlobal.size(); ++iwelemGlobal)
@@ -79,9 +79,9 @@ void WellElementSubRegion::Generate( MeshLevel                        & mesh,
 
   // initialize the sets using the classification of well elems
   // localElems will be enlarged once boundary elements ownership is determined
-  set<globalIndex> & localElems   = elemSetsByStatus[WellElemStatus::LOCAL];
-  set<globalIndex> & sharedElems  = elemSetsByStatus[WellElemStatus::SHARED];
-  set<globalIndex> & unownedElems = elemSetsByStatus[WellElemStatus::UNOWNED];
+  SortedArray<globalIndex> & localElems   = elemSetsByStatus[WellElemStatus::LOCAL];
+  SortedArray<globalIndex> & sharedElems  = elemSetsByStatus[WellElemStatus::SHARED];
+  SortedArray<globalIndex> & unownedElems = elemSetsByStatus[WellElemStatus::UNOWNED];
 
   // here we make sure that there are no shared elements
   // this is enforced in the InternalWellGenerator that currently merges two perforations 
@@ -117,8 +117,8 @@ void WellElementSubRegion::Generate( MeshLevel                        & mesh,
                              localElems,
                              elemStatusGlobal );
 
-  set<globalIndex> localNodes;
-  set<globalIndex> boundaryNodes;
+  SortedArray<globalIndex> localNodes;
+  SortedArray<globalIndex> boundaryNodes;
 
   // 2) collect the local nodes and tag the boundary nodes using element info
   // now that all the elements have been assigned, we collected the local nodes
@@ -162,8 +162,8 @@ void WellElementSubRegion::Generate( MeshLevel                        & mesh,
 
 void WellElementSubRegion::AssignUnownedElementsInReservoir( MeshLevel                   & mesh,
                                                              InternalWellGenerator const & wellGeometry,
-                                                             set<globalIndex>      const & unownedElems,
-                                                             set<globalIndex>            & localElems,
+                                                             SortedArray<globalIndex>      const & unownedElems,
+                                                             SortedArray<globalIndex>            & localElems,
                                                              arrayView1d<integer>        & elemStatusGlobal ) const
 {
   NodeManager const * const nodeManager          = mesh.getNodeManager();
@@ -222,7 +222,7 @@ void WellElementSubRegion::AssignUnownedElementsInReservoir( MeshLevel          
 
 
 void WellElementSubRegion::CheckPartitioningValidity( InternalWellGenerator const & wellGeometry,
-                                                      set<globalIndex>            & localElems,
+                                                      SortedArray<globalIndex>            & localElems,
                                                       arrayView1d<integer>        & elemStatusGlobal ) const
 {
   arrayView1d< arrayView1d< globalIndex const > const > const & prevElemIdsGlobal = wellGeometry.GetPrevElemIndices();
@@ -237,7 +237,7 @@ void WellElementSubRegion::CheckPartitioningValidity( InternalWellGenerator cons
     MpiWrapper::allGather( elemStatusGlobal[iwelemGlobal],
                                    thisElemStatusGlobal );
     // group the ranks by well element status
-    map< integer, set<globalIndex> > rankSetsByStatus;
+    map< integer, SortedArray<globalIndex> > rankSetsByStatus;
     for (globalIndex irank = 0; irank < thisElemStatusGlobal.size(); ++irank)
     {
       rankSetsByStatus[thisElemStatusGlobal[irank]].insert( irank );
@@ -316,9 +316,9 @@ void WellElementSubRegion::CheckPartitioningValidity( InternalWellGenerator cons
 
 
 void WellElementSubRegion::CollectLocalAndBoundaryNodes( InternalWellGenerator const & wellGeometry, 
-                                                         set<globalIndex>      const & localElems,
-                                                         set<globalIndex>            & localNodes,
-                                                         set<globalIndex>            & boundaryNodes ) const
+                                                         SortedArray<globalIndex>      const & localElems,
+                                                         SortedArray<globalIndex>            & localNodes,
+                                                         SortedArray<globalIndex>            & boundaryNodes ) const
 {
   // get the well connectivity
   arrayView1d< globalIndex const >                      const & nextElemIdGlobal  = wellGeometry.GetNextElemIndex();
@@ -358,8 +358,8 @@ void WellElementSubRegion::CollectLocalAndBoundaryNodes( InternalWellGenerator c
 
 void WellElementSubRegion::UpdateNodeManagerSize( MeshLevel                   & mesh,
                                                   InternalWellGenerator const & wellGeometry,
-                                                  set<globalIndex>      const & localNodes,
-                                                  set<globalIndex>      const & boundaryNodes, 
+                                                  SortedArray<globalIndex>      const & localNodes,
+                                                  SortedArray<globalIndex>      const & boundaryNodes, 
                                                   globalIndex                   nodeOffsetGlobal )
 {
 
@@ -414,8 +414,8 @@ void WellElementSubRegion::UpdateNodeManagerSize( MeshLevel                   & 
 
 void WellElementSubRegion::ConstructSubRegionLocalElementMaps( MeshLevel                   & mesh,
                                                                InternalWellGenerator const & wellGeometry,
-                                                               set<globalIndex>      const & localElems, 
-                                                               set<globalIndex>      const & GEOSX_UNUSED_ARG( localNodes ),
+                                                               SortedArray<globalIndex>      const & localElems, 
+                                                               SortedArray<globalIndex>      const & GEOSX_UNUSED_PARAM( localNodes ),
                                                                globalIndex                   nodeOffsetGlobal,
                                                                globalIndex                   elemOffsetGlobal )
 {
@@ -555,7 +555,7 @@ bool WellElementSubRegion::IsLocallyOwned() const
   return m_topRank == MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
 }
 
-void WellElementSubRegion::ViewPackingExclusionList( set<localIndex> & exclusionList ) const
+void WellElementSubRegion::ViewPackingExclusionList( SortedArray<localIndex> & exclusionList ) const
 { 
   ObjectManagerBase::ViewPackingExclusionList(exclusionList);
   exclusionList.insert(this->getWrapperIndex(viewKeyStruct::nodeListString));
@@ -591,8 +591,8 @@ localIndex WellElementSubRegion::PackUpDownMapsPrivate( buffer_unit_type * & buf
 
 localIndex WellElementSubRegion::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                                    localIndex_array & packList,
-                                                   bool const GEOSX_UNUSED_ARG( overwriteUpMaps ),
-                                                   bool const GEOSX_UNUSED_ARG( overwriteDownMaps ) )
+                                                   bool const GEOSX_UNUSED_PARAM( overwriteUpMaps ),
+                                                   bool const GEOSX_UNUSED_PARAM( overwriteDownMaps ) )
 { 
   localIndex unPackedSize = 0;
 

@@ -124,9 +124,9 @@ void PeriodicEvent::EstimateEventTiming(real64 const time,
 
 
 void PeriodicEvent::CheckOptionalFunctionThreshold(real64 const time,
-                                                   real64 const GEOSX_UNUSED_ARG( dt ), 
-                                                   integer const GEOSX_UNUSED_ARG( cycle ),
-                                                   Group * GEOSX_UNUSED_ARG( domain ))
+                                                   real64 const GEOSX_UNUSED_PARAM( dt ), 
+                                                   integer const GEOSX_UNUSED_PARAM( cycle ),
+                                                   Group * GEOSX_UNUSED_PARAM( domain ))
 {
   // Grab the function
   FunctionManager & functionManager = FunctionManager::Instance();
@@ -147,7 +147,7 @@ void PeriodicEvent::CheckOptionalFunctionThreshold(real64 const time,
     }
 
     // Get the set
-    set<localIndex> mySet;
+    SortedArray<localIndex> mySet;
     if (m_functionInputSetname.empty())
     {
       for(localIndex ii=0; ii<m_functionTarget->size(); ++ii)
@@ -158,7 +158,7 @@ void PeriodicEvent::CheckOptionalFunctionThreshold(real64 const time,
     else
     {
       dataRepository::Group const * sets = m_functionTarget->GetGroup(periodicEventViewKeys.functionSetNames);
-      mySet = sets->getReference< set<localIndex> >(m_functionInputSetname);
+      mySet = sets->getReference< SortedArray<localIndex> >(m_functionInputSetname);
     }
 
     // Find the function (min, average, max)

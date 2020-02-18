@@ -134,7 +134,7 @@ InternalMeshGenerator::~InternalMeshGenerator()
 /**
  * @param domain
  */
-void InternalMeshGenerator::GenerateElementRegions( DomainPartition& GEOSX_UNUSED_ARG( domain ) )
+void InternalMeshGenerator::GenerateElementRegions( DomainPartition& GEOSX_UNUSED_PARAM( domain ) )
 {
   //  lvector numElements;
   //
@@ -182,7 +182,6 @@ void InternalMeshGenerator::PostProcessInput()
     {
       if (m_nElemBias[i].size() > 0)
       {
-        m_useBias = true;
         failFlag += ( m_nElems[i].size() != m_nElemBias[i].size() );
       }
     }
@@ -312,7 +311,7 @@ void InternalMeshGenerator::PostProcessInput()
 
 
 
-Group * InternalMeshGenerator::CreateChild( string const & GEOSX_UNUSED_ARG( childKey ), string const & GEOSX_UNUSED_ARG( childName ) )
+Group * InternalMeshGenerator::CreateChild( string const & GEOSX_UNUSED_PARAM( childKey ), string const & GEOSX_UNUSED_PARAM( childName ) )
 {
   return nullptr;
 }
@@ -358,13 +357,13 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
   }
 
 
-  localIndex_set & xnegNodes = nodeSets->registerWrapper<localIndex_set>( std::string("xneg") )->reference();
-  localIndex_set & xposNodes = nodeSets->registerWrapper<localIndex_set>( std::string("xpos") )->reference();
-  localIndex_set & ynegNodes = nodeSets->registerWrapper<localIndex_set>( std::string("yneg") )->reference();
-  localIndex_set & yposNodes = nodeSets->registerWrapper<localIndex_set>( std::string("ypos") )->reference();
-  localIndex_set & znegNodes = nodeSets->registerWrapper<localIndex_set>( std::string("zneg") )->reference();
-  localIndex_set & zposNodes = nodeSets->registerWrapper<localIndex_set>( std::string("zpos") )->reference();
-  localIndex_set & allNodes  = nodeSets->registerWrapper<localIndex_set>( std::string("all") )->reference();
+  SortedArray<localIndex> & xnegNodes = nodeSets->registerWrapper<SortedArray<localIndex>>( std::string("xneg") )->reference();
+  SortedArray<localIndex> & xposNodes = nodeSets->registerWrapper<SortedArray<localIndex>>( std::string("xpos") )->reference();
+  SortedArray<localIndex> & ynegNodes = nodeSets->registerWrapper<SortedArray<localIndex>>( std::string("yneg") )->reference();
+  SortedArray<localIndex> & yposNodes = nodeSets->registerWrapper<SortedArray<localIndex>>( std::string("ypos") )->reference();
+  SortedArray<localIndex> & znegNodes = nodeSets->registerWrapper<SortedArray<localIndex>>( std::string("zneg") )->reference();
+  SortedArray<localIndex> & zposNodes = nodeSets->registerWrapper<SortedArray<localIndex>>( std::string("zpos") )->reference();
+  SortedArray<localIndex> & allNodes  = nodeSets->registerWrapper<SortedArray<localIndex>>( std::string("all") )->reference();
 
 
   // partition based on even spacing to get load balance
@@ -647,7 +646,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
 
     // assign global numbers to elements
     iterRegion = m_regionNames.begin();
-    set<std::string> processedRegionNames;
+    SortedArray<std::string> processedRegionNames;
     localIndex iR = 0;
 
     for( int iblock = 0 ; iblock < m_nElems[0].size() ; ++iblock )
@@ -1224,7 +1223,7 @@ void InternalMeshGenerator::GetElemToNodesRelationInBox( const std::string& elem
   }
 }
 
-void InternalMeshGenerator::RemapMesh( dataRepository::Group * const GEOSX_UNUSED_ARG( domain ) )
+void InternalMeshGenerator::RemapMesh( dataRepository::Group * const GEOSX_UNUSED_PARAM( domain ) )
 {
   //  // Node mapping
   //  if (!m_meshDx.empty())

@@ -130,7 +130,7 @@ void FaceElementSubRegion::CalculateElementGeometricQuantities( localIndex const
   m_elementVolume[k] = (m_elementAperture[k] + m_elementApertureOffset[k]) * faceArea[m_toFacesRelation[k][0]];
 }
 
-void FaceElementSubRegion::CalculateElementGeometricQuantities( NodeManager const & GEOSX_UNUSED_ARG( nodeManager ),
+void FaceElementSubRegion::CalculateElementGeometricQuantities( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
                                                                 FaceManager const & faceManager )
 {
   arrayView1d<real64 const> const & faceArea = faceManager.faceArea();
@@ -203,7 +203,7 @@ localIndex FaceElementSubRegion::PackUpDownMapsPrivate( buffer_unit_type * & buf
 localIndex FaceElementSubRegion::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                                    localIndex_array & packList,
                                                    bool const overwriteUpMaps,
-                                                   bool const GEOSX_UNUSED_ARG( overwriteDownMaps ) )
+                                                   bool const GEOSX_UNUSED_PARAM( overwriteDownMaps ) )
 {
   localIndex unPackedSize = 0;
 
@@ -281,7 +281,7 @@ void FaceElementSubRegion::inheritGhostRankFromParentFace( FaceManager const * c
   }
 }
 
-void FaceElementSubRegion::ViewPackingExclusionList( set<localIndex> & exclusionList ) const
+void FaceElementSubRegion::ViewPackingExclusionList( SortedArray<localIndex> & exclusionList ) const
 {
   ObjectManagerBase::ViewPackingExclusionList(exclusionList);
   exclusionList.insert(this->getWrapperIndex(viewKeyStruct::nodeListString));
