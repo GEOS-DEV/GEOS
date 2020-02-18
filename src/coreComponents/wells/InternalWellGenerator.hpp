@@ -302,7 +302,7 @@ private:
   array1d<R1Tensor>           m_polyNodeCoords;
   
   /// Map from the polyline nodes to the polyline nodes
-  array1d< set<globalIndex> > m_polyNodeToSegmentMap;
+  array1d< SortedArray<globalIndex> > m_polyNodeToSegmentMap;
 
   /// Index of the node at the well head
   globalIndex     m_polylineHeadNodeId;
