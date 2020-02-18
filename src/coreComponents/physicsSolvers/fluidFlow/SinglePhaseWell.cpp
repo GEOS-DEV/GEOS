@@ -401,8 +401,9 @@ void SinglePhaseWell::AssemblePerforationTerms( real64 const GEOSX_UNUSED_PARAM(
   string const wellDofKey = dofManager->getKey( WellElementDofName() );
   string const resDofKey  = dofManager->getKey( ResElementDofName() );
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d<globalIndex> > resDofNumberAccessor =
-    elemManager->ConstructViewAccessor< array1d<globalIndex>, arrayView1d<globalIndex> >( resDofKey );
+  ElementRegionManager::ElementViewAccessor< arrayView1d<globalIndex const> >
+  resDofNumberAccessor = elemManager->ConstructViewAccessor< array1d<globalIndex>,
+                                                             arrayView1d<globalIndex const> >( resDofKey );
 
   ElementRegionManager::ElementViewAccessor< arrayView1d<globalIndex const> >::ViewTypeConst resDofNumber =
     resDofNumberAccessor.toViewConst();
@@ -857,10 +858,10 @@ SinglePhaseWell::ApplySystemSolution( DofManager const & dofManager,
 void SinglePhaseWell::ResetStateToBeginningOfStep( DomainPartition * const domain )
 {
 
-  MeshLevel const * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ElementRegionManager const * const elemManager = meshLevel->getElemManager();
+  MeshLevel * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  ElementRegionManager * const elemManager = meshLevel->getElemManager();
 
-  elemManager->forElementSubRegions<WellElementSubRegion>( [&]( WellElementSubRegion const * const subRegion )
+  elemManager->forElementSubRegions<WellElementSubRegion>( [&]( WellElementSubRegion * const subRegion )
   {
 
     // get a reference to the primary variables on well elements
@@ -961,10 +962,10 @@ void SinglePhaseWell::ComputeAllPerforationRates( WellElementSubRegion const * c
   arrayView1d<real64 const> const & perfTransmissibility =
     perforationData->getReference<array1d<real64>>( PerforationData::viewKeyStruct::transmissibilityString );
 
-  arrayView1d<real64> const & perfRate =
+  arrayView1d<real64 const> const & perfRate =
     perforationData->getReference<array1d<real64>>( viewKeyStruct::perforationRateString );
 
-  arrayView2d<real64> const & dPerfRate_dPres =
+  arrayView2d<real64 const> const & dPerfRate_dPres =
     perforationData->getReference<array2d<real64>>( viewKeyStruct::dPerforationRate_dPresString );
 
   // get the element region, subregion, index
@@ -1192,10 +1193,10 @@ void SinglePhaseWell::ImplicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( t
                                             real64 const & GEOSX_UNUSED_PARAM( dt ),
                                             DomainPartition * const domain )
 {
-  MeshLevel const * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ElementRegionManager const * const elemManager = meshLevel->getElemManager();
+  MeshLevel * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  ElementRegionManager * const elemManager = meshLevel->getElemManager();
 
-  elemManager->forElementSubRegions<WellElementSubRegion>( [&]( WellElementSubRegion const * const subRegion )
+  elemManager->forElementSubRegions<WellElementSubRegion>( [&]( WellElementSubRegion * const subRegion )
   {
 
     // get a reference to the primary variables on well elements
