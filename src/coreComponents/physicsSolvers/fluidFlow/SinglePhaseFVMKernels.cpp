@@ -24,6 +24,7 @@ namespace geosx
 namespace SinglePhaseFVMKernels
 {
 
+
 inline void addLocalContributionsToGlobalSystem( localIndex const numFluxElems,
                                                  localIndex const stencilSize,
                                                  globalIndex const * const eqnRowIndices,

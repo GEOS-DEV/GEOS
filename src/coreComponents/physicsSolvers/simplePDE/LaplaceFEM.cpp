@@ -362,7 +362,7 @@ void LaplaceFEM::ApplyDirichletBC_implicit( real64 const time,
                    m_fieldName,
                    [&]( FieldSpecificationBase const * const bc,
                         string const &,
-                        set<localIndex> const & targetSet,
+                        SortedArray<localIndex> const & targetSet,
                         Group * const targetGroup,
                         string const GEOSX_UNUSED_PARAM( fieldName ) )->void
   {

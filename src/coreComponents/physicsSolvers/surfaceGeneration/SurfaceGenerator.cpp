@@ -1776,7 +1776,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
     m_usedFacesForNode[newNodeIndex].insert( val );
   }
 
-//  set<localIndex>& usedFacesNew = nodeManager.getReference< array1d<set<localIndex>> >("usedFaces")[newNodeIndex];
+//  SortedArray<localIndex>& usedFacesNew = nodeManager.getReference< array1d<SortedArray<localIndex>> >("usedFaces")[newNodeIndex];
 //  usedFacesNew = usedFaces[nodeID];
 
 
@@ -1846,7 +1846,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
   map<localIndex, localIndex> splitFaces;
 
 
-  set<localIndex> & externalFaces = faceManager.externalSet();
+  SortedArray<localIndex> & externalFaces = faceManager.externalSet();
 
   // loop over all faces attached to the nodeID
   for( map<localIndex, int>::const_iterator iter_face=faceLocations.begin() ; iter_face!=faceLocations.end() ; ++iter_face )

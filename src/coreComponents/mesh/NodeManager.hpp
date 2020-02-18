@@ -101,7 +101,7 @@ public:
 
 //  void Initialize();
 
-  virtual void ViewPackingExclusionList( set<localIndex> & exclusionList ) const override;
+  virtual void ViewPackingExclusionList( SortedArray<localIndex> & exclusionList ) const override;
 
   virtual localIndex PackUpDownMapsSize( arrayView1d<localIndex const> const & packList ) const override;
 
@@ -275,9 +275,9 @@ private:
   /// nodeToElement relation
   ElemMapType m_toElements;
 
-  map< localIndex, set<globalIndex> > m_unmappedGlobalIndicesInToEdges;
-  map< localIndex, set<globalIndex> > m_unmappedGlobalIndicesInToFaces;
-  map< localIndex, array1d< array1d< set<globalIndex> > > > m_unmappedGlobalIndicesInToElems;
+  map< localIndex, SortedArray<globalIndex> > m_unmappedGlobalIndicesInToEdges;
+  map< localIndex, SortedArray<globalIndex> > m_unmappedGlobalIndicesInToFaces;
+  map< localIndex, array1d< array1d< SortedArray<globalIndex> > > > m_unmappedGlobalIndicesInToElems;
 
 
 

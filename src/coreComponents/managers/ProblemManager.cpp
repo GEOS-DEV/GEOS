@@ -710,7 +710,7 @@ void ProblemManager::PostProcessInput()
 
 void ProblemManager::InitializationOrder( string_array & order )
 {
-  set<string> usedNames;
+  SortedArray<string> usedNames;
 
 
   {

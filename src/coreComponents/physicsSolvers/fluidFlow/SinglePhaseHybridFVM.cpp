@@ -189,7 +189,7 @@ void SinglePhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
 
   // in this function we need to make sure that we act only on the target regions
   // for that, we need the following region filter
-  set<localIndex> regionFilter;
+  SortedArray<localIndex> regionFilter;
   for (string const & regionName : m_targetRegions)
   {
     regionFilter.insert( elemManager->GetRegions().getIndex( regionName ) );
@@ -263,7 +263,7 @@ void SinglePhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
 void SinglePhaseHybridFVM::FluxLaunch( localIndex GEOSX_UNUSED_PARAM( er ),
                                        localIndex GEOSX_UNUSED_PARAM( esr ),
                                        FaceElementSubRegion const * const GEOSX_UNUSED_PARAM( subRegion ),
-                                       set<localIndex> GEOSX_UNUSED_PARAM( regionFilter ),
+                                       SortedArray<localIndex> GEOSX_UNUSED_PARAM( regionFilter ),
                                        MeshLevel const * const GEOSX_UNUSED_PARAM( mesh ),
                                        arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & GEOSX_UNUSED_PARAM( nodePosition ),
                                        array2d<localIndex> const & GEOSX_UNUSED_PARAM( elemRegionList ),
@@ -286,7 +286,7 @@ void SinglePhaseHybridFVM::FluxLaunch( localIndex GEOSX_UNUSED_PARAM( er ),
 void SinglePhaseHybridFVM::FluxLaunch( localIndex er,
                                        localIndex esr,
                                        CellElementSubRegion const * const subRegion,
-                                       set<localIndex> regionFilter,
+                                       SortedArray<localIndex> regionFilter,
                                        MeshLevel const * const mesh,
                                        arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodePosition,
                                        array2d<localIndex> const & elemRegionList,

@@ -93,7 +93,7 @@ public:
    */
   real64_array EvaluateStats( dataRepository::Group const * const group,
                               real64 const time,
-                              set<localIndex> const & set) const;
+                              SortedArray<localIndex> const & set) const;
 
 protected:
   string_array m_inputVarNames;
