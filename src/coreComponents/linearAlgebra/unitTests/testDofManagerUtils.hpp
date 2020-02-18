@@ -219,7 +219,7 @@ void makeSparsityTPFA( MeshLevel const * const mesh,
     elemManager->ConstructViewAccessor< array1d<globalIndex>, arrayView1d<globalIndex const> >( dofIndexKey );
 
   // Make a set of target region indices to check face fluxes.
-  set<localIndex> regionSet;
+  SortedArray<localIndex> regionSet;
   elemManager->forElementRegions( regions, [&]( ElementRegionBase const * const region )
   {
     regionSet.insert( region->getIndexInParent() );

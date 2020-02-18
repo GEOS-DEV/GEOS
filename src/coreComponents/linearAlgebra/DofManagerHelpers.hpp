@@ -282,19 +282,19 @@ struct MapHelperImpl< ArrayOfArrays<T> >
 };
 
 template< typename T >
-struct MapHelperImpl< array1d< set<T> > >
+struct MapHelperImpl< array1d< SortedArray<T> > >
 {
-  static localIndex size0( array1d< set<T> > const & map )
+  static localIndex size0( array1d< SortedArray<T> > const & map )
   {
     return map.size();
   }
 
-  static localIndex size1( array1d< set<T> > const & map, localIndex const i0 )
+  static localIndex size1( array1d< SortedArray<T> > const & map, localIndex const i0 )
   {
     return map[i0].size();
   }
 
-  static T const & value( array1d< set<T> > const & map, localIndex const i0, localIndex const i1 )
+  static T const & value( array1d< SortedArray<T> > const & map, localIndex const i0, localIndex const i1 )
   {
     return map[i0][i1];
   }
