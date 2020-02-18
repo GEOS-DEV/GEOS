@@ -390,13 +390,13 @@ void SinglePhaseWell::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time_n
 
 void SinglePhaseWell::AssemblePerforationTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                                 real64 const dt,
-                                                DomainPartition const * const domain,
+                                                DomainPartition * const domain,
                                                 DofManager const * const dofManager,
                                                 ParallelMatrix * const matrix,
                                                 ParallelVector * const rhs )
 {
-  MeshLevel const * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ElementRegionManager const * const elemManager = meshLevel->getElemManager();
+  MeshLevel * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  ElementRegionManager * const elemManager = meshLevel->getElemManager();
 
   string const wellDofKey = dofManager->getKey( WellElementDofName() );
   string const resDofKey  = dofManager->getKey( ResElementDofName() );
@@ -409,9 +409,9 @@ void SinglePhaseWell::AssemblePerforationTerms( real64 const GEOSX_UNUSED_PARAM(
     resDofNumberAccessor.toViewConst();
 
   // loop over the wells
-  elemManager->forElementSubRegions<WellElementSubRegion>( [&]( WellElementSubRegion const * const subRegion )
+  elemManager->forElementSubRegions<WellElementSubRegion>( [&]( WellElementSubRegion * const subRegion )
   {
-    PerforationData const * const perforationData = subRegion->GetPerforationData();
+    PerforationData * const perforationData = subRegion->GetPerforationData();
 
     // compute the local rates for this well
     ComputeAllPerforationRates( subRegion );
@@ -911,7 +911,7 @@ void SinglePhaseWell::ResetViews(DomainPartition * const domain)
                                                                                           constitutiveManager );
 }
 
-void SinglePhaseWell::ComputeAllPerforationRates( WellElementSubRegion const * const subRegion )
+void SinglePhaseWell::ComputeAllPerforationRates( WellElementSubRegion * const subRegion )
 {
 
   // get the reservoir data
@@ -924,7 +924,7 @@ void SinglePhaseWell::ComputeAllPerforationRates( WellElementSubRegion const * c
   ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const & dResViscosity_dPres = m_dResVisc_dPres;
 
   // get the well data
-  PerforationData const * const perforationData = subRegion->GetPerforationData();
+  PerforationData * const perforationData = subRegion->GetPerforationData();
 
   // get the degrees of freedom and depth
   arrayView1d<real64 const> const & wellElemGravCoef =
@@ -962,10 +962,10 @@ void SinglePhaseWell::ComputeAllPerforationRates( WellElementSubRegion const * c
   arrayView1d<real64 const> const & perfTransmissibility =
     perforationData->getReference<array1d<real64>>( PerforationData::viewKeyStruct::transmissibilityString );
 
-  arrayView1d<real64 const> const & perfRate =
+  arrayView1d<real64> const & perfRate =
     perforationData->getReference<array1d<real64>>( viewKeyStruct::perforationRateString );
 
-  arrayView2d<real64 const> const & dPerfRate_dPres =
+  arrayView2d<real64> const & dPerfRate_dPres =
     perforationData->getReference<array2d<real64>>( viewKeyStruct::dPerforationRate_dPresString );
 
   // get the element region, subregion, index
