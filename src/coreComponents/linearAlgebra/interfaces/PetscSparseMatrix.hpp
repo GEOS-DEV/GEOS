@@ -453,7 +453,7 @@ public:
             PetscVector const & x,
             real64 const beta,
             PetscVector  & y,
-            bool useTranspose=false );
+            bool useTranspose=false ) const;
 
   /**
    * @brief Multiply all elements by scalingFactor.

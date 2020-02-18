@@ -70,8 +70,8 @@ public:
    */
   virtual const string getCatalogName() const override { return WellElementSubRegion::CatalogName(); }
 
-  virtual void CalculateElementGeometricQuantities( NodeManager const & GEOSX_UNUSED_ARG( nodeManager ),
-                                                    FaceManager const & GEOSX_UNUSED_ARG( faceManager ) ) override 
+  virtual void CalculateElementGeometricQuantities( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
+                                                    FaceManager const & GEOSX_UNUSED_PARAM( faceManager ) ) override 
   {}
 
   virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override;
@@ -214,7 +214,7 @@ public:
    */
   void ReconstructLocalConnectivity();
 
-  virtual void ViewPackingExclusionList( set<localIndex> & exclusionList ) const override;
+  virtual void ViewPackingExclusionList( SortedArray<localIndex> & exclusionList ) const override;
 
   virtual localIndex PackUpDownMapsSize( arrayView1d<localIndex const> const & packList ) const override;
 
@@ -273,8 +273,8 @@ private:
    */
   void AssignUnownedElementsInReservoir( MeshLevel                        & mesh,
                                          InternalWellGenerator      const & wellGeometry,
-                                         set<globalIndex>           const & unownedElems,
-                                         set<globalIndex>                 & localElems,
+                                         SortedArray<globalIndex>           const & unownedElems,
+                                         SortedArray<globalIndex>                 & localElems,
                                          arrayView1d<integer>             & elemStatusGlobal ) const;
 
   /**
@@ -286,7 +286,7 @@ private:
    *                           enum SegmentStatus. They are used to partition well elements.  
    */
   void CheckPartitioningValidity( InternalWellGenerator const & wellGeometry,
-                                  set<globalIndex>            & localElems,
+                                  SortedArray<globalIndex>            & localElems,
                                   arrayView1d<integer>        & elemStatusGlobal ) const;
 
   /**
@@ -299,9 +299,9 @@ private:
                                and another rank
    */ 
   void CollectLocalAndBoundaryNodes( InternalWellGenerator const & wellGeometry, 
-                                     set<globalIndex>      const & localElems,
-                                     set<globalIndex>            & localNodes,
-                                     set<globalIndex>            & boundaryNodes ) const;
+                                     SortedArray<globalIndex>      const & localElems,
+                                     SortedArray<globalIndex>            & localNodes,
+                                     SortedArray<globalIndex>            & boundaryNodes ) const;
 
   /**
    * @brief Add the well nodes to the nodeManager (properly resized)
@@ -315,8 +315,8 @@ private:
    */ 
   void UpdateNodeManagerSize( MeshLevel                    & mesh, 
                               InternalWellGenerator  const & wellGeometry,
-                              set<globalIndex>       const & localNodes,
-                              set<globalIndex>       const & boundaryNodes,
+                              SortedArray<globalIndex>       const & localNodes,
+                              SortedArray<globalIndex>       const & boundaryNodes,
                               globalIndex                    nodeOffsetGlobal );
 
   /**
@@ -331,8 +331,8 @@ private:
    */ 
   void ConstructSubRegionLocalElementMaps( MeshLevel                   & mesh, 
                                            InternalWellGenerator const & wellGeometry,
-                                           set<globalIndex>      const & localElems,
-                                           set<globalIndex>      const & localNodes,
+                                           SortedArray<globalIndex>      const & localElems,
+                                           SortedArray<globalIndex>      const & localNodes,
                                            globalIndex                   nodeOffsetGlobal,
                                            globalIndex                   elemOffsetGlobal );
 

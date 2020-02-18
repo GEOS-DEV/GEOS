@@ -85,7 +85,7 @@ public:
    * @param[in] index of the stencil entry for which to query the size
    * @return the size of a stencil entry
    */
-  constexpr localIndex stencilSize( localIndex GEOSX_UNUSED_ARG( index ) ) const
+  constexpr localIndex stencilSize( localIndex GEOSX_UNUSED_PARAM( index ) ) const
   { return MAX_STENCIL_SIZE; }
 
 };

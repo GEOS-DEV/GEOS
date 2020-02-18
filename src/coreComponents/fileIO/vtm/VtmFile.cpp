@@ -180,7 +180,7 @@ void VtuFile::Load( string const &filename,
     LoadProperties(vtmDoc, properties);
 }
 
-void VtuFile::Save( string const & GEOSX_UNUSED_ARG( filename ) ) {
+void VtuFile::Save( string const & GEOSX_UNUSED_PARAM( filename ) ) {
     GEOSX_ERROR("vtu file save is not implemented yet");
 }
 

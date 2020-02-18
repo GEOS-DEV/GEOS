@@ -232,7 +232,7 @@ struct MapHelperImpl< array2d<T, PERMUTATION> >
     return map.size( 0 );
   }
 
-  static localIndex size1( array2d<T, PERMUTATION> const & map, localIndex const GEOSX_UNUSED_ARG( i0 ) )
+  static localIndex size1( array2d<T, PERMUTATION> const & map, localIndex const GEOSX_UNUSED_PARAM( i0 ) )
   {
     return map.size( 1 );
   }
@@ -282,19 +282,19 @@ struct MapHelperImpl< ArrayOfArrays<T> >
 };
 
 template< typename T >
-struct MapHelperImpl< array1d< set<T> > >
+struct MapHelperImpl< array1d< SortedArray<T> > >
 {
-  static localIndex size0( array1d< set<T> > const & map )
+  static localIndex size0( array1d< SortedArray<T> > const & map )
   {
     return map.size();
   }
 
-  static localIndex size1( array1d< set<T> > const & map, localIndex const i0 )
+  static localIndex size1( array1d< SortedArray<T> > const & map, localIndex const i0 )
   {
     return map[i0].size();
   }
 
-  static T const & value( array1d< set<T> > const & map, localIndex const i0, localIndex const i1 )
+  static T const & value( array1d< SortedArray<T> > const & map, localIndex const i0, localIndex const i1 )
   {
     return map[i0][i1];
   }
@@ -632,7 +632,7 @@ struct MeshLoopHelper< DofManager::Location::Elem, CONN_LOC, VISIT_GHOSTS >
     meshLevel->getElemManager()->
       forElementSubRegionsComplete<SUBREGIONTYPES...>( regions, [&]( localIndex const er,
                                                                      localIndex const esr,
-                                                                     ElementRegionBase const * const GEOSX_UNUSED_ARG( region ),
+                                                                     ElementRegionBase const * const GEOSX_UNUSED_PARAM( region ),
                                                                      auto const * const subRegion )
     {
       // derive subregion-dependent map type
@@ -676,7 +676,7 @@ struct MeshLoopHelper< DofManager::Location::Elem, DofManager::Location::Elem, V
     meshLevel->getElemManager()->
       forElementSubRegionsComplete<SUBREGIONTYPES...>( regions, [&]( localIndex const er,
                                                                      localIndex const esr,
-                                                                     ElementRegionBase const * const GEOSX_UNUSED_ARG( region ),
+                                                                     ElementRegionBase const * const GEOSX_UNUSED_PARAM( region ),
                                                                      auto const * const subRegion )
     {
       arrayView1d<integer const> const & elemGhostRank = subRegion->GhostRank();
@@ -760,7 +760,7 @@ localIndex countMeshObjects( MeshLevel * const mesh,
 {
   localIndex count = 0;
   forMeshLocation< LOC, VISIT_GHOSTS, SUBREGIONTYPES... >( mesh, regions,
-                                                           [&]( auto const GEOSX_UNUSED_ARG( connIdx ) )
+                                                           [&]( auto const GEOSX_UNUSED_PARAM( connIdx ) )
   {
     ++count;
   } );
@@ -786,7 +786,7 @@ struct IndexArrayHelper
   create( Mesh * const mesh,
           string const & key,
           string const & description,
-          string_array const & GEOSX_UNUSED_ARG( regions ) )
+          string_array const & GEOSX_UNUSED_PARAM( regions ) )
   {
     ObjectManagerBase * baseManager = getObjectManager<LOC>( mesh );
     baseManager->registerWrapper<ArrayType>( key )->
@@ -816,7 +816,7 @@ struct IndexArrayHelper
   static void
   remove( Mesh * const mesh,
           string const & key,
-          string_array const & GEOSX_UNUSED_ARG( regions ) )
+          string_array const & GEOSX_UNUSED_PARAM( regions ) )
   {
     getObjectManager<LOC>( mesh )->deregisterWrapper( key );
   }

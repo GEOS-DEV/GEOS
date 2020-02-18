@@ -532,7 +532,7 @@ void SurfaceGenerator::postRestartInitialization( Group * const domain0 )
 
 real64 SurfaceGenerator::SolverStep( real64 const & time_n,
                                      real64 const & dt,
-                                     const int GEOSX_UNUSED_ARG( cycleNumber ),
+                                     const int GEOSX_UNUSED_PARAM( cycleNumber ),
                                      DomainPartition * const domain )
 {
   int rval = 0;
@@ -925,7 +925,7 @@ bool SurfaceGenerator::ProcessNode( const localIndex nodeID,
                                     std::vector<std::set<localIndex> >& edgesToRupturedFaces,
                                     ElementRegionManager & elementManager,
                                     ModifiedObjectLists& modifiedObjects,
-                                    const bool GEOSX_UNUSED_ARG( prefrac ) )
+                                    const bool GEOSX_UNUSED_PARAM( prefrac ) )
 {
   bool didSplit = false;
   bool fracturePlaneFlag = true;
@@ -1671,8 +1671,8 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
                                         FaceManager & faceManager,
                                         ElementRegionManager & elementManager,
                                         ModifiedObjectLists& modifiedObjects,
-                                        std::vector<std::set<localIndex> >& GEOSX_UNUSED_ARG( nodesToRupturedFaces ),
-                                        std::vector<std::set<localIndex> >& GEOSX_UNUSED_ARG( edgesToRupturedFaces ),
+                                        std::vector<std::set<localIndex> >& GEOSX_UNUSED_PARAM( nodesToRupturedFaces ),
+                                        std::vector<std::set<localIndex> >& GEOSX_UNUSED_PARAM( edgesToRupturedFaces ),
                                         const std::set<localIndex>& separationPathFaces,
                                         const map<localIndex, int>& edgeLocations,
                                         const map<localIndex, int>& faceLocations,
@@ -1776,7 +1776,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
     m_usedFacesForNode[newNodeIndex].insert( val );
   }
 
-//  set<localIndex>& usedFacesNew = nodeManager.getReference< array1d<set<localIndex>> >("usedFaces")[newNodeIndex];
+//  SortedArray<localIndex>& usedFacesNew = nodeManager.getReference< array1d<SortedArray<localIndex>> >("usedFaces")[newNodeIndex];
 //  usedFacesNew = usedFaces[nodeID];
 
 
@@ -1846,7 +1846,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
   map<localIndex, localIndex> splitFaces;
 
 
-  set<localIndex> & externalFaces = faceManager.externalSet();
+  SortedArray<localIndex> & externalFaces = faceManager.externalSet();
 
   // loop over all faces attached to the nodeID
   for( map<localIndex, int>::const_iterator iter_face=faceLocations.begin() ; iter_face!=faceLocations.end() ; ++iter_face )
@@ -2324,7 +2324,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
 }
 
 
-void SurfaceGenerator::MapConsistencyCheck( localIndex const GEOSX_UNUSED_ARG( nodeID ),
+void SurfaceGenerator::MapConsistencyCheck( localIndex const GEOSX_UNUSED_PARAM( nodeID ),
                                             NodeManager const & nodeManager,
                                             EdgeManager const & edgeManager,
                                             FaceManager const & faceManager,
@@ -2700,7 +2700,7 @@ void SurfaceGenerator::MapConsistencyCheck( localIndex const GEOSX_UNUSED_ARG( n
 
 
 realT SurfaceGenerator::CalculateKinkAngle ( const localIndex edgeID,
-                                             const NodeManager & GEOSX_UNUSED_ARG( nodeManager ),
+                                             const NodeManager & GEOSX_UNUSED_PARAM( nodeManager ),
                                              EdgeManager & edgeManager,
                                              FaceManager & faceManager )
 {
@@ -2947,8 +2947,22 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
   detJ = elementManager.ConstructViewAccessor< array2d<real64> >(keys::detJ);
 
 
-  for (localIndex const trailingFaceIndex : m_trailingFaces)
+
+  nodeManager.totalDisplacement().move( chai::CPU, false );
+  elementManager.forElementSubRegions<CellElementSubRegion>( [&]( CellElementSubRegion * const subRegion )
   {
+    subRegion->GetConstitutiveModels()->GetGroup(m_solidMaterialName)->
+    getReference<array3d<real64, solid::STRESS_PERMUTATION> >( SolidBase::viewKeyStruct::stressString ).move( chai::CPU,
+                                                                                                              false );
+  });
+
+
+
+  for (localIndex const trailingFaceIndex : m_trailingFaces)
+//  RAJA::forall< parallelHostPolicy >( RAJA::TypedRangeSegment< localIndex >( 0, m_trailingFaces.size() ),
+//                                      GEOSX_HOST_DEVICE_LAMBDA ( localIndex const trailingFacesCounter )
+  {
+//    localIndex const trailingFaceIndex = m_trailingFaces[ trailingFacesCounter ];
     R1Tensor faceNormalVector = faceNormal[trailingFaceIndex];//TODO: check if a ghost face still has the correct attributes such as normal vector, face center, face index.
     localIndex_array unpinchedNodeID;
     localIndex_array pinchedNodeID;
@@ -3274,7 +3288,7 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
         }
       }
     }
-  }
+  } //);
 }
 
 realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
@@ -3946,7 +3960,7 @@ void SurfaceGenerator::MarkRuptureFaceFromNode ( const localIndex nodeIndex,
                                                  NodeManager & nodeManager,
                                                  EdgeManager & edgeManager,
                                                  FaceManager & faceManager,
-                                                 ElementRegionManager & GEOSX_UNUSED_ARG( elementManager ),
+                                                 ElementRegionManager & GEOSX_UNUSED_PARAM( elementManager ),
                                                  ModifiedObjectLists& modifiedObjects)
 {
   arrayView1d<integer> & ruptureState = faceManager.getReference<integer_array>( "ruptureState" );
@@ -4051,12 +4065,12 @@ void SurfaceGenerator::MarkRuptureFaceFromNode ( const localIndex nodeIndex,
 }
 
 void SurfaceGenerator::MarkRuptureFaceFromEdge ( localIndex const edgeID,
-                                                 localIndex & GEOSX_UNUSED_ARG( trailFaceID ),
+                                                 localIndex & GEOSX_UNUSED_PARAM( trailFaceID ),
                                                  NodeManager & nodeManager,
                                                  EdgeManager & edgeManager,
                                                  FaceManager & faceManager,
                                                  ElementRegionManager & elementManager,
-                                                 R1Tensor & GEOSX_UNUSED_ARG( vecTipNorm ),
+                                                 R1Tensor & GEOSX_UNUSED_PARAM( vecTipNorm ),
                                                  R1Tensor & vecTip,
                                                  ModifiedObjectLists & modifiedObjects,
                                                  int const edgeMode )
@@ -4279,7 +4293,7 @@ void SurfaceGenerator::MarkRuptureFaceFromEdge ( localIndex const edgeID,
 void SurfaceGenerator::PostUpdateRuptureStates( NodeManager & nodeManager,
                                                 EdgeManager & edgeManager,
                                                 FaceManager & faceManager,
-                                                ElementRegionManager & GEOSX_UNUSED_ARG( elementManager ),
+                                                ElementRegionManager & GEOSX_UNUSED_PARAM( elementManager ),
                                                 std::vector< std::set< localIndex > > & nodesToRupturedFaces,
                                                 std::vector< std::set< localIndex > > & edgesToRupturedFaces )
 {
@@ -4320,10 +4334,10 @@ void SurfaceGenerator::PostUpdateRuptureStates( NodeManager & nodeManager,
 }
 
 int SurfaceGenerator::CheckEdgeSplitability( localIndex const edgeID,
-                                             NodeManager & GEOSX_UNUSED_ARG( nodeManager ),
+                                             NodeManager & GEOSX_UNUSED_PARAM( nodeManager ),
                                              FaceManager & faceManager,
                                              EdgeManager & edgeManager,
-                                             bool const GEOSX_UNUSED_ARG( prefrac ) )
+                                             bool const GEOSX_UNUSED_PARAM( prefrac ) )
 {
   //     Return value = -1, this edge won't split for sure, don't do any more work;
   //                  = 0, edge is along a tip, but the fracture connected to it is not saturated yet.  We will only

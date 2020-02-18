@@ -72,7 +72,7 @@ void BrineViscosityFunction::MakeCoef(string_array const & inputPara)
 }
 
 
-  void BrineViscosityFunction::Evaluation(EvalVarArgs const & GEOSX_UNUSED_ARG( pressure ), EvalVarArgs const & temperature, arraySlice1d<EvalVarArgs const> const & GEOSX_UNUSED_ARG( phaseComposition ), EvalVarArgs & value, bool GEOSX_UNUSED_ARG( useMass )) const
+  void BrineViscosityFunction::Evaluation(EvalVarArgs const & GEOSX_UNUSED_PARAM( pressure ), EvalVarArgs const & temperature, arraySlice1d<EvalVarArgs const> const & GEOSX_UNUSED_PARAM( phaseComposition ), EvalVarArgs & value, bool GEOSX_UNUSED_PARAM( useMass )) const
 {
 
   value = m_coef0 + m_coef1 * temperature;
