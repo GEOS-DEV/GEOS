@@ -214,7 +214,7 @@ public:
    */
   void ReconstructLocalConnectivity();
 
-  virtual void ViewPackingExclusionList( set<localIndex> & exclusionList ) const override;
+  virtual void ViewPackingExclusionList( SortedArray<localIndex> & exclusionList ) const override;
 
   virtual localIndex PackUpDownMapsSize( arrayView1d<localIndex const> const & packList ) const override;
 
@@ -275,8 +275,8 @@ private:
    */
   void AssignUnownedElementsInReservoir( MeshLevel                        & mesh,
                                          InternalWellGenerator      const & wellGeometry,
-                                         set<globalIndex>           const & unownedElems,
-                                         set<globalIndex>                 & localElems,
+                                         SortedArray<globalIndex>           const & unownedElems,
+                                         SortedArray<globalIndex>                 & localElems,
                                          arrayView1d<integer>             & elemStatusGlobal ) const;
 
   /**
@@ -288,7 +288,7 @@ private:
    *                           enum SegmentStatus. They are used to partition well elements.  
    */
   void CheckPartitioningValidity( InternalWellGenerator const & wellGeometry,
-                                  set<globalIndex>            & localElems,
+                                  SortedArray<globalIndex>            & localElems,
                                   arrayView1d<integer>        & elemStatusGlobal ) const;
 
   /**
@@ -301,9 +301,9 @@ private:
                                and another rank
    */ 
   void CollectLocalAndBoundaryNodes( InternalWellGenerator const & wellGeometry, 
-                                     set<globalIndex>      const & localElems,
-                                     set<globalIndex>            & localNodes,
-                                     set<globalIndex>            & boundaryNodes ) const;
+                                     SortedArray<globalIndex>      const & localElems,
+                                     SortedArray<globalIndex>            & localNodes,
+                                     SortedArray<globalIndex>            & boundaryNodes ) const;
 
   /**
    * @brief Add the well nodes to the nodeManager (properly resized)
@@ -317,8 +317,8 @@ private:
    */ 
   void UpdateNodeManagerSize( MeshLevel                    & mesh, 
                               InternalWellGenerator  const & wellGeometry,
-                              set<globalIndex>       const & localNodes,
-                              set<globalIndex>       const & boundaryNodes,
+                              SortedArray<globalIndex>       const & localNodes,
+                              SortedArray<globalIndex>       const & boundaryNodes,
                               globalIndex                    nodeOffsetGlobal );
 
   /**
@@ -330,11 +330,11 @@ private:
    * @param[in] nodeOffsetGlobal the offset of the first global well node ( = offset of last global mesh node + 1 )
    * @param[in] elemOffsetGlobal the offset of the first global well element ( = offset of last global mesh elem + 1 )
    */ 
-  void ConstructSubRegionLocalElementMaps( MeshLevel                   & mesh, 
-                                           InternalWellGenerator const & wellGeometry,
-                                           set<globalIndex>      const & localElems,
-                                           globalIndex                   nodeOffsetGlobal,
-                                           globalIndex                   elemOffsetGlobal );
+  void ConstructSubRegionLocalElementMaps( MeshLevel                      & mesh, 
+                                           InternalWellGenerator const    & wellGeometry,
+                                           SortedArray<globalIndex> const & localElems,
+                                           globalIndex                      nodeOffsetGlobal,
+                                           globalIndex                      elemOffsetGlobal );
 
   /**
    * @brief This function is the equivalent of NodeManager::SetElementMaps for well elements.
