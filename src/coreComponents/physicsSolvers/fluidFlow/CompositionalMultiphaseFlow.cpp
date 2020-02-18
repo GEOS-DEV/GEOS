@@ -1150,7 +1150,7 @@ CompositionalMultiphaseFlow::ApplySourceFluxBC( real64 const time,
   fsManager.Apply( time + dt, domain, "ElementRegions", FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString,
                     [&]( FieldSpecificationBase const * const fs,
                     string const &,
-                    SortedArray<localIndex> const & lset,
+                    SortedArrayView<localIndex const> const & lset,
                     Group * subRegion,
                     string const & ) -> void
   {
@@ -1206,7 +1206,7 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( real64 const time,
                    viewKeyStruct::pressureString,
                    [&]( FieldSpecificationBase const * const fs,
                         string const & setName,
-                        SortedArray<localIndex> const & targetSet,
+                        SortedArrayView<localIndex const> const & targetSet,
                         Group * subRegion,
                         string const & )
   {
@@ -1230,7 +1230,7 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( real64 const time,
                    viewKeyStruct::globalCompFractionString,
                    [&] ( FieldSpecificationBase const * const fs,
                          string const & setName,
-                         SortedArray<localIndex> const & targetSet,
+                         SortedArrayView<localIndex const> const & targetSet,
                          Group * subRegion,
                          string const & )
   {
@@ -1274,7 +1274,7 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( real64 const time,
                    viewKeyStruct::pressureString,
                    [&] ( FieldSpecificationBase const * const GEOSX_UNUSED_PARAM( bc ),
                          string const & GEOSX_UNUSED_PARAM( setName ),
-                         SortedArray<localIndex> const & targetSet,
+                         SortedArrayView<localIndex const> const & targetSet,
                          Group * subRegion,
                          string const & )
   {
