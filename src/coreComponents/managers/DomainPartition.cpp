@@ -58,7 +58,7 @@ void DomainPartition::RegisterDataOnMeshRecursive( Group * const )
 
 void DomainPartition::InitializationOrder( string_array & order )
 {
-  set<string> usedNames;
+  SortedArray<string> usedNames;
   {
     order.push_back(keys::ConstitutiveManager);
     usedNames.insert(keys::ConstitutiveManager);
@@ -99,11 +99,11 @@ void DomainPartition::GenerateSets()
     string name = wrapper.second->getName();
     nodeInSet[name].resize( nodeManager->size() );
     nodeInSet[name] = false;
-    Wrapper<set<localIndex>> const * const setPtr = nodeSets->getWrapper<set<localIndex>>(name);
+    Wrapper<SortedArray<localIndex>> const * const setPtr = nodeSets->getWrapper<SortedArray<localIndex>>(name);
     if( setPtr!=nullptr )
     {
       setNames.push_back(name);
-      set<localIndex> const & set = setPtr->reference();
+      SortedArray<localIndex> const & set = setPtr->reference();
       for( localIndex const a : set )
       {
         nodeInSet[name][a] = true;
@@ -113,9 +113,9 @@ void DomainPartition::GenerateSets()
 
 
   ElementRegionManager * const elementRegionManager = mesh->getElemManager();
-  elementRegionManager->forElementSubRegionsComplete( [&]( localIndex const GEOSX_UNUSED_ARG( er ),
-                                                           localIndex const GEOSX_UNUSED_ARG( esr ),
-                                                           ElementRegionBase const * const GEOSX_UNUSED_ARG( region ),
+  elementRegionManager->forElementSubRegionsComplete( [&]( localIndex const GEOSX_UNUSED_PARAM( er ),
+                                                           localIndex const GEOSX_UNUSED_PARAM( esr ),
+                                                           ElementRegionBase const * const GEOSX_UNUSED_PARAM( region ),
                                                            auto * const subRegion )
   {
     dataRepository::Group * elementSets = subRegion->sets();
@@ -126,7 +126,7 @@ void DomainPartition::GenerateSets()
     {
       arrayView1d<bool const> const & nodeInCurSet = nodeInSet[setName];
 
-      set<localIndex> & targetSet = elementSets->registerWrapper< set<localIndex> >(setName)->reference();
+      SortedArray<localIndex> & targetSet = elementSets->registerWrapper< SortedArray<localIndex> >(setName)->reference();
       for( localIndex k = 0 ; k < subRegion->size() ; ++k )
       {
         localIndex const numNodes = subRegion->numNodesPerElement( k );
@@ -151,7 +151,7 @@ void DomainPartition::GenerateSets()
 }
 
 
-void DomainPartition::SetupCommunications()
+void DomainPartition::SetupCommunications( bool use_nonblocking )
 {
   GEOSX_MARK_FUNCTION;
   array1d<NeighborCommunicator> & allNeighbors = this->getReference< array1d<NeighborCommunicator> >( viewKeys.neighbors );
@@ -215,7 +215,7 @@ void DomainPartition::SetupCommunications()
   CommunicationTools::FindMatchedPartitionBoundaryObjects( nodeManager,
                                                            allNeighbors );
 
-  CommunicationTools::FindGhosts( meshLevel, allNeighbors );
+  CommunicationTools::FindGhosts( meshLevel, allNeighbors, use_nonblocking );
 
   faceManager->SortAllFaceNodes( nodeManager, meshLevel->getElemManager() );
   faceManager->computeGeometry( nodeManager );
@@ -291,10 +291,10 @@ void DomainPartition::ReadSilo( const SiloFile& siloFile,
 }
 
 
-void DomainPartition::ReadFiniteElementMesh( const SiloFile& GEOSX_UNUSED_ARG( siloFile ),
-                                             const int GEOSX_UNUSED_ARG( cycleNum ),
-                                             const realT GEOSX_UNUSED_ARG( problemTime ),
-                                             const bool GEOSX_UNUSED_ARG( isRestart ) )
+void DomainPartition::ReadFiniteElementMesh( const SiloFile& GEOSX_UNUSED_PARAM( siloFile ),
+                                             const int GEOSX_UNUSED_PARAM( cycleNum ),
+                                             const realT GEOSX_UNUSED_PARAM( problemTime ),
+                                             const bool GEOSX_UNUSED_PARAM( isRestart ) )
 {
 
 

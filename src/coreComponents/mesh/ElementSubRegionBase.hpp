@@ -36,16 +36,12 @@ public:
   ElementSubRegionBase( string const & name, dataRepository::Group * const parent );
   ~ElementSubRegionBase();
 
-  virtual R1Tensor const & calculateElementCenter( localIndex k,
-                                                   const NodeManager& nodeManager,
-                                                   const bool useReferencePos = true) const = 0;
-
   virtual void CalculateElementGeometricQuantities( NodeManager const & nodeManager,
                                                     FaceManager const & faceManager ) = 0;
 
   virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) = 0;
 
-  virtual void FixUpDownMaps( bool const GEOSX_UNUSED_ARG( clearIfUnmapped ) ) {}
+  virtual void FixUpDownMaps( bool const GEOSX_UNUSED_PARAM( clearIfUnmapped ) ) {}
 
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {

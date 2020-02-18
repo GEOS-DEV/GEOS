@@ -508,7 +508,7 @@ public:
 
     template< class U=T >
     static typename std::enable_if< !traits::is_array< U >, void >::type
-    copy( T * const GEOSX_UNUSED_ARG( data ), localIndex const GEOSX_UNUSED_ARG( sourceIndex ), localIndex const GEOSX_UNUSED_ARG( destIndex ) )
+    copy( T * const GEOSX_UNUSED_PARAM( data ), localIndex const GEOSX_UNUSED_PARAM( sourceIndex ), localIndex const GEOSX_UNUSED_PARAM( destIndex ) )
     {}
 
   };
@@ -756,9 +756,47 @@ public:
    */
   virtual std::string getDefaultValueString() const override
   {
+    // Find the dimensionality of the wrapper value
+    std::string wrapper_type = rtTypes::typeNames( std::type_index( get_typeid()));
+    integer value_dim = 0;
+    if( wrapper_type.find( "array3d" ) != std::string::npos )
+    {
+      value_dim = 3;
+    }
+    else if( wrapper_type.find( "array2d" ) != std::string::npos )
+    {
+      value_dim = 2;
+    }
+    else if( wrapper_type.find( "array" ) != std::string::npos )
+    {
+      value_dim = 1;
+    }
+
+    // Compose the default string
     std::stringstream ss;
+
+    for( integer ii=0 ; ii<value_dim ; ++ii )
+    {
+      ss << "{";
+    }
+
     ss << m_default;
-    return ss.str();
+
+    for( integer ii=0 ; ii<value_dim ; ++ii )
+    {
+      ss << "}";
+    }
+
+    std::string default_string = ss.str();
+
+    // Tensor types will be space-delimited using the << operator
+    // Replace these with commas
+    if( wrapper_type.find( "Tensor" ) != std::string::npos )
+    {
+      std::replace( default_string.begin(), default_string.end(), ' ', ',' );
+    }
+
+    return default_string;
   }
 
   HAS_MEMBER_FUNCTION( setName,

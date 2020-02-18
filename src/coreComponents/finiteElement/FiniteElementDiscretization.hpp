@@ -74,14 +74,14 @@ public:
 
 
   template< typename SUBREGION_TYPE >
-  void CalculateShapeFunctionGradients( arrayView1d<R1Tensor const> const & X,
+  void CalculateShapeFunctionGradients( arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & X,
                                         SUBREGION_TYPE * const elementSubRegion ) const
   {
     GEOSX_MARK_FUNCTION;
 
     arrayView3d<R1Tensor> const & dNdX = elementSubRegion->template getReference< array3d< R1Tensor > >(dataRepository::keys::dNdX);
     arrayView2d<real64> const & detJ = elementSubRegion->template getReference< array2d<real64> >(dataRepository::keys::detJ);
-    auto const & elemsToNodes = elementSubRegion->nodeList();
+    auto const & elemsToNodes = elementSubRegion->nodeList().toViewConst();
 
     PRAGMA_OMP( omp parallel )
     {

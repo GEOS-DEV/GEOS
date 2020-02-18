@@ -169,6 +169,11 @@ ProblemManager::ProblemManager( const std::string& name,
   commandLine->registerWrapper<string>( viewKeys.schemaFileName.Key() )->
     setRestartFlags(RestartFlags::WRITE)->
     setDescription("Name of the output schema");
+
+  commandLine->registerWrapper<integer>( viewKeys.useNonblockingMPI.Key() )->
+    setApplyDefaultValue(0)->
+    setRestartFlags(RestartFlags::WRITE)->
+    setDescription("Whether to prefer using non-blocking MPI communication where implemented (results in non-deterministic DOF numbering).");
 }
 
 
@@ -176,7 +181,7 @@ ProblemManager::~ProblemManager()
 {}
 
 
-Group * ProblemManager::CreateChild( string const & GEOSX_UNUSED_ARG( childKey ), string const & GEOSX_UNUSED_ARG( childName ) )
+Group * ProblemManager::CreateChild( string const & GEOSX_UNUSED_PARAM( childKey ), string const & GEOSX_UNUSED_PARAM( childName ) )
 { return nullptr; }
 
 
@@ -210,6 +215,7 @@ void ProblemManager::ParseCommandLineInput( int argc, char** argv)
   integer& yPartitionsOverride = commandLine->getReference<integer>(viewKeys.yPartitionsOverride);
   integer& zPartitionsOverride = commandLine->getReference<integer>(viewKeys.zPartitionsOverride);
   integer& overridePartitionNumbers = commandLine->getReference<integer>(viewKeys.overridePartitionNumbers);
+  integer& useNonblockingMPI = commandLine->getReference<integer>(viewKeys.useNonblockingMPI);
   std::string& schemaName = commandLine->getReference<std::string>(viewKeys.schemaFileName);
   std::string& problemName = commandLine->getReference<std::string>(viewKeys.problemName);
   std::string& outputDirectory = commandLine->getReference<std::string>(viewKeys.outputDirectory);
@@ -218,7 +224,7 @@ void ProblemManager::ParseCommandLineInput( int argc, char** argv)
 
 
   // Set the options structs and parse
-  enum optionIndex {UNKNOWN, HELP, INPUT, RESTART, XPAR, YPAR, ZPAR, SCHEMA, PROBLEMNAME, OUTPUTDIR};
+  enum optionIndex {UNKNOWN, HELP, INPUT, RESTART, XPAR, YPAR, ZPAR, SCHEMA, NONBLOCKING_MPI, PROBLEMNAME, OUTPUTDIR};
   const option::Descriptor usage[] =
   {
     {UNKNOWN, 0, "", "", Arg::Unknown, "USAGE: geosx -i input.xml [options]\n\nOptions:"},
@@ -229,6 +235,7 @@ void ProblemManager::ParseCommandLineInput( int argc, char** argv)
     {YPAR, 0, "y", "ypartitions", Arg::Numeric, "\t-y, --y-partitions, \t Number of partitions in the y-direction"},
     {ZPAR, 0, "z", "zpartitions", Arg::Numeric, "\t-z, --z-partitions, \t Number of partitions in the z-direction"},
     {SCHEMA, 0, "s", "schema", Arg::NonEmpty, "\t-s, --schema, \t Name of the output schema"},
+    {NONBLOCKING_MPI,0,"b","use-nonblocking", Arg::None,"\t-b, --use-nonblocking, \t Use non-blocking MPI communication"},
     {PROBLEMNAME, 0, "n", "name", Arg::NonEmpty, "\t-n, --name, \t Name of the problem, used for output"},
     {OUTPUTDIR, 0, "o", "output", Arg::NonEmpty, "\t-o, --output, \t Directory to put the output files"},
     { 0, 0, nullptr, nullptr, nullptr, nullptr}
@@ -295,6 +302,9 @@ void ProblemManager::ParseCommandLineInput( int argc, char** argv)
       zPartitionsOverride = std::stoi(opt.arg);
       overridePartitionNumbers = 1;
       break;
+    case NONBLOCKING_MPI:
+      useNonblockingMPI = true;
+      break;
     case SCHEMA:
       schemaName = opt.arg;
       break;
@@ -346,7 +356,7 @@ void ProblemManager::ParseCommandLineInput( int argc, char** argv)
 bool ProblemManager::ParseRestart( int argc, char** argv, std::string& restartFileName )
 {
   // Set the options structs and parse
-  enum optionIndex {UNKNOWN, HELP, INPUT, RESTART, XPAR, YPAR, ZPAR, SCHEMA, PROBLEMNAME, OUTPUTDIR};
+  enum optionIndex {UNKNOWN, HELP, INPUT, RESTART, XPAR, YPAR, ZPAR, SCHEMA, NONBLOCKING_MPI, PROBLEMNAME, OUTPUTDIR};
   const option::Descriptor usage[] =
   {
     {UNKNOWN, 0, "", "", Arg::Unknown, "USAGE: geosx -i input.xml [options]\n\nOptions:"},
@@ -357,19 +367,20 @@ bool ProblemManager::ParseRestart( int argc, char** argv, std::string& restartFi
     {YPAR, 0, "y", "ypartitions", Arg::Numeric, "\t-y, --y-partitions, \t Number of partitions in the y-direction"},
     {ZPAR, 0, "z", "zpartitions", Arg::Numeric, "\t-z, --z-partitions, \t Number of partitions in the z-direction"},
     {SCHEMA, 0, "s", "schema", Arg::NonEmpty, "\t-s, --schema, \t Name of the output schema"},
+    {NONBLOCKING_MPI,0,"b","use-nonblocking", Arg::None,"\t-b, --use-nonblocking, \t Use non-blocking MPI communication"},
     {PROBLEMNAME, 0, "n", "name", Arg::NonEmpty, "\t-n, --name, \t Name of the problem, used for output"},
     {OUTPUTDIR, 0, "o", "output", Arg::NonEmpty, "\t-o, --output, \t Directory to put the output files"},
     { 0, 0, nullptr, nullptr, nullptr, nullptr}
   };
 
-  argc -= (argc>0); 
+  argc -= (argc>0);
   argv += (argc>0);
   option::Stats stats(usage, argc, argv);
   option::Option options[100];//stats.options_max];
   option::Option buffer[100];//stats.buffer_max];
   option::Parser parse(usage, argc, argv, options, buffer);
 
-  
+
   // Handle special cases
   if (parse.error())
   {
@@ -415,6 +426,8 @@ bool ProblemManager::ParseRestart( int argc, char** argv, std::string& restartFi
       case ZPAR:
         break;
       case SCHEMA:
+        break;
+      case NONBLOCKING_MPI:
         break;
       case PROBLEMNAME:
         break;
@@ -697,7 +710,7 @@ void ProblemManager::PostProcessInput()
 
 void ProblemManager::InitializationOrder( string_array & order )
 {
-  set<string> usedNames;
+  SortedArray<string> usedNames;
 
 
   {
@@ -817,7 +830,7 @@ void ProblemManager::ApplyNumericalMethods()
         MeshLevel * const meshLevel = meshBody->GetGroup<MeshLevel>(b);
         NodeManager * const nodeManager = meshLevel->getNodeManager();
         ElementRegionManager * const elemManager = meshLevel->getElemManager();
-        arrayView1d<R1Tensor> const & X = nodeManager->referencePosition();
+        arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & X = nodeManager->referencePosition();
 
         for( auto const & regionName : targetRegions )
         {
@@ -828,12 +841,12 @@ void ProblemManager::ApplyNumericalMethods()
             regionQuadrature[regionName] = quadratureSize;
           }
           elemRegion->forElementSubRegions<CellElementSubRegion,
-                                           FaceElementSubRegion>([&]( auto * const subRegion )->void
+                                           FaceElementSubRegion>([&]( auto * const subRegion )
           {
             if( feDiscretization != nullptr )
             {
-              feDiscretization->ApplySpaceToTargetCells(subRegion);
-              feDiscretization->CalculateShapeFunctionGradients( X, subRegion);
+              feDiscretization->ApplySpaceToTargetCells( subRegion );
+              feDiscretization->CalculateShapeFunctionGradients( X, subRegion );
             }
           });
         }
@@ -858,7 +871,7 @@ void ProblemManager::ApplyNumericalMethods()
         if( elemRegion != nullptr )
         {
           string_array const & materialList = elemRegion->getMaterialList();
-          elemRegion->forElementSubRegions([&]( auto * const subRegion )->void
+          elemRegion->forElementSubRegions([&]( auto * const subRegion )
           {
             for( auto & materialName : materialList )
             {
@@ -872,7 +885,7 @@ void ProblemManager::ApplyNumericalMethods()
 }
 
 
-void ProblemManager::InitializePostSubGroups( Group * const GEOSX_UNUSED_ARG( group ) )
+void ProblemManager::InitializePostSubGroups( Group * const GEOSX_UNUSED_PARAM( group ) )
 {
 
 //  ObjectManagerBase::InitializePostSubGroups(nullptr);
@@ -886,7 +899,9 @@ void ProblemManager::InitializePostSubGroups( Group * const GEOSX_UNUSED_ARG( gr
   FaceManager * const faceManager = meshLevel->getFaceManager();
   EdgeManager * edgeManager = meshLevel->getEdgeManager();
 
-  domain->SetupCommunications();
+  Group * commandLine = this->GetGroup<Group>(groupKeys.commandLine);
+  integer const & useNonblockingMPI = commandLine->getReference<integer>(viewKeys.useNonblockingMPI);
+  domain->SetupCommunications( useNonblockingMPI );
   faceManager->SetIsExternal();
   edgeManager->SetIsExternal( faceManager );
 }

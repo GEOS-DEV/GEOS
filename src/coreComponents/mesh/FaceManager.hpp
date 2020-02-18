@@ -67,7 +67,7 @@ public:
   void SortAllFaceNodes( NodeManager const * const nodeManager,
                          ElementRegionManager const * const elemManager);
 
-  void SortFaceNodes( arrayView1d<R1Tensor const> const & X,
+  void SortFaceNodes( arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & X,
                       R1Tensor const & elemCenter,
                       localIndex * const faceNodes,
                       localIndex const numFaceNodes );
@@ -76,7 +76,7 @@ public:
 
   void SetIsExternal();
 
-  virtual void ViewPackingExclusionList( set<localIndex> & exclusionList ) const override;
+  virtual void ViewPackingExclusionList( SortedArray<localIndex> & exclusionList ) const override;
 
   virtual localIndex PackUpDownMapsSize( arrayView1d<localIndex const> const & packList ) const override;
   virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,

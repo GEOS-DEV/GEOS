@@ -45,7 +45,7 @@ CellBlock::CellBlock( string const & name, Group * const parent ):
 CellBlock::~CellBlock()
 {}
 
-localIndex CellBlock::GetNumFaceNodes( localIndex const GEOSX_UNUSED_ARG( elementIndex ),
+localIndex CellBlock::GetNumFaceNodes( localIndex const GEOSX_UNUSED_PARAM( elementIndex ),
                                        localIndex const localFaceIndex ) const
 {
   if (!m_elementTypeString.compare(0, 4, "C3D8")) return 4;
@@ -245,30 +245,6 @@ void CellBlock::GetFaceNodes( localIndex const elementIndex,
   GEOSX_ASSERT_EQ( numNodes, nodeIndicies.size() );
 }
 
-R1Tensor const & CellBlock::calculateElementCenter( localIndex k,
-                                                    const NodeManager& nodeManager,
-                                                    const bool ) const
-{
-
-  r1_array const & X = nodeManager.referencePosition();
-  m_elementCenter[k] = 0;
-  localIndex numNodesPerElem = numNodesPerElement();
-
-  if (!m_elementTypeString.compare(0, 4, "C3D6"))
-  {
-    numNodesPerElem -= 2;
-  }
-
-  for ( localIndex a = 0 ; a < numNodesPerElem ; ++a)
-  {
-    const localIndex b = m_toNodesRelation[k][a];
-    m_elementCenter[k] += X[b];
-  }
-  m_elementCenter[k] /= numNodesPerElem;
-
-  return m_elementCenter[k];
-}
-
 void CellBlock::SetElementType( string const & elementType)
 {
   m_elementTypeString = elementType;
@@ -328,9 +304,9 @@ void CellBlock::setupRelatedObjectsInRelations( MeshLevel const * const mesh )
 }
 
 void CellBlock::CalculateElementGeometricQuantities( NodeManager const & nodeManager,
-                                                     FaceManager const & GEOSX_UNUSED_ARG( facemanager ) )
+                                                     FaceManager const & GEOSX_UNUSED_PARAM( facemanager ) )
 {
-  array1d<R1Tensor> const & X = nodeManager.referencePosition();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
 
   forall_in_range<serialPolicy>( 0, this->size(), GEOSX_LAMBDA ( localIndex const k )
   {

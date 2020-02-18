@@ -40,12 +40,12 @@ TEST( LinearElasticAnisotropicTests, testAllocation )
 //  arrayView1d<LinearElasticAnisotropic::StiffnessTensor const> const &
 //  stiffness = cm.stiffness() ;
 
-  arrayView2d<R2SymTensor const> const & stress = cm.getStress();
+  arrayView3d<real64 const, solid::STRESS_USD> const & stress = cm.getStress();
 
 //  EXPECT_EQ( stiffness.size(), numElems );
   EXPECT_EQ( stress.size(0), numElems );
   EXPECT_EQ( stress.size(1), numQuadraturePoints );
-
+  EXPECT_EQ( stress.size(2), 6 );
 }
 
 void stressCalc( real64 const c[6][6], R2SymTensor const Ddt, real64 stressVoigt[6] )
@@ -94,13 +94,12 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
 //  stiffness = cm.stiffness();
 
 
-  arrayView2d<R2SymTensor> const & stress = cm.getStress();
+  arrayView3d<real64, solid::STRESS_USD> const & stress = cm.getStress();
 
   real64 const strain = 0.1;
   R2SymTensor Ddt;
   real64 stressV[6] = {0.0};
   R2Tensor Rot;
-  R2SymTensor zero;
 
   {
     Ddt(0,0) = strain;
@@ -114,7 +113,7 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
   }
 
   {
-    stress = zero;
+    stress = 0;
     Ddt = 0;
 
     Ddt(1,1) = strain;
@@ -129,7 +128,7 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
   }
 
   {
-    stress = zero;
+    stress = 0;
     Ddt = 0;
 
     Ddt(2,2) = strain;
@@ -144,7 +143,7 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
   }
 
   {
-    stress = zero;
+    stress = 0;
     Ddt = 0;
 
     Ddt(0,1) = strain;
@@ -159,7 +158,7 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
   }
 
   {
-    stress = zero;
+    stress = 0;
     Ddt = 0;
 
     Ddt(0,2) = strain;
@@ -174,7 +173,7 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
   }
 
   {
-    stress = zero;
+    stress = 0;
     Ddt = 0;
 
     Ddt(1,2) = strain;

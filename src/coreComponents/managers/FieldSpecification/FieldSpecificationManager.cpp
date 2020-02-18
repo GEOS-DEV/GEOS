@@ -71,7 +71,7 @@ void FieldSpecificationManager::ApplyInitialConditions( Group * domain ) const
   Apply( 0.0, domain, "", "",
          [&]( FieldSpecificationBase const * const bc,
          string const &,
-         set<localIndex> const & targetSet,
+         SortedArray<localIndex> const & targetSet,
          Group * const targetGroup,
          string const fieldName )
     {

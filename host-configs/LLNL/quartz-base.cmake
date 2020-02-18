@@ -23,7 +23,7 @@ set(MPIEXEC              /usr/bin/srun CACHE PATH "")
 set(MPIEXEC_NUMPROC_FLAG "-n" CACHE STRING "")
 
 set(GEOSX_TPL_ROOT_DIR /usr/gapps/GEOSX/thirdPartyLibs CACHE PATH "")
-set(GEOSX_TPL_DIR ${GEOSX_TPL_ROOT_DIR}/2019-12-09/install-${CONFIG_NAME}-release CACHE PATH "")
+set(GEOSX_TPL_DIR ${GEOSX_TPL_ROOT_DIR}/2020-02-09/install-${CONFIG_NAME}-release CACHE PATH "")
 
 set(GEOSX_HYPRE_DIR /p/lustre1/bui9/workspace/geosx/hypre/src CACHE PATH "")
 

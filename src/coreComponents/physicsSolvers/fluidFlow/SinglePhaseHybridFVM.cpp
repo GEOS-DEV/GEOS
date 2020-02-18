@@ -142,7 +142,7 @@ void SinglePhaseHybridFVM::ImplicitStepComplete( real64 const & time_n,
   });
 }
 
-void SinglePhaseHybridFVM::SetupDofs( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
+void SinglePhaseHybridFVM::SetupDofs( DomainPartition const * const GEOSX_UNUSED_PARAM( domain ),
                                       DofManager & dofManager ) const
 {
   
@@ -174,7 +174,7 @@ void SinglePhaseHybridFVM::SetupDofs( DomainPartition const * const GEOSX_UNUSED
 
 }
 
-void SinglePhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time_n ),
+void SinglePhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                               real64 const dt,
                                               DomainPartition const * const domain,
                                               DofManager const * const dofManager,
@@ -188,7 +188,7 @@ void SinglePhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( tim
 
   // in this function we need to make sure that we act only on the target regions
   // for that, we need the following region filter
-  set<localIndex> regionFilter;
+  SortedArray<localIndex> regionFilter;
   for (string const & regionName : m_targetRegions)
   {
     regionFilter.insert( elemManager->GetRegions().getIndex( regionName ) );
@@ -196,7 +196,7 @@ void SinglePhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( tim
   
   // node data (for transmissibility computation)
 
-  arrayView1d<R1Tensor const> const & nodePosition = nodeManager->referencePosition();
+  arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodePosition = nodeManager->referencePosition();
 
   
   // face data
@@ -468,7 +468,7 @@ void SinglePhaseHybridFVM::UpdateUpwindedCoefficients( MeshLevel const * const m
                                                        array2d<localIndex> const & elemRegionList,
                                                        array2d<localIndex> const & elemSubRegionList,
                                                        array2d<localIndex> const & elemList,
-                                                       set<localIndex> const & regionFilter,
+                                                       SortedArray<localIndex> const & regionFilter,
                                                        arraySlice1d<localIndex const> const elemToFaces,
                                                        ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const & mob,
                                                        ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const & dMob_dp,
@@ -658,12 +658,12 @@ void SinglePhaseHybridFVM::AssembleConstraints( arrayView1d<globalIndex const> c
   
 
 void
-SinglePhaseHybridFVM::ApplyBoundaryConditions( real64 const GEOSX_UNUSED_ARG( time_n ),
-                                               real64 const GEOSX_UNUSED_ARG( dt ),
-                                               DomainPartition * const GEOSX_UNUSED_ARG( domain ),
-                                               DofManager const & GEOSX_UNUSED_ARG( dofManager ),
-                                               ParallelMatrix & GEOSX_UNUSED_ARG( matrix ),
-                                               ParallelVector & GEOSX_UNUSED_ARG( rhs ) )
+SinglePhaseHybridFVM::ApplyBoundaryConditions( real64 const GEOSX_UNUSED_PARAM( time_n ),
+                                               real64 const GEOSX_UNUSED_PARAM( dt ),
+                                               DomainPartition * const GEOSX_UNUSED_PARAM( domain ),
+                                               DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
+                                               ParallelMatrix & GEOSX_UNUSED_PARAM( matrix ),
+                                               ParallelVector & GEOSX_UNUSED_PARAM( rhs ) )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -699,7 +699,7 @@ real64 SinglePhaseHybridFVM::CalculateResidualNorm( DomainPartition const * cons
 
   // compute the norm of local residual scaled by cell pore volume
   applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                 ElementRegionBase const * const GEOSX_UNUSED_ARG( region ),
+                                 ElementRegionBase const * const GEOSX_UNUSED_PARAM( region ),
                                  ElementSubRegionBase const * const subRegion )
   {
     arrayView1d<globalIndex const> const & elemDofNumber =
@@ -849,7 +849,7 @@ void makeFullTensor(R1Tensor const & values, R2SymTensor & result)
 
 // this function is obviously redundant with computeCellStencil in the TwoPointFluxApproximation class
 // this is here for now, but I will have to find a better place for this type of function at some point 
-void SinglePhaseHybridFVM::ComputeTPFAInnerProduct( arrayView1d<R1Tensor const> const & nodePosition, 
+void SinglePhaseHybridFVM::ComputeTPFAInnerProduct( arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodePosition, 
                                                     ArrayOfArraysView<localIndex const> const & faceToNodes, 
                                                     arraySlice1d<localIndex const> const elemToFaces,
                                                     R1Tensor const & elemCenter,
@@ -913,7 +913,7 @@ void SinglePhaseHybridFVM::ComputeTPFAInnerProduct( arrayView1d<R1Tensor const> 
   }
 }
 
-void SinglePhaseHybridFVM::ComputeQFamilyInnerProduct( arrayView1d<R1Tensor const> const & nodePosition, 
+void SinglePhaseHybridFVM::ComputeQFamilyInnerProduct( arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodePosition, 
                                                        ArrayOfArraysView<localIndex const> const & faceToNodes, 
                                                        arraySlice1d<localIndex const> const elemToFaces,
                                                        R1Tensor const & elemCenter,
@@ -1111,7 +1111,7 @@ void SinglePhaseHybridFVM::ComputeQFamilyInnerProduct( arrayView1d<R1Tensor cons
 
 // TODO: template on the type of inner product
 // TODO: template on the type of subRegion to have a special treatment for fractures
-void SinglePhaseHybridFVM::ComputeTransmissibilityMatrix( arrayView1d<R1Tensor const> const & nodePosition, 
+void SinglePhaseHybridFVM::ComputeTransmissibilityMatrix( arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodePosition, 
                                                           ArrayOfArraysView<localIndex const> const & faceToNodes, 
                                                           arraySlice1d<localIndex const> const elemToFaces,
                                                           R1Tensor const & elemCenter,

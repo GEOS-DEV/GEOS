@@ -34,7 +34,7 @@ namespace computationalGeometry
  */
 real64 Centroid_3DPolygon( localIndex const * const pointsIndices,
                            localIndex const numPoints,
-                           arrayView1d<R1Tensor const> const & points,
+                           arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & points,
                            R1Tensor & center,
                            R1Tensor & normal,
                            real64 areaTolerance )
@@ -46,7 +46,7 @@ real64 Centroid_3DPolygon( localIndex const * const pointsIndices,
 
   if( numPoints > 2 )
   {
-    const R1Tensor& x0 = points[pointsIndices[0]];
+    R1Tensor const x0 = points[pointsIndices[0]];
     for( localIndex a=0 ; a<(numPoints-2) ; ++a )
     {
       v1  = points[pointsIndices[a+1]];
@@ -115,7 +115,7 @@ real64 Centroid_3DPolygon( localIndex const * const pointsIndices,
 }
 
 real64 Centroid_3DPolygon( arrayView1d<localIndex const> const & pointsIndices,
-                           arrayView1d<R1Tensor const> const & points,
+                           arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & points,
                            R1Tensor & center,
                            R1Tensor & normal,
                            real64 areaTolerance )
@@ -277,7 +277,7 @@ int sgn( T val )
   return (T(0) < val) - (val < T(0));
 }
 
-bool IsPointInsidePolyhedron( arrayView1d<R1Tensor const> const & nodeCoordinates,
+bool IsPointInsidePolyhedron( arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodeCoordinates,
                               array1d<array1d<localIndex>> const & faceNodeIndicies,
                               R1Tensor const & point,
                               real64 const areaTolerance )
@@ -310,39 +310,40 @@ real64 Centroid_3DPolygon( arrayView1d<localIndex const> const & pointsIndices,
                            R1Tensor & normal )
 { return Centroid_3DPolygon( pointsIndices.data(), pointsIndices.size(), pointReferences, pointDisplacements, center, normal ); }
 
-real64 HexVolume( R1Tensor const * const X )
-{
-  R1Tensor X7_X1( X[7] );
-  X7_X1 -= X[1];
-
-  R1Tensor X6_X0( X[6] );
-  X6_X0 -= X[0];
-
-  R1Tensor X7_X2( X[7] );
-  X7_X2 -= X[2];
-
-  R1Tensor X3_X0( X[3] );
-  X3_X0 -= X[0];
-
-  R1Tensor X5_X0( X[5] );
-  X5_X0 -= X[0];
-
-  R1Tensor X7_X4( X[7] );
-  X7_X4 -= X[4];
-
-  R1Tensor X7_X1plusX6_X0( X7_X1 );
-  X7_X1plusX6_X0 += X6_X0;
-
-  R1Tensor X7_X2plusX5_X0( X7_X2 );
-  X7_X2plusX5_X0 += X5_X0;
-
-  R1Tensor X7_X4plusX3_X0( X7_X4 );
-  X7_X4plusX3_X0 += X3_X0;
-
-  return 1.0/12.0 * ( Dot( X7_X1plusX6_X0, Cross( X7_X2, X3_X0 ) ) +
-                      Dot( X6_X0, Cross( X7_X2plusX5_X0, X7_X4 ) ) +
-                      Dot( X7_X1, Cross( X5_X0, X7_X4plusX3_X0 ) ) );
-}
+//GEOSX_HOST_DEVICE
+//real64 HexVolume( R1Tensor const * const X )
+//{
+//  R1Tensor X7_X1( X[7] );
+//  X7_X1 -= X[1];
+//
+//  R1Tensor X6_X0( X[6] );
+//  X6_X0 -= X[0];
+//
+//  R1Tensor X7_X2( X[7] );
+//  X7_X2 -= X[2];
+//
+//  R1Tensor X3_X0( X[3] );
+//  X3_X0 -= X[0];
+//
+//  R1Tensor X5_X0( X[5] );
+//  X5_X0 -= X[0];
+//
+//  R1Tensor X7_X4( X[7] );
+//  X7_X4 -= X[4];
+//
+//  R1Tensor X7_X1plusX6_X0( X7_X1 );
+//  X7_X1plusX6_X0 += X6_X0;
+//
+//  R1Tensor X7_X2plusX5_X0( X7_X2 );
+//  X7_X2plusX5_X0 += X5_X0;
+//
+//  R1Tensor X7_X4plusX3_X0( X7_X4 );
+//  X7_X4plusX3_X0 += X3_X0;
+//
+//  return 1.0/12.0 * ( Dot( X7_X1plusX6_X0, Cross( X7_X2, X3_X0 ) ) +
+//                      Dot( X6_X0, Cross( X7_X2plusX5_X0, X7_X4 ) ) +
+//                      Dot( X7_X1, Cross( X5_X0, X7_X4plusX3_X0 ) ) );
+//}
 
 real64 TetVolume( R1Tensor const * const X ) {
     R1Tensor X1_X0( X[1] );

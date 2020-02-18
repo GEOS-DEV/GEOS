@@ -141,16 +141,16 @@ real64 LaplaceFEM::SolverStep( real64 const& time_n,
   return dtReturn;
 }
 
-real64 LaplaceFEM::ExplicitStep( real64 const& GEOSX_UNUSED_ARG( time_n ),
+real64 LaplaceFEM::ExplicitStep( real64 const& GEOSX_UNUSED_PARAM( time_n ),
                                  real64 const& dt,
-                                 const int GEOSX_UNUSED_ARG( cycleNumber ),
-                                 DomainPartition * const GEOSX_UNUSED_ARG( domain ) )
+                                 const int GEOSX_UNUSED_PARAM( cycleNumber ),
+                                 DomainPartition * const GEOSX_UNUSED_PARAM( domain ) )
 {
   return dt;
 }
 
-void LaplaceFEM::ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n ),
-                                    real64 const & GEOSX_UNUSED_ARG( dt ),
+void LaplaceFEM::ImplicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+                                    real64 const & GEOSX_UNUSED_PARAM( dt ),
                                     DomainPartition * const domain,
                                     DofManager & dofManager,
                                     ParallelMatrix & matrix,
@@ -161,13 +161,13 @@ void LaplaceFEM::ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n ),
   SetupSystem( domain, dofManager, matrix, rhs, solution );
 }
 
-void LaplaceFEM::ImplicitStepComplete( real64 const & GEOSX_UNUSED_ARG( time_n ),
-                                       real64 const & GEOSX_UNUSED_ARG( dt ),
-                                       DomainPartition * const GEOSX_UNUSED_ARG( domain ) )
+void LaplaceFEM::ImplicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+                                       real64 const & GEOSX_UNUSED_PARAM( dt ),
+                                       DomainPartition * const GEOSX_UNUSED_PARAM( domain ) )
 {
 }
 
-void LaplaceFEM::SetupDofs( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
+void LaplaceFEM::SetupDofs( DomainPartition const * const GEOSX_UNUSED_PARAM( domain ),
                             DofManager & dofManager ) const
 {
   dofManager.addField( m_fieldName,
@@ -180,7 +180,7 @@ void LaplaceFEM::SetupDofs( DomainPartition const * const GEOSX_UNUSED_ARG( doma
 
 //START_SPHINX_INCLUDE_04
 void LaplaceFEM::AssembleSystem( real64 const time_n,
-                                 real64 const GEOSX_UNUSED_ARG( dt ),
+                                 real64 const GEOSX_UNUSED_PARAM( dt ),
                                  DomainPartition * const domain,
                                  DofManager const & dofManager,
                                  ParallelMatrix & matrix,
@@ -213,7 +213,7 @@ void LaplaceFEM::AssembleSystem( real64 const time_n,
     FiniteElementDiscretization const *
     feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
 
-    elementRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const GEOSX_UNUSED_ARG( esr ),
+    elementRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const GEOSX_UNUSED_PARAM( esr ),
                                                                         CellElementSubRegion const * const elementSubRegion )
     {
       array3d<R1Tensor> const &
@@ -223,7 +223,7 @@ void LaplaceFEM::AssembleSystem( real64 const time_n,
       detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
 
       localIndex const numNodesPerElement = elementSubRegion->numNodesPerElement();
-      arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & elemNodes = elementSubRegion->nodeList();
+      arrayView2d<localIndex const, cells::NODE_MAP_USD> const & elemNodes = elementSubRegion->nodeList();
 
       globalIndex_array elemDofIndex( numNodesPerElement );
       real64_array element_rhs( numNodesPerElement );
@@ -362,9 +362,9 @@ void LaplaceFEM::ApplyDirichletBC_implicit( real64 const time,
                    m_fieldName,
                    [&]( FieldSpecificationBase const * const bc,
                         string const &,
-                        set<localIndex> const & targetSet,
+                        SortedArray<localIndex> const & targetSet,
                         Group * const targetGroup,
-                        string const GEOSX_UNUSED_ARG( fieldName ) )->void
+                        string const GEOSX_UNUSED_PARAM( fieldName ) )->void
   {
     bc->ApplyBoundaryConditionToSystem<FieldSpecificationEqual, LAInterface>( targetSet,
                                                                               time,

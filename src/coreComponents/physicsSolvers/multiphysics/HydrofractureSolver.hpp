@@ -209,8 +209,9 @@ private:
   ParallelMatrix m_permutationMatrix1; // it's used to have the output based on global ordering
 
   integer m_maxNumResolves;
-  integer n_cycles = 0;
+  integer m_numResolves[2];
 
+  integer n_cycles = 0;
 #ifdef GEOSX_USE_HYPRE_MGR
   // HYPRE variables
   HYPRE_IJMatrix IJ_matrix=nullptr;
@@ -234,8 +235,6 @@ private:
   HYPRE_Solver uu_amg_solver=nullptr;
 #endif
   int print_matrix = 0;
-
-  integer m_numResolves[2];
 };
 
 } /* namespace geosx */

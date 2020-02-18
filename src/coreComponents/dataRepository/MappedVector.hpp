@@ -478,7 +478,7 @@ private:
 
   template< typename U = T_PTR >
   typename std::enable_if< !std::is_same< U, T * >::value, void >::type
-  deleteValue( INDEX_TYPE GEOSX_UNUSED_ARG( index ) )
+  deleteValue( INDEX_TYPE GEOSX_UNUSED_PARAM( index ) )
   {}
 
   /// random access container that holds the values

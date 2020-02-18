@@ -394,11 +394,11 @@ void LinearElasticAnisotropic::StateUpdatePoint( localIndex const k,
                                                  localIndex const q,
                                                  R2SymTensor const & D,
                                                  R2Tensor const & Rot,
-                                                 integer const GEOSX_UNUSED_ARG( updateStiffnessFlag ) )
+                                                 integer const GEOSX_UNUSED_PARAM( updateStiffnessFlag ) )
 {
   R2SymTensor T;
-  real64 * const restrict Tdata = T.Data();
-  real64 const * const restrict Ddata = D.Data();
+  real64 * const GEOSX_RESTRICT Tdata = T.Data();
+  real64 const * const GEOSX_RESTRICT Ddata = D.Data();
 //  real64 const (&c)[6][6] = m_stiffness[k].m_data;
 
   Tdata[0] += m_c00[k]*Ddata[0] + m_c01[k]*Ddata[2] + m_c02[k]*Ddata[5] + m_c03[k]*(2*Ddata[4]) + m_c04[k]*(2*Ddata[3]) + m_c05[k]*(2*Ddata[1]);
@@ -408,11 +408,15 @@ void LinearElasticAnisotropic::StateUpdatePoint( localIndex const k,
   Tdata[3] += m_c40[k]*Ddata[0] + m_c41[k]*Ddata[2] + m_c42[k]*Ddata[5] + m_c43[k]*(2*Ddata[4]) + m_c44[k]*(2*Ddata[3]) + m_c45[k]*(2*Ddata[1]);
   Tdata[1] += m_c50[k]*Ddata[0] + m_c51[k]*Ddata[2] + m_c52[k]*Ddata[5] + m_c53[k]*(2*Ddata[4]) + m_c54[k]*(2*Ddata[3]) + m_c55[k]*(2*Ddata[1]);
 
-  m_stress[k][q] += T;
+  R2SymTensor temp2 = m_stress[ k ][ q ];
+  temp2 += T;
 
-  T.QijAjkQlk( m_stress[k][q], Rot );
-  m_stress[k][q] = T;
-
+  T.QijAjkQlk( temp2, Rot );
+  
+  for ( localIndex i = 0; i < 6; ++i )
+  {
+    m_stress( k, q, i ) = T.Data()[ i ];
+  }
 }
 
 //void LinearElasticAnisotropic::GetStiffness( localIndex const k, real64 c[6][6] ) const

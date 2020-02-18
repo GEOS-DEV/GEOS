@@ -98,7 +98,7 @@ public:
 
 	  ApplyFieldValue< POLICY >( time, domain, fieldPath, fieldName,
                                [&]( FieldSpecificationBase const * const,
-                                    set<localIndex> const & ){} );
+                                    SortedArray<localIndex> const & ){} );
   }
 
   /**
@@ -220,15 +220,6 @@ public:
               targetGroup = elemSubRegionSubGroup;
             }
 
-//            if( targetGroup->getName() == MeshLevel::groupStructKeys::elemManagerString )
-//            {
-//              targetGroup = targetGroup->GetGroup( dataRepository::keys::elementRegions );
-//            }
-//            if( targetGroup->getName() == ElementRegion::viewKeyStruct::elementSubRegions )
-//            {
-//              targetGroup = targetGroup->GetGroup( ElementRegion::viewKeyStruct::elementSubRegions );
-//            }
-
             if( targetPath[pathLevel] == ElementRegionManager::groupKeyStruct::elementRegionsGroup ||
                 targetPath[pathLevel] == ElementRegionBase::viewKeyStruct::elementSubRegions )
             {
@@ -241,7 +232,7 @@ public:
             GEOSX_ERROR_IF( targetGroup == nullptr,
                 "ApplyBoundaryCondition(): Last entry in objectPath ("<<processedPath<<") is not found" );
           }
-          ApplyOnTargetRecursive( targetGroup, fs, targetName, std::forward< LAMBDA >( lambda ) );
+          ApplyOnTargetRecursive( targetGroup, fs, targetName, lambda );
         }
       }
     }
@@ -274,17 +265,17 @@ private:
       string_array setNames = fs->GetSetNames();
       for( auto & setName : setNames )
       {
-        dataRepository::Wrapper<set<localIndex> > const * const setWrapper = setGroup->getWrapper<set<localIndex> >( setName );
+        dataRepository::Wrapper<SortedArray<localIndex> > const * const setWrapper = setGroup->getWrapper<SortedArray<localIndex> >( setName );
         if( setWrapper != nullptr )
         {
-          set<localIndex> const & targetSet = setWrapper->reference();
+          SortedArray<localIndex> const & targetSet = setWrapper->reference();
           lambda( fs, setName, targetSet, target, targetName );
         }
       } 
     }
     else
     {
-      target->forSubGroups([&]( Group * subTarget ) -> void
+      target->forSubGroups([&]( Group * subTarget )
       {
         ApplyOnTargetRecursive( subTarget, fs, targetName, lambda );
       });
@@ -306,7 +297,7 @@ ApplyFieldValue( real64 const time,
   Apply( time, domain, fieldPath, fieldName,
         [&]( FieldSpecificationBase const * const fs,
              string const &,
-             set<localIndex> const & targetSet,
+             SortedArray<localIndex> const & targetSet,
              Group * const targetGroup,
              string const & targetField )
     {
@@ -330,7 +321,7 @@ ApplyFieldValue( real64 const time,
   Apply( time, domain, fieldPath, fieldName,
         [&]( FieldSpecificationBase const * const fs,
              string const &,
-             set<localIndex> const & targetSet,
+             SortedArray<localIndex> const & targetSet,
              Group * const targetGroup,
              string const & targetField )
     {

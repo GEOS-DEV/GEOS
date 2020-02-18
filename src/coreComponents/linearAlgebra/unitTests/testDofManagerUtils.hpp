@@ -98,7 +98,7 @@ struct testMeshHelper<DofManager::Location::Face>
 };
 
 template<typename PERM>
-localIndex size1( InterObjectRelation<array2d<localIndex, PERM>> const & map, localIndex const GEOSX_UNUSED_ARG( i0 ) )
+localIndex size1( InterObjectRelation<array2d<localIndex, PERM>> const & map, localIndex const GEOSX_UNUSED_PARAM( i0 ) )
 {
   return map.size( 1 );
 }
@@ -164,7 +164,7 @@ struct forLocalObjectsImpl<DofManager::Location::Elem>
 
     elemManager->forElementSubRegionsComplete( regions, [&]( localIndex const er,
                                                              localIndex const esr,
-                                                             ElementRegionBase const * const GEOSX_UNUSED_ARG( region ),
+                                                             ElementRegionBase const * const GEOSX_UNUSED_PARAM( region ),
                                                              ElementSubRegionBase const * const subRegion )
     {
       arrayView1d<integer const> ghostRank =
@@ -205,11 +205,12 @@ localIndex countLocalObjects( MeshLevel const * const mesh, array1d<string> cons
  * @param numComp number of components per cell
  * @param sparsity the matrix to be populated, must be properly sized.
  */
+template<typename LAI>
 void makeSparsityTPFA( MeshLevel const * const mesh,
                        string const & dofIndexKey,
                        string_array const & regions,
                        localIndex const numComp,
-                       ParallelMatrix & sparsity )
+                       typename LAI::ParallelMatrix & sparsity )
 {
   ElementRegionManager const * const elemManager = mesh->getElemManager();
   FaceManager const * const faceManager = mesh->getFaceManager();
@@ -218,7 +219,7 @@ void makeSparsityTPFA( MeshLevel const * const mesh,
     elemManager->ConstructViewAccessor< array1d<globalIndex>, arrayView1d<globalIndex const> >( dofIndexKey );
 
   // Make a set of target region indices to check face fluxes.
-  set<localIndex> regionSet;
+  SortedArray<localIndex> regionSet;
   elemManager->forElementRegions( regions, [&]( ElementRegionBase const * const region )
   {
     regionSet.insert( region->getIndexInParent() );
@@ -264,11 +265,12 @@ void makeSparsityTPFA( MeshLevel const * const mesh,
  * @param numComp number of components per cell
  * @param sparsity the matrix to be populated, must be properly sized.
  */
+template<typename LAI>
 void makeSparsityFEM( MeshLevel const * const mesh,
                       string const & dofIndexKey,
                       string_array const & regions,
                       localIndex const numComp,
-                      ParallelMatrix & sparsity )
+                      typename LAI::ParallelMatrix & sparsity )
 {
   ElementRegionManager const * const elemManager = mesh->getElemManager();
   NodeManager const * const nodeManager = mesh->getNodeManager();
@@ -311,13 +313,14 @@ void makeSparsityFEM( MeshLevel const * const mesh,
  * @param numCompNode number of components per cell
  * @param sparsity the matrix to be populated, must be properly sized.
  */
+template<typename LAI>
 void makeSparsityFEM_FVM( MeshLevel const * const mesh,
                           string const & dofIndexKeyNode,
                           string const & dofIndexKeyElem,
                           string_array const & regions,
                           localIndex const numCompNode,
                           localIndex const numCompElem,
-                          ParallelMatrix & sparsity )
+                          typename LAI::ParallelMatrix & sparsity )
 {
   ElementRegionManager const * const elemManager = mesh->getElemManager();
   NodeManager const * const nodeManager = mesh->getNodeManager();
@@ -372,11 +375,12 @@ void makeSparsityFEM_FVM( MeshLevel const * const mesh,
  * @param numComp number of components per cell
  * @param sparsity the matrix to be populated
  */
+template<typename LAI>
 void makeSparsityMass( MeshLevel const * const mesh,
                        string const & dofIndexKey,
                        string_array const & regions,
                        localIndex const numComp,
-                       ParallelMatrix & sparsity )
+                       typename LAI::ParallelMatrix & sparsity )
 {
   ElementRegionManager const * const elemManager = mesh->getElemManager();
 
@@ -405,11 +409,12 @@ void makeSparsityMass( MeshLevel const * const mesh,
  * @param numComp number of components per cell
  * @param sparsity the matrix to be populated
  */
+template<typename LAI>
 void makeSparsityFlux( MeshLevel const * const mesh,
                        string const & dofIndexKey,
                        string_array const & regions,
                        localIndex const numComp,
-                       ParallelMatrix & sparsity )
+                       typename LAI::ParallelMatrix & sparsity )
 {
   ElementRegionManager const * const elemManager = mesh->getElemManager();
   FaceManager const * const faceManager = mesh->getFaceManager();

@@ -39,7 +39,7 @@ void CreatePermutationMatrix(NodeManager const * const nodeManager,
    */
 
   // Create permuation matrix based on size provided.
-  permutationMatrix.createWithGlobalSize(nRows, nCols, 1, MPI_COMM_GEOSX);
+  permutationMatrix.createWithLocalSize(nRows, nCols, 1, MPI_COMM_GEOSX);
 
   arrayView1d<globalIndex const> const &  DofNumber =  nodeManager->getReference<globalIndex_array>( DofKey );
 
@@ -57,7 +57,9 @@ void CreatePermutationMatrix(NodeManager const * const nodeManager,
         }
       }
   permutationMatrix.close();
+  permutationMatrix.open();
   permutationMatrix.set(1);
+  permutationMatrix.close();
 }
 
 void CreatePermutationMatrix(ElementRegionManager const * const elemManager,
@@ -75,7 +77,7 @@ void CreatePermutationMatrix(ElementRegionManager const * const elemManager,
    */
 
   // Create permuation matrix based on size provided.
-  permutationMatrix.createWithGlobalSize(nRows, nCols, 1, MPI_COMM_GEOSX);
+  permutationMatrix.createWithLocalSize(nRows, nCols, 1, MPI_COMM_GEOSX);
 
   elemManager->forElementSubRegions([&]( ElementSubRegionBase const * const elementSubRegion )
   {
@@ -98,7 +100,9 @@ void CreatePermutationMatrix(ElementRegionManager const * const elemManager,
     }
   });
   permutationMatrix.close();
+  permutationMatrix.open();
   permutationMatrix.set(1);
+  permutationMatrix.close();
 }
 
 ParallelVector PermuteVector(ParallelVector const & vector,

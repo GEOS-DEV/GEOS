@@ -54,10 +54,6 @@ public:
                      dataRepository::Group * const parent );
   virtual ~FaceElementSubRegion() override;
 
-  virtual R1Tensor const & calculateElementCenter( localIndex k,
-                                     const NodeManager& nodeManager,
-                                     const bool useReferencePos = true) const override;
-
   virtual void CalculateElementGeometricQuantities( NodeManager const & nodeManager,
                                                     FaceManager const & facemanager ) override;
 
@@ -75,7 +71,7 @@ public:
 
   virtual void FixUpDownMaps( bool const clearIfUnmapped ) override;
 
-  virtual void ViewPackingExclusionList( set<localIndex> & exclusionList ) const override;
+  virtual void ViewPackingExclusionList( SortedArray<localIndex> & exclusionList ) const override;
 
   /**
    * @brief function to set the ghostRank for a list of FaceElements and set them to the value of their bounding faces.
@@ -164,7 +160,7 @@ public:
 
   FixedToManyElementRelation m_faceElementsToCells;
 
-  set< localIndex > m_newFaceElements;
+  SortedArray< localIndex > m_newFaceElements;
 
 private:
   template<bool DOPACK>

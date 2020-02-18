@@ -49,7 +49,7 @@ ObjectManagerBase::ObjectManagerBase( std::string const & name,
 
   registerWrapper< array1d<integer> >( viewKeyStruct::domainBoundaryIndicatorString );
 
-  m_sets.registerWrapper<set<localIndex>>( this->m_ObjectManagerBaseViewKeys.externalSet );
+  m_sets.registerWrapper<SortedArray<localIndex>>( this->m_ObjectManagerBaseViewKeys.externalSet );
 }
 
 ObjectManagerBase::~ObjectManagerBase()
@@ -65,7 +65,7 @@ ObjectManagerBase::CatalogInterface::CatalogType& ObjectManagerBase::GetCatalog(
 
 void ObjectManagerBase::CreateSet( const std::string& newSetName )
 {
-  m_sets.registerWrapper<set<localIndex>>(newSetName);
+  m_sets.registerWrapper<SortedArray<localIndex>>(newSetName);
 }
 
 void ObjectManagerBase::ConstructSetFromSetAndMap( SortedArrayView<localIndex const> const & inputSet,
@@ -254,7 +254,7 @@ localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
     string_array wrapperNamesForPacking;
     if( wrapperNames.size()==0 )
     {
-      set<localIndex> exclusionList;
+      SortedArray<localIndex> exclusionList;
       ViewPackingExclusionList(exclusionList);
       wrapperNamesForPacking.resize( this->wrappers().size() );
       localIndex count = 0;
@@ -467,12 +467,12 @@ localIndex ObjectManagerBase::PackSets( buffer_unit_type * & buffer,
   for( auto const & wrapperIter : m_sets.wrappers() )
   {
     string const & setName = wrapperIter.first;
-    set<localIndex> const & currentSet = m_sets.getReference<set<localIndex> >(setName);
+    SortedArray<localIndex> const & currentSet = m_sets.getReference<SortedArray<localIndex> >(setName);
     packedSize += bufferOps::Pack<DOPACK>( buffer, setName );
     packedSize += bufferOps::Pack<DOPACK>( buffer,
                                            currentSet,
                                            packList,
-                                           set<globalIndex>(),
+                                           SortedArray<globalIndex>(),
                                            m_localToGlobalMap );
   }
   return packedSize;
@@ -498,9 +498,9 @@ localIndex ObjectManagerBase::UnpackSets( buffer_unit_type const *& buffer )
   {
     string setName;
     unpackedSize += bufferOps::Unpack( buffer, setName );
-    set<localIndex> & targetSet = m_sets.getReference<set<localIndex> >(setName);
+    SortedArray<localIndex> & targetSet = m_sets.getReference<SortedArray<localIndex> >(setName);
 
-    set<globalIndex> junk;
+    SortedArray<globalIndex> junk;
     unpackedSize += bufferOps::Unpack( buffer,
                                        targetSet,
                                        junk,
@@ -618,12 +618,14 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer
     unpackedSize += bufferOps::Unpack( buffer, globalIndices );
     localIndex numNewIndices = 0;
     globalIndex_array newGlobalIndices;
+    newGlobalIndices.reserve( numUnpackedIndices );
     localIndex const oldSize = this->size();
-    for( localIndex a=0 ; a<numUnpackedIndices ; ++a )
+    for( localIndex a = 0 ; a < numUnpackedIndices ; ++a )
     {
       // check to see if the object already exists by checking for the global
       // index in m_globalToLocalMap. If it doesn't, then add the object
-      unordered_map<globalIndex,localIndex>::iterator iterG2L = m_globalToLocalMap.find(globalIndices[a]);
+      unordered_map<globalIndex,localIndex>::iterator iterG2L =
+        m_globalToLocalMap.find(globalIndices[a]);
       if( iterG2L == m_globalToLocalMap.end() )
       {
         // object does not exist on this domain
@@ -634,7 +636,7 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer
 
         unpackedLocalIndices(a) = newLocalIndex;
 
-        newGlobalIndices.push_back( globalIndices[a] );
+        newGlobalIndices.push_back(globalIndices[a]);
 
         ++numNewIndices;
 
@@ -654,8 +656,6 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer
         }
       }
     }
-    newGlobalIndices.resize(numNewIndices);
-    //  newLocalIndices.resize(numNewIndices);
 
     // figure out new size of object container, and resize it
     const localIndex newSize = oldSize + numNewIndices;
@@ -666,7 +666,6 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer
     {
       localIndex const b = oldSize + a;
       m_localToGlobalMap[b] = newGlobalIndices(a);
-      //    newLocalIndices[a] = b;
       m_ghostRank[b] = sendingRank;
     }
 
@@ -718,7 +717,7 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer
 
 
 
-void ObjectManagerBase::ViewPackingExclusionList( set<localIndex> & exclusionList ) const
+void ObjectManagerBase::ViewPackingExclusionList( SortedArray<localIndex> & exclusionList ) const
 {
   exclusionList.insert(this->getWrapperIndex(viewKeyStruct::localToGlobalMapString));
   exclusionList.insert(this->getWrapperIndex(viewKeyStruct::globalToLocalMapString));
@@ -778,7 +777,7 @@ void ObjectManagerBase::SetReceiveLists()
 }
 
 integer ObjectManagerBase::SplitObject( localIndex const indexToSplit,
-                                        int const GEOSX_UNUSED_ARG( rank ),
+                                        int const GEOSX_UNUSED_PARAM( rank ),
                                         localIndex & newIndex )
 {
 
@@ -849,7 +848,7 @@ void ObjectManagerBase::CopyObject( const localIndex source, const localIndex de
 
   for( localIndex i=0 ; i<m_sets.wrappers().size() ; ++i )
   {
-    set<localIndex> & targetSet = m_sets.getReference< set<localIndex> >(i);
+    SortedArray<localIndex> & targetSet = m_sets.getReference< SortedArray<localIndex> >(i);
     if( targetSet.count(source) > 0 )
     {
       targetSet.insert(destination);
@@ -873,12 +872,12 @@ void ObjectManagerBase::SetMaxGlobalIndex()
 }
 
 void ObjectManagerBase::CleanUpMap( std::set< localIndex > const & targetIndices,
-                                    array1d< set< localIndex > > & upmap,
+                                    array1d< SortedArray< localIndex > > & upmap,
                                     arrayView2d< localIndex const > const & downmap )
 {
   for( auto const & targetIndex : targetIndices )
   {
-    set<localIndex> eraseList;
+    SortedArray<localIndex> eraseList;
     for( auto const & compositeIndex : upmap[targetIndex] )
     {
       bool hasTargetIndex = false;
@@ -937,12 +936,12 @@ void ObjectManagerBase::CleanUpMap( std::set<localIndex> const & targetIndices,
 }
 
 void ObjectManagerBase::CleanUpMap( std::set<localIndex> const & targetIndices,
-                                    array1d<set<localIndex> > & upmap,
+                                    array1d<SortedArray<localIndex> > & upmap,
                                     arrayView1d< arrayView1d< localIndex const > const > const & downmap )
 {
   for( auto const & targetIndex : targetIndices )
   {
-    set<localIndex> eraseList;
+    SortedArray<localIndex> eraseList;
     for( auto const & compositeIndex : upmap[targetIndex] )
     {
       bool hasTargetIndex = false;

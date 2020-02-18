@@ -23,6 +23,7 @@
 #include "ElementRegionManager.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "common/Logger.hpp"
 
 namespace geosx
 {
@@ -242,7 +243,7 @@ localIndex calculateTotalNumberOfFaces( ArrayOfArraysView< FaceBuilder const > c
   forall_in_range< parallelHostPolicy >( 0, numNodes, [&]( localIndex const nodeID )
   {
     localIndex const numFaces = facesByLowestNode.sizeOfArray( nodeID );
-    
+
     // If there are no faces associated with this node we can skip it.
     if ( numFaces == 0 ) return;
 
@@ -553,7 +554,7 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
   {
     auto const & setWrapper = nodeSets[i];
     std::string const & setName = setWrapper->getName();
-    const set<localIndex>& targetSet = nodeManager->sets()->getReference<set<localIndex>>( setName );
+    const SortedArray<localIndex>& targetSet = nodeManager->sets()->getReference<SortedArray<localIndex>>( setName );
     ConstructSetFromSetAndMap( targetSet, m_nodeList, setName );
   } );
 
@@ -568,7 +569,7 @@ void FaceManager::computeGeometry( NodeManager const * const nodeManager )
   real64_array & faceArea  = getReference<real64_array>( viewKeyStruct::faceAreaString);
   r1_array & faceNormal = getReference<r1_array>( viewKeyStruct::faceNormalString);
   r1_array & faceCenter = getReference<r1_array>( viewKeyStruct::faceCenterString);
-  r1_array const & X = nodeManager->referencePosition();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager->referencePosition();
 
   // loop over faces and calculate faceArea, faceNormal and faceCenter
   forall_in_range< parallelHostPolicy >( 0, this->size(), [&]( localIndex const faceID )
@@ -678,7 +679,7 @@ void FaceManager::SortAllFaceNodes( NodeManager const * const nodeManager,
   array2d<localIndex> const & elemRegionList = elementRegionList();
   array2d<localIndex> const & elemSubRegionList = elementSubRegionList();
   array2d<localIndex> const & elemList = elementList();
-  arrayView1d<R1Tensor const> const & X = nodeManager->referencePosition();
+  arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & X = nodeManager->referencePosition();
 
   const indexType max_face_nodes = getMaxFaceNodes();
   GEOSX_ERROR_IF( max_face_nodes >= MAX_FACE_NODES, "More nodes on a face than expected!" );
@@ -698,7 +699,7 @@ void FaceManager::SortAllFaceNodes( NodeManager const * const nodeManager,
   } );
 }
 
-void FaceManager::SortFaceNodes( arrayView1d<R1Tensor const> const & X,
+void FaceManager::SortFaceNodes( arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & X,
                                  R1Tensor const & elementCenter,
                                  localIndex * const faceNodes,
                                  localIndex const numFaceNodes )
@@ -825,7 +826,7 @@ void FaceManager::ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManager
 
 
 
-void FaceManager::ViewPackingExclusionList( set<localIndex> & exclusionList ) const
+void FaceManager::ViewPackingExclusionList( SortedArray<localIndex> & exclusionList ) const
 {
   ObjectManagerBase::ViewPackingExclusionList(exclusionList);
   exclusionList.insert(this->getWrapperIndex(viewKeyStruct::nodeListString));
@@ -886,7 +887,7 @@ localIndex FaceManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
 localIndex FaceManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                           localIndex_array & packList,
                                           bool const overwriteUpMaps,
-                                          bool const GEOSX_UNUSED_ARG( overwriteDownMaps ) )
+                                          bool const GEOSX_UNUSED_PARAM( overwriteDownMaps ) )
 {
   localIndex unPackedSize = 0;
 
