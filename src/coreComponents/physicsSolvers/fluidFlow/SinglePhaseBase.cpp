@@ -419,11 +419,13 @@ void SinglePhaseBase::UpdateEOS( real64 const time_n,
         fluid->PointUpdatePressureExplicit( pres[ei], ei, 0);
         dPres[ei] = pres[ei] - dPres[ei];
 
-//        if ( std::abs(mass[ei]) > 0 && poro[ei] > 0.999 )
+//        int rank = -1;
+//        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+////        if ( std::abs(mass[ei]) > 0 && poro[ei] > 0.999 )
+//        //        if ( pres[ei] > 0 )
 //        if ( std::abs(mass[ei]) > 0 )
-//        if ( pres[ei] > 0 )
 //        {
-//          std::cout << "\n Fluid Update in poroElastic:  ei = " << ei << ", mass = " << mass[ei] << ", poro= " << poro[ei] << ", vol = " << vol[ei]
+//          std::cout << "\n Rank = " << rank << ", Fluid Update in poroElastic:  ei = " << ei << ", mass = " << mass[ei] << ", poro= " << poro[ei] << ", vol = " << vol[ei]
 //                    << ", calculated dens = " << dens[ei][0] << ", new pres = " << pres[ei] << "\n";
 //        }
 

@@ -80,11 +80,11 @@ public:
 										  real64 const GEOSX_UNUSED_ARG( dt ),
 										  DomainPartition * const GEOSX_UNUSED_ARG( domain )) {}
 
-  virtual void UpdateEOS( real64 const GEOSX_UNUSED_ARG( time_n ),
-						  real64 const GEOSX_UNUSED_ARG( dt ),
-						  DomainPartition * const GEOSX_UNUSED_ARG( domain )) {}
-
   localIndex fluidIndex() const { return m_fluidIndex; }
+
+  virtual void UpdateEOS( real64 const GEOSX_UNUSED_ARG( time_n ),
+                          real64 const GEOSX_UNUSED_ARG( dt ),
+                          DomainPartition * const GEOSX_UNUSED_ARG( domain )) {}
 
   localIndex solidIndex() const { return m_solidIndex; }
 
