@@ -100,6 +100,11 @@ public:
                              int const cycleNumber,
                              DomainPartition * const domain ) override;
 
+  virtual void SolveSystem( DofManager const & dofManager,
+                            ParallelMatrix & matrix,
+                            ParallelVector & rhs,
+                            ParallelVector & solution ) override;
+
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
@@ -117,10 +122,6 @@ public:
   } SolidMechanicsEmbeddedFracturesViewKeys;
 
 protected:
-  virtual void PostProcessInput() override final;
-
-  virtual void
-  InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const problemManager ) override final;
 
   void AssembleEquilibriumOperator(array2d<real64> & eqMatrix,
                                    EmbeddedSurfaceSubRegion * const embeddedSurfaceSubRegion,
@@ -152,14 +153,14 @@ private:
 
   string m_contactRelationName;
 
-  ParallelMatrix m_matrix11;
-  ParallelMatrix m_matrix01;
-  ParallelMatrix m_matrix10;
-
-  ParallelVector m_residual1; // Traction balance on the fracture
-
-  ParallelMatrix m_permutationMatrix0; // it's used to have the output based on global ordering
-  ParallelMatrix m_permutationMatrix1; // it's used to have the output based on global ordering
+//  ParallelMatrix m_matrix11;
+//  ParallelMatrix m_matrix01;
+//  ParallelMatrix m_matrix10;
+//
+//  ParallelVector m_residual1; // Traction balance on the fracture
+//
+//  ParallelMatrix m_permutationMatrix0; // it's used to have the output based on global ordering
+//  ParallelMatrix m_permutationMatrix1; // it's used to have the output based on global ordering
 
 };
 

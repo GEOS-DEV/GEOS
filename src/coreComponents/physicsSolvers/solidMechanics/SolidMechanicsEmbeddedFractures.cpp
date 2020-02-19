@@ -115,16 +115,6 @@ void SolidMechanicsEmbeddedFractures::ImplicitStepComplete( real64 const& time_n
   m_solidSolver->ImplicitStepComplete( time_n, dt, domain );
 }
 
-void SolidMechanicsEmbeddedFractures::PostProcessInput()
-{
-
-}
-
-void SolidMechanicsEmbeddedFractures::InitializePostInitialConditions_PreSubGroups(Group * const GEOSX_UNUSED_ARG( problemManager ) )
-{
-
-}
-
 real64 SolidMechanicsEmbeddedFractures::SolverStep( real64 const & time_n,
                                                     real64 const & dt,
                                                     int const cycleNumber,
@@ -191,44 +181,55 @@ void SolidMechanicsEmbeddedFractures::SetupDofs( DomainPartition const * const d
 
 void SolidMechanicsEmbeddedFractures::SetupSystem( DomainPartition * const domain,
                                                    DofManager & dofManager,
-                                                   ParallelMatrix & GEOSX_UNUSED_ARG( matrix ),
-                                                   ParallelVector & GEOSX_UNUSED_ARG( rhs ),
-                                                   ParallelVector & GEOSX_UNUSED_ARG( solution ) )
+                                                   ParallelMatrix & matrix,
+                                                   ParallelVector &  rhs,
+                                                   ParallelVector &  solution)
 {
   GEOSX_MARK_FUNCTION;
 
-  m_solidSolver->SetupSystem( domain,
-                              m_solidSolver->getDofManager(),
-                              m_solidSolver->getSystemMatrix(),
-                              m_solidSolver->getSystemRhs(),
-                              m_solidSolver->getSystemSolution() );
+//  m_solidSolver->SetupSystem( domain,
+//                              m_solidSolver->getDofManager(),
+//                              m_solidSolver->getSystemMatrix(),
+//                              m_solidSolver->getSystemRhs(),
+//                              m_solidSolver->getSystemSolution() );
 
 
   // setup coupled DofManager
   dofManager.setMesh( domain, 0, 0 );
   SetupDofs( domain, dofManager );
+  dofManager.reorderByRank();
+
+  localIndex const numLocalDof = dofManager.numLocalDofs();
+
+  // Monolithic system
+  matrix.createWithLocalSize( numLocalDof, numLocalDof, 27, MPI_COMM_GEOSX );
+  rhs.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
+  solution.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
+
+  dofManager.setSparsityPattern( matrix, false ); // don't close the matrix
+
 
   // By not calling dofManager.reorderByRank(), we keep separate dof numbering for each field,
   // which allows constructing separate sparsity patterns for off-diagonal blocks of the matrix.
   // Once the solver moves to monolithic matrix, we can remove this method and just use SolverBase::SetupSystem.
 
-  m_matrix11.createWithLocalSize( dofManager.numLocalDofs(viewKeyStruct::dispJumpString),
-                                  dofManager.numLocalDofs(viewKeyStruct::dispJumpString),
-                                  1,
-                                  MPI_COMM_GEOSX);
-
-  m_matrix01.createWithLocalSize( m_solidSolver->getSystemMatrix().localRows(),
-                                  m_dofManager.numLocalDofs(viewKeyStruct::dispJumpString),
-                                  9,
-                                  MPI_COMM_GEOSX);
-
-  m_matrix10.createWithLocalSize( dofManager.numLocalDofs(viewKeyStruct::dispJumpString),
-                                  m_solidSolver->getSystemMatrix().localRows(),
-                                  24,
-                                  MPI_COMM_GEOSX);
-
-  m_residual1.createWithLocalSize(dofManager.numLocalDofs(viewKeyStruct::dispJumpString),
-                                  MPI_COMM_GEOSX);
+//  m_matrix11.createWithLocalSize( dofManager.numLocalDofs(viewKeyStruct::dispJumpString),
+//                                  dofManager.numLocalDofs(viewKeyStruct::dispJumpString),
+//                                  1,
+//                                  MPI_COMM_GEOSX);
+//
+//  m_matrix01.createWithLocalSize( m_solidSolver->getSystemMatrix().localRows(),
+//                                  m_dofManager.numLocalDofs(viewKeyStruct::dispJumpString),
+//                                  9,
+//                                  MPI_COMM_GEOSX);
+//
+//  m_matrix10.createWithLocalSize( dofManager.numLocalDofs(viewKeyStruct::dispJumpString),
+//                                  m_solidSolver->getSystemMatrix().localRows(),
+//                                  24,
+//                                  MPI_COMM_GEOSX);
+//
+//  m_residual1.createWithLocalSize(dofManager.numLocalDofs(viewKeyStruct::dispJumpString),
+//                                  MPI_COMM_GEOSX);
 
 
 
@@ -240,7 +241,8 @@ void SolidMechanicsEmbeddedFractures::SetupSystem( DomainPartition * const domai
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
   string const jumpDofKey = dofManager.getKey( viewKeyStruct::dispJumpString );
-  string const dispDofKey = m_solidSolver->getDofManager().getKey( keys::TotalDisplacement );
+  string const dispDofKey = dofManager.getKey( keys::TotalDisplacement );
+  //string const dispDofKey = m_solidSolver->getDofManager().getKey( keys::TotalDisplacement );
 
   arrayView1d<globalIndex> const &
   dispDofNumber =  nodeManager->getReference<globalIndex_array>( dispDofKey );
@@ -279,38 +281,43 @@ void SolidMechanicsEmbeddedFractures::SetupSystem( DomainPartition * const domai
         }
       }
 
-      m_matrix10.insert( activeJumpDOF.data(),
-                         activeDisplacementDOF.data(),
-                         values.data(),
-                         activeJumpDOF.size(),
-                         activeDisplacementDOF.size() );
+      matrix.insert( activeJumpDOF.data(),
+                     activeDisplacementDOF.data(),
+                     values.data(),
+                     activeJumpDOF.size(),
+                     activeDisplacementDOF.size() );
 
-      m_matrix01.insert( activeDisplacementDOF.data(),
-                         activeJumpDOF.data(),
-                         values.data(),
-                         activeDisplacementDOF.size(),
-                         activeJumpDOF.size() );
+      matrix.insert( activeDisplacementDOF.data(),
+                     activeJumpDOF.data(),
+                     values.data(),
+                     activeDisplacementDOF.size(),
+                     activeJumpDOF.size() );
     }
     });
 
-  m_matrix10.close();
-  m_matrix01.close();
+  matrix.close();
 }
 
 void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
                                                       real64 const dt,
                                                       DomainPartition * const domain,
-                                                      DofManager const & GEOSX_UNUSED_ARG( dofManager ),
-                                                      ParallelMatrix & GEOSX_UNUSED_ARG( matrix ),
-                                                      ParallelVector & GEOSX_UNUSED_ARG( rhs ) )
+                                                      DofManager const &  dofManager,
+                                                      ParallelMatrix &  matrix ,
+                                                      ParallelVector &  rhs )
 {
   GEOSX_MARK_FUNCTION;
+
+  matrix.open();
+  rhs.open();
+  matrix.zero();
+  rhs.zero();
+
   m_solidSolver->AssembleSystem( time,
                                  dt,
                                  domain,
-                                 m_solidSolver->getDofManager(),
-                                 m_solidSolver->getSystemMatrix(),
-                                 m_solidSolver->getSystemRhs() );
+                                 dofManager,
+                                 matrix,
+                                 rhs );
 
    MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
    NodeManager * const nodeManager = mesh->getNodeManager();
@@ -319,18 +326,18 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
    NumericalMethodsManager const * numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
    FiniteElementDiscretizationManager const * feDiscretizationManager = numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
 
-   ParallelVector & residual0 = m_solidSolver->getSystemRhs();
-
-   residual0.open();
-   m_matrix11.open();
-   m_matrix10.open();
-   m_matrix01.open();
-   m_residual1.open();
-
-   m_matrix11.zero();
-   m_matrix10.zero();
-   m_matrix01.zero();
-   m_residual1.zero();
+//   ParallelVector & residual0 = m_solidSolver->getSystemRhs();
+//
+//   residual0.open();
+//   m_matrix11.open();
+//   m_matrix10.open();
+//   m_matrix01.open();
+//   m_residual1.open();
+//
+//   m_matrix11.zero();
+//   m_matrix10.zero();
+//   m_matrix01.zero();
+//   m_residual1.zero();
 
    r1_array const& disp  = nodeManager->getReference<r1_array>(keys::TotalDisplacement);
    r1_array const& dDisp = nodeManager->getReference<r1_array>(keys::IncrementalDisplacement);
@@ -339,8 +346,8 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
    r1_array const uhattilde;
 
 
-   string const dofKey = m_dofManager.getKey( keys::TotalDisplacement );
-   string const jumpDofKey = m_dofManager.getKey( viewKeyStruct::dispJumpString );
+   string const dofKey     = dofManager.getKey( keys::TotalDisplacement );
+   string const jumpDofKey = dofManager.getKey( viewKeyStruct::dispJumpString );
 
    globalIndex_array const & globalDofNumber = nodeManager->getReference<globalIndex_array>( dofKey );
 
@@ -382,11 +389,9 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
          arrayView2d< localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM > const & elemsToNodes = elementSubRegion->nodeList();
          // Get the number of nodes per element
          localIndex const numNodesPerElement = elemsToNodes.size(1);
-         std::cout << "before" << std::endl;
          // Get finite element discretization info
          std::unique_ptr<FiniteElementBase>
          fe = feDiscretization->getFiniteElement( elementSubRegion->GetElementTypeString() );
-         std::cout << "after" << std::endl;
 
          // Initialise local matrices and vectors
          array1d<globalIndex>             elementLocalDofIndex ( nUdof );
@@ -447,6 +452,8 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
            {
              jumpLocalDofIndex[i] = embeddedElementDofNumber[k] + i;
              w(i) = w_global[k][i] + dw_global[k][i];
+             std::cout << "w" << std::endl;
+             std::cout << w(i) << std::endl;
            }
 
            // Dof index of nodal displacements
@@ -528,24 +535,31 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
 
          // 2. Assembly into global system
          // fill in residuals
-         residual0.add   (elementLocalDofIndex, R0);
-         m_residual1.add ( jumpLocalDofIndex, R1 );
+//         residual0.add   (elementLocalDofIndex, R0);
+//         m_residual1.add ( jumpLocalDofIndex, R1 );
+         rhs.add ( elementLocalDofIndex, R0 );
+         rhs.add ( jumpLocalDofIndex   , R1 );
 
          // fill in matrices
-         m_matrix11.add  ( jumpLocalDofIndex   , jumpLocalDofIndex,    Kww_elem);
-         m_matrix10.add  ( jumpLocalDofIndex   , elementLocalDofIndex, Kwu_elem);
-         m_matrix01.add  ( elementLocalDofIndex, jumpLocalDofIndex,    Kuw_elem);
+//         m_matrix11.add  ( jumpLocalDofIndex   , jumpLocalDofIndex,    Kww_elem);
+//         m_matrix10.add  ( jumpLocalDofIndex   , elementLocalDofIndex, Kwu_elem);
+//         m_matrix01.add  ( elementLocalDofIndex, jumpLocalDofIndex,    Kuw_elem);
+         matrix.add  ( jumpLocalDofIndex   , jumpLocalDofIndex,    Kww_elem);
+         matrix.add  ( jumpLocalDofIndex   , elementLocalDofIndex, Kwu_elem);
+         matrix.add  ( elementLocalDofIndex, jumpLocalDofIndex,    Kuw_elem);
 
        }   // loop over embedded surfaces
      }); // subregion loop
    }); // region loop
 
    // close all the objects
-   residual0.close();
-   m_residual1.close();
-   m_matrix11.close();
-   m_matrix10.close();
-   m_matrix01.close();
+   rhs.close();
+   matrix.close();
+//   residual0.close();
+//   m_residual1.close();
+//   m_matrix11.close();
+//   m_matrix10.close();
+//   m_matrix01.close();
 }
 
 void SolidMechanicsEmbeddedFractures::AssembleEquilibriumOperator(array2d<real64> & eqMatrix,
@@ -633,9 +647,9 @@ AssembleCompatibilityOperator(array2d<real64> & compMatrix,
     {
       if (i == j)
       {
-        compMatrix(i,0) -= 0.5 * (nVec[i]  * mVec[j]);
+        compMatrix(i, 0) -= 0.5 * (nVec[i]  * mVec[j]);
         compMatrix(i, 1) -= 0.5 * (tVec1[i] * mVec[j]);
-        compMatrix(i,2) -= 0.5 * (tVec2[i] * mVec[j]);
+        compMatrix(i, 2) -= 0.5 * (tVec2[i] * mVec[j]);
       }else
       {
         VoigtIndex = 6 - i - j;
@@ -682,99 +696,154 @@ void SolidMechanicsEmbeddedFractures::AssembleStrainOperator(array2d<real64> & s
 void SolidMechanicsEmbeddedFractures::ApplyBoundaryConditions( real64 const time,
                                                                real64 const dt,
                                                                DomainPartition * const domain,
-                                                               DofManager const & GEOSX_UNUSED_ARG( dofManager ),
-                                                               ParallelMatrix & GEOSX_UNUSED_ARG( matrix ),
-                                                               ParallelVector & GEOSX_UNUSED_ARG( rhs ) )
+                                                               DofManager const & dofManager ,
+                                                               ParallelMatrix &  matrix ,
+                                                               ParallelVector &  rhs  )
 {
   GEOSX_MARK_FUNCTION;
 
-  std::cout << "I m here" << std::endl;
   m_solidSolver->ApplyBoundaryConditions( time,
                                           dt,
                                           domain,
-                                          m_solidSolver->getDofManager(),
-                                          m_solidSolver->getSystemMatrix(),
-                                          m_solidSolver->getSystemRhs() );
+                                          dofManager,
+                                          matrix,
+                                          rhs );
 
 
-  if( getLogLevel() == 2 )
-    {
+  switch( getLogLevel() )
+  {
+    case 2:
       // Before outputting anything generate permuation matrix and permute.
-      MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-      NodeManager * const nodeManager = mesh->getNodeManager();
+      //      MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+      //      NodeManager * const nodeManager = mesh->getNodeManager();
 
-      LAIHelperFunctions::CreatePermutationMatrix(nodeManager,
-                                                  m_solidSolver->getSystemMatrix().localRows(),
-                                                  m_solidSolver->getSystemMatrix().localCols(),
-                                                  3,
-                                                  m_solidSolver->getDofManager().getKey( keys::TotalDisplacement ),
-                                                  m_permutationMatrix0);
+//      GEOSX_LOG_RANK_0("***********************************************************");
+//      GEOSX_LOG_RANK_0("Stiffness matrix");
+//      GEOSX_LOG_RANK_0("***********************************************************");
+//      matrix.print(std::cout);
+//      MpiWrapper::Barrier();
+//
+//      GEOSX_LOG_RANK_0("***********************************************************");
+//      GEOSX_LOG_RANK_0("rhs");
+//      GEOSX_LOG_RANK_0("***********************************************************");
+//      rhs.print(std::cout);
+//      MpiWrapper::Barrier();
 
-      GEOSX_LOG_RANK_0("***********************************************************");
-      GEOSX_LOG_RANK_0("matrixUU");
-      GEOSX_LOG_RANK_0("***********************************************************");
-      LAIHelperFunctions::PrintPermutedMatrix(m_solidSolver->getSystemMatrix(), m_permutationMatrix0, std::cout);
-      MpiWrapper::Barrier();
+      //      LAIHelperFunctions::CreatePermutationMatrix(nodeManager,
+      //                                                  m_solidSolver->getSystemMatrix().localRows(),
+      //                                                  m_solidSolver->getSystemMatrix().localCols(),
+      //                                                  3,
+      //                                                  m_solidSolver->getDofManager().getKey( keys::TotalDisplacement ),
+      //                                                  m_permutationMatrix0);
 
-      GEOSX_LOG_RANK_0("***********************************************************");
-      GEOSX_LOG_RANK_0("matrixWW");
-      GEOSX_LOG_RANK_0("***********************************************************");
-      m_matrix11.print(std::cout);
-      MpiWrapper::Barrier();
+      //      GEOSX_LOG_RANK_0("***********************************************************");
+      //      GEOSX_LOG_RANK_0("matrixUU");
+      //      GEOSX_LOG_RANK_0("***********************************************************");
+      //      LAIHelperFunctions::PrintPermutedMatrix(m_solidSolver->getSystemMatrix(), m_permutationMatrix0, std::cout);
+      //      MpiWrapper::Barrier();
+      //
+      //      GEOSX_LOG_RANK_0("***********************************************************");
+      //      GEOSX_LOG_RANK_0("matrixWW");
+      //      GEOSX_LOG_RANK_0("***********************************************************");
+      //      m_matrix11.print(std::cout);
+      //      MpiWrapper::Barrier();
+      //
+      //      GEOSX_LOG_RANK_0("***********************************************************");
+      //      GEOSX_LOG_RANK_0("matrixUw");
+      //      GEOSX_LOG_RANK_0("***********************************************************");
+      //      m_matrix01.print(std::cout);
+      //      MpiWrapper::Barrier();
+      //
+      //      GEOSX_LOG_RANK_0("***********************************************************");
+      //      GEOSX_LOG_RANK_0("matrixwU");
+      //      GEOSX_LOG_RANK_0("***********************************************************");
+      //      m_matrix10.print(std::cout);
+      //      MpiWrapper::Barrier();
+      //
+      //      GEOSX_LOG_RANK_0("***********************************************************");
+      //      GEOSX_LOG_RANK_0("residual0");
+      //      GEOSX_LOG_RANK_0("***********************************************************");
+      //      LAIHelperFunctions::PrintPermutedVector(m_solidSolver->getSystemRhs(), m_permutationMatrix0, std::cout);
+      //      MpiWrapper::Barrier();
+      //
+      //      GEOSX_LOG_RANK_0("***********************************************************");
+      //      GEOSX_LOG_RANK_0("residual1");
+      //      GEOSX_LOG_RANK_0("***********************************************************");
+      //      m_residual1.print(std::cout);
+      //      MpiWrapper::Barrier();
 
-      GEOSX_LOG_RANK_0("***********************************************************");
-      GEOSX_LOG_RANK_0("matrixUw");
-      GEOSX_LOG_RANK_0("***********************************************************");
-      m_matrix01.print(std::cout);
-      MpiWrapper::Barrier();
+    case 3:
 
-      GEOSX_LOG_RANK_0("***********************************************************");
-      GEOSX_LOG_RANK_0("matrixwU");
-      GEOSX_LOG_RANK_0("***********************************************************");
-      m_matrix10.print(std::cout);
-      MpiWrapper::Barrier();
+      integer newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
+      {
+        string filename = "Kmatrix" + std::to_string( time ) + "_" + std::to_string( newtonIter ) + ".mtx";
+        matrix.write( filename, true );
+        GEOSX_LOG_RANK_0( "matrix: written to " << filename );
+      }
+      {
+        string filename = "rhs" + std::to_string( time ) + "_" + std::to_string( newtonIter ) + ".mtx";
+        rhs.write( filename, true );
+        GEOSX_LOG_RANK_0( "rhs: written to " << filename );
+      }
+  } //end of switch statement
 
-      GEOSX_LOG_RANK_0("***********************************************************");
-      GEOSX_LOG_RANK_0("residual0");
-      GEOSX_LOG_RANK_0("***********************************************************");
-      LAIHelperFunctions::PrintPermutedVector(m_solidSolver->getSystemRhs(), m_permutationMatrix0, std::cout);
-      MpiWrapper::Barrier();
-
-      GEOSX_LOG_RANK_0("***********************************************************");
-      GEOSX_LOG_RANK_0("residual1");
-      GEOSX_LOG_RANK_0("***********************************************************");
-      m_residual1.print(std::cout);
-      MpiWrapper::Barrier();
-    }
 }
 
 real64 SolidMechanicsEmbeddedFractures::CalculateResidualNorm( DomainPartition const * const domain,
-                                                               DofManager const & GEOSX_UNUSED_ARG( dofManager ),
-                                                               ParallelVector const & GEOSX_UNUSED_ARG( rhs ) )
+                                                               DofManager const &       dofManager ,
+                                                               ParallelVector const &       rhs     )
 {
   GEOSX_MARK_FUNCTION;
 
+  // Matrix residual
   real64 const solidResidualNorm = m_solidSolver->CalculateResidualNorm( domain,
-                                                                     m_solidSolver->getDofManager(),
-                                                                     m_solidSolver->getSystemRhs() );
+                                                                         dofManager,
+                                                                         rhs );
+
+  // Fracture residual
 
   GEOSX_LOG_RANK_0("residual = "<< solidResidualNorm);
 
   return solidResidualNorm;
 }
 
-void SolidMechanicsEmbeddedFractures::ApplySystemSolution( DofManager const & GEOSX_UNUSED_ARG( dofManager ),
-                                                           ParallelVector const & GEOSX_UNUSED_ARG( solution ),
+void SolidMechanicsEmbeddedFractures::SolveSystem( DofManager const & dofManager,
+                                                   ParallelMatrix & matrix,
+                                                   ParallelVector & rhs,
+                                                   ParallelVector & solution )
+{
+  solution.zero();
+
+  SolverBase::SolveSystem( dofManager, matrix, rhs, solution );
+
+  // Debug for logLevel >= 2
+  GEOSX_LOG_LEVEL_RANK_0( 2, "After SolidMechanicsEmbeddedFractures::SolveSystem" );
+  GEOSX_LOG_LEVEL_RANK_0( 2, "\nSolution:\n" << solution );
+}
+
+void SolidMechanicsEmbeddedFractures::ApplySystemSolution( DofManager const & dofManager,
+                                                           ParallelVector const &  solution,
                                                            real64 const scalingFactor,
                                                            DomainPartition * const domain )
 {
   GEOSX_MARK_FUNCTION;
-  m_solidSolver->ApplySystemSolution( m_solidSolver->getDofManager(),
-                                      m_solidSolver->getSystemSolution(),
+
+  m_solidSolver->ApplySystemSolution( dofManager,
+                                      solution,
                                       scalingFactor,
                                       domain );
 
+  dofManager.addVectorToField( solution, viewKeyStruct::dispJumpString, viewKeyStruct::deltaDispJumpString, -scalingFactor );
 
+  // dofManager.addVectorToField( solution, viewKeyStruct::dispJumpString, viewKeyStruct::dispJumpString, -scalingFactor );
+
+//  std::map<string, string_array > fieldNames;
+//  fieldNames["node"].push_back( viewKeyStruct::dispJumpString );
+//  fieldNames["node"].push_back( viewKeyStruct::deltaDispJumpString );
+//
+//  CommunicationTools::SynchronizeFields( fieldNames,
+//                                           domain->getMeshBody( 0 )->getMeshLevel( 0 ),
+//                                           domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
 
 }
 
