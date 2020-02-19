@@ -1451,7 +1451,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( do
 
     // .... create SDC matrix
     m_blockDiagUU.reset(new ParallelMatrix());
-    LAIHelperFunctions::SeparateComponentFilter(m_solidSolver->getSystemMatrix(),*m_blockDiagUU,3);
+    LAIHelperFunctions::SeparateComponentFilter<TrilinosInterface>(m_solidSolver->getSystemMatrix(),*m_blockDiagUU,3);
     const Epetra_FECrsMatrix *blockDiagUU = m_blockDiagUU->unwrappedPointer();
 
     // .... Create the matrix

@@ -1722,16 +1722,6 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
   arrayView1d<integer> &
   faceDegreeFromCrackTip = faceManager.getReference<integer_array>( viewKeyStruct::degreeFromCrackTipString );
 
-  arrayView1d<integer> &
-  faceDegreeFromCrackTip = faceManager.getReference<integer_array>( viewKeyStruct::degreeFromCrackTipString );
-
-
-  arrayView1d<real64> &
-  nodeRuptureTime = nodeManager.getReference<real64_array>( viewKeyStruct::ruptureTimeString );
-
-  arrayView1d<real64> &
-  faceRuptureTime = faceManager.getReference<real64_array>( viewKeyStruct::ruptureTimeString );
-
   arrayView1d<real64> &
   nodeRuptureTime = nodeManager.getReference<real64_array>( viewKeyStruct::ruptureTimeString );
 

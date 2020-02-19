@@ -341,12 +341,6 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
 #endif
       SortedArray<localIndex> newElems;
 
-      real64 initialPressure = 1.0e99;
-#if SET_CREATION_DISPLACEMENT==1
-      real64 initialAperture = 1.0e99;
-#endif
-      set<localIndex> newElems;
-
       // loop over all face elements attached to the connector and add them to the stencil
       for( localIndex kfe=0 ; kfe<numElems ; ++kfe )
       {

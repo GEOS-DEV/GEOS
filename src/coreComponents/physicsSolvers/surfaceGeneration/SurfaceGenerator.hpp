@@ -599,8 +599,6 @@ private:
 
   SortedArray< localIndex > m_faceElemsRupturedThisSolve;
 
-  set< localIndex > m_faceElemsRupturedThisSolve;
-
 };
 
 } /* namespace geosx */
