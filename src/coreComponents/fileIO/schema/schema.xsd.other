@@ -1158,28 +1158,20 @@
 			<xsd:element name="neighborData" type="neighborDataType" />
 			<xsd:element name="sets" type="setsType" />
 		</xsd:choice>
-<<<<<<< HEAD
 		<!--Acceleration => An array that holds the current acceleration on the nodes. This array also is used to hold the summation of nodal forces resulting from the governing equations. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
 		<xsd:attribute name="Acceleration" type="LvArray::Array&lt;double, 2, camp::int_seq&lt;long, 1l, 0l&gt;, long, LvArray::NewChaiBuffer&gt;" />
 		<!--IncrementalDisplacement => An array that holds the incremental displacements for the current time step on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
 		<xsd:attribute name="IncrementalDisplacement" type="LvArray::Array&lt;double, 2, camp::int_seq&lt;long, 1l, 0l&gt;, long, LvArray::NewChaiBuffer&gt;" />
 		<!--Mass => An array that holds the mass on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
 		<xsd:attribute name="Mass" type="real64_array" />
-=======
->>>>>>> 4ba949660... fix remaining compilaiton errors. Still failing PAMELA unit test
 		<!--ReferencePosition => (no description available)-->
 		<xsd:attribute name="ReferencePosition" type="LvArray::Array&lt;double, 2, camp::int_seq&lt;long, 1l, 0l&gt;, long, LvArray::NewChaiBuffer&gt;" />
 		<!--SIFNode => SIF on the node-->
 		<xsd:attribute name="SIFNode" type="real64_array" />
-<<<<<<< HEAD
 		<!--TotalDisplacement => An array that holds the total displacements on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
 		<xsd:attribute name="TotalDisplacement" type="LvArray::Array&lt;double, 2, camp::int_seq&lt;long, 1l, 0l&gt;, long, LvArray::NewChaiBuffer&gt;" />
 		<!--Velocity => An array that holds the current velocity on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
 		<xsd:attribute name="Velocity" type="LvArray::Array&lt;double, 2, camp::int_seq&lt;long, 1l, 0l&gt;, long, LvArray::NewChaiBuffer&gt;" />
-=======
-		<!--acceleration => An array that holds the current acceleration on the nodes. This array also is used to hold the summation of nodal forces resulting from the governing equations. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
-		<xsd:attribute name="acceleration" type="LvArray::Array&lt;double, 2, camp::int_seq&lt;long, 1l, 0l&gt;, long, LvArray::NewChaiBuffer&gt;" />
->>>>>>> 4ba949660... fix remaining compilaiton errors. Still failing PAMELA unit test
 		<!--childIndex => Child index of node.-->
 		<xsd:attribute name="childIndex" type="localIndex_array" />
 		<!--contactForce => An array that holds the contact force. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
@@ -1206,11 +1198,6 @@
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
 		<xsd:attribute name="globalToLocalMap" type="geosx::mapBase&lt;long long, long, std::integral_constant&lt;bool, false&gt; &gt;" />
-<<<<<<< HEAD
-=======
-		<!--incrementalDisplacement => An array that holds the incremental displacements for the current time step on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
-		<xsd:attribute name="incrementalDisplacement" type="LvArray::Array&lt;double, 2, camp::int_seq&lt;long, 1l, 0l&gt;, long, LvArray::NewChaiBuffer&gt;" />
->>>>>>> 4ba949660... fix remaining compilaiton errors. Still failing PAMELA unit test
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
@@ -1221,17 +1208,8 @@
 		<xsd:attribute name="primaryField" type="real64_array" />
 		<!--ruptureTime => Time that the node was ruptured.-->
 		<xsd:attribute name="ruptureTime" type="real64_array" />
-<<<<<<< HEAD
 		<!--uhatTilde => An array that holds the incremental displacement predictors on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
 		<xsd:attribute name="uhatTilde" type="r1_array" />
-=======
-		<!--totalDisplacement => An array that holds the total displacements on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
-		<xsd:attribute name="totalDisplacement" type="LvArray::Array&lt;double, 2, camp::int_seq&lt;long, 1l, 0l&gt;, long, LvArray::NewChaiBuffer&gt;" />
-		<!--uhatTilde => An array that holds the incremental displacement predictors on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
-		<xsd:attribute name="uhatTilde" type="r1_array" />
-		<!--velocity => An array that holds the current velocity on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
-		<xsd:attribute name="velocity" type="LvArray::Array&lt;double, 2, camp::int_seq&lt;long, 1l, 0l&gt;, long, LvArray::NewChaiBuffer&gt;" />
->>>>>>> 4ba949660... fix remaining compilaiton errors. Still failing PAMELA unit test
 		<!--velocityTilde => An array that holds the velocity predictors on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
 		<xsd:attribute name="velocityTilde" type="r1_array" />
 	</xsd:complexType>

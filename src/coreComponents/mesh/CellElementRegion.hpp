@@ -63,7 +63,7 @@ public:
     m_cellBlockNames.push_back( cellBlockName );
   }
 
-  virtual void GenerateMesh( Group const * const cellBlocks ) override;
+  virtual void GenerateMesh( Group * const cellBlocks ) override;
 
   void GenerateAggregates( FaceManager const * const faceManager, NodeManager const * const NodeManager );
 

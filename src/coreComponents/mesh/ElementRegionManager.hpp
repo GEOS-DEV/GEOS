@@ -94,7 +94,7 @@ public:
 
 //  void Initialize(  ){}
 
-  void GenerateMesh( Group const * const cellBlockManager );
+  void GenerateMesh( Group * const cellBlockManager );
 
   void GenerateAggregates( FaceManager const * const faceManager, NodeManager const * const nodeManager );
 
