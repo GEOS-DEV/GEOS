@@ -36,6 +36,12 @@ public:
 
   static constexpr localIndex MAX_NUM_FACES = 15;
 
+  struct InnerProductType
+  {
+    static constexpr integer TPFA = 0;
+    static constexpr integer QUASI_TPFA = 1;
+  };
+  
   
   /**
    * @brief main constructor for Group Objects
@@ -218,7 +224,7 @@ private:
                               stackArray1d<real64, MAX_NUM_FACES> & totalVolFlux,
                               stackArray1d<real64, MAX_NUM_FACES> & dTotalVolFlux_dp,
                               stackArray1d<real64, MAX_NUM_FACES> & dTotalVolFlux_dS,
-                              stackArray1d<real64, MAX_NUM_FACES> & dTotalVolFlux_dfp ) const;
+                              stackArray2d<real64, MAX_NUM_FACES*MAX_NUM_FACES> & dTotalVolFlux_dfp ) const;
 
   /**
    * @brief In a given element, compute the difference between phase gravity heads at this element's faces
@@ -371,19 +377,19 @@ private:
                                    arrayView1d<globalIndex const> const & faceDofNumber,
                                    arraySlice1d<localIndex const> const elemToFaces,
                                    globalIndex const elemDofNumber,
-                                   stackArray1d<globalIndex, MAX_NUM_FACES>         const & neighborDofNumbers,
-                                   stackArray1d<real64, MAX_NUM_FACES>              const & totalVolFlux,
-                                   stackArray1d<real64, MAX_NUM_FACES>              const & dTotalVolFlux_dp,
-                                   stackArray1d<real64, MAX_NUM_FACES>              const & dTotalVolFlux_dS,
-                                   stackArray1d<real64, MAX_NUM_FACES>              const & dTotalVolFlux_dfp,
-                                   stackArray2d<real64, NUM_PHASES*MAX_NUM_FACES>   const & difGravHead,
-                                   stackArray3d<real64, 2*NUM_PHASES*MAX_NUM_FACES> const & dDifGravHead_dp,
-                                   stackArray2d<real64, NUM_PHASES*MAX_NUM_FACES>   const & viscousCoef,
-                                   stackArray3d<real64, 2*NUM_PHASES*MAX_NUM_FACES> const & dViscousCoef_dp,
-                                   stackArray3d<real64, 2*NUM_PHASES*MAX_NUM_FACES> const & dViscousCoef_dS,
-                                   stackArray2d<real64, NUM_PHASES*MAX_NUM_FACES>   const & gravCoef,
-                                   stackArray3d<real64, 2*NUM_PHASES*MAX_NUM_FACES> const & dGravCoef_dp,
-                                   stackArray3d<real64, 2*NUM_PHASES*MAX_NUM_FACES> const & dGravCoef_dS,
+                                   stackArray1d<globalIndex, MAX_NUM_FACES>          const & neighborDofNumbers,
+                                   stackArray1d<real64, MAX_NUM_FACES>               const & totalVolFlux,
+                                   stackArray1d<real64, MAX_NUM_FACES>               const & dTotalVolFlux_dp,
+                                   stackArray1d<real64, MAX_NUM_FACES>               const & dTotalVolFlux_dS,
+                                   stackArray2d<real64, MAX_NUM_FACES*MAX_NUM_FACES> const & dTotalVolFlux_dfp,
+                                   stackArray2d<real64, NUM_PHASES*MAX_NUM_FACES>    const & difGravHead,
+                                   stackArray3d<real64, 2*NUM_PHASES*MAX_NUM_FACES>  const & dDifGravHead_dp,
+                                   stackArray2d<real64, NUM_PHASES*MAX_NUM_FACES>    const & viscousCoef,
+                                   stackArray3d<real64, 2*NUM_PHASES*MAX_NUM_FACES>  const & dViscousCoef_dp,
+                                   stackArray3d<real64, 2*NUM_PHASES*MAX_NUM_FACES>  const & dViscousCoef_dS,
+                                   stackArray2d<real64, NUM_PHASES*MAX_NUM_FACES>    const & gravCoef,
+                                   stackArray3d<real64, 2*NUM_PHASES*MAX_NUM_FACES>  const & dGravCoef_dp,
+                                   stackArray3d<real64, 2*NUM_PHASES*MAX_NUM_FACES>  const & dGravCoef_dS,
                                    ParallelMatrix * const matrix,
                                    ParallelVector * const rhs ) const;
   /**
@@ -404,7 +410,7 @@ private:
                             stackArray1d<real64, MAX_NUM_FACES> const & totalVolFlux,
                             stackArray1d<real64, MAX_NUM_FACES> const & dTotalVolFlux_dp,
                             stackArray1d<real64, MAX_NUM_FACES> const & dTotalVolFlux_dS,                        
-                            stackArray1d<real64, MAX_NUM_FACES> const & dTotalVolFlux_dfp,
+                            stackArray2d<real64, MAX_NUM_FACES*MAX_NUM_FACES> const & dTotalVolFlux_dfp,
                             ParallelMatrix * const matrix,
                             ParallelVector * const rhs ) const; 
 
@@ -490,6 +496,33 @@ private:
                                 real64   const & lengthTolerance,
                                 stackArray2d<real64, MAX_NUM_FACES*MAX_NUM_FACES> const & transMatrix ) const;
   
+
+  /**
+   * @brief In a given element, recompute the transmissibility matrix from the Q-family
+   * @param[in] nodePosition the position of the nodes
+   * @param[in] faceToNodes the map from the face to their nodes
+   * @param[in] elemToFaces elem-to-faces maps
+   * @param[in] elemCenter the center of the element
+   * @param[in] elemVolume the volume of the element
+   * @param[in] elemPerm the permeability in the element
+   * @param[in] tParam the parameter used to compute the trans matrix (tParam = 2 for quasi-TPFA)
+   * @param[in] lengthTolerance the tolerance used in the trans calculations
+   * @param[inout] transMatrix
+   *
+   * This function is in this class until we find a better place for it
+   * 
+   */
+  void ComputeQFamilyInnerProduct( arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodePosition,
+                                   ArrayOfArraysView<localIndex const> const & faceToNodes, 
+                                   arraySlice1d<localIndex const> const elemToFaces,
+                                   R1Tensor const & elemCenter,
+                                   real64   const & elemVolume,
+                                   R1Tensor const & elemPerm,
+                                   real64   const & tParam, 
+                                   real64   const & lengthTolerance,
+                                   stackArray2d<real64, MAX_NUM_FACES
+                         			       *MAX_NUM_FACES> const & transMatrix ) const;
+
   
   /// Dof key for the member functions that do not have access to the coupled Dof manager
   string m_faceDofKey; 
@@ -502,6 +535,15 @@ private:
 
   /// minimum value of the total mobility
   real64 const m_minTotalMob;
+
+  /// type of inner product for the mimetic method
+  /// This is only const for now 
+  integer const m_ipType;
+
+  /// flag to decide we orthonormalize with SVD or with MGS
+  /// This is only const for now
+  bool const m_orthonormalizeWithSVD;
+  
 };
 
 } /* namespace geosx */

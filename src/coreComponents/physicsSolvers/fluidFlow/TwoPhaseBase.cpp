@@ -287,13 +287,13 @@ void TwoPhaseBase::InitializePreSubGroups( Group * const rootGroup )
   if ( (fluid->phaseName( 0 ) == "oil" && fluid->phaseName( 1 ) == "gas") ||
        (fluid->phaseName( 1 ) == "oil" && fluid->phaseName( 0 ) == "water") )
   {
-    m_ipw    = 0;
+    m_ipw  = 0;
     m_ipnw = 1;
   }
   else if ( (fluid->phaseName( 1 ) == "oil" && fluid->phaseName( 0 ) == "gas") ||
             (fluid->phaseName( 0 ) == "oil" && fluid->phaseName( 1 ) == "water") )
   {
-    m_ipw    = 1;
+    m_ipw  = 1;
     m_ipnw = 0;
   }
   GEOSX_ERROR_IF( m_ipw == -1 || m_ipnw == -1,

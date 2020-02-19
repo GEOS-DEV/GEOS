@@ -21,6 +21,7 @@
 #include "common/TimingMacros.hpp"
 #include "mpiCommunications/CommunicationTools.hpp"
 #include "mpiCommunications/NeighborCommunicator.hpp"
+#include "linearAlgebra/interfaces/BlasLapackLA.hpp"
 
 /**
  * @namespace the geosx namespace that encapsulates the majority of the code
@@ -38,7 +39,9 @@ TwoPhaseHybridFVM::TwoPhaseHybridFVM( const std::string& name,
   m_faceDofKey(""),
   m_elemDofKey(""),  
   m_areaRelTol(1e-8),
-  m_minTotalMob(1e-8)
+  m_minTotalMob(1e-8),
+  m_ipType(InnerProductType::QUASI_TPFA),
+  m_orthonormalizeWithSVD(false)
 {
   // two elem-centered dof per elem
   m_numDofPerCell = 2;
@@ -318,7 +321,7 @@ void TwoPhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time
         stackArray1d<real64, maxNumFaces> totalVolFlux( numFacesInElem );
         stackArray1d<real64, maxNumFaces> dTotalVolFlux_dp( numFacesInElem );
         stackArray1d<real64, maxNumFaces> dTotalVolFlux_dS( numFacesInElem );
-        stackArray1d<real64, maxNumFaces> dTotalVolFlux_dfp( numFacesInElem );
+        stackArray2d<real64, maxNumFaces*maxNumFaces> dTotalVolFlux_dfp( numFacesInElem, numFacesInElem );
 
         // one sided grav term: T (\rho_l - \rho_m) g \nabla d 
         stackArray2d<real64, numPhases*maxNumFaces>   difGravHead( numFacesInElem, numPhases );
@@ -488,7 +491,7 @@ void TwoPhaseHybridFVM::ComputeTotalVolFluxes( arrayView1d<real64 const> const &
                                                stackArray1d<real64, MAX_NUM_FACES> & totalVolFlux,
                                                stackArray1d<real64, MAX_NUM_FACES> & dTotalVolFlux_dp,
                                                stackArray1d<real64, MAX_NUM_FACES> & dTotalVolFlux_dS,
-                                               stackArray1d<real64, MAX_NUM_FACES> & dTotalVolFlux_dfp ) const
+                                               stackArray2d<real64, MAX_NUM_FACES*MAX_NUM_FACES> & dTotalVolFlux_dfp ) const
 {
   localIndex constexpr numPhases   = NUM_PHASES;
   localIndex constexpr maxNumFaces = MAX_NUM_FACES;
@@ -559,10 +562,10 @@ void TwoPhaseHybridFVM::ComputeTotalVolFluxes( arrayView1d<real64 const> const &
     for (localIndex jfaceLoc = 0; jfaceLoc < numFacesInElem; ++jfaceLoc)
     {
       // this is going to store T \sum_p \lambda_p (\nabla p - \rho_p g \nabla d)
-      totalVolFlux[ifaceLoc]      += transMatrix[ifaceLoc][jfaceLoc] * sumWeightedPotDif[jfaceLoc];
-      dTotalVolFlux_dp[ifaceLoc]  += transMatrix[ifaceLoc][jfaceLoc] * dSumWeightedPotDif_dp[jfaceLoc];
-      dTotalVolFlux_dS[ifaceLoc]  += transMatrix[ifaceLoc][jfaceLoc] * dSumWeightedPotDif_dS[jfaceLoc];      
-      dTotalVolFlux_dfp[ifaceLoc] += transMatrix[ifaceLoc][jfaceLoc] * dSumWeightedPotDif_dfp[jfaceLoc];
+      totalVolFlux[ifaceLoc]                += transMatrix[ifaceLoc][jfaceLoc] * sumWeightedPotDif[jfaceLoc];
+      dTotalVolFlux_dp[ifaceLoc]            += transMatrix[ifaceLoc][jfaceLoc] * dSumWeightedPotDif_dp[jfaceLoc];
+      dTotalVolFlux_dS[ifaceLoc]            += transMatrix[ifaceLoc][jfaceLoc] * dSumWeightedPotDif_dS[jfaceLoc];      
+      dTotalVolFlux_dfp[ifaceLoc][jfaceLoc] += transMatrix[ifaceLoc][jfaceLoc] * dSumWeightedPotDif_dfp[jfaceLoc];
     }
   }
 }
@@ -857,19 +860,19 @@ void TwoPhaseHybridFVM::AssembleOneSidedMassFluxes( real64 const & dt,
                                                     arrayView1d<globalIndex const> const & faceDofNumber,
                                                     arraySlice1d<localIndex const> const elemToFaces,
                                                     globalIndex const elemDofNumber,
-                                                    stackArray1d<globalIndex, MAX_NUM_FACES>         const & neighborDofNumbers,
-                                                    stackArray1d<real64, MAX_NUM_FACES>              const & totalVolFlux,
-                                                    stackArray1d<real64, MAX_NUM_FACES>              const & dTotalVolFlux_dp,
-                                                    stackArray1d<real64, MAX_NUM_FACES>              const & dTotalVolFlux_dS,
-                                                    stackArray1d<real64, MAX_NUM_FACES>              const & dTotalVolFlux_dfp,
-                                                    stackArray2d<real64, NUM_PHASES*MAX_NUM_FACES>   const & difGravHead,
-                                                    stackArray3d<real64, 2*NUM_PHASES*MAX_NUM_FACES> const & dDifGravHead_dp,
-                                                    stackArray2d<real64, NUM_PHASES*MAX_NUM_FACES>   const & viscousCoef,
-                                                    stackArray3d<real64, 2*NUM_PHASES*MAX_NUM_FACES> const & dViscousCoef_dp,
-                                                    stackArray3d<real64, 2*NUM_PHASES*MAX_NUM_FACES> const & dViscousCoef_dS,
-                                                    stackArray2d<real64, NUM_PHASES*MAX_NUM_FACES>   const & gravCoef,
-                                                    stackArray3d<real64, 2*NUM_PHASES*MAX_NUM_FACES> const & dGravCoef_dp,
-                                                    stackArray3d<real64, 2*NUM_PHASES*MAX_NUM_FACES> const & dGravCoef_dS,
+                                                    stackArray1d<globalIndex, MAX_NUM_FACES>          const & neighborDofNumbers,
+                                                    stackArray1d<real64, MAX_NUM_FACES>               const & totalVolFlux,
+                                                    stackArray1d<real64, MAX_NUM_FACES>               const & dTotalVolFlux_dp,
+                                                    stackArray1d<real64, MAX_NUM_FACES>               const & dTotalVolFlux_dS,
+                                                    stackArray2d<real64, MAX_NUM_FACES*MAX_NUM_FACES> const & dTotalVolFlux_dfp,
+                                                    stackArray2d<real64, NUM_PHASES*MAX_NUM_FACES>    const & difGravHead,
+                                                    stackArray3d<real64, 2*NUM_PHASES*MAX_NUM_FACES>  const & dDifGravHead_dp,
+                                                    stackArray2d<real64, NUM_PHASES*MAX_NUM_FACES>    const & viscousCoef,
+                                                    stackArray3d<real64, 2*NUM_PHASES*MAX_NUM_FACES>  const & dViscousCoef_dp,
+                                                    stackArray3d<real64, 2*NUM_PHASES*MAX_NUM_FACES>  const & dViscousCoef_dS,
+                                                    stackArray2d<real64, NUM_PHASES*MAX_NUM_FACES>    const & gravCoef,
+                                                    stackArray3d<real64, 2*NUM_PHASES*MAX_NUM_FACES>  const & dGravCoef_dp,
+                                                    stackArray3d<real64, 2*NUM_PHASES*MAX_NUM_FACES>  const & dGravCoef_dS,
                                                     ParallelMatrix * const matrix,
                                                     ParallelVector * const rhs ) const
 {
@@ -949,8 +952,11 @@ void TwoPhaseHybridFVM::AssembleOneSidedMassFluxes( real64 const & dt,
       dSumLocalMassFluxes_dElemVars[rowId][fOffset+dS] += dLocalViscCoef_dSNeighbor * totalVolFlux[ifaceLoc]
                                                         + dLocalGravCoef_dSNeighbor * difGravHead[ifaceLoc][ip];
 
-      // 4) derivatives wrt the face centered var 
-      dSumLocalMassFluxes_dFaceVars[rowId][ifaceLoc] = localViscCoef * dTotalVolFlux_dfp[ifaceLoc];
+      // 4) derivatives wrt the face centered var
+      for (localIndex jfaceLoc = 0; jfaceLoc < numFacesInElem; ++jfaceLoc)
+      { 	
+        dSumLocalMassFluxes_dFaceVars[rowId][jfaceLoc] += localViscCoef * dTotalVolFlux_dfp[ifaceLoc][jfaceLoc];
+      }
     }
 
     // collect the relevant dof numbers
@@ -986,40 +992,50 @@ void TwoPhaseHybridFVM::AssembleOneSidedMassFluxes( real64 const & dt,
 void TwoPhaseHybridFVM::AssembleConstraints( arrayView1d<globalIndex const> const & faceDofNumber,
                                              arraySlice1d<localIndex const> const elemToFaces,
                                              globalIndex const elemDofNumber,
-                                             stackArray1d<real64, MAX_NUM_FACES> const & totalVolFlux,
-                                             stackArray1d<real64, MAX_NUM_FACES> const & dTotalVolFlux_dp,
-                                             stackArray1d<real64, MAX_NUM_FACES> const & dTotalVolFlux_dS,
-                                             stackArray1d<real64, MAX_NUM_FACES> const & dTotalVolFlux_dfp,
+                                             stackArray1d<real64, MAX_NUM_FACES>               const & totalVolFlux,
+                                             stackArray1d<real64, MAX_NUM_FACES>               const & dTotalVolFlux_dp,
+                                             stackArray1d<real64, MAX_NUM_FACES>               const & dTotalVolFlux_dS,
+                                             stackArray2d<real64, MAX_NUM_FACES*MAX_NUM_FACES> const & dTotalVolFlux_dfp,
                                              ParallelMatrix * const matrix,
                                              ParallelVector * const rhs ) const 
 {
   localIndex constexpr numDof     = NUM_DOF;
+  localIndex constexpr maxNumFaces = MAX_NUM_FACES; 
+  
   localIndex const numFacesInElem = elemToFaces.size();
 
   localIndex const dp = TwoPhaseBase::ColOffset::DPRES;
   localIndex const dS = TwoPhaseBase::ColOffset::DSAT;
 
   // dof numbers
-  stackArray1d<globalIndex, numDof> elemDofColIndices( numDof );
+  stackArray1d<globalIndex, numDof>      elemDofColIndices( numDof );
+  stackArray1d<globalIndex, maxNumFaces> faceDofColIndices( numFacesInElem );
+  
   elemDofColIndices[dp] = elemDofNumber + dp;
   elemDofColIndices[dS] = elemDofNumber + dS;
 
   // fluxes
-  stackArray1d<real64, numDof> dFlux_dElemVars( numDof );
+  stackArray1d<real64, numDof>      dFlux_dElemVars( numDof );
+  stackArray1d<real64, maxNumFaces> dFlux_dFaceVars( numFacesInElem );  
   
   // for each element, loop over the local (one-sided) faces
   for (localIndex ifaceLoc = 0; ifaceLoc < numFacesInElem; ++ifaceLoc)
   {
     // dof numbers 
-    globalIndex const eqnRowIndex     = faceDofNumber[elemToFaces[ifaceLoc]];
-    globalIndex const faceDofColIndex = faceDofNumber[elemToFaces[ifaceLoc]];
+    globalIndex const eqnRowIndex = faceDofNumber[elemToFaces[ifaceLoc]];
 
     // fluxes
-    real64 const flux            = totalVolFlux[ifaceLoc];
-    real64 const dFlux_dFaceVars = dTotalVolFlux_dfp[ifaceLoc];
-    dFlux_dElemVars[dp]          = dTotalVolFlux_dp[ifaceLoc];
-    dFlux_dElemVars[dS]          = dTotalVolFlux_dS[ifaceLoc];
+    real64 const flux   = totalVolFlux[ifaceLoc];
+    dFlux_dElemVars[dp] = dTotalVolFlux_dp[ifaceLoc];
+    dFlux_dElemVars[dS] = dTotalVolFlux_dS[ifaceLoc];
 
+    dFlux_dFaceVars = 0.0;
+    for (localIndex jfaceLoc = 0; jfaceLoc < numFacesInElem; ++jfaceLoc)
+    {
+      faceDofColIndices[jfaceLoc] = faceDofNumber[elemToFaces[jfaceLoc]];      
+      dFlux_dFaceVars[jfaceLoc]   = dTotalVolFlux_dfp[ifaceLoc][jfaceLoc]; 
+    }
+    
     // residual
     rhs->add( &eqnRowIndex,
               &flux,
@@ -1033,9 +1049,9 @@ void TwoPhaseHybridFVM::AssembleConstraints( arrayView1d<globalIndex const> cons
    
     // jacobian -- derivatives wrt face pressure terms
     matrix->add( &eqnRowIndex,
-                 &faceDofColIndex,
-                 &dFlux_dFaceVars,
-                 1, 1 );
+                 faceDofColIndices.data(),
+                 dFlux_dFaceVars.data(),
+                 1, numFacesInElem );
 
   }      
 }
@@ -1377,18 +1393,47 @@ void TwoPhaseHybridFVM::ComputeTransmissibilityMatrix( arrayView2d<real64 const,
                                                        ArrayOfArraysView<localIndex const> const & faceToNodes, 
                                                        arraySlice1d<localIndex const> const elemToFaces,
                                                        R1Tensor const & elemCenter,
-                                                       real64   const & GEOSX_UNUSED_PARAM( elemVolume ),
+                                                       real64   const & elemVolume,
                                                        R1Tensor const & elemPerm,
                                                        real64   const & lengthTolerance,
                                                        stackArray2d<real64, MAX_NUM_FACES*MAX_NUM_FACES> & transMatrix ) const 
 {
-  ComputeTPFAInnerProduct( nodePosition,
-                           faceToNodes,
-                           elemToFaces,
-                           elemCenter,
-                           elemPerm,
-                           lengthTolerance,
-                           transMatrix );
+  switch (m_ipType)
+  {
+    case InnerProductType::TPFA:
+    {
+      ComputeTPFAInnerProduct( nodePosition,
+                               faceToNodes,
+                               elemToFaces,
+                               elemCenter,
+                               elemPerm,
+                               lengthTolerance,
+                               transMatrix );
+      break;
+    }
+
+    case InnerProductType::QUASI_TPFA:
+    {
+      // for now, Q-TPFA is useful for debugging the IP computation
+      // since it reduces to TPFA on orthogonal meshes...
+      ComputeQFamilyInnerProduct( nodePosition,
+                                  faceToNodes,
+                                  elemToFaces,
+                                  elemCenter,
+                                  elemVolume,
+                                  elemPerm,
+                                  2,   
+                                  lengthTolerance,
+                                  transMatrix );
+      break;
+    }
+
+    default:
+    {
+      GEOSX_LOG_RANK("Unknown inner product in SinglePhaseHybridFVM");
+      break;
+    }
+  }
 }
 
 namespace
@@ -1482,6 +1527,205 @@ void TwoPhaseHybridFVM::ComputeTPFAInnerProduct( arrayView2d<real64 const, nodes
     }
   }
 }
- 
+
+
+void TwoPhaseHybridFVM::ComputeQFamilyInnerProduct( arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodePosition,
+                                                    ArrayOfArraysView<localIndex const> const & faceToNodes, 
+                                                    arraySlice1d<localIndex const> const elemToFaces,
+                                                    R1Tensor const & elemCenter,
+                                                    real64   const & elemVolume,
+                                                    R1Tensor const & elemPerm,
+                                                    real64   const & tParam, 
+                                                    real64   const & lengthTolerance,
+                                                    stackArray2d<real64, MAX_NUM_FACES
+                                                                        *MAX_NUM_FACES> const & transMatrix ) const
+{
+  R1Tensor faceCenter, faceNormal, cellToFaceVec;
+  real64 const areaTolerance = lengthTolerance * lengthTolerance;
+
+  localIndex const numFacesInElem = elemToFaces.size();
+  localIndex const dim = 3;
+  
+  // TODO: remove all the array2ds of this function once the BlasLapackLA calls have been removed
+  //       work with stackArray2ds instead 
+  array2d<real64> cellToFaceMat;
+  array2d<real64> normalsMat( numFacesInElem, dim );
+  array2d<real64> permMat( dim, dim );
+  array2d<real64> transMat( numFacesInElem, numFacesInElem );
+  
+  // TODO: figure out if it is possible/beneficial to preallocate these arrays
+  array1d<real64> work_dim;
+  array2d<real64> work_dimByDim; 
+  array2d<real64> work_dimByNumFaces( dim, numFacesInElem );
+  array2d<real64> work_numFacesByDim( numFacesInElem, dim );
+  array2d<real64> worka_numFacesByNumFaces( numFacesInElem, numFacesInElem );
+  array2d<real64> workb_numFacesByNumFaces( numFacesInElem, numFacesInElem );
+  array2d<real64> workc_numFacesByNumFaces( numFacesInElem, numFacesInElem );
+
+  array1d<real64> q0; 
+  array1d<real64> q1; 
+  array1d<real64> q2; 
+
+  if (m_orthonormalizeWithSVD)
+  {
+    cellToFaceMat.resizeDimension<0>( numFacesInElem );
+    cellToFaceMat.resizeDimension<1>( dim );
+    work_dim.resize( dim );
+    work_dimByDim.resize( dim, dim );
+  }
+  else
+  {
+    q0.resize( numFacesInElem );
+    q1.resize( numFacesInElem );
+    q2.resize( numFacesInElem );
+  }
+  
+  // 1) fill the matrices cellToFaceMat and normalsMat row by row 
+  for (localIndex ifaceLoc = 0; ifaceLoc < numFacesInElem; ++ifaceLoc)
+  {
+
+    // compute the face geometry data: center, normal, vector from cell center to face center
+    real64 const faceArea =
+      computationalGeometry::Centroid_3DPolygon( faceToNodes[elemToFaces[ifaceLoc]],
+                                                 faceToNodes.sizeOfArray(elemToFaces[ifaceLoc]),
+                                                 nodePosition,
+                                                 faceCenter,
+                                                 faceNormal,
+                                                 areaTolerance );
+        
+    cellToFaceVec  = faceCenter;
+    cellToFaceVec -= elemCenter;
+
+    if (m_orthonormalizeWithSVD)
+    {  
+      cellToFaceMat(ifaceLoc,0) = cellToFaceVec(0);
+      cellToFaceMat(ifaceLoc,1) = cellToFaceVec(1);
+      cellToFaceMat(ifaceLoc,2) = cellToFaceVec(2);
+    }
+    else
+    {
+      q0(ifaceLoc) = cellToFaceVec(0);
+      q1(ifaceLoc) = cellToFaceVec(1);
+      q2(ifaceLoc) = cellToFaceVec(2);
+    }
+    
+    if (Dot(cellToFaceVec, faceNormal) < 0.0)
+    {
+      faceNormal *= -1;
+    }
+
+    faceNormal.Normalize();
+    
+    normalsMat(ifaceLoc,0) = faceArea*faceNormal(0);
+    normalsMat(ifaceLoc,1) = faceArea*faceNormal(1);
+    normalsMat(ifaceLoc,2) = faceArea*faceNormal(2);
+    
+  }
+
+  // 2) assemble full coefficient tensor from principal axis/components
+  // TODO: figure out if there is a better way to that 
+  R2SymTensor permeabilityTensor;
+  makeFullTensor(elemPerm, permeabilityTensor);
+  for (localIndex i = 0; i < dim; ++i)
+  {
+    for (localIndex j = 0; j < dim; ++j)
+    {
+      permMat(i,j) = permeabilityTensor(i,j);
+    }
+  }
+
+  // TODO: replace the BlasLapack calls below with explicitly for loops
+  //       this should be easy if MGS orthonormalization is as robust as SVD
+  
+  // 3) compute N K N' 
+  BlasLapackLA::matrixMatrixTMultiply( permMat,
+                                       normalsMat,
+                                       work_dimByNumFaces );
+  BlasLapackLA::matrixMatrixMultiply( normalsMat,
+                                      work_dimByNumFaces,
+                                      transMat );
+
+  // 4) compute the orthonormalization of the matrix cellToFaceVec 
+  //    This is done either with SVD or MGS
+  //    If we find that MGS is stable, I will remove SVD
+
+  if (m_orthonormalizeWithSVD)
+  {
+    // calling SVD seems to be an overkill to orthonormalize the 3 columns of cellToFaceMat...
+    BlasLapackLA::matrixSVD( cellToFaceMat,
+                             work_numFacesByDim,
+                             work_dim,
+                             work_dimByDim );
+  }
+  else
+  {
+    // q0
+    BlasLapackLA::vectorScale( 1.0/BlasLapackLA::vectorNorm2( q0 ), q0 );
+
+    // q1
+    real64 const q0Dotq1 = BlasLapackLA::vectorDot( q0, q1 );
+    BlasLapackLA::vectorVectorAdd( q0, q1, -q0Dotq1 );
+    BlasLapackLA::vectorScale( 1.0/BlasLapackLA::vectorNorm2( q1 ), q1 );
+  
+    // q2
+    real64 const q0Dotq2 = BlasLapackLA::vectorDot( q0, q2 );
+    BlasLapackLA::vectorVectorAdd( q0, q2, -q0Dotq2 );
+    real64 const q1Dotq2 = BlasLapackLA::vectorDot( q1, q2 );
+    BlasLapackLA::vectorVectorAdd( q1, q2, -q1Dotq2 );
+    BlasLapackLA::vectorScale( 1.0/BlasLapackLA::vectorNorm2( q2 ), q2 );
+
+    // TODO: remove the copies once the BlasLapackLA calls have been removed
+    for (int i = 0; i < numFacesInElem; ++i)
+    {  
+      work_numFacesByDim(i,0) = q0(i);
+      work_numFacesByDim(i,1) = q1(i);
+      work_numFacesByDim(i,2) = q2(i);
+    }
+  }
+  
+  // 5) compute P_Q = I - QQ'
+  BlasLapackLA::matrixMatrixTMultiply( work_numFacesByDim,
+                                       work_numFacesByDim,
+                                       worka_numFacesByNumFaces );
+  BlasLapackLA::matrixScale( -1, worka_numFacesByNumFaces );
+  for (localIndex i = 0; i < numFacesInElem; ++i)
+  {
+    worka_numFacesByNumFaces(i,i)++;
+  }
+
+  // 6) compute P_Q D P_Q where D = diag(diag(N K N')  
+  for (localIndex i = 0; i < numFacesInElem; ++i)
+  {
+    for (localIndex j = 0; j < numFacesInElem; ++j)
+    {
+      workb_numFacesByNumFaces(i,j) = (i == j ) ?  transMat(i,j) : 0.0;
+    }
+  }
+  BlasLapackLA::matrixMatrixMultiply( workb_numFacesByNumFaces,
+                                      worka_numFacesByNumFaces,
+                                      workc_numFacesByNumFaces );
+  BlasLapackLA::matrixMatrixMultiply( worka_numFacesByNumFaces,
+                                      workc_numFacesByNumFaces,
+                                      workb_numFacesByNumFaces );
+  
+  // 7) compute T = ( N K N' + t U diag(diag(N K N')) U ) / elemVolume
+  BlasLapackLA::matrixScale( tParam, workb_numFacesByNumFaces );
+  BlasLapackLA::matrixMatrixAdd( workb_numFacesByNumFaces, transMat );
+  BlasLapackLA::matrixScale( 1/elemVolume, transMat );
+  
+  // for now, I have this copy to transfer the data from the array2d to the stackArray2d
+  // I need the array2d to call the BlasLapackLA functions
+  // if and when everything works with explicit for loops in this kernel function,
+  // I will be able to do remove all the array2ds and then I won't need this copy anymore
+  for (localIndex i = 0; i < numFacesInElem; ++i)
+  {
+    for (localIndex j = 0; j < numFacesInElem; ++j)
+    {
+      transMatrix(i,j) = transMat(i,j);
+    }
+  }
+
+}
+
 REGISTER_CATALOG_ENTRY( SolverBase, TwoPhaseHybridFVM, std::string const &, Group * const )
 } /* namespace geosx */
