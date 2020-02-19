@@ -543,7 +543,7 @@ real64 SurfaceGenerator::SolverStep( real64 const & time_n,
     MeshLevel * meshLevel = Group::group_cast<MeshBody*>( mesh.second )->getMeshLevel( 0 );
 
     {
-      SpatialPartition & partition = domain->getReference<SpatialPartition,PartitionBase>(dataRepository::keys::partitionManager);
+      SpatialPartition & partition = dynamicCast< SpatialPartition & >( domain->getReference< PartitionBase >( dataRepository::keys::partitionManager ) );
 
       rval = SeparationDriver( domain,
                                meshLevel,
