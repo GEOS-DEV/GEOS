@@ -119,10 +119,10 @@ void checkArray2dView( const Wrapper< array2d< T > > * view, int sfp, const arra
 
 
 template< typename T >
-Wrapper< set< T > > * createSetView( Group * parent, const string & name,
-                                     localIndex sfp, const set< T > & data )
+Wrapper< SortedArray< T > > * createSetView( Group * parent, const string & name,
+                                             localIndex sfp, const SortedArray< T > & data )
 {
-  Wrapper< set< T > > * view = parent->registerWrapper< set< T > >( name );
+  Wrapper< SortedArray< T > > * view = parent->registerWrapper< SortedArray< T > >( name );
   view->setSizedFromParent( int(sfp) );
 
   /* Insert the data */
@@ -139,11 +139,11 @@ Wrapper< set< T > > * createSetView( Group * parent, const string & name,
 
 
 template< typename T >
-void checkSetView( const Wrapper< set< T > > * view, localIndex sfp, const set< T > & data )
+void checkSetView( const Wrapper< SortedArray< T > > * view, localIndex sfp, const SortedArray< T > & data )
 {
   EXPECT_EQ( view->sizedFromParent(), sfp );
   EXPECT_EQ( view->size(), data.size() );
-  const set< T > & view_data = view->reference();
+  const SortedArray< T > & view_data = view->reference();
   for( int i = 0 ; i < view->size() ; i++ )
   {
     EXPECT_EQ( view_data[i], data[i] );
@@ -361,10 +361,10 @@ TEST( testRestartExtended, testRestartExtended )
   createScalarView( mixed_group, view_pi_name, view_pi_sfp, view_pi_value );
 
 
-  /* Create a new set<int> Wrapper. */
+  /* Create a new SortedArray<int> Wrapper. */
   string view_setlocalIndex_name = "view_setlocalIndex";
   localIndex view_setlocalIndex_sfp = sfp++;
-  set< localIndex > view_setlocalIndex_set;
+  SortedArray< localIndex > view_setlocalIndex_set;
   view_setlocalIndex_set.insert( 4 );
   view_setlocalIndex_set.insert( 3 );
   view_setlocalIndex_set.insert( 10 );
@@ -374,10 +374,10 @@ TEST( testRestartExtended, testRestartExtended )
   createSetView( mixed_group, view_setlocalIndex_name, view_setlocalIndex_sfp, view_setlocalIndex_set );
 
 
-  /* Create a new set<string> Wrapper. */
+  /* Create a new SortedArray<string> Wrapper. */
   string view_setString_name = "view_setString";
   int view_setString_sfp = sfp++;
-  set< string > view_setString_set;
+  SortedArray< string > view_setString_set;
   view_setString_set.insert( "zaa" );
   view_setString_set.insert( "aab" );
   view_setString_set.insert( "QD" );
@@ -452,8 +452,8 @@ TEST( testRestartExtended, testRestartExtended )
   Wrapper< real32_array > * view_real32_new = mixed_group_new->registerWrapper< real32_array >( view_real32_name );
   Wrapper< string > * view_what_new = mixed_group_new->registerWrapper< string >( view_what_name );
   Wrapper< real64 > * view_pi_new = mixed_group_new->registerWrapper< real64 >( view_pi_name );
-  Wrapper< set< localIndex > > * view_setlocalIndex_new = mixed_group_new->registerWrapper< set< localIndex > >( view_setlocalIndex_name );
-  Wrapper< set< string > > * view_setString_new = mixed_group_new->registerWrapper< set< string > >( view_setString_name );
+  Wrapper< SortedArray< localIndex > > * view_setlocalIndex_new = mixed_group_new->registerWrapper< SortedArray< localIndex > >( view_setlocalIndex_name );
+  Wrapper< SortedArray< string > > * view_setString_new = mixed_group_new->registerWrapper< SortedArray< string > >( view_setString_name );
   Wrapper< array2d< real64 > > * view_real642d_new = mixed_group_new->registerWrapper< array2d< real64 > >( view_real642d_name );
   Wrapper< array2d< R1Tensor > > * view_r1t2d_new = mixed_group_new->registerWrapper< array2d< R1Tensor > >( view_r1t2d_name );
 

@@ -45,7 +45,7 @@ void RegisterAndApplyField( DomainPartition * domain,
   fieldSpecificationManager.Apply( 0., domain, "", "",
                                    [&] ( FieldSpecificationBase const * const bc,
                                          string const &,
-                                         set<localIndex> const & targetSet,
+                                         SortedArray<localIndex> const & targetSet,
                                          Group * const targetGroup,
                                          string const name )
                                    {
@@ -116,36 +116,36 @@ TEST(FieldSpecification, Recursive)
 
   reg1->GetSubRegion("reg1tet")->registerWrapper< array1d<real64> >( "field3" );
 
-  localIndex_set & set0hex = reg0->GetSubRegion("reg0hex")
+  SortedArray<localIndex> & set0hex = reg0->GetSubRegion("reg0hex")
                                  ->GetGroup("sets")
-                                 ->registerWrapper<localIndex_set>( std::string("all") )
+                                 ->registerWrapper<SortedArray<localIndex>>( std::string("all") )
                                  ->reference();
   for(localIndex i = 0; i < nbHexReg0 ; i++)
   {
     set0hex.insert( i );
   }
 
-  localIndex_set & set0tet = reg0->GetSubRegion("reg0tet")
+  SortedArray<localIndex> & set0tet = reg0->GetSubRegion("reg0tet")
                                  ->GetGroup("sets")
-                                 ->registerWrapper<localIndex_set>( std::string("all") )
+                                 ->registerWrapper<SortedArray<localIndex>>( std::string("all") )
                                  ->reference();
   for(localIndex i = 0; i < nbTetReg0 ; i++)
   {
     set0tet.insert( i );
   }
 
-  localIndex_set & set1hex = reg1->GetSubRegion("reg1hex")
+  SortedArray<localIndex> & set1hex = reg1->GetSubRegion("reg1hex")
                                  ->GetGroup("sets")
-                                 ->registerWrapper<localIndex_set>( std::string("all") )
+                                 ->registerWrapper<SortedArray<localIndex>>( std::string("all") )
                                  ->reference();
   for(localIndex i = 0; i < nbHexReg1 ; i++)
   {
     set1hex.insert( i );
   }
 
-  localIndex_set & set1tet = reg1->GetSubRegion("reg1tet")
+  SortedArray<localIndex> & set1tet = reg1->GetSubRegion("reg1tet")
                                  ->GetGroup("sets")
-                                 ->registerWrapper<localIndex_set>( std::string("all") )
+                                 ->registerWrapper<SortedArray<localIndex>>( std::string("all") )
                                  ->reference();
   for(localIndex i = 0; i < nbTetReg1 ; i++)
   {
