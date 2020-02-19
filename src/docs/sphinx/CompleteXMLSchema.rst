@@ -14,6 +14,13 @@ Element: BasisFunctions
 .. include:: ../../coreComponents/fileIO/schema/docs/BasisFunctions.rst
 
 
+.. _XML_BilinearElasticIsotropic:
+
+Element: BilinearElasticIsotropic
+=================================
+.. include:: ../../coreComponents/fileIO/schema/docs/BilinearElasticIsotropic.rst
+
+
 .. _XML_BlackOilFluid:
 
 Element: BlackOilFluid
@@ -231,6 +238,13 @@ Element: HaltEvent
 .. include:: ../../coreComponents/fileIO/schema/docs/HaltEvent.rst
 
 
+.. _XML_HardeningElasticIsotropic:
+
+Element: HardeningElasticIsotropic
+==================================
+.. include:: ../../coreComponents/fileIO/schema/docs/HardeningElasticIsotropic.rst
+
+
 .. _XML_Hydrofracture:
 
 Element: Hydrofracture
@@ -336,6 +350,13 @@ Element: MultiPhaseMultiComponentFluid
 .. include:: ../../coreComponents/fileIO/schema/docs/MultiPhaseMultiComponentFluid.rst
 
 
+.. _XML_NonlinearElasticDuncanChangEB:
+
+Element: NonlinearElasticDuncanChangEB
+======================================
+.. include:: ../../coreComponents/fileIO/schema/docs/NonlinearElasticDuncanChangEB.rst
+
+
 .. _XML_NonlinearSolverParameters:
 
 Element: NonlinearSolverParameters
@@ -392,6 +413,13 @@ Element: PoreVolumeCompressibleSolid
 .. include:: ../../coreComponents/fileIO/schema/docs/PoreVolumeCompressibleSolid.rst
 
 
+.. _XML_PoroBilinearElasticIsotropic:
+
+Element: PoroBilinearElasticIsotropic
+=====================================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroBilinearElasticIsotropic.rst
+
+
 .. _XML_PoroLinearElasticAnisotropic:
 
 Element: PoroLinearElasticAnisotropic
@@ -404,13 +432,6 @@ Element: PoroLinearElasticAnisotropic
 Element: PoroLinearElasticIsotropic
 ===================================
 .. include:: ../../coreComponents/fileIO/schema/docs/PoroLinearElasticIsotropic.rst
-
-
-.. _XML_PoroLinearViscoElasticAnisotropic:
-
-Element: PoroLinearViscoElasticAnisotropic
-==========================================
-.. include:: ../../coreComponents/fileIO/schema/docs/PoroLinearViscoElasticAnisotropic.rst
 
 
 .. _XML_PoroLinearViscoElasticIsotropic:
@@ -590,6 +611,13 @@ Datastructure Definitions
 Datastructure: BasisFunctions
 =============================
 .. include:: ../../coreComponents/fileIO/schema/docs/BasisFunctions_other.rst
+
+
+.. _DATASTRUCTURE_BilinearElasticIsotropic:
+
+Datastructure: BilinearElasticIsotropic
+=======================================
+.. include:: ../../coreComponents/fileIO/schema/docs/BilinearElasticIsotropic_other.rst
 
 
 .. _DATASTRUCTURE_BlackOilFluid:
@@ -823,6 +851,13 @@ Datastructure: HaltEvent
 .. include:: ../../coreComponents/fileIO/schema/docs/HaltEvent_other.rst
 
 
+.. _DATASTRUCTURE_HardeningElasticIsotropic:
+
+Datastructure: HardeningElasticIsotropic
+========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/HardeningElasticIsotropic_other.rst
+
+
 .. _DATASTRUCTURE_Hydrofracture:
 
 Datastructure: Hydrofracture
@@ -942,6 +977,13 @@ Datastructure: MultiPhaseMultiComponentFluid
 .. include:: ../../coreComponents/fileIO/schema/docs/MultiPhaseMultiComponentFluid_other.rst
 
 
+.. _DATASTRUCTURE_NonlinearElasticDuncanChangEB:
+
+Datastructure: NonlinearElasticDuncanChangEB
+============================================
+.. include:: ../../coreComponents/fileIO/schema/docs/NonlinearElasticDuncanChangEB_other.rst
+
+
 .. _DATASTRUCTURE_NonlinearSolverParameters:
 
 Datastructure: NonlinearSolverParameters
@@ -998,6 +1040,13 @@ Datastructure: PoreVolumeCompressibleSolid
 .. include:: ../../coreComponents/fileIO/schema/docs/PoreVolumeCompressibleSolid_other.rst
 
 
+.. _DATASTRUCTURE_PoroBilinearElasticIsotropic:
+
+Datastructure: PoroBilinearElasticIsotropic
+===========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroBilinearElasticIsotropic_other.rst
+
+
 .. _DATASTRUCTURE_PoroLinearElasticAnisotropic:
 
 Datastructure: PoroLinearElasticAnisotropic
@@ -1010,13 +1059,6 @@ Datastructure: PoroLinearElasticAnisotropic
 Datastructure: PoroLinearElasticIsotropic
 =========================================
 .. include:: ../../coreComponents/fileIO/schema/docs/PoroLinearElasticIsotropic_other.rst
-
-
-.. _DATASTRUCTURE_PoroLinearViscoElasticAnisotropic:
-
-Datastructure: PoroLinearViscoElasticAnisotropic
-================================================
-.. include:: ../../coreComponents/fileIO/schema/docs/PoroLinearViscoElasticAnisotropic_other.rst
 
 
 .. _DATASTRUCTURE_PoroLinearViscoElasticIsotropic:

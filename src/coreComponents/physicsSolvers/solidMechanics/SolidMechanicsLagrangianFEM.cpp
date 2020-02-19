@@ -34,7 +34,6 @@
 #include "mpiCommunications/NeighborCommunicator.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
-
 namespace geosx
 {
 

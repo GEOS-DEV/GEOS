@@ -31,6 +31,9 @@ set( constitutive_headers
      solid/LinearViscoElasticIsotropic.hpp
      solid/PoroElastic.hpp
      solid/PoreVolumeCompressibleSolid.hpp
+     solid/BilinearElasticIsotropic.hpp
+     solid/NonlinearElasticDuncanChangEB.hpp
+     solid/HardeningElasticIsotropic.hpp
      solid/SolidBase.hpp
    )
 #
@@ -64,6 +67,9 @@ set( constitutive_sources
      solid/LinearViscoElasticIsotropic.cpp
      solid/PoroElastic.cpp
      solid/PoreVolumeCompressibleSolid.cpp
+     solid/BilinearElasticIsotropic.cpp
+     solid/NonlinearElasticDuncanChangEB.cpp
+     solid/HardeningElasticIsotropic.cpp
      solid/SolidBase.cpp
    )
 

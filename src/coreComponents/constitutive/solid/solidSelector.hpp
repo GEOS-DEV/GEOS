@@ -23,6 +23,8 @@
 #include "LinearElasticIsotropic.hpp"
 #include "LinearViscoElasticIsotropic.hpp"
 #include "LinearElasticAnisotropic.hpp"
+#include "BilinearElasticIsotropic.hpp"
+#include "HardeningElasticIsotropic.hpp"
 
 namespace geosx
 {
@@ -43,6 +45,14 @@ bool constitutiveUpdatePassThru( constitutive::ConstitutiveBase * const constitu
 //  {
 //    lambda( static_cast<LinearViscoElasticIsotropic & >( *constitutiveRelation) );
 //  }
+  else if( dynamic_cast<BilinearElasticIsotropic * >( constitutiveRelation ) )
+  {
+    lambda( static_cast<BilinearElasticIsotropic & >( *constitutiveRelation) );
+  }
+  else if( dynamic_cast<HardeningElasticIsotropic * >( constitutiveRelation ) )
+  {
+    lambda( static_cast<HardeningElasticIsotropic & >( *constitutiveRelation) );
+  }
   else if( dynamic_cast<LinearElasticAnisotropic * >( constitutiveRelation ) )
   {
 #if !defined(__CUDA_ARCH__)
