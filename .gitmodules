@@ -19,3 +19,5 @@
 [submodule "src/coreComponents/physicsSolvers/GEOSX_PTP"]
 	path = src/coreComponents/physicsSolvers/GEOSX_PTP
 	url = ../GEOSX_PTP.git
+[submodule "PAMELA"]
+	shallow = true
