@@ -705,6 +705,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStepVelocityUpdate( real64 const& ti
                                    biotCoefficient[er][esr][m_solidMaterialFullIndex],
                                    stress[er][esr][m_solidMaterialFullIndex],
                                    dt,
+                                   1,
                                    &m_maxStableDt);
 
     }); //Element Region
@@ -769,6 +770,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStepVelocityUpdate( real64 const& ti
                                    biotCoefficient[er][esr][m_solidMaterialFullIndex],
                                    stress[er][esr][m_solidMaterialFullIndex],
                                    dt,
+                                   1,
                                    &m_maxStableDt );
     }); //Element Region
 

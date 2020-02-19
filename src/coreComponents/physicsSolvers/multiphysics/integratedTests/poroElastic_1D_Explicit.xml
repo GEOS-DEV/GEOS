@@ -24,7 +24,7 @@
       discretization="FE1"
       targetRegions="{Region2}"
       solidMaterialName="rock"
-      massDamping="100"
+      massDamping="10"
       >
     </SolidMechanics_LagrangianFEM>
   
@@ -68,7 +68,7 @@
       target="/Solvers/hydrofracture" />
 
     <PeriodicEvent name="outputs"
-                   cycleFrequency="10"
+                   cycleFrequency="100"
                    target="/Outputs/siloOutput" />
   </Events>
 
@@ -109,10 +109,11 @@
                                   referenceViscosity="0.35"
                                   viscosibility="0.0"/>
 
+    <!-- Density and Modulus is the combined (total) value for solid and fluid -->
     <PoroLinearElasticIsotropic name="rock"
                                 defaultDensity="2700"
                                 defaultBulkModulus="4e6"
-                                defaultShearModulus="0.4e6"
+                                defaultShearModulus="2e6"
                                 BiotCoefficient="1"
                                 />
   </Constitutive>
@@ -182,11 +183,12 @@
                fieldName="fluidMass"
                scale="305"/>
 
+    <!-- Total traction -->
 	<FieldSpecification name="xposconstraint" 
                objectPath="faceManager" 
                fieldName="Traction" 
                component="0" 
-               scale="-10000" 
+               scale="-2e4" 
                setNames="{xpos}"
                functionName="timeFunction"/>
 

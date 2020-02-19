@@ -45,6 +45,9 @@ public:
                 Group * const parent,
                 std::unique_ptr<ConstitutiveBase> & clone ) const override;
 
+  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
+                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+
   static constexpr auto m_catalogNameString = "LinearViscoElasticAnisotropic";
 
   virtual void StateUpdatePoint( localIndex const k,

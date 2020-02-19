@@ -55,6 +55,14 @@ LinearViscoElasticAnisotropic::DeliverClone( string const & name,
   newConstitutiveRelation->m_viscosity      = m_viscosity;
 }
 
+void LinearViscoElasticAnisotropic::AllocateConstitutiveData( dataRepository::Group * const parent,
+                                                            localIndex const numConstitutivePointsPerParentIndex )
+{
+  LinearElasticAnisotropic::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+
+  this->resize( parent->size() );
+  m_elasticStress.resize( parent->size(), numConstitutivePointsPerParentIndex, 6 );
+}
 
 void LinearViscoElasticAnisotropic::StateUpdatePoint( localIndex const k,
                                                  localIndex const q,

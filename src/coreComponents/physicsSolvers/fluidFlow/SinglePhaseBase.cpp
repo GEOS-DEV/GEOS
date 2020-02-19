@@ -435,7 +435,7 @@ void SinglePhaseBase::UpdateEOS( real64 const time_n,
 //        //        if ( pres[ei] > 0 )
 //        if ( std::abs(mass[ei]) > 0 )
 //        {
-//          std::cout << "\n Rank = " << rank << ", Fluid Update in poroElastic:  ei = " << ei << ", mass = " << mass[ei] << ", poro= " << poro[ei] << ", vol = " << vol[ei]
+//          std::cout << "\n Fluid Update in poroElastic:  ei = " << ei << ", mass = " << mass[ei] << ", poro= " << poro[ei] << ", vol = " << vol[ei]
 //                    << ", calculated dens = " << dens[ei][0] << ", new pres = " << pres[ei] << "\n";
 //        }
 

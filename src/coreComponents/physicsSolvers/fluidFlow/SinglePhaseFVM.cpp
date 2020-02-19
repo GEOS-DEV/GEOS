@@ -773,6 +773,8 @@ void SinglePhaseFVM::ExplicitStepSetup( real64 const & time_n,
       else
         totalCompressibility = dynamic_cast<PoreVolumeCompressibleSolid*>(solid)->compressibility() + fluid->compressibility();
 
+//      totalCompressibility = fluid->compressibility();
+
       referencePressure = fluid->referencePressure();
 
 //      if (m_explicitSolverInitializationFlag)
