@@ -267,7 +267,7 @@ struct ImplicitKernel
           arrayView2d< real64 const > const & density,
           arrayView1d< real64 const > const & fluidPressure,
           arrayView1d< real64 const > const & deltaFluidPressure,
-          arrayView1d< real64 const > const & biotCoefficient,
+          real64 const biotCoefficient,
           timeIntegrationOption const tiOption,
           real64 const stiffnessDamping,
           real64 const massDamping,
@@ -415,7 +415,7 @@ struct ImplicitKernel
           R2SymTensor referenceStress = stress[ k ][ q ];
           if( !fluidPressure.empty() )
           {
-            referenceStress.PlusIdentity( - biotCoefficient[0] * (fluidPressure[k] + deltaFluidPressure[k]));
+            referenceStress.PlusIdentity( - biotCoefficient * (fluidPressure[k] + deltaFluidPressure[k]));
           }
 
           const realT detJq = detJ[k][q];
