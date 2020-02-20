@@ -170,17 +170,15 @@ integer FindBase64StringLength( integer dataSize )
 }
 
 string EncodeBase64( unsigned char const * const bytes,
-                       integer outputSize,
-                       integer dataSize )
+                     integer dataSize )
 {
-  GEOSX_ASSERT( 8 * dataSize == outputSize );
-  string outputString( outputSize, ' ');
+  string outputString( FindBase64StringLength( dataSize ), ' ' );
   char * out = &outputString[0];
   integer val = 0;
   integer valB = -6;
   integer size = 0;
 
-  for( integer i = 0 ; i < outputSize ; i++ )
+  for( integer i = 0 ; i < dataSize ; i++ )
   {
     val = ( val << 8 ) + bytes[i];
     valB += 8;

@@ -180,8 +180,7 @@ static const std::string base64Chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                                        "0123456789+/";
 
 string EncodeBase64( unsigned char const * const bytes,
-                       integer outputSize,
-                       integer dataSize );
+                     integer dataSize );
 }
 }
 
