@@ -650,7 +650,7 @@ void SolidMechanicsLagrangianFEM::ApplyDisplacementBC_implicit( real64 const tim
                    keys::TotalDisplacement,
                    [&]( FieldSpecificationBase const * const bc,
                         string const &,
-                        set<localIndex> const & targetSet,
+                        SortedArray<localIndex> const & targetSet,
                         Group * const targetGroup,
                         string const fieldName )
   {
@@ -692,7 +692,7 @@ void SolidMechanicsLagrangianFEM::ApplyTractionBC( real64 const time,
                    string("Traction"),
                    [&]( FieldSpecificationBase const * const bc,
                         string const &,
-                        set<localIndex> const & targetSet,
+                        SortedArray<localIndex> const & targetSet,
                         Group * const GEOSX_UNUSED_PARAM( targetGroup ),
                         string const GEOSX_UNUSED_PARAM( fieldName ) )
   {
@@ -1057,7 +1057,7 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARA
                                                 density[er][esr][m_solidMaterialFullIndex],
                                                 fluidPres[er][esr],
                                                 dPres[er][esr],
-                                                biotCoefficient[er][esr],
+                                                biotCoefficient[er][esr][m_solidMaterialFullIndex],
                                                 m_timeIntegrationOption,
                                                 this->m_stiffnessDamping,
                                                 this->m_massDamping,
@@ -1112,7 +1112,7 @@ ApplyBoundaryConditions( real64 const time_n,
                    keys::Force,
                    [&]( FieldSpecificationBase const * const bc,
                         string const &,
-                        set< localIndex > const & targetSet,
+                        SortedArray< localIndex > const & targetSet,
                         Group * const targetGroup,
                         string const GEOSX_UNUSED_PARAM( fieldName ) )
   {
