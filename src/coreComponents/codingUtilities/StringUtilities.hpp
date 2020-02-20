@@ -174,11 +174,6 @@ inline void ExpandMultipleTokens(string_array& sVector, const std::string& multi
   sVector = newVec;
 }
 
-
-static const std::string base64Chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                                       "abcdefghijklmnopqrstuvwxyz"
-                                       "0123456789+/";
-
 string EncodeBase64( unsigned char const * const bytes,
                      integer dataSize );
 }

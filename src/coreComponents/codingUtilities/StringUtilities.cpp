@@ -169,6 +169,10 @@ integer FindBase64StringLength( integer dataSize )
   return base64StringLength;
 }
 
+static const std::string base64Chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                       "abcdefghijklmnopqrstuvwxyz"
+                                       "0123456789+/";
+
 string EncodeBase64( unsigned char const * const bytes,
                      integer dataSize )
 {
