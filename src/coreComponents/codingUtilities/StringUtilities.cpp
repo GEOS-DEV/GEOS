@@ -172,8 +172,8 @@ integer FindBase64StringLength( integer dataSize )
 string EncodeBase64( unsigned char const * const bytes,
                      integer dataSize )
 {
-  string outputString( FindBase64StringLength( dataSize ), ' ' );
-  char * out = &outputString[0];
+  string output;
+  output.reserve( FindBase64StringLength( dataSize ) );
   integer val = 0;
   integer valB = -6;
   integer size = 0;
@@ -184,25 +184,22 @@ string EncodeBase64( unsigned char const * const bytes,
     valB += 8;
     while ( valB >= 0 )
     {
-      *out = base64Chars[ ( val>>valB ) &0x3F ] ; //0x3f is the Hexadecimal for 63
-      ++out;
+      output.push_back( base64Chars[ ( val>>valB ) &0x3F ] ) ; //0x3f is the Hexadecimal for 63
       ++size;
       valB -= 6;
     }
   }
   if( valB > -6 )
   {
-    *out = base64Chars[ ( ( val << 8 ) >> ( valB + 8 ) ) &0x3F ];
-    ++out;
+    output.push_back( base64Chars[ ( ( val << 8 ) >> ( valB + 8 ) ) &0x3F ] );
     ++size;
   }
   while( size % 4 )
   {
-    *out = '=';
-    ++out;
+    output.push_back( '=' );
     ++size;
   }
-  return outputString;
+  return output;
 }
 
 }
