@@ -688,6 +688,7 @@ void HypreMatrix::rightMultiplyTranspose( HypreMatrix const & src,
 void HypreMatrix::parCSRtoIJ( HYPRE_ParCSRMatrix const & parCSRMatrix )
 {
   reset();
+  m_closed = false;
 
   hypre_IJMatrix *ijmatrix;
 
@@ -1251,7 +1252,7 @@ void HypreMatrix::write( string const & filename,
 // Inf-norm.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Returns the infinity norm of the matrix.
-real64 HypreMatrix::normInf() const
+real64 HypreMatrix::norm1() const
 {
   GEOSX_LAI_MATRIX_STATUS( ready() );
 
@@ -1262,16 +1263,16 @@ real64 HypreMatrix::normInf() const
                                1 );
   matT.parCSRtoIJ( parCSRT );
 
-  real64 normInf = matT.norm1();
+  real64 const norm = matT.normInf();
   matT.reset();
-  return normInf;
+  return norm;
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // 1-norm.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Returns the one norm of the matrix.
-real64 HypreMatrix::norm1() const
+real64 HypreMatrix::normInf() const
 {
   GEOSX_LAI_MATRIX_STATUS( ready() );
 
@@ -1306,8 +1307,8 @@ real64 HypreMatrix::norm1() const
     }
   }
 
-  real64 const local_norm1 = static_cast< real64 >( *std::max_element( row_abs_sum.begin(), row_abs_sum.end() ) );
-  return MpiWrapper::Max( local_norm1, getComm() );
+  real64 const local_norm = static_cast< real64 >( *std::max_element( row_abs_sum.begin(), row_abs_sum.end() ) );
+  return MpiWrapper::Max( local_norm, getComm() );
 
 }
 
