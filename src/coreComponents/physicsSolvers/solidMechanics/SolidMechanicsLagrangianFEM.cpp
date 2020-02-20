@@ -1065,7 +1065,7 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARA
                                                 density[er][esr][m_solidMaterialFullIndex],
                                                 fluidPres[er][esr],
                                                 dPres[er][esr],
-                                                biotCoefficient[er][esr],
+                                                biotCoefficient[er][esr][m_solidMaterialFullIndex],
                                                 m_timeIntegrationOption,
                                                 this->m_stiffnessDamping,
                                                 this->m_massDamping,
