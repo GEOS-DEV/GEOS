@@ -297,7 +297,7 @@ void HypreMatrix::open()
 {
   GEOSX_LAI_MATRIX_STATUS( created() && closed() );
   HYPRE_IJMatrixInitialize( m_ij_mat );
-  m_closed = true;
+  m_closed = false;
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""

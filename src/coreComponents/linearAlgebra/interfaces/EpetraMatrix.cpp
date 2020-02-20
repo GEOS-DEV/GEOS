@@ -173,7 +173,7 @@ void EpetraMatrix::zero()
 void EpetraMatrix::open()
 {
   GEOSX_LAI_MATRIX_STATUS( created() && closed() );
-  m_closed = true;
+  m_closed = false;
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
