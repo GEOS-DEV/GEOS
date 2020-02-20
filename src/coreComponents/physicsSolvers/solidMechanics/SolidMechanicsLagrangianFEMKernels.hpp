@@ -342,7 +342,7 @@ struct ImplicitKernel
           arrayView2d< real64 const > const & GEOSX_UNUSED_PARAM( density ),
           arrayView1d< real64 const > const & GEOSX_UNUSED_PARAM( fluidPressure ),
           arrayView1d< real64 const > const & GEOSX_UNUSED_PARAM( deltaFluidPressure ),
-          arrayView1d< real64 const > const & GEOSX_UNUSED_PARAM( biotCoefficient ),
+          real64 const GEOSX_UNUSED_PARAM( biotCoefficient ),
           timeIntegrationOption const GEOSX_UNUSED_PARAM( tiOption ),
           real64 const GEOSX_UNUSED_PARAM( stiffnessDamping ),
           real64 const GEOSX_UNUSED_PARAM( massDamping ),
