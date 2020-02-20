@@ -1195,11 +1195,11 @@ public:
    *
    * @note An error will be raised if wrapper does not exist or type cast is invalid.
    */
-  template< typename T, typename WRAPPEDTYPE=T, typename LOOKUP_TYPE >
-  typename Wrapper< WRAPPEDTYPE >::ViewTypeConst
+  template< typename T, typename LOOKUP_TYPE >
+  typename Wrapper< T >::ViewTypeConst
   getReference( LOOKUP_TYPE const & lookup ) const
   {
-    Wrapper< WRAPPEDTYPE > const * const wrapper = getWrapper< WRAPPEDTYPE >( lookup );
+    Wrapper< T > const * const wrapper = getWrapper< T >( lookup );
     if( wrapper == nullptr )
     {
       if( hasWrapper( lookup ) )
@@ -1215,11 +1215,11 @@ public:
   /**
    * @copydoc getReference(LOOKUP_TYPE const &) const
    */
-  template< typename T, typename WRAPPEDTYPE=T, typename LOOKUP_TYPE >
+  template< typename T, typename LOOKUP_TYPE >
   T &
   getReference( LOOKUP_TYPE const & lookup )
   {
-    Wrapper< WRAPPEDTYPE > * const wrapper = getWrapper< WRAPPEDTYPE >( lookup );
+    Wrapper< T > * const wrapper = getWrapper< T >( lookup );
     if( wrapper == nullptr )
     {
       if( hasWrapper( lookup ) )
@@ -1241,17 +1241,17 @@ public:
    *
    * @note An error will be raised if wrapper does not exist or type cast is invalid.
    */
-  template< typename T, typename WRAPPEDTYPE=T >
-  typename Wrapper< WRAPPEDTYPE >::ViewTypeConst
+  template< typename T >
+  typename Wrapper< T >::ViewTypeConst
   getReference( char const * const name ) const
-  { return getReference< T, WRAPPEDTYPE >( string( name ) ); }
+  { return getReference< T >( string( name ) ); }
 
   /**
    * @copydoc getReference(char const * const) const
    */
-  template< typename T, typename WRAPPEDTYPE=T >
+  template< typename T >
   T & getReference( char const * const name )
-  { return getReference< T, WRAPPEDTYPE >( string( name ) ); }
+  { return getReference< T >( string( name ) ); }
 
   /**
    * @brief Look up a wrapper and get reference to wrapped object.
