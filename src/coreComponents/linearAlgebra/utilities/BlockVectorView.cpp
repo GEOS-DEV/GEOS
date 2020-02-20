@@ -249,7 +249,7 @@ template class BlockVectorView<TrilinosInterface::ParallelVector>;
 #endif
 
 #ifdef GEOSX_USE_HYPRE
-//template class BlockVectorView<HypreInterface::ParallelVector>;
+template class BlockVectorView<HypreInterface::ParallelVector>;
 #endif
 
 #ifdef GEOSX_USE_PETSC

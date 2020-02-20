@@ -63,8 +63,7 @@ void HypreSolver::solve( HypreMatrix & mat,
                          HypreVector & sol,
                          HypreVector & rhs )
 {
-  GEOSX_ASSERT_MSG( mat.isClosed(),
-                   "Matrix has not been closed");
+  GEOSX_ASSERT( mat.ready() );
   GEOSX_ASSERT_MSG( sol.unwrappedPointer() != nullptr,
                    "Invalid solution vector");
   GEOSX_ASSERT_MSG( rhs.unwrappedPointer() != nullptr,
@@ -92,7 +91,7 @@ void HypreSolver::solve_direct( HypreMatrix & mat,
   HYPRE_Solver solver;
 
   hypre_SLUDistSetup( &solver,
-                      HYPRE_ParCSRMatrix(mat),
+                      mat.unwrappedPointerParCSR(),
                       0 );
   hypre_SLUDistSolve( solver,
                       HYPRE_ParVector( rhs ),
@@ -116,7 +115,7 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
   HYPRE_Solver solver;
 
   // Get MPI communicator
-  MPI_Comm comm = hypre_IJMatrixComm( HYPRE_IJMatrix(mat) );
+  MPI_Comm comm = hypre_IJMatrixComm( mat.unwrappedPointer() );
 
 
   // Setup the preconditioner
@@ -210,15 +209,15 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
 
     // Setup
     HYPRE_ParCSRGMRESSetup( solver,
-                          HYPRE_ParCSRMatrix(mat),
-                          HYPRE_ParVector( rhs ),
-                          HYPRE_ParVector( sol ));
+                            mat.unwrappedPointerParCSR(),
+                            HYPRE_ParVector( rhs ),
+                            HYPRE_ParVector( sol ) );
 
     // Solve
     HYPRE_ParCSRGMRESSolve( solver,
-                          HYPRE_ParCSRMatrix(mat),
-                          HYPRE_ParVector( rhs ),
-                          HYPRE_ParVector( sol ));
+                            mat.unwrappedPointerParCSR(),
+                            HYPRE_ParVector( rhs ),
+                            HYPRE_ParVector( sol ) );
 
 
     /* Destroy solver and preconditioner */
@@ -242,13 +241,13 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
 
     // Setup
     HYPRE_ParCSRBiCGSTABSetup( solver,
-                               HYPRE_ParCSRMatrix(mat),
+                               mat.unwrappedPointerParCSR(),
                                HYPRE_ParVector( rhs ),
                                HYPRE_ParVector( sol ));
 
     // Solve
     HYPRE_ParCSRBiCGSTABSolve( solver,
-                               HYPRE_ParCSRMatrix(mat),
+                               mat.unwrappedPointerParCSR(),
                                HYPRE_ParVector( rhs ),
                                HYPRE_ParVector( sol ));
 
@@ -275,13 +274,13 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
 
     // Setup
     HYPRE_ParCSRPCGSetup( solver,
-                          HYPRE_ParCSRMatrix(mat),
+                          mat.unwrappedPointerParCSR(),
                           HYPRE_ParVector( rhs ),
                           HYPRE_ParVector( sol ));
 
     // Solve
     HYPRE_ParCSRPCGSolve( solver,
-                          HYPRE_ParCSRMatrix(mat),
+                          mat.unwrappedPointerParCSR(),
                           HYPRE_ParVector( rhs ),
                           HYPRE_ParVector( sol ));
 

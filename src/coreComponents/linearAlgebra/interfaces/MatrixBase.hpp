@@ -16,10 +16,18 @@
  * @file MatrixBase.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_MATRIXBASE_HPP
-#define GEOSX_LINEARALGEBRA_INTERFACES_MATRIXBASE_HPP
+#ifndef GEOSX_LINEARALGEBRA_INTERFACES_MATRIXBASE_HPP_
+#define GEOSX_LINEARALGEBRA_INTERFACES_MATRIXBASE_HPP_
 
 #include "linearAlgebra/interfaces/LinearOperator.hpp"
+#include "linearAlgebra/interfaces/common.hpp"
+
+#define GEOSX_LAI_MATRIX_STATUS( expr ) \
+GEOSX_LAI_ASSERT_MSG( expr, "Matrix status: " \
+                            "created = "   << created()   << ", " \
+                            "assembled = " << assembled() << ", " \
+                            "closed = "    << closed() )
+
 
 namespace geosx
 {
@@ -75,7 +83,10 @@ public:
   virtual void
   createWithLocalSize( localIndex const localSize,
                        localIndex const maxEntriesPerRow,
-                       MPI_Comm const & comm ) = 0;
+                       MPI_Comm const & comm )
+  {
+    createWithLocalSize( localSize, localSize, maxEntriesPerRow, comm );
+  }
 
   /**
    * @brief Create a square matrix from global number of rows.
@@ -90,7 +101,10 @@ public:
   virtual void
   createWithGlobalSize( globalIndex const globalSize,
                         localIndex const maxEntriesPerRow,
-                        MPI_Comm const & comm ) = 0;
+                        MPI_Comm const & comm )
+  {
+    createWithGlobalSize( globalSize, globalSize, maxEntriesPerRow, comm );
+  }
 
   /**
    * @brief Create a rectangular matrix from number of rows/columns.
@@ -147,26 +161,52 @@ public:
    * @brief Query matrix open status
    * @return @p true if matrix has been opened and has not been closed since; @p false otherwise
    */
-  inline bool isOpen() const { return m_open; }
+  inline bool closed() const { return m_closed; }
 
   /**
    * @brief Query matrix assembled status
    * @return @p true if matrix has been opened and closed since creation; @p false otherwise
    */
-  inline bool isAssembled() const { return m_assembled; }
+  inline bool assembled() const { return m_assembled; }
+
+  /**
+   * @brief Query matrix ready status
+   * @return @p true if matrix has been assembled and is currently closed;
+   *         this implies it's ready to be used or re-opened for adding/setting values
+   */
+  inline bool ready() const { return closed() && assembled(); }
+
+  /**
+   * @brief Query matrix status
+   * @return @p true if matrix has been assembled and is currently open;
+   *         this implies individual entries within existing sparsity pattern
+   *         can be altered via set()/add() methods.
+   *
+   * TODO: come up with a good name for this??
+   */
+  inline bool modifiable() const { return !closed() && assembled(); }
+
+  /**
+   * @brief Query matrix status
+   * @return @p true if matrix has NOT been assembled yet (not closed since
+   *         last create() call) and is currently open for insertion of new entries
+   *
+   * TODO: come up with a good name for this??
+   */
+  inline bool insertable() const { return !closed() && !assembled(); }
 
   /**
    * @brief Query matrix creation status
    * @return @p true if matrix has been created
    */
-  virtual bool isCreated() const = 0;
+  virtual bool created() const = 0;
 
   /**
    * @brief Reset the matrix to default state
    */
   virtual void reset()
   {
-    m_open = false;
+    m_closed = true;
     m_assembled = false;
   }
 
@@ -320,7 +360,7 @@ public:
    */
   virtual void add( arraySlice1d<globalIndex const> const & rowIndices,
                     arraySlice1d<globalIndex const> const & colIndices,
-                    arraySlice2d<real64 const, 1> const & values ) = 0;
+                    arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const & values ) = 0;
 
   /**
    * @brief Set dense matrix.
@@ -333,7 +373,7 @@ public:
    */
   virtual void set( arraySlice1d<globalIndex const> const & rowIndices,
                     arraySlice1d<globalIndex const> const & colIndices,
-                    arraySlice2d<real64 const, 1> const & values ) = 0;
+                    arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const & values ) = 0;
 
   /**
    * @brief Insert dense matrix.
@@ -346,7 +386,7 @@ public:
    */
   virtual void insert( arraySlice1d<globalIndex const> const & rowIndices,
                        arraySlice1d<globalIndex const> const & colIndices,
-                       arraySlice2d<real64 const, 1> const & values ) = 0;
+                       arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const & values ) = 0;
 
   /**
    * @brief Add dense matrix.
@@ -359,7 +399,7 @@ public:
    */
   virtual void add( arraySlice1d<globalIndex const> const & rowIndices,
                     arraySlice1d<globalIndex const> const & colIndices,
-                    arraySlice2d<real64 const, 0> const & values ) = 0;
+                    arraySlice2d<real64 const, MatrixLayout::COL_MAJOR> const & values ) = 0;
 
   /**
    * @brief Set dense matrix.
@@ -372,7 +412,7 @@ public:
    */
   virtual void set( arraySlice1d<globalIndex const> const & rowIndices,
                     arraySlice1d<globalIndex const> const & colIndices,
-                    arraySlice2d<real64 const, 0> const & values ) = 0;
+                    arraySlice2d<real64 const, MatrixLayout::COL_MAJOR> const & values ) = 0;
 
   /**
    * @brief Insert dense matrix.
@@ -385,7 +425,7 @@ public:
    */
   virtual void insert( arraySlice1d<globalIndex const> const & rowIndices,
                        arraySlice1d<globalIndex const> const & colIndices,
-                       arraySlice2d<real64 const, 0> const & values ) = 0;
+                       arraySlice2d<real64 const, MatrixLayout::COL_MAJOR> const & values ) = 0;
 
   /**
    * @brief Add dense matrix.
@@ -710,14 +750,14 @@ public:
 protected:
 
   MatrixBase()
-  : m_open(false),
-    m_assembled(false)
+  : m_closed( true ),
+    m_assembled( false )
   {}
 
   ~MatrixBase() = default;
 
   /// Flag indicating whether the matrix is currently open for adding new entries
-  bool m_open;
+  bool m_closed;
 
   /// Flag indicating whether the matrix (sparsity pattern) has been assembled
   bool m_assembled;
@@ -726,4 +766,4 @@ protected:
 
 }
 
-#endif //GEOSX_LINEARALGEBRA_INTERFACES_MATRIXBASE_HPP
+#endif //GEOSX_LINEARALGEBRA_INTERFACES_MATRIXBASE_HPP_

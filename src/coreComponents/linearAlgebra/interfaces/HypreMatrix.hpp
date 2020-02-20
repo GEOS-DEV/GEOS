@@ -16,8 +16,8 @@
  * @file HypreMatrix.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_HYPREMATRIX_HPP_
-#define GEOSX_LINEARALGEBRA_HYPREMATRIX_HPP_
+#ifndef GEOSX_LINEARALGEBRA_INTERFACES_HYPREMATRIX_HPP_
+#define GEOSX_LINEARALGEBRA_INTERFACES_HYPREMATRIX_HPP_
 
 #include "common/DataTypes.hpp"
 #include "linearAlgebra/interfaces/HypreVector.hpp"
@@ -42,9 +42,11 @@ namespace geosx
  * \class HypreMatrix
  * \brief This class ...
  */
-class HypreMatrix : public MatrixBase<HypreMatrix, HypreVector>
+class HypreMatrix final : public MatrixBase<HypreMatrix, HypreVector>
 {
 public:
+
+  using Base = MatrixBase<HypreMatrix, HypreVector>;
 
   /// @name Constructor/Destructor Methods
   ///@{
@@ -67,240 +69,206 @@ public:
   /**
    * @brief Virtual destructor.
    */
-  ~HypreMatrix() final;
+  ~HypreMatrix() override;
 
   ///@}
 
-  void createWithLocalSize( localIndex const localSize,
-                            localIndex const maxEntriesPerRow,
-                            MPI_Comm const & comm = MPI_COMM_WORLD ) final;
-
-  void createWithGlobalSize( globalIndex const globalSize,
-                             localIndex const maxEntriesPerRow,
-                             MPI_Comm const & comm = MPI_COMM_WORLD ) final;
+  using Base::createWithLocalSize;
+  using Base::createWithGlobalSize;
 
   void createWithLocalSize( localIndex const localRows,
                             localIndex const localCols,
                             localIndex const maxEntriesPerRow,
-                            MPI_Comm const & comm = MPI_COMM_WORLD ) final;
+                            MPI_Comm const & comm = MPI_COMM_WORLD ) override;
 
   void createWithGlobalSize( globalIndex const globalRows,
                              globalIndex const globalCols,
                              localIndex const maxEntriesPerRow,
-                             MPI_Comm const & comm = MPI_COMM_WORLD ) final;
+                             MPI_Comm const & comm = MPI_COMM_WORLD ) override;
 
-  void set( real64 const value ) final;
+  void open() override;
 
-  void reset() final;
+  void close() override;
 
-  void zero() final;
+  bool created() const override;
 
-  void open() final;
+  void reset() override;
 
-  void close() final;
+  void set( real64 const value ) override;
 
-  /** @name Add/Set/Insert Methods
-   *
-   * TRILINOS logic:
-   * The add and set methods assume entries already exist in the sparsity pattern.
-   * Insert methods allow for dynamic allocation, but will temporarily use
-   * extra memory if one attempts to insert multiple values to the same location.
-   *
-   * HYPRE logic:
-   * The add and set methods can be used also if the sparsity pattern has not been
-   * finalized. In Hypre the insert method is an alias for set
-   *
-   * Caution: In Trilinos these methods are not thread-safe.  //TODO: add thread safety
-   */
-  ///@{
+  void zero() override;
 
   void add( globalIndex const rowIndex,
             globalIndex const colIndex,
-            real64 const value ) final;
+            real64 const value ) override;
 
   void set( globalIndex const rowIndex,
             globalIndex const colIndex,
-            real64 const value ) final;
+            real64 const value ) override;
 
   void insert( globalIndex const rowIndex,
                globalIndex const colIndex,
-               real64 const value ) final;
+               real64 const value ) override;
 
   void add( globalIndex const rowIndex,
             globalIndex const * colIndices,
             real64 const * values,
-            localIndex const size ) final;
+            localIndex const size ) override;
 
   void set( globalIndex const rowIndex,
             globalIndex const * colIndices,
             real64 const * values,
-            localIndex const size ) final;
+            localIndex const size ) override;
 
   void insert( globalIndex const rowIndex,
                globalIndex const * colIndices,
                real64 const * values,
-               localIndex const size ) final;
+               localIndex const size ) override;
 
   void add( globalIndex const rowIndex,
-            array1d< globalIndex > const & colIndices,
-            array1d< real64 > const & values ) final;
+            arraySlice1d< globalIndex const > const & colIndices,
+            arraySlice1d< real64 const > const & values ) override;
 
   void set( globalIndex const rowIndex,
-            array1d< globalIndex > const & colIndices,
-            array1d< real64 > const & values ) final;
+            arraySlice1d< globalIndex const > const & colIndices,
+            arraySlice1d< real64 const > const & values ) override;
 
   void insert( globalIndex const rowIndex,
-               array1d< globalIndex > const & colIndices,
-               array1d< real64 > const & values ) final;
+               arraySlice1d< globalIndex const > const & colIndices,
+               arraySlice1d< real64 const > const & values ) override;
 
-  void add( array1d< globalIndex > const & rowIndices,
-            array1d< globalIndex > const & colIndices,
-            array2d< real64 > const & values ) final;
+  void add( arraySlice1d< globalIndex const > const & rowIndices,
+            arraySlice1d< globalIndex const > const & colIndices,
+            arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & values ) override;
 
-  void set( array1d< globalIndex > const & rowIndices,
-            array1d< globalIndex > const & colIndices,
-            array2d< real64 > const & values ) final;
+  void set( arraySlice1d< globalIndex const > const & rowIndices,
+            arraySlice1d< globalIndex const > const & colIndices,
+            arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & values ) override;
 
-  void insert( array1d< globalIndex > const & rowIndices,
-               array1d< globalIndex > const & colIndices,
-               array2d< real64 > const & values ) final;
+  void insert( arraySlice1d< globalIndex const > const & rowIndices,
+               arraySlice1d< globalIndex const > const & colIndices,
+               arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & values ) override;
+
+  void add( arraySlice1d< globalIndex const > const & rowIndices,
+            arraySlice1d< globalIndex const > const & colIndices,
+            arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values ) override;
+
+  void set( arraySlice1d< globalIndex const > const & rowIndices,
+            arraySlice1d< globalIndex const > const & colIndices,
+            arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values ) override;
+
+  void insert( arraySlice1d< globalIndex const > const & rowIndices,
+               arraySlice1d< globalIndex const > const & colIndices,
+               arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values ) override;
 
   void add( globalIndex const * rowIndices,
             globalIndex const * colIndices,
             real64 const * values,
             localIndex const numRows,
-            localIndex const numCols ) final;
+            localIndex const numCols ) override;
 
   void set( globalIndex const * rowIndices,
             globalIndex const * colIndices,
             real64 const * values,
             localIndex const numRows,
-            localIndex const numCols ) final;
+            localIndex const numCols ) override;
 
   void insert( globalIndex const * rowIndices,
                globalIndex const * colIndices,
                real64 const * values,
                localIndex const numRows,
-               localIndex const numCols ) final;
-
-  ///@}
+               localIndex const numCols ) override;
 
   void multiply( HypreVector const & src,
-                 HypreVector & dst ) const final;
+                 HypreVector & dst ) const override;
 
   void multiply( HypreMatrix const & src,
                  HypreMatrix & dst,
-                 bool const closeResult = true ) const final;
+                 bool const closeResult = true ) const override;
 
   void leftMultiplyTranspose( HypreMatrix const & src,
                               HypreMatrix & dst,
-                              bool const closeResult = true ) const final;
+                              bool const closeResult = true ) const override;
 
   void rightMultiplyTranspose( HypreMatrix const & src,
                                HypreMatrix & dst,
-                               bool const closeResult = true ) const final;
+                               bool const closeResult = true ) const override;
 
   void gemv( real64 const alpha,
              HypreVector const & x,
              real64 const beta,
              HypreVector & y,
-             bool useTranspose=false ) const final;
+             bool useTranspose=false ) const override;
 
-  void scale( real64 const scalingFactor ) final;
+  void scale( real64 const scalingFactor ) override;
 
-  void leftScale( HypreVector const & vec ) final;
+  void leftScale( HypreVector const & vec ) override;
 
-  void rightScale( HypreVector const &vec ) final;
+  void rightScale( HypreVector const &vec ) override;
 
   void leftRightScale( HypreVector const &vecLeft,
-                       HypreVector const &vecRight ) final;
+                       HypreVector const &vecRight ) override;
 
   void clearRow( globalIndex const row,
-                 real64 const diagValue = 0 ) final;
+                 real64 const diagValue = 0 ) override;
 
-  localIndex maxRowLength() const final;
+  localIndex maxRowLength() const override;
 
-  localIndex localRowLength( localIndex localRowIndex ) const final;
+  localIndex localRowLength( localIndex localRowIndex ) const override;
 
-  localIndex globalRowLength( globalIndex globalRowIndex ) const final;
+  localIndex globalRowLength( globalIndex globalRowIndex ) const override;
 
   void getRowCopy( globalIndex globalRow,
                    array1d< globalIndex > & colIndices,
-                   array1d< real64 > & values ) const final;
+                   array1d< real64 > & values ) const override;
 
-  real64 getDiagValue( globalIndex globalRow ) const final;
+  real64 getDiagValue( globalIndex globalRow ) const override;
 
-  globalIndex globalRows() const final;
+  globalIndex globalRows() const override;
 
-  globalIndex globalCols() const final;
+  globalIndex globalCols() const override;
 
-  localIndex localRows() const final;
+  localIndex localRows() const override;
 
-  localIndex localCols() const final;
+  localIndex localCols() const override;
 
-  globalIndex ilower() const final;
+  globalIndex ilower() const override;
 
-  globalIndex iupper() const final;
+  globalIndex iupper() const override;
 
-  /**
-   * @brief Returns the number of nonzeros in the local portion of the matrix
-   */
-  localIndex localNonzeros() const final;
+  localIndex localNonzeros() const override;
 
-  /**
-   * @brief Returns the infinity norm of the matrix.
-   */
-  real64 normInf() const final;
+  globalIndex globalNonzeros() const override;
 
-  /**
-   * @brief Returns the one norm of the matrix.
-   */
-  real64 norm1() const final;
+  real64 normInf() const override;
 
-  /**
-   * @brief Returns the Frobenius norm of the matrix.
-   */
-  real64 normFrobenius() const final;
+  real64 norm1() const override;
 
-  /**
-   * @brief Returns true is the matrix has been assembled, false if not.
-   */
-  bool isAssembled() const;
-  //@}
+  real64 normFrobenius() const override;
 
-  /**
-   * @brief Returns true is the matrix has been closed, false if not.
-   */
-  bool isClosed() const;
-  //@}
+  localIndex getLocalRowID( globalIndex const index ) const override;
 
-  void print( std::ostream & os = std::cout ) const final;
+  globalIndex getGlobalRowID( localIndex const index ) const override;
+
+  virtual MPI_Comm getComm() const override;
+
+  void print( std::ostream & os = std::cout ) const override;
 
   void write( string const & filename,
-              bool const mtxFormat = true ) const final;
-
-  localIndex getLocalRowID( globalIndex const index ) const final;
-
-  globalIndex getGlobalRowID( localIndex const index ) const final;
+              MatrixOutputFormat const format ) const override;
 
   ///@}
 
   /**
    * @brief Returns a pointer to the underlying HYPRE_IJMatrix object.
    */
-  HYPRE_IJMatrix const * unwrappedPointer() const;
+  HYPRE_IJMatrix const & unwrappedPointer() const;
 
-  HYPRE_IJMatrix * unwrappedPointer();
+  HYPRE_IJMatrix & unwrappedPointer();
 
-  operator HYPRE_IJMatrix()
-  {
-    return (HYPRE_IJMatrix) m_ij_mat;
-  }
+  HYPRE_ParCSRMatrix const & unwrappedPointerParCSR() const;
 
-  operator HYPRE_ParCSRMatrix()
-  {
-    return (HYPRE_ParCSRMatrix) m_parcsr_mat;
-  }
+  HYPRE_ParCSRMatrix & unwrappedPointerParCSR();
 
 private:
 
@@ -320,16 +288,6 @@ private:
    * @brief Perform a matrix matrix product with Parallel Matrix
    */
   void parCSRtoIJ( HYPRE_ParCSRMatrix const & parCSRMatrix );
-
-  /**
-   * Boolean value, true if the matrix sparsity pattern has been fixed.
-   */
-  bool m_is_pattern_fixed = false;
-
-  /**
-   * Boolean value, true if the matrix had been finalized, false if not.
-   */
-  bool m_is_ready_to_use = false;
 
   /**
    * Pointer to underlying HYPRE_IJMatrix type.
@@ -354,4 +312,4 @@ std::ostream & operator<<( std::ostream & os,
 
 } // namespace geosx
 
-#endif /*GEOSX_LINEARALGEBRA_HYPREMATRIX_HPP_*/
+#endif /*GEOSX_LINEARALGEBRA_INTERFACES_HYPREMATRIX_HPP_*/

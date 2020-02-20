@@ -18,15 +18,27 @@
 
 #include "HypreVector.hpp"
 
+#include "linearAlgebra/interfaces/HypreUtils.hpp"
+
 // Include required Hypre headers
 #include "HYPRE.h"
 #include "_hypre_IJ_mv.h"
 #include "_hypre_parcsr_mv.h"
-#include "HypreUtils.hpp"
 
 // Put everything under the geosx namespace.
 namespace geosx
 {
+
+// Check matching requirements on index/value types between GEOSX and Hypre
+
+static_assert( sizeof( HYPRE_BigInt ) == sizeof( globalIndex ),
+               "HYPRE_BigInt and geosx::globalIndex must have the same size" );
+
+static_assert( std::is_signed< HYPRE_BigInt >::value == std::is_signed< globalIndex >::value,
+               "HYPRE_BigInt and geoex::globalIndex must both be signed or unsigned");
+
+static_assert( std::is_same< HYPRE_Real, real64 >::value,
+               "HYPRE_Real and geosx::real64 must be the same type" );
 
 // Helper function that performs the following sequence of IJVEctor
 // call: Create, SetObjectType, Initialize.
@@ -335,11 +347,11 @@ void HypreVector::zero()
   hypre_IJVectorZeroValues( m_ij_vector );
 }
 
-void HypreVector::rand()
+void HypreVector::rand( unsigned const seed )
 {
   GEOSX_ERROR_IF( m_ij_vector == nullptr,
                   "vector appears to be empty (not created)" );
-  HYPRE_ParVectorSetRandomValues( m_par_vector, 1984 );
+  HYPRE_ParVectorSetRandomValues( m_par_vector, seed );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -685,12 +697,12 @@ globalIndex HypreVector::getGlobalRowID( localIndex const index ) const
 // Extract a view of the local portion of the array
 real64 const * HypreVector::extractLocalVector() const
 {
-  return toGEOSX_real64( hypre_VectorData( hypre_ParVectorLocalVector ( m_par_vector ) ) );
+  return hypre_VectorData( hypre_ParVectorLocalVector ( m_par_vector ) );
 }
 
 real64 * HypreVector::extractLocalVector()
 {
-  return toGEOSX_real64( hypre_VectorData( hypre_ParVectorLocalVector ( m_par_vector ) ) );
+  return hypre_VectorData( hypre_ParVectorLocalVector ( m_par_vector ) );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""

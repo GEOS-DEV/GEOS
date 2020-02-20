@@ -58,7 +58,7 @@ template class BlockVectorWrapper<TrilinosInterface::ParallelVector>;
 #endif
 
 #ifdef GEOSX_USE_HYPRE
-//template class BlockVectorWrapper<HypreInterface::ParallelVector>;
+template class BlockVectorWrapper<HypreInterface::ParallelVector>;
 #endif
 
 #ifdef GEOSX_USE_PETSC

@@ -31,27 +31,15 @@
 #define PETSC_USE_64BIT_INDICES
 #endif
 
+#include "linearAlgebra/interfaces/PetscUtils.hpp"
+#include "mpiCommunications/MpiWrapper.hpp"
+
 #include <petscvec.h>
 #include <petscmat.h>
-
-#include "mpiCommunications/MpiWrapper.hpp"
 
 // Put everything under the geosx namespace.
 namespace geosx
 {
-
-static_assert( sizeof(PetscInt) == sizeof(globalIndex), "sizeof(PetscInt) != sizeof(localIndex)");
-static_assert( std::is_same<PetscScalar, real64>::value, "PetscScalar != real64" );
-
-inline PetscInt * toPetscInt( globalIndex * const index )
-{
-  return reinterpret_cast<PetscInt*>(index);
-}
-
-inline PetscInt const * toPetscInt( globalIndex const * const index )
-{
-  return reinterpret_cast<PetscInt const*>(index);
-}
 
 // ----------------------------
 // Constructors
@@ -71,9 +59,7 @@ PetscSparseMatrix::PetscSparseMatrix()
 PetscSparseMatrix::PetscSparseMatrix( PetscSparseMatrix const & src )
 : PetscSparseMatrix()
 {
-  GEOSX_ASSERT( !src.isOpen() );
-  GEOSX_ASSERT( src.isAssembled() );
-
+  GEOSX_LAI_MATRIX_STATUS( src.ready() );
   MatDuplicate( src.m_mat, MAT_COPY_VALUES, &m_mat );
   m_assembled = true;
 }
@@ -83,7 +69,7 @@ PetscSparseMatrix::PetscSparseMatrix( PetscSparseMatrix const & src )
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 PetscSparseMatrix::~PetscSparseMatrix()
 {
-  MatDestroy( &m_mat );
+  reset();
 }
 
 // -----------------------------
@@ -93,28 +79,16 @@ PetscSparseMatrix::~PetscSparseMatrix()
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Create a matrix from number of elements
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-void PetscSparseMatrix::createWithLocalSize( localIndex const localSize,
-                                             localIndex const maxEntriesPerRow,
-                                             MPI_Comm const & comm )
-{
-  // call general version
-  createWithLocalSize( localSize, localSize, maxEntriesPerRow, comm );
-}
-
-void PetscSparseMatrix::createWithGlobalSize( globalIndex const globalSize,
-                                              localIndex const maxEntriesPerRow,
-                                              MPI_Comm const & comm )
-{
-  // call general version
-  createWithGlobalSize( globalSize, globalSize, maxEntriesPerRow, comm );
-}
-
 void PetscSparseMatrix::createWithLocalSize( localIndex const localRows,
                                              localIndex const localCols,
                                              localIndex const maxEntriesPerRow,
                                              MPI_Comm const & comm )
 {
-  GEOSX_ASSERT( !isOpen() );
+  GEOSX_LAI_MATRIX_STATUS( closed() );
+  GEOSX_LAI_ASSERT_GE( localRows, 0 );
+  GEOSX_LAI_ASSERT_GE( localCols, 0 );
+  GEOSX_LAI_ASSERT_GE( maxEntriesPerRow, 0 );
+
   reset();
 
   // set up matrix
@@ -130,7 +104,11 @@ void PetscSparseMatrix::createWithGlobalSize( globalIndex const globalRows,
                                               localIndex const maxEntriesPerRow,
                                               MPI_Comm const & comm )
 {
-  GEOSX_ASSERT( !isOpen() );
+  GEOSX_LAI_MATRIX_STATUS( closed() );
+  GEOSX_LAI_ASSERT_GE( globalRows, 0 );
+  GEOSX_LAI_ASSERT_GE( globalCols, 0 );
+  GEOSX_LAI_ASSERT_GE( maxEntriesPerRow, 0 );
+
   reset();
 
   // set up matrix
@@ -141,7 +119,7 @@ void PetscSparseMatrix::createWithGlobalSize( globalIndex const globalRows,
   MatSetUp( m_mat );
 }
 
-bool PetscSparseMatrix::isCreated() const
+bool PetscSparseMatrix::created() const
 {
   return m_mat != nullptr;
 }
@@ -158,8 +136,7 @@ void PetscSparseMatrix::reset()
 // Sets all values to user-defined value.
 void PetscSparseMatrix::set( real64 const value )
 {
-  GEOSX_ASSERT( !isOpen() );
-  GEOSX_ASSERT( isAssembled() );
+  GEOSX_LAI_MATRIX_STATUS( ready() );
 
   PetscInt firstrow;
   PetscInt lastrow;
@@ -173,7 +150,7 @@ void PetscSparseMatrix::set( real64 const value )
   array1d<PetscScalar> vals_;
   array1d<PetscInt> inds_;
 
-  PetscInt const maxNumRows = MpiWrapper::Max( lastrow - firstrow );
+  PetscInt const maxNumRows = MpiWrapper::Max( lastrow - firstrow, getComm() );
 
   // loop over rows
   for( PetscInt row = firstrow; row < lastrow; row++)
@@ -218,8 +195,7 @@ void PetscSparseMatrix::set( real64 const value )
 // Sets all values to 0.
 void PetscSparseMatrix::zero()
 {
-  GEOSX_ASSERT( !isOpen() );
-  GEOSX_ASSERT( isAssembled() );
+  GEOSX_LAI_MATRIX_STATUS( ready() );
   MatZeroEntries( m_mat );
 }
 
@@ -229,9 +205,8 @@ void PetscSparseMatrix::zero()
 // Empty open function (implemented for HYPRE compatibility).
 void PetscSparseMatrix::open()
 {
-  GEOSX_ASSERT( !isOpen() );
-  GEOSX_ASSERT_MSG( isCreated(), "The matrix has not been created" );
-  m_open = true;
+  GEOSX_LAI_MATRIX_STATUS( created() && closed() );
+  m_closed = false;
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -240,13 +215,13 @@ void PetscSparseMatrix::open()
 // PETSc matrix assembly. Space for preallocated nonzeros that is not filled are compressed out by assembly.
 void PetscSparseMatrix::close()
 {
-  GEOSX_ASSERT( isOpen() );
+  GEOSX_LAI_MATRIX_STATUS( !closed() );
   MatAssemblyBegin( m_mat, MAT_FINAL_ASSEMBLY );
   MatAssemblyEnd( m_mat, MAT_FINAL_ASSEMBLY );
   MatSetOption( m_mat, MAT_NEW_NONZERO_LOCATIONS, PETSC_FALSE );
   MatSetOption( m_mat, MAT_NEW_NONZERO_LOCATION_ERR, PETSC_TRUE );
   m_assembled = true;
-  m_open = false;
+  m_closed = true;
 }
 
 // -------------------------
@@ -258,8 +233,7 @@ void PetscSparseMatrix::add( globalIndex const rowIndex,
                              globalIndex const colIndex,
                              real64 const value )
 {
-  GEOSX_ASSERT( isOpen() );
-  GEOSX_ASSERT( isAssembled() );
+  GEOSX_LAI_MATRIX_STATUS( modifiable() );
   MatSetValue( m_mat, rowIndex, colIndex, value, ADD_VALUES );
 }
 
@@ -267,8 +241,7 @@ void PetscSparseMatrix::set( globalIndex const rowIndex,
                              globalIndex const colIndex,
                              real64 const value )
 {
-  GEOSX_ASSERT( isOpen() );
-  GEOSX_ASSERT( isAssembled() );
+  GEOSX_LAI_MATRIX_STATUS( modifiable() );
   MatSetValue( m_mat, rowIndex, colIndex, value, INSERT_VALUES );
 }
 
@@ -276,8 +249,7 @@ void PetscSparseMatrix::insert( globalIndex const rowIndex,
                                 globalIndex const colIndex,
                                 real64 const value )
 {
-  GEOSX_ASSERT( isOpen() );
-  GEOSX_ASSERT( !isAssembled() );
+  GEOSX_LAI_MATRIX_STATUS( insertable() );
   MatSetValue( m_mat, rowIndex, colIndex, value, INSERT_VALUES );
 }
 
@@ -287,8 +259,7 @@ void PetscSparseMatrix::add( globalIndex const rowIndex,
                              real64 const * values,
                              localIndex size )
 {
-  GEOSX_ASSERT( isOpen() );
-  GEOSX_ASSERT( isAssembled() );
+  GEOSX_LAI_MATRIX_STATUS( modifiable() );
   PetscInt rows[1] = {rowIndex};
   MatSetValues( m_mat, 1, rows, size, toPetscInt( colIndices ), values, ADD_VALUES );
 }
@@ -298,8 +269,7 @@ void PetscSparseMatrix::set( globalIndex const rowIndex,
                              real64 const * values,
                              localIndex size )
 {
-  GEOSX_ASSERT( isOpen() );
-  GEOSX_ASSERT( isAssembled() );
+  GEOSX_LAI_MATRIX_STATUS( modifiable() );
   PetscInt rows[1] = {rowIndex};
   MatSetValues( m_mat, 1, rows, size, toPetscInt( colIndices), values, INSERT_VALUES );
 }
@@ -309,8 +279,7 @@ void PetscSparseMatrix::insert( globalIndex const rowIndex,
                                 real64 const * values,
                                 localIndex size )
 {
-  GEOSX_ASSERT( isOpen() );
-  GEOSX_ASSERT( !isAssembled() );
+  GEOSX_LAI_MATRIX_STATUS( insertable() );
   PetscInt rows[1] = {rowIndex};
   MatSetValues( m_mat, 1, rows, size, toPetscInt( colIndices), values, INSERT_VALUES );
 }
@@ -320,8 +289,7 @@ void PetscSparseMatrix::add( globalIndex const rowIndex,
                              arraySlice1d<globalIndex const> const &colIndices,
                              arraySlice1d<real64 const> const &values )
 {
-  GEOSX_ASSERT( isOpen() );
-  GEOSX_ASSERT( isAssembled() );
+  GEOSX_LAI_MATRIX_STATUS( modifiable() );
   PetscInt rows[1] = {rowIndex};
   MatSetValues( m_mat, 1, rows, values.size(), toPetscInt( colIndices.data()), values.data(), ADD_VALUES );
 }
@@ -330,8 +298,7 @@ void PetscSparseMatrix::set( globalIndex const rowIndex,
                              arraySlice1d<globalIndex const> const &colIndices,
                              arraySlice1d<real64 const> const &values )
 {
-  GEOSX_ASSERT( isOpen() );
-  GEOSX_ASSERT( isAssembled() );
+  GEOSX_LAI_MATRIX_STATUS( modifiable() );
   PetscInt rows[1] = {rowIndex};
   MatSetValues( m_mat, 1, rows, values.size(), toPetscInt( colIndices.data()), values.data(), INSERT_VALUES );
 }
@@ -340,8 +307,7 @@ void PetscSparseMatrix::insert( globalIndex const rowIndex,
                                 arraySlice1d<globalIndex const> const &colIndices,
                                 arraySlice1d<real64 const> const &values )
 {
-  GEOSX_ASSERT( isOpen() );
-  GEOSX_ASSERT( !isAssembled() );
+  GEOSX_LAI_MATRIX_STATUS( insertable() );
   PetscInt rows[1] = {rowIndex};
   MatSetValues( m_mat, 1, rows, values.size(), toPetscInt( colIndices.data()), values.data(), INSERT_VALUES );
 }
@@ -351,8 +317,7 @@ void PetscSparseMatrix::add( arraySlice1d<globalIndex const> const & rowIndices,
                              arraySlice1d<globalIndex const> const & colIndices,
                              arraySlice2d<real64 const, 1> const & values )
 {
-  GEOSX_ASSERT( isOpen() );
-  GEOSX_ASSERT( isAssembled() );
+  GEOSX_LAI_MATRIX_STATUS( modifiable() );
   MatSetValues( m_mat,
                 rowIndices.size(),
                 toPetscInt(rowIndices.data()),
@@ -366,8 +331,7 @@ void PetscSparseMatrix::set( arraySlice1d<globalIndex const> const & rowIndices,
                              arraySlice1d<globalIndex const> const & colIndices,
                              arraySlice2d<real64 const, 1> const & values )
 {
-  GEOSX_ASSERT( isOpen() );
-  GEOSX_ASSERT( isAssembled() );
+  GEOSX_LAI_MATRIX_STATUS( modifiable() );
   MatSetValues( m_mat,
                 rowIndices.size(),
                 toPetscInt(rowIndices.data()),
@@ -381,8 +345,7 @@ void PetscSparseMatrix::insert( arraySlice1d<globalIndex const> const & rowIndic
                                 arraySlice1d<globalIndex const> const & colIndices,
                                 arraySlice2d<real64 const, 1> const & values )
 {
-  GEOSX_ASSERT( isOpen() );
-  GEOSX_ASSERT( !isAssembled() );
+  GEOSX_LAI_MATRIX_STATUS( insertable() );
   MatSetValues( m_mat,
                 rowIndices.size(),
                 toPetscInt(rowIndices.data()),
@@ -396,8 +359,7 @@ void PetscSparseMatrix::add( arraySlice1d<globalIndex const> const & rowIndices,
                              arraySlice1d<globalIndex const> const & colIndices,
                              arraySlice2d<real64 const, 0> const & values )
 {
-  GEOSX_ASSERT( isOpen() );
-  GEOSX_ASSERT( isAssembled() );
+  GEOSX_LAI_MATRIX_STATUS( modifiable() );
   MatSetOption( m_mat, MAT_ROW_ORIENTED, PETSC_FALSE );
   MatSetValues( m_mat,
                 rowIndices.size(),
@@ -413,8 +375,7 @@ void PetscSparseMatrix::set( arraySlice1d<globalIndex const> const & rowIndices,
                              arraySlice1d<globalIndex const> const & colIndices,
                              arraySlice2d<real64 const, 0> const & values )
 {
-  GEOSX_ASSERT( isOpen() );
-  GEOSX_ASSERT( isAssembled() );
+  GEOSX_LAI_MATRIX_STATUS( modifiable() );
   MatSetOption( m_mat, MAT_ROW_ORIENTED, PETSC_FALSE );
   MatSetValues( m_mat,
                 rowIndices.size(),
@@ -430,8 +391,7 @@ void PetscSparseMatrix::insert( arraySlice1d<globalIndex const> const & rowIndic
                                 arraySlice1d<globalIndex const> const & colIndices,
                                 arraySlice2d<real64 const, 0> const & values )
 {
-  GEOSX_ASSERT( isOpen() );
-  GEOSX_ASSERT( !isAssembled() );
+  GEOSX_LAI_MATRIX_STATUS( insertable() );
   MatSetOption( m_mat, MAT_ROW_ORIENTED, PETSC_FALSE );
   MatSetValues( m_mat,
                 rowIndices.size(),
@@ -449,8 +409,7 @@ void PetscSparseMatrix::add( globalIndex const * rowIndices,
                              localIndex const numRows,
                              localIndex const numCols )
 {
-  GEOSX_ASSERT( isOpen() );
-  GEOSX_ASSERT( isAssembled() );
+  GEOSX_LAI_MATRIX_STATUS( modifiable() );
   MatSetValues( m_mat,
                 numRows,
                 toPetscInt(rowIndices),
@@ -466,8 +425,7 @@ void PetscSparseMatrix::set( globalIndex const * rowIndices,
                              localIndex const numRows,
                              localIndex const numCols )
 {
-  GEOSX_ASSERT( isOpen() );
-  GEOSX_ASSERT( isAssembled() );
+  GEOSX_LAI_MATRIX_STATUS( modifiable() );
   MatSetValues( m_mat,
                 numRows,
                 toPetscInt(rowIndices),
@@ -483,8 +441,7 @@ void PetscSparseMatrix::insert( globalIndex const * rowIndices,
                                 localIndex const numRows,
                                 localIndex const numCols )
 {
-  GEOSX_ASSERT( isOpen() );
-  GEOSX_ASSERT( !isAssembled() );
+  GEOSX_LAI_MATRIX_STATUS( insertable() );
   MatSetValues( m_mat,
                 numRows,
                 toPetscInt(rowIndices),
@@ -504,11 +461,10 @@ void PetscSparseMatrix::insert( globalIndex const * rowIndices,
 // Perform the matrix-vector product A*src = dst.
 //
 // NOTE: src and dst must be different vectors
-void PetscSparseMatrix::multiply( PetscVector const &src,
-                                  PetscVector &dst ) const
+void PetscSparseMatrix::multiply( PetscVector const & src,
+                                  PetscVector & dst ) const
 {
-  GEOSX_ASSERT( !isOpen() );
-  GEOSX_ASSERT( isAssembled() );
+  GEOSX_LAI_MATRIX_STATUS( ready() );
   MatMult( m_mat, src.getConstVec(), dst.getVec() );
 }
 
@@ -522,20 +478,19 @@ void PetscSparseMatrix::multiply( PetscSparseMatrix const & src,
                                   PetscSparseMatrix & dst,
                                   bool const closeResult ) const
 {
-  GEOSX_ASSERT( !isOpen() );
-  GEOSX_ASSERT( isAssembled() );
-  GEOSX_ASSERT( !src.isOpen() );
-  GEOSX_ASSERT( src.isAssembled() );
+  GEOSX_LAI_MATRIX_STATUS( ready() );
+  GEOSX_LAI_MATRIX_STATUS( src.ready() );
+  GEOSX_LAI_ASSERT_EQ( globalCols(), src.globalRows() );
 
-  MatReuse const reuse = dst.isCreated() ? MAT_REUSE_MATRIX : MAT_INITIAL_MATRIX;
-  if( !dst.isCreated() )
+  MatReuse const reuse = dst.created() ? MAT_REUSE_MATRIX : MAT_INITIAL_MATRIX;
+  if( !dst.created() )
   {
     dst.createWithLocalSize( localRows(), src.localCols(), 1, getComm() );
   }
 
   MatMatMult( m_mat, src.unwrappedPointer(), reuse, PETSC_DEFAULT, &dst.unwrappedPointer() );
   dst.m_assembled = closeResult;
-  dst.m_open = !closeResult;
+  dst.m_closed = closeResult;
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -546,20 +501,19 @@ void PetscSparseMatrix::leftMultiplyTranspose( PetscSparseMatrix const & src,
                                                PetscSparseMatrix & dst,
                                                bool const closeResult ) const
 {
-  GEOSX_ASSERT( !isOpen() );
-  GEOSX_ASSERT( isAssembled() );
-  GEOSX_ASSERT( !src.isOpen() );
-  GEOSX_ASSERT( src.isAssembled() );
+  GEOSX_LAI_MATRIX_STATUS( ready() );
+  GEOSX_LAI_MATRIX_STATUS( src.ready() );
+  GEOSX_LAI_ASSERT_EQ( globalRows(), src.globalRows() );
 
-  MatReuse const reuse = dst.isCreated() ? MAT_REUSE_MATRIX : MAT_INITIAL_MATRIX;
-  if( !dst.isCreated() )
+  MatReuse const reuse = dst.created() ? MAT_REUSE_MATRIX : MAT_INITIAL_MATRIX;
+  if( !dst.created() )
   {
     dst.createWithLocalSize( localCols(), src.localCols(), 1, getComm() );
   }
 
   MatTransposeMatMult( m_mat, src.unwrappedPointer(), reuse, PETSC_DEFAULT, &dst.unwrappedPointer() );
   dst.m_assembled = closeResult;
-  dst.m_open = !closeResult;
+  dst.m_closed = closeResult;
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -570,20 +524,19 @@ void PetscSparseMatrix::rightMultiplyTranspose( PetscSparseMatrix const & src,
                                                 PetscSparseMatrix & dst,
                                                 bool const closeResult ) const
 {
-  GEOSX_ASSERT( !isOpen() );
-  GEOSX_ASSERT( isAssembled() );
-  GEOSX_ASSERT( !src.isOpen() );
-  GEOSX_ASSERT( src.isAssembled() );
+  GEOSX_LAI_MATRIX_STATUS( ready() );
+  GEOSX_LAI_MATRIX_STATUS( src.ready() );
+  GEOSX_LAI_ASSERT_EQ( globalCols(), src.globalCols() );
 
-  MatReuse const reuse = dst.isCreated() ? MAT_REUSE_MATRIX : MAT_INITIAL_MATRIX;
-  if( !dst.isCreated() )
+  MatReuse const reuse = dst.created() ? MAT_REUSE_MATRIX : MAT_INITIAL_MATRIX;
+  if( !dst.created() )
   {
     dst.createWithLocalSize( localRows(), src.localRows(), 1, getComm() );
   }
 
   MatMatTransposeMult( m_mat, src.unwrappedPointer(), reuse, PETSC_DEFAULT, &dst.unwrappedPointer() );
   dst.m_assembled = closeResult;
-  dst.m_open = !closeResult;
+  dst.m_closed = closeResult;
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -596,8 +549,7 @@ void PetscSparseMatrix::gemv( real64 const alpha,
                               PetscVector & y,
                               bool useTranspose ) const
 {
-  GEOSX_ASSERT( !isOpen() );
-  GEOSX_ASSERT( isAssembled() );
+  GEOSX_LAI_MATRIX_STATUS( ready() );
 
   PetscVector x_( x );
   PetscVector b_( x );
@@ -622,8 +574,7 @@ void PetscSparseMatrix::gemv( real64 const alpha,
 // Multiply all elements by scalingFactor.
 void PetscSparseMatrix::scale( real64 const scalingFactor )
 {
-  GEOSX_ASSERT( !isOpen() );
-  GEOSX_ASSERT( isAssembled() );
+  GEOSX_LAI_MATRIX_STATUS( ready() );
   MatScale( m_mat, scalingFactor );
 }
 
@@ -632,24 +583,67 @@ void PetscSparseMatrix::scale( real64 const scalingFactor )
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 void PetscSparseMatrix::leftScale( PetscVector const &vec )
 {
-  GEOSX_ASSERT( !isOpen() );
-  GEOSX_ASSERT( isAssembled() );
+  GEOSX_LAI_MATRIX_STATUS( ready() );
   MatDiagonalScale( m_mat, vec.getConstVec(), nullptr );
 }
 
 void PetscSparseMatrix::rightScale( PetscVector const &vec )
 {
-  GEOSX_ASSERT( !isOpen() );
-  GEOSX_ASSERT( isAssembled() );
+  GEOSX_LAI_MATRIX_STATUS( ready() );
   MatDiagonalScale( m_mat, nullptr, vec.getConstVec() );
 }
 
 void PetscSparseMatrix::leftRightScale( PetscVector const &vecLeft,
                                         PetscVector const &vecRight )
 {
-  GEOSX_ASSERT( !isOpen() );
-  GEOSX_ASSERT( isAssembled() );
+  GEOSX_LAI_MATRIX_STATUS( ready() );
   MatDiagonalScale( m_mat, vecLeft.getConstVec(), vecRight.getConstVec() );
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Clear row.
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Clear the row.  By default the diagonal value will be set
+// to zero, but the user can pass a desired diagValue
+void PetscSparseMatrix::clearRow( globalIndex const globalRow,
+                                  real64 const diagValue )
+{
+  GEOSX_LAI_MATRIX_STATUS( modifiable() );
+  GEOSX_LAI_ASSERT_GE( globalRow, ilower() );
+  GEOSX_LAI_ASSERT_GT( iupper(), globalRow );
+
+  PetscInt rows[1] = {globalRow};
+  MatZeroRows( m_mat, 1, rows, diagValue, nullptr, nullptr );
+}
+
+// ---------------------------------------------------------
+//  Accessors
+// ---------------------------------------------------------
+
+localIndex PetscSparseMatrix::maxRowLength() const
+{
+  GEOSX_LAI_MATRIX_STATUS( assembled() );
+  localIndex maxLocalLength = 0;
+  for( localIndex i = ilower(); i < iupper(); ++i )
+  {
+    maxLocalLength = std::max( maxLocalLength, globalRowLength( i ) );
+  }
+  return MpiWrapper::Max( maxLocalLength, getComm() );
+}
+
+localIndex PetscSparseMatrix::localRowLength( localIndex localRowIndex ) const
+{
+  return globalRowLength( getGlobalRowID( localRowIndex ) );
+}
+
+localIndex PetscSparseMatrix::globalRowLength( globalIndex globalRowIndex ) const
+{
+  GEOSX_LAI_MATRIX_STATUS( assembled() );
+  PetscInt ncols;
+  MatGetRow( m_mat, globalRowIndex, &ncols, nullptr, nullptr );
+  localIndex const nnz = ncols;
+  MatRestoreRow( m_mat, globalRowIndex, &ncols, nullptr, nullptr );
+  return nnz;
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -661,13 +655,12 @@ void PetscSparseMatrix::getRowCopy( globalIndex globalRow,
                                     array1d<globalIndex> & colIndices,
                                     array1d<real64> & values ) const
 {
-  GEOSX_ASSERT( !isOpen() );
-  GEOSX_ASSERT( isAssembled() );
-  GEOSX_ASSERT_GE( globalRow, ilower() );
-  GEOSX_ASSERT_GT( iupper(), globalRow );
+  GEOSX_LAI_MATRIX_STATUS( ready() );
+  GEOSX_LAI_ASSERT_GE( globalRow, ilower() );
+  GEOSX_LAI_ASSERT_GT( iupper(), globalRow );
 
-  const PetscScalar* vals;
-  const PetscInt* inds;
+  PetscScalar const * vals;
+  PetscInt const * inds;
   PetscInt numEntries;
 
   MatGetRow( m_mat, globalRow, &numEntries, &inds, &vals );
@@ -690,9 +683,9 @@ void PetscSparseMatrix::getRowCopy( globalIndex globalRow,
 
 real64 PetscSparseMatrix::getDiagValue( globalIndex globalRow ) const
 {
-  GEOSX_ASSERT( isAssembled() );
-  GEOSX_ASSERT_GE( globalRow, ilower());
-  GEOSX_ASSERT_GT( iupper(), globalRow );
+  GEOSX_LAI_MATRIX_STATUS( assembled() );
+  GEOSX_LAI_ASSERT_GE( globalRow, ilower());
+  GEOSX_LAI_ASSERT_GT( iupper(), globalRow );
 
   PetscScalar const * vals = nullptr;
   PetscInt const * cols = nullptr;
@@ -712,49 +705,21 @@ real64 PetscSparseMatrix::getDiagValue( globalIndex globalRow ) const
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Clear row.
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Clear the row.  By default the diagonal value will be set
-// to zero, but the user can pass a desired diagValue
-void PetscSparseMatrix::clearRow( globalIndex const globalRow,
-                                  real64 const diagValue )
-{
-  GEOSX_ASSERT( isOpen() );
-  GEOSX_ASSERT( isAssembled() );
-  GEOSX_ASSERT_GE( globalRow, ilower() );
-  GEOSX_ASSERT_GT( iupper(), globalRow );
-
-  PetscInt rows[1] = {globalRow};
-  MatZeroRows( m_mat, 1, rows, diagValue, nullptr, nullptr );
-}
-
-// ----------------------------
-//  Accessors
-// ----------------------------
-
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Get pointer.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 // Accessor for the pointer to the matrix
 Mat & PetscSparseMatrix::unwrappedPointer()
 {
+  GEOSX_LAI_MATRIX_STATUS( created() );
   return m_mat;
 }
 
 // Accessor for the pointer to the matrix
 const Mat & PetscSparseMatrix::unwrappedPointer() const
 {
+  GEOSX_LAI_MATRIX_STATUS( created() );
   return m_mat;
-}
-
-// Accessor for the MPI communicator
-MPI_Comm PetscSparseMatrix::getComm() const
-{
-  GEOSX_ASSERT_MSG( isCreated(), "Matrix has not been created" );
-  MPI_Comm comm;
-  PetscObjectGetComm( reinterpret_cast<PetscObject>( m_mat ), &comm );
-  return comm;
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -763,7 +728,7 @@ MPI_Comm PetscSparseMatrix::getComm() const
 // Accessor for the number of global rows
 globalIndex PetscSparseMatrix::globalRows() const
 {
-  GEOSX_ASSERT_MSG( isCreated(), "Matrix has not been created" );
+  GEOSX_LAI_MATRIX_STATUS( created() );
   PetscInt num_rows;
   PetscInt num_cols;
   MatGetSize( m_mat, &num_rows, &num_cols );
@@ -776,7 +741,7 @@ globalIndex PetscSparseMatrix::globalRows() const
 // Accessor for the number of global columns
 globalIndex PetscSparseMatrix::globalCols() const
 {
-  GEOSX_ASSERT_MSG( isCreated(), "Matrix has not been created" );
+  GEOSX_LAI_MATRIX_STATUS( created() );
   PetscInt num_rows;
   PetscInt num_cols;
   MatGetSize( m_mat, &num_rows, &num_cols );
@@ -789,7 +754,7 @@ globalIndex PetscSparseMatrix::globalCols() const
 // Accessor for the index of the first global row
 globalIndex PetscSparseMatrix::ilower() const
 {
-  GEOSX_ASSERT_MSG( isCreated(), "Matrix has not been created" );
+  GEOSX_LAI_MATRIX_STATUS( created() );
   PetscInt firstrow;
   PetscInt lastrow;
   MatGetOwnershipRange( m_mat, &firstrow, &lastrow );
@@ -802,12 +767,135 @@ globalIndex PetscSparseMatrix::ilower() const
 // Accessor for the index of the last global row
 globalIndex PetscSparseMatrix::iupper() const
 {
-  GEOSX_ASSERT_MSG( isCreated(), "Matrix has not been created" );
+  GEOSX_LAI_MATRIX_STATUS( created() );
   PetscInt firstrow;
   PetscInt lastrow;
   MatGetOwnershipRange( m_mat, &firstrow, &lastrow );
   return integer_conversion<globalIndex>( lastrow );
- } 
+}
+
+localIndex PetscSparseMatrix::localNonzeros() const
+{
+  GEOSX_LAI_MATRIX_STATUS( assembled() );
+  PetscInt firstrow, lastrow;
+  MatGetOwnershipRange( m_mat, &firstrow, &lastrow );
+
+  PetscInt numEntries;
+  localIndex result = 0;
+
+  // loop over rows
+  for( PetscInt row = firstrow; row < lastrow; ++row )
+  {
+    MatGetRow( m_mat, row, &numEntries, nullptr, nullptr );
+    result += numEntries;
+    MatRestoreRow( m_mat, row, &numEntries, nullptr, nullptr );
+  }
+
+  return result;
+}
+
+globalIndex PetscSparseMatrix::globalNonzeros() const
+{
+  return MpiWrapper::Sum( integer_conversion<globalIndex>( localNonzeros() ), getComm() );
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Inf-norm.
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Returns the infinity norm of the matrix.
+real64 PetscSparseMatrix::normInf() const
+{
+  GEOSX_LAI_MATRIX_STATUS( ready() );
+  real64 normInf;
+  MatNorm( m_mat, NORM_INFINITY, &normInf );
+  return normInf;
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// 1-norm.
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Returns the one norm of the matrix.
+real64 PetscSparseMatrix::norm1() const
+{
+  GEOSX_LAI_MATRIX_STATUS( ready() );
+  real64 norm1;
+  MatNorm( m_mat, NORM_1, &norm1 );
+  return norm1;
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Frobenius-norm.
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Returns the Frobenius norm of the matrix.
+real64 PetscSparseMatrix::normFrobenius() const
+{
+  GEOSX_LAI_MATRIX_STATUS( ready() );
+  real64 normFrob;
+  MatNorm( m_mat, NORM_FROBENIUS, &normFrob );
+  return normFrob;
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// getLocalRowID
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Map a global row index to local row index
+localIndex PetscSparseMatrix::getLocalRowID( globalIndex const index ) const
+{
+  GEOSX_LAI_MATRIX_STATUS( created() );
+  PetscInt low, high;
+  MatGetOwnershipRange( m_mat, &low, &high);
+  return (index >= low && index < high) ? integer_conversion< localIndex >( index - low ) : -1;
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// getGlobalRowID
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Map a local row index to global row index
+globalIndex PetscSparseMatrix::getGlobalRowID( localIndex const index ) const
+{
+  GEOSX_LAI_MATRIX_STATUS( created() );
+  GEOSX_LAI_ASSERT_GE( index, 0 );
+  GEOSX_LAI_ASSERT_GT( localRows(), index );
+  PetscInt low, high;
+  MatGetOwnershipRange( m_mat, &low, &high);
+  return integer_conversion<globalIndex>( index + low );
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// localCols
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Return the local number of columns on each processor
+//
+// NOTE: PETSc MPI matrices are partitioned row-wise so that the local number
+// of columns is the global number.
+localIndex PetscSparseMatrix::localCols() const
+{
+  GEOSX_LAI_MATRIX_STATUS( created() );
+  PetscInt cols;
+  MatGetSize( m_mat, nullptr, &cols );
+  return integer_conversion<localIndex>( cols );
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// localRows
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Return the local number of rows on each processor
+localIndex PetscSparseMatrix::localRows() const
+{
+  GEOSX_LAI_MATRIX_STATUS( created() );
+  PetscInt low, high;
+  MatGetOwnershipRange( m_mat, &low, &high);
+  return integer_conversion<localIndex >( high - low );
+}
+
+// Accessor for the MPI communicator
+MPI_Comm PetscSparseMatrix::getComm() const
+{
+  GEOSX_LAI_MATRIX_STATUS( created() );
+  MPI_Comm comm;
+  PetscObjectGetComm( reinterpret_cast<PetscObject>( m_mat ), &comm );
+  return comm;
+}
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Print to terminal.
@@ -815,7 +903,7 @@ globalIndex PetscSparseMatrix::iupper() const
 // Wrapper to print the petsc output of the matrix
 void PetscSparseMatrix::print( std::ostream & os ) const
 {
-  GEOSX_ASSERT_MSG( isCreated(), "Matrix has not been created" );
+  GEOSX_LAI_MATRIX_STATUS( ready() );
   GEOSX_ERROR_IF( &os != &std::cout, "Only output to stdout currently supported" );
   MatView( m_mat, PETSC_VIEWER_STDOUT_( getComm() ) );
 }
@@ -826,7 +914,7 @@ void PetscSparseMatrix::print( std::ostream & os ) const
 void PetscSparseMatrix::write( string const & filename,
                                MatrixOutputFormat const format ) const
 {
-  GEOSX_ASSERT( isCreated() );
+  GEOSX_LAI_MATRIX_STATUS( ready() );
 
   PetscViewer viewer;
   PetscViewerASCIIOpen( getComm(), filename.c_str(), &viewer );
@@ -856,126 +944,6 @@ void PetscSparseMatrix::write( string const & filename,
   PetscViewerPushFormat( viewer, petscFormat );
   MatView( m_mat, viewer );
   PetscViewerDestroy( &viewer );
-}
-
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Inf-norm.
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Returns the infinity norm of the matrix.
-real64 PetscSparseMatrix::normInf() const
-{
-  GEOSX_ASSERT( !isOpen() );
-  GEOSX_ASSERT( isAssembled() );
-  real64 normInf;
-  MatNorm( m_mat, NORM_INFINITY, &normInf );
-  return normInf;
-}
-
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// 1-norm.
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Returns the one norm of the matrix.
-real64 PetscSparseMatrix::norm1() const
-{
-  GEOSX_ASSERT( !isOpen() );
-  GEOSX_ASSERT( isAssembled() );
-  real64 norm1;
-  MatNorm( m_mat, NORM_1, &norm1 );
-  return norm1;
-}
-
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Frobenius-norm.
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Returns the Frobenius norm of the matrix.
-real64 PetscSparseMatrix::normFrobenius() const
-{
-  GEOSX_ASSERT( !isOpen() );
-  GEOSX_ASSERT( isAssembled() );
-  real64 normFrob;
-  MatNorm( m_mat, NORM_FROBENIUS, &normFrob );
-  return normFrob;
-}
-
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// getLocalRowID
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Map a global row index to local row index
-localIndex PetscSparseMatrix::getLocalRowID( globalIndex const index ) const
-{
-  GEOSX_ASSERT( isCreated() );
-  GEOSX_ASSERT_GE( index, ilower() );
-  GEOSX_ASSERT_GT( iupper(), index );
-  PetscInt low, high;
-  MatGetOwnershipRange( m_mat, &low, &high);
-  return integer_conversion<localIndex>( index - low );
-}
-
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// getGlobalRowID
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Map a local row index to global row index
-globalIndex PetscSparseMatrix::getGlobalRowID( localIndex const index ) const
-{
-  GEOSX_ASSERT( isCreated() );
-  GEOSX_ASSERT_GE( index, 0 );
-  GEOSX_ASSERT_GT( localRows(), index );
-  PetscInt low, high;
-  MatGetOwnershipRange( m_mat, &low, &high);
-  return integer_conversion<globalIndex>( index + low );
-}
-
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// localCols
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Return the local number of columns on each processor
-//
-// NOTE: PETSc MPI matrices are partitioned row-wise so that the local number
-// of columns is the global number.
-localIndex PetscSparseMatrix::localCols() const
-{
-  GEOSX_ASSERT( isCreated());
-  PetscInt cols;
-  MatGetSize( m_mat, nullptr, &cols );
-  return integer_conversion<localIndex>( cols );
-}
-
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// localRows
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Return the local number of rows on each processor
-localIndex PetscSparseMatrix::localRows() const
-{
-  GEOSX_ASSERT( isCreated() );
-  PetscInt low, high;
-  MatGetOwnershipRange( m_mat, &low, &high);
-  return integer_conversion<localIndex >( high - low );
-}
-
-localIndex PetscSparseMatrix::localNonzeros() const
-{
-  GEOSX_ASSERT( isAssembled() );
-  PetscInt firstrow, lastrow;
-  MatGetOwnershipRange( m_mat, &firstrow, &lastrow );
-
-  PetscInt numEntries;
-  localIndex result = 0;
-
-  // loop over rows
-  for( PetscInt row = firstrow; row < lastrow; ++row )
-  {
-    MatGetRow( m_mat, row, &numEntries, nullptr, nullptr );
-    result += numEntries;
-    MatRestoreRow( m_mat, row, &numEntries, nullptr, nullptr );
-  }
-
-  return result;
-}
-
-globalIndex PetscSparseMatrix::globalNonzeros() const
-{
-  GEOSX_ASSERT( isAssembled() );
-  return MpiWrapper::Sum( integer_conversion<globalIndex>( localNonzeros() ) );
 }
 
 } // end geosx namespace

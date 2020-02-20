@@ -253,6 +253,21 @@
 #define GEOSX_ASSERT_EQ( lhs, rhs ) LVARRAY_ASSERT_EQ( lhs, rhs )
 
 /**
+ * @brief Assert that two values compare not equal in debug builds.
+ * @param lhs expression to be evaluated and used as left-hand side in comparison
+ * @param rhs expression to be evaluated and used as right-hand side in comparison
+ * @param msg a message to log (any expression that can be stream inserted)
+ */
+#define GEOSX_ASSERT_NE_MSG( lhs, rhs, msg ) LVARRAY_ASSERT_NE_MSG( lhs, rhs, msg )
+
+/**
+ * @brief Assert that two values compare not equal in debug builds.
+ * @param lhs expression to be evaluated and used as left-hand side in comparison
+ * @param rhs expression to be evaluated and used as right-hand side in comparison
+ */
+#define GEOSX_ASSERT_NE( lhs, rhs ) LVARRAY_ASSERT_NE( lhs, rhs )
+
+/**
  * @brief Assert that one value compares greater than the other in debug builds.
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison

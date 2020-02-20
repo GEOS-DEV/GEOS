@@ -4,6 +4,7 @@ message( "Entering /src/coreComponents/linearAlgebra/CMakeLists.txt")
 # Specify all headers
 #
 set( linearAlgebra_headers
+     interfaces/common.hpp
      interfaces/BlasLapackFunctions.h
      interfaces/BlasLapackLA.hpp
      interfaces/InterfaceTypes.hpp
@@ -18,9 +19,9 @@ set( linearAlgebra_headers
      utilities/BlockVector.hpp
      utilities/BlockOperatorView.hpp
      utilities/LinearSolverParameters.hpp
+     utilities/LAIHelperFunctions.hpp
      DofManager.hpp
-     DofManagerHelpers.hpp
-     utilities/LAIHelperFunctions.hpp)
+     DofManagerHelpers.hpp )
 
 #
 # Specify all sources
@@ -72,7 +73,7 @@ if( ENABLE_HYPRE )
                  interfaces/HypreVector.hpp
                  interfaces/HypreSolver.hpp
                  interfaces/HypreInterface.hpp
-                 interfaces/HypreUtils.hpp)
+                 interfaces/HypreUtils.hpp )
 
     list( APPEND linearAlgebra_sources
                  interfaces/HypreMatrix.cpp
@@ -89,13 +90,14 @@ if( ENABLE_PETSC )
                  interfaces/PetscVector.hpp
                  interfaces/PetscSparseMatrix.hpp
                  interfaces/PetscSolver.hpp
-                 interfaces/PetscInterface.hpp )
+                 interfaces/PetscInterface.hpp
+                 interfaces/PetscUtils.hpp )
 
     list( APPEND linearAlgebra_sources
                  interfaces/PetscVector.cpp
                  interfaces/PetscSparseMatrix.cpp
                  interfaces/PetscSolver.cpp
-                 interfaces/PetscInterface.cpp)
+                 interfaces/PetscInterface.cpp )
 
     list( APPEND dependencyList petsc )
 

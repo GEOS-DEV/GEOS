@@ -13,38 +13,28 @@
  */
 
 /**
- * @file HypreUtils.hpp
+ * @file PetscUtils.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_HYPREUTILS_HPP_
-#define GEOSX_LINEARALGEBRA_INTERFACES_HYPREUTILS_HPP_
+#ifndef GEOSX_LINEARALGEBRA_INTERFACES_PETSCUTILS_HPP
+#define GEOSX_LINEARALGEBRA_INTERFACES_PETSCUTILS_HPP
 
 #include "common/DataTypes.hpp"
-#include "HYPRE_utilities.h"
+#include <petscsys.h>
 
 namespace geosx
 {
 
-inline HYPRE_BigInt * toHYPRE_BigInt( globalIndex * const index )
+inline PetscInt * toPetscInt( globalIndex * const index )
 {
-  return reinterpret_cast<HYPRE_BigInt*>(index);
+  return reinterpret_cast< PetscInt * >(index);
 }
 
-inline HYPRE_BigInt const * toHYPRE_BigInt( globalIndex const * const index )
+inline PetscInt const * toPetscInt( globalIndex const * const index )
 {
-  return reinterpret_cast<HYPRE_BigInt const*>(index);
-}
-
-inline HYPRE_Real * toHYPRE_Real( real64 * const value )
-{
-  return reinterpret_cast<HYPRE_Real*>(value);
-}
-
-inline HYPRE_Real const * toHYPRE_Real( real64 const * const value )
-{
-  return reinterpret_cast<HYPRE_Real const*>(value);
+  return reinterpret_cast< PetscInt const * >(index);
 }
 
 }
 
-#endif /*GEOSX_LINEARALGEBRA_INTERFACES_HYPREUTILS_HPP_*/
+#endif //GEOSX_LINEARALGEBRA_INTERFACES_PETSCUTILS_HPP

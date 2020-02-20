@@ -26,25 +26,23 @@
 
 // Include the corresponding header file.
 #include "PetscVector.hpp"
-
+#include "linearAlgebra/interfaces/PetscUtils.hpp"
 #include <petscvec.h>
 
 // Put everything under the geosx namespace.
 namespace geosx
 {
 
-static_assert( sizeof(PetscInt) == sizeof(globalIndex), "sizeof(PetscInt) != sizeof(globalIndex)");
-static_assert( std::is_same<PetscScalar, real64>::value, "PetscScalar != real64" );
+// Check matching requirements on index/value types between GEOSX and PETSc
 
-inline PetscInt * toPetscInt( globalIndex * const index )
-{
-  return reinterpret_cast<PetscInt*>(index);
-}
+static_assert( sizeof( PetscInt ) == sizeof( globalIndex ),
+               "PetscInt and geosx::globalIndex must have the same size" );
 
-inline PetscInt const * toPetscInt( globalIndex const * const index )
-{
-  return reinterpret_cast<PetscInt const*>(index);
-}
+static_assert( std::is_signed< PetscInt >::value == std::is_signed< globalIndex >::value,
+               "PetscInt and geoex::globalIndex must both be signed or unsigned");
+
+static_assert( std::is_same< PetscScalar, real64 >::value,
+               "PetscScalar and geosx::real64 must be the same type" );
 
 // ----------------------------
 // Constructors

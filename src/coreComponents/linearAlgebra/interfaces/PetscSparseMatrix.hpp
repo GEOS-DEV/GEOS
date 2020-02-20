@@ -37,7 +37,7 @@ namespace geosx
  * @brief This class creates and provides basic support for the Mat
  *        matrix object type used in PETSc.
  */
-class PetscSparseMatrix : public MatrixBase<PetscSparseMatrix, PetscVector>
+class PetscSparseMatrix final : public MatrixBase<PetscSparseMatrix, PetscVector>
 {
 public:
 
@@ -65,7 +65,7 @@ public:
   /**
    * @brief Destructor.
    */
-  ~PetscSparseMatrix() final;
+  ~PetscSparseMatrix() override;
 
   ///@}
 
@@ -74,190 +74,191 @@ public:
    */
   ///@{
 
-  void createWithLocalSize( localIndex const localSize,
-                            localIndex const maxEntriesPerRow,
-                            MPI_Comm const & comm ) final;
-
-  void createWithGlobalSize( globalIndex const globalSize,
-                             localIndex const maxEntriesPerRow,
-                             MPI_Comm const & comm ) final;
+  using Base::createWithLocalSize;
+  using Base::createWithGlobalSize;
 
   void createWithLocalSize( localIndex const localRows,
                             localIndex const localCols,
                             localIndex const maxEntriesPerRow,
-                            MPI_Comm const & comm ) final;
+                            MPI_Comm const & comm ) override;
 
   void createWithGlobalSize( globalIndex const globalRows,
                              globalIndex const globalCols,
                              localIndex const maxEntriesPerRow,
-                             MPI_Comm const & comm ) final;
+                             MPI_Comm const & comm ) override;
 
-  bool isCreated() const final;
+  bool created() const override;
 
-  void reset() final;
+  void reset() override;
 
-  void set( real64 const value ) final;
+  void set( real64 const value ) override;
 
-  void zero() final;
+  void zero() override;
 
-  void open() final;
+  void open() override;
 
-  void close() final;
+  void close() override;
 
   void add( globalIndex const rowIndex,
             globalIndex const colIndex,
-            real64 const value ) final;
+            real64 const value ) override;
 
   void set( globalIndex const rowIndex,
             globalIndex const colIndex,
-            real64 const value ) final;
+            real64 const value ) override;
 
   void insert( globalIndex const rowIndex,
                globalIndex const colIndex,
-               real64 const value ) final;
+               real64 const value ) override;
 
   void add( globalIndex const rowIndex,
             globalIndex const * colIndices,
             real64 const * values,
-            localIndex const size ) final;
+            localIndex const size ) override;
 
   void set( globalIndex const rowIndex,
             globalIndex const * colIndices,
             real64 const * values,
-            localIndex const size ) final;
+            localIndex const size ) override;
 
   void insert( globalIndex const rowIndex,
                globalIndex const * colIndices,
                real64 const * values,
-               localIndex const size ) final;
+               localIndex const size ) override;
 
   void add( globalIndex const rowIndex,
             arraySlice1d<globalIndex const> const & colIndices,
-            arraySlice1d<real64 const> const & values ) final;
+            arraySlice1d<real64 const> const & values ) override;
 
   void set( globalIndex const rowIndex,
             arraySlice1d<globalIndex const> const & colIndices,
-            arraySlice1d<real64 const> const & values ) final;
+            arraySlice1d<real64 const> const & values ) override;
 
   void insert( globalIndex const rowIndex,
                arraySlice1d<globalIndex const> const & colIndices,
-               arraySlice1d<real64 const> const & values ) final;
+               arraySlice1d<real64 const> const & values ) override;
 
   void add( arraySlice1d<globalIndex const> const & rowIndices,
             arraySlice1d<globalIndex const> const & colIndices,
-            arraySlice2d<real64 const, 1> const & values ) final;
+            arraySlice2d<real64 const, 1> const & values ) override;
 
   void set( arraySlice1d<globalIndex const> const & rowIndices,
             arraySlice1d<globalIndex const> const & colIndices,
-            arraySlice2d<real64 const, 1> const & values ) final;
+            arraySlice2d<real64 const, 1> const & values ) override;
 
   void insert( arraySlice1d<globalIndex const> const & rowIndices,
                arraySlice1d<globalIndex const> const & colIndices,
-               arraySlice2d<real64 const, 1> const & values ) final;
+               arraySlice2d<real64 const, 1> const & values ) override;
 
   void add( arraySlice1d<globalIndex const> const & rowIndices,
             arraySlice1d<globalIndex const> const & colIndices,
-            arraySlice2d<real64 const, 0> const & values ) final;
+            arraySlice2d<real64 const, 0> const & values ) override;
 
   void set( arraySlice1d<globalIndex const> const & rowIndices,
             arraySlice1d<globalIndex const> const & colIndices,
-            arraySlice2d<real64 const, 0> const & values ) final;
+            arraySlice2d<real64 const, 0> const & values ) override;
 
   void insert( arraySlice1d<globalIndex const> const & rowIndices,
                arraySlice1d<globalIndex const> const & colIndices,
-               arraySlice2d<real64 const, 0> const & values ) final;
+               arraySlice2d<real64 const, 0> const & values ) override;
 
   virtual void add( globalIndex const * rowIndices,
                     globalIndex const * colIndices,
                     real64 const * values,
                     localIndex const numRows,
-                    localIndex const numCols ) final;
+                    localIndex const numCols ) override;
 
   virtual void set( globalIndex const * rowIndices,
                     globalIndex const * colIndices,
                     real64 const * values,
                     localIndex const numRows,
-                    localIndex const numCols ) final;
+                    localIndex const numCols ) override;
 
   void insert( globalIndex const * rowIndices,
                globalIndex const * colIndices,
                real64 const * values,
                localIndex const numRows,
-               localIndex const numCols ) final;
+               localIndex const numCols ) override;
 
   void multiply( PetscVector const & src,
-                 PetscVector & dst ) const final;
+                 PetscVector & dst ) const override;
 
   void multiply( PetscSparseMatrix const & src,
                  PetscSparseMatrix & dst,
-                 bool const closeResult = true ) const final;
+                 bool const closeResult = true ) const override;
 
   void leftMultiplyTranspose( PetscSparseMatrix const & src,
                               PetscSparseMatrix & dst,
-                              bool const closeResult = true ) const final;
+                              bool const closeResult = true ) const override;
 
   void rightMultiplyTranspose( PetscSparseMatrix const & src,
                                PetscSparseMatrix & dst,
-                               bool const closeResult = true ) const final;
+                               bool const closeResult = true ) const override;
 
   void gemv( real64 const alpha,
              PetscVector const & x,
              real64 const beta,
              PetscVector & y,
-             bool useTranspose = false ) const final;
+             bool useTranspose = false ) const override;
 
-  void scale( real64 const scalingFactor ) final;
+  void scale( real64 const scalingFactor ) override;
 
-  void leftScale( PetscVector const & vec ) final;
+  void leftScale( PetscVector const & vec ) override;
 
-  void rightScale( PetscVector const & vec ) final;
+  void rightScale( PetscVector const & vec ) override;
 
   void leftRightScale( PetscVector const & vecLeft,
-                       PetscVector const & vecRight ) final;
+                       PetscVector const & vecRight ) override;
 
   void clearRow( globalIndex const globalRow,
-                 real64 const diagValue = 0 ) final;
+                 real64 const diagValue = 0 ) override;
 
-  real64 getDiagValue( globalIndex globalRow ) const final;
+  virtual localIndex maxRowLength() const override;
+
+  virtual localIndex localRowLength( localIndex localRowIndex ) const override;
+
+  virtual localIndex globalRowLength( globalIndex globalRowIndex ) const override;
+
+  real64 getDiagValue( globalIndex globalRow ) const override;
 
   void getRowCopy( globalIndex globalRow,
                    array1d<globalIndex> & colIndices,
-                   array1d<real64> & values ) const final;
+                   array1d<real64> & values ) const override;
 
-  globalIndex globalRows() const final;
+  globalIndex globalRows() const override;
 
-  globalIndex globalCols() const final;
+  globalIndex globalCols() const override;
 
-  globalIndex ilower() const final;
+  globalIndex ilower() const override;
 
-  globalIndex iupper() const final;
+  globalIndex iupper() const override;
 
-  localIndex localNonzeros() const final;
+  localIndex localNonzeros() const override;
 
-  globalIndex globalNonzeros() const final;
+  globalIndex globalNonzeros() const override;
 
-  real64 normInf() const final;
+  real64 normInf() const override;
 
-  real64 norm1() const final;
+  real64 norm1() const override;
 
-  real64 normFrobenius() const final;
+  real64 normFrobenius() const override;
 
-  localIndex getLocalRowID( globalIndex const index ) const final;
+  localIndex getLocalRowID( globalIndex const index ) const override;
 
-  globalIndex getGlobalRowID( localIndex const index ) const final;
+  globalIndex getGlobalRowID( localIndex const index ) const override;
 
-  localIndex localRows() const final;
+  localIndex localRows() const override;
 
-  localIndex localCols() const final;
+  localIndex localCols() const override;
 
-  MPI_Comm getComm() const final;
+  MPI_Comm getComm() const override;
 
-  void print( std::ostream & os = std::cout ) const final;
+  void print( std::ostream & os = std::cout ) const override;
 
   void write( string const & filename,
-              MatrixOutputFormat const format ) const final;
+              MatrixOutputFormat const format ) const override;
 
-  /// @}
+  ///@}
 
   /**
    * @brief Returns a pointer to the underlying matrix.
