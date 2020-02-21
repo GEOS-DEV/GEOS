@@ -1784,7 +1784,7 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const &
     referencePosition = nodeManager->referencePosition();
 
-    array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > const * const
+    arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const * const
     totalDisplacement = nodeManager->getPointer< array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > >(NodeManager::viewKeyStruct::totalDisplacementString);
 
     bool writeArbitraryPolygon(false);

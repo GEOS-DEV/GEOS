@@ -328,12 +328,12 @@ public:
     dataRepository::ViewKey parentIndex = { parentIndexString };
 
 
-    static constexpr auto accelerationString            = "acceleration";
+    static constexpr auto accelerationString            = "Acceleration";
     static constexpr auto forceString                   = "force";
-    static constexpr auto massString                    = "mass";
-    static constexpr auto referencePositionString       = "referencePosition";
-    static constexpr auto totalDisplacementString       = "totalDisplacement";
-    static constexpr auto velocityString                = "velocity";
+    static constexpr auto massString                    = "Mass";
+    static constexpr auto referencePositionString       = "ReferencePosition";
+    static constexpr auto totalDisplacementString       = "TotalDisplacement";
+    static constexpr auto velocityString                = "Velocity";
 
     dataRepository::ViewKey acceleration            = { accelerationString };
     dataRepository::ViewKey force                   = { forceString };

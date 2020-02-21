@@ -382,7 +382,7 @@ localIndex ObjectManagerBase::PackParentChildMapsPrivate( buffer_unit_type * & b
 {
   localIndex packedSize = 0;
 
-  localIndex_array const * const
+  arrayView1d<localIndex const> const * const
   parentIndex = this->getPointer<localIndex_array>( m_ObjectManagerBaseViewKeys.parentIndex );
   if( parentIndex != nullptr )
   {
@@ -394,7 +394,7 @@ localIndex ObjectManagerBase::PackParentChildMapsPrivate( buffer_unit_type * & b
                                            this->m_localToGlobalMap );
   }
 
-  localIndex_array const * const
+  arrayView1d<localIndex const> const * const
   childIndex = this->getPointer<localIndex_array>( m_ObjectManagerBaseViewKeys.childIndex );
   if( childIndex != nullptr )
   {
@@ -554,7 +554,7 @@ localIndex ObjectManagerBase::PackGlobalMapsPrivate( buffer_unit_type * & buffer
     packedSize += bufferOps::Pack<DOPACK>( buffer, globalIndices );
   }
 
-  array1d<localIndex> const * const
+  arrayView1d<localIndex const> const * const
   parentIndices = this->getPointer<array1d<localIndex>>( viewKeyStruct::parentIndexString );
   if( parentIndices != nullptr )
   {

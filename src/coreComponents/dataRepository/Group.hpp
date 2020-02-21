@@ -1263,15 +1263,15 @@ public:
    * @note @p nullptr will be returned if wrapper does not exist or type cast is invalid.
    */
   template< typename T, typename LOOKUP_TYPE >
-  T const * getPointer( LOOKUP_TYPE const & lookup ) const
+  typename std::remove_reference< typename Wrapper< T >::ViewTypeConst >::type const *
+  getPointer( LOOKUP_TYPE const & lookup ) const
   {
-    T const * rval = nullptr;
-    Wrapper< T > const * wrapper = getWrapper< T >( lookup );
-    if( wrapper != nullptr )
+    Wrapper< T > const * const wrapper = getWrapper< T >( lookup );
+    if( wrapper == nullptr )
     {
-      rval = wrapper->getPointer();
+      return nullptr;
     }
-    return rval;
+    return &(wrapper->reference());
   }
 
   /**
@@ -1279,7 +1279,14 @@ public:
    */
   template< typename T, typename LOOKUP_TYPE >
   T * getPointer( LOOKUP_TYPE const & lookup )
-  { return const_cast< T * >( const_cast< Group const * >(this)->getPointer< T >( lookup )); }
+  {
+    Wrapper< T > * const wrapper = getWrapper< T >( lookup );
+    if( wrapper == nullptr )
+    {
+      return nullptr;
+    }
+    return wrapper->getPointer();
+  }
 
   /**
    * @copybrief getPointer(LOOKUP_TYPE const &) const
@@ -1290,7 +1297,8 @@ public:
    * @note nullptr will be returned if wrapper does not exist or type cast is invalid.
    */
   template< typename T >
-  T const * getPointer( char const * const name ) const
+  typename std::remove_reference< typename Wrapper< T >::ViewTypeConst >::type const *
+  getPointer( char const * const name ) const
   { return getPointer< T >( string( name ) ); }
 
   /**

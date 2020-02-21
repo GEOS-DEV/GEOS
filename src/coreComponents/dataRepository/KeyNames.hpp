@@ -31,31 +31,18 @@ namespace keys
 /// @cond DO_NOT_DOCUMENT
 
 
-static constexpr auto Name = "name";
-static constexpr auto Size = "size";
-static constexpr auto ProblemManager = "Problem";
 static constexpr auto ConstitutiveManager = "Constitutive";
-static constexpr auto ConstitutiveBase = "ConstitutiveBase";
-static constexpr auto solverNames = "solverNames";
 
 static constexpr auto schema = "schema";
 
-static constexpr auto time = "time";
-static constexpr auto cycle = "cycle";
-static constexpr auto beginTime = "beginTime";
-static constexpr auto endTime = "endTime";
-static constexpr auto dt = "dt";
+//static constexpr auto time = "time";
+//static constexpr auto cycle = "cycle";
+//static constexpr auto beginTime = "beginTime";
+//static constexpr auto endTime = "endTime";
+//static constexpr auto dt = "dt";
 
 static constexpr auto domain  = "domain";
-static constexpr auto solvers = "solvers";
-static constexpr auto simulationParameterMap = "simulationParameterMap";
-static constexpr auto FE_Space    = "FE_Space";
-//static constexpr auto FEM_Nodes    = "FEM_Nodes";
-//static constexpr auto FEM_Edges    = "FEM_Edges";
-//static constexpr auto FEM_Faces    = "FEM_Faces";
-//static constexpr auto FEM_Elements = "FEM_Elements";
 static constexpr auto cellManager = "cellManager";
-static constexpr auto functionManager = "FunctionManager";
 
 /// @endcond
 

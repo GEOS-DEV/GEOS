@@ -127,8 +127,7 @@ public:
     static constexpr auto elementSubRegionListString  = "elemSubRegionList";
     static constexpr auto elementListString           = "elemList";
     static constexpr auto faceListString              = "faceList";
-    static constexpr auto incrementalDisplacementString = "incrementalDisplacement";
-    static constexpr auto referencePositionString     = "ReferencePosition";
+    static constexpr auto incrementalDisplacementString = "IncrementalDisplacement";
 
     dataRepository::ViewKey edgeList                = { edgeListString };
     dataRepository::ViewKey elementRegionList       = { elementRegionListString };
@@ -136,7 +135,6 @@ public:
     dataRepository::ViewKey elementList             = { elementListString };
     dataRepository::ViewKey faceList                = { faceListString };
     dataRepository::ViewKey incrementalDisplacement = { incrementalDisplacementString };
-    dataRepository::ViewKey referencePosition       = { referencePositionString };
   } viewKeys;
 
 
