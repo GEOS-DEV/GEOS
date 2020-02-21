@@ -481,7 +481,9 @@ TYPED_TEST_P( LAOperationsTest, MatrixFunctions )
  */
 TYPED_TEST_P( LAOperationsTest, InterfaceSolvers )
 {
+#ifdef GEOSX_USE_PETSC
   SKIP_TEST_IF( (std::is_same<TypeParam, PetscInterface>::value), "https://github.com/GEOSX/GEOSX/issues/790" );
+#endif
 
   // Define aliases templated on the Linear Algebra Interface (LAI).
   using Matrix = typename TypeParam::ParallelMatrix;
