@@ -71,7 +71,8 @@ static void initialize( MPI_Comm const & comm,
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 HypreMatrix::HypreMatrix()
-: Base(),
+: LinearOperator(),
+  MatrixBase(),
   m_ij_mat{},
   m_parcsr_mat{}
 {}

@@ -54,7 +54,8 @@ namespace geosx
 // Create an empty matrix (meant to be used for declaration)
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 EpetraMatrix::EpetraMatrix()
-: Base()
+: LinearOperator(),
+  MatrixBase()
 { }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""

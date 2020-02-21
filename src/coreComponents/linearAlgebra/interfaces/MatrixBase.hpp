@@ -19,7 +19,6 @@
 #ifndef GEOSX_LINEARALGEBRA_INTERFACES_MATRIXBASE_HPP_
 #define GEOSX_LINEARALGEBRA_INTERFACES_MATRIXBASE_HPP_
 
-#include "linearAlgebra/interfaces/LinearOperator.hpp"
 #include "linearAlgebra/interfaces/common.hpp"
 
 #define GEOSX_LAI_MATRIX_STATUS( expr ) \
@@ -60,7 +59,7 @@ enum class MatrixOutputFormat
  * In that case, @c \@copydoc tag can be used to copy over the documentation.
  */
 template<typename MATRIX, typename VECTOR>
-class MatrixBase : public LinearOperator<VECTOR>
+class MatrixBase
 {
 public:
 
@@ -480,15 +479,6 @@ public:
    * @name Linear Algebra Methods
    */
   ///@{
-
-  /**
-   * @brief Apply operator to a vector
-   * @param src Input vector (x).
-   * @param dst Output vector (b).
-   */
-  virtual void
-  multiply( Vector const & src,
-            Vector & dst ) const override = 0;
 
   /**
    * @brief Matrix/Matrix multiplication.

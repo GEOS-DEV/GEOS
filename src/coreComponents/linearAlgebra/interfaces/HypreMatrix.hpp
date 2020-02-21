@@ -21,6 +21,7 @@
 
 #include "common/DataTypes.hpp"
 #include "linearAlgebra/interfaces/HypreVector.hpp"
+#include "linearAlgebra/interfaces/LinearOperator.hpp"
 #include "linearAlgebra/interfaces/MatrixBase.hpp"
 
 // Just a placeholder to avoid to include two HYPRE header files
@@ -42,11 +43,10 @@ namespace geosx
  * \class HypreMatrix
  * \brief This class ...
  */
-class HypreMatrix final : public MatrixBase<HypreMatrix, HypreVector>
+class HypreMatrix final : public LinearOperator<HypreVector>,
+                          private MatrixBase<HypreMatrix, HypreVector>
 {
 public:
-
-  using Base = MatrixBase<HypreMatrix, HypreVector>;
 
   /// @name Constructor/Destructor Methods
   ///@{
@@ -73,8 +73,13 @@ public:
 
   ///@}
 
-  using Base::createWithLocalSize;
-  using Base::createWithGlobalSize;
+  using MatrixBase::createWithLocalSize;
+  using MatrixBase::createWithGlobalSize;
+  using MatrixBase::closed;
+  using MatrixBase::assembled;
+  using MatrixBase::insertable;
+  using MatrixBase::modifiable;
+  using MatrixBase::ready;
 
   void createWithLocalSize( localIndex const localRows,
                             localIndex const localCols,

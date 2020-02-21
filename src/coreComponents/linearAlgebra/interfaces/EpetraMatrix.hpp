@@ -21,6 +21,7 @@
 
 #include "common/DataTypes.hpp"
 #include "linearAlgebra/interfaces/EpetraVector.hpp"
+#include "linearAlgebra/interfaces/LinearOperator.hpp"
 #include "linearAlgebra/interfaces/MatrixBase.hpp"
 
 class Epetra_Map;
@@ -34,11 +35,10 @@ namespace geosx
  * \brief This class creates and provides basic support for the Epetra_CrsMatrix
  *        matrix object type used in Trilinos.
  */
-class EpetraMatrix final: public MatrixBase<EpetraMatrix, EpetraVector>
+class EpetraMatrix final: public LinearOperator<EpetraVector>,
+                          private MatrixBase<EpetraMatrix, EpetraVector>
 {
 public:
-
-  using Base = MatrixBase<EpetraMatrix, EpetraVector>;
 
   //! @name Constructor/Destructor Methods
   //@{
@@ -69,8 +69,13 @@ public:
    */
   ///@{
 
-  using Base::createWithLocalSize;
-  using Base::createWithGlobalSize;
+  using MatrixBase::createWithLocalSize;
+  using MatrixBase::createWithGlobalSize;
+  using MatrixBase::closed;
+  using MatrixBase::assembled;
+  using MatrixBase::insertable;
+  using MatrixBase::modifiable;
+  using MatrixBase::ready;
 
   void createWithLocalSize( localIndex const localRows,
                             localIndex const localCols,

@@ -21,6 +21,7 @@
 
 #include "common/DataTypes.hpp"
 #include "linearAlgebra/interfaces/PetscVector.hpp"
+#include "linearAlgebra/interfaces/LinearOperator.hpp"
 #include "linearAlgebra/interfaces/MatrixBase.hpp"
 
 /**
@@ -37,11 +38,10 @@ namespace geosx
  * @brief This class creates and provides basic support for the Mat
  *        matrix object type used in PETSc.
  */
-class PetscSparseMatrix final : public MatrixBase<PetscSparseMatrix, PetscVector>
+class PetscSparseMatrix final : public LinearOperator<PetscVector>,
+                                private MatrixBase<PetscSparseMatrix, PetscVector>
 {
 public:
-
-  using Base = MatrixBase<PetscSparseMatrix, PetscVector>;
 
   /**
    * @name Constructor/Destructor Methods
@@ -74,8 +74,13 @@ public:
    */
   ///@{
 
-  using Base::createWithLocalSize;
-  using Base::createWithGlobalSize;
+  using MatrixBase::createWithLocalSize;
+  using MatrixBase::createWithGlobalSize;
+  using MatrixBase::closed;
+  using MatrixBase::assembled;
+  using MatrixBase::insertable;
+  using MatrixBase::modifiable;
+  using MatrixBase::ready;
 
   void createWithLocalSize( localIndex const localRows,
                             localIndex const localCols,

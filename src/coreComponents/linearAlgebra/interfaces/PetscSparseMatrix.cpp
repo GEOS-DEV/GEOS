@@ -49,7 +49,8 @@ namespace geosx
 // Create an empty matrix (meant to be used for declaration)
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 PetscSparseMatrix::PetscSparseMatrix()
-: Base(),
+: LinearOperator(),
+  MatrixBase(),
   m_mat{}
 {}
 
