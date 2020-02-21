@@ -918,30 +918,28 @@ void PetscSparseMatrix::write( string const & filename,
 
   PetscViewer viewer;
   PetscViewerASCIIOpen( getComm(), filename.c_str(), &viewer );
-  PetscViewerFormat petscFormat;
 
   switch( format )
   {
     case MatrixOutputFormat::NATIVE_ASCII:
-      petscFormat = PETSC_VIEWER_DEFAULT;
+      PetscViewerPushFormat( viewer, PETSC_VIEWER_DEFAULT );
       break;
     case MatrixOutputFormat::NATIVE_BINARY:
-      petscFormat = PETSC_VIEWER_NATIVE;
+      PetscViewerPushFormat( viewer, PETSC_VIEWER_NATIVE );
       break;
     case MatrixOutputFormat::MATLAB_ASCII:
-      petscFormat = PETSC_VIEWER_ASCII_MATLAB;
+      PetscViewerPushFormat( viewer, PETSC_VIEWER_ASCII_MATLAB );
       break;
     case MatrixOutputFormat::MATLAB_BINARY:
-      petscFormat = PETSC_VIEWER_BINARY_MATLAB;
+      PetscViewerPushFormat( viewer, PETSC_VIEWER_BINARY_MATLAB );
       break;
     case MatrixOutputFormat::MATRIX_MARKET:
-      petscFormat = PETSC_VIEWER_ASCII_MATRIXMARKET;
+      PetscViewerPushFormat( viewer, PETSC_VIEWER_ASCII_MATRIXMARKET );
       break;
     default:
       GEOSX_ERROR( "Unsupported matrix output format" );
   }
 
-  PetscViewerPushFormat( viewer, petscFormat );
   MatView( m_mat, viewer );
   PetscViewerDestroy( &viewer );
 }
