@@ -224,21 +224,21 @@ public:
 
   real64 getDiagValue( globalIndex globalRow ) const override;
 
-  globalIndex globalRows() const override;
+  globalIndex numGlobalRows() const override;
 
-  globalIndex globalCols() const override;
+  globalIndex numGlobalCols() const override;
 
-  localIndex localRows() const override;
+  localIndex numLocalRows() const override;
 
-  localIndex localCols() const override;
+  localIndex numLocalCols() const override;
 
   globalIndex ilower() const override;
 
   globalIndex iupper() const override;
 
-  localIndex localNonzeros() const override;
+  localIndex numLocalNonzeros() const override;
 
-  globalIndex globalNonzeros() const override;
+  globalIndex numGlobalNonzeros() const override;
 
   real64 normInf() const override;
 
@@ -262,13 +262,13 @@ public:
   /**
    * @brief Returns a pointer to the underlying HYPRE_IJMatrix object.
    */
-  HYPRE_IJMatrix const & unwrappedPointer() const;
+  HYPRE_IJMatrix const & unwrapped() const;
 
-  HYPRE_IJMatrix & unwrappedPointer();
+  HYPRE_IJMatrix & unwrapped();
 
-  HYPRE_ParCSRMatrix const & unwrappedPointerParCSR() const;
+  HYPRE_ParCSRMatrix const & unwrappedParCSR() const;
 
-  HYPRE_ParCSRMatrix & unwrappedPointerParCSR();
+  HYPRE_ParCSRMatrix & unwrappedParCSR();
 
 private:
 

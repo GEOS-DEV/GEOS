@@ -480,15 +480,15 @@ void PetscSparseMatrix::multiply( PetscSparseMatrix const & src,
 {
   GEOSX_LAI_MATRIX_STATUS( ready() );
   GEOSX_LAI_MATRIX_STATUS( src.ready() );
-  GEOSX_LAI_ASSERT_EQ( globalCols(), src.globalRows() );
+  GEOSX_LAI_ASSERT_EQ( numGlobalCols(), src.numGlobalRows() );
 
   MatReuse const reuse = dst.created() ? MAT_REUSE_MATRIX : MAT_INITIAL_MATRIX;
   if( !dst.created() )
   {
-    dst.createWithLocalSize( localRows(), src.localCols(), 1, getComm() );
+    dst.createWithLocalSize( numLocalRows(), src.numLocalCols(), 1, getComm() );
   }
 
-  MatMatMult( m_mat, src.unwrappedPointer(), reuse, PETSC_DEFAULT, &dst.unwrappedPointer() );
+  MatMatMult( m_mat, src.unwrapped(), reuse, PETSC_DEFAULT, &dst.unwrapped() );
   dst.m_assembled = closeResult;
   dst.m_closed = closeResult;
 }
@@ -503,15 +503,15 @@ void PetscSparseMatrix::leftMultiplyTranspose( PetscSparseMatrix const & src,
 {
   GEOSX_LAI_MATRIX_STATUS( ready() );
   GEOSX_LAI_MATRIX_STATUS( src.ready() );
-  GEOSX_LAI_ASSERT_EQ( globalRows(), src.globalRows() );
+  GEOSX_LAI_ASSERT_EQ( numGlobalRows(), src.numGlobalRows() );
 
   MatReuse const reuse = dst.created() ? MAT_REUSE_MATRIX : MAT_INITIAL_MATRIX;
   if( !dst.created() )
   {
-    dst.createWithLocalSize( localCols(), src.localCols(), 1, getComm() );
+    dst.createWithLocalSize( numLocalCols(), src.numLocalCols(), 1, getComm() );
   }
 
-  MatTransposeMatMult( m_mat, src.unwrappedPointer(), reuse, PETSC_DEFAULT, &dst.unwrappedPointer() );
+  MatTransposeMatMult( m_mat, src.unwrapped(), reuse, PETSC_DEFAULT, &dst.unwrapped() );
   dst.m_assembled = closeResult;
   dst.m_closed = closeResult;
 }
@@ -526,15 +526,15 @@ void PetscSparseMatrix::rightMultiplyTranspose( PetscSparseMatrix const & src,
 {
   GEOSX_LAI_MATRIX_STATUS( ready() );
   GEOSX_LAI_MATRIX_STATUS( src.ready() );
-  GEOSX_LAI_ASSERT_EQ( globalCols(), src.globalCols() );
+  GEOSX_LAI_ASSERT_EQ( numGlobalCols(), src.numGlobalCols() );
 
   MatReuse const reuse = dst.created() ? MAT_REUSE_MATRIX : MAT_INITIAL_MATRIX;
   if( !dst.created() )
   {
-    dst.createWithLocalSize( localRows(), src.localRows(), 1, getComm() );
+    dst.createWithLocalSize( numLocalRows(), src.numLocalRows(), 1, getComm() );
   }
 
-  MatMatTransposeMult( m_mat, src.unwrappedPointer(), reuse, PETSC_DEFAULT, &dst.unwrappedPointer() );
+  MatMatTransposeMult( m_mat, src.unwrapped(), reuse, PETSC_DEFAULT, &dst.unwrapped() );
   dst.m_assembled = closeResult;
   dst.m_closed = closeResult;
 }
@@ -709,14 +709,14 @@ real64 PetscSparseMatrix::getDiagValue( globalIndex globalRow ) const
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 // Accessor for the pointer to the matrix
-Mat & PetscSparseMatrix::unwrappedPointer()
+Mat & PetscSparseMatrix::unwrapped()
 {
   GEOSX_LAI_MATRIX_STATUS( created() );
   return m_mat;
 }
 
 // Accessor for the pointer to the matrix
-const Mat & PetscSparseMatrix::unwrappedPointer() const
+const Mat & PetscSparseMatrix::unwrapped() const
 {
   GEOSX_LAI_MATRIX_STATUS( created() );
   return m_mat;
@@ -726,7 +726,7 @@ const Mat & PetscSparseMatrix::unwrappedPointer() const
 // Get number of global rows.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Accessor for the number of global rows
-globalIndex PetscSparseMatrix::globalRows() const
+globalIndex PetscSparseMatrix::numGlobalRows() const
 {
   GEOSX_LAI_MATRIX_STATUS( created() );
   PetscInt num_rows;
@@ -739,7 +739,7 @@ globalIndex PetscSparseMatrix::globalRows() const
 // Get number of global columns.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Accessor for the number of global columns
-globalIndex PetscSparseMatrix::globalCols() const
+globalIndex PetscSparseMatrix::numGlobalCols() const
 {
   GEOSX_LAI_MATRIX_STATUS( created() );
   PetscInt num_rows;
@@ -774,7 +774,7 @@ globalIndex PetscSparseMatrix::iupper() const
   return integer_conversion<globalIndex>( lastrow );
 }
 
-localIndex PetscSparseMatrix::localNonzeros() const
+localIndex PetscSparseMatrix::numLocalNonzeros() const
 {
   GEOSX_LAI_MATRIX_STATUS( assembled() );
   PetscInt firstrow, lastrow;
@@ -794,9 +794,9 @@ localIndex PetscSparseMatrix::localNonzeros() const
   return result;
 }
 
-globalIndex PetscSparseMatrix::globalNonzeros() const
+globalIndex PetscSparseMatrix::numGlobalNonzeros() const
 {
-  return MpiWrapper::Sum( integer_conversion<globalIndex>( localNonzeros() ), getComm() );
+  return MpiWrapper::Sum( integer_conversion<globalIndex>( numLocalNonzeros() ), getComm() );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -855,20 +855,20 @@ globalIndex PetscSparseMatrix::getGlobalRowID( localIndex const index ) const
 {
   GEOSX_LAI_MATRIX_STATUS( created() );
   GEOSX_LAI_ASSERT_GE( index, 0 );
-  GEOSX_LAI_ASSERT_GT( localRows(), index );
+  GEOSX_LAI_ASSERT_GT( numLocalRows(), index );
   PetscInt low, high;
   MatGetOwnershipRange( m_mat, &low, &high);
   return integer_conversion<globalIndex>( index + low );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// localCols
+// numLocalCols
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Return the local number of columns on each processor
 //
 // NOTE: PETSc MPI matrices are partitioned row-wise so that the local number
 // of columns is the global number.
-localIndex PetscSparseMatrix::localCols() const
+localIndex PetscSparseMatrix::numLocalCols() const
 {
   GEOSX_LAI_MATRIX_STATUS( created() );
   PetscInt cols;
@@ -877,10 +877,10 @@ localIndex PetscSparseMatrix::localCols() const
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// localRows
+// numLocalRows
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Return the local number of rows on each processor
-localIndex PetscSparseMatrix::localRows() const
+localIndex PetscSparseMatrix::numLocalRows() const
 {
   GEOSX_LAI_MATRIX_STATUS( created() );
   PetscInt low, high;

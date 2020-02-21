@@ -570,17 +570,23 @@ real64 EpetraMatrix::getDiagValue( globalIndex globalRow ) const
 // Get pointer.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Accessor for the pointer to the raw Epetra matrix
-Epetra_FECrsMatrix * EpetraMatrix::unwrappedPointer() const
+Epetra_FECrsMatrix const & EpetraMatrix::unwrapped() const
 {
   GEOSX_LAI_MATRIX_STATUS( created() );
-  return m_matrix.get();
+  return *m_matrix.get();
+}
+
+Epetra_FECrsMatrix & EpetraMatrix::unwrapped()
+{
+  GEOSX_LAI_MATRIX_STATUS( created() );
+  return *m_matrix.get();
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Get number of global rows.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Accessor for the number of global rows
-globalIndex EpetraMatrix::globalRows() const
+globalIndex EpetraMatrix::numGlobalRows() const
 {
   GEOSX_LAI_MATRIX_STATUS( created() );
   return m_matrix->NumGlobalRows64();
@@ -590,7 +596,7 @@ globalIndex EpetraMatrix::globalRows() const
 // Get number of global columns.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Accessor for the number of global columns
-globalIndex EpetraMatrix::globalCols() const
+globalIndex EpetraMatrix::numGlobalCols() const
 {
   GEOSX_LAI_MATRIX_STATUS( created() );
   return m_src_map->NumGlobalElements64();
@@ -620,7 +626,7 @@ globalIndex EpetraMatrix::iupper() const
 // Get number of local nonzeros.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Accessor for the number of local nonzeros
-localIndex EpetraMatrix::localNonzeros() const
+localIndex EpetraMatrix::numLocalNonzeros() const
 {
   GEOSX_LAI_MATRIX_STATUS( assembled() );
   return m_matrix->NumMyNonzeros();
@@ -630,7 +636,7 @@ localIndex EpetraMatrix::localNonzeros() const
 // Get number of global nonzeros.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Accessor for the number of global nonzeros
-globalIndex EpetraMatrix::globalNonzeros() const
+globalIndex EpetraMatrix::numGlobalNonzeros() const
 {
   GEOSX_LAI_MATRIX_STATUS( assembled() );
   return m_matrix->NumGlobalNonzeros64();
@@ -684,26 +690,26 @@ globalIndex EpetraMatrix::getGlobalRowID( localIndex const index ) const
 {
   GEOSX_LAI_MATRIX_STATUS( created() );
   GEOSX_LAI_ASSERT_GE( index, 0 );
-  GEOSX_LAI_ASSERT_GT( localRows(), index );
+  GEOSX_LAI_ASSERT_GT( numLocalRows(), index );
   return m_matrix->GRID64( integer_conversion< int >( index ) );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// localCols
+// numLocalCols
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Return the local number of columns on each processor
 // NOTE: direct use of NumMyCols() counts also for overlays. To avoid those, DomainMap() is needed
-localIndex EpetraMatrix::localCols() const
+localIndex EpetraMatrix::numLocalCols() const
 {
   GEOSX_LAI_MATRIX_STATUS( created() );
   return m_src_map->NumMyElements();
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// localRows
+// numLocalRows
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Return the local number of columns on each processor
-localIndex EpetraMatrix::localRows() const
+localIndex EpetraMatrix::numLocalRows() const
 {
   GEOSX_LAI_MATRIX_STATUS( created() );
   return m_matrix->RowMap().NumMyElements();
@@ -784,17 +790,17 @@ void EpetraMatrix::multiply( bool const transA,
 
   if( !C.created() )
   {
-    C.createWithLocalSize( transA ? localCols() : localRows(),
-                           transB ? B.localRows() : B.localCols(),
+    C.createWithLocalSize( transA ? numLocalCols() : numLocalRows(),
+                           transB ? B.numLocalRows() : B.numLocalCols(),
                            1, // TODO: estimate entries per row?
                            getComm() );
   }
 
   int const err = EpetraExt::MatrixMatrix::Multiply( *m_matrix,
                                                      transA,
-                                                     *B.unwrappedPointer(),
+                                                     B.unwrapped(),
                                                      transB,
-                                                     *C.unwrappedPointer(),
+                                                     C.unwrapped(),
                                                      closeResult );
 
   GEOSX_ERROR_IF_NE_MSG( err, 0, "Error in EpetraExt::MatrixMatrix::Multiply()" );

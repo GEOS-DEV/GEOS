@@ -91,7 +91,7 @@ void HypreSolver::solve_direct( HypreMatrix & mat,
   HYPRE_Solver solver;
 
   hypre_SLUDistSetup( &solver,
-                      mat.unwrappedPointerParCSR(),
+                      mat.unwrappedParCSR(),
                       0 );
   hypre_SLUDistSolve( solver,
                       HYPRE_ParVector( rhs ),
@@ -115,7 +115,7 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
   HYPRE_Solver solver;
 
   // Get MPI communicator
-  MPI_Comm comm = hypre_IJMatrixComm( mat.unwrappedPointer() );
+  MPI_Comm comm = hypre_IJMatrixComm( mat.unwrapped() );
 
 
   // Setup the preconditioner
@@ -209,13 +209,13 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
 
     // Setup
     HYPRE_ParCSRGMRESSetup( solver,
-                            mat.unwrappedPointerParCSR(),
+                            mat.unwrappedParCSR(),
                             HYPRE_ParVector( rhs ),
                             HYPRE_ParVector( sol ) );
 
     // Solve
     HYPRE_ParCSRGMRESSolve( solver,
-                            mat.unwrappedPointerParCSR(),
+                            mat.unwrappedParCSR(),
                             HYPRE_ParVector( rhs ),
                             HYPRE_ParVector( sol ) );
 
@@ -230,7 +230,7 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
     HYPRE_BiCGSTABSetTol(solver, m_parameters.krylov.tolerance);
 
     // Default for now
-    HYPRE_BiCGSTABSetPrintLevel(solver, 2); /* prints out the iteration info */
+    HYPRE_BiCGSTABSetPrintLevel(solver, m_parameters.logLevel); /* prints out the iteration info */
     HYPRE_BiCGSTABSetLogging(solver, 1);    /* needed to get run info later */
 
     // Set the preconditioner
@@ -241,13 +241,13 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
 
     // Setup
     HYPRE_ParCSRBiCGSTABSetup( solver,
-                               mat.unwrappedPointerParCSR(),
+                               mat.unwrappedParCSR(),
                                HYPRE_ParVector( rhs ),
                                HYPRE_ParVector( sol ));
 
     // Solve
     HYPRE_ParCSRBiCGSTABSolve( solver,
-                               mat.unwrappedPointerParCSR(),
+                               mat.unwrappedParCSR(),
                                HYPRE_ParVector( rhs ),
                                HYPRE_ParVector( sol ));
 
@@ -262,7 +262,7 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
     HYPRE_PCGSetTol(solver, m_parameters.krylov.tolerance);
 
     // Default for now
-    HYPRE_PCGSetPrintLevel(solver, 2); /* prints out the iteration info */
+    HYPRE_PCGSetPrintLevel(solver, m_parameters.logLevel); /* prints out the iteration info */
     HYPRE_PCGSetLogging(solver, 1);    /* needed to get run info later */
     HYPRE_PCGSetTwoNorm(solver, 1);    /* use the two norm as the stopping criteria */
 
@@ -274,13 +274,13 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
 
     // Setup
     HYPRE_ParCSRPCGSetup( solver,
-                          mat.unwrappedPointerParCSR(),
+                          mat.unwrappedParCSR(),
                           HYPRE_ParVector( rhs ),
                           HYPRE_ParVector( sol ));
 
     // Solve
     HYPRE_ParCSRPCGSolve( solver,
-                          mat.unwrappedPointerParCSR(),
+                          mat.unwrappedParCSR(),
                           HYPRE_ParVector( rhs ),
                           HYPRE_ParVector( sol ));
 

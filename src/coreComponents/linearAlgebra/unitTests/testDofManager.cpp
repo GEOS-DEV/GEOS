@@ -635,13 +635,12 @@ REGISTER_TYPED_TEST_CASE_P( DofManagerSparsityTest,
 INSTANTIATE_TYPED_TEST_CASE_P( Trilinos, DofManagerSparsityTest, TrilinosInterface );
 #endif
 
-#ifdef GEOSX_USE_PETSC
-// Does not work. Remove this comment when fixed.
-INSTANTIATE_TYPED_TEST_CASE_P( Petsc, DofManagerSparsityTest, PetscInterface );
-#endif
-
 #ifdef GEOSX_USE_HYPRE
 INSTANTIATE_TYPED_TEST_CASE_P( Hypre, DofManagerSparsityTest, HypreInterface );
+#endif
+
+#ifdef GEOSX_USE_PETSC
+INSTANTIATE_TYPED_TEST_CASE_P( Petsc, DofManagerSparsityTest, PetscInterface );
 #endif
 
 int main( int argc, char** argv )

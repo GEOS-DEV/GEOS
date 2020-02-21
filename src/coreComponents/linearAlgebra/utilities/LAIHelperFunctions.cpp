@@ -126,13 +126,13 @@ ParallelMatrix PermuteMatrix(ParallelMatrix const & matrix,
   ParallelMatrix temp;
   ParallelMatrix permutedMatrix;
   // The value 24 is hardcoded and should probably be changed (It s fine for displacement).
-  temp.createWithLocalSize( matrix.localRows(),
-                            matrix.localCols(),
+  temp.createWithLocalSize( matrix.numLocalRows(),
+                            matrix.numLocalCols(),
                             24,
                             MPI_COMM_GEOSX );
 
-  permutedMatrix.createWithLocalSize( matrix.localRows(),
-                                      matrix.localCols(),
+  permutedMatrix.createWithLocalSize( matrix.numLocalRows(),
+                                      matrix.numLocalCols(),
                                       24,
                                       MPI_COMM_GEOSX );
 
@@ -153,13 +153,13 @@ ParallelMatrix PermuteMatrix(ParallelMatrix const & matrix,
   ParallelMatrix temp;
   ParallelMatrix permutedMatrix;
 
-  temp.createWithLocalSize( matrix.localRows(),
-                            matrix.localCols(),
+  temp.createWithLocalSize( matrix.numLocalRows(),
+                            matrix.numLocalCols(),
                             24,
                             MPI_COMM_GEOSX );
 
-  permutedMatrix.createWithLocalSize( matrix.localRows(),
-                                      matrix.localCols(),
+  permutedMatrix.createWithLocalSize( matrix.numLocalRows(),
+                                      matrix.numLocalCols(),
                                       24,
                                       MPI_COMM_GEOSX );
 

@@ -146,7 +146,7 @@ void BiCGSTABsolver< VECTOR >::solve( Vector const & b,
 
     // Update rk = s - omega*t
     s.axpy( -omegak, t );
-    rk = s;
+    rk.copy( s );
 
     // Convergence check on ||rk||/||b||
     if( rk.norm2() / normb < 1e-8 )

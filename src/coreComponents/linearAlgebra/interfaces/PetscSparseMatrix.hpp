@@ -225,17 +225,21 @@ public:
                    array1d<globalIndex> & colIndices,
                    array1d<real64> & values ) const override;
 
-  globalIndex globalRows() const override;
+  globalIndex numGlobalRows() const override;
 
-  globalIndex globalCols() const override;
+  globalIndex numGlobalCols() const override;
+
+  localIndex numLocalRows() const override;
+
+  localIndex numLocalCols() const override;
 
   globalIndex ilower() const override;
 
   globalIndex iupper() const override;
 
-  localIndex localNonzeros() const override;
+  localIndex numLocalNonzeros() const override;
 
-  globalIndex globalNonzeros() const override;
+  globalIndex numGlobalNonzeros() const override;
 
   real64 normInf() const override;
 
@@ -246,10 +250,6 @@ public:
   localIndex getLocalRowID( globalIndex const index ) const override;
 
   globalIndex getGlobalRowID( localIndex const index ) const override;
-
-  localIndex localRows() const override;
-
-  localIndex localCols() const override;
 
   MPI_Comm getComm() const override;
 
@@ -263,12 +263,12 @@ public:
   /**
    * @brief Returns a pointer to the underlying matrix.
    */
-  const Mat & unwrappedPointer() const;
+  const Mat & unwrapped() const;
 
   /**
    * @brief Returns a non-const pointer to the underlying matrix.
    */
-  Mat & unwrappedPointer();
+  Mat & unwrapped();
 
 private:
 

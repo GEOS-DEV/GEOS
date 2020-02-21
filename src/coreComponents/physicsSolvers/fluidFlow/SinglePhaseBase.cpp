@@ -320,9 +320,9 @@ void SinglePhaseBase::SetupSystem( DomainPartition * const domain,
 
     derivativeFluxResidual_dAperture = std::make_unique<CRSMatrix<real64,localIndex,localIndex>>( numRows, numCols );
 
-    derivativeFluxResidual_dAperture->reserveNonZeros( matrix.localNonzeros() );
+    derivativeFluxResidual_dAperture->reserveNonZeros( matrix.numLocalNonzeros() );
     localIndex maxRowSize = -1;
-    for( localIndex row=0 ; row<matrix.localRows() ; ++row )
+    for( localIndex row=0 ; row< matrix.numLocalRows() ; ++row )
     {
       localIndex const rowSize = matrix.localRowLength( row );
       maxRowSize = maxRowSize > rowSize ? maxRowSize : rowSize;
@@ -330,7 +330,7 @@ void SinglePhaseBase::SetupSystem( DomainPartition * const domain,
       derivativeFluxResidual_dAperture->reserveNonZeros( row,
                                                          rowSize );
     }
-    for( localIndex row=matrix.localRows() ; row<numRows ; ++row )
+    for( localIndex row= matrix.numLocalRows() ; row < numRows ; ++row )
     {
       derivativeFluxResidual_dAperture->reserveNonZeros( row,
                                                          maxRowSize );
@@ -512,8 +512,9 @@ void SinglePhaseBase::AssembleSystem( real64 const time_n,
 
   if( m_derivativeFluxResidual_dAperture==nullptr )
   {
-    m_derivativeFluxResidual_dAperture = std::make_unique<CRSMatrix<real64,localIndex,localIndex>>( matrix.localRows(),
-                                                                                                    matrix.localCols() );
+    m_derivativeFluxResidual_dAperture = std::make_unique<CRSMatrix<real64,localIndex,localIndex>>(
+      matrix.numLocalRows(),
+      matrix.numLocalCols() );
   }
   m_derivativeFluxResidual_dAperture->setValues(0.0);
 

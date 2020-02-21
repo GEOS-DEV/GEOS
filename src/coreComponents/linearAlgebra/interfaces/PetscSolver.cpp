@@ -78,7 +78,7 @@ void PetscSolver::solve_direct( PetscSparseMatrix &mat,
   // create linear solver
   KSP ksp;
   KSPCreate( comm, &ksp );
-  KSPSetOperators( ksp, mat.unwrappedPointer(), mat.unwrappedPointer() );
+  KSPSetOperators( ksp, mat.unwrapped(), mat.unwrapped() );
   KSPSetType( ksp, KSPPREONLY );
 
   // use direct solve preconditioner SUPERLU DIST
@@ -106,7 +106,7 @@ void PetscSolver::solve_krylov( PetscSparseMatrix &mat,
   // create linear solver
   KSP ksp;
   KSPCreate( comm, &ksp );
-  KSPSetOperators( ksp, mat.unwrappedPointer(), mat.unwrappedPointer() );
+  KSPSetOperators( ksp, mat.unwrapped(), mat.unwrapped() );
   KSPGMRESSetRestart( ksp, m_parameters.krylov.maxRestart );
   KSPSetTolerances( ksp, m_parameters.krylov.tolerance, PETSC_DEFAULT, PETSC_DEFAULT, m_parameters.krylov.maxIterations );
 

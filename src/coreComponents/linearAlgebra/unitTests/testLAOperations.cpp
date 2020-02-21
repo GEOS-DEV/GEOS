@@ -17,6 +17,7 @@
  */
 
 #include <gtest/gtest.h>
+#include "codingUtilities/UnitTestUtilities.hpp"
 #include "testLinearAlgebraUtils.hpp"
 #include "common/DataTypes.hpp"
 #include "managers/initialization.hpp"
@@ -305,14 +306,14 @@ TYPED_TEST_P( LAOperationsTest, MatrixFunctions )
   mat4.createWithGlobalSize( 3, 4, 3, MPI_COMM_WORLD ); // 3x4
 
   // Testing create, globalRows, globalCols
-  EXPECT_EQ( mat1.globalRows(), 2 * numranks );
-  EXPECT_EQ( mat1.globalCols(), 2 * numranks );
-  EXPECT_EQ( mat2.globalRows(), 2 );
-  EXPECT_EQ( mat2.globalCols(), 2 );
-  EXPECT_EQ( mat3.globalRows(), 2 * numranks );
-  EXPECT_EQ( mat3.globalCols(), 3 * numranks );
-  EXPECT_EQ( mat4.globalRows(), 3 );
-  EXPECT_EQ( mat4.globalCols(), 4 );
+  EXPECT_EQ( mat1.numGlobalRows(), 2 * numranks );
+  EXPECT_EQ( mat1.numGlobalCols(), 2 * numranks );
+  EXPECT_EQ( mat2.numGlobalRows(), 2 );
+  EXPECT_EQ( mat2.numGlobalCols(), 2 );
+  EXPECT_EQ( mat3.numGlobalRows(), 2 * numranks );
+  EXPECT_EQ( mat3.numGlobalCols(), 3 * numranks );
+  EXPECT_EQ( mat4.numGlobalRows(), 3 );
+  EXPECT_EQ( mat4.numGlobalCols(), 4 );
 
   // Testing add/set/insert element
   //  mat1.insert( 1, 0, .5 );
@@ -480,6 +481,8 @@ TYPED_TEST_P( LAOperationsTest, MatrixFunctions )
  */
 TYPED_TEST_P( LAOperationsTest, InterfaceSolvers )
 {
+  SKIP_TEST_IF( (std::is_same<TypeParam, PetscInterface>::value), "https://github.com/GEOSX/GEOSX/issues/790" );
+
   // Define aliases templated on the Linear Algebra Interface (LAI).
   using Matrix = typename TypeParam::ParallelMatrix;
   using Vector = typename TypeParam::ParallelVector;
@@ -612,8 +615,8 @@ TYPED_TEST_P( LAOperationsTest, RectangularMatrixOperations )
   A.close();
 
   // Check on sizes
-  EXPECT_EQ( A.globalRows(), nRows );
-  EXPECT_EQ( A.globalCols(), nCols );
+  EXPECT_EQ( A.numGlobalRows(), nRows );
+  EXPECT_EQ( A.numGlobalCols(), nCols );
 
   // Check on norms
   real64 const a = A.norm1();
@@ -637,15 +640,15 @@ REGISTER_TYPED_TEST_CASE_P( LAOperationsTest,
                             RectangularMatrixOperations );
 
 #ifdef GEOSX_USE_TRILINOS
-  INSTANTIATE_TYPED_TEST_CASE_P( Trilinos, LAOperationsTest, TrilinosInterface );
-#endif
-
-#ifdef GEOSX_USE_PETSC
-  INSTANTIATE_TYPED_TEST_CASE_P( Petsc, LAOperationsTest, PetscInterface );
+INSTANTIATE_TYPED_TEST_CASE_P( Trilinos, LAOperationsTest, TrilinosInterface );
 #endif
 
 #ifdef GEOSX_USE_HYPRE
-  INSTANTIATE_TYPED_TEST_CASE_P( Hypre, LAOperationsTest, HypreInterface );
+INSTANTIATE_TYPED_TEST_CASE_P( Hypre, LAOperationsTest, HypreInterface );
+#endif
+
+#ifdef GEOSX_USE_PETSC
+INSTANTIATE_TYPED_TEST_CASE_P( Petsc, LAOperationsTest, PetscInterface );
 #endif
 
 int main( int argc, char ** argv )

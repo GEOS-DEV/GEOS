@@ -121,7 +121,7 @@ void SeparateComponentFilter(typename LAI::ParallelMatrix const & src,
 {
   GEOSX_ERROR_IF(dofsPerNode < 2,"Function requires dofsPerNode > 1");
 
-  const localIndex  localRows  = src.localRows();
+  const localIndex  localRows  = src.numLocalRows();
   const localIndex  maxEntries = src.maxRowLength();
   const localIndex  maxDstEntries = maxEntries / dofsPerNode;
 

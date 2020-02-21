@@ -82,14 +82,41 @@ HypreVector::HypreVector( HypreVector const & src )
   this->create( src );
 }
 
-// Destructor
-HypreVector::~HypreVector()
+// Move constructor
+HypreVector::HypreVector( HypreVector && src )
+: m_ij_vector{},
+  m_par_vector{}
+{
+  *this = std::move(src);
+}
+
+HypreVector & HypreVector::operator=( HypreVector const & src )
+{
+  reset();
+  create( src );
+  return *this;
+}
+
+HypreVector & HypreVector::operator=( HypreVector && src )
+{
+  std::swap( m_ij_vector, src.m_ij_vector );
+  std::swap( m_par_vector, src.m_par_vector );
+  return *this;
+}
+
+void HypreVector::reset()
 {
   if( m_ij_vector )
   {
     HYPRE_IJVectorDestroy( m_ij_vector );
     m_ij_vector = nullptr;
   }
+}
+
+// Destructor
+HypreVector::~HypreVector()
+{
+  reset();
 }
 
 // Create from HypreVector

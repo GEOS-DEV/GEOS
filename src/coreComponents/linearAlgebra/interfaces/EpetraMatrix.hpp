@@ -220,21 +220,21 @@ public:
 
   real64 getDiagValue( globalIndex globalRow ) const override;
 
-  globalIndex globalRows() const override;
+  globalIndex numGlobalRows() const override;
 
-  globalIndex globalCols() const override;
+  globalIndex numGlobalCols() const override;
 
-  localIndex localRows() const override;
+  localIndex numLocalRows() const override;
 
-  localIndex localCols() const override;
+  localIndex numLocalCols() const override;
 
   globalIndex ilower() const override;
 
   globalIndex iupper() const override;
 
-  localIndex localNonzeros() const override;
+  localIndex numLocalNonzeros() const override;
 
-  globalIndex globalNonzeros() const override;
+  globalIndex numGlobalNonzeros() const override;
 
   real64 normInf() const override;
 
@@ -258,7 +258,12 @@ public:
   /**
    * @brief Returns a pointer to the underlying matrix.
    */
-  Epetra_FECrsMatrix * unwrappedPointer() const;
+  Epetra_FECrsMatrix const & unwrapped() const;
+
+  /**
+   * @brief Returns a pointer to the underlying matrix.
+   */
+  Epetra_FECrsMatrix & unwrapped();
 
 private:
 

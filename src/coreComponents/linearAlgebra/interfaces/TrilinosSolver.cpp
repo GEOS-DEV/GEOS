@@ -72,12 +72,12 @@ void TrilinosSolver::solve( EpetraMatrix & mat,
 {
   if( m_parameters.scaling.useRowScaling )
   {
-    Epetra_FECrsMatrix * mat_ptr = mat.unwrappedPointer();
+    Epetra_FECrsMatrix & mat_raw = mat.unwrapped();
     Epetra_MultiVector * rhs_ptr = rhs.unwrappedPointer();
 
-    Epetra_Vector scaling( mat_ptr->RowMap() );
-    mat_ptr->InvRowSums( scaling );
-    mat_ptr->LeftScale( scaling );
+    Epetra_Vector scaling( mat_raw.RowMap() );
+    mat_raw.InvRowSums( scaling );
+    mat_raw.LeftScale( scaling );
 
     Epetra_MultiVector tmp( *rhs_ptr );
     rhs_ptr->Multiply( 1.0, scaling, tmp, 0.0 );
@@ -102,7 +102,7 @@ void TrilinosSolver::solve_direct( EpetraMatrix & mat,
                                    EpetraVector & rhs )
 {
   // Create Epetra linear problem and instantiate solver.
-  Epetra_LinearProblem problem( mat.unwrappedPointer(),
+  Epetra_LinearProblem problem( &mat.unwrapped(),
                                 sol.unwrappedPointer(),
                                 rhs.unwrappedPointer() );
 
@@ -140,7 +140,7 @@ void TrilinosSolver::solve_krylov( EpetraMatrix & mat,
                                    EpetraVector & rhs )
 {
   // Create Epetra linear problem.
-  Epetra_LinearProblem problem( mat.unwrappedPointer(),
+  Epetra_LinearProblem problem( &mat.unwrapped(),
                                 sol.unwrappedPointer(),
                                 rhs.unwrappedPointer() );
 
@@ -242,13 +242,13 @@ void TrilinosSolver::solve_krylov( EpetraMatrix & mat,
     //TODO: templatization for LAIHelperFunctions needed
     if(m_parameters.amg.separateComponents) // apply separate displacement component filter
     {
-      scratch.reset(new EpetraMatrix());
+      scratch = std::make_unique<EpetraMatrix>();
       LAIHelperFunctions::SeparateComponentFilter<TrilinosInterface>(mat,*scratch,m_parameters.dofsPerNode);
-      ml_preconditioner.reset( new ML_Epetra::MultiLevelPreconditioner( *scratch->unwrappedPointer(), list ));
+      ml_preconditioner = std::make_unique<ML_Epetra::MultiLevelPreconditioner>( scratch->unwrapped(), list );
     }
     else // just use original matrix to construct amg operator
     {
-      ml_preconditioner.reset( new ML_Epetra::MultiLevelPreconditioner( *mat.unwrappedPointer(), list ));
+      ml_preconditioner = std::make_unique<ML_Epetra::MultiLevelPreconditioner>( mat.unwrapped(), list );
     }
 
     solver.SetPrecOperator( ml_preconditioner.get() );

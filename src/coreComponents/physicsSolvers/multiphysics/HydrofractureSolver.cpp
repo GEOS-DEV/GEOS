@@ -556,12 +556,12 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
   // By not calling dofManager.reorderByRank(), we keep separate dof numbering for each field,
   // which allows constructing separate sparsity patterns for off-diagonal blocks of the matrix.
   // Once the solver moves to monolithic matrix, we can remove this method and just use SolverBase::SetupSystem.
-  m_matrix01.createWithLocalSize( m_solidSolver->getSystemMatrix().localRows(),
-                                  m_flowSolver->getSystemMatrix().localCols(),
+  m_matrix01.createWithLocalSize( m_solidSolver->getSystemMatrix().numLocalRows(),
+                                  m_flowSolver->getSystemMatrix().numLocalCols(),
                                   9,
                                   MPI_COMM_GEOSX);
-  m_matrix10.createWithLocalSize( m_flowSolver->getSystemMatrix().localCols(),
-                                  m_solidSolver->getSystemMatrix().localRows(),
+  m_matrix10.createWithLocalSize( m_flowSolver->getSystemMatrix().numLocalCols(),
+                                  m_solidSolver->getSystemMatrix().numLocalRows(),
                                   24,
                                   MPI_COMM_GEOSX);
 
@@ -795,15 +795,15 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
 //    ElementRegionManager * const elemManager = mesh->getElemManager();
 
 //    LAIHelperFunctions::CreatePermutationMatrix(nodeManager,
-//                                                m_solidSolver->getSystemMatrix().globalRows(),
-//                                                m_solidSolver->getSystemMatrix().globalCols(),
+//                                                m_solidSolver->getSystemMatrix().numGlobalRows(),
+//                                                m_solidSolver->getSystemMatrix().numGlobalCols(),
 //                                                3,
 //                                                m_solidSolver->getDofManager().getKey( keys::TotalDisplacement ),
 //                                                m_permutationMatrix0);
 //
 //    LAIHelperFunctions::CreatePermutationMatrix(elemManager,
-//                                                m_flowSolver->getSystemMatrix().globalRows(),
-//                                                m_flowSolver->getSystemMatrix().globalCols(),
+//                                                m_flowSolver->getSystemMatrix().numGlobalRows(),
+//                                                m_flowSolver->getSystemMatrix().numGlobalCols(),
 //                                                1,
 //                                                m_flowSolver->getDofManager().getKey( FlowSolverBase::viewKeyStruct::pressureString ),
 //                                                m_permutationMatrix1);
@@ -1262,10 +1262,10 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( do
   p_solution[0] = m_solidSolver->getSystemSolution().unwrappedPointer();
   p_solution[1] = m_flowSolver->getSystemSolution().unwrappedPointer();
 
-  p_matrix[0][0] = m_solidSolver->getSystemMatrix().unwrappedPointer();
-  p_matrix[0][1] = m_matrix01.unwrappedPointer();
-  p_matrix[1][0] = m_matrix10.unwrappedPointer();
-  p_matrix[1][1] = m_flowSolver->getSystemMatrix().unwrappedPointer();
+  p_matrix[0][0] = &m_solidSolver->getSystemMatrix().unwrapped();
+  p_matrix[0][1] = &m_matrix01.unwrapped();
+  p_matrix[1][0] = &m_matrix10.unwrapped();
+  p_matrix[1][1] = &m_flowSolver->getSystemMatrix().unwrapped();
 
   // scale and symmetrize
 
@@ -1356,7 +1356,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( do
     matrix_block[i][j] = Thyra::epetraLinearOp(mmm);
   }
 
-  RCP<Epetra_Operator> bbb(m_blockDiagUU->unwrappedPointer(),false);
+  RCP<Epetra_Operator> bbb( &m_blockDiagUU->unwrapped(), false);
   RCP<Epetra_Operator> ppp(schurApproxPP,false);
 
   RCP<const Thyra::LinearOpBase<double> >  blockDiagOp = Thyra::epetraLinearOp(bbb);
@@ -1581,7 +1581,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( do
     /*
     ParallelVector permutedSol;
     ParallelVector const & solution = m_solidSolver->getSystemSolution();
-    permutedSol.createWithLocalSize(m_solidSolver->getSystemMatrix().localRows(), MPI_COMM_GEOSX);
+    permutedSol.createWithLocalSize(m_solidSolver->getSystemMatrix().numLocalRows(), MPI_COMM_GEOSX);
     m_permutationMatrix0.multiply(solution, permutedSol);
     permutedSol.close();
     */

@@ -33,17 +33,17 @@ BlockVector< VECTOR >::BlockVector( localIndex const nBlocks )
 
 template< typename VECTOR >
 BlockVector< VECTOR >::BlockVector( BlockVector< VECTOR > const & rhs )
-: BlockVectorView< VECTOR >( rhs )
+: BlockVectorView< VECTOR >( rhs ),
+  m_vectorStorage( rhs.m_vectorStorage )
 {
-  m_vectorStorage = rhs.m_vectorStorage;
   setPointers();
 }
 
 template< typename VECTOR >
 BlockVector< VECTOR >::BlockVector( BlockVector< VECTOR > && rhs ) noexcept
-: BlockVectorView< VECTOR >( std::move(rhs) )
+: BlockVectorView< VECTOR >( std::move(rhs) ),
+  m_vectorStorage( std::move( rhs.m_vectorStorage ) )
 {
-  m_vectorStorage = std::move( rhs.m_vectorStorage );
   setPointers();
 }
 
@@ -51,31 +51,11 @@ template< typename VECTOR >
 BlockVector< VECTOR >::BlockVector( BlockVectorView< VECTOR > const & rhs )
 : BlockVectorView< VECTOR >( rhs.blockSize() )
 {
-  m_vectorStorage.resize( rhs.blockSize() );
-  for( localIndex i = 0; i < m_vectorStorage.size(); ++i )
+  for( localIndex i = 0; i < rhs.blockSize(); ++i )
   {
-    m_vectorStorage[i] = rhs.block( i );
+    m_vectorStorage.push_back( rhs.block( i ) );
   }
   setPointers();
-}
-
-template< typename VECTOR >
-BlockVector< VECTOR > & BlockVector< VECTOR >::operator=( BlockVector< VECTOR > const & rhs )
-{
-  if( &rhs != this )
-  {
-    m_vectorStorage = rhs.m_vectorStorage;
-    setPointers();
-  }
-  return *this;
-}
-
-template< typename VECTOR >
-BlockVector< VECTOR > & BlockVector< VECTOR >::operator=( BlockVector< VECTOR > && rhs ) noexcept
-{
-  m_vectorStorage = std::move( rhs.m_vectorStorage );
-  setPointers();
-  return *this;
 }
 
 template< typename VECTOR >

@@ -181,8 +181,6 @@ public:
    * @return @p true if matrix has been assembled and is currently open;
    *         this implies individual entries within existing sparsity pattern
    *         can be altered via set()/add() methods.
-   *
-   * TODO: come up with a good name for this??
    */
   inline bool modifiable() const { return !closed() && assembled(); }
 
@@ -190,8 +188,6 @@ public:
    * @brief Query matrix status
    * @return @p true if matrix has NOT been assembled yet (not closed since
    *         last create() call) and is currently open for insertion of new entries
-   *
-   * TODO: come up with a good name for this??
    */
   inline bool insertable() const { return !closed() && !assembled(); }
 
@@ -649,22 +645,22 @@ public:
   /**
    * @brief Returns the number of global rows.
    */
-  virtual globalIndex globalRows() const = 0;
+  virtual globalIndex numGlobalRows() const = 0;
 
   /**
    * @brief Returns the number of global columns.
    */
-  virtual globalIndex globalCols() const = 0;
+  virtual globalIndex numGlobalCols() const = 0;
 
   /**
    * @brief Return the local number of columns on each processor
    */
-  virtual localIndex localRows() const = 0;
+  virtual localIndex numLocalRows() const = 0;
 
   /**
    * @brief Return the local number of columns on each processor
    */
-  virtual localIndex localCols() const = 0;
+  virtual localIndex numLocalCols() const = 0;
 
   /**
    * @brief Returns the index of the first global row owned by that processor.
@@ -681,12 +677,12 @@ public:
   /**
    * @brief Returns the number of nonzeros in the local portion of the matrix
    */
-  virtual localIndex localNonzeros() const = 0;
+  virtual localIndex numLocalNonzeros() const = 0;
 
   /**
    * @brief Returns the total number of nonzeros in the matrix
    */
-  virtual globalIndex globalNonzeros() const = 0;
+  virtual globalIndex numGlobalNonzeros() const = 0;
 
   /**
    * @brief Returns the infinity norm of the matrix.
@@ -754,6 +750,10 @@ protected:
     m_assembled( false )
   {}
 
+  MatrixBase( MatrixBase const & ) = default;
+  MatrixBase( MatrixBase && ) = default;
+  MatrixBase & operator=( MatrixBase const & ) = default;
+  MatrixBase & operator=( MatrixBase && ) = default;
   ~MatrixBase() = default;
 
   /// Flag indicating whether the matrix is currently open for adding new entries

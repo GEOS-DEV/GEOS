@@ -103,7 +103,7 @@ HypreMatrix::HypreMatrix( HypreMatrix const & src )
     rows[i - ilower] = i;
   }
 
-  HYPRE_IJMatrixGetRowCounts( src.unwrappedPointer(),
+  HYPRE_IJMatrixGetRowCounts( src.unwrapped(),
                               nrows,
                               rows.data(),
                               row_sizes.data() );
@@ -616,7 +616,7 @@ void HypreMatrix::multiply( HypreMatrix const & src,
 {
   GEOSX_LAI_MATRIX_STATUS( ready() );
   GEOSX_LAI_ASSERT( src.ready() );
-  GEOSX_LAI_ASSERT_EQ( globalCols(), src.globalRows() );
+  GEOSX_LAI_ASSERT_EQ( numGlobalCols(), src.numGlobalRows() );
 
   // Compute product
   HYPRE_ParCSRMatrix const dst_parcsr = hypre_ParMatmul( m_parcsr_mat, src.m_parcsr_mat );
@@ -638,7 +638,7 @@ void HypreMatrix::leftMultiplyTranspose( HypreMatrix const & src,
 {
   GEOSX_LAI_MATRIX_STATUS( ready() );
   GEOSX_LAI_ASSERT( src.ready() );
-  GEOSX_LAI_ASSERT_EQ( globalRows(), src.globalRows() );
+  GEOSX_LAI_ASSERT_EQ( numGlobalRows(), src.numGlobalRows() );
 
   // Compute product
   HYPRE_ParCSRMatrix const dst_parcsr = hypre_ParTMatmul( m_parcsr_mat, src.m_parcsr_mat );
@@ -661,7 +661,7 @@ void HypreMatrix::rightMultiplyTranspose( HypreMatrix const & src,
 {
   GEOSX_LAI_MATRIX_STATUS( ready() );
   GEOSX_LAI_ASSERT( src.ready() );
-  GEOSX_LAI_ASSERT_EQ( globalCols(), src.globalCols() );
+  GEOSX_LAI_ASSERT_EQ( numGlobalCols(), src.numGlobalCols() );
 
   // Transpose this
   HYPRE_ParCSRMatrix tmp;
@@ -885,7 +885,7 @@ localIndex HypreMatrix::maxRowLength() const
 {
   GEOSX_LAI_MATRIX_STATUS( assembled() );
 
-  HYPRE_Int nrows = integer_conversion< HYPRE_Int >( this->localRows());
+  HYPRE_Int nrows = integer_conversion< HYPRE_Int >( this->numLocalRows());
 
   array1d< HYPRE_BigInt > rows( nrows );
   array1d< HYPRE_Int > ncols( nrows );
@@ -1031,22 +1031,22 @@ void HypreMatrix::clearRow( globalIndex const globalRow,
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Accessor for the pointer to the raw Epetra matrix
 
-HYPRE_IJMatrix const & HypreMatrix::unwrappedPointer() const
+HYPRE_IJMatrix const & HypreMatrix::unwrapped() const
 {
   return m_ij_mat;
 }
 
-HYPRE_IJMatrix & HypreMatrix::unwrappedPointer()
+HYPRE_IJMatrix & HypreMatrix::unwrapped()
 {
   return m_ij_mat;
 }
 
-HYPRE_ParCSRMatrix const & HypreMatrix::unwrappedPointerParCSR() const
+HYPRE_ParCSRMatrix const & HypreMatrix::unwrappedParCSR() const
 {
   return m_parcsr_mat;
 }
 
-HYPRE_ParCSRMatrix & HypreMatrix::unwrappedPointerParCSR()
+HYPRE_ParCSRMatrix & HypreMatrix::unwrappedParCSR()
 {
   return m_parcsr_mat;
 }
@@ -1069,7 +1069,7 @@ globalIndex HypreMatrix::getGlobalRowID( localIndex const index ) const
 {
   GEOSX_LAI_MATRIX_STATUS( created() );
   GEOSX_LAI_ASSERT_GE( index, 0 );
-  GEOSX_LAI_ASSERT_GT( localRows(), index );
+  GEOSX_LAI_ASSERT_GT( numLocalRows(), index );
   return ilower() + index;
 }
 
@@ -1078,7 +1078,7 @@ globalIndex HypreMatrix::getGlobalRowID( localIndex const index ) const
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Accessor for the number of global rows
 
-globalIndex HypreMatrix::globalRows() const
+globalIndex HypreMatrix::numGlobalRows() const
 {
   GEOSX_LAI_MATRIX_STATUS( created() );
   return hypre_IJMatrixGlobalNumRows( m_ij_mat );
@@ -1089,7 +1089,7 @@ globalIndex HypreMatrix::globalRows() const
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Accessor for the number of global columns
 
-globalIndex HypreMatrix::globalCols() const
+globalIndex HypreMatrix::numGlobalCols() const
 {
   GEOSX_LAI_MATRIX_STATUS( created() );
   return hypre_IJMatrixGlobalNumCols( m_ij_mat );
@@ -1099,7 +1099,7 @@ globalIndex HypreMatrix::globalCols() const
 // Get number of local rows.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-localIndex HypreMatrix::localRows() const
+localIndex HypreMatrix::numLocalRows() const
 {
   GEOSX_LAI_MATRIX_STATUS( created() );
   return integer_conversion< localIndex >( iupper() - ilower() );
@@ -1109,7 +1109,7 @@ localIndex HypreMatrix::localRows() const
 // Get number of local columns.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-localIndex HypreMatrix::localCols() const
+localIndex HypreMatrix::numLocalCols() const
 {
   GEOSX_LAI_MATRIX_STATUS( created() );
   return integer_conversion< localIndex >( jupper() - jlower() );
@@ -1193,7 +1193,7 @@ globalIndex HypreMatrix::jupper() const
 // Get number of local nonzeros.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Accessor for the number of local nonzeros
-localIndex HypreMatrix::localNonzeros() const
+localIndex HypreMatrix::numLocalNonzeros() const
 {
   GEOSX_LAI_MATRIX_STATUS( assembled() );
 
@@ -1206,9 +1206,9 @@ localIndex HypreMatrix::localNonzeros() const
   return integer_conversion< localIndex >( diag_nnz + offdiag_nnz );
 }
 
-globalIndex HypreMatrix::globalNonzeros() const
+globalIndex HypreMatrix::numGlobalNonzeros() const
 {
-  return MpiWrapper::Sum( integer_conversion< globalIndex >( localNonzeros() ), getComm() );
+  return MpiWrapper::Sum( integer_conversion< globalIndex >( numLocalNonzeros() ), getComm() );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""

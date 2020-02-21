@@ -64,6 +64,30 @@ public:
   HypreVector( HypreVector const & src );
 
   /**
+   * @brief Move constructor.
+   *
+   * @param src HypreVector to be moved.
+   *
+   */
+  HypreVector( HypreVector && src );
+
+  /**
+   * @brief Copy assignment.
+   *
+   * @param src HypreVector to be copied.
+   *
+   */
+  HypreVector & operator=( HypreVector const & src );
+
+  /**
+   * @brief Move assignment.
+   *
+   * @param src HypreVector to be moved.
+   *
+   */
+  HypreVector & operator=( HypreVector && src );
+
+  /**
    * @brief Destructor.
    */
   ~HypreVector();
@@ -71,6 +95,8 @@ public:
 
   //! @name Create Methods
   //@{
+
+  void reset();
 
   /**
    * @brief Create a vector based on a previous vector.
