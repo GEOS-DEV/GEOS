@@ -1484,7 +1484,7 @@ void SiloFile::WriteElementRegionSilo( ElementRegionBase const * elemRegion,
           typedef decltype(array) arrayType;
           Wrapper<arrayType> const &
           sourceWrapper = Wrapper<arrayType>::cast( *wrapper );
-          arrayType const & sourceArray = sourceWrapper.reference();
+          typename arrayType::ViewTypeConst const & sourceArray = sourceWrapper.reference();
 
           Wrapper<arrayType> * const
           newWrapper = fakeGroup.registerWrapper<arrayType>( fieldName );
@@ -1521,7 +1521,7 @@ void SiloFile::WriteElementRegionSilo( ElementRegionBase const * elemRegion,
         {
           Wrapper<arrayType> const &
           sourceWrapper = Wrapper<arrayType>::cast(*(viewPointers[esr][fieldName]));
-          arrayType const & sourceArray = sourceWrapper.reference();
+          typename arrayType::ViewTypeConst const & sourceArray = sourceWrapper.reference();
 
           targetArray.copy(counter, sourceArray);
           counter += sourceArray.size(0);
@@ -3051,7 +3051,7 @@ void SiloFile::WriteMaterialDataField3d( string const & meshName,
     fieldView[esr].resize( numMat );
     for( localIndex matIndex = 0 ; matIndex<numMat ; ++matIndex )
     {
-      arrayView3d<TYPE> const &
+      arrayView3d<TYPE const> const &
       fieldData = subRegion->GetConstitutiveModels()->GetGroup(materialNames[matIndex])->getReference<array3d<TYPE>>(fieldName);
       if (fieldData.size() > 0)
       {
