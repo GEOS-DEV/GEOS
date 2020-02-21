@@ -116,7 +116,7 @@ void ElementRegionManager::SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
   }
 }
 
-void ElementRegionManager::GenerateMesh( Group const * const cellBlockManager )
+void ElementRegionManager::GenerateMesh( Group * const cellBlockManager )
 {
   this->forElementRegions<CellElementRegion>([&](CellElementRegion * const elemRegion)->void
   {

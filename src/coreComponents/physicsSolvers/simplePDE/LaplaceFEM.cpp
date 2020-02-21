@@ -216,10 +216,10 @@ void LaplaceFEM::AssembleSystem( real64 const time_n,
     elementRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const GEOSX_UNUSED_PARAM( esr ),
                                                                         CellElementSubRegion const * const elementSubRegion )
     {
-      array3d<R1Tensor> const &
+      arrayView3d<R1Tensor const> const &
       dNdX = elementSubRegion->getReference< array3d< R1Tensor > >(keys::dNdX);
 
-      arrayView2d<real64> const &
+      arrayView2d<real64 const> const &
       detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
 
       localIndex const numNodesPerElement = elementSubRegion->numNodesPerElement();
@@ -362,7 +362,7 @@ void LaplaceFEM::ApplyDirichletBC_implicit( real64 const time,
                    m_fieldName,
                    [&]( FieldSpecificationBase const * const bc,
                         string const &,
-                        SortedArray<localIndex> const & targetSet,
+                        SortedArrayView<localIndex const> const & targetSet,
                         Group * const targetGroup,
                         string const GEOSX_UNUSED_PARAM( fieldName ) )->void
   {

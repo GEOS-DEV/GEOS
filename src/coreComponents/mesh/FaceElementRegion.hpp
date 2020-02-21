@@ -59,7 +59,7 @@ public:
   { return FaceElementRegion::CatalogName(); }
 
 
-  virtual void GenerateMesh( Group const * ) override {}
+  virtual void GenerateMesh( Group * ) override {}
 
   /**
    * @brief This function generates and adds entries to the face/fracture mesh
