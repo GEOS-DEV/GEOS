@@ -609,11 +609,13 @@ public:
   { return *m_data; }
 
   /**
-   * @brief Accessor for m_data
-   * @return reference to const T
+   * @brief const Accessor for m_data
+   * @return reference to T, or in the case of an Array, a reference to an
+   *         ArrayView<T const> const.
    */
-  T const & reference() const
-  { return *m_data; }
+  auto const &
+  reference() const
+  { return referenceAsView(); }
 
   /**
    * @brief Accessor for m_data

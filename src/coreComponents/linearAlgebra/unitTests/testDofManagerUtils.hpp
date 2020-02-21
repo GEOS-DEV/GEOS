@@ -97,18 +97,36 @@ struct testMeshHelper<DofManager::Location::Face>
   template<typename SUBREGION> using ElemToObjMap = typename SUBREGION::FaceMapType;
 };
 
-template<typename PERM>
-localIndex size1( InterObjectRelation<array2d<localIndex, PERM>> const & map, localIndex const GEOSX_UNUSED_PARAM( i0 ) )
+//template<typename PERM>
+//localIndex size1( InterObjectRelation<array2d<localIndex, PERM>> const & map, localIndex const GEOSX_UNUSED_PARAM( i0 ) )
+//{
+//  return map.size( 1 );
+//}
+//
+//localIndex size1( InterObjectRelation<array1d<array1d<localIndex>>> const & map, localIndex const i0 )
+//{
+//return map[i0].size();
+//}
+//
+//localIndex size1( InterObjectRelation<ArrayOfArrays<localIndex>> const & map, localIndex const i0 )
+//{
+//  return map.sizeOfArray( i0 );
+//}
+
+
+template<int USD>
+localIndex size1( arrayView2d<localIndex const, USD> const & map,
+                  localIndex const GEOSX_UNUSED_PARAM( i0 ) )
 {
   return map.size( 1 );
 }
 
-localIndex size1( InterObjectRelation<array1d<array1d<localIndex>>> const & map, localIndex const i0 )
+localIndex size1( arrayView1d<arrayView1d<localIndex const> const> const & map, localIndex const i0 )
 {
 return map[i0].size();
 }
 
-localIndex size1( InterObjectRelation<ArrayOfArrays<localIndex>> const & map, localIndex const i0 )
+localIndex size1( ArrayOfArraysView<localIndex const> const & map, localIndex const i0 )
 {
   return map.sizeOfArray( i0 );
 }
@@ -133,8 +151,9 @@ struct forLocalObjectsImpl
     mesh->getElemManager()->forElementSubRegions( regions, [&]( auto const * const subRegion )
     {
       using MapType = typename helper::template ElemToObjMap<std::remove_pointer_t<decltype( subRegion )>>;
-      MapType const & elemToObjMap =
-        subRegion->template getReference<MapType>( helper::elemMapKey );
+
+      typename MapType::ViewTypeConst const &
+      elemToObjMap = subRegion->template getReference<MapType>( helper::elemMapKey );
 
       for( localIndex k = 0; k < subRegion->size(); ++k )
       {
@@ -282,8 +301,8 @@ void makeSparsityFEM( MeshLevel const * const mesh,
   elemManager->forElementSubRegions( regions, [&]( auto const * const subRegion )
   {
     using NodeMapType = TYPEOFPTR( subRegion )::NodeMapType;
-    NodeMapType const & nodeMap =
-      subRegion->template getReference<NodeMapType>( ElementSubRegionBase::viewKeyStruct::nodeListString );
+    typename NodeMapType::ViewTypeConst const &
+    nodeMap = subRegion->template getReference<NodeMapType>( ElementSubRegionBase::viewKeyStruct::nodeListString );
 
     localIndex const numNode = subRegion->numNodesPerElement();
     array1d<globalIndex> localDofIndex( numNode * numComp );
@@ -332,8 +351,8 @@ void makeSparsityFEM_FVM( MeshLevel const * const mesh,
   elemManager->forElementSubRegions( regions, [&]( auto const * const subRegion )
   {
     using NodeMapType = TYPEOFPTR( subRegion )::NodeMapType;
-    NodeMapType const & nodeMap =
-      subRegion->template getReference<NodeMapType>( ElementSubRegionBase::viewKeyStruct::nodeListString );
+    typename NodeMapType::ViewTypeConst const &
+    nodeMap = subRegion->template getReference<NodeMapType>( ElementSubRegionBase::viewKeyStruct::nodeListString );
 
     arrayView1d<globalIndex const> elemDofIndex =
       subRegion->template getReference< array1d<globalIndex> >( dofIndexKeyElem );
@@ -426,8 +445,8 @@ void makeSparsityFlux( MeshLevel const * const mesh,
   elemManager->forElementSubRegions( regions, [&]( auto const * const subRegion )
   {
     using FaceMapType = TYPEOFPTR( subRegion )::FaceMapType;
-    FaceMapType const & faceMap =
-      subRegion->template getReference<FaceMapType>( ElementSubRegionBase::viewKeyStruct::faceListString );
+    typename FaceMapType::ViewTypeConst const &
+    faceMap = subRegion->template getReference<FaceMapType>( ElementSubRegionBase::viewKeyStruct::faceListString );
 
     localIndex const numFace = subRegion->numFacesPerElement();
     array1d<globalIndex> localDofIndex( numFace * numComp );

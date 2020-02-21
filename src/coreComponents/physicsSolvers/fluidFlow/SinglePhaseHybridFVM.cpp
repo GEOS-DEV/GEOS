@@ -213,7 +213,7 @@ void SinglePhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
     faceManager->getReference< array1d<real64> >( viewKeyStruct::deltaFacePressureString );
 
   // get the face-centered depth 
-  arrayView1d<real64> const & faceGravCoef =
+  arrayView1d<real64 const> const & faceGravCoef =
     faceManager->getReference<array1d<real64>>(viewKeyStruct::gravityCoefString);
   
   // get the face-to-nodes connectivity for the transmissibility calculation
@@ -268,7 +268,7 @@ void SinglePhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
      subRegion->template getReference< array1d<R1Tensor> >( viewKeyStruct::permeabilityString ); 
 
     // get the cell-centered depth 
-    arrayView1d<real64> const & elemGravCoef =
+    arrayView1d<real64 const> const & elemGravCoef =
       subRegion->template getReference<array1d<real64>>(viewKeyStruct::gravityCoefString);
 
     

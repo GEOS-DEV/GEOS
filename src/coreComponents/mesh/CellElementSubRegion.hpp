@@ -27,7 +27,7 @@ public:
   CellElementSubRegion( string const & name, Group * const parent );
   virtual ~CellElementSubRegion() override;
 
-  void CopyFromCellBlock( CellBlock const * source );
+  void CopyFromCellBlock( CellBlock * source );
 
   void ConstructSubRegionFromFaceSet( FaceManager const * const faceManager,
                                       string const & setName );
