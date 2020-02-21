@@ -60,7 +60,7 @@ void checkArrayView( const Wrapper< array1d< T > > * view, int sfp, const array1
 {
   EXPECT_EQ( view->sizedFromParent(), sfp );
   EXPECT_EQ( view->size(), data.size() );
-  array1d< T > const & view_data = view->reference();
+  arrayView1d< T const > const & view_data = view->reference();
   for( int i = 0 ; i < view->size() ; i++ )
   {
     EXPECT_EQ( view_data[i], data[i] );
@@ -106,7 +106,7 @@ void checkArray2dView( const Wrapper< array2d< T > > * view, int sfp, const arra
   EXPECT_EQ( view->sizedFromParent(), sfp );
   EXPECT_EQ( view->size(), data.size() );
 
-  const array2d< T > & view_data = view->reference();
+  arrayView2d< T const > const & view_data = view->reference();
   for( int i = 0 ; i < data.size( 0 ) ; i++ )
   {
     for( int j = 0 ; j < data.size( 1 ) ; j++ )
@@ -143,7 +143,7 @@ void checkSetView( const Wrapper< SortedArray< T > > * view, localIndex sfp, con
 {
   EXPECT_EQ( view->sizedFromParent(), sfp );
   EXPECT_EQ( view->size(), data.size() );
-  const SortedArray< T > & view_data = view->reference();
+  SortedArrayView< T const > const & view_data = view->reference();
   for( int i = 0 ; i < view->size() ; i++ )
   {
     EXPECT_EQ( view_data[i], data[i] );
@@ -202,7 +202,7 @@ void checkStringArrayView( const Wrapper< string_array > * view, const int sfp, 
 {
   EXPECT_EQ( view->sizedFromParent(), sfp );
   EXPECT_EQ( view->size(), arr.size() );
-  string_array const & view_data = view->reference();
+  arrayView1d< string const > const & view_data = view->reference();
   for( int i = 0 ; i < view->size() ; i++ )
   {
     EXPECT_EQ( view_data[i], arr[i] );

@@ -158,7 +158,13 @@ void PeriodicEvent::CheckOptionalFunctionThreshold(real64 const time,
     else
     {
       dataRepository::Group const * sets = m_functionTarget->GetGroup(periodicEventViewKeys.functionSetNames);
-      mySet = sets->getReference< SortedArray<localIndex> >(m_functionInputSetname);
+      SortedArrayView<localIndex const> const &
+      functionSet = sets->getReference< SortedArray<localIndex> >(m_functionInputSetname);
+
+      for( localIndex const index : functionSet )
+      {
+        mySet.insert(index);
+      }
     }
 
     // Find the function (min, average, max)
