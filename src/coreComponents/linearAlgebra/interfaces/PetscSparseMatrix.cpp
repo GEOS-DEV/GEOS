@@ -757,12 +757,12 @@ void PetscSparseMatrix::write( string const & filename,
 
   PetscViewer viewer;
   PetscViewerASCIIOpen( getComm(), filename.c_str(), &viewer );
-  PetscViewerFormat petscFormat;
+  PetscViewerFormat petscFormat = PETSC_VIEWER_DEFAULT;
 
   switch( format )
   {
     case LAIOutputFormat::NATIVE_ASCII:
-      petscFormat = PETSC_VIEWER_DEFAULT;
+      petscFormat = PETSC_VIEWER_ASCII_COMMON;
       break;
     case LAIOutputFormat::NATIVE_BINARY:
       petscFormat = PETSC_VIEWER_NATIVE;
