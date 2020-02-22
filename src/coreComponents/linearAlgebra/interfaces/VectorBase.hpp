@@ -155,10 +155,7 @@ protected:
   /**
    * @brief Reset the matrix to default state
    */
-  virtual void reset()
-  {
-    GEOSX_LAI_VECTOR_STATUS( closed() );
-  }
+  virtual void reset() = 0;
 
   ///@}
 
@@ -355,7 +352,7 @@ protected:
    * @param[out] values array of vector values
    */
   virtual void get( arraySlice1d< globalIndex const > const & globalIndices,
-                    array1d< real64 > & values ) const = 0;
+                    arraySlice1d< real64 > const & values ) const = 0;
 
   /**
    * @brief Map a global row index to local row index.

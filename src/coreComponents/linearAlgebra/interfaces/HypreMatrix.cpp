@@ -1062,7 +1062,11 @@ HYPRE_ParCSRMatrix & HypreMatrix::unwrappedParCSR()
 localIndex HypreMatrix::getLocalRowID( globalIndex const index ) const
 {
   GEOSX_LAI_MATRIX_STATUS( created() );
-  return (index >= ilower() && index < iupper()) ? integer_conversion< localIndex >( index - ilower() ) : -1;
+  HYPRE_BigInt ilower, iupper, jlower, jupper;
+  HYPRE_IJMatrixGetLocalRange( m_ij_mat,
+                               &ilower, &iupper,
+                               &jlower, &jupper );
+  return (index >= ilower && index < iupper) ? integer_conversion< localIndex >( index - ilower ) : -1;
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -1129,12 +1133,9 @@ globalIndex HypreMatrix::ilower() const
   GEOSX_LAI_MATRIX_STATUS( created() );
 
   HYPRE_BigInt ilower, iupper, jlower, jupper;
-
   HYPRE_IJMatrixGetLocalRange( m_ij_mat,
-                               &ilower,
-                               &iupper,
-                               &jlower,
-                               &jupper );
+                               &ilower, &iupper,
+                               &jlower, &jupper );
   return integer_conversion< globalIndex >( ilower );
 }
 

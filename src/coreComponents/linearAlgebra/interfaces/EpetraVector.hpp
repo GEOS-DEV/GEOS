@@ -98,7 +98,7 @@ public:
 
   void close() override;
 
-  virtual void reset() override;
+  void reset() override;
 
   void set( globalIndex const globalRowIndex,
             real64 const value ) override;
@@ -156,7 +156,7 @@ public:
   real64 get( globalIndex globalRow ) const override;
 
   void get( arraySlice1d<globalIndex const> const & globalRowIndices,
-            array1d<real64> & values ) const override;
+            arraySlice1d<real64> const & values ) const override;
 
   localIndex getLocalRowID( globalIndex const globalRowIndex ) const override;
 

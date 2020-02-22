@@ -89,7 +89,7 @@ void PetscSolver::solve_direct( PetscSparseMatrix &mat,
 
   // solve system
   KSPSetFromOptions( ksp );
-  KSPSolve( ksp, rhs.getVec(), sol.getVec() );
+  KSPSolve( ksp, rhs.unwrapped(), sol.unwrapped() );
 }
 
 
@@ -214,7 +214,7 @@ void PetscSolver::solve_krylov( PetscSparseMatrix &mat,
 
   // Actually solve
   KSPSetFromOptions( ksp ); 
-  KSPSolve( ksp, rhs.getVec(), sol.getVec() );
+  KSPSolve( ksp, rhs.unwrapped(), sol.unwrapped() );
 }
 
 } // end geosx namespace

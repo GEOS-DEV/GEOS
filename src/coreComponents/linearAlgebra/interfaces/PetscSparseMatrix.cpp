@@ -16,15 +16,6 @@
  * @file PetscSparseMatrix.cpp
  */
 
-// BEGIN_RST_NARRATIVE PetscSparseMatrix.rst
-// ==============================
-// PETSc-based Matrix Object
-// ==============================
-// This class contains the ParallelMatrix wrappers based on PETSc Mat objects.
-// The class contains a unique pointer to a Mat as well as constructors,
-// functions and accessors for Mat objects.
-
-// Include the corresponding header file.
 #include "PetscSparseMatrix.hpp"
 
 #if !defined(PETSC_USE_64BIT_INDICES)
@@ -37,26 +28,15 @@
 #include <petscvec.h>
 #include <petscmat.h>
 
-// Put everything under the geosx namespace.
 namespace geosx
 {
 
-// ----------------------------
-// Constructors
-// ----------------------------
-
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Create an empty matrix (meant to be used for declaration)
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 PetscSparseMatrix::PetscSparseMatrix()
 : LinearOperator(),
   MatrixBase(),
   m_mat{}
 {}
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Copy constructor
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 PetscSparseMatrix::PetscSparseMatrix( PetscSparseMatrix const & src )
 : PetscSparseMatrix()
 {
@@ -65,21 +45,11 @@ PetscSparseMatrix::PetscSparseMatrix( PetscSparseMatrix const & src )
   m_assembled = true;
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Destructor
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 PetscSparseMatrix::~PetscSparseMatrix()
 {
   reset();
 }
 
-// -----------------------------
-// Create
-// -----------------------------
-// Allocate matrix (prepare to be filled with data).
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Create a matrix from number of elements
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 void PetscSparseMatrix::createWithLocalSize( localIndex const localRows,
                                              localIndex const localCols,
                                              localIndex const maxEntriesPerRow,
@@ -131,10 +101,6 @@ void PetscSparseMatrix::reset()
   MatDestroy( &m_mat );
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Reinitialize.
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Sets all values to user-defined value.
 void PetscSparseMatrix::set( real64 const value )
 {
   GEOSX_LAI_MATRIX_STATUS( ready() );
@@ -190,30 +156,18 @@ void PetscSparseMatrix::set( real64 const value )
   }
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Reinitialize.
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Sets all values to 0.
 void PetscSparseMatrix::zero()
 {
   GEOSX_LAI_MATRIX_STATUS( ready() );
   MatZeroEntries( m_mat );
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Open
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Empty open function (implemented for HYPRE compatibility).
 void PetscSparseMatrix::open()
 {
   GEOSX_LAI_MATRIX_STATUS( created() && closed() );
   m_closed = false;
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Close
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// PETSc matrix assembly. Space for preallocated nonzeros that is not filled are compressed out by assembly.
 void PetscSparseMatrix::close()
 {
   GEOSX_LAI_MATRIX_STATUS( !closed() );
@@ -225,11 +179,6 @@ void PetscSparseMatrix::close()
   m_closed = true;
 }
 
-// -------------------------
-// Add/Set
-// -------------------------
-
-// 1x1
 void PetscSparseMatrix::add( globalIndex const rowIndex,
                              globalIndex const colIndex,
                              real64 const value )
@@ -254,7 +203,6 @@ void PetscSparseMatrix::insert( globalIndex const rowIndex,
   MatSetValue( m_mat, rowIndex, colIndex, value, INSERT_VALUES );
 }
 
- // 1xN c-style
 void PetscSparseMatrix::add( globalIndex const rowIndex,
                              globalIndex const * colIndices,
                              real64 const * values,
@@ -285,7 +233,6 @@ void PetscSparseMatrix::insert( globalIndex const rowIndex,
   MatSetValues( m_mat, 1, rows, size, toPetscInt( colIndices ), values, INSERT_VALUES );
 }
 
-// 1xN array1d style 
 void PetscSparseMatrix::add( globalIndex const rowIndex,
                              arraySlice1d<globalIndex const> const & colIndices,
                              arraySlice1d<real64 const> const &values )
@@ -313,7 +260,6 @@ void PetscSparseMatrix::insert( globalIndex const rowIndex,
   MatSetValues( m_mat, 1, rows, values.size(), toPetscInt( colIndices ), values.data(), INSERT_VALUES );
 }
 
-// MxN array2d style
 void PetscSparseMatrix::add( arraySlice1d<globalIndex const> const & rowIndices,
                              arraySlice1d<globalIndex const> const & colIndices,
                              arraySlice2d<real64 const, 1> const & values )
@@ -452,29 +398,15 @@ void PetscSparseMatrix::insert( globalIndex const * rowIndices,
                 INSERT_VALUES );
 }
 
-// -------------------------
-// Linear Algebra
-// -------------------------
-
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Matrix/vector multiplication
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Perform the matrix-vector product A*src = dst.
-//
-// NOTE: src and dst must be different vectors
 void PetscSparseMatrix::multiply( PetscVector const & src,
                                   PetscVector & dst ) const
 {
   GEOSX_LAI_MATRIX_STATUS( ready() );
-  MatMult( m_mat, src.getConstVec(), dst.getVec() );
+  GEOSX_LAI_ASSERT( src.ready() );
+  GEOSX_LAI_ASSERT( dst.ready() );
+  MatMult( m_mat, src.unwrapped(), dst.unwrapped() );
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Matrix/matrix multiplication
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Perform the matrix-matrix product A*src = dst.
-//
-// NOTE: src and dst must be different vectors
 void PetscSparseMatrix::multiply( PetscSparseMatrix const & src, 
                                   PetscSparseMatrix & dst,
                                   bool const closeResult ) const
@@ -494,10 +426,6 @@ void PetscSparseMatrix::multiply( PetscSparseMatrix const & src,
   dst.m_closed = closeResult;
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Matrix/matrix multiplication
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Perform the matrix-matrix product this^T * src = dst.
 void PetscSparseMatrix::leftMultiplyTranspose( PetscSparseMatrix const & src,
                                                PetscSparseMatrix & dst,
                                                bool const closeResult ) const
@@ -517,10 +445,6 @@ void PetscSparseMatrix::leftMultiplyTranspose( PetscSparseMatrix const & src,
   dst.m_closed = closeResult;
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Matrix/matrix multiplication
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Perform the matrix-matrix product src * this^T  = dst.
 void PetscSparseMatrix::rightMultiplyTranspose( PetscSparseMatrix const & src,
                                                 PetscSparseMatrix & dst,
                                                 bool const closeResult ) const
@@ -540,10 +464,6 @@ void PetscSparseMatrix::rightMultiplyTranspose( PetscSparseMatrix const & src,
   dst.m_closed = closeResult;
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Generalized matrix/vector product.
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Compute gemv <tt>y = alpha*A*x + beta*y</tt>.
 void PetscSparseMatrix::gemv( real64 const alpha,
                               PetscVector const & x,
                               real64 const beta,
@@ -560,52 +480,40 @@ void PetscSparseMatrix::gemv( real64 const alpha,
 
   if ( useTranspose ) 
   {
-    MatMultTranspose( m_mat, x_.getVec(), b_.getVec() );
+    MatMultTranspose( m_mat, x_.unwrapped(), b_.unwrapped() );
   }
   else
   {
-    MatMult( m_mat, x_.getVec(), b_.getVec() ); // alpha*A*x_ = b_
+    MatMult( m_mat, x_.unwrapped(), b_.unwrapped() ); // alpha*A*x_ = b_
   }
-  VecAXPY( y.getVec(), 1, b_.getVec() ); // alpha*A*x_ + beta*y = y
+  VecAXPY( y.unwrapped(), 1, b_.unwrapped() ); // alpha*A*x_ + beta*y = y
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Scale.
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Multiply all elements by scalingFactor.
 void PetscSparseMatrix::scale( real64 const scalingFactor )
 {
   GEOSX_LAI_MATRIX_STATUS( ready() );
   MatScale( m_mat, scalingFactor );
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Left and right scaling
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 void PetscSparseMatrix::leftScale( PetscVector const &vec )
 {
   GEOSX_LAI_MATRIX_STATUS( ready() );
-  MatDiagonalScale( m_mat, vec.getConstVec(), nullptr );
+  MatDiagonalScale( m_mat, vec.unwrapped(), nullptr );
 }
 
 void PetscSparseMatrix::rightScale( PetscVector const &vec )
 {
   GEOSX_LAI_MATRIX_STATUS( ready() );
-  MatDiagonalScale( m_mat, nullptr, vec.getConstVec() );
+  MatDiagonalScale( m_mat, nullptr, vec.unwrapped() );
 }
 
 void PetscSparseMatrix::leftRightScale( PetscVector const &vecLeft,
                                         PetscVector const &vecRight )
 {
   GEOSX_LAI_MATRIX_STATUS( ready() );
-  MatDiagonalScale( m_mat, vecLeft.getConstVec(), vecRight.getConstVec() );
+  MatDiagonalScale( m_mat, vecLeft.unwrapped(), vecRight.unwrapped() );
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Clear row.
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Clear the row.  By default the diagonal value will be set
-// to zero, but the user can pass a desired diagValue
 void PetscSparseMatrix::clearRow( globalIndex const globalRow,
                                   real64 const diagValue )
 {
@@ -616,10 +524,6 @@ void PetscSparseMatrix::clearRow( globalIndex const globalRow,
   PetscInt rows[1] = {globalRow};
   MatZeroRows( m_mat, 1, rows, diagValue, nullptr, nullptr );
 }
-
-// ---------------------------------------------------------
-//  Accessors
-// ---------------------------------------------------------
 
 localIndex PetscSparseMatrix::maxRowLength() const
 {
@@ -647,11 +551,6 @@ localIndex PetscSparseMatrix::globalRowLength( globalIndex globalRowIndex ) cons
   return nnz;
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Get global row copy
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// The challenge here is that columns are stored with local, not global,
-// indices, so we need to do conversions back and forth
 void PetscSparseMatrix::getRowCopy( globalIndex globalRow,
                                     array1d<globalIndex> & colIndices,
                                     array1d<real64> & values ) const
@@ -705,28 +604,18 @@ real64 PetscSparseMatrix::getDiagValue( globalIndex globalRow ) const
   return 0.0;
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Get pointer.
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
-// Accessor for the pointer to the matrix
 Mat & PetscSparseMatrix::unwrapped()
 {
   GEOSX_LAI_MATRIX_STATUS( created() );
   return m_mat;
 }
 
-// Accessor for the pointer to the matrix
 const Mat & PetscSparseMatrix::unwrapped() const
 {
   GEOSX_LAI_MATRIX_STATUS( created() );
   return m_mat;
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Get number of global rows.
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Accessor for the number of global rows
 globalIndex PetscSparseMatrix::numGlobalRows() const
 {
   GEOSX_LAI_MATRIX_STATUS( created() );
@@ -736,10 +625,6 @@ globalIndex PetscSparseMatrix::numGlobalRows() const
   return integer_conversion<globalIndex>( num_rows );
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Get number of global columns.
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Accessor for the number of global columns
 globalIndex PetscSparseMatrix::numGlobalCols() const
 {
   GEOSX_LAI_MATRIX_STATUS( created() );
@@ -749,10 +634,6 @@ globalIndex PetscSparseMatrix::numGlobalCols() const
   return integer_conversion<globalIndex>( num_cols );
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Get the lower index owned by processor.
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Accessor for the index of the first global row
 globalIndex PetscSparseMatrix::ilower() const
 {
   GEOSX_LAI_MATRIX_STATUS( created() );
@@ -762,10 +643,6 @@ globalIndex PetscSparseMatrix::ilower() const
   return integer_conversion<globalIndex>( firstrow );
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Get the upper index owned by processor.
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Accessor for the index of the last global row
 globalIndex PetscSparseMatrix::iupper() const
 {
   GEOSX_LAI_MATRIX_STATUS( created() );
@@ -800,10 +677,6 @@ globalIndex PetscSparseMatrix::numGlobalNonzeros() const
   return MpiWrapper::Sum( integer_conversion<globalIndex>( numLocalNonzeros() ), getComm() );
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Inf-norm.
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Returns the infinity norm of the matrix.
 real64 PetscSparseMatrix::normInf() const
 {
   GEOSX_LAI_MATRIX_STATUS( ready() );
@@ -812,10 +685,6 @@ real64 PetscSparseMatrix::normInf() const
   return normInf;
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// 1-norm.
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Returns the one norm of the matrix.
 real64 PetscSparseMatrix::norm1() const
 {
   GEOSX_LAI_MATRIX_STATUS( ready() );
@@ -824,10 +693,6 @@ real64 PetscSparseMatrix::norm1() const
   return norm1;
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Frobenius-norm.
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Returns the Frobenius norm of the matrix.
 real64 PetscSparseMatrix::normFrobenius() const
 {
   GEOSX_LAI_MATRIX_STATUS( ready() );
@@ -836,10 +701,6 @@ real64 PetscSparseMatrix::normFrobenius() const
   return normFrob;
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// getLocalRowID
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Map a global row index to local row index
 localIndex PetscSparseMatrix::getLocalRowID( globalIndex const index ) const
 {
   GEOSX_LAI_MATRIX_STATUS( created() );
@@ -848,27 +709,16 @@ localIndex PetscSparseMatrix::getLocalRowID( globalIndex const index ) const
   return (index >= low && index < high) ? integer_conversion< localIndex >( index - low ) : -1;
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// getGlobalRowID
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Map a local row index to global row index
 globalIndex PetscSparseMatrix::getGlobalRowID( localIndex const index ) const
 {
   GEOSX_LAI_MATRIX_STATUS( created() );
   GEOSX_LAI_ASSERT_GE( index, 0 );
   GEOSX_LAI_ASSERT_GT( numLocalRows(), index );
   PetscInt low, high;
-  MatGetOwnershipRange( m_mat, &low, &high);
+  MatGetOwnershipRange( m_mat, &low, &high );
   return integer_conversion<globalIndex>( index + low );
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// numLocalCols
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Return the local number of columns on each processor
-//
-// NOTE: PETSc MPI matrices are partitioned row-wise so that the local number
-// of columns is the global number.
 localIndex PetscSparseMatrix::numLocalCols() const
 {
   GEOSX_LAI_MATRIX_STATUS( created() );
@@ -877,10 +727,6 @@ localIndex PetscSparseMatrix::numLocalCols() const
   return integer_conversion<localIndex>( cols );
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// numLocalRows
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Return the local number of rows on each processor
 localIndex PetscSparseMatrix::numLocalRows() const
 {
   GEOSX_LAI_MATRIX_STATUS( created() );
@@ -889,7 +735,6 @@ localIndex PetscSparseMatrix::numLocalRows() const
   return integer_conversion<localIndex >( high - low );
 }
 
-// Accessor for the MPI communicator
 MPI_Comm PetscSparseMatrix::getComm() const
 {
   GEOSX_LAI_MATRIX_STATUS( created() );
@@ -898,10 +743,6 @@ MPI_Comm PetscSparseMatrix::getComm() const
   return comm;
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Print to terminal.
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Wrapper to print the petsc output of the matrix
 void PetscSparseMatrix::print( std::ostream & os ) const
 {
   GEOSX_LAI_MATRIX_STATUS( ready() );
@@ -909,9 +750,6 @@ void PetscSparseMatrix::print( std::ostream & os ) const
   MatView( m_mat, PETSC_VIEWER_STDOUT_( getComm() ) );
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Write to matlab-compatible file
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 void PetscSparseMatrix::write( string const & filename,
                                LAIOutputFormat const format ) const
 {

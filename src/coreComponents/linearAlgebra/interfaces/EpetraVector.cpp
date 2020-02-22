@@ -217,7 +217,7 @@ void EpetraVector::close()
 
 void EpetraVector::reset()
 {
-  VectorBase::reset();
+  GEOSX_LAI_VECTOR_STATUS( closed() );
   m_vector.reset();
 }
 
@@ -230,6 +230,7 @@ void EpetraVector::scale( real64 const scalingFactor )
 real64 EpetraVector::dot( EpetraVector const & vec ) const
 {
   GEOSX_LAI_VECTOR_STATUS( ready() );
+  GEOSX_LAI_ASSERT( vec.ready() );
   real64 tmp;
   m_vector->Dot( vec.unwrapped(), &tmp );
   return tmp;
@@ -306,7 +307,7 @@ void EpetraVector::write( string const & filename,
       break;
     }
     default:
-      GEOSX_ERROR( "Unsupported output format" );
+      GEOSX_ERROR( "Unsupported vector output format" );
   }
 }
 
@@ -317,12 +318,10 @@ real64 EpetraVector::get( globalIndex globalRow ) const
 }
 
 void EpetraVector::get( arraySlice1d< globalIndex const > const & globalRowIndices,
-                        array1d< real64 > & values ) const
+                        arraySlice1d< real64 > const & values ) const
 {
   GEOSX_LAI_VECTOR_STATUS( ready() );
   real64 const * const localVector = extractLocalVector();
-  values.resize( globalRowIndices.size() );
-
   for( localIndex i = 0; i < globalRowIndices.size(); ++i )
   {
     values[i] = localVector[getLocalRowID( globalRowIndices[i] )];
@@ -362,6 +361,8 @@ localIndex EpetraVector::getLocalRowID( globalIndex const globalRowIndex ) const
 globalIndex EpetraVector::getGlobalRowID( localIndex const localRowIndex ) const
 {
   GEOSX_LAI_VECTOR_STATUS( created() );
+  GEOSX_LAI_ASSERT_GE( localRowIndex, 0 );
+  GEOSX_LAI_ASSERT_GT( localSize(), localRowIndex );
   return m_vector->Map().GID64( integer_conversion< int >( localRowIndex ) );
 }
 

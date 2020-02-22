@@ -19,8 +19,7 @@
 #ifndef GEOSX_LINEARALGEBRA_INTERFACES_PETSCVECTOR_HPP_
 #define GEOSX_LINEARALGEBRA_INTERFACES_PETSCVECTOR_HPP_
 
-#include "common/DataTypes.hpp"
-#include "mpiCommunications/MpiWrapper.hpp"
+#include "linearAlgebra/interfaces/VectorBase.hpp"
 
 /*
  * This definition of Vec is copied from <petscvec.h>.
@@ -49,444 +48,166 @@ namespace geosx
 {
 
 /**
- * \class PetscVector
- * \brief This class creates and provides basic support for Vec 
+ * @brief This class creates and provides basic support for Vec
  *        vector object type used in PETSc.
  */
-class PetscVector
+class PetscVector final : private VectorBase<PetscVector>
 {
-#if !defined(GEOSX_USE_MPI)
-  typedef int MPI_Comm;
-#endif
 public:
-  //! @name Constructor/Destructor Methods
-  //@{
+
+  /**
+   * @name Constructor/Destructor Methods
+   */
+  ///@{
 
   /**
    * @brief Empty vector constructor.
-   *
-   * Create an empty (distributed) vector.
-   * 
    */
   PetscVector();
 
   /**
    * @brief Copy constructor.
-   *
    * @param src PetscVector to be copied.
-   *
    */
   PetscVector( PetscVector const & src );
 
   /**
    * @brief Move constructor
-   *
    * @param src PetscVector to move from
    */
   PetscVector( PetscVector && src ) noexcept;
 
   /**
    * @brief Copy assignment.
-   *
    * @param src PetscVector to be copied.
-   *
    */
   PetscVector & operator=( PetscVector const & src );
 
   /**
    * @brief Move assignment.
-   *
    * @param src PetscVector to be moved from.
-   *
    */
   PetscVector & operator=( PetscVector && src ) noexcept;
 
   /**
-   * @brief Construct from Petsc vector
-   */
-  explicit PetscVector( Vec vec );
-
-  /**
-   * @brief Virtual destructor.
+   * @brief Destructor.
    */
   ~PetscVector();
-  //@}
 
-  //! @name Create Methods
-  //@{
+  ///@}
 
   /**
-   * @brief Create a vector based on a previous vector.
-   *
-   * @param vector an already formed PetscVector.
-   *
+   * @name VectorBase interface
    */
-  void create( PetscVector const & src );
+  ///@{
 
-  /**
-   * @brief Create a vector based on local number of elements. Creates a CPU MPI vector.
-   *
-   * Create a vector based on local number of elements.  Global size is
-   * the sum across processors.  For specifying a global size and having
-   * automatic partitioning, see createGlobal().
-   *
-   * @param localSize local number of elements.
-   *
-   */
-  void createWithLocalSize( localIndex const localSize, MPI_Comm const & comm  );
+  using VectorBase::closed;
+  using VectorBase::ready;
 
-  /**
-   * @brief Create a vector based on global number of elements. Creates a CPU MPI vector.
-   *
-   * Create a vector based on global number of elements. Every processors
-   * gets the same number of local elements except proc 0, which gets any
-   * remainder elements as well if the split can't be done evenly.
-   *
-   * @param globalSize Global number of elements.
-   *
-   */
-  void createWithGlobalSize( globalIndex const globalSize, MPI_Comm const & comm  );
+  bool created() const override;
 
-  /**
-   * @brief Construct parallel vector from a local array. Creates a CPU MPI vector.
-   *
-   * Create a vector from local data, must assemble vector after use.
-   *
-   * @param localValues local data to put into vector
-   *
-   */
-  void create( array1d<real64> const & localValues, MPI_Comm const & comm  );
+  void createWithLocalSize( localIndex const localSize, MPI_Comm const & comm ) override;
 
-  //@}
-  //! @name Open / close
-  //@{
+  void createWithGlobalSize( globalIndex const globalSize, MPI_Comm const & comm ) override;
 
-  /**
-   * @brief Empty function for PETSc implementation. May be required by other libraries.
-   *
-   */
-  void open();
+  void create( arraySlice1d<real64 const> const & localValues, MPI_Comm const & comm ) override;
 
-  /**
-   * @brief Assemble vector
-   *
-   */
-  void close();
+  void open() override;
 
-  //@}
-  //! @name Add/Set Methods
-  //@
+  void close() override;
 
-  /**
-   * @brief Set vector value.
-   *
-   * Set vector value at given element.
-   *
-   * @param globalRow global row index
-   * @param value Value to add at given row.
-   *
-   * NOTE: set() and add() can't be interchanged without assembly.
-   * 
-   */
+  void reset() override;
+
   void set( globalIndex const globalRow,
-            real64 const value );
+            real64 const value ) override;
 
-  /**
-   * @brief Add into vector value.
-   *
-   * Add into vector value at given element.
-   *
-   * @param globalRow global row.
-   * @param value Values to add in given row.
-   * 
-   * NOTE: set() and add() can't be interchanged without assembly.
-   *
-   */
   void add( globalIndex const globalRow,
-            real64 const value );
+            real64 const value ) override;
 
-  /**
-   * @brief Set vector values.
-   *
-   * Set vector values at given elements.
-   *
-   * @param globalIndices global row indices.
-   * @param values Values to add in given rows.
-   * @param size Number of elements
-   *
-   * NOTE: set() and add() can't be interchanged without assembly.
-   * 
-   */
   void set( globalIndex const * globalIndices,
             real64 const * values,
-            localIndex size );
+            localIndex size ) override;
 
-  /**
-   * @brief Add vector values.
-   *
-   * Add vector values at given elements.
-   *
-   * @param globalIndices global row indices.
-   * @param values Values to add in given rows.
-   * @param size Number of elements
-   *
-   * NOTE: set() and add() can't be interchanged without assembly.
-   * 
-   */
   void add( globalIndex const * globalIndices,
             real64 const * values,
-            localIndex size );
+            localIndex size ) override;
 
-  /**
-   * @brief Set vector values using array1d
-   *
-   * Set vector values at given elements.
-   *
-   * @param globalIndices global row indices.
-   * @param values Values to add in given rows.
-   *
-   * NOTE: set() and add() can't be interchanged without assembly.
-   * 
-   */
-  void set( array1d<globalIndex> const & globalIndices,
-            array1d<real64> const & values );
+  void set( arraySlice1d<globalIndex const> const & globalIndices,
+            arraySlice1d<real64 const> const & values ) override;
 
+  void add( arraySlice1d<globalIndex const> const & globalIndices,
+            arraySlice1d<real64 const> const & values ) override;
 
-  /**
-   * @brief Add into vector values using array1d
-   *
-   * Add into vector values at given rows.
-   *
-   * @param globalIndices global rows indices
-   * @param values Values to add in given rows.
-   *
-   * NOTE: set() and add() can't be interchanged without assembly.
-   * 
-   */
-  void add( array1d<globalIndex> const & globalIndices,
-            array1d<real64> const & values );
+  void set( real64 const value ) override;
 
-  /**
-   * @brief Set all elements to a constant value.
-   *
-   * @param value Values to set vector elements to.
-   *
-   * NOTE: set() and add() can't be interchanged without assembly.
-   * 
-   */
-  void set( real64 const value );
+  void zero() override;
 
-  /**
-   * @brief Set vector elements to zero.
-   *
-   */
-  void zero();
+  void rand( unsigned const seed = 1984 ) override;
 
-  /**
-   * @brief Set vector elements to random entries.
-   *
-   */
-  void rand( unsigned const seed = 1984 );
+  void scale( real64 const scalingFactor ) override;
 
-  //@}
+  real64 dot( PetscVector const & vec ) const override;
 
-  //! @name Algebraic Operations
-  //@{
+  void copy(PetscVector const & x) override;
 
-  /**
-   * @brief Multiply all elements by scalingFactor.
-   *
-   * @param scalingFactor Scaling Factor.
-   *
-   */
-  void scale( real64 const scalingFactor );
-
-  /**
-   * @brief Dot product with the vector vec.
-   *
-   * @param vec EpetraVector to dot-product with.
-   *
-   */
-  real64 dot( PetscVector const & vec ) const;
-
-  /**
-   * @brief Update vector <tt>y</tt> as <tt>y</tt> = <tt>x</tt>.
-   *
-   * @note The naming convention follows the BLAS library.
-   *
-   * @param x PetscVector to copy.
-   *
-   */
-  void copy(PetscVector const & x);
-
-  /**
-   * @brief Update vector <tt>y</tt> as <tt>y</tt> = <tt>alpha*x + y</tt>.
-   *
-   * @note The naming convention follows the logic of the BLAS library.
-   *
-   * @param alpha Scaling factor for added vector.
-   * @param x Vector to add.
-   *
-   */
   void axpy( real64 const alpha,
-             PetscVector const & x );
+             PetscVector const & x ) override;
 
-  /**
-   * @brief Update vector <tt>y</tt> as <tt>y</tt> = <tt>alpha*x + beta*y</tt>.
-   *
-   * @note The naming convention follows the logic of the BLAS library.
-   *
-   * @param alpha Scaling factor for added vector.
-   * @param x Vector to add.
-   * @param beta Scaling factor for self vector.
-   *
-   */
   void axpby( real64 const alpha, 
               PetscVector const & x,
-              real64 const beta);
+              real64 const beta) override;
 
-  /**
-   * @brief 1-norm of the vector.
-   *
-   */
-  real64 norm1() const;
+  real64 norm1() const override;
 
-  /**
-   * @brief 2-norm of the vector.
-   *
-   */
-  real64 norm2() const;
+  real64 norm2() const override;
 
-  /**
-   * @brief Infinity-norm of the vector.
-   *
-   */
-  real64 normInf() const;
+  real64 normInf() const override;
 
-  //@}
+  globalIndex globalSize() const override;
 
-  //! @name Accessor Methods
-  //@{
+  localIndex localSize() const override;
 
-  /**
-   * @brief Returns the global of the vector.
-   */
-  globalIndex globalSize() const;
+  globalIndex ilower() const override;
 
-  /**
-   * @brief Returns the local size of the vector.
-   */
-  localIndex localSize() const;
+  globalIndex iupper() const override;
 
-  /**
-   * @brief Returns the index of the first global row owned by that processor.
-   */
-  globalIndex ilower() const;
+  real64 get( globalIndex const globalRow ) const override;
 
-  /**
-   * @brief Returns the next index after last global row owned by that processor.
-   *
-   * @note The intention is for [ilower; iupper) to be used as a half-open index range
-   */
-  globalIndex iupper() const;
+  void get( arraySlice1d<globalIndex const> const & globalIndices,
+            arraySlice1d<real64> const & values ) const override;
 
-   /**
-   * @brief Returns a single element. 
-   * 
-   * @param globalRow Global location of element to return
-   */
-  real64 get(globalIndex globalRow) const;
+  MPI_Comm getComm() const override;
 
-  /**
-   * @brief Returns array of values at globalIndices of the vector.
-   * 
-   * @param globalIndices Global index array of local portion of the vector
-   * @param values Array of values of local portion of the vector
-   * 
-   * NOTE: not yet implemented
-   */
-  void get( array1d<globalIndex> const & globalIndices,
-            array1d<real64> & values ) const;
+  void print( std::ostream & os = std::cout ) const override;
+
+  void write( string const & filename,
+              LAIOutputFormat const format ) const override;
+
+  localIndex getLocalRowID( globalIndex const index ) const override;
+
+  globalIndex getGlobalRowID( localIndex const localRow ) const override;
+
+  real64 const * extractLocalVector() const override;
+
+  real64 * extractLocalVector() override;
+
+  ///@}
 
   /**
    * @brief Returns a const pointer to the underlying Vec.
    */
-  const Vec* unwrappedPointer() const;
+  const Vec & unwrapped() const;
 
   /**
    * @brief Returns a non-const pointer to the underlying Vec.
    */
-  Vec* unwrappedPointer();
-
-  /**
-   * @brief Returns underlying constant PETSc vector.
-   */
-  Vec getConstVec() const;
-
-  /**
-   * @brief Returns underying PETSc vector.
-   */
-  Vec getVec();
-
-  /**
-   * @brief Returns the matrix MPI communicator.
-   */
-  MPI_Comm getComm() const;
-
-  //@}
-
-  //! @name I/O Methods
-  //@{
-
-  /**
-   * @brief Print the vector in PETSc format to the terminal.
-   */
-  void print( std::ostream & os = std::cout ) const;
-
-  /**
-   * @brief Write the vector to a matlab-compatible file
-   * 
-   * @param filename Name of output file
-   * @param mtxFormat True if Matrix Market file format, false for Matlab
-   */
-  void write( string const & filename,
-              bool const mtxFormat = true ) const;
-
-  /**
-   * Map a global row index to local row index. 
-   * Error if requesting processor does not own row index. 
-   * 
-   * @param index Global index of row
-   */
-  localIndex getLocalRowID( globalIndex const index ) const;
-
-  /**
-   * Extract a view of the local portion of the array.
-   * 
-   * @param localVector Pointer to array of local values. Caller allocates memory.
-   */
-  real64 const * extractLocalVector() const;
-
-  /**
-   * Extract a view of the local portion of the array
-   */
-  real64 * extractLocalVector();
-
-  //@}
+  Vec & unwrapped();
 
 protected:
   
   // Underlying Petsc Vec
   Vec m_vec;
 };
-
-/**
- * @brief Stream insertion operator for PetscVector
- * @param os the output stream
- * @param vec the vector to be printed
- * @return reference to the output stream
- */
-std::ostream & operator<<( std::ostream & os, PetscVector const & vec );
 
 } // end geosx namespace
 
