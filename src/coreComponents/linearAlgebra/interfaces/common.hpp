@@ -24,8 +24,8 @@
 #define GEOSX_LAI_RUNTIME_ASSERT 1
 
 #if GEOSX_LAI_RUNTIME_ASSERT
-#define GEOSX_LAI_ASSERT( expr ) GEOSX_ERROR_IF( !expr, "" )
-#define GEOSX_LAI_ASSERT_MSG( expr, msg ) GEOSX_ERROR_IF( !expr, msg )
+#define GEOSX_LAI_ASSERT( expr ) GEOSX_ERROR_IF( !(expr), "" )
+#define GEOSX_LAI_ASSERT_MSG( expr, msg ) GEOSX_ERROR_IF( !(expr), msg )
 #define GEOSX_LAI_ASSERT_EQ( lhs, rhs ) GEOSX_ERROR_IF_NE( lhs, rhs )
 #define GEOSX_LAI_ASSERT_NE( lhs, rhs ) GEOSX_ERROR_IF_EQ( lhs, rhs )
 #define GEOSX_LAI_ASSERT_GT( lhs, rhs ) GEOSX_ERROR_IF_GE( rhs, lhs )
@@ -41,6 +41,15 @@
 
 namespace geosx
 {
+
+enum class LAIOutputFormat
+{
+  NATIVE_ASCII,
+  NATIVE_BINARY,
+  MATLAB_ASCII,
+  MATLAB_BINARY,
+  MATRIX_MARKET
+};
 
 struct MatrixLayout
 {

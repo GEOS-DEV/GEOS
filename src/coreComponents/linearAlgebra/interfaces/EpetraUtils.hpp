@@ -13,28 +13,26 @@
  */
 
 /**
- * @file HypreUtils.hpp
+ * @file EpetraUtils.hpp
  */
-
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_HYPREUTILS_HPP_
-#define GEOSX_LINEARALGEBRA_INTERFACES_HYPREUTILS_HPP_
+#ifndef GEOSX_LINEARALGEBRA_INTERFACES_EPETRAUTILS_HPP_
+#define GEOSX_LINEARALGEBRA_INTERFACES_EPETRAUTILS_HPP_
 
 #include "common/DataTypes.hpp"
-#include "HYPRE_utilities.h"
 
 namespace geosx
 {
 
-inline HYPRE_BigInt * toHYPRE_BigInt( globalIndex * const index )
+inline long long * toEpetraLongLong( globalIndex * const index )
 {
-  return reinterpret_cast<HYPRE_BigInt*>(index);
+  return reinterpret_cast< long long * >(index);
 }
 
-inline HYPRE_BigInt const * toHYPRE_BigInt( globalIndex const * const index )
+inline long long const * toEpetraLongLong( globalIndex const * const index )
 {
-  return reinterpret_cast<HYPRE_BigInt const*>(index);
+  return reinterpret_cast< long long const * >(index);
 }
 
 }
 
-#endif /*GEOSX_LINEARALGEBRA_INTERFACES_HYPREUTILS_HPP_*/
+#endif //GEOSX_LINEARALGEBRA_INTERFACES_EPETRAUTILS_HPP_

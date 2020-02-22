@@ -740,10 +740,10 @@ void CompositionalMultiphaseFlow::AssembleSystem( real64 const time_n,
     integer newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
 
     string filename_mat = "matrix_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
-    matrix.write( filename_mat, MatrixOutputFormat::MATRIX_MARKET );
+    matrix.write( filename_mat, LAIOutputFormat::MATRIX_MARKET );
 
     string filename_rhs = "rhs_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
-    rhs.write( filename_rhs, true );
+    rhs.write( filename_rhs, LAIOutputFormat::MATRIX_MARKET );
 
     GEOSX_LOG_RANK_0( "After CompositionalMultiphaseFlow::AssembleSystem" );
     GEOSX_LOG_RANK_0( "Jacobian: written to " << filename_mat );
@@ -1121,10 +1121,10 @@ void CompositionalMultiphaseFlow::ApplyBoundaryConditions( real64 const time_n,
     integer newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
 
     string filename_mat = "matrix_bc_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
-    matrix.write( filename_mat, MatrixOutputFormat::MATRIX_MARKET  );
+    matrix.write( filename_mat, LAIOutputFormat::MATRIX_MARKET  );
 
     string filename_rhs = "rhs_bc_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
-    rhs.write( filename_rhs, true );
+    rhs.write( filename_rhs, LAIOutputFormat::MATRIX_MARKET );
 
     GEOSX_LOG_RANK_0( "After CompositionalMultiphaseFlow::ApplyBoundaryConditions" );
     GEOSX_LOG_RANK_0( "Jacobian: written to " << filename_mat );

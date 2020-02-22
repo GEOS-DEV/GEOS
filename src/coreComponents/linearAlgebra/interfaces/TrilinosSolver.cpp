@@ -39,6 +39,8 @@
 #include <Amesos.h>
 #include <ml_MultiLevelPreconditioner.h>
 
+#include <memory>
+
 // Put everything under the geosx namespace.
 namespace geosx
 {
@@ -55,11 +57,7 @@ TrilinosSolver::TrilinosSolver( LinearSolverParameters const & parameters ) :
   m_parameters( parameters )
 {}
 
-TrilinosSolver::~TrilinosSolver()
-{
-  delete m_solver;
-  m_solver = nullptr;
-}
+TrilinosSolver::~TrilinosSolver() = default;
 
 // ----------------------------
 // Top-Level Solver
@@ -73,14 +71,14 @@ void TrilinosSolver::solve( EpetraMatrix & mat,
   if( m_parameters.scaling.useRowScaling )
   {
     Epetra_FECrsMatrix & mat_raw = mat.unwrapped();
-    Epetra_MultiVector * rhs_ptr = rhs.unwrappedPointer();
+    Epetra_MultiVector & rhs_raw = rhs.unwrapped();
 
     Epetra_Vector scaling( mat_raw.RowMap() );
     mat_raw.InvRowSums( scaling );
     mat_raw.LeftScale( scaling );
 
-    Epetra_MultiVector tmp( *rhs_ptr );
-    rhs_ptr->Multiply( 1.0, scaling, tmp, 0.0 );
+    Epetra_MultiVector tmp( rhs_raw );
+    rhs_raw.Multiply( 1.0, scaling, tmp, 0.0 );
   }
 
   if( m_parameters.solverType == "direct" )
@@ -103,30 +101,27 @@ void TrilinosSolver::solve_direct( EpetraMatrix & mat,
 {
   // Create Epetra linear problem and instantiate solver.
   Epetra_LinearProblem problem( &mat.unwrapped(),
-                                sol.unwrappedPointer(),
-                                rhs.unwrappedPointer() );
+                                &sol.unwrapped(),
+                                &rhs.unwrapped() );
 
-  if ( m_solver == nullptr )
-  {
-    // Instantiate the Amesos solver.
-    Amesos Factory;
+  // Instantiate the Amesos solver.
+  Amesos Factory;
 
-    // Select KLU solver (only one available as of 9/20/2018)
-    m_solver = Factory.Create( "Klu", problem );
-  }
+  // Select KLU solver (only one available as of 9/20/2018)
+  std::unique_ptr<Amesos_BaseSolver> solver( Factory.Create( "Klu", problem ) );
 
   // Factorize the matrix
-  m_solver->SymbolicFactorization();
-  m_solver->NumericFactorization();
+  solver->SymbolicFactorization();
+  solver->NumericFactorization();
 
   // Solve the system
-  m_solver->Solve();
+  solver->Solve();
 
   // Basic output
   if( m_parameters.logLevel > 0 )
   {
-    m_solver->PrintStatus();
-    m_solver->PrintTiming();
+    solver->PrintStatus();
+    solver->PrintTiming();
   }
 }
 
@@ -141,8 +136,8 @@ void TrilinosSolver::solve_krylov( EpetraMatrix & mat,
 {
   // Create Epetra linear problem.
   Epetra_LinearProblem problem( &mat.unwrapped(),
-                                sol.unwrappedPointer(),
-                                rhs.unwrappedPointer() );
+                                &sol.unwrapped(),
+                                &rhs.unwrapped() );
 
   // Instantiate the AztecOO solver.
   AztecOO solver( problem );

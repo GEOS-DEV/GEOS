@@ -857,32 +857,32 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
 
     {
       string filename = "matrix00_" + std::to_string( time ) + "_" + std::to_string( newtonIter ) + ".mtx";
-      m_solidSolver->getSystemMatrix().write( filename, MatrixOutputFormat::MATRIX_MARKET );
+      m_solidSolver->getSystemMatrix().write( filename, LAIOutputFormat::MATRIX_MARKET );
       GEOSX_LOG_RANK_0( "matrix00: written to " << filename );
     }
     {
       string filename = "matrix01_" + std::to_string( time ) + "_" + std::to_string( newtonIter ) + ".mtx";
-      m_matrix01.write( filename, MatrixOutputFormat::MATRIX_MARKET );
+      m_matrix01.write( filename, LAIOutputFormat::MATRIX_MARKET );
       GEOSX_LOG_RANK_0( "matrix01: written to " << filename );
     }
     {
       string filename = "matrix10_" + std::to_string( time ) + "_" + std::to_string( newtonIter ) + ".mtx";
-      m_matrix10.write( filename, MatrixOutputFormat::MATRIX_MARKET );
+      m_matrix10.write( filename, LAIOutputFormat::MATRIX_MARKET );
       GEOSX_LOG_RANK_0( "matrix10: written to " << filename );
     }
     {
       string filename = "matrix11_" + std::to_string( time ) + "_" + std::to_string( newtonIter ) + ".mtx";
-      m_flowSolver->getSystemMatrix().write( filename, MatrixOutputFormat::MATRIX_MARKET );
+      m_flowSolver->getSystemMatrix().write( filename, LAIOutputFormat::MATRIX_MARKET );
       GEOSX_LOG_RANK_0( "matrix11: written to " << filename );
     }
     {
       string filename = "residual0_" + std::to_string( time ) + "_" + std::to_string( newtonIter ) + ".mtx";
-      m_solidSolver->getSystemRhs().write( filename, true );
+      m_solidSolver->getSystemRhs().write( filename, LAIOutputFormat::MATRIX_MARKET );
       GEOSX_LOG_RANK_0( "residual0: written to " << filename );
     }
     {
       string filename = "residual1_" + std::to_string( time ) + "_" + std::to_string( newtonIter ) + ".mtx";
-      m_flowSolver->getSystemRhs().write( filename, true );
+      m_flowSolver->getSystemRhs().write( filename, LAIOutputFormat::MATRIX_MARKET );
       GEOSX_LOG_RANK_0( "residual1: written to " << filename );
     }
   }
@@ -1256,11 +1256,11 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( do
   Epetra_FEVector * p_rhs[2];
   Epetra_FEVector * p_solution[2];
 
-  p_rhs[0] = m_solidSolver->getSystemRhs().unwrappedPointer();
-  p_rhs[1] = m_flowSolver->getSystemRhs().unwrappedPointer();
+  p_rhs[0] = &m_solidSolver->getSystemRhs().unwrapped();
+  p_rhs[1] = &m_flowSolver->getSystemRhs().unwrapped();
 
-  p_solution[0] = m_solidSolver->getSystemSolution().unwrappedPointer();
-  p_solution[1] = m_flowSolver->getSystemSolution().unwrappedPointer();
+  p_solution[0] = &m_solidSolver->getSystemSolution().unwrapped();
+  p_solution[1] = &m_flowSolver->getSystemSolution().unwrapped();
 
   p_matrix[0][0] = &m_solidSolver->getSystemMatrix().unwrapped();
   p_matrix[0][1] = &m_matrix01.unwrapped();

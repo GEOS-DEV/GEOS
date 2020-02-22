@@ -40,8 +40,10 @@ class EpetraMatrix final: public LinearOperator<EpetraVector>,
 {
 public:
 
-  //! @name Constructor/Destructor Methods
-  //@{
+  /**
+   * @name Constructor/Destructor methods
+   */
+  ///@{
 
   /**
    * @brief Empty matrix constructor.
@@ -256,7 +258,7 @@ public:
   void print( std::ostream & os = std::cout ) const override;
 
   void write( string const & filename,
-              MatrixOutputFormat const format ) const override;
+              LAIOutputFormat const format ) const override;
 
   ///@}
 
@@ -290,15 +292,6 @@ private:
   /// Map representing the parallel partitioning of a destination vector (y in y=Ax)
   std::unique_ptr< Epetra_Map > m_dst_map;
 };
-
-/**
- * @brief Stream insertion operator for EpetraMatrix
- * @param os the output stream
- * @param matrix the matrix to be printed
- * @return reference to the output stream
- */
-std::ostream & operator<<( std::ostream & os,
-                           EpetraMatrix const & matrix );
 
 } // namespace geosx
 

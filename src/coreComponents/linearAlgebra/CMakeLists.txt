@@ -10,6 +10,7 @@ set( linearAlgebra_headers
      interfaces/InterfaceTypes.hpp
      interfaces/LinearOperator.hpp
      interfaces/MatrixBase.hpp
+     interfaces/VectorBase.hpp
      solvers/KrylovSolver.hpp
      solvers/CGsolver.hpp
      solvers/BiCGSTABsolver.hpp
@@ -54,6 +55,7 @@ if( ENABLE_TRILINOS )
     list( APPEND linearAlgebra_headers
                  interfaces/EpetraMatrix.hpp
                  interfaces/EpetraVector.hpp
+                 interfaces/EpetraUtils.hpp
                  interfaces/TrilinosSolver.hpp
                  interfaces/TrilinosInterface.hpp )
 

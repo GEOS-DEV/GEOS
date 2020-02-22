@@ -31,15 +31,6 @@ GEOSX_LAI_ASSERT_MSG( expr, "Matrix status: " \
 namespace geosx
 {
 
-enum class MatrixOutputFormat
-{
-  NATIVE_ASCII,
-  NATIVE_BINARY,
-  MATLAB_ASCII,
-  MATLAB_BINARY,
-  MATRIX_MARKET
-};
-
 /**
  * @brief Common base template for all matrix wrapper types.
  * @tparam MATRIX derived matrix type
@@ -47,10 +38,11 @@ enum class MatrixOutputFormat
  *
  * This class template provides a common interface for all derived matrix
  * wrapper types. Most methods are pure abstract in order to get the compiler
- * to enforce a common interface in all derived classes; however there is no
- * runtime polymorphism or virtual dispatch - derived classes are not related
- * between each other, and pointers/references to base should never be used -
- * the destructor is protected to enforce that.
+ * to enforce a common interface in all derived classes; the class should be
+ * inherited from privately by implementations to avoid the possibility of
+ * accidentally invoking virtual function calls. Some basic facilities are
+ * provided related to matrix lifecycle. These include status flags and
+ * corresponding status query functions.
  *
  * As an added benefit, the documentation for matrix interface also lives here
  * and does not need to be duplicated across matrix wrappers. Derived classes
@@ -61,10 +53,81 @@ enum class MatrixOutputFormat
 template<typename MATRIX, typename VECTOR>
 class MatrixBase
 {
-public:
+protected:
 
+  /// Type alias for actual derived matrix class
   using Matrix = MATRIX;
+
+  /// Type alias for a compatible vector class
   using Vector = VECTOR;
+
+  /**
+   * @name Constructors/destructor/assignment
+   */
+  ///@{
+
+  /**
+   * @brief Constructs a matrix in default state
+   */
+  MatrixBase()
+    : m_closed( true ),
+      m_assembled( false )
+  {}
+
+  MatrixBase( MatrixBase const & ) = default;
+  MatrixBase( MatrixBase && ) = default;
+  MatrixBase & operator=( MatrixBase const & ) = default;
+  MatrixBase & operator=( MatrixBase && ) = default;
+  ~MatrixBase() = default;
+
+  ///@}
+
+  /**
+   * @name Status query methods
+   */
+  ///@{
+
+  /**
+   * @brief Query matrix closed status
+   * @return @p true if matrix has been opened and has not been closed since; @p false otherwise
+   */
+  inline bool closed() const { return m_closed; }
+
+  /**
+   * @brief Query matrix assembled status
+   * @return @p true if matrix has been opened and closed since creation; @p false otherwise
+   */
+  inline bool assembled() const { return m_assembled; }
+
+  /**
+   * @brief Query matrix ready status
+   * @return @p true if matrix has been assembled and is currently closed;
+   *         this implies it's ready to be used or re-opened for adding/setting values
+   */
+  inline bool ready() const { return closed() && assembled(); }
+
+  /**
+   * @brief Query matrix status
+   * @return @p true if matrix has been assembled and is currently open;
+   *         this implies individual entries within existing sparsity pattern
+   *         can be altered via set()/add() methods.
+   */
+  inline bool modifiable() const { return !closed() && assembled(); }
+
+  /**
+   * @brief Query matrix status
+   * @return @p true if matrix has NOT been assembled yet (not closed since
+   *         last create() call) and is currently open for insertion of new entries
+   */
+  inline bool insertable() const { return !closed() && !assembled(); }
+
+  /**
+   * @brief Query matrix creation status
+   * @return @p true if matrix has been created
+   */
+  virtual bool created() const = 0;
+
+  ///@}
 
   /**
    * @name Create Methods
@@ -157,51 +220,11 @@ public:
   virtual void close() = 0;
 
   /**
-   * @brief Query matrix open status
-   * @return @p true if matrix has been opened and has not been closed since; @p false otherwise
-   */
-  inline bool closed() const { return m_closed; }
-
-  /**
-   * @brief Query matrix assembled status
-   * @return @p true if matrix has been opened and closed since creation; @p false otherwise
-   */
-  inline bool assembled() const { return m_assembled; }
-
-  /**
-   * @brief Query matrix ready status
-   * @return @p true if matrix has been assembled and is currently closed;
-   *         this implies it's ready to be used or re-opened for adding/setting values
-   */
-  inline bool ready() const { return closed() && assembled(); }
-
-  /**
-   * @brief Query matrix status
-   * @return @p true if matrix has been assembled and is currently open;
-   *         this implies individual entries within existing sparsity pattern
-   *         can be altered via set()/add() methods.
-   */
-  inline bool modifiable() const { return !closed() && assembled(); }
-
-  /**
-   * @brief Query matrix status
-   * @return @p true if matrix has NOT been assembled yet (not closed since
-   *         last create() call) and is currently open for insertion of new entries
-   */
-  inline bool insertable() const { return !closed() && !assembled(); }
-
-  /**
-   * @brief Query matrix creation status
-   * @return @p true if matrix has been created
-   */
-  virtual bool created() const = 0;
-
-  /**
    * @brief Reset the matrix to default state
    */
   virtual void reset()
   {
-    m_closed = true;
+    GEOSX_LAI_MATRIX_STATUS( closed() );
     m_assembled = false;
   }
 
@@ -729,22 +752,21 @@ public:
    * >> M = spconvert(filename_root)
    */
   virtual void write( string const & filename,
-                      MatrixOutputFormat const format ) const = 0;
+                      LAIOutputFormat const format ) const = 0;
 
   ///@}
 
-protected:
-
-  MatrixBase()
-  : m_closed( true ),
-    m_assembled( false )
-  {}
-
-  MatrixBase( MatrixBase const & ) = default;
-  MatrixBase( MatrixBase && ) = default;
-  MatrixBase & operator=( MatrixBase const & ) = default;
-  MatrixBase & operator=( MatrixBase && ) = default;
-  ~MatrixBase() = default;
+  /**
+   * @brief Stream insertion operator for all matrix types
+   * @param os the output stream
+   * @param matrix the matrix to be printed
+   * @return reference to the output stream
+   */
+  friend std::ostream & operator<<( std::ostream & os, Matrix const & matrix )
+  {
+    matrix.print( os );
+    return os;
+  }
 
   /// Flag indicating whether the matrix is currently open for adding new entries
   bool m_closed;

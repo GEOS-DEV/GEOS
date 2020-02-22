@@ -92,6 +92,7 @@ TYPED_TEST_P( LAOperationsTest, VectorFunctions )
   EXPECT_EQ( x.iupper(), offset + localSize );
 
   // Testing setting/getting values locally
+  x.open();
   for( globalIndex i = x.ilower(); i < x.iupper(); ++i )
   {
     x.set( i, 2 * i );
@@ -108,6 +109,7 @@ TYPED_TEST_P( LAOperationsTest, VectorFunctions )
   EXPECT_EQ( x.globalSize(), globalSize );
 
   // Testing adding global values on rank 0 and getting locally
+  x.open();
   if( rank == 0 )
   {
     for( globalIndex i = 0; i < x.globalSize(); ++i )
@@ -141,11 +143,10 @@ TYPED_TEST_P( LAOperationsTest, VectorFunctions )
     EXPECT_EQ( v.get( i ), localVals[v.getLocalRowID( i )] );
   }
 
-  // Testing copy constructor, create with ParallelVector,
-  // get element
+  // Testing copy constructor, assignment, get element
   Vector y( x );
   Vector z;
-  z.create( x );
+  z = x;
   for( globalIndex i = x.ilower(); i < x.iupper(); ++i )
   {
     EXPECT_EQ( x.get( i ), y.get( i ) );
@@ -174,8 +175,10 @@ TYPED_TEST_P( LAOperationsTest, VectorFunctions )
   }
 
   // Testing add/set single element
+  x.open();
   x.set( offset, -1 );
   x.close(); // set/add can't be interchanged
+  x.open();
   x.add( offset + 1, 10 );
   x.close();
   EXPECT_DOUBLE_EQ( x.get( offset ), -1 );
@@ -186,9 +189,11 @@ TYPED_TEST_P( LAOperationsTest, VectorFunctions )
     globalIndex const inds[3] = { offset, offset + 1, offset + 2 };
     real64 const vals[3] = { -5.0, -6.0, 0.0 };
     y.zero();
+    y.open();
     y.set( inds, vals, 2 );
     y.close();
     z.set( 1.0 );
+    z.open();
     z.add( inds, vals, 2 );
     z.close();
     for( localIndex i = 0; i < 3; ++i )
@@ -209,9 +214,11 @@ TYPED_TEST_P( LAOperationsTest, VectorFunctions )
     vals[1] = -6.0;
     vals[2] = 0.0;
     y.zero();
+    y.open();
     y.set( inds, vals );
     y.close();
     z.set( 1.0 );
+    z.open();
     z.add( inds, vals );
     z.close();
     for( localIndex i = 0; i < 3; ++i )
@@ -243,6 +250,7 @@ TYPED_TEST_P( LAOperationsTest, VectorFunctions )
 
   // Testing norms
   x.zero();
+  x.open();
   if( rank == 0 )
   {
     globalIndex const inds2[2] = { 0, 1 };

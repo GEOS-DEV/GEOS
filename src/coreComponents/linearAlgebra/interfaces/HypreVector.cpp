@@ -266,7 +266,7 @@ void HypreVector::set( globalIndex const globalRow,
   ierr = HYPRE_IJVectorSetValues( m_ij_vector,
                                   1,
                                   &globalRow,
-                                  toHYPRE_Real( &value ) );
+                                  &value );
   GEOSX_UNUSED_VAR( ierr );
   GEOSX_ASSERT_MSG( ierr == 0,
                     "Error setting values HypreVector - error code: " +
@@ -280,7 +280,7 @@ void HypreVector::add( globalIndex const globalRow,
   ierr = HYPRE_IJVectorAddToValues( m_ij_vector,
                                     1,
                                     &globalRow,
-                                    toHYPRE_Real( &value ) );
+                                    &value );
   GEOSX_UNUSED_VAR( ierr );
   GEOSX_ASSERT_MSG( ierr == 0,
                     "Error adding values HypreVector - error code: " +
@@ -300,7 +300,7 @@ void HypreVector::set( globalIndex const * globalIndices,
   ierr = HYPRE_IJVectorSetValues( m_ij_vector,
                                   integer_conversion< HYPRE_Int >( size ),
                                   toHYPRE_BigInt( globalIndices ),
-                                  toHYPRE_Real( values ) );
+                                  values );
   GEOSX_UNUSED_VAR( ierr );
   GEOSX_ASSERT_MSG( ierr == 0,
                     "Error setting values HypreVector - error code: " +
@@ -315,7 +315,7 @@ void HypreVector::add( globalIndex const * globalIndices,
   ierr = HYPRE_IJVectorAddToValues( m_ij_vector,
                                     integer_conversion< HYPRE_Int >( size ),
                                     toHYPRE_BigInt( globalIndices ),
-                                    toHYPRE_Real( values ) );
+                                    values );
   GEOSX_UNUSED_VAR( ierr );
   GEOSX_ASSERT_MSG( ierr == 0,
                     "Error adding values HypreVector - error code: " +
@@ -336,7 +336,7 @@ void HypreVector::set( array1d< globalIndex > const & globalIndices,
   ierr = HYPRE_IJVectorSetValues( m_ij_vector,
                                   integer_conversion< HYPRE_Int >( values.size() ),
                                   toHYPRE_BigInt( globalIndices.data() ),
-                                  toHYPRE_Real( values.data() ) );
+                                  values.data() );
   GEOSX_UNUSED_VAR( ierr );
   GEOSX_ASSERT_MSG( ierr == 0,
                     "Error setting values HypreVector - error code: " +
@@ -350,7 +350,7 @@ void HypreVector::add( array1d< globalIndex > const & globalIndices,
   ierr = HYPRE_IJVectorAddToValues( m_ij_vector,
                                     integer_conversion< HYPRE_Int >( values.size() ),
                                     toHYPRE_BigInt( globalIndices.data() ),
-                                    toHYPRE_Real( values.data() ) );
+                                    values.data() );
   GEOSX_UNUSED_VAR( ierr );
   GEOSX_ASSERT_MSG( ierr == 0,
                     "Error adding values HypreVector - error code: " +
@@ -636,7 +636,7 @@ void HypreVector::get( array1d< globalIndex > const & globalIndices,
   ierr = HYPRE_IJVectorGetValues( m_ij_vector,
                                   integer_conversion< HYPRE_Int >( globalIndices.size() ),
                                   toHYPRE_BigInt( globalIndices.data() ),
-                                  toHYPRE_Real( values.data() ) );
+                                  values.data() );
   GEOSX_ASSERT_MSG( ierr == 0,
                     "Error getting IJVector values - error code: " +
                     std::to_string( ierr ) );

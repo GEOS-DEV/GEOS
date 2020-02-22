@@ -19,9 +19,6 @@
 #ifndef GEOSX_LINEARALGEBRA_INTERFACES_TRILINOSSOLVER_HPP_
 #define GEOSX_LINEARALGEBRA_INTERFACES_TRILINOSSOLVER_HPP_
 
-// Forward declaration of Amesos_BaseSolver.
-class Amesos_BaseSolver;
-
 namespace geosx
 {
 
@@ -63,8 +60,6 @@ public:
 private:
 
   LinearSolverParameters const & m_parameters;
-
-  Amesos_BaseSolver * m_solver = nullptr;
 
   void solve_direct( EpetraMatrix & mat,
                      EpetraVector & sol,

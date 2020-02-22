@@ -357,7 +357,7 @@ void HypreMatrix::add( globalIndex const rowIndex,
                              &ncols,
                              toHYPRE_BigInt( &rowIndex ),
                              toHYPRE_BigInt( &colIndex ),
-                             toHYPRE_Real( &value ) );
+                             &value );
 }
 
 void HypreMatrix::set( globalIndex const rowIndex,
@@ -374,7 +374,7 @@ void HypreMatrix::set( globalIndex const rowIndex,
                            &ncols,
                            toHYPRE_BigInt( &rowIndex ),
                            toHYPRE_BigInt( &colIndex ),
-                           toHYPRE_Real( &value ) );
+                           &value );
 
 }
 
@@ -392,7 +392,7 @@ void HypreMatrix::insert( globalIndex const rowIndex,
                            &ncols,
                            toHYPRE_BigInt( &rowIndex ),
                            toHYPRE_BigInt( &colIndex ),
-                           toHYPRE_Real( &value ) );
+                           &value );
 }
 
 // 1xN c-style
@@ -410,7 +410,7 @@ void HypreMatrix::add( globalIndex const rowIndex,
                              &ncols,
                              toHYPRE_BigInt( &rowIndex ),
                              toHYPRE_BigInt( colIndices ),
-                             toHYPRE_Real( values ) );
+                             values );
 }
 
 void HypreMatrix::set( globalIndex const rowIndex,
@@ -428,7 +428,7 @@ void HypreMatrix::set( globalIndex const rowIndex,
                            &ncols,
                            toHYPRE_BigInt( &rowIndex ),
                            toHYPRE_BigInt( colIndices ),
-                           toHYPRE_Real( values ) );
+                           values );
 }
 
 void HypreMatrix::insert( globalIndex const rowIndex,
@@ -444,7 +444,7 @@ void HypreMatrix::insert( globalIndex const rowIndex,
                              &ncols,
                              toHYPRE_BigInt( &rowIndex ),
                              toHYPRE_BigInt( colIndices ),
-                             toHYPRE_Real( values ) );
+                             values );
 }
 
 // 1xN array1d style
@@ -461,7 +461,7 @@ void HypreMatrix::add( globalIndex const rowIndex,
                              &ncols,
                              toHYPRE_BigInt( &rowIndex ),
                              toHYPRE_BigInt( colIndices.data() ),
-                             toHYPRE_Real( values.data() ) );
+                             values.data() );
 }
 
 void HypreMatrix::set( globalIndex const rowIndex,
@@ -478,7 +478,7 @@ void HypreMatrix::set( globalIndex const rowIndex,
                            &ncols,
                            toHYPRE_BigInt( &rowIndex ),
                            toHYPRE_BigInt( colIndices.data() ),
-                           toHYPRE_Real( values.data() ) );
+                           values.data() );
 }
 
 void HypreMatrix::insert( globalIndex const rowIndex,
@@ -493,7 +493,7 @@ void HypreMatrix::insert( globalIndex const rowIndex,
                              &ncols,
                              toHYPRE_BigInt( &rowIndex ),
                              toHYPRE_BigInt( colIndices.data() ),
-                             toHYPRE_Real( values.data() ) );
+                             values.data() );
 }
 
 //// MxN array2d style
@@ -600,6 +600,9 @@ void HypreMatrix::insert( globalIndex const * rowIndices,
 void HypreMatrix::multiply( HypreVector const & src,
                             HypreVector & dst ) const
 {
+  GEOSX_LAI_MATRIX_STATUS( ready() );
+  //GEOSX_LAI_ASSERT( src.ready() );
+  //GEOSX_LAI_ASSERT( dst.ready() );
   hypre_ParCSRMatrixMatvec( 1.0,
                             m_parcsr_mat,
                             *src.getHypreParVectorPointer(),
@@ -1232,13 +1235,13 @@ void HypreMatrix::print( std::ostream & os ) const
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Note: EpetraExt also supports a MatrixMarket format as well
 void HypreMatrix::write( string const & filename,
-                         MatrixOutputFormat const format ) const
+                         LAIOutputFormat const format ) const
 {
   GEOSX_LAI_MATRIX_STATUS( ready() );
 
   switch( format )
   {
-    case MatrixOutputFormat::NATIVE_ASCII:
+    case LAIOutputFormat::NATIVE_ASCII:
     {
       hypre_ParCSRMatrixPrintIJ( m_parcsr_mat, 1, 1, filename.c_str() );
       break;
@@ -1359,13 +1362,6 @@ MPI_Comm HypreMatrix::getComm() const
 {
   GEOSX_LAI_MATRIX_STATUS( created() );
   return hypre_IJMatrixComm( m_ij_mat );
-}
-
-std::ostream & operator<<( std::ostream & os,
-                           HypreMatrix const & matrix )
-{
-  matrix.print( os );
-  return os;
 }
 
 }// end geosx namespace

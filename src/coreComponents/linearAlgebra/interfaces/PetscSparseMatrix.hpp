@@ -261,7 +261,7 @@ public:
   void print( std::ostream & os = std::cout ) const override;
 
   void write( string const & filename,
-              MatrixOutputFormat const format ) const override;
+              LAIOutputFormat const format ) const override;
 
   ///@}
 

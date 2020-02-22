@@ -272,7 +272,7 @@ void PetscSparseMatrix::set( globalIndex const rowIndex,
 {
   GEOSX_LAI_MATRIX_STATUS( modifiable() );
   PetscInt rows[1] = {rowIndex};
-  MatSetValues( m_mat, 1, rows, size, toPetscInt( colIndices), values, INSERT_VALUES );
+  MatSetValues( m_mat, 1, rows, size, toPetscInt( colIndices ), values, INSERT_VALUES );
 }
 
 void PetscSparseMatrix::insert( globalIndex const rowIndex,
@@ -282,17 +282,17 @@ void PetscSparseMatrix::insert( globalIndex const rowIndex,
 {
   GEOSX_LAI_MATRIX_STATUS( insertable() );
   PetscInt rows[1] = {rowIndex};
-  MatSetValues( m_mat, 1, rows, size, toPetscInt( colIndices), values, INSERT_VALUES );
+  MatSetValues( m_mat, 1, rows, size, toPetscInt( colIndices ), values, INSERT_VALUES );
 }
 
 // 1xN array1d style 
 void PetscSparseMatrix::add( globalIndex const rowIndex,
-                             arraySlice1d<globalIndex const> const &colIndices,
+                             arraySlice1d<globalIndex const> const & colIndices,
                              arraySlice1d<real64 const> const &values )
 {
   GEOSX_LAI_MATRIX_STATUS( modifiable() );
   PetscInt rows[1] = {rowIndex};
-  MatSetValues( m_mat, 1, rows, values.size(), toPetscInt( colIndices.data()), values.data(), ADD_VALUES );
+  MatSetValues( m_mat, 1, rows, values.size(), toPetscInt( colIndices ), values.data(), ADD_VALUES );
 }
 
 void PetscSparseMatrix::set( globalIndex const rowIndex,
@@ -301,7 +301,7 @@ void PetscSparseMatrix::set( globalIndex const rowIndex,
 {
   GEOSX_LAI_MATRIX_STATUS( modifiable() );
   PetscInt rows[1] = {rowIndex};
-  MatSetValues( m_mat, 1, rows, values.size(), toPetscInt( colIndices.data()), values.data(), INSERT_VALUES );
+  MatSetValues( m_mat, 1, rows, values.size(), toPetscInt( colIndices ), values.data(), INSERT_VALUES );
 }
 
 void PetscSparseMatrix::insert( globalIndex const rowIndex,
@@ -310,7 +310,7 @@ void PetscSparseMatrix::insert( globalIndex const rowIndex,
 {
   GEOSX_LAI_MATRIX_STATUS( insertable() );
   PetscInt rows[1] = {rowIndex};
-  MatSetValues( m_mat, 1, rows, values.size(), toPetscInt( colIndices.data()), values.data(), INSERT_VALUES );
+  MatSetValues( m_mat, 1, rows, values.size(), toPetscInt( colIndices ), values.data(), INSERT_VALUES );
 }
 
 // MxN array2d style
@@ -321,9 +321,9 @@ void PetscSparseMatrix::add( arraySlice1d<globalIndex const> const & rowIndices,
   GEOSX_LAI_MATRIX_STATUS( modifiable() );
   MatSetValues( m_mat,
                 rowIndices.size(),
-                toPetscInt(rowIndices.data()),
+                toPetscInt(rowIndices),
                 colIndices.size(),
-                toPetscInt(colIndices.data()),
+                toPetscInt(colIndices),
                 values.data(),
                 ADD_VALUES );
 }
@@ -335,9 +335,9 @@ void PetscSparseMatrix::set( arraySlice1d<globalIndex const> const & rowIndices,
   GEOSX_LAI_MATRIX_STATUS( modifiable() );
   MatSetValues( m_mat,
                 rowIndices.size(),
-                toPetscInt(rowIndices.data()),
+                toPetscInt(rowIndices),
                 colIndices.size(),
-                toPetscInt(colIndices.data()),
+                toPetscInt(colIndices),
                 values.data(),
                 INSERT_VALUES );
 }
@@ -349,9 +349,9 @@ void PetscSparseMatrix::insert( arraySlice1d<globalIndex const> const & rowIndic
   GEOSX_LAI_MATRIX_STATUS( insertable() );
   MatSetValues( m_mat,
                 rowIndices.size(),
-                toPetscInt(rowIndices.data()),
+                toPetscInt(rowIndices),
                 colIndices.size(),
-                toPetscInt(colIndices.data()),
+                toPetscInt(colIndices),
                 values.data(),
                 INSERT_VALUES );
 }
@@ -364,9 +364,9 @@ void PetscSparseMatrix::add( arraySlice1d<globalIndex const> const & rowIndices,
   MatSetOption( m_mat, MAT_ROW_ORIENTED, PETSC_FALSE );
   MatSetValues( m_mat,
                 rowIndices.size(),
-                toPetscInt(rowIndices.data()),
+                toPetscInt(rowIndices),
                 colIndices.size(),
-                toPetscInt(colIndices.data()),
+                toPetscInt(colIndices),
                 values.data(),
                 ADD_VALUES );
   MatSetOption( m_mat, MAT_ROW_ORIENTED, PETSC_TRUE );
@@ -380,9 +380,9 @@ void PetscSparseMatrix::set( arraySlice1d<globalIndex const> const & rowIndices,
   MatSetOption( m_mat, MAT_ROW_ORIENTED, PETSC_FALSE );
   MatSetValues( m_mat,
                 rowIndices.size(),
-                toPetscInt(rowIndices.data()),
+                toPetscInt(rowIndices),
                 colIndices.size(),
-                toPetscInt(colIndices.data()),
+                toPetscInt(colIndices),
                 values.data(),
                 INSERT_VALUES );
   MatSetOption( m_mat, MAT_ROW_ORIENTED, PETSC_TRUE );
@@ -396,9 +396,9 @@ void PetscSparseMatrix::insert( arraySlice1d<globalIndex const> const & rowIndic
   MatSetOption( m_mat, MAT_ROW_ORIENTED, PETSC_FALSE );
   MatSetValues( m_mat,
                 rowIndices.size(),
-                toPetscInt(rowIndices.data()),
+                toPetscInt(rowIndices),
                 colIndices.size(),
-                toPetscInt(colIndices.data()),
+                toPetscInt(colIndices),
                 values.data(),
                 INSERT_VALUES );
   MatSetOption( m_mat, MAT_ROW_ORIENTED, PETSC_TRUE );
@@ -913,7 +913,7 @@ void PetscSparseMatrix::print( std::ostream & os ) const
 // Write to matlab-compatible file
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 void PetscSparseMatrix::write( string const & filename,
-                               MatrixOutputFormat const format ) const
+                               LAIOutputFormat const format ) const
 {
   GEOSX_LAI_MATRIX_STATUS( ready() );
 
@@ -923,19 +923,19 @@ void PetscSparseMatrix::write( string const & filename,
 
   switch( format )
   {
-    case MatrixOutputFormat::NATIVE_ASCII:
+    case LAIOutputFormat::NATIVE_ASCII:
       petscFormat = PETSC_VIEWER_DEFAULT;
       break;
-    case MatrixOutputFormat::NATIVE_BINARY:
+    case LAIOutputFormat::NATIVE_BINARY:
       petscFormat = PETSC_VIEWER_NATIVE;
       break;
-    case MatrixOutputFormat::MATLAB_ASCII:
+    case LAIOutputFormat::MATLAB_ASCII:
       petscFormat = PETSC_VIEWER_ASCII_MATLAB;
       break;
-    case MatrixOutputFormat::MATLAB_BINARY:
+    case LAIOutputFormat::MATLAB_BINARY:
       petscFormat = PETSC_VIEWER_BINARY_MATLAB;
       break;
-    case MatrixOutputFormat::MATRIX_MARKET:
+    case LAIOutputFormat::MATRIX_MARKET:
       petscFormat = PETSC_VIEWER_ASCII_MATRIXMARKET;
       break;
     default:

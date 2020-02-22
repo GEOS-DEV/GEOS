@@ -112,8 +112,6 @@ ParallelVector PermuteVector(ParallelVector const & vector,
 
   permuationMatrix.multiply(vector, permutedVector);
 
-  permutedVector.close();
-
   return permutedVector;
 }
 

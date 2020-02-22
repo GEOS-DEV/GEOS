@@ -48,7 +48,9 @@ class HypreMatrix final : public LinearOperator<HypreVector>,
 {
 public:
 
-  /// @name Constructor/Destructor Methods
+  /**
+   * @name Constructor/Destructor Methods
+   */
   ///@{
 
   /**
@@ -72,6 +74,11 @@ public:
   ~HypreMatrix() override;
 
   ///@}
+
+  /**
+   * @name MatrixBase interface
+   */
+  ///@{
 
   using MatrixBase::createWithLocalSize;
   using MatrixBase::createWithGlobalSize;
@@ -260,7 +267,7 @@ public:
   void print( std::ostream & os = std::cout ) const override;
 
   void write( string const & filename,
-              MatrixOutputFormat const format ) const override;
+              LAIOutputFormat const format ) const override;
 
   ///@}
 
@@ -305,15 +312,6 @@ private:
   HYPRE_ParCSRMatrix m_parcsr_mat = nullptr;
 
 };
-
-/**
- * @brief Stream insertion operator for EpetraMatrix
- * @param os the output stream
- * @param matrix the matrix to be printed
- * @return reference to the output stream
- */
-std::ostream & operator<<( std::ostream & os,
-                           HypreMatrix const & matrix );
 
 } // namespace geosx
 

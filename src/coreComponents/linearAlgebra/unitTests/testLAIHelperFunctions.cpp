@@ -161,6 +161,8 @@ TEST_F(LAIHelperFunctionsTest, Test_NodalVectorPermutation)
   expectedPermutedVector.createWithLocalSize(nDof, MPI_COMM_GEOSX);
   expectedPermutedVector.set(0);
 
+  nodalVariable.open();
+  expectedPermutedVector.open();
   for ( localIndex a=0; a <nodeManager->size(); a++ )
   {
     if (isNodeGhost[a] < 0)
@@ -222,6 +224,8 @@ TEST_F(LAIHelperFunctionsTest, Test_CellCenteredVectorPermutation)
   expectedPermutedVector.createWithLocalSize(nDof, MPI_COMM_GEOSX);
   expectedPermutedVector.set(0);
 
+  cellCenteredVariable.open();
+  expectedPermutedVector.open();
   elemManager->forElementSubRegions([&]( ElementSubRegionBase const * const elementSubRegion )
     {
       localIndex const numElems = elementSubRegion->size();
