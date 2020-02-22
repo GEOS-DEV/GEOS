@@ -102,6 +102,10 @@ public:
                         const bool prefrac,
                         const realT time_np1 );
 
+  void UpdateAperture (DomainPartition * domain,
+                       MeshLevel * const mesh,
+                       real64 const time_n );
+
   /**
    * @brief Function to generate new global indices of a simple object (node, edge, face)
    * @param[in/out] object A reference to the object that needs new global indices

@@ -722,9 +722,9 @@ void SinglePhaseFVM::CalculateAndApplyMassFlux( real64 const time_n,
 }
 
 real64 SinglePhaseFVM::ExplicitStep( real64 const& time_n,
-                                      real64 const& dt,
-                                      const int GEOSX_UNUSED_PARAM( cycleNumber ),
-                                      DomainPartition * const domain )
+                                     real64 const& dt,
+                                     const int GEOSX_UNUSED_PARAM( cycleNumber ),
+                                     DomainPartition * const domain )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -742,14 +742,59 @@ void SinglePhaseFVM::ExplicitStepSetup( real64 const & time_n,
   ResetViews( domain );
 
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  ElementRegionManager * const elemManager = mesh->getElemManager();
 
   // This initialization should be done after running SurfaceGenerator
   static int setFlowSolverTimeStep = 0;
   if( setFlowSolverTimeStep == 0 )
   {
-    applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                       ElementRegionBase * const GEOSX_UNUSED_PARAM( region ),
-                       ElementSubRegionBase * const subRegion )
+//    elemManager->forElementRegions<CellElementRegion>([&]( CellElementRegion * const elemRegion )
+//    {
+//      elemRegion->forElementSubRegions<CellElementSubRegion>([&]( CellElementSubRegion * const subRegion )
+//      {
+//        UpdateState( subRegion );
+//
+//        arrayView1d<real64> const & totalCompressibility = m_totalCompressibility[er][esr];
+//        arrayView1d<real64> const & referencePressure = m_referencePressure[er][esr];
+//
+//        CompressibleSinglePhaseFluid * const fluid = dynamic_cast<CompressibleSinglePhaseFluid*>(GetConstitutiveModel<SingleFluidBase>( subRegion, m_fluidName ));
+//        ConstitutiveBase * const solid = GetConstitutiveModel<ConstitutiveBase>( subRegion, m_solidName );
+//
+//        if( dynamic_cast<LinearElasticIsotropic * >( solid ) )
+//        {
+//          totalCompressibility = dynamic_cast<LinearElasticIsotropic*>(solid)->compressibility() + fluid->compressibility();
+//        }
+//        else if( dynamic_cast<LinearElasticAnisotropic * >( solid ) )
+//        {
+//          totalCompressibility = dynamic_cast<LinearElasticAnisotropic*>(solid)->compressibility() + fluid->compressibility();
+//        }
+//        else
+//          totalCompressibility = dynamic_cast<PoreVolumeCompressibleSolid*>(solid)->compressibility() + fluid->compressibility();
+//
+//        referencePressure = fluid->referencePressure();
+//
+//  //      if (m_explicitSolverInitializationFlag)
+//  //      {
+//  //        arrayView2d<real64> const & dens = m_density[er][esr][m_fluidIndex];
+//  //        arrayView1d<real64> const & vol  = m_volume[er][esr];
+//  //        arrayView1d<real64> const & mass = m_fluidMass[er][esr];
+//  //        arrayView1d<real64> const & pres = m_pressure[er][esr];
+//  //        forall_in_range<RAJA::seq_exec>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex const ei )
+//  //        {
+//  //          fluid->PointUpdate( pres[ei], ei, 0 );
+//  //          mass[ei] = dens[ei][0] * vol[ei] * poro[ei];
+//  //        });
+//  //      }
+//
+//        UpdateEOS( time_n, dt, domain );
+//      });
+//    });
+
+    elemManager->forElementSubRegionsComplete<CellElementSubRegion>( m_targetRegions,
+                                                                    [&] ( localIndex const er,
+                                                                          localIndex const esr,
+                                                                          ElementRegionBase const * const GEOSX_UNUSED_PARAM( region ),
+                                                                          CellElementSubRegion * subRegion )
     {
       UpdateState( subRegion );
 
@@ -758,49 +803,39 @@ void SinglePhaseFVM::ExplicitStepSetup( real64 const & time_n,
 
       CompressibleSinglePhaseFluid * const fluid = dynamic_cast<CompressibleSinglePhaseFluid*>(GetConstitutiveModel<SingleFluidBase>( subRegion, m_fluidName ));
       ConstitutiveBase * const solid = GetConstitutiveModel<ConstitutiveBase>( subRegion, m_solidName );
-
-      arrayView1d<real64> const & poro = m_porosity[er][esr];
-      if (poro[0] > 0.999999 )
-        totalCompressibility = fluid->compressibility();
-      else if( dynamic_cast<LinearElasticIsotropic * >( solid ) )
-      {
-        totalCompressibility = dynamic_cast<LinearElasticIsotropic*>(solid)->compressibility() + fluid->compressibility();
-      }
-      else if( dynamic_cast<LinearElasticAnisotropic * >( solid ) )
-      {
-        totalCompressibility = dynamic_cast<LinearElasticAnisotropic*>(solid)->compressibility() + fluid->compressibility();
-      }
-      else
-        totalCompressibility = dynamic_cast<PoreVolumeCompressibleSolid*>(solid)->compressibility() + fluid->compressibility();
-
-//      totalCompressibility = fluid->compressibility();
+      totalCompressibility = solid->GetCompressibility() + fluid->compressibility();
 
       referencePressure = fluid->referencePressure();
 
-//      if (m_explicitSolverInitializationFlag)
-//      {
-//        arrayView2d<real64> const & dens = m_density[er][esr][m_fluidIndex];
-//        arrayView1d<real64> const & vol  = m_volume[er][esr];
-//        arrayView1d<real64> const & mass = m_fluidMass[er][esr];
-//        arrayView1d<real64> const & pres = m_pressure[er][esr];
-//        forall_in_range<RAJA::seq_exec>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex const ei )
-//        {
-//          fluid->PointUpdate( pres[ei], ei, 0 );
-//          mass[ei] = dens[ei][0] * vol[ei] * poro[ei];
-//        });
-//      }
+      UpdateEOS( time_n, dt, domain );
+    } );
+
+    elemManager->forElementSubRegionsComplete<FaceElementSubRegion>( m_targetRegions,
+                                                                    [&] ( localIndex er,
+                                                                          localIndex esr,
+                                                                          ElementRegionBase const * const GEOSX_UNUSED_PARAM( region ),
+                                                                          FaceElementSubRegion * subRegion )
+    {
+      UpdateState( subRegion );
+
+      arrayView1d<real64> const & totalCompressibility = m_totalCompressibility[er][esr];
+      arrayView1d<real64> const & referencePressure = m_referencePressure[er][esr];
+
+      CompressibleSinglePhaseFluid * const fluid = dynamic_cast<CompressibleSinglePhaseFluid*>(GetConstitutiveModel<SingleFluidBase>( subRegion, m_fluidName ));
+
+      totalCompressibility = fluid->compressibility();
+
+      referencePressure = fluid->referencePressure();
 
       UpdateEOS( time_n, dt, domain );
-
     } );
   }
 
-  mesh->getElemManager()->
-      forElementSubRegionsComplete<FaceElementSubRegion>( m_targetRegions,
-                                                          [&] ( localIndex const er,
-                                                                localIndex const esr,
-                                                                ElementRegionBase const * const GEOSX_UNUSED_PARAM( region ),
-                                                                FaceElementSubRegion * subRegion )
+  elemManager->forElementSubRegionsComplete<FaceElementSubRegion>( m_targetRegions,
+                                                                  [&] ( localIndex er,
+                                                                        localIndex esr,
+                                                                        ElementRegionBase const * const GEOSX_UNUSED_PARAM( region ),
+                                                                        FaceElementSubRegion * subRegion )
   {
     arrayView1d<real64> const & aper0 = subRegion->getReference<array1d<real64>>( viewKeyStruct::aperture0String );
     arrayView1d<real64 const> const & aper = m_effectiveAperture[er][esr];

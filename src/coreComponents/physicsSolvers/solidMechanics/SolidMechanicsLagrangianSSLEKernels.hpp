@@ -134,7 +134,8 @@ struct ExplicitKernel
           real64 const GEOSX_UNUSED_PARAM( biotCoefficient ),
           arrayView3d<real64, solid::STRESS_USD> const & stress,
           real64 const dt,
-          real64 const GEOSX_UNUSED_PARAM(dampingRatio),
+          arrayView1d<real64 const> const & GEOSX_UNUSED_PARAM(elementMass),
+          real64 const GEOSX_UNUSED_PARAM(dampingCoe),
           real64 * const GEOSX_UNUSED_PARAM(maxStableDt) )
   {
     GEOSX_MARK_FUNCTION;

@@ -58,8 +58,7 @@ public:
     dataRepository::ViewKey referencePressure = { "referencePressure" };
   } viewKeys;
 
-  real64 &       compressibility()       { return m_compressibility; }
-  real64 const & compressibility() const { return m_compressibility; }
+  virtual real64  GetCompressibility() const override { return m_compressibility; }
 
 protected:
   virtual void PostProcessInput() override;

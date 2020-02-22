@@ -226,6 +226,12 @@ void SolidMechanicsLagrangianFEM::RegisterDataOnMesh( Group * const MeshBodies )
           setRestartFlags(RestartFlags::NO_WRITE)->
           setRegisteringObjects(this->getName())->
           setDescription("Array to hold the beginning of step stress for implicit problem rewinds");
+
+        subRegion->registerWrapper<array1d<real64> >( keys::ElementMass )->
+            setPlotLevel(PlotLevel::NOPLOT)->
+            setRestartFlags(RestartFlags::NO_WRITE)->
+            setRegisteringObjects(this->getName())->
+            setDescription( "Array to hold the mass on the elements.");
       });
     });
 
@@ -252,7 +258,7 @@ void SolidMechanicsLagrangianFEM::SetInitialTimeStep(Group * const domain )
   static int setMechanicsSolverTimeStep = 0;
   if( setMechanicsSolverTimeStep == 0 && m_timeIntegrationOption == timeIntegrationOption::ExplicitDynamic )
   {
-    updateIntrinsicNodalData( domain->group_cast<DomainPartition *>() );
+    UpdateIntrinsicNodalData( domain->group_cast<DomainPartition *>() );
     ExplicitStepDisplacementUpdate( 0, 0, 0, domain->group_cast<DomainPartition *>() );
     ExplicitStepVelocityUpdate( 0, 0, 0, domain->group_cast<DomainPartition *>() );
     setMechanicsSolverTimeStep = 1;
@@ -269,7 +275,7 @@ real64 SolidMechanicsLagrangianFEM::GetTimestepRequest(real64 const time)
     return SolverBase::GetTimestepRequest(time);
 }
 
-void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * const domain )
+void SolidMechanicsLagrangianFEM::UpdateIntrinsicNodalData( DomainPartition * const domain )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -301,6 +307,7 @@ void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * co
     elemRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr, CellElementSubRegion const * const elementSubRegion )
     {
       arrayView2d<real64> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
+      arrayView1d<real64> const & elementMass = elementSubRegion->getReference< array1d<real64> >(keys::ElementMass);
       arrayView2d<localIndex const, cells::NODE_MAP_USD> const & elemsToNodes = elementSubRegion->nodeList();
 
       std::unique_ptr<FiniteElementBase>
@@ -308,16 +315,15 @@ void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * co
 
       for( localIndex k=0 ; k < elemsToNodes.size(0) ; ++k )
       {
-
         // TODO this integration needs to be be carried out properly.
-        real64 elemMass = 0;
+        elementMass[k] = 0;
         for( localIndex q=0 ; q<fe->n_quadrature_points() ; ++q )
         {
-          elemMass += rho[er][esr][m_solidMaterialFullIndex][k][q] * detJ[k][q];
+          elementMass[k] += rho[er][esr][m_solidMaterialFullIndex][k][q] * detJ[k][q];
         }
         for( localIndex a=0 ; a< elemsToNodes.size(1) ; ++a )
         {
-          mass[elemsToNodes[k][a]] += elemMass/elemsToNodes.size(1);
+          mass[elemsToNodes[k][a]] += elementMass[k]/elemsToNodes.size(1);
         }
 
         for( localIndex a=0 ; a<elementSubRegion->numNodesPerElement() ; ++a )
@@ -505,7 +511,7 @@ real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const& time_n,
     }
     if( globallyFractured == 0 )
     {
-      updateIntrinsicNodalData(domain);
+      UpdateIntrinsicNodalData(domain);
     }
 
   }
@@ -562,8 +568,6 @@ void SolidMechanicsLagrangianFEM::ExplicitStepDisplacementUpdate( real64 const& 
                                                                   DomainPartition * const domain )
 {
   GEOSX_MARK_FUNCTION;
-
-  // updateIntrinsicNodalData(domain);
 
   m_maxStableDt = std::numeric_limits<real64>::max();
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
@@ -684,6 +688,8 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStepVelocityUpdate( real64 const& ti
 
       arrayView2d<real64> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
 
+      arrayView1d<real64> const & elementMass = elementSubRegion->getReference< array1d<real64> >(keys::ElementMass);
+
       arrayView2d<localIndex const, cells::NODE_MAP_USD> const & elemsToNodes = elementSubRegion->nodeList();
 
       localIndex const numNodesPerElement = elemsToNodes.size(1);
@@ -705,7 +711,8 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStepVelocityUpdate( real64 const& ti
                                    biotCoefficient[er][esr][m_solidMaterialFullIndex],
                                    stress[er][esr][m_solidMaterialFullIndex],
                                    dt,
-                                   1,
+                                   elementMass,
+                                   m_massDamping,
                                    &m_maxStableDt);
 
     }); //Element Region
@@ -749,6 +756,8 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStepVelocityUpdate( real64 const& ti
 
       arrayView2d<real64> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
 
+      arrayView1d<real64> const & elementMass = elementSubRegion->getReference< array1d<real64> >(keys::ElementMass);
+
       arrayView2d<localIndex const, cells::NODE_MAP_USD> const & elemsToNodes = elementSubRegion->nodeList();
 
       localIndex const numNodesPerElement = elemsToNodes.size(1);
@@ -770,7 +779,8 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStepVelocityUpdate( real64 const& ti
                                    biotCoefficient[er][esr][m_solidMaterialFullIndex],
                                    stress[er][esr][m_solidMaterialFullIndex],
                                    dt,
-                                   1,
+                                   elementMass,
+                                   m_massDamping,
                                    &m_maxStableDt );
     }); //Element Region
 

@@ -175,8 +175,7 @@ public:
 
   real64 constrainedModulus(localIndex k) const { return std::max(m_c00[k], m_c22[k]); }
 
-  real64 compressibility()       { return 1 / m_defaultStiffness.m_data[2][2]; }
-  real64 compressibility() const { return 1 / m_defaultStiffness.m_data[2][2]; }
+  real64 GetCompressibility() const override { return 1 / m_defaultStiffness.m_data[2][2]; }
 
   void setDefaultStiffness( StiffnessTensor const & input )
   {

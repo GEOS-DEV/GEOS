@@ -65,7 +65,8 @@ public:
                                real64 const biotCoefficient,
                                arrayView3d<real64, solid::STRESS_USD> const & stress,
                                real64 const dt,
-                               real64 const dampingRatio,
+                               arrayView1d<real64 const> const & elementMass,
+                               real64 const dampingCoe,
                                real64 * const maxStableDt) const override
   {
     using ExplicitKernel = SolidMechanicsLagrangianSSLEKernels::ExplicitKernel;
@@ -83,7 +84,8 @@ public:
                                                         biotCoefficient,
                                                         stress,
                                                         dt,
-                                                        dampingRatio,
+                                                        elementMass,
+                                                        dampingCoe,
                                                         maxStableDt);
   }
 

@@ -38,6 +38,7 @@ static constexpr auto IncrementalDisplacement = "IncrementalDisplacement";
 static constexpr auto Velocity = "Velocity";
 static constexpr auto Acceleration = "Acceleration";
 static constexpr auto Mass = "Mass";
+static constexpr auto ElementMass = "ElementMass";
 static constexpr auto Force = "Force";
 static constexpr auto Strain = "Strain";
 static constexpr auto Name = "name";

@@ -105,6 +105,8 @@ public:
 
   localIndex numQuadraturePoints() const { return m_numQuadraturePoints; }
 
+  virtual real64 GetCompressibility() const { return 0; }
+
 protected:
 
 private:

@@ -553,6 +553,8 @@ real64 SurfaceGenerator::SolverStep( real64 const & time_n,
                                partition.NumColor(),
                                0,
                                time_n + dt);
+
+      UpdateAperture(domain, meshLevel, time_n);
     }
   }
 
@@ -764,62 +766,6 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
     });
   }
 
-  // apply aperture boundary condition in the explicit solver
-  FaceElementSubRegion const * const faceElementSubRegion = elementManager.GetRegion(m_fractureRegionName)->GetSubRegion<FaceElementSubRegion>(0);
-  SortedArray<localIndex> const & newFaceElems = faceElementSubRegion->m_newFaceElements;
-
-  FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
-  fsManager.Apply( time_np1, domain, "ElementRegions", FaceElementSubRegion::viewKeyStruct::elementApertureString,
-                    [&]( FieldSpecificationBase const * const fs,
-                         string const &,
-                         SortedArray<localIndex> const & lset,
-                         Group * const targetGroup,
-                         string const & )
-  {
-    SortedArray<localIndex> newSet;
-    for( localIndex index : newFaceElems )
-    {
-      if( lset.count(index) > 0 )
-      {
-        newSet.insert(index);
-      }
-    }
-    fs->ApplyFieldValue<FieldSpecificationEqual>( newSet,
-                                                  time_np1,
-                                                  targetGroup,
-                                                  FaceElementSubRegion::viewKeyStruct::elementApertureString );
-  });
-
-  fsManager.Apply( time_np1, domain, "ElementRegions", FaceElementSubRegion::viewKeyStruct::elementApertureOffsetString,
-                    [&]( FieldSpecificationBase const * const fs,
-                         string const &,
-                         SortedArray<localIndex> const & lset,
-                         Group * const targetGroup,
-                         string const & )
-  {
-    SortedArray<localIndex> newSet;
-    for( localIndex index : newFaceElems )
-    {
-      if( lset.count(index) > 0 )
-      {
-        newSet.insert(index);
-      }
-    }
-    fs->ApplyFieldValue<FieldSpecificationEqual>( newSet,
-                                                  time_np1,
-                                                  targetGroup,
-                                                  FaceElementSubRegion::viewKeyStruct::elementApertureOffsetString );
-  });
-
-  ElementRegionManager * const elemManager = mesh->getElemManager();
-  elemManager->forElementRegions<FaceElementRegion>([&]( FaceElementRegion * const faceElemRegion )
-  {
-    faceElemRegion->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion * const subRegion )
-    {
-      subRegion->CalculateElementGeometricQuantities( nodeManager, faceManager );
-    });
-  });
-
   real64 ruptureRate = calculateRuptureRate( *(elementManager.GetRegion<FaceElementRegion>(this->m_fractureRegionName)), edgeManager);
 
   GEOSX_LOG_LEVEL_RANK_0( 3, "rupture rate is " << ruptureRate);
@@ -827,6 +773,70 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
     m_nextDt = ruptureRate < 1e99 ? m_cflFactor / ruptureRate : 1e99;
 
   return rval;
+}
+
+void SurfaceGenerator::UpdateAperture (DomainPartition * domain,
+                                       MeshLevel * const mesh,
+                                       real64 const time_n )
+{
+  NodeManager & nodeManager = *(mesh->getNodeManager());
+  FaceManager & faceManager = *(mesh->getFaceManager());
+  ElementRegionManager * const elemManager = mesh->getElemManager();
+
+  // apply aperture boundary condition in the explicit solver
+  FaceElementSubRegion const * const faceElementSubRegion = elemManager->GetRegion(m_fractureRegionName)->GetSubRegion<FaceElementSubRegion>(0);
+  SortedArray<localIndex> const & newFaceElems = faceElementSubRegion->m_newFaceElements;
+
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
+  fsManager.Apply( time_n, domain, "ElementRegions", FaceElementSubRegion::viewKeyStruct::elementApertureString,
+                    [&]( FieldSpecificationBase const * const fs,
+                         string const &,
+                         SortedArray<localIndex> const & lset,
+                         Group * const targetGroup,
+                         string const & )
+  {
+    SortedArray<localIndex> newSet;
+    for( localIndex index : newFaceElems )
+    {
+      if( lset.count(index) > 0 )
+      {
+        newSet.insert(index);
+      }
+    }
+    fs->ApplyFieldValue<FieldSpecificationEqual>( newSet,
+                                                  time_n,
+                                                  targetGroup,
+                                                  FaceElementSubRegion::viewKeyStruct::elementApertureString );
+  });
+
+  fsManager.Apply( time_n, domain, "ElementRegions", FaceElementSubRegion::viewKeyStruct::elementApertureOffsetString,
+                    [&]( FieldSpecificationBase const * const fs,
+                         string const &,
+                         SortedArray<localIndex> const & lset,
+                         Group * const targetGroup,
+                         string const & )
+  {
+    SortedArray<localIndex> newSet;
+    for( localIndex index : newFaceElems )
+    {
+      if( lset.count(index) > 0 )
+      {
+        newSet.insert(index);
+      }
+    }
+    fs->ApplyFieldValue<FieldSpecificationEqual>( newSet,
+                                                  time_n,
+                                                  targetGroup,
+                                                  FaceElementSubRegion::viewKeyStruct::elementApertureOffsetString );
+  });
+
+  elemManager->forElementRegions<FaceElementRegion>([&]( FaceElementRegion * const faceElemRegion )
+  {
+    faceElemRegion->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion * const subRegion )
+    {
+      subRegion->CalculateElementGeometricQuantities( nodeManager, faceManager );
+    });
+  });
 }
 
 void SurfaceGenerator::SynchronizeTipSets (FaceManager & faceManager,

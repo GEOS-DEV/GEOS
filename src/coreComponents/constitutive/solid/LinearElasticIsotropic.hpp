@@ -86,8 +86,7 @@ public:
 
   real64 constrainedModulus(localIndex k) const { return ( m_bulkModulus[k] + 4 / 3.0 * m_shearModulus[k] ); }
 
-  real64 compressibility()       { return 1 / m_defaultBulkModulus; }
-  real64 compressibility() const { return 1 / m_defaultBulkModulus; }
+  virtual real64 GetCompressibility() const override { return 1 / m_defaultBulkModulus; }
 
   class KernelWrapper
   {

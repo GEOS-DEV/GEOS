@@ -197,7 +197,8 @@ struct ExplicitKernel
           real64 const biotCoefficient,
           arrayView3d<real64 const, solid::STRESS_USD> const & stress,
           real64 const dt,
-          real64 const dampingRatio,
+          arrayView1d<real64 const> const & elementMass,
+          real64 const dampingCoe,
           real64 * const maxStableDt)
   {
     if (elementList.empty())
@@ -289,8 +290,12 @@ struct ExplicitKernel
       }
 
       real64 constrainedModulus =  constitutiveRelation->constrainedModulus(k);
-      real64 tempDt = sqrt( density[k][0] / constrainedModulus / 2 /BB ) * ( sqrt( 1 + dampingRatio * dampingRatio ) - dampingRatio );
-      *maxStableDt = std::min(*maxStableDt, tempDt);
+      real64 stableDt = sqrt( density[k][0] / constrainedModulus / 2 /BB );
+
+      // Critical Damping Coefficient = 2 * m * omega_n, where stableDt <= 2 / omega_max and omega_max = omega_n
+      real64 criticalDampingCoe = 2 * elementMass[k] * (2 / stableDt);
+      real64 dampingRatio = dampingCoe / criticalDampingCoe;
+      *maxStableDt = std::min(*maxStableDt, stableDt * ( sqrt( 1 + dampingRatio * dampingRatio ) - dampingRatio ));
     });
 
     return dt;
