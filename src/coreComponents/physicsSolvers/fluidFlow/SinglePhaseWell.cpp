@@ -75,7 +75,7 @@ void SinglePhaseWell::InitializePreSubGroups( Group * const rootGroup )
 
   WellSolverBase::InitializePreSubGroups( rootGroup );
 
-  DomainPartition * const domain = rootGroup->GetGroup<DomainPartition>( keys::domain );
+  DomainPartition * const domain = rootGroup->GetGroup<DomainPartition>( dataRepository::keys::domainString );
 
   MeshLevel * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = meshLevel->getElemManager();

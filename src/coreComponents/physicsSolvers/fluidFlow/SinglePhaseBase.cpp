@@ -183,7 +183,7 @@ void SinglePhaseBase::InitializePostInitialConditions_PreSubGroups( Group * cons
 
   FlowSolverBase::InitializePostInitialConditions_PreSubGroups( rootGroup );
 
-  DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
+  DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(dataRepository::keys::domainString);
   MeshLevel * mesh = domain->getMeshBody(0)->getMeshLevel(0);
 
   ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();

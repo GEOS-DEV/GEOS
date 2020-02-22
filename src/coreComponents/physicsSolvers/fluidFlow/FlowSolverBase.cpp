@@ -118,7 +118,7 @@ void FlowSolverBase::InitializePreSubGroups(Group * const rootGroup)
 {
   SolverBase::InitializePreSubGroups(rootGroup);
 
-  DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
+  DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(dataRepository::keys::domainString);
   ConstitutiveManager * const cm = domain->getConstitutiveManager();
 
   ConstitutiveBase const * fluid  = cm->GetConstitutiveRelation<ConstitutiveBase>( m_fluidName );
@@ -159,7 +159,7 @@ void FlowSolverBase::InitializePostInitialConditions_PreSubGroups( Group * const
 {
   SolverBase::InitializePostInitialConditions_PreSubGroups(rootGroup);
 
-  DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
+  DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(dataRepository::keys::domainString);
 
   ResetViews( domain );
 

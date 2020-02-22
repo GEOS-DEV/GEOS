@@ -155,7 +155,7 @@ void WellSolverBase::InitializePreSubGroups(Group * const rootGroup)
 {
   SolverBase::InitializePreSubGroups(rootGroup);
 
-  DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
+  DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(dataRepository::keys::domainString);
   ConstitutiveManager * const cm = domain->getConstitutiveManager();
 
   ConstitutiveBase const * fluid  = cm->GetConstitutiveRelation<ConstitutiveBase>( m_fluidName );
@@ -171,7 +171,7 @@ void WellSolverBase::InitializePostInitialConditions_PreSubGroups(Group * const 
 {
   SolverBase::InitializePostInitialConditions_PreSubGroups(rootGroup);
 
-  DomainPartition * const domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
+  DomainPartition * const domain = rootGroup->GetGroup<DomainPartition>(dataRepository::keys::domainString);
 
   // make sure that nextWellElementIndex is up-to-date (will be used in well initialization and assembly)
   MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );

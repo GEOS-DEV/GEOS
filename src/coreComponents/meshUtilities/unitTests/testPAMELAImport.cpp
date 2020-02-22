@@ -41,7 +41,7 @@ void TestMeshImport( string const& inputStringMesh,
   meshManager.PostProcessInputRecursive();
 
   // Create the domain and generate the Mesh
-  auto domain = std::unique_ptr< DomainPartition >( new DomainPartition( "domain", nullptr ) );
+  auto domain = std::unique_ptr< DomainPartition >( new DomainPartition( dataRepository::keys::domainString, nullptr ) );
   meshManager.GenerateMeshes( domain.get() );
 
   Group * const meshBodies = domain->getMeshBodies();

@@ -144,7 +144,7 @@ void CompositionalMultiphaseFlow::InitializePreSubGroups( Group * const rootGrou
 {
   FlowSolverBase::InitializePreSubGroups( rootGroup );
 
-  DomainPartition * const domain = rootGroup->GetGroup<DomainPartition>( keys::domain );
+  DomainPartition * const domain = rootGroup->GetGroup<DomainPartition>( dataRepository::keys::domainString );
   ConstitutiveManager const * const cm = domain->getConstitutiveManager();
 
   MultiFluidBase const * fluid = cm->GetConstitutiveRelation<MultiFluidBase>( m_fluidName );
@@ -562,7 +562,7 @@ void CompositionalMultiphaseFlow::InitializePostInitialConditions_PreSubGroups( 
 
   FlowSolverBase::InitializePostInitialConditions_PreSubGroups( rootGroup );
 
-  DomainPartition * const domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
+  DomainPartition * const domain = rootGroup->GetGroup<DomainPartition>(dataRepository::keys::domainString);
 
   MeshLevel * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
 

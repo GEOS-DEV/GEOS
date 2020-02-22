@@ -137,10 +137,13 @@ public:
 
   struct groupKeysStruct
   {
-//    constexpr auto eventManager="EventManager";
+
+
+    static constexpr auto domainString=dataRepository::keys::domainString;
+
     dataRepository::GroupKey commandLine    = { "commandLine" };
     dataRepository::GroupKey constitutiveManager = { "Constitutive" };
-    dataRepository::GroupKey domain    = { "domain" };
+    dataRepository::GroupKey domain    = { domainString };
     dataRepository::GroupKey eventManager = { "Events" };
     dataRepository::GroupKey fieldSpecificationManager = { "FieldSpecifications" };
     dataRepository::GroupKey functionManager = { "Functions" };

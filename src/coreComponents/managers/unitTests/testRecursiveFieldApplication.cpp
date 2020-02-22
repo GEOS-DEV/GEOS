@@ -61,7 +61,7 @@ TEST(FieldSpecification, Recursive)
   localIndex nbHexReg0 = 60;
   localIndex nbTetReg1 = 40;
   localIndex nbHexReg1 = 50;
-  auto domain = std::unique_ptr< DomainPartition >( new DomainPartition( "domain", nullptr ) );
+  auto domain = std::unique_ptr< DomainPartition >( new DomainPartition( dataRepository::keys::domainString, nullptr ) );
   auto meshBodies = domain->getMeshBodies();
   MeshBody * const meshBody = meshBodies->RegisterGroup<MeshBody>( "body" );
   MeshLevel * const meshLevel0 = meshBody->RegisterGroup<MeshLevel>(std::string("Level0"));

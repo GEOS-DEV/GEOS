@@ -104,7 +104,7 @@ void CompositionalMultiphaseWell::InitializePreSubGroups( Group * const rootGrou
 {
   WellSolverBase::InitializePreSubGroups( rootGroup );
   
-  DomainPartition * const domain = rootGroup->GetGroup<DomainPartition>( keys::domain );
+  DomainPartition * const domain = rootGroup->GetGroup<DomainPartition>( dataRepository::keys::domainString );
 
   ConstitutiveManager const * const cm = domain->getConstitutiveManager();
 
@@ -177,7 +177,7 @@ void CompositionalMultiphaseWell::InitializePostInitialConditions_PreSubGroups( 
 {
   WellSolverBase::InitializePostInitialConditions_PreSubGroups( rootGroup );
 
-  DomainPartition * const domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
+  DomainPartition * const domain = rootGroup->GetGroup<DomainPartition>(dataRepository::keys::domainString);
 
   MeshLevel * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = meshLevel->getElemManager();

@@ -564,7 +564,7 @@ void ProblemManager::SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
   bcManager.GenerateDataStructureSkeleton(0);
   SchemaUtilities::SchemaConstruction(&bcManager, schemaRoot, targetChoiceNode, documentationType);
 
-  ConstitutiveManager * constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
+  ConstitutiveManager * constitutiveManager = domain->getConstitutiveManager();
   SchemaUtilities::SchemaConstruction(constitutiveManager, schemaRoot, targetChoiceNode, documentationType);
 
   MeshManager * meshManager = this->GetGroup<MeshManager>(groupKeys.meshManager);
@@ -648,7 +648,7 @@ void ProblemManager::ParseInputFile()
 
   // The objects in domain are handled separately for now
   {
-    ConstitutiveManager * constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
+    ConstitutiveManager * constitutiveManager = domain->getConstitutiveManager();
     xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child(constitutiveManager->getName().c_str());
     constitutiveManager->ProcessInputFileRecursive( topLevelNode );
     constitutiveManager->PostProcessInputRecursive();
@@ -806,7 +806,7 @@ void ProblemManager::ApplyNumericalMethods()
   numericalMethodManager = GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
 
   DomainPartition * domain  = getDomainPartition();
-  ConstitutiveManager const * constitutiveManager = domain->GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
+  ConstitutiveManager const * constitutiveManager = domain->getConstitutiveManager();
   Group * const meshBodies = domain->getMeshBodies();
 
   map<string,localIndex> regionQuadrature;
@@ -915,24 +915,24 @@ void ProblemManager::RunSimulation()
 
 DomainPartition * ProblemManager::getDomainPartition()
 {
-  return GetGroup<DomainPartition>(keys::domain);
+  return GetGroup<DomainPartition>(dataRepository::keys::domainString);
 }
 
 DomainPartition const * ProblemManager::getDomainPartition() const
 {
-  return GetGroup<DomainPartition>(keys::domain);
+  return GetGroup<DomainPartition>(dataRepository::keys::domainString);
 }
 
 void ProblemManager::ApplyInitialConditions()
 {
-  DomainPartition * domain = GetGroup<DomainPartition>(keys::domain);
+  DomainPartition * domain = GetGroup<DomainPartition>(dataRepository::keys::domainString);
   FieldSpecificationManager::get().ApplyInitialConditions( domain );
 }
 
 void ProblemManager::ReadRestartOverwrite()
 {
   this->loadFromConduit();
-  this->postRestartInitializationRecursive( GetGroup< DomainPartition >( keys::domain ) );
+  this->postRestartInitializationRecursive( GetGroup< DomainPartition >( dataRepository::keys::domainString ) );
 }
 
 

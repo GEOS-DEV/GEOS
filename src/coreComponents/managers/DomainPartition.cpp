@@ -60,8 +60,8 @@ void DomainPartition::InitializationOrder( string_array & order )
 {
   SortedArray<string> usedNames;
   {
-    order.push_back(keys::ConstitutiveManager);
-    usedNames.insert(keys::ConstitutiveManager);
+    order.push_back(groupKeysStruct::constitutiveManagerString);
+    usedNames.insert(groupKeysStruct::constitutiveManagerString);
   }
 
   {

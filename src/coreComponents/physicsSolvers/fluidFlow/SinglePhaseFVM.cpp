@@ -352,8 +352,7 @@ void SinglePhaseFVM::ApplyFaceDirichletBC_implicit( real64 const time_n,
   arrayView2d<localIndex> const & elemRegionList     = faceManager->elementRegionList();
   arrayView2d<localIndex> const & elemSubRegionList  = faceManager->elementSubRegionList();
 
-  ConstitutiveManager * const constitutiveManager =
-    domain->GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
+  ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
 
   NumericalMethodsManager * const numericalMethodManager =
     domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);

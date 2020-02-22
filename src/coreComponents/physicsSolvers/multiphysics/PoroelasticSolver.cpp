@@ -147,7 +147,7 @@ void PoroelasticSolver::InitializePostInitialConditions_PreSubGroups(Group * con
 {
   this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseBase*>()->setPoroElasticCoupling();
   // Calculate initial total mean stress
-  this->UpdateDeformationForCoupling(problemManager->GetGroup<DomainPartition>(keys::domain));
+  this->UpdateDeformationForCoupling(problemManager->GetGroup<DomainPartition>(dataRepository::keys::domainString));
 }
 
 PoroelasticSolver::~PoroelasticSolver()

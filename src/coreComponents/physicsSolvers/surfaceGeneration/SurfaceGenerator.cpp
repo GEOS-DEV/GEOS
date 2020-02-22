@@ -385,7 +385,7 @@ void SurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
 
 void SurfaceGenerator::InitializePostInitialConditions_PreSubGroups( Group * const problemManager )
 {
-  DomainPartition * domain = problemManager->GetGroup<DomainPartition>( dataRepository::keys::domain );
+  DomainPartition * domain = problemManager->GetGroup<DomainPartition>( dataRepository::keys::domainString );
   for( auto & mesh : domain->group_cast<DomainPartition *>()->getMeshBodies()->GetSubGroups() )
   {
     MeshLevel * meshLevel = Group::group_cast<MeshBody*>( mesh.second )->getMeshLevel( 0 );
@@ -2916,8 +2916,7 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
   GEOSX_ERROR_IF( solid == nullptr, "constitutive model " + m_solidMaterialName + " not found" );
   m_solidMaterialFullIndex = solid->getIndexInParent();
 
-  ConstitutiveManager * const constitutiveManager =
-      domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
+  ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
 
   ElementRegionManager::MaterialViewAccessor< arrayView1d<real64 const> > const shearModulus =
       elementManager.ConstructFullMaterialViewAccessor< array1d<real64>, arrayView1d<real64 const> >( "ShearModulus", constitutiveManager);
@@ -3739,8 +3738,7 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition * domain,
   GEOSX_ERROR_IF( solid == nullptr, "constitutive model " + m_solidMaterialName + " not found" );
   m_solidMaterialFullIndex = solid->getIndexInParent();
 
-  ConstitutiveManager * const constitutiveManager =
-      domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
+  ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
 
   ElementRegionManager::MaterialViewAccessor< arrayView1d<real64 const> > const shearModulus =
       elementManager.ConstructFullMaterialViewAccessor< array1d<real64>, arrayView1d<real64 const> >( "ShearModulus", constitutiveManager);

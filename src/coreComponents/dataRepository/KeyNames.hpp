@@ -31,17 +31,8 @@ namespace keys
 /// @cond DO_NOT_DOCUMENT
 
 
-static constexpr auto ConstitutiveManager = "Constitutive";
-
-static constexpr auto schema = "schema";
-
-//static constexpr auto time = "time";
-//static constexpr auto cycle = "cycle";
-//static constexpr auto beginTime = "beginTime";
-//static constexpr auto endTime = "endTime";
-//static constexpr auto dt = "dt";
-
-static constexpr auto domain  = "domain";
+//static constexpr auto schema = "schema";
+static constexpr auto domainString  = "domain";
 static constexpr auto cellManager = "cellManager";
 
 /// @endcond

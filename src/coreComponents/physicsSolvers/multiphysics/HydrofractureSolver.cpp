@@ -311,7 +311,7 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
   ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
 
   ConstitutiveManager const * const
-  constitutiveManager = domain->GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
+  constitutiveManager = domain->getConstitutiveManager();
 
   ContactRelationBase const * const
   contactRelation = constitutiveManager->GetGroup<ContactRelationBase>(m_contactRelationName);

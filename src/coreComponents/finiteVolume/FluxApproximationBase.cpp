@@ -109,7 +109,7 @@ bool FluxApproximationBase::hasBoundaryStencil(string const & setName) const
 
 void FluxApproximationBase::InitializePostInitialConditions_PreSubGroups( Group * const rootGroup )
 {
-  DomainPartition const * domain = rootGroup->GetGroup<DomainPartition>( keys::domain );
+  DomainPartition const * domain = rootGroup->GetGroup<DomainPartition>( dataRepository::keys::domainString );
   compute( const_cast<DomainPartition &>( *domain ) ); // hack, but guaranteed we won't modify it....is it though?
 }
 
