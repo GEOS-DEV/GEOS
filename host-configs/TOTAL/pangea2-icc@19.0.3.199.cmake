@@ -12,6 +12,9 @@
 #   * This is to have the intel compiler use the gcc8 headers instead of the 
 #     gcc4.8.5 headers, and to have intel-mpi to wrap intel instead of env cc.
 #
+# For ATS, the default python needs to be python2.7 and you need mpi4py installed
+# conda create -n python2 python=2.7 anaconda
+# source activate python2
 ########################################
 
 
@@ -27,9 +30,10 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -march=native -mtune=native" CACHE STR
 set(CMAKE_Fortran_FLAGS_RELEASE "-O3 -DNDEBUG -march=native -mtune=native" CACHE STRING "")
 
 set(MPI_HOME "${INTEL_COMPILER_ROOT}/mpi/intel64" CACHE PATH "")
+#set(MPI_Fortran_COMPILER "${MPI_HOME}/bin/mpiifort" CACHE PATH "")
 
 #set( BLT_MPI_LINK_FLAGS "-Wl,--enable-new-dtags -Wl,-rpath,/data_local/sw/intel/RHEL7/compilers_and_libraries_2019.3.199/linux/mpi/intel64/lib/release -Wl,-rpath,/data_local/sw/intel/RHEL7/compilers_and_libraries_2019.3.199/linux/mpi/intel64/lib" CACHE PATH "" FORCE )
-set( BLT_MPI_LINK_FLAGS "-Wl,--enable-new-dtags -Wl,-rpath,${MPI_HOME}/lib/release -Wl,-rpath,${MPI_HOME}/lib" CACHE PATH "" FORCE )
+#set( BLT_MPI_LINK_FLAGS "-Wl,--enable-new-dtags -Wl,-rpath,${MPI_HOME}/lib/release -Wl,-rpath,${MPI_HOME}/lib" CACHE PATH "" FORCE )
 
 set(ENABLE_MKL ON CACHE BOOL "")
 set(MKL_ROOT ${INTEL_COMPILER_ROOT}/mkl )
