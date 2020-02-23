@@ -1224,10 +1224,58 @@ void HypreMatrix::print( std::ostream & os ) const
 {
   GEOSX_LAI_MATRIX_STATUS( ready() );
 
-  if( MpiWrapper::Comm_rank( getComm() ) == 0 )
+  int this_mpi_process = MpiWrapper::Comm_rank( hypre_IJMatrixComm( m_ij_mat ) );
+  int n_mpi_process = MpiWrapper::Comm_size( hypre_IJMatrixComm( m_ij_mat ) );
+
+  GEOSX_LOG_RANK_0("\nMPI_Process         GlobalRowID         GlobalColID                   Value");
+  for( int iRank = 0; iRank < n_mpi_process; iRank++ )
   {
-    os << "Hypre interface: no output on screen available\n";
-    os << "                 use write method";
+	MpiWrapper::Barrier( hypre_IJVectorComm( m_ij_mat ) );
+    if ( iRank == this_mpi_process )
+    {
+      globalIndex firstRowID = this->ilower();
+      globalIndex firstDiagColID = this->jlower();
+
+      hypre_CSRMatrix * prt_diag_CSR = hypre_ParCSRMatrixDiag( m_parcsr_mat );
+      HYPRE_Int * diag_IA = hypre_CSRMatrixI( prt_diag_CSR );
+      HYPRE_Int * diag_JA = hypre_CSRMatrixJ( prt_diag_CSR );
+      HYPRE_Real * ptr_diag_data = hypre_CSRMatrixData( prt_diag_CSR );
+
+      hypre_CSRMatrix * prt_offdiag_CSR = hypre_ParCSRMatrixOffd( m_parcsr_mat );
+      HYPRE_Int * offdiag_IA = hypre_CSRMatrixI( prt_offdiag_CSR );
+      HYPRE_Int * offdiag_JA = hypre_CSRMatrixJ( prt_offdiag_CSR );
+      HYPRE_BigInt * col_map_offdiag = hypre_ParCSRMatrixColMapOffd( m_parcsr_mat );
+      HYPRE_Real * ptr_offdiag_data = hypre_CSRMatrixData( prt_offdiag_CSR );
+      for( HYPRE_Int i = 0 ; i < hypre_CSRMatrixNumRows( prt_diag_CSR ); ++i )
+      {
+        for( HYPRE_Int j = diag_IA[i] ; j < diag_IA[i + 1] ; ++j )
+    	{
+          os.width(11);
+          os << iRank;
+          os.width(20);
+          os << firstRowID + i;
+          os.width(20);
+          os << firstDiagColID + diag_JA[j];
+          os.width(24);
+          os << std::scientific;
+          os << ptr_diag_data[j];
+          os << std::endl;
+        }
+        for( HYPRE_Int j = offdiag_IA[i] ; j < offdiag_IA[i + 1] ; ++j )
+    	{
+          os.width(11);
+          os << iRank;
+          os.width(20);
+          os << firstRowID + i;
+          os.width(20);
+          os << col_map_offdiag[ offdiag_JA[j] ];
+          os.width(24);
+          os << std::scientific;
+          os << ptr_offdiag_data[j];
+          os << std::endl;
+        }
+      }
+    }
   }
 }
 

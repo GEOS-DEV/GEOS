@@ -574,10 +574,30 @@ void HypreVector::print( std::ostream & os ) const
 {
   GEOSX_ERROR_IF( m_ij_vector == nullptr,
                   "matrix appears to be empty (not created) or not finalized" );
-  if( MpiWrapper::Comm_rank( hypre_IJMatrixComm( m_ij_vector ) ) == 0 )
+
+  int this_mpi_process = MpiWrapper::Comm_rank( hypre_IJVectorComm( m_ij_vector ) );
+  int n_mpi_process = MpiWrapper::Comm_size( hypre_IJVectorComm( m_ij_vector ) );
+
+  GEOSX_LOG_RANK_0("\nMPI_Process         GlobalRowID                   Value");
+  for( int iRank = 0; iRank < n_mpi_process; iRank++ )
   {
-    os << "Hypre interface: no output on screen available/n";
-    os << "                 use write method";
+	MpiWrapper::Barrier( hypre_IJVectorComm( m_ij_vector ) );
+    if ( iRank == this_mpi_process )
+    {
+      real64 const * const local_data = this->extractLocalVector();
+      globalIndex firstRowID = this->ilower();
+      for( localIndex i = 0 ; i < this->localSize() ; ++i )
+      {
+        os.width(11);
+        os << iRank;
+        os.width(20);
+        os << firstRowID + i;
+        os.width(24);
+        os << std::scientific;
+        os << local_data[i];
+        os << std::endl;
+      }
+    }
   }
 }
 
