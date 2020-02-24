@@ -433,28 +433,52 @@ void HypreMatrix::insert( arraySlice1d< globalIndex const > const & rowIndices,
   }
 }
 
-void HypreMatrix::add( arraySlice1d< globalIndex const > const & GEOSX_UNUSED_PARAM( rowIndices ),
-                       arraySlice1d< globalIndex const > const & GEOSX_UNUSED_PARAM( colIndices ),
-                       arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & GEOSX_UNUSED_PARAM( values ) )
+template<typename T, int SRC_USD, int DST_USD>
+static void convertArrayLayout( arraySlice2d<T const, SRC_USD> const & src,
+                                arraySlice2d<T, DST_USD> const & dst )
 {
-  GEOSX_LAI_ASSERT( modifiable() );
-  GEOSX_ERROR( "Not implemented" );
+  GEOSX_ASSERT( src.size( 0 ) == dst.size( 0 ) );
+  GEOSX_ASSERT( src.size( 1 ) == dst.size( 1 ) );
+  for( localIndex i = 0; i < src.size( 0 ); ++i )
+  {
+    for( localIndex j = 0; j < src.size( 1 ); ++j )
+    {
+      dst(i, j) = src(i, j);
+    }
+  }
 }
 
-void HypreMatrix::set( arraySlice1d< globalIndex const > const & GEOSX_UNUSED_PARAM( rowIndices ),
-                       arraySlice1d< globalIndex const > const & GEOSX_UNUSED_PARAM( colIndices ),
-                       arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & GEOSX_UNUSED_PARAM( values ) )
+void HypreMatrix::add( arraySlice1d< globalIndex const > const & rowIndices,
+                       arraySlice1d< globalIndex const > const & colIndices,
+                       arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values )
 {
   GEOSX_LAI_ASSERT( modifiable() );
-  GEOSX_ERROR( "Not implemented" );
+
+  array2d<real64, MatrixLayout::ROW_MAJOR_PERM> valuesRowMajor( rowIndices.size(), colIndices.size() );
+  convertArrayLayout( values, valuesRowMajor.toSlice() );
+  add( rowIndices, colIndices, valuesRowMajor );
 }
 
-void HypreMatrix::insert( arraySlice1d< globalIndex const > const & GEOSX_UNUSED_PARAM( rowIndices ),
-                          arraySlice1d< globalIndex const > const & GEOSX_UNUSED_PARAM( colIndices ),
-                          arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & GEOSX_UNUSED_PARAM( values ) )
+void HypreMatrix::set( arraySlice1d< globalIndex const > const & rowIndices,
+                       arraySlice1d< globalIndex const > const & colIndices,
+                       arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values )
+{
+  GEOSX_LAI_ASSERT( modifiable() );
+
+  array2d<real64, MatrixLayout::ROW_MAJOR_PERM> valuesRowMajor( rowIndices.size(), colIndices.size() );
+  convertArrayLayout( values, valuesRowMajor.toSlice() );
+  set( rowIndices, colIndices, valuesRowMajor );
+}
+
+void HypreMatrix::insert( arraySlice1d< globalIndex const > const & rowIndices,
+                          arraySlice1d< globalIndex const > const & colIndices,
+                          arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values )
 {
   GEOSX_LAI_ASSERT( insertable() );
-  GEOSX_ERROR( "Not implemented" );
+
+  array2d<real64, MatrixLayout::ROW_MAJOR_PERM> valuesRowMajor( rowIndices.size(), colIndices.size() );
+  convertArrayLayout( values, valuesRowMajor.toSlice() );
+  insert( rowIndices, colIndices, valuesRowMajor );
 }
 
 void HypreMatrix::add( globalIndex const * rowIndices,
