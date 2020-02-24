@@ -86,7 +86,7 @@
                         component="0"
                         initialCondition="1"
                         setNames="{all}"
-                        objectPath="ElementRegions/Bot/elementSubRegions/1_TETRA"
+                        objectPath="ElementRegions/Bot/1_TETRA"
                         fieldName="permeability"
                         scale="2.0e-14"/>
 
@@ -94,7 +94,7 @@
                         component="1"
                         initialCondition="1"
                         setNames="{all}"
-                        objectPath="ElementRegions/Bot/elementSubRegions/1_TETRA"
+                        objectPath="ElementRegions/Bot/1_TETRA"
                         fieldName="permeability"
                         scale="2.0e-14"/>
 
@@ -102,21 +102,21 @@
                         component="2"
                         initialCondition="1"
                         setNames="{all}"
-                        objectPath="ElementRegions/Bot/elementSubRegions/1_TETRA"
+                        objectPath="ElementRegions/Bot/1_TETRA"
                         fieldName="permeability"
                         scale="2.0e-14"/>
 
     <FieldSpecification name="BotReferencePorosity"
                         initialCondition="1"
                         setNames="{all}"
-                        objectPath="ElementRegions/Bot/elementSubRegions/1_TETRA"
+                        objectPath="ElementRegions/Bot/1_TETRA"
                         fieldName="referencePorosity"
                         scale="0.05"/>
 
     <FieldSpecification name="BotInitialPressure"
                         initialCondition="1"
                         setNames="{all}"
-                        objectPath="ElementRegions/Bot/elementSubRegions/1_TETRA"
+                        objectPath="ElementRegions/Bot/1_TETRA"
                         fieldName="pressure"
                         scale="1e5"/>
 
