@@ -22,15 +22,15 @@
 #include "common/GeosxConfig.hpp"
 
 #ifdef GEOSX_USE_TRILINOS
-#include "linearAlgebra/interfaces/TrilinosInterface.hpp"
+#include "linearAlgebra/interfaces/trilinos/TrilinosInterface.hpp"
 #endif
 
 #ifdef GEOSX_USE_HYPRE
-#include "linearAlgebra/interfaces/HypreInterface.hpp"
+#include "linearAlgebra/interfaces/hypre/HypreInterface.hpp"
 #endif
 
 #ifdef GEOSX_USE_PETSC
-#include "linearAlgebra/interfaces/PetscInterface.hpp"
+#include "linearAlgebra/interfaces/petsc/PetscInterface.hpp"
 #endif
 
 #define CONCAT_( A, B ) A##B

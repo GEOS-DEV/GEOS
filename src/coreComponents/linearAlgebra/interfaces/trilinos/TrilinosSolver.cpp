@@ -25,8 +25,8 @@
 
 // Source inclues
 #include "TrilinosSolver.hpp"
-#include "linearAlgebra/interfaces/EpetraMatrix.hpp"
-#include "linearAlgebra/interfaces/EpetraVector.hpp"
+#include "interfaces/trilinos/EpetraMatrix.hpp"
+#include "interfaces/trilinos/EpetraVector.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 

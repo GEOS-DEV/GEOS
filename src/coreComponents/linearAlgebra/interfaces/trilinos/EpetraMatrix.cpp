@@ -17,7 +17,7 @@
  */
 
 #include "EpetraMatrix.hpp"
-#include "linearAlgebra/interfaces/EpetraUtils.hpp"
+#include "EpetraUtils.hpp"
 
 #include <Epetra_Map.h>
 #include <Epetra_FECrsGraph.h>

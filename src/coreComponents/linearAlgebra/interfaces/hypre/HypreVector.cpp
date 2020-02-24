@@ -17,7 +17,7 @@
  */
 
 #include "HypreVector.hpp"
-#include "linearAlgebra/interfaces/HypreUtils.hpp"
+#include "HypreUtils.hpp"
 
 #include "HYPRE.h"
 #include "_hypre_IJ_mv.h"

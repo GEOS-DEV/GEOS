@@ -20,7 +20,7 @@
 #define GEOSX_LINEARALGEBRA_INTERFACES_EPETRAMATRIX_HPP_
 
 #include "common/DataTypes.hpp"
-#include "linearAlgebra/interfaces/EpetraVector.hpp"
+#include "EpetraVector.hpp"
 #include "linearAlgebra/interfaces/LinearOperator.hpp"
 #include "linearAlgebra/interfaces/MatrixBase.hpp"
 

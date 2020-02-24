@@ -53,16 +53,16 @@ endif()
 if( ENABLE_TRILINOS )
 
     list( APPEND linearAlgebra_headers
-                 interfaces/EpetraMatrix.hpp
-                 interfaces/EpetraVector.hpp
-                 interfaces/EpetraUtils.hpp
-                 interfaces/TrilinosSolver.hpp
-                 interfaces/TrilinosInterface.hpp )
+          interfaces/trilinos/EpetraMatrix.hpp
+          interfaces/trilinos/EpetraVector.hpp
+          interfaces/trilinos/EpetraUtils.hpp
+          interfaces/trilinos/TrilinosSolver.hpp
+          interfaces/trilinos/TrilinosInterface.hpp )
 
     list( APPEND linearAlgebra_sources
-                 interfaces/EpetraMatrix.cpp
-                 interfaces/EpetraVector.cpp
-                 interfaces/TrilinosSolver.cpp )
+          interfaces/trilinos/EpetraMatrix.cpp
+          interfaces/trilinos/EpetraVector.cpp
+          interfaces/trilinos/TrilinosSolver.cpp )
 
     list( APPEND dependencyList trilinos )
 
@@ -71,16 +71,16 @@ endif()
 if( ENABLE_HYPRE )
 
     list( APPEND linearAlgebra_headers
-                 interfaces/HypreMatrix.hpp
-                 interfaces/HypreVector.hpp
-                 interfaces/HypreSolver.hpp
-                 interfaces/HypreInterface.hpp
-                 interfaces/HypreUtils.hpp )
+          interfaces/hypre/HypreMatrix.hpp
+          interfaces/hypre/HypreVector.hpp
+          interfaces/hypre/HypreSolver.hpp
+          interfaces/hypre/HypreInterface.hpp
+          interfaces/hypre/HypreUtils.hpp )
 
     list( APPEND linearAlgebra_sources
-                 interfaces/HypreMatrix.cpp
-                 interfaces/HypreVector.cpp
-                 interfaces/HypreSolver.cpp )
+          interfaces/hypre/HypreMatrix.cpp
+          interfaces/hypre/HypreVector.cpp
+          interfaces/hypre/HypreSolver.cpp )
 
     list( APPEND dependencyList hypre )
 
@@ -89,17 +89,17 @@ endif()
 if( ENABLE_PETSC )
 
     list( APPEND linearAlgebra_headers
-                 interfaces/PetscVector.hpp
-                 interfaces/PetscMatrix.hpp
-                 interfaces/PetscSolver.hpp
-                 interfaces/PetscInterface.hpp
-                 interfaces/PetscUtils.hpp )
+          interfaces/petsc/PetscVector.hpp
+          interfaces/petsc/PetscMatrix.hpp
+          interfaces/petsc/PetscSolver.hpp
+          interfaces/petsc/PetscInterface.hpp
+          interfaces/petsc/PetscUtils.hpp )
 
     list( APPEND linearAlgebra_sources
-                 interfaces/PetscVector.cpp
-                 interfaces/PetscMatrix.cpp
-                 interfaces/PetscSolver.cpp
-                 interfaces/PetscInterface.cpp )
+          interfaces/petsc/PetscVector.cpp
+          interfaces/petsc/PetscMatrix.cpp
+          interfaces/petsc/PetscSolver.cpp
+          interfaces/petsc/PetscInterface.cpp )
 
     list( APPEND dependencyList petsc )
 

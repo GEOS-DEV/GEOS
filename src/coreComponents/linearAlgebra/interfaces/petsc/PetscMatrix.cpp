@@ -22,7 +22,7 @@
 #define PETSC_USE_64BIT_INDICES
 #endif
 
-#include "linearAlgebra/interfaces/PetscUtils.hpp"
+#include "PetscUtils.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
 
 #include <petscvec.h>

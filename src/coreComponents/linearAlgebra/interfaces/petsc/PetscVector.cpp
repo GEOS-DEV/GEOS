@@ -17,7 +17,7 @@
  */
 
 #include "PetscVector.hpp"
-#include "linearAlgebra/interfaces/PetscUtils.hpp"
+#include "PetscUtils.hpp"
 #include <petscvec.h>
 
 namespace geosx

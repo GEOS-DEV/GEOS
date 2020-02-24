@@ -25,8 +25,8 @@
 // Include the corresponding header file.
 #include "HypreSolver.hpp"
 
-#include "linearAlgebra/interfaces/HypreMatrix.hpp"
-#include "linearAlgebra/interfaces/HypreVector.hpp"
+#include "HypreMatrix.hpp"
+#include "HypreVector.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 
 #include "_hypre_utilities.h"

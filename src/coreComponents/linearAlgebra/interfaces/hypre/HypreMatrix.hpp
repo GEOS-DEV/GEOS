@@ -20,7 +20,7 @@
 #define GEOSX_LINEARALGEBRA_INTERFACES_HYPREMATRIX_HPP_
 
 #include "common/DataTypes.hpp"
-#include "linearAlgebra/interfaces/HypreVector.hpp"
+#include "HypreVector.hpp"
 #include "linearAlgebra/interfaces/LinearOperator.hpp"
 #include "linearAlgebra/interfaces/MatrixBase.hpp"
 

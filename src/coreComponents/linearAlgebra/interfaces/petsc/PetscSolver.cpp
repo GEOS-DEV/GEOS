@@ -25,8 +25,8 @@
 // Include the corresponding header file.
 #include "PetscSolver.hpp"
 
-#include "linearAlgebra/interfaces/PetscVector.hpp"
-#include "linearAlgebra/interfaces/PetscMatrix.hpp"
+#include "PetscVector.hpp"
+#include "PetscMatrix.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 
 #include <petscvec.h>

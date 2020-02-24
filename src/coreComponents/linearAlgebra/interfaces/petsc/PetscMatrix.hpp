@@ -20,7 +20,7 @@
 #define GEOSX_LINEARALGEBRA_INTERFACES_PETSCSPARSEMATRIX_HPP_
 
 #include "common/DataTypes.hpp"
-#include "linearAlgebra/interfaces/PetscVector.hpp"
+#include "PetscVector.hpp"
 #include "linearAlgebra/interfaces/LinearOperator.hpp"
 #include "linearAlgebra/interfaces/MatrixBase.hpp"
 
