@@ -7,7 +7,7 @@
 		initialDt="10"
 		solidSolverName="matrixSolver"
 		contactRelationName="fractureContact"
-		logLevel="4"
+		logLevel="2"
 		>
 		<NonlinearSolverParameters 
         name="nlsp"
@@ -42,7 +42,7 @@
 		xCoords="{0, 10}"
 		yCoords="{0, 10}" 
 		zCoords="{0, 10}" 
-		nx="{1}" ny="{1}" nz="{1}"
+		nx="{21}" ny="{21}" nz="{1}"
 		cellBlockNames="{cb1}" />
 	</Mesh>
 
@@ -57,10 +57,10 @@
 		<BoundedPlane 
 		name="FracturePlane" 
 		normal="0, 1, 0"
-		origin="0, 5, 5" 
+		origin="5, 5, 5" 
 		lengthVector="1, 0, 0" 
 		widthVector="0, 0, 1"
-		dimensions="{30, 30}" />
+		dimensions="{5, 30}" />
 	</Geometry>
 
 
@@ -142,14 +142,14 @@
       objectPath="nodeManager" 
       fieldName="TotalDisplacement" 
       component="1" 
-      scale="0.1" 
+      scale="0.0" 
       setNames="{ypos}"/>
       
       <FieldSpecification name="ynegconstraint"    
       objectPath="nodeManager" 
       fieldName="TotalDisplacement" 
       component="1" 
-      scale="-0.1" 
+      scale="-0.0" 
       setNames="{yneg}"/>
                
       <FieldSpecification name="zconstraint"    
