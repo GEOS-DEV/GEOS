@@ -3,7 +3,7 @@
 
   <Solvers gravityVector="0.0, 0.0, 0.0">
 
-    <Poroelastic name="poroSolve" 
+    <Poroelastic name="poroSolve"
                  solidSolverName="lagsolve"
                  fluidSolverName="SinglePhaseFlow"
                  couplingTypeOption="FixedStress"
@@ -13,8 +13,8 @@
       <SystemSolverParameters logLevel="2"/>
     </Poroelastic>
 
-  
-    <SolidMechanics_LagrangianFEM name="lagsolve" 
+
+    <SolidMechanics_LagrangianFEM name="lagsolve"
                                   timeIntegrationOption="QuasiStatic"
                                   logLevel="1"
                                   solidMaterialName="shale"
@@ -24,7 +24,7 @@
       <SystemSolverParameters krylovTol="1.0e-10"
                               logLevel="2"/>
     </SolidMechanics_LagrangianFEM>
-  
+
     <SinglePhaseFVM name="SinglePhaseFlow"
                      logLevel="1"
                      discretization="singlePhaseTPFA"
@@ -36,10 +36,10 @@
       <SystemSolverParameters krylovTol="1.0e-10"/>
     </SinglePhaseFVM>
   </Solvers>
-  
+
   <Mesh>
     <InternalMesh name="mesh1"
-                  elementTypes="{C3D8}" 
+                  elementTypes="{C3D8}"
                   xCoords="{0, 42}"
                   yCoords="{0, 1}"
                   zCoords="{0, 1}"
@@ -68,13 +68,13 @@
     solver time-step request -->
     <PeriodicEvent name="solverApplication0"
                    beginTime="0"
-                   endTime="10"   
+                   endTime="10"
                    forceDt="1.0"
                    target="/Solvers/poroSolve" />
 
     <PeriodicEvent name="solverApplication1"
                    beginTime="10"
-                   endTime="8000"   
+                   endTime="8000"
                    forceDt="600.0"
                    target="/Solvers/poroSolve" />
 
@@ -92,7 +92,7 @@
     <FiniteElements>
       <FiniteElementSpace name="FE1" parentSpace="C3D8" basis="linearBasis" quadrature="gaussian" />
     </FiniteElements>
-    
+
     <FiniteVolume>
       <TwoPointFluxApproximation name="singlePhaseTPFA"
                                  fieldName="pressure"
@@ -105,7 +105,7 @@
   </ElementRegions>
 
   <Constitutive>
-  
+
       <LinearElasticIsotropic name="shale"
                               defaultDensity="2700"
                               defaultBulkModulus="61.9e6"
@@ -121,16 +121,16 @@
                                   referenceViscosity="0.001"
                                   viscosibility="0.0"
                                   />
-                                  
+
   </Constitutive>
 
 
   <FieldSpecifications>
     <FieldSpecification name="permx"
                component="0"
-               initialCondition="1"  
+               initialCondition="1"
                setNames="{all}"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               objectPath="ElementRegions/Region2/elementSubRegions/cb1"
                fieldName="permeability"
                scale="4.963e-14"/>
 
@@ -138,7 +138,7 @@
                component="1"
                initialCondition="1"
                setNames="{all}"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               objectPath="ElementRegions/Region2/elementSubRegions/cb1"
                fieldName="permeability"
                scale="4.963e-14"/>
 
@@ -146,58 +146,58 @@
                component="2"
                initialCondition="1"
                setNames="{all}"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               objectPath="ElementRegions/Region2/elementSubRegions/cb1"
                fieldName="permeability"
                scale="4.963e-14"/>
 
     <FieldSpecification name="referencePorosity"
                initialCondition="1"
                setNames="{all}"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               objectPath="ElementRegions/Region2/elementSubRegions/cb1"
                fieldName="referencePorosity"
                scale="0.3"/>
 
     <FieldSpecification name="initialPressure"
                initialCondition="1"
                setNames="{all}"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               objectPath="ElementRegions/Region2/elementSubRegions/cb1"
                fieldName="pressure"
                scale="2.125e6"/>
-  
-    <FieldSpecification name="xnegconstraint" 
-               objectPath="nodeManager" 
-               fieldName="TotalDisplacement"  
-               component="0" 
-               scale="0.0" 
+
+    <FieldSpecification name="xnegconstraint"
+               objectPath="nodeManager"
+               fieldName="TotalDisplacement"
+               component="0"
+               scale="0.0"
                setNames="{xneg}"/>
 
-    <FieldSpecification name="yconstraint"    
-               objectPath="nodeManager" 
-               fieldName="TotalDisplacement"  
-               component="1" 
-               scale="0.0" 
+    <FieldSpecification name="yconstraint"
+               objectPath="nodeManager"
+               fieldName="TotalDisplacement"
+               component="1"
+               scale="0.0"
                setNames="{yneg, ypos}"/>
-               
-    <FieldSpecification name="zconstraint"    
-               objectPath="nodeManager" 
-               fieldName="TotalDisplacement"  
-               component="2" 
-               scale="0.0" 
+
+    <FieldSpecification name="zconstraint"
+               objectPath="nodeManager"
+               fieldName="TotalDisplacement"
+               component="2"
+               scale="0.0"
                setNames="{zneg, zpos}"/>
-               
-    <FieldSpecification name="xposconstraint" 
-               objectPath="faceManager" 
-               fieldName="Traction"  
-               component="0" 
-               scale="-2.125e6" 
+
+    <FieldSpecification name="xposconstraint"
+               objectPath="faceManager"
+               fieldName="Traction"
+               component="0"
+               scale="-2.125e6"
                setNames="{xpos}"
                functionName="timeFunction"/>
 
     <FieldSpecification name="boundaryPressure"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               objectPath="ElementRegions/Region2/elementSubRegions/cb1"
                fieldName="pressure"
                scale="2.125e6"
-               setNames="{boundaryBot, boundaryTop}"/>  
+               setNames="{boundaryBot, boundaryTop}"/>
 
   </FieldSpecifications>
 
