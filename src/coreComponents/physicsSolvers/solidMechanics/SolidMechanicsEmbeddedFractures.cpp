@@ -193,7 +193,7 @@ void SolidMechanicsEmbeddedFractures::SetupSystem( DomainPartition * const domai
   // setup coupled DofManager
   dofManager.setMesh( domain, 0, 0 );
   SetupDofs( domain, dofManager );
-  // dofManager.reorderByRank();
+  dofManager.reorderByRank();
 
   localIndex const numLocalDof = dofManager.numLocalDofs();
 
@@ -288,9 +288,6 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
                                  matrix,
                                  rhs );
 
-//  string filename = "Kmatrix.mtx";
-//  matrix.write( filename, true );
-
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   NodeManager * const nodeManager = mesh->getNodeManager();
   ConstitutiveManager  * const constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
@@ -360,14 +357,13 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
         array2d<real64>            Kuw_elem( nUdof, 3 );
         array2d<real64>            Kww_elem( 3, 3 );
         array1d<real64>            R1(3);
-        array1d<real64>            R1wu(3);
         array1d<real64>            R0(nUdof);
+        array1d<real64>            tractionVec(3);
 
         BlasLapackLA::matrixScale(0, Kwu_elem);
         BlasLapackLA::matrixScale(0, Kuw_elem);
         BlasLapackLA::matrixScale(0, Kww_elem);
         BlasLapackLA::vectorScale(0, R1);
-        BlasLapackLA::vectorScale(0, R1wu);
         BlasLapackLA::vectorScale(0, R0);
 
         // Equilibrium and compatibility operators for the element
@@ -407,11 +403,12 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
           CopyGlobalToLocal<8,R1Tensor>( elemsToNodes[embeddedSurfaceToCell[k]], disp, dDisp, u_local, du_local );
 
           // Dof number of jump enrichment
+          std::cout << std::endl;
+          std::cout << "embedded element: " << k << std::endl;
           for (int i= 0 ; i < dim ; i++ )
           {
             jumpLocalDofIndex[i] = embeddedElementDofNumber[k] + i;
             w(i) = w_global[k][i] + dw_global[k][i];
-            std::cout << "w" << std::endl;
             std::cout << w(i) << std::endl;
           }
 
@@ -425,8 +422,6 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
             {
               elementLocalDofIndex[static_cast<int>(a)*dim+i] = globalDofNumber[localNodeIndex]+i;
               u(a*dim + i) = u_local[a][i] + 0*du_local[a][i];
-              std::cout << "u_local " << u_local[a][i] << std::endl;
-              std::cout << "du_local " << du_local[a][i] << std::endl;
             }
           }
 
@@ -443,6 +438,10 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
 
           BlasLapackLA::matrixScale(0, matED);
           BlasLapackLA::matrixMatrixMultiply(eqMatrix, dMatrix, matED);
+
+          tractionVec[0] = 1e5;
+          tractionVec[1] = 0.0;
+          tractionVec[2] = 0.0;
 
           for( integer q=0 ; q<fe->n_quadrature_points() ; ++q )
           {
@@ -492,10 +491,11 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
           BlasLapackLA::matrixScale(-1, Kuw_elem);
 
           BlasLapackLA::matrixVectorMultiply(Kww_elem, w, R1);
-          BlasLapackLA::matrixVectorMultiply(Kwu_elem, u, R1wu);
-          BlasLapackLA::vectorVectorAdd(R1wu, R1);
+          BlasLapackLA::matrixVectorMultiply(Kwu_elem, u, R1, 1, 1);
 
-          BlasLapackLA::matrixVectorMultiply(Kuw_elem, w, R0);
+          BlasLapackLA::matrixVectorMultiply(Kuw_elem, w, R0, 1, 1);
+
+          BlasLapackLA::vectorVectorAdd(tractionVec, R1, 1);
         }
 
         // 2. Assembly into global system
@@ -515,6 +515,17 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
    // close all the objects
    rhs.close();
    matrix.close();
+   if( getLogLevel() == 4 )
+   {
+     {
+       string filename = "Kmatrix_NoBC.mtx";
+       matrix.write( filename, true );
+     }
+     {
+       string filename = "rhs_NoBC.mtx";
+       rhs.write( filename, true );
+     }
+   }
 }
 
 void SolidMechanicsEmbeddedFractures::AssembleEquilibriumOperator(array2d<real64> & eqMatrix,
@@ -565,7 +576,6 @@ void SolidMechanicsEmbeddedFractures::AssembleEquilibriumOperator(array2d<real64
     }
   }
   BlasLapackLA::matrixScale(-hInv, eqMatrix);
-  std::cout << hInv << std::endl;
 
 //  for (int i = 0; i < 6; ++i)
 //  {
@@ -608,9 +618,9 @@ AssembleCompatibilityOperator(array2d<real64> & compMatrix,
     heavisideFun = embeddedSurfaceSubRegion->
         ComputeHeavisideFunction(nodesCoord[ elemsToNodes[embeddedSurfaceToCell[k]][a] ], k);
     // sum contribution of each node
-    mVec[0] += dNdXa[0] * heavisideFun;
-    mVec[1] += dNdXa[1] * heavisideFun;
-    mVec[2] += dNdXa[2] * heavisideFun;
+    mVec[0] -= dNdXa[0] * heavisideFun;
+    mVec[1] -= dNdXa[1] * heavisideFun;
+    mVec[2] -= dNdXa[2] * heavisideFun;
   }
 
   BlasLapackLA::matrixScale(0, compMatrix);
@@ -772,8 +782,8 @@ void SolidMechanicsEmbeddedFractures::SolveSystem( DofManager const & dofManager
   SolverBase::SolveSystem( dofManager, matrix, rhs, solution );
 
   // Debug for logLevel >= 2
-  GEOSX_LOG_LEVEL_RANK_0( 2, "After SolidMechanicsEmbeddedFractures::SolveSystem" );
-  GEOSX_LOG_LEVEL_RANK_0( 2, "\nSolution:\n" << solution );
+  GEOSX_LOG_LEVEL_RANK_0( 3, "After SolidMechanicsEmbeddedFractures::SolveSystem" );
+  GEOSX_LOG_LEVEL_RANK_0( 3, "\nSolution:\n" << solution );
 }
 
 void SolidMechanicsEmbeddedFractures::ApplySystemSolution( DofManager const & dofManager,
