@@ -4,7 +4,7 @@
   <!-- SPHINX_TUT_EXT_HEX_SOLVER -->
   <Solvers
     gravityVector="0.0, 0.0, -9.81">
-  
+
     <SinglePhaseFVM name="SinglePhaseFlow"
                           logLevel="0"
                           fluidName="water"
@@ -18,7 +18,7 @@
   </Solvers>
   <!-- SPHINX_TUT_EXT_HEX_SOLVER_END -->
 
-  
+
   <!-- SPHINX_TUT_EXT_HEX_MESH -->
   <Mesh>
       <PAMELAMeshGenerator name="CubeHex"
@@ -36,14 +36,14 @@
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
     <PeriodicEvent name="solverApplications"
-                   forceDt="1"
+                   forceDt="2"
                    target="/Solvers/SinglePhaseFlow" />
 
     <!-- This event is applied every 1.0s.  The targetExactTimestep
     flag allows this event to request a dt modification to match an
     integer multiple of the timeFrequency. -->
     <PeriodicEvent name="outputs"
-                   timeFrequency="1"
+                   timeFrequency="2"
                    targetExactTimestep="1"
                    target="/Outputs/siloWellPump" />
 
@@ -93,7 +93,7 @@
  <FieldSpecifications>
     <FieldSpecification name="permx"
                component="0"
-               initialCondition="1"  
+               initialCondition="1"
                setNames="{all}"
                objectPath="ElementRegions/Domain/elementSubRegions/0_HEX"
                fieldName="permeability"

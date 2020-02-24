@@ -3,7 +3,7 @@
 
   <Solvers
     gravityVector="0.0, 0.0, -9.81">
-  
+
     <SinglePhaseFVM name="SinglePhaseFlow"
                           logLevel="1"
                           fluidName="water"
@@ -15,7 +15,7 @@
       <SystemSolverParameters krylovTol="1.0e-10"/>
     </SinglePhaseFVM>
   </Solvers>
-  
+
   <Mesh>
       <PAMELAMeshGenerator name="CubeTetra"
           file="cube_10x10x10_tet_2_regions.msh"/>
@@ -82,9 +82,9 @@
   <FieldSpecifications>
     <FieldSpecification name="TopPermx"
                component="0"
-               initialCondition="1"  
+               initialCondition="1"
                setNames="{all}"
-               objectPath="ElementRegions/elementRegions/Top/elementSubRegions/0_TETRA"
+               objectPath="ElementRegions/Top/elementSubRegions/0_TETRA"
                fieldName="permeability"
                scale="2.0e-14"/>
 
@@ -92,7 +92,7 @@
                component="1"
                initialCondition="1"
                setNames="{all}"
-               objectPath="ElementRegions/elementRegions/Top/elementSubRegions/0_TETRA"
+               objectPath="ElementRegions/Top/elementSubRegions/0_TETRA"
                fieldName="permeability"
                scale="2.0e-14"/>
 
@@ -100,29 +100,29 @@
                component="2"
                initialCondition="1"
                setNames="{all}"
-               objectPath="ElementRegions/elementRegions/Top/elementSubRegions/0_TETRA"
+               objectPath="ElementRegions/Top/elementSubRegions/0_TETRA"
                fieldName="permeability"
                scale="2.0e-14"/>
 
     <FieldSpecification name="TopReferencePorosity"
                initialCondition="1"
                setNames="{all}"
-               objectPath="ElementRegions/elementRegions/Top/elementSubRegions/0_TETRA"
+               objectPath="ElementRegions/Top/elementSubRegions/0_TETRA"
                fieldName="referencePorosity"
                scale="0.05"/>
 
     <FieldSpecification name="TopInitialPressure"
                initialCondition="1"
                setNames="{all}"
-               objectPath="ElementRegions/elementRegions/Top/elementSubRegions/0_TETRA"
+               objectPath="ElementRegions/Top/elementSubRegions/0_TETRA"
                fieldName="pressure"
                scale="2e5"/>
 
     <FieldSpecification name="BotPermx"
                component="0"
-               initialCondition="1"  
+               initialCondition="1"
                setNames="{all}"
-               objectPath="ElementRegions/elementRegions/Bot/elementSubRegions/1_TETRA"
+               objectPath="ElementRegions/Bot/elementSubRegions/1_TETRA"
                fieldName="permeability"
                scale="2.0e-14"/>
 
@@ -130,7 +130,7 @@
                component="1"
                initialCondition="1"
                setNames="{all}"
-               objectPath="ElementRegions/elementRegions/Bot/elementSubRegions/1_TETRA"
+               objectPath="ElementRegions/Bot/elementSubRegions/1_TETRA"
                fieldName="permeability"
                scale="2.0e-14"/>
 
@@ -138,21 +138,21 @@
                component="2"
                initialCondition="1"
                setNames="{all}"
-               objectPath="ElementRegions/elementRegions/Bot/elementSubRegions/1_TETRA"
+               objectPath="ElementRegions/Bot/elementSubRegions/1_TETRA"
                fieldName="permeability"
                scale="2.0e-14"/>
 
     <FieldSpecification name="BotReferencePorosity"
                initialCondition="1"
                setNames="{all}"
-               objectPath="ElementRegions/elementRegions/Bot/elementSubRegions/1_TETRA"
+               objectPath="ElementRegions/Bot/elementSubRegions/1_TETRA"
                fieldName="referencePorosity"
                scale="0.05"/>
 
     <FieldSpecification name="BotInitialPressure"
                initialCondition="1"
                setNames="{all}"
-               objectPath="ElementRegions/elementRegions/Bot/elementSubRegions/1_TETRA"
+               objectPath="ElementRegions/Bot/elementSubRegions/1_TETRA"
                fieldName="pressure"
                scale="1e5"/>
   </FieldSpecifications>
