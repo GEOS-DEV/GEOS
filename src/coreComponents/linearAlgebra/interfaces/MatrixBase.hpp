@@ -21,13 +21,6 @@
 
 #include "linearAlgebra/interfaces/common.hpp"
 
-#define GEOSX_LAI_MATRIX_STATUS( expr ) \
-GEOSX_LAI_ASSERT_MSG( expr, "Matrix status: " \
-                            "created = "   << created()   << ", " \
-                            "assembled = " << assembled() << ", " \
-                            "closed = "    << closed() )
-
-
 namespace geosx
 {
 

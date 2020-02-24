@@ -22,11 +22,6 @@
 #include "linearAlgebra/interfaces/common.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
 
-#define GEOSX_LAI_VECTOR_STATUS( expr ) \
-GEOSX_LAI_ASSERT_MSG( expr, "Vector status: " \
-                            "created = "   << created()   << ", " \
-                            "closed = "    << closed() )
-
 namespace geosx
 {
 

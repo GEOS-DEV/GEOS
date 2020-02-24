@@ -59,7 +59,7 @@ HypreMatrix::HypreMatrix()
 HypreMatrix::HypreMatrix( HypreMatrix const & src )
 : HypreMatrix()
 {
-  GEOSX_LAI_MATRIX_STATUS( src.ready() );
+  GEOSX_LAI_ASSERT( src.ready() );
 
   HYPRE_BigInt ilower, iupper, jlower, jupper;
 
@@ -130,7 +130,7 @@ void HypreMatrix::createWithGlobalSize( globalIndex const globalRows,
                                         localIndex const maxEntriesPerRow,
                                         MPI_Comm const & comm )
 {
-  GEOSX_LAI_MATRIX_STATUS( closed() );
+  GEOSX_LAI_ASSERT( closed() );
   GEOSX_LAI_ASSERT_GE( globalRows, 0 );
   GEOSX_LAI_ASSERT_GE( globalCols, 0 );
   GEOSX_LAI_ASSERT_GE( maxEntriesPerRow, 0 );
@@ -193,7 +193,7 @@ void HypreMatrix::createWithLocalSize( localIndex const localRows,
 
 void HypreMatrix::set( real64 const value )
 {
-  GEOSX_LAI_MATRIX_STATUS( ready() );
+  GEOSX_LAI_ASSERT( ready() );
   open();
   GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixSetConstantValues( m_ij_mat, static_cast< HYPRE_Real >( value ) ) );
   close();
@@ -212,7 +212,7 @@ void HypreMatrix::reset()
 
 void HypreMatrix::zero()
 {
-  GEOSX_LAI_MATRIX_STATUS( ready() );
+  GEOSX_LAI_ASSERT( ready() );
   open();
   GEOSX_LAI_CHECK_ERROR( hypre_IJMatrixSetConstantValuesParCSR( m_ij_mat, 0.0 ) );
   close();
@@ -220,14 +220,14 @@ void HypreMatrix::zero()
 
 void HypreMatrix::open()
 {
-  GEOSX_LAI_MATRIX_STATUS( created() && closed() );
+  GEOSX_LAI_ASSERT( created() && closed() );
   GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixInitialize( m_ij_mat ) );
   m_closed = false;
 }
 
 void HypreMatrix::close()
 {
-  GEOSX_LAI_MATRIX_STATUS( !closed() );
+  GEOSX_LAI_ASSERT( !closed() );
 
   GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixAssemble( m_ij_mat ) );
 
@@ -260,7 +260,7 @@ void HypreMatrix::add( globalIndex const rowIndex,
                        globalIndex const colIndex,
                        real64 const value )
 {
-  GEOSX_LAI_MATRIX_STATUS( modifiable() );
+  GEOSX_LAI_ASSERT( modifiable() );
 
   HYPRE_Int ncols = 1;
   GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixAddToValues( m_ij_mat,
@@ -275,7 +275,7 @@ void HypreMatrix::set( globalIndex const rowIndex,
                        globalIndex const colIndex,
                        real64 const value )
 {
-  GEOSX_LAI_MATRIX_STATUS( modifiable() );
+  GEOSX_LAI_ASSERT( modifiable() );
   GEOSX_LAI_ASSERT_GE( rowIndex, ilower() );
   GEOSX_LAI_ASSERT_GT( iupper(), rowIndex );
 
@@ -293,7 +293,7 @@ void HypreMatrix::insert( globalIndex const rowIndex,
                           globalIndex const colIndex,
                           real64 const value )
 {
-  GEOSX_LAI_MATRIX_STATUS( insertable() );
+  GEOSX_LAI_ASSERT( insertable() );
   GEOSX_LAI_ASSERT_GE( rowIndex, ilower() );
   GEOSX_LAI_ASSERT_GT( iupper(), rowIndex );
 
@@ -311,7 +311,7 @@ void HypreMatrix::add( globalIndex const rowIndex,
                        real64 const * values,
                        localIndex size )
 {
-  GEOSX_LAI_MATRIX_STATUS( modifiable() );
+  GEOSX_LAI_ASSERT( modifiable() );
 
   HYPRE_Int ncols = integer_conversion< HYPRE_Int >( size );
   GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixAddToValues( m_ij_mat,
@@ -327,7 +327,7 @@ void HypreMatrix::set( globalIndex const rowIndex,
                        real64 const * values,
                        localIndex size )
 {
-  GEOSX_LAI_MATRIX_STATUS( modifiable() );
+  GEOSX_LAI_ASSERT( modifiable() );
   GEOSX_LAI_ASSERT_GE( rowIndex, ilower() );
   GEOSX_LAI_ASSERT_GT( iupper(), rowIndex );
 
@@ -345,7 +345,7 @@ void HypreMatrix::insert( globalIndex const rowIndex,
                           real64 const * values,
                           localIndex size )
 {
-  GEOSX_LAI_MATRIX_STATUS( insertable() );
+  GEOSX_LAI_ASSERT( insertable() );
 
   HYPRE_Int ncols = integer_conversion< HYPRE_Int >( size );
   GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixAddToValues( m_ij_mat,
@@ -360,7 +360,7 @@ void HypreMatrix::add( globalIndex const rowIndex,
                        arraySlice1d< globalIndex const > const & colIndices,
                        arraySlice1d< real64 const > const & values )
 {
-  GEOSX_LAI_MATRIX_STATUS( modifiable() );
+  GEOSX_LAI_ASSERT( modifiable() );
 
   HYPRE_Int ncols = integer_conversion< HYPRE_Int >( colIndices.size() );
   GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixAddToValues( m_ij_mat,
@@ -375,7 +375,7 @@ void HypreMatrix::set( globalIndex const rowIndex,
                        arraySlice1d< globalIndex const > const & colIndices,
                        arraySlice1d< real64 const > const & values )
 {
-  GEOSX_LAI_MATRIX_STATUS( modifiable() );
+  GEOSX_LAI_ASSERT( modifiable() );
   GEOSX_LAI_ASSERT_GE( rowIndex, ilower() );
   GEOSX_LAI_ASSERT_GT( iupper(), rowIndex );
 
@@ -392,7 +392,7 @@ void HypreMatrix::insert( globalIndex const rowIndex,
                           arraySlice1d< globalIndex const > const & colIndices,
                           arraySlice1d< real64 const > const & values )
 {
-  GEOSX_LAI_MATRIX_STATUS( insertable() );
+  GEOSX_LAI_ASSERT( insertable() );
 
   HYPRE_Int ncols = integer_conversion< HYPRE_Int >( colIndices.size() );
   GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixAddToValues( m_ij_mat,
@@ -437,7 +437,7 @@ void HypreMatrix::add( arraySlice1d< globalIndex const > const & GEOSX_UNUSED_PA
                        arraySlice1d< globalIndex const > const & GEOSX_UNUSED_PARAM( colIndices ),
                        arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & GEOSX_UNUSED_PARAM( values ) )
 {
-  GEOSX_LAI_MATRIX_STATUS( modifiable() );
+  GEOSX_LAI_ASSERT( modifiable() );
   GEOSX_ERROR( "Not implemented" );
 }
 
@@ -445,7 +445,7 @@ void HypreMatrix::set( arraySlice1d< globalIndex const > const & GEOSX_UNUSED_PA
                        arraySlice1d< globalIndex const > const & GEOSX_UNUSED_PARAM( colIndices ),
                        arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & GEOSX_UNUSED_PARAM( values ) )
 {
-  GEOSX_LAI_MATRIX_STATUS( modifiable() );
+  GEOSX_LAI_ASSERT( modifiable() );
   GEOSX_ERROR( "Not implemented" );
 }
 
@@ -453,7 +453,7 @@ void HypreMatrix::insert( arraySlice1d< globalIndex const > const & GEOSX_UNUSED
                           arraySlice1d< globalIndex const > const & GEOSX_UNUSED_PARAM( colIndices ),
                           arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & GEOSX_UNUSED_PARAM( values ) )
 {
-  GEOSX_LAI_MATRIX_STATUS( insertable() );
+  GEOSX_LAI_ASSERT( insertable() );
   GEOSX_ERROR( "Not implemented" );
 }
 
@@ -496,7 +496,7 @@ void HypreMatrix::insert( globalIndex const * rowIndices,
 void HypreMatrix::multiply( HypreVector const & src,
                             HypreVector & dst ) const
 {
-  GEOSX_LAI_MATRIX_STATUS( ready() );
+  GEOSX_LAI_ASSERT( ready() );
   GEOSX_LAI_ASSERT( src.ready() );
   GEOSX_LAI_ASSERT( dst.ready() );
   GEOSX_LAI_CHECK_ERROR( hypre_ParCSRMatrixMatvec( 1.0,
@@ -510,7 +510,7 @@ void HypreMatrix::multiply( HypreMatrix const & src,
                             HypreMatrix & dst,
                             bool const closeResult ) const
 {
-  GEOSX_LAI_MATRIX_STATUS( ready() );
+  GEOSX_LAI_ASSERT( ready() );
   GEOSX_LAI_ASSERT( src.ready() );
   GEOSX_LAI_ASSERT_EQ( numGlobalCols(), src.numGlobalRows() );
 
@@ -531,7 +531,7 @@ void HypreMatrix::leftMultiplyTranspose( HypreMatrix const & src,
                                          HypreMatrix & dst,
                                          bool const closeResult ) const
 {
-  GEOSX_LAI_MATRIX_STATUS( ready() );
+  GEOSX_LAI_ASSERT( ready() );
   GEOSX_LAI_ASSERT( src.ready() );
   GEOSX_LAI_ASSERT_EQ( numGlobalRows(), src.numGlobalRows() );
 
@@ -553,7 +553,7 @@ void HypreMatrix::rightMultiplyTranspose( HypreMatrix const & src,
                                           HypreMatrix & dst,
                                           bool const closeResult ) const
 {
-  GEOSX_LAI_MATRIX_STATUS( ready() );
+  GEOSX_LAI_ASSERT( ready() );
   GEOSX_LAI_ASSERT( src.ready() );
   GEOSX_LAI_ASSERT_EQ( numGlobalCols(), src.numGlobalCols() );
 
@@ -680,7 +680,7 @@ void HypreMatrix::gemv( real64 const alpha,
                         HypreVector & y,
                         bool useTranspose ) const
 {
-  GEOSX_LAI_MATRIX_STATUS( ready() );
+  GEOSX_LAI_ASSERT( ready() );
 
   if( !useTranspose )
   {
@@ -702,7 +702,7 @@ void HypreMatrix::gemv( real64 const alpha,
 
 void HypreMatrix::scale( real64 const scalingFactor )
 {
-  GEOSX_LAI_MATRIX_STATUS( ready() );
+  GEOSX_LAI_ASSERT( ready() );
 
   hypre_CSRMatrix * const prt_diag_CSR = hypre_ParCSRMatrixDiag( m_parcsr_mat );
   HYPRE_Int const diag_nnz = hypre_CSRMatrixNumNonzeros( prt_diag_CSR );
@@ -725,7 +725,7 @@ void HypreMatrix::scale( real64 const scalingFactor )
 
 void HypreMatrix::leftScale( HypreVector const & vec )
 {
-  GEOSX_LAI_MATRIX_STATUS( ready() );
+  GEOSX_LAI_ASSERT( ready() );
 
   hypre_Vector * const ptr_vec = hypre_ParVectorLocalVector( vec.unwrappedParVector() );
   HYPRE_Real * ptr_vec_data = hypre_VectorData( ptr_vec );
@@ -762,7 +762,7 @@ void HypreMatrix::leftScale( HypreVector const & vec )
 
 localIndex HypreMatrix::maxRowLength() const
 {
-  GEOSX_LAI_MATRIX_STATUS( assembled() );
+  GEOSX_LAI_ASSERT( assembled() );
 
   HYPRE_Int const nrows = integer_conversion< HYPRE_Int >( numLocalRows() );
 
@@ -790,7 +790,7 @@ localIndex HypreMatrix::localRowLength( localIndex localRowIndex ) const
 
 localIndex HypreMatrix::globalRowLength( globalIndex globalRowIndex ) const
 {
-  GEOSX_LAI_MATRIX_STATUS( assembled() );
+  GEOSX_LAI_ASSERT( assembled() );
 
   HYPRE_BigInt row = integer_conversion< HYPRE_BigInt >( globalRowIndex );
   HYPRE_Int ncols;
@@ -807,7 +807,7 @@ void HypreMatrix::getRowCopy( globalIndex globalRow,
                               arraySlice1d< globalIndex > const & colIndices,
                               arraySlice1d< real64 > const & values ) const
 {
-  GEOSX_LAI_MATRIX_STATUS( ready() );
+  GEOSX_LAI_ASSERT( ready() );
   GEOSX_LAI_ASSERT_GE( globalRow, ilower() );
   GEOSX_LAI_ASSERT_GT( iupper(), globalRow );
 
@@ -830,7 +830,7 @@ void HypreMatrix::getRowCopy( globalIndex globalRow,
 
 real64 HypreMatrix::getDiagValue( globalIndex globalRow ) const
 {
-  GEOSX_LAI_MATRIX_STATUS( assembled() );
+  GEOSX_LAI_ASSERT( assembled() );
   GEOSX_LAI_ASSERT_GE( globalRow, ilower());
   GEOSX_LAI_ASSERT_GT( iupper(), globalRow );
 
@@ -856,7 +856,7 @@ real64 HypreMatrix::getDiagValue( globalIndex globalRow ) const
 void HypreMatrix::clearRow( globalIndex const globalRow,
                             real64 const diagValue )
 {
-  GEOSX_LAI_MATRIX_STATUS( modifiable() );
+  GEOSX_LAI_ASSERT( modifiable() );
   GEOSX_LAI_ASSERT_GE( globalRow, ilower() );
   GEOSX_LAI_ASSERT_GT( iupper(), globalRow );
 
@@ -909,7 +909,7 @@ HYPRE_ParCSRMatrix & HypreMatrix::unwrappedParCSR()
 
 localIndex HypreMatrix::getLocalRowID( globalIndex const index ) const
 {
-  GEOSX_LAI_MATRIX_STATUS( created() );
+  GEOSX_LAI_ASSERT( created() );
   HYPRE_BigInt ilower, iupper, jlower, jupper;
   GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixGetLocalRange( m_ij_mat,
                                                       &ilower, &iupper,
@@ -919,7 +919,7 @@ localIndex HypreMatrix::getLocalRowID( globalIndex const index ) const
 
 globalIndex HypreMatrix::getGlobalRowID( localIndex const index ) const
 {
-  GEOSX_LAI_MATRIX_STATUS( created() );
+  GEOSX_LAI_ASSERT( created() );
   GEOSX_LAI_ASSERT_GE( index, 0 );
   GEOSX_LAI_ASSERT_GT( numLocalRows(), index );
   return ilower() + index;
@@ -927,31 +927,31 @@ globalIndex HypreMatrix::getGlobalRowID( localIndex const index ) const
 
 globalIndex HypreMatrix::numGlobalRows() const
 {
-  GEOSX_LAI_MATRIX_STATUS( created() );
+  GEOSX_LAI_ASSERT( created() );
   return hypre_IJMatrixGlobalNumRows( m_ij_mat );
 }
 
 globalIndex HypreMatrix::numGlobalCols() const
 {
-  GEOSX_LAI_MATRIX_STATUS( created() );
+  GEOSX_LAI_ASSERT( created() );
   return hypre_IJMatrixGlobalNumCols( m_ij_mat );
 }
 
 localIndex HypreMatrix::numLocalRows() const
 {
-  GEOSX_LAI_MATRIX_STATUS( created() );
+  GEOSX_LAI_ASSERT( created() );
   return integer_conversion< localIndex >( iupper() - ilower() );
 }
 
 localIndex HypreMatrix::numLocalCols() const
 {
-  GEOSX_LAI_MATRIX_STATUS( created() );
+  GEOSX_LAI_ASSERT( created() );
   return integer_conversion< localIndex >( jupper() - jlower() );
 }
 
 globalIndex HypreMatrix::ilower() const
 {
-  GEOSX_LAI_MATRIX_STATUS( created() );
+  GEOSX_LAI_ASSERT( created() );
 
   HYPRE_BigInt ilower, iupper, jlower, jupper;
   GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixGetLocalRange( m_ij_mat,
@@ -962,7 +962,7 @@ globalIndex HypreMatrix::ilower() const
 
 globalIndex HypreMatrix::iupper() const
 {
-  GEOSX_LAI_MATRIX_STATUS( created() );
+  GEOSX_LAI_ASSERT( created() );
 
   HYPRE_BigInt ilower, iupper, jlower, jupper;
   GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixGetLocalRange( m_ij_mat,
@@ -975,7 +975,7 @@ globalIndex HypreMatrix::iupper() const
 
 globalIndex HypreMatrix::jlower() const
 {
-  GEOSX_LAI_MATRIX_STATUS( created() );
+  GEOSX_LAI_ASSERT( created() );
 
   HYPRE_BigInt ilower, iupper, jlower, jupper;
   GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixGetLocalRange( m_ij_mat,
@@ -988,7 +988,7 @@ globalIndex HypreMatrix::jlower() const
 
 globalIndex HypreMatrix::jupper() const
 {
-  GEOSX_LAI_MATRIX_STATUS( created() );
+  GEOSX_LAI_ASSERT( created() );
 
   HYPRE_BigInt ilower, iupper, jlower, jupper;
   GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixGetLocalRange( m_ij_mat,
@@ -1001,7 +1001,7 @@ globalIndex HypreMatrix::jupper() const
 
 localIndex HypreMatrix::numLocalNonzeros() const
 {
-  GEOSX_LAI_MATRIX_STATUS( assembled() );
+  GEOSX_LAI_ASSERT( assembled() );
 
   hypre_CSRMatrix * prt_diag_CSR = hypre_ParCSRMatrixDiag( m_parcsr_mat );
   HYPRE_Int diag_nnz = hypre_CSRMatrixNumNonzeros( prt_diag_CSR );
@@ -1019,7 +1019,7 @@ globalIndex HypreMatrix::numGlobalNonzeros() const
 
 void HypreMatrix::print( std::ostream & os ) const
 {
-  GEOSX_LAI_MATRIX_STATUS( ready() );
+  GEOSX_LAI_ASSERT( ready() );
 
   int const this_mpi_process = MpiWrapper::Comm_rank( getComm() );
   int const n_mpi_process = MpiWrapper::Comm_size( getComm() );
@@ -1070,7 +1070,7 @@ void HypreMatrix::print( std::ostream & os ) const
 void HypreMatrix::write( string const & filename,
                          LAIOutputFormat const format ) const
 {
-  GEOSX_LAI_MATRIX_STATUS( ready() );
+  GEOSX_LAI_ASSERT( ready() );
 
   switch( format )
   {
@@ -1087,7 +1087,7 @@ void HypreMatrix::write( string const & filename,
 
 real64 HypreMatrix::norm1() const
 {
-  GEOSX_LAI_MATRIX_STATUS( ready() );
+  GEOSX_LAI_ASSERT( ready() );
 
   HYPRE_ParCSRMatrix parCSRT;
   GEOSX_LAI_CHECK_ERROR( hypre_ParCSRMatrixTranspose( m_parcsr_mat, &parCSRT, 1 ) );
@@ -1098,7 +1098,7 @@ real64 HypreMatrix::norm1() const
 
 real64 HypreMatrix::normInf() const
 {
-  GEOSX_LAI_MATRIX_STATUS( ready() );
+  GEOSX_LAI_ASSERT( ready() );
 
   hypre_CSRMatrix const * const prt_diag_CSR = hypre_ParCSRMatrixDiag( m_parcsr_mat );
   HYPRE_Real const * const ptr_diag_data = hypre_CSRMatrixData( prt_diag_CSR );
@@ -1138,7 +1138,7 @@ real64 HypreMatrix::normInf() const
 
 real64 HypreMatrix::normFrobenius() const
 {
-  GEOSX_LAI_MATRIX_STATUS( ready() );
+  GEOSX_LAI_ASSERT( ready() );
 
   hypre_CSRMatrix const * const prt_diag_CSR = hypre_ParCSRMatrixDiag( m_parcsr_mat );
   HYPRE_Int const diag_nnz = hypre_CSRMatrixNumNonzeros( prt_diag_CSR );
@@ -1163,20 +1163,20 @@ real64 HypreMatrix::normFrobenius() const
 
 void HypreMatrix::rightScale( HypreVector const & GEOSX_UNUSED_PARAM( vec ) )
 {
-  GEOSX_LAI_MATRIX_STATUS( ready() );
+  GEOSX_LAI_ASSERT( ready() );
   GEOSX_ERROR( "Not implemented" );
 }
 
 void HypreMatrix::leftRightScale( HypreVector const & GEOSX_UNUSED_PARAM( vecLeft ),
                                   HypreVector const & GEOSX_UNUSED_PARAM( vecRight ) )
 {
-  GEOSX_LAI_MATRIX_STATUS( ready() );
+  GEOSX_LAI_ASSERT( ready() );
   GEOSX_ERROR( "Not implemented" );
 }
 
 MPI_Comm HypreMatrix::getComm() const
 {
-  GEOSX_LAI_MATRIX_STATUS( created() );
+  GEOSX_LAI_ASSERT( created() );
   return hypre_IJMatrixComm( m_ij_mat );
 }
 
