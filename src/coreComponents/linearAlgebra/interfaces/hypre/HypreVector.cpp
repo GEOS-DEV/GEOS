@@ -42,8 +42,8 @@ static_assert( std::is_same< HYPRE_Real, real64 >::value,
 // Helper function that performs the following sequence of IJVEctor
 // call: Create, SetObjectType, Initialize.
 static void initialize( MPI_Comm const & comm,
-                        HYPRE_Int const & jlower,
-                        HYPRE_Int const & jupper,
+                        HYPRE_BigInt const & jlower,
+                        HYPRE_BigInt const & jupper,
                         HYPRE_IJVector & ij_vector )
 {
   GEOSX_LAI_CHECK_ERROR( HYPRE_IJVectorCreate( comm, jlower, jupper, &ij_vector ) );
@@ -127,8 +127,8 @@ void HypreVector::createWithLocalSize( localIndex const localSize,
   GEOSX_LAI_ASSERT( closed() );
   GEOSX_LAI_ASSERT_GE( localSize, 0 );
 
-  HYPRE_Int const jlower = MpiWrapper::PrefixSum< HYPRE_Int >( integer_conversion< HYPRE_Int >( localSize ) ).first;
-  HYPRE_Int const jupper = jlower + integer_conversion< HYPRE_Int >( localSize ) - 1;
+  HYPRE_BigInt const jlower = MpiWrapper::PrefixSum< HYPRE_BigInt >( integer_conversion< HYPRE_BigInt >( localSize ) ).first;
+  HYPRE_BigInt const jupper = jlower + integer_conversion< HYPRE_BigInt >( localSize ) - 1;
 
   initialize( comm, jlower, jupper, m_ij_vector );
   GEOSX_LAI_CHECK_ERROR( hypre_IJVectorZeroValues( m_ij_vector ) );
@@ -144,11 +144,11 @@ void HypreVector::createWithGlobalSize( globalIndex const globalSize,
   HYPRE_Int const rank  = integer_conversion< HYPRE_Int >( MpiWrapper::Comm_rank( comm ) );
   HYPRE_Int const nproc = integer_conversion< HYPRE_Int >( MpiWrapper::Comm_size( comm ) );
 
-  HYPRE_Int const localSize = globalSize / nproc;
-  HYPRE_Int const residual  = globalSize % nproc;
+  HYPRE_Int const localSize = integer_conversion< HYPRE_Int >( globalSize / nproc );
+  HYPRE_Int const residual  = integer_conversion< HYPRE_Int >( globalSize % nproc );
 
-  HYPRE_Int const ilower = rank * localSize + ( rank == 0 ? 0 : residual );
-  HYPRE_Int const iupper = ilower + localSize + ( rank == 0 ? residual : 0 ) - 1;
+  HYPRE_BigInt const ilower = integer_conversion< HYPRE_BigInt >(  rank * localSize + ( rank == 0 ? 0 : residual ) );
+  HYPRE_BigInt const iupper = integer_conversion< HYPRE_BigInt >( ilower + localSize + ( rank == 0 ? residual : 0 ) - 1 );
 
   initialize( comm, ilower, iupper, m_ij_vector );
   GEOSX_LAI_CHECK_ERROR( hypre_IJVectorZeroValues( m_ij_vector ) );
@@ -159,10 +159,10 @@ void HypreVector::create( arraySlice1d< real64 const > const & localValues,
                           MPI_Comm const & comm )
 {
   GEOSX_LAI_ASSERT( closed() );
-  HYPRE_Int const localSize = integer_conversion< HYPRE_Int >( localValues.size() );
+  HYPRE_BigInt const localSize = integer_conversion< HYPRE_BigInt >( localValues.size() );
 
-  HYPRE_Int const jlower = MpiWrapper::PrefixSum< HYPRE_Int >( localSize ).first;
-  HYPRE_Int const jupper = jlower + localSize - 1;
+  HYPRE_BigInt const jlower = MpiWrapper::PrefixSum< HYPRE_BigInt >( localSize ).first;
+  HYPRE_BigInt const jupper = jlower + localSize - 1;
 
   initialize( comm, jlower, jupper, m_ij_vector );
   finalize( m_ij_vector, m_par_vector );
@@ -356,8 +356,13 @@ void HypreVector::print( std::ostream & os ) const
 
   int const this_mpi_process = MpiWrapper::Comm_rank( getComm() );
   int const n_mpi_process = MpiWrapper::Comm_size( getComm() );
+  char str[77];
 
-  os << "MPI_Process         GlobalRowID                   Value" << std::endl;
+  if ( this_mpi_process == 0 )
+  {
+    os << "MPI_Process         GlobalRowID         GlobalColID                   Value" << std::endl;
+  }
+
   for( int iRank = 0; iRank < n_mpi_process; iRank++ )
   {
 	  MpiWrapper::Barrier( getComm() );
@@ -367,10 +372,12 @@ void HypreVector::print( std::ostream & os ) const
       globalIndex const firstRowID = ilower();
       for( localIndex i = 0 ; i < localSize() ; ++i )
       {
-        os << std::setw(11) << iRank;
-        os << std::setw(20) << firstRowID + i;
-        os << std::setw(24) << std::scientific << local_data[i];
-        os << std::endl;
+        sprintf( str,
+                 "%11i%20lli%24.10e\n",
+                 iRank,
+                 firstRowID + integer_conversion<globalIndex>(i),
+                 local_data[i] );
+        os << str;
       }
     }
   }

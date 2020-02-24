@@ -140,11 +140,11 @@ void HypreMatrix::createWithGlobalSize( globalIndex const globalRows,
   HYPRE_Int const rank  = integer_conversion< HYPRE_Int >( MpiWrapper::Comm_rank( comm ) );
   HYPRE_Int const nproc = integer_conversion< HYPRE_Int >( MpiWrapper::Comm_size( comm ) );
 
-  HYPRE_Int const localRowSize = globalRows / nproc;
-  HYPRE_Int const rowResidual = globalRows % nproc;
+  HYPRE_Int const localRowSize = integer_conversion< HYPRE_Int >( globalRows / nproc );
+  HYPRE_Int const rowResidual = integer_conversion< HYPRE_Int >( globalRows % nproc );
 
-  HYPRE_Int const localColSize = globalCols / nproc;
-  HYPRE_Int const colResidual = globalCols % nproc;
+  HYPRE_Int const localColSize = integer_conversion< HYPRE_Int >( globalCols / nproc );
+  HYPRE_Int const colResidual = integer_conversion< HYPRE_Int >( globalCols % nproc );
 
   HYPRE_BigInt const ilower = rank * localRowSize + ( rank == 0 ? 0 : rowResidual );
   HYPRE_BigInt const iupper = ilower + localRowSize + ( rank == 0 ? rowResidual : 0 ) - 1;
@@ -627,7 +627,7 @@ void HypreMatrix::parCSRtoIJ( HYPRE_ParCSRMatrix const & parCSRMatrix )
 #endif
   hypre_IJMatrixPrintLevel( ijmatrix ) = 0;
 
-  array1d< HYPRE_Int > info( 2 );
+  array1d< HYPRE_BigInt > info( 2 );
   if( MpiWrapper::Comm_rank( hypre_IJMatrixComm( ijmatrix ) ) == 0 )
   {
     info( 0 ) = hypre_ParCSRMatrixFirstRowIndex( parCSRMatrix );
@@ -859,7 +859,7 @@ real64 HypreMatrix::getDiagValue( globalIndex globalRow ) const
   GEOSX_LAI_ASSERT_GT( iupper(), globalRow );
 
   // Get local row index
-  HYPRE_Int const localRow = getLocalRowID( globalRow );
+  HYPRE_Int const localRow = integer_conversion< HYPRE_Int >( getLocalRowID( globalRow ) );
 
   // Get diagonal block
   hypre_CSRMatrix const * const prt_CSR  = hypre_ParCSRMatrixDiag( m_parcsr_mat );
@@ -885,7 +885,7 @@ void HypreMatrix::clearRow( globalIndex const globalRow,
   GEOSX_LAI_ASSERT_GT( iupper(), globalRow );
 
   // Get local row index
-  HYPRE_Int const localRow = getLocalRowID( globalRow );
+  HYPRE_Int const localRow = integer_conversion< HYPRE_Int >( getLocalRowID( globalRow ) );
 
   // Clear row in diagonal block
   hypre_CSRMatrix * prt_CSR  = hypre_ParCSRMatrixDiag( m_parcsr_mat );
@@ -1047,8 +1047,13 @@ void HypreMatrix::print( std::ostream & os ) const
 
   int const this_mpi_process = MpiWrapper::Comm_rank( getComm() );
   int const n_mpi_process = MpiWrapper::Comm_size( getComm() );
+  char str[77];
 
-  os << "MPI_Process         GlobalRowID         GlobalColID                   Value" << std::endl;
+  if ( this_mpi_process == 0 )
+  {
+    os << "MPI_Process         GlobalRowID         GlobalColID                   Value" << std::endl;
+  }
+
   for( int iRank = 0; iRank < n_mpi_process; iRank++ )
   {
 	  MpiWrapper::Barrier( getComm() );
@@ -1072,19 +1077,24 @@ void HypreMatrix::print( std::ostream & os ) const
       {
         for( HYPRE_Int j = diag_IA[i] ; j < diag_IA[i + 1] ; ++j )
     	  {
-          os << std::setw(11) << iRank;
-          os << std::setw(20) << firstRowID + i;
-          os << std::setw(20) << firstDiagColID + diag_JA[j];
-          os << std::setw(24) << std::scientific << ptr_diag_data[j];
-          os << std::endl;
+
+          sprintf( str,
+                   "%11i%20lli%20lli%24.10e\n",
+                   iRank,
+                   firstRowID + integer_conversion<globalIndex>(i),
+                   firstDiagColID + integer_conversion<globalIndex>( diag_JA[j] ),
+                   ptr_diag_data[j] );
+          os << str;
         }
         for( HYPRE_Int j = offdiag_IA[i] ; j < offdiag_IA[i + 1] ; ++j )
     	  {
-          os << std::setw(11) << iRank;
-          os << std::setw(20) << firstRowID + i;
-          os << std::setw(20) << col_map_offdiag[ offdiag_JA[j] ];
-          os << std::setw(24) << std::scientific << ptr_offdiag_data[j];
-          os << std::endl;
+          sprintf( str,
+                   "%11i%20lli%20lli%24.10e\n",
+                   iRank,
+                   firstRowID + integer_conversion<globalIndex>(i),
+                   col_map_offdiag[ offdiag_JA[j] ],
+                   ptr_offdiag_data[j] );
+          os << str;
         }
       }
     }
