@@ -5,6 +5,7 @@ message("CMAKE_SYSTEM_NAME = ${CMAKE_SYSTEM_NAME}")
 message("CMAKE_HOST_APPLE = ${CMAKE_HOST_APPLE}")
 
 
+
 # OPTIONS
 option( ENABLE_CALIPER "" OFF )
 
@@ -25,6 +26,8 @@ option( ENABLE_PAMELA "" ON )
 option( ENABLE_PVTPackage "" ON )
 
 option( ENABLE_UNCRUSTIFY "" ON )
+
+option( ENABLE_XML_UPDATES "" ON )
 
 option( ENABLE_FORTRAN "Enables Fortran support" OFF)
 
