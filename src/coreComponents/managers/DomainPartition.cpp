@@ -58,7 +58,7 @@ void DomainPartition::RegisterDataOnMeshRecursive( Group * const )
 
 void DomainPartition::InitializationOrder( string_array & order )
 {
-  set<string> usedNames;
+  SortedArray<string> usedNames;
   {
     order.push_back(keys::ConstitutiveManager);
     usedNames.insert(keys::ConstitutiveManager);
@@ -99,11 +99,11 @@ void DomainPartition::GenerateSets()
     string name = wrapper.second->getName();
     nodeInSet[name].resize( nodeManager->size() );
     nodeInSet[name] = false;
-    Wrapper<set<localIndex>> const * const setPtr = nodeSets->getWrapper<set<localIndex>>(name);
+    Wrapper<SortedArray<localIndex>> const * const setPtr = nodeSets->getWrapper<SortedArray<localIndex>>(name);
     if( setPtr!=nullptr )
     {
       setNames.push_back(name);
-      set<localIndex> const & set = setPtr->reference();
+      SortedArrayView<localIndex const> const & set = setPtr->reference();
       for( localIndex const a : set )
       {
         nodeInSet[name][a] = true;
@@ -126,7 +126,7 @@ void DomainPartition::GenerateSets()
     {
       arrayView1d<bool const> const & nodeInCurSet = nodeInSet[setName];
 
-      set<localIndex> & targetSet = elementSets->registerWrapper< set<localIndex> >(setName)->reference();
+      SortedArray<localIndex> & targetSet = elementSets->registerWrapper< SortedArray<localIndex> >(setName)->reference();
       for( localIndex k = 0 ; k < subRegion->size() ; ++k )
       {
         localIndex const numNodes = subRegion->numNodesPerElement( k );

@@ -207,7 +207,7 @@ void WellSolverBase::PrecomputeData(DomainPartition * const domain)
   {
     WellControls * const wellControls = GetWellControls( subRegion );
 
-    PerforationData const * const perforationData = subRegion->GetPerforationData();
+    PerforationData * const perforationData = subRegion->GetPerforationData();
 
     arrayView1d<R1Tensor const> const & wellElemLocation = 
       subRegion->getReference<array1d<R1Tensor>>( ElementSubRegionBase::viewKeyStruct::elementCenterString );

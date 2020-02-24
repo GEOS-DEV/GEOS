@@ -710,7 +710,7 @@ void ProblemManager::PostProcessInput()
 
 void ProblemManager::InitializationOrder( string_array & order )
 {
-  set<string> usedNames;
+  SortedArray<string> usedNames;
 
 
   {
@@ -745,7 +745,7 @@ void ProblemManager::GenerateMesh()
 
   MeshManager * meshManager = this->GetGroup<MeshManager>(groupKeys.meshManager);
   meshManager->GenerateMeshes(domain);
-  Group const * const cellBlockManager = domain->GetGroup(keys::cellManager);
+  Group * const cellBlockManager = domain->GetGroup(keys::cellManager);
 
 
   Group * const meshBodies = domain->getMeshBodies();

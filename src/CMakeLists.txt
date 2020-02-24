@@ -94,10 +94,15 @@ blt_add_executable(NAME geosx
                               ${externalComponentsLinkList}
                   )
 
+# Removing all transitive link dependencies from geosx_core target to circumvent
+# the BLT behavior which imposes all dependencies to be public
+#set_target_properties(geosx_core PROPERTIES INTERFACE_LINK_LIBRARIES "")
+
 target_include_directories( geosx PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
 # To change the runtime path during installation
 set_target_properties( geosx PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib" )
+set_target_properties( geosx PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE )
 
 install(TARGETS geosx RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 

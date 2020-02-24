@@ -27,7 +27,7 @@ public:
   CellElementSubRegion( string const & name, Group * const parent );
   virtual ~CellElementSubRegion() override;
 
-  void CopyFromCellBlock( CellBlock const * source );
+  void CopyFromCellBlock( CellBlock * source );
 
   void ConstructSubRegionFromFaceSet( FaceManager const * const faceManager,
                                       string const & setName );
@@ -42,7 +42,7 @@ public:
     }
   }
 
-  virtual void ViewPackingExclusionList( set<localIndex> & exclusionList ) const override;
+  virtual void ViewPackingExclusionList( SortedArray<localIndex> & exclusionList ) const override;
 
   virtual localIndex PackUpDownMapsSize( arrayView1d<localIndex const> const & packList ) const override;
 

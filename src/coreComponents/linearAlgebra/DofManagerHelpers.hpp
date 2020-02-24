@@ -241,6 +241,22 @@ struct MapHelperImpl< array2d<T, PERMUTATION> >
   {
     return map( i0, i1 );
   }
+
+  static localIndex size0( arrayView2d<T const, LvArray::getStrideOneDimension( PERMUTATION {} ) > const & map )
+  {
+    return map.size( 0 );
+  }
+
+  static localIndex size1( arrayView2d<T const, LvArray::getStrideOneDimension( PERMUTATION {} ) > const & map, localIndex const GEOSX_UNUSED_PARAM( i0 ) )
+  {
+    return map.size( 1 );
+  }
+
+  static T const & value( arrayView2d<T const, LvArray::getStrideOneDimension( PERMUTATION {} ) > const & map, localIndex const i0, localIndex const i1 )
+  {
+    return map( i0, i1 );
+  }
+
 };
 
 template< typename T >
@@ -260,6 +276,22 @@ struct MapHelperImpl< array1d< array1d<T> > >
   {
     return map[i0][i1];
   }
+
+  static localIndex size0( arrayView1d<arrayView1d<T const> const > const & map )
+  {
+    return map.size();
+  }
+
+  static localIndex size1( arrayView1d< arrayView1d<T const >  const > const & map, localIndex const i0 )
+  {
+    return map[i0].size();
+  }
+
+  static T const & value( arrayView1d< arrayView1d<T const> const > const & map, localIndex const i0, localIndex const i1 )
+  {
+    return map[i0][i1];
+  }
+
 };
 
 template< typename T >
@@ -282,19 +314,19 @@ struct MapHelperImpl< ArrayOfArrays<T> >
 };
 
 template< typename T >
-struct MapHelperImpl< array1d< set<T> > >
+struct MapHelperImpl< array1d< SortedArray<T> > >
 {
-  static localIndex size0( array1d< set<T> > const & map )
+  static localIndex size0( array1d< SortedArray<T> > const & map )
   {
     return map.size();
   }
 
-  static localIndex size1( array1d< set<T> > const & map, localIndex const i0 )
+  static localIndex size1( array1d< SortedArray<T> > const & map, localIndex const i0 )
   {
     return map[i0].size();
   }
 
-  static T const & value( array1d< set<T> > const & map, localIndex const i0, localIndex const i1 )
+  static T const & value( array1d< SortedArray<T> > const & map, localIndex const i0, localIndex const i1 )
   {
     return map[i0][i1];
   }
@@ -480,7 +512,7 @@ struct MeshLoopHelper< LOC, LOC, VISIT_GHOSTS >
       using ElemToLocMapType = MapType<LOC, ElementSubRegionType>;
 
       // get access to element-to-location map
-      ElemToLocMapType const & elemToLocMap =
+      auto const & elemToLocMap =
         subRegion->template getReference<ElemToLocMapType>( MeshHelper<LOC>::mapViewKey );
 
       // loop over all elements (including ghosts, which may be necessary to access some locally owned locations)
@@ -541,7 +573,7 @@ struct MeshLoopHelper
     ObjectManagerLoc const * const objectManager = getObjectManager<LOC>( meshLevel );
 
     // get access to location-to-connected map
-    LocToConnMapType const & locToConnMap =
+    auto const & locToConnMap =
       objectManager->template getReference<LocToConnMapType>( MeshHelper<CONN_LOC>::mapViewKey );
 
     // call the specialized version first, then add an extra loop over connected objects
@@ -584,11 +616,11 @@ struct MeshLoopHelper< LOC, DofManager::Location::Elem, VISIT_GHOSTS >
     ObjectManagerLoc const * const objectManager = getObjectManager<LOC>( meshLevel );
 
     // access to location-to-element map
-    ToElemMapType const & elemRegionList =
+    auto const & elemRegionList =
       objectManager->template getReference<ToElemMapType>( ObjectManagerLoc::viewKeyStruct::elementRegionListString );
-    ToElemMapType const & elemSubRegionList =
+    auto const & elemSubRegionList =
       objectManager->template getReference<ToElemMapType>( ObjectManagerLoc::viewKeyStruct::elementSubRegionListString );
-    ToElemMapType const & elemIndexList =
+    auto const & elemIndexList =
       objectManager->template getReference<ToElemMapType>( ObjectManagerLoc::viewKeyStruct::elementListString );
 
     // call the specialized version first, then add an extra loop over connected elements
@@ -639,7 +671,7 @@ struct MeshLoopHelper< DofManager::Location::Elem, CONN_LOC, VISIT_GHOSTS >
       using ElemToConnMapType = MapType<CONN_LOC, TYPEOFPTR( subRegion )>;
 
       // get access to element-to-location map
-      ElemToConnMapType const & elemToConnMap =
+      auto const & elemToConnMap =
         subRegion->template getReference<ElemToConnMapType>( MeshHelper<CONN_LOC>::mapViewKey );
 
       arrayView1d<integer const> const & elemGhostRank = subRegion->GhostRank();

@@ -875,8 +875,9 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( real64 const GEOSX_UNUSED_P
 
   string const dofKey = dofManager->getKey( viewKeyStruct::dofFieldString );
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d<globalIndex> > dofNumberAccessor =
-    elemManager->ConstructViewAccessor< array1d<globalIndex>, arrayView1d<globalIndex> >( dofKey );
+  ElementRegionManager::ElementViewAccessor< arrayView1d<globalIndex const> >
+  dofNumberAccessor = elemManager->ConstructViewAccessor< array1d<globalIndex>,
+                                                          arrayView1d<globalIndex const> >( dofKey );
 
   FluxKernel::ElementView< arrayView1d<globalIndex const> > const & dofNumber = dofNumberAccessor.toViewConst();
 
@@ -1150,7 +1151,7 @@ CompositionalMultiphaseFlow::ApplySourceFluxBC( real64 const time,
   fsManager.Apply( time + dt, domain, "ElementRegions", FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString,
                     [&]( FieldSpecificationBase const * const fs,
                     string const &,
-                    set<localIndex> const & lset,
+                    SortedArrayView<localIndex const> const & lset,
                     Group * subRegion,
                     string const & ) -> void
   {
@@ -1161,7 +1162,7 @@ CompositionalMultiphaseFlow::ApplySourceFluxBC( real64 const time,
     arrayView1d< integer const > const &
     ghostRank = subRegion->getReference<array1d<integer> >( ObjectManagerBase::viewKeyStruct::ghostRankString);
 
-    set< localIndex > localSet;
+    SortedArray< localIndex > localSet;
     for( localIndex const a : lset )
     {
       if( ghostRank[a] < 0 )
@@ -1206,7 +1207,7 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( real64 const time,
                    viewKeyStruct::pressureString,
                    [&]( FieldSpecificationBase const * const fs,
                         string const & setName,
-                        set<localIndex> const & targetSet,
+                        SortedArrayView<localIndex const> const & targetSet,
                         Group * subRegion,
                         string const & )
   {
@@ -1230,7 +1231,7 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( real64 const time,
                    viewKeyStruct::globalCompFractionString,
                    [&] ( FieldSpecificationBase const * const fs,
                          string const & setName,
-                         set<localIndex> const & targetSet,
+                         SortedArrayView<localIndex const> const & targetSet,
                          Group * subRegion,
                          string const & )
   {
@@ -1274,7 +1275,7 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( real64 const time,
                    viewKeyStruct::pressureString,
                    [&] ( FieldSpecificationBase const * const GEOSX_UNUSED_PARAM( bc ),
                          string const & GEOSX_UNUSED_PARAM( setName ),
-                         set<localIndex> const & targetSet,
+                         SortedArrayView<localIndex const> const & targetSet,
                          Group * subRegion,
                          string const & )
   {

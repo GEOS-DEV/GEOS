@@ -227,7 +227,7 @@ void NodeManager::CompressRelationMaps()
 }
 
 //**************************************************************************************************
-void NodeManager::ViewPackingExclusionList( set<localIndex> & exclusionList ) const
+void NodeManager::ViewPackingExclusionList( SortedArray<localIndex> & exclusionList ) const
 {
   ObjectManagerBase::ViewPackingExclusionList(exclusionList);
   exclusionList.insert(this->getWrapperIndex(viewKeyStruct::edgeListString));

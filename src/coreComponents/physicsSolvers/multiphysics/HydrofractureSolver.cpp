@@ -583,7 +583,7 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
   {
     localIndex const numElems = elementSubRegion->size();
     array1d<array1d<localIndex > > const & elemsToNodes = elementSubRegion->nodeList();
-    arrayView1d<globalIndex> const &
+    arrayView1d<globalIndex const> const &
     faceElementDofNumber = elementSubRegion->getReference< array1d<globalIndex> >( presDofKey );
 
     for( localIndex k=0 ; k<numElems ; ++k )
@@ -640,7 +640,7 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
 
       array1d<array1d<localIndex > > const & elemsToNodes = elementSubRegion->nodeList();
 
-      arrayView1d<globalIndex> const &
+      arrayView1d<globalIndex const> const &
       faceElementDofNumber = elementSubRegion->getReference< array1d<globalIndex> >( presDofKey );
       for( localIndex k0=0 ; k0<numFluxElems ; ++k0 )
       {
@@ -733,11 +733,11 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
                    keys::TotalDisplacement,
                    [&]( FieldSpecificationBase const * const bc,
                         string const &,
-                        set<localIndex> const & targetSet,
+                        SortedArrayView<localIndex const> const & targetSet,
                         Group * const ,
                         string const )
   {
-    set<localIndex> localSet;
+    SortedArray<localIndex> localSet;
     for( auto const & a : targetSet )
     {
       if( nodeGhostRank[a]<0 )
@@ -766,7 +766,7 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
                     FlowSolverBase::viewKeyStruct::pressureString,
                     [&]( FieldSpecificationBase const * const fs,
                          string const &,
-                         set<localIndex> const & lset,
+                         SortedArrayView<localIndex const> const & lset,
                          Group * subRegion,
                          string const & ) -> void
   {
@@ -774,7 +774,7 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
     dofNumber = subRegion->getReference< array1d<globalIndex> >( presDofKey );
     arrayView1d<integer const> const & ghostRank = subRegion->group_cast<ObjectManagerBase*>()->GhostRank();
 
-    set<localIndex> localSet;
+    SortedArray<localIndex> localSet;
     for( auto const & a : lset )
     {
       if( ghostRank[a]<0 )
