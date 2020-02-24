@@ -13,7 +13,7 @@
  */
 
 /**
- * @file PetscSparseMatrix.hpp
+ * @file PetscMatrix.hpp
  */
 
 #ifndef GEOSX_LINEARALGEBRA_INTERFACES_PETSCSPARSEMATRIX_HPP_
@@ -34,12 +34,12 @@ namespace geosx
 {
 
 /**
- * @class PetscSparseMatrix
+ * @class PetscMatrix
  * @brief This class creates and provides basic support for the Mat
  *        matrix object type used in PETSc.
  */
-class PetscSparseMatrix final : public LinearOperator<PetscVector>,
-                                private MatrixBase<PetscSparseMatrix, PetscVector>
+class PetscMatrix final : public LinearOperator<PetscVector>,
+                          private MatrixBase<PetscMatrix, PetscVector>
 {
 public:
 
@@ -53,19 +53,19 @@ public:
    *
    * Create an empty (distributed) matrix.
    */
-  PetscSparseMatrix();
+  PetscMatrix();
 
   /**
    * @brief Copy constructor.
    *
    * Create new matrix from matrix <tt>src</tt>.
    */
-  PetscSparseMatrix( PetscSparseMatrix const & src );
+  PetscMatrix( PetscMatrix const & src );
 
   /**
    * @brief Destructor.
    */
-  ~PetscSparseMatrix() override;
+  ~PetscMatrix() override;
 
   ///@}
 
@@ -188,16 +188,16 @@ public:
   void multiply( PetscVector const & src,
                  PetscVector & dst ) const override;
 
-  void multiply( PetscSparseMatrix const & src,
-                 PetscSparseMatrix & dst,
+  void multiply( PetscMatrix const & src,
+                 PetscMatrix & dst,
                  bool const closeResult = true ) const override;
 
-  void leftMultiplyTranspose( PetscSparseMatrix const & src,
-                              PetscSparseMatrix & dst,
+  void leftMultiplyTranspose( PetscMatrix const & src,
+                              PetscMatrix & dst,
                               bool const closeResult = true ) const override;
 
-  void rightMultiplyTranspose( PetscSparseMatrix const & src,
-                               PetscSparseMatrix & dst,
+  void rightMultiplyTranspose( PetscMatrix const & src,
+                               PetscMatrix & dst,
                                bool const closeResult = true ) const override;
 
   void gemv( real64 const alpha,

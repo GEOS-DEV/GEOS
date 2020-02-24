@@ -26,7 +26,7 @@
 #include "PetscSolver.hpp"
 
 #include "linearAlgebra/interfaces/PetscVector.hpp"
-#include "linearAlgebra/interfaces/PetscSparseMatrix.hpp"
+#include "linearAlgebra/interfaces/PetscMatrix.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 
 #include <petscvec.h>
@@ -55,7 +55,7 @@ PetscSolver::PetscSolver( LinearSolverParameters const & parameters )
 // ----------------------------
 // We switch between different solverTypes here
 
-void PetscSolver::solve( PetscSparseMatrix &mat,
+void PetscSolver::solve( PetscMatrix &mat,
                          PetscVector &sol,
                          PetscVector &rhs )
 {
@@ -69,7 +69,7 @@ void PetscSolver::solve( PetscSparseMatrix &mat,
 // Direct solver
 // ----------------------------
 
-void PetscSolver::solve_direct( PetscSparseMatrix &mat,
+void PetscSolver::solve_direct( PetscMatrix &mat,
                                 PetscVector &sol,
                                 PetscVector &rhs )
 {
@@ -97,7 +97,7 @@ void PetscSolver::solve_direct( PetscSparseMatrix &mat,
 // Iterative solver
 // ----------------------------
 
-void PetscSolver::solve_krylov( PetscSparseMatrix &mat,
+void PetscSolver::solve_krylov( PetscMatrix &mat,
                                 PetscVector &sol,
                                 PetscVector &rhs )
 {

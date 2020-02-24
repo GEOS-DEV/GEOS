@@ -90,14 +90,14 @@ if( ENABLE_PETSC )
 
     list( APPEND linearAlgebra_headers
                  interfaces/PetscVector.hpp
-                 interfaces/PetscSparseMatrix.hpp
+                 interfaces/PetscMatrix.hpp
                  interfaces/PetscSolver.hpp
                  interfaces/PetscInterface.hpp
                  interfaces/PetscUtils.hpp )
 
     list( APPEND linearAlgebra_sources
                  interfaces/PetscVector.cpp
-                 interfaces/PetscSparseMatrix.cpp
+                 interfaces/PetscMatrix.cpp
                  interfaces/PetscSolver.cpp
                  interfaces/PetscInterface.cpp )
 

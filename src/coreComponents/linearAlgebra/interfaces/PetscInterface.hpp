@@ -21,7 +21,7 @@
 
 #include "PetscSolver.hpp"
 #include "PetscVector.hpp"
-#include "PetscSparseMatrix.hpp"
+#include "PetscMatrix.hpp"
 
 namespace geosx
 {
@@ -37,7 +37,7 @@ struct PetscInterface
 
   static void finalize();
 
-  using ParallelMatrix = PetscSparseMatrix;
+  using ParallelMatrix = PetscMatrix;
   using ParallelVector = PetscVector;
   using LinearSolver   = PetscSolver;
 };
