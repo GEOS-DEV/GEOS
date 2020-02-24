@@ -155,7 +155,10 @@ protected:
   /**
    * @brief Reset the matrix to default state
    */
-  virtual void reset() = 0;
+  virtual void reset()
+  {
+    m_closed = true;
+  };
 
   ///@}
 

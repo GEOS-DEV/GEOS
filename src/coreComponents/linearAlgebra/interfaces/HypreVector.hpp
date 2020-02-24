@@ -19,8 +19,7 @@
 #ifndef GEOSX_LINEARALGEBRA_INTERFACES_HYPREVECTOR_HPP_
 #define GEOSX_LINEARALGEBRA_INTERFACES_HYPREVECTOR_HPP_
 
-#include "common/DataTypes.hpp"
-#include "mpiCommunications/MpiWrapper.hpp"
+#include "linearAlgebra/interfaces/VectorBase.hpp"
 
 // Just a placeholder to avoid to include two HYPRE header files
 // #include "HYPRE_IJ_mv.h"
@@ -42,48 +41,43 @@ namespace geosx
  *        vector object type used in Hypre using the linear-algebraic system
  *        interface (IJ interface).
  */
-class HypreVector
+class HypreVector final : private VectorBase<HypreVector>
 {
 public:
-  //! @name Constructor/Destructor Methods
-  //@{
+
+  /**
+   * @name Constructor/Destructor Methods
+   */
+   ///@{
 
   /**
    * @brief Empty vector constructor.
-   *
    * Create an empty (distributed) vector.
    */
   HypreVector();
 
   /**
    * @brief Copy constructor.
-   *
-   * @param src HypreVector to be copied.
+   * @param src vector to be copied
    *
    */
   HypreVector( HypreVector const & src );
 
   /**
    * @brief Move constructor.
-   *
-   * @param src HypreVector to be moved.
-   *
+   * @param src vector to be moved
    */
   HypreVector( HypreVector && src );
 
   /**
    * @brief Copy assignment.
-   *
    * @param src HypreVector to be copied.
-   *
    */
   HypreVector & operator=( HypreVector const & src );
 
   /**
    * @brief Move assignment.
-   *
    * @param src HypreVector to be moved.
-   *
    */
   HypreVector & operator=( HypreVector && src );
 
@@ -91,379 +85,140 @@ public:
    * @brief Destructor.
    */
   ~HypreVector();
-  //@}
 
-  //! @name Create Methods
-  //@{
-
-  void reset();
+  ///@}
 
   /**
-   * @brief Create a vector based on a previous vector.
-   *
-   * @param vector an already formed EpetraVector.
-   *
+   * @name VectorBase interface
    */
-  void create( HypreVector const & src );
+  ///@{
 
-  /**
-   * @brief Create a vector based on local number of elements.
-   *
-   * Create a vector based on local number of elements.  Global size is
-   * the sum across processors.  For specifying a global size and having
-   * automatic partitioning, see createGlobal().
-   *
-   * @param localSize local number of elements.
-   *
-   */
-  void createWithLocalSize( localIndex const localSize,
-                            MPI_Comm const & comm = MPI_COMM_WORLD );
+  using VectorBase::closed;
+  using VectorBase::ready;
 
-  /**
-   * @brief Create a vector based on global number of elements.
-   *
-   * Create a vector based on global number of elements. Every processors
-   * gets the same number of local elements except proc 0, which gets any
-   * remainder elements as well if the split can't be done evenly.
-   *
-   * @param globalSize Global number of elements.
-   *
-   */
-  void createWithGlobalSize( globalIndex const globalSize,
-                             MPI_Comm const & comm = MPI_COMM_WORLD );
+  bool created() const override;
 
-  /**
-   * @brief Construct parallel vector from a local array.
-   *
-   * Create a vector from local data
-   *
-   * @param localValues local data to put into vector
-   *
-   */
-  void create( array1d< real64 > const & localValues,
-               MPI_Comm const & comm = MPI_COMM_WORLD );
+  void createWithLocalSize( localIndex const localSize, MPI_Comm const & comm ) override;
 
-  //@}
-  //! @name Open / close
-  //@{
+  void createWithGlobalSize( globalIndex const globalSize, MPI_Comm const & comm ) override;
 
-  /**
-   * @brief Re-enable coefficient set/add
-   *
-   */
-  void open();
+  void create( arraySlice1d<real64 const> const & localValues, MPI_Comm const & comm ) override;
 
-  /**
-   * @brief Assemble vector
-   *
-   * Performs parallel communication to scatter assembled entries to appropriate locations
-   */
-  void close();
+  void open() override;
 
-  //@}
+  void close() override;
 
-  //! @name Add/Set Methods
-  //@{
+  void reset() override;
 
-  /**
-   * @brief Set vector value.
-   *
-   * Set vector value at given element.
-   *
-   * @param globalRow global row index
-   * @param value Value to add at given row.
-   *
-   */
-  void set( globalIndex const globalRow,
-            real64 const value );
+  void set( globalIndex const globalRowIndex,
+            real64 const value ) override;
 
-  /**
-   * @brief Add into vector value.
-   *
-   * Add into vector value at given row.
-   *
-   * @param globalRow global row.
-   * @param value Values to add in given row.
-   *
-   */
-  void add( globalIndex const globalRow,
-            real64 const value );
+  void add( globalIndex const globalRowIndex,
+            real64 const value ) override;
 
-  /**
-   * @brief Set vector values.
-   *
-   * Set vector values at given elements.
-   *
-   * @param globalIndices global row indices.
-   * @param values Values to add in given rows.
-   * @param size Number of elements
-   *
-   */
-  void set( globalIndex const * globalIndices,
+  void set( globalIndex const * globalRowIndices,
             real64 const * values,
-            localIndex size );
+            localIndex size ) override;
 
-  /**
-   * @brief Add vector values.
-   *
-   * Add vector values at given elements.
-   *
-   * @param globalIndices global row indices.
-   * @param values Values to add in given rows.
-   * @param size Number of elements
-   *
-   */
-  void add( globalIndex const * globalIndices,
+  void add( globalIndex const * globalRowIndices,
             real64 const * values,
-            localIndex size );
+            localIndex const size ) override;
 
-  /**
-   * @brief Set vector values using array1d
-   *
-   * Set vector values at given elements.
-   *
-   * @param globalIndices global row indices.
-   * @param values Values to add in given rows.
-   *
-   */
-  void set( array1d< globalIndex > const & globalIndices,
-            array1d< real64 > const & values );
+  void set( arraySlice1d<globalIndex const> const & globalRowIndices,
+            arraySlice1d<real64 const> const & values ) override;
 
-  /**
-   * @brief Add into vector values using array1d
-   *
-   * Add into vector values at given rows.
-   *
-   * @param globalIndices global rows indices
-   * @param values Values to add in given rows.
-   *
-   */
-  void add( array1d< globalIndex > const & globalIndices,
-            array1d< real64 > const & values );
+  void add( arraySlice1d<globalIndex const> const & globalRowIndices,
+            arraySlice1d<real64 const> const & values ) override;
 
-  /**
-   * @brief Set all elements to a constant value.
-   *
-   * @param value Values to set vector elements to.
-   *
-   */
-  void set( real64 const value );
+  void set( real64 const value ) override;
 
-  /**
-   * @brief Set vector elements to zero.
-   *
-   */
-  void zero();
+  void zero() override;
 
-  /**
-   * @brief Set vector elements to random entries.
-   *
-   */
-  void rand( unsigned const seed = 1984 );
+  void rand( unsigned const seed = 1984 ) override;
 
-  //@}
+  void scale( real64 const scalingFactor ) override;
 
-  //! @name Algebraic Operations
-  //@{
+  real64 dot( HypreVector const & vec ) const override;
 
-  /**
-   * @brief Multiply all elements by scalingFactor.
-   *
-   * @param scalingFactor Scaling Factor.
-   *
-   */
-  void scale( real64 const scalingFactor );
+  void copy( HypreVector const & x ) override;
 
-  /**
-   * @brief Dot product with the vector vec.
-   *
-   * @param vec HypreVector to dot-product with.
-   *
-   */
-  real64 dot( HypreVector const & vec ) const;
-
-  /**
-   * @brief Update vector <tt>y</tt> as <tt>y</tt> = <tt>x</tt>.
-   *
-   * @note The naming convention follows the BLAS library.
-   *
-   * @param x HypreVector to copy.
-   *
-   */
-  void copy( HypreVector const & x );
-
-  /**
-   * @brief Update vector <tt>y</tt> as <tt>y</tt> = <tt>alpha*x + y</tt>.
-   *
-   * @note The naming convention follows the logic of the BLAS library.
-   *
-   * @param alpha Scaling factor for added vector.
-   * @param x HypreVector to add.
-   *
-   */
   void axpy( real64 const alpha,
-             HypreVector const & x );
+             HypreVector const & x ) override;
 
-  /**
-   * @brief Update vector <tt>y</tt> as <tt>y</tt> = <tt>alpha*x + beta*y</tt>.
-   *
-   * @note The naming convention follows the logic of the BLAS library.
-   *
-   * @param alpha Scaling factor for added vector.
-   * @param x HypreVector to add.
-   * @param beta Scaling factor for self vector.
-   *
-   */
   void axpby( real64 const alpha,
               HypreVector const & x,
-              real64 const beta );
+              real64 const beta ) override;
 
-  /**
-   * @brief 1-norm of the vector.
-   *
-   */
-  real64 norm1() const;
+  real64 norm1() const override;
 
-  /**
-   * @brief 2-norm of the vector.
-   *
-   */
-  real64 norm2() const;
+  real64 norm2() const override;
 
-  /**
-   * @brief Infinity-norm of the vector.
-   *
-   */
-  real64 normInf() const;
+  real64 normInf() const override;
 
-  //@}
+  globalIndex globalSize() const override;
 
-  //! @name Accessor Methods
-  //@{
+  localIndex localSize() const override;
 
-  /**
-   * @brief Returns the global of the vector.
-   */
-  globalIndex globalSize() const;
+  globalIndex ilower() const override;
 
-  /**
-   * @brief Returns the local size of the vector.
-   */
-  localIndex localSize() const;
+  globalIndex iupper() const override;
 
-  /**
-   * @brief Returns the index of the first global row owned by that processor.
-   */
-  globalIndex ilower() const;
+  real64 get( globalIndex globalRow ) const override;
 
-  /**
-   * @brief Returns the next index after last global row owned by that processor.
-   *
-   * @note The intention is for [ilower; iupper) to be used as a half-open index range
-   */
-  globalIndex iupper() const;
+  void get( arraySlice1d<globalIndex const> const & globalRowIndices,
+            arraySlice1d<real64> const & values ) const override;
 
-  /**
-   * @brief Returns value globalRow of the vector. TODO: Not yet implemented, since not built-in
-   */
-  real64 get( globalIndex globalRow ) const;
+  localIndex getLocalRowID( globalIndex const globalRowIndex ) const override;
 
-  /**
-   * @brief Returns array of values at globalIndices of the vector. TODO: Not yet implemented, since not built-in
-   */
-  void get( array1d< globalIndex > const & globalIndices,
-            array1d< real64 > & values ) const;
+  globalIndex getGlobalRowID( localIndex const localRowIndex ) const override;
 
-  /**
-   * @brief Returns a const pointer to the underlying HYPRE_IJVector object.
-   */
-  HYPRE_IJVector const * unwrappedPointer() const;
+  real64 const * extractLocalVector() const override;
 
-  /**
-   * @brief Returns a non-const pointer to the underlying HYPRE_IJVector object.
-   */
-  HYPRE_IJVector * unwrappedPointer();
+  real64 * extractLocalVector() override;
 
-  /**
-   * @brief Returns a const pointer to the underlying HYPRE_IJVector object.
-   */
-  HYPRE_ParVector const * getHypreParVectorPointer() const;
+  MPI_Comm getComm() const override;
 
-  /**
-   * @brief Returns a non-const pointer to the underlying HYPRE_IJVector object.
-   */
-  HYPRE_ParVector * getHypreParVectorPointer();
+  void print( std::ostream & os = std::cout ) const override;
 
-  operator HYPRE_IJVector()
-  {
-    return (HYPRE_IJVector) m_ij_vector;
-  }
-
-  operator HYPRE_ParVector()
-  {
-    return (HYPRE_ParVector) m_par_vector;
-  }
-
-  /**
-   * Map a global row index to local row index
-   */
-  localIndex getLocalRowID( globalIndex const index ) const;
-
-  /**
-   * Map a local row index to global row index
-   */
-  globalIndex getGlobalRowID( localIndex const index ) const;
-
-  /**
-   * Extract a view of the local portion of the array
-   */
-  real64 const * extractLocalVector() const;
-
-//  /**
-//   * Extract a view of the local portion of the array
-//   */
-  real64 * extractLocalVector();
-
-  //@}
-
-  //! @name I/O Methods
-  //@{
-
-  /**
-   * @brief Print the vector in Hypre format to the terminal.
-   */
-  void print( std::ostream & os = std::cout ) const;
-
-  /**
-   * @brief Write the vector to file in HYPRE format
-   */
   void write( string const & filename,
-              bool const mtxFormat = true ) const;
+              LAIOutputFormat const format ) const override;
 
-  //@}
+  ///@}
+
+  /**
+   * @brief Returns a const pointer to the underlying HYPRE_IJVector object.
+   */
+  HYPRE_IJVector const & unwrapped() const;
+
+  /**
+   * @brief Returns a non-const pointer to the underlying HYPRE_IJVector object.
+   */
+  HYPRE_IJVector & unwrapped();
+
+  /**
+   * @brief Returns a const pointer to the underlying HYPRE_IJVector object.
+   */
+  HYPRE_ParVector const & unwrappedParVector() const;
+
+  /**
+   * @brief Returns a non-const pointer to the underlying HYPRE_IJVector object.
+   */
+  HYPRE_ParVector & unwrappedParVector();
 
 private:
 
   /**
    * Pointer to underlying HYPRE_IJVector type.
    */
-  HYPRE_IJVector m_ij_vector = nullptr;
+  HYPRE_IJVector m_ij_vector;
 
   /**
    * Pointer to underlying HYPRE_ParVector type.
    */
-  HYPRE_ParVector m_par_vector = nullptr;
+  HYPRE_ParVector m_par_vector;
 
 };
 
-/**
- * @brief Stream insertion operator for EpetraVector
- * @param os the output stream
- * @param vec the vector to be printed
- * @return reference to the output stream
- */
-std::ostream & operator<<( std::ostream & os, HypreVector const & vec );
-
-}// end geosx namespace
+}// end namespace geosx
 
 #endif /*GEOSX_LINEARALGEBRA_INTERFACES_HYPREVECTOR_HPP_*/

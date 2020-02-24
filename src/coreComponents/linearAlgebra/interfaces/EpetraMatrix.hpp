@@ -222,8 +222,8 @@ public:
   localIndex globalRowLength( globalIndex globalRowIndex ) const override;
 
   void getRowCopy( globalIndex globalRow,
-                   array1d< globalIndex > & colIndices,
-                   array1d< real64 > & values ) const override;
+                   arraySlice1d< globalIndex > const & colIndices,
+                   arraySlice1d< real64 > const & values ) const override;
 
   real64 getDiagValue( globalIndex globalRow ) const override;
 

@@ -19,7 +19,6 @@
 #ifndef GEOSX_LINEARALGEBRA_INTERFACES_EPETRAVECTOR_HPP_
 #define GEOSX_LINEARALGEBRA_INTERFACES_EPETRAVECTOR_HPP_
 
-#include "common/DataTypes.hpp"
 #include "linearAlgebra/interfaces/VectorBase.hpp"
 
 class Epetra_FEVector;
@@ -155,12 +154,12 @@ public:
 
   real64 get( globalIndex globalRow ) const override;
 
-  void get( arraySlice1d<globalIndex const> const & globalRowIndices,
+  void get( arraySlice1d<globalIndex const> const & globalIndices,
             arraySlice1d<real64> const & values ) const override;
 
-  localIndex getLocalRowID( globalIndex const globalRowIndex ) const override;
+  localIndex getLocalRowID( globalIndex const globalRow ) const override;
 
-  globalIndex getGlobalRowID( localIndex const localRowIndex ) const override;
+  globalIndex getGlobalRowID( localIndex const localRow ) const override;
 
   real64 const * extractLocalVector() const override;
 

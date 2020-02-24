@@ -356,18 +356,18 @@ TYPED_TEST_P( LAOperationsTest, MatrixFunctions )
   }
   mat4.close();
 
-  array1d<real64> colvals;
   array1d<real64> colvals_CHECK( 3 );
   colvals_CHECK( 0 ) = 6;
   colvals_CHECK( 1 ) = 1;
   colvals_CHECK( 2 ) = 10;
-  array1d<globalIndex> colinds;
 
   if( ( mat4.ilower() <= iRow ) && ( iRow < mat4.iupper() ) )
   {
+    localIndex const rowLength = mat.getGlobalRowLength( iRow );
+    EXPECT_EQ( rowLength, colvals_CHECK.size() );
+    array1d<real64> colvals( rowLength );
+    array1d<globalIndex> colinds( rowLength );
     mat4.getRowCopy( iRow, colinds, colvals );
-    EXPECT_EQ( colinds.size(), 3 );
-
     for( int i = 0 ; i < 3 ; ++i )
     {
       EXPECT_DOUBLE_EQ( colvals( colinds[i] ), colvals_CHECK( i ) ); //HYPRE does not return sorted cols!

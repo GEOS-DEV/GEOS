@@ -224,8 +224,8 @@ protected:
    */
   virtual void reset()
   {
-    GEOSX_LAI_MATRIX_STATUS( closed() );
     m_assembled = false;
+    m_closed = true;
   }
 
   ///@}
@@ -645,8 +645,8 @@ protected:
    * Note that the input arrays will be resized internally to fit the number of entries.
    */
   virtual void getRowCopy( globalIndex globalRow,
-                           array1d< globalIndex > & colIndices,
-                           array1d< real64 > & values ) const = 0;
+                           arraySlice1d< globalIndex > const & colIndices,
+                           arraySlice1d< real64 > const & values ) const = 0;
 
   /**
    * @brief get diagonal element value on a given row

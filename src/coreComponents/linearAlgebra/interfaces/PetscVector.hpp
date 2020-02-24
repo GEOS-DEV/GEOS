@@ -183,7 +183,7 @@ public:
   void write( string const & filename,
               LAIOutputFormat const format ) const override;
 
-  localIndex getLocalRowID( globalIndex const index ) const override;
+  localIndex getLocalRowID( globalIndex const globalRow ) const override;
 
   globalIndex getGlobalRowID( localIndex const localRow ) const override;
 

@@ -16,24 +16,15 @@
  * @file HypreMatrix.cpp
  */
 
-// BEGIN_RST_NARRATIVE HypreMatrix.rst
-// ==============================
-// Epetra-based Matrix Object
-// ==============================
-// This class contains the ParallelMatrix wrappers based on Epetra_Crs Objects.
-// The class contains a unique pointer to an Epetra_CrsMatrix as well as constructors,
-// functions and accessors for Epetra objects.
-
-// Include the corresponding header file.
 #include "HypreMatrix.hpp"
 
-// Include required Hypre headers
 #include "HYPRE.h"
 #include "_hypre_IJ_mv.h"
 #include "_hypre_parcsr_mv.h"
 #include "HypreUtils.hpp"
 
-// Put everything under the geosx namespace.
+#include <iomanip>
+
 namespace geosx
 {
 
@@ -44,31 +35,19 @@ static void initialize( MPI_Comm const & comm,
                         HYPRE_BigInt const & iupper,
                         HYPRE_BigInt const & jlower,
                         HYPRE_BigInt const & jupper,
-                        array1d< HYPRE_Int > const & ncols,
+                        arraySlice1d< HYPRE_Int const > const & ncols,
                         HYPRE_IJMatrix & ij_matrix )
 {
-  HYPRE_IJMatrixCreate( comm,
-                        ilower,
-                        iupper,
-                        jlower,
-                        jupper,
-                        &ij_matrix );
-  HYPRE_IJMatrixSetObjectType( ij_matrix,
-                               HYPRE_PARCSR );
-
-  HYPRE_IJMatrixSetRowSizes( ij_matrix,
-                             ncols.data() );
-
-  HYPRE_IJMatrixInitialize( ij_matrix );
+  GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixCreate( comm,
+                                               ilower,
+                                               iupper,
+                                               jlower,
+                                               jupper,
+                                               &ij_matrix ) );
+  GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixSetObjectType( ij_matrix, HYPRE_PARCSR ) );
+  GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixSetRowSizes( ij_matrix, ncols.data() ) );
+  GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixInitialize( ij_matrix ) );
 }
-
-// ----------------------------
-// Constructors
-// ----------------------------
-
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Create an empty matrix (meant to be used for declaration)
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 HypreMatrix::HypreMatrix()
 : LinearOperator(),
@@ -77,10 +56,6 @@ HypreMatrix::HypreMatrix()
   m_parcsr_mat{}
 {}
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Copy constructor
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
 HypreMatrix::HypreMatrix( HypreMatrix const & src )
 : HypreMatrix()
 {
@@ -88,11 +63,11 @@ HypreMatrix::HypreMatrix( HypreMatrix const & src )
 
   HYPRE_BigInt ilower, iupper, jlower, jupper;
 
-  HYPRE_IJMatrixGetLocalRange( src.m_ij_mat,
-                               &ilower,
-                               &iupper,
-                               &jlower,
-                               &jupper );
+  GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixGetLocalRange( src.m_ij_mat,
+                                                      &ilower,
+                                                      &iupper,
+                                                      &jlower,
+                                                      &jupper ) );
 
   // Get number of non-zeroes per row
   HYPRE_Int nrows = integer_conversion< HYPRE_Int >( iupper - ilower + 1 );
@@ -104,10 +79,10 @@ HypreMatrix::HypreMatrix( HypreMatrix const & src )
     rows[i - ilower] = i;
   }
 
-  HYPRE_IJMatrixGetRowCounts( src.unwrapped(),
-                              nrows,
-                              rows.data(),
-                              row_sizes.data() );
+  GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixGetRowCounts( src.unwrapped(),
+                                                     nrows,
+                                                     rows.data(),
+                                                     row_sizes.data() ) );
 
   // Get number of non-zeroes (ncols) for row indeces in rows,
   // column indeces and values
@@ -120,14 +95,14 @@ HypreMatrix::HypreMatrix( HypreMatrix const & src )
   array1d< HYPRE_BigInt > cols( nnz );
   array1d< HYPRE_Real > values( nnz );
 
-  HYPRE_IJMatrixGetValues( src.m_ij_mat,
-                           -nrows,
-                           row_sizes.data(),
-                           rows.data(),
-                           cols.data(),
-                           values.data() );
+  GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixGetValues( src.m_ij_mat,
+                                                  -nrows,
+                                                  row_sizes.data(),
+                                                  rows.data(),
+                                                  cols.data(),
+                                                  values.data() ) );
 
-  initialize( hypre_IJMatrixComm( src.m_ij_mat ),
+  initialize( src.getComm(),
               ilower,
               iupper,
               jlower,
@@ -135,38 +110,21 @@ HypreMatrix::HypreMatrix( HypreMatrix const & src )
               row_sizes,
               m_ij_mat );
 
-  HYPRE_IJMatrixSetValues( m_ij_mat,
-                           nrows,
-                           row_sizes.data(),
-                           rows.data(),
-                           cols.data(),
-                           values.data() );
+  GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixSetValues( m_ij_mat,
+                                                  nrows,
+                                                  row_sizes.data(),
+                                                  rows.data(),
+                                                  cols.data(),
+                                                  values.data() ) );
 
   close();
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Destructor
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 HypreMatrix::~HypreMatrix()
 {
   reset();
 }
 
-// -----------------------------
-// Create
-// -----------------------------
-// Allocate matrix (prepare to be filled with data).
-
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Create a matrix from number of elements
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
-// Note: When the global size is provided a near-even distribution
-// of elements across processors is produced. All processors get the
-// same number of rows/cols, except proc 0 which gets any remainder
-// elements necessary when the number of processors does not divide
-// evenly into the vector length.
 void HypreMatrix::createWithGlobalSize( globalIndex const globalRows,
                                         globalIndex const globalCols,
                                         localIndex const maxEntriesPerRow,
@@ -179,33 +137,19 @@ void HypreMatrix::createWithGlobalSize( globalIndex const globalRows,
 
   reset();
 
-  int const this_mpi_process = MpiWrapper::Comm_rank( comm );
-  int const n_mpi_process = MpiWrapper::Comm_size( comm );
+  HYPRE_Int const rank  = integer_conversion< HYPRE_Int >( MpiWrapper::Comm_rank( comm ) );
+  HYPRE_Int const nproc = integer_conversion< HYPRE_Int >( MpiWrapper::Comm_size( comm ) );
 
-  HYPRE_Int localRowSize = integer_conversion< HYPRE_Int >( globalRows / n_mpi_process );
-  HYPRE_Int rowResidual = integer_conversion< HYPRE_Int >( globalRows % n_mpi_process );
+  HYPRE_Int const localRowSize = globalRows / nproc;
+  HYPRE_Int const rowResidual = globalRows % nproc;
 
-  HYPRE_Int localColSize = integer_conversion< HYPRE_Int >( globalCols / n_mpi_process );
-  HYPRE_Int colResidual = integer_conversion< HYPRE_Int >( globalCols % n_mpi_process );
+  HYPRE_Int const localColSize = globalCols / nproc;
+  HYPRE_Int const colResidual = globalCols % nproc;
 
-  HYPRE_BigInt ilower, iupper, jlower, jupper;
-
-  if( this_mpi_process == 0 )
-  {
-    ilower = 0;
-    localRowSize = localRowSize + rowResidual;
-    iupper = integer_conversion< HYPRE_BigInt >( localRowSize - 1 );
-    jlower = 0;
-    localColSize = localColSize + colResidual;
-    jupper =  integer_conversion< HYPRE_BigInt >( localColSize - 1 );
-  }
-  else
-  {
-    ilower = integer_conversion< HYPRE_BigInt >( this_mpi_process * localRowSize + rowResidual );
-    iupper = ilower + integer_conversion< HYPRE_BigInt >( localRowSize ) - 1;
-    jlower = integer_conversion< HYPRE_BigInt >( this_mpi_process * localColSize + colResidual );
-    jupper = jlower + integer_conversion< HYPRE_BigInt >( localColSize ) - 1;
-  }
+  HYPRE_BigInt const ilower = rank * localRowSize + ( rank == 0 ? 0 : rowResidual );
+  HYPRE_BigInt const iupper = ilower + localRowSize + ( rank == 0 ? rowResidual : 0 ) - 1;
+  HYPRE_BigInt const jlower = rank * localColSize + ( rank == 0 ? 0 : colResidual );
+  HYPRE_BigInt const jupper = jlower + localColSize + ( rank == 0 ? colResidual : 0 ) - 1;
 
   array1d< HYPRE_Int > row_sizes( localRowSize );
   row_sizes = integer_conversion< HYPRE_Int >( maxEntriesPerRow );
@@ -247,84 +191,58 @@ void HypreMatrix::createWithLocalSize( localIndex const localRows,
               m_ij_mat );
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Reinitialize.
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Keeps the map and graph but sets all values to user-defined value.
 void HypreMatrix::set( real64 const value )
 {
   GEOSX_LAI_MATRIX_STATUS( ready() );
   open();
-  HYPRE_IJMatrixSetConstantValues( m_ij_mat, static_cast< HYPRE_Real >( value ) );
+  GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixSetConstantValues( m_ij_mat, static_cast< HYPRE_Real >( value ) ) );
   close();
 }
 
-
-/**
- * @brief Reset the object
- *
- */
 void HypreMatrix::reset()
 {
   MatrixBase::reset();
   if( m_ij_mat )
   {
-    HYPRE_IJMatrixDestroy( m_ij_mat );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixDestroy( m_ij_mat ) );
     m_ij_mat = nullptr;
     m_parcsr_mat = nullptr;
   }
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Reinitialize.
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Keeps the map and graph but sets all values to 0. If the matrix is closed
-// it will automatically re-open it.
-
 void HypreMatrix::zero()
 {
   GEOSX_LAI_MATRIX_STATUS( ready() );
   open();
-  hypre_IJMatrixSetConstantValuesParCSR( m_ij_mat, 0.0 );
+  GEOSX_LAI_CHECK_ERROR( hypre_IJMatrixSetConstantValuesParCSR( m_ij_mat, 0.0 ) );
   close();
 }
-
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Open
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Empty open function (implemented for HYPRE compatibility).
 
 void HypreMatrix::open()
 {
   GEOSX_LAI_MATRIX_STATUS( created() && closed() );
-  HYPRE_IJMatrixInitialize( m_ij_mat );
+  GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixInitialize( m_ij_mat ) );
   m_closed = false;
 }
-
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Close
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Fix the sparsity pattern, make the data contiguous in memory and
-// optimize storage.
 
 void HypreMatrix::close()
 {
   GEOSX_LAI_MATRIX_STATUS( !closed() );
 
-  HYPRE_IJMatrixAssemble( m_ij_mat );
+  GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixAssemble( m_ij_mat ) );
 
   // Get a reference to the constructed matrix object. Done only on the first
   // assembly call when the sparsity pattern of the matrix is defined.
   if( !m_assembled )
   {
-    HYPRE_IJMatrixGetObject( m_ij_mat, (void * *) &m_parcsr_mat );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixGetObject( m_ij_mat, (void * *) &m_parcsr_mat ) );
     // Compute column partitioning if needed
     if( hypre_IJMatrixRowPartitioning( m_ij_mat ) !=
         hypre_IJMatrixColPartitioning( m_ij_mat ) )
     {
       if( !hypre_ParCSRMatrixCommPkg( m_parcsr_mat ) )
       {
-        hypre_MatvecCommPkgCreate( m_parcsr_mat );
+        GEOSX_LAI_CHECK_ERROR( hypre_MatvecCommPkgCreate( m_parcsr_mat ) );
       }
     }
   }
@@ -338,13 +256,6 @@ bool HypreMatrix::created() const
   return m_ij_mat != nullptr;
 }
 
-
-// -------------------------
-// Add/Set
-// -------------------------
-
-// 1x1
-
 void HypreMatrix::add( globalIndex const rowIndex,
                        globalIndex const colIndex,
                        real64 const value )
@@ -352,12 +263,12 @@ void HypreMatrix::add( globalIndex const rowIndex,
   GEOSX_LAI_MATRIX_STATUS( modifiable() );
 
   HYPRE_Int ncols = 1;
-  HYPRE_IJMatrixAddToValues( m_ij_mat,
-                             1,
-                             &ncols,
-                             toHYPRE_BigInt( &rowIndex ),
-                             toHYPRE_BigInt( &colIndex ),
-                             &value );
+  GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixAddToValues( m_ij_mat,
+                                                    1,
+                                                    &ncols,
+                                                    toHYPRE_BigInt( &rowIndex ),
+                                                    toHYPRE_BigInt( &colIndex ),
+                                                    &value ) );
 }
 
 void HypreMatrix::set( globalIndex const rowIndex,
@@ -369,12 +280,12 @@ void HypreMatrix::set( globalIndex const rowIndex,
   GEOSX_LAI_ASSERT_GT( iupper(), rowIndex );
 
   HYPRE_Int ncols = 1;
-  HYPRE_IJMatrixSetValues( m_ij_mat,
-                           1,
-                           &ncols,
-                           toHYPRE_BigInt( &rowIndex ),
-                           toHYPRE_BigInt( &colIndex ),
-                           &value );
+  GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixSetValues( m_ij_mat,
+                                                  1,
+                                                  &ncols,
+                                                  toHYPRE_BigInt( &rowIndex ),
+                                                  toHYPRE_BigInt( &colIndex ),
+                                                  &value ) );
 
 }
 
@@ -387,15 +298,13 @@ void HypreMatrix::insert( globalIndex const rowIndex,
   GEOSX_LAI_ASSERT_GT( iupper(), rowIndex );
 
   HYPRE_Int ncols = 1;
-  HYPRE_IJMatrixSetValues( m_ij_mat,
-                           1,
-                           &ncols,
-                           toHYPRE_BigInt( &rowIndex ),
-                           toHYPRE_BigInt( &colIndex ),
-                           &value );
+  GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixSetValues( m_ij_mat,
+                                                  1,
+                                                  &ncols,
+                                                  toHYPRE_BigInt( &rowIndex ),
+                                                  toHYPRE_BigInt( &colIndex ),
+                                                  &value ) );
 }
-
-// 1xN c-style
 
 void HypreMatrix::add( globalIndex const rowIndex,
                        globalIndex const * colIndices,
@@ -405,12 +314,12 @@ void HypreMatrix::add( globalIndex const rowIndex,
   GEOSX_LAI_MATRIX_STATUS( modifiable() );
 
   HYPRE_Int ncols = integer_conversion< HYPRE_Int >( size );
-  HYPRE_IJMatrixAddToValues( m_ij_mat,
-                             1,
-                             &ncols,
-                             toHYPRE_BigInt( &rowIndex ),
-                             toHYPRE_BigInt( colIndices ),
-                             values );
+  GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixAddToValues( m_ij_mat,
+                                                    1,
+                                                    &ncols,
+                                                    toHYPRE_BigInt( &rowIndex ),
+                                                    toHYPRE_BigInt( colIndices ),
+                                                    values ) );
 }
 
 void HypreMatrix::set( globalIndex const rowIndex,
@@ -423,12 +332,12 @@ void HypreMatrix::set( globalIndex const rowIndex,
   GEOSX_LAI_ASSERT_GT( iupper(), rowIndex );
 
   HYPRE_Int ncols = integer_conversion< HYPRE_Int >( size );
-  HYPRE_IJMatrixSetValues( m_ij_mat,
-                           1,
-                           &ncols,
-                           toHYPRE_BigInt( &rowIndex ),
-                           toHYPRE_BigInt( colIndices ),
-                           values );
+  GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixSetValues( m_ij_mat,
+                                                  1,
+                                                  &ncols,
+                                                  toHYPRE_BigInt( &rowIndex ),
+                                                  toHYPRE_BigInt( colIndices ),
+                                                  values ) );
 }
 
 void HypreMatrix::insert( globalIndex const rowIndex,
@@ -439,15 +348,13 @@ void HypreMatrix::insert( globalIndex const rowIndex,
   GEOSX_LAI_MATRIX_STATUS( insertable() );
 
   HYPRE_Int ncols = integer_conversion< HYPRE_Int >( size );
-  HYPRE_IJMatrixAddToValues( m_ij_mat,
-                             1,
-                             &ncols,
-                             toHYPRE_BigInt( &rowIndex ),
-                             toHYPRE_BigInt( colIndices ),
-                             values );
+  GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixAddToValues( m_ij_mat,
+                                                    1,
+                                                    &ncols,
+                                                    toHYPRE_BigInt( &rowIndex ),
+                                                    toHYPRE_BigInt( colIndices ),
+                                                    values ) );
 }
-
-// 1xN array1d style
 
 void HypreMatrix::add( globalIndex const rowIndex,
                        arraySlice1d< globalIndex const > const & colIndices,
@@ -456,12 +363,12 @@ void HypreMatrix::add( globalIndex const rowIndex,
   GEOSX_LAI_MATRIX_STATUS( modifiable() );
 
   HYPRE_Int ncols = integer_conversion< HYPRE_Int >( colIndices.size() );
-  HYPRE_IJMatrixAddToValues( m_ij_mat,
-                             1,
-                             &ncols,
-                             toHYPRE_BigInt( &rowIndex ),
-                             toHYPRE_BigInt( colIndices.data() ),
-                             values.data() );
+  GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixAddToValues( m_ij_mat,
+                                                    1,
+                                                    &ncols,
+                                                    toHYPRE_BigInt( &rowIndex ),
+                                                    toHYPRE_BigInt( colIndices.data() ),
+                                                    values.data() ) );
 }
 
 void HypreMatrix::set( globalIndex const rowIndex,
@@ -473,12 +380,12 @@ void HypreMatrix::set( globalIndex const rowIndex,
   GEOSX_LAI_ASSERT_GT( iupper(), rowIndex );
 
   HYPRE_Int ncols = integer_conversion< HYPRE_Int >( colIndices.size() );
-  HYPRE_IJMatrixSetValues( m_ij_mat,
-                           1,
-                           &ncols,
-                           toHYPRE_BigInt( &rowIndex ),
-                           toHYPRE_BigInt( colIndices.data() ),
-                           values.data() );
+  GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixSetValues( m_ij_mat,
+                                                  1,
+                                                  &ncols,
+                                                  toHYPRE_BigInt( &rowIndex ),
+                                                  toHYPRE_BigInt( colIndices.data() ),
+                                                  values.data() ) );
 }
 
 void HypreMatrix::insert( globalIndex const rowIndex,
@@ -488,15 +395,13 @@ void HypreMatrix::insert( globalIndex const rowIndex,
   GEOSX_LAI_MATRIX_STATUS( insertable() );
 
   HYPRE_Int ncols = integer_conversion< HYPRE_Int >( colIndices.size() );
-  HYPRE_IJMatrixAddToValues( m_ij_mat,
-                             1,
-                             &ncols,
-                             toHYPRE_BigInt( &rowIndex ),
-                             toHYPRE_BigInt( colIndices.data() ),
-                             values.data() );
+  GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixAddToValues( m_ij_mat,
+                                                    1,
+                                                    &ncols,
+                                                    toHYPRE_BigInt( &rowIndex ),
+                                                    toHYPRE_BigInt( colIndices.data() ),
+                                                    values.data() ) );
 }
-
-//// MxN array2d style
 
 void HypreMatrix::add( arraySlice1d< globalIndex const > const & rowIndices,
                        arraySlice1d< globalIndex const > const & colIndices,
@@ -588,32 +493,19 @@ void HypreMatrix::insert( globalIndex const * rowIndices,
   }
 }
 
-// -------------------------
-// Linear Algebra
-// -------------------------
-
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Matrix/vector multiplication
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Perform the matrix-vector product A*src = dst.
-
 void HypreMatrix::multiply( HypreVector const & src,
                             HypreVector & dst ) const
 {
   GEOSX_LAI_MATRIX_STATUS( ready() );
-  //GEOSX_LAI_ASSERT( src.ready() );
-  //GEOSX_LAI_ASSERT( dst.ready() );
-  hypre_ParCSRMatrixMatvec( 1.0,
-                            m_parcsr_mat,
-                            *src.getHypreParVectorPointer(),
-                            0.0,
-                            *dst.getHypreParVectorPointer() );
+  GEOSX_LAI_ASSERT( src.ready() );
+  GEOSX_LAI_ASSERT( dst.ready() );
+  GEOSX_LAI_CHECK_ERROR( hypre_ParCSRMatrixMatvec( 1.0,
+                                                   m_parcsr_mat,
+                                                   src.unwrappedParVector(),
+                                                   0.0,
+                                                   dst.unwrappedParVector() ) );
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Matrix/matrix multiplication
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Perform the matrix-matrix product this * src = dst.
 void HypreMatrix::multiply( HypreMatrix const & src,
                             HypreMatrix & dst,
                             bool const closeResult ) const
@@ -635,7 +527,6 @@ void HypreMatrix::multiply( HypreMatrix const & src,
   }
 }
 
-// Perform the matrix-matrix product transpose(this) * src = dst.
 void HypreMatrix::leftMultiplyTranspose( HypreMatrix const & src,
                                          HypreMatrix & dst,
                                          bool const closeResult ) const
@@ -658,7 +549,6 @@ void HypreMatrix::leftMultiplyTranspose( HypreMatrix const & src,
 
 }
 
-// Perform the matrix-matrix product src * transpose(this) = dst.
 void HypreMatrix::rightMultiplyTranspose( HypreMatrix const & src,
                                           HypreMatrix & dst,
                                           bool const closeResult ) const
@@ -669,7 +559,7 @@ void HypreMatrix::rightMultiplyTranspose( HypreMatrix const & src,
 
   // Transpose this
   HYPRE_ParCSRMatrix tmp;
-  hypre_ParCSRMatrixTranspose( src.m_parcsr_mat, &tmp, 1 );
+  GEOSX_LAI_CHECK_ERROR( hypre_ParCSRMatrixTranspose( src.m_parcsr_mat, &tmp, 1 ) );
 
   // Compute product
   HYPRE_ParCSRMatrix const dst_parcsr = hypre_ParMatmul( src.m_parcsr_mat, tmp );
@@ -678,7 +568,7 @@ void HypreMatrix::rightMultiplyTranspose( HypreMatrix const & src,
   dst.parCSRtoIJ( dst_parcsr );
 
   // Destroy temporary matrix
-  hypre_ParCSRMatrixDestroy( tmp );
+  GEOSX_LAI_CHECK_ERROR( hypre_ParCSRMatrixDestroy( tmp ) );
 
   // Reopen matrix if desired
   if( !closeResult )
@@ -687,7 +577,6 @@ void HypreMatrix::rightMultiplyTranspose( HypreMatrix const & src,
   }
 
 }
-
 
 void HypreMatrix::parCSRtoIJ( HYPRE_ParCSRMatrix const & parCSRMatrix )
 {
@@ -785,11 +674,6 @@ void HypreMatrix::parCSRtoIJ( HYPRE_ParCSRMatrix const & parCSRMatrix )
 
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Generalized matrix/vector product.
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Compute gemv <tt>y = alpha*A*x + beta*y</tt>.
-
 void HypreMatrix::gemv( real64 const alpha,
                         HypreVector const & x,
                         real64 const beta,
@@ -800,38 +684,33 @@ void HypreMatrix::gemv( real64 const alpha,
 
   if( !useTranspose )
   {
-    hypre_ParCSRMatrixMatvec( static_cast< HYPRE_Real >( alpha ),
-                              m_parcsr_mat,
-                              *x.getHypreParVectorPointer(),
-                              static_cast< HYPRE_Real >( beta ),
-                              *y.getHypreParVectorPointer() );
+    GEOSX_LAI_CHECK_ERROR( hypre_ParCSRMatrixMatvec( alpha,
+                                                     m_parcsr_mat,
+                                                     x.unwrappedParVector(),
+                                                     beta,
+                                                     y.unwrappedParVector() ) );
   }
   else
   {
-    hypre_ParCSRMatrixMatvecT( static_cast< HYPRE_Real >( alpha ),
-                               m_parcsr_mat,
-                               *x.getHypreParVectorPointer(),
-                               static_cast< HYPRE_Real >( beta ),
-                               *y.getHypreParVectorPointer() );
+    GEOSX_LAI_CHECK_ERROR( hypre_ParCSRMatrixMatvecT( alpha,
+                                                      m_parcsr_mat,
+                                                      x.unwrappedParVector(),
+                                                      beta,
+                                                      y.unwrappedParVector() ) );
   }
 }
-
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Scale.
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Multiply all elements by scalingFactor.
 
 void HypreMatrix::scale( real64 const scalingFactor )
 {
   GEOSX_LAI_MATRIX_STATUS( ready() );
 
-  hypre_CSRMatrix * prt_diag_CSR = hypre_ParCSRMatrixDiag( m_parcsr_mat );
-  HYPRE_Int diag_nnz = hypre_CSRMatrixNumNonzeros( prt_diag_CSR );
-  HYPRE_Real * ptr_diag_data = hypre_CSRMatrixData( prt_diag_CSR );
+  hypre_CSRMatrix * const prt_diag_CSR = hypre_ParCSRMatrixDiag( m_parcsr_mat );
+  HYPRE_Int const diag_nnz = hypre_CSRMatrixNumNonzeros( prt_diag_CSR );
+  HYPRE_Real * const ptr_diag_data = hypre_CSRMatrixData( prt_diag_CSR );
 
-  hypre_CSRMatrix * prt_offdiag_CSR = hypre_ParCSRMatrixOffd( m_parcsr_mat );
-  HYPRE_Int offdiag_nnz = hypre_CSRMatrixNumNonzeros( prt_offdiag_CSR );
-  HYPRE_Real * ptr_offdiag_data = hypre_CSRMatrixData( prt_offdiag_CSR );
+  hypre_CSRMatrix * const prt_offdiag_CSR = hypre_ParCSRMatrixOffd( m_parcsr_mat );
+  HYPRE_Int const offdiag_nnz = hypre_CSRMatrixNumNonzeros( prt_offdiag_CSR );
+  HYPRE_Real * const ptr_offdiag_data = hypre_CSRMatrixData( prt_offdiag_CSR );
 
   HYPRE_Real alpha = static_cast< HYPRE_Real >( scalingFactor );
   for( HYPRE_Int i = 0 ; i < diag_nnz ; ++i )
@@ -844,22 +723,18 @@ void HypreMatrix::scale( real64 const scalingFactor )
   }
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Left and right scaling
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
 void HypreMatrix::leftScale( HypreVector const & vec )
 {
   GEOSX_LAI_MATRIX_STATUS( ready() );
 
-  hypre_Vector * ptr_vec = hypre_ParVectorLocalVector( *vec.getHypreParVectorPointer() );
+  hypre_Vector * const ptr_vec = hypre_ParVectorLocalVector( vec.unwrappedParVector() );
   HYPRE_Real * ptr_vec_data = hypre_VectorData( ptr_vec );
 
-  hypre_CSRMatrix * prt_diag_CSR = hypre_ParCSRMatrixDiag( m_parcsr_mat );
-  HYPRE_Real * ptr_diag_data = hypre_CSRMatrixData( prt_diag_CSR );
+  hypre_CSRMatrix * const prt_diag_CSR = hypre_ParCSRMatrixDiag( m_parcsr_mat );
+  HYPRE_Real * const ptr_diag_data = hypre_CSRMatrixData( prt_diag_CSR );
 
   HYPRE_Int nrows = hypre_CSRMatrixNumRows( prt_diag_CSR );
-  HYPRE_Int * IA = hypre_CSRMatrixI( prt_diag_CSR );
+  HYPRE_Int const * IA = hypre_CSRMatrixI( prt_diag_CSR );
 
   for( HYPRE_Int i = 0 ; i < nrows ; ++i )
   {
@@ -869,8 +744,8 @@ void HypreMatrix::leftScale( HypreVector const & vec )
     }
   }
 
-  hypre_CSRMatrix * prt_offdiag_CSR = hypre_ParCSRMatrixOffd( m_parcsr_mat );
-  HYPRE_Real * ptr_offdiag_data = hypre_CSRMatrixData( prt_offdiag_CSR );
+  hypre_CSRMatrix * const prt_offdiag_CSR = hypre_ParCSRMatrixOffd( m_parcsr_mat );
+  HYPRE_Real * const ptr_offdiag_data = hypre_CSRMatrixData( prt_offdiag_CSR );
 
   nrows = hypre_CSRMatrixNumRows( prt_offdiag_CSR );
   IA = hypre_CSRMatrixI( prt_offdiag_CSR );
@@ -889,22 +764,20 @@ localIndex HypreMatrix::maxRowLength() const
 {
   GEOSX_LAI_MATRIX_STATUS( assembled() );
 
-  HYPRE_Int nrows = integer_conversion< HYPRE_Int >( this->numLocalRows());
+  HYPRE_Int const nrows = integer_conversion< HYPRE_Int >( numLocalRows() );
 
   array1d< HYPRE_BigInt > rows( nrows );
   array1d< HYPRE_Int > ncols( nrows );
 
   for( HYPRE_Int i = 0 ; i < nrows ; ++i )
   {
-    rows[i] = this->ilower() + integer_conversion< HYPRE_BigInt >( i );
+    rows[i] = ilower() + integer_conversion< HYPRE_BigInt >( i );
   }
 
-  HYPRE_Int const ierr = HYPRE_IJMatrixGetRowCounts( m_ij_mat,
+  GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixGetRowCounts( m_ij_mat,
                                                      nrows,
                                                      rows.data(),
-                                                     ncols.data() );
-
-  GEOSX_ERROR_IF_NE_MSG( ierr, 0, "Error in HYPRE_IJMatrixGetRowCounts" );
+                                                     ncols.data() ) );
 
   HYPRE_Int const localMaxRowLength = *std::max_element( ncols.begin(), ncols.end() );
   return MpiWrapper::Max( localMaxRowLength, getComm() );
@@ -922,42 +795,37 @@ localIndex HypreMatrix::globalRowLength( globalIndex globalRowIndex ) const
   HYPRE_BigInt row = integer_conversion< HYPRE_BigInt >( globalRowIndex );
   HYPRE_Int ncols;
 
-  HYPRE_Int const ierr = HYPRE_IJMatrixGetRowCounts( m_ij_mat,
+  GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixGetRowCounts( m_ij_mat,
                                                      1,
                                                      &row,
-                                                     &ncols );
-
-  GEOSX_ERROR_IF_NE_MSG( ierr, 0, "Error in HYPRE_IJMatrixGetRowCounts" );
+                                                     &ncols ) );
 
   return integer_conversion< localIndex >( ncols );
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Get global row copy
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
 void HypreMatrix::getRowCopy( globalIndex globalRow,
-                              array1d< globalIndex > & colIndices,
-                              array1d< real64 > & values ) const
+                              arraySlice1d< globalIndex > const & colIndices,
+                              arraySlice1d< real64 > const & values ) const
 {
   GEOSX_LAI_MATRIX_STATUS( ready() );
   GEOSX_LAI_ASSERT_GE( globalRow, ilower() );
   GEOSX_LAI_ASSERT_GT( iupper(), globalRow );
 
-  HYPRE_Int n_entries;
-  HYPRE_IJMatrixGetRowCounts( m_ij_mat,
-                              1,
-                              toHYPRE_BigInt( &globalRow ),
-                              &n_entries );
+  HYPRE_Int numEntries;
+  GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixGetRowCounts( m_ij_mat,
+                                                     1,
+                                                     toHYPRE_BigInt( &globalRow ),
+                                                     &numEntries ) );
 
-  values.resize( n_entries );
-  colIndices.resize( n_entries );
-  hypre_IJMatrixGetValuesParCSR( m_ij_mat,
-                                 -1,
-                                 &n_entries,
-                                 toHYPRE_BigInt( &globalRow ),
-                                 toHYPRE_BigInt( colIndices.data() ),
-                                 values.data() );
+  GEOSX_LAI_ASSERT_GE( colIndices.size(), numEntries );
+  GEOSX_LAI_ASSERT_GE( values.size(), numEntries );
+
+  GEOSX_LAI_CHECK_ERROR( hypre_IJMatrixGetValuesParCSR( m_ij_mat,
+                                                        -1,
+                                                        &numEntries,
+                                                        toHYPRE_BigInt( &globalRow ),
+                                                        toHYPRE_BigInt( colIndices.data() ),
+                                                        values.data() ) );
 }
 
 real64 HypreMatrix::getDiagValue( globalIndex globalRow ) const
@@ -984,12 +852,6 @@ real64 HypreMatrix::getDiagValue( globalIndex globalRow ) const
   }
   return 0.0;
 }
-
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Clear row
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Clear the row.  By default the diagonal value will be set
-// to zero, but the user can pass a desired diagValue.
 
 void HypreMatrix::clearRow( globalIndex const globalRow,
                             real64 const diagValue )
@@ -1025,16 +887,6 @@ void HypreMatrix::clearRow( globalIndex const globalRow,
   set( globalRow, globalRow, diagValue );
 }
 
-
-// ---------------------------------------------------------
-//  Accessors
-// ---------------------------------------------------------
-
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Get pointer.
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Accessor for the pointer to the raw Epetra matrix
-
 HYPRE_IJMatrix const & HypreMatrix::unwrapped() const
 {
   return m_ij_mat;
@@ -1055,24 +907,16 @@ HYPRE_ParCSRMatrix & HypreMatrix::unwrappedParCSR()
   return m_parcsr_mat;
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// getLocalRowID
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Map a global row index to local row index
 localIndex HypreMatrix::getLocalRowID( globalIndex const index ) const
 {
   GEOSX_LAI_MATRIX_STATUS( created() );
   HYPRE_BigInt ilower, iupper, jlower, jupper;
-  HYPRE_IJMatrixGetLocalRange( m_ij_mat,
-                               &ilower, &iupper,
-                               &jlower, &jupper );
+  GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixGetLocalRange( m_ij_mat,
+                                                      &ilower, &iupper,
+                                                      &jlower, &jupper ) );
   return (index >= ilower && index < iupper) ? integer_conversion< localIndex >( index - ilower ) : -1;
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// getGlobalRowID
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Map a local row index to global row index
 globalIndex HypreMatrix::getGlobalRowID( localIndex const index ) const
 {
   GEOSX_LAI_MATRIX_STATUS( created() );
@@ -1081,21 +925,11 @@ globalIndex HypreMatrix::getGlobalRowID( localIndex const index ) const
   return ilower() + index;
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Get number of global rows.
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Accessor for the number of global rows
-
 globalIndex HypreMatrix::numGlobalRows() const
 {
   GEOSX_LAI_MATRIX_STATUS( created() );
   return hypre_IJMatrixGlobalNumRows( m_ij_mat );
 }
-
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Get number of global columns.
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Accessor for the number of global columns
 
 globalIndex HypreMatrix::numGlobalCols() const
 {
@@ -1103,19 +937,11 @@ globalIndex HypreMatrix::numGlobalCols() const
   return hypre_IJMatrixGlobalNumCols( m_ij_mat );
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Get number of local rows.
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
 localIndex HypreMatrix::numLocalRows() const
 {
   GEOSX_LAI_MATRIX_STATUS( created() );
   return integer_conversion< localIndex >( iupper() - ilower() );
 }
-
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Get number of local columns.
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 localIndex HypreMatrix::numLocalCols() const
 {
@@ -1123,81 +949,56 @@ localIndex HypreMatrix::numLocalCols() const
   return integer_conversion< localIndex >( jupper() - jlower() );
 }
 
-//
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Get the lower index owned by processor.
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Accessor for the index of the first global row
 globalIndex HypreMatrix::ilower() const
 {
   GEOSX_LAI_MATRIX_STATUS( created() );
 
   HYPRE_BigInt ilower, iupper, jlower, jupper;
-  HYPRE_IJMatrixGetLocalRange( m_ij_mat,
-                               &ilower, &iupper,
-                               &jlower, &jupper );
+  GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixGetLocalRange( m_ij_mat,
+                                                      &ilower, &iupper,
+                                                      &jlower, &jupper ) );
   return integer_conversion< globalIndex >( ilower );
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Get the upper index owned by processor.
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Accessor for the index of the last global row
 globalIndex HypreMatrix::iupper() const
 {
   GEOSX_LAI_MATRIX_STATUS( created() );
 
   HYPRE_BigInt ilower, iupper, jlower, jupper;
-
-  HYPRE_IJMatrixGetLocalRange( m_ij_mat,
-                               &ilower,
-                               &iupper,
-                               &jlower,
-                               &jupper );
+  GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixGetLocalRange( m_ij_mat,
+                                                      &ilower,
+                                                      &iupper,
+                                                      &jlower,
+                                                      &jupper ) );
   return integer_conversion< globalIndex >( iupper + 1 );
 }
 
-//
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Get the lower index owned by processor.
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Accessor for the index of the first global row
 globalIndex HypreMatrix::jlower() const
 {
   GEOSX_LAI_MATRIX_STATUS( created() );
 
   HYPRE_BigInt ilower, iupper, jlower, jupper;
-
-  HYPRE_IJMatrixGetLocalRange( m_ij_mat,
-                               &ilower,
-                               &iupper,
-                               &jlower,
-                               &jupper );
+  GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixGetLocalRange( m_ij_mat,
+                                                      &ilower,
+                                                      &iupper,
+                                                      &jlower,
+                                                      &jupper ) );
   return integer_conversion< globalIndex >( jlower );
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Get the upper index owned by processor.
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Accessor for the index of the last global row
 globalIndex HypreMatrix::jupper() const
 {
   GEOSX_LAI_MATRIX_STATUS( created() );
 
   HYPRE_BigInt ilower, iupper, jlower, jupper;
-
-  HYPRE_IJMatrixGetLocalRange( m_ij_mat,
-                               &ilower,
-                               &iupper,
-                               &jlower,
-                               &jupper );
+  GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixGetLocalRange( m_ij_mat,
+                                                      &ilower,
+                                                      &iupper,
+                                                      &jlower,
+                                                      &jupper ) );
   return integer_conversion< globalIndex >( jupper + 1 );
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Get number of local nonzeros.
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Accessor for the number of local nonzeros
 localIndex HypreMatrix::numLocalNonzeros() const
 {
   GEOSX_LAI_MATRIX_STATUS( assembled() );
@@ -1216,62 +1017,49 @@ globalIndex HypreMatrix::numGlobalNonzeros() const
   return MpiWrapper::Sum( integer_conversion< globalIndex >( numLocalNonzeros() ), getComm() );
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Print to terminal.
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Wrapper to print the trilinos output of the matrix
 void HypreMatrix::print( std::ostream & os ) const
 {
   GEOSX_LAI_MATRIX_STATUS( ready() );
 
-  int this_mpi_process = MpiWrapper::Comm_rank( hypre_IJMatrixComm( m_ij_mat ) );
-  int n_mpi_process = MpiWrapper::Comm_size( hypre_IJMatrixComm( m_ij_mat ) );
+  int const this_mpi_process = MpiWrapper::Comm_rank( getComm() );
+  int const n_mpi_process = MpiWrapper::Comm_size( getComm() );
 
-  GEOSX_LOG_RANK_0("\nMPI_Process         GlobalRowID         GlobalColID                   Value");
+  os << "MPI_Process         GlobalRowID         GlobalColID                   Value" << std::endl;
   for( int iRank = 0; iRank < n_mpi_process; iRank++ )
   {
-	MpiWrapper::Barrier( hypre_IJVectorComm( m_ij_mat ) );
+	  MpiWrapper::Barrier( getComm() );
     if ( iRank == this_mpi_process )
     {
-      globalIndex firstRowID = this->ilower();
-      globalIndex firstDiagColID = this->jlower();
+      globalIndex const firstRowID = ilower();
+      globalIndex const firstDiagColID = jlower();
 
-      hypre_CSRMatrix * prt_diag_CSR = hypre_ParCSRMatrixDiag( m_parcsr_mat );
-      HYPRE_Int * diag_IA = hypre_CSRMatrixI( prt_diag_CSR );
-      HYPRE_Int * diag_JA = hypre_CSRMatrixJ( prt_diag_CSR );
-      HYPRE_Real * ptr_diag_data = hypre_CSRMatrixData( prt_diag_CSR );
+      hypre_CSRMatrix const * const prt_diag_CSR = hypre_ParCSRMatrixDiag( m_parcsr_mat );
+      HYPRE_Int const * const diag_IA = hypre_CSRMatrixI( prt_diag_CSR );
+      HYPRE_Int const * const diag_JA = hypre_CSRMatrixJ( prt_diag_CSR );
+      HYPRE_Real const * const ptr_diag_data = hypre_CSRMatrixData( prt_diag_CSR );
 
-      hypre_CSRMatrix * prt_offdiag_CSR = hypre_ParCSRMatrixOffd( m_parcsr_mat );
-      HYPRE_Int * offdiag_IA = hypre_CSRMatrixI( prt_offdiag_CSR );
-      HYPRE_Int * offdiag_JA = hypre_CSRMatrixJ( prt_offdiag_CSR );
-      HYPRE_BigInt * col_map_offdiag = hypre_ParCSRMatrixColMapOffd( m_parcsr_mat );
-      HYPRE_Real * ptr_offdiag_data = hypre_CSRMatrixData( prt_offdiag_CSR );
+      hypre_CSRMatrix const * const prt_offdiag_CSR = hypre_ParCSRMatrixOffd( m_parcsr_mat );
+      HYPRE_Int const * const offdiag_IA = hypre_CSRMatrixI( prt_offdiag_CSR );
+      HYPRE_Int const * const offdiag_JA = hypre_CSRMatrixJ( prt_offdiag_CSR );
+      HYPRE_BigInt const * const col_map_offdiag = hypre_ParCSRMatrixColMapOffd( m_parcsr_mat );
+      HYPRE_Real const * const ptr_offdiag_data = hypre_CSRMatrixData( prt_offdiag_CSR );
+
       for( HYPRE_Int i = 0 ; i < hypre_CSRMatrixNumRows( prt_diag_CSR ); ++i )
       {
         for( HYPRE_Int j = diag_IA[i] ; j < diag_IA[i + 1] ; ++j )
-    	{
-          os.width(11);
-          os << iRank;
-          os.width(20);
-          os << firstRowID + i;
-          os.width(20);
-          os << firstDiagColID + diag_JA[j];
-          os.width(24);
-          os << std::scientific;
-          os << ptr_diag_data[j];
+    	  {
+          os << std::setw(11) << iRank;
+          os << std::setw(20) << firstRowID + i;
+          os << std::setw(20) << firstDiagColID + diag_JA[j];
+          os << std::setw(24) << std::scientific << ptr_diag_data[j];
           os << std::endl;
         }
         for( HYPRE_Int j = offdiag_IA[i] ; j < offdiag_IA[i + 1] ; ++j )
-    	{
-          os.width(11);
-          os << iRank;
-          os.width(20);
-          os << firstRowID + i;
-          os.width(20);
-          os << col_map_offdiag[ offdiag_JA[j] ];
-          os.width(24);
-          os << std::scientific;
-          os << ptr_offdiag_data[j];
+    	  {
+          os << std::setw(11) << iRank;
+          os << std::setw(20) << firstRowID + i;
+          os << std::setw(20) << col_map_offdiag[ offdiag_JA[j] ];
+          os << std::setw(24) << std::scientific << ptr_offdiag_data[j];
           os << std::endl;
         }
       }
@@ -1279,10 +1067,6 @@ void HypreMatrix::print( std::ostream & os ) const
   }
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Write to matlab-compatible file
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Note: EpetraExt also supports a MatrixMarket format as well
 void HypreMatrix::write( string const & filename,
                          LAIOutputFormat const format ) const
 {
@@ -1292,7 +1076,7 @@ void HypreMatrix::write( string const & filename,
   {
     case LAIOutputFormat::NATIVE_ASCII:
     {
-      hypre_ParCSRMatrixPrintIJ( m_parcsr_mat, 1, 1, filename.c_str() );
+      GEOSX_LAI_CHECK_ERROR( hypre_ParCSRMatrixPrintIJ( m_parcsr_mat, 1, 1, filename.c_str() ) );
       break;
     }
 
@@ -1301,39 +1085,26 @@ void HypreMatrix::write( string const & filename,
   }
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Inf-norm.
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Returns the infinity norm of the matrix.
 real64 HypreMatrix::norm1() const
 {
   GEOSX_LAI_MATRIX_STATUS( ready() );
 
-  HypreMatrix matT;
   HYPRE_ParCSRMatrix parCSRT;
-  hypre_ParCSRMatrixTranspose( m_parcsr_mat,
-                               &parCSRT,
-                               1 );
+  GEOSX_LAI_CHECK_ERROR( hypre_ParCSRMatrixTranspose( m_parcsr_mat, &parCSRT, 1 ) );
+  HypreMatrix matT;
   matT.parCSRtoIJ( parCSRT );
-
-  real64 const norm = matT.normInf();
-  matT.reset();
-  return norm;
+  return matT.normInf();
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// 1-norm.
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Returns the one norm of the matrix.
 real64 HypreMatrix::normInf() const
 {
   GEOSX_LAI_MATRIX_STATUS( ready() );
 
-  hypre_CSRMatrix * prt_diag_CSR = hypre_ParCSRMatrixDiag( m_parcsr_mat );
-  HYPRE_Real * ptr_diag_data = hypre_CSRMatrixData( prt_diag_CSR );
+  hypre_CSRMatrix const * const prt_diag_CSR = hypre_ParCSRMatrixDiag( m_parcsr_mat );
+  HYPRE_Real const * const ptr_diag_data = hypre_CSRMatrixData( prt_diag_CSR );
 
   HYPRE_Int nrows = hypre_CSRMatrixNumRows( prt_diag_CSR );
-  HYPRE_Int * IA = hypre_CSRMatrixI( prt_diag_CSR );
+  HYPRE_Int const * IA = hypre_CSRMatrixI( prt_diag_CSR );
 
   array1d< HYPRE_Real > row_abs_sum( nrows );
   row_abs_sum = 0.0;
@@ -1346,8 +1117,8 @@ real64 HypreMatrix::normInf() const
     }
   }
 
-  hypre_CSRMatrix * prt_offdiag_CSR = hypre_ParCSRMatrixOffd( m_parcsr_mat );
-  HYPRE_Real * ptr_offdiag_data = hypre_CSRMatrixData( prt_offdiag_CSR );
+  hypre_CSRMatrix const * const prt_offdiag_CSR = hypre_ParCSRMatrixOffd( m_parcsr_mat );
+  HYPRE_Real const * const ptr_offdiag_data = hypre_CSRMatrixData( prt_offdiag_CSR );
 
   nrows = hypre_CSRMatrixNumRows( prt_offdiag_CSR );
   IA = hypre_CSRMatrixI( prt_offdiag_CSR );
@@ -1360,26 +1131,22 @@ real64 HypreMatrix::normInf() const
     }
   }
 
-  real64 const local_norm = static_cast< real64 >( *std::max_element( row_abs_sum.begin(), row_abs_sum.end() ) );
+  real64 const local_norm = *std::max_element( row_abs_sum.begin(), row_abs_sum.end() );
   return MpiWrapper::Max( local_norm, getComm() );
 
 }
 
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Frobenius-norm.
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Returns the Frobenius norm of the matrix.
 real64 HypreMatrix::normFrobenius() const
 {
   GEOSX_LAI_MATRIX_STATUS( ready() );
 
-  hypre_CSRMatrix * prt_diag_CSR = hypre_ParCSRMatrixDiag( m_parcsr_mat );
-  HYPRE_Int diag_nnz = hypre_CSRMatrixNumNonzeros( prt_diag_CSR );
-  HYPRE_Real * ptr_diag_data = hypre_CSRMatrixData( prt_diag_CSR );
+  hypre_CSRMatrix const * const prt_diag_CSR = hypre_ParCSRMatrixDiag( m_parcsr_mat );
+  HYPRE_Int const diag_nnz = hypre_CSRMatrixNumNonzeros( prt_diag_CSR );
+  HYPRE_Real const * const ptr_diag_data = hypre_CSRMatrixData( prt_diag_CSR );
 
-  hypre_CSRMatrix * prt_offdiag_CSR = hypre_ParCSRMatrixOffd( m_parcsr_mat );
-  HYPRE_Int offdiag_nnz = hypre_CSRMatrixNumNonzeros( prt_offdiag_CSR );
-  HYPRE_Real * ptr_offdiag_data = hypre_CSRMatrixData( prt_offdiag_CSR );
+  hypre_CSRMatrix const * const prt_offdiag_CSR = hypre_ParCSRMatrixOffd( m_parcsr_mat );
+  HYPRE_Int const offdiag_nnz = hypre_CSRMatrixNumNonzeros( prt_offdiag_CSR );
+  HYPRE_Real const * const ptr_offdiag_data = hypre_CSRMatrixData( prt_offdiag_CSR );
 
   HYPRE_Real local_normFrob = 0.0;
   for( HYPRE_Int i = 0 ; i < diag_nnz ; ++i )
@@ -1413,6 +1180,5 @@ MPI_Comm HypreMatrix::getComm() const
   return hypre_IJMatrixComm( m_ij_mat );
 }
 
-}// end geosx namespace
+}// end namespace geosx
 
-// END_RST_NARRATIVE

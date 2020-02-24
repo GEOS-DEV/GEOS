@@ -137,11 +137,14 @@ void SeparateComponentFilter(typename LAI::ParallelMatrix const & src,
   for(globalIndex row=src.ilower(); row<src.iupper(); ++row)
   {
      const globalIndex rowComponent = row % dofsPerNode;
+     const localIndex rowLength = src.globalRowLength( row );
+     srcIndices.resize( rowLength );
+     srcValues.resize( rowLength );
 
      src.getRowCopy(row,srcIndices,srcValues);
 
      localIndex k=0;
-     for(localIndex col=0; col<srcIndices.size(); ++col)
+     for(localIndex col=0; col<rowLength; ++col)
      {
         const globalIndex colComponent = srcIndices[col] % dofsPerNode;
         if( rowComponent == colComponent )
