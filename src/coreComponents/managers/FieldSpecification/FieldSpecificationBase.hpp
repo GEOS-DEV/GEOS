@@ -436,7 +436,7 @@ void FieldSpecificationBase::ApplyFieldValueKernel( LvArray::ArrayView< T, N, UN
 
     if( function->isFunctionOfTime()==2 )
     {
-      real64 value = m_scale * function->Evaluate( &time ) * dt;
+      real64 value = m_scale * function->Evaluate( &time ) * dt * sizeScalingFactor;
       forall_in_range< POLICY >( 0, targetSet.size(), GEOSX_HOST_DEVICE_LAMBDA( localIndex const i )
       {
         localIndex const a = targetSet[ i ];
@@ -451,7 +451,7 @@ void FieldSpecificationBase::ApplyFieldValueKernel( LvArray::ArrayView< T, N, UN
       forall_in_range< POLICY >( 0, targetSet.size(), GEOSX_HOST_DEVICE_LAMBDA( localIndex const i )
       {
         localIndex const a = targetSet[ i ];
-        FIELD_OP::SpecifyFieldValue( field, a, component, m_scale*resultView[i] * dt );
+        FIELD_OP::SpecifyFieldValue( field, a, component, m_scale*resultView[i] * dt * sizeScalingFactor);
       });
     }
   }
