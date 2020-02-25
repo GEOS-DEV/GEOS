@@ -20,13 +20,19 @@
 
 namespace geosx
 {
-
+using namespace dataRepository;
 
 SimpleGeometricObjectBase::SimpleGeometricObjectBase( std::string const & name,
                                                       Group * const parent ):
-  Group( name, parent )
+  Group( name, parent ),
+  m_nodeIndexes(),
+  m_nodeNum(0)
 {
   setInputFlags(dataRepository::InputFlags::OPTIONAL_NONUNIQUE);
+
+  //Ron add m_nodeNum, m_nodeIndexes at Feb 24, 2020
+	 registerWrapper( "nodeIndexes", &m_nodeIndexes, false );
+	 registerWrapper( "nodeNum", &m_nodeNum, false );
 }
 
 

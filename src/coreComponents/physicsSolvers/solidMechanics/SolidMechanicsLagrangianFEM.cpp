@@ -252,6 +252,9 @@ void SolidMechanicsLagrangianFEM::SetInitialTimeStep(Group * const domain )
   }
 }
 
+
+
+
 void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * const domain )
 {
   GEOSX_MARK_FUNCTION;
@@ -571,6 +574,8 @@ void SolidMechanicsLagrangianFEM::ExplicitStepDisplacementUpdate( real64 const& 
   SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, this->getGravityVector(), dt/2 );
 
   fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
+
+  ApplyTiedVelocity_explicit(time_n,domain);
 
   //4. x^{n+1} = x^{n} + v^{n+{1}/{2}} dt (x is displacement)
   SolidMechanicsLagrangianFEMKernels::displacementUpdate( vel, uhat, u, dt );
@@ -1007,6 +1012,40 @@ void SolidMechanicsLagrangianFEM::ApplyTractionBC_explicit( real64 const time,
       }
     }
   });
+}
+
+void SolidMechanicsLagrangianFEM::ApplyTiedVelocity_explicit( real64 const time,
+		DomainPartition * const domain)
+{
+	FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
+	NodeManager * const nodeManager = domain->getMeshBody(0)->getMeshLevel(0)->getNodeManager();
+	arrayView1d<R1Tensor> const & vel = nodeManager->getReference<array1d<R1Tensor>>(keys::Velocity);
+	fsManager.Apply( time,
+	                    domain,
+	                    "nodeManager",
+	                    string("TiedVelocity"),
+	                    [&]( FieldSpecificationBase const * const bc,
+	                    string const &,
+	                    set<localIndex> const & targetSet,
+	                    Group * const GEOSX_UNUSED_ARG( targetGroup ),
+	                    string const GEOSX_UNUSED_ARG( fieldName ) ) -> void
+	  {
+	    //integer const component = bc->GetComponent();
+	    real64 scale = bc->GetScale();
+	    R1Tensor v0 = vel[targetSet[0]];
+	    for( int i=0 ; i<3 ; ++i )
+	    {
+	    	v0[i] *= scale;
+	    }
+	    for( auto kf : targetSet )
+	    {
+	//        if( faceGhostRank[kf] < 0 )
+	//        {
+	    	vel[kf] = v0;
+	//        }
+	    }
+
+	  });
 }
 
 void SolidMechanicsLagrangianFEM::ApplyChomboPressure( DofManager const & dofManager,

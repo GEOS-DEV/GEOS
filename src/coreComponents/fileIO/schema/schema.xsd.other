@@ -293,6 +293,7 @@
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="Box" type="BoxType" />
 			<xsd:element name="Cylinder" type="CylinderType" />
+			<xsd:element name="DiscreteNodeSet" type="DiscreteNodeSetType" />
 			<xsd:element name="ThickPlane" type="ThickPlaneType" />
 		</xsd:choice>
 	</xsd:complexType>
@@ -301,11 +302,31 @@
 		<xsd:attribute name="center" type="R1Tensor" />
 		<!--cosStrike => (no description available)-->
 		<xsd:attribute name="cosStrike" type="real64" />
+		<!--nodeIndexes => (no description available)-->
+		<xsd:attribute name="nodeIndexes" type="globalIndex_array" />
+		<!--nodeNum => (no description available)-->
+		<xsd:attribute name="nodeNum" type="globalIndex" />
 		<!--sinStrike => (no description available)-->
 		<xsd:attribute name="sinStrike" type="real64" />
 	</xsd:complexType>
-	<xsd:complexType name="CylinderType" />
-	<xsd:complexType name="ThickPlaneType" />
+	<xsd:complexType name="CylinderType">
+		<!--nodeIndexes => (no description available)-->
+		<xsd:attribute name="nodeIndexes" type="globalIndex_array" />
+		<!--nodeNum => (no description available)-->
+		<xsd:attribute name="nodeNum" type="globalIndex" />
+	</xsd:complexType>
+	<xsd:complexType name="DiscreteNodeSetType">
+		<!--nodeIndexes => (no description available)-->
+		<xsd:attribute name="nodeIndexes" type="globalIndex_array" />
+		<!--nodeNum => (no description available)-->
+		<xsd:attribute name="nodeNum" type="globalIndex" />
+	</xsd:complexType>
+	<xsd:complexType name="ThickPlaneType">
+		<!--nodeIndexes => (no description available)-->
+		<xsd:attribute name="nodeIndexes" type="globalIndex_array" />
+		<!--nodeNum => (no description available)-->
+		<xsd:attribute name="nodeNum" type="globalIndex" />
+	</xsd:complexType>
 	<xsd:complexType name="IncludedType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="File" type="FileType" />

@@ -25,7 +25,6 @@
 namespace geosx {
 using namespace dataRepository;
 using namespace cxx_utilities;
-using namespace std;
 namespace constitutive {
 
 HardeningElasticIsotropic::HardeningElasticIsotropic( std::string const & name, Group * const parent ):
@@ -139,11 +138,8 @@ void HardeningElasticIsotropic::StateUpdatePoint( localIndex const k,
 	}
 	real64 youngsModulus, shearModulus, bulkModulus;
 	youngsModulus = m_youngsModulus[k] + m_hardeningFactor[k] * (m_voidRatio[k][q] - m_referenceVoidRatio[k]);
-	cout<<youngsModulus;
-	cout<<"\n";
 	shearModulus = youngsModulus / (2 * (1 + m_poissonRatio[k]));
 	bulkModulus = youngsModulus / (3 * (1 - 2 * m_poissonRatio[k]));
-
 	R2SymTensor temp = D;
 	temp.PlusIdentity( -meanStresIncrement / 3.0 );
 	temp *= 2.0 * shearModulus;

@@ -67,12 +67,29 @@ void MeshUtilities::GenerateNodesets( dataRepository::Group const * geometries,
         {
           string name = object->getName();
           set<localIndex> & targetSet = sets->registerWrapper< set<localIndex> >(name)->reference();
-          for (localIndex a=0 ; a<X.size() ; ++a)
+          if(object->m_nodeNum == 0)
           {
-            if (object->IsCoordInObject(X[a]))
-            {
-              targetSet.insert(a);
-            }
+              for (localIndex a=0 ; a<X.size() ; ++a)
+              {
+                if (object->IsCoordInObject(X[a]))
+                {
+                  targetSet.insert(a);
+                }
+              }
+          }
+          else
+          {
+              for (globalIndex b=0 ; b<object->m_nodeNum ; ++b)
+              {
+            	  for (localIndex a=0 ; a<X.size() ; ++a)
+            	  {
+            	  if(nodeManager->m_localToGlobalMap[a] == object->m_nodeIndexes[b])
+            	  {
+            		  targetSet.insert(a);
+            		  break;
+            	  }
+              }
+    	  }
           }
         }
 

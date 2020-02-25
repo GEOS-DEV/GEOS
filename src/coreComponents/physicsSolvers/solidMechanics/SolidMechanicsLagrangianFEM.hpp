@@ -348,6 +348,9 @@ public:
   void ApplyTractionBC_explicit( real64 const time,
                                   DomainPartition * const domain);
 
+  void ApplyTiedVelocity_explicit( real64 const time,
+                                  DomainPartition * const domain);
+
   void ApplyTractionBC( real64 const time,
                         DofManager const & dofManager,
                         DomainPartition * const domain,

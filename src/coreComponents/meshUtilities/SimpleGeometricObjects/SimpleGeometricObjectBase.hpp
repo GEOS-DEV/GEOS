@@ -53,6 +53,10 @@ public:
   using CatalogInterface = dataRepository::CatalogInterface< SimpleGeometricObjectBase, std::string const &, Group * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 
+  //Ron add m_nodeNum, m_nodeIndexes at Feb 24, 2020
+	globalIndex_array m_nodeIndexes;
+	globalIndex m_nodeNum;
+
 };
 
 

@@ -133,6 +133,13 @@ Element: Dirichlet
 .. include:: ../../coreComponents/fileIO/schema/docs/Dirichlet.rst
 
 
+.. _XML_DiscreteNodeSet:
+
+Element: DiscreteNodeSet
+========================
+.. include:: ../../coreComponents/fileIO/schema/docs/DiscreteNodeSet.rst
+
+
 .. _XML_ElementRegions:
 
 Element: ElementRegions
@@ -737,6 +744,13 @@ Datastructure: Cylinder
 Datastructure: Dirichlet
 ========================
 .. include:: ../../coreComponents/fileIO/schema/docs/Dirichlet_other.rst
+
+
+.. _DATASTRUCTURE_DiscreteNodeSet:
+
+Datastructure: DiscreteNodeSet
+==============================
+.. include:: ../../coreComponents/fileIO/schema/docs/DiscreteNodeSet_other.rst
 
 
 .. _DATASTRUCTURE_ElementRegions:

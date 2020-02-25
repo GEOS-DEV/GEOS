@@ -435,6 +435,7 @@
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="Box" type="BoxType" />
 			<xsd:element name="Cylinder" type="CylinderType" />
+			<xsd:element name="DiscreteNodeSet" type="DiscreteNodeSetType" />
 			<xsd:element name="ThickPlane" type="ThickPlaneType" />
 		</xsd:choice>
 	</xsd:complexType>
@@ -455,6 +456,12 @@
 		<xsd:attribute name="point2" type="R1Tensor" use="required" />
 		<!--radius => Radius of the cylinder-->
 		<xsd:attribute name="radius" type="real64" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="DiscreteNodeSetType">
+		<!--nodeSetFile => node set file name of the DiscreteNodeSet-->
+		<xsd:attribute name="nodeSetFile" type="string" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
