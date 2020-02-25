@@ -253,14 +253,15 @@ void SolidMechanicsLagrangianFEM::InitializePreSubGroups(Group * const rootGroup
 
 }
 
-void SolidMechanicsLagrangianFEM::SetInitialTimeStep(Group * const domain )
+void SolidMechanicsLagrangianFEM::SetInitialTimeStep(Group * const domain0 )
 {
   static int setMechanicsSolverTimeStep = 0;
+  DomainPartition * const domain = domain0->group_cast<DomainPartition *>();
   if( setMechanicsSolverTimeStep == 0 && m_timeIntegrationOption == timeIntegrationOption::ExplicitDynamic )
   {
-    UpdateIntrinsicNodalData( domain->group_cast<DomainPartition *>() );
-    ExplicitStepDisplacementUpdate( 0, 0, 0, domain->group_cast<DomainPartition *>() );
-    ExplicitStepVelocityUpdate( 0, 0, 0, domain->group_cast<DomainPartition *>() );
+    UpdateIntrinsicNodalData( domain );
+    ExplicitStepDisplacementUpdate( 0, 0, 0, domain );
+    ExplicitStepVelocityUpdate( 0, 0, 0, domain );
     setMechanicsSolverTimeStep = 1;
   }
 }
@@ -366,27 +367,12 @@ void SolidMechanicsLagrangianFEM::UpdateIntrinsicNodalData( DomainPartition * co
 //    mass[index] *= m_fractureNodalMassScaling;
 //  }
 
-  // Double the mass of nodes at external boundary
-//  Group * nodeSets = nodes->sets();
-//  localIndex_set & xnegNodes = nodeSets->registerWrapper<localIndex_set>( std::string("xneg") )->reference();
-//  localIndex_set & xposNodes = nodeSets->registerWrapper<localIndex_set>( std::string("xpos") )->reference();
-//  localIndex_set & ynegNodes = nodeSets->registerWrapper<localIndex_set>( std::string("yneg") )->reference();
-//  localIndex_set & yposNodes = nodeSets->registerWrapper<localIndex_set>( std::string("ypos") )->reference();
-//  localIndex_set & znegNodes = nodeSets->registerWrapper<localIndex_set>( std::string("zneg") )->reference();
-//  localIndex_set & zposNodes = nodeSets->registerWrapper<localIndex_set>( std::string("zpos") )->reference();
-//
-//  for( localIndex index : xnegNodes )
-//    mass[index] *= 2;
-//  for( localIndex index : xposNodes )
-//    mass[index] *= 2;
-//  for( localIndex index : ynegNodes )
-//    mass[index] *= 2;
-//  for( localIndex index : yposNodes )
-//    mass[index] *= 2;
-//  for( localIndex index : znegNodes )
-//    mass[index] *= 2;
-//  for( localIndex index : zposNodes )
-//    mass[index] *= 2;
+  std::map<string, string_array> fieldNames;
+  fieldNames["node"].push_back( keys::Mass );
+  fieldNames["elems"].push_back( keys::ElementMass );
+  CommunicationTools::
+  SynchronizeFields( fieldNames, mesh,
+                     domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
 
 }
 
