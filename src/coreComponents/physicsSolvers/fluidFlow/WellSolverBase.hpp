@@ -212,7 +212,7 @@ public:
    */
   virtual void AssemblePerforationTerms( real64 const time_n,
                                          real64 const dt,
-                                         DomainPartition const * const domain,
+                                         DomainPartition * const domain,
                                          DofManager const * const dofManager,
                                          ParallelMatrix * const matrix,
                                          ParallelVector * const rhs ) = 0;

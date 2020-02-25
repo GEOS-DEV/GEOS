@@ -46,7 +46,7 @@ CellElementSubRegion::~CellElementSubRegion()
   // TODO Auto-generated destructor stub
 }
 
-void CellElementSubRegion::CopyFromCellBlock( CellBlock const * source )
+void CellElementSubRegion::CopyFromCellBlock( CellBlock * source )
 {
   this->SetElementType(source->GetElementTypeString());
   this->numNodesPerElement() = source->numNodesPerElement();
@@ -55,7 +55,7 @@ void CellElementSubRegion::CopyFromCellBlock( CellBlock const * source )
   this->nodeList() = source->nodeList();
   this->m_localToGlobalMap = source->m_localToGlobalMap;
   this->ConstructGlobalToLocalMap();
-  source->forExternalProperties([&]( const dataRepository::WrapperBase * wrapper )->void
+  source->forExternalProperties([&]( dataRepository::WrapperBase * const wrapper )->void
   {
     std::type_index typeIndex = std::type_index( wrapper->get_typeid());
     rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( typeIndex ),
@@ -63,9 +63,12 @@ void CellElementSubRegion::CopyFromCellBlock( CellBlock const * source )
                                     [&]( auto type, auto GEOSX_UNUSED_PARAM( baseType ) ) -> void
     {
       using fieldType = decltype(type);
-      const dataRepository::Wrapper<fieldType> & field = dataRepository::Wrapper< fieldType >::cast( *wrapper );
+      dataRepository::Wrapper<fieldType> & field = dataRepository::Wrapper< fieldType >::cast( *wrapper );
       const fieldType & fieldref = field.reference();
       this->registerWrapper( wrapper->getName(), &const_cast< fieldType & >( fieldref ), 0 ); //TODO remove const_cast
+//      auto const & origFieldRef = field.reference();
+//      fieldType & fieldRef = this->registerWrapper<fieldType>( wrapper->getName() )->reference();
+//      fieldRef.resize( origFieldRef.size() );
     });
   });
 }
@@ -73,7 +76,7 @@ void CellElementSubRegion::CopyFromCellBlock( CellBlock const * source )
 void CellElementSubRegion::ConstructSubRegionFromFaceSet( FaceManager const * const faceManager,
                                                         string const & setName )
 {
-  SortedArray<localIndex> const & targetSet = faceManager->sets()->getReference<SortedArray<localIndex> >(setName);
+  SortedArrayView<localIndex const> const & targetSet = faceManager->sets()->getReference<SortedArray<localIndex> >(setName);
   m_toFacesRelation.resize(0,2);
   this->resize( targetSet.size() );
 
