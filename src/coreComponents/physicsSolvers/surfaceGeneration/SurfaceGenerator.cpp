@@ -544,7 +544,7 @@ real64 SurfaceGenerator::SolverStep( real64 const & time_n,
     MeshLevel * meshLevel = Group::group_cast<MeshBody*>( mesh.second )->getMeshLevel( 0 );
 
     {
-      SpatialPartition & partition = domain->getReference<SpatialPartition,PartitionBase>(dataRepository::keys::partitionManager);
+      SpatialPartition & partition = dynamicCast< SpatialPartition & >( domain->getReference< PartitionBase >( dataRepository::keys::partitionManager ) );
 
       rval = SeparationDriver( domain,
                                meshLevel,
@@ -791,7 +791,7 @@ void SurfaceGenerator::UpdateAperture (DomainPartition * domain,
   fsManager.Apply( time_n, domain, "ElementRegions", FaceElementSubRegion::viewKeyStruct::elementApertureString,
                     [&]( FieldSpecificationBase const * const fs,
                          string const &,
-                         SortedArray<localIndex> const & lset,
+                         SortedArrayView<localIndex const> const & lset,
                          Group * const targetGroup,
                          string const & )
   {
@@ -812,7 +812,7 @@ void SurfaceGenerator::UpdateAperture (DomainPartition * domain,
   fsManager.Apply( time_n, domain, "ElementRegions", FaceElementSubRegion::viewKeyStruct::elementApertureOffsetString,
                     [&]( FieldSpecificationBase const * const fs,
                          string const &,
-                         SortedArray<localIndex> const & lset,
+                         SortedArrayView<localIndex const> const & lset,
                          Group * const targetGroup,
                          string const & )
   {
@@ -1056,15 +1056,15 @@ bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
                                            map< std::pair< CellElementSubRegion*, localIndex >, int>& elemLocations )
 {
 
-  arrayView1d<localIndex> const &
+  arrayView1d<localIndex const> const &
   parentNodeIndices = nodeManager.getReference<array1d<localIndex>>( nodeManager.viewKeys.parentIndex );
 
   localIndex const parentNodeIndex = ObjectManagerBase::GetParentRecusive( parentNodeIndices, nodeID );
 
-  arrayView1d<localIndex> const &
+  arrayView1d<localIndex const> const &
   parentFaceIndices = faceManager.getReference<array1d<localIndex>>( faceManager.viewKeys.parentIndex );
 
-  arrayView1d<localIndex> const &
+  arrayView1d<localIndex const> const &
   childFaceIndices = faceManager.getReference<array1d<localIndex>>( faceManager.viewKeys.childIndex );
 
   std::set<localIndex> const & vNodeToRupturedFaces = nodesToRupturedFaces[parentNodeIndex];
@@ -1628,7 +1628,7 @@ bool SurfaceGenerator::SetElemLocations( const int location,
                                          map< std::pair<CellElementSubRegion*, localIndex >, int>& elemLocations )
 {
 
-  arrayView1d<localIndex> const & parentFaceIndices =
+  arrayView1d<localIndex const> const & parentFaceIndices =
     faceManager.getReference<localIndex_array>( faceManager.viewKeys.parentIndex );
 
   const int otherlocation = (location==0) ? 1 : 0;
@@ -2985,15 +2985,15 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
   ConstitutiveManager * const constitutiveManager =
       domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
 
-  ElementRegionManager::MaterialViewAccessor< arrayView1d<real64> > const shearModulus =
-      elementManager.ConstructFullMaterialViewAccessor< array1d<real64>, arrayView1d<real64> >( "ShearModulus", constitutiveManager);
+  ElementRegionManager::MaterialViewAccessor< arrayView1d<real64 const> > const shearModulus =
+      elementManager.ConstructFullMaterialViewAccessor< array1d<real64>, arrayView1d<real64 const> >( "ShearModulus", constitutiveManager);
 
-  ElementRegionManager::MaterialViewAccessor< arrayView1d<real64> > const bulkModulus =
-      elementManager.ConstructFullMaterialViewAccessor< array1d<real64>, arrayView1d<real64> >( "BulkModulus", constitutiveManager);
+  ElementRegionManager::MaterialViewAccessor< arrayView1d<real64 const> > const bulkModulus =
+      elementManager.ConstructFullMaterialViewAccessor< array1d<real64>, arrayView1d<real64 const> >( "BulkModulus", constitutiveManager);
 
-  ElementRegionManager::MaterialViewAccessor< arrayView3d<real64, solid::STRESS_USD> > const
+  ElementRegionManager::MaterialViewAccessor< arrayView3d<real64 const, solid::STRESS_USD> > const
   stress = elementManager.ConstructFullMaterialViewAccessor< array3d<real64, solid::STRESS_PERMUTATION>,
-                                                             arrayView3d<real64, solid::STRESS_USD> >( SolidBase::viewKeyStruct::stressString,
+                                                             arrayView3d<real64 const, solid::STRESS_USD> >( SolidBase::viewKeyStruct::stressString,
                                                                                          constitutiveManager);
 
   NumericalMethodsManager const * numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
@@ -3809,20 +3809,20 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition * domain,
   ConstitutiveManager * const constitutiveManager =
       domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
 
-  ElementRegionManager::MaterialViewAccessor< arrayView1d<real64> > const shearModulus =
-      elementManager.ConstructFullMaterialViewAccessor< array1d<real64>, arrayView1d<real64> >( "ShearModulus", constitutiveManager);
+  ElementRegionManager::MaterialViewAccessor< arrayView1d<real64 const> > const shearModulus =
+      elementManager.ConstructFullMaterialViewAccessor< array1d<real64>, arrayView1d<real64 const> >( "ShearModulus", constitutiveManager);
 
-  ElementRegionManager::MaterialViewAccessor< arrayView1d<real64> > const bulkModulus =
-      elementManager.ConstructFullMaterialViewAccessor< array1d<real64>, arrayView1d<real64> >( "BulkModulus", constitutiveManager);
+  ElementRegionManager::MaterialViewAccessor< arrayView1d<real64 const> > const bulkModulus =
+      elementManager.ConstructFullMaterialViewAccessor< array1d<real64>, arrayView1d<real64 const> >( "BulkModulus", constitutiveManager);
 
-  ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> >
+  ElementRegionManager::MaterialViewAccessor< arrayView2d<real64 const> >
   meanStress = elementManager.ConstructFullMaterialViewAccessor< array2d<real64>,
-                                                               arrayView2d<real64> >("MeanStress",
+                                                               arrayView2d<real64 const> >("MeanStress",
                                                                                      constitutiveManager);
 
-  ElementRegionManager::MaterialViewAccessor< arrayView3d<real64, solid::STRESS_USD> > const
+  ElementRegionManager::MaterialViewAccessor< arrayView3d<real64 const, solid::STRESS_USD> > const
   stress = elementManager.ConstructFullMaterialViewAccessor< array3d<real64, solid::STRESS_PERMUTATION>,
-                                                             arrayView3d<real64, solid::STRESS_USD> >( SolidBase::viewKeyStruct::stressString,
+                                                             arrayView3d<real64 const, solid::STRESS_USD> >( SolidBase::viewKeyStruct::stressString,
                                                                                          constitutiveManager);
 
 
@@ -4601,11 +4601,11 @@ AssignNewGlobalIndicesSerial( ElementRegionManager & elementManager,
 }
 
 real64
-SurfaceGenerator::calculateRuptureRate( FaceElementRegion const & faceElementRegion,
+SurfaceGenerator::calculateRuptureRate( FaceElementRegion & faceElementRegion,
                                         EdgeManager const & edgeManager )
 {
   real64 maxRuptureRate = 0;
-  FaceElementSubRegion const * const subRegion = faceElementRegion.GetSubRegion<FaceElementSubRegion>(0);
+  FaceElementSubRegion * const subRegion = faceElementRegion.GetSubRegion<FaceElementSubRegion>(0);
 
   ArrayOfArraysView<localIndex const> const &
   fractureConnectorEdgesToFaceElements = edgeManager.m_fractureConnectorEdgesToFaceElements;

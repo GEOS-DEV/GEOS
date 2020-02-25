@@ -282,7 +282,7 @@ void SolidMechanicsLagrangianFEM::UpdateIntrinsicNodalData( DomainPartition * co
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   NodeManager * const nodes = mesh->getNodeManager();
 
-  ElementRegionManager const * const elementRegionManager = mesh->getElemManager();
+  ElementRegionManager * const elementRegionManager = mesh->getElemManager();
   ConstitutiveManager const * const constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
 
   arrayView1d<real64> & mass = nodes->getReference<array1d<real64>>(keys::Mass);
@@ -297,8 +297,13 @@ void SolidMechanicsLagrangianFEM::UpdateIntrinsicNodalData( DomainPartition * co
   FiniteElementDiscretization const *
   feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
 
-  ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > rho =
-    elementRegionManager->ConstructFullMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >("density", constitutiveManager);
+  ElementRegionManager::MaterialViewAccessor< arrayView2d<real64 const> >
+  rho = elementRegionManager->ConstructFullMaterialViewAccessor< array2d<real64>,
+                                                                 arrayView2d<real64 const> >( "density",
+                                                                                        constitutiveManager);
+
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const
+  elementMass = elementRegionManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(keys::ElementMass);
 
   for( localIndex er=0 ; er<elementRegionManager->numRegions() ; ++er )
   {
@@ -306,8 +311,7 @@ void SolidMechanicsLagrangianFEM::UpdateIntrinsicNodalData( DomainPartition * co
 
     elemRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr, CellElementSubRegion const * const elementSubRegion )
     {
-      arrayView2d<real64> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
-      arrayView1d<real64> const & elementMass = elementSubRegion->getReference< array1d<real64> >(keys::ElementMass);
+      arrayView2d<real64 const> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
       arrayView2d<localIndex const, cells::NODE_MAP_USD> const & elemsToNodes = elementSubRegion->nodeList();
 
       std::unique_ptr<FiniteElementBase>
@@ -316,14 +320,14 @@ void SolidMechanicsLagrangianFEM::UpdateIntrinsicNodalData( DomainPartition * co
       for( localIndex k=0 ; k < elemsToNodes.size(0) ; ++k )
       {
         // TODO this integration needs to be be carried out properly.
-        elementMass[k] = 0;
+        elementMass[er][esr][k] = 0;
         for( localIndex q=0 ; q<fe->n_quadrature_points() ; ++q )
         {
-          elementMass[k] += rho[er][esr][m_solidMaterialFullIndex][k][q] * detJ[k][q];
+          elementMass[er][esr][k] += rho[er][esr][m_solidMaterialFullIndex][k][q] * detJ[k][q];
         }
         for( localIndex a=0 ; a< elemsToNodes.size(1) ; ++a )
         {
-          mass[elemsToNodes[k][a]] += elementMass[k]/elemsToNodes.size(1);
+          mass[elemsToNodes[k][a]] += elementMass[er][esr][k]/elemsToNodes.size(1);
         }
 
         for( localIndex a=0 ; a<elementSubRegion->numNodesPerElement() ; ++a )
@@ -400,9 +404,13 @@ void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( 
 
   arrayView1d<real64> & mass = nodes->getReference<array1d<real64>>(keys::Mass);
 
-  ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > rho =
-    elementRegionManager->ConstructFullMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >("density", constitutiveManager);
+  ElementRegionManager::MaterialViewAccessor< arrayView2d<real64 const> >
+  rho = elementRegionManager->ConstructFullMaterialViewAccessor< array2d<real64>,
+                                                                 arrayView2d<real64 const> >( "density",
+                                                                                              constitutiveManager);
 
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const
+  elementMass = elementRegionManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(keys::ElementMass);
 
   NumericalMethodsManager const *
   numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
@@ -432,7 +440,7 @@ void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( 
         "SolidMechanicsLagrangianFEM::m_elemsNotAttachedToSendOrReceiveNodes["
         + std::to_string(er) + "][" + std::to_string(esr) + "]" );
 
-      arrayView2d<real64> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
+      arrayView2d<real64 const> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
       arrayView2d<localIndex const, cells::NODE_MAP_USD> const & elemsToNodes = elementSubRegion->nodeList();
 
       std::unique_ptr<FiniteElementBase>
@@ -442,14 +450,14 @@ void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( 
       {
 
         // TODO this integration needs to be be carried out properly.
-        real64 elemMass = 0;
+        elementMass[er][esr][k] = 0;
         for( localIndex q=0 ; q<fe->n_quadrature_points() ; ++q )
         {
-          elemMass += rho[er][esr][m_solidMaterialFullIndex][k][q] * detJ[k][q];
+          elementMass[er][esr][k] += rho[er][esr][m_solidMaterialFullIndex][k][q] * detJ[k][q];
         }
         for( localIndex a=0 ; a< elemsToNodes.size(1) ; ++a )
         {
-          mass[elemsToNodes[k][a]] += elemMass/elemsToNodes.size(1);
+          mass[elemsToNodes[k][a]] += elementMass[er][esr][k]/elemsToNodes.size(1);
         }
 
         bool isAttachedToGhostNode = false;
@@ -599,8 +607,11 @@ void SolidMechanicsLagrangianFEM::ExplicitStepDisplacementUpdate( real64 const& 
   //4. x^{n+1} = x^{n} + v^{n+{1}/{2}} dt (x is displacement)
   SolidMechanicsLagrangianFEMKernels::displacementUpdate( vel, uhat, u, dt );
 
-  fsManager.ApplyFieldValue( time_n + dt, domain, "nodeManager", keys::TotalDisplacement,
-    [&]( FieldSpecificationBase const * const bc, SortedArrayView<localIndex const> const & targetSet )
+  fsManager.ApplyFieldValue( time_n + dt,
+                             domain, "nodeManager",
+                             NodeManager::viewKeyStruct::totalDisplacementString,
+                             [&]( FieldSpecificationBase const * const bc,
+                                  SortedArrayView<localIndex const> const & targetSet )
     {
       integer const component = bc->GetComponent();
       forall_in_range< parallelDevicePolicy< 1024 > >(0, targetSet.size(),
@@ -611,7 +622,8 @@ void SolidMechanicsLagrangianFEM::ExplicitStepDisplacementUpdate( real64 const& 
         }
       );
     },
-    [&]( FieldSpecificationBase const * const bc, SortedArrayView<localIndex const> const & targetSet )
+    [&]( FieldSpecificationBase const * const bc,
+         SortedArrayView<localIndex const> const & targetSet )
     {
       integer const component = bc->GetComponent();
       forall_in_range< parallelDevicePolicy< 1024 > >(0, targetSet.size(),
@@ -662,9 +674,9 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStepVelocityUpdate( real64 const& ti
   ElementRegionManager::MaterialViewAccessor< arrayView3d<real64, solid::STRESS_USD> > const
   stress = elemManager->ConstructFullMaterialViewAccessor< array3d<real64, solid::STRESS_PERMUTATION>,
                                                            arrayView3d<real64, solid::STRESS_USD> >( SolidBase::viewKeyStruct::stressString,
-                                                                                       constitutiveManager);
+                                                                                                     constitutiveManager);
 
-  ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase>
+  ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase> const
   constitutiveRelations = elemManager->ConstructFullConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
 
   // add fluid pressure
@@ -684,11 +696,11 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStepVelocityUpdate( real64 const& ti
 
     elementRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr, CellElementSubRegion const * const elementSubRegion )
     {
-      arrayView3d< R1Tensor > const & dNdX = elementSubRegion->getReference< array3d< R1Tensor > >(keys::dNdX);
+      arrayView3d< R1Tensor const > const & dNdX = elementSubRegion->getReference< array3d< R1Tensor > >(keys::dNdX);
 
-      arrayView2d<real64> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
+      arrayView2d<real64 const > const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
 
-      arrayView1d<real64> const & elementMass = elementSubRegion->getReference< array1d<real64> >(keys::ElementMass);
+      arrayView1d<real64 const> const & elementMass = elementSubRegion->getReference< array1d<real64> >(keys::ElementMass);
 
       arrayView2d<localIndex const, cells::NODE_MAP_USD> const & elemsToNodes = elementSubRegion->nodeList();
 
@@ -752,11 +764,11 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStepVelocityUpdate( real64 const& ti
 
     elementRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr, CellElementSubRegion const * const elementSubRegion )
     {
-      arrayView3d< R1Tensor > const & dNdX = elementSubRegion->getReference< array3d< R1Tensor > >(keys::dNdX);
+      arrayView3d< R1Tensor const> const & dNdX = elementSubRegion->getReference< array3d< R1Tensor > >(keys::dNdX);
 
-      arrayView2d<real64> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
+      arrayView2d<real64 const> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
 
-      arrayView1d<real64> const & elementMass = elementSubRegion->getReference< array1d<real64> >(keys::ElementMass);
+      arrayView1d<real64 const> const & elementMass = elementSubRegion->getReference< array1d<real64> >(keys::ElementMass);
 
       arrayView2d<localIndex const, cells::NODE_MAP_USD> const & elemsToNodes = elementSubRegion->nodeList();
 
@@ -834,7 +846,7 @@ void SolidMechanicsLagrangianFEM::ApplyDisplacementBC_implicit( real64 const tim
                    keys::TotalDisplacement,
                    [&]( FieldSpecificationBase const * const bc,
                         string const &,
-                        SortedArray<localIndex> const & targetSet,
+                        SortedArrayView<localIndex const> const & targetSet,
                         Group * const targetGroup,
                         string const fieldName )
   {
@@ -876,7 +888,7 @@ void SolidMechanicsLagrangianFEM::ApplyTractionBC( real64 const time,
                    string("Traction"),
                    [&]( FieldSpecificationBase const * const bc,
                         string const &,
-                        SortedArray<localIndex> const & targetSet,
+                        SortedArrayView<localIndex const> const & targetSet,
                         Group * const GEOSX_UNUSED_PARAM( targetGroup ),
                         string const GEOSX_UNUSED_PARAM( fieldName ) )
   {
@@ -968,7 +980,7 @@ void SolidMechanicsLagrangianFEM::ApplyTractionBC_explicit( real64 const time,
 
   arrayView2d<real64, nodes::ACCELERATION_USD> const & acc = nodeManager->acceleration();
 
-//  arrayView1d<integer const> const & faceGhostRank = faceManager->GhostRank();
+//  arrayView1d<integer const> const & faceGhostRank = faceManager->GhostRank();;
 
   fsManager.Apply( time,
                    domain,
@@ -976,7 +988,7 @@ void SolidMechanicsLagrangianFEM::ApplyTractionBC_explicit( real64 const time,
                    string("Traction"),
                    [&]( FieldSpecificationBase const * const bc,
                         string const &,
-                        SortedArray<localIndex> const & targetSet,
+                        SortedArrayView<localIndex const> const & targetSet,
                         Group * const GEOSX_UNUSED_PARAM( targetGroup ),
                         string const GEOSX_UNUSED_PARAM( fieldName ) )
   {
@@ -1274,16 +1286,16 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARA
 
   string const dofKey = dofManager.getKey( keys::TotalDisplacement );
 
-  globalIndex_array const & dofNumber = nodeManager->getReference<globalIndex_array>( dofKey );
+  arrayView1d<globalIndex const> const & dofNumber = nodeManager->getReference<globalIndex_array>( dofKey );
 
 
   ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase>
   constitutiveRelations = elemManager->ConstructFullConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
 
-  ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const
+  ElementRegionManager::MaterialViewAccessor< arrayView2d<real64 const> > const
   density = elemManager->ConstructFullMaterialViewAccessor< array2d<real64>,
-                                                            arrayView2d<real64> >( SolidBase::viewKeyStruct::densityString,
-                                                                                   constitutiveManager );
+                                                            arrayView2d<real64 const> >( SolidBase::viewKeyStruct::densityString,
+                                                                                         constitutiveManager );
 
   // begin region loop
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
@@ -1296,10 +1308,10 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARA
     elementRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr,
                                                                         CellElementSubRegion const * const elementSubRegion )
     {
-      array3d<R1Tensor> const &
+      arrayView3d<R1Tensor const> const &
       dNdX = elementSubRegion->getReference< array3d<R1Tensor> >(keys::dNdX);
 
-      arrayView2d<real64> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
+      arrayView2d<real64 const> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
 
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion->nodeList();
       localIndex const numNodesPerElement = elemsToNodes.size(1);
@@ -1382,7 +1394,7 @@ ApplyBoundaryConditions( real64 const time_n,
                    keys::Force,
                    [&]( FieldSpecificationBase const * const bc,
                         string const &,
-                        SortedArray< localIndex > const & targetSet,
+                        SortedArrayView< localIndex const> const & targetSet,
                         Group * const targetGroup,
                         string const GEOSX_UNUSED_PARAM( fieldName ) )
   {

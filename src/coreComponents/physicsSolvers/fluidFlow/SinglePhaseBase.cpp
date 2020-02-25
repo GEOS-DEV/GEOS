@@ -510,7 +510,7 @@ void SinglePhaseBase::UpdateEOS( real64 const time_n,
   fsManager.Apply( time_n + dt, domain, "ElementRegions", viewKeyStruct::pressureString,
                     [&]( FieldSpecificationBase const * const fs,
                          string const &,
-                         SortedArray<localIndex> const & lset,
+                         SortedArrayView<localIndex const> const & lset,
                          Group * subRegion,
                          string const & ) -> void
   {

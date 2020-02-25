@@ -512,10 +512,10 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
     ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const volume =
       elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(CellElementSubRegion::viewKeyStruct::elementVolumeString);
 
-    ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> deltaVolume =
+    ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const deltaVolume =
       elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(FlowSolverBase::viewKeyStruct::deltaVolumeString);
 
-    ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> poro =
+    ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const poro =
       elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(FlowSolverBase::viewKeyStruct::porosityString);
 
     ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const poroOld =
@@ -546,7 +546,13 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
 
           volume[er][esr][ei] += deltaVolume[er][esr][ei];
 
-          poro[er][esr][ei] = (poroOld[er][esr][ei] + volStrain) / (1 + volStrain);
+          poro[er][esr][ei]  = std::max((poroOld[er][esr][ei] + volStrain) / (1 + volStrain), 1e-5);
+
+          //  Alternatively, transform to Log(porosity) space to avoid negative value
+//          real64 logPoroOld = log(poroOld[er][esr][ei]);
+//          real64 dLogPorodVolStrain = (1 - poroOld[er][esr][ei]) / (poroOld[er][esr][ei] + volStrain) / (1 + volStrain);
+//          real64 logPoroNew = logPoroOld + dLogPorodVolStrain * volStrain;
+//          poro[er][esr][ei] = exp(logPoroNew);
         }
       });
     }
@@ -663,7 +669,7 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
   {
     localIndex const numElems = elementSubRegion->size();
     array1d<array1d<localIndex > > const & elemsToNodes = elementSubRegion->nodeList();
-    arrayView1d<globalIndex> const &
+    arrayView1d<globalIndex const> const &
     faceElementDofNumber = elementSubRegion->getReference< array1d<globalIndex> >( presDofKey );
 
     for( localIndex k=0 ; k<numElems ; ++k )
@@ -720,7 +726,7 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
 
       array1d<array1d<localIndex > > const & elemsToNodes = elementSubRegion->nodeList();
 
-      arrayView1d<globalIndex> const &
+      arrayView1d<globalIndex const> const &
       faceElementDofNumber = elementSubRegion->getReference< array1d<globalIndex> >( presDofKey );
       for( localIndex k0=0 ; k0<numFluxElems ; ++k0 )
       {
@@ -813,7 +819,7 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
                    keys::TotalDisplacement,
                    [&]( FieldSpecificationBase const * const bc,
                         string const &,
-                        SortedArray<localIndex> const & targetSet,
+                        SortedArrayView<localIndex const> const & targetSet,
                         Group * const ,
                         string const )
   {
@@ -846,7 +852,7 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
                     FlowSolverBase::viewKeyStruct::pressureString,
                     [&]( FieldSpecificationBase const * const fs,
                          string const &,
-                         SortedArray<localIndex> const & lset,
+                         SortedArrayView<localIndex const> const & lset,
                          Group * subRegion,
                          string const & ) -> void
   {
