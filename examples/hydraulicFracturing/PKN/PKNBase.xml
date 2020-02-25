@@ -79,7 +79,7 @@
   </Geometry>
 
 
-  <Events maxTime="400.0">
+  <Events maxTime="200.0">
   
     <!-- SoloEvent 
       name="initialPlot"
@@ -144,13 +144,6 @@
       beginTime="100.0"
       endTime="200.0"
       forceDt="10.0"
-      target="/Solvers/hydrofracture" />
-
-    <PeriodicEvent 
-      name="solverApplications8"
-      beginTime="200.0"
-      endTime="400.0"
-      forceDt="20.0"
       target="/Solvers/hydrofracture" />
       
     <!-- This event is applied every 1.0s.  The targetExactTimestep
