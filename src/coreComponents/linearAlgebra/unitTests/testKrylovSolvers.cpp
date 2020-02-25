@@ -25,6 +25,7 @@
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "linearAlgebra/utilities/BlockOperatorView.hpp"
 #include "linearAlgebra/utilities/BlockVectorView.hpp"
+#include "linearAlgebra/solvers/PreconditionerIdentity.hpp"
 #include "linearAlgebra/solvers/CGsolver.hpp"
 #include "linearAlgebra/solvers/BiCGSTABsolver.hpp"
 
@@ -86,6 +87,17 @@ void testGEOSXSolvers()
   real64 const norm_true = x_true.norm2();
   real64 const norm_comp = x_comp.norm2();
   EXPECT_LT( std::fabs( norm_comp / norm_true - 1. ), 5e-6 );
+
+  PreconditionerIdentity< LAI > preconIdentity;
+  SOLVER<Vector> solver2( matrix, preconIdentity, 1e-8, -1 );
+  x_comp.zero();
+
+  solver2.solve( b, x_comp );
+
+
+  real64 const norm_true2 = x_true.norm2();
+  real64 const norm_comp2 = x_comp.norm2();
+  EXPECT_LT( std::fabs( norm_comp2 / norm_true2 - 1. ), 5e-6 );
 }
 
 /**
@@ -141,8 +153,8 @@ void testGEOSXBlockSolvers()
   // In this test we simply tile the laplace operator, so we assign a duplicate
   // of the monolithic matrix to every block of the matrix.
   block_matrix.set( 0, 0, matrix );
-  block_matrix.set( 0, 1, matrix );
-  block_matrix.set( 1, 0, matrix );
+  //block_matrix.set( 0, 1, matrix );
+  //block_matrix.set( 1, 0, matrix );
   block_matrix.set( 1, 1, matrix );
 
   // We do the same for the preconditioner to get the block identity matrix.

@@ -29,6 +29,14 @@ namespace geosx
 template< typename Vector > class LinearOperator;
 template< typename Vector > class BlockVectorView;
 
+//// StatsStruct
+//struct KrylovConvegernceStats
+//{
+//  localIndex numIterations;
+//  array1d<real64> relativeResidual;
+//  bool convergenceFlag;
+//};
+
 namespace internal
 {
 

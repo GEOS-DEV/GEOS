@@ -15,6 +15,7 @@ set( linearAlgebra_headers
      solvers/CGsolver.hpp
      solvers/BiCGSTABsolver.hpp
      solvers/PreconditionerBase.hpp
+     solvers/PreconditionerIdentity.hpp
      utilities/BlockVectorView.hpp
      utilities/BlockVectorWrapper.hpp
      utilities/BlockVector.hpp
