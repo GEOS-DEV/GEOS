@@ -19,6 +19,7 @@ include(cmake/thirdparty/setupThirdPartyDirectory.cmake)
 ################################
 option(ENABLE_BENCHMARKS "Enables benchmarks" ON)
 include(cmake/blt/SetupBLT.cmake)
+set(BLT_SOURCE_DIR ${PROJECT_SOURCE_DIR}/cmake/blt/)
 
 ################################
 # Include standard build system logic and options
