@@ -28,6 +28,40 @@ namespace computationalGeometry
 {
 
 /**
+ * Calculates the intersection between a line and a plane
+ * @param[in] vector defining direction of the line
+ * @param[in] 1 point of the line
+ * @param[in] normal to plane
+ * @param[in] plane origin
+ * @return area of the convex 3D polygon
+ */
+R1Tensor LinePlaneIntersection(R1Tensor lineDir,
+                               R1Tensor linePoint,
+                               R1Tensor planeNormal,
+                               R1Tensor planeOrigin);
+
+/**
+ * Calculates the area of a polygon given the set of points defining it
+ * @param[in] coordinates of the points
+ * @param[in] number of points
+ * @param[in] unit normal vector to the surface
+ * @return area
+ */
+real64 ComputeSurfaceArea(array1d<R1Tensor> const & points,
+                          localIndex const numPoints,
+                          R1Tensor const &  normal);
+
+/**
+ * Given a set of points on a plane it orders them counterclockwise
+ * @param[in] coordinates of the points
+ * @param[in] number of points
+ * @param[in] unit normal vector to the surface
+ * @return reordered points
+ */
+array1d<R1Tensor> orderPointsCCW(array1d<R1Tensor> const & points,
+                                 localIndex const  numPoints,
+                                 R1Tensor const &  normal);
+/**
  * Calculates the centroid of a convex 3D polygon as well as the normal
  * @param[in] pointIndices list of index references for the points array in
  * order (CW or CCW) about the polygon loop

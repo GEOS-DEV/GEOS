@@ -1,29 +1,25 @@
-
-
-================================ ======================================================================================================================================= ================================================================================== 
-Name                             Type                                                                                                                                    Description                                                                        
-================================ ======================================================================================================================================= ================================================================================== 
-creationMass                     real64_array                                                                                                                            The amount of remaining mass that was introduced when the FaceElement was created. 
-domainBoundaryIndicator          integer_array                                                                                                                           (no description available)                                                         
-edgeList                         InterObjectRelation< Array< Array< long, 1, int_seq< long, 0l >, long, NewChaiBuffer >, 1, int_seq< long, 0l >, long, NewChaiBuffer > > Map to the edges attached to each FaceElement.                                     
-elementAperture                  real64_array                                                                                                                            The aperture of each FaceElement.                                                  
-elementArea                      real64_array                                                                                                                            The area of each FaceElement.                                                      
-elementCenter                    r1_array                                                                                                                                The center of each FaceElement.                                                    
-elementLocalJump                 r1_array                                                                                                                                The local jump of each FaceElement.                                                
-elementRotationMatrix            r2_array                                                                                                                                The rotation matrix of each FaceElement.                                           
-elementVolume                    real64_array                                                                                                                            The volume of each FaceElement.                                                    
-faceList                         InterObjectRelation< Array< long, 2, int_seq< long, 0l, 1l >, long, NewChaiBuffer > >                                                   Map to the faces attached to each FaceElement.                                     
-fractureElementsToCellIndices    localIndex_array2d                                                                                                                      A map of face element local indices to the cell local indices                      
-fractureElementsToCellRegions    localIndex_array2d                                                                                                                      A map of face element local indices to the cell local indices                      
-fractureElementsToCellSubRegions localIndex_array2d                                                                                                                      A map of face element local indices to the cell local indices                      
-ghostRank                        integer_array                                                                                                                           (no description available)                                                         
-globalToLocalMap                 mapBase< long long, long, integral_constant< bool, false > >                                                                            (no description available)                                                         
-isExternal                       integer_array                                                                                                                           (no description available)                                                         
-localToGlobalMap                 globalIndex_array                                                                                                                       Array that contains a map from localIndex to globalIndex.                          
-nodeList                         InterObjectRelation< Array< Array< long, 1, int_seq< long, 0l >, long, NewChaiBuffer >, 1, int_seq< long, 0l >, long, NewChaiBuffer > > Map to the nodes attached to each FaceElement.                                     
-ConstitutiveModels               node                                                                                                                                    :ref:`DATASTRUCTURE_ConstitutiveModels`                                            
-neighborData                     node                                                                                                                                    :ref:`DATASTRUCTURE_neighborData`                                                  
-sets                             node                                                                                                                                    :ref:`DATASTRUCTURE_sets`                                                          
-================================ ======================================================================================================================================= ================================================================================== 
+================================ ===================================================================================== ========================================================= 
+Name                             Type                                                                                  Description                                               
+================================ ===================================================================================== ========================================================= 
+domainBoundaryIndicator          integer_array                                                                         (no description available)                                
+edgeList                         InterObjectRelation< ArrayOfArrays< long, long > >                                    Map to the edges.                                         
+elementAperture                  real64_array                                                                          The aperture of each EmbeddedSurface.                     
+elementArea                      real64_array                                                                          The area of each EmbeddedSurface element.                 
+elementCenter                    r1_array                                                                              The center of each EmbeddedSurface element.               
+elementVolume                    real64_array                                                                          The volume of each EmbeddedSurface element.               
+fractureElementsToCellIndices    localIndex_array                                                                      Map to the cells.                                         
+fractureElementsToRegionIndex    localIndex_array                                                                      Map to the region cut by each EmbeddedSurface.            
+fractureElementsToSubRegionIndex localIndex_array                                                                      Map to the subregion cut by each EmbeddedSurface.         
+ghostRank                        integer_array                                                                         (no description available)                                
+globalToLocalMap                 mapBase< long long, long, integral_constant< bool, false > >                          (no description available)                                
+isExternal                       integer_array                                                                         (no description available)                                
+localToGlobalMap                 globalIndex_array                                                                     Array that contains a map from localIndex to globalIndex. 
+nodeList                         InterObjectRelation< Array< long, 2, int_seq< long, 0l, 1l >, long, NewChaiBuffer > > Map to the nodes attached to each EmbeddedSurface.        
+normalVector                     r1_array                                                                              Unit normal vector to the embedded surface.               
+ConstitutiveModels               node                                                                                  :ref:`DATASTRUCTURE_ConstitutiveModels`                   
+neighborData                     node                                                                                  :ref:`DATASTRUCTURE_neighborData`                         
+sets                             node                                                                                  :ref:`DATASTRUCTURE_sets`                                 
+================================ ===================================================================================== ========================================================= 
+>>>>>>> develop
 
 
