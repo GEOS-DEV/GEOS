@@ -176,13 +176,13 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
   // This sets the capacity of each sub-array to 10. If this is using a bunch of memory
   // add a compress + shrink method to ArrayOfArrays that we can call afterwards.
   toElementRegionList.resize(0);
-  toElementRegionList.resize(size(), 20);
+  toElementRegionList.resize(size(), 44 );
 
   toElementSubRegionList.resize(0);
-  toElementSubRegionList.resize(size(), 20);
+  toElementSubRegionList.resize(size(), 44 );
 
   toElementList.resize(0);
-  toElementList.resize(size(), 20);
+  toElementList.resize(size(), 44 );
 
   for( typename dataRepository::indexType kReg=0 ; kReg<elementRegionManager->numRegions() ; ++kReg )
   {

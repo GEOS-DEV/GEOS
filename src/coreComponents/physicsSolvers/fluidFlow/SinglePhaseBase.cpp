@@ -305,6 +305,8 @@ void SinglePhaseBase::SetupSystem( DomainPartition * const domain,
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
+
+  GEOSX_MARK_BEGIN(ALLOCATE);
   std::unique_ptr<CRSMatrix<real64,localIndex,localIndex> > &
   derivativeFluxResidual_dAperture = getRefDerivativeFluxResidual_dAperture();
   {
@@ -338,6 +340,7 @@ void SinglePhaseBase::SetupSystem( DomainPartition * const domain,
 
 
   }
+  GEOSX_MARK_END(ALLOCATE);
 
 
   string const presDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString );
@@ -351,6 +354,7 @@ void SinglePhaseBase::SetupSystem( DomainPartition * const domain,
   FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation( getDiscretization() );
 
 
+  GEOSX_MARK_BEGIN(SPARSITY);
   fluxApprox->forStencils<FaceElementStencil>( [&]( FaceElementStencil const & stencil )
   {
     for( localIndex iconn=0 ; iconn<stencil.size() ; ++iconn)
@@ -372,6 +376,8 @@ void SinglePhaseBase::SetupSystem( DomainPartition * const domain,
       }
     }
   });
+  GEOSX_MARK_END(SPARSITY);
+
 }
 
 void SinglePhaseBase::ImplicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
