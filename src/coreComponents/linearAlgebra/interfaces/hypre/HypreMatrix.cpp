@@ -60,6 +60,7 @@ HypreMatrix::HypreMatrix()
 HypreMatrix::HypreMatrix( HypreMatrix const & src )
 : HypreMatrix()
 {
+#if 0
   GEOSX_LAI_ASSERT( src.ready() );
 
   HYPRE_BigInt ilower, iupper, jlower, jupper;
@@ -119,6 +120,15 @@ HypreMatrix::HypreMatrix( HypreMatrix const & src )
                                                   values.data() ) );
 
   close();
+#endif
+
+  GEOSX_LAI_ASSERT( src.ready() );
+
+  // Copy parcsr matrix
+  HYPRE_ParCSRMatrix const dst_parcsr = hypre_ParCSRMatrixClone( src.m_parcsr_mat, 1 );
+
+  // Create IJ layer (with matrix closed)
+  parCSRtoIJ( dst_parcsr );
 }
 
 HypreMatrix::~HypreMatrix()
@@ -295,16 +305,14 @@ void HypreMatrix::insert( globalIndex const rowIndex,
                           real64 const value )
 {
   GEOSX_LAI_ASSERT( insertable() );
-  GEOSX_LAI_ASSERT_GE( rowIndex, ilower() );
-  GEOSX_LAI_ASSERT_GT( iupper(), rowIndex );
 
   HYPRE_Int ncols = 1;
-  GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixSetValues( m_ij_mat,
-                                                  1,
-                                                  &ncols,
-                                                  toHYPRE_BigInt( &rowIndex ),
-                                                  toHYPRE_BigInt( &colIndex ),
-                                                  &value ) );
+  GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixAddToValues( m_ij_mat,
+                                                    1,
+                                                    &ncols,
+                                                    toHYPRE_BigInt( &rowIndex ),
+                                                    toHYPRE_BigInt( &colIndex ),
+                                                    &value ) );
 }
 
 void HypreMatrix::add( globalIndex const rowIndex,
@@ -514,7 +522,7 @@ void HypreMatrix::insert( globalIndex const * rowIndices,
 {
   for( localIndex i = 0 ; i < numRows ; ++i )
   {
-    add( rowIndices[i], colIndices, values + numCols * i, numCols );
+    insert( rowIndices[i], colIndices, values + numCols * i, numCols );
   }
 }
 
