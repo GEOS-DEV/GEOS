@@ -13,28 +13,30 @@
  */
 
 /**
- * @file ThickPlane.hpp
+ * @file BoundedPlane.hpp
  */
 
-#ifndef GEOSX_MESHUTILITIES_SIMPLEGEOMETRICOBJECTS_THICKPLANE_HPP_
-#define GEOSX_MESHUTILITIES_SIMPLEGEOMETRICOBJECTS_THICKPLANE_HPP_
+#ifndef SRC_COMPONENTS_CORE_SRC_MESHUTILITIES_SIMPLEGEOMETRICOBJECTS_BOUNDEDPLANE_HPP_
+#define SRC_COMPONENTS_CORE_SRC_MESHUTILITIES_SIMPLEGEOMETRICOBJECTS_BOUNDEDPLANE_HPP_
 
 #include "SimpleGeometricObjectBase.hpp"
 
 namespace geosx
 {
 
-class ThickPlane : public SimpleGeometricObjectBase
+class BoundedPlane : public SimpleGeometricObjectBase
 {
 public:
-  ThickPlane( const std::string& name,
+  BoundedPlane( const std::string& name,
               Group * const parent );
 
-  virtual ~ThickPlane() override;
+  virtual ~BoundedPlane() override;
 
-  static string CatalogName() { return "ThickPlane"; }
+  static string CatalogName() { return "BoundedPlane"; }
 
   bool IsCoordInObject( const R1Tensor& coord ) const override final;
+
+  void findRectangleLimits();
 
   /*
    * Accessors
@@ -49,25 +51,41 @@ public:
 
   R1Tensor const & getCenter() const {return m_origin;}
 
+  // width vector
+  R1Tensor & getWidthVector() {return m_widthVector;}
+
+  R1Tensor const & getWidthVector() const {return m_widthVector;}
+
+  // length vector
+  R1Tensor & getLengthVector() {return m_lengthVector;}
+
+  R1Tensor const & getLengthVector() const {return m_lengthVector;}
+
+
 protected:
   virtual void PostProcessInput() override final;
 
 private:
-
-  R1Tensor m_origin;
-  R1Tensor m_normal;
-  real64   m_thickness;
+  R1Tensor             m_origin;
+  R1Tensor             m_normal;
+  R1Tensor             m_lengthVector;
+  R1Tensor             m_widthVector;
+  array1d < real64 >   m_dimensions;
+  array1d < R1Tensor > m_points;
 
   struct viewKeyStruct
   {
     static constexpr auto originString = "origin";
     static constexpr auto normalString = "normal";
-    static constexpr auto thicknessString = "thickness";
+    static constexpr auto dimensionsString    = "dimensions";
+    static constexpr auto mLengthVectorString = "lengthVector";
+    static constexpr auto mWidthVectorString  = "widthVector";
   };
+
 
 };
 } /* namespace geosx */
 
-#endif /* GEOSX_MESHUTILITIES_SIMPLEGEOMETRICOBJECTS_THICKPLANE_HPP_
+#endif /* SRC_COMPONENTS_CORE_SRC_MESHUTILITIES_SIMPLEGEOMETRICOBJECTS_BOUNDEDPLANE_HPP_
         */
 
