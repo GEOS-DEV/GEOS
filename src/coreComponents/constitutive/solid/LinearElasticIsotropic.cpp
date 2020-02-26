@@ -210,11 +210,15 @@ void LinearElasticIsotropic::calculateStrainEnergyDensity()
     for( localIndex q=0 ; q<m_stress.size(1) ; ++q )
     {
       real64 const * const stress = m_stress(k,q).Data();
-      m_strainEnergyDensity(k,q) = ( stress[0]*stress[0] + stress[2]*stress[2] + stress[5]*stress[5] -
-                                     2 * ( nu * (stress[2] * stress[5] + stress[0] * (stress[2] + stress[5]) ) +
-                                           (1 + nu) * (stress[4]*stress[4] + stress[3]*stress[3] + stress[1]*stress[1])
-                                         )
-                                   ) * invE;
+      real64 const newStrainEnergyDensity = ( stress[0]*stress[0] + stress[2]*stress[2] + stress[5]*stress[5] -
+                                              2 * ( nu * (stress[2] * stress[5] + stress[0] * (stress[2] + stress[5]) ) +
+                                                    (1 + nu) * (stress[4]*stress[4] + stress[3]*stress[3] + stress[1]*stress[1])
+                                                  )
+                                            ) * invE;
+      if( newStrainEnergyDensity > m_strainEnergyDensity(k,q) )
+      {
+        m_strainEnergyDensity(k,q) = newStrainEnergyDensity;
+      }
     }
   }
 }
