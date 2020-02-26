@@ -20,7 +20,6 @@
 #include "AggregateElementSubRegion.hpp"
 #include "common/TimingMacros.hpp"
 #include "cxx-utilities/src/SparsityPattern.hpp"
-
 #include "metis.h"
 
 namespace geosx
@@ -174,7 +173,6 @@ void CellElementRegion::GenerateAggregates( FaceManager const * const faceManage
   }
   aggregateSubRegion->CreateFromFineToCoarseMap(nbAggregates, partsGEOS, aggregateBarycenters);
 }
-
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, CellElementRegion, std::string const &, Group * const )
 

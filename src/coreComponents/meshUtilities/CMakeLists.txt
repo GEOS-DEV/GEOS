@@ -13,6 +13,7 @@ set(meshUtilities_headers
     SimpleGeometricObjects/SimpleGeometricObjectBase.hpp
     SimpleGeometricObjects/Box.hpp
     SimpleGeometricObjects/ThickPlane.hpp
+    SimpleGeometricObjects/BoundedPlane.hpp
     StructuredGridUtilities.hpp
    )
 
@@ -31,6 +32,7 @@ set(meshUtilities_sources
     SimpleGeometricObjects/Box.cpp
     SimpleGeometricObjects/Cylinder.cpp
     SimpleGeometricObjects/ThickPlane.cpp
+    SimpleGeometricObjects/BoundedPlane.cpp
    )
 
 if( BUILD_OBJ_LIBS)
