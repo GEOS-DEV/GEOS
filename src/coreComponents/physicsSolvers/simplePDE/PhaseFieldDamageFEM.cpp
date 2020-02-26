@@ -238,9 +238,13 @@ void PhaseFieldDamageFEM::AssembleSystem( real64 const time_n,
 //          localIndex m_solidMaterialFullIndex = 0;
 //          SolidBase * solidModel =  constitutiveRelations[er][esr][m_solidMaterialFullIndex]->group_cast<SolidBase*>();
 
-#if 0
-          arrayView2d<real64 const> const & strainEnergy =
-          elementSubRegion->GetConstitutiveModels()->GetGroup(m_solidModelName)->getReference<array2d<real64> >(SolidBase::viewKeyStruct::strainEnergyDensityString);
+#if 1
+          arrayView2d<real64 const> const &
+          strainEnergy = elementSubRegion->
+                         GetConstitutiveModels()->
+                         GetGroup(m_solidModelName)->getReference<array2d<real64> >( SolidBase::
+                                                                                     viewKeyStruct::
+                                                                                     strainEnergyDensityString);
 #else
 #define strainEnergy( k, q ) m_coeff[k]
 #endif

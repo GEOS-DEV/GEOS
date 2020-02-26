@@ -397,6 +397,11 @@ public:
     dataRepository::GroupKey systemSolverParameters = { "SystemSolverParameters" };
   } solidMechanicsGroupKeys;
 
+  localIndex const & getSolidMaterialFullIndex() const
+  {
+    return m_solidMaterialFullIndex;
+  }
+
 protected:
   virtual void PostProcessInput() override final;
 

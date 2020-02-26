@@ -308,6 +308,9 @@ void PhaseFieldFractureSolver::ApplySystemSolution(DofManager const & GEOSX_UNUS
   MeshLevel *const mesh = domain->getMeshBody(0)->getMeshLevel(0);
   NodeManager *const nodeManager = mesh->getNodeManager();
 
+  SolidMechanicsLagrangianFEM &
+  solidSolver = *(this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolidMechanicsLagrangianFEM*>());
+
   PhaseFieldDamageFEM const &
   damageSolver = *(this->getParent()->GetGroup(m_damageSolverName)->group_cast<PhaseFieldDamageFEM*>());
 
@@ -326,6 +329,8 @@ void PhaseFieldFractureSolver::ApplySystemSolution(DofManager const & GEOSX_UNUS
   ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase>
   constitutiveRelations = elemManager->ConstructFullConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
 
+  localIndex const m_solidMaterialFullIndex = solidSolver.getSolidMaterialFullIndex();
+
   // begin region loop
   for (localIndex er = 0; er < elemManager->numRegions(); ++er)
   {
@@ -337,7 +342,6 @@ void PhaseFieldFractureSolver::ApplySystemSolution(DofManager const & GEOSX_UNUS
     elementRegion->forElementSubRegionsIndex<CellElementSubRegion>( [&]( localIndex const esr,
                                                                          CellElementSubRegion const *const elementSubRegion)
     {
-      localIndex m_solidMaterialFullIndex = 0;
       SolidBase * solidModel =  constitutiveRelations[er][esr][m_solidMaterialFullIndex]->group_cast<SolidBase*>();
 
       arrayView2d<real64> const & damageFieldOnMaterial = solidModel->getDamage();
