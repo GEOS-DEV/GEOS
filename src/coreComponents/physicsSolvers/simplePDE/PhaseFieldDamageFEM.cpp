@@ -267,7 +267,7 @@ void PhaseFieldDamageFEM::AssembleSystem( real64 const time_n,
           localIndex const n_q_points =
               feDiscretization->m_finiteElement->n_quadrature_points();
 
-          real64 ell = 0.05; //phase-field lenght scale
+          real64 ell = 0.1; //phase-field lenght scale
           real64 Gc = 1; //energy release rate
           double threshold = 3 * Gc / (16 * ell); //elastic energy threshold - use when LocalDissipation is Linear
           //real64 diffusion = 1.0;
@@ -280,6 +280,7 @@ void PhaseFieldDamageFEM::AssembleSystem( real64 const time_n,
                 double D = 0; //max between threshold and Elastic energy
                 if(m_localDissipationOption == "Linear"){
                   D = max(threshold, strainEnergy(k,q));
+                  //D = max(strainEnergy(k,q), strainEnergy(k,q));//debbuging line - remove after testing
                 }
                 /*real64 Xq = 0;
                 real64 Yq = 0;

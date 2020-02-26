@@ -6,7 +6,7 @@
                 discretization="FE1"
                 timeIntegrationOption="SteadyState"
                 fieldName="Damage"
-                localDissipation = "Quadratic"
+                localDissipation = "Linear"
                 logLevel="0"
                 targetRegions="{Region1}">
     </PhaseFieldDamageFEM>
@@ -15,16 +15,16 @@
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="{C3D8}"
-                  xCoords="{-1, 1}"
-                  yCoords="{-1, 1}"
-                  zCoords="{-1, 1}"
-                  nx="{3}"
-                  ny="{3}"
-                  nz="{3}"
+                  xCoords="{0, 1}"
+                  yCoords="{0, 1}"
+                  zCoords="{0, 1}"
+                  nx="{30}"
+                  ny="{30}"
+                  nz="{30}"
                   cellBlockNames="{cb1}"/>
   </Mesh>
 
-  <Events maxTime="2.0">
+  <Events maxTime="12.0">
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
     <PeriodicEvent name="solverApplications"
@@ -42,7 +42,7 @@
     <PeriodicEvent name="outputs"
                    timeFrequency="1.0"
                    targetExactTimestep="1"
-                   target="/Outputs/SiloOutput" />
+                   target="/Outputs/VTKOutput" />
 
     <PeriodicEvent name="restarts"
                    timeFrequency="1e99"
@@ -96,7 +96,7 @@
                         setNames="{all}"
                         objectPath="ElementRegions"
                         fieldName="coeffField"
-                        scale="4"
+                        scale="0.00375"
                         functionName="f_b"
                         />
   </FieldSpecifications>
@@ -109,11 +109,12 @@
     <SymbolicFunction name="f_b"
                       inputVarNames="{time, elementCenter}"
                       variableNames="{t, x, y, z}"
-                      expression="t/((1+x*x)*(1+y*y)*(1+z*z*z*z))"/>
+                      expression="t*(12*x*x-12*x+2-50)/(-1+x*x*(1-x)*(1-x))"/>
 
   </Functions>
+
   <Outputs>
-    <Silo name="SiloOutput" parallelThreads="1" plotFileRoot="plot"/> 
+    <!-- <Silo name="SiloOutput" parallelThreads="1" plotFileRoot="plot"/> -->
     <VTK name="VTKOutput" parallelThreads="1" plotFileRoot="plot"/>
     <Restart name="restartOutput"/>
   </Outputs>

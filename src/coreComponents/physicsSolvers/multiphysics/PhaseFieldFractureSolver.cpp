@@ -299,6 +299,72 @@ real64 PhaseFieldFractureSolver::SplitOperatorStep( real64 const& time_n,
   return dtReturn;
 }
 
+void PhaseFieldFractureSolver::ApplySystemSolution(DofManager const &dofManager,
+                                               ParallelVector const &solution,
+                                               real64 const GEOSX_UNUSED_ARG(scalingFactor),
+                                               DomainPartition *const domain) {
+
+  MeshLevel *const mesh = domain->getMeshBody(0)->getMeshLevel(0);
+  NodeManager *const nodeManager = mesh->getNodeManager();
+  arrayView1d<globalIndex const> const &dofIndex =
+      nodeManager->getReference<array1d<globalIndex>>(
+          dofManager.getKey(m_fieldName));//is there a way to get this without m_fieldName?
+  ElementRegionManager *const elemManager = mesh->getElemManager();
+  ConstitutiveManager  * const constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
+  NumericalMethodsManager const *numericalMethodManager =
+      domain->getParent()->GetGroup<NumericalMethodsManager>(
+          keys::numericalMethodsManager);
+  FiniteElementDiscretizationManager const *feDiscretizationManager =
+      numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(
+          keys::finiteElementDiscretizations);
+
+  ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase>
+  constitutiveRelations = elemManager->ConstructFullConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
+
+  // begin region loop
+  for (localIndex er = 0; er < elemManager->numRegions(); ++er) {
+    ElementRegionBase *const elementRegion = elemManager->GetRegion(er);
+
+    FiniteElementDiscretization const *feDiscretization =
+        feDiscretizationManager->GetGroup<FiniteElementDiscretization>(
+            m_discretizationName);
+
+    elementRegion->forElementSubRegionsIndex<CellElementSubRegion>(
+        [&](localIndex const esr,
+            CellElementSubRegion const *const elementSubRegion) {
+
+          localIndex m_solidMaterialFullIndex = 0;
+          SolidBase * solidModel =  constitutiveRelations[er][esr][m_solidMaterialFullIndex]->group_cast<SolidBase*>();
+
+          arrayView2d<real64> const & damageFieldOnMaterial = solidModel->getDamage();
+
+          localIndex const numNodesPerElement =
+              elementSubRegion->numNodesPerElement();
+
+          arrayView2d<localIndex const,
+                      CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const &elemNodes =
+              elementSubRegion->nodeList();
+
+          globalIndex_array elemDofIndex(numNodesPerElement);
+
+          localIndex const n_q_points =
+              feDiscretization->m_finiteElement->n_quadrature_points();
+
+          for (localIndex k = 0; k < elementSubRegion->size(); ++k) {
+              for (localIndex q = 0; q < n_q_points; ++q) {
+                 damageFieldOnMaterial(k,q) = 0;
+                 for (localIndex a = 0; a < numNodesPerElement; ++a) {
+                         damageFieldOnMaterial(k,q) +=
+                         feDiscretization->m_finiteElement->value(a, q) * solution[dofIndex(elemNodes(k, a))];
+                  }
+              }
+          }
+        });
+  }
+
+}
+
+
 
 REGISTER_CATALOG_ENTRY( SolverBase, PhaseFieldFractureSolver, std::string const &, Group * const )
 
