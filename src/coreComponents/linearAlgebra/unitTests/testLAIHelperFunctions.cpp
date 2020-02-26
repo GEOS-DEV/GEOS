@@ -225,7 +225,7 @@ TEST_F(LAIHelperFunctionsTest, Test_CellCenteredVectorPermutation)
   elemManager->forElementSubRegions([&]( ElementSubRegionBase const * const elementSubRegion )
     {
       localIndex const numElems = elementSubRegion->size();
-      arrayView1d<globalIndex> const &
+      arrayView1d<globalIndex const> const &
       dofNumber = elementSubRegion->getReference< array1d<globalIndex> >( dofManager.getKey( "cellCentered" ) );
       arrayView1d<integer> const & isGhost = elementSubRegion->GhostRank();
 

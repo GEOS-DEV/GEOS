@@ -188,7 +188,7 @@ void SinglePhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
 
   // in this function we need to make sure that we act only on the target regions
   // for that, we need the following region filter
-  set<localIndex> regionFilter;
+  SortedArray<localIndex> regionFilter;
   for (string const & regionName : m_targetRegions)
   {
     regionFilter.insert( elemManager->GetRegions().getIndex( regionName ) );
@@ -213,7 +213,7 @@ void SinglePhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
     faceManager->getReference< array1d<real64> >( viewKeyStruct::deltaFacePressureString );
 
   // get the face-centered depth 
-  arrayView1d<real64> const & faceGravCoef =
+  arrayView1d<real64 const> const & faceGravCoef =
     faceManager->getReference<array1d<real64>>(viewKeyStruct::gravityCoefString);
   
   // get the face-to-nodes connectivity for the transmissibility calculation
@@ -268,7 +268,7 @@ void SinglePhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
      subRegion->template getReference< array1d<R1Tensor> >( viewKeyStruct::permeabilityString ); 
 
     // get the cell-centered depth 
-    arrayView1d<real64> const & elemGravCoef =
+    arrayView1d<real64 const> const & elemGravCoef =
       subRegion->template getReference<array1d<real64>>(viewKeyStruct::gravityCoefString);
 
     
@@ -468,7 +468,7 @@ void SinglePhaseHybridFVM::UpdateUpwindedCoefficients( MeshLevel const * const m
                                                        array2d<localIndex> const & elemRegionList,
                                                        array2d<localIndex> const & elemSubRegionList,
                                                        array2d<localIndex> const & elemList,
-                                                       set<localIndex> const & regionFilter,
+                                                       SortedArray<localIndex> const & regionFilter,
                                                        arraySlice1d<localIndex const> const elemToFaces,
                                                        ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const & mob,
                                                        ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const & dMob_dp,

@@ -103,7 +103,7 @@ public:
    * called from within the lambda to a call to FieldSpecificationManager::ApplyFieldValue().
    */
   template< typename FIELD_OP, typename POLICY=parallelHostPolicy >
-  void ApplyFieldValue( set<localIndex> const & targetSet,
+  void ApplyFieldValue( SortedArrayView<localIndex const> const & targetSet,
                         real64 const time,
                         dataRepository::Group * dataGroup,
                         string const & fieldname ) const;
@@ -128,7 +128,7 @@ public:
    * BoundaryConditionManager::ApplyBoundaryCondition().
    */
   template< typename FIELD_OP, typename LAI >
-  void ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
+  void ApplyBoundaryConditionToSystem( SortedArrayView<localIndex const> const & targetSet,
                                        real64 const time,
                                        dataRepository::Group * dataGroup,
                                        string const & fieldName,
@@ -163,7 +163,7 @@ public:
    */
   template< typename FIELD_OP, typename LAI, typename LAMBDA >
   void
-  ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
+  ApplyBoundaryConditionToSystem( SortedArrayView<localIndex const> const & targetSet,
                                   real64 const time,
                                   dataRepository::Group * dataGroup,
                                   arrayView1d<globalIndex const> const & dofMap,
@@ -198,7 +198,7 @@ public:
    */
   template< typename FIELD_OP, typename LAI, typename LAMBDA >
   void
-  ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
+  ApplyBoundaryConditionToSystem( SortedArrayView<localIndex const> const & targetSet,
                                   real64 const time,
                                   real64 const dt,
                                   dataRepository::Group * dataGroup,
@@ -209,7 +209,7 @@ public:
                                   LAMBDA && lambda ) const;
 
   template< typename LAI >
-  void ZeroSystemRowsForBoundaryCondition( set<localIndex> const & targetSet,
+  void ZeroSystemRowsForBoundaryCondition( SortedArrayView<localIndex const> const & targetSet,
                                            arrayView1d<globalIndex const> const & dofMap,
                                            typename LAI::ParallelMatrix & matrix ) const;
 
@@ -414,7 +414,7 @@ void FieldSpecificationBase::ApplyFieldValueKernel( ArrayView< T, N, USD > const
 
 
 template< typename FIELD_OP, typename POLICY >
-void FieldSpecificationBase::ApplyFieldValue( set<localIndex> const & targetSet,
+void FieldSpecificationBase::ApplyFieldValue( SortedArrayView<localIndex const> const & targetSet,
                                               real64 const time,
                                               Group * dataGroup,
                                               string const & fieldName ) const
@@ -435,7 +435,7 @@ void FieldSpecificationBase::ApplyFieldValue( set<localIndex> const & targetSet,
 }
 
 template< typename FIELD_OP, typename LAI >
-void FieldSpecificationBase::ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
+void FieldSpecificationBase::ApplyBoundaryConditionToSystem( SortedArrayView<localIndex const> const & targetSet,
                                                              real64 const time,
                                                              dataRepository::Group * dataGroup,
                                                              string const & fieldName,
@@ -471,7 +471,7 @@ void FieldSpecificationBase::ApplyBoundaryConditionToSystem( set<localIndex> con
 template< typename FIELD_OP, typename LAI, typename LAMBDA >
 void
 FieldSpecificationBase::
-ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
+ApplyBoundaryConditionToSystem( SortedArrayView<localIndex const> const & targetSet,
                                 real64 const time,
                                 dataRepository::Group * dataGroup,
                                 arrayView1d<globalIndex const> const & dofMap,
@@ -569,7 +569,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
 template< typename FIELD_OP, typename LAI, typename LAMBDA >
 void
 FieldSpecificationBase::
-ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
+ApplyBoundaryConditionToSystem( SortedArrayView<localIndex const> const & targetSet,
                                 real64 const time,
                                 real64 const dt,
                                 dataRepository::Group * dataGroup,
@@ -667,7 +667,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
 }
 
 template< typename LAI >
-void FieldSpecificationBase::ZeroSystemRowsForBoundaryCondition( set<localIndex> const & targetSet,
+void FieldSpecificationBase::ZeroSystemRowsForBoundaryCondition( SortedArrayView<localIndex const> const & targetSet,
                                                                  arrayView1d<globalIndex const> const & dofMap,
                                                                  typename LAI::ParallelMatrix & matrix ) const
 
