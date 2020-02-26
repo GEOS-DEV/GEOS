@@ -21,6 +21,7 @@ set( physicsSolvers_headers
      fluidFlow/SinglePhaseWell.hpp
      fluidFlow/WellSolverBase.hpp
      multiphysics/HydrofractureSolver.hpp
+     multiphysics/LagrangianContactSolver.hpp
      multiphysics/PoroelasticSolver.hpp
      multiphysics/ReservoirSolver.hpp
      simplePDE/LaplaceFEM.hpp
@@ -50,6 +51,7 @@ set( physicsSolvers_sources
      fluidFlow/SinglePhaseWell.cpp
      fluidFlow/WellSolverBase.cpp
      multiphysics/HydrofractureSolver.cpp
+     multiphysics/LagrangianContactSolver.cpp
      multiphysics/PoroelasticSolver.cpp
      multiphysics/ReservoirSolver.cpp
      simplePDE/LaplaceFEM.cpp

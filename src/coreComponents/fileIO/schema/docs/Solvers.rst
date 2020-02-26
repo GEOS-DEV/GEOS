@@ -7,6 +7,7 @@ gravityVector                R1Tensor 0,0,-9.81 Gravity vector used in the physi
 CompositionalMultiphaseFlow  node               :ref:`XML_CompositionalMultiphaseFlow`     
 CompositionalMultiphaseWell  node               :ref:`XML_CompositionalMultiphaseWell`     
 Hydrofracture                node               :ref:`XML_Hydrofracture`                   
+LagrangianContact            node               :ref:`XML_LagrangianContact`               
 LaplaceFEM                   node               :ref:`XML_LaplaceFEM`                      
 Poroelastic                  node               :ref:`XML_Poroelastic`                     
 Reservoir                    node               :ref:`XML_Reservoir`                       

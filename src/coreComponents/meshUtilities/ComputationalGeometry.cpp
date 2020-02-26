@@ -114,6 +114,219 @@ real64 Centroid_3DPolygon( localIndex const * const pointsIndices,
   return area;
 }
 
+/**
+ * Calculates the centroid of a convex 3D polygon as well as the normal
+ * @param[in] pointIndices list of index references for the points array in
+ * order (CW or CCW) about the polygon loop
+ * @param[in] points 3D point list
+ * @param[out] center 3D center of the given ordered polygon point list
+ * @param[out] normal Normal to the face
+ * @return area of the convex 3D polygon
+ */
+real64 Centroid_3DPolygon( localIndex const * const pointsIndices,
+                           localIndex const numPoints,
+                           arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & points,
+                           R1Tensor & center,
+                           R1Tensor & normal,
+                           R2Tensor & rotationMatrix,
+                           real64 const areaTolerance,
+                           real64 const rotationTolerance )
+{
+  R1Tensor v1,v2,vc;
+  real64 area = 0.0;
+  center = 0.0;
+  normal=0.;
+  rotationMatrix=0.;
+
+  if( numPoints > 2 )
+  {
+    R1Tensor const x0 = points[pointsIndices[0]];
+    for( localIndex a=0 ; a<(numPoints-2) ; ++a )
+    {
+      v1  = points[pointsIndices[a+1]];
+      v2  = points[pointsIndices[a+2]];
+
+      vc  = x0;
+      vc += v1;
+      vc += v2;
+
+      v1 -= x0;
+      v2 -= x0;
+
+      R1Tensor triangleNormal;
+      triangleNormal.Cross( v1,v2 );
+      const real64 triangleArea = triangleNormal.Normalize();
+      triangleNormal *= triangleArea;
+      normal += triangleNormal;
+      area += triangleArea;
+      vc *= triangleArea;
+      center += vc;
+    }
+    if( area > areaTolerance )
+    {
+      center /= (area * 3.0);
+      normal.Normalize();
+      area *= 0.5;
+
+      RotationMatrix_3D( normal, rotationMatrix, rotationTolerance );
+    }
+    else if( area < -areaTolerance )
+    {
+      for( localIndex a=0 ; a<numPoints ; ++a )
+      {
+        GEOSX_LOG_RANK("Points: " << points[pointsIndices[a]](0) << " "
+                      << points[pointsIndices[a]](1) << " "
+                      << points[pointsIndices[a]](2) << " "
+                      << pointsIndices[a]);
+      }
+
+      GEOSX_ERROR("Negative area found : " << area );
+    }
+    else
+    {
+      return 0.;
+    }
+  }
+  else if( numPoints == 1 )
+  {
+    center = points[pointsIndices[0]];
+  }
+  else if( numPoints == 2 )
+  {
+    center  = points[pointsIndices[0]];
+
+    //For 2D elements, a face is actually an edge with two nodes. We treat the
+    // length of this edge as the surface area and use it in the calculation of
+    // tractions.
+    R1Tensor x1_x0;
+    x1_x0 = points[pointsIndices[1]];
+    center += x1_x0;
+    center *= 0.5;
+
+    x1_x0 -= points[pointsIndices[0]];
+    area = Dot(x1_x0, x1_x0);
+    area = sqrt(area);
+  }
+  return area;
+}
+
+void RotationMatrix_3D( R1Tensor const & normal,
+                        R2Tensor & rotationMatrix,
+                        real64 const rotationTolerance )
+{
+  R1Tensor const e1 = {1,0,0};
+  R1Tensor const e2 = {0,1,0};
+  R1Tensor const e3 = {0,0,1};
+
+  R1Tensor r2, r3;
+  R1Tensor proj1, proj2;
+  real64 dot1, dot2;
+  // Avoid to use a vector parallel to the normal to complete the basis
+  if( std::fabs(std::fabs(normal(0)) - 1.0) > rotationTolerance )
+  {
+    // Default choice: e1
+    proj1 = normal;
+    dot1 = Dot(e1, normal);
+    proj1 *= dot1;
+    r2 = e1;
+    r2 -= proj1;
+    r2.Normalize();
+
+    // Avoid to use a vector parallel to either the normal or the r2 direction to complete the basis
+    if( std::fabs(std::fabs(normal(1)) - 1.0) > rotationTolerance &&
+        std::fabs(std::fabs(r2(1)) - 1.0) > rotationTolerance )
+    {
+      // Default choice: e2
+      proj1 = normal;
+      dot1 = Dot(e2, normal);
+      proj1 *= dot1;
+      proj2 = r2;
+      dot2 = Dot(e2, r2);
+      proj2 *= dot2;
+      r3 = e2;
+      r3 -= proj1;
+      r3 -= proj2;
+      r3.Normalize();
+    }
+    else
+    {
+      // Alternative choice: e3
+      proj1 = normal;
+      dot1 = Dot(e3, normal);
+      proj1 *= dot1;
+      proj2 = r2;
+      dot2 = Dot(e3, r2);
+      proj2 *= dot2;
+      r3 = e3;
+      r3 -= proj1;
+      r3 -= proj2;
+      r3.Normalize();
+    }
+  }
+  else
+  {
+    // Alternative choice: e2
+    dot1 = Dot(e2, normal);
+    proj1 *= dot1;
+    r2 = e2;
+    r2 -= proj1;
+    r2.Normalize();
+
+    // Default choice: e3
+    proj1 = normal;
+    dot1 = Dot(e3, normal);
+    proj1 *= dot1;
+    proj2 = r2;
+    dot2 = Dot(e3, r2);
+    proj2 *= dot2;
+    r3 = e3;
+    r3 -= proj1;
+    r3 -= proj2;
+    r3.Normalize();
+  }
+
+  // Change sign to the vectors added to complete the basis of R3 according to the criterion:
+  // maximum component larger than zero
+  real64 max_r2 = std::fabs(r2(0));
+  real64 max_r3 = std::fabs(r3(0));
+  int maxpos_r2 = 0;
+  int maxpos_r3 = 0;
+  for( int i=1; i<3; ++i )
+  {
+    if( std::fabs(r2(i)) > max_r2 )
+    {
+      max_r2 = std::fabs(r2(i));
+      maxpos_r2 = i;
+    }
+    if( std::fabs(r3(i)) > max_r3 )
+    {
+      max_r3 = std::fabs(r3(i));
+      maxpos_r3 = i;
+    }
+  }
+  if( r2(maxpos_r2) < 0.0 )
+  {
+    r2 *= -1.0;
+  }
+  if( r3(maxpos_r3) < 0.0 )
+  {
+    r3 *= -1.0;
+  }
+
+  // Save everything in the standard form (3x3 rotation matrix)
+  rotationMatrix(0,0) = normal(0);
+  rotationMatrix(1,0) = normal(1);
+  rotationMatrix(2,0) = normal(2);
+  rotationMatrix(0,1) = r2(0);
+  rotationMatrix(1,1) = r2(1);
+  rotationMatrix(2,1) = r2(2);
+  rotationMatrix(0,2) = r3(0);
+  rotationMatrix(1,2) = r3(1);
+  rotationMatrix(2,2) = r3(2);
+
+  return;
+}
+
 real64 Centroid_3DPolygon( arrayView1d<localIndex const> const & pointsIndices,
                            arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & points,
                            R1Tensor & center,

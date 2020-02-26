@@ -282,6 +282,13 @@ Element: LagrangeBasis3
 .. include:: ../../coreComponents/fileIO/schema/docs/LagrangeBasis3.rst
 
 
+.. _XML_LagrangianContact:
+
+Element: LagrangianContact
+==========================
+.. include:: ../../coreComponents/fileIO/schema/docs/LagrangianContact.rst
+
+
 .. _XML_LaplaceFEM:
 
 Element: LaplaceFEM
@@ -865,6 +872,13 @@ Datastructure: LagrangeBasis2
 Datastructure: LagrangeBasis3
 =============================
 .. include:: ../../coreComponents/fileIO/schema/docs/LagrangeBasis3_other.rst
+
+
+.. _DATASTRUCTURE_LagrangianContact:
+
+Datastructure: LagrangianContact
+================================
+.. include:: ../../coreComponents/fileIO/schema/docs/LagrangianContact_other.rst
 
 
 .. _DATASTRUCTURE_LaplaceFEM:

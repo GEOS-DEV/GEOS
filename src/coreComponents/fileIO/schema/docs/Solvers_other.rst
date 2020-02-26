@@ -6,6 +6,7 @@ Name                         Type Description
 CompositionalMultiphaseFlow  node :ref:`DATASTRUCTURE_CompositionalMultiphaseFlow`  
 CompositionalMultiphaseWell  node :ref:`DATASTRUCTURE_CompositionalMultiphaseWell`  
 Hydrofracture                node :ref:`DATASTRUCTURE_Hydrofracture`                
+LagrangianContact            node :ref:`DATASTRUCTURE_LagrangianContact`            
 LaplaceFEM                   node :ref:`DATASTRUCTURE_LaplaceFEM`                   
 Poroelastic                  node :ref:`DATASTRUCTURE_Poroelastic`                  
 Reservoir                    node :ref:`DATASTRUCTURE_Reservoir`                    

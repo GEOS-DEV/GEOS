@@ -58,6 +58,7 @@ FaceManager::FaceManager( string const &, Group * const parent ):
   this->registerWrapper( viewKeyStruct::faceAreaString, &m_faceArea, false);
   this->registerWrapper( viewKeyStruct::faceCenterString, &m_faceCenter, false);
   this->registerWrapper( viewKeyStruct::faceNormalString, &m_faceNormal, false);
+  this->registerWrapper( viewKeyStruct::faceRotationMatrixString, &m_faceRotationMatrix, false);
 
   m_toElements.resize(0,2);
 
@@ -569,6 +570,7 @@ void FaceManager::computeGeometry( NodeManager const * const nodeManager )
   real64_array & faceArea  = getReference<real64_array>( viewKeyStruct::faceAreaString);
   r1_array & faceNormal = getReference<r1_array>( viewKeyStruct::faceNormalString);
   r1_array & faceCenter = getReference<r1_array>( viewKeyStruct::faceCenterString);
+  r2_array & rotationMatrix = getReference<r2_array>( viewKeyStruct::faceRotationMatrixString);
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager->referencePosition();
 
   // loop over faces and calculate faceArea, faceNormal and faceCenter
@@ -578,7 +580,8 @@ void FaceManager::computeGeometry( NodeManager const * const nodeManager )
                                                                     m_nodeList.sizeOfArray( faceID ),
                                                                     X,
                                                                     faceCenter[ faceID ],
-                                                                    faceNormal[ faceID ] );
+                                                                    faceNormal[ faceID ],
+                                                                    rotationMatrix[ faceID ] );
   } );
 }
 

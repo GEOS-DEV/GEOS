@@ -430,6 +430,7 @@
 			<xsd:element name="CompositionalMultiphaseFlow" type="CompositionalMultiphaseFlowType" />
 			<xsd:element name="CompositionalMultiphaseWell" type="CompositionalMultiphaseWellType" />
 			<xsd:element name="Hydrofracture" type="HydrofractureType" />
+			<xsd:element name="LagrangianContact" type="LagrangianContactType" />
 			<xsd:element name="LaplaceFEM" type="LaplaceFEMType" />
 			<xsd:element name="Poroelastic" type="PoroelasticType" />
 			<xsd:element name="Reservoir" type="ReservoirType" />
@@ -470,6 +471,14 @@
 	</xsd:complexType>
 	<xsd:complexType name="WellControlsType" />
 	<xsd:complexType name="HydrofractureType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
+		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
+		<xsd:attribute name="maxStableDt" type="real64" />
+	</xsd:complexType>
+	<xsd:complexType name="LagrangianContactType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
@@ -1130,6 +1139,8 @@
 		<xsd:attribute name="faceNormal" type="r1_array" />
 		<!--facePressure => An array that holds the pressures at the faces. => SinglePhaseHybridFVM-->
 		<xsd:attribute name="facePressure" type="real64_array" />
+		<!--faceRotationMatrix => (no description available)-->
+		<xsd:attribute name="faceRotationMatrix" type="r2_array" />
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
@@ -1289,6 +1300,10 @@
 		<xsd:attribute name="elementArea" type="real64_array" />
 		<!--elementCenter => The center of each FaceElement.-->
 		<xsd:attribute name="elementCenter" type="r1_array" />
+		<!--elementLocalJump => The local jump of each FaceElement.-->
+		<xsd:attribute name="elementLocalJump" type="r1_array" />
+		<!--elementRotationMatrix => The rotation matrix of each FaceElement.-->
+		<xsd:attribute name="elementRotationMatrix" type="r2_array" />
 		<!--elementVolume => The volume of each FaceElement.-->
 		<xsd:attribute name="elementVolume" type="real64_array" />
 		<!--faceList => Map to the faces attached to each FaceElement.-->

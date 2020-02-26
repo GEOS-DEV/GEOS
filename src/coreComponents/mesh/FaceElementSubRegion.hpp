@@ -60,6 +60,10 @@ public:
   void CalculateElementGeometricQuantities( localIndex const index,
                                             arrayView1d<real64 const> const & faceArea );
 
+  void CalculateElementGeometricQuantities( localIndex const k,
+                                            arrayView1d<real64 const> const & faceArea,
+                                            arrayView1d<R2Tensor const> const & faceRotationMatrix );
+
   virtual localIndex PackUpDownMapsSize( arrayView1d<localIndex const> const & packList ) const override;
   virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
                                      arrayView1d<localIndex const> const & packList ) const override;
@@ -85,6 +89,8 @@ public:
   {
     static constexpr auto elementApertureString        = "elementAperture";
     static constexpr auto elementAreaString            = "elementArea";
+    static constexpr auto elementLocalJumpString       = "elementLocalJump";
+    static constexpr auto elementRotationMatrixString  = "elementRotationMatrix";
     static constexpr auto faceElementsToCellRegionsString    = "fractureElementsToCellRegions";
     static constexpr auto faceElementsToCellSubRegionsString    = "fractureElementsToCellSubRegions";
     static constexpr auto faceElementsToCellIndexString    = "fractureElementsToCellIndices";
@@ -149,6 +155,12 @@ public:
   arrayView1d< real64 > const &       getElementArea()       { return m_elementArea; }
   arrayView1d< real64 const > const & getElementArea() const { return m_elementArea; }
 
+  arrayView1d< R1Tensor > const &       getElementLocalJump()       { return m_elementLocalJump; }
+  arrayView1d< R1Tensor const > const & getElementLocalJump() const { return m_elementLocalJump; }
+
+  arrayView1d< R2Tensor > const &       getElementRotationMatrix()       { return m_elementRotationMatrix; }
+  arrayView1d< R2Tensor const > const & getElementRotationMatrix() const { return m_elementRotationMatrix; }
+
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
   arrayView1d< real64 > const &       getSeparationCoefficient()       { return m_separationCoefficient; }
   arrayView1d< real64 const > const & getSeparationCoefficient() const { return m_separationCoefficient; }
@@ -181,6 +193,12 @@ private:
 
   /// The member level field for the element center
   array1d< real64 > m_elementArea;
+
+  /// The member level field for the element local jump
+  array1d< R1Tensor > m_elementLocalJump;
+
+  /// The member level field for the element rotation matrix
+  array1d< R2Tensor > m_elementRotationMatrix;
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
   array1d< real64 > m_separationCoefficient;

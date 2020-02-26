@@ -40,7 +40,9 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
   m_toEdgesRelation(),
   m_toFacesRelation(),
   m_elementAperture(),
-  m_elementArea()
+  m_elementArea(),
+  m_elementLocalJump(),
+  m_elementRotationMatrix()
 {
   registerWrapper( viewKeyStruct::nodeListString, &m_toNodesRelation, false )->
     setDescription("Map to the nodes attached to each FaceElement.");
@@ -61,6 +63,16 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
     setApplyDefaultValue(-1.0)->
     setPlotLevel(dataRepository::PlotLevel::LEVEL_2)->
     setDescription("The area of each FaceElement.");
+
+  registerWrapper( viewKeyStruct::elementLocalJumpString, &m_elementLocalJump, false )->
+    setApplyDefaultValue({0.0,0.0,0.0})->
+    setPlotLevel(dataRepository::PlotLevel::LEVEL_2)->
+    setDescription("The local jump of each FaceElement.");
+
+  registerWrapper( viewKeyStruct::elementRotationMatrixString, &m_elementRotationMatrix, false )->
+    setApplyDefaultValue({0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0})->
+    setPlotLevel(dataRepository::PlotLevel::LEVEL_2)->
+    setDescription("The rotation matrix of each FaceElement.");
 
   registerWrapper( viewKeyStruct::elementCenterString, &m_elementCenter, false )->
     setApplyDefaultValue({0.0,0.0,0.0})->
@@ -125,15 +137,26 @@ void FaceElementSubRegion::CalculateElementGeometricQuantities( localIndex const
   m_elementVolume[k] = m_elementAperture[k] * faceArea[m_toFacesRelation[k][0]];
 }
 
+void FaceElementSubRegion::CalculateElementGeometricQuantities( localIndex const k,
+                                                                arrayView1d<real64 const> const & faceArea,
+                                                                arrayView1d<R2Tensor const> const & faceRotationMatrix )
+{
+  m_elementArea[k] = faceArea[ m_toFacesRelation[k][0] ];
+  m_elementVolume[k] = m_elementAperture[k] * faceArea[m_toFacesRelation[k][0]];
+  m_elementRotationMatrix[k] = faceRotationMatrix[ m_toFacesRelation[k][0] ];
+}
+
 void FaceElementSubRegion::CalculateElementGeometricQuantities( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
                                                                 FaceManager const & faceManager )
 {
   arrayView1d<real64 const> const & faceArea = faceManager.faceArea();
+  arrayView1d<R2Tensor const> const & faceRotationMatrix = faceManager.faceRotationMatrix();
 
   forall_in_range<serialPolicy>( 0, this->size(), GEOSX_LAMBDA ( localIndex const k )
   {
     m_elementArea[k] = faceArea[ m_toFacesRelation[k][0] ];
     m_elementVolume[k] = m_elementAperture[k] * faceArea[m_toFacesRelation[k][0]];
+    m_elementRotationMatrix[k] = faceRotationMatrix[ m_toFacesRelation[k][0] ];
   });
 }
 
