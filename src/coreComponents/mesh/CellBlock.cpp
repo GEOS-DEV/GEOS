@@ -253,31 +253,39 @@ void CellBlock::SetElementType( string const & elementType)
   if (!m_elementTypeString.compare(0, 4, "C3D8"))
   {
     // Hexahedron
-    this->numNodesPerElement() = 8;
-    this->numEdgesPerElement() = 12;
-    this->numFacesPerElement() = 6;
+    this->setNumNodesPerElement( 8 );
+    this->setNumIndependentNodesPerElement( 8 );
+    this->setNumEdgesPerElement( 12 );
+    this->setNumFacesPerElement( 6 );
   }
   else if (!m_elementTypeString.compare(0, 4, "C3D4"))
   {
     // Tetrahedron
-    this->numNodesPerElement() = 4;
-    this->numEdgesPerElement() = 6;
-    this->numFacesPerElement() = 4;
+    this->setNumNodesPerElement( 4 );
+    this->setNumIndependentNodesPerElement( 4 );
+    this->setNumEdgesPerElement( 6 );
+    this->setNumFacesPerElement( 4 );
   }
   else if (!m_elementTypeString.compare(0, 4, "C3D6"))
   {
     // Triangular prism
-    this->numNodesPerElement() = 8;
-    this->numEdgesPerElement() = 9;
-    this->numFacesPerElement() = 5;
+
+    // This element type uses the HEX shape functions, so numNodesPerElement needs to be 8 until we have a proper
+    // element type for this
+    this->setNumNodesPerElement( 8 );
+    this->setNumIndependentNodesPerElement( 6 );
+    this->setNumEdgesPerElement( 9 );
+    this->setNumFacesPerElement( 5 );
   }
   else if (!m_elementTypeString.compare(0, 4, "C3D5"))
   {
     // Pyramid
-    this->numNodesPerElement() = 5;
-    this->numEdgesPerElement() = 8;
-    this->numFacesPerElement() = 5;
-  }else
+    this->setNumNodesPerElement( 5 );
+    this->setNumIndependentNodesPerElement( 5 );
+    this->setNumEdgesPerElement( 8 );
+    this->setNumFacesPerElement( 5 );
+  }
+  else
   {
     GEOSX_ERROR("Error.  Don't know what kind of element this is.");
   }
