@@ -195,19 +195,13 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
 
       for( localIndex k=0 ; k<subRegion->size() ; ++k )
       {
-        localIndex_array nodeIndices;
-        for( localIndex a=0 ; a<subRegion->numNodesPerElement() ; ++a )
+        for( localIndex a=0 ; a<subRegion->numIndependentNodesPerElement() ; ++a )
         {
           localIndex nodeIndex = elemToNodeMap( k, a );
 
-          if (std::find(nodeIndices.begin(), nodeIndices.end(), nodeIndex) == nodeIndices.end())
-          {
-            toElementRegionList.appendToArray( nodeIndex, kReg );
-            toElementSubRegionList.appendToArray( nodeIndex, kSubReg );
-            toElementList.appendToArray( nodeIndex, k );
-
-            nodeIndices.push_back(nodeIndex);
-          }
+          toElementRegionList.appendToArray( nodeIndex, kReg );
+          toElementSubRegionList.appendToArray( nodeIndex, kSubReg );
+          toElementList.appendToArray( nodeIndex, k );
         }
       }
     });

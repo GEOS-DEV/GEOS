@@ -68,6 +68,13 @@ public:
   localIndex const & numNodesPerElement() const { return m_numNodesPerElement; }
 
   /**
+   * @return number of independent nodes per element
+   */
+  localIndex & numIndependentNodesPerElement()  { return m_numIndependentNodesPerElement; }
+
+  localIndex const & numIndependentNodesPerElement() const { return m_numIndependentNodesPerElement; }
+
+  /**
    * @return number of nodes per element
    */
   localIndex       & numNodesPerElement()       { return m_numNodesPerElement; }
@@ -120,6 +127,9 @@ private:
 protected:
   /// The number of nodes per element in this cell block
   localIndex m_numNodesPerElement;
+
+  /// The number of independent nodes per element in this cell block
+  localIndex m_numIndependentNodesPerElement;
 
   /// The number of edges per element in this cell block
   localIndex m_numEdgesPerElement;

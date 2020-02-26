@@ -277,21 +277,25 @@ void CellBlock::SetElementType( string const & elementType)
   if (!m_elementTypeString.compare(0, 4, "C3D8"))
   {
     this->numNodesPerElement() = 8;
+    this->numIndependentNodesPerElement() = 8;
     this->numFacesPerElement() = 6;
   }
   else if (!m_elementTypeString.compare(0, 4, "C3D4"))
   {
     this->numNodesPerElement() = 4;
+    this->numIndependentNodesPerElement() = 4;
     this->numFacesPerElement() = 4;
   }
   else if (!m_elementTypeString.compare(0, 4, "C3D6"))
   {
     this->numNodesPerElement() = 8;
+    this->numIndependentNodesPerElement() = 6;
     this->numFacesPerElement() = 5;
   }
   else if (!m_elementTypeString.compare(0, 4, "C3D5"))
   {
     this->numNodesPerElement() = 5;
+    this->numIndependentNodesPerElement() = 5;
     this->numFacesPerElement() = 5;
   }
 
