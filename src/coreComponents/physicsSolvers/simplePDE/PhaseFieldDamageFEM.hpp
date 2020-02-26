@@ -131,6 +131,8 @@ public:
     m_solidModelName = name;
   }
 
+  string const & getFieldName() const { return m_fieldName; }
+
 protected:
   virtual void PostProcessInput() override final;
 
