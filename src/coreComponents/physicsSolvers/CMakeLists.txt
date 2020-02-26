@@ -29,6 +29,7 @@ set( physicsSolvers_headers
      solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp
      solidMechanics/SolidMechanicsLagrangianSSLEKernels.hpp     
      surfaceGeneration/SurfaceGenerator.hpp
+     surfaceGeneration/EmbeddedSurfaceGenerator.hpp
      )
 
 #
@@ -56,6 +57,7 @@ set( physicsSolvers_sources
      solidMechanics/SolidMechanicsLagrangianFEM.cpp
      solidMechanics/SolidMechanicsLagrangianSSLE.cpp
      surfaceGeneration/SurfaceGenerator.cpp
+     surfaceGeneration/EmbeddedSurfaceGenerator.cpp
      )
 
 if( BUILD_OBJ_LIBS)

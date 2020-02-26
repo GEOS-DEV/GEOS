@@ -23,6 +23,13 @@ Element: BlackOilFluid
 .. include:: ../../coreComponents/fileIO/schema/docs/BlackOilFluid.rst
 
 
+.. _XML_BoundedPlane:
+
+Element: BoundedPlane
+=====================
+.. include:: ../../coreComponents/fileIO/schema/docs/BoundedPlane.rst
+
+
 .. _XML_Box:
 
 Element: Box
@@ -133,6 +140,20 @@ Element: Dirichlet
 Element: ElementRegions
 =======================
 .. include:: ../../coreComponents/fileIO/schema/docs/ElementRegions.rst
+
+
+.. _XML_EmbeddedSurfaceElementRegion:
+
+Element: EmbeddedSurfaceElementRegion
+=====================================
+.. include:: ../../coreComponents/fileIO/schema/docs/EmbeddedSurfaceElementRegion.rst
+
+
+.. _XML_EmbeddedSurfaceGenerator:
+
+Element: EmbeddedSurfaceGenerator
+=================================
+.. include:: ../../coreComponents/fileIO/schema/docs/EmbeddedSurfaceGenerator.rst
 
 
 .. _XML_Events:
@@ -594,6 +615,13 @@ Datastructure: BlackOilFluid
 .. include:: ../../coreComponents/fileIO/schema/docs/BlackOilFluid_other.rst
 
 
+.. _DATASTRUCTURE_BoundedPlane:
+
+Datastructure: BoundedPlane
+===========================
+.. include:: ../../coreComponents/fileIO/schema/docs/BoundedPlane_other.rst
+
+
 .. _DATASTRUCTURE_Box:
 
 Datastructure: Box
@@ -711,6 +739,20 @@ Datastructure: Dirichlet
 Datastructure: ElementRegions
 =============================
 .. include:: ../../coreComponents/fileIO/schema/docs/ElementRegions_other.rst
+
+
+.. _DATASTRUCTURE_EmbeddedSurfaceElementRegion:
+
+Datastructure: EmbeddedSurfaceElementRegion
+===========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/EmbeddedSurfaceElementRegion_other.rst
+
+
+.. _DATASTRUCTURE_EmbeddedSurfaceGenerator:
+
+Datastructure: EmbeddedSurfaceGenerator
+=======================================
+.. include:: ../../coreComponents/fileIO/schema/docs/EmbeddedSurfaceGenerator_other.rst
 
 
 .. _DATASTRUCTURE_Events:

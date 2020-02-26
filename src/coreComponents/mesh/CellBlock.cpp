@@ -34,6 +34,7 @@ CellBlock::CellBlock( string const & name, Group * const parent ):
   m_toFacesRelation()
 {
   registerWrapper(viewKeyStruct::nodeListString, &m_toNodesRelation, 0 );
+  registerWrapper(viewKeyStruct::edgeListString, &m_toEdgesRelation, 0 );
   registerWrapper(viewKeyStruct::faceListString, &m_toFacesRelation, 0 );
   registerWrapper(viewKeyStruct::numNodesPerElementString, &m_numNodesPerElement, 0 );
   registerWrapper(viewKeyStruct::numEdgesPerElementString, &m_numEdgesPerElement, 0 );
@@ -251,49 +252,39 @@ void CellBlock::SetElementType( string const & elementType)
 
   if (!m_elementTypeString.compare(0, 4, "C3D8"))
   {
-    m_toNodesRelation.resize(0,8);
-    m_toFacesRelation.resize(0,6);
-  }
-  else if (!m_elementTypeString.compare(0, 4, "C3D4"))
-  {
-    m_toNodesRelation.resize(0,4);
-    m_toFacesRelation.resize(0,4);
-  }
-  else if (!m_elementTypeString.compare(0, 4, "C3D6"))
-  {
-    m_toNodesRelation.resize(0,8);
-    m_toFacesRelation.resize(0,5);
-  }
-  else if (!m_elementTypeString.compare(0, 4, "C3D5"))
-  {
-    m_toNodesRelation.resize(0,5);
-    m_toFacesRelation.resize(0,5);
-  }
-  else
-  {
-    GEOSX_ERROR("Error.  Don't know what kind of element this is.");
-  }
-
-  if (!m_elementTypeString.compare(0, 4, "C3D8"))
-  {
+    // Hexahedron
     this->numNodesPerElement() = 8;
+    this->numEdgesPerElement() = 12;
     this->numFacesPerElement() = 6;
   }
   else if (!m_elementTypeString.compare(0, 4, "C3D4"))
   {
+    // Tetrahedron
     this->numNodesPerElement() = 4;
+    this->numEdgesPerElement() = 6;
     this->numFacesPerElement() = 4;
   }
   else if (!m_elementTypeString.compare(0, 4, "C3D6"))
   {
+    // Triangular prism
     this->numNodesPerElement() = 8;
+    this->numEdgesPerElement() = 9;
     this->numFacesPerElement() = 5;
   }
   else if (!m_elementTypeString.compare(0, 4, "C3D5"))
   {
+    // Pyramid
     this->numNodesPerElement() = 5;
+    this->numEdgesPerElement() = 8;
     this->numFacesPerElement() = 5;
+  }else
+  {
+    GEOSX_ERROR("Error.  Don't know what kind of element this is.");
   }
+
+  m_toNodesRelation.resize(0, m_numNodesPerElement);
+  m_toEdgesRelation.resize(0, m_numEdgesPerElement);
+  m_toFacesRelation.resize(0, m_numFacesPerElement);
 
 }
 

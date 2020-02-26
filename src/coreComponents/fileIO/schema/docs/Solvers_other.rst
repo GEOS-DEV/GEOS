@@ -5,6 +5,7 @@ Name                         Type Description
 ============================ ==== ================================================= 
 CompositionalMultiphaseFlow  node :ref:`DATASTRUCTURE_CompositionalMultiphaseFlow`  
 CompositionalMultiphaseWell  node :ref:`DATASTRUCTURE_CompositionalMultiphaseWell`  
+EmbeddedSurfaceGenerator     node :ref:`DATASTRUCTURE_EmbeddedSurfaceGenerator`     
 Hydrofracture                node :ref:`DATASTRUCTURE_Hydrofracture`                
 LaplaceFEM                   node :ref:`DATASTRUCTURE_LaplaceFEM`                   
 Poroelastic                  node :ref:`DATASTRUCTURE_Poroelastic`                  

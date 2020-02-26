@@ -28,6 +28,7 @@
 #include "FaceElementRegion.hpp"
 #include "fileIO/schema/SchemaUtilities.hpp"
 #include "wells/WellElementRegion.hpp"
+#include "EmbeddedSurfaceRegion.hpp"
 
 namespace geosx
 {
@@ -96,10 +97,11 @@ public:
 
   void GenerateMesh( Group * const cellBlockManager );
 
+  void GenerateCellToEdgeMaps(FaceManager const * const faceManager);
+
   void GenerateAggregates( FaceManager const * const faceManager, NodeManager const * const nodeManager );
 
   void GenerateWells( MeshManager * const meshManager, MeshLevel * const meshLevel );
-
 
   virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 //  virtual void ReadXMLsub( xmlWrapper::xmlNode const & targetNode ) override;
@@ -196,13 +198,13 @@ public:
   template< typename LAMBDA >
   void forElementRegionsComplete( LAMBDA lambda ) const
   {
-    forElementRegionsComplete<CellElementRegion,FaceElementRegion,WellElementRegion>( std::forward<LAMBDA>(lambda) );
+    forElementRegionsComplete<CellElementRegion,FaceElementRegion,EmbeddedSurfaceRegion,WellElementRegion>( std::forward<LAMBDA>(lambda) );
   }
 
   template< typename LAMBDA >
   void forElementRegionsComplete( LAMBDA lambda )
   {
-    forElementRegionsComplete<CellElementRegion,FaceElementRegion,WellElementRegion>( std::forward<LAMBDA>(lambda) );
+    forElementRegionsComplete<CellElementRegion,FaceElementRegion,EmbeddedSurfaceRegion,WellElementRegion>( std::forward<LAMBDA>(lambda) );
   }
 
 
@@ -241,25 +243,25 @@ public:
   template< typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda )
   {
-    forElementSubRegions<CellElementSubRegion,FaceElementSubRegion,WellElementSubRegion>( std::forward<LAMBDA>(lambda) );
+    forElementSubRegions<CellElementSubRegion,FaceElementSubRegion,EmbeddedSurfaceSubRegion,WellElementSubRegion>( std::forward<LAMBDA>(lambda) );
   }
 
   template< typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda ) const
   {
-    forElementSubRegions<CellElementSubRegion,FaceElementSubRegion,WellElementSubRegion>( std::forward<LAMBDA>(lambda) );
+    forElementSubRegions<CellElementSubRegion,FaceElementSubRegion,EmbeddedSurfaceSubRegion,WellElementSubRegion>( std::forward<LAMBDA>(lambda) );
   }
 
   template< typename LAMBDA >
   void forElementSubRegions( string_array const & targetRegions, LAMBDA && lambda )
   {
-    forElementSubRegions<CellElementSubRegion,FaceElementSubRegion,WellElementSubRegion>( targetRegions, std::forward<LAMBDA>(lambda) );
+    forElementSubRegions<CellElementSubRegion,FaceElementSubRegion,EmbeddedSurfaceSubRegion,WellElementSubRegion>( targetRegions, std::forward<LAMBDA>(lambda) );
   }
 
   template< typename LAMBDA >
   void forElementSubRegions( string_array const & targetRegions, LAMBDA && lambda ) const
   {
-    forElementSubRegions<CellElementSubRegion,FaceElementSubRegion,WellElementSubRegion>( targetRegions, std::forward<LAMBDA>(lambda) );
+    forElementSubRegions<CellElementSubRegion,FaceElementSubRegion,EmbeddedSurfaceSubRegion,WellElementSubRegion>( targetRegions, std::forward<LAMBDA>(lambda) );
   }
 
 
@@ -309,25 +311,25 @@ public:
   template< typename LAMBDA >
   void forElementSubRegionsComplete( LAMBDA lambda ) const
   {
-    forElementSubRegionsComplete<CellElementSubRegion,FaceElementSubRegion,WellElementSubRegion>( std::forward<LAMBDA>(lambda) );
+    forElementSubRegionsComplete<CellElementSubRegion,FaceElementSubRegion,EmbeddedSurfaceSubRegion,WellElementSubRegion>( std::forward<LAMBDA>(lambda) );
   }
 
   template< typename LAMBDA >
   void forElementSubRegionsComplete( LAMBDA lambda )
   {
-    forElementSubRegionsComplete<CellElementSubRegion,FaceElementSubRegion,WellElementSubRegion>( std::forward<LAMBDA>(lambda) );
+    forElementSubRegionsComplete<CellElementSubRegion,FaceElementSubRegion,EmbeddedSurfaceSubRegion,WellElementSubRegion>( std::forward<LAMBDA>(lambda) );
   }
 
   template< typename LAMBDA >
   void forElementSubRegionsComplete( string_array const & targetRegions, LAMBDA && lambda )
   {
-    forElementSubRegionsComplete<CellElementSubRegion,FaceElementSubRegion,WellElementSubRegion>( targetRegions, std::forward<LAMBDA>(lambda) );
+    forElementSubRegionsComplete<CellElementSubRegion,FaceElementSubRegion,EmbeddedSurfaceSubRegion,WellElementSubRegion>( targetRegions, std::forward<LAMBDA>(lambda) );
   }
 
   template< typename LAMBDA >
   void forElementSubRegionsComplete( string_array const & targetRegions, LAMBDA && lambda ) const
   {
-    forElementSubRegionsComplete<CellElementSubRegion,FaceElementSubRegion,WellElementSubRegion>( targetRegions, std::forward<LAMBDA>(lambda) );
+    forElementSubRegionsComplete<CellElementSubRegion,FaceElementSubRegion,EmbeddedSurfaceSubRegion,WellElementSubRegion>( targetRegions, std::forward<LAMBDA>(lambda) );
   }
 
 
