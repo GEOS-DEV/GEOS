@@ -300,12 +300,14 @@ real64 PhaseFieldFractureSolver::SplitOperatorStep( real64 const& time_n,
 }
 
 void PhaseFieldFractureSolver::ApplySystemSolution(DofManager const &dofManager,
-                                               ParallelVector const &solution,
+                                               ParallelVector const &solution,//add GEOSX_UNUSED_ARG here if using damageResult
                                                real64 const GEOSX_UNUSED_ARG(scalingFactor),
                                                DomainPartition *const domain) {
 
   MeshLevel *const mesh = domain->getMeshBody(0)->getMeshLevel(0);
   NodeManager *const nodeManager = mesh->getNodeManager();
+  //should get reference to damage field here.
+  //ArrayView1d<real64> const & damageResult = nodeManager->getField ??
   arrayView1d<globalIndex const> const &dofIndex =
       nodeManager->getReference<array1d<globalIndex>>(
           dofManager.getKey(m_fieldName));//is there a way to get this without m_fieldName?
@@ -355,7 +357,11 @@ void PhaseFieldFractureSolver::ApplySystemSolution(DofManager const &dofManager,
                  damageFieldOnMaterial(k,q) = 0;
                  for (localIndex a = 0; a < numNodesPerElement; ++a) {
                          damageFieldOnMaterial(k,q) +=
+                         //solution is probably not going to work because the solution of the coupled solver
+                         //has both damage and displacements. Using the damageResult field from the Damage solver
+                         //is probably better
                          feDiscretization->m_finiteElement->value(a, q) * solution[dofIndex(elemNodes(k, a))];
+                         //feDiscretization->m_finiteElement->value(a, q) * damageResult[dofIndex(elemNodes(k, a))];
                   }
               }
           }
