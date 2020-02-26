@@ -44,6 +44,7 @@ static void initialize( MPI_Comm const & comm,
                                                jlower,
                                                jupper,
                                                &ij_matrix ) );
+
   GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixSetObjectType( ij_matrix, HYPRE_PARCSR ) );
   GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixSetRowSizes( ij_matrix, ncols.data() ) );
   GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixInitialize( ij_matrix ) );
@@ -151,7 +152,7 @@ void HypreMatrix::createWithGlobalSize( globalIndex const globalRows,
   HYPRE_BigInt const jlower = rank * localColSize + ( rank == 0 ? 0 : colResidual );
   HYPRE_BigInt const jupper = jlower + localColSize + ( rank == 0 ? colResidual : 0 ) - 1;
 
-  array1d< HYPRE_Int > row_sizes( localRowSize );
+  array1d< HYPRE_Int > row_sizes( integer_conversion<localIndex>( iupper - ilower + 1 ) );
   row_sizes = integer_conversion< HYPRE_Int >( maxEntriesPerRow );
 
   initialize( comm,
