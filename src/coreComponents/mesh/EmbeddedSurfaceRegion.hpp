@@ -63,30 +63,6 @@ public:
   virtual const string getCatalogName() const override final
   { return EmbeddedSurfaceRegion::CatalogName(); }
 
-  virtual void GenerateMesh( Group const * ) override {}
-
-  /**
-   * @brief This function generates and adds entries to the face/fracture mesh
-   * @param faceManager A pointer to the FaceManager object.
-   * @param subRegionName The name of the EmbeddedSurfaceSubRegion to insert the new entries.
-   * @param faceIndices The local indices of the new faces that define the face element.
-   * @return The local index of the new EmbeddedSurface entry.
-
-  localIndex AddToFractureMesh( EdgeManager * const edgeManager,
-                                FaceManager const * const faceManager,
-                                array1d< array1d<localIndex> > const & originalFaceToEdges,
-                                string const & subRegionName,
-                                localIndex const faceIndices[2] );
-
-
-  */
-
-  /**
-     * @brief Getter for the name of the InternalWellGenerator object of this well
-     * @param the name of the InternalWellGenerator object
-     */
-  string const & GetEmbeddedSurfaceGeneratorName() const { return m_embeddedSurfaceName; }
-
   struct viewKeyStruct : public ElementRegionBase::viewKeyStruct
   {
     static constexpr auto fractureSetString = "fractureSet";
@@ -94,7 +70,6 @@ public:
 
 
 private:
-  string m_embeddedSurfaceName;
 
 };
 
