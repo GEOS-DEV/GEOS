@@ -77,6 +77,9 @@ protected:
   using KrylovSolver<VECTOR>::m_tolerance;
   using KrylovSolver<VECTOR>::m_maxIterations;
   using KrylovSolver<VECTOR>::m_verbosity;
+  using KrylovSolver<VECTOR>::m_numIterations;
+  using KrylovSolver<VECTOR>::m_residualNormVector;
+  using KrylovSolver<VECTOR>::m_convergenceFlag;
 
 };
 

@@ -69,8 +69,9 @@ void CGsolver<VECTOR>::solve( Vector const & b,
   LinearOperator< VECTOR > const & A = m_operator;
   LinearOperator< VECTOR > const & M = m_precond;
 
-  // Get the global size
-  localIndex const N = ( m_maxIterations > 0 ) ? m_maxIterations : integer_conversion<localIndex>( x.globalSize() );
+  // Get the global size and resize residual norm vector
+  localIndex const N = m_maxIterations;
+  m_residualNormVector.resize( N + 1 );
 
   // Get the norm of the right hand side
   real64 const normb = b.norm2();
@@ -80,6 +81,7 @@ void CGsolver<VECTOR>::solve( Vector const & b,
 
   // Compute initial rk =  b - Ax
   A.residual( x, b, rk );
+  m_residualNormVector[0]= rk.norm2();
 
   // Preconditioning
   VectorTemp zk( x );
@@ -109,9 +111,10 @@ void CGsolver<VECTOR>::solve( Vector const & b,
     rkold.copy( rk );
     zkold.copy( zk );
     rk.axpby( -alpha, Apk, 1.0 );
+    m_residualNormVector[ k+1 ] = rk.norm2();
 
     // Convergence check on ||rk||/||b||
-    if( rk.norm2() / normb < 1e-8 )
+    if( m_residualNormVector[ k+1 ] / normb < 1e-8 )
     {
       break;
     }
@@ -125,6 +128,11 @@ void CGsolver<VECTOR>::solve( Vector const & b,
     // Update pk = pk + beta*zk
     pk.axpby( 1.0, zk, beta );
   }
+
+  // Convergence statistics
+  m_numIterations = k;
+  m_convergenceFlag = k < N;
+  m_residualNormVector.resize( m_numIterations + 1 );
 
   if( m_verbosity >= 1 )
   {

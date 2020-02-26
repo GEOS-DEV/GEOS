@@ -67,8 +67,9 @@ void BiCGSTABsolver< VECTOR >::solve( Vector const & b,
   LinearOperator< VECTOR > const & A = m_operator;
   LinearOperator< VECTOR > const & M = m_precond;
 
-  // Get the global size
-  localIndex const N = ( m_maxIterations > 0 ) ? m_maxIterations : integer_conversion<localIndex>( x.globalSize() );
+  // Get the global size and resize residual norm vector
+  localIndex const N = m_maxIterations;
+  m_residualNormVector.resize( N + 1 );
 
   // Get the norm of the right hand side
   real64 const normb = b.norm2();
@@ -78,6 +79,7 @@ void BiCGSTABsolver< VECTOR >::solve( Vector const & b,
 
   // Compute initial rk
   A.residual( x, b, rk );
+  m_residualNormVector[0]= rk.norm2();
 
   // Define vectors
   VectorTemp r0_hat( rk );
@@ -147,14 +149,20 @@ void BiCGSTABsolver< VECTOR >::solve( Vector const & b,
     // Update rk = s - omega*t
     s.axpy( -omegak, t );
     rk.copy( s );
+    m_residualNormVector[ k+1 ] = rk.norm2();
 
     // Convergence check on ||rk||/||b||
-    if( rk.norm2() / normb < 1e-8 )
+    if( m_residualNormVector[ k+1 ] / normb < 1e-8 )
     {
       break;
     }
 
   }
+
+  // Convergence statistics
+  m_numIterations = k;
+  m_convergenceFlag = k < N;
+  m_residualNormVector.resize( m_numIterations + 1 );
 
   if( m_verbosity >= 1 )
   {

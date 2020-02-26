@@ -35,7 +35,7 @@ KrylovSolver< VECTOR >::KrylovSolver( LinearOperator<Vector> const & A,
   m_maxIterations( maxIterations ),
   m_verbosity( verbosity )
 {
-
+  GEOSX_ERROR_IF( m_maxIterations < 0, "Krylov solver: max number of iteration must be non-negative." );
 }
 
 template< typename VECTOR >

@@ -29,14 +29,6 @@ namespace geosx
 template< typename Vector > class LinearOperator;
 template< typename Vector > class BlockVectorView;
 
-//// StatsStruct
-//struct KrylovConvegernceStats
-//{
-//  localIndex numIterations;
-//  array1d<real64> relativeResidual;
-//  bool convergenceFlag;
-//};
-
 namespace internal
 {
 
@@ -98,6 +90,12 @@ public:
   multiply( Vector const & src,
             Vector & dst ) const override final;
 
+  inline localIndex numIterations( ) const { return m_numIterations; };
+
+  inline arrayView1d<const real64> residualNormVector( ) const { return m_residualNormVector.toViewConst(); };
+
+  inline bool convergenceFlag( ) const { return m_convergenceFlag; };
+
 protected:
 
   /// Alias for vector type that can be used for temporaries
@@ -117,6 +115,15 @@ protected:
 
   /// solver verbosity level
   integer m_verbosity;
+
+  /// actual number if Krylov iterations
+  mutable localIndex m_numIterations = 0;
+
+  /// residual norm vector
+  mutable array1d<real64 > m_residualNormVector;
+
+  /// convergence flag
+  mutable bool m_convergenceFlag;
 
 };
 

@@ -81,18 +81,32 @@ void testGEOSXSolvers()
   matrix.multiply( x_true, b );
 
   // Solve
-  SOLVER<Vector> solver( matrix, identity, 1e-8, -1 );
+  SOLVER<Vector> solver( matrix, identity, 1e-8, 300 );
   solver.solve( b, x_comp );
+  /////////////////////////////////////////
+//  GEOSX_LOG_RANK_0("Iterations: " + std::to_string(solver.numIterations()));
+//  if ( MpiWrapper::Comm_rank( MPI_COMM_WORLD ) == 0)
+//  {
+//    GEOSX_LOG_RANK_VAR( solver.relativeResidual() );
+//  }
+  /////////////////////////////////////////
 
   real64 const norm_true = x_true.norm2();
   real64 const norm_comp = x_comp.norm2();
   EXPECT_LT( std::fabs( norm_comp / norm_true - 1. ), 5e-6 );
 
   PreconditionerIdentity< LAI > preconIdentity;
-  SOLVER<Vector> solver2( matrix, preconIdentity, 1e-8, -1 );
+  SOLVER<Vector> solver2( matrix, preconIdentity, 1e-8, 300 );
   x_comp.zero();
 
   solver2.solve( b, x_comp );
+  /////////////////////////////////////////
+//  GEOSX_LOG_RANK_0("Iterations: " + std::to_string(solver.numIterations()));
+//  if ( MpiWrapper::Comm_rank( MPI_COMM_WORLD ) == 0)
+//  {
+//    GEOSX_LOG_RANK_VAR( solver.residualNormVector() );
+//  }
+  /////////////////////////////////////////
 
 
   real64 const norm_true2 = x_true.norm2();
@@ -121,7 +135,7 @@ void testGEOSXBlockSolvers()
 
   // We are going to assembly the following dummy system
   // [L L] [x_true] = [b_0]
-  // [L L] [x_true] = [b_1]
+  // [0 L] [x_true] = [b_1]
 
   globalIndex constexpr n = 100;
   globalIndex constexpr N = n * n;
@@ -153,8 +167,8 @@ void testGEOSXBlockSolvers()
   // In this test we simply tile the laplace operator, so we assign a duplicate
   // of the monolithic matrix to every block of the matrix.
   block_matrix.set( 0, 0, matrix );
-  //block_matrix.set( 0, 1, matrix );
-  //block_matrix.set( 1, 0, matrix );
+//  block_matrix.set( 0, 1, matrix );
+//  block_matrix.set( 1, 0, matrix );
   block_matrix.set( 1, 1, matrix );
 
   // We do the same for the preconditioner to get the block identity matrix.
@@ -166,7 +180,7 @@ void testGEOSXBlockSolvers()
   block_matrix.multiply( x_true, b );
 
   // Create block CG solver object and solve
-  SOLVER< BlockVectorView< Vector > > solver( block_matrix, block_precon, 1e-8, -1 );
+  SOLVER< BlockVectorView< Vector > > solver( block_matrix, block_precon, 1e-8, 300 );
   solver.solve( b, x_comp );
 
   // The true solution is the vector x, so we check if the norm are equal.
