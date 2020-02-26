@@ -34,6 +34,7 @@ CellBlock::CellBlock( string const & name, Group * const parent ):
   m_toFacesRelation()
 {
   registerWrapper(viewKeyStruct::nodeListString, &m_toNodesRelation, 0 );
+  registerWrapper(viewKeyStruct::edgeListString, &m_toEdgesRelation, 0 );
   registerWrapper(viewKeyStruct::faceListString, &m_toFacesRelation, 0 );
   registerWrapper(viewKeyStruct::numNodesPerElementString, &m_numNodesPerElement, 0 );
   registerWrapper(viewKeyStruct::numEdgesPerElementString, &m_numEdgesPerElement, 0 );
@@ -251,55 +252,47 @@ void CellBlock::SetElementType( string const & elementType)
 
   if (!m_elementTypeString.compare(0, 4, "C3D8"))
   {
-    m_toNodesRelation.resize(0,8);
-    m_toFacesRelation.resize(0,6);
+    // Hexahedron
+    this->setNumNodesPerElement( 8 );
+    this->setNumIndependentNodesPerElement( 8 );
+    this->setNumEdgesPerElement( 12 );
+    this->setNumFacesPerElement( 6 );
   }
   else if (!m_elementTypeString.compare(0, 4, "C3D4"))
   {
-    m_toNodesRelation.resize(0,4);
-    m_toFacesRelation.resize(0,4);
+    // Tetrahedron
+    this->setNumNodesPerElement( 4 );
+    this->setNumIndependentNodesPerElement( 4 );
+    this->setNumEdgesPerElement( 6 );
+    this->setNumFacesPerElement( 4 );
   }
   else if (!m_elementTypeString.compare(0, 4, "C3D6"))
   {
-    m_toNodesRelation.resize(0,8);
-    m_toFacesRelation.resize(0,5);
+    // Triangular prism
+
+    // This element type uses the HEX shape functions, so numNodesPerElement needs to be 8 until we have a proper
+    // element type for this
+    this->setNumNodesPerElement( 8 );
+    this->setNumIndependentNodesPerElement( 6 );
+    this->setNumEdgesPerElement( 9 );
+    this->setNumFacesPerElement( 5 );
   }
   else if (!m_elementTypeString.compare(0, 4, "C3D5"))
   {
-    m_toNodesRelation.resize(0,5);
-    m_toFacesRelation.resize(0,5);
+    // Pyramid
+    this->setNumNodesPerElement( 5 );
+    this->setNumIndependentNodesPerElement( 5 );
+    this->setNumEdgesPerElement( 8 );
+    this->setNumFacesPerElement( 5 );
   }
   else
   {
     GEOSX_ERROR("Error.  Don't know what kind of element this is.");
   }
 
-  if (!m_elementTypeString.compare(0, 4, "C3D8"))
-  {
-    this->setNumNodesPerElement( 8 );
-    this->setNumIndependentNodesPerElement( 8 );
-    this->setNumFacesPerElement( 6 );
-  }
-  else if (!m_elementTypeString.compare(0, 4, "C3D4"))
-  {
-    this->setNumNodesPerElement( 4 );
-    this->setNumIndependentNodesPerElement( 4 );
-    this->setNumFacesPerElement( 4 );
-  }
-  else if (!m_elementTypeString.compare(0, 4, "C3D6"))
-  {
-    // This element type uses the HEX shape functions, so numNodesPerElement needs to be 8 until we have a proper
-    // element type for this
-    this->setNumNodesPerElement( 8 );
-    this->setNumIndependentNodesPerElement( 6 );
-    this->setNumFacesPerElement( 5 );
-  }
-  else if (!m_elementTypeString.compare(0, 4, "C3D5"))
-  {
-    this->setNumNodesPerElement( 5 );
-    this->setNumIndependentNodesPerElement( 5 );
-    this->setNumFacesPerElement( 5 );
-  }
+  m_toNodesRelation.resize(0, m_numNodesPerElement);
+  m_toEdgesRelation.resize(0, m_numEdgesPerElement);
+  m_toFacesRelation.resize(0, m_numFacesPerElement);
 
 }
 

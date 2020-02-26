@@ -13,7 +13,7 @@
  */
 
 /**
- * @file FaceElementRegion.hpp
+ * @file CellElementRegion.hpp
  *
  */
 
@@ -24,13 +24,14 @@
 
 namespace geosx
 {
-
+class EdgeManager;
+class EmbeddedSurfaceGenerator;
 
 /**
- * @class FaceElementRegion
+ * @class CellElementRegion
  *
- * The FaceElementRegion class contains the functionality to support the concept of a FaceElementRegion in the element
- * hierarchy. FaceElementRegion derives from ElementRegion and has an entry in the ObjectManagerBase catalog.
+ * The CellElementRegion class contains the functionality to support the concept of a CellElementRegion in the element
+ * hierarchy. CellElementRegion derives from ElementRegionBase and has an entry in the ObjectManagerBase catalog.
  *
  *
  */
