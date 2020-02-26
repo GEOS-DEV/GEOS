@@ -173,6 +173,11 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
   ArrayOfArrays<localIndex> & toElementSubRegionList = m_toElements.m_toElementSubRegion;
   ArrayOfArrays<localIndex> & toElementList = m_toElements.m_toElementIndex;
 
+
+  // This sets the capacity of each sub-array based on the maximum number of
+  // elements attached to a node. This is an over-allocation, so we need to
+  // compress the arrays as part of the initialization.
+
   array1d<localIndex> sizeOfArrays(size());
 
   elementRegionManager->
@@ -190,8 +195,6 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
   });
   localIndex const arrayCapacity = *(std::max_element( sizeOfArrays.begin(), sizeOfArrays.end() ));
 
-  // This sets the capacity of each sub-array to 10. If this is using a bunch of memory
-  // add a compress + shrink method to ArrayOfArrays that we can call afterwards.
   toElementRegionList.resize(0);
   toElementRegionList.resize(size(), arrayCapacity );
   toElementSubRegionList.resize(0);

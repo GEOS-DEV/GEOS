@@ -276,27 +276,29 @@ void CellBlock::SetElementType( string const & elementType)
 
   if (!m_elementTypeString.compare(0, 4, "C3D8"))
   {
-    this->numNodesPerElement() = 8;
-    this->numIndependentNodesPerElement() = 8;
-    this->numFacesPerElement() = 6;
+    this->setNumNodesPerElement( 8 );
+    this->setNumIndependentNodesPerElement( 8 );
+    this->setNumFacesPerElement( 6 );
   }
   else if (!m_elementTypeString.compare(0, 4, "C3D4"))
   {
-    this->numNodesPerElement() = 4;
-    this->numIndependentNodesPerElement() = 4;
-    this->numFacesPerElement() = 4;
+    this->setNumNodesPerElement( 4 );
+    this->setNumIndependentNodesPerElement( 4 );
+    this->setNumFacesPerElement( 4 );
   }
   else if (!m_elementTypeString.compare(0, 4, "C3D6"))
   {
-    this->numNodesPerElement() = 8;
-    this->numIndependentNodesPerElement() = 6;
-    this->numFacesPerElement() = 5;
+    // This element type uses the HEX shape functions, so numNodesPerElement needs to be 8 until we have a proper
+    // element type for this
+    this->setNumNodesPerElement( 8 );
+    this->setNumIndependentNodesPerElement( 6 );
+    this->setNumFacesPerElement( 5 );
   }
   else if (!m_elementTypeString.compare(0, 4, "C3D5"))
   {
-    this->numNodesPerElement() = 5;
-    this->numIndependentNodesPerElement() = 5;
-    this->numFacesPerElement() = 5;
+    this->setNumNodesPerElement( 5 );
+    this->setNumIndependentNodesPerElement( 5 );
+    this->setNumFacesPerElement( 5 );
   }
 
 }
