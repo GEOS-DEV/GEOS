@@ -180,7 +180,7 @@ void VtuFile::Load( string const &filename,
     LoadProperties(vtmDoc, properties);
 }
 
-void VtuFile::Save( string const & GEOSX_UNUSED_ARG( filename ) ) {
+void VtuFile::Save( string const & GEOSX_UNUSED_PARAM( filename ) ) {
     GEOSX_ERROR("vtu file save is not implemented yet");
 }
 
@@ -768,37 +768,36 @@ string const & DumbMesh::Name() const {
 
 void RankBlock::TransferRankBlockToGEOSMesh( MeshLevel * const meshLevel ) const
 {
-  for (auto& meshBlock : m_block) {
+  for (auto& meshBlock : m_block)
+  {
       const auto & mesh = meshBlock.mesh();
-      if( mesh.NumPolygons() == 0 ) {
+      if( mesh.NumPolygons() == 0 )
+      {
           NodeManager * const nodeManager = meshLevel->getNodeManager();
           ElementRegionManager * const elemRegManager = meshLevel->getElemManager();
 
-
           nodeManager->resize(mesh.NumVertices());
-          arrayView1d<R1Tensor> & X = nodeManager->referencePosition();
-          std::cout << "node Manager pointer : " << nodeManager << std::endl;
-          std::cout << "X pointer : " << X[0].Data() << std::endl;
+          arrayView2d<real64, nodes::REFERENCE_POSITION_USD> & X = nodeManager->referencePosition();
 
           for( localIndex a=0 ; a< mesh.NumVertices() ; ++a )
           {
-              real64 * const tensorData = X[a].Data();
-              tensorData[0] = mesh.Vertex(a)[0];
-              tensorData[1] = mesh.Vertex(a)[1];
-              tensorData[2] = mesh.Vertex(a)[2];
+              X( a, 0 ) = mesh.Vertex(a)[0];
+              X( a, 1 ) = mesh.Vertex(a)[1];
+              X( a, 2 ) = mesh.Vertex(a)[2];
           }
 
 
-          for( int i = 0 ; i < elemRegManager->GetRegions().size() ; i++) {
+          for( int i = 0 ; i < elemRegManager->GetRegions().size() ; i++)
+          {
               std::cout<< "REGION DBUT : " << i << std::endl;
               std::cout << elemRegManager->GetRegion(i)->getName() << std::endl;
               std::cout<< "REGION FIN : " << i << std::endl;
           }
           CellElementSubRegion * const subRegion = elemRegManager->GetRegion( "Region2" )->RegisterGroup<CellElementSubRegion>("cb1");
-          CellElementSubRegion * const cellBlock =
-              elemRegManager->GetRegion( "Region2" )->GetSubRegion<CellElementSubRegion>("HEX");
+          CellElementSubRegion * const cellBlock = elemRegManager->GetRegion( "Region2" )->GetSubRegion<CellElementSubRegion>("HEX");
           std::cout << "HA" << std::endl;
-          for(int i = 0 ; i < elemRegManager->GetRegion( "Region2" )->GetSubRegions().size();i++){
+          for(int i = 0 ; i < elemRegManager->GetRegion( "Region2" )->GetSubRegions().size();i++)
+          {
               std::cout << "SUBREGION : " << i << std::endl;
           }
           std::cout << "BE" << std::endl;

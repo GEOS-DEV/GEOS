@@ -89,7 +89,7 @@ void fillValue( std::vector< T > & val )
 }
 
 template< typename T, int NDIM, typename PERMUTATION >
-void fillValue( LvArray::Array< T, NDIM, PERMUTATION > & val )
+void fillValue( Array< T, NDIM, PERMUTATION > & val )
 {
   localIndex dims[ NDIM ];
   for( int i = 0 ; i < NDIM ; ++i )
@@ -139,8 +139,8 @@ void compareValues( T const & val, T const & valFromFile )
 }
 
 template< typename T, int NDIM, typename PERMUTATION >
-void compareValues( LvArray::Array< T, NDIM, PERMUTATION > const & val,
-                    LvArray::Array< T, NDIM, PERMUTATION > const & valFromFile )
+void compareValues( Array< T, NDIM, PERMUTATION > const & val,
+                    Array< T, NDIM, PERMUTATION > const & valFromFile )
 {
   ASSERT_EQ( val.size(), valFromFile.size() );
   for( localIndex i = 0 ; i < val.size() ; ++i )
@@ -248,10 +248,8 @@ using TestTypes = ::testing::Types< int,
                                     array2d< R2Tensor, RAJA::PERM_JI >,
                                     array2d< std::string, RAJA::PERM_JI >,
                                     array3d< double >,
-                                    array3d< R2Tensor >,
                                     array3d< std::string >,
                                     array3d< double, RAJA::PERM_KJI >,
-                                    array3d< R2Tensor, RAJA::PERM_JIK >,
                                     array3d< std::string, RAJA::PERM_IKJ >,
                                     SortedArray< int >,
                                     SortedArray< std::string >,

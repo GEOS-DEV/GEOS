@@ -17,7 +17,9 @@ include(cmake/thirdparty/setupThirdPartyDirectory.cmake)
 ################################
 # Include blt
 ################################
+option(ENABLE_BENCHMARKS "Enables benchmarks" ON)
 include(cmake/blt/SetupBLT.cmake)
+set(BLT_SOURCE_DIR ${PROJECT_SOURCE_DIR}/cmake/blt/)
 
 ################################
 # Include standard build system logic and options
@@ -52,11 +54,9 @@ endif()
 
 
 ################################
-# install targets from build
-################################s
-install(DIRECTORY ${PROJECT_BINARY_DIR}/bin DESTINATION . OPTIONAL)
-install(DIRECTORY ${PROJECT_BINARY_DIR}/include DESTINATION . OPTIONAL)
-
+# Deploy headers
+################################
+install(DIRECTORY ${PROJECT_BINARY_DIR}/include DESTINATION .)
 
 ################################
 # Create header of configuration options
@@ -95,15 +95,31 @@ blt_add_executable(NAME geosx
                               ${externalComponentsLinkList}
                   )
 
+# Removing all transitive link dependencies from geosx_core target to circumvent
+# the BLT behavior which imposes all dependencies to be public
+#set_target_properties(geosx_core PROPERTIES INTERFACE_LINK_LIBRARIES "")
+
 target_include_directories( geosx PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
+# To change the runtime path during installation
+set_target_properties( geosx PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib" )
+set_target_properties( geosx PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE )
 
-if( ENABLE_MPI )
+install(TARGETS geosx RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
+
+if( ENABLE_MPI AND UNIX AND NOT APPLE AND NOT ENABLE_CUDA )
   add_custom_target( geosx_update_rst_tables
                      ALL
                      COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/updateRstTables.bash ${CMAKE_SOURCE_DIR} > updateRstTables.log
                      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
                      DEPENDS geosx
+                     )
+
+  add_custom_target( geosx_validate_all_xml_files
+                     ALL
+                     COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/validateAllXMLFiles.bash ${CMAKE_SOURCE_DIR}
+                     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+                     DEPENDS geosx_update_rst_tables
                      )
 endif()
 

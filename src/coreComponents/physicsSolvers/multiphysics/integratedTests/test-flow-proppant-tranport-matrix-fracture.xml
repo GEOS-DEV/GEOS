@@ -8,7 +8,6 @@
 
     <ProppantTransport name="ProppantTransport"
                        logLevel="1"  
-                       gravityFlag="1"
                        updateProppantPacking="1"
                        discretization="singlePhaseTPFA"
                        targetRegions="{Fracture}"
@@ -16,13 +15,13 @@
                        proppantName="sand"		       
                        solidName="rock">
 
-      <NonlinearSolverParameters name="nlsp"
+      <NonlinearSolverParameters 
                                  newtonTol="1.0e-6"
                                  newtonMaxIter="8"
                                  lineSearchAction="0"
                                  newtonMinIter="1"
                                  maxTimeStepCuts="5"/>
-      <SystemSolverParameters name="SystemSolverParameters"
+      <SystemSolverParameters 
                               krylovTol="1.0e-12"
                               useDirectSolver="0"/>
     
@@ -35,32 +34,31 @@
                            targetRegions="{Region2, Fracture}"
                            logLevel="1">
 
-      <NonlinearSolverParameters name="nlsp"
+      <NonlinearSolverParameters 
                                  newtonMinIter="1"
                                  newtonMaxIter="5"/>
-      <SystemSolverParameters name="SystemSolverParameters"/>
+      <SystemSolverParameters />
     </FlowProppantTransport>
 
 
 
 
-    <SinglePhaseFlow name="SinglePhaseFlow"
+    <SinglePhaseFVM name="SinglePhaseFlow"
                      logLevel="1"
-                     gravityFlag="1"
                      discretization="singlePhaseTPFA"
                      targetRegions="{Region2, Fracture}"
                      fluidName="water"
                      solidName="rock">
 
-      <NonlinearSolverParameters name="nlsp"
+      <NonlinearSolverParameters 
                                  newtonTol="1.0e-8"
                                  newtonMaxIter="8"
                                  lineSearchAction="0"
                                  newtonMinIter="1"
                                  maxTimeStepCuts="5"/>
-       <SystemSolverParameters name="SystemSolverParameters"
+       <SystemSolverParameters 
                                krylovTol="1.0e-12"/>
-    </SinglePhaseFlow>
+    </SinglePhaseFVM>
 
 
     
@@ -160,10 +158,6 @@
                                  referencePressure="0.0"
                                  compressibility="1e-9"/>    
   </Constitutive>
-
-  <InitialConditions>
-    
-  </InitialConditions>
 
   <FieldSpecifications>
 
@@ -285,10 +279,6 @@
 
   <Functions>
   </Functions>
-
-  <Partition>
-    <SpatialPartition xPar="1" yPar="1" zPar="1"/>
-  </Partition>
 
   <Outputs>
       <Silo name="siloOutput"/>

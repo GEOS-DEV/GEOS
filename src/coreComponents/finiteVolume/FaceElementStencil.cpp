@@ -66,7 +66,7 @@ void FaceElementStencil::add( localIndex const numPts,
 
 void FaceElementStencil::add( localIndex const numPts,
                               R1Tensor const * const cellCenterToEdgeCenter,
-                              integer const * const isGhostConnectors,                              
+                              integer const * const isGhostConnectors,
                               localIndex const connectorIndex )
 {
   GEOSX_ERROR_IF( numPts >= MAX_STENCIL_SIZE, "Maximum stencil size exceeded" );

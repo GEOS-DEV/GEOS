@@ -97,25 +97,14 @@
 
   <Functions>
     <TableFunction     name="timeFunction"         inputVarNames="{time}"   coordinates="{0.0, 1.0e-6, 2.0e-6, 1.0e9}" values="{0.0, 1.0, 1.0, 1.0}" />
-    <SymbolicFunction  name="spaceFunction"        inputVarNames="{ReferencePosition}"  variableNames="{x, y, z}" expression="sqrt(pow(x,2)+pow(y,2)+pow(z,2))"/>
-    <CompositeFunction name="timeSpaceFunction" functionNames="{timeFunction, spaceFunction}" variableNames="{t, s}" expression="t*s"/>
-    
   </Functions>
-
-  <Partition>
-    <SpatialPartition xPar="1" yPar="1" zPar="1"/>
-  </Partition>
-
  
   <Outputs>
     <Silo name="siloOutput" parallelThreads="1" plotFileRoot="plot" slaveDirectory="sub" />
   </Outputs>
 
-  <Nodesets>
+  <Geometry>
     <Box name="perf" xMin="0, 0, 0" xMax="1, 1, 1"/>
-  </Nodesets>
-
-
-  <Fracture failCriterion="1" failGap="0.0004" fractureFlag="100" preFractureSetName="perf" rockToughness="1e6" separableSet="all"/>
+  </Geometry>
 
 </Problem>

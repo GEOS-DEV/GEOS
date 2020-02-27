@@ -85,8 +85,8 @@ public:
    */
   virtual ~FieldSpecificationBase() override;
 
-  template < typename FIELD_OP, typename POLICY, typename T, int N, int UNIT_STRIDE_DIM >
-  void ApplyFieldValueKernel( LvArray::ArrayView< T, N, UNIT_STRIDE_DIM, localIndex > const & field,
+  template < typename FIELD_OP, typename POLICY, typename T, int N, int USD >
+  void ApplyFieldValueKernel( ArrayView< T, N, USD > const & field,
                               SortedArrayView< localIndex const > const & targetSet,
                               real64 const time,
                               Group * dataGroup ) const;
@@ -103,7 +103,7 @@ public:
    * called from within the lambda to a call to FieldSpecificationManager::ApplyFieldValue().
    */
   template< typename FIELD_OP, typename POLICY=parallelHostPolicy >
-  void ApplyFieldValue( set<localIndex> const & targetSet,
+  void ApplyFieldValue( SortedArrayView<localIndex const> const & targetSet,
                         real64 const time,
                         dataRepository::Group * dataGroup,
                         string const & fieldname ) const;
@@ -128,7 +128,7 @@ public:
    * BoundaryConditionManager::ApplyBoundaryCondition().
    */
   template< typename FIELD_OP, typename LAI >
-  void ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
+  void ApplyBoundaryConditionToSystem( SortedArrayView<localIndex const> const & targetSet,
                                        real64 const time,
                                        dataRepository::Group * dataGroup,
                                        string const & fieldName,
@@ -163,7 +163,7 @@ public:
    */
   template< typename FIELD_OP, typename LAI, typename LAMBDA >
   void
-  ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
+  ApplyBoundaryConditionToSystem( SortedArrayView<localIndex const> const & targetSet,
                                   real64 const time,
                                   dataRepository::Group * dataGroup,
                                   arrayView1d<globalIndex const> const & dofMap,
@@ -198,7 +198,7 @@ public:
    */
   template< typename FIELD_OP, typename LAI, typename LAMBDA >
   void
-  ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
+  ApplyBoundaryConditionToSystem( SortedArrayView<localIndex const> const & targetSet,
                                   real64 const time,
                                   real64 const dt,
                                   dataRepository::Group * dataGroup,
@@ -208,8 +208,11 @@ public:
                                   typename LAI::ParallelVector & rhs,
                                   LAMBDA && lambda ) const;
 
-  
-  
+  template< typename LAI >
+  void ZeroSystemRowsForBoundaryCondition( SortedArrayView<localIndex const> const & targetSet,
+                                           arrayView1d<globalIndex const> const & dofMap,
+                                           typename LAI::ParallelMatrix & matrix ) const;
+
   struct viewKeyStruct
   {
     constexpr static auto setNamesString = "setNames";
@@ -256,7 +259,7 @@ public:
     return m_component;
   }
 
-  virtual const R1Tensor& GetDirection( realT GEOSX_UNUSED_ARG( time ) )
+  virtual const R1Tensor& GetDirection( realT GEOSX_UNUSED_PARAM( time ) )
   {
     return m_direction;
   }
@@ -362,8 +365,8 @@ private:
 };
 
 
-template < typename FIELD_OP, typename POLICY, typename T, int N, int UNIT_STRIDE_DIM >
-void FieldSpecificationBase::ApplyFieldValueKernel( LvArray::ArrayView< T, N, UNIT_STRIDE_DIM, localIndex > const & field,
+template < typename FIELD_OP, typename POLICY, typename T, int N, int USD >
+void FieldSpecificationBase::ApplyFieldValueKernel( ArrayView< T, N, USD > const & field,
                                                     SortedArrayView< localIndex const > const & targetSet,
                                                     real64 const time,
                                                     Group * dataGroup ) const
@@ -411,7 +414,7 @@ void FieldSpecificationBase::ApplyFieldValueKernel( LvArray::ArrayView< T, N, UN
 
 
 template< typename FIELD_OP, typename POLICY >
-void FieldSpecificationBase::ApplyFieldValue( set<localIndex> const & targetSet,
+void FieldSpecificationBase::ApplyFieldValue( SortedArrayView<localIndex const> const & targetSet,
                                               real64 const time,
                                               Group * dataGroup,
                                               string const & fieldName ) const
@@ -420,8 +423,8 @@ void FieldSpecificationBase::ApplyFieldValue( set<localIndex> const & targetSet,
   std::type_index typeIndex = std::type_index( wrapper->get_typeid());
 
   rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( typeIndex ),
-                                 false,
-                                 [&]( auto arrayInstance, auto GEOSX_UNUSED_ARG( dataTypeInstance ) )
+                                  true,
+                                  [&]( auto arrayInstance, auto GEOSX_UNUSED_PARAM( dataTypeInstance ) )
   {
     using ArrayType = decltype(arrayInstance);
     dataRepository::Wrapper<ArrayType> & view = dataRepository::Wrapper<ArrayType>::cast( *wrapper );
@@ -432,7 +435,7 @@ void FieldSpecificationBase::ApplyFieldValue( set<localIndex> const & targetSet,
 }
 
 template< typename FIELD_OP, typename LAI >
-void FieldSpecificationBase::ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
+void FieldSpecificationBase::ApplyBoundaryConditionToSystem( SortedArrayView<localIndex const> const & targetSet,
                                                              real64 const time,
                                                              dataRepository::Group * dataGroup,
                                                              string const & fieldName,
@@ -447,14 +450,14 @@ void FieldSpecificationBase::ApplyBoundaryConditionToSystem( set<localIndex> con
   integer const component = GetComponent();
 
   rtTypes::ApplyArrayTypeLambda1( rtTypes::typeID( typeIndex ),
-    [&]( auto type ) -> void
+    [&]( auto type )
     {
       using fieldType = decltype(type);
       dataRepository::Wrapper<fieldType> & wrapper = dynamic_cast< dataRepository::Wrapper<fieldType> & >(*wrapperBase);
       typename dataRepository::Wrapper<fieldType>::ViewTypeConst fieldView = wrapper.referenceAsView();
 
       this->ApplyBoundaryConditionToSystem<FIELD_OP, LAI>( targetSet, time, dataGroup, dofMap, dofDim, matrix, rhs,
-        [&]( localIndex const a )->real64
+        [&]( localIndex const a )
         {
           real64 value = 0.0;
           FieldSpecificationEqual::ReadFieldValue( fieldView, a, component, value );
@@ -468,11 +471,11 @@ void FieldSpecificationBase::ApplyBoundaryConditionToSystem( set<localIndex> con
 template< typename FIELD_OP, typename LAI, typename LAMBDA >
 void
 FieldSpecificationBase::
-ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
+ApplyBoundaryConditionToSystem( SortedArrayView<localIndex const> const & targetSet,
                                 real64 const time,
                                 dataRepository::Group * dataGroup,
                                 arrayView1d<globalIndex const> const & dofMap,
-                                integer const & GEOSX_UNUSED_ARG( dofDim ),
+                                integer const & GEOSX_UNUSED_PARAM( dofDim ),
                                 typename LAI::ParallelMatrix & matrix,
                                 typename LAI::ParallelVector & rhs,
                                 LAMBDA && lambda ) const
@@ -566,12 +569,12 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
 template< typename FIELD_OP, typename LAI, typename LAMBDA >
 void
 FieldSpecificationBase::
-ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
+ApplyBoundaryConditionToSystem( SortedArrayView<localIndex const> const & targetSet,
                                 real64 const time,
                                 real64 const dt,
                                 dataRepository::Group * dataGroup,
                                 arrayView1d<globalIndex const> const & dofMap,
-                                integer const & GEOSX_UNUSED_ARG( dofDim ),
+                                integer const & GEOSX_UNUSED_PARAM( dofDim ),
                                 typename LAI::ParallelMatrix & matrix,
                                 typename LAI::ParallelVector & rhs,
                                 LAMBDA && lambda ) const
@@ -663,5 +666,18 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
   }
 }
 
+template< typename LAI >
+void FieldSpecificationBase::ZeroSystemRowsForBoundaryCondition( SortedArrayView<localIndex const> const & targetSet,
+                                                                 arrayView1d<globalIndex const> const & dofMap,
+                                                                 typename LAI::ParallelMatrix & matrix ) const
+
+{
+  integer const component = GetComponent();
+  for( auto a : targetSet )
+  {
+    globalIndex const dof = dofMap[a]+component;
+    matrix.clearRow( dof, 0.0 );
+  }
+}
 }
 #endif

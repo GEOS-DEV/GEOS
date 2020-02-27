@@ -212,8 +212,8 @@ void ProppantTransport::InitializePreSubGroups(Group * const rootGroup)
 
 }
 
-void ProppantTransport::ResizeFractureFields( real64 const & GEOSX_UNUSED_ARG( time_n ),
-                                              real64 const & GEOSX_UNUSED_ARG( dt ),
+void ProppantTransport::ResizeFractureFields( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+                                              real64 const & GEOSX_UNUSED_PARAM( dt ),
                                               DomainPartition * const domain)
 {
 
@@ -400,7 +400,7 @@ void ProppantTransport::InitializePostInitialConditions_PreSubGroups( Group * co
   localIndex const NC = m_numComponents;
   
   applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                                 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
+                                 ElementRegionBase * const GEOSX_UNUSED_PARAM( region ),
                                  ElementSubRegionBase * const subRegion )
   {
     UpdateState( subRegion );
@@ -422,7 +422,7 @@ void ProppantTransport::InitializePostInitialConditions_PreSubGroups( Group * co
 
   } );
 
-  m_downVector = getGravityVector();
+  m_downVector = gravityVector();
   m_downVector.Normalize();
 
   m_minAperture = m_bridgingFactor * m_proppantDiameter;
@@ -468,7 +468,7 @@ real64 ProppantTransport::SolverStep( real64 const& time_n,
     localIndex const NC = m_numComponents;
     
     applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                                 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
+                                 ElementRegionBase * const GEOSX_UNUSED_PARAM( region ),
                                  ElementSubRegionBase * const subRegion )
     {
 
@@ -606,7 +606,7 @@ void ProppantTransport::PreStepUpdate( real64 const& time,
     localIndex const NC = m_numComponents;
     
     applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                                 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
+                                 ElementRegionBase * const GEOSX_UNUSED_PARAM( region ),
                                  ElementSubRegionBase * const subRegion )
     {
 
@@ -706,13 +706,13 @@ void ProppantTransport::PostStepUpdate( real64 const & time_n,
 }
   
 
-void ProppantTransport::ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n ),
-                                           real64 const & GEOSX_UNUSED_ARG( dt ),
+void ProppantTransport::ImplicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+                                           real64 const & GEOSX_UNUSED_PARAM( dt ),
                                            DomainPartition * const domain,
-                                           DofManager & GEOSX_UNUSED_ARG(dofManager),
-                                           ParallelMatrix & GEOSX_UNUSED_ARG(matrix),
-                                           ParallelVector & GEOSX_UNUSED_ARG(rhs),
-                                           ParallelVector & GEOSX_UNUSED_ARG(solution) )
+                                           DofManager & GEOSX_UNUSED_PARAM(dofManager),
+                                           ParallelMatrix & GEOSX_UNUSED_PARAM(matrix),
+                                           ParallelVector & GEOSX_UNUSED_PARAM(rhs),
+                                           ParallelVector & GEOSX_UNUSED_PARAM(solution) )
 {
 
   localIndex const NC = m_numComponents;  
@@ -724,7 +724,7 @@ void ProppantTransport::ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time
   /* The loop below could be moved to SolverStep after ImplicitStepSetup */
   
   applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                                 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
+                                 ElementRegionBase * const GEOSX_UNUSED_PARAM( region ),
                                  ElementSubRegionBase * const subRegion )
   {
 
@@ -774,8 +774,8 @@ void ProppantTransport::ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time
   */
 }
 
-void ProppantTransport::ImplicitStepComplete( real64 const & GEOSX_UNUSED_ARG(time_n),
-                                              real64 const & GEOSX_UNUSED_ARG(dt),
+void ProppantTransport::ImplicitStepComplete( real64 const & GEOSX_UNUSED_PARAM(time_n),
+                                              real64 const & GEOSX_UNUSED_PARAM(dt),
                                             DomainPartition * const domain )
 {
   GEOSX_MARK_FUNCTION;
@@ -785,7 +785,7 @@ void ProppantTransport::ImplicitStepComplete( real64 const & GEOSX_UNUSED_ARG(ti
   localIndex const NC = m_numComponents;
   
   applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                                 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
+                                 ElementRegionBase * const GEOSX_UNUSED_PARAM( region ),
                                  ElementSubRegionBase * const subRegion )
   {
     arrayView1d<real64> const & proppantConc = m_proppantConcentration[er][esr];
@@ -810,12 +810,11 @@ void ProppantTransport::ImplicitStepComplete( real64 const & GEOSX_UNUSED_ARG(ti
 
 }
 
-void ProppantTransport::SetupDofs( DomainPartition const * const GEOSX_UNUSED_ARG(domain),
+void ProppantTransport::SetupDofs( DomainPartition const * const GEOSX_UNUSED_PARAM(domain),
                                    DofManager & dofManager ) const
 {
   dofManager.addField( viewKeyStruct::proppantConcentrationString,
                        DofManager::Location::Elem,
-                       DofManager::Connectivity::Face,
                        m_numDofPerCell,
                        m_targetRegions );
 }
@@ -881,7 +880,7 @@ void ProppantTransport::AssembleAccumulationTerms( DomainPartition const * const
   MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
 
   applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                                 ElementRegionBase const * const GEOSX_UNUSED_ARG( region ),
+                                 ElementRegionBase const * const GEOSX_UNUSED_PARAM( region ),
                                  ElementSubRegionBase const * const subRegion )
   {
     string const dofKey = dofManager->getKey( viewKeyStruct::proppantConcentrationString );
@@ -960,7 +959,7 @@ void ProppantTransport::AssembleAccumulationTerms( DomainPartition const * const
 }
 
 
-void ProppantTransport::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG(time_n),
+void ProppantTransport::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM(time_n),
                                            real64 const dt,
                                            DomainPartition const * const domain,
                                            DofManager const * const dofManager,
@@ -982,8 +981,8 @@ void ProppantTransport::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG(time_n)
 
   string const dofKey = dofManager->getKey( viewKeyStruct::proppantConcentrationString );
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d<globalIndex> >
-  dofNumberAccessor = elemManager->ConstructViewAccessor< array1d<globalIndex>, arrayView1d<globalIndex> >( dofKey );
+  ElementRegionManager::ElementViewAccessor< arrayView1d<globalIndex const> >
+  dofNumberAccessor = elemManager->ConstructViewAccessor< array1d<globalIndex>, arrayView1d<globalIndex const> >( dofKey );
 
   FluxKernel::ElementViewConst< arrayView1d<globalIndex const> > const & dofNumber = dofNumberAccessor.toViewConst();
 
@@ -995,7 +994,7 @@ void ProppantTransport::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG(time_n)
 
   FluxKernel::ElementViewConst < arrayView1d<real64 const> > const & dProppantConc       = m_deltaProppantConcentration.toViewConst();
 
-  FluxKernel::ElementViewConst < arrayView1d<real64 const> > const & gravDepth   = m_gravDepth.toViewConst();
+  FluxKernel::ElementViewConst < arrayView1d<real64 const> > const & gravCoef   = m_gravCoef.toViewConst();
 
   FluxKernel::MaterialView< arrayView2d<real64 const> > const & dens        = m_density.toViewConst();
 
@@ -1066,7 +1065,7 @@ void ProppantTransport::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG(time_n)
                         componentDens,
                         dComponentDens_dPres,
                         dComponentDens_dComponentConc,
-                        gravDepth,
+                        gravCoef,
                         dens,
                         dDens_dPres,
                         dDens_dProppantConc,
@@ -1115,7 +1114,7 @@ void ProppantTransport::ApplyBoundaryConditions(real64 const time_n,
   fsManager.Apply( time_n + dt, domain, "ElementRegions", "FLUX",
                    [&]( FieldSpecificationBase const * const fs,
                         string const &,
-                        set<localIndex> const & lset,
+                        SortedArrayView<localIndex const> const & lset,
                         Group * subRegion,
                         string const & ) -> void
   {
@@ -1143,7 +1142,7 @@ void ProppantTransport::ApplyBoundaryConditions(real64 const time_n,
                                                                             m_numDofPerCell,
                                                                             matrix,
                                                                             rhs,
-                                                                            [&]( localIndex const GEOSX_UNUSED_ARG(a) ) -> real64
+                                                                            [&]( localIndex const GEOSX_UNUSED_PARAM(a) ) -> real64
         {
           return 0;
         } );
@@ -1156,7 +1155,7 @@ void ProppantTransport::ApplyBoundaryConditions(real64 const time_n,
  fsManager.Apply( time_n + dt, domain, "ElementRegions", viewKeyStruct::proppantConcentrationString,
                     [&]( FieldSpecificationBase const * const fs,
                     string const &,
-                    set<localIndex> const & lset,
+                    SortedArrayView<localIndex const> const & lset,
                     Group * subRegion,
                     string const & ) -> void
   {
@@ -1199,9 +1198,9 @@ void ProppantTransport::ApplyBoundaryConditions(real64 const time_n,
                        domain,
                        "ElementRegions",
                        viewKeyStruct::proppantConcentrationString,
-                       [&]( FieldSpecificationBase const * const GEOSX_UNUSED_ARG( fs ),
+                       [&]( FieldSpecificationBase const * const GEOSX_UNUSED_PARAM( fs ),
                             string const & setName,
-                            set<localIndex> const & GEOSX_UNUSED_ARG( targetSet ),
+                            SortedArrayView<localIndex const> const & GEOSX_UNUSED_PARAM( targetSet ),
                         Group * subRegion,
                         string const & )
       {
@@ -1219,7 +1218,7 @@ void ProppantTransport::ApplyBoundaryConditions(real64 const time_n,
                        viewKeyStruct::componentConcentrationString,
                        [&] ( FieldSpecificationBase const * const fs,
                              string const & setName,
-                             set<localIndex> const & targetSet,
+                             SortedArrayView<localIndex const> const & targetSet,
                              Group * subRegion,
                              string const & )      
       {
@@ -1259,9 +1258,9 @@ void ProppantTransport::ApplyBoundaryConditions(real64 const time_n,
                        domain,
                        "ElementRegions",
                        viewKeyStruct::proppantConcentrationString,
-                       [&] ( FieldSpecificationBase const * const GEOSX_UNUSED_ARG( bc ),
-                         string const & GEOSX_UNUSED_ARG( setName ),
-                         set<localIndex> const & targetSet,
+                       [&] ( FieldSpecificationBase const * const GEOSX_UNUSED_PARAM( bc ),
+                         string const & GEOSX_UNUSED_PARAM( setName ),
+                         SortedArrayView<localIndex const> const & targetSet,
                          Group * subRegion,
                          string const & )
       {      
@@ -1344,7 +1343,7 @@ CalculateResidualNorm( DomainPartition const * const domain,
   real64 localResidualNorm = 0.0;
 
   applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                 ElementRegionBase const * const GEOSX_UNUSED_ARG( region ),
+                                 ElementRegionBase const * const GEOSX_UNUSED_PARAM( region ),
                                  ElementSubRegionBase const * const subRegion )
   {
 
@@ -1387,27 +1386,20 @@ void ProppantTransport::ApplySystemSolution( DofManager const & dofManager,
   
   MeshLevel * mesh = domain->getMeshBody(0)->getMeshLevel(0);
 
-  applyToSubRegions( mesh, [&] ( localIndex GEOSX_UNUSED_ARG(er), localIndex GEOSX_UNUSED_ARG(esr),
-                                 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
-                                 ElementSubRegionBase * const subRegion )
-  {
 
+  dofManager.addVectorToField( solution,
+                               viewKeyStruct::proppantConcentrationString,
+                               viewKeyStruct::deltaProppantConcentrationString,
+                               scalingFactor,
+                               0, 1 );
+
+
+  if(m_numDofPerCell > 1)
     dofManager.addVectorToField( solution,
                                  viewKeyStruct::proppantConcentrationString,
-                                 scalingFactor,
-                                 subRegion,
-                                 viewKeyStruct::deltaProppantConcentrationString,
-                                 0, 1 );
-
-
-    if(m_numDofPerCell > 1) 
-    dofManager.addVectorToField( solution,
-                                 viewKeyStruct::proppantConcentrationString,
-                                 scalingFactor,
-                                 subRegion,
                                  viewKeyStruct::deltaComponentConcentrationString,
+                                 scalingFactor,
                                  1, m_numDofPerCell );
-  } );
 
   std::map<string, string_array > fieldNames;
   fieldNames["elems"].push_back( viewKeyStruct::deltaProppantConcentrationString );
@@ -1453,7 +1445,7 @@ void ProppantTransport::ResetStateToBeginningOfStep( DomainPartition * const dom
   localIndex const NC = m_numComponents;
   
   applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                                 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
+                                 ElementRegionBase * const GEOSX_UNUSED_PARAM( region ),
                                  ElementSubRegionBase * const subRegion )
   {
     arrayView1d<real64> const & dProppantConc = m_deltaProppantConcentration[er][esr];
@@ -1600,7 +1592,7 @@ void ProppantTransport::ResetViews(DomainPartition * const domain)
 
 
 
-void ProppantTransport::UpdateCellBasedFlux( real64 const GEOSX_UNUSED_ARG(time_n),
+void ProppantTransport::UpdateCellBasedFlux( real64 const GEOSX_UNUSED_PARAM(time_n),
                                              DomainPartition * const domain )
 {
   GEOSX_MARK_FUNCTION;
@@ -1619,7 +1611,7 @@ void ProppantTransport::UpdateCellBasedFlux( real64 const GEOSX_UNUSED_ARG(time_
   
   //  FluxKernel::ElementViewConst < arrayView1d<real64 const> > const & dPres       = m_deltaPressure.toViewConst();
 
-  FluxKernel::ElementViewConst < arrayView1d<real64 const> > const & gravDepth   = m_gravDepth.toViewConst();
+  FluxKernel::ElementViewConst < arrayView1d<real64 const> > const & gravCoef   = m_gravCoef.toViewConst();
 
   FluxKernel::MaterialView< arrayView2d<real64 const> > const & dens        = m_density.toViewConst();
 
@@ -1643,7 +1635,7 @@ void ProppantTransport::UpdateCellBasedFlux( real64 const GEOSX_UNUSED_ARG(time_
                                                 transTMultiplier,
                                                 m_downVector,
                                                 pres,
-                                                gravDepth,
+                                                gravCoef,
                                                 dens,
                                                 visc,
                                                 aperture,
@@ -1662,7 +1654,7 @@ void ProppantTransport::UpdateCellBasedFlux( real64 const GEOSX_UNUSED_ARG(time_
   
 }
 
-void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_ARG(time_n),
+void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_PARAM(time_n),
                                                   real64 const dt,
                                                   DomainPartition * const domain)
 {
@@ -1823,7 +1815,7 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_ARG(
   // update poroMultiplier and transTMultiplier
 
   applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                                 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
+                                 ElementRegionBase * const GEOSX_UNUSED_PARAM( region ),
                                  ElementSubRegionBase * const subRegion )
   {
 

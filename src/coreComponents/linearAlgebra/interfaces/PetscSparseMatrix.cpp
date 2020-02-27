@@ -320,6 +320,21 @@ void PetscSparseMatrix::insert( array1d<globalIndex> const & rowIndices,
                 INSERT_VALUES );
 }
 
+void PetscSparseMatrix::insert( globalIndex const * rowIndices,
+                                globalIndex const * colIndices,
+                                real64 const * values,
+                                localIndex const numRows,
+                                localIndex const numCols )
+{
+  MatSetValues( m_mat,
+                numRows,
+                toPetscInt(rowIndices),
+                numCols,
+                toPetscInt(colIndices),
+                values,
+                INSERT_VALUES );
+}
+
 // -------------------------
 // Linear Algebra
 // -------------------------
@@ -344,7 +359,7 @@ void PetscSparseMatrix::multiply( PetscVector const &src,
 // NOTE: src and dst must be different vectors
 void PetscSparseMatrix::multiply( PetscSparseMatrix const & src, 
                                   PetscSparseMatrix & dst,
-                                  bool const GEOSX_UNUSED_ARG( closeResult ) ) const
+                                  bool const GEOSX_UNUSED_PARAM( closeResult ) ) const
 {
   MatMatMult( m_mat, src.getConstMat(), MAT_INITIAL_MATRIX, PETSC_DEFAULT, dst.unwrappedNonConstPointer() );
 }
@@ -355,7 +370,7 @@ void PetscSparseMatrix::multiply( PetscSparseMatrix const & src,
 // Perform the matrix-matrix product this^T * src = dst.
 void PetscSparseMatrix::leftMultiplyTranspose( PetscSparseMatrix const & src,
                                                PetscSparseMatrix & dst,
-                                               bool const GEOSX_UNUSED_ARG( closeResult ) ) const
+                                               bool const GEOSX_UNUSED_PARAM( closeResult ) ) const
 {
   MatTransposeMatMult( m_mat, src.getConstMat(), MAT_INITIAL_MATRIX, PETSC_DEFAULT, dst.unwrappedNonConstPointer() );
 }
@@ -366,7 +381,7 @@ void PetscSparseMatrix::leftMultiplyTranspose( PetscSparseMatrix const & src,
 // Perform the matrix-matrix product src * this^T  = dst.
 void PetscSparseMatrix::rightMultiplyTranspose( PetscSparseMatrix const & src,
                                                 PetscSparseMatrix & dst,
-                                                bool const GEOSX_UNUSED_ARG( closeResult ) ) const
+                                                bool const GEOSX_UNUSED_PARAM( closeResult ) ) const
 {
   MatMatTransposeMult( m_mat, src.getConstMat(), MAT_INITIAL_MATRIX, PETSC_DEFAULT, dst.unwrappedNonConstPointer() );
 }
@@ -391,7 +406,7 @@ void PetscSparseMatrix::gemv( real64 const alpha,
                               PetscVector const & x,
                               real64 const beta,
                               PetscVector & y,
-                              bool useTranspose )
+                              bool useTranspose ) const
 {
   PetscVector x_( x );
   PetscVector b_( x );
@@ -744,6 +759,25 @@ Mat PetscSparseMatrix::getConstMat() const
 Mat PetscSparseMatrix::getMat()
 {
   return m_mat;
+}
+
+localIndex PetscSparseMatrix::localNonzeros() const
+{
+  PetscInt firstrow, lastrow;
+  MatGetOwnershipRange( m_mat, &firstrow, &lastrow );
+
+  PetscInt numEntries;
+  localIndex result = 0;
+
+  // loop over rows
+  for( PetscInt row = firstrow; row < lastrow; ++row )
+  {
+    MatGetRow( m_mat, row, &numEntries, nullptr, nullptr );
+    result += numEntries;
+    MatRestoreRow( m_mat, row, &numEntries, nullptr, nullptr );
+  }
+
+  return result;
 }
 
 } // end geosx namespace

@@ -47,7 +47,7 @@ struct AccumulationKernel
            real64 const & proppantConcNew,
            arraySlice1d<real64 const> const & componentDensOld,
            arraySlice1d<real64 const> const & componentDensNew,
-           arraySlice1d<real64 const> const & GEOSX_UNUSED_ARG( dCompDens_dPres ),
+           arraySlice1d<real64 const> const & GEOSX_UNUSED_PARAM( dCompDens_dPres ),
            arraySlice2d<real64 const> const & dCompDens_dCompConc,
            real64 const & volume,
            real64 const & packPoreVolume,           
@@ -224,7 +224,7 @@ struct FluxKernel
                    arrayView1d<real64 const> const & collisionFactor,
                    arrayView1d<real64 const> const & dCollisionFactor_dProppantConc,
                    arrayView1d<integer const> const & isProppantMobile,
-                   arrayView1d<real64 const> const & GEOSX_UNUSED_ARG(proppantPackVf),
+                   arrayView1d<real64 const> const & GEOSX_UNUSED_PARAM(proppantPackVf),
                    arrayView1d<real64 const> const & aperture,
                    arrayView1d<real64 const> const & proppantLiftFlux,
                    //                              arrayView1d<integer const> const & isInterfaceElement,
@@ -1082,7 +1082,7 @@ ComputeCellBasedFlux( localIndex const numElems,
                       arrayView2d<real64 const> const & dens,
                       arrayView2d<real64 const> const & visc,
                       arrayView1d<real64 const> const & aperture,
-                      arrayView1d<real64 const> const & GEOSX_UNUSED_ARG(proppantPackVf),
+                      arrayView1d<real64 const> const & GEOSX_UNUSED_PARAM(proppantPackVf),
                       arrayView1d<R1Tensor> const & cellBasedFlux)
 {
 

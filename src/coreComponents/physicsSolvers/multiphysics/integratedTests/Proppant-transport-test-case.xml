@@ -6,7 +6,6 @@
 
     <ProppantTransport name="ProppantTransport"
                        logLevel="1"  
-                       gravityFlag="1"
                        updateProppantPacking="1"
                        proppantDiameter="4.5e-4"
                        frictionCoefficient="0.04"
@@ -19,14 +18,12 @@
                        solidName="rock">
 
             <NonlinearSolverParameters
-                name="nlsp"
                 newtonTol="1.0e-6"
                 newtonMaxIter="8"
                 lineSearchAction="0"
                 maxTimeStepCuts="5"
                 newtonMinIter="1"/>
             <SystemSolverParameters
-                name="SystemSolverParameters"
                 krylovTol="1.0e-12"/>
 
     
@@ -35,7 +32,7 @@
     
     <FlowProppantTransport name="FlowProppantTransport"
                            proppantSolverName="ProppantTransport"
-                           flowSolverName="SinglePhaseFlow"
+                           flowSolverName="SinglePhaseFVM"
                            targetRegions="{Fracture}"
                            logLevel="1">
 
@@ -45,26 +42,23 @@
 
 
 
-    <SinglePhaseFlow name="SinglePhaseFlow"
+    <SinglePhaseFVM name="SinglePhaseFVM"
                      logLevel="1"
-                     gravityFlag="1"
                      discretization="singlePhaseTPFA"
                      targetRegions="{Fracture}"
                      fluidName="water"
                      solidName="rock">
 
             <NonlinearSolverParameters
-                name="nlsp"
                 newtonTol="1.0e-8"
                 newtonMaxIter="8"
                 lineSearchAction="0"
                 newtonMinIter="0"/>
             <SystemSolverParameters
-                name="SystemSolverParameters"
                 krylovTol="1.0e-12"/>
 
 
-    </SinglePhaseFlow>
+    </SinglePhaseFVM>
 
 
     
@@ -187,10 +181,6 @@
     
   </Constitutive>
 
-  <InitialConditions>
-    
-  </InitialConditions>
-
   <FieldSpecifications>
 
 
@@ -308,10 +298,6 @@
 
   <Functions>
   </Functions>
-
-  <Partition>
-    <SpatialPartition xPar="1" yPar="1" zPar="1"/>
-  </Partition>
 
   <Outputs>
       <Silo name="siloOutput"/>

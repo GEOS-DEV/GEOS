@@ -156,7 +156,15 @@ void ParticleFluid::BatchUpdate( arrayView1d<real64 const> const & )
 }
 
 
-void ParticleFluid::PointUpdate(localIndex const GEOSX_UNUSED_ARG(NC), real64 const & GEOSX_UNUSED_ARG(proppantConcentration), arraySlice1d<real64 const> const & GEOSX_UNUSED_ARG(componentConcentration), arraySlice1d<real64 const> const & GEOSX_UNUSED_ARG(nIndex), arraySlice1d<real64 const> const & GEOSX_UNUSED_ARG(KIndex), real64 const & GEOSX_UNUSED_ARG(fluidDensity), real64 const & GEOSX_UNUSED_ARG(dFluidDensity_dPressure), arraySlice1d<real64 const> const & GEOSX_UNUSED_ARG(dFluidDensity_dComponentConcentration), localIndex const GEOSX_UNUSED_ARG(k) )  
+void ParticleFluid::PointUpdate( localIndex const GEOSX_UNUSED_PARAM(NC),
+                                 real64 const & GEOSX_UNUSED_PARAM(proppantConcentration),
+                                 arraySlice1d<real64 const> const & GEOSX_UNUSED_PARAM(componentConcentration),
+                                 arraySlice1d<real64 const> const & GEOSX_UNUSED_PARAM(nIndex),
+                                 arraySlice1d<real64 const> const & GEOSX_UNUSED_PARAM(KIndex),
+                                 real64 const & GEOSX_UNUSED_PARAM(fluidDensity),
+                                 real64 const & GEOSX_UNUSED_PARAM(dFluidDensity_dPressure),
+                                 arraySlice1d<real64 const> const & GEOSX_UNUSED_PARAM(dFluidDensity_dComponentConcentration),
+                                 localIndex const GEOSX_UNUSED_PARAM(k) )
 {
 
 
@@ -173,11 +181,11 @@ void ParticleFluid::PointUpdate(localIndex const NC, real64 const & proppantConc
 void ParticleFluid::Compute( localIndex const NC,
                              real64 const & proppantConcentration,
                              real64 const & fluidDensity,
-                             real64 const & GEOSX_UNUSED_ARG( dFluidDensity_dPressure ),
-                             arraySlice1d<real64 const> const & GEOSX_UNUSED_ARG( dFluidDensity_dComponentConcentration ),
+                             real64 const & GEOSX_UNUSED_PARAM( dFluidDensity_dPressure ),
+                             arraySlice1d<real64 const> const & GEOSX_UNUSED_PARAM( dFluidDensity_dComponentConcentration ),
                              real64 const & fluidViscosity,
-                             real64 const & GEOSX_UNUSED_ARG( dFluidViscosity_dPressure ),
-                             arraySlice1d<real64 const> const & GEOSX_UNUSED_ARG( dFluidViscosity_dComponentConcentration ),
+                             real64 const & GEOSX_UNUSED_PARAM( dFluidViscosity_dPressure ),
+                             arraySlice1d<real64 const> const & GEOSX_UNUSED_PARAM( dFluidViscosity_dComponentConcentration ),
                              real64 & settlingFactor,
                              real64 & dSettlingFactor_dPressure,
                              real64 & dSettlingFactor_dProppantConcentration,

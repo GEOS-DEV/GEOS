@@ -16,8 +16,10 @@ set( physicsSolvers_headers
      fluidFlow/FlowSolverBase.hpp
      fluidFlow/ProppantTransport.hpp
      fluidFlow/ProppantTransportKernels.hpp
-     fluidFlow/SinglePhaseFlow.hpp
-     fluidFlow/SinglePhaseFlowKernels.hpp
+     fluidFlow/SinglePhaseBase.hpp
+     fluidFlow/SinglePhaseHybridFVM.hpp
+     fluidFlow/SinglePhaseFVM.hpp
+     fluidFlow/SinglePhaseKernels.hpp
      fluidFlow/SinglePhaseWell.hpp
      fluidFlow/WellSolverBase.hpp
      fluidFlow/WellSolverBase.hpp
@@ -29,8 +31,9 @@ set( physicsSolvers_headers
      solidMechanics/SolidMechanicsLagrangianFEM.hpp
      solidMechanics/SolidMechanicsLagrangianSSLE.hpp
      solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp
-     solidMechanics/SolidMechanicsLagrangianSSLEKernels.hpp
+     solidMechanics/SolidMechanicsLagrangianSSLEKernels.hpp     
      surfaceGeneration/SurfaceGenerator.hpp
+     surfaceGeneration/EmbeddedSurfaceGenerator.hpp
      )
 
 #
@@ -45,13 +48,13 @@ set( physicsSolvers_sources
      fluidFlow/CompositionalMultiphaseFlowKernels.cpp
      fluidFlow/CompositionalMultiphaseWell.cpp
      fluidFlow/FlowSolverBase.cpp
-     fluidFlow/SinglePhaseFlow.cpp
-     fluidFlow/SinglePhaseFlowKernels.cpp
-     fluidFlow/SinglePhaseWell.cpp
      fluidFlow/ProppantTransport.cpp
      fluidFlow/ProppantTransportKernels.cpp               
-     fluidFlow/SinglePhaseFlow.cpp
-     fluidFlow/SinglePhaseFlowKernels.cpp
+     fluidFlow/SinglePhaseBase.cpp
+     fluidFlow/SinglePhaseHybridFVM.cpp
+     fluidFlow/SinglePhaseFVM.cpp     
+     fluidFlow/SinglePhaseKernels.cpp
+     fluidFlow/SinglePhaseWell.cpp
      fluidFlow/SinglePhaseWell.cpp
      fluidFlow/WellSolverBase.cpp
      multiphysics/FlowProppantTransportSolver.cpp          
@@ -62,6 +65,7 @@ set( physicsSolvers_sources
      solidMechanics/SolidMechanicsLagrangianFEM.cpp
      solidMechanics/SolidMechanicsLagrangianSSLE.cpp
      surfaceGeneration/SurfaceGenerator.cpp
+     surfaceGeneration/EmbeddedSurfaceGenerator.cpp
      )
 
 if( BUILD_OBJ_LIBS)

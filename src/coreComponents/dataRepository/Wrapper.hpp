@@ -27,6 +27,7 @@
 #include "codingUtilities/SFINAE_Macros.hpp"
 #include "cxx-utilities/src/Macros.hpp"
 #include "BufferOps.hpp"
+#include "BufferOpsDevice.hpp"
 #include "RestartFlags.hpp"
 #include "codingUtilities/traits.hpp"
 #include "common/GeosxConfig.hpp"
@@ -45,7 +46,6 @@ namespace geosx
 
 namespace dataRepository
 {
-
 //template< typename U >
 //static void totalViewType( char * const dataType );
 
@@ -56,7 +56,6 @@ namespace dataRepository
 template< typename T >
 class Wrapper : public WrapperBase
 {
-
 public:
 
   /**
@@ -275,97 +274,175 @@ public:
 
   /**
    * @name Methods for buffer packing/unpacking
+   * @param[in] on_device    whether to use device-based packing functions
+   *                         (buffer must be either pinned or a device pointer)
    *
    * This group of functions is used to pack/unpack wrapped object to/from binary buffers
    */
-  ///@{
-
-  virtual bool isPackable() const override final
+  virtual
+  bool isPackable( bool on_device ) const override final
   {
-    return bufferOps::is_packable< T >;
+    if( on_device )
+    {
+      return bufferOps::can_memcpy< T >;
+    }
+    else
+    {
+      return bufferOps::is_packable< T >;
+    }
   }
 
-  virtual localIndex Pack( buffer_unit_type * & buffer ) const override final
+  /**
+   * @brief function to pack T
+   * @param buffer the buffer in which to pack T
+   * @param[in] on_device    whether to use device-based packing functions
+   *                         (buffer must be either pinned or a device pointer)
+   * @return number of packed bytes.
+   */
+  virtual
+  localIndex Pack( buffer_unit_type * & buffer, bool on_device ) const override final
   {
     localIndex packedSize = 0;
-
     packedSize += bufferOps::Pack< true >( buffer, this->getName() );
-    packedSize += bufferOps::Pack< true >( buffer, *m_data );
-
+    if( on_device )
+    {
+      packedSize += wrapperHelpers::PackDevice< true >( buffer, referenceAsView() );
+    }
+    else
+    {
+      packedSize += bufferOps::Pack< true >( buffer, *m_data );
+    }
     return packedSize;
   }
 
-  virtual localIndex Pack( buffer_unit_type * & buffer, arrayView1d< localIndex const > const & packList ) const override final
+  /**
+   * @brief function to pack T
+   * @param buffer the buffer in which to pack T
+   * @param packList indices of T to pack
+   * @param[in] on_device    whether to use device-based packing functions
+   *                         (buffer must be either pinned or a device pointer)
+   * @return number of packed bytes.
+   */
+  virtual
+  localIndex PackByIndex( buffer_unit_type * & buffer, arrayView1d< localIndex const > const & packList, bool on_device ) const override final
   {
     localIndex packedSize = 0;
-
-    static_if( bufferOps::is_packable_by_index< T > )
+    if( sizedFromParent() == 1 )
     {
-      if( sizedFromParent()==1 )
+      packedSize += bufferOps::Pack< true >( buffer, this->getName() );
+      if( on_device )
       {
-        packedSize += bufferOps::Pack< true >( buffer, this->getName() );
-        packedSize += bufferOps::Pack< true >( buffer, *m_data, packList );
+        packedSize += wrapperHelpers::PackByIndexDevice< true >( buffer, referenceAsView(), packList );
+      }
+      else
+      {
+        packedSize += wrapperHelpers::PackByIndex< true >( buffer, *m_data, packList );
       }
     }
-    end_static_if
     return packedSize;
   }
 
-  virtual localIndex PackSize( ) const override final
+  /**
+   * @brief function to pack return the length of packing...without doing the packing.
+   * @param[in] on_device    whether to use device-based packing functions
+   *                         (buffer must be either pinned or a device pointer)
+   * @return size of packed bytes
+   */
+  virtual
+  localIndex PackSize( bool on_device ) const override final
   {
     buffer_unit_type * buffer = nullptr;
     localIndex packedSize = 0;
-
     packedSize += bufferOps::Pack< false >( buffer, this->getName() );
-    packedSize += bufferOps::Pack< false >( buffer, *m_data );
-
+    if( on_device )
+    {
+      packedSize += wrapperHelpers::PackDevice< false >( buffer, referenceAsView() );
+    }
+    else
+    {
+      packedSize += bufferOps::Pack< false >( buffer, *m_data );
+    }
     return packedSize;
   }
 
-  virtual localIndex PackSize( arrayView1d< localIndex const > const & packList ) const override final
+  /**
+   * @brief function to get the the packing size
+   * @param packList indices of T to pack
+   * @param[in] on_device    whether to use device-based packing functions
+   *                         (buffer must be either pinned or a device pointer)
+   * @return number of packed bytes.
+   */
+  virtual
+  localIndex PackByIndexSize( arrayView1d< localIndex const > const & packList, bool on_device ) const override final
   {
-
-    buffer_unit_type * buffer = nullptr;
     localIndex packedSize = 0;
-
-    static_if( bufferOps::is_packable_by_index< T > )
+    buffer_unit_type * buffer = nullptr;
+    if( sizedFromParent() == 1 )
     {
-      if( sizedFromParent()==1 )
+      packedSize += bufferOps::Pack< false >( buffer, this->getName() );
+      if( on_device )
       {
-        packedSize += bufferOps::Pack< false >( buffer, this->getName() );
-        packedSize += bufferOps::Pack< false >( buffer, *m_data, packList );
+        packedSize += wrapperHelpers::PackByIndexDevice< false >( buffer, referenceAsView(), packList );
+      }
+      else
+      {
+        packedSize += wrapperHelpers::PackByIndex< false >( buffer, *m_data, packList );
       }
     }
-    end_static_if
-
     return packedSize;
   }
 
-  virtual localIndex Unpack( buffer_unit_type const * & buffer ) override final
+  /**
+   * @brief function to unpack a buffer into the object referred to by m_data
+   * @param buffer
+   * @param[in] on_device    whether to use device-based packing functions
+   *                         (buffer must be either pinned or a device pointer)
+   * @return
+   */
+  virtual
+  localIndex Unpack( buffer_unit_type const * & buffer, bool on_device ) override final
   {
     localIndex unpackedSize = 0;
     string name;
     unpackedSize += bufferOps::Unpack( buffer, name );
     GEOSX_ERROR_IF( name != this->getName(), "buffer unpack leads to wrapper names that don't match" );
-    unpackedSize += bufferOps::Unpack( buffer, *m_data );
+    if( on_device )
+    {
+      unpackedSize += wrapperHelpers::UnpackDevice( buffer, referenceAsView() );
+    }
+    else
+    {
+      unpackedSize += bufferOps::Unpack( buffer, *m_data );
+    }
     return unpackedSize;
   }
 
-  virtual localIndex Unpack( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices ) override final
+  /**
+   * @brief function to unpack a buffer into the object referred to by m_data
+   * @param buffer
+   * @param unpackIndices    indices of T to pack
+   * @param[in] on_device    whether to use device-based packing functions
+   *                         (buffer must be either pinned or a device pointer)
+   * @return
+   */
+  virtual
+  localIndex UnpackByIndex( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool on_device ) override final
   {
     localIndex unpackedSize = 0;
-    static_if( bufferOps::is_packable_by_index< T > )
+    if( sizedFromParent()==1 )
     {
-      if( sizedFromParent()==1 )
+      string name;
+      unpackedSize += bufferOps::Unpack( buffer, name );
+      GEOSX_ERROR_IF( name != this->getName(), "buffer unpack leads to wrapper names that don't match" );
+      if( on_device )
       {
-        string name;
-        unpackedSize += bufferOps::Unpack( buffer, name );
-        GEOSX_ERROR_IF( name != this->getName(), "buffer unpack leads to wrapper names that don't match" );
-        unpackedSize += bufferOps::Unpack( buffer, *m_data, unpackIndices );
+        unpackedSize += wrapperHelpers::UnpackByIndexDevice( buffer, referenceAsView(), unpackIndices );
+      }
+      else
+      {
+        unpackedSize += wrapperHelpers::UnpackByIndex( buffer, *m_data, unpackIndices );
       }
     }
-    end_static_if
-
     return unpackedSize;
   }
 
@@ -385,7 +462,9 @@ public:
   }
 
   virtual void resize( int ndims, localIndex const * const dims ) override final
-  { wrapperHelpers::resizeDimensions( *m_data, ndims, dims ); }
+  {
+    wrapperHelpers::resizeDimensions( *m_data, ndims, dims );
+  }
 
   /// @cond DO_NOT_DOCUMENT
   struct reserve_wrapper
@@ -429,7 +508,7 @@ public:
 
     template< class U=T >
     static typename std::enable_if< !traits::is_array< U >, void >::type
-    copy( T * const GEOSX_UNUSED_ARG( data ), localIndex const GEOSX_UNUSED_ARG( sourceIndex ), localIndex const GEOSX_UNUSED_ARG( destIndex ) )
+    copy( T * const GEOSX_UNUSED_PARAM( data ), localIndex const GEOSX_UNUSED_PARAM( sourceIndex ), localIndex const GEOSX_UNUSED_PARAM( destIndex ) )
     {}
 
   };
@@ -530,11 +609,13 @@ public:
   { return *m_data; }
 
   /**
-   * @brief Accessor for m_data
-   * @return reference to const T
+   * @brief const Accessor for m_data
+   * @return reference to T, or in the case of an Array, a reference to an
+   *         ArrayView<T const> const.
    */
-  T const & reference() const
-  { return *m_data; }
+  auto const &
+  reference() const
+  { return referenceAsView(); }
 
   /**
    * @brief Accessor for m_data
@@ -615,6 +696,14 @@ public:
   ///@{
 
   /**
+   * @copydoc WrapperBase::hasDefaultValue()
+   */
+  virtual bool hasDefaultValue() const final override
+  {
+    return m_default.has_default_value;
+  }
+
+  /**
    * @brief Accessor for m_default.
    * @return reference to const m_default member
    */
@@ -662,6 +751,54 @@ public:
     m_default.value = defaultVal;
     *m_data = m_default.value;
     return this;
+  }
+
+  /**
+   * @copydoc WrapperBase::getDefaultValueString()
+   */
+  virtual std::string getDefaultValueString() const override
+  {
+    // Find the dimensionality of the wrapper value
+    std::string wrapper_type = rtTypes::typeNames( std::type_index( get_typeid()));
+    integer value_dim = 0;
+    if( wrapper_type.find( "array3d" ) != std::string::npos )
+    {
+      value_dim = 3;
+    }
+    else if( wrapper_type.find( "array2d" ) != std::string::npos )
+    {
+      value_dim = 2;
+    }
+    else if( wrapper_type.find( "array" ) != std::string::npos )
+    {
+      value_dim = 1;
+    }
+
+    // Compose the default string
+    std::stringstream ss;
+
+    for( integer ii=0 ; ii<value_dim ; ++ii )
+    {
+      ss << "{";
+    }
+
+    ss << m_default;
+
+    for( integer ii=0 ; ii<value_dim ; ++ii )
+    {
+      ss << "}";
+    }
+
+    std::string default_string = ss.str();
+
+    // Tensor types will be space-delimited using the << operator
+    // Replace these with commas
+    if( wrapper_type.find( "Tensor" ) != std::string::npos )
+    {
+      std::replace( default_string.begin(), default_string.end(), ' ', ',' );
+    }
+
+    return default_string;
   }
 
   HAS_MEMBER_FUNCTION( setName,
@@ -822,7 +959,6 @@ private:
 
   /// the default value of the object being wrapped
   DefaultValue< T > m_default;
-
 
   Wrapper() = delete;
 };

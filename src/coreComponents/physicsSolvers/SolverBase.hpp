@@ -144,6 +144,17 @@ public:
   virtual void SetNextDt( real64 const & currentDt,
                           real64 & nextDt);
 
+  /**
+       * @brief entry function to perform a solver step
+       * @param [in]  time_n time at the beginning of the step
+       * @param [in]  dt the perscribed timestep
+       * @param [out] return the timestep that was achieved during the step.
+       *
+       * T
+       */
+  void SetNextDtBasedOnNewtonIter( real64 const & currentDt,
+                                   real64 & nextDt);
+
 
   /**
    * @brief Entry function for an explicit time integration step
@@ -471,10 +482,12 @@ public:
   /*
    * Returns the requirement for the next time-step to the event executing the solver.
    */
-  virtual real64 GetTimestepRequest( real64 const GEOSX_UNUSED_ARG( time ) ) override
+  virtual real64 GetTimestepRequest( real64 const GEOSX_UNUSED_PARAM( time ) ) override
 		  {return m_nextDt;};
   /**@}*/
 
+  real64 GetTimestepRequest()
+      {return m_nextDt;};
 
   virtual Group * CreateChild( string const & childKey, string const & childName ) override;
   virtual void ExpandObjectCatalogs() override;
@@ -484,7 +497,6 @@ public:
 
   struct viewKeyStruct
   {
-    constexpr static auto gravityVectorString = "gravityVector";
     constexpr static auto cflFactorString = "cflFactor";
     constexpr static auto initialDtString = "initialDt";
     constexpr static auto maxStableDtString = "maxStableDt";
@@ -500,11 +512,15 @@ public:
   } groupKeys;
 
 
-
-  R1Tensor const & getGravityVector() const { return m_gravityVector; }
-  R1Tensor       & getGravityVector()       { return m_gravityVector; }
-  R1Tensor const * globalGravityVector() const;
-
+  /**
+   * @brief return the value of the gravity vector specified in PhysicsSolverManager 
+   * @return the value of the gravity vector
+   *
+   * @note if the solver is instantiated outside of a simulation (for instance for a unit test)
+   *       and therefore does not have a parent of type PhysicsSolverManager, this function returns
+   *       {0.0,0.0,-9.81}  
+   */
+  R1Tensor const gravityVector() const;
 
   /**
    * accessor for the system solver parameters.
@@ -581,8 +597,6 @@ protected:
   template<typename BASETYPE>
   static BASETYPE * GetConstitutiveModel( dataRepository::Group * dataGroup, string const & name );
 
-  integer m_logLevel = 0;
-  R1Tensor m_gravityVector;
   SystemSolverParameters m_systemSolverParameters;
 
   real64 m_cflFactor;
@@ -605,7 +619,6 @@ protected:
 
   /// Linear solver parameters
   LinearSolverParameters m_linearSolverParameters;
-
   NonlinearSolverParameters m_nonlinearSolverParameters;
 
   array1d<integer> m_sourceFluxSetSize;

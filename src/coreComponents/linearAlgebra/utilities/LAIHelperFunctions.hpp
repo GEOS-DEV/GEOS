@@ -39,12 +39,12 @@ namespace LAIHelperFunctions
  * @param[in]  DofKey
  * @param[out] permutationMatrix
  */
-void CreatePermutationMatrix(NodeManager* const nodeManager,
-                             localIndex const nRows,
-                             localIndex const nCols,
-                             int const nDofPerNode,
-                             string const DofKey,
-                             ParallelMatrix & permutationMatrix);
+void CreatePermutationMatrix( NodeManager const * const nodeManager,
+                              localIndex const nRows,
+                              localIndex const nCols,
+                              int const nDofPerNode,
+                              string const DofKey,
+                              ParallelMatrix & permutationMatrix);
 
 /**
  * Create a permuation matrix for a given nodal variable.
@@ -55,12 +55,12 @@ void CreatePermutationMatrix(NodeManager* const nodeManager,
  * @param[in]  DofKey
  * @param[out] permutationMatrix
  */
-void CreatePermutationMatrix(ElementRegionManager* const elemManager,
-                             localIndex const nRows,
-                             localIndex const nCols,
-                             int const nDofPerNode,
-                             string const DofKey,
-                             ParallelMatrix & permutationMatrix);
+void CreatePermutationMatrix( ElementRegionManager const * const elemManager,
+                              localIndex const nRows,
+                              localIndex const nCols,
+                              int const nDofPerNode,
+                              string const DofKey,
+                              ParallelMatrix & permutationMatrix);
 
 /**
  * Create a permuation matrix for a given nodal variable.
@@ -109,6 +109,52 @@ void PrintPermutedMatrix(ParallelMatrix const & matrix,
                          ParallelMatrix const & permutationMatrixRight,
                          std::ostream & os);
 
+
+//void SeparateComponentFilter(ParallelMatrix const & src,
+//                             ParallelMatrix & dst,
+//                             const localIndex dofsPerNode);
+
+template<typename LAI>
+void SeparateComponentFilter(typename LAI::ParallelMatrix const & src,
+                             typename LAI::ParallelMatrix & dst,
+                             const localIndex dofsPerNode)
+{
+  GEOSX_ERROR_IF(dofsPerNode < 2,"Function requires dofsPerNode > 1");
+
+  const localIndex  localRows  = src.localRows();
+  const localIndex  maxEntries = src.maxRowLength();
+  const localIndex  maxDstEntries = maxEntries / dofsPerNode;
+
+  dst.createWithLocalSize(localRows,maxEntries,MPI_COMM_WORLD);
+  dst.open();
+
+  array1d<real64> srcValues;
+  array1d<real64> dstValues( maxDstEntries );
+
+  array1d<globalIndex> srcIndices;
+  array1d<globalIndex> dstIndices( maxDstEntries );
+
+  for(globalIndex row=src.ilower(); row<src.iupper(); ++row)
+  {
+     const globalIndex rowComponent = row % dofsPerNode;
+
+     src.getRowCopy(row,srcIndices,srcValues);
+
+     localIndex k=0;
+     for(localIndex col=0; col<srcIndices.size(); ++col)
+     {
+        const globalIndex colComponent = srcIndices[col] % dofsPerNode;
+        if( rowComponent == colComponent )
+        {
+          dstValues[k] = srcValues[col];
+          dstIndices[k] = srcIndices[col];
+          k++;
+        }
+     }
+     dst.insert(row,dstIndices.data(),dstValues.data(),k);
+  }
+  dst.close();
+}
 
 } // LAIHelperFunctions namespace
 

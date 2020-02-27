@@ -21,8 +21,8 @@
 #include "FlowProppantTransportSolver.hpp"
 
 #include "constitutive/ConstitutiveManager.hpp"
-#include "../fluidFlow/SinglePhaseFlow.hpp"
-#include "../fluidFlow/ProppantTransport.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseFVM.hpp"
+#include "physicsSolvers/fluidFlow/ProppantTransport.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "finiteElement/Kinematics.h"
 #include "managers/DomainPartition.hpp"
@@ -57,20 +57,20 @@ void FlowProppantTransportSolver::RegisterDataOnMesh( dataRepository::Group * co
 
 }
 
-void FlowProppantTransportSolver::ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n ),
-                                                     real64 const & GEOSX_UNUSED_ARG( dt ),
-                                                     DomainPartition * const GEOSX_UNUSED_ARG( domain ),
-                                                     DofManager & GEOSX_UNUSED_ARG( dofManager ),
-                                                     ParallelMatrix & GEOSX_UNUSED_ARG( matrix ),
-                                                     ParallelVector & GEOSX_UNUSED_ARG( rhs ),
-                                                     ParallelVector & GEOSX_UNUSED_ARG( solution ) )
+void FlowProppantTransportSolver::ImplicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+                                                     real64 const & GEOSX_UNUSED_PARAM( dt ),
+                                                     DomainPartition * const GEOSX_UNUSED_PARAM( domain ),
+                                                     DofManager & GEOSX_UNUSED_PARAM( dofManager ),
+                                                     ParallelMatrix & GEOSX_UNUSED_PARAM( matrix ),
+                                                     ParallelVector & GEOSX_UNUSED_PARAM( rhs ),
+                                                     ParallelVector & GEOSX_UNUSED_PARAM( solution ) )
 {
   
 }
 
-void FlowProppantTransportSolver::ImplicitStepComplete( real64 const& GEOSX_UNUSED_ARG( time_n ),
-                                                        real64 const& GEOSX_UNUSED_ARG( dt ),
-                                                        DomainPartition * const GEOSX_UNUSED_ARG( domain ) )
+void FlowProppantTransportSolver::ImplicitStepComplete( real64 const& GEOSX_UNUSED_PARAM( time_n ),
+                                                        real64 const& GEOSX_UNUSED_PARAM( dt ),
+                                                        DomainPartition * const GEOSX_UNUSED_PARAM( domain ) )
 {
 
 }
@@ -80,9 +80,9 @@ void FlowProppantTransportSolver::PostProcessInput()
 
 }
 
-void FlowProppantTransportSolver::InitializePostInitialConditions_PreSubGroups(Group * const GEOSX_UNUSED_ARG( problemManager ))
+void FlowProppantTransportSolver::InitializePostInitialConditions_PreSubGroups(Group * const GEOSX_UNUSED_PARAM( problemManager ))
 {
-  this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>()->setFlowProppantTransportCoupling();  
+  this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFVM*>()->setFlowProppantTransportCoupling();
 }
 
 FlowProppantTransportSolver::~FlowProppantTransportSolver()
@@ -90,7 +90,7 @@ FlowProppantTransportSolver::~FlowProppantTransportSolver()
   // TODO Auto-generated destructor stub
 }
 
-void FlowProppantTransportSolver::ResetStateToBeginningOfStep( DomainPartition * const GEOSX_UNUSED_ARG( domain ) )
+void FlowProppantTransportSolver::ResetStateToBeginningOfStep( DomainPartition * const GEOSX_UNUSED_PARAM( domain ) )
 {
 
 }
@@ -107,8 +107,8 @@ real64 FlowProppantTransportSolver::SolverStep( real64 const & time_n,
   ProppantTransport &
   proppantSolver = *(this->getParent()->GetGroup(m_proppantSolverName)->group_cast<ProppantTransport*>());
 
-  SinglePhaseFlow &
-  flowSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>());
+  SinglePhaseFVM &
+  flowSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFVM*>());
 
   proppantSolver.ResizeFractureFields(time_n, dt, domain);
   

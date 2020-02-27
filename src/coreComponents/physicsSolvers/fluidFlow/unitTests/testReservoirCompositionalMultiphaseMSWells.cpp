@@ -205,7 +205,7 @@ void testNumericalJacobian( ReservoirSolver * solver,
   for (localIndex er = 0; er < elemManager->numRegions(); ++er)
   {
     ElementRegionBase * const elemRegion = elemManager->GetRegion(er);
-    elemRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const GEOSX_UNUSED_ARG( esr ), auto * const subRegion )
+    elemRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const GEOSX_UNUSED_PARAM( esr ), auto * const subRegion )
     {
       // get the degrees of freedom and ghosting information
       arrayView1d<globalIndex> & dofNumber =
@@ -537,6 +537,12 @@ TEST_F(ReservoirSolverTest, jacobianNumericalCheck_Perforation)
 
   DomainPartition * domain = problemManager->getDomainPartition();
 
+  solver->SetupSystem( domain,
+		       solver->getDofManager(),
+                       solver->getSystemMatrix(),
+                       solver->getSystemRhs(),
+                       solver->getSystemSolution() );
+  
   solver->ImplicitStepSetup( time,
                              dt,
                              domain,
@@ -566,6 +572,12 @@ TEST_F(ReservoirSolverTest, jacobianNumericalCheck_Flux)
   real64 const dt = 1e4;
 
   DomainPartition * domain = problemManager->getDomainPartition();
+
+  solver->SetupSystem( domain,
+		       solver->getDofManager(),
+                       solver->getSystemMatrix(),
+                       solver->getSystemRhs(),
+                       solver->getSystemSolution() );
   
   solver->ImplicitStepSetup( time,
                              dt,
@@ -597,6 +609,12 @@ TEST_F(ReservoirSolverTest, jacobianNumericalCheck_Control)
   real64 const dt = 1e4;
 
   DomainPartition * domain = problemManager->getDomainPartition();
+
+  solver->SetupSystem( domain,
+		       solver->getDofManager(),
+                       solver->getSystemMatrix(),
+                       solver->getSystemRhs(),
+                       solver->getSystemSolution() );
   
   solver->ImplicitStepSetup( time,
                              dt,
@@ -628,6 +646,12 @@ TEST_F(ReservoirSolverTest, jacobianNumericalCheck_VolumeBalance)
 
   DomainPartition * domain = problemManager->getDomainPartition();
 
+  solver->SetupSystem( domain,
+		       solver->getDofManager(),
+                       solver->getSystemMatrix(),
+                       solver->getSystemRhs(),
+                       solver->getSystemSolution() );
+  
   solver->ImplicitStepSetup( time,
                              dt,
                              domain,
@@ -657,6 +681,12 @@ TEST_F(ReservoirSolverTest, jacobianNumericalCheck_PressureRel)
 
   DomainPartition * domain = problemManager->getDomainPartition();
 
+  solver->SetupSystem( domain,
+		       solver->getDofManager(),
+                       solver->getSystemMatrix(),
+                       solver->getSystemRhs(),
+                       solver->getSystemSolution() );
+  
   solver->ImplicitStepSetup( time,
                              dt,
                              domain,

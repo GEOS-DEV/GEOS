@@ -65,21 +65,14 @@ public:
   {
     return m_fineToCoarse;
   }
-  
-  virtual R1Tensor const & calculateElementCenter( localIndex k,
-                                                   NodeManager const & GEOSX_UNUSED_ARG( nodeManager ),
-                                                   const bool GEOSX_UNUSED_ARG( useReferencePos ) = true) const override
-  {
-    return m_elementCenter[k];
-  }
 
-  virtual void CalculateElementGeometricQuantities( NodeManager const & GEOSX_UNUSED_ARG( nodeManager ),
-                                                    FaceManager const & GEOSX_UNUSED_ARG( faceManager ) ) override
+  virtual void CalculateElementGeometricQuantities( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
+                                                    FaceManager const & GEOSX_UNUSED_PARAM( faceManager ) ) override
   {
       //TODO ?
   }
 
-  virtual void setupRelatedObjectsInRelations( MeshLevel const * const GEOSX_UNUSED_ARG( mesh ) ) override
+  virtual void setupRelatedObjectsInRelations( MeshLevel const * const GEOSX_UNUSED_PARAM( mesh ) ) override
   {
     //TODO ?
   }

@@ -24,6 +24,144 @@ namespace computationalGeometry
 {
 
 /**
+ * Calculates the intersection between a line and a plane
+ * @param[in] vector defining direction of the line
+ * @param[in] 1 point of the line
+ * @param[in] normal to plane
+ * @param[in] plane origin
+ * @return area of the convex 3D polygon
+ */
+R1Tensor LinePlaneIntersection(R1Tensor lineDir,
+                               R1Tensor linePoint,
+                               R1Tensor planeNormal,
+                               R1Tensor planeOrigin)
+{
+  /* Find intersection line plane
+   * line equation: p - (d*lineDir + linePoing) = 0;
+   * plane equation: ( p - planeOrigin) * planeNormal = 0;
+   * d = (planeOrigin - linePoint) * planeNormal / (lineDir * planeNormal )
+   * pInt = d*lineDir+linePoint;
+   */
+  R1Tensor dummy;
+  real64 d;
+  // Intersection
+  R1Tensor pInt;
+
+  dummy = planeOrigin;
+  dummy -= linePoint;
+  d  = Dot(dummy, planeNormal);
+  d /= Dot(lineDir, planeNormal);
+
+
+  pInt    = linePoint;
+  pInt[0] += d * lineDir[0];
+  pInt[1] += d * lineDir[1];
+  pInt[2] += d * lineDir[2];
+
+  return pInt;
+}
+/**
+ * Calculates the area of a polygon given the set of points defining it
+ * @param[in] coordinates of the points
+ * @param[in] number of points
+ * @param[in] unit normal vector to the surface
+ * @return area
+ */
+real64 ComputeSurfaceArea(array1d<R1Tensor> const & points,
+                          localIndex const numPoints,
+                          R1Tensor const & normal)
+{
+  // reorder points counterclockwise
+
+  array1d<R1Tensor> pointsReordered = orderPointsCCW(points, numPoints, normal);
+
+  real64 surfaceArea = 0.0;
+  R1Tensor v1,v2;
+  const R1Tensor& x0 = pointsReordered[0];
+
+  for( localIndex a=0 ; a<(numPoints-2) ; ++a )
+      {
+        v1  = pointsReordered[a+1];
+        v2  = pointsReordered[a+2];
+
+        v1 -= x0;
+        v2 -= x0;
+
+        R1Tensor triangleNormal;
+        triangleNormal.Cross( v1,v2 );
+        const real64 triangleArea = triangleNormal.Normalize();
+
+        surfaceArea += triangleArea;
+      }
+  surfaceArea *= 0.5;
+  return surfaceArea;
+}
+
+/**
+ * Given a set of points on a plane it orders them counterclockwise
+ * @param[in] coordinates of the points
+ * @param[in] number of points
+ * @param[in] unit normal vector to the surface
+ * @return reordered points
+ */
+array1d<R1Tensor> orderPointsCCW(array1d<R1Tensor> const & points,
+                                 localIndex const numPoints,
+                                 R1Tensor const & normal)
+{
+  array1d<R1Tensor> orderedPoints(numPoints);
+  R1Tensor p0 = points[0];
+  R1Tensor centroid = p0;
+
+  std::vector<int> indices(numPoints);
+  indices[0] = 0;
+  real64 dot, det;
+  std::vector<real64 > angle(numPoints);
+
+  // compute centroid of the set of points
+
+  for (localIndex a=1; a < numPoints; a++)
+  {
+    centroid += points[a];
+    indices[a] = a;
+  }
+  centroid /= numPoints;
+
+  R1Tensor v0, v;
+  v0  = centroid;
+  v0 -= points[0];
+  v0.Normalize();
+
+  // compute angles
+  angle[0] = 0;
+  //std::cout << std::endl;
+  for (localIndex a=1; a < numPoints; a++)
+    {
+      v        = centroid;
+      v       -= points[a];
+      dot      = Dot(v, v0);
+      det      = Dot(normal, Cross(v, v0));
+      angle[a] = std::atan2(det, dot);
+      // std::cout << angle[a] << " - ";
+    }
+
+  // sort the indices
+  std::sort( indices.begin(), indices.end(), [&](int i,int j){return angle[i]<angle[j];} );
+  // std::cout << std::endl;
+
+  // copy the points in the reorderedPoints array.
+  for (localIndex a=0; a < numPoints; a++)
+      {
+        // fill in with ordered
+        // std::cout << indices[a] << " - ";
+        orderedPoints[a] = points[indices[a]];
+      }
+  //std::cout << std::endl;
+
+  return orderedPoints;
+}
+
+
+/**
  * Calculates the centroid of a convex 3D polygon as well as the normal
  * @param[in] pointIndices list of index references for the points array in
  * order (CW or CCW) about the polygon loop
@@ -34,7 +172,7 @@ namespace computationalGeometry
  */
 real64 Centroid_3DPolygon( localIndex const * const pointsIndices,
                            localIndex const numPoints,
-                           arrayView1d<R1Tensor const> const & points,
+                           arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & points,
                            R1Tensor & center,
                            R1Tensor & normal,
                            real64 areaTolerance )
@@ -46,7 +184,7 @@ real64 Centroid_3DPolygon( localIndex const * const pointsIndices,
 
   if( numPoints > 2 )
   {
-    const R1Tensor& x0 = points[pointsIndices[0]];
+    R1Tensor const x0 = points[pointsIndices[0]];
     for( localIndex a=0 ; a<(numPoints-2) ; ++a )
     {
       v1  = points[pointsIndices[a+1]];
@@ -115,7 +253,7 @@ real64 Centroid_3DPolygon( localIndex const * const pointsIndices,
 }
 
 real64 Centroid_3DPolygon( arrayView1d<localIndex const> const & pointsIndices,
-                           arrayView1d<R1Tensor const> const & points,
+                           arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & points,
                            R1Tensor & center,
                            R1Tensor & normal,
                            real64 areaTolerance )
@@ -277,7 +415,7 @@ int sgn( T val )
   return (T(0) < val) - (val < T(0));
 }
 
-bool IsPointInsidePolyhedron( arrayView1d<R1Tensor const> const & nodeCoordinates,
+bool IsPointInsidePolyhedron( arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodeCoordinates,
                               array1d<array1d<localIndex>> const & faceNodeIndicies,
                               R1Tensor const & point,
                               real64 const areaTolerance )
@@ -310,39 +448,40 @@ real64 Centroid_3DPolygon( arrayView1d<localIndex const> const & pointsIndices,
                            R1Tensor & normal )
 { return Centroid_3DPolygon( pointsIndices.data(), pointsIndices.size(), pointReferences, pointDisplacements, center, normal ); }
 
-real64 HexVolume( R1Tensor const * const X )
-{
-  R1Tensor X7_X1( X[7] );
-  X7_X1 -= X[1];
-
-  R1Tensor X6_X0( X[6] );
-  X6_X0 -= X[0];
-
-  R1Tensor X7_X2( X[7] );
-  X7_X2 -= X[2];
-
-  R1Tensor X3_X0( X[3] );
-  X3_X0 -= X[0];
-
-  R1Tensor X5_X0( X[5] );
-  X5_X0 -= X[0];
-
-  R1Tensor X7_X4( X[7] );
-  X7_X4 -= X[4];
-
-  R1Tensor X7_X1plusX6_X0( X7_X1 );
-  X7_X1plusX6_X0 += X6_X0;
-
-  R1Tensor X7_X2plusX5_X0( X7_X2 );
-  X7_X2plusX5_X0 += X5_X0;
-
-  R1Tensor X7_X4plusX3_X0( X7_X4 );
-  X7_X4plusX3_X0 += X3_X0;
-
-  return 1.0/12.0 * ( Dot( X7_X1plusX6_X0, Cross( X7_X2, X3_X0 ) ) +
-                      Dot( X6_X0, Cross( X7_X2plusX5_X0, X7_X4 ) ) +
-                      Dot( X7_X1, Cross( X5_X0, X7_X4plusX3_X0 ) ) );
-}
+//GEOSX_HOST_DEVICE
+//real64 HexVolume( R1Tensor const * const X )
+//{
+//  R1Tensor X7_X1( X[7] );
+//  X7_X1 -= X[1];
+//
+//  R1Tensor X6_X0( X[6] );
+//  X6_X0 -= X[0];
+//
+//  R1Tensor X7_X2( X[7] );
+//  X7_X2 -= X[2];
+//
+//  R1Tensor X3_X0( X[3] );
+//  X3_X0 -= X[0];
+//
+//  R1Tensor X5_X0( X[5] );
+//  X5_X0 -= X[0];
+//
+//  R1Tensor X7_X4( X[7] );
+//  X7_X4 -= X[4];
+//
+//  R1Tensor X7_X1plusX6_X0( X7_X1 );
+//  X7_X1plusX6_X0 += X6_X0;
+//
+//  R1Tensor X7_X2plusX5_X0( X7_X2 );
+//  X7_X2plusX5_X0 += X5_X0;
+//
+//  R1Tensor X7_X4plusX3_X0( X7_X4 );
+//  X7_X4plusX3_X0 += X3_X0;
+//
+//  return 1.0/12.0 * ( Dot( X7_X1plusX6_X0, Cross( X7_X2, X3_X0 ) ) +
+//                      Dot( X6_X0, Cross( X7_X2plusX5_X0, X7_X4 ) ) +
+//                      Dot( X7_X1, Cross( X5_X0, X7_X4plusX3_X0 ) ) );
+//}
 
 real64 TetVolume( R1Tensor const * const X ) {
     R1Tensor X1_X0( X[1] );

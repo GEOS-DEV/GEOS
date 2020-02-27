@@ -114,7 +114,7 @@ void ProppantSlurryFluid::PostProcessInput()
 
 }
 
-  void ProppantSlurryFluid::BatchUpdate(arrayView1d<real64 const> const & GEOSX_UNUSED_ARG( pressure ), arrayView1d<real64 const> const & GEOSX_UNUSED_ARG( proppantConcentration ),  arrayView2d<real64 const> const & GEOSX_UNUSED_ARG( componentConcentration ), arrayView1d<real64 const> const & GEOSX_UNUSED_ARG( shearRate ))
+  void ProppantSlurryFluid::BatchUpdate(arrayView1d<real64 const> const & GEOSX_UNUSED_PARAM( pressure ), arrayView1d<real64 const> const & GEOSX_UNUSED_PARAM( proppantConcentration ),  arrayView2d<real64 const> const & GEOSX_UNUSED_PARAM( componentConcentration ), arrayView1d<real64 const> const & GEOSX_UNUSED_PARAM( shearRate ))
 {
 
 }
@@ -178,7 +178,7 @@ void ProppantSlurryFluid::ComputeFluidDensity( localIndex const NC,
 
 
 void ProppantSlurryFluid::Compute( localIndex const NC,
-                                   real64 const & GEOSX_UNUSED_ARG( pressure ),
+                                   real64 const & GEOSX_UNUSED_PARAM( pressure ),
                                    real64 const & proppantConcentration,
                                    arraySlice1d<real64 const> const & componentConcentration,
                                    real64 const & shearRate,

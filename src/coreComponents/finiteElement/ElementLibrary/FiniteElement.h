@@ -23,6 +23,7 @@
 #include "finiteElement/quadrature/QuadratureBase.hpp"
 #include "FiniteElementBase.h"
 #include "common/TimingMacros.hpp"
+#include "cxx-utilities/src/tensorOps.hpp"
 
 /**
  * Class representing a generic finite element.  Its constructor
@@ -57,20 +58,19 @@ public:
                  const int num_zero_energy_modes = 0 ) :
     FiniteElementBase( dim, quadrature.size(), basis.size(), num_zero_energy_modes)
   {
-    data.resize(n_q_points);
-    for(auto q=0 ; q<n_q_points ; ++q)
+    for(int q=0 ; q<n_q_points ; ++q)
     {
       data[q].parent_q_point = quadrature.integration_point(q);
       data[q].parent_q_weight = quadrature.integration_weight(q);
 
-      data[q].parent_values.resize(n_dofs);
-      data[q].parent_gradients.resize(n_dofs);
-      data[q].mapped_gradients.resize(n_dofs);
-
-      for(auto i=0 ; i<n_dofs ; ++i)
+      for(int i=0 ; i<n_dofs ; ++i)
       {
-        data[q].parent_values[i]    = basis.value(i,data[q].parent_q_point);
-        data[q].parent_gradients[i] = basis.gradient(i,data[q].parent_q_point);
+        data[q].parent_values[i] = basis.value(i,data[q].parent_q_point);
+        R1Tensor const gradient = basis.gradient(i,data[q].parent_q_point);
+        for ( int j = 0; j < 3; ++j )
+        {
+          data[q].parent_gradients[i][j] = gradient[j];
+        }
       }
     }
   }
@@ -80,10 +80,10 @@ public:
 
   static string CatalogName() { return "C3D8"; }
 
-  void reinit( arrayView1d< R1Tensor const > const & X, arraySlice1d< localIndex const, -1 > const & mapped_support_points ) override
+  void reinit( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X, arraySlice1d< localIndex const, -1 > const & mapped_support_points ) override
   { return reinitPrivate( X, mapped_support_points ); }
 
-  void reinit( arrayView1d< R1Tensor const > const & X, arraySlice1d< localIndex const, 0 > const & mapped_support_points ) override
+  void reinit( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X, arraySlice1d< localIndex const, 0 > const & mapped_support_points ) override
   { return reinitPrivate( X, mapped_support_points ); }
 
 private:
@@ -96,29 +96,32 @@ private:
    * the y, then z (depending on the desired spatial dimension of the
    * element).
    */
-  template< int UNIT_STRIDE_DIM >
-  void reinitPrivate( arrayView1d< R1Tensor const > const & X, arraySlice1d< localIndex const, UNIT_STRIDE_DIM > const & mapped_support_points )
+  template< int USD >
+  void reinitPrivate( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X, arraySlice1d< localIndex const, USD > const & mapped_support_points )
   {
+    StackArray< real64, 2, 9 > jacobian( 3, 3 );
+
     for(int q=0 ; q<n_q_points ; ++q)
     {
-      R2TensorT<3> jacobian;
-      jacobian.dyadic_ab( X[ mapped_support_points[0] ], data[q].parent_gradients[0] );
+      arrayView2d< real64 const > const & parentGradients = data[ q ].parent_gradients;
 
-      for(int a=1 ; a<n_dofs ; ++a)
+      LvArray::tensorOps::outerProduct( jacobian.toSlice(), X[ mapped_support_points[ 0 ] ], parentGradients[ 0 ] );
+
+      for(int i=1 ; i<n_dofs ; ++i)
       {
-        jacobian.plus_dyadic_ab( X[ mapped_support_points[a] ], data[q].parent_gradients[a] );
+        LvArray::tensorOps::outerProductPE( jacobian.toSlice(), X[ mapped_support_points[ i ] ], parentGradients[ i ] );
       }
 
-      if( dim==2 )
+      if( dim == 2 )
       {
-        jacobian(2,2) = 1;
+        jacobian( 2, 2 ) = 1;
       }
 
-      data[q].jacobian_determinant = jacobian.Inverse();
+      data[ q ].jacobian_determinant = LvArray::tensorOps::invert( jacobian.toSlice() );
 
       for(int i=0 ; i<n_dofs ; ++i)
       {
-        data[q].mapped_gradients[i].AijBi( jacobian, data[q].parent_gradients[i] );
+        LvArray::tensorOps::matTVec( data[ q ].mapped_gradients[ i ], jacobian.toSliceConst(), parentGradients[ i ] );
       }
     }
   }

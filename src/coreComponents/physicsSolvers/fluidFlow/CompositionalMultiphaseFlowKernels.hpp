@@ -67,14 +67,14 @@ struct ComponentFractionKernel
                       arrayView3d<real64> const & dCompFrac_dCompDens );
 
   template<localIndex NC>
-  static void Launch( set<localIndex> const & targetSet,
+  static void Launch( SortedArray<localIndex> const & targetSet,
                       arrayView2d<real64 const> const & compDens,
                       arrayView2d<real64 const> const & dCompDens,
                       arrayView2d<real64> const & compFrac,
                       arrayView3d<real64> const & dCompFrac_dCompDens );
 
   static void Launch( localIndex NC,
-                      set<localIndex> const & targetSet,
+                      SortedArray<localIndex> const & targetSet,
                       arrayView2d<real64 const> const & compDens,
                       arrayView2d<real64 const> const & dCompDens,
                       arrayView2d<real64> const & compFrac,
@@ -90,7 +90,7 @@ void ComponentFractionKernel::Launch<NC>( localIndex begin, localIndex end, \
                                           arrayView2d<real64> const & compFrac, \
                                           arrayView3d<real64> const & dCompFrac_dCompDens ); \
 extern template \
-void ComponentFractionKernel::Launch<NC>( set<localIndex> const & targetSet, \
+void ComponentFractionKernel::Launch<NC>( SortedArray<localIndex> const & targetSet, \
                                           arrayView2d<real64 const> const & compDens, \
                                           arrayView2d<real64 const> const & dCompDens, \
                                           arrayView2d<real64> const & compFrac, \
@@ -173,7 +173,7 @@ struct PhaseVolumeFractionKernel
                       arrayView3d<real64> const & dPhaseVolFrac_dComp );
 
   template<localIndex NC, localIndex NP>
-  static void Launch( set<localIndex> const & targetSet,
+  static void Launch( SortedArray<localIndex> const & targetSet,
                       arrayView2d<real64 const> const & compDens,
                       arrayView2d<real64 const> const & dCompDens,
                       arrayView3d<real64 const> const & dCompFrac_dCompDens,
@@ -188,7 +188,7 @@ struct PhaseVolumeFractionKernel
                       arrayView3d<real64> const & dPhaseVolFrac_dComp );
 
   static void Launch( localIndex NC, localIndex NP,
-                      set<localIndex> const & targetSet,
+                      SortedArray<localIndex> const & targetSet,
                       arrayView2d<real64 const> const & compDens,
                       arrayView2d<real64 const> const & dCompDens,
                       arrayView3d<real64 const> const & dCompFrac_dCompDens,
@@ -220,7 +220,7 @@ void PhaseVolumeFractionKernel::Launch<NC,NP>( localIndex begin, localIndex end,
                                                arrayView2d<real64> const & dPhaseVolFrac_dPres, \
                                                arrayView3d<real64> const & dPhaseVolFrac_dComp ); \
 extern template \
-void PhaseVolumeFractionKernel::Launch<NC,NP>( set<localIndex> const & targetSet, \
+void PhaseVolumeFractionKernel::Launch<NC,NP>( SortedArray<localIndex> const & targetSet, \
                                                arrayView2d<real64 const> const & compDens, \
                                                arrayView2d<real64 const> const & dCompDens, \
                                                arrayView3d<real64 const> const & dCompFrac_dCompDens, \
@@ -331,7 +331,7 @@ struct PhaseMobilityKernel
                       arrayView3d<real64> const & dPhaseMob_dComp );
 
   template<localIndex NC, localIndex NP>
-  static void Launch( set<localIndex> const & targetSet,
+  static void Launch( SortedArray<localIndex> const & targetSet,
                       arrayView3d<real64 const> const & dCompFrac_dCompDens,
                       arrayView3d<real64 const> const & phaseDens,
                       arrayView3d<real64 const> const & dPhaseDens_dPres,
@@ -348,7 +348,7 @@ struct PhaseMobilityKernel
                       arrayView3d<real64> const & dPhaseMob_dComp );
 
   static void Launch( localIndex NC, localIndex NP,
-                      set<localIndex> const & targetSet,
+                      SortedArray<localIndex> const & targetSet,
                       arrayView3d<real64 const> const & dCompFrac_dCompDens,
                       arrayView3d<real64 const> const & phaseDens,
                       arrayView3d<real64 const> const & dPhaseDens_dPres,
@@ -384,7 +384,7 @@ void PhaseMobilityKernel::Launch<NC,NP>( localIndex begin, localIndex end, \
                                          arrayView2d<real64> const & dPhaseMob_dPres, \
                                          arrayView3d<real64> const & dPhaseMob_dComp ); \
 extern template \
-void PhaseMobilityKernel::Launch<NC,NP>( set<localIndex> const & targetSet, \
+void PhaseMobilityKernel::Launch<NC,NP>( SortedArray<localIndex> const & targetSet, \
                                          arrayView3d<real64 const> const & dCompFrac_dCompDens, \
                                          arrayView3d<real64 const> const & phaseDens, \
                                          arrayView3d<real64 const> const & dPhaseDens_dPres, \
@@ -663,7 +663,7 @@ struct FluxKernel
            arraySlice1d<real64 const> const & stencilWeights,
            ElementView <arrayView1d<real64 const>> const & pres,
            ElementView <arrayView1d<real64 const>> const & dPres,
-           ElementView <arrayView1d<real64 const>> const & gravDepth,
+           ElementView <arrayView1d<real64 const>> const & gravCoef,
            ElementView <arrayView2d<real64 const>> const & phaseMob,
            ElementView <arrayView2d<real64 const>> const & dPhaseMob_dPres,
            ElementView <arrayView3d<real64 const>> const & dPhaseMob_dComp,
@@ -680,7 +680,6 @@ struct FluxKernel
            MaterialView<arrayView4d<real64 const>> const & dPhaseCapPressure_dPhaseVolFrac,
            localIndex const fluidIndex,
            localIndex const capPressureIndex,
-           integer const gravityFlag,
            integer const capPressureFlag,
            real64 const dt,
            arraySlice1d<real64> const & localFlux,
@@ -814,19 +813,16 @@ struct FluxKernel
           dPresGrad_dC[i][jc] += - weight * dCapPressure_dC[jc];
         }
 
-        if (gravityFlag)
-        {
-          real64 const gravD = weight * gravDepth[er][esr][ei];
-          gravHead += densMean * gravD;
+        real64 const gravD = weight * gravCoef[er][esr][ei];
+        gravHead += densMean * gravD;
 
-          // need to add contributions from both cells the mean density depends on
-          for (localIndex j = 0; j < numElems; ++j)
+        // need to add contributions from both cells the mean density depends on
+        for (localIndex j = 0; j < numElems; ++j)
+        {
+          dGravHead_dP[j] += dDensMean_dP[j] * gravD;
+          for (localIndex jc = 0; jc < NC; ++jc)
           {
-            dGravHead_dP[j] += dDensMean_dP[j] * gravD;
-            for (localIndex jc = 0; jc < NC; ++jc)
-            {
-              dGravHead_dC[j][jc] += dDensMean_dC[j][jc] * gravD;
-            }
+            dGravHead_dC[j][jc] += dDensMean_dC[j][jc] * gravD;
           }
         }
       }
@@ -837,7 +833,7 @@ struct FluxKernel
       // TODO isolate into a kernel?
 
       // compute phase potential gradient
-      real64 potGrad = presGrad + gravHead;
+      real64 potGrad = presGrad - gravHead;
 
       // choose upstream cell
       localIndex const k_up = (potGrad >= 0) ? 0 : 1;
@@ -868,10 +864,10 @@ struct FluxKernel
       // gravitational head depends only on the two cells connected (same as mean density)
       for (localIndex ke = 0; ke < numElems; ++ke)
       {
-        dPhaseFlux_dP[ke] += dGravHead_dP[ke];
+        dPhaseFlux_dP[ke] -= dGravHead_dP[ke];
         for (localIndex jc = 0; jc < NC; ++jc)
         {
-          dPhaseFlux_dC[ke][jc] += dGravHead_dC[ke][jc];
+          dPhaseFlux_dC[ke][jc] -= dGravHead_dC[ke][jc];
         }
       }
 

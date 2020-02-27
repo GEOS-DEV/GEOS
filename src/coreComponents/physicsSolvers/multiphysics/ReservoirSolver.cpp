@@ -72,6 +72,8 @@ real64 ReservoirSolver::SolverStep( real64 const & time_n,
 {
   real64 dt_return = dt;
 
+  SetupSystem( domain, m_dofManager, m_matrix, m_rhs, m_solution );
+
   // setup reservoir and well systems
   ImplicitStepSetup( time_n, dt, domain, m_dofManager, m_matrix, m_rhs, m_solution );
 
@@ -108,8 +110,6 @@ void ReservoirSolver::ImplicitStepSetup( real64 const & time_n,
                                    rhs,
                                    solution );
 
-  // setup the coupled linear system
-  SetupSystem( domain, dofManager, matrix, rhs, solution );
 }
 
 void ReservoirSolver::SetupDofs( DomainPartition const * const domain,
@@ -134,11 +134,15 @@ void ReservoirSolver::SetupSystem( DomainPartition * const domain,
 
   dofManager.setMesh( domain, 0, 0 );
   SetupDofs( domain, dofManager );
-  dofManager.close();
+  dofManager.reorderByRank();
 
-  dofManager.setSparsityPattern( matrix, "", "", false ); // don't close the matrix
-  dofManager.setVector( rhs );
-  dofManager.setVector( solution );
+  localIndex const numLocalDof = dofManager.numLocalDofs();
+
+  matrix.createWithLocalSize( numLocalDof, numLocalDof, 8, MPI_COMM_GEOSX );
+  rhs.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
+  solution.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
+
+  dofManager.setSparsityPattern( matrix, false ); // don't close the matrix
 
   // TODO: remove this and just call SolverBase::SetupSystem when DofManager can handle the coupling
 
@@ -154,15 +158,16 @@ void ReservoirSolver::SetupSystem( DomainPartition * const domain,
   localIndex constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
   localIndex constexpr maxNumDof  = maxNumComp + 1;
 
-  ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex>> const & resDofNumber =
-    elemManager->ConstructViewAccessor<array1d<globalIndex>, arrayView1d<globalIndex>>( resDofKey );
+  ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex const>> const &
+  resDofNumber = elemManager->ConstructViewAccessor<array1d<globalIndex>,
+                                                    arrayView1d<globalIndex const>>( resDofKey );
 
   elemManager->forElementSubRegions<WellElementSubRegion>( [&]( WellElementSubRegion const * const subRegion )
   {
     PerforationData const * const perforationData = subRegion->GetPerforationData();
 
     // get the well degrees of freedom and ghosting info
-    arrayView1d< globalIndex > const & wellElemDofNumber =
+    arrayView1d< globalIndex const > const & wellElemDofNumber =
       subRegion->getReference< array1d<globalIndex> >( wellDofKey );
 
     // get the well element indices corresponding to each perforation
@@ -222,6 +227,7 @@ void ReservoirSolver::SetupSystem( DomainPartition * const domain,
    } );
 
   matrix.close();
+
 }
 
 void ReservoirSolver::AssembleSystem( real64 const time_n,
@@ -243,6 +249,7 @@ void ReservoirSolver::AssembleSystem( real64 const time_n,
                                 dofManager,
                                 matrix,
                                 rhs );
+
 
   matrix.close();
   rhs.close();
@@ -266,6 +273,7 @@ void ReservoirSolver::AssembleSystem( real64 const time_n,
     GEOSX_LOG_RANK_0( "Jacobian: written to " << filename_mat );
     GEOSX_LOG_RANK_0( "Residual: written to " << filename_rhs );
   }
+
 }
 
 void ReservoirSolver::ApplyBoundaryConditions( real64 const time_n,

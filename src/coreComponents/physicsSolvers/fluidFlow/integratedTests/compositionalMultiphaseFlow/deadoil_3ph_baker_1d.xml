@@ -1,12 +1,10 @@
 
 <Problem>
 
-  <Solvers
-    gravityVector="0.0, 0.0, -9.81">
+  <Solvers>
   
     <CompositionalMultiphaseFlow name="compflow"
                                  logLevel="1"
-                                 gravityFlag="1"
                                  discretization="fluidTPFA"
                                  targetRegions="{Region1}"
                                  fluidName="fluid1"
@@ -14,13 +12,11 @@
                                  relPermName="relperm"
                                  temperature="300"
                                  useMass="0">
-      <NonlinearSolverParameters name="nlsp"
-                                 newtonTol="1.0e-10"
+      <NonlinearSolverParameters newtonTol="1.0e-10"
                                  newtonMaxIter="15"
                                  maxTimeStepCuts="2"
                                  lineSearchMaxCuts="2"/>
-      <SystemSolverParameters name="ssp"
-                              useDirectSolver="1"/>
+      <SystemSolverParameters useDirectSolver="1"/>
     </CompositionalMultiphaseFlow>
   </Solvers>
   

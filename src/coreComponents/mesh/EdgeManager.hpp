@@ -48,9 +48,10 @@ public:
    virtual const string getCatalogName() const override final
    { return EdgeManager::CatalogName(); }
 
-
    ///@}
 
+   static inline localIndex GetFaceMapOverallocation()
+   { return 4; }
 
   EdgeManager( std::string const & name,
                Group * const parent );
@@ -81,16 +82,18 @@ public:
 
   void FixUpDownMaps( bool const clearIfUnmapped );
 
+  void CompressRelationMaps( );
+
   void depopulateUpMaps( std::set<localIndex> const & receivedEdges,
                          ArrayOfArraysView< localIndex const > const & facesToEdges );
 
-  void ConnectivityFromGlobalToLocal( const set<localIndex>& indices,
+  void ConnectivityFromGlobalToLocal( const SortedArray<localIndex>& indices,
                                       const map<globalIndex,localIndex>& nodeGlobalToLocal,
                                       const map<globalIndex,localIndex>& faceGlobalToLocal );
 
 //  void UpdateEdgeExternalityFromSplit( const FaceManager& faceManager,
-//                                     const set<localIndex>& newEdgeIndices,
-//                                     const set<localIndex>& modifiedEdgeIndices );
+//                                     const SortedArray<localIndex>& newEdgeIndices,
+//                                     const SortedArray<localIndex>& modifiedEdgeIndices );
 
   void AddToEdgeToFaceMap( FaceManager const * const faceManager,
                            arrayView1d< localIndex const > const & newFaceIndices );
@@ -98,17 +101,15 @@ public:
   void SplitEdge( const localIndex indexToSplit,
                   const localIndex parentNodeIndex,
                   const localIndex childNodeIndex[2],
-                  array1d<set<localIndex>>& nodesToEdges );
+                  array1d<SortedArray<localIndex>>& nodesToEdges );
 
   bool hasNode( const localIndex edgeID, const localIndex nodeID ) const;
 
-  void calculateCenter( localIndex const edgeIndex,
-                        arraySlice1d<R1Tensor const> const & X,
-                        R1Tensor & center ) const;
+  R1Tensor calculateCenter( localIndex const edgeIndex,
+                            arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & X ) const;
 
-  void calculateLength( localIndex const edgeIndex,
-                        arraySlice1d<R1Tensor const> const & X,
-                        R1Tensor & center ) const;
+  R1Tensor calculateLength( localIndex const edgeIndex,
+                            arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & X ) const;
 
 
 
@@ -168,7 +169,7 @@ public:
 
   // TODO These should be in their own subset of edges when we add that capability.
   /// maps from the edges to the fracture connectors index (edges that are fracture connectors)
-  set< localIndex > m_recalculateFractureConnectorEdges;
+  SortedArray< localIndex > m_recalculateFractureConnectorEdges;
   map< localIndex, localIndex > m_edgesToFractureConnectorsEdges;
   array1d<localIndex> m_fractureConnectorsEdgesToEdges;
   ArrayOfArrays<localIndex> m_fractureConnectorEdgesToFaceElements;
@@ -188,21 +189,21 @@ private:
 
 };
 
-inline void EdgeManager::calculateCenter( localIndex const edgeIndex,
-                                          arraySlice1d<R1Tensor const> const & X,
-                                          R1Tensor & center ) const
+inline R1Tensor EdgeManager::calculateCenter( localIndex const edgeIndex,
+                                              arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & X ) const
 {
-  center = X[m_toNodesRelation[edgeIndex][0]];
+  R1Tensor center = X[m_toNodesRelation[edgeIndex][0]];
   center += X[m_toNodesRelation[edgeIndex][1]];
   center *= 0.5;
+  return center;
 }
 
-inline void EdgeManager::calculateLength( localIndex const edgeIndex,
-                                          arraySlice1d<R1Tensor const> const & X,
-                                          R1Tensor & center ) const
+inline R1Tensor EdgeManager::calculateLength( localIndex const edgeIndex,
+                                              arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & X ) const
 {
-  center = X[m_toNodesRelation[edgeIndex][1]];
-  center -= X[m_toNodesRelation[edgeIndex][0]];
+  R1Tensor length = X[m_toNodesRelation[edgeIndex][1]];
+  length -= X[m_toNodesRelation[edgeIndex][0]];
+  return length;
 }
 
 }

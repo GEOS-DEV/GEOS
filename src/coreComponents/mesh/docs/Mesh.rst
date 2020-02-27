@@ -4,14 +4,14 @@
 Meshes
 ============
 
-This section describes how meshes are handled.
-We first briefly describe how meshes are stored within GEOSX,
-in order to clarify how the user can interact with mesh data.
+The purpose of this document is to explain how users and developers interact with mesh data.
+This section describes how meshes are handled and stored in GEOSX.
 
-There are then two options for generating a mesh.  GEOSX can internally
-generate simple (Cartesian) meshes.  For more complex geometries, we support
-a number of mesh import file formats.  This latter options allows one to work
-with unstructured mesh data and a variety of element types.
+There are two possible methods for generating a mesh:
+either by using GEOSX's internal mesh generator (for Cartesian meshes only),
+or by importing meshes from various common mesh file formats.
+This latter options allows one to work with more complex geometries,
+such as unstructured meshes comprised of a variety of element types (polyhedral elements).
 
 ************************
 Internal Mesh Generation
@@ -42,6 +42,16 @@ The following is an example XML ``<mesh>`` block, which will generate a vertical
                   cellBlockNames="cb1 cb2"/>
   </Mesh>
 
+- ``name`` the name of the mesh body
+- ``elementTypes`` the type of the elements that will be generated.
+- ``xCoord`` List of ``x`` coordinates of the boundaries of the ``CellBlocks``
+- ``yCoord`` List of ``y`` coordinates of the boundaries of the ``CellBlocks``
+- ``zCoord`` List of ``z`` coordinates of the boundaries of the ``CellBlocks``
+- ``nx`` List containing the number of cells in ``x`` direction within the ``CellBlocks``
+- ``ny`` List containing the number of cells in ``y`` direction within the ``CellBlocks``
+- ``nz`` List containing the number of cells in ``z`` direction within the ``CellBlocks``
+- ``cellBlockNames`` List containing the names of the ``CellBlocks``
+
 .. image:: ../../../coreComponents/mesh/docs/beam.png
 
 
@@ -60,12 +70,12 @@ For a given element block, the average element size will be
 the element on the left-most side of the block will have size
 
 .. math::
-   dx_{left}[i] = (1 + xBias[i]) \dot dx_{average}[i],
+   dx_{left}[i] = (1 + xBias[i]) \cdot dx_{average}[i],
 
 and the element on the right-most side will have size
 
 .. math::
-   dx_{right}[i] = (1 - xBias[i]) \dot dx_{average}[i].
+   dx_{right}[i] = (1 - xBias[i]) \cdot dx_{average}[i].
 
 
 The following are the two most common scenarios that occur while designing a mesh with bias:
@@ -73,12 +83,12 @@ The following are the two most common scenarios that occur while designing a mes
 1. The size of the block and the element size on an adjacent region are known.  Assuming that we are to the left of the target block, the appropriate bias would be:
 
 .. math::
-   xBias[i] = 1 - \frac{nx[i] \dot dx_{left}[i+1]}{xCoords[i+1]-xCoords[i]}
+   xBias[i] = 1 - \frac{nx[i] \cdot dx_{left}[i+1]}{xCoords[i+1]-xCoords[i]}
 
 2. The bias of the block and the element size on an adjacent region are known.  Again, assuming that we are to the left of the target block, the appropriate size for the block would be:
 
 .. math::
-   xCoords[i+1]-xCoords[i] = \frac{nx[i] \dot dx_{left}[i+1]}{1 - xBias[i]}
+   xCoords[i+1]-xCoords[i] = \frac{nx[i] \cdot dx_{left}[i+1]}{1 - xBias[i]}
 
 
 The following is an example of a mesh block along each dimension, and an image showing the corresponding mesh.  Note that there is a core region of elements with zero bias, and that the transitions between element blocks are smooth.
@@ -144,21 +154,21 @@ The supported mesh format are:
 - The MEDIT_ file format (.mesh)
 - The ECLIPSE file formats (.egrid, .grdecl)
 
-The supported mesh elements are, for volume elements:
+The supported mesh elements for volume elements consist of the following:
 
-- 4 nodes tetrahedra
-- 5 nodes pyramids
-- 6 nodes wedges
-- 8 nodes hexahedra
+- 4 nodes tetrahedra,
+- 5 nodes pyramids,
+- 6 nodes wedges,
+- 8 nodes hexahedra,
 
 The mesh can be divided in several regions.
-These regions are intended
-to support different physics or to define different constitutive properties.
+These regions are intended to support different physics
+or to define different constitutive properties.
 
 - For the GMSH file format, the regions are defined using the `elementary geometrical tags`_
-  provided by GMSH
-- For the MEDIT file format, the regions are defined using the tag of the element
-- For the ECLIPSE file formats, the regions have to be first defined using the ECLIPSE software
+  provided by GMSH.
+- For the MEDIT file format, the regions are defined using the tag of the element.
+- For the ECLIPSE file formats, the regions have to be first defined using the ECLIPSE software.
 
 .. _ImportingExternalMesh:
 
@@ -168,7 +178,7 @@ Importing the Mesh
 Several blocks are involved to import an external mesh into GEOSX, defined in the XML input file.
 These are the ``<Mesh>`` block and the ``<ElementRegions>`` block.
 
-The mesh block has the following syntax.
+The mesh block has the following syntax:
 
 .. code-block:: xml
 
@@ -177,9 +187,10 @@ The mesh block has the following syntax.
                          file="/path/to/the/mesh/file.msh"/>
   </Mesh>
 
-The path mentionned has to be either relative to the XML file, or absolute.
+We advise users to use absolute path to the mesh file.
 
-GEOSX uses ``ElementRegions`` to support different physics, or to define different constitutive properties.
+GEOSX uses ``ElementRegions`` to support different physics
+or to define different constitutive properties.
 An ``ElementRegion`` is defined as a set of ``CellBlocks``.
 A ``CellBlock`` is an ensemble of elements with the same element geometry.
 
