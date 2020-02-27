@@ -43,12 +43,9 @@
 // preconditioner.
 template<typename MATRIX>
 void computeIdentity( MPI_Comm comm,
-                      geosx::globalIndex n,
+                      geosx::globalIndex N,
                       MATRIX & I )
 {
-  // total dofs = n^2
-  geosx::globalIndex N = n * n;
-
   // Create a matrix of size N with 1 non-zero per row
   I.createWithGlobalSize( N, 1, comm );
 
@@ -62,6 +59,16 @@ void computeIdentity( MPI_Comm comm,
   }
 
   // Close the matrix (make data contiguous in memory)
+  I.close();
+}
+
+template<typename MATRIX>
+void computeZero( MPI_Comm comm,
+                  geosx::globalIndex N,
+                  MATRIX & I )
+{
+  I.createWithGlobalSize( N, 0, comm );
+  I.open();
   I.close();
 }
 

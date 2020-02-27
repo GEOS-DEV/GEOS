@@ -19,7 +19,7 @@
 #ifndef GEOSX_LINEARALGEBRA_UTILITIES_BLOCKVECTORVIEW_HPP_
 #define GEOSX_LINEARALGEBRA_UTILITIES_BLOCKVECTORVIEW_HPP_
 
-#include "common/DataTypes.hpp"
+#include "linearAlgebra/common.hpp"
 
 namespace geosx
 {
@@ -36,22 +36,34 @@ public:
   using Vector = VECTOR;
 
   /**
+   * @brief Deleted copy assignment
+   */
+  BlockVectorView & operator=( BlockVectorView const & x ) = delete;
+
+  /**
+   * @brief Deleted move assignment
+   */
+  BlockVectorView & operator=( BlockVectorView && x ) noexcept = delete;
+
+  /**
    * @brief Destructor.
    */
   virtual ~BlockVectorView() = default;
 
   ///@}
-  //! @name Setters
+
+  /// @name Setters
   ///@{
 
   /**
    * @brief Update vector <tt>y</tt> as <tt>y</tt> = <tt>x</tt>.
    * @param src Vector to copy
    */
-  void copy( BlockVectorView< VECTOR > const & src );
+  void copy( BlockVectorView const & src );
 
   ///@}
-  //! @name Linear Algebra Operations
+
+  /// @name Linear Algebra Operations
   ///@{
 
   /**
@@ -77,7 +89,7 @@ public:
    * @param result Result of the dot product.
    *
    */
-  real64 dot( BlockVectorView<VECTOR> const &x ) const;
+  real64 dot( BlockVectorView const & x ) const;
 
   /**
    * @brief 2-norm of the block vector.
@@ -99,7 +111,7 @@ public:
    * @param x Vector to add.
    */
   void axpy( real64 const alpha,
-             BlockVectorView<VECTOR> const &x );
+             BlockVectorView const & x );
 
   /**
    * @brief Update vector <tt>y</tt> as <tt>y = alpha*x + beta*y</tt>.
@@ -111,11 +123,12 @@ public:
    * @param beta Scaling factor for self vector.
    */
   void axpby( real64 const alpha,
-              BlockVectorView<VECTOR> const &x,
+              BlockVectorView const & x,
               real64 const beta );
 
   ///@}
-  //! @name Accessors
+
+  /// @name Accessors
   ///@{
 
   /**
@@ -135,15 +148,16 @@ public:
   void print( std::ostream & os = std::cout ) const;
 
   /**
-   * @brief Get a reference to the vector corresponding to block <tt>blockRowIndex</tt>.
-   *
-   * This enables convenient calls to individual block operations, e.g.
-   * <tt>block_vector.block(1).norm2()</tt>
-   *
+   * @brief Get a reference to the vector corresponding to block @p blockRowIndex.
    * @param blockIndex Index of the block to return.
-   *
    */
-  VECTOR & block( localIndex const blockIndex ) const;
+  VECTOR const & block( localIndex const blockIndex ) const;
+
+  /**
+   * @copydoc block(localIndex const) const
+   */
+  VECTOR & block( localIndex const blockIndex );
+
   ///@}
 
 protected:
@@ -165,22 +179,12 @@ protected:
   /**
    * @brief Copy constructor
    */
-  BlockVectorView( BlockVectorView< VECTOR > const & x );
+  BlockVectorView( BlockVectorView const & x ) = default;
 
   /**
    * @brief Move constructor
    */
-  BlockVectorView( BlockVectorView< VECTOR > && x );
-
-  /**
-   * @brief Copy assignment
-   */
-  BlockVectorView<VECTOR> & operator=( BlockVectorView< VECTOR > const & x );
-
-  /**
-   * @brief Move assignment
-   */
-  BlockVectorView<VECTOR> & operator=( BlockVectorView< VECTOR > && x );
+  BlockVectorView( BlockVectorView && x ) noexcept = default;
 
   ///@}
 
@@ -188,14 +192,157 @@ protected:
   array1d< VECTOR * > m_vectors;
 };
 
+template< typename VECTOR >
+BlockVectorView< VECTOR >::BlockVectorView( localIndex const nBlocks )
+  : m_vectors( nBlocks )
+{ }
+
+template< typename VECTOR >
+void BlockVectorView< VECTOR >::copy( BlockVectorView const & src )
+{
+  GEOSX_LAI_ASSERT_EQ( blockSize(), src.blockSize() );
+  for( localIndex i = 0; i < m_vectors.size(); i++ )
+  {
+    block( i ).copy( src.block( i ) );
+  }
+}
+
+template< typename VECTOR >
+void BlockVectorView< VECTOR >::scale( real64 const factor )
+{
+  for( localIndex i = 0; i < m_vectors.size(); i++ )
+  {
+    block( i ).scale( factor );
+  }
+}
+
+template< typename VECTOR >
+void BlockVectorView< VECTOR >::zero()
+{
+  for( localIndex i = 0; i < m_vectors.size(); i++ )
+  {
+    block( i ).zero();
+  }
+}
+
+template< typename VECTOR >
+void BlockVectorView< VECTOR >::rand( unsigned const seed )
+{
+  for( localIndex i = 0; i < m_vectors.size(); i++ )
+  {
+    block( i ).rand( seed );
+  }
+}
+
+template< typename VECTOR >
+real64 BlockVectorView< VECTOR >::dot( BlockVectorView const & src ) const
+{
+  GEOSX_LAI_ASSERT_EQ( blockSize(), src.blockSize() );
+  real64 accum = 0;
+  for( localIndex i = 0; i < m_vectors.size(); i++ )
+  {
+    accum += block( i ).dot( src.block( i ) );
+  }
+  return accum;
+}
+
+template< typename VECTOR >
+real64 BlockVectorView< VECTOR >::norm2() const
+{
+  real64 accum = 0;
+  for( localIndex i = 0; i < m_vectors.size(); i++ )
+  {
+    real64 const temp = block( i ).norm2();
+    accum = accum + temp * temp;
+  }
+  return std::sqrt( accum );
+}
+
+template< typename VECTOR >
+real64 BlockVectorView< VECTOR >::normInf() const
+{
+  real64 result = 0.0;
+  for( localIndex i = 0; i < m_vectors.size(); i++ )
+  {
+    result = std::fmax( result, block( i ).normInf() );
+  }
+  return result;
+}
+
+template< typename VECTOR >
+void BlockVectorView< VECTOR >::axpy( real64 const alpha,
+                                      BlockVectorView const & x )
+{
+  GEOSX_LAI_ASSERT_EQ( blockSize(), x.blockSize() );
+  for( localIndex i = 0; i < m_vectors.size(); i++ )
+  {
+    block( i ).axpy( alpha, x.block( i ) );
+  }
+}
+
+template< typename VECTOR >
+void BlockVectorView< VECTOR >::axpby( real64 const alpha,
+                                       BlockVectorView const & x,
+                                       real64 const beta )
+{
+  GEOSX_LAI_ASSERT_EQ( blockSize(), x.blockSize() );
+  for( localIndex i = 0; i < m_vectors.size(); i++ )
+  {
+    block( i ).axpby( alpha, x.block( i ), beta );
+  }
+}
+
+template< typename VECTOR >
+localIndex BlockVectorView< VECTOR >::blockSize() const
+{
+  return m_vectors.size();
+}
+
+template< typename VECTOR >
+globalIndex BlockVectorView< VECTOR >::globalSize() const
+{
+  globalIndex size = 0;
+  for( localIndex i = 0; i < m_vectors.size(); i++ )
+  {
+    size += block( i ).globalSize();
+  }
+  return size;
+}
+
+template< typename VECTOR >
+VECTOR const & BlockVectorView< VECTOR >::block( localIndex blockIndex ) const
+{
+  GEOSX_LAI_ASSERT( m_vectors[blockIndex] != nullptr );
+  return *m_vectors[blockIndex];
+}
+
+template< typename VECTOR >
+VECTOR & BlockVectorView< VECTOR >::block( localIndex blockIndex )
+{
+  GEOSX_LAI_ASSERT( m_vectors[blockIndex] != nullptr );
+  return *m_vectors[blockIndex];
+}
+
+template< typename VECTOR >
+void BlockVectorView< VECTOR >::print( std::ostream & os ) const
+{
+  for( localIndex i = 0; i < m_vectors.size(); i++ )
+  {
+    os << "Block " << i << " of " << blockSize() << ":" << std::endl;
+    os << "=============" << std::endl;
+    block( i ).print( os );
+  }
+}
+
 /**
  * @brief Stream insertion operator
  * @param os the output stream
  * @param vec the vector to be printed
  * @return reference to the output stream
  */
-template<typename VECTOR>
-std::ostream & operator<<( std::ostream & os, BlockVectorView<VECTOR> const & vec )
+template< typename VECTOR >
+std::ostream & operator<<( std::ostream & os,
+                           BlockVectorView< VECTOR > const & vec )
 {
   vec.print( os );
   return os;

@@ -20,6 +20,7 @@
 #define GEOSX_LINEARALGEBRA_UTILITIES_BLOCKVECTORWRAPPER_HPP_
 
 #include "linearAlgebra/utilities/BlockVectorView.hpp"
+#include "linearAlgebra/common.hpp"
 
 namespace geosx
 {
@@ -37,51 +38,38 @@ public:
    * @brief Create a vector wrapper of @p nBlocks blocks.
    * @param nBlocks number of blocks
    */
-  explicit BlockVectorWrapper( localIndex const nBlocks );
+  explicit BlockVectorWrapper( localIndex const nBlocks )
+  : BlockVectorView<VECTOR>( nBlocks )
+  {}
 
   /**
    * @brief Deleted copy constructor
    * @param rhs the block vector to copy
    */
-  BlockVectorWrapper( BlockVectorWrapper< VECTOR > const & rhs ) = delete;
+  BlockVectorWrapper( BlockVectorWrapper< VECTOR > const & rhs ) = default;
 
   /**
    * @brief Deleted move constructor
    * @param rhs the block vector to move from
    */
-  BlockVectorWrapper( BlockVectorWrapper< VECTOR > && rhs ) = delete;
-
-  /**
-   * @brief Copy assignment
-   * @param rhs the block vector to copy
-   * @return reference to current object
-   */
-  BlockVectorWrapper< VECTOR > & operator=( BlockVectorWrapper< VECTOR > const & rhs ) = delete;
-
-  /**
-   * @brief Move assignment
-   * @param rhs the block vector to move from
-   * @return reference to current object
-   */
-  BlockVectorWrapper< VECTOR > & operator=( BlockVectorWrapper< VECTOR > && rhs ) = delete;
+  BlockVectorWrapper( BlockVectorWrapper< VECTOR > && rhs ) noexcept = default;
 
   /**
    * @brief Destructor
    */
-  virtual ~BlockVectorWrapper() override;
-
-  /**
-   * @brief Create a shallow copy by copying pointers.
-   * @param x Vector to copy.
-   */
-  void shallowCopy( BlockVectorView<VECTOR> const & x );
+  virtual ~BlockVectorWrapper() override = default;
 
   /**
    * @brief Set block <tt>blockIndex</tt> using <tt>vector</tt>.
    * @param blockIndex Index of the block to return.
    * @param vector Input vector to put in the block <tt>blockIndex</tt>.
    */
-  void set( localIndex const blockIndex, VECTOR & x );
+  void set( localIndex const blockIndex, VECTOR & vec )
+  {
+    GEOSX_LAI_ASSERT_GE( blockIndex, 0 );
+    GEOSX_LAI_ASSERT_GT( this->blockSize(), blockIndex );
+    m_vectors[blockIndex] = &vec;
+  }
 
 private:
 

@@ -4,7 +4,7 @@ message( "Entering /src/coreComponents/linearAlgebra/CMakeLists.txt")
 # Specify all headers
 #
 set( linearAlgebra_headers
-     interfaces/common.hpp
+     common.hpp
      interfaces/BlasLapackFunctions.h
      interfaces/BlasLapackLA.hpp
      interfaces/InterfaceTypes.hpp
@@ -20,6 +20,8 @@ set( linearAlgebra_headers
      utilities/BlockVectorWrapper.hpp
      utilities/BlockVector.hpp
      utilities/BlockOperatorView.hpp
+     utilities/BlockOperatorWrapper.hpp
+     utilities/BlockOperator.hpp
      utilities/LinearSolverParameters.hpp
      utilities/LAIHelperFunctions.hpp
      DofManager.hpp
@@ -33,10 +35,6 @@ set( linearAlgebra_sources
      solvers/KrylovSolver.cpp
      solvers/CGsolver.cpp
      solvers/BiCGSTABsolver.cpp
-     utilities/BlockVectorView.cpp
-     utilities/BlockVectorWrapper.cpp
-     utilities/BlockVector.cpp
-     utilities/BlockOperatorView.cpp
      utilities/LAIHelperFunctions.cpp
      DofManager.cpp )
 

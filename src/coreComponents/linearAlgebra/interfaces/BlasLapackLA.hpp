@@ -20,7 +20,7 @@
 
 #include "common/DataTypes.hpp"
 #include "common/Logger.hpp"
-#include "linearAlgebra/interfaces/common.hpp"
+#include "linearAlgebra/common.hpp"
 
 namespace geosx
 {

@@ -29,13 +29,11 @@ class BlockVector : public BlockVectorView< VECTOR >
 {
 public:
 
+  using Base = BlockVectorView< VECTOR >;
+
   /**
-   * @brief Vector of <tt>nBlocks</tt> blocks.
-   *
-   * Create a block vector of size <tt>nBlocks</tt>.
-   *
+   * @brief Create a vector of @p nBlocks blocks.
    * @param nBlocks Number of blocks.
-   *
    */
   explicit BlockVector( localIndex const nBlocks );
 
@@ -43,50 +41,80 @@ public:
    * @brief Copy constructor that performs a deep copy of each sub-vector
    * @param rhs the block vector to copy
    */
-  BlockVector( BlockVector< VECTOR > const & rhs );
+  BlockVector( BlockVector const & rhs );
 
   /**
    * @brief Move constructor
    * @param rhs the block vector to move from
    */
-  BlockVector( BlockVector< VECTOR > && rhs ) noexcept;
+  BlockVector( BlockVector && rhs ) noexcept;
 
   /**
-   * @brief Conversion from a compatible view with a deep copy of each sub-vector
+   * @brief Conversion constructor from a compatible view with a deep copy of each sub-vector
    * @param rhs the block vector view to copy from
-   *
    * @note declared explicit to avoid unintended deep copying
    */
   explicit BlockVector( BlockVectorView< VECTOR > const & rhs );
 
   /**
-   * @brief Copy assignment
-   * @param rhs the block vector to copy
-   * @return reference to current object
+   * @brief Destructor.
    */
-  BlockVector< VECTOR > & operator=( BlockVector< VECTOR > const & rhs );
-
-  /**
-   * @brief Move assignment
-   * @param rhs the block vector to move from
-   * @return reference to current object
-   */
-  BlockVector< VECTOR > & operator=( BlockVector< VECTOR > && rhs ) noexcept;
-
-  /**
-   * @brief Desctructor.
-   */
-  virtual ~BlockVector() override;
+  virtual ~BlockVector() override = default;
 
 private:
 
-  using BlockVectorView< VECTOR >::m_vectors;
-
   void setPointers();
 
-  array1d< VECTOR > m_vectorStorage;
+  using BlockVectorView< VECTOR >::m_vectors;
 
+  /// storage for actual vectors
+  array1d <VECTOR> m_vectorStorage;
 };
+
+template< typename VECTOR >
+BlockVector< VECTOR >::BlockVector( localIndex const nBlocks )
+  : Base( nBlocks ),
+    m_vectorStorage( nBlocks )
+{
+  setPointers();
+}
+
+template< typename VECTOR >
+BlockVector< VECTOR >::BlockVector( BlockVector< VECTOR > const & rhs )
+  : Base( rhs ),
+    m_vectorStorage( rhs.m_vectorStorage )
+{
+  setPointers();
+}
+
+template< typename VECTOR >
+BlockVector< VECTOR >::BlockVector( BlockVector && rhs ) noexcept
+  : Base( std::move( rhs ) ),
+    m_vectorStorage( std::move( rhs.m_vectorStorage ) )
+{
+  setPointers();
+}
+
+template< typename VECTOR >
+BlockVector< VECTOR >::BlockVector( BlockVectorView <VECTOR> const & rhs )
+  : Base( rhs.blockSize() )
+{
+  for( localIndex i = 0; i < rhs.blockSize(); ++i )
+  {
+    m_vectorStorage.push_back( rhs.block( i ) );
+  }
+  setPointers();
+}
+
+template< typename VECTOR >
+void BlockVector< VECTOR >::setPointers()
+{
+  GEOSX_LAI_ASSERT_EQ( m_vectors.size(), m_vectorStorage.size() );
+  for( localIndex i = 0; i < m_vectorStorage.size(); ++i )
+  {
+    m_vectors[i] = &m_vectorStorage[i];
+  }
+}
 
 } //namespace geosx
 

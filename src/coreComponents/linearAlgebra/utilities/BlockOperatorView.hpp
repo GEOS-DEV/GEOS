@@ -13,7 +13,7 @@
  */
 
 /**
- * @file BlockMatrixView.hpp
+ * @file BlockOperatorView.hpp
  */
 
 #ifndef GEOSX_LINEARALGEBRA_UTILITIES_BLOCKOPERATORVIEW_HPP_
@@ -33,36 +33,30 @@ namespace geosx
 template< typename VECTOR, typename OPERATOR = LinearOperator<VECTOR> >
 class BlockOperatorView : public LinearOperator< BlockVectorView<VECTOR> >
 {
-  using Vector = typename LinearOperator< BlockVectorView<VECTOR> >::Vector;
-  using Operator = OPERATOR;
 
 public:
 
-  //! @name Constructor/Destructor Methods
-  //@{
-  /**
-   * @brief Empty matrix constructor.
-   *
-   * Create an empty block matrix.
-   */
-  BlockOperatorView();
+  /// the type of vector this linear operator operates on
+  using Vector   = BlockVectorView<VECTOR>;
 
-  /**
-   * @brief Matrix of (<tt>nRows</tt>,<tt>nCols</tt>) blocks.
-   *
-   * Create a block matrix of size (<tt>nRows</tt>,<tt>nCols</tt>).
-   */
-  BlockOperatorView( localIndex const nRows,
-                     localIndex const nCols );
+  /// the underlying operator type for each block
+  using Operator = OPERATOR;
 
   /**
    * @brief Destructor.
    */
   virtual ~BlockOperatorView() override = default;
-  //@}
 
-  //! @name Linear Algebra Methods
-  //@{
+  /**
+   * @brief Deleted copy assignment
+   */
+  BlockOperatorView & operator=( BlockOperatorView const & rhs ) = delete;
+
+  /**
+   * @brief Deleted move assignment
+   */
+  BlockOperatorView & operator=( BlockOperatorView && rhs ) = delete;
+  
   /**
    * @brief Apply the block matrix to a block vector.
    *
@@ -75,30 +69,82 @@ public:
   virtual void multiply( BlockVectorView<VECTOR> const & x,
                          BlockVectorView<VECTOR> & b ) const override;
 
-  //@}
-  //! @name Accessors/Setters
-  //@{
+  /**
+   * @brief
+   * @return number of block rows
+   */
+  localIndex numBlockRows() const
+  {
+    return m_operators.size(0);
+  }
 
   /**
-   * @brief Get the matrix corresponding to block (<tt>blockRowIndex</tt>,<tt>blockColIndex</tt>).
+   * @brief
+   * @return number of block columns
    */
-  OPERATOR & block( localIndex const blockRowIndex,
-                    localIndex const blockColIndex ) const;
+  localIndex numBlockCols() const
+  {
+    return m_operators.size(1);
+  }
 
   /**
-   * @brief Set block (<tt>i</tt>,<tt>j</tt>) using <tt>matrix</tt>.
+   * @brief Get the matrix corresponding to block (@p blockRowIndex, @p blockColIndex).
    */
-  void set( localIndex const blockRowIndex,
-            localIndex const blockColIndex,
-            OPERATOR & matrix );
+   Operator const & block( localIndex const blockRowIndex, localIndex const blockColIndex ) const
+  {
+    return *m_operators( blockRowIndex, blockColIndex );
+  }
 
-  //@}
+  /**
+   * @copydoc block( localIndex const, localIndex const )
+   */
+  Operator & block( localIndex const blockRowIndex, localIndex const blockColIndex )
+  {
+    return *m_operators( blockRowIndex, blockColIndex );
+  }
 
-private:
+protected:
 
-  array2d< OPERATOR * > m_matrices;
+  /**
+   * @brief Create a matrix of (@P nRows, @p nCols) blocks.
+   */
+  BlockOperatorView( localIndex const nRows, localIndex const nCols )
+    : m_operators( nRows, nCols )
+  {}
+
+  /**
+   * @brief Copy constructor
+   */
+  BlockOperatorView( BlockOperatorView< VECTOR, OPERATOR > const & x ) = default;
+
+  /**
+   * @brief Move constructor
+   */
+  BlockOperatorView( BlockOperatorView< VECTOR, OPERATOR > && x ) noexcept = default;
+
+  /// Array of pointers to blocks
+  array2d< Operator * > m_operators;
 
 };
+
+template< typename VECTOR, typename OPERATOR >
+void BlockOperatorView< VECTOR, OPERATOR >::multiply( BlockVectorView<VECTOR> const & x,
+                                                      BlockVectorView<VECTOR> & b ) const
+{
+  for( localIndex row = 0; row < m_operators.size( 0 ); row++ )
+  {
+    b.block( row ).zero();
+    VECTOR temp( b.block( row ) );
+    for( localIndex col = 0; col < m_operators.size( 1 ); col++ )
+    {
+      if( m_operators[row][col] != nullptr )
+      {
+        m_operators[row][col]->multiply( x.block( col ), temp );
+        b.block( row ).axpy( 1.0, temp );
+      }
+    }
+  }
+}
 
 }// end geosx namespace
 

@@ -67,7 +67,7 @@ public:
    * @brief Move constructor.
    * @param src vector to be moved
    */
-  HypreVector( HypreVector && src );
+  HypreVector( HypreVector && src ) noexcept;
 
   /**
    * @brief Copy assignment.
@@ -79,7 +79,7 @@ public:
    * @brief Move assignment.
    * @param src HypreVector to be moved.
    */
-  HypreVector & operator=( HypreVector && src );
+  HypreVector & operator=( HypreVector && src ) noexcept;
 
   /**
    * @brief Destructor.

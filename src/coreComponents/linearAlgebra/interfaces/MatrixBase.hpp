@@ -19,7 +19,7 @@
 #ifndef GEOSX_LINEARALGEBRA_INTERFACES_MATRIXBASE_HPP_
 #define GEOSX_LINEARALGEBRA_INTERFACES_MATRIXBASE_HPP_
 
-#include "linearAlgebra/interfaces/common.hpp"
+#include "linearAlgebra/common.hpp"
 
 namespace geosx
 {

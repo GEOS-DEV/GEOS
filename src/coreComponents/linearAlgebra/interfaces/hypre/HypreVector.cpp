@@ -74,7 +74,7 @@ HypreVector::HypreVector( HypreVector const & src )
 }
 
 // Move constructor
-HypreVector::HypreVector( HypreVector && src )
+HypreVector::HypreVector( HypreVector && src ) noexcept
 : HypreVector()
 {
   *this = std::move(src);
@@ -97,7 +97,7 @@ HypreVector & HypreVector::operator=( HypreVector const & src )
   return *this;
 }
 
-HypreVector & HypreVector::operator=( HypreVector && src )
+HypreVector & HypreVector::operator=( HypreVector && src ) noexcept
 {
   GEOSX_LAI_ASSERT( &src != this );
   GEOSX_LAI_ASSERT( src.ready() );

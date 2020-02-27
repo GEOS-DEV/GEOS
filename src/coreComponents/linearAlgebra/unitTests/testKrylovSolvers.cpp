@@ -23,8 +23,9 @@
 #include "common/DataTypes.hpp"
 #include "managers/initialization.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
-#include "linearAlgebra/utilities/BlockOperatorView.hpp"
-#include "linearAlgebra/utilities/BlockVectorView.hpp"
+#include "linearAlgebra/utilities/BlockOperatorWrapper.hpp"
+#include "linearAlgebra/utilities/BlockOperator.hpp"
+#include "linearAlgebra/utilities/BlockVectorWrapper.hpp"
 #include "linearAlgebra/solvers/PreconditionerIdentity.hpp"
 #include "linearAlgebra/solvers/CGsolver.hpp"
 #include "linearAlgebra/solvers/BiCGSTABsolver.hpp"
@@ -67,7 +68,7 @@ void testGEOSXSolvers()
   Matrix matrix;
   Matrix identity;
   compute2DLaplaceOperator( MPI_COMM_WORLD, n, matrix );
-  computeIdentity( MPI_COMM_WORLD, n, identity );
+  computeIdentity( MPI_COMM_WORLD, N, identity );
 
   // Define vectors
   Vector x_true, x_comp, b;
@@ -140,11 +141,25 @@ void testGEOSXBlockSolvers()
   globalIndex constexpr n = 100;
   globalIndex constexpr N = n * n;
 
-  Matrix matrix;
-  Matrix identity;
-  compute2DLaplaceOperator( MPI_COMM_WORLD, n, matrix );
-  computeIdentity( MPI_COMM_WORLD, n, identity );
+  // Declare and allocate block matrices/vectors
 
+  // Set up a block operator consisting of two laplacian blocks
+  // Here we demonstrate creating a thin wrapper pointing to the same matrix twice
+  Matrix matrix;
+  compute2DLaplaceOperator( MPI_COMM_WORLD, n, matrix );
+  BlockOperatorWrapper<Vector, Matrix> block_matrix( 2, 2 );
+  block_matrix.set( 0, 0, matrix );
+  block_matrix.set( 1, 1, matrix );
+
+  // Set up block identity preconditioner
+  // Here we instantiate a concrete block matrix with two independent blocks
+  BlockOperator<Vector, Matrix> block_precon( 2, 2 );
+  computeIdentity( MPI_COMM_WORLD, N, block_precon.block( 0, 0 ) );
+  computeIdentity( MPI_COMM_WORLD, N, block_precon.block( 1, 1 ) );
+  computeZero( MPI_COMM_WORLD, N, block_precon.block( 0, 1 ) );
+  computeZero( MPI_COMM_WORLD, N, block_precon.block( 1, 0 ) );
+
+  // Create rhs and solution vectors
   BlockVector<Vector> x_true(2);
   BlockVector<Vector> x_comp( 2);
   BlockVector<Vector> b(2);
@@ -158,23 +173,6 @@ void testGEOSXBlockSolvers()
 
   x_true.rand();
   x_comp.zero();
-
-  // Declare and allocate block matrices/vectors
-  // System matrix
-  BlockOperatorView<Vector> block_matrix( 2, 2 );
-  BlockOperatorView<Vector> block_precon( 2, 2 );
-
-  // In this test we simply tile the laplace operator, so we assign a duplicate
-  // of the monolithic matrix to every block of the matrix.
-  block_matrix.set( 0, 0, matrix );
-//  block_matrix.set( 0, 1, matrix );
-//  block_matrix.set( 1, 0, matrix );
-  block_matrix.set( 1, 1, matrix );
-
-  // We do the same for the preconditioner to get the block identity matrix.
-  // We ignore the off-diagonal blocks and leave them as null-pointers.
-  block_precon.set( 0, 0, identity );
-  block_precon.set( 1, 1, identity );
 
   // Set right hand side.
   block_matrix.multiply( x_true, b );
