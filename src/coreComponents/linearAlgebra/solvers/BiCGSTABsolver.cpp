@@ -116,8 +116,8 @@ void BiCGSTABsolver< VECTOR >::solve( Vector const & b,
     pk.axpby( 1., rk, beta );
 
     // Uptate vk = MApk
-    M.multiply( pk, y );
-    A.multiply( y, vk );
+    M.apply( pk, y );
+    A.apply( y, vk );
 
     // Compute alpha
     alpha = rhok / vk.dot( r0_hat );
@@ -131,13 +131,13 @@ void BiCGSTABsolver< VECTOR >::solve( Vector const & b,
     s.axpy( -alpha, vk );
 
     // Compute z = Ms
-    M.multiply( s, z );
+    M.apply( s, z );
 
     // Compute t = Az
-    A.multiply( z, t );
+    A.apply( z, t );
 
     // Compute t = Mt
-    M.multiply( t, q );
+    M.apply( t, q );
 
     // Update omega
     omegak = q.dot( z ) / q.dot( q );

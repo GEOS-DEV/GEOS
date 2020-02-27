@@ -142,6 +142,11 @@ public:
   globalIndex globalSize() const;
 
   /**
+   * @brief Get global size.
+   */
+  localIndex localSize() const;
+
+  /**
    * @brief Print the block vector
    * @param os the stream to print to
    */
@@ -184,9 +189,21 @@ protected:
   /**
    * @brief Move constructor
    */
-  BlockVectorView( BlockVectorView && x ) noexcept = default;
+  BlockVectorView( BlockVectorView && x ) = default;
 
   ///@}
+
+  /**
+   * @brief Set pointer to a vector
+   * @param i index of vector
+   * @param vec new pointer to vector
+   */
+  void setPointer( localIndex i, VECTOR * vec )
+  {
+    m_vectors( i ) = vec;
+  }
+
+private:
 
   /// Resizable array of pointers to GEOSX vectors.
   array1d< VECTOR * > m_vectors;
@@ -201,7 +218,7 @@ template< typename VECTOR >
 void BlockVectorView< VECTOR >::copy( BlockVectorView const & src )
 {
   GEOSX_LAI_ASSERT_EQ( blockSize(), src.blockSize() );
-  for( localIndex i = 0; i < m_vectors.size(); i++ )
+  for( localIndex i = 0; i < blockSize(); i++ )
   {
     block( i ).copy( src.block( i ) );
   }
@@ -210,7 +227,7 @@ void BlockVectorView< VECTOR >::copy( BlockVectorView const & src )
 template< typename VECTOR >
 void BlockVectorView< VECTOR >::scale( real64 const factor )
 {
-  for( localIndex i = 0; i < m_vectors.size(); i++ )
+  for( localIndex i = 0; i < blockSize(); i++ )
   {
     block( i ).scale( factor );
   }
@@ -219,7 +236,7 @@ void BlockVectorView< VECTOR >::scale( real64 const factor )
 template< typename VECTOR >
 void BlockVectorView< VECTOR >::zero()
 {
-  for( localIndex i = 0; i < m_vectors.size(); i++ )
+  for( localIndex i = 0; i < blockSize(); i++ )
   {
     block( i ).zero();
   }
@@ -228,7 +245,7 @@ void BlockVectorView< VECTOR >::zero()
 template< typename VECTOR >
 void BlockVectorView< VECTOR >::rand( unsigned const seed )
 {
-  for( localIndex i = 0; i < m_vectors.size(); i++ )
+  for( localIndex i = 0; i < blockSize(); i++ )
   {
     block( i ).rand( seed );
   }
@@ -239,7 +256,7 @@ real64 BlockVectorView< VECTOR >::dot( BlockVectorView const & src ) const
 {
   GEOSX_LAI_ASSERT_EQ( blockSize(), src.blockSize() );
   real64 accum = 0;
-  for( localIndex i = 0; i < m_vectors.size(); i++ )
+  for( localIndex i = 0; i < blockSize(); i++ )
   {
     accum += block( i ).dot( src.block( i ) );
   }
@@ -250,7 +267,7 @@ template< typename VECTOR >
 real64 BlockVectorView< VECTOR >::norm2() const
 {
   real64 accum = 0;
-  for( localIndex i = 0; i < m_vectors.size(); i++ )
+  for( localIndex i = 0; i < blockSize(); i++ )
   {
     real64 const temp = block( i ).norm2();
     accum = accum + temp * temp;
@@ -262,7 +279,7 @@ template< typename VECTOR >
 real64 BlockVectorView< VECTOR >::normInf() const
 {
   real64 result = 0.0;
-  for( localIndex i = 0; i < m_vectors.size(); i++ )
+  for( localIndex i = 0; i < blockSize(); i++ )
   {
     result = std::fmax( result, block( i ).normInf() );
   }
@@ -274,7 +291,7 @@ void BlockVectorView< VECTOR >::axpy( real64 const alpha,
                                       BlockVectorView const & x )
 {
   GEOSX_LAI_ASSERT_EQ( blockSize(), x.blockSize() );
-  for( localIndex i = 0; i < m_vectors.size(); i++ )
+  for( localIndex i = 0; i < blockSize(); i++ )
   {
     block( i ).axpy( alpha, x.block( i ) );
   }
@@ -286,7 +303,7 @@ void BlockVectorView< VECTOR >::axpby( real64 const alpha,
                                        real64 const beta )
 {
   GEOSX_LAI_ASSERT_EQ( blockSize(), x.blockSize() );
-  for( localIndex i = 0; i < m_vectors.size(); i++ )
+  for( localIndex i = 0; i < blockSize(); i++ )
   {
     block( i ).axpby( alpha, x.block( i ), beta );
   }
@@ -302,9 +319,20 @@ template< typename VECTOR >
 globalIndex BlockVectorView< VECTOR >::globalSize() const
 {
   globalIndex size = 0;
-  for( localIndex i = 0; i < m_vectors.size(); i++ )
+  for( localIndex i = 0; i < blockSize(); i++ )
   {
     size += block( i ).globalSize();
+  }
+  return size;
+}
+
+template< typename VECTOR >
+localIndex BlockVectorView< VECTOR >::localSize() const
+{
+  localIndex size = 0;
+  for( localIndex i = 0; i < blockSize(); i++ )
+  {
+    size += block( i ).localSize();
   }
   return size;
 }

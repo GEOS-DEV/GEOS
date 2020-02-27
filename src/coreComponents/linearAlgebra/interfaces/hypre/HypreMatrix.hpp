@@ -43,7 +43,7 @@ namespace geosx
  * \class HypreMatrix
  * \brief This class ...
  */
-class HypreMatrix final : public LinearOperator<HypreVector>,
+class HypreMatrix final : public virtual LinearOperator<HypreVector>,
                           private MatrixBase<HypreMatrix, HypreVector>
 {
 public:
@@ -191,8 +191,8 @@ public:
                localIndex const numRows,
                localIndex const numCols ) override;
 
-  void multiply( HypreVector const & src,
-                 HypreVector & dst ) const override;
+  void apply( HypreVector const & src,
+              HypreVector & dst ) const override;
 
   void multiply( HypreMatrix const & src,
                  HypreMatrix & dst,

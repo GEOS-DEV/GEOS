@@ -79,7 +79,7 @@ void testGEOSXSolvers()
   x_true.rand();
   x_comp.zero();
 
-  matrix.multiply( x_true, b );
+  matrix.apply( x_true, b );
 
   // Solve
   SOLVER<Vector> solver( matrix, identity, 1e-8, 300 );
@@ -97,6 +97,7 @@ void testGEOSXSolvers()
   EXPECT_LT( std::fabs( norm_comp / norm_true - 1. ), 5e-6 );
 
   PreconditionerIdentity< LAI > preconIdentity;
+  preconIdentity.compute( matrix );
   SOLVER<Vector> solver2( matrix, preconIdentity, 1e-8, 300 );
   x_comp.zero();
 
@@ -175,7 +176,7 @@ void testGEOSXBlockSolvers()
   x_comp.zero();
 
   // Set right hand side.
-  block_matrix.multiply( x_true, b );
+  block_matrix.apply( x_true, b );
 
   // Create block CG solver object and solve
   SOLVER< BlockVectorView< Vector > > solver( block_matrix, block_precon, 1e-8, 300 );

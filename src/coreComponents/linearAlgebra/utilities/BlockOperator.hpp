@@ -24,19 +24,16 @@
 namespace geosx
 {
 
-template<typename VECTOR, typename OPERATOR>
-class BlockOperator : public BlockOperatorView<VECTOR, OPERATOR>
+template< typename VECTOR, typename OPERATOR >
+class BlockOperator : public BlockOperatorView< VECTOR, OPERATOR >
 {
 public:
 
   /// The base class
-  using Base = BlockOperatorView<VECTOR, OPERATOR>;
+  using Base = BlockOperatorView< VECTOR, OPERATOR >;
 
   /// The type of vector this linear operator operates on
   using Vector = typename Base::Vector;
-
-  /// The underlying operator type for each block
-  using Operator = typename Base::Operator;
 
   /**
    * @brief Create an operator with (@p nRows, @p nCols) blocks.
@@ -53,7 +50,7 @@ public:
    * @brief Move constructor
    * @param rhs the block operator to move from
    */
-  BlockOperator( BlockOperator && rhs ) noexcept;
+  BlockOperator( BlockOperator && rhs );
 
   /**
    * @brief Destructor.
@@ -62,18 +59,16 @@ public:
 
 private:
 
-  using Base::m_operators;
-
   void setPointers();
 
   /// Actual storage for blocks
-  array2d< Operator > m_operatorStorage;
+  array2d< OPERATOR > m_operatorStorage;
 };
 
 template< typename VECTOR, typename OPERATOR >
 BlockOperator< VECTOR, OPERATOR >::BlockOperator( localIndex const nRows, localIndex const nCols )
-: Base( nRows, nCols ),
-  m_operatorStorage( nRows, nCols )
+  : Base( nRows, nCols ),
+    m_operatorStorage( nRows, nCols )
 {
   setPointers();
 }
@@ -81,28 +76,29 @@ BlockOperator< VECTOR, OPERATOR >::BlockOperator( localIndex const nRows, localI
 template< typename VECTOR, typename OPERATOR >
 void BlockOperator< VECTOR, OPERATOR >::setPointers()
 {
-  GEOSX_LAI_ASSERT_EQ( m_operators.size(), m_operatorStorage.size() );
-  for( localIndex i = 0; i < m_operatorStorage.size(0); ++i )
+  GEOSX_LAI_ASSERT_EQ( this->numBlockRows(), m_operatorStorage.size( 0 ) );
+  GEOSX_LAI_ASSERT_EQ( this->numBlockCols(), m_operatorStorage.size( 1 ) );
+  for( localIndex i = 0; i < m_operatorStorage.size( 0 ); ++i )
   {
-    for( localIndex j = 0; j < m_operatorStorage.size(1); ++j )
+    for( localIndex j = 0; j < m_operatorStorage.size( 1 ); ++j )
     {
-      m_operators( i, j ) = &m_operatorStorage( i, j );
+      this->setPointer( i, j, &m_operatorStorage( i, j ) );
     }
   }
 }
 
 template< typename VECTOR, typename OPERATOR >
 BlockOperator< VECTOR, OPERATOR >::BlockOperator( BlockOperator const & rhs )
-: Base( rhs ),
-  m_operatorStorage( rhs.m_operatorStorage )
+  : Base( rhs ),
+    m_operatorStorage( rhs.m_operatorStorage )
 {
   setPointers();
 }
 
 template< typename VECTOR, typename OPERATOR >
-BlockOperator< VECTOR, OPERATOR >::BlockOperator( BlockOperator && rhs ) noexcept
-: Base( std::move( rhs ) ),
-  m_operatorStorage( std::move( rhs.m_operatorStorage ) )
+BlockOperator< VECTOR, OPERATOR >::BlockOperator( BlockOperator && rhs )
+  : Base( std::move( rhs ) ),
+    m_operatorStorage( std::move( rhs.m_operatorStorage ) )
 {
   setPointers();
 }

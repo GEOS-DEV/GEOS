@@ -538,7 +538,7 @@ TYPED_TEST_P( LAOperationsTest, InterfaceSolvers )
 
   // Compute the matrix/vector multiplication. We compute b as Ax and will aim to get x
   // back from the solvers.
-  matrix.multiply( x_true, b );
+  matrix.apply( x_true, b );
 
   // Test the residual function by computing r = b - Ax = 0
   matrix.residual( x_true, b, r );

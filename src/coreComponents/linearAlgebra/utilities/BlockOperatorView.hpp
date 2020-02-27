@@ -36,11 +36,16 @@ class BlockOperatorView : public LinearOperator< BlockVectorView<VECTOR> >
 
 public:
 
-  /// the type of vector this linear operator operates on
-  using Vector   = BlockVectorView<VECTOR>;
+  /// Base type
+  using Base = LinearOperator< BlockVectorView<VECTOR> >;
 
-  /// the underlying operator type for each block
-  using Operator = OPERATOR;
+  /// the type of vector this linear operator operates on
+  using Vector = typename Base::Vector;
+
+  /**
+   * @name Constructors/destructors
+   */
+  ///@{
 
   /**
    * @brief Destructor.
@@ -56,21 +61,34 @@ public:
    * @brief Deleted move assignment
    */
   BlockOperatorView & operator=( BlockOperatorView && rhs ) = delete;
-  
-  /**
-   * @brief Apply the block matrix to a block vector.
-   *
-   * Computes the matrix-vector product <tt>Ax = b</tt>.
-   *
-   * @param x Input vector.
-   * @param b Output vector.
-   *
-   */
-  virtual void multiply( BlockVectorView<VECTOR> const & x,
-                         BlockVectorView<VECTOR> & b ) const override;
+
+  ///@}
 
   /**
-   * @brief
+   * @name LinearOperator interface
+   */
+  ///@{
+
+  virtual void apply( BlockVectorView< VECTOR > const & x,
+                      BlockVectorView< VECTOR > & b ) const override;
+
+  virtual globalIndex numGlobalRows() const override;
+
+  virtual globalIndex numGlobalCols() const override;
+
+  virtual localIndex numLocalRows() const override;
+
+  virtual localIndex numLocalCols() const override;
+
+  ///@}
+
+  /**
+   * @name Getters
+   */
+  ///@{
+
+  /**
+   * @brief Get number of block rows
    * @return number of block rows
    */
   localIndex numBlockRows() const
@@ -79,7 +97,7 @@ public:
   }
 
   /**
-   * @brief
+   * @brief Get number of block columns
    * @return number of block columns
    */
   localIndex numBlockCols() const
@@ -90,7 +108,7 @@ public:
   /**
    * @brief Get the matrix corresponding to block (@p blockRowIndex, @p blockColIndex).
    */
-   Operator const & block( localIndex const blockRowIndex, localIndex const blockColIndex ) const
+  OPERATOR const & block( localIndex const blockRowIndex, localIndex const blockColIndex ) const
   {
     return *m_operators( blockRowIndex, blockColIndex );
   }
@@ -98,10 +116,12 @@ public:
   /**
    * @copydoc block( localIndex const, localIndex const )
    */
-  Operator & block( localIndex const blockRowIndex, localIndex const blockColIndex )
+  OPERATOR & block( localIndex const blockRowIndex, localIndex const blockColIndex )
   {
     return *m_operators( blockRowIndex, blockColIndex );
   }
+
+  ///@}
 
 protected:
 
@@ -110,7 +130,10 @@ protected:
    */
   BlockOperatorView( localIndex const nRows, localIndex const nCols )
     : m_operators( nRows, nCols )
-  {}
+  {
+    GEOSX_LAI_ASSERT_GT( nRows, 0 );
+    GEOSX_LAI_ASSERT_GT( nCols, 0 );
+  }
 
   /**
    * @brief Copy constructor
@@ -120,16 +143,33 @@ protected:
   /**
    * @brief Move constructor
    */
-  BlockOperatorView( BlockOperatorView< VECTOR, OPERATOR > && x ) noexcept = default;
+  BlockOperatorView( BlockOperatorView< VECTOR, OPERATOR > && x ) = default;
+
+  /**
+   * @brief Set/replace a pointer to a block
+   * @param blockRowIndex row index of the block
+   * @param blockColIndex column index of the block
+   * @param op the new pointer
+   */
+  void setPointer( localIndex const blockRowIndex, localIndex const blockColIndex, OPERATOR * op )
+  {
+    GEOSX_LAI_ASSERT_GE( blockRowIndex, 0 );
+    GEOSX_LAI_ASSERT_GT( numBlockRows(), blockRowIndex );
+    GEOSX_LAI_ASSERT_GE( blockColIndex, 0 );
+    GEOSX_LAI_ASSERT_GT( numBlockCols(), blockColIndex );
+    m_operators( blockRowIndex, blockColIndex ) = op;
+  }
+
+private:
 
   /// Array of pointers to blocks
-  array2d< Operator * > m_operators;
+  array2d< OPERATOR * > m_operators;
 
 };
 
 template< typename VECTOR, typename OPERATOR >
-void BlockOperatorView< VECTOR, OPERATOR >::multiply( BlockVectorView<VECTOR> const & x,
-                                                      BlockVectorView<VECTOR> & b ) const
+void BlockOperatorView< VECTOR, OPERATOR >::apply( BlockVectorView< VECTOR > const & x,
+                                                   BlockVectorView< VECTOR > & b ) const
 {
   for( localIndex row = 0; row < m_operators.size( 0 ); row++ )
   {
@@ -139,11 +179,69 @@ void BlockOperatorView< VECTOR, OPERATOR >::multiply( BlockVectorView<VECTOR> co
     {
       if( m_operators[row][col] != nullptr )
       {
-        m_operators[row][col]->multiply( x.block( col ), temp );
+        m_operators[row][col]->apply( x.block( col ), temp );
         b.block( row ).axpy( 1.0, temp );
       }
     }
   }
+}
+
+template< typename VECTOR, typename OPERATOR >
+globalIndex BlockOperatorView< VECTOR, OPERATOR >::numGlobalRows() const
+{
+  globalIndex numRows = 0;
+  for( localIndex i = 0; i < numBlockRows(); ++i )
+  {
+    for( localIndex j = 0; j < numBlockCols(); ++j )
+    {
+      if( m_operators( i,j ) != nullptr )
+      {
+        numRows += block( i, j ).numGlobalRows();
+        break;
+      }
+    }
+  }
+  return numRows;
+}
+
+template< typename VECTOR, typename OPERATOR >
+globalIndex BlockOperatorView< VECTOR, OPERATOR >::numGlobalCols() const
+{
+  globalIndex numCols = 0;
+  for( localIndex j = 0; j < numBlockCols(); j++ )
+  {
+    for( localIndex i = 0; i < numBlockRows(); ++i )
+    {
+      if( m_operators( i,j ) != nullptr )
+      {
+        numCols += block( i, j ).numGlobalCols();
+        break;
+      }
+    }
+  }
+  return numCols;
+}
+
+template< typename VECTOR, typename OPERATOR >
+localIndex BlockOperatorView< VECTOR, OPERATOR >::numLocalRows() const
+{
+  localIndex numRows = 0;
+  for( localIndex i = 0; i < numBlockRows(); i++ )
+  {
+    numRows += block( i, 0 ).numLocalRows();
+  }
+  return numRows;
+}
+
+template< typename VECTOR, typename OPERATOR >
+localIndex BlockOperatorView< VECTOR, OPERATOR >::numLocalCols() const
+{
+  localIndex numCols = 0;
+  for( localIndex j = 0; j < numBlockCols(); j++ )
+  {
+    numCols += block( 0, j ).numLocalCols();
+  }
+  return numCols;
 }
 
 }// end geosx namespace

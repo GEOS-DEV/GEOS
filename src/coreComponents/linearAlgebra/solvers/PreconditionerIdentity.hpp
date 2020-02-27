@@ -21,8 +21,6 @@
 namespace geosx
 {
 
-class DofManager;
-
 /**
  * @brief Common interface for identity preconditioning operator
  * @tparam LAI linear algebra interface providing vectors, matrices and solvers
@@ -41,22 +39,13 @@ public:
    * @brief Compute the preconditioner from a matrix
    * @param mat the matrix to precondition
    */
-  void compute( Matrix const & GEOSX_UNUSED_PARAM( mat ),
-                DofManager const & GEOSX_UNUSED_PARAM( dofManager ) ) override
+  void apply( Vector const & src,
+              Vector & dst ) const override
   {
-    return;
-  }
-
-  /**
-   * @brief Compute the preconditioner from a matrix
-   * @param mat the matrix to precondition
-   */
-  void multiply( Vector const & src,
-                 Vector & dst ) const override
-  {
+    GEOSX_LAI_ASSERT_EQ( this->numGlobalRows(), dst.globalSize() );
+    GEOSX_LAI_ASSERT_EQ( this->numGlobalCols(), src.globalSize() );
     dst = src;
   }
-
 };
 
 }

@@ -20,6 +20,7 @@
 #define GEOSX_LINEARALGEBRA_INTERFACES_MATRIXBASE_HPP_
 
 #include "linearAlgebra/common.hpp"
+#include "linearAlgebra/interfaces/LinearOperator.hpp"
 
 namespace geosx
 {
@@ -44,7 +45,7 @@ namespace geosx
  * In that case, @c \@copydoc tag can be used to copy over the documentation.
  */
 template<typename MATRIX, typename VECTOR>
-class MatrixBase
+class MatrixBase : public virtual LinearOperator< VECTOR >
 {
 protected:
 
@@ -497,6 +498,13 @@ protected:
   ///@{
 
   /**
+   * @brief Apply operator to a vector
+   * @param src Input vector (x).
+   * @param dst Output vector (b).
+   */
+  virtual void apply( Vector const & src, Vector & dst ) const override = 0;
+
+  /**
    * @brief Matrix/Matrix multiplication.
    *
    * Compute <tt>this * B = C<tt>.
@@ -661,22 +669,22 @@ protected:
   /**
    * @brief Returns the number of global rows.
    */
-  virtual globalIndex numGlobalRows() const = 0;
+  virtual globalIndex numGlobalRows() const override = 0;
 
   /**
    * @brief Returns the number of global columns.
    */
-  virtual globalIndex numGlobalCols() const = 0;
+  virtual globalIndex numGlobalCols() const override = 0;
 
   /**
    * @brief Return the local number of columns on each processor
    */
-  virtual localIndex numLocalRows() const = 0;
+  virtual localIndex numLocalRows() const override = 0;
 
   /**
    * @brief Return the local number of columns on each processor
    */
-  virtual localIndex numLocalCols() const = 0;
+  virtual localIndex numLocalCols() const override = 0;
 
   /**
    * @brief Returns the index of the first global row owned by that processor.

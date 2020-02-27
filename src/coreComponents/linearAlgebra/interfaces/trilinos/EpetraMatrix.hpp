@@ -35,7 +35,7 @@ namespace geosx
  * \brief This class creates and provides basic support for the Epetra_CrsMatrix
  *        matrix object type used in Trilinos.
  */
-class EpetraMatrix final: public LinearOperator<EpetraVector>,
+class EpetraMatrix final: public virtual LinearOperator<EpetraVector>,
                           private MatrixBase<EpetraMatrix, EpetraVector>
 {
 public:
@@ -182,8 +182,8 @@ public:
                localIndex const numRows,
                localIndex const numCols ) override;
 
-  void multiply( EpetraVector const & src,
-                 EpetraVector & dst ) const override;
+  void apply( EpetraVector const & src,
+              EpetraVector & dst ) const override;
 
   void multiply( EpetraMatrix const & src,
                  EpetraMatrix & dst,

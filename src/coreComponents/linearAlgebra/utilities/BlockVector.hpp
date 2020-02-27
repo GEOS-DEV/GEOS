@@ -47,7 +47,7 @@ public:
    * @brief Move constructor
    * @param rhs the block vector to move from
    */
-  BlockVector( BlockVector && rhs ) noexcept;
+  BlockVector( BlockVector && rhs );
 
   /**
    * @brief Conversion constructor from a compatible view with a deep copy of each sub-vector
@@ -64,8 +64,6 @@ public:
 private:
 
   void setPointers();
-
-  using BlockVectorView< VECTOR >::m_vectors;
 
   /// storage for actual vectors
   array1d <VECTOR> m_vectorStorage;
@@ -88,7 +86,7 @@ BlockVector< VECTOR >::BlockVector( BlockVector< VECTOR > const & rhs )
 }
 
 template< typename VECTOR >
-BlockVector< VECTOR >::BlockVector( BlockVector && rhs ) noexcept
+BlockVector< VECTOR >::BlockVector( BlockVector && rhs )
   : Base( std::move( rhs ) ),
     m_vectorStorage( std::move( rhs.m_vectorStorage ) )
 {
@@ -109,10 +107,10 @@ BlockVector< VECTOR >::BlockVector( BlockVectorView <VECTOR> const & rhs )
 template< typename VECTOR >
 void BlockVector< VECTOR >::setPointers()
 {
-  GEOSX_LAI_ASSERT_EQ( m_vectors.size(), m_vectorStorage.size() );
+  GEOSX_LAI_ASSERT_EQ( this->blockSize(), m_vectorStorage.size() );
   for( localIndex i = 0; i < m_vectorStorage.size(); ++i )
   {
-    m_vectors[i] = &m_vectorStorage[i];
+    this->setPointer( i, &m_vectorStorage[i] );
   }
 }
 

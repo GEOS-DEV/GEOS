@@ -38,7 +38,7 @@ namespace geosx
  * @brief This class creates and provides basic support for the Mat
  *        matrix object type used in PETSc.
  */
-class PetscMatrix final : public LinearOperator<PetscVector>,
+class PetscMatrix final : public virtual LinearOperator<PetscVector>,
                           private MatrixBase<PetscMatrix, PetscVector>
 {
 public:
@@ -185,8 +185,8 @@ public:
                localIndex const numRows,
                localIndex const numCols ) override;
 
-  void multiply( PetscVector const & src,
-                 PetscVector & dst ) const override;
+  void apply( PetscVector const & src,
+              PetscVector & dst ) const override;
 
   void multiply( PetscMatrix const & src,
                  PetscMatrix & dst,

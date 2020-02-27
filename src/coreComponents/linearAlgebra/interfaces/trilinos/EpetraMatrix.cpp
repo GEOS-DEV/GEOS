@@ -358,8 +358,8 @@ void EpetraMatrix::insert( globalIndex const * rowIndices,
                                                             Epetra_FECrsMatrix::ROW_MAJOR ) );
 }
 
-void EpetraMatrix::multiply( EpetraVector const & src,
-                             EpetraVector & dst ) const
+void EpetraMatrix::apply( EpetraVector const & src,
+                          EpetraVector & dst ) const
 {
   GEOSX_LAI_ASSERT( ready() );
   GEOSX_LAI_ASSERT( src.ready() );
@@ -431,6 +431,7 @@ void EpetraMatrix::transpose( EpetraMatrix & dst ) const
   Epetra_RowMatrixTransposer transposer( m_matrix.get() );
   Epetra_CrsMatrix * trans;
   transposer.CreateTranspose( true, trans );
+  dst.reset();
   dst.m_matrix = std::make_unique<Epetra_FECrsMatrix>( Copy, trans->Graph() );
   dst.m_dst_map = std::make_unique<Epetra_Map>( trans->RangeMap() );
   dst.m_src_map = std::make_unique<Epetra_Map>( trans->DomainMap() );
@@ -445,6 +446,7 @@ void EpetraMatrix::transpose( EpetraMatrix & dst ) const
     dst.m_matrix->ReplaceMyValues( i, numEntries, values, indices );
   }
   delete trans;
+  dst.m_assembled = true;
 }
 
 void EpetraMatrix::clearRow( globalIndex const globalRow,

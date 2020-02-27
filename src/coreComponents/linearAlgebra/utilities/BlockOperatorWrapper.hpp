@@ -32,7 +32,6 @@ public:
 
   using Base = BlockOperatorView<VECTOR, OPERATOR>;
   using Vector = typename Base::Vector;
-  using Operator = typename Base::Operator;
 
   /**
    * @brief Create a vector wrapper of @p nBlocks blocks.
@@ -66,16 +65,8 @@ public:
             localIndex const blockColIndex,
             OPERATOR & op )
   {
-    GEOSX_LAI_ASSERT_GE( blockRowIndex, 0 );
-    GEOSX_LAI_ASSERT_GT( this->numBlockRows(), blockRowIndex );
-    GEOSX_LAI_ASSERT_GE( blockColIndex, 0 );
-    GEOSX_LAI_ASSERT_GT( this->numBlockCols(), blockColIndex );
-    m_operators( blockRowIndex, blockColIndex ) = &op;
+    this->setPointer( blockRowIndex, blockColIndex, &op );
   }
-
-private:
-
-  using Base::m_operators;
 };
 
 } // namespace geosx

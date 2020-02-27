@@ -46,9 +46,7 @@ public:
    * @param src Input vector (x).
    * @param dst Output vector (b).
    */
-  virtual void
-  multiply( Vector const & src,
-            Vector & dst ) const = 0;
+  virtual void apply( Vector const & src, Vector & dst ) const = 0;
 
   /**
    * @brief Compute residual <tt>r = Ax - b</tt>.
@@ -57,13 +55,31 @@ public:
    * @param b Input right hand side.
    * @param r Output residual.
    */
-  void residual( Vector const & x,
-                 Vector const & b,
-                 Vector & r ) const
+  virtual void residual( Vector const & x, Vector const & b, Vector & r ) const
   {
-    this->multiply( x, r );
+    this->apply( x, r );
     r.axpby( 1.0, b, -1.0 );
   }
+
+  /**
+   * @brief Returns the number of global rows.
+   */
+  virtual globalIndex numGlobalRows() const = 0;
+
+  /**
+   * @brief Returns the number of global columns.
+   */
+  virtual globalIndex numGlobalCols() const = 0;
+
+  /**
+   * @brief Returns the number of global rows.
+   */
+  virtual localIndex numLocalRows() const = 0;
+
+  /**
+   * @brief Returns the number of global columns.
+   */
+  virtual localIndex numLocalCols() const = 0;
 };
 
 }

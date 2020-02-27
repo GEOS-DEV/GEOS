@@ -52,7 +52,7 @@ public:
    * @brief Deleted move constructor
    * @param rhs the block vector to move from
    */
-  BlockVectorWrapper( BlockVectorWrapper< VECTOR > && rhs ) noexcept = default;
+  BlockVectorWrapper( BlockVectorWrapper< VECTOR > && rhs ) = default;
 
   /**
    * @brief Destructor
@@ -68,12 +68,8 @@ public:
   {
     GEOSX_LAI_ASSERT_GE( blockIndex, 0 );
     GEOSX_LAI_ASSERT_GT( this->blockSize(), blockIndex );
-    m_vectors[blockIndex] = &vec;
+    setPointer( blockIndex, &vec );
   }
-
-private:
-
-  using BlockVectorView< VECTOR >::m_vectors;
 };
 
 } //namespace geosx

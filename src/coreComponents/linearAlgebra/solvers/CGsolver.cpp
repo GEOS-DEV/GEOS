@@ -85,7 +85,7 @@ void CGsolver<VECTOR>::solve( Vector const & b,
 
   // Preconditioning
   VectorTemp zk( x );
-  M.multiply( rk, zk );
+  M.apply( rk, zk );
 
   // pk = zk
   VectorTemp pk( zk );
@@ -99,7 +99,7 @@ void CGsolver<VECTOR>::solve( Vector const & b,
   for( k = 0 ; k < N ; k++ )
   {
     // Compute Apk
-    A.multiply( pk, Apk );
+    A.apply( pk, Apk );
 
     // compute alpha
     real64 const alpha = rk.dot( zk ) / pk.dot( Apk );
@@ -120,7 +120,7 @@ void CGsolver<VECTOR>::solve( Vector const & b,
     }
 
     // Update zk = Mrk
-    M.multiply( rk, zk );
+    M.apply( rk, zk );
 
     // Compute beta
     real64 const beta = zk.dot( rk ) / zkold.dot( rkold );

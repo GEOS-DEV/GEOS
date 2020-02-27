@@ -420,8 +420,8 @@ void PetscMatrix::insert( globalIndex const * rowIndices,
                                        INSERT_VALUES ) );
 }
 
-void PetscMatrix::multiply( PetscVector const & src,
-                            PetscVector & dst ) const
+void PetscMatrix::apply( PetscVector const & src,
+                         PetscVector & dst ) const
 {
   GEOSX_LAI_ASSERT( ready() );
   GEOSX_LAI_ASSERT( src.ready() );

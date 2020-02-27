@@ -526,8 +526,8 @@ void HypreMatrix::insert( globalIndex const * rowIndices,
   }
 }
 
-void HypreMatrix::multiply( HypreVector const & src,
-                            HypreVector & dst ) const
+void HypreMatrix::apply( HypreVector const & src,
+                         HypreVector & dst ) const
 {
   GEOSX_LAI_ASSERT( ready() );
   GEOSX_LAI_ASSERT( src.ready() );

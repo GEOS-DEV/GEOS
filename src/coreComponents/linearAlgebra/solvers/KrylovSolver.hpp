@@ -56,8 +56,11 @@ class KrylovSolver : public LinearOperator< VECTOR >
 {
 public:
 
+  /// Base type
+  using Base = LinearOperator< VECTOR >;
+
   /// Alias for template parameter
-  using Vector = typename LinearOperator< VECTOR >::Vector;
+  using Vector = typename Base::Vector;
 
   /**
    * @brief Constructor
@@ -66,12 +69,23 @@ public:
                 LinearOperator< Vector > const & M,
                 real64 const tolerance,
                 localIndex const maxIterations,
-                integer const verbosity );
+                integer const verbosity )
+  : Base(),
+    m_operator( A ),
+    m_precond( M ),
+    m_tolerance( tolerance ),
+    m_maxIterations( maxIterations ),
+    m_verbosity( verbosity )
+  {
+    GEOSX_ERROR_IF_LT_MSG( m_maxIterations, 0, "Krylov solver: max number of iteration must be non-negative." );
+    GEOSX_LAI_ASSERT_EQ( m_operator.numGlobalRows(), m_precond.numGlobalRows() );
+    GEOSX_LAI_ASSERT_EQ( m_operator.numGlobalCols(), m_precond.numGlobalCols() );
+  }
 
   /**
    * @brief Virtual destructor (does nothing)
    */
-  virtual ~KrylovSolver() override;
+  virtual ~KrylovSolver() override = default;
 
   /**
    * @brief Solve the system <tt>M^{-1}(Ax - b) = 0</tt> with CG
@@ -83,18 +97,39 @@ public:
    * @param M preconditioner.
    */
   virtual void
-  solve( Vector const & b,
-         Vector & x ) const = 0;
+  solve( Vector const & b, Vector & x ) const = 0;
 
   virtual void
-  multiply( Vector const & src,
-            Vector & dst ) const override final;
+  apply( Vector const & src, Vector & dst ) const override final
+  {
+    solve( src, dst );
+  }
 
-  inline localIndex numIterations( ) const { return m_numIterations; };
+  virtual globalIndex numGlobalRows() const override final
+  {
+    return m_operator.numGlobalRows();
+  }
 
-  inline arrayView1d<const real64> residualNormVector( ) const { return m_residualNormVector.toViewConst(); };
+  virtual globalIndex numGlobalCols() const override final
+  {
+    return m_operator.numGlobalCols();
+  }
 
-  inline bool convergenceFlag( ) const { return m_convergenceFlag; };
+  virtual localIndex numLocalRows() const override final
+  {
+    return m_operator.numLocalRows();
+  }
+
+  virtual localIndex numLocalCols() const override final
+  {
+    return m_operator.numLocalCols();
+  }
+
+  localIndex numIterations( ) const { return m_numIterations; };
+
+  arrayView1d<const real64> residualNormVector( ) const { return m_residualNormVector.toViewConst(); };
+
+  bool convergenceFlag( ) const { return m_convergenceFlag; };
 
 protected:
 

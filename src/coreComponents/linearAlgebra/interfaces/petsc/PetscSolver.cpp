@@ -16,13 +16,6 @@
  * @file PetscSolver.cpp
  */
 
-// BEGIN_RST_NARRATIVE PetscSolver.rst
-// ==============================
-// Petsc Solver
-// ==============================
-// This class implements solvers from the PETSc library. 
-
-// Include the corresponding header file.
 #include "PetscSolver.hpp"
 
 #include "PetscVector.hpp"
@@ -37,37 +30,28 @@
 namespace geosx
 {
 
-// ----------------------------
-// Constructors
-// ----------------------------
-
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Constructor
-// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
 PetscSolver::PetscSolver( LinearSolverParameters const & parameters )
   :
   m_parameters( parameters )
 {}
 
-// ----------------------------
-// Top-Level Solver
-// ----------------------------
-// We switch between different solverTypes here
-
 void PetscSolver::solve( PetscMatrix &mat,
                          PetscVector &sol,
                          PetscVector &rhs )
 {
-  if( m_parameters.solverType == "direct" )
-    solve_direct( mat, sol, rhs );
-  else
-    solve_krylov( mat, sol, rhs );
-}
+  GEOSX_LAI_ASSERT( mat.ready() );
+  GEOSX_LAI_ASSERT( sol.ready() );
+  GEOSX_LAI_ASSERT( rhs.ready() );
 
-// ----------------------------
-// Direct solver
-// ----------------------------
+  if( m_parameters.solverType == "direct" )
+  {
+    solve_direct( mat, sol, rhs );
+  }
+  else
+  {
+    solve_krylov( mat, sol, rhs );
+  }
+}
 
 void PetscSolver::solve_direct( PetscMatrix &mat,
                                 PetscVector &sol,
@@ -77,25 +61,20 @@ void PetscSolver::solve_direct( PetscMatrix &mat,
 
   // create linear solver
   KSP ksp;
-  KSPCreate( comm, &ksp );
-  KSPSetOperators( ksp, mat.unwrapped(), mat.unwrapped() );
-  KSPSetType( ksp, KSPPREONLY );
+  GEOSX_LAI_CHECK_ERROR( KSPCreate( comm, &ksp ) );
+  GEOSX_LAI_CHECK_ERROR( KSPSetOperators( ksp, mat.unwrapped(), mat.unwrapped() ) );
+  GEOSX_LAI_CHECK_ERROR( KSPSetType( ksp, KSPPREONLY ) );
 
   // use direct solve preconditioner SUPERLU DIST
   PC prec;
-  KSPGetPC( ksp, &prec );
-  PCSetType( prec, PCLU );
-  PCFactorSetMatSolverType( prec, MATSOLVERSUPERLU_DIST );
+  GEOSX_LAI_CHECK_ERROR( KSPGetPC( ksp, &prec ) );
+  GEOSX_LAI_CHECK_ERROR( PCSetType( prec, PCLU ) );
+  GEOSX_LAI_CHECK_ERROR( PCFactorSetMatSolverType( prec, MATSOLVERSUPERLU_DIST ) );
 
   // solve system
-  KSPSetFromOptions( ksp );
-  KSPSolve( ksp, rhs.unwrapped(), sol.unwrapped() );
+  GEOSX_LAI_CHECK_ERROR( KSPSetFromOptions( ksp ) );
+  GEOSX_LAI_CHECK_ERROR( KSPSolve( ksp, rhs.unwrapped(), sol.unwrapped() ) );
 }
-
-
-// ----------------------------
-// Iterative solver
-// ----------------------------
 
 void PetscSolver::solve_krylov( PetscMatrix &mat,
                                 PetscVector &sol,
@@ -105,23 +84,24 @@ void PetscSolver::solve_krylov( PetscMatrix &mat,
 
   // create linear solver
   KSP ksp;
-  KSPCreate( comm, &ksp );
-  KSPSetOperators( ksp, mat.unwrapped(), mat.unwrapped() );
-  KSPGMRESSetRestart( ksp, m_parameters.krylov.maxRestart );
-  KSPSetTolerances( ksp, m_parameters.krylov.tolerance, PETSC_DEFAULT, PETSC_DEFAULT, m_parameters.krylov.maxIterations );
+  GEOSX_LAI_CHECK_ERROR( KSPCreate( comm, &ksp ) );
+  GEOSX_LAI_CHECK_ERROR( KSPSetOperators( ksp, mat.unwrapped(), mat.unwrapped() ) );
+  GEOSX_LAI_CHECK_ERROR( KSPGMRESSetRestart( ksp, m_parameters.krylov.maxRestart ) );
+  GEOSX_LAI_CHECK_ERROR( KSPSetTolerances( ksp, m_parameters.krylov.tolerance, PETSC_DEFAULT,
+                                           PETSC_DEFAULT, m_parameters.krylov.maxIterations ) );
 
   // pick the solver type
   if( m_parameters.solverType == "gmres" )
   {
-    KSPSetType( ksp, KSPGMRES );
+    GEOSX_LAI_CHECK_ERROR( KSPSetType( ksp, KSPGMRES ) );
   }
   else if( m_parameters.solverType == "bicgstab" )
   {
-    KSPSetType( ksp, KSPBCGS );
+    GEOSX_LAI_CHECK_ERROR( KSPSetType( ksp, KSPBCGS ) );
   }
   else if( m_parameters.solverType == "cg" )
   {
-    KSPSetType( ksp, KSPCG );
+    GEOSX_LAI_CHECK_ERROR( KSPSetType( ksp, KSPCG ) );
   }
   else
   {
@@ -130,7 +110,7 @@ void PetscSolver::solve_krylov( PetscMatrix &mat,
   
   // create a preconditioner and pick type
   PC prec;
-  KSPGetPC( ksp, &prec );
+  GEOSX_LAI_CHECK_ERROR( KSPGetPC( ksp, &prec ) );
 
   if( m_parameters.preconditionerType == "none" )
   {
@@ -151,8 +131,8 @@ void PetscSolver::solve_krylov( PetscMatrix &mat,
   else if( m_parameters.preconditionerType == "ilut" )
   {
 #ifdef GEOSX_USE_MPI
-    PCSetType( prec, PCHYPRE );
-    PCHYPRESetType( prec, "pilut" );
+    GEOSX_LAI_CHECK_ERROR( PCSetType( prec, PCHYPRE ) );
+    GEOSX_LAI_CHECK_ERROR( PCHYPRESetType( prec, "pilut" ) );
 #else
     GEOSX_ERROR("Can't use HYPRE through PETSc in serial");
 #endif
@@ -177,8 +157,8 @@ void PetscSolver::solve_krylov( PetscMatrix &mat,
     translate.insert( std::make_pair( "l1scaledJacobi", "l1scaled-Jacobi" ));
 
 #ifdef GEOSX_USE_MPI
-    PCSetType( prec, PCHYPRE );
-    PCHYPRESetType( prec, "boomeramg" );
+    GEOSX_LAI_CHECK_ERROR( PCSetType( prec, PCHYPRE ) );
+    GEOSX_LAI_CHECK_ERROR( PCHYPRESetType( prec, "boomeramg" ) );
 #else
     GEOSX_ERROR("Can't use HYPRE through PETSc in serial");
 #endif
@@ -190,31 +170,34 @@ void PetscSolver::solve_krylov( PetscMatrix &mat,
     sprintf( smoother_type, "%s", translate[m_parameters.amg.smootherType].c_str() );
     sprintf( coarse_type, "%s", translate[m_parameters.amg.coarseType].c_str() );
 
-    PetscOptionsSetValue( nullptr, "-pc_hypre_boomeramg_max_levels", max_levels ); 
-    PetscOptionsSetValue( nullptr, "-pc_hypre_boomeramg_cycle_type", cycle_type ); 
+    GEOSX_LAI_CHECK_ERROR( PetscOptionsSetValue( nullptr, "-pc_hypre_boomeramg_max_levels", max_levels ) );
+    GEOSX_LAI_CHECK_ERROR( PetscOptionsSetValue( nullptr, "-pc_hypre_boomeramg_cycle_type", cycle_type ) );
     // relaxation method
     // available in HYPRE: Jacobi, sequential-Gauss-Seidel, seqboundary-Gauss-Seidel, SOR/Jacobi backward-SOR/Jacobi, symmetric-SOR/Jacobi  
     //   l1scaled-SOR/Jacobi Gaussian-elimination, l1-Gauss-Seidel, backward-l1-Gauss-Seidel, CG, Chebyshev FCF-Jacobi, l1scaled-Jacobi
-    PetscOptionsSetValue( nullptr, "-pc_hypre_boomeramg_relax_type_all", smoother_type ); // default: symmetric-SOR/Jacobi
-    PetscOptionsSetValue( nullptr, "-pc_hypre_boomeramg_relax_type_coarse", coarse_type ); // default: Gaussian-elimination
+    GEOSX_LAI_CHECK_ERROR( PetscOptionsSetValue( nullptr, "-pc_hypre_boomeramg_relax_type_all", smoother_type ) ); // default: symmetric-SOR/Jacobi
+    GEOSX_LAI_CHECK_ERROR( PetscOptionsSetValue( nullptr, "-pc_hypre_boomeramg_relax_type_coarse", coarse_type ) ); // default: Gaussian-elimination
     // number of relaxation sweeps
-    PetscOptionsSetValue( nullptr, "-pc_hypre_boomeramg_grid_sweeps_all", num_sweeps ); 
-    PetscOptionsSetValue( nullptr, "-pc_hypre_boomeramg_grid_sweeps_coarse", num_sweeps ); // coarsest grid
+    GEOSX_LAI_CHECK_ERROR( PetscOptionsSetValue( nullptr, "-pc_hypre_boomeramg_grid_sweeps_all", num_sweeps ) );
+    GEOSX_LAI_CHECK_ERROR( PetscOptionsSetValue( nullptr, "-pc_hypre_boomeramg_grid_sweeps_coarse", num_sweeps ) ); // coarsest grid
   }
   else
   {
-    GEOSX_ERROR( "The requested preconditionerType isn't availbe in exist" );
+    GEOSX_ERROR( "The requested preconditioner type isn't available in PETSc" );
   }
 
   // display output
   if ( m_parameters.logLevel > 0 )
   {
-    PetscOptionsSetValue( nullptr, "-ksp_monitor", nullptr ); 
+    GEOSX_LAI_CHECK_ERROR( PetscOptionsSetValue( nullptr, "-ksp_monitor", nullptr ) );
   }
 
   // Actually solve
-  KSPSetFromOptions( ksp ); 
-  KSPSolve( ksp, rhs.unwrapped(), sol.unwrapped() );
+  GEOSX_LAI_CHECK_ERROR( KSPSetFromOptions( ksp ) );
+  GEOSX_LAI_CHECK_ERROR( KSPSolve( ksp, rhs.unwrapped(), sol.unwrapped() ) );
+
+  // reset verbosity option
+  GEOSX_LAI_CHECK_ERROR( PetscOptionsClearValue( nullptr, "-ksp_monitor" ) );
 }
 
 } // end geosx namespace

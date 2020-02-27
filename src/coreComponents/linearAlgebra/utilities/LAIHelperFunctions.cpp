@@ -110,7 +110,7 @@ ParallelVector PermuteVector(ParallelVector const & vector,
 
   permutedVector.createWithLocalSize(vector.localSize(), MPI_COMM_GEOSX);
 
-  permuationMatrix.multiply(vector, permutedVector);
+  permuationMatrix.apply( vector, permutedVector );
 
   return permutedVector;
 }

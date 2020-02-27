@@ -32,7 +32,6 @@ set( linearAlgebra_headers
 #
 set( linearAlgebra_sources
      interfaces/BlasLapackLA.cpp
-     solvers/KrylovSolver.cpp
      solvers/CGsolver.cpp
      solvers/BiCGSTABsolver.cpp
      utilities/LAIHelperFunctions.cpp

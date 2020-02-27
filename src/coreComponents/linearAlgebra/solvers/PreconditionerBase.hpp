@@ -40,8 +40,51 @@ public:
    * @brief Compute the preconditioner from a matrix
    * @param mat the matrix to precondition
    */
+  virtual void compute( Matrix const & mat )
+  {
+    m_numGlobalRows = mat.numGlobalRows();
+    m_numGlobalCols = mat.numGlobalCols();
+    m_numLocalRows = mat.numLocalRows();
+    m_numLocalCols = mat.numLocalCols();
+  }
+
+  /**
+   * @brief Compute the preconditioner from a matrix
+   * @param mat the matrix to precondition
+   * @param dofManager the Degree-of-Freedom manager associated with matrix
+   */
   virtual void compute( Matrix const & mat,
-                        DofManager const & dofManager ) = 0;
+                        DofManager const & GEOSX_UNUSED_PARAM( dofManager ) )
+  {
+    compute( mat );
+  }
+
+  virtual globalIndex numGlobalRows() const override
+  {
+    return m_numGlobalRows;
+  }
+
+  virtual globalIndex numGlobalCols() const override
+  {
+    return m_numGlobalCols;
+  }
+
+  virtual localIndex numLocalRows() const override
+  {
+    return m_numLocalRows;
+  }
+
+  virtual localIndex numLocalCols() const override
+  {
+    return m_numLocalCols;
+  }
+
+private:
+
+  globalIndex m_numGlobalRows;
+  globalIndex m_numGlobalCols;
+  localIndex m_numLocalRows;
+  localIndex m_numLocalCols;
 
 };
 
