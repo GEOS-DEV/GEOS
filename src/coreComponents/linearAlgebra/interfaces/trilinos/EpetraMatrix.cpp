@@ -25,6 +25,7 @@
 #include <Epetra_FEVector.h>
 #include <EpetraExt_MatrixMatrix.h>
 #include <EpetraExt_RowMatrixOut.h>
+#include <Epetra_RowMatrixTransposer.h>
 
 #ifdef GEOSX_USE_MPI
 #include <Epetra_MpiComm.h>
@@ -424,10 +425,26 @@ void EpetraMatrix::leftRightScale( EpetraVector const & vecLeft,
   rightScale( vecRight );
 }
 
-void EpetraMatrix::transpose( EpetraMatrix & GEOSX_UNUSED_PARAM(dst) ) const
+void EpetraMatrix::transpose( EpetraMatrix & dst ) const
 {
   GEOSX_LAI_ASSERT( ready() );
-  GEOSX_ERROR( "Not implemented" );
+  Epetra_RowMatrixTransposer transposer( m_matrix.get() );
+  Epetra_CrsMatrix * trans;
+  transposer.CreateTranspose( true, trans );
+  dst.m_matrix = std::make_unique<Epetra_FECrsMatrix>( Copy, trans->Graph() );
+  dst.m_dst_map = std::make_unique<Epetra_Map>( trans->RangeMap() );
+  dst.m_src_map = std::make_unique<Epetra_Map>( trans->DomainMap() );
+
+  // copy rows of Epetra_CrsMatrix into Epetra_FECrsMatrix
+  int numEntries;
+  double * values;
+  int * indices;
+  for( int i = 0; i < trans->NumMyRows(); ++i )
+  {
+    trans->ExtractMyRowView( i, numEntries, values, indices );
+    dst.m_matrix->ReplaceMyValues( i, numEntries, values, indices );
+  }
+  delete trans;
 }
 
 void EpetraMatrix::clearRow( globalIndex const globalRow,
