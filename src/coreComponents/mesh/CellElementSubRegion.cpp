@@ -49,8 +49,8 @@ CellElementSubRegion::~CellElementSubRegion()
 void CellElementSubRegion::CopyFromCellBlock( CellBlock * source )
 {
   this->SetElementType(source->GetElementTypeString());
-  this->numNodesPerElement() = source->numNodesPerElement();
-  this->numFacesPerElement() = source->numFacesPerElement();
+  this->setNumNodesPerElement( source->numNodesPerElement() );
+  this->setNumFacesPerElement( source->numFacesPerElement() );
   this->resize(source->size());
   this->nodeList() = source->nodeList();
   this->m_localToGlobalMap = source->m_localToGlobalMap;
