@@ -2873,6 +2873,13 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
   real64_array& SIFNode = nodeManager.getReference<real64_array>( "SIFNode" );
   real64_array& SIFonFace = faceManager.getReference<real64_array>( "SIFonFace" );
 
+  std::vector< std::vector< realT > > SIFNode_All, SIFonFace_All;
+  std::vector< realT > SIFOnEdge;
+  SIFNode_All.resize( nodeManager.size() );
+  SIFonFace_All.resize( faceManager.size() );
+  SIFOnEdge.resize( edgeManager.size() );
+
+
   for (localIndex i = 0; i < SIFNode.size(); i++)
   {
     SIFNode[i] = 0.0;
@@ -3172,23 +3179,7 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
           tipNodeSIF = pow( (fabs(tipNodeForce[0] * trailingNodeDisp[0] / 2.0 / tipArea) + fabs(tipNodeForce[1] * trailingNodeDisp[1] / 2.0 / tipArea)
               + fabs(tipNodeForce[2] * trailingNodeDisp[2] / 2.0 / tipArea)), 0.5 );
 
-          //wu40: the tip node may be included in two trailing faces and SIF of the node will be calculated twice. We chose the smaller one.
-//          if (SIFNode[nodeIndex] < tipNodeSIF)
-//          {
-//            SIFNode[nodeIndex] = tipNodeSIF;
-//          }
-
-          if (SIFNode[nodeIndex] > 0)
-          {
-            if (SIFNode[nodeIndex] > tipNodeSIF)
-            {
-              SIFNode[nodeIndex] = tipNodeSIF;
-            }
-          }
-          else
-          {
-            SIFNode[nodeIndex] = tipNodeSIF;
-          }
+          SIFNode_All[nodeIndex].push_back(tipNodeSIF);
 
 
           //Calculate SIF on tip faces connected to this trailing face and the tip node.
@@ -3276,10 +3267,8 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
 
                     SIF_Face = cos( thetaFace / 2.0 ) *
                         ( SIF_I * cos( thetaFace / 2.0 ) * cos( thetaFace / 2.0 ) - 1.5 * SIF_II * sin( thetaFace ) );
-                    if ( SIFonFace[faceIndex] < SIF_Face )
-                    {
-                      SIFonFace[faceIndex] = SIF_Face;
-                    }
+
+                    SIFonFace_All[faceIndex].push_back(SIF_Face);
                   }
                 }
               }
@@ -3288,7 +3277,30 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
         }
       }
     }
-  } //);
+  }
+
+  //wu40: the tip node may be included in multiple trailing faces and SIF of the node/face will be calculated multiple times. We chose the smaller node SIF and the larger face SIF.
+  for (localIndex const nodeIndex : m_tipNodes)
+  {
+    if (isNodeGhost[nodeIndex] < 0)
+    {
+      SIFNode[nodeIndex] = *min_element(SIFNode_All[nodeIndex].begin(), SIFNode_All[nodeIndex].end());
+
+      for (localIndex const edgeIndex: m_tipEdges)
+      {
+        if (edgeToNodeMap[edgeIndex][0] == nodeIndex || edgeToNodeMap[edgeIndex][1] == nodeIndex)
+        {
+          for (localIndex const faceIndex: edgeToFaceMap.getIterableSet( edgeIndex ) )
+          {
+            if (m_tipFaces.contains(faceIndex))
+            {
+              SIFonFace[faceIndex] = *max_element(SIFonFace_All[faceIndex].begin(), SIFonFace_All[faceIndex].end());
+            }
+          }
+        }
+      }
+    }
+  }
 }
 
 realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
