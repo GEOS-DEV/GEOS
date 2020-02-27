@@ -212,6 +212,8 @@ public:
   void leftRightScale( EpetraVector const & vecLeft,
                        EpetraVector const & vecRight ) override;
 
+  void transpose( EpetraMatrix & dst ) const override;
+
   void clearRow( globalIndex const row,
                  real64 const diagValue = 0 ) override;
 

@@ -591,17 +591,11 @@ void HypreMatrix::rightMultiplyTranspose( HypreMatrix const & src,
   GEOSX_LAI_ASSERT_EQ( numGlobalCols(), src.numGlobalCols() );
 
   // Transpose this
-  HYPRE_ParCSRMatrix tmp;
-  GEOSX_LAI_CHECK_ERROR( hypre_ParCSRMatrixTranspose( src.m_parcsr_mat, &tmp, 1 ) );
+  HypreMatrix tmp;
+  transpose( tmp );
 
   // Compute product
-  HYPRE_ParCSRMatrix const dst_parcsr = hypre_ParMatmul( src.m_parcsr_mat, tmp );
-
-  // Create IJ layer (with matrix closed)
-  dst.parCSRtoIJ( dst_parcsr );
-
-  // Destroy temporary matrix
-  GEOSX_LAI_CHECK_ERROR( hypre_ParCSRMatrixDestroy( tmp ) );
+  src.multiply( tmp, dst );
 
   // Reopen matrix if desired
   if( !closeResult )
@@ -1132,10 +1126,8 @@ real64 HypreMatrix::norm1() const
 {
   GEOSX_LAI_ASSERT( ready() );
 
-  HYPRE_ParCSRMatrix parCSRT;
-  GEOSX_LAI_CHECK_ERROR( hypre_ParCSRMatrixTranspose( m_parcsr_mat, &parCSRT, 1 ) );
   HypreMatrix matT;
-  matT.parCSRtoIJ( parCSRT );
+  transpose( matT );
   return matT.normInf();
 }
 
@@ -1182,26 +1174,7 @@ real64 HypreMatrix::normInf() const
 real64 HypreMatrix::normFrobenius() const
 {
   GEOSX_LAI_ASSERT( ready() );
-
-  hypre_CSRMatrix const * const prt_diag_CSR = hypre_ParCSRMatrixDiag( m_parcsr_mat );
-  HYPRE_Int const diag_nnz = hypre_CSRMatrixNumNonzeros( prt_diag_CSR );
-  HYPRE_Real const * const ptr_diag_data = hypre_CSRMatrixData( prt_diag_CSR );
-
-  hypre_CSRMatrix const * const prt_offdiag_CSR = hypre_ParCSRMatrixOffd( m_parcsr_mat );
-  HYPRE_Int const offdiag_nnz = hypre_CSRMatrixNumNonzeros( prt_offdiag_CSR );
-  HYPRE_Real const * const ptr_offdiag_data = hypre_CSRMatrixData( prt_offdiag_CSR );
-
-  HYPRE_Real local_normFrob = 0.0;
-  for( HYPRE_Int i = 0 ; i < diag_nnz ; ++i )
-  {
-    local_normFrob += ptr_diag_data[i] * ptr_diag_data[i];
-  }
-  for( HYPRE_Int i = 0 ; i < offdiag_nnz ; ++i )
-  {
-    local_normFrob += ptr_offdiag_data[i] * ptr_offdiag_data[i];
-  }
-
-  return sqrt( MpiWrapper::Sum( local_normFrob, getComm() ) );
+  return hypre_ParCSRMatrixFnorm( m_parcsr_mat );
 }
 
 void HypreMatrix::rightScale( HypreVector const & GEOSX_UNUSED_PARAM( vec ) )
@@ -1215,6 +1188,18 @@ void HypreMatrix::leftRightScale( HypreVector const & GEOSX_UNUSED_PARAM( vecLef
 {
   GEOSX_LAI_ASSERT( ready() );
   GEOSX_ERROR( "Not implemented" );
+}
+
+void HypreMatrix::transpose( HypreMatrix & dst ) const
+{
+  GEOSX_LAI_ASSERT( ready() );
+
+  // Transpose this->m_parcsr_mat
+  HYPRE_ParCSRMatrix dst_parcsr;
+  GEOSX_LAI_CHECK_ERROR( hypre_ParCSRMatrixTranspose( m_parcsr_mat, &dst_parcsr, 1 ) );
+
+  // Create IJ layer (with matrix closed)
+  dst.parCSRtoIJ( dst_parcsr );
 }
 
 MPI_Comm HypreMatrix::getComm() const

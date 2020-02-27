@@ -597,6 +597,16 @@ protected:
                                Vector const & vecRight ) = 0;
 
   /**
+   * @brief Matrix transposition.
+   *
+   * Compute <tt>B = this^T<tt>.
+   *
+   * @param dst Output matrix (B).
+   *
+   */
+  virtual void transpose( Matrix & dst ) const = 0;
+
+  /**
    * @brief Clear a row, and optionally set diagonal element to <tt>diagValue</tt>.
    * @param row globalIndex of the row to be cleared.
    * @param diagValue (Optional) set diagonal element to desired value.

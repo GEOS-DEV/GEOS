@@ -71,6 +71,9 @@ void HypreSolver::solve( HypreMatrix & mat,
 
   if( m_parameters.solverType == "direct" )
   {
+	mat.write( "MGR_jacobian",
+		       LAIOutputFormat::NATIVE_ASCII );
+	GEOSX_ERROR( "STOP EXECUTION");
     solve_direct( mat, sol, rhs );
   }
   else

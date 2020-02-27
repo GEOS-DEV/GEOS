@@ -221,6 +221,8 @@ public:
   void leftRightScale( HypreVector const &vecLeft,
                        HypreVector const &vecRight ) override;
 
+  void transpose( HypreMatrix & dst ) const override;
+
   void clearRow( globalIndex const row,
                  real64 const diagValue = 0 ) override;
 

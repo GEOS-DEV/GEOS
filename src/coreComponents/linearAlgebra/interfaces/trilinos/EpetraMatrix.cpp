@@ -424,6 +424,12 @@ void EpetraMatrix::leftRightScale( EpetraVector const & vecLeft,
   rightScale( vecRight );
 }
 
+void EpetraMatrix::transpose( EpetraMatrix & GEOSX_UNUSED_PARAM(dst) ) const
+{
+  GEOSX_LAI_ASSERT( ready() );
+  GEOSX_ERROR( "Not implemented" );
+}
+
 void EpetraMatrix::clearRow( globalIndex const globalRow,
                              real64 const diagValue )
 {

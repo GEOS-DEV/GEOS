@@ -536,6 +536,13 @@ void PetscMatrix::leftRightScale( PetscVector const &vecLeft,
   GEOSX_LAI_CHECK_ERROR( MatDiagonalScale( m_mat, vecLeft.unwrapped(), vecRight.unwrapped() ) );
 }
 
+void PetscMatrix::transpose( PetscMatrix & dst ) const
+{
+  GEOSX_LAI_ASSERT( ready() );
+  MatReuse const reuse = dst.created() ? MAT_REUSE_MATRIX : MAT_INITIAL_MATRIX;
+  GEOSX_LAI_CHECK_ERROR( MatTranspose( m_mat, reuse, &dst.unwrapped() ) );
+}
+
 void PetscMatrix::clearRow( globalIndex const globalRow,
                             real64 const diagValue )
 {

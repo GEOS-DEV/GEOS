@@ -215,6 +215,8 @@ public:
   void leftRightScale( PetscVector const & vecLeft,
                        PetscVector const & vecRight ) override;
 
+  void transpose( PetscMatrix & dst ) const override;
+
   void clearRow( globalIndex const globalRow,
                  real64 const diagValue = 0 ) override;
 
