@@ -326,6 +326,20 @@ void SinglePhaseBase::InitializePostInitialConditions_PreSubGroups( Group * cons
          setApplyDefaultValue(defaultDensity * region->getDefaultAperture() );
      });
    });
+
+   elemManager->forElementSubRegionsComplete<FaceElementSubRegion>( m_targetRegions,
+                                                                   [&] ( localIndex er,
+                                                                         localIndex esr,
+                                                                         ElementRegionBase const * const GEOSX_UNUSED_PARAM( region ),
+                                                                         FaceElementSubRegion * subRegion )
+   {
+     arrayView1d<real64 const> const & offsetAper = subRegion->getReference<array1d<real64>>( FaceElementSubRegion::viewKeyStruct::elementApertureOffsetString );
+     arrayView1d<real64> const & effAper = m_effectiveAperture[er][esr];
+     forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+     {
+       effAper[ei] += offsetAper[ei];
+     } );
+   } );
 }
 
 real64 SinglePhaseBase::SolverStep( real64 const& time_n,
@@ -392,20 +406,7 @@ void SinglePhaseBase::UpdateEOS( real64 const time_n,
     } );
   } );
 
-  // TODO: this formulation of explicit solver requires density boundary condition
-//  FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
-//  fsManager.Apply( time_n + dt, domain, "ElementRegions", viewKeyStruct::densityString,
-//                    [&]( FieldSpecificationBase const * const fs,
-//                         string const &,
-//                         SortedArray<localIndex> const & lset,
-//                         Group * subRegion,
-//                         string const & ) -> void
-//  {
-//    fs->ApplyFieldValue<FieldSpecificationEqual>( lset,
-//                                                  time_n + dt,
-//                                                  subRegion,
-//                                                  viewKeyStruct::densityString );
-//  });
+  // TODO: this formulation of explicit solver may require density boundary condition
 
   // update pressure based on density
   if (m_poroElasticFlag)
@@ -429,10 +430,8 @@ void SinglePhaseBase::UpdateEOS( real64 const time_n,
         fluid->PointUpdatePressureExplicit( pres[ei], ei, 0);
         dPres[ei] = pres[ei] - dPres[ei];
 
-//        int rank = -1;
-//        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-////        if ( std::abs(mass[ei]) > 0 && poro[ei] > 0.999 )
-//        //        if ( pres[ei] > 0 )
+//          std::cout << "    rank " << MpiWrapper::Comm_rank(MPI_COMM_GEOSX)
+//        if ( pres[ei] > 0 )
 //        if ( std::abs(mass[ei]) > 0 )
 //        {
 //          std::cout << "\n Fluid Update in poroElastic:  ei = " << ei << ", mass = " << mass[ei] << ", poro= " << poro[ei] << ", vol = " << vol[ei]
@@ -569,19 +568,13 @@ void SinglePhaseBase::SetupSystem( DomainPartition * const domain,
     {
       localIndex const rowSize = matrix.localRowLength( row );
       maxRowSize = maxRowSize > rowSize ? maxRowSize : rowSize;
-
-      derivativeFluxResidual_dAperture->reserveNonZeros( row,
-                                                         rowSize );
     }
     for( localIndex row=matrix.localRows() ; row<numRows ; ++row )
     {
       derivativeFluxResidual_dAperture->reserveNonZeros( row,
                                                          maxRowSize );
     }
-
-
   }
-
 
   string const presDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString );
 
@@ -614,6 +607,7 @@ void SinglePhaseBase::SetupSystem( DomainPartition * const domain,
       }
     }
   });
+
 }
 
 void SinglePhaseBase::ImplicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),

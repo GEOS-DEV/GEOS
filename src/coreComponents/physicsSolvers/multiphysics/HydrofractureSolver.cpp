@@ -418,6 +418,8 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
   ContactRelationBase const * const
   contactRelation = constitutiveManager->GetGroup<ContactRelationBase>(m_contactRelationName);
 
+  real64 const contactStiffness = contactRelation->stiffness();
+
   // update face area
   faceManager->computeGeometry(nodeManager);
 
@@ -429,7 +431,7 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
       arrayView1d<real64> const & aperture = subRegion->getElementAperture();
       arrayView1d<real64> const & apertureOffset = subRegion->getElementApertureOffset();
       arrayView1d<real64> const & effectiveAperture = subRegion->getReference<array1d<real64>>(FlowSolverBase::viewKeyStruct::effectiveApertureString);
-      arrayView1d<real64> const & volume = subRegion->getElementVolume();
+      arrayView1d<real64 const> const & volume = subRegion->getElementVolume();
       arrayView1d<real64> const & deltaVolume = subRegion->getReference<array1d<real64> >(FlowSolverBase::viewKeyStruct::deltaVolumeString);
       arrayView1d<real64 const> const & area = subRegion->getElementArea();
       arrayView2d< localIndex const > const & elemsToFaces = subRegion->faceList();
@@ -453,18 +455,22 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
         localIndex const kf0 = elemsToFaces[kfe][0];
         localIndex const kf1 = elemsToFaces[kfe][1];
         localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray(kf0);
-        R1Tensor temp;
+
+        R1Tensor Nbar = faceNormal[kf0];
+        Nbar -= faceNormal[kf1];
+        Nbar.Normalize();
+
+        real64 gapNormal = 0;
         for( localIndex a=0 ; a<numNodesPerFace ; ++a )
         {
-          temp += u[faceToNodeMap(kf0, a)];
-          temp -= u[faceToNodeMap(kf1, a)];
+          localIndex const node0 = faceToNodeMap[kf0][a];
+          localIndex const node1 = faceToNodeMap[kf1][ a==0 ? a : numNodesPerFace-a ];
+          R1Tensor gap = u[node1];
+          gap -= u[node0];
+          gapNormal += Dot(gap,Nbar);
         }
-
-        // TODO this needs a proper contact based strategy for aperture
-        aperture[kfe] = -Dot(temp,faceNormal[kf0]) / numNodesPerFace;
-
-        contactStress[kfe] = std::max(- aperture[kfe] * contactRelation->stiffness(), 0.0);
-
+        aperture[kfe] = gapNormal / numNodesPerFace;
+        contactStress[kfe] = std::max(- aperture[kfe] * contactStiffness, 0.0);
         effectiveAperture[kfe] = contactRelation->effectiveAperture( aperture[kfe] + apertureOffset[kfe]);
 
 
@@ -497,7 +503,7 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
     {
       faceElemRegion->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion * const subRegion )
       {
-        arrayView1d<real64> const & volume = subRegion->getElementVolume();
+        arrayView1d<real64> const & volume = subRegion->getReference<array1d<real64> >(CellElementSubRegion::viewKeyStruct::elementVolumeString);
         arrayView1d<real64> const & deltaVolume = subRegion->getReference<array1d<real64> >(FlowSolverBase::viewKeyStruct::deltaVolumeString);
         for( localIndex kfe=0 ; kfe<subRegion->size() ; ++kfe )
         {

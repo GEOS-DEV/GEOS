@@ -291,11 +291,13 @@
 	<xsd:complexType name="TableFunctionType" />
 	<xsd:complexType name="GeometryType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="BoundedPlane" type="BoundedPlaneType" />
 			<xsd:element name="Box" type="BoxType" />
 			<xsd:element name="Cylinder" type="CylinderType" />
 			<xsd:element name="ThickPlane" type="ThickPlaneType" />
 		</xsd:choice>
 	</xsd:complexType>
+	<xsd:complexType name="BoundedPlaneType" />
 	<xsd:complexType name="BoxType">
 		<!--center => (no description available)-->
 		<xsd:attribute name="center" type="R1Tensor" />
@@ -429,6 +431,7 @@
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="CompositionalMultiphaseFlow" type="CompositionalMultiphaseFlowType" />
 			<xsd:element name="CompositionalMultiphaseWell" type="CompositionalMultiphaseWellType" />
+			<xsd:element name="EmbeddedSurfaceGenerator" type="EmbeddedSurfaceGeneratorType" />
 			<xsd:element name="Hydrofracture" type="HydrofractureType" />
 			<xsd:element name="LaplaceFEM" type="LaplaceFEMType" />
 			<xsd:element name="Poroelastic" type="PoroelasticType" />
@@ -469,6 +472,14 @@
 		<xsd:attribute name="resFluidIndex" type="localIndex" />
 	</xsd:complexType>
 	<xsd:complexType name="WellControlsType" />
+	<xsd:complexType name="EmbeddedSurfaceGeneratorType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
+		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
+		<xsd:attribute name="maxStableDt" type="real64" />
+	</xsd:complexType>
 	<xsd:complexType name="HydrofractureType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
@@ -1133,6 +1144,7 @@
 			<xsd:element name="neighborData" type="neighborDataType" />
 			<xsd:element name="sets" type="setsType" />
 			<xsd:element name="CellElementRegion" type="CellElementRegionType" />
+			<xsd:element name="EmbeddedSurfaceElementRegion" type="EmbeddedSurfaceElementRegionType" />
 			<xsd:element name="FaceElementRegion" type="FaceElementRegionType" />
 			<xsd:element name="WellElementRegion" type="WellElementRegionType" />
 		</xsd:choice>
@@ -1354,7 +1366,7 @@
 			<xsd:element name="WellElementRegionuniqueSubRegion" type="WellElementRegionuniqueSubRegionType" />
 		</xsd:choice>
 	</xsd:complexType>
-	<xsd:complexType name="FaceElementRegionType">
+	<xsd:complexType name="EmbeddedSurfaceElementRegionType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="elementSubRegions" type="elementSubRegionsType" />
 			<xsd:element name="neighborData" type="neighborDataType" />
@@ -1377,30 +1389,24 @@
 			<xsd:element name="neighborData" type="neighborDataType" />
 			<xsd:element name="sets" type="setsType" />
 		</xsd:choice>
-		<!--creationMass => The amount of remaining mass that was introduced when the FaceElement was created.-->
-		<xsd:attribute name="creationMass" type="real64_array" />
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
-		<!--edgeList => Map to the edges attached to each FaceElement.-->
-		<xsd:attribute name="edgeList" type="geosx::InterObjectRelation&lt;LvArray::Array&lt;LvArray::Array&lt;long, 1, camp::int_seq&lt;long, 0l&gt;, long, LvArray::NewChaiBuffer&gt;, 1, camp::int_seq&lt;long, 0l&gt;, long, LvArray::NewChaiBuffer&gt; &gt;" />
-		<!--elementAperture => The aperture of each FaceElement.-->
+		<!--edgeList => Map to the edges.-->
+		<xsd:attribute name="edgeList" type="geosx::InterObjectRelation&lt;LvArray::ArrayOfArrays&lt;long, long&gt; &gt;" />
+		<!--elementAperture => The aperture of each EmbeddedSurface.-->
 		<xsd:attribute name="elementAperture" type="real64_array" />
-		<!--elementApertureOffset => The aperture offset of each FaceElement.-->
-		<xsd:attribute name="elementApertureOffset" type="real64_array" />
-		<!--elementArea => The area of each FaceElement.-->
+		<!--elementArea => The area of each EmbeddedSurface element.-->
 		<xsd:attribute name="elementArea" type="real64_array" />
-		<!--elementCenter => The center of each FaceElement.-->
+		<!--elementCenter => The center of each EmbeddedSurface element.-->
 		<xsd:attribute name="elementCenter" type="r1_array" />
-		<!--elementVolume => The volume of each FaceElement.-->
+		<!--elementVolume => The volume of each EmbeddedSurface element.-->
 		<xsd:attribute name="elementVolume" type="real64_array" />
-		<!--faceList => Map to the faces attached to each FaceElement.-->
-		<xsd:attribute name="faceList" type="geosx::InterObjectRelation&lt;LvArray::Array&lt;long, 2, camp::int_seq&lt;long, 0l, 1l&gt;, long, LvArray::NewChaiBuffer&gt; &gt;" />
-		<!--fractureElementsToCellIndices => A map of face element local indices to the cell local indices-->
-		<xsd:attribute name="fractureElementsToCellIndices" type="localIndex_array2d" />
-		<!--fractureElementsToCellRegions => A map of face element local indices to the cell local indices-->
-		<xsd:attribute name="fractureElementsToCellRegions" type="localIndex_array2d" />
-		<!--fractureElementsToCellSubRegions => A map of face element local indices to the cell local indices-->
-		<xsd:attribute name="fractureElementsToCellSubRegions" type="localIndex_array2d" />
+		<!--fractureElementsToCellIndices => Map to the cells.-->
+		<xsd:attribute name="fractureElementsToCellIndices" type="localIndex_array" />
+		<!--fractureElementsToRegionIndex => Map to the region cut by each EmbeddedSurface.-->
+		<xsd:attribute name="fractureElementsToRegionIndex" type="localIndex_array" />
+		<!--fractureElementsToSubRegionIndex => Map to the subregion cut by each EmbeddedSurface.-->
+		<xsd:attribute name="fractureElementsToSubRegionIndex" type="localIndex_array" />
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
@@ -1409,10 +1415,29 @@
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
-		<!--nodeList => Map to the nodes attached to each FaceElement.-->
-		<xsd:attribute name="nodeList" type="geosx::InterObjectRelation&lt;LvArray::Array&lt;LvArray::Array&lt;long, 1, camp::int_seq&lt;long, 0l&gt;, long, LvArray::NewChaiBuffer&gt;, 1, camp::int_seq&lt;long, 0l&gt;, long, LvArray::NewChaiBuffer&gt; &gt;" />
+		<!--nodeList => Map to the nodes attached to each EmbeddedSurface.-->
+		<xsd:attribute name="nodeList" type="geosx::InterObjectRelation&lt;LvArray::Array&lt;long, 2, camp::int_seq&lt;long, 0l, 1l&gt;, long, LvArray::NewChaiBuffer&gt; &gt;" />
+		<!--normalVector => Unit normal vector to the embedded surface.-->
+		<xsd:attribute name="normalVector" type="r1_array" />
 	</xsd:complexType>
 	<xsd:complexType name="ConstitutiveModelsType" />
+	<xsd:complexType name="FaceElementRegionType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="elementSubRegions" type="elementSubRegionsType" />
+			<xsd:element name="neighborData" type="neighborDataType" />
+			<xsd:element name="sets" type="setsType" />
+		</xsd:choice>
+		<!--domainBoundaryIndicator => (no description available)-->
+		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
+		<!--ghostRank => (no description available)-->
+		<xsd:attribute name="ghostRank" type="integer_array" />
+		<!--globalToLocalMap => (no description available)-->
+		<xsd:attribute name="globalToLocalMap" type="geosx::mapBase&lt;long long, long, std::integral_constant&lt;bool, false&gt; &gt;" />
+		<!--isExternal => (no description available)-->
+		<xsd:attribute name="isExternal" type="integer_array" />
+		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
+		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
+	</xsd:complexType>
 	<xsd:complexType name="WellElementRegionType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="elementSubRegions" type="elementSubRegionsType" />

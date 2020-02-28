@@ -91,9 +91,6 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
   coefficient = elemManager->ConstructViewAccessor< array1d<R1Tensor>,
                                                     arrayView1d<R1Tensor const> >( m_coeffName );
 
-  arrayView1d<integer const> const & faceGhostRank =
-    faceManager->getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
-
   ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager->nodeList();
 
   // make a list of region indices to be included
@@ -124,8 +121,7 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
 
   for (localIndex kf = 0; kf < faceManager->size(); ++kf)
   {
-  //  if (elemRegionList[kf][0] == -1 || elemRegionList[kf][1] == -1)
-    if (faceGhostRank[kf] >= 0 || elemRegionList[kf][0] == -1 || elemRegionList[kf][1] == -1)
+    if (elemRegionList[kf][0] == -1 || elemRegionList[kf][1] == -1 || elemList[kf][0] == -1 || elemList[kf][1] == -1)
       continue;
 
     if ( !(regionFilter.contains(elemRegionList[kf][0]) && regionFilter.contains(elemRegionList[kf][1])) )
@@ -262,7 +258,6 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition & domain,
   stackArray1d<localIndex, maxElems> stencilCellsIndex;
   stackArray1d<real64, maxElems> stencilWeights;
   stackArray1d<real64, maxElems> stencilWeightedElementCenterToConnectorCenter;
-//  arrayView1d<integer const> const & edgeGhostRank = edgeManager->GhostRank();
 
   // TODO Note that all of this initialization should be performed elsewhere. This is just here because it was
   // convenient, but it is not appropriate to have physics based initialization in the flux approximator.
@@ -332,7 +327,6 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition & domain,
     localIndex const edgeIndex = fractureConnectorsToEdges[fci];
 
     if( numElems > 1 )
-//    if( edgeGhostRank[edgeIndex] < 0 && numElems > 1 )
     {
 
       GEOSX_ERROR_IF(numElems > maxElems, "Max stencil size exceeded by fracture-fracture connector " << fci);
@@ -510,7 +504,6 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition & domain,
     for( localIndex const kfe : fractureSubRegion->m_newFaceElements )
 //    for( localIndex kfe=0 ; kfe<faceElementsToCells.size(0) ; ++kfe )
     {
-//      if( fractureSubRegion->GhostRank()[kfe] < 0 )
       {
         localIndex const numElems = faceElementsToCells.size(1);
 
@@ -599,10 +592,6 @@ void TwoPointFluxApproximation::computeBoundaryStencil( DomainPartition const & 
   coefficient = elemManager->ConstructViewAccessor< array1d<R1Tensor>,
                                                     arrayView1d<R1Tensor const> >(m_coeffName);
 
-//  integer_array const & faceGhostRank = faceManager->getReference<integer_array>(ObjectManagerBase::
-//                                                                                 viewKeyStruct::
-//                                                                                 ghostRankString);
-
   ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager->nodeList();
 
   // make a list of region indices to be included
@@ -630,9 +619,6 @@ void TwoPointFluxApproximation::computeBoundaryStencil( DomainPartition const & 
   stencil.reserve(faceSet.size(), 2);
   for (localIndex kf : faceSet)
   {
-//    if (faceGhostRank[kf] >= 0)
-//      continue;
-
     faceArea = computationalGeometry::Centroid_3DPolygon( faceToNodes[kf], faceToNodes.sizeOfArray( kf ), X, faceCenter, faceNormal, areaTolerance );
 
     for (localIndex ke = 0; ke < numElems; ++ke)
