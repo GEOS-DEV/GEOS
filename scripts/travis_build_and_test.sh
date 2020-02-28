@@ -33,8 +33,6 @@ or_die python scripts/config-build.py \
 
 or_die cd ${GEOSX_BUILD_DIR}
 or_die make -j $(nproc) VERBOSE=1
-# FIXME MAKE an intelligent path... in the python command line
-# FIXME make install is still not working
 or_die make install VERBOSE=1
 
 # Unit tests
