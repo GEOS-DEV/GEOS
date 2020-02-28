@@ -160,6 +160,8 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
     GEOSX_ERROR( "The requested preconditionerType doesn't seem to exist" );
   }
 
+  HYPRE_Int result = 0;
+
   // Choose the solver type - set parameters - solve
   if( m_parameters.solverType == "gmres" )
   {
@@ -187,10 +189,10 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
                                                    sol.unwrappedParVector() ) );
 
     // Solve
-    GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRGMRESSolve( solver,
-                                                   mat.unwrappedParCSR(),
-                                                   rhs.unwrappedParVector(),
-                                                   sol.unwrappedParVector() ) );
+    result = HYPRE_ParCSRGMRESSolve( solver,
+                                     mat.unwrappedParCSR(),
+                                     rhs.unwrappedParVector(),
+                                     sol.unwrappedParVector() );
 
 
     /* Destroy solver and preconditioner */
@@ -220,10 +222,10 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
                                                       sol.unwrappedParVector() ) );
 
     // Solve
-    GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRBiCGSTABSolve( solver,
-                                                      mat.unwrappedParCSR(),
-                                                      rhs.unwrappedParVector(),
-                                                      sol.unwrappedParVector() ) );
+    result = HYPRE_ParCSRBiCGSTABSolve( solver,
+                                        mat.unwrappedParCSR(),
+                                        rhs.unwrappedParVector(),
+                                        sol.unwrappedParVector() );
 
 
     /* Destroy solver and preconditioner */
@@ -254,10 +256,11 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
                                                  sol.unwrappedParVector() ) );
 
     // Solve
-    GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRPCGSolve( solver,
-                                                 mat.unwrappedParCSR(),
-                                                 rhs.unwrappedParVector(),
-                                                 sol.unwrappedParVector() ) );
+    result = HYPRE_ParCSRPCGSolve( solver,
+                                   mat.unwrappedParCSR(),
+                                   rhs.unwrappedParVector(),
+                                   sol.unwrappedParVector() );
+
 
 
     /* Destroy solver and preconditioner */
@@ -267,6 +270,8 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
   {
     GEOSX_ERROR( "The requested linear solverType doesn't seem to exist" );
   }
+
+  GEOSX_WARNING_IF( result, "HypreSolver: Krylov convergence not achieved" );
 
   // Destroy preconditioner
   GEOSX_LAI_CHECK_ERROR( precondDestroyFunction( precond ) );
