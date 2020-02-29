@@ -73,22 +73,30 @@ void LagrangianContactSolver::RegisterDataOnMesh( dataRepository::Group * const 
       region->forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion * const subRegion )
       {
         subRegion->registerWrapper< array2d< real64 > >( viewKeyStruct::tractionString )->
+          setApplyDefaultValue(0.0)->
           setPlotLevel( PlotLevel::LEVEL_0 )->
           setRegisteringObjects( this->getName())->
           setDescription( "An array that holds the tractions on the fracture." );
         subRegion->getReference< array2d< real64 > >( viewKeyStruct::tractionString ).resizeDimension< 1 >( 3 );
 
         subRegion->registerWrapper< array2d< real64 > >( viewKeyStruct::deltaTractionString )->
+          setApplyDefaultValue(0.0)->
           setPlotLevel( PlotLevel::LEVEL_0 )->
           setRegisteringObjects( this->getName())->
           setDescription( "An array that holds the traction increments on the fracture." );
         subRegion->getReference< array2d< real64 > >( viewKeyStruct::deltaTractionString ).resizeDimension< 1 >( 3 );
 
-        // TODO: maybe not needed???
-        subRegion->registerWrapper< array1d< R1Tensor > >( FaceElementSubRegion::viewKeyStruct::elementLocalJumpString )->
-          setPlotLevel( PlotLevel::LEVEL_0 )->
+        subRegion->registerWrapper< array1d< FractureState > >( viewKeyStruct::fractureStateString )->
+          setPlotLevel( PlotLevel::LEVEL_1 )->
           setRegisteringObjects( this->getName())->
-          setDescription( "An array that holds the local jump on the fracture." );
+          setDescription( "An array that holds the fracture state." );
+        InitializeFractureState( meshLevel );
+
+//        // TODO: maybe not needed???
+//        subRegion->registerWrapper< array1d< R1Tensor > >( FaceElementSubRegion::viewKeyStruct::elementLocalJumpString )->
+//          setPlotLevel( PlotLevel::LEVEL_1 )->
+//          setRegisteringObjects( this->getName())->
+//          setDescription( "An array that holds the local jump on the fracture." );
       } );
     } );
   }
@@ -162,11 +170,6 @@ void LagrangianContactSolver::ResetStateToBeginningOfStep( DomainPartition * con
   MeshLevel * const meshLevel = domain->getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager * const elemManager = meshLevel->getElemManager();
 
-//  elemManager->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion const * const subRegion )->void
-//    {
-//      if( subRegion->hasWrapper( tractionKey ) )
-//      {
-
   elemManager->forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion * const subRegion )->void
   {
     if( subRegion->hasWrapper( tractionKey ) )
@@ -196,8 +199,6 @@ real64 LagrangianContactSolver::SolverStep( real64 const & time_n,
 {
   real64 dtReturn = dt;
 
-  SolverBase * const surfaceGenerator = this->getParent()->GetGroup< SolverBase >( "SurfaceGen" );
-
   ImplicitStepSetup( time_n,
                      dt,
                      domain,
@@ -206,78 +207,29 @@ real64 LagrangianContactSolver::SolverStep( real64 const & time_n,
                      m_rhs,
                      m_solution );
 
-  int const maxIter = m_maxNumResolves + 1;
   m_numResolves[1] = m_numResolves[0];
-  int solveIter;
-  for( solveIter=0 ; solveIter<maxIter ; ++solveIter )
-  {
-    int locallyFractured = 0;
-    int globallyFractured = 0;
 
-    SetupSystem( domain,
-                 m_dofManager,
-                 m_matrix,
-                 m_rhs,
-                 m_solution );
+  SetupSystem( domain,
+               m_dofManager,
+               m_matrix,
+               m_rhs,
+               m_solution );
 
-    if( solveIter>0 )
-    {
-      m_solidSolver->ResetStressToBeginningOfStep( domain );
-    }
+  // currently the only method is implicit time integration
+  dtReturn = this->NonlinearImplicitStep( time_n,
+                                          dt,
+                                          cycleNumber,
+                                          domain,
+                                          m_dofManager,
+                                          m_matrix,
+                                          m_rhs,
+                                          m_solution );
 
-    // currently the only method is implicit time integration
-    dtReturn = this->NonlinearImplicitStep( time_n,
-                                            dt,
-                                            cycleNumber,
-                                            domain,
-                                            m_dofManager,
-                                            m_matrix,
-                                            m_rhs,
-                                            m_solution );
+  m_solidSolver->updateStress( domain );
 
-    m_solidSolver->updateStress( domain );
-
-    if( surfaceGenerator!=nullptr )
-    {
-      if( surfaceGenerator->SolverStep( time_n, dt, cycleNumber, domain ) > 0 )
-      {
-        locallyFractured = 1;
-      }
-      MpiWrapper::allReduce( &locallyFractured,
-                             &globallyFractured,
-                             1,
-                             MPI_MAX,
-                             MPI_COMM_GEOSX );
-    }
-    if( globallyFractured == 0 )
-    {
-      break;
-    }
-    else
-    {
-      std::map< string, string_array > fieldNames;
-      fieldNames["node"].push_back( keys::IncrementalDisplacement );
-      fieldNames["node"].push_back( keys::TotalDisplacement );
-      fieldNames["elems"].push_back( viewKeyStruct::tractionString );
-      fieldNames["elems"].push_back( viewKeyStruct::deltaTractionString );
-      fieldNames["elems"].push_back( FaceElementSubRegion::viewKeyStruct::elementLocalJumpString );
-
-      CommunicationTools::SynchronizeFields( fieldNames,
-                                             domain->getMeshBody( 0 )->getMeshLevel( 0 ),
-                                             domain->getReference< array1d< NeighborCommunicator > >( domain->viewKeys.neighbors ) );
-
-      this->UpdateDeformationForCoupling( domain );
-
-      if( getLogLevel() >= 1 )
-      {
-        GEOSX_LOG_RANK_0( "++ Fracture propagation. Re-entering Newton Solve." );
-      }
-    }
-
-    // final step for completion of timestep. typically secondary variable updates and cleanup.
-    ImplicitStepComplete( time_n, dtReturn, domain );
-    m_numResolves[1] = solveIter;
-  }
+  // final step for completion of timestep. typically secondary variable updates and cleanup.
+  ImplicitStepComplete( time_n, dtReturn, domain );
+  m_numResolves[1] += 1;
 
   return dtReturn;
 }
@@ -301,13 +253,13 @@ void LagrangianContactSolver::UpdateDeformationForCoupling( DomainPartition * co
     if( subRegion->hasWrapper( tractionKey ) )
     {
       arrayView1d< integer const > const & ghostRank = subRegion->GhostRank();
-      arrayView1d< R1Tensor > const & localJump = subRegion->getElementLocalJump();
+      arrayView2d< real64 > const & localJump = subRegion->getElementLocalJump();
       arrayView1d< R2Tensor const > const & rotationMatrix = subRegion->getElementRotationMatrix();
       arrayView2d< localIndex const > const & elemsToFaces = subRegion->faceList();
 
       forall_in_range< serialPolicy >( 0,
                                        subRegion->size(),
-                                       GEOSX_LAMBDA ( localIndex kfe )
+                                       GEOSX_LAMBDA ( localIndex const kfe )
         {
           {
             localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
@@ -321,13 +273,17 @@ void LagrangianContactSolver::UpdateDeformationForCoupling( DomainPartition * co
                 for( int i=0 ; i<3 ; ++i )
                 {
                   globalJump( i ) +=
-                    ( u[faceToNodeMap( elemsToFaces[kfe][0], a )][i] -
-                      u[faceToNodeMap( elemsToFaces[kfe][1], a )][i] ) / static_cast< real64 >(numNodesPerFace);
+                    ( - u[faceToNodeMap( elemsToFaces[kfe][0], a )][i]
+                      + u[faceToNodeMap( elemsToFaces[kfe][1], a )][i] ) / static_cast< real64 >(numNodesPerFace);
                 }
               }
-              localJump[kfe].AijBi( rotationMatrix[kfe], globalJump );
+              R1Tensor localJumpTensor;
+              localJumpTensor.AijBi( rotationMatrix[kfe], globalJump );
+              localJump[kfe][0] = localJumpTensor[0];
+              localJump[kfe][1] = localJumpTensor[1];
+              localJump[kfe][2] = localJumpTensor[2];
 
-              std::cout << "Element: " << kfe << " localJump: " << localJump[kfe] << std::endl;
+              std::cout << "Element: " << kfe << " localJump: " << localJumpTensor << std::endl;
             }
           }
         } );
@@ -358,6 +314,44 @@ real64 LagrangianContactSolver::ExplicitStep( real64 const & time_n,
   return dt;
 }
 
+real64 LagrangianContactSolver::NonlinearImplicitStep( real64 const & time_n,
+                                                       real64 const & dt,
+                                                       integer const cycleNumber,
+                                                       DomainPartition * const domain,
+                                                       DofManager const & dofManager,
+                                                       ParallelMatrix & matrix,
+                                                       ParallelVector & rhs,
+                                                       ParallelVector & solution )
+{
+  real64 stepDt;
+  bool continueLoop = true;
+  while( continueLoop )
+  {
+    stepDt = SolverBase::NonlinearImplicitStep( time_n,
+                                                dt,
+                                                cycleNumber,
+                                                domain,
+                                                dofManager,
+                                                matrix,
+                                                rhs,
+                                                solution );
+
+    bool const isPreviousFractureStateValid = UpdateFractureState( domain );
+    std::cout << isPreviousFractureStateValid << std::endl;
+    if( isPreviousFractureStateValid )
+    {
+      continueLoop = false;
+    }
+    else
+    {
+      std::cout << "*******************************************" << std::endl;
+      std::cout << "*******************************************" << std::endl;
+      std::cout << "*******************************************" << std::endl;
+    }
+  }
+
+  return stepDt;
+}
 
 void LagrangianContactSolver::SetupDofs( DomainPartition const * const domain,
                                          DofManager & dofManager ) const
@@ -437,6 +431,38 @@ void LagrangianContactSolver::SetupSystem( DomainPartition * const domain,
                               m_solidSolver->getSystemMatrix().localCols() + m_matrix11.localCols(),
                               MPI_COMM_GEOSX );
 
+  globalIndex numDispDofs = m_solidSolver->getSystemRhs().globalSize();
+  matrix.open();
+  for( globalIndex i=m_solidSolver->getSystemMatrix().ilower() ; i<m_solidSolver->getSystemMatrix().iupper() ; ++i )
+  {
+    globalIndex_array colIndices;
+    real64_array values;
+    m_solidSolver->getSystemMatrix().getRowCopy( i, colIndices, values );
+    matrix.insert( i, colIndices, values );
+
+    m_matrix01.getRowCopy( i, colIndices, values );
+    for( localIndex j = 0 ; j < colIndices.size() ; ++j )
+    {
+      colIndices[j] += numDispDofs;
+    }
+    matrix.insert( i, colIndices, values );
+  }
+  for( globalIndex i=m_matrix11.ilower() ; i<m_matrix11.iupper() ; ++i )
+  {
+    globalIndex_array colIndices;
+    real64_array values;
+    m_matrix10.getRowCopy( i, colIndices, values );
+    matrix.insert( numDispDofs+i, colIndices, values );
+
+    m_matrix11.getRowCopy( i, colIndices, values );
+    for( localIndex j = 0 ; j < colIndices.size() ; ++j )
+    {
+      colIndices[j] += numDispDofs;
+    }
+    matrix.insert( numDispDofs+i, colIndices, values );
+  }
+  matrix.close();
+
   rhs.createWithLocalSize( m_solidSolver->getSystemRhs().localSize() + m_rhs1.localSize(),
                            MPI_COMM_GEOSX );
 
@@ -452,6 +478,7 @@ void LagrangianContactSolver::AssembleSystem( real64 const time,
                                               ParallelVector & GEOSX_UNUSED_PARAM( rhs ) )
 {
   GEOSX_MARK_FUNCTION;
+
   m_solidSolver->AssembleSystem( time,
                                  dt,
                                  domain,
@@ -460,7 +487,7 @@ void LagrangianContactSolver::AssembleSystem( real64 const time,
                                  m_solidSolver->getSystemRhs() );
 
   AssembleForceResidualDerivativeWrtTraction( domain, &m_matrix01, &m_rhs0 );
-  AssembleTractionResidualDerivativeWrtDisplacement( domain, &m_matrix10, &m_rhs1 );
+  AssembleTractionResidualDerivativeWrtDisplacementAndTraction( domain, &m_matrix10, &m_matrix11, &m_rhs1 );
 }
 
 void LagrangianContactSolver::ApplyBoundaryConditions( real64 const time,
@@ -508,36 +535,6 @@ void LagrangianContactSolver::ApplyBoundaryConditions( real64 const time,
                                                            dispDofNumber,
                                                            m_matrix01 );
   } );
-
-//  string const tracDofKey = getDofManager().getKey( viewKeyStruct::tractionString );
-//
-//  fsManager.Apply( time + dt,
-//                    domain,
-//                    "ElementRegions",
-//                    viewKeyStruct::tractionString,
-//                    [&]( FieldSpecificationBase const * const fs,
-//                         string const &,
-//                         SortedArrayView<localIndex const> const & lset,
-//                         Group * subRegion,
-//                         string const & ) -> void
-//  {
-//    arrayView1d<globalIndex const> const &
-//    dofNumber = subRegion->getReference< array1d<globalIndex> >( tracDofKey );
-//    arrayView1d<integer const> const & ghostRank = subRegion->group_cast<ObjectManagerBase*>()->GhostRank();
-//
-//    SortedArray<localIndex> localSet;
-//    for( auto const & a : lset )
-//    {
-//      if( ghostRank[a]<0 )
-//      {
-//        localSet.insert(a);
-//      }
-//    }
-//
-//    fs->ZeroSystemRowsForBoundaryCondition<LAInterface>( localSet,
-//                                                         dofNumber,
-//                                                         m_matrix10 );
-//   });
 }
 
 real64
@@ -550,33 +547,7 @@ LagrangianContactSolver::
 
   std::cout << "In CalculateResidualNorm!" << std::endl;
   ParallelVector const & solidResidual = m_solidSolver->getSystemRhs();
-  //real64 const solidResidual = m_solidSolver->getSystemRhs().norm2();
   real64 const tractionResidualNorm = m_rhs1.norm2();
-
-//  std::cout << rhs.globalSize() << std::endl;
-//  real64 const * localResidual = rhs.extractLocalVector();
-//
-//  real64 localResidualNorm = 0.0;
-//  for( localIndex i=0 ; i<rhs.localSize() ; ++i )
-//  {
-//    // sum(rhs^2) on each rank.
-//    if (rhs.getGlobalRowID(i) < m_rhs1.globalSize() )
-//    {
-//      localResidualNorm += localResidual[i] * localResidual[i];
-//    }
-//  }
-//
-//  real64 globalValues;
-//  MpiWrapper::allReduce( &localResidualNorm,
-//                         &globalValues,
-//                         1,
-//                         MPI_SUM,
-//                         MPI_COMM_GEOSX );
-//  real64 const solidResidualNorm = sqrt(globalValues);
-//
-//  m_rhs0.axpy(1.0, solidResidual);
-//  real64 const solidResidualNorm = m_rhs0.norm2();
-//  real64 const solidResidualNorm = solidResidual.norm2();
 
   ParallelVector rhs0;
   rhs0.create( solidResidual );
@@ -649,17 +620,18 @@ LagrangianContactSolver::
           globalIndex rowDOF[12];
           real64 nodeRHS[12];
           stackArray2d< real64, 3*4*3 > dRdT( 3*numNodesPerFace, 3 );
+          dRdT = 0.0;
           globalIndex colDOF[3];
           for( int i=0 ; i<3 ; ++i )
           {
             colDOF[i] = tracDofNumber[kfe] + i;
           }
 
-          real64 const Ja = area[kfe] / static_cast< real64 >( numNodesPerFace );
+          real64 const nodalArea = area[kfe] / static_cast< real64 >( numNodesPerFace );
           real64_array nodalForceVec( 3 );
-          nodalForceVec( 0 ) = ( traction[kfe]( 0 ) ) * Ja;
-          nodalForceVec( 1 ) = ( traction[kfe]( 1 ) ) * Ja;
-          nodalForceVec( 2 ) = ( traction[kfe]( 2 ) ) * Ja;
+          nodalForceVec( 0 ) = ( traction[kfe]( 0 ) ) * nodalArea;
+          nodalForceVec( 1 ) = ( traction[kfe]( 1 ) ) * nodalArea;
+          nodalForceVec( 2 ) = ( traction[kfe]( 2 ) ) * nodalArea;
           R1Tensor localNodalForce( nodalForceVec( 0 ), nodalForceVec( 1 ), nodalForceVec( 2 ));
           R1Tensor globalNodalForce;
           globalNodalForce.AijBj( rotationMatrix[kfe], localNodalForce );
@@ -676,9 +648,9 @@ LagrangianContactSolver::
                 nodeRHS[3*a+i] = -globalNodalForce[i] * pow( -1, kf );
                 fext[faceToNodeMap( faceIndex, a )][i] += -globalNodalForce[i] * pow( -1, kf );
 
-                dRdT( 3*a+i, 0 ) = -Ja * rotationMatrix[kfe]( i, 0 ) * pow( -1, kf );
-                dRdT( 3*a+i, 1 ) = -Ja * rotationMatrix[kfe]( i, 1 ) * pow( -1, kf );
-                dRdT( 3*a+i, 2 ) = -Ja * rotationMatrix[kfe]( i, 2 ) * pow( -1, kf );
+                dRdT( 3*a+i, 0 ) = - nodalArea * rotationMatrix[kfe]( i, 0 ) * pow( -1, kf );
+                dRdT( 3*a+i, 1 ) = - nodalArea * rotationMatrix[kfe]( i, 1 ) * pow( -1, kf );
+                dRdT( 3*a+i, 2 ) = - nodalArea * rotationMatrix[kfe]( i, 2 ) * pow( -1, kf );
               }
             }
 
@@ -705,9 +677,10 @@ LagrangianContactSolver::
 
 void
 LagrangianContactSolver::
-  AssembleTractionResidualDerivativeWrtDisplacement( DomainPartition const * const domain,
-                                                     ParallelMatrix * const matrix10,
-                                                     ParallelVector * const rhs1 )
+  AssembleTractionResidualDerivativeWrtDisplacementAndTraction( DomainPartition const * const domain,
+                                                                ParallelMatrix * const matrix10,
+                                                                ParallelMatrix * const matrix11,
+                                                                ParallelVector * const rhs1 )
 {
   GEOSX_MARK_FUNCTION;
   MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
@@ -727,6 +700,8 @@ LagrangianContactSolver::
 
   matrix10->open();
   matrix10->zero();
+  matrix11->open();
+  matrix11->zero();
   rhs1->open();
   rhs1->zero();
 
@@ -740,11 +715,15 @@ LagrangianContactSolver::
       arrayView1d< real64 const > const & area = subRegion->getElementArea();
       arrayView1d< R2Tensor const > const & rotationMatrix = subRegion->getElementRotationMatrix();
       arrayView2d< localIndex const > const & elemsToFaces = subRegion->faceList();
-      arrayView1d< R1Tensor const > const & localJump = subRegion->getElementLocalJump();
+      arrayView2d< real64 const > const & localJump = subRegion->getElementLocalJump();
+      arrayView2d< real64 const > const &
+      traction = subRegion->getReference< array2d< real64 > >( viewKeyStruct::tractionString );
+      arrayView1d< FractureState const > const &
+      fractureState = subRegion->getReference< array1d< FractureState > >( viewKeyStruct::fractureStateString );
 
       forall_in_range< serialPolicy >( 0,
                                        subRegion->size(),
-                                       GEOSX_LAMBDA ( localIndex kfe )
+                                       GEOSX_LAMBDA ( localIndex const kfe )
         {
           {
             localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
@@ -755,43 +734,173 @@ LagrangianContactSolver::
               elemDOF[i] = tracDofNumber[kfe] + i;
             }
 
-            real64 const Ja = area[kfe] / static_cast< real64 >( numNodesPerFace );
+            real64 elemRHS[3];
+            real64 const Ja = area[kfe];
+            real64 const nodalArea = Ja / static_cast< real64 >( numNodesPerFace );
 
             stackArray2d< real64, 2*3*4*3 > dRdU( 3, 2*3*numNodesPerFace );
+            stackArray2d< real64, 3*3 > dRdT( 3, 3 );
+            dRdU = 0.0;
+            dRdT = 0.0;
 
             // Contact constraints
             if( ghostRank[kfe] < 0 )
             {
-              for( localIndex kf=0 ; kf<2 ; ++kf )
+              switch( fractureState[kfe] )
               {
-                for( localIndex a=0 ; a<numNodesPerFace ; ++a )
+                case FractureState::STICK:
                 {
+                  std::cout << kfe << " STICK" << std::endl;
                   for( int i=0 ; i<3 ; ++i )
                   {
-                    nodeDOF[ kf*3*numNodesPerFace + 3*a+i] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe][kf], a )] + i;
-
-                    dRdU( 0, kf*3*numNodesPerFace + 3*a+i ) = -Ja * rotationMatrix[kfe]( 0, i ) * pow( -1, kf );
-                    dRdU( 1, kf*3*numNodesPerFace + 3*a+i ) = -Ja * rotationMatrix[kfe]( 1, i ) * pow( -1, kf );
-                    dRdU( 2, kf*3*numNodesPerFace + 3*a+i ) = -Ja * rotationMatrix[kfe]( 2, i ) * pow( -1, kf );
+                    elemRHS[i] = + Ja * localJump[kfe][i];
                   }
+
+                  for( localIndex kf=0 ; kf<2 ; ++kf )
+                  {
+                    for( localIndex a=0 ; a<numNodesPerFace ; ++a )
+                    {
+                      for( int i=0 ; i<3 ; ++i )
+                      {
+                        nodeDOF[ kf*3*numNodesPerFace + 3*a+i ] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe][kf], a )] + i;
+
+                        dRdU( 0, kf*3*numNodesPerFace + 3*a+i ) = - nodalArea * rotationMatrix[kfe]( 0, i ) * pow( -1, kf );
+                        dRdU( 1, kf*3*numNodesPerFace + 3*a+i ) = - nodalArea * rotationMatrix[kfe]( 1, i ) * pow( -1, kf );
+                        dRdU( 2, kf*3*numNodesPerFace + 3*a+i ) = - nodalArea * rotationMatrix[kfe]( 2, i ) * pow( -1, kf );
+                      }
+                    }
+                  }
+                  break;
                 }
-              }
+                case FractureState::SLIP:
+                case FractureState::NEW_SLIP:
+                {
+                  std::cout << kfe << " SLIP" << std::endl;
+                  elemRHS[0] = + Ja * localJump[kfe](0);
 
-              matrix10->add( elemDOF,
-                             nodeDOF,
-                             dRdU.data(),
-                             3,
-                             2*3*numNodesPerFace );
+                  for( localIndex kf=0 ; kf<2 ; ++kf )
+                  {
+                    for( localIndex a=0 ; a<numNodesPerFace ; ++a )
+                    {
+                      for( int i=0 ; i<3 ; ++i )
+                      {
+                        nodeDOF[ kf*3*numNodesPerFace + 3*a+i ] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe][kf], a )] + i;
+                        dRdU( 0, kf*3*numNodesPerFace + 3*a+i ) = - nodalArea * rotationMatrix[kfe]( 0, i ) * pow( -1, kf );
+                      }
+                    }
+                  }
 
-              real64 elemRHS[3];
-              for( int i=0 ; i<3 ; ++i )
-              {
-                elemRHS[i] = +localJump[kfe][i];
+                  real64 limitTau = m_cohesion - traction[kfe](0) * std::tan( m_frictionAngle );
+                  R1TensorT<2> sliding( localJump[kfe](1), localJump[kfe](2) );
+                  real64 slidingNorm = sqrt( sliding(0)*sliding(0) + sliding(1)*sliding(1) );
+
+                  if( !( ( m_nonlinearSolverParameters.m_numNewtonIterations == 0 ) && ( fractureState[kfe] == FractureState::NEW_SLIP ) )
+                      && slidingNorm > m_slidingTolerance )
+                  {
+                    for( int i=1 ; i<3 ; ++i )
+                    {
+                      elemRHS[i] = + Ja * ( traction[kfe](i) - limitTau * sliding(i-1) / slidingNorm );
+                    }
+
+                    R2TensorT<2> dUdgT;
+                    dUdgT.dyadic_aa( sliding );
+                    dUdgT(0,0) = (slidingNorm*slidingNorm - dUdgT(0,0)) * limitTau / std::pow(slidingNorm, 3);
+                    dUdgT(0,1) *= - limitTau / std::pow(slidingNorm, 3);
+                    dUdgT(1,0) *= - limitTau / std::pow(slidingNorm, 3);
+                    dUdgT(1,1) = (slidingNorm*slidingNorm - dUdgT(1,1)) * limitTau / std::pow(slidingNorm, 3);
+
+                    for( localIndex kf=0 ; kf<2 ; ++kf )
+                    {
+                      for( localIndex a=0 ; a<numNodesPerFace ; ++a )
+                      {
+                        for( int i=0 ; i<3 ; ++i )
+                        {
+                          R1TensorT<2> localRowB( rotationMatrix[kfe]( 1, i ), rotationMatrix[kfe]( 2, i ) );
+                          R1TensorT<2> localRowE;
+                          localRowE.AijBj( dUdgT, localRowB );
+
+                          dRdU( 1, kf*3*numNodesPerFace + 3*a+i ) = - nodalArea * localRowE( 0 ) * pow( -1, kf );
+                          dRdU( 2, kf*3*numNodesPerFace + 3*a+i ) = - nodalArea * localRowE( 1 ) * pow( -1, kf );
+                        }
+                      }
+                    }
+                    for( int i=1 ; i<3 ; ++i )
+                    {
+                      dRdT( i, 0 ) = Ja * std::tan( m_frictionAngle ) * sliding(i-1) / slidingNorm;
+                      dRdT( i, i ) = Ja;
+                    }
+                    std::cout << "dRdT" << dRdT << std::endl;
+                  }
+                  else
+                  {
+                    R1TensorT<2> vaux( traction[kfe](1), traction[kfe](2) );
+                    real64 vauxNorm = sqrt( vaux(0)*vaux(0) + vaux(1)*vaux(1) );
+                    if( vauxNorm > 0.0 )
+                    {
+                      for( int i=1 ; i<3 ; ++i )
+                      {
+                        elemRHS[i] = + Ja * ( traction[kfe](i) - limitTau * vaux(i-1) / vauxNorm );
+                      }
+                      for( int i=1 ; i<3 ; ++i )
+                      {
+                        dRdT( i, i ) = Ja;
+                      }
+                    }
+                    else
+                    {
+                      for( int i=1 ; i<3 ; ++i )
+                      {
+                        elemRHS[i] = 0.0;
+                      }
+                      for( int i=1 ; i<3 ; ++i )
+                      {
+                        dRdT( i, i ) = Ja;
+                      }
+                    }
+                  }
+                  for( int i=0 ; i<3 ; ++i )
+                  {
+                    std::cout << i << " " << elemRHS[i] << std::endl;
+                  }
+                  break;
+                }
+                case FractureState::OPEN:
+                {
+                  std::cout << kfe << " OPEN" << std::endl;
+                  for( int i=0 ; i<3 ; ++i )
+                  {
+                    elemRHS[i] = + Ja * traction[kfe][i];
+                  }
+
+                  for( int i=0 ; i<3 ; ++i )
+                  {
+                    dRdT( i, i ) = Ja;
+                  }
+                  break;
+                }
               }
 
               rhs1->add( elemDOF,
                          elemRHS,
-                         3 * numNodesPerFace );
+                         3 );
+
+              if( fractureState[kfe] != FractureState::OPEN )
+              {
+                matrix10->add( elemDOF,
+                               nodeDOF,
+                               dRdU.data(),
+                               3,
+                               2*3*numNodesPerFace );
+              }
+
+              if( fractureState[kfe] != FractureState::STICK )
+              {
+                matrix11->add( elemDOF,
+                               elemDOF,
+                               dRdT.data(),
+                               3,
+                               3 );
+              }
             }
           }
         } );
@@ -799,6 +908,7 @@ LagrangianContactSolver::
   } );
 
   matrix10->close();
+  matrix11->close();
   rhs1->close();
 }
 
@@ -852,14 +962,124 @@ LagrangianContactSolver::
   getDofManager().addVectorToField( sol1, viewKeyStruct::tractionString, viewKeyStruct::tractionString, -scalingFactor );
 
   std::map< string, string_array > fieldNames;
-  fieldNames["elem"].push_back( viewKeyStruct::deltaTractionString );
   fieldNames["elem"].push_back( viewKeyStruct::tractionString );
+  fieldNames["elem"].push_back( viewKeyStruct::deltaTractionString );
+  fieldNames["elem"].push_back( viewKeyStruct::fractureStateString );
+  fieldNames["elem"].push_back( FaceElementSubRegion::viewKeyStruct::elementLocalJumpString );
 
   CommunicationTools::SynchronizeFields( fieldNames,
                                          domain->getMeshBody( 0 )->getMeshLevel( 0 ),
                                          domain->getReference< array1d< NeighborCommunicator > >( domain->viewKeys.neighbors ) );
 
   this->UpdateDeformationForCoupling( domain );
+}
+
+void LagrangianContactSolver::InitializeFractureState( MeshLevel * const mesh )
+{
+  GEOSX_MARK_FUNCTION;
+  ElementRegionManager * const elemManager = mesh->getElemManager();
+
+  string const tractionKey = viewKeyStruct::tractionString;
+
+  elemManager->forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion * const subRegion )->void
+  {
+    if( subRegion->hasWrapper( tractionKey ) )
+    {
+      arrayView1d< FractureState > const & fractureState = subRegion->getReference< array1d< FractureState > >( viewKeyStruct::fractureStateString );
+      fractureState = FractureState::STICK;
+    }
+  });
+}
+
+bool LagrangianContactSolver::UpdateFractureState( DomainPartition * const domain )
+{
+  GEOSX_MARK_FUNCTION;
+  std::cout << "In UpdateFractureState!" << std::endl;
+
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
+  ElementRegionManager * const elemManager = mesh->getElemManager();
+
+  bool checkActiveSet = true;
+
+  elemManager->forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion * const subRegion )->void
+  {
+    if( subRegion->hasWrapper( m_tractionKey ) )
+    {
+      arrayView2d< real64 const > const & traction = subRegion->getReference< array2d< real64 > >( viewKeyStruct::tractionString );
+      arrayView2d< real64 const > const & localJump = subRegion->getReference< array2d< real64 > >( FaceElementSubRegion::viewKeyStruct::elementLocalJumpString );
+      arrayView1d< FractureState > const & fractureState = subRegion->getReference< array1d< FractureState > >( viewKeyStruct::fractureStateString );
+      array1d< bool > localCheck( subRegion->size() );
+
+      forall_in_range< serialPolicy >( 0,
+                                       subRegion->size(),
+                                       [&]( localIndex const kfe )
+        {
+          {
+            std::cout << traction[kfe] << std::endl;
+
+            FractureState const originalFractureState = fractureState[kfe];
+            if( originalFractureState == FractureState::OPEN )
+            {
+              if( localJump[kfe](0) > - m_normalDisplacementTolerance )
+              {
+                fractureState[kfe] = FractureState::OPEN;
+              }
+              else
+              {
+                fractureState[kfe] = FractureState::STICK;
+              }
+            }
+            else if( traction[kfe](0) > m_normalTractionTolerance )
+            {
+              std::cout << "need to be open!!!\n";
+              fractureState[kfe] = FractureState::OPEN;
+            }
+            else
+            {
+              real64 currentTau = sqrt( traction[kfe](1)*traction[kfe](1) + traction[kfe](2)*traction[kfe](2) );
+              real64 limitTau = m_cohesion - traction[kfe](0) * std::tan( m_frictionAngle );
+              if( originalFractureState != FractureState::SLIP && currentTau >= limitTau )
+              {
+                currentTau *= (1.0 - m_alpha);
+              }
+              else if( originalFractureState == FractureState::SLIP && currentTau <= limitTau )
+              {
+                currentTau *= (1.0 + m_alpha);
+              }
+              if( currentTau > limitTau )
+              {
+                if( originalFractureState == FractureState::STICK )
+                {
+                  fractureState[kfe] = FractureState::NEW_SLIP;
+                }
+                else
+                {
+                  fractureState[kfe] = FractureState::SLIP;
+                }
+              }
+              else
+              {
+                fractureState[kfe] = FractureState::STICK;
+              }
+            }
+            std::cout << kfe << " " << FractureStateToString( originalFractureState ) << std::endl;
+            std::cout << kfe << " " << FractureStateToString( fractureState[kfe] ) << std::endl;
+            localCheck[kfe] = ( originalFractureState == fractureState[kfe] );
+            std::cout << kfe << " *** " << localCheck[kfe] << std::endl;
+          }
+        });
+
+      std::cout << localCheck << std::endl;
+      for( localIndex kfe = 0; kfe < subRegion->size(); ++kfe )
+      {
+        std::cout << kfe << " " << checkActiveSet << " " << localCheck[kfe] << std::endl;
+        checkActiveSet &= localCheck[kfe];
+      }
+    }
+  });
+
+  std::cout << "output of UpdateFractureState -> " << checkActiveSet << std::endl;
+  return checkActiveSet;
 }
 
 void LagrangianContactSolver::SolveSystem( DofManager const & dofManager,
@@ -875,6 +1095,7 @@ void LagrangianContactSolver::SolveSystem( DofManager const & dofManager,
   GEOSX_LOG_RANK_0( "size = " << numDispDofs << " + " << numTracDofs );
 
   matrix.open();
+  matrix.zero();
   rhs.open();
   rhs.zero();
   for( globalIndex i=m_solidSolver->getSystemMatrix().ilower() ; i<m_solidSolver->getSystemMatrix().iupper() ; ++i )
@@ -887,7 +1108,7 @@ void LagrangianContactSolver::SolveSystem( DofManager const & dofManager,
     {
       values[j] *= -1.0;
     }
-    matrix.insert( i, colIndices, values );
+    matrix.set( i, colIndices, values );
 
     real64 value = m_solidSolver->getSystemRhs().get( i );
     // Attention: change sign to rhs (m_solidSolver provide K < 0, I'd prefer K > 0)
@@ -898,7 +1119,7 @@ void LagrangianContactSolver::SolveSystem( DofManager const & dofManager,
     {
       colIndices[j] += numDispDofs;
     }
-    matrix.insert( i, colIndices, values );
+    matrix.set( i, colIndices, values );
 
     value = m_rhs0.get( i );
     rhs.add( i, value );
@@ -908,14 +1129,14 @@ void LagrangianContactSolver::SolveSystem( DofManager const & dofManager,
     globalIndex_array colIndices;
     real64_array values;
     m_matrix10.getRowCopy( i, colIndices, values );
-    matrix.insert( numDispDofs+i, colIndices, values );
+    matrix.set( numDispDofs+i, colIndices, values );
 
     m_matrix11.getRowCopy( i, colIndices, values );
     for( localIndex j = 0 ; j < colIndices.size() ; ++j )
     {
       colIndices[j] += numDispDofs;
     }
-    matrix.insert( numDispDofs+i, colIndices, values );
+    matrix.set( numDispDofs+i, colIndices, values );
 
     real64 const value = m_rhs1.get( i );
     rhs.add( numDispDofs+i, value );
@@ -935,6 +1156,7 @@ void LagrangianContactSolver::SolveSystem( DofManager const & dofManager,
   {
     solution.write( "sol" );
   }
+  std::cin.get();
 }
 
 real64
@@ -942,6 +1164,7 @@ LagrangianContactSolver::ScalingForSystemSolution( DomainPartition const * const
                                                    DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
                                                    ParallelVector const & GEOSX_UNUSED_PARAM( solution ) )
 {
+  // TODO: add something for tractions!!!
   return m_solidSolver->ScalingForSystemSolution( domain,
                                                   m_solidSolver->getDofManager(),
                                                   m_solidSolver->getSystemSolution() );
@@ -957,6 +1180,7 @@ void LagrangianContactSolver::SetNextDt( real64 const & currentDt,
   }
   else
   {
+    std::cout << "call to surfaceGenerator" << std::endl;
     SolverBase * const surfaceGenerator =  this->getParent()->GetGroup< SolverBase >( "SurfaceGen" );
     nextDt = surfaceGenerator->GetTimestepRequest() < 1e99 ? surfaceGenerator->GetTimestepRequest() : currentDt;
   }

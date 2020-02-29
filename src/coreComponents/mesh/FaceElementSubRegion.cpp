@@ -65,9 +65,10 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
     setDescription("The area of each FaceElement.");
 
   registerWrapper( viewKeyStruct::elementLocalJumpString, &m_elementLocalJump, false )->
-    setApplyDefaultValue({0.0,0.0,0.0})->
+    setApplyDefaultValue(0.0)->
     setPlotLevel(dataRepository::PlotLevel::LEVEL_2)->
     setDescription("The local jump of each FaceElement.");
+  m_elementLocalJump.resizeDimension<1>( 3 );
 
   registerWrapper( viewKeyStruct::elementRotationMatrixString, &m_elementRotationMatrix, false )->
     setApplyDefaultValue({0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0})->

@@ -155,8 +155,8 @@ public:
   arrayView1d< real64 > const &       getElementArea()       { return m_elementArea; }
   arrayView1d< real64 const > const & getElementArea() const { return m_elementArea; }
 
-  arrayView1d< R1Tensor > const &       getElementLocalJump()       { return m_elementLocalJump; }
-  arrayView1d< R1Tensor const > const & getElementLocalJump() const { return m_elementLocalJump; }
+  arrayView2d< real64 > const &       getElementLocalJump()       { return m_elementLocalJump; }
+  arrayView2d< real64 const > const & getElementLocalJump() const { return m_elementLocalJump; }
 
   arrayView1d< R2Tensor > const &       getElementRotationMatrix()       { return m_elementRotationMatrix; }
   arrayView1d< R2Tensor const > const & getElementRotationMatrix() const { return m_elementRotationMatrix; }
@@ -195,7 +195,7 @@ private:
   array1d< real64 > m_elementArea;
 
   /// The member level field for the element local jump
-  array1d< R1Tensor > m_elementLocalJump;
+  array2d< real64 > m_elementLocalJump;
 
   /// The member level field for the element rotation matrix
   array1d< R2Tensor > m_elementRotationMatrix;

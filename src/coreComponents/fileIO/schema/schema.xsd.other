@@ -1310,11 +1310,7 @@
 		<xsd:attribute name="elementArea" type="real64_array" />
 		<!--elementCenter => The center of each EmbeddedSurface element.-->
 		<xsd:attribute name="elementCenter" type="r1_array" />
-		<!--elementLocalJump => The local jump of each FaceElement.-->
-		<xsd:attribute name="elementLocalJump" type="r1_array" />
-		<!--elementRotationMatrix => The rotation matrix of each FaceElement.-->
-		<xsd:attribute name="elementRotationMatrix" type="r2_array" />
-		<!--elementVolume => The volume of each FaceElement.-->
+		<!--elementVolume => The volume of each EmbeddedSurface element.-->
 		<xsd:attribute name="elementVolume" type="real64_array" />
 		<!--fractureElementsToCellIndices => Map to the cells.-->
 		<xsd:attribute name="fractureElementsToCellIndices" type="localIndex_array" />

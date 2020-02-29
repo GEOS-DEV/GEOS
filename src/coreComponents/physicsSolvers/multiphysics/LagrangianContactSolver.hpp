@@ -119,16 +119,29 @@ public:
                                integer const cycleNumber,
                                DomainPartition * const domain ) override;
 
+  virtual real64 NonlinearImplicitStep( real64 const & time_n,
+                                        real64 const & dt,
+                                        integer const cycleNumber,
+                                        DomainPartition * const domain,
+                                        DofManager const & dofManager,
+                                        ParallelMatrix & matrix,
+                                        ParallelVector & rhs,
+                                        ParallelVector & solution ) override;
+
   void UpdateDeformationForCoupling( DomainPartition * const domain );
 
   void AssembleForceResidualDerivativeWrtTraction( DomainPartition * const domain,
                                                    ParallelMatrix * const matrix01,
                                                    ParallelVector * const rhs0 );
 
-  void AssembleTractionResidualDerivativeWrtDisplacement( DomainPartition const * const domain,
-                                                          ParallelMatrix * const matrix10,
-                                                          ParallelVector * const rhs1 );
+  void AssembleTractionResidualDerivativeWrtDisplacementAndTraction( DomainPartition const * const domain,
+                                                                     ParallelMatrix * const matrix10,
+                                                                     ParallelMatrix * const matrix11,
+                                                                     ParallelVector * const rhs1 );
 
+  void InitializeFractureState( MeshLevel * const mesh );
+
+  bool UpdateFractureState( DomainPartition * const domain );
 
   real64 SplitOperatorStep( real64 const & time_n,
                             real64 const & dt,
@@ -143,6 +156,8 @@ public:
 
     constexpr static auto tractionString = "traction";
     constexpr static auto deltaTractionString = "deltaTraction";
+
+    constexpr static auto fractureStateString = "fractureState";
 
   } LagrangianContactSolverViewKeys;
 
@@ -165,6 +180,56 @@ private:
 
   integer m_maxNumResolves;
   integer m_numResolves[2];
+
+  real64 const m_alpha = 0.05;
+  real64 const m_cohesion = 0.0;
+  real64 const m_frictionAngle = 30.0 * M_PI/180.0;
+  real64 const m_normalDisplacementTolerance = 0.0;
+  real64 const m_normalTractionTolerance = 0.0;
+  real64 const m_slidingTolerance = 0.0;
+  string const m_tractionKey = viewKeyStruct::tractionString;
+
+  /**
+   * @enum FractureState
+   *
+   * A scoped enum for the Plot options.
+   */
+  enum class FractureState : int
+  {
+    STICK,    ///< element is closed: no jump across the discontinuity
+    SLIP,     ///< element is sliding: no normal jump across the discontinuity, but sliding is allowed for
+    NEW_SLIP, ///< element just starts sliding: no normal jump across the discontinuity, but sliding is allowed for
+    OPEN,     ///< element is open: no constraints are imposed
+  };
+
+  string FractureStateToString( FractureState const state ) const
+  {
+    string stringState;
+    switch( state )
+    {
+      case FractureState::STICK:
+      {
+        stringState = "stick";
+        break;
+      }
+      case FractureState::SLIP:
+      {
+        stringState = "slip";
+        break;
+      }
+      case FractureState::NEW_SLIP:
+      {
+        stringState = "new_slip";
+        break;
+      }
+      case FractureState::OPEN:
+      {
+        stringState = "open";
+        break;
+      }
+    }
+    return stringState;
+  }
 };
 
 } /* namespace geosx */
