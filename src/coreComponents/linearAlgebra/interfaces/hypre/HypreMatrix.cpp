@@ -376,8 +376,8 @@ void HypreMatrix::add( globalIndex const rowIndex,
                                                     1,
                                                     &ncols,
                                                     toHYPRE_BigInt( &rowIndex ),
-                                                    toHYPRE_BigInt( colIndices.data() ),
-                                                    values.data() ) );
+                                                    toHYPRE_BigInt( colIndices),
+                                                    values ) );
 }
 
 void HypreMatrix::set( globalIndex const rowIndex,
@@ -393,8 +393,8 @@ void HypreMatrix::set( globalIndex const rowIndex,
                                                   1,
                                                   &ncols,
                                                   toHYPRE_BigInt( &rowIndex ),
-                                                  toHYPRE_BigInt( colIndices.data() ),
-                                                  values.data() ) );
+                                                  toHYPRE_BigInt( colIndices ),
+                                                  values ) );
 }
 
 void HypreMatrix::insert( globalIndex const rowIndex,
@@ -408,8 +408,8 @@ void HypreMatrix::insert( globalIndex const rowIndex,
                                                     1,
                                                     &ncols,
                                                     toHYPRE_BigInt( &rowIndex ),
-                                                    toHYPRE_BigInt( colIndices.data() ),
-                                                    values.data() ) );
+                                                    toHYPRE_BigInt( colIndices ),
+                                                    values ) );
 }
 
 void HypreMatrix::add( arraySlice1d< globalIndex const > const & rowIndices,
@@ -461,8 +461,6 @@ void HypreMatrix::add( arraySlice1d< globalIndex const > const & rowIndices,
                        arraySlice1d< globalIndex const > const & colIndices,
                        arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values )
 {
-  GEOSX_LAI_ASSERT( modifiable() );
-
   array2d<real64, MatrixLayout::ROW_MAJOR_PERM> valuesRowMajor( rowIndices.size(), colIndices.size() );
   convertArrayLayout( values, valuesRowMajor.toSlice() );
   add( rowIndices, colIndices, valuesRowMajor );
@@ -472,8 +470,6 @@ void HypreMatrix::set( arraySlice1d< globalIndex const > const & rowIndices,
                        arraySlice1d< globalIndex const > const & colIndices,
                        arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values )
 {
-  GEOSX_LAI_ASSERT( modifiable() );
-
   array2d<real64, MatrixLayout::ROW_MAJOR_PERM> valuesRowMajor( rowIndices.size(), colIndices.size() );
   convertArrayLayout( values, valuesRowMajor.toSlice() );
   set( rowIndices, colIndices, valuesRowMajor );
@@ -483,8 +479,6 @@ void HypreMatrix::insert( arraySlice1d< globalIndex const > const & rowIndices,
                           arraySlice1d< globalIndex const > const & colIndices,
                           arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values )
 {
-  GEOSX_LAI_ASSERT( insertable() );
-
   array2d<real64, MatrixLayout::ROW_MAJOR_PERM> valuesRowMajor( rowIndices.size(), colIndices.size() );
   convertArrayLayout( values, valuesRowMajor.toSlice() );
   insert( rowIndices, colIndices, valuesRowMajor );
@@ -851,8 +845,8 @@ void HypreMatrix::getRowCopy( globalIndex globalRow,
                                                         -1,
                                                         &numEntries,
                                                         toHYPRE_BigInt( &globalRow ),
-                                                        toHYPRE_BigInt( colIndices.data() ),
-                                                        values.data() ) );
+                                                        toHYPRE_BigInt( colIndices ),
+                                                        values ) );
 }
 
 real64 HypreMatrix::getDiagValue( globalIndex globalRow ) const

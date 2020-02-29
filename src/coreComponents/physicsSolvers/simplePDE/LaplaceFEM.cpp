@@ -310,7 +310,11 @@ void LaplaceFEM::ApplyBoundaryConditions( real64 const time_n,
                                           ParallelMatrix & matrix,
                                           ParallelVector & rhs )
 {
+  matrix.open();
+  rhs.open();
   ApplyDirichletBC_implicit( time_n + dt, dofManager, *domain, m_matrix, m_rhs );
+  matrix.close();
+  rhs.close();
 
   // Debug for logLevel >= 2
   GEOSX_LOG_LEVEL_RANK_0( 2, "After LaplaceFEM::ApplyBoundaryConditions" );

@@ -239,16 +239,16 @@ void PetscMatrix::insert( globalIndex const rowIndex,
 
 void PetscMatrix::add( globalIndex const rowIndex,
                        arraySlice1d<globalIndex const> const & colIndices,
-                       arraySlice1d<real64 const> const &values )
+                       arraySlice1d<real64 const> const & values )
 {
   GEOSX_LAI_ASSERT( modifiable() );
   PetscInt rows[1] = {rowIndex};
   GEOSX_LAI_CHECK_ERROR( MatSetValues( m_mat,
                                        1,
                                        rows,
-                                       values.size(),
+                                       colIndices.size(),
                                        toPetscInt( colIndices ),
-                                       values.data(),
+                                       values,
                                        ADD_VALUES ) );
 }
 
@@ -261,9 +261,9 @@ void PetscMatrix::set( globalIndex const rowIndex,
   GEOSX_LAI_CHECK_ERROR( MatSetValues( m_mat,
                                        1,
                                        rows,
-                                       values.size(),
+                                       colIndices.size(),
                                        toPetscInt( colIndices ),
-                                       values.data(),
+                                       values,
                                        INSERT_VALUES ) );
 }
 
@@ -276,9 +276,9 @@ void PetscMatrix::insert( globalIndex const rowIndex,
   GEOSX_LAI_CHECK_ERROR( MatSetValues( m_mat,
                                        1,
                                        rows,
-                                       values.size(),
+                                       colIndices.size(),
                                        toPetscInt( colIndices ),
-                                       values.data(),
+                                       values,
                                        INSERT_VALUES ) );
 }
 

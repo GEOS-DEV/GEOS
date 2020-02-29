@@ -502,7 +502,6 @@ void DofManager::setSparsityPatternOneBlock( MATRIX & pattern,
   array1d< globalIndex > dofIndicesRow( maxDofRow );
   array1d< globalIndex > dofIndicesCol( maxDofCol );
   array2d< real64 > values( maxDofRow, maxDofCol );
-  values = 1.0;
 
   // Perform assembly/multiply patterns
   for( localIndex irow = 0; irow < connLocRow.numRows(); ++irow )
@@ -522,6 +521,7 @@ void DofManager::setSparsityPatternOneBlock( MATRIX & pattern,
     }
 
     values.resize( numDofRow, numDofCol );
+    values = 1.0;
     pattern.insert( dofIndicesRow, dofIndicesCol, values );
   }
 }
