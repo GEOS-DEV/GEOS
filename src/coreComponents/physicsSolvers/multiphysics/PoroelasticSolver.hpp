@@ -44,6 +44,9 @@ public:
 
   virtual void RegisterDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
 
+  virtual void SetupDofs( DomainPartition const * const domain,
+                          DofManager & dofManager ) const override;
+
   virtual void
   ImplicitStepSetup( real64 const & time_n,
                      real64 const & dt,
@@ -114,6 +117,12 @@ private:
   string m_flowSolverName;
   string m_couplingTypeOptionString;
   couplingTypeOption m_couplingTypeOption;
+
+  // pointer to the flow sub-solver
+  FlowSolverBase * m_flowSolver;
+
+  // pointer to the solid mechanics sub-solver
+  SolidMechanicsLagrangianFEM * m_solidSolver;
 
 };
 

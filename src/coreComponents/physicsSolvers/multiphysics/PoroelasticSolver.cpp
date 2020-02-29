@@ -79,6 +79,18 @@ void PoroelasticSolver::RegisterDataOnMesh( dataRepository::Group * const MeshBo
   }
 }
 
+void PoroelasticSolver::SetupDofs( DomainPartition const * const domain,
+                                   DofManager & dofManager ) const
+{
+  GEOSX_MARK_FUNCTION;
+  m_solidSolver->SetupDofs( domain, dofManager );
+  m_flowSolver->SetupDofs( domain, dofManager );
+
+  dofManager.addCoupling( keys::TotalDisplacement,
+                          FlowSolverBase::viewKeyStruct::pressureString,
+                          DofManager::Connectivity::Elem );
+}
+
 void PoroelasticSolver::ImplicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
                                            real64 const & GEOSX_UNUSED_PARAM( dt ),
                                            DomainPartition * const domain,
@@ -113,6 +125,8 @@ void PoroelasticSolver::ImplicitStepComplete( real64 const& GEOSX_UNUSED_PARAM( 
 
 void PoroelasticSolver::PostProcessInput()
 {
+  SolverBase::PostProcessInput();
+
   string ctOption = this->getReference<string>(viewKeyStruct::couplingTypeOptionStringString);
 
   if( ctOption == "FixedStress" )
@@ -135,6 +149,12 @@ void PoroelasticSolver::PostProcessInput()
   else if( ctOption == "TightlyCoupled" )
   {
     this->m_couplingTypeOption = couplingTypeOption::TightlyCoupled;
+
+    m_flowSolver  = this->getParent()->GetGroup<SinglePhaseBase>( m_flowSolverName );
+    m_solidSolver = this->getParent()->GetGroup<SolidMechanicsLagrangianFEM>( m_solidSolverName );
+
+    GEOSX_ERROR_IF( m_flowSolver == nullptr, "Flow solver not found or invalid type: " << m_flowSolverName );
+    GEOSX_ERROR_IF( m_solidSolver == nullptr, "Solid solver not found or invalid type: " << m_solidSolverName );
   }
   else
   {
@@ -187,7 +207,31 @@ real64 PoroelasticSolver::SolverStep( real64 const & time_n,
   }
   else if( m_couplingTypeOption == couplingTypeOption::TightlyCoupled )
   {
+
+    // setup monolithic coupled system
+    m_dofManager.setMesh( domain, 0, 0 );
+    SetupDofs( domain, m_dofManager );
+    m_dofManager.reorderByRank();
+
+    localIndex const numLocalDof = m_dofManager.numLocalDofs();
+    m_matrix.createWithLocalSize( numLocalDof, numLocalDof, 30, MPI_COMM_GEOSX );
+    m_rhs.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
+    m_solution.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
+
+
+    m_dofManager.setSparsityPattern( m_matrix, true );
+    m_matrix.write("jacobian");
+
+
     GEOSX_ERROR( "couplingTypeOption::FullyImplicit not yet implemented");
+
+    ImplicitStepSetup( time_n,
+               dt,
+               domain,
+               m_dofManager,
+               m_matrix,
+               m_rhs,
+               m_solution );
   }
   return dtReturn;
 }
