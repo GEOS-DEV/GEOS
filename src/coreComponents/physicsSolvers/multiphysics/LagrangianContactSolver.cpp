@@ -63,6 +63,7 @@ LagrangianContactSolver::LagrangianContactSolver( const std::string & name,
 void LagrangianContactSolver::RegisterDataOnMesh( dataRepository::Group * const MeshBodies )
 {
   std::cout << "In RegisterDataOnMesh!" << std::endl;
+
   for( auto & mesh : MeshBodies->GetSubGroups() )
   {
     MeshLevel * meshLevel = Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
@@ -283,7 +284,11 @@ void LagrangianContactSolver::UpdateDeformationForCoupling( DomainPartition * co
               localJump[kfe][1] = localJumpTensor[1];
               localJump[kfe][2] = localJumpTensor[2];
 
-              std::cout << "Element: " << kfe << " localJump: " << localJumpTensor << std::endl;
+              std::cout << "Element: "
+                        << kfe
+                        << " localJump: "
+                        << localJumpTensor
+                        << std::endl;
             }
           }
         } );
@@ -337,7 +342,7 @@ real64 LagrangianContactSolver::NonlinearImplicitStep( real64 const & time_n,
                                                 solution );
 
     bool const isPreviousFractureStateValid = UpdateFractureState( domain );
-    std::cout << isPreviousFractureStateValid << std::endl;
+    std::cout << "active set flag ---> " << isPreviousFractureStateValid << std::endl;
     if( isPreviousFractureStateValid )
     {
       continueLoop = false;
@@ -488,6 +493,10 @@ void LagrangianContactSolver::AssembleSystem( real64 const time,
 
   AssembleForceResidualDerivativeWrtTraction( domain, &m_matrix01, &m_rhs0 );
   AssembleTractionResidualDerivativeWrtDisplacementAndTraction( domain, &m_matrix10, &m_matrix11, &m_rhs1 );
+
+  m_matrix01.write( "matrix01.mtx" );
+  m_matrix10.write( "matrix10.mtx" );
+  m_matrix11.write( "matrix11.mtx" );
 }
 
 void LagrangianContactSolver::ApplyBoundaryConditions( real64 const time,
@@ -544,8 +553,8 @@ LagrangianContactSolver::
                          ParallelVector const & GEOSX_UNUSED_PARAM( rhs ) )
 {
   GEOSX_MARK_FUNCTION;
-
   std::cout << "In CalculateResidualNorm!" << std::endl;
+
   ParallelVector const & solidResidual = m_solidSolver->getSystemRhs();
   real64 const tractionResidualNorm = m_rhs1.norm2();
 
@@ -607,8 +616,6 @@ LagrangianContactSolver::
       arrayView1d< real64 const > const & area = subRegion->getElementArea();
       arrayView1d< R2Tensor const > const & rotationMatrix = subRegion->getElementRotationMatrix();
       arrayView2d< localIndex const > const & elemsToFaces = subRegion->faceList();
-
-      std::cout << traction << std::endl;
 
       forall_in_range< serialPolicy >( 0,
                                        subRegion->size(),
@@ -750,7 +757,6 @@ LagrangianContactSolver::
               {
                 case FractureState::STICK:
                 {
-                  std::cout << kfe << " STICK" << std::endl;
                   for( int i=0 ; i<3 ; ++i )
                   {
                     elemRHS[i] = + Ja * localJump[kfe][i];
@@ -775,7 +781,7 @@ LagrangianContactSolver::
                 case FractureState::SLIP:
                 case FractureState::NEW_SLIP:
                 {
-                  std::cout << kfe << " SLIP" << std::endl;
+//                   std::cout << kfe << " SLIP" << std::endl;
                   elemRHS[0] = + Ja * localJump[kfe](0);
 
                   for( localIndex kf=0 ; kf<2 ; ++kf )
@@ -793,6 +799,8 @@ LagrangianContactSolver::
                   real64 limitTau = m_cohesion - traction[kfe](0) * std::tan( m_frictionAngle );
                   R1TensorT<2> sliding( localJump[kfe](1), localJump[kfe](2) );
                   real64 slidingNorm = sqrt( sliding(0)*sliding(0) + sliding(1)*sliding(1) );
+
+//                   std::cout << "sliding " << sliding << std::endl;
 
                   if( !( ( m_nonlinearSolverParameters.m_numNewtonIterations == 0 ) && ( fractureState[kfe] == FractureState::NEW_SLIP ) )
                       && slidingNorm > m_slidingTolerance )
@@ -819,8 +827,8 @@ LagrangianContactSolver::
                           R1TensorT<2> localRowE;
                           localRowE.AijBj( dUdgT, localRowB );
 
-                          dRdU( 1, kf*3*numNodesPerFace + 3*a+i ) = - nodalArea * localRowE( 0 ) * pow( -1, kf );
-                          dRdU( 2, kf*3*numNodesPerFace + 3*a+i ) = - nodalArea * localRowE( 1 ) * pow( -1, kf );
+                          dRdU( 1, kf*3*numNodesPerFace + 3*a+i ) = nodalArea * localRowE( 0 ) * pow( -1, kf );
+                          dRdU( 2, kf*3*numNodesPerFace + 3*a+i ) = nodalArea * localRowE( 1 ) * pow( -1, kf );
                         }
                       }
                     }
@@ -829,7 +837,7 @@ LagrangianContactSolver::
                       dRdT( i, 0 ) = Ja * std::tan( m_frictionAngle ) * sliding(i-1) / slidingNorm;
                       dRdT( i, i ) = Ja;
                     }
-                    std::cout << "dRdT" << dRdT << std::endl;
+//                     std::cout << "dRdT" << dRdT << std::endl;
                   }
                   else
                   {
@@ -858,15 +866,14 @@ LagrangianContactSolver::
                       }
                     }
                   }
-                  for( int i=0 ; i<3 ; ++i )
-                  {
-                    std::cout << i << " " << elemRHS[i] << std::endl;
-                  }
+//                   for( int i=0 ; i<3 ; ++i )
+//                   {
+//                     std::cout << i << " " << elemRHS[i] << std::endl;
+//                   }
                   break;
                 }
                 case FractureState::OPEN:
                 {
-                  std::cout << kfe << " OPEN" << std::endl;
                   for( int i=0 ; i<3 ; ++i )
                   {
                     elemRHS[i] = + Ja * traction[kfe][i];
@@ -920,7 +927,6 @@ LagrangianContactSolver::
                        DomainPartition * const domain )
 {
   GEOSX_MARK_FUNCTION;
-
   std::cout << "In ApplySystemSolution!" << std::endl;
 
   globalIndex numDispDofs = m_solidSolver->getSystemRhs().globalSize();
@@ -1015,7 +1021,11 @@ bool LagrangianContactSolver::UpdateFractureState( DomainPartition * const domai
                                        [&]( localIndex const kfe )
         {
           {
-            std::cout << traction[kfe] << std::endl;
+            std::cout << "traction for element "
+                      << kfe
+                      << " "
+                      << traction[kfe]
+                      << std::endl;
 
             FractureState const originalFractureState = fractureState[kfe];
             if( originalFractureState == FractureState::OPEN )
@@ -1031,18 +1041,17 @@ bool LagrangianContactSolver::UpdateFractureState( DomainPartition * const domai
             }
             else if( traction[kfe](0) > m_normalTractionTolerance )
             {
-              std::cout << "need to be open!!!\n";
               fractureState[kfe] = FractureState::OPEN;
             }
             else
             {
               real64 currentTau = sqrt( traction[kfe](1)*traction[kfe](1) + traction[kfe](2)*traction[kfe](2) );
               real64 limitTau = m_cohesion - traction[kfe](0) * std::tan( m_frictionAngle );
-              if( originalFractureState != FractureState::SLIP && currentTau >= limitTau )
+              if( originalFractureState == FractureState::STICK && currentTau >= limitTau )
               {
                 currentTau *= (1.0 - m_alpha);
               }
-              else if( originalFractureState == FractureState::SLIP && currentTau <= limitTau )
+              else if( originalFractureState != FractureState::STICK && currentTau <= limitTau )
               {
                 currentTau *= (1.0 + m_alpha);
               }
@@ -1062,23 +1071,25 @@ bool LagrangianContactSolver::UpdateFractureState( DomainPartition * const domai
                 fractureState[kfe] = FractureState::STICK;
               }
             }
-            std::cout << kfe << " " << FractureStateToString( originalFractureState ) << std::endl;
-            std::cout << kfe << " " << FractureStateToString( fractureState[kfe] ) << std::endl;
+            std::cout << "--- fracture element "
+                      << kfe
+                      << " previous state <"
+                      << FractureStateToString( originalFractureState )
+                      << "> current state <"
+                      << FractureStateToString( fractureState[kfe] )
+                      << ">"
+                      << std::endl;
             localCheck[kfe] = ( originalFractureState == fractureState[kfe] );
-            std::cout << kfe << " *** " << localCheck[kfe] << std::endl;
           }
         });
 
-      std::cout << localCheck << std::endl;
       for( localIndex kfe = 0; kfe < subRegion->size(); ++kfe )
       {
-        std::cout << kfe << " " << checkActiveSet << " " << localCheck[kfe] << std::endl;
         checkActiveSet &= localCheck[kfe];
       }
     }
   });
 
-  std::cout << "output of UpdateFractureState -> " << checkActiveSet << std::endl;
   return checkActiveSet;
 }
 
@@ -1088,8 +1099,8 @@ void LagrangianContactSolver::SolveSystem( DofManager const & dofManager,
                                            ParallelVector & solution )
 {
   GEOSX_MARK_FUNCTION;
-
   std::cout << "In SolveSystem!" << std::endl;
+
   globalIndex numDispDofs = m_solidSolver->getSystemRhs().globalSize();
   globalIndex numTracDofs = m_matrix11.globalRows();
   GEOSX_LOG_RANK_0( "size = " << numDispDofs << " + " << numTracDofs );

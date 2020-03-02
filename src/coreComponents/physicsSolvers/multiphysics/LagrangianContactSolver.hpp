@@ -184,9 +184,9 @@ private:
   real64 const m_alpha = 0.05;
   real64 const m_cohesion = 0.0;
   real64 const m_frictionAngle = 30.0 * M_PI/180.0;
-  real64 const m_normalDisplacementTolerance = 0.0;
-  real64 const m_normalTractionTolerance = 0.0;
-  real64 const m_slidingTolerance = 0.0;
+  real64 const m_normalDisplacementTolerance = 1.e-7;
+  real64 const m_normalTractionTolerance = 1.e-4;
+  real64 const m_slidingTolerance = 1.e-7;
   string const m_tractionKey = viewKeyStruct::tractionString;
 
   /**
