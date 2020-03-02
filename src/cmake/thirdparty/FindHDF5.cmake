@@ -14,7 +14,13 @@ set(ENV{HDF5_ROOT} ${HDF5_ROOT}/bin)
 # Use CMake's FindHDF5 module, which uses hdf5's compiler wrappers to extract
 # all the info about the hdf5 install
 set( HDF5_USE_STATIC_LIBRARIES FALSE )
+set( HDF5_FIND_COMPONENTS "C" "HL" )
+
 include(FindHDF5)
+
+if ( HDF5_HL_LIBRARIES )
+  set(HDF5_LIBRARIES ${HDF5_HL_LIBRARIES} ${HDF5_LIBRARIES}  ) 
+endif( )
 
 message(STATUS "HDF5_INCLUDE_DIRS: ${HDF5_INCLUDE_DIRS}")
 message(STATUS "HDF5_LIBRARIES: ${HDF5_LIBRARIES}")

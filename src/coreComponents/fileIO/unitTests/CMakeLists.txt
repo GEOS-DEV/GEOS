@@ -3,10 +3,10 @@
 #
 
 set(gtest_geosx_tests
-   testDataTypes.cpp
+   testHDFFile.cpp
    )
 
-set( dependencyList common hdf5 gtest )
+set( dependencyList gtest fileIO cxx-utilities )
 
 #
 # Add gtest C++ based tests

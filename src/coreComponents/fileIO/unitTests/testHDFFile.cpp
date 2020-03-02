@@ -1,0 +1,74 @@
+#include "fileIO/hdf/HDFFile.hpp"
+#include <gtest/gtest.h>
+
+
+// todo: template
+#define DIM 1
+#define ARR_TYPE real64
+#define IND_TYPE localIndex
+
+using namespace geosx;
+
+TEST( testHDFTraits, can_hdf_io )
+{
+  static_assert( can_hdf_io< real32 >, "Should be true.");
+  static_assert( can_hdf_io< real64 >, "Should be true.");
+  static_assert( can_hdf_io< integer >, "Should be true.");
+  static_assert( can_hdf_io< localIndex >, "Should be true.");
+  static_assert( can_hdf_io< globalIndex >, "Should be true.");
+
+  static_assert( can_hdf_io< const real32 >, "Should be true.");
+  static_assert( can_hdf_io< const real64 >, "Should be true.");
+  static_assert( can_hdf_io< const integer >, "Should be true.");
+  static_assert( can_hdf_io< const localIndex >, "Should be true.");
+  static_assert( can_hdf_io< const globalIndex >, "Should be true.");
+}
+
+TEST( testHDFIO, WholeTabularIO )
+{
+  srand(time(NULL));
+  localIndex dims[DIM] = {0};
+  for(integer dd = 0; dd < DIM; ++dd )
+  {
+    dims[dd] = rand();
+  }
+  Array<ARR_TYPE, DIM> arr(rand());
+  // Array<IND_TYPE, 1> ind_arr(rand() % dims[0]);
+
+  {
+    HDFFile file("arr_output");
+    HDFTabularIO<decltype(arr)> table_out(file);
+    table_out.CreateTable("Scalar","scl",arr.size(),arr.size(0),"nd_");
+    table_out.AppendRow("scl",arr);
+  }
+}
+
+//TEST( testHDFIO, IndexedTabularIO )
+//TEST( testHDFIO, PartialTabularIO )
+//TEST( testHDFIO, IndexedPartialTabularIO )
+
+TEST( testHDFIO, WholeTabularTimeHistory )
+{
+  srand(time(NULL));
+  localIndex dims[DIM] = {0};
+  for(integer dd = 0; dd < DIM; ++dd )
+  {
+    dims[dd] = rand();
+  }
+  Array<ARR_TYPE, DIM> arr(rand());
+
+  {
+    HDFFile file("arr_time_hist");
+    HDFTimeHistoryTabular<decltype(arr)> time_hist(file);
+    time_hist.CreateTable("Scalar","scl",arr.size(),arr.size(0),"nd_");
+    //time_hist.LoadTableMeta("scl");
+    time_hist.AppendRow("scl",0.1,arr);
+    time_hist.AppendRow("scl",0.5,arr);
+    time_hist.ClearAfterTime("scl",0.4);
+  }
+
+}
+
+//TEST( testHDFIO, IndexedTabularTimeHistory )
+//TEST( testHDFIO, PartialTabularTimeHistory )
+//TEST( testHDFIO, IndexedPartialTimeHistory )
