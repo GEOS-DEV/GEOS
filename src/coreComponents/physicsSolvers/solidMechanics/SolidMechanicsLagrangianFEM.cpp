@@ -971,7 +971,7 @@ void SolidMechanicsLagrangianFEM::SetupDofs( DomainPartition const * const GEOSX
 
   dofManager.addCoupling( keys::TotalDisplacement,
                           keys::TotalDisplacement,
-                          DofManager::Connectivity::Elem );
+                          DofManager::Connector::Elem );
 }
 
 void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),

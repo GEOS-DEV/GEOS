@@ -155,7 +155,7 @@ void SinglePhaseHybridFVM::SetupDofs( DomainPartition const * const GEOSX_UNUSED
 
   dofManager.addCoupling( viewKeyStruct::pressureString,
                           viewKeyStruct::pressureString,
-                          DofManager::Connectivity::Face );
+                          DofManager::Connector::Face );
   
   // setup the connectivity of face fields
   dofManager.addField( viewKeyStruct::facePressureString,
@@ -164,12 +164,12 @@ void SinglePhaseHybridFVM::SetupDofs( DomainPartition const * const GEOSX_UNUSED
 
   dofManager.addCoupling( viewKeyStruct::facePressureString,
                           viewKeyStruct::facePressureString,
-                          DofManager::Connectivity::Elem );
+                          DofManager::Connector::Elem );
   
   // setup coupling between pressure and face pressure
   dofManager.addCoupling( viewKeyStruct::facePressureString,
                           viewKeyStruct::pressureString,
-                          DofManager::Connectivity::Elem,
+                          DofManager::Connector::Elem,
                           true);
 
 }

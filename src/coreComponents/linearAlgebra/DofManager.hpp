@@ -29,6 +29,7 @@ namespace geosx
 class DomainPartition;
 class MeshLevel;
 class ObjectManagerBase;
+class FluxApproximationBase;
 
 /**
  * @class DofManager
@@ -58,13 +59,14 @@ public:
    * enum is nearly identical to Location, but we keep both for code readability
    * in function calls.
    */
-  enum class Connectivity
+  enum class Connector
   {
     Elem, //!< connectivity is element (like in finite elements)
     Face, //!< connectivity is face (like in finite volumes TPFA)
     Edge, //!< connectivity is edge (like fracture element connectors)
     Node, //!< connectivity is node (like in finite volumes MPFA)
-    None  //!< there is no connectivity (self connected field, like a lumped mass matrix)
+    None,  //!< there is no connectivity (self connected field, like a lumped mass matrix)
+    Stencil //!< connectivity is through a (set of) user-provided stencil(s)
   };
 
   /**
@@ -88,6 +90,13 @@ public:
     globalIndex blockOffset;  //!< offset of this field's block in a block-wise ordered system
     globalIndex rankOffset; //!< field's first DoF on current processor (within its block, ignoring other fields)
     globalIndex globalOffset; //!< global offset of field's DOFs on current processor for multi-field problems
+  };
+
+  struct CouplingDescription
+  {
+    Connector connector = Connector::None;
+    string_array regions;
+    FluxApproximationBase const * stencils = nullptr;
   };
 
   /**
@@ -191,7 +200,7 @@ public:
    */
   void addCoupling( string const & rowFieldName,
                     string const & colFieldName,
-                    Connectivity const connectivity );
+                    Connector const connectivity );
 
   /**
    * @brief Just another interface to allow four parameters (no symmetry, default is true).
@@ -203,7 +212,7 @@ public:
    */
   void addCoupling( string const & rowFieldName,
                     string const & colFieldName,
-                    Connectivity const connectivity,
+                    Connector const connectivity,
                     string_array const & regions );
 
   /**
@@ -216,25 +225,8 @@ public:
    */
   void addCoupling( string const & rowFieldName,
                     string const & colFieldName,
-                    Connectivity const connectivity,
+                    Connector const connectivity,
                     bool const symmetric );
-
-  /**
-   * @brief Finish populating fields and apply appropriate dof renumbering
-   *
-   * This function must be called after all field and coupling information has been added.
-   * It adjusts DoF index arrays to account for presence of other fields (in a global monolithic fashion).
-   *
-   * @note After DofManager has been closed, new fields and coupling cannot be added, until
-   *       @ref clear or @ref setMesh is called.
-   *
-   * @note After reorderByRank() is called, the meaning of FieldDescription::globalOffset changes from
-   *       "global offset of field's block in a global field-wise ordered (block) system" to
-   *       "global offset of field's block on current processor in a rank-wise ordered system".
-   *       This meaning is consistent with its use throughout. For example, this is the row/col
-   *       global offset used to insert the field's sparsity block into a global coupled system.
-   */
-  void reorderByRank();
 
   /**
    * @brief Add coupling between two fields.
@@ -256,9 +248,37 @@ public:
    */
   void addCoupling( string const & rowFieldName,
                     string const & colFieldName,
-                    Connectivity const connectivity,
+                    Connector const connectivity,
                     string_array const & regions,
                     bool const symmetric );
+
+  /**
+   * @brief Special interface for self-connectivity through a stencil.
+   * @param [in] fieldName name of the field (this is only for diagonal blocks)
+   * @param [in] stencils a pointer to FluxApproximation storing the stencils
+   *
+   * The field must be defined on element support. The set of regions is taken
+   * automatically from the field definition.
+   */
+  void addCoupling( string const & fieldName,
+                    FluxApproximationBase const * stencils );
+
+  /**
+   * @brief Finish populating fields and apply appropriate dof renumbering
+   *
+   * This function must be called after all field and coupling information has been added.
+   * It adjusts DoF index arrays to account for presence of other fields (in a global monolithic fashion).
+   *
+   * @note After DofManager has been closed, new fields and coupling cannot be added, until
+   *       @ref clear or @ref setMesh is called.
+   *
+   * @note After reorderByRank() is called, the meaning of FieldDescription::globalOffset changes from
+   *       "global offset of field's block in a global field-wise ordered (block) system" to
+   *       "global offset of field's block on current processor in a rank-wise ordered system".
+   *       This meaning is consistent with its use throughout. For example, this is the row/col
+   *       global offset used to insert the field's sparsity block into a global coupled system.
+   */
+  void reorderByRank();
 
   /**
    * @brief Check if string key is already being used
@@ -483,6 +503,9 @@ private:
                                    localIndex const rowFieldIndex,
                                    localIndex const colFieldIndex ) const;
 
+  template< typename MATRIX >
+  void setSparsityPatternFromStencil( MATRIX & pattern, localIndex const fieldIndex ) const;
+
   /**
    * @brief Generic implementation for @ref copyVectorToField and @ref addVectorToField
    * @tparam FIELD_OP operation to perform (see FieldSpecificationOps.hpp)
@@ -542,10 +565,7 @@ private:
   array1d<FieldDescription> m_fields;
 
   /// Table of connector types within and between fields
-  array2d<Connectivity> m_connectivity;
-
-  /// For each field-field coupling, list of regions where coupling is defined
-  array2d< string_array > m_couplingRegions;
+  array2d<CouplingDescription> m_coupling;
 
   /// Flag indicating that DOFs have been reordered rank-wise.
   bool m_reordered;

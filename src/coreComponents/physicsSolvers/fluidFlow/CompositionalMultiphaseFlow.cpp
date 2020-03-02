@@ -686,7 +686,7 @@ CompositionalMultiphaseFlow::ImplicitStepSetup( real64 const & GEOSX_UNUSED_PARA
   }
 }
 
-void CompositionalMultiphaseFlow::SetupDofs( DomainPartition const * const GEOSX_UNUSED_PARAM( domain ),
+void CompositionalMultiphaseFlow::SetupDofs( DomainPartition const * const domain,
                                              DofManager & dofManager ) const
 {
   dofManager.addField( viewKeyStruct::dofFieldString,
@@ -694,9 +694,15 @@ void CompositionalMultiphaseFlow::SetupDofs( DomainPartition const * const GEOSX
                        m_numDofPerCell,
                        m_targetRegions );
 
-  dofManager.addCoupling( viewKeyStruct::dofFieldString,
-                          viewKeyStruct::dofFieldString,
-                          DofManager::Connectivity::Face );
+  NumericalMethodsManager const * const numericalMethodManager =
+    domain->getParent()->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
+
+  FiniteVolumeManager const * const fvManager =
+    numericalMethodManager->GetGroup<FiniteVolumeManager>( keys::finiteVolumeManager );
+
+  FluxApproximationBase const * const fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
+
+  dofManager.addCoupling( viewKeyStruct::dofFieldString, fluxApprox );
 }
 
 void CompositionalMultiphaseFlow::AssembleSystem( real64 const time_n,

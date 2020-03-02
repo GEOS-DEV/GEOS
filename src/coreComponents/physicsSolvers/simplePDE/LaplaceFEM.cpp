@@ -175,7 +175,7 @@ void LaplaceFEM::SetupDofs( DomainPartition const * const GEOSX_UNUSED_PARAM( do
 
   dofManager.addCoupling( m_fieldName,
                           m_fieldName,
-                          DofManager::Connectivity::Elem );
+                          DofManager::Connector::Elem );
 }
 
 //START_SPHINX_INCLUDE_04

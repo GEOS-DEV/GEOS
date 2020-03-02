@@ -524,7 +524,7 @@ void HydrofractureSolver::SetupDofs( DomainPartition const * const domain,
 
   dofManager.addCoupling( keys::TotalDisplacement,
                           FlowSolverBase::viewKeyStruct::pressureString,
-                          DofManager::Connectivity::Elem,
+                          DofManager::Connector::Elem,
                           fractureRegions );
 }
 

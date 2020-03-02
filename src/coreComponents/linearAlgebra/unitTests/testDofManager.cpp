@@ -365,7 +365,7 @@ protected:
   {
     string name;
     DofManager::Location location;
-    DofManager::Connectivity connectivity;
+    DofManager::Connector connectivity;
     localIndex components;
     PatternFunc makePattern;
     std::vector<string> regions = {};
@@ -373,7 +373,7 @@ protected:
 
   struct CouplingDesc
   {
-    DofManager::Connectivity connectivity;
+    DofManager::Connector connectivity;
     CoupledPatternFunc makeCouplingPattern;
     bool symmetric = true;
     std::vector<string> regions = {};
@@ -478,7 +478,7 @@ TYPED_TEST_P( DofManagerSparsityTest, TPFA_Full )
 {
   TestFixture::testPattern( { { "pressure",
                                 DofManager::Location::Elem,
-                                DofManager::Connectivity::Face,
+                                DofManager::Connector::Face,
                                 2, makeSparsityTPFA<typename TestFixture::Matrix> } } );
 }
 
@@ -490,7 +490,7 @@ TYPED_TEST_P( DofManagerSparsityTest, TPFA_Partial )
 {
   TestFixture::testPattern( { { "pressure",
                                 DofManager::Location::Elem,
-                                DofManager::Connectivity::Face,
+                                DofManager::Connector::Face,
                                 2, makeSparsityTPFA<typename TestFixture::Matrix>,
                                 { "region1", "region3", "region4" } } } );
 }
@@ -503,7 +503,7 @@ TYPED_TEST_P( DofManagerSparsityTest, FEM_Full )
 {
   TestFixture::testPattern( { { "displacement",
                                 DofManager::Location::Node,
-                                DofManager::Connectivity::Elem,
+                                DofManager::Connector::Elem,
                                 3, makeSparsityFEM<typename TestFixture::Matrix> } } );
 }
 
@@ -515,7 +515,7 @@ TYPED_TEST_P( DofManagerSparsityTest, FEM_Partial )
 {
   TestFixture::testPattern( { { "displacement",
                                 DofManager::Location::Node,
-                                DofManager::Connectivity::Elem,
+                                DofManager::Connector::Elem,
                                 3, makeSparsityFEM<typename TestFixture::Matrix>,
                                 { "region1", "region3", "region4" } } } );
 }
@@ -528,7 +528,7 @@ TYPED_TEST_P( DofManagerSparsityTest, Mass_Full )
 {
   TestFixture::testPattern( { { "mass",
                                 DofManager::Location::Elem,
-                                DofManager::Connectivity::None,
+                                DofManager::Connector::None,
                                 2, makeSparsityMass<typename TestFixture::Matrix> } } );
 }
 
@@ -540,7 +540,7 @@ TYPED_TEST_P( DofManagerSparsityTest, Mass_Partial )
 {
   TestFixture::testPattern( { { "mass",
                                 DofManager::Location::Elem,
-                                DofManager::Connectivity::None,
+                                DofManager::Connector::None,
                                 2, makeSparsityMass<typename TestFixture::Matrix>,
                                 { "region1", "region3", "region4" } } } );
 }
@@ -553,7 +553,7 @@ TYPED_TEST_P( DofManagerSparsityTest, Flux_Full )
 {
   TestFixture::testPattern( { { "flux",
                                 DofManager::Location::Face,
-                                DofManager::Connectivity::Elem,
+                                DofManager::Connector::Elem,
                                 2, makeSparsityFlux<typename TestFixture::Matrix> } } );
 }
 
@@ -565,7 +565,7 @@ TYPED_TEST_P( DofManagerSparsityTest, Flux_Partial )
 {
   TestFixture::testPattern( { { "flux",
                                 DofManager::Location::Face,
-                                DofManager::Connectivity::Elem,
+                                DofManager::Connector::Elem,
                                 2, makeSparsityFlux<typename TestFixture::Matrix>,
                                 { "region1", "region3", "region4" } } } );
 }
@@ -578,15 +578,15 @@ TYPED_TEST_P( DofManagerSparsityTest, FEM_TPFA_Full )
 {
   TestFixture::testPattern( { { "displacement",
                                 DofManager::Location::Node,
-                                DofManager::Connectivity::Elem,
+                                DofManager::Connector::Elem,
                                 3, makeSparsityFEM<typename TestFixture::Matrix> },
                               { "pressure",
                                 DofManager::Location::Elem,
-                                DofManager::Connectivity::Face,
+                                DofManager::Connector::Face,
                                 2, makeSparsityTPFA<typename TestFixture::Matrix> }
                             },
                             { { { "displacement", "pressure" },
-                                { DofManager::Connectivity::Elem,
+                                { DofManager::Connector::Elem,
                                   makeSparsityFEM_FVM<typename TestFixture::Matrix>,
                                   true } }
                             } );
@@ -601,17 +601,17 @@ TYPED_TEST_P( DofManagerSparsityTest, FEM_TPFA_Partial )
 {
   TestFixture::testPattern( { { "displacement",
                                 DofManager::Location::Node,
-                                DofManager::Connectivity::Elem,
+                                DofManager::Connector::Elem,
                                 3, makeSparsityFEM<typename TestFixture::Matrix>,
                                 { "region1", "region3", "region4" } },
                               { "pressure",
                                 DofManager::Location::Elem,
-                                DofManager::Connectivity::Face,
+                                DofManager::Connector::Face,
                                 2, makeSparsityTPFA<typename TestFixture::Matrix>,
                                 { "region1", "region2", "region4" }}
                             },
                             { { { "displacement", "pressure" },
-                                { DofManager::Connectivity::Elem,
+                                { DofManager::Connector::Elem,
                                   makeSparsityFEM_FVM<typename TestFixture::Matrix>,
                                   true,
                                   { "region4" } } }

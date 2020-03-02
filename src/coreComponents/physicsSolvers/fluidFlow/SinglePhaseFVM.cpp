@@ -45,16 +45,22 @@ SinglePhaseFVM::SinglePhaseFVM( const std::string& name,
 }
 
 
-void SinglePhaseFVM::SetupDofs( DomainPartition const * const GEOSX_UNUSED_PARAM( domain ),
+void SinglePhaseFVM::SetupDofs( DomainPartition const * const domain,
                                 DofManager & dofManager ) const
 {
   dofManager.addField( viewKeyStruct::pressureString,
                        DofManager::Location::Elem,
                        m_targetRegions );
 
-  dofManager.addCoupling( viewKeyStruct::pressureString,
-                          viewKeyStruct::pressureString,
-                          DofManager::Connectivity::Face );
+  NumericalMethodsManager const * const numericalMethodManager =
+    domain->getParent()->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
+
+  FiniteVolumeManager const * const fvManager =
+    numericalMethodManager->GetGroup<FiniteVolumeManager>( keys::finiteVolumeManager );
+
+  FluxApproximationBase const * const fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
+
+  dofManager.addCoupling( viewKeyStruct::pressureString, fluxApprox );
 }
   
 

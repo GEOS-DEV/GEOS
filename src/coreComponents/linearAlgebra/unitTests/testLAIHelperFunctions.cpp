@@ -147,7 +147,7 @@ TEST_F(LAIHelperFunctionsTest, Test_NodalVectorPermutation)
   Region.push_back( "region1" );
 
   dofManager.addField( "nodalVariable", DofManager::Location::Node, 3, Region );
-  dofManager.addCoupling( "nodalVariable", "nodalVariable", DofManager::Connectivity::Elem );
+  dofManager.addCoupling( "nodalVariable", "nodalVariable", DofManager::Connector::Elem );
   dofManager.reorderByRank();
 
   localIndex nDof = 3*nodeManager->size();
@@ -213,7 +213,7 @@ TEST_F(LAIHelperFunctionsTest, Test_CellCenteredVectorPermutation)
   region.push_back( "region1" );
 
   dofManager.addField( "cellCentered", DofManager::Location::Elem, region );
-  dofManager.addCoupling( "cellCentered", "cellCentered", DofManager::Connectivity::Face );
+  dofManager.addCoupling( "cellCentered", "cellCentered", DofManager::Connector::Face );
   dofManager.reorderByRank();
 
   integer nDof = dofManager.numGlobalDofs("cellCentered");
