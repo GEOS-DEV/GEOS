@@ -21,6 +21,21 @@ option(ENABLE_BENCHMARKS "Enables benchmarks" ON)
 include(cmake/blt/SetupBLT.cmake)
 set(BLT_SOURCE_DIR ${PROJECT_SOURCE_DIR}/cmake/blt/)
 
+# Removes -pthread from BLT CUDA libraries lists
+if (ENABLE_CUDA)
+  set(_cuda_libraries)
+  foreach(_lib ${BLT_CUDA_LIBRARIES})
+    if ("${_lib}" STREQUAL "-pthread")
+      list(APPEND _cuda_libraries "-lpthread")
+    else()
+      list(APPEND _cuda_libraries "${_lib}")
+    endif()
+  endforeach()
+
+  set(BLT_CUDA_LIBRARIES "${_cuda_libraries}" CACHE STRING "" FORCE)
+  set(BLT_CUDA_RUNTIME_LIBRARIES "${_cuda_libraries}" CACHE STRING "" FORCE)
+endif()
+
 ################################
 # Include standard build system logic and options
 ################################
