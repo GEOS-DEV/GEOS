@@ -409,26 +409,24 @@ void SinglePhaseBase::UpdateEOS( real64 const time_n,
   // TODO: this formulation of explicit solver may require density boundary condition
 
   // update pressure based on density
-  if (m_poroElasticFlag)
+  applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
+               ElementRegionBase * const GEOSX_UNUSED_PARAM( region ),
+               ElementSubRegionBase * const subRegion )
   {
-    applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                 ElementRegionBase * const GEOSX_UNUSED_PARAM( region ),
-                 ElementSubRegionBase * const subRegion )
-    {
-      SingleFluidBase * const fluid = GetConstitutiveModel<SingleFluidBase>( subRegion, m_fluidName );
-      arrayView1d<real64> const & pres = m_pressure[er][esr];
-      arrayView1d<real64> const & dPres = m_deltaPressure[er][esr];
+    SingleFluidBase * const fluid = GetConstitutiveModel<SingleFluidBase>( subRegion, m_fluidName );
+    arrayView1d<real64> const & pres = m_pressure[er][esr];
+    arrayView1d<real64> const & dPres = m_deltaPressure[er][esr];
 
 //      arrayView2d<real64> const & dens = m_density[er][esr][m_fluidIndex];
 //      arrayView1d<real64> const & vol  = m_volume[er][esr];
 //      arrayView1d<real64> const & poro = m_porosity[er][esr];
 //      arrayView1d<real64> const & mass = m_fluidMass[er][esr];
 
-      forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
-      {
-        dPres[ei] = pres[ei];
-        fluid->PointUpdatePressureExplicit( pres[ei], ei, 0);
-        dPres[ei] = pres[ei] - dPres[ei];
+    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+    {
+      dPres[ei] = pres[ei];
+      fluid->PointUpdatePressure( pres[ei], ei, 0);
+      dPres[ei] = pres[ei] - dPres[ei];
 
 //          std::cout << "    rank " << MpiWrapper::Comm_rank(MPI_COMM_GEOSX)
 //        if ( pres[ei] > 0 )
@@ -438,71 +436,8 @@ void SinglePhaseBase::UpdateEOS( real64 const time_n,
 //                    << ", calculated dens = " << dens[ei][0] << ", new pres = " << pres[ei] << "\n";
 //        }
 
-      } );
     } );
-  }
-  else
-  {
-    mesh->getElemManager()->
-        forElementSubRegionsComplete<CellElementSubRegion>( m_targetRegions,
-                                                            [&] ( localIndex er,
-                                                                  localIndex esr,
-                                                                  ElementRegionBase const * const GEOSX_UNUSED_PARAM( region ),
-                                                                  CellElementSubRegion * subRegion )
-    {
-      SingleFluidBase * const fluid = GetConstitutiveModel<SingleFluidBase>( subRegion, m_fluidName );
-      arrayView1d<real64> const & vol  = m_volume[er][esr];
-      arrayView1d<real64> const & mass = m_fluidMass[er][esr];
-      arrayView1d<real64> const & pres = m_pressure[er][esr];
-      arrayView1d<real64> const & dPres = m_deltaPressure[er][esr];
-
-      arrayView1d<real64 const> const & poroRef       = m_porosityRef[er][esr];
-      arrayView1d<real64> const & totalCompressibility = m_totalCompressibility[er][esr];
-
-      forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
-      {
-        dPres[ei] = pres[ei];
-        fluid->PointUpdatePressure( pres[ei], mass[ei], vol[ei], poroRef[ei], totalCompressibility[ei]);
-        fluid->PointUpdateDensity( pres[ei], ei, 0 );
-        dPres[ei] = pres[ei] - dPres[ei];
-
-//        if ( mass[ei] > 0 )
-//        {
-//          arrayView2d<real64> const & dens = m_density[er][esr][m_fluidIndex];
-//          arrayView1d<real64> const & poro = m_porosity[er][esr];
-//          std::cout << "\n Fluid Update in matrix: ei = " << ei  << ", mass = " << mass[ei] << ", poro= " << poro[ei] << ", vol = " << vol[ei]
-//                    << ", calculated dens = " << dens[ei][0] << ", new pres = " << pres[ei] << "\n";
-//        }
-
-      } );
-    } );
-
-    mesh->getElemManager()->
-        forElementSubRegionsComplete<FaceElementSubRegion>( m_targetRegions,
-                                                            [&] ( localIndex const er,
-                                                                  localIndex const esr,
-                                                                  ElementRegionBase const * const GEOSX_UNUSED_PARAM( region ),
-                                                                  FaceElementSubRegion * subRegion )
-    {
-      SingleFluidBase * const fluid = GetConstitutiveModel<SingleFluidBase>( subRegion, m_fluidName );
-      arrayView1d<real64> const & pres = m_pressure[er][esr];
-      arrayView1d<real64> const & dPres = m_deltaPressure[er][esr];
-
-      forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
-      {
-        dPres[ei] = pres[ei];
-        fluid->PointUpdatePressureExplicit( pres[ei], ei, 0);
-        dPres[ei] = pres[ei] - dPres[ei];
-
-//        if ( mass[ei] > 0 )
-//        {
-//          std::cout << "\n Fluid Update in fracture: ei = " << ei  << ", mass = " << mass[ei] << ", vol = " << vol[ei]
-//                    << ", calculated dens = " << dens[ei][0] << ", new pres = " << pres[ei] << "\n";
-//        }
-
-      } );
-    } );
-  }
+  } );
 
   // apply pressure boundary condition in the explicit solver
   FieldSpecificationManager & fsManager = FieldSpecificationManager::get();

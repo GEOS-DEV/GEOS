@@ -179,7 +179,6 @@ void CompressibleSinglePhaseFluid::Compute( real64 const & pressure,
   } );
 }
 
-
 void CompressibleSinglePhaseFluid::PointUpdateViscosity( real64 const & pressure, localIndex const k, localIndex const q )
 {
   if (pressure > m_referencePressure)
@@ -189,47 +188,13 @@ void CompressibleSinglePhaseFluid::PointUpdateViscosity( real64 const & pressure
     } );
 }
 
-void CompressibleSinglePhaseFluid::PointUpdateDensity( real64 const & pressure, localIndex const k, localIndex const q )
-{
-  if (pressure > m_referencePressure)
-    makeExponentialRelation( m_densityModelType, m_referencePressure, m_referenceDensity, m_compressibility, [&] ( auto relation )
-    {
-      Compute( pressure, m_density[k][q], m_dDensity_dPressure[k][q], relation );
-    } );
-}
-
-void CompressibleSinglePhaseFluid::PointUpdatePressureExplicit( real64 & pressure, localIndex const k, localIndex const q )
+void CompressibleSinglePhaseFluid::PointUpdatePressure( real64 & pressure, localIndex const k, localIndex const q )
 {
   // In explicit solver, density is calculated from mass, and then used to calculate pressure;
   real64 pressureCap = 1e8;
   pressure = m_density[k][q] < m_referenceDensity ? 0 : (pressure <= 0.5 * pressureCap
                                                         ? (1 - m_referenceDensity / m_density[k][q]) / m_compressibility + m_referencePressure
                                                         : 0.5 * pressureCap + ( pressure - 0.5 * pressureCap) / (1.0 / m_compressibility - 0.5 * pressureCap) * 0.5 * pressureCap);
-}
-
-void CompressibleSinglePhaseFluid::PointUpdatePressure( real64 & pressure, real64 const & mass, real64 const & volume, real64 const & poroRef, real64 const & totalCompressibility)
-{
-  real64 value = mass / ( m_referenceDensity * volume * poroRef );
-  if (value > 1)
-    switch( m_densityModelType )
-    {
-      case ExponentApproximationType::Full:
-      {
-        pressure = std::log( value ) / totalCompressibility + m_referencePressure;
-        break;
-      }
-      case ExponentApproximationType::Linear:
-      {
-        pressure = ( value - 1) / totalCompressibility + m_referencePressure;
-        break;
-      }
-      default:
-      {
-        GEOSX_ERROR( "PointUpdatePressure() ExponentApproximationType is invalid: Only Full or Linear is available!" );
-      }
-    }
-  else
-    pressure = 0;
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompressibleSinglePhaseFluid, std::string const &, Group * const )

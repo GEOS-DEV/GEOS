@@ -56,11 +56,7 @@ public:
 
   virtual void PointUpdateViscosity( real64 const & pressure, localIndex const k, localIndex const q ) override;
 
-  virtual void PointUpdateDensity( real64 const & pressure, localIndex const k, localIndex const q ) override;
-
-  virtual void PointUpdatePressureExplicit( real64 & pressure, localIndex const k, localIndex const q ) override;
-
-  virtual void PointUpdatePressure( real64 & pressure, real64 const & mass, real64 const & volume, real64 const & poroRef, real64 const & totalCompressibility) override;
+  virtual void PointUpdatePressure( real64 & pressure, localIndex const k, localIndex const q ) override;
 
   virtual void BatchUpdate( arrayView1d<real64 const> const & pressure ) override;
 
