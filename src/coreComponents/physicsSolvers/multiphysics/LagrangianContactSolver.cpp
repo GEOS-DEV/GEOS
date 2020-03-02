@@ -50,8 +50,7 @@ LagrangianContactSolver::LagrangianContactSolver( const std::string & name,
                                                   Group * const parent ):
   SolverBase( name, parent ),
   m_solidSolverName(),
-  m_solidSolver( nullptr ),
-  m_maxNumResolves( 10 )
+  m_solidSolver( nullptr )
 {
   registerWrapper( viewKeyStruct::solidSolverNameString, &m_solidSolverName, 0 )->
     setInputFlag( InputFlags::REQUIRED )->

@@ -178,7 +178,6 @@ private:
   ParallelMatrix m_matrix10;
   ParallelMatrix m_matrix11;
 
-  integer m_maxNumResolves;
   integer m_numResolves[2];
 
   real64 const m_alpha = 0.05;
