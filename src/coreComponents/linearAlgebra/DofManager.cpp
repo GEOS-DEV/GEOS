@@ -449,6 +449,7 @@ void DofManager::setSparsityPatternFromStencil( MATRIX & pattern,
 {
   FieldDescription const & field = m_fields[fieldIndex];
   CouplingDescription const & coupling = m_coupling[fieldIndex][fieldIndex];
+  localIndex const NC = field.numComponents;
 
   ElementRegionManager::ElementViewAccessor< arrayView1d<globalIndex const> > dofNumber =
     m_mesh->getElemManager()->ConstructViewAccessor< array1d<globalIndex >, arrayView1d<globalIndex const> >( field.key );
@@ -464,24 +465,36 @@ void DofManager::setSparsityPatternFromStencil( MATRIX & pattern,
     typename StenciType::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
     typename StenciType::IndexContainerViewConstType const & sei = stencil.getElementIndices();
 
-    forall_in_range<serialPolicy>( 0, stencil.size(), GEOSX_LAMBDA ( localIndex iconn )
+    array1d<globalIndex> rowIndices( maxNumFluxElems * NC );
+    array1d<globalIndex> colIndices( maxStencilSize * NC );
+    array2d<real64> values( maxNumFluxElems * NC, maxStencilSize * NC );
+
+    forall_in_range<serialPolicy>( 0, stencil.size(), [&]( localIndex iconn )
     {
       localIndex const numFluxElems = stencil.stencilSize(iconn);
       localIndex const stencilSize  = numFluxElems;
 
-      stackArray1d<globalIndex, maxNumFluxElems> rowIndices( numFluxElems );
-      stackArray1d<globalIndex, maxStencilSize> colIndices( stencilSize );
-      stackArray2d<real64, maxNumFluxElems*maxStencilSize> values( numFluxElems, stencilSize );
-      values = 1.0;
-
+      rowIndices.resize( numFluxElems * NC );
       for (localIndex i = 0; i < numFluxElems; ++i)
       {
-        rowIndices[i] = dofNumber[seri(iconn,i)][sesri(iconn,i)][sei(iconn,i)];
+        for (localIndex c = 0; c < NC; ++c)
+        {
+          rowIndices[i * NC + c] = dofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )] + c;
+        }
       }
+
+      colIndices.resize( stencilSize * NC );
       for (localIndex i = 0; i < stencilSize; ++i)
       {
-        colIndices[i] = dofNumber[seri(iconn,i)][sesri(iconn,i)][sei(iconn,i)];
+        for (localIndex c = 0; c < NC; ++c)
+        {
+          colIndices[i * NC + c] = dofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )] + c;
+        }
       }
+
+      values.resize( numFluxElems * NC, stencilSize * NC );
+      values = 1.0;
+
       pattern_ptr->insert( rowIndices, colIndices, values);
     } );
   } );
@@ -501,7 +514,7 @@ void DofManager::setSparsityPatternOneBlock( MATRIX & pattern,
   Connector conn = m_coupling[rowFieldIndex][colFieldIndex].connector;
   if( rowFieldIndex == colFieldIndex && conn == Connector::Stencil )
   {
-    setSparsityPatternFromStencil<MATRIX>( pattern, rowFieldIndex );
+    setSparsityPatternFromStencil( pattern, rowFieldIndex );
     return;
   }
 
