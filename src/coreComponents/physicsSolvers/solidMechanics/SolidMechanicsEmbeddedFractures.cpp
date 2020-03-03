@@ -404,13 +404,10 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
           CopyGlobalToLocal<8,R1Tensor>( elemsToNodes[embeddedSurfaceToCell[k]], disp, dDisp, u_local, du_local );
 
           // Dof number of jump enrichment
-          std::cout << std::endl;
-          std::cout << "embedded element: " << k << std::endl;
           for (int i= 0 ; i < dim ; i++ )
           {
             jumpLocalDofIndex[i] = embeddedElementDofNumber[k] + i;
             w(i) = w_global[k][i] + 0*dw_global[k][i];
-            std::cout << w(i) << std::endl;
           }
 
           // Dof index of nodal displacements

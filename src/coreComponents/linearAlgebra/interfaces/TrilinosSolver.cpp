@@ -85,12 +85,10 @@ void TrilinosSolver::solve( EpetraMatrix & mat,
 
   if( m_parameters.solverType == "direct" )
   {
-    std::cout << "Solving direct" << std::endl;
     solve_direct( mat, sol, rhs );
   }
   else
   {
-    std::cout << "Solving krylov" << std::endl;
     solve_krylov( mat, sol, rhs );
   }
 }

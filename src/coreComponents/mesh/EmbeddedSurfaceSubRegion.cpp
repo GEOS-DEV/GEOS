@@ -156,7 +156,7 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface (localIndex const cellIndex
   real64 prodScalarProd;
 
   array1d<R1Tensor> intersectionPoints;
-  for (localIndex ke = 0; ke < 12; ke++)
+  for (localIndex ke = 0; ke < cellToEdges.size(1); ke++)
   {
     edgeIndex = cellToEdges[cellIndex][ke];
     dist = nodesCoord[edgeToNodes[edgeIndex][0]];
@@ -278,7 +278,7 @@ void EmbeddedSurfaceSubRegion::ComputeIntersectionPoints( NodeManager const & no
     count = offSet[k-1];
   }
 
-  for (localIndex ke = 0; ke < 12; ke++)
+  for (localIndex ke = 0; ke < cellToEdges.size(1); ke++)
   {
     edgeIndex = cellToEdges[m_embeddedSurfaceToCell[k]][ke];
     dist = nodesCoord[edgeToNodes[edgeIndex][0]];
