@@ -75,19 +75,14 @@ TEST( testHDFIO, PartialTabularIO )
     dims[dd] = rand();
   }
   Array<ARR_TYPE, DIM> arr(rand());
-  // rand primary dim
-  Array<IND_TYPE, 1> ind_arr(rand() % dims[0], rand() % dims[1]);
-
-  // populate ind_arr
-  // for each array dimension, a list of indices to retrieve from that dimension
-  // one dimension is tagged as the primary loop
-  Array<IND_TYPE, 2> slice_arr(DIM);
+  array1d<IND_TYPE> ind_arr(rand() % dims[0]);
+  array2d<IND_TYPE> cmp_arr(3,DIM-1);
 
   {
     HDFFile file("arr_output");
-    HDFTabularIO<decltype(arr),decltype(ind_arr)> table_out(file);
-    table_out.CreateTable("Scalar","scl",arr.size(0),ind_arr.size(),ind_arr,"nd_");
-    table_out.AppendRow("scl",arr,ind_arr);
+    HDFTableIO<decltype(arr)> table_out(file,"Stress","s",0,ind_arr,cmp_arr,"nd");
+    table_out.OpenTable( );
+    table_out.AppendRow( arr );
   }
 }
 

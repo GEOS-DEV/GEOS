@@ -331,12 +331,122 @@ protected:
   map<string,localIndex> m_cell_size_map;
 };
 
+// if we want to take whole chunks of data, we must want all indices < the cell stride index
+
+#define HDF_SLICE -2
+
+template < typename ARRAY_TYPE, typename ENABLE = void >
+class HDFTableIO;
+
+
+template < typename T, int NDIM, typename PERMUTATION, typename INDEX_TYPE, template< typename > class DATA_VECTOR_TYPE >
+class HDFTableIO< LvArray::Array< T, NDIM, PERMUTATION, INDEX_TYPE, DATA_VECTOR_TYPE >, typename std::enable_if< can_hdf_io< T > >::type > : public HDFIO
+{
+public:
+  using array_type = LvArray::Array< T, NDIM, PERMUTATION, INDEX_TYPE, DATA_VECTOR_TYPE >;
+  using index_type = array1d< INDEX_TYPE >;
+  using component_type = array2d< INDEX_TYPE >;
+  using value_type = typename array_type::value_type;
+
+  HDFTableIO(HDFTarget & target,
+              string const & title,
+              string const & hdf_id,
+              localIndex const csd,
+              index_type const & idxs,
+              component_type const & cmps,
+              string const & record_prefix = "") :
+    HDFIO(target),
+    m_is_open(false),
+    m_title(title),
+    m_hdf_id(hdf_id),
+    m_csd(csd),
+    m_idxs(idxs),
+    m_cmps(cmps),
+    m_num_cells(0),
+    m_cell_size(1),
+    m_record_prefix(record_prefix),
+    m_internal_copy()
+  {
+    // how many cells do we want to dump?
+    m_num_cells = m_idxs.size( );
+
+    // num indices speced for each cell
+    m_cell_size = m_cmps.size( 0 );
+
+    m_internal_copy.reserve(m_num_cells * m_cell_size);
+  }
+
+  virtual ~HDFTableIO() {}
+
+  virtual void OpenTable( )
+  {
+    // if ( !impl::TryOpen(hdf_id) )
+    {
+      impl::CreateTable<value_type>(this->io_target,m_title,m_hdf_id,m_cell_size,m_num_cells,m_record_prefix);
+    }
+    //allocate internal copy if specd
+    m_is_open = true;
+  }
+  virtual void AppendRow( array_type const & row )
+  {
+    _update_internal_copy(row);
+    impl::AppendRow<value_type>(this->io_target,m_hdf_id,m_cell_size,m_num_cells,m_internal_copy.data());
+  }
+  virtual void CloseTable( )
+  {
+    // deallocate internal copy if specd
+    m_is_open = false;
+  }
+
+private:
+
+  template < int U, class SLICE, class LAMBDA >
+  inline
+  typename std::enable_if< (U < NDIM-1), T const & >::type
+  _index(SLICE & slice, LAMBDA indexer )
+  {
+    return _index<U+1>(slice[indexer(U)],indexer);
+  }
+
+  template < int U, class SLICE, class LAMBDA >
+  inline
+  typename std::enable_if< (U >= NDIM-1), T const & >::type
+  _index(SLICE & slice, LAMBDA indexer )
+  {
+    return slice[indexer(U)];
+  }
+
+  void _update_internal_copy( array_type const & row )
+  {
+    localIndex offset = 0;
+    for( hsize_t cell = 0; cell < m_num_cells; ++cell )
+    {
+      for ( localIndex cmp = 0; cmp < m_cmps.size( 0 ); ++cmp)
+      {
+        m_internal_copy[offset++] = _index<0>(row,[&](localIndex dim) { return (dim == m_csd) ? m_idxs[cell] : m_cmps[cmp][dim]; });
+      }
+    }
+  }
+
+  bool m_is_open;
+
+  string const m_title;
+  string const m_hdf_id;
+  localIndex const m_csd;
+  index_type m_idxs;
+  component_type m_cmps;
+  hsize_t m_num_cells;
+  hsize_t m_cell_size;
+  string const m_record_prefix;
+  array1d< T > m_internal_copy;
+};
+
+
 template < class DATA_ARR_T >
 class HDFTabularIO<DATA_ARR_T, std::nullptr_t, typename std::enable_if< is_array<DATA_ARR_T> && can_hdf_io<typename DATA_ARR_T::value_type> >::type > : public HDFIO
 {
 public:
   using value_type = typename DATA_ARR_T::value_type;
-  using index_type = std::nullptr_t;
 
   HDFTabularIO(HDFTarget & target) : HDFIO(target), m_cell_size_map() {}
   virtual ~HDFTabularIO() {}
