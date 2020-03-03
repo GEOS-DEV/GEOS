@@ -698,12 +698,19 @@ void HydrofractureSolver::AssembleSystem( real64 const time,
                                           ParallelVector & GEOSX_UNUSED_PARAM( rhs ) )
 {
   GEOSX_MARK_FUNCTION;
+
+  m_solidSolver->getSystemMatrix().zero();
+  m_solidSolver->getSystemRhs().zero();
+
   m_solidSolver->AssembleSystem( time,
                                  dt,
                                  domain,
                                  m_solidSolver->getDofManager(),
                                  m_solidSolver->getSystemMatrix(),
                                  m_solidSolver->getSystemRhs() );
+
+  m_flowSolver->getSystemMatrix().zero();
+  m_flowSolver->getSystemRhs().zero();
 
   m_flowSolver->AssembleSystem( time,
                                 dt,
@@ -713,8 +720,10 @@ void HydrofractureSolver::AssembleSystem( real64 const time,
                                 m_flowSolver->getSystemRhs() );
 
 
-
+  m_matrix01.zero();
   AssembleForceResidualDerivativeWrtPressure( domain, &m_matrix01, &(m_solidSolver->getSystemRhs()) );
+
+  m_matrix10.zero();
   AssembleFluidMassResidualDerivativeWrtDisplacement( domain, &m_matrix10, &(m_flowSolver->getSystemRhs()) );
 }
 
@@ -967,8 +976,6 @@ AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
   arrayView1d<globalIndex> const &
   dispDofNumber =  nodeManager->getReference<globalIndex_array>( dispDofKey );
 
-
-  matrix01->zero();
   matrix01->open();
   rhs0->open();
 
@@ -1080,7 +1087,6 @@ AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const * cons
   ContactRelationBase const * const
   contactRelation = constitutiveManager->GetGroup<ContactRelationBase>( m_contactRelationName );
 
-  matrix10->zero();
   matrix10->open();
 
   elemManager->forElementSubRegionsComplete<FaceElementSubRegion>( this->m_targetRegions,
