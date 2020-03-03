@@ -48,7 +48,7 @@ VTKOutput::VTKOutput( std::string const & name,
     setDescription("");
 
   registerWrapper(viewKeysStruct::binaryString, &m_writeBinaryData, false )->
-    setApplyDefaultValue(1)->
+    setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Output the data in binary format");
 

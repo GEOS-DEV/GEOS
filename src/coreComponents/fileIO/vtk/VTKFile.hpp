@@ -72,6 +72,13 @@ class VTKFile
   void Write( double const timeStep, 
               DomainPartition const & domain );
 
+  /*!
+   * @brief Output a file for one time step
+   * @param[in] cycle the cycle number
+   */
+  void WriteFractures( double const timeStep,
+                       DomainPartition const & domain );
+
   private:
     /*!
      * @brief Create a XML Node for DataArray
@@ -125,9 +132,11 @@ class VTKFile
   private:
     /// Root file ( .pvd )
     xmlWrapper::xmlDocument m_rootFile;
+    xmlWrapper::xmlDocument m_rootFileFractures;
 
     /// Unstructured file gathering all vtu files for a time step ( .pvtu )
     pugi::xml_document m_pvtuFile;
+    pugi::xml_document m_pvtuFileFractures;
 
     /// Plot level
     dataRepository::PlotLevel m_plotLevel;
@@ -137,6 +146,9 @@ class VTKFile
 
     /// Tells wether or not the output is binary
     bool m_binary;
+
+    /// Tells whether or not a fracture file should be outputted.
+    bool m_fractureFile;
 };
 }
 #endif /* GEOSX_FILEIO_VTK_VTKFILE_HPP_ */

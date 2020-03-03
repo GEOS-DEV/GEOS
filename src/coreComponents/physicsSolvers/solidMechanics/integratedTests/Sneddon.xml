@@ -73,20 +73,20 @@
 		name="preFracture" 
 		target="/Solvers/SurfaceGenerator" />
 
-		<!--SoloEvent 
+		<SoloEvent 
 		name="output1" 
-		target="/Outputs/siloOutput" /-->
+		target="/Outputs/vtkOutput" />
 
 		<PeriodicEvent 
 		name="solverApplications" 
 		forceDt="1e3"
 		target="/Solvers/mechSolve" />
 
-		<!--PeriodicEvent 
+		<PeriodicEvent 
 		name="outputs" 
 		cycleFrequency="1"
 		targetExactTimestep="1" 
-		target="/Outputs/siloOutput" /-->
+		target="/Outputs/vtkOutput" />
 	</Events>
 
 	<NumericalMethods>
@@ -171,6 +171,9 @@
 		<Silo name="siloOutput" 
 		plotFileRoot="Sneddon"
 		plotLevel="4" />
+		<VTK name="vtkOutput"
+		plotFileRoot="Sneddon"
+		plotLevel="4"/>
 		<Restart name="sidreRestart" />
 	</Outputs>
 
