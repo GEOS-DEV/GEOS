@@ -82,13 +82,15 @@ public:
                                              EdgeManager const & edgeManager,
                                              ElementRegionManager const & elemManager,
                                              array1d<R1Tensor> & intersectionPoints,
-                                             array1d<localIndex> & connectivityList) const;
+                                             array1d<localIndex> & connectivityList,
+                                             array1d<int> & offSet) const;
 
     void ComputeIntersectionPoints( NodeManager const & nodeManager,
                                     EdgeManager const & edgeManager,
                                     ElementRegionManager const & elemManager,
                                     array1d<R1Tensor> & intersectionPoints,
                                     array1d<localIndex> & connectivityList,
+                                    array1d<int> & offSet,
                                     localIndex const k ) const;
 
     /**
