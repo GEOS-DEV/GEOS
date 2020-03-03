@@ -17,7 +17,6 @@
  */
 
 #include "SolidMechanicsEmbeddedFractures.hpp"
-
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/contact/ContactRelationBase.hpp"
@@ -359,12 +358,14 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
         array1d<real64>            R1(3);
         array1d<real64>            R0(nUdof);
         array1d<real64>            tractionVec(3);
+        array2d<real64>            dTdw(3, 3);
 
         BlasLapackLA::matrixScale(0, Kwu_elem);
         BlasLapackLA::matrixScale(0, Kuw_elem);
         BlasLapackLA::matrixScale(0, Kww_elem);
         BlasLapackLA::vectorScale(0, R1);
         BlasLapackLA::vectorScale(0, R0);
+        BlasLapackLA::matrixScale(0, dTdw);
 
         // Equilibrium and compatibility operators for the element
         // number of strain components x number of jump enrichments. The comp operator is different
@@ -408,7 +409,7 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
           for (int i= 0 ; i < dim ; i++ )
           {
             jumpLocalDofIndex[i] = embeddedElementDofNumber[k] + i;
-            w(i) = w_global[k][i] + dw_global[k][i];
+            w(i) = w_global[k][i] + 0*dw_global[k][i];
             std::cout << w(i) << std::endl;
           }
 
@@ -439,9 +440,8 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
           BlasLapackLA::matrixScale(0, matED);
           BlasLapackLA::matrixMatrixMultiply(eqMatrix, dMatrix, matED);
 
-          tractionVec[0] = 1e5;
-          tractionVec[1] = 0.0;
-          tractionVec[2] = 0.0;
+          // Compute traction
+          ComputeTraction(constitutiveManager, w, tractionVec, dTdw);
 
           for( integer q=0 ; q<fe->n_quadrature_points() ; ++q )
           {
@@ -481,14 +481,12 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
             BlasLapackLA::matrixScale( detJq , Kww_gauss);
 
             // Add Gauss point contribution to element matrix
-            BlasLapackLA::matrixMatrixAdd(Kww_gauss , Kww_elem);
-            BlasLapackLA::matrixMatrixAdd(Kwu_gauss , Kwu_elem);
-            BlasLapackLA::matrixMatrixAdd(Kuw_gauss , Kuw_elem);
+            BlasLapackLA::matrixMatrixAdd(Kww_gauss , Kww_elem, -1);
+            BlasLapackLA::matrixMatrixAdd(Kwu_gauss , Kwu_elem, -1);
+            BlasLapackLA::matrixMatrixAdd(Kuw_gauss , Kuw_elem, -1);
           }
 
-          BlasLapackLA::matrixScale(-1, Kww_elem);
-          BlasLapackLA::matrixScale(-1, Kwu_elem);
-          BlasLapackLA::matrixScale(-1, Kuw_elem);
+          BlasLapackLA::matrixMatrixAdd(dTdw , Kww_elem, -1);
 
           BlasLapackLA::matrixVectorMultiply(Kww_elem, w, R1);
           BlasLapackLA::matrixVectorMultiply(Kwu_elem, u, R1, 1, 1);
@@ -800,7 +798,7 @@ void SolidMechanicsEmbeddedFractures::ApplySystemSolution( DofManager const & do
 
   dofManager.addVectorToField( solution, viewKeyStruct::dispJumpString, viewKeyStruct::deltaDispJumpString, -scalingFactor );
 
-  // dofManager.addVectorToField( solution, viewKeyStruct::dispJumpString, viewKeyStruct::dispJumpString, -scalingFactor );
+  dofManager.addVectorToField( solution, viewKeyStruct::dispJumpString, viewKeyStruct::dispJumpString, -scalingFactor );
 
 //  std::map<string, string_array > fieldNames;
 //  fieldNames["node"].push_back( viewKeyStruct::dispJumpString );
@@ -810,6 +808,42 @@ void SolidMechanicsEmbeddedFractures::ApplySystemSolution( DofManager const & do
 //                                           domain->getMeshBody( 0 )->getMeshLevel( 0 ),
 //                                           domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
 
+}
+
+void SolidMechanicsEmbeddedFractures::ComputeTraction( ConstitutiveManager const * const constitutiveManager,
+                                                       array1d<real64>  const & dispJump,
+                                                       array1d<real64>  & tractionVector,
+                                                       array2d<real64> & dTdw )
+{
+  // Compute traction vector on the fracture element
+  ContactRelationBase const * const
+  contactRelation = constitutiveManager->GetGroup<ContactRelationBase>(m_contactRelationName);
+
+  // check if fracture is open
+  bool open = dispJump[0] >= 0 ? true : false;
+
+  if (open)
+  {
+    tractionVector[0] = 1e5;
+    tractionVector[1] = 0.0;
+    tractionVector[2] = 0.0;
+    dTdw(0,0) = 0.0;
+    dTdw(0,1)= 0.0;
+    dTdw(0,2)= 0.0;
+    dTdw(1,0)= 0.0;
+    dTdw(1,1)= 0.0;
+    dTdw(1,2)= 0.0;
+    dTdw(2,0)= 0.0;
+    dTdw(2,1)= 0.0;
+    dTdw(2,2)= 0.0;
+  }
+  else
+  {
+    // Contact through penalty condition.
+    tractionVector[0] = contactRelation->stiffness() * dispJump[0];
+    tractionVector[1] = 0;
+    tractionVector[2] = 0;
+  }
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsEmbeddedFractures, std::string const &, Group * const )

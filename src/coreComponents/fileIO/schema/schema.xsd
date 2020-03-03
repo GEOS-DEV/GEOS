@@ -781,7 +781,7 @@
 		<!--slaveDirectory => slave directory path-->
 		<xsd:attribute name="slaveDirectory" type="string" default="" />
 		<!--writeBinaryData => Output the data in binary format-->
-		<xsd:attribute name="writeBinaryData" type="integer" default="1" />
+		<xsd:attribute name="writeBinaryData" type="integer" default="0" />
 		<!--writeFEMFaces => (no description available)-->
 		<xsd:attribute name="writeFEMFaces" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->

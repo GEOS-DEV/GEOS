@@ -89,6 +89,19 @@ public:
     real64 ComputeHeavisideFunction( R1Tensor   const nodeCoord,
                                      localIndex const k         );
 
+    void getIntersectionPoints( NodeManager const & nodeManager,
+                                             EdgeManager const & edgeManager,
+                                             ElementRegionManager const & elemManager,
+                                             array1d<R1Tensor> & intersectionPoints,
+                                             array1d<localIndex> & connectivityList) const;
+
+    void ComputeIntersectionPoints( NodeManager const & nodeManager,
+                                    EdgeManager const & edgeManager,
+                                    ElementRegionManager const & elemManager,
+                                    array1d<R1Tensor> & intersectionPoints,
+                                    array1d<localIndex> & connectivityList,
+                                    localIndex const k ) const;
+
     /**
      * @brief function to set the ghostRank for a list of FaceElements and set them to the value of their bounding faces.
      * @param[in] faceManager The face group.

@@ -24,6 +24,7 @@
 
 namespace geosx
 {
+using namespace constitutive;
 
 class SolidMechanicsLagrangianFEM;
 
@@ -144,6 +145,11 @@ protected:
                               localIndex const numNodesPerElement,
                               array3d<R1Tensor> const & dNdX);
 
+  void ComputeTraction( ConstitutiveManager const * const constitutiveManager,
+                        array1d<real64>  const & dispJump,
+                        array1d<real64>  & tractionVector,
+                        array2d<real64> & dTdw );
+
 
 private:
 
@@ -153,14 +159,7 @@ private:
 
   string m_contactRelationName;
 
-//  ParallelMatrix m_matrix11;
-//  ParallelMatrix m_matrix01;
-//  ParallelMatrix m_matrix10;
-//
-//  ParallelVector m_residual1; // Traction balance on the fracture
-//
-//  ParallelMatrix m_permutationMatrix0; // it's used to have the output based on global ordering
-//  ParallelMatrix m_permutationMatrix1; // it's used to have the output based on global ordering
+//  ParallelMatrix m_permutationMatrix; // it's used to have the output based on global ordering
 
 };
 

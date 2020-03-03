@@ -232,6 +232,86 @@ real64 EmbeddedSurfaceSubRegion::ComputeHeavisideFunction(R1Tensor const nodeCoo
   return heaviside;
 }
 
+void EmbeddedSurfaceSubRegion::getIntersectionPoints( NodeManager const & nodeManager,
+                                                                   EdgeManager const & edgeManager,
+                                                                   ElementRegionManager const & elemManager,
+                                                                   array1d<R1Tensor> & intersectionPoints,
+                                                                   array1d<localIndex> & connectivityList) const
+{
+
+  for(localIndex k =0; k < size(); k++)
+  {
+    ComputeIntersectionPoints(nodeManager, edgeManager, elemManager, intersectionPoints, connectivityList, k);
+  }
+}
+
+void EmbeddedSurfaceSubRegion::ComputeIntersectionPoints( NodeManager const & nodeManager,
+                                                          EdgeManager const & edgeManager,
+                                                          ElementRegionManager const & elemManager,
+                                                          array1d<R1Tensor> & intersectionPoints,
+                                                          array1d<localIndex> & connectivityList,
+                                                          localIndex const k ) const
+{
+
+  // I ll use this for plotting
+  array1d<R1Tensor> const & nodesCoord = nodeManager.referencePosition();
+  EdgeManager::NodeMapType::ViewTypeConst const & edgeToNodes = edgeManager.nodeList();
+
+  FixedOneToManyRelation const & cellToEdges = elemManager.GetRegion(m_embeddedSurfaceToRegion[k])
+      ->GetSubRegion<CellElementSubRegion>(m_embeddedSurfaceToSubRegion[k])->edgeList();
+
+  // Initialize variables
+  localIndex edgeIndex;
+  R1Tensor lineDir, dist, point;
+  real64 prodScalarProd;
+  bool isUnique;
+  localIndex pointIndex;
+  R1Tensor distance;
+  std::cout << "Element:" << k << std::endl;
+  for (localIndex ke = 0; ke < 12; ke++)
+  {
+    edgeIndex = cellToEdges[m_embeddedSurfaceToCell[k]][ke];
+    dist = nodesCoord[edgeToNodes[edgeIndex][0]];
+    dist -= m_elementCenter[k];
+    prodScalarProd = Dot(dist, m_normalVector[k]);
+    dist = nodesCoord[edgeToNodes[edgeIndex][1]];
+    dist -= m_elementCenter[k];
+    prodScalarProd *= Dot(dist, m_normalVector[k]);
+
+    if (prodScalarProd < 0)
+    {
+      // std::cout << "node 1: " << nodesCoord[edgeToNodes[edgeIndex][0]] <<  " node 2: " << nodesCoord[edgeToNodes[edgeIndex][1]] << std::endl;
+      lineDir  = nodesCoord[edgeToNodes[edgeIndex][0]];
+      lineDir -= nodesCoord[edgeToNodes[edgeIndex][1]];
+      lineDir.Normalize();
+      point = computationalGeometry::LinePlaneIntersection(lineDir,
+                                                           nodesCoord[edgeToNodes[edgeIndex][0]],
+                                                           m_normalVector[k],
+                                                           m_elementCenter[k]);
+      isUnique = true;
+      for (int i=0; i < intersectionPoints.size(); i++)
+      {
+        distance = point;
+        distance-=intersectionPoints[i];
+        if (distance.L2_Norm() < 1e-9)
+        {
+          isUnique = false;
+          pointIndex = i;
+          break;
+        }
+      }
+
+      if (isUnique == true)
+      {
+        intersectionPoints.push_back(point);
+        pointIndex = intersectionPoints.size();
+        connectivityList.push_back(pointIndex);
+      }
+    }
+  } //end of edge loop
+}
+
+
 } /* namespace geosx */
 
 
