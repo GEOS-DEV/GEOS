@@ -18,11 +18,8 @@ ParticleFluid                         node         :ref:`XML_ParticleFluid`
 PoreVolumeCompressibleSolid           node         :ref:`XML_PoreVolumeCompressibleSolid`           
 PoroLinearElasticAnisotropic          node         :ref:`XML_PoroLinearElasticAnisotropic`          
 PoroLinearElasticIsotropic            node         :ref:`XML_PoroLinearElasticIsotropic`            
-<<<<<<< HEAD
-ProppantSlurryFluid                   node         :ref:`XML_ProppantSlurryFluid`                   
-=======
 PoroLinearElasticTransverseIsotropic  node         :ref:`XML_PoroLinearElasticTransverseIsotropic`  
->>>>>>> updated LinearElasticAnisotropic
+ProppantSlurryFluid                   node         :ref:`XML_ProppantSlurryFluid`                   
 VanGenuchtenBakerRelativePermeability node         :ref:`XML_VanGenuchtenBakerRelativePermeability` 
 VanGenuchtenCapillaryPressure         node         :ref:`XML_VanGenuchtenCapillaryPressure`         
 ===================================== ==== ======= ================================================ 

@@ -215,7 +215,7 @@ void SolidMechanicsLagrangianFEM::RegisterDataOnMesh( Group * const MeshBodies )
     {
       elemRegion->forElementSubRegions<CellElementSubRegion>([&]( CellElementSubRegion * const subRegion )
       {
-        subRegion->registerWrapper<array2d<R2SymTensor> >( viewKeyStruct::stress_n )->
+        subRegion->registerWrapper< array3d< real64, solid::STRESS_PERMUTATION > >( viewKeyStruct::stress_n )->
           setPlotLevel(PlotLevel::NOPLOT)->
           setRestartFlags(RestartFlags::NO_WRITE)->
           setRegisteringObjects(this->getName())->
@@ -895,15 +895,18 @@ ImplicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
 
     arrayView3d<real64 const, solid::STRESS_USD> const & stress = constitutiveRelation->getStress();
 
-    array2d<R2SymTensor> &
-    stress_n = subRegion->getReference<array2d<R2SymTensor>>(viewKeyStruct::stress_n);
-    stress_n.resize( stress.size(0), stress.size(1) );
+    array3d<real64, solid::STRESS_PERMUTATION> &
+    stress_n = subRegion->getReference<array3d< real64, solid::STRESS_PERMUTATION >>(viewKeyStruct::stress_n);
+    stress_n.resize( stress.size(0), stress.size(1), 6 );
 
     for( localIndex k=0 ; k<stress.size(0) ; ++k )
     {
       for( localIndex a=0 ; a<stress.size(1) ; ++a )
       {
-        stress_n(k,a) = stress[k][a];
+        for( localIndex i=0 ; i<6 ; ++i )
+        {
+          stress_n(k,a,i) = stress(k,a,i);
+        }
       }
     }
   });
@@ -1297,8 +1300,8 @@ void SolidMechanicsLagrangianFEM::ResetStressToBeginningOfStep( DomainPartition 
 
     arrayView3d<real64, solid::STRESS_USD> const & stress = constitutiveRelation->getStress();
 
-    array2d<R2SymTensor> &
-    stress_n = subRegion->getReference<array2d<R2SymTensor>>(viewKeyStruct::stress_n);
+    arrayView3d<real64 const, solid::STRESS_USD> const &
+    stress_n = subRegion->getReference<array3d< real64, solid::STRESS_PERMUTATION >>(viewKeyStruct::stress_n);
 
     for( localIndex k=0 ; k<stress.size(0) ; ++k )
     {
@@ -1306,7 +1309,7 @@ void SolidMechanicsLagrangianFEM::ResetStressToBeginningOfStep( DomainPartition 
       {
         for ( localIndex i = 0; i < 6; ++i )
         {
-          stress( k, a, i ) = stress_n( k, a ).Data()[ i ];
+          stress( k, a, i ) = stress_n( k, a, i );
         }
       }
     }
