@@ -817,6 +817,11 @@ void ProppantTransport::SetupDofs( DomainPartition const * const GEOSX_UNUSED_PA
                        DofManager::Location::Elem,
                        m_numDofPerCell,
                        m_targetRegions );
+
+  dofManager.addCoupling( viewKeyStruct::proppantConcentrationString,
+                          viewKeyStruct::proppantConcentrationString,
+                          DofManager::Connectivity::Face );
+  
 }
 
 
@@ -837,7 +842,7 @@ void ProppantTransport::AssembleSystem( real64 const time,
 
   AssembleAccumulationTerms( domain, &dofManager, &matrix, &rhs );
 
-  if( getLogLevel() >= 2 )
+  if( getLogLevel() >= 3 )
   {
     GEOSX_LOG_RANK_0("After ProppantTransport::AssembleAccumulationTerms");
     GEOSX_LOG_RANK_0("\nJacobian:\n");
@@ -858,7 +863,7 @@ void ProppantTransport::AssembleSystem( real64 const time,
   matrix.close();
   rhs.close();
 
-  if( getLogLevel() >= 2 )
+  if( getLogLevel() >= 3 )
   {
     GEOSX_LOG_RANK_0("After ProppantTransport::AssembleSystem");
     GEOSX_LOG_RANK_0("\nJacobian:\n");
@@ -1104,6 +1109,9 @@ void ProppantTransport::ApplyBoundaryConditions(real64 const time_n,
   
   GEOSX_MARK_FUNCTION;
 
+  matrix.open();
+  rhs.open();
+
   FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
   string const dofKey = dofManager.getKey( viewKeyStruct::proppantConcentrationString );
 
@@ -1307,7 +1315,14 @@ void ProppantTransport::ApplyBoundaryConditions(real64 const time_n,
       });
 
     }
-                            
+
+  matrix.close();
+  rhs.close();
+  
+  GEOSX_LOG_LEVEL_RANK_0( 2, "After ProppantTransport::ApplyBoundaryConditions" );
+  GEOSX_LOG_LEVEL_RANK_0( 2, "\nJacobian:\n" << matrix );
+  GEOSX_LOG_LEVEL_RANK_0( 2, "\nResidual:\n" << rhs );
+  
   if( getLogLevel() >= 3 )
   {
     integer const newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
@@ -1839,7 +1854,6 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
 
       transTMultiplier[ei][1] = 1.0 / (proppantPackVfNew[ei] * aperture0[ei] * aperture0[ei] / 12.0 / m_proppantPackPermeability + (1.0 - proppantPackVfNew[ei]));
 
- 
     } );
   
   });

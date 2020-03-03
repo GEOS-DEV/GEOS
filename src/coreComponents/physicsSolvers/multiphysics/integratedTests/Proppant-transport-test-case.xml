@@ -145,7 +145,7 @@
                    materialList="{water, rock, sand}"/>
                    
     <FaceElementRegion name="Fracture"
-                       defaultAperture="7.62e-3"                       
+                       defaultAperture="7.63e-3"                       
                        materialList="{water, rock, sand}"/>
                    
   </ElementRegions>
