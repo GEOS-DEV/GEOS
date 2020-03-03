@@ -905,7 +905,10 @@ void HypreMatrix::clearRow( globalIndex const globalRow,
   }
 
   // Set diagonal value
-  set( globalRow, globalRow, diagValue );
+  if( std::fabs(diagValue) > 0.0 && numGlobalRows() == numGlobalCols() )
+  {
+    set( globalRow, globalRow, diagValue );
+  }
 }
 
 HYPRE_IJMatrix const & HypreMatrix::unwrapped() const

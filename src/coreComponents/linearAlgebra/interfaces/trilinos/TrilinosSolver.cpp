@@ -252,8 +252,10 @@ void TrilinosSolver::solve_krylov( EpetraMatrix & mat,
   }
 
   // Actually solve
-  GEOSX_LAI_CHECK_ERROR( solver.Iterate( m_parameters.krylov.maxIterations,
-                                         m_parameters.krylov.tolerance ) );
+  int const result = solver.Iterate( m_parameters.krylov.maxIterations,
+                                     m_parameters.krylov.tolerance );
+
+  GEOSX_WARNING_IF( result, "TrilinosSolver: Krylov convergence not achieved" );
 
   //TODO: should we return performance feedback to have GEOSX pretty print details?:
   //      i.e. iterations to convergence, residual reduction, etc.

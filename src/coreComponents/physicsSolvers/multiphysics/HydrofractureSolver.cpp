@@ -530,9 +530,9 @@ void HydrofractureSolver::SetupDofs( DomainPartition const * const domain,
 
 void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
                                        DofManager & dofManager,
-                                       ParallelMatrix & GEOSX_UNUSED_PARAM( matrix ),
-                                       ParallelVector & GEOSX_UNUSED_PARAM( rhs ),
-                                       ParallelVector & GEOSX_UNUSED_PARAM( solution ) )
+                                       ParallelMatrix & matrix,
+                                       ParallelVector & rhs,
+                                       ParallelVector & solution )
 {
   GEOSX_MARK_FUNCTION;
   m_flowSolver->ResetViews( domain );
@@ -552,6 +552,17 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
   // setup coupled DofManager
   m_dofManager.setMesh( domain, 0, 0 );
   SetupDofs( domain, dofManager );
+
+  // This is needed for NonlinearImplicitStep to function, even though
+  // we're currently not assembling the monolithic matrix/rhs
+  localIndex const numLocalDof = dofManager.numLocalDofs();
+  matrix.createWithLocalSize( numLocalDof, numLocalDof, 0, MPI_COMM_GEOSX );
+  rhs.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
+  solution.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
+
+  // Emulate assembly
+  matrix.open();
+  matrix.close();
 
   // By not calling dofManager.reorderByRank(), we keep separate dof numbering for each field,
   // which allows constructing separate sparsity patterns for off-diagonal blocks of the matrix.
@@ -578,6 +589,9 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
 
   arrayView1d<globalIndex> const &
   dispDofNumber =  nodeManager->getReference<globalIndex_array>( dispDofKey );
+
+  m_matrix01.open();
+  m_matrix10.open();
 
   elemManager->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion const * const elementSubRegion )
   {
@@ -727,6 +741,7 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
   arrayView1d<globalIndex const> const & dispDofNumber = nodeManager->getReference<globalIndex_array>( dispDofKey );
   arrayView1d<integer const> const & nodeGhostRank = nodeManager->GhostRank();
 
+  m_matrix01.open();
   fsManager.Apply( time + dt,
                    domain,
                    "nodeManager",
@@ -735,7 +750,7 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
                         string const &,
                         SortedArrayView<localIndex const> const & targetSet,
                         Group * const ,
-                        string const )
+                        string const & )
   {
     SortedArray<localIndex> localSet;
     for( auto const & a : targetSet )
@@ -749,7 +764,7 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
                                                          dispDofNumber,
                                                          m_matrix01 );
   } );
-
+  m_matrix01.close();
 
   m_flowSolver->ApplyBoundaryConditions( time,
                                          dt,
@@ -760,6 +775,7 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
 
   string const presDofKey = m_flowSolver->getDofManager().getKey( FlowSolverBase::viewKeyStruct::pressureString );
 
+  m_matrix10.open();
   fsManager.Apply( time + dt,
                     domain,
                     "ElementRegions",
@@ -787,6 +803,7 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
                                                          dofNumber,
                                                          m_matrix10 );
   });
+  m_matrix10.close();
 
   // debugging info.  can be trimmed once everything is working.
   if( getLogLevel()==2 )
@@ -951,8 +968,8 @@ AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
   dispDofNumber =  nodeManager->getReference<globalIndex_array>( dispDofKey );
 
 
-  matrix01->open();
   matrix01->zero();
+  matrix01->open();
   rhs0->open();
 
   elemManager->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion * const subRegion )->void
@@ -1035,7 +1052,6 @@ AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
     }
   });
 
-  rhs0->close();
   matrix01->close();
   rhs0->close();
 }
@@ -1064,8 +1080,8 @@ AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const * cons
   ContactRelationBase const * const
   contactRelation = constitutiveManager->GetGroup<ContactRelationBase>( m_contactRelationName );
 
-  matrix10->open();
   matrix10->zero();
+  matrix10->open();
 
   elemManager->forElementSubRegionsComplete<FaceElementSubRegion>( this->m_targetRegions,
                                                                    [&] ( localIndex GEOSX_UNUSED_PARAM( er ),

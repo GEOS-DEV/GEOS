@@ -179,6 +179,8 @@ void PetscMatrix::close()
   GEOSX_LAI_CHECK_ERROR( MatAssemblyEnd( m_mat, MAT_FINAL_ASSEMBLY ) );
   GEOSX_LAI_CHECK_ERROR( MatSetOption( m_mat, MAT_NEW_NONZERO_LOCATIONS, PETSC_FALSE ) );
   GEOSX_LAI_CHECK_ERROR( MatSetOption( m_mat, MAT_NEW_NONZERO_LOCATION_ERR, PETSC_TRUE ) );
+  GEOSX_LAI_CHECK_ERROR( MatSetOption( m_mat, MAT_KEEP_NONZERO_PATTERN, PETSC_TRUE) );
+  GEOSX_LAI_CHECK_ERROR( MatSetOption( m_mat, MAT_NO_OFF_PROC_ZERO_ROWS, PETSC_TRUE ) );
   m_assembled = true;
   m_closed = true;
 }
@@ -550,8 +552,28 @@ void PetscMatrix::clearRow( globalIndex const globalRow,
   GEOSX_LAI_ASSERT_GE( globalRow, ilower() );
   GEOSX_LAI_ASSERT_GT( iupper(), globalRow );
 
-  PetscInt rows[1] = {globalRow};
-  GEOSX_LAI_CHECK_ERROR( MatZeroRows( m_mat, 1, rows, diagValue, nullptr, nullptr ) );
+  // The implementation below is not the most efficient, but we can't use
+  // PETCs's MatZeroRows because it is collective and clearRow() is not
+
+  localIndex const numEntries = globalRowLength( globalRow );
+  array1d< globalIndex > colIndices( numEntries );
+  array1d< real64 > values( numEntries );
+  values = 0.0;
+
+  PetscInt const * inds;
+  GEOSX_LAI_CHECK_ERROR( MatGetRow( m_mat, globalRow, nullptr, &inds, nullptr ) );
+
+  bool const isDiagonal = numGlobalRows() == numGlobalCols();
+  for( localIndex i = 0; i < numEntries; ++i)
+  {
+    colIndices[i] = inds[i];
+    if( colIndices[i] == globalRow && isDiagonal )
+    {
+      values[i] = diagValue;
+    }
+  }
+  GEOSX_LAI_CHECK_ERROR( MatRestoreRow( m_mat, globalRow, nullptr, &inds, nullptr ) );
+  set( globalRow, colIndices, values );
 }
 
 localIndex PetscMatrix::maxRowLength() const

@@ -714,9 +714,6 @@ void CompositionalMultiphaseFlow::AssembleSystem( real64 const time_n,
 {
   GEOSX_MARK_FUNCTION;
 
-  matrix.zero();
-  rhs.zero();
-
   matrix.open();
   rhs.open();
 
@@ -724,13 +721,8 @@ void CompositionalMultiphaseFlow::AssembleSystem( real64 const time_n,
   AssembleFluxTerms( time_n, dt, domain, &dofManager, &matrix, &rhs );
   AssembleVolumeBalanceTerms( time_n, dt, domain, &dofManager, &matrix, &rhs );
 
-  if (!m_coupledWellsFlag)
-  {
-    // these functions will be called by the ReservoirSolver
-    // when coupled wells are present
-    matrix.close();
-    rhs.close();
-  }
+  matrix.close();
+  rhs.close();
 
   if( getLogLevel() == 2 )
   {
@@ -1107,7 +1099,6 @@ void CompositionalMultiphaseFlow::ApplyBoundaryConditions( real64 const time_n,
   ApplyDirichletBC_implicit( time_n, dt, &dofManager, domain, &matrix, &rhs );
 
   // apply flux boundary conditions
-
   ApplySourceFluxBC( time_n, dt, &dofManager, domain, &matrix, &rhs );
 
   

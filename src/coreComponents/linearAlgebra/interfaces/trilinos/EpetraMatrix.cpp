@@ -464,7 +464,11 @@ void EpetraMatrix::clearRow( globalIndex const globalRow,
   {
     values_ptr[j] = 0.0;
   }
-  set( globalRow, globalRow, diagValue );
+
+  if( std::fabs(diagValue) > 0.0 && numGlobalRows() == numGlobalCols() )
+  {
+    set( globalRow, globalRow, diagValue );
+  }
 }
 
 localIndex EpetraMatrix::maxRowLength() const

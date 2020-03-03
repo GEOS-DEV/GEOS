@@ -454,6 +454,24 @@ void DofManager::setSparsityPatternFromStencil( MATRIX & pattern,
   ElementRegionManager::ElementViewAccessor< arrayView1d<globalIndex const> > dofNumber =
     m_mesh->getElemManager()->ConstructViewAccessor< array1d<globalIndex >, arrayView1d<globalIndex const> >( field.key );
 
+  array1d<globalIndex> rowIndices( NC );
+  array1d<globalIndex> colIndices( NC );
+  array2d<real64> values( NC, NC );
+  values = 1.0;
+
+  // 1. Insert diagonal blocks, in case there are elements not included in stencil
+  // (e.g. a single fracture element not connected to any other)
+  forMeshLocation< Location::Elem, false >( m_mesh, field.regions,
+                                            [&]( auto const & elemIdx )
+  {
+    for (localIndex c = 0; c < NC; ++c)
+    {
+      rowIndices[c] = dofNumber[elemIdx[0]][elemIdx[1]][elemIdx[2]] + c;
+    }
+    pattern.insert( rowIndices, rowIndices, values );
+  } );
+
+  // 2. Assemble diagonal and off-diagonal blocks for elements in stencil
   MATRIX * const pattern_ptr = &pattern;
   coupling.stencils->forCellStencils( [&]( auto const & stencil )
   {
@@ -465,9 +483,9 @@ void DofManager::setSparsityPatternFromStencil( MATRIX & pattern,
     typename StenciType::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
     typename StenciType::IndexContainerViewConstType const & sei = stencil.getElementIndices();
 
-    array1d<globalIndex> rowIndices( maxNumFluxElems * NC );
-    array1d<globalIndex> colIndices( maxStencilSize * NC );
-    array2d<real64> values( maxNumFluxElems * NC, maxStencilSize * NC );
+    rowIndices.reserve( maxNumFluxElems * NC );
+    colIndices.reserve( maxStencilSize * NC );
+    values.reserve( maxNumFluxElems * NC * maxStencilSize * NC );
 
     forall_in_range<serialPolicy>( 0, stencil.size(), [&]( localIndex iconn )
     {

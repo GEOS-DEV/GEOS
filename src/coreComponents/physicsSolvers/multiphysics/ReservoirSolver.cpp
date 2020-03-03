@@ -237,8 +237,6 @@ void ReservoirSolver::AssembleSystem( real64 const time_n,
                                       ParallelMatrix & matrix,
                                       ParallelVector & rhs )
 {
-  // open() and zero() are called from the flow solver
-
   // assemble J_RR (excluding perforation rates)
   m_flowSolver->AssembleSystem( time_n, dt, domain,
                                 dofManager,
@@ -250,14 +248,15 @@ void ReservoirSolver::AssembleSystem( real64 const time_n,
                                 matrix,
                                 rhs );
 
-
-  matrix.close();
-  rhs.close();
-
   // Debug for logLevel >= 2
-  GEOSX_LOG_LEVEL_RANK_0( 2, "After ReservoirSolver::AssembleSystem" );
-  GEOSX_LOG_LEVEL_RANK_0( 2, "\nJacobian:\n" << matrix );
-  GEOSX_LOG_LEVEL_RANK_0( 2, "\nResidual:\n" << rhs );
+  if( getLogLevel() >= 2 )
+  {
+    GEOSX_LOG_RANK_0( "After ReservoirSolver::AssembleSystem" );
+    GEOSX_LOG_RANK_0( "\nJacobian:\n");
+    std::cout << matrix;
+    GEOSX_LOG_RANK_0( "\nResidual:\n");
+    std::cout << rhs;
+  }
 
   if( getLogLevel() >= 3 )
   {

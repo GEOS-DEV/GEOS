@@ -494,19 +494,6 @@ void SinglePhaseBase::AssembleSystem( real64 const time_n,
 {
   GEOSX_MARK_FUNCTION;
 
-//  MeshLevel * mesh = domain->getMeshBody(0)->getMeshLevel(0);
-//  applyToSubRegions( mesh, [&] ( localIndex , localIndex ,
-//                                 ElementRegionBase * const GEOSX_UNUSED_PARAM( region ),
-//                                 ElementSubRegionBase * const subRegion )
-//  {
-//    UpdateState( subRegion );
-//  } );
-
-
-
-  matrix.zero();
-  rhs.zero();
-
   matrix.open();
   rhs.open();
 
@@ -528,16 +515,9 @@ void SinglePhaseBase::AssembleSystem( real64 const time_n,
   }
 
   AssembleFluxTerms( time_n, dt, domain, &dofManager, &matrix, &rhs );
- 
-  
-  if (!m_coupledWellsFlag)
-  {
-    // these functions will be called by the ReservoirSolver
-    // when coupled wells are present
-    matrix.close();
-    rhs.close();
-  }
-  
+
+  matrix.close();
+  rhs.close();
 
   if( getLogLevel() == 2 )
   {
@@ -724,10 +704,12 @@ void SinglePhaseBase::SolveSystem( DofManager const & dofManager,
 
   SolverBase::SolveSystem( dofManager, matrix, rhs, solution );
 
-  // Debug for logLevel >= 2
-  GEOSX_LOG_LEVEL_RANK_0( 2, "After SinglePhaseBase::SolveSystem" );
-  GEOSX_LOG_LEVEL_RANK_0( 2, "\nSolution:\n" << solution );
-
+  if( getLogLevel() == 2 )
+  {
+    GEOSX_LOG_RANK_0( "After SinglePhaseBase::SolveSystem" );
+    GEOSX_LOG_RANK_0("\nSolution:\n");
+    std::cout<< solution;
+  }
 }
 
 void SinglePhaseBase::ResetStateToBeginningOfStep( DomainPartition * const domain )

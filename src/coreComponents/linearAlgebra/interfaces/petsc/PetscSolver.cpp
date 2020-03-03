@@ -196,6 +196,10 @@ void PetscSolver::solve_krylov( PetscMatrix &mat,
   GEOSX_LAI_CHECK_ERROR( KSPSetFromOptions( ksp ) );
   GEOSX_LAI_CHECK_ERROR( KSPSolve( ksp, rhs.unwrapped(), sol.unwrapped() ) );
 
+  KSPConvergedReason result;
+  GEOSX_LAI_CHECK_ERROR( KSPGetConvergedReason( ksp, &result ) );
+  GEOSX_WARNING_IF( result < 0, "PetscSolver: Krylov convergence not achieved" );
+
   // reset verbosity option
   GEOSX_LAI_CHECK_ERROR( PetscOptionsClearValue( nullptr, "-ksp_monitor" ) );
 }
