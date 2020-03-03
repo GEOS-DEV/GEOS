@@ -76,11 +76,11 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
     cmw.HypoElastic( 0, 0, Ddt.Data(), Rot );
 
     ASSERT_DOUBLE_EQ( stress( 0, 0, 0 ), (2.0/3.0*strain)*2*G + strain*K );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 1 ), (-1.0/3.0*strain)*2*G + strain*K );
     ASSERT_DOUBLE_EQ( stress( 0, 0, 2 ), (-1.0/3.0*strain)*2*G + strain*K );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 5 ), (-1.0/3.0*strain)*2*G + strain*K );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 4 ), 0.0 );
     ASSERT_DOUBLE_EQ( stress( 0, 0, 3 ), 0.0 );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 1 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 4 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 5 ), 0.0 );
   }
 
   {
@@ -96,11 +96,11 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
 
 
     ASSERT_DOUBLE_EQ( stress( 0, 0, 0 ), (-1.0/3.0*strain)*2*G + strain*K );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 2 ), (2.0/3.0*strain)*2*G + strain*K );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 5 ), (-1.0/3.0*strain)*2*G + strain*K );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 4 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 1 ), (2.0/3.0*strain)*2*G + strain*K );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 2 ), (-1.0/3.0*strain)*2*G + strain*K );
     ASSERT_DOUBLE_EQ( stress( 0, 0, 3 ), 0.0 );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 1 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 4 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 5 ), 0.0 );
   }
 
   {
@@ -116,11 +116,11 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
 
 
     ASSERT_DOUBLE_EQ( stress( 0, 0, 0 ), (-1.0/3.0*strain)*2*G + strain*K );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 2 ), (-1.0/3.0*strain)*2*G + strain*K );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 5 ), (2.0/3.0*strain)*2*G + strain*K );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 4 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 1 ), (-1.0/3.0*strain)*2*G + strain*K );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 2 ), (2.0/3.0*strain)*2*G + strain*K );
     ASSERT_DOUBLE_EQ( stress( 0, 0, 3 ), 0.0 );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 1 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 4 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 5 ), 0.0 );
   }
 
   {
@@ -136,11 +136,11 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
 
 
     ASSERT_DOUBLE_EQ( stress( 0, 0, 0 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 1 ), 0.0 );
     ASSERT_DOUBLE_EQ( stress( 0, 0, 2 ), 0.0 );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 5 ), 0.0 );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 4 ), 0.0 );
     ASSERT_DOUBLE_EQ( stress( 0, 0, 3 ), 0.0 );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 1 ), strain*2*G );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 4 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 5 ), strain*2*G );
   }
 
   {
@@ -156,11 +156,11 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
 
 
     ASSERT_DOUBLE_EQ( stress( 0, 0, 0 ), 0.0 );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 2 ), 0.0 );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 5 ), 0.0 );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 4 ), 0.0 );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 3 ), strain*2*G );
     ASSERT_DOUBLE_EQ( stress( 0, 0, 1 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 2 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 3 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 4 ), strain*2*G );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 5 ), 0.0 );
   }
 
   {
@@ -176,11 +176,11 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
 
 
     ASSERT_DOUBLE_EQ( stress( 0, 0, 0 ), 0.0 );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 2 ), 0.0 );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 5 ), 0.0 );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 4 ), strain*2*G );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 3 ), 0.0 );
     ASSERT_DOUBLE_EQ( stress( 0, 0, 1 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 2 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 3 ), strain*2*G );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 4 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 5 ), 0.0 );
   }
 }
 

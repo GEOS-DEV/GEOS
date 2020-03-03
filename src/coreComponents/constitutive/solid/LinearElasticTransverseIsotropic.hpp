@@ -107,41 +107,19 @@ public:
   GEOSX_HOST_DEVICE inline
   virtual void GetStiffness( localIndex const k, real64 (& c)[6][6] ) const override final
   {
+
+    memset( c, 0, sizeof( c ) );
     c[0][0] = m_c11[k];
     c[0][1] = m_c11[k] - 2 * m_c66[k];
     c[0][2] = m_c13[k];
-    c[0][3] = 0;
-    c[0][4] = 0;
-    c[0][5] = 0;
     c[1][0] = c[0][1];
     c[1][1] = m_c11[k];
     c[1][2] = m_c13[k];
-    c[1][3] = 0;
-    c[1][4] = 0;
-    c[1][5] = 0;
     c[2][0] = c[0][2];
     c[2][1] = c[1][2];
     c[2][2] = m_c33[k];
-    c[2][3] = 0;
-    c[2][4] = 0;
-    c[2][5] = 0;
-    c[3][0] = 0;
-    c[3][1] = 0;
-    c[3][2] = 0;
     c[3][3] = m_c44[k];
-    c[3][4] = 0;
-    c[3][5] = 0;
-    c[4][0] = 0;
-    c[4][1] = 0;
-    c[4][2] = 0;
-    c[4][3] = 0;
     c[4][4] = m_c44[k];
-    c[4][5] = 0;
-    c[5][0] = 0;
-    c[5][1] = 0;
-    c[5][2] = 0;
-    c[5][3] = 0;
-    c[5][4] = 0;
     c[5][5] = m_c66[k];
   }
 
@@ -252,6 +230,7 @@ class LinearElasticTransverseIsotropic : public SolidBase
 {
 public:
 
+  /// @typedef Alias for LinearElasticTransverseIsotropicUpdates
   using KernelWrapper = LinearElasticTransverseIsotropicUpdates;
 
   /**

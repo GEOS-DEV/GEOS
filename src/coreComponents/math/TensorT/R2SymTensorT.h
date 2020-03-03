@@ -114,10 +114,12 @@ public:
   {
     GEOSX_ASSERT_EQ( src.size(), SIZE );
 
-    for ( int i = 0; i < SIZE; ++i )
-    {
-      this->t_data[ i ] = src[ i ];
-    }
+    this->t_data[ 0 ] = src[ 0 ];
+    this->t_data[ 2 ] = src[ 1 ];
+    this->t_data[ 5 ] = src[ 2 ];
+    this->t_data[ 4 ] = src[ 3 ];
+    this->t_data[ 3 ] = src[ 4 ];
+    this->t_data[ 1 ] = src[ 5 ];
 
     return *this;
   }
@@ -128,10 +130,12 @@ public:
   {
     GEOSX_ASSERT_EQ( src.size(), SIZE );
 
-    for ( int i = 0; i < SIZE; ++i )
-    {
-      this->t_data[ i ] = src[ i ];
-    }
+    this->t_data[ 0 ] = src[ 0 ];
+    this->t_data[ 2 ] = src[ 1 ];
+    this->t_data[ 5 ] = src[ 2 ];
+    this->t_data[ 4 ] = src[ 3 ];
+    this->t_data[ 3 ] = src[ 4 ];
+    this->t_data[ 1 ] = src[ 5 ];
 
     return *this;
   }
@@ -144,10 +148,12 @@ public:
   {
     GEOSX_ASSERT_EQ( src.size(), SIZE );
 
-    for ( int i = 0; i < SIZE; ++i )
-    {
-      this->t_data[ i ] += src[ i ];
-    }
+    this->t_data[ 0 ] += src[ 0 ];
+    this->t_data[ 2 ] += src[ 1 ];
+    this->t_data[ 5 ] += src[ 2 ];
+    this->t_data[ 4 ] += src[ 3 ];
+    this->t_data[ 3 ] += src[ 4 ];
+    this->t_data[ 1 ] += src[ 5 ];
 
     return *this;
   }
@@ -158,10 +164,12 @@ public:
   {
     GEOSX_ASSERT_EQ( src.size(), SIZE );
 
-    for ( int i = 0; i < SIZE; ++i )
-    {
-      this->t_data[ i ] += src[ i ];
-    }
+    this->t_data[ 0 ] += src[ 0 ];
+    this->t_data[ 2 ] += src[ 1 ];
+    this->t_data[ 5 ] += src[ 2 ];
+    this->t_data[ 4 ] += src[ 3 ];
+    this->t_data[ 3 ] += src[ 4 ];
+    this->t_data[ 1 ] += src[ 5 ];
 
     return *this;
   }

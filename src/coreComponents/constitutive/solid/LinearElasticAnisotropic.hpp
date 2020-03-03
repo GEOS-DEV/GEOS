@@ -39,6 +39,7 @@ namespace constitutive
 class LinearElasticAnisotropicUpdates : public SolidBaseUpdates
 {
 public:
+
   /**
    * @brief Constructor
    * @param [in] C The Voigt stiffness tensor
@@ -140,23 +141,13 @@ LinearElasticAnisotropicUpdates::
                localIndex const q,
                real64 const * const GEOSX_RESTRICT voigtStrainInc ) const
 {
-//  for( localIndex i=0 ; i<6 ; ++i )
-//  {
-//    for( localIndex j=0 ; j<6 ; ++j )
-//    {
-//      m_stress( k, q, i ) = m_stress( k, q, i ) + m_stiffnessView( k, i, j ) * voigtStrainInc[j];
-//    }
-//  }
-  for( localIndex j=0 ; j<6 ; ++j )
+  for( localIndex i=0 ; i<6 ; ++i )
   {
-    m_stress( k, q, 0 ) = m_stress( k, q, 0 ) + m_stiffnessView( k, 0, j ) * voigtStrainInc[j];
-    m_stress( k, q, 2 ) = m_stress( k, q, 2 ) + m_stiffnessView( k, 1, j ) * voigtStrainInc[j];
-    m_stress( k, q, 5 ) = m_stress( k, q, 5 ) + m_stiffnessView( k, 2, j ) * voigtStrainInc[j];
-    m_stress( k, q, 4 ) = m_stress( k, q, 4 ) + m_stiffnessView( k, 3, j ) * voigtStrainInc[j];
-    m_stress( k, q, 3 ) = m_stress( k, q, 3 ) + m_stiffnessView( k, 4, j ) * voigtStrainInc[j];
-    m_stress( k, q, 1 ) = m_stress( k, q, 1 ) + m_stiffnessView( k, 5, j ) * voigtStrainInc[j];
+    for( localIndex j=0 ; j<6 ; ++j )
+    {
+      m_stress( k, q, i ) = m_stress( k, q, i ) + m_stiffnessView( k, i, j ) * voigtStrainInc[j];
+    }
   }
-
 }
 
 GEOSX_HOST_DEVICE
@@ -180,36 +171,40 @@ LinearElasticAnisotropicUpdates::
 //    }
 //  }
 
-  localIndex map[6] = { 0, 2, 5, 4, 3, 1 };
+  constexpr localIndex map[6] = { 0, 2, 5, 4, 3, 1 };
 
   for( localIndex j=0 ; j<3 ; ++j )
   {
     m_stress( k, q, 0 ) = m_stress( k, q, 0 ) + m_stiffnessView( k, 0, j ) * Ddt[map[j]];
-    m_stress( k, q, 2 ) = m_stress( k, q, 2 ) + m_stiffnessView( k, 1, j ) * Ddt[map[j]];
-    m_stress( k, q, 5 ) = m_stress( k, q, 5 ) + m_stiffnessView( k, 2, j ) * Ddt[map[j]];
-    m_stress( k, q, 4 ) = m_stress( k, q, 4 ) + m_stiffnessView( k, 3, j ) * Ddt[map[j]];
-    m_stress( k, q, 3 ) = m_stress( k, q, 3 ) + m_stiffnessView( k, 4, j ) * Ddt[map[j]];
-    m_stress( k, q, 1 ) = m_stress( k, q, 1 ) + m_stiffnessView( k, 5, j ) * Ddt[map[j]];
+    m_stress( k, q, 1 ) = m_stress( k, q, 1 ) + m_stiffnessView( k, 1, j ) * Ddt[map[j]];
+    m_stress( k, q, 2 ) = m_stress( k, q, 2 ) + m_stiffnessView( k, 2, j ) * Ddt[map[j]];
+    m_stress( k, q, 3 ) = m_stress( k, q, 3 ) + m_stiffnessView( k, 3, j ) * Ddt[map[j]];
+    m_stress( k, q, 4 ) = m_stress( k, q, 4 ) + m_stiffnessView( k, 4, j ) * Ddt[map[j]];
+    m_stress( k, q, 5 ) = m_stress( k, q, 5 ) + m_stiffnessView( k, 5, j ) * Ddt[map[j]];
   }
   for( localIndex j=3 ; j<6 ; ++j )
   {
     m_stress( k, q, 0 ) = m_stress( k, q, 0 ) + m_stiffnessView( k, 0, j ) * 2 * Ddt[map[j]];
-    m_stress( k, q, 2 ) = m_stress( k, q, 2 ) + m_stiffnessView( k, 1, j ) * 2 * Ddt[map[j]];
-    m_stress( k, q, 5 ) = m_stress( k, q, 5 ) + m_stiffnessView( k, 2, j ) * 2 * Ddt[map[j]];
-    m_stress( k, q, 4 ) = m_stress( k, q, 4 ) + m_stiffnessView( k, 3, j ) * 2 * Ddt[map[j]];
-    m_stress( k, q, 3 ) = m_stress( k, q, 3 ) + m_stiffnessView( k, 4, j ) * 2 * Ddt[map[j]];
-    m_stress( k, q, 1 ) = m_stress( k, q, 1 ) + m_stiffnessView( k, 5, j ) * 2 * Ddt[map[j]];
+    m_stress( k, q, 1 ) = m_stress( k, q, 1 ) + m_stiffnessView( k, 1, j ) * 2 * Ddt[map[j]];
+    m_stress( k, q, 2 ) = m_stress( k, q, 2 ) + m_stiffnessView( k, 2, j ) * 2 * Ddt[map[j]];
+    m_stress( k, q, 3 ) = m_stress( k, q, 3 ) + m_stiffnessView( k, 3, j ) * 2 * Ddt[map[j]];
+    m_stress( k, q, 4 ) = m_stress( k, q, 4 ) + m_stiffnessView( k, 4, j ) * 2 * Ddt[map[j]];
+    m_stress( k, q, 5 ) = m_stress( k, q, 5 ) + m_stiffnessView( k, 5, j ) * 2 * Ddt[map[j]];
   }
 
   R2SymTensor stress;
   stress = m_stress[k][q];
+
   R2SymTensor temp;
   real64 const * const pTemp = temp.Data();
   temp.QijAjkQlk( stress, Rot );
-  for( int i=0 ; i<6 ; ++i )
-  {
-    m_stress( k, q, i ) = pTemp[i];
-  }
+
+  m_stress( k, q, 0 ) = pTemp[0];
+  m_stress( k, q, 1 ) = pTemp[2];
+  m_stress( k, q, 2 ) = pTemp[5];
+  m_stress( k, q, 3 ) = pTemp[4];
+  m_stress( k, q, 4 ) = pTemp[3];
+  m_stress( k, q, 5 ) = pTemp[1];
 }
 
 GEOSX_HOST_DEVICE
@@ -242,6 +237,9 @@ LinearElasticAnisotropicUpdates::
 class LinearElasticAnisotropic : public SolidBase
 {
 public:
+  /// @typedef Alias for LinearElasticAnisotropicUpdates
+  using KernelWrapper = LinearElasticAnisotropicUpdates;
+
   /**
    * @brief constructor
    * @param[in]name name of the instance in the catalog
