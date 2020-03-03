@@ -118,6 +118,11 @@ namespace impl
     return sizeof(T) * unit_per_cell * cells_per_row;
   }
 
+  bool TryOpen( hid_t target, string const & id )
+  {
+    return ( H5Gget_objinfo(target, id.c_str(), 0, NULL) == 0 );
+  }
+
   template < typename DATA_TYPE >
   typename std::enable_if< can_hdf_io<DATA_TYPE>, void>::type
   CreateTable(hid_t target,
@@ -380,21 +385,35 @@ public:
 
   virtual void OpenTable( )
   {
-    // if ( !impl::TryOpen(hdf_id) )
+    if ( !impl::TryOpen(this->io_target,m_hdf_id) )
     {
       impl::CreateTable<value_type>(this->io_target,m_title,m_hdf_id,m_cell_size,m_num_cells,m_record_prefix);
     }
-    //allocate internal copy if specd
+    // else
+    // {
+    //   //verify the table conforms to our needs
+    // }
     m_is_open = true;
   }
   virtual void AppendRow( array_type const & row )
   {
+    // assert(m_is_open);
     _update_internal_copy(row);
     impl::AppendRow<value_type>(this->io_target,m_hdf_id,m_cell_size,m_num_cells,m_internal_copy.data());
   }
+  virtual void ClearAfter( localIndex first_to_delete )
+  {
+    //assert(m_is_open);
+    impl::ClearAfter(this->io_target,m_hdf_id,first_to_delete);
+  }
+  template < typename LAMBDA >
+  // sfinae lambda returns bool, accepts value_type*
+  void ColSearch( localIndex col_idx , LAMBDA && cond)
+  {
+    return impl::ColSearch<value_type>(this->io_target,m_hdf_id,col_idx,m_cell_size,cond);
+  }
   virtual void CloseTable( )
   {
-    // deallocate internal copy if specd
     m_is_open = false;
   }
 
@@ -440,7 +459,6 @@ private:
   string const m_record_prefix;
   array1d< T > m_internal_copy;
 };
-
 
 template < class DATA_ARR_T >
 class HDFTabularIO<DATA_ARR_T, std::nullptr_t, typename std::enable_if< is_array<DATA_ARR_T> && can_hdf_io<typename DATA_ARR_T::value_type> >::type > : public HDFIO
