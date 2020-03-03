@@ -123,6 +123,21 @@ namespace impl
     return ( H5Gget_objinfo(target, id.c_str(), 0, NULL) == 0 );
   }
 
+  bool VerifyTable( hid_t target, string const & id, hsize_t num_cols, hsize_t cell_size )
+  {
+    hsize_t o_num_cols = 0;
+    hsize_t o_num_rows = 0;
+    H5TBget_table_info(target,id.c_str(),&o_num_cols,&o_num_rows);
+    if( o_num_cols != num_cols ) return false;
+    std::vector<size_t> col_sizes(num_cols);
+    H5TBget_field_info(target,id.c_str(),NULL,&col_sizes[0],NULL,NULL);
+    for( auto cs : col_sizes )
+    {
+      if( cs != cell_size ) return false;
+    }
+    return true;
+  }
+
   template < typename DATA_TYPE >
   typename std::enable_if< can_hdf_io<DATA_TYPE>, void>::type
   CreateTable(hid_t target,
@@ -389,10 +404,10 @@ public:
     {
       impl::CreateTable<value_type>(this->io_target,m_title,m_hdf_id,m_cell_size,m_num_cells,m_record_prefix);
     }
-    // else
-    // {
-    //   //verify the table conforms to our needs
-    // }
+    else
+    {
+      impl::VerifyTable(this->io_target,m_hdf_id,m_num_cells,m_cell_size);
+    }
     m_is_open = true;
   }
   virtual void AppendRow( array_type const & row )
