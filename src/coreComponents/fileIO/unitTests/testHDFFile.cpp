@@ -24,6 +24,8 @@ TEST( testHDFTraits, can_hdf_io )
   static_assert( can_hdf_io< const globalIndex >, "Should be true.");
 }
 
+// need versions that use raw arrays as well
+
 TEST( testHDFIO, WholeTabularIO )
 {
   srand(time(NULL));
@@ -43,8 +45,52 @@ TEST( testHDFIO, WholeTabularIO )
   }
 }
 
-//TEST( testHDFIO, IndexedTabularIO )
-//TEST( testHDFIO, PartialTabularIO )
+TEST( testHDFIO, IndexedTabularIO )
+{
+  srand(time(NULL));
+  localIndex dims[DIM] = {0};
+  for(integer dd = 0; dd < DIM; ++dd )
+  {
+    dims[dd] = rand();
+  }
+  Array<ARR_TYPE, DIM> arr(rand());
+  // rand primary dim
+  Array<IND_TYPE, 1> ind_arr(rand() % dims[0]);
+
+  {
+    HDFFile file("arr_output");
+    HDFTabularIO<decltype(arr),decltype(ind_arr)> table_out(file);
+    table_out.CreateTable("Scalar","scl",arr.size(0),ind_arr.size(),ind_arr,"nd_");
+    table_out.AppendRow("scl",arr,ind_arr);
+  }
+}
+
+//
+TEST( testHDFIO, PartialTabularIO )
+{
+  srand(time(NULL));
+  localIndex dims[DIM] = {0};
+  for(integer dd = 0; dd < DIM; ++dd )
+  {
+    dims[dd] = rand();
+  }
+  Array<ARR_TYPE, DIM> arr(rand());
+  // rand primary dim
+  Array<IND_TYPE, 1> ind_arr(rand() % dims[0], rand() % dims[1]);
+
+  // populate ind_arr
+  // for each array dimension, a list of indices to retrieve from that dimension
+  // one dimension is tagged as the primary loop
+  Array<IND_TYPE, 2> slice_arr(DIM);
+
+  {
+    HDFFile file("arr_output");
+    HDFTabularIO<decltype(arr),decltype(ind_arr)> table_out(file);
+    table_out.CreateTable("Scalar","scl",arr.size(0),ind_arr.size(),ind_arr,"nd_");
+    table_out.AppendRow("scl",arr,ind_arr);
+  }
+}
+
 //TEST( testHDFIO, IndexedPartialTabularIO )
 
 TEST( testHDFIO, WholeTabularTimeHistory )
@@ -66,6 +112,7 @@ TEST( testHDFIO, WholeTabularTimeHistory )
     time_hist.AppendRow("scl",0.5,arr);
     time_hist.ClearAfterTime("scl",0.4);
   }
+
 
 }
 

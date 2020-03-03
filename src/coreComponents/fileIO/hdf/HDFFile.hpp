@@ -71,20 +71,44 @@ private:
 
 namespace impl
 {
-  template <typename OITER>
-  void GenColNames(OITER out, string const & prefix, localIndex num_cols, localIndex * col_idxs = nullptr )
+  template < typename OITER, typename IDX_TYPE >
+  // sfinae: oiter must be output iter that can accept strings, idx must be integral
+  typename std::enable_if< std::is_integral<IDX_TYPE>::value, void>::type
+  GenColNames(OITER out, string const & prefix, localIndex num_cols, IDX_TYPE const * col_idxs )
   {
     for( localIndex lidx = 0; lidx < num_cols; ++lidx )
     {
-      *out++ = (prefix + std::to_string(col_idxs == nullptr ? lidx : col_idxs[lidx])).c_str();
+      *out++ = (prefix + std::to_string(col_idxs[lidx])).c_str();
     }
   }
-  template <typename T, typename OITER>
-  void GenColOffsets(OITER out, localIndex type_per_cell, localIndex num_cols)
+
+  template < typename OITER >
+  void GenColNames(OITER out, string const & prefix, localIndex num_cols )
   {
     for( localIndex lidx = 0; lidx < num_cols; ++lidx )
     {
-      *out++ = (lidx * (sizeof(T) * type_per_cell));
+      *out++ = (prefix + std::to_string(lidx)).c_str();
+    }
+  }
+
+  template < typename T, typename OITER, typename IDX_TYPE >
+  // sfinae: oiter must be output iter that can accept Ts (trivially T*), idx must be integral
+  typename std::enable_if< std::is_integral<IDX_TYPE>::value, void>::type
+  GenColOffsets(OITER out, localIndex type_per_cell, localIndex num_cols, IDX_TYPE const * col_idxs)
+  {
+    for( localIndex lidx = 0; lidx < num_cols; ++lidx )
+    {
+      *out++ = (col_idxs[num_cols]) * (sizeof(T) * type_per_cell);
+    }
+  }
+
+  template < typename T, typename OITER >
+  // sfinae: oiter must be output iter that can accept Ts (trivially T*), idx must be integral
+  void GenColOffsets(OITER out, localIndex type_per_cell, localIndex num_cols )
+  {
+    for( localIndex lidx = 0; lidx < num_cols; ++lidx )
+    {
+      *out++ = lidx * (sizeof(T) * type_per_cell);
     }
   }
 
@@ -94,17 +118,17 @@ namespace impl
     return sizeof(T) * unit_per_cell * cells_per_row;
   }
 
-  template < typename DATA_TYPE > //, typename IDX_TYPE = localIndex >
-  void CreateTable(hid_t target,
-                   string const & title,
-                   string const & id,
-                   localIndex const unit_per_cell,
-                   localIndex const num_cols,
-                   //IDX_TYPE const * col_idxs = nullptr,
-                   string const & record_prefix = "" )
+  template < typename DATA_TYPE >
+  typename std::enable_if< can_hdf_io<DATA_TYPE>, void>::type
+  CreateTable(hid_t target,
+              string const & title,
+              string const & id,
+              localIndex const unit_per_cell,
+              localIndex const num_cols,
+              string const & record_prefix = "")
   {
     size_t row_size = CalcRowSize<DATA_TYPE>(unit_per_cell,num_cols);
-    std::vector<const char*> col_names(num_cols); //,col_idxs);
+    std::vector<const char*> col_names(num_cols);
     GenColNames(std::back_insert_iterator<decltype(col_names)>(col_names), record_prefix, num_cols);
     std::vector<size_t> col_offsets(num_cols);
     GenColOffsets<DATA_TYPE>(std::back_insert_iterator<decltype(col_offsets)>(col_offsets), unit_per_cell, num_cols);
@@ -113,12 +137,32 @@ namespace impl
     H5TBmake_table(title.c_str(), target, id.c_str(), num_cols, 0, row_size, &col_names[0], &col_offsets[0], &col_types[0], 0, nullptr, 0, nullptr);
   }
 
+  template < typename DATA_TYPE, typename IDX_TYPE >
+  typename std::enable_if< can_hdf_io<DATA_TYPE> && std::is_integral<IDX_TYPE>::value, void>::type
+  CreateTable(hid_t target,
+              string const & title,
+              string const & id,
+              localIndex const unit_per_cell,
+              localIndex const num_cols,
+              IDX_TYPE const * idxs,
+              string const & record_prefix = "")
+  {
+    size_t row_size = CalcRowSize<DATA_TYPE>(unit_per_cell,num_cols);
+    std::vector<const char*> col_names(num_cols);
+    GenColNames(std::back_insert_iterator<decltype(col_names)>(col_names), record_prefix, num_cols, idxs);
+    std::vector<size_t> col_offsets(num_cols);
+    GenColOffsets<DATA_TYPE>(std::back_insert_iterator<decltype(col_offsets)>(col_offsets), unit_per_cell, num_cols, idxs);
+    hid_t hdf_data_type = unit_per_cell == 1 ? GetHDFDataType<DATA_TYPE>() : GetHDFArrayDataType<DATA_TYPE>(unit_per_cell);
+    std::vector<hid_t> col_types(num_cols, hdf_data_type);
+    H5TBmake_table(title.c_str(), target, id.c_str(), num_cols, 0, row_size, &col_names[0], &col_offsets[0], &col_types[0], 0, nullptr, 0, nullptr);
+  }
+
   template < typename DATA_TYPE >
   void AppendRow( hid_t target,
                   string const & id,
+                  localIndex const unit_per_cell,
                   localIndex const num_cols,
-                  DATA_TYPE const * data,
-                  localIndex const unit_per_cell )
+                  DATA_TYPE const * data )
   {
     size_t row_size = CalcRowSize<DATA_TYPE>(unit_per_cell,num_cols);
     std::vector<size_t> col_offsets(num_cols);
@@ -127,13 +171,29 @@ namespace impl
     H5TBappend_records(target,id.c_str(),1,row_size,&col_offsets[0],&col_sizes[0],data);
   }
 
-  template < typename DATA_TYPE, typename COND >
+  template < typename DATA_TYPE, typename IDX_TYPE >
+  void AppendRow( hid_t target,
+                  string const & id,
+                  localIndex const unit_per_cell,
+                  localIndex const num_cols,
+                  DATA_TYPE const * data,
+                  IDX_TYPE const * idxs = nullptr)
+  {
+    size_t row_size = CalcRowSize<DATA_TYPE>(unit_per_cell,num_cols);
+    std::vector<size_t> col_offsets(num_cols);
+    GenColOffsets<DATA_TYPE>(std::back_insert_iterator<decltype(col_offsets)>(col_offsets), unit_per_cell, num_cols, idxs);
+    std::vector<size_t> col_sizes(num_cols,sizeof(DATA_TYPE));
+    H5TBappend_records(target,id.c_str(),1,row_size,&col_offsets[0],&col_sizes[0],data);
+  }
+
+  template < typename DATA_TYPE, typename COND > //, typename IDX_TYPE = localIndex >
   // sfinae lamda callable, two input args, bool return
   localIndex ColSearch( hid_t target,
                         string const & id,
                         integer const col_idx,
                         localIndex const unit_per_cell,
-                        COND && cond )
+                        COND && cond)
+                        //IDX_TYPE const * idxs = nullptr )
   {
     hsize_t num_cols = 0;
     hsize_t num_rows = 0;
@@ -143,6 +203,10 @@ namespace impl
     GenColOffsets<DATA_TYPE>(std::back_insert_iterator<decltype(col_offsets)>(col_offsets), unit_per_cell, num_cols );
     size_t cell_size = sizeof(DATA_TYPE) * unit_per_cell;
     Array<DATA_TYPE,1> col_data(num_rows);
+    // the offsets are contiguous in this case regardless of whether the table was created from an indexed array or whole array,
+    //  the hope is that since this is a read, we can simply ignore the typical "correct" specification of the offsets and read in
+    //  the column contigously regardless.. might not work in practice, needs testing (and the hdf spec doesn't make it clear why the
+    //  argument is even required since it is supposed to specify the offsets into the passed in data afaik, not the offests into table)
     H5TBread_fields_index(target,id.c_str(),1,&col_idx,0,num_rows,row_size,&col_offsets[col_idx],&cell_size,col_data.data());
     hsize_t row = 0;
     bool found = false;
@@ -177,37 +241,12 @@ protected:
   HDFTarget io_target;
 };
 
-template < class DATA_TYPE, typename ENABLE = void >
+template < class DATA_TYPE, class IDX_TYPE = std::nullptr_t, typename ENABLE = void >
 class HDFTabularIO;
-
-
-// template < class DATA_TYPE, class IDX_TYPE >
-// class HDFTabularIO<DATA_TYPE, IDX_TYPE, typename std::enable_if< can_hdf_io< DATA_TYPE > && std::is_integral_v< IDX_TYPE > >::type> : public HDFIO
-// {
-// public:
-//   HDFTabularIO(HDFTarget & target) : HDFIO(target), m_cell_size_map() {}
-//   virtual ~HDFTabularIO() {}
-
-//   virtual void CreateTable( string const & title,
-//                             string const & id,
-//                             localIndex const unit_per_cell,
-//                             localIndex const num_cols,
-//                             IDX_TYPE const * idxs = nullptr,
-//                             string const & record_prefix = "" )
-//   {
-//     impl::CreateTable<DATA_TYPE,IDX_TYPE>(this->io_target,title,id,unit_per_cell,num_cols,idxs,record_prefix);
-//     m_cell_size_map[id] = unit_per_cell;
-//   }
-
-//   virtual void AppendRow( string const & id,
-//                           localIndex const )
-// protected:
-//   map<string,localIndex> m_cell_size_map;
-// };
 
 // writing out scalar types
 template < class DATA_TYPE >
-class HDFTabularIO<DATA_TYPE, typename std::enable_if< can_hdf_io< DATA_TYPE > >::type> : public HDFIO
+class HDFTabularIO<DATA_TYPE, std::nullptr_t, typename std::enable_if< can_hdf_io< DATA_TYPE > >::type> : public HDFIO
 {
 public:
   HDFTabularIO(HDFTarget & target) : HDFIO(target), m_cell_size_map() {}
@@ -215,18 +254,18 @@ public:
 
   virtual void CreateTable( string const & title,
                             string const & id,
-                            localIndex const num_cols,
                             localIndex const unit_per_cell,
+                            localIndex const num_cols,
                             string const & record_prefix = "" )
   {
-    impl::CreateTable<DATA_TYPE>(this->io_target,title,id,num_cols,unit_per_cell,record_prefix);
+    impl::CreateTable<DATA_TYPE>(this->io_target,title,id,unit_per_cell,num_cols,record_prefix);
     m_cell_size_map[id] = unit_per_cell;
   }
   virtual void AppendRow( string const & id,
                           localIndex const num_cols,
                           DATA_TYPE const * data)
   {
-    impl::AppendRow(this->io_target,id,num_cols,data,m_cell_size_map[id]);
+    impl::AppendRow(this->io_target,id,m_cell_size_map[id],num_cols,data);
   }
 
   template <typename SEARCH_LAMBDA>
@@ -247,11 +286,58 @@ private:
   map<string,localIndex> m_cell_size_map;
 };
 
+template < class DATA_TYPE, class IDX_TYPE >
+class HDFTabularIO<DATA_TYPE, IDX_TYPE, typename std::enable_if< can_hdf_io< DATA_TYPE > && std::is_integral< IDX_TYPE >::value >::type> : public HDFIO
+{
+public:
+  HDFTabularIO(HDFTarget & target) : HDFIO(target), m_cell_size_map() {}
+  virtual ~HDFTabularIO() {}
+
+  virtual void CreateTable( string const & title,
+                            string const & id,
+                            localIndex const unit_per_cell,
+                            localIndex const num_cols,
+                            IDX_TYPE const * idxs,
+                            string const & record_prefix = "" )
+  {
+    impl::CreateTable<DATA_TYPE,IDX_TYPE>(this->io_target,title,id,unit_per_cell,num_cols,idxs,record_prefix);
+    m_cell_size_map[id] = unit_per_cell;
+  }
+
+  virtual void AppendRow( string const & id,
+                          DATA_TYPE const * data,
+                          localIndex const num_cols,
+                          IDX_TYPE const * idxs = nullptr )
+  {
+    impl::AppendRow(this->io_target,id,m_cell_size_map[id],num_cols,data,idxs);
+  }
+
+  template <typename SEARCH_LAMBDA>
+  // sfinae lamda callable, one input arg, bool return
+  localIndex ColSearch( string const & id,
+                        integer const col_idx,
+                        SEARCH_LAMBDA && cond )
+  {
+    return impl::ColSearch<DATA_TYPE>(this->io_target,id,col_idx,m_cell_size_map[id],cond);
+  }
+
+  virtual void ClearAfter( string const & id,
+                           localIndex const row_idx )
+  {
+    impl::ClearAfter(this->io_target,id,row_idx);
+  }
+
+protected:
+  map<string,localIndex> m_cell_size_map;
+};
+
 template < class DATA_ARR_T >
-class HDFTabularIO<DATA_ARR_T, typename std::enable_if< is_array<DATA_ARR_T> && can_hdf_io<typename DATA_ARR_T::value_type> >::type > : public HDFIO
+class HDFTabularIO<DATA_ARR_T, std::nullptr_t, typename std::enable_if< is_array<DATA_ARR_T> && can_hdf_io<typename DATA_ARR_T::value_type> >::type > : public HDFIO
 {
 public:
   using value_type = typename DATA_ARR_T::value_type;
+  using index_type = std::nullptr_t;
+
   HDFTabularIO(HDFTarget & target) : HDFIO(target), m_cell_size_map() {}
   virtual ~HDFTabularIO() {}
 
@@ -261,7 +347,7 @@ public:
                            localIndex const unit_per_cell = 1,
                            string const & record_prefix = "" )
   {
-    impl::CreateTable<value_type>(this->io_target,title,id,num_cols,unit_per_cell,record_prefix);
+    impl::CreateTable<value_type>(this->io_target,title,id,unit_per_cell,num_cols,record_prefix);
     m_cell_size_map[id] = unit_per_cell;
   }
 
@@ -269,7 +355,7 @@ public:
                  DATA_ARR_T const & array)
   {
     localIndex num_cols = array.size();
-    impl::AppendRow(this->io_target,id,num_cols,array.data(),m_cell_size_map[id]);
+    impl::AppendRow<value_type>(this->io_target,id,m_cell_size_map[id],num_cols,array.data());
   }
 
   void ClearAfter(string const & id,
@@ -282,11 +368,60 @@ private:
   map<string,localIndex> m_cell_size_map;
 };
 
-template < class DATA_ARR_T >
-class HDFTimeHistoryTabular : public HDFTabularIO<DATA_ARR_T>
+// currently assumes standard c array ordering
+template < class DATA_ARR_T, class IDX_ARR_T >
+//sfinae todo: idx_arr_t dim = 1 for single-level indexing, dim = 2 for sub-indexing
+class HDFTabularIO<DATA_ARR_T, IDX_ARR_T, typename std::enable_if< is_array<DATA_ARR_T> &&
+                                                                   can_hdf_io<typename DATA_ARR_T::value_type> &&
+                                                                   is_array<IDX_ARR_T> &&
+                                                                   std::is_integral< typename IDX_ARR_T::value_type >::value >::type > : public HDFIO
 {
 public:
-  using Super = HDFTabularIO<DATA_ARR_T>;
+  using value_type = typename DATA_ARR_T::value_type;
+  using index_type = typename IDX_ARR_T::value_type;
+
+  HDFTabularIO(HDFTarget & target) : HDFIO(target), m_cell_size_map() {}
+  virtual ~HDFTabularIO() {}
+
+  virtual void CreateTable( string const & title,
+                            string const & id,
+                            localIndex const unit_per_cell,
+                            localIndex const num_cols,
+                            IDX_ARR_T const & idxs,
+                            string const & record_prefix = "" )
+  {
+    impl::CreateTable<value_type,index_type>(this->io_target,title,id,unit_per_cell,num_cols,idxs.data(),record_prefix);
+    m_cell_size_map[id] = unit_per_cell;
+  }
+
+  void AppendRow(string const & id,
+                 DATA_ARR_T const & array,
+                 IDX_ARR_T const & idx)
+  {
+    localIndex num_cols = array.size();
+    impl::AppendRow<value_type,index_type>(this->io_target,id,m_cell_size_map[id],num_cols,array.data(),idx.data());
+  }
+
+  void ClearAfter(string const & id,
+                  localIndex const row_idx)
+  {
+    impl::ClearAfter(this->io_target,id,row_idx);
+  }
+
+private:
+  map<string,localIndex> m_cell_size_map;
+};
+
+
+template < class DATA_ARR_T, class IDX_ARR_T = std::nullptr_t >
+// the sfinae from the superclass should handle the sfinae here
+// execpt this could potentially be either the pointer or the array version
+// above, and the functions in those versions have different parameters, so we might need two
+// specializations of this class toooo
+class HDFTimeHistoryTabular : public HDFTabularIO<DATA_ARR_T,IDX_ARR_T>
+{
+public:
+  using Super = HDFTabularIO<DATA_ARR_T,IDX_ARR_T>;
   using typename Super::value_type;
 
   HDFTimeHistoryTabular( HDFTarget & target ) :
