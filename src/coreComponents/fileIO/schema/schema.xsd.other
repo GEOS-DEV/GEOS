@@ -676,11 +676,8 @@
 			<xsd:element name="PoreVolumeCompressibleSolid" type="PoreVolumeCompressibleSolidType" />
 			<xsd:element name="PoroLinearElasticAnisotropic" type="PoroLinearElasticAnisotropicType" />
 			<xsd:element name="PoroLinearElasticIsotropic" type="PoroLinearElasticIsotropicType" />
-<<<<<<< HEAD
-			<xsd:element name="ProppantSlurryFluid" type="ProppantSlurryFluidType" />
-=======
 			<xsd:element name="PoroLinearElasticTransverseIsotropic" type="PoroLinearElasticTransverseIsotropicType" />
->>>>>>> updated LinearElasticAnisotropic
+			<xsd:element name="ProppantSlurryFluid" type="ProppantSlurryFluidType" />
 			<xsd:element name="VanGenuchtenBakerRelativePermeability" type="VanGenuchtenBakerRelativePermeabilityType" />
 			<xsd:element name="VanGenuchtenCapillaryPressure" type="VanGenuchtenCapillaryPressureType" />
 		</xsd:choice>
@@ -934,7 +931,26 @@
 		<!--stress => Material Stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
 	</xsd:complexType>
-<<<<<<< HEAD
+	<xsd:complexType name="PoroLinearElasticTransverseIsotropicType">
+		<!--c11 => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="c11" type="real64_array" />
+		<!--c13 => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="c13" type="real64_array" />
+		<!--c33 => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="c33" type="real64_array" />
+		<!--c44 => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="c44" type="real64_array" />
+		<!--c66 => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="c66" type="real64_array" />
+		<!--dPVMult_dDensity => (no description available)-->
+		<xsd:attribute name="dPVMult_dDensity" type="real64_array2d" />
+		<!--density => Material Density-->
+		<xsd:attribute name="density" type="real64_array2d" />
+		<!--poreVolumeMultiplier => (no description available)-->
+		<xsd:attribute name="poreVolumeMultiplier" type="real64_array2d" />
+		<!--stress => Material Stress-->
+		<xsd:attribute name="stress" type="real64_array3d" />
+	</xsd:complexType>
 	<xsd:complexType name="ProppantSlurryFluidType">
 		<!--FluidDensity => (no description available)-->
 		<xsd:attribute name="FluidDensity" type="real64_array2d" />
@@ -970,27 +986,6 @@
 		<xsd:attribute name="density" type="real64_array2d" />
 		<!--viscosity => (no description available)-->
 		<xsd:attribute name="viscosity" type="real64_array2d" />
-=======
-	<xsd:complexType name="PoroLinearElasticTransverseIsotropicType">
-		<!--c11 => Elastic Bulk Modulus Field-->
-		<xsd:attribute name="c11" type="real64_array" />
-		<!--c13 => Elastic Bulk Modulus Field-->
-		<xsd:attribute name="c13" type="real64_array" />
-		<!--c33 => Elastic Bulk Modulus Field-->
-		<xsd:attribute name="c33" type="real64_array" />
-		<!--c44 => Elastic Bulk Modulus Field-->
-		<xsd:attribute name="c44" type="real64_array" />
-		<!--c66 => Elastic Bulk Modulus Field-->
-		<xsd:attribute name="c66" type="real64_array" />
-		<!--dPVMult_dDensity => (no description available)-->
-		<xsd:attribute name="dPVMult_dDensity" type="real64_array2d" />
-		<!--density => Material Density-->
-		<xsd:attribute name="density" type="real64_array2d" />
-		<!--poreVolumeMultiplier => (no description available)-->
-		<xsd:attribute name="poreVolumeMultiplier" type="real64_array2d" />
-		<!--stress => Material Stress-->
-		<xsd:attribute name="stress" type="real64_array3d" />
->>>>>>> updated LinearElasticAnisotropic
 	</xsd:complexType>
 	<xsd:complexType name="VanGenuchtenBakerRelativePermeabilityType">
 		<!--dPhaseRelPerm_dPhaseVolFraction => (no description available)-->
@@ -1172,24 +1167,7 @@
 		<xsd:attribute name="SIFNode" type="real64_array" />
 		<!--TotalDisplacement => An array that holds the total displacements on the nodes. => SolidMechanics_LagrangianFEM, SolidMechanicsLagrangianSSLE-->
 		<xsd:attribute name="TotalDisplacement" type="LvArray::Array&lt;double, 2, camp::int_seq&lt;long, 1l, 0l&gt;, long, LvArray::NewChaiBuffer&gt;" />
-<<<<<<< HEAD
-<<<<<<< HEAD
 		<!--Velocity => An array that holds the current velocity on the nodes. => SolidMechanics_LagrangianFEM, SolidMechanicsLagrangianSSLE-->
-=======
-<<<<<<< HEAD
-		<!--Velocity => An array that holds the current velocity on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
-=======
-<<<<<<< HEAD
-		<!--Velocity => An array that holds the current velocity on the nodes. => SolidMechanics_LagrangianFEM, SolidMechanicsLagrangianSSLE-->
-=======
-		<!--Velocity => An array that holds the current velocity on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
-<<<<<<< HEAD
->>>>>>> added linear elastic transverse isotropic material
->>>>>>> added linear elastic transverse isotropic material
->>>>>>> Added a linear elastic transverse isotropic material
-=======
-		<!--Velocity => An array that holds the current velocity on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
->>>>>>> updated LinearElasticAnisotropic
 		<xsd:attribute name="Velocity" type="LvArray::Array&lt;double, 2, camp::int_seq&lt;long, 1l, 0l&gt;, long, LvArray::NewChaiBuffer&gt;" />
 		<!--childIndex => Child index of node.-->
 		<xsd:attribute name="childIndex" type="localIndex_array" />
@@ -1227,25 +1205,7 @@
 		<xsd:attribute name="primaryField" type="real64_array" />
 		<!--ruptureTime => Time that the node was ruptured.-->
 		<xsd:attribute name="ruptureTime" type="real64_array" />
-<<<<<<< HEAD
-<<<<<<< HEAD
 		<!--uhatTilde => An array that holds the incremental displacement predictors on the nodes. => SolidMechanics_LagrangianFEM, SolidMechanicsLagrangianSSLE-->
-=======
-<<<<<<< HEAD
-		<!--uhatTilde => An array that holds the incremental displacement predictors on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
-=======
-<<<<<<< HEAD
-		<!--uhatTilde => An array that holds the incremental displacement predictors on the nodes. => SolidMechanics_LagrangianFEM, SolidMechanicsLagrangianSSLE-->
-=======
-=======
->>>>>>> added linear elastic transverse isotropic material
-		<!--uhatTilde => An array that holds the incremental displacement predictors on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
->>>>>>> added linear elastic transverse isotropic material
->>>>>>> added linear elastic transverse isotropic material
->>>>>>> Added a linear elastic transverse isotropic material
-=======
-		<!--uhatTilde => An array that holds the incremental displacement predictors on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
->>>>>>> updated LinearElasticAnisotropic
 		<xsd:attribute name="uhatTilde" type="r1_array" />
 		<!--velocityTilde => An array that holds the velocity predictors on the nodes. => SolidMechanics_LagrangianFEM, SolidMechanicsLagrangianSSLE-->
 		<xsd:attribute name="velocityTilde" type="r1_array" />
