@@ -1305,11 +1305,8 @@
 			<xsd:element name="PoreVolumeCompressibleSolid" type="PoreVolumeCompressibleSolidType" />
 			<xsd:element name="PoroLinearElasticAnisotropic" type="PoroLinearElasticAnisotropicType" />
 			<xsd:element name="PoroLinearElasticIsotropic" type="PoroLinearElasticIsotropicType" />
-<<<<<<< HEAD
-			<xsd:element name="ProppantSlurryFluid" type="ProppantSlurryFluidType" />
-=======
 			<xsd:element name="PoroLinearElasticTransverseIsotropic" type="PoroLinearElasticTransverseIsotropicType" />
->>>>>>> updated LinearElasticAnisotropic
+			<xsd:element name="ProppantSlurryFluid" type="ProppantSlurryFluidType" />
 			<xsd:element name="VanGenuchtenBakerRelativePermeability" type="VanGenuchtenBakerRelativePermeabilityType" />
 			<xsd:element name="VanGenuchtenCapillaryPressure" type="VanGenuchtenCapillaryPressureType" />
 		</xsd:choice>
@@ -1547,7 +1544,28 @@
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-<<<<<<< HEAD
+	<xsd:complexType name="PoroLinearElasticTransverseIsotropicType">
+		<!--BiotCoefficient => Biot's coefficient-->
+		<xsd:attribute name="BiotCoefficient" type="real64" default="0" />
+		<!--compressibility => Fluid Compressibilty-->
+		<xsd:attribute name="compressibility" type="real64" default="-1" />
+		<!--defaultDensity => Default Material Density-->
+		<xsd:attribute name="defaultDensity" type="real64" use="required" />
+		<!--defaultPoissonRatioAxialTransverse => Elastic Shear Modulus Parameter-->
+		<xsd:attribute name="defaultPoissonRatioAxialTransverse" type="real64" default="-1" />
+		<!--defaultPoissonRatioTransverse => Elastic Shear Modulus Parameter-->
+		<xsd:attribute name="defaultPoissonRatioTransverse" type="real64" default="-1" />
+		<!--defaultShearModulusAxialTransverse => Elastic Shear Modulus Parameter-->
+		<xsd:attribute name="defaultShearModulusAxialTransverse" type="real64" default="-1" />
+		<!--defaultYoungsModulusAxial => Elastic Shear Modulus Parameter-->
+		<xsd:attribute name="defaultYoungsModulusAxial" type="real64" default="-1" />
+		<!--defaultYoungsModulusTransverse => Elastic Bulk Modulus Parameter-->
+		<xsd:attribute name="defaultYoungsModulusTransverse" type="real64" default="-1" />
+		<!--referencePressure => ReferencePressure-->
+		<xsd:attribute name="referencePressure" type="real64" default="0" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
 	<xsd:complexType name="ProppantSlurryFluidType">
 		<!--componentNames => List of fluid component names-->
 		<xsd:attribute name="componentNames" type="string_array" default="{}" />
@@ -1573,27 +1591,6 @@
 		<xsd:attribute name="referenceProppantDensity" type="real64" default="1400" />
 		<!--referenceViscosity => Reference fluid viscosity-->
 		<xsd:attribute name="referenceViscosity" type="real64" default="0.001" />
-=======
-	<xsd:complexType name="PoroLinearElasticTransverseIsotropicType">
-		<!--BiotCoefficient => Biot's coefficient-->
-		<xsd:attribute name="BiotCoefficient" type="real64" default="0" />
-		<!--compressibility => Fluid Compressibilty-->
-		<xsd:attribute name="compressibility" type="real64" default="-1" />
-		<!--defaultDensity => Default Material Density-->
-		<xsd:attribute name="defaultDensity" type="real64" use="required" />
-		<!--defaultPoissonRatioAxialTransverse => Elastic Shear Modulus Parameter-->
-		<xsd:attribute name="defaultPoissonRatioAxialTransverse" type="real64" default="-1" />
-		<!--defaultPoissonRatioTransverse => Elastic Shear Modulus Parameter-->
-		<xsd:attribute name="defaultPoissonRatioTransverse" type="real64" default="-1" />
-		<!--defaultShearModulusAxialTransverse => Elastic Shear Modulus Parameter-->
-		<xsd:attribute name="defaultShearModulusAxialTransverse" type="real64" default="-1" />
-		<!--defaultYoungsModulusAxial => Elastic Shear Modulus Parameter-->
-		<xsd:attribute name="defaultYoungsModulusAxial" type="real64" default="-1" />
-		<!--defaultYoungsModulusTransverse => Elastic Bulk Modulus Parameter-->
-		<xsd:attribute name="defaultYoungsModulusTransverse" type="real64" default="-1" />
-		<!--referencePressure => ReferencePressure-->
-		<xsd:attribute name="referencePressure" type="real64" default="0" />
->>>>>>> updated LinearElasticAnisotropic
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

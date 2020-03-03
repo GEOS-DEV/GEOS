@@ -279,7 +279,7 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
         real64 effectiveMeanStress = 0.0;
         for( localIndex q=0 ; q<numQuadraturePoints; ++q )
         {
-          effectiveMeanStress += ( stress(ei,q,0) + stress(ei,q,2) + stress(ei,q,5) );
+          effectiveMeanStress += ( stress(ei,q,0) + stress(ei,q,1) + stress(ei,q,2) );
         }
         effectiveMeanStress /= ( 3 * numQuadraturePoints );
 

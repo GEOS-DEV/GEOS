@@ -43,7 +43,7 @@ LinearElasticAnisotropic::LinearElasticAnisotropic( std::string const & name, Gr
     setApplyDefaultValue( 0 )->
     setDescription( "Fully Anisotropic Elastic Stiffness Field in Voigt notation (6x6 matrix)" );
 
-  m_stiffness.resize( 0, 6, 6 );
+  m_stiffness.resizeDimension<1,2>( 6, 6 );
 }
 
 
@@ -63,14 +63,7 @@ LinearElasticAnisotropic::DeliverClone( string const & name,
   SolidBase::DeliverClone( name, parent, clone );
   LinearElasticAnisotropic * const newConstitutiveRelation = dynamic_cast< LinearElasticAnisotropic * >(clone.get());
 
-
-  for( localIndex i=0 ; i<6 ; ++i )
-  {
-    for( localIndex j=0 ; j<6 ; ++j )
-    {
-      newConstitutiveRelation->m_defaultStiffness[i][j] = m_defaultStiffness[i][j];
-    }
-  }
+  newConstitutiveRelation->m_defaultStiffness = m_defaultStiffness;
   //newConstitutiveRelation->m_stiffness = m_stiffness;
 }
 

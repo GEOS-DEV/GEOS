@@ -21,7 +21,7 @@
 #define GEOSX_CONSTITUTIVE_SOLID_SOLIDSELECTOR_HPP_
 
 #include "LinearElasticIsotropic.hpp"
-//#include "LinearElasticAnisotropic.hpp"
+#include "LinearElasticAnisotropic.hpp"
 #include "LinearElasticTransverseIsotropic.hpp"
 
 namespace geosx
@@ -41,12 +41,11 @@ bool constitutiveUpdatePassThru( constitutive::ConstitutiveBase * const constitu
   }
   else if( dynamic_cast< LinearElasticTransverseIsotropic * >( constitutiveRelation ) )
   {
-#if !defined(__CUDA_ARCH__)
     lambda( static_cast< LinearElasticTransverseIsotropic & >( *constitutiveRelation) );
-#else
-    GEOSX_ERROR( "Cannot call kernel using constitutiveUpdatePassThru. "
-                 "Too many parameters in LinearElasticAnisotropic::KernelWrapper" );
-#endif
+  }
+  else if( dynamic_cast< LinearElasticAnisotropic * >( constitutiveRelation ) )
+  {
+    lambda( static_cast< LinearElasticAnisotropic & >( *constitutiveRelation) );
   }
   else
   {

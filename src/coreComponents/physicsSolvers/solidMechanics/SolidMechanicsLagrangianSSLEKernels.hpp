@@ -85,11 +85,11 @@ struct StressCalculationKernel
           real64 const v2_x_dNdXa2 = uhat_local[ a ][ 2 ] * dNdX[ k ][ q ][ a ][ 2 ];
 
           stress( k, q, 0 ) += ( v0_x_dNdXa0 * c[ 0 ][ 0 ] + v1_x_dNdXa1 * c[ 0 ][ 1 ] + v2_x_dNdXa2*c[ 0 ][ 2 ] ) ;
-          stress( k, q, 2 ) += ( v0_x_dNdXa0 * c[ 1 ][ 0 ] + v1_x_dNdXa1 * c[ 1 ][ 1 ] + v2_x_dNdXa2*c[ 1 ][ 2 ] ) ;
-          stress( k, q, 5 ) += ( v0_x_dNdXa0 * c[ 2 ][ 0 ] + v1_x_dNdXa1 * c[ 2 ][ 1 ] + v2_x_dNdXa2*c[ 2 ][ 2 ] ) ;
-          stress( k, q, 4 ) += ( uhat_local[ a ][ 2 ] * dNdX[ k ][ q ][ a ][ 1 ] + uhat_local[ a ][ 1 ] * dNdX[ k ][ q ][ a ][ 2 ] ) * c[ 3 ][ 3 ] ;
-          stress( k, q, 3 ) += ( uhat_local[ a ][ 2 ] * dNdX[ k ][ q ][ a ][ 0 ] + uhat_local[ a ][ 0 ] * dNdX[ k ][ q ][ a ][ 2 ] ) * c[ 4 ][ 4 ] ;
-          stress( k, q, 1 ) += ( uhat_local[ a ][ 1 ] * dNdX[ k ][ q ][ a ][ 0 ] + uhat_local[ a ][ 0 ] * dNdX[ k ][ q ][ a ][ 1 ] ) * c[ 5 ][ 5 ] ;
+          stress( k, q, 1 ) += ( v0_x_dNdXa0 * c[ 1 ][ 0 ] + v1_x_dNdXa1 * c[ 1 ][ 1 ] + v2_x_dNdXa2*c[ 1 ][ 2 ] ) ;
+          stress( k, q, 2 ) += ( v0_x_dNdXa0 * c[ 2 ][ 0 ] + v1_x_dNdXa1 * c[ 2 ][ 1 ] + v2_x_dNdXa2*c[ 2 ][ 2 ] ) ;
+          stress( k, q, 3 ) += ( uhat_local[ a ][ 2 ] * dNdX[ k ][ q ][ a ][ 1 ] + uhat_local[ a ][ 1 ] * dNdX[ k ][ q ][ a ][ 2 ] ) * c[ 3 ][ 3 ] ;
+          stress( k, q, 4 ) += ( uhat_local[ a ][ 2 ] * dNdX[ k ][ q ][ a ][ 0 ] + uhat_local[ a ][ 0 ] * dNdX[ k ][ q ][ a ][ 2 ] ) * c[ 4 ][ 4 ] ;
+          stress( k, q, 5 ) += ( uhat_local[ a ][ 1 ] * dNdX[ k ][ q ][ a ][ 0 ] + uhat_local[ a ][ 0 ] * dNdX[ k ][ q ][ a ][ 1 ] ) * c[ 5 ][ 5 ] ;
         }
       }//quadrature loop
 
@@ -177,15 +177,15 @@ struct ExplicitKernel
 
         for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
         {
-          f_local[ a ][ 0 ] -= ( constitutive.m_stress( k, q, 1 ) * dNdX[ k ][ q ][ a ][ 1 ]
-                               + constitutive.m_stress( k, q, 3 ) * dNdX[ k ][ q ][ a ][ 2 ]
-                               + constitutive.m_stress( k, q, 0 ) * dNdX[ k ][ q ][ a ][ 0 ] ) * detJ[ k ][ q ];
-          f_local[ a ][ 1 ] -= ( constitutive.m_stress( k, q, 1 ) * dNdX[ k ][ q ][ a ][ 0 ]
-                               + constitutive.m_stress( k, q, 4 ) * dNdX[ k ][ q ][ a ][ 2 ]
-                               + constitutive.m_stress( k, q, 2 ) * dNdX[ k ][ q ][ a ][ 1 ] ) * detJ[ k ][ q ];
-          f_local[ a ][ 2 ] -= ( constitutive.m_stress( k, q, 3 ) * dNdX[ k ][ q ][ a ][ 0 ]
-                               + constitutive.m_stress( k, q, 4 ) * dNdX[ k ][ q ][ a ][ 1 ]
-                               + constitutive.m_stress( k, q, 5 ) * dNdX[ k ][ q ][ a ][ 2 ] ) * detJ[ k ][ q ];
+          f_local[ a ][ 0 ] -= ( constitutive.m_stress( k, q, 0 ) * dNdX[ k ][ q ][ a ][ 0 ]
+                               + constitutive.m_stress( k, q, 5 ) * dNdX[ k ][ q ][ a ][ 1 ]
+                               + constitutive.m_stress( k, q, 4 ) * dNdX[ k ][ q ][ a ][ 2 ] ) * detJ[ k ][ q ];
+          f_local[ a ][ 1 ] -= ( constitutive.m_stress( k, q, 5 ) * dNdX[ k ][ q ][ a ][ 0 ]
+                               + constitutive.m_stress( k, q, 1 ) * dNdX[ k ][ q ][ a ][ 1 ]
+                               + constitutive.m_stress( k, q, 3 ) * dNdX[ k ][ q ][ a ][ 2 ] ) * detJ[ k ][ q ];
+          f_local[ a ][ 2 ] -= ( constitutive.m_stress( k, q, 4 ) * dNdX[ k ][ q ][ a ][ 0 ]
+                               + constitutive.m_stress( k, q, 3 ) * dNdX[ k ][ q ][ a ][ 1 ]
+                               + constitutive.m_stress( k, q, 2 ) * dNdX[ k ][ q ][ a ][ 2 ] ) * detJ[ k ][ q ];
         }
       }//quadrature loop
 

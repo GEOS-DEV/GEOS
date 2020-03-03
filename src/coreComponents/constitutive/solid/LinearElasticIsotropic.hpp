@@ -168,11 +168,11 @@ void LinearElasticIsotropicUpdates::SmallStrain( localIndex const k,
   real64 const TwoG = 2.0 * m_shearModulus[k];
 
   m_stress( k, q, 0 ) =  m_stress( k, q, 0 ) + TwoG * voigtStrainInc[0] + lambda * volStrain;
-  m_stress( k, q, 2 ) =  m_stress( k, q, 2 ) + TwoG * voigtStrainInc[1] + lambda * volStrain;
-  m_stress( k, q, 5 ) =  m_stress( k, q, 5 ) + TwoG * voigtStrainInc[2] + lambda * volStrain;
-  m_stress( k, q, 4 ) =  m_stress( k, q, 4 ) + m_shearModulus[k] * voigtStrainInc[3];
-  m_stress( k, q, 3 ) =  m_stress( k, q, 3 ) + m_shearModulus[k] * voigtStrainInc[4];
-  m_stress( k, q, 1 ) =  m_stress( k, q, 1 ) + m_shearModulus[k] * voigtStrainInc[5];
+  m_stress( k, q, 1 ) =  m_stress( k, q, 1 ) + TwoG * voigtStrainInc[1] + lambda * volStrain;
+  m_stress( k, q, 2 ) =  m_stress( k, q, 2 ) + TwoG * voigtStrainInc[2] + lambda * volStrain;
+  m_stress( k, q, 3 ) =  m_stress( k, q, 3 ) + m_shearModulus[k] * voigtStrainInc[3];
+  m_stress( k, q, 4 ) =  m_stress( k, q, 4 ) + m_shearModulus[k] * voigtStrainInc[4];
+  m_stress( k, q, 5 ) =  m_stress( k, q, 5 ) + m_shearModulus[k] * voigtStrainInc[5];
 
 }
 
@@ -187,23 +187,27 @@ void LinearElasticIsotropicUpdates::HypoElastic( localIndex const k,
   real64 const volStrain = ( Ddt[0] + Ddt[2] + Ddt[5] );
   real64 const TwoG = 2.0 * m_shearModulus[k];
 
-  R2SymTensor stress;
-  real64 * const pStress = stress.Data();
 
-  pStress[0] =  m_stress( k, q, 0 ) + TwoG * Ddt[0] + lambda * volStrain;
-  pStress[2] =  m_stress( k, q, 2 ) + TwoG * Ddt[2] + lambda * volStrain;
-  pStress[5] =  m_stress( k, q, 5 ) + TwoG * Ddt[5] + lambda * volStrain;
-  pStress[4] =  m_stress( k, q, 4 ) + TwoG * Ddt[4];
-  pStress[3] =  m_stress( k, q, 3 ) + TwoG * Ddt[3];
-  pStress[1] =  m_stress( k, q, 1 ) + TwoG * Ddt[1];
+  m_stress( k, q, 0 ) =  m_stress( k, q, 0 ) + TwoG * Ddt[0] + lambda * volStrain;
+  m_stress( k, q, 1 ) =  m_stress( k, q, 1 ) + TwoG * Ddt[2] + lambda * volStrain;
+  m_stress( k, q, 2 ) =  m_stress( k, q, 2 ) + TwoG * Ddt[5] + lambda * volStrain;
+  m_stress( k, q, 3 ) =  m_stress( k, q, 3 ) + TwoG * Ddt[4];
+  m_stress( k, q, 4 ) =  m_stress( k, q, 4 ) + TwoG * Ddt[3];
+  m_stress( k, q, 5 ) =  m_stress( k, q, 5 ) + TwoG * Ddt[1];
+
+  R2SymTensor stress;
+  stress = m_stress[k][q];
 
   R2SymTensor temp;
   real64 const * const pTemp = temp.Data();
   temp.QijAjkQlk( stress, Rot );
-  for( int i=0 ; i<6 ; ++i )
-  {
-    m_stress( k, q, i ) = pTemp[i];
-  }
+
+  m_stress( k, q, 0 ) = pTemp[0];
+  m_stress( k, q, 1 ) = pTemp[2];
+  m_stress( k, q, 2 ) = pTemp[5];
+  m_stress( k, q, 3 ) = pTemp[4];
+  m_stress( k, q, 4 ) = pTemp[3];
+  m_stress( k, q, 5 ) = pTemp[1];
 }
 
 GEOSX_HOST_DEVICE
@@ -269,6 +273,7 @@ class LinearElasticIsotropic : public SolidBase
 {
 public:
 
+  /// @typedef Alias for LinearElasticIsotropicUpdates
   using KernelWrapper = LinearElasticIsotropicUpdates;
 
   /**

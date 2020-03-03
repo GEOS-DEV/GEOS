@@ -1065,7 +1065,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionBase const * const ele
       for( int ivar=0 ; ivar<siloTOC->nmultivar ; ++ivar )
       {
         string varName = siloTOC->multivar_names[ivar];
-        if( varName == "stress_0" )
+        if( varName == "stress_11" )
         {
           stressFound = true;
         }
@@ -2904,8 +2904,19 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
         {
           for( localIndex k = 0 ; k < subRegion->size() ; ++k )
           {
-            varsData[i][nels2[i]++] = SiloFileUtilities::CastField<OUTTYPE>(field[esr][0][k][0], i);
-            mixvarsData[i][mixlen2[i]++] = SiloFileUtilities::CastField<OUTTYPE>(field[esr][0][k][0], i);
+            localIndex const numQ = field[esr][0].size(1);
+            varsData[i][nels2[i]] = 0;
+            mixvarsData[i][mixlen2[i]] = 0;
+            for( localIndex q=0 ; q < numQ ; ++q )
+            {
+              varsData[i][nels2[i]] += SiloFileUtilities::CastField<OUTTYPE>(field[esr][0][k][q], i);
+              mixvarsData[i][mixlen2[i]] += SiloFileUtilities::CastField<OUTTYPE>(field[esr][0][k][q], i);
+            }
+            varsData[i][nels2[i]] /= numQ;
+            mixvarsData[i][mixlen2[i]] /= numQ;
+
+            ++nels2[i];
+            ++mixlen2[i];
           }
         }
       }
@@ -2919,7 +2930,14 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
             {
               if( field[esr][a].size() > 0 )
               {
-                mixvarsData[i][mixlen2[i]++] = SiloFileUtilities::CastField<OUTTYPE>( field[esr][a][k][0], i);
+                localIndex const numQ = field[esr][0].size(1);
+                mixvarsData[i][mixlen2[i]] = 0;
+                for( localIndex q=0 ; q < numQ ; ++q )
+                {
+                  mixvarsData[i][mixlen2[i]] = SiloFileUtilities::CastField<OUTTYPE>( field[esr][a][k][q], i);
+                }
+                mixvarsData[i][mixlen2[i]] /= numQ;
+                ++mixlen2[i];
               }
               else
               {
@@ -2929,7 +2947,14 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
 
             if (field[esr][0].size() > 0)
             {
-              varsData[i][nels2[i]++] = SiloFileUtilities::CastField<OUTTYPE>( field[esr][0][k][0], i);
+              localIndex const numQ = field[esr][0].size(1);
+              varsData[i][nels2[i]] = 0;
+              for( localIndex q=0 ; q < numQ ; ++q )
+              {
+                varsData[i][nels2[i]] += SiloFileUtilities::CastField<OUTTYPE>(field[esr][0][k][q], i);
+              }
+              varsData[i][nels2[i]] /= numQ;
+              ++nels2[i];
             }
             else
             {
@@ -3086,8 +3111,39 @@ void SiloFile::WriteMaterialDataField3d( string const & meshName,
         }
       }
     });
+
+
+    string component = std::to_string(ivar);
+    if( fieldName=="stress" )
+    {
+      if( ivar==0 )
+      {
+        component = "11";
+      }
+      else if( ivar==1 )
+      {
+        component = "22";
+      }
+      else if( ivar==2 )
+      {
+        component = "33";
+      }
+      else if( ivar==3 )
+      {
+        component = "23";
+      }
+      else if( ivar==4 )
+      {
+        component = "13";
+      }
+      else if( ivar==5 )
+      {
+        component = "12";
+      }
+    }
+    string componentFieldName = fieldName + "_" + component;
     WriteMaterialDataField<real64>( meshName,
-                                    fieldName + "_" + std::to_string(ivar),
+                                    componentFieldName,
                                     fieldView,
                                     elemRegion,
                                     centering,
@@ -3184,9 +3240,25 @@ void SiloFile::WriteStressVarDefinition( string const & MatDir )
     const char * expObjName = expressionName.c_str();
     const char * const names[1] = { expObjName } ;
     int const types[1] = { DB_VARTYPE_TENSOR };
-    string const definition = "{{<"+ MatDir + "/stress_0>,<"+ MatDir + "/stress_1>,<"+ MatDir + "/stress_3>},"
-                               "{<"+ MatDir + "/stress_1>,<"+ MatDir + "/stress_2>,<"+ MatDir + "/stress_4>},"
-                               "{<"+ MatDir + "/stress_3>,<"+ MatDir + "/stress_4>,<"+ MatDir + "/stress_5>}}";
+    string const definition = "{{<"+ MatDir + "/stress_11>,<"+ MatDir + "/stress_21>,<"+ MatDir + "/stress_13>},"
+                               "{<"+ MatDir + "/stress_12>,<"+ MatDir + "/stress_22>,<"+ MatDir + "/stress_23>},"
+                               "{<"+ MatDir + "/stress_13>,<"+ MatDir + "/stress_23>,<"+ MatDir + "/stress_33>}}";
+    const char * const defns[1] = { definition.c_str() };
+    DBPutDefvars( m_dbBaseFilePtr,
+                  expObjName,
+                  1,
+                  names,
+                  types,
+                  defns,
+                  nullptr );
+  }
+
+  {
+    string const expressionName = "/" + MatDir + "/meanStress";
+    const char * expObjName = expressionName.c_str();
+    const char * const names[1] = { expObjName } ;
+    int const types[1] = { DB_VARTYPE_SCALAR };
+    string const definition = "(<"+ MatDir + "/stress_11>+<"+ MatDir + "/stress_22>+<"+ MatDir + "/stress_33>)/3";
     const char * const defns[1] = { definition.c_str() };
     DBPutDefvars( m_dbBaseFilePtr,
                   expObjName,

@@ -75,11 +75,11 @@ void voigtStrain( real64 strainVoigt[6], R2SymTensor const Ddt )
 void stressSliceCheck( arrayView3d<real64 const, solid::STRESS_USD> const & stress, real64 const stressV[6] )
 {
   ASSERT_DOUBLE_EQ( stress(0,0,0), stressV[0] );
-  ASSERT_DOUBLE_EQ( stress(0,0,2), stressV[1] );
-  ASSERT_DOUBLE_EQ( stress(0,0,5), stressV[2] );
-  ASSERT_DOUBLE_EQ( stress(0,0,4), stressV[3] );
-  ASSERT_DOUBLE_EQ( stress(0,0,3), stressV[4] );
-  ASSERT_DOUBLE_EQ( stress(0,0,1), stressV[5] );
+  ASSERT_DOUBLE_EQ( stress(0,0,1), stressV[1] );
+  ASSERT_DOUBLE_EQ( stress(0,0,2), stressV[2] );
+  ASSERT_DOUBLE_EQ( stress(0,0,3), stressV[3] );
+  ASSERT_DOUBLE_EQ( stress(0,0,4), stressV[4] );
+  ASSERT_DOUBLE_EQ( stress(0,0,5), stressV[5] );
 }
 
 void stressCheck( real64 const stressV[6], real64 const stressV2[6] )
