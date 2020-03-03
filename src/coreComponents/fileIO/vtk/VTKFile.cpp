@@ -104,6 +104,19 @@ class CustomVTUXMLWriter
     m_spaceCount +=2;
   }
 
+  template < typename T >
+    void WriteArray(array1d<T> const & array, bool binary)
+    {
+      if( binary )
+      {
+        WriteBinaryArray( array );
+      }
+      else
+      {
+        WriteAsciiArray( array );
+      }
+    }
+
   /*!
    * @brief Write the vertices coordinates
    * @param[in] vertices table of vertice coordinates
@@ -249,6 +262,21 @@ class CustomVTUXMLWriter
 
   private:
 
+  template < typename T >
+  void WriteBinaryArray(array1d<T> const & GEOSX_UNUSED_ARG(array))
+  {
+
+  }
+
+  template < typename T >
+  void WriteAsciiArray(array1d<T> const & array)
+  {
+    for (integer i=0; i < array.size(); i++)
+    {
+      m_outFile << array[i] << " ";
+    }
+    m_outFile << "\n";
+  }
     void WriteBinaryVertices( r1_array const & vertices )
     {
       std::stringstream stream;
@@ -414,7 +442,7 @@ class CustomVTUXMLWriter
           localIndex offSetForOneCell = elemSubRegion->numNodesPerElement();
           for( localIndex i =  0; i < elemSubRegion->size(); i++ )
           {
-            offsetFragment[countOffsetFragmentIndex++] = curOffset;   
+            offsetFragment[countOffsetFragmentIndex++] = curOffset;
             curOffset += offSetForOneCell;
             if( countOffsetFragmentIndex == multiplier )
             {
@@ -461,7 +489,7 @@ class CustomVTUXMLWriter
           integer type = geosxToVTKCellTypeMap.at( elemSubRegion->GetElementTypeString() );
           for( localIndex i =  0; i < elemSubRegion->size(); i++ )
           {
-            typeFragment[countTypeFragmentIndex++] = type;   
+            typeFragment[countTypeFragmentIndex++] = type;
             if( countTypeFragmentIndex == multiplier )
             {
               stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( typeFragment.data() ), outputString, sizeof( integer ) * multiplier );
@@ -833,7 +861,7 @@ void VTKFile::Write( double const timeStep,
     auto pPointsNode = pUnstructureGridNode.append_child("PPoints");
     // .... and the data array containg the positions
     CreatePDataArray( pPointsNode, geosxToVTKTypeMap.at( std::type_index( typeid( real64 ) ) ), "Position", 3, format );
-    
+
     // Declare all the point fields
     auto pPointDataNode = pUnstructureGridNode.append_child("PPointData");
     for( auto & nodeField : nodeFields )
@@ -868,7 +896,7 @@ void VTKFile::Write( double const timeStep,
     m_rootFile.save_file(pvdFileName.c_str());
     pvtuFile.save_file(pvtuFileName.c_str());
   }
-  
+
   string vtuFileName = timeStepFolderName + "/" + std::to_string(mpiRank) + ".vtu";
   CustomVTUXMLWriter vtuWriter( vtuFileName );
   vtuWriter.WriteHeader();
@@ -928,7 +956,7 @@ void VTKFile::Write( double const timeStep,
                                         { "Name", "connectivity" },
                                         { "NumberOfComponents", "1" },
                                         { "format", format } } );
-  
+
   vtuWriter.WriteCellConnectivities( elemManager, m_binary );
 
   /*
@@ -1025,13 +1053,14 @@ void VTKFile::WriteFractures( double const timeStep,
   std::set< std::tuple< string, string, integer, rtTypes::TypeIDs > > cellFields; // First : field name, Second : type, Third : field dimension;
   array1d<R1Tensor> intersectionPoints;
   array1d<localIndex> connectivityList;
+  array1d<int> offSet, typesList;
   // Find all cell fields to export
   elemManager->forElementRegions<EmbeddedSurfaceRegion>( [&]( EmbeddedSurfaceRegion const * const embeddedRegion )->void
   {
     embeddedRegion->forElementSubRegions<EmbeddedSurfaceSubRegion>([&]( EmbeddedSurfaceSubRegion const * const subRegion )
     {
       // Get "nodes" relative to the fracture subregion
-      subRegion->getIntersectionPoints(*nodeManager, *edgeManager, *elemManager, intersectionPoints, connectivityList);
+      subRegion->getIntersectionPoints(*nodeManager, *edgeManager, *elemManager, intersectionPoints, connectivityList, offSet);
       // subRegion->getNumPointsPerElement();
       for( auto const & wrapperIter : subRegion->wrappers() )
       {
@@ -1062,8 +1091,21 @@ void VTKFile::WriteFractures( double const timeStep,
 
   for (int i=0; i < intersectionPoints.size(); i++)
   {
-    std::cout <<i + 1 << ": " << intersectionPoints[i] << std::endl;
+    std::cout << i << ": " << intersectionPoints[i] << std::endl;
   }
+  std::cout << "Connectivity: " << std::endl;
+  for (int i=0; i < connectivityList.size(); i++)
+  {
+    std::cout << connectivityList[i] << " - ";
+  }
+  std::cout << std::endl;
+  std::cout << "Offset: " << std::endl;
+  for (int i=0; i < offSet.size(); i++)
+  {
+    std::cout << offSet[i] << " - ";
+  }
+  std::cout << std::endl;
+
 
   if( mpiRank == 0 )
   {
@@ -1139,8 +1181,10 @@ void VTKFile::WriteFractures( double const timeStep,
 
   // Declaration of the node Piece and the basic informations of the mesh
   localIndex totalNumberOfCells = elemManager->getNumberOfElements< EmbeddedSurfaceSubRegion >();
+  typesList.resize(totalNumberOfCells);
+  typesList = 9;
 
-  vtuWriter.OpenXMLNode( "Piece", { { "NumberOfPoints", std::to_string( totalNumberOfCells * 4) },
+  vtuWriter.OpenXMLNode( "Piece", { { "NumberOfPoints", std::to_string( intersectionPoints.size() ) },
                                     { "NumberOfCells", std::to_string( totalNumberOfCells ) } } );
 
   // Definition of node Points
@@ -1152,11 +1196,9 @@ void VTKFile::WriteFractures( double const timeStep,
                                         { "Name", "Position" },
                                         { "NumberOfComponents", "3" },
                                         { "format", format } } );
-  //vtuWriter.WriteVertices( nodeManager->referencePosition(), m_binary );
+  vtuWriter.WriteVertices( intersectionPoints, m_binary );
   vtuWriter.CloseXMLNode( "DataArray" );
   vtuWriter.CloseXMLNode( "Points" );
-
-  vtuWriter.CloseXMLNode( "PointData" );
 
   // Definition of the node Cells
   vtuWriter.OpenXMLNode( "Cells", {} );
@@ -1168,7 +1210,7 @@ void VTKFile::WriteFractures( double const timeStep,
                                         { "format", format } } );
 
   // Should be connectivities of the embedded elements.
-  // vtuWriter.WriteCellConnectivities( elemManager, m_binary );
+  vtuWriter.WriteArray( connectivityList, m_binary );
 
   vtuWriter.CloseXMLNode( "DataArray" );
 
@@ -1187,7 +1229,7 @@ void VTKFile::WriteFractures( double const timeStep,
                                         { "Name", "offsets" },
                                         { "NumberOfComponents", "1" },
                                         { "format", format } } );
-  //vtuWriter.WriteCellOffsets( elemManager, m_binary );
+  vtuWriter.WriteArray( offSet, m_binary );
   vtuWriter.CloseXMLNode( "DataArray" );
 
   // Definition of the node DataArray that will contain the cell types
@@ -1195,7 +1237,7 @@ void VTKFile::WriteFractures( double const timeStep,
                                         { "Name", "types" },
                                         { "NumberOfComponents", "1" },
                                         { "format", format } } );
-  //vtuWriter.WriteCellTypes( elemManager, m_binary );
+  vtuWriter.WriteArray( typesList, m_binary );
   vtuWriter.CloseXMLNode( "DataArray" );
 
   vtuWriter.CloseXMLNode( "Cells" );

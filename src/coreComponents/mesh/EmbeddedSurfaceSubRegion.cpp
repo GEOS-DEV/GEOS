@@ -236,12 +236,15 @@ void EmbeddedSurfaceSubRegion::getIntersectionPoints( NodeManager const & nodeMa
                                                                    EdgeManager const & edgeManager,
                                                                    ElementRegionManager const & elemManager,
                                                                    array1d<R1Tensor> & intersectionPoints,
-                                                                   array1d<localIndex> & connectivityList) const
+                                                                   array1d<localIndex> & connectivityList,
+                                                                   array1d<int> & offSet) const
 {
 
+  offSet.resize(size());
+  offSet = 0;
   for(localIndex k =0; k < size(); k++)
   {
-    ComputeIntersectionPoints(nodeManager, edgeManager, elemManager, intersectionPoints, connectivityList, k);
+    ComputeIntersectionPoints(nodeManager, edgeManager, elemManager, intersectionPoints, connectivityList, offSet, k);
   }
 }
 
@@ -250,6 +253,7 @@ void EmbeddedSurfaceSubRegion::ComputeIntersectionPoints( NodeManager const & no
                                                           ElementRegionManager const & elemManager,
                                                           array1d<R1Tensor> & intersectionPoints,
                                                           array1d<localIndex> & connectivityList,
+                                                          array1d<int> & offSet,
                                                           localIndex const k ) const
 {
 
@@ -264,10 +268,16 @@ void EmbeddedSurfaceSubRegion::ComputeIntersectionPoints( NodeManager const & no
   localIndex edgeIndex;
   R1Tensor lineDir, dist, point;
   real64 prodScalarProd;
-  bool isUnique;
-  localIndex pointIndex;
+  bool isNew;
   R1Tensor distance;
-  std::cout << "Element:" << k << std::endl;
+  array1d<R1Tensor> localPoints;
+
+  int count = 0;
+  if (k > 0)
+  {
+    count = offSet[k-1];
+  }
+
   for (localIndex ke = 0; ke < 12; ke++)
   {
     edgeIndex = cellToEdges[m_embeddedSurfaceToCell[k]][ke];
@@ -280,7 +290,8 @@ void EmbeddedSurfaceSubRegion::ComputeIntersectionPoints( NodeManager const & no
 
     if (prodScalarProd < 0)
     {
-      // std::cout << "node 1: " << nodesCoord[edgeToNodes[edgeIndex][0]] <<  " node 2: " << nodesCoord[edgeToNodes[edgeIndex][1]] << std::endl;
+      count += 1;
+
       lineDir  = nodesCoord[edgeToNodes[edgeIndex][0]];
       lineDir -= nodesCoord[edgeToNodes[edgeIndex][1]];
       lineDir.Normalize();
@@ -288,27 +299,45 @@ void EmbeddedSurfaceSubRegion::ComputeIntersectionPoints( NodeManager const & no
                                                            nodesCoord[edgeToNodes[edgeIndex][0]],
                                                            m_normalVector[k],
                                                            m_elementCenter[k]);
-      isUnique = true;
+
+      localPoints.push_back(point);
+
+      isNew = true;
       for (int i=0; i < intersectionPoints.size(); i++)
       {
         distance = point;
         distance-=intersectionPoints[i];
         if (distance.L2_Norm() < 1e-9)
         {
-          isUnique = false;
-          pointIndex = i;
+          isNew = false;
+          //pointIndex = i;
           break;
         }
       }
 
-      if (isUnique == true)
+      if (isNew == true)
       {
         intersectionPoints.push_back(point);
-        pointIndex = intersectionPoints.size();
-        connectivityList.push_back(pointIndex);
+        //pointIndex = intersectionPoints.size() - 1;
       }
     }
   } //end of edge loop
+
+  // Reorder the points CCW and then add the correct index to the connectivity list
+  localPoints = computationalGeometry::orderPointsCCW(localPoints, localPoints.size(), m_normalVector[k]);
+  for (localIndex j=0; j < localPoints.size(); j++)
+  {
+    for (localIndex h=0; h < intersectionPoints.size(); h++)
+    {
+      distance = localPoints[j];
+      distance-=intersectionPoints[h];
+      if (distance.L2_Norm() < 1e-9)
+      {
+        connectivityList.push_back(h);
+      }
+    }
+  }
+  offSet[k] = count;
 }
 
 
