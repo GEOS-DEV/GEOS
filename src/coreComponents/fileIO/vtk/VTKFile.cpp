@@ -1078,24 +1078,6 @@ void VTKFile::WriteFractures( double const timeStep,
      });
   });
 
-  for (int i=0; i < intersectionPoints.size(); i++)
-  {
-    std::cout << i << ": " << intersectionPoints[i] << std::endl;
-  }
-  std::cout << "Connectivity: " << std::endl;
-  for (int i=0; i < connectivityList.size(); i++)
-  {
-    std::cout << connectivityList[i] << " - ";
-  }
-  std::cout << std::endl;
-  std::cout << "Offset: " << std::endl;
-  for (int i=0; i < offSet.size(); i++)
-  {
-    std::cout << offSet[i] << " - ";
-  }
-  std::cout << std::endl;
-
-
   if( mpiRank == 0 )
   {
     /// Add the new entry to the pvd root file
