@@ -68,6 +68,7 @@ void PetscMatrix::createWithLocalSize( localIndex const localRows,
   GEOSX_LAI_CHECK_ERROR( MatSetSizes( m_mat, localRows, localCols, PETSC_DETERMINE, PETSC_DETERMINE ) );
   GEOSX_LAI_CHECK_ERROR( MatMPIAIJSetPreallocation( m_mat, maxEntriesPerRow, nullptr, maxEntriesPerRow, nullptr ) );
   GEOSX_LAI_CHECK_ERROR( MatSetUp( m_mat ) );
+  GEOSX_LAI_CHECK_ERROR( MatSetOption( m_mat, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE ) );
 }
 
 void PetscMatrix::createWithGlobalSize( globalIndex const globalRows,
@@ -88,6 +89,7 @@ void PetscMatrix::createWithGlobalSize( globalIndex const globalRows,
   GEOSX_LAI_CHECK_ERROR( MatSetSizes( m_mat, PETSC_DECIDE, PETSC_DECIDE, globalRows, globalCols ) );
   GEOSX_LAI_CHECK_ERROR( MatMPIAIJSetPreallocation( m_mat, maxEntriesPerRow, nullptr, maxEntriesPerRow, nullptr ) );
   GEOSX_LAI_CHECK_ERROR( MatSetUp( m_mat ) );
+  GEOSX_LAI_CHECK_ERROR( MatSetOption( m_mat, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE ) );
 }
 
 bool PetscMatrix::created() const

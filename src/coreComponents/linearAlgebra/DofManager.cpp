@@ -992,11 +992,7 @@ void DofManager::addCoupling( string const & fieldName,
 
 void DofManager::reorderByRank()
 {
-  if( m_reordered || m_fields.size() < 2 )
-  {
-    m_reordered = true;
-    return;
-  }
+  GEOSX_LAI_ASSERT( !m_reordered );
 
   // update field offsets to account for renumbering
   globalIndex dofOffset = rankOffset();
@@ -1059,7 +1055,7 @@ void DofManager::makeRestrictor( string const & fieldName,
   globalIndex colOffset = field.globalOffset;
   localIndex rowStride = numComp;
   localIndex colStride = field.numComponents;
-  localIndex rowSize = field.numLocalDof;
+  localIndex rowSize = field.numLocalDof / field.numComponents * numComp;
   localIndex colSize = numLocalDofs();
 
   if( transpose )
@@ -1070,6 +1066,7 @@ void DofManager::makeRestrictor( string const & fieldName,
   }
 
   restrictor.createWithLocalSize( rowSize, colSize, 1, MPI_COMM_GEOSX );
+  restrictor.open();
   for( localIndex i = 0; i < numLoc; ++i )
   {
     for( localIndex c = loComp; c < hiComp; ++c )
