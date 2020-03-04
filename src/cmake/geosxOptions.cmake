@@ -33,6 +33,7 @@ option( ENABLE_METIS "Enables METIS" ON )
 option( ENABLE_PARMETIS "Enables PARMETIS" ON )
 option( ENABLE_SUPERLU_DIST "Enables SUPERLU_DIST" ON )
 option( ENABLE_HYPRE "Enables HYPRE" ON )
+option( ENABLE_VTK "Enables VTK" ON )
 
 if ( ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang") OR "${CMAKE_HOST_APPLE}" )
   option( ENABLE_PETSC "Enables PETSC" OFF )

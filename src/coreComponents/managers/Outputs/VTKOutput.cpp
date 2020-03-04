@@ -17,7 +17,6 @@
  */
 
 #include "VTKOutput.hpp"
-#include "fileIO/vtk/VTKFile.hpp"
 #include "managers/DomainPartition.hpp"
 
 namespace geosx
@@ -31,8 +30,7 @@ VTKOutput::VTKOutput( std::string const & name,
   OutputBase( name, parent),
   m_plotFileRoot(),
   m_writeFaceMesh(),
-  m_plotLevel(),
-  m_vtkFile(name)
+  m_plotLevel()
 {
   registerWrapper(viewKeysStruct::plotFileRoot, &m_plotFileRoot, false )->
     setInputFlag(InputFlags::OPTIONAL)->
@@ -52,8 +50,6 @@ VTKOutput::VTKOutput( std::string const & name,
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Output the data in binary format");
 
-  m_vtkFile.SetPlotLevel( m_plotLevel );
-  m_vtkFile.SetBinaryMode( m_writeBinaryData) ;
 
 }
 
@@ -70,7 +66,9 @@ void VTKOutput::Execute(real64 const time_n,
                          Group * domain)
 {
   DomainPartition* domainPartition = Group::group_cast<DomainPartition*>(domain);
-  m_vtkFile.Write( time_n, *domainPartition);
+  std::cout << domainPartition->size() << std::endl;
+  std::cout << time_n << std::endl;
+//  m_vtkFile.Write( time_n, *domainPartition);
 }
 
 

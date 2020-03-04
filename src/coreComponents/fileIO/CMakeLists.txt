@@ -5,8 +5,6 @@
 #
 set( fileIO_headers
      silo/SiloFile.hpp
-     vtk/VTKFile.hpp
-     vtm/VtmFile.hpp
      schema/SchemaUtilities.hpp )
 
 #
@@ -14,8 +12,6 @@ set( fileIO_headers
 #
 set( fileIO_sources
      silo/SiloFile.cpp
-     vtk/VTKFile.cpp
-     vtm/VtmFile.cpp
      schema/SchemaUtilities.cpp )
 
 if( BUILD_OBJ_LIBS)
@@ -33,6 +29,10 @@ endif()
 
 if( CONDUIT_FOUND )
   set( dependencyList ${dependencyList} conduit conduit_relay conduit_blueprint )
+endif()
+
+if( ENABLE_VTK )
+  add_subdirectory( vtk )
 endif()
 
 if( ENABLE_OPENMP )
