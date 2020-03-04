@@ -1036,6 +1036,7 @@ void DofManager::reorderByRank()
 template< typename MATRIX >
 void DofManager::makeRestrictor( string const & fieldName,
                                  MATRIX & restrictor,
+                                 MPI_Comm const comm,
                                  bool const transpose,
                                  localIndex const loCompIndex,
                                  localIndex const hiCompIndex ) const
@@ -1065,7 +1066,7 @@ void DofManager::makeRestrictor( string const & fieldName,
     std::swap( rowSize, colSize );
   }
 
-  restrictor.createWithLocalSize( rowSize, colSize, 1, MPI_COMM_GEOSX );
+  restrictor.createWithLocalSize( rowSize, colSize, 1, comm );
   restrictor.open();
   for( localIndex i = 0; i < numLoc; ++i )
   {
@@ -1175,11 +1176,12 @@ template void DofManager::addFieldToVector( LAI::ParallelVector &, \
                                             real64 const, \
                                             localIndex const, \
                                             localIndex const ) const; \
-template void DofManager::makeRestrictor( string const & fieldName, \
-                                          LAI::ParallelMatrix & restrictor, \
-                                          bool const transpose, \
-                                          localIndex const loCompIndex, \
-                                          localIndex const hiCompIndex ) const;
+template void DofManager::makeRestrictor( string const &, \
+                                          LAI::ParallelMatrix &, \
+                                          MPI_Comm const, \
+                                          bool const, \
+                                          localIndex const, \
+                                          localIndex const ) const;
 
 #ifdef GEOSX_USE_TRILINOS
 MAKE_DOFMANAGER_METHOD_INST( TrilinosInterface )

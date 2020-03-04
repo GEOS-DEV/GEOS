@@ -459,6 +459,7 @@ public:
   template<typename MATRIX>
   void makeRestrictor( string const & fieldName,
                        MATRIX & restrictor,
+                       MPI_Comm const comm,
                        bool const transpose = false,
                        localIndex const loCompIndex = 0,
                        localIndex const hiCompIndex = -1 ) const;

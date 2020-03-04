@@ -700,8 +700,8 @@ void DofManagerRestrictorTest<LAI>::test( std::vector<FieldDesc> fields,
 
   // Create prolongation and restriction to 2 out of 3 components
   Matrix R, P;
-  dofManager.makeRestrictor( fields[block].name, R, false, loComp, hiComp );
-  dofManager.makeRestrictor( fields[block].name, P, true,  loComp, hiComp );
+  dofManager.makeRestrictor( fields[block].name, R, MPI_COMM_GEOSX, false, loComp, hiComp );
+  dofManager.makeRestrictor( fields[block].name, P, MPI_COMM_GEOSX, true,  loComp, hiComp );
 
   // Compute the sub-matrix via RAP
   Matrix Asub, AP;

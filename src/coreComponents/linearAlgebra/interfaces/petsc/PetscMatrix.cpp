@@ -441,13 +441,8 @@ void PetscMatrix::multiply( PetscMatrix const & src,
   GEOSX_LAI_ASSERT( src.ready() );
   GEOSX_LAI_ASSERT_EQ( numGlobalCols(), src.numGlobalRows() );
 
-  MatReuse const reuse = dst.created() ? MAT_REUSE_MATRIX : MAT_INITIAL_MATRIX;
-  if( !dst.created() )
-  {
-    dst.createWithLocalSize( numLocalRows(), src.numLocalCols(), 1, getComm() );
-  }
-
-  GEOSX_LAI_CHECK_ERROR( MatMatMult( m_mat, src.unwrapped(), reuse, PETSC_DEFAULT, &dst.unwrapped() ) );
+  dst.reset();
+  GEOSX_LAI_CHECK_ERROR( MatMatMult( m_mat, src.unwrapped(), MAT_INITIAL_MATRIX, PETSC_DEFAULT, &dst.m_mat ) );
   dst.m_assembled = closeResult;
   dst.m_closed = closeResult;
 }
