@@ -80,9 +80,17 @@ TEST( testHDFIO, PartialTabularIO )
 
   {
     HDFFile file("arr_output");
-    HDFTableIO<decltype(arr)> table_out(file,"Stress","s",0,ind_arr,cmp_arr,"nd");
-    table_out.OpenTable( );
+    HDFTableIO<decltype(arr)> table_out("Stress","s",0,ind_arr,cmp_arr,"nd");
+    table_out.OpenTable( file );
     table_out.AppendRow( arr );
+    table_out.AppendRow( arr );
+
+    table_out.ClearFrom( 1 );
+  }
+
+  // check that there is only one row and that it has the correct content
+  {
+
   }
 }
 
@@ -105,7 +113,7 @@ TEST( testHDFIO, WholeTabularTimeHistory )
     //time_hist.LoadTableMeta("scl");
     time_hist.AppendRow("scl",0.1,arr);
     time_hist.AppendRow("scl",0.5,arr);
-    time_hist.ClearAfterTime("scl",0.4);
+    time_hist.ClearFromTime("scl",0.4);
   }
 
 

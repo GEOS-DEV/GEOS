@@ -62,7 +62,6 @@ public:
   {
     H5Fclose(file_id);
   }
-  // implicit conversion operator so we can use this in place of the usual hid_t
   virtual operator hid_t() final { return file_id; }
 private:
   string filename;
@@ -241,7 +240,7 @@ namespace impl
     return found ? static_cast<localIndex>(row) : -1;
   }
 
-  void ClearAfter( hid_t target,
+  void ClearFrom( hid_t target,
                    string const & id,
                    localIndex const row_idx )
   {
@@ -297,10 +296,10 @@ public:
     return impl::ColSearch<DATA_TYPE>(this->io_target,id,col_idx,m_cell_size_map[id],cond);
   }
 
-  virtual void ClearAfter( string const & id,
+  virtual void ClearFrom( string const & id,
                            localIndex const row_idx )
   {
-    impl::ClearAfter(this->io_target,id,row_idx);
+    impl::ClearFrom(this->io_target,id,row_idx);
   }
 private:
   map<string,localIndex> m_cell_size_map;
@@ -341,10 +340,10 @@ public:
     return impl::ColSearch<DATA_TYPE>(this->io_target,id,col_idx,m_cell_size_map[id],cond);
   }
 
-  virtual void ClearAfter( string const & id,
+  virtual void ClearFrom( string const & id,
                            localIndex const row_idx )
   {
-    impl::ClearAfter(this->io_target,id,row_idx);
+    impl::ClearFrom(this->io_target,id,row_idx);
   }
 
 protected:
@@ -353,14 +352,14 @@ protected:
 
 // if we want to take whole chunks of data, we must want all indices < the cell stride index
 
-#define HDF_SLICE -2
+//#define HDF_SLICE -2
 
 template < typename ARRAY_TYPE, typename ENABLE = void >
 class HDFTableIO;
 
 
 template < typename T, int NDIM, typename PERMUTATION, typename INDEX_TYPE, template< typename > class DATA_VECTOR_TYPE >
-class HDFTableIO< LvArray::Array< T, NDIM, PERMUTATION, INDEX_TYPE, DATA_VECTOR_TYPE >, typename std::enable_if< can_hdf_io< T > >::type > : public HDFIO
+class HDFTableIO< LvArray::Array< T, NDIM, PERMUTATION, INDEX_TYPE, DATA_VECTOR_TYPE >, typename std::enable_if< can_hdf_io< T > >::type >
 {
 public:
   using array_type = LvArray::Array< T, NDIM, PERMUTATION, INDEX_TYPE, DATA_VECTOR_TYPE >;
@@ -368,14 +367,12 @@ public:
   using component_type = array2d< INDEX_TYPE >;
   using value_type = typename array_type::value_type;
 
-  HDFTableIO(HDFTarget & target,
-              string const & title,
+  HDFTableIO( string const & title,
               string const & hdf_id,
               localIndex const csd,
               index_type const & idxs,
               component_type const & cmps,
               string const & record_prefix = "") :
-    HDFIO(target),
     m_is_open(false),
     m_title(title),
     m_hdf_id(hdf_id),
@@ -398,34 +395,36 @@ public:
 
   virtual ~HDFTableIO() {}
 
-  virtual void OpenTable( )
+  virtual void OpenTable( HDFTarget & target )
   {
-    if ( !impl::TryOpen(this->io_target,m_hdf_id) )
+    if ( !impl::TryOpen(m_active_target,m_hdf_id) )
     {
-      impl::CreateTable<value_type>(this->io_target,m_title,m_hdf_id,m_cell_size,m_num_cells,m_record_prefix);
+      impl::CreateTable<value_type>(m_active_target,m_title,m_hdf_id,m_cell_size,m_num_cells,m_record_prefix);
     }
     else
     {
-      impl::VerifyTable(this->io_target,m_hdf_id,m_num_cells,m_cell_size);
+      impl::VerifyTable(m_active_target,m_hdf_id,m_num_cells,m_cell_size);
     }
     m_is_open = true;
+    m_active_target = target;
   }
   virtual void AppendRow( array_type const & row )
   {
     // assert(m_is_open);
     _update_internal_copy(row);
-    impl::AppendRow<value_type>(this->io_target,m_hdf_id,m_cell_size,m_num_cells,m_internal_copy.data());
+    impl::AppendRow<value_type>(m_active_target,m_hdf_id,m_cell_size,m_num_cells,m_internal_copy.data());
   }
-  virtual void ClearAfter( localIndex first_to_delete )
+  virtual void ClearFrom( localIndex first_to_delete )
   {
     //assert(m_is_open);
-    impl::ClearAfter(this->io_target,m_hdf_id,first_to_delete);
+    impl::ClearFrom(m_active_target,m_hdf_id,first_to_delete);
   }
   template < typename LAMBDA >
   // sfinae lambda returns bool, accepts value_type*
   void ColSearch( localIndex col_idx , LAMBDA && cond)
   {
-    return impl::ColSearch<value_type>(this->io_target,m_hdf_id,col_idx,m_cell_size,cond);
+    //assert(m_is_open);
+    return impl::ColSearch<value_type>(m_active_target,m_hdf_id,col_idx,m_cell_size,cond);
   }
   virtual void CloseTable( )
   {
@@ -457,7 +456,7 @@ private:
     {
       for ( localIndex cmp = 0; cmp < m_cmps.size( 0 ); ++cmp)
       {
-        m_internal_copy[offset++] = _index<0>(row,[&](localIndex dim) { return (dim == m_csd) ? m_idxs[cell] : m_cmps[cmp][dim]; });
+        m_internal_copy[offset++] = _index<0>(row,[&](localIndex dim) { return (dim == m_csd) ? m_idxs[cell] : m_cmps[cmp][ dim > m_csd ? dim : dim-1 ]; });
       }
     }
   }
@@ -473,6 +472,8 @@ private:
   hsize_t m_cell_size;
   string const m_record_prefix;
   array1d< T > m_internal_copy;
+
+  HDFTarget m_active_target;
 };
 
 template < class DATA_ARR_T >
@@ -501,10 +502,10 @@ public:
     impl::AppendRow<value_type>(this->io_target,id,m_cell_size_map[id],num_cols,array.data());
   }
 
-  void ClearAfter(string const & id,
+  void ClearFrom(string const & id,
                   localIndex const row_idx)
   {
-    impl::ClearAfter(this->io_target,id,row_idx);
+    impl::ClearFrom(this->io_target,id,row_idx);
   }
 
 private:
@@ -545,10 +546,10 @@ public:
     impl::AppendRow<value_type,index_type>(this->io_target,id,m_cell_size_map[id],num_cols,array.data(),idx.data());
   }
 
-  void ClearAfter(string const & id,
+  void ClearFrom(string const & id,
                   localIndex const row_idx)
   {
-    impl::ClearAfter(this->io_target,id,row_idx);
+    impl::ClearFrom(this->io_target,id,row_idx);
   }
 
 private:
@@ -595,14 +596,14 @@ public:
     time_table.AppendRow(m_data_2_time_map[id],1,&time);
   }
 
-  bool ClearAfterTime(string const & id, real64 const time)
+  bool ClearFromTime(string const & id, real64 const time)
   {
     localIndex first_to_clear = time_table.ColSearch(m_data_2_time_map[id],0,[&](real64 * col_time) { return time >= *col_time; });
     bool do_clear = first_to_clear >= 0;
     if ( do_clear )
     {
-      Super::ClearAfter(id,first_to_clear);
-      time_table.ClearAfter(m_data_2_time_map[id],first_to_clear);
+      Super::ClearFrom(id,first_to_clear);
+      time_table.ClearFrom(m_data_2_time_map[id],first_to_clear);
     }
     return do_clear;
   }
