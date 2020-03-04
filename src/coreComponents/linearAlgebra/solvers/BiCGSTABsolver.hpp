@@ -62,9 +62,7 @@ public:
   //! @name KrylovSolver interface
   //@{
 
-  virtual void
-  solve( Vector const & b,
-         Vector & x ) const override final;
+  virtual void solve( Vector const & b, Vector & x ) const override final;
 
   //@}
 

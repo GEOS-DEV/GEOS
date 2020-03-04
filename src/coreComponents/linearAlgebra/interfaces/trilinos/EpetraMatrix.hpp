@@ -25,7 +25,9 @@
 #include "linearAlgebra/interfaces/MatrixBase.hpp"
 
 class Epetra_Map;
+
 class Epetra_CrsMatrix;
+
 class Epetra_FECrsMatrix;
 
 namespace geosx
@@ -36,8 +38,8 @@ namespace geosx
  * \brief This class creates and provides basic support for the Epetra_CrsMatrix
  *        matrix object type used in Trilinos.
  */
-class EpetraMatrix final: public virtual LinearOperator<EpetraVector>,
-                          private MatrixBase<EpetraMatrix, EpetraVector>
+class EpetraMatrix final : public virtual LinearOperator< EpetraVector >,
+                           private MatrixBase< EpetraMatrix, EpetraVector >
 {
 public:
 
@@ -80,192 +82,192 @@ public:
   using MatrixBase::modifiable;
   using MatrixBase::ready;
 
-  void createWithLocalSize( localIndex const localRows,
-                            localIndex const localCols,
-                            localIndex const maxEntriesPerRow,
-                            MPI_Comm const & comm ) override;
+  virtual void createWithLocalSize( localIndex const localRows,
+                                    localIndex const localCols,
+                                    localIndex const maxEntriesPerRow,
+                                    MPI_Comm const & comm ) override;
 
-  void createWithGlobalSize( globalIndex const globalRows,
-                             globalIndex const globalCols,
-                             localIndex const maxEntriesPerRow,
-                             MPI_Comm const & comm ) override;
+  virtual void createWithGlobalSize( globalIndex const globalRows,
+                                     globalIndex const globalCols,
+                                     localIndex const maxEntriesPerRow,
+                                     MPI_Comm const & comm ) override;
 
-  void open() override;
+  virtual void open() override;
 
-  void close() override;
+  virtual void close() override;
 
-  bool created() const override;
+  virtual bool created() const override;
 
-  void reset() override;
+  virtual void reset() override;
 
-  void set( real64 const value ) override;
+  virtual void set( real64 const value ) override;
 
-  void zero() override;
+  virtual void zero() override;
 
-  void add( globalIndex const rowIndex,
-            globalIndex const colIndex,
-            real64 const value ) override;
+  virtual void add( globalIndex const rowIndex,
+                    globalIndex const colIndex,
+                    real64 const value ) override;
 
-  void set( globalIndex const rowIndex,
-            globalIndex const colIndex,
-            real64 const value ) override;
+  virtual void set( globalIndex const rowIndex,
+                    globalIndex const colIndex,
+                    real64 const value ) override;
 
-  void insert( globalIndex const rowIndex,
-               globalIndex const colIndex,
-               real64 const value ) override;
+  virtual void insert( globalIndex const rowIndex,
+                       globalIndex const colIndex,
+                       real64 const value ) override;
 
-  void add( globalIndex const rowIndex,
-            globalIndex const * colIndices,
-            real64 const * values,
-            localIndex const size ) override;
+  virtual void add( globalIndex const rowIndex,
+                    globalIndex const * colIndices,
+                    real64 const * values,
+                    localIndex const size ) override;
 
-  void set( globalIndex const rowIndex,
-            globalIndex const * colIndices,
-            real64 const * values,
-            localIndex const size ) override;
+  virtual void set( globalIndex const rowIndex,
+                    globalIndex const * colIndices,
+                    real64 const * values,
+                    localIndex const size ) override;
 
-  void insert( globalIndex const rowIndex,
-               globalIndex const * colIndices,
-               real64 const * values,
-               localIndex const size ) override;
+  virtual void insert( globalIndex const rowIndex,
+                       globalIndex const * colIndices,
+                       real64 const * values,
+                       localIndex const size ) override;
 
-  void add( globalIndex const rowIndex,
-            arraySlice1d< globalIndex const > const & colIndices,
-            arraySlice1d< real64 const > const & values ) override;
+  virtual void add( globalIndex const rowIndex,
+                    arraySlice1d< globalIndex const > const & colIndices,
+                    arraySlice1d< real64 const > const & values ) override;
 
-  void set( globalIndex const rowIndex,
-            arraySlice1d< globalIndex const > const & colIndices,
-            arraySlice1d< real64 const > const & values ) override;
+  virtual void set( globalIndex const rowIndex,
+                    arraySlice1d< globalIndex const > const & colIndices,
+                    arraySlice1d< real64 const > const & values ) override;
 
-  void insert( globalIndex const rowIndex,
-               arraySlice1d< globalIndex const > const & colIndices,
-               arraySlice1d< real64 const > const & values ) override;
+  virtual void insert( globalIndex const rowIndex,
+                       arraySlice1d< globalIndex const > const & colIndices,
+                       arraySlice1d< real64 const > const & values ) override;
 
-  void add( arraySlice1d< globalIndex const > const & rowIndices,
-            arraySlice1d< globalIndex const > const & colIndices,
-            arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & values ) override;
+  virtual void add( arraySlice1d< globalIndex const > const & rowIndices,
+                    arraySlice1d< globalIndex const > const & colIndices,
+                    arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & values ) override;
 
-  void set( arraySlice1d< globalIndex const > const & rowIndices,
-            arraySlice1d< globalIndex const > const & colIndices,
-            arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & values ) override;
+  virtual void set( arraySlice1d< globalIndex const > const & rowIndices,
+                    arraySlice1d< globalIndex const > const & colIndices,
+                    arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & values ) override;
 
-  void insert( arraySlice1d< globalIndex const > const & rowIndices,
-               arraySlice1d< globalIndex const > const & colIndices,
-               arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & values ) override;
+  virtual void insert( arraySlice1d< globalIndex const > const & rowIndices,
+                       arraySlice1d< globalIndex const > const & colIndices,
+                       arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & values ) override;
 
-  void add( arraySlice1d< globalIndex const > const & rowIndices,
-            arraySlice1d< globalIndex const > const & colIndices,
-            arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values ) override;
+  virtual void add( arraySlice1d< globalIndex const > const & rowIndices,
+                    arraySlice1d< globalIndex const > const & colIndices,
+                    arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values ) override;
 
-  void set( arraySlice1d< globalIndex const > const & rowIndices,
-            arraySlice1d< globalIndex const > const & colIndices,
-            arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values ) override;
+  virtual void set( arraySlice1d< globalIndex const > const & rowIndices,
+                    arraySlice1d< globalIndex const > const & colIndices,
+                    arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values ) override;
 
-  void insert( arraySlice1d< globalIndex const > const & rowIndices,
-               arraySlice1d< globalIndex const > const & colIndices,
-               arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values ) override;
+  virtual void insert( arraySlice1d< globalIndex const > const & rowIndices,
+                       arraySlice1d< globalIndex const > const & colIndices,
+                       arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values ) override;
 
-  void add( globalIndex const * rowIndices,
-            globalIndex const * colIndices,
-            real64 const * values,
-            localIndex const numRows,
-            localIndex const numCols ) override;
+  virtual void add( globalIndex const * rowIndices,
+                    globalIndex const * colIndices,
+                    real64 const * values,
+                    localIndex const numRows,
+                    localIndex const numCols ) override;
 
-  void set( globalIndex const * rowIndices,
-            globalIndex const * colIndices,
-            real64 const * values,
-            localIndex const numRows,
-            localIndex const numCols ) override;
+  virtual void set( globalIndex const * rowIndices,
+                    globalIndex const * colIndices,
+                    real64 const * values,
+                    localIndex const numRows,
+                    localIndex const numCols ) override;
 
-  void insert( globalIndex const * rowIndices,
-               globalIndex const * colIndices,
-               real64 const * values,
-               localIndex const numRows,
-               localIndex const numCols ) override;
+  virtual void insert( globalIndex const * rowIndices,
+                       globalIndex const * colIndices,
+                       real64 const * values,
+                       localIndex const numRows,
+                       localIndex const numCols ) override;
 
-  void apply( EpetraVector const & src,
-              EpetraVector & dst ) const override;
+  virtual void apply( EpetraVector const & src,
+                      EpetraVector & dst ) const override;
 
-  void multiply( EpetraMatrix const & src,
-                 EpetraMatrix & dst ) const override;
+  virtual void multiply( EpetraMatrix const & src,
+                         EpetraMatrix & dst ) const override;
 
-  void leftMultiplyTranspose( EpetraMatrix const & src,
-                              EpetraMatrix & dst ) const override;
+  virtual void leftMultiplyTranspose( EpetraMatrix const & src,
+                                      EpetraMatrix & dst ) const override;
 
-  void rightMultiplyTranspose( EpetraMatrix const & src,
-                               EpetraMatrix & dst ) const override;
+  virtual void rightMultiplyTranspose( EpetraMatrix const & src,
+                                       EpetraMatrix & dst ) const override;
 
-  void multiplyRAP( EpetraMatrix const & R,
-                    EpetraMatrix const & P,
-                    EpetraMatrix & dst ) const override;
+  virtual void multiplyRAP( EpetraMatrix const & R,
+                            EpetraMatrix const & P,
+                            EpetraMatrix & dst ) const override;
 
-  void multiplyPtAP( EpetraMatrix const & P,
-                     EpetraMatrix & dst ) const override;
+  virtual void multiplyPtAP( EpetraMatrix const & P,
+                             EpetraMatrix & dst ) const override;
 
-  void gemv( real64 const alpha,
-             EpetraVector const & x,
-             real64 const beta,
-             EpetraVector & y,
-             bool useTranspose = false ) const override;
+  virtual void gemv( real64 const alpha,
+                     EpetraVector const & x,
+                     real64 const beta,
+                     EpetraVector & y,
+                     bool useTranspose = false ) const override;
 
-  void scale( real64 const scalingFactor ) override;
+  virtual void scale( real64 const scalingFactor ) override;
 
-  void leftScale( EpetraVector const & vec ) override;
+  virtual void leftScale( EpetraVector const & vec ) override;
 
-  void rightScale( EpetraVector const & vec ) override;
+  virtual void rightScale( EpetraVector const & vec ) override;
 
-  void leftRightScale( EpetraVector const & vecLeft,
-                       EpetraVector const & vecRight ) override;
+  virtual void leftRightScale( EpetraVector const & vecLeft,
+                               EpetraVector const & vecRight ) override;
 
-  void transpose( EpetraMatrix & dst ) const override;
+  virtual void transpose( EpetraMatrix & dst ) const override;
 
-  void clearRow( globalIndex const row,
-                 real64 const diagValue ) override;
+  virtual void clearRow( globalIndex const row,
+                         real64 const diagValue ) override;
 
-  localIndex maxRowLength() const override;
+  virtual localIndex maxRowLength() const override;
 
-  localIndex localRowLength( localIndex localRowIndex ) const override;
+  virtual localIndex localRowLength( localIndex localRowIndex ) const override;
 
-  localIndex globalRowLength( globalIndex globalRowIndex ) const override;
+  virtual localIndex globalRowLength( globalIndex globalRowIndex ) const override;
 
-  void getRowCopy( globalIndex globalRow,
-                   arraySlice1d< globalIndex > const & colIndices,
-                   arraySlice1d< real64 > const & values ) const override;
+  virtual void getRowCopy( globalIndex globalRow,
+                           arraySlice1d< globalIndex > const & colIndices,
+                           arraySlice1d< real64 > const & values ) const override;
 
-  real64 getDiagValue( globalIndex globalRow ) const override;
+  virtual real64 getDiagValue( globalIndex globalRow ) const override;
 
-  globalIndex numGlobalRows() const override;
+  virtual globalIndex numGlobalRows() const override;
 
-  globalIndex numGlobalCols() const override;
+  virtual globalIndex numGlobalCols() const override;
 
-  localIndex numLocalRows() const override;
+  virtual localIndex numLocalRows() const override;
 
-  localIndex numLocalCols() const override;
+  virtual localIndex numLocalCols() const override;
 
-  globalIndex ilower() const override;
+  virtual globalIndex ilower() const override;
 
-  globalIndex iupper() const override;
+  virtual globalIndex iupper() const override;
 
-  localIndex numLocalNonzeros() const override;
+  virtual localIndex numLocalNonzeros() const override;
 
-  globalIndex numGlobalNonzeros() const override;
+  virtual globalIndex numGlobalNonzeros() const override;
 
-  real64 normInf() const override;
+  virtual real64 normInf() const override;
 
-  real64 norm1() const override;
+  virtual real64 norm1() const override;
 
-  real64 normFrobenius() const override;
+  virtual real64 normFrobenius() const override;
 
-  localIndex getLocalRowID( globalIndex const index ) const override;
+  virtual localIndex getLocalRowID( globalIndex const index ) const override;
 
-  globalIndex getGlobalRowID( localIndex const index ) const override;
+  virtual globalIndex getGlobalRowID( localIndex const index ) const override;
 
-  MPI_Comm getComm() const override;
+  virtual MPI_Comm getComm() const override;
 
-  void print( std::ostream & os = std::cout ) const override;
+  virtual void print( std::ostream & os = std::cout ) const override;
 
-  void write( string const & filename,
-              LAIOutputFormat const format ) const override;
+  virtual void write( string const & filename,
+                      LAIOutputFormat const format ) const override;
 
   ///@}
 

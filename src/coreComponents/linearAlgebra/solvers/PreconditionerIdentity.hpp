@@ -39,8 +39,8 @@ public:
    * @brief Compute the preconditioner from a matrix
    * @param mat the matrix to precondition
    */
-  void apply( Vector const & src,
-              Vector & dst ) const override
+  virtual void apply( Vector const & src,
+                      Vector & dst ) const override
   {
     GEOSX_LAI_ASSERT_EQ( this->numGlobalRows(), dst.globalSize() );
     GEOSX_LAI_ASSERT_EQ( this->numGlobalCols(), src.globalSize() );

@@ -96,11 +96,9 @@ public:
    * @param b system right hand side.
    * @param M preconditioner.
    */
-  virtual void
-  solve( Vector const & b, Vector & x ) const = 0;
+  virtual void solve( Vector const & b, Vector & x ) const = 0;
 
-  virtual void
-  apply( Vector const & src, Vector & dst ) const override final
+  virtual void apply( Vector const & src, Vector & dst ) const override final
   {
     solve( src, dst );
   }
