@@ -29,6 +29,7 @@
                 discretization="FE1"
                 timeIntegrationOption="SteadyState"
                 fieldName="Damage"
+                solidMaterialName="shale"
                 localDissipation = "Quadratic"
                 logLevel="0"
                 targetRegions="{Region1}">
@@ -51,14 +52,14 @@
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
     <PeriodicEvent name="solverApplications"
-                   forceDt="1.0"
+                   forceDt="0.2"
                    target="/Solvers/PhaseFieldSolve" />
 
     <!-- This event is applied every 1.0s.  The targetExactTimestep
     flag allows this event to request a dt modification to match an
     integer multiple of the timeFrequency. -->
     <PeriodicEvent name="outputs"
-                   timeFrequency="1.0"
+                   timeFrequency="0.2"
                    targetExactTimestep="1"
                    target="/Outputs/VTKOutput" />
 

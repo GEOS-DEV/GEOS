@@ -83,8 +83,9 @@ PhaseFieldDamageFEM::PhaseFieldDamageFEM(const std::string &name,
 //    setInputFlag(InputFlags::REQUIRED)->
 //    setDescription("name of field variable representing the diffusion coefficient");
 
-
-
+  registerWrapper<string>( viewKeyStruct::solidModelNameString, &m_solidModelName, false)->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("name of solid constitutive model");
 }
 
 PhaseFieldDamageFEM::~PhaseFieldDamageFEM() {

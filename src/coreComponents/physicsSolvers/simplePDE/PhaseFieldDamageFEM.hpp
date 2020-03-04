@@ -115,6 +115,7 @@ public:
 //    static constexpr auto coeffFieldName = "coeffFieldName";
     static constexpr auto coeffName = "coeffField";
     static constexpr auto localDissipationOption = "localDissipation";
+    static constexpr auto solidModelNameString = "solidMaterialName";
 
 
     dataRepository::ViewKey timeIntegrationOption = {"timeIntegrationOption"};
