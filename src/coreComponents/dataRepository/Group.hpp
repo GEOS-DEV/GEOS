@@ -1541,9 +1541,11 @@ private:
   /// Verbosity flag for group logs
   integer m_logLevel;
 
-  RestartFlags m_restart_flags; ///< Restart flag for this group...and
-                                ///< subsequently all wrappers in this group
-  InputFlags m_input_flags;     ///< Input flag for this group
+  /// Restart flag for this group... and subsequently all wrappers in this group.
+  RestartFlags m_restart_flags;
+
+  /// Input flag for this group.
+  InputFlags m_input_flags;
 
   /// Reference to the conduit::Node that mirrors this group
   conduit::Node & m_conduitNode;
