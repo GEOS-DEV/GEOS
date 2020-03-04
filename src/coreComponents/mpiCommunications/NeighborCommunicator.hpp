@@ -252,7 +252,7 @@ public:
    *  must be completed before PostRecv is called in order
    *  to correctly resize the receive buffer.
    */
-  void PrepareAndSendSyncLists( MeshLevel & meshLevel,
+  void PrepareAndSendSyncLists( MeshLevel const & meshLevel,
                                 int const commID );
 
   /**
@@ -266,12 +266,12 @@ public:
                                   int const CommID );
 
   void PackCommBufferForSync( std::map< string, string_array > const & fieldNames,
-                              MeshLevel * const meshLevel,
+                              MeshLevel const & meshLevel,
                               int const commID,
                               bool on_device = false );
 
   int PackCommSizeForSync( std::map< string, string_array > const & fieldNames,
-                           MeshLevel * const meshLevel,
+                           MeshLevel const & meshLevel,
                            int const commID,
                            bool on_device = false );
 

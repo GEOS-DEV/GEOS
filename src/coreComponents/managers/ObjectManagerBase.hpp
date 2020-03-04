@@ -21,7 +21,7 @@
 
 #include "dataRepository/Group.hpp"
 #include "common/TimingMacros.hpp"
-#include "mpiCommunications/MpiWrapper.hpp"
+#include "mpiCommunications/NeighborData.hpp"
 
 namespace geosx
 {
@@ -211,15 +211,10 @@ public:
 
   void SetGhostRankForSenders( int const neighborRank )
   {
-    Group * const neighborData = GetGroup( groupKeys().neighborData )->GetGroup( std::to_string( neighborRank ) );
+    arrayView1d< localIndex const > const & ghostsToSend = getNeighborData( neighborRank ).ghostsToSend();
+    array1d< std::pair< globalIndex, int > > & nonLocalGhosts = getNeighborData( neighborRank ).nonLocalGhosts();
 
-    arrayView1d< localIndex const > const & indicesToSend =
-      neighborData->getReference< array1d< localIndex > >( viewKeys().ghostsToSend );
-
-    array1d< std::pair< globalIndex, int > > & nonLocalGhosts =
-      neighborData->getReference< array1d< std::pair< globalIndex, int > > >( "nonLocalGhosts" );
-
-    for( localIndex const index : indicesToSend )
+    for( localIndex const index : ghostsToSend )
     {
       integer & owningRank = m_ghostRank[ index ];
       if( owningRank >= 0 )
@@ -328,13 +323,10 @@ public:
     static constexpr auto matchedPartitionBoundaryObjectsString = "matchedPartitionBoundaryObjects";
     static constexpr auto parentIndexString = "parentIndex";
 
-    dataRepository::ViewKey adjacencyList = { adjacencyListString };
     dataRepository::ViewKey childIndex = { childIndexString };
     dataRepository::ViewKey domainBoundaryIndicator = { domainBoundaryIndicatorString };
     dataRepository::ViewKey externalSet = { externalSetString };
     dataRepository::ViewKey ghostRank = { ghostRankString };
-    dataRepository::ViewKey ghostsToSend = { ghostsToSendString };
-    dataRepository::ViewKey ghostsToReceive = { ghostsToReceiveString };
     dataRepository::ViewKey globalToLocalMap = { globalToLocalMapString };
     dataRepository::ViewKey isExternal = { isExternalString };
     dataRepository::ViewKey localToGlobalMap = { localToGlobalMapString };
@@ -353,7 +345,6 @@ public:
     static constexpr auto setsString = "sets";
     static constexpr auto neighborDataString = "neighborData";
     dataRepository::GroupKey sets = { setsString };
-    dataRepository::GroupKey neighborData = { neighborDataString };
   } m_ObjectManagerBaseGroupKeys;
 
 
@@ -386,6 +377,23 @@ public:
   integer_array const & GhostRank() const
   { return this->m_ghostRank; }
 
+  NeighborData & getNeighborData( int const rank )
+  { return m_neighborData.at( rank ); }
+
+  NeighborData const & getNeighborData( int const rank ) const
+  { return m_neighborData.at( rank ); }
+
+  void addNeighbor( int const rank )
+  {
+    m_neighborData.emplace( rank, *( m_neighborGroup.RegisterGroup< NeighborData >( std::to_string( rank ) ) ) );
+  }
+
+  void removeNeighbor( int const rank )
+  {
+    m_neighborData.erase( rank );
+    m_neighborGroup.deregisterGroup( std::to_string( rank ) );
+  }
+
   Group m_sets;
 
   globalIndex_array m_localToGlobalMap;
@@ -393,13 +401,13 @@ public:
   integer_array m_isExternal;
   integer_array m_ghostRank;
 
+private:
+  Group m_neighborGroup;
+  unordered_map< int, NeighborData & > m_neighborData;
   real64 m_overAllocationFactor = 1.1;
 
+public:
   globalIndex m_maxGlobalIndex = -1;
-
-//  localIndex_array m_ghostToSend;
-// localIndex_array m_ghostToReceive;
-
 };
 
 
