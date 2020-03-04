@@ -13,6 +13,7 @@ set(managers_headers
     Outputs/SiloOutput.hpp
     Outputs/VTKOutput.hpp
     Outputs/RestartOutput.hpp
+    Outputs/TimeHistoryOutput.hpp
     Functions/FunctionBase.hpp
     Functions/SymbolicFunction.hpp
     Functions/TableFunction.hpp
