@@ -36,6 +36,7 @@
 #include "codingUtilities/Utilities.hpp"
 
 #include "managers/DomainPartition.hpp"
+#include "linearAlgebra/interfaces/BlasLapackLA.hpp"
 
 namespace geosx
 {
@@ -173,7 +174,7 @@ namespace geosx
     dofManager.addField( m_fieldName,
     DofManager::Location::Node// ,
     // DofManager::Connectivity::Elem
-												 );
+                         );
   }
 
   //START_SPHINX_INCLUDE_04
@@ -205,7 +206,6 @@ namespace geosx
 
     // get node properties
     arrayView1d<R1Tensor const> const & nodeCoords = nodeManager->referencePosition();
-    GEOSX_UNUSED_VAR(nodeCoords);
 
     // get face properties
     FaceManager const * const faceManager = mesh->getFaceManager();
@@ -213,8 +213,7 @@ namespace geosx
     GEOSX_UNUSED_VAR(faceArea);
     arrayView1d<R1Tensor const> const & faceCenter = faceManager->faceCenter();
     GEOSX_UNUSED_VAR(faceCenter);
-    arrayView1d<R1Tensor const> const & faceNormal = faceManager->faceNormal();
-    GEOSX_UNUSED_VAR(faceNormal);
+    arrayView1d<R1Tensor const> const & faceNormals = faceManager->faceNormal();
 
     // get edge properties
     EdgeManager const * const edgeManager = mesh->getEdgeManager();
@@ -249,32 +248,111 @@ namespace geosx
         integer_array const & elemGhostRank = elementSubRegion->m_ghostRank;
         localIndex const n_q_points = feDiscretization->m_finiteElement->n_quadrature_points();
 
+        arrayView2d<localIndex> const & elemsToFaces = elementSubRegion->faceList(); GEOSX_UNUSED_VAR(elemsToFaces);
+        ArrayOfArraysView< localIndex const > const & facesToEdges = faceManager->edgeList(); GEOSX_UNUSED_VAR(facesToEdges);
+        ArrayOfArraysView< localIndex const > const & facesToNodes = faceManager->nodeList();
+        arrayView2d<localIndex> const & edgesToNodes = edgeManager->nodeList(); GEOSX_UNUSED_VAR(edgesToNodes);
+
+
+        localIndex const & numFacesPerElem = elemsToFaces.size(1);
+
         // begin element loop, skipping ghost elements
         for( localIndex k=0 ; k<elementSubRegion->size() ; ++k )
         {
-          if(elemGhostRank[k] < 0)
+          // compute basis functions integral on each face
+          real64_array2d basisFunctionsIntegrals( numFacesPerElem, numNodesPerElement ); GEOSX_UNUSED_VAR(basisFunctionsIntegrals);
+          for( localIndex kf = 0; kf < numFacesPerElem; ++kf )
           {
-            element_rhs = 0.0;
-            element_matrix = 0.0;
-            for( localIndex q=0 ; q<n_q_points ; ++q)
+            localIndex const & faceIndex = elemsToFaces(k,kf);
+            localIndex const & numFaceNodes = facesToNodes.sizeOfArray(faceIndex);
+            // compute face rotation matrix
+            R1TensorT<3> const & V0 = nodeCoords(facesToNodes(faceIndex, 0));
+            R1TensorT<3> V1mV0 = nodeCoords(facesToNodes(faceIndex, 1));
+            V1mV0 -= V0;
+            realT normV1mV0 = V1mV0.L2_Norm();
+            real64_array2d auxMatZ(numFaceNodes, 3);
+            auxMatZ(0, 0) = V1mV0(0);
+            auxMatZ(0, 1) = V1mV0(1);
+            auxMatZ(0, 2) = V1mV0(2);
+            real64_array2d auxMatW(3, numFaceNodes);
+            auxMatW(0, 0) = normV1mV0;
+            auxMatW(1, 0) = 0;
+            auxMatW(2, 0) = 0;
+            for( localIndex col = 1; col < numFaceNodes-1; ++col )
             {
-              for( localIndex a=0 ; a<numNodesPerElement ; ++a)
-              {
-                elemDofIndex[a] = dofIndex[ elemNodes( k, a ) ];
-
-                real64 diffusion = 1.0;
-                for( localIndex b=0 ; b<numNodesPerElement ; ++b)
-                {
-                  element_matrix(a,b) += detJ[k][q] *
-                    diffusion *
-                    + Dot( dNdX[k][q][a], dNdX[k][q][b] );
-                }
-
-              }
+              R1TensorT<3> VimV0 = nodeCoords(facesToNodes(faceIndex, col+1));
+              VimV0 -= V0;
+              realT normVimV0 = VimV0.L2_Norm(); GEOSX_UNUSED_VAR(normVimV0);
+              auxMatZ(col, 0) = VimV0(0);
+              auxMatZ(col, 1) = VimV0(1);
+              auxMatZ(col, 2) = VimV0(2);
+              realT inverseProdNorms = 1.0/(normV1mV0*normVimV0);
+              realT cosAngleBetweenVectors = Dot(VimV0,V1mV0)*inverseProdNorms; GEOSX_UNUSED_VAR(cosAngleBetweenVectors);
+              realT sinAngleBetweenVectors = Cross(VimV0,V1mV0).L2_Norm()*inverseProdNorms;
+              auxMatW(0, col) = normVimV0*cosAngleBetweenVectors;
+              auxMatW(1, col) = normVimV0*sinAngleBetweenVectors;
+              auxMatW(2, col) = 0;
             }
-            matrix.add( elemDofIndex, elemDofIndex, element_matrix );
-            rhs.add( elemDofIndex, element_rhs );
+            R1TensorT<3> const & faceNormal = faceNormals(faceIndex); GEOSX_UNUSED_VAR(faceNormal);
+            auxMatZ(numFaceNodes-1, 0) = faceNormal(0);
+            auxMatZ(numFaceNodes-1, 1) = faceNormal(1);
+            auxMatZ(numFaceNodes-1, 2) = faceNormal(2);
+            auxMatW(0, numFaceNodes-1) = 0;
+            auxMatW(1, numFaceNodes-1) = 0;
+            auxMatW(2, numFaceNodes-1) = 1;
+            array2d<real64> auxMatH(3,3);
+            for(localIndex i = 0; i < 9; ++i)
+              auxMatH.data()[i] = 0;
+            for(localIndex i = 0; i < numFaceNodes; ++i)
+            {
+              auxMatH(0,0) += auxMatW(0,i)*auxMatZ(i,0);
+              auxMatH(0,1) += auxMatW(0,i)*auxMatZ(i,1);
+              auxMatH(0,2) += auxMatW(0,i)*auxMatZ(i,2);
+              auxMatH(1,0) += auxMatW(1,i)*auxMatZ(i,0);
+              auxMatH(1,1) += auxMatW(1,i)*auxMatZ(i,1);
+              auxMatH(1,2) += auxMatW(1,i)*auxMatZ(i,2);
+              auxMatH(2,0) += auxMatW(2,i)*auxMatZ(i,0);
+              auxMatH(2,1) += auxMatW(2,i)*auxMatZ(i,1);
+              auxMatH(2,2) += auxMatW(2,i)*auxMatZ(i,2);
+            }
+            array2d<real64> svdMatU(3,3), svdMatVT(3,3);
+            array1d<real64> svdValues(3);
+            BlasLapackLA::matrixSVD(auxMatH, svdMatU, svdValues, svdMatVT);
+            R2TensorT<3> faceRotationMatrix(0.0);
+            // for(localIndex i = 0; i < 3; ++i)
+            //   for(localIndex j = 0; j < 3; ++j)
           }
+
+
+          GEOSX_UNUSED_VAR(dNdX);
+          GEOSX_UNUSED_VAR(detJ);
+          GEOSX_UNUSED_VAR(elemNodes);
+          GEOSX_UNUSED_VAR(elemGhostRank);
+          GEOSX_UNUSED_VAR(n_q_points);
+          GEOSX_UNUSED_VAR(dofIndex);
+          // if(elemGhostRank[k] < 0)
+          // {
+          //   element_rhs = 0.0;
+          //   element_matrix = 0.0;
+          //   for( localIndex q=0 ; q<n_q_points ; ++q)
+          //   {
+          //     for( localIndex a=0 ; a<numNodesPerElement ; ++a)
+          //     {
+          //       elemDofIndex[a] = dofIndex[ elemNodes( k, a ) ];
+
+          //       real64 diffusion = 1.0;
+          //       for( localIndex b=0 ; b<numNodesPerElement ; ++b)
+          //       {
+          //         element_matrix(a,b) += detJ[k][q] *
+          //           diffusion *
+          //           + Dot( dNdX[k][q][a], dNdX[k][q][b] );
+          //       }
+
+          //     }
+          //   }
+          //   matrix.add( elemDofIndex, elemDofIndex, element_matrix );
+          //   rhs.add( elemDofIndex, element_rhs );
+          // }
         }
       });
     }
@@ -291,7 +369,7 @@ namespace geosx
     {
       // SystemSolverParameters * const solverParams = getSystemSolverParameters();
       // integer newtonIter = solverParams->numNewtonIterations();
-			integer newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
+      integer newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
 
       string filename_mat = "matrix_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
       matrix.write( filename_mat, true );
