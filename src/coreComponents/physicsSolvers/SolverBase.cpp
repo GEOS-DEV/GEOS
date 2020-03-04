@@ -266,6 +266,10 @@ real64 SolverBase::LinearImplicitStep( real64 const & time_n,
   // call setup for physics solver. Pre step allocations etc.
   ImplicitStepSetup( time_n, dt, domain, dofManager, matrix, rhs, solution );
 
+  // clean matrix and rhs entries
+  matrix.zero();
+  rhs.zero();
+
   // call assemble to fill the matrix and the rhs
   AssembleSystem( time_n, dt, domain, dofManager, matrix, rhs );
 
@@ -325,6 +329,10 @@ bool SolverBase::LineSearch( real64 const & time_n,
     }
 
     ApplySystemSolution( dofManager, solution, localScaleFactor, domain );
+
+    // clean matrix and rhs entries
+    matrix.zero();
+    rhs.zero();
 
     // re-assemble system
     AssembleSystem( time_n, dt, domain, dofManager, matrix, rhs );
@@ -414,6 +422,11 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
                  dtAttempt, newtonIter );
         std::cout<<output;
       }
+
+      // clean matrix and rhs entries
+      matrix.zero();
+      rhs.zero();
+
       // call assemble to fill the matrix and the rhs
       AssembleSystem( time_n, stepDt, domain, dofManager, matrix, rhs );
 

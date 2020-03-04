@@ -199,8 +199,8 @@ void LaplaceFEM::AssembleSystem( real64 const time_n,
     nodeManager->getReference< array1d<globalIndex> >( dofManager.getKey( m_fieldName ) );
 
   // Initialize all entries to zero
-  matrix.zero();
-  rhs.zero();
+//  matrix.zero();
+//  rhs.zero();
 
   matrix.open();
   rhs.open();

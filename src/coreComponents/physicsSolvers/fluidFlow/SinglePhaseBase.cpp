@@ -499,8 +499,8 @@ void SinglePhaseBase::AssembleSystem( real64 const time_n,
 
 
 
-  matrix.zero();
-  rhs.zero();
+//  matrix.zero();
+//  rhs.zero();
 
   matrix.open();
   rhs.open();

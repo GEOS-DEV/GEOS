@@ -22,6 +22,7 @@
 
 #include "common/DataLayouts.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
+#include "constitutive/solid/PoroElastic.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "finiteElement/Kinematics.h"
 #include "managers/DomainPartition.hpp"
@@ -91,30 +92,72 @@ void PoroelasticSolver::SetupDofs( DomainPartition const * const domain,
                           DofManager::Connectivity::Elem );
 }
 
-void PoroelasticSolver::ImplicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
-                                           real64 const & GEOSX_UNUSED_PARAM( dt ),
-                                           DomainPartition * const domain,
-                                           DofManager & GEOSX_UNUSED_PARAM( dofManager ),
-                                           ParallelMatrix & GEOSX_UNUSED_PARAM( matrix ),
-                                           ParallelVector & GEOSX_UNUSED_PARAM( rhs ),
-                                           ParallelVector & GEOSX_UNUSED_PARAM( solution ) )
+void PoroelasticSolver::SetupSystem( DomainPartition * const domain,
+                                     DofManager & dofManager,
+                                     ParallelMatrix & matrix,
+                                     ParallelVector & rhs,
+                                     ParallelVector & solution )
 {
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ElementRegionManager * const elemManager = mesh->getElemManager();
+  // setup monolithic coupled system
+  dofManager.setMesh( domain, 0, 0 );
+  SetupDofs( domain, dofManager );
+  dofManager.reorderByRank();
 
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const totalMeanStress =
-    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::totalMeanStressString);
+  localIndex const numLocalDof = dofManager.numLocalDofs();
+  matrix.createWithLocalSize( numLocalDof, numLocalDof, 30, MPI_COMM_GEOSX );
+  rhs.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
+  solution.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
 
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> oldTotalMeanStress =
-    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::oldTotalMeanStressString);
+  dofManager.setSparsityPattern( m_matrix, true );
 
-  //***** loop over all elements and initialize the derivative arrays *****
-  forAllElemsInMesh( mesh, [&]( localIndex const er,
-                                localIndex const esr,
-                                localIndex const k)->void
+}
+
+void PoroelasticSolver::ImplicitStepSetup( real64 const & time_n,
+                                           real64 const & dt,
+                                           DomainPartition * const domain,
+                                           DofManager & dofManager,
+                                           ParallelMatrix & matrix,
+                                           ParallelVector & rhs,
+                                           ParallelVector & solution)
+{
+  string ctOption = this->getReference<string>(viewKeyStruct::couplingTypeOptionStringString);
+
+  if( ctOption == "FixedStress" )
   {
-    oldTotalMeanStress[er][esr][k] = totalMeanStress[er][esr][k];
-  });
+    MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+    ElementRegionManager * const elemManager = mesh->getElemManager();
+
+    ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const totalMeanStress =
+      elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::totalMeanStressString);
+
+    ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> oldTotalMeanStress =
+      elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::oldTotalMeanStressString);
+
+    //***** loop over all elements and initialize the derivative arrays *****
+    forAllElemsInMesh( mesh, [&]( localIndex const er,
+                                  localIndex const esr,
+                                  localIndex const k)->void
+    {
+      oldTotalMeanStress[er][esr][k] = totalMeanStress[er][esr][k];
+    });
+  }
+  else if( ctOption == "TightlyCoupled" )
+  {
+    m_flowSolver->ImplicitStepSetup( time_n, dt, domain,
+                                     dofManager,
+                                     matrix,
+                                     rhs,
+                                     solution );
+    m_solidSolver->ImplicitStepSetup( time_n, dt, domain,
+                                      dofManager,
+                                      matrix,
+                                      rhs,
+                                      solution );
+
+  }
+
+
+
 }
 
 void PoroelasticSolver::ImplicitStepComplete( real64 const& GEOSX_UNUSED_PARAM( time_n ),
@@ -200,40 +243,38 @@ real64 PoroelasticSolver::SolverStep( real64 const & time_n,
                                       int const cycleNumber,
                                       DomainPartition * const domain )
 {
-  real64 dtReturn = dt;
+  real64 dt_return = dt;
   if( m_couplingTypeOption == couplingTypeOption::FixedStress )
   {
-    dtReturn = SplitOperatorStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>() );
+    dt_return = SplitOperatorStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>() );
   }
   else if( m_couplingTypeOption == couplingTypeOption::TightlyCoupled )
   {
-
-    // setup monolithic coupled system
-    m_dofManager.setMesh( domain, 0, 0 );
-    SetupDofs( domain, m_dofManager );
-    m_dofManager.reorderByRank();
-
-    localIndex const numLocalDof = m_dofManager.numLocalDofs();
-    m_matrix.createWithLocalSize( numLocalDof, numLocalDof, 30, MPI_COMM_GEOSX );
-    m_rhs.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
-    m_solution.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
-
-
-    m_dofManager.setSparsityPattern( m_matrix, true );
-    m_matrix.write("jacobian");
-
-
-    GEOSX_ERROR( "couplingTypeOption::FullyImplicit not yet implemented");
+    SetupSystem( domain, m_dofManager, m_matrix, m_rhs, m_solution );
 
     ImplicitStepSetup( time_n,
-               dt,
-               domain,
-               m_dofManager,
-               m_matrix,
-               m_rhs,
-               m_solution );
+                       dt,
+                       domain,
+                       m_dofManager,
+                       m_matrix,
+                       m_rhs,
+                       m_solution );
+
+    // setup reservoir and well systems
+    ImplicitStepSetup( time_n, dt, domain, m_dofManager, m_matrix, m_rhs, m_solution );
+
+    // currently the only method is implicit time integration
+    dt_return = this->NonlinearImplicitStep( time_n, dt, cycleNumber, domain,
+                                             m_dofManager,
+                                             m_matrix,
+                                             m_rhs,
+                                             m_solution );
+
+    // complete time step in reservoir and well systems
+    ImplicitStepComplete( time_n, dt_return, domain );
+
   }
-  return dtReturn;
+  return dt_return;
 }
 
 void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const domain )
@@ -345,6 +386,142 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
     }
   }
 
+}
+
+void PoroelasticSolver::AssembleSystem( real64 const time_n,
+                                        real64 const dt,
+                                        DomainPartition * const domain,
+                                        DofManager const & dofManager,
+                                        ParallelMatrix & matrix,
+                                        ParallelVector & rhs )
+{
+
+  // assemble J_SS
+  m_solidSolver->AssembleSystem( time_n, dt, domain,
+                                 dofManager,
+                                 matrix,
+                                 rhs );
+
+  // assemble J_FF
+  m_flowSolver->AssembleSystem( time_n, dt, domain,
+                                dofManager,
+                                matrix,
+                                rhs );
+
+  // assemble J_SF
+  AssembleForceResidualDerivativeWrtPressure( domain,
+                                              dofManager,
+                                              matrix,
+                                              rhs );
+
+  matrix.write("jacobian.mtx");
+  rhs.write("rhs.mtx");
+  GEOSX_ERROR( "STOP ASSMEBLY" );
+
+}
+
+void PoroelasticSolver::AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
+                                                                    DofManager const & dofManager,
+                                                                    ParallelMatrix & matrix,
+                                                                    ParallelVector & GEOSX_UNUSED_PARAM( rhs ) )
+{
+  GEOSX_MARK_FUNCTION;
+
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  NodeManager * const nodeManager = mesh->getNodeManager();
+  ElementRegionManager * const elemManager = mesh->getElemManager();
+  NumericalMethodsManager const * numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
+  FiniteElementDiscretizationManager const * feDiscretizationManager = numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
+
+  matrix.open();
+
+  string const uDofKey = dofManager.getKey( keys::TotalDisplacement );
+  arrayView1d<globalIndex const> const & uDofNumber = nodeManager->getReference<globalIndex_array>( uDofKey );
+
+  string const pDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString );
+
+  // begin region loop
+  for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
+  {
+    ElementRegionBase * const elementRegion = elemManager->GetRegion(er);
+
+    FiniteElementDiscretization const *
+      feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
+
+    elementRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const GEOSX_UNUSED_PARAM ( esr ),
+                                                                        CellElementSubRegion const * const elementSubRegion )
+    {
+      arrayView3d<R1Tensor const> const &
+      dNdX = elementSubRegion->getReference< array3d<R1Tensor> >(keys::dNdX);
+
+      arrayView2d<real64 const> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
+
+      arrayView1d<globalIndex const> const & pDofNumber = elementSubRegion->getReference<globalIndex_array>( pDofKey );
+
+      arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion->nodeList();
+      localIndex const numNodesPerElement = elemsToNodes.size(1);
+
+      std::unique_ptr<FiniteElementBase>
+      fe = feDiscretization->getFiniteElement( elementSubRegion->GetElementTypeString() );
+
+      string const solidModelName = this->getSolidSolver()->getSolidMaterialName();
+      real64 const
+      biotCoefficient = elementSubRegion->GetConstitutiveModels()->GetGroup(solidModelName)->getReference<real64>( "BiotCoefficient");
+
+
+      int dim = 3;
+      int nUDof = dim * numNodesPerElement;
+      int nPDof = 1;
+
+      array1d<globalIndex> elementULocalDofIndex( nUDof );
+      globalIndex          elementPLocalDOfIndex;
+      array2d<real64>      dRsdP( nUDof,nPDof );
+      array2d<real64>      dRfdU( nPDof,nUDof );
+
+      for( localIndex k=0; k<elementSubRegion->size(); ++ k )
+      {
+
+        dRsdP = 0.0;
+        dRfdU = 0.0;
+
+        if ( elementSubRegion->m_ghostRank[k] < 0 )
+        {
+          // Get dof local to global mapping
+          for( localIndex a=0 ; a<numNodesPerElement ; ++a)
+          {
+            localIndex localNodeIndex = elemsToNodes[k][a];
+
+            for( int i=0 ; i<dim ; ++i )
+            {
+              elementULocalDofIndex[static_cast<int>(a)*dim+i] = uDofNumber[localNodeIndex]+i;
+            }
+          }
+          elementPLocalDOfIndex = pDofNumber[k];
+
+          R1Tensor dNdXa;
+
+          for( integer q=0; q<fe->n_quadrature_points(); ++q )
+          {
+            const realT detJq = detJ[k][q];
+
+            for( integer a=0; a<numNodesPerElement; ++a )
+            {
+              dNdXa = dNdX[k][q][a];
+              dRsdP(a*dim+0, 0) -= biotCoefficient * dNdXa[0] * detJq;
+              dRsdP(a*dim+1, 0) -= biotCoefficient * dNdXa[1] * detJq;
+              dRsdP(a*dim+2, 0) -= biotCoefficient * dNdXa[2] * detJq;
+            }
+          }
+
+          matrix.add( elementULocalDofIndex.data(), &elementPLocalDOfIndex, dRsdP.data(), nUDof, nPDof );
+          matrix.add( &elementPLocalDOfIndex, elementULocalDofIndex.data(), dRfdU.data(), nPDof, nUDof );
+         }
+       }
+    });
+
+  }
+
+  matrix.close();
 }
 
 real64 PoroelasticSolver::SplitOperatorStep( real64 const& time_n,

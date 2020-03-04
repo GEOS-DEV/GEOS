@@ -708,8 +708,8 @@ void CompositionalMultiphaseFlow::AssembleSystem( real64 const time_n,
 {
   GEOSX_MARK_FUNCTION;
 
-  matrix.zero();
-  rhs.zero();
+//  matrix.zero();
+//  rhs.zero();
 
   matrix.open();
   rhs.open();

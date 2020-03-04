@@ -998,8 +998,8 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARA
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const dPres =
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>("deltaPressure");
 
-  matrix.zero();
-  rhs.zero();
+//  matrix.zero();
+//  rhs.zero();
 
   matrix.open();
   rhs.open();

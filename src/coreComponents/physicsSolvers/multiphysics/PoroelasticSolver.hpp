@@ -44,6 +44,13 @@ public:
 
   virtual void RegisterDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
 
+
+  virtual void SetupSystem( DomainPartition * const domain,
+                            DofManager & dofManager,
+                            ParallelMatrix & matrix,
+                            ParallelVector & rhs,
+                            ParallelVector & solution ) override;
+
   virtual void SetupDofs( DomainPartition const * const domain,
                           DofManager & dofManager ) const override;
 
@@ -55,6 +62,19 @@ public:
                      ParallelMatrix & matrix,
                      ParallelVector & rhs,
                      ParallelVector & solution ) override final;
+
+  virtual void AssembleSystem( real64 const time,
+                               real64 const dt,
+                               DomainPartition * const domain,
+                               DofManager const & dofManager,
+                               ParallelMatrix & matrix,
+                               ParallelVector & rhs ) override;
+
+  void AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
+                                                   DofManager const & dofManager,
+                                                   ParallelMatrix & matrix,
+                                                   ParallelVector & rhs );
+
 
   virtual void
   ImplicitStepComplete( real64 const & time_n,
