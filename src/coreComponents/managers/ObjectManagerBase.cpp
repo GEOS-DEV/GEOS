@@ -29,11 +29,14 @@ ObjectManagerBase::ObjectManagerBase( std::string const & name,
   Group( name, parent ),
   m_sets( groupKeyStruct::setsString, this ),
   m_localToGlobalMap(),
-  m_globalToLocalMap()
+  m_globalToLocalMap(),
+  m_isExternal(),
+  m_ghostRank(),
+  m_neighborGroup( groupKeyStruct::neighborDataString, this ),
+  m_neighborData()
 {
-
   RegisterGroup( groupKeyStruct::setsString, &m_sets, false );
-  RegisterGroup( m_ObjectManagerBaseGroupKeys.neighborData );
+  RegisterGroup( groupKeyStruct::neighborDataString, &m_neighborGroup, false );
 
   registerWrapper( viewKeyStruct::localToGlobalMapString, &m_localToGlobalMap, false )->
     setApplyDefaultValue( -1 )->
@@ -323,7 +326,7 @@ localIndex ObjectManagerBase::Unpack( buffer_unit_type const * & buffer,
   localIndex unpackedSize = 0;
   string groupName;
   unpackedSize += bufferOps::Unpack( buffer, groupName );
-  GEOSX_ERROR_IF( groupName != this->getName(), "ObjectManagerBase::Unpack(): group names do not match" );
+  GEOSX_ERROR_IF_NE( groupName, this->getName() );
 
   int sendingRank;
   unpackedSize += bufferOps::Unpack( buffer, sendingRank );
@@ -335,7 +338,7 @@ localIndex ObjectManagerBase::Unpack( buffer_unit_type const * & buffer,
 
     string wrappersLabel;
     unpackedSize += bufferOps::Unpack( buffer, wrappersLabel );
-    GEOSX_ERROR_IF( wrappersLabel != "Wrappers", "ObjectManagerBase::Unpack(): wrapper label incorrect" );
+    GEOSX_ERROR_IF_NE( wrappersLabel, "Wrappers" );
 
     localIndex numWrappers;
     unpackedSize += bufferOps::Unpack( buffer, numWrappers );
@@ -355,15 +358,14 @@ localIndex ObjectManagerBase::Unpack( buffer_unit_type const * & buffer,
   {
     string subGroups;
     unpackedSize += bufferOps::Unpack( buffer, subGroups );
-    GEOSX_ERROR_IF( subGroups != "SubGroups", "Group::Unpack(): group names do not match" );
+    GEOSX_ERROR_IF_NE( subGroups, "SubGroups" );
 
     decltype( this->GetSubGroups().size()) numSubGroups;
     unpackedSize += bufferOps::Unpack( buffer, numSubGroups );
-    GEOSX_ERROR_IF( numSubGroups != this->GetSubGroups().size(), "Group::Unpack(): incorrect number of subGroups" );
+    GEOSX_ERROR_IF_NE( numSubGroups, this->GetSubGroups().size() );
 
-    for( auto const & index : this->GetSubGroups() )
+    for( localIndex i = 0; i < this->numSubGroups(); ++i )
     {
-      GEOSX_UNUSED_VAR( index );
       string subGroupName;
       unpackedSize += bufferOps::Unpack( buffer, subGroupName );
       unpackedSize += this->GetGroup( subGroupName )->Unpack( buffer, packList, recursive, on_device );
@@ -371,7 +373,7 @@ localIndex ObjectManagerBase::Unpack( buffer_unit_type const * & buffer,
   }
 
   unpackedSize += bufferOps::Unpack( buffer, groupName );
-  GEOSX_ERROR_IF( groupName != this->getName(), "ObjectManagerBase::Unpack(): group names do not match" );
+  GEOSX_ERROR_IF_NE( groupName, this->getName() );
 
   return unpackedSize;
 }
@@ -757,21 +759,17 @@ localIndex ObjectManagerBase::GetNumberOfLocalIndices() const
 
 void ObjectManagerBase::SetReceiveLists()
 {
-  map< int, localIndex_array >  receiveIndices;
+  for( std::pair< int const, NeighborData & > & pair : m_neighborData )
+  {
+    pair.second.ghostsToReceive().clear();
+  }
+
   for( localIndex a=0; a<size(); ++a )
   {
     if( m_ghostRank[a] > -1 )
     {
-      receiveIndices[m_ghostRank[a]].push_back( a );
+      getNeighborData( m_ghostRank[ a ] ).ghostsToReceive().push_back( a );
     }
-  }
-
-  for( map< int, localIndex_array >::const_iterator iter=receiveIndices.begin(); iter!=receiveIndices.end(); ++iter )
-  {
-    Group * const neighborData = GetGroup( m_ObjectManagerBaseGroupKeys.neighborData )->GetGroup( std::to_string( iter->first ) );
-
-    localIndex_array & nodeAdjacencyList = neighborData->getReference< localIndex_array >( m_ObjectManagerBaseViewKeys.ghostsToReceive );
-    nodeAdjacencyList = iter->second;
   }
 }
 
@@ -779,7 +777,6 @@ integer ObjectManagerBase::SplitObject( localIndex const indexToSplit,
                                         int const GEOSX_UNUSED_PARAM( rank ),
                                         localIndex & newIndex )
 {
-
   // if the object index has a zero sized childIndices entry, then this object can be split into two
   // new objects
 
