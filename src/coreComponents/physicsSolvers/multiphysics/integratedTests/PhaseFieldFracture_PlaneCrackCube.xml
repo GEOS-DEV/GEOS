@@ -48,20 +48,20 @@
                   cellBlockNames="{cb1}"/>
   </Mesh>
 
-  <Events maxTime="1.0">
+  <Events maxTime="15.0">
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
     <PeriodicEvent name="solverApplications"
-                   forceDt="0.2"
+                   forceDt="1"
                    target="/Solvers/PhaseFieldSolve" />
 
     <!-- This event is applied every 1.0s.  The targetExactTimestep
     flag allows this event to request a dt modification to match an
     integer multiple of the timeFrequency. -->
     <PeriodicEvent name="outputs"
-                   timeFrequency="0.2"
+                   timeFrequency="1"
                    targetExactTimestep="1"
-                   target="/Outputs/VTKOutput" />
+                   target="/Outputs/PFCrack_VTKOutput" />
 
     <!-- <PeriodicEvent name="outputs"
                    timeFrequency="1.0"
@@ -108,14 +108,15 @@
                objectPath="nodeManager"
                fieldName="TotalDisplacement"
                component="0"
-               scale="-0.10"
+               scale="0"
                setNames="{xneg}"/>
 
     <FieldSpecification name="xconstraint1"
                objectPath="nodeManager"
                fieldName="TotalDisplacement"
                component="0"
-               scale="0.10"
+               scale="0.0000010"
+               functionName="f_b"
                setNames="{xpos}"/>
 
     <FieldSpecification name="yconstraint"
@@ -123,29 +124,30 @@
                fieldName="TotalDisplacement"
                component="1"
                scale="0.0"
-               setNames="{yneg, ypos}"/>
+               setNames="{xneg}"/>
 
     <FieldSpecification name="zconstraint"
                objectPath="nodeManager"
                fieldName="TotalDisplacement"
                component="2"
                scale="0.0"
-               setNames="{zneg, zpos}"/>
+               setNames="{xneg}"/>
 
-    <!-- <FieldSpecification name="pointSource"
-                        fieldName="Temperature"
+    <FieldSpecification name="pointSource"
+                        fieldName="Damage"
+                        initialCondition="0"
                         objectPath="nodeManager"
                         scale="1"
-                        setNames="{centerLine}"/> -->
+                        setNames="{centerLine}"/>
 
-    <FieldSpecification name="diffusionCoeff"
+    <!-- <FieldSpecification name="diffusionCoeff"
                         initialCondition="1"
                         setNames="{all}"
                         objectPath="ElementRegions"
                         fieldName="coeffField"
                         scale="2e3"
                         functionName="f_b"
-                        />
+                        /> -->
   </FieldSpecifications>
 
 
@@ -154,14 +156,14 @@
     symbolic math function should expect the variables to be given, and an expression that it will compile.
     A list of available functions is given here: https://github.com/kobalicek/mathpresso -->
     <SymbolicFunction name="f_b"
-                      inputVarNames="{elementCenter}"
-                      variableNames="{x, y, z}"
-                      expression="0"/>
+                      inputVarNames="{time}"
+                      variableNames="{t}"
+                      expression="t"/>
 
   </Functions>
   <Outputs>
     <!-- <Silo name="SiloOutput" parallelThreads="1" plotFileRoot="plot"/> -->
-    <VTK name="VTKOutput" parallelThreads="1" plotFileRoot="plot"/>
+    <VTK name="PFCrack_VTKOutput" parallelThreads="1" plotFileRoot="plot"/>
     <Restart name="restartOutput"/>
   </Outputs>
 
