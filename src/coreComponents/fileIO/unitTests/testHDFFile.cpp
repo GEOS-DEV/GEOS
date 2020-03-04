@@ -94,7 +94,9 @@ TEST( testHDFIO, PartialTabularIO )
   }
 }
 
-TEST( testHDFIO, PartialTabularIO_R1Tensor )
+//TEST( testHDFIO, IndexedPartialTabularIO )
+
+TEST( testHDFIO, WholeArrayTimeHistory )
 {
   srand(time(NULL));
   localIndex dims[DIM] = {0};
@@ -102,51 +104,20 @@ TEST( testHDFIO, PartialTabularIO_R1Tensor )
   {
     dims[dd] = rand();
   }
-  Array<R1Tensor, DIM> arr(rand());
-  array1d<IND_TYPE> ind_arr(rand() % dims[0]);
-  array2d<IND_TYPE> cmp_arr(3,DIM-1);
+  Array<ARR_TYPE, DIM> arr(rand());
 
   {
-    HDFFile file("arr_output");
-    HDFTableIO<decltype(arr)> table_out("Stress","s",0,ind_arr,cmp_arr,"nd");
-    table_out.OpenTable( file );
-    table_out.AppendRow( arr );
-    table_out.AppendRow( arr );
-
-    table_out.ClearFrom( 1 );
+    HDFFile file("arr_time_hist");
+    HDFTimeHistoryTable<decltype(arr)> time_hist("Scalar","scl",arr.size(),arr.size(0),0,"nd_");
+    time_hist.OpenTable( file );
+    time_hist.AppendRow( 0.3, arr );
+    time_hist.AppendRow( 0.5, arr );
+    time_hist.ClearFromTime( 0.4 );
   }
 
-  // check that there is only one row and that it has the correct content
-  {
-
-  }
 }
-
-//TEST( testHDFIO, IndexedPartialTabularIO )
-
-// TEST( testHDFIO, WholeTabularTimeHistory )
-// {
-//   srand(time(NULL));
-//   localIndex dims[DIM] = {0};
-//   for(integer dd = 0; dd < DIM; ++dd )
-//   {
-//     dims[dd] = rand();
-//   }
-//   Array<ARR_TYPE, DIM> arr(rand());
-
-//   {
-//     HDFFile file("arr_time_hist");
-//     HDFTimeHistoryTabular<decltype(arr)> time_hist(file);
-//     time_hist.CreateTable("Scalar","scl",arr.size(),arr.size(0),"nd_");
-//     //time_hist.LoadTableMeta("scl");
-//     time_hist.AppendRow("scl",0.1,arr);
-//     time_hist.AppendRow("scl",0.5,arr);
-//     time_hist.ClearFromTime("scl",0.4);
-//   }
-
-
-// }
 
 //TEST( testHDFIO, IndexedTabularTimeHistory )
 //TEST( testHDFIO, PartialTabularTimeHistory )
 //TEST( testHDFIO, IndexedPartialTimeHistory )
+//

@@ -15,8 +15,7 @@ constexpr bool can_hdf_io = std::is_same<std::remove_const_t<T>, real32>::value 
                             std::is_same<std::remove_const_t<T>, real64>::value ||
                             std::is_same<std::remove_const_t<T>, integer>::value ||
                             std::is_same<std::remove_const_t<T>, localIndex>::value ||
-                            std::is_same<std::remove_const_t<T>, globalIndex>::value ||
-                            is_tensorT< T >;
+                            std::is_same<std::remove_const_t<T>, globalIndex>::value;
 
 template < typename T >
 hid_t GetHDFDataType();
@@ -523,11 +522,81 @@ template < typename T, int NDIM, typename PERMUTATION, typename INDEX_TYPE, temp
       _process_flatten(arr,flat_arr,cell_indexer,cmp_indexer,csd);
     }
   }
-}// internal namespace
 
-template < typename ARRAY_TYPE, typename ENABLE = void >
+}// impl namespace
+
+template < typename DATA_TYPE, typename ENABLE = void >
 class HDFTableIO;
 
+
+// this can only handle dense contiguous output at the moment, which is fine for time series
+template < typename DATA_TYPE >
+class HDFTableIO< DATA_TYPE, typename std::enable_if< can_hdf_io< DATA_TYPE > >::type >
+{
+public:
+  using value_type = DATA_TYPE;
+
+  HDFTableIO( string const & title,
+              string const & hdf_id,
+              localIndex const & num_cells,
+              localIndex const & cell_size,
+              string const & record_prefix  = "" ) :
+    m_is_open(false),
+    m_title(title),
+    m_hdf_id(hdf_id),
+    m_num_cells(num_cells),
+    m_cell_size(cell_size),
+    m_record_prefix(record_prefix)
+  { }
+
+  virtual void OpenTable( HDFTarget & target )
+  {
+    if ( !impl::TryOpen(target,m_hdf_id) )
+    {
+      impl::CreateTable<value_type>(target,m_title,m_hdf_id,m_cell_size,m_num_cells,m_record_prefix);
+    }
+    else
+    {
+      impl::VerifyTable(target,m_hdf_id,m_num_cells,m_cell_size);
+    }
+    m_is_open = true;
+    m_active_target = target;
+  }
+  virtual void AppendRow( value_type const * row )
+  {
+    // assert(m_is_open);
+    /// only supporting flat arrays at the moment
+    impl::AppendRow<value_type>(m_active_target,m_hdf_id,m_cell_size,m_num_cells,row);
+  }
+  virtual void ClearFrom( localIndex first_to_delete )
+  {
+    //assert(m_is_open);
+    impl::ClearFrom(m_active_target,m_hdf_id,first_to_delete);
+  }
+  template < typename LAMBDA >
+  // sfinae lambda returns bool, accepts value_type*
+  localIndex ColSearch( localIndex col_idx , LAMBDA && cond)
+  {
+    //assert(m_is_open);
+    return impl::ColSearch<value_type>(m_active_target,m_hdf_id,col_idx,m_cell_size,cond);
+  }
+  virtual void CloseTable( )
+  {
+    m_is_open = false;
+  }
+
+private:
+
+  bool m_is_open;
+  string const m_title;
+  string const m_hdf_id;
+  hsize_t m_num_cells;
+  hsize_t m_cell_size;
+  string const m_record_prefix;
+  HDFTarget m_active_target;
+};
+
+// specialization for LvArrays containing types we're able to output with hdf
 template < typename T, int NDIM, typename PERMUTATION, typename INDEX_TYPE, template< typename > class DATA_VECTOR_TYPE >
 class HDFTableIO< LvArray::Array< T, NDIM, PERMUTATION, INDEX_TYPE, DATA_VECTOR_TYPE >, typename std::enable_if< can_hdf_io< T > >::type >
 {
@@ -633,13 +702,13 @@ public:
 
   virtual void OpenTable( HDFTarget & target )
   {
-    if ( !impl::TryOpen(m_active_target,m_hdf_id) )
+    if ( !impl::TryOpen(target,m_hdf_id) )
     {
-      impl::CreateTable<value_type>(m_active_target,m_title,m_hdf_id,m_cell_size,m_num_cells,m_record_prefix);
+      impl::CreateTable<value_type>(target,m_title,m_hdf_id,m_cell_size,m_num_cells,m_record_prefix);
     }
     else
     {
-      impl::VerifyTable(m_active_target,m_hdf_id,m_num_cells,m_cell_size);
+      impl::VerifyTable(target,m_hdf_id,m_num_cells,m_cell_size);
     }
     m_is_open = true;
     m_active_target = target;
@@ -657,7 +726,7 @@ public:
   }
   template < typename LAMBDA >
   // sfinae lambda returns bool, accepts value_type*
-  void ColSearch( localIndex col_idx , LAMBDA && cond)
+  localIndex ColSearch( localIndex col_idx , LAMBDA && cond)
   {
     //assert(m_is_open);
     return impl::ColSearch<value_type>(m_active_target,m_hdf_id,col_idx,m_cell_size,cond);
@@ -667,7 +736,7 @@ public:
     m_is_open = false;
   }
 
-private:
+protected:
 
   void _reserve()
   {
@@ -679,9 +748,7 @@ private:
     m_internal_copy.swap(flat_array_type());
   }
 
-
   bool m_is_open;
-
   string const m_title;
   string const m_hdf_id;
   localIndex const m_csd;
@@ -691,9 +758,108 @@ private:
   hsize_t m_cell_size;
   string const m_record_prefix;
   flat_array_type m_internal_copy;
-
   HDFTarget m_active_target;
 };
+
+template < typename DATA_TYPE >
+class HDFTimeHistoryTable;
+
+template < typename T, int NDIM, typename PERMUTATION, typename INDEX_TYPE, template< typename > class DATA_VECTOR_TYPE >
+class HDFTimeHistoryTable< LvArray::Array< T, NDIM, PERMUTATION, INDEX_TYPE, DATA_VECTOR_TYPE > > : public HDFTableIO< LvArray::Array< T, NDIM, PERMUTATION, INDEX_TYPE, DATA_VECTOR_TYPE >, typename std::enable_if< can_hdf_io< T > >::type >
+{
+public:
+  using Super = HDFTableIO< LvArray::Array< T, NDIM, PERMUTATION, INDEX_TYPE, DATA_VECTOR_TYPE >, typename std::enable_if< can_hdf_io< T > >::type >;
+  using typename Super::array_type;
+  using typename Super::index_array_type;
+  using typename Super::comp_array_type;
+  using typename Super::flat_array_type;
+  using typename Super::value_type;
+
+  HDFTimeHistoryTable( string const & title,
+              string const & hdf_id,
+              INDEX_TYPE const & num_cells,
+              localIndex const & cell_size,
+              localIndex const csd = 0,
+              string const & record_prefix  = "" ) :
+    Super(title,hdf_id,num_cells,cell_size,csd,record_prefix),
+    m_time_table(GenTimeTitle(title),GenTimeID(hdf_id),1,1)
+  {}
+
+  HDFTimeHistoryTable( string const & title,
+              string const & hdf_id,
+              index_array_type const & idxs,
+              localIndex const & cell_size,
+              localIndex const csd = 0 ,
+              string const & record_prefix = "" ) :
+    Super(title,hdf_id,idxs,cell_size,csd,record_prefix),
+    m_time_table(GenTimeTitle(title),GenTimeID(hdf_id),1,1)
+  {}
+
+  HDFTimeHistoryTable( string const & title,
+              string const & hdf_id,
+              INDEX_TYPE const & num_cells,
+              comp_array_type const & cmps,
+              localIndex const csd = 0,
+              string const & record_prefix = "" ) :
+    Super(title,hdf_id,num_cells,cmps,csd,record_prefix),
+    m_time_table(GenTimeTitle(title),GenTimeID(hdf_id),1,1)
+  {}
+
+  HDFTimeHistoryTable( string const & title,
+              string const & hdf_id,
+              localIndex const csd,
+              index_array_type const & idxs,
+              comp_array_type const & cmps,
+              string const & record_prefix = "" ) :
+    Super(title,hdf_id,idxs,cmps,csd,record_prefix),
+    m_time_table(GenTimeTitle(title),GenTimeID(hdf_id),1,1)
+  {}
+
+  virtual void OpenTable( HDFTarget & target )
+  {
+    Super::OpenTable(target);
+    m_time_table.OpenTable(target);
+  }
+  virtual void AppendRow( real64 time, array_type const & row )
+  {
+    Super::AppendRow(row);
+    m_time_table.AppendRow(&time);
+  }
+
+  virtual void ClearFromRow( localIndex first_to_clear )
+  {
+    //assert(m_is_open);
+    Super::ClearFrom(first_to_clear);
+    m_time_table.ClearFrom(first_to_clear);
+  }
+
+  localIndex FirstRowTimeGE( real64 const time )
+  {
+    return m_time_table.ColSearch(0,[&](real64 * col_time) { return time >= *col_time; });
+  }
+
+  bool ClearFromTime( real64 const time )
+  {
+    localIndex first = FirstRowTimeGE(time);
+    bool did_clear = (first >= 0);
+    if ( did_clear ) ClearFromRow(first);
+    return did_clear;
+  }
+
+  virtual void CloseTable( )
+  {
+    Super::CloseTable( );
+    m_time_table.CloseTable( );
+  }
+
+private:
+  //disallow appending to the data table without also appending to the time table
+  using Super::AppendRow;
+  static string GenTimeID(string const & id) { return id + string("_t"); }
+  static string GenTimeTitle(string const & title) { return title + string(" Time"); }
+  HDFTableIO<real64> m_time_table;
+};
+
 
 
 
