@@ -38,11 +38,13 @@ TEST( testHDFIO, WholeTabularIO )
   // Array<IND_TYPE, 1> ind_arr(rand() % dims[0]);
 
   {
-    HDFFile file("arr_output");
-    HDFTabularIO<decltype(arr)> table_out(file);
-    table_out.CreateTable("Scalar","scl",arr.size(),arr.size(0),"nd_");
-    table_out.AppendRow("scl",arr);
+    HDFFile file("whole_array");
+    HDFTableIO<decltype(arr)> table_out("Array1","arr1",arr.size( ),arr.size( 0 ),0,"nd_");
+    table_out.OpenTable( file );
+    table_out.AppendRow( arr );
+    table_out.CloseTable( );
   }
+
 }
 
 TEST( testHDFIO, IndexedTabularIO )
@@ -58,10 +60,8 @@ TEST( testHDFIO, IndexedTabularIO )
   Array<IND_TYPE, 1> ind_arr(rand() % dims[0]);
 
   {
-    HDFFile file("arr_output");
-    HDFTabularIO<decltype(arr),decltype(ind_arr)> table_out(file);
-    table_out.CreateTable("Scalar","scl",arr.size(0),ind_arr.size(),ind_arr,"nd_");
-    table_out.AppendRow("scl",arr,ind_arr);
+    HDFFile file("indexed_array");
+    HDFTableIO<decltype(arr)> table_out("Array1","arr1",ind_arr,arr.size( 0 ),0,"nd_");
   }
 }
 
@@ -124,28 +124,28 @@ TEST( testHDFIO, PartialTabularIO_R1Tensor )
 
 //TEST( testHDFIO, IndexedPartialTabularIO )
 
-TEST( testHDFIO, WholeTabularTimeHistory )
-{
-  srand(time(NULL));
-  localIndex dims[DIM] = {0};
-  for(integer dd = 0; dd < DIM; ++dd )
-  {
-    dims[dd] = rand();
-  }
-  Array<ARR_TYPE, DIM> arr(rand());
+// TEST( testHDFIO, WholeTabularTimeHistory )
+// {
+//   srand(time(NULL));
+//   localIndex dims[DIM] = {0};
+//   for(integer dd = 0; dd < DIM; ++dd )
+//   {
+//     dims[dd] = rand();
+//   }
+//   Array<ARR_TYPE, DIM> arr(rand());
 
-  {
-    HDFFile file("arr_time_hist");
-    HDFTimeHistoryTabular<decltype(arr)> time_hist(file);
-    time_hist.CreateTable("Scalar","scl",arr.size(),arr.size(0),"nd_");
-    //time_hist.LoadTableMeta("scl");
-    time_hist.AppendRow("scl",0.1,arr);
-    time_hist.AppendRow("scl",0.5,arr);
-    time_hist.ClearFromTime("scl",0.4);
-  }
+//   {
+//     HDFFile file("arr_time_hist");
+//     HDFTimeHistoryTabular<decltype(arr)> time_hist(file);
+//     time_hist.CreateTable("Scalar","scl",arr.size(),arr.size(0),"nd_");
+//     //time_hist.LoadTableMeta("scl");
+//     time_hist.AppendRow("scl",0.1,arr);
+//     time_hist.AppendRow("scl",0.5,arr);
+//     time_hist.ClearFromTime("scl",0.4);
+//   }
 
 
-}
+// }
 
 //TEST( testHDFIO, IndexedTabularTimeHistory )
 //TEST( testHDFIO, PartialTabularTimeHistory )

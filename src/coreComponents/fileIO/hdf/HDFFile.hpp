@@ -277,130 +277,338 @@ namespace impl
     H5TBget_table_info(target,id.c_str(),&num_cols,&num_rows);
     H5TBdelete_record(target,id.c_str(),row_idx,num_rows-row_idx);
   }
-}
 
-class HDFIO
-{
-public:
-  HDFIO(HDFTarget & target) : io_target(target) {}
-  virtual ~HDFIO() {}
-protected:
-  HDFTarget io_target;
-};
+/// herelper classes for iteratively indexing into lvarrays at runtime
+  // template < class INDEX_TYPE, int NDIM >
+  // class Indexer;
 
-template < class DATA_TYPE, class IDX_TYPE = std::nullptr_t, typename ENABLE = void >
-class HDFTabularIO;
-
-// writing out scalar types
-template < class DATA_TYPE >
-class HDFTabularIO<DATA_TYPE, std::nullptr_t, typename std::enable_if< can_hdf_io< DATA_TYPE > >::type> : public HDFIO
-{
-public:
-  HDFTabularIO(HDFTarget & target) : HDFIO(target), m_cell_size_map() {}
-  virtual ~HDFTabularIO() {}
-
-  virtual void CreateTable( string const & title,
-                            string const & id,
-                            localIndex const unit_per_cell,
-                            localIndex const num_cols,
-                            string const & record_prefix = "" )
+  template <class INDEX_TYPE, int NDIM >
+  class DenseIndexer
   {
-    impl::CreateTable<DATA_TYPE>(this->io_target,title,id,unit_per_cell,num_cols,record_prefix);
-    m_cell_size_map[id] = unit_per_cell;
-  }
-  virtual void AppendRow( string const & id,
-                          localIndex const num_cols,
-                          DATA_TYPE const * data)
+  public:
+    using index_array_type = array2d<INDEX_TYPE>;
+
+    template < typename ARRAY_TYPE, typename = typename std::enable_if< is_array<ARRAY_TYPE> >::type >
+    DenseIndexer( ARRAY_TYPE const & arr ) :
+      m_cmp(0),
+      m_bounds(0),
+      m_num_indices(0),
+      m_dim_index(0)
+    {
+      for( localIndex dd = 0; dd < NDIM; ++dd)
+      {
+        m_bounds[dd] = arr.size( dd );
+      }
+      m_num_indices = std::accumulate(m_bounds,m_bounds+NDIM,1,std::multiplies<INDEX_TYPE>());
+    }
+
+    template < typename ... BOUNDS >
+    DenseIndexer( BOUNDS const ... bounds ) :
+      m_cmp(0),
+      m_bounds({0}),
+      m_num_indices(0),
+      m_dim_index({0})
+    {
+      static_assert( sizeof ... (BOUNDS) == NDIM, "Error: calling DenseIndexer::DenseIndexer with incorrect number of arguments." );
+      LvArray::dimUnpack(&m_bounds[0],bounds...);
+      m_num_indices = std::accumulate(m_bounds.begin(),m_bounds.end(),1,std::multiplies<INDEX_TYPE>());
+    }
+    void next()
+    {
+      this->operator++();
+    }
+    bool done()
+    {
+      return m_cmp != getNumIndices();
+    }
+    void reset()
+    {
+      m_cmp = 0;
+      memset(&m_dim_index[0],0,sizeof(localIndex)*NDIM);
+    }
+    inline INDEX_TYPE operator()(localIndex dim)
+    {
+      return m_dim_index[dim];
+    }
+    inline localIndex operator++()
+    {
+      localIndex dim = NDIM - 1;
+      m_dim_index[dim]++;
+      while(m_dim_index[dim] >= m_bounds[0])
+      {
+        m_dim_index[dim] = 0;
+        dim--;
+        m_dim_index[dim]++;
+      }
+      return dim;
+    }
+    INDEX_TYPE getNumIndices()
+    {
+      return m_num_indices;
+    }
+  private:
+    localIndex m_cmp;
+    std::array<INDEX_TYPE, NDIM> m_bounds;
+    localIndex m_num_indices;
+    std::array<localIndex, NDIM> m_dim_index;
+  };
+
+  template <class INDEX_TYPE >
+  class DenseIndexer<INDEX_TYPE,0>
   {
-    impl::AppendRow(this->io_target,id,m_cell_size_map[id],num_cols,data);
-  }
+  public:
+    template < typename ARRAY_TYPE, typename = typename std::enable_if< is_array<ARRAY_TYPE> >::type >
+    DenseIndexer( ARRAY_TYPE const & ) : m_done(false) {}
+    template < typename ... BOUNDS >
+    DenseIndexer( BOUNDS const ... ) : m_done(false) {}
+    void next() { this->operator++(); };
+    bool done() { return m_done; }
+    void reset() { m_done = false; }
+    // should never be called
+    inline INDEX_TYPE operator()(localIndex) { return -1; }
+    inline localIndex operator++() { m_done = true; return 0; }
+    INDEX_TYPE getNumIndices() { return 0; }
+  private:
+    bool m_done;
+  };
 
-  template <typename SEARCH_LAMBDA>
-  // sfinae lamda callable, one input arg, bool return
-  localIndex ColSearch( string const & id,
-                        integer const col_idx,
-                        SEARCH_LAMBDA && cond )
+  template < class INDEX_TYPE, int NDIM >
+  class EnumeratedIndexer
   {
-    return impl::ColSearch<DATA_TYPE>(this->io_target,id,col_idx,m_cell_size_map[id],cond);
-  }
+  public:
+    using index_array_type = array2d<INDEX_TYPE>;
+    EnumeratedIndexer(index_array_type const & idxs) :
+      m_idxs(idxs),
+      m_cmp(0)
+    { }
+    void next()
+    {
+      this->operator++();
+    }
+    bool done()
+    {
+      return m_cmp != getNumIndices();
+    }
+    inline INDEX_TYPE operator()(localIndex dim)
+    {
+      return m_idxs[m_cmp][dim];
+    }
+    inline localIndex operator++()
+    {
+      return m_cmp++;
+    }
+    void reset()
+    {
+      m_cmp = 0;
+    }
+    INDEX_TYPE getNumIndices() { return m_idxs.size( 0 ); }
+  private:
+    array2d<INDEX_TYPE> const & m_idxs;
+    localIndex m_cmp;
+  };
 
-  virtual void ClearFrom( string const & id,
-                           localIndex const row_idx )
+  template < class INDEX_TYPE >
+  class EnumeratedIndexer<INDEX_TYPE,1>
   {
-    impl::ClearFrom(this->io_target,id,row_idx);
-  }
-private:
-  map<string,localIndex> m_cell_size_map;
-};
+  public:
+    using index_array_type = array1d<INDEX_TYPE>;
+    EnumeratedIndexer(index_array_type const & idxs) :
+      m_idxs(idxs),
+      m_cmp(0)
+    {}
+    void next()
+    {
+      this->operator++();
+    }
+    bool done()
+    {
+      return m_cmp != getNumIndices();
+    }
+    inline INDEX_TYPE operator()(localIndex)
+    {
+      return m_idxs[m_cmp];
+    }
+    inline localIndex operator++()
+    {
+      return m_cmp++;
+    }
+    void reset()
+    {
+      m_cmp = 0;
+    }
+    INDEX_TYPE getNumIndices() { return m_idxs.size( ); }
+  private:
+    array1d<INDEX_TYPE> const & m_idxs;
+    localIndex m_cmp;
+  };
 
-template < class DATA_TYPE, class IDX_TYPE >
-class HDFTabularIO<DATA_TYPE, IDX_TYPE, typename std::enable_if< can_hdf_io< DATA_TYPE > && std::is_integral< IDX_TYPE >::value >::type> : public HDFIO
-{
-public:
-  HDFTabularIO(HDFTarget & target) : HDFIO(target), m_cell_size_map() {}
-  virtual ~HDFTabularIO() {}
-
-  virtual void CreateTable( string const & title,
-                            string const & id,
-                            localIndex const unit_per_cell,
-                            localIndex const num_cols,
-                            IDX_TYPE const * idxs,
-                            string const & record_prefix = "" )
+template< int U, typename T, int NDIM, int USD, typename INDEX_TYPE, typename LAMBDA >
+  inline
+  typename std::enable_if< ( U >= 0 ) && (U < NDIM-1), T const & >::type
+  _index(LvArray::ArraySlice<T,NDIM,USD,INDEX_TYPE> const & slice, LAMBDA indexer )
   {
-    impl::CreateTable<DATA_TYPE,IDX_TYPE>(this->io_target,title,id,unit_per_cell,num_cols,idxs,record_prefix);
-    m_cell_size_map[id] = unit_per_cell;
+    return _index<U+1>(slice[indexer(U)],indexer);
   }
 
-  virtual void AppendRow( string const & id,
-                          DATA_TYPE const * data,
-                          localIndex const num_cols,
-                          IDX_TYPE const * idxs = nullptr )
+template< int U, typename T, int NDIM, int USD, typename INDEX_TYPE, typename LAMBDA >
+  inline
+  typename std::enable_if< ( U >= 0 ) && (U >= NDIM-1), T const & >::type
+  _index(LvArray::ArraySlice<T,NDIM,USD,INDEX_TYPE> const & slice, LAMBDA indexer )
   {
-    impl::AppendRow(this->io_target,id,m_cell_size_map[id],num_cols,data,idxs);
+    return slice[indexer(U)];
   }
 
-  template <typename SEARCH_LAMBDA>
-  // sfinae lamda callable, one input arg, bool return
-  localIndex ColSearch( string const & id,
-                        integer const col_idx,
-                        SEARCH_LAMBDA && cond )
+template< int U, typename T, int NDIM, typename PERMUTATION, typename INDEX_TYPE, template< typename > class DATA_VECTOR_TYPE, typename LAMBDA >
+  inline
+  typename std::enable_if< ( U >= 0 ) && (U < NDIM-1), T const & >::type
+  _index(LvArray::Array< T, NDIM, PERMUTATION, INDEX_TYPE, DATA_VECTOR_TYPE > const & slice, LAMBDA indexer )
   {
-    return impl::ColSearch<DATA_TYPE>(this->io_target,id,col_idx,m_cell_size_map[id],cond);
+    return _index<U+1>(slice[indexer(U)],indexer);
   }
 
-  virtual void ClearFrom( string const & id,
-                           localIndex const row_idx )
+template< int U, typename T, int NDIM, typename PERMUTATION, typename INDEX_TYPE, template< typename > class DATA_VECTOR_TYPE, typename LAMBDA >
+  inline
+  typename std::enable_if< ( U >= 0 ) && (U >= NDIM-1), T const & >::type
+  _index(LvArray::Array< T, NDIM, PERMUTATION, INDEX_TYPE, DATA_VECTOR_TYPE > const & slice, LAMBDA indexer )
   {
-    impl::ClearFrom(this->io_target,id,row_idx);
+    return slice[indexer(U)];
   }
 
-protected:
-  map<string,localIndex> m_cell_size_map;
-};
+template < typename T, int NDIM, typename PERMUTATION, typename INDEX_TYPE, template< typename > class DATA_VECTOR_TYPE , class FLAT_TYPE, class CELL_INDEXER, class COMP_INDEXER >
+  inline void _process_flatten( LvArray::Array< T, NDIM, PERMUTATION, INDEX_TYPE, DATA_VECTOR_TYPE > const & arr,
+                                FLAT_TYPE & flat_arr,
+                                CELL_INDEXER & cell_indexer,
+                                COMP_INDEXER & comp_indexer,
+                                localIndex csd = 0)
+  {
+    localIndex offset = 0;
+    for( cell_indexer.reset(); !cell_indexer.done(); ++cell_indexer )
+    {
+      for(comp_indexer.reset(); !comp_indexer.done(); ++comp_indexer )
+      {
+        flat_arr[offset++] = _index<0>(arr,[&](localIndex dim) { return (dim == csd) ? cell_indexer(0) : comp_indexer(dim > csd ? dim-1 : dim);});
+      }
+    }
+  }
 
-// if we want to take whole chunks of data, we must want all indices < the cell stride index
-
-//#define HDF_SLICE -2
+  template < typename T, int NDIM, typename PERMUTATION, typename INDEX_TYPE, template< typename > class DATA_VECTOR_TYPE >
+  void FlattenArray( LvArray::Array< T, NDIM, PERMUTATION, INDEX_TYPE, DATA_VECTOR_TYPE > const & arr,
+                     array1d< T > & flat_arr,
+                     array1d<INDEX_TYPE> & idxs,
+                     array2d<INDEX_TYPE> & cmps,
+                     localIndex const csd = 0)
+  {
+    if ( idxs.size( ) > 0 && cmps.size( ) == 0 )
+    {
+      EnumeratedIndexer<INDEX_TYPE,1> cell_indexer(idxs);
+      DenseIndexer<INDEX_TYPE,NDIM-1> cmp_indexer(arr);
+      _process_flatten(arr,flat_arr,cell_indexer,cmp_indexer,csd);
+    }
+    else if( idxs.size( ) > 0 && cmps.size( ) > 0 )
+    {
+      EnumeratedIndexer<INDEX_TYPE,1> cell_indexer(idxs);
+      EnumeratedIndexer<INDEX_TYPE,NDIM-1> cmp_indexer(cmps);
+      _process_flatten(arr,flat_arr,cell_indexer,cmp_indexer,csd);
+    }
+    else if( idxs.size( ) == 0 && cmps.size( ) > 0 )
+    {
+      DenseIndexer<INDEX_TYPE,1> cell_indexer(arr.size(csd));
+      EnumeratedIndexer<INDEX_TYPE,NDIM-1> cmp_indexer(cmps);
+      _process_flatten(arr,flat_arr,cell_indexer,cmp_indexer,csd);
+    }
+    else if( idxs.size( ) == 0 && cmps.size( ) == 0)
+    {
+      DenseIndexer<INDEX_TYPE,1> cell_indexer(arr.size(csd));
+      DenseIndexer<INDEX_TYPE,NDIM-1> cmp_indexer(cmps);
+      _process_flatten(arr,flat_arr,cell_indexer,cmp_indexer,csd);
+    }
+  }
+}// internal namespace
 
 template < typename ARRAY_TYPE, typename ENABLE = void >
 class HDFTableIO;
-
 
 template < typename T, int NDIM, typename PERMUTATION, typename INDEX_TYPE, template< typename > class DATA_VECTOR_TYPE >
 class HDFTableIO< LvArray::Array< T, NDIM, PERMUTATION, INDEX_TYPE, DATA_VECTOR_TYPE >, typename std::enable_if< can_hdf_io< T > >::type >
 {
 public:
   using array_type = LvArray::Array< T, NDIM, PERMUTATION, INDEX_TYPE, DATA_VECTOR_TYPE >;
-  using index_type = array1d< INDEX_TYPE >;
-  using component_type = array2d< INDEX_TYPE >;
+  using index_array_type = array1d< INDEX_TYPE >;
+  using comp_array_type = array2d< INDEX_TYPE >;
+  using flat_array_type = array1d< T >;
   using value_type = typename array_type::value_type;
 
   HDFTableIO( string const & title,
               string const & hdf_id,
+              INDEX_TYPE const & num_cells,
+              localIndex const & cell_size,
+              localIndex const csd = 0,
+              string const & record_prefix  = "" ) :
+  m_is_open(false),
+  m_title(title),
+  m_hdf_id(hdf_id),
+  m_csd(csd),
+  m_idxs(),
+  m_cmps(),
+  m_num_cells(num_cells),
+  m_cell_size(cell_size),
+  m_record_prefix(record_prefix),
+  m_internal_copy()
+  {
+    _reserve();
+  }
+
+  HDFTableIO( string const & title,
+              string const & hdf_id,
+              index_array_type const & idxs,
+              localIndex const & cell_size,
+              localIndex const csd = 0 ,
+              string const & record_prefix = "" ) :
+  m_is_open(false),
+  m_title(title),
+  m_hdf_id(hdf_id),
+  m_csd(csd),
+  m_idxs(idxs),
+  m_cmps(),
+  m_num_cells(0),
+  m_cell_size(cell_size),
+  m_record_prefix(record_prefix),
+  m_internal_copy()
+  {
+    m_num_cells = m_idxs.size( );
+
+    _reserve();
+  }
+
+  HDFTableIO( string const & title,
+              string const & hdf_id,
+              INDEX_TYPE const & num_cells,
+              comp_array_type const & cmps,
+              localIndex const csd = 0,
+              string const & record_prefix = "" ) :
+    m_is_open(false),
+    m_title(title),
+    m_hdf_id(hdf_id),
+    m_csd(csd),
+    m_idxs(),
+    m_cmps(cmps),
+    m_num_cells(num_cells),
+    m_cell_size(1),
+    m_record_prefix(record_prefix),
+    m_internal_copy()
+  {
+    // num indices speced for each cell
+    m_cell_size = m_cmps.size( 0 );
+
+    _reserve();
+  }
+
+  HDFTableIO( string const & title,
+              string const & hdf_id,
               localIndex const csd,
-              index_type const & idxs,
-              component_type const & cmps,
-              string const & record_prefix = "") :
+              index_array_type const & idxs,
+              comp_array_type const & cmps,
+              string const & record_prefix = "" ) :
     m_is_open(false),
     m_title(title),
     m_hdf_id(hdf_id),
@@ -418,7 +626,7 @@ public:
     // num indices speced for each cell
     m_cell_size = m_cmps.size( 0 );
 
-    m_internal_copy.reserve(m_num_cells * m_cell_size);
+    _reserve();
   }
 
   virtual ~HDFTableIO() {}
@@ -439,7 +647,7 @@ public:
   virtual void AppendRow( array_type const & row )
   {
     // assert(m_is_open);
-    _update_internal_copy(row);
+    impl::FlattenArray(row,m_internal_copy,m_idxs,m_cmps,m_csd);
     impl::AppendRow<value_type>(m_active_target,m_hdf_id,m_cell_size,m_num_cells,m_internal_copy.data());
   }
   virtual void ClearFrom( localIndex first_to_delete )
@@ -461,186 +669,90 @@ public:
 
 private:
 
-  template < int U, class SLICE, class LAMBDA >
-  inline
-  typename std::enable_if< (U < NDIM-1), T const & >::type
-  _index(SLICE & slice, LAMBDA indexer )
+  void _reserve()
   {
-    return _index<U+1>(slice[indexer(U)],indexer);
+    m_internal_copy.reserve(m_num_cells * m_cell_size);
   }
 
-  template < int U, class SLICE, class LAMBDA >
-  inline
-  typename std::enable_if< (U >= NDIM-1), T const & >::type
-  _index(SLICE & slice, LAMBDA indexer )
+  void _release()
   {
-    return slice[indexer(U)];
+    m_internal_copy.swap(flat_array_type());
   }
 
-  void _update_internal_copy( array_type const & row )
-  {
-    localIndex offset = 0;
-    for( hsize_t cell = 0; cell < m_num_cells; ++cell )
-    {
-      for ( localIndex cmp = 0; cmp < m_cmps.size( 0 ); ++cmp)
-      {
-        m_internal_copy[offset++] = _index<0>(row,[&](localIndex dim) { return (dim == m_csd) ? m_idxs[cell] : m_cmps[cmp][ dim > m_csd ? dim : dim-1 ]; });
-      }
-    }
-  }
 
   bool m_is_open;
 
   string const m_title;
   string const m_hdf_id;
   localIndex const m_csd;
-  index_type m_idxs;
-  component_type m_cmps;
+  index_array_type m_idxs;
+  comp_array_type m_cmps;
   hsize_t m_num_cells;
   hsize_t m_cell_size;
   string const m_record_prefix;
-  array1d< T > m_internal_copy;
+  flat_array_type m_internal_copy;
 
   HDFTarget m_active_target;
 };
 
-template < class DATA_ARR_T >
-class HDFTabularIO<DATA_ARR_T, std::nullptr_t, typename std::enable_if< is_array<DATA_ARR_T> && can_hdf_io<typename DATA_ARR_T::value_type> >::type > : public HDFIO
-{
-public:
-  using value_type = typename DATA_ARR_T::value_type;
-
-  HDFTabularIO(HDFTarget & target) : HDFIO(target), m_cell_size_map() {}
-  virtual ~HDFTabularIO() {}
-
-  virtual void CreateTable(string const & title,
-                           string const & id,
-                           localIndex const num_cols,
-                           localIndex const unit_per_cell = 1,
-                           string const & record_prefix = "" )
-  {
-    impl::CreateTable<value_type>(this->io_target,title,id,unit_per_cell,num_cols,record_prefix);
-    m_cell_size_map[id] = unit_per_cell;
-  }
-
-  void AppendRow(string const & id,
-                 DATA_ARR_T const & array)
-  {
-    localIndex num_cols = array.size();
-    impl::AppendRow<value_type>(this->io_target,id,m_cell_size_map[id],num_cols,array.data());
-  }
-
-  void ClearFrom(string const & id,
-                  localIndex const row_idx)
-  {
-    impl::ClearFrom(this->io_target,id,row_idx);
-  }
-
-private:
-  map<string,localIndex> m_cell_size_map;
-};
-
-// currently assumes standard c array ordering
-template < class DATA_ARR_T, class IDX_ARR_T >
-//sfinae todo: idx_arr_t dim = 1 for single-level indexing, dim = 2 for sub-indexing
-class HDFTabularIO<DATA_ARR_T, IDX_ARR_T, typename std::enable_if< is_array<DATA_ARR_T> &&
-                                                                   can_hdf_io<typename DATA_ARR_T::value_type> &&
-                                                                   is_array<IDX_ARR_T> &&
-                                                                   std::is_integral< typename IDX_ARR_T::value_type >::value >::type > : public HDFIO
-{
-public:
-  using value_type = typename DATA_ARR_T::value_type;
-  using index_type = typename IDX_ARR_T::value_type;
-
-  HDFTabularIO(HDFTarget & target) : HDFIO(target), m_cell_size_map() {}
-  virtual ~HDFTabularIO() {}
-
-  virtual void CreateTable( string const & title,
-                            string const & id,
-                            localIndex const unit_per_cell,
-                            localIndex const num_cols,
-                            IDX_ARR_T const & idxs,
-                            string const & record_prefix = "" )
-  {
-    impl::CreateTable<value_type,index_type>(this->io_target,title,id,unit_per_cell,num_cols,idxs.data(),record_prefix);
-    m_cell_size_map[id] = unit_per_cell;
-  }
-
-  void AppendRow(string const & id,
-                 DATA_ARR_T const & array,
-                 IDX_ARR_T const & idx)
-  {
-    localIndex num_cols = array.size();
-    impl::AppendRow<value_type,index_type>(this->io_target,id,m_cell_size_map[id],num_cols,array.data(),idx.data());
-  }
-
-  void ClearFrom(string const & id,
-                  localIndex const row_idx)
-  {
-    impl::ClearFrom(this->io_target,id,row_idx);
-  }
-
-private:
-  map<string,localIndex> m_cell_size_map;
-};
 
 
-template < class DATA_ARR_T, class IDX_ARR_T = std::nullptr_t >
-// the sfinae from the superclass should handle the sfinae here
-// execpt this could potentially be either the pointer or the array version
-// above, and the functions in those versions have different parameters, so we might need two
-// specializations of this class toooo
-class HDFTimeHistoryTabular : public HDFTabularIO<DATA_ARR_T,IDX_ARR_T>
-{
-public:
-  using Super = HDFTabularIO<DATA_ARR_T,IDX_ARR_T>;
-  using typename Super::value_type;
+// template < class DATA_ARR_T, class IDX_ARR_T = std::nullptr_t >
+// // the sfinae from the superclass should handle the sfinae here
+// // execpt this could potentially be either the pointer or the array version
+// // above, and the functions in those versions have different parameters, so we might need two
+// // specializations of this class toooo
+// class HDFTimeHistoryTabular : public HDFTabularIO<DATA_ARR_T,IDX_ARR_T>
+// {
+// public:
+//   using Super = HDFTabularIO<DATA_ARR_T,IDX_ARR_T>;
+//   using typename Super::value_type;
 
-  HDFTimeHistoryTabular( HDFTarget & target ) :
-    Super(target),
-    time_table(target)
-  { }
+//   HDFTimeHistoryTabular( HDFTarget & target ) :
+//     Super(target),
+//     time_table(target)
+//   { }
 
-  virtual void CreateTable( string const & title,
-                            string const & id,
-                            localIndex const num_cols,
-                            localIndex const type_per_cell = 1,
-                            string const & record_prefix = "" )
-  {
-    Super::CreateTable(title,id,num_cols,type_per_cell,record_prefix);
-    string ttitle = title + string(" Time");
-    string tid = GenTimeID(id);
-    time_table.CreateTable(ttitle,tid,1,1);
-    m_data_2_time_map[id] = tid;
-  }
-  // virtual void LoadTableMeta();
+//   virtual void CreateTable( string const & title,
+//                             string const & id,
+//                             localIndex const num_cols,
+//                             localIndex const type_per_cell = 1,
+//                             string const & record_prefix = "" )
+//   {
+//     Super::CreateTable(title,id,num_cols,type_per_cell,record_prefix);
+//     string ttitle = title + string(" Time");
+//     string tid = GenTimeID(id);
+//     time_table.CreateTable(ttitle,tid,1,1);
+//     m_data_2_time_map[id] = tid;
+//   }
+//   // virtual void LoadTableMeta();
 
-  virtual void AppendRow(string const & id,// localIndex const num_cols,
-                         real64 const time,
-                         DATA_ARR_T const & array)//,
-                         //localIndex const type_per_cell = 1)
-  {
-    Super::AppendRow(id,array);
-    time_table.AppendRow(m_data_2_time_map[id],1,&time);
-  }
+//   virtual void AppendRow(string const & id,// localIndex const num_cols,
+//                          real64 const time,
+//                          DATA_ARR_T const & array)//,
+//                          //localIndex const type_per_cell = 1)
+//   {
+//     Super::AppendRow(id,array);
+//     time_table.AppendRow(m_data_2_time_map[id],1,&time);
+//   }
 
-  bool ClearFromTime(string const & id, real64 const time)
-  {
-    localIndex first_to_clear = time_table.ColSearch(m_data_2_time_map[id],0,[&](real64 * col_time) { return time >= *col_time; });
-    bool do_clear = first_to_clear >= 0;
-    if ( do_clear )
-    {
-      Super::ClearFrom(id,first_to_clear);
-      time_table.ClearFrom(m_data_2_time_map[id],first_to_clear);
-    }
-    return do_clear;
-  }
+//   bool ClearFromTime(string const & id, real64 const time)
+//   {
+//     localIndex first_to_clear = time_table.ColSearch(m_data_2_time_map[id],0,[&](real64 * col_time) { return time >= *col_time; });
+//     bool do_clear = first_to_clear >= 0;
+//     if ( do_clear )
+//     {
+//       Super::ClearFrom(id,first_to_clear);
+//       time_table.ClearFrom(m_data_2_time_map[id],first_to_clear);
+//     }
+//     return do_clear;
+//   }
 
-private:
-  string GenTimeID(string const & data_id) { return data_id + string("_t"); }
-  map<string,string> m_data_2_time_map;
-  HDFTabularIO<real64> time_table;
-};
+// private:
+//   string GenTimeID(string const & data_id) { return data_id + string("_t"); }
+//   map<string,string> m_data_2_time_map;
+//   HDFTabularIO<real64> time_table;
+// };
 
 // (X) table that contains a whole array in a row
 // ( ) table that contains specific indices of an array in a row
