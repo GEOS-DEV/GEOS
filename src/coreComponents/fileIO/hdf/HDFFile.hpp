@@ -15,8 +15,8 @@ constexpr bool can_hdf_io = std::is_same<std::remove_const_t<T>, real32>::value 
                             std::is_same<std::remove_const_t<T>, real64>::value ||
                             std::is_same<std::remove_const_t<T>, integer>::value ||
                             std::is_same<std::remove_const_t<T>, localIndex>::value ||
-                            std::is_same<std::remove_const_t<T>, globalIndex>::value;
-
+                            std::is_same<std::remove_const_t<T>, globalIndex>::value ||
+                            is_tensorT< T >;
 
 template < typename T >
 hid_t GetHDFDataType();
@@ -43,6 +43,25 @@ hid_t GetHDFArrayDataType(hsize_t dim)
   return GetHDFArrayDataType<T>(1,&dim);
 }
 
+template <>
+hid_t GetHDFDataType<R1Tensor>()
+{
+  return GetHDFArrayDataType<real64>(3);
+}
+
+template <>
+hid_t GetHDFDataType<R2Tensor>()
+{
+  hsize_t dims[2] = {3,3};
+  return GetHDFArrayDataType<real64>(2,&dims[0]);
+}
+
+template <>
+hid_t GetHDFDataType<R2SymTensor>()
+{
+  return GetHDFArrayDataType<real64>(6);
+}
+
 class HDFTarget
 {
 public:
@@ -56,7 +75,16 @@ public:
     filename(fnm),
     file_id(0)
   {
-    file_id = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+    // check if file already exists
+    if( H5Fis_hdf5(filename.c_str() ) < 0 )
+    {
+      file_id = H5Fopen(filename.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
+    }
+    else
+    {
+      // this will fail if the file exists already
+      file_id = H5Fcreate(filename.c_str(), H5F_ACC_EXCL, H5P_DEFAULT, H5P_DEFAULT);
+    }
   }
   ~HDFFile()
   {

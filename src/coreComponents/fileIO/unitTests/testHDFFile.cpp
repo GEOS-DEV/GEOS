@@ -94,6 +94,34 @@ TEST( testHDFIO, PartialTabularIO )
   }
 }
 
+TEST( testHDFIO, PartialTabularIO_R1Tensor )
+{
+  srand(time(NULL));
+  localIndex dims[DIM] = {0};
+  for(integer dd = 0; dd < DIM; ++dd )
+  {
+    dims[dd] = rand();
+  }
+  Array<R1Tensor, DIM> arr(rand());
+  array1d<IND_TYPE> ind_arr(rand() % dims[0]);
+  array2d<IND_TYPE> cmp_arr(3,DIM-1);
+
+  {
+    HDFFile file("arr_output");
+    HDFTableIO<decltype(arr)> table_out("Stress","s",0,ind_arr,cmp_arr,"nd");
+    table_out.OpenTable( file );
+    table_out.AppendRow( arr );
+    table_out.AppendRow( arr );
+
+    table_out.ClearFrom( 1 );
+  }
+
+  // check that there is only one row and that it has the correct content
+  {
+
+  }
+}
+
 //TEST( testHDFIO, IndexedPartialTabularIO )
 
 TEST( testHDFIO, WholeTabularTimeHistory )
