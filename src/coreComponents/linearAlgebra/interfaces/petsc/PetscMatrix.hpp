@@ -189,16 +189,20 @@ public:
               PetscVector & dst ) const override;
 
   void multiply( PetscMatrix const & src,
-                 PetscMatrix & dst,
-                 bool const closeResult = true ) const override;
+                 PetscMatrix & dst ) const override;
 
   void leftMultiplyTranspose( PetscMatrix const & src,
-                              PetscMatrix & dst,
-                              bool const closeResult = true ) const override;
+                              PetscMatrix & dst ) const override;
 
   void rightMultiplyTranspose( PetscMatrix const & src,
-                               PetscMatrix & dst,
-                               bool const closeResult = true ) const override;
+                               PetscMatrix & dst ) const override;
+
+  void multiplyRAP( PetscMatrix const & R,
+                    PetscMatrix const & P,
+                    PetscMatrix & dst ) const override;
+
+  void multiplyPtAP( PetscMatrix const & P,
+                     PetscMatrix & dst ) const override;
 
   void gemv( real64 const alpha,
              PetscVector const & x,
@@ -218,7 +222,7 @@ public:
   void transpose( PetscMatrix & dst ) const override;
 
   void clearRow( globalIndex const globalRow,
-                 real64 const diagValue = 0 ) override;
+                 real64 const diagValue ) override;
 
   virtual localIndex maxRowLength() const override;
 

@@ -195,16 +195,20 @@ public:
               HypreVector & dst ) const override;
 
   void multiply( HypreMatrix const & src,
-                 HypreMatrix & dst,
-                 bool const closeResult = true ) const override;
+                 HypreMatrix & dst ) const override;
 
   void leftMultiplyTranspose( HypreMatrix const & src,
-                              HypreMatrix & dst,
-                              bool const closeResult = true ) const override;
+                              HypreMatrix & dst ) const override;
 
   void rightMultiplyTranspose( HypreMatrix const & src,
-                               HypreMatrix & dst,
-                               bool const closeResult = true ) const override;
+                               HypreMatrix & dst ) const override;
+
+  void multiplyRAP( HypreMatrix const & R,
+                    HypreMatrix const & P,
+                    HypreMatrix & dst ) const override;
+
+  void multiplyPtAP( HypreMatrix const & P,
+                     HypreMatrix & dst ) const override;
 
   void gemv( real64 const alpha,
              HypreVector const & x,
@@ -224,7 +228,7 @@ public:
   void transpose( HypreMatrix & dst ) const override;
 
   void clearRow( globalIndex const row,
-                 real64 const diagValue = 0 ) override;
+                 real64 const diagValue ) override;
 
   localIndex maxRowLength() const override;
 

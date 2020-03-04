@@ -519,8 +519,7 @@ protected:
    * the nonzero entries produced by the product this*B.
    */
   virtual void multiply( Matrix const & src,
-                         Matrix & dst,
-                         bool const closeResult = true ) const = 0;
+                         Matrix & dst ) const = 0;
 
   /**
    * @brief Matrix/Matrix transpose multiplication.
@@ -537,8 +536,7 @@ protected:
    * the nonzero entries produced by the product this*B.
    */
   virtual void leftMultiplyTranspose( Matrix const & src,
-                                      Matrix & dst,
-                                      bool const closeResult = true ) const = 0;
+                                      Matrix & dst ) const = 0;
 
   /**
    * @brief Matrix/Matrix transpose multiplication.
@@ -555,8 +553,46 @@ protected:
    * the nonzero entries produced by the product this*B.
    */
   virtual void rightMultiplyTranspose( Matrix const & src,
-                                       Matrix & dst,
-                                       bool const closeResult = true ) const = 0;
+                                       Matrix & dst ) const = 0;
+
+  /**
+   * @brief Compute the triple product <tt>dst = R * this * P</tt>
+   * @param R the "restriction" matrix
+   * @param P the "prolongation" matrix
+   * @param dst the resulting product matrix (will be re-created as needed)
+   */
+  virtual void multiplyRAP( Matrix const & R,
+                            Matrix const & P,
+                            Matrix & dst ) const
+  {
+    GEOSX_LAI_ASSERT( ready() );
+    GEOSX_LAI_ASSERT( R.ready() );
+    GEOSX_LAI_ASSERT( P.ready() );
+    GEOSX_LAI_ASSERT_EQ( numGlobalRows(), R.numGlobalCols() );
+    GEOSX_LAI_ASSERT_EQ( numGlobalCols(), P.numGlobalRows() );
+
+    Matrix AP;
+    multiply( P, AP );
+    R.multiply( AP, dst );
+  }
+
+  /**
+   * @brief Compute the triple product <tt>dst = P^T * this * P</tt>
+   * @param P the "prolongation" matrix
+   * @param dst the resulting product matrix (will be re-created as needed)
+   */
+  virtual void multiplyPtAP( Matrix const & P,
+                             Matrix & dst ) const
+  {
+    GEOSX_LAI_ASSERT( ready() );
+    GEOSX_LAI_ASSERT( P.ready() );
+    GEOSX_LAI_ASSERT_EQ( numGlobalRows(), P.numGlobalRows() );
+    GEOSX_LAI_ASSERT_EQ( numGlobalCols(), P.numGlobalRows() );
+
+    Matrix AP;
+    multiply( P, AP );
+    P.leftMultiplyTranspose( AP, dst );
+  }
 
   /**
    * @brief Compute gemv <tt>y = alpha*A*x + beta*y</tt>.
@@ -621,7 +657,7 @@ protected:
    *
    */
   virtual void clearRow( globalIndex const row,
-                         real64 const diagValue = 0.0 ) = 0;
+                         real64 const diagValue ) = 0;
 
   ///@}
 

@@ -25,6 +25,7 @@
 #include "linearAlgebra/interfaces/MatrixBase.hpp"
 
 class Epetra_Map;
+class Epetra_CrsMatrix;
 class Epetra_FECrsMatrix;
 
 namespace geosx
@@ -186,16 +187,20 @@ public:
               EpetraVector & dst ) const override;
 
   void multiply( EpetraMatrix const & src,
-                 EpetraMatrix & dst,
-                 bool const closeResult = true ) const override;
+                 EpetraMatrix & dst ) const override;
 
   void leftMultiplyTranspose( EpetraMatrix const & src,
-                              EpetraMatrix & dst,
-                              bool const closeResult = true ) const override;
+                              EpetraMatrix & dst ) const override;
 
   void rightMultiplyTranspose( EpetraMatrix const & src,
-                               EpetraMatrix & dst,
-                               bool const closeResult = true ) const override;
+                               EpetraMatrix & dst ) const override;
+
+  void multiplyRAP( EpetraMatrix const & R,
+                    EpetraMatrix const & P,
+                    EpetraMatrix & dst ) const override;
+
+  void multiplyPtAP( EpetraMatrix const & P,
+                     EpetraMatrix & dst ) const override;
 
   void gemv( real64 const alpha,
              EpetraVector const & x,
@@ -215,7 +220,7 @@ public:
   void transpose( EpetraMatrix & dst ) const override;
 
   void clearRow( globalIndex const row,
-                 real64 const diagValue = 0 ) override;
+                 real64 const diagValue ) override;
 
   localIndex maxRowLength() const override;
 
@@ -282,8 +287,13 @@ private:
   void multiply( bool const transA,
                  EpetraMatrix const & B,
                  bool const transB,
-                 EpetraMatrix & C,
-                 bool const closeResult ) const;
+                 EpetraMatrix & C ) const;
+
+  /**
+   * @brief Create the matrix by copying data from an Epetra_CrsMatrix
+   * @param src the source matrix
+   */
+  void create( Epetra_CrsMatrix const & src );
 
   /// Pointer to the underlying Epetra_CrsMatrix.
   std::unique_ptr< Epetra_FECrsMatrix > m_matrix;

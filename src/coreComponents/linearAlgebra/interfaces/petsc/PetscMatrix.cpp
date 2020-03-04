@@ -434,8 +434,7 @@ void PetscMatrix::apply( PetscVector const & src,
 }
 
 void PetscMatrix::multiply( PetscMatrix const & src,
-                            PetscMatrix & dst,
-                            bool const closeResult ) const
+                            PetscMatrix & dst ) const
 {
   GEOSX_LAI_ASSERT( ready() );
   GEOSX_LAI_ASSERT( src.ready() );
@@ -443,46 +442,34 @@ void PetscMatrix::multiply( PetscMatrix const & src,
 
   dst.reset();
   GEOSX_LAI_CHECK_ERROR( MatMatMult( m_mat, src.unwrapped(), MAT_INITIAL_MATRIX, PETSC_DEFAULT, &dst.m_mat ) );
-  dst.m_assembled = closeResult;
-  dst.m_closed = closeResult;
+  dst.m_assembled = true;
+  dst.m_closed = true;
 }
 
 void PetscMatrix::leftMultiplyTranspose( PetscMatrix const & src,
-                                         PetscMatrix & dst,
-                                         bool const closeResult ) const
+                                         PetscMatrix & dst ) const
 {
   GEOSX_LAI_ASSERT( ready() );
   GEOSX_LAI_ASSERT( src.ready() );
   GEOSX_LAI_ASSERT_EQ( numGlobalRows(), src.numGlobalRows() );
 
-  MatReuse const reuse = dst.created() ? MAT_REUSE_MATRIX : MAT_INITIAL_MATRIX;
-  if( !dst.created() )
-  {
-    dst.createWithLocalSize( numLocalCols(), src.numLocalCols(), 1, getComm() );
-  }
-
-  GEOSX_LAI_CHECK_ERROR( MatTransposeMatMult( m_mat, src.unwrapped(), reuse, PETSC_DEFAULT, &dst.unwrapped() ) );
-  dst.m_assembled = closeResult;
-  dst.m_closed = closeResult;
+  dst.reset();
+  GEOSX_LAI_CHECK_ERROR( MatTransposeMatMult( m_mat, src.unwrapped(), MAT_INITIAL_MATRIX, PETSC_DEFAULT, &dst.unwrapped() ) );
+  dst.m_assembled = true;
+  dst.m_closed = true;
 }
 
 void PetscMatrix::rightMultiplyTranspose( PetscMatrix const & src,
-                                          PetscMatrix & dst,
-                                          bool const closeResult ) const
+                                          PetscMatrix & dst ) const
 {
   GEOSX_LAI_ASSERT( ready() );
   GEOSX_LAI_ASSERT( src.ready() );
   GEOSX_LAI_ASSERT_EQ( numGlobalCols(), src.numGlobalCols() );
 
-  MatReuse const reuse = dst.created() ? MAT_REUSE_MATRIX : MAT_INITIAL_MATRIX;
-  if( !dst.created() )
-  {
-    dst.createWithLocalSize( numLocalRows(), src.numLocalRows(), 1, getComm() );
-  }
-
-  GEOSX_LAI_CHECK_ERROR( MatMatTransposeMult( m_mat, src.unwrapped(), reuse, PETSC_DEFAULT, &dst.unwrapped() ) );
-  dst.m_assembled = closeResult;
-  dst.m_closed = closeResult;
+  dst.reset();
+  GEOSX_LAI_CHECK_ERROR( MatMatTransposeMult( m_mat, src.unwrapped(), MAT_INITIAL_MATRIX, PETSC_DEFAULT, &dst.unwrapped() ) );
+  dst.m_assembled = true;
+  dst.m_closed = true;
 }
 
 void PetscMatrix::gemv( real64 const alpha,
@@ -535,11 +522,34 @@ void PetscMatrix::leftRightScale( PetscVector const &vecLeft,
   GEOSX_LAI_CHECK_ERROR( MatDiagonalScale( m_mat, vecLeft.unwrapped(), vecRight.unwrapped() ) );
 }
 
+void PetscMatrix::multiplyRAP( PetscMatrix const & R,
+                               PetscMatrix const & P,
+                               PetscMatrix & dst ) const
+{
+  // No builtin RAP function in PETSc, so use double product for now
+  // TODO: research this better
+  MatrixBase::multiplyRAP( R, P, dst );
+}
+
+void PetscMatrix::multiplyPtAP( PetscMatrix const & P,
+                                PetscMatrix & dst ) const
+{
+  GEOSX_LAI_ASSERT( ready() );
+  GEOSX_LAI_ASSERT( P.ready() );
+  GEOSX_LAI_ASSERT_EQ( numGlobalRows(), P.numGlobalRows() );
+  GEOSX_LAI_ASSERT_EQ( numGlobalCols(), P.numGlobalRows() );
+
+  dst.reset();
+  GEOSX_LAI_CHECK_ERROR( MatPtAP( m_mat, P.m_mat, MAT_INITIAL_MATRIX, PETSC_DEFAULT, &dst.m_mat ) );
+  dst.m_assembled = true;
+}
+
 void PetscMatrix::transpose( PetscMatrix & dst ) const
 {
   GEOSX_LAI_ASSERT( ready() );
-  MatReuse const reuse = dst.created() ? MAT_REUSE_MATRIX : MAT_INITIAL_MATRIX;
-  GEOSX_LAI_CHECK_ERROR( MatTranspose( m_mat, reuse, &dst.unwrapped() ) );
+
+  dst.reset();
+  GEOSX_LAI_CHECK_ERROR( MatTranspose( m_mat, MAT_INITIAL_MATRIX, &dst.unwrapped() ) );
 }
 
 void PetscMatrix::clearRow( globalIndex const globalRow,

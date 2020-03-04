@@ -534,8 +534,7 @@ void HypreMatrix::apply( HypreVector const & src,
 }
 
 void HypreMatrix::multiply( HypreMatrix const & src,
-                            HypreMatrix & dst,
-                            bool const closeResult ) const
+                            HypreMatrix & dst ) const
 {
   GEOSX_LAI_ASSERT( ready() );
   GEOSX_LAI_ASSERT( src.ready() );
@@ -546,17 +545,10 @@ void HypreMatrix::multiply( HypreMatrix const & src,
 
   // Create IJ layer (with matrix closed)
   dst.parCSRtoIJ( dst_parcsr );
-
-  // Reopen matrix if desired
-  if( !closeResult )
-  {
-    dst.open();
-  }
 }
 
 void HypreMatrix::leftMultiplyTranspose( HypreMatrix const & src,
-                                         HypreMatrix & dst,
-                                         bool const closeResult ) const
+                                         HypreMatrix & dst ) const
 {
   GEOSX_LAI_ASSERT( ready() );
   GEOSX_LAI_ASSERT( src.ready() );
@@ -567,18 +559,10 @@ void HypreMatrix::leftMultiplyTranspose( HypreMatrix const & src,
 
   // Create IJ layer (with matrix closed)
   dst.parCSRtoIJ( dst_parcsr );
-
-  // Reopen matrix if desired
-  if( !closeResult )
-  {
-    dst.open();
-  }
-
 }
 
 void HypreMatrix::rightMultiplyTranspose( HypreMatrix const & src,
-                                          HypreMatrix & dst,
-                                          bool const closeResult ) const
+                                          HypreMatrix & dst ) const
 {
   GEOSX_LAI_ASSERT( ready() );
   GEOSX_LAI_ASSERT( src.ready() );
@@ -590,13 +574,47 @@ void HypreMatrix::rightMultiplyTranspose( HypreMatrix const & src,
 
   // Compute product
   src.multiply( tmp, dst );
+}
 
-  // Reopen matrix if desired
-  if( !closeResult )
-  {
-    dst.open();
-  }
+void HypreMatrix::multiplyRAP( HypreMatrix const & R,
+                               HypreMatrix const & P,
+                               HypreMatrix & dst ) const
+{
+  // TODO: figure out how to make this work
+#if 0
+  GEOSX_LAI_ASSERT( ready() );
+  GEOSX_LAI_ASSERT( R.ready() );
+  GEOSX_LAI_ASSERT( P.ready() );
+  GEOSX_LAI_ASSERT_EQ( numGlobalRows(), R.numGlobalCols() );
+  GEOSX_LAI_ASSERT_EQ( numGlobalCols(), P.numGlobalRows() );
 
+  HYPRE_ParCSRMatrix const dst_parcsr = hypre_ParCSRMatrixRAP( R.m_parcsr_mat,
+                                                               m_parcsr_mat,
+                                                               P.m_parcsr_mat );
+  dst.parCSRtoIJ( dst_parcsr );
+#else
+  MatrixBase::multiplyRAP( R, P, dst );
+#endif
+}
+
+void HypreMatrix::multiplyPtAP( HypreMatrix const & P,
+                                HypreMatrix & dst ) const
+{
+  // TODO: figure out how to make this work
+#if 0
+  GEOSX_LAI_ASSERT( ready() );
+  GEOSX_LAI_ASSERT( P.ready() );
+  GEOSX_LAI_ASSERT_EQ( numGlobalRows(), P.numGlobalRows() );
+  GEOSX_LAI_ASSERT_EQ( numGlobalCols(), P.numGlobalRows() );
+
+  HYPRE_ParCSRMatrix const dst_parcsr = hypre_ParCSRMatrixRAPKT( P.m_parcsr_mat,
+                                                                 m_parcsr_mat,
+                                                                 P.m_parcsr_mat,
+                                                                 0 );
+  dst.parCSRtoIJ( dst_parcsr );
+#else
+  MatrixBase::multiplyPtAP( P, dst );
+#endif
 }
 
 void HypreMatrix::parCSRtoIJ( HYPRE_ParCSRMatrix const & parCSRMatrix )
