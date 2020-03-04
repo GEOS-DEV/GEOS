@@ -513,11 +513,11 @@ public:
 
   /** @cond DO_NOT_DOCUMENT */
   template< typename CONTAINERTYPE, typename LAMBDA >
-  static bool applyLambdaToContainer( CONTAINERTYPE const * const GEOSX_UNUSED_ARG( group ), LAMBDA && GEOSX_UNUSED_ARG( lambda ) )
+  static bool applyLambdaToContainer( CONTAINERTYPE const * const GEOSX_UNUSED_PARAM( group ), LAMBDA && GEOSX_UNUSED_PARAM( lambda ) )
   { return false; }
 
   template< typename CONTAINERTYPE, typename LAMBDA >
-  static bool applyLambdaToContainer( CONTAINERTYPE * const GEOSX_UNUSED_ARG( group ), LAMBDA && GEOSX_UNUSED_ARG( lambda ) )
+  static bool applyLambdaToContainer( CONTAINERTYPE * const GEOSX_UNUSED_PARAM( group ), LAMBDA && GEOSX_UNUSED_PARAM( lambda ) )
   { return false; }
   /** @endcond */
 
@@ -596,9 +596,9 @@ public:
     for( auto & subGroupIter : m_subGroups )
     {
       applyLambdaToContainer< Group, GROUPTYPE, GROUPTYPES... >( subGroupIter.second, [&]( auto * const castedSubGroup )
-          {
-            lambda( castedSubGroup );
-          } );
+      {
+        lambda( castedSubGroup );
+      } );
     }
   }
 
@@ -611,9 +611,9 @@ public:
     for( auto const & subGroupIter : m_subGroups )
     {
       applyLambdaToContainer< Group, GROUPTYPE, GROUPTYPES... >( subGroupIter.second, [&]( auto const * const castedSubGroup )
-          {
-            lambda( castedSubGroup );
-          } );
+      {
+        lambda( castedSubGroup );
+      } );
     }
   }
 
@@ -631,9 +631,9 @@ public:
     for( string const & subgroupName : subgroupNames )
     {
       applyLambdaToContainer< Group, GROUPTYPE, GROUPTYPES... >( GetGroup( subgroupName ), [&]( auto * const castedSubGroup )
-          {
-            lambda( castedSubGroup );
-          } );
+      {
+        lambda( castedSubGroup );
+      } );
     }
   }
 
@@ -646,9 +646,9 @@ public:
     for( string const & subgroupName : subgroupNames )
     {
       applyLambdaToContainer< Group, GROUPTYPE, GROUPTYPES... >( GetGroup( subgroupName ), [&]( auto const * const castedSubGroup )
-          {
-            lambda( castedSubGroup );
-          } );
+      {
+        lambda( castedSubGroup );
+      } );
     }
   }
   ///@}
@@ -1195,11 +1195,11 @@ public:
    *
    * @note An error will be raised if wrapper does not exist or type cast is invalid.
    */
-  template< typename T, typename WRAPPEDTYPE=T, typename LOOKUP_TYPE >
-  typename std::enable_if< std::is_same< T, WRAPPEDTYPE >::value, T const & >::type
+  template< typename T, typename LOOKUP_TYPE >
+  typename Wrapper< T >::ViewTypeConst
   getReference( LOOKUP_TYPE const & lookup ) const
   {
-    Wrapper< WRAPPEDTYPE > const * wrapper = getWrapper< WRAPPEDTYPE >( lookup );
+    Wrapper< T > const * const wrapper = getWrapper< T >( lookup );
     if( wrapper == nullptr )
     {
       if( hasWrapper( lookup ) )
@@ -1215,12 +1215,11 @@ public:
   /**
    * @copydoc getReference(LOOKUP_TYPE const &) const
    */
-  template< typename T, typename WRAPPEDTYPE=T, typename LOOKUP_TYPE >
-  typename std::enable_if< !std::is_same< T, WRAPPEDTYPE >::value, T const & >::type
-  getReference( LOOKUP_TYPE const & lookup ) const
+  template< typename T, typename LOOKUP_TYPE >
+  T &
+  getReference( LOOKUP_TYPE const & lookup )
   {
-    static_assert( std::is_base_of< WRAPPEDTYPE, T >::value, "incorrect template arguments" );
-    Wrapper< WRAPPEDTYPE > const * wrapper = getWrapper< WRAPPEDTYPE >( lookup );
+    Wrapper< T > * const wrapper = getWrapper< T >( lookup );
     if( wrapper == nullptr )
     {
       if( hasWrapper( lookup ) )
@@ -1230,15 +1229,8 @@ public:
       GEOSX_ERROR( "call to getWrapper results in nullptr and a view does not exist. lookup : " << lookup );
     }
 
-    return dynamicCast< T const & >( wrapper->reference() );
+    return wrapper->reference();
   }
-
-  /**
-   * @copydoc getReference(LOOKUP_TYPE const &) const
-   */
-  template< typename T, typename WRAPPEDTYPE=T, typename LOOKUP_TYPE >
-  T & getReference( LOOKUP_TYPE const & lookup )
-  { return const_cast< T & >( const_cast< const Group * >(this)->template getReference< T, WRAPPEDTYPE, LOOKUP_TYPE >( lookup ) ); }
 
   /**
    * @copybrief getReference(LOOKUP_TYPE const &) const
@@ -1249,16 +1241,17 @@ public:
    *
    * @note An error will be raised if wrapper does not exist or type cast is invalid.
    */
-  template< typename T, typename WRAPPEDTYPE=T >
-  T const & getReference( char const * const name ) const
-  { return getReference< T, WRAPPEDTYPE >( string( name ) ); }
+  template< typename T >
+  typename Wrapper< T >::ViewTypeConst
+  getReference( char const * const name ) const
+  { return getReference< T >( string( name ) ); }
 
   /**
    * @copydoc getReference(char const * const) const
    */
-  template< typename T, typename WRAPPEDTYPE=T >
+  template< typename T >
   T & getReference( char const * const name )
-  { return const_cast< T & >( const_cast< const Group * >(this)->getReference< T, WRAPPEDTYPE >( name ) ); }
+  { return getReference< T >( string( name ) ); }
 
   /**
    * @brief Look up a wrapper and get reference to wrapped object.

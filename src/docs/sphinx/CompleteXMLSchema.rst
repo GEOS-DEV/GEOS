@@ -6,6 +6,8 @@ GEOSX Data Structure
 Input Schema Definitions
 ********************************
 
+:download:`XML Schema <../../coreComponents/fileIO/schema/docs/../schema.xsd>`
+
 
 .. _XML_BasisFunctions:
 
@@ -19,6 +21,13 @@ Element: BasisFunctions
 Element: BlackOilFluid
 ======================
 .. include:: ../../coreComponents/fileIO/schema/docs/BlackOilFluid.rst
+
+
+.. _XML_BoundedPlane:
+
+Element: BoundedPlane
+=====================
+.. include:: ../../coreComponents/fileIO/schema/docs/BoundedPlane.rst
 
 
 .. _XML_Box:
@@ -131,6 +140,20 @@ Element: Dirichlet
 Element: ElementRegions
 =======================
 .. include:: ../../coreComponents/fileIO/schema/docs/ElementRegions.rst
+
+
+.. _XML_EmbeddedSurfaceElementRegion:
+
+Element: EmbeddedSurfaceElementRegion
+=====================================
+.. include:: ../../coreComponents/fileIO/schema/docs/EmbeddedSurfaceElementRegion.rst
+
+
+.. _XML_EmbeddedSurfaceGenerator:
+
+Element: EmbeddedSurfaceGenerator
+=================================
+.. include:: ../../coreComponents/fileIO/schema/docs/EmbeddedSurfaceGenerator.rst
 
 
 .. _XML_Events:
@@ -371,6 +394,13 @@ Element: Parameters
 .. include:: ../../coreComponents/fileIO/schema/docs/Parameters.rst
 
 
+.. _XML_Perforation:
+
+Element: Perforation
+====================
+.. include:: ../../coreComponents/fileIO/schema/docs/Perforation.rst
+
+
 .. _XML_PeriodicEvent:
 
 Element: PeriodicEvent
@@ -560,6 +590,13 @@ Element: VanGenuchtenCapillaryPressure
 .. include:: ../../coreComponents/fileIO/schema/docs/VanGenuchtenCapillaryPressure.rst
 
 
+.. _XML_WellControls:
+
+Element: WellControls
+=====================
+.. include:: ../../coreComponents/fileIO/schema/docs/WellControls.rst
+
+
 .. _XML_WellElementRegion:
 
 Element: WellElementRegion
@@ -583,6 +620,13 @@ Datastructure: BasisFunctions
 Datastructure: BlackOilFluid
 ============================
 .. include:: ../../coreComponents/fileIO/schema/docs/BlackOilFluid_other.rst
+
+
+.. _DATASTRUCTURE_BoundedPlane:
+
+Datastructure: BoundedPlane
+===========================
+.. include:: ../../coreComponents/fileIO/schema/docs/BoundedPlane_other.rst
 
 
 .. _DATASTRUCTURE_Box:
@@ -702,6 +746,20 @@ Datastructure: Dirichlet
 Datastructure: ElementRegions
 =============================
 .. include:: ../../coreComponents/fileIO/schema/docs/ElementRegions_other.rst
+
+
+.. _DATASTRUCTURE_EmbeddedSurfaceElementRegion:
+
+Datastructure: EmbeddedSurfaceElementRegion
+===========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/EmbeddedSurfaceElementRegion_other.rst
+
+
+.. _DATASTRUCTURE_EmbeddedSurfaceGenerator:
+
+Datastructure: EmbeddedSurfaceGenerator
+=======================================
+.. include:: ../../coreComponents/fileIO/schema/docs/EmbeddedSurfaceGenerator_other.rst
 
 
 .. _DATASTRUCTURE_Events:
@@ -963,6 +1021,13 @@ Datastructure: Parameters
 .. include:: ../../coreComponents/fileIO/schema/docs/Parameters_other.rst
 
 
+.. _DATASTRUCTURE_Perforation:
+
+Datastructure: Perforation
+==========================
+.. include:: ../../coreComponents/fileIO/schema/docs/Perforation_other.rst
+
+
 .. _DATASTRUCTURE_PeriodicEvent:
 
 Datastructure: PeriodicEvent
@@ -1150,6 +1215,13 @@ Datastructure: VanGenuchtenBakerRelativePermeability
 Datastructure: VanGenuchtenCapillaryPressure
 ============================================
 .. include:: ../../coreComponents/fileIO/schema/docs/VanGenuchtenCapillaryPressure_other.rst
+
+
+.. _DATASTRUCTURE_WellControls:
+
+Datastructure: WellControls
+===========================
+.. include:: ../../coreComponents/fileIO/schema/docs/WellControls_other.rst
 
 
 .. _DATASTRUCTURE_WellElementRegion:

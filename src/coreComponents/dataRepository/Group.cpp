@@ -147,33 +147,33 @@ void Group::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
       rtTypes::TypeIDs const wrapperTypeID = rtTypes::typeID( wrapper->get_typeid());
 
       rtTypes::ApplyIntrinsicTypeLambda2( wrapperTypeID,
-                                          [&]( auto a, auto GEOSX_UNUSED_ARG( b ) )
-          {
-            using COMPOSITE_TYPE = decltype( a );
+                                          [&]( auto a, auto GEOSX_UNUSED_PARAM( b ) )
+      {
+        using COMPOSITE_TYPE = decltype( a );
 
-            Wrapper< COMPOSITE_TYPE > & typedWrapper = Wrapper< COMPOSITE_TYPE >::cast( *wrapper );
-            COMPOSITE_TYPE & objectReference = typedWrapper.reference();
-            processedXmlNodes.insert( wrapperName );
+        Wrapper< COMPOSITE_TYPE > & typedWrapper = Wrapper< COMPOSITE_TYPE >::cast( *wrapper );
+        COMPOSITE_TYPE & objectReference = typedWrapper.reference();
+        processedXmlNodes.insert( wrapperName );
 
-            if( inputFlag == InputFlags::REQUIRED || !(typedWrapper.getDefaultValueStruct().has_default_value) )
-            {
-              bool const readSuccess = xmlWrapper::ReadAttributeAsType( objectReference,
-                                                                        wrapperName,
-                                                                        targetNode,
-                                                                        inputFlag == InputFlags::REQUIRED );
-              GEOSX_ERROR_IF( !readSuccess,
-                              "Input variable " + wrapperName + " is required in " + targetNode.path()
-                              + ". Available options are: \n"+ dumpInputOptions()
-                              + "\nFor more details, please refer to documentation at: \n"
-                              + "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html \n" );
+        if( inputFlag == InputFlags::REQUIRED || !(typedWrapper.getDefaultValueStruct().has_default_value) )
+        {
+          bool const readSuccess = xmlWrapper::ReadAttributeAsType( objectReference,
+                                                                    wrapperName,
+                                                                    targetNode,
+                                                                    inputFlag == InputFlags::REQUIRED );
+          GEOSX_ERROR_IF( !readSuccess,
+                          "Input variable " + wrapperName + " is required in " + targetNode.path()
+                          + ". Available options are: \n"+ dumpInputOptions()
+                          + "\nFor more details, please refer to documentation at: \n"
+                          + "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html \n" );
 
 
-            }
-            else
-            {
-              xmlWrapper::ReadAttributeAsType( objectReference, wrapperName, targetNode, typedWrapper.getDefaultValueStruct() );
-            }
-          } );
+        }
+        else
+        {
+          xmlWrapper::ReadAttributeAsType( objectReference, wrapperName, targetNode, typedWrapper.getDefaultValueStruct() );
+        }
+      } );
     }
   }
 
@@ -505,9 +505,9 @@ void Group::prepareToWrite()
   m_conduitNode[ "__size__" ].set( m_size );
 
   forSubGroups( []( Group * subGroup )
-      {
-        subGroup->prepareToWrite();
-      } );
+  {
+    subGroup->prepareToWrite();
+  } );
 }
 
 
@@ -524,9 +524,9 @@ void Group::finishWriting()
   }
 
   forSubGroups( []( Group * subGroup )
-      {
-        subGroup->finishWriting();
-      } );
+  {
+    subGroup->finishWriting();
+  } );
 }
 
 
@@ -545,27 +545,27 @@ void Group::loadFromConduit()
   }
 
   forSubGroups( []( Group * subGroup )
-      {
-        subGroup->loadFromConduit();
-      } );
+  {
+    subGroup->loadFromConduit();
+  } );
 }
 
 void Group::postRestartInitializationRecursive( Group * const domain )
 {
   forSubGroups( [&]( Group * const subGroup )
-      {
-        subGroup->postRestartInitializationRecursive( domain );
-      } );
+  {
+    subGroup->postRestartInitializationRecursive( domain );
+  } );
 
   this->postRestartInitialization( domain );
 }
 
-void Group::SetSchemaDeviations( xmlWrapper::xmlNode GEOSX_UNUSED_ARG( schemaRoot ),
-                                 xmlWrapper::xmlNode GEOSX_UNUSED_ARG( schemaParent ),
-                                 integer GEOSX_UNUSED_ARG( documentationType ) )
+void Group::SetSchemaDeviations( xmlWrapper::xmlNode GEOSX_UNUSED_PARAM( schemaRoot ),
+                                 xmlWrapper::xmlNode GEOSX_UNUSED_PARAM( schemaParent ),
+                                 integer GEOSX_UNUSED_PARAM( documentationType ) )
 {}
 
-void Group::RegisterDataOnMesh( Group * const GEOSX_UNUSED_ARG( MeshBody ) )
+void Group::RegisterDataOnMesh( Group * const GEOSX_UNUSED_PARAM( MeshBody ) )
 {}
 
 

@@ -69,11 +69,11 @@ ChomboIO::~ChomboIO()
   m_coupler = nullptr;
 }
 
-void ChomboIO::Execute( real64 const GEOSX_UNUSED_ARG( time_n ),
+void ChomboIO::Execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
                         real64 const dt,
                         integer const cycleNumber,
-                        integer const GEOSX_UNUSED_ARG( eventCounter ),
-                        real64 const GEOSX_UNUSED_ARG( eventProgress ),
+                        integer const GEOSX_UNUSED_PARAM( eventCounter ),
+                        real64 const GEOSX_UNUSED_PARAM( eventProgress ),
                         dataRepository::Group * const domain )
 {
   if (m_coupler == nullptr)

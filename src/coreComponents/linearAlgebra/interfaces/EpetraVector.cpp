@@ -230,7 +230,7 @@ void EpetraVector::scale( real64 const scalingFactor )
 // Dot
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Dot product with the vector vec.
-real64 EpetraVector::dot( EpetraVector const & vec )
+real64 EpetraVector::dot( EpetraVector const & vec ) const
 {
   real64 tmp;
   m_vector.get()->Dot( *vec.unwrappedPointer(), &tmp );
@@ -337,7 +337,7 @@ void EpetraVector::write( string const & filename,
 }
 
 // ----------------------------
-// Acessors
+// Accessors
 // ----------------------------
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -406,7 +406,7 @@ localIndex EpetraVector::getLocalRowID( globalIndex const index ) const
 // getGlobalRowID
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Map a local row index to global row index
-localIndex EpetraVector::getGlobalRowID( localIndex const index ) const
+globalIndex EpetraVector::getGlobalRowID( localIndex const index ) const
 {
   return m_vector->Map().GID64( integer_conversion< int >( index ) );
 }

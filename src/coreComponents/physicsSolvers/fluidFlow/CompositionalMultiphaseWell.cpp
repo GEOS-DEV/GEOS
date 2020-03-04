@@ -191,7 +191,7 @@ void CompositionalMultiphaseWell::InitializePostInitialConditions_PreSubGroups( 
 }
 
 
-void CompositionalMultiphaseWell::UpdateMixtureDensity( WellElementSubRegion const * const subRegion )
+void CompositionalMultiphaseWell::UpdateMixtureDensity( WellElementSubRegion * const subRegion )
 {
   localIndex constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
   localIndex const NC = m_numComponents;
@@ -546,7 +546,7 @@ void CompositionalMultiphaseWell::SetupDofs( DomainPartition const * const domai
                           DofManager::Connectivity::Node );
 }
 
-void CompositionalMultiphaseWell::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time_n ),
+void CompositionalMultiphaseWell::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                                      real64 const dt,
                                                      DomainPartition const * const domain,
                                                      DofManager const * const dofManager,
@@ -826,8 +826,8 @@ void CompositionalMultiphaseWell::AssembleFluxTerms( real64 const GEOSX_UNUSED_A
   });
 }
 
-void CompositionalMultiphaseWell::AssembleVolumeBalanceTerms( real64 const GEOSX_UNUSED_ARG( time_n ),
-                                                              real64 const GEOSX_UNUSED_ARG( dt ),
+void CompositionalMultiphaseWell::AssembleVolumeBalanceTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
+                                                              real64 const GEOSX_UNUSED_PARAM( dt ),
                                                               DomainPartition const * const domain,
                                                               DofManager const * const dofManager,
                                                               ParallelMatrix * const matrix,
@@ -926,15 +926,15 @@ void CompositionalMultiphaseWell::AssembleVolumeBalanceTerms( real64 const GEOSX
 }
 
 
-void CompositionalMultiphaseWell::AssemblePerforationTerms( real64 const GEOSX_UNUSED_ARG( time_n ),
+void CompositionalMultiphaseWell::AssemblePerforationTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                                             real64 const dt,
-                                                            DomainPartition const * const domain, 
+                                                            DomainPartition * const domain,
                                                             DofManager const * const dofManager,
                                                             ParallelMatrix * const matrix,
                                                             ParallelVector * const rhs )
 {
-  MeshLevel const * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ElementRegionManager const * const elemManager = meshLevel->getElemManager();
+  MeshLevel * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  ElementRegionManager * const elemManager = meshLevel->getElemManager();
 
   localIndex constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
   localIndex constexpr maxNumDof  = maxNumComp + 1;
@@ -951,7 +951,7 @@ void CompositionalMultiphaseWell::AssemblePerforationTerms( real64 const GEOSX_U
   ElementRegionManager::ElementViewAccessor< arrayView1d<globalIndex const> >::ViewTypeConst resDofNumber =
     resDofNumberAccessor.toViewConst();
 
-  elemManager->forElementSubRegions<WellElementSubRegion>( [&]( WellElementSubRegion const * const subRegion )
+  elemManager->forElementSubRegions<WellElementSubRegion>( [&]( WellElementSubRegion * const subRegion )
   {
 
     PerforationData const * const perforationData = subRegion->GetPerforationData();
@@ -1231,10 +1231,10 @@ CompositionalMultiphaseWell::ApplySystemSolution( DofManager const & dofManager,
 void CompositionalMultiphaseWell::ResetStateToBeginningOfStep( DomainPartition * const domain )
 {
 
-  MeshLevel const * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ElementRegionManager const * const elemManager = meshLevel->getElemManager();
+  MeshLevel * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  ElementRegionManager * const elemManager = meshLevel->getElemManager();
 
-  elemManager->forElementSubRegions<WellElementSubRegion>( [&]( WellElementSubRegion const * const subRegion )
+  elemManager->forElementSubRegions<WellElementSubRegion>( [&]( WellElementSubRegion * const subRegion )
   {
 
     // get a reference to the primary variables on well elements
@@ -1616,15 +1616,15 @@ void CompositionalMultiphaseWell::FormControlEquation( DomainPartition const * c
 }
 
 
-void CompositionalMultiphaseWell::ImplicitStepComplete( real64 const & GEOSX_UNUSED_ARG( time ),
-                                                        real64 const & GEOSX_UNUSED_ARG( dt ),
+void CompositionalMultiphaseWell::ImplicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time ),
+                                                        real64 const & GEOSX_UNUSED_PARAM( dt ),
                                                         DomainPartition * const domain )
 {
 
-  MeshLevel const * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ElementRegionManager const * const elemManager = meshLevel->getElemManager();
+  MeshLevel * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  ElementRegionManager * const elemManager = meshLevel->getElemManager();
 
-  elemManager->forElementSubRegions<WellElementSubRegion>( [&]( WellElementSubRegion const * const subRegion )
+  elemManager->forElementSubRegions<WellElementSubRegion>( [&]( WellElementSubRegion * const subRegion )
   {
 
     // get a reference to the primary variables on well elements
@@ -1667,7 +1667,7 @@ void CompositionalMultiphaseWell::ImplicitStepComplete( real64 const & GEOSX_UNU
 }
 
 
-void CompositionalMultiphaseWell::ComputeAllPerforationRates( WellElementSubRegion const * const subRegion )
+void CompositionalMultiphaseWell::ComputeAllPerforationRates( WellElementSubRegion * const subRegion )
 {
   localIndex constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS; 
   
@@ -1692,7 +1692,7 @@ void CompositionalMultiphaseWell::ComputeAllPerforationRates( WellElementSubRegi
   ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> const & resPhaseRelPerm                = m_resPhaseRelPerm;
   ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> const & dResPhaseRelPerm_dPhaseVolFrac = m_dResPhaseRelPerm_dPhaseVolFrac;
 
-  PerforationData const * const perforationData = subRegion->GetPerforationData();
+  PerforationData * const perforationData = subRegion->GetPerforationData();
 
   // get depth
   arrayView1d<real64 const> const & wellElemGravCoef =

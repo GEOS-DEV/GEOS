@@ -45,7 +45,7 @@ SinglePhaseFVM::SinglePhaseFVM( const std::string& name,
 }
 
 
-void SinglePhaseFVM::SetupDofs( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
+void SinglePhaseFVM::SetupDofs( DomainPartition const * const GEOSX_UNUSED_PARAM( domain ),
                                 DofManager & dofManager ) const
 {
   dofManager.addField( viewKeyStruct::pressureString,
@@ -72,7 +72,7 @@ real64 SinglePhaseFVM::CalculateResidualNorm( DomainPartition const * const doma
   // compute the norm of local residual scaled by cell pore volume
   real64 localResidualNorm[3] = { 0.0, 0.0, 0.0 };
   applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                 ElementRegionBase const * const GEOSX_UNUSED_ARG( region ),
+                                 ElementRegionBase const * const GEOSX_UNUSED_PARAM( region ),
                                  ElementSubRegionBase const * const subRegion )
   {
     arrayView1d<globalIndex const> const & dofNumber = subRegion->getReference< array1d<globalIndex> >( dofKey );
@@ -104,7 +104,20 @@ real64 SinglePhaseFVM::CalculateResidualNorm( DomainPartition const * const doma
                          MPI_SUM,
                          MPI_COMM_GEOSX);
 
-  return sqrt(globalResidualNorm[0]) / ( ( globalResidualNorm[1] + m_fluxEstimate ) / (globalResidualNorm[2]+1) );
+
+  real64 const residual = sqrt(globalResidualNorm[0]) / ( ( globalResidualNorm[1] + m_fluxEstimate ) / (globalResidualNorm[2]+1) );
+
+  if( getLogLevel() >= 1 && logger::internal::rank==0 )
+  {
+    char output[200] = {0};
+    sprintf( output,
+             "( Rfluid ) = (%4.2e) ; ",
+             residual);
+    std::cout<<output;
+  }
+
+
+  return residual;
 }
 
   
@@ -134,8 +147,7 @@ void SinglePhaseFVM::ApplySystemSolution( DofManager const & dofManager,
   } );
 }
 
-  
-void SinglePhaseFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time_n ),
+void SinglePhaseFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                         real64 const dt,
                                         DomainPartition const * const domain,
                                         DofManager const * const dofManager,
@@ -157,28 +169,35 @@ void SinglePhaseFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time_n ),
 
   string const dofKey = dofManager->getKey( viewKeyStruct::pressureString );
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d<globalIndex> > dofNumberAccessor =
-    elemManager->ConstructViewAccessor< array1d<globalIndex>, arrayView1d<globalIndex> >( dofKey );
+  ElementRegionManager::ElementViewAccessor< arrayView1d<globalIndex const> >
+  dofNumberAccessor = elemManager->ConstructViewAccessor< array1d<globalIndex>,
+                                                          arrayView1d<globalIndex const> >( dofKey );
 
   FluxKernel::ElementView< arrayView1d<globalIndex const> > const & dofNumber = dofNumberAccessor.toViewConst();
 
   FluxKernel::ElementView < arrayView1d<real64 const> > const & dPres       = m_deltaPressure.toViewConst();
   FluxKernel::ElementView < arrayView1d<real64 const> > const & pres        = m_pressure.toViewConst();
-  FluxKernel::ElementView < arrayView1d<real64 const> > const & gravCoef    = m_gravCoef.toViewConst();
+  FluxKernel::ElementView < arrayView1d<real64 const> > const & gravCoef   = m_gravCoef.toViewConst();
   FluxKernel::MaterialView< arrayView2d<real64 const> > const & dens        = m_density.toViewConst();
   FluxKernel::MaterialView< arrayView2d<real64 const> > const & dDens_dPres = m_dDens_dPres.toViewConst();
   FluxKernel::ElementView < arrayView1d<real64 const> > const & mob         = m_mobility.toViewConst();
   FluxKernel::ElementView < arrayView1d<real64 const> > const & dMob_dPres  = m_dMobility_dPres.toViewConst();
 
   FluxKernel::ElementView < arrayView1d<real64 const> > const & aperture0  = m_elementAperture0.toViewConst();
-  FluxKernel::ElementView < arrayView1d<real64 const> > const & aperture  = m_elementAperture.toViewConst();
+  FluxKernel::ElementView < arrayView1d<real64 const> > const & aperture  = m_effectiveAperture.toViewConst();
 
+#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+  FluxKernel::ElementView < arrayView1d<real64 const> > const & separationCoeff  = m_elementSeparationCoefficient.toViewConst();
+
+  FluxKernel::ElementView < arrayView1d<real64 const> > const & dseparationCoeff_dAper  = m_element_dSeparationCoefficient_dAperture.toViewConst();
+#endif
   localIndex const fluidIndex = m_fluidIndex;
 
 
   fluxApprox->forCellStencils( [&]( auto const & stencil )
   {
 
+//    typedef TYPEOFREF( stencil ) STENCIL_TYPE;
 
     FluxKernel::Launch( stencil,
                         dt,
@@ -193,10 +212,14 @@ void SinglePhaseFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time_n ),
                         dMob_dPres,
                         aperture0,
                         aperture,
+#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+                        separationCoeff,
+                        dseparationCoeff_dAper,
+#endif
                         matrix,
-                        rhs );
+                        rhs,
+                        *m_derivativeFluxResidual_dAperture );
   });
-
 }
 
 void
@@ -218,11 +241,11 @@ SinglePhaseFVM::ApplyBoundaryConditions( real64 const time_n,
   // call the BoundaryConditionManager::ApplyField function that will check to see
   // if the boundary condition should be applied to this subregion
   fsManager.Apply( time_n + dt, domain, "ElementRegions", FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString,
-                    [&]( FieldSpecificationBase const * const fs,
-                         string const &,
-                         set<localIndex> const & lset,
-                         Group * subRegion,
-                         string const & ) -> void
+                   [&]( FieldSpecificationBase const * const fs,
+                        string const &,
+                        SortedArrayView<localIndex const> const & lset,
+                        Group * subRegion,
+                        string const & ) -> void
   {
     arrayView1d<globalIndex const> const &
     dofNumber = subRegion->getReference< array1d<globalIndex> >( dofKey );
@@ -230,7 +253,7 @@ SinglePhaseFVM::ApplyBoundaryConditions( real64 const time_n,
     arrayView1d< integer const > const &
     ghostRank = subRegion->getReference<array1d<integer> >( ObjectManagerBase::viewKeyStruct::ghostRankString);
 
-    set< localIndex > localSet;
+    SortedArray< localIndex > localSet;
     for( localIndex const a : lset )
     {
       if( ghostRank[a] < 0 )
@@ -247,7 +270,7 @@ SinglePhaseFVM::ApplyBoundaryConditions( real64 const time_n,
                                                                             1,
                                                                             matrix,
                                                                             rhs,
-                                                                            [&]( localIndex const GEOSX_UNUSED_ARG( a ) ) -> real64
+                                                                            [&]( localIndex const GEOSX_UNUSED_PARAM( a ) ) -> real64
     {
       return 0;
     } );
@@ -256,11 +279,11 @@ SinglePhaseFVM::ApplyBoundaryConditions( real64 const time_n,
 
 
   fsManager.Apply( time_n + dt, domain, "ElementRegions", viewKeyStruct::pressureString,
-                    [&]( FieldSpecificationBase const * const fs,
-                         string const &,
-                         set<localIndex> const & lset,
-                         Group * subRegion,
-                         string const & ) -> void
+                   [&]( FieldSpecificationBase const * const fs,
+                        string const &,
+                        SortedArrayView<localIndex const> const & lset,
+                        Group * subRegion,
+                        string const & ) -> void
   {
     arrayView1d<globalIndex const> const &
     dofNumber = subRegion->getReference< array1d<globalIndex> >( dofKey );
@@ -297,7 +320,7 @@ SinglePhaseFVM::ApplyBoundaryConditions( real64 const time_n,
   GEOSX_LOG_LEVEL_RANK_0( 2, "After SinglePhaseFVM::ApplyBoundaryConditions" );
   GEOSX_LOG_LEVEL_RANK_0( 2, "\nJacobian:\n" << matrix );
   GEOSX_LOG_LEVEL_RANK_0( 2, "\nResidual:\n" << rhs );
- 
+
   if( getLogLevel() >= 3 )
   {
     integer newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
@@ -340,7 +363,7 @@ void SinglePhaseFVM::ApplyFaceDirichletBC_implicit( real64 const time_n,
   FluxApproximationBase const * const fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
 
   // make a list of region indices to be included
-  set<localIndex> regionFilter;
+  SortedArray<localIndex> regionFilter;
   for (string const & regionName : m_targetRegions)
   {
     regionFilter.insert( elemManager->GetRegions().getIndex( regionName ) );
@@ -381,7 +404,7 @@ void SinglePhaseFVM::ApplyFaceDirichletBC_implicit( real64 const time_n,
                     viewKeyStruct::boundaryFacePressureString,
                     [&] ( FieldSpecificationBase const * const fs,
                           string const &,
-                          set<localIndex> const & targetSet,
+                          SortedArrayView<localIndex const> const & targetSet,
                           Group * const targetGroup,
                           string const fieldName )
   {
@@ -394,9 +417,9 @@ void SinglePhaseFVM::ApplyFaceDirichletBC_implicit( real64 const time_n,
                     domain,
                     "faceManager",
                     viewKeyStruct::boundaryFacePressureString,
-                    [&] ( FieldSpecificationBase const * GEOSX_UNUSED_ARG( bc ),
+                    [&] ( FieldSpecificationBase const * GEOSX_UNUSED_PARAM( bc ),
                           string const &,
-                          set<localIndex> const & targetSet,
+                          SortedArrayView<localIndex const> const & targetSet,
                           Group * const,
                           string const & )
   {
@@ -435,9 +458,9 @@ void SinglePhaseFVM::ApplyFaceDirichletBC_implicit( real64 const time_n,
                     domain,
                     "faceManager",
                     viewKeyStruct::boundaryFacePressureString,
-                    [&] ( FieldSpecificationBase const * GEOSX_UNUSED_ARG( bc ),
+                    [&] ( FieldSpecificationBase const * GEOSX_UNUSED_PARAM( bc ),
                           string const & setName,
-                          set<localIndex> const &,
+                          SortedArrayView<localIndex const> const &,
                           Group * const,
                           string const & )
   {

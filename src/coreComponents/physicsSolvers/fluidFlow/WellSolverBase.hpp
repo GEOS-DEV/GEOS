@@ -86,6 +86,10 @@ public:
 
   virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 
+  /// Expand catalog for schema generation
+  virtual void ExpandObjectCatalogs() override;
+
+
   /**
    * @brief setter for the name of the flow solver (needed to use the flow kernels like UpdateFluid)
    * @param name the name of the flow solver
@@ -159,9 +163,9 @@ public:
                                   ParallelVector & rhs,
                                   ParallelVector & solution ) override;
 
-  virtual void ImplicitStepComplete( real64 const & GEOSX_UNUSED_ARG( time ),
-                                     real64 const & GEOSX_UNUSED_ARG( dt ),
-                                     DomainPartition * const GEOSX_UNUSED_ARG( domain ) ) override {}
+  virtual void ImplicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time ),
+                                     real64 const & GEOSX_UNUSED_PARAM( dt ),
+                                     DomainPartition * const GEOSX_UNUSED_PARAM( domain ) ) override {}
 
 
   /**@}*/
@@ -208,7 +212,7 @@ public:
    */
   virtual void AssemblePerforationTerms( real64 const time_n,
                                          real64 const dt,
-                                         DomainPartition const * const domain,
+                                         DomainPartition * const domain,
                                          DofManager const * const dofManager,
                                          ParallelMatrix * const matrix,
                                          ParallelVector * const rhs ) = 0;

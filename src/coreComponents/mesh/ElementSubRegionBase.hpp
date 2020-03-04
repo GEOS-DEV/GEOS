@@ -36,16 +36,12 @@ public:
   ElementSubRegionBase( string const & name, dataRepository::Group * const parent );
   ~ElementSubRegionBase();
 
-  virtual R1Tensor const & calculateElementCenter( localIndex k,
-                                                   const NodeManager& nodeManager,
-                                                   const bool useReferencePos = true) const = 0;
-
   virtual void CalculateElementGeometricQuantities( NodeManager const & nodeManager,
                                                     FaceManager const & faceManager ) = 0;
 
   virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) = 0;
 
-  virtual void FixUpDownMaps( bool const GEOSX_UNUSED_ARG( clearIfUnmapped ) ) {}
+  virtual void FixUpDownMaps( bool const GEOSX_UNUSED_PARAM( clearIfUnmapped ) ) {}
 
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
@@ -72,9 +68,24 @@ public:
   localIndex const & numNodesPerElement() const { return m_numNodesPerElement; }
 
   /**
-   * @return number of nodes per element
+   * Set the number of independent nodes per element.
+   * @param numNodes The number of independent nodes per element.
    */
-  localIndex       & numNodesPerElement()       { return m_numNodesPerElement; }
+  void setNumIndependentNodesPerElement( localIndex const numNodes )
+  {
+    m_numIndependentNodesPerElement = numNodes;
+  }
+
+  localIndex const & numIndependentNodesPerElement() const { return m_numIndependentNodesPerElement; }
+
+  /**
+   * Sets the number of nodes per element
+   * @param numNodes The number of nodes per element
+   */
+  void setNumNodesPerElement( localIndex numNodes )
+  {
+    m_numNodesPerElement = numNodes;
+  }
 
   virtual localIndex numNodesPerElement( localIndex const ) const { return m_numNodesPerElement; }
 
@@ -84,9 +95,13 @@ public:
   localIndex const & numEdgesPerElement() const { return m_numEdgesPerElement; }
 
   /**
-   * @return number of edges per element
+   * Sets the number of edges per element
+   * @param numEdges The number of edges per element
    */
-  localIndex       & numEdgesPerElement()       { return m_numEdgesPerElement; }
+  void setNumEdgesPerElement( localIndex const numEdges )
+  {
+    m_numEdgesPerElement = numEdges;
+  }
 
   /**
    * @return number of faces per element
@@ -94,16 +109,25 @@ public:
   localIndex const & numFacesPerElement() const { return m_numFacesPerElement; }
 
   /**
-   * @return number of faces per element
+   * Sets the number of faces per element
+   * @param numFaces The number of faces per element
    */
-  localIndex       & numFacesPerElement()       { return m_numFacesPerElement; }
+  void setNumFacesPerElement( localIndex const numFaces )
+  {
+    m_numFacesPerElement = numFaces;
+  }
 
-  array1d< R1Tensor > const & getElementCenter() const
+  arrayView1d< R1Tensor const > const & getElementCenter() const
   {
     return m_elementCenter;
   }
 
-  array1d< real64 > const & getElementVolume() const
+  arrayView1d< R1Tensor > const & getElementCenter()
+  {
+    return m_elementCenter;
+  }
+
+  arrayView1d< real64 const > const & getElementVolume() const
   {
     return m_elementVolume;
   }
@@ -124,6 +148,9 @@ private:
 protected:
   /// The number of nodes per element in this cell block
   localIndex m_numNodesPerElement;
+
+  /// The number of independent nodes per element in this cell block
+  localIndex m_numIndependentNodesPerElement;
 
   /// The number of edges per element in this cell block
   localIndex m_numEdgesPerElement;

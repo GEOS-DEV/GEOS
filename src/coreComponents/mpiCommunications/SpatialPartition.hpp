@@ -37,24 +37,24 @@ public:
 //  void ReadXML( xmlWrapper::xmlNode const & targetNode );
 
   virtual void InitializeMetis();
-  void AddNeighborsMetis( set<globalIndex>& neighborList );
-  virtual bool IsCoordInPartition( const realT& coord, const int dir );
-  virtual bool IsCoordInPartition( const R1Tensor& elemCenter );
-  virtual bool IsCoordInPartition( const R1Tensor& elemCenter,
+  void AddNeighborsMetis( SortedArray< globalIndex > & neighborList );
+  virtual bool IsCoordInPartition( const realT & coord, const int dir );
+  virtual bool IsCoordInPartition( const R1Tensor & elemCenter );
+  virtual bool IsCoordInPartition( const R1Tensor & elemCenter,
                                    const int numDistPartition );
-  virtual bool IsCoordInPartitionClosed( const R1Tensor& elemCenter );
-  virtual bool IsCoordInPartitionBoundingBox( const R1Tensor& elemCenter );
+  virtual bool IsCoordInPartitionClosed( const R1Tensor & elemCenter );
+  virtual bool IsCoordInPartitionBoundingBox( const R1Tensor & elemCenter );
 
-  virtual bool IsCoordInContactGhostRange( const R1Tensor& elemCenter );
+  virtual bool IsCoordInContactGhostRange( const R1Tensor & elemCenter );
 
-  void setSizes( const R1Tensor& min, const R1Tensor& max );
-  void setGlobalDomainSizes( const R1Tensor& min, const R1Tensor& max );
-  void getSizes( R1Tensor& min, R1Tensor& max ) const;
-  void getPartitionSizes( R1Tensor& min, R1Tensor& max ) const;
-  void getPartitionGeometricalBoundary( R1Tensor& min, R1Tensor& max ) const;
+  void setSizes( const R1Tensor & min, const R1Tensor & max );
+  void setGlobalDomainSizes( const R1Tensor & min, const R1Tensor & max );
+  void getSizes( R1Tensor & min, R1Tensor & max ) const;
+  void getPartitionSizes( R1Tensor & min, R1Tensor & max ) const;
+  void getPartitionGeometricalBoundary( R1Tensor & min, R1Tensor & max ) const;
 //  void UpdatePartitionBoundingBox(NodeManager& nodeManager);
-  void GetPartitionBoundingBox( R1Tensor& xmin, R1Tensor& xmax );
-  void SetPartitionGeometricalBoundary( R1Tensor& min, R1Tensor& max );
+  void GetPartitionBoundingBox( R1Tensor & xmin, R1Tensor & xmax );
+  void SetPartitionGeometricalBoundary( R1Tensor & min, R1Tensor & max );
 
   void setPartitions( unsigned int xPartitions, unsigned int yPartitions,
                       unsigned int zPartitions ) {
@@ -96,18 +96,18 @@ public:
 
   int GetColor();
 
-  const array1d<integer>& GetPartitions() const {
+  const array1d< integer > & GetPartitions() const {
     return m_Partitions;
   }
 
-  const array1d<integer>& GetCoords() const {
+  const array1d< integer > & GetCoords() const {
     return m_coords;
   }
 
-  const R1Tensor& xMin() const {
+  const R1Tensor & xMin() const {
     return m_min;
   }
-  const R1Tensor& xMax() const {
+  const R1Tensor & xMax() const {
     return m_max;
   }
 
@@ -123,9 +123,9 @@ protected:
   void InitializePostSubGroups( dataRepository::Group * const );
 
 public:
-  array1d<int> m_Partitions; // number of partitions
-  array1d<int> m_Periodic; // 1 = periodic
-  array1d<int> m_coords; // ijk partition indexes
+  array1d< int > m_Partitions; // number of partitions
+  array1d< int > m_Periodic; // 1 = periodic
+  array1d< int > m_coords; // ijk partition indexes
 
   R1Tensor m_min; // Minimum extent of partition dimensions (excluding ghost
                   // objects)
@@ -134,7 +134,7 @@ public:
 
   R1Tensor m_xBoundingBoxMin, m_xBoundingBoxMax;
 
-  array1d<real64> m_PartitionLocations[3]; // locations of partition boundaries
+  array1d< real64 > m_PartitionLocations[3]; // locations of partition boundaries
 
   R1Tensor m_blockSize; // Length of partition dimensions (excluding ghost
                         // objects)
@@ -147,8 +147,8 @@ public:
                       // objects)
 
 
-  void AddNeighbors( const unsigned int idim, MPI_Comm& cartcomm,
-                     int* ncoords );
+  void AddNeighbors( const unsigned int idim, MPI_Comm & cartcomm,
+                     int * ncoords );
 
 };
 }

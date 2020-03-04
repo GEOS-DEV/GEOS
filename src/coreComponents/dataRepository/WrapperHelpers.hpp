@@ -75,7 +75,7 @@ size( T const & value )
 
 template< typename T >
 inline std::enable_if_t< !traits::has_size_method< T >, localIndex >
-size( T const & GEOSX_UNUSED_ARG( value ) )
+size( T const & GEOSX_UNUSED_PARAM( value ) )
 {
   return 1;
 }
@@ -124,8 +124,8 @@ resize( T & value, localIndex const newSize )
 
 template< typename T >
 inline std::enable_if_t< !traits::has_resize_method< T > >
-resize( T & GEOSX_UNUSED_ARG( value ),
-        localIndex const GEOSX_UNUSED_ARG( newSize ) )
+resize( T & GEOSX_UNUSED_PARAM( value ),
+        localIndex const GEOSX_UNUSED_PARAM( newSize ) )
 {}
 
 template< typename T >
@@ -137,7 +137,7 @@ resizeDefault( T & value, localIndex const newSize, DefaultValue< T > const & de
 
 template< typename T >
 inline std::enable_if_t< !traits::has_resize_default_method< T, typename DefaultValue< T >::value_type > >
-resizeDefault( T & value, localIndex const newSize, DefaultValue< T > const & GEOSX_UNUSED_ARG( defaultValue ) )
+resizeDefault( T & value, localIndex const newSize, DefaultValue< T > const & GEOSX_UNUSED_PARAM( defaultValue ) )
 {
   resize( value, newSize );
 }
@@ -436,7 +436,7 @@ template< bool DO_PACKING, typename T >
 inline std::enable_if_t< bufferOps::is_container< T > && bufferOps::can_memcpy< T >, localIndex >
 PackDevice( buffer_unit_type * & buffer, T & var )
 {
-  return bufferOps::PackDevice< parallelDevicePolicy< >, DO_PACKING >( buffer, var );
+  return bufferOps::PackDevice< DO_PACKING >( buffer, var );
 }
 
 template< bool DO_PACKING, typename T >
@@ -451,7 +451,7 @@ template< bool DO_PACKING, typename T, typename IDX >
 inline std::enable_if_t< bufferOps::is_container< T >, localIndex >
 PackByIndexDevice( buffer_unit_type * & buffer, T & var, IDX & idx )
 {
-  return bufferOps::PackByIndexDevice< parallelDevicePolicy< >, DO_PACKING >( buffer, var, idx );
+  return bufferOps::PackByIndexDevice< DO_PACKING >( buffer, var, idx );
 }
 
 template< bool DO_PACKING, typename T, typename IDX >
@@ -466,7 +466,7 @@ template< typename T >
 inline std::enable_if_t< bufferOps::is_container< T >, localIndex >
 UnpackDevice( buffer_unit_type const * & buffer, T & var )
 {
-  return bufferOps::UnpackDevice< parallelDevicePolicy< > >( buffer, var );
+  return bufferOps::UnpackDevice( buffer, var );
 }
 
 template< typename T >
@@ -480,7 +480,7 @@ template< typename T, typename IDX >
 inline std::enable_if_t< bufferOps::is_container< T >, localIndex >
 UnpackByIndexDevice( buffer_unit_type const * & buffer, T & var, IDX & idx )
 {
-  return bufferOps::UnpackByIndexDevice< parallelDevicePolicy< > >( buffer, var, idx );
+  return bufferOps::UnpackByIndexDevice( buffer, var, idx );
 }
 
 template< typename T, typename IDX >

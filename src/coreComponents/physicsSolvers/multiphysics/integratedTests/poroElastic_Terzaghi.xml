@@ -1,7 +1,7 @@
 
 <Problem>
 
-  <Solvers>
+  <Solvers gravityVector="0.0, 0.0, 0.0">
 
 <!-- SPHINX_POROELASTIC_SOLVER -->
     <Poroelastic name="poroSolve" 
@@ -11,10 +11,8 @@
                  logLevel="1"
                  discretization="FE1"
                  targetRegions="{Region2}">
-      <NonlinearSolverParameters name="nlsp"
-                                 newtonMaxIter="40"/>
-      <SystemSolverParameters name="ssp"
-                              logLevel="2"/>
+      <NonlinearSolverParameters newtonMaxIter="40"/>
+      <SystemSolverParameters logLevel="0"/>
     </Poroelastic>
 
   
@@ -25,12 +23,10 @@
                                   targetRegions="{Region2}"
                                   solidMaterialName="shale"
                                   >
-      <NonlinearSolverParameters name="nlsp"
-                                 newtonTol="1.0e-6"
+      <NonlinearSolverParameters newtonTol="1.0e-6"
                                  newtonMaxIter="5"/>
-      <SystemSolverParameters name="ssp"
-                              krylovTol="1.0e-10"
-                              logLevel="2"/>
+      <SystemSolverParameters krylovTol="1.0e-10"
+                              logLevel="0"/>
     </SolidMechanicsLagrangianSSLE>
   
     <SinglePhaseFVM name="SinglePhaseFlow"
@@ -39,11 +35,9 @@
                      targetRegions="{Region2}"
                      fluidName="water"
                      solidName="shale">
-      <NonlinearSolverParameters name="nlsp"
-                                 newtonTol="1.0e-6"
+      <NonlinearSolverParameters newtonTol="1.0e-6"
                                  newtonMaxIter="8"/>
-      <SystemSolverParameters name="ssp"
-                              krylovTol="1.0e-10"/>
+      <SystemSolverParameters krylovTol="1.0e-10"/>
     </SinglePhaseFVM>
   </Solvers>
 <!-- SPHINX_POROELASTIC_SOLVER_END -->  
@@ -222,10 +216,6 @@
   <Functions>
     <TableFunction     name="timeFunction"         inputVarNames="{time}" coordinates="{1.0, 2.0, 6e4}" values="{1.0, 2.0, 2.0}" />
   </Functions>
-
-  <!-- <Partition>
-    <SpatialPartition xPar="1" yPar="1" zPar="1"/>
-  </Partition> -->
 
   <Outputs>
       <Silo name="siloOutput"/>

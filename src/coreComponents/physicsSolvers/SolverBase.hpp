@@ -144,6 +144,17 @@ public:
   virtual void SetNextDt( real64 const & currentDt,
                           real64 & nextDt);
 
+  /**
+       * @brief entry function to perform a solver step
+       * @param [in]  time_n time at the beginning of the step
+       * @param [in]  dt the perscribed timestep
+       * @param [out] return the timestep that was achieved during the step.
+       *
+       * T
+       */
+  void SetNextDtBasedOnNewtonIter( real64 const & currentDt,
+                                   real64 & nextDt);
+
 
   /**
    * @brief Entry function for an explicit time integration step
@@ -471,10 +482,12 @@ public:
   /*
    * Returns the requirement for the next time-step to the event executing the solver.
    */
-  virtual real64 GetTimestepRequest( real64 const GEOSX_UNUSED_ARG( time ) ) override
+  virtual real64 GetTimestepRequest( real64 const GEOSX_UNUSED_PARAM( time ) ) override
 		  {return m_nextDt;};
   /**@}*/
 
+  real64 GetTimestepRequest()
+      {return m_nextDt;};
 
   virtual Group * CreateChild( string const & childKey, string const & childName ) override;
   virtual void ExpandObjectCatalogs() override;
@@ -580,7 +593,6 @@ protected:
   template<typename BASETYPE>
   static BASETYPE * GetConstitutiveModel( dataRepository::Group * dataGroup, string const & name );
 
-  integer m_logLevel = 0;
   SystemSolverParameters m_systemSolverParameters;
 
   real64 m_cflFactor;
@@ -603,7 +615,6 @@ protected:
 
   /// Linear solver parameters
   LinearSolverParameters m_linearSolverParameters;
-
   NonlinearSolverParameters m_nonlinearSolverParameters;
 
 };

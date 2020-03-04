@@ -160,7 +160,7 @@
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  */
-#define GEOSX_ERROR_IF_EQ( lhs, rhs ) GEOSX_ERROR_IF_EQ( lhs, rhs )
+#define GEOSX_ERROR_IF_EQ( lhs, rhs ) LVARRAY_ERROR_IF_EQ( lhs, rhs )
 
 /**
  * @brief Raise a hard error if two values are not equal.

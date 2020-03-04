@@ -65,7 +65,7 @@ VTMMeshGenerator::~VTMMeshGenerator()
 /**
  * @param domain
  */
-void VTMMeshGenerator::GenerateElementRegions( DomainPartition& GEOSX_UNUSED_ARG( domain ) )
+void VTMMeshGenerator::GenerateElementRegions( DomainPartition& GEOSX_UNUSED_PARAM( domain ) )
 {
   //  lvector numElements;
   //
@@ -87,12 +87,12 @@ void VTMMeshGenerator::PostProcessInput()
 
 
 
-void VTMMeshGenerator::RemapMesh(dataRepository::Group * const GEOSX_UNUSED_ARG( domain ) )
+void VTMMeshGenerator::RemapMesh(dataRepository::Group * const GEOSX_UNUSED_PARAM( domain ) )
 {
 
 }
 
-Group * VTMMeshGenerator::CreateChild( string const & GEOSX_UNUSED_ARG( childKey ), string const & GEOSX_UNUSED_ARG( childName ) )
+Group * VTMMeshGenerator::CreateChild( string const & GEOSX_UNUSED_PARAM( childKey ), string const & GEOSX_UNUSED_PARAM( childName ) )
 {
   return nullptr;
 }
@@ -115,13 +115,13 @@ void VTMMeshGenerator::GenerateMesh( DomainPartition * const domain )
                 const auto & mesh = meshBlock.mesh();
                 /// Write nodes
                 nodeManager->resize(mesh.NumVertices());
-                arrayView1d<R1Tensor> & X = nodeManager->referencePosition();
+                arrayView2d<real64, nodes::REFERENCE_POSITION_USD> const & X = nodeManager->referencePosition();
                 for( localIndex a=0 ; a< mesh.NumVertices() ; ++a )
                 {
-                    real64 * const tensorData = X[a].Data();
-                    tensorData[0] = mesh.Vertex(a)[0];
-                    tensorData[1] = mesh.Vertex(a)[1];
-                    tensorData[2] = mesh.Vertex(a)[2];
+                  for( int i = 0; i < 3; ++i )
+                  {
+                    X(a, i) = mesh.Vertex(a)[i];
+                  }
                 }
                 /// Cell blocks registrations
                 if( mesh.NumHex() > 0) {
@@ -196,11 +196,11 @@ void VTMMeshGenerator::GenerateMesh( DomainPartition * const domain )
     }
 }
 
-void VTMMeshGenerator::GetElemToNodesRelationInBox( const std::string& GEOSX_UNUSED_ARG( elementType ),
-                                                    const int GEOSX_UNUSED_ARG( index )[],
-                                                    const int& GEOSX_UNUSED_ARG( iEle ),
-                                                    int GEOSX_UNUSED_ARG( nodeIDInBox )[],
-                                                    const int GEOSX_UNUSED_ARG( node_size ) )
+void VTMMeshGenerator::GetElemToNodesRelationInBox( const std::string& GEOSX_UNUSED_PARAM( elementType ),
+                                                    const int GEOSX_UNUSED_PARAM( index )[],
+                                                    const int& GEOSX_UNUSED_PARAM( iEle ),
+                                                    int GEOSX_UNUSED_PARAM( nodeIDInBox )[],
+                                                    const int GEOSX_UNUSED_PARAM( node_size ) )
 
 {
 

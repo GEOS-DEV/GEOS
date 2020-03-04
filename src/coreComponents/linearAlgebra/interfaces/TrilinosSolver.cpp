@@ -28,6 +28,7 @@
 #include "linearAlgebra/interfaces/EpetraMatrix.hpp"
 #include "linearAlgebra/interfaces/EpetraVector.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
+#include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 
 // TPL includes
 #include <Epetra_Map.h>
@@ -146,6 +147,9 @@ void TrilinosSolver::solve_krylov( EpetraMatrix & mat,
   // Instantiate the AztecOO solver.
   AztecOO solver( problem );
 
+  // Extra scratch matrix, may or may not be used
+  std::unique_ptr<EpetraMatrix> scratch;
+
   // Choose the solver type
   if( m_parameters.solverType == "gmres" )
   {
@@ -217,6 +221,7 @@ void TrilinosSolver::solve_krylov( EpetraMatrix & mat,
     translate.insert( std::make_pair( "chebyshev", "Chebyshev" ));
     translate.insert( std::make_pair( "ilu", "ILU" ));
     translate.insert( std::make_pair( "ilut", "ILUT" ));
+    translate.insert( std::make_pair( "icc", "IC" ));
 
     list.set( "ML output", m_parameters.logLevel );
     list.set( "max levels", m_parameters.amg.maxLevels );
@@ -226,13 +231,26 @@ void TrilinosSolver::solve_krylov( EpetraMatrix & mat,
     list.set( "prec type", translate[m_parameters.amg.cycleType] );
     list.set( "smoother: type", translate[m_parameters.amg.smootherType] );
     list.set( "coarse: type", translate[m_parameters.amg.coarseType] );
+    //list.set( "aggregation: threshold", 0.0 );
+    //list.set( "smoother: pre or post", "post" );
 
     //TODO: add user-defined null space / rigid body mode support
     //list.set("null space: type","pre-computed");
     //list.set("null space: vectors",&rigid_body_modes[0]);
     //list.set("null space: dimension", n_rbm);
 
-    ml_preconditioner.reset( new ML_Epetra::MultiLevelPreconditioner( *mat.unwrappedPointer(), list ));
+    //TODO: templatization for LAIHelperFunctions needed
+    if(m_parameters.amg.separateComponents) // apply separate displacement component filter
+    {
+      scratch.reset(new EpetraMatrix());
+      LAIHelperFunctions::SeparateComponentFilter<TrilinosInterface>(mat,*scratch,m_parameters.dofsPerNode);
+      ml_preconditioner.reset( new ML_Epetra::MultiLevelPreconditioner( *scratch->unwrappedPointer(), list ));
+    }
+    else // just use original matrix to construct amg operator
+    {
+      ml_preconditioner.reset( new ML_Epetra::MultiLevelPreconditioner( *mat.unwrappedPointer(), list ));
+    }
+
     solver.SetPrecOperator( ml_preconditioner.get() );
   }
   else

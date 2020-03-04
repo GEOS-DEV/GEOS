@@ -46,7 +46,7 @@ FunctionBase::~FunctionBase()
 integer FunctionBase::isFunctionOfTime() const
 {
   integer rval=0;
-  string_array const & inputVarNames = this->getReference<string_array>( dataRepository::keys::inputVarNames );
+  arrayView1d<string const> const & inputVarNames = this->getReference<string_array>( dataRepository::keys::inputVarNames );
   localIndex numVars = integer_conversion<localIndex>(inputVarNames.size());
 
   if( numVars==1 )
@@ -73,7 +73,7 @@ integer FunctionBase::isFunctionOfTime() const
 
 real64_array FunctionBase::EvaluateStats( dataRepository::Group const * const group,
                                           real64 const time,
-                                          set<localIndex> const & set) const
+                                          SortedArray<localIndex> const & set) const
 {
   localIndex N = set.size();
   real64_array sub(N);

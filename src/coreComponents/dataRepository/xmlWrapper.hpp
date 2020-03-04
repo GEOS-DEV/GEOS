@@ -126,11 +126,12 @@ public:
    * @copybrief StringToInputVariable(T &, string)
    * @tparam T    data type of the array
    * @tparam NDIM number of dimensions of the array
+   * @tparam PERMUTATION the permutation of the array
    * @param[out] array the array to read values into
    * @param[in]  value the string that contains the data to be parsed into target
    */
-  template< typename T, int NDIM >
-  static void StringToInputVariable( Array< T, NDIM > & array, string value );
+  template< typename T, int NDIM, typename PERMUTATION >
+  static void StringToInputVariable( Array< T, NDIM, PERMUTATION > & array, string value );
 
   ///@}
 
@@ -222,10 +223,10 @@ void xmlWrapper::StringToInputVariable( T & target, string inputValue )
   ss>>target;
 }
 
-template< typename T, int NDIM >
-void xmlWrapper::StringToInputVariable( Array< T, NDIM > & array, string valueString )
+template< typename T, int NDIM, typename PERMUTATION >
+void xmlWrapper::StringToInputVariable( Array< T, NDIM, PERMUTATION > & array, string valueString )
 {
-  cxx_utilities::stringToArray( array, valueString );
+  LvArray::stringToArray( array, valueString );
 }
 
 template< typename T >

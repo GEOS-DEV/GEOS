@@ -2,20 +2,18 @@
 <Problem>
   
   <Solvers
-    gravityVector="0.0, 0.0, -9.81">
+    gravityVector="0.0, 0.0, 0.0">
 
     <SolidMechanicsLagrangianSSLE name="lagSolve" 
                                   timeIntegrationOption="QuasiStatic"
-                                  logLevel="0"
+                                  logLevel="1"
                                   discretization="FE1"
                                   targetRegions="{Region2}"
                                   solidMaterialName="granite"
                                   >
-      <NonlinearSolverParameters name="nlsp"
-                                 newtonTol="1.0e-3"
+      <NonlinearSolverParameters newtonTol="1.0e-3"
                                  newtonMaxIter="8"/>
-      <SystemSolverParameters name="ssp"
-                              krylovTol="1.0e-10"
+      <SystemSolverParameters krylovTol="1.0e-10"
                               logLevel="0"/>
      </SolidMechanicsLagrangianSSLE>
   
@@ -146,7 +144,14 @@
                objectPath="faceManager"
                fieldName="Traction" 
                scale="-1e6" 
-               setNames="{zneg}"/>                             
+               setNames="{zneg}"/>
+               
+    <FieldSpecification name="znegconstraint" 
+               component="2" 
+               objectPath="nodeManager"
+               fieldName="TotalDisplacement" 
+               scale="0.0" 
+               setNames="{zneg}"/>
                
   </FieldSpecifications>
 
@@ -158,10 +163,6 @@
                    values     = "{0.0, 1.0, 1.0}" />
     
   </Functions>
-
-  <!-- <Partition>
-    <SpatialPartition xPar="1" yPar="1" zPar="1"/>
-  </Partition> -->
 
  
   <Outputs>
