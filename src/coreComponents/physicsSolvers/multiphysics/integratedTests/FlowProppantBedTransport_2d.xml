@@ -40,7 +40,7 @@
 
 
 
-    <SinglePhaseFVM name="SinglePhaseFVM"
+    <SinglePhaseProppantFVM name="SinglePhaseFVM"
                      logLevel="1"
                      discretization="singlePhaseTPFA"
                      targetRegions="{Fracture}"
@@ -53,7 +53,7 @@
                                  newtonMinIter="1"
                                  maxTimeStepCuts="5"/>
        <SystemSolverParameters krylovTol="1.0e-12"/>
-    </SinglePhaseFVM>
+    </SinglePhaseProppantFVM>
 
 
     

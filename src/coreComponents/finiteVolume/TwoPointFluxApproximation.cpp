@@ -23,11 +23,6 @@
 #include "FaceElementStencil.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 
-//<<<<<<< HEAD
-//#include "managers/DomainPartition.hpp"
-//#include "managers/ProblemManager.hpp"
-//#include "physicsSolvers/PhysicsSolverManager.hpp"
-//=======
 #include <cmath>
 
 namespace geosx
@@ -213,7 +208,7 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition & domain,
                                                       bool const initFlag )
 {
   MeshLevel * const mesh = domain.getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  NodeManager const * const nodeManager = mesh->getNodeManager();
+  NodeManager * const nodeManager = mesh->getNodeManager();
   EdgeManager const * const edgeManager = mesh->getEdgeManager();
   FaceManager const * const faceManager = mesh->getFaceManager();
   ElementRegionManager * const elemManager = mesh->getElemManager();
@@ -273,8 +268,8 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition & domain,
 #endif
 #if SET_CREATION_DISPLACEMENT==1
   ArrayOfArraysView<localIndex const> const & faceToNodesMap = faceManager->nodeList();
-  arrayView2d<real64 nodes::INCR_DISPLACEMENT_USD> const & incrementalDisplacement = nodeManager->incrementalDisplacement();
-  arrayView2d<real64, nodes::TOTAL_DISPLACEMENT_UNIT_STIRDE> const & totalDisplacement = nodeManager->totalDisplacement();
+  arrayView2d<real64, nodes::INCR_DISPLACEMENT_USD> const & incrementalDisplacement = nodeManager->incrementalDisplacement();
+  arrayView2d<real64, nodes::TOTAL_DISPLACEMENT_USD> const & totalDisplacement = nodeManager->totalDisplacement();
   arrayView1d< real64 > const & aperture = fractureSubRegion->getReference<array1d<real64>>("elementAperture");
 #endif
 
@@ -424,8 +419,8 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition & domain,
           {
             localIndex const node0 = faceToNodesMap(faceIndex0,a);
             localIndex const node1 = faceToNodesMap(faceIndex1, a==0 ? a : numNodesPerFace-a );
-            if( fabs( totalDisplacement[node0].L2_Norm() ) > 1.0e-99 &&
-                fabs( totalDisplacement[node1].L2_Norm() ) > 1.0e-99 )
+            if( fabs( LvArray::tensorOps::norm2(totalDisplacement[node0]) ) > 1.0e-99 &&
+                fabs( LvArray::tensorOps::norm2(totalDisplacement[node1]) ) > 1.0e-99 )
             {
               zeroDisp = false;
             }
