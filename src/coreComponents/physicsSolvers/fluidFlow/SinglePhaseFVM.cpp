@@ -26,6 +26,7 @@
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseKernels.hpp"
+#include "mesh/FaceElementRegion.hpp"
 
 #include "constitutive/solid/PoreVolumeCompressibleSolid.hpp"
 #include "constitutive/solid/LinearElasticAnisotropic.hpp"
@@ -234,6 +235,9 @@ void SinglePhaseFVM::AssembleFluxTermsExplicit( real64 const GEOSX_UNUSED_PARAM(
 {
   GEOSX_MARK_FUNCTION;
 
+  MeshLevel const * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  ElementRegionManager const * const elemManager=  mesh->getElemManager();
+
   NumericalMethodsManager * numericalMethodManager =
     domain->getParent()->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
 
@@ -246,7 +250,8 @@ void SinglePhaseFVM::AssembleFluxTermsExplicit( real64 const GEOSX_UNUSED_PARAM(
   FluxKernel::MaterialView< arrayView2d<real64 const> > const & dens        = m_density.toViewConst();
   FluxKernel::MaterialView< arrayView2d<real64 const> > const & visc        = m_viscosity.toViewConst();
   FluxKernel::ElementView < arrayView1d<real64 const> > const & mob         = m_mobility.toViewConst();
-  FluxKernel::ElementView < arrayView1d<real64 const> > const & poro        = m_porosityRef.toViewConst();
+  FluxKernel::ElementView < arrayView1d<real64 const> > const & poro        = m_porosity.toViewConst();
+  FluxKernel::ElementView < arrayView1d<real64 const> > const & poroRef     = m_porosityRef.toViewConst();
   FluxKernel::ElementView < arrayView1d<real64 const> > const & totalCompressibility = m_totalCompressibility.toViewConst();
   FluxKernel::ElementView < arrayView1d<real64 const> > const & referencePressure = m_referencePressure.toViewConst();
 
@@ -261,11 +266,15 @@ void SinglePhaseFVM::AssembleFluxTermsExplicit( real64 const GEOSX_UNUSED_PARAM(
   localIndex const fluidIndex = m_fluidIndex;
   m_maxStableDt = std::numeric_limits<real64>::max();
 
+  FaceElementRegion const * const fractureRegion = elemManager->GetRegion<FaceElementRegion>("Fracture");
+  localIndex const fractureRegionIndex = fractureRegion->getIndexInParent();
+
   fluxApprox->forCellStencils( [&]( auto & stencil )
   {
     FluxKernel::Launch( stencil,
                         dt,
                         fluidIndex,
+                        fractureRegionIndex,
                         pres,
                         gravCoef,
                         dens,
@@ -278,6 +287,7 @@ void SinglePhaseFVM::AssembleFluxTermsExplicit( real64 const GEOSX_UNUSED_PARAM(
                         dseparationCoeff_dAper,
 #endif
                         poro,
+                        poroRef,
                         totalCompressibility,
                         referencePressure,
                         &m_fluidMass,
