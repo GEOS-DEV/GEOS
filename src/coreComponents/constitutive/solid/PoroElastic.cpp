@@ -40,12 +40,12 @@ PoroElastic<BASE>::PoroElastic( string const & name, Group * const parent ):
   m_poreVolumeRelation()
 {
   this->registerWrapper( viewKeyStruct::biotCoefficientString, &m_biotCoefficient, 0 )->
-    setApplyDefaultValue(0)->
+    setApplyDefaultValue(1.0)-> // Default 0? Shouldn't be 1
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Biot's coefficient");
 
   this->registerWrapper( viewKeyStruct::compressibilityString, &m_compressibility, 0 )->
-    setApplyDefaultValue(-1)->
+    setApplyDefaultValue(0.0)-> //Why -1?
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Fluid Compressibilty");
 
