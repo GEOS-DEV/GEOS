@@ -104,6 +104,13 @@
                         objectPath="nodeManager"
                         scale="0"
                         setNames="{xneg, xpos, yneg, ypos, zneg, zpos}"/> -->
+    <FieldSpecification name="xposconstraint"
+               objectPath="nodeManager"
+               fieldName="Force"
+               component="0"
+               scale="4.0e2"
+               functionName="f_b"
+               setNames="{xpos}"/>
 
     <FieldSpecification name="xconstraint0"
                objectPath="nodeManager"
@@ -112,13 +119,13 @@
                scale="0"
                setNames="{xneg}"/>
 
-    <FieldSpecification name="xconstraint1"
+    <!-- <FieldSpecification name="xconstraint1"
                objectPath="nodeManager"
                fieldName="TotalDisplacement"
                component="0"
                scale="0.0000010"
                functionName="f_b"
-               setNames="{xpos}"/>
+               setNames="{xpos}"/> -->
 
     <FieldSpecification name="yconstraint"
                objectPath="nodeManager"
