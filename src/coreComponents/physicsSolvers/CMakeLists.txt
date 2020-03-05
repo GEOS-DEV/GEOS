@@ -21,6 +21,7 @@ set( physicsSolvers_headers
      fluidFlow/SinglePhaseFVM.hpp
      fluidFlow/SinglePhaseKernels.hpp
      fluidFlow/SinglePhaseWell.hpp
+     fluidFlow/SinglePhaseProppantBase.hpp
      fluidFlow/WellSolverBase.hpp
      fluidFlow/WellSolverBase.hpp
      multiphysics/FlowProppantTransportSolver.hpp
@@ -31,7 +32,7 @@ set( physicsSolvers_headers
      solidMechanics/SolidMechanicsLagrangianFEM.hpp
      solidMechanics/SolidMechanicsLagrangianSSLE.hpp
      solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp
-     solidMechanics/SolidMechanicsLagrangianSSLEKernels.hpp     
+     solidMechanics/SolidMechanicsLagrangianSSLEKernels.hpp
      surfaceGeneration/SurfaceGenerator.hpp
      surfaceGeneration/EmbeddedSurfaceGenerator.hpp
      )
@@ -49,15 +50,16 @@ set( physicsSolvers_sources
      fluidFlow/CompositionalMultiphaseWell.cpp
      fluidFlow/FlowSolverBase.cpp
      fluidFlow/ProppantTransport.cpp
-     fluidFlow/ProppantTransportKernels.cpp               
+     fluidFlow/ProppantTransportKernels.cpp
      fluidFlow/SinglePhaseBase.cpp
      fluidFlow/SinglePhaseHybridFVM.cpp
-     fluidFlow/SinglePhaseFVM.cpp     
+     fluidFlow/SinglePhaseFVM.cpp
      fluidFlow/SinglePhaseKernels.cpp
+     fluidFlow/SinglePhaseProppantBase.cpp
      fluidFlow/SinglePhaseWell.cpp
      fluidFlow/SinglePhaseWell.cpp
      fluidFlow/WellSolverBase.cpp
-     multiphysics/FlowProppantTransportSolver.cpp          
+     multiphysics/FlowProppantTransportSolver.cpp
      multiphysics/HydrofractureSolver.cpp
      multiphysics/PoroelasticSolver.cpp
      multiphysics/ReservoirSolver.cpp

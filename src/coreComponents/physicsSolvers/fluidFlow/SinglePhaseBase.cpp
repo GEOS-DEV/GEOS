@@ -18,15 +18,12 @@
 
 #include "SinglePhaseBase.hpp"
 
-#include "ProppantTransport.hpp"
-
 #include "mpiCommunications/CommunicationTools.hpp"
 #include "mpiCommunications/NeighborCommunicator.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
-#include "constitutive/fluid/SlurryFluidBase.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/NumericalMethodsManager.hpp"
@@ -109,39 +106,11 @@ void SinglePhaseBase::RegisterDataOnMesh(Group * const MeshBodies)
   }
 }
 
-template<>
-void SinglePhaseBase::UpdateFluidProperty<true>(Group * const dataGroup) const
+
+void SinglePhaseBase::UpdateFluidModel(Group * const dataGroup) const
 {
   GEOSX_MARK_FUNCTION;
-
-  arrayView1d<real64 const> const & pres = dataGroup->getReference< array1d<real64> >( viewKeyStruct::pressureString );
-  arrayView1d<real64 const> const & dPres = dataGroup->getReference< array1d<real64> >( viewKeyStruct::deltaPressureString );
-
-  SlurryFluidBase * const fluid = GetConstitutiveModel<SlurryFluidBase>( dataGroup, m_fluidName );
-
-  arrayView1d<real64 const> const & proppantConcentration = dataGroup->getReference<array1d<real64>>( ProppantTransport::viewKeyStruct::proppantConcentrationString );
-
-  arrayView1d<real64 const> const & dProppantConcentration = dataGroup->getReference<array1d<real64>>( ProppantTransport::viewKeyStruct::deltaProppantConcentrationString );      
-
-  arrayView2d<real64 const> const & componentConcentration = dataGroup->getReference<array2d<real64>>( ProppantTransport::viewKeyStruct::componentConcentrationString );
-
-  arrayView1d<R1Tensor const> const & cellBasedFlux = dataGroup->getReference< array1d<R1Tensor> >( ProppantTransport::viewKeyStruct::cellBasedFluxString );
-
-  arrayView1d<integer const> const & isProppantBoundaryElement  = dataGroup->getReference< array1d<integer> >( ProppantTransport::viewKeyStruct::isProppantBoundaryString );
   
-  forall_in_range<RAJA::seq_exec>( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a )
-  {
-      fluid->PointUpdate( pres[a] + dPres[a], proppantConcentration[a] + dProppantConcentration[a],  componentConcentration[a], cellBasedFlux[a].L2_Norm(), isProppantBoundaryElement[a], a, 0 );
-
-  });
-}
-
-
-template<>
-void SinglePhaseBase::UpdateFluidProperty<false>(Group * const dataGroup) const
-{
-  GEOSX_MARK_FUNCTION;
-
   arrayView1d<real64 const> const & pres = dataGroup->getReference< array1d<real64> >( viewKeyStruct::pressureString );
   arrayView1d<real64 const> const & dPres = dataGroup->getReference< array1d<real64> >( viewKeyStruct::deltaPressureString );
 
@@ -150,28 +119,7 @@ void SinglePhaseBase::UpdateFluidProperty<false>(Group * const dataGroup) const
   forall_in_range<RAJA::seq_exec>( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a )
   {                                      
     fluid->PointUpdate( pres[a] + dPres[a], a, 0 );
-  });
-
-}
-
-void SinglePhaseBase::UpdateFluidModel(Group * const dataGroup) const
-{
-
-  GEOSX_MARK_FUNCTION;
-
-  if(m_flowProppantTransportFlag)
-    {
-  
-      UpdateFluidProperty<true>( dataGroup );
-
-    }
-  else
-    {
-
-      UpdateFluidProperty<false>( dataGroup );
-
-    }
-}
+  });}
 
 void SinglePhaseBase::UpdateSolidModel(Group * const dataGroup) const
 {
@@ -188,43 +136,6 @@ void SinglePhaseBase::UpdateSolidModel(Group * const dataGroup) const
   });
 }
 
-template<class FLUIDBASE>  
-void SinglePhaseBase::UpdateMobility( Group * const dataGroup ) const
-{
-  GEOSX_MARK_FUNCTION;
-
-  // output
-
-  arrayView1d<real64> const & mob =
-    dataGroup->getReference< array1d<real64> >( viewKeyStruct::mobilityString );
-
-  arrayView1d<real64> const & dMob_dPres =
-    dataGroup->getReference< array1d<real64> >( viewKeyStruct::dMobility_dPressureString );
-
-  FLUIDBASE * const fluid = GetConstitutiveModel<FLUIDBASE>( dataGroup, m_fluidName );      
-
-  arrayView2d<real64 const> const & dens =
-    fluid->template getReference< array2d<real64> >( FLUIDBASE::viewKeyStruct::densityString );
-
-  arrayView2d<real64 const> const & dDens_dPres =
-    fluid->template getReference< array2d<real64> >( FLUIDBASE::viewKeyStruct::dDens_dPresString );
-
-  arrayView2d<real64 const> const & visc =
-    fluid->template getReference< array2d<real64> >( FLUIDBASE::viewKeyStruct::viscosityString );
-
-  arrayView2d<real64 const> const & dVisc_dPres =
-    fluid->template getReference< array2d<real64> >( FLUIDBASE::viewKeyStruct::dVisc_dPresString );
-
-  MobilityKernel::Launch( 0, dataGroup->size(),
-                          dens,
-                          dDens_dPres,
-                          visc,
-                          dVisc_dPres,
-                          mob,
-                          dMob_dPres );
-
-}
-
 
 void SinglePhaseBase::UpdateState( Group * dataGroup ) const
 {
@@ -232,11 +143,7 @@ void SinglePhaseBase::UpdateState( Group * dataGroup ) const
 
   UpdateFluidModel( dataGroup );
   UpdateSolidModel( dataGroup );
-
-  if(m_flowProppantTransportFlag)
-    UpdateMobility<SlurryFluidBase>( dataGroup );
-  else
-    UpdateMobility<SingleFluidBase>( dataGroup );    
+  UpdateMobility<SingleFluidBase>( dataGroup );
 }
 
 void SinglePhaseBase::InitializePostInitialConditions_PreSubGroups( Group * const rootGroup )
@@ -855,56 +762,7 @@ void SinglePhaseBase::ResetViews( DomainPartition * const domain )
   m_porosity =
     elemManager->ConstructViewAccessor< array1d<real64>, arrayView1d<real64> >( viewKeyStruct::porosityString );
 
-  if(m_flowProppantTransportFlag)
-    {
-  
-      m_density =
-        elemManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64> >( SlurryFluidBase::viewKeyStruct::densityString,
-                                                                                               constitutiveManager );
-      m_dDens_dPres =
-        elemManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64> >( SlurryFluidBase::viewKeyStruct::dDens_dPresString,
-                                                                                               constitutiveManager );
-      m_viscosity =
-        elemManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64> >( SlurryFluidBase::viewKeyStruct::viscosityString,
-                                                                                               constitutiveManager );
-      m_dVisc_dPres =
-        elemManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64> >( SlurryFluidBase::viewKeyStruct::dVisc_dPresString,
-                                                                                               constitutiveManager );
-
-      m_poroMultiplier =
-      elemManager->ConstructViewAccessor< array1d<real64>, arrayView1d<real64> >( ProppantTransport::viewKeyStruct::poroMultiplierString );
-
-      m_transTMultiplier =
-      elemManager->ConstructViewAccessor< array1d<R1Tensor>, arrayView1d<R1Tensor> >( ProppantTransport::viewKeyStruct::transTMultiplierString );
-
-
-    }
-  else
-    {
-
-      m_density =
-        elemManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64> >( SingleFluidBase::viewKeyStruct::densityString,
-                                                                                               constitutiveManager );
-      m_dDens_dPres =
-        elemManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64> >( SingleFluidBase::viewKeyStruct::dDens_dPresString,
-                                                                                               constitutiveManager );
-      m_viscosity =
-        elemManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64> >( SingleFluidBase::viewKeyStruct::viscosityString,
-                                                                                               constitutiveManager );
-      m_dVisc_dPres =
-        elemManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64> >( SingleFluidBase::viewKeyStruct::dVisc_dPresString,
-                                                                                           constitutiveManager );
-
-      m_poroMultiplier =
-      elemManager->ConstructViewAccessor< array1d<real64>, arrayView1d<real64> >( viewKeyStruct::poroMultString );
-
-      
-      m_transTMultiplier =
-      elemManager->ConstructViewAccessor< array1d<R1Tensor>, arrayView1d<R1Tensor> >( viewKeyStruct::transTMultString );
-
-      
-    }
-
+  ResetViewsPrivate( elemManager, constitutiveManager );
       
   if (m_poroElasticFlag)
   {
@@ -918,6 +776,33 @@ void SinglePhaseBase::ResetViews( DomainPartition * const domain )
                                                                             constitutiveManager );
   }
 }
+
+void SinglePhaseBase::ResetViewsPrivate( ElementRegionManager * const elemManager,
+                                         ConstitutiveManager * const constitutiveManager )
+{
+
+  m_density =
+    elemManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64> >( SingleFluidBase::viewKeyStruct::densityString,
+                                                                                           constitutiveManager );
+  m_dDens_dPres =
+    elemManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64> >( SingleFluidBase::viewKeyStruct::dDens_dPresString,
+                                                                                           constitutiveManager );
+  m_viscosity =
+    elemManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64> >( SingleFluidBase::viewKeyStruct::viscosityString,
+                                                                                           constitutiveManager );
+  m_dVisc_dPres =
+    elemManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64> >( SingleFluidBase::viewKeyStruct::dVisc_dPresString,
+                                                                                       constitutiveManager );
+
+  m_poroMultiplier =
+  elemManager->ConstructViewAccessor< array1d<real64>, arrayView1d<real64> >( viewKeyStruct::poroMultString );
+
+
+  m_transTMultiplier =
+  elemManager->ConstructViewAccessor< array1d<R1Tensor>, arrayView1d<R1Tensor> >( viewKeyStruct::transTMultString );
+
+}
+
 
 
 } /* namespace geosx */

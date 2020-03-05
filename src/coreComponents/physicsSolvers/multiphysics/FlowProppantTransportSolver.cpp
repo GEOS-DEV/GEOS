@@ -82,7 +82,7 @@ void FlowProppantTransportSolver::PostProcessInput()
 
 void FlowProppantTransportSolver::InitializePostInitialConditions_PreSubGroups(Group * const GEOSX_UNUSED_PARAM( problemManager ))
 {
-  this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFVM*>()->setFlowProppantTransportCoupling();
+//  this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFVM<SinglePhaseProppantBase>*>()->setFlowProppantTransportCoupling();
 }
 
 FlowProppantTransportSolver::~FlowProppantTransportSolver()
@@ -107,8 +107,8 @@ real64 FlowProppantTransportSolver::SolverStep( real64 const & time_n,
   ProppantTransport &
   proppantSolver = *(this->getParent()->GetGroup(m_proppantSolverName)->group_cast<ProppantTransport*>());
 
-  SinglePhaseFVM &
-  flowSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFVM*>());
+  SinglePhaseFVM<SinglePhaseProppantBase> &
+  flowSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFVM<SinglePhaseProppantBase>*>());
 
   proppantSolver.ResizeFractureFields(time_n, dt, domain);
   
