@@ -23,6 +23,7 @@
 #include "common/DataLayouts.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/solid/PoroElastic.hpp"
+#include "constitutive/fluid/SingleFluidBase.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "finiteElement/Kinematics.h"
 #include "managers/DomainPartition.hpp"
@@ -208,9 +209,12 @@ void PoroelasticSolver::PostProcessInput()
 
 void PoroelasticSolver::InitializePostInitialConditions_PreSubGroups(Group * const problemManager)
 {
-  this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseBase*>()->setPoroElasticCoupling();
-  // Calculate initial total mean stress
-  this->UpdateDeformationForCoupling(problemManager->GetGroup<DomainPartition>(keys::domain));
+  if( m_couplingTypeOption == couplingTypeOption::FixedStress )
+  {
+    this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseBase*>()->setPoroElasticCoupling();
+    // Calculate initial total mean stress
+    this->UpdateDeformationForCoupling(problemManager->GetGroup<DomainPartition>(keys::domain));
+  }
 }
 
 PoroelasticSolver::~PoroelasticSolver()
@@ -429,6 +433,7 @@ void PoroelasticSolver::AssembleForceResidualDerivativeWrtPressure( DomainPartit
 
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   NodeManager * const nodeManager = mesh->getNodeManager();
+//  ConstitutiveManager  * const constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
   ElementRegionManager * const elemManager = mesh->getElemManager();
   NumericalMethodsManager const * numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
   FiniteElementDiscretizationManager const * feDiscretizationManager = numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
@@ -439,6 +444,9 @@ void PoroelasticSolver::AssembleForceResidualDerivativeWrtPressure( DomainPartit
   arrayView1d<globalIndex const> const & uDofNumber = nodeManager->getReference<globalIndex_array>( uDofKey );
 
   string const pDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString );
+
+//  ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase>
+//    constitutiveRelation = elemManager->ConstructFullConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
 
   // begin region loop
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
@@ -468,10 +476,14 @@ void PoroelasticSolver::AssembleForceResidualDerivativeWrtPressure( DomainPartit
       real64 const
       biotCoefficient = elementSubRegion->GetConstitutiveModels()->GetGroup(solidModelName)->getReference<real64>( "BiotCoefficient");
 
+      arrayView2d<real64 const> const &
+      density = elementSubRegion->GetConstitutiveModels()
+                                ->GetGroup(m_flowSolver->fluidIndex())
+                                ->getReference<array2d<real64>>( SingleFluidBase::viewKeyStruct::densityString );
 
       int dim = 3;
       int nUDof = dim * numNodesPerElement;
-      int nPDof = 1;
+      int nPDof = m_flowSolver->numDofPerCell();
 
       array1d<globalIndex> elementULocalDofIndex( nUDof );
       globalIndex          elementPLocalDOfIndex;
@@ -510,6 +522,9 @@ void PoroelasticSolver::AssembleForceResidualDerivativeWrtPressure( DomainPartit
               dRsdP(a*dim+0, 0) -= biotCoefficient * dNdXa[0] * detJq;
               dRsdP(a*dim+1, 0) -= biotCoefficient * dNdXa[1] * detJq;
               dRsdP(a*dim+2, 0) -= biotCoefficient * dNdXa[2] * detJq;
+              dRfdU(0, a*dim+0) += density[k][0] * biotCoefficient * dNdXa[0] * detJq;
+              dRfdU(0, a*dim+1) += density[k][0] * biotCoefficient * dNdXa[1] * detJq;
+              dRfdU(0, a*dim+2) += density[k][0] * biotCoefficient * dNdXa[2] * detJq;
             }
           }
 
