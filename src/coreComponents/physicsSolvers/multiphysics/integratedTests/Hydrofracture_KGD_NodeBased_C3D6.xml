@@ -8,7 +8,7 @@
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
       couplingTypeOption="TightlyCoupled"
-      logLevel="0"
+      logLevel="1"
       targetRegions="{Region2, Fracture}"
       contactRelationName="fractureContact"
       >
@@ -262,7 +262,7 @@
                
     <SourceFlux name="sourceTerm"
                 objectPath="ElementRegions/Fracture"
-                scale="-5.0"
+                scale="-1.0"
                 setNames="{source}"/>
   </FieldSpecifications>
 
