@@ -21,6 +21,7 @@
 
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseKernels.hpp"
 
 namespace geosx
 {
@@ -173,17 +174,13 @@ public:
    * @brief Function to update all constitutive state and dependent variables
    * @param dataGroup group that contains the fields
    */
-  void UpdateState( Group * dataGroup ) const;
+  virtual void UpdateState( Group * dataGroup ) const;
 
   /**
    * @brief Function to update all constitutive models
    * @param dataGroup group that contains the fields
    */
-
-  void UpdateFluidModel( Group * const dataGroup ) const;
-
-  template<bool ISPROPPANT>
-  void UpdateFluidProperty( Group * const dataGroup ) const;  
+  virtual void UpdateFluidModel( Group * const dataGroup ) const;
 
 
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
@@ -227,7 +224,7 @@ public:
   /**
    * @brief Setup stored views into domain data for the current step
    */
-  void ResetViews( DomainPartition * const domain ) override;
+  virtual void ResetViews( DomainPartition * const domain ) override;
 
 protected:
 
@@ -291,8 +288,51 @@ protected:
 
     ElementRegionManager::ElementViewAccessor<arrayView1d<R1Tensor>> m_transTMultiplier;  
   
+private:
+  virtual void ResetViewsPrivate( ElementRegionManager * const elemManager,
+                                  constitutive::ConstitutiveManager * const constitutiveManager );
+
 };
 
+
+
+template<class FLUIDBASE>
+void SinglePhaseBase::UpdateMobility( Group * const dataGroup ) const
+{
+  GEOSX_MARK_FUNCTION;
+
+  // output
+
+  arrayView1d<real64> const & mob =
+    dataGroup->getReference< array1d<real64> >( viewKeyStruct::mobilityString );
+
+  arrayView1d<real64> const & dMob_dPres =
+    dataGroup->getReference< array1d<real64> >( viewKeyStruct::dMobility_dPressureString );
+
+  FLUIDBASE * const fluid = GetConstitutiveModel<FLUIDBASE>( dataGroup, m_fluidName );
+
+  arrayView2d<real64 const> const & dens =
+    fluid->template getReference< array2d<real64> >( FLUIDBASE::viewKeyStruct::densityString );
+
+  arrayView2d<real64 const> const & dDens_dPres =
+    fluid->template getReference< array2d<real64> >( FLUIDBASE::viewKeyStruct::dDens_dPresString );
+
+  arrayView2d<real64 const> const & visc =
+    fluid->template getReference< array2d<real64> >( FLUIDBASE::viewKeyStruct::viscosityString );
+
+  arrayView2d<real64 const> const & dVisc_dPres =
+    fluid->template getReference< array2d<real64> >( FLUIDBASE::viewKeyStruct::dVisc_dPresString );
+
+  SinglePhaseKernels::MobilityKernel::Launch( 0,
+                                              dataGroup->size(),
+                                              dens,
+                                              dDens_dPres,
+                                              visc,
+                                              dVisc_dPres,
+                                              mob,
+                                              dMob_dPres );
+
+}
 
 } /* namespace geosx */
 

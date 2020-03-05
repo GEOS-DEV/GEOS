@@ -506,6 +506,13 @@ Element: SinglePhaseHybridFVM
 .. include:: ../../coreComponents/fileIO/schema/docs/SinglePhaseHybridFVM.rst
 
 
+.. _XML_SinglePhaseProppantFVM:
+
+Element: SinglePhaseProppantFVM
+===============================
+.. include:: ../../coreComponents/fileIO/schema/docs/SinglePhaseProppantFVM.rst
+
+
 .. _XML_SinglePhaseWell:
 
 Element: SinglePhaseWell
@@ -1152,6 +1159,13 @@ Datastructure: SinglePhaseFVM
 Datastructure: SinglePhaseHybridFVM
 ===================================
 .. include:: ../../coreComponents/fileIO/schema/docs/SinglePhaseHybridFVM_other.rst
+
+
+.. _DATASTRUCTURE_SinglePhaseProppantFVM:
+
+Datastructure: SinglePhaseProppantFVM
+=====================================
+.. include:: ../../coreComponents/fileIO/schema/docs/SinglePhaseProppantFVM_other.rst
 
 
 .. _DATASTRUCTURE_SinglePhaseWell:

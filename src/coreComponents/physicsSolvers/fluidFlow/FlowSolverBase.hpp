@@ -74,8 +74,6 @@ public:
   
   void setPoroElasticCoupling() { m_poroElasticFlag = 1; }
 
-  void setFlowProppantTransportCoupling() { m_flowProppantTransportFlag = 1; }  
-
   void setReservoirWellsCoupling() { m_coupledWellsFlag = 1; }
 
   localIndex fluidIndex() const { return m_fluidIndex; }
@@ -182,9 +180,6 @@ protected:
 
   /// flag to determine whether or not coupled with solid solver
   integer m_poroElasticFlag;
-
-  /// flag to determine whether or not coupled with proppant transport solver
-  integer m_flowProppantTransportFlag;  
 
   /// flag to determine whether or not coupled with wells
   integer m_coupledWellsFlag;
