@@ -259,8 +259,9 @@ void SinglePhaseFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time_n 
 
   string const dofKey = dofManager->getKey( viewKeyStruct::pressureString );
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d<globalIndex> > dofNumberAccessor =
-    elemManager->ConstructViewAccessor< array1d<globalIndex>, arrayView1d<globalIndex> >( dofKey );
+  ElementRegionManager::ElementViewAccessor< arrayView1d<globalIndex const> >
+  dofNumberAccessor = elemManager->ConstructViewAccessor< array1d<globalIndex>,
+                                                          arrayView1d<globalIndex const> >( dofKey );
 
   FluxKernel::ElementView< arrayView1d<globalIndex const> > const & dofNumber = dofNumberAccessor.toViewConst();
 
@@ -332,7 +333,7 @@ SinglePhaseFVM::ApplyBoundaryConditions( real64 const time_n,
   fsManager.Apply( time_n + dt, domain, "ElementRegions", FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString,
                    [&]( FieldSpecificationBase const * const fs,
                         string const &,
-                        SortedArray<localIndex> const & lset,
+                        SortedArrayView<localIndex const> const & lset,
                         Group * subRegion,
                         string const & ) -> void
   {
@@ -370,7 +371,7 @@ SinglePhaseFVM::ApplyBoundaryConditions( real64 const time_n,
   fsManager.Apply( time_n + dt, domain, "ElementRegions", viewKeyStruct::pressureString,
                    [&]( FieldSpecificationBase const * const fs,
                         string const &,
-                        SortedArray<localIndex> const & lset,
+                        SortedArrayView<localIndex const> const & lset,
                         Group * subRegion,
                         string const & ) -> void
   {
@@ -493,7 +494,7 @@ void SinglePhaseFVM::ApplyFaceDirichletBC_implicit( real64 const time_n,
                     viewKeyStruct::boundaryFacePressureString,
                     [&] ( FieldSpecificationBase const * const fs,
                           string const &,
-                          SortedArray<localIndex> const & targetSet,
+                          SortedArrayView<localIndex const> const & targetSet,
                           Group * const targetGroup,
                           string const fieldName )
   {
@@ -508,7 +509,7 @@ void SinglePhaseFVM::ApplyFaceDirichletBC_implicit( real64 const time_n,
                     viewKeyStruct::boundaryFacePressureString,
                     [&] ( FieldSpecificationBase const * GEOSX_UNUSED_PARAM( bc ),
                           string const &,
-                          SortedArray<localIndex> const & targetSet,
+                          SortedArrayView<localIndex const> const & targetSet,
                           Group * const,
                           string const & )
   {
@@ -549,7 +550,7 @@ void SinglePhaseFVM::ApplyFaceDirichletBC_implicit( real64 const time_n,
                     viewKeyStruct::boundaryFacePressureString,
                     [&] ( FieldSpecificationBase const * GEOSX_UNUSED_PARAM( bc ),
                           string const & setName,
-                          SortedArray<localIndex> const &,
+                          SortedArrayView<localIndex const> const &,
                           Group * const,
                           string const & )
   {

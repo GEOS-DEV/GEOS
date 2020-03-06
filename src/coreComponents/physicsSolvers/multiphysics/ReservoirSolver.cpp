@@ -158,15 +158,16 @@ void ReservoirSolver::SetupSystem( DomainPartition * const domain,
   localIndex constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
   localIndex constexpr maxNumDof  = maxNumComp + 1;
 
-  ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex>> const & resDofNumber =
-    elemManager->ConstructViewAccessor<array1d<globalIndex>, arrayView1d<globalIndex>>( resDofKey );
+  ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex const>> const &
+  resDofNumber = elemManager->ConstructViewAccessor<array1d<globalIndex>,
+                                                    arrayView1d<globalIndex const>>( resDofKey );
 
   elemManager->forElementSubRegions<WellElementSubRegion>( [&]( WellElementSubRegion const * const subRegion )
   {
     PerforationData const * const perforationData = subRegion->GetPerforationData();
 
     // get the well degrees of freedom and ghosting info
-    arrayView1d< globalIndex > const & wellElemDofNumber =
+    arrayView1d< globalIndex const > const & wellElemDofNumber =
       subRegion->getReference< array1d<globalIndex> >( wellDofKey );
 
     // get the well element indices corresponding to each perforation
