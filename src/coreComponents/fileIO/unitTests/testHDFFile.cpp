@@ -48,9 +48,15 @@ TEST( testHDFIO, WholeTabularIO )
     time_table.CreateInTarget( file );
 
     HDFTable table("Array1","arr1");
-    table.AddCols(arr.size( )/2,2,sizeof(decltype(arr)::value_type),typeid(decltype(arr)::value_type));
+    SpecFromArray(table,arr);
     table.Finalize( );
     table.CreateInTarget( file );
+
+    localIndex indices[] = { 0, 5, 9 };
+    HDFTable idx_table("Array1 Indexed","arr1_idx");
+    SpecFromArrayIndices(idx_table,arr,3,&indices[0]);
+    idx_table.Finalize( );
+    idx_table.CreateInTarget( file );
 
     HDFTableIO table_io( table );
     HDFTableIO time_table_io( time_table );

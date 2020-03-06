@@ -1,3 +1,6 @@
+#ifndef GEOSX_HDFFILE_HPP_
+#define GEOSX_HDFFILE_HPP_
+
 #include "cxx-utilities/src/Array.hpp"
 #include "codingUtilities/traits.hpp"
 #include "common/DataTypes.hpp"
@@ -389,4 +392,34 @@ private:
   std::vector<size_t> m_buffered_sizes;
 };
 
+template < typename ARRAY_T >
+typename std::enable_if < is_array<ARRAY_T>, void >::type
+SpecFromArray( HDFTable & tbl, ARRAY_T const & arr )
+{
+  tbl.AddCols(arr.size( ) / arr.size( 0 ),arr.size( 0 ), sizeof(typename ARRAY_T::value_type), typeid(typename ARRAY_T::value_type));
 }
+
+template < typename ARRAY_T, typename LAMBDA >
+typename std::enable_if < is_array<ARRAY_T>, void >::type
+SpecFromArray( HDFTable & tbl, ARRAY_T const & arr, LAMBDA && title_gen )
+{
+  tbl.AddCols(arr.size( ) / arr.size( 0 ),arr.size( 0 ), sizeof(typename ARRAY_T::value_type), typeid(typename ARRAY_T::value_type),title_gen);
+}
+
+template < typename ARRAY_T >
+typename std::enable_if < is_array<ARRAY_T>, void >::type
+SpecFromArrayIndices( HDFTable & tbl, ARRAY_T const & arr, localIndex const num_indices, localIndex const * indices )
+{
+  tbl.AddCols(num_indices, arr.size( 0 ), sizeof(typename ARRAY_T::value_type), typeid(typename ARRAY_T::value_type), indices);
+}
+
+template < typename ARRAY_T, typename LAMBDA >
+typename std::enable_if < is_array<ARRAY_T>, void >::type
+SpecFromArrayIndices( HDFTable & tbl, ARRAY_T const & arr, LAMBDA && title_gen, localIndex const num_indices, localIndex const * indices )
+{
+  tbl.AddCols(num_indices, arr.size( 0 ), sizeof(typename ARRAY_T::value_type), typeid(typename ARRAY_T::value_type),title_gen, indices);
+}
+
+}
+
+#endif
