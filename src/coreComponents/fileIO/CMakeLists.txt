@@ -32,7 +32,22 @@ if( CONDUIT_FOUND )
 endif()
 
 if( ENABLE_VTK )
-  add_subdirectory( vtk )
+  list( APPEND fileIO_headers
+               vtk/Array2DVTKDataArray.hpp
+               vtk/CellVTKDataArray.hpp
+               vtk/DummyVTKDataArray.hpp 
+               vtk/VTKTypes.hpp
+               vtk/VTKMultiBlockDataWriterInterface.hpp )
+
+  list( APPEND fileIO_sources
+               vtk/Array2DVTKDataArray.cpp
+               vtk/CellVTKDataArray.cpp
+               vtk/DummyVTKDataArray.cpp
+               vtk/VTKTypes.cpp
+               vtk/VTKMultiBlockDataWriterInterface.cpp )
+
+
+  list( APPEND dependencyList vtk )
 endif()
 
 if( ENABLE_OPENMP )

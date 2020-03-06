@@ -30,7 +30,8 @@ VTKOutput::VTKOutput( std::string const & name,
   OutputBase( name, parent),
   m_plotFileRoot(),
   m_writeFaceMesh(),
-  m_plotLevel()
+  m_plotLevel(),
+  m_writerInterface( name )
 {
   registerWrapper(viewKeysStruct::plotFileRoot, &m_plotFileRoot, false )->
     setInputFlag(InputFlags::OPTIONAL)->
@@ -50,7 +51,6 @@ VTKOutput::VTKOutput( std::string const & name,
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Output the data in binary format");
 
-
 }
 
 VTKOutput::~VTKOutput()
@@ -68,7 +68,7 @@ void VTKOutput::Execute(real64 const time_n,
   DomainPartition* domainPartition = Group::group_cast<DomainPartition*>(domain);
   std::cout << domainPartition->size() << std::endl;
   std::cout << time_n << std::endl;
-//  m_vtkFile.Write( time_n, *domainPartition);
+  m_writerInterface.Write( time_n, domainPartition );
 }
 
 
