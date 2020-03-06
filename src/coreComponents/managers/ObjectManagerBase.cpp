@@ -384,25 +384,23 @@ localIndex ObjectManagerBase::PackParentChildMapsPrivate( buffer_unit_type * & b
 {
   localIndex packedSize = 0;
 
-  localIndex_array const * const
-  parentIndex = this->getPointer< localIndex_array >( m_ObjectManagerBaseViewKeys.parentIndex );
-  if( parentIndex != nullptr )
+  if( this->hasWrapper( m_ObjectManagerBaseViewKeys.parentIndex ) )
   {
+    arrayView1d< localIndex const > const & parentIndex = this->getReference< localIndex_array >( m_ObjectManagerBaseViewKeys.parentIndex );
     packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::parentIndexString ) );
     packedSize += bufferOps::Pack< DOPACK >( buffer,
-                                             *parentIndex,
+                                             parentIndex,
                                              packList,
                                              this->m_localToGlobalMap,
                                              this->m_localToGlobalMap );
   }
 
-  localIndex_array const * const
-  childIndex = this->getPointer< localIndex_array >( m_ObjectManagerBaseViewKeys.childIndex );
-  if( childIndex != nullptr )
+  if( this->hasWrapper( m_ObjectManagerBaseViewKeys.childIndex ) )
   {
+    arrayView1d< localIndex const > const & childIndex = this->getReference< localIndex_array >( m_ObjectManagerBaseViewKeys.childIndex );
     packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::childIndexString ) );
     packedSize += bufferOps::Pack< DOPACK >( buffer,
-                                             *childIndex,
+                                             childIndex,
                                              packList,
                                              this->m_localToGlobalMap,
                                              this->m_localToGlobalMap );
@@ -410,6 +408,7 @@ localIndex ObjectManagerBase::PackParentChildMapsPrivate( buffer_unit_type * & b
 
   return packedSize;
 }
+
 template
 localIndex ObjectManagerBase::PackParentChildMapsPrivate< true >( buffer_unit_type * & buffer,
                                                                   arrayView1d< localIndex const > const & packList ) const;
@@ -423,31 +422,29 @@ localIndex ObjectManagerBase::UnpackParentChildMaps( buffer_unit_type const * & 
 {
   localIndex unpackedSize = 0;
 
-  localIndex_array * const
-  parentIndex = this->getPointer< localIndex_array >( m_ObjectManagerBaseViewKeys.parentIndex );
-  if( parentIndex != nullptr )
+  if( this->hasWrapper( m_ObjectManagerBaseViewKeys.parentIndex ) )
   {
+    localIndex_array & parentIndex = this->getReference< localIndex_array >( m_ObjectManagerBaseViewKeys.parentIndex );
     string shouldBeParentIndexString;
     unpackedSize += bufferOps::Unpack( buffer, shouldBeParentIndexString );
     GEOSX_ERROR_IF( shouldBeParentIndexString != viewKeyStruct::parentIndexString,
                     "value read from buffer is:"<<shouldBeParentIndexString<<". It should be "<<viewKeyStruct::parentIndexString );
     unpackedSize += bufferOps::Unpack( buffer,
-                                       *parentIndex,
+                                       parentIndex,
                                        packList,
                                        this->m_globalToLocalMap,
                                        this->m_globalToLocalMap );
   }
 
-  localIndex_array * const
-  childIndex = this->getPointer< localIndex_array >( m_ObjectManagerBaseViewKeys.childIndex );
-  if( childIndex != nullptr )
+  if( this->hasWrapper( m_ObjectManagerBaseViewKeys.childIndex ) )
   {
+    localIndex_array & childIndex = this->getReference< localIndex_array >( m_ObjectManagerBaseViewKeys.childIndex );
     string shouldBeChildIndexString;
     unpackedSize += bufferOps::Unpack( buffer, shouldBeChildIndexString );
     GEOSX_ERROR_IF( shouldBeChildIndexString != viewKeyStruct::childIndexString,
                     "value read from buffer is:"<<shouldBeChildIndexString<<". It should be "<<viewKeyStruct::childIndexString );
     unpackedSize += bufferOps::Unpack( buffer,
-                                       *childIndex,
+                                       childIndex,
                                        packList,
                                        this->m_globalToLocalMap,
                                        this->m_globalToLocalMap );
@@ -556,13 +553,12 @@ localIndex ObjectManagerBase::PackGlobalMapsPrivate( buffer_unit_type * & buffer
     packedSize += bufferOps::Pack< DOPACK >( buffer, globalIndices );
   }
 
-  array1d< localIndex > const * const
-  parentIndices = this->getPointer< array1d< localIndex > >( viewKeyStruct::parentIndexString );
-  if( parentIndices != nullptr )
+  if( this->hasWrapper( viewKeys().parentIndex ) )
   {
+    arrayView1d< localIndex const > const & parentIndex = this->getReference< localIndex_array >( viewKeys().parentIndex );
     packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::parentIndexString ) );
     packedSize += bufferOps::Pack< DOPACK >( buffer,
-                                             *parentIndices,
+                                             parentIndex,
                                              packList,
                                              this->m_localToGlobalMap,
                                              this->m_localToGlobalMap );
@@ -675,14 +671,14 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const * & buffe
   }
 
 
-  arrayView1d< localIndex > * const parentIndices = this->getPointer< array1d< localIndex > >( viewKeyStruct::parentIndexString );
-  if( parentIndices != nullptr )
+  if( this->hasWrapper( m_ObjectManagerBaseViewKeys.parentIndex ) )
   {
+    array1d< localIndex > & parentIndex = this->getReference< localIndex_array >( m_ObjectManagerBaseViewKeys.parentIndex );
     string parentIndicesString;
     unpackedSize += bufferOps::Unpack( buffer, parentIndicesString );
     GEOSX_ERROR_IF( parentIndicesString != viewKeyStruct::parentIndexString, "ObjectManagerBase::Unpack(): label incorrect" );
     unpackedSize += bufferOps::Unpack( buffer,
-                                       *parentIndices,
+                                       parentIndex,
                                        packList,
                                        this->m_globalToLocalMap,
                                        this->m_globalToLocalMap );
@@ -792,18 +788,16 @@ integer ObjectManagerBase::SplitObject( localIndex const indexToSplit,
   // copy the fields
   CopyObject( indexToSplit, newIndex );
 
-  localIndex_array * const
-  parentIndex = this->getPointer< localIndex_array >( m_ObjectManagerBaseViewKeys.parentIndex );
-  if( parentIndex != nullptr )
+  if( this->hasWrapper( m_ObjectManagerBaseViewKeys.parentIndex ) )
   {
-    (*parentIndex)[newIndex] = indexToSplit;
+    arrayView1d< localIndex > const & parentIndex = this->getReference< localIndex_array >( m_ObjectManagerBaseViewKeys.parentIndex );
+    parentIndex[newIndex] = indexToSplit;
   }
 
-  localIndex_array * const
-  childIndex = this->getPointer< localIndex_array >( m_ObjectManagerBaseViewKeys.childIndex );
-  if( childIndex != nullptr )
+  if( this->hasWrapper( m_ObjectManagerBaseViewKeys.childIndex ) )
   {
-    (*childIndex)[indexToSplit] = newIndex;
+    arrayView1d< localIndex > const & childIndex = this->getReference< localIndex_array >( m_ObjectManagerBaseViewKeys.childIndex );
+    childIndex[indexToSplit] = newIndex;
   }
 
   m_localToGlobalMap[newIndex] = -1;
