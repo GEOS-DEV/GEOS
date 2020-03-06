@@ -188,7 +188,7 @@ void FlowSolverBase::PrecomputeData( DomainPartition * const domain )
     arrayView1d< real64 > const & gravityCoef =
       subRegion.getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
 
-    forall_in_range< serialPolicy >( 0, subRegion.size(), [=] ( localIndex a )
+    forAll< serialPolicy >( subRegion.size(), [=] ( localIndex a )
     {
       gravityCoef[a] = Dot( elemCenter[a], gravVector );
     } );
@@ -201,7 +201,7 @@ void FlowSolverBase::PrecomputeData( DomainPartition * const domain )
     arrayView1d< real64 > const & gravityCoef =
       faceManager->getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
 
-    forall_in_range< serialPolicy >( 0, faceManager->size(), [=] ( localIndex a )
+    forAll< serialPolicy >( faceManager->size(), [=] ( localIndex a )
     {
       gravityCoef[a] = Dot( faceCenter[a], gravVector );
     } );

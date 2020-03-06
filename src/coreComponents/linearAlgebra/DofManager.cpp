@@ -490,7 +490,7 @@ void DofManager::setSparsityPatternFromStencil( MATRIX & pattern,
     colIndices.reserve( maxStencilSize * NC );
     values.reserve( maxNumFluxElems * NC * maxStencilSize * NC );
 
-    forall_in_range< serialPolicy >( 0, stencil.size(), [&]( localIndex iconn )
+    forAll< serialPolicy >( stencil.size(), [&]( localIndex iconn )
     {
       localIndex const numFluxElems = stencil.stencilSize( iconn );
       localIndex const stencilSize  = numFluxElems;
@@ -673,7 +673,7 @@ void vectorToFieldImpl( VECTOR const & vector,
     Wrapper< ArrayType > & view = Wrapper< ArrayType >::cast( *wrapper );
     typename Wrapper< ArrayType >::ViewType const & field = view.referenceAsView();
 
-    forall_in_range< POLICY >( 0, indexArray.size(), [=]( localIndex const i )
+    forAll< POLICY >( indexArray.size(), [=] ( localIndex const i )
     {
       if( ghostRank[i] < 0 && indexArray[i] >= 0 )
       {
@@ -718,7 +718,7 @@ void fieldToVectorImpl( VECTOR & vector,
     Wrapper< ArrayType > const & view = Wrapper< ArrayType >::cast( *wrapper );
     typename Wrapper< ArrayType >::ViewTypeConst const & field = view.referenceAsView();
 
-    forall_in_range< POLICY >( 0, indexArray.size(), [=]( localIndex const i )
+    forAll< POLICY >( indexArray.size(), [=] ( localIndex const i )
     {
       if( ghostRank[i] < 0 && indexArray[i] >= 0 )
       {

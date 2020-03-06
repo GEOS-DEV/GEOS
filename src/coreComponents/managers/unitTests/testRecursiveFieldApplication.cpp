@@ -166,7 +166,7 @@ TEST( FieldSpecification, Recursive )
   elemManager->forElementSubRegionsComplete< ElementSubRegionBase >(
     [&] ( localIndex const er, localIndex const esr, ElementRegionBase const &, ElementSubRegionBase const & subRegion )
   {
-    forall_in_range< serialPolicy >( 0, subRegion.size(), [=] ( localIndex ei )
+    forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )
     {
       GEOSX_ERROR_IF( field0[er][esr][ei] < 1. || field0[er][esr][ei] > 1., "Recursive fields are not set" );
     } );
@@ -175,18 +175,18 @@ TEST( FieldSpecification, Recursive )
   reg0->forElementSubRegionsIndex< ElementSubRegionBase >(
     [&]( localIndex const esr, ElementSubRegionBase & subRegion )
   {
-    forall_in_range< serialPolicy >( 0, subRegion.size(), [=] ( localIndex ei )
+    forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )
     {
       GEOSX_ERROR_IF( field1[0][esr][ei] < 2. || field1[0][esr][ei] > 2., "Recursive fields are not set" );
     } );
   } );
 
-  forall_in_range< serialPolicy >( 0, reg0Hex->size(), [=] ( localIndex ei )
+  forAll< serialPolicy >( reg0Hex->size(), [=] ( localIndex const ei )
   {
     GEOSX_ERROR_IF( field2[0][0][ei] < 1. || field2[0][0][ei] > 3., "Recursive fields are not set" );
   } );
 
-  forall_in_range< serialPolicy >( 0, reg1Tet->size(), [=] ( localIndex ei )
+  forAll< serialPolicy >( reg1Tet->size(), [=] ( localIndex const ei )
   {
     GEOSX_ERROR_IF( field3[1][1][ei] < 4. || field3[1][1][ei] > 4., "Recursive fields are not set" );
   } );

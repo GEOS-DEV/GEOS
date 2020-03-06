@@ -636,7 +636,6 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
 
   fluxApprox->forStencils< FaceElementStencil >( [&]( FaceElementStencil const & stencil )
   {
-//    forall_in_range<serialPolicy>( 0, stencil.size(), [=] ( localIndex iconn )
     for( localIndex iconn=0; iconn<stencil.size(); ++iconn )
     {
       localIndex const numFluxElems = stencil.stencilSize( iconn );
@@ -989,7 +988,7 @@ HydrofractureSolver::
       arrayView1d< real64 > const & area = subRegion.getElementArea();
       arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
 
-      forall_in_range< serialPolicy >( 0, subRegion.size(), [=] ( localIndex const kfe )
+      forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const kfe )
       {
         R1Tensor Nbar = faceNormal[elemsToFaces[kfe][0]];
         Nbar -= faceNormal[elemsToFaces[kfe][1]];
@@ -1113,7 +1112,7 @@ HydrofractureSolver::
 // subRegion.getReference<array1d<real64>>(FaceElementSubRegion::viewKeyStruct::dSeparationCoeffdAperString);
 
 
-    forall_in_range< serialPolicy >( 0, subRegion.size(), [=] ( localIndex ei )
+    forAll< serialPolicy >( subRegion.size(), [=] ( localIndex ei )
     {
       //if (elemGhostRank[ei] < 0)
       {

@@ -244,7 +244,7 @@ void CompositionalMultiphaseFlow::UpdateComponentFraction( Group * const dataGro
     dataGroup->getReference< array2d< real64 > >( viewKeyStruct::deltaGlobalCompDensityString );
 
   KernelLaunchSelector1< ComponentFractionKernel >( m_numComponents,
-                                                    0, dataGroup->size(),
+                                                    dataGroup->size(),
                                                     compDens,
                                                     dCompDens,
                                                     compFrac,
@@ -256,7 +256,7 @@ void CompositionalMultiphaseFlow::UpdateComponentFraction( localIndex er, localI
   GEOSX_MARK_FUNCTION;
 
   KernelLaunchSelector1< ComponentFractionKernel >( m_numComponents,
-                                                    0, m_compFrac[er][esr].size( 0 ),
+                                                    m_compFrac[er][esr].size( 0 ),
                                                     m_globalCompDensity[er][esr],
                                                     m_deltaGlobalCompDensity[er][esr],
                                                     m_compFrac[er][esr],
@@ -310,7 +310,7 @@ void CompositionalMultiphaseFlow::UpdatePhaseVolumeFraction( Group * const dataG
     fluid->getReference< array4d< real64 > >( MultiFluidBase::viewKeyStruct::dPhaseDensity_dGlobalCompFractionString );
 
   KernelLaunchSelector2< PhaseVolumeFractionKernel >( m_numComponents, m_numPhases,
-                                                      0, dataGroup->size(),
+                                                      dataGroup->size(),
                                                       compDens,
                                                       dCompDens,
                                                       dCompFrac_dCompDens,
@@ -330,7 +330,7 @@ void CompositionalMultiphaseFlow::UpdatePhaseVolumeFraction( localIndex er, loca
   GEOSX_MARK_FUNCTION;
 
   KernelLaunchSelector2< PhaseVolumeFractionKernel >( m_numComponents, m_numPhases,
-                                                      0, m_phaseVolFrac[er][esr].size( 0 ),
+                                                      m_phaseVolFrac[er][esr].size( 0 ),
                                                       m_globalCompDensity[er][esr],
                                                       m_deltaGlobalCompDensity[er][esr],
                                                       m_dCompFrac_dCompDens[er][esr],
@@ -400,7 +400,7 @@ void CompositionalMultiphaseFlow::UpdatePhaseMobility( Group * const dataGroup )
     relperm->getReference< array4d< real64 > >( RelativePermeabilityBase::viewKeyStruct::dPhaseRelPerm_dPhaseVolFractionString );
 
   KernelLaunchSelector2< PhaseMobilityKernel >( m_numComponents, m_numPhases,
-                                                0, dataGroup->size(),
+                                                dataGroup->size(),
                                                 dCompFrac_dCompDens,
                                                 phaseDens,
                                                 dPhaseDens_dPres,
@@ -422,7 +422,7 @@ void CompositionalMultiphaseFlow::UpdatePhaseMobility( localIndex er, localIndex
   GEOSX_MARK_FUNCTION;
 
   KernelLaunchSelector2< PhaseMobilityKernel >( m_numComponents, m_numPhases,
-                                                0, m_phaseMob[er][esr].size( 0 ),
+                                                m_phaseMob[er][esr].size( 0 ),
                                                 m_dCompFrac_dCompDens[er][esr],
                                                 m_phaseDens[er][esr][m_fluidIndex],
                                                 m_dPhaseDens_dPres[er][esr][m_fluidIndex],
@@ -450,7 +450,7 @@ void CompositionalMultiphaseFlow::UpdateFluidModel( Group * const dataGroup )
   arrayView2d< real64 const > const & compFrac = dataGroup->getReference< array2d< real64 > >( viewKeyStruct::globalCompFractionString );
 
   // TODO replace with batch update (need up-to-date pressure and temperature fields)
-  forall_in_range< RAJA::seq_exec >( 0, dataGroup->size(), [=] ( localIndex const a )
+  forAll< serialPolicy >( dataGroup->size(), [=] ( localIndex const a )
   {
     fluid->PointUpdate( pres[a] + dPres[a], m_temperature, compFrac[a], a, 0 );
   } );
@@ -466,7 +466,7 @@ void CompositionalMultiphaseFlow::UpdateSolidModel( Group * dataGroup )
   arrayView1d< real64 const > const & pres  = dataGroup->getReference< array1d< real64 > >( viewKeyStruct::pressureString );
   arrayView1d< real64 const > const & dPres = dataGroup->getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString );
 
-  forall_in_range( 0, dataGroup->size(), [=] ( localIndex const a )
+  forAll< serialPolicy >( dataGroup->size(), [=] ( localIndex const a )
   {
     solid->StateUpdatePointPressure( pres[a] + dPres[a], a, 0 );
   } );
@@ -529,7 +529,7 @@ void CompositionalMultiphaseFlow::InitializeFluidState( DomainPartition * const 
     arrayView2d< real64 const > const & totalDens = m_totalDens[er][esr][m_fluidIndex];
     arrayView2d< real64 > compDens = m_globalCompDensity[er][esr];
 
-    forall_in_range< serialPolicy >( 0, subRegion.size(), [=] ( localIndex ei )
+    forAll< serialPolicy >( subRegion.size(), [=] ( localIndex ei )
     {
       for( localIndex ic = 0; ic < m_numComponents; ++ic )
       {
@@ -635,7 +635,7 @@ void CompositionalMultiphaseFlow::BackupFields( DomainPartition * const domain )
     arrayView3d< real64 > const & phaseCompFracOld = m_phaseCompFracOld[er][esr];
     arrayView1d< real64 > const & poroOld          = m_porosityOld[er][esr];
 
-    forall_in_range< serialPolicy >( 0, subRegion.size(), [=] ( localIndex ei )
+    forAll< serialPolicy >( subRegion.size(), [=] ( localIndex ei )
     {
       if( elemGhostRank[ei] >= 0 )
         return;
@@ -793,7 +793,7 @@ void CompositionalMultiphaseFlow::AssembleAccumulationTerms( real64 const GEOSX_
     arrayView4d< real64 const > const & dPhaseCompFrac_dPres = m_dPhaseCompFrac_dPres[er][esr][m_fluidIndex];
     arrayView5d< real64 const > const & dPhaseCompFrac_dComp = m_dPhaseCompFrac_dComp[er][esr][m_fluidIndex];
 
-    forall_in_range< serialPolicy >( 0, subRegion.size(), [=] ( localIndex ei )
+    forAll< serialPolicy >( subRegion.size(), [=] ( localIndex ei )
     {
       if( elemGhostRank[ei] < 0 )
       {
@@ -917,7 +917,7 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( real64 const GEOSX_UNUSED_P
     typename STENCIL_TYPE::IndexContainerViewConstType const & ei = stencil.getElementIndices();
     typename STENCIL_TYPE::WeightContainerViewConstType const & weights = stencil.getWeights();
 
-    forall_in_range< serialPolicy >( 0, stencil.size(), [=] ( localIndex iconn )
+    forAll< serialPolicy >( stencil.size(), [=] ( localIndex iconn )
     {
       localIndex const stencilSize = stencil.stencilSize( iconn );
 
@@ -1033,7 +1033,7 @@ void CompositionalMultiphaseFlow::AssembleVolumeBalanceTerms( real64 const GEOSX
     arrayView2d< real64 const > const & pvMult        = m_pvMult[er][esr][m_solidIndex];
     arrayView2d< real64 const > const & dPvMult_dPres = m_dPvMult_dPres[er][esr][m_solidIndex];
 
-    forall_in_range< serialPolicy >( 0, subRegion.size(), [=] ( localIndex ei )
+    forAll< serialPolicy >( subRegion.size(), [=] ( localIndex ei )
     {
       if( elemGhostRank[ei] >= 0 )
       {
@@ -1418,7 +1418,7 @@ CompositionalMultiphaseFlow::CheckSystemSolution( DomainPartition const * const 
     arrayView2d< real64 const > const & compDens  = m_globalCompDensity[er][esr];
     arrayView2d< real64 const > const & dCompDens = m_deltaGlobalCompDensity[er][esr];
 
-    forall_in_range< serialPolicy >( 0, subRegion.size(), [&] ( localIndex ei )
+    forAll< serialPolicy >( subRegion.size(), [&] ( localIndex ei )
     {
       if( elemGhostRank[ei] >= 0 )
       {
@@ -1507,7 +1507,7 @@ void CompositionalMultiphaseFlow::ResetStateToBeginningOfStep( DomainPartition *
     arrayView1d< real64 > const & dPres     = m_deltaPressure[er][esr];
     arrayView2d< real64 > const & dCompDens = m_deltaGlobalCompDensity[er][esr];
 
-    forall_in_range< serialPolicy >( 0, subRegion.size(), [=] ( localIndex ei )
+    forAll< serialPolicy >( subRegion.size(), [=] ( localIndex ei )
     {
       dPres[ei] = 0.0;
       for( localIndex ic = 0; ic < m_numComponents; ++ic )
@@ -1536,7 +1536,7 @@ void CompositionalMultiphaseFlow::ImplicitStepComplete( real64 const & GEOSX_UNU
     arrayView1d< real64 > const & pres     = m_pressure[er][esr];
     arrayView2d< real64 > const & compDens = m_globalCompDensity[er][esr];
 
-    forall_in_range< serialPolicy >( 0, subRegion.size(), [=] ( localIndex const ei )
+    forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )
     {
       pres[ei] += dPres[ei];
       for( localIndex ic = 0; ic < m_numComponents; ++ic )
