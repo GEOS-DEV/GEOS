@@ -745,7 +745,7 @@ void ProblemManager::GenerateMesh()
 
   MeshManager * meshManager = this->GetGroup<MeshManager>(groupKeys.meshManager);
   meshManager->GenerateMeshes(domain);
-  Group const * const cellBlockManager = domain->GetGroup(keys::cellManager);
+  Group * const cellBlockManager = domain->GetGroup(keys::cellManager);
 
 
   Group * const meshBodies = domain->getMeshBodies();
@@ -791,10 +791,11 @@ void ProblemManager::GenerateMesh()
 
       });
 
+      elemManager->GenerateCellToEdgeMaps(faceManager);
+
       elemManager->GenerateAggregates( faceManager, nodeManager );
 
       elemManager->GenerateWells( meshManager, meshLevel );
-
     }
   }
 }

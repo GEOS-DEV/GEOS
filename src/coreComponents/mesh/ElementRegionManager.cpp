@@ -116,12 +116,66 @@ void ElementRegionManager::SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
   }
 }
 
-void ElementRegionManager::GenerateMesh( Group const * const cellBlockManager )
+void ElementRegionManager::GenerateMesh( Group * const cellBlockManager )
 {
   this->forElementRegions<CellElementRegion>([&](CellElementRegion * const elemRegion)->void
   {
     elemRegion->GenerateMesh( cellBlockManager->GetGroup(keys::cellBlocks) );
   });
+}
+
+void ElementRegionManager::GenerateCellToEdgeMaps(FaceManager const * const faceManager)
+{
+  /*
+   * Create cell to edges map
+   * I use the existing maps from cells to faces and from faces to edges.
+   */
+  localIndex faceIndex, edgeIndex;
+  int count = 0;
+  bool isUnique = true;
+
+  this->forElementSubRegions<CellElementSubRegion>( [&](CellElementSubRegion * const subRegion)-> void
+    {
+      FixedOneToManyRelation & cellToEdges = subRegion->edgeList();
+      FixedOneToManyRelation const & cellToFaces = subRegion->faceList();
+      InterObjectRelation< ArrayOfArrays< localIndex > > const & faceToEdges = faceManager->edgeList();
+
+      //loop over the cells
+      for ( localIndex kc = 0; kc < subRegion->size(); kc++)
+      {
+        // loop over the faces
+        // std::cout << "Element: " << kc << std::endl;
+        count = 0;
+        for (localIndex kf = 0; kf < subRegion->numFacesPerElement(); kf++)
+        {
+          // loop over edges of each face
+          faceIndex = cellToFaces[kc][kf];
+          for (localIndex ke = 0; ke < faceToEdges.sizeOfArray(faceIndex); ke++)
+          {
+            isUnique = true;
+            edgeIndex = faceToEdges[faceIndex][ke];
+
+            //loop over edges that have already been added to the element.
+            for (localIndex kec = 0; kec < count+1; kec++)
+            {
+              // make sure that the edge has not been counted yet
+              if (cellToEdges(kc, kec) == edgeIndex)
+              {
+                isUnique = false;
+                break;
+              }
+            }
+            if (isUnique)
+            {
+              // std::cout << edgeIndex << std::endl;
+              cellToEdges(kc, count) = edgeIndex;
+              count++;
+            }
+
+          } // end edge loop
+        } // end face loop
+      } // end cell loop
+    });
 }
 
 void ElementRegionManager::GenerateAggregates( FaceManager const * const faceManager, NodeManager const * const nodeManager )

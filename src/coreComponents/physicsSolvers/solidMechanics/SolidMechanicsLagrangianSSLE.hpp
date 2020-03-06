@@ -98,7 +98,7 @@ public:
                                arrayView2d< real64 const > const & density,
                                arrayView1d< real64 const > const & fluidPressure,
                                arrayView1d< real64 const > const & deltaFluidPressure,
-                               arrayView1d< real64 const > const & biotCoefficient,
+                               real64 const biotCoefficient,
                                timeIntegrationOption const tiOption,
                                real64 const stiffnessDamping,
                                real64 const massDamping,

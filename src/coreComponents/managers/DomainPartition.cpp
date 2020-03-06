@@ -103,7 +103,7 @@ void DomainPartition::GenerateSets()
     if( setPtr!=nullptr )
     {
       setNames.push_back(name);
-      SortedArray<localIndex> const & set = setPtr->reference();
+      SortedArrayView<localIndex const> const & set = setPtr->reference();
       for( localIndex const a : set )
       {
         nodeInSet[name][a] = true;
