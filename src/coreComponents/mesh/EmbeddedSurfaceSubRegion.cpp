@@ -94,7 +94,7 @@ void EmbeddedSurfaceSubRegion::CalculateElementGeometricQuantities( NodeManager 
                                                                     FaceManager const & GEOSX_UNUSED_PARAM( facemanager ) )
 {
   // loop over the elements
-  forall_in_range< serialPolicy >( 0, this->size(), [=] ( localIndex const k )
+  forAll< serialPolicy >( this->size(), [=] ( localIndex const k )
   {
     m_elementVolume[k] = m_elementAperture[k] * m_elementArea[k];
   } );

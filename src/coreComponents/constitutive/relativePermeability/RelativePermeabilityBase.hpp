@@ -158,7 +158,7 @@ void RelativePermeabilityBase::BatchUpdateKernel( arrayView2d< real64 const > co
   arrayView3d< real64 > const & phaseRelPerm = m_phaseRelPerm;
   arrayView4d< real64 > const & dPhaseRelPerm_dPhaseVolFrac = m_dPhaseRelPerm_dPhaseVolFrac;
 
-  forall_in_range< POLICY >( 0, numElem, [=] ( localIndex const k )
+  forAll< POLICY >( numElem, [=] ( localIndex const k )
   {
     for( localIndex q=0; q<numQ; ++q )
     {

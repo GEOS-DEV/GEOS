@@ -46,7 +46,7 @@ MobilityKernel::Compute( real64 const & dens,
   mob = dens / visc;
 }
 
-void MobilityKernel::Launch( localIndex begin, localIndex end,
+void MobilityKernel::Launch( localIndex const size,
                              arrayView2d< real64 const > const & dens,
                              arrayView2d< real64 const > const & dDens_dPres,
                              arrayView2d< real64 const > const & visc,
@@ -54,7 +54,7 @@ void MobilityKernel::Launch( localIndex begin, localIndex end,
                              arrayView1d< real64 > const & mob,
                              arrayView1d< real64 > const & dMob_dPres )
 {
-  forall_in_range( begin, end, [=] ( localIndex const a )
+  forAll< serialPolicy >( size, [=] ( localIndex const a )
   {
     Compute( dens[a][0],
              dDens_dPres[a][0],
@@ -73,8 +73,9 @@ void MobilityKernel::Launch( SortedArrayView< localIndex const > targetSet,
                              arrayView1d< real64 > const & mob,
                              arrayView1d< real64 > const & dMob_dPres )
 {
-  forall_in_set( targetSet.values(), targetSet.size(), [=] ( localIndex const a )
+  forAll< serialPolicy >( targetSet.size(), [=] ( localIndex const i )
   {
+    localIndex const a = targetSet[ i ];
     Compute( dens[a][0],
              dDens_dPres[a][0],
              visc[a][0],
@@ -84,12 +85,12 @@ void MobilityKernel::Launch( SortedArrayView< localIndex const > targetSet,
   } );
 }
 
-void MobilityKernel::Launch( localIndex begin, localIndex end,
+void MobilityKernel::Launch( localIndex const size,
                              arrayView2d< real64 const > const & dens,
                              arrayView2d< real64 const > const & visc,
                              arrayView1d< real64 > const & mob )
 {
-  forall_in_range( begin, end, [=] ( localIndex const a )
+  forAll< serialPolicy >( size, [=] ( localIndex const a )
   {
     Compute( dens[a][0],
              visc[a][0],
@@ -102,8 +103,9 @@ void MobilityKernel::Launch( SortedArrayView< localIndex const > targetSet,
                              arrayView2d< real64 const > const & visc,
                              arrayView1d< real64 > const & mob )
 {
-  forall_in_set( targetSet.values(), targetSet.size(), [=] ( localIndex const a )
+  forAll< serialPolicy >( targetSet.size(), [=] ( localIndex const i )
   {
+    localIndex const a = targetSet[ i ];
     Compute( dens[a][0],
              visc[a][0],
              mob[a] );
@@ -169,7 +171,7 @@ void FluxKernel::
   typename CellElementStencilTPFA::IndexContainerViewConstType const & sei = stencil.getElementIndices();
   typename CellElementStencilTPFA::WeightContainerViewConstType const & weights = stencil.getWeights();
 
-  forall_in_range< serialPolicy >( 0, stencil.size(), [=] ( localIndex iconn )
+  forAll< serialPolicy >( stencil.size(), [=] ( localIndex const iconn )
   {
     // working arrays
     stackArray1d< globalIndex, numFluxElems > eqnRowIndices( numFluxElems );
@@ -259,7 +261,7 @@ void FluxKernel::
 
   static constexpr real64 TINY = 1e-10;
 
-  forall_in_range< serialPolicy >( 0, stencil.size(), [=] ( localIndex iconn )
+  forAll< serialPolicy >( stencil.size(), [=] ( localIndex const iconn )
   {
     localIndex const numFluxElems = stencil.stencilSize( iconn );
     localIndex const stencilSize  = numFluxElems;

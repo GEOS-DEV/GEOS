@@ -135,7 +135,7 @@ void createEdgesByLowestNode( ArrayOfArraysView< localIndex const > const & face
   localIndex const numFaces = faceToNodeMap.size();
 
   // loop over all the faces.
-  forall_in_range< parallelHostPolicy >( 0, numFaces, [&]( localIndex const faceID )
+  forAll< parallelHostPolicy >( numFaces, [&]( localIndex const faceID )
   {
     localIndex const numNodesInFace = faceToNodeMap.sizeOfArray( faceID );
 
@@ -154,7 +154,7 @@ void createEdgesByLowestNode( ArrayOfArraysView< localIndex const > const & face
   } );
 
   // Loop over all the nodes and sort the associated edges.
-  forall_in_range< parallelHostPolicy >( 0, numNodes, [&]( localIndex const nodeID )
+  forAll< parallelHostPolicy >( numNodes, [&]( localIndex const nodeID )
   {
     EdgeBuilder * const edges = edgesByLowestNode[ nodeID ];
     std::sort( edges, edges + edgesByLowestNode.sizeOfArray( nodeID ) );
@@ -176,7 +176,7 @@ localIndex calculateTotalNumberOfEdges( ArrayOfArraysView< EdgeBuilder const > c
   uniqueEdgeOffsets[0] = 0;
 
   // Loop over all the nodes.
-  forall_in_range< parallelHostPolicy >( 0, numNodes, [&]( localIndex const nodeID )
+  forAll< parallelHostPolicy >( numNodes, [&]( localIndex const nodeID )
   {
     localIndex const numEdges = edgesByLowestNode.sizeOfArray( nodeID );
 
@@ -222,7 +222,7 @@ void resizeEdgeToFaceMap( ArrayOfArraysView< EdgeBuilder const > const & edgesBy
   array1d< localIndex > numFacesPerEdge( numUniqueEdges );
 
   // loop over all the nodes.
-  forall_in_range< parallelHostPolicy >( 0, numNodes, [&]( localIndex const nodeID )
+  forAll< parallelHostPolicy >( numNodes, [&]( localIndex const nodeID )
   {
     localIndex curEdgeID = uniqueEdgeOffsets[ nodeID ];
     localIndex const numEdges = edgesByLowestNode.sizeOfArray( nodeID );
@@ -254,7 +254,7 @@ void resizeEdgeToFaceMap( ArrayOfArraysView< EdgeBuilder const > const & edgesBy
 
   // Calculate the total number of nodes in the edge to face map.
   RAJA::ReduceSum< parallelHostReduce, localIndex > totalEdgeFaces( 0.0 );
-  forall_in_range< parallelHostPolicy >( 0, numUniqueEdges, [&]( localIndex const faceID )
+  forAll< parallelHostPolicy >( numUniqueEdges, [&]( localIndex const faceID )
   {
     totalEdgeFaces += numFacesPerEdge[ faceID ];
   } );
@@ -350,7 +350,7 @@ void populateMaps( ArrayOfArraysView< EdgeBuilder const > const & edgesByLowestN
   }
 
   // loop over all the nodes.
-  forall_in_range< parallelHostPolicy >( 0, numNodes, [&]( localIndex const nodeID )
+  forAll< parallelHostPolicy >( numNodes, [&]( localIndex const nodeID )
   {
     localIndex curEdgeID = uniqueEdgeOffsets[ nodeID ];
     localIndex const numEdges = edgesByLowestNode.sizeOfArray( nodeID );
@@ -424,7 +424,7 @@ void EdgeManager::BuildEdges( FaceManager * const faceManager, NodeManager * con
   }
 
   // Then loop over them in parallel.
-  forall_in_range< parallelHostPolicy >( 0, nodeSets.size(), [&]( localIndex const i ) -> void
+  forAll< parallelHostPolicy >( nodeSets.size(), [&]( localIndex const i ) -> void
   {
     auto const & setWrapper = nodeSets[i];
     std::string const & setName = setWrapper->getName();
@@ -612,7 +612,7 @@ void EdgeManager::ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManager
 
   globalEdgeNodes.resize( numEdges );
 
-  forall_in_range< parallelHostPolicy >( 0, numEdges, [&]( localIndex const edgeID )
+  forAll< parallelHostPolicy >( numEdges, [&]( localIndex const edgeID )
   {
     std::vector< globalIndex > & curEdgeGlobalNodes = globalEdgeNodes[ edgeID ];
 

@@ -377,7 +377,7 @@ void FieldSpecificationBase::ApplyFieldValueKernel( ArrayView< T, N, USD > const
 
   if( functionName.empty() )
   {
-    forall_in_range< POLICY >( 0, targetSet.size(), [=] GEOSX_HOST_DEVICE( localIndex const i )
+    forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
       {
         localIndex const a = targetSet[ i ];
         FIELD_OP::SpecifyFieldValue( field, a, component, m_scale );
@@ -392,7 +392,7 @@ void FieldSpecificationBase::ApplyFieldValueKernel( ArrayView< T, N, USD > const
     if( function->isFunctionOfTime()==2 )
     {
       real64 value = m_scale * function->Evaluate( &time );
-      forall_in_range< POLICY >( 0, targetSet.size(), [=] GEOSX_HOST_DEVICE( localIndex const i )
+      forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
         {
           localIndex const a = targetSet[ i ];
           FIELD_OP::SpecifyFieldValue( field, a, component, value );
@@ -403,7 +403,7 @@ void FieldSpecificationBase::ApplyFieldValueKernel( ArrayView< T, N, USD > const
       real64_array result( static_cast< localIndex >( targetSet.size() ) );
       function->Evaluate( dataGroup, time, targetSet, result );
       arrayView1d< real64 const > const & resultView = result;
-      forall_in_range< POLICY >( 0, targetSet.size(), [=] GEOSX_HOST_DEVICE( localIndex const i )
+      forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
         {
           localIndex const a = targetSet[ i ];
           FIELD_OP::SpecifyFieldValue( field, a, component, m_scale*resultView[i] );

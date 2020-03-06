@@ -188,7 +188,7 @@ void SingleFluidBase::LaunchKernel( LAMBDA && lambda )
   localIndex const numElem = m_density.size( 0 );
   localIndex const numQuad = m_density.size( 1 );
 
-  forall_in_range< POLICY >( 0, numElem, [=] ( localIndex const k )
+  forAll< POLICY >( numElem, [=] ( localIndex const k )
   {
     for( localIndex q = 0; q < numQuad; ++q )
     {

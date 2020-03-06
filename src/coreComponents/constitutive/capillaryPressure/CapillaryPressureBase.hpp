@@ -143,7 +143,7 @@ void CapillaryPressureBase::BatchUpdateKernel( arrayView2d< real64 const > const
   arrayView4d< real64 > const & dPhaseCapPressure_dPhaseVolFrac = m_dPhaseCapPressure_dPhaseVolFrac;
   arrayView1d< integer const > const & phaseOrder = m_phaseOrder;
 
-  forall_in_range< POLICY >( 0, numElem, [=] ( localIndex const k )
+  forAll< POLICY >( numElem, [=] ( localIndex const k )
   {
     for( localIndex q=0; q<numQ; ++q )
     {
