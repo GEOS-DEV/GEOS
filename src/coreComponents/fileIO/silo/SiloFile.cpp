@@ -1779,10 +1779,6 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
 
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & referencePosition = nodeManager->referencePosition();
 
-  array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > const * const totalDisplacement = nodeManager->getPointer< array2d< real64,
-                                                                                                                        nodes::TOTAL_DISPLACEMENT_PERM > >(
-    keys::TotalDisplacement );
-
   bool writeArbitraryPolygon( false );
   string const meshName( "MeshLevel" );
 
@@ -1795,18 +1791,25 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
   {
     R1Tensor nodePosition;
     nodePosition = referencePosition[a];
-    if( totalDisplacement!=nullptr )
-    {
-      nodePosition += (*totalDisplacement)[a];
-    }
 
-    xcoords[a] = nodePosition( 0 );
-    ycoords[a] = nodePosition( 1 );
-    zcoords[a] = nodePosition( 2 );
+    xcoords[a] = referencePosition( a, 0 );
+    ycoords[a] = referencePosition( a, 1 );
+    zcoords[a] = referencePosition( a, 2 );
 
     if( nodeGhostRank[a] >=0 )
     {
       ghostNodeFlag[a] = 1;
+    }
+  }
+
+  if( nodeManager->hasWrapper( keys::TotalDisplacement ) )
+  {
+    arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & totalDisplacement = nodeManager->totalDisplacement();
+    for( localIndex a = 0; a < numNodes; ++a )
+    {
+      xcoords[a] += totalDisplacement( a, 0 );
+      ycoords[a] += totalDisplacement( a, 1 );
+      zcoords[a] += totalDisplacement( a, 2 );
     }
   }
 
