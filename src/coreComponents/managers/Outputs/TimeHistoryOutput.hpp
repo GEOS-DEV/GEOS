@@ -22,7 +22,7 @@ namespace geosx
   class ArrayTimeHistoryCollector< ARRAY_T, typename std::enable_if< is_array< ARRAY_T > >::type > : public TimeHistoryCollector
   {
   public:
-    ArrayTimeHistoryCollector( ARRAY_T const & array ) :
+    ArrayTimeHistoryCollector ( ARRAY_T const & array ) :
       TimeHistoryCollector(),
       m_arr(array),
       m_offset(0),

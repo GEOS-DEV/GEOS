@@ -96,15 +96,20 @@ public:
     file_id(0)
   {
     // check if file already exists
-    if( H5Fis_hdf5(filename.c_str() ) < 0 )
+    htri_t exists = 0;
+    H5E_BEGIN_TRY {
+      exists = H5Fis_hdf5(filename.c_str() );
+    } H5E_END_TRY
+    if( exists > 0 )
     {
       file_id = H5Fopen(filename.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
     }
-    else
+    else if ( exists < 0 )
     {
       // this will fail if the file exists already
       file_id = H5Fcreate(filename.c_str(), H5F_ACC_EXCL, H5P_DEFAULT, H5P_DEFAULT);
     }
+    GEOSX_ERROR_IF( exists == 0, string("Existing file ") + fnm + string(" is not and HDF5 final, cannot use for HDF5 output.") );
   }
   ~HDFFile()
   {
@@ -115,51 +120,6 @@ private:
   string filename;
   hid_t file_id;
 };
-
-namespace impl
-{
-  template < typename OITER, typename LAMBDA >
-  void GenColNames(OITER out, localIndex const num_cols, LAMBDA && title_gen, localIndex const * const col_idxs = NULL )
-  {
-    if ( col_idxs != NULL )
-    {
-      for( localIndex lidx = 0; lidx < num_cols; ++lidx )
-      {
-        *out++ = title_gen(col_idxs[lidx]);
-      }
-    }
-    else
-    {
-      for( localIndex lidx = 0; lidx < num_cols; ++lidx )
-      {
-        *out++ = title_gen(lidx);
-      }
-    }
-  }
-
-  template < typename OITER >
-  // sfinae oiter can act as an output_iterator
-  void GenColOffsets(OITER out, localIndex const num_cols, localIndex const units_per_col, size_t const unit_size, localIndex const offset_base = 0 )
-  {
-    for( localIndex lidx = 0; lidx < num_cols; ++lidx )
-    {
-      *out++ = offset_base + lidx * (unit_size * units_per_col);
-    }
-  }
-
-  template < typename OITER >
-  // sfinae oiter can act as an output_iterator
-  void GenColTypes(OITER out, localIndex const num_cols, localIndex const units_per_col, std::type_info const & tid )
-  {
-    hsize_t upc = integer_conversion<hsize_t>(units_per_col);
-    hid_t tp = units_per_col == 1 ? GetHDFDataType(tid) : GetHDFArrayDataType(tid,1,&upc);
-    for( localIndex lidx = 0; lidx < num_cols; ++lidx )
-    {
-      *out++ = tp;
-    }
-  }
-
-}// impl namespace
 
 class HDFTable
 {
@@ -199,14 +159,20 @@ public:
                 localIndex const * idxs = NULL)
   {
     prepColAdd(num_cols);
-    impl::GenColNames(std::back_inserter(m_col_names),num_cols,title_gen,idxs);
-    for( localIndex idx = 0; idx < num_cols; ++idx)
+    localIndex offset_head = m_row_size;
+    localIndex col_size = 0;
+    for( localIndex lidx = 0; lidx < num_cols; ++lidx )
     {
-      m_col_name_ptrs[m_col_count + idx] = m_col_names[m_col_count + idx].c_str();
+      m_col_names.push_back( title_gen(idxs == NULL ? lidx : idxs[lidx]) );
+      m_col_name_ptrs.push_back( m_col_names.back().c_str() );
+      m_col_offsets.push_back( offset_head );
+      col_size = units_per_col * unit_byte_size;
+      m_col_sizes.push_back( col_size );
+      hsize_t upc = integer_conversion<hsize_t>(units_per_col);
+      m_col_types.push_back( units_per_col == 1 ? GetHDFDataType(type) : GetHDFArrayDataType(type,1,&upc) );
+      offset_head += col_size;
     }
-    impl::GenColOffsets(std::back_inserter(m_col_offsets),num_cols,units_per_col,unit_byte_size,m_row_size);
-    impl::GenColTypes(std::back_inserter(m_col_types),num_cols,units_per_col,type);
-    m_row_size += num_cols * units_per_col * unit_byte_size;
+    m_row_size = offset_head;
   }
 
   inline void Finalize()
@@ -280,6 +246,7 @@ protected:
   {
     m_col_count += num_cols;
     m_col_names.reserve(m_col_count);
+    m_col_name_ptrs.reserve(m_col_count);
     m_col_offsets.reserve(m_col_count);
     m_col_sizes.reserve(m_col_count);
     m_col_types.reserve(m_col_count);
