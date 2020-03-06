@@ -58,7 +58,7 @@ void TestMeshImport( string const& inputStringMesh,
   elemManager->ProcessInputFileRecursive( xmlRegionNode );
   elemManager->PostProcessInputRecursive();
 
-  Group const * const cellBlockManager = domain->GetGroup(keys::cellManager);
+  Group * const cellBlockManager = domain->GetGroup(keys::cellManager);
 
   // This method will call the CopyElementSubRegionFromCellBlocks that will trigger the property transfer.
   elemManager->GenerateMesh( cellBlockManager );

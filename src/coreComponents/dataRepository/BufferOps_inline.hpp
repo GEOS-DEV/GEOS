@@ -788,9 +788,9 @@ localIndex Unpack( buffer_unit_type const * & buffer,
 
 template< bool DO_PACKING >
 localIndex Pack( buffer_unit_type * & buffer,
-                 SortedArray< localIndex > const & var,
+                 SortedArrayView< localIndex const > const & var,
                  arrayView1d< localIndex const > const & packList,
-                 SortedArray< globalIndex > const & unmappedGlobalIndices,
+                 SortedArrayView< globalIndex const > const & unmappedGlobalIndices,
                  arraySlice1d< globalIndex const > const & localToGlobal )
 {
 

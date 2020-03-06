@@ -213,13 +213,13 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
 
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
   {
-    ElementRegionBase const * const elemRegion = elemManager->GetRegion(er);
+    ElementRegionBase * const elemRegion = elemManager->GetRegion(er);
 
     FiniteElementDiscretization const * feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
 
     for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
     {
-      CellElementSubRegion const * const cellElementSubRegion = elemRegion->GetSubRegion<CellElementSubRegion>(esr);
+      CellElementSubRegion * const cellElementSubRegion = elemRegion->GetSubRegion<CellElementSubRegion>(esr);
 
       arrayView2d<localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = cellElementSubRegion->nodeList();
 

@@ -173,7 +173,7 @@ public:
    */
   virtual void AssemblePerforationTerms( real64 const time_n,
                                          real64 const dt,
-                                         DomainPartition const * const domain,
+                                         DomainPartition * const domain,
                                          DofManager const * const dofManager,
                                          ParallelMatrix * const matrix,
                                          ParallelVector * const rhs ) override;
@@ -279,7 +279,7 @@ private:
    * @brief Compute all the perforation rates for this well
    * @param well the well with its perforations
    */
-  void ComputeAllPerforationRates( WellElementSubRegion const * const subRegion );
+  void ComputeAllPerforationRates( WellElementSubRegion * const subRegion );
 
   /**
    * @brief Save all the rates and pressures in the well for reporting purposes

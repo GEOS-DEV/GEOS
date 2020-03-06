@@ -166,7 +166,7 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( SortedArrayView<localIndex co
 
 void ObjectManagerBase::ConstructLocalListOfBoundaryObjects( localIndex_array& objectList ) const
 {
-  const array1d<integer>& isDomainBoundary = this->getReference<integer_array>(m_ObjectManagerBaseViewKeys.domainBoundaryIndicator);
+  arrayView1d<integer const > const & isDomainBoundary = this->getReference<integer_array>(m_ObjectManagerBaseViewKeys.domainBoundaryIndicator);
   for( localIndex k=0 ; k<size() ; ++k )
   {
     if( isDomainBoundary[k] == 1 )
@@ -178,7 +178,7 @@ void ObjectManagerBase::ConstructLocalListOfBoundaryObjects( localIndex_array& o
 
 void ObjectManagerBase::ConstructGlobalListOfBoundaryObjects( globalIndex_array& objectList ) const
 {
-  const array1d<integer>& isDomainBoundary = this->getReference<integer_array>(m_ObjectManagerBaseViewKeys.domainBoundaryIndicator);
+  arrayView1d<integer const> const & isDomainBoundary = this->getReference<integer_array>(m_ObjectManagerBaseViewKeys.domainBoundaryIndicator);
   for( localIndex k=0 ; k<size() ; ++k )
   {
     if( isDomainBoundary[k] == 1 )
@@ -467,7 +467,7 @@ localIndex ObjectManagerBase::PackSets( buffer_unit_type * & buffer,
   for( auto const & wrapperIter : m_sets.wrappers() )
   {
     string const & setName = wrapperIter.first;
-    SortedArray<localIndex> const & currentSet = m_sets.getReference<SortedArray<localIndex> >(setName);
+    SortedArrayView<localIndex const> const & currentSet = m_sets.getReference<SortedArray<localIndex> >(setName);
     packedSize += bufferOps::Pack<DOPACK>( buffer, setName );
     packedSize += bufferOps::Pack<DOPACK>( buffer,
                                            currentSet,

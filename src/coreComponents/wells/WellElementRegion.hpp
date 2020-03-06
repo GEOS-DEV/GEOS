@@ -86,7 +86,7 @@ public:
 
   
   // not implemented, this task is performed in GenerateWell
-  virtual void GenerateMesh( Group const * ) override {}
+  virtual void GenerateMesh( Group * ) override {}
 
  /**
   * @brief Build the local well elements and perforations from global well geometry
