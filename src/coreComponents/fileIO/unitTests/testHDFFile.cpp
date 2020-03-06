@@ -1,3 +1,4 @@
+#include "managers/Outputs/TimeHistoryOutput.hpp"
 #include "fileIO/hdf/HDFFile.hpp"
 #include "dataRepository/BufferOps.hpp"
 #include "dataRepository/BufferOpsDevice.hpp"
@@ -39,61 +40,20 @@ TEST( testHDFIO, WholeTabularIO )
   Array<ARR_TYPE, DIM> arr(rand());
 
   {
-    HDFFile file("whole_array");
 
-    // specify the tables (done during init)
-    HDFTable time_table("Array1 Time", "arr1_t");
-    time_table.AddCols(1,1,sizeof(real64),typeid(real64),[](localIndex idx){ return std::string("nd_") + std::to_string(idx); });
-    time_table.Finalize( );
-    time_table.CreateInTarget( file );
+    TimeHistoryCollector * arr_collector = new ArrayTimeHistoryCollector<decltype(arr)>( arr );
 
-    HDFTable table("Array1","arr1");
-    SpecFromArray(table,arr);
-    table.Finalize( );
-    table.CreateInTarget( file );
+    TimeHistoryUpdate update_event("TimeHistoryUpdate",NULL);
+    TimeHistory & arr_hist = update_event.getTimeHistory( );
+    arr_hist.AddHistory("arr1","Array1",arr_collector);
 
-    localIndex indices[] = { 0, 5, 9 };
-    HDFTable idx_table("Array1 Indexed","arr1_idx");
-    SpecFromArrayIndices(idx_table,arr,3,&indices[0]);
-    idx_table.Finalize( );
-    idx_table.CreateInTarget( file );
+    update_event.Execute(1.0,0.5,1,4,0.6,NULL);
 
-    HDFTableIO table_io( table );
-    HDFTableIO time_table_io( time_table );
+    TimeHistoryOutput output_event("whole_array_hist","TimeHistoryOutput",NULL);
+    output_event.InitHistoryFile( );
 
-    // collect time history data into buffers
-    buffer_unit_type * buf_head = NULL;
-    size_t bufferSize = bufferOps::Pack<false>(buf_head,arr.toView());
-    std::vector<buffer_unit_type> buf(bufferSize);
-    buf_head = &buf[0];
-    bufferOps::Pack<true>(buf_head,arr.toView());
-    // we pack arr.strides() before the actual array
-    size_t pack_meta_size = DIM * sizeof(localIndex);
+    output_event.Execute(1.0,0.5,1,4,0.6,NULL);
 
-    real64 time = 0.4;
-    std::vector<buffer_unit_type> tbuf(sizeof(decltype(time)));
-    buf_head = &tbuf[0];
-    bufferOps::Pack<true>(buf_head,time);
-
-    // done on collection
-    // buffer io on the table
-    table_io.BufferRow( &buf[pack_meta_size] );
-    time_table_io.BufferRow( &tbuf[0] );
-
-    // done on write
-    // open the table to write
-    table_io.Open( file );
-    table_io.WriteBuffered( );
-    table_io.Close();
-
-    time_table_io.Open( file );
-    time_table_io.WriteBuffered( );
-    time_table_io.Close( );
-
-    // clear the table in the target from row 0
-    table_io.Open( file );
-    table_io.ClearAfterWriteHead( );
-    table_io.Close();
   }
 }
 

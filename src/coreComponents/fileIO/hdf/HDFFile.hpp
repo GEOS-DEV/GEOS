@@ -166,9 +166,11 @@ class HDFTable
 public:
 
   HDFTable( const string & title,
-            const string & hdf_id )
+            const string & hdf_id,
+            size_t prealloc_rows = 10)
   : m_title(title)
   , m_hdf_id(hdf_id)
+  , m_prealloc_rows(prealloc_rows)
   , m_is_final(false)
   , m_row_size(0)
   , m_col_count(0)
@@ -214,14 +216,14 @@ public:
 
   inline bool isFinal() { return m_is_final; }
 
-  inline void CreateInTarget( HDFTarget & target, localIndex prealloc_rows = 10)
+  inline void CreateInTarget( HDFTarget & target )
   {
     warn_not_final();
     H5TBmake_table(m_title.c_str(),
                    target,
                    m_hdf_id.c_str(),
                    m_col_count,
-                   prealloc_rows,
+                   m_prealloc_rows,
                    m_row_size,
                    const_cast<const char**>(&m_col_name_ptrs[0]),
                    &m_col_offsets[0],
@@ -258,12 +260,13 @@ public:
     return true;
   }
 
-  inline size_t getRowSize() { warn_not_final(); return m_row_size;}
-  inline hsize_t getColCount() { warn_not_final(); return m_col_count; }
-  inline const string & getTitle() { return m_title; }
-  inline const string & getHDFID() { return m_hdf_id; }
+  inline size_t getRowPreallocCount() const { warn_not_final(); return m_prealloc_rows; }
+  inline size_t getRowSize() const { warn_not_final(); return m_row_size;}
+  inline hsize_t getColCount() const { warn_not_final(); return m_col_count; }
+  inline const string & getTitle() const { return m_title; }
+  inline const string & getHDFID() const { return m_hdf_id; }
 
-  void warn_not_final()
+  void warn_not_final() const
   {
     if(!m_is_final)
     {
@@ -282,8 +285,9 @@ protected:
     m_col_types.reserve(m_col_count);
   }
 
-  const string m_title;
-  const string m_hdf_id;
+  string m_title;
+  string m_hdf_id;
+  size_t m_prealloc_rows;
 
   bool m_is_final;
   size_t m_row_size;
@@ -300,9 +304,9 @@ class HDFTableIO
 public:
   HDFTableIO( HDFTable const & table_spec, localIndex buffer_default = 4 )
   : m_spec(table_spec)
-  , m_file_row_head(0)
-  , m_active_target()
-  , m_is_open(false)
+  , m_target_row_head(0)
+  , m_target_row_limit(m_spec.getRowPreallocCount())
+  , m_need_file_realloc(false)
   , m_buffered_count(0)
   , m_row_buffer( buffer_default * m_spec.getRowSize() )
   , m_buffered_offsets( buffer_default * m_spec.getRowSize() )
@@ -319,7 +323,6 @@ public:
     hsize_t col_count = m_spec.getColCount(); //# cells in a row
     m_row_buffer.resize(m_row_buffer.size() + row_size);
     memcpy(&m_row_buffer[m_buffered_count*row_size],row,row_size);
-
 
     localIndex prev_row_head = col_count * (m_buffered_count-1);
     localIndex new_row_head = col_count * m_buffered_count;
@@ -338,36 +341,37 @@ public:
     }
 
     m_buffered_count++;
+
+    if ( m_target_row_head + m_buffered_count > m_target_row_limit )
+    {
+      m_need_file_realloc = true;
+    }
   }
 
-  void Open( HDFTarget & target, bool do_verify = false )
+  virtual void CreateInTarget( HDFTarget & target )
   {
+    m_spec.CreateInTarget( target );
+  }
+
+  virtual void WriteBuffered( HDFTarget & target, bool do_verify = false )
+  {
+    // MPI::Reduce(m_need_file_realloc)
+    // if (m_need_file_realloc)
+    // m_target_row_limit *= 2;
+    // H5TBreserve(m_target_row_limit)
     if ( do_verify ) m_spec.Verify( target );
-    m_is_open = true;
-    m_active_target = target;
-  }
-
-  virtual void WriteBuffered( )
-  {
-    assert(m_is_open);
-    H5TBappend_records(m_active_target,m_spec.getHDFID().c_str(),m_buffered_count,m_spec.getRowSize(),&m_buffered_offsets[0],&m_buffered_sizes[0],&m_row_buffer);
-    m_file_row_head += m_buffered_count;
+    H5TBappend_records(target,m_spec.getHDFID().c_str(),m_buffered_count,m_spec.getRowSize(),&m_buffered_offsets[0],&m_buffered_sizes[0],&m_row_buffer);
+    m_target_row_head += m_buffered_count;
     EmptyBuffer();
   }
 
-  virtual void ClearAfterWriteHead( )
+  virtual void ClearAfterWriteHead( HDFTarget & target )
   {
-    //assert(m_is_open);
     hsize_t num_cols = 0;
     hsize_t num_rows = 0;
     const string hdf_id = m_spec.getHDFID();
-    H5TBget_table_info(m_active_target,hdf_id.c_str(),&num_cols,&num_rows);
-    H5TBdelete_record(m_active_target,hdf_id.c_str(),m_file_row_head, num_rows - m_file_row_head);
-  }
-
-  virtual void Close( )
-  {
-    m_is_open = false;
+    H5TBget_table_info(target,hdf_id.c_str(),&num_cols,&num_rows);
+    H5TBdelete_record(target,hdf_id.c_str(),m_target_row_head, num_rows - m_target_row_head);
   }
 
 private:
@@ -383,11 +387,11 @@ private:
 
   // in the data store
   HDFTable m_spec;
-  hsize_t m_file_row_head;
+  size_t m_target_row_head;
+  size_t m_target_row_limit;
+  bool m_need_file_realloc;
 
   // not in the data store
-  HDFTarget m_active_target;
-  bool m_is_open;
   localIndex m_buffered_count;
   array1d<buffer_unit_type> m_row_buffer;
   std::vector<size_t> m_buffered_offsets;
@@ -421,6 +425,17 @@ SpecFromArrayIndices( HDFTable & tbl, ARRAY_T const & arr, LAMBDA && title_gen, 
 {
   tbl.AddCols(num_indices, arr.size( 0 ), sizeof(typename ARRAY_T::value_type), typeid(typename ARRAY_T::value_type),title_gen, indices);
 }
+
+inline HDFTable TimeSeries( HDFTable const & base_table )
+{
+  string time_title = base_table.getTitle() + string(" Time");
+  string time_id = base_table.getHDFID() + string("_t");
+  HDFTable time_table(time_title,time_id);
+  time_table.AddCols(1,1,sizeof(real64),typeid(real64));
+  time_table.Finalize();
+  return time_table;
+}
+
 
 }
 

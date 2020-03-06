@@ -6,7 +6,7 @@ set(gtest_geosx_tests
    testHDFFile.cpp
    )
 
-set( dependencyList gtest fileIO cxx-utilities )
+set( dependencyList gtest fileIO cxx-utilities managers dataRepository )
 
 #
 # Add gtest C++ based tests
