@@ -65,7 +65,7 @@ FluxApproximationBase::GetCatalog()
   return catalog;
 }
 
-void FluxApproximationBase::compute( DomainPartition const & domain )
+void FluxApproximationBase::compute( DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION_SCOPED;
 
@@ -74,12 +74,12 @@ void FluxApproximationBase::compute( DomainPartition const & domain )
   FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
 
   fsManager.Apply( 0.0,
-                   const_cast<DomainPartition *>( &domain ), // hack, but guaranteed we won't modify it
+                   &domain,
                    "faceManager",
                    m_boundaryFieldName,
                    [&] ( FieldSpecificationBase const * GEOSX_UNUSED_PARAM( bc ),
                          string const & setName,
-                         SortedArray<localIndex> const & targetSet,
+                         SortedArrayView<localIndex const> const & targetSet,
                          Group const * GEOSX_UNUSED_PARAM( targetGroup ),
                          string const & GEOSX_UNUSED_PARAM( targetName ))
   {
@@ -110,7 +110,7 @@ bool FluxApproximationBase::hasBoundaryStencil(string const & setName) const
 void FluxApproximationBase::InitializePostInitialConditions_PreSubGroups( Group * const rootGroup )
 {
   DomainPartition const * domain = rootGroup->GetGroup<DomainPartition>( keys::domain );
-  compute( *domain );
+  compute( const_cast<DomainPartition &>( *domain ) ); // hack, but guaranteed we won't modify it....is it though?
 }
 
 } //namespace geosx

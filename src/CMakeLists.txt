@@ -19,6 +19,22 @@ include(cmake/thirdparty/setupThirdPartyDirectory.cmake)
 ################################
 option(ENABLE_BENCHMARKS "Enables benchmarks" ON)
 include(cmake/blt/SetupBLT.cmake)
+set(BLT_SOURCE_DIR ${PROJECT_SOURCE_DIR}/cmake/blt/)
+
+# Removes -pthread from BLT CUDA libraries lists
+if (ENABLE_CUDA)
+  set(_cuda_libraries)
+  foreach(_lib ${BLT_CUDA_LIBRARIES})
+    if ("${_lib}" STREQUAL "-pthread")
+      list(APPEND _cuda_libraries "-lpthread")
+    else()
+      list(APPEND _cuda_libraries "${_lib}")
+    endif()
+  endforeach()
+
+  set(BLT_CUDA_LIBRARIES "${_cuda_libraries}" CACHE STRING "" FORCE)
+  set(BLT_CUDA_RUNTIME_LIBRARIES "${_cuda_libraries}" CACHE STRING "" FORCE)
+endif()
 
 ################################
 # Include standard build system logic and options
@@ -94,10 +110,15 @@ blt_add_executable(NAME geosx
                               ${externalComponentsLinkList}
                   )
 
+# Removing all transitive link dependencies from geosx_core target to circumvent
+# the BLT behavior which imposes all dependencies to be public
+#set_target_properties(geosx_core PROPERTIES INTERFACE_LINK_LIBRARIES "")
+
 target_include_directories( geosx PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
 # To change the runtime path during installation
 set_target_properties( geosx PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib" )
+set_target_properties( geosx PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE )
 
 install(TARGETS geosx RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 

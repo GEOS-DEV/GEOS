@@ -37,8 +37,11 @@ class CellBlock : public ElementSubRegionBase
 {
 public:
 
+
   using NodeMapType = InterObjectRelation< array2d< localIndex, cells::NODE_MAP_PERMUTATION > >;
+  using EdgeMapType = FixedOneToManyRelation;
   using FaceMapType = FixedOneToManyRelation;
+
 
   /**
    * @name Static Factory Catalog Functions
@@ -188,6 +191,16 @@ public:
   localIndex const & nodeList( localIndex const k, localIndex a ) const { return m_toNodesRelation( k, a ); }
 
   /**
+   * @return the element to edge map
+   */
+  FixedOneToManyRelation & edgeList()                    { return m_toEdgesRelation; }
+
+  /**
+   * @return the element to edge map
+   */
+  FixedOneToManyRelation const & edgeList() const        { return m_toEdgesRelation; }
+
+  /**
    * @return the element to face map
    */
   FixedOneToManyRelation       & faceList()       { return m_toFacesRelation; }
@@ -210,11 +223,11 @@ public:
   }
 
   template< typename LAMBDA >
-  void forExternalProperties( LAMBDA && lambda ) const
+  void forExternalProperties( LAMBDA && lambda )
   {
     for( auto & externalPropertyName : m_externalPropertyNames )
     {
-      const dataRepository::WrapperBase * wrapper = this->getWrapperBase( externalPropertyName );
+      dataRepository::WrapperBase * const wrapper = this->getWrapperBase( externalPropertyName );
       lambda( wrapper );
     }
   }
@@ -224,6 +237,9 @@ protected:
 
   /// The elements to nodes relation
   NodeMapType  m_toNodesRelation;
+
+  /// The elements to edges relation
+  EdgeMapType  m_toEdgesRelation;
 
   /// The elements to faces relation
   FaceMapType  m_toFacesRelation;

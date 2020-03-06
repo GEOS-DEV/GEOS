@@ -14,6 +14,10 @@ endif(ENABLE_PAMELA)
 
 set( dependencyList geosx_core gtest )
 
+if ( ENABLE_MPI )
+  set ( dependencyList ${dependencyList} mpi )
+endif()
+
 if( ENABLE_OPENMP )
     set( dependencyList ${dependencyList} openmp )
 endif()

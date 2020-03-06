@@ -65,7 +65,7 @@ void MobilityKernel::Launch( localIndex begin, localIndex end,
   } );
 }
 
-void MobilityKernel::Launch( SortedArray<localIndex> targetSet,
+void MobilityKernel::Launch( SortedArrayView<localIndex const> targetSet,
                              arrayView2d<real64 const> const & dens,
                              arrayView2d<real64 const> const & dDens_dPres,
                              arrayView2d<real64 const> const & visc,
@@ -97,7 +97,7 @@ void MobilityKernel::Launch( localIndex begin, localIndex end,
   } );
 }
 
-void MobilityKernel::Launch( SortedArray<localIndex> targetSet,
+void MobilityKernel::Launch( SortedArrayView<localIndex const> targetSet,
                              arrayView2d<real64 const> const & dens,
                              arrayView2d<real64 const> const & visc,
                              arrayView1d<real64> const & mob )

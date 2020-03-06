@@ -180,15 +180,15 @@ class CustomVTUXMLWriter
   }
 
   template< typename T >
-  void WriteCellData(  ElementRegionManager::ElementViewAccessor< T > const & dataView, ElementRegionManager const * const elemManager, bool binary)
+  void WriteCellData(  string const & fieldName, ElementRegionManager const * const elemManager, bool binary)
   {
     if( binary )
     {
-      WriteCellBinaryData( dataView, elemManager );
+      WriteCellBinaryData<T>( fieldName, elemManager );
     }
     else
     {
-      WriteCellAsciiData( dataView, elemManager );
+      WriteCellAsciiData<T>( fieldName, elemManager );
     }
   }
 
@@ -214,9 +214,7 @@ class CustomVTUXMLWriter
   {
     std::stringstream stream;
     std::uint32_t size = integer_conversion< std::uint32_t >( nbTotalCells * factor );
-    string outputString;
-    outputString.resize( FindBase64StringLength( sizeof(std::uint32_t ) ) );
-    stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( &size ), outputString, sizeof( std::uint32_t ) );
+    stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( &size ), sizeof( std::uint32_t ) );
     m_outFile << stream.rdbuf();
   }
 
@@ -240,16 +238,15 @@ class CustomVTUXMLWriter
     {
       std::stringstream stream;
       std::uint32_t size = integer_conversion< std::uint32_t >( vertices.size() ) * sizeof( real64 );
-      string outputString;
-      outputString.resize( FindBase64StringLength( sizeof(std::uint32_t ) ) );
-      stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( &size ), outputString, sizeof( std::uint32_t ) );
-      outputString.resize(FindBase64StringLength( sizeof( real64 ) * 3 ) );
+      stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( &size ), sizeof( std::uint32_t ) );
       for ( localIndex i = 0; i < vertices.size( 0 ); ++i )
       {
+        real64_array vertex(3);
         for ( localIndex j = 0; j < 3; ++j )
         {
-          stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( &vertices( i, j ) ), outputString, sizeof( real64 ) );
+          vertex[j] = vertices( i, j );
         }
+          stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( vertex.data() ), 3 * sizeof( real64 ) );
       }
       DumpBuffer( stream );
     }
@@ -266,8 +263,6 @@ class CustomVTUXMLWriter
     {
       std::stringstream stream;
       integer multiplier = FindMultiplier( sizeof( localIndex ) );
-      string outputString;
-      outputString.resize( FindBase64StringLength( multiplier * sizeof( localIndex) ) );
       localIndex_array connectivityFragment( multiplier );
       integer countConnectivityFragment = 0;
       elemManager->forElementRegionsComplete< CellElementRegion >( [&]( localIndex const GEOSX_UNUSED_PARAM( er ),
@@ -305,7 +300,7 @@ class CustomVTUXMLWriter
                 }
                 if( countConnectivityFragment == multiplier )
                 {
-                  stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( connectivityFragment.data() ), outputString, sizeof( localIndex ) * multiplier );
+                  stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( connectivityFragment.data() ), sizeof( localIndex ) * multiplier );
                   countConnectivityFragment = 0;
                 }
               }
@@ -320,7 +315,7 @@ class CustomVTUXMLWriter
                 connectivityFragment[countConnectivityFragment++] = connectivities[i][j];
                 if( countConnectivityFragment == multiplier )
                 {
-                  stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( connectivityFragment.data() ), outputString, sizeof( localIndex ) * multiplier );
+                  stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( connectivityFragment.data() ), sizeof( localIndex ) * multiplier );
                   countConnectivityFragment = 0;
                 }
               }
@@ -328,8 +323,7 @@ class CustomVTUXMLWriter
           }
         });
       });
-      outputString.resize( FindBase64StringLength( sizeof( localIndex ) * ( countConnectivityFragment) ) );
-      stream <<stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( connectivityFragment.data() ), outputString, sizeof( localIndex ) * ( countConnectivityFragment) );
+      stream <<stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( connectivityFragment.data() ), sizeof( localIndex ) * ( countConnectivityFragment) );
       DumpBuffer( stream );
     }
 
@@ -392,8 +386,6 @@ class CustomVTUXMLWriter
       std::stringstream stream;
       integer multiplier = FindMultiplier( sizeof( integer ) ); // We do not write all the data at once to avoid creating a big table each time.
       localIndex_array offsetFragment( multiplier );
-      string outputString;
-      outputString.resize( FindBase64StringLength( sizeof( localIndex ) * multiplier ) );
       integer countOffsetFragmentIndex = 0;
       localIndex curOffset = elemManager->GetRegion(0)->GetSubRegion(0)->numNodesPerElement();
       elemManager->forElementRegionsComplete< CellElementRegion >( [&]( localIndex const GEOSX_UNUSED_PARAM( er ),
@@ -408,14 +400,13 @@ class CustomVTUXMLWriter
             curOffset += offSetForOneCell;
             if( countOffsetFragmentIndex == multiplier )
             {
-              stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( offsetFragment.data() ), outputString, sizeof( localIndex ) * multiplier );
+              stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( offsetFragment.data() ), sizeof( localIndex ) * multiplier );
               countOffsetFragmentIndex = 0;
             }
           }
         });
       });
-      outputString.resize( FindBase64StringLength( sizeof( localIndex ) * ( countOffsetFragmentIndex) ) );
-      stream <<stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( offsetFragment.data() ), outputString, sizeof( localIndex ) * ( countOffsetFragmentIndex) );
+      stream <<stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( offsetFragment.data() ), sizeof( localIndex ) * ( countOffsetFragmentIndex) );
       DumpBuffer( stream );
     }
 
@@ -440,8 +431,6 @@ class CustomVTUXMLWriter
       std::stringstream stream;
       integer multiplier = FindMultiplier( sizeof( integer ) ); // We do not write all the data at once to avoid creating a big table each time.
       integer_array typeFragment( multiplier );
-      string outputString;
-      outputString.resize( FindBase64StringLength( sizeof( integer ) * multiplier ) );
       integer countTypeFragmentIndex = 0;
       elemManager->forElementRegionsComplete< CellElementRegion >( [&]( localIndex const GEOSX_UNUSED_PARAM( er ),
                                                                     auto const * const elemRegion )
@@ -454,91 +443,79 @@ class CustomVTUXMLWriter
             typeFragment[countTypeFragmentIndex++] = type;   
             if( countTypeFragmentIndex == multiplier )
             {
-              stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( typeFragment.data() ), outputString, sizeof( integer ) * multiplier );
+              stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( typeFragment.data() ), sizeof( integer ) * multiplier );
               countTypeFragmentIndex = 0;
             }
           }
         });
       });
-      outputString.resize( FindBase64StringLength( sizeof( integer ) * ( countTypeFragmentIndex) ) );
-      stream <<stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( typeFragment.data() ), outputString, sizeof( localIndex ) * ( countTypeFragmentIndex) );
+      stream <<stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( typeFragment.data() ), sizeof( localIndex ) * ( countTypeFragmentIndex) );
       DumpBuffer( stream );
     }
 
     template< typename T >
-    void WriteCellAsciiData( ElementRegionManager::ElementViewAccessor< T > const & dataView,
+    void WriteCellAsciiData( string const & fieldName,
                              ElementRegionManager const * const elemManager )
     {
-      elemManager->forElementRegionsComplete< CellElementRegion >( [&]( localIndex const er,
-                                                                    auto const * const elemRegion )
+      elemManager->forElementSubRegions< CellElementSubRegion >( [&]( auto const * const elemSubRegion )
       {
-        elemRegion->template forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const esr,
-                                                                                     auto const * const elemSubRegion )
+        typename T::ViewTypeConst const & dataView = elemSubRegion->template getReference<T>(fieldName);
+        for ( localIndex ei = 0; ei < elemSubRegion->size(); ++ei )
         {
-          for ( localIndex ei = 0; ei < elemSubRegion->size(); ++ei )
-          {
-            LvArray::forValuesInSlice( dataView[er][esr][ei], [this]( auto const & value ) { m_outFile << value << " "; } );
-            m_outFile << "\n";
-          }
-        });
+          LvArray::forValuesInSlice( dataView[ei], [this]( auto const & value ) { m_outFile << value << " "; } );
+          m_outFile << "\n";
+        }
       });
     }
 
     template< typename ARRAY_TYPE >
-    void WriteCellBinaryData( ElementRegionManager::ElementViewAccessor< ARRAY_TYPE > const & dataView, ElementRegionManager const * const elemManager )
+    void WriteCellBinaryData( string const & fieldName, ElementRegionManager const * const elemManager )
     {
       using VALUE_TYPE = typename ARRAY_TYPE::value_type;
 
       std::stringstream stream;
       WriteSize( elemManager->getNumberOfElements< CellElementSubRegion >(), sizeof( VALUE_TYPE ) );
       integer multiplier = FindMultiplier( sizeof( VALUE_TYPE ) );// We do not write all the data at once to avoid creating a big table each time.
-      string outputString;
-      outputString.resize( FindBase64StringLength( sizeof( VALUE_TYPE ) * multiplier ) );
       std::vector< VALUE_TYPE > dataFragment( multiplier );
       integer countDataFragment = 0;
-      elemManager->forElementRegionsComplete< CellElementRegion >( [&]( localIndex const er,
-                                                                        CellElementRegion const * const elemRegion )
+      elemManager->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const * const elemSubRegion )
       {
-        elemRegion->template forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const esr,
-                                                                                     CellElementSubRegion const * const elemSubRegion )
+
+        typename ARRAY_TYPE::ViewTypeConst const & dataView = elemSubRegion->getReference<ARRAY_TYPE>(fieldName);
+        if ( elemSubRegion->size() > 0 )
         {
-          if ( elemSubRegion->size() > 0 )
+          for( localIndex ei = 0; ei < elemSubRegion->size(); ++ei )
           {
-            for( localIndex ei = 0; ei < elemSubRegion->size(); ++ei )
+            LvArray::forValuesInSlice( dataView[ei],
+                                       [&]( VALUE_TYPE const & value )
             {
-              LvArray::forValuesInSlice( dataView[er][esr][ei],
-                [&]( VALUE_TYPE const & value )
-                {
-                  dataFragment[ countDataFragment++ ] = value;
-                  if( countDataFragment == multiplier )
-                  {
-                    stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( dataFragment.data() ), outputString, sizeof( VALUE_TYPE ) * countDataFragment );
-                    countDataFragment = 0;
-                  }
-                }
-              );
-            }
+              dataFragment[ countDataFragment++ ] = value;
+              if( countDataFragment == multiplier )
+              {
+                stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( dataFragment.data() ), sizeof( VALUE_TYPE ) * countDataFragment );
+                countDataFragment = 0;
+              }
+            });
           }
-          else
+        }
+        else
+        {
+          real64 nanArray[3] = { std::nan("0"), std::nan("0"), std::nan("0") };
+          for( localIndex ei = 0; ei  < elemSubRegion->size(); ei++)
           {
-            real64 nanArray[3] = { std::nan("0"), std::nan("0"), std::nan("0") };
-            for( localIndex ei = 0; ei  < elemSubRegion->size(); ei++)
-            {
-              stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( nanArray ), outputString, sizeof( real64 ) * 3 );
-            }
+            stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( nanArray ), sizeof( real64 ) * 3 );
           }
-        });
+        }
       });
 
-      outputString.resize( FindBase64StringLength( sizeof( VALUE_TYPE ) * ( countDataFragment) ) );
-      stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( dataFragment.data() ), outputString, sizeof( VALUE_TYPE ) * ( countDataFragment ) );
+      stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( dataFragment.data() ), sizeof( VALUE_TYPE ) * ( countDataFragment ) );
       DumpBuffer( stream );
     }
 
     template< typename ARRAY_TYPE >
     void WriteNodeAsciiData( Wrapper< ARRAY_TYPE > const & dataView )
     {
-      ARRAY_TYPE const & array = dataView.reference();
+      typename ARRAY_TYPE::ViewTypeConst const & array = dataView.reference();
       for( localIndex i = 0; i < array.size( 0 ); i++ )
       {
         LvArray::forValuesInSlice( array[ i ], [this]( auto const & value ) { m_outFile << value << " "; } );
@@ -551,14 +528,11 @@ class CustomVTUXMLWriter
     {
 
       std::stringstream stream;
-      ARRAY_TYPE const & array = dataView.reference();
+      typename ARRAY_TYPE::ViewTypeConst const & array = dataView.reference();
 
       using VALUE_TYPE = typename ARRAY_TYPE::value_type;
       
       integer multiplier = FindMultiplier( sizeof( VALUE_TYPE ) );// We do not write all the data at once to avoid creating a big table each time.
-      
-      string outputString;
-      outputString.resize( FindBase64StringLength( sizeof( VALUE_TYPE ) * multiplier ) );
       
       std::vector< VALUE_TYPE > dataFragment( multiplier );
       
@@ -572,15 +546,14 @@ class CustomVTUXMLWriter
             dataFragment[countDataFragment++] = value;
             if( countDataFragment == multiplier )
             {
-              stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( dataFragment.data() ), outputString, sizeof( VALUE_TYPE ) * countDataFragment );
+              stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( dataFragment.data() ), sizeof( VALUE_TYPE ) * countDataFragment );
               countDataFragment = 0;
             }
           }
         );
       }
 
-      outputString.resize( FindBase64StringLength( sizeof( VALUE_TYPE ) * countDataFragment ) );
-      stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( dataFragment.data() ), outputString, sizeof( VALUE_TYPE ) * countDataFragment );
+      stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( dataFragment.data() ), sizeof( VALUE_TYPE ) * countDataFragment );
       DumpBuffer( stream );
     }
 
@@ -598,16 +571,6 @@ class CustomVTUXMLWriter
       return multiplier;
     }
 
-    integer FindBase64StringLength( integer dataSize )
-    {
-      integer base64StringLength = (dataSize * 8) / 6;
-      while( base64StringLength % 4 )
-      {
-        base64StringLength++;
-      }
-      return base64StringLength;
-    }
-
     void DumpBuffer( std::stringstream const & stream )
     {
       m_outFile << stream.rdbuf() << '\n';
@@ -621,34 +584,34 @@ class CustomVTUXMLWriter
 };
 
 template<>
-inline void CustomVTUXMLWriter::WriteCellBinaryData( ElementRegionManager::ElementViewAccessor< r1_array > const & dataView, ElementRegionManager const * const elemManager )
+inline void CustomVTUXMLWriter::WriteCellBinaryData<r1_array>( string const & fieldName,
+                                                               ElementRegionManager const * const elemManager )
 {
   std::stringstream stream;
   string outputString;
-  outputString.resize(  FindBase64StringLength( sizeof( real64 ) * 3) );
   WriteSize( elemManager->getNumberOfElements< CellElementSubRegion >() * 3, sizeof( real64 ) );
-  elemManager->forElementRegionsComplete< CellElementRegion >( [&]( localIndex const er,
-                                                                auto const * const elemRegion )
+  elemManager->forElementSubRegions< CellElementSubRegion >( [&]( auto const * const elemSubRegion )
   {
-    elemRegion->template forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const esr,
-                                                                                 auto const * const elemSubRegion )
+    arrayView1d<R1Tensor const> const & dataView = elemSubRegion->template getReference<array1d<R1Tensor>>(fieldName);
+
+    if ( dataView.size() > 0 )
     {
-      if ( dataView[er][esr].size() > 0 )
-        for( localIndex ei = 0; ei  < elemSubRegion->size(); ei++)
-        {
-          stream <<stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( dataView[er][esr][ei].Data() ), outputString, sizeof( real64 ) * 3 );
-        }
-      else
+      for( localIndex ei = 0; ei  < elemSubRegion->size(); ei++)
       {
-        real64_array nanArray(3);
-        nanArray[0] = nanArray[1] = nanArray[2] = std::nan("0");
-        for( localIndex ei = 0; ei  < elemSubRegion->size(); ei++)
-        {
-          stream <<stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( nanArray.data() ), outputString, sizeof( real64 ) * 3 );
-        }
+        stream <<stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( dataView[ei].Data() ), sizeof( real64 ) * 3 );
       }
-    });
+    }
+    else
+    {
+      real64_array nanArray(3);
+      nanArray[0] = nanArray[1] = nanArray[2] = std::nan("0");
+      for( localIndex ei = 0; ei  < elemSubRegion->size(); ei++)
+      {
+        stream <<stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( nanArray.data() ), sizeof( real64 ) * 3 );
+      }
+    }
   });
+
   DumpBuffer( stream );
 }
 
@@ -658,11 +621,10 @@ inline void CustomVTUXMLWriter::WriteNodeBinaryData( Wrapper< r1_array > const &
   std::stringstream stream;
   auto & viewRef = dataView.reference();
   string outputString;
-  outputString.resize(  FindBase64StringLength( sizeof( real64 ) * 3 ) );
   WriteSize( viewRef.size() * 3, sizeof( real64 ) );
   for( localIndex i = 0; i < viewRef.size(); i++)
   {
-    stream <<stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( viewRef[i].Data() ), outputString, sizeof( real64 ) * 3 );
+    stream <<stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( viewRef[i].Data() ), sizeof( real64 ) * 3 );
   }
   DumpBuffer( stream );
 }
@@ -964,8 +926,7 @@ void VTKFile::Write( double const timeStep,
                                     [&]( auto type ) -> void
     {
       using cType = decltype(type);
-      auto dataView = elemManager->ConstructViewAccessor< cType >(std::get<0>( cellField ));
-      vtuWriter.WriteCellData( dataView, elemManager, m_binary );
+      vtuWriter.WriteCellData<cType>( std::get<0>( cellField ), elemManager, m_binary );
     });
     vtuWriter.CloseXMLNode( "DataArray" );
   }

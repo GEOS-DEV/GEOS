@@ -212,7 +212,7 @@ public:
    * @brief Return an immutable arrayView of the total displacement if it exists, if not an error is thrown.
    */
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & totalDisplacement() const
-  { return getReference< array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > >( viewKeys.totalDisplacement ).toViewConst(); }
+  { return getReference< array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > >( viewKeys.totalDisplacement ); }
 
   /**
    * @brief Return the incremental displacement array if it exists, if not an error is thrown.
@@ -224,7 +224,7 @@ public:
    * @brief Return an immutable arrayView of the incremental displacement if it exists, if not an error is thrown.
    */
   arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const & incrementalDisplacement() const
-  { return getReference< array2d< real64, nodes::INCR_DISPLACEMENT_PERM > >( viewKeys.incrementalDisplacement ).toViewConst(); }
+  { return getReference< array2d< real64, nodes::INCR_DISPLACEMENT_PERM > >( viewKeys.incrementalDisplacement ); }
 
   /**
    * @brief Return the velocity array if it exists, if not an error is thrown.
@@ -236,7 +236,7 @@ public:
    * @brief Return an immutable arrayView of the velocity if it exists, if not an error is thrown.
    */
   arrayView2d< real64 const, nodes::VELOCITY_USD > const & velocity() const
-  { return getReference< array2d< real64, nodes::VELOCITY_PERM > >( viewKeys.velocity ).toViewConst(); }
+  { return getReference< array2d< real64, nodes::VELOCITY_PERM > >( viewKeys.velocity ); }
 
   /**
    * @brief Return the accleration array if it exists, if not an error is thrown.
@@ -248,7 +248,7 @@ public:
    * @brief Return an immutable arrayView of the acceleration if it exists, if not an error is thrown.
    */
   arrayView2d< real64 const, nodes::ACCELERATION_USD > const & acceleration() const
-  { return getReference< array2d< real64, nodes::ACCELERATION_PERM > >( viewKeys.acceleration ).toViewConst(); }
+  { return getReference< array2d< real64, nodes::ACCELERATION_PERM > >( viewKeys.acceleration ); }
 
 private:
   /**

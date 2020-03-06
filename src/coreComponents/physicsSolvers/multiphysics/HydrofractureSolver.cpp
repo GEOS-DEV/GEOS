@@ -322,7 +322,7 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
     {
       arrayView1d<real64> const & aperture = subRegion->getElementAperture();
       arrayView1d<real64> const & effectiveAperture = subRegion->getReference<array1d<real64>>(FlowSolverBase::viewKeyStruct::effectiveApertureString);
-      arrayView1d<real64> const & volume = subRegion->getElementVolume();
+      arrayView1d<real64 const> const & volume = subRegion->getElementVolume();
       arrayView1d<real64> const & deltaVolume = subRegion->getReference<array1d<real64> >(FlowSolverBase::viewKeyStruct::deltaVolumeString);
       arrayView1d<real64 const> const & area = subRegion->getElementArea();
       arrayView2d< localIndex const > const & elemsToFaces = subRegion->faceList();
@@ -583,7 +583,7 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
   {
     localIndex const numElems = elementSubRegion->size();
     array1d<array1d<localIndex > > const & elemsToNodes = elementSubRegion->nodeList();
-    arrayView1d<globalIndex> const &
+    arrayView1d<globalIndex const> const &
     faceElementDofNumber = elementSubRegion->getReference< array1d<globalIndex> >( presDofKey );
 
     for( localIndex k=0 ; k<numElems ; ++k )
@@ -640,7 +640,7 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
 
       array1d<array1d<localIndex > > const & elemsToNodes = elementSubRegion->nodeList();
 
-      arrayView1d<globalIndex> const &
+      arrayView1d<globalIndex const> const &
       faceElementDofNumber = elementSubRegion->getReference< array1d<globalIndex> >( presDofKey );
       for( localIndex k0=0 ; k0<numFluxElems ; ++k0 )
       {
@@ -733,7 +733,7 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
                    keys::TotalDisplacement,
                    [&]( FieldSpecificationBase const * const bc,
                         string const &,
-                        SortedArray<localIndex> const & targetSet,
+                        SortedArrayView<localIndex const> const & targetSet,
                         Group * const ,
                         string const )
   {
@@ -766,7 +766,7 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
                     FlowSolverBase::viewKeyStruct::pressureString,
                     [&]( FieldSpecificationBase const * const fs,
                          string const &,
-                         SortedArray<localIndex> const & lset,
+                         SortedArrayView<localIndex const> const & lset,
                          Group * subRegion,
                          string const & ) -> void
   {

@@ -45,7 +45,7 @@ void RegisterAndApplyField( DomainPartition * domain,
   fieldSpecificationManager.Apply( 0., domain, "", "",
                                    [&] ( FieldSpecificationBase const * const bc,
                                          string const &,
-                                         SortedArray<localIndex> const & targetSet,
+                                         SortedArrayView<localIndex const> const & targetSet,
                                          Group * const targetGroup,
                                          string const name )
                                    {

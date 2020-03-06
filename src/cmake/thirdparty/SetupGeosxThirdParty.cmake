@@ -30,7 +30,15 @@ if (EXISTS ${CONDUIT_DIR})
                         INCLUDES ${CONDUIT_INCLUDE_DIRS}
                         LIBRARIES conduit_relay
                         TREAT_INCLUDES_AS_SYSTEM ON )
-                        
+  
+  # Removes link to Thread library (removes "-pthread" when linking to relay)                      
+  get_target_property(_relay_libraries conduit_relay INTERFACE_LINK_LIBRARIES)
+  set(_new_relay_libraries)
+  string(REPLACE "Threads::Threads;" "" _new_relay_libraries "${_relay_libraries}")
+  set_target_properties (conduit_relay 
+                         PROPERTIES INTERFACE_LINK_LIBRARIES 
+                         "${_new_relay_libraries}" )
+
   set( CONDUIT_FOUND ON CACHE BOOL "" )
   set( thirdPartyLibs ${thirdPartyLibs} conduit conduit_blueprint conduit_relay )
 else()
@@ -42,11 +50,6 @@ endif()
 # AXOM
 ################################
 include(${CMAKE_SOURCE_DIR}/cmake/thirdparty/FindATK.cmake)
-
-################################
-# PTHREADS
-################################
-find_package(Threads)
 
 ################################
 # HDF5
