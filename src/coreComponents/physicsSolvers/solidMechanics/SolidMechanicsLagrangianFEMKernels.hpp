@@ -69,7 +69,7 @@ inline void velocityUpdate( arrayView2d< real64, nodes::ACCELERATION_USD > const
                             arrayView1d< real64 const > const & mass,
                             arrayView2d< real64, nodes::VELOCITY_USD > const & velocity,
                             real64 const dt,
-                            LvArray::SortedArrayView< localIndex const, localIndex > const & indices )
+                            SortedArrayView< localIndex const > const & indices )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -181,7 +181,7 @@ struct ExplicitKernel
   template< localIndex NUM_NODES_PER_ELEM, localIndex NUM_QUADRATURE_POINTS, typename CONSTITUTIVE_TYPE >
   static inline real64
   Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
-          LvArray::SortedArrayView< localIndex const, localIndex > const & elementList,
+          SortedArrayView< localIndex const > const & elementList,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
           arrayView3d< R1Tensor const > const & dNdX,
           arrayView2d< real64 const > const & detJ,
@@ -193,19 +193,18 @@ struct ExplicitKernel
 
     typename CONSTITUTIVE_TYPE::KernelWrapper const & constitutive = constitutiveRelation->createKernelWrapper();
 
-    forall_in_set< serialPolicy >( elementList.values(),
-                                   elementList.size(),
-                                   [=] ( localIndex const k )
+    forAll< serialPolicy >( elementList.size(), [=] ( localIndex const i )
     {
+      localIndex const k = elementList[ i ];
       R1Tensor v_local[NUM_NODES_PER_ELEM];
       R1Tensor u_local[NUM_NODES_PER_ELEM];
       R1Tensor f_local[NUM_NODES_PER_ELEM];
 
-      for( localIndex i = 0; i < NUM_NODES_PER_ELEM; ++i )
+      for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
       {
-        localIndex const nodeIndex = elemsToNodes( k, i );
-        u_local[ i ] = u[ nodeIndex ];
-        v_local[ i ] = vel[ nodeIndex ];
+        localIndex const nodeIndex = elemsToNodes( k, a );
+        u_local[ a ] = u[ nodeIndex ];
+        v_local[ a ] = vel[ nodeIndex ];
       }
 
       //Compute Quadrature
@@ -246,10 +245,10 @@ struct ExplicitKernel
 
       for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
       {
-        localIndex const i = elemsToNodes( k, a );
-        RAJA::atomicAdd< serialAtomic >( &acc( i, 0 ), f_local[ a ][ 0 ] );
-        RAJA::atomicAdd< serialAtomic >( &acc( i, 1 ), f_local[ a ][ 1 ] );
-        RAJA::atomicAdd< serialAtomic >( &acc( i, 2 ), f_local[ a ][ 2 ] );
+        localIndex const nodeIndex = elemsToNodes( k, a );
+        RAJA::atomicAdd< serialAtomic >( &acc( nodeIndex, 0 ), f_local[ a ][ 0 ] );
+        RAJA::atomicAdd< serialAtomic >( &acc( nodeIndex, 1 ), f_local[ a ][ 1 ] );
+        RAJA::atomicAdd< serialAtomic >( &acc( nodeIndex, 2 ), f_local[ a ][ 2 ] );
       }
 
     } );
