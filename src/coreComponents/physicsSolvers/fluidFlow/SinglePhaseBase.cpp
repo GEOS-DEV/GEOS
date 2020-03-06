@@ -30,9 +30,6 @@
 #include "mesh/MeshForLoopInterface.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseKernels.hpp"
 
-
-#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
-
 /**
  * @namespace the geosx namespace that encapsulates the majority of the code
  */

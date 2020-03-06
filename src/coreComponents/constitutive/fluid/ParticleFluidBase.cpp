@@ -33,7 +33,7 @@ ParticleFluidBase::ParticleFluidBase( std::string const & name, Group * const pa
   registerWrapper( viewKeyStruct::settlingFactorString, &m_settlingFactor, false );
   registerWrapper( viewKeyStruct::dSettlingFactor_dPressureString, &m_dSettlingFactor_dPressure, false );
   registerWrapper( viewKeyStruct::dSettlingFactor_dProppantConcentrationString, &m_dSettlingFactor_dProppantConcentration, false );
-    registerWrapper( viewKeyStruct::dSettlingFactor_dComponentConcentrationString, &m_dSettlingFactor_dComponentConcentration, false );  
+  registerWrapper( viewKeyStruct::dSettlingFactor_dComponentConcentrationString, &m_dSettlingFactor_dComponentConcentration, false );
 
   registerWrapper( viewKeyStruct::collisionFactorString, &m_collisionFactor, false );
   registerWrapper( viewKeyStruct::dCollisionFactor_dProppantConcentrationString, &m_dCollisionFactor_dProppantConcentration, false );
@@ -65,16 +65,7 @@ void ParticleFluidBase::AllocateConstitutiveData( Group * const parent,
   ConstitutiveBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
   this->resize( parent->size() );
-
-  m_settlingFactor.resize( parent->size());
-  m_dSettlingFactor_dPressure.resize( parent->size());
-  m_dSettlingFactor_dProppantConcentration.resize( parent->size());
   m_dSettlingFactor_dComponentConcentration.resize( parent->size(), MAX_NUM_COMPONENTS);  
-
-  m_collisionFactor.resize( parent->size());
-  m_dCollisionFactor_dProppantConcentration.resize( parent->size());
-
-  m_proppantPackPermeability.resize( parent->size());  
   
 }
 

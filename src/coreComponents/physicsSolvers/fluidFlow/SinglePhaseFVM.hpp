@@ -57,7 +57,6 @@ public:
   using BASE::m_solution;
   using BASE::m_linearSolverParameters;
   using BASE::m_nonlinearSolverParameters;
-  using BASE::m_sourceFluxSetSize;
 
   // Aliasing public/protected members/methods of FlowSolverBase so we don't
   // have to use this->member etc.
