@@ -16,7 +16,9 @@ namespace geosx
 using namespace traits;
 
 template < typename T >
-constexpr bool can_hdf_io = std::is_same<std::remove_const_t<T>, real32>::value ||
+constexpr bool can_hdf_io = std::is_same<std::remove_const_t<T>, char>::value ||
+                            std::is_same<std::remove_const_t<T>, signed char>::value ||
+                            std::is_same<std::remove_const_t<T>, real32>::value ||
                             std::is_same<std::remove_const_t<T>, real64>::value ||
                             std::is_same<std::remove_const_t<T>, integer>::value ||
                             std::is_same<std::remove_const_t<T>, localIndex>::value ||
@@ -393,28 +395,28 @@ private:
 };
 
 template < typename ARRAY_T >
-typename std::enable_if < is_array<ARRAY_T>, void >::type
+typename std::enable_if < is_array<ARRAY_T> && can_hdf_io<typename ARRAY_T::value_type>, void >::type
 SpecFromArray( HDFTable & tbl, ARRAY_T const & arr )
 {
-  tbl.AddCols(arr.size( ) / arr.size( 0 ),arr.size( 0 ), sizeof(typename ARRAY_T::value_type), typeid(typename ARRAY_T::value_type));
+  tbl.AddCols(arr.size( ) / arr.size( 0 ), arr.size( 0 ), sizeof(typename ARRAY_T::value_type), typeid(typename ARRAY_T::value_type));
 }
 
 template < typename ARRAY_T, typename LAMBDA >
-typename std::enable_if < is_array<ARRAY_T>, void >::type
+typename std::enable_if < is_array<ARRAY_T> && can_hdf_io<typename ARRAY_T::value_type>, void >::type
 SpecFromArray( HDFTable & tbl, ARRAY_T const & arr, LAMBDA && title_gen )
 {
-  tbl.AddCols(arr.size( ) / arr.size( 0 ),arr.size( 0 ), sizeof(typename ARRAY_T::value_type), typeid(typename ARRAY_T::value_type),title_gen);
+  tbl.AddCols(arr.size( ) / arr.size( 0 ), arr.size( 0 ), sizeof(typename ARRAY_T::value_type), typeid(typename ARRAY_T::value_type),title_gen);
 }
 
 template < typename ARRAY_T >
-typename std::enable_if < is_array<ARRAY_T>, void >::type
+typename std::enable_if < is_array<ARRAY_T> && can_hdf_io<typename ARRAY_T::value_type>, void >::type
 SpecFromArrayIndices( HDFTable & tbl, ARRAY_T const & arr, localIndex const num_indices, localIndex const * indices )
 {
   tbl.AddCols(num_indices, arr.size( 0 ), sizeof(typename ARRAY_T::value_type), typeid(typename ARRAY_T::value_type), indices);
 }
 
 template < typename ARRAY_T, typename LAMBDA >
-typename std::enable_if < is_array<ARRAY_T>, void >::type
+typename std::enable_if < is_array<ARRAY_T> && can_hdf_io<typename ARRAY_T::value_type>, void >::type
 SpecFromArrayIndices( HDFTable & tbl, ARRAY_T const & arr, LAMBDA && title_gen, localIndex const num_indices, localIndex const * indices )
 {
   tbl.AddCols(num_indices, arr.size( 0 ), sizeof(typename ARRAY_T::value_type), typeid(typename ARRAY_T::value_type),title_gen, indices);

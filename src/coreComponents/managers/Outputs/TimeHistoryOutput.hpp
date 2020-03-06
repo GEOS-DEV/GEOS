@@ -5,7 +5,10 @@ namespace geosx
 
   class TimeHistoryCollector
   {
-
+  public:
+    template < typename ARRAY_T >
+    typename std::enable_if< is_array< ARRAY_T >, void >::type
+    InitCollectionFrom
   };
 
   class TimeHistory
