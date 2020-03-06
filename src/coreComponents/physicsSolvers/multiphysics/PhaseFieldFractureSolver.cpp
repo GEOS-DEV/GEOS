@@ -280,8 +280,7 @@ real64 PhaseFieldFractureSolver::SplitOperatorStep( real64 const& time_n,
                                                          damageSolver.getSystemRhs(),
                                                          damageSolver.getSystemSolution() );
 
-
-
+    mapDamageToQuadrature( domain );
 
     if (dtReturnTemporary < dtReturn)
     {
@@ -299,10 +298,7 @@ real64 PhaseFieldFractureSolver::SplitOperatorStep( real64 const& time_n,
   return dtReturn;
 }
 
-void PhaseFieldFractureSolver::ApplySystemSolution(DofManager const & GEOSX_UNUSED_ARG(dofManager),
-                                               ParallelVector const & GEOSX_UNUSED_ARG(solution),
-                                               real64 const GEOSX_UNUSED_ARG(scalingFactor),
-                                               DomainPartition *const domain)
+void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition * const domain )
 {
 
   MeshLevel *const mesh = domain->getMeshBody(0)->getMeshLevel(0);

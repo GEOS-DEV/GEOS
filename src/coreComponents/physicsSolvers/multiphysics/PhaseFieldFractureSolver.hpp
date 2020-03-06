@@ -69,10 +69,7 @@ public:
                             integer const cycleNumber,
                             DomainPartition * const domain);
 
-  virtual void ApplySystemSolution(  DofManager const &dofManager,
-                                     ParallelVector const &solution,
-                                     real64 const scalingFactor,
-                                     DomainPartition *const domain) override;
+  void mapDamageToQuadrature( DomainPartition * const domain );
 
 
   enum class couplingTypeOption : int
