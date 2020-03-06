@@ -319,7 +319,7 @@ void CellBlock::CalculateElementGeometricQuantities( NodeManager const & nodeMan
 {
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
 
-  forall_in_range< serialPolicy >( 0, this->size(), [=] ( localIndex const k )
+  forAll< serialPolicy >( this->size(), [=] ( localIndex const k )
   {
     CalculateCellVolumesKernel( k, X );
   } );

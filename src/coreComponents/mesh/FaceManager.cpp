@@ -225,7 +225,7 @@ void createFacesByLowestNode( ElementRegionManager const & elementManager,
   }
 
   // Loop over all the nodes and sort the associated faces.
-  forall_in_range< parallelHostPolicy >( 0, numNodes, [&]( localIndex const nodeID )
+  forAll< parallelHostPolicy >( numNodes, [&]( localIndex const nodeID )
   {
     FaceBuilder * const faces = facesByLowestNode[ nodeID ];
     std::sort( faces, faces + facesByLowestNode.sizeOfArray( nodeID ) );
@@ -247,7 +247,7 @@ localIndex calculateTotalNumberOfFaces( ArrayOfArraysView< FaceBuilder const > c
   uniqueFaceOffsets[0] = 0;
 
   // Loop over all the nodes.
-  forall_in_range< parallelHostPolicy >( 0, numNodes, [&]( localIndex const nodeID )
+  forAll< parallelHostPolicy >( numNodes, [&]( localIndex const nodeID )
   {
     localIndex const numFaces = facesByLowestNode.sizeOfArray( nodeID );
 
@@ -296,7 +296,7 @@ void resizeFaceToNodeMap( ElementRegionManager const & elementManager,
   array1d< localIndex > numNodesPerFace( numUniqueFaces );
 
   // loop over all the nodes.
-  forall_in_range< parallelHostPolicy >( 0, numNodes, [&]( localIndex const nodeID )
+  forAll< parallelHostPolicy >( numNodes, [&]( localIndex const nodeID )
   {
     localIndex curFaceID = uniqueFaceOffsets[ nodeID ];
     localIndex const numFaces = facesByLowestNode.sizeOfArray( nodeID );
@@ -337,7 +337,7 @@ void resizeFaceToNodeMap( ElementRegionManager const & elementManager,
 
   // Calculate the total number of nodes in the face to node map.
   RAJA::ReduceSum< parallelHostReduce, localIndex > totalFaceNodes( 0.0 );
-  forall_in_range< parallelHostPolicy >( 0, numUniqueFaces, [&]( localIndex const faceID )
+  forAll< parallelHostPolicy >( numUniqueFaces, [&]( localIndex const faceID )
   {
     totalFaceNodes += numNodesPerFace[ faceID ];
   } );
@@ -487,7 +487,7 @@ void populateMaps( ElementRegionManager & elementManager,
   GEOSX_ERROR_IF_NE( numUniqueFaces, nodeList.size() );
 
   // loop over all the nodes.
-  forall_in_range< parallelHostPolicy >( 0, numNodes, [&]( localIndex const nodeID )
+  forAll< parallelHostPolicy >( numNodes, [&]( localIndex const nodeID )
   {
     localIndex curFaceID = uniqueFaceOffsets[ nodeID ];
     localIndex const numFaces = facesByLowestNode.sizeOfArray( nodeID );
@@ -559,7 +559,7 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
   }
 
   // Then loop over them in parallel and fill them in.
-  forall_in_range< parallelHostPolicy >( 0, nodeSets.size(), [&]( localIndex const i ) -> void
+  forAll< parallelHostPolicy >( nodeSets.size(), [&]( localIndex const i ) -> void
   {
     auto const & setWrapper = nodeSets[i];
     std::string const & setName = setWrapper->getName();
@@ -581,7 +581,7 @@ void FaceManager::computeGeometry( NodeManager const * const nodeManager )
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager->referencePosition();
 
   // loop over faces and calculate faceArea, faceNormal and faceCenter
-  forall_in_range< parallelHostPolicy >( 0, this->size(), [&]( localIndex const faceID )
+  forAll< parallelHostPolicy >( this->size(), [&]( localIndex const faceID )
   {
     faceArea[ faceID ] = computationalGeometry::Centroid_3DPolygon( m_nodeList[ faceID ],
                                                                     m_nodeList.sizeOfArray( faceID ),
@@ -600,7 +600,7 @@ void FaceManager::SetDomainBoundaryObjects( NodeManager * const nodeManager )
 
   arrayView2d< localIndex const > const & elemRegionList = this->elementRegionList();
 
-  forall_in_range< parallelHostPolicy >( 0, size(), [&]( localIndex const kf )
+  forAll< parallelHostPolicy >( size(), [&]( localIndex const kf )
   {
     if( elemRegionList[kf][1] == -1 )
     {
@@ -613,7 +613,7 @@ void FaceManager::SetDomainBoundaryObjects( NodeManager * const nodeManager )
 
   ArrayOfArraysView< localIndex const > const & faceToNodesMap = this->nodeList();
 
-  forall_in_range< parallelHostPolicy >( 0, size(), [&]( localIndex const k )
+  forAll< parallelHostPolicy >( size(), [&]( localIndex const k )
   {
     if( faceDomainBoundaryIndicator[k] == 1 )
     {
@@ -699,7 +699,7 @@ void FaceManager::SortAllFaceNodes( NodeManager const * const nodeManager,
 
   ArrayOfArraysView< localIndex > const & faceToNodeMap = nodeList();
 
-  forall_in_range< parallelHostPolicy >( 0, size(), [&]( localIndex const kf )
+  forAll< parallelHostPolicy >( size(), [&]( localIndex const kf )
   {
     ElementRegionBase const * const elemRegion = elemManager->GetRegion( elemRegionList[kf][0] );
     CellElementSubRegion const * const subRegion = elemRegion->GetSubRegion< CellElementSubRegion >( elemSubRegionList[kf][0] );
@@ -811,7 +811,7 @@ void FaceManager::ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManager
 
   globalFaceNodes.resize( numFaces );
 
-  forall_in_range< parallelHostPolicy >( 0, numFaces, [&]( localIndex const & faceID )
+  forAll< parallelHostPolicy >( numFaces, [&]( localIndex const & faceID )
   {
     std::vector< globalIndex > & curFaceGlobalNodes = globalFaceNodes[ faceID ];
 

@@ -86,14 +86,14 @@ void NodeManager::SetEdgeMaps( EdgeManager const * const edgeManager )
 
   ArrayOfArrays< localIndex > toEdgesTemp( numNodes, edgeManager->maxEdgesPerNode() );
 
-  forall_in_range< parallelHostPolicy >( 0, numEdges, [&]( localIndex const edgeID )
+  forAll< parallelHostPolicy >( numEdges, [&]( localIndex const edgeID )
   {
     toEdgesTemp.atomicAppendToArray( RAJA::auto_atomic{}, edgeToNodeMap( edgeID, 0 ), edgeID );
     toEdgesTemp.atomicAppendToArray( RAJA::auto_atomic{}, edgeToNodeMap( edgeID, 1 ), edgeID );
   } );
 
   RAJA::ReduceSum< parallelHostReduce, localIndex > totalNodeEdges( 0 );
-  forall_in_range< parallelHostPolicy >( 0, numNodes, [&]( localIndex const nodeID )
+  forAll< parallelHostPolicy >( numNodes, [&]( localIndex const nodeID )
   {
     totalNodeEdges += toEdgesTemp.sizeOfArray( nodeID );
   } );
@@ -107,7 +107,7 @@ void NodeManager::SetEdgeMaps( EdgeManager const * const edgeManager )
   }
 
   ArrayOfSetsView< localIndex > const & toEdgesView = m_toEdgesRelation;
-  forall_in_range< parallelHostPolicy >( 0, numNodes, [&]( localIndex const nodeID )
+  forAll< parallelHostPolicy >( numNodes, [&]( localIndex const nodeID )
   {
     localIndex * const edges = toEdgesTemp[ nodeID ];
     localIndex const numNodeEdges = toEdgesTemp.sizeOfArray( nodeID );
@@ -129,7 +129,7 @@ void NodeManager::SetFaceMaps( FaceManager const * const faceManager )
 
   ArrayOfArrays< localIndex > toFacesTemp( numNodes, faceManager->maxFacesPerNode() );
 
-  forall_in_range< parallelHostPolicy >( 0, numFaces, [&]( localIndex const faceID )
+  forAll< parallelHostPolicy >( numFaces, [&]( localIndex const faceID )
   {
     localIndex const numFaceNodes = faceToNodes.sizeOfArray( faceID );
     for( localIndex a = 0; a < numFaceNodes; ++a )
@@ -139,7 +139,7 @@ void NodeManager::SetFaceMaps( FaceManager const * const faceManager )
   } );
 
   RAJA::ReduceSum< parallelHostReduce, localIndex > totalNodeFaces( 0 );
-  forall_in_range< parallelHostPolicy >( 0, numNodes, [&]( localIndex const nodeID )
+  forAll< parallelHostPolicy >( numNodes, [&]( localIndex const nodeID )
   {
     totalNodeFaces += toFacesTemp.sizeOfArray( nodeID );
   } );
@@ -152,7 +152,7 @@ void NodeManager::SetFaceMaps( FaceManager const * const faceManager )
     m_toFacesRelation.appendSet( toFacesTemp.sizeOfArray( nodeID ) + GetFaceMapOverallocation() );
   }
 
-  forall_in_range< parallelHostPolicy >( 0, numNodes, [&]( localIndex const nodeID )
+  forAll< parallelHostPolicy >( numNodes, [&]( localIndex const nodeID )
   {
     localIndex * const faces = toFacesTemp[ nodeID ];
     localIndex const numNodeFaces = toFacesTemp.sizeOfArray( nodeID );

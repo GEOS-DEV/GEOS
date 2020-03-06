@@ -519,26 +519,26 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
                                   SortedArrayView< localIndex const > const & targetSet )
   {
     integer const component = bc->GetComponent();
-    forall_in_range< parallelDevicePolicy< 1024 > >( 0, targetSet.size(),
-                                                     [=] GEOSX_DEVICE( localIndex const i )
+    forAll< parallelDevicePolicy< 1024 > >( targetSet.size(),
+                                            [=] GEOSX_DEVICE ( localIndex const i )
       {
         localIndex const a = targetSet[ i ];
         vel( a, component ) = u( a, component );
       }
-                                                     );
+                                            );
   },
                              [&]( FieldSpecificationBase const * const bc,
                                   SortedArrayView< localIndex const > const & targetSet )
   {
     integer const component = bc->GetComponent();
-    forall_in_range< parallelDevicePolicy< 1024 > >( 0, targetSet.size(),
-                                                     [=] GEOSX_DEVICE( localIndex const i )
+    forAll< parallelDevicePolicy< 1024 > >( targetSet.size(),
+                                            [=] GEOSX_DEVICE ( localIndex const i )
       {
         localIndex const a = targetSet[ i ];
         uhat( a, component ) = u( a, component ) - vel( a, component );
         vel( a, component )  = uhat( a, component ) / dt;
       }
-                                                     );
+                                            );
   }
                              );
 
@@ -1368,7 +1368,7 @@ void SolidMechanicsLagrangianFEM::ApplyContactConstraint( DofManager const & dof
       arrayView1d< real64 > const & area = subRegion.getElementArea();
       arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
 
-      forall_in_range< serialPolicy >( 0, subRegion.size(), [=] ( localIndex const kfe )
+      forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const kfe )
       {
 
         if( ghostRank[kfe] < 0 )
@@ -1461,9 +1461,7 @@ SolidMechanicsLagrangianFEM::ScalingForSystemSolution( DomainPartition const * c
 //      arrayView2d< localIndex const > const & elemsToFaces = subRegion->faceList();
 //
 //      RAJA::ReduceMin<RAJA::seq_reduce, real64> newScaleFactor(1.0);
-//      forall_in_range<serialPolicy>( 0,
-//                                     subRegion->size(),
-//                                     [=] ( localIndex const kfe )
+//      forAll<serialPolicy>( subRegion->size(), [=] ( localIndex const kfe )
 //      {
 //
 //        if( ghostRank[kfe] < 0 )

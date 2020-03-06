@@ -130,7 +130,7 @@ void FaceElementSubRegion::CalculateElementGeometricQuantities( NodeManager cons
 {
   arrayView1d< real64 const > const & faceArea = faceManager.faceArea();
 
-  forall_in_range< serialPolicy >( 0, this->size(), [=] ( localIndex const k )
+  forAll< serialPolicy >( this->size(), [=] ( localIndex const k )
   {
     m_elementArea[k] = faceArea[ m_toFacesRelation[k][0] ];
     m_elementVolume[k] = m_elementAperture[k] * faceArea[m_toFacesRelation[k][0]];

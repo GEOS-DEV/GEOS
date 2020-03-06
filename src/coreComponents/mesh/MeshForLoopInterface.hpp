@@ -28,54 +28,25 @@ namespace geosx
 {
 
 template< class POLICY=serialPolicy, typename LAMBDA=void >
-void forAllElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody )
+void forAllElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambda )
 {
 
   ElementRegionManager const * const elemManager = mesh->getElemManager();
-
-  for( localIndex er=0; er<elemManager->numRegions(); ++er )
+  elemManager->forElementSubRegionsComplete< ElementSubRegionBase >( [&]
+                                                                       ( localIndex const er, localIndex const esr, ElementRegionBase const &,
+                                                                       ElementSubRegionBase const & subRegion )
   {
-    ElementRegionBase const * const elemRegion = elemManager->GetRegion( er );
-    for( localIndex esr=0; esr<elemRegion->numSubRegions(); ++esr )
-    {
-      ElementSubRegionBase const * const elementSubRegion = elemRegion->GetSubRegion( esr );
-
-      forall_in_range< POLICY >( 0, elementSubRegion->size(),
-                                 [=]( localIndex index ) mutable -> void
-      {
-        lambdaBody( er, esr, index );
-      } );
-    }
-  }
-}
-
-template< typename NUMBER=real64, class POLICY=serialPolicy, typename LAMBDA=void >
-std::pair< NUMBER, localIndex >
-minloc_in_range( localIndex const begin, const localIndex end, LAMBDA && body )
-{
-  NUMBER minDist = std::numeric_limits< NUMBER >::max();
-  localIndex minDistId = -1;
-
-  // TODO: make this a RAJA loop
-  for( localIndex ei = begin; ei < end; ++ei )
-  {
-    NUMBER dist = body( ei );
-
-    if( dist < minDist )
-    {
-      minDist   = dist;
-      minDistId = ei;
-    }
-  }
-
-  return std::make_pair( minDist, minDistId );
+    forAll< POLICY >( subRegion.size(), [&]( localIndex const k ) { lambda( er, esr, k ); } );
+  } );
 }
 
 
-template< typename NUMBER=real64, class POLICY=serialPolicy, typename LAMBDA=void >
-std::pair< NUMBER, std::tuple< localIndex, localIndex, localIndex > >
-minLocOverElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody )
+template< typename LAMBDA >
+auto
+minLocOverElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambda )
 {
+  using NUMBER = decltype( lambda( 0, 0, 0 ) );
+
   NUMBER minVal = std::numeric_limits< NUMBER >::max();
   localIndex minReg = -1, minSubreg = -1, minIndex = -1;
 
@@ -87,19 +58,17 @@ minLocOverElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody )
 
     elemRegion->forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const esr, CellElementSubRegion const & subRegion )
     {
-      auto ebody = [=]( localIndex index )
+      localIndex const size = subRegion.size();
+      for( localIndex k = 0; k < size; ++k )
       {
-        return lambdaBody( er, esr, index );
-      };
-
-      auto ret = minloc_in_range< NUMBER, POLICY >( 0, subRegion.size(), ebody );
-
-      if( ret.first < minVal )
-      {
-        minVal    = ret.first;
-        minReg    = er;
-        minSubreg = esr;
-        minIndex  = ret.second;
+        NUMBER const val = lambda( er, esr, k );
+        if( val < minVal )
+        {
+          minVal = val;
+          minReg = er;
+          minSubreg = esr;
+          minIndex = k;
+        }
       }
     } );
   }

@@ -152,7 +152,7 @@ void FunctionBase::EvaluateT( dataRepository::Group const * const group,
   }
 
   integer count=0;
-  forall_in_range< serialPolicy >( 0, set.size(), [&, set]( localIndex const i )
+  forAll< serialPolicy >( set.size(), [&, set]( localIndex const i )
   {
     localIndex const index = set[ i ];
     double input[4];
