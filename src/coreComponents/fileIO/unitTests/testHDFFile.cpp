@@ -1,4 +1,6 @@
 #include "fileIO/hdf/HDFFile.hpp"
+#include "dataRepository/BufferOps.hpp"
+#include "dataRepository/BufferOpsDevice.hpp"
 #include <gtest/gtest.h>
 
 
@@ -35,87 +37,129 @@ TEST( testHDFIO, WholeTabularIO )
     dims[dd] = rand();
   }
   Array<ARR_TYPE, DIM> arr(rand());
-  // Array<IND_TYPE, 1> ind_arr(rand() % dims[0]);
 
   {
     HDFFile file("whole_array");
-    HDFTableIO<decltype(arr)> table_out("Array1","arr1",arr.size( ),arr.size( 0 ),0,"nd_");
-    table_out.OpenTable( file );
-    table_out.AppendRow( arr );
-    table_out.CloseTable( );
-  }
 
-}
+    // specify the tables (done during init)
+    HDFTable time_table("Array1 Time", "arr1_t");
+    time_table.AddCols(1,1,sizeof(real64),typeid(real64),[](localIndex idx){ return std::string("nd_") + std::to_string(idx); });
+    time_table.Finalize( );
+    time_table.CreateInTarget( file );
 
-TEST( testHDFIO, IndexedTabularIO )
-{
-  srand(time(NULL));
-  localIndex dims[DIM] = {0};
-  for(integer dd = 0; dd < DIM; ++dd )
-  {
-    dims[dd] = rand();
-  }
-  Array<ARR_TYPE, DIM> arr(rand());
-  // rand primary dim
-  Array<IND_TYPE, 1> ind_arr(rand() % dims[0]);
+    HDFTable table("Array1","arr1");
+    table.AddCols(arr.size( )/2,2,sizeof(decltype(arr)::value_type),typeid(decltype(arr)::value_type));
+    table.Finalize( );
+    table.CreateInTarget( file );
 
-  {
-    HDFFile file("indexed_array");
-    HDFTableIO<decltype(arr)> table_out("Array1","arr1",ind_arr,arr.size( 0 ),0,"nd_");
-  }
-}
+    HDFTableIO table_io( table );
+    HDFTableIO time_table_io( time_table );
 
-//
-TEST( testHDFIO, PartialTabularIO )
-{
-  srand(time(NULL));
-  localIndex dims[DIM] = {0};
-  for(integer dd = 0; dd < DIM; ++dd )
-  {
-    dims[dd] = rand();
-  }
-  Array<ARR_TYPE, DIM> arr(rand());
-  array1d<IND_TYPE> ind_arr(rand() % dims[0]);
-  array2d<IND_TYPE> cmp_arr(3,DIM-1);
+    // collect time history data into buffers
+    buffer_unit_type * buf_head = NULL;
+    size_t bufferSize = bufferOps::Pack<false>(buf_head,arr.toView());
+    std::vector<buffer_unit_type> buf(bufferSize);
+    buf_head = &buf[0];
+    bufferOps::Pack<true>(buf_head,arr.toView());
+    // we pack arr.strides() before the actual array
+    size_t pack_meta_size = DIM * sizeof(localIndex);
 
-  {
-    HDFFile file("arr_output");
-    HDFTableIO<decltype(arr)> table_out("Stress","s",0,ind_arr,cmp_arr,"nd");
-    table_out.OpenTable( file );
-    table_out.AppendRow( arr );
-    table_out.AppendRow( arr );
+    real64 time = 0.4;
+    std::vector<buffer_unit_type> tbuf(sizeof(decltype(time)));
+    buf_head = &tbuf[0];
+    bufferOps::Pack<true>(buf_head,time);
 
-    table_out.ClearFrom( 1 );
-  }
+    // done on collection
+    // buffer io on the table
+    table_io.BufferRow( &buf[pack_meta_size] );
+    time_table_io.BufferRow( &tbuf[0] );
 
-  // check that there is only one row and that it has the correct content
-  {
+    // done on write
+    // open the table to write
+    table_io.Open( file );
+    table_io.WriteBuffered( );
+    table_io.Close();
 
+    time_table_io.Open( file );
+    time_table_io.WriteBuffered( );
+    time_table_io.Close( );
+
+    // clear the table in the target from row 0
+    table_io.Open( file );
+    table_io.ClearAfterWriteHead( );
+    table_io.Close();
   }
 }
 
-//TEST( testHDFIO, IndexedPartialTabularIO )
+// TEST( testHDFIO, IndexedTabularIO )
+// {
+//   srand(time(NULL));
+//   localIndex dims[DIM] = {0};
+//   for(integer dd = 0; dd < DIM; ++dd )
+//   {
+//     dims[dd] = rand();
+//   }
+//   Array<ARR_TYPE, DIM> arr(rand());
+//   // rand primary dim
+//   Array<IND_TYPE, 1> ind_arr(rand() % dims[0]);
 
-TEST( testHDFIO, WholeArrayTimeHistory )
-{
-  srand(time(NULL));
-  localIndex dims[DIM] = {0};
-  for(integer dd = 0; dd < DIM; ++dd )
-  {
-    dims[dd] = rand();
-  }
-  Array<ARR_TYPE, DIM> arr(rand());
+//   {
+//     HDFFile file("indexed_array");
+//     HDFTableIO<decltype(arr)> table_out("Array1","arr1",ind_arr,arr.size( 0 ),0,"nd_");
+//   }
+// }
 
-  {
-    HDFFile file("arr_time_hist");
-    HDFTimeHistoryTable<decltype(arr)> time_hist("Scalar","scl",arr.size(),arr.size(0),0,"nd_");
-    time_hist.OpenTable( file );
-    time_hist.AppendRow( 0.3, arr );
-    time_hist.AppendRow( 0.5, arr );
-    time_hist.ClearFromTime( 0.4 );
-  }
+// //
+// TEST( testHDFIO, PartialTabularIO )
+// {
+//   srand(time(NULL));
+//   localIndex dims[DIM] = {0};
+//   for(integer dd = 0; dd < DIM; ++dd )
+//   {
+//     dims[dd] = rand();
+//   }
+//   Array<ARR_TYPE, DIM> arr(rand());
+//   array1d<IND_TYPE> ind_arr(rand() % dims[0]);
+//   array2d<IND_TYPE> cmp_arr(3,DIM-1);
 
-}
+//   {
+//     HDFFile file("arr_output");
+//     HDFTableIO<decltype(arr)> table_out("Stress","s",0,ind_arr,cmp_arr,"nd");
+//     table_out.OpenTable( file );
+//     table_out.AppendRow( arr );
+//     table_out.AppendRow( arr );
+
+//     table_out.ClearFrom( 1 );
+//   }
+
+//   // check that there is only one row and that it has the correct content
+//   {
+
+//   }
+// }
+
+// //TEST( testHDFIO, IndexedPartialTabularIO )
+
+// TEST( testHDFIO, WholeArrayTimeHistory )
+// {
+//   srand(time(NULL));
+//   localIndex dims[DIM] = {0};
+//   for(integer dd = 0; dd < DIM; ++dd )
+//   {
+//     dims[dd] = rand();
+//   }
+//   Array<ARR_TYPE, DIM> arr(rand());
+
+//   {
+//     HDFFile file("arr_time_hist");
+//     HDFTimeHistoryTable<decltype(arr)> time_hist("Scalar","scl",arr.size(),arr.size(0),0,"nd_");
+//     time_hist.OpenTable( file );
+//     time_hist.AppendRow( 0.3, arr );
+//     time_hist.AppendRow( 0.5, arr );
+//     time_hist.ClearFromTime( 0.4 );
+//   }
+
+// }
 
 //TEST( testHDFIO, IndexedTabularTimeHistory )
 //TEST( testHDFIO, PartialTabularTimeHistory )

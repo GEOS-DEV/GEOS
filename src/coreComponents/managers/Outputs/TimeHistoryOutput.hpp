@@ -36,13 +36,14 @@ namespace geosx
 }
 
 
-void TimeHistoryOutput::Execute( real64 const time_n,
+void TimeHistoryOutput::Execute( real64 const t,
                                  real64 const dt,
                                  integer const cycleNumber,
                                  integer const eventCounter,
                                  real64 const eventProgress,
                                  dataRepository::Group * domain )
 {
+  real64 t_effective = t + dt * eventProgress;
   HDFFile hdf_file("time_history");
   array2d<real64> field; // retrieve from a manager depending on the input xml
   array1d<localIndex> local_indices; // retreive from probe
@@ -50,6 +51,6 @@ void TimeHistoryOutput::Execute( real64 const time_n,
 
   HDFTimeHistoryTableIO veloc_hist<decltype(field)>("Velocity","vel",0,local_indices,components,"nd");
   veloc_hist.OpenTable( hdf_file );
-  veloc_hist.AppendRow( time_n, veloc_field );
+  veloc_hist.AppendRow( t_effective, veloc_field );
   veloc_hist.CloseTable( );
 }

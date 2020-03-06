@@ -47,6 +47,17 @@ const T2& stlMapLookup( const mapBase<T1,T2, SORTED>& Map, const T1& key)
   return (stlMapLookup( const_cast<mapBase<T1,T2, SORTED>&>(Map), key ));
 }
 
+// taken from
+//https://stackoverflow.com/questions/8542591/c11-reverse-range-based-for-loop
+template < typename C >
+struct reverse
+{
+  C & m_c;
+  reverse(C & c) : m_c(c) {};
+  typename C::reverse_iterator begin() {return m_c.rbegin();}
+  typename C::reverse_iterator end() {return m_c.rend();}
+};
+
 template< typename T1, typename T2, typename SORTED, typename LAMBDA >
 bool executeOnMapValue( mapBase<T1,T2, SORTED> const & Map, const T1& key, LAMBDA&& lambda )
 {
