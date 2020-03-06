@@ -109,7 +109,7 @@ void CompositeFunction::Evaluate( dataRepository::Group const * const group,
   }
 
   // Evaluate the symbolic math
-  forall_in_range< serialPolicy >( 0, set.size(), [&, set]( localIndex const i )
+  forAll< serialPolicy >( set.size(), [&, set]( localIndex const i )
   {
     localIndex const ii = set[ i ];
     real64 functionResults[m_maxNumSubFunctions];
