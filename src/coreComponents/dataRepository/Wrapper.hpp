@@ -618,20 +618,6 @@ public:
   { return referenceAsView(); }
 
   /**
-   * @brief Accessor for m_data
-   * @return pointer to T
-   */
-  T * getPointer()
-  { return m_data; }
-
-  /**
-   * @brief Accessor for m_data
-   * @return pointer to const T
-   */
-  T const * getPointer() const
-  { return m_data; }
-
-  /**
    * @brief Provides type-dependent access to the underlying data.
    * @return a type-dependent pointer to data
    *

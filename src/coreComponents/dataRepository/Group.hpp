@@ -1170,7 +1170,7 @@ public:
    *
    * These functions can be used to get referece/pointer access to the data
    * stored by wrappers in this group. They are essentially just shortcuts for
-   * @p Group::getWrapper() and @p Wrapper<T>::getReference()/getPointer().
+   * @p Group::getWrapper() and @p Wrapper<T>::getReference().
    * An additional template parameter can be provided to cast the return pointer
    * or reference to a base class pointer or reference (e.g. Array to ArrayView).
    */
@@ -1244,52 +1244,6 @@ public:
   T & getReference( char const * const name )
   { return getReference< T >( string( name ) ); }
 
-  /**
-   * @brief Look up a wrapper and get reference to wrapped object.
-   * @tparam T           return value type
-   * @tparam LOOKUP_TYPE type of value used for wrapper lookup
-   * @param lookup       value for wrapper lookup
-   * @return             pointer to @p T
-   *
-   * @note @p nullptr will be returned if wrapper does not exist or type cast is invalid.
-   */
-  template< typename T, typename LOOKUP_TYPE >
-  T const * getPointer( LOOKUP_TYPE const & lookup ) const
-  {
-    T const * rval = nullptr;
-    Wrapper< T > const * wrapper = getWrapper< T >( lookup );
-    if( wrapper != nullptr )
-    {
-      rval = wrapper->getPointer();
-    }
-    return rval;
-  }
-
-  /**
-   * @copydoc getPointer(LOOKUP_TYPE const &) const
-   */
-  template< typename T, typename LOOKUP_TYPE >
-  T * getPointer( LOOKUP_TYPE const & lookup )
-  { return const_cast< T * >( const_cast< Group const * >(this)->getPointer< T >( lookup )); }
-
-  /**
-   * @copybrief getPointer(LOOKUP_TYPE const &) const
-   * @tparam T           return value type
-   * @param name         name of the wrapper
-   * @return             pointer to @p T
-   *
-   * @note nullptr will be returned if wrapper does not exist or type cast is invalid.
-   */
-  template< typename T >
-  T const * getPointer( char const * const name ) const
-  { return getPointer< T >( string( name ) ); }
-
-  /**
-   * @copydoc getPointer(char const * const) const
-   */
-  template< typename T >
-  T * getPointer( char const * const name )
-  { return getPointer< T >( string( name ) ); }
   //END_SPHINX_INCLUDE_GET_WRAPPER
 
   ///@}
