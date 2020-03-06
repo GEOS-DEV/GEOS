@@ -230,9 +230,9 @@ void TwoPhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time
     faceManager->getReference< array1d<real64> >( viewKeyStruct::deltaFacePressureString );
   
   // get the face-centered depth 
-  arrayView1d<real64> const & faceGravCoef =
+  arrayView1d<real64 const> const & faceGravCoef =
     faceManager->getReference<array1d<real64>>(viewKeyStruct::gravityCoefString);
-  arrayView1d<real64> const & weightedFaceGravCoef =
+  arrayView1d<real64 const> const & weightedFaceGravCoef =
     faceManager->getReference<array1d<real64>>(viewKeyStruct::weightedGravityCoefString);
   
   // get the face-to-nodes connectivity for the transmissibility calculation
@@ -1308,7 +1308,7 @@ void TwoPhaseHybridFVM::PrecomputeData( DomainPartition * const domain )
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager const * const elemManager = mesh->getElemManager();
   NodeManager const * const nodeManager          = mesh->getNodeManager();
-  FaceManager const * const faceManager          = mesh->getFaceManager();
+  FaceManager * const faceManager                = mesh->getFaceManager();
 
   // node data (for transmissibility computation)
 
