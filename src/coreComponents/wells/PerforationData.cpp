@@ -56,8 +56,8 @@ void PerforationData::ComputeWellTransmissibility( MeshLevel const & mesh,
 {
 
   // get the permeability in the domain
-  ElementRegionManager::ElementViewAccessor<arrayView1d<R1Tensor>> const perm =
-    mesh.getElemManager()->ConstructViewAccessor< array1d<R1Tensor>, arrayView1d<R1Tensor> >( permeabilityKey );
+  ElementRegionManager::ElementViewAccessor<arrayView1d<R1Tensor const>> const perm =
+    mesh.getElemManager()->ConstructViewAccessor< array1d<R1Tensor>, arrayView1d<R1Tensor const> >( permeabilityKey );
 
   // for all the local perforations on this well
   for ( localIndex iperf = 0; iperf < size(); ++iperf)
