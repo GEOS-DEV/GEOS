@@ -369,7 +369,7 @@ void PhaseFieldDamageFEM::ApplySystemSolution(DofManager const &dofManager,
   MeshLevel *const mesh = domain->getMeshBody(0)->getMeshLevel(0);
   NodeManager *const nodeManager = mesh->getNodeManager();
 
-  dofManager.copyVectorToField(solution, m_fieldName, scalingFactor,
+  dofManager.addVectorToField(solution, m_fieldName, scalingFactor,
                                nodeManager, m_fieldName);
 
   // Syncronize ghost nodes
