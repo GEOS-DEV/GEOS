@@ -83,7 +83,7 @@ real64 SinglePhaseFVM< BASE >::CalculateResidualNorm( DomainPartition const * co
   this->applyToSubRegionsComplete( mesh,
                                    [&] ( localIndex const er, localIndex const esr, ElementRegionBase const &, ElementSubRegionBase const & subRegion )
   {
-    arrayView1d< globalIndex const > const & dofNumber = subRegion.template getReference< array1d< globalIndex > >( dofKey );
+    arrayView1d< globalIndex const > const & dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
 
     arrayView1d< integer const > const & elemGhostRank = m_elemGhostRank[er][esr];
     arrayView1d< real64 const > const & refPoro        = m_porosityRef[er][esr];
