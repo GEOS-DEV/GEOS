@@ -131,10 +131,6 @@ jobs:
     - CMAKE_BUILD_TYPE=Debug
   - <<: *geosx_linux_build
     env:
-    - DOCKER_REPOSITORY=geosx/ubuntu18.04-gcc7
-    - CMAKE_BUILD_TYPE=Release
-  - <<: *geosx_linux_build
-    env:
     - DOCKER_REPOSITORY=geosx/ubuntu18.04-gcc8
     - CMAKE_BUILD_TYPE=Release
   - <<: *geosx_linux_build
