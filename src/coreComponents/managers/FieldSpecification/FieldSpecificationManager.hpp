@@ -98,7 +98,7 @@ public:
 
 	  ApplyFieldValue< POLICY >( time, domain, fieldPath, fieldName,
                                [&]( FieldSpecificationBase const * const,
-                                    SortedArray<localIndex> const & ){} );
+                                    SortedArrayView<localIndex const> const & ){} );
   }
 
   /**
@@ -268,7 +268,7 @@ private:
         dataRepository::Wrapper<SortedArray<localIndex> > const * const setWrapper = setGroup->getWrapper<SortedArray<localIndex> >( setName );
         if( setWrapper != nullptr )
         {
-          SortedArray<localIndex> const & targetSet = setWrapper->reference();
+          SortedArrayView<localIndex const> const & targetSet = setWrapper->reference();
           lambda( fs, setName, targetSet, target, targetName );
         }
       } 
@@ -297,7 +297,7 @@ ApplyFieldValue( real64 const time,
   Apply( time, domain, fieldPath, fieldName,
         [&]( FieldSpecificationBase const * const fs,
              string const &,
-             SortedArray<localIndex> const & targetSet,
+             SortedArrayView<localIndex const> const & targetSet,
              Group * const targetGroup,
              string const & targetField )
     {
@@ -321,7 +321,7 @@ ApplyFieldValue( real64 const time,
   Apply( time, domain, fieldPath, fieldName,
         [&]( FieldSpecificationBase const * const fs,
              string const &,
-             SortedArray<localIndex> const & targetSet,
+             SortedArrayView<localIndex const> const & targetSet,
              Group * const targetGroup,
              string const & targetField )
     {

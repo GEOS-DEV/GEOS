@@ -140,7 +140,7 @@ public:
    * @brief Recompute mixture densities using current values of pressure and composition
    * @param subRegion the well subregion containing all the primary and dependent fields
    */
-  void UpdateMixtureDensity( WellElementSubRegion const * const subRegion );
+  void UpdateMixtureDensity( WellElementSubRegion * const subRegion );
 
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
@@ -187,7 +187,7 @@ public:
    */
   virtual void AssemblePerforationTerms( real64 const time_n,
                                          real64 const dt,
-                                         DomainPartition const * const domain,
+                                         DomainPartition * const domain,
                                          DofManager const * const dofManager,
                                          ParallelMatrix * const matrix,
                                          ParallelVector * const rhs ) override;
@@ -347,7 +347,7 @@ private:
    * @brief Compute the perforation rates for this well
    * @param well the well with its perforations
    */
-  void ComputeAllPerforationRates( WellElementSubRegion const * const subRegion );
+  void ComputeAllPerforationRates( WellElementSubRegion * const subRegion );
 
   /**
    * @brief Save all the rates and pressures in the well for reporting purposes

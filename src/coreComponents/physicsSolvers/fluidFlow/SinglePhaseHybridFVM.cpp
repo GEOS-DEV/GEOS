@@ -214,7 +214,7 @@ void SinglePhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
     faceManager->getReference< array1d<real64> >( viewKeyStruct::deltaFacePressureString );
 
   // get the face-centered depth 
-  arrayView1d<real64> const & faceGravCoef =
+  arrayView1d<real64 const> const & faceGravCoef =
     faceManager->getReference<array1d<real64>>(viewKeyStruct::gravityCoefString);
   
   // get the face-to-nodes connectivity for the transmissibility calculation
@@ -273,7 +273,7 @@ void SinglePhaseHybridFVM::FluxLaunch( localIndex GEOSX_UNUSED_PARAM( er ),
                                        arrayView1d<globalIndex const> const & GEOSX_UNUSED_PARAM( faceDofNumber ),
                                        arrayView1d<real64 const> const & GEOSX_UNUSED_PARAM( facePres ),
                                        arrayView1d<real64 const> const & GEOSX_UNUSED_PARAM( dFacePres ),
-                                       arrayView1d<real64> const & GEOSX_UNUSED_PARAM( faceGravCoef ),
+                                       arrayView1d<real64 const> const & GEOSX_UNUSED_PARAM( faceGravCoef ),
                                        real64 const GEOSX_UNUSED_PARAM( lengthTolerance ),
                                        real64 const GEOSX_UNUSED_PARAM( dt ),                                  
                                        DofManager const * const GEOSX_UNUSED_PARAM( dofManager ),
@@ -296,7 +296,7 @@ void SinglePhaseHybridFVM::FluxLaunch( localIndex er,
                                        arrayView1d<globalIndex const> const & faceDofNumber,
                                        arrayView1d<real64 const> const & facePres,
                                        arrayView1d<real64 const> const & dFacePres,
-                                       arrayView1d<real64> const & faceGravCoef,
+                                       arrayView1d<real64 const> const & faceGravCoef,
                                        real64 const lengthTolerance,
                                        real64 const dt,        
                                        DofManager const * const dofManager,
@@ -334,7 +334,7 @@ void SinglePhaseHybridFVM::FluxLaunch( localIndex er,
    subRegion->template getReference< array1d<R1Tensor> >( viewKeyStruct::permeabilityString ); 
 
   // get the cell-centered depth 
-  arrayView1d<real64> const & elemGravCoef =
+  arrayView1d<real64 const> const & elemGravCoef =
     subRegion->template getReference<array1d<real64>>(viewKeyStruct::gravityCoefString);
 
   // assemble the residual and Jacobian element by element

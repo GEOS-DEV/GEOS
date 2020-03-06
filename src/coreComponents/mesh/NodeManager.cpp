@@ -173,16 +173,34 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
   ArrayOfArrays<localIndex> & toElementSubRegionList = m_toElements.m_toElementSubRegion;
   ArrayOfArrays<localIndex> & toElementList = m_toElements.m_toElementIndex;
 
-  // This sets the capacity of each sub-array to 10. If this is using a bunch of memory
-  // add a compress + shrink method to ArrayOfArrays that we can call afterwards.
+
+  // This sets the capacity of each sub-array based on the maximum number of
+  // elements attached to a node. This is an over-allocation, so we need to
+  // compress the arrays as part of the initialization.
+
+  array1d<localIndex> sizeOfArrays(size());
+
+  elementRegionManager->
+  forElementSubRegions<CellElementSubRegion>( [&]( CellElementSubRegion const * const subRegion )
+  {
+    arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemToNodeMap = subRegion->nodeList();
+    for( localIndex k=0 ; k<subRegion->size() ; ++k )
+    {
+      for( localIndex a=0 ; a<subRegion->numIndependentNodesPerElement() ; ++a )
+      {
+        localIndex nodeIndex = elemToNodeMap( k, a );
+        ++sizeOfArrays[nodeIndex];
+      }
+    }
+  });
+  localIndex const arrayCapacity = *(std::max_element( sizeOfArrays.begin(), sizeOfArrays.end() ));
+
   toElementRegionList.resize(0);
-  toElementRegionList.resize(size(), 10);
-
+  toElementRegionList.resize(size(), arrayCapacity );
   toElementSubRegionList.resize(0);
-  toElementSubRegionList.resize(size(), 10);
-
+  toElementSubRegionList.resize(size(), arrayCapacity );
   toElementList.resize(0);
-  toElementList.resize(size(), 10);
+  toElementList.resize(size(), arrayCapacity );
 
   for( typename dataRepository::indexType kReg=0 ; kReg<elementRegionManager->numRegions() ; ++kReg )
   {
@@ -195,19 +213,13 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
 
       for( localIndex k=0 ; k<subRegion->size() ; ++k )
       {
-        localIndex_array nodeIndices;
-        for( localIndex a=0 ; a<subRegion->numNodesPerElement() ; ++a )
+        for( localIndex a=0 ; a<subRegion->numIndependentNodesPerElement() ; ++a )
         {
           localIndex nodeIndex = elemToNodeMap( k, a );
 
-          if (std::find(nodeIndices.begin(), nodeIndices.end(), nodeIndex) == nodeIndices.end())
-          {
-            toElementRegionList.appendToArray( nodeIndex, kReg );
-            toElementSubRegionList.appendToArray( nodeIndex, kSubReg );
-            toElementList.appendToArray( nodeIndex, k );
-
-            nodeIndices.push_back(nodeIndex);
-          }
+          toElementRegionList.appendToArray( nodeIndex, kReg );
+          toElementSubRegionList.appendToArray( nodeIndex, kSubReg );
+          toElementList.appendToArray( nodeIndex, k );
         }
       }
     });
