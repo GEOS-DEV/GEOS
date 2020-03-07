@@ -405,6 +405,9 @@ void PoroelasticSolver::AssembleSystem( real64 const time_n,
                                  dofManager,
                                  matrix,
                                  rhs );
+  // scale matrix and rhs to warrant SPD diagonal block
+  //matrix.scale( -1.0 );
+  //rhs.scale( -1.0 );
 
   // assemble J_FF
   m_flowSolver->AssembleSystem( time_n, dt, domain,
@@ -413,21 +416,17 @@ void PoroelasticSolver::AssembleSystem( real64 const time_n,
                                 rhs );
 
   // assemble J_SF
-  AssembleForceResidualDerivativeWrtPressure( domain,
-                                              dofManager,
-                                              matrix,
-                                              rhs );
-
-  matrix.write("jacobian.mtx");
-  rhs.write("rhs.mtx");
-  GEOSX_ERROR( "STOP ASSMEBLY" );
+  AssembleCouplingBlocks( domain,
+                          dofManager,
+                          matrix,
+                          rhs );
 
 }
 
-void PoroelasticSolver::AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
-                                                                    DofManager const & dofManager,
-                                                                    ParallelMatrix & matrix,
-                                                                    ParallelVector & GEOSX_UNUSED_PARAM( rhs ) )
+void PoroelasticSolver::AssembleCouplingBlocks( DomainPartition * const domain,
+                                                DofManager const & dofManager,
+                                                ParallelMatrix & matrix,
+                                                ParallelVector & GEOSX_UNUSED_PARAM( rhs ) )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -519,9 +518,9 @@ void PoroelasticSolver::AssembleForceResidualDerivativeWrtPressure( DomainPartit
             for( integer a=0; a<numNodesPerElement; ++a )
             {
               dNdXa = dNdX[k][q][a];
-              dRsdP(a*dim+0, 0) -= biotCoefficient * dNdXa[0] * detJq;
-              dRsdP(a*dim+1, 0) -= biotCoefficient * dNdXa[1] * detJq;
-              dRsdP(a*dim+2, 0) -= biotCoefficient * dNdXa[2] * detJq;
+              dRsdP(a*dim+0, 0) += biotCoefficient * dNdXa[0] * detJq;
+              dRsdP(a*dim+1, 0) += biotCoefficient * dNdXa[1] * detJq;
+              dRsdP(a*dim+2, 0) += biotCoefficient * dNdXa[2] * detJq;
               dRfdU(0, a*dim+0) += density[k][0] * biotCoefficient * dNdXa[0] * detJq;
               dRfdU(0, a*dim+1) += density[k][0] * biotCoefficient * dNdXa[1] * detJq;
               dRfdU(0, a*dim+2) += density[k][0] * biotCoefficient * dNdXa[2] * detJq;
@@ -537,6 +536,79 @@ void PoroelasticSolver::AssembleForceResidualDerivativeWrtPressure( DomainPartit
   }
 
   matrix.close();
+}
+
+void PoroelasticSolver::ApplyBoundaryConditions( real64 const time_n,
+                                                 real64 const dt,
+                                                 DomainPartition * const domain,
+                                                 DofManager const & dofManager,
+                                                 ParallelMatrix & matrix,
+                                                 ParallelVector & rhs )
+{
+  m_solidSolver->ApplyBoundaryConditions( time_n, dt, domain,
+                                          dofManager,
+                                          matrix,
+                                          rhs );
+
+  m_flowSolver->ApplyBoundaryConditions( time_n, dt, domain,
+                                         dofManager,
+                                         matrix,
+                                         rhs );
+  // no boundary conditions for wells
+}
+
+real64 PoroelasticSolver::CalculateResidualNorm( DomainPartition const * const domain,
+                                                 DofManager const & dofManager,
+                                                 ParallelVector const & rhs )
+{
+//  MpiWrapper::Barrier();
+//  GEOSX_LOG("\n\n\n\n");
+//  GEOSX_LOG_RANK_VAR( rhs.norm1() );
+//  GEOSX_LOG_RANK_VAR( rhs.norm2() );
+//  GEOSX_LOG_RANK_VAR( rhs.normInf() );
+//  GEOSX_LOG("\n\n\n\n");
+//  MpiWrapper::Barrier();
+
+  // compute norm of momentum balance residual equations
+  real64 const momementumResidualNorm = 0;//m_solidSolver->CalculateResidualNorm( domain, dofManager, rhs );
+
+  // compute norm of mass balance residual equations
+  real64 const massResidualNorm = m_flowSolver->CalculateResidualNorm( domain, dofManager, rhs );
+
+  return sqrt( momementumResidualNorm*momementumResidualNorm
+             + massResidualNorm*massResidualNorm );
+}
+
+void PoroelasticSolver::SolveSystem( DofManager const & dofManager,
+                                     ParallelMatrix & matrix,
+                                     ParallelVector & rhs,
+                                     ParallelVector & solution )
+{
+  rhs.scale( -1.0 );
+  solution.zero();
+
+  SolverBase::SolveSystem( dofManager, matrix, rhs, solution );
+
+  //////////////////////////////////////////
+  std::cout << "\n\n\n\n\n***********   System solution   ***********\n";
+  std::cout << solution;
+  solution.scale( -1.0 );
+  //////////////////////////////////////////
+
+  // Debug for logLevel >= 2
+  GEOSX_LOG_LEVEL_RANK_0( 2, "After ReservoirSolver::SolveSystem" );
+  GEOSX_LOG_LEVEL_RANK_0( 2, "\nSolution:\n" << solution );
+}
+
+void PoroelasticSolver::ApplySystemSolution( DofManager const & dofManager,
+                                             ParallelVector const & solution,
+                                             real64 const scalingFactor,
+                                             DomainPartition * const domain )
+{
+  // update the reservoir variables
+  m_solidSolver->ApplySystemSolution( dofManager, solution, scalingFactor, domain );
+  // update the well variables
+  m_flowSolver->ApplySystemSolution( dofManager, solution, scalingFactor, domain );
 }
 
 real64 PoroelasticSolver::SplitOperatorStep( real64 const& time_n,

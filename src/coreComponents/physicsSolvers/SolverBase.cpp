@@ -439,6 +439,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       // get residual norm
       real64 residualNorm = CalculateResidualNorm( domain, dofManager, rhs );
 
+      GEOSX_LOG_RANK_VAR(residualNorm);
 
       if( getLogLevel() >= 1 && logger::internal::rank==0 )
       {
@@ -498,8 +499,6 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
 
       // call the default linear solver on the system
       SolveSystem( dofManager, matrix, rhs, solution );
-
-
 
       scaleFactor = ScalingForSystemSolution( domain, dofManager, solution );
 
