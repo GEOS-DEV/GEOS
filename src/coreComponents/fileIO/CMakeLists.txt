@@ -37,6 +37,8 @@ if( ENABLE_VTK )
                vtk/CellVTKDataArray.hpp
                vtk/DummyVTKDataArray.hpp 
                vtk/VTKTypes.hpp
+               vtk/VTKPVDWriter.hpp
+               vtk/VTKVTMWriter.hpp
                vtk/VTKMultiBlockDataWriterInterface.hpp )
 
   list( APPEND fileIO_sources

@@ -66,11 +66,6 @@ class Array2DVTKDataArray : public DummyVTKDataArray< DATA_TYPE >
     iter->Initialize( this );
     return iter;
   };
-  virtual void *GetVoidPointer( vtkIdType valueIdx )
-  {
-    return static_cast< void *> ( m_geosxArray2d.data() ) + valueIdx;
-  }
-    
   private:
 
   /// A view to the encapsulated array2d

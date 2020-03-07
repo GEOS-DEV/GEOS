@@ -16,12 +16,15 @@
 #define GEOSX_FILEIO_VTK_VTKTYPES_HPP_
 
 #include <typeindex>
+#include "common/DataTypes.hpp"
 
 namespace geosx
 {
 namespace vtk
 {
   int GetVTKType(  std::type_index const & type );
+
+  int GetVTKCellType( string const & cellType );
 }
 }
 
