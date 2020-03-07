@@ -358,7 +358,7 @@ real64 LagrangianContactSolver::NonlinearImplicitStep( real64 const & time_n,
                                                        ParallelVector & rhs,
                                                        ParallelVector & solution )
 {
-  real64 stepDt;
+  real64 stepDt = dt;
 
   bool converged = false;
   integer & activeSetIter = m_activeSetIter;
