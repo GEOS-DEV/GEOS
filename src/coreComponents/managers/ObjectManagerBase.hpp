@@ -20,6 +20,7 @@
 #define GEOSX_MANAGERS_OBJECTMANAGERBASE_HPP_
 
 #include "dataRepository/Group.hpp"
+#include "common/TimingMacros.hpp"
 
 namespace geosx
 {
@@ -56,17 +57,20 @@ public:
 
   virtual localIndex PackSize( string_array const & wrapperNames,
                                arrayView1d<localIndex const> const & packList,
-                               integer const recursive ) const override;
+                               integer const recursive,
+                               bool on_device = false ) const override;
 
 
   virtual localIndex Pack( buffer_unit_type * & buffer,
                            string_array const & wrapperNames,
                            arrayView1d<localIndex const> const & packList,
-                           integer const recursive )  const override;
+                           integer const recursive,
+                           bool on_device = false)  const override;
 
   virtual localIndex Unpack( buffer_unit_type const *& buffer,
                              arrayView1d<localIndex> & packList,
-                             integer const recursive )  override;
+                             integer const recursive,
+                             bool on_device = false ) override;
 
   template< bool DOPACK >
   localIndex PackSets( buffer_unit_type * & buffer,
@@ -74,7 +78,7 @@ public:
 
   localIndex UnpackSets( buffer_unit_type const *& buffer );
 
-  virtual void ViewPackingExclusionList( set<localIndex> & exclusionList ) const;
+  virtual void ViewPackingExclusionList( SortedArray<localIndex> & exclusionList ) const;
 
 
   virtual localIndex PackGlobalMapsSize( arrayView1d<localIndex> const & packList,
@@ -88,17 +92,17 @@ public:
 
 
 
-  virtual localIndex PackUpDownMapsSize( arrayView1d<localIndex const> const & GEOSX_UNUSED_ARG( packList ) ) const
+  virtual localIndex PackUpDownMapsSize( arrayView1d<localIndex const> const & GEOSX_UNUSED_PARAM( packList ) ) const
   { return 0; }
 
-  virtual localIndex PackUpDownMaps( buffer_unit_type * & GEOSX_UNUSED_ARG( buffer ),
-                                     arrayView1d<localIndex const> const & GEOSX_UNUSED_ARG( packList ) ) const
+  virtual localIndex PackUpDownMaps( buffer_unit_type * & GEOSX_UNUSED_PARAM( buffer ),
+                                     arrayView1d<localIndex const> const & GEOSX_UNUSED_PARAM( packList ) ) const
   { return 0; }
 
-  virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & GEOSX_UNUSED_ARG( buffer ),
-                                       array1d<localIndex> & GEOSX_UNUSED_ARG( packList ),
-                                       bool const GEOSX_UNUSED_ARG( overwriteUpMaps ),
-                                       bool const GEOSX_UNUSED_ARG( overwriteDownMaps ) )
+  virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & GEOSX_UNUSED_PARAM( buffer ),
+                                       array1d<localIndex> & GEOSX_UNUSED_PARAM( packList ),
+                                       bool const GEOSX_UNUSED_PARAM( overwriteUpMaps ),
+                                       bool const GEOSX_UNUSED_PARAM( overwriteDownMaps ) )
   { return 0; }
 
 
@@ -128,7 +132,8 @@ private:
   localIndex PackPrivate( buffer_unit_type * & buffer,
                           string_array const & wrapperNames,
                           arrayView1d<localIndex const> const & packList,
-                          integer const recursive ) const;
+                          integer const recursive,
+                          bool on_device) const;
 
   template< bool DOPACK >
   localIndex PackGlobalMapsPrivate( buffer_unit_type * & buffer,
@@ -207,7 +212,7 @@ public:
   {
     for( auto index : indicesToSend )
     {
-      GEOS_ERROR_IF( m_ghostRank[index] >= 0,
+      GEOSX_ERROR_IF( m_ghostRank[index] >= 0,
                      "trying to set ghostRank of non-locally owned index: "
                      "m_ghostRank[" << index << "]=" << m_ghostRank[index] );
       m_ghostRank[index] = -1;
@@ -242,16 +247,16 @@ public:
 
   template< typename TYPE_RELATION >
   static void FixUpDownMaps( TYPE_RELATION & relation,
-                             map< localIndex, set<globalIndex> > & unmappedIndices,
+                             map< localIndex, SortedArray<globalIndex> > & unmappedIndices,
                              bool const clearIfUnmapped );
 
   static void FixUpDownMaps( ArrayOfSets< localIndex > & relation,
                              unordered_map<globalIndex,localIndex> const & globalToLocal,
-                             map< localIndex, set<globalIndex> > & unmappedIndices,
+                             map< localIndex, SortedArray<globalIndex> > & unmappedIndices,
                              bool const clearIfUnmapped );
 
   static void CleanUpMap( std::set<localIndex> const & targetIndices,
-                          array1d<set<localIndex> > & upmap,
+                          array1d<SortedArray<localIndex> > & upmap,
                           arrayView2d<localIndex const> const & downmap );
 
   static void CleanUpMap( std::set<localIndex> const & targetIndices,
@@ -259,7 +264,7 @@ public:
                           arrayView2d< localIndex const > const & downmap );
 
   static void CleanUpMap( std::set<localIndex> const & targetIndices,
-                          array1d<set<localIndex> > & upmap,
+                          array1d<SortedArray<localIndex> > & upmap,
                           arrayView1d< arrayView1d<localIndex const > const > const & downmap );
 
   static void CleanUpMap( std::set<localIndex> const & targetIndices,
@@ -349,11 +354,11 @@ public:
   Group * sets()             {return &m_sets;}
   Group const * sets() const {return &m_sets;}
 
-  set<localIndex> & externalSet()
-  {return m_sets.getReference<set<localIndex>>(m_ObjectManagerBaseViewKeys.externalSet);}
+  SortedArray<localIndex> & externalSet()
+  {return m_sets.getReference<SortedArray<localIndex>>(m_ObjectManagerBaseViewKeys.externalSet);}
 
-  set<localIndex> const & externalSet() const
-  {return m_sets.getReference<set<localIndex>>(m_ObjectManagerBaseViewKeys.externalSet);}
+  SortedArrayView<localIndex const> const & externalSet() const
+  {return m_sets.getReference<SortedArray<localIndex>>(m_ObjectManagerBaseViewKeys.externalSet);}
 
   integer_array & isExternal()
   { return this->m_isExternal; }
@@ -389,6 +394,8 @@ void ObjectManagerBase::FixUpDownMaps( TYPE_RELATION & relation,
                                        map< localIndex, array1d<globalIndex> > & unmappedIndices,
                                        bool const  )
 {
+  GEOSX_MARK_FUNCTION;
+
   bool allValuesMapped = true;
   unordered_map<globalIndex,localIndex> const & globalToLocal = relation.RelatedObjectGlobalToLocal();
   for( map< localIndex, array1d<globalIndex> >::iterator iter = unmappedIndices.begin() ;
@@ -410,21 +417,23 @@ void ObjectManagerBase::FixUpDownMaps( TYPE_RELATION & relation,
           allValuesMapped = false;
         }
       }
-      GEOS_ERROR_IF( relation[li][a]==unmappedLocalIndexValue, "Index not set");
+      GEOSX_ERROR_IF( relation[li][a]==unmappedLocalIndexValue, "Index not set");
     }
   }
-  GEOS_ERROR_IF( !allValuesMapped, "some values of unmappedIndices were not used");
+  GEOSX_ERROR_IF( !allValuesMapped, "some values of unmappedIndices were not used");
   unmappedIndices.clear();
 }
 
 
 template< typename TYPE_RELATION >
 void ObjectManagerBase::FixUpDownMaps( TYPE_RELATION & relation,
-                                       map< localIndex, set<globalIndex> > & unmappedIndices,
+                                       map< localIndex, SortedArray<globalIndex> > & unmappedIndices,
                                        bool const clearIfUnmapped )
 {
+  GEOSX_MARK_FUNCTION;
+
   unordered_map<globalIndex,localIndex> const & globalToLocal = relation.RelatedObjectGlobalToLocal();
-  for( map< localIndex, set<globalIndex> >::iterator iter = unmappedIndices.begin() ;
+  for( map< localIndex, SortedArray<globalIndex> >::iterator iter = unmappedIndices.begin() ;
        iter != unmappedIndices.end() ;
        ++iter )
   {
@@ -435,7 +444,7 @@ void ObjectManagerBase::FixUpDownMaps( TYPE_RELATION & relation,
     }
     else
     {
-      set<globalIndex> const & globalIndices = iter->second;
+      SortedArray<globalIndex> const & globalIndices = iter->second;
       for( auto const newGlobalIndex : globalIndices )
       {
         // NOTE: This simply ignores if newGlobalIndex is not found. This is OK if this function is
@@ -455,10 +464,12 @@ void ObjectManagerBase::FixUpDownMaps( TYPE_RELATION & relation,
 inline
 void ObjectManagerBase::FixUpDownMaps( ArrayOfSets< localIndex > & relation,
                                        unordered_map<globalIndex,localIndex> const & globalToLocal,
-                                       map< localIndex, set<globalIndex> > & unmappedIndices,
+                                       map< localIndex, SortedArray<globalIndex> > & unmappedIndices,
                                        bool const clearIfUnmapped )
 {
-  for( map< localIndex, set<globalIndex> >::iterator iter = unmappedIndices.begin() ;
+  GEOSX_MARK_FUNCTION;
+
+  for( map< localIndex, SortedArray<globalIndex> >::iterator iter = unmappedIndices.begin() ;
        iter != unmappedIndices.end() ;
        ++iter )
   {
@@ -469,7 +480,7 @@ void ObjectManagerBase::FixUpDownMaps( ArrayOfSets< localIndex > & relation,
     }
     else
     {
-      set<globalIndex> const & globalIndices = iter->second;
+      SortedArray<globalIndex> const & globalIndices = iter->second;
       for( globalIndex const newGlobalIndex : globalIndices )
       {
         // NOTE: This simply ignores if newGlobalIndex is not found. This is OK if this function is

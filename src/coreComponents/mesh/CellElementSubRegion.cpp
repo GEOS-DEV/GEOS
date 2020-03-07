@@ -46,26 +46,29 @@ CellElementSubRegion::~CellElementSubRegion()
   // TODO Auto-generated destructor stub
 }
 
-void CellElementSubRegion::CopyFromCellBlock( CellBlock const * source )
+void CellElementSubRegion::CopyFromCellBlock( CellBlock * source )
 {
   this->SetElementType(source->GetElementTypeString());
-  this->numNodesPerElement() = source->numNodesPerElement();
-  this->numFacesPerElement() = source->numFacesPerElement();
+  this->setNumNodesPerElement( source->numNodesPerElement() );
+  this->setNumFacesPerElement( source->numFacesPerElement() );
   this->resize(source->size());
   this->nodeList() = source->nodeList();
   this->m_localToGlobalMap = source->m_localToGlobalMap;
   this->ConstructGlobalToLocalMap();
-  source->forExternalProperties([&]( const dataRepository::WrapperBase * wrapper )->void
+  source->forExternalProperties([&]( dataRepository::WrapperBase * const wrapper )->void
   {
     std::type_index typeIndex = std::type_index( wrapper->get_typeid());
     rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( typeIndex ),
                                     true,
-                                    [&]( auto type, auto GEOSX_UNUSED_ARG( baseType ) ) -> void
+                                    [&]( auto type, auto GEOSX_UNUSED_PARAM( baseType ) ) -> void
     {
       using fieldType = decltype(type);
-      const dataRepository::Wrapper<fieldType> & field = dataRepository::Wrapper< fieldType >::cast( *wrapper );
+      dataRepository::Wrapper<fieldType> & field = dataRepository::Wrapper< fieldType >::cast( *wrapper );
       const fieldType & fieldref = field.reference();
       this->registerWrapper( wrapper->getName(), &const_cast< fieldType & >( fieldref ), 0 ); //TODO remove const_cast
+//      auto const & origFieldRef = field.reference();
+//      fieldType & fieldRef = this->registerWrapper<fieldType>( wrapper->getName() )->reference();
+//      fieldRef.resize( origFieldRef.size() );
     });
   });
 }
@@ -73,24 +76,14 @@ void CellElementSubRegion::CopyFromCellBlock( CellBlock const * source )
 void CellElementSubRegion::ConstructSubRegionFromFaceSet( FaceManager const * const faceManager,
                                                         string const & setName )
 {
-  set<localIndex> const & targetSet = faceManager->sets()->getReference<set<localIndex> >(setName);
+  SortedArrayView<localIndex const> const & targetSet = faceManager->sets()->getReference<SortedArray<localIndex> >(setName);
   m_toFacesRelation.resize(0,2);
   this->resize( targetSet.size() );
 
 
 }
 
-void CellElementSubRegion::MaterialPassThru( string const & GEOSX_UNUSED_ARG( matName ),
-                                             string const & GEOSX_UNUSED_ARG( setName ),
-                                             set<localIndex> & GEOSX_UNUSED_ARG( materialSet ),
-                                             Group * GEOSX_UNUSED_ARG( material ) )
-{}
-
-
-
-
-
-void CellElementSubRegion::ViewPackingExclusionList( set<localIndex> & exclusionList ) const
+void CellElementSubRegion::ViewPackingExclusionList( SortedArray<localIndex> & exclusionList ) const
 {
   ObjectManagerBase::ViewPackingExclusionList(exclusionList);
   exclusionList.insert(this->getWrapperIndex(viewKeyStruct::nodeListString));
@@ -138,8 +131,8 @@ localIndex CellElementSubRegion::PackUpDownMapsPrivate( buffer_unit_type * & buf
 
 localIndex CellElementSubRegion::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                                  localIndex_array & packList,
-                                                 bool const GEOSX_UNUSED_ARG( overwriteUpMaps ),
-                                                 bool const GEOSX_UNUSED_ARG( overwriteDownMaps ) )
+                                                 bool const GEOSX_UNUSED_PARAM( overwriteUpMaps ),
+                                                 bool const GEOSX_UNUSED_PARAM( overwriteDownMaps ) )
 {
   localIndex unPackedSize = 0;
   unPackedSize += bufferOps::Unpack( buffer,

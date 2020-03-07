@@ -14,23 +14,18 @@
 
 #include "FieldSpecificationBase.hpp"
 
+#include "mpiCommunications/MpiWrapper.hpp"
+#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
+#include "managers/DomainPartition.hpp"
+
+
 namespace geosx
 {
 using namespace dataRepository;
 
 FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * parent ):
-  Group( name, parent )
-//  m_setNames(),
-//  m_objectPath(),
-//  m_fieldName(),
-//  m_component(-1),
-//  m_direction(-1),
-//  m_initialCondition(0),
-//  m_functionName(),
-//  m_scale(0.0),
-//  m_beginTime(0.0),
-//  m_endTime(1e9),
-//  m_bcApplicationFunctionName()
+  Group( name, parent ),
+  m_normalizeBySetSize(false)
 {
   setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
 
@@ -70,7 +65,6 @@ FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * par
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Scale factor for value of BC.");
 
-
   registerWrapper( viewKeyStruct::initialConditionString, &m_initialCondition, 0 )->
     setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
@@ -85,6 +79,7 @@ FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * par
     setApplyDefaultValue(1.0e99)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("time at which bc will stop being applied");
+
 }
 
 
@@ -98,8 +93,11 @@ FieldSpecificationBase::GetCatalog()
   return catalog;
 }
 
+
+  
 void FieldSpecificationBase::PostProcessInput()
 {}
+
 
 
 REGISTER_CATALOG_ENTRY( FieldSpecificationBase, FieldSpecificationBase, string const &, Group * const )

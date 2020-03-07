@@ -139,7 +139,7 @@ void LinearElasticIsotropic::PostProcessInput()
     }
     errorCheck += ")";
 
-    GEOS_ERROR_IF( numConstantsSpecified != 2,
+    GEOSX_ERROR_IF( numConstantsSpecified != 2,
                    "A specific pair of elastic constants is required. Either (K,G) or (E,nu). "<<
                    "You have specified "<<errorCheck );
 
@@ -175,7 +175,7 @@ void LinearElasticIsotropic::PostProcessInput()
     }
     else
     {
-      GEOS_ERROR( "invalid specification for default elastic constants. "<<errorCheck<<" has been specified.");
+      GEOSX_ERROR( "invalid specification for default elastic constants. "<<errorCheck<<" has been specified.");
     }
   }
   m_postProcessed = true;
@@ -185,7 +185,7 @@ void LinearElasticIsotropic::StateUpdatePoint( localIndex const k,
                                                localIndex const q,
                                                R2SymTensor const & D,
                                                R2Tensor const & Rot,
-                                               integer const GEOSX_UNUSED_ARG( updateStiffnessFlag ) )
+                                               integer const GEOSX_UNUSED_PARAM( updateStiffnessFlag ) )
 {
   real64 meanStresIncrement = D.Trace();
 
@@ -195,10 +195,15 @@ void LinearElasticIsotropic::StateUpdatePoint( localIndex const k,
   meanStresIncrement *= m_bulkModulus[k];
   temp.PlusIdentity( meanStresIncrement );
 
-  m_stress[k][q] += temp;
+  R2SymTensor temp2 = m_stress[ k ][ q ];
+  temp2 += temp;
 
-  temp.QijAjkQlk( m_stress[k][q], Rot );
-  m_stress[k][q] = temp;
+  temp.QijAjkQlk( temp2, Rot );
+
+  for ( localIndex i = 0; i < 6; ++i )
+  {
+    m_stress( k, q, i ) = temp.Data()[ i ];
+  }
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, LinearElasticIsotropic, std::string const &, Group * const )

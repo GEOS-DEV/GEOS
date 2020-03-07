@@ -22,16 +22,13 @@
 #include <cxxabi.h>
 #include <cstring>
 #include <memory>
-//#include <vector>
 #include <sstream>
 #include <algorithm>
 #include <map>
 
-//#include "Common/Common.h"
-//#include <string>
 
 #include "common/DataTypes.hpp"
-#include "IntegerConversion.hpp"
+#include "cxx-utilities/src/IntegerConversion.hpp"
 
 namespace geosx
 {
@@ -152,13 +149,6 @@ string_array TokenizeSeq(const std::string& str, const std::string& seq);
 /// Split string at first token
 string_array Split(const std::string& str, const std::string& delimiters);
 
-/// Remove comments from end of string
-void RemoveComments(std::string& str, char d='%');
-
-/// Remove all spaces ' ' from a string
-inline void RemoveSpaces(std::string& aString){
-  aString.erase(std::remove(aString.begin(), aString.end(), ' '), aString.end());
-}
 
 /// Expand string vector based on multiple tokens eg [a, b**3, c] => [a,b,b,b,c]
 inline void ExpandMultipleTokens(string_array& sVector, const std::string& multipleToken="**"){
@@ -184,94 +174,8 @@ inline void ExpandMultipleTokens(string_array& sVector, const std::string& multi
   sVector = newVec;
 }
 
-/// Trim whitespace from string
-void TrimLeft(std::string& str, const std::string& d=" \t\n\r");
-void TrimRight(std::string& str, const std::string& d=" \t\n\r");
-void Trim(std::string& str, const std::string& d=" \t\n\r");
-
-inline void Trim(string_array& strVect, const std::string& d=" \t\n\r"){
-  for(int i =0 ; i < int(strVect.size()) ; ++i)
-    Trim(strVect[i],d);
-}
-
-/// Replace parameters of form "$:NAME" in a string, returns true if a parameter
-// is detected
-/// @param lineStr - the string containing the parameters
-/// @param parameterMap - map of parameter names and replacement strings,
-/// @param prefix - Character sequence used to signal start of parameter ("$:"
-// by default),
-bool ReplaceParameters(std::string& lineStr, const std::map<std::string,std::string>& parameterMap,const std::string& prefix= "$:");
-
-
-
-template< typename T >
-inline void StringToType( std::vector<T>& destination, std::string const & source )
-{
-  std::istringstream ss( source );
-
-  T value;
-
-  while(ss.peek() == ',' || ss.peek() == ' ')
-  {
-    ss.ignore();
-  }
-  while( ss>>value )
-  {
-    destination.push_back( value );
-    while(ss.peek() == ',' || ss.peek() == ' ')
-    {
-      ss.ignore();
-    }
-  }
-
-}
-
-template <>
-inline void StringToType<std::string>( std::vector<std::string>& destination, std::string const & source )
-{
-  destination.push_back( source );
-}
-
-static const std::string base64Chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                                       "abcdefghijklmnopqrstuvwxyz"
-                                       "0123456789+/";
-
-inline string & EncodeBase64( unsigned char const * const bytes,
-                              string & outputString,
-                              int len)
-{
-  char * out = &outputString[0];
-  integer val = 0;
-  integer valB = -6;
-  integer size = 0;
-
-  for( integer i = 0 ; i < len ; i++ )
-  {
-    val = ( val << 8 ) + bytes[i];
-    valB += 8;
-    while ( valB >= 0 )
-    {
-      *out = base64Chars[ ( val>>valB ) &0x3F ] ; //0x3f is the Hexadecimal for 63
-      ++out;
-      ++size;
-      valB -= 6;
-    }
-  }
-  if( valB > -6 )
-  {
-    *out = base64Chars[ ( ( val << 8 ) >> ( valB + 8 ) ) &0x3F ];
-    ++out;
-    ++size;
-  }
-  while( size % 4 )
-  {
-    *out = '=';
-    ++out;
-    ++size;
-  }
-  return outputString;
-}
-
+string EncodeBase64( unsigned char const * const bytes,
+                     integer dataSize );
 }
 }
 

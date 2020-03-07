@@ -21,7 +21,7 @@
 
 #include "VtmFile.hpp"
 
-#include "Logger.hpp"
+#include "common/Logger.hpp"
 #include "mesh/MeshBody.hpp"
 
 
@@ -180,8 +180,8 @@ void VtuFile::Load( string const &filename,
     LoadProperties(vtmDoc, properties);
 }
 
-void VtuFile::Save( string const & GEOSX_UNUSED_ARG( filename ) ) {
-    GEOS_ERROR("vtu file save is not implemented yet");
+void VtuFile::Save( string const & GEOSX_UNUSED_PARAM( filename ) ) {
+    GEOSX_ERROR("vtu file save is not implemented yet");
 }
 
 
@@ -192,17 +192,17 @@ void VtmFile::CheckXmlFileConsistency(pugi::xml_document const & vtmDoc,
     // VTKFile is the main node of the pvtufile
     auto const & vtkFileNode =vtmDoc.child("VTKFile");
     if( vtkFileNode.empty() ) {
-        GEOS_ERROR("Main node VTKFile not found in " + filename);
+        GEOSX_ERROR("Main node VTKFile not found in " + filename);
     }
 
     if( vtkFileNode.attribute("type").as_string() !=
             static_cast< string >("vtkMultiBlockDataSet")) {
-        GEOS_ERROR("VTKFile is not a vtkMultiBlockDataSet" + filename);
+        GEOSX_ERROR("VTKFile is not a vtkMultiBlockDataSet" + filename);
     }
 
     auto const & vtkMultiBlockDataSetNode =  vtkFileNode.child("vtkMultiBlockDataSet");
     if( vtkMultiBlockDataSetNode.empty() ) {
-        GEOS_ERROR("vtkMultiBlockDataSet node is not present in " + filename);
+        GEOSX_ERROR("vtkMultiBlockDataSet node is not present in " + filename);
     }
 
     localIndex countNbRank=0;
@@ -215,7 +215,7 @@ void VtmFile::CheckXmlFileConsistency(pugi::xml_document const & vtmDoc,
                     countNbBlock++;
                 }
                 if( block.attribute("file").empty() ) {
-                    GEOS_ERROR(
+                    GEOSX_ERROR(
                             "DataSet "
                             + static_cast< string >(rank.attribute("name").as_string())
                             + " of block "
@@ -223,7 +223,7 @@ void VtmFile::CheckXmlFileConsistency(pugi::xml_document const & vtmDoc,
                             " does not contain a \"file\" attribute");
                 }
                 if( block.attribute("name").empty() ) {
-                    GEOS_ERROR(
+                    GEOSX_ERROR(
                             "DataSet "
                             + static_cast< string >(rank.attribute("name").as_string())
                             + " of block "
@@ -232,13 +232,13 @@ void VtmFile::CheckXmlFileConsistency(pugi::xml_document const & vtmDoc,
                 }
             }
             if( countNbBlock == 0 ) {
-                GEOS_ERROR(static_cast< string >(rank.attribute("name").as_string()) +
+                GEOSX_ERROR(static_cast< string >(rank.attribute("name").as_string()) +
                         " does not contain any DataSet");
             }
         }
     }
     if( countNbRank == 0 ) {
-        GEOS_ERROR("There is no block defined in " + filename);
+        GEOSX_ERROR("There is no block defined in " + filename);
     }
 
 }
@@ -285,12 +285,12 @@ void VtuFile::CheckXmlChildFileConsistency(pugi::xml_document const & vtmDoc,
     auto const & vtkFileNode =vtmDoc.child("VTKFile");
     auto const & uGridNode = vtkFileNode.child("UnstructuredGrid");
     if( uGridNode.empty() ) {
-        GEOS_ERROR("Node UnstructuredGrid not found or empty in " +
+        GEOSX_ERROR("Node UnstructuredGrid not found or empty in " +
                 filename);
     }
     pugi::xml_node pieceNode = uGridNode.child("Piece");
     if (pieceNode.empty()) {
-        GEOS_ERROR("Piece node is missing in " + filename);
+        GEOSX_ERROR("Piece node is missing in " + filename);
     }
 
     string const pieceNodeChildNames[4] = {"PointData",
@@ -298,7 +298,7 @@ void VtuFile::CheckXmlChildFileConsistency(pugi::xml_document const & vtmDoc,
     for( auto const & pieceNodeChildName : pieceNodeChildNames ) {
         auto const & pieceNodeChild = pieceNode.child(pieceNodeChildName.c_str());
         if(pieceNodeChild.empty()) {
-            GEOS_ERROR("Node " + pieceNodeChildName +
+            GEOSX_ERROR("Node " + pieceNodeChildName +
                 " not found or empty in " + filename);
         }
     }
@@ -311,7 +311,7 @@ void VtuFile::CheckXmlChildFileConsistency(pugi::xml_document const & vtmDoc,
                 auto const & attribute =
                     dataProperty.attribute( mandatoryAttribute.c_str());
                 if( attribute.empty() ) {
-                    GEOS_ERROR("Mandatory attribute " + mandatoryAttribute +
+                    GEOSX_ERROR("Mandatory attribute " + mandatoryAttribute +
                         " does not exist in a DataArray of PointData");
                 }
             }
@@ -325,7 +325,7 @@ void VtuFile::CheckXmlChildFileConsistency(pugi::xml_document const & vtmDoc,
                 auto const & attribute =
                     dataProperty.attribute( mandatoryAttribute.c_str());
                 if( attribute.empty() ) {
-                    GEOS_ERROR("Mandatory attribute " + mandatoryAttribute +
+                    GEOSX_ERROR("Mandatory attribute " + mandatoryAttribute +
                         " does not exist in a DataArray of CellData in "
                         + filename);
                 }
@@ -337,34 +337,34 @@ void VtuFile::CheckXmlChildFileConsistency(pugi::xml_document const & vtmDoc,
         }
     }
     if (!cellsHasGlobalIndexProperty) {
-        //GEOS_ERROR("Can't find any DataArray which contains the property originalIndex in  CellData in "+filename);
+        //GEOSX_ERROR("Can't find any DataArray which contains the property originalIndex in  CellData in "+filename);
     }
 
     auto const & pointDataArray = pieceNode.child("Points").find_child_by_attribute("DataArray","Name","Points");
     if(pointDataArray.empty() ) {
-        GEOS_ERROR("Can't find DataArray names \"Points\" in node \"Points\" in " + filename);
+        GEOSX_ERROR("Can't find DataArray names \"Points\" in node \"Points\" in " + filename);
     }
 
     if( pieceNode.attribute("NumberOfCells").empty() ) {
-        GEOS_ERROR("Attribute \"NumberOfCells\" of Node \"Piece\" is missing or empty in "
+        GEOSX_ERROR("Attribute \"NumberOfCells\" of Node \"Piece\" is missing or empty in "
                 + filename);
     }
 
     if( pieceNode.attribute("NumberOfPoints").empty() ) {
-        GEOS_ERROR("Attribute \"NumberOfPoints\" of Node \"Piece\" is missing or empty in "
+        GEOSX_ERROR("Attribute \"NumberOfPoints\" of Node \"Piece\" is missing or empty in "
                 + filename);
     }
 
     if (pieceNode.child("Cells").find_child_by_attribute(
                 "DataArray","Name","connectivity").empty()) {
-        GEOS_ERROR("No property \"connectivity\" found in \"Cells\" node of " + filename);
+        GEOSX_ERROR("No property \"connectivity\" found in \"Cells\" node of " + filename);
     }
     if (pieceNode.child("Cells").find_child_by_attribute("DataArray","Name","types").empty()) {
-        GEOS_ERROR("No property \"types\" found in \"Cells\" node of " + filename);
+        GEOSX_ERROR("No property \"types\" found in \"Cells\" node of " + filename);
     }
     if (pieceNode.child("Cells").find_child_by_attribute(
                 "DataArray","Name","offsets").empty()) {
-        GEOS_ERROR("No property \"offsets\" found in \"Cells\" node of " + filename);
+        GEOSX_ERROR("No property \"offsets\" found in \"Cells\" node of " + filename);
     }
 }   
 
@@ -452,7 +452,7 @@ void VtuFile::LoadMesh(pugi::xml_document const & vtmDoc, DumbMesh& mesh){
         } else if(elementType == 9) {
             numQuad++;
         } else {
-            GEOS_ERROR("Element type " + std::to_string(elementType) + " not supported");
+            GEOSX_ERROR("Element type " + std::to_string(elementType) + " not supported");
         }
     }
 
@@ -520,7 +520,7 @@ void VtuFile::LoadMesh(pugi::xml_document const & vtmDoc, DumbMesh& mesh){
                    */
         }
         else {
-            GEOS_ERROR("Element not recognised");
+            GEOSX_ERROR("Element not recognised");
         }
     }
 
@@ -768,37 +768,36 @@ string const & DumbMesh::Name() const {
 
 void RankBlock::TransferRankBlockToGEOSMesh( MeshLevel * const meshLevel ) const
 {
-  for (auto& meshBlock : m_block) {
+  for (auto& meshBlock : m_block)
+  {
       const auto & mesh = meshBlock.mesh();
-      if( mesh.NumPolygons() == 0 ) {
+      if( mesh.NumPolygons() == 0 )
+      {
           NodeManager * const nodeManager = meshLevel->getNodeManager();
           ElementRegionManager * const elemRegManager = meshLevel->getElemManager();
 
-
           nodeManager->resize(mesh.NumVertices());
-          arrayView1d<R1Tensor> & X = nodeManager->referencePosition();
-          std::cout << "node Manager pointer : " << nodeManager << std::endl;
-          std::cout << "X pointer : " << X[0].Data() << std::endl;
+          arrayView2d<real64, nodes::REFERENCE_POSITION_USD> & X = nodeManager->referencePosition();
 
           for( localIndex a=0 ; a< mesh.NumVertices() ; ++a )
           {
-              real64 * const tensorData = X[a].Data();
-              tensorData[0] = mesh.Vertex(a)[0];
-              tensorData[1] = mesh.Vertex(a)[1];
-              tensorData[2] = mesh.Vertex(a)[2];
+              X( a, 0 ) = mesh.Vertex(a)[0];
+              X( a, 1 ) = mesh.Vertex(a)[1];
+              X( a, 2 ) = mesh.Vertex(a)[2];
           }
 
 
-          for( int i = 0 ; i < elemRegManager->GetRegions().size() ; i++) {
+          for( int i = 0 ; i < elemRegManager->GetRegions().size() ; i++)
+          {
               std::cout<< "REGION DBUT : " << i << std::endl;
               std::cout << elemRegManager->GetRegion(i)->getName() << std::endl;
               std::cout<< "REGION FIN : " << i << std::endl;
           }
           CellElementSubRegion * const subRegion = elemRegManager->GetRegion( "Region2" )->RegisterGroup<CellElementSubRegion>("cb1");
-          CellElementSubRegion * const cellBlock =
-              elemRegManager->GetRegion( "Region2" )->GetSubRegion<CellElementSubRegion>("HEX");
+          CellElementSubRegion * const cellBlock = elemRegManager->GetRegion( "Region2" )->GetSubRegion<CellElementSubRegion>("HEX");
           std::cout << "HA" << std::endl;
-          for(int i = 0 ; i < elemRegManager->GetRegion( "Region2" )->GetSubRegions().size();i++){
+          for(int i = 0 ; i < elemRegManager->GetRegion( "Region2" )->GetSubRegions().size();i++)
+          {
               std::cout << "SUBREGION : " << i << std::endl;
           }
           std::cout << "BE" << std::endl;

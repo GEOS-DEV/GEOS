@@ -40,7 +40,7 @@ using namespace dataRepository;
 NodeManager::NodeManager( std::string const & name,
                           Group * const parent ):
   ObjectManagerBase( name, parent ),
-  m_referencePosition()
+  m_referencePosition( 0, 3 )
 {
   registerWrapper(viewKeyStruct::referencePositionString, &m_referencePosition, false );
 
@@ -100,10 +100,10 @@ void NodeManager::SetEdgeMaps( EdgeManager const * const edgeManager )
 
   m_toEdgesRelation.resize(0);
   m_toEdgesRelation.reserve( numNodes );
-  m_toEdgesRelation.reserve( totalNodeEdges.get() );
+  m_toEdgesRelation.reserveValues( totalNodeEdges.get() + numNodes * GetEdgeMapOverallocation() );
   for ( localIndex nodeID = 0; nodeID < numNodes; ++nodeID )
   {
-    m_toEdgesRelation.appendSet( toEdgesTemp.sizeOfArray( nodeID ) );
+    m_toEdgesRelation.appendSet( toEdgesTemp.sizeOfArray( nodeID ) + GetEdgeMapOverallocation() );
   }
 
   ArrayOfSetsView< localIndex > const & toEdgesView = m_toEdgesRelation;
@@ -146,10 +146,10 @@ void NodeManager::SetFaceMaps( FaceManager const * const faceManager )
 
   m_toFacesRelation.resize(0);
   m_toFacesRelation.reserve( numNodes );
-  m_toFacesRelation.reserve( totalNodeFaces.get() );
+  m_toFacesRelation.reserveValues( totalNodeFaces.get() + numNodes * GetFaceMapOverallocation() );
   for ( localIndex nodeID = 0; nodeID < numNodes; ++nodeID )
   {
-    m_toFacesRelation.appendSet( toFacesTemp.sizeOfArray( nodeID ) );
+    m_toFacesRelation.appendSet( toFacesTemp.sizeOfArray( nodeID ) + GetFaceMapOverallocation() );
   }
 
   forall_in_range< parallelHostPolicy >( 0, numNodes, [&]( localIndex const nodeID )
@@ -173,16 +173,34 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
   ArrayOfArrays<localIndex> & toElementSubRegionList = m_toElements.m_toElementSubRegion;
   ArrayOfArrays<localIndex> & toElementList = m_toElements.m_toElementIndex;
 
-  // This sets the capacity of each sub-array to 10. If this is using a bunch of memory
-  // add a compress + shrink method to ArrayOfArrays that we can call afterwards.
+
+  // This sets the capacity of each sub-array based on the maximum number of
+  // elements attached to a node. This is an over-allocation, so we need to
+  // compress the arrays as part of the initialization.
+
+  array1d<localIndex> sizeOfArrays(size());
+
+  elementRegionManager->
+  forElementSubRegions<CellElementSubRegion>( [&]( CellElementSubRegion const * const subRegion )
+  {
+    arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemToNodeMap = subRegion->nodeList();
+    for( localIndex k=0 ; k<subRegion->size() ; ++k )
+    {
+      for( localIndex a=0 ; a<subRegion->numIndependentNodesPerElement() ; ++a )
+      {
+        localIndex nodeIndex = elemToNodeMap( k, a );
+        ++sizeOfArrays[nodeIndex];
+      }
+    }
+  });
+  localIndex const arrayCapacity = *(std::max_element( sizeOfArrays.begin(), sizeOfArrays.end() ));
+
   toElementRegionList.resize(0);
-  toElementRegionList.resize(size(), 10);
-
+  toElementRegionList.resize(size(), arrayCapacity );
   toElementSubRegionList.resize(0);
-  toElementSubRegionList.resize(size(), 10);
-
+  toElementSubRegionList.resize(size(), arrayCapacity );
   toElementList.resize(0);
-  toElementList.resize(size(), 10);
+  toElementList.resize(size(), arrayCapacity );
 
   for( typename dataRepository::indexType kReg=0 ; kReg<elementRegionManager->numRegions() ; ++kReg )
   {
@@ -191,23 +209,17 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
     elemRegion->forElementSubRegionsIndex<CellElementSubRegion>( [&]( localIndex const kSubReg,
                                                                       CellElementSubRegion const * const subRegion )
     {
-      arrayView2d< localIndex const, CellElementSubRegion::NODE_MAP_UNIT_STRIDE_DIM > const & elemToNodeMap = subRegion->nodeList();
+      arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemToNodeMap = subRegion->nodeList();
 
       for( localIndex k=0 ; k<subRegion->size() ; ++k )
       {
-        localIndex_array nodeIndices;
-        for( localIndex a=0 ; a<subRegion->numNodesPerElement() ; ++a )
+        for( localIndex a=0 ; a<subRegion->numIndependentNodesPerElement() ; ++a )
         {
           localIndex nodeIndex = elemToNodeMap( k, a );
 
-          if (std::find(nodeIndices.begin(), nodeIndices.end(), nodeIndex) == nodeIndices.end())
-          {
-            toElementRegionList.appendToArray( nodeIndex, kReg );
-            toElementSubRegionList.appendToArray( nodeIndex, kSubReg );
-            toElementList.appendToArray( nodeIndex, k );
-
-            nodeIndices.push_back(nodeIndex);
-          }
+          toElementRegionList.appendToArray( nodeIndex, kReg );
+          toElementSubRegionList.appendToArray( nodeIndex, kSubReg );
+          toElementList.appendToArray( nodeIndex, k );
         }
       }
     });
@@ -216,8 +228,18 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
   this->m_toElements.setElementRegionManager( elementRegionManager );
 }
 
+void NodeManager::CompressRelationMaps()
+{
+  //GEOSX_MARK_FUNCTION;
+  m_toEdgesRelation.compress();
+  m_toFacesRelation.compress();
+  m_toElements.m_toElementRegion.compress();
+  m_toElements.m_toElementSubRegion.compress();
+  m_toElements.m_toElementIndex.compress();
+}
+
 //**************************************************************************************************
-void NodeManager::ViewPackingExclusionList( set<localIndex> & exclusionList ) const
+void NodeManager::ViewPackingExclusionList( SortedArray<localIndex> & exclusionList ) const
 {
   ObjectManagerBase::ViewPackingExclusionList(exclusionList);
   exclusionList.insert(this->getWrapperIndex(viewKeyStruct::edgeListString));
@@ -287,7 +309,7 @@ localIndex NodeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
 
   string temp;
   unPackedSize += bufferOps::Unpack( buffer, temp );
-  GEOS_ERROR_IF( temp != viewKeyStruct::edgeListString, "");
+  GEOSX_ERROR_IF( temp != viewKeyStruct::edgeListString, "");
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toEdgesRelation,
                                      packList,
@@ -297,7 +319,7 @@ localIndex NodeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                      overwriteUpMaps );
 
   unPackedSize += bufferOps::Unpack( buffer, temp );
-  GEOS_ERROR_IF( temp != viewKeyStruct::faceListString, "");
+  GEOSX_ERROR_IF( temp != viewKeyStruct::faceListString, "");
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toFacesRelation,
                                      packList,
@@ -307,7 +329,7 @@ localIndex NodeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                      overwriteUpMaps );
 
   unPackedSize += bufferOps::Unpack( buffer, temp );
-  GEOS_ERROR_IF( temp != viewKeyStruct::elementListString, "");
+  GEOSX_ERROR_IF( temp != viewKeyStruct::elementListString, "");
   unPackedSize += bufferOps::Unpack( buffer,
                                      this->m_toElements,
                                      packList,
@@ -351,7 +373,7 @@ void NodeManager::depopulateUpMaps( std::set<localIndex> const & receivedNodes,
 
       CellElementSubRegion const * subRegion = elemRegionManager.GetRegion(elemRegionIndex)->
                                                GetSubRegion<CellElementSubRegion>(elemSubRegionIndex);
-      arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & downmap = subRegion->nodeList();
+      arrayView2d<localIndex const, cells::NODE_MAP_USD> const & downmap = subRegion->nodeList();
       bool hasTargetIndex = false;
 
       for( localIndex a=0 ; a<downmap.size(1) ; ++a )

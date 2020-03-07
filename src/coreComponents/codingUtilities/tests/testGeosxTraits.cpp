@@ -13,7 +13,7 @@
  */
 
 // Source includes
-#include "codingUtilities/GeosxTraits.hpp"
+#include "codingUtilities/traits.hpp"
 
 // TPL includes
 #include <gtest/gtest.h>
@@ -207,7 +207,7 @@ TEST( testGeosxTraits, is_map )
 
 TEST( testGeosxTraits, is_set )
 {
-  static_assert( is_set< set< string > >, "Should be true." );
+  static_assert( is_set< SortedArray< string > >, "Should be true." );
 
   static_assert( !is_set< int >, "Should be false." );
   static_assert( !is_set< double >, "Should be false." );

@@ -132,7 +132,7 @@ void CGsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
 
   }
 
-  GEOS_LOG_RANK_0( "Native CG (no preconditioner) converged in " << numIt << " iterations.");
+  GEOSX_LOG_RANK_0( "Native CG (no preconditioner) converged in " << numIt << " iterations.");
   return;
 
 }
@@ -141,13 +141,13 @@ void CGsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
 // Block CG solver
 // ----------------------------
 template< typename LAI >
-void CGsolver<LAI>::solve( BlockMatrixView<LAI> const & GEOSX_UNUSED_ARG( A ),
-                           BlockVectorView<LAI> & GEOSX_UNUSED_ARG( x ),
-                           BlockVectorView<LAI> const & GEOSX_UNUSED_ARG( b ),
-                           BlockMatrixView<LAI> const & GEOSX_UNUSED_ARG( M ) )
+void CGsolver<LAI>::solve( BlockMatrixView<LAI> const & GEOSX_UNUSED_PARAM( A ),
+                           BlockVectorView<LAI> & GEOSX_UNUSED_PARAM( x ),
+                           BlockVectorView<LAI> const & GEOSX_UNUSED_PARAM( b ),
+                           BlockMatrixView<LAI> const & GEOSX_UNUSED_PARAM( M ) )
 
 {
-  GEOS_ERROR( "Not implemented" );
+  GEOSX_ERROR( "Not implemented" );
 
   // TODO: BlockVectorView is a view that doesn't handle any vector
   //       storage.  The copy and copy constructor functions below

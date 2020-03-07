@@ -67,11 +67,15 @@ void CompositionalMultiphaseReservoir::SetupSystem( DomainPartition * const doma
 
   dofManager.setMesh( domain, 0, 0 );
   SetupDofs( domain, dofManager );
-  dofManager.close();
+  dofManager.reorderByRank();
 
-  dofManager.setSparsityPattern( matrix, "", "", false ); // don't close the matrix
-  dofManager.setVector( rhs );
-  dofManager.setVector( solution );
+  localIndex const numLocalDof = dofManager.numLocalDofs();
+
+  matrix.createWithLocalSize( numLocalDof, numLocalDof, 8, MPI_COMM_GEOSX );
+  rhs.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
+  solution.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
+  
+  dofManager.setSparsityPattern( matrix, false ); // don't close the matrix
 
   // TODO: remove this and just call SolverBase::SetupSystem when DofManager can handle the coupling
 
@@ -86,15 +90,15 @@ void CompositionalMultiphaseReservoir::SetupSystem( DomainPartition * const doma
   localIndex constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
   localIndex constexpr maxNumDof  = maxNumComp + 1;
 
-  ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex>> const & resDofNumber =
-    elemManager->ConstructViewAccessor<array1d<globalIndex>, arrayView1d<globalIndex>>( resDofKey );
+  ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex const>> const & resDofNumber =
+    elemManager->ConstructViewAccessor<array1d<globalIndex>, arrayView1d<globalIndex const>>( resDofKey );
 
   elemManager->forElementSubRegions<WellElementSubRegion>( [&]( WellElementSubRegion const * const subRegion )
   {
     PerforationData const * const perforationData = subRegion->GetPerforationData();
 
     // get the well degrees of freedom and ghosting info
-    arrayView1d< globalIndex > const & wellElemDofNumber =
+    arrayView1d< globalIndex const> const & wellElemDofNumber =
       subRegion->getReference< array1d<globalIndex> >( wellDofKey );
 
     // get the well element indices corresponding to each perforation
@@ -156,15 +160,15 @@ void CompositionalMultiphaseReservoir::SetupSystem( DomainPartition * const doma
   matrix.close();
 }
 
-void CompositionalMultiphaseReservoir::AssembleCouplingTerms( real64 const GEOSX_UNUSED_ARG( time_n ),
+void CompositionalMultiphaseReservoir::AssembleCouplingTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                                               real64 const dt,
-                                                              DomainPartition const * const domain,
+                                                              DomainPartition * const domain,
                                                               DofManager const * const dofManager,
                                                               ParallelMatrix * const matrix,
                                                               ParallelVector * const rhs )
 {
-  MeshLevel const * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ElementRegionManager const * const elemManager = meshLevel->getElemManager();
+  MeshLevel * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  ElementRegionManager * const elemManager = meshLevel->getElemManager();
 
   localIndex constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
   localIndex constexpr maxNumDof  = maxNumComp + 1;
@@ -175,13 +179,13 @@ void CompositionalMultiphaseReservoir::AssembleCouplingTerms( real64 const GEOSX
   string const resDofKey  = dofManager->getKey( m_wellSolver->ResElementDofName() );
   string const wellDofKey = dofManager->getKey( m_wellSolver->WellElementDofName() );
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d<globalIndex> > 
-  resDofNumberAccessor = elemManager->ConstructViewAccessor< array1d<globalIndex>, arrayView1d<globalIndex> >( resDofKey );
+  ElementRegionManager::ElementViewAccessor< arrayView1d<globalIndex const> > 
+  resDofNumberAccessor = elemManager->ConstructViewAccessor< array1d<globalIndex>, arrayView1d<globalIndex const> >( resDofKey );
 
   ElementRegionManager::ElementViewAccessor< arrayView1d<globalIndex const> >::ViewTypeConst 
   resDofNumber = resDofNumberAccessor.toViewConst();
 
-  elemManager->forElementSubRegions<WellElementSubRegion>( [&]( WellElementSubRegion const * const subRegion )
+  elemManager->forElementSubRegions<WellElementSubRegion>( [&]( WellElementSubRegion * const subRegion )
   {
 
     PerforationData const * const perforationData = subRegion->GetPerforationData();
@@ -294,7 +298,7 @@ void CompositionalMultiphaseReservoir::AssembleCouplingTerms( real64 const GEOSX
   });  
 }
 
-void CompositionalMultiphaseReservoir::ComputeAllPerforationRates( WellElementSubRegion const * const subRegion ) 
+void CompositionalMultiphaseReservoir::ComputeAllPerforationRates( WellElementSubRegion * const subRegion ) 
 {
   localIndex constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS; 
   
@@ -319,11 +323,11 @@ void CompositionalMultiphaseReservoir::ComputeAllPerforationRates( WellElementSu
   ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> const & resPhaseRelPerm                = m_resPhaseRelPerm;
   ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> const & dResPhaseRelPerm_dPhaseVolFrac = m_dResPhaseRelPerm_dPhaseVolFrac;
 
-  PerforationData const * const perforationData = subRegion->GetPerforationData();
+  PerforationData * const perforationData = subRegion->GetPerforationData();
 
   // get depth
   arrayView1d<real64 const> const & 
-  wellElemGravDepth = subRegion->getReference<array1d<real64>>( CompositionalMultiphaseWell::viewKeyStruct::gravityDepthString );
+  wellElemGravCoef = subRegion->getReference<array1d<real64>>( CompositionalMultiphaseWell::viewKeyStruct::gravityCoefString );
     
   // get well primary variables on well elements
   arrayView1d<real64 const> const & 
@@ -350,7 +354,7 @@ void CompositionalMultiphaseReservoir::ComputeAllPerforationRates( WellElementSu
 
   // get well variables on perforations
   arrayView1d<real64 const> const & 
-  perfGravDepth = perforationData->getReference<array1d<real64>>( CompositionalMultiphaseWell::viewKeyStruct::gravityDepthString );
+  perfGravCoef = perforationData->getReference<array1d<real64>>( CompositionalMultiphaseWell::viewKeyStruct::gravityCoefString );
 
   arrayView1d<localIndex const> const & 
   perfWellElemIndex = perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::wellElementIndexString );
@@ -460,20 +464,16 @@ void CompositionalMultiphaseReservoir::ComputeAllPerforationRates( WellElementSu
 
     multiplier[CompositionalMultiphaseWell::SubRegionTag::WELL] = -1.0;
 
-    integer const gravityFlag = m_wellSolver->getReference<integer>( WellSolverBase::viewKeyStruct::gravityFlagString );
-    if (gravityFlag)
-    {
-      real64 const gravD = ( perfGravDepth[iperf] - wellElemGravDepth[iwelem] );
+    real64 const gravD = ( perfGravCoef[iperf] - wellElemGravCoef[iwelem] );
 
-      pressure[CompositionalMultiphaseWell::SubRegionTag::WELL] += 
-        wellElemMixtureDensity[iwelem] * gravD;
-      dPressure_dP[CompositionalMultiphaseWell::SubRegionTag::WELL] += 
-        dWellElemMixtureDensity_dPres[iwelem] * gravD;
-      for (localIndex ic = 0; ic < NC; ++ic)
-      {
-        dPressure_dC[CompositionalMultiphaseWell::SubRegionTag::WELL][ic] += 
-          dWellElemMixtureDensity_dComp[iwelem][ic] * gravD;
-      }
+    pressure[CompositionalMultiphaseWell::SubRegionTag::WELL] += 
+      wellElemMixtureDensity[iwelem] * gravD;
+    dPressure_dP[CompositionalMultiphaseWell::SubRegionTag::WELL] += 
+      dWellElemMixtureDensity_dPres[iwelem] * gravD;
+    for (localIndex ic = 0; ic < NC; ++ic)
+    {
+      dPressure_dC[CompositionalMultiphaseWell::SubRegionTag::WELL][ic] += 
+        dWellElemMixtureDensity_dComp[iwelem][ic] * gravD;
     }
 
     // get transmissibility at the interface

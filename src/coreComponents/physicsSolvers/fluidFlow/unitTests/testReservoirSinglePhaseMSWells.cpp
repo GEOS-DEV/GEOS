@@ -23,8 +23,9 @@
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/multiphysics/ReservoirSolverBase.hpp"
 #include "physicsSolvers/multiphysics/SinglePhaseReservoir.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseFVM.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseWell.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseFlow.hpp"
 
 using namespace geosx;
 using namespace geosx::dataRepository;
@@ -54,7 +55,7 @@ void testNumericalJacobian( SinglePhaseReservoir * solver,
                             LAMBDA && assembleFunction )
 {
   SinglePhaseWell * wellSolver = solver->GetWellSolver()->group_cast<SinglePhaseWell*>();
-  SinglePhaseFlow * flowSolver = solver->GetFlowSolver()->group_cast<SinglePhaseFlow*>();
+  SinglePhaseFVM * flowSolver = solver->GetFlowSolver()->group_cast<SinglePhaseFVM*>();
 
   ParallelMatrix & jacobian = solver->getSystemMatrix();
   ParallelVector & residual = solver->getSystemRhs();
@@ -91,7 +92,7 @@ void testNumericalJacobian( SinglePhaseReservoir * solver,
   for (localIndex er = 0; er < elemManager->numRegions(); ++er)
   {
     ElementRegionBase * const elemRegion = elemManager->GetRegion(er);
-    elemRegion->forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const GEOSX_UNUSED_ARG( esr ),
+    elemRegion->forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const GEOSX_UNUSED_PARAM( esr ),
                                                                         auto * const subRegion )
     {
       // get the dof numbers and ghosting information
@@ -103,10 +104,10 @@ void testNumericalJacobian( SinglePhaseReservoir * solver,
 
       // get the primary variables on reservoir elements
       arrayView1d<real64> & pres =
-        subRegion-> template getReference<array1d<real64>>( SinglePhaseFlow::viewKeyStruct::pressureString );
+        subRegion-> template getReference<array1d<real64>>( SinglePhaseFVM::viewKeyStruct::pressureString );
 
       arrayView1d<real64> & dPres =
-        subRegion-> template getReference<array1d<real64>>( SinglePhaseFlow::viewKeyStruct::deltaPressureString );
+        subRegion-> template getReference<array1d<real64>>( SinglePhaseFVM::viewKeyStruct::deltaPressureString );
 
       // a) compute all the derivatives wrt to the pressure in RESERVOIR elem ei 
       for (localIndex ei = 0; ei < subRegion->size(); ++ei)
@@ -297,7 +298,7 @@ protected:
 
     solver = problemManager->GetPhysicsSolverManager().GetGroup<SinglePhaseReservoir>( "reservoirSystem" );
 
-    GEOS_ERROR_IF( solver == nullptr, "ReservoirSystem not found" );
+    GEOSX_ERROR_IF( solver == nullptr, "ReservoirSystem not found" );
 
   }
 
@@ -327,6 +328,12 @@ TEST_F(ReservoirSolverTest, jacobianNumericalCheck_Perforation)
 
   DomainPartition * domain = problemManager->getDomainPartition();
 
+  solver->SetupSystem( domain,
+		       solver->getDofManager(),
+                       solver->getSystemMatrix(),
+                       solver->getSystemRhs(),
+                       solver->getSystemSolution() );
+  
   solver->ImplicitStepSetup( time,
                              dt,
                              domain,
@@ -336,7 +343,7 @@ TEST_F(ReservoirSolverTest, jacobianNumericalCheck_Perforation)
                              solver->getSystemSolution() );
 
   testNumericalJacobian( solver, domain, eps, tol,
-                         [&] ( SinglePhaseWell * const GEOSX_UNUSED_ARG( targetSolver ),
+                         [&] ( SinglePhaseWell * const GEOSX_UNUSED_PARAM( targetSolver ),
                                DomainPartition * const targetDomain,
                                ParallelMatrix * targetJacobian,
                                ParallelVector * targetResidual,
@@ -356,6 +363,12 @@ TEST_F(ReservoirSolverTest, jacobianNumericalCheck_Flux)
 
   DomainPartition * domain = problemManager->getDomainPartition();
 
+  solver->SetupSystem( domain,
+		       solver->getDofManager(),
+                       solver->getSystemMatrix(),
+                       solver->getSystemRhs(),
+                       solver->getSystemSolution() );
+  
   solver->ImplicitStepSetup( time,
                              dt,
                              domain,
@@ -385,7 +398,13 @@ TEST_F(ReservoirSolverTest, jacobianNumericalCheck_Control)
   real64 const dt = 1e4;
 
   DomainPartition * domain = problemManager->getDomainPartition();
-  
+
+  solver->SetupSystem( domain,
+		       solver->getDofManager(),
+                       solver->getSystemMatrix(),
+                       solver->getSystemRhs(),
+                       solver->getSystemSolution() );
+
   solver->ImplicitStepSetup( time,
                              dt,
                              domain,
@@ -416,6 +435,12 @@ TEST_F(ReservoirSolverTest, jacobianNumericalCheck_PressureRel)
 
   DomainPartition * domain = problemManager->getDomainPartition();
 
+  solver->SetupSystem( domain,
+		       solver->getDofManager(),
+                       solver->getSystemMatrix(),
+                       solver->getSystemRhs(),
+                       solver->getSystemSolution() );
+  
   solver->ImplicitStepSetup( time,
                              dt,
                              domain,

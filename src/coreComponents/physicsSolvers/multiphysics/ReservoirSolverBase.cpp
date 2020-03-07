@@ -61,8 +61,8 @@ void ReservoirSolverBase::PostProcessInput()
   m_flowSolver = this->getParent()->GetGroup<FlowSolverBase>( m_flowSolverName );
   m_wellSolver = this->getParent()->GetGroup<WellSolverBase>( m_wellSolverName );
 
-  GEOS_ERROR_IF( m_flowSolver == nullptr, "Flow solver not found or invalid type: " << m_flowSolverName );
-  GEOS_ERROR_IF( m_wellSolver == nullptr, "Well solver not found or invalid type: " << m_wellSolverName );
+  GEOSX_ERROR_IF( m_flowSolver == nullptr, "Flow solver not found or invalid type: " << m_flowSolverName );
+  GEOSX_ERROR_IF( m_wellSolver == nullptr, "Well solver not found or invalid type: " << m_wellSolverName );
 
   m_wellSolver->SetFlowSolverName( m_flowSolverName );
   m_flowSolver->setReservoirWellsCoupling();
@@ -87,6 +87,9 @@ real64 ReservoirSolverBase::SolverStep( real64 const & time_n,
 {
   real64 dt_return = dt;
 
+  // setup the coupled linear system
+  SetupSystem( domain, m_dofManager, m_matrix, m_rhs, m_solution );
+  
   // setup reservoir and well systems
   ImplicitStepSetup( time_n, dt, domain, m_dofManager, m_matrix, m_rhs, m_solution );
 
@@ -111,9 +114,6 @@ void ReservoirSolverBase::ImplicitStepSetup( real64 const & time_n,
                                              ParallelVector & rhs,
                                              ParallelVector & solution )
 {
-  // bind the stored reservoir views to the current domain
-  ResetViews( domain );
-
   // setup the individual solvers
   m_flowSolver->ImplicitStepSetup( time_n, dt, domain,
                                    dofManager,
@@ -126,23 +126,21 @@ void ReservoirSolverBase::ImplicitStepSetup( real64 const & time_n,
                                    rhs,
                                    solution );
 
-  // setup the coupled linear system
-  SetupSystem( domain, dofManager, matrix, rhs, solution );
 }
 
-void ReservoirSolverBase::SetupDofs( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
-                                     DofManager & GEOSX_UNUSED_ARG( dofManager ) ) const
+void ReservoirSolverBase::SetupDofs( DomainPartition const * const GEOSX_UNUSED_PARAM( domain ),
+                                     DofManager & GEOSX_UNUSED_PARAM( dofManager ) ) const
 {
-  GEOS_ERROR( "ReservoirSolverBase::SetupDofs called!. Should be overridden." );
+  GEOSX_ERROR( "ReservoirSolverBase::SetupDofs called!. Should be overridden." );
 }
 
-void ReservoirSolverBase::SetupSystem( DomainPartition * const GEOSX_UNUSED_ARG( domain ),
-                                       DofManager & GEOSX_UNUSED_ARG( dofManager ),
-                                       ParallelMatrix & GEOSX_UNUSED_ARG( matrix ),
-                                       ParallelVector & GEOSX_UNUSED_ARG( rhs ),
-                                       ParallelVector & GEOSX_UNUSED_ARG( solution ) )
+void ReservoirSolverBase::SetupSystem( DomainPartition * const GEOSX_UNUSED_PARAM( domain ),
+                                       DofManager & GEOSX_UNUSED_PARAM( dofManager ),
+                                       ParallelMatrix & GEOSX_UNUSED_PARAM( matrix ),
+                                       ParallelVector & GEOSX_UNUSED_PARAM( rhs ),
+                                       ParallelVector & GEOSX_UNUSED_PARAM( solution ) )
 {
-  GEOS_ERROR( "ReservoirSolverBase::SetupSystem called!. Should be overridden." );
+  GEOSX_ERROR( "ReservoirSolverBase::SetupSystem called!. Should be overridden." );
 }
 
 void ReservoirSolverBase::AssembleSystem( real64 const time_n,
@@ -176,17 +174,16 @@ void ReservoirSolverBase::AssembleSystem( real64 const time_n,
 
   if( getLogLevel() == 2 )
   {
-    GEOS_LOG_RANK_0( "After ReservoirSolverBase::AssembleSystem" );
-    GEOS_LOG_RANK_0("\nJacobian:\n");
+    GEOSX_LOG_RANK_0( "After ReservoirSolverBase::AssembleSystem" );
+    GEOSX_LOG_RANK_0("\nJacobian:\n");
     std::cout << matrix;
-    GEOS_LOG_RANK_0("\nResidual:\n");
+    GEOSX_LOG_RANK_0("\nResidual:\n");
     std::cout << rhs;
   }
 
   if( getLogLevel() >= 3 )
   {
-    SystemSolverParameters * const solverParams = getSystemSolverParameters();
-    integer newtonIter = solverParams->numNewtonIterations();
+    integer newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
 
     string filename_mat = "matrix_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
     matrix.write( filename_mat, true );
@@ -194,20 +191,20 @@ void ReservoirSolverBase::AssembleSystem( real64 const time_n,
     string filename_rhs = "rhs_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
     rhs.write( filename_rhs, true );
 
-    GEOS_LOG_RANK_0( "After ReservoirSolverBase::AssembleSystem" );
-    GEOS_LOG_RANK_0( "Jacobian: written to " << filename_mat );
-    GEOS_LOG_RANK_0( "Residual: written to " << filename_rhs );
+    GEOSX_LOG_RANK_0( "After ReservoirSolverBase::AssembleSystem" );
+    GEOSX_LOG_RANK_0( "Jacobian: written to " << filename_mat );
+    GEOSX_LOG_RANK_0( "Residual: written to " << filename_rhs );
   }
 }
 
-void ReservoirSolverBase::AssembleCouplingTerms( real64 const GEOSX_UNUSED_ARG( time_n ),
-                                                 real64 const GEOSX_UNUSED_ARG( dt ),
-                                                 DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
-                                                 DofManager const * const GEOSX_UNUSED_ARG( dofManager ),
-                                                 ParallelMatrix * const GEOSX_UNUSED_ARG( matrix ),
-                                                 ParallelVector * const GEOSX_UNUSED_ARG( rhs ) )
+void ReservoirSolverBase::AssembleCouplingTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
+                                                 real64 const GEOSX_UNUSED_PARAM( dt ),
+                                                 DomainPartition * const GEOSX_UNUSED_PARAM( domain ),
+                                                 DofManager const * const GEOSX_UNUSED_PARAM( dofManager ),
+                                                 ParallelMatrix * const GEOSX_UNUSED_PARAM( matrix ),
+                                                 ParallelVector * const GEOSX_UNUSED_PARAM( rhs ) )
 {
-  GEOS_ERROR( "ReservoirSolverBase::AssembleCouplingTerms called!. Should be overridden." );
+  GEOSX_ERROR( "ReservoirSolverBase::AssembleCouplingTerms called!. Should be overridden." );
 }
 
 void ReservoirSolverBase::ApplyBoundaryConditions( real64 const time_n,
@@ -249,8 +246,8 @@ void ReservoirSolverBase::SolveSystem( DofManager const & dofManager,
 
   if( getLogLevel() == 2 )
   {
-    GEOS_LOG_RANK_0("After SinglePhaseFlow::SolveSystem");
-    GEOS_LOG_RANK_0("\nSolution:\n");
+    GEOSX_LOG_RANK_0("After SinglePhaseFlow::SolveSystem");
+    GEOSX_LOG_RANK_0("\nSolution:\n");
     std::cout << solution;
   }
 }
@@ -293,7 +290,7 @@ void ReservoirSolverBase::ImplicitStepComplete( real64 const& time_n,
   m_wellSolver->ImplicitStepComplete( time_n, dt, domain );
 }
 
-void ReservoirSolverBase::ResetViews( DomainPartition * const GEOSX_UNUSED_ARG( domain ) )
+void ReservoirSolverBase::ResetViews( DomainPartition * const GEOSX_UNUSED_PARAM( domain ) )
 {
 }
 

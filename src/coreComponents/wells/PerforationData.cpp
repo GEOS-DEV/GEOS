@@ -139,21 +139,21 @@ void PerforationData::ConnectToWellElements( InternalWellGenerator const & wellG
   {
     globalIndex const iwelemGlobal = perfElemIndexGlobal[m_localToGlobalMap[iperfLocal]];
     globalIndex const ielemGlobal  = elemOffsetGlobal + iwelemGlobal;
-    GEOS_ASSERT( globalToLocalWellElemMap.count( ielemGlobal ) > 0 );
+    GEOSX_ASSERT( globalToLocalWellElemMap.count( ielemGlobal ) > 0 );
     m_wellElementIndex[iperfLocal] = globalToLocalWellElemMap.at( ielemGlobal ); 
   }
 
   //DebugLocalPerforations();
 }
  
-void PerforationData::InitializePostInitialConditions_PreSubGroups( Group * const GEOSX_UNUSED_ARG( problemManager ) )
+void PerforationData::InitializePostInitialConditions_PreSubGroups( Group * const GEOSX_UNUSED_PARAM( problemManager ) )
 {
   for (localIndex iperf = 0; iperf < size(); ++iperf)
   {
     if (m_transmissibility[iperf] < 0.0)
     {
       // TODO: compute transmissibility internally
-      GEOS_ERROR( "Invalid transmissibility value: " << m_transmissibility[iperf] );
+      GEOSX_ERROR( "Invalid transmissibility value: " << m_transmissibility[iperf] );
     }
   }
 }

@@ -140,7 +140,7 @@ public:
    * @brief Recompute mixture densities using current values of pressure and composition
    * @param subRegion the well subregion containing all the primary and dependent fields
    */
-  void UpdateMixtureDensity( WellElementSubRegion const * const subRegion );
+  void UpdateMixtureDensity( WellElementSubRegion * const subRegion );
 
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)

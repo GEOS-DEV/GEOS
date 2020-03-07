@@ -42,6 +42,7 @@ class R2TensorT : public TensorBaseT< T_dim*T_dim >
 public:
   //**** CONSTRUCTORS AND DESTRUCTORS *****************************************
   /// default constructor
+  GEOSX_HOST_DEVICE
   R2TensorT(void);
 
   /**
@@ -119,12 +120,14 @@ public:
   void AjiBjk( const R2TensorT<T_dim>& A, const R2SymTensorT<T_dim>& B );
 
   /// multiply (dyadic product) Rank1 tensor with Rank 1 tensor
+  GEOSX_HOST_DEVICE
   void dyadic_ab( const R1TensorT<T_dim>& a, const R1TensorT<T_dim>& b );
 
   /// multiply (dyadic product) Rank1 tensor with itself
   void dyadic_aa( const R1TensorT<T_dim>& a );
 
   /// multiply (dyadic product) Rank1 tensor with Rank 1 tensor and add
+  GEOSX_HOST_DEVICE
   void plus_dyadic_ab( const R1TensorT<T_dim>& a, const R1TensorT<T_dim>& b );
 
   void FillColumn( const int col, const R1TensorT<T_dim>& a );
@@ -149,6 +152,7 @@ public:
   realT Inner(void) const;
 
   /// Trace
+  GEOSX_HOST_DEVICE
   realT Trace(void) const;
 
   /// Determinant
@@ -234,6 +238,7 @@ void R2TensorT<T_dim>::print( std::ostream& os ) const
  * @return none
  */
 template< int T_dim >
+GEOSX_HOST_DEVICE
 R2TensorT<T_dim>::R2TensorT(void):
   TensorBaseT< T_dim*T_dim >()
 {}
@@ -642,7 +647,7 @@ inline void R2TensorT<T_dim>::AijBjk( const R2SymTensorT<T_dim>& A, const R2Tens
   }
   else
   {
-    GEOS_WARNING("R2TensorT::AijBjk(R2SymTensorT,R2TensorT) not implemented for dimension > 3 ");
+    GEOSX_WARNING("R2TensorT::AijBjk(R2SymTensorT,R2TensorT) not implemented for dimension > 3 ");
   }
 }
 
@@ -685,7 +690,7 @@ inline void R2TensorT<T_dim>::AijBkj( const R2SymTensorT<T_dim>& A, const R2Tens
 //  }
 //  else
 //  {
-//    GEOS_WARNING("R2TensorT::AijBkj(R2SymTensorT,R2TensorT) not implemented for dimension > 3");
+//    GEOSX_WARNING("R2TensorT::AijBkj(R2SymTensorT,R2TensorT) not implemented for dimension > 3");
 //  }
 }
 
@@ -725,7 +730,7 @@ inline void R2TensorT<T_dim>::AijBjk( const R2TensorT<T_dim>& A, const R2SymTens
   }
   else
   {
-    GEOS_WARNING("R2TensorT::AijBjk(R2TensorT,R2SymTensorT) not implemented for dimension > 3");
+    GEOSX_WARNING("R2TensorT::AijBjk(R2TensorT,R2SymTensorT) not implemented for dimension > 3");
   }
 }
 
@@ -765,7 +770,7 @@ inline void R2TensorT<T_dim>::AjiBjk( const R2TensorT<T_dim>& A, const R2SymTens
   }
   else
   {
-    GEOS_WARNING("R2TensorT::AjiBjk(R2TensorT,R2SymTensorT) not implemented for dimension > 3");
+    GEOSX_WARNING("R2TensorT::AjiBjk(R2TensorT,R2SymTensorT) not implemented for dimension > 3");
   }
 }
 
@@ -778,6 +783,7 @@ inline void R2TensorT<T_dim>::AjiBjk( const R2TensorT<T_dim>& A, const R2SymTens
  *\otimes b}\f$ -or- \f$a_i b_j\f$
  */
 template< int T_dim >
+GEOSX_HOST_DEVICE
 inline void R2TensorT<T_dim>::dyadic_ab( const R1TensorT<T_dim>& a, const R1TensorT<T_dim>& b )
 {
 //  if( T_dim == 2 )
@@ -804,7 +810,7 @@ inline void R2TensorT<T_dim>::dyadic_ab( const R1TensorT<T_dim>& a, const R1Tens
 //  }
 //  else
 //  {
-//    GEOS_WARNING("R2TensorT::dyadic_ab(R1TensorT,R1TensorT) not implemented for dimension > 3");
+//    GEOSX_WARNING("R2TensorT::dyadic_ab(R1TensorT,R1TensorT) not implemented for dimension > 3");
 //  }
 }
 
@@ -844,7 +850,7 @@ inline void R2TensorT<T_dim>::dyadic_aa( const R1TensorT<T_dim>& a )
   }
   else
   {
-    GEOS_WARNING("R2TensorT::dyadic_ab(R1TensorT,R1TensorT) not implemented for dimension > 3");
+    GEOSX_WARNING("R2TensorT::dyadic_ab(R1TensorT,R1TensorT) not implemented for dimension > 3");
   }
 }
 
@@ -857,6 +863,7 @@ inline void R2TensorT<T_dim>::dyadic_aa( const R1TensorT<T_dim>& a )
  * tensor.
  */
 template< int T_dim >
+GEOSX_HOST_DEVICE
 inline void R2TensorT<T_dim>::plus_dyadic_ab( const R1TensorT<T_dim>& a, const R1TensorT<T_dim>& b )
 {
 //  if( T_dim == 2 )
@@ -883,7 +890,7 @@ inline void R2TensorT<T_dim>::plus_dyadic_ab( const R1TensorT<T_dim>& a, const R
 //  }
 //  else
 //  {
-//    GEOS_WARNING("R2TensorT::dyadic_ab(R1TensorT,R1TensorT) not implemented for dimension > 3");
+//    GEOSX_WARNING("R2TensorT::dyadic_ab(R1TensorT,R1TensorT) not implemented for dimension > 3");
 //  }
 }
 
@@ -893,6 +900,7 @@ inline void R2TensorT<T_dim>::plus_dyadic_ab( const R1TensorT<T_dim>& a, const R
  * This function returns the trace of the tensor that it is called from.
  */
 template< int T_dim >
+GEOSX_HOST_DEVICE
 inline realT R2TensorT<T_dim>::Trace(void) const
 {
   realT trace=0;
@@ -937,7 +945,7 @@ inline realT R2TensorT<T_dim>::Det(void) const
           + this->t_data[6]*( this->t_data[1]*(this->t_data[5]) - this->t_data[2]*(this->t_data[4]) );
   else
   {
-    GEOS_WARNING("R2TensorT::Det() not implemented for dimension > 3");
+    GEOSX_WARNING("R2TensorT::Det() not implemented for dimension > 3");
   }
 
   return det;
@@ -964,7 +972,7 @@ inline realT R2TensorT<T_dim>::Inner(void) const
            + this->t_data[8]*(this->t_data[8]);
   else
   {
-    GEOS_WARNING("R2TensorT::Inner() not implemented for dimension > 3");
+    GEOSX_WARNING("R2TensorT::Inner() not implemented for dimension > 3");
   }
 
   return rval;
@@ -996,7 +1004,7 @@ inline realT R2TensorT<T_dim>::OneMinusDet(void) const
               - ( this->t_data[2]*(this->t_data[3])*(this->t_data[7]) + this->t_data[1]*(this->t_data[5])*(this->t_data[6]) );
   else
   {
-    GEOS_WARNING("R2TensorT::Det() not implemented for dimension > 3");
+    GEOSX_WARNING("R2TensorT::Det() not implemented for dimension > 3");
   }
 
   return One_Det;
@@ -1025,7 +1033,7 @@ inline realT R2TensorT<T_dim>::Inverse( R2TensorT<T_dim>& a )
   realT const det = a.t_data[0] * o1 + a.t_data[3] * o2 + a.t_data[6] * o3;
 
   realT const tol = 1.0e-14 * a.MaxVal();
-  GEOS_ERROR_IF(std::abs(det) <= tol, "Tolerance error. |det| = " << std::abs(det) << ", tol = " << tol);
+  GEOSX_ERROR_IF(std::abs(det) <= tol, "Tolerance error. |det| = " << std::abs(det) << ", tol = " << tol);
   
   realT const o11 = 1.0 / det;
 
@@ -1101,7 +1109,7 @@ inline R2TensorT<T_dim>& R2TensorT<T_dim>::Inverse_I( R2TensorT<T_dim>& a )
   }
   else
   {
-    GEOS_WARNING("R2TensorT::Inverse( R2TensorT ) not implemented for dimension > 3");
+    GEOSX_WARNING("R2TensorT::Inverse( R2TensorT ) not implemented for dimension > 3");
   }
   return *this;
 }
@@ -1170,7 +1178,7 @@ inline void R2TensorT<T_dim>::Aijkl_to_Bmn( const R4minSymTensorT<3>& A)
   int n_dim = 6;
 
   if (T_dim!=6)
-    GEOS_WARNING( "R2TensorT<T_dim>::Aijkl_to_Bmn not implemented for T_dim /= 6");
+    GEOSX_WARNING( "R2TensorT<T_dim>::Aijkl_to_Bmn not implemented for T_dim /= 6");
   else
   {
     for(int ii=0,m=0,j=0 ; m<n_dim ; m+=++ii)
@@ -1236,7 +1244,7 @@ void R2TensorT<T_dim>::SetMaxVal( const R2TensorT<T_dim>& A )
 
   }
   else
-    GEOS_WARNING("R1TensorT not implemented for nsdof>3");
+    GEOSX_WARNING("R1TensorT not implemented for nsdof>3");
 
 }
 #endif

@@ -37,17 +37,11 @@ FieldSpecificationManager::FieldSpecificationManager( string const & name, Group
 }
 
 
-FieldSpecificationManager * FieldSpecificationManager::get()
+FieldSpecificationManager & FieldSpecificationManager::get()
 {
-  static FieldSpecificationManager * bcman = new FieldSpecificationManager( "FieldSpecifications", nullptr );
+  static FieldSpecificationManager bcman( "FieldSpecifications", nullptr );
   return bcman;
 }
-
-void FieldSpecificationManager::finalize()
-{
-  delete get();
-}
-
 
 FieldSpecificationManager::~FieldSpecificationManager()
 {
@@ -77,7 +71,7 @@ void FieldSpecificationManager::ApplyInitialConditions( Group * domain ) const
   Apply( 0.0, domain, "", "",
          [&]( FieldSpecificationBase const * const bc,
          string const &,
-         set<localIndex> const & targetSet,
+         SortedArrayView<localIndex const> const & targetSet,
          Group * const targetGroup,
          string const fieldName )
     {

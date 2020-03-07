@@ -12,6 +12,7 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
+
 /**
  * @file Group.hpp
  */
@@ -176,6 +177,12 @@ public:
    * @param[in] indent The level of indentation to add to this level of output.
    */
   void PrintDataHierarchy( integer indent = 0 );
+
+  /**
+   * @brief Generates a table formatted string containing all input options.
+   * @return a string containing a well formatted table containing input options.
+   */
+  string dumpInputOptions();
 
   ///@}
 
@@ -506,11 +513,11 @@ public:
 
   /** @cond DO_NOT_DOCUMENT */
   template< typename CONTAINERTYPE, typename LAMBDA >
-  static bool applyLambdaToContainer( CONTAINERTYPE const * const GEOSX_UNUSED_ARG( group ), LAMBDA && GEOSX_UNUSED_ARG( lambda ) )
+  static bool applyLambdaToContainer( CONTAINERTYPE const * const GEOSX_UNUSED_PARAM( group ), LAMBDA && GEOSX_UNUSED_PARAM( lambda ) )
   { return false; }
 
   template< typename CONTAINERTYPE, typename LAMBDA >
-  static bool applyLambdaToContainer( CONTAINERTYPE * const GEOSX_UNUSED_ARG( group ), LAMBDA && GEOSX_UNUSED_ARG( lambda ) )
+  static bool applyLambdaToContainer( CONTAINERTYPE * const GEOSX_UNUSED_PARAM( group ), LAMBDA && GEOSX_UNUSED_PARAM( lambda ) )
   { return false; }
   /** @endcond */
 
@@ -589,9 +596,9 @@ public:
     for( auto & subGroupIter : m_subGroups )
     {
       applyLambdaToContainer< Group, GROUPTYPE, GROUPTYPES... >( subGroupIter.second, [&]( auto * const castedSubGroup )
-          {
-            lambda( castedSubGroup );
-          } );
+      {
+        lambda( castedSubGroup );
+      } );
     }
   }
 
@@ -604,9 +611,9 @@ public:
     for( auto const & subGroupIter : m_subGroups )
     {
       applyLambdaToContainer< Group, GROUPTYPE, GROUPTYPES... >( subGroupIter.second, [&]( auto const * const castedSubGroup )
-          {
-            lambda( castedSubGroup );
-          } );
+      {
+        lambda( castedSubGroup );
+      } );
     }
   }
 
@@ -624,9 +631,9 @@ public:
     for( string const & subgroupName : subgroupNames )
     {
       applyLambdaToContainer< Group, GROUPTYPE, GROUPTYPES... >( GetGroup( subgroupName ), [&]( auto * const castedSubGroup )
-          {
-            lambda( castedSubGroup );
-          } );
+      {
+        lambda( castedSubGroup );
+      } );
     }
   }
 
@@ -639,9 +646,9 @@ public:
     for( string const & subgroupName : subgroupNames )
     {
       applyLambdaToContainer< Group, GROUPTYPE, GROUPTYPES... >( GetGroup( subgroupName ), [&]( auto const * const castedSubGroup )
-          {
-            lambda( castedSubGroup );
-          } );
+      {
+        lambda( castedSubGroup );
+      } );
     }
   }
   ///@}
@@ -823,16 +830,6 @@ public:
   template< typename T, typename TBASE=T >
   Wrapper< TBASE > * registerWrapper( Group::wrapperMap::KeyIndex & viewKey );
 
-
-  /**
-   * @copybrief registerWrapper(std::string const &,wrapperMap::KeyIndex::index_type * const)
-   * @param[in] name the name of the wrapper to use as a string key
-   * @param[in] type the runtime type to wrap in the new Wrapper
-   * @return         an un-typed pointer to the newly registered/created wrapper
-   */
-  WrapperBase * registerWrapper( std::string const & name,
-                                 rtTypes::TypeIDs const & type );
-
   /**
    * @brief Register a Wrapper around a given object and take ownership.
    * @tparam T the type of the wrapped object
@@ -945,27 +942,35 @@ public:
    * @brief Get the size required to pack a list of wrappers.
    * @param[in] wrapperNames an array that contains the names of the wrappers to pack.
    * @param[in] recursive    whether or not to perform a recursive pack.
+   * @param[in] on_device    whether to use device-based packing functions
+   *                         (buffer must be either pinned or a device pointer)
    * @return                 the size of the buffer required to pack the wrappers.
    */
   virtual localIndex PackSize( string_array const & wrapperNames,
-                               integer const recursive ) const;
+                               integer const recursive,
+                               bool on_device = false ) const;
 
   /**
    * @brief Get the size required to pack a list of indices within a list of wrappers.
    * @param[in] wrapperNames an array that contains the names of the wrappers to pack.
    * @param[in] packList     the list of indices to pack
    * @param[in] recursive    whether or not to perform a recursive pack.
+   * @param[in] on_device    whether to use device-based packing functions
+   *                         (buffer must be either pinned or a device pointer)
    * @return                 the size of the buffer required to pack the wrapper indices.
    */
   virtual localIndex PackSize( string_array const & wrapperNames,
                                arrayView1d< localIndex const > const & packList,
-                               integer const recursive ) const;
+                               integer const recursive,
+                               bool on_device = false ) const;
 
   /**
    * @brief Pack a list of wrappers to a buffer.
    * @param[in,out] buffer   the buffer that will be packed.
    * @param[in] wrapperNames an array that contains the names of the wrappers to pack.
    * @param[in] recursive    whether or not to perform a recursive pack.
+   * @param[in] on_device    whether to use device-based packing functions
+   *                         (buffer must be either pinned or a device pointer)
    * @return                 the size of data packed to the buffer.
    *
    * This function takes in a reference to a pointer @p buffer, and packs data specified by
@@ -976,7 +981,8 @@ public:
    */
   virtual localIndex Pack( buffer_unit_type * & buffer,
                            string_array const & wrapperNames,
-                           integer const recursive ) const;
+                           integer const recursive,
+                           bool on_device = false ) const;
 
   /**
    * @brief Pack a list of indices within a list of wrappers.
@@ -984,6 +990,8 @@ public:
    * @param[in] wrapperNames an array that contains the names of the wrappers to pack.
    * @param[in] packList     the list of indices to pack
    * @param[in] recursive    whether or not to perform a recursive pack.
+   * @param[in] on_device    whether to use device-based packing functions
+   *                         (buffer must be either pinned or a device pointer)
    * @return                 the size of data packed to the buffer.
    *
    * This function takes in a reference to a pointer @p buffer, and packs data specified by
@@ -994,13 +1002,16 @@ public:
   virtual localIndex Pack( buffer_unit_type * & buffer,
                            string_array const & wrapperNames,
                            arrayView1d< localIndex const > const & packList,
-                           integer const recursive ) const;
+                           integer const recursive,
+                           bool on_device = false ) const;
 
   /**
    * @brief Unpack a buffer.
    * @param[in,out] buffer   the buffer to unpack
    * @param[in,out] packList the list of indices that will be unpacked.
    * @param[in] recursive    whether or not to perform a recursive unpack.
+   * @param[in] on_device    whether to use device-based packing functions
+   *                         (buffer must be either pinned or a device pointer)
    * @return                 the number of bytes unpacked.
    *
    * This function takes a reference to a pointer to const buffer type, and
@@ -1011,7 +1022,8 @@ public:
    */
   virtual localIndex Unpack( buffer_unit_type const * & buffer,
                              arrayView1d< localIndex > & packList,
-                             integer const recursive );
+                             integer const recursive,
+                             bool on_device = false );
 
   ///@}
 
@@ -1183,18 +1195,18 @@ public:
    *
    * @note An error will be raised if wrapper does not exist or type cast is invalid.
    */
-  template< typename T, typename WRAPPEDTYPE=T, typename LOOKUP_TYPE >
-  typename std::enable_if< std::is_same< T, WRAPPEDTYPE >::value, T const & >::type
+  template< typename T, typename LOOKUP_TYPE >
+  typename Wrapper< T >::ViewTypeConst
   getReference( LOOKUP_TYPE const & lookup ) const
   {
-    Wrapper< WRAPPEDTYPE > const * wrapper = getWrapper< WRAPPEDTYPE >( lookup );
+    Wrapper< T > const * const wrapper = getWrapper< T >( lookup );
     if( wrapper == nullptr )
     {
       if( hasWrapper( lookup ) )
       {
-        GEOS_ERROR( "call to getWrapper results in nullptr but a view exists. Most likely given the incorrect type. lookup : " << lookup );
+        GEOSX_ERROR( "call to getWrapper results in nullptr but a view exists. Most likely given the incorrect type. lookup : " << lookup );
       }
-      GEOS_ERROR( "call to getWrapper results in nullptr and a view does not exist. lookup : " << lookup );
+      GEOSX_ERROR( "call to getWrapper results in nullptr and a view does not exist. lookup : " << lookup );
     }
 
     return wrapper->reference();
@@ -1203,30 +1215,22 @@ public:
   /**
    * @copydoc getReference(LOOKUP_TYPE const &) const
    */
-  template< typename T, typename WRAPPEDTYPE=T, typename LOOKUP_TYPE >
-  typename std::enable_if< !std::is_same< T, WRAPPEDTYPE >::value, T const & >::type
-  getReference( LOOKUP_TYPE const & lookup ) const
+  template< typename T, typename LOOKUP_TYPE >
+  T &
+  getReference( LOOKUP_TYPE const & lookup )
   {
-    static_assert( std::is_base_of< WRAPPEDTYPE, T >::value, "incorrect template arguments" );
-    Wrapper< WRAPPEDTYPE > const * wrapper = getWrapper< WRAPPEDTYPE >( lookup );
+    Wrapper< T > * const wrapper = getWrapper< T >( lookup );
     if( wrapper == nullptr )
     {
       if( hasWrapper( lookup ) )
       {
-        GEOS_ERROR( "call to getWrapper results in nullptr but a view exists. Most likely given the incorrect type. lookup : " << lookup );
+        GEOSX_ERROR( "call to getWrapper results in nullptr but a view exists. Most likely given the incorrect type. lookup : " << lookup );
       }
-      GEOS_ERROR( "call to getWrapper results in nullptr and a view does not exist. lookup : " << lookup );
+      GEOSX_ERROR( "call to getWrapper results in nullptr and a view does not exist. lookup : " << lookup );
     }
 
-    return dynamicCast< T const & >( wrapper->reference() );
+    return wrapper->reference();
   }
-
-  /**
-   * @copydoc getReference(LOOKUP_TYPE const &) const
-   */
-  template< typename T, typename WRAPPEDTYPE=T, typename LOOKUP_TYPE >
-  T & getReference( LOOKUP_TYPE const & lookup )
-  { return const_cast< T & >( const_cast< const Group * >(this)->template getReference< T, WRAPPEDTYPE, LOOKUP_TYPE >( lookup ) ); }
 
   /**
    * @copybrief getReference(LOOKUP_TYPE const &) const
@@ -1237,16 +1241,17 @@ public:
    *
    * @note An error will be raised if wrapper does not exist or type cast is invalid.
    */
-  template< typename T, typename WRAPPEDTYPE=T >
-  T const & getReference( char const * const name ) const
-  { return getReference< T, WRAPPEDTYPE >( string( name ) ); }
+  template< typename T >
+  typename Wrapper< T >::ViewTypeConst
+  getReference( char const * const name ) const
+  { return getReference< T >( string( name ) ); }
 
   /**
    * @copydoc getReference(char const * const) const
    */
-  template< typename T, typename WRAPPEDTYPE=T >
+  template< typename T >
   T & getReference( char const * const name )
-  { return const_cast< T & >( const_cast< const Group * >(this)->getReference< T, WRAPPEDTYPE >( name ) ); }
+  { return getReference< T >( string( name ) ); }
 
   /**
    * @brief Look up a wrapper and get reference to wrapped object.

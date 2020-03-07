@@ -464,7 +464,7 @@ public:
              EpetraVector const & x,
              real64 const beta,
              EpetraVector & y,
-             bool useTranspose = false );
+             bool useTranspose = false ) const;
 
   /**
    * @brief Multiply all elements by scalingFactor.
@@ -515,6 +515,18 @@ public:
 
   //! @name Accessors Methods
   //@{
+
+
+  /**
+   * @brief Returns the number of nozero entries in the longest
+   * row of the matrix.
+   */
+  localIndex maxRowLength() const;
+
+  // TODO: These break the goal of hiding local row indexing from user.  Revise
+  // use cases to use ilower() and iupper();
+  localIndex localRowLength( localIndex localRowIndex ) const;
+  localIndex globalRowLength( globalIndex globalRowIndex ) const;
 
   /**
    * @brief Returns a copy of the data in row <tt>globalRow</tt>.

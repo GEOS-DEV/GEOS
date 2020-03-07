@@ -158,83 +158,52 @@ string_array Split(const std::string& str, const std::string& delimiters)
   return tokens;
 }
 
-/**
-   Remove everything in a string after a comment character (eg '%')
- **/
-void RemoveComments(std::string& str, char d)
+
+integer FindBase64StringLength( integer dataSize )
 {
-  size_t indx = str.find(d);
-  str = str.substr(0,indx);
-}
-
-/**
-   Remove white space from left of string
- **/
-void TrimLeft(std::string& str, const std::string& trimChars)
-{
-  str.erase(0,str.find_first_not_of(trimChars));
-}
-
-/**
-   Remove white space from right of string
- **/
-void TrimRight(std::string& str, const std::string& trimChars) {
-  str.erase(str.find_last_not_of(trimChars)+1);
-}
-
-/**
-   Remove white space around string
- **/
-void Trim(std::string& str, const std::string& trimChars) {
-  TrimLeft(str,trimChars);  TrimRight(str,trimChars);
-}
-
-/// Replace parameters of form "$:NAME" in a string, returns true if a parameter
-// is detected
-/// @param lineStr The string containing the parameters.
-/// @param parameterMap Map of parameter names and replacement strings.
-/// @param prefix Character sequence used to signal start of parameter ("$:" by
-// default).
-bool ReplaceParameters(std::string& lineStr, const std::map<std::string,std::string>& parameterMap,const std::string& prefix){
-
-  bool rv = false;
-  std::map<std::string,std::string>::const_iterator endMap = parameterMap.end();
-
-  const std::string validParamChars = std::string("abcdefghijklmnopqrstuvwxyz") +
-                                      std::string("ABCDEFGHIJKLMNOPQRSTUVWXYZ") +
-                                      std::string("0123456789_");
-
-  size_t pSize = prefix.size();
-  size_t startIndx = lineStr.find(prefix);
-//  size_t endIndx =0;
-
-  while(startIndx < lineStr.size())
+  integer base64StringLength = (dataSize * 8) / 6;
+  while( base64StringLength % 4 )
   {
-    rv = true;
-    size_t startIndxB = startIndx+pSize;
-    size_t endIndx = lineStr.find_first_not_of(validParamChars,startIndxB);
-
-    std::string paramName = lineStr.substr(startIndxB, endIndx-startIndxB);
-
-    std::map<std::string,std::string>::const_iterator itr = parameterMap.find(paramName);
-    if(itr == endMap)
-    {
-      std::map<std::string,std::string>::const_iterator itrB  = parameterMap.begin();
-      while(itrB != parameterMap.end())
-      {
-        ++itrB;
-      }
-
-      GEOS_ERROR("Error: Undefined model parameter: " << paramName << ".");
-    }
-
-    const std::string& replaceStr = itr->second;
-    lineStr.replace(startIndx,endIndx-startIndx,replaceStr);
-
-    startIndx = lineStr.find(prefix);
+    base64StringLength++;
   }
+  return base64StringLength;
+}
 
-  return rv;
+static const std::string base64Chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                       "abcdefghijklmnopqrstuvwxyz"
+                                       "0123456789+/";
+
+string EncodeBase64( unsigned char const * const bytes,
+                     integer dataSize )
+{
+  string output;
+  output.reserve( FindBase64StringLength( dataSize ) );
+  integer val = 0;
+  integer valB = -6;
+  integer size = 0;
+
+  for( integer i = 0 ; i < dataSize ; i++ )
+  {
+    val = ( val << 8 ) + bytes[i];
+    valB += 8;
+    while ( valB >= 0 )
+    {
+      output.push_back( base64Chars[ ( val>>valB ) &0x3F ] ) ; //0x3f is the Hexadecimal for 63
+      ++size;
+      valB -= 6;
+    }
+  }
+  if( valB > -6 )
+  {
+    output.push_back( base64Chars[ ( ( val << 8 ) >> ( valB + 8 ) ) &0x3F ] );
+    ++size;
+  }
+  while( size % 4 )
+  {
+    output.push_back( '=' );
+    ++size;
+  }
+  return output;
 }
 
 }

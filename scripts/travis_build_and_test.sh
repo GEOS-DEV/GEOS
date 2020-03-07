@@ -11,21 +11,33 @@ function or_die () {
     fi
 }
 
-or_die cd /tmp/GEOSX
+# Working in the root of the cloned repository
+or_die cd $(dirname $0)/..
+
 # The -DBLT_MPI_COMMAND_APPEND:STRING=--allow-run-as-root option is added for openmpi
 # which prevents from running as root user by default.
 # And by default, you are root in a docker container.
 # Using this option therefore offers a minimal and convenient way
 # to run the unit tests.
+GEOSX_BUILD_DIR=/tmp/build
 or_die python scripts/config-build.py \
               -hc host-configs/environment.cmake \
               -bt ${CMAKE_BUILD_TYPE} \
-              -bp /tmp/build \
-              -DGEOSX_TPL_DIR=$GEOSX_TPL_DIR \
+              -bp ${GEOSX_BUILD_DIR} \
+              -ip ${GEOSX_DIR} \
+              -DGEOSX_TPL_DIR=${GEOSX_TPL_DIR} \
               -DENABLE_GEOSX_PTP:BOOL=ON \
-              -DBLT_MPI_COMMAND_APPEND:STRING=--allow-run-as-root
-or_die cd /tmp/build
+              -DBLT_MPI_COMMAND_APPEND:STRING=--allow-run-as-root \
+              -DENABLE_CUDA:BOOL=${ENABLE_CUDA:-OFF} \
+              -DCMAKE_CUDA_FLAGS:STRING=\""${CMAKE_CUDA_FLAGS:-Unused}"\"
+
+or_die cd ${GEOSX_BUILD_DIR}
 or_die make -j $(nproc) VERBOSE=1
-or_die ctest -V 
+or_die make install VERBOSE=1
+
+# Unit tests
+if [[ "$*" != *--disable-unit-tests* ]]; then
+  or_die ctest -V
+fi 
 
 exit 0

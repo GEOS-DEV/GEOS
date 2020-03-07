@@ -90,6 +90,17 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
     setPlotLevel(PlotLevel::NOPLOT)->
     setDescription( "A map of face element local indices to the cell local indices");
 
+  registerWrapper<real64_array>(viewKeyStruct::creationMassString)->
+    setApplyDefaultValue(0.0)->
+    setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
+    setDescription("The amount of remaining mass that was introduced when the FaceElement was created.");
+
+#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+  registerWrapper(viewKeyStruct::separationCoeffString, &m_separationCoefficient, false)->
+    setApplyDefaultValue(0.0)->
+    setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
+    setDescription("Scalar indicator of level of separation for a fracturing face.");
+#endif
 
   m_faceElementsToCells.resize(0,2);
   m_faceElementsToCells.setElementRegionManager( getParent()->getParent()->getParent()->getParent()->group_cast<ElementRegionManager*>() );
@@ -99,27 +110,6 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
 
 FaceElementSubRegion::~FaceElementSubRegion()
 {}
-
-
-R1Tensor const & FaceElementSubRegion::calculateElementCenter( localIndex k,
-                                                               const NodeManager& nodeManager,
-                                                               const bool useReferencePos ) const
-{
-  r1_array const & X = nodeManager.referencePosition();
-  m_elementCenter[k] = 0;
-  localIndex const numNodes = numNodesPerElement( k );
-  for ( localIndex a = 0 ; a < numNodes ; ++a)
-  {
-    const localIndex b = m_toNodesRelation[k][a];
-    m_elementCenter[k] += X[b];
-    if(!useReferencePos)
-      m_elementCenter[k] += X[b];
-  }
-  m_elementCenter[k] /= numNodes;
-
-  return m_elementCenter[k];
-
-}
 
 void FaceElementSubRegion::setupRelatedObjectsInRelations( MeshLevel const * const mesh )
 {
@@ -135,7 +125,7 @@ void FaceElementSubRegion::CalculateElementGeometricQuantities( localIndex const
   m_elementVolume[k] = m_elementAperture[k] * faceArea[m_toFacesRelation[k][0]];
 }
 
-void FaceElementSubRegion::CalculateElementGeometricQuantities( NodeManager const & GEOSX_UNUSED_ARG( nodeManager ),
+void FaceElementSubRegion::CalculateElementGeometricQuantities( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
                                                                 FaceManager const & faceManager )
 {
   arrayView1d<real64 const> const & faceArea = faceManager.faceArea();
@@ -208,13 +198,13 @@ localIndex FaceElementSubRegion::PackUpDownMapsPrivate( buffer_unit_type * & buf
 localIndex FaceElementSubRegion::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                                    localIndex_array & packList,
                                                    bool const overwriteUpMaps,
-                                                   bool const GEOSX_UNUSED_ARG( overwriteDownMaps ) )
+                                                   bool const GEOSX_UNUSED_PARAM( overwriteDownMaps ) )
 {
   localIndex unPackedSize = 0;
 
   string nodeListString;
   unPackedSize += bufferOps::Unpack( buffer, nodeListString );
-  GEOS_ERROR_IF_NE( nodeListString, viewKeyStruct::nodeListString );
+  GEOSX_ERROR_IF_NE( nodeListString, viewKeyStruct::nodeListString );
 
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toNodesRelation,
@@ -226,7 +216,7 @@ localIndex FaceElementSubRegion::UnpackUpDownMaps( buffer_unit_type const * & bu
 
   string edgeListString;
   unPackedSize += bufferOps::Unpack( buffer, edgeListString );
-  GEOS_ERROR_IF_NE( edgeListString, viewKeyStruct::edgeListString );
+  GEOSX_ERROR_IF_NE( edgeListString, viewKeyStruct::edgeListString );
 
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toEdgesRelation,
@@ -237,7 +227,7 @@ localIndex FaceElementSubRegion::UnpackUpDownMaps( buffer_unit_type const * & bu
 
   string faceListString;
   unPackedSize += bufferOps::Unpack( buffer, faceListString );
-  GEOS_ERROR_IF_NE( faceListString, viewKeyStruct::faceListString );
+  GEOSX_ERROR_IF_NE( faceListString, viewKeyStruct::faceListString );
 
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toFacesRelation.Base(),
@@ -248,7 +238,7 @@ localIndex FaceElementSubRegion::UnpackUpDownMaps( buffer_unit_type const * & bu
 
   string elementListString;
   unPackedSize += bufferOps::Unpack( buffer, elementListString );
-  GEOS_ERROR_IF_NE( elementListString, viewKeyStruct::faceElementsToCellRegionsString );
+  GEOSX_ERROR_IF_NE( elementListString, viewKeyStruct::faceElementsToCellRegionsString );
 
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_faceElementsToCells,
@@ -286,7 +276,7 @@ void FaceElementSubRegion::inheritGhostRankFromParentFace( FaceManager const * c
   }
 }
 
-void FaceElementSubRegion::ViewPackingExclusionList( set<localIndex> & exclusionList ) const
+void FaceElementSubRegion::ViewPackingExclusionList( SortedArray<localIndex> & exclusionList ) const
 {
   ObjectManagerBase::ViewPackingExclusionList(exclusionList);
   exclusionList.insert(this->getWrapperIndex(viewKeyStruct::nodeListString));

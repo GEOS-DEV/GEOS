@@ -19,6 +19,7 @@
  */
 
 #include "common/GeosxConfig.hpp"
+#include "cxx-utilities/src/Macros.hpp"
 
 #ifndef GEOSX_COMMON_GEOSXMACROS_HPP_
 #define GEOSX_COMMON_GEOSXMACROS_HPP_
@@ -35,7 +36,7 @@
 ///@{
 
 /// Mark an unused argument and silence compiler warnings.
-#define GEOSX_UNUSED_ARG( X )
+#define GEOSX_UNUSED_PARAM( X )
 
 /// Mark an unused variable and silence compiler warnings.
 #define GEOSX_UNUSED_VAR( X ) ( ( void ) X )
@@ -43,15 +44,6 @@
 /// Mark a debug variable and silence compiler warnings.
 #define GEOSX_DEBUG_VAR( X ) GEOSX_UNUSED_VAR( X )
 
-///@}
-
-/// Interpret A as a string constant.
-#define STRINGIZE_NX( A ) #A
-
-/// Expand A and then interpret that as a string.
-#define STRINGIZE( A ) STRINGIZE_NX( A )
-
-/// Add an OpenMP clause to a statement.
 #if defined(GEOSX_USE_OPENMP)
   #define PRAGMA_OMP( clause ) _Pragma(STRINGIZE(clause))
 #else
@@ -90,5 +82,11 @@
 #endif
 
 ///@}
+
+/// preprocessor variable for the C99 restrict keyword for use with pointers
+#define GEOSX_RESTRICT LVARRAY_RESTRICT
+
+/// preprocessor variable for the C99 restrict keyword for use with the "this" pointer
+#define GEOSX_RESTRICT_THIS LVARRAY_RESTRICT_THIS
 
 #endif // GEOSX_COMMON_GEOSXMACROS_HPP_

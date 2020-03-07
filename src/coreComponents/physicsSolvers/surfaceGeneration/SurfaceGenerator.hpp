@@ -79,8 +79,8 @@ public:
   virtual void Execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
-                        integer const GEOSX_UNUSED_ARG( eventCounter ),
-                        real64 const GEOSX_UNUSED_ARG( eventProgress ),
+                        integer const GEOSX_UNUSED_PARAM( eventCounter ),
+                        real64 const GEOSX_UNUSED_PARAM( eventProgress ),
                         dataRepository::Group * domain ) override
   {
     SolverStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>());
@@ -100,7 +100,7 @@ public:
                         int const tileColor,
                         int const numTileColors,
                         const bool prefrac,
-                        const realT time);
+                        const realT time_np1 );
 
   /**
    * @brief Function to generate new global indices of a simple object (node, edge, face)
@@ -120,9 +120,10 @@ public:
   AssignNewGlobalIndicesSerial( ElementRegionManager & elementManager,
                                 map< std::pair<localIndex,localIndex>, std::set<localIndex> > const & indexList );
 
+  // SortedArray< localIndex > & getSurfaceElementsRupturedThisSolve() { return m_faceElemsRupturedThisSolve; }
+
 protected:
 
-  virtual void InitializePostSubGroups( Group * const problemManager ) override final;
   virtual void InitializePostInitialConditions_PreSubGroups( Group * const problemManager ) override final;
   virtual void postRestartInitialization( Group * const domain ) override final;
 
@@ -305,6 +306,7 @@ private:
    * @return
    */
   bool ProcessNode( const localIndex nodeID,
+                    real64 const time,
                     NodeManager & nodeManager,
                     EdgeManager & edgeManager,
                     FaceManager & faceManager,
@@ -359,6 +361,7 @@ private:
    * @param elemLocations
    */
   void PerformFracture( const localIndex nodeID,
+                        real64 const time_np1,
                         NodeManager & nodeManager,
                         EdgeManager & edgeManager,
                         FaceManager & faceManager,
@@ -461,6 +464,9 @@ private:
                            ModifiedObjectLists& receivedObjects);
 
 
+//  void setDegreeFromCrackTip( NodeManager & nodeManager,
+//                              FaceManager & faceManager );
+
   /**
    *
    * @param edgeID
@@ -488,18 +494,24 @@ private:
                                 FaceManager & faceManager );
 
 
+  real64 calculateRuptureRate( FaceElementRegion & faceElementRegion,
+                               EdgeManager const & edgeManager );
+
   /**
    * @struct viewKeyStruct holds char strings and viewKeys for fast lookup
    */
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     constexpr static auto ruptureStateString = "ruptureState";
+    constexpr static auto ruptureTimeString = "ruptureTime";
+    constexpr static auto ruptureRateString = "ruptureRate";
     constexpr static auto SIFonFaceString = "SIFonFace";
     constexpr static auto K_ICString = "K_IC";
     constexpr static auto primaryCandidateFaceString = "primaryCandidateFace";
     constexpr static auto isFaceSeparableString = "isFaceSeparable";
     constexpr static auto failCriterionString = "failCriterion";
     constexpr static auto degreeFromCrackString = "degreeFromCrack";
+    constexpr static auto degreeFromCrackTipString = "degreeFromCrackTip";
     constexpr static auto solidMaterialNameString = "solidMaterialName";
     constexpr static auto fExternalString = "fExternal";
     constexpr static auto SIFNodeString = "SIFNode";
@@ -512,6 +524,15 @@ private:
 
     //TODO: rock toughness should be a material parameter, and we need to make rock toughness to KIC a constitutive relation.
     constexpr static auto rockToughnessString = "rockToughness";
+    constexpr static auto K_IC_00String = "K_IC_00";
+    constexpr static auto K_IC_01String = "K_IC_01";
+    constexpr static auto K_IC_02String = "K_IC_02";
+    constexpr static auto K_IC_10String = "K_IC_10";
+    constexpr static auto K_IC_11String = "K_IC_11";
+    constexpr static auto K_IC_12String = "K_IC_12";
+    constexpr static auto K_IC_20String = "K_IC_20";
+    constexpr static auto K_IC_21String = "K_IC_21";
+    constexpr static auto K_IC_22String = "K_IC_22";
 
     //TODO: Once the node-based SIF criterion becomes mature and robust, remove the edge-based criterion.
     constexpr static auto nodeBasedSIFString = "nodeBasedSIF";
@@ -523,6 +544,9 @@ private:
 
 
 private:
+
+  constexpr static real64 m_nonRuptureTime = 1e9;
+
   /// choice of failure criterion
   integer m_failCriterion=1;
 
@@ -539,7 +563,7 @@ private:
   int m_mpiCommOrder;
 
   /// set of separable faces
-  localIndex_set m_separableFaceSet;
+  SortedArray<localIndex> m_separableFaceSet;
 
   /// copy of the original node->face mapping prior to any separation
   ArrayOfSets< localIndex > m_originalNodetoFaces;
@@ -551,7 +575,7 @@ private:
   ArrayOfArrays< localIndex>  m_originalFaceToEdges;
 
   /// collection of faces that have been used for separation of each node
-  array1d< set<localIndex> > m_usedFacesForNode;
+  array1d< SortedArray<localIndex> > m_usedFacesForNode;
 
   /// copy of the original face->elemRegion mapping prior to any separation
   array2d< localIndex > m_originalFacesToElemRegion;
@@ -565,13 +589,15 @@ private:
   /// name of the element region to place all new fractures
   string m_fractureRegionName;
 
-  set< localIndex > m_tipNodes;
+  SortedArray< localIndex > m_tipNodes;
 
-  set< localIndex > m_tipEdges;
+  SortedArray< localIndex > m_tipEdges;
 
-  set< localIndex > m_tipFaces;
+  SortedArray< localIndex > m_tipFaces;
 
-  set< localIndex > m_trailingFaces;
+  SortedArray< localIndex > m_trailingFaces;
+
+  SortedArray< localIndex > m_faceElemsRupturedThisSolve;
 
 };
 

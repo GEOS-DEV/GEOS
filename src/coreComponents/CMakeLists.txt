@@ -84,7 +84,7 @@ if( BUILD_OBJ_LIBS )
                     DEPENDS_ON  ${coreLibs}
                     SHARED TRUE
                   )
-else()                  
+else()
   blt_combine_static_libraries( NAME          geosx_core
                                 SOURCE_LIBS   ${coreLibs}
                                 LIB_TYPE SHARED
@@ -92,6 +92,12 @@ else()
                                 LINK_POSTPEND ${GEOSX_LINK_POSTPEND_FLAG}
                               )
 endif()
+
+# To install the library with the runtime path used during the building
+set_target_properties( geosx_core PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE )
+
+# To install the shared library
+install(TARGETS geosx_core LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
 
 #set( geosx_core_libs geosx_core CACHE PATH "" FORCE)
 
@@ -102,7 +108,8 @@ geosx_add_code_checks( PREFIX core )
 
 set( enforceUncrustifyLibs
      common
-     dataRepository )
+     dataRepository
+     cxx-utilities )
 
 if( ENABLE_UNCRUSTIFY )
   foreach( lib ${enforceUncrustifyLibs} )

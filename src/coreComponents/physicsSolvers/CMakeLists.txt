@@ -9,12 +9,15 @@ set( physicsSolvers_headers
      PhysicsSolverManager.hpp
      SolverBase.hpp
      SystemSolverParameters.hpp
+     NonlinearSolverParameters.hpp
      fluidFlow/CompositionalMultiphaseFlow.hpp
      fluidFlow/CompositionalMultiphaseFlowKernels.hpp
      fluidFlow/CompositionalMultiphaseWell.hpp
      fluidFlow/FlowSolverBase.hpp
-     fluidFlow/SinglePhaseFlow.hpp
-     fluidFlow/SinglePhaseFlowKernels.hpp
+     fluidFlow/SinglePhaseBase.hpp
+     fluidFlow/SinglePhaseHybridFVM.hpp
+     fluidFlow/SinglePhaseFVM.hpp
+     fluidFlow/SinglePhaseKernels.hpp
      fluidFlow/SinglePhaseWell.hpp
      fluidFlow/WellSolverBase.hpp
      multiphysics/HydrofractureSolver.hpp
@@ -26,8 +29,9 @@ set( physicsSolvers_headers
      solidMechanics/SolidMechanicsLagrangianFEM.hpp
      solidMechanics/SolidMechanicsLagrangianSSLE.hpp
      solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp
-     solidMechanics/SolidMechanicsLagrangianSSLEKernels.hpp
+     solidMechanics/SolidMechanicsLagrangianSSLEKernels.hpp     
      surfaceGeneration/SurfaceGenerator.hpp
+     surfaceGeneration/EmbeddedSurfaceGenerator.hpp
      )
 
 #
@@ -37,12 +41,15 @@ set( physicsSolvers_sources
      PhysicsSolverManager.cpp
      SolverBase.cpp
      SystemSolverParameters.cpp
+     NonlinearSolverParameters.cpp
      fluidFlow/CompositionalMultiphaseFlow.cpp
      fluidFlow/CompositionalMultiphaseFlowKernels.cpp
      fluidFlow/CompositionalMultiphaseWell.cpp
      fluidFlow/FlowSolverBase.cpp
-     fluidFlow/SinglePhaseFlow.cpp
-     fluidFlow/SinglePhaseFlowKernels.cpp
+     fluidFlow/SinglePhaseBase.cpp
+     fluidFlow/SinglePhaseHybridFVM.cpp
+     fluidFlow/SinglePhaseFVM.cpp     
+     fluidFlow/SinglePhaseKernels.cpp
      fluidFlow/SinglePhaseWell.cpp
      fluidFlow/WellSolverBase.cpp
      multiphysics/HydrofractureSolver.cpp
@@ -54,6 +61,7 @@ set( physicsSolvers_sources
      solidMechanics/SolidMechanicsLagrangianFEM.cpp
      solidMechanics/SolidMechanicsLagrangianSSLE.cpp
      surfaceGeneration/SurfaceGenerator.cpp
+     surfaceGeneration/EmbeddedSurfaceGenerator.cpp
      )
 
 if( BUILD_OBJ_LIBS)

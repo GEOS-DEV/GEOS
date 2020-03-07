@@ -1,22 +1,21 @@
 
 <Problem>
 
-  <Solvers
-    gravityVector="0.0, 0.0, -9.81">
-
+  <Solvers>
 
     <CompositionalMultiphaseReservoir name="reservoirSystem"
-                                      flowSolverName="compositionalMultiphaseFlow"
-                                      wellSolverName="compositionalMultiphaseWell"
-                                      logLevel="1"
-                                      targetRegions="{Channel,wellRegion1,wellRegion2}">
-      <SystemSolverParameters maxIterNewton="40"
-                              useDirectSolver="1"/>
+               flowSolverName="compositionalMultiphaseFlow"
+               wellSolverName="compositionalMultiphaseWell"
+               logLevel="1"
+               targetRegions="{Channel,wellRegion1,wellRegion2}">
+      <NonlinearSolverParameters newtonTol="1.0e-4"
+                                 newtonMaxIter="40"/>
+      <SystemSolverParameters useDirectSolver="1"
+                              logLevel="0"/>
     </CompositionalMultiphaseReservoir>
     
     <CompositionalMultiphaseFlow name="compositionalMultiphaseFlow"
-                                 logLevel="0"
-                                 gravityFlag="1"
+                                 logLevel="1"
                                  discretization="fluidTPFA"
                                  targetRegions="{Channel}"
                                  fluidName="fluid1"
@@ -28,7 +27,6 @@
 
     <CompositionalMultiphaseWell name="compositionalMultiphaseWell"
                                  logLevel="1"
-                                 gravityFlag="1"
                                  targetRegions="{wellRegion1,wellRegion2}"
                                  wellFluidName="fluid1"
                                  wellRelPermName="relperm"
@@ -96,7 +94,7 @@
   <Events maxTime="2.5e4">
 
     <PeriodicEvent name="outputs"
-                   timeFrequency="5e3.0"
+                   timeFrequency="5e3"
                    targetExactTimestep="1"
                    target="/Outputs/siloOutput" />
 

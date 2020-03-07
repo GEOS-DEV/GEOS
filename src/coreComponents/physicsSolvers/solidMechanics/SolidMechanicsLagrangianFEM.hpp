@@ -115,13 +115,6 @@ public:
              DofManager & dofManager ) const override;
 
   virtual void
-  SetupSystem( DomainPartition * const domain,
-               DofManager & dofManager,
-               ParallelMatrix & matrix,
-               ParallelVector & rhs,
-               ParallelVector & solution ) override;
-
-  virtual void
   AssembleSystem( real64 const time,
                   real64 const dt,
                   DomainPartition * const domain,
@@ -176,8 +169,7 @@ public:
    * @param u The nodal array of total displacements.
    * @param vel The nodal array of velocity.
    * @param acc The nodal array of force/acceleration.
-   * @param meanStress The mean stress at each element quadrature point
-   * @param devStress The deviator stress at each element quadrature point.
+   * @param stress The stress at each element quadrature point.
    * @param dt The timestep
    * @return The achieved timestep.
    */
@@ -185,14 +177,14 @@ public:
   ExplicitElementKernelLaunch( localIndex NUM_NODES_PER_ELEM,
                                localIndex NUM_QUADRATURE_POINTS,
                                constitutive::ConstitutiveBase * const constitutiveRelation,
-                               set<localIndex> const & elementList,
-                               arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & elemsToNodes,
-                               arrayView3d< R1Tensor const> const & dNdX,
+                               SortedArray<localIndex> const & elementList,
+                               arrayView2d<localIndex const, cells::NODE_MAP_USD> const & elemsToNodes,
+                               arrayView3d<R1Tensor const> const & dNdX,
                                arrayView2d<real64 const> const & detJ,
-                               arrayView1d<R1Tensor const> const & u,
-                               arrayView1d<R1Tensor const> const & vel,
-                               arrayView1d<R1Tensor> const & acc,
-                               arrayView2d<R2SymTensor> const & stress,
+                               arrayView2d<real64 const, nodes::TOTAL_DISPLACEMENT_USD> const & u,
+                               arrayView2d<real64 const, nodes::VELOCITY_USD> const & vel,
+                               arrayView2d<real64, nodes::ACCELERATION_USD> const & acc,
+                               arrayView3d<real64, solid::STRESS_USD> const & stress,
                                real64 const dt ) const
   {
     using ExplicitKernel = SolidMechanicsLagrangianFEMKernels::ExplicitKernel;
@@ -253,25 +245,27 @@ public:
                                arrayView2d<real64 const > const& detJ,
                                FiniteElementBase const * const fe,
                                arrayView1d< integer const > const & elemGhostRank,
-                               arrayView2d< localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM > const & elemsToNodes,
+                               arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
                                arrayView1d< globalIndex const > const & globalDofNumber,
-                               arrayView1d< R1Tensor const > const & disp,
-                               arrayView1d< R1Tensor const > const & uhat,
+                               arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & disp,
+                               arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const & uhat,
                                arrayView1d< R1Tensor const > const & vtilde,
                                arrayView1d< R1Tensor const > const & uhattilde,
-                               arrayView1d< real64 const > const & density,
+                               arrayView2d< real64 const > const & density,
                                arrayView1d< real64 const > const & fluidPressure,
                                arrayView1d< real64 const > const & deltaFluidPressure,
-                               arrayView1d< real64 const > const & biotCoefficient,
+                               real64 const biotCoefficient,
                                timeIntegrationOption const tiOption,
                                real64 const stiffnessDamping,
                                real64 const massDamping,
                                real64 const newmarkBeta,
                                real64 const newmarkGamma,
+                               R1Tensor const & gravityVector,
                                DofManager const * const dofManager,
                                ParallelMatrix * const matrix,
                                ParallelVector * const rhs ) const
   {
+    GEOSX_MARK_FUNCTION;
     using ImplicitKernel = SolidMechanicsLagrangianFEMKernels::ImplicitKernel;
     return SolidMechanicsLagrangianFEMKernels::
            ElementKernelLaunchSelector<ImplicitKernel>( NUM_NODES_PER_ELEM,
@@ -298,6 +292,7 @@ public:
                                                         massDamping,
                                                         newmarkBeta,
                                                         newmarkGamma,
+                                                        gravityVector,
                                                         dofManager,
                                                         matrix,
                                                         rhs );
@@ -356,7 +351,7 @@ public:
     }
     else
     {
-      GEOS_ERROR("Invalid time integration option: " << stringVal);
+      GEOSX_ERROR("Invalid time integration option: " << stringVal);
     }
   }
 
@@ -381,6 +376,7 @@ public:
     static constexpr auto contactRelationNameString = "contactRelationName";
     static constexpr auto noContactRelationNameString = "NOCONTACT";
     static constexpr auto contactForceString = "contactForce";
+    static constexpr auto maxForce = "maxForce";
 
     dataRepository::ViewKey vTilde = { vTildeString };
     dataRepository::ViewKey uhatTilde = { uhatTildeString };
@@ -396,6 +392,8 @@ public:
   {
     dataRepository::GroupKey systemSolverParameters = { "SystemSolverParameters" };
   } solidMechanicsGroupKeys;
+
+  string const & getSolidMaterialName() const { return m_solidMaterialName; }
 
 protected:
   virtual void PostProcessInput() override final;
@@ -417,10 +415,10 @@ protected:
   string m_contactRelationName;
 
 
-  array1d< array1d < set<localIndex> > > m_elemsAttachedToSendOrReceiveNodes;
-  array1d< array1d < set<localIndex> > > m_elemsNotAttachedToSendOrReceiveNodes;
-  set<localIndex> m_sendOrReceiveNodes;
-  set<localIndex> m_nonSendOrReceiveNodes;
+  array1d< array1d < SortedArray<localIndex> > > m_elemsAttachedToSendOrReceiveNodes;
+  array1d< array1d < SortedArray<localIndex> > > m_elemsNotAttachedToSendOrReceiveNodes;
+  SortedArray<localIndex> m_sendOrReceiveNodes;
+  SortedArray<localIndex> m_nonSendOrReceiveNodes;
   MPI_iCommData m_iComm;
 
   SolidMechanicsLagrangianFEM();

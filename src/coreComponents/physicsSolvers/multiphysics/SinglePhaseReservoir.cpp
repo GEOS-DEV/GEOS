@@ -25,7 +25,7 @@
 #include "SinglePhaseReservoir.hpp"
 
 #include "common/TimingMacros.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseFlow.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseWell.hpp"
 
 namespace geosx
@@ -66,11 +66,15 @@ void SinglePhaseReservoir::SetupSystem( DomainPartition * const domain,
 
   dofManager.setMesh( domain, 0, 0 );
   SetupDofs( domain, dofManager );
-  dofManager.close();
+  dofManager.reorderByRank();
 
-  dofManager.setSparsityPattern( matrix, "", "", false ); // don't close the matrix
-  dofManager.setVector( rhs );
-  dofManager.setVector( solution );
+  localIndex const numLocalDof = dofManager.numLocalDofs();
+
+  matrix.createWithLocalSize( numLocalDof, numLocalDof, 8, MPI_COMM_GEOSX );
+  rhs.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
+  solution.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
+  
+  dofManager.setSparsityPattern( matrix, false ); // don't close the matrix
 
   // TODO: remove this and just call SolverBase::SetupSystem when DofManager can handle the coupling
 
@@ -82,15 +86,15 @@ void SinglePhaseReservoir::SetupSystem( DomainPartition * const domain,
   localIndex const resNDOF = m_wellSolver->NumDofPerResElement();
   localIndex const wellNDOF = m_wellSolver->NumDofPerWellElement();
 
-  ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex>> const & resDofNumber =
-    elemManager->ConstructViewAccessor<array1d<globalIndex>, arrayView1d<globalIndex>>( resDofKey );
+  ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex const>> const & resDofNumber =
+    elemManager->ConstructViewAccessor<array1d<globalIndex>, arrayView1d<globalIndex const>>( resDofKey );
 
   elemManager->forElementSubRegions<WellElementSubRegion>( [&]( WellElementSubRegion const * const subRegion )
   {
     PerforationData const * const perforationData = subRegion->GetPerforationData();
 
     // get the well degrees of freedom and ghosting info
-    arrayView1d< globalIndex > const & wellElemDofNumber =
+    arrayView1d< globalIndex const> const & wellElemDofNumber =
       subRegion->getReference< array1d<globalIndex> >( wellDofKey );
 
     // get the well element indices corresponding to each perforation
@@ -152,27 +156,27 @@ void SinglePhaseReservoir::SetupSystem( DomainPartition * const domain,
   matrix.close();
 }
 
-void SinglePhaseReservoir::AssembleCouplingTerms( real64 const GEOSX_UNUSED_ARG( time_n ),
+void SinglePhaseReservoir::AssembleCouplingTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                                   real64 const dt,
-                                                  DomainPartition const * const domain,
+                                                  DomainPartition * const domain,
                                                   DofManager const * const dofManager,
                                                   ParallelMatrix * const matrix,
                                                   ParallelVector * const rhs )
 {
-  MeshLevel const * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ElementRegionManager const * const elemManager = meshLevel->getElemManager();
+  MeshLevel * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  ElementRegionManager * const elemManager = meshLevel->getElemManager();
 
   string const wellDofKey = dofManager->getKey( m_wellSolver->WellElementDofName() );
   string const resDofKey  = dofManager->getKey( m_wellSolver->ResElementDofName() );
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d<globalIndex> > 
-  resDofNumberAccessor = elemManager->ConstructViewAccessor< array1d<globalIndex>, arrayView1d<globalIndex> >( resDofKey );
+  ElementRegionManager::ElementViewAccessor< arrayView1d<globalIndex const> > 
+  resDofNumberAccessor = elemManager->ConstructViewAccessor< array1d<globalIndex>, arrayView1d<globalIndex const> >( resDofKey );
 
   ElementRegionManager::ElementViewAccessor< arrayView1d<globalIndex const> >::ViewTypeConst 
   resDofNumber = resDofNumberAccessor.toViewConst();
 
   // loop over the wells
-  elemManager->forElementSubRegions<WellElementSubRegion>( [&]( WellElementSubRegion const * const subRegion )
+  elemManager->forElementSubRegions<WellElementSubRegion>( [&]( WellElementSubRegion * const subRegion )
   {
     PerforationData const * const perforationData = subRegion->GetPerforationData();
 
@@ -265,7 +269,7 @@ void SinglePhaseReservoir::AssembleCouplingTerms( real64 const GEOSX_UNUSED_ARG(
   });
 }
 
-void SinglePhaseReservoir::ComputeAllPerforationRates( WellElementSubRegion const * const subRegion ) 
+void SinglePhaseReservoir::ComputeAllPerforationRates( WellElementSubRegion * const subRegion ) 
 {
 
   // get the reservoir data
@@ -278,11 +282,11 @@ void SinglePhaseReservoir::ComputeAllPerforationRates( WellElementSubRegion cons
   ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const & dResViscosity_dPres = m_dResVisc_dPres;
 
   // get the well data
-  PerforationData const * const perforationData = subRegion->GetPerforationData();
+  PerforationData * const perforationData = subRegion->GetPerforationData();
 
   // get the degrees of freedom and depth
   arrayView1d<real64 const> const & 
-  wellElemGravDepth = subRegion->getReference<array1d<real64>>( SinglePhaseWell::viewKeyStruct::gravityDepthString );
+  wellElemGravCoef = subRegion->getReference<array1d<real64>>( SinglePhaseWell::viewKeyStruct::gravityCoefString );
 
   // get well primary variables on well elements
   arrayView1d<real64 const> const & 
@@ -309,7 +313,7 @@ void SinglePhaseReservoir::ComputeAllPerforationRates( WellElementSubRegion cons
 
   // get well variables on perforations
   arrayView1d<real64 const> const & 
-  perfGravDepth = perforationData->getReference<array1d<real64>>( SinglePhaseWell::viewKeyStruct::gravityDepthString );
+  perfGravCoef = perforationData->getReference<array1d<real64>>( SinglePhaseWell::viewKeyStruct::gravityCoefString );
 
   arrayView1d<localIndex const> const & 
   perfWellElemIndex = perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::wellElementIndexString );
@@ -378,13 +382,9 @@ void SinglePhaseReservoir::ComputeAllPerforationRates( WellElementSubRegion cons
     pressure[WellSolverBase::SubRegionTag::WELL] = wellElemPressure[iwelem] + dWellElemPressure[iwelem];
     dPressure_dP[WellSolverBase::SubRegionTag::WELL] = 1.0;
 
-    integer const gravityFlag = m_wellSolver->getReference<integer>( WellSolverBase::viewKeyStruct::gravityFlagString );
-    if (gravityFlag)
-    {
-      real64 const gravD = ( perfGravDepth[iperf] - wellElemGravDepth[iwelem] );
-      pressure[WellSolverBase::SubRegionTag::WELL]     += wellElemDensity[iwelem][0] * gravD;
-      dPressure_dP[WellSolverBase::SubRegionTag::WELL] += dWellElemDensity_dPres[iwelem][0] * gravD;
-    }
+    real64 const gravD = ( perfGravCoef[iperf] - wellElemGravCoef[iwelem] );
+    pressure[WellSolverBase::SubRegionTag::WELL]     += wellElemDensity[iwelem][0] * gravD;
+    dPressure_dP[WellSolverBase::SubRegionTag::WELL] += dWellElemDensity_dPres[iwelem][0] * gravD;
 
     // multiplier for well side in the flux
     multiplier[WellSolverBase::SubRegionTag::WELL] = -1;
@@ -455,10 +455,10 @@ void SinglePhaseReservoir::ResetViews( DomainPartition * const domain )
   ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
 
   m_resPressure =
-    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( SinglePhaseFlow::viewKeyStruct::pressureString );
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( SinglePhaseBase::viewKeyStruct::pressureString );
 
   m_deltaResPressure =
-    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( SinglePhaseFlow::viewKeyStruct::deltaPressureString );
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( SinglePhaseBase::viewKeyStruct::deltaPressureString );
 
   m_resDensity =
     elemManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64>>( SingleFluidBase::viewKeyStruct::densityString,

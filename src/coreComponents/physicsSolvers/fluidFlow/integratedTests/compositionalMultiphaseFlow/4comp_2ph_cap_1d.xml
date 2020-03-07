@@ -1,12 +1,10 @@
 
 <Problem>
 
-  <Solvers
-    gravityVector="0.0, 0.0, -9.81">
+  <Solvers>
   
     <CompositionalMultiphaseFlow name="compflow"
                                  logLevel="1"
-                                 gravityFlag="1"
                                  discretization="fluidTPFA"
                                  targetRegions="{Region1}"
                                  fluidName="fluid1"
@@ -15,9 +13,9 @@
                                  capPressureName="capPressure"
                                  temperature="297.15"
                                  useMass="0">
-      <SystemSolverParameters newtonTol="1.0e-6"
-                              maxIterNewton="15"
-                              useDirectSolver="1"/>
+      <NonlinearSolverParameters newtonTol="1.0e-6"
+                                 newtonMaxIter="15"/>
+      <SystemSolverParameters useDirectSolver="1"/>
     </CompositionalMultiphaseFlow>
   </Solvers>
   

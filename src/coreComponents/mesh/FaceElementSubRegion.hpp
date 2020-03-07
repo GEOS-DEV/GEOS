@@ -54,10 +54,6 @@ public:
                      dataRepository::Group * const parent );
   virtual ~FaceElementSubRegion() override;
 
-  virtual R1Tensor const & calculateElementCenter( localIndex k,
-                                     const NodeManager& nodeManager,
-                                     const bool useReferencePos = true) const override;
-
   virtual void CalculateElementGeometricQuantities( NodeManager const & nodeManager,
                                                     FaceManager const & facemanager ) override;
 
@@ -75,7 +71,7 @@ public:
 
   virtual void FixUpDownMaps( bool const clearIfUnmapped ) override;
 
-  virtual void ViewPackingExclusionList( set<localIndex> & exclusionList ) const override;
+  virtual void ViewPackingExclusionList( SortedArray<localIndex> & exclusionList ) const override;
 
   /**
    * @brief function to set the ghostRank for a list of FaceElements and set them to the value of their bounding faces.
@@ -92,6 +88,13 @@ public:
     static constexpr auto faceElementsToCellRegionsString    = "fractureElementsToCellRegions";
     static constexpr auto faceElementsToCellSubRegionsString    = "fractureElementsToCellSubRegions";
     static constexpr auto faceElementsToCellIndexString    = "fractureElementsToCellIndices";
+    constexpr static auto creationMassString = "creationMass";
+
+#if GEOSX_USE_SEPARATION_COEFFICIENT
+    constexpr static auto separationCoeffString = "separationCoeff";
+    constexpr static auto dSeparationCoeffdAperString = "dSeparationCoeffdAper";
+#endif
+
   };
 
   virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override;
@@ -146,13 +149,18 @@ public:
   arrayView1d< real64 > const &       getElementArea()       { return m_elementArea; }
   arrayView1d< real64 const > const & getElementArea() const { return m_elementArea; }
 
+#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+  arrayView1d< real64 > const &       getSeparationCoefficient()       { return m_separationCoefficient; }
+  arrayView1d< real64 const > const & getSeparationCoefficient() const { return m_separationCoefficient; }
+#endif
+
   map< localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInToNodes;
   map< localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInToEdges;
   map< localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInToFaces;
 
   FixedToManyElementRelation m_faceElementsToCells;
 
-  set< localIndex > m_newFaceElements;
+  SortedArray< localIndex > m_newFaceElements;
 
 private:
   template<bool DOPACK>
@@ -174,6 +182,9 @@ private:
   /// The member level field for the element center
   array1d< real64 > m_elementArea;
 
+#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+  array1d< real64 > m_separationCoefficient;
+#endif
 
 };
 

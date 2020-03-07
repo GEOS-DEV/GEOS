@@ -38,6 +38,7 @@ EventBase::EventBase( const std::string& name,
   m_endTime(1e100),
   m_forceDt(-1.0),
   m_maxEventDt(-1.0),
+  m_finalDtStretch(1e-3),
   m_targetExactStartStop(0),
   m_currentSubEvent(0),
   m_targetExecFlag(0),
@@ -78,6 +79,11 @@ EventBase::EventBase( const std::string& name,
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("While active, this event will request a timestep <= this value (depending upon any child/target requests).");
 
+  registerWrapper(viewKeyStruct::finalDtStretchString, &m_finalDtStretch, false )->
+    setApplyDefaultValue(1e-3)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Allow the final dt request for this event to grow by this percentage to match the endTime exactly.");
+
   registerWrapper(viewKeyStruct::targetExactStartStopString, &m_targetExactStartStop, false )->
     setApplyDefaultValue(1)->
     setInputFlag(InputFlags::OPTIONAL)->
@@ -111,7 +117,7 @@ EventBase::CatalogInterface::CatalogType& EventBase::GetCatalog()
 
 Group * EventBase::CreateChild( string const & childKey, string const & childName )
 {
-  GEOS_LOG_RANK_0("Adding Event: " << childKey << ", " << childName);
+  GEOSX_LOG_RANK_0("Adding Event: " << childKey << ", " << childName);
   std::unique_ptr<EventBase> event = EventBase::CatalogInterface::Factory( childKey, childName, this );
   return this->RegisterGroup<EventBase>( childName, std::move(event) );
 }
@@ -137,7 +143,7 @@ void EventBase::GetTargetReferences()
   {
     Group * tmp = this->GetGroupByPath(m_eventTarget);
     m_target = Group::group_cast<ExecutableGroup*>(tmp);
-    GEOS_ERROR_IF(m_target == nullptr, "The target of an event must be executable! " << m_target);
+    GEOSX_ERROR_IF(m_target == nullptr, "The target of an event must be executable! " << m_target);
   }
 
   this->forSubGroups<EventBase>([]( EventBase * subEvent ) -> void
@@ -226,7 +232,7 @@ void EventBase::Execute(real64 const time_n,
     integer subEventForecast = subEvent->GetForecast();
 
     // Print debug information for logLevel >= 1
-    GEOS_LOG_LEVEL_RANK_0(1, "          SubEvent: " << m_currentSubEvent << " (" << subEvent->getName() << "), dt_request=" << subEvent->GetCurrentEventDtRequest() << ", forecast=" << subEventForecast);
+    GEOSX_LOG_LEVEL_RANK_0(1, "          SubEvent: " << m_currentSubEvent << " (" << subEvent->getName() << "), dt_request=" << subEvent->GetCurrentEventDtRequest() << ", forecast=" << subEventForecast);
 
     if (subEventForecast <= 0)
     {
@@ -244,7 +250,7 @@ void EventBase::Execute(real64 const time_n,
 
 real64 EventBase::GetTimestepRequest(real64 const time)
 {
-  m_currentEventDtRequest = std::numeric_limits<real64>::max();
+  m_currentEventDtRequest = std::numeric_limits<real64>::max() / 2.0;
 
   // Events and their targets may request a max dt when active
   if ((time >= m_beginTime) && (time < m_endTime))
@@ -291,7 +297,12 @@ real64 EventBase::GetTimestepRequest(real64 const time)
     }
     else if (tmp_t < m_endTime)
     {
-      m_currentEventDtRequest = std::min(m_endTime - time, m_currentEventDtRequest);
+      // If the current dt request exceeds the end time, cut it
+      // Otherwise, if it falls just short of the end time, grow it.
+      if (time + m_currentEventDtRequest * (1.0 + m_finalDtStretch) > m_endTime)
+      {
+        m_currentEventDtRequest = m_endTime - time;
+      }
     }
   }
 
@@ -301,8 +312,8 @@ real64 EventBase::GetTimestepRequest(real64 const time)
 
 void EventBase::Cleanup(real64 const time_n,
                         integer const cycleNumber,
-                        integer const GEOSX_UNUSED_ARG( eventCounter ),
-                        real64 const GEOSX_UNUSED_ARG( eventProgress ),
+                        integer const GEOSX_UNUSED_PARAM( eventCounter ),
+                        real64 const GEOSX_UNUSED_PARAM( eventProgress ),
                         Group * domain)
 {
   if (m_target != nullptr)

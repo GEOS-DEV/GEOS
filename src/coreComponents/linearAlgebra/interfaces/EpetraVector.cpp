@@ -60,7 +60,7 @@ EpetraVector::EpetraVector() = default;
 // copied to a new memory location. Checks if the vector to be copied is empty.
 EpetraVector::EpetraVector( EpetraVector const & src )
 {
-  GEOS_ERROR_IF( src.unwrappedPointer() == nullptr, "source vector appears to be empty" );
+  GEOSX_ERROR_IF( src.unwrappedPointer() == nullptr, "source vector appears to be empty" );
   m_vector = std::make_unique< Epetra_FEVector >( *src.unwrappedPointer() );
 }
 
@@ -79,7 +79,7 @@ EpetraVector::~EpetraVector() = default;
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 void EpetraVector::create( EpetraVector const & src )
 {
-  GEOS_ERROR_IF( src.unwrappedPointer() == nullptr, "source vector appears to be empty" );
+  GEOSX_ERROR_IF( src.unwrappedPointer() == nullptr, "source vector appears to be empty" );
   m_vector = std::make_unique< Epetra_FEVector >( *src.unwrappedPointer() );
 }
 
@@ -230,7 +230,7 @@ void EpetraVector::scale( real64 const scalingFactor )
 // Dot
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Dot product with the vector vec.
-real64 EpetraVector::dot( EpetraVector const & vec )
+real64 EpetraVector::dot( EpetraVector const & vec ) const
 {
   real64 tmp;
   m_vector.get()->Dot( *vec.unwrappedPointer(), &tmp );
@@ -337,7 +337,7 @@ void EpetraVector::write( string const & filename,
 }
 
 // ----------------------------
-// Acessors
+// Accessors
 // ----------------------------
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -406,7 +406,7 @@ localIndex EpetraVector::getLocalRowID( globalIndex const index ) const
 // getGlobalRowID
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Map a local row index to global row index
-localIndex EpetraVector::getGlobalRowID( localIndex const index ) const
+globalIndex EpetraVector::getGlobalRowID( localIndex const index ) const
 {
   return m_vector->Map().GID64( integer_conversion< int >( index ) );
 }

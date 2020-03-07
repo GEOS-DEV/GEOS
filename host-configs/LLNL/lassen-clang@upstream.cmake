@@ -13,6 +13,8 @@ set(ENABLE_GEOSX_PTP ON CACHE BOOL "")
 set(ENABLE_CALIPER ON CACHE BOOL "")
 set(ENABLE_PAPI OFF CACHE BOOL "")
 
+set(ENABLE_UNCRUSTIFY OFF CACHE BOOL "")
+
 set(ENABLE_ESSL ON CACHE BOOL "")
 set(ESSL_INCLUDE_DIRS /usr/tcetmp/packages/essl/essl-6.2/include CACHE STRING "")
 set(ESSL_LIBRARIES /usr/tcetmp/packages/essl/essl-6.2/lib64/libesslsmpcuda.so
@@ -24,6 +26,8 @@ set(ESSL_LIBRARIES /usr/tcetmp/packages/essl/essl-6.2/lib64/libesslsmpcuda.so
                    ${GEOSX_TPL_ROOT_DIR}/liblapackforesslgeosx.a
                    /usr/tce/packages/xl/xl-beta-2019.06.20/alllibs/libxl.a
                    CACHE PATH "")
+
+set(DOXYGEN_EXECUTABLE /usr/bin/doxygen CACHE PATH "")
 
 set(PETSC_OMP_DIR ${GEOSX_TPL_ROOT_DIR}/omp-links-for-petsc CACHE STRING "")
 

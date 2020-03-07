@@ -65,6 +65,8 @@ template<int T_dim>
 class R2SymTensorT : public TensorBaseT< SymSize< T_dim >::value >
 {
 public:
+  static constexpr int SIZE = SymSize< T_dim >::value;
+
   //**** CONSTRUCTORS AND DESTRUCTORS *****************************************
   /// default constructor
   R2SymTensorT(void);
@@ -73,29 +75,95 @@ public:
 
    * @param[in] data use for initialization of t_data
    */
-  explicit R2SymTensorT( const realT data ): TensorBaseT< SymSize< T_dim >::value >(data) {}
+  explicit R2SymTensorT( const realT data ): TensorBaseT< SIZE >(data) {}
 
   /// copy constructor
-  R2SymTensorT(const R2SymTensorT< T_dim >& rhs) = default;
+  R2SymTensorT(const R2SymTensorT& rhs) = default;
 
-  explicit R2SymTensorT( const TensorBaseT< SymSize< T_dim >::value  >& rhs ): TensorBaseT< SymSize< T_dim >::value  > ()
-  { TensorBaseT< SymSize< T_dim >::value  >::operator=( rhs ); }
+  explicit R2SymTensorT( const TensorBaseT< SIZE  >& rhs ): TensorBaseT< SIZE  > ()
+  { TensorBaseT< SIZE  >::operator=( rhs ); }
+
+  template< int USD >
+  R2SymTensorT( LvArray::ArraySlice< realT const, 1, USD > const & src ):
+    TensorBaseT< SIZE > ()
+  { *this = src; }
+
+  template< int USD >
+  R2SymTensorT( LvArray::ArraySlice< realT, 1, USD > const & src ):
+    TensorBaseT< SIZE > ()
+  { *this = src; }
 
   //***** ASSIGNMENT OPERATORS
   // **************************************************
 
   /// assignment of all data to an integer
   GEOSX_HOST_DEVICE
-  R2SymTensorT< T_dim >& operator=(const int& rhs);
+  R2SymTensorT& operator=(const int& rhs);
 
   /// assignment of all data to a realT
   GEOSX_HOST_DEVICE
-  R2SymTensorT< T_dim >& operator=(const realT& rhs);
+  R2SymTensorT& operator=(const realT& rhs);
 
   /// assignment to another R2SymTensorT
-  R2SymTensorT< T_dim >& operator=(const R2SymTensorT< T_dim >& rhs) = default;
+  R2SymTensorT& operator=(const R2SymTensorT& rhs) = default;
 
-  R2SymTensorT& operator+=( const R2SymTensorT<T_dim>& rhs );
+  template< int USD >
+  GEOSX_HOST_DEVICE constexpr inline
+  R2SymTensorT & operator=( LvArray::ArraySlice< realT const, 1, USD > const & src )
+  {
+    GEOSX_ASSERT_EQ( src.size(), SIZE );
+
+    for ( int i = 0; i < SIZE; ++i )
+    {
+      this->t_data[ i ] = src[ i ];
+    }
+
+    return *this;
+  }
+
+  template< int USD >
+  GEOSX_HOST_DEVICE constexpr inline
+  R2SymTensorT & operator=( LvArray::ArraySlice< realT, 1, USD > const & src )
+  {
+    GEOSX_ASSERT_EQ( src.size(), SIZE );
+
+    for ( int i = 0; i < SIZE; ++i )
+    {
+      this->t_data[ i ] = src[ i ];
+    }
+
+    return *this;
+  }
+
+  R2SymTensorT& operator+=( const R2SymTensorT& rhs );
+
+  template< int USD >
+  GEOSX_HOST_DEVICE constexpr inline
+  R2SymTensorT & operator+=( LvArray::ArraySlice< realT const, 1, USD > const & src )
+  {
+    GEOSX_ASSERT_EQ( src.size(), SIZE );
+
+    for ( int i = 0; i < SIZE; ++i )
+    {
+      this->t_data[ i ] += src[ i ];
+    }
+
+    return *this;
+  }
+
+  template< int USD >
+  GEOSX_HOST_DEVICE constexpr inline
+  R2SymTensorT & operator+=( LvArray::ArraySlice< realT, 1, USD > const & src )
+  {
+    GEOSX_ASSERT_EQ( src.size(), SIZE );
+
+    for ( int i = 0; i < SIZE; ++i )
+    {
+      this->t_data[ i ] += src[ i ];
+    }
+
+    return *this;
+  }
 
   //***** ACCESS OPERATORS ****************************************************
   /// const access to data
@@ -105,29 +173,29 @@ public:
   realT& operator()(const int i, const int j);
 
   //***** MULTIPLICATION OPERATIONS *******************************************
-  realT AijBij(const R2SymTensorT< T_dim >& A, const R2SymTensorT< T_dim >& B);
-  void AijBjk(const R2SymTensorT< T_dim >& A, const R2SymTensorT< T_dim >& B);
+  realT AijBij(const R2SymTensorT& A, const R2SymTensorT& B);
+  void AijBjk(const R2SymTensorT& A, const R2SymTensorT& B);
   void AijAkj(const R2TensorT< T_dim >& A);
   void AjiAjk(const R2TensorT< T_dim >& A);
-  void AijAjk(const R2SymTensorT< T_dim >& A);
+  void AijAjk(const R2SymTensorT& A);
 
   void AijAkj_plus_Aik_plus_Aki(const R2TensorT< T_dim >& A);
   void AjiAjk_plus_Aik_plus_Aki(const R2TensorT< T_dim >& A);
   void AijAkj_m_Aik_m_Aki(const R2TensorT< T_dim >& A);
-  void QijAjkQlk(const R2SymTensorT< T_dim >& A, const R2TensorT< T_dim >& Q);
+  void QijAjkQlk(const R2SymTensorT& A, const R2TensorT< T_dim >& Q);
 
   void dyadic_aa(const R1TensorT< T_dim >& a);
   void dyadic_ab_plus_ba(const R1TensorT< T_dim >& a, const R1TensorT< T_dim >& b);
 
-  void AijklBkl(const R4minSymTensorT< T_dim >&A, const R2SymTensorT< T_dim >& B );
-  void AijklBij(const R4minSymTensorT< T_dim >&A, const R2SymTensorT< T_dim >& B );
+  void AijklBkl(const R4minSymTensorT< T_dim >&A, const R2SymTensorT& B );
+  void AijklBij(const R4minSymTensorT< T_dim >&A, const R2SymTensorT& B );
 
   //**** Overloaded arithmetic operators
   //  ******************************************
 
   // Scalar product
-  friend R2SymTensorT<T_dim> operator*(realT k, const R2SymTensorT<T_dim> &V){ return R2SymTensorT<T_dim>(V*k); }
-  friend R2SymTensorT<T_dim> operator*(R2SymTensorT<T_dim> V, realT k){return static_cast< R2SymTensorT<T_dim> >(V*=k); }
+  friend R2SymTensorT operator*(realT k, const R2SymTensorT &V){ return R2SymTensorT(V*k); }
+  friend R2SymTensorT operator*(R2SymTensorT V, realT k){return static_cast< R2SymTensorT >(V*=k); }
 
   //****** TENSOR OPERATIONS **************************************************
   realT Inner(void) const;
@@ -163,7 +231,7 @@ public:
 
 
   inline realT
-  Inverse(R2SymTensorT< T_dim >& tensor);
+  Inverse(R2SymTensorT & tensor);
 
   /// add identity
   void PlusIdentity(const realT rhs)
@@ -189,7 +257,7 @@ public:
 private:
 //  R2SymTensorT(R2SymTensorT< T_dim >&);
 
-//  static constexpr int map[SymSize< T_dim >::value] = {{0,1,2,0,1,2,0,1,2}};
+//  static constexpr int map[SIZE] = {{0,1,2,0,1,2,0,1,2}};
 
 
 };
@@ -222,7 +290,7 @@ void R2SymTensorT< T_dim >::print(std::ostream& os) const
 
 template<int T_dim>
 R2SymTensorT< T_dim >::R2SymTensorT(void):
-  TensorBaseT< SymSize< T_dim >::value > ()
+  TensorBaseT< SIZE > ()
 {}
 
 
@@ -234,7 +302,7 @@ GEOSX_HOST_DEVICE
 R2SymTensorT< T_dim >&
 R2SymTensorT< T_dim >::operator=(const int& rhs)
 {
-  TensorBaseT< SymSize< T_dim >::value >::operator=( rhs );
+  TensorBaseT< SIZE >::operator=( rhs );
   return *this;
 }
 
@@ -244,7 +312,7 @@ GEOSX_HOST_DEVICE
 R2SymTensorT< T_dim >&
 R2SymTensorT< T_dim >::operator=(const realT& rhs)
 {
-  TensorBaseT< SymSize< T_dim >::value >::operator=( rhs );
+  TensorBaseT< SIZE >::operator=( rhs );
   return *this;
 }
 
@@ -252,7 +320,7 @@ R2SymTensorT< T_dim >::operator=(const realT& rhs)
 template< int T_dim >
 inline R2SymTensorT<T_dim>& R2SymTensorT<T_dim>::operator+=( const R2SymTensorT<T_dim>& rhs )
 {
-  TensorBaseT< SymSize< T_dim >::value >::operator+=(rhs);
+  TensorBaseT< SIZE >::operator+=(rhs);
   return *this;
 }
 
@@ -370,7 +438,7 @@ inline realT R2SymTensorT< T_dim >::Det(void) const
                                t_data[3]));
   else
   {
-    GEOS_WARNING("R2TensorT::Det() not implemented for dimension > 3");
+    GEOSX_WARNING("R2TensorT::Det() not implemented for dimension > 3");
   }
 
   return det;
@@ -405,7 +473,7 @@ inline realT R2SymTensorT< T_dim >::Inner(void) const
            * (this->t_data[3]) + 2 * (this->t_data[4]) * (this->t_data[4]) + this->t_data[5] * (this->t_data[5]);
   else
   {
-    GEOS_WARNING("R2TensorT::Inner() not implemented for dimension > 3");
+    GEOSX_WARNING("R2TensorT::Inner() not implemented for dimension > 3");
   }
 
   return rval;
@@ -472,7 +540,7 @@ realT R2SymTensorT<T_dim>::Inverse( R2SymTensorT<T_dim>& tensor )
   }
   else
   {
-    GEOS_WARNING("R2SymTensorT::Inverse( R2TensorT ) not implemented for dimension > 3");
+    GEOSX_WARNING("R2SymTensorT::Inverse( R2TensorT ) not implemented for dimension > 3");
   }
   return det;
 }
@@ -488,7 +556,7 @@ inline void R2SymTensorT< T_dim >::EigenVals( realT eigenvals[T_dim],
 {
   if(T_dim != 3)
   {
-    GEOS_WARNING("R2SymTensorT::EigenVals not implemented for dimension != 3");
+    GEOSX_WARNING("R2SymTensorT::EigenVals not implemented for dimension != 3");
     return;
   }
 
@@ -581,7 +649,7 @@ inline void R2SymTensorT< T_dim >::EigenVecs(const realT lambda[T_dim], R1Tensor
 {
   if(T_dim != 3)
   {
-    GEOS_WARNING("R2SymTensorT::EigenVecs not implemented for dimension != 3");
+    GEOSX_WARNING("R2SymTensorT::EigenVecs not implemented for dimension != 3");
     return;
   }
 
@@ -628,7 +696,7 @@ inline void R2SymTensorT< T_dim >::EigenVecs(const realT lambda[T_dim], R1Tensor
 
       maxmag = 0.0;
       int imax = -1;
-      for (int i = 0 ; i < SymSize< T_dim >::value ; ++i)
+      for (int i = 0 ; i < SIZE ; ++i)
         if (maxmag < fabs( M.t_data[i] ))
         {
           maxmag = fabs( M.t_data[i] );
@@ -764,7 +832,7 @@ inline void R2SymTensorT< T_dim >::EigenVector(const realT lambda, R1TensorT< T_
 {
   if(T_dim != 3)
   {
-    GEOS_WARNING("R2SymTensorT::EigenVector not implemented for dimension != 3");
+    GEOSX_WARNING("R2SymTensorT::EigenVector not implemented for dimension != 3");
     return;
   }
 
@@ -811,7 +879,7 @@ void R2SymTensorT< T_dim >::Sqrt()
 {
   if(T_dim != 3)
   {
-    GEOS_WARNING("R2SymTensorT::Sqrt not implemented for dimension != 3");
+    GEOSX_WARNING("R2SymTensorT::Sqrt not implemented for dimension != 3");
     return;
   }
 
@@ -905,7 +973,7 @@ inline void R2SymTensorT< T_dim >::AijBjk(const R2SymTensorT< T_dim >& A, const 
   }
   else
   {
-    GEOS_WARNING("R2SymTensorT::AijBjk(R2TensorT) not implemented for dimension > 3 ");
+    GEOSX_WARNING("R2SymTensorT::AijBjk(R2TensorT) not implemented for dimension > 3 ");
   }
 
 }
@@ -941,7 +1009,7 @@ inline void R2SymTensorT< T_dim >::AijAkj(const R2TensorT< T_dim >& A)
   }
   else
   {
-    GEOS_WARNING("R2SymTensorT::AijAkj(R2TensorT) not implemented for dimension > 3 ");
+    GEOSX_WARNING("R2SymTensorT::AijAkj(R2TensorT) not implemented for dimension > 3 ");
   }
 
 }
@@ -974,7 +1042,7 @@ inline void R2SymTensorT< T_dim >::AjiAjk(const R2TensorT< T_dim >& A)
   }
   else
   {
-    GEOS_WARNING("R2SymTensorT::AijAkj(R2TensorT) not implemented for dimension > 3 ");
+    GEOSX_WARNING("R2SymTensorT::AijAkj(R2TensorT) not implemented for dimension > 3 ");
   }
 
 }
@@ -1026,7 +1094,7 @@ inline void R2SymTensorT< T_dim >::AijAjk(const R2SymTensorT< T_dim >& A)
   }
   else
   {
-    GEOS_WARNING("R2SymTensorT::AijAkj(R2TensorT) not implemented for dimension > 3");
+    GEOSX_WARNING("R2SymTensorT::AijAkj(R2TensorT) not implemented for dimension > 3");
   }
 
 }
@@ -1060,7 +1128,7 @@ inline void R2SymTensorT< T_dim >::AijAkj_plus_Aik_plus_Aki(const R2TensorT< T_d
   }
   else
   {
-    GEOS_WARNING("R2SymTensorT::AijAkj_plus_Aik_plus_Aki not implemented for dimension > 3");
+    GEOSX_WARNING("R2SymTensorT::AijAkj_plus_Aik_plus_Aki not implemented for dimension > 3");
     return;
   }
 }
@@ -1094,7 +1162,7 @@ inline void R2SymTensorT< T_dim >::AjiAjk_plus_Aik_plus_Aki(const R2TensorT< T_d
   }
   else
   {
-    GEOS_WARNING("R2SymTensorT::AjiAjk_plus_Aik_plus_Aki not implemented for dimension > 3");
+    GEOSX_WARNING("R2SymTensorT::AjiAjk_plus_Aik_plus_Aki not implemented for dimension > 3");
     return;
   }
 }
@@ -1129,7 +1197,7 @@ inline void R2SymTensorT< T_dim >::AijAkj_m_Aik_m_Aki(const R2TensorT< T_dim >& 
   }
   else
   {
-    GEOS_WARNING("R2SymTensorT::AijAkj_m_Aik_m_Aki not implemented for dimension > 3");
+    GEOSX_WARNING("R2SymTensorT::AijAkj_m_Aik_m_Aki not implemented for dimension > 3");
     return;
   }
 }
@@ -1194,7 +1262,7 @@ inline void R2SymTensorT< T_dim >::QijAjkQlk(const R2SymTensorT< T_dim >& A, con
 //  }
 //  else
 //  {
-//    GEOS_WARNING("R2SymTensorT::QijAjkQlk(R2TensorT) not implemented for dimension > 3");
+//    GEOSX_WARNING("R2SymTensorT::QijAjkQlk(R2TensorT) not implemented for dimension > 3");
 //  }
 
 }
@@ -1278,7 +1346,7 @@ inline void R2SymTensorT< T_dim >::dyadic_ab_plus_ba(const R1TensorT< T_dim >& a
   }
   else
   {
-    GEOS_WARNING("R2SymTensorT::dyadic_ab(R1TensorT,R1TensorT) not implemented for dimension )> 3");
+    GEOSX_WARNING("R2SymTensorT::dyadic_ab(R1TensorT,R1TensorT) not implemented for dimension )> 3");
   }
 }
 

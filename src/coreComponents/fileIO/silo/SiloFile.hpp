@@ -326,7 +326,7 @@ public:
   template<typename OUTTYPE, typename TYPE>
   void WriteDataField( string const & meshName,
                        string const & fieldName,
-                       const array1d<TYPE>& field,
+                       arrayView1d<TYPE const> const & field,
                        int const centering,
                        int const cycleNumber,
                        real64 const problemTime,
@@ -342,10 +342,10 @@ public:
    * @param problemTime the current problem time
    * @param multiRoot location to write the multivar entries
    */
-  template<typename OUTTYPE, typename TYPE>
+  template<typename OUTTYPE, typename TYPE, int USD >
   void WriteDataField( string const & meshName,
                        string const & fieldName,
-                       const array2d<TYPE>& field,
+                       arrayView2d<TYPE const, USD> const& field,
                        int const centering,
                        int const cycleNumber,
                        real64 const problemTime,
@@ -361,15 +361,24 @@ public:
    * @param problemTime the current problem time
    * @param multiRoot location to write the multivar entries
    */
-  template<typename OUTTYPE, typename TYPE>
+  template<typename OUTTYPE, typename TYPE, int USD>
   void WriteDataField( string const & meshName,
                        string const & fieldName,
-                       const array3d<TYPE>& field,
+                       arrayView3d<TYPE const,USD> const & field,
                        int const centering,
                        int const cycleNumber,
                        real64 const problemTime,
                        string const & multiRoot );
 
+  template<typename OUTTYPE, typename TYPE, int NDIM, int USD>
+  void WriteDataField( string const & meshName,
+                       string const & fieldName,
+                       ArrayView<TYPE const,NDIM, USD> const & field,
+                       int const siloTensorRank,
+                       int const centering,
+                       int const cycleNumber,
+                       real64 const problemTime,
+                       string const & multiRoot );
 
   template< typename OUTTYPE, typename TYPE >
   void WriteMaterialDataField( string const & meshName,
@@ -419,6 +428,9 @@ public:
                                    string const & fieldName );
 
   void WriteStressVarDefinition( string const & MatDir );
+
+  void WriteVectorVarDefinition( string const & fieldName,
+                                 string const & subDirectory );
 
   /**
    * find the silo mesh type that we are attempting to reference
@@ -517,6 +529,7 @@ private:
   string m_baseFileName;
 
   string_array m_emptyMeshes;
+//  string_array m_emptyMaterials;
   string_array m_emptyVariables;
 
   integer m_writeEdgeMesh;

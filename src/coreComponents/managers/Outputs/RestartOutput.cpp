@@ -39,11 +39,11 @@ RestartOutput::RestartOutput( std::string const & name,
 RestartOutput::~RestartOutput()
 {}
 
-void RestartOutput::Execute(real64 const GEOSX_UNUSED_ARG( time_n ),
-                            real64 const GEOSX_UNUSED_ARG( dt ),
+void RestartOutput::Execute(real64 const GEOSX_UNUSED_PARAM( time_n ),
+                            real64 const GEOSX_UNUSED_PARAM( dt ),
                             integer const cycleNumber,
-                            integer const GEOSX_UNUSED_ARG( eventCounter ),
-                            real64 const GEOSX_UNUSED_ARG( eventProgress ),
+                            integer const GEOSX_UNUSED_PARAM( eventCounter ),
+                            real64 const GEOSX_UNUSED_PARAM( eventProgress ),
                             Group * domain)
 {
   GEOSX_MARK_FUNCTION;
@@ -57,12 +57,12 @@ void RestartOutput::Execute(real64 const GEOSX_UNUSED_ARG( time_n ),
   sprintf(fileName, "%s_%s_%09d", problemManager->getProblemName().c_str(), "restart", cycleNumber);
 
   problemManager->prepareToWrite();
-  FunctionManager::Instance()->prepareToWrite();
-  FieldSpecificationManager::get()->prepareToWrite();
+  FunctionManager::Instance().prepareToWrite();
+  FieldSpecificationManager::get().prepareToWrite();
   writeTree( fileName );
   problemManager->finishWriting();
-  FunctionManager::Instance()->finishWriting();
-  FieldSpecificationManager::get()->finishWriting();
+  FunctionManager::Instance().finishWriting();
+  FieldSpecificationManager::get().finishWriting();
 }
 
 

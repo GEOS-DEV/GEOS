@@ -13,8 +13,7 @@
  */
 
 // Source includes
-#include "SetSignalHandling.hpp"
-#include "stackTrace.hpp"
+#include "managers/initialization.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/fluid/CompositionalMultiphaseFluid.hpp"
@@ -378,7 +377,7 @@ MultiFluidBase * makeLiveOilFluid(string const & name, Group * parent)
   surfaceDens.resize( 3 );
   surfaceDens[0] = 800.0; surfaceDens[1] = 0.9907; surfaceDens[2] = 1022.0;
 
-  auto & tableNames = fluid->getReference<string_array>( BlackOilFluid::viewKeyStruct::tableFilesString );
+  auto & tableNames = fluid->getReference<path_array>( BlackOilFluid::viewKeyStruct::tableFilesString );
   tableNames.resize( 3 );
   tableNames[0] = "pvto.txt"; tableNames[1] = "pvtg.txt"; tableNames[2] = "pvtw.txt";
 
@@ -411,7 +410,7 @@ MultiFluidBase * makeDeadOilFluid( string const & name, Group * parent )
   surfaceDens.resize( 3 );
   surfaceDens[0] = 800.0; surfaceDens[1] = 0.9907; surfaceDens[2] = 1022.0;
 
-  auto & tableNames = fluid->getReference<string_array>( BlackOilFluid::viewKeyStruct::tableFilesString );
+  auto & tableNames = fluid->getReference<path_array>( BlackOilFluid::viewKeyStruct::tableFilesString );
   tableNames.resize( 3 );
   tableNames[0] = "pvdo.txt"; tableNames[1] = "pvdg.txt"; tableNames[2] = "pvdw.txt";
 
@@ -566,31 +565,15 @@ TEST_F(DeadOilFluidTest, numericalDerivativesMass)
   testNumericalDerivatives( fluid, P, T, comp, eps, relTol, absTol );
 }
 
-int main(int argc, char** argv)
+int main( int argc, char** argv )
 {
-  ::testing::InitGoogleTest(&argc, argv);
+  ::testing::InitGoogleTest( &argc, argv );
 
-#ifdef GEOSX_USE_MPI
-
-  MPI_Init(&argc,&argv);
-
-  MPI_Comm_dup( MPI_COMM_WORLD, &MPI_COMM_GEOSX );
-
-  logger::InitializeLogger(MPI_COMM_GEOSX);
-#else
-  logger::InitializeLogger();
-#endif
-
-  cxx_utilities::setSignalHandling(cxx_utilities::handler1);
+  geosx::basicSetup( argc, argv );
 
   int const result = RUN_ALL_TESTS();
 
-  logger::FinalizeLogger();
-
-#ifdef GEOSX_USE_MPI
-  MPI_Comm_free( &MPI_COMM_GEOSX );
-  MPI_Finalize();
-#endif
+  geosx::basicCleanup();
 
   return result;
 }

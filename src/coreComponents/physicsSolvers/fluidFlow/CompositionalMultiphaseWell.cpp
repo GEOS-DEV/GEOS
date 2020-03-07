@@ -109,7 +109,7 @@ void CompositionalMultiphaseWell::InitializePreSubGroups( Group * const rootGrou
   ConstitutiveManager const * const cm = domain->getConstitutiveManager();
 
   RelativePermeabilityBase const * relPerm = cm->GetConstitutiveRelation<RelativePermeabilityBase>( m_resRelPermName );
-  GEOS_ERROR_IF( relPerm == nullptr, "Relative permeability model " + m_resRelPermName + " not found" );
+  GEOSX_ERROR_IF( relPerm == nullptr, "Relative permeability model " + m_resRelPermName + " not found" );
   m_resRelPermIndex = relPerm->getIndexInParent();
 
   MeshLevel * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
@@ -133,11 +133,11 @@ void CompositionalMultiphaseWell::InitializePreSubGroups( Group * const rootGrou
       for (localIndex ic = 0; ic < m_numComponents; ++ic)
       {
         real64 const compFrac = wellControls->GetInjectionStream( ic );
-        GEOS_ERROR_IF( compFrac < 0.0 || compFrac > 1.0, 
+        GEOSX_ERROR_IF( compFrac < 0.0 || compFrac > 1.0, 
                        "Invalid injection stream for well " << subRegion->getName() );
         compFracSum += compFrac;
       }
-      GEOS_ERROR_IF( compFracSum < 1.0 - std::numeric_limits<real64>::epsilon() || 
+      GEOSX_ERROR_IF( compFracSum < 1.0 - std::numeric_limits<real64>::epsilon() || 
                      compFracSum > 1.0 + std::numeric_limits<real64>::epsilon(), 
                      "Invalid injection stream for well " << subRegion->getName() );
     }
@@ -191,7 +191,7 @@ void CompositionalMultiphaseWell::InitializePostInitialConditions_PreSubGroups( 
 }
 
 
-void CompositionalMultiphaseWell::UpdateMixtureDensity( WellElementSubRegion const * const subRegion )
+void CompositionalMultiphaseWell::UpdateMixtureDensity( WellElementSubRegion * const subRegion )
 {
   localIndex constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
   localIndex const NC = m_numComponents;
@@ -268,7 +268,7 @@ void CompositionalMultiphaseWell::UpdateState( WellElementSubRegion * const subR
 {
   CompositionalMultiphaseFlow * const flowSolver = getParent()->GetGroup<CompositionalMultiphaseFlow>( GetFlowSolverName() );
 
-  GEOS_ERROR_IF( flowSolver == nullptr,
+  GEOSX_ERROR_IF( flowSolver == nullptr,
                  "Flow solver " << GetFlowSolverName() << " not found in well solver " << getName() );
 
   flowSolver->UpdateComponentFraction( subRegion );
@@ -314,8 +314,8 @@ void CompositionalMultiphaseWell::InitializeWells( DomainPartition * const domai
     arrayView2d<real64> const & wellElemCompFrac =
       subRegion->getReference<array2d<real64>>( viewKeyStruct::globalCompFractionString );
 
-    arrayView1d<real64 const> const & wellElemGravDepth =
-      subRegion->getReference<array1d<real64>>( viewKeyStruct::gravityDepthString );
+    arrayView1d<real64 const> const & wellElemGravCoef =
+      subRegion->getReference<array1d<real64>>( viewKeyStruct::gravityCoefString );
     
     // get the element region, subregion, index
     arrayView1d<localIndex const> const & resElementRegion =
@@ -421,7 +421,7 @@ void CompositionalMultiphaseWell::InitializeWells( DomainPartition * const domai
         avgCompFrac[ic] /= numPerforationsGlobal; 
         compFracSum += avgCompFrac[ic];
       } 
-      GEOS_ERROR_IF( compFracSum < 1 - tol || compFracSum > 1 + tol, 
+      GEOSX_ERROR_IF( compFracSum < 1 - tol || compFracSum > 1 + tol, 
                      "Invalid well initialization: negative pressure was found" );
 
     }
@@ -443,14 +443,14 @@ void CompositionalMultiphaseWell::InitializeWells( DomainPartition * const domai
       }
     }
 
-    real64 pressureControl  = 0.0;
-    real64 gravDepthControl = 0.0;
+    real64 pressureControl = 0.0;
+    real64 gravCoefControl = 0.0;
   
     if (subRegion->IsLocallyOwned())
     {
       
       localIndex const iwelemControl = wellControls->GetReferenceWellElementIndex();
-      gravDepthControl = wellElemGravDepth[iwelemControl];
+      gravCoefControl = wellElemGravCoef[iwelemControl];
 
       // 2) Initialize the reference pressure
       real64 const & targetBHP = wellControls->GetTargetBHP();
@@ -473,19 +473,15 @@ void CompositionalMultiphaseWell::InitializeWells( DomainPartition * const domai
 
     // TODO optimize
     MpiWrapper::Broadcast( pressureControl, subRegion->GetTopRank() );
-    MpiWrapper::Broadcast( gravDepthControl, subRegion->GetTopRank() );
+    MpiWrapper::Broadcast( gravCoefControl, subRegion->GetTopRank() );
 
-    GEOS_ERROR_IF( pressureControl <= 0, "Invalid well initialization: negative pressure was found" );
+    GEOSX_ERROR_IF( pressureControl <= 0, "Invalid well initialization: negative pressure was found" );
 
     // 3) Estimate the pressures in the well elements using this avgDensity
-    integer const gravityFlag = m_gravityFlag;
-
     forall_in_range( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex const iwelem )
     {
       wellElemPressure[iwelem] = pressureControl
-        + ( gravityFlag 
-          ? avgMixtureDensity * ( wellElemGravDepth[iwelem] - gravDepthControl ) 
-          : 0 );
+        + avgMixtureDensity * ( wellElemGravCoef[iwelem] - gravCoefControl );
 
     });
 
@@ -542,12 +538,15 @@ void CompositionalMultiphaseWell::SetupDofs( DomainPartition const * const domai
 
   dofManager.addField( WellElementDofName(),
                        DofManager::Location::Elem,
-                       DofManager::Connectivity::Node,
                        NumDofPerWellElement(),
                        regions );
+
+  dofManager.addCoupling( WellElementDofName(),
+                          WellElementDofName(),
+                          DofManager::Connectivity::Node );
 }
 
-void CompositionalMultiphaseWell::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time_n ),
+void CompositionalMultiphaseWell::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                                      real64 const dt,
                                                      DomainPartition const * const domain,
                                                      DofManager const * const dofManager,
@@ -827,8 +826,8 @@ void CompositionalMultiphaseWell::AssembleFluxTerms( real64 const GEOSX_UNUSED_A
   });
 }
 
-void CompositionalMultiphaseWell::AssembleVolumeBalanceTerms( real64 const GEOSX_UNUSED_ARG( time_n ),
-                                                              real64 const GEOSX_UNUSED_ARG( dt ),
+void CompositionalMultiphaseWell::AssembleVolumeBalanceTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
+                                                              real64 const GEOSX_UNUSED_PARAM( dt ),
                                                               DomainPartition const * const domain,
                                                               DofManager const * const dofManager,
                                                               ParallelMatrix * const matrix,
@@ -925,7 +924,6 @@ void CompositionalMultiphaseWell::AssembleVolumeBalanceTerms( real64 const GEOSX
     });
   });
 }
-
 
 real64
 CompositionalMultiphaseWell::CalculateResidualNorm( DomainPartition const * const domain,
@@ -1065,32 +1063,23 @@ CompositionalMultiphaseWell::ApplySystemSolution( DofManager const & dofManager,
                                                   real64 const scalingFactor,
                                                   DomainPartition * const domain )
 {
-  MeshLevel * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ElementRegionManager * const elemManager = meshLevel->getElemManager();
+  dofManager.addVectorToField( solution,
+                               WellElementDofName(),
+                               viewKeyStruct::deltaPressureString,
+                               scalingFactor,
+                               0, 1 );
 
-  elemManager->forElementSubRegions<WellElementSubRegion>( [&]( WellElementSubRegion * const subRegion )
-  {
-    dofManager.addVectorToField( solution,
-                                 WellElementDofName(),
-                                 scalingFactor,
-                                 subRegion,
-                                 viewKeyStruct::deltaPressureString,
-                                 0, 1 );
+  dofManager.addVectorToField( solution,
+                               WellElementDofName(),
+                               viewKeyStruct::deltaGlobalCompDensityString,
+                               scalingFactor,
+                               1, m_numDofPerWellElement - 1 );
 
-    dofManager.addVectorToField( solution,
-                                 WellElementDofName(),
-                                 scalingFactor,
-                                 subRegion,
-                                 viewKeyStruct::deltaGlobalCompDensityString,
-                                 1, m_numDofPerWellElement - 1 );
-
-    dofManager.addVectorToField( solution,
-                                 WellElementDofName(),
-                                 scalingFactor,
-                                 subRegion,
-                                 viewKeyStruct::deltaMixtureConnRateString,
-                                 m_numDofPerWellElement - 1, m_numDofPerWellElement );
-  });  
+  dofManager.addVectorToField( solution,
+                               WellElementDofName(),
+                               viewKeyStruct::deltaMixtureConnRateString,
+                               scalingFactor,
+                               m_numDofPerWellElement - 1, m_numDofPerWellElement );
 
   std::map<string, string_array > fieldNames;
   fieldNames["elems"].push_back( viewKeyStruct::deltaPressureString );
@@ -1108,10 +1097,10 @@ CompositionalMultiphaseWell::ApplySystemSolution( DofManager const & dofManager,
 void CompositionalMultiphaseWell::ResetStateToBeginningOfStep( DomainPartition * const domain )
 {
 
-  MeshLevel const * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ElementRegionManager const * const elemManager = meshLevel->getElemManager();
+  MeshLevel * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  ElementRegionManager * const elemManager = meshLevel->getElemManager();
 
-  elemManager->forElementSubRegions<WellElementSubRegion>( [&]( WellElementSubRegion const * const subRegion )
+  elemManager->forElementSubRegions<WellElementSubRegion>( [&]( WellElementSubRegion * const subRegion )
   {
 
     // get a reference to the primary variables on well elements
@@ -1193,8 +1182,8 @@ void CompositionalMultiphaseWell::FormPressureRelations( DomainPartition const *
     arrayView1d<integer const> const & wellElemGhostRank =
       subRegion->getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
-    arrayView1d<real64 const> const & wellElemGravDepth =
-      subRegion->getReference<array1d<real64>>( viewKeyStruct::gravityDepthString );
+    arrayView1d<real64 const> const & wellElemGravCoef =
+      subRegion->getReference<array1d<real64>>( viewKeyStruct::gravityCoefString );
 
     arrayView1d<localIndex const> const & nextWellElemIndex =
       subRegion->getReference<array1d<localIndex>>( WellElementSubRegion::viewKeyStruct::nextWellElementIndexString );
@@ -1251,9 +1240,9 @@ void CompositionalMultiphaseWell::FormPressureRelations( DomainPartition const *
           dAvgDensity_dCompNext[ic]    = 0.5 * dWellElemMixtureDensity_dComp[iwelemNext][ic];
           dAvgDensity_dCompCurrent[ic] = 0.5 * dWellElemMixtureDensity_dComp[iwelem][ic];
         }
-        
+
         // compute depth diff times acceleration
-        real64 const gravD = ( wellElemGravDepth[iwelemNext] - wellElemGravDepth[iwelem] );
+        real64 const gravD = wellElemGravCoef[iwelemNext] - wellElemGravCoef[iwelem];
 
         // compute the current pressure in the two well elements
         real64 const pressureNext    = wellElemPressure[iwelemNext] + dWellElemPressure[iwelemNext];
@@ -1416,7 +1405,7 @@ void CompositionalMultiphaseWell::FormControlEquation( DomainPartition const * c
     }
     else
     {
-      GEOS_ERROR_IF( (control != WellControls::Control::BHP) 
+      GEOSX_ERROR_IF( (control != WellControls::Control::BHP) 
                   && (control != WellControls::Control::LIQUIDRATE),
                     "Phase rate contraints for CompositionalMultiphaseWell will be implemented later" );
     }
@@ -1424,15 +1413,15 @@ void CompositionalMultiphaseWell::FormControlEquation( DomainPartition const * c
 }
 
 
-void CompositionalMultiphaseWell::ImplicitStepComplete( real64 const & GEOSX_UNUSED_ARG( time ),
-                                                        real64 const & GEOSX_UNUSED_ARG( dt ),
+void CompositionalMultiphaseWell::ImplicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time ),
+                                                        real64 const & GEOSX_UNUSED_PARAM( dt ),
                                                         DomainPartition * const domain )
 {
 
-  MeshLevel const * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ElementRegionManager const * const elemManager = meshLevel->getElemManager();
+  MeshLevel * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  ElementRegionManager * const elemManager = meshLevel->getElemManager();
 
-  elemManager->forElementSubRegions<WellElementSubRegion>( [&]( WellElementSubRegion const * const subRegion )
+  elemManager->forElementSubRegions<WellElementSubRegion>( [&]( WellElementSubRegion * const subRegion )
   {
 
     // get a reference to the primary variables on well elements
@@ -1674,7 +1663,7 @@ void CompositionalMultiphaseWell::CheckWellControlSwitch( DomainPartition * cons
                                     wellControls->GetTargetRate() );
         
         // Debug information for logLevel >= 1
-        GEOS_LOG_LEVEL_RANK_0(1, "Control switch for well " << subRegion->getName()
+        GEOSX_LOG_LEVEL_RANK_0(1, "Control switch for well " << subRegion->getName()
                               << " from BHP constraint to rate constraint" );
 
       }
@@ -1683,7 +1672,7 @@ void CompositionalMultiphaseWell::CheckWellControlSwitch( DomainPartition * cons
         wellControls->SetControl( WellControls::Control::BHP, 
                                     wellControls->GetTargetBHP() );
         // Debug information for logLevel >= 1
-        GEOS_LOG_LEVEL_RANK_0(1,  "Control switch for well " << subRegion->getName()
+        GEOSX_LOG_LEVEL_RANK_0(1,  "Control switch for well " << subRegion->getName()
                                << " from rate constraint to BHP constraint" );
       }
     }

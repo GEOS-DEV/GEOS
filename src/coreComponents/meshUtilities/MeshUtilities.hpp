@@ -29,8 +29,10 @@ namespace dataRepository
 {
 class Group;
 }
+
 class ObjectManagerBase;
 class xmlWrapper;
+class NodeManager;
 
 class MeshUtilities
 {
@@ -41,7 +43,7 @@ public:
 
 
   static void GenerateNodesets( dataRepository::Group const * geometry,
-                                ObjectManagerBase * const nodeManager );
+                                NodeManager * const nodeManager );
 
 //  static void GenerateFasesetsAndAssociatedNodesets( xmlWrapper const & hdn,
 //                                                     Group&

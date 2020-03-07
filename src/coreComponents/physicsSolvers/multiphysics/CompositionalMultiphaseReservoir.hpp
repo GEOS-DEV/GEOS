@@ -84,7 +84,7 @@ public:
 
   virtual void AssembleCouplingTerms( real64 const time_n,
                                       real64 const dt,
-                                      DomainPartition const * const domain,
+                                      DomainPartition * const domain,
                                       DofManager const * const dofManager,
                                       ParallelMatrix * const matrix,
                                       ParallelVector * const rhs ) override;
@@ -97,7 +97,7 @@ protected:
    * @brief Compute all the perforation rates for this well
    * @param well the well with its perforations
    */
-  void ComputeAllPerforationRates( WellElementSubRegion const * const subRegion );
+  void ComputeAllPerforationRates( WellElementSubRegion * const subRegion );
 
   /// views into reservoir primary variable fields
 

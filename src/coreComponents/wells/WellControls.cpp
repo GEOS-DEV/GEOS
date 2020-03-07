@@ -38,6 +38,7 @@ WellControls::WellControls(string const & name, Group * const parent)
     m_targetBHP( 0.0 ),
     m_targetRate( 0.0 )
 {
+  setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
   registerWrapper( viewKeyStruct::typeString, &m_typeString, false )->
     setInputFlag(InputFlags::REQUIRED)->
@@ -114,7 +115,7 @@ void WellControls::PostProcessInput()
   }
   else
   {
-    GEOS_ERROR("Invalid well type: " << m_typeString);
+    GEOSX_ERROR("Invalid well type: " << m_typeString);
   }
 
   // 2) set initial control type
@@ -126,17 +127,17 @@ void WellControls::PostProcessInput()
   else if (m_inputControlString == "gasRate")
   {
     m_currentControl = Control::GASRATE;
-    GEOS_ERROR("This control is not implemented yet");
+    GEOSX_ERROR("This control is not implemented yet");
   }
   else if (m_inputControlString == "oilRate")
   {
     m_currentControl = Control::OILRATE;
-    GEOS_ERROR("This control is not implemented yet");
+    GEOSX_ERROR("This control is not implemented yet");
   }
   else if (m_inputControlString == "waterRate")
   {
     m_currentControl = Control::WATERRATE;
-    GEOS_ERROR("This control is not implemented yet");
+    GEOSX_ERROR("This control is not implemented yet");
   }
   else if (m_inputControlString == "liquidRate")
   {
@@ -144,19 +145,19 @@ void WellControls::PostProcessInput()
   }
   else
   {
-    GEOS_ERROR("Invalid initial well control: " << m_inputControlString);
+    GEOSX_ERROR("Invalid initial well control: " << m_inputControlString);
   }
 
   // 3.a) check target BHP
   if (m_targetBHP < 0)
   {
-    GEOS_ERROR("Target bottom-hole pressure for well "<< getName() << " is negative");
+    GEOSX_ERROR("Target bottom-hole pressure for well "<< getName() << " is negative");
   }
 
   // 3.b) check target rate
   if (m_targetRate < 0) // choose a default value if negative
   {
-    GEOS_ERROR("Target rate for well "<< getName() << " is negative");
+    GEOSX_ERROR("Target rate for well "<< getName() << " is negative");
   }
 
   // 4) check injection stream
@@ -165,16 +166,16 @@ void WellControls::PostProcessInput()
     real64 sum = 0.0;
     for (localIndex ic = 0; ic < m_injectionStream.size(); ++ic)
     {
-      GEOS_ERROR_IF( m_injectionStream[ic] < 0.0 || m_injectionStream[ic] > 1.0,
+      GEOSX_ERROR_IF( m_injectionStream[ic] < 0.0 || m_injectionStream[ic] > 1.0,
                      "Invalid injection stream for well " << getName() );
       sum += m_injectionStream[ic];
     }
-    GEOS_ERROR_IF( std::abs(1.0 - sum) > std::numeric_limits<real64>::epsilon(),
+    GEOSX_ERROR_IF( std::abs(1.0 - sum) > std::numeric_limits<real64>::epsilon(),
                    "Invalid injection stream for well " << getName() );
   }
 }
 
-void WellControls::InitializePostInitialConditions_PreSubGroups( Group * const GEOSX_UNUSED_ARG( rootGroup ) )
+void WellControls::InitializePostInitialConditions_PreSubGroups( Group * const GEOSX_UNUSED_PARAM( rootGroup ) )
 {
   // for a producer, the solvers compute negative rates, so we adjust the input here
   if (GetType() == Type::PRODUCER && m_targetRate > 0.0)

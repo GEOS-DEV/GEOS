@@ -26,7 +26,7 @@
 #include <exception>
 #include <limits>
 #include "TensorOps.h"
-#include "Logger.hpp"
+#include "common/Logger.hpp"
 #include "common/GeosxMacros.hpp"
 
 /**
@@ -69,6 +69,7 @@ public:
   //**** CONSTRUCTORS AND DESTRUCTORS ******************************************
 
   /// default constructor
+  GEOSX_HOST_DEVICE
   TensorBaseT( void );
 
   /// constructor initialized by single value
@@ -105,9 +106,11 @@ public:
   TensorBaseT& operator/=( const realT& rhs );
 
   /// add another tensor
+  GEOSX_HOST_DEVICE
   TensorBaseT& operator+=( const TensorBaseT& rhs );
 
   /// subtract a tensor
+  GEOSX_HOST_DEVICE
   TensorBaseT& operator-=( const TensorBaseT& rhs );
 
   /// multiply by a tensor (data component by component)
@@ -220,7 +223,7 @@ public:
   {
     std::istringstream iss(str, std::istringstream::in);
     for ( int i = 0 ; i < T_length ; i++ )
-      GEOS_ERROR_IF(!(iss >> t_data[i]), "Error");
+      GEOSX_ERROR_IF(!(iss >> t_data[i]), "Error");
   }
 
 /*
@@ -352,6 +355,7 @@ public:
   }
 
   friend inline
+  GEOSX_HOST_DEVICE
   realT Dot( const TensorBaseT<T_length>& A,  const TensorBaseT<T_length>& B )
   {
     realT rval = 0;
@@ -382,6 +386,7 @@ private:
  * @return none
  */
 template<int T_length>
+GEOSX_HOST_DEVICE
 TensorBaseT< T_length >::TensorBaseT( void )//:
 {
   *this = 0.0;
@@ -526,6 +531,7 @@ TensorBaseT< T_length >::operator+=( const TensorBaseT< T_length >& rhs )
 
 
 template<>
+GEOSX_HOST_DEVICE
 inline TensorBaseT< 3 >&
 TensorBaseT<3>::operator+=( const TensorBaseT< 3 >& rhs )
 {
@@ -540,6 +546,7 @@ TensorBaseT<3>::operator+=( const TensorBaseT< 3 >& rhs )
  * @return none
  */
 template<int T_length>
+GEOSX_HOST_DEVICE
 inline TensorBaseT< T_length >&
 TensorBaseT< T_length >::operator-=( const TensorBaseT< T_length >& rhs )
 {

@@ -93,17 +93,20 @@ InternalMeshGenerator::InternalMeshGenerator( string const & name, Group * const
   registerWrapper(keys::xBias, &(m_nElemBias[0]), false )->
     setApplyDefaultValue(1.0)->
     setSizedFromParent(0)->
-    setInputFlag(InputFlags::OPTIONAL);
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("bias of element sizes in the x-direction within each mesh block (dx_left=(1+b)*L/N, dx_right=(1-b)*L/N)");
 
   registerWrapper(keys::yBias, &(m_nElemBias[1]), false )->
     setApplyDefaultValue(1.0)->
     setSizedFromParent(0)->
-    setInputFlag(InputFlags::OPTIONAL);
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("bias of element sizes in the y-direction within each mesh block (dy_left=(1+b)*L/N, dx_right=(1-b)*L/N)");
 
   registerWrapper(keys::zBias, &(m_nElemBias[2]), false )->
     setApplyDefaultValue(1.0)->
     setSizedFromParent(0)->
-    setInputFlag(InputFlags::OPTIONAL);
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("bias of element sizes in the z-direction within each mesh block (dz_left=(1+b)*L/N, dz_right=(1-b)*L/N)");
 
   registerWrapper(keys::cellBlockNames, &m_regionNames, false )->
     setInputFlag(InputFlags::REQUIRED)->
@@ -131,7 +134,7 @@ InternalMeshGenerator::~InternalMeshGenerator()
 /**
  * @param domain
  */
-void InternalMeshGenerator::GenerateElementRegions( DomainPartition& GEOSX_UNUSED_ARG( domain ) )
+void InternalMeshGenerator::GenerateElementRegions( DomainPartition& GEOSX_UNUSED_PARAM( domain ) )
 {
   //  lvector numElements;
   //
@@ -159,10 +162,11 @@ void InternalMeshGenerator::PostProcessInput()
   }
   else
   {
-    GEOS_ERROR("InternalMeshGenerator: incorrect element type!");
+    GEOSX_ERROR("InternalMeshGenerator: incorrect element type!");
   }
 
   {
+    // Check for vertex/element matching
     bool failFlag = false;
     for( int i=0 ; i<m_dim ; ++i )
     {
@@ -170,7 +174,20 @@ void InternalMeshGenerator::PostProcessInput()
     }
     if( failFlag )
     {
-      GEOS_ERROR("vertex/element mismatch InternalMeshGenerator::ReadXMLPost()");
+      GEOSX_ERROR("vertex/element mismatch InternalMeshGenerator::ReadXMLPost()");
+    }
+
+    // If specified, check to make sure bias values have the correct length
+    for( int i=0 ; i<m_dim ; ++i )
+    {
+      if (m_nElemBias[i].size() > 0)
+      {
+        failFlag += ( m_nElems[i].size() != m_nElemBias[i].size() );
+      }
+    }
+    if( failFlag )
+    {
+      GEOSX_ERROR("element/bias mismatch InternalMeshGenerator::ReadXMLPost()");
     }
   }
 
@@ -188,7 +205,7 @@ void InternalMeshGenerator::PostProcessInput()
     }
     else
     {
-      GEOS_ERROR("InternalMeshGenerator: The number of element types is inconsistent with the number of total block.");
+      GEOSX_ERROR("InternalMeshGenerator: The number of element types is inconsistent with the number of total block.");
     }
   }
 
@@ -242,7 +259,7 @@ void InternalMeshGenerator::PostProcessInput()
       }
       else
       {
-        GEOS_ERROR("Incorrect number of regionLayout entries specified in InternalMeshGenerator::ReadXML()");
+        GEOSX_ERROR("Incorrect number of regionLayout entries specified in InternalMeshGenerator::ReadXML()");
       }
     }
   }
@@ -294,7 +311,7 @@ void InternalMeshGenerator::PostProcessInput()
 
 
 
-Group * InternalMeshGenerator::CreateChild( string const & GEOSX_UNUSED_ARG( childKey ), string const & GEOSX_UNUSED_ARG( childName ) )
+Group * InternalMeshGenerator::CreateChild( string const & GEOSX_UNUSED_PARAM( childKey ), string const & GEOSX_UNUSED_PARAM( childName ) )
 {
   return nullptr;
 }
@@ -340,13 +357,13 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
   }
 
 
-  localIndex_set & xnegNodes = nodeSets->registerWrapper<localIndex_set>( std::string("xneg") )->reference();
-  localIndex_set & xposNodes = nodeSets->registerWrapper<localIndex_set>( std::string("xpos") )->reference();
-  localIndex_set & ynegNodes = nodeSets->registerWrapper<localIndex_set>( std::string("yneg") )->reference();
-  localIndex_set & yposNodes = nodeSets->registerWrapper<localIndex_set>( std::string("ypos") )->reference();
-  localIndex_set & znegNodes = nodeSets->registerWrapper<localIndex_set>( std::string("zneg") )->reference();
-  localIndex_set & zposNodes = nodeSets->registerWrapper<localIndex_set>( std::string("zpos") )->reference();
-  localIndex_set & allNodes  = nodeSets->registerWrapper<localIndex_set>( std::string("all") )->reference();
+  SortedArray<localIndex> & xnegNodes = nodeSets->registerWrapper<SortedArray<localIndex>>( std::string("xneg") )->reference();
+  SortedArray<localIndex> & xposNodes = nodeSets->registerWrapper<SortedArray<localIndex>>( std::string("xpos") )->reference();
+  SortedArray<localIndex> & ynegNodes = nodeSets->registerWrapper<SortedArray<localIndex>>( std::string("yneg") )->reference();
+  SortedArray<localIndex> & yposNodes = nodeSets->registerWrapper<SortedArray<localIndex>>( std::string("ypos") )->reference();
+  SortedArray<localIndex> & znegNodes = nodeSets->registerWrapper<SortedArray<localIndex>>( std::string("zneg") )->reference();
+  SortedArray<localIndex> & zposNodes = nodeSets->registerWrapper<SortedArray<localIndex>>( std::string("zpos") )->reference();
+  SortedArray<localIndex> & allNodes  = nodeSets->registerWrapper<SortedArray<localIndex>>( std::string("all") )->reference();
 
 
   // partition based on even spacing to get load balance
@@ -523,7 +540,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
   }
 
   nodeManager->resize( numNodes );
-  r1_array& X = nodeManager->getReference<r1_array>( keys::referencePositionString );
+  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & X = nodeManager->referencePosition();
 
   {
     localIndex localNodeIndex = 0;
@@ -539,13 +556,17 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
           {
             index[a] += firstElemIndexInPartition[a];
           }
-
-          X[localNodeIndex] = NodePosition( index, m_trianglePattern );
+          
+          R1Tensor const pos = NodePosition( index, m_trianglePattern );
+          for ( int a = 0; a < 3; ++a )
+          {
+            X( localNodeIndex, a ) = pos[ a ];
+          }
 
           // alter global node map for radial mesh
           if( m_mapToRadial > 0 )
           {
-            if( isEqual( X[localNodeIndex][1], m_max[1], 1e-10 ) )
+            if( isEqual( X( localNodeIndex, 1 ), m_max[1], 1e-10 ) )
             {
               index[1] = 0;
             }
@@ -556,19 +577,19 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
           // cartesian-specific nodesets
           if( m_mapToRadial == 0 )
           {
-            if( isEqual( X[localNodeIndex][0], m_min[0], 1e-10 ) )
+            if( isEqual( X( localNodeIndex, 0 ), m_min[0], 1e-10 ) )
             {
               xnegNodes.insert( localNodeIndex );
             }
-            if( isEqual( X[localNodeIndex][0], m_max[0], 1e-10 ) )
+            if( isEqual( X( localNodeIndex, 0 ), m_max[0], 1e-10 ) )
             {
               xposNodes.insert( localNodeIndex );
             }
-            if( isEqual( X[localNodeIndex][1], m_min[1], 1e-10 ) )
+            if( isEqual( X( localNodeIndex, 1 ), m_min[1], 1e-10 ) )
             {
               ynegNodes.insert( localNodeIndex );
             }
-            if( isEqual( X[localNodeIndex][1], m_max[1], 1e-10 ) )
+            if( isEqual( X( localNodeIndex, 1 ), m_max[1], 1e-10 ) )
             {
               yposNodes.insert( localNodeIndex );
             }
@@ -576,22 +597,22 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
           else
           {
             // radial-specific nodesets
-            if( isEqual( X[localNodeIndex][0], m_min[0], 1e-10 ) )
+            if( isEqual( X( localNodeIndex, 0 ), m_min[0], 1e-10 ) )
             {
               xnegNodes.insert( localNodeIndex );
             }
-            if( isEqual( X[localNodeIndex][0], m_max[0], 1e-10 ) )
+            if( isEqual( X( localNodeIndex, 0 ), m_max[0], 1e-10 ) )
             {
               xposNodes.insert( localNodeIndex );
             }
           }
 
           // general nodesets
-          if( isEqual( X[localNodeIndex][2], m_min[2], 1e-10 ) )
+          if( isEqual( X( localNodeIndex, 2 ), m_min[2], 1e-10 ) )
           {
             znegNodes.insert( localNodeIndex );
           }
-          if( isEqual( X[localNodeIndex][2], m_max[2], 1e-10 ) )
+          if( isEqual( X( localNodeIndex, 2 ), m_max[2], 1e-10 ) )
           {
             zposNodes.insert( localNodeIndex );
           }
@@ -625,7 +646,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
 
     // assign global numbers to elements
     iterRegion = m_regionNames.begin();
-    set<std::string> processedRegionNames;
+    SortedArray<std::string> processedRegionNames;
     localIndex iR = 0;
 
     for( int iblock = 0 ; iblock < m_nElems[0].size() ; ++iblock )
@@ -641,7 +662,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
           int const numNodesPerElem = integer_conversion<int>(elemRegion->numNodesPerElement());
           integer_array nodeIDInBox( numNodesPerElem );
 
-           arrayView2d< localIndex, CellBlock::NODE_MAP_UNIT_STRIDE_DIM > elemsToNodes = elemRegion->nodeList();
+           arrayView2d< localIndex, cells::NODE_MAP_USD > elemsToNodes = elemRegion->nodeList();
 
           int numElemsInDirForRegion[3] =
           { lastElemIndexForBlockInPartition[0][iblock] - firstElemIndexForBlockInPartition[0][iblock] + 1,
@@ -1202,7 +1223,7 @@ void InternalMeshGenerator::GetElemToNodesRelationInBox( const std::string& elem
   }
 }
 
-void InternalMeshGenerator::RemapMesh( dataRepository::Group * const GEOSX_UNUSED_ARG( domain ) )
+void InternalMeshGenerator::RemapMesh( dataRepository::Group * const GEOSX_UNUSED_PARAM( domain ) )
 {
   //  // Node mapping
   //  if (!m_meshDx.empty())

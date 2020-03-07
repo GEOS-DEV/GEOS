@@ -70,11 +70,13 @@ public:
   static string CatalogName() { return "InternalWell"; }
 
   /// not implemented
-  virtual void GenerateElementRegions( DomainPartition & GEOSX_UNUSED_ARG( domain ) ) override {}
+  virtual void GenerateElementRegions( DomainPartition & GEOSX_UNUSED_PARAM( domain ) ) override {}
 
   virtual Group * CreateChild( string const & childKey, 
                                       string const & childName ) override;
 
+  /// Expand object catalogs for schema generation
+  virtual void ExpandObjectCatalogs() override;
 
   /**
    * @brief main function of this class: processes the well input and creates the globla well topology
@@ -83,14 +85,14 @@ public:
   virtual void GenerateMesh( DomainPartition * const domain ) override;
 
   /// not implemented 
-  virtual void GetElemToNodesRelationInBox ( std::string const & GEOSX_UNUSED_ARG( elementType ),
-                                             int const * GEOSX_UNUSED_ARG( index ),
-                                             int const & GEOSX_UNUSED_ARG( iEle ),
-                                             int * GEOSX_UNUSED_ARG( nodeIDInBox ),
-                                             int const GEOSX_UNUSED_ARG( size )) override {}
+  virtual void GetElemToNodesRelationInBox ( std::string const & GEOSX_UNUSED_PARAM( elementType ),
+                                             int const * GEOSX_UNUSED_PARAM( index ),
+                                             int const & GEOSX_UNUSED_PARAM( iEle ),
+                                             int * GEOSX_UNUSED_PARAM( nodeIDInBox ),
+                                             int const GEOSX_UNUSED_PARAM( size )) override {}
 
   /// not implemented
-  virtual void RemapMesh ( dataRepository::Group * const GEOSX_UNUSED_ARG( domain ) ) override {}
+  virtual void RemapMesh ( dataRepository::Group * const GEOSX_UNUSED_PARAM( domain ) ) override {}
 
 
      
@@ -300,7 +302,7 @@ private:
   array1d<R1Tensor>           m_polyNodeCoords;
   
   /// Map from the polyline nodes to the polyline nodes
-  array1d< set<globalIndex> > m_polyNodeToSegmentMap;
+  array1d< SortedArray<globalIndex> > m_polyNodeToSegmentMap;
 
   /// Index of the node at the well head
   globalIndex     m_polylineHeadNodeId;

@@ -19,8 +19,7 @@
 #include "CellElementRegion.hpp"
 #include "AggregateElementSubRegion.hpp"
 #include "common/TimingMacros.hpp"
-#include "cxx-utilities/src/src/SparsityPattern.hpp"
-
+#include "cxx-utilities/src/SparsityPattern.hpp"
 #include "metis.h"
 
 namespace geosx
@@ -41,21 +40,21 @@ CellElementRegion::~CellElementRegion()
 {}
 
 
-void CellElementRegion::GenerateMesh( Group const * const cellBlocks )
+void CellElementRegion::GenerateMesh( Group * const cellBlocks )
 {
-  Group * elementSubRegions = this->GetGroup(viewKeyStruct::elementSubRegions);
+  Group * const elementSubRegions = this->GetGroup(viewKeyStruct::elementSubRegions);
 
   for( string const & cellBlockName : this->m_cellBlockNames )
   {
-    CellElementSubRegion * subRegion = elementSubRegions->RegisterGroup<CellElementSubRegion>(cellBlockName);
-    CellBlock const * source = cellBlocks->GetGroup<CellBlock>( subRegion->getName() );
-    GEOS_ERROR_IF(source == nullptr, "Cell block named " + subRegion->getName() + " does not exist");
+    CellElementSubRegion * const subRegion = elementSubRegions->RegisterGroup<CellElementSubRegion>(cellBlockName);
+    CellBlock * const source = cellBlocks->GetGroup<CellBlock>( subRegion->getName() );
+    GEOSX_ERROR_IF(source == nullptr, "Cell block named " + subRegion->getName() + " does not exist");
     subRegion->CopyFromCellBlock( source );
   }
 }
 
 void CellElementRegion::GenerateAggregates( FaceManager const * const faceManager,
-                                            NodeManager const * const GEOSX_UNUSED_ARG( nodeManager ) )
+                                            NodeManager const * const GEOSX_UNUSED_PARAM( nodeManager ) )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -80,7 +79,7 @@ void CellElementRegion::GenerateAggregates( FaceManager const * const faceManage
   });
   // Number of aggregate computation
   localIndex nbAggregates = integer_conversion< localIndex >( int(nbCellElements * m_coarseningRatio) );
-  GEOS_LOG_RANK_0("Generating " << nbAggregates  << " aggregates on region " << this->getName());
+  GEOSX_LOG_RANK_0("Generating " << nbAggregates  << " aggregates on region " << this->getName());
 
   // METIS variable declarations
   using idx_t = ::idx_t;
@@ -174,7 +173,6 @@ void CellElementRegion::GenerateAggregates( FaceManager const * const faceManage
   }
   aggregateSubRegion->CreateFromFineToCoarseMap(nbAggregates, partsGEOS, aggregateBarycenters);
 }
-
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, CellElementRegion, std::string const &, Group * const )
 

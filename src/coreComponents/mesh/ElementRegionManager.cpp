@@ -43,7 +43,7 @@ ElementRegionManager::~ElementRegionManager()
 localIndex ElementRegionManager::numCellBlocks() const
 {
   localIndex numCellBlocks = 0;
-  this->forElementSubRegions([&]( Group const * GEOSX_UNUSED_ARG( cellBlock ) )
+  this->forElementSubRegions([&]( Group const * GEOSX_UNUSED_PARAM( cellBlock ) )
     {
     numCellBlocks += 1;
   });
@@ -52,7 +52,7 @@ localIndex ElementRegionManager::numCellBlocks() const
 
 void ElementRegionManager::resize( integer_array const & numElements,
                                    string_array const & regionNames,
-                                   string_array const & GEOSX_UNUSED_ARG( elementTypes ) )
+                                   string_array const & GEOSX_UNUSED_PARAM( elementTypes ) )
 {
   localIndex const n_regions = integer_conversion<localIndex>(regionNames.size());
 //  Group * elementRegions = this->GetGroup(keys::cellBlocks);
@@ -66,9 +66,9 @@ void ElementRegionManager::resize( integer_array const & numElements,
 
 Group * ElementRegionManager::CreateChild( string const & childKey, string const & childName )
  {
-  GEOS_ERROR_IF( !(CatalogInterface::hasKeyName(childKey)),
+  GEOSX_ERROR_IF( !(CatalogInterface::hasKeyName(childKey)),
                  "KeyName ("<<childKey<<") not found in ObjectManager::Catalog");
-  GEOS_LOG_RANK_0("Adding Object " << childKey<<" named "<< childName<<" from ObjectManager::Catalog.");
+  GEOSX_LOG_RANK_0("Adding Object " << childKey<<" named "<< childName<<" from ObjectManager::Catalog.");
   Group * const elementRegions = this->GetGroup(ElementRegionManager::groupKeyStruct::elementRegionsGroup);
   return elementRegions->RegisterGroup( childName,
                                         CatalogInterface::Factory( childKey, childName, elementRegions ) );
@@ -116,12 +116,66 @@ void ElementRegionManager::SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
   }
 }
 
-void ElementRegionManager::GenerateMesh( Group const * const cellBlockManager )
+void ElementRegionManager::GenerateMesh( Group * const cellBlockManager )
 {
   this->forElementRegions<CellElementRegion>([&](CellElementRegion * const elemRegion)->void
   {
     elemRegion->GenerateMesh( cellBlockManager->GetGroup(keys::cellBlocks) );
   });
+}
+
+void ElementRegionManager::GenerateCellToEdgeMaps(FaceManager const * const faceManager)
+{
+  /*
+   * Create cell to edges map
+   * I use the existing maps from cells to faces and from faces to edges.
+   */
+  localIndex faceIndex, edgeIndex;
+  int count = 0;
+  bool isUnique = true;
+
+  this->forElementSubRegions<CellElementSubRegion>( [&](CellElementSubRegion * const subRegion)-> void
+    {
+      FixedOneToManyRelation & cellToEdges = subRegion->edgeList();
+      FixedOneToManyRelation const & cellToFaces = subRegion->faceList();
+      InterObjectRelation< ArrayOfArrays< localIndex > > const & faceToEdges = faceManager->edgeList();
+
+      //loop over the cells
+      for ( localIndex kc = 0; kc < subRegion->size(); kc++)
+      {
+        // loop over the faces
+        // std::cout << "Element: " << kc << std::endl;
+        count = 0;
+        for (localIndex kf = 0; kf < subRegion->numFacesPerElement(); kf++)
+        {
+          // loop over edges of each face
+          faceIndex = cellToFaces[kc][kf];
+          for (localIndex ke = 0; ke < faceToEdges.sizeOfArray(faceIndex); ke++)
+          {
+            isUnique = true;
+            edgeIndex = faceToEdges[faceIndex][ke];
+
+            //loop over edges that have already been added to the element.
+            for (localIndex kec = 0; kec < count+1; kec++)
+            {
+              // make sure that the edge has not been counted yet
+              if (cellToEdges(kc, kec) == edgeIndex)
+              {
+                isUnique = false;
+                break;
+              }
+            }
+            if (isUnique)
+            {
+              // std::cout << edgeIndex << std::endl;
+              cellToEdges(kc, count) = edgeIndex;
+              count++;
+            }
+
+          } // end edge loop
+        } // end face loop
+      } // end cell loop
+    });
 }
 
 void ElementRegionManager::GenerateAggregates( FaceManager const * const faceManager, NodeManager const * const nodeManager )
@@ -155,7 +209,7 @@ void ElementRegionManager::GenerateWells( MeshManager * const meshManager,
     InternalWellGenerator const * const wellGeometry =
     meshManager->GetGroup<InternalWellGenerator>( generatorName );
 
-    GEOS_ERROR_IF( wellGeometry == nullptr,
+    GEOSX_ERROR_IF( wellGeometry == nullptr,
                   "InternalWellGenerator " << generatorName << " not found in well " << wellRegion->getName() );
 
     // generate the local data (well elements, nodes, perforations) on this well
@@ -172,12 +226,12 @@ void ElementRegionManager::GenerateWells( MeshManager * const meshManager,
     subRegion = wellRegion->GetGroup( ElementRegionBase::viewKeyStruct::elementSubRegions )
                           ->GetGroup<WellElementSubRegion>( subRegionName );
 
-    GEOS_ERROR_IF( subRegion == nullptr,
+    GEOSX_ERROR_IF( subRegion == nullptr,
                    "Subregion " << subRegionName << " not found in well " << wellRegion->getName() );
 
     globalIndex const numWellElemsGlobal = MpiWrapper::Sum( subRegion->size() );
 
-    GEOS_ERROR_IF( numWellElemsGlobal != wellGeometry->GetNumElements(),
+    GEOSX_ERROR_IF( numWellElemsGlobal != wellGeometry->GetNumElements(),
                    "Invalid partitioning in well " << subRegionName );
 
   });
@@ -267,7 +321,7 @@ int ElementRegionManager::UnpackPrivate( buffer_unit_type const * & buffer,
   string name;
   unpackedSize += bufferOps::Unpack( buffer, name );
 
-  GEOS_ERROR_IF( name!=this->getName(), "Unpacked name ("<<name<<") does not equal object name ("<<this->getName() );
+  GEOSX_ERROR_IF( name!=this->getName(), "Unpacked name ("<<name<<") does not equal object name ("<<this->getName() );
 
   localIndex numRegionsRead;
   unpackedSize += bufferOps::Unpack( buffer, numRegionsRead );
@@ -453,6 +507,7 @@ ElementRegionManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                         ElementReferenceAccessor<localIndex_array> & packList,
                                         bool const overwriteMap )
 {
+  GEOSX_MARK_FUNCTION;
   int unpackedSize = 0;
 
   localIndex numRegionsRead;

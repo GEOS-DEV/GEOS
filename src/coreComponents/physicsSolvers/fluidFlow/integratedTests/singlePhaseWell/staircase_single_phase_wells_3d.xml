@@ -1,29 +1,29 @@
 
 <Problem>
 
-  <Solvers
-    gravityVector="0.0, 0.0, -9.81">
+  <Solvers>
 
     <SinglePhaseReservoir name="reservoirSystem"
-                          flowSolverName="SinglePhaseFlow"
-                          wellSolverName="SinglePhaseWell"
-                          targetRegions="{Channel,wellRegion1,wellRegion2}">
-      <SystemSolverParameters maxIterNewton="40"
-                              useDirectSolver="1"/>
+               flowSolverName="SinglePhaseFlow"
+               wellSolverName="SinglePhaseWell"
+               logLevel="1"
+               targetRegions="{Channel,wellRegion1,wellRegion2}">
+      <NonlinearSolverParameters newtonMaxIter="40"/>
+      <SystemSolverParameters useDirectSolver="1"
+                              logLevel="0"/>
     </SinglePhaseReservoir>
   
-    <SinglePhaseFlow name="SinglePhaseFlow"
+    <SinglePhaseFVM
+	             name="SinglePhaseFlow"
                      logLevel="0"
-                     gravityFlag="1"
                      discretization="singlePhaseTPFA"
                      fluidName="water"
                      solidName="rock"
                      targetRegions="{Channel}">
-    </SinglePhaseFlow>
+    </SinglePhaseFVM>
 
     <SinglePhaseWell name="SinglePhaseWell"
                      logLevel="1"
-                     gravityFlag="1"
                      wellFluidName="water"
                      targetRegions="{wellRegion1,wellRegion2}">
         <WellControls name="wellControls1"

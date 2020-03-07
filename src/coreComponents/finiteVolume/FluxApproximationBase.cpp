@@ -65,23 +65,23 @@ FluxApproximationBase::GetCatalog()
   return catalog;
 }
 
-void FluxApproximationBase::compute( DomainPartition const & domain )
+void FluxApproximationBase::compute( DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION_SCOPED;
 
   computeCellStencil( domain );
 
-  FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
 
-  fsManager->Apply( 0.0,
-                    const_cast<DomainPartition *>( &domain ), // hack, but guaranteed we won't modify it
-                    "faceManager",
-                    m_boundaryFieldName,
-                    [&] ( FieldSpecificationBase const * GEOSX_UNUSED_ARG( bc ),
-                          string const & setName,
-                          set<localIndex> const & targetSet,
-                          Group const * GEOSX_UNUSED_ARG( targetGroup ),
-                          string const & GEOSX_UNUSED_ARG( targetName ))
+  fsManager.Apply( 0.0,
+                   &domain,
+                   "faceManager",
+                   m_boundaryFieldName,
+                   [&] ( FieldSpecificationBase const * GEOSX_UNUSED_PARAM( bc ),
+                         string const & setName,
+                         SortedArrayView<localIndex const> const & targetSet,
+                         Group const * GEOSX_UNUSED_PARAM( targetGroup ),
+                         string const & GEOSX_UNUSED_PARAM( targetName ))
   {
     Wrapper<BoundaryStencil> * stencil = this->registerWrapper<BoundaryStencil>( setName );
     stencil->setRestartFlags(RestartFlags::NO_WRITE);
@@ -110,7 +110,7 @@ bool FluxApproximationBase::hasBoundaryStencil(string const & setName) const
 void FluxApproximationBase::InitializePostInitialConditions_PreSubGroups( Group * const rootGroup )
 {
   DomainPartition const * domain = rootGroup->GetGroup<DomainPartition>( keys::domain );
-  compute( *domain );
+  compute( const_cast<DomainPartition &>( *domain ) ); // hack, but guaranteed we won't modify it....is it though?
 }
 
 } //namespace geosx

@@ -28,6 +28,7 @@
 #include "FaceElementRegion.hpp"
 #include "fileIO/schema/SchemaUtilities.hpp"
 #include "wells/WellElementRegion.hpp"
+#include "EmbeddedSurfaceRegion.hpp"
 
 namespace geosx
 {
@@ -94,12 +95,13 @@ public:
 
 //  void Initialize(  ){}
 
-  void GenerateMesh( Group const * const cellBlockManager );
+  void GenerateMesh( Group * const cellBlockManager );
+
+  void GenerateCellToEdgeMaps(FaceManager const * const faceManager);
 
   void GenerateAggregates( FaceManager const * const faceManager, NodeManager const * const nodeManager );
 
   void GenerateWells( MeshManager * const meshManager, MeshLevel * const meshLevel );
-
 
   virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 //  virtual void ReadXMLsub( xmlWrapper::xmlNode const & targetNode ) override;
@@ -196,13 +198,13 @@ public:
   template< typename LAMBDA >
   void forElementRegionsComplete( LAMBDA lambda ) const
   {
-    forElementRegionsComplete<CellElementRegion,FaceElementRegion,WellElementRegion>( std::forward<LAMBDA>(lambda) );
+    forElementRegionsComplete<CellElementRegion,FaceElementRegion,EmbeddedSurfaceRegion,WellElementRegion>( std::forward<LAMBDA>(lambda) );
   }
 
   template< typename LAMBDA >
   void forElementRegionsComplete( LAMBDA lambda )
   {
-    forElementRegionsComplete<CellElementRegion,FaceElementRegion,WellElementRegion>( std::forward<LAMBDA>(lambda) );
+    forElementRegionsComplete<CellElementRegion,FaceElementRegion,EmbeddedSurfaceRegion,WellElementRegion>( std::forward<LAMBDA>(lambda) );
   }
 
 
@@ -241,25 +243,25 @@ public:
   template< typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda )
   {
-    forElementSubRegions<CellElementSubRegion,FaceElementSubRegion,WellElementSubRegion>( std::forward<LAMBDA>(lambda) );
+    forElementSubRegions<CellElementSubRegion,FaceElementSubRegion,EmbeddedSurfaceSubRegion,WellElementSubRegion>( std::forward<LAMBDA>(lambda) );
   }
 
   template< typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda ) const
   {
-    forElementSubRegions<CellElementSubRegion,FaceElementSubRegion,WellElementSubRegion>( std::forward<LAMBDA>(lambda) );
+    forElementSubRegions<CellElementSubRegion,FaceElementSubRegion,EmbeddedSurfaceSubRegion,WellElementSubRegion>( std::forward<LAMBDA>(lambda) );
   }
 
   template< typename LAMBDA >
   void forElementSubRegions( string_array const & targetRegions, LAMBDA && lambda )
   {
-    forElementSubRegions<CellElementSubRegion,FaceElementSubRegion,WellElementSubRegion>( targetRegions, std::forward<LAMBDA>(lambda) );
+    forElementSubRegions<CellElementSubRegion,FaceElementSubRegion,EmbeddedSurfaceSubRegion,WellElementSubRegion>( targetRegions, std::forward<LAMBDA>(lambda) );
   }
 
   template< typename LAMBDA >
   void forElementSubRegions( string_array const & targetRegions, LAMBDA && lambda ) const
   {
-    forElementSubRegions<CellElementSubRegion,FaceElementSubRegion,WellElementSubRegion>( targetRegions, std::forward<LAMBDA>(lambda) );
+    forElementSubRegions<CellElementSubRegion,FaceElementSubRegion,EmbeddedSurfaceSubRegion,WellElementSubRegion>( targetRegions, std::forward<LAMBDA>(lambda) );
   }
 
 
@@ -309,25 +311,25 @@ public:
   template< typename LAMBDA >
   void forElementSubRegionsComplete( LAMBDA lambda ) const
   {
-    forElementSubRegionsComplete<CellElementSubRegion,FaceElementSubRegion,WellElementSubRegion>( std::forward<LAMBDA>(lambda) );
+    forElementSubRegionsComplete<CellElementSubRegion,FaceElementSubRegion,EmbeddedSurfaceSubRegion,WellElementSubRegion>( std::forward<LAMBDA>(lambda) );
   }
 
   template< typename LAMBDA >
   void forElementSubRegionsComplete( LAMBDA lambda )
   {
-    forElementSubRegionsComplete<CellElementSubRegion,FaceElementSubRegion,WellElementSubRegion>( std::forward<LAMBDA>(lambda) );
+    forElementSubRegionsComplete<CellElementSubRegion,FaceElementSubRegion,EmbeddedSurfaceSubRegion,WellElementSubRegion>( std::forward<LAMBDA>(lambda) );
   }
 
   template< typename LAMBDA >
   void forElementSubRegionsComplete( string_array const & targetRegions, LAMBDA && lambda )
   {
-    forElementSubRegionsComplete<CellElementSubRegion,FaceElementSubRegion,WellElementSubRegion>( targetRegions, std::forward<LAMBDA>(lambda) );
+    forElementSubRegionsComplete<CellElementSubRegion,FaceElementSubRegion,EmbeddedSurfaceSubRegion,WellElementSubRegion>( targetRegions, std::forward<LAMBDA>(lambda) );
   }
 
   template< typename LAMBDA >
   void forElementSubRegionsComplete( string_array const & targetRegions, LAMBDA && lambda ) const
   {
-    forElementSubRegionsComplete<CellElementSubRegion,FaceElementSubRegion,WellElementSubRegion>( targetRegions, std::forward<LAMBDA>(lambda) );
+    forElementSubRegionsComplete<CellElementSubRegion,FaceElementSubRegion,EmbeddedSurfaceSubRegion,WellElementSubRegion>( targetRegions, std::forward<LAMBDA>(lambda) );
   }
 
 
@@ -430,7 +432,12 @@ public:
   template< typename VIEWTYPE, typename LHS=VIEWTYPE >
   MaterialViewAccessor< LHS >
   ConstructFullMaterialViewAccessor( string const & name,
-                                 constitutive::ConstitutiveManager const * const cm ) const;
+                                     constitutive::ConstitutiveManager const * const cm ) const;
+
+  template< typename VIEWTYPE, typename LHS=VIEWTYPE >
+  MaterialViewAccessor< LHS >
+  ConstructFullMaterialViewAccessor( string const & name,
+                                     constitutive::ConstitutiveManager const * const cm );
 
 //  template< typename VIEWTYPE, typename LHS=VIEWTYPE >
 //  MaterialViewAccessor< LHS >
@@ -709,6 +716,46 @@ ConstructFullMaterialViewAccessor( string const & viewName,
         if( constitutiveRelation != nullptr )
         {
           dataRepository::Wrapper<VIEWTYPE> const * const
+          wrapper = constitutiveRelation->getWrapper<VIEWTYPE>(viewName);
+
+          if( wrapper != nullptr )
+          {
+            accessor[kReg][kSubReg][matIndex] = wrapper->reference();
+          }
+        }
+      }
+    }
+  }
+  return accessor;
+}
+
+template< typename VIEWTYPE, typename LHS >
+ElementRegionManager::MaterialViewAccessor<LHS>
+ElementRegionManager::
+ConstructFullMaterialViewAccessor( string const & viewName,
+                                   constitutive::ConstitutiveManager const * const cm  )
+{
+  MaterialViewAccessor<LHS> accessor;
+  accessor.resize( numRegions() );
+  for( localIndex kReg=0 ; kReg<numRegions() ; ++kReg  )
+  {
+    ElementRegionBase * const elemRegion = GetRegion(kReg);
+    accessor[kReg].resize( elemRegion->numSubRegions() );
+
+    for( localIndex kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
+    {
+      ElementSubRegionBase * const subRegion = elemRegion->GetSubRegion(kSubReg);
+      dataRepository::Group * const constitutiveGroup = subRegion->GetConstitutiveModels();
+
+      accessor[kReg][kSubReg].resize( cm->numSubGroups() );
+
+      for( localIndex matIndex=0 ; matIndex<cm->numSubGroups() ; ++matIndex )
+      {
+        string constitutiveName = cm->GetGroup(matIndex)->getName();
+        dataRepository::Group * const constitutiveRelation = constitutiveGroup->GetGroup(constitutiveName);
+        if( constitutiveRelation != nullptr )
+        {
+          dataRepository::Wrapper<VIEWTYPE> * const
           wrapper = constitutiveRelation->getWrapper<VIEWTYPE>(viewName);
 
           if( wrapper != nullptr )

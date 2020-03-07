@@ -8,7 +8,7 @@ boundaryFieldName string                Name of boundary (face) field
 coefficientName   string       required Name of coefficient field                   
 fieldName         string       required Name of primary solution field              
 name              string       required A name is required for any non-unique nodes 
-targetRegions     string_array          List of regions to build the stencil for    
+targetRegions     string_array {}       List of regions to build the stencil for    
 ================= ============ ======== =========================================== 
 
 

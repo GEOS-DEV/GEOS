@@ -24,7 +24,7 @@ namespace geosx
 namespace LAIHelperFunctions
 {
 
-void CreatePermutationMatrix(NodeManager* const nodeManager,
+void CreatePermutationMatrix(NodeManager const * const nodeManager,
                              localIndex const nRows,
                              localIndex const nCols,
                              int const nDofPerNode,
@@ -39,9 +39,9 @@ void CreatePermutationMatrix(NodeManager* const nodeManager,
    */
 
   // Create permuation matrix based on size provided.
-  permutationMatrix.createWithGlobalSize(nRows, nCols, 1, MPI_COMM_GEOSX);
+  permutationMatrix.createWithLocalSize(nRows, nCols, 1, MPI_COMM_GEOSX);
 
-  arrayView1d<globalIndex> const &  DofNumber =  nodeManager->getReference<globalIndex_array>( DofKey );
+  arrayView1d<globalIndex const> const &  DofNumber =  nodeManager->getReference<globalIndex_array>( DofKey );
 
   for( localIndex a=0 ; a<nodeManager->size() ; ++a )
       {
@@ -57,10 +57,12 @@ void CreatePermutationMatrix(NodeManager* const nodeManager,
         }
       }
   permutationMatrix.close();
+  permutationMatrix.open();
   permutationMatrix.set(1);
+  permutationMatrix.close();
 }
 
-void CreatePermutationMatrix(ElementRegionManager* const elemManager,
+void CreatePermutationMatrix(ElementRegionManager const * const elemManager,
                              localIndex const nRows,
                              localIndex const nCols,
                              int const nDofPerCell,
@@ -75,12 +77,12 @@ void CreatePermutationMatrix(ElementRegionManager* const elemManager,
    */
 
   // Create permuation matrix based on size provided.
-  permutationMatrix.createWithGlobalSize(nRows, nCols, 1, MPI_COMM_GEOSX);
+  permutationMatrix.createWithLocalSize(nRows, nCols, 1, MPI_COMM_GEOSX);
 
   elemManager->forElementSubRegions([&]( ElementSubRegionBase const * const elementSubRegion )
   {
     localIndex const numElems = elementSubRegion->size();
-    arrayView1d<globalIndex> const &
+    arrayView1d<globalIndex const> const &
     DofNumber = elementSubRegion->getReference< array1d<globalIndex> >( DofKey );
 
     for( localIndex k=0 ; k<numElems ; ++k )
@@ -98,7 +100,9 @@ void CreatePermutationMatrix(ElementRegionManager* const elemManager,
     }
   });
   permutationMatrix.close();
+  permutationMatrix.open();
   permutationMatrix.set(1);
+  permutationMatrix.close();
 }
 
 ParallelVector PermuteVector(ParallelVector const & vector,

@@ -335,6 +335,23 @@ public:
   void insert( array1d<globalIndex> const & rowIndices,
                array1d<globalIndex> const & colIndices,
                array2d<real64> const & values );
+
+  /**
+   * @brief Insert dense matrix.
+   *
+   * \param rowIndices Global row indices.
+   * \param colIndices Global col indices
+   * \param values Dense local matrix of values.
+   * \param numRows Number of row indices.
+   * \param numCols Number of column indices.
+   *
+   * @note Row major layout assumed in values
+   */
+  void insert( globalIndex const * rowIndices,
+               globalIndex const * colIndices,
+               real64 const * values,
+               localIndex const numRows,
+               localIndex const numCols );
   //@}
 
   //! @name Linear Algebra Methods
@@ -436,7 +453,7 @@ public:
             PetscVector const & x,
             real64 const beta,
             PetscVector  & y,
-            bool useTranspose=false );
+            bool useTranspose=false ) const;
 
   /**
    * @brief Multiply all elements by scalingFactor.
@@ -546,6 +563,11 @@ public:
    * @brief Returns the index of the last global row owned by that processor.
    */
   globalIndex iupper() const;
+
+  /**
+   * @brief Returns the number of nonzeros in the local portion of the matrix
+   */
+  localIndex localNonzeros() const;
 
   /**
    * @brief Returns the infinity norm of the matrix.

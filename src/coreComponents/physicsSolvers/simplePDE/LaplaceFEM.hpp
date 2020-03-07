@@ -17,7 +17,6 @@
 
 #include "physicsSolvers/SolverBase.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
-#include "linearAlgebra/DofManager.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 //START_SPHINX_INCLUDE_00
 struct stabledt
@@ -113,7 +112,7 @@ public:
                        DomainPartition * const domain ) override;
 
   virtual void
-  ResetStateToBeginningOfStep( DomainPartition * const GEOSX_UNUSED_ARG( domain ) ) override
+  ResetStateToBeginningOfStep( DomainPartition * const GEOSX_UNUSED_PARAM( domain ) ) override
   {}
 
   virtual void

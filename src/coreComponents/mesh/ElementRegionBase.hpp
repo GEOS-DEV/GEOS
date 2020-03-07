@@ -19,6 +19,7 @@
 #include "FaceElementSubRegion.hpp"
 #include "wells/WellElementSubRegion.hpp"
 #include "managers/ObjectManagerBase.hpp"
+#include "EmbeddedSurfaceSubRegion.hpp"
 
 namespace geosx
 {
@@ -58,14 +59,14 @@ public:
 
   virtual ~ElementRegionBase() override;
 
-  virtual void GenerateMesh( Group const * const GEOSX_UNUSED_ARG( cellBlocks ) )
+  virtual void GenerateMesh( Group * const GEOSX_UNUSED_PARAM( cellBlocks ) )
   {
-    GEOS_ERROR( "ElementRegionBase::GenerateMesh() should be overriden if called.");
+    GEOSX_ERROR( "ElementRegionBase::GenerateMesh() should be overriden if called.");
   }
 
 //  void GenerateAggregates( FaceManager const * const faceManager, NodeManager const * const NodeManager )
 //  {
-//    GEOS_ERROR( "ElementRegionBase::GenerateAggregates() should be overriden if called.");
+//    GEOSX_ERROR( "ElementRegionBase::GenerateAggregates() should be overriden if called.");
 //  }
 
   subGroupMap & GetSubRegions()
@@ -119,13 +120,13 @@ public:
   template< typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda ) const
   {
-    forElementSubRegions<CellElementSubRegion, FaceElementSubRegion, WellElementSubRegion>( std::forward<LAMBDA>(lambda) );
+    forElementSubRegions<CellElementSubRegion, FaceElementSubRegion, WellElementSubRegion, EmbeddedSurfaceSubRegion>( std::forward<LAMBDA>(lambda) );
   }
 
   template< typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda )
   {
-    forElementSubRegions<CellElementSubRegion, FaceElementSubRegion, WellElementSubRegion>( std::forward<LAMBDA>(lambda) );
+    forElementSubRegions<CellElementSubRegion, FaceElementSubRegion, WellElementSubRegion, EmbeddedSurfaceSubRegion>( std::forward<LAMBDA>(lambda) );
   }
 
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
@@ -146,13 +147,13 @@ public:
   template< typename LAMBDA >
   void forElementSubRegionsIndex( LAMBDA && lambda ) const
   {
-    forElementSubRegionsIndex<CellElementSubRegion, FaceElementSubRegion, WellElementSubRegion>( std::forward<LAMBDA>(lambda) );
+    forElementSubRegionsIndex<CellElementSubRegion, FaceElementSubRegion, WellElementSubRegion, EmbeddedSurfaceSubRegion>( std::forward<LAMBDA>(lambda) );
   }
 
   template< typename LAMBDA >
   void forElementSubRegionsIndex( LAMBDA && lambda )
   {
-    forElementSubRegionsIndex<CellElementSubRegion, FaceElementSubRegion, WellElementSubRegion>( std::forward<LAMBDA>(lambda) );
+    forElementSubRegionsIndex<CellElementSubRegion, FaceElementSubRegion, WellElementSubRegion, EmbeddedSurfaceSubRegion>( std::forward<LAMBDA>(lambda) );
   }
 
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >

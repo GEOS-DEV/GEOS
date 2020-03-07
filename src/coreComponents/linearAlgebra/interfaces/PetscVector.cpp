@@ -257,7 +257,7 @@ void PetscVector::scale( real64 const scalingFactor )
 // Dot
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Dot product with the vector vec.
-real64 PetscVector::dot( PetscVector const &vec )
+real64 PetscVector::dot( PetscVector const &vec ) const
 {
   real64 dot;
   VecDot( m_vec, vec.m_vec, &dot );
@@ -451,7 +451,7 @@ localIndex PetscVector::getLocalRowID( globalIndex const index ) const
 {
   PetscInt low, high;
   VecGetOwnershipRange( m_vec, &low, &high );
-  GEOS_ERROR_IF( index < low || high <= index, "getLocalRowID: processor does not own global row index" );
+  GEOSX_ERROR_IF( index < low || high <= index, "getLocalRowID: processor does not own global row index" );
   return index - low;
 }
 
