@@ -97,13 +97,6 @@ void SlurryFluidBase::PostProcessInput()
   GEOSX_ERROR_IF( m_defaultViscosity.size() != NC,
                   "The number of flow behavior indices is not the same as the component number" );
 
-  /*
-  GEOSX_ERROR_IF( m_nIndices.size() != NC, "The number of flow behavior indices is not the same as the component number" );
-
-  GEOSX_ERROR_IF( m_Ks.size() != NC, "The number of flow consistency indices is not the same as the component number" );  
-  */
-
-  
 }
 
 localIndex SlurryFluidBase::numFluidComponents() const

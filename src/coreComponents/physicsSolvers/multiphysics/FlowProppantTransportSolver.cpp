@@ -82,7 +82,7 @@ void FlowProppantTransportSolver::PostProcessInput()
 
 void FlowProppantTransportSolver::InitializePostInitialConditions_PreSubGroups(Group * const GEOSX_UNUSED_PARAM( problemManager ))
 {
-//  this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFVM<SinglePhaseProppantBase>*>()->setFlowProppantTransportCoupling();
+
 }
 
 FlowProppantTransportSolver::~FlowProppantTransportSolver()

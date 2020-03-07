@@ -148,7 +148,7 @@ void ParticleFluid::PostProcessInput()
 
 void ParticleFluid::BatchUpdate( arrayView1d<real64 const> const & )
 {
-
+  GEOSX_ERROR("BatchUpdate for ParticleFluid is not implemented");
 }
 
 
@@ -162,7 +162,7 @@ void ParticleFluid::PointUpdate( localIndex const GEOSX_UNUSED_PARAM(NC),
                                  arraySlice1d<real64 const> const & GEOSX_UNUSED_PARAM(dFluidDensity_dComponentConcentration),
                                  localIndex const GEOSX_UNUSED_PARAM(k) )
 {
-
+  GEOSX_ERROR("Function: PointUpdate is used for ParticlePowerLawFluid and is not implemented");
 
 }
 
@@ -191,8 +191,6 @@ void ParticleFluid::Compute( localIndex const NC,
 {
 
   real64 singleParticleSettlingVelocity = 0.0;
-  //  real64 dSingleParticleSettlingVelocity_dPressure = 0.0;
-  //  array1d<real64> dSingleParticleSettlingVelocity_dComponentConcentration(NC);
 
   static real64 constCoef = 9.81 * m_proppantDiameter * m_proppantDiameter / 18.0;
   
@@ -201,18 +199,6 @@ void ParticleFluid::Compute( localIndex const NC,
     case ParticleSettlingModel::Stokes:
 
       singleParticleSettlingVelocity = constCoef * (m_proppantDensity - fluidDensity ) / fluidViscosity;
-
-      /*
-      dSingleParticleSettlingVelocity_dPressure = -(constCoef * dFluidDensity_dPressure + singleParticleSettlingVelocity  * dFluidViscosity_dPressure) / fluidViscosity;
-
-      for(localIndex c = 0; c < NC; ++c)
-        {
-
-          dSingleParticleSettlingVelocity_dComponentConcentration[c] = -(constCoef * dFluidDensity_dComponentConcentration[c] + singleParticleSettlingVelocity  * dFluidViscosity_dComponentConcentration[c]) / fluidViscosity; 
-
-        }
-      */
-
       break;
     case ParticleSettlingModel::Intermediate:
       
@@ -250,24 +236,8 @@ void ParticleFluid::Compute( localIndex const NC,
     {
 
       // settlingFactor
-      // Stokes + hindered settling model
       
       settlingFactor = singleParticleSettlingVelocity * exp(-m_hinderedSettlingCoefficient * proppantConcentration);
-
-      /*
-      
-      dSettlingFactor_dPressure = dSingleParticleSettlingVelocity_dPressure * exp(-m_hinderedSettlingCoefficient * proppantConcentration);      
-
-      dSettlingFactor_dProppantConcentration = -m_hinderedSettlingCoefficient * settlingFactor;
-
-      for(localIndex c = 0; c < NC; ++c)
-        {
-
-          dSettlingFactor_dComponentConcentration[c] = dSingleParticleSettlingVelocity_dComponentConcentration[c] * exp(-m_hinderedSettlingCoefficient * proppantConcentration);      
-
-        }
-      
-      */
 
       // collisionFactor
       // Collision model (We need to check the other models)
@@ -282,7 +252,7 @@ void ParticleFluid::Compute( localIndex const NC,
 
           collisionFactor = (lambda - 1.0) / (1.0 - proppantConcentration);
 
-          //          dCollisionFactor_dProppantConcentration = (dLambda_dC  + collisionFactor) / (1.0 - proppantConcentration);
+
         }
 
     }

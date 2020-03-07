@@ -112,7 +112,7 @@ void ProppantSlurryFluid::PostProcessInput()
 
   void ProppantSlurryFluid::BatchUpdate(arrayView1d<real64 const> const & GEOSX_UNUSED_PARAM( pressure ), arrayView1d<real64 const> const & GEOSX_UNUSED_PARAM( proppantConcentration ),  arrayView2d<real64 const> const & GEOSX_UNUSED_PARAM( componentConcentration ), arrayView1d<real64 const> const & GEOSX_UNUSED_PARAM( shearRate ))
 {
-
+  GEOSX_ERROR("BatchUpdate for ProppantSlurryFluid is not implemented");
 }
   
   void ProppantSlurryFluid::PointUpdate(real64 const & pressure, real64 const & proppantConcentration, arraySlice1d<real64 const> const & componentConcentration, real64 const & GEOSX_UNUSED_PARAM( shearRate ), integer const & isProppantBoundary, localIndex const k, localIndex const q)

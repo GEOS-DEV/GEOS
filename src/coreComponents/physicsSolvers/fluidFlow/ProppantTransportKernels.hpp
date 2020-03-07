@@ -513,48 +513,11 @@ struct FluxKernel
         
       }
 
-      //contribution from paricle slipping
-    
-    
-      /*
-      
-      edgeToFaceProppantFlux[i] = (1.0 + fluidDens[i] / mixDens[i] * (1.0 - proppantC[i]) * collisionFac[i]) *  edgeToFaceFlux[i] + fluidDens[i] / mixDens[i] * (1.0 - proppantC[i]) * settlingFac[i] * coefs[i];
-
-      dEdgeToFaceProppantFlux_dP[i][i] = (dFluidDens_dP[i] / mixDens[i] - fluidDens[i] * dMixDens_dP[i] / (mixDens[i] * mixDens[i])) * (1.0 - proppantC[i]) * (collisionFac[i] * edgeToFaceFlux[i] + settlingFac[i] * coefs[i]) + fluidDens[i] / mixDens[i] * (1.0 - proppantC[i]) * dSettlingFac_dP[i] * coefs[i];
-
-      dEdgeToFaceProppantFlux_dProppantC[i][i] = -fluidDens[i] / mixDens[i] * (1.0 + dMixDens_dProppantC[i] / mixDens[i] * (1.0 - proppantC[i])) * (collisionFac[i] *  edgeToFaceFlux[i] + settlingFac[i] * coefs[i]) + fluidDens[i] / mixDens[i] * (1.0 - proppantC[i]) * (dCollisionFac_dProppantC[i] *  edgeToFaceFlux[i] + dSettlingFac_dProppantC[i] * coefs[i]);
-
-      for(localIndex c = 0; c < NC; ++c)
-        {
-
-          dEdgeToFaceProppantFlux_dComponentC[i][i][c] = (dFluidDens_dComponentC[i][c] / mixDens[i] - fluidDens[i] * dMixDens_dComponentC[i][c] / (mixDens[i] * mixDens[i])) * (1.0 - proppantC[i]) * (collisionFac[i] * edgeToFaceFlux[i] + settlingFac[i] * coefs[i]) + fluidDens[i] / mixDens[i] * (1.0 - proppantC[i]) * dSettlingFac_dComponentC[i][c] * coefs[i];
-
-        }
-          
-      
-      for (localIndex j = 0; j < numElems; ++j)
-      {
-
-        dEdgeToFaceProppantFlux_dP[i][j] += (1.0 + fluidDens[i] / mixDens[i] * (1.0 - proppantC[i]) * collisionFac[i]) *  dEdgeToFaceFlux_dP[i][j];
-
-        dEdgeToFaceProppantFlux_dProppantC[i][j] += (1.0 + fluidDens[i] / mixDens[i] * (1.0 - proppantC[i]) * collisionFac[i]) *  dEdgeToFaceFlux_dProppantC[i][j];
-
-      for(localIndex c = 0; c < NC; ++c)
-        {
-
-          dEdgeToFaceProppantFlux_dComponentC[i][j][c] += (1.0 + fluidDens[i] / mixDens[i] * (1.0 - proppantC[i]) * collisionFac[i]) *  dEdgeToFaceFlux_dComponentC[i][j][c];
-
-        }
-          
-      }
-
-      */
-
 
       for (localIndex j = 0; j < numElems; ++j)
         {
 
-          //          dEdgeToFaceProppantFlux_dP[i][j] = 0.0;
+
           dEdgeToFaceProppantFlux_dProppantC[i][j] = 0.0;
 
           for(localIndex c = 0; c < NC; ++c)
@@ -583,7 +546,6 @@ struct FluxKernel
             {
 
               dEdgeToFaceProppantFlux_dProppantC[i][j] += dEdgeToFaceFlux_dProppantC[i][j];
-              //              dEdgeToFaceProppantFlux_dP[i][j] += dEdgeToFaceFlux_dP[i][j];
 
               for(localIndex c = 0; c < NC; ++c)
                 {

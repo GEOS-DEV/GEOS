@@ -116,12 +116,6 @@ void ProppantTransport::RegisterDataOnMesh(Group * const MeshBodies)
 
       subRegion->registerWrapper< array2d<real64> >( viewKeyStruct::bcComponentConcentrationString )->setDefaultValue(0.0);      
       
-      /*
-      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::poroMultiplierString )->setDefaultValue(1.0);
-
-      subRegion->registerWrapper< array1d<R1Tensor> >( viewKeyStruct::transTMultiplierString );            
-      */
-      
     });
 
     
@@ -454,12 +448,9 @@ real64 ProppantTransport::SolverStep( real64 const& time_n,
 
   if(cycleNumber == 0) {
 
-    /*  assign intitial and boundary conditions */
     FieldSpecificationManager const & boundaryConditionManager = FieldSpecificationManager::get();
 
     boundaryConditionManager.ApplyInitialConditions( domain );
-
-    /* Below must be called after ImplicitStepSetup */
 
     localIndex const NC = m_numComponents;
     
@@ -760,14 +751,6 @@ void ProppantTransport::ImplicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( ti
     } );
   } );
 
-  // setup dof numbers and linear system
-  /*
-  SetupSystem( domain,
-               m_dofManager,
-               m_matrix,
-               m_rhs,
-               m_solution  );
-  */
 }
 
 void ProppantTransport::ImplicitStepComplete( real64 const & GEOSX_UNUSED_PARAM(time_n),
@@ -1111,48 +1094,6 @@ void ProppantTransport::ApplyBoundaryConditions(real64 const time_n,
   FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
   string const dofKey = dofManager.getKey( viewKeyStruct::proppantConcentrationString );
 
-
-  /* Since flux boundary condition can be set in SinglePhaseFlow solver, ther is no need to set it in ProppantTransport solver */
-
-  /*
-  fsManager.Apply( time_n + dt, domain, "ElementRegions", "FLUX",
-                   [&]( FieldSpecificationBase const * const fs,
-                        string const &,
-                        SortedArrayView<localIndex const> const & lset,
-                        Group * subRegion,
-                        string const & ) -> void
-  {
-
-    arrayView1d<globalIndex const> const &
-    dofNumber = subRegion->getReference< array1d<globalIndex> >( dofKey );
-    arrayView1d< integer const > const &
-    ghostRank = subRegion->getReference<array1d<integer> >( ObjectManagerBase::viewKeyStruct::ghostRankString);
-
-    set< localIndex > localSet;
-    for( localIndex const a : lset )
-    {
-      if( ghostRank[a] < 0 )
-      {
-        localSet.insert(a);
-      }
-    }
-
-    fs->ApplyBoundaryConditionToSystem<FieldSpecificationAdd, LAInterface>( localSet,
-                                                                            true,
-                                                                            time_n + dt,
-                                                                            dt,
-                                                                            subRegion,
-                                                                            dofNumber,
-                                                                            m_numDofPerCell,
-                                                                            matrix,
-                                                                            rhs,
-                                                                            [&]( localIndex const GEOSX_UNUSED_PARAM(a) ) -> real64
-        {
-          return 0;
-        } );
-
-  } );
-  */
 
   //  Apply Dirichlet BC for proppant concentration
 

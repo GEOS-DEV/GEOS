@@ -238,27 +238,6 @@ public:
 
     static constexpr auto frictionCoefficientString  = "frictionCoefficient";                                    
 
-    /*
-    using ViewKey = dataRepository::ViewKey;
-
-    // primary solution field
-    ViewKey proppantConcentration      = { proppantConcentrationString };
-    ViewKey deltaProppantConcentration = { deltaProppantConcentrationString };
-
-    ViewKey componentConcentration      = { componentConcentrationString };
-    ViewKey deltaComponentConcentration = { deltaComponentConcentrationString };    
-    
-    ViewKey updatedComponentConcentration      = { updatedComponentConcentrationString };
-
-    
-    ViewKey oldProppantConcentration    = { oldProppantConcentrationString };
-    ViewKey oldComponentDensity    = { oldComponentDensityString };
-    
-
-    ViewKey proppantName      = { proppantNameString };
-    ViewKey proppantIndex      = { proppantIndexString };
-    */
-    
   } viewKeysProppantTransport;
 
   viewKeyStruct & viewKeys() { return viewKeysProppantTransport; }
