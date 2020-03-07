@@ -12,7 +12,7 @@ A key focus of the project is achieving scalable performance on current and next
 high performance computing systems.  We do this through a portable programming model and research into scalable algorithms.
 
 You may want to browse our
-[publications](https://github.com/GEOSX/GEOSX/blob/develop/src/docs/sphinx/publications.rst)
+[publications](https://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/Publications.html)
 page for more details on the HPC, numerics,
 and applied engineering components of this effort.
 
@@ -26,9 +26,9 @@ three main organizations:
   - Total, S.A.
 
 See our
-[authors](https://github.com/GEOSX/GEOSX/blob/develop/src/docs/sphinx/authors.rst)
+[authors](https://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/Contributors.html)
 and
-[acknowledgements](https://github.com/GEOSX/GEOSX/blob/develop/src/docs/sphinx/acknowledgements.rst)
+[acknowledgements](https://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/Acknowledgements.html)
 page for more details.  
 
 How does GEOSX relate to GEOS?
