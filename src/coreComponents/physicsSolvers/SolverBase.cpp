@@ -409,10 +409,10 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
     {
       if( getLogLevel() >= 1 && logger::internal::rank==0 )
       {
-        char output[200] = {0};
+        char output[35] = {0};
         sprintf( output, "    Attempt: %2d, NewtonIter: %2d ; ",
                  dtAttempt, newtonIter );
-        std::cout<<output;
+        std::cout<<output<<std::endl;
       }
       // call assemble to fill the matrix and the rhs
       AssembleSystem( time_n, stepDt, domain, dofManager, matrix, rhs );
@@ -431,7 +431,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       {
         if( newtonIter!=0 )
         {
-          char output[200] = {0};
+          char output[46] = {0};
           sprintf( output,
                    "Last LinSolve(iter,tol) = (%4d, %4.2e) ; ",
                    m_systemSolverParameters.m_numKrylovIter,

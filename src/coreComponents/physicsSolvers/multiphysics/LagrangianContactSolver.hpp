@@ -92,11 +92,6 @@ public:
                             ParallelVector & rhs,
                             ParallelVector & solution ) override;
 
-  virtual real64
-  ScalingForSystemSolution( DomainPartition const * const domain,
-                            DofManager const & dofManager,
-                            ParallelVector const & solution ) override;
-
   virtual void
   ApplySystemSolution( DofManager const & dofManager,
                        ParallelVector const & solution,
@@ -131,13 +126,19 @@ public:
   void UpdateDeformationForCoupling( DomainPartition * const domain );
 
   void AssembleForceResidualDerivativeWrtTraction( DomainPartition * const domain,
-                                                   ParallelMatrix * const matrix01,
-                                                   ParallelVector * const rhs0 );
+                                                   DofManager const & dofManager,
+                                                   ParallelMatrix * const matrix,
+                                                   ParallelVector * const rhs );
 
   void AssembleTractionResidualDerivativeWrtDisplacementAndTraction( DomainPartition const * const domain,
-                                                                     ParallelMatrix * const matrix10,
-                                                                     ParallelMatrix * const matrix11,
-                                                                     ParallelVector * const rhs1 );
+                                                                     DofManager const & dofManager,
+                                                                     ParallelMatrix * const matrix,
+                                                                     ParallelVector * const rhs );
+
+  void AssembleStabliziation( DomainPartition * const domain,
+                              DofManager const & dofManager,
+                              ParallelMatrix * const matrix,
+                              ParallelVector * const rhs );
 
   void InitializeFractureState( MeshLevel * const mesh );
 
@@ -148,17 +149,18 @@ public:
                             integer const cycleNumber,
                             DomainPartition * const domain );
 
-  void initializeNewFaceElements( DomainPartition const & domain );
-
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     constexpr static auto solidSolverNameString = "solidSolverName";
+    constexpr static auto stabilizationNameString = "stabilizationName";
+    constexpr static auto activeSetMaxIterString = "activeSetMaxIter";
 
     constexpr static auto tractionString = "traction";
     constexpr static auto deltaTractionString = "deltaTraction";
-
+    constexpr static auto stabilizationRhsString = "stabilizationRhs";
+    constexpr static auto deltaStabilizationRhsString = "deltaStabilizationRhs";
     constexpr static auto fractureStateString = "fractureState";
-
+    constexpr static auto elementPreviousLocalJumpString = "elementPreviousLocalJump";
   } LagrangianContactSolverViewKeys;
 
 protected:
@@ -172,13 +174,10 @@ private:
   string m_solidSolverName;
   SolidMechanicsLagrangianFEM * m_solidSolver;
 
-  ParallelVector m_rhs0;
-  ParallelVector m_rhs1;
-  ParallelMatrix m_matrix01;
-  ParallelMatrix m_matrix10;
-  ParallelMatrix m_matrix11;
+  string m_stabilizationName;
+  integer m_activeSetMaxIter;
 
-  integer m_numResolves[2];
+  integer m_activeSetIter = 0;
 
   real64 const m_alpha = 0.05;
   real64 const m_cohesion = 0.0;
@@ -187,6 +186,8 @@ private:
   real64 const m_normalTractionTolerance = 1.e-4;
   real64 const m_slidingTolerance = 1.e-7;
   string const m_tractionKey = viewKeyStruct::tractionString;
+
+  real64 m_initialResidual[2] = {0.0, 0.0};
 
   /**
    * @enum FractureState
