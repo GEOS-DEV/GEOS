@@ -627,7 +627,7 @@
 			<xsd:element name="cellManager" type="cellManagerType" />
 		</xsd:choice>
 		<!--Neighbors => (no description available)-->
-		<xsd:attribute name="Neighbors" type="LvArray::Array&lt;geosx::NeighborCommunicator, 1, camp::int_seq&lt;long, 0l&gt;, long, LvArray::NewChaiBuffer&gt;" />
+		<xsd:attribute name="Neighbors" type="std::vector&lt;geosx::NeighborCommunicator, std::allocator&lt;geosx::NeighborCommunicator&gt; &gt;" />
 		<!--partitionManager => (no description available)-->
 		<xsd:attribute name="partitionManager" type="geosx::PartitionBase" />
 	</xsd:complexType>

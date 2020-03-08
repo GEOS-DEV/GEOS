@@ -65,7 +65,7 @@ void MeshLevel::InitializePostInitialConditions_PostSubGroups( Group * const )
 }
 
 
-void MeshLevel::GenerateAdjacencyLists( localIndex_array & seedNodeList,
+void MeshLevel::GenerateAdjacencyLists( arrayView1d< localIndex const > const & seedNodeList,
                                         localIndex_array & nodeAdjacencyList,
                                         localIndex_array & edgeAdjacencyList,
                                         localIndex_array & faceAdjacencyList,
@@ -74,11 +74,11 @@ void MeshLevel::GenerateAdjacencyLists( localIndex_array & seedNodeList,
 {
   NodeManager * const nodeManager = getNodeManager();
 
-  ArrayOfArraysView<localIndex> const & nodeToElementRegionList = nodeManager->elementRegionList();
+  ArrayOfArraysView<localIndex const> const & nodeToElementRegionList = nodeManager->elementRegionList();
 
-  ArrayOfArraysView<localIndex> const & nodeToElementSubRegionList = nodeManager->elementSubRegionList();
+  ArrayOfArraysView<localIndex const> const & nodeToElementSubRegionList = nodeManager->elementSubRegionList();
 
-  ArrayOfArraysView<localIndex> const & nodeToElementList = nodeManager->elementList();
+  ArrayOfArraysView<localIndex const> const & nodeToElementList = nodeManager->elementList();
 
 
   FaceManager * const faceManager = this->getFaceManager();
@@ -86,22 +86,21 @@ void MeshLevel::GenerateAdjacencyLists( localIndex_array & seedNodeList,
 
   ElementRegionManager * const elemManager = this->getElemManager();
 
-  SortedArray<localIndex> nodeAdjacencySet;
-  SortedArray<localIndex> edgeAdjacencySet;
-  SortedArray<localIndex> faceAdjacencySet;
-  array1d< array1d< SortedArray<localIndex> > > elementAdjacencySet;
-  elementAdjacencySet.resize( elemManager->numRegions() );
+  std::set< localIndex > nodeAdjacencySet;
+  std::set< localIndex > edgeAdjacencySet;
+  std::set< localIndex > faceAdjacencySet;
+  std::vector< std::vector< std::set< localIndex > > > elementAdjacencySet( elemManager->numRegions() );
 
   for( localIndex a=0 ; a<elemManager->numRegions() ; ++a )
   {
     elementAdjacencySet[a].resize( elemManager->GetRegion(a)->numSubRegions() );
   }
 
-  nodeAdjacencySet.insert( seedNodeList.data(), seedNodeList.size() );
+  nodeAdjacencySet.insert( seedNodeList.begin(), seedNodeList.end() );
 
   for( integer d=0 ; d<depth ; ++d )
   {
-    for( auto const nodeIndex : nodeAdjacencySet )
+    for( localIndex const nodeIndex : nodeAdjacencySet )
     {
       for( localIndex b=0 ; b<nodeToElementRegionList.sizeOfArray(nodeIndex) ; ++b )
       {
@@ -145,30 +144,22 @@ void MeshLevel::GenerateAdjacencyLists( localIndex_array & seedNodeList,
         }
       });
     }
-    nodeAdjacencyList.clear();
-    nodeAdjacencyList.resize( integer_conversion<localIndex>(nodeAdjacencySet.size()));
-    std::copy(nodeAdjacencySet.begin(), nodeAdjacencySet.end(), nodeAdjacencyList.begin() );
-
   }
 
-  nodeAdjacencyList.clear();
   nodeAdjacencyList.resize(integer_conversion<localIndex>(nodeAdjacencySet.size()));
   std::copy(nodeAdjacencySet.begin(), nodeAdjacencySet.end(), nodeAdjacencyList.begin() );
 
-  edgeAdjacencyList.clear();
   edgeAdjacencyList.resize(integer_conversion<localIndex>(edgeAdjacencySet.size()));
   std::copy(edgeAdjacencySet.begin(), edgeAdjacencySet.end(), edgeAdjacencyList.begin() );
 
-  faceAdjacencyList.clear();
   faceAdjacencyList.resize(integer_conversion<localIndex>(faceAdjacencySet.size()));
   std::copy(faceAdjacencySet.begin(), faceAdjacencySet.end(), faceAdjacencyList.begin() );
 
-
-  for( typename dataRepository::indexType kReg=0 ; kReg<elemManager->numRegions() ; ++kReg  )
+  for( localIndex kReg=0 ; kReg<elemManager->numRegions() ; ++kReg  )
   {
     ElementRegionBase const * const elemRegion = elemManager->GetRegion(kReg);
 
-    for( typename dataRepository::indexType kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
+    for( localIndex kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
     {
       elementAdjacencyList[kReg][kSubReg].get().clear();
       elementAdjacencyList[kReg][kSubReg].get().resize( integer_conversion<localIndex>(elementAdjacencySet[kReg][kSubReg].size()) );
