@@ -157,10 +157,11 @@ public:
 
     constexpr static auto tractionString = "traction";
     constexpr static auto deltaTractionString = "deltaTraction";
-    constexpr static auto stabilizationRhsString = "stabilizationRhs";
-    constexpr static auto deltaStabilizationRhsString = "deltaStabilizationRhs";
     constexpr static auto fractureStateString = "fractureState";
-    constexpr static auto elementPreviousLocalJumpString = "elementPreviousLocalJump";
+    constexpr static auto localJumpString = "localJump";
+    constexpr static auto previousLocalJumpString = "previousLocalJump";
+    constexpr static auto localJumpCorrectionString = "localJumpCorrection";
+    constexpr static auto previousLocalJumpCorrectionString = "previousLocalJumpCorrection";
   } LagrangianContactSolverViewKeys;
 
 protected:
@@ -230,6 +231,30 @@ private:
     }
     return stringState;
   }
+
+  bool CompareFractureStates( FractureState const & state0, FractureState const & state1 ) const
+  {
+    if( state0 == state1 )
+    {
+      return true;
+    }
+    else if( state0 == FractureState::NEW_SLIP && state1 == FractureState::SLIP )
+    {
+      return true;
+    }
+    else if( state0 == FractureState::SLIP && state1 == FractureState::NEW_SLIP )
+    {
+      return true;
+    }
+    return false;
+  }
+
+//  void FractureStateSummary( globalIndex numStick, globalIndex numSlip, globalIndex numOpen ) const
+//  {
+//    globalIndex_array localSummary( 3 );
+//    localSummary = 0;
+//
+//  }
 };
 
 } /* namespace geosx */

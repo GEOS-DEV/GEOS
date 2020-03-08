@@ -89,7 +89,6 @@ public:
   {
     static constexpr auto elementApertureString        = "elementAperture";
     static constexpr auto elementAreaString            = "elementArea";
-    static constexpr auto elementLocalJumpString       = "elementLocalJump";
     static constexpr auto elementRotationMatrixString  = "elementRotationMatrix";
     static constexpr auto faceElementsToCellRegionsString    = "fractureElementsToCellRegions";
     static constexpr auto faceElementsToCellSubRegionsString    = "fractureElementsToCellSubRegions";
@@ -155,9 +154,6 @@ public:
   arrayView1d< real64 > const &       getElementArea()       { return m_elementArea; }
   arrayView1d< real64 const > const & getElementArea() const { return m_elementArea; }
 
-  arrayView2d< real64 > const &       getElementLocalJump()       { return m_elementLocalJump; }
-  arrayView2d< real64 const > const & getElementLocalJump() const { return m_elementLocalJump; }
-
   arrayView1d< R2Tensor > const &       getElementRotationMatrix()       { return m_elementRotationMatrix; }
   arrayView1d< R2Tensor const > const & getElementRotationMatrix() const { return m_elementRotationMatrix; }
 
@@ -193,9 +189,6 @@ private:
 
   /// The member level field for the element center
   array1d< real64 > m_elementArea;
-
-  /// The member level field for the element local jump
-  array2d< real64 > m_elementLocalJump;
 
   /// The member level field for the element rotation matrix
   array1d< R2Tensor > m_elementRotationMatrix;

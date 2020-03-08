@@ -41,7 +41,6 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
   m_toFacesRelation(),
   m_elementAperture(),
   m_elementArea(),
-  m_elementLocalJump(),
   m_elementRotationMatrix()
 {
   registerWrapper( viewKeyStruct::nodeListString, &m_toNodesRelation, false )->
@@ -63,12 +62,6 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
     setApplyDefaultValue(-1.0)->
     setPlotLevel(dataRepository::PlotLevel::LEVEL_2)->
     setDescription("The area of each FaceElement.");
-
-  registerWrapper( viewKeyStruct::elementLocalJumpString, &m_elementLocalJump, false )->
-    setApplyDefaultValue(0.0)->
-    setPlotLevel(dataRepository::PlotLevel::LEVEL_2)->
-    setDescription("The local jump of each FaceElement.");
-  m_elementLocalJump.resizeDimension<1>( 3 );
 
   registerWrapper( viewKeyStruct::elementRotationMatrixString, &m_elementRotationMatrix, false )->
     setApplyDefaultValue({0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0})->
