@@ -102,7 +102,7 @@ if( ENABLE_ESSL )
                        CACHE PATH "")
 else()
   set( BLAS_LIBRARIES /usr/lib64/libblas.so.3 CACHE PATH "")
-  set( LAPACK_LIBRARIES /usr/lib64/liblapack.so.3 CACHE PATH "")
+  set( LAPACK_LIBRARIES /data_local/sw/cuda/10.1.243/targets/ppc64le-linux/lib/liblapack_static.a CACHE PATH "")
 endif()
 
 set(ENABLE_DOXYGEN OFF CACHE PATH "")

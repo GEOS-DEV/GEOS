@@ -5,17 +5,6 @@
 #
 ########################################
 
-
-set(ENABLE_FORTRAN OFF CACHE BOOL "" FORCE)
-set(ENABLE_MPI ON CACHE BOOL "" FORCE)
-
-set(MPI_C_COMPILER       "${MPI_HOME}/bin/mpicc"   CACHE PATH "")
-set(MPI_CXX_COMPILER     "${MPI_HOME}/bin/mpicxx"  CACHE PATH "")
-set(MPI_Fortran_COMPILER "${MPI_HOME}/bin/mpiifort" CACHE PATH "")
-
-set(MPIEXEC              "${MPI_HOME}/bin/mpirun" CACHE PATH "")
-set(MPIEXEC_NUMPROC_FLAG "-n" CACHE PATH "")
-
 #set( GEOSX_TPL_ROOT_DIR /workrd/GEOS/thirdPartyLibs CACHE PATH "")
 #set( GEOSX_TPL_DIR ${GEOSX_TPL_ROOT_DIR}/2019-11-25/install-${CONFIG_NAME}-release CACHE PATH "")
 
@@ -28,6 +17,8 @@ set( ENABLE_PETSC OFF CACHE BOOL "" FORCE)
 set( ENABLE_MATHPRESSO ON CACHE BOOL "" FORCE)
 set( ENABLE_HYPRE OFF CACHE BOOL "" FORCE)
 set( ENABLE_XML_UPDATES OFF CACHE BOOL "" FORCE)
+set( ENABLE_DOXYGEN OFF CACHE BOOL "" FORCE )
+set( ENABLE_BENCHMARKS OFF CACHE BOOL "" FORCE)
 
 #######################################
 # RAJA/CHAI SETUP
