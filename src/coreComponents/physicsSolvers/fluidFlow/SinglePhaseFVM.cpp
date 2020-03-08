@@ -193,7 +193,7 @@ void SinglePhaseFVM<BASE>::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
 
   FluxKernel::ElementView < arrayView1d<real64 const> > const & dseparationCoeff_dAper  = m_element_dSeparationCoefficient_dAperture.toViewConst();
 #endif
-  localIndex const fluidIndex = m_fluidIndex;
+  localIndex fluidIndex = m_fluidIndex;
 
   FluxKernel::ElementView < arrayView1d<R1Tensor const> > const & transTMultiplier  = m_transTMultiplier.toViewConst();
 
