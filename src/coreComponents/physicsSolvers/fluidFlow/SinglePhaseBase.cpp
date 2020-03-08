@@ -162,9 +162,9 @@ void SinglePhaseBase::InitializePostInitialConditions_PreSubGroups( Group * cons
 
   // Moved the following part from ImplicitStepSetup to here since it only needs to be initialized once
   // They will be updated in ApplySystemSolution and ImplicitStepComplete, respectively
-
+  ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
   real64 const defaultDensity = constitutiveManager->GetConstitutiveRelation( m_fluidIndex )->
-                                getWrapper< array2d<real64> >( SingleFluidBase::viewKeyStruct::densityString )->
+                                template getWrapper< array2d<real64> >( SingleFluidBase::viewKeyStruct::densityString )->
                                 getDefaultValue();
 
   applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,

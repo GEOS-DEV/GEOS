@@ -378,10 +378,7 @@ void ProppantTransport::InitializePostInitialConditions_PreSubGroups( Group * co
   fieldNames["elems"].push_back( viewKeyStruct::proppantConcentrationString );
   fieldNames["elems"].push_back( viewKeyStruct::componentConcentrationString );
   
-  array1d<NeighborCommunicator> & comms =
-    domain->getReference< array1d<NeighborCommunicator>>( domain->viewKeys.neighbors );
-
-  CommunicationTools::SynchronizeFields( fieldNames, mesh, comms );
+  CommunicationTools::SynchronizeFields( fieldNames, mesh, domain->getNeighbors() );
 
   ResetViews( domain );  
 
@@ -1357,10 +1354,7 @@ void ProppantTransport::ApplySystemSolution( DofManager const & dofManager,
   fieldNames["elems"].push_back( viewKeyStruct::deltaProppantConcentrationString );
   fieldNames["elems"].push_back( viewKeyStruct::deltaComponentConcentrationString );  
 
-  array1d<NeighborCommunicator> &
-  comms = domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors );
-
-  CommunicationTools::SynchronizeFields( fieldNames, mesh, comms );
+  CommunicationTools::SynchronizeFields( fieldNames, mesh, domain->getNeighbors() );
 
   applyToSubRegions( mesh, [&] ( ElementSubRegionBase * subRegion )
   {
@@ -1599,10 +1593,7 @@ void ProppantTransport::UpdateCellBasedFlux( real64 const GEOSX_UNUSED_PARAM(tim
   std::map<string, string_array > fieldNames;
   fieldNames["elems"].push_back( viewKeyStruct::cellBasedFluxString );  
 
-  array1d<NeighborCommunicator> & comms =
-    domain->getReference< array1d<NeighborCommunicator>>( domain->viewKeys.neighbors );
-
-  CommunicationTools::SynchronizeFields( fieldNames, mesh, comms );
+  CommunicationTools::SynchronizeFields( fieldNames, mesh, domain->getNeighbors() );
   
 }
 
@@ -1696,11 +1687,7 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
     fieldNames["elems"].push_back( viewKeyStruct::proppantExcessPackVolumeString );
     fieldNames["elems"].push_back( viewKeyStruct::proppantLiftFluxString );      
 
-
-    array1d<NeighborCommunicator> & comms =
-      domain->getReference< array1d<NeighborCommunicator>>( domain->viewKeys.neighbors );
-
-    CommunicationTools::SynchronizeFields( fieldNames, mesh, comms );
+    CommunicationTools::SynchronizeFields( fieldNames, mesh, domain->getNeighbors() );
 
   }
 
@@ -1729,10 +1716,7 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
     fieldNames["elems"].push_back( viewKeyStruct::proppantConcentrationString );  
     fieldNames["elems"].push_back( viewKeyStruct::proppantPackVolumeFractionString );
 
-    array1d<NeighborCommunicator> & comms =
-      domain->getReference< array1d<NeighborCommunicator>>( domain->viewKeys.neighbors );
-
-    CommunicationTools::SynchronizeFields( fieldNames, mesh, comms );
+    CommunicationTools::SynchronizeFields( fieldNames, mesh, domain->getNeighbors() );
 
   }
 
@@ -1757,10 +1741,7 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
     std::map<string, string_array > fieldNames;
     fieldNames["elems"].push_back( viewKeyStruct::isInterfaceElementString );  
 
-    array1d<NeighborCommunicator> & comms =
-      domain->getReference< array1d<NeighborCommunicator>>( domain->viewKeys.neighbors );
-
-    CommunicationTools::SynchronizeFields( fieldNames, mesh, comms );
+    CommunicationTools::SynchronizeFields( fieldNames, mesh, domain->getNeighbors() );
 
   }
 
