@@ -140,10 +140,7 @@ void SinglePhaseFVM<BASE>::ApplySystemSolution( DofManager const & dofManager,
   std::map<string, string_array> fieldNames;
   fieldNames["elems"].push_back( viewKeyStruct::deltaPressureString );
 
-  array1d<NeighborCommunicator> & comms =
-    domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors );
-
-  CommunicationTools::SynchronizeFields( fieldNames, mesh, comms );
+  CommunicationTools::SynchronizeFields( fieldNames, mesh, domain->getNeighbors() );
 
   this->applyToSubRegions( mesh, [&] ( ElementSubRegionBase * subRegion )
   {

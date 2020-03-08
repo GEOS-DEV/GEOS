@@ -156,12 +156,8 @@ void SinglePhaseBase::InitializePostInitialConditions_PreSubGroups( Group * cons
   std::map<string, string_array > fieldNames;
   fieldNames["elems"].push_back( viewKeyStruct::pressureString );
 
-  array1d<NeighborCommunicator> & comms =
-    domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors );
+  CommunicationTools::SynchronizeFields( fieldNames, mesh, domain->getNeighbors() );
 
-  CommunicationTools::SynchronizeFields( fieldNames, mesh, comms );
-  ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
-  
   ResetViews( domain );
 
   // Moved the following part from ImplicitStepSetup to here since it only needs to be initialized once
