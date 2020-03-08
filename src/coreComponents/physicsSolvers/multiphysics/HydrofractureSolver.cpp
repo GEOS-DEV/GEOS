@@ -278,7 +278,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 
         CommunicationTools::SynchronizeFields( fieldNames,
                                                domain->getMeshBody(0)->getMeshLevel(0),
-                                               domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
+                                               domain->getNeighbors() );
 
         this->UpdateDeformationForCoupling(domain);
 
@@ -322,7 +322,7 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
     {
       arrayView1d<real64> const & aperture = subRegion->getElementAperture();
       arrayView1d<real64> const & effectiveAperture = subRegion->getReference<array1d<real64>>(FlowSolverBase::viewKeyStruct::effectiveApertureString);
-      arrayView1d<real64> const & volume = subRegion->getElementVolume();
+      arrayView1d<real64 const> const & volume = subRegion->getElementVolume();
       arrayView1d<real64> const & deltaVolume = subRegion->getReference<array1d<real64> >(FlowSolverBase::viewKeyStruct::deltaVolumeString);
       arrayView1d<real64 const> const & area = subRegion->getElementArea();
       arrayView2d< localIndex const > const & elemsToFaces = subRegion->faceList();

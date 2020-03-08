@@ -21,6 +21,7 @@
 
 #include "dataRepository/Group.hpp"
 #include "common/TimingMacros.hpp"
+#include "mpiCommunications/MpiWrapper.hpp"
 
 namespace geosx
 {
@@ -208,14 +209,27 @@ public:
                                                                 std::vector< std::vector< globalIndex > > & )
   {}
 
-  void SetGhostRankForSenders( arrayView1d<localIndex> const & indicesToSend )
+  void SetGhostRankForSenders( int const neighborRank )
   {
-    for( auto index : indicesToSend )
+    Group * const neighborData = GetGroup( groupKeys().neighborData )->GetGroup( std::to_string( neighborRank ) );
+
+    arrayView1d< localIndex const > const & indicesToSend =
+      neighborData->getReference< array1d< localIndex > >( viewKeys().ghostsToSend );
+    
+    array1d< std::pair< globalIndex, int > > & nonLocalGhosts =
+      neighborData->getReference< array1d< std::pair< globalIndex, int > > >( "nonLocalGhosts" );
+
+    for( localIndex const index : indicesToSend )
     {
-      GEOSX_ERROR_IF( m_ghostRank[index] >= 0,
-                     "trying to set ghostRank of non-locally owned index: "
-                     "m_ghostRank[" << index << "]=" << m_ghostRank[index] );
-      m_ghostRank[index] = -1;
+      integer & owningRank = m_ghostRank[ index ];
+      if ( owningRank >= 0 )
+      {
+        nonLocalGhosts.push_back( { m_localToGlobalMap[ index ], owningRank } );
+      }
+      else
+      {
+        owningRank = -1;
+      }
     }
   }
 

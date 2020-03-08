@@ -192,10 +192,7 @@ void SinglePhaseBase::InitializePostInitialConditions_PreSubGroups( Group * cons
   std::map<string, string_array > fieldNames;
   fieldNames["elems"].push_back( viewKeyStruct::pressureString );
 
-  array1d<NeighborCommunicator> & comms =
-    domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors );
-
-  CommunicationTools::SynchronizeFields( fieldNames, mesh, comms );
+  CommunicationTools::SynchronizeFields( fieldNames, mesh, domain->getNeighbors() );
 
   ResetViews( domain );
 
@@ -326,19 +323,13 @@ void SinglePhaseBase::SetupSystem( DomainPartition * const domain,
     {
       localIndex const rowSize = matrix.localRowLength( row );
       maxRowSize = maxRowSize > rowSize ? maxRowSize : rowSize;
-
-      derivativeFluxResidual_dAperture->reserveNonZeros( row,
-                                                         rowSize );
     }
     for( localIndex row=matrix.localRows() ; row<numRows ; ++row )
     {
       derivativeFluxResidual_dAperture->reserveNonZeros( row,
                                                          maxRowSize );
     }
-
-
   }
-
 
   string const presDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString );
 
@@ -372,6 +363,7 @@ void SinglePhaseBase::SetupSystem( DomainPartition * const domain,
       }
     }
   });
+
 }
 
 void SinglePhaseBase::ImplicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
