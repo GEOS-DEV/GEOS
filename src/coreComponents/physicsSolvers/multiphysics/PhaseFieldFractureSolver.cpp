@@ -255,6 +255,8 @@ real64 PhaseFieldFractureSolver::SplitOperatorStep( real64 const& time_n,
 
     solidSolver.updateStress( domain );
 
+    std::cout<< dtReturnTemporary << std::endl;
+
     if (dtReturnTemporary < dtReturn)
     {
       iter = 0;
@@ -281,6 +283,8 @@ real64 PhaseFieldFractureSolver::SplitOperatorStep( real64 const& time_n,
                                                          damageSolver.getSystemSolution() );
 
     mapDamageToQuadrature( domain );
+
+    std::cout<< dtReturnTemporary << std::endl;
 
     if (dtReturnTemporary < dtReturn)
     {

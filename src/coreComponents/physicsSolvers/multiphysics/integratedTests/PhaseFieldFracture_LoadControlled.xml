@@ -105,10 +105,10 @@
                         scale="0"
                         setNames="{xneg, xpos, yneg, ypos, zneg, zpos}"/> -->
     <FieldSpecification name="xposconstraint"
-               objectPath="nodeManager"
-               fieldName="Force"
+               objectPath="faceManager"
+               fieldName="Traction"
                component="0"
-               scale="4.0e2"
+               scale="16.0e2"
                functionName="f_b"
                setNames="{xpos}"/>
 

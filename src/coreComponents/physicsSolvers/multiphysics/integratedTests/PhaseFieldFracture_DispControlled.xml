@@ -5,7 +5,7 @@
                  solidSolverName="SolidMechSolve"
                  damageSolverName="DamageSolve"
                  couplingTypeOption="FixedStress"
-                 logLevel="1"
+                 logLevel="2"
                  discretization="FE1"
                  targetRegions="{Region1}">
       <SystemSolverParameters maxIterNewton="40"
@@ -14,7 +14,7 @@
 
     <SolidMechanicsLagrangianSSLE name="SolidMechSolve"
                                   timeIntegrationOption="QuasiStatic"
-                                  logLevel="0"
+                                  logLevel="1"
                                   discretization="FE1"
                                   targetRegions="{Region1}"
                                   solidMaterialName="shale"
@@ -31,7 +31,7 @@
                 fieldName="Damage"
                 solidMaterialName="shale"
                 localDissipation = "Quadratic"
-                logLevel="0"
+                logLevel="1"
                 targetRegions="{Region1}">
     </PhaseFieldDamageFEM>
   </Solvers>
@@ -42,13 +42,13 @@
                   xCoords="{-1, 1}"
                   yCoords="{-1, 1}"
                   zCoords="{-1, 1}"
-                  nx="{10}"
-                  ny="{10}"
+                  nx="{30}"
+                  ny="{30}"
                   nz="{1}"
                   cellBlockNames="{cb1}"/>
   </Mesh>
 
-  <Events maxTime="15.0">
+  <Events maxTime="10.0">
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
     <PeriodicEvent name="solverApplications"
@@ -63,10 +63,10 @@
                    targetExactTimestep="1"
                    target="/Outputs/PFCrack_VTKOutput" />
 
-    <PeriodicEvent name="outputs"
+    <!-- <PeriodicEvent name="outputs"
                    timeFrequency="1.0"
                    targetExactTimestep="1"
-                   target="/Outputs/SiloOutput"/>
+                   target="/Outputs/SiloOutput"/> -->
 
     <PeriodicEvent name="restarts"
                    timeFrequency="1e99"
@@ -95,7 +95,7 @@
     <LinearElasticIsotropic name="shale"
                             defaultDensity="2700"
                             defaultBulkModulus="5.5556e9"
-                            defaultShearModulus="4.16667e9"/>
+                            defaultShearModulus="8.3333e9"/>
   </Constitutive>
 
   <FieldSpecifications>
@@ -108,14 +108,16 @@
                objectPath="nodeManager"
                fieldName="TotalDisplacement"
                component="0"
-               scale="1.0e-6"
+               scale="1.0e-7"
+               functionName="f_b"
                setNames="{xpos}"/>
 
     <FieldSpecification name="xneg"
                objectPath="nodeManager"
                fieldName="TotalDisplacement"
                component="0"
-               scale="-1.0e-6"
+               scale="-1.0e-7"
+               functionName="f_b"
                setNames="{xneg}"/>
 
     <!-- <FieldSpecification name="xconstraint1"
@@ -169,7 +171,7 @@
 
   </Functions>
   <Outputs>
-    <Silo name="SiloOutput" parallelThreads="1" plotFileRoot="plot"/>
+    <!-- <Silo name="SiloOutput" parallelThreads="1" plotFileRoot="plot"/> -->
     <VTK name="PFCrack_VTKOutput" parallelThreads="1" plotFileRoot="plot"/>
     <Restart name="restartOutput"/>
   </Outputs>
