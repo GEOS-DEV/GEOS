@@ -601,16 +601,27 @@ void HypreMatrix::multiplyPtAP( HypreMatrix const & P,
                                 HypreMatrix & dst ) const
 {
   // TODO: figure out how to make this work
-#if 0
+#if 1
   GEOSX_LAI_ASSERT( ready() );
   GEOSX_LAI_ASSERT( P.ready() );
   GEOSX_LAI_ASSERT_EQ( numGlobalRows(), P.numGlobalRows() );
   GEOSX_LAI_ASSERT_EQ( numGlobalCols(), P.numGlobalRows() );
 
+  HYPRE_Int P_owns_its_col_starts = hypre_ParCSRMatrixOwnsColStarts( P.m_parcsr_mat );
+
   HYPRE_ParCSRMatrix const dst_parcsr = hypre_ParCSRMatrixRAPKT( P.m_parcsr_mat,
                                                                  m_parcsr_mat,
                                                                  P.m_parcsr_mat,
                                                                  0 );
+
+  hypre_ParCSRMatrixSetRowStartsOwner( dst_parcsr, 0 );
+  hypre_ParCSRMatrixSetColStartsOwner( dst_parcsr, 0 );
+
+  if (P_owns_its_col_starts)
+  {
+     hypre_ParCSRMatrixSetColStartsOwner( P.m_parcsr_mat, 1 );
+  }
+
   dst.parCSRtoIJ( dst_parcsr );
 #else
   MatrixBase::multiplyPtAP( P, dst );
@@ -631,6 +642,7 @@ void HypreMatrix::parCSRtoIJ( HYPRE_ParCSRMatrix const & parCSRMatrix )
   hypre_IJMatrixObject( ijmatrix ) = parCSRMatrix;
   hypre_IJMatrixTranslator( ijmatrix ) = NULL;
   hypre_IJMatrixAssumedPart( ijmatrix ) = hypre_ParCSRMatrixAssumedPartition( parCSRMatrix );
+  hypre_ParCSRMatrixOwnsAssumedPartition( parCSRMatrix ) = 0;
 
   hypre_IJMatrixAssembleFlag( ijmatrix ) = 1;
 
