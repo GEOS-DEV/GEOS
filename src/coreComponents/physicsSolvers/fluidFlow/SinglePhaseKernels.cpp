@@ -159,7 +159,7 @@ void FluxKernel::
 #endif
                                     ParallelMatrix * const jacobian,
                                     ParallelVector * const residual,
-                                    CRSMatrixView< real64, localIndex, localIndex const > const & )
+                                    CRSMatrixView< real64, localIndex > const & )
 {
   constexpr localIndex maxNumFluxElems = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
   constexpr localIndex numFluxElems = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
@@ -244,7 +244,7 @@ void FluxKernel::
 #endif
                                 ParallelMatrix * const jacobian,
                                 ParallelVector * const residual,
-                                CRSMatrixView< real64, localIndex, localIndex const > const & dR_dAper )
+                                CRSMatrixView< real64, localIndex > const & dR_dAper )
 {
   constexpr localIndex maxNumFluxElems = FaceElementStencil::NUM_POINT_IN_FLUX;
   constexpr localIndex maxStencilSize = FaceElementStencil::MAX_STENCIL_SIZE;

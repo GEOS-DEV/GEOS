@@ -179,10 +179,9 @@ public:
   void PrintDataHierarchy( integer indent = 0 );
 
   /**
-   * @brief Generates a table formatted string containing all input options.
-   * @return a string containing a well formatted table containing input options.
+   * @brief @return a table formatted string containing all input options.
    */
-  string dumpInputOptions();
+  string dumpInputOptions() const;
 
   ///@}
 
@@ -1187,7 +1186,7 @@ public:
    * @note An error will be raised if wrapper does not exist or type cast is invalid.
    */
   template< typename T, typename LOOKUP_TYPE >
-  typename Wrapper< T >::ViewTypeConst
+  traits::ViewTypeConst< T >
   getReference( LOOKUP_TYPE const & lookup ) const
   {
     Wrapper< T > const * const wrapper = getWrapper< T >( lookup );
@@ -1233,7 +1232,7 @@ public:
    * @note An error will be raised if wrapper does not exist or type cast is invalid.
    */
   template< typename T >
-  typename Wrapper< T >::ViewTypeConst
+  traits::ViewTypeConst< T >
   getReference( char const * const name ) const
   { return getReference< T >( string( name ) ); }
 

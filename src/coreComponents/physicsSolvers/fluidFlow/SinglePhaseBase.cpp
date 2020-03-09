@@ -262,7 +262,7 @@ void SinglePhaseBase::SetupSystem( DomainPartition * const domain,
 
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
 
-  std::unique_ptr< CRSMatrix< real64, localIndex, localIndex > > &
+  std::unique_ptr< CRSMatrix< real64, localIndex > > &
   derivativeFluxResidual_dAperture = getRefDerivativeFluxResidual_dAperture();
   {
 
@@ -272,7 +272,7 @@ void SinglePhaseBase::SetupSystem( DomainPartition * const domain,
       numRows += elementSubRegion.size();
     } );
 
-    derivativeFluxResidual_dAperture = std::make_unique< CRSMatrix< real64, localIndex, localIndex > >( numRows, numRows );
+    derivativeFluxResidual_dAperture = std::make_unique< CRSMatrix< real64, localIndex > >( numRows, numRows );
 
     derivativeFluxResidual_dAperture->reserveNonZeros( matrix.numLocalNonzeros() );
     localIndex maxRowSize = -1;
@@ -452,7 +452,7 @@ void SinglePhaseBase::AssembleSystem( real64 const time_n,
 
   if( m_derivativeFluxResidual_dAperture==nullptr )
   {
-    m_derivativeFluxResidual_dAperture = std::make_unique< CRSMatrix< real64, localIndex, localIndex > >(
+    m_derivativeFluxResidual_dAperture = std::make_unique< CRSMatrix< real64, localIndex > >(
       matrix.numLocalRows(),
       matrix.numLocalCols() );
   }

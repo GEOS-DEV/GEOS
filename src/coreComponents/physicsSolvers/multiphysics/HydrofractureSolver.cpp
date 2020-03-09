@@ -1078,7 +1078,7 @@ HydrofractureSolver::
   string const presDofKey = m_flowSolver->getDofManager().getKey( FlowSolverBase::viewKeyStruct::pressureString );
   string const dispDofKey = m_solidSolver->getDofManager().getKey( keys::TotalDisplacement );
 
-  CRSMatrixView< real64 const, localIndex const, localIndex const > const &
+  CRSMatrixView< real64 const, localIndex const > const &
   dFluxResidual_dAperture = m_flowSolver->getDerivativeFluxResidual_dAperture();
 
   ContactRelationBase const * const

@@ -22,10 +22,9 @@ namespace geosx
 {
 using namespace dataRepository;
 
-void xmlWrapper::StringToInputVariable( R1Tensor & target, string inputValue )
+void xmlWrapper::StringToInputVariable( R1Tensor & target, string const & inputValue )
 {
-  string csvstr = inputValue;
-  std::istringstream ss( csvstr );
+  std::istringstream ss( inputValue );
 
   real64 value;
   int count = 0;

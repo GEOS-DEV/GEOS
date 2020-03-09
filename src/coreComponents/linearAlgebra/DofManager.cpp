@@ -671,7 +671,7 @@ void vectorToFieldImpl( VECTOR const & vector,
   {
     using ArrayType = decltype( arrayInstance );
     Wrapper< ArrayType > & view = Wrapper< ArrayType >::cast( *wrapper );
-    typename Wrapper< ArrayType >::ViewType const & field = view.referenceAsView();
+    traits::ViewType< ArrayType > field = view.reference();
 
     forAll< POLICY >( indexArray.size(), [=] ( localIndex const i )
     {
@@ -716,7 +716,7 @@ void fieldToVectorImpl( VECTOR & vector,
   {
     using ArrayType = decltype( arrayInstance );
     Wrapper< ArrayType > const & view = Wrapper< ArrayType >::cast( *wrapper );
-    typename Wrapper< ArrayType >::ViewTypeConst const & field = view.referenceAsView();
+    traits::ViewTypeConst< ArrayType > field = view.reference();
 
     forAll< POLICY >( indexArray.size(), [=] ( localIndex const i )
     {

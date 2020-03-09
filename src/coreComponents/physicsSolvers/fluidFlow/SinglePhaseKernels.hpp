@@ -357,7 +357,7 @@ struct FluxKernel
 #endif
             ParallelMatrix * const jacobian,
             ParallelVector * const residual,
-            CRSMatrixView< real64, localIndex, localIndex const > const & dR_dAper );
+            CRSMatrixView< real64, localIndex > const & dR_dAper );
 
 
   /**
