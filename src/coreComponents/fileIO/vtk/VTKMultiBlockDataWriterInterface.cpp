@@ -14,6 +14,8 @@
 
 #include "VTKMultiBlockDataWriterInterface.hpp"
 
+#include "dataRepository/WrapperBase.hpp"
+
 #include "Array2DVTKDataArray.hpp"
 #include "CellVTKDataArray.hpp"
 
@@ -102,6 +104,35 @@ namespace vtk
     return std::make_tuple(cellsArray, cellType);
   }
 
+  void VTKPolyDataWriterInterface::SetCellFields( vtkSmartPointer< vtkCellData > & celldata, CellElementRegion const * const er ) const
+  {
+      for( auto const & wrapperIter : er->wrappers() )
+      {
+        auto const * const wrapper = wrapperIter.second;
+
+        if( wrapper->getPlotLevel() < m_plotLevel )
+        {
+          // the field name is the key to the map
+          string const fieldName = wrapper->getName();
+          /*
+          std::type_info const & typeID = wrapper->get_typeid();
+          rtTypes::TypeIDs fieldType = rtTypes::typeID(wrapper->get_typeid());
+          if( !geosxToVTKTypeMap.count( typeID ) )
+            continue;
+          int dimension = 0;
+          if( fieldType == rtTypes::TypeIDs::r1_array_id )
+          {
+            dimension = 3;
+          }
+          else
+          {
+            dimension = 1;
+          }
+          cellFields.insert(std::make_tuple(fieldName, geosxToVTKTypeMap.at( typeID ), dimension, fieldType) );
+          */
+        }
+      }
+  }
   void VTKPolyDataWriterInterface::WriteMeshFiles( double time, DomainPartition const * const domain ) const
   {
     string timeStepSubFolder = VTKPolyDataWriterInterface::GetTimeStepSubFolder( time );
