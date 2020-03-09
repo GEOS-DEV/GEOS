@@ -61,11 +61,6 @@
 #include <vector>
 #include <set>
 
-/// macro definition to specify whether or not to use dynamic_cast
-#ifndef USE_DYNAMIC_CASTING
-  #define USE_DYNAMIC_CASTING 1
-#endif
-
 /**
  * top level geosx namespace contains all code that is specific to GEOSX
  */
@@ -78,21 +73,12 @@ namespace geosx
  * @tparam EXISTING_TYPE base type
  * @param val            base pointer to cast
  * @return               pointer cast to derived type or @p nullptr
- *
- * Depending on value of @p USE_DYNAMIC_CASTING, will use either
- * @p dynamic_cast or @p static_cast. The latter could result in undefined
- * behavior if the cast is invalid (e.g. EXISTING_TYPE not base of @p NEW_TYPE)
  */
 template< typename NEW_TYPE, typename EXISTING_TYPE >
 NEW_TYPE dynamicCast( EXISTING_TYPE * const val )
 {
   static_assert( std::is_pointer< NEW_TYPE >::value, "NEW_TYPE must be a pointer." );
-
-#if USE_DYNAMIC_CASTING
   return dynamic_cast< NEW_TYPE >( val );
-#else
-  return static_cast< NEW_TYPE >( val );
-#endif
 }
 
 /**
@@ -101,10 +87,6 @@ NEW_TYPE dynamicCast( EXISTING_TYPE * const val )
  * @tparam EXISTING_TYPE base type
  * @param val            base reference to cast
  * @return               reference cast to derived type or @p nullptr
- *
- * Depending on value of @p USE_DYNAMIC_CASTING, will use either
- * @p dynamic_cast or @p static_cast. The latter could result in undefined
- * behavior if the cast is invalid (e.g. EXISTING_TYPE not base of @p NEW_TYPE)
  */
 template< typename NEW_TYPE, typename EXISTING_TYPE >
 NEW_TYPE dynamicCast( EXISTING_TYPE & val )
@@ -113,7 +95,8 @@ NEW_TYPE dynamicCast( EXISTING_TYPE & val )
 
   using POINTER_TO_NEW_TYPE = std::remove_reference_t< NEW_TYPE > *;
   POINTER_TO_NEW_TYPE ptr = dynamicCast< POINTER_TO_NEW_TYPE >( &val );
-  GEOSX_ERROR_IF( ptr == nullptr, "Cast failed." );
+  GEOSX_ERROR_IF( ptr == nullptr, "Cast from " << cxx_utilities::demangleType( val ) << " to " <<
+                  cxx_utilities::demangleType< NEW_TYPE >() << " failed." );
 
   return *ptr;
 }
@@ -282,12 +265,12 @@ using stackArray5d = StackArray< T, 5, MAXSIZE >;
 
 
 /// Alias for CRS Matrix class.
-template< typename T, typename ROWINDEX, typename COLINDEX >
-using CRSMatrix = LvArray::CRSMatrix< T, COLINDEX, ROWINDEX >;
+template< typename T, typename COL_INDEX=localIndex >
+using CRSMatrix = LvArray::CRSMatrix< T, COL_INDEX, localIndex >;
 
 /// Alias for CRS Matrix View.
-template< typename T, typename COLINDEX, typename LINEEARINDEX >
-using CRSMatrixView = LvArray::CRSMatrixView< T, COLINDEX, LINEEARINDEX >;
+template< typename T, typename COL_INDEX=localIndex >
+using CRSMatrixView = LvArray::CRSMatrixView< T, COL_INDEX, localIndex const >;
 
 ///@}
 
@@ -1043,205 +1026,6 @@ public:
         {
           GEOSX_ERROR( "TypeID not recognized." );
         }
-      }
-    }
-  }
-
-  /**
-   * @brief this function provides a switchyard for the intrinsic supported GEOSX types which calls a generic
-   *        lambda that takes in a two arguments argument which may be used to infer array type and underlying type.
-   * @tparam LAMBDA the template arg that represents the lambda function
-   * @param type the TypeIDs we would like to pass to the lambda function
-   * @param lambda the lambda function to call
-   * @return the return type of lambda
-   */
-  template< typename LAMBDA >
-  static auto ApplyTypeLambda2( const TypeIDs type,
-                                LAMBDA lambda )
-  {
-    switch( type )
-    {
-      case ( TypeIDs::integer_id ):
-      {
-        return lambda( integer( 1 ), integer( 1 ) );
-      }
-      case ( TypeIDs::real32_id ):
-      {
-        return lambda( real32( 1 ), real32( 1 ) );
-      }
-      case ( TypeIDs::real64_id ):
-      {
-        return lambda( real64( 1 ), real64( 1 ) );
-      }
-      case ( TypeIDs::r1Tensor_id ):
-      {
-        return lambda( R1Tensor(), R1Tensor() );
-      }
-      case ( TypeIDs::r2Tensor_id ):
-      {
-        return lambda( R2Tensor(), R2Tensor() );
-      }
-      case ( TypeIDs::r2SymTensor_id ):
-      {
-        return lambda( R2SymTensor(), R2SymTensor() );
-      }
-      case ( TypeIDs::integer_array_id ):
-      {
-        return lambda( integer_array( 1 ), integer( 1 ) );
-      }
-      case ( TypeIDs::localIndex_array_id ):
-      {
-        return lambda( localIndex_array( 1 ), localIndex( 1 ) );
-      }
-      case ( TypeIDs::globalIndex_array_id ):
-      {
-        return lambda( globalIndex_array( 1 ), globalIndex( 1 ) );
-      }
-      case ( TypeIDs::real32_array_id ):
-      {
-        return lambda( real32_array( 1 ), real32( 1 ) );
-      }
-      case ( TypeIDs::real64_array_id ):
-      {
-        return lambda( real64_array( 1 ), real64( 1 ) );
-      }
-      case ( TypeIDs::r1_array_id ):
-      {
-        return lambda( r1_array( 1 ), R1Tensor() );
-      }
-      case ( TypeIDs::r2_array_id ):
-      {
-        return lambda( r2_array( 1 ), R2Tensor() );
-      }
-      case ( TypeIDs::r2Sym_array_id ):
-      {
-        return lambda( r2Sym_array( 1 ), R2SymTensor() );
-      }
-      case ( TypeIDs::string_id ):
-      {
-        return lambda( string( "" ), string( "" ) );
-      }
-      case ( TypeIDs::Path_id ):
-      {
-        return lambda( Path( "" ), Path( "" ) );
-      }
-      case ( TypeIDs::string_array_id ):
-      {
-        return lambda( string_array( 1 ), string( "" ) );
-      }
-      case ( TypeIDs::path_array_id ):
-      {
-        return lambda( path_array( 1 ), Path( "" ) );
-      }
-      // case ( TypeIDs::mapPair_array_id ):
-      // {
-      //   return lambda( mapPair_array(1), mapPair({}) );
-      // }
-      default:
-      {
-        GEOSX_ERROR( "TypeID not recognized." );
-      }
-    }
-  }
-
-
-  /**
-   * @brief this function provides a switchyard for the supported GEOSX types which calls a generic
-   *        lambda that takes in a two arguments argument which may be used to infer array type and underlying type.
-   * @tparam LAMBDA the template arg that represents the lambda function
-   * @param type the TypeIDs we would like to pass to the lambda function
-   * @param lambda the lambda function to call
-   * @return the return type of lambda
-   */
-  template< typename LAMBDA >
-  static auto ApplyIntrinsicTypeLambda2( const TypeIDs type,
-                                         LAMBDA lambda )
-  {
-    switch( type )
-    {
-      case ( TypeIDs::integer_id ):
-      {
-        return lambda( integer( 1 ), integer( 1 ) );
-      }
-      case ( TypeIDs::real32_id ):
-      {
-        return lambda( real32( 1 ), real32( 1 ) );
-      }
-      case ( TypeIDs::real64_id ):
-      {
-        return lambda( real64( 1 ), real64( 1 ) );
-      }
-      case ( TypeIDs::r1Tensor_id ):
-      {
-        return lambda( R1Tensor(), R1Tensor() );
-      }
-      case ( TypeIDs::r2Tensor_id ):
-      {
-        return lambda( R2Tensor(), R2Tensor() );
-      }
-      case ( TypeIDs::r2SymTensor_id ):
-      {
-        return lambda( R2SymTensor(), R2SymTensor() );
-      }
-      case ( TypeIDs::integer_array_id ):
-      {
-        return lambda( integer_array( 1 ), integer( 1 ) );
-      }
-      case ( TypeIDs::real32_array_id ):
-      {
-        return lambda( real32_array( 1 ), real32( 1 ) );
-      }
-      case ( TypeIDs::real64_array_id ):
-      {
-        return lambda( real64_array( 1 ), real64( 1 ) );
-      }
-      case ( TypeIDs::string_id ):
-      {
-        return lambda( string( "" ), string( "" ) );
-      }
-      case ( TypeIDs::Path_id ):
-      {
-        return lambda( Path( "" ), Path( "" ) );
-      }
-      case ( TypeIDs::string_array_id ):
-      {
-        return lambda( string_array( 1 ), string( "" ) );
-      }
-      case ( TypeIDs::path_array_id ):
-      {
-        return lambda( path_array( 1 ), Path( "" ) );
-      }
-      case ( TypeIDs::integer_array2d_id ):
-      {
-        return lambda( integer_array2d(), integer( 1 ) );
-      }
-      case ( TypeIDs::localIndex_array2d_id ):
-      {
-        return lambda( localIndex_array2d(), localIndex( 1 ) );
-      }
-      case ( TypeIDs::globalIndex_array2d_id ):
-      {
-        return lambda( globalIndex_array2d(), globalIndex() );
-      }
-      case ( TypeIDs::real32_array2d_id ):
-      {
-        return lambda( real32_array2d(), real32( 1 ) );
-      }
-      case ( TypeIDs::real64_array2d_id ):
-      {
-        return lambda( real64_array2d(), real64( 1 ) );
-      }
-      case ( TypeIDs::real64_array2d_ji_id ):
-      {
-        return lambda( array2d< real64, RAJA::PERM_JI >(), real64( 1 ) );
-      }
-      //  case ( TypeIDs::mapPair_array_id ):
-      //  {
-      //    return lambda( mapPair_array(1), mapPair({}) );
-      //  }
-      default:
-      {
-        GEOSX_ERROR( "TypeID not recognized." );
       }
     }
   }
