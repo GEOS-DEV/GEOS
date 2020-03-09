@@ -581,17 +581,32 @@ void HypreMatrix::multiplyRAP( HypreMatrix const & R,
                                HypreMatrix & dst ) const
 {
   // TODO: figure out how to make this work
-#if 0
+#if 1
   GEOSX_LAI_ASSERT( ready() );
   GEOSX_LAI_ASSERT( R.ready() );
   GEOSX_LAI_ASSERT( P.ready() );
   GEOSX_LAI_ASSERT_EQ( numGlobalRows(), R.numGlobalCols() );
   GEOSX_LAI_ASSERT_EQ( numGlobalCols(), P.numGlobalRows() );
 
-  HYPRE_ParCSRMatrix const dst_parcsr = hypre_ParCSRMatrixRAP( R.m_parcsr_mat,
+  HypreMatrix Rt;
+  R.transpose( Rt );
+
+  HYPRE_Int Rt_owns_its_col_starts = hypre_ParCSRMatrixOwnsColStarts( Rt.m_parcsr_mat );
+  HYPRE_Int P_owns_its_col_starts = hypre_ParCSRMatrixOwnsColStarts( P.m_parcsr_mat );
+
+  HYPRE_ParCSRMatrix const dst_parcsr = hypre_ParCSRMatrixRAP( Rt.m_parcsr_mat,
                                                                m_parcsr_mat,
                                                                P.m_parcsr_mat );
+
+  hypre_ParCSRMatrixSetRowStartsOwner( dst_parcsr, 0 );
+  hypre_ParCSRMatrixSetColStartsOwner( dst_parcsr, 0 );
+
+  hypre_ParCSRMatrixSetColStartsOwner( Rt.m_parcsr_mat, Rt_owns_its_col_starts );
+  hypre_ParCSRMatrixSetColStartsOwner( P.m_parcsr_mat, P_owns_its_col_starts );
+
   dst.parCSRtoIJ( dst_parcsr );
+  Rt.reset();
+
 #else
   MatrixBase::multiplyRAP( R, P, dst );
 #endif
@@ -617,10 +632,7 @@ void HypreMatrix::multiplyPtAP( HypreMatrix const & P,
   hypre_ParCSRMatrixSetRowStartsOwner( dst_parcsr, 0 );
   hypre_ParCSRMatrixSetColStartsOwner( dst_parcsr, 0 );
 
-  if (P_owns_its_col_starts)
-  {
-     hypre_ParCSRMatrixSetColStartsOwner( P.m_parcsr_mat, 1 );
-  }
+  hypre_ParCSRMatrixSetColStartsOwner( P.m_parcsr_mat, P_owns_its_col_starts );
 
   dst.parCSRtoIJ( dst_parcsr );
 #else
@@ -675,11 +687,10 @@ void HypreMatrix::parCSRtoIJ( HYPRE_ParCSRMatrix const & parCSRMatrix )
   else
   {
     HYPRE_BigInt *row_partitioning;
-    HYPRE_BigInt *row_starts = hypre_ParCSRMatrixRowStarts( parCSRMatrix );
 #ifdef HYPRE_NO_GLOBAL_PARTITION
     row_partitioning = hypre_CTAlloc( HYPRE_BigInt, 2, HYPRE_MEMORY_HOST );
-    row_partitioning[0] = row_starts[0];
-    row_partitioning[1] = row_starts[1];
+    row_partitioning[0] = hypre_ParCSRMatrixFirstRowIndex( parCSRMatrix );
+    row_partitioning[1] = hypre_ParCSRMatrixLastRowIndex( parCSRMatrix ) + 1;
 #else
     GEOSX_ERROR( "HYPRE intended to be used only with HYPRE_NO_GLOBAL_PARTITION" )
 #endif
@@ -699,11 +710,10 @@ void HypreMatrix::parCSRtoIJ( HYPRE_ParCSRMatrix const & parCSRMatrix )
     else
     {
       HYPRE_BigInt *col_partitioning;
-      HYPRE_BigInt *col_starts = hypre_ParCSRMatrixColStarts( parCSRMatrix );
 #ifdef HYPRE_NO_GLOBAL_PARTITION
       col_partitioning = hypre_CTAlloc( HYPRE_BigInt, 2, HYPRE_MEMORY_HOST );
-      col_partitioning[0] = col_starts[0];
-      col_partitioning[1] = col_starts[1];
+      col_partitioning[0] = hypre_ParCSRMatrixFirstColDiag( parCSRMatrix );
+      col_partitioning[1] = hypre_ParCSRMatrixLastColDiag( parCSRMatrix ) + 1;
 #else
       GEOSX_ERROR( "HYPRE intended to be used only with HYPRE_NO_GLOBAL_PARTITION" )
 #endif

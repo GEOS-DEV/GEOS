@@ -702,9 +702,15 @@ void DofManagerRestrictorTest<LAI>::test( std::vector<FieldDesc> fields,
   Matrix P;
   dofManager.makeRestrictor( fields[block].name, P, MPI_COMM_GEOSX, true, loComp, hiComp );
 
+  // Compute the sub-matrix via PtAP
+  Matrix Asub_PtAP;
+  A.multiplyPtAP( P, Asub_PtAP );
+
   // Compute the sub-matrix via RAP
-  Matrix Asub;
-  A.multiplyPtAP( P, Asub );
+  Matrix R;
+  Matrix Asub_RAP;
+  P.transpose(R);
+  A.multiplyRAP(R, P, Asub_RAP);
 
   // Now reset the DofManager and make a field with sub-components only
   dofManager.clear();
@@ -719,7 +725,8 @@ void DofManagerRestrictorTest<LAI>::test( std::vector<FieldDesc> fields,
   B.set( 1 );
 
   // Check if the matrices match
-  compareMatrices( Asub, B );
+  compareMatrices( Asub_PtAP, B );
+  compareMatrices( Asub_RAP, B );
 }
 
 TYPED_TEST_CASE_P( DofManagerRestrictorTest );
