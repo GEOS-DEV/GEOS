@@ -29,30 +29,30 @@ TEST( testHDFTraits, can_hdf_io )
 
 TEST( testHDFIO, SingleValueTable )
 {
+  HDFTable spec("Array1","arr1");
+  spec.AddCols(1,1,sizeof(real64),typeid(real64));
+  spec.Finalize();
+
+  real64 time = 0.0;
+  HDFTableIO out( spec );
+  for( localIndex tidx = 0; tidx < 100; ++tidx )
   {
-    HDFTable spec("Array1","arr1");
-    spec.AddCols(1,1,sizeof(real64),typeid(real64));
-    spec.Finalize();
-
-    real64 time = 1.0;
-    HDFTableIO out( spec );
+    time += 0.333;
     out.BufferRow( reinterpret_cast<buffer_unit_type const * >(&time) );
-
-    HDFFile file( "single_value" );
-    out.CreateInTarget( file );
-    out.WriteBuffered( file );
   }
+
+  string filename( "single_value" );
+  HDFFile file( filename );
+  out.CreateInTarget( file );
+  out.WriteBuffered( file );
+
+  // remove( filename.c_str() );
 }
 
-TEST( testHDFIO, WholeArrayTableIO )
+TEST( testHDFIO, WholeArrayTable )
 {
   srand(time(NULL));
-  localIndex dims[DIM] = {0};
-  for(integer dd = 0; dd < DIM; ++dd )
-  {
-    dims[dd] = rand();
-  }
-  Array<ARR_TYPE, DIM> arr(rand());
+  Array<ARR_TYPE, DIM> arr(4096);
 
   {
     HDFTable spec("Array1","arr1");
@@ -60,30 +60,34 @@ TEST( testHDFIO, WholeArrayTableIO )
     spec.Finalize();
 
     HDFTableIO out( spec );
-    out.BufferRow( reinterpret_cast<buffer_unit_type const * >(arr.data()) );
+    out.BufferRow( reinterpret_cast<buffer_unit_type const * >( arr.data() ) );
 
-    HDFFile file( "whole_array" );
+    string filename("whole_array");
+    HDFFile file( filename );
     out.CreateInTarget( file );
     out.WriteBuffered( file );
-  }
 
-  {
-
-    // TimeHistoryCollector * arr_collector = new ArrayTimeHistoryCollector<decltype(arr)>( arr );
-
-    // TimeHistoryUpdate update_event("TimeHistoryUpdate",NULL);
-    // TimeHistory & arr_hist = update_event.getTimeHistory( );
-    // arr_hist.AddHistory("arr1","Array1",arr_collector);
-
-    // update_event.Execute(1.0,0.5,1,4,0.6,NULL);
-
-    // TimeHistoryOutput output_event("whole_array_hist","TimeHistoryOutput",NULL);
-    // output_event.InitHistoryFile( );
-
-    // output_event.Execute(1.0,0.5,1,4,0.6,NULL);
-
+  //  remove( filename.c_str() );
   }
 }
+
+//   {
+
+//     // TimeHistoryCollector * arr_collector = new ArrayTimeHistoryCollector<decltype(arr)>( arr );
+
+//     // TimeHistoryUpdate update_event("TimeHistoryUpdate",NULL);
+//     // TimeHistory & arr_hist = update_event.getTimeHistory( );
+//     // arr_hist.AddHistory("arr1","Array1",arr_collector);
+
+//     // update_event.Execute(1.0,0.5,1,4,0.6,NULL);
+
+//     // TimeHistoryOutput output_event("whole_array_hist","TimeHistoryOutput",NULL);
+//     // output_event.InitHistoryFile( );
+
+//     // output_event.Execute(1.0,0.5,1,4,0.6,NULL);
+
+//   }
+// }
 
 // TEST( testHDFIO, IndexedTabularIO )
 // {

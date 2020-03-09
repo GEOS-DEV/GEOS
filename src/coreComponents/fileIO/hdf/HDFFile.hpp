@@ -182,35 +182,51 @@ public:
 
   inline bool isFinal() { return m_is_final; }
 
-  inline void CreateInTarget( HDFTarget & target )
+  inline void CreateInTarget( HDFTarget & target, bool exists_okay = true )
   {
     warn_not_final();
-    H5TBmake_table(m_title.c_str(),
-                   target,
-                   m_hdf_id.c_str(),
-                   m_col_count,
-                   m_prealloc_rows,
-                   m_row_size,
-                   const_cast<const char**>(&m_col_name_ptrs[0]),
-                   &m_col_offsets[0],
-                   &m_col_types[0],
-                   0,
-                   nullptr,
-                   0,
-                   nullptr);
+    bool in_target = CheckInTarget( target );
+    if ( !in_target )
+    {
+      H5TBmake_table(m_title.c_str(),
+                     target,
+                     m_hdf_id.c_str(),
+                     m_col_count,
+                     0,
+                     m_row_size,
+                     &m_col_name_ptrs[0],
+                     &m_col_offsets[0],
+                     &m_col_types[0],
+                     40,
+                     nullptr,
+                     0,
+                     nullptr);
+    }
+    else if ( in_target && !exists_okay )
+    {
+      GEOSX_ERROR( "HDFTable: A table with the same hdf_id already exists in the write target!");
+    }
+    else
+    {
+      GEOSX_ERROR_IF( ! CheckCompatible( target ), "HDFTable: A table with the same hdf_id already exists in the write target, but is not compatible with the specification.");
+    }
   }
 
   inline void Verify( HDFTarget & target )
   {
-    GEOSX_ERROR_IF( ! (VerifyInTarget(target) && VerifyCompatible(target)), "HDFTable: Compatible table not found in target. Make sure to CreateInTarget().");
+    GEOSX_ERROR_IF( ! (CheckInTarget(target) && CheckCompatible(target)), "HDFTable: Compatible table not found in the write target. Make sure to CreateInTarget().");
   }
 
-  inline bool VerifyInTarget( HDFTarget & target )
+  inline bool CheckInTarget( HDFTarget & target )
   {
-    return ( H5Gget_objinfo(target, m_hdf_id.c_str(), 0, NULL) == 0 );
+    htri_t exists = 0;
+    H5E_BEGIN_TRY {
+      exists = H5Gget_objinfo(target, m_hdf_id.c_str(), 0, NULL);
+    } H5E_END_TRY
+    return ( exists  == 0 );
   }
 
-  inline bool VerifyCompatible( HDFTarget & target )
+  inline bool CheckCompatible( HDFTarget & target )
   {
     warn_not_final();
     hsize_t o_col_count = 0;
@@ -229,6 +245,8 @@ public:
   inline size_t getRowPreallocCount() const { warn_not_final(); return m_prealloc_rows; }
   inline size_t getRowSize() const { warn_not_final(); return m_row_size;}
   inline hsize_t getColCount() const { warn_not_final(); return m_col_count; }
+  inline size_t const * getColSizes() const { warn_not_final(); return &m_col_sizes[0]; }
+  inline size_t const * getColOffsets() const { warn_not_final(); return &m_col_offsets[0]; }
   inline const string & getTitle() const { return m_title; }
   inline const string & getHDFID() const { return m_hdf_id; }
 
@@ -262,7 +280,7 @@ protected:
   std::vector<string> m_col_names;
   std::vector<const char*> m_col_name_ptrs;
   std::vector<size_t> m_col_offsets;
-  std::vector<hsize_t> m_col_sizes;
+  std::vector<size_t> m_col_sizes;
   std::vector<hid_t> m_col_types;
 };
 
@@ -276,8 +294,8 @@ public:
   , m_need_file_realloc(false)
   , m_buffered_count(0)
   , m_row_buffer( buffer_default * m_spec.getRowSize() )
-  , m_buffered_offsets( buffer_default * m_spec.getRowSize() )
-  , m_buffered_sizes( buffer_default * m_spec.getRowSize() )
+  // , m_buffered_offsets( buffer_default * m_spec.getRowSize() )
+  // , m_buffered_sizes( buffer_default * m_spec.getRowSize() )
   {
     if (!m_spec.isFinal()) m_spec.warn_not_final();
     // add items to the data store
@@ -287,25 +305,24 @@ public:
   {
     /// only supporting flat arrays at the moment
     size_t row_size = m_spec.getRowSize(); //bytes
-    hsize_t col_count = m_spec.getColCount(); //# cells in a row
+    // hsize_t col_count = m_spec.getColCount(); //# cells in a row
     m_row_buffer.resize(m_row_buffer.size() + row_size);
     memcpy(&m_row_buffer[m_buffered_count*row_size],row,row_size);
 
-    localIndex prev_row_head = col_count * (m_buffered_count-1);
-    localIndex new_row_head = col_count * m_buffered_count;
+    // localIndex new_row_head = col_count * m_buffered_count;
 
-    size_t osize = m_buffered_sizes.size();
-    m_buffered_sizes.resize(osize + col_count);
-    memcpy(&m_buffered_sizes[new_row_head],&m_buffered_sizes[prev_row_head],col_count * sizeof(decltype(m_buffered_sizes)::value_type));
+    // size_t osize = m_buffered_sizes.size();
+    // m_buffered_sizes.resize(osize + col_count);
+    // memcpy(&m_buffered_sizes[new_row_head],m_spec.getColSizes(),col_count * sizeof(decltype(m_buffered_sizes)::value_type));
 
-    osize = m_buffered_offsets.size();
-    m_buffered_offsets.resize(osize + col_count);
-    memcpy(&m_buffered_offsets[new_row_head],&m_buffered_offsets[prev_row_head], col_count * sizeof(decltype(m_buffered_offsets)::value_type));
+    // osize = m_buffered_offsets.size();
+    // m_buffered_offsets.resize(osize + col_count);
+    // memcpy(&m_buffered_offsets[new_row_head],m_spec.getColOffsets(), col_count * sizeof(decltype(m_buffered_offsets)::value_type));
 
-    for( hsize_t idx = 0 ; idx < col_count; ++idx )
-    {
-      m_buffered_offsets[new_row_head + idx] += row_size;
-    }
+    // for( hsize_t idx = 0 ; idx < col_count; ++idx )
+    // {
+    //   m_buffered_offsets[new_row_head + idx] += (m_buffered_count * row_size);
+    // }
 
     m_buffered_count++;
 
@@ -315,9 +332,9 @@ public:
     }
   }
 
-  virtual void CreateInTarget( HDFTarget & target )
+  virtual void CreateInTarget( HDFTarget & target, bool exists_okay = true )
   {
-    m_spec.CreateInTarget( target );
+    m_spec.CreateInTarget( target, exists_okay );
   }
 
   virtual void WriteBuffered( HDFTarget & target, bool do_verify = false )
@@ -327,7 +344,7 @@ public:
     // m_target_row_limit *= 2;
     // H5TBreserve(m_target_row_limit)
     if ( do_verify ) m_spec.Verify( target );
-    H5TBappend_records(target,m_spec.getHDFID().c_str(),m_buffered_count,m_spec.getRowSize(),&m_buffered_offsets[0],&m_buffered_sizes[0],&m_row_buffer);
+    H5TBappend_records(target,m_spec.getHDFID().c_str(),m_buffered_count,m_spec.getRowSize(),m_spec.getColOffsets(),m_spec.getColSizes(),&m_row_buffer[0]);
     m_target_row_head += m_buffered_count;
     EmptyBuffer();
   }
@@ -361,33 +378,62 @@ private:
   // not in the data store
   localIndex m_buffered_count;
   array1d<buffer_unit_type> m_row_buffer;
-  std::vector<size_t> m_buffered_offsets;
-  std::vector<size_t> m_buffered_sizes;
+  // std::vector<size_t> m_buffered_offsets;
+  // std::vector<size_t> m_buffered_sizes;
 };
 
+
 template < typename ARRAY_T >
-typename std::enable_if < is_array<ARRAY_T> && can_hdf_io<typename ARRAY_T::value_type>, void >::type
+typename std::enable_if < is_array<ARRAY_T> && (ARRAY_T::ndim == 1) && can_hdf_io<typename ARRAY_T::value_type>, void >::type
+SpecFromArray( HDFTable & tbl, ARRAY_T const & arr, localIndex vals_per_col = 1 )
+{
+  tbl.AddCols(arr.size( ), vals_per_col, sizeof(typename ARRAY_T::value_type), typeid(typename ARRAY_T::value_type));
+}
+
+template < typename ARRAY_T, typename LAMBDA >
+typename std::enable_if < is_array<ARRAY_T> && (ARRAY_T::ndim == 1) && can_hdf_io<typename ARRAY_T::value_type>, void >::type
+SpecFromArray( HDFTable & tbl, ARRAY_T const & arr, LAMBDA && title_gen, localIndex vals_per_col = 1 )
+{
+  tbl.AddCols(arr.size( ), vals_per_col, sizeof(typename ARRAY_T::value_type), typeid(typename ARRAY_T::value_type),title_gen);
+}
+
+template < typename ARRAY_T >
+typename std::enable_if < is_array<ARRAY_T> && (ARRAY_T::ndim > 1) && can_hdf_io<typename ARRAY_T::value_type>, void >::type
 SpecFromArray( HDFTable & tbl, ARRAY_T const & arr )
 {
   tbl.AddCols(arr.size( ) / arr.size( 0 ), arr.size( 0 ), sizeof(typename ARRAY_T::value_type), typeid(typename ARRAY_T::value_type));
 }
 
 template < typename ARRAY_T, typename LAMBDA >
-typename std::enable_if < is_array<ARRAY_T> && can_hdf_io<typename ARRAY_T::value_type>, void >::type
+typename std::enable_if < is_array<ARRAY_T> && (ARRAY_T::ndim > 1) && can_hdf_io<typename ARRAY_T::value_type>, void >::type
 SpecFromArray( HDFTable & tbl, ARRAY_T const & arr, LAMBDA && title_gen )
 {
   tbl.AddCols(arr.size( ) / arr.size( 0 ), arr.size( 0 ), sizeof(typename ARRAY_T::value_type), typeid(typename ARRAY_T::value_type),title_gen);
 }
 
 template < typename ARRAY_T >
-typename std::enable_if < is_array<ARRAY_T> && can_hdf_io<typename ARRAY_T::value_type>, void >::type
+typename std::enable_if < is_array<ARRAY_T> && (ARRAY_T::ndim == 1) && can_hdf_io<typename ARRAY_T::value_type>, void >::type
+SpecFromArrayIndices( HDFTable & tbl, ARRAY_T const & GEOSX_UNUSED_PARAM( arr ), localIndex const num_indices, localIndex const * indices, localIndex vals_per_col = 1)
+{
+  tbl.AddCols(num_indices, vals_per_col, sizeof(typename ARRAY_T::value_type), typeid(typename ARRAY_T::value_type), indices);
+}
+
+template < typename ARRAY_T, typename LAMBDA >
+typename std::enable_if < is_array<ARRAY_T> && (ARRAY_T::ndim == 1) && can_hdf_io<typename ARRAY_T::value_type>, void >::type
+SpecFromArrayIndices( HDFTable & tbl, ARRAY_T const & GEOSX_UNUSED_PARAM( arr ), LAMBDA && title_gen, localIndex const num_indices, localIndex const * indices, localIndex vals_per_col = 1 )
+{
+  tbl.AddCols(num_indices, vals_per_col, sizeof(typename ARRAY_T::value_type), typeid(typename ARRAY_T::value_type),title_gen, indices);
+}
+
+template < typename ARRAY_T >
+typename std::enable_if < is_array<ARRAY_T> && (ARRAY_T::ndim > 1) && can_hdf_io<typename ARRAY_T::value_type>, void >::type
 SpecFromArrayIndices( HDFTable & tbl, ARRAY_T const & arr, localIndex const num_indices, localIndex const * indices )
 {
   tbl.AddCols(num_indices, arr.size( 0 ), sizeof(typename ARRAY_T::value_type), typeid(typename ARRAY_T::value_type), indices);
 }
 
 template < typename ARRAY_T, typename LAMBDA >
-typename std::enable_if < is_array<ARRAY_T> && can_hdf_io<typename ARRAY_T::value_type>, void >::type
+typename std::enable_if < is_array<ARRAY_T> && (ARRAY_T::ndim > 1) && can_hdf_io<typename ARRAY_T::value_type>, void >::type
 SpecFromArrayIndices( HDFTable & tbl, ARRAY_T const & arr, LAMBDA && title_gen, localIndex const num_indices, localIndex const * indices )
 {
   tbl.AddCols(num_indices, arr.size( 0 ), sizeof(typename ARRAY_T::value_type), typeid(typename ARRAY_T::value_type),title_gen, indices);

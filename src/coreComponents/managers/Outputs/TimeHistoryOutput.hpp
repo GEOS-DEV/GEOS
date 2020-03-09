@@ -40,10 +40,12 @@ namespace geosx
     virtual void Collect ( real64 const GEOSX_UNUSED_PARAM(time_n), real64 const GEOSX_UNUSED_PARAM(dt) ) override
     {
       buffer_unit_type * buf_head = NULL;
-      size_t buffer_size = bufferOps::Pack<false>(buf_head,m_arr.toView());
+      size_t buffer_size = bufferOps::PackDevice<false>(buf_head,m_arr.toView());
       m_collection.resize(buffer_size);
       buf_head = &m_collection[0];
-      bufferOps::Pack<true>(buf_head,m_arr.toView());
+      bufferOps::PackDevice<true>(buf_head,m_arr.toView());
+      // this points past the packing metadata
+      // todo: move this calc into bufferOps somewhere
       m_offset = ARRAY_T::ndim * sizeof(typename ARRAY_T::index_type);
     }
 
@@ -57,6 +59,56 @@ namespace geosx
     size_t m_offset;
     std::vector<buffer_unit_type> m_collection;
   };
+
+  template < typename ARRAY_T, typename INDEX_ARRAY_T, typename ENABLE = void >
+  class ArrayIndexedTimeHistoryCollector;
+
+  template <typename ARRAY_T, typename INDEX_ARRAY_T >
+  class ArrayIndexedTimeHistoryCollector< ARRAY_T, INDEX_ARRAY_T, typename std::enable_if< is_array< ARRAY_T > &&
+                                                                                           is_array< INDEX_ARRAY_T > &&
+                                                                                           LvArray::is_integer< typename INDEX_ARRAY_T::value_type >::value >::type > : public TimeHistoryCollector
+  {
+  public:
+    ArrayIndexedTimeHistoryCollector ( ARRAY_T const & array, INDEX_ARRAY_T const & idx_arr ) :
+      TimeHistoryCollector(),
+      m_arr(array),
+      m_idxs(idx_arr),
+      m_offset(0),
+      m_collection(array.size() + (ARRAY_T::ndim * sizeof(typename ARRAY_T::index_type)) )
+    {}
+
+    virtual HDFTable GenerateHistorySpec ( const string & title, const string & id ) override
+    {
+      HDFTable spec(title,id);
+      SpecFromArrayIndices(spec,m_arr,m_idxs.size( ),m_idxs.data( ));
+      spec.Finalize();
+      return spec;
+    }
+
+    virtual void Collect ( real64 const GEOSX_UNUSED_PARAM(time_n), real64 const GEOSX_UNUSED_PARAM(dt) ) override
+    {
+      buffer_unit_type * buf_head = NULL;
+      size_t buffer_size = bufferOps::PackByIndexDevice<false>(buf_head,m_arr.toView(),m_idxs);
+      m_collection.resize(buffer_size);
+      buf_head = &m_collection[0];
+      bufferOps::PackByIndexDevice<true>(buf_head,m_arr.toView(),m_idxs);
+      // this points past the packing metadata
+      // todo: move this calc into bufferOps somewhere
+      m_offset = ARRAY_T::ndim * sizeof(typename ARRAY_T::index_type);
+    }
+
+    virtual buffer_unit_type * Provide( ) override
+    {
+      return &m_collection[m_offset];
+    }
+
+  private:
+    ARRAY_T const & m_arr;
+    INDEX_ARRAY_T const & m_idxs;
+    size_t m_offset;
+    std::vector<buffer_unit_type> m_collection;
+  };
+
 
   class TimeHistory
   {
