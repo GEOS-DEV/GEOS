@@ -48,9 +48,6 @@ Wrapper< array1d< T > > * createArrayView( Group * parent, const string & name,
     view_data[i] = data[i];
   }
 
-  /* Check that the Wrapper dataPtr points to the right thing */
-  EXPECT_EQ( view->dataPtr(), view_data.data() );
-
   return view;
 }
 
@@ -93,9 +90,6 @@ Wrapper< array2d< T > > * createArray2dView( Group * parent, const string & name
     }
   }
 
-  /* Check that the Wrapper dataPtr points to the right thing */
-  EXPECT_TRUE( view->dataPtr() == &view_data[0][0] );
-
   return view;
 }
 
@@ -126,13 +120,10 @@ Wrapper< SortedArray< T > > * createSetView( Group * parent, const string & name
   view->setSizedFromParent( int(sfp) );
 
   /* Insert the data */
-  view->reference().insert( data.values(), data.size() );
+  view->reference().insert( data.data(), data.size() );
 
   /* Check that the Wrapper size and byteSize return the proper values */
   EXPECT_EQ( view->size(), data.size() );
-
-  /* Check that the Wrapper dataPtr points to the right thing */
-  EXPECT_EQ( view->dataPtr(), view->reference().values() );
 
   return view;
 }
@@ -163,9 +154,6 @@ Wrapper< string > * createStringView( Group * parent, const string & name,
   /* Check that the Wrapper size and byteSize return the proper values */
   EXPECT_EQ( static_cast< uint >(view->size() ), str.size() );
 
-  /* Check that the Wrapper dataPtr points to the right thing */
-  EXPECT_EQ( view->dataPtr(), view->reference().c_str() );
-
   return view;
 }
 
@@ -193,7 +181,6 @@ Wrapper< string_array > * createStringArrayView( Group * parent, const string & 
     view_data[i] = arr[i];
   }
 
-  EXPECT_EQ( view->dataPtr(), view_data.data() );
   return view;
 }
 
@@ -222,9 +209,6 @@ Wrapper< T > * createScalarView( Group * parent, const string & name,
 
   /* Check that the Wrapper size and byteSize return the proper values */
   EXPECT_EQ( view->size(), 1 );
-
-  /* Check that the Wrapper dataPtr points to the right thing */
-  EXPECT_EQ( *(view->dataPtr() ), value );
 
   return view;
 }

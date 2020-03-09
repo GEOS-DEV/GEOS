@@ -180,15 +180,15 @@ public:
 
   ArrayOfArrays< localIndex > & elementRegionList()       { return m_toElements.m_toElementRegion; }
   ArrayOfArraysView< localIndex const > const & elementRegionList() const
-  { return m_toElements.m_toElementRegion.toViewCC(); }
+  { return m_toElements.m_toElementRegion.toViewConst(); }
 
   ArrayOfArrays< localIndex > & elementSubRegionList()       { return m_toElements.m_toElementSubRegion; }
   ArrayOfArraysView< localIndex const > const & elementSubRegionList() const
-  { return m_toElements.m_toElementSubRegion.toViewCC(); }
+  { return m_toElements.m_toElementSubRegion.toViewConst(); }
 
   ArrayOfArrays< localIndex > & elementList()       { return m_toElements.m_toElementIndex; }
   ArrayOfArraysView< localIndex const > const & elementList() const
-  { return m_toElements.m_toElementIndex.toViewCC(); }
+  { return m_toElements.m_toElementIndex.toViewConst(); }
 
   /**
    * @brief Return the reference position array.

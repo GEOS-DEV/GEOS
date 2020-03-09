@@ -29,6 +29,12 @@
 namespace geosx
 {
 
+// Forward declarations
+namespace dataRepository
+{
+class Group;
+}
+
 class SchemaUtilities
 {
 public:

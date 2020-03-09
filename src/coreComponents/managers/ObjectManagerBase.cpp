@@ -983,7 +983,7 @@ void ObjectManagerBase::CleanUpMap( std::set< localIndex > const & targetIndices
       ++pos;
     }
 
-    upmap.removeSortedFromSet( targetIndex, eraseList.values(), eraseList.size() );
+    upmap.removeSortedFromSet( targetIndex, eraseList.data(), eraseList.size() );
   }
 }
 
@@ -1011,7 +1011,7 @@ void ObjectManagerBase::CleanUpMap( std::set< localIndex > const & targetIndices
       }
     }
 
-    upmap.removeSortedFromSet( targetIndex, eraseList.values(), eraseList.size() );
+    upmap.removeSortedFromSet( targetIndex, eraseList.data(), eraseList.size() );
   }
 }
 
