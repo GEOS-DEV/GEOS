@@ -105,6 +105,7 @@ public:
     static constexpr auto effectiveApertureString = "effectiveAperture";
 
     static constexpr auto inputFluxEstimateString  = "inputFluxEstimate";
+    static constexpr auto meanPermCoeffString  = "meanPermCoeff";
 
     using ViewKey = dataRepository::ViewKey;
 
@@ -191,6 +192,8 @@ protected:
 
   real64 m_fluxEstimate;
   
+  real64 m_meanPermCoeff;
+
   /// views into constant data fields
   ElementRegionManager::ElementViewAccessor<arrayView1d<integer>> m_elemGhostRank;
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_volume;

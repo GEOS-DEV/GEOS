@@ -351,6 +351,7 @@ struct FluxKernel
           ElementView < arrayView1d<real64 const> > const & aperture,
           ElementView < arrayView1d<R1Tensor const> > const & transTMultiplier,
           R1Tensor const gravityVector,
+          real64 const meanPermCoeff,
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
           ElementView < arrayView1d<real64 const> > const & s,
           ElementView < arrayView1d<real64 const> > const & dSdAper,
@@ -576,6 +577,7 @@ struct FluxKernel
                    arrayView1d<real64 const> const & dMob_dPres,
                    arrayView1d<real64 const> const & aperture0,
                    arrayView1d<real64 const> const & aperture,
+                   real64 const meanPermCoeff,
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
                    arrayView1d<real64 const> const & ,//s,
                    arrayView1d<real64 const> const & ,//dSdAper,
@@ -630,7 +632,7 @@ struct FluxKernel
 
         localIndex const ei[2] = { stencilElementIndices[k[0]],
                                    stencilElementIndices[k[1]] };
-#if 1
+#if 0
         real64 const weight = ( stencilWeights[k[0]]*aperTerm[k[0]] ) *
                               ( stencilWeights[k[1]]*aperTerm[k[1]] ) / sumOfWeights;
 
@@ -639,7 +641,7 @@ struct FluxKernel
         { ( 1 / aperTerm[k[0]]  - stencilWeights[k[0]] / sumOfWeights ) * weight * dAperTerm_dAper[k[0]],
           ( 1 / aperTerm[k[1]]  - stencilWeights[k[1]] / sumOfWeights ) * weight * dAperTerm_dAper[k[1]]};
 #else
-        real64 c = 0.8;
+        real64 const c = meanPermCoeff;
 
         real64 const harmonicWeight = ( stencilWeights[k[0]]*aperTerm[k[0]] ) *
                                       ( stencilWeights[k[1]]*aperTerm[k[1]] ) / sumOfWeights;

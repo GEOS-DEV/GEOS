@@ -70,6 +70,13 @@ FlowSolverBase::FlowSolverBase( std::string const & name,
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Initial estimate of the input flux used only for residual scaling. This should be "
                    "essentially equivalent to the input flux * dt.");
+
+  this->registerWrapper( viewKeyStruct::meanPermCoeffString,  &m_meanPermCoeff,  false )->
+    setApplyDefaultValue(1.0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Coefficient to move between harmonic mean (1.0) and arithmetic mean (0.0) for the "
+                   "calculation of permeability between elements.");
+
 }
 
 void FlowSolverBase::RegisterDataOnMesh( Group * const MeshBodies )
