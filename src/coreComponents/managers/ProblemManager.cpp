@@ -174,8 +174,13 @@ ProblemManager::ProblemManager( const std::string& name,
     setApplyDefaultValue(0)->
     setRestartFlags(RestartFlags::WRITE)->
     setDescription("Whether to prefer using non-blocking MPI communication where implemented (results in non-deterministic DOF numbering).");
-}
 
+  commandLine->registerWrapper<integer>( viewKeys.suppressPinned.Key( ) )->
+    setApplyDefaultValue(0)->
+    setRestartFlags(RestartFlags::WRITE)->
+    setDescription("Whether to disallow using pinned memory allocations for MPI communication buffers.");
+
+}
 
 ProblemManager::~ProblemManager()
 {}
@@ -216,6 +221,7 @@ void ProblemManager::ParseCommandLineInput( int argc, char** argv)
   integer& zPartitionsOverride = commandLine->getReference<integer>(viewKeys.zPartitionsOverride);
   integer& overridePartitionNumbers = commandLine->getReference<integer>(viewKeys.overridePartitionNumbers);
   integer& useNonblockingMPI = commandLine->getReference<integer>(viewKeys.useNonblockingMPI);
+  integer& suppressPinned = commandLine->getReference<integer>(viewKeys.suppressPinned);
   std::string& schemaName = commandLine->getReference<std::string>(viewKeys.schemaFileName);
   std::string& problemName = commandLine->getReference<std::string>(viewKeys.problemName);
   std::string& outputDirectory = commandLine->getReference<std::string>(viewKeys.outputDirectory);
@@ -224,7 +230,7 @@ void ProblemManager::ParseCommandLineInput( int argc, char** argv)
 
 
   // Set the options structs and parse
-  enum optionIndex {UNKNOWN, HELP, INPUT, RESTART, XPAR, YPAR, ZPAR, SCHEMA, NONBLOCKING_MPI, PROBLEMNAME, OUTPUTDIR};
+  enum optionIndex {UNKNOWN, HELP, INPUT, RESTART, XPAR, YPAR, ZPAR, SCHEMA, NONBLOCKING_MPI, SUPPRESS_PINNED, PROBLEMNAME, OUTPUTDIR};
   const option::Descriptor usage[] =
   {
     {UNKNOWN, 0, "", "", Arg::Unknown, "USAGE: geosx -i input.xml [options]\n\nOptions:"},
@@ -236,6 +242,7 @@ void ProblemManager::ParseCommandLineInput( int argc, char** argv)
     {ZPAR, 0, "z", "zpartitions", Arg::Numeric, "\t-z, --z-partitions, \t Number of partitions in the z-direction"},
     {SCHEMA, 0, "s", "schema", Arg::NonEmpty, "\t-s, --schema, \t Name of the output schema"},
     {NONBLOCKING_MPI,0,"b","use-nonblocking", Arg::None,"\t-b, --use-nonblocking, \t Use non-blocking MPI communication"},
+    {SUPPRESS_PINNED,0,"s","suppress-pinned", Arg::None,"\t-s, --suppress-pinned,\t Suppress usage of pinned memory for MPI buffers"},
     {PROBLEMNAME, 0, "n", "name", Arg::NonEmpty, "\t-n, --name, \t Name of the problem, used for output"},
     {OUTPUTDIR, 0, "o", "output", Arg::NonEmpty, "\t-o, --output, \t Directory to put the output files"},
     { 0, 0, nullptr, nullptr, nullptr, nullptr}
@@ -305,6 +312,9 @@ void ProblemManager::ParseCommandLineInput( int argc, char** argv)
     case NONBLOCKING_MPI:
       useNonblockingMPI = true;
       break;
+    case SUPPRESS_PINNED:
+      suppressPinned = true;
+      break;
     case SCHEMA:
       schemaName = opt.arg;
       break;
@@ -325,7 +335,7 @@ void ProblemManager::ParseCommandLineInput( int argc, char** argv)
     splitPath( inputFileName, xmlFolder, notUsed );
     Path::pathPrefix() = xmlFolder;
 
-    if (problemName == "") 
+    if (problemName == "")
     {
       if (inputFileName.length() > 4 && inputFileName.substr(inputFileName.length() - 4, 4) == ".xml")
       {
@@ -356,7 +366,7 @@ void ProblemManager::ParseCommandLineInput( int argc, char** argv)
 bool ProblemManager::ParseRestart( int argc, char** argv, std::string& restartFileName )
 {
   // Set the options structs and parse
-  enum optionIndex {UNKNOWN, HELP, INPUT, RESTART, XPAR, YPAR, ZPAR, SCHEMA, NONBLOCKING_MPI, PROBLEMNAME, OUTPUTDIR};
+  enum optionIndex {UNKNOWN, HELP, INPUT, RESTART, XPAR, YPAR, ZPAR, SCHEMA, NONBLOCKING_MPI, SUPPRESS_PINNED, PROBLEMNAME, OUTPUTDIR};
   const option::Descriptor usage[] =
   {
     {UNKNOWN, 0, "", "", Arg::Unknown, "USAGE: geosx -i input.xml [options]\n\nOptions:"},
@@ -368,6 +378,7 @@ bool ProblemManager::ParseRestart( int argc, char** argv, std::string& restartFi
     {ZPAR, 0, "z", "zpartitions", Arg::Numeric, "\t-z, --z-partitions, \t Number of partitions in the z-direction"},
     {SCHEMA, 0, "s", "schema", Arg::NonEmpty, "\t-s, --schema, \t Name of the output schema"},
     {NONBLOCKING_MPI,0,"b","use-nonblocking", Arg::None,"\t-b, --use-nonblocking, \t Use non-blocking MPI communication"},
+    {SUPPRESS_PINNED,0,"","suppress-pinned", Arg::None,"\t--suppress-pinned,\t Suppress usage of pinned memory for MPI buffers"},
     {PROBLEMNAME, 0, "n", "name", Arg::NonEmpty, "\t-n, --name, \t Name of the problem, used for output"},
     {OUTPUTDIR, 0, "o", "output", Arg::NonEmpty, "\t-o, --output, \t Directory to put the output files"},
     { 0, 0, nullptr, nullptr, nullptr, nullptr}
@@ -429,6 +440,8 @@ bool ProblemManager::ParseRestart( int argc, char** argv, std::string& restartFi
         break;
       case NONBLOCKING_MPI:
         break;
+      case SUPPRESS_PINNED:
+        break;
       case PROBLEMNAME:
         break;
       case OUTPUTDIR:
@@ -477,7 +490,7 @@ bool ProblemManager::ParseRestart( int argc, char** argv, std::string& restartFi
 
 
 void ProblemManager::InitializePythonInterpreter()
-{  
+{
 #ifdef GEOSX_USE_PYTHON
   // Initialize python and numpy
   GEOSX_LOG_RANK_0("Loading python interpreter");
@@ -520,7 +533,7 @@ void ProblemManager::GenerateDocumentation()
   std::cout << "Trying to generate schema..." << std::endl;
   Group * commandLine = GetGroup<Group>(groupKeys.commandLine);
   std::string const & schemaName = commandLine->getReference<std::string>(viewKeys.schemaFileName);
-  
+
   if (schemaName.empty() == 0)
   {
     // Generate an extensive data structure
@@ -580,7 +593,7 @@ void ProblemManager::SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
 
   Group * includedFile = IncludedList->RegisterGroup<Group>("File");
   includedFile->setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
-  
+
   Group * parameterList = this->RegisterGroup<Group>("Parameters");
   parameterList->setInputFlags(InputFlags::OPTIONAL);
 
@@ -670,6 +683,10 @@ void ProblemManager::PostProcessInput()
   DomainPartition * domain  = getDomainPartition();
 
   Group const * commandLine = GetGroup<Group>(groupKeys.commandLine);
+
+  integer const & suppressPinned = commandLine->getReference<integer>(viewKeys.suppressPinned);
+  buffer_allocator<buffer_unit_type>::preferPinned((suppressPinned == 0));
+
   integer const & xparCL = commandLine->getReference<integer>(viewKeys.xPartitionsOverride);
   integer const & yparCL = commandLine->getReference<integer>(viewKeys.yPartitionsOverride);
   integer const & zparCL = commandLine->getReference<integer>(viewKeys.zPartitionsOverride);

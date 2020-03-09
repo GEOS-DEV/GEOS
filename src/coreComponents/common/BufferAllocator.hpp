@@ -109,7 +109,7 @@ public:
 };
 
 template< typename T >
-bool buffer_allocator< T >::prefer_pinned = false;
+bool buffer_allocator< T >::prefer_pinned = true;
 
 #endif
 
