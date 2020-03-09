@@ -50,7 +50,7 @@ public:
    * @name Static Factory Catalog Functions
    */
   ///@{
-  const static string CatalogName() 
+  const static string CatalogName()
   { return "Problem"; }
   virtual const string getCatalogName() const override final
   { return ProblemManager::CatalogName(); }
@@ -133,6 +133,7 @@ public:
     dataRepository::ViewKey problemName              = {"problemName"};
     dataRepository::ViewKey outputDirectory          = {"outputDirectory"};
     dataRepository::ViewKey useNonblockingMPI        = {"useNonblockingMPI"};
+    dataRepository::ViewKey suppressPinned           = {"suppressPinned"};
   } viewKeys;
 
   struct groupKeysStruct
