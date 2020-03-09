@@ -498,12 +498,11 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
   arrayView2d<real64, nodes::INCR_DISPLACEMENT_USD> const & uhat = nodes->incrementalDisplacement();
   arrayView2d<real64, nodes::ACCELERATION_USD> const & acc = nodes->acceleration();
 
-  array1d<NeighborCommunicator> & neighbors = domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors );
   std::map<string, string_array > fieldNames;
   fieldNames["node"].push_back( keys::Velocity);
   fieldNames["node"].push_back( keys::Acceleration);
 
-  CommunicationTools::SynchronizePackSendRecvSizes( fieldNames, mesh, neighbors, m_iComm, true );
+  CommunicationTools::SynchronizePackSendRecvSizes( fieldNames, mesh, domain->getNeighbors(), m_iComm, true );
 
   fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Acceleration );
 
@@ -594,7 +593,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
 
   fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
 
-  CommunicationTools::SynchronizePackSendRecv( fieldNames, mesh, neighbors, m_iComm, true );
+  CommunicationTools::SynchronizePackSendRecv( fieldNames, mesh, domain->getNeighbors(), m_iComm, true );
 
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
   {
@@ -635,7 +634,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
 
   fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
 
-  CommunicationTools::SynchronizeUnpack( mesh, neighbors, m_iComm, true );
+  CommunicationTools::SynchronizeUnpack( mesh, domain->getNeighbors(), m_iComm, true );
 
   return dt;
 }
@@ -1250,7 +1249,7 @@ SolidMechanicsLagrangianFEM::ApplySystemSolution( DofManager const & dofManager,
 
   CommunicationTools::SynchronizeFields( fieldNames,
                                          domain->getMeshBody( 0 )->getMeshLevel( 0 ),
-                                         domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
+                                         domain->getNeighbors() );
 }
 
 void SolidMechanicsLagrangianFEM::SolveSystem( DofManager const & dofManager,

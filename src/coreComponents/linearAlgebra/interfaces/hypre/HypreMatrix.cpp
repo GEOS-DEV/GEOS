@@ -185,9 +185,9 @@ void HypreMatrix::createWithLocalSize( localIndex const localRows,
 
   reset();
 
-  HYPRE_BigInt const ilower = MpiWrapper::PrefixSum<HYPRE_BigInt>( localRows, comm ).first;
+  HYPRE_BigInt const ilower = MpiWrapper::PrefixSum<HYPRE_BigInt>( localRows );
   HYPRE_BigInt const iupper = ilower + localRows - 1;
-  HYPRE_BigInt const jlower = MpiWrapper::PrefixSum<HYPRE_BigInt>( localCols, comm ).first;
+  HYPRE_BigInt const jlower = MpiWrapper::PrefixSum<HYPRE_BigInt>( localCols );
   HYPRE_BigInt const jupper = jlower + localCols - 1;
 
   array1d< HYPRE_Int > row_sizes( localRows );

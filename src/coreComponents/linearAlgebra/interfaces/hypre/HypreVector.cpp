@@ -127,7 +127,7 @@ void HypreVector::createWithLocalSize( localIndex const localSize,
   GEOSX_LAI_ASSERT( closed() );
   GEOSX_LAI_ASSERT_GE( localSize, 0 );
 
-  HYPRE_BigInt const jlower = MpiWrapper::PrefixSum< HYPRE_BigInt >( integer_conversion< HYPRE_BigInt >( localSize ) ).first;
+  HYPRE_BigInt const jlower = MpiWrapper::PrefixSum< HYPRE_BigInt >( integer_conversion< HYPRE_BigInt >( localSize ) );
   HYPRE_BigInt const jupper = jlower + integer_conversion< HYPRE_BigInt >( localSize ) - 1;
 
   initialize( comm, jlower, jupper, m_ij_vector );
@@ -161,7 +161,7 @@ void HypreVector::create( arraySlice1d< real64 const > const & localValues,
   GEOSX_LAI_ASSERT( closed() );
   HYPRE_BigInt const localSize = integer_conversion< HYPRE_BigInt >( localValues.size() );
 
-  HYPRE_BigInt const jlower = MpiWrapper::PrefixSum< HYPRE_BigInt >( localSize ).first;
+  HYPRE_BigInt const jlower = MpiWrapper::PrefixSum< HYPRE_BigInt >( localSize );
   HYPRE_BigInt const jupper = jlower + localSize - 1;
 
   initialize( comm, jlower, jupper, m_ij_vector );

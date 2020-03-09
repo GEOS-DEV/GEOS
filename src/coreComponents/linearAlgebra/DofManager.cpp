@@ -175,7 +175,10 @@ void DofManager::createIndexArray( FieldDescription & field )
     field.numLocalDof = field.numComponents * numLocalNodes;
 
     // step 2. gather row counts across ranks
-    std::tie( field.rankOffset, field.numGlobalDof ) = MpiWrapper::PrefixSum<globalIndex>( field.numLocalDof );
+    field.rankOffset = MpiWrapper::PrefixSum<globalIndex>( field.numLocalDof );
+
+    field.numGlobalDof = field.rankOffset + field.numLocalDof;
+    MpiWrapper::Broadcast( field.numGlobalDof, MpiWrapper::Comm_size() - 1 );
 
     // step 3. adjust local dof offsets to reflect processor offset
     forMeshLocation< LOC, false >( m_mesh, field.regions, [&]( auto const locIdx )
@@ -189,7 +192,7 @@ void DofManager::createIndexArray( FieldDescription & field )
 
     CommunicationTools::
     SynchronizeFields( fieldNames, m_mesh,
-                       m_domain->getReference< array1d<NeighborCommunicator> >( m_domain->viewKeys.neighbors ) );
+                       m_domain->getNeighbors() );
   } );
   GEOSX_ERROR_IF( !success, "Invalid location type: " << static_cast<int>(field.location) );
 }
@@ -1028,7 +1031,7 @@ void DofManager::reorderByRank()
   // synchronize index arrays for all fields across ranks
   CommunicationTools::
   SynchronizeFields( fieldToSync, m_mesh,
-                     m_domain->getReference< array1d< NeighborCommunicator > >( m_domain->viewKeys.neighbors ) );
+                     m_domain->getNeighbors() );
 
   m_reordered = true;
 }
