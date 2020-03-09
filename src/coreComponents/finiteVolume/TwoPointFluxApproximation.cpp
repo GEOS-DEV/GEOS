@@ -240,7 +240,7 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition & domain,
                                                                                     viewKeyStruct::
                                                                                     fractureConnectorEdgesToEdgesString );
 
-  ArrayOfArrays< localIndex > const &
+  ArrayOfArraysView< localIndex const > const &
   fractureConnectorsToFaceElements =
     edgeManager->getReference< ArrayOfArrays< localIndex > >( EdgeManager::
                                                                 viewKeyStruct::

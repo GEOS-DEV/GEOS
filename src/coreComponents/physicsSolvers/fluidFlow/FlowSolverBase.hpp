@@ -134,19 +134,19 @@ public:
   virtual void ResetViews( DomainPartition * const domain );
 
 
-  std::unique_ptr< CRSMatrix< real64, localIndex, localIndex > > & getRefDerivativeFluxResidual_dAperture()
+  std::unique_ptr< CRSMatrix< real64, localIndex > > & getRefDerivativeFluxResidual_dAperture()
   {
     return m_derivativeFluxResidual_dAperture;
   }
 
-  CRSMatrixView< real64, localIndex, localIndex const > const & getDerivativeFluxResidual_dAperture()
+  CRSMatrixView< real64, localIndex const > const & getDerivativeFluxResidual_dAperture()
   {
     return m_derivativeFluxResidual_dAperture->toView();
   }
 
-  CRSMatrixView< real64 const, localIndex const, localIndex const > const & getDerivativeFluxResidual_dAperture() const
+  CRSMatrixView< real64 const, localIndex const > const & getDerivativeFluxResidual_dAperture() const
   {
-    return m_derivativeFluxResidual_dAperture->toViewCC();
+    return m_derivativeFluxResidual_dAperture->toViewConst();
   }
 
 private:
@@ -187,7 +187,7 @@ protected:
   /// the number of Degrees of Freedom per cell
   localIndex m_numDofPerCell;
 
-  std::unique_ptr< CRSMatrix< real64, localIndex, localIndex > > m_derivativeFluxResidual_dAperture;
+  std::unique_ptr< CRSMatrix< real64, localIndex > > m_derivativeFluxResidual_dAperture;
 
   real64 m_fluxEstimate;
 

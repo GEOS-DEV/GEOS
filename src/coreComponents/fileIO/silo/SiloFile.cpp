@@ -2204,13 +2204,13 @@ void SiloFile::WriteWrappersToSilo( string const & meshname,
       {
         auto const & wrapperT = dynamic_cast< dataRepository::Wrapper< array1d< real64 > > const & >( *wrapper );
         this->WriteDataField< real64 >( meshname.c_str(), fieldName,
-                                        wrapperT.referenceAsView(), centering, cycleNum, problemTime, multiRoot );
+                                        wrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
       }
       if( typeID==typeid(array2d< real64 >) )
       {
         auto const & wrapperT = dynamic_cast< dataRepository::Wrapper< array2d< real64 > > const & >( *wrapper );
 
-        arrayView2d< real64 const > const & array = wrapperT.referenceAsView();
+        arrayView2d< real64 const > const & array = wrapperT.reference();
         this->WriteDataField< real64 >( meshname.c_str(),
                                         fieldName,
                                         array,
@@ -2227,7 +2227,7 @@ void SiloFile::WriteWrappersToSilo( string const & meshname,
         auto const & wrapperT = dynamic_cast< dataRepository::Wrapper< array2d< real64, RAJA::PERM_JI > > const & >( *wrapper );
 
         arrayView2d< real64 const, LvArray::getStrideOneDimension( RAJA::PERM_JI {} ) > const &
-        array = wrapperT.referenceAsView();
+        array = wrapperT.reference();
         this->WriteDataField< real64 >( meshname.c_str(),
                                         fieldName,
                                         array,
@@ -2242,31 +2242,31 @@ void SiloFile::WriteWrappersToSilo( string const & meshname,
       {
         auto const & wrapperT = dynamic_cast< dataRepository::Wrapper< array3d< real64 > > const & >( *wrapper );
         this->WriteDataField< real64 >( meshname.c_str(), fieldName,
-                                        wrapperT.referenceAsView(), centering, cycleNum, problemTime, multiRoot );
+                                        wrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
       }
       if( typeID==typeid(r1_array) )
       {
         auto const & wrapperT = dynamic_cast< dataRepository::Wrapper< r1_array > const & >( *wrapper );
         this->WriteDataField< real64 >( meshname.c_str(), fieldName,
-                                        wrapperT.referenceAsView(), centering, cycleNum, problemTime, multiRoot );
+                                        wrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
       }
       if( typeID==typeid(integer_array) )
       {
         auto const & wrapperT = dynamic_cast< dataRepository::Wrapper< integer_array > const & >( *wrapper );
         this->WriteDataField< integer >( meshname.c_str(), fieldName,
-                                         wrapperT.referenceAsView(), centering, cycleNum, problemTime, multiRoot );
+                                         wrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
       }
       if( typeID==typeid(localIndex_array) )
       {
         auto const & wrapperT = dynamic_cast< dataRepository::Wrapper< localIndex_array > const & >( *wrapper );
         this->WriteDataField< localIndex >( meshname.c_str(), fieldName,
-                                            wrapperT.referenceAsView(), centering, cycleNum, problemTime, multiRoot );
+                                            wrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
       }
       if( typeID==typeid(globalIndex_array) )
       {
         auto const & wrapperT = dynamic_cast< dataRepository::Wrapper< globalIndex_array > const & >( *wrapper );
         this->WriteDataField< globalIndex >( meshname.c_str(), fieldName,
-                                             wrapperT.referenceAsView(), centering, cycleNum, problemTime, multiRoot );
+                                             wrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
       }
 //      if( typeID==typeid(array2d<R2SymTensor> ) )
 //      {
@@ -2784,7 +2784,7 @@ void SiloFile::WriteMaterialDataField2d( string const & meshName,
 
       if( wrapper != nullptr )
       {
-        arrayView2d< TYPE const > const & fieldView = wrapper->referenceAsView();
+        arrayView2d< TYPE const > const & fieldView = wrapper->reference();
 
         fieldData[esr][matIndex].resize( fieldView.size( 0 ), 1 );
         field[esr][matIndex] = fieldData[esr][matIndex].toViewConst();
