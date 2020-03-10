@@ -432,12 +432,15 @@
 			<xsd:element name="CompositionalMultiphaseFlow" type="CompositionalMultiphaseFlowType" />
 			<xsd:element name="CompositionalMultiphaseWell" type="CompositionalMultiphaseWellType" />
 			<xsd:element name="EmbeddedSurfaceGenerator" type="EmbeddedSurfaceGeneratorType" />
+			<xsd:element name="FlowProppantTransport" type="FlowProppantTransportType" />
 			<xsd:element name="Hydrofracture" type="HydrofractureType" />
 			<xsd:element name="LaplaceFEM" type="LaplaceFEMType" />
 			<xsd:element name="Poroelastic" type="PoroelasticType" />
+			<xsd:element name="ProppantTransport" type="ProppantTransportType" />
 			<xsd:element name="Reservoir" type="ReservoirType" />
 			<xsd:element name="SinglePhaseFVM" type="SinglePhaseFVMType" />
 			<xsd:element name="SinglePhaseHybridFVM" type="SinglePhaseHybridFVMType" />
+			<xsd:element name="SinglePhaseProppantFVM" type="SinglePhaseProppantFVMType" />
 			<xsd:element name="SinglePhaseWell" type="SinglePhaseWellType" />
 			<xsd:element name="SolidMechanicsLagrangianSSLE" type="SolidMechanicsLagrangianSSLEType" />
 			<xsd:element name="SolidMechanics_LagrangianFEM" type="SolidMechanics_LagrangianFEMType" />
@@ -480,6 +483,14 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 	</xsd:complexType>
+	<xsd:complexType name="FlowProppantTransportType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
+		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
+		<xsd:attribute name="maxStableDt" type="real64" />
+	</xsd:complexType>
 	<xsd:complexType name="HydrofractureType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
@@ -504,6 +515,20 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 	</xsd:complexType>
+	<xsd:complexType name="ProppantTransportType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
+		<!--fluidIndex => (no description available)-->
+		<xsd:attribute name="fluidIndex" type="localIndex" />
+		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
+		<xsd:attribute name="maxStableDt" type="real64" />
+		<!--proppantIndex => (no description available)-->
+		<xsd:attribute name="proppantIndex" type="localIndex" />
+		<!--solidIndex => (no description available)-->
+		<xsd:attribute name="solidIndex" type="localIndex" />
+	</xsd:complexType>
 	<xsd:complexType name="ReservoirType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
@@ -525,6 +550,18 @@
 		<xsd:attribute name="solidIndex" type="localIndex" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseHybridFVMType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
+		<!--fluidIndex => (no description available)-->
+		<xsd:attribute name="fluidIndex" type="localIndex" />
+		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
+		<xsd:attribute name="maxStableDt" type="real64" />
+		<!--solidIndex => (no description available)-->
+		<xsd:attribute name="solidIndex" type="localIndex" />
+	</xsd:complexType>
+	<xsd:complexType name="SinglePhaseProppantFVMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
@@ -634,9 +671,11 @@
 			<xsd:element name="LinearElasticAnisotropic" type="LinearElasticAnisotropicType" />
 			<xsd:element name="LinearElasticIsotropic" type="LinearElasticIsotropicType" />
 			<xsd:element name="MultiPhaseMultiComponentFluid" type="MultiPhaseMultiComponentFluidType" />
+			<xsd:element name="ParticleFluid" type="ParticleFluidType" />
 			<xsd:element name="PoreVolumeCompressibleSolid" type="PoreVolumeCompressibleSolidType" />
 			<xsd:element name="PoroLinearElasticAnisotropic" type="PoroLinearElasticAnisotropicType" />
 			<xsd:element name="PoroLinearElasticIsotropic" type="PoroLinearElasticIsotropicType" />
+			<xsd:element name="ProppantSlurryFluid" type="ProppantSlurryFluidType" />
 			<xsd:element name="VanGenuchtenBakerRelativePermeability" type="VanGenuchtenBakerRelativePermeabilityType" />
 			<xsd:element name="VanGenuchtenCapillaryPressure" type="VanGenuchtenCapillaryPressureType" />
 		</xsd:choice>
@@ -898,6 +937,22 @@
 		<!--totalDensity => (no description available)-->
 		<xsd:attribute name="totalDensity" type="real64_array2d" />
 	</xsd:complexType>
+	<xsd:complexType name="ParticleFluidType">
+		<!--collisionFactor => (no description available)-->
+		<xsd:attribute name="collisionFactor" type="real64_array" />
+		<!--dCollisionFactor_dProppantConcentration => (no description available)-->
+		<xsd:attribute name="dCollisionFactor_dProppantConcentration" type="real64_array" />
+		<!--dSettlingFactor_dComponentConcentration => (no description available)-->
+		<xsd:attribute name="dSettlingFactor_dComponentConcentration" type="real64_array2d" />
+		<!--dSettlingFactor_dPressure => (no description available)-->
+		<xsd:attribute name="dSettlingFactor_dPressure" type="real64_array" />
+		<!--dSettlingFactor_dProppantConcentration => (no description available)-->
+		<xsd:attribute name="dSettlingFactor_dProppantConcentration" type="real64_array" />
+		<!--proppantPackPermeability => (no description available)-->
+		<xsd:attribute name="proppantPackPermeability" type="real64_array" />
+		<!--settlingFactor => (no description available)-->
+		<xsd:attribute name="settlingFactor" type="real64_array" />
+	</xsd:complexType>
 	<xsd:complexType name="PoreVolumeCompressibleSolidType">
 		<!--dPVMult_dDensity => (no description available)-->
 		<xsd:attribute name="dPVMult_dDensity" type="real64_array2d" />
@@ -1001,6 +1056,42 @@
 		<xsd:attribute name="poreVolumeMultiplier" type="real64_array2d" />
 		<!--stress => Material Stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
+	</xsd:complexType>
+	<xsd:complexType name="ProppantSlurryFluidType">
+		<!--FluidDensity => (no description available)-->
+		<xsd:attribute name="FluidDensity" type="real64_array2d" />
+		<!--FluidViscosity => (no description available)-->
+		<xsd:attribute name="FluidViscosity" type="real64_array2d" />
+		<!--componentDensity => (no description available)-->
+		<xsd:attribute name="componentDensity" type="real64_array3d" />
+		<!--dCompDens_dCompConc => (no description available)-->
+		<xsd:attribute name="dCompDens_dCompConc" type="LvArray::Array&lt;double, 4, camp::int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray::NewChaiBuffer&gt;" />
+		<!--dCompDens_dPres => (no description available)-->
+		<xsd:attribute name="dCompDens_dPres" type="real64_array3d" />
+		<!--dDens_dCompConc => (no description available)-->
+		<xsd:attribute name="dDens_dCompConc" type="real64_array3d" />
+		<!--dDens_dPres => (no description available)-->
+		<xsd:attribute name="dDens_dPres" type="real64_array2d" />
+		<!--dDens_dProppantConc => (no description available)-->
+		<xsd:attribute name="dDens_dProppantConc" type="real64_array2d" />
+		<!--dFluidDens_dCompConc => (no description available)-->
+		<xsd:attribute name="dFluidDens_dCompConc" type="real64_array3d" />
+		<!--dFluidDens_dPres => (no description available)-->
+		<xsd:attribute name="dFluidDens_dPres" type="real64_array2d" />
+		<!--dFluidVisc_dCompConc => (no description available)-->
+		<xsd:attribute name="dFluidVisc_dCompConc" type="real64_array3d" />
+		<!--dFluidVisc_dPres => (no description available)-->
+		<xsd:attribute name="dFluidVisc_dPres" type="real64_array2d" />
+		<!--dVisc_dCompConc => (no description available)-->
+		<xsd:attribute name="dVisc_dCompConc" type="real64_array3d" />
+		<!--dVisc_dPres => (no description available)-->
+		<xsd:attribute name="dVisc_dPres" type="real64_array2d" />
+		<!--dVisc_dProppantConc => (no description available)-->
+		<xsd:attribute name="dVisc_dProppantConc" type="real64_array2d" />
+		<!--density => (no description available)-->
+		<xsd:attribute name="density" type="real64_array2d" />
+		<!--viscosity => (no description available)-->
+		<xsd:attribute name="viscosity" type="real64_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="VanGenuchtenBakerRelativePermeabilityType">
 		<!--dPhaseRelPerm_dPhaseVolFraction => (no description available)-->
@@ -1170,23 +1261,23 @@
 			<xsd:element name="neighborData" type="neighborDataType" />
 			<xsd:element name="sets" type="setsType" />
 		</xsd:choice>
-		<!--Acceleration => An array that holds the current acceleration on the nodes. This array also is used to hold the summation of nodal forces resulting from the governing equations. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
+		<!--Acceleration => An array that holds the current acceleration on the nodes. This array also is used to hold the summation of nodal forces resulting from the governing equations. => SolidMechanics_LagrangianFEM, SolidMechanicsLagrangianSSLE-->
 		<xsd:attribute name="Acceleration" type="LvArray::Array&lt;double, 2, camp::int_seq&lt;long, 1l, 0l&gt;, long, LvArray::NewChaiBuffer&gt;" />
-		<!--IncrementalDisplacement => An array that holds the incremental displacements for the current time step on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
+		<!--IncrementalDisplacement => An array that holds the incremental displacements for the current time step on the nodes. => SolidMechanics_LagrangianFEM, SolidMechanicsLagrangianSSLE-->
 		<xsd:attribute name="IncrementalDisplacement" type="LvArray::Array&lt;double, 2, camp::int_seq&lt;long, 1l, 0l&gt;, long, LvArray::NewChaiBuffer&gt;" />
-		<!--Mass => An array that holds the mass on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
+		<!--Mass => An array that holds the mass on the nodes. => SolidMechanics_LagrangianFEM, SolidMechanicsLagrangianSSLE-->
 		<xsd:attribute name="Mass" type="real64_array" />
 		<!--ReferencePosition => (no description available)-->
 		<xsd:attribute name="ReferencePosition" type="LvArray::Array&lt;double, 2, camp::int_seq&lt;long, 1l, 0l&gt;, long, LvArray::NewChaiBuffer&gt;" />
 		<!--SIFNode => SIF on the node-->
 		<xsd:attribute name="SIFNode" type="real64_array" />
-		<!--TotalDisplacement => An array that holds the total displacements on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
+		<!--TotalDisplacement => An array that holds the total displacements on the nodes. => SolidMechanics_LagrangianFEM, SolidMechanicsLagrangianSSLE-->
 		<xsd:attribute name="TotalDisplacement" type="LvArray::Array&lt;double, 2, camp::int_seq&lt;long, 1l, 0l&gt;, long, LvArray::NewChaiBuffer&gt;" />
-		<!--Velocity => An array that holds the current velocity on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
+		<!--Velocity => An array that holds the current velocity on the nodes. => SolidMechanics_LagrangianFEM, SolidMechanicsLagrangianSSLE-->
 		<xsd:attribute name="Velocity" type="LvArray::Array&lt;double, 2, camp::int_seq&lt;long, 1l, 0l&gt;, long, LvArray::NewChaiBuffer&gt;" />
 		<!--childIndex => Child index of node.-->
 		<xsd:attribute name="childIndex" type="localIndex_array" />
-		<!--contactForce => An array that holds the contact force. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
+		<!--contactForce => An array that holds the contact force. => SolidMechanics_LagrangianFEM, SolidMechanicsLagrangianSSLE-->
 		<xsd:attribute name="contactForce" type="r1_array" />
 		<!--degreeFromCrack => connectivity distance from crack.-->
 		<xsd:attribute name="degreeFromCrack" type="integer_array" />
@@ -1202,7 +1293,7 @@
 		<xsd:attribute name="elemRegionList" type="LvArray::ArrayOfArrays&lt;long, long&gt;" />
 		<!--elemSubRegionList => (no description available)-->
 		<xsd:attribute name="elemSubRegionList" type="LvArray::ArrayOfArrays&lt;long, long&gt;" />
-		<!--externalForce => An array that holds the external forces on the nodes. This includes any boundary conditions as well as coupling forces such as hydraulic forces. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
+		<!--externalForce => An array that holds the external forces on the nodes. This includes any boundary conditions as well as coupling forces such as hydraulic forces. => SolidMechanics_LagrangianFEM, SolidMechanicsLagrangianSSLE-->
 		<xsd:attribute name="externalForce" type="r1_array" />
 		<!--faceList => (no description available)-->
 		<xsd:attribute name="faceList" type="geosx::InterObjectRelation&lt;LvArray::ArrayOfSets&lt;long, long&gt; &gt;" />
@@ -1220,9 +1311,9 @@
 		<xsd:attribute name="primaryField" type="real64_array" />
 		<!--ruptureTime => Time that the node was ruptured.-->
 		<xsd:attribute name="ruptureTime" type="real64_array" />
-		<!--uhatTilde => An array that holds the incremental displacement predictors on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
+		<!--uhatTilde => An array that holds the incremental displacement predictors on the nodes. => SolidMechanics_LagrangianFEM, SolidMechanicsLagrangianSSLE-->
 		<xsd:attribute name="uhatTilde" type="r1_array" />
-		<!--velocityTilde => An array that holds the velocity predictors on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
+		<!--velocityTilde => An array that holds the velocity predictors on the nodes. => SolidMechanics_LagrangianFEM, SolidMechanicsLagrangianSSLE-->
 		<xsd:attribute name="velocityTilde" type="r1_array" />
 	</xsd:complexType>
 	<xsd:complexType name="cellManagerType">
