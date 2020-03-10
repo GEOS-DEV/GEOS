@@ -5,9 +5,10 @@
 set( gtest_geosx_tests
      testRecursiveFieldApplication.cpp
      testMeshGeneration.cpp
+     testTimeHistoryOutput.cpp
    )
 
-set( dependencyList geosx_core gtest )
+set( dependencyList geosx_core managers fileIO gtest )
 
 if ( ENABLE_MPI )
   set ( dependencyList ${dependencyList} mpi )
