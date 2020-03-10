@@ -584,6 +584,7 @@ struct ImplicitKernel
         {
           const realT detJq = detJ[k][q];
           std::vector<double> const & N = fe->values(q);
+//          std::cout<<"damage("<<k<<","<<q<<") = "<<damage(k,q)<<std::endl;
 
           for( integer a=0 ; a<NUM_NODES_PER_ELEM ; ++a )
           {
