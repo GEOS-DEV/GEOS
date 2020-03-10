@@ -536,7 +536,6 @@ real64 SurfaceGenerator::SolverStep( real64 const & time_n,
                                      DomainPartition * const domain )
 {
   int rval = 0;
-  array1d<NeighborCommunicator> & neighbors = domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors );
 
   for( auto & mesh : domain->group_cast<DomainPartition *>()->getMeshBodies()->GetSubGroups() )
   {
@@ -547,7 +546,7 @@ real64 SurfaceGenerator::SolverStep( real64 const & time_n,
 
       rval = SeparationDriver( domain,
                                meshLevel,
-                               neighbors,
+                               domain->getNeighbors(),
                                partition.GetColor(),
                                partition.NumColor(),
                                0,
@@ -593,7 +592,7 @@ real64 SurfaceGenerator::SolverStep( real64 const & time_n,
 
 int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
                                         MeshLevel * const mesh,
-                                        array1d<NeighborCommunicator> & neighbors,
+                                        std::vector<NeighborCommunicator> & neighbors,
                                         int const tileColor,
                                         int const numTileColors,
                                         bool const prefrac,
@@ -617,8 +616,7 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
   fieldNames["face"].push_back(viewKeyStruct::ruptureStateString);
   fieldNames["node"].push_back( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternal );
 
-  CommunicationTools::SynchronizeFields( fieldNames, mesh,
-                                         domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
+  CommunicationTools::SynchronizeFields( fieldNames, mesh, domain->getNeighbors() );
 
 
   if( !prefrac )
@@ -3760,11 +3758,6 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition * domain,
 
   ElementRegionManager::MaterialViewAccessor< arrayView1d<real64 const> > const bulkModulus =
       elementManager.ConstructFullMaterialViewAccessor< array1d<real64>, arrayView1d<real64 const> >( "BulkModulus", constitutiveManager);
-
-  ElementRegionManager::MaterialViewAccessor< arrayView2d<real64 const> >
-  meanStress = elementManager.ConstructFullMaterialViewAccessor< array2d<real64>,
-                                                               arrayView2d<real64 const> >("MeanStress",
-                                                                                     constitutiveManager);
 
   ElementRegionManager::MaterialViewAccessor< arrayView3d<real64 const, solid::STRESS_USD> > const
   stress = elementManager.ConstructFullMaterialViewAccessor< array3d<real64, solid::STRESS_PERMUTATION>,
