@@ -30,7 +30,7 @@ TEST( testHDFTraits, can_hdf_io )
 TEST( testHDFIO, SingleValueTable )
 {
   HDFTable spec("Array1","arr1");
-  spec.AddCols(1,1,sizeof(real64),typeid(real64));
+  spec.AddCol(1,1,sizeof(real64),typeid(real64),"Time");
   spec.Finalize();
 
   real64 time = 0.0;
@@ -49,25 +49,62 @@ TEST( testHDFIO, SingleValueTable )
   // remove( filename.c_str() );
 }
 
-TEST( testHDFIO, WholeArrayTable )
+TEST( testHDFIO, ArrayTableIO )
 {
   srand(time(NULL));
-  Array<ARR_TYPE, DIM> arr(4096);
 
   {
-    HDFTable spec("Array1","arr1");
-    SpecFromArray(spec,arr);
-    spec.Finalize();
+    Array<real64, 1> arr(4096);
+    HDFTable spec("ArrayTable1d","arr_tbl");
+    spec.AddArrayCol( arr, "Array1" );
+    spec.Finalize( );
 
     HDFTableIO out( spec );
     out.BufferRow( reinterpret_cast<buffer_unit_type const * >( arr.data() ) );
 
-    string filename("whole_array");
+    string filename( "WholeArrayTable" );
     HDFFile file( filename );
     out.CreateInTarget( file );
     out.WriteBuffered( file );
 
   //  remove( filename.c_str() );
+  }
+  {
+    Array<real64, 2> arr(4096,4096);
+    HDFTable spec("ArrayTable2d","arr_tbl");
+    spec.AddArrayCol( arr, "Array1" );
+    spec.Finalize( );
+
+    HDFTableIO out( spec );
+    out.BufferRow( reinterpret_cast<buffer_unit_type const * >( arr.data() ) );
+
+    string filename( "WholeArrayTable" );
+    HDFFile file( filename );
+    out.CreateInTarget( file );
+    out.WriteBuffered( file );
+
+  //  remove( filename.c_str() );
+  }
+}
+
+TEST( testHDFIO, IdxArrayTable )
+{
+  srand(time(NULL));
+  {
+    array1d<real64> arr(4096);
+    array1d<localIndex> idx(1024);
+    HDFTable spec("ArrayTable2d","arr_tbl");
+    spec.AddArrayIndicesCol( arr, "Array1", idx.size( ) );
+    spec.Finalize( );
+
+    HDFTableIO out( spec );
+    out.BufferRow( reinterpret_cast<buffer_unit_type const * >( arr.data() ) );
+
+    string filename( "WholeArrayTable" );
+    HDFFile file( filename );
+    out.CreateInTarget( file );
+    out.WriteBuffered( file );
+
   }
 }
 

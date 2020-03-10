@@ -10,9 +10,85 @@ namespace geosx
   class TimeHistoryCollector
   {
   public:
-    virtual HDFTable GenerateHistorySpec( const string & title, const string & id ) = 0;
+    virtual void AddToSpec( HDFTable table ) const = 0;
     virtual void Collect( real64 const time_n, real64 const dt ) = 0;
     virtual buffer_unit_type * Provide( ) = 0;
+    virtual size_t size() const = 0;
+  };
+
+  class CollectorSet : public TimeHistoryCollector
+  {
+  public:
+    void AddCollector( TimeHistoryCollector * to_add )
+    {
+      m_collectors.insert(to_add);
+    }
+
+    virtual void AddToSpec( HDFTable spec ) const override
+    {
+      forEachCollector([&spec](const TimeHistoryCollector * coll)
+        {
+          coll->AddToSpec(spec);
+        });
+    }
+
+    virtual void Collect( real64 const time_n, real64 const dt ) override
+    {
+      size_t total_size = 0;
+      forEachCollector([&time_n,&dt,&total_size](TimeHistoryCollector * coll)
+        {
+          coll->Collect(time_n,dt);
+          total_size += coll->size( );
+        });
+      m_buffer.resize(total_size);
+      size_t offset = 0;
+      buffer_unit_type * buffer_head = &m_buffer[0];
+      forEachCollector([&offset,&buffer_head](TimeHistoryCollector * coll)
+        {
+          size_t size = coll->size( );
+          memcpy(buffer_head + offset,coll->Provide( ),size);
+          offset += size;
+        }) ;
+    }
+
+    virtual buffer_unit_type * Provide( ) override
+    {
+      return &m_buffer[0];
+    }
+
+    virtual size_t size( ) const override
+    {
+      size_t total_size = 0;
+      forEachCollector([&total_size](const TimeHistoryCollector * coll)
+        {
+          total_size += coll->size();
+        });
+      return total_size;
+    }
+
+  private:
+
+    template < typename LAMBDA >
+    void forEachCollector( LAMBDA && lambda )
+    {
+      for( TimeHistoryCollector * coll : m_collectors )
+      {
+        lambda(coll);
+      }
+    }
+
+    template < typename LAMBDA >
+    void forEachCollector( LAMBDA && lambda ) const
+    {
+      for( const TimeHistoryCollector * coll : m_collectors )
+      {
+        lambda(coll);
+      }
+    }
+
+
+    set<TimeHistoryCollector*> m_collectors;
+    std::vector<buffer_unit_type> m_buffer;
   };
 
   template < typename ARRAY_T, typename ENABLE = void >
@@ -27,14 +103,15 @@ namespace geosx
       m_arr(array),
       m_offset(0),
       m_collection(array.size() + (ARRAY_T::ndim * sizeof(typename ARRAY_T::index_type)) )
-    {}
-
-    virtual HDFTable GenerateHistorySpec( const string & title, const string & id ) override
     {
-      HDFTable spec(title,id);
-      SpecFromArray(spec,m_arr);
-      spec.Finalize();
-      return spec;
+      // this points past the packing metadata
+      // todo: move this calc into bufferOps somewhere
+      m_offset = ARRAY_T::ndim * sizeof(typename ARRAY_T::index_type);
+    }
+
+    virtual void AddToSpec( HDFTable spec ) const override
+    {
+      spec.AddArrayCol(m_arr);
     }
 
     virtual void Collect ( real64 const GEOSX_UNUSED_PARAM(time_n), real64 const GEOSX_UNUSED_PARAM(dt) ) override
@@ -44,14 +121,16 @@ namespace geosx
       m_collection.resize(buffer_size);
       buf_head = &m_collection[0];
       bufferOps::PackDevice<true>(buf_head,m_arr.toView());
-      // this points past the packing metadata
-      // todo: move this calc into bufferOps somewhere
-      m_offset = ARRAY_T::ndim * sizeof(typename ARRAY_T::index_type);
     }
 
     virtual buffer_unit_type * Provide( ) override
     {
       return &m_collection[m_offset];
+    }
+
+    virtual size_t size( ) const override
+    {
+      return m_collection.size() - m_offset;
     }
 
   private:
@@ -77,12 +156,9 @@ namespace geosx
       m_collection(array.size() + (ARRAY_T::ndim * sizeof(typename ARRAY_T::index_type)) )
     {}
 
-    virtual HDFTable GenerateHistorySpec ( const string & title, const string & id ) override
+    virtual void AddToSpec ( HDFTable spec ) const override
     {
-      HDFTable spec(title,id);
-      SpecFromArrayIndices(spec,m_arr,m_idxs.size( ),m_idxs.data( ));
-      spec.Finalize();
-      return spec;
+      spec.AddArrayIndicesCol(m_arr,m_idxs.size( ));
     }
 
     virtual void Collect ( real64 const GEOSX_UNUSED_PARAM(time_n), real64 const GEOSX_UNUSED_PARAM(dt) ) override
@@ -97,9 +173,14 @@ namespace geosx
       m_offset = ARRAY_T::ndim * sizeof(typename ARRAY_T::index_type);
     }
 
-    virtual buffer_unit_type * Provide( ) override
+    virtual buffer_unit_type * Provide ( ) override
     {
       return &m_collection[m_offset];
+    }
+
+    virtual size_t size( ) const override
+    {
+      return m_collection.size() - m_offset;
     }
 
   private:
@@ -109,81 +190,40 @@ namespace geosx
     std::vector<buffer_unit_type> m_collection;
   };
 
+  // move into hdffile once the collectors are in a seperate header
+  HDFTableIO InitTimeHistoryIO( string const & name, string const & id, TimeHistoryCollector * coll )
+  {
+    HDFTable spec = InitHistoryTable( name,id );
+    coll->AddToSpec( spec );
+    spec.Finalize();
+    return HDFTableIO( spec );
+  }
 
   class TimeHistory
   {
   public:
-    void AddHistory( string const & id, string const & title, TimeHistoryCollector * collector )
+    TimeHistory( string const & name, string const & id, TimeHistoryCollector * coll )
+      : m_collector(coll)
+      , m_hist_io(InitTimeHistoryIO(name,id,coll))
+    { }
+    void InitFile( string const & filename )
     {
-      HDFTable spec = collector->GenerateHistorySpec( title, id );
-      m_collectors[id] = collector;
-      m_time_series.insert(std::make_pair(id,TimeSeries( spec )));
-      m_hist_series.insert(std::make_pair(id,HDFTableIO( spec )));
+      HDFFile out_file( filename );
+      m_hist_io.CreateInTarget( out_file );
     }
-    void UpdateHistories( real64 const time_n, real64 const dt )
+    void Update( real64 const time_n, real64 const dt )
     {
-      forEachCollector([&](TimeHistoryCollector * collector)
-        {
-          collector->Collect( time_n, dt );
-        }
-      );
-      forEachTimeSeries([&](HDFTableIO & time_series)
-        {
-          time_series.BufferRow( reinterpret_cast<buffer_unit_type const *>(&time_n) );
-        }
-      );
-      for( auto kv : m_hist_series )
-      {
-        kv.second.BufferRow( m_collectors[kv.first]->Provide( ) );
-      }
-
+      m_collector->Collect( time_n, dt );
+      m_hist_io.BufferRow( m_collector->Provide() );
     }
-    template < typename LAMBDA >
-    inline void forEachHistory( LAMBDA && lambda )
+    void WriteToFile( string const & filename )
     {
-      forEachTimeSeries( lambda );
-      forEachHistorySeries( lambda );
-    }
-    template < typename LAMBDA >
-    void forHistory( string const & id, LAMBDA && lambda )
-    {
-      lambda( m_time_series[id] );
-      lambda( m_hist_series[id] );
-    }
-    template < typename LAMBDA >
-    void forEachCollector( LAMBDA && lambda )
-    {
-      for ( auto kv : m_collectors )
-      {
-        lambda( kv.second );
-      }
-    }
-    template < typename LAMBDA >
-    void forCollector( string const & id, LAMBDA && lambda )
-    {
-      lambda( m_collectors[id] );
+      HDFFile out_file( filename );
+      m_hist_io.WriteBuffered( out_file );
     }
   private:
-    template < typename LAMBDA >
-    inline void forEachTimeSeries( LAMBDA && lambda )
-    {
-      for( auto kv : m_time_series )
-      {
-        lambda( kv.second );
-      }
-    }
-    template < typename LAMBDA >
-    inline void forEachHistorySeries( LAMBDA && lambda )
-    {
-      for( auto kv : m_hist_series )
-      {
-        lambda( kv.second );
-      }
-    }
-
-    map<string,TimeHistoryCollector*> m_collectors;
-    map<string,HDFTableIO> m_time_series;
-    map<string,HDFTableIO> m_hist_series;
+    TimeHistoryCollector * m_collector;
+    HDFTableIO m_hist_io;
   };
 
 
@@ -196,9 +236,9 @@ namespace geosx
   class TimeHistoryUpdate : public OutputBase
   {
   public:
-    TimeHistoryUpdate( string const & name, Group * const parent ):
+    TimeHistoryUpdate( string const & target, string const & name, Group * const parent ):
       OutputBase(name,parent),
-      m_time_hist()
+      m_target(target)
     {
       // add to data repo
       // m_time_hist
@@ -212,24 +252,26 @@ namespace geosx
                           real64 const GEOSX_UNUSED_PARAM( eventProgress ),
                           dataRepository::Group * GEOSX_UNUSED_PARAM( domain ) ) override
     {
-      m_time_hist.UpdateHistories( time_n, dt );
+      TimeHistory /*&*/ * target = nullptr;
+      target->Update( time_n, dt );
     }
 
-    inline TimeHistory & getTimeHistory( ) { return m_time_hist; }
+    //inline TimeHistory & getTimeHistoryTarget( ) { return m_time_hist; }
 
   private:
-    TimeHistory m_time_hist;
+    string m_target;
   };
 
   class TimeHistoryOutput : public OutputBase
   {
   public:
     TimeHistoryOutput( string const & hist_filename,
+                       string const & target,
                        string const & name,
                        Group * const parent ):
       OutputBase(name,parent),
       m_thist_filename( hist_filename ),
-      m_table_names()
+      m_target(target)
     { }
 
     virtual ~TimeHistoryOutput() override
@@ -250,13 +292,8 @@ namespace geosx
                           real64 const GEOSX_UNUSED_PARAM( eventProgress ),
                           dataRepository::Group * GEOSX_UNUSED_PARAM( domain ) ) override
     {
-      TimeHistory /*&*/ time_hist; // = Wrapper::getRefernce(...)
-      HDFFile out(m_thist_filename);
-      time_hist.forEachHistory([&out](HDFTableIO & history)
-        {
-          history.WriteBuffered( out );
-        }
-      );
+      TimeHistory /*&*/ * time_hist = nullptr; // = Wrapper::getReference(m_target...t...)
+      time_hist->WriteToFile( m_thist_filename );
     }
 
     /// Write one final output as the code exits
@@ -271,13 +308,8 @@ namespace geosx
 
     void InitHistoryFile()
     {
-      TimeHistory /*&*/ time_hist; // = Wrapper::getRefernce(...)
-      HDFFile out(m_thist_filename);
-      time_hist.forEachHistory( [&](HDFTableIO & history)
-        {
-          history.CreateInTarget( out );
-        }
-      );
+      TimeHistory /*&*/ * time_hist = nullptr; // = Wrapper::getRefernce(...)
+      time_hist->InitFile( m_thist_filename );
     }
 
     struct viewKeysStruct
@@ -287,6 +319,6 @@ namespace geosx
 
     private:
       string m_thist_filename;
-      std::vector<std::string> m_table_names;
+      string m_target;
   };
 }

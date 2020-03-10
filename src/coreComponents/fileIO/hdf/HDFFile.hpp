@@ -126,11 +126,9 @@ class HDFTable
 public:
 
   HDFTable( const string & title,
-            const string & hdf_id,
-            size_t prealloc_rows = 10)
+            const string & hdf_id )
   : m_title(title)
   , m_hdf_id(hdf_id)
-  , m_prealloc_rows(prealloc_rows)
   , m_is_final(false)
   , m_row_size(0)
   , m_col_count(0)
@@ -141,38 +139,21 @@ public:
   , m_col_types()
   {}
 
-  inline void AddCols( localIndex const num_cols,
-                localIndex const units_per_col,
-                size_t const unit_byte_size,
-                std::type_info const & type,
-                localIndex const * idxs = NULL)
+  void AddCol(localIndex const num_items,
+              localIndex const units_per_item,
+              size_t const unit_byte_size,
+              std::type_info const & type,
+              string const & name )
   {
-    AddCols(num_cols,units_per_col,unit_byte_size,type,[](localIndex idx) { return std::to_string(idx); },idxs);
-  }
-
-  template < typename LAMBDA >
-  void AddCols( localIndex const num_cols,
-                localIndex const units_per_col,
-                size_t const unit_byte_size,
-                std::type_info const & type,
-                LAMBDA && title_gen,
-                localIndex const * idxs = NULL)
-  {
-    prepColAdd(num_cols);
-    localIndex offset_head = m_row_size;
-    localIndex col_size = 0;
-    for( localIndex lidx = 0; lidx < num_cols; ++lidx )
-    {
-      m_col_names.push_back( title_gen(idxs == NULL ? lidx : idxs[lidx]) );
-      m_col_name_ptrs.push_back( m_col_names.back().c_str() );
-      m_col_offsets.push_back( offset_head );
-      col_size = units_per_col * unit_byte_size;
-      m_col_sizes.push_back( col_size );
-      hsize_t upc = integer_conversion<hsize_t>(units_per_col);
-      m_col_types.push_back( units_per_col == 1 ? GetHDFDataType(type) : GetHDFArrayDataType(type,1,&upc) );
-      offset_head += col_size;
-    }
-    m_row_size = offset_head;
+    prepColAdd(1);
+    localIndex col_size = num_items * units_per_item * unit_byte_size;
+    m_col_names.push_back( name );
+    m_col_name_ptrs.push_back( m_col_names.back().c_str() );
+    m_col_offsets.push_back( m_row_size );
+    m_col_sizes.push_back( col_size );
+    hsize_t dims[2] = {integer_conversion<hsize_t>(num_items), integer_conversion<hsize_t>(units_per_item) };
+    m_col_types.push_back( col_size == 1 ? GetHDFDataType(type) : GetHDFArrayDataType(type,2,&dims[0]) );
+    m_row_size += col_size;
   }
 
   inline void Finalize()
@@ -242,7 +223,6 @@ public:
     return true;
   }
 
-  inline size_t getRowPreallocCount() const { warn_not_final(); return m_prealloc_rows; }
   inline size_t getRowSize() const { warn_not_final(); return m_row_size;}
   inline hsize_t getColCount() const { warn_not_final(); return m_col_count; }
   inline size_t const * getColSizes() const { warn_not_final(); return &m_col_sizes[0]; }
@@ -256,6 +236,39 @@ public:
     {
       GEOSX_WARNING("HDFTable: The table being operated on has not been finalized.");
     }
+  }
+
+
+  template < typename ARRAY_T >
+  inline
+  typename std::enable_if < is_array<ARRAY_T> && (ARRAY_T::ndim == 1) && can_hdf_io<typename ARRAY_T::value_type>, void >::type
+  AddArrayCol( ARRAY_T const & arr, string const & name, localIndex vals_per_col = 1 )
+  {
+    AddCol(arr.size( ), vals_per_col, sizeof(typename ARRAY_T::value_type), typeid(typename ARRAY_T::value_type), name);
+  }
+
+  template < typename ARRAY_T >
+  inline
+  typename std::enable_if < is_array<ARRAY_T> && (ARRAY_T::ndim > 1) && can_hdf_io<typename ARRAY_T::value_type>, void >::type
+  AddArrayCol( ARRAY_T const & arr, string const & name)
+  {
+    AddCol(arr.size( ) / arr.size( 0 ), arr.size( 0 ), sizeof(typename ARRAY_T::value_type), typeid(typename ARRAY_T::value_type), name);
+  }
+
+  template < typename ARRAY_T >
+  inline
+  typename std::enable_if < is_array<ARRAY_T> && (ARRAY_T::ndim == 1) && can_hdf_io<typename ARRAY_T::value_type>, void >::type
+  AddArrayIndicesCol( ARRAY_T const & GEOSX_UNUSED_PARAM( arr ), string const & name, localIndex const num_indices, localIndex vals_per_col = 1 )
+  {
+    AddCol(num_indices, vals_per_col, sizeof(typename ARRAY_T::value_type), typeid(typename ARRAY_T::value_type), name);
+  }
+
+  template < typename ARRAY_T >
+  inline
+  typename std::enable_if < is_array<ARRAY_T> && (ARRAY_T::ndim > 1) && can_hdf_io<typename ARRAY_T::value_type>, void >::type
+  AddArrayIndicesCol( ARRAY_T const & arr, string const & name, localIndex const num_indices )
+  {
+    AddCol(num_indices, arr.size( 0 ), sizeof(typename ARRAY_T::value_type), typeid(typename ARRAY_T::value_type), name);
   }
 
 protected:
@@ -290,46 +303,23 @@ public:
   HDFTableIO( HDFTable const & table_spec, localIndex buffer_default = 4 )
   : m_spec(table_spec)
   , m_target_row_head(0)
-  , m_target_row_limit(m_spec.getRowPreallocCount())
-  , m_need_file_realloc(false)
+  // , m_need_file_realloc(false)
   , m_buffered_count(0)
   , m_row_buffer( buffer_default * m_spec.getRowSize() )
-  // , m_buffered_offsets( buffer_default * m_spec.getRowSize() )
-  // , m_buffered_sizes( buffer_default * m_spec.getRowSize() )
   {
     if (!m_spec.isFinal()) m_spec.warn_not_final();
-    // add items to the data store
   }
 
   void BufferRow( buffer_unit_type const * row )
   {
-    /// only supporting flat arrays at the moment
     size_t row_size = m_spec.getRowSize(); //bytes
-    // hsize_t col_count = m_spec.getColCount(); //# cells in a row
     m_row_buffer.resize(m_row_buffer.size() + row_size);
     memcpy(&m_row_buffer[m_buffered_count*row_size],row,row_size);
-
-    // localIndex new_row_head = col_count * m_buffered_count;
-
-    // size_t osize = m_buffered_sizes.size();
-    // m_buffered_sizes.resize(osize + col_count);
-    // memcpy(&m_buffered_sizes[new_row_head],m_spec.getColSizes(),col_count * sizeof(decltype(m_buffered_sizes)::value_type));
-
-    // osize = m_buffered_offsets.size();
-    // m_buffered_offsets.resize(osize + col_count);
-    // memcpy(&m_buffered_offsets[new_row_head],m_spec.getColOffsets(), col_count * sizeof(decltype(m_buffered_offsets)::value_type));
-
-    // for( hsize_t idx = 0 ; idx < col_count; ++idx )
-    // {
-    //   m_buffered_offsets[new_row_head + idx] += (m_buffered_count * row_size);
-    // }
-
     m_buffered_count++;
-
-    if ( m_target_row_head + m_buffered_count > m_target_row_limit )
-    {
-      m_need_file_realloc = true;
-    }
+    // if ( m_target_row_head + m_buffered_count > m_target_row_limit )
+    // {
+    //   m_need_file_realloc = true;
+    // }
   }
 
   virtual void CreateInTarget( HDFTarget & target, bool exists_okay = true )
@@ -369,84 +359,32 @@ private:
     }
   }
 
-  // in the data store
   HDFTable m_spec;
+  // in the data store
   size_t m_target_row_head;
-  size_t m_target_row_limit;
-  bool m_need_file_realloc;
+  // size_t m_target_row_limit;
+  // bool m_need_file_realloc;
 
   // not in the data store
   localIndex m_buffered_count;
   array1d<buffer_unit_type> m_row_buffer;
-  // std::vector<size_t> m_buffered_offsets;
-  // std::vector<size_t> m_buffered_sizes;
 };
 
+// inline HDFTable TimeSeries( HDFTable const & base_table )
+// {
+//   string time_title = base_table.getTitle() + string(" Time");
+//   string time_id = base_table.getHDFID() + string("_t");
+//   HDFTable time_table(time_title,time_id);
+//   time_table.AddCol(1,1,sizeof(real64),typeid(real64),"Time");
+//   time_table.Finalize();
+//   return time_table;
+// }
 
-template < typename ARRAY_T >
-typename std::enable_if < is_array<ARRAY_T> && (ARRAY_T::ndim == 1) && can_hdf_io<typename ARRAY_T::value_type>, void >::type
-SpecFromArray( HDFTable & tbl, ARRAY_T const & arr, localIndex vals_per_col = 1 )
+inline HDFTable InitHistoryTable( string const & title, string const & hdf_id )
 {
-  tbl.AddCols(arr.size( ), vals_per_col, sizeof(typename ARRAY_T::value_type), typeid(typename ARRAY_T::value_type));
-}
-
-template < typename ARRAY_T, typename LAMBDA >
-typename std::enable_if < is_array<ARRAY_T> && (ARRAY_T::ndim == 1) && can_hdf_io<typename ARRAY_T::value_type>, void >::type
-SpecFromArray( HDFTable & tbl, ARRAY_T const & arr, LAMBDA && title_gen, localIndex vals_per_col = 1 )
-{
-  tbl.AddCols(arr.size( ), vals_per_col, sizeof(typename ARRAY_T::value_type), typeid(typename ARRAY_T::value_type),title_gen);
-}
-
-template < typename ARRAY_T >
-typename std::enable_if < is_array<ARRAY_T> && (ARRAY_T::ndim > 1) && can_hdf_io<typename ARRAY_T::value_type>, void >::type
-SpecFromArray( HDFTable & tbl, ARRAY_T const & arr )
-{
-  tbl.AddCols(arr.size( ) / arr.size( 0 ), arr.size( 0 ), sizeof(typename ARRAY_T::value_type), typeid(typename ARRAY_T::value_type));
-}
-
-template < typename ARRAY_T, typename LAMBDA >
-typename std::enable_if < is_array<ARRAY_T> && (ARRAY_T::ndim > 1) && can_hdf_io<typename ARRAY_T::value_type>, void >::type
-SpecFromArray( HDFTable & tbl, ARRAY_T const & arr, LAMBDA && title_gen )
-{
-  tbl.AddCols(arr.size( ) / arr.size( 0 ), arr.size( 0 ), sizeof(typename ARRAY_T::value_type), typeid(typename ARRAY_T::value_type),title_gen);
-}
-
-template < typename ARRAY_T >
-typename std::enable_if < is_array<ARRAY_T> && (ARRAY_T::ndim == 1) && can_hdf_io<typename ARRAY_T::value_type>, void >::type
-SpecFromArrayIndices( HDFTable & tbl, ARRAY_T const & GEOSX_UNUSED_PARAM( arr ), localIndex const num_indices, localIndex const * indices, localIndex vals_per_col = 1)
-{
-  tbl.AddCols(num_indices, vals_per_col, sizeof(typename ARRAY_T::value_type), typeid(typename ARRAY_T::value_type), indices);
-}
-
-template < typename ARRAY_T, typename LAMBDA >
-typename std::enable_if < is_array<ARRAY_T> && (ARRAY_T::ndim == 1) && can_hdf_io<typename ARRAY_T::value_type>, void >::type
-SpecFromArrayIndices( HDFTable & tbl, ARRAY_T const & GEOSX_UNUSED_PARAM( arr ), LAMBDA && title_gen, localIndex const num_indices, localIndex const * indices, localIndex vals_per_col = 1 )
-{
-  tbl.AddCols(num_indices, vals_per_col, sizeof(typename ARRAY_T::value_type), typeid(typename ARRAY_T::value_type),title_gen, indices);
-}
-
-template < typename ARRAY_T >
-typename std::enable_if < is_array<ARRAY_T> && (ARRAY_T::ndim > 1) && can_hdf_io<typename ARRAY_T::value_type>, void >::type
-SpecFromArrayIndices( HDFTable & tbl, ARRAY_T const & arr, localIndex const num_indices, localIndex const * indices )
-{
-  tbl.AddCols(num_indices, arr.size( 0 ), sizeof(typename ARRAY_T::value_type), typeid(typename ARRAY_T::value_type), indices);
-}
-
-template < typename ARRAY_T, typename LAMBDA >
-typename std::enable_if < is_array<ARRAY_T> && (ARRAY_T::ndim > 1) && can_hdf_io<typename ARRAY_T::value_type>, void >::type
-SpecFromArrayIndices( HDFTable & tbl, ARRAY_T const & arr, LAMBDA && title_gen, localIndex const num_indices, localIndex const * indices )
-{
-  tbl.AddCols(num_indices, arr.size( 0 ), sizeof(typename ARRAY_T::value_type), typeid(typename ARRAY_T::value_type),title_gen, indices);
-}
-
-inline HDFTable TimeSeries( HDFTable const & base_table )
-{
-  string time_title = base_table.getTitle() + string(" Time");
-  string time_id = base_table.getHDFID() + string("_t");
-  HDFTable time_table(time_title,time_id);
-  time_table.AddCols(1,1,sizeof(real64),typeid(real64));
-  time_table.Finalize();
-  return time_table;
+  HDFTable time_history( title, hdf_id );
+  time_history.AddCol( 1, 1, sizeof(real64), typeid(real64), "time" );
+  return time_history;
 }
 
 
