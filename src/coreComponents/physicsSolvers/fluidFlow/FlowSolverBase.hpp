@@ -105,6 +105,7 @@ public:
     static constexpr auto effectiveApertureString = "effectiveAperture";
 
     static constexpr auto inputFluxEstimateString  = "inputFluxEstimate";
+    static constexpr auto meanPermCoeffString  = "meanPermCoeff";
 
     using ViewKey = dataRepository::ViewKey;
 
@@ -155,11 +156,12 @@ private:
    * @brief This function generates various discretization information for later use.
    * @param domain the domain partition
    */
-  void PrecomputeData(DomainPartition *const domain);
 
 
 protected:
 
+  void PrecomputeData(DomainPartition *const domain);
+  
   virtual void InitializePreSubGroups(Group * const rootGroup) override;
 
   virtual void InitializePostInitialConditions_PreSubGroups(Group * const rootGroup) override;
@@ -190,6 +192,8 @@ protected:
 
   real64 m_fluxEstimate;
   
+  real64 m_meanPermCoeff;
+
   /// views into constant data fields
   ElementRegionManager::ElementViewAccessor<arrayView1d<integer>> m_elemGhostRank;
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_volume;
