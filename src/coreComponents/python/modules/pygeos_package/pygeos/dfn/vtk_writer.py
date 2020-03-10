@@ -15,7 +15,7 @@ def WriteVTK(previewName, fractureCenter, fractureLength, fractureHeight, fractu
   @arg header Additional header information
   """
 
-  print ('Writing preview file')
+  print('Writing preview file')
   myfile = open(previewName, 'w')
   myfile.write("# vtk DataFile Version 2.0" + '\n')
   myfile.write(header + '\n')

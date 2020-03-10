@@ -1,7 +1,7 @@
 """DFN Generation Scripts"""
 
 import argparse
-from pygeos import dfn
+from pygeos.dfn import dfn_generator
 
 
 def main():
@@ -23,11 +23,11 @@ def main():
   parser.add_argument('-p', '--percolation', type=int, help='Calculate percolation for generated DFN', default=True)
   args = parser.parse_args()
 
-  dfn.generate_from_xml(args.input,
-                        args.output,
-                        args.maxIter,
-                        args.margin,
-                        args.calculatePercolation)
+  dfn_generator.generate_from_xml(args.input,
+                                  args.output,
+                                  args.nIter,
+                                  args.margin,
+                                  args.percolation)
 
 
 if __name__ == "__main__":

@@ -124,7 +124,7 @@ def EvenSpacing(x):
     return meanIntv
   else:
     sdIntv = np.std(intv)
-    print sdIntv
+    print(sdIntv)
 
     if sdIntv <= 1e-6:
       return meanIntv
@@ -157,10 +157,10 @@ def BuildNodeset(parent, name, fractureCenter, fractureLength, fractureHeight, f
 
   newSet = etree.Element("BoundedPlane", name=name)
 
-  newSet.set('lengthVector', '{%1.6e, %1.6e, 0}' % (np.cos(fractureAngle), np.sin(fractureAngle)))
-  newSet.set('widthVector', '{0, 0, 1}')
-  newSet.set('origin', '{%1.6e, %1.6e, %1.6e}' % (fractureCenter[0], fractureCenter[1], fractureCenter[2]))
-  newSet.set('normal', '{%1.6e, %1.6e, 0}' % (np.sin(fractureAngle), np.cos(fractureAngle)))
+  newSet.set('lengthVector', '%1.6e, %1.6e, 0' % (np.cos(fractureAngle), np.sin(fractureAngle)))
+  newSet.set('widthVector', '0, 0, 1')
+  newSet.set('origin', '%1.6e, %1.6e, %1.6e' % (fractureCenter[0], fractureCenter[1], fractureCenter[2]))
+  newSet.set('normal', '%1.6e, %1.6e, 0' % (np.cos(fractureAngle+0.5*np.pi), np.sin(fractureAngle+0.5*np.pi)))
   newSet.set('dimensions', '{%1.6e, %1.6e}' % (fractureLength+margin, fractureHeight+margin))
 
   parent.insert(-1, newSet)
@@ -202,6 +202,34 @@ def WriteDFNxml(inputFileName, outputFileName, fractureCenter, fractureLength, f
   tree.write(outputFileName, pretty_print=True)
 
 
+def parse_attributes(source, targets, types, defaults):
+  """
+  Parse values from an XML node
+
+  @arg source XML node
+  @arg targets list of attribute names
+  @arg types list of attribute types (used for string conversion)
+  @arg defaults dict defining attribute default values
+  """
+
+  attribute_dict = {}
+  for k, kt in zip(targets, types):
+    if k in source.attrib:
+      tmp = source.get(k)
+      if '{' in tmp:
+        attribute_dict[k] = [kt(x) for x in tmp[1:-1].split(',')]
+      else:
+        attribute_dict[k] = kt(tmp)
+
+    elif k in defaults:
+      attribute_dict[k] = defaults[k]
+
+    else:
+      raise Exception('Required attribute not supplied: %s' % (k))
+
+  return attribute_dict
+
+
 def parse_geosx_xml(inputFileName):
   """
   Parse a geosx format input file
@@ -212,13 +240,13 @@ def parse_geosx_xml(inputFileName):
   Mandatory:
      name: string, name.
      mode: string, box or strip.
-     gridDiemsnion: integer, 0, 1, 2, or 3. 0 means the xz plane, 2 means the yz plane, 1 and 3 are the planes in between.
+     gridDimension: integer, 0, 1, 2, or 3. 0 means the xz plane, 2 means the yz plane, 1 and 3 are the planes in between.
                     for gridDimension 0 and 2, only the box mode is valid.
      xmin, xmax: three real values separated by white spaces. They are coordinates in the unskewed coordinate system. For the box mode, they define the two corners of the box.
                  For the the strip mode, xmin[0] and xmax[2] define the left and right ends of the set's intersecton with y=skewCenter[1]
      coverageRatio: real, the target coverage ratio on each grid plane. A fracture plane typically would saturate at a coverage of 0.4, depending on the minGap value.
      minGap: integer, the minimum gap size, in terms of grids, between two neighbor fractures on the same grid plane.
-     lmin, lmax, pwoer: define the length distribution, it follows a power-law distribution.
+     lmin, lmax, power: define the length distribution, it follows a power-law distribution.
      meanAR, stdevAR, minAR, maxAR: defines the aspect ratio distribution.
   Optional:
      seed: integer, >=0, random seed
@@ -227,10 +255,8 @@ def parse_geosx_xml(inputFileName):
      rightExtension, 1 or 0, same idea.
   """
 
-  results = {'mesh': {'skewCenter': [0.0, 0.0, 0.0], 'skewAngle': 0.0},
-             'dfn': {}}
-
   # Parse file
+  results = {'dfn': {}}
   parser = etree.XMLParser(remove_comments=True, remove_blank_text=True)
   tree = etree.parse(inputFileName, parser=parser)
   root = tree.getroot()
@@ -238,17 +264,14 @@ def parse_geosx_xml(inputFileName):
   # Read mesh parameters
   meshNode = root.findall('Mesh')[0]
   intentalMeshNode = meshNode.findall('InternalMesh')[0]
-  for k in ['xcoords', 'ycoords', 'zcoords', 'nx', 'ny', 'nz', 'skewCenter', 'skewAngle']:
-    if k in intentalMeshNode.attrib:
-      tmp = intentalMeshNode.get(k)
-      if '{' in tmp:
-        results['mesh'][k] = [float(x) for x in tmp[1:-1].split(',')]
-      else:
-        results['mesh'][k] = tmp
+  mesh_targets = ['xCoords', 'yCoords', 'zCoords', 'nx', 'ny', 'nz', 'skewCenter', 'skewAngle']
+  mesh_types = [float, float, float, int, int, int, float, float]
+  mesh_defaults = {'skewCenter': [0.0, 0.0, 0.0], 'skewAngle': 0.0}
+  results['mesh'] = parse_attributes(intentalMeshNode, mesh_targets, mesh_types, mesh_defaults)
 
   # Calculate grid ticks (note: these are before skewing)
   for k in ['x', 'y', 'z']:
-    c = results['mesh']['%scoords' % (k)]
+    c = results['mesh']['%sCoords' % (k)]
     n = results['mesh']['n%s' % (k)]
 
     tmp = [np.linspace(c[ii], c[ii+1], n[ii]+1) for ii in range(0, len(n))]
@@ -258,26 +281,18 @@ def parse_geosx_xml(inputFileName):
   results['mesh']['yCenterID'] = NearestIndex(results['mesh']['xticks'], results['mesh']['skewCenter'][1])
 
   # Parse DFN definitions
+  dfn_targets = ['mode', 'gridDimension', 'xmin', 'xmax', 'coverageRatio', 'minGap', 'lmin',
+                 'lmax', 'power', 'meanAR', 'stdevAR', 'maxAR', 'minAR', 'seed',
+                 'planeExtensionFactor', 'leftExtension', 'rightExtension']
+  dfn_types = [str, int, float, float, float, int, float,
+               float, float, float, float, float, float, int,
+               int, int, int]
+  dfn_defaults = {'seed': -1, 'planeExtensionFactor': 10, 'leftExtension': 0, 'rightExtension': 0}
+
   for DFNSetsNode in root.findall('DFNSets'):
     for SetNode in DFNSetsNode.findall('DFNSet'):
       name = SetNode.get('name')
-      results['dfn'][name] = {'DFNmode': str.lower(SetNode.get('mode')),
-                              'gridDimension': int(SetNode.get('gridDimension')),
-                              'xmin': [float(v) for v in SetNode.get('xmin').split()],
-                              'xmax': [float(v) for v in SetNode.get('xmax').split()],
-                              'coverageRatio': float(SetNode.get('coverageRatio')),
-                              'minGap': int(SetNode.get('minGap')),
-                              'lmin': float(SetNode.get('lmin')),
-                              'lmax': float(SetNode.get('lmax')),
-                              'power': float(SetNode.get('power')),
-                              'meanAR': float(SetNode.get('meanAR')),
-                              'stdevAR': float(SetNode.get('stdevAR')),
-                              'maxAR': float(SetNode.get('minAR')),
-                              'minAR': float(SetNode.get('maxAR')),
-                              'seed': int(SetNode.get('seed', default='-1')),
-                              'planeExtensionFactor': int(SetNode.get('planeExtensionFactor', default='10')),
-                              'leftExtension': int(SetNode.get('leftExtension', default='0')),
-                              'rightExtension': int(SetNode.get('rightExtension', default='0'))}
+      results['dfn'][name] = parse_attributes(SetNode, dfn_targets, dfn_types, dfn_defaults)
 
   return results
 
@@ -315,14 +330,14 @@ def generate_from_xml(inputFileName, outputFileName, nIter=10000, margin=0.01, c
     planeExtensionFactor = dfn_config['dfn'][kd]['planeExtensionFactor']
     leftExtension = dfn_config['dfn'][kd]['leftExtension']
     rightExtension = dfn_config['dfn'][kd]['rightExtension']
-    DFNmode = dfn_config['dfn'][kd]['DFNmode']
+    mode = dfn_config['dfn'][kd]['mode']
     xmin = dfn_config['dfn'][kd]['xmin']
     xmax = dfn_config['dfn'][kd]['xmax']
 
     # Check inputs
-    if DFNmode == 'strip' and (gridDimension == 0 or gridDimension == 2):
+    if mode == 'strip' and (gridDimension == 0 or gridDimension == 2):
       raise Exception(kd + ': For gridDimension = 0 or 2, there is not reason to use the strip mode.  Use box mode instead.')
-    if DFNmode == 'box' and (leftExtension > 0 or rightExtension > 0):
+    if mode == 'box' and (leftExtension > 0 or rightExtension > 0):
       raise Exception(kd + ': leftExtension and right Extension only apply to the strip mode, not the box mode.')
 
     # Set seed
@@ -353,7 +368,7 @@ def generate_from_xml(inputFileName, outputFileName, nIter=10000, margin=0.01, c
       nIntYPlus = max(0, round((a1 - dfn_config['mesh']['skewCenter'][1]) / da / 2) + 1)
       nIntYMinus = max(0, round((dfn_config['mesh']['skewCenter'][1] - a0) / da / 2) + 1)
 
-      if DFNmode == 'box':
+      if mode == 'box':
         if (gridDimension == 1):
           c0 -= dc * nIntYPlus
           c1 += dc * nIntYMinus
@@ -361,12 +376,12 @@ def generate_from_xml(inputFileName, outputFileName, nIter=10000, margin=0.01, c
           c0 -= dc * nIntYMinus
           c1 += dc * nIntYPlus
 
-      if DFNmode == 'strip' and leftExtension > 0:
+      if mode == 'strip' and leftExtension > 0:
         if (gridDimension == 1):
           c0 -= dc * nIntYPlus
         elif (gridDimension == 3):
           c0 -= dc * nIntYMinus
-      if DFNmode == 'strip' and rightExtension > 0:
+      if mode == 'strip' and rightExtension > 0:
         if (gridDimension == 1):
           c1 += dc * nIntYMinus
         elif (gridDimension == 3):
@@ -394,13 +409,13 @@ def generate_from_xml(inputFileName, outputFileName, nIter=10000, margin=0.01, c
         strikeAngle = 0.0
         lengthProjFactor = 1.0
       elif (gridDimension == 1):
-        strikeAngle = np.atan(1 / (dc / 2 / da - np.tan(np.radians(dfn_config['mesh']['skewAngle']))))
+        strikeAngle = np.arctan(1 / (dc / 2 / da - np.tan(np.radians(dfn_config['mesh']['skewAngle']))))
         lengthProjFactor = np.sin(strikeAngle)
       elif (gridDimension == 2):
         strikeAngle = np.pi / 2 + np.radians(dfn_config['mesh']['skewAngle'])
         lengthProjFactor = np.sin(strikeAngle)
       elif (gridDimension == 3):
-        strikeAngle = np.pi - np.atan(1 / (dc / 2 / da + np.tan(np.radians(dfn_config['mesh']['skewAngle']))))
+        strikeAngle = np.pi - np.arctan(1 / (dc / 2 / da + np.tan(np.radians(dfn_config['mesh']['skewAngle']))))
         lengthProjFactor = abs(np.sin(strikeAngle))
       else:
         sys.exit('ERROR: gridDimension must be between 0 and 3.')
@@ -438,7 +453,7 @@ def generate_from_xml(inputFileName, outputFileName, nIter=10000, margin=0.01, c
           count += 1
 
           if (count > nIter):
-            print ("rejecting ", i)
+            print("rejecting ", i)
             rejectionCount += 1
             break
           ia = np.random.randint(0, na - int(lw[i][0] / da))
@@ -471,24 +486,24 @@ def generate_from_xml(inputFileName, outputFileName, nIter=10000, margin=0.01, c
             fractures['intersections'].append(0)
 
       occupiedCellCout += np.count_nonzero(backCells)
-    print ('In set ' + kd + ' rejected ' + str(rejectionCount) + ' out of ' + str(totalCount) + ' fractures.' + 'We have ' + str(nc) + ' planes.')
-    print ('Set ' + kd + ' average coverage ratio is: ' + str(occupiedCellCout * 1.0 / na / nb / nc))
+    print('In set ' + kd + ' rejected ' + str(rejectionCount) + ' out of ' + str(totalCount) + ' fractures.' + 'We have ' + str(nc) + ' planes.')
+    print('Set ' + kd + ' average coverage ratio is: ' + str(occupiedCellCout * 1.0 / na / nb / nc))
 
-  print ('Finished, we have ', len(fractures['center']), ' fractures')
+  print('Finished, we have ', len(fractures['center']), ' fractures')
 
   # Calculate percolation number
   if (calculatePercolation >= 1):
     nPairs = len(fractures['center']) * (len(fractures['center']) - 1) / 2
-    print ('Calculating percolation number, there are ' + str(nPairs) + ' to check')
+    print('Calculating percolation number, there are ' + str(nPairs) + ' to check')
 
     pairCount = 0
-    print ('Finished    \r')
+    print('Finished    \r')
     for i in range(0, len(fractures['center'])):
       for j in range(i + 1, len(fractures['center'])):
         pairCount += 1
 
         if (pairCount % (int(nPairs / 10)) == 0 or (pairCount % (int(nPairs / 100)) == 0 and pairCount < 0.1 * nPairs)):
-          print (str(pairCount * 100 / nPairs).zfill(2) + '%\r')
+          print(str(pairCount * 100 / nPairs).zfill(2) + '%\r')
 
         if (fractures['angle'][i] != fractures['angle'][j]):
           zA0 = fractures['center'][i][2] - fractures['height'][i] * 0.5
@@ -501,10 +516,10 @@ def generate_from_xml(inputFileName, outputFileName, nIter=10000, margin=0.01, c
               fractures['intersections'][i] += 1
               fractures['intersections'][j] += 1
   else:
-    print ('Not calculating percolation number as instructed.')
-  vtk_writer.WriteVTK('preview.vtk', fractures['center'], fractures['length'], fractures['height'], fractures['angle'], fractures['planeID'], fractures['intersections'])
+    print('Not calculating percolation number as instructed.')
+  vtk_writer.WriteVTK('dfn_preview.vtk', fractures['center'], fractures['length'], fractures['height'], fractures['angle'], fractures['planeID'], fractures['intersections'])
   WriteDFNxml(inputFileName, outputFileName, fractures['center'], fractures['length'], fractures['height'], fractures['angle'], fractures['set'], margin)
   totalIntersection = np.sum(fractures['intersections'])
-  print ('The percolation number is ', totalIntersection * 1.0 / len(fractures['center']))
+  print('The percolation number is ', totalIntersection * 1.0 / len(fractures['center']))
 
 
