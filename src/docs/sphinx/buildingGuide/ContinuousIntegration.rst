@@ -11,7 +11,7 @@ For each image, the unique `${TRAVIS_PULL_REQUEST}-${TRAVIS_BUILD_NUMBER}` tag i
 Each docker contains the `org.opencontainers.image.created` and `org.opencontainers.image.revision` labels to provide additional information.
 
 For the OSX builds, we construct a tarball of the TPLs and save them in a remote cloud storage.
-There is currently only one mac osx tested environment (xcode 10.2) and the same `${TRAVIS_PULL_REQUEST}-${TRAVIS_BUILD_NUMBER}` pattern is used as an identifier for the build. 
+There is currently only one mac osx tested environment (xcode 11.2) and the same `${TRAVIS_PULL_REQUEST}-${TRAVIS_BUILD_NUMBER}` pattern is used as an identifier for the build.
 An important counterpart to using a tarball and not a docker image is that the tarball does not provide the whole system the precompiled binaries rely on.
 Problems may arise since we use the rolling release `Homebrew <https://brew.sh/>`_ (to install open-mpi in particular).
 To circumvent this potential issue, the brew version is fixed to a specific commit (see BREW_HASH variable in `third party's .travis.yml <https://github.com/GEOSX/thirdPartyLibs/blob/master/.travis.yml>`_)
