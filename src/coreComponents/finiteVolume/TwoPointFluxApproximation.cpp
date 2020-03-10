@@ -208,7 +208,7 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition & domain,
                                                       bool const initFlag )
 {
   MeshLevel * const mesh = domain.getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  NodeManager const * const nodeManager = mesh->getNodeManager();
+  NodeManager * const nodeManager = mesh->getNodeManager();
   EdgeManager const * const edgeManager = mesh->getEdgeManager();
   FaceManager const * const faceManager = mesh->getFaceManager();
   ElementRegionManager * const elemManager = mesh->getElemManager();
@@ -256,6 +256,9 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition & domain,
   stackArray1d<localIndex, maxElems> stencilCellsIndex;
   stackArray1d<real64, maxElems> stencilWeights;
 
+  stackArray1d<R1Tensor, maxElems> stencilCellCenterToEdgeCenters;    
+  stackArray1d<integer, maxElems> isGhostConnectors;
+  
   arrayView1d<integer const> const & edgeGhostRank = edgeManager->GhostRank();
 
   // TODO Note that all of this initialization should be performed elsewhere. This is just here because it was
@@ -265,8 +268,8 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition & domain,
 #endif
 #if SET_CREATION_DISPLACEMENT==1
   ArrayOfArraysView<localIndex const> const & faceToNodesMap = faceManager->nodeList();
-  arrayView2d<real64 nodes::INCR_DISPLACEMENT_USD> const & incrementalDisplacement = nodeManager->incrementalDisplacement();
-  arrayView2d<real64, nodes::TOTAL_DISPLACEMENT_UNIT_STIRDE> const & totalDisplacement = nodeManager->totalDisplacement();
+  arrayView2d<real64, nodes::INCR_DISPLACEMENT_USD> const & incrementalDisplacement = nodeManager->incrementalDisplacement();
+  arrayView2d<real64, nodes::TOTAL_DISPLACEMENT_USD> const & totalDisplacement = nodeManager->totalDisplacement();
   arrayView1d< real64 > const & aperture = fractureSubRegion->getReference<array1d<real64>>("elementAperture");
 #endif
 
@@ -325,7 +328,7 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition & domain,
     // only do this if there are more than one element attached to the connector
     localIndex const edgeIndex = fractureConnectorsToEdges[fci];
 
-    if( edgeGhostRank[edgeIndex] < 0 && numElems > 1 )
+    //    if( edgeGhostRank[edgeIndex] < 0 && numElems > 1 )
     {
 
       GEOSX_ERROR_IF(numElems > maxElems, "Max stencil size exceeded by fracture-fracture connector " << fci);
@@ -334,6 +337,9 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition & domain,
       stencilCellsIndex.resize(numElems);
       stencilWeights.resize(numElems);
 
+      stencilCellCenterToEdgeCenters.resize(numElems);
+      isGhostConnectors.resize(numElems);      
+      
       // get edge geometry
       R1Tensor const edgeCenter = edgeManager->calculateCenter( edgeIndex, X );
       real64 const edgeLength = edgeManager->calculateLength( edgeIndex, X ).L2_Norm();
@@ -360,6 +366,10 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition & domain,
         stencilCellsIndex[kfe] = fractureElementIndex;
 
         stencilWeights[kfe] =  1.0 / 12.0 * edgeLength / cellCenterToEdgeCenter.L2_Norm();
+
+        stencilCellCenterToEdgeCenters[kfe] = cellCenterToEdgeCenter;
+
+         isGhostConnectors[kfe] = edgeGhostRank[edgeIndex];
 
         // code to initialize new face elements with pressures from neighbors
         if( fractureSubRegion->m_newFaceElements.count(fractureElementIndex)==0 )
@@ -409,8 +419,8 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition & domain,
           {
             localIndex const node0 = faceToNodesMap(faceIndex0,a);
             localIndex const node1 = faceToNodesMap(faceIndex1, a==0 ? a : numNodesPerFace-a );
-            if( fabs( totalDisplacement[node0].L2_Norm() ) > 1.0e-99 &&
-                fabs( totalDisplacement[node1].L2_Norm() ) > 1.0e-99 )
+            if( fabs( LvArray::tensorOps::norm2(totalDisplacement[node0]) ) > 1.0e-99 &&
+                fabs( LvArray::tensorOps::norm2(totalDisplacement[node1]) ) > 1.0e-99 )
             {
               zeroDisp = false;
             }
@@ -431,6 +441,10 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition & domain,
                            stencilWeights.data(),
                            fci );
 
+      fractureStencil.add( numElems,
+                           stencilCellCenterToEdgeCenters.data(),
+                           isGhostConnectors.data(),
+                           fci );
     }
   }
 

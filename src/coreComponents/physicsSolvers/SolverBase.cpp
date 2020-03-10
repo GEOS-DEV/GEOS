@@ -445,6 +445,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
 
       // if the residual norm is less than the Newton tolerance we denote that we have
       // converged and break from the Newton loop immediately.
+
       if( residualNorm < newtonTol && newtonIter >= minNewtonIter)
       {
         isConverged = 1;
@@ -482,7 +483,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       {
         m_systemSolverParameters.m_krylovTol = LinearSolverParameters::eisenstatWalker(residualNorm,lastResidual);
       }
-
+    
       // call the default linear solver on the system
       SolveSystem( dofManager, matrix, rhs, solution );
 
