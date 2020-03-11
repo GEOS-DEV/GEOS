@@ -124,6 +124,7 @@ public:
   {
     static constexpr auto referencePositionString       = "ReferencePosition";
     static constexpr auto totalDisplacementString       = "TotalDisplacement";
+    static constexpr auto totalDisplacementOldString       = "TotalDisplacementOld";
     static constexpr auto incrementalDisplacementString = "IncrementalDisplacement";
     static constexpr auto edgeListString                = "edgeList";
     static constexpr auto faceListString                = "faceList";
@@ -133,6 +134,7 @@ public:
 
     dataRepository::ViewKey referencePosition       = { referencePositionString };
     dataRepository::ViewKey totalDisplacement       = { totalDisplacementString };
+    dataRepository::ViewKey totalDisplacementOld    = { totalDisplacementOldString };
     dataRepository::ViewKey incrementalDisplacement = { incrementalDisplacementString };
     dataRepository::ViewKey edgeList                = { edgeListString };
     dataRepository::ViewKey faceList                = { faceListString };
@@ -213,6 +215,18 @@ public:
    */
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & totalDisplacement() const
   { return getReference< array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > >( viewKeys.totalDisplacement ); }
+
+  /**
+   * @brief Return the total displacement array if it exists, if not an error is thrown.
+   */
+  array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > & totalDisplacementOld()
+  { return getReference< array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > >( viewKeys.totalDisplacementOld ); }
+
+  /**
+   * @brief Return an immutable arrayView of the total displacement if it exists, if not an error is thrown.
+   */
+  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & totalDisplacementOld() const
+  { return getReference< array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > >( viewKeys.totalDisplacementOld ); }
 
   /**
    * @brief Return the incremental displacement array if it exists, if not an error is thrown.

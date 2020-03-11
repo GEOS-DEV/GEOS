@@ -34,6 +34,7 @@ namespace keys
 static constexpr auto referencePositionString = "ReferencePosition";
 
 static constexpr auto TotalDisplacement = "TotalDisplacement";
+static constexpr auto TotalDisplacementOld = "TotalDisplacementOld";
 static constexpr auto IncrementalDisplacement = "IncrementalDisplacement";
 static constexpr auto Velocity = "Velocity";
 static constexpr auto Acceleration = "Acceleration";
