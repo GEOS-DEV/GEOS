@@ -60,7 +60,6 @@ public:
                                arrayView2d<real64 const, nodes::TOTAL_DISPLACEMENT_USD> const & u,
                                arrayView2d<real64 const, nodes::VELOCITY_USD> const & vel,
                                arrayView2d<real64, nodes::ACCELERATION_USD> const & acc,
-                               arrayView3d<real64, solid::STRESS_USD> const & stress,
                                real64 const dt ) const override
   {
     using ExplicitKernel = SolidMechanicsLagrangianSSLEKernels::ExplicitKernel;
@@ -75,7 +74,6 @@ public:
                                                         u,
                                                         vel,
                                                         acc,
-                                                        stress,
                                                         dt );
   }
 
