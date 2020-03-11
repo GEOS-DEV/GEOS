@@ -188,7 +188,7 @@ void WellElementSubRegion::AssignUnownedElementsInReservoir( MeshLevel & mesh,
     // find the closest reservoir element
     auto ret = minLocOverElemsInMesh( &mesh, [&] ( localIndex const er,
                                                    localIndex const esr,
-                                                   localIndex const ei ) -> real64
+                                                   localIndex const ei )
     {
       R1Tensor v = wellElemCoords;
       v -= resElemCoords[er][esr][ei];

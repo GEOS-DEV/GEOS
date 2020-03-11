@@ -518,61 +518,46 @@ public:
   ///@{
 
   /** @cond DO_NOT_DOCUMENT */
-  template< typename CONTAINERTYPE, typename LAMBDA >
-  static bool applyLambdaToContainer( CONTAINERTYPE const * const GEOSX_UNUSED_PARAM( group ), LAMBDA && GEOSX_UNUSED_PARAM( lambda ) )
-  { return false; }
+  template< typename CASTTYPE, typename CONTAINERTYPE, typename LAMBDA >
+  static bool applyLambdaToContainer( CONTAINERTYPE & container, LAMBDA && lambda )
+  {
+    using T = std::conditional_t< std::is_const< CONTAINERTYPE >::value, CASTTYPE const, CASTTYPE >;
+    T * const castedContainer = dynamic_cast< T * >( &container );
 
-  template< typename CONTAINERTYPE, typename LAMBDA >
-  static bool applyLambdaToContainer( CONTAINERTYPE * const GEOSX_UNUSED_PARAM( group ), LAMBDA && GEOSX_UNUSED_PARAM( lambda ) )
-  { return false; }
+    if( castedContainer != nullptr )
+    {
+      lambda( *castedContainer );
+      return true;
+    }
+
+    return false;
+  }
   /** @endcond */
 
   /**
    * @brief Apply a given functor to a container if the container can be
    *        cast to one of the specified types.
-   * @tparam CONTAINERTYPE the type of container
    * @tparam CASTTYPE      the first type that will be used in the attempted casting of container
    * @tparam CASTTYPES     a variadic list of types that will be used in the attempted casting of container
+   * @tparam CONTAINERTYPE the type of container
    * @tparam LAMBDA        the type of lambda function to call in the function
    * @param[in] container  a pointer to the container which will be passed to the lambda function
    * @param[in] lambda     the lambda function to call in the function
    * @return               a boolean to indicate whether the lambda was successfully applied to the container.
    */
-  template< typename CONTAINERTYPE, typename CASTTYPE, typename ... CASTTYPES, typename LAMBDA >
-  static bool applyLambdaToContainer( CONTAINERTYPE const * const container, LAMBDA && lambda )
+  template< typename T0, typename T1, typename ... CASTTYPES, typename CONTAINERTYPE, typename LAMBDA >
+  static bool applyLambdaToContainer( CONTAINERTYPE & container, LAMBDA && lambda )
   {
-    bool rval = false;
-    CASTTYPE const * const castedContainer = dynamic_cast< CASTTYPE const * >( container );
-    if( castedContainer!= nullptr )
-    {
-      lambda( castedContainer );
-      rval = true;
-    }
-    else
-    {
-      rval = applyLambdaToContainer< CONTAINERTYPE, CASTTYPES... >( container, std::forward< LAMBDA >( lambda ) );
-    }
-    return rval;
-  }
+    using T = std::conditional_t< std::is_const< CONTAINERTYPE >::value, T0 const, T0 >;
+    T * const castedContainer = dynamic_cast< T * >( &container );
 
-  /**
-   * @copydoc applyLambdaToContainer(CONTAINERTYPE const * const, LAMBDA &&)
-   */
-  template< typename CONTAINERTYPE, typename CASTTYPE, typename ... CASTTYPES, typename LAMBDA >
-  static bool applyLambdaToContainer( CONTAINERTYPE * const container, LAMBDA && lambda )
-  {
-    bool rval = false;
-    CASTTYPE * const castedContainer = dynamic_cast< CASTTYPE * >( container );
-    if( castedContainer!= nullptr )
+    if( castedContainer != nullptr )
     {
-      lambda( castedContainer );
-      rval = true;
+      lambda( *castedContainer );
+      return true;
     }
-    else
-    {
-      rval = applyLambdaToContainer< CONTAINERTYPE, CASTTYPES... >( container, std::forward< LAMBDA >( lambda ) );
-    }
-    return rval;
+
+    return applyLambdaToContainer< T1, CASTTYPES... >( container, std::forward< LAMBDA >( lambda ) );
   }
   ///@}
 
@@ -601,7 +586,7 @@ public:
   {
     for( auto & subGroupIter : m_subGroups )
     {
-      applyLambdaToContainer< Group, GROUPTYPE, GROUPTYPES... >( subGroupIter.second, [&]( auto * const castedSubGroup )
+      applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( *subGroupIter.second, [&]( auto & castedSubGroup )
       {
         lambda( castedSubGroup );
       } );
@@ -616,7 +601,7 @@ public:
   {
     for( auto const & subGroupIter : m_subGroups )
     {
-      applyLambdaToContainer< Group, GROUPTYPE, GROUPTYPES... >( subGroupIter.second, [&]( auto const * const castedSubGroup )
+      applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( *subGroupIter.second, [&]( auto const & castedSubGroup )
       {
         lambda( castedSubGroup );
       } );
@@ -636,7 +621,7 @@ public:
   {
     for( string const & subgroupName : subgroupNames )
     {
-      applyLambdaToContainer< Group, GROUPTYPE, GROUPTYPES... >( GetGroup( subgroupName ), [&]( auto * const castedSubGroup )
+      applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( *GetGroup( subgroupName ), [&]( auto & castedSubGroup )
       {
         lambda( castedSubGroup );
       } );
@@ -651,7 +636,7 @@ public:
   {
     for( string const & subgroupName : subgroupNames )
     {
-      applyLambdaToContainer< Group, GROUPTYPE, GROUPTYPES... >( GetGroup( subgroupName ), [&]( auto const * const castedSubGroup )
+      applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( *GetGroup( subgroupName ), [&]( auto const & castedSubGroup )
       {
         lambda( castedSubGroup );
       } );
@@ -709,8 +694,8 @@ public:
   {
     for( auto & wrapperIter : m_wrappers )
     {
-      applyLambdaToContainer< WrapperBase, Wrapper< TYPE >, Wrapper< TYPES >... >( wrapperIter.second,
-                                                                                   std::forward< LAMBDA >( lambda ));
+      applyLambdaToContainer< Wrapper< TYPE >, Wrapper< TYPES >... >( wrapperIter.second,
+                                                                      std::forward< LAMBDA >( lambda ));
     }
   }
 
@@ -726,8 +711,8 @@ public:
   {
     for( auto const & wrapperIter : m_wrappers )
     {
-      applyLambdaToContainer< WrapperBase, Wrapper< TYPE >, Wrapper< TYPES >... >( wrapperIter.second,
-                                                                                   std::forward< LAMBDA >( lambda ));
+      applyLambdaToContainer< Wrapper< TYPE >, Wrapper< TYPES >... >( *wrapperIter.second,
+                                                                      std::forward< LAMBDA >( lambda ));
     }
   }
 

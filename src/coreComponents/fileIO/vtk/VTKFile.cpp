@@ -128,13 +128,9 @@ public:
     if( binary )
     {
       localIndex totalNumberOfConnectivities = 0;
-      elemManager->forElementRegionsComplete< CellElementRegion >( [&]( localIndex const GEOSX_UNUSED_PARAM( er ),
-                                                                        auto const * const elemRegion )
+      elemManager->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & elemSubRegion )
       {
-        elemRegion->template forElementSubRegions< CellElementSubRegion >( [&]( auto const * const elemSubRegion )
-        {
-          totalNumberOfConnectivities += elemSubRegion->size() * elemSubRegion->numNodesPerElement();
-        } );
+        totalNumberOfConnectivities += elemSubRegion.size() * elemSubRegion.numNodesPerElement();
       } );
       WriteSize( totalNumberOfConnectivities, sizeof( localIndex ) );
       WriteBinaryConnectivities( elemManager );
@@ -264,65 +260,62 @@ private:
     integer multiplier = FindMultiplier( sizeof( localIndex ) );
     localIndex_array connectivityFragment( multiplier );
     integer countConnectivityFragment = 0;
-    elemManager->forElementRegionsComplete< CellElementRegion >( [&]( localIndex const GEOSX_UNUSED_PARAM( er ),
-                                                                      auto const * const elemRegion )
+
+    elemManager->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & elemSubRegion )
     {
-      elemRegion->template forElementSubRegions< CellElementSubRegion >( [&]( auto const * const elemSubRegion )
+      integer type = geosxToVTKCellTypeMap.at( elemSubRegion.GetElementTypeString() );
+      auto & connectivities = elemSubRegion.nodeList();
+      if( type == 12 )   // Special case for hexahedron because of the internal ordering
       {
-        integer type = geosxToVTKCellTypeMap.at( elemSubRegion->GetElementTypeString() );
-        auto & connectivities = elemSubRegion->nodeList();
-        if( type == 12 )   // Special case for hexahedron because of the internal ordering
+        for( localIndex i = 0; i < elemSubRegion.size(); i++ )
         {
-          for( localIndex i = 0; i < elemSubRegion->size(); i++ )
+          for( integer j = 0; j < elemSubRegion.numNodesPerElement(); j++ )
           {
-            for( integer j = 0; j < elemSubRegion->numNodesPerElement(); j++ )
+            if( j == 2 )
             {
-              if( j == 2 )
-              {
-                connectivityFragment[countConnectivityFragment++] = connectivities[i][3];
-              }
-              else if( j == 3 )
-              {
-                connectivityFragment[countConnectivityFragment++] = connectivities[i][2];
-              }
-              else if( j == 6 )
-              {
-                connectivityFragment[countConnectivityFragment++] = connectivities[i][7];
-              }
-              else if( j == 7 )
-              {
-                connectivityFragment[countConnectivityFragment++] = connectivities[i][6];
-              }
-              else
-              {
-                connectivityFragment[countConnectivityFragment++] = connectivities[i][j];
-              }
-              if( countConnectivityFragment == multiplier )
-              {
-                stream <<
-                  stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( connectivityFragment.data() ), sizeof( localIndex ) * multiplier );
-                countConnectivityFragment = 0;
-              }
+              connectivityFragment[countConnectivityFragment++] = connectivities[i][3];
             }
-          }
-        }
-        else
-        {
-          for( localIndex i = 0; i < elemSubRegion->size(); i++ )
-          {
-            for( integer j = 0; j < elemSubRegion->numNodesPerElement(); j++ )
+            else if( j == 3 )
+            {
+              connectivityFragment[countConnectivityFragment++] = connectivities[i][2];
+            }
+            else if( j == 6 )
+            {
+              connectivityFragment[countConnectivityFragment++] = connectivities[i][7];
+            }
+            else if( j == 7 )
+            {
+              connectivityFragment[countConnectivityFragment++] = connectivities[i][6];
+            }
+            else
             {
               connectivityFragment[countConnectivityFragment++] = connectivities[i][j];
-              if( countConnectivityFragment == multiplier )
-              {
-                stream <<
-                  stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( connectivityFragment.data() ), sizeof( localIndex ) * multiplier );
-                countConnectivityFragment = 0;
-              }
+            }
+            if( countConnectivityFragment == multiplier )
+            {
+              stream <<
+                stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( connectivityFragment.data() ), sizeof( localIndex ) * multiplier );
+              countConnectivityFragment = 0;
             }
           }
         }
-      } );
+      }
+      else
+      {
+        for( localIndex i = 0; i < elemSubRegion.size(); i++ )
+        {
+          for( integer j = 0; j < elemSubRegion.numNodesPerElement(); j++ )
+          {
+            connectivityFragment[countConnectivityFragment++] = connectivities[i][j];
+            if( countConnectivityFragment == multiplier )
+            {
+              stream <<
+                stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( connectivityFragment.data() ), sizeof( localIndex ) * multiplier );
+              countConnectivityFragment = 0;
+            }
+          }
+        }
+      }
     } );
     stream <<
       stringutilities::EncodeBase64(
@@ -332,55 +325,47 @@ private:
 
   void WriteAsciiConnectivities( ElementRegionManager const * const elemManager )
   {
-    elemManager->forElementRegionsComplete< CellElementRegion >( [&]( localIndex const GEOSX_UNUSED_PARAM( er ),
-                                                                      auto const * const elemRegion )
+    elemManager->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & elemSubRegion )
     {
-      elemRegion->template forElementSubRegions< CellElementSubRegion >( [&]( auto const * const elemSubRegion )
+      integer type = geosxToVTKCellTypeMap.at( elemSubRegion.GetElementTypeString() );
+      auto & connectivities = elemSubRegion.nodeList();
+      if( type == 12 )   // Special case for hexahedron because of the internal ordering
       {
-        integer type = geosxToVTKCellTypeMap.at( elemSubRegion->GetElementTypeString() );
-        auto & connectivities = elemSubRegion->nodeList();
-        if( type == 12 )   // Special case for hexahedron because of the internal ordering
+        for( localIndex i = 0; i < connectivities.size() / 8; i++ )
         {
-          for( localIndex i = 0; i < connectivities.size() / 8; i++ )
-          {
-            m_outFile << connectivities[i][0] << " ";
-            m_outFile << connectivities[i][1] << " ";
-            m_outFile << connectivities[i][3] << " ";
-            m_outFile << connectivities[i][2] << " ";
-            m_outFile << connectivities[i][4] << " ";
-            m_outFile << connectivities[i][5] << " ";
-            m_outFile << connectivities[i][7] << " ";
-            m_outFile << connectivities[i][6] << " ";
-            m_outFile << "\n";
-          }
-        }
-        else
-        {
-          for( localIndex i = 0; i < connectivities.size(); i++ )
-          {
-            m_outFile << connectivities.data()[i] <<" ";
-          }
+          m_outFile << connectivities[i][0] << " ";
+          m_outFile << connectivities[i][1] << " ";
+          m_outFile << connectivities[i][3] << " ";
+          m_outFile << connectivities[i][2] << " ";
+          m_outFile << connectivities[i][4] << " ";
+          m_outFile << connectivities[i][5] << " ";
+          m_outFile << connectivities[i][7] << " ";
+          m_outFile << connectivities[i][6] << " ";
           m_outFile << "\n";
         }
-      } );
+      }
+      else
+      {
+        for( localIndex i = 0; i < connectivities.size(); i++ )
+        {
+          m_outFile << connectivities.data()[i] <<" ";
+        }
+        m_outFile << "\n";
+      }
     } );
   }
 
   void WriteAsciiOffsets( ElementRegionManager const * const elemManager )
   {
     localIndex curOffset = elemManager->GetRegion( 0 )->GetSubRegion( 0 )->numNodesPerElement();
-    elemManager->forElementRegionsComplete< CellElementRegion >( [&]( localIndex const GEOSX_UNUSED_PARAM( er ),
-                                                                      auto const * const elemRegion )
+    elemManager->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & elemSubRegion )
     {
-      elemRegion->template forElementSubRegions< CellElementSubRegion >( [&]( auto const * const elemSubRegion )
+      localIndex offSetForOneCell = elemSubRegion.numNodesPerElement();
+      for( localIndex i =  0; i < elemSubRegion.size(); i++ )
       {
-        localIndex offSetForOneCell = elemSubRegion->numNodesPerElement();
-        for( localIndex i =  0; i < elemSubRegion->size(); i++ )
-        {
-          m_outFile << curOffset << "\n";
-          curOffset += offSetForOneCell;
-        }
-      } );
+        m_outFile << curOffset << "\n";
+        curOffset += offSetForOneCell;
+      }
     } );
   }
 
@@ -392,23 +377,19 @@ private:
     localIndex_array offsetFragment( multiplier );
     integer countOffsetFragmentIndex = 0;
     localIndex curOffset = elemManager->GetRegion( 0 )->GetSubRegion( 0 )->numNodesPerElement();
-    elemManager->forElementRegionsComplete< CellElementRegion >( [&]( localIndex const GEOSX_UNUSED_PARAM( er ),
-                                                                      auto const * const elemRegion )
+    elemManager->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & elemSubRegion )
     {
-      elemRegion->template forElementSubRegions< CellElementSubRegion >( [&]( auto const * const elemSubRegion )
+      localIndex offSetForOneCell = elemSubRegion.numNodesPerElement();
+      for( localIndex i =  0; i < elemSubRegion.size(); i++ )
       {
-        localIndex offSetForOneCell = elemSubRegion->numNodesPerElement();
-        for( localIndex i =  0; i < elemSubRegion->size(); i++ )
+        offsetFragment[countOffsetFragmentIndex++] = curOffset;
+        curOffset += offSetForOneCell;
+        if( countOffsetFragmentIndex == multiplier )
         {
-          offsetFragment[countOffsetFragmentIndex++] = curOffset;
-          curOffset += offSetForOneCell;
-          if( countOffsetFragmentIndex == multiplier )
-          {
-            stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( offsetFragment.data() ), sizeof( localIndex ) * multiplier );
-            countOffsetFragmentIndex = 0;
-          }
+          stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( offsetFragment.data() ), sizeof( localIndex ) * multiplier );
+          countOffsetFragmentIndex = 0;
         }
-      } );
+      }
     } );
     stream <<
       stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( offsetFragment.data() ), sizeof( localIndex ) * ( countOffsetFragmentIndex) );
@@ -417,17 +398,13 @@ private:
 
   void WriteAsciiTypes( ElementRegionManager const * const elemManager )
   {
-    elemManager->forElementRegionsComplete< CellElementRegion >( [&]( localIndex const GEOSX_UNUSED_PARAM( er ),
-                                                                      auto const * const elemRegion )
+    elemManager->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & elemSubRegion )
     {
-      elemRegion->template forElementSubRegions< CellElementSubRegion >( [&]( auto const * const elemSubRegion )
+      integer type = geosxToVTKCellTypeMap.at( elemSubRegion.GetElementTypeString() );
+      for( localIndex i =  0; i < elemSubRegion.size(); i++ )
       {
-        integer type = geosxToVTKCellTypeMap.at( elemSubRegion->GetElementTypeString() );
-        for( localIndex i =  0; i < elemSubRegion->size(); i++ )
-        {
-          m_outFile <<  type << "\n";
-        }
-      } );
+        m_outFile <<  type << "\n";
+      }
     } );
   }
 
@@ -438,22 +415,18 @@ private:
                                                                 // creating a big table each time.
     integer_array typeFragment( multiplier );
     integer countTypeFragmentIndex = 0;
-    elemManager->forElementRegionsComplete< CellElementRegion >( [&]( localIndex const GEOSX_UNUSED_PARAM( er ),
-                                                                      auto const * const elemRegion )
+    elemManager->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & elemSubRegion )
     {
-      elemRegion->template forElementSubRegions< CellElementSubRegion >( [&]( auto const * const elemSubRegion )
+      integer type = geosxToVTKCellTypeMap.at( elemSubRegion.GetElementTypeString() );
+      for( localIndex i =  0; i < elemSubRegion.size(); i++ )
       {
-        integer type = geosxToVTKCellTypeMap.at( elemSubRegion->GetElementTypeString() );
-        for( localIndex i =  0; i < elemSubRegion->size(); i++ )
+        typeFragment[countTypeFragmentIndex++] = type;
+        if( countTypeFragmentIndex == multiplier )
         {
-          typeFragment[countTypeFragmentIndex++] = type;
-          if( countTypeFragmentIndex == multiplier )
-          {
-            stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( typeFragment.data() ), sizeof( integer ) * multiplier );
-            countTypeFragmentIndex = 0;
-          }
+          stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( typeFragment.data() ), sizeof( integer ) * multiplier );
+          countTypeFragmentIndex = 0;
         }
-      } );
+      }
     } );
     stream <<
       stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( typeFragment.data() ), sizeof( localIndex ) * ( countTypeFragmentIndex) );
@@ -464,10 +437,10 @@ private:
   void WriteCellAsciiData( string const & fieldName,
                            ElementRegionManager const * const elemManager )
   {
-    elemManager->forElementSubRegions< CellElementSubRegion >( [&]( auto const * const elemSubRegion )
+    elemManager->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & elemSubRegion )
     {
-      typename T::ViewTypeConst const & dataView = elemSubRegion->template getReference< T >( fieldName );
-      for( localIndex ei = 0; ei < elemSubRegion->size(); ++ei )
+      typename T::ViewTypeConst const & dataView = elemSubRegion.getReference< T >( fieldName );
+      for( localIndex ei = 0; ei < elemSubRegion.size(); ++ei )
       {
         LvArray::forValuesInSlice( dataView[ei], [this]( auto const & value ) { m_outFile << value << " "; } );
         m_outFile << "\n";
@@ -486,13 +459,13 @@ private:
                                                                   // creating a big table each time.
     std::vector< VALUE_TYPE > dataFragment( multiplier );
     integer countDataFragment = 0;
-    elemManager->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const * const elemSubRegion )
+    elemManager->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & elemSubRegion )
     {
 
-      typename ARRAY_TYPE::ViewTypeConst const & dataView = elemSubRegion->getReference< ARRAY_TYPE >( fieldName );
-      if( elemSubRegion->size() > 0 )
+      typename ARRAY_TYPE::ViewTypeConst const & dataView = elemSubRegion.getReference< ARRAY_TYPE >( fieldName );
+      if( elemSubRegion.size() > 0 )
       {
-        for( localIndex ei = 0; ei < elemSubRegion->size(); ++ei )
+        for( localIndex ei = 0; ei < elemSubRegion.size(); ++ei )
         {
           LvArray::forValuesInSlice( dataView[ei],
                                      [&]( VALUE_TYPE const & value )
@@ -510,7 +483,7 @@ private:
       else
       {
         real64 nanArray[3] = { std::nan( "0" ), std::nan( "0" ), std::nan( "0" ) };
-        for( localIndex ei = 0; ei  < elemSubRegion->size(); ei++ )
+        for( localIndex ei = 0; ei  < elemSubRegion.size(); ei++ )
         {
           stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( nanArray ), sizeof( real64 ) * 3 );
         }
@@ -600,13 +573,13 @@ inline void CustomVTUXMLWriter::WriteCellBinaryData< r1_array >( string const & 
   std::stringstream stream;
   string outputString;
   WriteSize( elemManager->getNumberOfElements< CellElementSubRegion >() * 3, sizeof( real64 ) );
-  elemManager->forElementSubRegions< CellElementSubRegion >( [&]( auto const * const elemSubRegion )
+  elemManager->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & elemSubRegion )
   {
-    arrayView1d< R1Tensor const > const & dataView = elemSubRegion->template getReference< array1d< R1Tensor > >( fieldName );
+    arrayView1d< R1Tensor const > const & dataView = elemSubRegion.getReference< array1d< R1Tensor > >( fieldName );
 
     if( dataView.size() > 0 )
     {
-      for( localIndex ei = 0; ei  < elemSubRegion->size(); ei++ )
+      for( localIndex ei = 0; ei  < elemSubRegion.size(); ei++ )
       {
         stream <<stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( dataView[ei].Data() ), sizeof( real64 ) * 3 );
       }
@@ -615,7 +588,7 @@ inline void CustomVTUXMLWriter::WriteCellBinaryData< r1_array >( string const & 
     {
       real64_array nanArray( 3 );
       nanArray[0] = nanArray[1] = nanArray[2] = std::nan( "0" );
-      for( localIndex ei = 0; ei  < elemSubRegion->size(); ei++ )
+      for( localIndex ei = 0; ei  < elemSubRegion.size(); ei++ )
       {
         stream <<stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( nanArray.data() ), sizeof( real64 ) * 3 );
       }
@@ -696,36 +669,32 @@ void VTKFile::Write( double const timeStep,
   std::set< std::tuple< string, string, integer, rtTypes::TypeIDs > > cellFields; // First : field name, Second : type,
                                                                                   // Third : field dimension;
   // Find all cell fields to export
-  elemManager->forElementRegionsComplete< CellElementRegion >( [&]( localIndex const GEOSX_UNUSED_PARAM( er ),
-                                                                    auto const * const elemRegion )
+  elemManager->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & subRegion )
   {
-    elemRegion->forElementSubRegions( [&]( auto const * const subRegion )
+    for( auto const & wrapperIter : subRegion.wrappers() )
     {
-      for( auto const & wrapperIter : subRegion->wrappers() )
-      {
-        WrapperBase const * const wrapper = wrapperIter.second;
+      WrapperBase const * const wrapper = wrapperIter.second;
 
-        if( wrapper->getPlotLevel() < m_plotLevel )
+      if( wrapper->getPlotLevel() < m_plotLevel )
+      {
+        // the field name is the key to the map
+        string const fieldName = wrapper->getName();
+        std::type_info const & typeID = wrapper->get_typeid();
+        rtTypes::TypeIDs fieldType = rtTypes::typeID( wrapper->get_typeid());
+        if( !geosxToVTKTypeMap.count( typeID ) )
+          continue;
+        int dimension = 0;
+        if( fieldType == rtTypes::TypeIDs::r1_array_id )
         {
-          // the field name is the key to the map
-          string const fieldName = wrapper->getName();
-          std::type_info const & typeID = wrapper->get_typeid();
-          rtTypes::TypeIDs fieldType = rtTypes::typeID( wrapper->get_typeid());
-          if( !geosxToVTKTypeMap.count( typeID ) )
-            continue;
-          int dimension = 0;
-          if( fieldType == rtTypes::TypeIDs::r1_array_id )
-          {
-            dimension = 3;
-          }
-          else
-          {
-            dimension = 1;
-          }
-          cellFields.insert( std::make_tuple( fieldName, geosxToVTKTypeMap.at( typeID ), dimension, fieldType ) );
+          dimension = 3;
         }
+        else
+        {
+          dimension = 1;
+        }
+        cellFields.insert( std::make_tuple( fieldName, geosxToVTKTypeMap.at( typeID ), dimension, fieldType ) );
       }
-    } );
+    }
   } );
 
   std::set< std::tuple< string, string, integer, rtTypes::TypeIDs > > nodeFields; // First : field name, Second : type,
@@ -842,9 +811,9 @@ void VTKFile::Write( double const timeStep,
   localIndex totalNumberOfCells = elemManager->getNumberOfElements< CellElementSubRegion >();
   localIndex totalNumberOfSubRegion = 0;
   elemManager->forElementRegionsComplete< CellElementRegion >( [&]( localIndex const GEOSX_UNUSED_PARAM( er ),
-                                                                    auto const * const elemRegion )
+                                                                    CellElementRegion const & elemRegion )
   {
-    totalNumberOfSubRegion += elemRegion->numSubRegions();
+    totalNumberOfSubRegion += elemRegion.numSubRegions();
   } );
   vtuWriter.OpenXMLNode( "Piece", {
       { "NumberOfPoints", std::to_string( nodeManager->size() ) },
@@ -900,28 +869,15 @@ void VTKFile::Write( double const timeStep,
 
   vtuWriter.WriteCellConnectivities( elemManager, m_binary );
 
-  /*
-     elemManager->forElementRegionsComplete< ElementRegion >( [&]( localIndex const er,
-                                                                auto const * const elemRegion )
-     {
-     elemRegion->template forElementSubRegions< CellElementSubRegion >( [&]( auto const * const elemSubRegion )
-     {
-      vtuWriter.WriteCellConnectivities( elemSubRegion->GetElementTypeString(), elemSubRegion->nodeList(), m_binary );
-     });
-     });
-   */
   vtuWriter.CloseXMLNode( "DataArray" );
 
 
   array1d< std::tuple< integer, localIndex, string > > subRegionsInfo; // First value : cell size, Second value : number
                                                                        // of cells, Third value : cell Types
-  elemManager->forElementRegionsComplete< CellElementRegion >( [&]( localIndex const GEOSX_UNUSED_PARAM( er ),
-                                                                    auto const * const elemRegion )
+
+  elemManager->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & elemSubRegion )
   {
-    elemRegion->template forElementSubRegions< CellElementSubRegion >( [&]( auto const * const elemSubRegion )
-    {
-      subRegionsInfo.push_back( std::make_tuple( elemSubRegion->numNodesPerElement(), elemSubRegion->size(), elemSubRegion->GetElementTypeString() ) );
-    } );
+    subRegionsInfo.push_back( std::make_tuple( elemSubRegion.numNodesPerElement(), elemSubRegion.size(), elemSubRegion.GetElementTypeString() ) );
   } );
 
   // Definition of the node DataArray that will contain the offsets

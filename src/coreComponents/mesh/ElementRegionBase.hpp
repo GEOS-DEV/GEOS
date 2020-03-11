@@ -161,8 +161,8 @@ public:
   {
     for( localIndex esr=0; esr<this->numSubRegions(); ++esr )
     {
-      ElementSubRegionBase const * const subRegion = this->GetSubRegion( esr );
-      applyLambdaToContainer< ElementSubRegionBase, SUBREGIONTYPE, SUBREGIONTYPES... >( subRegion, [&]( auto const * const castedSubRegion )
+      ElementSubRegionBase const & subRegion = *this->GetSubRegion( esr );
+      applyLambdaToContainer< SUBREGIONTYPE, SUBREGIONTYPES... >( subRegion, [&]( auto const & castedSubRegion )
       {
         lambda( esr, castedSubRegion );
       } );
@@ -174,8 +174,8 @@ public:
   {
     for( localIndex esr=0; esr<this->numSubRegions(); ++esr )
     {
-      ElementSubRegionBase * const subRegion = this->GetSubRegion( esr );
-      applyLambdaToContainer< ElementSubRegionBase, SUBREGIONTYPE, SUBREGIONTYPES... >( subRegion, [&]( auto * const castedSubRegion )
+      ElementSubRegionBase & subRegion = *this->GetSubRegion( esr );
+      applyLambdaToContainer< SUBREGIONTYPE, SUBREGIONTYPES... >( subRegion, [&]( auto & castedSubRegion )
       {
         lambda( esr, castedSubRegion );
       } );

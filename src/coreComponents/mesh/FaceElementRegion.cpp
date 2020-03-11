@@ -45,11 +45,10 @@ FaceElementRegion::~FaceElementRegion()
 
 void FaceElementRegion::InitializePreSubGroups( Group * const )
 {
-  this->forElementSubRegions< FaceElementSubRegion >( [&] ( FaceElementSubRegion * const subRegion )
+  this->forElementSubRegions< FaceElementSubRegion >( [&] ( FaceElementSubRegion & subRegion )
   {
-    subRegion->getWrapper< array1d< real64 > >( FaceElementSubRegion::viewKeyStruct::elementApertureString )->
+    subRegion.getWrapper< array1d< real64 > >( FaceElementSubRegion::viewKeyStruct::elementApertureString )->
       setApplyDefaultValue( m_defaultAperture );
-
   } );
 }
 

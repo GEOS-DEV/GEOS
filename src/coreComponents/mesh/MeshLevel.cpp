@@ -58,9 +58,9 @@ MeshLevel::~MeshLevel()
 
 void MeshLevel::InitializePostInitialConditions_PostSubGroups( Group * const )
 {
-  m_elementManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion * const subRegion )
+  m_elementManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
   {
-    subRegion->CalculateElementGeometricQuantities( m_nodeManager, m_faceManager );
+    subRegion.CalculateElementGeometricQuantities( m_nodeManager, m_faceManager );
   } );
 }
 
@@ -117,10 +117,10 @@ void MeshLevel::GenerateAdjacencyLists( arrayView1d< localIndex const > const & 
 
       elemRegion->forElementSubRegionsIndex< CellElementSubRegion,
                                              WellElementSubRegion >( [&]( localIndex const kSubReg,
-                                                                          auto const * const subRegion )
+                                                                          auto const & subRegion )
       {
-        arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = subRegion->nodeList();
-        arrayView2d< localIndex const > const & elemsToFaces = subRegion->faceList();
+        arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = subRegion.nodeList();
+        arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
         for( auto const elementIndex : elementAdjacencySet[kReg][kSubReg] )
         {
           for( localIndex a=0; a<elemsToNodes.size( 1 ); ++a )

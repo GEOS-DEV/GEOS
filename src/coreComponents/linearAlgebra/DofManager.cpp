@@ -265,9 +265,9 @@ void DofManager::addField( string const & fieldName,
   ElementRegionManager * const elemManager = m_mesh->getElemManager();
   if( field.regions.empty() )
   {
-    elemManager->forElementRegions( [&]( ElementRegionBase const * const region )
+    elemManager->forElementRegions( [&]( ElementRegionBase const & region )
     {
-      field.regions.push_back( region->getName() );
+      field.regions.push_back( region.getName() );
     } );
   }
   else
@@ -754,10 +754,10 @@ void DofManager::vectorToField( VECTOR const & vector,
 
   if( fieldDesc.location == Location::Elem )
   {
-    m_mesh->getElemManager()->forElementSubRegions( fieldDesc.regions, [&]( ElementSubRegionBase * const subRegion )
+    m_mesh->getElemManager()->forElementSubRegions< ElementSubRegionBase >( fieldDesc.regions, [&]( ElementSubRegionBase & subRegion )
     {
       vectorToFieldImpl< FIELD_OP, POLICY >( vector,
-                                             subRegion,
+                                             &subRegion,
                                              fieldDesc.key,
                                              dstFieldName,
                                              scalingFactor,
@@ -829,10 +829,10 @@ void DofManager::fieldToVector( VECTOR & vector,
 
   if( fieldDesc.location == Location::Elem )
   {
-    m_mesh->getElemManager()->forElementSubRegions( fieldDesc.regions, [&]( ElementSubRegionBase const * const subRegion )
+    m_mesh->getElemManager()->forElementSubRegions< ElementSubRegionBase >( fieldDesc.regions, [&]( ElementSubRegionBase const & subRegion )
     {
       fieldToVectorImpl< FIELD_OP, POLICY >( vector,
-                                             subRegion,
+                                             &subRegion,
                                              fieldDesc.key,
                                              dstFieldName,
                                              scalingFactor,

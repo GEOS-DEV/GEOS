@@ -237,43 +237,40 @@ void SurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
 
     ElementRegionManager * const elemManager = meshLevel->getElemManager();
 
-    elemManager->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion * const subRegion )
+    elemManager->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
-      subRegion->registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_00String )->setDefaultValue( -1 );
-      subRegion->registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_01String )->setDefaultValue( -1 );
-      subRegion->registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_02String )->setDefaultValue( -1 );
-      subRegion->registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_10String )->setDefaultValue( -1 );
-      subRegion->registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_11String )->setDefaultValue( -1 );
-      subRegion->registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_12String )->setDefaultValue( -1 );
-      subRegion->registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_20String )->setDefaultValue( -1 );
-      subRegion->registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_21String )->setDefaultValue( -1 );
-      subRegion->registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_22String )->setDefaultValue( -1 );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_00String )->setDefaultValue( -1 );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_01String )->setDefaultValue( -1 );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_02String )->setDefaultValue( -1 );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_10String )->setDefaultValue( -1 );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_11String )->setDefaultValue( -1 );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_12String )->setDefaultValue( -1 );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_20String )->setDefaultValue( -1 );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_21String )->setDefaultValue( -1 );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_22String )->setDefaultValue( -1 );
     } );
 
-    elemManager->forElementRegions< FaceElementRegion >( [&] ( FaceElementRegion * const region )
+    elemManager->forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
-      region->forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion * const subRegion )
-      {
-        subRegion->registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_00String )->setDefaultValue( -1 );
-        subRegion->registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_01String )->setDefaultValue( -1 );
-        subRegion->registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_02String )->setDefaultValue( -1 );
-        subRegion->registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_10String )->setDefaultValue( -1 );
-        subRegion->registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_11String )->setDefaultValue( -1 );
-        subRegion->registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_12String )->setDefaultValue( -1 );
-        subRegion->registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_20String )->setDefaultValue( -1 );
-        subRegion->registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_21String )->setDefaultValue( -1 );
-        subRegion->registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_22String )->setDefaultValue( -1 );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_00String )->setDefaultValue( -1 );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_01String )->setDefaultValue( -1 );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_02String )->setDefaultValue( -1 );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_10String )->setDefaultValue( -1 );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_11String )->setDefaultValue( -1 );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_12String )->setDefaultValue( -1 );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_20String )->setDefaultValue( -1 );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_21String )->setDefaultValue( -1 );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_22String )->setDefaultValue( -1 );
 
-        subRegion->registerWrapper< real64_array >( viewKeyStruct::ruptureTimeString )->
-          setApplyDefaultValue( m_nonRuptureTime )->
-          setPlotLevel( dataRepository::PlotLevel::LEVEL_0 )->
-          setDescription( "Time that the face was ruptured." );
+      subRegion.registerWrapper< real64_array >( viewKeyStruct::ruptureTimeString )->
+        setApplyDefaultValue( m_nonRuptureTime )->
+        setPlotLevel( dataRepository::PlotLevel::LEVEL_0 )->
+        setDescription( "Time that the face was ruptured." );
 
-        subRegion->registerWrapper< real64_array >( viewKeyStruct::ruptureRateString )->
-          setApplyDefaultValue( 1.0e99 )->
-          setPlotLevel( dataRepository::PlotLevel::LEVEL_0 )->
-          setDescription( "Rate of rupture for a given face." );
-      } );
+      subRegion.registerWrapper< real64_array >( viewKeyStruct::ruptureRateString )->
+        setApplyDefaultValue( 1.0e99 )->
+        setPlotLevel( dataRepository::PlotLevel::LEVEL_0 )->
+        setDescription( "Rate of rupture for a given face." );
     } );
 
     NodeManager * const nodeManager = meshLevel->getNodeManager();
@@ -721,23 +718,23 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
 
     elementManager.forElementSubRegionsComplete< FaceElementSubRegion >( [&]( localIndex const er,
                                                                               localIndex const esr,
-                                                                              ElementRegionBase const * const,
-                                                                              FaceElementSubRegion * const subRegion )
+                                                                              ElementRegionBase &,
+                                                                              FaceElementSubRegion & subRegion )
     {
       std::set< localIndex > & newFaceElems = modifiedObjects.newElements[{er, esr}];
       for( localIndex const newFaceElemIndex : newFaceElems )
       {
-        subRegion->m_newFaceElements.insert( newFaceElemIndex );
+        subRegion.m_newFaceElements.insert( newFaceElemIndex );
       }
     } );
 
 
-    elementManager.forElementSubRegions< FaceElementSubRegion >( [&]( auto * const subRegion )
+    elementManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
-      FaceElementSubRegion::NodeMapType & nodeMap = subRegion->nodeList();
-      FaceElementSubRegion::FaceMapType & faceMap = subRegion->faceList();
+      FaceElementSubRegion::NodeMapType & nodeMap = subRegion.nodeList();
+      FaceElementSubRegion::FaceMapType & faceMap = subRegion.faceList();
 
-      for( localIndex kfe=0; kfe<subRegion->size(); ++kfe )
+      for( localIndex kfe=0; kfe<subRegion.size(); ++kfe )
       {
         nodeMap[kfe].resize( 8 );
 
@@ -2963,9 +2960,9 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
 
 
   nodeManager.totalDisplacement().move( chai::CPU, false );
-  elementManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion * const subRegion )
+  elementManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
   {
-    subRegion->GetConstitutiveModels()->GetGroup( m_solidMaterialName )->
+    subRegion.GetConstitutiveModels()->GetGroup( m_solidMaterialName )->
       getReference< array3d< real64, solid::STRESS_PERMUTATION > >( SolidBase::viewKeyStruct::stressString ).move( chai::CPU,
                                                                                                                    false );
   } );

@@ -146,9 +146,9 @@ void EventBase::GetTargetReferences()
     GEOSX_ERROR_IF( m_target == nullptr, "The target of an event must be executable! " << m_target );
   }
 
-  this->forSubGroups< EventBase >( []( EventBase * subEvent ) -> void
+  this->forSubGroups< EventBase >( []( EventBase & subEvent )
   {
-    subEvent->GetTargetReferences();
+    subEvent.GetTargetReferences();
   } );
 }
 
@@ -179,9 +179,9 @@ void EventBase::CheckEvents( real64 const time,
     this->EstimateEventTiming( time, dt, cycle, domain );
 
     // Check sub-events
-    this->forSubGroups< EventBase >( [&]( EventBase * subEvent ) -> void
+    this->forSubGroups< EventBase >( [&]( EventBase & subEvent )
     {
-      subEvent->CheckEvents( time, dt, cycle, domain );
+      subEvent.CheckEvents( time, dt, cycle, domain );
     } );
   }
 }
@@ -197,11 +197,11 @@ void EventBase::SignalToPrepareForExecution( real64 const time,
     m_target->SignalToPrepareForExecution( time, dt, cycle, domain );
   }
 
-  this->forSubGroups< EventBase >( [&]( EventBase * subEvent ) -> void
+  this->forSubGroups< EventBase >( [&]( EventBase & subEvent )
   {
-    if( subEvent->GetForecast() == 1 )
+    if( subEvent.GetForecast() == 1 )
     {
-      subEvent->SignalToPrepareForExecution( time, dt, cycle, domain );
+      subEvent.SignalToPrepareForExecution( time, dt, cycle, domain );
     }
   } );
 }
@@ -280,9 +280,9 @@ real64 EventBase::GetTimestepRequest( real64 const time )
       }
 
       // Get the sub-event dt requests
-      this->forSubGroups< EventBase >( [&]( EventBase * subEvent ) -> void
+      this->forSubGroups< EventBase >( [&]( EventBase & subEvent )
       {
-        m_currentEventDtRequest = std::min( m_currentEventDtRequest, subEvent->GetTimestepRequest( time ));
+        m_currentEventDtRequest = std::min( m_currentEventDtRequest, subEvent.GetTimestepRequest( time ));
       } );
     }
   }
@@ -325,9 +325,9 @@ void EventBase::Cleanup( real64 const time_n,
   }
 
   // Cleanup any sub-events
-  this->forSubGroups< EventBase >( [&]( EventBase * subEvent ) -> void
+  this->forSubGroups< EventBase >( [&]( EventBase & subEvent )
   {
-    subEvent->Cleanup( time_n, cycleNumber, m_eventCount, m_eventProgress, domain );
+    subEvent.Cleanup( time_n, cycleNumber, m_eventCount, m_eventProgress, domain );
   } );
 }
 
@@ -335,9 +335,9 @@ void EventBase::Cleanup( real64 const time_n,
 
 integer EventBase::GetExitFlag()
 {
-  this->forSubGroups< EventBase >( [&]( EventBase * subEvent ) -> void
+  this->forSubGroups< EventBase >( [&]( EventBase & subEvent )
   {
-    m_exitFlag += subEvent->GetExitFlag();
+    m_exitFlag += subEvent.GetExitFlag();
   } );
 
   return m_exitFlag;
@@ -361,9 +361,9 @@ void EventBase::GetExecutionOrder( array1d< integer > & eventCounters )
     }
   }
 
-  this->forSubGroups< EventBase >( [&]( EventBase * subEvent ) -> void
+  this->forSubGroups< EventBase >( [&]( EventBase & subEvent )
   {
-    subEvent->GetExecutionOrder( eventCounters );
+    subEvent.GetExecutionOrder( eventCounters );
   } );
 }
 
@@ -379,9 +379,9 @@ void EventBase::SetProgressIndicator( array1d< integer > & eventCounters )
   }
 
   // Do this for child events
-  this->forSubGroups< EventBase >( [&]( EventBase * subEvent ) -> void
+  this->forSubGroups< EventBase >( [&]( EventBase & subEvent )
   {
-    subEvent->SetProgressIndicator( eventCounters );
+    subEvent.SetProgressIndicator( eventCounters );
   } );
 }
 

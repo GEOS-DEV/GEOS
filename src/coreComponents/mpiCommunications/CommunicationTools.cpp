@@ -663,9 +663,9 @@ void removeUnusedNeighbors( NodeManager & nodeManager,
 
     used = used || faceManager.getNeighborData( neighborRank ).communicationExists();
 
-    elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase * const subRegion )
+    elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
     {
-      used = used || subRegion->getNeighborData( neighborRank ).communicationExists();
+      used = used || subRegion.getNeighborData( neighborRank ).communicationExists();
     } );
 
     if( used )
@@ -678,9 +678,9 @@ void removeUnusedNeighbors( NodeManager & nodeManager,
       edgeManager.removeNeighbor( neighborRank );
       faceManager.removeNeighbor( neighborRank );
 
-      elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase * subRegion )
+      elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
       {
-        subRegion->removeNeighbor( neighborRank );
+        subRegion.removeNeighbor( neighborRank );
       } );
 
       neighbors.erase( neighbors.begin() + i );
@@ -777,10 +777,10 @@ void CommunicationTools::FindGhosts( MeshLevel & meshLevel,
   verifyGhostingConsistency( edgeManager, neighbors );
   faceManager.FixUpDownMaps( false );
   verifyGhostingConsistency( faceManager, neighbors );
-  elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase * subRegion )
+  elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
   {
-    subRegion->FixUpDownMaps( false );
-    verifyGhostingConsistency( *subRegion, neighbors );
+    subRegion.FixUpDownMaps( false );
+    verifyGhostingConsistency( subRegion, neighbors );
   } );
 
   removeUnusedNeighbors( nodeManager, edgeManager, faceManager, elemManager, neighbors );

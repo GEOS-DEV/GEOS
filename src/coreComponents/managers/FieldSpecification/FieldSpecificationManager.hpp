@@ -276,9 +276,9 @@ private:
     }
     else
     {
-      target->forSubGroups( [&]( Group * subTarget )
+      target->forSubGroups( [&]( Group & subTarget )
       {
-        ApplyOnTargetRecursive( subTarget, fs, targetName, lambda );
+        ApplyOnTargetRecursive( &subTarget, fs, targetName, lambda );
       } );
     }
   }
