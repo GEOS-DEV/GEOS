@@ -550,7 +550,7 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
                 nodeList() );
 
   // First create the sets
-  auto const & nodeSets = nodeManager->sets()->wrappers();
+  auto const & nodeSets = nodeManager->sets().wrappers();
   for( localIndex i = 0; i < nodeSets.size(); ++i )
   {
     auto const & setWrapper = nodeSets[i];
@@ -563,7 +563,7 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
   {
     auto const & setWrapper = nodeSets[i];
     std::string const & setName = setWrapper->getName();
-    const SortedArray< localIndex > & targetSet = nodeManager->sets()->getReference< SortedArray< localIndex > >( setName );
+    const SortedArray< localIndex > & targetSet = nodeManager->sets().getReference< SortedArray< localIndex > >( setName );
     ConstructSetFromSetAndMap( targetSet, m_nodeList, setName );
   } );
 
@@ -648,7 +648,7 @@ void FaceManager::SetIsExternal()
 //{
 //  array1d< localIndex_array > const & faceToNodes = this->getReference< array1d< localIndex_array > >(
 // viewKeys.nodeList );
-//  globalIndex_array const & nodalGlobalIndex = compositionalObject->m_localToGlobalMap;
+//  globalIndex_array const & nodalGlobalIndex = compositionalObject->localToGlobalMap();
 //  integer_array const & isDomainBoundary = this->getReference<integer_array>(viewKeys.isDomainBoundary);
 //
 //  mpiBuffer buffer;
@@ -822,7 +822,7 @@ void FaceManager::ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManager
 
       for( localIndex a = 0; a < numNodes; ++a )
       {
-        curFaceGlobalNodes[ a ]= nodeManager->m_localToGlobalMap( faceToNodeMap( faceID, a ) );
+        curFaceGlobalNodes[ a ]= nodeManager->localToGlobalMap()( faceToNodeMap( faceID, a ) );
       }
 
       std::sort( curFaceGlobalNodes.begin(), curFaceGlobalNodes.end() );
@@ -871,7 +871,7 @@ localIndex FaceManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
                                            m_nodeList.Base(),
                                            m_unmappedGlobalIndicesInToNodes,
                                            packList,
-                                           this->m_localToGlobalMap,
+                                           this->localToGlobalMap(),
                                            m_nodeList.RelatedObjectLocalToGlobal() );
 
   packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::edgeListString ) );
@@ -879,7 +879,7 @@ localIndex FaceManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
                                            m_edgeList.Base(),
                                            m_unmappedGlobalIndicesInToEdges,
                                            packList,
-                                           this->m_localToGlobalMap,
+                                           this->localToGlobalMap(),
                                            m_edgeList.RelatedObjectLocalToGlobal() );
 
   packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::elementListString ) );
@@ -909,7 +909,7 @@ localIndex FaceManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                      m_nodeList,
                                      packList,
                                      m_unmappedGlobalIndicesInToNodes,
-                                     this->m_globalToLocalMap,
+                                     this->globalToLocalMap(),
                                      m_nodeList.RelatedObjectGlobalToLocal() );
 
 
@@ -921,7 +921,7 @@ localIndex FaceManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                      m_edgeList,
                                      packList,
                                      m_unmappedGlobalIndicesInToEdges,
-                                     this->m_globalToLocalMap,
+                                     this->globalToLocalMap(),
                                      m_edgeList.RelatedObjectGlobalToLocal() );
 
 

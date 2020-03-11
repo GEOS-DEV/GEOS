@@ -252,6 +252,8 @@ void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * co
   arrayView1d< real64 > & mass = nodes->getReference< array1d< real64 > >( keys::Mass );
   mass = 0.0;
 
+  arrayView1d< integer const > const & nodeGhostRank = nodes->ghostRank();
+
   NumericalMethodsManager const *
     numericalMethodManager = domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
 
@@ -294,7 +296,7 @@ void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * co
 
         for( localIndex a=0; a<elementSubRegion.numNodesPerElement(); ++a )
         {
-          if( nodes->GhostRank()[elemsToNodes[k][a]] >= -1 )
+          if( nodeGhostRank[elemsToNodes[k][a]] >= -1 )
           {
             m_sendOrReceiveNodes.insert( elemsToNodes[k][a] );
           }
@@ -321,6 +323,8 @@ void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( 
   ConstitutiveManager * constitutiveManager = domain->GetGroup< ConstitutiveManager >( keys::ConstitutiveManager );
 
   arrayView1d< real64 > & mass = nodes->getReference< array1d< real64 > >( keys::Mass );
+
+  arrayView1d< integer const > const & nodeGhostRank = nodes->ghostRank();
 
   ElementRegionManager::MaterialViewAccessor< arrayView2d< real64 const > >
   rho = elementRegionManager->ConstructFullMaterialViewAccessor< array2d< real64 >,
@@ -379,7 +383,7 @@ void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( 
         bool isAttachedToGhostNode = false;
         for( localIndex a=0; a<elementSubRegion.numNodesPerElement(); ++a )
         {
-          if( nodes->GhostRank()[elemsToNodes[k][a]] >= -1 )
+          if( nodeGhostRank[elemsToNodes[k][a]] >= -1 )
           {
             isAttachedToGhostNode = true;
             m_sendOrReceiveNodes.insert( elemsToNodes[k][a] );
@@ -683,7 +687,7 @@ void SolidMechanicsLagrangianFEM::ApplyTractionBC( real64 const time,
   arrayView1d< globalIndex > const &
   blockLocalDofNumber = nodeManager->getReference< globalIndex_array >( dofKey );
 
-  arrayView1d< integer const > const & faceGhostRank = faceManager->GhostRank();
+  arrayView1d< integer const > const & faceGhostRank = faceManager->ghostRank();
   fsManager.Apply( time,
                    domain,
                    "faceManager",
@@ -1047,7 +1051,7 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARA
                                                 dNdX,
                                                 detJ,
                                                 fe.get(),
-                                                elementSubRegion.m_ghostRank,
+                                                elementSubRegion.ghostRank(),
                                                 elemsToNodes,
                                                 dofNumber,
                                                 disp,
@@ -1364,7 +1368,7 @@ void SolidMechanicsLagrangianFEM::ApplyContactConstraint( DofManager const & dof
 
     elemManager->forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
-      arrayView1d< integer const > const & ghostRank = subRegion.GhostRank();
+      arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
       arrayView1d< real64 > const & area = subRegion.getElementArea();
       arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
 
@@ -1456,7 +1460,7 @@ SolidMechanicsLagrangianFEM::ScalingForSystemSolution( DomainPartition const * c
 //
 //  elemManager->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion const * const subRegion )->void
 //  {
-//      arrayView1d<integer const> const & ghostRank = subRegion->GhostRank();
+//      arrayView1d<integer const> const & ghostRank = subRegion->ghostRank();
 //      arrayView1d<real64 const > const & area = subRegion->getElementArea();
 //      arrayView2d< localIndex const > const & elemsToFaces = subRegion->faceList();
 //

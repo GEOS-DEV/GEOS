@@ -55,11 +55,11 @@ public:
   const ObjectManagerBase * RelatedObject() const
   { return m_relatedObject; }
 
-  globalIndex_array const & RelatedObjectLocalToGlobal() const
-  { return this->m_relatedObject->m_localToGlobalMap; }
+  arrayView1d< globalIndex const > const & RelatedObjectLocalToGlobal() const
+  { return this->m_relatedObject->localToGlobalMap(); }
 
-  const unordered_map< globalIndex, localIndex > & RelatedObjectGlobalToLocal() const
-  { return this->m_relatedObject->m_globalToLocalMap; }
+  unordered_map< globalIndex, localIndex > const & RelatedObjectGlobalToLocal() const
+  { return this->m_relatedObject->globalToLocalMap(); }
 
 private:
   ObjectManagerBase const * m_relatedObject = nullptr;

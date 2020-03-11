@@ -460,7 +460,7 @@ struct MeshLoopHelper< LOC, LOC, VISIT_GHOSTS >
 
     // get access to location ghost rank (we don't want to visit ghosted locations
     ObjectManagerLoc const * const objectManager = getObjectManager< LOC >( meshLevel );
-    array1d< integer > const & ghostRank = objectManager->GhostRank();
+    arrayView1d< integer const > const & ghostRank = objectManager->ghostRank();
 
     // create an array to track previously visited locations (to avoid multiple visits)
     array1d< bool > locationsVisited( objectManager->size() );
@@ -640,7 +640,7 @@ struct MeshLoopHelper< DofManager::Location::Elem, CONN_LOC, VISIT_GHOSTS >
       auto const & elemToConnMap =
         subRegion.template getReference< ElemToConnMapType >( MeshHelper< CONN_LOC >::mapViewKey );
 
-      arrayView1d< integer const > const & elemGhostRank = subRegion.GhostRank();
+      arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
 
       for( localIndex ei = 0; ei < subRegion.size(); ++ei )
       {
@@ -677,7 +677,7 @@ struct MeshLoopHelper< DofManager::Location::Elem, DofManager::Location::Elem, V
                                                                        ElementRegionBase const &,
                                                                        ElementSubRegionBase const & subRegion )
     {
-      arrayView1d< integer const > const & elemGhostRank = subRegion.GhostRank();
+      arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
       localIndex const numElems = subRegion.size();
 
       for( localIndex ei = 0; ei < numElems; ++ei )

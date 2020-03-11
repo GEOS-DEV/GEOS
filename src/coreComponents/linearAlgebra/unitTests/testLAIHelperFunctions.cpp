@@ -140,6 +140,8 @@ TEST_F( LAIHelperFunctionsTest, Test_NodalVectorPermutation )
   MeshLevel * const meshLevel = domain->getMeshBody( 0 )->getMeshLevel( 0 );
   NodeManager * const nodeManager = meshLevel->getNodeManager();
 
+  arrayView1d< globalIndex const > const & nodeLocalToGlobal = nodeManager->localToGlobalMap();
+
   DofManager dofManager( "test" );
   dofManager.setMesh( domain, 0, 0 );
 
@@ -153,7 +155,7 @@ TEST_F( LAIHelperFunctionsTest, Test_NodalVectorPermutation )
   localIndex nDof = 3*nodeManager->size();
 
   arrayView1d< globalIndex > const & dofNumber =  nodeManager->getReference< globalIndex_array >( dofManager.getKey( "nodalVariable" )  );
-  arrayView1d< integer > const & isNodeGhost = nodeManager->GhostRank();
+  arrayView1d< integer > const & isNodeGhost = nodeManager->ghostRank();
 
   ParallelVector nodalVariable, expectedPermutedVector;
   nodalVariable.createWithLocalSize( nDof, MPI_COMM_GEOSX );
@@ -169,11 +171,10 @@ TEST_F( LAIHelperFunctionsTest, Test_NodalVectorPermutation )
     {
       for( localIndex d=0; d < 3; d++ )
       {
-
         localIndex index = dofNumber( a ) + d;
-        real64 Value = nodeManager->m_localToGlobalMap[a] * 3 + d;
+        real64 Value = nodeLocalToGlobal[a] * 3 + d;
         nodalVariable.add( index, Value );
-        index =  nodeManager->m_localToGlobalMap[a] * 3 + d;
+        index =  nodeLocalToGlobal[a] * 3 + d;
         expectedPermutedVector.add( index, Value );
       }
     }
@@ -231,17 +232,18 @@ TEST_F( LAIHelperFunctionsTest, Test_CellCenteredVectorPermutation )
     localIndex const numElems = elementSubRegion.size();
     arrayView1d< globalIndex const > const &
     dofNumber = elementSubRegion.getReference< array1d< globalIndex > >( dofManager.getKey( "cellCentered" ) );
-    arrayView1d< integer > const & isGhost = elementSubRegion.GhostRank();
+    arrayView1d< integer const > const & isGhost = elementSubRegion.ghostRank();
+    arrayView1d< globalIndex const > const & localToGlobal = elementSubRegion.localToGlobalMap();
 
     for( localIndex k=0; k<numElems; ++k )
     {
       if( dofNumber[k] >= 0 && isGhost[k] < 0 )
       {
         globalIndex index = dofNumber[k];
-        real64 Value = elementSubRegion.m_localToGlobalMap[k];
+        real64 Value = localToGlobal[k];
         cellCenteredVariable.add( index, Value );
-        index = elementSubRegion.m_localToGlobalMap[k];
-        Value = elementSubRegion.m_localToGlobalMap[k];
+        index = localToGlobal[k];
+        Value = localToGlobal[k];
         expectedPermutedVector.add( index, Value );
       }
     }
