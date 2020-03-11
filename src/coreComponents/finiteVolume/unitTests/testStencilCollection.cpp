@@ -93,7 +93,7 @@ TEST(testStencilCollection, noAcessorIterationTPFA)
   {
     ArrayOfArraysView<FluxStencil<Cell, double>::Entry const, true> const & connections = stencil.getConnections();
 
-    forall_in_range<serialPolicy>( 0, connections.size(), GEOSX_LAMBDA ( localIndex iconn )
+    forall_in_range<serialPolicy>( 0, connections.size(), [=] ( localIndex iconn )
     {
       for (localIndex i = 0; i < connections.sizeOfArray(iconn); ++i)
       {

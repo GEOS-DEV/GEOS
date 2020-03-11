@@ -113,7 +113,7 @@ void SinglePhaseBase::UpdateFluidModel(Group * const dataGroup) const
 
   SingleFluidBase * const fluid = GetConstitutiveModel<SingleFluidBase>( dataGroup, m_fluidName );
 
-  forall_in_range<RAJA::seq_exec>( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a )
+  forall_in_range<RAJA::seq_exec>( 0, dataGroup->size(), [=] ( localIndex const a )
   {                                      
     fluid->PointUpdate( pres[a] + dPres[a], a, 0 );
   });}
@@ -127,7 +127,7 @@ void SinglePhaseBase::UpdateSolidModel(Group * const dataGroup) const
   arrayView1d<real64 const> const & pres  = dataGroup->getReference< array1d<real64> >( viewKeyStruct::pressureString );
   arrayView1d<real64 const> const & dPres = dataGroup->getReference< array1d<real64> >( viewKeyStruct::deltaPressureString );
 
-  forall_in_range( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a )
+  forall_in_range( 0, dataGroup->size(), [=] ( localIndex const a )
   {
     solid->StateUpdatePointPressure( pres[a] + dPres[a], a, 0 );
   });
@@ -187,7 +187,7 @@ void SinglePhaseBase::InitializePostInitialConditions_PreSubGroups( Group * cons
 
     if( pvmult.size() == poro.size() )
     {
-      forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+      forall_in_range<serialPolicy>( 0, subRegion->size(), [=] ( localIndex ei )
       {
         densOld[ei] = dens[ei][0];
         poro[ei] = poroRef[ei] * pvmult[ei][0];
@@ -196,7 +196,7 @@ void SinglePhaseBase::InitializePostInitialConditions_PreSubGroups( Group * cons
     }
     else
     {
-      forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+      forall_in_range<serialPolicy>( 0, subRegion->size(), [=] ( localIndex ei )
       {
         densOld[ei] = dens[ei][0];
         poro[ei] = poroRef[ei];
@@ -356,7 +356,7 @@ void SinglePhaseBase::ImplicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time
     arrayView1d<real64> const & densOld = m_densityOld[er][esr];
     arrayView1d<real64> const & poroOld = m_porosityOld[er][esr];
 
-    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+    forall_in_range<serialPolicy>( 0, subRegion->size(), [=] ( localIndex ei )
     {
 
       dPres[ei] = 0.0;
@@ -367,7 +367,7 @@ void SinglePhaseBase::ImplicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time
     // This should fix NaN density in newly created fracture elements
     UpdateState( subRegion );
 
-    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+    forall_in_range<serialPolicy>( 0, subRegion->size(), [=] ( localIndex ei )
     {
 
       densOld[ei] = dens[ei][0];
@@ -386,7 +386,7 @@ void SinglePhaseBase::ImplicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time
     arrayView1d<real64> const & aper0 = subRegion->getReference<array1d<real64>>( viewKeyStruct::aperture0String );
     arrayView1d<real64 const> const & aper = m_effectiveAperture[er][esr];
 
-    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+    forall_in_range<serialPolicy>( 0, subRegion->size(), [=] ( localIndex ei )
     {
       aper0[ei] = aper[ei];
     } );
@@ -416,7 +416,7 @@ void SinglePhaseBase::ImplicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( t
     arrayView1d<real64 const> const & dPres = m_deltaPressure[er][esr];
     arrayView1d<real64 const> const & dVol  = m_deltaVolume[er][esr];
 
-    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+    forall_in_range<serialPolicy>( 0, subRegion->size(), [=] ( localIndex ei )
     {
       pres[ei] += dPres[ei];
       vol[ei] += dVol[ei];
@@ -438,7 +438,7 @@ void SinglePhaseBase::ImplicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( t
     arrayView1d<real64> const &
     creationMass = subRegion->getReference<real64_array>( FaceElementSubRegion::viewKeyStruct::creationMassString);
 
-    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+    forall_in_range<serialPolicy>( 0, subRegion->size(), [=] ( localIndex ei )
     {
       if (elemGhostRank[ei] < 0)
       {
@@ -566,7 +566,7 @@ void SinglePhaseBase::AccumulationLaunch( localIndex const er,
   arrayView1d<real64 const> const & bulkModulus        = m_poroElasticFlag ? m_bulkModulus[er][esr][m_solidIndex] : poroOld;
   real64 const & biotCoefficient                       = m_poroElasticFlag ? m_biotCoefficient[er][esr][m_solidIndex] : 0;
 
-  forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+  forall_in_range<serialPolicy>( 0, subRegion->size(), [=] ( localIndex ei )
   {
     if (elemGhostRank[ei] < 0)
     {
@@ -627,7 +627,7 @@ void SinglePhaseBase::AccumulationLaunch( localIndex const er,
   arrayView1d<real64 const> const &
   creationMass = subRegion->getReference<real64_array>(FaceElementSubRegion::viewKeyStruct::creationMassString);
 #endif
-  forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+  forall_in_range<serialPolicy>( 0, subRegion->size(), [=] ( localIndex ei )
   {
     if (elemGhostRank[ei] < 0)
     {
@@ -712,7 +712,7 @@ void SinglePhaseBase::ResetStateToBeginningOfStep( DomainPartition * const domai
   {
     arrayView1d<real64> const & dPres = m_deltaPressure[er][esr];
 
-    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+    forall_in_range<serialPolicy>( 0, subRegion->size(), [=] ( localIndex ei )
     {
       dPres[ei] = 0.0;
     } );

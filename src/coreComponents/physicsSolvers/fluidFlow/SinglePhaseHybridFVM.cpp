@@ -101,7 +101,7 @@ void SinglePhaseHybridFVM::ImplicitStepSetup( real64 const & time_n,
   arrayView1d<real64> & dFacePres =
     faceManager->getReference<array1d<real64>>(viewKeyStruct::deltaFacePressureString);
 
-  forall_in_range<serialPolicy>( 0, faceManager->size(), GEOSX_LAMBDA ( localIndex iface )
+  forall_in_range<serialPolicy>( 0, faceManager->size(), [=] ( localIndex iface )
   {
     dFacePres[iface] = 0;
   });
@@ -131,7 +131,7 @@ void SinglePhaseHybridFVM::ImplicitStepComplete( real64 const & time_n,
   arrayView1d<real64> const & dFacePres =
     faceManager->getReference<array1d<real64>>(viewKeyStruct::deltaFacePressureString);
 
-  forall_in_range<serialPolicy>( 0, faceManager->size(), GEOSX_LAMBDA ( localIndex iface )
+  forall_in_range<serialPolicy>( 0, faceManager->size(), [=] ( localIndex iface )
   {
     // update if face is in target region
     if (faceDofNumber[iface] >= 0)
@@ -274,7 +274,7 @@ void SinglePhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
     
     // assemble the residual and Jacobian element by element
     // in this loop we assemble both equation types: mass conservation in the elements and constraints at the faces
-    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+    forall_in_range<serialPolicy>( 0, subRegion->size(), [=] ( localIndex ei )
     {
 
       if (elemGhostRank[ei] < 0)
@@ -810,7 +810,7 @@ void SinglePhaseHybridFVM::ResetStateToBeginningOfStep( DomainPartition * const 
   arrayView1d<real64> & dFacePres =
     faceManager->getReference<array1d<real64>>(viewKeyStruct::deltaFacePressureString);
 
-  forall_in_range<serialPolicy>( 0, faceManager->size(), GEOSX_LAMBDA ( localIndex iface )
+  forall_in_range<serialPolicy>( 0, faceManager->size(), [=] ( localIndex iface )
   {
     dFacePres[iface] = 0;
   });
