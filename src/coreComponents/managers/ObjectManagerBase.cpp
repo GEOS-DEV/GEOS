@@ -28,11 +28,11 @@ ObjectManagerBase::ObjectManagerBase( std::string const & name,
                                       Group * const parent ):
   Group( name, parent ),
   m_sets( groupKeyStruct::setsString, this ),
+  m_neighborGroup( groupKeyStruct::neighborDataString, this ),
   m_localToGlobalMap(),
   m_globalToLocalMap(),
   m_isExternal(),
   m_ghostRank(),
-  m_neighborGroup( groupKeyStruct::neighborDataString, this ),
   m_neighborData()
 {
   RegisterGroup( groupKeyStruct::setsString, &m_sets, false );
@@ -197,11 +197,11 @@ void ObjectManagerBase::ConstructGlobalToLocalMap()
   GEOSX_MARK_FUNCTION;
 
   m_globalToLocalMap.clear();
-  for( localIndex k=0; k<size(); ++k )
+  localIndex const N = size();
+  for( localIndex k = 0; k < N; ++k )
   {
-    m_globalToLocalMap[m_localToGlobalMap[k]] = k;
+    updateGlobalToLocalMap( k );
   }
-
 }
 
 localIndex ObjectManagerBase::PackSize( string_array const & wrapperNames,
@@ -755,7 +755,7 @@ localIndex ObjectManagerBase::GetNumberOfLocalIndices() const
 
 void ObjectManagerBase::SetReceiveLists()
 {
-  for( std::pair< int const, NeighborData & > & pair : m_neighborData )
+  for( std::pair< int const, NeighborData > & pair : m_neighborData )
   {
     pair.second.ghostsToReceive().clear();
   }
@@ -848,13 +848,7 @@ void ObjectManagerBase::CopyObject( const localIndex source, const localIndex de
 
 void ObjectManagerBase::SetMaxGlobalIndex()
 {
-  globalIndex maxGlobalIndexLocally = -1;
-
-  for( localIndex a=0; a<m_localToGlobalMap.size(); ++a )
-  {
-    maxGlobalIndexLocally = std::max( maxGlobalIndexLocally, m_localToGlobalMap[a] );
-  }
-  MpiWrapper::allReduce( &maxGlobalIndexLocally,
+  MpiWrapper::allReduce( &m_localMaxGlobalIndex,
                          &m_maxGlobalIndex,
                          1,
                          MPI_MAX,

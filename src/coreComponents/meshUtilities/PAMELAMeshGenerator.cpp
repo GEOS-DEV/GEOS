@@ -106,6 +106,9 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
   // Vertices are written first
   arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & X = nodeManager->referencePosition();
   nodeManager->resize( m_pamelaMesh->get_PointCollection()->size_all());
+
+  arrayView1d< globalIndex > const & nodeLocalToGlobal = nodeManager->localToGlobalMap();
+
   R1Tensor xMax( std::numeric_limits< real64 >::min(),
                  std::numeric_limits< real64 >::min(),
                  std::numeric_limits< real64 >::min());
@@ -113,6 +116,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
   R1Tensor xMin( std::numeric_limits< real64 >::max(),
                  std::numeric_limits< real64 >::max(),
                  std::numeric_limits< real64 >::max());
+
   double zReverseFactor = 1.;
   if( m_isZReverse )
   {
@@ -126,7 +130,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
     X( vertexLocalIndex, 1 ) = verticesIterator->get_coordinates().y * m_scale;
     X( vertexLocalIndex, 2 ) = verticesIterator->get_coordinates().z * m_scale * zReverseFactor;
 
-    nodeManager->m_localToGlobalMap[vertexLocalIndex] = vertexGlobalIndex;
+    nodeLocalToGlobal[vertexLocalIndex] = vertexGlobalIndex;
     for( int i = 0; i < 3; i++ )
     {
       if( X( vertexLocalIndex, i ) > xMax[i] )
@@ -170,6 +174,8 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
         cellBlock->resize( nbCells );
         cellToVertex.resize( nbCells, 8 );
 
+        arrayView1d< globalIndex > const & localToGlobal = cellBlock->localToGlobalMap();
+
         // Iterate on cells
         for( auto cellItr = cellBlockPAMELA->SubCollection.begin_owned();
              cellItr != cellBlockPAMELA->SubCollection.end_owned();
@@ -196,7 +202,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
           cellToVertex[cellLocalIndex][7] =
             cornerList[6]->get_localIndex();
 
-          cellBlock->m_localToGlobalMap[cellLocalIndex] = cellGlobalIndex;
+          localToGlobal[cellLocalIndex] = cellGlobalIndex;
         }
       }
       else if( cellBlockName == "TETRA" )
@@ -210,6 +216,8 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
         auto & cellToVertex = cellBlock->nodeList();
         cellBlock->resize( nbCells );
         cellToVertex.resize( nbCells, 4 );
+
+        arrayView1d< globalIndex > const & localToGlobal = cellBlock->localToGlobalMap();
 
         // Iterate on cells
         for( auto cellItr = cellBlockPAMELA->SubCollection.begin_owned();
@@ -229,7 +237,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
           cellToVertex[cellLocalIndex][3] =
             cornerList[3]->get_localIndex();
 
-          cellBlock->m_localToGlobalMap[cellLocalIndex] = cellGlobalIndex;
+          localToGlobal[cellLocalIndex] = cellGlobalIndex;
         }
       }
       else if( cellBlockName == "WEDGE" )
@@ -243,6 +251,8 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
         auto & cellToVertex = cellBlock->nodeList();
         cellBlock->resize( nbCells );
         cellToVertex.resize( nbCells, 6 );
+
+        arrayView1d< globalIndex > const & localToGlobal = cellBlock->localToGlobalMap();
 
         // Iterate on cells
         for( auto cellItr = cellBlockPAMELA->SubCollection.begin_owned();
@@ -266,7 +276,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
           cellToVertex[cellLocalIndex][5] =
             cornerList[5]->get_localIndex();
 
-          cellBlock->m_localToGlobalMap[cellLocalIndex] = cellGlobalIndex;
+          localToGlobal[cellLocalIndex] = cellGlobalIndex;
         }
       }
       else if( cellBlockName == "PYRAMID" )
@@ -280,6 +290,8 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
         auto & cellToVertex = cellBlock->nodeList();
         cellBlock->resize( nbCells );
         cellToVertex.resize( nbCells, 5 );
+
+        arrayView1d< globalIndex > const & localToGlobal = cellBlock->localToGlobalMap();
 
         // Iterate on cells
         for( auto cellItr = cellBlockPAMELA->SubCollection.begin_owned();
@@ -301,7 +313,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
           cellToVertex[cellLocalIndex][4] =
             cornerList[4]->get_localIndex();
 
-          cellBlock->m_localToGlobalMap[cellLocalIndex] = cellGlobalIndex;
+          localToGlobal[cellLocalIndex] = cellGlobalIndex;
         }
       }
       /// Import ppt

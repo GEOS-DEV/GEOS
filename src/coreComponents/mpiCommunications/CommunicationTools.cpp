@@ -95,10 +95,12 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
   localIndex const numberOfObjectsHere = object.size();
   globalIndex const offset = MpiWrapper::PrefixSum< globalIndex >( numberOfObjectsHere );
 
+  arrayView1d< globalIndex > const & localToGlobal = object.localToGlobalMap();
+
   // set the global indices as if they were all local to this process
   for( localIndex a = 0; a < object.size(); ++a )
   {
-    object.m_localToGlobalMap[a] = offset + a;
+    localToGlobal[a] = offset + a;
   }
 
   // get the relation to the composition object used that will be used to identify the main object. For example,
@@ -149,7 +151,7 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
     {
       std::vector< globalIndex > const & nodeList = objectToCompositionObject[a];
       objectToCompositionObjectSendBuffer.push_back( nodeList.size() );
-      objectToCompositionObjectSendBuffer.push_back( object.m_localToGlobalMap[a] );
+      objectToCompositionObjectSendBuffer.push_back( localToGlobal[a] );
       for( std::size_t b = 0; b < nodeList.size(); ++b )
       {
         objectToCompositionObjectSendBuffer.push_back( nodeList[b] );
@@ -282,11 +284,11 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
                             iter_neighbor2->first.begin() ) )
             {
               // they are equal, so we need to overwrite the global index for the object
-              if( iter_neighbor2->second < object.m_localToGlobalMap[iter_local2->second] )
+              if( iter_neighbor2->second < localToGlobal[iter_local2->second] )
               {
                 if( neighbor.NeighborRank() < commRank )
                 {
-                  object.m_localToGlobalMap[iter_local2->second] = iter_neighbor2->second;
+                  localToGlobal[iter_local2->second] = iter_neighbor2->second;
                   ghostRank[iter_local2->second] = neighbor.NeighborRank();
                 }
                 else
@@ -317,22 +319,13 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
 
   object.ConstructGlobalToLocalMap();
 
-  globalIndex maxGlobalIndex = -1;
-  for( localIndex a=0; a<object.m_localToGlobalMap.size(); ++a )
-  {
-    maxGlobalIndex = std::max( maxGlobalIndex, object.m_localToGlobalMap[a] );
-  }
-
-  MpiWrapper::allReduce( &maxGlobalIndex,
-                         &(object.m_maxGlobalIndex),
-                         1,
-                         MPI_MAX,
-                         MPI_COMM_GEOSX );
+  object.SetMaxGlobalIndex();
 }
 
 void CommunicationTools::AssignNewGlobalIndices( ObjectManagerBase & object,
                                                  std::set< localIndex > const & indexList )
 {
+  // TODO: This should be done with a prefix sum!
   int const thisRank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
   int const commSize = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
   localIndex numberOfNewObjectsHere = indexList.size();
@@ -347,30 +340,22 @@ void CommunicationTools::AssignNewGlobalIndices( ObjectManagerBase & object,
     glocalIndexOffset[rank] = glocalIndexOffset[rank - 1] + numberOfNewObjects[rank - 1];
   }
 
+  arrayView1d< globalIndex > const & localToGlobal = object.localToGlobalMap();
+
   localIndex nIndicesAssigned = 0;
   for( localIndex const newLocalIndex : indexList )
   {
-    GEOSX_ERROR_IF( object.m_localToGlobalMap[newLocalIndex] != -1,
+    GEOSX_ERROR_IF( localToGlobal[newLocalIndex] != -1,
                     "Local object " << newLocalIndex << " should be new but already has a global index "
-                                    << object.m_localToGlobalMap[newLocalIndex] );
+                                    << localToGlobal[newLocalIndex] );
 
-    object.m_localToGlobalMap[newLocalIndex] = object.m_maxGlobalIndex + glocalIndexOffset[thisRank] + nIndicesAssigned + 1;
-    object.m_globalToLocalMap[object.m_localToGlobalMap[newLocalIndex]] = newLocalIndex;
+    localToGlobal[newLocalIndex] = object.maxGlobalIndex() + glocalIndexOffset[thisRank] + nIndicesAssigned + 1;
+    object.updateGlobalToLocalMap( newLocalIndex );
 
     nIndicesAssigned += 1;
   }
 
-  globalIndex maxGlobalIndex = -1;
-  for( localIndex a=0; a<object.m_localToGlobalMap.size(); ++a )
-  {
-    maxGlobalIndex = std::max( maxGlobalIndex, object.m_localToGlobalMap[a] );
-  }
-
-  MpiWrapper::allReduce( &maxGlobalIndex,
-                         &(object.m_maxGlobalIndex),
-                         1,
-                         MPI_MAX,
-                         MPI_COMM_GEOSX );
+  object.SetMaxGlobalIndex();
 }
 
 void
@@ -378,6 +363,7 @@ CommunicationTools::
   AssignNewGlobalIndices( ElementRegionManager & elementManager,
                           std::map< std::pair< localIndex, localIndex >, std::set< localIndex > > const & newElems )
 {
+  // TODO: This should be done with a prefix sum!
   int const thisRank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
   int const commSize = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
 
@@ -401,8 +387,6 @@ CommunicationTools::
   }
 
   localIndex nIndicesAssigned = 0;
-  globalIndex maxGlobalIndex = -1;
-
   for( auto const & iter : newElems )
   {
     localIndex const er = iter.first.first;
@@ -410,30 +394,22 @@ CommunicationTools::
     std::set< localIndex > const & indexList = iter.second;
 
     ElementSubRegionBase * const subRegion = elementManager.GetRegion( er )->GetSubRegion( esr );
+    arrayView1d< globalIndex > const & localToGlobal = subRegion->localToGlobalMap();
 
     for( localIndex const newLocalIndex : indexList )
     {
-      GEOSX_ERROR_IF( subRegion->m_localToGlobalMap[newLocalIndex] != -1,
+      GEOSX_ERROR_IF( localToGlobal[newLocalIndex] != -1,
                       "Local object " << newLocalIndex << " should be new but already has a global index "
-                                      << subRegion->m_localToGlobalMap[newLocalIndex] );
+                                      << localToGlobal[newLocalIndex] );
 
-      subRegion->m_localToGlobalMap[newLocalIndex] = elementManager.m_maxGlobalIndex + glocalIndexOffset[thisRank] + nIndicesAssigned + 1;
-      subRegion->m_globalToLocalMap[subRegion->m_localToGlobalMap[newLocalIndex]] = newLocalIndex;
+      localToGlobal[newLocalIndex] = elementManager.maxGlobalIndex() + glocalIndexOffset[thisRank] + nIndicesAssigned + 1;
+      subRegion->updateGlobalToLocalMap( newLocalIndex );
 
       nIndicesAssigned += 1;
     }
-    for( localIndex a=0; a<subRegion->m_localToGlobalMap.size(); ++a )
-    {
-      maxGlobalIndex = std::max( maxGlobalIndex, subRegion->m_localToGlobalMap[a] );
-    }
   }
 
-
-  MpiWrapper::allReduce( &maxGlobalIndex,
-                         &(elementManager.m_maxGlobalIndex),
-                         1,
-                         MPI_MAX,
-                         MPI_COMM_GEOSX );
+  elementManager.SetMaxGlobalIndex();
 }
 
 void
@@ -474,7 +450,7 @@ CommunicationTools::
       {
         if( globalPartitionBoundaryObjectsIndices[localCounter] == neighborPartitionBoundaryObjects[i][neighborCounter] )
         {
-          localIndex const localMatchedIndex = objectManager->m_globalToLocalMap.at( globalPartitionBoundaryObjectsIndices[localCounter] );
+          localIndex const localMatchedIndex = objectManager->globalToLocalMap( globalPartitionBoundaryObjectsIndices[localCounter] );
           matchedPartitionBoundaryObjects.push_back( localMatchedIndex );
           domainBoundaryIndicator[ localMatchedIndex ] = 2;
           ++localCounter;
@@ -505,7 +481,7 @@ void verifyGhostingConsistency( ObjectManagerBase const & objectManager,
 {
   GEOSX_MARK_FUNCTION;
 
-  arrayView1d< integer const > const & ghostRank = objectManager.GhostRank();
+  arrayView1d< integer const > const & ghostRank = objectManager.ghostRank();
 
   /// Variable to track if an error has occurred.
   bool error = false;
@@ -611,12 +587,12 @@ void fixReceiveLists( ObjectManagerBase & objectManager,
     /// Map from owning MPI rank to an array of local objects we need to fix.
     std::unordered_map< int, std::vector< localIndex > > ghostsBySecondNeighbor;
 
-    arrayView1d< integer > const & ghostRank = objectManager.m_ghostRank;
+    arrayView1d< integer > const & ghostRank = objectManager.ghostRank();
 
     /// Populate ghostsToFix and ghostsBySecondNeighbor while also updating ghostRank.
     for( std::pair< globalIndex, int > const & pair : ghostsFromSecondNeighbor )
     {
-      localIndex const lid = objectManager.m_globalToLocalMap.at( pair.first );
+      localIndex const lid = objectManager.globalToLocalMap( pair.first );
       ghostsBySecondNeighbor[ pair.second ].push_back( lid );
       ghostsToFix.push_back( lid );
       ghostRank[ lid ] = pair.second;

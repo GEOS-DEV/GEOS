@@ -1599,7 +1599,7 @@ void SiloFile::WriteElementMesh( ElementRegionBase const & elementRegion,
       // TODO HACK. this isn't correct for variable relations.
       elementToNodeMap[count].resize( elemsToNodes.size( 0 ), elementSubRegion.numNodesPerElement( 0 ) );
 
-      integer_array const & elemGhostRank = elementSubRegion.GhostRank();
+      arrayView1d< integer const > const & elemGhostRank = elementSubRegion.ghostRank();
 
 
       string elementType = elementSubRegion.GetElementTypeString();
@@ -1624,7 +1624,7 @@ void SiloFile::WriteElementMesh( ElementRegionBase const & elementRegion,
 
       meshConnectivity[count] = elementToNodeMap[count].data();
 
-      //        globalElementNumbers[count] = elementRegion.m_localToGlobalMap.data();
+      //        globalElementNumbers[count] = elementRegion.localToGlobalMap().data();
       shapecnt[count] = static_cast< int >(elementSubRegion.size());
 
 
@@ -1773,7 +1773,7 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
   string const ghostNodeName = "ghostNodeFlag";
   string const ghostZoneName = "ghostZoneFlag";
 
-  integer_array const & nodeGhostRank = nodeManager->GhostRank();
+  arrayView1d< integer const > const & nodeGhostRank = nodeManager->ghostRank();
   array1d< char > ghostNodeFlag( nodeGhostRank.size() );
   array1d< char > ghostZoneFlag;
 
@@ -1829,7 +1829,7 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
                       regionName,
                       numNodes,
                       coords,
-                      nodeManager->m_localToGlobalMap.data(),
+                      nodeManager->localToGlobalMap().data(),
                       ghostNodeFlag,
                       cycleNum,
                       problemTime,
@@ -1873,7 +1873,7 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
 
         faceConnectivity[0] = faceToNodeMapCopy[0].data();
 
-        globalFaceNumbers[0] = faceManager->m_localToGlobalMap.data();
+        globalFaceNumbers[0] = faceManager->localToGlobalMap().data();
         fshapecnt[0] = numFaces;
         fshapetype[0] = dbZoneType;
         fshapesize[0] = 0;
@@ -1881,7 +1881,7 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
       int lnodelist = faceToNodeMapCopy[0].size();
 
       WritePolygonMeshObject( facemeshName, numNodes, coords,
-                              nodeManager->m_localToGlobalMap.data(), numFaceTypes,
+                              nodeManager->localToGlobalMap().data(), numFaceTypes,
                               fshapecnt.data(), faceConnectivity.data(), globalFaceNumbers.data(),
                               nullptr, fshapetype.data(), fshapesize.data(), cycleNum, problemTime, lnodelist );
 
@@ -1928,7 +1928,7 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
 
         faceConnectivity[faceType] = faceToNodeMapCopy[faceType].data();
 
-        globalFaceNumbers[faceType] = faceManager->m_localToGlobalMap.data();
+        globalFaceNumbers[faceType] = faceManager->localToGlobalMap().data();
         fshapecnt[faceType] = numFaces;
         fshapetype[faceType] = dbZoneType;
         fshapesize[faceType] = numNodesPerFace;
@@ -1937,7 +1937,7 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
       WriteMeshObject( facemeshName,
                        numNodes,
                        coords,
-                       nodeManager->m_localToGlobalMap.data(),
+                       nodeManager->localToGlobalMap().data(),
                        nullptr,
                        nullptr,
                        numFaceTypes,
@@ -2008,7 +2008,7 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
 
       edgeConnectivity[edgeType] = edgeToNodeMap[edgeType].data();
 
-      globalEdgeNumbers[edgeType] = edgeManager->m_localToGlobalMap.data();
+      globalEdgeNumbers[edgeType] = edgeManager->localToGlobalMap().data();
       eshapecnt[edgeType] = numEdges;
       eshapetype[edgeType] = dbZoneType;
       eshapesize[edgeType] = numNodesPerEdge;
@@ -2017,7 +2017,7 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
     WriteMeshObject( edgeMeshName,
                      numNodes,
                      coords,
-                     nodeManager->m_localToGlobalMap.data(),
+                     nodeManager->localToGlobalMap().data(),
                      nullptr,
                      nullptr,
                      numEdgeTypes,
