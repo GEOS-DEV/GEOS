@@ -63,6 +63,9 @@ Launch<CellElementStencilTPFA>( CellElementStencilTPFA const & stencil,
                                 FluxKernel::ElementView < arrayView1d<real64 const> > const & dMob_dPres,
                                 FluxKernel::ElementView < arrayView1d<real64 const> > const &,
                                 FluxKernel::ElementView < arrayView1d<real64 const> > const &,
+                                FluxKernel::ElementView < arrayView1d<R1Tensor const> > const &,
+                                R1Tensor const,
+                                real64 const,
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
                                 FluxKernel::ElementView < arrayView1d<real64 const> > const &,
                                 FluxKernel::ElementView < arrayView1d<real64 const> > const &,
@@ -145,6 +148,9 @@ Launch<FaceElementStencil>( FaceElementStencil const & stencil,
                             FluxKernel::ElementView < arrayView1d<real64 const> > const & dMob_dPres,
                             FluxKernel::ElementView < arrayView1d<real64 const> > const & aperture0,
                             FluxKernel::ElementView < arrayView1d<real64 const> > const & aperture,
+                            FluxKernel::ElementView < arrayView1d<R1Tensor const> > const & transTMultiplier,
+                            R1Tensor const gravityVector,
+                            real64 const meanPermCoeff,
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
                             FluxKernel::ElementView < arrayView1d<real64 const> > const & s,
                             FluxKernel::ElementView < arrayView1d<real64 const> > const & dSdAper,
@@ -162,125 +168,111 @@ Launch<FaceElementStencil>( FaceElementStencil const & stencil,
   typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
   typename FaceElementStencil::WeightContainerViewConstType const & weights = stencil.getWeights();
 
-//  {
-//    localIndex const numRows = dR_dAper.numRows();
-//    for( localIndex ei=0 ; ei<numRows ; ++ei )
-//    {
-//      localIndex const numColumns = dR_dAper.numNonZeros(ei);
-//      arraySlice1d<localIndex const> const & columns = dR_dAper.getColumns( ei );
-//      arraySlice1d<real64 const> const & values = dR_dAper.getEntries( ei );
-//
-//      for( localIndex kfe2=0 ; kfe2<numColumns ; ++kfe2 )
-//      {
-//        real64 dRdAper = values[kfe2];
-//        localIndex const ei2 = columns[kfe2];
-//        GEOS_LOG_RANK( "dR_dAper("<<ei<<", "<<ei2<<") = "<<dRdAper );
-//      }
-//    }
-//  }
+  ArrayOfArraysView<R1Tensor const> const & cellCenterToEdgeCenters = stencil.getCellCenterToEdgeCenters();
+  
+  ArrayOfArraysView<integer const> const & isGhostConnectors = stencil.getIsGhostConnectors();  
+
+  static constexpr real64 TINY = 1e-10;  
 
   forall_in_range<serialPolicy>( 0, stencil.size(), GEOSX_LAMBDA ( localIndex iconn )
   {
     localIndex const numFluxElems = stencil.stencilSize(iconn);
     localIndex const stencilSize  = numFluxElems;
 
-    // working arrays
-    stackArray1d<globalIndex, maxNumFluxElems> eqnRowIndices(numFluxElems);
-    stackArray1d<globalIndex, maxStencilSize> dofColIndices(stencilSize);
+    if(numFluxElems > 1 && isGhostConnectors[iconn][0] < 0)
+    {
 
-    stackArray1d<localIndex, maxNumFluxElems> localRowIndices(numFluxElems);
-    stackArray1d<localIndex, maxNumFluxElems> localColIndices(numFluxElems);
+        // working arrays
+        stackArray1d<globalIndex, maxNumFluxElems> eqnRowIndices(numFluxElems);
+        stackArray1d<globalIndex, maxStencilSize> dofColIndices(stencilSize);
 
-    stackArray1d<real64, maxNumFluxElems> localFlux(numFluxElems);
-    stackArray2d<real64, maxNumFluxElems*maxStencilSize> localFluxJacobian(numFluxElems, stencilSize);
+        stackArray1d<localIndex, maxNumFluxElems> localRowIndices(numFluxElems);
+        stackArray1d<localIndex, maxNumFluxElems> localColIndices(numFluxElems);
 
-    // need to store this for later use in determining the dFlux_dU terms when using better permeabilty approximations.
-    stackArray2d<real64, maxNumFluxElems*maxStencilSize> dFlux_dAper(numFluxElems, stencilSize);
+        stackArray1d<real64, maxNumFluxElems> localFlux(numFluxElems);
+        stackArray2d<real64, maxNumFluxElems*maxStencilSize> localFluxJacobian(numFluxElems, stencilSize);
 
-    localIndex const er = seri[iconn][0];
-    localIndex const esr = sesri[iconn][0];
+        // need to store this for later use in determining the dFlux_dU terms when using better permeabilty approximations.
+        stackArray2d<real64, maxNumFluxElems*maxStencilSize> dFlux_dAper(numFluxElems, stencilSize);
 
+        localIndex const er = seri[iconn][0];
+        localIndex const esr = sesri[iconn][0];
 
-    FluxKernel::ComputeJunction( numFluxElems,
-                                 sei[iconn],
-                                 weights[iconn],
-                                 pres[er][esr],
-                                 dPres[er][esr],
-                                 gravCoef[er][esr],
-                                 dens[er][esr][fluidIndex],
-                                 dDens_dPres[er][esr][fluidIndex],
-                                 mob[er][esr],
-                                 dMob_dPres[er][esr],
-                                 aperture0[er][esr],
-                                 aperture[er][esr],
+        // check if connection is vertical or horizontal
+        stackArray1d<real64, maxNumFluxElems> effectiveWeights(numFluxElems);        
+
+        for(localIndex k = 0; k < numFluxElems; ++k)
+          {
+            
+            effectiveWeights[k] = weights[iconn][k];
+
+            localIndex const ei = sei[iconn][k];
+            
+            if(fabs(Dot(cellCenterToEdgeCenters[iconn][k], gravityVector)) > TINY)
+              effectiveWeights[k] *= transTMultiplier[er][esr][ei][1];
+            else 
+              effectiveWeights[k] *= transTMultiplier[er][esr][ei][0];
+
+          }
+
+        FluxKernel::ComputeJunction( numFluxElems,
+                                     sei[iconn],
+                                     effectiveWeights,
+                                     pres[er][esr],
+                                     dPres[er][esr],
+                                     gravCoef[er][esr],
+                                     dens[er][esr][fluidIndex],
+                                     dDens_dPres[er][esr][fluidIndex],
+                                     mob[er][esr],
+                                     dMob_dPres[er][esr],
+                                     aperture0[er][esr],
+                                     aperture[er][esr],
+                                     meanPermCoeff,
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
                                  s[er][esr],
                                  dSdAper[er][esr],
 #endif
-                                 fluidIndex,
-                                 dt,
-                                 localFlux,
-                                 localFluxJacobian,
-                                 dFlux_dAper );
+                                     fluidIndex,
+                                     dt,
+                                     localFlux,
+                                     localFluxJacobian,
+                                     dFlux_dAper );
 
-    // extract DOF numbers
-    eqnRowIndices = -1;
-    for (localIndex i = 0; i < numFluxElems; ++i)
-    {
-      eqnRowIndices[i] = dofNumber[seri(iconn,i)][sesri(iconn,i)][sei(iconn,i)];
-      localRowIndices[i] = sei(iconn,i);
-    }
+        // extract DOF numbers
+        eqnRowIndices = -1;
+        for (localIndex i = 0; i < numFluxElems; ++i)
+          {
+          eqnRowIndices[i] = dofNumber[seri(iconn,i)][sesri(iconn,i)][sei(iconn,i)];
+          localRowIndices[i] = sei(iconn,i);
+          }
 
-    for (localIndex i = 0; i < stencilSize; ++i)
-    {
-      dofColIndices[i] = dofNumber[seri(iconn,i)][sesri(iconn,i)][sei(iconn,i)];
-      localColIndices[i] = sei(iconn,i);
-    }
+        for (localIndex i = 0; i < stencilSize; ++i)
+          {
+          dofColIndices[i] = dofNumber[seri(iconn,i)][sesri(iconn,i)][sei(iconn,i)];
+          localColIndices[i] = sei(iconn,i);
+          }
 
-    addLocalContributionsToGlobalSystem( numFluxElems,
-                                         stencilSize,
-                                         eqnRowIndices.data(),
-                                         dofColIndices.data(),
-                                         localFluxJacobian.data(),
-                                         localFlux.data(),
-                                         jacobian,
-                                         residual );
+        addLocalContributionsToGlobalSystem( numFluxElems,
+                                             stencilSize,
+                                             eqnRowIndices.data(),
+                                             dofColIndices.data(),
+                                             localFluxJacobian.data(),
+                                             localFlux.data(),
+                                             jacobian,
+                                             residual );
 
-//    for( localIndex a=0 ;a<numFluxElems ; ++a )
-//    {
-//      for( localIndex b=0 ; b<stencilSize ; ++b )
-//      {
-//        GEOS_LOG_RANK("dFlux_dAper("<<localRowIndices[a]<<", "<<localColIndices[b]<<") = "<<dFlux_dAper(a,b) );
-//      }
-//    }
-    for( localIndex row=0 ; row<numFluxElems ; ++row )
-    {
-      dR_dAper.addToRowBinarySearch( localRowIndices[row],
-                                     localColIndices.data(),
-                                     dFlux_dAper.data() + (stencilSize * row),
-                                     stencilSize );
-    }
+        for( localIndex row=0 ; row<numFluxElems ; ++row )
+        {
+          dR_dAper.addToRowBinarySearch( localRowIndices[row],
+                                         localColIndices.data(),
+                                         dFlux_dAper.data() + (stencilSize * row),
+                                         stencilSize );
+        }
 
-  } );
-
-//  localIndex const numRows = dR_dAper.numRows();
-//  for( localIndex ei=0 ; ei<numRows ; ++ei )
-//  {
-//    localIndex const numColumns = dR_dAper.numNonZeros(ei);
-//    arraySlice1d<localIndex const> const & columns = dR_dAper.getColumns( ei );
-//    arraySlice1d<real64 const> const & values = dR_dAper.getEntries( ei );
-//
-//    for( localIndex kfe2=0 ; kfe2<numColumns ; ++kfe2 )
-//    {
-//      real64 dRdAper = values[kfe2];
-//      localIndex const ei2 = columns[kfe2];
-//      GEOS_LOG_RANK( "dR_dAper("<<ei<<", "<<ei2<<") = "<<dRdAper );
-//    }
-//  }
-
+      }
+    
+    } );
 }
-
-
 
 
 } // namespace SinglePhaseFVMKernels
