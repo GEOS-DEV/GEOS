@@ -80,11 +80,11 @@ void CreatePermutationMatrix( ElementRegionManager const * const elemManager,
   permutationMatrix.createWithLocalSize( nRows, nCols, 1, MPI_COMM_GEOSX );
   permutationMatrix.open();
 
-  elemManager->forElementSubRegions( [&]( ElementSubRegionBase const * const elementSubRegion )
+  elemManager->forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase const & elementSubRegion )
   {
-    localIndex const numElems = elementSubRegion->size();
+    localIndex const numElems = elementSubRegion.size();
     arrayView1d< globalIndex const > const &
-    DofNumber = elementSubRegion->getReference< array1d< globalIndex > >( DofKey );
+    DofNumber = elementSubRegion.getReference< array1d< globalIndex > >( DofKey );
 
     for( localIndex k=0; k<numElems; ++k )
     {
@@ -92,7 +92,7 @@ void CreatePermutationMatrix( ElementRegionManager const * const elemManager,
       {
         for( int d=0; d<nDofPerCell; ++d )
         {
-          globalIndex const rowIndex    = elementSubRegion->m_localToGlobalMap[k] * nDofPerCell + d;
+          globalIndex const rowIndex    = elementSubRegion.m_localToGlobalMap[k] * nDofPerCell + d;
           globalIndex const columnIndex = DofNumber[k]*nDofPerCell + d;
 
           permutationMatrix.insert( rowIndex, columnIndex, 1.0 );

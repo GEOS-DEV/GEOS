@@ -74,18 +74,18 @@ SolidMechanicsLagrangianSSLE::updateStress( DomainPartition * const domain )
       feDiscretization = feDiscretizationManager->GetGroup< FiniteElementDiscretization >( m_discretizationName );
 
     elementRegion->forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const esr,
-                                                                           CellElementSubRegion const * const elementSubRegion )
+                                                                           CellElementSubRegion const & elementSubRegion )
     {
       arrayView3d< R1Tensor const > const &
-      dNdX = elementSubRegion->getReference< array3d< R1Tensor > >( dataRepository::keys::dNdX );
+      dNdX = elementSubRegion.getReference< array3d< R1Tensor > >( dataRepository::keys::dNdX );
 
-      arrayView2d< real64 const > const & detJ = elementSubRegion->getReference< array2d< real64 > >( dataRepository::keys::detJ );
+      arrayView2d< real64 const > const & detJ = elementSubRegion.getReference< array2d< real64 > >( dataRepository::keys::detJ );
 
-      arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion->nodeList();
+      arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
       localIndex const numNodesPerElement = elemsToNodes.size( 1 );
 
       std::unique_ptr< FiniteElementBase >
-      fe = feDiscretization->getFiniteElement( elementSubRegion->GetElementTypeString() );
+      fe = feDiscretization->getFiniteElement( elementSubRegion.GetElementTypeString() );
 
       // space for element matrix and rhs
 
@@ -94,7 +94,7 @@ SolidMechanicsLagrangianSSLE::updateStress( DomainPartition * const domain )
         ElementKernelLaunchSelector< Kernels >( numNodesPerElement,
                                                 fe->n_quadrature_points(),
                                                 constitutiveRelations[er][esr][m_solidMaterialFullIndex],
-                                                elementSubRegion->size(),
+                                                elementSubRegion.size(),
                                                 elemsToNodes,
                                                 dNdX,
                                                 detJ,

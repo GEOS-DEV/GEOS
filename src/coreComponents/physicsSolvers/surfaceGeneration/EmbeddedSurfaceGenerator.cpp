@@ -119,7 +119,7 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
     embeddedSurfaceRegion->GetSubRegion< EmbeddedSurfaceSubRegion >( 0 );
 
   // Loop over all the fracture planes
-  geometricObjManager->forSubGroups< BoundedPlane >( [&]( BoundedPlane * const fracture ) -> void
+  geometricObjManager->forSubGroups< BoundedPlane >( [&]( BoundedPlane & fracture )
   {
     /* 1. Find out if an element is cut by the fracture or not.
      * Loop over all the elements and for each one of them loop over the nodes and compute the
@@ -127,53 +127,51 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
      * vector defining the plane. If two scalar products have different signs the plane cuts the
      * cell. If a nodes gives a 0 dot product it has to be neglected or the method won't work.
      */
-    R1Tensor planeCenter  = fracture->getCenter();
-    R1Tensor normalVector = fracture->getNormal();
+    R1Tensor planeCenter  = fracture.getCenter();
+    R1Tensor normalVector = fracture.getNormal();
     // Initialize variables
     globalIndex nodeIndex;
     integer isPositive, isNegative;
     R1Tensor distVec;
 
-    elemManager->forElementRegionsComplete< CellElementRegion >( [&]( localIndex const er, CellElementRegion * const region )->void
+    elemManager->forElementSubRegionsComplete< CellElementSubRegion >(
+      [&]( localIndex const er, localIndex const esr, ElementRegionBase &, CellElementSubRegion & subRegion )
     {
-      region->forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const esr, CellElementSubRegion * const subRegion )->void
+      CellElementSubRegion::NodeMapType::ViewTypeConst const & cellToNodes = subRegion.nodeList();
+      FixedOneToManyRelation const & cellToEdges = subRegion.edgeList();
+      for( localIndex cellIndex =0; cellIndex<subRegion.size(); cellIndex++ )
       {
-        CellElementSubRegion::NodeMapType::ViewTypeConst const & cellToNodes = subRegion->nodeList();
-        FixedOneToManyRelation const & cellToEdges = subRegion->edgeList();
-        for( localIndex cellIndex =0; cellIndex<subRegion->size(); cellIndex++ )
+        isPositive = 0;
+        isNegative = 0;
+        for( localIndex kn =0; kn<subRegion.numNodesPerElement(); kn++ )
         {
-          isPositive = 0;
-          isNegative = 0;
-          for( localIndex kn =0; kn<subRegion->numNodesPerElement(); kn++ )
+          nodeIndex = cellToNodes[cellIndex][kn];
+          distVec  = nodesCoord[nodeIndex];
+          distVec -= planeCenter;
+          // check if the dot product is zero
+          if( Dot( distVec, normalVector ) > 0 )
           {
-            nodeIndex = cellToNodes[cellIndex][kn];
-            distVec  = nodesCoord[nodeIndex];
-            distVec -= planeCenter;
-            // check if the dot product is zero
-            if( Dot( distVec, normalVector ) > 0 )
-            {
-              isPositive = 1;
-            }
-            else if( Dot( distVec, normalVector ) < 0 )
-            {
-              isNegative = 1;
-            }
-          } // end loop over nodes
-          if( isPositive * isNegative == 1 )
-          {
-            bool added = embeddedSurfaceSubRegion->AddNewEmbeddedSurface( cellIndex,
-                                                                          er,
-                                                                          esr,
-                                                                          *nodeManager,
-                                                                          *edgeManager,
-                                                                          cellToEdges,
-                                                                          fracture );
-            if( added )
-              GEOSX_LOG_LEVEL_RANK_0( 2, "Element " << cellIndex << " is fractured" );
+            isPositive = 1;
           }
-        } // end loop over cells
-      } );// end loop over subregions
-    } );// end loop over elementRegions
+          else if( Dot( distVec, normalVector ) < 0 )
+          {
+            isNegative = 1;
+          }
+        } // end loop over nodes
+        if( isPositive * isNegative == 1 )
+        {
+          bool added = embeddedSurfaceSubRegion->AddNewEmbeddedSurface( cellIndex,
+                                                                        er,
+                                                                        esr,
+                                                                        *nodeManager,
+                                                                        *edgeManager,
+                                                                        cellToEdges,
+                                                                        &fracture );
+          if( added )
+            GEOSX_LOG_LEVEL_RANK_0( 2, "Element " << cellIndex << " is fractured" );
+        }
+      } // end loop over cells
+    } );// end loop over subregions
   } );// end loop over thick planes
 
   GEOSX_LOG_LEVEL_RANK_0( 1, "Number of embedded surface elements: " << embeddedSurfaceSubRegion->size() );

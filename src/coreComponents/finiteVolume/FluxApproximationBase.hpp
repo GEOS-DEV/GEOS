@@ -169,18 +169,18 @@ template< typename LAMBDA >
 void FluxApproximationBase::forCellStencils( LAMBDA && lambda ) const
 {
 //TODO remove dependence on CellElementStencilTPFA and FaceElementStencil
-  this->forWrappers< CellElementStencilTPFA, FaceElementStencil >( [&] ( auto const * const wrapper ) -> void
+  this->forWrappers< CellElementStencilTPFA, FaceElementStencil >( [&] ( auto const & wrapper )
   {
-    lambda( wrapper->reference());
+    lambda( wrapper.reference());
   } );
 }
 
 template< typename TYPE, typename ... TYPES, typename LAMBDA >
 void FluxApproximationBase::forStencils( LAMBDA && lambda ) const
 {
-  this->forWrappers< TYPE, TYPES... >( [&] ( auto const * const wrapper ) -> void
+  this->forWrappers< TYPE, TYPES... >( [&] ( auto const & wrapper )
   {
-    lambda( wrapper->reference());
+    lambda( wrapper.reference());
   } );
 }
 
@@ -188,9 +188,9 @@ void FluxApproximationBase::forStencils( LAMBDA && lambda ) const
 template< typename LAMBDA >
 void FluxApproximationBase::forBoundaryStencils( LAMBDA && lambda ) const
 {
-  this->forWrappers< BoundaryStencil >( [&] ( auto const * const wrapper ) -> void
+  this->forWrappers< BoundaryStencil >( [&] ( auto const & wrapper )
   {
-    lambda( wrapper->reference());
+    lambda( wrapper.reference());
   } );
 }
 

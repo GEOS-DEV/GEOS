@@ -112,23 +112,20 @@ void DomainPartition::GenerateSets()
 
 
   ElementRegionManager * const elementRegionManager = mesh->getElemManager();
-  elementRegionManager->forElementSubRegionsComplete( [&]( localIndex const GEOSX_UNUSED_PARAM( er ),
-                                                           localIndex const GEOSX_UNUSED_PARAM( esr ),
-                                                           ElementRegionBase const * const GEOSX_UNUSED_PARAM( region ),
-                                                           auto * const subRegion )
+  elementRegionManager->forElementSubRegions( [&]( auto & subRegion )
   {
-    dataRepository::Group * elementSets = subRegion->sets();
+    dataRepository::Group * elementSets = subRegion.sets();
 
-    auto const & elemToNodeMap = subRegion->nodeList();
+    auto const & elemToNodeMap = subRegion.nodeList();
 
     for( std::string const & setName : setNames )
     {
       arrayView1d< bool const > const & nodeInCurSet = nodeInSet[setName];
 
       SortedArray< localIndex > & targetSet = elementSets->registerWrapper< SortedArray< localIndex > >( setName )->reference();
-      for( localIndex k = 0; k < subRegion->size(); ++k )
+      for( localIndex k = 0; k < subRegion.size(); ++k )
       {
-        localIndex const numNodes = subRegion->numNodesPerElement( k );
+        localIndex const numNodes = subRegion.numNodesPerElement( k );
 
         localIndex elementInSet = true;
         for( localIndex i = 0; i < numNodes; ++i )

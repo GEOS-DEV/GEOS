@@ -163,19 +163,19 @@ TEST( FieldSpecification, Recursive )
   auto field1 = elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( "field1" );
   auto field2 = elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( "field2" );
   auto field3 = elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( "field3" );
-  elemManager->forElementSubRegionsComplete( [&] ( localIndex er, localIndex esr,
-                                                   ElementRegionBase * const GEOSX_UNUSED_PARAM( region ),
-                                                   ElementSubRegionBase const * const subRegion )
+  elemManager->forElementSubRegionsComplete< ElementSubRegionBase >(
+    [&] ( localIndex const er, localIndex const esr, ElementRegionBase const &, ElementSubRegionBase const & subRegion )
   {
-    forall_in_range< serialPolicy >( 0, subRegion->size(), [=] ( localIndex ei )
+    forall_in_range< serialPolicy >( 0, subRegion.size(), [=] ( localIndex ei )
     {
       GEOSX_ERROR_IF( field0[er][esr][ei] < 1. || field0[er][esr][ei] > 1., "Recursive fields are not set" );
     } );
   } );
 
-  reg0->forElementSubRegionsIndex( [&]( localIndex const esr, ElementSubRegionBase * const subRegion )->void
+  reg0->forElementSubRegionsIndex< ElementSubRegionBase >(
+    [&]( localIndex const esr, ElementSubRegionBase & subRegion )
   {
-    forall_in_range< serialPolicy >( 0, subRegion->size(), [=] ( localIndex ei )
+    forall_in_range< serialPolicy >( 0, subRegion.size(), [=] ( localIndex ei )
     {
       GEOSX_ERROR_IF( field1[0][esr][ei] < 2. || field1[0][esr][ei] > 2., "Recursive fields are not set" );
     } );

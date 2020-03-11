@@ -75,32 +75,34 @@ void Group::deregisterWrapper( string const & name )
 }
 
 
-void Group::resize( indexType const newsize )
+void Group::resize( indexType const newSize )
 {
-  for( auto && i : this->wrappers() )
+  forWrappers( [newSize] ( WrapperBase & wrapper )
   {
-    if( i.second->sizedFromParent() == 1 )
+    if( wrapper.sizedFromParent() == 1 )
     {
-      i.second->resize( newsize );
+      wrapper.resize( newSize );
     }
-  }
-  m_size = newsize;
+  } );
+
+  m_size = newSize;
   if( m_size > m_capacity )
   {
     m_capacity = m_size;
   }
 }
 
-void Group::reserve( indexType const newsize )
+void Group::reserve( indexType const newSize )
 {
-  for( auto && i : this->wrappers() )
+  forWrappers( [newSize] ( WrapperBase & wrapper )
   {
-    if( i.second->sizedFromParent() == 1 )
+    if( wrapper.sizedFromParent() == 1 )
     {
-      i.second->reserve( newsize );
+      wrapper.reserve( newSize );
     }
-  }
-  m_capacity = newsize;
+  } );
+
+  m_capacity = newSize;
 }
 
 void Group::ProcessInputFileRecursive( xmlWrapper::xmlNode & targetNode )
@@ -503,16 +505,16 @@ void Group::prepareToWrite()
     return;
   }
 
-  for( auto & pair : m_wrappers )
+  forWrappers( [] ( WrapperBase & wrapper )
   {
-    pair.second->registerToWrite();
-  }
+    wrapper.registerToWrite();
+  } );
 
   m_conduitNode[ "__size__" ].set( m_size );
 
-  forSubGroups( []( Group * subGroup )
+  forSubGroups( []( Group & subGroup )
   {
-    subGroup->prepareToWrite();
+    subGroup.prepareToWrite();
   } );
 }
 
@@ -524,14 +526,14 @@ void Group::finishWriting()
     return;
   }
 
-  for( auto & pair : m_wrappers )
+  forWrappers( [] ( WrapperBase & wrapper )
   {
-    pair.second->finishWriting();
-  }
+    wrapper.finishWriting();
+  } );
 
-  forSubGroups( []( Group * subGroup )
+  forSubGroups( []( Group & subGroup )
   {
-    subGroup->finishWriting();
+    subGroup.finishWriting();
   } );
 }
 
@@ -545,22 +547,22 @@ void Group::loadFromConduit()
 
   m_size = m_conduitNode.fetch_child( "__size__" ).value();
 
-  for( auto & pair : m_wrappers )
+  forWrappers( []( WrapperBase & wrapper )
   {
-    pair.second->loadFromConduit();
-  }
+    wrapper.loadFromConduit();
+  } );
 
-  forSubGroups( []( Group * subGroup )
+  forSubGroups( []( Group & subGroup )
   {
-    subGroup->loadFromConduit();
+    subGroup.loadFromConduit();
   } );
 }
 
 void Group::postRestartInitializationRecursive( Group * const domain )
 {
-  forSubGroups( [&]( Group * const subGroup )
+  forSubGroups( [&]( Group & subGroup )
   {
-    subGroup->postRestartInitializationRecursive( domain );
+    subGroup.postRestartInitializationRecursive( domain );
   } );
 
   this->postRestartInitialization( domain );

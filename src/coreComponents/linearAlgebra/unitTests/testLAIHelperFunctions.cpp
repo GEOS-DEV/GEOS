@@ -226,22 +226,22 @@ TEST_F( LAIHelperFunctionsTest, Test_CellCenteredVectorPermutation )
 
   cellCenteredVariable.open();
   expectedPermutedVector.open();
-  elemManager->forElementSubRegions( [&]( ElementSubRegionBase const * const elementSubRegion )
+  elemManager->forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase const & elementSubRegion )
   {
-    localIndex const numElems = elementSubRegion->size();
+    localIndex const numElems = elementSubRegion.size();
     arrayView1d< globalIndex const > const &
-    dofNumber = elementSubRegion->getReference< array1d< globalIndex > >( dofManager.getKey( "cellCentered" ) );
-    arrayView1d< integer > const & isGhost = elementSubRegion->GhostRank();
+    dofNumber = elementSubRegion.getReference< array1d< globalIndex > >( dofManager.getKey( "cellCentered" ) );
+    arrayView1d< integer > const & isGhost = elementSubRegion.GhostRank();
 
     for( localIndex k=0; k<numElems; ++k )
     {
       if( dofNumber[k] >= 0 && isGhost[k] < 0 )
       {
         globalIndex index = dofNumber[k];
-        real64 Value = elementSubRegion->m_localToGlobalMap[k];
+        real64 Value = elementSubRegion.m_localToGlobalMap[k];
         cellCenteredVariable.add( index, Value );
-        index = elementSubRegion->m_localToGlobalMap[k];
-        Value = elementSubRegion->m_localToGlobalMap[k];
+        index = elementSubRegion.m_localToGlobalMap[k];
+        Value = elementSubRegion.m_localToGlobalMap[k];
         expectedPermutedVector.add( index, Value );
       }
     }

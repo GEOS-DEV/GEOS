@@ -104,16 +104,16 @@ void EventManager::Run( dataRepository::Group * domain )
 
   // Setup event targets, sequence indicators
   array1d< integer > eventCounters( 2 );
-  this->forSubGroups< EventBase >( [&]( EventBase * subEvent ) -> void
+  this->forSubGroups< EventBase >( [&]( EventBase & subEvent )
   {
-    subEvent->GetTargetReferences();
-    subEvent->GetExecutionOrder( eventCounters );
+    subEvent.GetTargetReferences();
+    subEvent.GetExecutionOrder( eventCounters );
   } );
 
   // Set the progress indicators
-  this->forSubGroups< EventBase >( [&]( EventBase * subEvent ) -> void
+  this->forSubGroups< EventBase >( [&]( EventBase & subEvent )
   {
-    subEvent->SetProgressIndicator( eventCounters );
+    subEvent.SetProgressIndicator( eventCounters );
   } );
 
   // Inform user if it appears this is a mid-loop restart
@@ -190,9 +190,9 @@ void EventManager::Run( dataRepository::Group * domain )
   // Cleanup
   GEOSX_LOG_RANK_0( "Cleaning up events" );
 
-  this->forSubGroups< EventBase >( [&]( EventBase * subEvent ) -> void
+  this->forSubGroups< EventBase >( [&]( EventBase & subEvent )
   {
-    subEvent->Cleanup( m_time, m_cycle, 0, 0, domain );
+    subEvent.Cleanup( m_time, m_cycle, 0, 0, domain );
   } );
 }
 
