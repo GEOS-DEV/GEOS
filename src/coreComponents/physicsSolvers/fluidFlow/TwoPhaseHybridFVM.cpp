@@ -954,7 +954,7 @@ void TwoPhaseHybridFVM::AssembleOneSidedMassFluxes( real64 const & dt,
 
       // 4) derivatives wrt the face centered var
       for (localIndex jfaceLoc = 0; jfaceLoc < numFacesInElem; ++jfaceLoc)
-      { 	
+      {         
         dSumLocalMassFluxes_dFaceVars[rowId][jfaceLoc] += localViscCoef * dTotalVolFlux_dfp[ifaceLoc][jfaceLoc];
       }
     }
@@ -1183,7 +1183,7 @@ void TwoPhaseHybridFVM::ApplySystemSolution( DofManager const & dofManager,
 
   dofManager.addVectorToField( solution,
                                viewKeyStruct::elemDofFieldString,
-                               viewKeyStruct::deltaWettingPhaseSatString,				 
+                               viewKeyStruct::deltaWettingPhaseSatString,                                
                                scalingFactor,
                                1, 2 );
 
@@ -1202,7 +1202,7 @@ void TwoPhaseHybridFVM::ApplySystemSolution( DofManager const & dofManager,
   fieldNames["elems"].push_back( viewKeyStruct::deltaWettingPhaseSatString );
   CommunicationTools::SynchronizeFields( fieldNames,
                                          mesh,
-                                         domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
+                                         domain->getNeighbors() );
 
   applyToSubRegions( mesh, [&] ( ElementSubRegionBase * const subRegion )
   {

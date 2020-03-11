@@ -14,9 +14,11 @@ ImmiscibleTwoPhaseFluid               node         :ref:`XML_ImmiscibleTwoPhaseF
 LinearElasticAnisotropic              node         :ref:`XML_LinearElasticAnisotropic`              
 LinearElasticIsotropic                node         :ref:`XML_LinearElasticIsotropic`                
 MultiPhaseMultiComponentFluid         node         :ref:`XML_MultiPhaseMultiComponentFluid`         
+ParticleFluid                         node         :ref:`XML_ParticleFluid`                         
 PoreVolumeCompressibleSolid           node         :ref:`XML_PoreVolumeCompressibleSolid`           
 PoroLinearElasticAnisotropic          node         :ref:`XML_PoroLinearElasticAnisotropic`          
 PoroLinearElasticIsotropic            node         :ref:`XML_PoroLinearElasticIsotropic`            
+ProppantSlurryFluid                   node         :ref:`XML_ProppantSlurryFluid`                   
 VanGenuchtenBakerRelativePermeability node         :ref:`XML_VanGenuchtenBakerRelativePermeability` 
 VanGenuchtenCapillaryPressure         node         :ref:`XML_VanGenuchtenCapillaryPressure`         
 ===================================== ==== ======= ================================================ 

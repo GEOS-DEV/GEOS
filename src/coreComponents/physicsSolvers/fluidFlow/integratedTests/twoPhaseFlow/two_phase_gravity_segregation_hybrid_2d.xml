@@ -30,7 +30,7 @@
                   cellBlockNames="{block1}"/>
   </Mesh>
 
-  <Events maxTime="1e10">
+  <Events maxTime="1e8">
 
     <PeriodicEvent name="outputs"
                    timeFrequency="5e7"

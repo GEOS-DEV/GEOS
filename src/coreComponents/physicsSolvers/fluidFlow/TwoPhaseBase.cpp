@@ -343,10 +343,7 @@ void TwoPhaseBase::InitializePostInitialConditions_PreSubGroups( Group * const r
   fieldNames["elems"].push_back( viewKeyStruct::pressureString );
   fieldNames["elems"].push_back( viewKeyStruct::wettingPhaseSatString );
 
-  array1d<NeighborCommunicator> & comms =
-    domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors );
-
-  CommunicationTools::SynchronizeFields( fieldNames, mesh, comms );
+  CommunicationTools::SynchronizeFields( fieldNames, mesh, domain->getNeighbors() );
 
   ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
 

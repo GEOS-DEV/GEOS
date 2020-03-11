@@ -22,6 +22,10 @@ set( constitutive_headers
      fluid/MultiFluidBase.hpp
      fluid/CompressibleSinglePhaseFluid.hpp
      fluid/ImmiscibleTwoPhaseFluid.hpp
+     fluid/SlurryFluidBase.hpp
+     fluid/ProppantSlurryFluid.hpp
+     fluid/ParticleFluidBase.hpp
+     fluid/ParticleFluid.hpp          
      relativePermeability/RelativePermeabilityBase.hpp
      relativePermeability/BrooksCoreyRelativePermeability.hpp
      relativePermeability/BrooksCoreyBakerRelativePermeability.hpp
@@ -31,6 +35,14 @@ set( constitutive_headers
      solid/PoroElastic.hpp
      solid/PoreVolumeCompressibleSolid.hpp
      solid/SolidBase.hpp
+     relativePermeability/RelativePermeabilityBase.hpp
+     relativePermeability/BrooksCoreyRelativePermeability.hpp
+     relativePermeability/BrooksCoreyBakerRelativePermeability.hpp
+     relativePermeability/VanGenuchtenBakerRelativePermeability.hpp
+     capillaryPressure/CapillaryPressureBase.hpp
+     capillaryPressure/BrooksCoreyCapillaryPressure.hpp
+     capillaryPressure/VanGenuchtenCapillaryPressure.hpp
+     contact/ContactRelationBase.hpp
    )
 #
 # Specify all sources
@@ -53,6 +65,10 @@ set( constitutive_sources
      fluid/SingleFluidBase.cpp
      fluid/MultiFluidBase.cpp
      fluid/CompressibleSinglePhaseFluid.cpp
+     fluid/SlurryFluidBase.cpp
+     fluid/ProppantSlurryFluid.cpp
+     fluid/ParticleFluidBase.cpp
+     fluid/ParticleFluid.cpp               
      fluid/ImmiscibleTwoPhaseFluid.cpp     
      relativePermeability/RelativePermeabilityBase.cpp
      relativePermeability/BrooksCoreyRelativePermeability.cpp
@@ -63,6 +79,14 @@ set( constitutive_sources
      solid/PoroElastic.cpp
      solid/PoreVolumeCompressibleSolid.cpp
      solid/SolidBase.cpp
+     relativePermeability/RelativePermeabilityBase.cpp
+     relativePermeability/BrooksCoreyRelativePermeability.cpp
+     relativePermeability/BrooksCoreyBakerRelativePermeability.cpp
+     relativePermeability/VanGenuchtenBakerRelativePermeability.cpp
+     capillaryPressure/CapillaryPressureBase.cpp
+     capillaryPressure/BrooksCoreyCapillaryPressure.cpp
+     capillaryPressure/VanGenuchtenCapillaryPressure.cpp
+     contact/ContactRelationBase.cpp
    )
 
 if( BUILD_OBJ_LIBS)

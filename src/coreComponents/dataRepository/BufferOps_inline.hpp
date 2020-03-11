@@ -939,6 +939,26 @@ Unpack( buffer_unit_type const * & buffer,
   return sizeOfUnpackedChars;
 }
 
+inline
+localIndex
+UnpackSyncList( buffer_unit_type const * & buffer,
+                localIndex_array & var,
+                std::unordered_map< globalIndex, localIndex > const & globalToLocalMap )
+{
+  localIndex length;
+  localIndex sizeOfUnpackedChars = Unpack( buffer, length );
+  var.resize( length );
+
+  for( localIndex a=0 ; a<length ; ++a )
+  {
+    globalIndex unpackedGlobalIndex;
+    sizeOfUnpackedChars += Unpack( buffer, unpackedGlobalIndex );
+    var[a] = globalToLocalMap.at( unpackedGlobalIndex );
+  }
+
+  return sizeOfUnpackedChars;
+}
+
 template< typename SORTED >
 inline
 localIndex
