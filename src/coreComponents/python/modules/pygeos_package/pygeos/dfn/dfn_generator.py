@@ -187,16 +187,8 @@ def WriteDFNxml(inputFileName, outputFileName, fractureCenter, fractureLength, f
   # Write fracture definitions
   GeometryBlock = root.findall('Geometry')[0]
   fracNames = ['Frac_%06d' % (ii) for ii in range(0, len(fractureCenter))]
-  setNames = {k: [] for k in np.unique(fractureSet)}
   for ii in range(0, len(fractureCenter)):
     BuildNodeset(GeometryBlock, fracNames[ii], fractureCenter[ii], fractureLength[ii], fractureHeight[ii], fractureAngle[ii], margin)
-    setNames[fractureSet[ii]].append(fracNames[ii])
-
-  # Write dfn set definitions
-  for k in setNames:
-    newSet = etree.Element("Union", name=k)
-    newSet.set('subObjects', '{' + ', '.join(setNames[k]) + '}')
-    GeometryBlock.insert(-1, newSet)
 
   # Write an initial condition to mark the DFN faces
   InitDFN = etree.Element("FieldSpecification", name='init_dfn')
@@ -204,7 +196,7 @@ def WriteDFNxml(inputFileName, outputFileName, fractureCenter, fractureLength, f
   InitDFN.set('initialCondition', '1')
   InitDFN.set('objectPath', 'faceManager')
   InitDFN.set('scale', '1')
-  InitDFN.set('setNames', '{' + ', '.join(list(setNames.keys())) + '}')
+  InitDFN.set('setNames', '{' + ', '.join(fracNames) + '}')
   FieldSpecificationsBlock = root.findall('FieldSpecifications')[0]
   FieldSpecificationsBlock.insert(-1, InitDFN)
 
