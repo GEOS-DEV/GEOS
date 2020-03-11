@@ -280,7 +280,7 @@ localIndex NodeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
                                            m_toEdgesRelation.toArrayOfArraysView(),
                                            m_unmappedGlobalIndicesInToEdges,
                                            packList,
-                                           this->m_localToGlobalMap,
+                                           this->localToGlobalMap(),
                                            m_toEdgesRelation.RelatedObjectLocalToGlobal() );
 
   packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::faceListString ) );
@@ -288,7 +288,7 @@ localIndex NodeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
                                            m_toFacesRelation.toArrayOfArraysView(),
                                            m_unmappedGlobalIndicesInToFaces,
                                            packList,
-                                           this->m_localToGlobalMap,
+                                           this->localToGlobalMap(),
                                            m_toFacesRelation.RelatedObjectLocalToGlobal() );
 
   packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::elementListString ) );
@@ -314,7 +314,7 @@ localIndex NodeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                      m_toEdgesRelation,
                                      packList,
                                      m_unmappedGlobalIndicesInToEdges,
-                                     this->m_globalToLocalMap,
+                                     this->globalToLocalMap(),
                                      m_toEdgesRelation.RelatedObjectGlobalToLocal(),
                                      overwriteUpMaps );
 
@@ -324,7 +324,7 @@ localIndex NodeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                      m_toFacesRelation,
                                      packList,
                                      m_unmappedGlobalIndicesInToFaces,
-                                     this->m_globalToLocalMap,
+                                     this->globalToLocalMap(),
                                      m_toFacesRelation.RelatedObjectGlobalToLocal(),
                                      overwriteUpMaps );
 

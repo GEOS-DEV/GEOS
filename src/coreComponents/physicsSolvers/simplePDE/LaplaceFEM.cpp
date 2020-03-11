@@ -223,7 +223,7 @@ void LaplaceFEM::AssembleSystem( real64 const time_n,
       real64_array element_rhs( numNodesPerElement );
       real64_array2d element_matrix( numNodesPerElement, numNodesPerElement );
 
-      integer_array const & elemGhostRank = elementSubRegion.m_ghostRank;
+      arrayView1d< integer const > const & elemGhostRank = elementSubRegion.ghostRank();
       localIndex const n_q_points = feDiscretization->m_finiteElement->n_quadrature_points();
 
       // begin element loop, skipping ghost elements

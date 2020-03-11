@@ -114,7 +114,7 @@ void DomainPartition::GenerateSets()
   ElementRegionManager * const elementRegionManager = mesh->getElemManager();
   elementRegionManager->forElementSubRegions( [&]( auto & subRegion )
   {
-    dataRepository::Group * elementSets = subRegion.sets();
+    dataRepository::Group & elementSets = subRegion.sets();
 
     auto const & elemToNodeMap = subRegion.nodeList();
 
@@ -122,7 +122,7 @@ void DomainPartition::GenerateSets()
     {
       arrayView1d< bool const > const & nodeInCurSet = nodeInSet[setName];
 
-      SortedArray< localIndex > & targetSet = elementSets->registerWrapper< SortedArray< localIndex > >( setName )->reference();
+      SortedArray< localIndex > & targetSet = elementSets.registerWrapper< SortedArray< localIndex > >( setName )->reference();
       for( localIndex k = 0; k < subRegion.size(); ++k )
       {
         localIndex const numNodes = subRegion.numNodesPerElement( k );
