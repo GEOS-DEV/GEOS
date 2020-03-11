@@ -70,16 +70,6 @@ public:
    * @brief Returns the number of global columns.
    */
   virtual globalIndex numGlobalCols() const = 0;
-
-  /**
-   * @brief Returns the number of global rows.
-   */
-  virtual localIndex numLocalRows() const = 0;
-
-  /**
-   * @brief Returns the number of global columns.
-   */
-  virtual localIndex numLocalCols() const = 0;
 };
 
 }

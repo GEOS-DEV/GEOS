@@ -493,9 +493,9 @@ void SinglePhaseBase::AssembleSystem( real64 const time_n,
   {
     GEOSX_LOG_RANK_0( "After SinglePhaseFlow::AssembleSystem" );
     GEOSX_LOG_RANK_0("\nJacobian:\n");
-    std::cout<< matrix;
+    std::cout << matrix;
     GEOSX_LOG_RANK_0("\nResidual:\n");
-    std::cout<< rhs;
+    std::cout << rhs;
   }
 
 

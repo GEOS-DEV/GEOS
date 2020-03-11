@@ -715,12 +715,12 @@ protected:
   /**
    * @brief Return the local number of columns on each processor
    */
-  virtual localIndex numLocalRows() const override = 0;
+  virtual localIndex numLocalRows() const = 0;
 
   /**
    * @brief Return the local number of columns on each processor
    */
-  virtual localIndex numLocalCols() const override = 0;
+  virtual localIndex numLocalCols() const = 0;
 
   /**
    * @brief Returns the index of the first global row owned by that processor.

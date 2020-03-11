@@ -44,8 +44,6 @@ public:
   {
     m_numGlobalRows = mat.numGlobalRows();
     m_numGlobalCols = mat.numGlobalCols();
-    m_numLocalRows = mat.numLocalRows();
-    m_numLocalCols = mat.numLocalCols();
   }
 
   /**
@@ -69,23 +67,10 @@ public:
     return m_numGlobalCols;
   }
 
-  virtual localIndex numLocalRows() const override
-  {
-    return m_numLocalRows;
-  }
-
-  virtual localIndex numLocalCols() const override
-  {
-    return m_numLocalCols;
-  }
-
 private:
 
   globalIndex m_numGlobalRows;
   globalIndex m_numGlobalCols;
-  localIndex m_numLocalRows;
-  localIndex m_numLocalCols;
-
 };
 
 }

@@ -29,24 +29,6 @@ namespace geosx
 template< typename Vector > class LinearOperator;
 template< typename Vector > class BlockVectorView;
 
-namespace internal
-{
-
-// Helper struct to get temporary stored vector type from vector view types
-template< typename VECTOR >
-struct VectorStorage
-{
-  using type = VECTOR;
-};
-
-template< typename VECTOR >
-struct VectorStorage< BlockVectorView< VECTOR > >
-{
-  using type = BlockVector< VECTOR >;
-};
-
-}
-
 /**
  * @brief Base class for Krylov solvers
  * @tparam VECTOR type of vector handled by this solver
@@ -83,7 +65,7 @@ public:
   }
 
   /**
-   * @brief Virtual destructor (does nothing)
+   * @brief Virtual destructor
    */
   virtual ~KrylovSolver() override = default;
 
@@ -113,26 +95,31 @@ public:
     return m_operator.numGlobalCols();
   }
 
-  virtual localIndex numLocalRows() const override final
-  {
-    return m_operator.numLocalRows();
-  }
-
-  virtual localIndex numLocalCols() const override final
-  {
-    return m_operator.numLocalCols();
-  }
-
   localIndex numIterations( ) const { return m_numIterations; };
 
   arrayView1d<const real64> residualNormVector( ) const { return m_residualNormVector.toViewConst(); };
 
   bool convergenceFlag( ) const { return m_convergenceFlag; };
 
+private:
+
+  // Helper struct to get temporary stored vector type from vector view types
+  template< typename VEC >
+  struct VectorStorageHelper
+  {
+    using type = VEC;
+  };
+
+  template< typename VEC >
+  struct VectorStorageHelper< BlockVectorView< VEC > >
+  {
+    using type = BlockVector< VEC >;
+  };
+
 protected:
 
   /// Alias for vector type that can be used for temporaries
-  using VectorTemp = typename internal::VectorStorage< VECTOR >::type;
+  using VectorTemp = typename VectorStorageHelper< VECTOR >::type;
 
   /// reference to the operator to be solved
   LinearOperator<Vector> const & m_operator;

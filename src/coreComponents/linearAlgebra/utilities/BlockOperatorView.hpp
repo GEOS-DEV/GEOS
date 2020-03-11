@@ -76,9 +76,9 @@ public:
 
   virtual globalIndex numGlobalCols() const override;
 
-  virtual localIndex numLocalRows() const override;
+  virtual localIndex numLocalRows() const;
 
-  virtual localIndex numLocalCols() const override;
+  virtual localIndex numLocalCols() const;
 
   ///@}
 
@@ -171,16 +171,16 @@ template< typename VECTOR, typename OPERATOR >
 void BlockOperatorView< VECTOR, OPERATOR >::apply( BlockVectorView< VECTOR > const & x,
                                                    BlockVectorView< VECTOR > & b ) const
 {
-  for( localIndex row = 0; row < m_operators.size( 0 ); row++ )
+  for( localIndex i = 0; i < m_operators.size( 0 ); i++ )
   {
-    b.block( row ).zero();
-    VECTOR temp( b.block( row ) );
-    for( localIndex col = 0; col < m_operators.size( 1 ); col++ )
+    b.block( i ).zero();
+    VECTOR temp( b.block( i ) );
+    for( localIndex j = 0; j < m_operators.size( 1 ); j++ )
     {
-      if( m_operators[row][col] != nullptr )
+      if( m_operators( i, j ) != nullptr )
       {
-        m_operators[row][col]->apply( x.block( col ), temp );
-        b.block( row ).axpy( 1.0, temp );
+        m_operators( i, j )->apply( x.block( j ), temp );
+        b.block( i ).axpy( 1.0, temp );
       }
     }
   }
@@ -194,7 +194,7 @@ globalIndex BlockOperatorView< VECTOR, OPERATOR >::numGlobalRows() const
   {
     for( localIndex j = 0; j < numBlockCols(); ++j )
     {
-      if( m_operators( i,j ) != nullptr )
+      if( m_operators( i, j ) != nullptr )
       {
         numRows += block( i, j ).numGlobalRows();
         break;
@@ -212,7 +212,7 @@ globalIndex BlockOperatorView< VECTOR, OPERATOR >::numGlobalCols() const
   {
     for( localIndex i = 0; i < numBlockRows(); ++i )
     {
-      if( m_operators( i,j ) != nullptr )
+      if( m_operators( i, j ) != nullptr )
       {
         numCols += block( i, j ).numGlobalCols();
         break;
@@ -226,9 +226,16 @@ template< typename VECTOR, typename OPERATOR >
 localIndex BlockOperatorView< VECTOR, OPERATOR >::numLocalRows() const
 {
   localIndex numRows = 0;
-  for( localIndex i = 0; i < numBlockRows(); i++ )
+  for( localIndex i = 0; i < numBlockRows(); ++i )
   {
-    numRows += block( i, 0 ).numLocalRows();
+    for( localIndex j = 0; j < numBlockCols(); ++j )
+    {
+      if( m_operators( i, j ) != nullptr )
+      {
+        numRows += block( i, j ).numLocalRows();
+        break;
+      }
+    }
   }
   return numRows;
 }
@@ -239,7 +246,14 @@ localIndex BlockOperatorView< VECTOR, OPERATOR >::numLocalCols() const
   localIndex numCols = 0;
   for( localIndex j = 0; j < numBlockCols(); j++ )
   {
-    numCols += block( 0, j ).numLocalCols();
+    for( localIndex i = 0; i < numBlockRows(); ++i )
+    {
+      if( m_operators( i, j ) != nullptr )
+      {
+        numCols += block( i, j ).numLocalCols();
+        break;
+      }
+    }
   }
   return numCols;
 }
