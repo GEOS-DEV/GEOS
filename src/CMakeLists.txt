@@ -55,6 +55,7 @@ add_subdirectory(thirdparty)
 set( externalComponentsLinkList "" ) 
 add_subdirectory(externalComponents)
 add_subdirectory(coreComponents)
+add_subdirectory(main)
 
 
 ################################
@@ -63,9 +64,6 @@ add_subdirectory(coreComponents)
 if (ENABLE_DOCS)
   add_subdirectory(docs)
 endif()
-
-
-#add_code_check_targets(uncrustify.cfg)
 
 
 ################################
