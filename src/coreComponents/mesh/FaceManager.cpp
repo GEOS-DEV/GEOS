@@ -196,10 +196,10 @@ void createFacesByLowestNode( ElementRegionManager const & elementManager,
 
     // loop over all the subregions
     elemRegion.forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const esr,
-                                                                       CellElementSubRegion const * const subRegion )
+                                                                       CellElementSubRegion const & subRegion )
     {
-      localIndex const numFacesPerElement = subRegion->numFacesPerElement();
-      localIndex const numElements = subRegion->size();
+      localIndex const numFacesPerElement = subRegion.numFacesPerElement();
+      localIndex const numElements = subRegion.size();
 
       // Begin the parallel region so that tempNodeList and lowestNodes are thread private.
       PRAGMA_OMP( "omp parallel" )
@@ -213,7 +213,7 @@ void createFacesByLowestNode( ElementRegionManager const & elementManager,
         {
           for( localIndex elementLocalFaceIndex = 0; elementLocalFaceIndex < numFacesPerElement; ++elementLocalFaceIndex )
           {
-            subRegion->GetFaceNodes( k, elementLocalFaceIndex, tempNodeList );
+            subRegion.GetFaceNodes( k, elementLocalFaceIndex, tempNodeList );
             findSmallestThreeValues( tempNodeList, lowestNodes );
 
             facesByLowestNode.atomicAppendToArray( RAJA::auto_atomic{}, lowestNodes[0],
@@ -694,12 +694,12 @@ void FaceManager::SortAllFaceNodes( NodeManager const * const nodeManager,
   const indexType max_face_nodes = getMaxFaceNodes();
   GEOSX_ERROR_IF( max_face_nodes >= MAX_FACE_NODES, "More nodes on a face than expected!" );
 
-  elemManager->forElementSubRegions< CellElementSubRegion >( [X] ( CellElementSubRegion const * const subRegion )
-  { subRegion->calculateElementCenters( X ); } );
+  elemManager->forElementSubRegions< CellElementSubRegion >( [&] ( CellElementSubRegion const & subRegion )
+  { subRegion.calculateElementCenters( X ); } );
 
   ArrayOfArraysView< localIndex > const & faceToNodeMap = nodeList();
 
-  forall_in_range< parallelHostPolicy >( 0, size(), [&]( localIndex const kf ) -> void
+  forall_in_range< parallelHostPolicy >( 0, size(), [&]( localIndex const kf )
   {
     ElementRegionBase const * const elemRegion = elemManager->GetRegion( elemRegionList[kf][0] );
     CellElementSubRegion const * const subRegion = elemRegion->GetSubRegion< CellElementSubRegion >( elemSubRegionList[kf][0] );

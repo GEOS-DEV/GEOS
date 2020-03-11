@@ -55,18 +55,18 @@ void MeshManager::ExpandObjectCatalogs()
 
 void MeshManager::GenerateMeshes( DomainPartition * const domain )
 {
-  forSubGroups< MeshGeneratorBase >( [&]( MeshGeneratorBase * meshGen ) -> void
+  forSubGroups< MeshGeneratorBase >( [&]( MeshGeneratorBase & meshGen )
   {
-    meshGen->GenerateMesh( domain );
+    meshGen.GenerateMesh( domain );
   } );
 }
 
 
 void MeshManager::GenerateMeshLevels( DomainPartition * const domain )
 {
-  this->forSubGroups< MeshGeneratorBase >( [&]( MeshGeneratorBase * meshGen ) -> void
+  this->forSubGroups< MeshGeneratorBase >( [&]( MeshGeneratorBase & meshGen )
   {
-    string meshName = meshGen->getName();
+    string meshName = meshGen.getName();
 
     // THIS IS A HACK
     if( meshName.find( "well" ) == std::string::npos )

@@ -208,27 +208,26 @@ void LaplaceFEM::AssembleSystem( real64 const time_n,
     FiniteElementDiscretization const *
       feDiscretization = feDiscretizationManager->GetGroup< FiniteElementDiscretization >( m_discretizationName );
 
-    elementRegion->forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const GEOSX_UNUSED_PARAM( esr ),
-                                                                           CellElementSubRegion const * const elementSubRegion )
+    elementRegion->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & elementSubRegion )
     {
       arrayView3d< R1Tensor const > const &
-      dNdX = elementSubRegion->getReference< array3d< R1Tensor > >( keys::dNdX );
+      dNdX = elementSubRegion.getReference< array3d< R1Tensor > >( keys::dNdX );
 
       arrayView2d< real64 const > const &
-      detJ = elementSubRegion->getReference< array2d< real64 > >( keys::detJ );
+      detJ = elementSubRegion.getReference< array2d< real64 > >( keys::detJ );
 
-      localIndex const numNodesPerElement = elementSubRegion->numNodesPerElement();
-      arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemNodes = elementSubRegion->nodeList();
+      localIndex const numNodesPerElement = elementSubRegion.numNodesPerElement();
+      arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemNodes = elementSubRegion.nodeList();
 
       globalIndex_array elemDofIndex( numNodesPerElement );
       real64_array element_rhs( numNodesPerElement );
       real64_array2d element_matrix( numNodesPerElement, numNodesPerElement );
 
-      integer_array const & elemGhostRank = elementSubRegion->m_ghostRank;
+      integer_array const & elemGhostRank = elementSubRegion.m_ghostRank;
       localIndex const n_q_points = feDiscretization->m_finiteElement->n_quadrature_points();
 
       // begin element loop, skipping ghost elements
-      for( localIndex k=0; k<elementSubRegion->size(); ++k )
+      for( localIndex k=0; k<elementSubRegion.size(); ++k )
       {
         if( elemGhostRank[k] < 0 )
         {

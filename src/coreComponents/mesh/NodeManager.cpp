@@ -181,12 +181,12 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
   array1d< localIndex > sizeOfArrays( size());
 
   elementRegionManager->
-    forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const * const subRegion )
+    forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & subRegion )
   {
-    arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemToNodeMap = subRegion->nodeList();
-    for( localIndex k=0; k<subRegion->size(); ++k )
+    arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemToNodeMap = subRegion.nodeList();
+    for( localIndex k=0; k<subRegion.size(); ++k )
     {
-      for( localIndex a=0; a<subRegion->numIndependentNodesPerElement(); ++a )
+      for( localIndex a=0; a<subRegion.numIndependentNodesPerElement(); ++a )
       {
         localIndex nodeIndex = elemToNodeMap( k, a );
         ++sizeOfArrays[nodeIndex];
@@ -207,13 +207,13 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
     ElementRegionBase const * const elemRegion = elementRegionManager->GetRegion( kReg );
 
     elemRegion->forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const kSubReg,
-                                                                        CellElementSubRegion const * const subRegion )
+                                                                        CellElementSubRegion const & subRegion )
     {
-      arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemToNodeMap = subRegion->nodeList();
+      arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemToNodeMap = subRegion.nodeList();
 
-      for( localIndex k=0; k<subRegion->size(); ++k )
+      for( localIndex k=0; k<subRegion.size(); ++k )
       {
-        for( localIndex a=0; a<subRegion->numIndependentNodesPerElement(); ++a )
+        for( localIndex a=0; a<subRegion.numIndependentNodesPerElement(); ++a )
         {
           localIndex nodeIndex = elemToNodeMap( k, a );
 

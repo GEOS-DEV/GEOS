@@ -929,6 +929,15 @@ public:
     return this;
   }
 
+  /**
+   * @copydoc WrapperBase::setRegisteringObjects(string const &)
+   */
+  Wrapper< T > * setRegisteringObjects( string const & objectName )
+  {
+    WrapperBase::setRegisteringObjects( objectName );
+    return this;
+  }
+
   ///@}
 
 #if defined(USE_TOTALVIEW_OUTPUT)

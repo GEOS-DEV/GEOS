@@ -210,9 +210,9 @@ void NeighborCommunicator::AddNeighborGroupToMesh( MeshLevel & mesh ) const
   mesh.getEdgeManager()->addNeighbor( m_neighborRank );
   mesh.getFaceManager()->addNeighbor( m_neighborRank );
 
-  mesh.getElemManager()->forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase * elementSubRegion )
+  mesh.getElemManager()->forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & elementSubRegion )
   {
-    elementSubRegion->addNeighbor( m_neighborRank );
+    elementSubRegion.addNeighbor( m_neighborRank );
   } );
 }
 
@@ -460,14 +460,14 @@ void NeighborCommunicator::PrepareAndSendSyncLists( MeshLevel const & mesh,
                                           faceGhostsToReceive.size(),
                                           faceManager.m_localToGlobalMap.toSliceConst() );
 
-  elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase const * const subRegion )
+  elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase const & subRegion )
   {
-    arraySlice1d< localIndex const > const ghostsToReceive = subRegion->getNeighborData( m_neighborRank ).ghostsToReceive();
+    arraySlice1d< localIndex const > const ghostsToReceive = subRegion.getNeighborData( m_neighborRank ).ghostsToReceive();
     bufferSize += bufferOps::Pack< false >( sendBufferPtr,
                                             ghostsToReceive,
                                             nullptr,
                                             ghostsToReceive.size(),
-                                            subRegion->m_localToGlobalMap.toSliceConst() );
+                                            subRegion.m_localToGlobalMap.toSliceConst() );
   } );
 
   this->resizeSendBuffer( commID, bufferSize );
@@ -492,14 +492,14 @@ void NeighborCommunicator::PrepareAndSendSyncLists( MeshLevel const & mesh,
                                          faceGhostsToReceive.size(),
                                          faceManager.m_localToGlobalMap.toSliceConst() );
 
-  elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase const * const subRegion )
+  elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase const & subRegion )
   {
-    arraySlice1d< localIndex const > const ghostsToReceive = subRegion->getNeighborData( m_neighborRank ).ghostsToReceive();
+    arraySlice1d< localIndex const > const ghostsToReceive = subRegion.getNeighborData( m_neighborRank ).ghostsToReceive();
     packedSize += bufferOps::Pack< true >( sendBufferPtr,
                                            ghostsToReceive,
                                            nullptr,
                                            ghostsToReceive.size(),
-                                           subRegion->m_localToGlobalMap.toSliceConst() );
+                                           subRegion.m_localToGlobalMap.toSliceConst() );
   } );
 
   GEOSX_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
@@ -540,17 +540,13 @@ void NeighborCommunicator::UnpackAndRebuildSyncLists( MeshLevel & mesh,
   edgeManager.SetGhostRankForSenders( m_neighborRank );
   faceManager.SetGhostRankForSenders( m_neighborRank );
 
-  ElementRegionManager::ElementViewAccessor< ReferenceWrapper< localIndex_array > > elementGhostToSend =
-    elemManager.ConstructReferenceAccessor< localIndex_array >( ObjectManagerBase:: viewKeyStruct::ghostsToSendString,
-                                                                std::to_string( this->m_neighborRank ) );
-
-  elemManager.forElementSubRegions< ElementSubRegionBase >( [&] ( ElementSubRegionBase * const subRegion )
+  elemManager.forElementSubRegions< ElementSubRegionBase >( [&] ( ElementSubRegionBase & subRegion )
   {
     bufferOps::UnpackSyncList( receiveBufferPtr,
-                               subRegion->getNeighborData( m_neighborRank ).ghostsToSend(),
-                               subRegion->m_globalToLocalMap );
+                               subRegion.getNeighborData( m_neighborRank ).ghostsToSend(),
+                               subRegion.m_globalToLocalMap );
 
-    subRegion->SetGhostRankForSenders( m_neighborRank );
+    subRegion.SetGhostRankForSenders( m_neighborRank );
   } );
 }
 
@@ -589,9 +585,9 @@ int NeighborCommunicator::PackCommSizeForSync( std::map< string, string_array > 
 
   if( fieldNames.count( "elems" ) > 0 )
   {
-    elemManager.forElementSubRegions< ElementSubRegionBase >( [&] ( ElementSubRegionBase const * const subRegion )
+    elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase const & subRegion )
     {
-      bufferSize += subRegion->PackSize( fieldNames.at( "elems" ), subRegion->getNeighborData( m_neighborRank ).ghostsToSend(), 0, on_device );
+      bufferSize += subRegion.PackSize( fieldNames.at( "elems" ), subRegion.getNeighborData( m_neighborRank ).ghostsToSend(), 0, on_device );
     } );
   }
 
@@ -638,9 +634,9 @@ void NeighborCommunicator::PackCommBufferForSync( std::map< string, string_array
 
   if( fieldNames.count( "elems" ) > 0 )
   {
-    elemManager.forElementSubRegions( [&]( ElementSubRegionBase const * const subRegion )
+    elemManager.forElementSubRegions( [&]( ElementSubRegionBase const & subRegion )
     {
-      packedSize += subRegion->Pack( sendBufferPtr, fieldNames.at( "elems" ), subRegion->getNeighborData( m_neighborRank ).ghostsToSend(), 0, on_device );
+      packedSize += subRegion.Pack( sendBufferPtr, fieldNames.at( "elems" ), subRegion.getNeighborData( m_neighborRank ).ghostsToSend(), 0, on_device );
     } );
   }
 
@@ -692,9 +688,9 @@ void NeighborCommunicator::UnpackBufferForSync( std::map< string, string_array >
 
   if( fieldNames.count( "elems" ) > 0 )
   {
-    elemManager.forElementSubRegions< ElementSubRegionBase >( [&] ( ElementSubRegionBase * const subRegion )
+    elemManager.forElementSubRegions< ElementSubRegionBase >( [&] ( ElementSubRegionBase & subRegion )
     {
-      unpackedSize += subRegion->Unpack( receiveBufferPtr, subRegion->getNeighborData( m_neighborRank ).ghostsToReceive(), 0, on_device );
+      unpackedSize += subRegion.Unpack( receiveBufferPtr, subRegion.getNeighborData( m_neighborRank ).ghostsToReceive(), 0, on_device );
     } );
   }
 }
