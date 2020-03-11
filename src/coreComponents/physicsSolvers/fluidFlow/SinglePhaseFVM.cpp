@@ -80,18 +80,17 @@ real64 SinglePhaseFVM< BASE >::CalculateResidualNorm( DomainPartition const * co
 
   // compute the norm of local residual scaled by cell pore volume
   real64 localResidualNorm[3] = { 0.0, 0.0, 0.0 };
-  this->applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                       ElementRegionBase const * const GEOSX_UNUSED_PARAM( region ),
-                                       ElementSubRegionBase const * const subRegion )
+  this->applyToSubRegionsComplete( mesh,
+                                   [&] ( localIndex const er, localIndex const esr, ElementRegionBase const &, ElementSubRegionBase const & subRegion )
   {
-    arrayView1d< globalIndex const > const & dofNumber = subRegion->getReference< array1d< globalIndex > >( dofKey );
+    arrayView1d< globalIndex const > const & dofNumber = subRegion.template getReference< array1d< globalIndex > >( dofKey );
 
     arrayView1d< integer const > const & elemGhostRank = m_elemGhostRank[er][esr];
     arrayView1d< real64 const > const & refPoro        = m_porosityRef[er][esr];
     arrayView1d< real64 const > const & volume         = m_volume[er][esr];
     arrayView1d< real64 const > const & densOld        = m_densityOld[er][esr];
 
-    localIndex const subRegionSize = subRegion->size();
+    localIndex const subRegionSize = subRegion.size();
     for( localIndex a = 0; a < subRegionSize; ++a )
     {
       if( elemGhostRank[a] < 0 )
@@ -148,9 +147,9 @@ void SinglePhaseFVM< BASE >::ApplySystemSolution( DofManager const & dofManager,
 
   CommunicationTools::SynchronizeFields( fieldNames, mesh, domain->getNeighbors() );
 
-  this->applyToSubRegions( mesh, [&] ( ElementSubRegionBase * subRegion )
+  this->applyToSubRegions( mesh, [&] ( ElementSubRegionBase & subRegion )
   {
-    this->UpdateState( subRegion );
+    this->UpdateState( &subRegion );
   } );
 }
 
