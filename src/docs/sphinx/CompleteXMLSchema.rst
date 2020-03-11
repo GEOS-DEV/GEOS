@@ -611,6 +611,13 @@ Element: TwoPointFluxApproximation
 .. include:: ../../coreComponents/fileIO/schema/docs/TwoPointFluxApproximation.rst
 
 
+.. _XML_Union:
+
+Element: Union
+==============
+.. include:: ../../coreComponents/fileIO/schema/docs/Union.rst
+
+
 .. _XML_VTK:
 
 Element: VTK
@@ -1278,6 +1285,13 @@ Datastructure: ThickPlane
 Datastructure: TwoPointFluxApproximation
 ========================================
 .. include:: ../../coreComponents/fileIO/schema/docs/TwoPointFluxApproximation_other.rst
+
+
+.. _DATASTRUCTURE_Union:
+
+Datastructure: Union
+====================
+.. include:: ../../coreComponents/fileIO/schema/docs/Union_other.rst
 
 
 .. _DATASTRUCTURE_VTK:

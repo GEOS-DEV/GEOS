@@ -40,12 +40,18 @@ public:
 
 private:
 
-  string_array m_objects;
-  
+  /**
+   * @struct viewKeyStruct holds char strings and viewKeys for fast lookup
+   */
+  // struct viewKeyStruct : SimpleGeometricObjectBase::viewKeyStruct
   struct viewKeyStruct
   {
-    static constexpr auto objects = "objects";
-  } viewKeys;
+    // dataRepository::ViewKey subObjects = {"subObjects"};
+    constexpr static auto subObjectsString = "subObjects";
+  };
+
+  /// List of sub objects
+  string_array m_subObjects;
 
 
 };

@@ -443,6 +443,7 @@
 			<xsd:element name="Box" type="BoxType" />
 			<xsd:element name="Cylinder" type="CylinderType" />
 			<xsd:element name="ThickPlane" type="ThickPlaneType" />
+			<xsd:element name="Union" type="UnionType" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="BoundedPlaneType">
@@ -486,6 +487,12 @@
 		<xsd:attribute name="origin" type="R1Tensor" use="required" />
 		<!--thickness => The total thickness of the plane (with half to each side)-->
 		<xsd:attribute name="thickness" type="real64" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="UnionType">
+		<!--subObjects => List of geometric objects to unite-->
+		<xsd:attribute name="subObjects" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

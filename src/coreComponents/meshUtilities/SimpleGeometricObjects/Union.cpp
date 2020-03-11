@@ -25,9 +25,10 @@ namespace geosx
 using namespace dataRepository;
 
 Union::Union( const std::string& name, Group * const parent ):
-  SimpleGeometricObjectBase( name, parent )
+  SimpleGeometricObjectBase( name, parent ),
+  m_subObjects()
 {
-  registerWrapper( viewKeyStruct::objects, &m_objects, false )->
+  registerWrapper( viewKeyStruct::subObjectsString, &m_subObjects, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("List of geometric objects to unite");
 }
@@ -41,7 +42,7 @@ bool Union::IsCoordInObject( const R1Tensor& coord ) const
   bool rval = false;
   dataRepository::Group const * geometries = this->getParent();
 
-  for (auto subObjectName : m_objects)
+  for (auto subObjectName : m_subObjects)
   {
     SimpleGeometricObjectBase const * const subObject = geometries->GetGroup<SimpleGeometricObjectBase>(subObjectName);
     
