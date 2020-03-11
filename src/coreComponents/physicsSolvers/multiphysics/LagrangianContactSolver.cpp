@@ -443,7 +443,6 @@ real64 LagrangianContactSolver::NonlinearImplicitStep( real64 const & time_n,
       ComputeFractureStateStatistics( domain, numStick, numSlip, numOpen, true );
     }
 
-    bool computeResidual = true;
     integer & activeSetIter = m_activeSetIter;
     for( activeSetIter = 0 ; activeSetIter < m_activeSetMaxIter ; ++activeSetIter )
     {
@@ -457,6 +456,7 @@ real64 LagrangianContactSolver::NonlinearImplicitStep( real64 const & time_n,
       real64 scaleFactor = 1.0;
 
       // main Newton loop
+      bool computeResidual = true;
       for( newtonIter = 0; newtonIter < maxNewtonIter; ++newtonIter )
       {
         if( getLogLevel() >= 1 && logger::internal::rank==0 )
@@ -641,6 +641,7 @@ real64 LagrangianContactSolver::NonlinearImplicitStep( real64 const & time_n,
   return stepDt;
 }
 
+// TODO: maybe to be moved in SolverBase ...
 real64 LagrangianContactSolver::ParabolicInterpolationThreePoints( real64 const lambdac,
                                                                    real64 const lambdam,
                                                                    real64 const ff0,
@@ -707,8 +708,6 @@ bool LagrangianContactSolver::LineSearch( real64 const & time_n,
                                           real64 & lastResidual )
 {
   bool lineSearchSuccess = true;
-
-  GEOSX_LOG_RANK( " in line search ");
 
   integer const maxNumberLineSearchCuts = m_nonlinearSolverParameters.m_lineSearchMaxCuts;
 
@@ -1388,7 +1387,13 @@ void LagrangianContactSolver::AssembleStabliziation( DomainPartition * const dom
     for( localIndex iconn=0 ; iconn<stencil.size() ; ++iconn )
     {
       localIndex const numFluxElems = stencil.stencilSize( iconn );
-      GEOSX_ERROR_IF( numFluxElems != 2, "A fracture connector has to be an edge shared by two faces." );
+      // GEOSX_ERROR_IF( numFluxElems != 2, "A fracture connector has to be an edge shared by two faces." );
+      // A fracture connector has to be an edge shared by two faces
+      if( numFluxElems != 2 )
+      {
+        continue;
+      }
+
       typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
 
       // First index: face element. Second index: node
