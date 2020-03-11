@@ -83,11 +83,11 @@ public:
     arrayView2d<real64> const & detJ = elementSubRegion->template getReference< array2d<real64> >(dataRepository::keys::detJ);
     auto const & elemsToNodes = elementSubRegion->nodeList().toViewConst();
 
-    PRAGMA_OMP( omp parallel )
+    PRAGMA_OMP( "omp parallel" )
     {
       std::unique_ptr<FiniteElementBase> fe = getFiniteElement( m_parentSpace );
 
-      PRAGMA_OMP( omp for )
+      PRAGMA_OMP( "omp for" )
       for (localIndex k = 0 ; k < elementSubRegion->size() ; ++k)
       {
         fe->reinit(X, elemsToNodes[k]);
