@@ -231,7 +231,9 @@ real64 PhaseFieldFractureSolver::SplitOperatorStep( real64 const& time_n,
 
   SystemSolverParameters * const solverParams = getSystemSolverParameters();
   integer & iter = solverParams->numNewtonIterations();
-  while (iter < (*(this->getSystemSolverParameters())).maxIterNewton() )
+  iter=0;
+  bool isConverged = false;
+  while (iter < solverParams->maxIterNewton() )
   {
     if (iter == 0)
     {
@@ -268,6 +270,7 @@ real64 PhaseFieldFractureSolver::SplitOperatorStep( real64 const& time_n,
     if (solidSolver.getSystemSolverParameters()->numNewtonIterations() == 0 && iter > 0)
     {
       GEOS_LOG_LEVEL_RANK_0( 1, "***** The iterative coupling has converged in " << iter  << " iterations! *****\n" );
+      isConverged = true;
       break;
     }
 
@@ -295,6 +298,8 @@ real64 PhaseFieldFractureSolver::SplitOperatorStep( real64 const& time_n,
     }
     ++iter;
   }
+
+  GEOS_ERROR_IF( !isConverged, "PhaseFieldFractureSolver::SplitOperatorStep() did not converge" );
 
   damageSolver.ImplicitStepComplete( time_n, dt, domain );
   solidSolver.ImplicitStepComplete( time_n, dt, domain );
@@ -368,9 +373,9 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition * const do
                 //has both damage and displacements. Using the damageResult field from the Damage solver
                 //is probably better
                 feDiscretization->m_finiteElement->value(a, q) * nodalDamage[elemNodes(k, a)];
-            std::cout<<"q, N, Dnode = "<<q<<", "<<feDiscretization->m_finiteElement->value(a, q)<<", "<<nodalDamage[elemNodes(k, a)]<<std::endl;
+//            std::cout<<"q, N, Dnode = "<<q<<", "<<feDiscretization->m_finiteElement->value(a, q)<<", "<<nodalDamage[elemNodes(k, a)]<<std::endl;
           }
-          std::cout<<"damage("<<k<<","<<q<<") = "<<damageFieldOnMaterial(k,q)<<std::endl;
+//          std::cout<<"damage("<<k<<","<<q<<") = "<<damageFieldOnMaterial(k,q)<<std::endl;
         }
       }
     });

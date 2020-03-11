@@ -582,9 +582,20 @@ struct ImplicitKernel
 
         for( integer q=0 ; q<NUM_QUADRATURE_POINTS ; ++q )
         {
-          const realT detJq = detJ[k][q];
+          real64 damageFactor = ( 1.0 - damage(k,q) );
+//          if( damageFactor > 0.00000000001 )
+//          {
+//            damageFactor = 1.0;
+//          }
+//          else
+//          {
+//            damageFactor = 0.0;
+//          }
+          const realT detJq = detJ[k][q] * damageFactor;
           std::vector<double> const & N = fe->values(q);
-//          std::cout<<"damage("<<k<<","<<q<<") = "<<damage(k,q)<<std::endl;
+//          std::cout<<"damageFactor("<<k<<","<<q<<") = "<<damageFactor<<std::endl;
+
+
 
           for( integer a=0 ; a<NUM_NODES_PER_ELEM ; ++a )
           {
@@ -596,17 +607,17 @@ struct ImplicitKernel
       //        realT const * const dNdXb = dNdX(q,b).Data();
               dNdXb = dNdX[k][q][b];
 
-              dRdU(a*dim+0,b*dim+0) -= ( c[0][0]*dNdXa[0]*dNdXb[0] + c[5][5]*dNdXa[1]*dNdXb[1] + c[4][4]*dNdXa[2]*dNdXb[2] ) * detJq * ( 1.0 - damage(k,q) );
-              dRdU(a*dim+0,b*dim+1) -= ( c[5][5]*dNdXa[1]*dNdXb[0] + c[0][1]*dNdXa[0]*dNdXb[1] ) * detJq * ( 1.0 - damage(k,q) );
-              dRdU(a*dim+0,b*dim+2) -= ( c[4][4]*dNdXa[2]*dNdXb[0] + c[0][2]*dNdXa[0]*dNdXb[2] ) * detJq * ( 1.0 - damage(k,q) );
+              dRdU(a*dim+0,b*dim+0) -= ( c[0][0]*dNdXa[0]*dNdXb[0] + c[5][5]*dNdXa[1]*dNdXb[1] + c[4][4]*dNdXa[2]*dNdXb[2] ) * detJq;
+              dRdU(a*dim+0,b*dim+1) -= ( c[5][5]*dNdXa[1]*dNdXb[0] + c[0][1]*dNdXa[0]*dNdXb[1] ) * detJq;
+              dRdU(a*dim+0,b*dim+2) -= ( c[4][4]*dNdXa[2]*dNdXb[0] + c[0][2]*dNdXa[0]*dNdXb[2] ) * detJq;
 
-              dRdU(a*dim+1,b*dim+0) -= ( c[0][1]*dNdXa[1]*dNdXb[0] + c[5][5]*dNdXa[0]*dNdXb[1] ) * detJq * ( 1.0 - damage(k,q) );
-              dRdU(a*dim+1,b*dim+1) -= ( c[5][5]*dNdXa[0]*dNdXb[0] + c[1][1]*dNdXa[1]*dNdXb[1] + c[3][3]*dNdXa[2]*dNdXb[2] ) * detJq * ( 1.0 - damage(k,q) );
-              dRdU(a*dim+1,b*dim+2) -= ( c[3][3]*dNdXa[2]*dNdXb[1] + c[1][2]*dNdXa[1]*dNdXb[2] ) * detJq * ( 1.0 - damage(k,q) );
+              dRdU(a*dim+1,b*dim+0) -= ( c[0][1]*dNdXa[1]*dNdXb[0] + c[5][5]*dNdXa[0]*dNdXb[1] ) * detJq;
+              dRdU(a*dim+1,b*dim+1) -= ( c[5][5]*dNdXa[0]*dNdXb[0] + c[1][1]*dNdXa[1]*dNdXb[1] + c[3][3]*dNdXa[2]*dNdXb[2] ) * detJq;
+              dRdU(a*dim+1,b*dim+2) -= ( c[3][3]*dNdXa[2]*dNdXb[1] + c[1][2]*dNdXa[1]*dNdXb[2] ) * detJq;
 
-              dRdU(a*dim+2,b*dim+0) -= ( c[0][2]*dNdXa[2]*dNdXb[0] + c[4][4]*dNdXa[0]*dNdXb[2] ) * detJq * ( 1.0 - damage(k,q) );
-              dRdU(a*dim+2,b*dim+1) -= ( c[1][2]*dNdXa[2]*dNdXb[1] + c[3][3]*dNdXa[1]*dNdXb[2] ) * detJq * ( 1.0 - damage(k,q) );
-              dRdU(a*dim+2,b*dim+2) -= ( c[4][4]*dNdXa[0]*dNdXb[0] + c[3][3]*dNdXa[1]*dNdXb[1] + c[2][2]*dNdXa[2]*dNdXb[2] ) * detJq * ( 1.0 - damage(k,q) );
+              dRdU(a*dim+2,b*dim+0) -= ( c[0][2]*dNdXa[2]*dNdXb[0] + c[4][4]*dNdXa[0]*dNdXb[2] ) * detJq;
+              dRdU(a*dim+2,b*dim+1) -= ( c[1][2]*dNdXa[2]*dNdXb[1] + c[3][3]*dNdXa[1]*dNdXb[2] ) * detJq;
+              dRdU(a*dim+2,b*dim+2) -= ( c[4][4]*dNdXa[0]*dNdXb[0] + c[3][3]*dNdXa[1]*dNdXb[1] + c[2][2]*dNdXa[2]*dNdXb[2] ) * detJq;
 
               if( tiOption == timeIntegrationOption::ImplicitDynamic )
               {
@@ -679,7 +690,16 @@ struct ImplicitKernel
 
           const realT detJq = detJ[k][q];
           R2SymTensor stress0 = referenceStress;
-          stress0 *= detJq;
+          real64 damageFactor = ( 1.0 - damage(k,q) );
+//          if( damageFactor > 0.00000000001 )
+//          {
+//            damageFactor = 1.0;
+//          }
+//          else
+//          {
+//            damageFactor = 0.0;
+//          }
+          stress0 *= detJq * damageFactor;
           for( integer a=0 ; a<NUM_NODES_PER_ELEM ; ++a )
           {
             dNdXa = dNdX[k][q][a];

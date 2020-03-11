@@ -8,7 +8,7 @@
                  logLevel="2"
                  discretization="FE1"
                  targetRegions="{Region1}">
-      <SystemSolverParameters maxIterNewton="40"
+      <SystemSolverParameters maxIterNewton="20"
                               logLevel="2"/>
     </PhaseFieldFracture>
 

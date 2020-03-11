@@ -8,21 +8,21 @@
                  logLevel="1"
                  discretization="FE1"
                  targetRegions="{Region1}">
-      <SystemSolverParameters maxIterNewton="2"
-                              logLevel="2"/>
+      <SystemSolverParameters maxIterNewton="200"
+                              logLevel="0"/>
     </PhaseFieldFracture>
 
     <SolidMechanicsLagrangianSSLE name="SolidMechSolve"
                                   timeIntegrationOption="QuasiStatic"
-                                  logLevel="2"
+                                  logLevel="1"
                                   discretization="FE1"
                                   targetRegions="{Region1}"
                                   solidMaterialName="shale"
                                   >
       <SystemSolverParameters krylovTol="1.0e-10"
-                              newtonTol="1.0e-6"
+                              newtonTol="1.0e-3"
                               maxIterNewton="5"
-                              logLevel="2"/>
+                              logLevel="0"/>
     </SolidMechanicsLagrangianSSLE>
 
     <PhaseFieldDamageFEM name="DamageSolve"
@@ -42,13 +42,16 @@
                   xCoords="{-1, 1}"
                   yCoords="{-1, 1}"
                   zCoords="{-1, 1}"
-                  nx="{3}"
+                  nx="{4}"
                   ny="{1}"
                   nz="{1}"
                   cellBlockNames="{cb1}"/>
   </Mesh>
 
   <Events maxTime="4.0">
+    <SoloEvent name="siloOutput0"
+                   target="/Outputs/SiloOutput"/>
+
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
     <PeriodicEvent name="solverApplications"
@@ -63,10 +66,10 @@
                    targetExactTimestep="1"
                    target="/Outputs/PFCrack_VTKOutput" />
 
-    <!-- <PeriodicEvent name="outputs"
+    <PeriodicEvent name="siloOutputs"
                    timeFrequency="1.0"
                    targetExactTimestep="1"
-                   target="/Outputs/SiloOutput"/> -->
+                   target="/Outputs/SiloOutput"/>
 
     <PeriodicEvent name="restarts"
                    timeFrequency="1e99"
@@ -149,6 +152,14 @@
                         scale="1"
                         setNames="{centerLine}"/>
 
+    <!-- FieldSpecification name="pointSource2"
+                        fieldName="Damage"
+                        initialCondition="0"
+                        objectPath="nodeManager"
+                        scale="0"
+                        setNames="{xneg,xpos}"/-->
+
+
     <!-- <FieldSpecification name="diffusionCoeff"
                         initialCondition="1"
                         setNames="{all}"
@@ -171,13 +182,13 @@
 
   </Functions>
   <Outputs>
-    <!-- <Silo name="SiloOutput" parallelThreads="1" plotFileRoot="plot"/> -->
+    <Silo name="SiloOutput" parallelThreads="1" plotFileRoot="plot"/>
     <VTK name="PFCrack_VTKOutput" parallelThreads="1" plotFileRoot="plot"/>
     <Restart name="restartOutput"/>
   </Outputs>
 
   <Geometry>
-    <Box name="centerLine" xMin="-0.701, -1.001, -1.001" xMax="+0.701, +1.001, +1.001"/>
+    <Box name="centerLine" xMin="-0.201, -1.001, -1.001" xMax="+0.201, +1.001, +1.001"/>
   </Geometry>
 
 </Problem>
