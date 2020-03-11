@@ -1108,7 +1108,6 @@ ApplyBoundaryConditions( real64 const time_n,
 
   matrix.open();
   rhs.open();
-
   fsManager.Apply( time_n + dt,
                    domain,
                    "nodeManager",
@@ -1128,29 +1127,31 @@ ApplyBoundaryConditions( real64 const time_n,
                                                                             matrix,
                                                                             rhs );
   });
+  matrix.close();
+  rhs.close();
 
-  ApplyTractionBC(
-    time_n + dt,
-    dofManager, domain,
-    rhs );
+  rhs.open();
+  ApplyTractionBC( time_n + dt, dofManager, domain, rhs );
+  rhs.close();
 
+  matrix.open();
+  rhs.open();
   ApplyDisplacementBC_implicit( time_n + dt, dofManager, *domain, matrix, rhs );
+  matrix.close();
+  rhs.close();
 
   if( faceManager->hasWrapper( "ChomboPressure" ) )
   {
     fsManager.ApplyFieldValue( time_n, domain, "faceManager", "ChomboPressure" );
+    rhs.open();
     ApplyChomboPressure( dofManager, domain, rhs );
+    rhs.close();
   }
-
-  matrix.close();
-  rhs.close();
 
   // Debug for logLevel >= 2
   GEOSX_LOG_LEVEL_RANK_0( 2, "After SolidMechanicsLagrangianFEM::AssembleSystem" );
   GEOSX_LOG_LEVEL_RANK_0( 2, "\nJacobian:\n" << matrix );
   GEOSX_LOG_LEVEL_RANK_0( 2, "\nResidual:\n" << rhs );
-
-
 }
 
 real64
