@@ -489,7 +489,7 @@ void SinglePhaseFVM<BASE>::ApplyFaceDirichletBC_implicit( real64 const time_n,
     FluxApproximationBase::BoundaryStencil const & stencil = fluxApprox->getBoundaryStencil(setName);
     ArrayOfArraysView<FluxApproximationBase::BoundaryStencil::Entry const, true> const & connections = stencil.getConnections();
 
-    forall_in_range<serialPolicy>( 0, connections.size(), GEOSX_LAMBDA ( localIndex iconn )
+    forall_in_range<serialPolicy>( 0, connections.size(), [=] ( localIndex iconn )
     {
       localIndex const stencilSize = connections.sizeOfArray(iconn);
 

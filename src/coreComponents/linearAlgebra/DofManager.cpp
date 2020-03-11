@@ -673,7 +673,7 @@ void vectorToFieldImpl( VECTOR const & vector,
     Wrapper< ArrayType > & view = Wrapper< ArrayType >::cast( *wrapper );
     typename Wrapper< ArrayType >::ViewType const & field = view.referenceAsView();
 
-    forall_in_range< POLICY >( 0, indexArray.size(), GEOSX_LAMBDA( localIndex const i )
+    forall_in_range< POLICY >( 0, indexArray.size(), [=]( localIndex const i )
     {
       if( ghostRank[i] < 0 && indexArray[i] >= 0 )
       {
@@ -718,7 +718,7 @@ void fieldToVectorImpl( VECTOR & vector,
     Wrapper< ArrayType > const & view = Wrapper< ArrayType >::cast( *wrapper );
     typename Wrapper< ArrayType >::ViewTypeConst const & field = view.referenceAsView();
 
-    forall_in_range< POLICY >( 0, indexArray.size(), GEOSX_LAMBDA( localIndex const i )
+    forall_in_range< POLICY >( 0, indexArray.size(), [=]( localIndex const i )
     {
       if( ghostRank[i] < 0 && indexArray[i] >= 0 )
       {

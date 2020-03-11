@@ -139,7 +139,7 @@ struct ExplicitKernel
 
     using KERNEL_POLICY = parallelDevicePolicy< 256 >;
     RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, elementList.size() ),
-                                   GEOSX_DEVICE_LAMBDA ( localIndex const i )
+                                   [=] GEOSX_DEVICE ( localIndex const i )
     {
       localIndex const k = elementList[ i ];
 
@@ -281,7 +281,7 @@ struct ImplicitKernel
     arrayView3d<real64 const, solid::STRESS_USD> const & stress = constitutiveRelation->getStress();
 
     RAJA::forall< serialPolicy >( RAJA::TypedRangeSegment< localIndex >( 0, numElems ),
-                                  GEOSX_LAMBDA ( localIndex const k )
+                                  [=] ( localIndex const k )
     {
       stackArray1d<globalIndex, ndof>       elementLocalDofIndex( ndof );
       stackArray1d<real64, ndof>            R( ndof );

@@ -641,7 +641,7 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
 
   fluxApprox->forStencils<FaceElementStencil>( [&]( FaceElementStencil const & stencil )
   {
-//    forall_in_range<serialPolicy>( 0, stencil.size(), GEOSX_LAMBDA ( localIndex iconn )
+//    forall_in_range<serialPolicy>( 0, stencil.size(), [=] ( localIndex iconn )
     for( localIndex iconn=0 ; iconn<stencil.size() ; ++iconn)
     {
       localIndex const numFluxElems = stencil.stencilSize(iconn);
@@ -995,7 +995,7 @@ AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
 
       forall_in_range<serialPolicy>( 0,
                                    subRegion->size(),
-                                   GEOSX_LAMBDA ( localIndex const kfe )
+                                   [=] ( localIndex const kfe )
       {
         R1Tensor Nbar = faceNormal[elemsToFaces[kfe][0]];
         Nbar -= faceNormal[elemsToFaces[kfe][1]];
@@ -1120,7 +1120,7 @@ AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const * cons
 //    dseparationCoeff_dAper  = subRegion->getReference<array1d<real64>>(FaceElementSubRegion::viewKeyStruct::dSeparationCoeffdAperString);
 
 
-    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+    forall_in_range<serialPolicy>( 0, subRegion->size(), [=] ( localIndex ei )
     {
       //if (elemGhostRank[ei] < 0)
       {
