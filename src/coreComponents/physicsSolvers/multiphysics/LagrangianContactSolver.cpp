@@ -170,7 +170,7 @@ void LagrangianContactSolver::ImplicitStepComplete( real64 const & time_n,
 
       forall_in_range< serialPolicy >( 0,
                                        subRegion->size(),
-                                       GEOSX_LAMBDA ( localIndex const kfe )
+                                       [=]( localIndex const kfe )
         {
           if( ghostRank[kfe] < 0 )
           {
@@ -224,7 +224,7 @@ void LagrangianContactSolver::ResetStateToBeginningOfStep( DomainPartition * con
 
       forall_in_range< serialPolicy >( 0,
                                        subRegion->size(),
-                                       GEOSX_LAMBDA ( localIndex const kfe )
+                                       [=]( localIndex const kfe )
         {
           if( ghostRank[kfe] < 0 )
           {
@@ -304,7 +304,7 @@ void LagrangianContactSolver::UpdateDeformationForCoupling( DomainPartition * co
 
       forall_in_range< serialPolicy >( 0,
                                        subRegion->size(),
-                                       GEOSX_LAMBDA ( localIndex const kfe )
+                                       [=]( localIndex const kfe )
         {
           {
             localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
@@ -1039,7 +1039,7 @@ void LagrangianContactSolver::AssembleForceResidualDerivativeWrtTraction( Domain
 
       forall_in_range< serialPolicy >( 0,
                                        subRegion->size(),
-                                       GEOSX_LAMBDA( localIndex const kfe )
+                                       [=]( localIndex const kfe )
         {
           localIndex const kf0 = elemsToFaces[kfe][0];
           localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kf0 );
@@ -1148,7 +1148,7 @@ void LagrangianContactSolver::AssembleTractionResidualDerivativeWrtDisplacementA
 
       forall_in_range< serialPolicy >( 0,
                                        subRegion->size(),
-                                       GEOSX_LAMBDA ( localIndex const kfe )
+                                       [=]( localIndex const kfe )
         {
           {
             localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
