@@ -191,6 +191,9 @@ public:
   virtual void multiply( PetscMatrix const & src,
                          PetscMatrix & dst ) const override;
 
+  virtual void applyTranspose( Vector const & src,
+                               Vector & dst ) const override;
+
   virtual void leftMultiplyTranspose( PetscMatrix const & src,
                                       PetscMatrix & dst ) const override;
 

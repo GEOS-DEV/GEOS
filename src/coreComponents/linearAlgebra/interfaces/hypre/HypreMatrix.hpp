@@ -194,6 +194,9 @@ public:
   virtual void apply( HypreVector const & src,
                       HypreVector & dst ) const override;
 
+  virtual void applyTranspose( Vector const & src,
+                               Vector & dst ) const override;
+
   virtual void multiply( HypreMatrix const & src,
                          HypreMatrix & dst ) const override;
 

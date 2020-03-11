@@ -365,7 +365,22 @@ void EpetraMatrix::apply( EpetraVector const & src,
   GEOSX_LAI_ASSERT( ready() );
   GEOSX_LAI_ASSERT( src.ready() );
   GEOSX_LAI_ASSERT( dst.ready() );
+  GEOSX_LAI_ASSERT_EQ( numGlobalRows(), dst.globalSize() );
+  GEOSX_LAI_ASSERT_EQ( numGlobalCols(), src.globalSize() );
+
   GEOSX_LAI_CHECK_ERROR( m_matrix->Multiply( false, src.unwrapped(), dst.unwrapped() ) );
+}
+
+void EpetraMatrix::applyTranspose( EpetraVector const & src,
+                                   EpetraVector & dst ) const
+{
+  GEOSX_LAI_ASSERT( ready() );
+  GEOSX_LAI_ASSERT( src.ready() );
+  GEOSX_LAI_ASSERT( dst.ready() );
+  GEOSX_LAI_ASSERT_EQ( numGlobalCols(), dst.globalSize() );
+  GEOSX_LAI_ASSERT_EQ( numGlobalRows(), src.globalSize() );
+
+  GEOSX_LAI_CHECK_ERROR( m_matrix->Multiply( true, src.unwrapped(), dst.unwrapped() ) );
 }
 
 void EpetraMatrix::multiply( EpetraMatrix const & src,

@@ -497,12 +497,14 @@ protected:
    */
   ///@{
 
+  virtual void apply( Vector const & src, Vector & dst ) const override = 0;
+
   /**
-   * @brief Apply operator to a vector
+   * @brief Apply transpose of the matrix to a vector
    * @param src Input vector (x).
    * @param dst Output vector (b).
    */
-  virtual void apply( Vector const & src, Vector & dst ) const override = 0;
+  virtual void applyTranspose( Vector const & src, Vector & dst ) const = 0;
 
   /**
    * @brief Matrix/Matrix multiplication.

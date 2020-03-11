@@ -188,6 +188,9 @@ public:
   virtual void apply( EpetraVector const & src,
                       EpetraVector & dst ) const override;
 
+  virtual void applyTranspose( Vector const & src,
+                               Vector & dst ) const override;
+
   virtual void multiply( EpetraMatrix const & src,
                          EpetraMatrix & dst ) const override;
 

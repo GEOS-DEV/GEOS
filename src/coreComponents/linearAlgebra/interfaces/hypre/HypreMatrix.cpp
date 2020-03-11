@@ -526,11 +526,30 @@ void HypreMatrix::apply( HypreVector const & src,
   GEOSX_LAI_ASSERT( ready() );
   GEOSX_LAI_ASSERT( src.ready() );
   GEOSX_LAI_ASSERT( dst.ready() );
+  GEOSX_LAI_ASSERT_EQ( numGlobalRows(), dst.globalSize() );
+  GEOSX_LAI_ASSERT_EQ( numGlobalCols(), src.globalSize() );
+
   GEOSX_LAI_CHECK_ERROR( hypre_ParCSRMatrixMatvec( 1.0,
                                                    m_parcsr_mat,
                                                    src.unwrapped(),
                                                    0.0,
                                                    dst.unwrapped() ) );
+}
+
+void HypreMatrix::applyTranspose( Vector const & src,
+                                  Vector & dst ) const
+{
+  GEOSX_LAI_ASSERT( ready() );
+  GEOSX_LAI_ASSERT( src.ready() );
+  GEOSX_LAI_ASSERT( dst.ready() );
+  GEOSX_LAI_ASSERT_EQ( numGlobalCols(), dst.globalSize() );
+  GEOSX_LAI_ASSERT_EQ( numGlobalRows(), src.globalSize() );
+
+  GEOSX_LAI_CHECK_ERROR( hypre_ParCSRMatrixMatvecT( 1.0,
+                                                    m_parcsr_mat,
+                                                    src.unwrapped(),
+                                                    0.0,
+                                                    dst.unwrapped() ) );
 }
 
 void HypreMatrix::multiply( HypreMatrix const & src,
