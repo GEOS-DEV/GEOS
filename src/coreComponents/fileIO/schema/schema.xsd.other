@@ -670,11 +670,13 @@
 			<xsd:element name="Contact" type="ContactType" />
 			<xsd:element name="LinearElasticAnisotropic" type="LinearElasticAnisotropicType" />
 			<xsd:element name="LinearElasticIsotropic" type="LinearElasticIsotropicType" />
+			<xsd:element name="LinearElasticTransverseIsotropic" type="LinearElasticTransverseIsotropicType" />
 			<xsd:element name="MultiPhaseMultiComponentFluid" type="MultiPhaseMultiComponentFluidType" />
 			<xsd:element name="ParticleFluid" type="ParticleFluidType" />
 			<xsd:element name="PoreVolumeCompressibleSolid" type="PoreVolumeCompressibleSolidType" />
 			<xsd:element name="PoroLinearElasticAnisotropic" type="PoroLinearElasticAnisotropicType" />
 			<xsd:element name="PoroLinearElasticIsotropic" type="PoroLinearElasticIsotropicType" />
+			<xsd:element name="PoroLinearElasticTransverseIsotropic" type="PoroLinearElasticTransverseIsotropicType" />
 			<xsd:element name="ProppantSlurryFluid" type="ProppantSlurryFluidType" />
 			<xsd:element name="VanGenuchtenBakerRelativePermeability" type="VanGenuchtenBakerRelativePermeabilityType" />
 			<xsd:element name="VanGenuchtenCapillaryPressure" type="VanGenuchtenCapillaryPressureType" />
@@ -806,82 +808,10 @@
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="LinearElasticAnisotropicType">
-		<!--c11 => The 11 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c11" type="real64_array" />
-		<!--c12 => The 12 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c12" type="real64_array" />
-		<!--c13 => The 13 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c13" type="real64_array" />
-		<!--c14 => The 14 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c14" type="real64_array" />
-		<!--c15 => The 15 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c15" type="real64_array" />
-		<!--c16 => The 16 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c16" type="real64_array" />
-		<!--c21 => The 21 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c21" type="real64_array" />
-		<!--c22 => The 22 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c22" type="real64_array" />
-		<!--c23 => The 23 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c23" type="real64_array" />
-		<!--c24 => The 24 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c24" type="real64_array" />
-		<!--c25 => The 25 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c25" type="real64_array" />
-		<!--c26 => The 26 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c26" type="real64_array" />
-		<!--c31 => The 31 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c31" type="real64_array" />
-		<!--c32 => The 32 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c32" type="real64_array" />
-		<!--c33 => The 33 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c33" type="real64_array" />
-		<!--c34 => The 34 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c34" type="real64_array" />
-		<!--c35 => The 35 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c35" type="real64_array" />
-		<!--c36 => The 36 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c36" type="real64_array" />
-		<!--c41 => The 41 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c41" type="real64_array" />
-		<!--c42 => The 42 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c42" type="real64_array" />
-		<!--c43 => The 43 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c43" type="real64_array" />
-		<!--c44 => The 44 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c44" type="real64_array" />
-		<!--c45 => The 45 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c45" type="real64_array" />
-		<!--c46 => The 46 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c46" type="real64_array" />
-		<!--c51 => The 51 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c51" type="real64_array" />
-		<!--c52 => The 52 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c52" type="real64_array" />
-		<!--c53 => The 53 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c53" type="real64_array" />
-		<!--c54 => The 54 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c54" type="real64_array" />
-		<!--c55 => The 55 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c55" type="real64_array" />
-		<!--c56 => The 56 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c56" type="real64_array" />
-		<!--c61 => The 61 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c61" type="real64_array" />
-		<!--c62 => The 62 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c62" type="real64_array" />
-		<!--c63 => The 63 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c63" type="real64_array" />
-		<!--c64 => The 64 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c64" type="real64_array" />
-		<!--c65 => The 65 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c65" type="real64_array" />
-		<!--c66 => The 66 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c66" type="real64_array" />
-		<!--defaultStiffness => Default Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="defaultStiffness" type="geosx::constitutive::LinearElasticAnisotropic::StiffnessTensor" />
 		<!--density => Material Density-->
 		<xsd:attribute name="density" type="real64_array2d" />
+		<!--stiffness => Fully Anisotropic Elastic Stiffness Field in Voigt notation (6x6 matrix)-->
+		<xsd:attribute name="stiffness" type="real64_array3d" />
 		<!--stress => Material Stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
 	</xsd:complexType>
@@ -890,6 +820,22 @@
 		<xsd:attribute name="BulkModulus" type="real64_array" />
 		<!--ShearModulus => Elastic Shear Modulus-->
 		<xsd:attribute name="ShearModulus" type="real64_array" />
+		<!--density => Material Density-->
+		<xsd:attribute name="density" type="real64_array2d" />
+		<!--stress => Material Stress-->
+		<xsd:attribute name="stress" type="real64_array3d" />
+	</xsd:complexType>
+	<xsd:complexType name="LinearElasticTransverseIsotropicType">
+		<!--c11 => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="c11" type="real64_array" />
+		<!--c13 => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="c13" type="real64_array" />
+		<!--c33 => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="c33" type="real64_array" />
+		<!--c44 => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="c44" type="real64_array" />
+		<!--c66 => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="c66" type="real64_array" />
 		<!--density => Material Density-->
 		<xsd:attribute name="density" type="real64_array2d" />
 		<!--stress => Material Stress-->
@@ -960,86 +906,14 @@
 		<xsd:attribute name="poreVolumeMultiplier" type="real64_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="PoroLinearElasticAnisotropicType">
-		<!--c11 => The 11 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c11" type="real64_array" />
-		<!--c12 => The 12 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c12" type="real64_array" />
-		<!--c13 => The 13 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c13" type="real64_array" />
-		<!--c14 => The 14 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c14" type="real64_array" />
-		<!--c15 => The 15 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c15" type="real64_array" />
-		<!--c16 => The 16 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c16" type="real64_array" />
-		<!--c21 => The 21 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c21" type="real64_array" />
-		<!--c22 => The 22 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c22" type="real64_array" />
-		<!--c23 => The 23 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c23" type="real64_array" />
-		<!--c24 => The 24 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c24" type="real64_array" />
-		<!--c25 => The 25 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c25" type="real64_array" />
-		<!--c26 => The 26 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c26" type="real64_array" />
-		<!--c31 => The 31 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c31" type="real64_array" />
-		<!--c32 => The 32 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c32" type="real64_array" />
-		<!--c33 => The 33 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c33" type="real64_array" />
-		<!--c34 => The 34 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c34" type="real64_array" />
-		<!--c35 => The 35 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c35" type="real64_array" />
-		<!--c36 => The 36 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c36" type="real64_array" />
-		<!--c41 => The 41 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c41" type="real64_array" />
-		<!--c42 => The 42 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c42" type="real64_array" />
-		<!--c43 => The 43 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c43" type="real64_array" />
-		<!--c44 => The 44 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c44" type="real64_array" />
-		<!--c45 => The 45 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c45" type="real64_array" />
-		<!--c46 => The 46 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c46" type="real64_array" />
-		<!--c51 => The 51 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c51" type="real64_array" />
-		<!--c52 => The 52 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c52" type="real64_array" />
-		<!--c53 => The 53 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c53" type="real64_array" />
-		<!--c54 => The 54 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c54" type="real64_array" />
-		<!--c55 => The 55 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c55" type="real64_array" />
-		<!--c56 => The 56 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c56" type="real64_array" />
-		<!--c61 => The 61 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c61" type="real64_array" />
-		<!--c62 => The 62 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c62" type="real64_array" />
-		<!--c63 => The 63 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c63" type="real64_array" />
-		<!--c64 => The 64 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c64" type="real64_array" />
-		<!--c65 => The 65 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c65" type="real64_array" />
-		<!--c66 => The 66 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c66" type="real64_array" />
 		<!--dPVMult_dDensity => (no description available)-->
 		<xsd:attribute name="dPVMult_dDensity" type="real64_array2d" />
-		<!--defaultStiffness => Default Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="defaultStiffness" type="geosx::constitutive::LinearElasticAnisotropic::StiffnessTensor" />
 		<!--density => Material Density-->
 		<xsd:attribute name="density" type="real64_array2d" />
 		<!--poreVolumeMultiplier => (no description available)-->
 		<xsd:attribute name="poreVolumeMultiplier" type="real64_array2d" />
+		<!--stiffness => Fully Anisotropic Elastic Stiffness Field in Voigt notation (6x6 matrix)-->
+		<xsd:attribute name="stiffness" type="real64_array3d" />
 		<!--stress => Material Stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
 	</xsd:complexType>
@@ -1048,6 +922,26 @@
 		<xsd:attribute name="BulkModulus" type="real64_array" />
 		<!--ShearModulus => Elastic Shear Modulus-->
 		<xsd:attribute name="ShearModulus" type="real64_array" />
+		<!--dPVMult_dDensity => (no description available)-->
+		<xsd:attribute name="dPVMult_dDensity" type="real64_array2d" />
+		<!--density => Material Density-->
+		<xsd:attribute name="density" type="real64_array2d" />
+		<!--poreVolumeMultiplier => (no description available)-->
+		<xsd:attribute name="poreVolumeMultiplier" type="real64_array2d" />
+		<!--stress => Material Stress-->
+		<xsd:attribute name="stress" type="real64_array3d" />
+	</xsd:complexType>
+	<xsd:complexType name="PoroLinearElasticTransverseIsotropicType">
+		<!--c11 => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="c11" type="real64_array" />
+		<!--c13 => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="c13" type="real64_array" />
+		<!--c33 => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="c33" type="real64_array" />
+		<!--c44 => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="c44" type="real64_array" />
+		<!--c66 => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="c66" type="real64_array" />
 		<!--dPVMult_dDensity => (no description available)-->
 		<xsd:attribute name="dPVMult_dDensity" type="real64_array2d" />
 		<!--density => Material Density-->
