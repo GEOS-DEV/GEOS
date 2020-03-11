@@ -87,7 +87,7 @@ void ComponentFractionKernel::Launch( localIndex const begin, localIndex const e
                                       arrayView2d<real64> const & compFrac,
                                       arrayView3d<real64> const & dCompFrac_dCompDens )
 {
-  forall_in_range( begin, end, GEOSX_LAMBDA ( localIndex const a )
+  forall_in_range( begin, end, [=] ( localIndex const a )
   {
     Compute<NC>( compDens[a],
                  dCompDens[a],
@@ -103,7 +103,7 @@ void ComponentFractionKernel::Launch( localIndex const NC,
                                       arrayView2d<real64> const & compFrac,
                                       arrayView3d<real64> const & dCompFrac_dCompDens )
 {
-  forall_in_range( begin, end, GEOSX_LAMBDA ( localIndex const a )
+  forall_in_range( begin, end, [=] ( localIndex const a )
   {
     Compute( NC,
              compDens[a],
@@ -120,7 +120,7 @@ void ComponentFractionKernel::Launch( SortedArray<localIndex> const & targetSet,
                                       arrayView2d<real64> const & compFrac,
                                       arrayView3d<real64> const & dCompFrac_dCompDens )
 {
-  forall_in_set( targetSet.values(), targetSet.size(), GEOSX_LAMBDA ( localIndex const a )
+  forall_in_set( targetSet.values(), targetSet.size(), [=] ( localIndex const a )
   {
     Compute<NC>( compDens[a],
                  dCompDens[a],
@@ -136,7 +136,7 @@ void ComponentFractionKernel::Launch( localIndex const NC,
                                       arrayView2d<real64> const & compFrac,
                                       arrayView3d<real64> const & dCompFrac_dCompDens )
 {
-  forall_in_set( targetSet.values(), targetSet.size(), GEOSX_LAMBDA ( localIndex const a )
+  forall_in_set( targetSet.values(), targetSet.size(), [=] ( localIndex const a )
   {
     Compute( NC,
              compDens[a],
@@ -301,7 +301,7 @@ void PhaseVolumeFractionKernel::Launch( localIndex const begin, localIndex const
                                         arrayView2d<real64> const & dPhaseVolFrac_dPres,
                                         arrayView3d<real64> const & dPhaseVolFrac_dComp )
 {
-  forall_in_range( begin, end, GEOSX_LAMBDA ( localIndex const a )
+  forall_in_range( begin, end, [=] ( localIndex const a )
   {
     Compute<NC, NP>( compDens[a],
                      dCompDens[a],
@@ -333,7 +333,7 @@ void PhaseVolumeFractionKernel::Launch( localIndex const NC, localIndex const NP
                                         arrayView2d<real64> const & dPhaseVolFrac_dPres,
                                         arrayView3d<real64> const & dPhaseVolFrac_dComp )
 {
-  forall_in_range( begin, end, GEOSX_LAMBDA ( localIndex const a )
+  forall_in_range( begin, end, [=] ( localIndex const a )
   {
     Compute( NC, NP,
              compDens[a],
@@ -366,7 +366,7 @@ void PhaseVolumeFractionKernel::Launch( SortedArray<localIndex> const & targetSe
                                         arrayView2d<real64> const & dPhaseVolFrac_dPres,
                                         arrayView3d<real64> const & dPhaseVolFrac_dComp )
 {
-  forall_in_set( targetSet.values(), targetSet.size(), GEOSX_LAMBDA ( localIndex const a )
+  forall_in_set( targetSet.values(), targetSet.size(), [=] ( localIndex const a )
   {
     Compute<NC, NP>( compDens[a],
                      dCompDens[a],
@@ -398,7 +398,7 @@ void PhaseVolumeFractionKernel::Launch( localIndex const NC, localIndex const NP
                                         arrayView2d<real64> const & dPhaseVolFrac_dPres,
                                         arrayView3d<real64> const & dPhaseVolFrac_dComp )
 {
-  forall_in_set( targetSet.values(), targetSet.size(), GEOSX_LAMBDA ( localIndex const a )
+  forall_in_set( targetSet.values(), targetSet.size(), [=] ( localIndex const a )
   {
     Compute( NC, NP,
              compDens[a],
@@ -609,7 +609,7 @@ void PhaseMobilityKernel::Launch( localIndex const begin, localIndex const end,
                                   arrayView2d<real64> const & dPhaseMob_dPres,
                                   arrayView3d<real64> const & dPhaseMob_dComp )
 {
-  forall_in_range( begin, end, GEOSX_LAMBDA ( localIndex const a )
+  forall_in_range( begin, end, [=] ( localIndex const a )
   {
     Compute<NC, NP>( dCompFrac_dCompDens[a],
                      phaseDens[a][0],
@@ -645,7 +645,7 @@ void PhaseMobilityKernel::Launch( localIndex const NC, localIndex const NP,
                                   arrayView2d<real64> const & dPhaseMob_dPres,
                                   arrayView3d<real64> const & dPhaseMob_dComp )
 {
-  forall_in_range( begin, end, GEOSX_LAMBDA ( localIndex const a )
+  forall_in_range( begin, end, [=] ( localIndex const a )
   {
     Compute( NC, NP,
              dCompFrac_dCompDens[a],
@@ -682,7 +682,7 @@ void PhaseMobilityKernel::Launch( SortedArray<localIndex> const & targetSet,
                                   arrayView2d<real64> const & dPhaseMob_dPres,
                                   arrayView3d<real64> const & dPhaseMob_dComp )
 {
-  forall_in_set( targetSet.values(), targetSet.size(), GEOSX_LAMBDA ( localIndex const a )
+  forall_in_set( targetSet.values(), targetSet.size(), [=] ( localIndex const a )
   {
     Compute<NC, NP>( dCompFrac_dCompDens[a],
                      phaseDens[a][0],
@@ -718,7 +718,7 @@ void PhaseMobilityKernel::Launch( localIndex const NC, localIndex const NP,
                                   arrayView2d<real64> const & dPhaseMob_dPres,
                                   arrayView3d<real64> const & dPhaseMob_dComp )
 {
-  forall_in_set( targetSet.values(), targetSet.size(), GEOSX_LAMBDA ( localIndex const a )
+  forall_in_set( targetSet.values(), targetSet.size(), [=] ( localIndex const a )
   {
     Compute( NC, NP,
              dCompFrac_dCompDens[a],
