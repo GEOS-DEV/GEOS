@@ -1221,7 +1221,7 @@ CompositionalMultiphaseWell::ApplySystemSolution( DofManager const & dofManager,
   fieldNames["elems"].push_back( viewKeyStruct::deltaMixtureConnRateString );
   CommunicationTools::SynchronizeFields( fieldNames,
                                          domain->getMeshBody(0)->getMeshLevel(0),
-                                         domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
+                                         domain->getNeighbors() );
 
   // update properties
   UpdateStateAll( domain );

@@ -28,29 +28,6 @@
 #define GEOSX_LAMBDA [=]
 
 /**
- * @name Unused variable markers.
- *
- * These macros are used to explicitly mark a variable/argument as unused
- * and thus silence compiler warnings.
- */
-///@{
-
-/// Mark an unused argument and silence compiler warnings.
-#define GEOSX_UNUSED_PARAM( X )
-
-/// Mark an unused variable and silence compiler warnings.
-#define GEOSX_UNUSED_VAR( X ) ( ( void ) X )
-
-/// Mark a debug variable and silence compiler warnings.
-#define GEOSX_DEBUG_VAR( X ) GEOSX_UNUSED_VAR( X )
-
-#if defined(GEOSX_USE_OPENMP)
-  #define PRAGMA_OMP( clause ) _Pragma(STRINGIZE(clause))
-#else
-  #define PRAGMA_OMP( clause )
-#endif
-
-/**
  * @name Host-device markers
  *
  * These macros are used to denote host/device/inline functions in a compiler-specific way.
@@ -82,6 +59,34 @@
 #endif
 
 ///@}
+
+/**
+ * @name Unused variable markers.
+ *
+ * These macros are used to explicitly mark a variable/argument as unused
+ * and thus silence compiler warnings.
+ */
+///@{
+
+/// Mark an unused argument and silence compiler warnings.
+#define GEOSX_UNUSED_PARAM( X )
+
+/// Used to silence unused variable warnings, cuda doesn't respect casting to void.
+template< typename T >
+GEOSX_HOST_DEVICE inline constexpr
+void i_g_n_o_r_e( T & ) {}
+
+/// Mark an unused variable and silence compiler warnings.
+#define GEOSX_UNUSED_VAR( X ) i_g_n_o_r_e( X );
+
+/// Mark a debug variable and silence compiler warnings.
+#define GEOSX_DEBUG_VAR( X ) GEOSX_UNUSED_VAR( X )
+
+#if defined(GEOSX_USE_OPENMP)
+  #define PRAGMA_OMP( clause ) _Pragma(STRINGIZE(clause))
+#else
+  #define PRAGMA_OMP( clause )
+#endif
 
 /// preprocessor variable for the C99 restrict keyword for use with pointers
 #define GEOSX_RESTRICT LVARRAY_RESTRICT

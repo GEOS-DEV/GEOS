@@ -94,11 +94,31 @@ public:
                     real64 const * const weights,
                     localIndex const connectorIndex ) override final;
 
+  void add( localIndex const numPts,
+	    R1Tensor const * const cellCenterToEdgeCenter,
+            integer const * const isGhostConnector,
+	    localIndex const connectorIndex );  
+
   virtual localIndex size() const  override final
   { return m_elementRegionIndices.size(); }
 
   localIndex stencilSize( localIndex index ) const
   { return m_elementRegionIndices.sizeOfArray(index); }
+
+
+  ArrayOfArraysView< R1Tensor const > const & getCellCenterToEdgeCenters() const
+  { return m_cellCenterToEdgeCenters; }
+
+  ArrayOfArraysView< integer const > const & getIsGhostConnectors() const
+  { return m_isGhostConnectors; }  
+
+  
+private:
+
+  ArrayOfArrays<R1Tensor> m_cellCenterToEdgeCenters;
+  ArrayOfArrays<integer> m_isGhostConnectors;  
+
+
 };
 
 } /* namespace geosx */

@@ -39,15 +39,17 @@ using namespace constitutive;
 using namespace SinglePhaseBaseKernels;  
 using namespace SinglePhaseFVMKernels;
 
-SinglePhaseFVM::SinglePhaseFVM( const std::string& name,
-                                Group * const parent ):
-  SinglePhaseBase(name, parent)
+template< typename BASE >
+SinglePhaseFVM<BASE>::SinglePhaseFVM( const std::string& name,
+                                      Group * const parent ):
+  BASE(name, parent)
 {
   m_numDofPerCell = 1;
 }
 
 
-void SinglePhaseFVM::SetupDofs( DomainPartition const * const GEOSX_UNUSED_PARAM( domain ),
+template< typename BASE >
+void SinglePhaseFVM<BASE>::SetupDofs( DomainPartition const * const GEOSX_UNUSED_PARAM( domain ),
                                 DofManager & dofManager ) const
 {
   dofManager.addField( viewKeyStruct::pressureString,
@@ -59,30 +61,30 @@ void SinglePhaseFVM::SetupDofs( DomainPartition const * const GEOSX_UNUSED_PARAM
                           DofManager::Connectivity::Face );
 }
 
-
-void SinglePhaseFVM::SetupSystem( DomainPartition * const domain,
-                                  DofManager & dofManager,
-                                  ParallelMatrix & matrix,
-                                  ParallelVector & rhs,
-                                  ParallelVector & solution )
+template< typename BASE >
+void SinglePhaseFVM<BASE>::SetupSystem( DomainPartition * const domain,
+                                        DofManager & dofManager,
+                                        ParallelMatrix & matrix,
+                                        ParallelVector & rhs,
+                                        ParallelVector & solution )
 {
   GEOSX_MARK_FUNCTION;
-  SinglePhaseBase::SetupSystem( domain,
-                                dofManager,
-                                matrix,
-                                rhs,
-                                solution );
+  BASE::SetupSystem( domain,
+                     dofManager,
+                     matrix,
+                     rhs,
+                     solution );
 
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
   std::unique_ptr<CRSMatrix<real64,localIndex,localIndex> > &
-  derivativeFluxResidual_dAperture = getRefDerivativeFluxResidual_dAperture();
+  derivativeFluxResidual_dAperture = this->getRefDerivativeFluxResidual_dAperture();
   {
 
     localIndex numRows = 0;
     localIndex numCols = 0;
-    string_array const & flowRegions = getTargetRegions();
+    string_array const & flowRegions = this->getTargetRegions();
     elemManager->forElementSubRegions( flowRegions, [&]( ElementSubRegionBase const * const elementSubRegion )
     {
       numRows += elementSubRegion->size();
@@ -119,7 +121,7 @@ void SinglePhaseFVM::SetupSystem( DomainPartition * const domain,
   FiniteVolumeManager const *
   fvManager = numericalMethodManager->GetGroup<FiniteVolumeManager>( keys::finiteVolumeManager );
 
-  FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation( getDiscretization() );
+  FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation( this->getDiscretization() );
 
 
   fluxApprox->forStencils<FaceElementStencil>( [&]( FaceElementStencil const & stencil )
@@ -141,9 +143,10 @@ void SinglePhaseFVM::SetupSystem( DomainPartition * const domain,
 }   
   
 
-real64 SinglePhaseFVM::CalculateResidualNorm( DomainPartition const * const domain,
-                                              DofManager const & dofManager,
-                                              ParallelVector const & rhs )
+template< typename BASE >
+real64 SinglePhaseFVM<BASE>::CalculateResidualNorm( DomainPartition const * const domain,
+                                                    DofManager const & dofManager,
+                                                    ParallelVector const & rhs )
 {
   MeshLevel const * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
 
@@ -154,9 +157,9 @@ real64 SinglePhaseFVM::CalculateResidualNorm( DomainPartition const * const doma
 
   // compute the norm of local residual scaled by cell pore volume
   real64 localResidualNorm[3] = { 0.0, 0.0, 0.0 };
-  applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                 ElementRegionBase const * const GEOSX_UNUSED_PARAM( region ),
-                                 ElementSubRegionBase const * const subRegion )
+  this->applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
+                                       ElementRegionBase const * const GEOSX_UNUSED_PARAM( region ),
+                                       ElementSubRegionBase const * const subRegion )
   {
     arrayView1d<globalIndex const> const & dofNumber = subRegion->getReference< array1d<globalIndex> >( dofKey );
 
@@ -204,7 +207,8 @@ real64 SinglePhaseFVM::CalculateResidualNorm( DomainPartition const * const doma
 }
 
   
-void SinglePhaseFVM::ApplySystemSolution( DofManager const & dofManager,
+template< typename BASE >
+void SinglePhaseFVM<BASE>::ApplySystemSolution( DofManager const & dofManager,
                                           ParallelVector const & solution,
                                           real64 const scalingFactor,
                                           DomainPartition * const domain )
@@ -219,18 +223,16 @@ void SinglePhaseFVM::ApplySystemSolution( DofManager const & dofManager,
   std::map<string, string_array> fieldNames;
   fieldNames["elems"].push_back( viewKeyStruct::deltaPressureString );
 
-  array1d<NeighborCommunicator> & comms =
-    domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors );
+  CommunicationTools::SynchronizeFields( fieldNames, mesh, domain->getNeighbors() );
 
-  CommunicationTools::SynchronizeFields( fieldNames, mesh, comms );
-
-  applyToSubRegions( mesh, [&] ( ElementSubRegionBase * subRegion )
+  this->applyToSubRegions( mesh, [&] ( ElementSubRegionBase * subRegion )
   {
-    UpdateState( subRegion );
+    this->UpdateState( subRegion );
   } );
 }
 
-void SinglePhaseFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
+template< typename BASE >
+void SinglePhaseFVM<BASE>::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                         real64 const dt,
                                         DomainPartition const * const domain,
                                         DofManager const * const dofManager,
@@ -281,7 +283,9 @@ void SinglePhaseFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time_n 
 
   FluxKernel::ElementView < arrayView1d<real64 const> > const & dseparationCoeff_dAper  = m_element_dSeparationCoefficient_dAperture.toViewConst();
 #endif
-  localIndex const fluidIndex = m_fluidIndex;
+  localIndex fluidIndex = m_fluidIndex;
+
+  FluxKernel::ElementView < arrayView1d<R1Tensor const> > const & transTMultiplier  = m_transTMultiplier.toViewConst();
 
 
   fluxApprox->forCellStencils( [&]( auto const & stencil )
@@ -302,6 +306,9 @@ void SinglePhaseFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time_n 
                         dMob_dPres,
                         aperture0,
                         aperture,
+                        transTMultiplier,
+                        this->gravityVector(),
+                        this->m_meanPermCoeff,
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
                         separationCoeff,
                         dseparationCoeff_dAper,
@@ -312,8 +319,9 @@ void SinglePhaseFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time_n 
   });
 }
 
+template< typename BASE >
 void
-SinglePhaseFVM::ApplyBoundaryConditions( real64 const time_n,
+SinglePhaseFVM<BASE>::ApplyBoundaryConditions( real64 const time_n,
                                          real64 const dt,
                                          DomainPartition * const domain,
                                          DofManager const & dofManager,
@@ -407,7 +415,7 @@ SinglePhaseFVM::ApplyBoundaryConditions( real64 const time_n,
   rhs.close();
 
   // Debug for logLevel >= 2
-  GEOSX_LOG_LEVEL_RANK_0( 2, "After SinglePhaseFVM::ApplyBoundaryConditions" );
+  GEOSX_LOG_LEVEL_RANK_0( 2, "After SinglePhaseFVM<BASE>::ApplyBoundaryConditions" );
   GEOSX_LOG_LEVEL_RANK_0( 2, "\nJacobian:\n" << matrix );
   GEOSX_LOG_LEVEL_RANK_0( 2, "\nResidual:\n" << rhs );
 
@@ -421,13 +429,14 @@ SinglePhaseFVM::ApplyBoundaryConditions( real64 const time_n,
     string filename_rhs = "rhs_bc_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
     rhs.write( filename_rhs, true );
 
-    GEOSX_LOG_RANK_0( "After SinglePhaseFVM::ApplyBoundaryConditions" );
+    GEOSX_LOG_RANK_0( "After SinglePhaseFVM<BASE>::ApplyBoundaryConditions" );
     GEOSX_LOG_RANK_0( "Jacobian: written to " << filename_mat );
     GEOSX_LOG_RANK_0( "Residual: written to " << filename_rhs );
   }
 }
 
-void SinglePhaseFVM::ApplyFaceDirichletBC_implicit( real64 const time_n,
+template< typename BASE >
+void SinglePhaseFVM<BASE>::ApplyFaceDirichletBC_implicit( real64 const time_n,
                                                     real64 const dt,
                                                     DofManager const * const dofManager,
                                                     DomainPartition * const domain,
@@ -530,7 +539,7 @@ void SinglePhaseFVM::ApplyFaceDirichletBC_implicit( real64 const time_n,
 
       real64 dummy; // don't need derivatives on faces
 
-      SingleFluidBase * fluid = constitutiveRelations[er][esr][m_fluidIndex]->group_cast<SingleFluidBase *>();
+      SingleFluidBase * fluid = constitutiveRelations[er][esr][m_fluidIndex]->template group_cast<SingleFluidBase *>();
       fluid->Compute( presFace[kf], densFace[kf][0], dummy, viscFace[kf][0], dummy );
     }
 
@@ -701,6 +710,11 @@ void SinglePhaseFVM::ApplyFaceDirichletBC_implicit( real64 const time_n,
   } );
 }
 
-
-REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseFVM, std::string const &, Group * const )
+namespace
+{
+typedef SinglePhaseFVM<SinglePhaseBase> NoProppant;
+typedef SinglePhaseFVM<SinglePhaseProppantBase> Proppant;
+REGISTER_CATALOG_ENTRY( SolverBase, NoProppant, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( SolverBase, Proppant, std::string const &, Group * const )
+}
 } /* namespace geosx */

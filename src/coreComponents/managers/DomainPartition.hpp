@@ -23,6 +23,7 @@
 #include "mesh/MeshBody.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
+#include "mpiCommunications/NeighborCommunicator.hpp"
 
 namespace geosx
 {
@@ -66,13 +67,6 @@ public:
    */
   ///@{
 
-//  void FindMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
-//                                            array1d< array1d<localIndex> > & matchedPartitionBoundaryObjects );
-
-//  static std::set<int> & getFreeCommIDs();
-//  static int reserveCommID();
-//  static void releaseCommID( int & ID );
-
   void SetupCommunications( bool use_nonblocking );
 
   void AddNeighbors(const unsigned int idim,
@@ -96,11 +90,6 @@ public:
                               const realT problemTime,
                               const bool isRestart );
 
-  struct viewKeysStruct
-  {
-    dataRepository::ViewKey neighbors = { "Neighbors" };
-  } viewKeys;
-
   struct groupKeysStruct
   {
     static constexpr auto meshBodiesString = "MeshBodies";
@@ -121,25 +110,38 @@ public:
 
   Group const * getMeshBodies() const
   { return this->GetGroup(groupKeys.meshBodies); }
+  
   Group * getMeshBodies()
   { return this->GetGroup(groupKeys.meshBodies); }
 
   MeshBody const * getMeshBody( string const & meshName ) const
   { return this->GetGroup(groupKeys.meshBodies)->GetGroup<MeshBody>(meshName); }
+  
   MeshBody * getMeshBody( string const & meshName )
   { return this->GetGroup(groupKeys.meshBodies)->GetGroup<MeshBody>(meshName); }
 
   MeshBody const * getMeshBody( localIndex const index ) const
   { return this->GetGroup(groupKeys.meshBodies)->GetGroup<MeshBody>(index); }
+  
   MeshBody * getMeshBody( localIndex const index )
   { return this->GetGroup(groupKeys.meshBodies)->GetGroup<MeshBody>(index); }
 
-  std::set<int>       & getMetisNeighborList()       {return m_metisNeighborList;}
-  std::set<int> const & getMetisNeighborList() const {return m_metisNeighborList;}
+  std::set<int>       & getMetisNeighborList()
+  { return m_metisNeighborList; }
+  
+  std::set<int> const & getMetisNeighborList() const
+  { return m_metisNeighborList; }
+
+  std::vector< NeighborCommunicator > & getNeighbors()
+  { return m_neighbors; }
+
+  std::vector< NeighborCommunicator > const & getNeighbors() const
+  { return m_neighbors; };
 
 private:
 
   std::set<int> m_metisNeighborList;
+  std::vector< NeighborCommunicator > m_neighbors;
 
 };
 
