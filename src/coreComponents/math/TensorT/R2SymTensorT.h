@@ -106,6 +106,8 @@ public:
 
   //***** MULTIPLICATION OPERATIONS *******************************************
   realT AijBij(const R2SymTensorT< T_dim >& A, const R2SymTensorT< T_dim >& B);
+  realT doubleContraction(const R2SymTensorT< T_dim >& A, const R2SymTensorT< T_dim >& B);
+
   void AijBjk(const R2SymTensorT< T_dim >& A, const R2SymTensorT< T_dim >& B);
   void AijAkj(const R2TensorT< T_dim >& A);
   void AjiAjk(const R2TensorT< T_dim >& A);
@@ -871,6 +873,20 @@ inline realT R2SymTensorT< T_dim >::AijBij(const R2SymTensorT< T_dim >& A, const
   for (int i=0 ; i<n_dim ; i++)
   {
     results += A.t_data[i]*B.t_data[i];
+  }
+  return results;
+
+}
+
+template<int T_dim>
+inline realT R2SymTensorT< T_dim >::doubleContraction(const R2SymTensorT< T_dim >& A, const R2SymTensorT< T_dim >& B)
+{
+  realT results = AijBij(A, B) * 2;
+  int index = -1;
+  for (int i=0 ; i<T_dim ; i++)
+  {
+	  index += i + 1;
+	  results -= A.t_data[index]*B.t_data[index];
   }
   return results;
 

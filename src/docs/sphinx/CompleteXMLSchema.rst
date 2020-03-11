@@ -119,6 +119,13 @@ Element: Contact
 .. include:: ../../coreComponents/fileIO/schema/docs/Contact.rst
 
 
+.. _XML_CycLiqCPSP:
+
+Element: CycLiqCPSP
+===================
+.. include:: ../../coreComponents/fileIO/schema/docs/CycLiqCPSP.rst
+
+
 .. _XML_Cylinder:
 
 Element: Cylinder
@@ -427,6 +434,13 @@ Element: PoroBilinearElasticIsotropic
 .. include:: ../../coreComponents/fileIO/schema/docs/PoroBilinearElasticIsotropic.rst
 
 
+.. _XML_PoroCycLiqCPSP:
+
+Element: PoroCycLiqCPSP
+=======================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroCycLiqCPSP.rst
+
+
 .. _XML_PoroLinearElasticAnisotropic:
 
 Element: PoroLinearElasticAnisotropic
@@ -730,6 +744,13 @@ Datastructure: ConstitutiveModels
 Datastructure: Contact
 ======================
 .. include:: ../../coreComponents/fileIO/schema/docs/Contact_other.rst
+
+
+.. _DATASTRUCTURE_CycLiqCPSP:
+
+Datastructure: CycLiqCPSP
+=========================
+.. include:: ../../coreComponents/fileIO/schema/docs/CycLiqCPSP_other.rst
 
 
 .. _DATASTRUCTURE_Cylinder:
@@ -1059,6 +1080,13 @@ Datastructure: PoreVolumeCompressibleSolid
 Datastructure: PoroBilinearElasticIsotropic
 ===========================================
 .. include:: ../../coreComponents/fileIO/schema/docs/PoroBilinearElasticIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_PoroCycLiqCPSP:
+
+Datastructure: PoroCycLiqCPSP
+=============================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroCycLiqCPSP_other.rst
 
 
 .. _DATASTRUCTURE_PoroLinearElasticAnisotropic:

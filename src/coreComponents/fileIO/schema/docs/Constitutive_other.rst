@@ -11,6 +11,7 @@ BrooksCoreyRelativePermeability       node :ref:`DATASTRUCTURE_BrooksCoreyRelati
 CompositionalMultiphaseFluid          node :ref:`DATASTRUCTURE_CompositionalMultiphaseFluid`          
 CompressibleSinglePhaseFluid          node :ref:`DATASTRUCTURE_CompressibleSinglePhaseFluid`          
 Contact                               node :ref:`DATASTRUCTURE_Contact`                               
+CycLiqCPSP                            node :ref:`DATASTRUCTURE_CycLiqCPSP`                            
 HardeningElasticIsotropic             node :ref:`DATASTRUCTURE_HardeningElasticIsotropic`             
 LinearElasticAnisotropic              node :ref:`DATASTRUCTURE_LinearElasticAnisotropic`              
 LinearElasticIsotropic                node :ref:`DATASTRUCTURE_LinearElasticIsotropic`                
@@ -20,6 +21,7 @@ MultiPhaseMultiComponentFluid         node :ref:`DATASTRUCTURE_MultiPhaseMultiCo
 NonlinearElasticDuncanChangEB         node :ref:`DATASTRUCTURE_NonlinearElasticDuncanChangEB`         
 PoreVolumeCompressibleSolid           node :ref:`DATASTRUCTURE_PoreVolumeCompressibleSolid`           
 PoroBilinearElasticIsotropic          node :ref:`DATASTRUCTURE_PoroBilinearElasticIsotropic`          
+PoroCycLiqCPSP                        node :ref:`DATASTRUCTURE_PoroCycLiqCPSP`                        
 PoroLinearElasticAnisotropic          node :ref:`DATASTRUCTURE_PoroLinearElasticAnisotropic`          
 PoroLinearElasticIsotropic            node :ref:`DATASTRUCTURE_PoroLinearElasticIsotropic`            
 PoroLinearViscoElasticIsotropic       node :ref:`DATASTRUCTURE_PoroLinearViscoElasticIsotropic`       

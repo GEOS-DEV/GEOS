@@ -34,6 +34,7 @@ set( constitutive_headers
      solid/BilinearElasticIsotropic.hpp
      solid/NonlinearElasticDuncanChangEB.hpp
      solid/HardeningElasticIsotropic.hpp
+     solid/CycLiqCPSP.hpp
      solid/SolidBase.hpp
    )
 #
@@ -70,6 +71,7 @@ set( constitutive_sources
      solid/BilinearElasticIsotropic.cpp
      solid/NonlinearElasticDuncanChangEB.cpp
      solid/HardeningElasticIsotropic.cpp
+     solid/CycLiqCPSP.cpp
      solid/SolidBase.cpp
    )
 

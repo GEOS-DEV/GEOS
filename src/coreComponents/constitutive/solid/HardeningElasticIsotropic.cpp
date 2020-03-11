@@ -20,7 +20,6 @@
  */
 
 #include "HardeningElasticIsotropic.hpp"
-#include <iostream>
 
 namespace geosx {
 using namespace dataRepository;
@@ -38,22 +37,22 @@ HardeningElasticIsotropic::HardeningElasticIsotropic( std::string const & name, 
 		{
 			registerWrapper( viewKeyStruct::defaultYoungsModulusString, &m_defaultYoungsModulus, 0 )->
 			    setApplyDefaultValue(-1)->
-			    setInputFlag(InputFlags::OPTIONAL)->
+			    setInputFlag(InputFlags::REQUIRED)->
 			    setDescription("Elastic Youngs Modulus Parameter");
 
 			registerWrapper( viewKeyStruct::defaultHardeningFactorString, &m_defaultHardeningFactor, 0 )->
 			    setApplyDefaultValue(-1)->
-			    setInputFlag(InputFlags::OPTIONAL)->
+			    setInputFlag(InputFlags::REQUIRED)->
 			    setDescription("Hardening Factor Parameter");
 
 			registerWrapper( viewKeyStruct::defaultReferenceVoidRatioString, &m_defaultReferenceVoidRatio, 0 )->
 			    setApplyDefaultValue(-1)->
-			    setInputFlag(InputFlags::OPTIONAL)->
+			    setInputFlag(InputFlags::REQUIRED)->
 			    setDescription("Reference Void Ratio Parameter 1");
 
 			registerWrapper( viewKeyStruct::defaultPoissonRatioString, &m_defaultPoissonRatio, 0 )->
 			    setApplyDefaultValue(-1)->
-			    setInputFlag(InputFlags::OPTIONAL)->
+			    setInputFlag(InputFlags::REQUIRED)->
 			    setDescription("Elastic Poisson Ratio Parameter");
 
 		    registerWrapper( viewKeyStruct::voidRatioString, &m_voidRatio, 0 )->
@@ -91,6 +90,7 @@ HardeningElasticIsotropic::DeliverClone( string const & name,
   newConstitutiveRelation->m_poissonRatio = m_poissonRatio;
 
   newConstitutiveRelation->m_voidRatio = m_voidRatio;
+  newConstitutiveRelation->m_stress = m_stress;
   //newConstitutiveRelation->m_strain = m_strain;
 }
 

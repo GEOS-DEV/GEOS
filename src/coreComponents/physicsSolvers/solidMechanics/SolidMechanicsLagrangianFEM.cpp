@@ -573,9 +573,9 @@ void SolidMechanicsLagrangianFEM::ExplicitStepDisplacementUpdate( real64 const& 
   //3: v^{n+1/2} = v^{n} + a^{n} dt/2
   SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, this->getGravityVector(), dt/2 );
 
-  fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
-
   ApplyTiedVelocity_explicit(time_n,domain);
+
+  fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
 
   //4. x^{n+1} = x^{n} + v^{n+{1}/{2}} dt (x is displacement)
   SolidMechanicsLagrangianFEMKernels::displacementUpdate( vel, uhat, u, dt );
@@ -718,6 +718,8 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStepVelocityUpdate( real64 const& ti
   // apply this over a set
   SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_massDamping, m_sendOrReceiveNodes );
 
+  //ApplyTiedVelocity_explicit(time_n + dt,domain);
+
   fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n + dt, domain, "nodeManager", keys::Velocity );
 
   CommunicationTools::SynchronizePackSendRecv( fieldNames, mesh, neighbors, m_iComm, true );
@@ -762,6 +764,8 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStepVelocityUpdate( real64 const& ti
 
   // apply this over a set
   SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_massDamping, m_nonSendOrReceiveNodes );
+
+  ApplyTiedVelocity_explicit(time_n + dt,domain);
 
   fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n + dt, domain, "nodeManager", keys::Velocity );
 
@@ -821,6 +825,28 @@ void SolidMechanicsLagrangianFEM::ApplyDisplacementBC_implicit( real64 const tim
                                                                               matrix,
                                                                               rhs );
   } );
+  /*
+  //Ron Wang, Add at 5 March, 2020
+  fsManager.Apply( time,
+                   &domain,
+                   "nodeManager",
+                   keys::Velocity,
+                   [&]( FieldSpecificationBase const * const bc,
+                        string const &,
+                        set<localIndex> const & targetSet,
+                        Group * const targetGroup,
+                        string const fieldName )
+  {
+    bc->ApplyBoundaryConditionToSystem<FieldSpecificationEqual, LAInterface>( targetSet,
+                                                                              time,
+                                                                              targetGroup,
+                                                                              fieldName,
+                                                                              dofKey,
+                                                                              3,
+                                                                              matrix,
+                                                                              rhs );
+  } );
+  */
 }
 
 
@@ -963,7 +989,7 @@ void SolidMechanicsLagrangianFEM::ApplyTractionBC_explicit( real64 const time,
       for( auto kf : targetSet )
       {
 //        if( faceGhostRank[kf] < 0 )
-//        {
+//        {ApplyDisplacementBC_implicit
           localIndex const numNodes = faceToNodeMap.sizeOfArray( kf );
           for( localIndex a=0 ; a<numNodes ; ++a )
           {
@@ -1024,19 +1050,13 @@ void SolidMechanicsLagrangianFEM::ApplyTiedVelocity_explicit( real64 const time,
 	                    domain,
 	                    "nodeManager",
 	                    string("TiedVelocity"),
-	                    [&]( FieldSpecificationBase const * const bc,
+	                    [&]( FieldSpecificationBase const * const &,
 	                    string const &,
 	                    set<localIndex> const & targetSet,
 	                    Group * const GEOSX_UNUSED_ARG( targetGroup ),
 	                    string const GEOSX_UNUSED_ARG( fieldName ) ) -> void
 	  {
-	    //integer const component = bc->GetComponent();
-	    real64 scale = bc->GetScale();
 	    R1Tensor v0 = vel[targetSet[0]];
-	    for( int i=0 ; i<3 ; ++i )
-	    {
-	    	v0[i] *= scale;
-	    }
 	    for( auto kf : targetSet )
 	    {
 	//        if( faceGhostRank[kf] < 0 )

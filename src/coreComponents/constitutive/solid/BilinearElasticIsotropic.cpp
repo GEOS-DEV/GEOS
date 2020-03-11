@@ -37,27 +37,27 @@ BilinearElasticIsotropic::BilinearElasticIsotropic( std::string const & name, Gr
 {
 	registerWrapper( viewKeyStruct::defaultYoungsModulus_1String, &m_defaultYoungsModulus_1, 0 )->
 	    setApplyDefaultValue(-1)->
-	    setInputFlag(InputFlags::OPTIONAL)->
+	    setInputFlag(InputFlags::REQUIRED)->
 	    setDescription("Elastic Youngs Modulus Parameter 1");
 
 	registerWrapper( viewKeyStruct::defaultYoungsModulus_2String, &m_defaultYoungsModulus_2, 0 )->
 	    setApplyDefaultValue(-1)->
-	    setInputFlag(InputFlags::OPTIONAL)->
+	    setInputFlag(InputFlags::REQUIRED)->
 	    setDescription("Elastic Youngs Modulus Parameter 2");
 
 	registerWrapper( viewKeyStruct::defaultPoissonRatio_1String, &m_defaultPoissonRatio_1, 0 )->
 	    setApplyDefaultValue(-1)->
-	    setInputFlag(InputFlags::OPTIONAL)->
+	    setInputFlag(InputFlags::REQUIRED)->
 	    setDescription("Elastic Poisson Ratio Parameter 1");
 
 	registerWrapper( viewKeyStruct::defaultPoissonRatio_2String, &m_defaultPoissonRatio_2, 0 )->
 	    setApplyDefaultValue(-1)->
-	    setInputFlag(InputFlags::OPTIONAL)->
+	    setInputFlag(InputFlags::REQUIRED)->
 	    setDescription("Elastic Poisson Ratio Parameter 2");
 
 	registerWrapper( viewKeyStruct::defaultCriticalStressString, &m_defaultCriticalStress, 0 )->
 	    setApplyDefaultValue(-1)->
-	    setInputFlag(InputFlags::OPTIONAL)->
+	    setInputFlag(InputFlags::REQUIRED)->
 	    setDescription("Elastic Critical Stress Parameter");
 
 }
