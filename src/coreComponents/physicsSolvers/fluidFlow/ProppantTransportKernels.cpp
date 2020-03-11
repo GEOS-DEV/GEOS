@@ -155,7 +155,7 @@ Launch<FaceElementStencil>( FaceElementStencil const & stencil,
   constexpr  localIndex DOF1 = maxNumFluxElems * constitutive::MultiFluidBase::MAX_NUM_COMPONENTS;
   constexpr  localIndex DOF2 = maxStencilSize * constitutive::MultiFluidBase::MAX_NUM_COMPONENTS;
 
-  forall_in_range<serialPolicy>( 0, stencil.size(), GEOSX_LAMBDA ( localIndex iconn )
+  forall_in_range<serialPolicy>( 0, stencil.size(), [=] ( localIndex iconn )
   {
 
     localIndex const numFluxElems = stencil.stencilSize(iconn);
@@ -299,7 +299,7 @@ LaunchCellBasedFluxCalculation<FaceElementStencil>( FaceElementStencil const & s
   ArrayOfArraysView<R1Tensor const> const & cellCenterToEdgeCenters = stencil.getCellCenterToEdgeCenters();
 
 
-  forall_in_range<serialPolicy>( 0, stencil.size(), GEOSX_LAMBDA ( localIndex iconn )
+  forall_in_range<serialPolicy>( 0, stencil.size(), [=] ( localIndex iconn )
   {
 
     localIndex const numFluxElems = stencil.stencilSize(iconn);
@@ -392,7 +392,7 @@ LaunchProppantPackVolumeCalculation<FaceElementStencil>( FaceElementStencil cons
 
   ArrayOfArraysView<R1Tensor const> const & cellCenterToEdgeCenters = stencil.getCellCenterToEdgeCenters();
 
-  forall_in_range<serialPolicy>( 0, stencil.size(), GEOSX_LAMBDA ( localIndex iconn )
+  forall_in_range<serialPolicy>( 0, stencil.size(), [=] ( localIndex iconn )
   {
 
     localIndex const numFluxElems = stencil.stencilSize(iconn);
@@ -463,7 +463,7 @@ LaunchProppantPackVolumeUpdate<FaceElementStencil>( FaceElementStencil const & s
 
   ArrayOfArraysView<R1Tensor const> const & cellCenterToEdgeCenters = stencil.getCellCenterToEdgeCenters();
 
-  forall_in_range<serialPolicy>( 0, stencil.size(), GEOSX_LAMBDA ( localIndex iconn )
+  forall_in_range<serialPolicy>( 0, stencil.size(), [=] ( localIndex iconn )
   {
 
     localIndex const numFluxElems = stencil.stencilSize(iconn);
@@ -512,7 +512,7 @@ LaunchInterfaceElementUpdate<FaceElementStencil>( FaceElementStencil const & ste
 
   ArrayOfArraysView<R1Tensor const> const & cellCenterToEdgeCenters = stencil.getCellCenterToEdgeCenters();
 
-  forall_in_range<serialPolicy>( 0, stencil.size(), GEOSX_LAMBDA ( localIndex iconn )
+  forall_in_range<serialPolicy>( 0, stencil.size(), [=] ( localIndex iconn )
   {
 
     localIndex const numFluxElems = stencil.stencilSize(iconn);

@@ -55,7 +55,7 @@ inline void velocityUpdate( arrayView2d<real64, nodes::ACCELERATION_USD> const &
   GEOSX_MARK_FUNCTION;
 
   localIndex const N = acceleration.size( 0 );
-  forAll< parallelDevicePolicy<> >( N, GEOSX_DEVICE_LAMBDA ( localIndex const i )
+  forAll< parallelDevicePolicy<> >( N, [=] GEOSX_DEVICE ( localIndex const i )
   {
     for (int j = 0; j < 3; ++j)
     {
@@ -73,7 +73,7 @@ inline void velocityUpdate( arrayView2d<real64, nodes::ACCELERATION_USD> const &
 {
   GEOSX_MARK_FUNCTION;
 
-  forAll< parallelDevicePolicy<> >( indices.size(), GEOSX_DEVICE_LAMBDA ( localIndex const i )
+  forAll< parallelDevicePolicy<> >( indices.size(), [=] GEOSX_DEVICE ( localIndex const i )
   {
     localIndex const a = indices[ i ];
     for (int j = 0; j < 3; ++j)
@@ -92,7 +92,7 @@ inline void displacementUpdate( arrayView2d<real64 const, nodes::VELOCITY_USD> c
   GEOSX_MARK_FUNCTION;
 
   localIndex const N = velocity.size( 0 );
-  forAll< parallelDevicePolicy<> >( N, GEOSX_DEVICE_LAMBDA ( localIndex const i )
+  forAll< parallelDevicePolicy<> >( N, [=] GEOSX_DEVICE ( localIndex const i )
   {
     for (int j = 0; j < 3; ++j)
     {
@@ -195,7 +195,7 @@ struct ExplicitKernel
 
     forall_in_set<serialPolicy>( elementList.values(),
                                  elementList.size(),
-                                 GEOSX_LAMBDA ( localIndex const k )
+                                 [=] ( localIndex const k )
     {
       R1Tensor v_local[NUM_NODES_PER_ELEM];
       R1Tensor u_local[NUM_NODES_PER_ELEM];

@@ -118,7 +118,7 @@ void forAllElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
 // {
 //   ReduceSum<REDUCE_POLICY, NUMBER> sum(NUMBER(0));
   
-//   forall_in_range(begin, end, GEOSX_LAMBDA (localIndex index) mutable -> void
+//   forall_in_range(begin, end, [=] (localIndex index) mutable -> void
 //   {
 //       sum += body(index);
 //   });
@@ -131,7 +131,7 @@ void forAllElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
 // NUMBER sum_in_set(localIndex const * const indexList, const localIndex len, LAMBDA && body)
 // {
 //   ReduceSum<REDUCE_POLICY, NUMBER> sum(NUMBER(0));
-//   forall_in_set(indexList, GEOSX_LAMBDA (localIndex index) mutable -> void
+//   forall_in_set(indexList, [=] (localIndex index) mutable -> void
 //    {
 //      sum += body(index);
 //    });
@@ -226,7 +226,7 @@ minLocOverElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
 }
 
 
-// #define FOR_ELEMS_IN_SUBREGION( SUBREGION, INDEX ) for_elems_in_subRegion( SUBREGION, GEOSX_LAMBDA ( localIndex const INDEX ) mutable -> void
+// #define FOR_ELEMS_IN_SUBREGION( SUBREGION, INDEX ) for_elems_in_subRegion( SUBREGION, [=] ( localIndex const INDEX ) mutable -> void
 #endif
 
 
@@ -318,7 +318,7 @@ void for_elems_by_constitutive( MeshLevel const * const mesh,
     for_elems_by_constitutive( mesh,\
     constitutiveManager,\
     feDiscretizationManager,\
-    GEOSX_LAMBDA( localIndex const k,\
+    [=]( localIndex const k,\
     localIndex const numNodesPerElement,\
     arrayView2d<localIndex> const elemsToNodes,\
     localIndex const numQuadraturePoints,\

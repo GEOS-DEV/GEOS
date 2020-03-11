@@ -67,7 +67,7 @@ void SinglePhaseProppantBase::UpdateFluidModel(Group * const dataGroup) const
 
   arrayView1d<integer const> const & isProppantBoundaryElement  = dataGroup->getReference< array1d<integer> >( ProppantTransport::viewKeyStruct::isProppantBoundaryString );
 
-  forall_in_range<RAJA::seq_exec>( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a )
+  forall_in_range<RAJA::seq_exec>( 0, dataGroup->size(), [=] ( localIndex const a )
   {
       fluid->PointUpdate( pres[a] + dPres[a], proppantConcentration[a] + dProppantConcentration[a],  componentConcentration[a], cellBasedFlux[a].L2_Norm(), isProppantBoundaryElement[a], a, 0 );
   });
