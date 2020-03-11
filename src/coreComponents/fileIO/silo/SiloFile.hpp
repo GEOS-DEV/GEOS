@@ -189,7 +189,7 @@ public:
                              bool const isRestart );
 
 
-  void WriteElementMesh( ElementRegionBase const * const elementRegion,
+  void WriteElementMesh( ElementRegionBase const & elementRegion,
                          NodeManager const * const nodeManager,
                          string const & meshName,
                          const localIndex nnodes,
@@ -260,7 +260,7 @@ public:
                       int const cycleNumber,
                       real64 const problemTime );
 
-  void WriteMaterialMapsFullStorage( ElementRegionBase const * const elementRegion,
+  void WriteMaterialMapsFullStorage( ElementRegionBase const & elementRegion,
                                      string const & meshName,
                                      string_array const & regionMaterialList,
                                      int const cycleNumber,
@@ -285,7 +285,7 @@ public:
                        bool const isRestart,
                        const localIndex_array & mask );
 
-  void WriteElementRegionSilo( ElementRegionBase const * group,
+  void WriteElementRegionSilo( ElementRegionBase const & elemRegion,
                                string const & siloDirName,
                                string const & meshName,
                                int const cycleNum,
@@ -384,7 +384,7 @@ public:
   void WriteMaterialDataField( string const & meshName,
                                string const & fieldName,
                                array1d< array1d< arrayView2d< TYPE const > > > const & field,
-                               ElementRegionBase const * const elemRegion,
+                               ElementRegionBase const & elemRegion,
                                int const centering,
                                int const cycleNumber,
                                real64 const problemTime,
@@ -394,7 +394,7 @@ public:
   template< typename OUTTYPE, typename TYPE >
   void WriteMaterialDataField2d( string const & meshName,
                                  string const & fieldName,
-                                 ElementRegionBase const * const elemRegion,
+                                 ElementRegionBase const & elemRegion,
                                  int const centering,
                                  int const cycleNumber,
                                  real64 const problemTime,
@@ -405,7 +405,7 @@ public:
   template< typename OUTTYPE, typename TYPE >
   void WriteMaterialDataField3d( string const & meshName,
                                  string const & fieldName,
-                                 ElementRegionBase const * const elemRegion,
+                                 ElementRegionBase const & elemRegion,
                                  int const centering,
                                  int const cycleNumber,
                                  real64 const problemTime,
@@ -415,7 +415,7 @@ public:
   template< typename OUTTYPE, typename TYPE >
   void WriteMaterialDataField4d( string const & meshName,
                                  string const & fieldName,
-                                 ElementRegionBase const * const elemRegion,
+                                 ElementRegionBase const & elemRegion,
                                  int const centering,
                                  int const cycleNumber,
                                  real64 const problemTime,

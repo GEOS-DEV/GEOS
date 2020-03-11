@@ -553,30 +553,16 @@ public:
   string_array const & getTargetRegions() const {return m_targetRegions;}
 
 
-  template< bool CONST >
-  using SubregionFunc = std::function< void ( add_const_if_t< ElementSubRegionBase, CONST > * ) >;
-
   template< typename MESH, typename LAMBDA >
-  typename std::enable_if< std::is_same< typename std::remove_cv< MESH >::type, MeshLevel >::value &&
-                           std::is_convertible< LAMBDA, SubregionFunc< std::is_const< MESH >::value > >::value,
-                           void >::type
-  applyToSubRegions( MESH * const mesh, LAMBDA && lambda ) const
+  void applyToSubRegions( MESH * const mesh, LAMBDA && lambda ) const
   {
-    mesh->getElemManager()->forElementSubRegions( m_targetRegions, std::forward< LAMBDA >( lambda ) );
+    mesh->getElemManager()->template forElementSubRegions< ElementSubRegionBase >( m_targetRegions, std::forward< LAMBDA >( lambda ) );
   }
 
-  template< bool CONST >
-  using SubregionFuncComplete = std::function< void ( localIndex, localIndex,
-                                                      add_const_if_t< ElementRegionBase, CONST > *,
-                                                      add_const_if_t< ElementSubRegionBase, CONST > * ) >;
-
   template< typename MESH, typename LAMBDA >
-  typename std::enable_if< std::is_same< typename std::remove_cv< MESH >::type, MeshLevel >::value &&
-                           std::is_convertible< LAMBDA, SubregionFuncComplete< std::is_const< MESH >::value > >::value,
-                           void >::type
-  applyToSubRegions( MESH * const mesh, LAMBDA && lambda ) const
+  void applyToSubRegionsComplete( MESH * const mesh, LAMBDA && lambda ) const
   {
-    mesh->getElemManager()->forElementSubRegionsComplete( m_targetRegions, std::forward< LAMBDA >( lambda ) );
+    mesh->getElemManager()->template forElementSubRegionsComplete< ElementSubRegionBase >( m_targetRegions, std::forward< LAMBDA >( lambda ) );
   }
 
 protected:

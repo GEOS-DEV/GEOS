@@ -511,18 +511,18 @@ struct MeshLoopHelper< LOC, LOC, VISIT_GHOSTS >
     locationsToVisit.reserve( objectManager->size() );
 
     meshLevel->getElemManager()->
-      forElementSubRegions< SUBREGIONTYPES... >( regions, [&]( auto const * const subRegion )
+      forElementSubRegions< SUBREGIONTYPES... >( regions, [&]( auto const & subRegion )
     {
       // derive some more useful, subregion-dependent type aliases
-      using ElementSubRegionType = std::remove_pointer_t< decltype( subRegion ) >;
+      using ElementSubRegionType = std::remove_reference_t< decltype( subRegion ) >;
       using ElemToLocMapType = MapType< LOC, ElementSubRegionType >;
 
       // get access to element-to-location map
       auto const & elemToLocMap =
-        subRegion->template getReference< ElemToLocMapType >( MeshHelper< LOC >::mapViewKey );
+        subRegion.template getReference< ElemToLocMapType >( MeshHelper< LOC >::mapViewKey );
 
       // loop over all elements (including ghosts, which may be necessary to access some locally owned locations)
-      for( localIndex ei = 0; ei < subRegion->size(); ++ei )
+      for( localIndex ei = 0; ei < subRegion.size(); ++ei )
       {
         // loop over all locations incident on an element
         for( localIndex a = 0; a < MapHelper< ElemToLocMapType >::size1( elemToLocMap, ei ); ++a )
@@ -670,19 +670,19 @@ struct MeshLoopHelper< DofManager::Location::Elem, CONN_LOC, VISIT_GHOSTS >
     meshLevel->getElemManager()->
       forElementSubRegionsComplete< SUBREGIONTYPES... >( regions, [&]( localIndex const er,
                                                                        localIndex const esr,
-                                                                       ElementRegionBase const * const GEOSX_UNUSED_PARAM( region ),
-                                                                       auto const * const subRegion )
+                                                                       ElementRegionBase const &,
+                                                                       auto const & subRegion )
     {
       // derive subregion-dependent map type
-      using ElemToConnMapType = MapType< CONN_LOC, TYPEOFPTR( subRegion ) >;
+      using ElemToConnMapType = MapType< CONN_LOC, TYPEOFREF( subRegion ) >;
 
       // get access to element-to-location map
       auto const & elemToConnMap =
-        subRegion->template getReference< ElemToConnMapType >( MeshHelper< CONN_LOC >::mapViewKey );
+        subRegion.template getReference< ElemToConnMapType >( MeshHelper< CONN_LOC >::mapViewKey );
 
-      arrayView1d< integer const > const & elemGhostRank = subRegion->GhostRank();
+      arrayView1d< integer const > const & elemGhostRank = subRegion.GhostRank();
 
-      for( localIndex ei = 0; ei < subRegion->size(); ++ei )
+      for( localIndex ei = 0; ei < subRegion.size(); ++ei )
       {
         if( VISIT_GHOSTS || elemGhostRank[ei] < 0 )
         {
@@ -709,17 +709,18 @@ struct MeshLoopHelper< DofManager::Location::Elem, DofManager::Location::Elem, V
   template< typename ... SUBREGIONTYPES, typename LAMBDA >
   static void visit( MeshLevel * const meshLevel,
                      array1d< string > const & regions,
-                     LAMBDA lambda )
+                     LAMBDA && lambda )
   {
     meshLevel->getElemManager()->
       forElementSubRegionsComplete< SUBREGIONTYPES... >( regions, [&]( localIndex const er,
                                                                        localIndex const esr,
-                                                                       ElementRegionBase const * const GEOSX_UNUSED_PARAM( region ),
-                                                                       auto const * const subRegion )
+                                                                       ElementRegionBase const &,
+                                                                       ElementSubRegionBase const & subRegion )
     {
-      arrayView1d< integer const > const & elemGhostRank = subRegion->GhostRank();
+      arrayView1d< integer const > const & elemGhostRank = subRegion.GhostRank();
+      localIndex const numElems = subRegion.size();
 
-      for( localIndex ei = 0; ei < subRegion->size(); ++ei )
+      for( localIndex ei = 0; ei < numElems; ++ei )
       {
         if( VISIT_GHOSTS || elemGhostRank[ei] < 0 )
         {
@@ -879,9 +880,9 @@ struct IndexArrayHelper< INDEX, DofManager::Location::Elem >
           string const & description,
           string_array const & regions )
   {
-    mesh->getElemManager()->template forElementSubRegions< SUBREGIONTYPES... >( regions, [&]( auto * const subRegion )
+    mesh->getElemManager()->template forElementSubRegions< SUBREGIONTYPES... >( regions, [&]( auto & subRegion )
     {
-      subRegion->template registerWrapper< ArrayType >( key )->
+      subRegion.template registerWrapper< ArrayType >( key )->
         setApplyDefaultValue( -1 )->
         setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
         setRestartFlags( dataRepository::RestartFlags::NO_WRITE )->
@@ -916,9 +917,9 @@ struct IndexArrayHelper< INDEX, DofManager::Location::Elem >
           string const & key,
           string_array const & regions )
   {
-    mesh->getElemManager()->template forElementSubRegions< SUBREGIONTYPES... >( regions, [&]( auto * const subRegion )
+    mesh->getElemManager()->template forElementSubRegions< SUBREGIONTYPES... >( regions, [&]( ElementSubRegionBase & subRegion )
     {
-      subRegion->deregisterWrapper( key );
+      subRegion.deregisterWrapper( key );
     } );
   }
 };
