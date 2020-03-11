@@ -12,7 +12,7 @@
                                  solidName="rock"
                                  relPermName="relperm">
       <NonlinearSolverParameters lineSearchAction="0"
-                                 newtonTol="1.0e-8"
+                                 newtonTol="1.0e-10"
                                  newtonMaxIter="15"/>
       <SystemSolverParameters useDirectSolver="1"/>
     </TwoPhaseHybridFVM>
@@ -24,13 +24,13 @@
                   xCoords="{0, 20}"
                   yCoords="{0, 1}"
                   zCoords="{0, 100}"
-                  nx="{10}"
+                  nx="{2}"
                   ny="{1}"
                   nz="{50}"
                   cellBlockNames="{block1}"/>
   </Mesh>
 
-  <Events maxTime="1e9">
+  <Events maxTime="1e10">
 
     <PeriodicEvent name="outputs"
                    timeFrequency="5e7"
@@ -61,19 +61,13 @@
 
   <Constitutive>
     <!-- Currently these fluid properties are not used in the simulation --> 
-    <CompositionalMultiphaseFluid name="fluid1"
-                                  phaseNames="{oil, gas}"
-                                  equationsOfState="{PR, PR}"
-                                  componentNames="{N2, C10, C20, H2O}"
-                                  componentCriticalPressure="{34e5, 25.3e5, 14.6e5, 220.5e5}"
-                                  componentCriticalTemperature="{126.2, 622.0, 782.0, 647.0}"
-                                  componentAcentricFactor="{0.04, 0.443, 0.816, 0.344}"
-                                  componentMolarWeight="{28e-3, 134e-3, 275e-3, 18e-3}"
-                                  componentVolumeShift="{0, 0, 0, 0}"
-                                  componentBinaryCoeff="{ {0, 0, 0, 0},
-                                                          {0, 0, 0, 0},
-                                                          {0, 0, 0, 0},
-                                                          {0, 0, 0, 0} }"/>
+    <ImmiscibleTwoPhaseFluid name="fluid1"
+			     phaseNames="{oil, gas}"
+                             referencePressure="1e6"
+			     referencePhaseDensity="{800,10}"
+                             referencePhaseViscosity="{0.001,0.0001}"
+			     phaseCompressibility="{1e-9,1e-7}"
+			     phaseViscosibility="{1e-12,1e-11}"/>
 
     <PoreVolumeCompressibleSolid name="rock"
                                  referencePressure="0.0"

@@ -10,6 +10,7 @@ BrooksCoreyRelativePermeability       node :ref:`DATASTRUCTURE_BrooksCoreyRelati
 CompositionalMultiphaseFluid          node :ref:`DATASTRUCTURE_CompositionalMultiphaseFluid`          
 CompressibleSinglePhaseFluid          node :ref:`DATASTRUCTURE_CompressibleSinglePhaseFluid`          
 Contact                               node :ref:`DATASTRUCTURE_Contact`                               
+ImmiscibleTwoPhaseFluid               node :ref:`DATASTRUCTURE_ImmiscibleTwoPhaseFluid`               
 LinearElasticAnisotropic              node :ref:`DATASTRUCTURE_LinearElasticAnisotropic`              
 LinearElasticIsotropic                node :ref:`DATASTRUCTURE_LinearElasticIsotropic`                
 MultiPhaseMultiComponentFluid         node :ref:`DATASTRUCTURE_MultiPhaseMultiComponentFluid`         

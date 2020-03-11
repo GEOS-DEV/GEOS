@@ -261,6 +261,13 @@ Element: Hydrofracture
 .. include:: ../../coreComponents/fileIO/schema/docs/Hydrofracture.rst
 
 
+.. _XML_ImmiscibleTwoPhaseFluid:
+
+Element: ImmiscibleTwoPhaseFluid
+================================
+.. include:: ../../coreComponents/fileIO/schema/docs/ImmiscibleTwoPhaseFluid.rst
+
+
 .. _XML_Included:
 
 Element: Included
@@ -872,6 +879,13 @@ Datastructure: HaltEvent
 Datastructure: Hydrofracture
 ============================
 .. include:: ../../coreComponents/fileIO/schema/docs/Hydrofracture_other.rst
+
+
+.. _DATASTRUCTURE_ImmiscibleTwoPhaseFluid:
+
+Datastructure: ImmiscibleTwoPhaseFluid
+======================================
+.. include:: ../../coreComponents/fileIO/schema/docs/ImmiscibleTwoPhaseFluid_other.rst
 
 
 .. _DATASTRUCTURE_Included:

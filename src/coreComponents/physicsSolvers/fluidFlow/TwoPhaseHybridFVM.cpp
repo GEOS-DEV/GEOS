@@ -618,15 +618,15 @@ void TwoPhaseHybridFVM::ComputeGravityHead( arrayView1d<real64 const> const & we
     // TODO: check if we can use a face density here
     
     // first we have to compute the average density at the interface
-    real64 difAvgDens             = dens[er][esr][fi][ei][0][m_ipw]     - dens[er][esr][fi][ei][0][m_ipnw]; 
-    real64 dDifAvgDens_dpLoc      = dDens_dp[er][esr][fi][ei][0][m_ipw] - dDens_dp[er][esr][fi][ei][0][m_ipnw] ;
+    real64 difAvgDens             = dens[er][esr][fi][ei][0][m_ipnw]     - dens[er][esr][fi][ei][0][m_ipw]; 
+    real64 dDifAvgDens_dpLoc      = dDens_dp[er][esr][fi][ei][0][m_ipnw] - dDens_dp[er][esr][fi][ei][0][m_ipw] ;
     real64 dDifAvgDens_dpNeighbor = 0;
     if (ern != -1 && esrn != -1 && ein != -1)
     {
       difAvgDens            *= 0.5;
-      difAvgDens            += 0.5 * ( dens[ern][esrn][fi][ein][0][m_ipw] - dens[ern][esrn][fi][ein][0][m_ipnw] );
+      difAvgDens            += 0.5 * ( dens[ern][esrn][fi][ein][0][m_ipnw] - dens[ern][esrn][fi][ein][0][m_ipw] );
       dDifAvgDens_dpLoc     *= 0.5;  
-      dDifAvgDens_dpNeighbor = 0.5 * ( dDens_dp[ern][esrn][fi][ein][0][m_ipw] - dDens_dp[ern][esrn][fi][ein][0][m_ipnw] );
+      dDifAvgDens_dpNeighbor = 0.5 * ( dDens_dp[ern][esrn][fi][ein][0][m_ipnw] - dDens_dp[ern][esrn][fi][ein][0][m_ipw] );
     }
 
     // then we multiply the depth term by the difference between the phase avg densities

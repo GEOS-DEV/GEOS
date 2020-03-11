@@ -1225,6 +1225,7 @@
 			<xsd:element name="CompositionalMultiphaseFluid" type="CompositionalMultiphaseFluidType" />
 			<xsd:element name="CompressibleSinglePhaseFluid" type="CompressibleSinglePhaseFluidType" />
 			<xsd:element name="Contact" type="ContactType" />
+			<xsd:element name="ImmiscibleTwoPhaseFluid" type="ImmiscibleTwoPhaseFluidType" />
 			<xsd:element name="LinearElasticAnisotropic" type="LinearElasticAnisotropicType" />
 			<xsd:element name="LinearElasticIsotropic" type="LinearElasticIsotropicType" />
 			<xsd:element name="MultiPhaseMultiComponentFluid" type="MultiPhaseMultiComponentFluidType" />
@@ -1345,6 +1346,26 @@
 		<xsd:attribute name="apertureTolerance" type="real64" default="1e-09" />
 		<!--penaltyStiffness => Value of the penetration penalty stiffness. Units of Pressure/length-->
 		<xsd:attribute name="penaltyStiffness" type="real64" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="ImmiscibleTwoPhaseFluidType">
+		<!--componentMolarWeight => Component molar weights-->
+		<xsd:attribute name="componentMolarWeight" type="real64_array" default="{0}" />
+		<!--componentNames => List of component names-->
+		<xsd:attribute name="componentNames" type="string_array" default="{}" />
+		<!--phaseCompressibility => Phase compressibilities-->
+		<xsd:attribute name="phaseCompressibility" type="real64_array" default="{0}" />
+		<!--phaseNames => List of fluid phases-->
+		<xsd:attribute name="phaseNames" type="string_array" default="{}" />
+		<!--phaseViscosibility => Phase viscosity exponential coefficients-->
+		<xsd:attribute name="phaseViscosibility" type="real64_array" default="{0}" />
+		<!--referencePhaseDensity => Reference phase densities-->
+		<xsd:attribute name="referencePhaseDensity" type="real64_array" default="{1000}" />
+		<!--referencePhaseViscosity => Reference phase viscosities-->
+		<xsd:attribute name="referencePhaseViscosity" type="real64_array" default="{0.001}" />
+		<!--referencePressure => Reference pressure-->
+		<xsd:attribute name="referencePressure" type="real64" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

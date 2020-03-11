@@ -46,9 +46,9 @@ TwoPhaseBase::TwoPhaseBase( const std::string& name,
                             Group * const parent ):
   FlowSolverBase(name, parent)
 {
-  m_ipw     = -1;
-  m_ipnw  = -1;
-  m_numDofPerCell =  2;
+  m_ipw  = -1;
+  m_ipnw = -1;
+  m_numDofPerCell = 2;
  
   this->registerWrapper( viewKeyStruct::relPermNameString,  &m_relPermName,  false )->
     setInputFlag(InputFlags::REQUIRED)->
@@ -99,48 +99,45 @@ void TwoPhaseBase::UpdateFluidModel(Group * const dataGroup ) const
 
   MultiFluidBase * const fluid = GetConstitutiveModel<MultiFluidBase>( dataGroup, m_fluidName );
 
-  // in this function, I currently use hard-coded relations  
-  // TODO: find a way to call a constitutive model here
-  //       (maybe some variant of SingleFluid with pressure-dependent densities and viscosities
-  //       or, better a MultiFluid two-phase Dead-Oil)
-
   arrayView1d<real64 const> const & pres  =
     dataGroup->getReference< array1d<real64> >( viewKeyStruct::pressureString );
   arrayView1d<real64 const> const & dPres =
     dataGroup->getReference< array1d<real64> >( viewKeyStruct::deltaPressureString );
-  
+
+  real64 const dummyTemperature = 293.15;
+  stackArray1d<real64, 2> dummyCompFrac( 2 );
+  dummyCompFrac = 0;
+
+  /*
   // phase densities
   arrayView3d<real64> const & phaseDens =
-    fluid->getReference<array3d<real64>>( MultiFluidBase::viewKeyStruct::phaseDensityString );
+     fluid->getReference<array3d<real64>>( MultiFluidBase::viewKeyStruct::phaseDensityString );
   arrayView3d<real64> const & dPhaseDens_dPres =
     fluid->getReference<array3d<real64>>( MultiFluidBase::viewKeyStruct::dPhaseDensity_dPressureString );
 
-  // phase viscosities
   arrayView3d<real64> const & phaseVisc =
-    fluid->getReference<array3d<real64>>( MultiFluidBase::viewKeyStruct::phaseViscosityString );
+     fluid->getReference<array3d<real64>>( MultiFluidBase::viewKeyStruct::phaseViscosityString );
   arrayView3d<real64> const & dPhaseVisc_dPres =
     fluid->getReference<array3d<real64>>( MultiFluidBase::viewKeyStruct::dPhaseViscosity_dPressureString );
+  */  
 
-  real64 const p_ref       = 1e6;
-  real64 const c_w         = 1e-12;
-  real64 const c_nw        = 1e-9;
-  real64 const dens_ref_w  = 1000;
-  real64 const dens_ref_nw = 800;
-  real64 const visc_ref_w  = 0.001;
-  real64 const visc_ref_nw = 0.0005;
-  forall_in_range( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a )
+  forall_in_range<RAJA::seq_exec>( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a )
   {
-    // densities
-    phaseDens[a][0][m_ipw]         = dens_ref_w * std::exp( c_w * ( pres[a]+dPres[a] - p_ref ) );
-    dPhaseDens_dPres[a][0][m_ipw]  = c_w * phaseDens[a][0][m_ipw];
-    phaseDens[a][0][m_ipnw]        = dens_ref_nw * std::exp( c_nw * ( pres[a]+dPres[a] - p_ref ) );
-    dPhaseDens_dPres[a][0][m_ipnw] = c_nw * phaseDens[a][0][m_ipnw];
-    // viscosities
-    phaseVisc[a][0][m_ipw]         = visc_ref_w * std::exp( c_w * ( pres[a]+dPres[a] - p_ref ) );
-    dPhaseVisc_dPres[a][0][m_ipw]  = c_w * phaseVisc[a][0][m_ipw];
-    phaseVisc[a][0][m_ipnw]        = visc_ref_nw * std::exp( c_w * ( pres[a]+dPres[a] - p_ref ) );
-    dPhaseVisc_dPres[a][0][m_ipnw] = c_nw * phaseVisc[a][0][m_ipnw];;        
+    fluid->PointUpdate( pres[a] + dPres[a], dummyTemperature, dummyCompFrac, a, 0 );
+
+    // std::cout << "pressure = "                             << pres[a] + dPres[a]
+    //           << " wetting-phase density = "               << phaseDens[a][0][m_ipw]
+    //           << " d(wetting-phase density)_dPres = "      << dPhaseDens_dPres[a][0][m_ipw]
+    //           << " nonwetting-phase density = "            << phaseDens[a][0][m_ipnw]
+    //           << " d(nonwetting-phase density)_dPres = "   << dPhaseDens_dPres[a][0][m_ipnw]
+    //           << " wetting-phase viscosity = "             << phaseVisc[a][0][m_ipw]
+    //           << " d(wetting-phase viscosity)_dPres = "    << dPhaseVisc_dPres[a][0][m_ipw]
+    //           << " nonwetting-phase viscosity = "          << phaseVisc[a][0][m_ipnw]
+    //           << " d(nonwetting-phase viscosity)_dPres = " << dPhaseVisc_dPres[a][0][m_ipnw]
+    //           << std::endl;
+      
   });
+
 }
 
 void TwoPhaseBase::UpdateSolidModel(Group * const dataGroup ) const
@@ -255,7 +252,6 @@ void TwoPhaseBase::InitializePreSubGroups( Group * const rootGroup )
 
   DomainPartition * const domain = rootGroup->GetGroup<DomainPartition>( keys::domain );
   ConstitutiveManager const * const cm = domain->getConstitutiveManager();
-
   
   MultiFluidBase const * fluid = cm->GetConstitutiveRelation<MultiFluidBase>( m_fluidName );
 
@@ -263,6 +259,9 @@ void TwoPhaseBase::InitializePreSubGroups( Group * const rootGroup )
   GEOSX_ERROR_IF( relPerm == nullptr, "Relative permeability model " + m_relPermName + " not found" );
   m_relPermIndex = relPerm->getIndexInParent();
 
+  GEOSX_ERROR_IF( fluid->numFluidPhases() != 2,
+                  "Invalid number of fluid phases in fluid model '" << m_fluidName << "'" );
+  
   // Consistency check between the models
   GEOSX_ERROR_IF( fluid->numFluidPhases() != relPerm->numFluidPhases(),
                  "Number of fluid phases differs between fluid model '" << m_fluidName

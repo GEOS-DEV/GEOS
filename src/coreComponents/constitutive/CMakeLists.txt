@@ -21,6 +21,7 @@ set( constitutive_headers
      fluid/SingleFluidBase.hpp
      fluid/MultiFluidBase.hpp
      fluid/CompressibleSinglePhaseFluid.hpp
+     fluid/ImmiscibleTwoPhaseFluid.hpp
      relativePermeability/RelativePermeabilityBase.hpp
      relativePermeability/BrooksCoreyRelativePermeability.hpp
      relativePermeability/BrooksCoreyBakerRelativePermeability.hpp
@@ -52,6 +53,7 @@ set( constitutive_sources
      fluid/SingleFluidBase.cpp
      fluid/MultiFluidBase.cpp
      fluid/CompressibleSinglePhaseFluid.cpp
+     fluid/ImmiscibleTwoPhaseFluid.cpp     
      relativePermeability/RelativePermeabilityBase.cpp
      relativePermeability/BrooksCoreyRelativePermeability.cpp
      relativePermeability/BrooksCoreyBakerRelativePermeability.cpp

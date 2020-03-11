@@ -10,6 +10,7 @@ BrooksCoreyRelativePermeability       node         :ref:`XML_BrooksCoreyRelative
 CompositionalMultiphaseFluid          node         :ref:`XML_CompositionalMultiphaseFluid`          
 CompressibleSinglePhaseFluid          node         :ref:`XML_CompressibleSinglePhaseFluid`          
 Contact                               node         :ref:`XML_Contact`                               
+ImmiscibleTwoPhaseFluid               node         :ref:`XML_ImmiscibleTwoPhaseFluid`               
 LinearElasticAnisotropic              node         :ref:`XML_LinearElasticAnisotropic`              
 LinearElasticIsotropic                node         :ref:`XML_LinearElasticIsotropic`                
 MultiPhaseMultiComponentFluid         node         :ref:`XML_MultiPhaseMultiComponentFluid`         
