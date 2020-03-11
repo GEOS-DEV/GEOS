@@ -196,13 +196,13 @@ void createFacesByLowestNode( ElementRegionManager const & elementManager,
       localIndex const numElements = subRegion->size();
 
       // Begin the parallel region so that tempNodeList and lowestNodes are thread private.
-      PRAGMA_OMP( omp parallel )
+      PRAGMA_OMP( "omp parallel" )
       {
         localIndex_array tempNodeList;
         localIndex lowestNodes[3];
 
         // Loop over all the elements.
-        PRAGMA_OMP( omp for )
+        PRAGMA_OMP( "omp for" )
         for( localIndex k = 0; k < numElements; ++k )
         {
           for( localIndex elementLocalFaceIndex = 0; elementLocalFaceIndex < numFacesPerElement; ++elementLocalFaceIndex )
