@@ -272,7 +272,7 @@ void PhaseFieldDamageFEM::AssembleSystem( real64 const time_n,
           localIndex const n_q_points =
               feDiscretization->m_finiteElement->n_quadrature_points();
 
-          real64 ell = 0.1; //phase-field lenght scale
+          real64 ell = 0.1; //phase-field length scale
           real64 Gc = 1; //energy release rate
           double threshold = 3 * Gc / (16 * ell); //elastic energy threshold - use when LocalDissipation is Linear
           //real64 diffusion = 1.0;

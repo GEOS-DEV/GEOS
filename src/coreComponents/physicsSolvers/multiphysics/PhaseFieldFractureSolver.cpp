@@ -368,7 +368,9 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition * const do
                 //has both damage and displacements. Using the damageResult field from the Damage solver
                 //is probably better
                 feDiscretization->m_finiteElement->value(a, q) * nodalDamage[elemNodes(k, a)];
+            std::cout<<"q, N, Dnode = "<<q<<", "<<feDiscretization->m_finiteElement->value(a, q)<<", "<<nodalDamage[elemNodes(k, a)]<<std::endl;
           }
+          std::cout<<"damage("<<k<<","<<q<<") = "<<damageFieldOnMaterial(k,q)<<std::endl;
         }
       }
     });
