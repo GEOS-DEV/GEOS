@@ -213,7 +213,7 @@ void EmbeddedSurfaceSubRegion::setupRelatedObjectsInRelations( MeshLevel const *
   this->m_toNodesRelation.SetRelatedObject( mesh->getNodeManager() );
 }
 
-real64 EmbeddedSurfaceSubRegion::ComputeHeavisideFunction(R1Tensor const nodeCoord,
+real64 EmbeddedSurfaceSubRegion::ComputeHeavisideFunction(ArraySlice<real64 const, 1, -1> const nodeCoord,
                                                           localIndex const k)
 {
   real64 heaviside;
@@ -226,11 +226,11 @@ real64 EmbeddedSurfaceSubRegion::ComputeHeavisideFunction(R1Tensor const nodeCoo
 }
 
 void EmbeddedSurfaceSubRegion::getIntersectionPoints( NodeManager const & nodeManager,
-                                                                   EdgeManager const & edgeManager,
-                                                                   ElementRegionManager const & elemManager,
-                                                                   array1d<R1Tensor> & intersectionPoints,
-                                                                   array1d<localIndex> & connectivityList,
-                                                                   array1d<int> & offSet) const
+                                                      EdgeManager const & edgeManager,
+                                                      ElementRegionManager const & elemManager,
+                                                      array1d<R1Tensor> & intersectionPoints,
+                                                      array1d<localIndex> & connectivityList,
+                                                      array1d<int> & offSet) const
 {
 
   offSet.resize(size());
@@ -251,7 +251,7 @@ void EmbeddedSurfaceSubRegion::ComputeIntersectionPoints( NodeManager const & no
 {
 
   // I ll use this for plotting
-  array1d<R1Tensor> const & nodesCoord = nodeManager.referencePosition();
+  arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodesCoord = nodeManager.referencePosition();
   EdgeManager::NodeMapType::ViewTypeConst const & edgeToNodes = edgeManager.nodeList();
 
   FixedOneToManyRelation const & cellToEdges = elemManager.GetRegion(m_embeddedSurfaceToRegion[k])

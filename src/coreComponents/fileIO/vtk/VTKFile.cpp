@@ -206,7 +206,7 @@ class CustomVTUXMLWriter
   }
 
   template< typename T >
-  void WriteFractureData(  ElementRegionManager::ElementViewAccessor< T > const & dataView, ElementRegionManager const * const elemManager, bool binary)
+  void WriteFractureData(  string const & fieldName, ElementRegionManager const * const elemManager, bool binary)
    {
      if( binary )
      {
@@ -214,7 +214,7 @@ class CustomVTUXMLWriter
      }
      else
      {
-       WriteFractureAsciiData( dataView, elemManager );
+       WriteFractureAsciiData<T>( fieldName, elemManager );
      }
    }
 
@@ -261,7 +261,7 @@ class CustomVTUXMLWriter
   private:
 
   template < typename T >
-  void WriteBinaryArray(array1d<T> const & GEOSX_UNUSED_ARG(array))
+  void WriteBinaryArray(array1d<T> const & GEOSX_UNUSED_PARAM(array))
   {
 
   }
@@ -275,7 +275,7 @@ class CustomVTUXMLWriter
     }
     m_outFile << "\n";
   }
-    void WriteBinaryVertices( r1_array const & vertices )
+  void WriteBinaryVertices( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & vertices )
     {
       std::stringstream stream;
       std::uint32_t size = integer_conversion< std::uint32_t >( vertices.size() ) * sizeof( real64 );
@@ -510,22 +510,22 @@ class CustomVTUXMLWriter
     }
 
     template< typename T >
-    void WriteFractureAsciiData( ElementRegionManager::ElementViewAccessor< T > const & dataView, ElementRegionManager const * const elemManager )
+    void WriteFractureAsciiData( string const & fieldName,
+                                 ElementRegionManager const * const elemManager )
     {
-      elemManager->forElementRegionsComplete< EmbeddedSurfaceRegion >( [&]( localIndex const er, auto const * const embeddedSurfaceRegion )
-      {
-        embeddedSurfaceRegion->template forElementSubRegionsIndex< EmbeddedSurfaceSubRegion >( [&]( localIndex const esr, auto const * const embeddedSurfaceSubRegion )
-        {
-          for( localIndex ei = 0; ei  < embeddedSurfaceSubRegion->size(); ei++)
-          {
-            m_outFile << dataView[er][esr][ei] << "\n";
-          }
-        });
-      });
+      elemManager->forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( auto const * const embeddedSurfaceSubRegion )
+            {
+              typename T::ViewTypeConst const & dataView = embeddedSurfaceSubRegion->template getReference<T>(fieldName);
+              for ( localIndex ei = 0; ei < embeddedSurfaceSubRegion->size(); ++ei )
+              {
+                LvArray::forValuesInSlice( dataView[ei], [this]( auto const & value ) { m_outFile << value << " "; } );
+                m_outFile << "\n";
+              }
+            });
     }
 
-    template< typename T >
-    void WriteCellBinaryData( ElementRegionManager::ElementViewAccessor< T > const & dataView, ElementRegionManager const * const elemManager )
+    template< typename ARRAY_TYPE >
+       void WriteCellBinaryData( string const & fieldName, ElementRegionManager const * const elemManager )
     {
       using VALUE_TYPE = typename ARRAY_TYPE::value_type;
 
@@ -1167,7 +1167,7 @@ void VTKFile::WriteFractures( double const timeStep,
                                         { "Name", "Position" },
                                         { "NumberOfComponents", "3" },
                                         { "format", format } } );
-  vtuWriter.WriteVertices( intersectionPoints, m_binary );
+  //vtuWriter.WriteVertices( intersectionPoints, m_binary );
   vtuWriter.CloseXMLNode( "DataArray" );
   vtuWriter.CloseXMLNode( "Points" );
 
@@ -1186,7 +1186,7 @@ void VTKFile::WriteFractures( double const timeStep,
   vtuWriter.CloseXMLNode( "DataArray" );
 
   array1d< std::tuple< integer, localIndex, string > > subRegionsInfo; // First value : cell size, Second value : number of cells, Third value : cell Types
-  elemManager->forElementRegionsComplete< EmbeddedSurfaceRegion >( [&]( localIndex const GEOSX_UNUSED_ARG( er ),
+  elemManager->forElementRegionsComplete< EmbeddedSurfaceRegion >( [&]( localIndex const GEOSX_UNUSED_PARAM( er ),
                                                                 auto const * const Region )
   {
     Region->template forElementSubRegions< CellElementSubRegion >( [&]( auto const * const SubRegion )
@@ -1224,8 +1224,7 @@ void VTKFile::WriteFractures( double const timeStep,
                                     [&]( auto type ) -> void
                                     {
       using cType = decltype(type);
-      auto dataView = elemManager->ConstructViewAccessor< cType >(std::get<0>( cellField ));
-      vtuWriter.WriteFractureData( dataView, elemManager, m_binary );
+      vtuWriter.WriteFractureData<cType>( std::get<0>( cellField ), elemManager, m_binary );
                                     });
     vtuWriter.CloseXMLNode( "DataArray" );
   }

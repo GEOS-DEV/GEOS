@@ -10,12 +10,10 @@
 		logLevel="2"
 		>
 		<NonlinearSolverParameters 
-        name="nlsp"
         newtonTol="1.0e-6"
         newtonMaxIter="2"
         maxTimeStepCuts="1"/>
         <SystemSolverParameters 
-        name="ssp"
         useDirectSolver="1"
         solverType="direct"
         logLevel="0"/>
@@ -108,7 +106,7 @@
 		name="Region1" 
 		cellBlocks="{cb1}"
 		materialList="{rock}" />
-		<EmbeddedSurfaceRegion 
+		<EmbeddedSurfaceElementRegion 
 		name="Fracture"
 		materialList="{rock}"
 		defaultAperture="1e-3"/>
@@ -162,10 +160,6 @@
 
 	<Functions>
 	</Functions>
-
-	<Partition>
-		<SpatialPartition xPar="1" yPar="1" zPar="1" />
-	</Partition>
 
 	<Outputs>
 		<Silo name="siloOutput" 

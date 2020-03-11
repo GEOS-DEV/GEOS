@@ -75,7 +75,7 @@ public:
     void CalculateElementGeometricQuantities( array1d<R1Tensor> const  intersectionPoints,
                                               localIndex const k );
 
-    real64 ComputeHeavisideFunction( R1Tensor   const nodeCoord,
+    real64 ComputeHeavisideFunction( ArraySlice<real64 const, 1, -1>  const nodeCoord,
                                      localIndex const k         );
 
     void getIntersectionPoints( NodeManager const & nodeManager,

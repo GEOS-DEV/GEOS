@@ -133,17 +133,17 @@ protected:
                                      EmbeddedSurfaceSubRegion * const embeddedSurfaceSubRegion,
                                      localIndex const k,
                                      localIndex const q,
-                                     arrayView2d< localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM > const & elemsToNodes,
-                                     array1d<R1Tensor> const & nodesCoord,
+                                     CellBlock::NodeMapType const & elemsToNodes,
+                                     arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodesCoord,
                                      arrayView1d< localIndex const> const & embeddedSurfaceToCell,
                                      localIndex const numNodesPerElement,
-                                     array3d<R1Tensor> const & dNdX);
+                                     arrayView3d<R1Tensor const> const & dNdX);
 
   void AssembleStrainOperator(array2d<real64> & strainMatrix,
                               localIndex const elIndex,
                               localIndex const q,
                               localIndex const numNodesPerElement,
-                              array3d<R1Tensor> const & dNdX);
+                              arrayView3d<R1Tensor const> const & dNdX);
 
   void ComputeTraction( ConstitutiveManager const * const constitutiveManager,
                         array1d<real64>  const & dispJump,
