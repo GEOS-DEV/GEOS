@@ -16,6 +16,7 @@ Reservoir                    node               :ref:`XML_Reservoir`
 SinglePhaseFVM               node               :ref:`XML_SinglePhaseFVM`                  
 SinglePhaseHybridFVM         node               :ref:`XML_SinglePhaseHybridFVM`            
 SinglePhaseProppantFVM       node               :ref:`XML_SinglePhaseProppantFVM`          
+SinglePhaseProppantHybridFVM node               :ref:`XML_SinglePhaseProppantHybridFVM`    
 SinglePhaseWell              node               :ref:`XML_SinglePhaseWell`                 
 SolidMechanicsLagrangianSSLE node               :ref:`XML_SolidMechanicsLagrangianSSLE`    
 SolidMechanics_LagrangianFEM node               :ref:`XML_SolidMechanics_LagrangianFEM`    

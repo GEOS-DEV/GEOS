@@ -31,9 +31,10 @@ namespace geosx
 
 using namespace dataRepository;
 
-SinglePhaseHybridFVM::SinglePhaseHybridFVM( const std::string& name,
-                                            Group * const parent ):
-  SinglePhaseBase(name, parent),
+template< typename BASE >  
+SinglePhaseHybridFVM<BASE>::SinglePhaseHybridFVM( const std::string& name,
+                                                  Group * const parent ):
+  BASE(name, parent),
   m_faceDofKey(""),
   m_areaRelTol(1e-8),
   m_ipType(InnerProductType::QUASI_TPFA),
@@ -44,12 +45,12 @@ SinglePhaseHybridFVM::SinglePhaseHybridFVM( const std::string& name,
   m_numDofPerCell = 1;
 }
 
-  
-void SinglePhaseHybridFVM::RegisterDataOnMesh(Group * const MeshBodies)
+template< typename BASE >  
+void SinglePhaseHybridFVM<BASE>::RegisterDataOnMesh(Group * const MeshBodies)
 {
 
   // 1) Register the cell-centered data
-  SinglePhaseBase::RegisterDataOnMesh(MeshBodies);
+  BASE::RegisterDataOnMesh(MeshBodies);
 
   // 2) Register the face data 
   for( auto & mesh : MeshBodies->GetSubGroups() )
@@ -72,18 +73,19 @@ void SinglePhaseHybridFVM::RegisterDataOnMesh(Group * const MeshBodies)
 }
 
   
-void SinglePhaseHybridFVM::ImplicitStepSetup( real64 const & time_n,
-                                              real64 const & dt,
-                                              DomainPartition * const domain,
-                                              DofManager & dofManager,
-                                              ParallelMatrix & matrix,
-                                              ParallelVector & rhs,
-                                              ParallelVector & solution )
+template< typename BASE >  
+void SinglePhaseHybridFVM<BASE>::ImplicitStepSetup( real64 const & time_n,
+                                                    real64 const & dt,
+                                                    DomainPartition * const domain,
+                                                    DofManager & dofManager,
+                                                    ParallelMatrix & matrix,
+                                                    ParallelVector & rhs,
+                                                    ParallelVector & solution )
 {
   GEOSX_MARK_FUNCTION;
 
   // setup the cell-centered fields
-  SinglePhaseBase::ImplicitStepSetup( time_n, dt, domain, dofManager, matrix, rhs, solution );
+  BASE::ImplicitStepSetup( time_n, dt, domain, dofManager, matrix, rhs, solution );
 
   // setup the face fields
   MeshLevel * const meshLevel     = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
@@ -108,14 +110,15 @@ void SinglePhaseHybridFVM::ImplicitStepSetup( real64 const & time_n,
 
 }
 
-void SinglePhaseHybridFVM::ImplicitStepComplete( real64 const & time_n,
-                                                 real64 const & dt,
-                                                 DomainPartition * const domain )
+template< typename BASE >  
+void SinglePhaseHybridFVM<BASE>::ImplicitStepComplete( real64 const & time_n,
+                                                       real64 const & dt, 
+                                                       DomainPartition * const domain )
 {
   GEOSX_MARK_FUNCTION;
 
   // increment the cell-centered fields
-  SinglePhaseBase::ImplicitStepComplete( time_n, dt, domain );
+  BASE::ImplicitStepComplete( time_n, dt, domain );
 
   // increment the face fields
   MeshLevel * const meshLevel     = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
@@ -142,8 +145,9 @@ void SinglePhaseHybridFVM::ImplicitStepComplete( real64 const & time_n,
   });
 }
 
-void SinglePhaseHybridFVM::SetupDofs( DomainPartition const * const GEOSX_UNUSED_PARAM( domain ),
-                                      DofManager & dofManager ) const
+template< typename BASE >  
+void SinglePhaseHybridFVM<BASE>::SetupDofs( DomainPartition const * const GEOSX_UNUSED_PARAM( domain ),
+                                            DofManager & dofManager ) const
 {
   
   // setup the connectivity of elem fields
@@ -174,12 +178,13 @@ void SinglePhaseHybridFVM::SetupDofs( DomainPartition const * const GEOSX_UNUSED
 
 }
 
-void SinglePhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
-                                              real64 const dt,
-                                              DomainPartition const * const domain,
-                                              DofManager const * const dofManager,
-                                              ParallelMatrix * const matrix,
-                                              ParallelVector * const rhs )
+template< typename BASE >  
+void SinglePhaseHybridFVM<BASE>::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
+                                                    real64 const dt,
+                                                    DomainPartition const * const domain,
+                                                    DofManager const * const dofManager,
+                                                    ParallelMatrix * const matrix,
+                                                    ParallelVector * const rhs )
 {
   MeshLevel const * const mesh                   = domain->getMeshBody(0)->getMeshLevel(0);
   ElementRegionManager const * const elemManager = mesh->getElemManager();
@@ -232,8 +237,7 @@ void SinglePhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
 
 
   elemManager->
-    forElementSubRegionsComplete<CellElementSubRegion,
-                                 FaceElementSubRegion>( m_targetRegions,
+    forElementSubRegionsComplete<CellElementSubRegion>( m_targetRegions,
                                                       [&]( localIndex const er,
                                                            localIndex const esr,
                                                            ElementRegionBase const * const,
@@ -386,20 +390,22 @@ void SinglePhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
   });
 }
 
-void SinglePhaseHybridFVM::ComputeOneSidedVolFluxes( arrayView1d<real64 const> const & facePres,
-                                                     arrayView1d<real64 const> const & dFacePres,
-                                                     arrayView1d<real64 const> const & faceGravCoef,
-                                                     arraySlice1d<localIndex const> const elemToFaces,
-                                                     real64 const & elemPres,
-                                                     real64 const & dElemPres,
-                                                     real64 const & elemGravCoef,
-                                                     real64 const & elemDens,
-                                                     real64 const & dElemDens_dp,
-                                                     stackArray2d<real64, MAX_NUM_FACES
-                                                                         *MAX_NUM_FACES> const & transMatrix,
-                                                     stackArray1d<real64, MAX_NUM_FACES> & oneSidedVolFlux,
-                                                     stackArray1d<real64, MAX_NUM_FACES> & dOneSidedVolFlux_dp,
-                                                     stackArray1d<real64, MAX_NUM_FACES> & dOneSidedVolFlux_dfp ) const
+
+template< typename BASE >  
+void SinglePhaseHybridFVM<BASE>::ComputeOneSidedVolFluxes( arrayView1d<real64 const> const & facePres,
+                                                           arrayView1d<real64 const> const & dFacePres,
+                                                           arrayView1d<real64 const> const & faceGravCoef,
+                                                           arraySlice1d<localIndex const> const elemToFaces,
+                                                           real64 const & elemPres,
+                                                           real64 const & dElemPres,
+                                                           real64 const & elemGravCoef,
+                                                           real64 const & elemDens,
+                                                           real64 const & dElemDens_dp,
+                                                           stackArray2d<real64, MAX_NUM_FACES
+                                                                               *MAX_NUM_FACES> const & transMatrix,
+                                                           stackArray1d<real64, MAX_NUM_FACES> & oneSidedVolFlux,
+                                                           stackArray1d<real64, MAX_NUM_FACES> & dOneSidedVolFlux_dp,
+                                                           stackArray1d<real64, MAX_NUM_FACES> & dOneSidedVolFlux_dfp ) const
 {
   localIndex constexpr maxNumFaces = MAX_NUM_FACES;
   
@@ -464,23 +470,25 @@ void SinglePhaseHybridFVM::ComputeOneSidedVolFluxes( arrayView1d<real64 const> c
   }
 }
 
-void SinglePhaseHybridFVM::UpdateUpwindedCoefficients( MeshLevel const * const mesh,
-                                                       array2d<localIndex> const & elemRegionList,
-                                                       array2d<localIndex> const & elemSubRegionList,
-                                                       array2d<localIndex> const & elemList,
-                                                       SortedArray<localIndex> const & regionFilter,
-                                                       arraySlice1d<localIndex const> const elemToFaces,
-                                                       ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const & mob,
-                                                       ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const & dMob_dp,
-                                                       localIndex const er,
-                                                       localIndex const esr,
-                                                       localIndex const ei,
-                                                       globalIndex const elemDofNumber,
-                                                       string const elemDofKey,    
-                                                       stackArray1d<real64, MAX_NUM_FACES> const & oneSidedVolFlux,
-                                                       stackArray1d<real64, MAX_NUM_FACES> & upwMobility,
-                                                       stackArray1d<real64, MAX_NUM_FACES> & dUpwMobility_dp,
-                                                       stackArray1d<globalIndex, MAX_NUM_FACES> & upwDofNumber ) const
+
+template< typename BASE >    
+void SinglePhaseHybridFVM<BASE>::UpdateUpwindedCoefficients( MeshLevel const * const mesh,
+                                                             array2d<localIndex> const & elemRegionList,
+                                                             array2d<localIndex> const & elemSubRegionList,
+                                                             array2d<localIndex> const & elemList,
+                                                             SortedArray<localIndex> const & regionFilter,
+                                                             arraySlice1d<localIndex const> const elemToFaces,
+                                                             ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const & mob,
+                                                             ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const & dMob_dp,
+                                                             localIndex const er,
+                                                             localIndex const esr,
+                                                             localIndex const ei,
+                                                             globalIndex const elemDofNumber,
+                                                             string const elemDofKey,    
+                                                             stackArray1d<real64, MAX_NUM_FACES> const & oneSidedVolFlux,
+                                                             stackArray1d<real64, MAX_NUM_FACES> & upwMobility,
+                                                             stackArray1d<real64, MAX_NUM_FACES> & dUpwMobility_dp,
+                                                             stackArray1d<globalIndex, MAX_NUM_FACES> & upwDofNumber ) const
 {
   localIndex const numFacesInElem = elemToFaces.size();
   
@@ -540,18 +548,19 @@ void SinglePhaseHybridFVM::UpdateUpwindedCoefficients( MeshLevel const * const m
 }
 
 
-void SinglePhaseHybridFVM::AssembleOneSidedMassFluxes( real64 const & dt,
-                                                       arrayView1d<globalIndex const> const & faceDofNumber,
-                                                       arraySlice1d<localIndex const> const elemToFaces,
-                                                       globalIndex const elemDofNumber,
-                                                       stackArray1d<real64, MAX_NUM_FACES> const & oneSidedVolFlux,
-                                                       stackArray1d<real64, MAX_NUM_FACES> const & dOneSidedVolFlux_dp,
-                                                       stackArray1d<real64, MAX_NUM_FACES> const & dOneSidedVolFlux_dfp,
-                                                       stackArray1d<real64, MAX_NUM_FACES> const & upwMobility,
-                                                       stackArray1d<real64, MAX_NUM_FACES> const & dUpwMobility_dp,
-                                                       stackArray1d<globalIndex, MAX_NUM_FACES> const & upwDofNumber,
-                                                       ParallelMatrix * const matrix,
-                                                       ParallelVector * const rhs ) const
+template< typename BASE >    
+void SinglePhaseHybridFVM<BASE>::AssembleOneSidedMassFluxes( real64 const & dt,
+                                                             arrayView1d<globalIndex const> const & faceDofNumber,
+                                                             arraySlice1d<localIndex const> const elemToFaces,
+                                                             globalIndex const elemDofNumber,
+                                                             stackArray1d<real64, MAX_NUM_FACES> const & oneSidedVolFlux,
+                                                             stackArray1d<real64, MAX_NUM_FACES> const & dOneSidedVolFlux_dp,
+                                                             stackArray1d<real64, MAX_NUM_FACES> const & dOneSidedVolFlux_dfp,
+                                                             stackArray1d<real64, MAX_NUM_FACES> const & upwMobility,
+                                                             stackArray1d<real64, MAX_NUM_FACES> const & dUpwMobility_dp,
+                                                             stackArray1d<globalIndex, MAX_NUM_FACES> const & upwDofNumber,
+                                                             ParallelMatrix * const matrix,
+                                                             ParallelVector * const rhs ) const
 {
   localIndex constexpr maxNumFaces = MAX_NUM_FACES;
 
@@ -611,14 +620,15 @@ void SinglePhaseHybridFVM::AssembleOneSidedMassFluxes( real64 const & dt,
 }
 
 
-void SinglePhaseHybridFVM::AssembleConstraints( arrayView1d<globalIndex const> const & faceDofNumber,
-                                                arraySlice1d<localIndex const> const elemToFaces,
-                                                globalIndex const elemDofNumber,
-                                                stackArray1d<real64, MAX_NUM_FACES> const & oneSidedVolFlux,
-                                                stackArray1d<real64, MAX_NUM_FACES> const & dOneSidedVolFlux_dp,
-                                                stackArray1d<real64, MAX_NUM_FACES> const & dOneSidedVolFlux_dfp,
-                                                ParallelMatrix * const matrix,
-                                                ParallelVector * const rhs ) const 
+template< typename BASE >    
+void SinglePhaseHybridFVM<BASE>::AssembleConstraints( arrayView1d<globalIndex const> const & faceDofNumber,
+                                                      arraySlice1d<localIndex const> const elemToFaces,
+                                                      globalIndex const elemDofNumber,
+                                                      stackArray1d<real64, MAX_NUM_FACES> const & oneSidedVolFlux,
+                                                      stackArray1d<real64, MAX_NUM_FACES> const & dOneSidedVolFlux_dp,
+                                                      stackArray1d<real64, MAX_NUM_FACES> const & dOneSidedVolFlux_dfp,
+                                                      ParallelMatrix * const matrix,
+                                                      ParallelVector * const rhs ) const 
 {
   localIndex const numFacesInElem = elemToFaces.size();
   
@@ -655,15 +665,15 @@ void SinglePhaseHybridFVM::AssembleConstraints( arrayView1d<globalIndex const> c
 
   }      
 }
-  
 
-void
-SinglePhaseHybridFVM::ApplyBoundaryConditions( real64 const GEOSX_UNUSED_PARAM( time_n ),
-                                               real64 const GEOSX_UNUSED_PARAM( dt ),
-                                               DomainPartition * const GEOSX_UNUSED_PARAM( domain ),
-                                               DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
-                                               ParallelMatrix & GEOSX_UNUSED_PARAM( matrix ),
-                                               ParallelVector & GEOSX_UNUSED_PARAM( rhs ) )
+
+template< typename BASE >  
+void SinglePhaseHybridFVM<BASE>::ApplyBoundaryConditions( real64 const GEOSX_UNUSED_PARAM( time_n ),
+                                                          real64 const GEOSX_UNUSED_PARAM( dt ),
+                                                          DomainPartition * const GEOSX_UNUSED_PARAM( domain ),
+                                                          DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
+                                                          ParallelMatrix & GEOSX_UNUSED_PARAM( matrix ),
+                                                          ParallelVector & GEOSX_UNUSED_PARAM( rhs ) )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -671,9 +681,11 @@ SinglePhaseHybridFVM::ApplyBoundaryConditions( real64 const GEOSX_UNUSED_PARAM( 
 
 }
 
-real64 SinglePhaseHybridFVM::CalculateResidualNorm( DomainPartition const * const domain,
-                                                    DofManager const & dofManager,
-                                                    ParallelVector const & rhs )
+
+template< typename BASE >  
+real64 SinglePhaseHybridFVM<BASE>::CalculateResidualNorm( DomainPartition const * const domain,
+                                                          DofManager const & dofManager,
+                                                          ParallelVector const & rhs )
 {
   MeshLevel const * const mesh          = domain->getMeshBody(0)->getMeshLevel(0);
   FaceManager const * const faceManager = mesh->getFaceManager();
@@ -698,9 +710,9 @@ real64 SinglePhaseHybridFVM::CalculateResidualNorm( DomainPartition const * cons
   // 1. Compute the residual for the mass conservation equations
 
   // compute the norm of local residual scaled by cell pore volume
-  applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                 ElementRegionBase const * const GEOSX_UNUSED_PARAM( region ),
-                                 ElementSubRegionBase const * const subRegion )
+  this->applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
+                                       ElementRegionBase const * const GEOSX_UNUSED_PARAM( region ),
+                                       ElementSubRegionBase const * const subRegion )
   {
     arrayView1d<globalIndex const> const & elemDofNumber =
       subRegion->getReference< array1d<globalIndex> >( elemDofKey );
@@ -756,12 +768,14 @@ real64 SinglePhaseHybridFVM::CalculateResidualNorm( DomainPartition const * cons
   return sqrt( maxNorm );
 }
 
-void SinglePhaseHybridFVM::ApplySystemSolution( DofManager const & dofManager,
-                                                ParallelVector const & solution,
-                                                real64 const scalingFactor,
-                                                DomainPartition * const domain )
+
+template< typename BASE >  
+void SinglePhaseHybridFVM<BASE>::ApplySystemSolution( DofManager const & dofManager,
+                                                      ParallelVector const & solution,
+                                                      real64 const scalingFactor,
+                                                      DomainPartition * const domain )
 {
-  MeshLevel * const mesh          = domain->getMeshBody(0)->getMeshLevel(0);
+  MeshLevel * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
 
   // here we apply the cell-centered update in the derived class
   // to avoid duplicating a synchronization point 
@@ -789,18 +803,19 @@ void SinglePhaseHybridFVM::ApplySystemSolution( DofManager const & dofManager,
 
   CommunicationTools::SynchronizeFields( fieldNames, mesh, domain->getNeighbors() );
   
-  applyToSubRegions( mesh, [&] ( ElementSubRegionBase * subRegion )
+  this->applyToSubRegions( mesh, [&] ( ElementSubRegionBase * subRegion )
   {
-    UpdateState( subRegion );
+    this->UpdateState( subRegion );
   } );
 
 }
 
 
-void SinglePhaseHybridFVM::ResetStateToBeginningOfStep( DomainPartition * const domain )
+template< typename BASE >  
+void SinglePhaseHybridFVM<BASE>::ResetStateToBeginningOfStep( DomainPartition * const domain )
 {
   // 1. Reset the cell-centered fields
-  SinglePhaseBase::ResetStateToBeginningOfStep( domain );
+  BASE::ResetStateToBeginningOfStep( domain );
 
   // 2. Reset the face-based fields
   MeshLevel * const mesh          = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
@@ -845,15 +860,16 @@ void makeFullTensor(R1Tensor const & values, R2SymTensor & result)
 }
 
 // this function is obviously redundant with computeCellStencil in the TwoPointFluxApproximation class
-// this is here for now, but I will have to find a better place for this type of function at some point 
-void SinglePhaseHybridFVM::ComputeTPFAInnerProduct( arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodePosition, 
-                                                    ArrayOfArraysView<localIndex const> const & faceToNodes, 
-                                                    arraySlice1d<localIndex const> const elemToFaces,
-                                                    R1Tensor const & elemCenter,
-                                                    R1Tensor const & elemPerm,
-                                                    real64   const & lengthTolerance,
-                                                    stackArray2d<real64, MAX_NUM_FACES
-                                                                        *MAX_NUM_FACES> const & transMatrix ) const
+// this is here for now, but I will have to find a better place for this type of function at some point
+template< typename BASE >  
+void SinglePhaseHybridFVM<BASE>::ComputeTPFAInnerProduct( arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodePosition, 
+                                                          ArrayOfArraysView<localIndex const> const & faceToNodes, 
+                                                          arraySlice1d<localIndex const> const elemToFaces,
+                                                          R1Tensor const & elemCenter,
+                                                          R1Tensor const & elemPerm,
+                                                          real64   const & lengthTolerance,
+                                                          stackArray2d<real64, MAX_NUM_FACES
+                                                                              *MAX_NUM_FACES> const & transMatrix ) const
 {
   R1Tensor faceCenter, faceNormal, faceConormal, cellToFaceVec;
   R2SymTensor permeabilityTensor;
@@ -910,16 +926,18 @@ void SinglePhaseHybridFVM::ComputeTPFAInnerProduct( arrayView2d<real64 const, no
   }
 }
 
-void SinglePhaseHybridFVM::ComputeQFamilyInnerProduct( arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodePosition, 
-                                                       ArrayOfArraysView<localIndex const> const & faceToNodes, 
-                                                       arraySlice1d<localIndex const> const elemToFaces,
-                                                       R1Tensor const & elemCenter,
-                                                       real64   const & elemVolume,
-                                                       R1Tensor const & elemPerm,
-                                                       real64   const & tParam, 
-                                                       real64   const & lengthTolerance,
-                                                       stackArray2d<real64, MAX_NUM_FACES
-                                                                           *MAX_NUM_FACES> const & transMatrix ) const
+
+template< typename BASE >  
+void SinglePhaseHybridFVM<BASE>::ComputeQFamilyInnerProduct( arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodePosition, 
+                                                             ArrayOfArraysView<localIndex const> const & faceToNodes, 
+                                                             arraySlice1d<localIndex const> const elemToFaces,
+                                                             R1Tensor const & elemCenter,
+                                                             real64   const & elemVolume,
+                                                             R1Tensor const & elemPerm,
+                                                             real64   const & tParam, 
+                                                             real64   const & lengthTolerance,
+                                                             stackArray2d<real64, MAX_NUM_FACES
+                                                                                 *MAX_NUM_FACES> const & transMatrix ) const
 {
   R1Tensor faceCenter, faceNormal, cellToFaceVec;
   real64 const areaTolerance = lengthTolerance * lengthTolerance;
@@ -1108,15 +1126,16 @@ void SinglePhaseHybridFVM::ComputeQFamilyInnerProduct( arrayView2d<real64 const,
 
 // TODO: template on the type of inner product
 // TODO: template on the type of subRegion to have a special treatment for fractures
-void SinglePhaseHybridFVM::ComputeTransmissibilityMatrix( arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodePosition, 
-                                                          ArrayOfArraysView<localIndex const> const & faceToNodes, 
-                                                          arraySlice1d<localIndex const> const elemToFaces,
-                                                          R1Tensor const & elemCenter,
-                                                          real64   const & elemVolume,
-                                                          R1Tensor const & elemPerm,
-                                                          real64   const & lengthTolerance,
-                                                          stackArray2d<real64, MAX_NUM_FACES
-                                                                              *MAX_NUM_FACES> const & transMatrix ) const
+template< typename BASE >  
+void SinglePhaseHybridFVM<BASE>::ComputeTransmissibilityMatrix( arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodePosition, 
+                                                                ArrayOfArraysView<localIndex const> const & faceToNodes, 
+                                                                arraySlice1d<localIndex const> const elemToFaces,
+                                                                R1Tensor const & elemCenter,
+                                                                real64   const & elemVolume,
+                                                                R1Tensor const & elemPerm,
+                                                                real64   const & lengthTolerance,
+                                                                stackArray2d<real64, MAX_NUM_FACES
+                                                                                    *MAX_NUM_FACES> const & transMatrix ) const
 {
   switch (m_ipType)
   {
@@ -1156,6 +1175,12 @@ void SinglePhaseHybridFVM::ComputeTransmissibilityMatrix( arrayView2d<real64 con
   }
 }
 
- 
-REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseHybridFVM, std::string const &, Group * const )
+namespace
+{
+typedef SinglePhaseHybridFVM<SinglePhaseBase> NoProppant;
+typedef SinglePhaseHybridFVM<SinglePhaseProppantBase> Proppant;
+REGISTER_CATALOG_ENTRY( SolverBase, NoProppant, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( SolverBase, Proppant, std::string const &, Group * const )
+}
+
 } /* namespace geosx */

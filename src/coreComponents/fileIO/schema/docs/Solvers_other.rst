@@ -15,6 +15,7 @@ Reservoir                    node :ref:`DATASTRUCTURE_Reservoir`
 SinglePhaseFVM               node :ref:`DATASTRUCTURE_SinglePhaseFVM`               
 SinglePhaseHybridFVM         node :ref:`DATASTRUCTURE_SinglePhaseHybridFVM`         
 SinglePhaseProppantFVM       node :ref:`DATASTRUCTURE_SinglePhaseProppantFVM`       
+SinglePhaseProppantHybridFVM node :ref:`DATASTRUCTURE_SinglePhaseProppantHybridFVM` 
 SinglePhaseWell              node :ref:`DATASTRUCTURE_SinglePhaseWell`              
 SolidMechanicsLagrangianSSLE node :ref:`DATASTRUCTURE_SolidMechanicsLagrangianSSLE` 
 SolidMechanics_LagrangianFEM node :ref:`DATASTRUCTURE_SolidMechanics_LagrangianFEM` 

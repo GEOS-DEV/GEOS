@@ -21,8 +21,6 @@
 #include "FlowProppantTransportSolver.hpp"
 
 #include "constitutive/ConstitutiveManager.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseFVM.hpp"
-#include "physicsSolvers/fluidFlow/ProppantTransport.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "finiteElement/Kinematics.h"
 #include "managers/DomainPartition.hpp"
@@ -57,27 +55,55 @@ void FlowProppantTransportSolver::RegisterDataOnMesh( dataRepository::Group * co
 
 }
 
-void FlowProppantTransportSolver::ImplicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
-                                                     real64 const & GEOSX_UNUSED_PARAM( dt ),
-                                                     DomainPartition * const GEOSX_UNUSED_PARAM( domain ),
+void FlowProppantTransportSolver::ImplicitStepSetup( real64 const & time_n,
+                                                     real64 const & dt,
+                                                     DomainPartition * const domain,
                                                      DofManager & GEOSX_UNUSED_PARAM( dofManager ),
                                                      ParallelMatrix & GEOSX_UNUSED_PARAM( matrix ),
                                                      ParallelVector & GEOSX_UNUSED_PARAM( rhs ),
                                                      ParallelVector & GEOSX_UNUSED_PARAM( solution ) )
 {
+  m_flowSolver->SetupSystem( domain,
+                             m_flowSolver->getDofManager(),
+                             m_flowSolver->getSystemMatrix(),
+                             m_flowSolver->getSystemRhs(),
+                             m_flowSolver->getSystemSolution() );
+  m_proppantSolver->SetupSystem( domain,
+                                 m_proppantSolver->getDofManager(),
+                                 m_proppantSolver->getSystemMatrix(),
+                                 m_proppantSolver->getSystemRhs(),
+                                 m_proppantSolver->getSystemSolution() );
+
+
+  m_flowSolver->ImplicitStepSetup( time_n, dt, domain,
+                                   m_flowSolver->getDofManager(),
+                                   m_flowSolver->getSystemMatrix(),
+                                   m_flowSolver->getSystemRhs(),
+                                   m_flowSolver->getSystemSolution() );
+  m_proppantSolver->ImplicitStepSetup( time_n, dt, domain,
+                                       m_proppantSolver->getDofManager(),
+                                       m_proppantSolver->getSystemMatrix(),
+                                       m_proppantSolver->getSystemRhs(),
+                                       m_proppantSolver->getSystemSolution() );
+ 
   
 }
 
-void FlowProppantTransportSolver::ImplicitStepComplete( real64 const& GEOSX_UNUSED_PARAM( time_n ),
-                                                        real64 const& GEOSX_UNUSED_PARAM( dt ),
-                                                        DomainPartition * const GEOSX_UNUSED_PARAM( domain ) )
+void FlowProppantTransportSolver::ImplicitStepComplete( real64 const& time_n,
+                                                        real64 const& dt,
+                                                        DomainPartition * const domain )
 {
-
+  m_flowSolver->ImplicitStepComplete( time_n, dt, domain );
+  m_proppantSolver->ImplicitStepComplete( time_n, dt, domain );
 }
 
 void FlowProppantTransportSolver::PostProcessInput()
 {
-
+  m_proppantSolver = this->getParent()->GetGroup(m_proppantSolverName)->group_cast<ProppantTransport*>();
+  GEOSX_ERROR_IF( m_proppantSolver == nullptr, this->getName() << ": invalid solid solver name: " << m_proppantSolverName );
+  
+  m_flowSolver = this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseBase*>();
+  GEOSX_ERROR_IF( m_flowSolver == nullptr, this->getName() << ": invalid solid solver name: " << m_flowSolverName );
 }
 
 void FlowProppantTransportSolver::InitializePostInitialConditions_PreSubGroups(Group * const GEOSX_UNUSED_PARAM( problemManager ))
@@ -90,9 +116,10 @@ FlowProppantTransportSolver::~FlowProppantTransportSolver()
   // TODO Auto-generated destructor stub
 }
 
-void FlowProppantTransportSolver::ResetStateToBeginningOfStep( DomainPartition * const GEOSX_UNUSED_PARAM( domain ) )
+void FlowProppantTransportSolver::ResetStateToBeginningOfStep( DomainPartition * const domain )
 {
-
+  m_proppantSolver->ResetStateToBeginningOfStep( domain );
+  m_flowSolver->ResetStateToBeginningOfStep( domain );  
 }
 
 real64 FlowProppantTransportSolver::SolverStep( real64 const & time_n,
@@ -104,61 +131,23 @@ real64 FlowProppantTransportSolver::SolverStep( real64 const & time_n,
   real64 dtReturn = dt;
   real64 dtReturnTemporary;
 
-  ProppantTransport &
-  proppantSolver = *(this->getParent()->GetGroup(m_proppantSolverName)->group_cast<ProppantTransport*>());
-
-  SinglePhaseFVM<SinglePhaseProppantBase> &
-  flowSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFVM<SinglePhaseProppantBase>*>());
-
-  proppantSolver.ResizeFractureFields(time_n, dt, domain);
+  m_proppantSolver->ResizeFractureFields(time_n, dt, domain);
   
-  if(cycleNumber == 0) {
-
+  if(cycleNumber == 0)
+  {
     FieldSpecificationManager const & boundaryConditionManager = FieldSpecificationManager::get();
-
     boundaryConditionManager.ApplyInitialConditions( domain );
-
   }
 
-  flowSolver.SetupSystem( domain,
-                          flowSolver.getDofManager(),
-                          flowSolver.getSystemMatrix(),
-                          flowSolver.getSystemRhs(),
-                          flowSolver.getSystemSolution() );
-
-
-  flowSolver.ImplicitStepSetup( time_n, dt, domain,
-                                flowSolver.getDofManager(),
-                                flowSolver.getSystemMatrix(),
-                                flowSolver.getSystemRhs(),
-                                flowSolver.getSystemSolution() );
-
-  proppantSolver.SetupSystem( domain,
-                              proppantSolver.getDofManager(),
-                              proppantSolver.getSystemMatrix(),
-                              proppantSolver.getSystemRhs(),
-                              proppantSolver.getSystemSolution() );
-
-
-  proppantSolver.ImplicitStepSetup( time_n, dt, domain,
-                                    proppantSolver.getDofManager(),
-                                    proppantSolver.getSystemMatrix(),
-                                    proppantSolver.getSystemRhs(),
-                                    proppantSolver.getSystemSolution() );
-  
-
-  proppantSolver.PreStepUpdate(time_n, dt, cycleNumber, domain);
-
   this->ImplicitStepSetup( time_n, dt, domain, m_dofManager, m_matrix, m_rhs, m_solution );
-
+  m_proppantSolver->PreStepUpdate(time_n, dt, cycleNumber, domain);
+  
   int iter = 0;
   while (iter <  this->m_nonlinearSolverParameters.m_maxIterNewton )
   {
     if (iter == 0)
     {
       // reset the states of all slave solvers if any of them has been reset
-      flowSolver.ResetStateToBeginningOfStep( domain );
-      proppantSolver.ResetStateToBeginningOfStep( domain );
       ResetStateToBeginningOfStep( domain );
     }
     if (getLogLevel() >= 1)
@@ -166,15 +155,14 @@ real64 FlowProppantTransportSolver::SolverStep( real64 const & time_n,
       GEOSX_LOG_RANK_0( "\tIteration: " << iter+1  << ", FlowSolver: " );
     }
 
-    dtReturnTemporary = flowSolver.NonlinearImplicitStep( time_n,
-                                                          dtReturn,
-                                                          cycleNumber,
-                                                          domain,
-                                                          flowSolver.getDofManager(),
-                                                          flowSolver.getSystemMatrix(),
-                                                          flowSolver.getSystemRhs(),
-                                                          flowSolver.getSystemSolution() );
-
+    dtReturnTemporary = m_flowSolver->NonlinearImplicitStep( time_n,
+                                                             dtReturn,
+                                                             cycleNumber,
+                                                             domain,
+                                                             m_flowSolver->getDofManager(),
+                                                             m_flowSolver->getSystemMatrix(),
+                                                             m_flowSolver->getSystemRhs(),
+                                                             m_flowSolver->getSystemSolution() );
 
     if (dtReturnTemporary < dtReturn)
     {
@@ -183,8 +171,8 @@ real64 FlowProppantTransportSolver::SolverStep( real64 const & time_n,
       continue;
     }
   
-    NonlinearSolverParameters const & fluidNonLinearParams = flowSolver.getNonlinearSolverParameters();
-    if( fluidNonLinearParams.m_numNewtonIterations<=this->m_nonlinearSolverParameters.m_minIterNewton && iter > 0 &&
+    NonlinearSolverParameters const & fluidNonLinearParams = m_flowSolver->getNonlinearSolverParameters();
+    if( fluidNonLinearParams.m_numNewtonIterations <= this->m_nonlinearSolverParameters.m_minIterNewton && iter > 0 &&
         getLogLevel() >= 1)
     {
       GEOSX_LOG_RANK_0( "***** The iterative coupling has converged in " << iter  << " iterations! *****\n" );
@@ -196,14 +184,14 @@ real64 FlowProppantTransportSolver::SolverStep( real64 const & time_n,
       GEOSX_LOG_RANK_0( "\tIteration: " << iter+1  << ", Proppant Solver: " );
     }
     
-    dtReturnTemporary = proppantSolver.NonlinearImplicitStep( time_n,
-                                                              dtReturn,
-                                                              cycleNumber,
-                                                              domain,
-                                                              proppantSolver.getDofManager(),
-                                                              proppantSolver.getSystemMatrix(),
-                                                              proppantSolver.getSystemRhs(),
-                                                              proppantSolver.getSystemSolution() );
+    dtReturnTemporary = m_proppantSolver->NonlinearImplicitStep( time_n,
+                                                                 dtReturn,
+                                                                 cycleNumber,
+                                                                 domain,
+                                                                 m_proppantSolver->getDofManager(),
+                                                                 m_proppantSolver->getSystemMatrix(),
+                                                                 m_proppantSolver->getSystemRhs(),
+                                                                 m_proppantSolver->getSystemSolution() );
 
     if (dtReturnTemporary < dtReturn)
     {
@@ -215,13 +203,10 @@ real64 FlowProppantTransportSolver::SolverStep( real64 const & time_n,
     ++iter;
   }
 
-  
-  flowSolver.ImplicitStepComplete( time_n, dt, domain );
-  proppantSolver.ImplicitStepComplete( time_n, dt, domain );
-
-  proppantSolver.PostStepUpdate(time_n, dtReturn, cycleNumber, domain);
   this->ImplicitStepComplete( time_n, dt, domain );
+  m_proppantSolver->PostStepUpdate(time_n, dtReturn, cycleNumber, domain);
 
+  
   return dtReturn;
 }
 

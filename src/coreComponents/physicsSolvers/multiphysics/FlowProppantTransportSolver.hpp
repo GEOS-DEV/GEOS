@@ -20,7 +20,10 @@
 #ifndef GEOSX_PHYSICSSOLVERS_COUPLEDSOLVERS_FLOWPROPPANTTRANSPORTSOLVER_HPP_
 #define GEOSX_PHYSICSSOLVERS_COUPLEDSOLVERS_FLOWPROPPANTTRANSPORTSOLVER_HPP_
 
-#include "../SolverBase.hpp"
+#include "physicsSolvers/SolverBase.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseFVM.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseHybridFVM.hpp"
+#include "physicsSolvers/fluidFlow/ProppantTransport.hpp"
 
 namespace geosx
 {
@@ -82,6 +85,10 @@ private:
   string m_proppantSolverName;
   string m_flowSolverName;
 
+  ProppantTransport * m_proppantSolver;
+  SinglePhaseBase * m_flowSolver;
+
+  
 };
 
 } /* namespace geosx */
