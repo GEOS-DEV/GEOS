@@ -229,7 +229,8 @@ real64 PhaseFieldFractureSolver::SplitOperatorStep( real64 const& time_n,
 
   this->ImplicitStepSetup( time_n, dt, domain, m_dofManager, m_matrix, m_rhs, m_solution );
 
-  int iter = 0;
+  SystemSolverParameters * const solverParams = getSystemSolverParameters();
+  integer & iter = solverParams->numNewtonIterations();
   while (iter < (*(this->getSystemSolverParameters())).maxIterNewton() )
   {
     if (iter == 0)

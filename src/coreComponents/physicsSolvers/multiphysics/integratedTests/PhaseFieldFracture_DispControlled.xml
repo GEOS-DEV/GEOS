@@ -22,7 +22,7 @@
       <SystemSolverParameters krylovTol="1.0e-10"
                               newtonTol="1.0e-6"
                               maxIterNewton="5"
-                              logLevel="2"/>
+                              logLevel="0"/>
     </SolidMechanicsLagrangianSSLE>
 
     <PhaseFieldDamageFEM name="DamageSolve"
@@ -58,15 +58,15 @@
     <!-- This event is applied every 1.0s.  The targetExactTimestep
     flag allows this event to request a dt modification to match an
     integer multiple of the timeFrequency. -->
-    <PeriodicEvent name="outputs"
+    <PeriodicEvent name="vtkOutput"
                    timeFrequency="1"
                    targetExactTimestep="1"
                    target="/Outputs/PFCrack_VTKOutput" />
 
-    <!-- <PeriodicEvent name="outputs"
+    <PeriodicEvent name="siloOutputs"
                    timeFrequency="1.0"
                    targetExactTimestep="1"
-                   target="/Outputs/SiloOutput"/> -->
+                   target="/Outputs/SiloOutput"/>
 
     <PeriodicEvent name="restarts"
                    timeFrequency="1e99"
@@ -171,7 +171,7 @@
 
   </Functions>
   <Outputs>
-    <!-- <Silo name="SiloOutput" parallelThreads="1" plotFileRoot="plot"/> -->
+    <Silo name="SiloOutput" parallelThreads="1" plotFileRoot="plot"/>
     <VTK name="PFCrack_VTKOutput" parallelThreads="1" plotFileRoot="plot"/>
     <Restart name="restartOutput"/>
   </Outputs>
