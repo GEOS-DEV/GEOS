@@ -81,7 +81,7 @@ HypreMatrix::HypreMatrix( HypreMatrix const & src )
     rows[i - ilower] = i;
   }
 
-  GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixGetRowCounts( src.unwrapped(),
+  GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixGetRowCounts( src.m_ij_mat,
                                                      nrows,
                                                      rows.data(),
                                                      row_sizes.data() ) );
@@ -528,9 +528,9 @@ void HypreMatrix::apply( HypreVector const & src,
   GEOSX_LAI_ASSERT( dst.ready() );
   GEOSX_LAI_CHECK_ERROR( hypre_ParCSRMatrixMatvec( 1.0,
                                                    m_parcsr_mat,
-                                                   src.unwrappedParVector(),
+                                                   src.unwrapped(),
                                                    0.0,
-                                                   dst.unwrappedParVector() ) );
+                                                   dst.unwrapped() ) );
 }
 
 void HypreMatrix::multiply( HypreMatrix const & src,
@@ -747,17 +747,17 @@ void HypreMatrix::gemv( real64 const alpha,
   {
     GEOSX_LAI_CHECK_ERROR( hypre_ParCSRMatrixMatvec( alpha,
                                                      m_parcsr_mat,
-                                                     x.unwrappedParVector(),
+                                                     x.unwrapped(),
                                                      beta,
-                                                     y.unwrappedParVector() ) );
+                                                     y.unwrapped() ) );
   }
   else
   {
     GEOSX_LAI_CHECK_ERROR( hypre_ParCSRMatrixMatvecT( alpha,
                                                       m_parcsr_mat,
-                                                      x.unwrappedParVector(),
+                                                      x.unwrapped(),
                                                       beta,
-                                                      y.unwrappedParVector() ) );
+                                                      y.unwrapped() ) );
   }
 }
 
@@ -788,7 +788,7 @@ void HypreMatrix::leftScale( HypreVector const & vec )
 {
   GEOSX_LAI_ASSERT( ready() );
 
-  hypre_Vector * const ptr_vec = hypre_ParVectorLocalVector( vec.unwrappedParVector() );
+  hypre_Vector * const ptr_vec = hypre_ParVectorLocalVector( vec.unwrapped() );
   HYPRE_Real * ptr_vec_data = hypre_VectorData( ptr_vec );
 
   hypre_CSRMatrix * const prt_diag_CSR = hypre_ParCSRMatrixDiag( m_parcsr_mat );

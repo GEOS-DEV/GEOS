@@ -72,8 +72,8 @@ void HypreSolver::solve_direct( HypreMatrix & mat,
                                              mat.unwrappedParCSR(),
                                              0 ) );
   GEOSX_LAI_CHECK_ERROR( hypre_SLUDistSolve( solver,
-                                             rhs.unwrappedParVector(),
-                                             sol.unwrappedParVector() ) );
+                                             rhs.unwrapped(),
+                                             sol.unwrapped() ) );
   GEOSX_LAI_CHECK_ERROR( hypre_SLUDistDestroy( solver ) );
 
 }
@@ -185,14 +185,14 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
     // Setup
     GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRGMRESSetup( solver,
                                                    mat.unwrappedParCSR(),
-                                                   rhs.unwrappedParVector(),
-                                                   sol.unwrappedParVector() ) );
+                                                   rhs.unwrapped(),
+                                                   sol.unwrapped() ) );
 
     // Solve
     result = HYPRE_ParCSRGMRESSolve( solver,
                                      mat.unwrappedParCSR(),
-                                     rhs.unwrappedParVector(),
-                                     sol.unwrappedParVector() );
+                                     rhs.unwrapped(),
+                                     sol.unwrapped() );
 
 
     /* Destroy solver and preconditioner */
@@ -218,14 +218,14 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
     // Setup
     GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRBiCGSTABSetup( solver,
                                                       mat.unwrappedParCSR(),
-                                                      rhs.unwrappedParVector(),
-                                                      sol.unwrappedParVector() ) );
+                                                      rhs.unwrapped(),
+                                                      sol.unwrapped() ) );
 
     // Solve
     result = HYPRE_ParCSRBiCGSTABSolve( solver,
                                         mat.unwrappedParCSR(),
-                                        rhs.unwrappedParVector(),
-                                        sol.unwrappedParVector() );
+                                        rhs.unwrapped(),
+                                        sol.unwrapped() );
 
 
     /* Destroy solver and preconditioner */
@@ -252,14 +252,14 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
     // Setup
     GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRPCGSetup( solver,
                                                  mat.unwrappedParCSR(),
-                                                 rhs.unwrappedParVector(),
-                                                 sol.unwrappedParVector() ) );
+                                                 rhs.unwrapped(),
+                                                 sol.unwrapped() ) );
 
     // Solve
     result = HYPRE_ParCSRPCGSolve( solver,
                                    mat.unwrappedParCSR(),
-                                   rhs.unwrappedParVector(),
-                                   sol.unwrappedParVector() );
+                                   rhs.unwrapped(),
+                                   sol.unwrapped() );
 
 
 

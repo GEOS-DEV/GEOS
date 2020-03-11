@@ -425,22 +425,12 @@ void HypreVector::get( arraySlice1d< globalIndex const > const & globalIndices,
                                                   values.data() ) );
 }
 
-HYPRE_IJVector const & HypreVector::unwrapped() const
-{
-  return m_ij_vector;
-}
-
-HYPRE_IJVector & HypreVector::unwrapped()
-{
-  return m_ij_vector;
-}
-
-HYPRE_ParVector const & HypreVector::unwrappedParVector() const
+HYPRE_ParVector const & HypreVector::unwrapped() const
 {
   return m_par_vector;
 }
 
-HYPRE_ParVector & HypreVector::unwrappedParVector()
+HYPRE_ParVector & HypreVector::unwrapped()
 {
   return m_par_vector;
 }

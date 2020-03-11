@@ -441,7 +441,7 @@ void PetscMatrix::multiply( PetscMatrix const & src,
   GEOSX_LAI_ASSERT_EQ( numGlobalCols(), src.numGlobalRows() );
 
   dst.reset();
-  GEOSX_LAI_CHECK_ERROR( MatMatMult( m_mat, src.unwrapped(), MAT_INITIAL_MATRIX, PETSC_DEFAULT, &dst.m_mat ) );
+  GEOSX_LAI_CHECK_ERROR( MatMatMult( m_mat, src.m_mat, MAT_INITIAL_MATRIX, PETSC_DEFAULT, &dst.m_mat ) );
   dst.m_assembled = true;
   dst.m_closed = true;
 }
@@ -454,7 +454,7 @@ void PetscMatrix::leftMultiplyTranspose( PetscMatrix const & src,
   GEOSX_LAI_ASSERT_EQ( numGlobalRows(), src.numGlobalRows() );
 
   dst.reset();
-  GEOSX_LAI_CHECK_ERROR( MatTransposeMatMult( m_mat, src.unwrapped(), MAT_INITIAL_MATRIX, PETSC_DEFAULT, &dst.unwrapped() ) );
+  GEOSX_LAI_CHECK_ERROR( MatTransposeMatMult( m_mat, src.m_mat, MAT_INITIAL_MATRIX, PETSC_DEFAULT, &dst.m_mat ) );
   dst.m_assembled = true;
   dst.m_closed = true;
 }
@@ -467,7 +467,7 @@ void PetscMatrix::rightMultiplyTranspose( PetscMatrix const & src,
   GEOSX_LAI_ASSERT_EQ( numGlobalCols(), src.numGlobalCols() );
 
   dst.reset();
-  GEOSX_LAI_CHECK_ERROR( MatMatTransposeMult( m_mat, src.unwrapped(), MAT_INITIAL_MATRIX, PETSC_DEFAULT, &dst.unwrapped() ) );
+  GEOSX_LAI_CHECK_ERROR( MatMatTransposeMult( m_mat, src.m_mat, MAT_INITIAL_MATRIX, PETSC_DEFAULT, &dst.m_mat ) );
   dst.m_assembled = true;
   dst.m_closed = true;
 }
@@ -549,7 +549,8 @@ void PetscMatrix::transpose( PetscMatrix & dst ) const
   GEOSX_LAI_ASSERT( ready() );
 
   dst.reset();
-  GEOSX_LAI_CHECK_ERROR( MatTranspose( m_mat, MAT_INITIAL_MATRIX, &dst.unwrapped() ) );
+  GEOSX_LAI_CHECK_ERROR( MatTranspose( m_mat, MAT_INITIAL_MATRIX, &dst.m_mat ) );
+  dst.m_assembled = true;
 }
 
 void PetscMatrix::clearRow( globalIndex const globalRow,

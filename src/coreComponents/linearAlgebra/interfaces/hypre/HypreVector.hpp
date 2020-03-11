@@ -189,24 +189,14 @@ public:
   ///@}
 
   /**
-   * @brief Returns a const pointer to the underlying HYPRE_IJVector object.
+   * @brief Returns a const pointer to the underlying HYPRE_ParVector object.
    */
-  HYPRE_IJVector const & unwrapped() const;
+  HYPRE_ParVector const & unwrapped() const;
 
   /**
-   * @brief Returns a non-const pointer to the underlying HYPRE_IJVector object.
+   * @brief Returns a non-const pointer to the underlying HYPRE_ParVector object.
    */
-  HYPRE_IJVector & unwrapped();
-
-  /**
-   * @brief Returns a const pointer to the underlying HYPRE_IJVector object.
-   */
-  HYPRE_ParVector const & unwrappedParVector() const;
-
-  /**
-   * @brief Returns a non-const pointer to the underlying HYPRE_IJVector object.
-   */
-  HYPRE_ParVector & unwrappedParVector();
+  HYPRE_ParVector & unwrapped();
 
 private:
 

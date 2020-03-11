@@ -25,7 +25,7 @@
 #include <Epetra_FEVector.h>
 #include <EpetraExt_MatrixMatrix.h>
 #include <EpetraExt_RowMatrixOut.h>
-#include <Epetra_RowMatrixTransposer.h>
+#include <EpetraExt_Transpose_RowMatrix.h>
 #include <ml_epetra_utils.h>
 
 #ifdef GEOSX_USE_MPI
@@ -393,8 +393,8 @@ void EpetraMatrix::create( Epetra_CrsMatrix const & src )
 
   m_matrix = std::make_unique<Epetra_FECrsMatrix>( Copy, src.Graph() );
   GEOSX_LAI_CHECK_ERROR( m_matrix->FillComplete( src.DomainMap(), src.RangeMap(), true ) );
-  m_src_map = std::make_unique<Epetra_Map>( m_matrix->RangeMap() );
-  m_dst_map = std::make_unique<Epetra_Map>( m_matrix->DomainMap() );
+  m_src_map = std::make_unique<Epetra_Map>( m_matrix->DomainMap() );
+  m_dst_map = std::make_unique<Epetra_Map>( m_matrix->RangeMap() );
 
   // We have to copy the data using the "expert" interface,
   // since there is no direct way to convert CrsMatrix to FECrsMatrix.
@@ -503,12 +503,11 @@ void EpetraMatrix::transpose( EpetraMatrix & dst ) const
 {
   GEOSX_LAI_ASSERT( ready() );
 
-  Epetra_RowMatrixTransposer transposer( m_matrix.get() );
-  Epetra_CrsMatrix * trans;
-  transposer.CreateTranspose( true, trans );
-
-  dst.create( *trans );
-  delete trans;
+  // XXX: Transposer always creates a CrsMatrix, but doesn't expose this fact in the API:
+  // https://docs.trilinos.org/dev/packages/epetraext/doc/html/EpetraExt__Transpose__RowMatrix_8cpp_source.html#l00248
+  EpetraExt::RowMatrix_Transpose transposer( m_src_map.get() );
+  Epetra_CrsMatrix & trans = dynamic_cast<Epetra_CrsMatrix &>( transposer( *m_matrix ) );
+  dst.create( trans );
 }
 
 void EpetraMatrix::clearRow( globalIndex const globalRow,
@@ -747,14 +746,13 @@ void EpetraMatrix::multiply( bool const transA,
                          1, // TODO: estimate entries per row?
                          getComm() );
 
-  GEOSX_LAI_CHECK_ERROR( EpetraExt::MatrixMatrix::Multiply( *m_matrix,
+  GEOSX_LAI_CHECK_ERROR( EpetraExt::MatrixMatrix::Multiply( unwrapped(),
                                                             transA,
                                                             B.unwrapped(),
                                                             transB,
                                                             C.unwrapped(),
                                                             true ) );
   C.m_assembled = true;
-  C.m_closed = true;
 }
 
 } // end geosx namespace
