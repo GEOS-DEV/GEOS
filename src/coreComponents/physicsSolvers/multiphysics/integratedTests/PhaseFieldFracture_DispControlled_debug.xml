@@ -30,7 +30,7 @@
                 timeIntegrationOption="SteadyState"
                 fieldName="Damage"
                 solidMaterialName="shale"
-                localDissipation = "Quadratic"
+                localDissipation = "Linear"
                 logLevel="1"
                 targetRegions="{Region1}">
     </PhaseFieldDamageFEM>
