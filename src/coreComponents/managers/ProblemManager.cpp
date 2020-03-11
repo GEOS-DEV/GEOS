@@ -91,7 +91,7 @@ struct Arg : public option::Arg
 
 ProblemManager::ProblemManager( const std::string & name,
                                 Group * const parent ):
-  ObjectManagerBase( name, parent ),
+  dataRepository::Group( name, parent ),
   m_physicsSolverManager( nullptr ),
   m_eventManager( nullptr ),
   m_functionManager( nullptr )
@@ -966,9 +966,5 @@ void ProblemManager::ReadRestartOverwrite()
   this->loadFromConduit();
   this->postRestartInitializationRecursive( GetGroup< DomainPartition >( keys::domain ) );
 }
-
-
-
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, ProblemManager, string const &, Group * const )
 
 } /* namespace geosx */
