@@ -222,7 +222,7 @@ void WellSolverBase::PrecomputeData(DomainPartition * const domain)
 
     }
 
-    forall_in_range( 0, perforationData->size(), GEOSX_LAMBDA ( localIndex const iperf )
+    forall_in_range( 0, perforationData->size(), [=] ( localIndex const iperf )
     {
       // precompute the depth of the perforations
       perfGravCoef[iperf] = Dot( perfLocation[iperf], gravVector );

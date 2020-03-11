@@ -245,7 +245,7 @@ void ProppantTransport::UpdateFluidModel(Group * const dataGroup)
 
   arrayView2d<real64> const & updatedComponentConc = dataGroup->getReference<array2d<real64>>( viewKeyStruct::updatedComponentConcentrationString );    
 
-  forall_in_range<RAJA::seq_exec>( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a )
+  forall_in_range<RAJA::seq_exec>( 0, dataGroup->size(), [=] ( localIndex const a )
   {
 
     for(localIndex c = 0; c < m_numComponents; ++c)
@@ -273,7 +273,7 @@ void ProppantTransport::UpdateComponentDensity(Group * const dataGroup)
 
   arrayView2d<real64> const & updatedComponentConc = dataGroup->getReference<array2d<real64>>( viewKeyStruct::updatedComponentConcentrationString );    
 
-  forall_in_range<RAJA::seq_exec>( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a )
+  forall_in_range<RAJA::seq_exec>( 0, dataGroup->size(), [=] ( localIndex const a )
   {
 
     for(localIndex c = 0; c < m_numComponents; ++c)
@@ -321,7 +321,7 @@ void ProppantTransport::UpdateProppantModel(Group * const dataGroup)
 
   arrayView3d<real64 const> const & dFluidVisc_dCompConc = fluid->getReference<array3d<real64>>( SlurryFluidBase::viewKeyStruct::dFluidVisc_dCompConcString );        
 
-  forall_in_range<RAJA::seq_exec>( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a )
+  forall_in_range<RAJA::seq_exec>( 0, dataGroup->size(), [=] ( localIndex const a )
   {     
     particle->PointUpdate(NC, proppantConc[a] + dProppantConc[a], fluidDens[a][0], dFluidDens_dPres[a][0], dFluidDens_dCompConc[a][0], fluidVisc[a][0], dFluidVisc_dPres[a][0], dFluidVisc_dCompConc[a][0], a);
 
@@ -341,7 +341,7 @@ void ProppantTransport::UpdateProppantMobility(Group * const dataGroup)
   
   // TODO replace with batch update
   
-  forall_in_range<RAJA::seq_exec>( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a )
+  forall_in_range<RAJA::seq_exec>( 0, dataGroup->size(), [=] ( localIndex const a )
   {
 
     if(aperture[a] > m_minAperture && conc[a] < m_maxProppantConcentration)
@@ -399,7 +399,7 @@ void ProppantTransport::InitializePostInitialConditions_PreSubGroups( Group * co
     arrayView2d<real64> const & componentDensOld = m_componentDensityOld[er][esr];    
 
 
-    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+    forall_in_range<serialPolicy>( 0, subRegion->size(), [=] ( localIndex ei )
     {
         proppantConcOld[ei] = proppantConc[ei];
 
@@ -490,7 +490,7 @@ real64 ProppantTransport::SolverStep( real64 const& time_n,
       arrayView1d<integer> const & isProppantMobile = m_isProppantMobile[er][esr];          
 
       
-      forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+      forall_in_range<serialPolicy>( 0, subRegion->size(), [=] ( localIndex ei )
       {
         dProppantConc[ei] = 0.0;
 
@@ -627,7 +627,7 @@ void ProppantTransport::PreStepUpdate( real64 const& time,
 
       arrayView1d<integer> const & isProppantMobile = m_isProppantMobile[er][esr];          
 
-       forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+       forall_in_range<serialPolicy>( 0, subRegion->size(), [=] ( localIndex ei )
       {
         dProppantConc[ei] = 0.0;
 
@@ -727,7 +727,7 @@ void ProppantTransport::ImplicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( ti
 
     arrayView1d<R1Tensor> const & cellBasedFlux = m_cellBasedFlux[er][esr];    
     
-    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+    forall_in_range<serialPolicy>( 0, subRegion->size(), [=] ( localIndex ei )
     {
 
       dProppantConc[ei] = 0.0;
@@ -772,7 +772,7 @@ void ProppantTransport::ImplicitStepComplete( real64 const & GEOSX_UNUSED_PARAM(
 
     arrayView1d<real64> const & proppantLiftFlux = m_proppantLiftFlux[er][esr];        
     
-    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+    forall_in_range<serialPolicy>( 0, subRegion->size(), [=] ( localIndex ei )
     {
       proppantConc[ei] += dProppantConc[ei];
       proppantLiftFlux[ei] = 0.0;
@@ -886,7 +886,7 @@ void ProppantTransport::AssembleAccumulationTerms( DomainPartition const * const
 
     arrayView1d<real64 const> const & proppantPackVf          = m_proppantPackVolumeFraction[er][esr];            
 
-    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+    forall_in_range<serialPolicy>( 0, subRegion->size(), [=] ( localIndex ei )
     {
       if (elemGhostRank[ei] < 0)
       {
@@ -1397,7 +1397,7 @@ void ProppantTransport::ResetStateToBeginningOfStep( DomainPartition * const dom
     arrayView1d<real64> const & dProppantConc = m_deltaProppantConcentration[er][esr];
     arrayView2d<real64> const & dComponentConc = m_deltaComponentConcentration[er][esr];        
 
-    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+    forall_in_range<serialPolicy>( 0, subRegion->size(), [=] ( localIndex ei )
     {
       dProppantConc[ei] = 0.0;
 
@@ -1759,7 +1759,7 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
     arrayView1d<real64> const & poroMultiplier = m_poroMultiplier[er][esr];
     arrayView1d<R1Tensor> const & transTMultiplier = m_transTMultiplier[er][esr];        
 
-    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+    forall_in_range<serialPolicy>( 0, subRegion->size(), [=] ( localIndex ei )
     {
 
       poroMultiplier[ei] = 1.0 - m_maxProppantConcentration * proppantPackVfNew[ei];

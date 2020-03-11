@@ -522,7 +522,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
     {
       integer const component = bc->GetComponent();
       forall_in_range< parallelDevicePolicy< 1024 > >(0, targetSet.size(),
-        GEOSX_DEVICE_LAMBDA( localIndex const i )
+        [=] GEOSX_DEVICE( localIndex const i )
         {
           localIndex const a = targetSet[ i ];
           vel( a, component ) = u( a, component );
@@ -534,7 +534,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
     {
       integer const component = bc->GetComponent();
       forall_in_range< parallelDevicePolicy< 1024 > >(0, targetSet.size(),
-        GEOSX_DEVICE_LAMBDA( localIndex const i )
+        [=] GEOSX_DEVICE( localIndex const i )
         {
           localIndex const a = targetSet[ i ];
           uhat( a, component ) = u( a, component ) - vel( a, component );
@@ -837,7 +837,7 @@ ImplicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
     real64 const newmarkBeta = this->getReference<real64>(solidMechanicsViewKeys.newmarkBeta);
 
     RAJA::forall< parallelHostPolicy >( RAJA::TypedRangeSegment< localIndex >( 0, numNodes ),
-                                        GEOSX_LAMBDA ( localIndex const a )
+                                        [=] ( localIndex const a )
     {
       for( int i=0 ; i<3 ; ++i )
       {
@@ -855,7 +855,7 @@ ImplicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
     if( m_useVelocityEstimateForQS==1 )
     {
       RAJA::forall< parallelHostPolicy >( RAJA::TypedRangeSegment< localIndex >( 0, numNodes ),
-                                          GEOSX_LAMBDA ( localIndex const a )
+                                          [=] ( localIndex const a )
       {
         for( int i=0 ; i<3 ; ++i )
         {
@@ -867,7 +867,7 @@ ImplicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
     else
     {
       RAJA::forall< parallelHostPolicy >( RAJA::TypedRangeSegment< localIndex >( 0, numNodes ),
-                                          GEOSX_LAMBDA ( localIndex const a )
+                                          [=] ( localIndex const a )
       {
         for( int i=0 ; i<3 ; ++i )
         {
@@ -935,7 +935,7 @@ void SolidMechanicsLagrangianFEM::ImplicitStepComplete( real64 const & GEOSX_UNU
     real64 const newmarkBeta = this->getReference<real64>(solidMechanicsViewKeys.newmarkBeta);
 
     RAJA::forall< parallelHostPolicy >( RAJA::TypedRangeSegment< localIndex >( 0, numNodes ),
-                                        GEOSX_LAMBDA ( localIndex const a )
+                                        [=] ( localIndex const a )
     {
       for( int i=0 ; i<3 ; ++i )
       {
@@ -947,7 +947,7 @@ void SolidMechanicsLagrangianFEM::ImplicitStepComplete( real64 const & GEOSX_UNU
   else if( this->m_timeIntegrationOption == timeIntegrationOption::QuasiStatic && dt > 0.0)
   {
     RAJA::forall< parallelHostPolicy >( RAJA::TypedRangeSegment< localIndex >( 0, numNodes ),
-                                        GEOSX_LAMBDA ( localIndex const a )
+                                        [=] ( localIndex const a )
     {
       for( int i=0 ; i<3 ; ++i )
       {
@@ -1266,7 +1266,7 @@ void SolidMechanicsLagrangianFEM::ResetStateToBeginningOfStep( DomainPartition *
   arrayView2d<real64, nodes::TOTAL_DISPLACEMENT_USD> const & disp = nodeManager->totalDisplacement();
 
   // TODO need to finish this rewind
-  forAll< serialPolicy >( nodeManager->size(), GEOSX_LAMBDA (localIndex const a)
+  forAll< serialPolicy >( nodeManager->size(), [=] (localIndex const a)
   {
     for ( localIndex i = 0; i < 3; ++i )
     {
@@ -1359,7 +1359,7 @@ void SolidMechanicsLagrangianFEM::ApplyContactConstraint( DofManager const & dof
 
         forall_in_range<serialPolicy>( 0,
                                        subRegion->size(),
-                                       GEOSX_LAMBDA ( localIndex const kfe )
+                                       [=] ( localIndex const kfe )
         {
 
           if( ghostRank[kfe] < 0 )
@@ -1460,7 +1460,7 @@ SolidMechanicsLagrangianFEM::ScalingForSystemSolution( DomainPartition const * c
 //      RAJA::ReduceMin<RAJA::seq_reduce, real64> newScaleFactor(1.0);
 //      forall_in_range<serialPolicy>( 0,
 //                                     subRegion->size(),
-//                                     GEOSX_LAMBDA ( localIndex const kfe )
+//                                     [=] ( localIndex const kfe )
 //      {
 //
 //        if( ghostRank[kfe] < 0 )

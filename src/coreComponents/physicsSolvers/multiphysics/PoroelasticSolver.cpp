@@ -265,7 +265,7 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
 
 
       forall_in_range< parallelHostPolicy >( 0, cellElementSubRegion->size(),
-                                             GEOSX_HOST_DEVICE_LAMBDA ( localIndex const ei )
+                                             [=] GEOSX_HOST_DEVICE ( localIndex const ei )
       {
 
         R1Tensor u_local[10];
