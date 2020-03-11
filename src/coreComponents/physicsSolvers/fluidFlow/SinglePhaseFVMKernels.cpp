@@ -13,102 +13,16 @@
  */
 
 /**
- * @file SinglePhaseKernels.cpp
+ * @file SinglePhaseFVMKernels.cpp
  */
 
-#include "SinglePhaseKernels.hpp"
+#include "SinglePhaseFVMKernels.hpp"
 
 namespace geosx
 {
 
-namespace SinglePhaseKernels
+namespace SinglePhaseFVMKernels
 {
-
-/******************************** MobilityKernel ********************************/
-
-void
-MobilityKernel::Compute( real64 const & dens,
-                         real64 const & dDens_dPres,
-                         real64 const & visc,
-                         real64 const & dVisc_dPres,
-                         real64 & mob,
-                         real64 & dMob_dPres )
-{
-  mob = dens / visc;
-  dMob_dPres = dDens_dPres / visc - mob / visc * dVisc_dPres;
-}
-
-void
-MobilityKernel::Compute( real64 const & dens,
-                         real64 const & visc,
-                         real64 & mob )
-{
-  mob = dens / visc;
-}
-
-void MobilityKernel::Launch( localIndex begin, localIndex end,
-                             arrayView2d<real64 const> const & dens,
-                             arrayView2d<real64 const> const & dDens_dPres,
-                             arrayView2d<real64 const> const & visc,
-                             arrayView2d<real64 const> const & dVisc_dPres,
-                             arrayView1d<real64> const & mob,
-                             arrayView1d<real64> const & dMob_dPres )
-{
-  forall_in_range( begin, end, GEOSX_LAMBDA ( localIndex const a )
-  {
-    Compute( dens[a][0],
-             dDens_dPres[a][0],
-             visc[a][0],
-             dVisc_dPres[a][0],
-             mob[a],
-             dMob_dPres[a] );
-  } );
-}
-
-void MobilityKernel::Launch( SortedArrayView<localIndex const> targetSet,
-                             arrayView2d<real64 const> const & dens,
-                             arrayView2d<real64 const> const & dDens_dPres,
-                             arrayView2d<real64 const> const & visc,
-                             arrayView2d<real64 const> const & dVisc_dPres,
-                             arrayView1d<real64> const & mob,
-                             arrayView1d<real64> const & dMob_dPres )
-{
-  forall_in_set( targetSet.values(), targetSet.size(), GEOSX_LAMBDA ( localIndex const a )
-  {
-    Compute( dens[a][0],
-             dDens_dPres[a][0],
-             visc[a][0],
-             dVisc_dPres[a][0],
-             mob[a],
-             dMob_dPres[a] );
-  } );
-}
-
-void MobilityKernel::Launch( localIndex begin, localIndex end,
-                             arrayView2d<real64 const> const & dens,
-                             arrayView2d<real64 const> const & visc,
-                             arrayView1d<real64> const & mob )
-{
-  forall_in_range( begin, end, GEOSX_LAMBDA ( localIndex const a )
-  {
-    Compute( dens[a][0],
-             visc[a][0],
-             mob[a] );
-  } );
-}
-
-void MobilityKernel::Launch( SortedArrayView<localIndex const> targetSet,
-                             arrayView2d<real64 const> const & dens,
-                             arrayView2d<real64 const> const & visc,
-                             arrayView1d<real64> const & mob )
-{
-  forall_in_set( targetSet.values(), targetSet.size(), GEOSX_LAMBDA ( localIndex const a )
-  {
-    Compute( dens[a][0],
-             visc[a][0],
-             mob[a] );
-  } );
-}
 
 inline void addLocalContributionsToGlobalSystem( localIndex const numFluxElems,
                                                  localIndex const stencilSize,
@@ -360,7 +274,7 @@ Launch<FaceElementStencil>( FaceElementStencil const & stencil,
 }
 
 
-} // namespace SinglePhaseFlowKernels
+} // namespace SinglePhaseFVMKernels
 
 
 } // namespace geosx

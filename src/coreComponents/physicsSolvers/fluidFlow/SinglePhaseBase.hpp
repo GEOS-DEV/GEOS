@@ -21,7 +21,7 @@
 
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseKernels.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
 
 namespace geosx
 {
@@ -323,14 +323,14 @@ void SinglePhaseBase::UpdateMobility( Group * const dataGroup ) const
   arrayView2d<real64 const> const & dVisc_dPres =
     fluid->template getReference< array2d<real64> >( FLUIDBASE::viewKeyStruct::dVisc_dPresString );
 
-  SinglePhaseKernels::MobilityKernel::Launch( 0,
-                                              dataGroup->size(),
-                                              dens,
-                                              dDens_dPres,
-                                              visc,
-                                              dVisc_dPres,
-                                              mob,
-                                              dMob_dPres );
+  SinglePhaseBaseKernels::MobilityKernel::Launch( 0,
+                                                  dataGroup->size(),
+                                                  dens,
+                                                  dDens_dPres,
+                                                  visc,
+                                                  dVisc_dPres,
+                                                  mob,
+                                                  dMob_dPres );
 
 }
 

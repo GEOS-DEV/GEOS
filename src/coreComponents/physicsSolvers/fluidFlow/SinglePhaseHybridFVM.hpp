@@ -21,6 +21,7 @@
 
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseProppantBase.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseHybridFVMKernels.hpp"
 
 namespace geosx
 {
@@ -100,8 +101,6 @@ public:
   using BASE::m_poroMultiplier;
   using BASE::m_transTMultiplier;
   
-  static constexpr localIndex MAX_NUM_FACES = 15;
-
   struct EquationType
   {
     static constexpr integer MASS_CONS  = 0;
@@ -199,6 +198,12 @@ public:
                          DofManager const & dofManager,
                          ParallelVector const & rhs ) override;
 
+  virtual bool
+  CheckSystemSolution( DomainPartition const * const domain,
+                       DofManager const & dofManager,
+                       ParallelVector const & solution,
+                       real64 const scalingFactor ) override;
+  
   virtual void
   ApplySystemSolution( DofManager const & dofManager,
                        ParallelVector const & solution,
@@ -260,126 +265,45 @@ public:
 
 private:
 
-  /**
-   * @brief In a given element, compute the one-sided volumetric fluxes at this element's faces
-   * @param[in] facePres the pressure at the mesh faces at the beginning of the time step
-   * @param[in] dFacePres the accumulated pressure updates at the mesh face 
-   * @param[in] faceGravDepth the depth at the mesh faces
-   * @param[in] elemToFaces the map from one-sided face to face 
-   * @param[in] elemPres the pressure at this element's center
-   * @param[in] dElemPres the accumulated pressure updates at this element's center
-   * @param[in] elemGravDepth the depth at this element's center
-   * @param[in] elemDens the density at this elenent's center  
-   * @param[in] dElemDens_dp the derivative of the density at this element's center 
-   * @param[in] transMatrix the transmissibility matrix in this element
-   * @param[out] oneSidedVolFlux the volumetric fluxes at this element's faces  
-   * @param[out] dOneSidedVolFlux_dp the derivatives of the vol fluxes wrt to this element's cell centered pressure 
-   * @param[out] dOneSidedVolFlux_dfp the derivatives of the vol fluxes wrt to this element's face pressures
-   */
-  void ComputeOneSidedVolFluxes( arrayView1d<real64 const> const & facePres,
-                                 arrayView1d<real64 const> const & dFacePres,
-                                 arrayView1d<real64 const> const & faceGravDepth,
-                                 arraySlice1d<localIndex const> const elemToFaces,
-                                 real64 const & elemPres,
-                                 real64 const & dElemPres,
-                                 real64 const & elemGravDepth,
-                                 real64 const & elemDens,
-                                 real64 const & dElemDens_dp,
-                                 stackArray2d<real64, MAX_NUM_FACES
-                                                     *MAX_NUM_FACES> const & transMatrix,
-                                 stackArray1d<real64, MAX_NUM_FACES> & oneSidedVolFlux,
-                                 stackArray1d<real64, MAX_NUM_FACES> & dOneSidedVolFlux_dp,
-                                 stackArray1d<real64, MAX_NUM_FACES> & dOneSidedVolFlux_dfp ) const;
-
-  /**
-   * @brief In a given element, collect the upwinded mobilities at this element's faces 
-   * @param[in] mesh the mesh object (single level only)
-   * @param[in] elemRegionList face-to-elemRegions map
-   * @param[in] elemSubRegionList face-to-elemSubRegions map
-   * @param[in] elemList face-to-elemIds map
-   * @param[in] regionFilter set containing the indices of the target regions
-   * @param[in] elemToFaces elem-to-faces maps
-   * @param[in] mob the mobilities in the domain (non-local)
-   * @param[in] dMob_dp the derivatives of the mobilities in the domain wrt cell-centered pressure (non-local)
-   * @param[in] er index of this element's region
-   * @param[in] esr index of this element's subregion  
-   * @param[in] ei index of this element 
-   * @param[in] elemDofNumber the dof number of this element's cell centered pressure
-   * @param[in] elemDofKey 
-   * @param[in] oneSidedVolFlux the volumetric fluxes at this element's faces  
-   * @param[inout] upwMobility the upwinded mobilities at this element's faces  
-   * @param[inout] dUpwMobility_dp the derivatives of the upwinded mobilities wrt the cell-centered pressures (local or neighbor)  
-   * @param[inout] upwDofNumber  the dof number of the upwind pressure 
-   *
-   * Note: because of the upwinding, this function requires non-local information
-   */
-  void UpdateUpwindedCoefficients( MeshLevel const * const mesh,
-                                   array2d<localIndex> const & elemRegionList,
-                                   array2d<localIndex> const & elemSubRegionList,
-                                   array2d<localIndex> const & elemList,
-                                   SortedArray<localIndex> const & regionFilter,
-                                   arraySlice1d<localIndex const> const elemToFaces,
-                                   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const & mob,
-                                   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const & dMob_dp,
-                                   localIndex const er,
-                                   localIndex const esr,
-                                   localIndex const ei,
-                                   globalIndex const elemDofNumber,
-                                   string const elemDofKey,    
-                                   stackArray1d<real64, MAX_NUM_FACES> const & oneSidedVolFlux,
-                                   stackArray1d<real64, MAX_NUM_FACES> & upwMobility,
-                                   stackArray1d<real64, MAX_NUM_FACES> & dUpwMobility_dp,
-                                   stackArray1d<globalIndex, MAX_NUM_FACES> & upwDofNumber ) const;
-
-  /**
-   * @brief In a given element, assemble the mass conservation equation
-   * @param[in] dt the time step size 
-   * @param[in] faceDofNumber the dof numbers of the face pressures 
-   * @param[in] elemToFaces the map from one-sided face to face to access face Dof numbers
-   * @param[in] elemDofNumber the dof number of this element's cell centered pressure
-   * @param[in] oneSidedVolFlux the volumetric fluxes at this element's faces  
-   * @param[in] dOneSidedVolFlux_dp the derivatives of the vol fluxes wrt to this element's cell centered pressure 
-   * @param[in] dOneSidedVolFlux_dfp the derivatives of the vol fluxes wrt to this element's face pressures
-   * @param[in] upwMobility the upwinded mobilities at this element's faces  
-   * @param[in] dUpwMobility_dp the derivatives of the upwinded mobilities wrt the cell-centered pressures (local or neighbor)  
-   * @param[in] upwDofNumber  the dof number of the upwind pressure 
-   * @param[inout] matrix the jacobian matrix
-   * @param[inout] rhs the residual
-   */
-  void AssembleOneSidedMassFluxes( real64 const & dt,
-                                   arrayView1d<globalIndex const> const & faceDofNumber,
-                                   arraySlice1d<localIndex const> const elemToFaces,
-                                   globalIndex const elemDofNumber,
-                                   stackArray1d<real64, MAX_NUM_FACES> const & oneSidedVolFlux,
-                                   stackArray1d<real64, MAX_NUM_FACES> const & dOneSidedVolFlux_dp,
-                                   stackArray1d<real64, MAX_NUM_FACES> const & dOneSidedVolFlux_dfp,
-                                   stackArray1d<real64, MAX_NUM_FACES> const & upwMobility,
-                                   stackArray1d<real64, MAX_NUM_FACES> const & dUpwMobility_dp,
-                                   stackArray1d<globalIndex, MAX_NUM_FACES> const & upwDofNumber,
-                                   ParallelMatrix * const matrix,
-                                   ParallelVector * const rhs ) const;
-
-
-  /**
-   * @brief In a given element, assemble the constraints at this element's faces
-   * @param[in] faceDofNumber the dof numbers of the face pressures 
-   * @param[in] elemToFaces the map from one-sided face to face to access face Dof numbers
-   * @param[in] elemDofNumber the dof number of this element's cell centered pressure
-   * @param[in] oneSidedVolFlux the volumetric fluxes at this element's faces  
-   * @param[in] dOneSidedVolFlux_dp the derivatives of the vol fluxes wrt to this element's cell centered pressure 
-   * @param[in] dOneSidedVolFlux_dfp the derivatives of the vol fluxes wrt to this element's face pressures
-   * @param[inout] matrix the jacobian matrix
-   * @param[inout] rhs the residual
-   */
-  void AssembleConstraints( arrayView1d<globalIndex const> const & faceDofNumber,
-                            arraySlice1d<localIndex const> const elemToFaces,
-                            globalIndex const elemDofNumber,
-                            stackArray1d<real64, MAX_NUM_FACES> const & oneSidedVolFlux,
-                            stackArray1d<real64, MAX_NUM_FACES> const & dOneSidedVolFlux_dp,
-                            stackArray1d<real64, MAX_NUM_FACES> const & dOneSidedVolFlux_dfp,
-                            ParallelMatrix * const matrix,
-                            ParallelVector * const rhs ) const; 
-
+  void FluxLaunch( localIndex er,
+                   localIndex esr,
+                   FaceElementSubRegion const * const subRegion,
+                   SortedArray<localIndex> regionFilter,
+                   MeshLevel const * const mesh,
+                   arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodePosition,
+                   array2d<localIndex> const & elemRegionList,
+                   array2d<localIndex> const & elemSubRegionList,
+                   array2d<localIndex> const & elemList,
+                   ArrayOfArraysView<localIndex const> const & faceToNodes,                
+                   arrayView1d<globalIndex const> const & faceDofNumber,
+                   arrayView1d<real64 const> const & facePres,
+                   arrayView1d<real64 const> const & dFacePres,
+                   arrayView1d<real64 const> const & faceGravCoef,
+                   real64 const lengthTolerance,
+                   real64 const dt,
+                   DofManager const * const dofManager,
+                   ParallelMatrix * const matrix,
+                   ParallelVector * const rhs );
+ 
+  void FluxLaunch( localIndex er,
+                   localIndex esr,
+                   CellElementSubRegion const * const subRegion,
+                   SortedArray<localIndex> regionFilter,
+                   MeshLevel const * const mesh,
+                   arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodePosition,
+                   array2d<localIndex> const & elemRegionList,
+                   array2d<localIndex> const & elemSubRegionList,
+                   array2d<localIndex> const & elemList,
+                   ArrayOfArraysView<localIndex const> const & faceToNodes,                
+                   arrayView1d<globalIndex const> const & faceDofNumber,
+                   arrayView1d<real64 const> const & facePres,
+                   arrayView1d<real64 const> const & dFacePres,
+                   arrayView1d<real64 const> const & faceGravCoef,
+                   real64 const lengthTolerance,
+                   real64 const dt,
+                   DofManager const * const dofManager,
+                   ParallelMatrix * const matrix,
+                   ParallelVector * const rhs );
 
   /**
    * @brief In a given element, recompute the transmissibility matrix
@@ -402,8 +326,8 @@ private:
                                       real64   const & elemVolume,
                                       R1Tensor const & elemPerm,
                                       real64   const & lengthTolerance,
-                                      stackArray2d<real64, MAX_NUM_FACES
-                                                          *MAX_NUM_FACES> const & transMatrix ) const; 
+                                      stackArray2d<real64, SinglePhaseHybridFVMKernels::MAX_NUM_FACES
+                                                          *SinglePhaseHybridFVMKernels::MAX_NUM_FACES> const & transMatrix ) const; 
 
   
   /**
@@ -425,8 +349,8 @@ private:
                                 R1Tensor const & elemCenter,
                                 R1Tensor const & elemPerm,
                                 real64   const & lengthTolerance,
-                                stackArray2d<real64, MAX_NUM_FACES
-                                                    *MAX_NUM_FACES> const & transMatrix ) const; 
+                                stackArray2d<real64, SinglePhaseHybridFVMKernels::MAX_NUM_FACES
+                                                    *SinglePhaseHybridFVMKernels::MAX_NUM_FACES> const & transMatrix ) const; 
 
   /**
    * @brief In a given element, recompute the transmissibility matrix using a consistent inner product
@@ -453,8 +377,8 @@ private:
                                    R1Tensor const & elemPerm,
                                    real64   const & tParam, 
                                    real64   const & lengthTolerance,
-                                   stackArray2d<real64, MAX_NUM_FACES
-                                                       *MAX_NUM_FACES> const & transMatrix ) const; 
+                                   stackArray2d<real64, SinglePhaseHybridFVMKernels::MAX_NUM_FACES
+                                                       *SinglePhaseHybridFVMKernels::MAX_NUM_FACES> const & transMatrix ) const; 
 
 
   
