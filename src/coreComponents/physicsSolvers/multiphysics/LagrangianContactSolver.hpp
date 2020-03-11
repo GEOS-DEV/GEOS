@@ -123,6 +123,17 @@ public:
                                         ParallelVector & rhs,
                                         ParallelVector & solution ) override;
 
+  virtual bool LineSearch( real64 const & time_n,
+                           real64 const & dt,
+                           integer const GEOSX_UNUSED_PARAM( cycleNumber ),
+                           DomainPartition * const domain,
+                           DofManager const & dofManager,
+                           ParallelMatrix & matrix,
+                           ParallelVector & rhs,
+                           ParallelVector const & solution,
+                           real64 const scaleFactor,
+                           real64 & lastResidual ) override;
+
   void UpdateDeformationForCoupling( DomainPartition * const domain );
 
   void AssembleForceResidualDerivativeWrtTraction( DomainPartition * const domain,
@@ -140,10 +151,6 @@ public:
                               ParallelMatrix * const matrix,
                               ParallelVector * const rhs );
 
-  void InitializeFractureState( MeshLevel * const mesh );
-
-  bool UpdateFractureState( DomainPartition * const domain );
-
   real64 SplitOperatorStep( real64 const & time_n,
                             real64 const & dt,
                             integer const cycleNumber,
@@ -158,10 +165,9 @@ public:
     constexpr static auto tractionString = "traction";
     constexpr static auto deltaTractionString = "deltaTraction";
     constexpr static auto fractureStateString = "fractureState";
+    constexpr static auto previousFractureStateString = "previousFractureState";
     constexpr static auto localJumpString = "localJump";
     constexpr static auto previousLocalJumpString = "previousLocalJump";
-    constexpr static auto localJumpCorrectionString = "localJumpCorrection";
-    constexpr static auto previousLocalJumpCorrectionString = "previousLocalJumpCorrection";
   } LagrangianContactSolverViewKeys;
 
 protected:
@@ -188,7 +194,7 @@ private:
   real64 const m_slidingTolerance = 1.e-7;
   string const m_tractionKey = viewKeyStruct::tractionString;
 
-  real64 m_initialResidual[2] = {0.0, 0.0};
+  real64 m_initialResidual[3] = {0.0, 0.0, 0.0};
 
   /**
    * @enum FractureState
@@ -249,12 +255,26 @@ private:
     return false;
   }
 
-//  void FractureStateSummary( globalIndex numStick, globalIndex numSlip, globalIndex numOpen ) const
-//  {
-//    globalIndex_array localSummary( 3 );
-//    localSummary = 0;
-//
-//  }
+  void InitializeFractureState( MeshLevel * const mesh,
+                                string const fieldName ) const;
+
+  void SetFractureStateForElasticStep( DomainPartition * const domain ) const;
+
+  bool UpdateFractureState( DomainPartition * const domain ) const;
+
+  bool IsFractureAllInStickCondition( DomainPartition const * const domain ) const;
+
+  void ComputeFractureStateStatistics( DomainPartition const * const domain,
+                                       globalIndex & numStick,
+                                       globalIndex & numSlip,
+                                       globalIndex & numOpen,
+                                       bool printAll = false ) const;
+
+  real64 ParabolicInterpolationThreePoints( real64 const lambdac,
+                                            real64 const lambdam,
+                                            real64 const ff0,
+                                            real64 const ffc,
+                                            real64 const ffm ) const;
 };
 
 } /* namespace geosx */
