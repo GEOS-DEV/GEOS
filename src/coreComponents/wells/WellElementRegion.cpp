@@ -82,7 +82,7 @@ void WellElementRegion::GenerateWell( MeshLevel & mesh,
   {
     globalIndex const iwelemGlobal = perfElemIdGlobal[iperfGlobal];
 
-    if( perforationData->m_globalToLocalMap.count( iperfGlobal ) > 0 )
+    if( perforationData->globalToLocalMap().count( iperfGlobal ) > 0 )
     {
       elemStatusGlobal[iwelemGlobal] |= WellElementSubRegion::WellElemStatus::LOCAL;
     }
@@ -121,7 +121,7 @@ void WellElementRegion::GenerateWell( MeshLevel & mesh,
 
   // 5) construct the local perforation to well element map
   perforationData->ConnectToWellElements( wellGeometry,
-                                          subRegion->m_globalToLocalMap,
+                                          subRegion->globalToLocalMap(),
                                           elemOffsetGlobal );
 
 }

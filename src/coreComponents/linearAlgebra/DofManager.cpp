@@ -657,7 +657,7 @@ void vectorToFieldImpl( VECTOR const & vector,
                         localIndex const hiComp )
 {
   arrayView1d< globalIndex const > const & indexArray = manager->getReference< array1d< globalIndex > >( dofKey );
-  arrayView1d< integer const > const & ghostRank = manager->GhostRank();
+  arrayView1d< integer const > const & ghostRank = manager->ghostRank();
 
   real64 const * localVector = vector.extractLocalVector();
 
@@ -702,7 +702,7 @@ void fieldToVectorImpl( VECTOR & vector,
                         localIndex const hiComp )
 {
   arrayView1d< globalIndex const > const & indexArray = manager->getReference< array1d< globalIndex > >( dofKey );
-  arrayView1d< integer const > const & ghostRank = manager->GhostRank();
+  arrayView1d< integer const > const & ghostRank = manager->ghostRank();
 
   real64 * localVector = vector.extractLocalVector();
 

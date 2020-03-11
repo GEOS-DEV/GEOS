@@ -53,14 +53,21 @@ void CellElementSubRegion::CopyFromCellBlock( CellBlock * source )
   this->setNumFacesPerElement( source->numFacesPerElement() );
   this->resize( source->size());
   this->nodeList() = source->nodeList();
-  this->m_localToGlobalMap = source->m_localToGlobalMap;
+
+  arrayView1d< globalIndex const > const & sourceLocalToGlobal = source->localToGlobalMap();
+  this->m_localToGlobalMap.resize( sourceLocalToGlobal.size() );
+  for( localIndex i = 0; i < localToGlobalMap().size(); ++i )
+  {
+    this->m_localToGlobalMap[ i ] = sourceLocalToGlobal[ i ];
+  }
+
   this->ConstructGlobalToLocalMap();
-  source->forExternalProperties( [&]( dataRepository::WrapperBase * const wrapper )->void
+  source->forExternalProperties( [&]( dataRepository::WrapperBase * const wrapper )
   {
     std::type_index typeIndex = std::type_index( wrapper->get_typeid());
     rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( typeIndex ),
                                     true,
-                                    [&]( auto type, auto GEOSX_UNUSED_PARAM( baseType ) ) -> void
+                                    [&]( auto type, auto GEOSX_UNUSED_PARAM( baseType ) )
     {
       using fieldType = decltype(type);
       dataRepository::Wrapper< fieldType > & field = dataRepository::Wrapper< fieldType >::cast( *wrapper );
@@ -76,7 +83,7 @@ void CellElementSubRegion::CopyFromCellBlock( CellBlock * source )
 void CellElementSubRegion::ConstructSubRegionFromFaceSet( FaceManager const * const faceManager,
                                                           string const & setName )
 {
-  SortedArrayView< localIndex const > const & targetSet = faceManager->sets()->getReference< SortedArray< localIndex > >( setName );
+  SortedArrayView< localIndex const > const & targetSet = faceManager->sets().getReference< SortedArray< localIndex > >( setName );
   m_toFacesRelation.resize( 0, 2 );
   this->resize( targetSet.size() );
 
@@ -115,14 +122,14 @@ localIndex CellElementSubRegion::PackUpDownMapsPrivate( buffer_unit_type * & buf
                                            nodeList().Base().toViewConst(),
                                            m_unmappedGlobalIndicesInNodelist,
                                            packList,
-                                           this->m_localToGlobalMap,
+                                           this->localToGlobalMap(),
                                            nodeList().RelatedObjectLocalToGlobal() );
 
   packedSize += bufferOps::Pack< DOPACK >( buffer,
                                            faceList().Base().toViewConst(),
                                            m_unmappedGlobalIndicesInFacelist,
                                            packList,
-                                           this->m_localToGlobalMap,
+                                           this->localToGlobalMap(),
                                            faceList().RelatedObjectLocalToGlobal() );
 
   return packedSize;
@@ -139,14 +146,14 @@ localIndex CellElementSubRegion::UnpackUpDownMaps( buffer_unit_type const * & bu
                                      nodeList().Base().toView(),
                                      packList,
                                      m_unmappedGlobalIndicesInNodelist,
-                                     this->m_globalToLocalMap,
+                                     this->globalToLocalMap(),
                                      nodeList().RelatedObjectGlobalToLocal() );
 
   unPackedSize += bufferOps::Unpack( buffer,
                                      faceList().Base(),
                                      packList,
                                      m_unmappedGlobalIndicesInFacelist,
-                                     this->m_globalToLocalMap,
+                                     this->globalToLocalMap(),
                                      faceList().RelatedObjectGlobalToLocal() );
 
   return unPackedSize;

@@ -235,6 +235,8 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition & domain,
   FaceElementSubRegion * const fractureSubRegion = fractureRegion->GetSubRegion< FaceElementSubRegion >( "default" );
   FaceElementSubRegion::FaceMapType const & faceMap = fractureSubRegion->faceList();
 
+  arrayView1d< integer const > const & ghostRank = fractureSubRegion->ghostRank();
+
   arrayView1d< localIndex const > const &
   fractureConnectorsToEdges = edgeManager->getReference< array1d< localIndex > >( EdgeManager::
                                                                                     viewKeyStruct::
@@ -259,7 +261,7 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition & domain,
   stackArray1d< R1Tensor, maxElems > stencilCellCenterToEdgeCenters;
   stackArray1d< integer, maxElems > isGhostConnectors;
 
-  arrayView1d< integer const > const & edgeGhostRank = edgeManager->GhostRank();
+  arrayView1d< integer const > const & edgeGhostRank = edgeManager->ghostRank();
 
   // TODO Note that all of this initialization should be performed elsewhere. This is just here because it was
   // convenient, but it is not appropriate to have physics based initialization in the flux approximator.
@@ -515,7 +517,7 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition & domain,
     for( localIndex const kfe : fractureSubRegion->m_newFaceElements )
 //    for( localIndex kfe=0 ; kfe<faceElementsToCells.size(0) ; ++kfe )
     {
-      if( fractureSubRegion->GhostRank()[kfe] < 0 )
+      if( ghostRank[kfe] < 0 )
       {
         localIndex const numElems = faceElementsToCells.size( 1 );
 

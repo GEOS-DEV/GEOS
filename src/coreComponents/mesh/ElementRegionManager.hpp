@@ -119,10 +119,7 @@ public:
                string_array const & regionNames,
                string_array const & elementTypes );
 
-//  CellBlock & CreateRegion( string const & regionName,
-//                               string const & elementType,
-//                               integer const & numElements );
-
+  void SetMaxGlobalIndex();
 
   subGroupMap const & GetRegions() const
   {
@@ -146,13 +143,13 @@ public:
   }
 
   template< typename T=ElementRegionBase >
-  T const * GetRegion( localIndex const & index ) const
+  T const * GetRegion( localIndex const index ) const
   {
     return this->GetGroup( groupKeyStruct::elementRegionsGroup )->GetGroup< T >( index );
   }
 
   template< typename T=ElementRegionBase >
-  T * GetRegion( localIndex const & index )
+  T * GetRegion( localIndex const index )
   {
     return this->GetGroup( groupKeyStruct::elementRegionsGroup )->GetGroup< T >( index );
   }
