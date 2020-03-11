@@ -2965,7 +2965,7 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
 
   for (localIndex const trailingFaceIndex : m_trailingFaces)
 //  RAJA::forall< parallelHostPolicy >( RAJA::TypedRangeSegment< localIndex >( 0, m_trailingFaces.size() ),
-//                                      GEOSX_HOST_DEVICE_LAMBDA ( localIndex const trailingFacesCounter )
+//                                      [=] GEOSX_HOST_DEVICE ( localIndex const trailingFacesCounter )
   {
 //    localIndex const trailingFaceIndex = m_trailingFaces[ trailingFacesCounter ];
     R1Tensor faceNormalVector = faceNormal[trailingFaceIndex];//TODO: check if a ghost face still has the correct attributes such as normal vector, face center, face index.
