@@ -45,6 +45,10 @@ public:
 
   NeighborCommunicator();
 
+  NeighborCommunicator( int rank ) :
+    NeighborCommunicator()
+  { SetNeighborRank( rank ); }
+
   void MPI_iSendReceive( buffer_unit_type const * const sendBuffer,
                          int const sendSize,
                          MPI_Request & sendRequest,
@@ -226,7 +230,7 @@ public:
    */
   void PrepareAndSendGhosts( bool const contactActive,
                              int const depth,
-                             MeshLevel * const meshLevel,
+                             MeshLevel & meshLevel,
                              int const commID );
 
   /**
@@ -236,7 +240,7 @@ public:
    *  the request associated with that recv has
    *  completed (retrieve the request using GetRecvRequest)
    */
-  void UnpackGhosts( MeshLevel * const meshLevel,
+  void UnpackGhosts( MeshLevel & meshLevel,
                      int const commID );
 
   /**
@@ -248,7 +252,7 @@ public:
    *  must be completed before PostRecv is called in order
    *  to correctly resize the receive buffer.
    */
-  void PrepareAndSendSyncLists( MeshLevel * const meshLevel,
+  void PrepareAndSendSyncLists( MeshLevel & meshLevel,
                                 int const commID );
 
   /**
@@ -258,7 +262,7 @@ public:
    *  the request associated with that recv has
    *  completed (retrieve the request using GetRecvRequest)
    */
-  void UnpackAndRebuildSyncLists( MeshLevel * const meshLevel,
+  void UnpackAndRebuildSyncLists( MeshLevel & meshLevel,
                                   int const CommID );
 
   void PackCommBufferForSync( std::map< string, string_array > const & fieldNames,
@@ -277,9 +281,6 @@ public:
                             MeshLevel * const meshLevel,
                             int const commID,
                             bool on_device = false );
-
-  static int Rank();
-  static int MPISize();
 
   void SetNeighborRank( int const rank ) { m_neighborRank = rank; }
   int NeighborRank() const { return m_neighborRank; }
@@ -328,7 +329,7 @@ public:
     m_receiveBuffer[commID].resize( newSize );
   }
 
-  void AddNeighborGroupToMesh( MeshLevel * const mesh ) const;
+  void AddNeighborGroupToMesh( MeshLevel & mesh ) const;
 
 private:
   int m_neighborRank;

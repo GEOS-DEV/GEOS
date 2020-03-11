@@ -24,7 +24,6 @@
 #include "fileIO/silo/SiloFile.hpp"
 #include "managers/ObjectManagerBase.hpp"
 #include "mpiCommunications/CommunicationTools.hpp"
-#include "mpiCommunications/NeighborCommunicator.hpp"
 #include "mpiCommunications/SpatialPartition.hpp"
 
 
@@ -37,8 +36,8 @@ DomainPartition::DomainPartition( std::string const & name,
                                   Group * const parent ):
   Group( name, parent )
 {
-  this->registerWrapper< array1d<NeighborCommunicator> >(viewKeys.neighbors)->setRestartFlags( RestartFlags::NO_WRITE );
-  this->registerWrapper<SpatialPartition,PartitionBase>(keys::partitionManager)->setRestartFlags( RestartFlags::NO_WRITE );
+  this->registerWrapper( "Neighbors", &m_neighbors, false )->setRestartFlags( RestartFlags::NO_WRITE );
+  this->registerWrapper< SpatialPartition, PartitionBase >( keys::partitionManager )->setRestartFlags( RestartFlags::NO_WRITE );
 
   RegisterGroup( groupKeys.meshBodies );
   RegisterGroup<constitutive::ConstitutiveManager>( groupKeys.constitutiveManager );
@@ -154,7 +153,6 @@ void DomainPartition::GenerateSets()
 void DomainPartition::SetupCommunications( bool use_nonblocking )
 {
   GEOSX_MARK_FUNCTION;
-  array1d<NeighborCommunicator> & allNeighbors = this->getReference< array1d<NeighborCommunicator> >( viewKeys.neighbors );
 
 #if defined(GEOSX_USE_MPI)
   if( m_metisNeighborList.empty() )
@@ -181,43 +179,84 @@ void DomainPartition::SetupCommunications( bool use_nonblocking )
   }
   else
   {
-    for( auto & neighborRank : m_metisNeighborList )
+    for( integer const neighborRank : m_metisNeighborList )
     {
-      NeighborCommunicator neighbor;
-      neighbor.SetNeighborRank( neighborRank );
-      allNeighbors.push_back( std::move(neighbor) );
+      m_neighbors.push_back( NeighborCommunicator( neighborRank ) );
     }
   }
+
+  // Create an array of the first neighbors.
+  array1d< int > firstNeighborRanks;
+  for( NeighborCommunicator const & neighbor : m_neighbors )
+  {
+    firstNeighborRanks.push_back( neighbor.NeighborRank() );
+  }
+
+  constexpr int neighborsTag = 43543;
+
+  // Send this list of neighbors to all neighbors.
+  std::vector< MPI_Request > requests( m_neighbors.size() );
+  for( std::size_t i = 0; i < m_neighbors.size(); ++i )
+  {
+    MpiWrapper::iSend( firstNeighborRanks.toViewConst(), m_neighbors[ i ].NeighborRank(), neighborsTag, MPI_COMM_GEOSX, &requests[ i ] );
+  }
+
+  // This set will contain the second (neighbor of) neighbors ranks.
+  std::set< int > secondNeighborRanks;
+
+  array1d< int > neighborOfNeighborRanks;
+  for ( std::size_t i = 0; i < m_neighbors.size(); ++i )
+  {
+    MpiWrapper::recv( neighborOfNeighborRanks, m_neighbors[ i ].NeighborRank(), neighborsTag, MPI_COMM_GEOSX, MPI_STATUS_IGNORE );
+
+    // Insert the neighbors of the current neighbor into the set of second neighbors.
+    secondNeighborRanks.insert( neighborOfNeighborRanks.begin(), neighborOfNeighborRanks.end() );
+  }
+
+  // Remove yourself and all the first neighbors from the second neighbors.
+  secondNeighborRanks.erase( MpiWrapper::Comm_rank() );
+  for( NeighborCommunicator const & neighbor : m_neighbors )
+  {
+    secondNeighborRanks.erase( neighbor.NeighborRank() );
+  }
+
+  for( integer const neighborRank : secondNeighborRanks )
+  {
+    m_neighbors.push_back( NeighborCommunicator( neighborRank ) );
+  }
+
+  MpiWrapper::Waitall( requests.size(), requests.data(), MPI_STATUSES_IGNORE );
+
 #endif
 
   Group * const meshBodies = getMeshBodies();
   MeshBody * const meshBody = meshBodies->GetGroup<MeshBody>(0);
-  MeshLevel * const meshLevel = meshBody->GetGroup<MeshLevel>(0);
+  MeshLevel & meshLevel = *meshBody->GetGroup<MeshLevel>(0);
 
-  for( auto const & neighbor : allNeighbors )
+  for( NeighborCommunicator const & neighbor : m_neighbors )
   {
     neighbor.AddNeighborGroupToMesh(meshLevel);
   }
 
-  NodeManager * const nodeManager = meshLevel->getNodeManager();
-  FaceManager * const faceManager = meshLevel->getFaceManager();
-  EdgeManager * const edgeManager = meshLevel->getEdgeManager();
+  NodeManager * const nodeManager = meshLevel.getNodeManager();
+  FaceManager * const faceManager = meshLevel.getFaceManager();
+  EdgeManager * const edgeManager = meshLevel.getEdgeManager();
 
   nodeManager->SetMaxGlobalIndex();
 
-  CommunicationTools::AssignGlobalIndices( *faceManager, *nodeManager, allNeighbors );
+  CommunicationTools::AssignGlobalIndices( *faceManager, *nodeManager, m_neighbors );
 
-  CommunicationTools::AssignGlobalIndices( *edgeManager, *nodeManager, allNeighbors );
+  CommunicationTools::AssignGlobalIndices( *edgeManager, *nodeManager, m_neighbors );
 
   CommunicationTools::FindMatchedPartitionBoundaryObjects( faceManager,
-                                                           allNeighbors );
+                                                           m_neighbors );
 
   CommunicationTools::FindMatchedPartitionBoundaryObjects( nodeManager,
-                                                           allNeighbors );
+                                                           m_neighbors );
 
-  CommunicationTools::FindGhosts( meshLevel, allNeighbors, use_nonblocking );
+  CommunicationTools::FindGhosts( meshLevel, m_neighbors, use_nonblocking );
 
-  faceManager->SortAllFaceNodes( nodeManager, meshLevel->getElemManager() );
+  faceManager->SortAllFaceNodes( nodeManager, meshLevel.getElemManager() );
   faceManager->computeGeometry( nodeManager );
 }
 
@@ -227,7 +266,6 @@ void DomainPartition::AddNeighbors(const unsigned int idim,
 {
   PartitionBase   & partition1 = getReference<PartitionBase>(keys::partitionManager);
   SpatialPartition & partition = dynamic_cast<SpatialPartition &>(partition1);
-  array1d<NeighborCommunicator> & allNeighbors = this->getReference< array1d<NeighborCommunicator> >( viewKeys.neighbors );
 
   if (idim == nsdof)
   {
@@ -242,9 +280,8 @@ void DomainPartition::AddNeighbors(const unsigned int idim,
     }
     if (!me)
     {
-      allNeighbors.push_back(NeighborCommunicator());
-      int neighborRank = MpiWrapper::Cart_rank(cartcomm, ncoords);
-      allNeighbors.back().SetNeighborRank(neighborRank);
+      int const neighborRank = MpiWrapper::Cart_rank(cartcomm, ncoords);
+      m_neighbors.push_back( NeighborCommunicator( neighborRank ) );
     }
   }
   else

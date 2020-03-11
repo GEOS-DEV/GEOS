@@ -278,7 +278,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 
         CommunicationTools::SynchronizeFields( fieldNames,
                                                domain->getMeshBody(0)->getMeshLevel(0),
-                                               domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
+                                               domain->getNeighbors() );
 
         this->UpdateDeformationForCoupling(domain);
 

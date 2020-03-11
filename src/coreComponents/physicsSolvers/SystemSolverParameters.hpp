@@ -94,8 +94,6 @@ public:
   real64  m_krylovSetupTime;
   real64  m_krylovSolveTime;
   integer m_maxIters = 1000;
-
-
 };
 
 } /* namespace geosx */
