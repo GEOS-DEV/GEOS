@@ -295,7 +295,6 @@
 			<xsd:element name="Box" type="BoxType" />
 			<xsd:element name="Cylinder" type="CylinderType" />
 			<xsd:element name="ThickPlane" type="ThickPlaneType" />
-			<xsd:element name="Union" type="UnionType" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="BoundedPlaneType" />
@@ -309,7 +308,6 @@
 	</xsd:complexType>
 	<xsd:complexType name="CylinderType" />
 	<xsd:complexType name="ThickPlaneType" />
-	<xsd:complexType name="UnionType" />
 	<xsd:complexType name="IncludedType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="File" type="FileType" />
