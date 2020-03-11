@@ -130,10 +130,11 @@ void CellElementRegion::GenerateAggregates( FaceManager const * const faceManage
   // First, compute the volume of each aggregates
   this->forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&]( ElementSubRegionBase & elementSubRegion )
   {
+    arrayView1d< integer const > const & ghostRank = elementSubRegion.ghostRank();
     localIndex const subRegionIndex = elementSubRegion.getIndexInParent();
     for( localIndex cellIndex = 0; cellIndex< elementSubRegion.size(); cellIndex++ )
     {
-      if( elementSubRegion.GhostRank()[cellIndex] >= 0 )
+      if( ghostRank[cellIndex] >= 0 )
         continue;
       aggregateVolumes[parts[cellIndex + offsetSubRegions[subRegionIndex]]] += elementSubRegion.getElementVolume()[cellIndex];
     }
@@ -142,10 +143,11 @@ void CellElementRegion::GenerateAggregates( FaceManager const * const faceManage
   // Second, compute the normalized volume of each fine elements
   this->forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&]( ElementSubRegionBase & elementSubRegion )
   {
+    arrayView1d< integer const > const & ghostRank = elementSubRegion.ghostRank();
     localIndex const subRegionIndex = elementSubRegion.getIndexInParent();
     for( localIndex cellIndex = 0; cellIndex< elementSubRegion.size(); cellIndex++ )
     {
-      if( elementSubRegion.GhostRank()[cellIndex] >= 0 )
+      if( ghostRank[cellIndex] >= 0 )
         continue;
       normalizeVolumes[cellIndex + offsetSubRegions[subRegionIndex]] =
         elementSubRegion.getElementVolume()[cellIndex] / aggregateVolumes[parts[cellIndex + offsetSubRegions[subRegionIndex]]];
@@ -155,10 +157,11 @@ void CellElementRegion::GenerateAggregates( FaceManager const * const faceManage
   // Third, normalize the centers
   this->forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&]( ElementSubRegionBase & elementSubRegion )
   {
+    arrayView1d< integer const > const & ghostRank = elementSubRegion.ghostRank();
     localIndex const subRegionIndex = elementSubRegion.getIndexInParent();
     for( localIndex cellIndex = 0; cellIndex< elementSubRegion.size(); cellIndex++ )
     {
-      if( elementSubRegion.GhostRank()[cellIndex] >= 0 )
+      if( ghostRank[cellIndex] >= 0 )
         continue;
       R1Tensor center = elementSubRegion.getElementCenter()[cellIndex];
       center *= normalizeVolumes[cellIndex + offsetSubRegions[subRegionIndex]];

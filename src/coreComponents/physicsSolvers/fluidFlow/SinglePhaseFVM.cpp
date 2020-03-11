@@ -412,7 +412,7 @@ void SinglePhaseFVM< BASE >::ApplyFaceDirichletBC_implicit( real64 const time_n,
   arrayView1d< real64 >       const & mobFace       = faceManager->getReference< array1d< real64 > >( viewKeyStruct::boundaryFaceMobilityString );
   arrayView1d< real64 const > const & gravCoefFace  = faceManager->getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
 
-  dataRepository::Group const * sets = faceManager->sets();
+  dataRepository::Group const & sets = faceManager->sets();
 
   // first, evaluate BC to get primary field values (pressure)
 //  fsManager->ApplyField(faceManager, viewKeyStruct::boundaryFacePressure, time + dt);
@@ -482,7 +482,7 @@ void SinglePhaseFVM< BASE >::ApplyFaceDirichletBC_implicit( real64 const time_n,
                          Group * const,
                          string const & )
   {
-    if( !sets->hasWrapper( setName ) || !fluxApprox->hasBoundaryStencil( setName ))
+    if( !sets.hasWrapper( setName ) || !fluxApprox->hasBoundaryStencil( setName ))
       return;
 
     FluxApproximationBase::BoundaryStencil const & stencil = fluxApprox->getBoundaryStencil( setName );

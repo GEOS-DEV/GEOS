@@ -356,25 +356,47 @@ public:
 
 
 
-  Group * sets()             {return &m_sets;}
-  Group const * sets() const {return &m_sets;}
+  Group & sets()
+  { return m_sets; }
+
+  Group const & sets() const
+  { return m_sets; }
 
   SortedArray< localIndex > & externalSet()
-  {return m_sets.getReference< SortedArray< localIndex > >( m_ObjectManagerBaseViewKeys.externalSet );}
+  { return m_sets.getReference< SortedArray< localIndex > >( m_ObjectManagerBaseViewKeys.externalSet ); }
 
   SortedArrayView< localIndex const > const & externalSet() const
-  {return m_sets.getReference< SortedArray< localIndex > >( m_ObjectManagerBaseViewKeys.externalSet );}
+  { return m_sets.getReference< SortedArray< localIndex > >( m_ObjectManagerBaseViewKeys.externalSet ); }
 
-  integer_array & isExternal()
+  void updateGlobalToLocalMap( localIndex const lid )
+  {
+    globalIndex const gid = m_localToGlobalMap[ lid ];
+    m_localMaxGlobalIndex = std::max( m_localMaxGlobalIndex, gid );
+    m_globalToLocalMap[ gid ] = lid;
+  }
+
+  arrayView1d< globalIndex > const & localToGlobalMap()
+  { return m_localToGlobalMap; }
+
+  arrayView1d< globalIndex const > const & localToGlobalMap() const
+  { return m_localToGlobalMap; }
+
+  unordered_map< globalIndex, localIndex > const & globalToLocalMap() const
+  { return m_globalToLocalMap; }
+
+  localIndex globalToLocalMap( globalIndex const gid ) const
+  { return m_globalToLocalMap.at( gid ); }
+
+  arrayView1d< integer > const & isExternal()
   { return this->m_isExternal; }
 
-  integer_array const & isExternal() const
+  arrayView1d< integer const > const & isExternal() const
   { return this->m_isExternal; }
 
-  integer_array & GhostRank()
+  arrayView1d< integer > const & ghostRank()
   { return this->m_ghostRank; }
 
-  integer_array const & GhostRank() const
+  arrayView1d< integer const > const & ghostRank() const
   { return this->m_ghostRank; }
 
   NeighborData & getNeighborData( int const rank )
@@ -385,29 +407,53 @@ public:
 
   void addNeighbor( int const rank )
   {
-    m_neighborData.emplace( rank, *( m_neighborGroup.RegisterGroup< NeighborData >( std::to_string( rank ) ) ) );
+    std::string const & rankString = std::to_string( rank );
+    m_neighborData.emplace( std::piecewise_construct, std::make_tuple( rank ), std::make_tuple( rankString, &m_neighborGroup ) );
+    m_neighborGroup.RegisterGroup( rankString, &getNeighborData( rank ), false );
   }
 
   void removeNeighbor( int const rank )
   {
+    m_neighborGroup.deregisterGroup( getNeighborData( rank ).getName() );
     m_neighborData.erase( rank );
-    m_neighborGroup.deregisterGroup( std::to_string( rank ) );
   }
 
+  globalIndex maxGlobalIndex() const
+  { return m_maxGlobalIndex; }
+
+protected:
+  /// Group that holds object sets.
   Group m_sets;
 
-  globalIndex_array m_localToGlobalMap;
-  unordered_map< globalIndex, localIndex >  m_globalToLocalMap;
-  integer_array m_isExternal;
-  integer_array m_ghostRank;
-
-private:
+  /// Group that holds all the NeighborData objects.
   Group m_neighborGroup;
-  unordered_map< int, NeighborData & > m_neighborData;
+
+  /// Contains the global index of each object.
+  array1d< globalIndex > m_localToGlobalMap;
+
+  /// Map from object global index to the local index.
+  unordered_map< globalIndex, localIndex > m_globalToLocalMap;
+
+  /// Array that holds if an object is external.
+  array1d< integer > m_isExternal;
+
+  /// Array that holds the ghost information about each object.
+  /// A value of -2 means that the object is owned locally and not communicated.
+  /// A value of -1 means that the object is owned locally and is communicated.
+  /// A positive value means that the object is a ghost and is owned by that rank.
+  array1d< integer > m_ghostRank;
+
+  /// A map from rank to the associated NeighborData object.
+  unordered_map< int, NeighborData > m_neighborData;
+
+  /// Factor by which to overallocate when adding objects.
   real64 m_overAllocationFactor = 1.1;
 
-public:
+  /// The maximum global index of all objects across all rank.
   globalIndex m_maxGlobalIndex = -1;
+
+  /// The maximum global index of any object of all objects on this rank.
+  globalIndex m_localMaxGlobalIndex = -1;
 };
 
 

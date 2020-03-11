@@ -46,7 +46,7 @@ void MeshUtilities::GenerateNodesets( dataRepository::Group const * geometries,
 {
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager->referencePosition();
   localIndex const numNodes = nodeManager->size();
-  Group * sets = nodeManager->sets();
+  Group & sets = nodeManager->sets();
 
   for( int i = 0; i < geometries->GetSubGroups().size(); ++i )
   {
@@ -54,7 +54,7 @@ void MeshUtilities::GenerateNodesets( dataRepository::Group const * geometries,
     if( object!=nullptr )
     {
       string name = object->getName();
-      SortedArray< localIndex > & targetSet = sets->registerWrapper< SortedArray< localIndex > >( name )->reference();
+      SortedArray< localIndex > & targetSet = sets.registerWrapper< SortedArray< localIndex > >( name )->reference();
       for( localIndex a=0; a<numNodes; ++a )
       {
         if( object->IsCoordInObject( X[a] ))

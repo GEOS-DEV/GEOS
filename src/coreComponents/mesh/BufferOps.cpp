@@ -51,7 +51,7 @@ localIndex Pack( buffer_unit_type * & buffer,
       {
         ElementRegionBase const * const elemRegion = elementRegionManager->GetRegion( elemRegionIndex );
         ElementSubRegionBase const * const elemSubRegion = elemRegion->GetSubRegion( elemSubRegionIndex );
-        sizeOfPackedChars += bufferOps::Pack< DO_PACKING >( buffer, elemSubRegion->m_localToGlobalMap[elemIndex] );
+        sizeOfPackedChars += bufferOps::Pack< DO_PACKING >( buffer, elemSubRegion->localToGlobalMap()[elemIndex] );
       }
       else
       {
@@ -117,7 +117,7 @@ localIndex Unpack( buffer_unit_type const * & buffer,
         ElementRegionBase const * const elemRegion = elementRegionManager->GetRegion( elemRegionIndex );
         ElementSubRegionBase const * const elemSubRegion = elemRegion->GetSubRegion( elemSubRegionIndex );
 
-        localIndex localElementIndex = softMapLookup( elemSubRegion->m_globalToLocalMap,
+        localIndex localElementIndex = softMapLookup( elemSubRegion->globalToLocalMap(),
                                                       globalElementIndex,
                                                       localIndex( -1 ) );
         if( localElementIndex!=-1 )
@@ -181,7 +181,7 @@ localIndex Pack( buffer_unit_type * & buffer,
       {
         ElementRegionBase const * const elemRegion = elementRegionManager->GetRegion( elemRegionIndex );
         ElementSubRegionBase const * const elemSubRegion = elemRegion->GetSubRegion( elemSubRegionIndex );
-        sizeOfPackedChars += bufferOps::Pack< DO_PACKING >( buffer, elemSubRegion->m_localToGlobalMap[elemIndex] );
+        sizeOfPackedChars += bufferOps::Pack< DO_PACKING >( buffer, elemSubRegion->localToGlobalMap()[elemIndex] );
       }
       else
       {
@@ -239,7 +239,7 @@ localIndex Unpack( buffer_unit_type const * & buffer,
         ElementSubRegionBase const * const
         elemSubRegion = elemRegion->GetSubRegion( recvElemSubRegionIndex );
 
-        localIndex const recvElemIndex = softMapLookup( elemSubRegion->m_globalToLocalMap,
+        localIndex const recvElemIndex = softMapLookup( elemSubRegion->globalToLocalMap(),
                                                         globalElementIndex,
                                                         localIndex( -1 ) );
 

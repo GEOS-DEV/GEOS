@@ -742,7 +742,7 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
   string const dispDofKey = m_solidSolver->getDofManager().getKey( keys::TotalDisplacement );
   NodeManager const * const nodeManager = mesh->getNodeManager();
   arrayView1d< globalIndex const > const & dispDofNumber = nodeManager->getReference< globalIndex_array >( dispDofKey );
-  arrayView1d< integer const > const & nodeGhostRank = nodeManager->GhostRank();
+  arrayView1d< integer const > const & nodeGhostRank = nodeManager->ghostRank();
 
   m_matrix01.open();
   fsManager.Apply( time + dt,
@@ -791,7 +791,7 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
   {
     arrayView1d< globalIndex const > const &
     dofNumber = subRegion->getReference< array1d< globalIndex > >( presDofKey );
-    arrayView1d< integer const > const & ghostRank = subRegion->group_cast< ObjectManagerBase * >()->GhostRank();
+    arrayView1d< integer const > const & ghostRank = subRegion->group_cast< ObjectManagerBase * >()->ghostRank();
 
     SortedArray< localIndex > localSet;
     for( auto const & a : lset )
@@ -984,7 +984,7 @@ HydrofractureSolver::
     {
       arrayView1d< real64 const > const & fluidPressure = subRegion.getReference< array1d< real64 > >( "pressure" );
       arrayView1d< real64 const > const & deltaFluidPressure = subRegion.getReference< array1d< real64 > >( "deltaPressure" );
-      arrayView1d< integer const > const & ghostRank = subRegion.GhostRank();
+      arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
       arrayView1d< real64 > const & area = subRegion.getElementArea();
       arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
 
@@ -1091,7 +1091,7 @@ HydrofractureSolver::
     dataRepository::Group const * const constitutiveGroup = subRegion.GetConstitutiveModels();
     dataRepository::Group const * const constitutiveRelation = constitutiveGroup->GetGroup( constitutiveName );
 
-    arrayView1d< integer const >     const & elemGhostRank = subRegion.GhostRank();
+    arrayView1d< integer const >     const & elemGhostRank = subRegion.ghostRank();
     arrayView1d< globalIndex const > const & presDofNumber = subRegion.getReference< array1d< globalIndex > >( presDofKey );
     arrayView1d< globalIndex const > const & dispDofNumber = nodeManager->getReference< array1d< globalIndex > >( dispDofKey );
 

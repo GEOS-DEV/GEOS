@@ -55,13 +55,27 @@ void ElementRegionManager::resize( integer_array const & numElements,
                                    string_array const & GEOSX_UNUSED_PARAM( elementTypes ) )
 {
   localIndex const n_regions = integer_conversion< localIndex >( regionNames.size());
-//  Group * elementRegions = this->GetGroup(keys::cellBlocks);
   for( localIndex reg=0; reg<n_regions; ++reg )
   {
-    ElementRegionBase * elemRegion = this->GetRegion( regionNames[reg] );
+    ElementRegionBase * elemRegion = this->GetRegion( reg );
     elemRegion->resize( numElements[reg] );
   }
 }
+
+void ElementRegionManager::SetMaxGlobalIndex()
+{
+  forElementSubRegions< ElementSubRegionBase >( [this] ( ElementSubRegionBase const & subRegion )
+  {
+    m_localMaxGlobalIndex = std::max( m_localMaxGlobalIndex, subRegion.maxGlobalIndex() );
+  } );
+
+  MpiWrapper::allReduce( &m_localMaxGlobalIndex,
+                         &m_maxGlobalIndex,
+                         1,
+                         MPI_MAX,
+                         MPI_COMM_GEOSX );
+}
+
 
 
 Group * ElementRegionManager::CreateChild( string const & childKey, string const & childName )
@@ -193,7 +207,7 @@ void ElementRegionManager::GenerateWells( MeshManager * const meshManager,
 
   // get the offsets to construct local-to-global maps for well nodes and elements
   nodeManager->SetMaxGlobalIndex();
-  globalIndex const nodeOffsetGlobal = nodeManager->m_maxGlobalIndex + 1;
+  globalIndex const nodeOffsetGlobal = nodeManager->maxGlobalIndex() + 1;
   localIndex const elemOffsetLocal  = this->getNumberOfElements();
   globalIndex const elemOffsetGlobal = MpiWrapper::Sum( elemOffsetLocal );
 
