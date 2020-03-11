@@ -1129,12 +1129,16 @@ ApplyBoundaryConditions( real64 const time_n,
                                                                             rhs );
   });
 
+  rhs.open();
   ApplyTractionBC(
     time_n + dt,
     dofManager, domain,
     rhs );
+  rhs.close();
 
+  rhs.open();
   ApplyDisplacementBC_implicit( time_n + dt, dofManager, *domain, matrix, rhs );
+  rhs.close();
 
   if( faceManager->hasWrapper( "ChomboPressure" ) )
   {
@@ -1149,7 +1153,6 @@ ApplyBoundaryConditions( real64 const time_n,
   GEOSX_LOG_LEVEL_RANK_0( 2, "After SolidMechanicsLagrangianFEM::AssembleSystem" );
   GEOSX_LOG_LEVEL_RANK_0( 2, "\nJacobian:\n" << matrix );
   GEOSX_LOG_LEVEL_RANK_0( 2, "\nResidual:\n" << rhs );
-
 
 }
 
