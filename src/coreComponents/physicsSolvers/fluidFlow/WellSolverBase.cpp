@@ -119,6 +119,9 @@ void WellSolverBase::AssembleSystem( real64 const time,
   // first deal with the well control and switch if necessary
   CheckWellControlSwitch( domain );
 
+  matrix.open();
+  rhs.open();
+
   // then assemble the mass balance equations
   AssembleFluxTerms( time, dt, domain, &dofManager, &matrix, &rhs );
   AssemblePerforationTerms( time, dt, domain, &dofManager, &matrix, &rhs );
@@ -132,10 +135,17 @@ void WellSolverBase::AssembleSystem( real64 const time,
   // finally assemble the well control equation
   FormControlEquation( domain, &dofManager, &matrix, &rhs );
 
-  // Log messages for logLevel >= 2
-  GEOSX_LOG_LEVEL_RANK_0(2, "After WellSolverBase::AssembleSystem" );
-  GEOSX_LOG_LEVEL_RANK_0(2, "\nJacobian:\n" << matrix );
-  GEOSX_LOG_LEVEL_RANK_0(2, "\nResidual:\n" << rhs );
+  matrix.close();
+  rhs.close();
+
+  if( getLogLevel() >= 2 )
+  {
+    GEOSX_LOG_RANK_0( "After WellSolverBase::AssembleSystem" );
+    GEOSX_LOG_RANK_0( "\nJacobian:\n");
+    std::cout << matrix;
+    GEOSX_LOG_RANK_0( "\nResidual:\n");
+    std::cout << rhs;
+  }
 }
 
 void WellSolverBase::UpdateStateAll( DomainPartition * const domain )

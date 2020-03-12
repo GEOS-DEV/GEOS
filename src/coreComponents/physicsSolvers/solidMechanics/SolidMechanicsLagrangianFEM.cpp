@@ -966,7 +966,7 @@ void SolidMechanicsLagrangianFEM::SetupDofs( DomainPartition const * const GEOSX
 
   dofManager.addCoupling( keys::TotalDisplacement,
                           keys::TotalDisplacement,
-                          DofManager::Connectivity::Elem );
+                          DofManager::Connector::Elem );
 }
 
 void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
@@ -992,9 +992,6 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARA
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const dPres =
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>("deltaPressure");
-
-  matrix.zero();
-  rhs.zero();
 
   matrix.open();
   rhs.open();
@@ -1083,10 +1080,14 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARA
   matrix.close();
   rhs.close();
 
-  // Debug for logLevel >= 2
-  GEOSX_LOG_LEVEL_RANK_0( 2, "After SolidMechanicsLagrangianFEM::AssembleSystem" );
-  GEOSX_LOG_LEVEL_RANK_0( 2, "\nJacobian:\n" << matrix );
-  GEOSX_LOG_LEVEL_RANK_0( 2, "\nResidual:\n" << rhs );
+  if( getLogLevel() >= 2 )
+  {
+    GEOSX_LOG_RANK_0( "After SolidMechanicsLagrangianFEM::AssembleSystem" );
+    GEOSX_LOG_RANK_0("\nJacobian:\n");
+    std::cout<< matrix;
+    GEOSX_LOG_RANK_0("\nResidual:\n");
+    std::cout<< rhs;
+  }
 }
 
 void
@@ -1108,7 +1109,6 @@ ApplyBoundaryConditions( real64 const time_n,
 
   matrix.open();
   rhs.open();
-
   fsManager.Apply( time_n + dt,
                    domain,
                    "nodeManager",
@@ -1128,31 +1128,35 @@ ApplyBoundaryConditions( real64 const time_n,
                                                                             matrix,
                                                                             rhs );
   });
-
-  rhs.open();
-  ApplyTractionBC(
-    time_n + dt,
-    dofManager, domain,
-    rhs );
+  matrix.close();
   rhs.close();
 
   rhs.open();
+  ApplyTractionBC( time_n + dt, dofManager, domain, rhs );
+  rhs.close();
+
+  matrix.open();
+  rhs.open();
   ApplyDisplacementBC_implicit( time_n + dt, dofManager, *domain, matrix, rhs );
+  matrix.close();
   rhs.close();
 
   if( faceManager->hasWrapper( "ChomboPressure" ) )
   {
     fsManager.ApplyFieldValue( time_n, domain, "faceManager", "ChomboPressure" );
+    rhs.open();
     ApplyChomboPressure( dofManager, domain, rhs );
+    rhs.close();
   }
 
-  matrix.close();
-  rhs.close();
-
-  // Debug for logLevel >= 2
-  GEOSX_LOG_LEVEL_RANK_0( 2, "After SolidMechanicsLagrangianFEM::AssembleSystem" );
-  GEOSX_LOG_LEVEL_RANK_0( 2, "\nJacobian:\n" << matrix );
-  GEOSX_LOG_LEVEL_RANK_0( 2, "\nResidual:\n" << rhs );
+  if( getLogLevel() >= 2 )
+  {
+    GEOSX_LOG_RANK_0( "After SolidMechanicsLagrangianFEM::ApplyBoundaryConditions" );
+    GEOSX_LOG_RANK_0( "\nJacobian:\n");
+    std::cout << matrix;
+    GEOSX_LOG_RANK_0( "\nResidual:\n");
+    std::cout << rhs;
+  }
 
 }
 
@@ -1255,9 +1259,12 @@ void SolidMechanicsLagrangianFEM::SolveSystem( DofManager const & dofManager,
 
   SolverBase::SolveSystem( dofManager, matrix, rhs, solution );
 
-  // Debug for logLevel >= 2
-  GEOSX_LOG_LEVEL_RANK_0( 2, "After SolidMechanicsLagrangianFEM::SolveSystem" );
-  GEOSX_LOG_LEVEL_RANK_0( 2, "\nSolution:\n" << solution );
+  if( getLogLevel() >= 2 )
+  {
+    GEOSX_LOG_RANK_0( "After SolidMechanicsLagrangianFEM::SolveSystem" );
+    GEOSX_LOG_RANK_0("\nSolution:\n");
+    std::cout<< solution;
+  }
 }
 
 void SolidMechanicsLagrangianFEM::ResetStateToBeginningOfStep( DomainPartition * const domain )
@@ -1353,6 +1360,9 @@ void SolidMechanicsLagrangianFEM::ApplyContactConstraint( DofManager const & dof
     string const dofKey = dofManager.getKey( keys::TotalDisplacement );
     arrayView1d<globalIndex> const & nodeDofNumber = nodeManager->getReference<globalIndex_array>( dofKey );
 
+    // TODO: this bound may need to change
+    constexpr localIndex maxNodexPerFace = 4;
+    constexpr localIndex maxDofPerElem = maxNodexPerFace * 3 * 2;
 
     elemManager->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion * const subRegion )->void
     {
@@ -1376,10 +1386,9 @@ void SolidMechanicsLagrangianFEM::ApplyContactConstraint( DofManager const & dof
             localIndex const numNodesPerFace=facesToNodes.sizeOfArray(kf0);
             real64 const Ja = area[kfe] / numNodesPerFace;
 
-
-            globalIndex rowDOF[24] = {0};
-            real64 nodeRHS[24] = {0};
-            stackArray2d<real64, (4*3*2)*(4*3*2)> dRdP(numNodesPerFace*3*2, numNodesPerFace*3*2);
+            stackArray1d<globalIndex, maxDofPerElem> rowDOF( numNodesPerFace*3*2 );
+            stackArray1d<real64, maxDofPerElem> nodeRHS( numNodesPerFace*3*2 );
+            stackArray2d<real64, maxDofPerElem*maxDofPerElem> dRdP(numNodesPerFace*3*2, numNodesPerFace*3*2);
 
             for( localIndex a=0 ; a<numNodesPerFace ; ++a )
             {
@@ -1390,15 +1399,17 @@ void SolidMechanicsLagrangianFEM::ApplyContactConstraint( DofManager const & dof
               gap -= u[node0];
               real64 const gapNormal = Dot(gap,Nbar);
 
+              for( int i=0 ; i<3 ; ++i )
+              {
+                rowDOF[3*a+i]                     = nodeDofNumber[node0]+i;
+                rowDOF[3*(numNodesPerFace + a)+i] = nodeDofNumber[node1]+i;
+              }
+
               if( gapNormal < 0 )
               {
                 penaltyForce *= -contactStiffness * gapNormal * Ja;
                 for( int i=0 ; i<3 ; ++i )
                 {
-                  rowDOF[3*a+i]                     = nodeDofNumber[node0]+i;
-                  rowDOF[3*(numNodesPerFace + a)+i] = nodeDofNumber[node1]+i;
-
-
                   fc[node0] -= penaltyForce;
                   fc[node1] += penaltyForce;
                   nodeRHS[3*a+i]                     -= penaltyForce[i];
@@ -1412,15 +1423,8 @@ void SolidMechanicsLagrangianFEM::ApplyContactConstraint( DofManager const & dof
               }
             }
 
-            rhs->add( rowDOF,
-                      nodeRHS,
-                      numNodesPerFace*3*2 );
-
-            matrix->add( rowDOF,
-                         rowDOF,
-                         dRdP.data(),
-                         numNodesPerFace * 3 *2,
-                         numNodesPerFace * 3 *2 );
+            rhs->add( rowDOF, nodeRHS );
+            matrix->add( rowDOF, rowDOF, dRdP );
           }
         });
     });

@@ -476,6 +476,8 @@ real64 LagrangianContactSolver::NonlinearImplicitStep( real64 const & time_n,
         }
 
         // call assemble to fill the matrix and the rhs
+        matrix.zero();
+        rhs.zero();
         AssembleSystem( time_n, stepDt, domain, dofManager, matrix, rhs );
 
         // apply boundary conditions to system
@@ -733,6 +735,8 @@ bool LagrangianContactSolver::LineSearch( real64 const & time_n,
   ApplySystemSolution( dofManager, solution, scaleFactor, domain );
 
   // re-assemble system
+  matrix.zero();
+  rhs.zero();
   AssembleSystem( time_n, dt, domain, dofManager, matrix, rhs );
 
   // apply boundary conditions to system
@@ -776,6 +780,8 @@ bool LagrangianContactSolver::LineSearch( real64 const & time_n,
     // Keep the books on the function norms
     // re-assemble system
     // TODO: add a flag to avoid a completely useless Jacobian computation: rhs is enough
+    matrix.zero();
+    rhs.zero();
     AssembleSystem( time_n, dt, domain, dofManager, matrix, rhs );
 
     // apply boundary conditions to system
@@ -826,11 +832,11 @@ void LagrangianContactSolver::SetupDofs( DomainPartition const * const domain,
                        fractureRegions );
   dofManager.addCoupling( viewKeyStruct::tractionString,
                           viewKeyStruct::tractionString,
-                          DofManager::Connectivity::Face,
+                          DofManager::Connector::Face,
                           fractureRegions );
   dofManager.addCoupling( keys::TotalDisplacement,
                           viewKeyStruct::tractionString,
-                          DofManager::Connectivity::Elem,
+                          DofManager::Connector::Elem,
                           fractureRegions );
 }
 
@@ -872,13 +878,6 @@ void LagrangianContactSolver::AssembleSystem( real64 const time,
                                               ParallelVector & rhs )
 {
   GEOSX_MARK_FUNCTION;
-
-  matrix.open();
-  matrix.zero();
-  rhs.open();
-  rhs.zero();
-  matrix.close();
-  rhs.close();
 
   m_solidSolver->AssembleSystem( time,
                                  dt,
@@ -1947,15 +1946,15 @@ void LagrangianContactSolver::SolveSystem( DofManager const & dofManager,
 
   if( getLogLevel() > 3 )
   {
-    matrix.write( "matrix" );
-    rhs.write( "rhs" );
+    matrix.write( "matrix.mtx", LAIOutputFormat::MATRIX_MARKET );
+    rhs.write( "rhs.mtx", LAIOutputFormat::MATRIX_MARKET );
   }
 
   SolverBase::SolveSystem( dofManager, matrix, rhs, solution );
 
   if( getLogLevel() > 3 )
   {
-    solution.write( "sol" );
+    solution.write( "sol.mtx", LAIOutputFormat::MATRIX_MARKET );
   }
 
   int rank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
