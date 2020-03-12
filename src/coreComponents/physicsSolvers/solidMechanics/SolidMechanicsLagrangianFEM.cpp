@@ -1128,27 +1128,20 @@ ApplyBoundaryConditions( real64 const time_n,
                                                                             matrix,
                                                                             rhs );
   });
-  matrix.close();
-  rhs.close();
 
-  rhs.open();
   ApplyTractionBC( time_n + dt, dofManager, domain, rhs );
-  rhs.close();
 
   if( faceManager->hasWrapper( "ChomboPressure" ) )
   {
     fsManager.ApplyFieldValue( time_n, domain, "faceManager", "ChomboPressure" );
-    rhs.open();
     ApplyChomboPressure( dofManager, domain, rhs );
-    rhs.close();
   }
+  matrix.close();
+  rhs.close();
 
   matrix.open();
   rhs.open();
   ApplyDisplacementBC_implicit( time_n + dt, dofManager, *domain, matrix, rhs );
-  matrix.close();
-  rhs.close();
-
   matrix.close();
   rhs.close();
 
