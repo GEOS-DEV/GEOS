@@ -85,11 +85,11 @@ struct StressCalculationKernel
           real64 const v2_x_dNdXa2 = uhat_local[ a ][ 2 ] * dNdX[ k ][ q ][ a ][ 2 ];
 
           stress( k, q, 0 ) += ( v0_x_dNdXa0 * c[ 0 ][ 0 ] + v1_x_dNdXa1 * c[ 0 ][ 1 ] + v2_x_dNdXa2*c[ 0 ][ 2 ] ) ;
-          stress( k, q, 2 ) += ( v0_x_dNdXa0 * c[ 1 ][ 0 ] + v1_x_dNdXa1 * c[ 1 ][ 1 ] + v2_x_dNdXa2*c[ 1 ][ 2 ] ) ;
-          stress( k, q, 5 ) += ( v0_x_dNdXa0 * c[ 2 ][ 0 ] + v1_x_dNdXa1 * c[ 2 ][ 1 ] + v2_x_dNdXa2*c[ 2 ][ 2 ] ) ;
-          stress( k, q, 4 ) += ( uhat_local[ a ][ 2 ] * dNdX[ k ][ q ][ a ][ 1 ] + uhat_local[ a ][ 1 ] * dNdX[ k ][ q ][ a ][ 2 ] ) * c[ 3 ][ 3 ] ;
-          stress( k, q, 3 ) += ( uhat_local[ a ][ 2 ] * dNdX[ k ][ q ][ a ][ 0 ] + uhat_local[ a ][ 0 ] * dNdX[ k ][ q ][ a ][ 2 ] ) * c[ 4 ][ 4 ] ;
-          stress( k, q, 1 ) += ( uhat_local[ a ][ 1 ] * dNdX[ k ][ q ][ a ][ 0 ] + uhat_local[ a ][ 0 ] * dNdX[ k ][ q ][ a ][ 1 ] ) * c[ 5 ][ 5 ] ;
+          stress( k, q, 1 ) += ( v0_x_dNdXa0 * c[ 1 ][ 0 ] + v1_x_dNdXa1 * c[ 1 ][ 1 ] + v2_x_dNdXa2*c[ 1 ][ 2 ] ) ;
+          stress( k, q, 2 ) += ( v0_x_dNdXa0 * c[ 2 ][ 0 ] + v1_x_dNdXa1 * c[ 2 ][ 1 ] + v2_x_dNdXa2*c[ 2 ][ 2 ] ) ;
+          stress( k, q, 3 ) += ( uhat_local[ a ][ 2 ] * dNdX[ k ][ q ][ a ][ 1 ] + uhat_local[ a ][ 1 ] * dNdX[ k ][ q ][ a ][ 2 ] ) * c[ 3 ][ 3 ] ;
+          stress( k, q, 4 ) += ( uhat_local[ a ][ 2 ] * dNdX[ k ][ q ][ a ][ 0 ] + uhat_local[ a ][ 0 ] * dNdX[ k ][ q ][ a ][ 2 ] ) * c[ 4 ][ 4 ] ;
+          stress( k, q, 5 ) += ( uhat_local[ a ][ 1 ] * dNdX[ k ][ q ][ a ][ 0 ] + uhat_local[ a ][ 0 ] * dNdX[ k ][ q ][ a ][ 1 ] ) * c[ 5 ][ 5 ] ;
         }
       }//quadrature loop
 
@@ -131,7 +131,6 @@ struct ExplicitKernel
           arrayView2d<real64 const, nodes::TOTAL_DISPLACEMENT_USD> const & GEOSX_UNUSED_PARAM( u ),
           arrayView2d<real64 const, nodes::VELOCITY_USD> const & vel,
           arrayView2d<real64, nodes::ACCELERATION_USD> const & acc,
-          arrayView3d<real64, solid::STRESS_USD> const & stress,
           real64 const dt )
   {
     GEOSX_MARK_FUNCTION;
@@ -140,7 +139,7 @@ struct ExplicitKernel
 
     using KERNEL_POLICY = parallelDevicePolicy< 256 >;
     RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, elementList.size() ),
-                                   GEOSX_DEVICE_LAMBDA ( localIndex const i )
+                                   [=] GEOSX_DEVICE ( localIndex const i )
     {
       localIndex const k = elementList[ i ];
 
@@ -156,45 +155,37 @@ struct ExplicitKernel
         }
       }
 
-      real64 c[ 6 ][ 6 ];
-      constitutive.GetStiffness( k, c );
-
       //Compute Quadrature
       for ( localIndex q = 0; q < NUM_QUADRATURE_POINTS; ++q )
       {
-        real64 p_stress[ 6 ] = { 0 };
+        real64 strain[6] = {0};
         for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
         {
-          real64 const v0_x_dNdXa0 = v_local[ a ][ 0 ] * dNdX[ k ][ q ][ a ][ 0 ];
-          real64 const v1_x_dNdXa1 = v_local[ a ][ 1 ] * dNdX[ k ][ q ][ a ][ 1 ];
-          real64 const v2_x_dNdXa2 = v_local[ a ][ 2 ] * dNdX[ k ][ q ][ a ][ 2 ];
-
-          p_stress[ 0 ] += ( v0_x_dNdXa0 * c[ 0 ][ 0 ] + v1_x_dNdXa1 * c[ 0 ][ 1 ] + v2_x_dNdXa2*c[ 0 ][ 2 ] ) * dt;
-          p_stress[ 1 ] += ( v0_x_dNdXa0 * c[ 1 ][ 0 ] + v1_x_dNdXa1 * c[ 1 ][ 1 ] + v2_x_dNdXa2*c[ 1 ][ 2 ] ) * dt;
-          p_stress[ 2 ] += ( v0_x_dNdXa0 * c[ 2 ][ 0 ] + v1_x_dNdXa1 * c[ 2 ][ 1 ] + v2_x_dNdXa2*c[ 2 ][ 2 ] ) * dt;
-          p_stress[ 3 ] += ( v_local[ a ][ 2 ] * dNdX[ k ][ q ][ a ][ 1 ] + v_local[ a ][ 1 ] * dNdX[ k ][ q ][ a ][ 2 ] ) * c[ 3 ][ 3 ] * dt;
-          p_stress[ 4 ] += ( v_local[ a ][ 2 ] * dNdX[ k ][ q ][ a ][ 0 ] + v_local[ a ][ 0 ] * dNdX[ k ][ q ][ a ][ 2 ] ) * c[ 4 ][ 4 ] * dt;
-          p_stress[ 5 ] += ( v_local[ a ][ 1 ] * dNdX[ k ][ q ][ a ][ 0 ] + v_local[ a ][ 0 ] * dNdX[ k ][ q ][ a ][ 1 ] ) * c[ 5 ][ 5 ] * dt;
+           strain[0] = strain[0] + dNdX( k, q, a )[0] * v_local[a][0];
+           strain[1] = strain[1] + dNdX( k, q, a )[1] * v_local[a][1];
+           strain[2] = strain[2] + dNdX( k, q, a )[2] * v_local[a][2];
+           strain[3] = strain[3] + dNdX( k, q, a )[2] * v_local[a][1] + dNdX( k, q, a )[1] * v_local[a][2];
+           strain[4] = strain[4] + dNdX( k, q, a )[2] * v_local[a][0] + dNdX( k, q, a )[0] * v_local[a][2];
+           strain[5] = strain[5] + dNdX( k, q, a )[1] * v_local[a][0] + dNdX( k, q, a )[0] * v_local[a][1];
+        }
+        for( int j=0 ; j<6 ; ++j )
+        {
+          strain[j] *= dt;
         }
 
-        stress( k, q, 0 ) += p_stress[ 0 ];
-        stress( k, q, 2 ) += p_stress[ 1 ];
-        stress( k, q, 5 ) += p_stress[ 2 ];
-        stress( k, q, 4 ) += p_stress[ 3 ];
-        stress( k, q, 3 ) += p_stress[ 4 ];
-        stress( k, q, 1 ) += p_stress[ 5 ];
+        constitutive.SmallStrain( k, q, strain );
 
         for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
         {
-          f_local[ a ][ 0 ] -= ( stress( k, q, 1 ) * dNdX[ k ][ q ][ a ][ 1 ]
-                               + stress( k, q, 3 ) * dNdX[ k ][ q ][ a ][ 2 ]
-                               + stress( k, q, 0 ) * dNdX[ k ][ q ][ a ][ 0 ] ) * detJ[ k ][ q ];
-          f_local[ a ][ 1 ] -= ( stress( k, q, 1 ) * dNdX[ k ][ q ][ a ][ 0 ]
-                               + stress( k, q, 4 ) * dNdX[ k ][ q ][ a ][ 2 ]
-                               + stress( k, q, 2 ) * dNdX[ k ][ q ][ a ][ 1 ] ) * detJ[ k ][ q ];
-          f_local[ a ][ 2 ] -= ( stress( k, q, 3 ) * dNdX[ k ][ q ][ a ][ 0 ]
-                               + stress( k, q, 4 ) * dNdX[ k ][ q ][ a ][ 1 ]
-                               + stress( k, q, 5 ) * dNdX[ k ][ q ][ a ][ 2 ] ) * detJ[ k ][ q ];
+          f_local[ a ][ 0 ] -= ( constitutive.m_stress( k, q, 0 ) * dNdX[ k ][ q ][ a ][ 0 ]
+                               + constitutive.m_stress( k, q, 5 ) * dNdX[ k ][ q ][ a ][ 1 ]
+                               + constitutive.m_stress( k, q, 4 ) * dNdX[ k ][ q ][ a ][ 2 ] ) * detJ[ k ][ q ];
+          f_local[ a ][ 1 ] -= ( constitutive.m_stress( k, q, 5 ) * dNdX[ k ][ q ][ a ][ 0 ]
+                               + constitutive.m_stress( k, q, 1 ) * dNdX[ k ][ q ][ a ][ 1 ]
+                               + constitutive.m_stress( k, q, 3 ) * dNdX[ k ][ q ][ a ][ 2 ] ) * detJ[ k ][ q ];
+          f_local[ a ][ 2 ] -= ( constitutive.m_stress( k, q, 4 ) * dNdX[ k ][ q ][ a ][ 0 ]
+                               + constitutive.m_stress( k, q, 3 ) * dNdX[ k ][ q ][ a ][ 1 ]
+                               + constitutive.m_stress( k, q, 2 ) * dNdX[ k ][ q ][ a ][ 2 ] ) * detJ[ k ][ q ];
         }
       }//quadrature loop
 
@@ -290,7 +281,7 @@ struct ImplicitKernel
     arrayView3d<real64 const, solid::STRESS_USD> const & stress = constitutiveRelation->getStress();
 
     RAJA::forall< serialPolicy >( RAJA::TypedRangeSegment< localIndex >( 0, numElems ),
-                                  GEOSX_LAMBDA ( localIndex const k )
+                                  [=] ( localIndex const k )
     {
       stackArray1d<globalIndex, ndof>       elementLocalDofIndex( ndof );
       stackArray1d<real64, ndof>            R( ndof );
@@ -488,7 +479,7 @@ struct ImplicitKernel
 //          R    += R_StiffnessDamping;
         }
 
-        // TODO remove local epetra objects, remove use of unwrappedPointer()
+        // TODO remove local epetra objects, remove use of unwrapped()
         matrix->add( elementLocalDofIndex.data(), elementLocalDofIndex.data(), dRdU.data(), ndof, ndof );
         rhs->add( elementLocalDofIndex.data(), R.data(), ndof );
       }

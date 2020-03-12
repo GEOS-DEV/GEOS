@@ -219,7 +219,7 @@ void SinglePhaseWell::InitializeWells( DomainPartition * const domain )
     GEOSX_ERROR_IF( pressureControl <= 0, "Invalid well initialization: negative pressure was found" );
 
     // 3) Estimate the pressures in the well elements using this avgDensity
-    forall_in_range( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex const iwelem )
+    forall_in_range( 0, subRegion->size(), [=] ( localIndex const iwelem )
     {
       wellElemPressure[iwelem] = pressureControl
         + avgDensity * ( wellElemGravCoef[iwelem] - gravCoefControl );
@@ -229,7 +229,7 @@ void SinglePhaseWell::InitializeWells( DomainPartition * const domain )
     UpdateState( subRegion );
 
     // 5) Estimate the connection rates based on the min/max pressure
-    forall_in_range( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex const iwelem )
+    forall_in_range( 0, subRegion->size(), [=] ( localIndex const iwelem )
     {
       real64 const & targetRate = wellControls->GetTargetRate();
       if (wellControls->GetControl() == WellControls::Control::BHP)
@@ -268,7 +268,7 @@ void SinglePhaseWell::SetupDofs( DomainPartition const * const domain,
 
   dofManager.addCoupling( WellElementDofName(),
                           WellElementDofName(),
-                          DofManager::Connectivity::Node );
+                          DofManager::Connector::Node );
 }
 
 void SinglePhaseWell::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
@@ -306,7 +306,7 @@ void SinglePhaseWell::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time_n
       subRegion->getReference<array1d<real64>>( viewKeyStruct::deltaConnRateString );
 
     // loop over the well elements to compute the fluxes between elements
-    forall_in_range( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex const iwelem )
+    forall_in_range( 0, subRegion->size(), [=] ( localIndex const iwelem )
     {
 
       if ( wellElemGhostRank[iwelem] >= 0 )
@@ -547,7 +547,7 @@ void SinglePhaseWell::FormPressureRelations( DomainPartition const * const domai
       fluid->getReference<array2d<real64>>( SingleFluidBase::viewKeyStruct::dDens_dPresString );
 
     // loop over the well elements to compute the pressure relations between well elements
-    forall_in_range( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex const iwelem )
+    forall_in_range( 0, subRegion->size(), [=] ( localIndex const iwelem )
     {
 
       if (wellElemGhostRank[iwelem] >= 0)
@@ -849,7 +849,7 @@ SinglePhaseWell::ApplySystemSolution( DofManager const & dofManager,
   fieldNames["elems"].push_back( viewKeyStruct::deltaConnRateString );
   CommunicationTools::SynchronizeFields(fieldNames,
                                         domain->getMeshBody(0)->getMeshLevel(0),
-                                        domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
+                                        domain->getNeighbors() );
 
   // update properties
   UpdateStateAll( domain );
@@ -871,7 +871,7 @@ void SinglePhaseWell::ResetStateToBeginningOfStep( DomainPartition * const domai
     arrayView1d<real64> const & dConnRate =
       subRegion->getReference<array1d<real64>>( viewKeyStruct::deltaConnRateString );
 
-    forall_in_range( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex const iwelem )
+    forall_in_range( 0, subRegion->size(), [=] ( localIndex const iwelem )
     {
       dWellElemPressure[iwelem] = 0;
       dConnRate[iwelem] = 0;

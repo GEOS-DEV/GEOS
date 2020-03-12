@@ -53,7 +53,7 @@ void testNumericalJacobian( ReservoirSolver * solver,
                             LAMBDA && assembleFunction )
 {
   SinglePhaseWell * wellSolver = solver->GetWellSolver()->group_cast<SinglePhaseWell*>();
-  SinglePhaseFVM * flowSolver = solver->GetFlowSolver()->group_cast<SinglePhaseFVM*>();
+  SinglePhaseFVM<SinglePhaseBase> * flowSolver = solver->GetFlowSolver()->group_cast<SinglePhaseFVM<SinglePhaseBase>*>();
 
   ParallelMatrix & jacobian = solver->getSystemMatrix();
   ParallelVector & residual = solver->getSystemRhs();
@@ -68,7 +68,12 @@ void testNumericalJacobian( ReservoirSolver * solver,
   // assemble the analytical residual
   solver->ResetStateToBeginningOfStep( domain );
   residual.zero();
+  jacobian.zero();
+  residual.open();
+  jacobian.open();
   assembleFunction( wellSolver, domain, &jacobian, &residual, &dofManager );
+  residual.close();
+  jacobian.close();
 
   // copy the analytical residual
   ParallelVector residualOrig( residual );
@@ -77,6 +82,7 @@ void testNumericalJacobian( ReservoirSolver * solver,
   // create the numerical jacobian
   ParallelMatrix jacobianFD( jacobian );
   jacobianFD.zero();
+  jacobianFD.open();
 
   string const resDofKey  = dofManager.getKey( wellSolver->ResElementDofName() );
   string const wellDofKey = dofManager.getKey( wellSolver->WellElementDofName() );
@@ -102,10 +108,10 @@ void testNumericalJacobian( ReservoirSolver * solver,
 
       // get the primary variables on reservoir elements
       arrayView1d<real64> & pres =
-        subRegion-> template getReference<array1d<real64>>( SinglePhaseFVM::viewKeyStruct::pressureString );
+        subRegion-> template getReference<array1d<real64>>( FlowSolverBase::viewKeyStruct::pressureString );
 
       arrayView1d<real64> & dPres =
-        subRegion-> template getReference<array1d<real64>>( SinglePhaseFVM::viewKeyStruct::deltaPressureString );
+        subRegion-> template getReference<array1d<real64>>( FlowSolverBase::viewKeyStruct::deltaPressureString );
 
       // a) compute all the derivatives wrt to the pressure in RESERVOIR elem ei 
       for (localIndex ei = 0; ei < subRegion->size(); ++ei)
@@ -130,7 +136,12 @@ void testNumericalJacobian( ReservoirSolver * solver,
           });
 
           residual.zero();
+          jacobian.zero();
+          residual.open();
+          jacobian.open();
           assembleFunction( wellSolver, domain, &jacobian, &residual, &dofManager );
+          residual.close();
+          jacobian.close();
 
           globalIndex const dofIndex = integer_conversion<long long>(eiOffset);
 
@@ -198,7 +209,12 @@ void testNumericalJacobian( ReservoirSolver * solver,
         wellSolver->UpdateState( subRegion );
 
         residual.zero();
+        jacobian.zero();
+        residual.open();
+        jacobian.open();
         assembleFunction( wellSolver, domain, &jacobian, &residual, &dofManager );
+        residual.close();
+        jacobian.close();
 
         globalIndex const dofIndex = iwelemOffset + SinglePhaseWell::ColOffset::DPRES;
 
@@ -229,7 +245,12 @@ void testNumericalJacobian( ReservoirSolver * solver,
         dConnRate[iwelem] = dRate;
 
         residual.zero();
+        jacobian.zero();
+        residual.open();
+        jacobian.open();
         assembleFunction( wellSolver, domain, &jacobian, &residual, &dofManager );
+        residual.close();
+        jacobian.close();
 
         globalIndex const dofIndex = integer_conversion<globalIndex>(iwelemOffset + SinglePhaseWell::ColOffset::DRATE );
 
@@ -252,8 +273,13 @@ void testNumericalJacobian( ReservoirSolver * solver,
 
   // assemble the analytical jacobian
   solver->ResetStateToBeginningOfStep( domain );
+  residual.zero();
   jacobian.zero();
+  residual.open();
+  jacobian.open();
   assembleFunction( wellSolver, domain, &jacobian, &residual, &dofManager );
+  residual.close();
+  jacobian.close();
 
   compareMatrices( jacobian, jacobianFD, relTol );
 

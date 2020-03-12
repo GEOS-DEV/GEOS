@@ -55,7 +55,7 @@ inline void velocityUpdate( arrayView2d<real64, nodes::ACCELERATION_USD> const &
   GEOSX_MARK_FUNCTION;
 
   localIndex const N = acceleration.size( 0 );
-  forAll< parallelDevicePolicy<> >( N, GEOSX_DEVICE_LAMBDA ( localIndex const i )
+  forAll< parallelDevicePolicy<> >( N, [=] GEOSX_DEVICE ( localIndex const i )
   {
     for (int j = 0; j < 3; ++j)
     {
@@ -73,7 +73,7 @@ inline void velocityUpdate( arrayView2d<real64, nodes::ACCELERATION_USD> const &
 {
   GEOSX_MARK_FUNCTION;
 
-  forAll< parallelDevicePolicy<> >( indices.size(), GEOSX_DEVICE_LAMBDA ( localIndex const i )
+  forAll< parallelDevicePolicy<> >( indices.size(), [=] GEOSX_DEVICE ( localIndex const i )
   {
     localIndex const a = indices[ i ];
     for (int j = 0; j < 3; ++j)
@@ -92,7 +92,7 @@ inline void displacementUpdate( arrayView2d<real64 const, nodes::VELOCITY_USD> c
   GEOSX_MARK_FUNCTION;
 
   localIndex const N = velocity.size( 0 );
-  forAll< parallelDevicePolicy<> >( N, GEOSX_DEVICE_LAMBDA ( localIndex const i )
+  forAll< parallelDevicePolicy<> >( N, [=] GEOSX_DEVICE ( localIndex const i )
   {
     for (int j = 0; j < 3; ++j)
     {
@@ -188,12 +188,14 @@ struct ExplicitKernel
           arrayView2d<real64 const, nodes::TOTAL_DISPLACEMENT_USD> const & u,
           arrayView2d<real64 const, nodes::VELOCITY_USD> const & vel,
           arrayView2d<real64, nodes::ACCELERATION_USD> const & acc,
-          arrayView3d<real64 const, solid::STRESS_USD> const & stress,
           real64 const dt )
   {
+
+    typename CONSTITUTIVE_TYPE::KernelWrapper const & constitutive = constitutiveRelation->createKernelWrapper();
+
     forall_in_set<serialPolicy>( elementList.values(),
                                  elementList.size(),
-                                 GEOSX_LAMBDA ( localIndex const k )
+                                 [=] ( localIndex const k )
     {
       R1Tensor v_local[NUM_NODES_PER_ELEM];
       R1Tensor u_local[NUM_NODES_PER_ELEM];
@@ -237,9 +239,9 @@ struct ExplicitKernel
         R2SymTensor Dadt;
         HughesWinget(Rot, Dadt, Ldt);
 
-        constitutiveRelation->StateUpdatePoint( k, q, Dadt, Rot, 0);
+        constitutive.HypoElastic( k, q, Dadt.Data(), Rot );
 
-        Integrate<NUM_NODES_PER_ELEM>( stress[k][q], dNdX[k][q], detJ[k][q], detF, fInv, f_local );
+        Integrate<NUM_NODES_PER_ELEM>( constitutive.m_stress[k][q], dNdX[k][q], detJ[k][q], detF, fInv, f_local );
       }//quadrature loop
      
       for( localIndex a = 0 ; a < NUM_NODES_PER_ELEM ; ++a )
@@ -271,15 +273,16 @@ struct ExplicitKernel
     //Compute Quadrature
     for ( localIndex q = 0; q < numQuadraturePoints; ++q )
     {
-      force[ 0 ] -= ( stress( k, q, 1 ) * dNdX( k, q, a )[ 1 ] +
-                      stress( k, q, 3 ) * dNdX( k, q, a )[ 2 ] +
-                      stress( k, q, 0 ) * dNdX( k, q, a )[ 0 ] ) * detJ( k, q );
-      force[ 1 ] -= ( stress( k, q, 1 ) * dNdX( k, q, a )[ 0 ] +
-                      stress( k, q, 4 ) * dNdX( k, q, a )[ 2 ] +
-                      stress( k, q, 2 ) * dNdX( k, q, a )[ 1 ] ) * detJ( k, q );
-      force[ 2 ] -= ( stress( k, q, 3 ) * dNdX( k, q, a )[ 0 ] +
-                      stress( k, q, 4 ) * dNdX( k, q, a )[ 1 ] +
-                      stress( k, q, 5 ) * dNdX( k, q, a )[ 2 ] ) * detJ( k, q );
+      force[ 0 ] -= ( stress( k, q, 0 ) * dNdX( k, q, a )[ 0 ] +
+                      stress( k, q, 5 ) * dNdX( k, q, a )[ 1 ] +
+                      stress( k, q, 4 ) * dNdX( k, q, a )[ 2 ] ) * detJ( k, q );
+      force[ 1 ] -= ( stress( k, q, 5 ) * dNdX( k, q, a )[ 0 ] +
+                      stress( k, q, 1 ) * dNdX( k, q, a )[ 1 ] +
+                      stress( k, q, 3 ) * dNdX( k, q, a )[ 2 ] ) * detJ( k, q );
+      force[ 2 ] -= ( stress( k, q, 4 ) * dNdX( k, q, a )[ 0 ] +
+                      stress( k, q, 3 ) * dNdX( k, q, a )[ 1 ] +
+                      stress( k, q, 2 ) * dNdX( k, q, a )[ 2 ] ) * detJ( k, q );
+
     }//quadrature loop
 
     return 0;

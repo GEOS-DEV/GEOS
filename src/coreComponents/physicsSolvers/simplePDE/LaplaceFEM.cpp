@@ -175,7 +175,7 @@ void LaplaceFEM::SetupDofs( DomainPartition const * const GEOSX_UNUSED_PARAM( do
 
   dofManager.addCoupling( m_fieldName,
                           m_fieldName,
-                          DofManager::Connectivity::Elem );
+                          DofManager::Connector::Elem );
 }
 
 //START_SPHINX_INCLUDE_04
@@ -197,10 +197,6 @@ void LaplaceFEM::AssembleSystem( real64 const time_n,
 
   array1d<globalIndex> const & dofIndex =
     nodeManager->getReference< array1d<globalIndex> >( dofManager.getKey( m_fieldName ) );
-
-  // Initialize all entries to zero
-//  matrix.zero();
-//  rhs.zero();
 
   matrix.open();
   rhs.open();
@@ -265,20 +261,24 @@ void LaplaceFEM::AssembleSystem( real64 const time_n,
   rhs.close();
   //END_SPHINX_INCLUDE_04
 
-  // Debug for logLevel >= 2
-  GEOSX_LOG_LEVEL_RANK_0( 2, "After LaplaceFEM::AssembleSystem" );
-  GEOSX_LOG_LEVEL_RANK_0( 2, "\nJacobian:\n" << matrix );
-  GEOSX_LOG_LEVEL_RANK_0( 2, "\nResidual:\n" << rhs );
+  if( getLogLevel() == 2 )
+  {
+    GEOSX_LOG_RANK_0( "After LaplaceFEM::AssembleSystem" );
+    GEOSX_LOG_RANK_0( "\nJacobian:\n");
+    std::cout << matrix;
+    GEOSX_LOG_RANK_0( "\nResidual:\n");
+    std::cout << rhs;
+  }
 
   if( getLogLevel() >= 3 )
   {
     integer newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
 
     string filename_mat = "matrix_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
-    matrix.write( filename_mat, true );
+    matrix.write( filename_mat, LAIOutputFormat::MATRIX_MARKET );
 
     string filename_rhs = "rhs_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
-    rhs.write( filename_rhs, true );
+    rhs.write( filename_rhs, LAIOutputFormat::MATRIX_MARKET );
 
     GEOSX_LOG_RANK_0( "After LaplaceFEM::AssembleSystem" );
     GEOSX_LOG_RANK_0( "Jacobian: written to " << filename_mat );
@@ -300,7 +300,7 @@ void LaplaceFEM::ApplySystemSolution( DofManager const & dofManager,
   CommunicationTools::
   SynchronizeFields( fieldNames,
                      domain->getMeshBody( 0 )->getMeshLevel( 0 ),
-                     domain->getReference<array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
+                     domain->getNeighbors() );
 }
 
 void LaplaceFEM::ApplyBoundaryConditions( real64 const time_n,
@@ -310,22 +310,30 @@ void LaplaceFEM::ApplyBoundaryConditions( real64 const time_n,
                                           ParallelMatrix & matrix,
                                           ParallelVector & rhs )
 {
+  matrix.open();
+  rhs.open();
   ApplyDirichletBC_implicit( time_n + dt, dofManager, *domain, m_matrix, m_rhs );
+  matrix.close();
+  rhs.close();
 
-  // Debug for logLevel >= 2
-  GEOSX_LOG_LEVEL_RANK_0( 2, "After LaplaceFEM::ApplyBoundaryConditions" );
-  GEOSX_LOG_LEVEL_RANK_0( 2, "\nJacobian:\n" << matrix );
-  GEOSX_LOG_LEVEL_RANK_0( 2, "\nResidual:\n" << rhs );
+  if( getLogLevel() == 2 )
+  {
+    GEOSX_LOG_RANK_0( "After LaplaceFEM::ApplyBoundaryConditions" );
+    GEOSX_LOG_RANK_0( "\nJacobian:\n");
+    std::cout << matrix;
+    GEOSX_LOG_RANK_0( "\nResidual:\n");
+    std::cout << rhs;
+  }
 
   if( getLogLevel() >= 3 )
   {
     integer newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
 
     string filename_mat = "matrix_bc_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
-    matrix.write( filename_mat, true );
+    matrix.write( filename_mat, LAIOutputFormat::MATRIX_MARKET );
 
     string filename_rhs = "rhs_bc_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
-    rhs.write( filename_rhs, true );
+    rhs.write( filename_rhs, LAIOutputFormat::MATRIX_MARKET );
 
     GEOSX_LOG_RANK_0( "After LaplaceFEM::ApplyBoundaryConditions" );
     GEOSX_LOG_RANK_0( "Jacobian: written to " << filename_mat );

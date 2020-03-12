@@ -478,7 +478,7 @@ void CompositionalMultiphaseWell::InitializeWells( DomainPartition * const domai
     GEOSX_ERROR_IF( pressureControl <= 0, "Invalid well initialization: negative pressure was found" );
 
     // 3) Estimate the pressures in the well elements using this avgDensity
-    forall_in_range( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex const iwelem )
+    forall_in_range( 0, subRegion->size(), [=] ( localIndex const iwelem )
     {
       wellElemPressure[iwelem] = pressureControl
         + avgMixtureDensity * ( wellElemGravCoef[iwelem] - gravCoefControl );
@@ -543,7 +543,7 @@ void CompositionalMultiphaseWell::SetupDofs( DomainPartition const * const domai
 
   dofManager.addCoupling( WellElementDofName(),
                           WellElementDofName(),
-                          DofManager::Connectivity::Node );
+                          DofManager::Connector::Node );
 }
 
 void CompositionalMultiphaseWell::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
@@ -594,7 +594,7 @@ void CompositionalMultiphaseWell::AssembleFluxTerms( real64 const GEOSX_UNUSED_P
       subRegion->getReference<array3d<real64>>( viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString );
     
     // loop over the well elements to compute the fluxes between elements    
-    forall_in_range( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex const iwelem )
+    forall_in_range( 0, subRegion->size(), [=] ( localIndex const iwelem )
     {
 
       // rank that owns the current well element assembles the flux between current and next
@@ -868,7 +868,7 @@ void CompositionalMultiphaseWell::AssembleVolumeBalanceTerms( real64 const GEOSX
     arrayView1d<real64 const> const & wellElemVolume =
       subRegion->getReference<array1d<real64>>( ElementSubRegionBase::viewKeyStruct::elementVolumeString );
 
-    forall_in_range( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex const iwelem )
+    forall_in_range( 0, subRegion->size(), [=] ( localIndex const iwelem )
     {
 
       if (wellElemGhostRank[iwelem] >= 0)
@@ -1221,7 +1221,7 @@ CompositionalMultiphaseWell::ApplySystemSolution( DofManager const & dofManager,
   fieldNames["elems"].push_back( viewKeyStruct::deltaMixtureConnRateString );
   CommunicationTools::SynchronizeFields( fieldNames,
                                          domain->getMeshBody(0)->getMeshLevel(0),
-                                         domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
+                                         domain->getNeighbors() );
 
   // update properties
   UpdateStateAll( domain );
@@ -1247,7 +1247,7 @@ void CompositionalMultiphaseWell::ResetStateToBeginningOfStep( DomainPartition *
     arrayView1d<real64> const & dConnRate =
       subRegion->getReference<array1d<real64>>( viewKeyStruct::deltaMixtureConnRateString );
 
-    forall_in_range( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex const iwelem )
+    forall_in_range( 0, subRegion->size(), [=] ( localIndex const iwelem )
     {
       // extract solution and apply to dP
       dWellElemPressure[iwelem] = 0;
@@ -1409,7 +1409,7 @@ void CompositionalMultiphaseWell::FormPressureRelations( DomainPartition const *
       subRegion->getReference<array2d<real64>>( viewKeyStruct::dMixtureDensity_dGlobalCompDensityString );
 
     // loop over the well elements to compute the pressure relations between well elements
-    forall_in_range( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex const iwelem )
+    forall_in_range( 0, subRegion->size(), [=] ( localIndex const iwelem )
     {
        
       if (wellElemGhostRank[iwelem] >= 0)
@@ -1646,7 +1646,7 @@ void CompositionalMultiphaseWell::ImplicitStepComplete( real64 const & GEOSX_UNU
     arrayView1d<real64 const> const & dConnRate =
       subRegion->getReference<array1d<real64>>( viewKeyStruct::deltaMixtureConnRateString );   
 
-    forall_in_range( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex const iwelem )
+    forall_in_range( 0, subRegion->size(), [=] ( localIndex const iwelem )
     {
       wellElemPressure[iwelem] += dWellElemPressure[iwelem];
       for (localIndex ic = 0; ic < m_numComponents; ++ic)

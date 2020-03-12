@@ -275,6 +275,12 @@ public:
   }
 
   /**
+   * @brief Removes a child group from this group.
+   * @param name the name of the child group to remove from this group.
+   */
+  void deregisterGroup( std::string const & name );
+
+  /**
    * @brief Creates a new sub-Group using the ObjectCatalog functionality.
    * @param[in] childKey The name of the new object type's key in the
    *                     ObjectCatalog.

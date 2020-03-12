@@ -212,6 +212,13 @@ Element: FiniteVolume
 .. include:: ../../coreComponents/fileIO/schema/docs/FiniteVolume.rst
 
 
+.. _XML_FlowProppantTransport:
+
+Element: FlowProppantTransport
+==============================
+.. include:: ../../coreComponents/fileIO/schema/docs/FlowProppantTransport.rst
+
+
 .. _XML_Functions:
 
 Element: Functions
@@ -324,6 +331,13 @@ Element: LinearElasticIsotropic
 .. include:: ../../coreComponents/fileIO/schema/docs/LinearElasticIsotropic.rst
 
 
+.. _XML_LinearElasticTransverseIsotropic:
+
+Element: LinearElasticTransverseIsotropic
+=========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/LinearElasticTransverseIsotropic.rst
+
+
 .. _XML_Mesh:
 
 Element: Mesh
@@ -387,6 +401,13 @@ Element: Parameters
 .. include:: ../../coreComponents/fileIO/schema/docs/Parameters.rst
 
 
+.. _XML_ParticleFluid:
+
+Element: ParticleFluid
+======================
+.. include:: ../../coreComponents/fileIO/schema/docs/ParticleFluid.rst
+
+
 .. _XML_Perforation:
 
 Element: Perforation
@@ -422,6 +443,13 @@ Element: PoroLinearElasticIsotropic
 .. include:: ../../coreComponents/fileIO/schema/docs/PoroLinearElasticIsotropic.rst
 
 
+.. _XML_PoroLinearElasticTransverseIsotropic:
+
+Element: PoroLinearElasticTransverseIsotropic
+=============================================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroLinearElasticTransverseIsotropic.rst
+
+
 .. _XML_Poroelastic:
 
 Element: Poroelastic
@@ -434,6 +462,20 @@ Element: Poroelastic
 Element: Problem
 ================
 .. include:: ../../coreComponents/fileIO/schema/docs/Problem.rst
+
+
+.. _XML_ProppantSlurryFluid:
+
+Element: ProppantSlurryFluid
+============================
+.. include:: ../../coreComponents/fileIO/schema/docs/ProppantSlurryFluid.rst
+
+
+.. _XML_ProppantTransport:
+
+Element: ProppantTransport
+==========================
+.. include:: ../../coreComponents/fileIO/schema/docs/ProppantTransport.rst
 
 
 .. _XML_QuadratureRules:
@@ -476,6 +518,13 @@ Element: SinglePhaseFVM
 Element: SinglePhaseHybridFVM
 =============================
 .. include:: ../../coreComponents/fileIO/schema/docs/SinglePhaseHybridFVM.rst
+
+
+.. _XML_SinglePhaseProppantFVM:
+
+Element: SinglePhaseProppantFVM
+===============================
+.. include:: ../../coreComponents/fileIO/schema/docs/SinglePhaseProppantFVM.rst
 
 
 .. _XML_SinglePhaseWell:
@@ -818,6 +867,13 @@ Datastructure: FiniteVolume
 .. include:: ../../coreComponents/fileIO/schema/docs/FiniteVolume_other.rst
 
 
+.. _DATASTRUCTURE_FlowProppantTransport:
+
+Datastructure: FlowProppantTransport
+====================================
+.. include:: ../../coreComponents/fileIO/schema/docs/FlowProppantTransport_other.rst
+
+
 .. _DATASTRUCTURE_Functions:
 
 Datastructure: Functions
@@ -937,6 +993,13 @@ Datastructure: LinearElasticIsotropic
 .. include:: ../../coreComponents/fileIO/schema/docs/LinearElasticIsotropic_other.rst
 
 
+.. _DATASTRUCTURE_LinearElasticTransverseIsotropic:
+
+Datastructure: LinearElasticTransverseIsotropic
+===============================================
+.. include:: ../../coreComponents/fileIO/schema/docs/LinearElasticTransverseIsotropic_other.rst
+
+
 .. _DATASTRUCTURE_Mesh:
 
 Datastructure: Mesh
@@ -1007,6 +1070,13 @@ Datastructure: Parameters
 .. include:: ../../coreComponents/fileIO/schema/docs/Parameters_other.rst
 
 
+.. _DATASTRUCTURE_ParticleFluid:
+
+Datastructure: ParticleFluid
+============================
+.. include:: ../../coreComponents/fileIO/schema/docs/ParticleFluid_other.rst
+
+
 .. _DATASTRUCTURE_Perforation:
 
 Datastructure: Perforation
@@ -1042,6 +1112,13 @@ Datastructure: PoroLinearElasticIsotropic
 .. include:: ../../coreComponents/fileIO/schema/docs/PoroLinearElasticIsotropic_other.rst
 
 
+.. _DATASTRUCTURE_PoroLinearElasticTransverseIsotropic:
+
+Datastructure: PoroLinearElasticTransverseIsotropic
+===================================================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroLinearElasticTransverseIsotropic_other.rst
+
+
 .. _DATASTRUCTURE_Poroelastic:
 
 Datastructure: Poroelastic
@@ -1054,6 +1131,20 @@ Datastructure: Poroelastic
 Datastructure: Problem
 ======================
 .. include:: ../../coreComponents/fileIO/schema/docs/Problem_other.rst
+
+
+.. _DATASTRUCTURE_ProppantSlurryFluid:
+
+Datastructure: ProppantSlurryFluid
+==================================
+.. include:: ../../coreComponents/fileIO/schema/docs/ProppantSlurryFluid_other.rst
+
+
+.. _DATASTRUCTURE_ProppantTransport:
+
+Datastructure: ProppantTransport
+================================
+.. include:: ../../coreComponents/fileIO/schema/docs/ProppantTransport_other.rst
 
 
 .. _DATASTRUCTURE_QuadratureRules:
@@ -1096,6 +1187,13 @@ Datastructure: SinglePhaseFVM
 Datastructure: SinglePhaseHybridFVM
 ===================================
 .. include:: ../../coreComponents/fileIO/schema/docs/SinglePhaseHybridFVM_other.rst
+
+
+.. _DATASTRUCTURE_SinglePhaseProppantFVM:
+
+Datastructure: SinglePhaseProppantFVM
+=====================================
+.. include:: ../../coreComponents/fileIO/schema/docs/SinglePhaseProppantFVM_other.rst
 
 
 .. _DATASTRUCTURE_SinglePhaseWell:

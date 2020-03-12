@@ -40,10 +40,6 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 
-//////////////
-//static int step_counter = 0;
-//////////////
-
 PoroelasticSolver::PoroelasticSolver( const std::string& name,
                                       Group * const parent ):
   SolverBase(name,parent),
@@ -91,7 +87,7 @@ void PoroelasticSolver::SetupDofs( DomainPartition const * const domain,
 
   dofManager.addCoupling( keys::TotalDisplacement,
                           FlowSolverBase::viewKeyStruct::pressureString,
-                          DofManager::Connectivity::Elem );
+                          DofManager::Connector::Elem );
 }
 
 void PoroelasticSolver::SetupSystem( DomainPartition * const domain,
@@ -359,7 +355,7 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
 
 
       forall_in_range< parallelHostPolicy >( 0, cellElementSubRegion->size(),
-                                             GEOSX_HOST_DEVICE_LAMBDA ( localIndex const ei )
+                                             [=] GEOSX_HOST_DEVICE ( localIndex const ei )
       {
 
         R1Tensor u_local[10];
@@ -373,7 +369,7 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
         real64 effectiveMeanStress = 0.0;
         for( localIndex q=0 ; q<numQuadraturePoints; ++q )
         {
-          effectiveMeanStress += ( stress(ei,q,0) + stress(ei,q,2) + stress(ei,q,5) );
+          effectiveMeanStress += ( stress(ei,q,0) + stress(ei,q,1) + stress(ei,q,2) );
         }
         effectiveMeanStress /= ( 3 * numQuadraturePoints );
 

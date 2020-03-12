@@ -271,6 +271,8 @@ real64 SolverBase::LinearImplicitStep( real64 const & time_n,
   rhs.zero();
 
   // call assemble to fill the matrix and the rhs
+  matrix.zero();
+  rhs.zero();
   AssembleSystem( time_n, dt, domain, dofManager, matrix, rhs );
 
   // apply boundary conditions to system
@@ -335,6 +337,8 @@ bool SolverBase::LineSearch( real64 const & time_n,
     rhs.zero();
 
     // re-assemble system
+    matrix.zero();
+    rhs.zero();
     AssembleSystem( time_n, dt, domain, dofManager, matrix, rhs );
 
     // apply boundary conditions to system
@@ -418,16 +422,13 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       if( getLogLevel() >= 1 && logger::internal::rank==0 )
       {
         char output[200] = {0};
-        sprintf( output, "    Attempt: %2d, NewtonIter: %2d ; ",
-                 dtAttempt, newtonIter );
-        std::cout<<output;
+        sprintf( output, "    Attempt: %2d, NewtonIter: %2d ; ", dtAttempt, newtonIter );
+        std::cout << output;
       }
 
-      // clean matrix and rhs entries
+      // call assemble to fill the matrix and the rhs
       matrix.zero();
       rhs.zero();
-
-      // call assemble to fill the matrix and the rhs
       AssembleSystem( time_n, stepDt, domain, dofManager, matrix, rhs );
 
       // apply boundary conditions to system
@@ -457,6 +458,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
 
       // if the residual norm is less than the Newton tolerance we denote that we have
       // converged and break from the Newton loop immediately.
+
       if( residualNorm < newtonTol && newtonIter >= minNewtonIter)
       {
         isConverged = 1;
@@ -494,7 +496,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       {
         m_systemSolverParameters.m_krylovTol = LinearSolverParameters::eisenstatWalker(residualNorm,lastResidual);
       }
-
+    
       // call the default linear solver on the system
       SolveSystem( dofManager, matrix, rhs, solution );
 
