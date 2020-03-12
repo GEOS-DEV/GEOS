@@ -267,6 +267,8 @@ real64 SolverBase::LinearImplicitStep( real64 const & time_n,
   ImplicitStepSetup( time_n, dt, domain, dofManager, matrix, rhs, solution );
 
   // call assemble to fill the matrix and the rhs
+  matrix.zero();
+  rhs.zero();
   AssembleSystem( time_n, dt, domain, dofManager, matrix, rhs );
 
   // apply boundary conditions to system
@@ -327,6 +329,8 @@ bool SolverBase::LineSearch( real64 const & time_n,
     ApplySystemSolution( dofManager, solution, localScaleFactor, domain );
 
     // re-assemble system
+    matrix.zero();
+    rhs.zero();
     AssembleSystem( time_n, dt, domain, dofManager, matrix, rhs );
 
     // apply boundary conditions to system
@@ -410,11 +414,13 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       if( getLogLevel() >= 1 && logger::internal::rank==0 )
       {
         char output[200] = {0};
-        sprintf( output, "    Attempt: %2d, NewtonIter: %2d ; ",
-                 dtAttempt, newtonIter );
-        std::cout<<output;
+        sprintf( output, "    Attempt: %2d, NewtonIter: %2d ; ", dtAttempt, newtonIter );
+        std::cout << output;
       }
+
       // call assemble to fill the matrix and the rhs
+      matrix.zero();
+      rhs.zero();
       AssembleSystem( time_n, stepDt, domain, dofManager, matrix, rhs );
 
       // apply boundary conditions to system

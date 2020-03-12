@@ -183,7 +183,12 @@ void testNumericalJacobian( ReservoirSolver * solver,
   // assemble the analytical residual
   solver->ResetStateToBeginningOfStep( domain );
   residual.zero();
+  jacobian.zero();
+  residual.open();
+  jacobian.open();
   assembleFunction( wellSolver, domain, &jacobian, &residual, &dofManager );
+  residual.close();
+  jacobian.close();
 
   // copy the analytical residual
   ParallelVector residualOrig( residual );
@@ -192,6 +197,7 @@ void testNumericalJacobian( ReservoirSolver * solver,
   // create the numerical jacobian
   ParallelMatrix jacobianFD( jacobian );
   jacobianFD.zero();
+  jacobianFD.open();
 
   string const resDofKey  = dofManager.getKey( wellSolver->ResElementDofName() );
   string const wellDofKey = dofManager.getKey( wellSolver->WellElementDofName() );
@@ -256,7 +262,12 @@ void testNumericalJacobian( ReservoirSolver * solver,
           });
 
           residual.zero();
+          jacobian.zero();
+          residual.open();
+          jacobian.open();
           assembleFunction( wellSolver, domain, &jacobian, &residual, &dofManager );
+          residual.close();
+          jacobian.close();
 
           globalIndex const dofIndex = eiOffset;
 
@@ -286,7 +297,12 @@ void testNumericalJacobian( ReservoirSolver * solver,
           });
 
           residual.zero();
+          jacobian.zero();
+          residual.open();
+          jacobian.open();
           assembleFunction( wellSolver, domain, &jacobian, &residual, &dofManager );
+          residual.close();
+          jacobian.close();
 
           globalIndex const dofIndex = eiOffset + jc + 1;
 
@@ -365,7 +381,12 @@ void testNumericalJacobian( ReservoirSolver * solver,
         wellSolver->UpdateState( subRegion );
 
         residual.zero();
+        jacobian.zero();
+        residual.open();
+        jacobian.open();
         assembleFunction( wellSolver, domain, &jacobian, &residual, &dofManager );
+        residual.close();
+        jacobian.close();
 
         globalIndex const dofIndex = iwelemOffset + CompositionalMultiphaseWell::ColOffset::DPRES;
 
@@ -391,7 +412,12 @@ void testNumericalJacobian( ReservoirSolver * solver,
         wellSolver->UpdateStateAll( domain );
 
         residual.zero();
+        jacobian.zero();
+        residual.open();
+        jacobian.open();
         assembleFunction( wellSolver, domain, &jacobian, &residual, &dofManager );
+        residual.close();
+        jacobian.close();
 
         globalIndex const dofIndex = iwelemOffset + CompositionalMultiphaseWell::ColOffset::DCOMP + jc;
 
@@ -426,7 +452,12 @@ void testNumericalJacobian( ReservoirSolver * solver,
         dConnRate[iwelem] = dRate;
 
         residual.zero();
+        jacobian.zero();
+        residual.open();
+        jacobian.open();
         assembleFunction( wellSolver, domain, &jacobian, &residual, &dofManager );
+        residual.close();
+        jacobian.close();
 
         globalIndex const dofIndex = iwelemOffset + CompositionalMultiphaseWell::ColOffset::DCOMP + NC;
 
@@ -449,8 +480,13 @@ void testNumericalJacobian( ReservoirSolver * solver,
 
   // assemble the analytical jacobian
   solver->ResetStateToBeginningOfStep( domain );
+  residual.zero();
   jacobian.zero();
+  residual.open();
+  jacobian.open();
   assembleFunction( wellSolver, domain, &jacobian, &residual, &dofManager );
+  residual.close();
+  jacobian.close();
 
   compareMatrices( jacobian, jacobianFD, relTol );
 

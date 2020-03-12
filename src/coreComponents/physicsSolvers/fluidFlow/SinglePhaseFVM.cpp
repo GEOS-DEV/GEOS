@@ -47,16 +47,22 @@ SinglePhaseFVM<BASE>::SinglePhaseFVM( const std::string& name,
 
 
 template< typename BASE >
-void SinglePhaseFVM<BASE>::SetupDofs( DomainPartition const * const GEOSX_UNUSED_PARAM( domain ),
-                                DofManager & dofManager ) const
+void SinglePhaseFVM<BASE>::SetupDofs( DomainPartition const * const domain,
+                                      DofManager & dofManager ) const
 {
   dofManager.addField( viewKeyStruct::pressureString,
                        DofManager::Location::Elem,
                        m_targetRegions );
 
-  dofManager.addCoupling( viewKeyStruct::pressureString,
-                          viewKeyStruct::pressureString,
-                          DofManager::Connectivity::Face );
+  NumericalMethodsManager const * const numericalMethodManager =
+    domain->getParent()->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
+
+  FiniteVolumeManager const * const fvManager =
+    numericalMethodManager->GetGroup<FiniteVolumeManager>( keys::finiteVolumeManager );
+
+  FluxApproximationBase const * const fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
+
+  dofManager.addCoupling( viewKeyStruct::pressureString, fluxApprox );
 }
   
 
@@ -324,20 +330,24 @@ SinglePhaseFVM<BASE>::ApplyBoundaryConditions( real64 const time_n,
   matrix.close();
   rhs.close();
 
-  // Debug for logLevel >= 2
-  GEOSX_LOG_LEVEL_RANK_0( 2, "After SinglePhaseFVM<BASE>::ApplyBoundaryConditions" );
-  GEOSX_LOG_LEVEL_RANK_0( 2, "\nJacobian:\n" << matrix );
-  GEOSX_LOG_LEVEL_RANK_0( 2, "\nResidual:\n" << rhs );
+  if( getLogLevel() == 2 )
+  {
+    GEOSX_LOG_RANK_0( "After SinglePhaseFVM<BASE>::ApplyBoundaryConditions" );
+    GEOSX_LOG_RANK_0( "\nJacobian:\n" );
+    std::cout << matrix;
+    GEOSX_LOG_RANK_0( "\nResidual:\n" );
+    std::cout << rhs;
+  }
 
   if( getLogLevel() >= 3 )
   {
     integer newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
 
-    string filename_mat = "matrix_bc_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
-    matrix.write( filename_mat, true );
+    string const filename_mat = "matrix_bc_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
+    matrix.write( filename_mat, LAIOutputFormat::MATRIX_MARKET );
 
-    string filename_rhs = "rhs_bc_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
-    rhs.write( filename_rhs, true );
+    string const filename_rhs = "rhs_bc_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
+    rhs.write( filename_rhs, LAIOutputFormat::MATRIX_MARKET );
 
     GEOSX_LOG_RANK_0( "After SinglePhaseFVM<BASE>::ApplyBoundaryConditions" );
     GEOSX_LOG_RANK_0( "Jacobian: written to " << filename_mat );

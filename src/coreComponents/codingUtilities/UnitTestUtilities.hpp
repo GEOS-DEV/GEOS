@@ -134,11 +134,11 @@ void compareMatrices( MATRIX const & matrix1,
                       real64 const relTol = DEFAULT_REL_TOL,
                       real64 const absTol = DEFAULT_ABS_TOL )
 {
-  ASSERT_EQ( matrix1.globalRows(), matrix2.globalRows() );
-  ASSERT_EQ( matrix1.globalCols(), matrix2.globalCols() );
+  ASSERT_EQ( matrix1.numGlobalRows(), matrix2.numGlobalRows() );
+  ASSERT_EQ( matrix1.numGlobalCols(), matrix2.numGlobalCols() );
 
-  ASSERT_EQ( matrix1.localRows(), matrix2.localRows() );
-  ASSERT_EQ( matrix1.localCols(), matrix2.localCols() );
+  ASSERT_EQ( matrix1.numLocalRows(), matrix2.numLocalRows() );
+  ASSERT_EQ( matrix1.numLocalCols(), matrix2.numLocalCols() );
 
   array1d< globalIndex > indices1, indices2;
   array1d< real64 > values1, values2;
@@ -146,7 +146,12 @@ void compareMatrices( MATRIX const & matrix1,
   // check the accuracy across local rows
   for( globalIndex i = matrix1.ilower() ; i < matrix1.iupper() ; ++i )
   {
+    indices1.resize( matrix1.globalRowLength( i ) );
+    values1.resize( matrix1.globalRowLength( i ) );
     matrix1.getRowCopy( i, indices1, values1 );
+
+    indices2.resize( matrix2.globalRowLength( i ) );
+    values2.resize( matrix2.globalRowLength( i ) );
     matrix2.getRowCopy( i, indices2, values2 );
 
     compareMatrixRow( i, relTol, absTol,

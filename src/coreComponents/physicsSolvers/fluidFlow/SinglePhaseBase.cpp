@@ -283,14 +283,14 @@ void SinglePhaseBase::SetupSystem( DomainPartition * const domain,
 
     derivativeFluxResidual_dAperture = std::make_unique<CRSMatrix<real64,localIndex,localIndex>>( numRows, numCols );
 
-    derivativeFluxResidual_dAperture->reserveNonZeros( matrix.localNonzeros() );
+    derivativeFluxResidual_dAperture->reserveNonZeros( matrix.numLocalNonzeros() );
     localIndex maxRowSize = -1;
-    for( localIndex row=0 ; row<matrix.localRows() ; ++row )
+    for( localIndex row=0 ; row< matrix.numLocalRows() ; ++row )
     {
       localIndex const rowSize = matrix.localRowLength( row );
       maxRowSize = maxRowSize > rowSize ? maxRowSize : rowSize;
     }
-    for( localIndex row=matrix.localRows() ; row<numRows ; ++row )
+    for( localIndex row= matrix.numLocalRows() ; row < numRows ; ++row )
     {
       derivativeFluxResidual_dAperture->reserveNonZeros( row,
                                                          maxRowSize );
@@ -464,26 +464,14 @@ void SinglePhaseBase::AssembleSystem( real64 const time_n,
 {
   GEOSX_MARK_FUNCTION;
 
-//  MeshLevel * mesh = domain->getMeshBody(0)->getMeshLevel(0);
-//  applyToSubRegions( mesh, [&] ( localIndex , localIndex ,
-//                                 ElementRegionBase * const GEOSX_UNUSED_PARAM( region ),
-//                                 ElementSubRegionBase * const subRegion )
-//  {
-//    UpdateState( subRegion );
-//  } );
-
-
-
-  matrix.zero();
-  rhs.zero();
-
   matrix.open();
   rhs.open();
 
   if( m_derivativeFluxResidual_dAperture==nullptr )
   {
-    m_derivativeFluxResidual_dAperture = std::make_unique<CRSMatrix<real64,localIndex,localIndex>>( matrix.localRows(),
-                                                                                                    matrix.localCols() );
+    m_derivativeFluxResidual_dAperture = std::make_unique<CRSMatrix<real64,localIndex,localIndex>>(
+      matrix.numLocalRows(),
+      matrix.numLocalCols() );
   }
   m_derivativeFluxResidual_dAperture->setValues(0.0);
 
@@ -497,24 +485,17 @@ void SinglePhaseBase::AssembleSystem( real64 const time_n,
   }
 
   AssembleFluxTerms( time_n, dt, domain, &dofManager, &matrix, &rhs );
- 
-  
-  if (!m_coupledWellsFlag)
-  {
-    // these functions will be called by the ReservoirSolver
-    // when coupled wells are present
-    matrix.close();
-    rhs.close();
-  }
-  
+
+  matrix.close();
+  rhs.close();
 
   if( getLogLevel() == 2 )
   {
     GEOSX_LOG_RANK_0( "After SinglePhaseFlow::AssembleSystem" );
     GEOSX_LOG_RANK_0("\nJacobian:\n");
-    std::cout<< matrix;
+    std::cout << matrix;
     GEOSX_LOG_RANK_0("\nResidual:\n");
-    std::cout<< rhs;
+    std::cout << rhs;
   }
 
 
@@ -524,10 +505,10 @@ void SinglePhaseBase::AssembleSystem( real64 const time_n,
     integer newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
 
     string filename_mat = "matrix_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
-    matrix.write( filename_mat, true );
+    matrix.write( filename_mat, LAIOutputFormat::MATRIX_MARKET );
 
     string filename_rhs = "rhs_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
-    rhs.write( filename_rhs, true );
+    rhs.write( filename_rhs, LAIOutputFormat::MATRIX_MARKET );
 
     GEOSX_LOG_RANK_0( "After SinglePhaseBase::AssembleSystem" );
     GEOSX_LOG_RANK_0( "Jacobian: written to " << filename_mat );
@@ -696,10 +677,12 @@ void SinglePhaseBase::SolveSystem( DofManager const & dofManager,
 
   SolverBase::SolveSystem( dofManager, matrix, rhs, solution );
 
-  // Debug for logLevel >= 2
-  GEOSX_LOG_LEVEL_RANK_0( 2, "After SinglePhaseBase::SolveSystem" );
-  GEOSX_LOG_LEVEL_RANK_0( 2, "\nSolution:\n" << solution );
-
+  if( getLogLevel() == 2 )
+  {
+    GEOSX_LOG_RANK_0( "After SinglePhaseBase::SolveSystem" );
+    GEOSX_LOG_RANK_0("\nSolution:\n");
+    std::cout<< solution;
+  }
 }
 
 void SinglePhaseBase::ResetStateToBeginningOfStep( DomainPartition * const domain )

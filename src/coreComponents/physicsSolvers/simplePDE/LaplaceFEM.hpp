@@ -152,7 +152,7 @@ public:
   }
 
   inline globalIndex getSize() const {
-    return m_matrix.globalRows();
+    return m_matrix.numGlobalRows();
 }
 
 protected:
