@@ -683,7 +683,7 @@ CompositionalMultiphaseFlow::ImplicitStepSetup( real64 const & GEOSX_UNUSED_PARA
   }
 }
 
-void CompositionalMultiphaseFlow::SetupDofs( DomainPartition const * const GEOSX_UNUSED_PARAM( domain ),
+void CompositionalMultiphaseFlow::SetupDofs( DomainPartition const * const domain,
                                              DofManager & dofManager ) const
 {
   dofManager.addField( viewKeyStruct::dofFieldString,
@@ -691,9 +691,15 @@ void CompositionalMultiphaseFlow::SetupDofs( DomainPartition const * const GEOSX
                        m_numDofPerCell,
                        m_targetRegions );
 
-  dofManager.addCoupling( viewKeyStruct::dofFieldString,
-                          viewKeyStruct::dofFieldString,
-                          DofManager::Connectivity::Face );
+  NumericalMethodsManager const * const numericalMethodManager =
+    domain->getParent()->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
+
+  FiniteVolumeManager const * const fvManager =
+    numericalMethodManager->GetGroup<FiniteVolumeManager>( keys::finiteVolumeManager );
+
+  FluxApproximationBase const * const fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
+
+  dofManager.addCoupling( viewKeyStruct::dofFieldString, fluxApprox );
 }
 
 void CompositionalMultiphaseFlow::AssembleSystem( real64 const time_n,
@@ -705,9 +711,6 @@ void CompositionalMultiphaseFlow::AssembleSystem( real64 const time_n,
 {
   GEOSX_MARK_FUNCTION;
 
-  matrix.zero();
-  rhs.zero();
-
   matrix.open();
   rhs.open();
 
@@ -715,13 +718,8 @@ void CompositionalMultiphaseFlow::AssembleSystem( real64 const time_n,
   AssembleFluxTerms( time_n, dt, domain, &dofManager, &matrix, &rhs );
   AssembleVolumeBalanceTerms( time_n, dt, domain, &dofManager, &matrix, &rhs );
 
-  if (!m_coupledWellsFlag)
-  {
-    // these functions will be called by the ReservoirSolver
-    // when coupled wells are present
-    matrix.close();
-    rhs.close();
-  }
+  matrix.close();
+  rhs.close();
 
   if( getLogLevel() == 2 )
   {
@@ -737,10 +735,10 @@ void CompositionalMultiphaseFlow::AssembleSystem( real64 const time_n,
     integer newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
 
     string filename_mat = "matrix_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
-    matrix.write( filename_mat, true );
+    matrix.write( filename_mat, LAIOutputFormat::MATRIX_MARKET );
 
     string filename_rhs = "rhs_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
-    rhs.write( filename_rhs, true );
+    rhs.write( filename_rhs, LAIOutputFormat::MATRIX_MARKET );
 
     GEOSX_LOG_RANK_0( "After CompositionalMultiphaseFlow::AssembleSystem" );
     GEOSX_LOG_RANK_0( "Jacobian: written to " << filename_mat );
@@ -1098,7 +1096,6 @@ void CompositionalMultiphaseFlow::ApplyBoundaryConditions( real64 const time_n,
   ApplyDirichletBC_implicit( time_n, dt, &dofManager, domain, &matrix, &rhs );
 
   // apply flux boundary conditions
-
   ApplySourceFluxBC( time_n, dt, &dofManager, domain, &matrix, &rhs );
 
   
@@ -1119,10 +1116,10 @@ void CompositionalMultiphaseFlow::ApplyBoundaryConditions( real64 const time_n,
     integer newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
 
     string filename_mat = "matrix_bc_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
-    matrix.write( filename_mat, true );
+    matrix.write( filename_mat, LAIOutputFormat::MATRIX_MARKET  );
 
     string filename_rhs = "rhs_bc_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
-    rhs.write( filename_rhs, true );
+    rhs.write( filename_rhs, LAIOutputFormat::MATRIX_MARKET );
 
     GEOSX_LOG_RANK_0( "After CompositionalMultiphaseFlow::ApplyBoundaryConditions" );
     GEOSX_LOG_RANK_0( "Jacobian: written to " << filename_mat );

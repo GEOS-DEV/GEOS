@@ -17,8 +17,8 @@
  */
 
 
-#ifndef SRC_CORECOMPONENTS_LINEARALGEBRA_UTILITIES_LAIHELPERFUNCTIONS_HPP_
-#define SRC_CORECOMPONENTS_LINEARALGEBRA_UTILITIES_LAIHELPERFUNCTIONS_HPP_
+#ifndef GEOSX_LINEARALGEBRA_UTILITIES_LAIHELPERFUNCTIONS_HPP_
+#define GEOSX_LINEARALGEBRA_UTILITIES_LAIHELPERFUNCTIONS_HPP_
 
 #include "common/DataTypes.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
@@ -121,7 +121,7 @@ void SeparateComponentFilter(typename LAI::ParallelMatrix const & src,
 {
   GEOSX_ERROR_IF(dofsPerNode < 2,"Function requires dofsPerNode > 1");
 
-  const localIndex  localRows  = src.localRows();
+  const localIndex  localRows  = src.numLocalRows();
   const localIndex  maxEntries = src.maxRowLength();
   const localIndex  maxDstEntries = maxEntries / dofsPerNode;
 
@@ -137,11 +137,14 @@ void SeparateComponentFilter(typename LAI::ParallelMatrix const & src,
   for(globalIndex row=src.ilower(); row<src.iupper(); ++row)
   {
      const globalIndex rowComponent = row % dofsPerNode;
+     const localIndex rowLength = src.globalRowLength( row );
+     srcIndices.resize( rowLength );
+     srcValues.resize( rowLength );
 
      src.getRowCopy(row,srcIndices,srcValues);
 
      localIndex k=0;
-     for(localIndex col=0; col<srcIndices.size(); ++col)
+     for(localIndex col=0; col<rowLength; ++col)
      {
         const globalIndex colComponent = srcIndices[col] % dofsPerNode;
         if( rowComponent == colComponent )
@@ -160,4 +163,4 @@ void SeparateComponentFilter(typename LAI::ParallelMatrix const & src,
 
 } // geosx namespace
 
-#endif /* SRC_CORECOMPONENTS_LINEARALGEBRA_UTILITIES_LAIHELPERFUNCTIONS_HPP_ */
+#endif /*GEOSX_LINEARALGEBRA_UTILITIES_LAIHELPERFUNCTIONS_HPP_*/
