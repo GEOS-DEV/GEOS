@@ -294,12 +294,11 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
   NumericalMethodsManager const * numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
   FiniteElementDiscretizationManager const * feDiscretizationManager = numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
 
-  r1_array const& disp  = nodeManager->getReference<r1_array>(keys::TotalDisplacement);
-  r1_array const& dDisp = nodeManager->getReference<r1_array>(keys::IncrementalDisplacement);
-  arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodesCoord = nodeManager->referencePosition();
+  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & disp  = nodeManager->totalDisplacement();
+  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & dDisp = nodeManager->incrementalDisplacement();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoord = nodeManager->referencePosition();
 
   r1_array const uhattilde;
-
 
   string const dofKey     = dofManager.getKey( keys::TotalDisplacement );
   string const jumpDofKey = dofManager.getKey( viewKeyStruct::dispJumpString );
@@ -404,7 +403,7 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
         // Dof index of nodal displacements
         for( localIndex a=0 ; a<numNodesPerElement ; ++a)
         {
-          localIndex localNodeIndex = elemsToNodes[k][a];
+          localIndex localNodeIndex = elemsToNodes[embeddedSurfaceToCell[k]][a];
 
           for( int i=0 ; i<dim ; ++i )
           {
@@ -582,6 +581,13 @@ void SolidMechanicsEmbeddedFractures::AssembleEquilibriumOperator(array2d<real64
     }
   }
   BlasLapackLA::matrixScale(-hInv, eqMatrix);
+
+//  for (int i = 0; i < 6; ++i)
+//   {
+//     std::cout << "eqMat(1," + std::to_string(i+1) + ") " << eqMatrix(0, i) << std::endl;
+//     std::cout << "eqMat(2," + std::to_string(i+1) + ") " << eqMatrix(1, i) << std::endl;
+//     std::cout << "eqMat(3," + std::to_string(i+1) + ") " << eqMatrix(2, i) << std::endl;
+//   }
 }
 
 void
@@ -662,6 +668,12 @@ AssembleCompatibilityOperator(array2d<real64> & compMatrix,
       compMatrix(VoigtIndex, 2) += t2DmSym(i, j);
     }
   }
+//  for (int i = 0; i < 6; ++i)
+//     {
+//       std::cout << "compMat(" + std::to_string(i+1) + ",1) " << compMatrix(i, 0) << std::endl;
+//       std::cout << "compMat(" + std::to_string(i+1) + ",2) " << compMatrix(i, 1) << std::endl;
+//       std::cout << "compMat(" + std::to_string(i+1) + ",3) " << compMatrix(i, 2) << std::endl;
+//     }
 }
 
 void SolidMechanicsEmbeddedFractures::AssembleStrainOperator(array2d<real64> & strainMatrix,

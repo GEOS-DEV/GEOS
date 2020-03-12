@@ -7,7 +7,7 @@
 		initialDt="10"
 		solidSolverName="matrixSolver"
 		contactRelationName="fractureContact"
-		logLevel="2"
+		logLevel="1"
 		>
 		<NonlinearSolverParameters 
         newtonTol="1.0e-6"
@@ -40,7 +40,7 @@
 		xCoords="{0, 10}"
 		yCoords="{0, 10}" 
 		zCoords="{0, 10}" 
-		nx="{21}" ny="{21}" nz="{1}"
+		nx="{3}" ny="{3}" nz="{1}"
 		cellBlockNames="{cb1}" />
 	</Mesh>
 
