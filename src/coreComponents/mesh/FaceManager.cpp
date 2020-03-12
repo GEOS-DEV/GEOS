@@ -642,32 +642,6 @@ void FaceManager::SetIsExternal()
   }
 }
 
-//void
-//FaceManager::
-//SetGlobalIndexFromCompositionalObject( ObjectManagerBase const * const compositionalObject )
-//{
-//  array1d< localIndex_array > const & faceToNodes = this->getReference< array1d< localIndex_array > >(
-// viewKeys.nodeList );
-//  globalIndex_array const & nodalGlobalIndex = compositionalObject->localToGlobalMap();
-//  integer_array const & isDomainBoundary = this->getReference<integer_array>(viewKeys.isDomainBoundary);
-//
-//  mpiBuffer buffer;
-//
-//  localIndex numFaces;
-//  for( localIndex k=0 ; k<size() ; ++k )
-//  {
-//    if( isDomainBoundary[k] == 1 )
-//    {
-//    }
-//  }
-//  for( localIndex k=0 ; k<size() ; ++k )
-//  {
-//    if( isDomainBoundary[k] == 1 )
-//    {
-//      CommBufferOps::Pack( buffer, )
-//    }
-//  }
-//}
 
 localIndex FaceManager::getMaxFaceNodes() const
 {
