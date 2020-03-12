@@ -13,28 +13,25 @@
  */
 
 /**
- * @file TrilinosSolver.hpp
+ * @file PetscSolver.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_TRILINOSSOLVER_HPP_
-#define GEOSX_LINEARALGEBRA_INTERFACES_TRILINOSSOLVER_HPP_
-
-// Forward declaration of Amesos_BaseSolver.
-class Amesos_BaseSolver;
+#ifndef GEOSX_LINEARALGEBRA_INTERFACES_PETSCSOLVER_HPP_
+#define GEOSX_LINEARALGEBRA_INTERFACES_PETSCSOLVER_HPP_
 
 namespace geosx
 {
 
-class EpetraVector;
-class EpetraMatrix;
+class PetscVector;
+class PetscMatrix;
 class LinearSolverParameters;
 
 /**
- * \class TrilinosSolver
- * \brief This class creates and provides basic support for AztecOO, Amesos and ML libraries.
+ * \class PetscSolver
+ * \brief This class creates and provides basic support for PETSc solvers.
  */
 
-class TrilinosSolver
+class PetscSolver
 {
 public:
 
@@ -42,40 +39,38 @@ public:
    * @brief Solver constructor, with parameter list reference
    *
    */
-  TrilinosSolver( LinearSolverParameters const & parameters );
+  PetscSolver( LinearSolverParameters const & parameters );
 
   /**
    * @brief Virtual destructor.
    *
    */
-  ~TrilinosSolver();
+  virtual ~PetscSolver() = default;
 
   /**
    * @brief Solve system with an iterative solver.
    *
-   * Solve Ax=b with A an EpetraMatrix, x and b EpetraVector.
+   * Solve Ax=b with A an PetscMatrix, x and b PetscVector.
    */
 
-  void solve( EpetraMatrix & mat,
-              EpetraVector & sol,
-              EpetraVector & rhs );
+  void solve( PetscMatrix & mat,
+              PetscVector & sol,
+              PetscVector & rhs );
 
 private:
 
   LinearSolverParameters const & m_parameters;
 
-  Amesos_BaseSolver * m_solver = nullptr;
+  void solve_direct( PetscMatrix & mat,
+                     PetscVector & sol,
+                     PetscVector & rhs );
 
-  void solve_direct( EpetraMatrix & mat,
-                     EpetraVector & sol,
-                     EpetraVector & rhs );
-
-  void solve_krylov( EpetraMatrix & mat,
-                     EpetraVector & sol,
-                     EpetraVector & rhs );
+  void solve_krylov( PetscMatrix & mat,
+                     PetscVector & sol,
+                     PetscVector & rhs );
 
 };
 
 } // end geosx namespace
 
-#endif /* TRILINOSSOLVER_HPP_ */
+#endif /* PETSCSOLVER_HPP_ */

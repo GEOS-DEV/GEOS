@@ -543,7 +543,7 @@ void CompositionalMultiphaseWell::SetupDofs( DomainPartition const * const domai
 
   dofManager.addCoupling( WellElementDofName(),
                           WellElementDofName(),
-                          DofManager::Connectivity::Node );
+                          DofManager::Connector::Node );
 }
 
 void CompositionalMultiphaseWell::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),

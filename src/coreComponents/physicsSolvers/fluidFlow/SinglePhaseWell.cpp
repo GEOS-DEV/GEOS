@@ -268,7 +268,7 @@ void SinglePhaseWell::SetupDofs( DomainPartition const * const domain,
 
   dofManager.addCoupling( WellElementDofName(),
                           WellElementDofName(),
-                          DofManager::Connectivity::Node );
+                          DofManager::Connector::Node );
 }
 
 void SinglePhaseWell::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),

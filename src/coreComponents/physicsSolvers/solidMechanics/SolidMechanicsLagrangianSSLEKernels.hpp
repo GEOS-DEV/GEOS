@@ -479,7 +479,7 @@ struct ImplicitKernel
 //          R    += R_StiffnessDamping;
         }
 
-        // TODO remove local epetra objects, remove use of unwrappedPointer()
+        // TODO remove local epetra objects, remove use of unwrapped()
         matrix->add( elementLocalDofIndex.data(), elementLocalDofIndex.data(), dRdU.data(), ndof, ndof );
         rhs->add( elementLocalDofIndex.data(), R.data(), ndof );
       }
