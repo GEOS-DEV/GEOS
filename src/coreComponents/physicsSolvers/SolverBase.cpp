@@ -439,8 +439,6 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       // get residual norm
       real64 residualNorm = CalculateResidualNorm( domain, dofManager, rhs );
 
-      GEOSX_LOG_RANK_VAR(residualNorm);
-
       if( getLogLevel() >= 1 && logger::internal::rank==0 )
       {
         if( newtonIter!=0 )

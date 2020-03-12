@@ -127,7 +127,7 @@ void SinglePhaseFVM::ApplySystemSolution( DofManager const & dofManager,
                                           DomainPartition * const domain )
 {
   MeshLevel * mesh = domain->getMeshBody(0)->getMeshLevel(0);
-  GEOSX_LOG_RANK_VAR( solution );
+
   dofManager.addVectorToField( solution,
                                viewKeyStruct::pressureString,
                                viewKeyStruct::deltaPressureString,
@@ -145,18 +145,7 @@ void SinglePhaseFVM::ApplySystemSolution( DofManager const & dofManager,
   {
     UpdateState( subRegion );
   } );
-  ////////////////////////////////////
-//  ElementRegionManager::ElementViewAccessor< arrayView1d<real64> >  const & pres        = m_pressure;
-//  ElementRegionManager::ElementViewAccessor< arrayView1d<real64> >  const & dPres        = m_deltaPressure;
-//  GEOSX_LOG_RANK_VAR( pres );
-//  GEOSX_LOG_RANK_VAR( dPres );
-//  if ( MpiWrapper::Comm_rank() == 0 )
-//  {
-//    std::cout << "Press key to continue";
-//    std::cin.get();
-//  }
-//  MpiWrapper::Barrier();
-  ////////////////////////////////////
+
 }
 
 void SinglePhaseFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
