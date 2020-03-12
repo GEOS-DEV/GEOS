@@ -125,7 +125,7 @@ void EpetraVector::create( arraySlice1d< real64 const > const & localValues,
                         Epetra_MpiComm( MPI_PARAM( comm ) ) );
   m_vector = std::make_unique< Epetra_FEVector >( Copy,
                                                   map,
-                                                  const_cast<real64 *>( localValues.data() ),
+                                                  const_cast<real64 *>( localValues.dataIfContiguous() ),
                                                   localSize,
                                                   1 );
 }
@@ -169,8 +169,8 @@ void EpetraVector::set( arraySlice1d< globalIndex const > const & globalRowIndic
 {
   GEOSX_LAI_ASSERT( !closed() );
   GEOSX_LAI_CHECK_ERROR( m_vector->ReplaceGlobalValues( integer_conversion< int >( values.size() ),
-                                                        toEpetraLongLong( globalRowIndices.data() ),
-                                                        values.data() ) );
+                                                        toEpetraLongLong( globalRowIndices.dataIfContiguous() ),
+                                                        values.dataIfContiguous() ) );
 }
 
 void EpetraVector::add( arraySlice1d< globalIndex const > const & globalRowIndices,
@@ -178,8 +178,8 @@ void EpetraVector::add( arraySlice1d< globalIndex const > const & globalRowIndic
 {
   GEOSX_LAI_ASSERT( !closed() );
   GEOSX_LAI_CHECK_ERROR( m_vector->SumIntoGlobalValues( integer_conversion< int >( values.size() ),
-                                                        toEpetraLongLong( globalRowIndices.data() ),
-                                                        values.data() ) );
+                                                        toEpetraLongLong( globalRowIndices.dataIfContiguous() ),
+                                                        values.dataIfContiguous() ) );
 }
 
 void EpetraVector::set( real64 value )
@@ -332,8 +332,9 @@ void EpetraVector::get( arraySlice1d< globalIndex const > const & globalIndices,
 {
   GEOSX_LAI_ASSERT( ready() );
   GEOSX_LAI_ASSERT_GE( values.size(), globalIndices.size() );
-  GEOSX_LAI_ASSERT_GE( *std::min_element( globalIndices.data(), globalIndices.data() + globalIndices.size() ), ilower() );
-  GEOSX_LAI_ASSERT_GT( iupper(), *std::max_element( globalIndices.data(), globalIndices.data() + globalIndices.size() ) );
+  GEOSX_LAI_ASSERT_GE( *std::min_element( globalIndices.dataIfContiguous(), globalIndices.dataIfContiguous() + globalIndices.size() ), ilower() );
+  GEOSX_LAI_ASSERT_GT( iupper(), *std::max_element( globalIndices.dataIfContiguous(),
+                                                    globalIndices.dataIfContiguous() + globalIndices.size() ) );
 
   real64 const * const localVector = extractLocalVector();
   for( localIndex i = 0; i < globalIndices.size(); ++i )
