@@ -1236,7 +1236,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( do
                                        ParallelVector &  )
 {
   GEOSX_MARK_FUNCTION;
-#if 0
+
   /*
   globalIndex numU = m_solidSolver->getSystemRhs().globalSize();
   globalIndex numP = m_flowSolver->getSystemRhs().globalSize();
@@ -1605,7 +1605,6 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( do
     p_solution[1]->Print(std::cout);
 
   }
-#endif
 }
 
 real64
