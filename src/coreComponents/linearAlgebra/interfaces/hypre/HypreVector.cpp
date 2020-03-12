@@ -223,13 +223,14 @@ void HypreVector::set( arraySlice1d< globalIndex const > const & globalIndices,
                        arraySlice1d< real64 const > const & values )
 {
   GEOSX_LAI_ASSERT( !closed() );
-  GEOSX_LAI_ASSERT_GE( *std::min_element( globalIndices.data(), globalIndices.data() + globalIndices.size() ), ilower() );
-  GEOSX_LAI_ASSERT_GT( iupper(), *std::max_element( globalIndices.data(), globalIndices.data() + globalIndices.size() ) );
+  GEOSX_LAI_ASSERT_GE( *std::min_element( globalIndices.dataIfContiguous(), globalIndices.dataIfContiguous() + globalIndices.size() ), ilower() );
+  GEOSX_LAI_ASSERT_GT( iupper(), *std::max_element( globalIndices.dataIfContiguous(),
+                                                    globalIndices.dataIfContiguous() + globalIndices.size() ) );
 
   GEOSX_LAI_CHECK_ERROR( HYPRE_IJVectorSetValues( m_ij_vector,
                                                   integer_conversion< HYPRE_Int >( values.size() ),
-                                                  toHYPRE_BigInt( globalIndices.data() ),
-                                                  values.data() ) );
+                                                  toHYPRE_BigInt( globalIndices.dataIfContiguous() ),
+                                                  values.dataIfContiguous() ) );
 }
 
 void HypreVector::add( arraySlice1d< globalIndex const > const & globalIndices,
@@ -238,8 +239,8 @@ void HypreVector::add( arraySlice1d< globalIndex const > const & globalIndices,
   GEOSX_LAI_ASSERT( !closed() );
   GEOSX_LAI_CHECK_ERROR( HYPRE_IJVectorAddToValues( m_ij_vector,
                                                     integer_conversion< HYPRE_Int >( values.size() ),
-                                                    toHYPRE_BigInt( globalIndices.data() ),
-                                                    values.data() ) );
+                                                    toHYPRE_BigInt( globalIndices.dataIfContiguous() ),
+                                                    values.dataIfContiguous() ) );
 }
 
 void HypreVector::set( real64 value )
@@ -416,13 +417,14 @@ void HypreVector::get( arraySlice1d< globalIndex const > const & globalIndices,
 {
   GEOSX_LAI_ASSERT( ready() );
   GEOSX_LAI_ASSERT_GE( values.size(), globalIndices.size() );
-  GEOSX_LAI_ASSERT_GE( *std::min_element( globalIndices.data(), globalIndices.data() + globalIndices.size() ), ilower() );
-  GEOSX_LAI_ASSERT_GT( iupper(), *std::max_element( globalIndices.data(), globalIndices.data() + globalIndices.size() ) );
+  GEOSX_LAI_ASSERT_GE( *std::min_element( globalIndices.dataIfContiguous(), globalIndices.dataIfContiguous() + globalIndices.size() ), ilower() );
+  GEOSX_LAI_ASSERT_GT( iupper(), *std::max_element( globalIndices.dataIfContiguous(),
+                                                    globalIndices.dataIfContiguous() + globalIndices.size() ) );
 
   GEOSX_LAI_CHECK_ERROR( HYPRE_IJVectorGetValues( m_ij_vector,
                                                   integer_conversion< HYPRE_Int >( globalIndices.size() ),
-                                                  toHYPRE_BigInt( globalIndices.data() ),
-                                                  values.data() ) );
+                                                  toHYPRE_BigInt( globalIndices.dataIfContiguous() ),
+                                                  values.dataIfContiguous() ) );
 }
 
 HYPRE_ParVector const & HypreVector::unwrapped() const

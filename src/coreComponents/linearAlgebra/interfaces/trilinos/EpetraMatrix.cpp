@@ -245,7 +245,7 @@ void EpetraMatrix::add( arraySlice1d< globalIndex const > const & rowIndices,
                                                         toEpetraLongLong( rowIndices ),
                                                         integer_conversion< int >( colIndices.size() ),
                                                         toEpetraLongLong( colIndices ),
-                                                        values.data(),
+                                                        values.dataIfContiguous(),
                                                         Epetra_FECrsMatrix::ROW_MAJOR ) );
 }
 
@@ -258,7 +258,7 @@ void EpetraMatrix::set( arraySlice1d< globalIndex const > const & rowIndices,
                                                         toEpetraLongLong( rowIndices ),
                                                         integer_conversion< int >( colIndices.size() ),
                                                         toEpetraLongLong( colIndices ),
-                                                        values.data(),
+                                                        values.dataIfContiguous(),
                                                         Epetra_FECrsMatrix::ROW_MAJOR ) );
 }
 
@@ -271,7 +271,7 @@ void EpetraMatrix::insert( arraySlice1d< globalIndex const > const & rowIndices,
                                                             toEpetraLongLong( rowIndices ),
                                                             integer_conversion< int >( colIndices.size() ),
                                                             toEpetraLongLong( colIndices ),
-                                                            values.data(),
+                                                            values.dataIfContiguous(),
                                                             Epetra_FECrsMatrix::ROW_MAJOR ) );
 }
 
@@ -284,7 +284,7 @@ void EpetraMatrix::add( arraySlice1d< globalIndex const > const & rowIndices,
                                                         toEpetraLongLong( rowIndices ),
                                                         integer_conversion< int >( colIndices.size() ),
                                                         toEpetraLongLong( colIndices ),
-                                                        values.data(),
+                                                        values.dataIfContiguous(),
                                                         Epetra_FECrsMatrix::COLUMN_MAJOR ) );
 }
 
@@ -297,7 +297,7 @@ void EpetraMatrix::set( arraySlice1d< globalIndex const > const & rowIndices,
                                                         toEpetraLongLong( rowIndices ),
                                                         integer_conversion< int >( colIndices.size() ),
                                                         toEpetraLongLong( colIndices ),
-                                                        values.data(),
+                                                        values.dataIfContiguous(),
                                                         Epetra_FECrsMatrix::COLUMN_MAJOR ) );
 }
 
@@ -310,7 +310,7 @@ void EpetraMatrix::insert( arraySlice1d< globalIndex const > const & rowIndices,
                                                             toEpetraLongLong( rowIndices ),
                                                             integer_conversion< int >( colIndices.size() ),
                                                             toEpetraLongLong( colIndices ),
-                                                            values.data(),
+                                                            values.dataIfContiguous(),
                                                             Epetra_FECrsMatrix::COLUMN_MAJOR ) );
 }
 
