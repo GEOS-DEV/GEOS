@@ -164,8 +164,11 @@ void PoroelasticSolver::ImplicitStepComplete( real64 const & time_n,
                                               real64 const & dt,
                                               DomainPartition * const domain )
 {
-  m_solidSolver->ImplicitStepComplete( time_n, dt, domain );
-  m_flowSolver->ImplicitStepComplete( time_n, dt, domain );
+  if( m_couplingTypeOption == couplingTypeOption::TightlyCoupled )
+  {
+    m_solidSolver->ImplicitStepComplete( time_n, dt, domain );
+    m_flowSolver->ImplicitStepComplete( time_n, dt, domain );
+  }
 }
 
 void PoroelasticSolver::PostProcessInput()
