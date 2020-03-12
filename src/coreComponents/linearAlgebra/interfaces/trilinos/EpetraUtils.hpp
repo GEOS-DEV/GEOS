@@ -13,35 +13,26 @@
  */
 
 /**
- * @file PetscInterface.hpp
+ * @file EpetraUtils.hpp
  */
+#ifndef GEOSX_LINEARALGEBRA_INTERFACES_EPETRAUTILS_HPP_
+#define GEOSX_LINEARALGEBRA_INTERFACES_EPETRAUTILS_HPP_
 
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_PETSCINTERFACE_HPP_
-#define GEOSX_LINEARALGEBRA_INTERFACES_PETSCINTERFACE_HPP_
-
-#include "PetscSolver.hpp"
-#include "PetscVector.hpp"
-#include "PetscSparseMatrix.hpp"
+#include "common/DataTypes.hpp"
 
 namespace geosx
 {
 
-/**
- * \class PetscInterface
- * \brief This class holds aliases based on the Petsc library.
- */
-
-struct PetscInterface
+inline long long * toEpetraLongLong( globalIndex * const index )
 {
-  static void initialize( int & argc, char ** & argv );
+  return reinterpret_cast< long long * >(index);
+}
 
-  static void finalize();
+inline long long const * toEpetraLongLong( globalIndex const * const index )
+{
+  return reinterpret_cast< long long const * >(index);
+}
 
-  using ParallelMatrix = PetscSparseMatrix;
-  using ParallelVector = PetscVector;
-  using LinearSolver   = PetscSolver;
-};
+}
 
-} /* namespace geosx */
-
-#endif /*GEOSX_LINEARALGEBRA_INTERFACES_PETSCINTERFACE_HPP_*/
+#endif //GEOSX_LINEARALGEBRA_INTERFACES_EPETRAUTILS_HPP_
