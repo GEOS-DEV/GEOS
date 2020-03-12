@@ -296,7 +296,7 @@ void PetscMatrix::add( arraySlice1d<globalIndex const> const & rowIndices,
                                        toPetscInt( rowIndices ),
                                        colIndices.size(),
                                        toPetscInt( colIndices ),
-                                       values.data(),
+                                       values.dataIfContiguous(),
                                        ADD_VALUES ) );
 }
 
@@ -310,7 +310,7 @@ void PetscMatrix::set( arraySlice1d<globalIndex const> const & rowIndices,
                                        toPetscInt( rowIndices ),
                                        colIndices.size(),
                                        toPetscInt( colIndices ),
-                                       values.data(),
+                                       values.dataIfContiguous(),
                                        INSERT_VALUES ) );
 }
 
@@ -324,7 +324,7 @@ void PetscMatrix::insert( arraySlice1d<globalIndex const> const & rowIndices,
                                        toPetscInt( rowIndices ),
                                        colIndices.size(),
                                        toPetscInt( colIndices ),
-                                       values.data(),
+                                       values.dataIfContiguous(),
                                        INSERT_VALUES ) );
 }
 
@@ -339,7 +339,7 @@ void PetscMatrix::add( arraySlice1d<globalIndex const> const & rowIndices,
                                        toPetscInt( rowIndices ),
                                        colIndices.size(),
                                        toPetscInt( colIndices ),
-                                       values.data(),
+                                       values.dataIfContiguous(),
                                        ADD_VALUES ) );
   GEOSX_LAI_CHECK_ERROR( MatSetOption( m_mat, MAT_ROW_ORIENTED, PETSC_TRUE ) );
 }
@@ -355,7 +355,7 @@ void PetscMatrix::set( arraySlice1d<globalIndex const> const & rowIndices,
                                        toPetscInt( rowIndices ),
                                        colIndices.size(),
                                        toPetscInt( colIndices ),
-                                       values.data(),
+                                       values.dataIfContiguous(),
                                        INSERT_VALUES ) );
   GEOSX_LAI_CHECK_ERROR( MatSetOption( m_mat, MAT_ROW_ORIENTED, PETSC_TRUE ) );
 }
@@ -371,7 +371,7 @@ void PetscMatrix::insert( arraySlice1d<globalIndex const> const & rowIndices,
                                        toPetscInt( rowIndices ),
                                        colIndices.size(),
                                        toPetscInt( colIndices ),
-                                       values.data(),
+                                       values.dataIfContiguous(),
                                        INSERT_VALUES ) );
   GEOSX_LAI_CHECK_ERROR( MatSetOption( m_mat, MAT_ROW_ORIENTED, PETSC_TRUE ) );
 }
