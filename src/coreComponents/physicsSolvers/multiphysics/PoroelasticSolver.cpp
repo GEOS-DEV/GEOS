@@ -438,8 +438,6 @@ void PoroelasticSolver::AssembleCouplingBlocks( DomainPartition * const domain,
   NumericalMethodsManager const * numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
   FiniteElementDiscretizationManager const * feDiscretizationManager = numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
 
-  matrix.open();
-
   string const uDofKey = dofManager.getKey( keys::TotalDisplacement );
   arrayView1d<globalIndex const> const & uDofNumber = nodeManager->getReference<globalIndex_array>( uDofKey );
 
@@ -447,8 +445,8 @@ void PoroelasticSolver::AssembleCouplingBlocks( DomainPartition * const domain,
 
   string const pDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString );
 
-//  ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase>
-//    constitutiveRelation = elemManager->ConstructFullConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
+  matrix.open();
+  rhs.open();
 
   // begin region loop
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
@@ -550,6 +548,7 @@ void PoroelasticSolver::AssembleCouplingBlocks( DomainPartition * const domain,
   }
 
   matrix.close();
+  rhs.close();
 }
 
 void PoroelasticSolver::ApplyBoundaryConditions( real64 const time_n,
