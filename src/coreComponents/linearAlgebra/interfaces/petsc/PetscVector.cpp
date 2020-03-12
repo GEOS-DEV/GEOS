@@ -165,8 +165,8 @@ void PetscVector::set( arraySlice1d<globalIndex const> const & globalIndices,
   GEOSX_LAI_ASSERT( !closed() );
   GEOSX_LAI_CHECK_ERROR( VecSetValues( m_vec,
                                        values.size(),
-                                       toPetscInt( globalIndices.data()),
-                                       values.data(),
+                                       toPetscInt( globalIndices.dataIfContiguous()),
+                                       values.dataIfContiguous(),
                                        INSERT_VALUES ) );
 }
 
@@ -176,8 +176,8 @@ void PetscVector::add( arraySlice1d<globalIndex const> const & globalIndices,
   GEOSX_LAI_ASSERT( !closed() );
   GEOSX_LAI_CHECK_ERROR( VecSetValues( m_vec,
                                        values.size(),
-                                       toPetscInt( globalIndices.data()),
-                                       values.data(),
+                                       toPetscInt( globalIndices.dataIfContiguous()),
+                                       values.dataIfContiguous(),
                                        ADD_VALUES ) );
 }
 
@@ -357,13 +357,14 @@ void PetscVector::get( arraySlice1d<globalIndex const> const & globalIndices,
 {
   GEOSX_LAI_ASSERT( ready() );
   GEOSX_LAI_ASSERT_GE( values.size(), globalIndices.size() );
-  GEOSX_LAI_ASSERT_GE( *std::min_element( globalIndices.data(), globalIndices.data() + globalIndices.size() ), ilower() );
-  GEOSX_LAI_ASSERT_GT( iupper(), *std::max_element( globalIndices.data(), globalIndices.data() + globalIndices.size() ) );
+  GEOSX_LAI_ASSERT_GE( *std::min_element( globalIndices.dataIfContiguous(), globalIndices.dataIfContiguous() + globalIndices.size() ), ilower() );
+  GEOSX_LAI_ASSERT_GT( iupper(), *std::max_element( globalIndices.dataIfContiguous(),
+                                                    globalIndices.dataIfContiguous() + globalIndices.size() ) );
 
   GEOSX_LAI_CHECK_ERROR( VecGetValues( m_vec,
                                        globalIndices.size(),
-                                       toPetscInt( globalIndices.data() ),
-                                       values.data() ) );
+                                       toPetscInt( globalIndices.dataIfContiguous() ),
+                                       values.dataIfContiguous() ) );
 }
 
 Vec const & PetscVector::unwrapped() const

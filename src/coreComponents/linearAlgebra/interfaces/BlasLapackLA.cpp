@@ -40,21 +40,21 @@ real64 BlasLapackLA::vectorNorm1( arraySlice1d<real64 const> const & X )
 {
   int const INCX = 1;
   int const N = integer_conversion<int>( X.size() );
-  return GEOSX_dasum( &N, X.data(), &INCX);
+  return GEOSX_dasum( &N, X.dataIfContiguous(), &INCX);
 }
 
 real64 BlasLapackLA::vectorNorm2( arraySlice1d<real64 const> const & X )
 {
   int const INCX = 1;
   int const N = integer_conversion<int>( X.size() );
-  return GEOSX_dnrm2( &N, X.data(), &INCX);
+  return GEOSX_dnrm2( &N, X.dataIfContiguous(), &INCX);
 }
 
 real64 BlasLapackLA::vectorNormInf( arraySlice1d<real64 const> const & X )
 {
   int const INCX = 1;
   int const N = integer_conversion<int>( X.size() );
-  int ind = GEOSX_idamax( &N, X.data(), &INCX);
+  int ind = GEOSX_idamax( &N, X.dataIfContiguous(), &INCX);
   ind -= 1; // Fortran convention, subtract 1
   return std::abs( X(ind) );
 }
@@ -170,7 +170,7 @@ static real64 matrixNorm( arraySlice2d< real64 const, USD > const & A,
     WORK = temp.data();
   }
 
-  return GEOSX_dlange( &NORM, &N, &M, A.data(), &N, WORK );
+  return GEOSX_dlange( &NORM, &N, &M, A.dataIfContiguous(), &N, WORK );
 }
 
 template< int USD >
@@ -186,7 +186,7 @@ void matrixMatrixAdd( arraySlice2d<real64 const, USD> const & A,
   int const INCX = 1;
   int const INCY = 1;
   int const N = integer_conversion<int>( A.size() );
-  GEOSX_daxpy( &N, &alpha, A.data(), &INCX, B.data(), &INCY );
+  GEOSX_daxpy( &N, &alpha, A.dataIfContiguous(), &INCX, B.dataIfContiguous(), &INCY );
 }
 
 template< int USD >
@@ -195,7 +195,7 @@ void matrixScale( real64 const alpha,
 {
   int const INCX = 1;
   int const N = integer_conversion<int>( A.size() );
-  GEOSX_dscal( &N, &alpha, A.data(), &INCX );
+  GEOSX_dscal( &N, &alpha, A.dataIfContiguous(), &INCX );
 }
 
 template< int USD >
@@ -205,7 +205,7 @@ void matrixRand( arraySlice2d< real64, USD > const & A,
   int const IDIST = static_cast<int>(idist);
   int const NN = integer_conversion<int>( A.size() );
   GEOSX_ASSERT_MSG( NN > 0, "The matrix cannot be empty");
-  GEOSX_dlarnv( &IDIST, ISEED, &NN, A.data() );
+  GEOSX_dlarnv( &IDIST, ISEED, &NN, A.dataIfContiguous() );
 }
 
 template< int USD >
@@ -219,7 +219,7 @@ void matrixCopy( arraySlice2d< real64 const, USD > const & A,
   int const INCX = 1;
   int const INCY = 1;
   int const N = integer_conversion<int>( A.size() );
-  GEOSX_dcopy( &N, A.data(), &INCX, B.data(), &INCY );
+  GEOSX_dcopy( &N, A.dataIfContiguous(), &INCX, B.dataIfContiguous(), &INCY );
 }
 
 template< int USD >
@@ -264,7 +264,7 @@ void matrixInverse( arraySlice2d< real64 const, USD > const & A,
     // transpose matrix, i.e. choosing the LAPACK_COL_MAJOR ordering, to
     // avoid transposition/copy requires for LAPACK_ROW_MAJOR ordering.
     int INFO;
-    GEOSX_dgetrf( &NN, &NN, Ainv.data(), &NN, IPIV.data(), &INFO);
+    GEOSX_dgetrf( &NN, &NN, Ainv.dataIfContiguous(), &NN, IPIV.data(), &INFO);
 
     GEOSX_ASSERT_MSG( INFO == 0, "LAPACK dgetrf error code: " << INFO );
 
@@ -334,7 +334,7 @@ void matrixInverse( arraySlice2d< real64 const, USD > const & A,
       // Invert (LAPACK function DGETRI). The LU factors computed for the
       // transpose matrix stored in Ainv are used.
       int INFO;
-      GEOSX_dgetri( &NN, Ainv.data(), &NN, IPIV.data(), INV_WORK.data(), &NN, &INFO);
+      GEOSX_dgetri( &NN, Ainv.dataIfContiguous(), &NN, IPIV.data(), INV_WORK.data(), &NN, &INFO);
 
       GEOSX_ASSERT_MSG( INFO == 0, "LAPACK dgetri error code: " << INFO );
 
@@ -407,7 +407,7 @@ void BlasLapackLA::vectorVectorAdd( arraySlice1d<real64 const> const & X,
   int const INCX = 1;
   int const INCY = 1;
   int const N = integer_conversion<int>( X.size() );
-  GEOSX_daxpy( &N, &alpha, X.data(), &INCX, Y.data(), &INCY );
+  GEOSX_daxpy( &N, &alpha, X.dataIfContiguous(), &INCX, Y.dataIfContiguous(), &INCY );
 }
 
 void BlasLapackLA::matrixMatrixAdd( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
@@ -429,7 +429,7 @@ void BlasLapackLA::vectorScale( real64 const alpha,
 {
   int const INCX = 1;
   int const N = integer_conversion<int>( X.size() );
-  GEOSX_dscal( &N, &alpha, X.data(), &INCX );
+  GEOSX_dscal( &N, &alpha, X.dataIfContiguous(), &INCX );
 }
 
 void BlasLapackLA::matrixScale( real64 const alpha, arraySlice2d<real64, MatrixLayout::ROW_MAJOR> const & A )
@@ -449,7 +449,7 @@ real64 BlasLapackLA::vectorDot( arraySlice1d<real64 const> const & X,
   int const INCX = 1;
   int const INCY = 1;
   int const N = integer_conversion<int>( X.size() );
-  return GEOSX_ddot( &N, X.data(), &INCX, Y.data(), &INCY );
+  return GEOSX_ddot( &N, X.dataIfContiguous(), &INCX, Y.dataIfContiguous(), &INCY );
 
 }
 
@@ -471,7 +471,7 @@ void BlasLapackLA::matrixVectorMultiply( arraySlice2d<real64 const, MatrixLayout
   char const TRANS1 = 'N';
   char const TRANS2 = 'N';
 
-  GEOSX_dgemm(&TRANS1, &TRANS2, &N, &M, &K, &alpha, X.data(), &N, A.data(), &K, &beta, Y.data(), &N);
+  GEOSX_dgemm( &TRANS1, &TRANS2, &N, &M, &K, &alpha, X.dataIfContiguous(), &N, A.dataIfContiguous(), &K, &beta, Y.dataIfContiguous(), &N);
 }
 
 void BlasLapackLA::matrixTVectorMultiply( arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const & A,
@@ -492,7 +492,7 @@ void BlasLapackLA::matrixTVectorMultiply( arraySlice2d<real64 const, MatrixLayou
   char const TRANS1 = 'N';
   char const TRANS2 = 'T';
 
-  GEOSX_dgemm(&TRANS1, &TRANS2, &N, &M, &K, &alpha, X.data(), &N, A.data(), &M, &beta, Y.data(), &N);
+  GEOSX_dgemm( &TRANS1, &TRANS2, &N, &M, &K, &alpha, X.dataIfContiguous(), &N, A.dataIfContiguous(), &M, &beta, Y.dataIfContiguous(), &N);
 }
 
 void BlasLapackLA::matrixMatrixMultiply( arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const & A,
@@ -516,7 +516,7 @@ void BlasLapackLA::matrixMatrixMultiply( arraySlice2d<real64 const, MatrixLayout
   char const TRANS1 = 'N';
   char const TRANS2 = 'N';
 
-  GEOSX_dgemm(&TRANS1, &TRANS2, &N, &M, &K, &alpha, B.data(), &N, A.data(), &K, &beta, C.data(), &N);
+  GEOSX_dgemm( &TRANS1, &TRANS2, &N, &M, &K, &alpha, B.dataIfContiguous(), &N, A.dataIfContiguous(), &K, &beta, C.dataIfContiguous(), &N);
 }
 
 void BlasLapackLA::matrixTMatrixMultiply( arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const & A,
@@ -541,7 +541,7 @@ void BlasLapackLA::matrixTMatrixMultiply( arraySlice2d<real64 const, MatrixLayou
   char const TRANS1 = 'N';
   char const TRANS2 = 'T';
 
-  GEOSX_dgemm(&TRANS1, &TRANS2, &N, &M, &K, &alpha, B.data(), &N, A.data(), &M, &beta, C.data(), &N);
+  GEOSX_dgemm( &TRANS1, &TRANS2, &N, &M, &K, &alpha, B.dataIfContiguous(), &N, A.dataIfContiguous(), &M, &beta, C.dataIfContiguous(), &N);
 }
 
 void BlasLapackLA::matrixMatrixTMultiply( arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const & A,
@@ -566,7 +566,7 @@ void BlasLapackLA::matrixMatrixTMultiply( arraySlice2d<real64 const, MatrixLayou
   char const TRANS1 = 'T';
   char const TRANS2 = 'N';
 
-  GEOSX_dgemm(&TRANS1, &TRANS2, &N, &M, &K, &alpha, B.data(), &K, A.data(), &K, &beta, C.data(), &N);
+  GEOSX_dgemm( &TRANS1, &TRANS2, &N, &M, &K, &alpha, B.dataIfContiguous(), &K, A.dataIfContiguous(), &K, &beta, C.dataIfContiguous(), &N);
 }
 
 void BlasLapackLA::matrixTMatrixTMultiply( arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const & A,
@@ -591,7 +591,7 @@ void BlasLapackLA::matrixTMatrixTMultiply( arraySlice2d<real64 const, MatrixLayo
   char const TRANS1 = 'T';
   char const TRANS2 = 'T';
 
-  GEOSX_dgemm(&TRANS1, &TRANS2, &N, &M, &K, &alpha, B.data(), &K, A.data(), &M, &beta, C.data(), &N);
+  GEOSX_dgemm( &TRANS1, &TRANS2, &N, &M, &K, &alpha, B.dataIfContiguous(), &K, A.dataIfContiguous(), &M, &beta, C.dataIfContiguous(), &N);
 
   return;
 }
@@ -682,7 +682,7 @@ void BlasLapackLA::vectorRand( arraySlice1d<real64> const & X,
   int IDIST = static_cast<int>(idist);
   int const N = integer_conversion<int>( X.size() );
   GEOSX_ASSERT_MSG( N > 0, "The vector cannot be empty");
-  GEOSX_dlarnv( &IDIST, ISEED, &N, X.data());
+  GEOSX_dlarnv( &IDIST, ISEED, &N, X.dataIfContiguous());
 }
 
 void BlasLapackLA::matrixRand( arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & A,
@@ -738,18 +738,18 @@ void BlasLapackLA::matrixSVD( arraySlice2d< real64 const, MatrixLayout::COL_MAJO
   // 1) query and allocate the optimal workspace
   LWORK = -1;
   GEOSX_dgesvd( "S", "S",
-		&M, &N, ACOPY.data(), &LDA,
-		S.data(), U.data(), &LDU, VT.data(), &LDVT,
-		&WKOPT, &LWORK, &INFO );
+                &M, &N, ACOPY.data(), &LDA,
+                S.dataIfContiguous(), U.dataIfContiguous(), &LDU, VT.dataIfContiguous(), &LDVT,
+                &WKOPT, &LWORK, &INFO );
 
   LWORK = static_cast<int>( WKOPT );
   array1d<real64> WORK( LWORK );
 
   // 2) compute svd 
   GEOSX_dgesvd( "S", "S",
-		&M, &N, ACOPY.data(), &LDA,
-		S.data(), U.data(), &LDU, VT.data(), &LDVT,
-		WORK.data(), &LWORK, &INFO );
+                &M, &N, ACOPY.data(), &LDA,
+                S.dataIfContiguous(), U.dataIfContiguous(), &LDU, VT.dataIfContiguous(), &LDVT,
+                WORK.data(), &LWORK, &INFO );
 
   GEOSX_ASSERT_MSG( INFO == 0, "The algorithm computing SVD failed to converge." );
 }
