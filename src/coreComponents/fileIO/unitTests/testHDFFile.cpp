@@ -12,20 +12,20 @@
 
 using namespace geosx;
 
-TEST( testHDFTraits, can_hdf_io )
-{
-  static_assert( can_hdf_io< real32 >, "Should be true.");
-  static_assert( can_hdf_io< real64 >, "Should be true.");
-  static_assert( can_hdf_io< integer >, "Should be true.");
-  static_assert( can_hdf_io< localIndex >, "Should be true.");
-  static_assert( can_hdf_io< globalIndex >, "Should be true.");
+// TEST( testHDFTraits, can_hist_io )
+// {
+//   static_assert( can_hist_io< real32 >, "Should be true.");
+//   static_assert( can_hist_io< real64 >, "Should be true.");
+//   static_assert( can_hist_io< integer >, "Should be true.");
+//   static_assert( can_hist_io< localIndex >, "Should be true.");
+//   static_assert( can_hist_io< globalIndex >, "Should be true.");
 
-  static_assert( can_hdf_io< const real32 >, "Should be true.");
-  static_assert( can_hdf_io< const real64 >, "Should be true.");
-  static_assert( can_hdf_io< const integer >, "Should be true.");
-  static_assert( can_hdf_io< const localIndex >, "Should be true.");
-  static_assert( can_hdf_io< const globalIndex >, "Should be true.");
-}
+//   static_assert( can_hist_io< const real32 >, "Should be true.");
+//   static_assert( can_hist_io< const real64 >, "Should be true.");
+//   static_assert( can_hist_io< const integer >, "Should be true.");
+//   static_assert( can_hist_io< const localIndex >, "Should be true.");
+//   static_assert( can_hist_io< const globalIndex >, "Should be true.");
+// }
 
 TEST( testHDFIO, SingleValueTable )
 {

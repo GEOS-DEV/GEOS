@@ -1,324 +1,48 @@
+#ifndef GEOSX_TIME_HISTORY_OUTPUT_HPP_
+#define GEOSX_TIME_HISTORY_OUTPUT_HPP_
+
 #include "OutputBase.hpp"
+#include "TimeHistoryCollector.hpp"
+#include "TimeHistory.hpp"
+#include "managers/TimeHistory/HistoryIO.hpp"
 #include "fileIO/hdf/HDFFile.hpp"
 
 #include "cxx-utilities/src/Array.hpp" // just for collector
 
 namespace geosx
 {
-  using namespace traits;
-
-  class TimeHistoryCollector
-  {
-  public:
-    virtual void AddToSpec( HDFTable table ) const = 0;
-    virtual void Collect( real64 const time_n, real64 const dt ) = 0;
-    virtual buffer_unit_type const * Provide( ) = 0;
-    virtual size_t size() const = 0;
-  };
-
-  template < typename VALUE_TYPE, typename ENABLE = void >
-  class ScalarCollector;
-
-  template < typename VALUE_T >
-  class ScalarCollector< VALUE_T, typename std::enable_if< can_hdf_io< VALUE_T > >::type > : public TimeHistoryCollector
-  {
-  public:
-    ScalarCollector( string const & name, VALUE_T const & value )
-     : m_name(name)
-     , m_value(value)
-    {}
-    virtual void AddToSpec( HDFTable spec ) const override
-    {
-      spec.AddCol(1,1,sizeof(VALUE_T),typeid(VALUE_T),m_name);
-    }
-    virtual void Collect( real64 const GEOSX_UNUSED_PARAM(time_n), real64 const GEOSX_UNUSED_PARAM(dt) ) override
-    { }
-    virtual buffer_unit_type const * Provide( ) override
-    {
-      return reinterpret_cast<buffer_unit_type const *>(&m_value);
-    }
-    virtual size_t size( ) const override
-    {
-      return sizeof(VALUE_T);
-    }
-  private:
-    string m_name;
-    VALUE_T const & m_value;
-  };
-
-  class CollectorSet : public TimeHistoryCollector
-  {
-  public:
-    void AddCollector( TimeHistoryCollector & to_add )
-    {
-      m_collectors.push_back(&to_add);
-    }
-
-    virtual void AddToSpec( HDFTable spec ) const override
-    {
-      forEachCollector([&spec](const TimeHistoryCollector & coll)
-        {
-          coll.AddToSpec(spec);
-        });
-    }
-
-    virtual void Collect( real64 const time_n, real64 const dt ) override
-    {
-      size_t total_size = 0;
-      forEachCollector([&time_n,&dt,&total_size](TimeHistoryCollector & coll)
-        {
-          coll.Collect(time_n,dt);
-          total_size += coll.size( );
-        });
-      m_buffer.resize(total_size);
-      size_t offset = 0;
-      buffer_unit_type * buffer_head = &m_buffer[0];
-      forEachCollector([&offset,&buffer_head](TimeHistoryCollector & coll)
-        {
-          size_t size = coll.size( );
-          memcpy(buffer_head + offset,coll.Provide( ),size);
-          offset += size;
-        }) ;
-    }
-
-    virtual buffer_unit_type const * Provide( ) override
-    {
-      return &m_buffer[0];
-    }
-
-    virtual size_t size( ) const override
-    {
-      size_t total_size = 0;
-      forEachCollector([&total_size](const TimeHistoryCollector & coll)
-        {
-          total_size += coll.size();
-        });
-      return total_size;
-    }
-
-  private:
-
-    template < typename LAMBDA >
-    void forEachCollector( LAMBDA && lambda ) const
-    {
-      for( const TimeHistoryCollector * coll : m_collectors )
-      {
-        lambda(*coll);
-      }
-    }
-
-    template < typename LAMBDA >
-    void forEachCollector( LAMBDA && lambda )
-    {
-      for( TimeHistoryCollector * coll : m_collectors )
-      {
-        lambda(*coll);
-      }
-    }
-
-    std::vector<TimeHistoryCollector*> m_collectors {4};
-    std::vector<buffer_unit_type> m_buffer;
-  };
-
-  template < typename ARRAY_T, typename ENABLE = void >
-  class ArrayTimeHistoryCollector;
-
-  template <typename ARRAY_T >
-  class ArrayTimeHistoryCollector< ARRAY_T, typename std::enable_if< is_array< ARRAY_T > >::type > : public TimeHistoryCollector
-  {
-  public:
-    ArrayTimeHistoryCollector ( ARRAY_T const & array ) :
-      TimeHistoryCollector(),
-      m_arr(array),
-      m_offset(0),
-      m_collection(array.size() + (ARRAY_T::ndim * sizeof(typename ARRAY_T::index_type)) )
-    {
-      // this points past the packing metadata
-      // todo: move this calc into bufferOps somewhere
-      m_offset = ARRAY_T::ndim * sizeof(typename ARRAY_T::index_type);
-    }
-
-    virtual void AddToSpec( HDFTable spec ) const override
-    {
-      spec.AddArrayCol(m_arr);
-    }
-
-    virtual void Collect ( real64 const GEOSX_UNUSED_PARAM(time_n), real64 const GEOSX_UNUSED_PARAM(dt) ) override
-    {
-      buffer_unit_type * buf_head = NULL;
-      size_t buffer_size = bufferOps::PackDevice<false>(buf_head,m_arr.toView());
-      m_collection.resize(buffer_size);
-      buf_head = &m_collection[0];
-      bufferOps::PackDevice<true>(buf_head,m_arr.toView());
-    }
-
-    virtual buffer_unit_type const * Provide( ) override
-    {
-      return &m_collection[m_offset];
-    }
-
-    virtual size_t size( ) const override
-    {
-      return m_collection.size() - m_offset;
-    }
-
-  private:
-    ARRAY_T const & m_arr;
-    size_t m_offset;
-    std::vector<buffer_unit_type> m_collection;
-  };
-
-  template < typename ARRAY_T, typename INDEX_ARRAY_T, typename ENABLE = void >
-  class ArrayIndexedTimeHistoryCollector;
-
-  template <typename ARRAY_T, typename INDEX_ARRAY_T >
-  class ArrayIndexedTimeHistoryCollector< ARRAY_T, INDEX_ARRAY_T, typename std::enable_if< is_array< ARRAY_T > &&
-                                                                                           is_array< INDEX_ARRAY_T > &&
-                                                                                           LvArray::is_integer< typename INDEX_ARRAY_T::value_type >::value >::type > : public TimeHistoryCollector
-  {
-  public:
-    ArrayIndexedTimeHistoryCollector ( ARRAY_T const & array, INDEX_ARRAY_T const & idx_arr ) :
-      TimeHistoryCollector(),
-      m_arr(array),
-      m_idxs(idx_arr),
-      m_offset(0),
-      m_collection(array.size() + (ARRAY_T::ndim * sizeof(typename ARRAY_T::index_type)) )
-    {}
-
-    virtual void AddToSpec ( HDFTable spec ) const override
-    {
-      spec.AddArrayIndicesCol(m_arr,m_idxs.size( ));
-    }
-
-    virtual void Collect ( real64 const GEOSX_UNUSED_PARAM(time_n), real64 const GEOSX_UNUSED_PARAM(dt) ) override
-    {
-      buffer_unit_type * buf_head = NULL;
-      size_t buffer_size = bufferOps::PackByIndexDevice<false>(buf_head,m_arr.toView(),m_idxs);
-      m_collection.resize(buffer_size);
-      buf_head = &m_collection[0];
-      bufferOps::PackByIndexDevice<true>(buf_head,m_arr.toView(),m_idxs);
-      // this points past the packing metadata
-      // todo: move this calc into bufferOps somewhere
-      m_offset = ARRAY_T::ndim * sizeof(typename ARRAY_T::index_type);
-    }
-
-    virtual buffer_unit_type const * Provide ( ) override
-    {
-      return &m_collection[m_offset];
-    }
-
-    virtual size_t size( ) const override
-    {
-      return m_collection.size() - m_offset;
-    }
-
-  private:
-    ARRAY_T const & m_arr;
-    INDEX_ARRAY_T const & m_idxs;
-    size_t m_offset;
-    std::vector<buffer_unit_type> m_collection;
-  };
-
-  class TimeHistory
-  {
-  public:
-    virtual void Init( string const & target_name ) = 0;
-    virtual void Update( real64 const time_n, real64 const dt ) = 0;
-    virtual void Write( string const & target_name ) = 0;
-  };
-
-  class HDFTimeHistory : public TimeHistory
-  {
-  public:
-    HDFTimeHistory( string const & name, string const & id, TimeHistoryCollector & coll )
-      : TimeHistory()
-      , m_collector(coll)
-      , m_hist_io(InitTimeHistoryIO(name,id,coll))
-    { }
-    virtual void Init( string const & filename ) override
-    {
-      HDFFile out_file( filename );
-      m_hist_io.CreateInTarget( out_file );
-    }
-    virtual void Update( real64 const time_n, real64 const dt ) override
-    {
-      m_collector.Collect( time_n, dt );
-      m_hist_io.BufferRow( m_collector.Provide() );
-    }
-    virtual void Write( string const & filename ) override
-    {
-      HDFFile out_file( filename );
-      m_hist_io.WriteBuffered( out_file );
-    }
-  private:
-    static HDFTableIO InitTimeHistoryIO( string const & name, string const & id, TimeHistoryCollector & coll )
-    {
-      HDFTable spec = InitHistoryTable( name,id );
-      coll.AddToSpec( spec );
-      spec.Finalize();
-      return HDFTableIO( spec );
-    }
-
-    TimeHistoryCollector & m_collector;
-    HDFTableIO m_hist_io;
-  };
-
-
-// who should own time history? presumably update
-  // and output should retrieve and reference it, but there may be
-  // multiple time history update events
-  // or rather the time history update event may be called many different times for
-  // different time histories
-
-  class TimeHistoryUpdate : public OutputBase
-  {
-  public:
-    TimeHistoryUpdate( string const & target, string const & name, Group * const parent ):
-      OutputBase(name,parent),
-      m_target(target)
-    {
-      // add to data repo
-      // m_time_hist
-    }
-
-    /// This method will be called by the event manager if triggered
-    virtual void Execute( real64 const time_n,
-                          real64 const dt,
-                          integer const GEOSX_UNUSED_PARAM( cycleNumber ),
-                          integer const GEOSX_UNUSED_PARAM( eventCounter ),
-                          real64 const GEOSX_UNUSED_PARAM( eventProgress ),
-                          dataRepository::Group * GEOSX_UNUSED_PARAM( domain ) ) override
-    {
-      TimeHistory /*&*/ * target = nullptr;
-      target->Update( time_n, dt );
-    }
-
-    //inline TimeHistory & getTimeHistoryTarget( ) { return m_time_hist; }
-
-  private:
-    string m_target;
-  };
-
   class TimeHistoryOutput : public OutputBase
   {
   public:
-    TimeHistoryOutput( string const & hist_filename,
-                       string const & target,
-                       string const & name,
+    TimeHistoryOutput( string const & name,
                        Group * const parent ):
       OutputBase(name,parent),
-      m_thist_filename( hist_filename ),
-      m_target(target)
-    { }
+      //m_time_history(nullptr),
+      m_time_history_filename( ),
+      m_time_history_path( )
+    {
+      // the filename here and the write_head in hdftableio/hdfdataio should be paired in some way
+      // as the write head doesn't make sense if the filename changes
+
+      registerWrapper(viewKeysStruct::timeHistoryOutputFilename, &m_time_history_filename, false)->
+        setApplyDefaultValue("TimeHistory")->
+        setInputFlag(InputFlags::OPTIONAL)->
+        setDescription("The filename to which to write time history output.");
+
+      // it would be best to allow multiple targets, but
+      // i don't know how required_nonunique works and it isn't used anywhere else
+      registerWrapper(viewKeysStruct::timeHistoryOutputTarget, &m_time_history_path, false)->
+        setInputFlag(InputFlags::REQUIRED)->
+        setDescription("A time history to output to the history file.");
+    }
 
     virtual ~TimeHistoryOutput() override
     { }
 
-    static string CatalogName() { return "TimeHistoryOutput"; }
-
     virtual void SetupDirectoryStructure() override
     {
-
+      GetTimeHistoryTarget( );
+      m_time_history->Init( m_time_history_filename );
     }
 
     /// This method will be called by the event manager if triggered
@@ -329,8 +53,7 @@ namespace geosx
                           real64 const GEOSX_UNUSED_PARAM( eventProgress ),
                           dataRepository::Group * GEOSX_UNUSED_PARAM( domain ) ) override
     {
-      TimeHistory /*&*/ * time_hist = nullptr; // = Wrapper::getReference(m_target...t...)
-      time_hist->Write( m_thist_filename );
+      m_time_history->Write( m_time_history_filename );
     }
 
     /// Write one final output as the code exits
@@ -343,19 +66,30 @@ namespace geosx
       Execute(time_n,0.0,cycleNumber,eventCounter,eventProgress,domain);
     }
 
-    void InitHistoryFile()
+    inline void GetTimeHistoryTarget ( )
     {
-      TimeHistory /*&*/ * time_hist = nullptr; // = Wrapper::getRefernce(...)
-      time_hist->Init( m_thist_filename );
+      Group * tmp = this->GetGroupByPath(m_time_history_path);
+      m_time_history = Group::group_cast<TimeHistory*>(tmp);
+      GEOSX_ERROR_IF(m_time_history == nullptr, "The target of a time history output event must be a time history! " << m_time_history_path);
     }
+
+    static string CatalogName() { return "TimeHistoryOutput"; }
 
     struct viewKeysStruct
     {
-      static constexpr auto xxxString = "xxxString";
+      static constexpr auto timeHistoryOutputFilename = "filename";
+      static constexpr auto timeHistoryOutputTarget = "target";
     } timeHistoryOutputViewKeys;
 
+    // struct groupKeysStruct
+    // {
+    //   static constexpr auto timeHistoryOutputHistory
+    // } timeHistoryOutputGroups;
     private:
-      string m_thist_filename;
-      string m_target;
+      TimeHistory * m_time_history;
+      string m_time_history_filename;
+      string m_time_history_path;
   };
 }
+
+#endif

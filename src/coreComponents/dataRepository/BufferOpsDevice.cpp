@@ -13,12 +13,12 @@ PackPointerDevice( buffer_unit_type * & buffer,
                    T const * const GEOSX_RESTRICT var,
                    localIndex const length )
 {
-  localIndex const sizeOfPackedChars = sizeof( localIndex ) + length * sizeof( T );
+  localIndex const sizeOfPackedChars = /*sizeof( localIndex ) +*/ length * sizeof( T );
 
   if( DO_PACKING )
   {
-    memcpy( buffer, &length, sizeof( localIndex ) );
-    buffer += sizeof( localIndex );
+    // memcpy( buffer, &length, sizeof( localIndex ) );
+    // buffer += sizeof( localIndex );
 
     memcpy( buffer, var, length * sizeof( T ) );
     buffer += length * sizeof( T );
@@ -32,17 +32,17 @@ GEOSX_HOST_DEVICE
 localIndex
 UnpackPointerDevice( buffer_unit_type const * & buffer,
                      T * const GEOSX_RESTRICT var,
-                     localIndex const expectedLength )
+                     localIndex const GEOSX_UNUSED_PARAM( expectedLength ) )
 {
   localIndex length = 0;
-  localIndex sizeOfUnpackedChars = sizeof( localIndex );
-  memcpy( &length, buffer, sizeof( localIndex ) );
-  buffer += sizeof( localIndex );
+  // localIndex sizeOfUnpackedChars = sizeof( localIndex );
+  // memcpy( &length, buffer, sizeof( localIndex ) );
+  // buffer += sizeof( localIndex );
 
-  GEOSX_ASSERT_EQ( length, expectedLength );
-  GEOSX_DEBUG_VAR( expectedLength );
+  // GEOSX_ASSERT_EQ( length, expectedLength );
+  // GEOSX_DEBUG_VAR( expectedLength );
 
-  sizeOfUnpackedChars += length * sizeof(T);
+  localIndex sizeOfUnpackedChars = length * sizeof(T);
   memcpy( var, buffer, length * sizeof(T) );
   buffer += length * sizeof(T);
   return sizeOfUnpackedChars;
@@ -53,8 +53,8 @@ typename std::enable_if< can_memcpy< T >, localIndex >::type
 PackDevice( buffer_unit_type * & buffer,
             ArrayView< T const, NDIM, USD > const & var )
 {
-  localIndex packedSize = PackPointerDevice< DO_PACKING >( buffer, var.dims(), NDIM );
-  packedSize += PackPointerDevice< DO_PACKING >( buffer, var.strides(), NDIM );
+  // localIndex packedSize = PackPointerDevice< DO_PACKING >( buffer, var.dims(), NDIM );
+  // packedSize += PackPointerDevice< DO_PACKING >( buffer, var.strides(), NDIM );
   if( DO_PACKING )
   {
     forAll< parallelDevicePolicy<> >( var.size(), GEOSX_DEVICE_LAMBDA( localIndex ii )
@@ -62,7 +62,7 @@ PackDevice( buffer_unit_type * & buffer,
           reinterpret_cast< std::remove_const_t< T > * >( buffer )[ ii ] = var.data()[ ii ];
         } );
   }
-  packedSize += var.size() * sizeof(T);
+  localIndex packedSize = var.size() * sizeof(T);
   if( DO_PACKING )
   {
     buffer += var.size() * sizeof(T);
@@ -75,20 +75,20 @@ typename std::enable_if< can_memcpy< T >, localIndex >::type
 UnpackDevice( buffer_unit_type const * & buffer,
               ArrayView< T, NDIM, USD > const & var )
 {
-  localIndex dims[NDIM];
-  localIndex packedSize = UnpackPointerDevice( buffer, dims, NDIM );
-  localIndex strides[NDIM];
-  packedSize += UnpackPointerDevice( buffer, strides, NDIM );
-  for( int dd = 0 ; dd < NDIM ; ++dd )
-  {
-    GEOSX_ERROR_IF_NE( strides[dd], var.strides()[dd] );
-  }
+  // localIndex dims[NDIM];
+  // localIndex packedSize = UnpackPointerDevice( buffer, dims, NDIM );
+  // localIndex strides[NDIM];
+  // packedSize += UnpackPointerDevice( buffer, strides, NDIM );
+  // for( int dd = 0 ; dd < NDIM ; ++dd )
+  // {
+    // GEOSX_ERROR_IF_NE( strides[dd], var.strides()[dd] );
+  // }
 
   forAll< parallelDevicePolicy<> >( var.size(), GEOSX_DEVICE_LAMBDA( localIndex ii )
       {
         var.data()[ ii ] = reinterpret_cast< const T * >( buffer )[ ii ];
       } );
-  packedSize += var.size() * sizeof(T);
+  localIndex packedSize = var.size() * sizeof(T);
   buffer += var.size() * sizeof(T);
   return packedSize;
 }
@@ -101,7 +101,7 @@ PackByIndexDevice ( buffer_unit_type * & buffer,
 {
   localIndex const numIndices = indices.size();
   localIndex const unitSize = var.size() / var.size( 0 ) * sizeof( T );
-  localIndex const packedSize = PackPointerDevice< DO_PACKING >( buffer, var.strides(), NDIM ) + numIndices * unitSize;
+  // localIndex const packedSize = PackPointerDevice< DO_PACKING >( buffer, var.strides(), NDIM ) + numIndices * unitSize;
 
   buffer_unit_type * const devBuffer = buffer;
   if( DO_PACKING )
@@ -118,7 +118,7 @@ PackByIndexDevice ( buffer_unit_type * & buffer,
 
     buffer += numIndices * unitSize;
   }
-
+  localIndex packedSize = numIndices * unitSize;
   return packedSize;
 }
 
@@ -128,8 +128,8 @@ UnpackByIndexDevice ( buffer_unit_type const * & buffer,
                       ArrayView< T, NDIM, USD > const & var,
                       T_INDICES const & indices )
 {
-  localIndex strides[NDIM];
-  localIndex sizeOfPackedChars = UnpackPointerDevice( buffer, strides, NDIM );
+  // localIndex strides[NDIM];
+  // localIndex sizeOfPackedChars = UnpackPointerDevice( buffer, strides, NDIM );
 
   localIndex numIndices = indices.size();
   buffer_unit_type const * devBuffer = buffer;
@@ -145,7 +145,7 @@ UnpackByIndexDevice ( buffer_unit_type const * & buffer,
       } );
 
   localIndex avSize = numIndices * unitSize;
-  sizeOfPackedChars += avSize;
+  localIndex sizeOfPackedChars = avSize;
   buffer += avSize;
   return sizeOfPackedChars;
 }

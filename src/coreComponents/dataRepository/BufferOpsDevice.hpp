@@ -33,6 +33,22 @@ namespace bufferOps
 {
 
 //------------------------------------------------------------------------------
+template< bool DO_PACKING, typename T >
+GEOSX_HOST_DEVICE
+localIndex
+PackPointerDevice( buffer_unit_type * & buffer,
+                   T const * const GEOSX_RESTRICT var,
+                   localIndex const length );
+
+//------------------------------------------------------------------------------
+template< typename T >
+GEOSX_HOST_DEVICE
+localIndex
+UnpackPointerDevice( buffer_unit_type const * & buffer,
+                     T * const GEOSX_RESTRICT var,
+                     localIndex const expectedLength );
+
+//------------------------------------------------------------------------------
 template< bool DO_PACKING, typename T, int NDIM, int USD >
 typename std::enable_if< can_memcpy< T >, localIndex >::type
 PackDevice( buffer_unit_type * & buffer,
