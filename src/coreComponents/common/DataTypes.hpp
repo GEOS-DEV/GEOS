@@ -380,85 +380,42 @@ using unordered_map = mapBase< TKEY, TVAL, std::integral_constant< bool, false >
 ///@{
 
 using integer_array        = array1d< integer >;
-using integer_const_array  = array1d< integer const >;
 
 using real32_array        = array1d< real32 >;
-using real32_const_array  = array1d< real32 const >;
 
 using real64_array        = array1d< real64 >;
-using real64_const_array  = array1d< real64 const >;
 
 using string_array        = array1d< string >;
-using string_const_array  = array1d< string const >;
 
 using path_array        = array1d< Path >;
-using path_const_array  = array1d< Path const >;
 
 using localIndex_array        = array1d< localIndex >;
-using localIndex_const_array  = array1d< localIndex const >;
 
 using globalIndex_array        = array1d< globalIndex >;
-using globalIndex_const_array  = array1d< globalIndex const >;
-
-using mpiBuffer = array1d< char >;
-
-using integer_set        = set< integer >;
-using integer_const_set  = set< integer const >;
-
-using real32_set        = set< real32 >;
-using real32_const_set  = set< real32 const >;
-
-using real64_set        = set< real64 >;
-using real64_const_set  = set< real64 const >;
-
-using string_set        = set< string >;
-using string_const_set  = set< string const >;
-
-using localIndex_set        = set< localIndex >;
-using localIndex_const_set  = set< localIndex const >;
-
-using globalIndex_set        = set< globalIndex >;
-using globalIndex_const_set  = set< globalIndex const >;
 
 
 
 using integer_array2d       = array2d< integer >;
-using integer_const_array2d = array2d< integer const >;
 
 using real32_array2d       = array2d< real32 >;
-using real32_const_array2d = array2d< real32 const >;
 
 using real64_array2d       = array2d< real64 >;
-using real64_const_array2d = array2d< real64 const >;
-
-using string_array2d       = array2d< string >;
-using string_const_array2d = array2d< string const >;
 
 using localIndex_array2d       = array2d< localIndex >;
-using localIndex_const_array2d = array2d< localIndex const >;
 
 using globalIndex_array2d       = array2d< globalIndex >;
-using globalIndex_const_array2d = array2d< globalIndex const >;
 
 
 
 using integer_array3d       = array3d< integer >;
-using integer_const_array3d = array3d< integer const >;
 
 using real32_array3d       = array3d< real32 >;
-using real32_const_array3d = array3d< real32 const >;
 
 using real64_array3d       = array3d< real64 >;
-using real64_const_array3d = array3d< real64 const >;
-
-using string_array3d       = array3d< string >;
-using string_const_array3d = array3d< string const >;
 
 using localIndex_array3d       = array3d< localIndex >;
-using localIndex_const_array3d = array3d< localIndex const >;
 
 using globalIndex_array3d       = array3d< globalIndex >;
-using globalIndex_const_array3d = array3d< globalIndex const >;
 
 ///@}
 
@@ -603,60 +560,6 @@ public:
     mapPair_array_id,    //!< mapPair_array_id
     none_id              //!< none_id
   };
-
-  /**
-   * @brief Return a TypeID value given a name.
-   * @param name the string of the type
-   * @return a TypeIDs value corresponding to the input string
-   */
-  static TypeIDs typeID( string const & name )
-  {
-    const std::unordered_map< string, TypeIDs > type_names =
-    {
-      { "integer", TypeIDs::integer_id },
-      { "localIndex", TypeIDs::localIndex_id },
-      { "globalIndex", TypeIDs::globalIndex_id },
-      { "real32", TypeIDs::real32_id },
-      { "real64", TypeIDs::real64_id },
-      { "R1Tensor", TypeIDs::r1Tensor_id },
-      { "R2Tensor", TypeIDs::r2Tensor_id },
-      { "R2SymTensor", TypeIDs::r2SymTensor_id },
-      { "integer_array", TypeIDs::integer_array_id },
-      { "localIndex_array", TypeIDs::localIndex_array_id },
-      { "globalIndex_array", TypeIDs::globalIndex_array_id },
-      { "real32_array", TypeIDs::real32_array_id },
-      { "real64_array", TypeIDs::real64_array_id },
-      { "r1_array", TypeIDs::r1_array_id },
-      { "r2_array", TypeIDs::r2_array_id },
-      { "r2Sym_array", TypeIDs::r2Sym_array_id },
-
-      { "integer_array2d", TypeIDs::integer_array2d_id },
-      { "localIndex_array2d", TypeIDs::localIndex_array2d_id },
-      { "globalIndex_array2d", TypeIDs::globalIndex_array2d_id },
-      { "real32_array2d", TypeIDs::real32_array2d_id },
-      { "real64_array2d", TypeIDs::real64_array2d_id },
-      { "real64_array2d_ji", TypeIDs::real64_array2d_ji_id },
-      { "r1_array2d", TypeIDs::r1_array2d_id },
-      { "r2_array2d", TypeIDs::r2_array2d_id },
-      { "r2Sym_array2d", TypeIDs::r2Sym_array2d_id },
-
-      { "integer_array3d", TypeIDs::integer_array3d_id },
-      { "localIndex_array3d", TypeIDs::localIndex_array3d_id },
-      { "globalIndex_array3d", TypeIDs::globalIndex_array3d_id },
-      { "real32_array3d", TypeIDs::real32_array3d_id },
-      { "real64_array3d", TypeIDs::real64_array3d_id },
-      { "real64_array3d_kji", TypeIDs::real64_array3d_kji_id },
-
-      { "string", TypeIDs::string_id },
-      { "path", TypeIDs::Path_id },
-      { "string_array", TypeIDs::string_array_id },
-      { "path_array", TypeIDs::path_array_id },
-      { "map_array", TypeIDs::path_array_id },
-      { "mapPair_array", TypeIDs::mapPair_array_id },
-      { "", TypeIDs::none_id }
-    };
-    return type_names.at( name );
-  }
 
   /**
    * @brief Return a TypeID enum given a std::type_index.
