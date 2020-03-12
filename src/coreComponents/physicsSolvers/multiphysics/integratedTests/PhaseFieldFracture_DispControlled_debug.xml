@@ -8,7 +8,7 @@
                  logLevel="1"
                  discretization="FE1"
                  targetRegions="{Region1}">
-      <SystemSolverParameters maxIterNewton="200"
+      <SystemSolverParameters maxIterNewton="10"
                               logLevel="0"/>
     </PhaseFieldFracture>
 
@@ -20,7 +20,7 @@
                                   solidMaterialName="shale"
                                   >
       <SystemSolverParameters krylovTol="1.0e-10"
-                              newtonTol="1.0e-3"
+                              newtonTol="1.0e-6"
                               maxIterNewton="5"
                               logLevel="0"/>
     </SolidMechanicsLagrangianSSLE>
@@ -30,7 +30,7 @@
                 timeIntegrationOption="SteadyState"
                 fieldName="Damage"
                 solidMaterialName="shale"
-                localDissipation = "Linear"
+                localDissipation = "Quadratic"
                 logLevel="1"
                 targetRegions="{Region1}">
     </PhaseFieldDamageFEM>
