@@ -34,7 +34,7 @@ static_assert( sizeof( HYPRE_BigInt ) == sizeof( globalIndex ),
                "HYPRE_BigInt and geosx::globalIndex must have the same size" );
 
 static_assert( std::is_signed< HYPRE_BigInt >::value == std::is_signed< globalIndex >::value,
-               "HYPRE_BigInt and geoex::globalIndex must both be signed or unsigned");
+               "HYPRE_BigInt and geoex::globalIndex must both be signed or unsigned" );
 
 static_assert( std::is_same< HYPRE_Real, real64 >::value,
                "HYPRE_Real and geosx::real64 must be the same type" );
@@ -57,27 +57,27 @@ static void finalize( HYPRE_IJVector & ij_vector,
                       HYPRE_ParVector & par_vector )
 {
   GEOSX_LAI_CHECK_ERROR( HYPRE_IJVectorAssemble( ij_vector ) );
-  GEOSX_LAI_CHECK_ERROR( HYPRE_IJVectorGetObject( ij_vector, (void **) &par_vector ) );
+  GEOSX_LAI_CHECK_ERROR( HYPRE_IJVectorGetObject( ij_vector, (void * *) &par_vector ) );
 }
 
 HypreVector::HypreVector()
-: VectorBase(),
+  : VectorBase(),
   m_ij_vector{},
   m_par_vector{}
 {}
 
 // Copy constructor
 HypreVector::HypreVector( HypreVector const & src )
-: HypreVector()
+  : HypreVector()
 {
   *this = src;
 }
 
 // Move constructor
 HypreVector::HypreVector( HypreVector && src ) noexcept
-: HypreVector()
+  : HypreVector()
 {
-  *this = std::move(src);
+  *this = std::move( src );
 }
 
 HypreVector & HypreVector::operator=( HypreVector const & src )
@@ -147,7 +147,7 @@ void HypreVector::createWithGlobalSize( globalIndex const globalSize,
   HYPRE_Int const localSize = integer_conversion< HYPRE_Int >( globalSize / nproc );
   HYPRE_Int const residual  = integer_conversion< HYPRE_Int >( globalSize % nproc );
 
-  HYPRE_BigInt const ilower = integer_conversion< HYPRE_BigInt >(  rank * localSize + ( rank == 0 ? 0 : residual ) );
+  HYPRE_BigInt const ilower = integer_conversion< HYPRE_BigInt >( rank * localSize + ( rank == 0 ? 0 : residual ) );
   HYPRE_BigInt const iupper = integer_conversion< HYPRE_BigInt >( ilower + localSize + ( rank == 0 ? residual : 0 ) - 1 );
 
   initialize( comm, ilower, iupper, m_ij_vector );
@@ -168,7 +168,7 @@ void HypreVector::create( arraySlice1d< real64 const > const & localValues,
   finalize( m_ij_vector, m_par_vector );
 
   HYPRE_Real * const local_data = extractLocalVector();
-  for( localIndex i = 0 ; i < localValues.size() ; ++i )
+  for( localIndex i = 0; i < localValues.size(); ++i )
   {
     local_data[i] = localValues[i];
   }
@@ -325,7 +325,7 @@ real64 HypreVector::norm1() const
 
   real64 const * const local_data = extractLocalVector();
   real64 loc_norm1 = 0.0;
-  for( HYPRE_Int i = 0 ; i < localSize() ; ++i )
+  for( HYPRE_Int i = 0; i < localSize(); ++i )
   {
     loc_norm1 += std::fabs( local_data[i] );
   }
@@ -344,7 +344,7 @@ real64 HypreVector::normInf() const
 
   real64 const * const local_data = extractLocalVector();
   real64 loc_normInf = 0.0;
-  for( HYPRE_Int i = 0 ; i < localSize() ; ++i )
+  for( HYPRE_Int i = 0; i < localSize(); ++i )
   {
     loc_normInf = std::max( loc_normInf, std::fabs( local_data[i] ) );
   }
@@ -359,24 +359,24 @@ void HypreVector::print( std::ostream & os ) const
   int const n_mpi_process = MpiWrapper::Comm_size( getComm() );
   char str[77];
 
-  if ( this_mpi_process == 0 )
+  if( this_mpi_process == 0 )
   {
     os << "MPI_Process         GlobalRowID         GlobalColID                   Value" << std::endl;
   }
 
   for( int iRank = 0; iRank < n_mpi_process; iRank++ )
   {
-	  MpiWrapper::Barrier( getComm() );
-    if ( iRank == this_mpi_process )
+    MpiWrapper::Barrier( getComm() );
+    if( iRank == this_mpi_process )
     {
       real64 const * const local_data = extractLocalVector();
       globalIndex const firstRowID = ilower();
-      for( localIndex i = 0 ; i < localSize() ; ++i )
+      for( localIndex i = 0; i < localSize(); ++i )
       {
         sprintf( str,
                  "%11i%20lli%24.10e\n",
                  iRank,
-                 firstRowID + integer_conversion<globalIndex>(i),
+                 firstRowID + integer_conversion< globalIndex >( i ),
                  local_data[i] );
         os << str;
       }
@@ -391,8 +391,10 @@ void HypreVector::write( string const & filename,
   switch( format )
   {
     case LAIOutputFormat::NATIVE_ASCII:
+    {
       GEOSX_LAI_CHECK_ERROR( HYPRE_IJVectorPrint( m_ij_vector, filename.c_str() ) );
-      break;
+    }
+    break;
     default:
       GEOSX_ERROR( "Unsupported vector output format" );
   }
@@ -492,4 +494,3 @@ MPI_Comm HypreVector::getComm() const
 }
 
 } // end namespace geosx
-

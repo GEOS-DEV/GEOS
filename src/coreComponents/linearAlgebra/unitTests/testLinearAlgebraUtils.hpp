@@ -41,7 +41,7 @@
 // ==============================
 // This function computes the identity matrix. It can be used to generate a dummy
 // preconditioner.
-template<typename MATRIX>
+template< typename MATRIX >
 void computeIdentity( MPI_Comm comm,
                       geosx::globalIndex N,
                       MATRIX & I )
@@ -52,7 +52,7 @@ void computeIdentity( MPI_Comm comm,
   I.open();
 
   // Loop over rows to fill the matrix
-  for( geosx::globalIndex i = I.ilower() ; i < I.iupper() ; i++ )
+  for( geosx::globalIndex i = I.ilower(); i < I.iupper(); i++ )
   {
     // Set the value for element (i,i) to 1
     I.insert( i, i, 1.0 );
@@ -62,7 +62,7 @@ void computeIdentity( MPI_Comm comm,
   I.close();
 }
 
-template<typename MATRIX>
+template< typename MATRIX >
 void computeZero( MPI_Comm comm,
                   geosx::globalIndex N,
                   MATRIX & I )
@@ -85,10 +85,10 @@ void computeZero( MPI_Comm comm,
 // This function computes the matrix corresponding to a 2D Laplace operator. These
 // matrices arise from a classical finite volume formulation on a cartesian mesh
 // (5-point stencil).  Input is the mesh size, n, from which the total dofs is N = n^2;
-template<typename MATRIX>
+template< typename MATRIX >
 void compute2DLaplaceOperator( MPI_Comm comm,
                                geosx::globalIndex n,
-			        		             MATRIX & laplace2D )
+                               MATRIX & laplace2D )
 {
   // total dofs = n^2
   geosx::globalIndex N = n * n;
@@ -104,7 +104,7 @@ void compute2DLaplaceOperator( MPI_Comm comm,
   laplace2D.open();
 
   // Loop over rows to fill the matrix
-  for( geosx::globalIndex i = laplace2D.ilower() ; i < laplace2D.iupper() ; i++ )
+  for( geosx::globalIndex i = laplace2D.ilower(); i < laplace2D.iupper(); i++ )
   {
     // Re-set the number of non-zeros for row i to 0.
     geosx::localIndex nnz = 0;
