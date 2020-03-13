@@ -29,6 +29,7 @@ or_die python scripts/config-build.py \
               -DENABLE_GEOSX_PTP:BOOL=ON \
               -DBLT_MPI_COMMAND_APPEND:STRING=--allow-run-as-root \
               -DENABLE_CUDA:BOOL=${ENABLE_CUDA:-OFF} \
+              -DENABLE_PETSC:BOOL=ON \
               -DCMAKE_CUDA_FLAGS:STRING=\""${CMAKE_CUDA_FLAGS:-Unused}"\"
 
 or_die cd ${GEOSX_BUILD_DIR}
