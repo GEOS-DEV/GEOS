@@ -63,10 +63,13 @@ public:
     // This key is defined in problem manager:
     static constexpr auto elemManagerString = "ElementRegions";
 
+    static constexpr auto embSurfEdgeManagerString = "embeddedSurfacesEdgeManager";
+
     dataRepository::GroupKey nodeManager = {nodeManagerString};
     dataRepository::GroupKey edgeManager = {edgeManagerString};
     dataRepository::GroupKey faceManager = {faceManagerString};
     dataRepository::GroupKey elemManager = {elemManagerString};
+    dataRepository::GroupKey embSurfEdgeManager = {embSurfEdgeManagerString};
   } groupKeys;
 
   NodeManager const * getNodeManager() const { return &m_nodeManager; }
@@ -81,12 +84,17 @@ public:
   ElementRegionManager const * getElemManager() const { return &m_elementManager; }
   ElementRegionManager * getElemManager()             { return &m_elementManager; }
 
+  EdgeManager const * getEmbdSurfEdgeManager() const { return &m_embSurfEdgeManager; }
+  EdgeManager * getEmbdSurfEdgeManager()             { return &m_embSurfEdgeManager; }
+
 private:
 
   NodeManager m_nodeManager;
   EdgeManager m_edgeManager;
   FaceManager m_faceManager;
   ElementRegionManager m_elementManager;
+
+  EdgeManager m_embSurfEdgeManager;
 
 };
 

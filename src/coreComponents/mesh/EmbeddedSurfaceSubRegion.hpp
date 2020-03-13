@@ -75,6 +75,23 @@ public:
     void CalculateElementGeometricQuantities( array1d<R1Tensor> const  intersectionPoints,
                                               localIndex k );
 
+
+    void getIntersectionPoints( NodeManager const & nodeManager,
+                                EdgeManager const & edgeManager,
+                                ElementRegionManager const & elemManager,
+                                array1d<R1Tensor> & intersectionPoints,
+                                array1d<localIndex> & connectivityList,
+                                array1d<int> & offSet) const;
+
+    void ComputeIntersectionPoints( NodeManager const & nodeManager,
+                                    EdgeManager const & edgeManager,
+                                    ElementRegionManager const & elemManager,
+                                    array1d<R1Tensor> & intersectionPoints,
+                                    array1d<localIndex> & connectivityList,
+                                    array1d<int> & offSet,
+                                    localIndex const k ) const;
+
+
     /**
      * @brief function to set the ghostRank for a list of FaceElements and set them to the value of their bounding faces.
      * @param[in] faceManager The face group.

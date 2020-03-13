@@ -61,33 +61,33 @@ EmbeddedSurfaceGenerator::~EmbeddedSurfaceGenerator()
 
 void EmbeddedSurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
 {
-  for( auto & mesh : MeshBodies->GetSubGroups() )
-  {
-    MeshLevel * const meshLevel = mesh.second->group_cast<MeshBody*>()->getMeshLevel(0);
-
-    NodeManager * const nodeManager = meshLevel->getNodeManager();
-    EdgeManager * const edgeManager = meshLevel->getEdgeManager();
-
-    nodeManager->registerWrapper<localIndex_array>(ObjectManagerBase::viewKeyStruct::parentIndexString)->
-      setApplyDefaultValue(-1)->
-      setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
-      setDescription("Parent index of node.");
-
-    nodeManager->registerWrapper<localIndex_array>(ObjectManagerBase::viewKeyStruct::childIndexString)->
-      setApplyDefaultValue(-1)->
-      setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
-      setDescription("Child index of node.");
-
-    edgeManager->registerWrapper<localIndex_array>(ObjectManagerBase::viewKeyStruct::parentIndexString)->
-      setApplyDefaultValue(-1)->
-      setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
-      setDescription("Parent index of the edge.");
-
-    edgeManager->registerWrapper<localIndex_array>(ObjectManagerBase::viewKeyStruct::childIndexString)->
-      setApplyDefaultValue(-1)->
-      setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
-      setDescription("Child index of the edge.");
-  }
+//  for( auto & mesh : MeshBodies->GetSubGroups() )
+//  {
+//    MeshLevel * const meshLevel = mesh.second->group_cast<MeshBody*>()->getMeshLevel(0);
+//
+//    NodeManager * const nodeManager = meshLevel->getNodeManager();
+//    EdgeManager * const edgeManager = meshLevel->getEdgeManager();
+//
+//    nodeManager->registerWrapper<localIndex_array>(ObjectManagerBase::viewKeyStruct::parentIndexString)->
+//      setApplyDefaultValue(-1)->
+//      setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
+//      setDescription("Parent index of node.");
+//
+//    nodeManager->registerWrapper<localIndex_array>(ObjectManagerBase::viewKeyStruct::childIndexString)->
+//      setApplyDefaultValue(-1)->
+//      setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
+//      setDescription("Child index of node.");
+//
+//    edgeManager->registerWrapper<localIndex_array>(ObjectManagerBase::viewKeyStruct::parentIndexString)->
+//      setApplyDefaultValue(-1)->
+//      setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
+//      setDescription("Parent index of the edge.");
+//
+//    edgeManager->registerWrapper<localIndex_array>(ObjectManagerBase::viewKeyStruct::childIndexString)->
+//      setApplyDefaultValue(-1)->
+//      setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
+//      setDescription("Child index of the edge.");
+//  }
 }
 
 void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemManager )
@@ -175,6 +175,14 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
       });// end loop over subregions
     });// end loop over elementRegions
   });// end loop over thick planes
+
+  // Populate EdgeManager for embedded surfaces.
+  EdgeManager * const embSurfEdgeManager = meshLevel->getEdgeManager();
+
+  array1d<R1Tensor> intersectionPoints;
+  array1d<localIndex> connectivityList;
+  array1d<int> offSet;
+  embeddedSurfaceSubRegion->getIntersectionPoints(*nodeManager, *edgeManager, *elemManager, intersectionPoints, connectivityList, offSet);
 
   GEOSX_LOG_LEVEL_RANK_0(1, "Number of embedded surface elements: " << embeddedSurfaceSubRegion->size() );
 }

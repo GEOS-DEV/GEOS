@@ -70,9 +70,9 @@ void SinglePhaseBase::RegisterDataOnMesh(Group * const MeshBodies)
       subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::densityOldString );
     });
 
-    elemManager->forElementRegions<FaceElementRegion>( [&] ( FaceElementRegion * const region )
+    elemManager->forElementRegions<FaceElementRegion,EmbeddedSurfaceRegion>( [&] ( auto * const region )
     {
-      region->forElementSubRegions<FaceElementSubRegion>( [&]( FaceElementSubRegion * const subRegion )
+      region->forElementSubRegions<FaceElementSubRegion,EmbeddedSurfaceSubRegion>( [&]( auto * const subRegion )
       {
         subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::pressureString )->setPlotLevel(PlotLevel::LEVEL_0);
         subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::deltaPressureString );
