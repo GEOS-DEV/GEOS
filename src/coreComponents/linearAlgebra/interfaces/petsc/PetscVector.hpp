@@ -177,7 +177,7 @@ public:
   virtual real64 get( globalIndex const globalRow ) const override;
 
   void get( arraySlice1d< globalIndex const > const & globalIndices,
-            arraySlice1d <real64> const & values ) const override;
+            arraySlice1d< real64 > const & values ) const override;
 
   virtual MPI_Comm getComm() const override;
 

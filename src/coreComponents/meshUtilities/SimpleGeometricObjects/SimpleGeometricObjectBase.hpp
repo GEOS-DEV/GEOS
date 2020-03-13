@@ -32,7 +32,7 @@ namespace dataRepository
 {
 namespace keys
 {
-string const geometricObjects("GeometricObjects");
+string const geometricObjects( "GeometricObjects" );
 }
 }
 
@@ -48,10 +48,10 @@ public:
 
   static string CatalogName() { return "SimpleGeometricObjectBase"; }
 
-  virtual bool IsCoordInObject( const R1Tensor& coord ) const = 0;
+  virtual bool IsCoordInObject( const R1Tensor & coord ) const = 0;
 
   using CatalogInterface = dataRepository::CatalogInterface< SimpleGeometricObjectBase, std::string const &, Group * const >;
-  static CatalogInterface::CatalogType& GetCatalog();
+  static CatalogInterface::CatalogType & GetCatalog();
 
 };
 

@@ -36,7 +36,7 @@ class WellElementSubRegion;
  * @class PerforationData
  *
  * This class keeps track of all the local perforations on this rank
- */  
+ */
 class PerforationData : public ObjectManagerBase
 {
 public:
@@ -46,7 +46,7 @@ public:
    * @param name the name of this instantiation of Group in the repository
    * @param parent the parent group of this instantiation of Group
    */
-  explicit PerforationData( string const & name, 
+  explicit PerforationData( string const & name,
                             dataRepository::Group * const parent );
 
   /**
@@ -58,7 +58,7 @@ public:
   PerforationData() = delete;
 
   /// deleted copy constructor
-  PerforationData( PerforationData const &) = delete;
+  PerforationData( PerforationData const & ) = delete;
 
   /// deleted move constructor
   PerforationData( PerforationData && ) = delete;
@@ -81,57 +81,57 @@ public:
 
   /**
    * @brief Getter for the global number of perforations (used for well initialization)
-   * @return the global number of perforations 
+   * @return the global number of perforations
    */
   globalIndex GetNumPerforationsGlobal() const { return m_numPerforationsGlobal; }
-  
+
   /**
    * @brief Getter for perforation to mesh element connectivity
    * @return list of element region/subregion/index conencted to each perforation
    */
-  ToElementRelation< array1d<localIndex> > & GetMeshElements() { return m_toMeshElements; }
+  ToElementRelation< array1d< localIndex > > & GetMeshElements() { return m_toMeshElements; }
 
   /**
    * @brief Const getter for perforation to mesh element connectivity
    * @return list of element region/subregion/index connected to each perforation
    */
-  ToElementRelation< array1d<localIndex> > const & GetMeshElements() const { return m_toMeshElements; }
+  ToElementRelation< array1d< localIndex > > const & GetMeshElements() const { return m_toMeshElements; }
 
   /**
    * @brief Getter for perforation to well element connectivity
    * @return list of well element index connected to each perforation
    */
-  arrayView1d<localIndex> & GetWellElements() { return m_wellElementIndex; }
+  arrayView1d< localIndex > & GetWellElements() { return m_wellElementIndex; }
 
   /**
    * @brief Const getter for perforation to well element connectivity
    * @return list of well element index connected to each perforation
    */
-  arrayView1d<localIndex const> const & GetWellElements() const { return m_wellElementIndex; }
+  arrayView1d< localIndex const > const & GetWellElements() const { return m_wellElementIndex; }
 
   /**
    * @brief Getter for perforation locations
    * @return list of perforation locations
    */
-  arrayView1d<R1Tensor> & GetLocation() { return m_location; }
+  arrayView1d< R1Tensor > & GetLocation() { return m_location; }
 
   /**
    * @brief Const getter for perforation locations
    * @return list of perforation locations
    */
-  arrayView1d<R1Tensor const> const & GetLocation() const { return m_location; }
+  arrayView1d< R1Tensor const > const & GetLocation() const { return m_location; }
 
   /**
    * @brief Getter for perforation transmissibilities
    * @return list of perforation transmissibilities
    */
-  arrayView1d<real64> & GetTransmissibility() { return m_transmissibility; }
+  arrayView1d< real64 > & GetTransmissibility() { return m_transmissibility; }
 
   /**
    * @brief Getter for perforation transmissibilities
    * @return list of perforation transmissibilities
    */
-  arrayView1d<real64 const> const & getTransmissibility() const { return m_transmissibility; }
+  arrayView1d< real64 const > const & getTransmissibility() const { return m_transmissibility; }
 
 
   /**
@@ -148,9 +148,9 @@ public:
    * @param[in] wellElementGlobalToLocalMap the global to local map of wellbore elements
    * @param[in] elemOffsetGlobal the offset of the first global well element ( = offset of last global mesh elem + 1 )
    */
-  void ConnectToWellElements( InternalWellGenerator                 const & wellGeometry,
-                              unordered_map<globalIndex,localIndex> const & globalToLocalWellElementMap,
-                              globalIndex                                   elemOffsetGlobal );
+  void ConnectToWellElements( InternalWellGenerator const & wellGeometry,
+                              unordered_map< globalIndex, localIndex > const & globalToLocalWellElementMap,
+                              globalIndex elemOffsetGlobal );
 
   struct viewKeyStruct : public ObjectManagerBase::viewKeyStruct
   {
@@ -174,8 +174,7 @@ public:
   } viewKeysPerforationData;
 
   struct groupKeyStruct : public ObjectManagerBase::groupKeyStruct
-  {
-  } groupKeysPerforationData;
+  {} groupKeysPerforationData;
 
 protected:
 
@@ -186,19 +185,19 @@ private:
   void DebugLocalPerforations() const;
 
   /// global number of perforations
-  globalIndex m_numPerforationsGlobal; 
+  globalIndex m_numPerforationsGlobal;
 
   /// indices of the mesh elements connected to perforations
-  ToElementRelation< array1d<localIndex> > m_toMeshElements;
+  ToElementRelation< array1d< localIndex > > m_toMeshElements;
 
   /// indices of the well element to which perforations are attached
-  array1d<localIndex> m_wellElementIndex;
+  array1d< localIndex > m_wellElementIndex;
 
   /// location of the perforations
-  array1d<R1Tensor> m_location;
+  array1d< R1Tensor > m_location;
 
   /// transmissibility (well index) of the perforations
-  array1d<real64> m_transmissibility;
+  array1d< real64 > m_transmissibility;
 
 };
 

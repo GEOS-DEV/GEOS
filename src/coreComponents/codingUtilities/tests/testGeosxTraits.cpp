@@ -32,7 +32,7 @@ TEST( testGeosxTraits, Pointer )
 
   static_assert( std::is_same< ConstPointer< int >, int const * >::value, "Should be true." );
   static_assert( std::is_same< ConstPointer< R1Tensor >, R1Tensor const * >::value, "Should be true." );
-  static_assert( std::is_same< ConstPointer< std::vector< double > >, double  const* >::value, "Should be true." );
+  static_assert( std::is_same< ConstPointer< std::vector< double > >, double const * >::value, "Should be true." );
   static_assert( std::is_same< ConstPointer< std::string >, char const * >::value, "Should be true." );
   static_assert( std::is_same< ConstPointer< array3d< std::string > >, std::string const * >::value, "Should be true." );
   static_assert( std::is_same< ConstPointer< SortedArray< float > >, float const * >::value, "Should be true." );
@@ -70,7 +70,7 @@ TEST( testGeosxTraits, has_chai_move_method )
   static_assert( has_chai_move_method< array5d< array1d< R1Tensor > > >, "Should be true." );
   static_assert( has_chai_move_method< SortedArray< string > >, "Should be true." );
   static_assert( has_chai_move_method< ArrayOfArrays< int > >, "Should be true." );
-  
+
   static_assert( !has_chai_move_method< std::vector< int > >, "Should be true." );
   static_assert( !has_chai_move_method< std::map< string, string > >, "Should be true." );
   static_assert( !has_chai_move_method< int >, "Should be false." );
@@ -108,7 +108,7 @@ TEST( testGeosxTraits, has_dimension_size_method )
 {
   static_assert( has_dimension_size_method< array1d< double > >, "Should be true." );
   static_assert( has_dimension_size_method< array5d< array1d< R1Tensor > > >, "Should be true." );
-  
+
   static_assert( !has_dimension_size_method< SortedArray< string > >, "Should be false." );
   static_assert( !has_dimension_size_method< std::vector< int > >, "Should be false." );
   static_assert( !has_dimension_size_method< std::map< string, string > >, "Should be false." );
@@ -124,7 +124,7 @@ TEST( testGeosxTraits, has_resize_method )
   static_assert( has_resize_method< std::vector< int > >, "Should be true." );
   static_assert( has_resize_method< ArrayOfArrays< int > >, "Should be true." );
   static_assert( has_resize_method< ArrayOfSets< int > >, "Should be true." );
-  
+
   static_assert( !has_resize_method< SortedArray< string > >, "Should be false." );
   static_assert( !has_resize_method< std::map< string, string > >, "Should be false." );
   static_assert( !has_resize_method< int >, "Should be false." );
@@ -155,7 +155,7 @@ TEST( testGeosxTraits, has_resize_dimensions_method )
 {
   static_assert( has_resize_dimensions_method< array1d< double > >, "Should be true." );
   static_assert( has_resize_dimensions_method< array5d< array1d< R1Tensor > > >, "Should be true." );
-  
+
   static_assert( !has_resize_dimensions_method< SortedArray< string > >, "Should be false." );
   static_assert( !has_resize_dimensions_method< std::vector< int > >, "Should be false." );
   static_assert( !has_resize_dimensions_method< std::map< string, string > >, "Should be false." );
@@ -188,7 +188,7 @@ TEST( testGeosxTraits, is_string )
 TEST( testGeosxTraits, is_array )
 {
   static_assert( is_array< LvArray::Array< int, 1, camp::make_idx_seq< 0 >::type, int > >, "Should be true." );
-  
+
   static_assert( !is_array< int >, "Should be false." );
   static_assert( !is_array< double >, "Should be false." );
   static_assert( !is_array< void >, "Should be false." );
@@ -199,9 +199,9 @@ TEST( testGeosxTraits, is_map )
   static_assert( is_map< map< string, int > >, "Should be true." );
   static_assert( is_map< unordered_map< string, int > >, "Should be true." );
 
-  static_assert(!is_map< int >, "Should be false." );
-  static_assert(!is_map< double >, "Should be false." );
-  static_assert(!is_map< void >, "Should be false." );
+  static_assert( !is_map< int >, "Should be false." );
+  static_assert( !is_map< double >, "Should be false." );
+  static_assert( !is_map< void >, "Should be false." );
   SUCCEED();
 }
 
@@ -223,4 +223,3 @@ TEST( testGeosxTraits, is_pair )
   static_assert( !is_pair< double >, "Should be false" );
   static_assert( !is_pair< void >, "Should be false" );
 }
-

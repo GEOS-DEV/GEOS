@@ -13,8 +13,8 @@
  */
 
 /**
-  * @file SingleFluidBase.cpp
-  */
+ * @file SingleFluidBase.cpp
+ */
 
 #include "SingleFluidBase.hpp"
 
@@ -31,12 +31,12 @@ SingleFluidBase::SingleFluidBase( std::string const & name, Group * const parent
 {
 
   registerWrapper( viewKeyStruct::defaultDensityString, &m_defaultDensity, false )->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Default value for density.");
+    setInputFlag( InputFlags::REQUIRED )->
+    setDescription( "Default value for density." );
 
   registerWrapper( viewKeyStruct::defaultViscosityString, &m_defaultViscosity, false )->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Default value for viscosity.");
+    setInputFlag( InputFlags::REQUIRED )->
+    setDescription( "Default value for viscosity." );
 
   registerWrapper( viewKeyStruct::densityString, &m_density, false )->setPlotLevel( PlotLevel::LEVEL_0 );
 
@@ -51,8 +51,8 @@ SingleFluidBase::~SingleFluidBase() = default;
 void SingleFluidBase::PostProcessInput()
 {
   ConstitutiveBase::PostProcessInput();
-  this->getWrapper< array2d<real64> >(viewKeyStruct::densityString)->setApplyDefaultValue(m_defaultDensity);
-  this->getWrapper< array2d<real64> >(viewKeyStruct::viscosityString)->setApplyDefaultValue(m_defaultViscosity);
+  this->getWrapper< array2d< real64 > >( viewKeyStruct::densityString )->setApplyDefaultValue( m_defaultDensity );
+  this->getWrapper< array2d< real64 > >( viewKeyStruct::viscosityString )->setApplyDefaultValue( m_defaultViscosity );
 
 }
 
@@ -74,12 +74,12 @@ void SingleFluidBase::AllocateConstitutiveData( Group * const parent,
 void
 SingleFluidBase::DeliverClone( string const & name,
                                Group * const parent,
-                               std::unique_ptr<ConstitutiveBase> & clone ) const
+                               std::unique_ptr< ConstitutiveBase > & clone ) const
 {
   GEOSX_ERROR_IF( !clone, "clone not allocated" );
 
   ConstitutiveBase::DeliverClone( name, parent, clone );
-  SingleFluidBase * const newConstitutiveRelation = dynamic_cast<SingleFluidBase *>(clone.get());
+  SingleFluidBase * const newConstitutiveRelation = dynamic_cast< SingleFluidBase * >(clone.get());
 
   newConstitutiveRelation->m_defaultDensity = m_defaultDensity;
   newConstitutiveRelation->m_defaultViscosity = m_defaultViscosity;

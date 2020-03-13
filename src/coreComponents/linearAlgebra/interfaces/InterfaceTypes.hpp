@@ -33,7 +33,7 @@
 #include "linearAlgebra/interfaces/petsc/PetscInterface.hpp"
 #endif
 
-#define CONCAT_( A, B ) A##B
+#define CONCAT_( A, B ) A ## B
 #define CONCAT( A, B ) CONCAT_( A, B )
 
 
@@ -47,7 +47,7 @@ using ParallelMatrix = LAInterface::ParallelMatrix;
 using ParallelVector = LAInterface::ParallelVector;
 using LinearSolver   = LAInterface::LinearSolver;
 
-inline void setupLAI( int & argc, char ** & argv )
+inline void setupLAI( int & argc, char * * & argv )
 {
 #ifdef GEOSX_USE_TRILINOS
   TrilinosInterface::initialize( argc, argv );

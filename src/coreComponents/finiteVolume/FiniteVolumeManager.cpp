@@ -31,42 +31,40 @@ namespace geosx
 using namespace dataRepository;
 
 
-FiniteVolumeManager::FiniteVolumeManager(string const &name, Group *const parent)
-  : Group(name, parent)
+FiniteVolumeManager::FiniteVolumeManager( string const & name, Group * const parent )
+  : Group( name, parent )
 {
-  setInputFlags(InputFlags::OPTIONAL);
+  setInputFlags( InputFlags::OPTIONAL );
 }
 
 FiniteVolumeManager::~FiniteVolumeManager()
-{
+{}
 
-}
-
-Group * FiniteVolumeManager::CreateChild(string const &childKey, string const &childName)
+Group * FiniteVolumeManager::CreateChild( string const & childKey, string const & childName )
 {
-  std::unique_ptr<FluxApproximationBase> approx = FluxApproximationBase::CatalogInterface::Factory(childKey, childName, this);
-  return this->RegisterGroup<FluxApproximationBase>(childName, std::move(approx));
+  std::unique_ptr< FluxApproximationBase > approx = FluxApproximationBase::CatalogInterface::Factory( childKey, childName, this );
+  return this->RegisterGroup< FluxApproximationBase >( childName, std::move( approx ));
 }
 
 
 void FiniteVolumeManager::ExpandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from FluxApproximationBase here
-  for (auto& catalogIter: FluxApproximationBase::GetCatalog())
+  for( auto & catalogIter: FluxApproximationBase::GetCatalog())
   {
     CreateChild( catalogIter.first, catalogIter.first );
   }
 }
 
 
-FluxApproximationBase const * FiniteVolumeManager::getFluxApproximation(std::string const &name) const
+FluxApproximationBase const * FiniteVolumeManager::getFluxApproximation( std::string const & name ) const
 {
-  return this->GetGroup<FluxApproximationBase>(name);
+  return this->GetGroup< FluxApproximationBase >( name );
 }
 
-FluxApproximationBase * FiniteVolumeManager::getFluxApproximation(std::string const &name)
+FluxApproximationBase * FiniteVolumeManager::getFluxApproximation( std::string const & name )
 {
-  return this->GetGroup<FluxApproximationBase>(name);
+  return this->GetGroup< FluxApproximationBase >( name );
 }
 
 

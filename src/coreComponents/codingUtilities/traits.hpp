@@ -35,88 +35,88 @@ namespace traits
 
 namespace internal
 {
-  HAS_ALIAS( value_type )
+HAS_ALIAS( value_type )
 
-  HAS_ALIAS( pointer )
+HAS_ALIAS( pointer )
 
-  template< class T,
-            bool HASPOINTERTYPE = has_alias_pointer< T >::value >
-  struct PointerHelper
-  {
-    using Pointer = T *;
-    using ConstPointer = T const *;
-  };
+template< class T,
+          bool HASPOINTERTYPE = has_alias_pointer< T >::value >
+struct PointerHelper
+{
+  using Pointer = T *;
+  using ConstPointer = T const *;
+};
 
-  template< class T >
-  struct PointerHelper< T, true >
-  {
-    using Pointer = typename T::pointer;
-    using ConstPointer = typename T::const_pointer;
-  };
+template< class T >
+struct PointerHelper< T, true >
+{
+  using Pointer = typename T::pointer;
+  using ConstPointer = typename T::const_pointer;
+};
 
-  template< typename T >
-  struct has_data_method
-  {
-    HAS_MEMBER_FUNCTION_VARIANT( data, nonconst, typename PointerHelper< T >::Pointer, , , )
-    HAS_MEMBER_FUNCTION_VARIANT( data, const,    typename PointerHelper< T >::Pointer, const, , )
+template< typename T >
+struct has_data_method
+{
+  HAS_MEMBER_FUNCTION_VARIANT( data, nonconst, typename PointerHelper< T >::Pointer, , , )
+  HAS_MEMBER_FUNCTION_VARIANT( data, const, typename PointerHelper< T >::Pointer, const, , )
 
-    static constexpr bool value = has_memberfunction_vnonconst_data< T >::value ||
-                                  has_memberfunction_vconst_data< T >::value;
-  };
+  static constexpr bool value = has_memberfunction_vnonconst_data< T >::value ||
+                                has_memberfunction_vconst_data< T >::value;
+};
 
-  template< typename T >
-  struct has_chai_move_method
-  {
-    HAS_MEMBER_FUNCTION( move,
-                         void,
-                         ,
-                         VA_LIST( chai::ExecutionSpace, bool ),
-                         VA_LIST( chai::CPU, true ) )
-    static constexpr bool value = has_memberfunction_move< T >::value;
-  };
+template< typename T >
+struct has_chai_move_method
+{
+  HAS_MEMBER_FUNCTION( move,
+                       void,
+                       ,
+                       VA_LIST( chai::ExecutionSpace, bool ),
+                       VA_LIST( chai::CPU, true ) )
+  static constexpr bool value = has_memberfunction_move< T >::value;
+};
 
-  template< typename T >
-  struct has_empty_method
-  {
-    HAS_MEMBER_FUNCTION( empty, bool, const, , )
-    static constexpr bool value = has_memberfunction_empty< T >::value;
-  };
+template< typename T >
+struct has_empty_method
+{
+  HAS_MEMBER_FUNCTION( empty, bool, const, , )
+  static constexpr bool value = has_memberfunction_empty< T >::value;
+};
 
-  template< typename T, typename INDEX_TYPE >
-  struct has_size_method
-  {
-    HAS_MEMBER_FUNCTION( size, INDEX_TYPE, const, , )
-    static constexpr bool value = has_memberfunction_size< T >::value;
-  };
+template< typename T, typename INDEX_TYPE >
+struct has_size_method
+{
+  HAS_MEMBER_FUNCTION( size, INDEX_TYPE, const, , )
+  static constexpr bool value = has_memberfunction_size< T >::value;
+};
 
-  template< typename T, typename INDEX_TYPE >
-  struct has_dimension_size_method
-  {
-    HAS_MEMBER_FUNCTION( size, INDEX_TYPE, const, VA_LIST( int ), VA_LIST( 0 ) )
-    static constexpr bool value = has_memberfunction_size< T >::value;
-  };
+template< typename T, typename INDEX_TYPE >
+struct has_dimension_size_method
+{
+  HAS_MEMBER_FUNCTION( size, INDEX_TYPE, const, VA_LIST( int ), VA_LIST( 0 ) )
+  static constexpr bool value = has_memberfunction_size< T >::value;
+};
 
-  template< typename T, typename INDEX_TYPE >
-  struct has_resize_method
-  {
-    HAS_MEMBER_FUNCTION( resize, void, , VA_LIST( INDEX_TYPE ), VA_LIST( INDEX_TYPE( 0 ) ) )
-    static constexpr bool value = has_memberfunction_resize< T >::value;
-  };
+template< typename T, typename INDEX_TYPE >
+struct has_resize_method
+{
+  HAS_MEMBER_FUNCTION( resize, void, , VA_LIST( INDEX_TYPE ), VA_LIST( INDEX_TYPE( 0 ) ) )
+  static constexpr bool value = has_memberfunction_resize< T >::value;
+};
 
-  template< typename T, typename DVT, typename INDEX_TYPE >
-  struct has_resize_default_method
-  {
-    HAS_MEMBER_FUNCTION( resizeDefault, void, , VA_LIST( INDEX_TYPE, DVT const & ), VA_LIST( INDEX_TYPE( 0 ), std::declval< DVT const & >() ) )
-    static constexpr bool value = has_memberfunction_resizeDefault< T >::value;
-  };
+template< typename T, typename DVT, typename INDEX_TYPE >
+struct has_resize_default_method
+{
+  HAS_MEMBER_FUNCTION( resizeDefault, void, , VA_LIST( INDEX_TYPE, DVT const & ), VA_LIST( INDEX_TYPE( 0 ), std::declval< DVT const & >() ) )
+  static constexpr bool value = has_memberfunction_resizeDefault< T >::value;
+};
 
-  template< typename T >
-  struct has_resize_dimensions_method
-  {
-    HAS_MEMBER_FUNCTION( resize, void, , VA_LIST( int, localIndex const * ),
-                         VA_LIST( 0, static_cast< localIndex const * >( nullptr ) ) )
-    static constexpr bool value = has_memberfunction_resize< T >::value;
-  };
+template< typename T >
+struct has_resize_dimensions_method
+{
+  HAS_MEMBER_FUNCTION( resize, void, , VA_LIST( int, localIndex const * ),
+                       VA_LIST( 0, static_cast< localIndex const * >( nullptr ) ) )
+  static constexpr bool value = has_memberfunction_resize< T >::value;
+};
 
 } // namespace internal
 
@@ -201,14 +201,14 @@ constexpr bool is_tensorT = is_same_v< std::remove_const_t< T >, R1Tensor > ||
 
 } /* namespace traits */
 
-template<typename T, bool COND>
+template< typename T, bool COND >
 struct add_const_if
 {
-  using type = typename std::conditional<COND, typename std::add_const<T>::type, T>::type;
+  using type = typename std::conditional< COND, typename std::add_const< T >::type, T >::type;
 };
 
-template<typename T, bool COND>
-using add_const_if_t = typename add_const_if<T, COND>::type;
+template< typename T, bool COND >
+using add_const_if_t = typename add_const_if< T, COND >::type;
 
 } /* namespace geosx */
 

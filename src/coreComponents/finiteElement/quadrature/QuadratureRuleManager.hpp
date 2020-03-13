@@ -23,8 +23,7 @@ namespace geosx
 namespace dataRepository
 {
 namespace keys
-{
-}
+{}
 }
 
 
@@ -32,7 +31,7 @@ class QuadratureRuleManager : public dataRepository::Group
 {
 public:
   QuadratureRuleManager() = delete;
-  QuadratureRuleManager(string const & name, Group * const parent);
+  QuadratureRuleManager( string const & name, Group * const parent );
   virtual ~QuadratureRuleManager() override;
 
   virtual Group * CreateChild( string const & childKey, string const & childName ) override;

@@ -68,17 +68,17 @@ TEST( TestNeighborComms, testBuffers )
   {
     size_t sz = 100;
     std::vector< char > sd( sz );
-    for( size_t ii = 0 ; ii < sz ; ++ii )
+    for( size_t ii = 0; ii < sz; ++ii )
       sd[ii] = crand();
 
     auto nc = NeighborCommunicator();
     nc.resizeSendBuffer( 0, sz );
 
     auto & sb = nc.SendBuffer( 0 );
-    for( size_t ii = 0 ; ii < sz ; ++ii )
+    for( size_t ii = 0; ii < sz; ++ii )
       sb[ii] = sd[ii];
 
-    for( size_t ii = 0 ; ii < sz ; ++ii )
+    for( size_t ii = 0; ii < sz; ++ii )
       EXPECT_EQ( sb[ii], sd[ii] );
   }
 }
@@ -110,7 +110,7 @@ TEST( TestNeighborComms, testMPICommunication_fromPinnedSetOnDevice )
     constexpr localIndex size = 1000;
     constexpr localIndex byte_size = 1000 * sizeof(int);
     array1d< int > veloc( size );
-    for( int ii = 0 ; ii < size ; ++ii )
+    for( int ii = 0; ii < size; ++ii )
       veloc[ii] = rnk == 0 ? ii : 0;
 
     auto nc = NeighborCommunicator();
@@ -136,7 +136,7 @@ TEST( TestNeighborComms, testMPICommunication_fromPinnedSetOnDevice )
       auto veloc_view = veloc.toView();
       unpack( buf, veloc_view, size );
       veloc.move( chai::CPU );
-      for( int ii = 0 ; ii < size ; ++ii )
+      for( int ii = 0; ii < size; ++ii )
         EXPECT_EQ( veloc[ii], ii );
     }
   }

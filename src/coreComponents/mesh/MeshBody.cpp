@@ -25,10 +25,10 @@ using namespace dataRepository;
 
 MeshBody::MeshBody( string const & name,
                     Group * const parent ):
-  Group(name,parent),
-  m_globalLengthScale(0)
+  Group( name, parent ),
+  m_globalLengthScale( 0 )
 {
-  registerWrapper<integer>( viewKeys.meshLevels );
+  registerWrapper< integer >( viewKeys.meshLevels );
 }
 
 MeshBody::~MeshBody()
@@ -40,7 +40,7 @@ MeshBody::~MeshBody()
 
 MeshLevel * MeshBody::CreateMeshLevel( localIndex const GEOSX_UNUSED_PARAM( newLevel ) )
 {
-  return this->RegisterGroup<MeshLevel>( "Level0" );
+  return this->RegisterGroup< MeshLevel >( "Level0" );
 }
 
 void MeshBody::setGlobalLengthScale( real64 scale )

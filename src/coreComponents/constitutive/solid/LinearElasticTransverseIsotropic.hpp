@@ -191,7 +191,7 @@ LinearElasticTransverseIsotropicUpdates::
   R2SymTensor temp;
   real64 const * const pTemp = temp.Data();
   temp.QijAjkQlk( stress, Rot );
-  for( int i=0 ; i<6 ; ++i )
+  for( int i=0; i<6; ++i )
   {
     m_stress( k, q, i ) = pTemp[i];
   }

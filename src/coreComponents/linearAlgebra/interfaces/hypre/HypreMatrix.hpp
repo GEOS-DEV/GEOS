@@ -44,7 +44,7 @@ namespace geosx
  * \brief This class ...
  */
 class HypreMatrix final : public virtual LinearOperator< HypreVector >,
-                          private MatrixBase< HypreMatrix, HypreVector >
+  private MatrixBase< HypreMatrix, HypreVector >
 {
 public:
 

@@ -33,7 +33,7 @@ namespace geosx
 
 struct PetscInterface
 {
-  static void initialize( int & argc, char ** & argv );
+  static void initialize( int & argc, char * * & argv );
 
   static void finalize();
 
