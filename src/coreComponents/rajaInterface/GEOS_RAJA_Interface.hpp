@@ -59,10 +59,10 @@ namespace geosx
 {
 
 //RAJA wrapper for loops over ranges - local index
-template< typename POLICY=serialPolicy, typename LAMBDA=void>
-RAJA_INLINE void forall_in_range(const localIndex begin, const localIndex end, LAMBDA && body)
+template< typename POLICY=serialPolicy, typename LAMBDA=void >
+RAJA_INLINE void forall_in_range( const localIndex begin, const localIndex end, LAMBDA && body )
 {
-  RAJA::forall<POLICY>(RAJA::TypedRangeSegment<localIndex>(begin, end), std::forward<LAMBDA>(body));
+  RAJA::forall< POLICY >( RAJA::TypedRangeSegment< localIndex >( begin, end ), std::forward< LAMBDA >( body ));
 }
 
 template< typename POLICY, typename LAMBDA >
@@ -72,17 +72,17 @@ RAJA_INLINE void forAll( const localIndex end, LAMBDA && body )
 }
 
 //RAJA wrapper for loops over ranges - global index
-template<class POLICY=serialPolicy, typename LAMBDA=void>
-RAJA_INLINE void forall_in_range(const globalIndex begin, const globalIndex end, LAMBDA && body)
+template< class POLICY=serialPolicy, typename LAMBDA=void >
+RAJA_INLINE void forall_in_range( const globalIndex begin, const globalIndex end, LAMBDA && body )
 {
-  RAJA::forall<POLICY>(RAJA::TypedRangeSegment<globalIndex>(begin, end), std::forward<LAMBDA>(body));
+  RAJA::forall< POLICY >( RAJA::TypedRangeSegment< globalIndex >( begin, end ), std::forward< LAMBDA >( body ));
 }
 
 //RAJA wrapper for loops over sets
-template<class POLICY=serialPolicy, typename T, typename LAMBDA=void>
-RAJA_INLINE void forall_in_set(const T * const indexList, const localIndex len, LAMBDA && body)
+template< class POLICY=serialPolicy, typename T, typename LAMBDA=void >
+RAJA_INLINE void forall_in_set( const T * const indexList, const localIndex len, LAMBDA && body )
 {
-  RAJA::forall<POLICY>(RAJA::TypedListSegment<T>(indexList, len, RAJA::Unowned), std::forward<LAMBDA>(body));
+  RAJA::forall< POLICY >( RAJA::TypedListSegment< T >( indexList, len, RAJA::Unowned ), std::forward< LAMBDA >( body ));
 }
 
 }

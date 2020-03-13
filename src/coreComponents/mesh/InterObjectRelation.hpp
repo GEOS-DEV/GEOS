@@ -27,27 +27,27 @@
 
 namespace geosx
 {
-template < typename BASETYPE >
+template< typename BASETYPE >
 class InterObjectRelation : public BASETYPE
 {
 public:
 
   using base_type = BASETYPE;
 
-  template< typename ...ARGS >
-  InterObjectRelation( ARGS && ...args ) :
+  template< typename ... ARGS >
+  InterObjectRelation( ARGS && ... args ):
     BASETYPE( std::forward< ARGS >( args )... )
   {}
 
   /// equals operator that sets *this to a single value of any type
-  template<typename rTYPE> InterObjectRelation& operator=( const rTYPE& rhs )
+  template< typename rTYPE > InterObjectRelation & operator=( const rTYPE & rhs )
   {
-    BASETYPE::operator=(rhs);
+    BASETYPE::operator=( rhs );
     return (*this);
   }
 
-  const base_type & Base() const { return static_cast<const BASETYPE&>(*this); }
-  base_type & Base() { return dynamic_cast<BASETYPE&>(*this); }
+  const base_type & Base() const { return static_cast< const BASETYPE & >(*this); }
+  base_type & Base() { return dynamic_cast< BASETYPE & >(*this); }
 
   void SetRelatedObject( ObjectManagerBase const * const relatedObject )
   { m_relatedObject = relatedObject; }
@@ -58,14 +58,14 @@ public:
   globalIndex_array const & RelatedObjectLocalToGlobal() const
   { return this->m_relatedObject->m_localToGlobalMap; }
 
-  const unordered_map<globalIndex,localIndex>& RelatedObjectGlobalToLocal() const
+  const unordered_map< globalIndex, localIndex > & RelatedObjectGlobalToLocal() const
   { return this->m_relatedObject->m_globalToLocalMap; }
 
 private:
   ObjectManagerBase const * m_relatedObject = nullptr;
 };
 
-typedef InterObjectRelation<array2d<localIndex>>                FixedOneToManyRelation;
+typedef InterObjectRelation< array2d< localIndex > >                FixedOneToManyRelation;
 }
 
 #endif /* GEOSX_MESH_INTEROBJECTRELATION_HPP_ */

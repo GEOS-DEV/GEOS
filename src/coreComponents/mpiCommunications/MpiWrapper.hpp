@@ -86,7 +86,7 @@ struct MPI_Status
 #endif
 
 #if defined(NDEBUG)
-  #define MPI_CHECK_ERROR( error ) ((void) error) 
+  #define MPI_CHECK_ERROR( error ) ((void) error)
 #else
   #define MPI_CHECK_ERROR( error ) GEOSX_ERROR_IF_NE( error, MPI_SUCCESS );
 #endif
@@ -578,7 +578,7 @@ int MpiWrapper::allGather( arrayView1d< T const > const & sendValues,
 
 #else
   allValues.resize( sendSize );
-  for( localIndex a=0 ; a<sendSize ; ++a )
+  for( localIndex a=0; a<sendSize; ++a )
   {
     allValues[a] = sendValues[a];
   }
@@ -729,7 +729,7 @@ int MpiWrapper::recv( array1d< T > & buf,
 
   GEOSX_ASSERT_EQ( count % sizeof( T ), 0 );
   buf.resize( count / sizeof( T ) );
-  
+
   return MPI_Recv( reinterpret_cast< char * >( buf.data() ),
                    count,
                    MPI_CHAR,
@@ -738,7 +738,7 @@ int MpiWrapper::recv( array1d< T > & buf,
                    comm,
                    request );
 #else
-  GEOSX_ERROR("Not implemented!");
+  GEOSX_ERROR( "Not implemented!" );
   return MPI_SUCCESS;
 #endif
 }
@@ -759,7 +759,7 @@ int MpiWrapper::iSend( arrayView1d< T const > const & buf,
                     comm,
                     request );
 #else
-  GEOSX_ERROR("Not implemented.");
+  GEOSX_ERROR( "Not implemented." );
   return MPI_SUCCESS;
 #endif
 }
@@ -803,7 +803,7 @@ U MpiWrapper::PrefixSum( T const value )
   int const error = MPI_Exscan( &convertedValue, &localResult, 1, getMpiType< U >(), MPI_SUM, MPI_COMM_GEOSX );
   MPI_CHECK_ERROR( error );
 
-  if ( Comm_rank() == 0 )
+  if( Comm_rank() == 0 )
   {
     localResult = 0;
   }

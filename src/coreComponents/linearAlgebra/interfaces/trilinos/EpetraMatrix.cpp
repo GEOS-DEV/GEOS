@@ -31,7 +31,7 @@
 #ifdef GEOSX_USE_MPI
 #include <Epetra_MpiComm.h>
 #else
-#include<Epetra_SerialComm.h>
+#include <Epetra_SerialComm.h>
 using Epetra_MpiComm = Epetra_SerialComm;
 #endif
 
@@ -39,12 +39,12 @@ namespace geosx
 {
 
 EpetraMatrix::EpetraMatrix()
-: LinearOperator(),
+  : LinearOperator(),
   MatrixBase()
 { }
 
 EpetraMatrix::EpetraMatrix( EpetraMatrix const & src )
-: EpetraMatrix()
+  : EpetraMatrix()
 {
   GEOSX_LAI_ASSERT( src.ready() );
   m_matrix = std::make_unique< Epetra_FECrsMatrix >( *src.m_matrix );
@@ -69,10 +69,10 @@ void EpetraMatrix::createWithGlobalSize( globalIndex const globalRows,
 
   m_dst_map = std::make_unique< Epetra_Map >( globalRows,
                                               0,
-                                              Epetra_MpiComm( MPI_PARAM(comm) ) );
+                                              Epetra_MpiComm( MPI_PARAM( comm ) ) );
   m_src_map = std::make_unique< Epetra_Map >( globalCols,
                                               0,
-                                              Epetra_MpiComm( MPI_PARAM(comm) ) );
+                                              Epetra_MpiComm( MPI_PARAM( comm ) ) );
   m_matrix = std::make_unique< Epetra_FECrsMatrix >( Copy,
                                                      *m_dst_map,
                                                      integer_conversion< int >( maxEntriesPerRow ),
@@ -94,11 +94,11 @@ void EpetraMatrix::createWithLocalSize( localIndex const localRows,
   m_dst_map = std::make_unique< Epetra_Map >( integer_conversion< globalIndex >( -1 ),
                                               integer_conversion< int >( localRows ),
                                               0,
-                                              Epetra_MpiComm( MPI_PARAM(comm) ) );
+                                              Epetra_MpiComm( MPI_PARAM( comm ) ) );
   m_src_map = std::make_unique< Epetra_Map >( integer_conversion< globalIndex >( -1 ),
                                               integer_conversion< int >( localCols ),
                                               0,
-                                              Epetra_MpiComm( MPI_PARAM(comm) ) );
+                                              Epetra_MpiComm( MPI_PARAM( comm ) ) );
   m_matrix = std::make_unique< Epetra_FECrsMatrix >( Copy,
                                                      *m_dst_map,
                                                      integer_conversion< int >( maxEntriesPerRow ),
@@ -406,10 +406,10 @@ void EpetraMatrix::create( Epetra_CrsMatrix const & src )
   GEOSX_LAI_ASSERT( closed() );
   reset();
 
-  m_matrix = std::make_unique<Epetra_FECrsMatrix>( Copy, src.Graph() );
+  m_matrix = std::make_unique< Epetra_FECrsMatrix >( Copy, src.Graph() );
   GEOSX_LAI_CHECK_ERROR( m_matrix->FillComplete( src.DomainMap(), src.RangeMap(), true ) );
-  m_src_map = std::make_unique<Epetra_Map>( m_matrix->DomainMap() );
-  m_dst_map = std::make_unique<Epetra_Map>( m_matrix->RangeMap() );
+  m_src_map = std::make_unique< Epetra_Map >( m_matrix->DomainMap() );
+  m_dst_map = std::make_unique< Epetra_Map >( m_matrix->RangeMap() );
 
   // We have to copy the data using the "expert" interface,
   // since there is no direct way to convert CrsMatrix to FECrsMatrix.
@@ -430,7 +430,7 @@ void EpetraMatrix::create( Epetra_CrsMatrix const & src )
 
   std::copy( offsets_src, offsets_src + src.NumMyRows() + 1, offsets_dst );
   std::copy( indices_src, indices_src + src.NumMyNonzeros(), indices_dst );
-  std::copy( values_src, values_src + src.NumMyNonzeros(), values_dst  );
+  std::copy( values_src, values_src + src.NumMyNonzeros(), values_dst );
 
   m_assembled = true;
 }
@@ -521,7 +521,7 @@ void EpetraMatrix::transpose( EpetraMatrix & dst ) const
   // XXX: Transposer always creates a CrsMatrix, but doesn't expose this fact in the API:
   // https://docs.trilinos.org/dev/packages/epetraext/doc/html/EpetraExt__Transpose__RowMatrix_8cpp_source.html#l00248
   EpetraExt::RowMatrix_Transpose transposer( m_src_map.get() );
-  Epetra_CrsMatrix & trans = dynamic_cast<Epetra_CrsMatrix &>( transposer( *m_matrix ) );
+  Epetra_CrsMatrix & trans = dynamic_cast< Epetra_CrsMatrix & >( transposer( *m_matrix ) );
   dst.create( trans );
 }
 
@@ -541,7 +541,7 @@ void EpetraMatrix::clearRow( globalIndex const globalRow,
     values_ptr[j] = 0.0;
   }
 
-  if( std::fabs(diagValue) > 0.0 && numGlobalRows() == numGlobalCols() )
+  if( std::fabs( diagValue ) > 0.0 && numGlobalRows() == numGlobalCols() )
   {
     set( globalRow, globalRow, diagValue );
   }
@@ -585,7 +585,7 @@ void EpetraMatrix::getRowCopy( globalIndex globalRow,
   localIndex const length = integer_conversion< localIndex >( numEntries );
   for( localIndex i = 0; i < length; ++i )
   {
-    colIndices[i] = integer_conversion<globalIndex>( m_matrix->GCID64( indices_ptr[i] ) );
+    colIndices[i] = integer_conversion< globalIndex >( m_matrix->GCID64( indices_ptr[i] ) );
     values[i] = values_ptr[i];
   }
 }
@@ -709,7 +709,7 @@ MPI_Comm EpetraMatrix::getComm() const
 {
   GEOSX_LAI_ASSERT( created() );
 #ifdef GEOSX_USE_MPI
-  return dynamic_cast<Epetra_MpiComm const &>( m_matrix->RowMap().Comm() ).Comm();
+  return dynamic_cast< Epetra_MpiComm const & >( m_matrix->RowMap().Comm() ).Comm();
 #else
   return MPI_COMM_GEOSX;
 #endif

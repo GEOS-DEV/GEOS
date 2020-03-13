@@ -26,28 +26,28 @@ static void CalculateShapeFunctionDerivative( const realT y[8],
                                               realT b[8] );
 
 
-static void CalculateFBHourGlassModes( const array1d<R1Tensor>& xpos,
-                                       const array1d<R1Tensor>& dNdx,
+static void CalculateFBHourGlassModes( const array1d< R1Tensor > & xpos,
+                                       const array1d< R1Tensor > & dNdx,
                                        realT gamma[4][8] );
 
 static void
-CalcFBHourForce( const array1d<R1Tensor>& vel,
+CalcFBHourForce( const array1d< R1Tensor > & vel,
                  const realT gamma[4][8],
-                 const realT& dampcoef,
-                 const realT& stiffcoef,
-                 const realT& rho,
-                 const realT& modulus,
-                 const realT& volume,
-                 const array1d<R1Tensor>& dNdx,
-                 const realT& dt,
-                 array1d<R1Tensor>& Qstiffness,
-                 array1d<R1Tensor>& hgforce);
+                 const realT & dampcoef,
+                 const realT & stiffcoef,
+                 const realT & rho,
+                 const realT & modulus,
+                 const realT & volume,
+                 const array1d< R1Tensor > & dNdx,
+                 const realT & dt,
+                 array1d< R1Tensor > & Qstiffness,
+                 array1d< R1Tensor > & hgforce );
 
 
 UniformStrainHexahedron::UniformStrainHexahedron():
-  FiniteElement<3>(1,8,4)
+  FiniteElement< 3 >( 1, 8, 4 )
 {
-  m_nodeOrdering.resize(8);
+  m_nodeOrdering.resize( 8 );
 
   m_nodeOrdering[0] = 0;
   m_nodeOrdering[1] = 1;
@@ -77,75 +77,75 @@ UniformStrainHexahedron::~UniformStrainHexahedron()
  * element).
  */
 
-void UniformStrainHexahedron::reinit(const std::vector<R1TensorT<3> > &mapped_support_points)
+void UniformStrainHexahedron::reinit( const std::vector< R1TensorT< 3 > > & mapped_support_points )
 {
-  assert(mapped_support_points.size() == n_dofs);
+  assert( mapped_support_points.size() == n_dofs );
 
   const unsigned int q = 0;
 
 
 
-  const realT x[8] = {  mapped_support_points[m_nodeOrdering[0]](0),
-                        mapped_support_points[m_nodeOrdering[1]](0),
-                        mapped_support_points[m_nodeOrdering[2]](0),
-                        mapped_support_points[m_nodeOrdering[3]](0),
-                        mapped_support_points[m_nodeOrdering[4]](0),
-                        mapped_support_points[m_nodeOrdering[5]](0),
-                        mapped_support_points[m_nodeOrdering[6]](0),
-                        mapped_support_points[m_nodeOrdering[7]](0) };
+  const realT x[8] = {  mapped_support_points[m_nodeOrdering[0]]( 0 ),
+                        mapped_support_points[m_nodeOrdering[1]]( 0 ),
+                        mapped_support_points[m_nodeOrdering[2]]( 0 ),
+                        mapped_support_points[m_nodeOrdering[3]]( 0 ),
+                        mapped_support_points[m_nodeOrdering[4]]( 0 ),
+                        mapped_support_points[m_nodeOrdering[5]]( 0 ),
+                        mapped_support_points[m_nodeOrdering[6]]( 0 ),
+                        mapped_support_points[m_nodeOrdering[7]]( 0 ) };
 
-  const realT y[8] = {  mapped_support_points[m_nodeOrdering[0]](1),
-                        mapped_support_points[m_nodeOrdering[1]](1),
-                        mapped_support_points[m_nodeOrdering[2]](1),
-                        mapped_support_points[m_nodeOrdering[3]](1),
-                        mapped_support_points[m_nodeOrdering[4]](1),
-                        mapped_support_points[m_nodeOrdering[5]](1),
-                        mapped_support_points[m_nodeOrdering[6]](1),
-                        mapped_support_points[m_nodeOrdering[7]](1) };
+  const realT y[8] = {  mapped_support_points[m_nodeOrdering[0]]( 1 ),
+                        mapped_support_points[m_nodeOrdering[1]]( 1 ),
+                        mapped_support_points[m_nodeOrdering[2]]( 1 ),
+                        mapped_support_points[m_nodeOrdering[3]]( 1 ),
+                        mapped_support_points[m_nodeOrdering[4]]( 1 ),
+                        mapped_support_points[m_nodeOrdering[5]]( 1 ),
+                        mapped_support_points[m_nodeOrdering[6]]( 1 ),
+                        mapped_support_points[m_nodeOrdering[7]]( 1 ) };
 
-  const realT z[8] = {  mapped_support_points[m_nodeOrdering[0]](2),
-                        mapped_support_points[m_nodeOrdering[1]](2),
-                        mapped_support_points[m_nodeOrdering[2]](2),
-                        mapped_support_points[m_nodeOrdering[3]](2),
-                        mapped_support_points[m_nodeOrdering[4]](2),
-                        mapped_support_points[m_nodeOrdering[5]](2),
-                        mapped_support_points[m_nodeOrdering[6]](2),
-                        mapped_support_points[m_nodeOrdering[7]](2) };
+  const realT z[8] = {  mapped_support_points[m_nodeOrdering[0]]( 2 ),
+                        mapped_support_points[m_nodeOrdering[1]]( 2 ),
+                        mapped_support_points[m_nodeOrdering[2]]( 2 ),
+                        mapped_support_points[m_nodeOrdering[3]]( 2 ),
+                        mapped_support_points[m_nodeOrdering[4]]( 2 ),
+                        mapped_support_points[m_nodeOrdering[5]]( 2 ),
+                        mapped_support_points[m_nodeOrdering[6]]( 2 ),
+                        mapped_support_points[m_nodeOrdering[7]]( 2 ) };
 
 
 
   realT b[3][8];
 
-  CalculateShapeFunctionDerivative(  y, z, b[0] );
-  CalculateShapeFunctionDerivative(  z, x, b[1] );
-  CalculateShapeFunctionDerivative(  x, y, b[2] );
+  CalculateShapeFunctionDerivative( y, z, b[0] );
+  CalculateShapeFunctionDerivative( z, x, b[1] );
+  CalculateShapeFunctionDerivative( x, y, b[2] );
 
   data[q].jacobian_determinant = 0.0;
-  for( int a=0 ; a<8 ; ++a )
+  for( int a=0; a<8; ++a )
   {
     data[q].jacobian_determinant += x[a]*b[0][a] + y[a]*b[1][a] + z[a]*b[2][a];
   }
   data[q].jacobian_determinant /= 3.0;
 
-  for( int a=0 ; a<8 ; ++a )
+  for( int a=0; a<8; ++a )
   {
-    data[q].mapped_gradients[a](0) = b[0][m_nodeOrdering[a]] / data[q].jacobian_determinant;
-    data[q].mapped_gradients[a](1) = b[1][m_nodeOrdering[a]] / data[q].jacobian_determinant;
-    data[q].mapped_gradients[a](2) = b[2][m_nodeOrdering[a]] / data[q].jacobian_determinant;
+    data[q].mapped_gradients[a]( 0 ) = b[0][m_nodeOrdering[a]] / data[q].jacobian_determinant;
+    data[q].mapped_gradients[a]( 1 ) = b[1][m_nodeOrdering[a]] / data[q].jacobian_determinant;
+    data[q].mapped_gradients[a]( 2 ) = b[2][m_nodeOrdering[a]] / data[q].jacobian_determinant;
   }
 }
 
-void UniformStrainHexahedron::zero_energy_mode_control( const array1d<R1Tensor>& dNdx,
-                                                        const realT& volume,
-                                                        const array1d<R1Tensor>& x,
-                                                        const array1d<R1Tensor>& vel,
-                                                        const realT& dampcoef,
-                                                        const realT& stiffcoef,
-                                                        const realT& rho,
-                                                        const realT& modulus,
-                                                        const realT& dt,
-                                                        array1d<R1Tensor>& Qstiffness,
-                                                        array1d<R1Tensor>& force )
+void UniformStrainHexahedron::zero_energy_mode_control( const array1d< R1Tensor > & dNdx,
+                                                        const realT & volume,
+                                                        const array1d< R1Tensor > & x,
+                                                        const array1d< R1Tensor > & vel,
+                                                        const realT & dampcoef,
+                                                        const realT & stiffcoef,
+                                                        const realT & rho,
+                                                        const realT & modulus,
+                                                        const realT & dt,
+                                                        array1d< R1Tensor > & Qstiffness,
+                                                        array1d< R1Tensor > & force )
 {
   realT gamma[4][8];
 
@@ -240,16 +240,16 @@ void CalculateShapeFunctionDerivative( const realT y[8],
 }
 
 #define WRITEOUT 0
-void CalculateFBHourGlassModes( const array1d<R1Tensor>& xpos,
-                                const array1d<R1Tensor>& dNdx,
+void CalculateFBHourGlassModes( const array1d< R1Tensor > & xpos,
+                                const array1d< R1Tensor > & dNdx,
                                 realT gamma[4][8] )
 {
 
   const realT Gamma[4][8] =  {
-    { 1,  1, -1, -1, -1, -1,  1,  1},
-    { 1, -1,  1, -1, -1,  1, -1,  1},
-    { 1, -1, -1,  1,  1, -1, -1,  1},
-    {-1,  1,  1, -1,  1, -1, -1,  1}
+    { 1, 1, -1, -1, -1, -1, 1, 1},
+    { 1, -1, 1, -1, -1, 1, -1, 1},
+    { 1, -1, -1, 1, 1, -1, -1, 1},
+    {-1, 1, 1, -1, 1, -1, -1, 1}
   };
 
   static R1Tensor temp;
@@ -257,62 +257,62 @@ void CalculateFBHourGlassModes( const array1d<R1Tensor>& xpos,
 
 
   // compute the hourglass modes
-  for( int mode=0 ; mode<4 ; ++mode )
+  for( int mode=0; mode<4; ++mode )
   {
     xGamma = 0;
 
-    for( int a=0 ; a<8 ; ++a )
+    for( int a=0; a<8; ++a )
     {
-      temp = xpos(a);
+      temp = xpos( a );
       temp *= Gamma[mode][a];
       xGamma += temp;
     }
 
-    for( int a=0 ; a<8 ; ++a )
+    for( int a=0; a<8; ++a )
     {
-      gamma[mode][a] = Gamma[mode][a] - Dot( dNdx(a), xGamma);
+      gamma[mode][a] = Gamma[mode][a] - Dot( dNdx( a ), xGamma );
     }
   }
 }
 
 
 void
-CalcFBHourForce( const array1d<R1Tensor>& vel,
+CalcFBHourForce( const array1d< R1Tensor > & vel,
                  const realT gamma[4][8],
-                 const realT& dampcoef,
-                 const realT& stiffcoef,
-                 const realT& rho,
-                 const realT& modulus,
-                 const realT& volume,
-                 const array1d<R1Tensor>& dNdx,
-                 const realT& dt,
-                 array1d<R1Tensor>& Qstiffness,
-                 array1d<R1Tensor>& hgforce )
+                 const realT & dampcoef,
+                 const realT & stiffcoef,
+                 const realT & rho,
+                 const realT & modulus,
+                 const realT & volume,
+                 const array1d< R1Tensor > & dNdx,
+                 const realT & dt,
+                 array1d< R1Tensor > & Qstiffness,
+                 array1d< R1Tensor > & hgforce )
 {
 
 
   R1Tensor q[4];
 
-  const realT BB = Dot(dNdx[0],dNdx[0]) + Dot(dNdx[1],dNdx[1]) + Dot(dNdx[2],dNdx[2]) + Dot(dNdx[3],dNdx[3]) +
-                   Dot(dNdx[4],dNdx[4]) + Dot(dNdx[5],dNdx[5]) + Dot(dNdx[6],dNdx[6]) + Dot(dNdx[7],dNdx[7]);
+  const realT BB = Dot( dNdx[0], dNdx[0] ) + Dot( dNdx[1], dNdx[1] ) + Dot( dNdx[2], dNdx[2] ) + Dot( dNdx[3], dNdx[3] ) +
+                   Dot( dNdx[4], dNdx[4] ) + Dot( dNdx[5], dNdx[5] ) + Dot( dNdx[6], dNdx[6] ) + Dot( dNdx[7], dNdx[7] );
 
   const realT Cdamp  = dampcoef * sqrt( rho*modulus*BB / 6.0 ) * volume;
 
   const realT Cstiff = stiffcoef * modulus * BB * volume / 3.0;
 
-  for( int mode=0 ; mode<4 ; ++mode )
+  for( int mode=0; mode<4; ++mode )
   {
     R1Tensor temp;
     q[mode] = 0.0;
-    for( int a=0 ; a<8 ; ++a )
+    for( int a=0; a<8; ++a )
     {
       R1Tensor temp2;
-      temp2 = vel(a);
+      temp2 = vel( a );
       temp2 *= gamma[mode][a];
       q[mode] += temp2;
     }
 
-    q[mode] *= 1.0/sqrt(8.0);
+    q[mode] *= 1.0/sqrt( 8.0 );
 
     temp = q[mode];
     temp *= Cstiff * dt;
@@ -320,13 +320,13 @@ CalcFBHourForce( const array1d<R1Tensor>& vel,
 
     q[mode] *= Cdamp;
     q[mode] += Qstiffness[mode];
-    q[mode] *= 1.0/sqrt(8.0);
+    q[mode] *= 1.0/sqrt( 8.0 );
   }
 
   hgforce = 0.0;
-  for( int a=0 ; a<8 ; ++a )
+  for( int a=0; a<8; ++a )
   {
-    for( int mode=0 ; mode<4 ; ++mode )
+    for( int mode=0; mode<4; ++mode )
     {
       R1Tensor temp  = q[mode];
       temp *= gamma[mode][a];

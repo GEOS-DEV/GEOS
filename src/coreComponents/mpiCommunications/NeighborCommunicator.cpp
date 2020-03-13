@@ -197,7 +197,7 @@ void NeighborCommunicator::MPI_WaitAll( int const commID )
 
 void NeighborCommunicator::Clear()
 {
-  for( int i = 0 ; i < maxComm ; ++i )
+  for( int i = 0; i < maxComm; ++i )
   {
     m_sendBuffer[i].clear();
     m_receiveBuffer[i].clear();
@@ -226,15 +226,15 @@ void NeighborCommunicator::AddNeighborGroupToMesh( MeshLevel & mesh ) const
 
   ElementRegionManager * const elemManager = mesh.getElemManager();
   elemManager->forElementSubRegions( [&]( Group * const elementSubRegion )
-    {
-      neighborGroups[numNeighborGroups++] = elementSubRegion->
-                                              GetGroup( faceManager->m_ObjectManagerBaseGroupKeys.neighborData )->
-                                              RegisterGroup( std::to_string( this->m_neighborRank ));
-    } );
+  {
+    neighborGroups[numNeighborGroups++] = elementSubRegion->
+                                            GetGroup( faceManager->m_ObjectManagerBaseGroupKeys.neighborData )->
+                                            RegisterGroup( std::to_string( this->m_neighborRank ));
+  } );
 
   GEOSX_ERROR_IF_GT( numNeighborGroups, 100 );
 
-  for( localIndex a=0 ; a<numNeighborGroups ; ++a )
+  for( localIndex a=0; a<numNeighborGroups; ++a )
   {
     neighborGroups[ a ]->
       registerWrapper< localIndex_array >( ObjectManagerBase::viewKeyStruct::matchedPartitionBoundaryObjectsString )->
@@ -252,7 +252,7 @@ void NeighborCommunicator::AddNeighborGroupToMesh( MeshLevel & mesh ) const
       registerWrapper< localIndex_array >( ObjectManagerBase::viewKeyStruct::adjacencyListString )->
       setSizedFromParent( 0 );
 
-     // Each entry is a ghost on this Neighbor. The first value is the global index of the node and the second
+    // Each entry is a ghost on this Neighbor. The first value is the global index of the node and the second
     // entry is the owning rank.
     neighborGroups[ a ]->
       registerWrapper< array1d< std::pair< globalIndex, int > > >( "nonLocalGhosts" )->
@@ -531,18 +531,18 @@ void NeighborCommunicator::PrepareAndSendSyncLists( MeshLevel & mesh,
                                           faceGhostsToReceive.size(),
                                           faceManager.m_localToGlobalMap.toSliceConst() );
 
-  for( localIndex er=0 ; er<elemManager.numRegions() ; ++er )
+  for( localIndex er=0; er<elemManager.numRegions(); ++er )
   {
     ElementRegionBase const * const elemRegion = elemManager.GetRegion( er );
     elemRegion->forElementSubRegionsIndex( [&]( localIndex const esr,
                                                 ElementSubRegionBase const * const subRegion )
-      {
-        bufferSize+= bufferOps::Pack< false >( sendBufferPtr,
-                                               elementGhostToReceive[er][esr].toSliceConst(),
-                                               nullptr,
-                                               elementGhostToReceive[er][esr].size(),
-                                               subRegion->m_localToGlobalMap.toSliceConst() );
-      } );
+    {
+      bufferSize+= bufferOps::Pack< false >( sendBufferPtr,
+                                             elementGhostToReceive[er][esr].toSliceConst(),
+                                             nullptr,
+                                             elementGhostToReceive[er][esr].size(),
+                                             subRegion->m_localToGlobalMap.toSliceConst() );
+    } );
   }
 
   this->resizeSendBuffer( commID, bufferSize );
@@ -569,17 +569,17 @@ void NeighborCommunicator::PrepareAndSendSyncLists( MeshLevel & mesh,
 
 
 
-  for( localIndex er=0 ; er<elemManager.numRegions() ; ++er )
+  for( localIndex er=0; er<elemManager.numRegions(); ++er )
   {
     ElementRegionBase const * const elemRegion = elemManager.GetRegion( er );
     elemRegion->forElementSubRegionsIndex( [&]( localIndex const esr, ElementSubRegionBase const * const subRegion )
-      {
-        packedSize+= bufferOps::Pack< true >( sendBufferPtr,
-                                              elementGhostToReceive[er][esr].toSliceConst(),
-                                              nullptr,
-                                              elementGhostToReceive[er][esr].size(),
-                                              subRegion->m_localToGlobalMap.toSliceConst() );
-      } );
+    {
+      packedSize+= bufferOps::Pack< true >( sendBufferPtr,
+                                            elementGhostToReceive[er][esr].toSliceConst(),
+                                            nullptr,
+                                            elementGhostToReceive[er][esr].size(),
+                                            subRegion->m_localToGlobalMap.toSliceConst() );
+    } );
   }
 
   GEOSX_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
@@ -634,17 +634,17 @@ void NeighborCommunicator::UnpackAndRebuildSyncLists( MeshLevel & mesh,
     elemManager.ConstructReferenceAccessor< localIndex_array >( ObjectManagerBase:: viewKeyStruct::ghostsToSendString,
                                                                 std::to_string( this->m_neighborRank ) );
 
-  for( localIndex er=0 ; er<elemManager.numRegions() ; ++er )
+  for( localIndex er=0; er<elemManager.numRegions(); ++er )
   {
     ElementRegionBase * const elemRegion = elemManager.GetRegion( er );
     elemRegion->forElementSubRegionsIndex( [&]( localIndex const esr, ElementSubRegionBase * const subRegion )
-      {
-        bufferOps::UnpackSyncList( receiveBufferPtr,
-                                   elementGhostToSend[er][esr].get(),
-                                   subRegion->m_globalToLocalMap );
+    {
+      bufferOps::UnpackSyncList( receiveBufferPtr,
+                                 elementGhostToSend[er][esr].get(),
+                                 subRegion->m_globalToLocalMap );
 
-        subRegion->SetGhostRankForSenders( NeighborRank() );
-      } );
+      subRegion->SetGhostRankForSenders( NeighborRank() );
+    } );
   }
 }
 
@@ -705,14 +705,14 @@ int NeighborCommunicator::PackCommSizeForSync( std::map< string, string_array > 
 
   if( fieldNames.count( "elems" ) > 0 )
   {
-    for( localIndex er=0 ; er<elemManager.numRegions() ; ++er )
+    for( localIndex er=0; er<elemManager.numRegions(); ++er )
     {
       ElementRegionBase const * const elemRegion = elemManager.GetRegion( er );
       elemRegion->forElementSubRegionsIndex( [&]( localIndex const esr,
                                                   auto const * const subRegion )
-        {
-          bufferSize += subRegion->PackSize( fieldNames.at( "elems" ), elementGhostToSend[er][esr], 0, on_device );
-        } );
+      {
+        bufferSize += subRegion->PackSize( fieldNames.at( "elems" ), elementGhostToSend[er][esr], 0, on_device );
+      } );
     }
   }
 
@@ -781,13 +781,13 @@ void NeighborCommunicator::PackCommBufferForSync( std::map< string, string_array
 
   if( fieldNames.count( "elems" ) > 0 )
   {
-    for( localIndex er=0 ; er<elemManager.numRegions() ; ++er )
+    for( localIndex er=0; er<elemManager.numRegions(); ++er )
     {
       ElementRegionBase const * const elemRegion = elemManager.GetRegion( er );
       elemRegion->forElementSubRegionsIndex( [&]( localIndex const esr, auto const * const subRegion )
-        {
-          packedSize += subRegion->Pack( sendBufferPtr, fieldNames.at( "elems" ), elementGhostToSend[er][esr], 0, on_device );
-        } );
+      {
+        packedSize += subRegion->Pack( sendBufferPtr, fieldNames.at( "elems" ), elementGhostToSend[er][esr], 0, on_device );
+      } );
     }
   }
 
@@ -860,14 +860,14 @@ void NeighborCommunicator::UnpackBufferForSync( std::map< string, string_array >
 
   if( fieldNames.count( "elems" ) > 0 )
   {
-    for( localIndex er=0 ; er<elemManager.numRegions() ; ++er )
+    for( localIndex er=0; er<elemManager.numRegions(); ++er )
     {
       ElementRegionBase * const elemRegion = elemManager.GetRegion( er );
       elemRegion->forElementSubRegionsIndex( [&]( localIndex const esr,
                                                   auto * const subRegion )
-        {
-          unpackedSize += subRegion->Unpack( receiveBufferPtr, elementGhostToReceive[er][esr], 0, on_device );
-        } );
+      {
+        unpackedSize += subRegion->Unpack( receiveBufferPtr, elementGhostToReceive[er][esr], 0, on_device );
+      } );
     }
   }
 }

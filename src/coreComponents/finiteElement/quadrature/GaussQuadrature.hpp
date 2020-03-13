@@ -23,7 +23,7 @@
 namespace geosx
 {
 
-template<int dim>
+template< int dim >
 class GaussQuadrature : public QuadratureBase
 {
 public:
@@ -55,8 +55,8 @@ private:
   int m_degree;
   int m_n_gauss_points;
 
-  std::vector<double> m_points_1d;
-  std::vector<double> m_weights_1d;
+  std::vector< double > m_points_1d;
+  std::vector< double > m_weights_1d;
 
 };
 }

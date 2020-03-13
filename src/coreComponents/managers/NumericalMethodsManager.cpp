@@ -28,14 +28,14 @@ namespace geosx
 using namespace dataRepository;
 
 NumericalMethodsManager::NumericalMethodsManager( string const & name, Group * const parent ):
-  Group(name,parent)
+  Group( name, parent )
 {
-  setInputFlags(InputFlags::OPTIONAL);
+  setInputFlags( InputFlags::OPTIONAL );
 
-  this->RegisterGroup<BasisFunctionManager>(keys::basisFunctions);
-  this->RegisterGroup<QuadratureRuleManager>(keys::quadratureRules);
-  this->RegisterGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
-  this->RegisterGroup<FiniteVolumeManager>(keys::finiteVolumeManager);
+  this->RegisterGroup< BasisFunctionManager >( keys::basisFunctions );
+  this->RegisterGroup< QuadratureRuleManager >( keys::quadratureRules );
+  this->RegisterGroup< FiniteElementDiscretizationManager >( keys::finiteElementDiscretizations );
+  this->RegisterGroup< FiniteVolumeManager >( keys::finiteVolumeManager );
 }
 
 NumericalMethodsManager::~NumericalMethodsManager()
@@ -48,16 +48,16 @@ Group * NumericalMethodsManager::CreateChild( string const & GEOSX_UNUSED_PARAM(
   return nullptr;
 }
 
-dataRepository::Group const * NumericalMethodsManager::FindNumericalMethodByName(string const & name) const
+dataRepository::Group const * NumericalMethodsManager::FindNumericalMethodByName( string const & name ) const
 {
   for( auto & iterNumericalMethod : this->GetSubGroups() )
   {
-    if( iterNumericalMethod.second->getName() == name)
+    if( iterNumericalMethod.second->getName() == name )
     {
       return iterNumericalMethod.second;
     }
   }
-  GEOSX_ERROR("Can't find subgroup named " + name + " in " + this->getName());
+  GEOSX_ERROR( "Can't find subgroup named " + name + " in " + this->getName());
   return nullptr;
 }
 

@@ -13,8 +13,8 @@
  */
 
 /**
-  * @file SingleFluidBase.hpp
-  */
+ * @file SingleFluidBase.hpp
+ */
 
 #ifndef GEOSX_CONSTITUTIVE_FLUID_SINGLEFLUIDBASE_HPP
 #define GEOSX_CONSTITUTIVE_FLUID_SINGLEFLUIDBASE_HPP
@@ -40,7 +40,7 @@ public:
 
   virtual void DeliverClone( string const & name,
                              Group * const parent,
-                             std::unique_ptr<ConstitutiveBase> & clone ) const override = 0;
+                             std::unique_ptr< ConstitutiveBase > & clone ) const override = 0;
 
   virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
@@ -61,7 +61,7 @@ public:
    * @brief Perform a batch constitutive update (all points).
    * @param[in] pressure array containing target pressure values
    */
-  virtual void BatchUpdate( arrayView1d<real64 const> const & pressure ) = 0;
+  virtual void BatchUpdate( arrayView1d< real64 const > const & pressure ) = 0;
 
   /**
    * @brief Compute constitutive values at a single point.
@@ -81,17 +81,17 @@ public:
                         real64 & viscosity,
                         real64 & dViscosity_dPressure ) const = 0;
 
-  array2d<real64> const & density() const { return m_density; }
-  array2d<real64>       & density()       { return m_density; }
+  array2d< real64 > const & density() const { return m_density; }
+  array2d< real64 > & density()       { return m_density; }
 
-  array2d<real64> const & dDensity_dPressure() const { return m_dDensity_dPressure; }
-  array2d<real64>       & dDensity_dPressure()       { return m_dDensity_dPressure; }
+  array2d< real64 > const & dDensity_dPressure() const { return m_dDensity_dPressure; }
+  array2d< real64 > & dDensity_dPressure()       { return m_dDensity_dPressure; }
 
-  array2d<real64> const & viscosity() const { return m_viscosity; }
-  array2d<real64>       & viscosity()       { return m_viscosity; }
+  array2d< real64 > const & viscosity() const { return m_viscosity; }
+  array2d< real64 > & viscosity()       { return m_viscosity; }
 
-  array2d<real64> const & dViscosity_dDensity() const { return m_dViscosity_dPressure; }
-  array2d<real64>       & dViscosity_dDensity()       { return m_dViscosity_dPressure; }
+  array2d< real64 > const & dViscosity_dDensity() const { return m_dViscosity_dPressure; }
+  array2d< real64 > & dViscosity_dDensity()       { return m_dViscosity_dPressure; }
 
   // *** Data repository keys
 
@@ -139,7 +139,7 @@ protected:
    * @note This function expects LEAFCLASS to have a public static function Compute with the appropriate signature
    */
   template< typename LEAFCLASS, typename POLICY=serialPolicy, typename ... ARGS >
-  void BatchUpdateKernel( arrayView1d<real64 const> const & pressure,
+  void BatchUpdateKernel( arrayView1d< real64 const > const & pressure,
                           ARGS && ... args );
 
   /**
@@ -153,7 +153,7 @@ protected:
    * @note This function expects LEAFCLASS to have a public static function Compute with the appropriate signature
    */
   template< typename LEAFCLASS, typename POLICY=serialPolicy, typename ... ARGS >
-  void BatchDensityUpdateKernel( arrayView1d<real64 const> const & pressure,
+  void BatchDensityUpdateKernel( arrayView1d< real64 const > const & pressure,
                                  ARGS && ... args );
 
   /**
@@ -167,17 +167,17 @@ protected:
    * @note This function expects LEAFCLASS to have a public static function Compute with the appropriate signature
    */
   template< typename LEAFCLASS, typename POLICY=serialPolicy, typename ... ARGS >
-  void BatchViscosityUpdateKernel( arrayView1d<real64 const> const & pressure,
+  void BatchViscosityUpdateKernel( arrayView1d< real64 const > const & pressure,
                                    ARGS && ... args );
 
   real64 m_defaultDensity;
   real64 m_defaultViscosity;
 
-  array2d<real64> m_density;
-  array2d<real64> m_dDensity_dPressure;
+  array2d< real64 > m_density;
+  array2d< real64 > m_dDensity_dPressure;
 
-  array2d<real64> m_viscosity;
-  array2d<real64> m_dViscosity_dPressure;
+  array2d< real64 > m_viscosity;
+  array2d< real64 > m_dViscosity_dPressure;
 
 };
 
@@ -185,12 +185,12 @@ protected:
 template< typename POLICY, typename LAMBDA >
 void SingleFluidBase::LaunchKernel( LAMBDA && lambda )
 {
-  localIndex const numElem = m_density.size(0);
-  localIndex const numQuad = m_density.size(1);
+  localIndex const numElem = m_density.size( 0 );
+  localIndex const numQuad = m_density.size( 1 );
 
-  forall_in_range<POLICY>( 0, numElem, [=] ( localIndex const k )
+  forall_in_range< POLICY >( 0, numElem, [=] ( localIndex const k )
   {
-    for (localIndex q = 0; q < numQuad; ++q)
+    for( localIndex q = 0; q < numQuad; ++q )
     {
       lambda( k, q );
     }
@@ -198,54 +198,54 @@ void SingleFluidBase::LaunchKernel( LAMBDA && lambda )
 }
 
 template< typename LEAFCLASS, typename POLICY, typename ... ARGS >
-void SingleFluidBase::BatchUpdateKernel( arrayView1d<real64 const> const & pressure,
+void SingleFluidBase::BatchUpdateKernel( arrayView1d< real64 const > const & pressure,
                                          ARGS && ... args )
 {
-  arrayView2d<real64> const & density = m_density;
-  arrayView2d<real64> const & dDensity_dPressure = m_dDensity_dPressure;
-  arrayView2d<real64> const & viscosity = m_viscosity;
-  arrayView2d<real64> const & dViscosity_dPressure = m_dViscosity_dPressure;
+  arrayView2d< real64 > const & density = m_density;
+  arrayView2d< real64 > const & dDensity_dPressure = m_dDensity_dPressure;
+  arrayView2d< real64 > const & viscosity = m_viscosity;
+  arrayView2d< real64 > const & dViscosity_dPressure = m_dViscosity_dPressure;
 
-  LaunchKernel<POLICY>( [=] ( localIndex const k, localIndex const q )
+  LaunchKernel< POLICY >( [=] ( localIndex const k, localIndex const q )
   {
     LEAFCLASS::Compute( pressure[k],
                         density[k][q],
                         dDensity_dPressure[k][q],
                         viscosity[k][q],
                         dViscosity_dPressure[k][q],
-                        args... );
+                        args ... );
   } );
 }
 
 template< typename LEAFCLASS, typename POLICY, typename ... ARGS >
-void SingleFluidBase::BatchDensityUpdateKernel( arrayView1d<real64 const> const & pressure,
+void SingleFluidBase::BatchDensityUpdateKernel( arrayView1d< real64 const > const & pressure,
                                                 ARGS && ... args )
 {
-  arrayView2d<real64> const & density = m_density;
-  arrayView2d<real64> const & dDensity_dPressure = m_dDensity_dPressure;
+  arrayView2d< real64 > const & density = m_density;
+  arrayView2d< real64 > const & dDensity_dPressure = m_dDensity_dPressure;
 
-  LaunchKernel<POLICY>( [=] ( localIndex const k, localIndex const q )
+  LaunchKernel< POLICY >( [=] ( localIndex const k, localIndex const q )
   {
     LEAFCLASS::Compute( pressure[k],
                         density[k][q],
                         dDensity_dPressure[k][q],
-                        args... );
+                        args ... );
   } );
 }
 
 template< typename LEAFCLASS, typename POLICY, typename ... ARGS >
-void SingleFluidBase::BatchViscosityUpdateKernel( arrayView1d<real64 const> const & pressure,
+void SingleFluidBase::BatchViscosityUpdateKernel( arrayView1d< real64 const > const & pressure,
                                                   ARGS && ... args )
 {
-  arrayView2d<real64> const & viscosity = m_viscosity;
-  arrayView2d<real64> const & dViscosity_dPressure = m_dViscosity_dPressure;
+  arrayView2d< real64 > const & viscosity = m_viscosity;
+  arrayView2d< real64 > const & dViscosity_dPressure = m_dViscosity_dPressure;
 
-  LaunchKernel<POLICY>( [=] ( localIndex const k, localIndex const q )
+  LaunchKernel< POLICY >( [=] ( localIndex const k, localIndex const q )
   {
     LEAFCLASS::Compute( pressure[k],
                         viscosity[k][q],
                         dViscosity_dPressure[k][q],
-                        args... );
+                        args ... );
   } );
 }
 

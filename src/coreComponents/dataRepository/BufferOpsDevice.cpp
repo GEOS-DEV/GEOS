@@ -79,7 +79,7 @@ UnpackDevice( buffer_unit_type const * & buffer,
   localIndex packedSize = UnpackPointerDevice( buffer, dims, NDIM );
   localIndex strides[NDIM];
   packedSize += UnpackPointerDevice( buffer, strides, NDIM );
-  for( int dd = 0 ; dd < NDIM ; ++dd )
+  for( int dd = 0; dd < NDIM; ++dd )
   {
     GEOSX_ERROR_IF_NE( strides[dd], var.strides()[dd] );
   }

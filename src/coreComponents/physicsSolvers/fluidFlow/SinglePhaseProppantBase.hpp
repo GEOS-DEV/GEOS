@@ -37,7 +37,7 @@ public:
 
   SinglePhaseProppantBase() = delete;
 
-    /// deleted copy constructor
+  /// deleted copy constructor
   SinglePhaseProppantBase( SinglePhaseProppantBase const & ) = delete;
 
   /// default move constructor
@@ -59,16 +59,16 @@ public:
   virtual void UpdateFluidModel( Group * const dataGroup ) const override;
 
   struct viewKeyStruct : SinglePhaseBase::viewKeyStruct
-   {
-     static constexpr auto transTMultString = "transTMult";
-     static constexpr auto poroMultString = "poroMult";
+  {
+    static constexpr auto transTMultString = "transTMult";
+    static constexpr auto poroMultString = "poroMult";
 
-   } viewKeysSinglePhaseProppantBase;
+  } viewKeysSinglePhaseProppantBase;
 
 
 private:
-   virtual void ResetViewsPrivate( ElementRegionManager * const elemManager,
-                                   constitutive::ConstitutiveManager * const constitutiveManager ) override;
+  virtual void ResetViewsPrivate( ElementRegionManager * const elemManager,
+                                  constitutive::ConstitutiveManager * const constitutiveManager ) override;
 
 };
 }

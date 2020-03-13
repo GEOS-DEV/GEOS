@@ -39,7 +39,7 @@ namespace geosx
  *        matrix object type used in PETSc.
  */
 class PetscMatrix final : public virtual LinearOperator< PetscVector >,
-                          private MatrixBase< PetscMatrix, PetscVector >
+  private MatrixBase< PetscMatrix, PetscVector >
 {
 public:
 
@@ -236,8 +236,8 @@ public:
   virtual real64 getDiagValue( globalIndex globalRow ) const override;
 
   virtual void getRowCopy( globalIndex globalRow,
-                           arraySlice1d <globalIndex> const & colIndices,
-                           arraySlice1d <real64> const & values ) const override;
+                           arraySlice1d< globalIndex > const & colIndices,
+                           arraySlice1d< real64 > const & values ) const override;
 
   virtual globalIndex numGlobalRows() const override;
 

@@ -39,7 +39,7 @@ namespace geosx
  *        matrix object type used in Trilinos.
  */
 class EpetraMatrix final : public virtual LinearOperator< EpetraVector >,
-                           private MatrixBase< EpetraMatrix, EpetraVector >
+  private MatrixBase< EpetraMatrix, EpetraVector >
 {
 public:
 

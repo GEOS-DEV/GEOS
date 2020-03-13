@@ -33,15 +33,15 @@ class PeriodicEvent : public EventBase
 {
 public:
   /// Main constructor
-  PeriodicEvent(const std::string& name,
-                Group * const parent);
-  
+  PeriodicEvent( const std::string & name,
+                 Group * const parent );
+
   /// Destructor
   virtual ~PeriodicEvent() override;
 
   /// Catalog name interface
   static string CatalogName() { return "PeriodicEvent"; }
-  
+
   /**
    * Estimate the expected number of cycles until an event is expected to trigger.
    * The event frequency can be specified in terms of:
@@ -51,10 +51,10 @@ public:
    * In addition, there is an optional function input that will be called if the
    * the nominal forecast (based on timing) is zero.
    */
-  virtual void EstimateEventTiming(real64 const time,
-                                   real64 const dt, 
-                                   integer const cycle,
-                                   dataRepository::Group * domain) override;
+  virtual void EstimateEventTiming( real64 const time,
+                                    real64 const dt,
+                                    integer const cycle,
+                                    dataRepository::Group * domain ) override;
 
   /**
    * If the event forecast is zero, and an optional function (f) is specified, then
@@ -72,16 +72,16 @@ public:
    *   - functionStatOption selects the statistic to compare against the eventThreshold (0 = min, 1 = average, 2 = max)
    *   - The event will be executed if f(object, arguments)[stat] >= eventThreshold
    */
-  void CheckOptionalFunctionThreshold(real64 const time,
-                                      real64 const dt, 
-                                      integer const cycle,
-                                      dataRepository::Group * domain);
+  void CheckOptionalFunctionThreshold( real64 const time,
+                                       real64 const dt,
+                                       integer const cycle,
+                                       dataRepository::Group * domain );
 
   /**
    * Grab the next time-step.  If requested, then limit the requested
    * dt to exactly match the time frequency
    */
-  virtual real64 GetEventTypeDtRequest(real64 const time) override;
+  virtual real64 GetEventTypeDtRequest( real64 const time ) override;
 
   /// A pointer to an optional function
   dataRepository::Group * m_functionTarget;
