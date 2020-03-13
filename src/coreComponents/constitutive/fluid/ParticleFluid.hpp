@@ -13,8 +13,8 @@
  */
 
 /**
-  * @file ParticleFluid.hpp
-  */
+ * @file ParticleFluid.hpp
+ */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_PARTICLEFLUID_HPP_
 #define SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_PARTICLEFLUID_HPP_
@@ -46,7 +46,7 @@ public:
   };
 
   static ParticleSettlingModel stringToParticleSettlingModel( string const & str );
-  
+
   ParticleFluid( std::string const & name, Group * const parent );
 
   virtual ~ParticleFluid() override;
@@ -55,7 +55,7 @@ public:
 
   virtual void DeliverClone( string const & name,
                              Group * const parent,
-                             std::unique_ptr<ConstitutiveBase> & clone ) const override;
+                             std::unique_ptr< ConstitutiveBase > & clone ) const override;
 
   static std::string CatalogName() { return dataRepository::keys::particleFluid; }
 
@@ -66,11 +66,17 @@ public:
 
   // *** ParticleFluid interface
 
-  virtual void PointUpdate(localIndex const NC, real64 const & proppantConcentration, arraySlice1d<real64 const> const & componentConcentration, arraySlice1d<real64 const> const & nIndex, arraySlice1d<real64 const> const & KIndex, real64 const &fluidDensity, real64 const &dFluidDensity_dPressure, arraySlice1d<real64 const> const &dFluidDensity_dComponentConcentration, localIndex const k) override; 
+  virtual void PointUpdate( localIndex const NC, real64 const & proppantConcentration, arraySlice1d< real64 const > const & componentConcentration,
+                            arraySlice1d< real64 const > const & nIndex, arraySlice1d< real64 const > const & KIndex, real64 const & fluidDensity,
+                            real64 const & dFluidDensity_dPressure, arraySlice1d< real64 const > const & dFluidDensity_dComponentConcentration,
+                            localIndex const k ) override;
 
-  virtual void PointUpdate(localIndex const NC, real64 const & proppantConcentration, real64 const &fluidDensity, real64 const &dFluidDensity_dPressure, arraySlice1d<real64 const> const &dFluidDensity_dComponentConcentration, real64 const &fluidViscosity, real64 const &dFluidViscosity_dPressure, arraySlice1d<real64 const> const &dFluidViscosity_dComponentConcentration, localIndex const k) override;  
-  
-  virtual void BatchUpdate( arrayView1d<real64 const> const & concentration) override;
+  virtual void PointUpdate( localIndex const NC, real64 const & proppantConcentration, real64 const & fluidDensity, real64 const & dFluidDensity_dPressure,
+                            arraySlice1d< real64 const > const & dFluidDensity_dComponentConcentration, real64 const & fluidViscosity,
+                            real64 const & dFluidViscosity_dPressure, arraySlice1d< real64 const > const & dFluidViscosity_dComponentConcentration,
+                            localIndex const k ) override;
+
+  virtual void BatchUpdate( arrayView1d< real64 const > const & concentration ) override;
 
   // *** Data repository keys
 
@@ -78,16 +84,16 @@ public:
   {
 
     static constexpr auto fluidViscosityString    = "fluidViscosity";
-    static constexpr auto proppantDiameterString    = "proppantDiameter";    
+    static constexpr auto proppantDiameterString    = "proppantDiameter";
     static constexpr auto proppantDensityString    = "proppantDensity";
     static constexpr auto hinderedSettlingCoefficientString    = "hinderedSettlingCoefficient";
     static constexpr auto collisionAlphaString    = "collisionAlpha";
-    static constexpr auto slipConcentrationString    = "slipConcentration";    
+    static constexpr auto slipConcentrationString    = "slipConcentration";
     static constexpr auto collisionBetaString    = "collisionBeta";
     static constexpr auto bridgingFactorString    = "bridgingFactor";
     static constexpr auto sphericityString    = "sphericity";
 
-    static constexpr auto particleSettlingModelString    = "particleSettlingModel";            
+    static constexpr auto particleSettlingModelString    = "particleSettlingModel";
 
     dataRepository::ViewKey fluidViscosity    = { fluidViscosityString    };
     dataRepository::ViewKey proppantDiameter    = { proppantDiameterString };
@@ -99,7 +105,7 @@ public:
 
     dataRepository::ViewKey sphericity   = { sphericityString };
 
-    dataRepository::ViewKey particleSettlingModel   = { particleSettlingModelString };            
+    dataRepository::ViewKey particleSettlingModel   = { particleSettlingModelString };
 
   } viewKeysParticleFluid;
 
@@ -113,26 +119,26 @@ private:
                 real64 const & proppantConcentration,
                 real64 const & fluidDensity,
                 real64 const & dFluidDensity_dPressure,
-                arraySlice1d<real64 const> const & dFluidDensity_dComponentConcentration,
+                arraySlice1d< real64 const > const & dFluidDensity_dComponentConcentration,
                 real64 const & fluidViscosity,
                 real64 const & dFluidViscosity_dPressure,
-                arraySlice1d<real64 const> const & dFluidViscosity_dComponentConcentration,
+                arraySlice1d< real64 const > const & dFluidViscosity_dComponentConcentration,
                 real64 & settlingFactor,
                 real64 & dSettlingFactor_dPressure,
                 real64 & dSettlingFactor_dProppantConcentration,
-                arraySlice1d<real64> const & dSettlingFactor_dComponentConcentration,
+                arraySlice1d< real64 > const & dSettlingFactor_dComponentConcentration,
                 real64 & collisionFactor,
                 real64 & dCollisionFactor_dProppantConcentration ) const;
 
   string m_particleSettlingModelString;
 
   ParticleSettlingModel m_particleSettlingModel;
-  
-  real64 m_proppantDensity;  
+
+  real64 m_proppantDensity;
 
   real64 m_fluidViscosity;
-  
-  real64 m_proppantDiameter;  
+
+  real64 m_proppantDiameter;
 
   real64 m_hinderedSettlingCoefficient;
 

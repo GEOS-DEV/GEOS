@@ -28,7 +28,7 @@ class FiniteElementDiscretizationManager : public dataRepository::Group
 {
 public:
   FiniteElementDiscretizationManager() = delete;
-  FiniteElementDiscretizationManager(string const & name, Group * const parent);
+  FiniteElementDiscretizationManager( string const & name, Group * const parent );
   virtual ~FiniteElementDiscretizationManager() override;
 
   virtual Group * CreateChild( string const & childKey, string const & childName ) override;

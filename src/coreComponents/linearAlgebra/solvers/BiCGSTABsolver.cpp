@@ -46,9 +46,7 @@ BiCGSTABsolver< VECTOR >::BiCGSTABsolver( LinearOperator< Vector > const & A,
                                           localIndex const maxIterations,
                                           integer const verbosity )
   : KrylovSolver< VECTOR >( A, M, tolerance, maxIterations, verbosity )
-{
-
-}
+{}
 
 // ----------------------------
 // Destructor
@@ -176,20 +174,18 @@ void BiCGSTABsolver< VECTOR >::solve( Vector const & b,
 // Explicit Instantiations
 // -----------------------
 #ifdef GEOSX_USE_TRILINOS
-template class BiCGSTABsolver<TrilinosInterface::ParallelVector>;
-template class BiCGSTABsolver<BlockVectorView<TrilinosInterface::ParallelVector>>;
+template class BiCGSTABsolver< TrilinosInterface::ParallelVector >;
+template class BiCGSTABsolver< BlockVectorView< TrilinosInterface::ParallelVector > >;
 #endif
 
 #ifdef GEOSX_USE_HYPRE
-template class BiCGSTABsolver<HypreInterface::ParallelVector>;
-template class BiCGSTABsolver<BlockVectorView<HypreInterface::ParallelVector>>;
+template class BiCGSTABsolver< HypreInterface::ParallelVector >;
+template class BiCGSTABsolver< BlockVectorView< HypreInterface::ParallelVector > >;
 #endif
 
 #ifdef GEOSX_USE_PETSC
-template class BiCGSTABsolver<PetscInterface::ParallelVector>;
-template class BiCGSTABsolver<BlockVectorView<PetscInterface::ParallelVector>>;
+template class BiCGSTABsolver< PetscInterface::ParallelVector >;
+template class BiCGSTABsolver< BlockVectorView< PetscInterface::ParallelVector > >;
 #endif
 
 } //namespace geosx
-
-

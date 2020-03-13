@@ -42,7 +42,7 @@ namespace geosx
  * behavior deviates from expectations or has unexpected performance impacts.
  * In that case, @c \@copydoc tag can be used to copy over the documentation.
  */
-template<typename VECTOR>
+template< typename VECTOR >
 class VectorBase
 {
 protected:
@@ -126,7 +126,7 @@ protected:
    * @param localValues local data to put into vector
    * @param comm MPI communicator to use
    */
-  virtual void create( arraySlice1d<real64 const> const & localValues, MPI_Comm const & comm ) = 0;
+  virtual void create( arraySlice1d< real64 const > const & localValues, MPI_Comm const & comm ) = 0;
 
   ///@}
 
@@ -213,8 +213,8 @@ protected:
    *
    * Set vector values at given elements.
    */
-  virtual void set( arraySlice1d<globalIndex const> const & globalIndices,
-                    arraySlice1d<real64 const> const & values ) = 0;
+  virtual void set( arraySlice1d< globalIndex const > const & globalIndices,
+                    arraySlice1d< real64 const > const & values ) = 0;
 
 
   /**
@@ -224,7 +224,7 @@ protected:
    *
    * Add into vector values at given rows.
    */
-  virtual void add( arraySlice1d<globalIndex const> const & globalIndices,
+  virtual void add( arraySlice1d< globalIndex const > const & globalIndices,
                     arraySlice1d< real64 const > const & values ) = 0;
 
   /**

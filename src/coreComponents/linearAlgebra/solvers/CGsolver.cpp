@@ -41,28 +41,26 @@ namespace geosx
 // ----------------------------
 // Empty constructor.
 template< typename VECTOR >
-CGsolver<VECTOR>::CGsolver( LinearOperator<Vector> const & A,
-                            LinearOperator< Vector > const & M,
-                            real64 const tolerance,
-                            localIndex const maxIterations,
-                            integer const verbosity )
-: KrylovSolver<VECTOR>( A, M, tolerance, maxIterations, verbosity )
-{
-
-}
+CGsolver< VECTOR >::CGsolver( LinearOperator< Vector > const & A,
+                              LinearOperator< Vector > const & M,
+                              real64 const tolerance,
+                              localIndex const maxIterations,
+                              integer const verbosity )
+  : KrylovSolver< VECTOR >( A, M, tolerance, maxIterations, verbosity )
+{}
 
 // ----------------------------
 // Destructor
 // ----------------------------
 template< typename VECTOR >
-CGsolver<VECTOR>::~CGsolver() = default;
+CGsolver< VECTOR >::~CGsolver() = default;
 
 // ----------------------------
 // Monolithic CG solver
 // ----------------------------
 template< typename VECTOR >
-void CGsolver<VECTOR>::solve( Vector const & b,
-                              Vector & x ) const
+void CGsolver< VECTOR >::solve( Vector const & b,
+                                Vector & x ) const
 
 {
   // Shortcuts for operators
@@ -96,7 +94,7 @@ void CGsolver<VECTOR>::solve( Vector const & b,
   VectorTemp zkold( zk );
 
   localIndex k;
-  for( k = 0 ; k < N ; k++ )
+  for( k = 0; k < N; k++ )
   {
     // Compute Apk
     A.apply( pk, Apk );
@@ -146,18 +144,18 @@ void CGsolver<VECTOR>::solve( Vector const & b,
 // Explicit Instantiations
 // -----------------------
 #ifdef GEOSX_USE_TRILINOS
-template class CGsolver<TrilinosInterface::ParallelVector>;
-template class CGsolver<BlockVectorView<TrilinosInterface::ParallelVector>>;
+template class CGsolver< TrilinosInterface::ParallelVector >;
+template class CGsolver< BlockVectorView< TrilinosInterface::ParallelVector > >;
 #endif
 
 #ifdef GEOSX_USE_HYPRE
-template class CGsolver<HypreInterface::ParallelVector>;
-template class CGsolver<BlockVectorView<HypreInterface::ParallelVector>>;
+template class CGsolver< HypreInterface::ParallelVector >;
+template class CGsolver< BlockVectorView< HypreInterface::ParallelVector > >;
 #endif
 
 #ifdef GEOSX_USE_PETSC
-template class CGsolver<PetscInterface::ParallelVector>;
-template class CGsolver<BlockVectorView<PetscInterface::ParallelVector>>;
+template class CGsolver< PetscInterface::ParallelVector >;
+template class CGsolver< BlockVectorView< PetscInterface::ParallelVector > >;
 #endif
 
 } //namespace geosx

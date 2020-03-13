@@ -30,7 +30,8 @@ class EdgeManager;
 /**
  * @class EmbeddedSurfaceRegion
  *
- * The EmbeddedSurfaceRegion class contains the functionality to support the concept of a EmbeddedSurfaceRegion in the element
+ * The EmbeddedSurfaceRegion class contains the functionality to support the concept of a EmbeddedSurfaceRegion in the
+ * element
  * hierarchy. EmbeddedSurfaceRegion derives from ElementRegion and has an entry in the ObjectManagerBase catalog.
  *
  *
