@@ -108,7 +108,7 @@ void Group::ProcessInputFileRecursive( xmlWrapper::xmlNode & targetNode )
   xmlWrapper::addIncludedXML( targetNode );
 
   // loop over the child nodes of the targetNode
-  for( xmlWrapper::xmlNode childNode=targetNode.first_child() ; childNode ; childNode=childNode.next_sibling())
+  for( xmlWrapper::xmlNode childNode=targetNode.first_child(); childNode; childNode=childNode.next_sibling())
   {
     // Get the child tag and name
     std::string childName = childNode.attribute( "name" ).value();
@@ -177,7 +177,7 @@ void Group::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
     }
   }
 
-  for( xmlWrapper::xmlAttribute attribute=targetNode.first_attribute() ; attribute ; attribute = attribute.next_attribute() )
+  for( xmlWrapper::xmlAttribute attribute=targetNode.first_attribute(); attribute; attribute = attribute.next_attribute() )
   {
     string const childName = attribute.name();
     if( childName != "name" && childName != "xmlns:xsi" && childName != "xsi:noNamespaceSchemaLocation" )
@@ -464,7 +464,7 @@ localIndex Group::Unpack( buffer_unit_type const * & buffer,
 
   localIndex numWrappers;
   unpackedSize += bufferOps::Unpack( buffer, numWrappers );
-  for( localIndex a=0 ; a<numWrappers ; ++a )
+  for( localIndex a=0; a<numWrappers; ++a )
   {
     string wrapperName;
     unpackedSize += bufferOps::Unpack( buffer, wrapperName );

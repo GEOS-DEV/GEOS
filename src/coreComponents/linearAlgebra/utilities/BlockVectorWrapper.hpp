@@ -39,7 +39,7 @@ public:
    * @param nBlocks number of blocks
    */
   explicit BlockVectorWrapper( localIndex const nBlocks )
-  : BlockVectorView<VECTOR>( nBlocks )
+    : BlockVectorView< VECTOR >( nBlocks )
   {}
 
   /**
@@ -75,4 +75,3 @@ public:
 } //namespace geosx
 
 #endif //GEOSX_LINEARALGEBRA_UTILITIES_BLOCKVECTORWRAPPER_HPP_
-

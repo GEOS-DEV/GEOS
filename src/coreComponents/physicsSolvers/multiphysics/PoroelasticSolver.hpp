@@ -32,7 +32,7 @@ class FlowSolverBase;
 class PoroelasticSolver : public SolverBase
 {
 public:
-  PoroelasticSolver( const std::string& name,
+  PoroelasticSolver( const std::string & name,
                      Group * const parent );
   ~PoroelasticSolver() override;
 
@@ -112,10 +112,10 @@ public:
 
   void UpdateDeformationForCoupling( DomainPartition * const domain );
 
-  real64 SplitOperatorStep( real64 const& time_n,
-                            real64 const& dt,
+  real64 SplitOperatorStep( real64 const & time_n,
+                            real64 const & dt,
                             integer const cycleNumber,
-                            DomainPartition * const domain);
+                            DomainPartition * const domain );
 
 
   enum class couplingTypeOption : int
@@ -139,16 +139,22 @@ public:
   } poroElasticSolverViewKeys;
 
 
-  SolidMechanicsLagrangianFEM * getSolidSolver()             { return this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolidMechanicsLagrangianFEM *>(); }
-  SolidMechanicsLagrangianFEM const * getSolidSolver() const { return this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolidMechanicsLagrangianFEM const *>(); }
+  SolidMechanicsLagrangianFEM * getSolidSolver()
+  {
+    return this->getParent()->GetGroup( m_solidSolverName )->group_cast< SolidMechanicsLagrangianFEM * >();
+  }
+  SolidMechanicsLagrangianFEM const * getSolidSolver() const
+  {
+    return this->getParent()->GetGroup( m_solidSolverName )->group_cast< SolidMechanicsLagrangianFEM const * >();
+  }
 
-  FlowSolverBase * getFlowSolver()             { return this->getParent()->GetGroup(m_flowSolverName)->group_cast<FlowSolverBase *>(); }
-  FlowSolverBase const * getFlowSolver() const { return this->getParent()->GetGroup(m_flowSolverName)->group_cast<FlowSolverBase const *>(); }
+  FlowSolverBase * getFlowSolver()             { return this->getParent()->GetGroup( m_flowSolverName )->group_cast< FlowSolverBase * >(); }
+  FlowSolverBase const * getFlowSolver() const { return this->getParent()->GetGroup( m_flowSolverName )->group_cast< FlowSolverBase const * >(); }
 
 protected:
   virtual void PostProcessInput() override final;
 
-  virtual void InitializePostInitialConditions_PreSubGroups(dataRepository::Group * const problemManager) override final;
+  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const problemManager ) override final;
 
 
 private:
