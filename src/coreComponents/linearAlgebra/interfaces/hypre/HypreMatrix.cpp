@@ -997,7 +997,7 @@ localIndex HypreMatrix::getLocalRowID( globalIndex const index ) const
   GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixGetLocalRange( m_ij_mat,
                                                       &ilower, &iupper,
                                                       &jlower, &jupper ) );
-  return (index >= ilower && index < iupper) ? integer_conversion< localIndex >( index - ilower ) : -1;
+  return (index >= ilower && index <= iupper) ? integer_conversion< localIndex >( index - ilower ) : -1;
 }
 
 globalIndex HypreMatrix::getGlobalRowID( localIndex const index ) const
