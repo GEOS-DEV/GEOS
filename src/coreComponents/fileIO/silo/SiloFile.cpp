@@ -28,6 +28,7 @@
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
 #include "constitutive/solid/PoreVolumeCompressibleSolid.hpp"
+#include "constitutive/contact/ContactRelationBase.hpp"
 #include "managers/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
@@ -1674,7 +1675,12 @@ void SiloFile::WriteElementMesh( ElementRegionBase const * const elementRegion,
     }
     localIndex const numFluids = regionFluidMaterialList.size();
 
-    if( numSolids + numFluids > 0 )
+    string_array
+    fractureContactList = elementRegion->getConstitutiveNames< constitutive::ContactRelationBase >();
+
+    localIndex const numContacts = fractureContactList.size();
+
+    if( numSolids + numFluids + numContacts > 0 )
     {
       WriteMeshObject( meshName,
                        numNodes,
@@ -1845,7 +1851,6 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
 
   if( m_writeFaceMesh )
   {
-
     FaceManager const * const faceManager = meshLevel->getFaceManager();
     localIndex const numFaces = faceManager->size();
     ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
