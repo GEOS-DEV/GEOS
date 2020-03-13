@@ -417,22 +417,20 @@ void PoroelasticSolver::AssembleSystem( real64 const time_n,
   // assemble J_SF
   AssembleCouplingBlocks( domain,
                           dofManager,
-                          matrix,
-                          rhs );
+                          &matrix,
+                          &rhs );
 
 }
 
-void PoroelasticSolver::AssembleCouplingBlocks( DomainPartition * const domain,
-                                                DofManager const & dofManager,
-                                                ParallelMatrix & matrix,
-                                                ParallelVector & rhs )
+void PoroelasticSolver::AssembleCouplingTerms( DomainPartition * const domain,
+                                               DofManager const & dofManager,
+                                               ParallelMatrix * const matrix,
+                                               ParallelVector * const rhs )
 {
   GEOSX_MARK_FUNCTION;
 
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
   NodeManager * const nodeManager = mesh->getNodeManager();
-//  ConstitutiveManager  * const constitutiveManager = domain->GetGroup<ConstitutiveManager
-// >(keys::ConstitutiveManager);
   ElementRegionManager * const elemManager = mesh->getElemManager();
   NumericalMethodsManager const * numericalMethodManager = domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
   FiniteElementDiscretizationManager const * feDiscretizationManager = numericalMethodManager->GetGroup< FiniteElementDiscretizationManager >(
@@ -445,8 +443,8 @@ void PoroelasticSolver::AssembleCouplingBlocks( DomainPartition * const domain,
 
   string const pDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString );
 
-  matrix.open();
-  rhs.open();
+  matrix->open();
+  rhs->open();
 
   // begin region loop
   for( localIndex er=0; er<elemManager->numRegions(); ++er )
@@ -456,6 +454,7 @@ void PoroelasticSolver::AssembleCouplingBlocks( DomainPartition * const domain,
     FiniteElementDiscretization const *
       feDiscretization = feDiscretizationManager->GetGroup< FiniteElementDiscretization >( m_discretizationName );
 
+    // begin subregion loop
     elementRegion->forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const GEOSX_UNUSED_PARAM ( esr ),
                                                                            CellElementSubRegion const * const elementSubRegion )
     {
@@ -484,15 +483,17 @@ void PoroelasticSolver::AssembleCouplingBlocks( DomainPartition * const domain,
       int dim = 3;
       int nUDof = dim * numNodesPerElement;
       int nPDof = m_flowSolver->numDofPerCell();
+      int numQuadraturePoints = fe->n_quadrature_points();
 
-      array1d< globalIndex > elementULocalDofIndex( nUDof );
-      globalIndex elementPLocalDOfIndex;
-      array2d< real64 >      dRsdP( nUDof, nPDof );
-      array2d< real64 >      dRfdU( nPDof, nUDof );
-      real64 Rf;
-
-      for( localIndex k=0; k<elementSubRegion->size(); ++k )
+      forall_in_range< serialPolicy >( 0,
+                                       elementSubRegion->size(),
+                                       [=] ( localIndex const k )
       {
+        array1d< globalIndex > elementULocalDofIndex( nUDof );
+        globalIndex elementPLocalDOfIndex;
+        array2d< real64 >      dRsdP( nUDof, nPDof );
+        array2d< real64 >      dRfdU( nPDof, nUDof );
+        real64 Rf;
 
         dRsdP = 0.0;
         dRfdU = 0.0;
@@ -513,7 +514,7 @@ void PoroelasticSolver::AssembleCouplingBlocks( DomainPartition * const domain,
 
           R1Tensor dNdXa;
 
-          for( integer q=0; q<fe->n_quadrature_points(); ++q )
+          for( integer q=0; q<numQuadraturePoints; ++q )
           {
             const realT detJq = detJ[k][q];
 
@@ -538,17 +539,17 @@ void PoroelasticSolver::AssembleCouplingBlocks( DomainPartition * const domain,
             }
           }
 
-          matrix.add( elementULocalDofIndex.data(), &elementPLocalDOfIndex, dRsdP.data(), nUDof, nPDof );
-          matrix.add( &elementPLocalDOfIndex, elementULocalDofIndex.data(), dRfdU.data(), nPDof, nUDof );
-          rhs.add( &elementPLocalDOfIndex, &Rf, 1 );
+          matrix->add( elementULocalDofIndex.data(), &elementPLocalDOfIndex, dRsdP.data(), nUDof, nPDof );
+          matrix->add( &elementPLocalDOfIndex, elementULocalDofIndex.data(), dRfdU.data(), nPDof, nUDof );
+          rhs->add( &elementPLocalDOfIndex, &Rf, 1 );
         }
-      }
+      } );
     } );
 
   }
 
-  matrix.close();
-  rhs.close();
+  matrix->close();
+  rhs->close();
 }
 
 void PoroelasticSolver::ApplyBoundaryConditions( real64 const time_n,

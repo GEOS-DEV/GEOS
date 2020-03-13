@@ -70,10 +70,10 @@ public:
                                ParallelMatrix & matrix,
                                ParallelVector & rhs ) override;
 
-  void AssembleCouplingBlocks( DomainPartition * const domain,
-                               DofManager const & dofManager,
-                               ParallelMatrix & matrix,
-                               ParallelVector & rhs );
+  void AssembleCouplingTerms( DomainPartition * const domain,
+                              DofManager const & dofManager,
+                              ParallelMatrix * const matrix,
+                              ParallelVector * const rhs );
 
   virtual void ApplyBoundaryConditions( real64 const time_n,
                                         real64 const dt,
