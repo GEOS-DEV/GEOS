@@ -1676,7 +1676,7 @@ void SiloFile::WriteElementMesh( ElementRegionBase const * const elementRegion,
     localIndex const numFluids = regionFluidMaterialList.size();
 
     string_array
-    fractureContactList = elementRegion->getConstitutiveNames< constitutive::ContactRelationBase >();
+      fractureContactList = elementRegion->getConstitutiveNames< constitutive::ContactRelationBase >();
 
     localIndex const numContacts = fractureContactList.size();
 
