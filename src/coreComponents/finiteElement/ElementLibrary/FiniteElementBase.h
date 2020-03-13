@@ -39,9 +39,9 @@ public:
 
   static string CatalogName() { return "FiniteElementBase"; }
   using CatalogInterface = dataRepository::CatalogInterface< FiniteElementBase, BasisBase const &,
-                                                                               QuadratureBase const &,
-                                                                               const int >;
-  static CatalogInterface::CatalogType& GetCatalog()
+                                                             QuadratureBase const &,
+                                                             const int >;
+  static CatalogInterface::CatalogType & GetCatalog()
   {
     static FiniteElementBase::CatalogInterface::CatalogType catalog;
     return catalog;
@@ -74,20 +74,32 @@ public:
     switch( type )
     {
       case ElementType::Tetrahedal:
+      {
         return "C3D4";
+      }
       case ElementType::Pyramid:
+      {
         return "C3D5";
+      }
       case ElementType::Prism:
+      {
         return "C3D6";
+      }
       case ElementType::Hexahedral:
+      {
         return "C3D8";
+      }
       case ElementType::Polyhedral:
+      {
         return "POLYHEDRAL";
+      }
       case ElementType::Polytope:
+      {
         return "POLYTOPE";
+      }
       case ElementType::INVALID:
       default:
-        GEOSX_ERROR("Invalid Element Type specified");
+        GEOSX_ERROR( "Invalid Element Type specified" );
         return "INVALID";
     }
   }
@@ -110,8 +122,10 @@ public:
       return ElementType::INVALID;
   }
 
-  virtual void reinit( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X, arraySlice1d< localIndex const, -1 > const & mapped_support_points ) = 0;
-  virtual void reinit( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X, arraySlice1d< localIndex const, 0 > const & mapped_support_points ) = 0;
+  virtual void reinit( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X, arraySlice1d< localIndex const,
+                                                                                                           -1 > const & mapped_support_points ) = 0;
+  virtual void reinit( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
+                       arraySlice1d< localIndex const, 0 > const & mapped_support_points ) = 0;
 
 
 
@@ -127,81 +141,81 @@ public:
 //                                         array1d<R1Tensor>& Qstiffness,
 //                                         array1d<R1Tensor>& force ) {}
 
-  virtual void zero_energy_mode_control( const array1d<R1Tensor>&,
-                                         const realT&,
-                                         const array1d<R1Tensor>&,
-                                         const array1d<R1Tensor>&,
-                                         const realT&,
-                                         const realT&,
-                                         const realT&,
-                                         const realT&,
-                                         const realT&,
-                                         array1d<R1Tensor>&,
-                                         array1d<R1Tensor>&  ) {}
+  virtual void zero_energy_mode_control( const array1d< R1Tensor > &,
+                                         const realT &,
+                                         const array1d< R1Tensor > &,
+                                         const array1d< R1Tensor > &,
+                                         const realT &,
+                                         const realT &,
+                                         const realT &,
+                                         const realT &,
+                                         const realT &,
+                                         array1d< R1Tensor > &,
+                                         array1d< R1Tensor > & ) {}
 
 
-  double value(const int shape_index,
-               const int q_index) const
+  double value( const int shape_index,
+                const int q_index ) const
   {
-    GEOSX_ASSERT(q_index < n_q_points);
-    GEOSX_ASSERT(shape_index < n_dofs);
+    GEOSX_ASSERT( q_index < n_q_points );
+    GEOSX_ASSERT( shape_index < n_dofs );
     return data[q_index].parent_values[shape_index];
   }
 
-  std::vector<double> const & values( const int q_index ) const
+  std::vector< double > const & values( const int q_index ) const
   {
-    GEOSX_ASSERT(q_index < n_q_points);
+    GEOSX_ASSERT( q_index < n_q_points );
     return data[q_index].parent_values;
   }
 
   inline arraySlice1d< real64 const > gradient( const localIndex shape_index,
                                                 const localIndex q_index ) const
   {
-    GEOSX_ASSERT(q_index < n_q_points);
-    GEOSX_ASSERT(shape_index < n_dofs);
+    GEOSX_ASSERT( q_index < n_q_points );
+    GEOSX_ASSERT( shape_index < n_dofs );
     return data[q_index].mapped_gradients[shape_index];
   }
 
-  inline double JxW(const localIndex q_index) const
+  inline double JxW( const localIndex q_index ) const
   {
-    GEOSX_ASSERT(q_index < n_q_points);
+    GEOSX_ASSERT( q_index < n_q_points );
     return data[q_index].jacobian_determinant *
            data[q_index].parent_q_weight;
   }
 
 
   int Dim()                             { return m_dim; }
-  int n_quadrature_points() const  { return n_q_points;  }
-  int dofs_per_element() const     { return n_dofs;  }
-  inline int zero_energy_modes() const  { return m_zero_energy_modes; }
+  int n_quadrature_points() const { return n_q_points;  }
+  int dofs_per_element() const { return n_dofs;  }
+  inline int zero_energy_modes() const { return m_zero_energy_modes; }
 
   std::string m_type;
 
 protected:
-  array1d<integer> m_nodeOrdering;
+  array1d< integer > m_nodeOrdering;
   int n_q_points;
   int n_dofs;
   int m_zero_energy_modes;
 
   struct QuadraturePointData
   {
-    R1TensorT<3>                 parent_q_point;
-    double                       parent_q_weight;
-    std::vector<double>          parent_values;
+    R1TensorT< 3 >                 parent_q_point;
+    double parent_q_weight;
+    std::vector< double >          parent_values;
     array2d< real64 >            parent_gradients;
 
     array2d< real64 >            mapped_gradients;
-    double                       jacobian_determinant;
+    double jacobian_determinant;
   };
 
-  std::vector<QuadraturePointData> data;
+  std::vector< QuadraturePointData > data;
 
 private:
   int m_dim;
 
 
   FiniteElementBase();
-  FiniteElementBase( const FiniteElementBase& );
+  FiniteElementBase( const FiniteElementBase & );
 
 
 };

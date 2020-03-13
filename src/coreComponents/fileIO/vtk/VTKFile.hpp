@@ -20,7 +20,7 @@
 #define GEOSX_FILEIO_VTK_VTKFILE_HPP_
 
 #include "common/DataTypes.hpp"
-#include "dataRepository/RestartFlags.hpp" 
+#include "dataRepository/RestartFlags.hpp"
 #include "mesh/InterObjectRelation.hpp"
 #include "codingUtilities/StringUtilities.hpp"
 
@@ -34,7 +34,7 @@ class DomainPartition;
 
 class VTKFile
 {
-  public:
+public:
   VTKFile() = delete;
 
   /*!
@@ -53,7 +53,7 @@ class VTKFile
    */
   void SetPlotLevel( const int plotLevel )
   {
-    m_plotLevel = dataRepository::IntToPlotLevel(plotLevel);
+    m_plotLevel = dataRepository::IntToPlotLevel( plotLevel );
   }
 
   /*!
@@ -69,74 +69,74 @@ class VTKFile
    * @brief Output a file for one time step
    * @param[in] cycle the cycle number
    */
-  void Write( double const timeStep, 
+  void Write( double const timeStep,
               DomainPartition const & domain );
 
-  private:
-    /*!
-     * @brief Create a XML Node for DataArray
-     * @param[in,out] parent the parent XML node
-     * @param[in] type a string containing the type of the field
-     * @param[in] name the name of the field
-     * @param[in] nbComponents dimension of the field
-     * @param[in] p is a parallel data array
-     * @return the corresponding xml node
-     */
+private:
+  /*!
+   * @brief Create a XML Node for DataArray
+   * @param[in,out] parent the parent XML node
+   * @param[in] type a string containing the type of the field
+   * @param[in] name the name of the field
+   * @param[in] nbComponents dimension of the field
+   * @param[in] p is a parallel data array
+   * @return the corresponding xml node
+   */
   xmlWrapper::xmlNode CreateDataArray( pugi::xml_node & parent,
-                                  string const & type,
-                                  string const & name,
-                                  int const & nbComponents,
-                                  string const & format = "ascii",
-                                  bool p = false)
+                                       string const & type,
+                                       string const & name,
+                                       int const & nbComponents,
+                                       string const & format = "ascii",
+                                       bool p = false )
   {
     xmlWrapper::xmlNode dataArrayNode;
     if( p )
     {
-      dataArrayNode = parent.append_child("PDataArray");
+      dataArrayNode = parent.append_child( "PDataArray" );
     }
     else
     {
-      dataArrayNode = parent.append_child("DataArray");
+      dataArrayNode = parent.append_child( "DataArray" );
     }
-    dataArrayNode.append_attribute("type") = type.c_str();
-    dataArrayNode.append_attribute("Name") = name.c_str();
-    dataArrayNode.append_attribute("NumberOfComponents") = std::to_string(nbComponents).c_str();
-    dataArrayNode.append_attribute("format") = format.c_str();
+    dataArrayNode.append_attribute( "type" ) = type.c_str();
+    dataArrayNode.append_attribute( "Name" ) = name.c_str();
+    dataArrayNode.append_attribute( "NumberOfComponents" ) = std::to_string( nbComponents ).c_str();
+    dataArrayNode.append_attribute( "format" ) = format.c_str();
     return dataArrayNode;
   }
 
-    /*!
-     * @brief Create a XML Node for PDataArray
-     * @param[in,out] parent the parent XML node
-     * @param[in] type a string containing the type of the field
-     * @param[in] name the name of the field
-     * @param[in] nbComponents dimension of the field
-     * @return the corresponding xml node
-     */
+  /*!
+   * @brief Create a XML Node for PDataArray
+   * @param[in,out] parent the parent XML node
+   * @param[in] type a string containing the type of the field
+   * @param[in] name the name of the field
+   * @param[in] nbComponents dimension of the field
+   * @return the corresponding xml node
+   */
   xmlWrapper::xmlNode CreatePDataArray( xmlWrapper::xmlNode & parent,
                                         string const & type,
                                         string const & name,
                                         int const & nbComponents,
                                         string const & format = "ascii" )
   {
-    return CreateDataArray( parent, type, name, nbComponents, format, true);
+    return CreateDataArray( parent, type, name, nbComponents, format, true );
   }
 
-  private:
-    /// Root file ( .pvd )
-    xmlWrapper::xmlDocument m_rootFile;
+private:
+  /// Root file ( .pvd )
+  xmlWrapper::xmlDocument m_rootFile;
 
-    /// Unstructured file gathering all vtu files for a time step ( .pvtu )
-    pugi::xml_document m_pvtuFile;
+  /// Unstructured file gathering all vtu files for a time step ( .pvtu )
+  pugi::xml_document m_pvtuFile;
 
-    /// Plot level
-    dataRepository::PlotLevel m_plotLevel;
+  /// Plot level
+  dataRepository::PlotLevel m_plotLevel;
 
-    /// Base name of the output
-    string m_baseName;
+  /// Base name of the output
+  string m_baseName;
 
-    /// Tells wether or not the output is binary
-    bool m_binary;
+  /// Tells wether or not the output is binary
+  bool m_binary;
 };
 }
 #endif /* GEOSX_FILEIO_VTK_VTKFILE_HPP_ */

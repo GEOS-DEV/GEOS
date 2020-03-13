@@ -26,34 +26,33 @@ namespace geosx
 
 using namespace dataRepository;
 
-Perforation::Perforation(string const & name, Group * const parent)
-  : Group(name, parent),
-    m_distanceFromHead(0),
-    m_transmissibility(0)
+Perforation::Perforation( string const & name, Group * const parent )
+  : Group( name, parent ),
+  m_distanceFromHead( 0 ),
+  m_transmissibility( 0 )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
   registerWrapper( viewKeyStruct::distanceFromHeadString, &m_distanceFromHead, false )->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Perforation linear distance from well head");
+    setInputFlag( InputFlags::REQUIRED )->
+    setDescription( "Perforation linear distance from well head" );
 
   registerWrapper( viewKeyStruct::transmissibilityString, &m_transmissibility, false )->
-    setApplyDefaultValue(-1.0)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Perforation transmissibility");
+    setApplyDefaultValue( -1.0 )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Perforation transmissibility" );
 
 }
 
 void Perforation::PostProcessInput()
 {
   GEOSX_ERROR_IF( m_distanceFromHead <= 0,
-                 "Invalid distance well head to perforation " << getName() );
+                  "Invalid distance well head to perforation " << getName() );
 
 }
 
 Perforation::~Perforation()
-{
-}
+{}
 
 
 } //namespace geosx

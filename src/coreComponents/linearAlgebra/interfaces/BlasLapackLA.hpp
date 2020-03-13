@@ -36,10 +36,10 @@ class BlasLapackLA
 public:
 
   /**
-    * \enum  RandomNumberDistribution
-    * \brief This enum class specifies the type of distribution for
-    *        generating random real numbers.
-    */
+   * \enum  RandomNumberDistribution
+   * \brief This enum class specifies the type of distribution for
+   *        generating random real numbers.
+   */
   enum class RandomNumberDistribution : int
   {
     UNIFORM_01 = 1,   /**< uniform distribution (0,1); */
@@ -52,21 +52,21 @@ public:
    *
    * @param [in] X GEOSX array1d.
    */
-  static real64 vectorNorm1( arraySlice1d<real64 const> const & X ) ;
+  static real64 vectorNorm1( arraySlice1d< real64 const > const & X );
 
   /**
    * @brief Returns the two norm of the vector.
    *
    * @param [in] X GEOSX array1d.
    */
-  static real64 vectorNorm2( arraySlice1d<real64 const> const & X ) ;
+  static real64 vectorNorm2( arraySlice1d< real64 const > const & X );
 
   /**
    * @brief Returns the infinity-norm of the vector.
    *
    * @param [in] X GEOSX array1d.
    */
-  static real64 vectorNormInf( arraySlice1d<real64 const> const & X ) ;
+  static real64 vectorNormInf( arraySlice1d< real64 const > const & X );
 
   /**
    * @brief Returns the determinant of a square matrix.
@@ -81,12 +81,12 @@ public:
    * is computed for the transpose matrix, i.e. assuming column major
    * ordering, for best performance.
    */
-  static real64 determinant( arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const & A );
+  static real64 determinant( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A );
 
   /**
    * @copydoc determinant( arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const & )
    */
-  static real64 determinant( arraySlice2d<real64 const, MatrixLayout::COL_MAJOR> const & A );
+  static real64 determinant( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A );
 
   /**
    * @brief Returns the infinity norm of the matrix.
@@ -99,12 +99,12 @@ public:
    * norm is computed as the one norm of the transpose matrix, i.e. assuming
    * column major ordering, for best performance.
    */
-  static real64 matrixNormInf( arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const & A );
+  static real64 matrixNormInf( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A );
 
   /**
    * @copydoc matrixNormInf( arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const & )
    */
-  static real64 matrixNormInf( arraySlice2d<real64 const, MatrixLayout::COL_MAJOR> const & A );
+  static real64 matrixNormInf( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A );
 
   /**
    * @brief Returns the one norm of the matrix.
@@ -117,12 +117,12 @@ public:
    * is computed as the infinity norm of the transpose matrix, i.e. assuming
    * column major ordering, for best performance.
    */
-  static real64 matrixNorm1( arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const & A );
+  static real64 matrixNorm1( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A );
 
   /**
    * @copydoc matrixNorm1( arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const & )
    */
-  static real64 matrixNorm1( arraySlice2d<real64 const, MatrixLayout::COL_MAJOR> const & A );
+  static real64 matrixNorm1( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A );
 
   /**
    * @brief Returns the Frobenius norm of the matrix.
@@ -135,12 +135,12 @@ public:
    * is computed for the transpose matrix, i.e. assuming column major
    * ordering, for best performance.
    */
-  static real64 matrixNormFrobenius( arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const & A );
+  static real64 matrixNormFrobenius( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A );
 
   /**
    * @copydoc matrixNormFrobenius( arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const & )
    */
-  static real64 matrixNormFrobenius( arraySlice2d<real64 const, MatrixLayout::COL_MAJOR> const & A );
+  static real64 matrixNormFrobenius( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A );
 
   /**
    * @brief Vector-Vector sum;
@@ -156,8 +156,8 @@ public:
    * @warning
    * Assumes that \p X and \p Y have the same size.
    */
-  static void vectorVectorAdd( arraySlice1d<real64 const> const & X,
-                               arraySlice1d<real64> const & Y,
+  static void vectorVectorAdd( arraySlice1d< real64 const > const & X,
+                               arraySlice1d< real64 > const & Y,
                                real64 const alpha = 1. );
 
   /**
@@ -174,8 +174,8 @@ public:
    * @warning
    * Assumes that \p A and \p B have the same size.
    */
-  static void matrixMatrixAdd( arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const & A,
-                               arraySlice2d<real64, MatrixLayout::ROW_MAJOR> const & B,
+  static void matrixMatrixAdd( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
+                               arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & B,
                                real64 const alpha = 1. );
 
   /**
@@ -183,8 +183,8 @@ public:
                                arraySlice2d<real64, MatrixLayout::ROW_MAJOR> const & B,
                                real64 const alpha = 1. )
    */
-  static void matrixMatrixAdd( arraySlice2d<real64 const, MatrixLayout::COL_MAJOR> const & A,
-                               arraySlice2d<real64, MatrixLayout::COL_MAJOR> const & B,
+  static void matrixMatrixAdd( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A,
+                               arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & B,
                                real64 const alpha = 1. );
 
   /**
@@ -195,7 +195,7 @@ public:
    * @param [in,out] X     GEOSX array1d.
    */
   static void vectorScale( real64 const alpha,
-                           arraySlice1d<real64> const & X ) ;
+                           arraySlice1d< real64 > const & X );
 
   /**
    * @brief In-place scalar-matrix product;
@@ -205,13 +205,13 @@ public:
    * @param [in,out] A     GEOSX array2d.
    */
   static void matrixScale( real64 const alpha,
-                           arraySlice2d<real64, MatrixLayout::ROW_MAJOR> const & A ) ;
+                           arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & A );
 
   /**
    * @copydoc static void matrixScale( real64 const alpha, arraySlice2d<real64, MatrixLayout::ROW_MAJOR> const & )
    */
   static void matrixScale( real64 const alpha,
-                           arraySlice2d<real64, MatrixLayout::COL_MAJOR> const & A ) ;
+                           arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & A );
 
   /**
    * @brief Returns the dot product of two vectors.
@@ -220,8 +220,8 @@ public:
    * @param [in] Y GEOSX array1d.
    *
    */
-  static real64 vectorDot( arraySlice1d<real64 const> const & X,
-                           arraySlice1d<real64 const> const & Y) ;
+  static real64 vectorDot( arraySlice1d< real64 const > const & X,
+                           arraySlice1d< real64 const > const & Y );
 
   /**
    * @brief Matrix-Vector product;
@@ -238,11 +238,11 @@ public:
    * @warning
    * Assumes that \p X and \p Y have compatible sizes with \p A.
    */
-  static void matrixVectorMultiply(arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const & A,
-                                   arraySlice1d<real64 const> const & X,
-                                   arraySlice1d<real64> const & Y,
-                                   real64 const alpha = 1.0,
-                                   real64 const beta = 0.0 ) ;
+  static void matrixVectorMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
+                                    arraySlice1d< real64 const > const & X,
+                                    arraySlice1d< real64 > const & Y,
+                                    real64 const alpha = 1.0,
+                                    real64 const beta = 0.0 );
 
   /**
    * @brief transpose(Matrix)-Vector product;
@@ -261,11 +261,11 @@ public:
    * @warning
    * Assumes that \p X and \p Y have compatible sizes with \p transpose(A).
    */
-  static void matrixTVectorMultiply(arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const & A,
-                                    arraySlice1d<real64 const> const & X,
-                                    arraySlice1d<real64> const & Y,
-                                    real64 const alpha = 1.0,
-                                    real64 const beta = 0.0) ;
+  static void matrixTVectorMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
+                                     arraySlice1d< real64 const > const & X,
+                                     arraySlice1d< real64 > const & Y,
+                                     real64 const alpha = 1.0,
+                                     real64 const beta = 0.0 );
 
   /**
    * @brief Matrix-Matrix product;
@@ -284,11 +284,11 @@ public:
    * has the right size.
    *
    */
-  static void matrixMatrixMultiply( arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const & A,
-                                    arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const & B,
-                                    arraySlice2d<real64, MatrixLayout::ROW_MAJOR> const & C,
+  static void matrixMatrixMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
+                                    arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & B,
+                                    arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & C,
                                     real64 const alpha = 1.0,
-                                    real64 const beta = 0.0 ) ;
+                                    real64 const beta = 0.0 );
 
   /**
    * @brief transpose(Matrix)-Matrix product;
@@ -309,9 +309,9 @@ public:
    * \p C already has the right size.
    *
    */
-  static void matrixTMatrixMultiply( arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const & A,
-                                     arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const & B,
-                                     arraySlice2d<real64, MatrixLayout::ROW_MAJOR> const & C,
+  static void matrixTMatrixMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
+                                     arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & B,
+                                     arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & C,
                                      real64 const alpha = 1.0,
                                      real64 const beta = 0.0 );
 
@@ -334,11 +334,11 @@ public:
    * \p C already has the right size.
    *
    */
-  static void matrixMatrixTMultiply( arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const & A,
-                                     arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const & B,
-                                     arraySlice2d<real64, MatrixLayout::ROW_MAJOR> const & C,
+  static void matrixMatrixTMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
+                                     arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & B,
+                                     arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & C,
                                      real64 const alpha = 1.0,
-                                     real64 const beta = 0.0 ) ;
+                                     real64 const beta = 0.0 );
 
   /**
    * @brief transpose(Matrix)-transpose(Matrix) product;
@@ -359,11 +359,11 @@ public:
    * and that \p C already has the right size.
    *
    */
-  static void matrixTMatrixTMultiply( arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const & A,
-                                      arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const & B,
-                                      arraySlice2d<real64, MatrixLayout::ROW_MAJOR> const & C,
+  static void matrixTMatrixTMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
+                                      arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & B,
+                                      arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & C,
                                       real64 const alpha = 1.0,
-                                      real64 const beta = 0.0 ) ;
+                                      real64 const beta = 0.0 );
 
   /**
    * @brief Computes the inverse matrix;
@@ -388,8 +388,8 @@ public:
    * for any copy/transposition that would be required operating with the
    * row-major layout.
    */
-  static void matrixInverse( arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const & A,
-                             arraySlice2d<real64, MatrixLayout::ROW_MAJOR> const & Ainv,
+  static void matrixInverse( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
+                             arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & Ainv,
                              real64 & detA );
 
   /**
@@ -397,40 +397,40 @@ public:
                              arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> &,
                              real64 & )
    */
-  static void matrixInverse( arraySlice2d<real64 const, MatrixLayout::COL_MAJOR> const & A,
-                             arraySlice2d<real64, MatrixLayout::COL_MAJOR> const & Ainv,
+  static void matrixInverse( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A,
+                             arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & Ainv,
                              real64 & detA );
 
   /**
- * @brief Computes the inverse matrix;
- * \p Ainv = \p inverse(A).
- *
- * Computes the inverse of the square matrix \p A and stores it in \p Ainv.
- *
- * @param [in]  A    GEOSX array2d.
- * @param [out] Ainv GEOSX array2d.
- *
- * @warning
- * Assumes \p Ainv already has the same size as \p A.
- *
- * @note This function is hardcoded for matrices up to order three.
- * For dimensions larger than three, the function calls LAPACK
- * functions DGETRF and DGETRI. Because of the row major
- * ordering used by GEOSX array2d, the inverse of \p A is practically
- * computed as the transpose matrix of the transpose matrix inverse using
- * lapack operation based on column-major ordering. This removes the need
- * for any copy/transposition that would be required operating with the
- * row-major layout.
- */
-  static void matrixInverse( arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const & A,
-                             arraySlice2d<real64, MatrixLayout::ROW_MAJOR> const & Ainv );
+   * @brief Computes the inverse matrix;
+   * \p Ainv = \p inverse(A).
+   *
+   * Computes the inverse of the square matrix \p A and stores it in \p Ainv.
+   *
+   * @param [in]  A    GEOSX array2d.
+   * @param [out] Ainv GEOSX array2d.
+   *
+   * @warning
+   * Assumes \p Ainv already has the same size as \p A.
+   *
+   * @note This function is hardcoded for matrices up to order three.
+   * For dimensions larger than three, the function calls LAPACK
+   * functions DGETRF and DGETRI. Because of the row major
+   * ordering used by GEOSX array2d, the inverse of \p A is practically
+   * computed as the transpose matrix of the transpose matrix inverse using
+   * lapack operation based on column-major ordering. This removes the need
+   * for any copy/transposition that would be required operating with the
+   * row-major layout.
+   */
+  static void matrixInverse( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
+                             arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & Ainv );
 
   /**
    * @copydoc matrixInverse( arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const & A,
                              arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> & Ainv )
    */
-  static void matrixInverse( arraySlice2d<real64 const, MatrixLayout::COL_MAJOR> const & A,
-                             arraySlice2d<real64, MatrixLayout::COL_MAJOR> const & Ainv );
+  static void matrixInverse( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A,
+                             arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & Ainv );
 
   /**
    * @brief Vector copy;
@@ -443,8 +443,8 @@ public:
    * Assumes that \p X and \p Y have the same size.
    *
    */
-  static void vectorCopy( array1d<real64> const & X,
-                          array1d<real64> & Y ) ;
+  static void vectorCopy( array1d< real64 > const & X,
+                          array1d< real64 > & Y );
 
   /**
    * @brief Matrix copy;
@@ -457,15 +457,15 @@ public:
    * Assumes that \p A and \p B have the same size.
    *
    */
-  static void matrixCopy( arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const & A,
-                          arraySlice2d<real64, MatrixLayout::ROW_MAJOR> const & B );
+  static void matrixCopy( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
+                          arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & B );
 
   /**
    * @copydoc matrixCopy( arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const & A,
                           arraySlice2d<real64, MatrixLayout::ROW_MAJOR> const & B )
    */
-  static void matrixCopy( arraySlice2d<real64 const, MatrixLayout::COL_MAJOR> const & A,
-                          arraySlice2d<real64, MatrixLayout::COL_MAJOR> const & B );
+  static void matrixCopy( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A,
+                          arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & B );
 
   /**
    * @brief Set the random number generator seed.
@@ -473,14 +473,14 @@ public:
    * @param [in] seed GEOSX array1d, dimension (4). The elements must be
    *             between 0 and 4095, and seed(4) must be odd.
    */
-  static void setRandomNumberGeneratorSeed( arraySlice1d<int const> const & seed);
+  static void setRandomNumberGeneratorSeed( arraySlice1d< int const > const & seed );
 
   /**
    * @brief Get the random number generator seed.
    *
    * @param [out] seed GEOSX array1d, dimension (4).
    */
-  static void getRandomNumberGeneratorSeed( arraySlice1d<int> const & seed);
+  static void getRandomNumberGeneratorSeed( arraySlice1d< int > const & seed );
 
   /**
    * @brief Sets vector entries to random real numbers.
@@ -492,8 +492,8 @@ public:
    * @param [in]     idist Optional RandomNumberDistribution enum value
    *                       specifying the distribution of the random numbers.
    */
-  static void vectorRand( arraySlice1d<real64> const & X,
-                          RandomNumberDistribution const & idist = RandomNumberDistribution::UNIFORM_01) ;
+  static void vectorRand( arraySlice1d< real64 > const & X,
+                          RandomNumberDistribution const & idist = RandomNumberDistribution::UNIFORM_01 );
 
   /**
    * @brief Sets matrix entries to random real numbers.
@@ -505,26 +505,26 @@ public:
    * @param [in]     idist Optional RandomNumberDistribution enum value
    *                       specifying the distribution of the random numbers.
    */
-  static void matrixRand( arraySlice2d<real64, MatrixLayout::ROW_MAJOR> const & A,
+  static void matrixRand( arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & A,
                           RandomNumberDistribution const & idist = RandomNumberDistribution::UNIFORM_01 );
 
   /**
    * @copydoc matrixRand( arraySlice2d<real64, MatrixLayout::ROW_MAJOR> const & A,
                           RandomNumberDistribution const & idist = RandomNumberDistribution::UNIFORM_01 )
    */
-  static void matrixRand( arraySlice2d<real64, MatrixLayout::COL_MAJOR> const & A,
+  static void matrixRand( arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & A,
                           RandomNumberDistribution const & idist = RandomNumberDistribution::UNIFORM_01 );
 
 
   /**
-   * @brief Computes the singular value decomposition of A 
+   * @brief Computes the singular value decomposition of A
    *
    * If size(A) = (M,N), this function expects:
-   * size(U) = (M,min(M,N)), 
-   * size(VT) = (min(M,N),N), and 
+   * size(U) = (M,min(M,N)),
+   * size(VT) = (min(M,N),N), and
    * size(S) = min(M,N)
-   * On exit, S contains the singular values of A 
-   * and U contains an orthonormal basis of range(A) 
+   * On exit, S contains the singular values of A
+   * and U contains an orthonormal basis of range(A)
    *
    * @param [in]    A GEOSX array2d.
    * @param [out]   U GEOSX array2d.
@@ -547,7 +547,7 @@ public:
                          arraySlice1d< real64 > const & S,
                          arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & VT );
 
-  
+
 };
 
 }

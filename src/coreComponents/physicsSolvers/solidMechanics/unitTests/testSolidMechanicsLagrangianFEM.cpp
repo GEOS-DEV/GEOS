@@ -25,7 +25,7 @@
 //------------------------------------------------------------------------------
 // getName()
 //------------------------------------------------------------------------------
-TEST(testSolidMechanicsLagrangianFEM,feature)
+TEST( testSolidMechanicsLagrangianFEM, feature )
 {
 //	signal(SIGSEGV, stacktrace::handler);   // install our handler
 //	stacktrace::foo(); // this will call foo, bar, and baz.  baz segfaults.

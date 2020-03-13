@@ -35,9 +35,9 @@ PetscSolver::PetscSolver( LinearSolverParameters const & parameters )
   m_parameters( parameters )
 {}
 
-void PetscSolver::solve( PetscMatrix &mat,
-                         PetscVector &sol,
-                         PetscVector &rhs )
+void PetscSolver::solve( PetscMatrix & mat,
+                         PetscVector & sol,
+                         PetscVector & rhs )
 {
   GEOSX_LAI_ASSERT( mat.ready() );
   GEOSX_LAI_ASSERT( sol.ready() );
@@ -53,9 +53,9 @@ void PetscSolver::solve( PetscMatrix &mat,
   }
 }
 
-void PetscSolver::solve_direct( PetscMatrix &mat,
-                                PetscVector &sol,
-                                PetscVector &rhs )
+void PetscSolver::solve_direct( PetscMatrix & mat,
+                                PetscVector & sol,
+                                PetscVector & rhs )
 {
   MPI_Comm const comm = mat.getComm();
 
@@ -76,9 +76,9 @@ void PetscSolver::solve_direct( PetscMatrix &mat,
   GEOSX_LAI_CHECK_ERROR( KSPSolve( ksp, rhs.unwrapped(), sol.unwrapped() ) );
 }
 
-void PetscSolver::solve_krylov( PetscMatrix &mat,
-                                PetscVector &sol,
-                                PetscVector &rhs )
+void PetscSolver::solve_krylov( PetscMatrix & mat,
+                                PetscVector & sol,
+                                PetscVector & rhs )
 {
   MPI_Comm const comm = mat.getComm();
 
@@ -107,7 +107,7 @@ void PetscSolver::solve_krylov( PetscMatrix &mat,
   {
     GEOSX_ERROR( "The requested linear solverType doesn't seem to exist" );
   }
-  
+
   // create a preconditioner and pick type
   PC prec;
   GEOSX_LAI_CHECK_ERROR( KSPGetPC( ksp, &prec ) );
@@ -134,12 +134,12 @@ void PetscSolver::solve_krylov( PetscMatrix &mat,
     GEOSX_LAI_CHECK_ERROR( PCSetType( prec, PCHYPRE ) );
     GEOSX_LAI_CHECK_ERROR( PCHYPRESetType( prec, "pilut" ) );
 #else
-    GEOSX_ERROR("Can't use HYPRE through PETSc in serial");
+    GEOSX_ERROR( "Can't use HYPRE through PETSc in serial" );
 #endif
   }
   else if( m_parameters.preconditionerType == "amg" )
   {
-    std::map<std::string, std::string> translate; // maps GEOSX to PETSc syntax for Hyper options
+    std::map< std::string, std::string > translate; // maps GEOSX to PETSc syntax for Hyper options
 
     translate.insert( std::make_pair( "jacobi", "Jacobi" ));
     translate.insert( std::make_pair( "sequentialGaussSeidel", "sequential-Gauss-Seidel" ));
@@ -160,7 +160,7 @@ void PetscSolver::solve_krylov( PetscMatrix &mat,
     GEOSX_LAI_CHECK_ERROR( PCSetType( prec, PCHYPRE ) );
     GEOSX_LAI_CHECK_ERROR( PCHYPRESetType( prec, "boomeramg" ) );
 #else
-    GEOSX_ERROR("Can't use HYPRE through PETSc in serial");
+    GEOSX_ERROR( "Can't use HYPRE through PETSc in serial" );
 #endif
     // PETSc needs char[]
     char max_levels[10], cycle_type[10], num_sweeps[10], smoother_type[30], coarse_type[30];
@@ -173,13 +173,18 @@ void PetscSolver::solve_krylov( PetscMatrix &mat,
     GEOSX_LAI_CHECK_ERROR( PetscOptionsSetValue( nullptr, "-pc_hypre_boomeramg_max_levels", max_levels ) );
     GEOSX_LAI_CHECK_ERROR( PetscOptionsSetValue( nullptr, "-pc_hypre_boomeramg_cycle_type", cycle_type ) );
     // relaxation method
-    // available in HYPRE: Jacobi, sequential-Gauss-Seidel, seqboundary-Gauss-Seidel, SOR/Jacobi backward-SOR/Jacobi, symmetric-SOR/Jacobi  
-    //   l1scaled-SOR/Jacobi Gaussian-elimination, l1-Gauss-Seidel, backward-l1-Gauss-Seidel, CG, Chebyshev FCF-Jacobi, l1scaled-Jacobi
-    GEOSX_LAI_CHECK_ERROR( PetscOptionsSetValue( nullptr, "-pc_hypre_boomeramg_relax_type_all", smoother_type ) ); // default: symmetric-SOR/Jacobi
-    GEOSX_LAI_CHECK_ERROR( PetscOptionsSetValue( nullptr, "-pc_hypre_boomeramg_relax_type_coarse", coarse_type ) ); // default: Gaussian-elimination
+    // available in HYPRE: Jacobi, sequential-Gauss-Seidel, seqboundary-Gauss-Seidel, SOR/Jacobi backward-SOR/Jacobi,
+    // symmetric-SOR/Jacobi
+    //   l1scaled-SOR/Jacobi Gaussian-elimination, l1-Gauss-Seidel, backward-l1-Gauss-Seidel, CG, Chebyshev FCF-Jacobi,
+    // l1scaled-Jacobi
+    GEOSX_LAI_CHECK_ERROR( PetscOptionsSetValue( nullptr, "-pc_hypre_boomeramg_relax_type_all", smoother_type ) ); // default:
+                                                                                                                   // symmetric-SOR/Jacobi
+    GEOSX_LAI_CHECK_ERROR( PetscOptionsSetValue( nullptr, "-pc_hypre_boomeramg_relax_type_coarse", coarse_type ) ); // default:
+                                                                                                                    // Gaussian-elimination
     // number of relaxation sweeps
     GEOSX_LAI_CHECK_ERROR( PetscOptionsSetValue( nullptr, "-pc_hypre_boomeramg_grid_sweeps_all", num_sweeps ) );
-    GEOSX_LAI_CHECK_ERROR( PetscOptionsSetValue( nullptr, "-pc_hypre_boomeramg_grid_sweeps_coarse", num_sweeps ) ); // coarsest grid
+    GEOSX_LAI_CHECK_ERROR( PetscOptionsSetValue( nullptr, "-pc_hypre_boomeramg_grid_sweeps_coarse", num_sweeps ) ); // coarsest
+                                                                                                                    // grid
   }
   else
   {
@@ -187,7 +192,7 @@ void PetscSolver::solve_krylov( PetscMatrix &mat,
   }
 
   // display output
-  if ( m_parameters.logLevel > 0 )
+  if( m_parameters.logLevel > 0 )
   {
     GEOSX_LAI_CHECK_ERROR( PetscOptionsSetValue( nullptr, "-ksp_monitor", nullptr ) );
   }
@@ -205,4 +210,3 @@ void PetscSolver::solve_krylov( PetscMatrix &mat,
 }
 
 } // end geosx namespace
-

@@ -100,9 +100,9 @@ public:
   GEOSX_HOST_DEVICE inline
   virtual void GetStiffness( localIndex const k, real64 (& c)[6][6] ) const override final
   {
-    for( int i=0 ; i<6 ; ++i )
+    for( int i=0; i<6; ++i )
     {
-      for( int j=0 ; j<6 ; ++j )
+      for( int j=0; j<6; ++j )
       {
         c[i][j] = m_stiffnessView( k, i, j );
       }
@@ -123,9 +123,9 @@ LinearElasticAnisotropicUpdates::
                       real64 const * GEOSX_RESTRICT const voigtStrain,
                       real64 * GEOSX_RESTRICT const stress ) const
 {
-  for( localIndex i=0 ; i<6 ; ++i )
+  for( localIndex i=0; i<6; ++i )
   {
-    for( localIndex j=0 ; j<6 ; ++j )
+    for( localIndex j=0; j<6; ++j )
     {
       stress[i] = stress[i] + m_stiffnessView( k, i, j ) * voigtStrain[j];
     }
@@ -141,9 +141,9 @@ LinearElasticAnisotropicUpdates::
                localIndex const q,
                real64 const * const GEOSX_RESTRICT voigtStrainInc ) const
 {
-  for( localIndex i=0 ; i<6 ; ++i )
+  for( localIndex i=0; i<6; ++i )
   {
-    for( localIndex j=0 ; j<6 ; ++j )
+    for( localIndex j=0; j<6; ++j )
     {
       m_stress( k, q, i ) = m_stress( k, q, i ) + m_stiffnessView( k, i, j ) * voigtStrainInc[j];
     }
@@ -173,7 +173,7 @@ LinearElasticAnisotropicUpdates::
 
   constexpr localIndex map[6] = { 0, 2, 5, 4, 3, 1 };
 
-  for( localIndex j=0 ; j<3 ; ++j )
+  for( localIndex j=0; j<3; ++j )
   {
     m_stress( k, q, 0 ) = m_stress( k, q, 0 ) + m_stiffnessView( k, 0, j ) * Ddt[map[j]];
     m_stress( k, q, 1 ) = m_stress( k, q, 1 ) + m_stiffnessView( k, 1, j ) * Ddt[map[j]];
@@ -182,7 +182,7 @@ LinearElasticAnisotropicUpdates::
     m_stress( k, q, 4 ) = m_stress( k, q, 4 ) + m_stiffnessView( k, 4, j ) * Ddt[map[j]];
     m_stress( k, q, 5 ) = m_stress( k, q, 5 ) + m_stiffnessView( k, 5, j ) * Ddt[map[j]];
   }
-  for( localIndex j=3 ; j<6 ; ++j )
+  for( localIndex j=3; j<6; ++j )
   {
     m_stress( k, q, 0 ) = m_stress( k, q, 0 ) + m_stiffnessView( k, 0, j ) * 2 * Ddt[map[j]];
     m_stress( k, q, 1 ) = m_stress( k, q, 1 ) + m_stiffnessView( k, 1, j ) * 2 * Ddt[map[j]];
@@ -305,7 +305,7 @@ public:
    * @brief Const Getter for stiffness tensor
    * @return ArrayView to the stiffness tensor
    */
-  arrayView3d< real64 const,solid::STIFFNESS_USD > const & getStiffness() const
+  arrayView3d< real64 const, solid::STIFFNESS_USD > const & getStiffness() const
   {
     return m_stiffness;
   }

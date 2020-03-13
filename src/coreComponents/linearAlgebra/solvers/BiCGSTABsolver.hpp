@@ -34,11 +34,11 @@ namespace geosx
  *        from Y. Saad (2003).
  */
 template< typename VECTOR >
-class BiCGSTABsolver : public KrylovSolver<VECTOR>
+class BiCGSTABsolver : public KrylovSolver< VECTOR >
 {
 public:
 
-  using Vector = typename KrylovSolver<VECTOR>::Vector;
+  using Vector = typename KrylovSolver< VECTOR >::Vector;
 
   //! @name Constructor/Destructor Methods
   //@{
@@ -46,8 +46,8 @@ public:
   /**
    * @brief Solver object constructor.
    */
-  BiCGSTABsolver( LinearOperator<Vector> const & A,
-                  LinearOperator<Vector> const & M,
+  BiCGSTABsolver( LinearOperator< Vector > const & A,
+                  LinearOperator< Vector > const & M,
                   real64 const tolerance,
                   localIndex const maxIterations,
                   integer const verbosity = 0 );
@@ -68,16 +68,16 @@ public:
 
 protected:
 
-  using VectorTemp = typename KrylovSolver<VECTOR>::VectorTemp;
+  using VectorTemp = typename KrylovSolver< VECTOR >::VectorTemp;
 
-  using KrylovSolver<VECTOR>::m_operator;
-  using KrylovSolver<VECTOR>::m_precond;
-  using KrylovSolver<VECTOR>::m_tolerance;
-  using KrylovSolver<VECTOR>::m_maxIterations;
-  using KrylovSolver<VECTOR>::m_verbosity;
-  using KrylovSolver<VECTOR>::m_numIterations;
-  using KrylovSolver<VECTOR>::m_residualNormVector;
-  using KrylovSolver<VECTOR>::m_convergenceFlag;
+  using KrylovSolver< VECTOR >::m_operator;
+  using KrylovSolver< VECTOR >::m_precond;
+  using KrylovSolver< VECTOR >::m_tolerance;
+  using KrylovSolver< VECTOR >::m_maxIterations;
+  using KrylovSolver< VECTOR >::m_verbosity;
+  using KrylovSolver< VECTOR >::m_numIterations;
+  using KrylovSolver< VECTOR >::m_residualNormVector;
+  using KrylovSolver< VECTOR >::m_convergenceFlag;
 
 };
 

@@ -66,13 +66,13 @@ private:
   void setPointers();
 
   /// storage for actual vectors
-  array1d <VECTOR> m_vectorStorage;
+  array1d< VECTOR > m_vectorStorage;
 };
 
 template< typename VECTOR >
 BlockVector< VECTOR >::BlockVector( localIndex const nBlocks )
   : Base( nBlocks ),
-    m_vectorStorage( nBlocks )
+  m_vectorStorage( nBlocks )
 {
   setPointers();
 }
@@ -80,7 +80,7 @@ BlockVector< VECTOR >::BlockVector( localIndex const nBlocks )
 template< typename VECTOR >
 BlockVector< VECTOR >::BlockVector( BlockVector< VECTOR > const & rhs )
   : Base( rhs ),
-    m_vectorStorage( rhs.m_vectorStorage )
+  m_vectorStorage( rhs.m_vectorStorage )
 {
   setPointers();
 }
@@ -88,13 +88,13 @@ BlockVector< VECTOR >::BlockVector( BlockVector< VECTOR > const & rhs )
 template< typename VECTOR >
 BlockVector< VECTOR >::BlockVector( BlockVector && rhs )
   : Base( std::move( rhs ) ),
-    m_vectorStorage( std::move( rhs.m_vectorStorage ) )
+  m_vectorStorage( std::move( rhs.m_vectorStorage ) )
 {
   setPointers();
 }
 
 template< typename VECTOR >
-BlockVector< VECTOR >::BlockVector( BlockVectorView <VECTOR> const & rhs )
+BlockVector< VECTOR >::BlockVector( BlockVectorView< VECTOR > const & rhs )
   : Base( rhs.blockSize() )
 {
   for( localIndex i = 0; i < rhs.blockSize(); ++i )
