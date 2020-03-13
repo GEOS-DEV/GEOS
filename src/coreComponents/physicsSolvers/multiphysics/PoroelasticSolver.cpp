@@ -166,7 +166,9 @@ void PoroelasticSolver::ImplicitStepComplete( real64 const & time_n,
 {
   if( m_couplingTypeOption == couplingTypeOption::TightlyCoupled )
   {
+    m_solidSolver->updateStress( domain );
     m_solidSolver->ImplicitStepComplete( time_n, dt, domain );
+
     m_flowSolver->ImplicitStepComplete( time_n, dt, domain );
   }
 }
@@ -258,7 +260,11 @@ real64 PoroelasticSolver::SolverStep( real64 const & time_n,
   }
   else if( m_couplingTypeOption == couplingTypeOption::TightlyCoupled )
   {
-    SetupSystem( domain, m_dofManager, m_matrix, m_rhs, m_solution );
+    SetupSystem( domain,
+                 m_dofManager,
+                 m_matrix,
+                 m_rhs,
+                 m_solution );
 
     ImplicitStepSetup( time_n,
                        dt,
@@ -268,19 +274,12 @@ real64 PoroelasticSolver::SolverStep( real64 const & time_n,
                        m_rhs,
                        m_solution );
 
-    // setup
-    ImplicitStepSetup( time_n, dt, domain, m_dofManager, m_matrix, m_rhs, m_solution );
-
-    // currently
     dt_return = this->NonlinearImplicitStep( time_n, dt, cycleNumber, domain,
                                              m_dofManager,
                                              m_matrix,
                                              m_rhs,
                                              m_solution );
 
-    m_solidSolver->updateStress( domain );
-
-    // complete time step in reservoir and well systems
     ImplicitStepComplete( time_n, dt_return, domain );
 
   }
@@ -411,9 +410,6 @@ void PoroelasticSolver::AssembleSystem( real64 const time_n,
                                  dofManager,
                                  matrix,
                                  rhs );
-  // scale matrix and rhs to warrant SPD diagonal block
-  //matrix.scale( -1.0 );
-  //rhs.scale( -1.0 );
 
   // assemble J_FF
   m_flowSolver->AssembleSystem( time_n, dt, domain,
@@ -572,7 +568,6 @@ void PoroelasticSolver::ApplyBoundaryConditions( real64 const time_n,
                                          dofManager,
                                          matrix,
                                          rhs );
-  // no boundary conditions for wells
 }
 
 real64 PoroelasticSolver::CalculateResidualNorm( DomainPartition const * const domain,
@@ -608,9 +603,9 @@ void PoroelasticSolver::ApplySystemSolution( DofManager const & dofManager,
                                              real64 const scalingFactor,
                                              DomainPartition * const domain )
 {
-  // update the reservoir variables
+  // update displacement field
   m_solidSolver->ApplySystemSolution( dofManager, solution, scalingFactor, domain );
-  // update the well variables
+  // update pressure field
   m_flowSolver->ApplySystemSolution( dofManager, solution, -scalingFactor, domain );
 }
 

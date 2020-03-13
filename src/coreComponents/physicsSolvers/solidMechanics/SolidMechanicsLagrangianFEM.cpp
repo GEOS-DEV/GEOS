@@ -1520,7 +1520,7 @@ SolidMechanicsLagrangianFEM::ScalingForSystemSolution( DomainPartition const * c
 void
 SolidMechanicsLagrangianFEM::updateStress( DomainPartition * const GEOSX_UNUSED_PARAM(domain) )
 {
-  GEOSX_ERROR( "SolverBase::Assemble called!. Should be overridden." );
+  GEOSX_ERROR( "SolidMechanicsLagrangianFEM::updateStress called!. Should be overridden." );
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsLagrangianFEM, string const &, dataRepository::Group * const )
