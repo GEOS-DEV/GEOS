@@ -33,7 +33,7 @@
 
 using namespace geosx;
 
-static real64 const machinePrecision = 20.0 * std::numeric_limits<real64>::epsilon();
+static real64 const machinePrecision = 20.0 * std::numeric_limits< real64 >::epsilon();
 
 // BEGIN_RST_NARRATIVE testLAOperations.rst
 
@@ -41,11 +41,9 @@ static real64 const machinePrecision = 20.0 * std::numeric_limits<real64>::epsil
  * @brief Test case class for LA operations tests
  * @tparam LAI Linear Algebra Interface
  */
-template<typename LAI>
+template< typename LAI >
 class LAOperationsTest : public ::testing::Test
-{
-
-};
+{};
 
 TYPED_TEST_CASE_P( LAOperationsTest );
 
@@ -356,7 +354,7 @@ TYPED_TEST_P( LAOperationsTest, MatrixFunctions )
   }
   mat4.close();
 
-  array1d<real64> colvals_CHECK( 3 );
+  array1d< real64 > colvals_CHECK( 3 );
   colvals_CHECK( 0 ) = 6;
   colvals_CHECK( 1 ) = 1;
   colvals_CHECK( 2 ) = 10;
@@ -365,10 +363,10 @@ TYPED_TEST_P( LAOperationsTest, MatrixFunctions )
   {
     localIndex const rowLength = mat.getGlobalRowLength( iRow );
     EXPECT_EQ( rowLength, colvals_CHECK.size() );
-    array1d<real64> colvals( rowLength );
-    array1d<globalIndex> colinds( rowLength );
+    array1d< real64 > colvals( rowLength );
+    array1d< globalIndex > colinds( rowLength );
     mat4.getRowCopy( iRow, colinds, colvals );
-    for( int i = 0 ; i < 3 ; ++i )
+    for( int i = 0; i < 3; ++i )
     {
       EXPECT_DOUBLE_EQ( colvals( colinds[i] ), colvals_CHECK( i ) ); //HYPRE does not return sorted cols!
     }
@@ -376,9 +374,9 @@ TYPED_TEST_P( LAOperationsTest, MatrixFunctions )
   // Testing add/set/insert array1d
   Matrix mat6;
   mat6.createWithGlobalSize( 4, 4, MPI_COMM_WORLD );
-  array1d<real64> vals6( 3 );
-  array1d<real64> vals7( 3 );
-  array1d<globalIndex> inds6( 3 );
+  array1d< real64 > vals6( 3 );
+  array1d< real64 > vals7( 3 );
+  array1d< globalIndex > inds6( 3 );
   vals6[0] = 1;
   vals6[1] = .5;
   vals6[2] = -3;
@@ -403,9 +401,9 @@ TYPED_TEST_P( LAOperationsTest, MatrixFunctions )
   // Testing add/set/insert array2d
   Matrix mat7;
   mat7.createWithGlobalSize( 4, 4, MPI_COMM_WORLD );
-  array1d<globalIndex> rows( 2 );
-  array1d<globalIndex> cols( 2 );
-  array2d<real64> vals8( 2, 2 );
+  array1d< globalIndex > rows( 2 );
+  array1d< globalIndex > cols( 2 );
+  array2d< real64 > vals8( 2, 2 );
   rows[0] = 0;
   rows[1] = 2;
   cols[0] = 1;
@@ -490,7 +488,7 @@ TYPED_TEST_P( LAOperationsTest, MatrixFunctions )
 TYPED_TEST_P( LAOperationsTest, InterfaceSolvers )
 {
 #ifdef GEOSX_USE_PETSC
-  SKIP_TEST_IF( (std::is_same<TypeParam, PetscInterface>::value), "https://github.com/GEOSX/GEOSX/issues/790" );
+  SKIP_TEST_IF( (std::is_same< TypeParam, PetscInterface >::value), "https://github.com/GEOSX/GEOSX/issues/790" );
 #endif
 
   // Define aliases templated on the Linear Algebra Interface (LAI).
@@ -534,7 +532,7 @@ TYPED_TEST_P( LAOperationsTest, InterfaceSolvers )
 
   EXPECT_NEAR( norm1, N, N * machinePrecision );
   EXPECT_NEAR( norm2, n, n * machinePrecision );
-  EXPECT_NEAR( normInf, 1., machinePrecision);
+  EXPECT_NEAR( normInf, 1., machinePrecision );
 
   // Compute the matrix/vector multiplication. We compute b as Ax and will aim to get x
   // back from the solvers.
@@ -616,9 +614,9 @@ TYPED_TEST_P( LAOperationsTest, RectangularMatrixOperations )
   A.createWithGlobalSize( nRows, nCols, 2, MPI_COMM_WORLD );
 
   A.open();
-  for( globalIndex i = A.ilower() ; i < A.iupper() ; ++i )
+  for( globalIndex i = A.ilower(); i < A.iupper(); ++i )
   {
-    real64 const entry = static_cast<real64>( i + 1 );
+    real64 const entry = static_cast< real64 >( i + 1 );
     A.insert( i, 2 * i, entry );
     A.insert( i, 2 * i + 1, -entry );
   }
@@ -635,7 +633,7 @@ TYPED_TEST_P( LAOperationsTest, RectangularMatrixOperations )
 
   EXPECT_DOUBLE_EQ( a, static_cast< real64 >( nRows ) );
   EXPECT_DOUBLE_EQ( b, static_cast< real64 >( nCols ) );
-  EXPECT_DOUBLE_EQ( c, std::sqrt( static_cast<real64>( nRows * ( nRows + 1 ) * ( 2 * nRows + 1 ) ) / 3.0 ) );
+  EXPECT_DOUBLE_EQ( c, std::sqrt( static_cast< real64 >( nRows * ( nRows + 1 ) * ( 2 * nRows + 1 ) ) / 3.0 ) );
 }
 
 // END_RST_NARRATIVE
@@ -661,7 +659,7 @@ INSTANTIATE_TYPED_TEST_CASE_P( Hypre, LAOperationsTest, HypreInterface );
 INSTANTIATE_TYPED_TEST_CASE_P( Petsc, LAOperationsTest, PetscInterface );
 #endif
 
-int main( int argc, char ** argv )
+int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
 

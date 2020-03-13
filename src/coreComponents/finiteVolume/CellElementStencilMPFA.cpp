@@ -23,9 +23,8 @@ namespace geosx
 {
 
 CellElementStencilMPFA::CellElementStencilMPFA():
-  StencilBase<CellElementStencilMPFA_Traits,CellElementStencilMPFA>()
-{
-}
+  StencilBase< CellElementStencilMPFA_Traits, CellElementStencilMPFA >()
+{}
 
 
 void CellElementStencilMPFA::reserve( localIndex const size )

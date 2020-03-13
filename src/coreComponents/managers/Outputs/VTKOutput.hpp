@@ -59,7 +59,7 @@ public:
                         real64 const eventProgress,
                         dataRepository::Group * domain ) override
   {
-    Execute(time_n, 0, cycleNumber, eventCounter, eventProgress, domain);
+    Execute( time_n, 0, cycleNumber, eventCounter, eventProgress, domain );
   }
 
   struct viewKeysStruct : OutputBase::viewKeysStruct

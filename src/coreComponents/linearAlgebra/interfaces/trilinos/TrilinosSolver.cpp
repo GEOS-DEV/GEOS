@@ -35,7 +35,7 @@
 namespace geosx
 {
 
-TrilinosSolver::TrilinosSolver( LinearSolverParameters const & parameters ) :
+TrilinosSolver::TrilinosSolver( LinearSolverParameters const & parameters ):
   m_parameters( parameters )
 {}
 
@@ -85,7 +85,7 @@ void TrilinosSolver::solve_direct( EpetraMatrix & mat,
   Amesos Factory;
 
   // Select KLU solver (only one available as of 9/20/2018)
-  std::unique_ptr<Amesos_BaseSolver> solver( Factory.Create( "Klu", problem ) );
+  std::unique_ptr< Amesos_BaseSolver > solver( Factory.Create( "Klu", problem ) );
 
   // Factorize the matrix
   GEOSX_LAI_CHECK_ERROR( solver->SymbolicFactorization() );
@@ -115,7 +115,7 @@ void TrilinosSolver::solve_krylov( EpetraMatrix & mat,
   AztecOO solver( problem );
 
   // Extra scratch matrix, may or may not be used
-  std::unique_ptr<EpetraMatrix> scratch;
+  std::unique_ptr< EpetraMatrix > scratch;
 
   // Choose the solver type
   if( m_parameters.solverType == "gmres" )
@@ -135,7 +135,7 @@ void TrilinosSolver::solve_krylov( EpetraMatrix & mat,
     GEOSX_ERROR( "The requested linear solverType doesn't seem to exist" );
 
   // Create a null pointer to an ML amg preconditioner
-  std::unique_ptr<ML_Epetra::MultiLevelPreconditioner> ml_preconditioner;
+  std::unique_ptr< ML_Epetra::MultiLevelPreconditioner > ml_preconditioner;
 
   // Choose the preconditioner type
   if( m_parameters.preconditionerType == "none" )
@@ -180,7 +180,7 @@ void TrilinosSolver::solve_krylov( EpetraMatrix & mat,
       GEOSX_LAI_CHECK_ERROR( ML_Epetra::SetDefaults( "NSSA", list ) );
     }
 
-    std::map<string, string> translate; // maps GEOSX to ML syntax
+    std::map< string, string > translate; // maps GEOSX to ML syntax
 
     translate.insert( std::make_pair( "V", "MGV" ));
     translate.insert( std::make_pair( "W", "MGW" ));
@@ -211,15 +211,15 @@ void TrilinosSolver::solve_krylov( EpetraMatrix & mat,
     //list.set("null space: dimension", n_rbm);
 
     //TODO: templatization for LAIHelperFunctions needed
-    if(m_parameters.amg.separateComponents) // apply separate displacement component filter
+    if( m_parameters.amg.separateComponents ) // apply separate displacement component filter
     {
-      scratch = std::make_unique<EpetraMatrix>();
-      LAIHelperFunctions::SeparateComponentFilter<TrilinosInterface>(mat,*scratch,m_parameters.dofsPerNode);
-      ml_preconditioner = std::make_unique<ML_Epetra::MultiLevelPreconditioner>( scratch->unwrapped(), list );
+      scratch = std::make_unique< EpetraMatrix >();
+      LAIHelperFunctions::SeparateComponentFilter< TrilinosInterface >( mat, *scratch, m_parameters.dofsPerNode );
+      ml_preconditioner = std::make_unique< ML_Epetra::MultiLevelPreconditioner >( scratch->unwrapped(), list );
     }
     else // just use original matrix to construct amg operator
     {
-      ml_preconditioner = std::make_unique<ML_Epetra::MultiLevelPreconditioner>( mat.unwrapped(), list );
+      ml_preconditioner = std::make_unique< ML_Epetra::MultiLevelPreconditioner >( mat.unwrapped(), list );
     }
 
     GEOSX_LAI_CHECK_ERROR( solver.SetPrecOperator( ml_preconditioner.get() ) );

@@ -29,7 +29,7 @@ namespace dataRepository
 {
 namespace keys
 {
-string const inputVarNames("inputVarNames");
+string const inputVarNames( "inputVarNames" );
 
 }
 }
@@ -43,7 +43,7 @@ class FunctionBase : public dataRepository::Group
 {
 public:
   /// Main constructor
-  FunctionBase( const std::string& name,
+  FunctionBase( const std::string & name,
                 dataRepository::Group * const parent );
 
   /// Destructor
@@ -78,7 +78,7 @@ public:
 
   // Setup catalog
   using CatalogInterface = dataRepository::CatalogInterface< FunctionBase, std::string const &, Group * const >;
-  static CatalogInterface::CatalogType& GetCatalog()
+  static CatalogInterface::CatalogType & GetCatalog()
   {
     static CatalogInterface::CatalogType catalog;
     return catalog;
@@ -93,7 +93,7 @@ public:
    */
   real64_array EvaluateStats( dataRepository::Group const * const group,
                               real64 const time,
-                              SortedArray<localIndex> const & set) const;
+                              SortedArray< localIndex > const & set ) const;
 
 protected:
   string_array m_inputVarNames;
@@ -101,7 +101,7 @@ protected:
   template< typename LEAF >
   void EvaluateT( dataRepository::Group const * const group,
                   real64 const time,
-                  SortedArrayView<localIndex const> const & set,
+                  SortedArrayView< localIndex const > const & set,
                   real64_array & result ) const;
 
   virtual void PostProcessInput() override { InitializeFunction(); }
@@ -112,23 +112,23 @@ protected:
 template< typename LEAF >
 void FunctionBase::EvaluateT( dataRepository::Group const * const group,
                               real64 const time,
-                              SortedArrayView<localIndex const> const & set,
+                              SortedArrayView< localIndex const > const & set,
                               real64_array & result ) const
 {
   real64 const * input_ptrs[4];
 
-  arrayView1d<string const> const & inputVarNames = this->getReference<string_array>( dataRepository::keys::inputVarNames );
-  
-  localIndex const numVars = integer_conversion<localIndex>(inputVarNames.size());
-  GEOSX_ERROR_IF(numVars > 4, "Number of variables is: " << numVars);
+  arrayView1d< string const > const & inputVarNames = this->getReference< string_array >( dataRepository::keys::inputVarNames );
+
+  localIndex const numVars = integer_conversion< localIndex >( inputVarNames.size());
+  GEOSX_ERROR_IF( numVars > 4, "Number of variables is: " << numVars );
 
   localIndex varSize[4];
-  int timeVar[4] = {1,1,1,1};
-  for( auto varIndex=0 ; varIndex<numVars ; ++varIndex )
+  int timeVar[4] = {1, 1, 1, 1};
+  for( auto varIndex=0; varIndex<numVars; ++varIndex )
   {
     string const & varName = inputVarNames[varIndex];
 
-    if( varName=="time")
+    if( varName=="time" )
     {
       input_ptrs[varIndex] = &time;
       varSize[varIndex] = 1;
@@ -137,29 +137,29 @@ void FunctionBase::EvaluateT( dataRepository::Group const * const group,
     else
     {
       dataRepository::WrapperBase const & wrapperb = *(group->getWrapperBase( varName ));
-      std::type_index typeIndex = std::type_index(wrapperb.get_typeid());
-      rtTypes::ApplyTypeLambda2( rtTypes::typeID(typeIndex), [&]( auto container_type, auto var_type ) -> void
-        {
-          using containerType = decltype(container_type);
-          using varType = decltype(var_type);
-          dataRepository::Wrapper<containerType> const & view =
-            dynamic_cast< dataRepository::Wrapper<containerType> const & >(wrapperb);
+      std::type_index typeIndex = std::type_index( wrapperb.get_typeid());
+      rtTypes::ApplyTypeLambda2( rtTypes::typeID( typeIndex ), [&]( auto container_type, auto var_type ) -> void
+      {
+        using containerType = decltype(container_type);
+        using varType = decltype(var_type);
+        dataRepository::Wrapper< containerType > const & view =
+          dynamic_cast< dataRepository::Wrapper< containerType > const & >(wrapperb);
 
-          input_ptrs[varIndex] = reinterpret_cast<double const*>(view.dataPtr());
-          varSize[varIndex] = sizeof(varType) / sizeof(double);
-        });
+        input_ptrs[varIndex] = reinterpret_cast< double const * >(view.dataPtr());
+        varSize[varIndex] = sizeof(varType) / sizeof(double);
+      } );
     }
   }
 
   integer count=0;
-  forall_in_range<serialPolicy>( 0, set.size(), [&, set]( localIndex const i )
+  forall_in_range< serialPolicy >( 0, set.size(), [&, set]( localIndex const i )
   {
     localIndex const index = set[ i ];
     double input[4];
     int c = 0;
-    for( int a=0 ; a<numVars ; ++a )
+    for( int a=0; a<numVars; ++a )
     {
-      for( int b=0 ; b<varSize[a] ; ++b )
+      for( int b=0; b<varSize[a]; ++b )
       {
         input[c] = input_ptrs[a][(index*varSize[a]+b)*timeVar[a]];
         ++c;
@@ -167,9 +167,9 @@ void FunctionBase::EvaluateT( dataRepository::Group const * const group,
     }
 
     // TODO: Check this line to make sure it is correct
-    result[count] = static_cast<LEAF const *>(this)->Evaluate(input);
+    result[count] = static_cast< LEAF const * >(this)->Evaluate( input );
     ++count;
-  });
+  } );
 
 }
 } /* namespace geosx */

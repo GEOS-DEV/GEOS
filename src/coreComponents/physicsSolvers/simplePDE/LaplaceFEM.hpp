@@ -42,7 +42,7 @@ public:
 
   LaplaceFEM() = delete;
 
-  LaplaceFEM( const std::string& name,
+  LaplaceFEM( const std::string & name,
               Group * const parent );
 
   virtual ~LaplaceFEM() override;
@@ -52,12 +52,12 @@ public:
   virtual void RegisterDataOnMesh( Group * const MeshBodies ) override final;
 
 //END_SPHINX_INCLUDE_02
-  /**
-   * @defgroup Solver Interface Functions
-   *
-   * These functions provide the primary interface that is required for derived classes
-   */
-  /**@{*/
+/**
+ * @defgroup Solver Interface Functions
+ *
+ * These functions provide the primary interface that is required for derived classes
+ */
+/**@{*/
 
   //START_SPHINX_INCLUDE_03
   virtual real64 SolverStep( real64 const & time_n,
@@ -136,7 +136,7 @@ public:
     ImplicitTransient,
     ExplicitTransient
   };
- //END_SPHINX_INCLUDE_01
+  //END_SPHINX_INCLUDE_01
 
   //START_SPHINX_INCLUDE_04
   struct viewKeyStruct : public SolverBase::viewKeyStruct
@@ -147,13 +147,15 @@ public:
   } laplaceFEMViewKeys;
   //END_SPHINX_INCLUDE_04
 
-  inline ParallelVector const * getSolution() const {
-    return & m_solution;
+  inline ParallelVector const * getSolution() const
+  {
+    return &m_solution;
   }
 
-  inline globalIndex getSize() const {
+  inline globalIndex getSize() const
+  {
     return m_matrix.numGlobalRows();
-}
+  }
 
 protected:
   virtual void PostProcessInput() override final;

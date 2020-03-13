@@ -41,16 +41,16 @@
 
 /// Macro for checking and reporting error codes from TPL packages
 #define GEOSX_LAI_CHECK_ERROR( call ) \
-do { \
-  auto const ierr = call; \
-  GEOSX_ERROR_IF_NE_MSG( ierr, 0, "Error in call to " << #call ); \
-} while( false )
+  do { \
+    auto const ierr = call; \
+    GEOSX_ERROR_IF_NE_MSG( ierr, 0, "Error in call to " << #call ); \
+  } while( false )
 
 #define GEOSX_LAI_CHECK_ERROR_NNEG( call ) \
-do { \
-  auto const ierr = call; \
-  GEOSX_ERROR_IF_GT_MSG(0, ierr, "Error in call to " << #call ); \
-} while( false )
+  do { \
+    auto const ierr = call; \
+    GEOSX_ERROR_IF_GT_MSG( 0, ierr, "Error in call to " << #call ); \
+  } while( false )
 
 namespace geosx
 {

@@ -54,7 +54,7 @@ class DomainPartition;
 class InternalMeshGenerator : public MeshGeneratorBase
 {
 public:
-  InternalMeshGenerator( const std::string& name,
+  InternalMeshGenerator( const std::string & name,
                          Group * const parent );
 
   virtual ~InternalMeshGenerator() override;
@@ -65,7 +65,7 @@ public:
 //
 //
 
-  virtual void GenerateElementRegions( DomainPartition& domain ) override;
+  virtual void GenerateElementRegions( DomainPartition & domain ) override;
 
   virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 
@@ -74,11 +74,11 @@ public:
   // virtual void GenerateNodesets( xmlWrapper::xmlNode const & targetNode,
   //                                NodeManager * nodeManager ) override;
 
-  virtual void GetElemToNodesRelationInBox ( const std::string& elementType,
+  virtual void GetElemToNodesRelationInBox ( const std::string & elementType,
                                              const int index[],
-                                             const int& iEle,
+                                             const int & iEle,
                                              int nodeIDInBox[],
-                                             const int size) override;
+                                             const int size ) override;
 
   virtual void RemapMesh ( dataRepository::Group * const domain ) override;
 
@@ -90,12 +90,12 @@ protected:
 private:
 
   int m_dim;
-  array1d<real64> m_vertices[3];
+  array1d< real64 > m_vertices[3];
   integer_array m_nElems[3];
-  array1d<real64> m_nElemScaling[3];
+  array1d< real64 > m_nElemScaling[3];
 
   //bool m_useBias = false;
-  array1d<real64> m_nElemBias[3];
+  array1d< real64 > m_nElemBias[3];
 
   string_array m_regionNames;
 
@@ -122,7 +122,7 @@ private:
 
   string_array m_elementType;
 
-  array1d<integer> m_numElePerBox;
+  array1d< integer > m_numElePerBox;
 
   int m_trianglePattern;   // In pattern 0, half nodes have 4 edges and the
                            // other half have 8; for Pattern 1, every node has
@@ -139,7 +139,7 @@ private:
   realT m_meshRact;
 
   realT m_skewAngle = 0;
-  R1Tensor m_skewCenter = {0,0,0};
+  R1Tensor m_skewCenter = {0, 0, 0};
 
   std::string m_meshDx, m_meshDy, m_meshDz;
 
@@ -162,15 +162,15 @@ private:
   inline R1Tensor NodePosition( const int a[3], int trianglePattern )
   {
     R1Tensor X;
-    realT xInterval(0);
+    realT xInterval( 0 );
 
     int xPosIndex = 0;
-    if (trianglePattern == 1)
+    if( trianglePattern == 1 )
     {
       int startingIndex = 0;
       int endingIndex = 0;
       int block = 0;
-      for( block=0 ; block<m_nElems[0].size() ; ++block )
+      for( block=0; block<m_nElems[0].size(); ++block )
       {
         startingIndex = endingIndex;
         endingIndex = startingIndex + m_nElems[0][block];
@@ -178,13 +178,13 @@ private:
       xPosIndex = endingIndex;
     }
 
-    for( int i=0 ; i<3 ; ++i )
+    for( int i=0; i<3; ++i )
     {
 
       int startingIndex = 0;
       int endingIndex = 0;
       int block = 0;
-      for( block=0 ; block<m_nElems[i].size() ; ++block )
+      for( block=0; block<m_nElems[i].size(); ++block )
       {
         startingIndex = endingIndex;
         endingIndex = startingIndex + m_nElems[i][block];
@@ -201,11 +201,12 @@ private:
 
       // First check if m_nElemBias contains values
       // Otherwise the next test will cause a segfault when looking for "block"
-      if(m_nElemBias[i].size()>0){
+      if( m_nElemBias[i].size()>0 )
+      {
         // Verify that the bias is non-zero and applied to more than one block:
-        if ( ( !isZero(m_nElemBias[i][block]) ) && (m_nElems[i][block]>1))
+        if( ( !isZero( m_nElemBias[i][block] ) ) && (m_nElems[i][block]>1))
         {
-          GEOSX_ERROR_IF(fabs(m_nElemBias[i][block]) >= 1, "Mesh bias must between -1 and 1!");
+          GEOSX_ERROR_IF( fabs( m_nElemBias[i][block] ) >= 1, "Mesh bias must between -1 and 1!" );
 
           realT len = max -  min;
           realT xmean = len / m_nElems[i][block];
@@ -217,8 +218,8 @@ private:
       }
 
       // This is for creating regular triangle pattern
-      if (i==0) xInterval = (max-min) / m_nElems[i][block];
-      if (trianglePattern == 1 && i == 1 && a[1] % 2 == 1 && a[0] != 0 && a[0] != xPosIndex)
+      if( i==0 ) xInterval = (max-min) / m_nElems[i][block];
+      if( trianglePattern == 1 && i == 1 && a[1] % 2 == 1 && a[0] != 0 && a[0] != xPosIndex )
         X[0] -= xInterval * 0.5;
     }
 
@@ -229,7 +230,7 @@ private:
   {
     R1Tensor X;
 
-    for( int i=0 ; i<3 ; ++i )
+    for( int i=0; i<3; ++i )
     {
       X[i] = m_min[i] + (m_max[i]-m_min[i]) * ( ( k[i] + 0.5 ) / m_numElemsTotal[i] );
     }

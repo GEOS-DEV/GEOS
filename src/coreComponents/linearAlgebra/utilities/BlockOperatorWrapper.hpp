@@ -25,12 +25,12 @@
 namespace geosx
 {
 
-template<typename VECTOR, typename OPERATOR>
-class BlockOperatorWrapper : public BlockOperatorView<VECTOR, OPERATOR>
+template< typename VECTOR, typename OPERATOR >
+class BlockOperatorWrapper : public BlockOperatorView< VECTOR, OPERATOR >
 {
 public:
 
-  using Base = BlockOperatorView<VECTOR, OPERATOR>;
+  using Base = BlockOperatorView< VECTOR, OPERATOR >;
   using Vector = typename Base::Vector;
 
   /**
@@ -38,7 +38,7 @@ public:
    * @param nBlocks number of blocks
    */
   explicit BlockOperatorWrapper( localIndex const nRows, localIndex const nCols )
-  : Base( nRows, nCols )
+    : Base( nRows, nCols )
   {}
 
   /**

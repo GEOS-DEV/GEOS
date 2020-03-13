@@ -45,7 +45,7 @@ public:
 
   NeighborCommunicator();
 
-  NeighborCommunicator( int rank ) :
+  NeighborCommunicator( int rank ):
     NeighborCommunicator()
   { SetNeighborRank( rank ); }
 

@@ -57,16 +57,16 @@ void checkDerivative( arraySlice1d< real64 const > const & valueEps,
                       string const & var,
                       string_array const & labels )
 {
-  localIndex const size = labels.size(0);
+  localIndex const size = labels.size( 0 );
 
-  for (localIndex i = 0; i < size; ++i)
+  for( localIndex i = 0; i < size; ++i )
   {
     checkDerivative( valueEps[i], value[i], deriv[i], eps, relTol, absTol,
                      name + "[" + labels[i] + "]", var );
   }
 }
 
-template<int DIM, typename ... Args>
+template< int DIM, typename ... Args >
 void checkDerivative( ArraySlice< real64 const, DIM > const & valueEps,
                       ArraySlice< real64 const, DIM > const & value,
                       ArraySlice< real64 const, DIM > const & deriv,
@@ -78,12 +78,12 @@ void checkDerivative( ArraySlice< real64 const, DIM > const & valueEps,
                       string_array const & labels,
                       Args ... label_lists )
 {
-  localIndex const size = labels.size(0);
+  localIndex const size = labels.size( 0 );
 
-  for (localIndex i = 0; i < size; ++i)
+  for( localIndex i = 0; i < size; ++i )
   {
     checkDerivative( valueEps[i], value[i], deriv[i], eps, relTol, absTol,
-                     name + "[" + labels[i] + "]", var, label_lists... );
+                     name + "[" + labels[i] + "]", var, label_lists ... );
   }
 }
 
@@ -97,7 +97,7 @@ void checkDerivative( ArraySlice< real64 const, DIM > const & valueEps,
                       string const & var,
                       string_array const & labels,
                       Args ... label_lists )
-{ return checkDerivative( valueEps, value, deriv, eps, relTol, DEFAULT_ABS_TOL, name, var, labels, label_lists... ); }
+{ return checkDerivative( valueEps, value, deriv, eps, relTol, DEFAULT_ABS_TOL, name, var, labels, label_lists ... ); }
 
 // invert compositional derivative array layout to move innermost slice on the top
 // (this is needed so we can use checkDerivative() to check derivative w.r.t. for each compositional var)
@@ -123,7 +123,7 @@ array2d< real64 > invertLayout( arraySlice2d< real64 const > const & input,
   {
     for( localIndex j = 0; j < N2; ++j )
     {
-      output(j, i) = input(i, j);
+      output( j, i ) = input( i, j );
     }
   }
 
@@ -143,7 +143,7 @@ array3d< real64 > invertLayout( arraySlice3d< real64 const > const & input,
     {
       for( localIndex k = 0; k < N3; ++k )
       {
-        output(k, i, j) = input(i, j, k);
+        output( k, i, j ) = input( i, j, k );
       }
     }
   }

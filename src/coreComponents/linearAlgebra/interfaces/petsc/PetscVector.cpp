@@ -29,24 +29,24 @@ static_assert( sizeof( PetscInt ) == sizeof( globalIndex ),
                "PetscInt and geosx::globalIndex must have the same size" );
 
 static_assert( std::is_signed< PetscInt >::value == std::is_signed< globalIndex >::value,
-               "PetscInt and geoex::globalIndex must both be signed or unsigned");
+               "PetscInt and geoex::globalIndex must both be signed or unsigned" );
 
 static_assert( std::is_same< PetscScalar, real64 >::value,
                "PetscScalar and geosx::real64 must be the same type" );
 
 PetscVector::PetscVector()
-: VectorBase(),
+  : VectorBase(),
   m_vec{}
 {}
 
 PetscVector::PetscVector( PetscVector const & src )
-: PetscVector()
+  : PetscVector()
 {
   *this = src;
 }
 
 PetscVector::PetscVector( PetscVector && src ) noexcept
-: PetscVector()
+  : PetscVector()
 {
   *this = std::move( src );
 }
@@ -100,10 +100,10 @@ void PetscVector::createWithGlobalSize( globalIndex const globalSize, MPI_Comm c
   reset();
   GEOSX_LAI_CHECK_ERROR( VecCreate( comm, &m_vec ) );
   GEOSX_LAI_CHECK_ERROR( VecSetType( m_vec, VECMPI ) );
-  GEOSX_LAI_CHECK_ERROR( VecSetSizes( m_vec, PETSC_DECIDE, globalSize) );
+  GEOSX_LAI_CHECK_ERROR( VecSetSizes( m_vec, PETSC_DECIDE, globalSize ) );
 }
 
-void PetscVector::create( arraySlice1d<real64 const> const & localValues, MPI_Comm const & comm )
+void PetscVector::create( arraySlice1d< real64 const > const & localValues, MPI_Comm const & comm )
 {
   GEOSX_LAI_ASSERT( closed() );
   reset();
@@ -116,7 +116,7 @@ void PetscVector::create( arraySlice1d<real64 const> const & localValues, MPI_Co
   GEOSX_LAI_CHECK_ERROR( VecGetArray( m_vec, &values ) );
 
   // set vector values
-  for (int i = 0; i < size; i++)
+  for( int i = 0; i < size; i++ )
   {
     values[i] = localValues[i];
   }
@@ -148,7 +148,7 @@ void PetscVector::set( globalIndex const * globalIndices,
                        localIndex size )
 {
   GEOSX_LAI_ASSERT( !closed() );
-  GEOSX_LAI_CHECK_ERROR( VecSetValues( m_vec, size, toPetscInt( globalIndices), values, INSERT_VALUES ) );
+  GEOSX_LAI_CHECK_ERROR( VecSetValues( m_vec, size, toPetscInt( globalIndices ), values, INSERT_VALUES ) );
 }
 
 void PetscVector::add( globalIndex const * globalIndices,
@@ -156,11 +156,11 @@ void PetscVector::add( globalIndex const * globalIndices,
                        localIndex size )
 {
   GEOSX_LAI_ASSERT( !closed() );
-  GEOSX_LAI_CHECK_ERROR( VecSetValues( m_vec, size, toPetscInt( globalIndices), values, ADD_VALUES ) );
+  GEOSX_LAI_CHECK_ERROR( VecSetValues( m_vec, size, toPetscInt( globalIndices ), values, ADD_VALUES ) );
 }
 
-void PetscVector::set( arraySlice1d<globalIndex const> const & globalIndices,
-                       arraySlice1d<real64 const> const & values )
+void PetscVector::set( arraySlice1d< globalIndex const > const & globalIndices,
+                       arraySlice1d< real64 const > const & values )
 {
   GEOSX_LAI_ASSERT( !closed() );
   GEOSX_LAI_CHECK_ERROR( VecSetValues( m_vec,
@@ -170,8 +170,8 @@ void PetscVector::set( arraySlice1d<globalIndex const> const & globalIndices,
                                        INSERT_VALUES ) );
 }
 
-void PetscVector::add( arraySlice1d<globalIndex const> const & globalIndices,
-                       arraySlice1d<real64 const> const & values )
+void PetscVector::add( arraySlice1d< globalIndex const > const & globalIndices,
+                       arraySlice1d< real64 const > const & values )
 {
   GEOSX_LAI_ASSERT( !closed() );
   GEOSX_LAI_CHECK_ERROR( VecSetValues( m_vec,
@@ -324,14 +324,20 @@ void PetscVector::write( string const & filename,
   switch( format )
   {
     case LAIOutputFormat::NATIVE_ASCII:
+    {
       petscFormat = PETSC_VIEWER_ASCII_COMMON;
-      break;
+    }
+    break;
     case LAIOutputFormat::MATLAB_ASCII:
+    {
       petscFormat = PETSC_VIEWER_ASCII_MATLAB;
-      break;
+    }
+    break;
     case LAIOutputFormat::MATRIX_MARKET:
+    {
       petscFormat = PETSC_VIEWER_ASCII_MATRIXMARKET;
-      break;
+    }
+    break;
     default:
       GEOSX_ERROR( "Unsupported vector output format" );
   }
@@ -352,8 +358,8 @@ real64 PetscVector::get( globalIndex globalRow ) const
   return value;
 }
 
-void PetscVector::get( arraySlice1d<globalIndex const> const & globalIndices,
-                       arraySlice1d<real64> const & values ) const
+void PetscVector::get( arraySlice1d< globalIndex const > const & globalIndices,
+                       arraySlice1d< real64 > const & values ) const
 {
   GEOSX_LAI_ASSERT( ready() );
   GEOSX_LAI_ASSERT_GE( values.size(), globalIndices.size() );
@@ -383,7 +389,7 @@ MPI_Comm PetscVector::getComm() const
 {
   GEOSX_LAI_ASSERT( created() );
   MPI_Comm comm;
-  GEOSX_LAI_CHECK_ERROR( PetscObjectGetComm( reinterpret_cast<PetscObject>( m_vec ), &comm ) );
+  GEOSX_LAI_CHECK_ERROR( PetscObjectGetComm( reinterpret_cast< PetscObject >( m_vec ), &comm ) );
   return comm;
 }
 
@@ -456,4 +462,3 @@ globalIndex PetscVector::iupper() const
 }
 
 } // end geosx
-

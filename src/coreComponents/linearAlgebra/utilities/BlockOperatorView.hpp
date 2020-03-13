@@ -30,14 +30,14 @@ namespace geosx
  * @tparam Vector type of vector that sub-blocks of this view can operate on
  */
 
-template< typename VECTOR, typename OPERATOR = LinearOperator<VECTOR> >
-class BlockOperatorView : public LinearOperator< BlockVectorView<VECTOR> >
+template< typename VECTOR, typename OPERATOR = LinearOperator< VECTOR > >
+class BlockOperatorView : public LinearOperator< BlockVectorView< VECTOR > >
 {
 
 public:
 
   /// Base type
-  using Base = LinearOperator< BlockVectorView<VECTOR> >;
+  using Base = LinearOperator< BlockVectorView< VECTOR > >;
 
   /// the type of vector this linear operator operates on
   using Vector = typename Base::Vector;
@@ -93,7 +93,7 @@ public:
    */
   localIndex numBlockRows() const
   {
-    return m_operators.size(0);
+    return m_operators.size( 0 );
   }
 
   /**
@@ -102,7 +102,7 @@ public:
    */
   localIndex numBlockCols() const
   {
-    return m_operators.size(1);
+    return m_operators.size( 1 );
   }
 
   /**

@@ -43,7 +43,7 @@ LinearElasticAnisotropic::LinearElasticAnisotropic( std::string const & name, Gr
     setApplyDefaultValue( 0 )->
     setDescription( "Fully Anisotropic Elastic Stiffness Field in Voigt notation (6x6 matrix)" );
 
-  m_stiffness.resizeDimension<1,2>( 6, 6 );
+  m_stiffness.resizeDimension< 1, 2 >( 6, 6 );
 }
 
 
@@ -74,11 +74,11 @@ void LinearElasticAnisotropic::AllocateConstitutiveData( dataRepository::Group *
 
   this->resize( parent->size() );
 //  m_stiffness.resize( parent->size() );
-  for( localIndex k=0 ; k< m_stiffness.size( 0 ) ; ++k )
+  for( localIndex k=0; k< m_stiffness.size( 0 ); ++k )
   {
-    for( localIndex i=0 ; i<6 ; ++i )
+    for( localIndex i=0; i<6; ++i )
     {
-      for( localIndex j=0 ; j<6 ; ++j )
+      for( localIndex j=0; j<6; ++j )
       {
         m_stiffness( k, i, j ) = m_defaultStiffness[i][j];
       }
@@ -95,9 +95,9 @@ void LinearElasticAnisotropic::PostProcessInput()
 
 void LinearElasticAnisotropic::setDefaultStiffness( real64 const c[6][6] )
 {
-  for( int i=0 ; i<6 ; ++i )
+  for( int i=0; i<6; ++i )
   {
-    for( int j=0 ; j<6 ; ++j )
+    for( int j=0; j<6; ++j )
     {
       m_defaultStiffness( i, j ) = c[i][j];
     }

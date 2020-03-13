@@ -169,7 +169,7 @@ public:
   virtual real64 get( globalIndex globalRow ) const override;
 
   virtual void get( arraySlice1d< globalIndex const > const & globalRowIndices,
-                    arraySlice1d <real64> const & values ) const override;
+                    arraySlice1d< real64 > const & values ) const override;
 
   virtual localIndex getLocalRowID( globalIndex const globalRowIndex ) const override;
 

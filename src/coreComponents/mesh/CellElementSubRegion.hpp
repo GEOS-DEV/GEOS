@@ -42,12 +42,12 @@ public:
     }
   }
 
-  virtual void ViewPackingExclusionList( SortedArray<localIndex> & exclusionList ) const override;
+  virtual void ViewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const override;
 
-  virtual localIndex PackUpDownMapsSize( arrayView1d<localIndex const> const & packList ) const override;
+  virtual localIndex PackUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
 
   virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
-                                     arrayView1d<localIndex const> const & packList ) const override;
+                                     arrayView1d< localIndex const > const & packList ) const override;
 
   virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                        localIndex_array & packList,
@@ -92,12 +92,12 @@ public:
 
 private:
 
-  map<localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInNodelist;
-  map<localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInFacelist;
+  map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInNodelist;
+  map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInFacelist;
 
   template< bool DOPACK >
   localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                    arrayView1d<localIndex const> const & packList ) const;
+                                    arrayView1d< localIndex const > const & packList ) const;
 
 
 };
