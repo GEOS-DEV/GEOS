@@ -133,8 +133,8 @@ public:
   array1d< R1Tensor > & faceNormal()       { return m_faceNormal; }
   array1d< R1Tensor > const & faceNormal() const { return m_faceNormal; }
 
-  array1d<R2Tensor> &       faceRotationMatrix()       { return m_faceRotationMatrix; }
-  array1d<R2Tensor> const & faceRotationMatrix() const { return m_faceRotationMatrix; }
+  array1d< R2Tensor > & faceRotationMatrix()       { return m_faceRotationMatrix; }
+  array1d< R2Tensor > const & faceRotationMatrix() const { return m_faceRotationMatrix; }
 
   NodeMapType & nodeList()                    { return m_nodeList; }
   NodeMapType const & nodeList() const { return m_nodeList; }

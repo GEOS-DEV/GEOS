@@ -459,7 +459,7 @@ struct FieldSpecificationAdd : public FieldSpecificationOp< OpAdd >
                                          globalIndex * const dof,
                                          real64 * const values )
   {
-    for( localIndex a = 0 ; a < num ; ++a )
+    for( localIndex a = 0; a < num; ++a )
     {
       if( rhs.getLocalRowID( dof[a] ) >= 0 )
       {

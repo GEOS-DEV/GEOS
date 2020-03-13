@@ -90,9 +90,9 @@ void MohrCoulomb::PostProcessInput()
     string & frictionAngleUnitOfMeasurement = getReference< string >( viewKeyStruct::frictionAngleUnitOfMeasurementString );
 
     // convert string to lower case
-    std::for_each( frictionAngleUnitOfMeasurement.begin(), frictionAngleUnitOfMeasurement.end(), [](char & c) {
-      c = ::tolower(c);
-    });
+    std::for_each( frictionAngleUnitOfMeasurement.begin(), frictionAngleUnitOfMeasurement.end(), []( char & c ) {
+      c = ::tolower( c );
+    } );
 
     if( frictionAngleUnitOfMeasurement == "radians" || frictionAngleUnitOfMeasurement == "rad" )
     {

@@ -44,7 +44,7 @@ public:
     return "LagrangianContact";
   }
 
-  virtual void InitializePreSubGroups(Group * const rootGroup) override;
+  virtual void InitializePreSubGroups( Group * const rootGroup ) override;
 
   virtual void RegisterDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
 

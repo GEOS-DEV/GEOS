@@ -91,7 +91,7 @@ real64 Centroid_3DPolygon( localIndex const * const pointsIndices,
  */
 real64 Centroid_3DPolygon( localIndex const * const pointsIndices,
                            localIndex const numPoints,
-                           arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & points,
+                           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & points,
                            R1Tensor & center,
                            R1Tensor & normal,
                            R2Tensor & rotationMatrix,

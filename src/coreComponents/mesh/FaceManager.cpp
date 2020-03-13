@@ -579,7 +579,7 @@ void FaceManager::computeGeometry( NodeManager const * const nodeManager )
   real64_array & faceArea  = getReference< real64_array >( viewKeyStruct::faceAreaString );
   r1_array & faceNormal = getReference< r1_array >( viewKeyStruct::faceNormalString );
   r1_array & faceCenter = getReference< r1_array >( viewKeyStruct::faceCenterString );
-  r2_array & rotationMatrix = getReference<r2_array>( viewKeyStruct::faceRotationMatrixString );
+  r2_array & rotationMatrix = getReference< r2_array >( viewKeyStruct::faceRotationMatrixString );
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager->referencePosition();
 
   // loop over faces and calculate faceArea, faceNormal and faceCenter

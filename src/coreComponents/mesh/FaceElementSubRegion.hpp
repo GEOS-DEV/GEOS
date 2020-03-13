@@ -61,8 +61,8 @@ public:
                                             arrayView1d< real64 const > const & faceArea );
 
   void CalculateElementGeometricQuantities( localIndex const k,
-                                            arrayView1d<real64 const> const & faceArea,
-                                            arrayView1d<R2Tensor const> const & faceRotationMatrix );
+                                            arrayView1d< real64 const > const & faceArea,
+                                            arrayView1d< R2Tensor const > const & faceRotationMatrix );
 
   virtual localIndex PackUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
 
@@ -155,7 +155,7 @@ public:
   arrayView1d< real64 > const & getElementArea()       { return m_elementArea; }
   arrayView1d< real64 const > const & getElementArea() const { return m_elementArea; }
 
-  arrayView1d< R2Tensor > const &       getElementRotationMatrix()       { return m_elementRotationMatrix; }
+  arrayView1d< R2Tensor > const & getElementRotationMatrix()       { return m_elementRotationMatrix; }
   arrayView1d< R2Tensor const > const & getElementRotationMatrix() const { return m_elementRotationMatrix; }
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
