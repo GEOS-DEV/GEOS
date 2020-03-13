@@ -50,22 +50,22 @@ namespace geosx
 struct FaceElementStencil_Traits
 {
   /// The array type that will be used to store the indices of the stencil contributors
-  using IndexContainerType = ArrayOfArrays<localIndex>;
+  using IndexContainerType = ArrayOfArrays< localIndex >;
 
   /// The array view type for the stencil indices
-  using IndexContainerViewType = ArrayOfArraysView<localIndex>;
+  using IndexContainerViewType = ArrayOfArraysView< localIndex >;
 
   /// The array view to const type for the stencil indices
-  using IndexContainerViewConstType = ArrayOfArraysView<localIndex const>;
+  using IndexContainerViewConstType = ArrayOfArraysView< localIndex const >;
 
   /// The array type that is used to store the weights of the stencil contributors
-  using WeightContainerType = ArrayOfArrays<real64>;
+  using WeightContainerType = ArrayOfArrays< real64 >;
 
   /// The array view type for the stencil weights
-  using WeightContainerViewType = ArrayOfArraysView<real64>;
+  using WeightContainerViewType = ArrayOfArraysView< real64 >;
 
   /// The array view to const type for the stencil weights
-  using WeightContainerViewConstType = ArrayOfArraysView<real64 const>;
+  using WeightContainerViewConstType = ArrayOfArraysView< real64 const >;
 
   /// Number of points the flux is between (normally 2)
   static localIndex constexpr NUM_POINT_IN_FLUX = 6;
@@ -79,8 +79,8 @@ struct FaceElementStencil_Traits
  *
  * Provides management of the interior stencil points for a face elements when using Two-Point flux approximation.
  */
-class FaceElementStencil : public StencilBase<FaceElementStencil_Traits,FaceElementStencil>,
-                           public FaceElementStencil_Traits
+class FaceElementStencil : public StencilBase< FaceElementStencil_Traits, FaceElementStencil >,
+  public FaceElementStencil_Traits
 {
 public:
 
@@ -88,35 +88,35 @@ public:
   FaceElementStencil();
 
   virtual void add( localIndex const numPts,
-                    localIndex  const * const elementRegionIndices,
-                    localIndex  const * const elementSubRegionIndices,
-                    localIndex  const * const elementIndices,
+                    localIndex const * const elementRegionIndices,
+                    localIndex const * const elementSubRegionIndices,
+                    localIndex const * const elementIndices,
                     real64 const * const weights,
                     localIndex const connectorIndex ) override final;
 
   void add( localIndex const numPts,
-	    R1Tensor const * const cellCenterToEdgeCenter,
+            R1Tensor const * const cellCenterToEdgeCenter,
             integer const * const isGhostConnector,
-	    localIndex const connectorIndex );  
+            localIndex const connectorIndex );
 
-  virtual localIndex size() const  override final
+  virtual localIndex size() const override final
   { return m_elementRegionIndices.size(); }
 
   localIndex stencilSize( localIndex index ) const
-  { return m_elementRegionIndices.sizeOfArray(index); }
+  { return m_elementRegionIndices.sizeOfArray( index ); }
 
 
   ArrayOfArraysView< R1Tensor const > const & getCellCenterToEdgeCenters() const
   { return m_cellCenterToEdgeCenters; }
 
   ArrayOfArraysView< integer const > const & getIsGhostConnectors() const
-  { return m_isGhostConnectors; }  
+  { return m_isGhostConnectors; }
 
-  
+
 private:
 
-  ArrayOfArrays<R1Tensor> m_cellCenterToEdgeCenters;
-  ArrayOfArrays<integer> m_isGhostConnectors;  
+  ArrayOfArrays< R1Tensor > m_cellCenterToEdgeCenters;
+  ArrayOfArrays< integer > m_isGhostConnectors;
 
 
 };

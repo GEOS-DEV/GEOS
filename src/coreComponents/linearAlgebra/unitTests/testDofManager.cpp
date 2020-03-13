@@ -37,25 +37,25 @@ using namespace geosx::testing;
 using namespace geosx::dataRepository;
 
 char const * xmlInput =
-"<Problem>"
-"  <Mesh>"
-"    <InternalMesh name=\"mesh1\""
-"                  elementTypes=\"{C3D8}\""
-"                  xCoords=\"{0, 1, 2, 3, 4}\""
-"                  yCoords=\"{0, 1}\""
-"                  zCoords=\"{0, 1}\""
-"                  nx=\"{4, 4, 4, 4}\""
-"                  ny=\"{4}\""
-"                  nz=\"{5}\""
-"                  cellBlockNames=\"{block1, block2, block3, block4}\"/>"
-"  </Mesh>"
-"  <ElementRegions>"
-"    <CellElementRegion name=\"region1\" cellBlocks=\"{block1}\" materialList=\"{}\" />"
-"    <CellElementRegion name=\"region2\" cellBlocks=\"{block2}\" materialList=\"{}\" />"
-"    <CellElementRegion name=\"region3\" cellBlocks=\"{block3}\" materialList=\"{}\" />"
-"    <CellElementRegion name=\"region4\" cellBlocks=\"{block4}\" materialList=\"{}\" />"
-"  </ElementRegions>"
-"</Problem>";
+  "<Problem>"
+  "  <Mesh>"
+  "    <InternalMesh name=\"mesh1\""
+  "                  elementTypes=\"{C3D8}\""
+  "                  xCoords=\"{0, 1, 2, 3, 4}\""
+  "                  yCoords=\"{0, 1}\""
+  "                  zCoords=\"{0, 1}\""
+  "                  nx=\"{4, 4, 4, 4}\""
+  "                  ny=\"{4}\""
+  "                  nz=\"{5}\""
+  "                  cellBlockNames=\"{block1, block2, block3, block4}\"/>"
+  "  </Mesh>"
+  "  <ElementRegions>"
+  "    <CellElementRegion name=\"region1\" cellBlocks=\"{block1}\" materialList=\"{}\" />"
+  "    <CellElementRegion name=\"region2\" cellBlocks=\"{block2}\" materialList=\"{}\" />"
+  "    <CellElementRegion name=\"region3\" cellBlocks=\"{block3}\" materialList=\"{}\" />"
+  "    <CellElementRegion name=\"region4\" cellBlocks=\"{block4}\" materialList=\"{}\" />"
+  "  </ElementRegions>"
+  "</Problem>";
 
 /**
  * @brief Base class for all DofManager test fixtures.
@@ -64,9 +64,9 @@ class DofManagerTestBase : public ::testing::Test
 {
 public:
 
-  DofManagerTestBase() :
+  DofManagerTestBase():
     ::testing::Test(),
-    problemManager( std::make_unique<ProblemManager>( "Problem", nullptr ) ),
+                                             problemManager( std::make_unique< ProblemManager >( "Problem", nullptr ) ),
     dofManager( "test" )
   {
     setupProblem( problemManager.get(), xmlInput );
@@ -76,7 +76,7 @@ public:
 
 protected:
 
-  std::unique_ptr<ProblemManager> const problemManager;
+  std::unique_ptr< ProblemManager > const problemManager;
   MeshLevel * mesh;
   DofManager dofManager;
 };
@@ -94,10 +94,10 @@ void checkLocalDofNumbers( MeshLevel const * const mesh,
                            string_array const & regions,
                            array1d< globalIndex > & dofNumbers )
 {
-  ObjectManagerBase const * const manager = mesh->GetGroup<ObjectManagerBase>( testMeshHelper<LOC>::managerKey );
-  arrayView1d< globalIndex const > dofIndex = manager->getReference< array1d<globalIndex> >( dofIndexKey );
+  ObjectManagerBase const * const manager = mesh->GetGroup< ObjectManagerBase >( testMeshHelper< LOC >::managerKey );
+  arrayView1d< globalIndex const > dofIndex = manager->getReference< array1d< globalIndex > >( dofIndexKey );
 
-  forLocalObjects<LOC>( mesh, regions, [&]( localIndex const idx )
+  forLocalObjects< LOC >( mesh, regions, [&]( localIndex const idx )
   {
     SCOPED_TRACE( "idx = " + std::to_string( idx ) );
     EXPECT_GE( dofIndex[idx], 0 );
@@ -116,13 +116,13 @@ template<>
 void checkLocalDofNumbers< DofManager::Location::Elem >( MeshLevel const * const mesh,
                                                          string const & dofIndexKey,
                                                          string_array const & regions,
-                                                         array1d<globalIndex> & dofNumbers )
+                                                         array1d< globalIndex > & dofNumbers )
 {
   // make a list of regions
   ElementRegionManager const * const elemManager = mesh->getElemManager();
-  auto const dofNumber = elemManager->ConstructViewAccessor< array1d<globalIndex>, arrayView1d<globalIndex const> >( dofIndexKey );
+  auto const dofNumber = elemManager->ConstructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex const > >( dofIndexKey );
 
-  forLocalObjects<DofManager::Location::Elem>( mesh, regions, [&]( auto const idx )
+  forLocalObjects< DofManager::Location::Elem >( mesh, regions, [&]( auto const idx )
   {
     globalIndex const dofIndex = dofNumber[idx[0]][idx[1]][idx[2]];
     EXPECT_GE( dofIndex, 0 );
@@ -160,11 +160,11 @@ void checkStride( arrayView1d< globalIndex const > const & dofNumbers, globalInd
  */
 void checkGlobalOrdering( arrayView1d< globalIndex const > const & dofNumbers )
 {
-  array1d<globalIndex> localDofBounds( 2 );
+  array1d< globalIndex > localDofBounds( 2 );
   localDofBounds[0] = dofNumbers.empty() ? -1 : dofNumbers.front();
   localDofBounds[1] = dofNumbers.empty() ? -1 : dofNumbers.back();
 
-  array1d<globalIndex> globalDofBounds;
+  array1d< globalIndex > globalDofBounds;
   MpiWrapper::allGather( localDofBounds.toViewConst(), globalDofBounds );
 
   if( MpiWrapper::Comm_rank() == 0 )
@@ -191,10 +191,10 @@ protected:
     string name;
     DofManager::Location location;
     localIndex components;
-    std::vector<string> regions = {};
+    std::vector< string > regions = {};
   };
 
-  void test( std::vector<FieldDesc> fields );
+  void test( std::vector< FieldDesc > fields );
 };
 
 /**
@@ -205,7 +205,7 @@ protected:
  * @param numDofIndicesExpected expected global number of dof indices
  * @param regions list of support regions (empty = whole domain)
  */
-void DofManagerIndicesTest::test( std::vector<FieldDesc> fields )
+void DofManagerIndicesTest::test( std::vector< FieldDesc > fields )
 {
   for( FieldDesc & f : fields )
   {
@@ -213,25 +213,31 @@ void DofManagerIndicesTest::test( std::vector<FieldDesc> fields )
   }
   dofManager.reorderByRank();
 
-  array1d<globalIndex> allDofNumbers;
+  array1d< globalIndex > allDofNumbers;
   localIndex lastNumComp = -1;
 
   for( FieldDesc & f : fields )
   {
-    array1d<globalIndex> dofNumbers;
+    array1d< globalIndex > dofNumbers;
     string const key = dofManager.getKey( f.name );
     string_array const regions = getRegions( mesh, f.regions );
     switch( f.location )
     {
       case DofManager::Location::Elem:
+      {
         checkLocalDofNumbers< DofManager::Location::Elem >( mesh, key, regions, dofNumbers );
-        break;
+      }
+      break;
       case DofManager::Location::Face:
+      {
         checkLocalDofNumbers< DofManager::Location::Face >( mesh, key, regions, dofNumbers );
-        break;
+      }
+      break;
       case DofManager::Location::Node:
+      {
         checkLocalDofNumbers< DofManager::Location::Node >( mesh, key, regions, dofNumbers );
-        break;
+      }
+      break;
       default:
         GEOSX_ERROR( "Unsupported" );
     }
@@ -257,7 +263,9 @@ void DofManagerIndicesTest::test( std::vector<FieldDesc> fields )
  */
 TEST_F( DofManagerIndicesTest, Node_Full )
 {
-  test( { { "displacement", DofManager::Location::Node, 3 } } );
+  test( {
+    { "displacement", DofManager::Location::Node, 3 }
+  } );
 }
 
 /**
@@ -265,7 +273,10 @@ TEST_F( DofManagerIndicesTest, Node_Full )
  */
 TEST_F( DofManagerIndicesTest, Node_Partial )
 {
-  test( { { "displacement", DofManager::Location::Node, 3, { "region1", "region3", "region4" } } } );
+  test( {
+    { "displacement", DofManager::Location::Node, 3, { "region1", "region3", "region4" }
+    }
+  } );
 }
 
 /**
@@ -273,7 +284,9 @@ TEST_F( DofManagerIndicesTest, Node_Partial )
  */
 TEST_F( DofManagerIndicesTest, Elem_Full )
 {
-  test( { { "pressure", DofManager::Location::Elem, 2 } } );
+  test( {
+    { "pressure", DofManager::Location::Elem, 2 }
+  } );
 }
 
 /**
@@ -281,7 +294,10 @@ TEST_F( DofManagerIndicesTest, Elem_Full )
  */
 TEST_F( DofManagerIndicesTest, Elem_Partial )
 {
-  test( { { "pressure", DofManager::Location::Elem, 2, { "region1", "region3", "region4" } } } );
+  test( {
+    { "pressure", DofManager::Location::Elem, 2, { "region1", "region3", "region4" }
+    }
+  } );
 }
 
 /**
@@ -289,7 +305,9 @@ TEST_F( DofManagerIndicesTest, Elem_Partial )
  */
 TEST_F( DofManagerIndicesTest, Face_Full )
 {
-  test( { { "flux", DofManager::Location::Face, 2 } } );
+  test( {
+    { "flux", DofManager::Location::Face, 2 }
+  } );
 }
 
 /**
@@ -297,7 +315,10 @@ TEST_F( DofManagerIndicesTest, Face_Full )
  */
 TEST_F( DofManagerIndicesTest, Face_Partial )
 {
-  test( { { "flux", DofManager::Location::Face, 2, { "region1", "region3", "region4" } } } );
+  test( {
+    { "flux", DofManager::Location::Face, 2, { "region1", "region3", "region4" }
+    }
+  } );
 }
 
 /**
@@ -305,8 +326,12 @@ TEST_F( DofManagerIndicesTest, Face_Partial )
  */
 TEST_F( DofManagerIndicesTest, Node_Elem_Full )
 {
-  test( { { "displacement", DofManager::Location::Node, 3, {} },
-          { "pressure",     DofManager::Location::Elem, 2, {} } } );
+  test( {
+    { "displacement", DofManager::Location::Node, 3, {}
+    },
+    { "pressure", DofManager::Location::Elem, 2, {}
+    }
+  } );
 }
 
 /**
@@ -314,8 +339,12 @@ TEST_F( DofManagerIndicesTest, Node_Elem_Full )
  */
 TEST_F( DofManagerIndicesTest, Node_Elem_Partial )
 {
-  test( { { "displacement", DofManager::Location::Node, 3, { "region1", "region3", "region4" } },
-          { "pressure",     DofManager::Location::Elem, 2, { "region1", "region2", "region4" } } } );
+  test( {
+    { "displacement", DofManager::Location::Node, 3, { "region1", "region3", "region4" }
+    },
+    { "pressure", DofManager::Location::Elem, 2, { "region1", "region2", "region4" }
+    }
+  } );
 }
 
 /**
@@ -323,8 +352,12 @@ TEST_F( DofManagerIndicesTest, Node_Elem_Partial )
  */
 TEST_F( DofManagerIndicesTest, Face_Elem_Full )
 {
-  test( { { "flux",     DofManager::Location::Face, 2, {} },
-          { "pressure", DofManager::Location::Elem, 2, {} } } );
+  test( {
+    { "flux", DofManager::Location::Face, 2, {}
+    },
+    { "pressure", DofManager::Location::Elem, 2, {}
+    }
+  } );
 }
 
 /**
@@ -332,15 +365,19 @@ TEST_F( DofManagerIndicesTest, Face_Elem_Full )
  */
 TEST_F( DofManagerIndicesTest, Face_Elem_Partial )
 {
-  test( { { "flux",     DofManager::Location::Face, 2, { "region1", "region3", "region4" } },
-          { "pressure", DofManager::Location::Elem, 2, { "region1", "region3", "region4" } } } );
+  test( {
+    { "flux", DofManager::Location::Face, 2, { "region1", "region3", "region4" }
+    },
+    { "pressure", DofManager::Location::Elem, 2, { "region1", "region3", "region4" }
+    }
+  } );
 }
 
 /**
  * @brief Test fixture for all typed (LAI dependent) DofManager tests.
  * @tparam LAI linear algebra interface type
  */
-template<typename LAI>
+template< typename LAI >
 class DofManagerMatrixTest : public DofManagerTestBase
 {
 protected:
@@ -379,8 +416,8 @@ protected:
     std::vector< string > regions = {};
   };
 
-  void addFields( std::vector<FieldDesc> fields,
-                  std::map< std::pair<string, string>, CouplingDesc > couplings = {} )
+  void addFields( std::vector< FieldDesc > fields,
+                  std::map< std::pair< string, string >, CouplingDesc > couplings = {} )
   {
     for( FieldDesc const & f : fields )
     {
@@ -389,20 +426,20 @@ protected:
     }
     for( auto const & entry : couplings )
     {
-      std::pair<string, string> const & fieldNames = entry.first;
+      std::pair< string, string > const & fieldNames = entry.first;
       CouplingDesc const & c = entry.second;
-      dofManager.addCoupling( fieldNames.first, fieldNames.second, c.connectivity, getRegions( mesh, c.regions), c.symmetric );
+      dofManager.addCoupling( fieldNames.first, fieldNames.second, c.connectivity, getRegions( mesh, c.regions ), c.symmetric );
     }
     dofManager.reorderByRank();
   }
 };
 
-template<typename LAI>
-class DofManagerSparsityTest : public DofManagerMatrixTest<LAI>
+template< typename LAI >
+class DofManagerSparsityTest : public DofManagerMatrixTest< LAI >
 {
 protected:
 
-  using Base = DofManagerMatrixTest<LAI>;
+  using Base = DofManagerMatrixTest< LAI >;
   using Matrix = typename Base::Matrix;
   using FieldDesc = typename Base::FieldDesc;
   using CouplingDesc = typename Base::CouplingDesc;
@@ -411,15 +448,15 @@ protected:
   using Base::dofManager;
   using Base::addFields;
 
-  void test( std::vector<FieldDesc> fields,
-             std::map< std::pair<string, string>, CouplingDesc > couplings = {} );
+  void test( std::vector< FieldDesc > fields,
+             std::map< std::pair< string, string >, CouplingDesc > couplings = {} );
 };
 
 TYPED_TEST_CASE_P( DofManagerSparsityTest );
 
-template<typename LAI>
-void DofManagerSparsityTest<LAI>::test( std::vector<FieldDesc> fields,
-                                        std::map< std::pair<string, string>, CouplingDesc > couplings )
+template< typename LAI >
+void DofManagerSparsityTest< LAI >::test( std::vector< FieldDesc > fields,
+                                          std::map< std::pair< string, string >, CouplingDesc > couplings )
 {
   addFields( fields, couplings );
 
@@ -433,14 +470,20 @@ void DofManagerSparsityTest<LAI>::test( std::vector<FieldDesc> fields,
     switch( f.location )
     {
       case DofManager::Location::Elem:
+      {
         numLocalObj = countLocalObjects< DofManager::Location::Elem >( mesh, regions );
-        break;
+      }
+      break;
       case DofManager::Location::Face:
+      {
         numLocalObj = countLocalObjects< DofManager::Location::Face >( mesh, regions );
-        break;
+      }
+      break;
       case DofManager::Location::Node:
+      {
         numLocalObj = countLocalObjects< DofManager::Location::Node >( mesh, regions );
-        break;
+      }
+      break;
       default:
         GEOSX_ERROR( "Unsupported" );
     }
@@ -467,7 +510,7 @@ void DofManagerSparsityTest<LAI>::test( std::vector<FieldDesc> fields,
   }
   for( auto const & entry : couplings )
   {
-    std::pair<string, string> const & names = entry.first;
+    std::pair< string, string > const & names = entry.first;
     CouplingDesc const & c = entry.second;
 
     FieldDesc const & f1 = *std::find_if( fields.begin(), fields.end(),
@@ -497,10 +540,12 @@ void DofManagerSparsityTest<LAI>::test( std::vector<FieldDesc> fields,
  */
 TYPED_TEST_P( DofManagerSparsityTest, TPFA_Full )
 {
-  TestFixture::test( { { "pressure",
-                         DofManager::Location::Elem,
-                         DofManager::Connector::Face,
-                         2, makeSparsityTPFA< typename TestFixture::Matrix > } } );
+  TestFixture::test( {
+    { "pressure",
+      DofManager::Location::Elem,
+      DofManager::Connector::Face,
+      2, makeSparsityTPFA< typename TestFixture::Matrix > }
+  } );
 }
 
 /**
@@ -509,11 +554,14 @@ TYPED_TEST_P( DofManagerSparsityTest, TPFA_Full )
  */
 TYPED_TEST_P( DofManagerSparsityTest, TPFA_Partial )
 {
-  TestFixture::test( { { "pressure",
-                         DofManager::Location::Elem,
-                         DofManager::Connector::Face,
-                         2, makeSparsityTPFA< typename TestFixture::Matrix >,
-                         { "region1", "region3", "region4" } } } );
+  TestFixture::test( {
+    { "pressure",
+      DofManager::Location::Elem,
+      DofManager::Connector::Face,
+      2, makeSparsityTPFA< typename TestFixture::Matrix >,
+      { "region1", "region3", "region4" }
+    }
+  } );
 }
 
 /**
@@ -522,10 +570,12 @@ TYPED_TEST_P( DofManagerSparsityTest, TPFA_Partial )
  */
 TYPED_TEST_P( DofManagerSparsityTest, FEM_Full )
 {
-  TestFixture::test( { { "displacement",
-                         DofManager::Location::Node,
-                         DofManager::Connector::Elem,
-                         3, makeSparsityFEM< typename TestFixture::Matrix > } } );
+  TestFixture::test( {
+    { "displacement",
+      DofManager::Location::Node,
+      DofManager::Connector::Elem,
+      3, makeSparsityFEM< typename TestFixture::Matrix > }
+  } );
 }
 
 /**
@@ -534,11 +584,14 @@ TYPED_TEST_P( DofManagerSparsityTest, FEM_Full )
  */
 TYPED_TEST_P( DofManagerSparsityTest, FEM_Partial )
 {
-  TestFixture::test( { { "displacement",
-                         DofManager::Location::Node,
-                         DofManager::Connector::Elem,
-                         3, makeSparsityFEM< typename TestFixture::Matrix >,
-                         { "region1", "region3", "region4" } } } );
+  TestFixture::test( {
+    { "displacement",
+      DofManager::Location::Node,
+      DofManager::Connector::Elem,
+      3, makeSparsityFEM< typename TestFixture::Matrix >,
+      { "region1", "region3", "region4" }
+    }
+  } );
 }
 
 /**
@@ -547,10 +600,12 @@ TYPED_TEST_P( DofManagerSparsityTest, FEM_Partial )
  */
 TYPED_TEST_P( DofManagerSparsityTest, Mass_Full )
 {
-  TestFixture::test( { { "mass",
-                         DofManager::Location::Elem,
-                         DofManager::Connector::None,
-                         2, makeSparsityMass< typename TestFixture::Matrix > } } );
+  TestFixture::test( {
+    { "mass",
+      DofManager::Location::Elem,
+      DofManager::Connector::None,
+      2, makeSparsityMass< typename TestFixture::Matrix > }
+  } );
 }
 
 /**
@@ -559,11 +614,14 @@ TYPED_TEST_P( DofManagerSparsityTest, Mass_Full )
  */
 TYPED_TEST_P( DofManagerSparsityTest, Mass_Partial )
 {
-  TestFixture::test( { { "mass",
-                         DofManager::Location::Elem,
-                         DofManager::Connector::None,
-                         2, makeSparsityMass< typename TestFixture::Matrix >,
-                         { "region1", "region3", "region4" } } } );
+  TestFixture::test( {
+    { "mass",
+      DofManager::Location::Elem,
+      DofManager::Connector::None,
+      2, makeSparsityMass< typename TestFixture::Matrix >,
+      { "region1", "region3", "region4" }
+    }
+  } );
 }
 
 /**
@@ -572,10 +630,12 @@ TYPED_TEST_P( DofManagerSparsityTest, Mass_Partial )
  */
 TYPED_TEST_P( DofManagerSparsityTest, Flux_Full )
 {
-  TestFixture::test( { { "flux",
-                         DofManager::Location::Face,
-                         DofManager::Connector::Elem,
-                         2, makeSparsityFlux< typename TestFixture::Matrix > } } );
+  TestFixture::test( {
+    { "flux",
+      DofManager::Location::Face,
+      DofManager::Connector::Elem,
+      2, makeSparsityFlux< typename TestFixture::Matrix > }
+  } );
 }
 
 /**
@@ -584,11 +644,14 @@ TYPED_TEST_P( DofManagerSparsityTest, Flux_Full )
  */
 TYPED_TEST_P( DofManagerSparsityTest, Flux_Partial )
 {
-  TestFixture::test( { { "flux",
-                         DofManager::Location::Face,
-                         DofManager::Connector::Elem,
-                         2, makeSparsityFlux< typename TestFixture::Matrix >,
-                         { "region1", "region3", "region4" } } } );
+  TestFixture::test( {
+    { "flux",
+      DofManager::Location::Face,
+      DofManager::Connector::Elem,
+      2, makeSparsityFlux< typename TestFixture::Matrix >,
+      { "region1", "region3", "region4" }
+    }
+  } );
 }
 
 /**
@@ -597,20 +660,24 @@ TYPED_TEST_P( DofManagerSparsityTest, Flux_Partial )
  */
 TYPED_TEST_P( DofManagerSparsityTest, FEM_TPFA_Full )
 {
-  TestFixture::test( { { "displacement",
-                         DofManager::Location::Node,
-                         DofManager::Connector::Elem,
-                         3, makeSparsityFEM< typename TestFixture::Matrix > },
-                       { "pressure",
-                         DofManager::Location::Elem,
-                         DofManager::Connector::Face,
-                         2, makeSparsityTPFA< typename TestFixture::Matrix > }
-                     },
-                     { { { "displacement", "pressure" },
-                         { DofManager::Connector::Elem,
-                           makeSparsityFEM_FVM< typename TestFixture::Matrix >,
-                           true } }
-                     } );
+  TestFixture::test( {
+    { "displacement",
+      DofManager::Location::Node,
+      DofManager::Connector::Elem,
+      3, makeSparsityFEM< typename TestFixture::Matrix > },
+    { "pressure",
+      DofManager::Location::Elem,
+      DofManager::Connector::Face,
+      2, makeSparsityTPFA< typename TestFixture::Matrix > }
+  },
+  {
+    {
+      { "displacement", "pressure" },
+      { DofManager::Connector::Elem,
+        makeSparsityFEM_FVM< typename TestFixture::Matrix >,
+        true }
+    }
+  } );
 }
 
 /**
@@ -619,23 +686,30 @@ TYPED_TEST_P( DofManagerSparsityTest, FEM_TPFA_Full )
  */
 TYPED_TEST_P( DofManagerSparsityTest, FEM_TPFA_Partial )
 {
-  TestFixture::test( { { "displacement",
-                         DofManager::Location::Node,
-                         DofManager::Connector::Elem,
-                         3, makeSparsityFEM< typename TestFixture::Matrix >,
-                         { "region1", "region3", "region4" } },
-                       { "pressure",
-                         DofManager::Location::Elem,
-                         DofManager::Connector::Face,
-                         2, makeSparsityTPFA< typename TestFixture::Matrix >,
-                         { "region1", "region2", "region4" } }
-                     },
-                     { { { "displacement", "pressure" },
-                         { DofManager::Connector::Elem,
-                           makeSparsityFEM_FVM< typename TestFixture::Matrix >,
-                           true,
-                           { "region4" } } }
-                     } );
+  TestFixture::test( {
+    { "displacement",
+      DofManager::Location::Node,
+      DofManager::Connector::Elem,
+      3, makeSparsityFEM< typename TestFixture::Matrix >,
+      { "region1", "region3", "region4" }
+    },
+    { "pressure",
+      DofManager::Location::Elem,
+      DofManager::Connector::Face,
+      2, makeSparsityTPFA< typename TestFixture::Matrix >,
+      { "region1", "region2", "region4" }
+    }
+  },
+  {
+    {
+      { "displacement", "pressure" },
+      { DofManager::Connector::Elem,
+        makeSparsityFEM_FVM< typename TestFixture::Matrix >,
+        true,
+        { "region4" }
+      }
+    }
+  } );
 }
 
 REGISTER_TYPED_TEST_CASE_P( DofManagerSparsityTest,
@@ -666,12 +740,12 @@ INSTANTIATE_TYPED_TEST_CASE_P( Petsc, DofManagerSparsityTest, PetscInterface );
  * @brief Test fixture for all typed (LAI dependent) DofManager tests.
  * @tparam LAI linear algebra interface type
  */
-template<typename LAI>
-class DofManagerRestrictorTest : public DofManagerMatrixTest<LAI>
+template< typename LAI >
+class DofManagerRestrictorTest : public DofManagerMatrixTest< LAI >
 {
 protected:
 
-  using Base = DofManagerMatrixTest<LAI>;
+  using Base = DofManagerMatrixTest< LAI >;
   using Matrix = typename Base::Matrix;
   using FieldDesc = typename Base::FieldDesc;
   using CouplingDesc = typename Base::CouplingDesc;
@@ -680,15 +754,15 @@ protected:
   using Base::dofManager;
   using Base::addFields;
 
-  void test( std::vector<FieldDesc> fields,
+  void test( std::vector< FieldDesc > fields,
              localIndex block, localIndex loComp, localIndex hiComp,
-             std::map< std::pair<string, string>, CouplingDesc > couplings = {} );
+             std::map< std::pair< string, string >, CouplingDesc > couplings = {} );
 };
 
-template<typename LAI>
-void DofManagerRestrictorTest<LAI>::test( std::vector<FieldDesc> fields,
-                                          localIndex block, localIndex loComp, localIndex hiComp,
-                                          std::map< std::pair<string, string>, CouplingDesc > couplings )
+template< typename LAI >
+void DofManagerRestrictorTest< LAI >::test( std::vector< FieldDesc > fields,
+                                            localIndex block, localIndex loComp, localIndex hiComp,
+                                            std::map< std::pair< string, string >, CouplingDesc > couplings )
 {
   addFields( fields, couplings );
 
@@ -709,8 +783,8 @@ void DofManagerRestrictorTest<LAI>::test( std::vector<FieldDesc> fields,
   // Compute the sub-matrix via RAP
   Matrix R;
   Matrix Asub_RAP;
-  P.transpose(R);
-  A.multiplyRAP(R, P, Asub_RAP);
+  P.transpose( R );
+  A.multiplyRAP( R, P, Asub_RAP );
 
   // Now reset the DofManager and make a field with sub-components only
   dofManager.clear();
@@ -733,56 +807,73 @@ TYPED_TEST_CASE_P( DofManagerRestrictorTest );
 
 TYPED_TEST_P( DofManagerRestrictorTest, SingleBlock )
 {
-  TestFixture::test( { { "pressure",
-                         DofManager::Location::Elem,
-                         DofManager::Connector::Face,
-                         3, makeSparsityTPFA<typename TestFixture::Matrix>,
-                         { "region1", "region3", "region4" } } },
+  TestFixture::test( {
+    { "pressure",
+      DofManager::Location::Elem,
+      DofManager::Connector::Face,
+      3, makeSparsityTPFA< typename TestFixture::Matrix >,
+      { "region1", "region3", "region4" }
+    }
+  },
                      0, 1, 3 );
 }
 
 TYPED_TEST_P( DofManagerRestrictorTest, MultiBlock1 )
 {
-  TestFixture::test( { { "displacement",
-                         DofManager::Location::Node,
-                         DofManager::Connector::Elem,
-                         3, makeSparsityFEM< typename TestFixture::Matrix >,
-                         { "region1", "region3", "region4" } },
-                       { "pressure",
-                         DofManager::Location::Elem,
-                         DofManager::Connector::Face,
-                         2, makeSparsityTPFA< typename TestFixture::Matrix >,
-                         { "region1", "region2", "region4" } }
-                     },
+  TestFixture::test( {
+    { "displacement",
+      DofManager::Location::Node,
+      DofManager::Connector::Elem,
+      3, makeSparsityFEM< typename TestFixture::Matrix >,
+      { "region1", "region3", "region4" }
+    },
+    { "pressure",
+      DofManager::Location::Elem,
+      DofManager::Connector::Face,
+      2, makeSparsityTPFA< typename TestFixture::Matrix >,
+      { "region1", "region2", "region4" }
+    }
+  },
                      0, 1, 3,
-                     { { { "displacement", "pressure" },
-                         { DofManager::Connector::Elem,
-                           makeSparsityFEM_FVM< typename TestFixture::Matrix >,
-                           true,
-                           { "region4" } } }
-                     } );
+  {
+    {
+      { "displacement", "pressure" },
+      { DofManager::Connector::Elem,
+        makeSparsityFEM_FVM< typename TestFixture::Matrix >,
+        true,
+        { "region4" }
+      }
+    }
+  } );
 }
 
 TYPED_TEST_P( DofManagerRestrictorTest, MultiBlock2 )
 {
-  TestFixture::test( { { "displacement",
-                         DofManager::Location::Node,
-                         DofManager::Connector::Elem,
-                         3, makeSparsityFEM< typename TestFixture::Matrix >,
-                         { "region1", "region3", "region4" } },
-                       { "pressure",
-                         DofManager::Location::Elem,
-                         DofManager::Connector::Face,
-                         2, makeSparsityTPFA< typename TestFixture::Matrix >,
-                         { "region1", "region2", "region4" } }
-                     },
+  TestFixture::test( {
+    { "displacement",
+      DofManager::Location::Node,
+      DofManager::Connector::Elem,
+      3, makeSparsityFEM< typename TestFixture::Matrix >,
+      { "region1", "region3", "region4" }
+    },
+    { "pressure",
+      DofManager::Location::Elem,
+      DofManager::Connector::Face,
+      2, makeSparsityTPFA< typename TestFixture::Matrix >,
+      { "region1", "region2", "region4" }
+    }
+  },
                      1, 1, 2,
-                     { { { "displacement", "pressure" },
-                         { DofManager::Connector::Elem,
-                           makeSparsityFEM_FVM< typename TestFixture::Matrix >,
-                           true,
-                           { "region4" } } }
-                     } );
+  {
+    {
+      { "displacement", "pressure" },
+      { DofManager::Connector::Elem,
+        makeSparsityFEM_FVM< typename TestFixture::Matrix >,
+        true,
+        { "region4" }
+      }
+    }
+  } );
 }
 
 REGISTER_TYPED_TEST_CASE_P( DofManagerRestrictorTest,
@@ -802,7 +893,7 @@ INSTANTIATE_TYPED_TEST_CASE_P( Hypre, DofManagerRestrictorTest, HypreInterface )
 INSTANTIATE_TYPED_TEST_CASE_P( Petsc, DofManagerRestrictorTest, PetscInterface );
 #endif
 
-int main( int argc, char** argv )
+int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
   geosx::basicSetup( argc, argv );

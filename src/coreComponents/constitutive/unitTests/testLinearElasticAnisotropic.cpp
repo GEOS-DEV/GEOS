@@ -52,10 +52,10 @@ void stressCalc( real64 const c[6][6], R2SymTensor const Ddt, real64 stressVoigt
 {
   real64 const DdtVoigt[6] = { Ddt( 0, 0 ), Ddt( 1, 1 ), Ddt( 2, 2 ), 2*Ddt( 1, 2 ), 2*Ddt( 0, 2 ), 2*Ddt( 0, 1 ) };
 
-  for( int i=0 ; i<6 ; ++i )
+  for( int i=0; i<6; ++i )
   {
     stressVoigt[i] = 0.0;
-    for( int j=0 ; j<6 ; ++j )
+    for( int j=0; j<6; ++j )
     {
       stressVoigt[i] += c[i][j] * DdtVoigt[j];
     }
@@ -72,14 +72,14 @@ void voigtStrain( real64 strainVoigt[6], R2SymTensor const Ddt )
   strainVoigt[5] = Ddt( 0, 1 )*2;
 }
 
-void stressSliceCheck( arrayView3d<real64 const, solid::STRESS_USD> const & stress, real64 const stressV[6] )
+void stressSliceCheck( arrayView3d< real64 const, solid::STRESS_USD > const & stress, real64 const stressV[6] )
 {
-  ASSERT_DOUBLE_EQ( stress(0,0,0), stressV[0] );
-  ASSERT_DOUBLE_EQ( stress(0,0,1), stressV[1] );
-  ASSERT_DOUBLE_EQ( stress(0,0,2), stressV[2] );
-  ASSERT_DOUBLE_EQ( stress(0,0,3), stressV[3] );
-  ASSERT_DOUBLE_EQ( stress(0,0,4), stressV[4] );
-  ASSERT_DOUBLE_EQ( stress(0,0,5), stressV[5] );
+  ASSERT_DOUBLE_EQ( stress( 0, 0, 0 ), stressV[0] );
+  ASSERT_DOUBLE_EQ( stress( 0, 0, 1 ), stressV[1] );
+  ASSERT_DOUBLE_EQ( stress( 0, 0, 2 ), stressV[2] );
+  ASSERT_DOUBLE_EQ( stress( 0, 0, 3 ), stressV[3] );
+  ASSERT_DOUBLE_EQ( stress( 0, 0, 4 ), stressV[4] );
+  ASSERT_DOUBLE_EQ( stress( 0, 0, 5 ), stressV[5] );
 }
 
 void stressCheck( real64 const stressV[6], real64 const stressV2[6] )
@@ -276,9 +276,9 @@ TEST( LinearElasticAnisotropicTests, testXML )
     { 6.0e9, 6.1e9, 6.2e9, 6.3e9, 6.4e9, 6.5e9 }
   };
 
-  for( int i=0 ; i<6 ; ++i )
+  for( int i=0; i<6; ++i )
   {
-    for( int j=0 ; j<6 ; ++j )
+    for( int j=0; j<6; ++j )
     {
       ASSERT_DOUBLE_EQ( stiffness[i][j], c[i][j] );
     }

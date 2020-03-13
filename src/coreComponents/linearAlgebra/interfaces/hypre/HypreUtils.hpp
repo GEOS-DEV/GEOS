@@ -27,12 +27,12 @@ namespace geosx
 
 inline HYPRE_BigInt * toHYPRE_BigInt( globalIndex * const index )
 {
-  return reinterpret_cast<HYPRE_BigInt*>(index);
+  return reinterpret_cast< HYPRE_BigInt * >(index);
 }
 
 inline HYPRE_BigInt const * toHYPRE_BigInt( globalIndex const * const index )
 {
-  return reinterpret_cast<HYPRE_BigInt const*>(index);
+  return reinterpret_cast< HYPRE_BigInt const * >(index);
 }
 
 }

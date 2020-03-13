@@ -308,7 +308,7 @@ pushDataToConduitNode( Array< T, NDIM, PERMUTATION > const & var,
 
   // Create a copy of the dimensions
   localIndex temp[ NDIM + 1 ];
-  for( int i = 0 ; i < NDIM ; ++i )
+  for( int i = 0; i < NDIM; ++i )
   {
     temp[ i ] = var.size( i );
   }
@@ -328,7 +328,7 @@ pushDataToConduitNode( Array< T, NDIM, PERMUTATION > const & var,
 
   // Create a copy of the permutation
   constexpr std::array< camp::idx_t, NDIM > const perm = RAJA::as_array< PERMUTATION >::get();
-  for( int i = 0 ; i < NDIM ; ++i )
+  for( int i = 0; i < NDIM; ++i )
   {
     temp[ i ] = perm[ i ];
   }
@@ -358,7 +358,7 @@ pullDataFromConduitNode( Array< T, NDIM, PERMUTATION > & var,
 
   constexpr std::array< camp::idx_t, NDIM > const perm = RAJA::as_array< PERMUTATION >::get();
   camp::idx_t const * const permFromConduit = permutationNode.value();
-  for( int i = 0 ; i < NDIM ; ++i )
+  for( int i = 0; i < NDIM; ++i )
   {
     GEOSX_ERROR_IF_NE_MSG( permFromConduit[ i ], perm[ i ],
                            "The permutation of the data in conduit and the provided Array don't match." );

@@ -38,7 +38,7 @@ static constexpr auto wellControls = "WellControls";
  * @class WellControls
  *
  * This class describes the controls used to operate a well
- */  
+ */
 class WellControls : public dataRepository::Group
 {
 public:
@@ -66,7 +66,7 @@ public:
    * @param parent the parent group of this instantiation of Group
    */
   explicit WellControls( string const & name, dataRepository::Group * const parent );
-  
+
   /**
    * @brief default destructor
    */
@@ -76,7 +76,7 @@ public:
   WellControls() = delete;
 
   /// deleted copy constructor
-  WellControls( WellControls const &) = delete;
+  WellControls( WellControls const & ) = delete;
 
   /// deleted move constructor
   WellControls( WellControls && ) = delete;
@@ -156,7 +156,7 @@ public:
     static constexpr auto targetBHPString        = "targetBHP";
     static constexpr auto targetRateString       = "targetRate";
     static constexpr auto injectionStreamString  = "injectionStream";
-    
+
     dataRepository::ViewKey referenceIndex  = { refWellElemIndexString };
     dataRepository::ViewKey referenceDepth  = { refWellElemDepthString };
     dataRepository::ViewKey type            = { typeString };
@@ -167,7 +167,7 @@ public:
 
   } viewKeysWellControls;
 
-protected: 
+protected:
 
   virtual void PostProcessInput() override;
 
@@ -184,13 +184,13 @@ private:
   localIndex m_refWellElemIndex;
 
   /// well controls
-  string  m_inputControlString;
+  string m_inputControlString;
   Control m_currentControl;
-  real64  m_targetBHP;
-  real64  m_targetRate;
- 
+  real64 m_targetBHP;
+  real64 m_targetRate;
+
   /// global component fraction at the injector
-  array1d<real64>  m_injectionStream;
+  array1d< real64 >  m_injectionStream;
 
 };
 

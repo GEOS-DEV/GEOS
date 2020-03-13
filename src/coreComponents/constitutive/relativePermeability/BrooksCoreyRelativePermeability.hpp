@@ -13,8 +13,8 @@
  */
 
 /**
-  * @file BrooksCoreyRelativePermeability.hpp
-  */
+ * @file BrooksCoreyRelativePermeability.hpp
+ */
 
 #ifndef GEOSX_CONSTITUTIVE_BROOKSCOREYRELATIVEPERMEABILITY_HPP
 #define GEOSX_CONSTITUTIVE_BROOKSCOREYRELATIVEPERMEABILITY_HPP
@@ -36,7 +36,7 @@ public:
 
   void DeliverClone( string const & name,
                      Group * const parent,
-                     std::unique_ptr<ConstitutiveBase> & clone ) const override;
+                     std::unique_ptr< ConstitutiveBase > & clone ) const override;
 
 //START_SPHINX_INCLUDE_00
   static std::string CatalogName() { return "BrooksCoreyRelativePermeability"; }
@@ -56,22 +56,23 @@ public:
    *       within a kernel since it is virtual, and the required data is not
    *       guaranteed to be in the target memory space.
    */
-  virtual void PointUpdate( arraySlice1d<real64 const> const & phaseVolFraction,
+  virtual void PointUpdate( arraySlice1d< real64 const > const & phaseVolFraction,
                             localIndex const k,
                             localIndex const q ) override;
 
-   /**
+  /**
    * @brief Perform a batch constitutive update (all points).
    * @param[in] phaseVolFraction input phase volume fraction
    */
-  virtual void BatchUpdate( arrayView2d<real64 const> const & phaseVolumeFraction ) override;
+  virtual void BatchUpdate( arrayView2d< real64 const > const & phaseVolumeFraction ) override;
 
-    /**
+  /**
    * @brief Computes the phase relative permeabilities using the Brooks method
    * @param NP phase index
    * @param[in] phaseVolumeFraction for all phases
    * @param[out] phaseRelPerm the computed relative permeability value vector for all phases
-   * @param[out] dPhaseRelPerm_dPhaseVolFrac the computed partial derivative of the relative wrt to the volume fraction of the phases
+   * @param[out] dPhaseRelPerm_dPhaseVolFrac the computed partial derivative of the relative wrt to the volume fraction
+   * of the phases
    * @param[in] phaseOrder vector of phase orders
    * @param[in] phaseMinVolumeFraction vector of minimum phase volume fractions
    * @param[in] phaseRelPermExponentInv vector of exponents used in the computation of the relative permeabilities
@@ -82,12 +83,12 @@ public:
    * This function computes the relative permeabilities for all phases based on the Brooks-Corey method
    */
   inline static void Compute( localIndex const NP,
-                              arraySlice1d<real64 const> const & phaseVolFraction,
-                              arraySlice1d<real64> const & phaseRelPerm,
-                              arraySlice2d<real64> const & dPhaseRelPerm_dPhaseVolFrac,
-                              arraySlice1d<real64 const> const & phaseMinVolumeFraction,
-                              arraySlice1d<real64 const> const & phaseRelPermExponent,
-                              arraySlice1d<real64 const> const & phaseRelPermMaxValue,
+                              arraySlice1d< real64 const > const & phaseVolFraction,
+                              arraySlice1d< real64 > const & phaseRelPerm,
+                              arraySlice2d< real64 > const & dPhaseRelPerm_dPhaseVolFrac,
+                              arraySlice1d< real64 const > const & phaseMinVolumeFraction,
+                              arraySlice1d< real64 const > const & phaseRelPermExponent,
+                              arraySlice1d< real64 const > const & phaseRelPermMaxValue,
                               real64 const & satScale );
 
 //START_SPHINX_INCLUDE_01
@@ -109,9 +110,9 @@ protected:
   virtual void PostProcessInput() override;
 
 //START_SPHINX_INCLUDE_02
-  array1d<real64> m_phaseMinVolumeFraction;
-  array1d<real64> m_phaseRelPermExponent;
-  array1d<real64> m_phaseRelPermMaxValue;
+  array1d< real64 > m_phaseMinVolumeFraction;
+  array1d< real64 > m_phaseRelPermExponent;
+  array1d< real64 > m_phaseRelPermMaxValue;
 
   real64 m_satScale;
 
@@ -121,31 +122,31 @@ protected:
 
 inline void
 BrooksCoreyRelativePermeability::Compute( localIndex const NP,
-                                          arraySlice1d<real64 const> const & phaseVolFraction,
-                                          arraySlice1d<real64> const & phaseRelPerm,
-                                          arraySlice2d<real64> const & dPhaseRelPerm_dPhaseVolFrac,
-                                          arraySlice1d<real64 const> const & phaseMinVolumeFraction,
-                                          arraySlice1d<real64 const> const & phaseRelPermExponent,
-                                          arraySlice1d<real64 const> const & phaseRelPermMaxValue,
+                                          arraySlice1d< real64 const > const & phaseVolFraction,
+                                          arraySlice1d< real64 > const & phaseRelPerm,
+                                          arraySlice2d< real64 > const & dPhaseRelPerm_dPhaseVolFrac,
+                                          arraySlice1d< real64 const > const & phaseMinVolumeFraction,
+                                          arraySlice1d< real64 const > const & phaseRelPermExponent,
+                                          arraySlice1d< real64 const > const & phaseRelPermMaxValue,
                                           real64 const & satScale )
 {
 
-  for (localIndex ip = 0; ip < NP; ++ip)
+  for( localIndex ip = 0; ip < NP; ++ip )
   {
-    for (localIndex jp = 0; jp < NP; ++jp)
+    for( localIndex jp = 0; jp < NP; ++jp )
     {
       dPhaseRelPerm_dPhaseVolFrac[ip][jp] = 0.0;
     }
   }
   real64 const satScaleInv = 1.0 / satScale;
 
-  for (localIndex ip = 0; ip < NP; ++ip)
+  for( localIndex ip = 0; ip < NP; ++ip )
   {
     real64 const satScaled = (phaseVolFraction[ip] - phaseMinVolumeFraction[ip]) * satScaleInv;
     real64 const exponent  = phaseRelPermExponent[ip];
     real64 const scale     = phaseRelPermMaxValue[ip];
 
-    if (satScaled > 0.0 && satScaled < 1.0)
+    if( satScaled > 0.0 && satScaled < 1.0 )
     {
       // intermediate value
       real64 const v = scale * std::pow( satScaled, exponent - 1.0 );

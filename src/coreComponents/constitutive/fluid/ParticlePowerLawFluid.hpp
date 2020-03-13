@@ -13,8 +13,8 @@
  */
 
 /**
-  * @file ParticleFluid.hpp
-  */
+ * @file ParticleFluid.hpp
+ */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_PARTICLEFLUID_HPP_
 #define SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_PARTICLEFLUID_HPP_
@@ -45,7 +45,7 @@ public:
   };
 
   static ParticleSettlingModel stringToParticleSettlingModel( string const & str );
-  
+
   ParticleFluid( std::string const & name, Group * const parent );
 
   virtual ~ParticleFluid() override;
@@ -54,7 +54,7 @@ public:
 
   virtual void DeliverClone( string const & name,
                              Group * const parent,
-                             std::unique_ptr<ConstitutiveBase> & clone ) const override;
+                             std::unique_ptr< ConstitutiveBase > & clone ) const override;
 
   static std::string CatalogName() { return dataRepository::keys::particleFluid; }
 
@@ -65,30 +65,33 @@ public:
 
   // *** ParticleFluid interface
 
-  virtual void PointUpdate(localIndex const NC, real64 const & proppantConcentration, arraySlice1d<real64 const> const & componentConcentration, arraySlice1d<real64 const> const & nIndex, arraySlice1d<real64 const> const & KIndex, real64 const &fluidDensity, real64 const &dFluidDensity_dPressure, arraySlice1d<real64 const> const &dFluidDensity_dComponentConcentration, localIndex const k) override; 
-  
-  virtual void BatchUpdate( arrayView1d<real64 const> const & concentration) override;
+  virtual void PointUpdate( localIndex const NC, real64 const & proppantConcentration, arraySlice1d< real64 const > const & componentConcentration,
+                            arraySlice1d< real64 const > const & nIndex, arraySlice1d< real64 const > const & KIndex, real64 const & fluidDensity,
+                            real64 const & dFluidDensity_dPressure, arraySlice1d< real64 const > const & dFluidDensity_dComponentConcentration,
+                            localIndex const k ) override;
 
-  virtual void PointUpdateMob(real64 const & concentration, real64 const & aperture, localIndex const k) override;
+  virtual void BatchUpdate( arrayView1d< real64 const > const & concentration ) override;
 
-  virtual void BatchUpdateMob( arrayView1d<real64 const> const & concentration, arrayView1d<real64 const> const & aperture) override;
-  
+  virtual void PointUpdateMob( real64 const & concentration, real64 const & aperture, localIndex const k ) override;
+
+  virtual void BatchUpdateMob( arrayView1d< real64 const > const & concentration, arrayView1d< real64 const > const & aperture ) override;
+
   // *** Data repository keys
 
   struct viewKeyStruct : public ParticleFluidBase::viewKeyStruct
   {
 
     static constexpr auto fluidViscosityString    = "fluidViscosity";
-    static constexpr auto proppantDiameterString    = "proppantDiameter";    
+    static constexpr auto proppantDiameterString    = "proppantDiameter";
     static constexpr auto proppantDensityString    = "proppantDensity";
     static constexpr auto hinderedSettlingCoefficientString    = "hinderedSettlingCoefficient";
     static constexpr auto collisionAlphaString    = "collisionAlpha";
-    static constexpr auto slipConcentrationString    = "slipConcentration";    
+    static constexpr auto slipConcentrationString    = "slipConcentration";
     static constexpr auto collisionBetaString    = "collisionBeta";
     static constexpr auto bridgingFactorString    = "bridgingFactor";
     static constexpr auto sphericityString    = "sphericity";
 
-    static constexpr auto particleSettlingModelString    = "particleSettlingModel";            
+    static constexpr auto particleSettlingModelString    = "particleSettlingModel";
 
     dataRepository::ViewKey fluidViscosity    = { fluidViscosityString    };
     dataRepository::ViewKey proppantDiameter    = { proppantDiameterString };
@@ -101,7 +104,7 @@ public:
     dataRepository::ViewKey bridgingFactor   = { bridgingFactorString };
     dataRepository::ViewKey sphericity   = { sphericityString };
 
-    dataRepository::ViewKey particleSettlingModel   = { particleSettlingModelString };            
+    dataRepository::ViewKey particleSettlingModel   = { particleSettlingModelString };
 
   } viewKeysParticleFluid;
 
@@ -113,34 +116,34 @@ private:
 
   void Compute( localIndex const NC,
                 real64 const & proppantConcentration,
-                arraySlice1d<real64 const> const & componentConcentration,
-                arraySlice1d<real64 const> const & nIndex,
-                arraySlice1d<real64 const> const & KIndex,
+                arraySlice1d< real64 const > const & componentConcentration,
+                arraySlice1d< real64 const > const & nIndex,
+                arraySlice1d< real64 const > const & KIndex,
                 real64 const & fluidDensity,
                 real64 const & dFluidDensity_dPressure,
-                arraySlice1d<real64 const> const & dFluidDensity_dComponentConcentration,
+                arraySlice1d< real64 const > const & dFluidDensity_dComponentConcentration,
                 real64 & settlingFactor,
                 real64 & dSettlingFactor_dPressure,
                 real64 & dSettlingFactor_dProppantConcentration,
-                arraySlice1d<real64> const & dSettlingFactor_dComponentConcentration,
+                arraySlice1d< real64 > const & dSettlingFactor_dComponentConcentration,
                 real64 & collisionFactor,
                 real64 & dCollisionFactor_dProppantConcentration ) const;
 
   void ComputeMob( real64 const & concentration,
-		   real64 const & aperture,		
-		   integer & isProppantMobile,
-		   real64 & proppantPackPermeability ) const;
+                   real64 const & aperture,
+                   integer & isProppantMobile,
+                   real64 & proppantPackPermeability ) const;
 
 
   string m_particleSettlingModelString;
 
   ParticleSettlingModel m_particleSettlingModel;
-  
-  real64 m_proppantDensity;  
+
+  real64 m_proppantDensity;
 
   real64 m_fluidViscosity;
-  
-  real64 m_proppantDiameter;  
+
+  real64 m_proppantDiameter;
 
   real64 m_hinderedSettlingCoefficient;
 
@@ -156,8 +159,8 @@ private:
 
   real64 m_packPermeabilityCoef;
 
-  real64 m_bridgingAperture;  
-  
+  real64 m_bridgingAperture;
+
 };
 
 } /* namespace constitutive */

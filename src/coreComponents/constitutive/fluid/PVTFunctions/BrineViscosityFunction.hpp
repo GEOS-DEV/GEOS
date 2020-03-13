@@ -50,12 +50,12 @@ public:
 
   virtual void Evaluation( EvalVarArgs const & pressure,
                            EvalVarArgs const & temperature,
-                           arraySlice1d<EvalVarArgs const> const & phaseComposition,
-                           EvalVarArgs & value, bool useMass = 0) const override;
+                           arraySlice1d< EvalVarArgs const > const & phaseComposition,
+                           EvalVarArgs & value, bool useMass = 0 ) const override;
 
 private:
 
-  void MakeCoef(string_array const & inputPara);
+  void MakeCoef( string_array const & inputPara );
 
   real64 m_coef0;
   real64 m_coef1;
@@ -64,5 +64,5 @@ private:
 
 }
 
-}  
+}
 #endif //GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_BRINEVISCOSITYFUNCTION_HPP_

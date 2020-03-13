@@ -322,7 +322,7 @@ public:
    * @param fieldName the name of the field
    * @return the number of dof components
    */
-  localIndex numComponents( string const & fieldName = "") const;
+  localIndex numComponents( string const & fieldName = "" ) const;
 
   /**
    * @brief Populate sparsity pattern of the entire system matrix.
@@ -456,7 +456,7 @@ public:
    *
    * @note Can only be called after close()
    */
-  template<typename MATRIX>
+  template< typename MATRIX >
   void makeRestrictor( string const & fieldName,
                        MATRIX & restrictor,
                        MPI_Comm const comm,
@@ -563,10 +563,10 @@ private:
   MeshLevel * m_mesh = nullptr;
 
   /// Array of field descriptions
-  array1d<FieldDescription> m_fields;
+  array1d< FieldDescription > m_fields;
 
   /// Table of connector types within and between fields
-  array2d<CouplingDescription> m_coupling;
+  array2d< CouplingDescription > m_coupling;
 
   /// Flag indicating that DOFs have been reordered rank-wise.
   bool m_reordered;

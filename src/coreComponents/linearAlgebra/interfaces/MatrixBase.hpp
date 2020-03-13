@@ -44,7 +44,7 @@ namespace geosx
  * behavior deviates from expectations or has unexpected performance impacts.
  * In that case, @c \@copydoc tag can be used to copy over the documentation.
  */
-template<typename MATRIX, typename VECTOR>
+template< typename MATRIX, typename VECTOR >
 class MatrixBase : public virtual LinearOperator< VECTOR >
 {
 protected:
@@ -65,7 +65,7 @@ protected:
    */
   MatrixBase()
     : m_closed( true ),
-      m_assembled( false )
+    m_assembled( false )
   {}
 
   MatrixBase( MatrixBase const & ) = default;
@@ -336,8 +336,8 @@ protected:
    * @param values Values to add to prescribed locations.
    */
   virtual void add( globalIndex const rowIndex,
-                    arraySlice1d<globalIndex const> const & colIndices,
-                    arraySlice1d<real64 const> const & values ) = 0;
+                    arraySlice1d< globalIndex const > const & colIndices,
+                    arraySlice1d< real64 const > const & values ) = 0;
 
   /**
    * @brief Set elements of one row using array1d
@@ -347,8 +347,8 @@ protected:
    * @param values Values to add to prescribed locations.
    */
   virtual void set( globalIndex const rowIndex,
-                    arraySlice1d<globalIndex const> const & colIndices,
-                    arraySlice1d<real64 const> const & values ) = 0;
+                    arraySlice1d< globalIndex const > const & colIndices,
+                    arraySlice1d< real64 const > const & values ) = 0;
 
   /**
    * @brief Insert elements of one row using array1d
@@ -358,8 +358,8 @@ protected:
    * @param values Values to add to prescribed locations.
    */
   virtual void insert( globalIndex const rowIndex,
-                       arraySlice1d<globalIndex const> const & colIndices,
-                       arraySlice1d<real64 const> const & values ) = 0;
+                       arraySlice1d< globalIndex const > const & colIndices,
+                       arraySlice1d< real64 const > const & values ) = 0;
 
   /**
    * @brief Add dense matrix.
@@ -370,9 +370,9 @@ protected:
    *
    * @note Row major layout assumed in values
    */
-  virtual void add( arraySlice1d<globalIndex const> const & rowIndices,
-                    arraySlice1d<globalIndex const> const & colIndices,
-                    arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const & values ) = 0;
+  virtual void add( arraySlice1d< globalIndex const > const & rowIndices,
+                    arraySlice1d< globalIndex const > const & colIndices,
+                    arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & values ) = 0;
 
   /**
    * @brief Set dense matrix.
@@ -383,9 +383,9 @@ protected:
    *
    * @note Row major layout assumed in values
    */
-  virtual void set( arraySlice1d<globalIndex const> const & rowIndices,
-                    arraySlice1d<globalIndex const> const & colIndices,
-                    arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const & values ) = 0;
+  virtual void set( arraySlice1d< globalIndex const > const & rowIndices,
+                    arraySlice1d< globalIndex const > const & colIndices,
+                    arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & values ) = 0;
 
   /**
    * @brief Insert dense matrix.
@@ -396,9 +396,9 @@ protected:
    *
    * @note Row major layout assumed in values
    */
-  virtual void insert( arraySlice1d<globalIndex const> const & rowIndices,
-                       arraySlice1d<globalIndex const> const & colIndices,
-                       arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const & values ) = 0;
+  virtual void insert( arraySlice1d< globalIndex const > const & rowIndices,
+                       arraySlice1d< globalIndex const > const & colIndices,
+                       arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & values ) = 0;
 
   /**
    * @brief Add dense matrix.
@@ -409,9 +409,9 @@ protected:
    *
    * @note Column major layout assumed in values
    */
-  virtual void add( arraySlice1d<globalIndex const> const & rowIndices,
-                    arraySlice1d<globalIndex const> const & colIndices,
-                    arraySlice2d<real64 const, MatrixLayout::COL_MAJOR> const & values ) = 0;
+  virtual void add( arraySlice1d< globalIndex const > const & rowIndices,
+                    arraySlice1d< globalIndex const > const & colIndices,
+                    arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values ) = 0;
 
   /**
    * @brief Set dense matrix.
@@ -422,9 +422,9 @@ protected:
    *
    * @note Column major layout assumed in values
    */
-  virtual void set( arraySlice1d<globalIndex const> const & rowIndices,
-                    arraySlice1d<globalIndex const> const & colIndices,
-                    arraySlice2d<real64 const, MatrixLayout::COL_MAJOR> const & values ) = 0;
+  virtual void set( arraySlice1d< globalIndex const > const & rowIndices,
+                    arraySlice1d< globalIndex const > const & colIndices,
+                    arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values ) = 0;
 
   /**
    * @brief Insert dense matrix.
@@ -435,9 +435,9 @@ protected:
    *
    * @note Column major layout assumed in values
    */
-  virtual void insert( arraySlice1d<globalIndex const> const & rowIndices,
-                       arraySlice1d<globalIndex const> const & colIndices,
-                       arraySlice2d<real64 const, MatrixLayout::COL_MAJOR> const & values ) = 0;
+  virtual void insert( arraySlice1d< globalIndex const > const & rowIndices,
+                       arraySlice1d< globalIndex const > const & colIndices,
+                       arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values ) = 0;
 
   /**
    * @brief Add dense matrix.

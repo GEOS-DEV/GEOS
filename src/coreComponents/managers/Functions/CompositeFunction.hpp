@@ -37,7 +37,7 @@ class CompositeFunction : public FunctionBase
 {
 public:
   /// Main constructor
-  CompositeFunction( const std::string& name,
+  CompositeFunction( const std::string & name,
                      dataRepository::Group * const parent );
 
   /// Destructor
@@ -45,7 +45,7 @@ public:
 
   /// Catalog name interface
   static string CatalogName() { return "CompositeFunction"; }
-  
+
   /// Function initialization
   virtual void InitializeFunction() override;
 
@@ -58,20 +58,20 @@ public:
    */
   virtual void Evaluate( dataRepository::Group const * const group,
                          real64 const time,
-                         SortedArrayView<localIndex const> const & set,
+                         SortedArrayView< localIndex const > const & set,
                          real64_array & result ) const override final;
 
   /**
    * @brief Method to evaluate a function
    * @param input a scalar input
    */
-  virtual real64 Evaluate( real64 const * const input) const override final;
+  virtual real64 Evaluate( real64 const * const input ) const override final;
 
 private:
 
   string_array m_functionNames;
   string_array m_variableNames;
-  string       m_expression;
+  string m_expression;
 
 #ifdef GEOSX_USE_MATHPRESSO
   mathpresso::Context parserContext;
@@ -80,7 +80,7 @@ private:
 
   localIndex m_numSubFunctions;
   static constexpr localIndex m_maxNumSubFunctions = 10;
-  std::vector<FunctionBase*> m_subFunctions;
+  std::vector< FunctionBase * > m_subFunctions;
 
 };
 

@@ -30,7 +30,7 @@ namespace geosx
  * @brief Abstract base class for linear operators
  * @tparam VECTOR Type of vector this operator can be applied to
  */
-template<typename VECTOR>
+template< typename VECTOR >
 class LinearOperator
 {
 public:

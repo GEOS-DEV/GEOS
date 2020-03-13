@@ -46,7 +46,7 @@ void fillValue( T & val )
 
 void fillValue( R1Tensor & val )
 {
-  for( int i = 0 ; i < 3 ; ++i )
+  for( int i = 0; i < 3; ++i )
   {
     val[ i ] = rand( -100, 100 );
   }
@@ -54,9 +54,9 @@ void fillValue( R1Tensor & val )
 
 void fillValue( R2Tensor & val )
 {
-  for( int i = 0 ; i < 3 ; ++i )
+  for( int i = 0; i < 3; ++i )
   {
-    for( int j = 0 ; j < 3 ; ++j )
+    for( int j = 0; j < 3; ++j )
     {
       val( i, j ) = rand( -100, 100 );
     }
@@ -92,14 +92,14 @@ template< typename T, int NDIM, typename PERMUTATION >
 void fillValue( Array< T, NDIM, PERMUTATION > & val )
 {
   localIndex dims[ NDIM ];
-  for( int i = 0 ; i < NDIM ; ++i )
+  for( int i = 0; i < NDIM; ++i )
   {
     dims[ i ] = rand( 1, 10 );
   }
 
   val.resize( NDIM, dims );
 
-  for( localIndex i = 0 ; i < val.size() ; ++i )
+  for( localIndex i = 0; i < val.size(); ++i )
   {
     fillValue( val.data()[ i ] );
   }
@@ -109,7 +109,7 @@ template< typename T >
 void fillValue( SortedArray< T > & val )
 {
   int const nVals = rand( 0, 30 );
-  for( int i = 0 ; i < nVals ; ++i )
+  for( int i = 0; i < nVals; ++i )
   {
     T v;
     fillValue( v );
@@ -121,7 +121,7 @@ template< typename K, typename V, typename SORTED >
 void fillValue( mapBase< K, V, SORTED > & val )
 {
   int const nVals = rand( 0, 30 );
-  for( int i = 0 ; i < nVals ; ++i )
+  for( int i = 0; i < nVals; ++i )
   {
     K k;
     V v;
@@ -143,7 +143,7 @@ void compareValues( Array< T, NDIM, PERMUTATION > const & val,
                     Array< T, NDIM, PERMUTATION > const & valFromFile )
 {
   ASSERT_EQ( val.size(), valFromFile.size() );
-  for( localIndex i = 0 ; i < val.size() ; ++i )
+  for( localIndex i = 0; i < val.size(); ++i )
   {
     compareValues( val.data()[ i ], valFromFile.data()[ i ] );
   }
@@ -154,7 +154,7 @@ void compareValues( SortedArray< T > const & val,
                     SortedArray< T > const & valFromFile )
 {
   ASSERT_EQ( val.size(), valFromFile.size() );
-  for( localIndex i = 0 ; i < val.size() ; ++i )
+  for( localIndex i = 0; i < val.size(); ++i )
   {
     compareValues( val[ i ], valFromFile[ i ] );
   }

@@ -51,14 +51,14 @@ static void initialize( MPI_Comm const & comm,
 }
 
 HypreMatrix::HypreMatrix()
-: LinearOperator(),
+  : LinearOperator(),
   MatrixBase(),
   m_ij_mat{},
   m_parcsr_mat{}
 {}
 
 HypreMatrix::HypreMatrix( HypreMatrix const & src )
-: HypreMatrix()
+  : HypreMatrix()
 {
 #if 0
   GEOSX_LAI_ASSERT( src.ready() );
@@ -76,7 +76,7 @@ HypreMatrix::HypreMatrix( HypreMatrix const & src )
   array1d< HYPRE_BigInt > rows( nrows );
   array1d< HYPRE_Int > row_sizes( nrows );
 
-  for( HYPRE_BigInt i = ilower ; i <= iupper ; ++i )
+  for( HYPRE_BigInt i = ilower; i <= iupper; ++i )
   {
     rows[i - ilower] = i;
   }
@@ -89,7 +89,7 @@ HypreMatrix::HypreMatrix( HypreMatrix const & src )
   // Get number of non-zeroes (ncols) for row indeces in rows,
   // column indeces and values
   HYPRE_Int nnz = 0;
-  for( HYPRE_Int i = 0 ; i < nrows ; ++i )
+  for( HYPRE_Int i = 0; i < nrows; ++i )
   {
     nnz += row_sizes[i];
   }
@@ -162,7 +162,7 @@ void HypreMatrix::createWithGlobalSize( globalIndex const globalRows,
   HYPRE_BigInt const jlower = rank * localColSize + ( rank == 0 ? 0 : colResidual );
   HYPRE_BigInt const jupper = jlower + localColSize + ( rank == 0 ? colResidual : 0 ) - 1;
 
-  array1d< HYPRE_Int > row_sizes( integer_conversion<localIndex>( iupper - ilower + 1 ) );
+  array1d< HYPRE_Int > row_sizes( integer_conversion< localIndex >( iupper - ilower + 1 ) );
   row_sizes = integer_conversion< HYPRE_Int >( maxEntriesPerRow );
 
   initialize( comm,
@@ -185,9 +185,9 @@ void HypreMatrix::createWithLocalSize( localIndex const localRows,
 
   reset();
 
-  HYPRE_BigInt const ilower = MpiWrapper::PrefixSum<HYPRE_BigInt>( localRows );
+  HYPRE_BigInt const ilower = MpiWrapper::PrefixSum< HYPRE_BigInt >( localRows );
   HYPRE_BigInt const iupper = ilower + localRows - 1;
-  HYPRE_BigInt const jlower = MpiWrapper::PrefixSum<HYPRE_BigInt>( localCols );
+  HYPRE_BigInt const jlower = MpiWrapper::PrefixSum< HYPRE_BigInt >( localCols );
   HYPRE_BigInt const jupper = jlower + localCols - 1;
 
   array1d< HYPRE_Int > row_sizes( localRows );
@@ -376,7 +376,7 @@ void HypreMatrix::add( globalIndex const rowIndex,
                                                     1,
                                                     &ncols,
                                                     toHYPRE_BigInt( &rowIndex ),
-                                                    toHYPRE_BigInt( colIndices),
+                                                    toHYPRE_BigInt( colIndices ),
                                                     values ) );
 }
 
@@ -416,7 +416,7 @@ void HypreMatrix::add( arraySlice1d< globalIndex const > const & rowIndices,
                        arraySlice1d< globalIndex const > const & colIndices,
                        arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & values )
 {
-  for( localIndex i = 0 ; i < rowIndices.size() ; ++i )
+  for( localIndex i = 0; i < rowIndices.size(); ++i )
   {
     add( rowIndices[i], colIndices, values[i] );
   }
@@ -426,7 +426,7 @@ void HypreMatrix::set( arraySlice1d< globalIndex const > const & rowIndices,
                        arraySlice1d< globalIndex const > const & colIndices,
                        arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & values )
 {
-  for( localIndex i = 0 ; i < integer_conversion< localIndex >( rowIndices.size() ) ; ++i )
+  for( localIndex i = 0; i < integer_conversion< localIndex >( rowIndices.size() ); ++i )
   {
     set( rowIndices[i], colIndices, values[i] );
   }
@@ -436,15 +436,15 @@ void HypreMatrix::insert( arraySlice1d< globalIndex const > const & rowIndices,
                           arraySlice1d< globalIndex const > const & colIndices,
                           arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & values )
 {
-  for( localIndex i = 0 ; i < rowIndices.size() ; ++i )
+  for( localIndex i = 0; i < rowIndices.size(); ++i )
   {
     insert( rowIndices[i], colIndices, values[i] );
   }
 }
 
-template<typename T, int SRC_USD, int DST_USD>
-static void convertArrayLayout( arraySlice2d<T const, SRC_USD> const & src,
-                                arraySlice2d<T, DST_USD> const & dst )
+template< typename T, int SRC_USD, int DST_USD >
+static void convertArrayLayout( arraySlice2d< T const, SRC_USD > const & src,
+                                arraySlice2d< T, DST_USD > const & dst )
 {
   GEOSX_ASSERT( src.size( 0 ) == dst.size( 0 ) );
   GEOSX_ASSERT( src.size( 1 ) == dst.size( 1 ) );
@@ -452,7 +452,7 @@ static void convertArrayLayout( arraySlice2d<T const, SRC_USD> const & src,
   {
     for( localIndex j = 0; j < src.size( 1 ); ++j )
     {
-      dst(i, j) = src(i, j);
+      dst( i, j ) = src( i, j );
     }
   }
 }
@@ -461,7 +461,7 @@ void HypreMatrix::add( arraySlice1d< globalIndex const > const & rowIndices,
                        arraySlice1d< globalIndex const > const & colIndices,
                        arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values )
 {
-  array2d<real64, MatrixLayout::ROW_MAJOR_PERM> valuesRowMajor( rowIndices.size(), colIndices.size() );
+  array2d< real64, MatrixLayout::ROW_MAJOR_PERM > valuesRowMajor( rowIndices.size(), colIndices.size() );
   convertArrayLayout( values, valuesRowMajor.toSlice() );
   add( rowIndices, colIndices, valuesRowMajor );
 }
@@ -470,7 +470,7 @@ void HypreMatrix::set( arraySlice1d< globalIndex const > const & rowIndices,
                        arraySlice1d< globalIndex const > const & colIndices,
                        arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values )
 {
-  array2d<real64, MatrixLayout::ROW_MAJOR_PERM> valuesRowMajor( rowIndices.size(), colIndices.size() );
+  array2d< real64, MatrixLayout::ROW_MAJOR_PERM > valuesRowMajor( rowIndices.size(), colIndices.size() );
   convertArrayLayout( values, valuesRowMajor.toSlice() );
   set( rowIndices, colIndices, valuesRowMajor );
 }
@@ -479,7 +479,7 @@ void HypreMatrix::insert( arraySlice1d< globalIndex const > const & rowIndices,
                           arraySlice1d< globalIndex const > const & colIndices,
                           arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values )
 {
-  array2d<real64, MatrixLayout::ROW_MAJOR_PERM> valuesRowMajor( rowIndices.size(), colIndices.size() );
+  array2d< real64, MatrixLayout::ROW_MAJOR_PERM > valuesRowMajor( rowIndices.size(), colIndices.size() );
   convertArrayLayout( values, valuesRowMajor.toSlice() );
   insert( rowIndices, colIndices, valuesRowMajor );
 }
@@ -490,7 +490,7 @@ void HypreMatrix::add( globalIndex const * rowIndices,
                        localIndex const numRows,
                        localIndex const numCols )
 {
-  for( localIndex i = 0 ; i < numRows ; ++i )
+  for( localIndex i = 0; i < numRows; ++i )
   {
     add( rowIndices[i], colIndices, values + numCols * i, numCols );
   }
@@ -502,7 +502,7 @@ void HypreMatrix::set( globalIndex const * rowIndices,
                        localIndex const numRows,
                        localIndex const numCols )
 {
-  for( localIndex i = 0 ; i < numRows ; ++i )
+  for( localIndex i = 0; i < numRows; ++i )
   {
     set( rowIndices[i], colIndices, values + numCols * i, numCols );
   }
@@ -514,7 +514,7 @@ void HypreMatrix::insert( globalIndex const * rowIndices,
                           localIndex const numRows,
                           localIndex const numCols )
 {
-  for( localIndex i = 0 ; i < numRows ; ++i )
+  for( localIndex i = 0; i < numRows; ++i )
   {
     insert( rowIndices[i], colIndices, values + numCols * i, numCols );
   }
@@ -793,11 +793,11 @@ void HypreMatrix::scale( real64 const scalingFactor )
   HYPRE_Real * const ptr_offdiag_data = hypre_CSRMatrixData( prt_offdiag_CSR );
 
   HYPRE_Real alpha = static_cast< HYPRE_Real >( scalingFactor );
-  for( HYPRE_Int i = 0 ; i < diag_nnz ; ++i )
+  for( HYPRE_Int i = 0; i < diag_nnz; ++i )
   {
     ptr_diag_data[i] *= alpha;
   }
-  for( HYPRE_Int i = 0 ; i < offdiag_nnz ; ++i )
+  for( HYPRE_Int i = 0; i < offdiag_nnz; ++i )
   {
     ptr_offdiag_data[i] *= alpha;
   }
@@ -816,9 +816,9 @@ void HypreMatrix::leftScale( HypreVector const & vec )
   HYPRE_Int nrows = hypre_CSRMatrixNumRows( prt_diag_CSR );
   HYPRE_Int const * IA = hypre_CSRMatrixI( prt_diag_CSR );
 
-  for( HYPRE_Int i = 0 ; i < nrows ; ++i )
+  for( HYPRE_Int i = 0; i < nrows; ++i )
   {
-    for( HYPRE_Int j = IA[i] ; j < IA[i + 1] ; ++j )
+    for( HYPRE_Int j = IA[i]; j < IA[i + 1]; ++j )
     {
       ptr_diag_data[j] *= ptr_vec_data[i];
     }
@@ -830,9 +830,9 @@ void HypreMatrix::leftScale( HypreVector const & vec )
   nrows = hypre_CSRMatrixNumRows( prt_offdiag_CSR );
   IA = hypre_CSRMatrixI( prt_offdiag_CSR );
 
-  for( HYPRE_Int i = 0 ; i < nrows ; ++i )
+  for( HYPRE_Int i = 0; i < nrows; ++i )
   {
-    for( HYPRE_Int j = IA[i] ; j < IA[i + 1] ; ++j )
+    for( HYPRE_Int j = IA[i]; j < IA[i + 1]; ++j )
     {
       ptr_offdiag_data[j] *= ptr_vec_data[i];
     }
@@ -849,7 +849,7 @@ localIndex HypreMatrix::maxRowLength() const
   array1d< HYPRE_BigInt > rows( nrows );
   array1d< HYPRE_Int > ncols( nrows );
 
-  for( HYPRE_Int i = 0 ; i < nrows ; ++i )
+  for( HYPRE_Int i = 0; i < nrows; ++i )
   {
     rows[i] = ilower() + integer_conversion< HYPRE_BigInt >( i );
   }
@@ -919,11 +919,11 @@ real64 HypreMatrix::getDiagValue( globalIndex globalRow ) const
 
   // Get diagonal block
   hypre_CSRMatrix const * const prt_CSR  = hypre_ParCSRMatrixDiag( m_parcsr_mat );
-  HYPRE_Int const       * const IA       = hypre_CSRMatrixI( prt_CSR );
-  HYPRE_Int const       * const JA       = hypre_CSRMatrixJ( prt_CSR );
-  HYPRE_Real const      * const ptr_data = hypre_CSRMatrixData( prt_CSR );
+  HYPRE_Int const * const IA       = hypre_CSRMatrixI( prt_CSR );
+  HYPRE_Int const * const JA       = hypre_CSRMatrixJ( prt_CSR );
+  HYPRE_Real const * const ptr_data = hypre_CSRMatrixData( prt_CSR );
 
-  for( HYPRE_Int j = IA[localRow] ; j < IA[localRow + 1] ; ++j )
+  for( HYPRE_Int j = IA[localRow]; j < IA[localRow + 1]; ++j )
   {
     if( JA[j] == localRow )
     {
@@ -948,7 +948,7 @@ void HypreMatrix::clearRow( globalIndex const globalRow,
   HYPRE_Int *       IA       = hypre_CSRMatrixI( prt_CSR );
   HYPRE_Real *      ptr_data = hypre_CSRMatrixData( prt_CSR );
 
-  for( HYPRE_Int j = IA[localRow] ; j < IA[localRow + 1] ; ++j )
+  for( HYPRE_Int j = IA[localRow]; j < IA[localRow + 1]; ++j )
   {
     ptr_data[j] = 0.0;
   }
@@ -958,13 +958,13 @@ void HypreMatrix::clearRow( globalIndex const globalRow,
   IA       = hypre_CSRMatrixI( prt_CSR );
   ptr_data = hypre_CSRMatrixData( prt_CSR );
 
-  for( HYPRE_Int j = IA[localRow] ; j < IA[localRow + 1] ; ++j )
+  for( HYPRE_Int j = IA[localRow]; j < IA[localRow + 1]; ++j )
   {
     ptr_data[j] = 0.0;
   }
 
   // Set diagonal value
-  if( std::fabs(diagValue) > 0.0 && numGlobalRows() == numGlobalCols() )
+  if( std::fabs( diagValue ) > 0.0 && numGlobalRows() == numGlobalCols() )
   {
     set( globalRow, globalRow, diagValue );
   }
@@ -1108,15 +1108,15 @@ void HypreMatrix::print( std::ostream & os ) const
   int const n_mpi_process = MpiWrapper::Comm_size( getComm() );
   char str[77];
 
-  if ( this_mpi_process == 0 )
+  if( this_mpi_process == 0 )
   {
     os << "MPI_Process         GlobalRowID         GlobalColID                   Value" << std::endl;
   }
 
   for( int iRank = 0; iRank < n_mpi_process; iRank++ )
   {
-	  MpiWrapper::Barrier( getComm() );
-    if ( iRank == this_mpi_process )
+    MpiWrapper::Barrier( getComm() );
+    if( iRank == this_mpi_process )
     {
       globalIndex const firstRowID = ilower();
       globalIndex const firstDiagColID = jlower();
@@ -1132,25 +1132,25 @@ void HypreMatrix::print( std::ostream & os ) const
       HYPRE_BigInt const * const col_map_offdiag = hypre_ParCSRMatrixColMapOffd( m_parcsr_mat );
       HYPRE_Real const * const ptr_offdiag_data = hypre_CSRMatrixData( prt_offdiag_CSR );
 
-      for( HYPRE_Int i = 0 ; i < hypre_CSRMatrixNumRows( prt_diag_CSR ); ++i )
+      for( HYPRE_Int i = 0; i < hypre_CSRMatrixNumRows( prt_diag_CSR ); ++i )
       {
-        for( HYPRE_Int j = diag_IA[i] ; j < diag_IA[i + 1] ; ++j )
-    	  {
+        for( HYPRE_Int j = diag_IA[i]; j < diag_IA[i + 1]; ++j )
+        {
 
           sprintf( str,
                    "%11i%20lli%20lli%24.10e\n",
                    iRank,
-                   firstRowID + integer_conversion<globalIndex>(i),
-                   firstDiagColID + integer_conversion<globalIndex>( diag_JA[j] ),
+                   firstRowID + integer_conversion< globalIndex >( i ),
+                   firstDiagColID + integer_conversion< globalIndex >( diag_JA[j] ),
                    ptr_diag_data[j] );
           os << str;
         }
-        for( HYPRE_Int j = offdiag_IA[i] ; j < offdiag_IA[i + 1] ; ++j )
-    	  {
+        for( HYPRE_Int j = offdiag_IA[i]; j < offdiag_IA[i + 1]; ++j )
+        {
           sprintf( str,
                    "%11i%20lli%20lli%24.10e\n",
                    iRank,
-                   firstRowID + integer_conversion<globalIndex>(i),
+                   firstRowID + integer_conversion< globalIndex >( i ),
                    col_map_offdiag[ offdiag_JA[j] ],
                    ptr_offdiag_data[j] );
           os << str;
@@ -1200,9 +1200,9 @@ real64 HypreMatrix::normInf() const
   array1d< HYPRE_Real > row_abs_sum( nrows );
   row_abs_sum = 0.0;
 
-  for( HYPRE_Int i = 0 ; i < nrows ; ++i )
+  for( HYPRE_Int i = 0; i < nrows; ++i )
   {
-    for( HYPRE_Int j = IA[i] ; j < IA[i + 1] ; ++j )
+    for( HYPRE_Int j = IA[i]; j < IA[i + 1]; ++j )
     {
       row_abs_sum[i] += std::fabs( ptr_diag_data[j] );
     }
@@ -1214,9 +1214,9 @@ real64 HypreMatrix::normInf() const
   nrows = hypre_CSRMatrixNumRows( prt_offdiag_CSR );
   IA = hypre_CSRMatrixI( prt_offdiag_CSR );
 
-  for( HYPRE_Int i = 0 ; i < nrows ; ++i )
+  for( HYPRE_Int i = 0; i < nrows; ++i )
   {
-    for( HYPRE_Int j = IA[i] ; j < IA[i + 1] ; ++j )
+    for( HYPRE_Int j = IA[i]; j < IA[i + 1]; ++j )
     {
       row_abs_sum[i] += std::fabs( ptr_offdiag_data[j] );
     }
@@ -1265,4 +1265,3 @@ MPI_Comm HypreMatrix::getComm() const
 }
 
 }// end namespace geosx
-

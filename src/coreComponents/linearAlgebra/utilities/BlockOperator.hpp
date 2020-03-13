@@ -68,7 +68,7 @@ private:
 template< typename VECTOR, typename OPERATOR >
 BlockOperator< VECTOR, OPERATOR >::BlockOperator( localIndex const nRows, localIndex const nCols )
   : Base( nRows, nCols ),
-    m_operatorStorage( nRows, nCols )
+  m_operatorStorage( nRows, nCols )
 {
   setPointers();
 }
@@ -90,7 +90,7 @@ void BlockOperator< VECTOR, OPERATOR >::setPointers()
 template< typename VECTOR, typename OPERATOR >
 BlockOperator< VECTOR, OPERATOR >::BlockOperator( BlockOperator const & rhs )
   : Base( rhs ),
-    m_operatorStorage( rhs.m_operatorStorage )
+  m_operatorStorage( rhs.m_operatorStorage )
 {
   setPointers();
 }
@@ -98,7 +98,7 @@ BlockOperator< VECTOR, OPERATOR >::BlockOperator( BlockOperator const & rhs )
 template< typename VECTOR, typename OPERATOR >
 BlockOperator< VECTOR, OPERATOR >::BlockOperator( BlockOperator && rhs )
   : Base( std::move( rhs ) ),
-    m_operatorStorage( std::move( rhs.m_operatorStorage ) )
+  m_operatorStorage( std::move( rhs.m_operatorStorage ) )
 {
   setPointers();
 }
