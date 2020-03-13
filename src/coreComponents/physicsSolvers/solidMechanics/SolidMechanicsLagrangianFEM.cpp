@@ -1111,7 +1111,6 @@ SolidMechanicsLagrangianFEM::
 
   matrix.open();
   rhs.open();
-
   fsManager.Apply( time_n + dt,
                    domain,
                    "nodeManager",
@@ -1134,19 +1133,19 @@ SolidMechanicsLagrangianFEM::
                                                                               rhs );
   } );
 
-  ApplyTractionBC(
-    time_n + dt,
-    dofManager, domain,
-    rhs );
-
-  ApplyDisplacementBC_implicit( time_n + dt, dofManager, *domain, matrix, rhs );
+  ApplyTractionBC( time_n + dt, dofManager, domain, rhs );
 
   if( faceManager->hasWrapper( "ChomboPressure" ) )
   {
     fsManager.ApplyFieldValue( time_n, domain, "faceManager", "ChomboPressure" );
     ApplyChomboPressure( dofManager, domain, rhs );
   }
+  matrix.close();
+  rhs.close();
 
+  matrix.open();
+  rhs.open();
+  ApplyDisplacementBC_implicit( time_n + dt, dofManager, *domain, matrix, rhs );
   matrix.close();
   rhs.close();
 
@@ -1158,8 +1157,6 @@ SolidMechanicsLagrangianFEM::
     GEOSX_LOG_RANK_0( "\nResidual:\n" );
     std::cout << rhs;
   }
-
-
 }
 
 real64
