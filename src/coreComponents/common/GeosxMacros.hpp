@@ -74,7 +74,8 @@ void i_g_n_o_r_e( T & ) {}
 #define GEOSX_DEBUG_VAR( X ) GEOSX_UNUSED_VAR( X )
 
 #if defined(GEOSX_USE_OPENMP)
-  #define PRAGMA_OMP( clause ) _Pragma(STRINGIZE(clause))
+  #define PRAGMA_OMP( clause ) _Pragma( clause )
+//  #define PRAGMA_OMP( clause ) _Pragma( STRINGIZE( omp clause ) )
 #else
   #define PRAGMA_OMP( clause )
 #endif

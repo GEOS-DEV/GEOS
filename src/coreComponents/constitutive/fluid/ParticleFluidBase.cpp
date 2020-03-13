@@ -13,8 +13,8 @@
  */
 
 /**
-  * @file ParticleFluidBase.cpp
-  */
+ * @file ParticleFluidBase.cpp
+ */
 
 #include "ParticleFluidBase.hpp"
 
@@ -39,17 +39,17 @@ ParticleFluidBase::ParticleFluidBase( std::string const & name, Group * const pa
   registerWrapper( viewKeyStruct::dCollisionFactor_dProppantConcentrationString, &m_dCollisionFactor_dProppantConcentration, false );
 
   registerWrapper( viewKeyStruct::maxProppantConcentrationString, &m_maxProppantConcentration, false )->
-    setApplyDefaultValue(0.6)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Max proppant concentration");    
+    setApplyDefaultValue( 0.6 )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Max proppant concentration" );
 
   registerWrapper( viewKeyStruct::isCollisionalSlipString, &m_isCollisionalSlip, false )->
-      setApplyDefaultValue(0)->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("Whether the collisional component of the slip velocity is considered");
+    setApplyDefaultValue( 0 )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Whether the collisional component of the slip velocity is considered" );
 
-  registerWrapper( viewKeyStruct::proppantPackPermeabilityString, &m_proppantPackPermeability, false );  
-  
+  registerWrapper( viewKeyStruct::proppantPackPermeabilityString, &m_proppantPackPermeability, false );
+
 }
 
 ParticleFluidBase::~ParticleFluidBase() = default;
@@ -60,40 +60,40 @@ void ParticleFluidBase::PostProcessInput()
 }
 
 void ParticleFluidBase::AllocateConstitutiveData( Group * const parent,
-                                                localIndex const numConstitutivePointsPerParentIndex )
+                                                  localIndex const numConstitutivePointsPerParentIndex )
 {
   ConstitutiveBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
   this->resize( parent->size() );
-  m_dSettlingFactor_dComponentConcentration.resize( parent->size(), MAX_NUM_COMPONENTS);  
-  
+  m_dSettlingFactor_dComponentConcentration.resize( parent->size(), MAX_NUM_COMPONENTS );
+
 }
 
 
 void
 ParticleFluidBase::DeliverClone( string const & name,
-                               Group * const parent,
-                               std::unique_ptr<ConstitutiveBase> & clone ) const
+                                 Group * const parent,
+                                 std::unique_ptr< ConstitutiveBase > & clone ) const
 {
   GEOSX_ERROR_IF( !clone, "clone not allocated" );
 
   ConstitutiveBase::DeliverClone( name, parent, clone );
-  ParticleFluidBase * const newConstitutiveRelation = dynamic_cast<ParticleFluidBase *>(clone.get());
+  ParticleFluidBase * const newConstitutiveRelation = dynamic_cast< ParticleFluidBase * >(clone.get());
 
   newConstitutiveRelation->m_settlingFactor = m_settlingFactor;
   newConstitutiveRelation->m_dSettlingFactor_dPressure = m_dSettlingFactor_dPressure;
   newConstitutiveRelation->m_dSettlingFactor_dProppantConcentration = m_dSettlingFactor_dProppantConcentration;
-  newConstitutiveRelation->m_dSettlingFactor_dComponentConcentration = m_dSettlingFactor_dComponentConcentration;  
+  newConstitutiveRelation->m_dSettlingFactor_dComponentConcentration = m_dSettlingFactor_dComponentConcentration;
 
   newConstitutiveRelation->m_collisionFactor = m_collisionFactor;
-  newConstitutiveRelation->m_dCollisionFactor_dProppantConcentration = m_dCollisionFactor_dProppantConcentration;  
+  newConstitutiveRelation->m_dCollisionFactor_dProppantConcentration = m_dCollisionFactor_dProppantConcentration;
 
   newConstitutiveRelation->m_maxProppantConcentration = this->m_maxProppantConcentration;
 
   newConstitutiveRelation->m_isCollisionalSlip = this->m_isCollisionalSlip;
 
-  newConstitutiveRelation->m_proppantPackPermeability = this->m_proppantPackPermeability;      
-  
+  newConstitutiveRelation->m_proppantPackPermeability = this->m_proppantPackPermeability;
+
 }
 } //namespace constitutive
 

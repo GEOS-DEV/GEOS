@@ -13,8 +13,8 @@
  */
 
 /**
-  * @file ParticleFluidBase.hpp
-  */
+ * @file ParticleFluidBase.hpp
+ */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_PARTICLEFLUIDBASE_HPP
 #define SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_PARTICLEFLUIDBASE_HPP
@@ -40,46 +40,52 @@ public:
 
   virtual void DeliverClone( string const & name,
                              Group * const parent,
-                             std::unique_ptr<ConstitutiveBase> & clone ) const override = 0;
+                             std::unique_ptr< ConstitutiveBase > & clone ) const override = 0;
 
   virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   // *** ParticleFluidBase-specific interface
 
-  virtual void PointUpdate(localIndex const NC, real64 const & proppantConcentration, arraySlice1d<real64 const> const & ComponentConcentration, arraySlice1d<real64 const> const & nIndex, arraySlice1d<real64 const> const & KIndex, real64 const &fluidDensity, real64 const &dFluidDensity_dPressure, arraySlice1d<real64 const> const &dFluidDensity_dComponentConcentration, localIndex const k) = 0;
+  virtual void PointUpdate( localIndex const NC, real64 const & proppantConcentration, arraySlice1d< real64 const > const & ComponentConcentration,
+                            arraySlice1d< real64 const > const & nIndex, arraySlice1d< real64 const > const & KIndex, real64 const & fluidDensity,
+                            real64 const & dFluidDensity_dPressure, arraySlice1d< real64 const > const & dFluidDensity_dComponentConcentration,
+                            localIndex const k ) = 0;
 
-  virtual void PointUpdate(localIndex const NC, real64 const & proppantConcentration, real64 const &fluidDensity, real64 const &dFluidDensity_dPressure, arraySlice1d<real64 const> const &dFluidDensity_dComponentConcentration, real64 const &fluidViscosity, real64 const &dFluidViscosity_dPressure, arraySlice1d<real64 const> const &dFluidViscosity_dComponentConcentration, localIndex const k) = 0;  
+  virtual void PointUpdate( localIndex const NC, real64 const & proppantConcentration, real64 const & fluidDensity, real64 const & dFluidDensity_dPressure,
+                            arraySlice1d< real64 const > const & dFluidDensity_dComponentConcentration, real64 const & fluidViscosity,
+                            real64 const & dFluidViscosity_dPressure, arraySlice1d< real64 const > const & dFluidViscosity_dComponentConcentration,
+                            localIndex const k ) = 0;
 
-  virtual void BatchUpdate( arrayView1d<real64 const> const & concentration ) = 0;
+  virtual void BatchUpdate( arrayView1d< real64 const > const & concentration ) = 0;
 
   static constexpr localIndex MAX_NUM_COMPONENTS = 4;
-  
+
   // *** Data repository keys
 
   struct viewKeyStruct
   {
 
     static constexpr auto settlingFactorString    = "settlingFactor";
-    static constexpr auto dSettlingFactor_dPressureString  = "dSettlingFactor_dPressure";    
+    static constexpr auto dSettlingFactor_dPressureString  = "dSettlingFactor_dPressure";
     static constexpr auto dSettlingFactor_dProppantConcentrationString  = "dSettlingFactor_dProppantConcentration";
-    static constexpr auto dSettlingFactor_dComponentConcentrationString  = "dSettlingFactor_dComponentConcentration";    
+    static constexpr auto dSettlingFactor_dComponentConcentrationString  = "dSettlingFactor_dComponentConcentration";
 
-    static constexpr auto collisionFactorString    = "collisionFactor";    
-    static constexpr auto dCollisionFactor_dProppantConcentrationString  = "dCollisionFactor_dProppantConcentration";        
+    static constexpr auto collisionFactorString    = "collisionFactor";
+    static constexpr auto dCollisionFactor_dProppantConcentrationString  = "dCollisionFactor_dProppantConcentration";
 
     static constexpr auto maxProppantConcentrationString    = "maxProppantConcentration";
 
     static constexpr auto isCollisionalSlipString    = "isCollisionalSlip";
-    
+
     static constexpr auto proppantPackPermeabilityString    = "proppantPackPermeability";
-    
+
     using ViewKey = dataRepository::ViewKey;
 
     ViewKey settlingFactor  = { settlingFactorString };
     ViewKey dSettlingFactor_dPressure = { dSettlingFactor_dPressureString };
     ViewKey dSettlingFactor_dProppantConcentration = { dSettlingFactor_dProppantConcentrationString };
-    ViewKey dSettlingFactor_dComponentConcentration = { dSettlingFactor_dComponentConcentrationString };    
+    ViewKey dSettlingFactor_dComponentConcentration = { dSettlingFactor_dComponentConcentrationString };
 
     ViewKey collisionFactor  = { collisionFactorString };
     ViewKey collisionFactor_dProppantConcentration = { dCollisionFactor_dProppantConcentrationString };
@@ -87,7 +93,7 @@ public:
     ViewKey maxProppantConcentration   = { maxProppantConcentrationString };
 
     ViewKey isCollisionalSlip   = { isCollisionalSlipString };
-    ViewKey proppantPackPermeability   = { proppantPackPermeabilityString };        
+    ViewKey proppantPackPermeability   = { proppantPackPermeabilityString };
 
   } viewKeysParticleFluidBase;
 
@@ -95,20 +101,20 @@ protected:
 
   virtual void PostProcessInput() override;
 
-  array1d<real64> m_settlingFactor;
-  array1d<real64> m_dSettlingFactor_dPressure;
-  array1d<real64> m_dSettlingFactor_dProppantConcentration;
-  array2d<real64> m_dSettlingFactor_dComponentConcentration;  
+  array1d< real64 > m_settlingFactor;
+  array1d< real64 > m_dSettlingFactor_dPressure;
+  array1d< real64 > m_dSettlingFactor_dProppantConcentration;
+  array2d< real64 > m_dSettlingFactor_dComponentConcentration;
 
-  array1d<real64> m_collisionFactor;
-  array1d<real64> m_dCollisionFactor_dProppantConcentration;   
+  array1d< real64 > m_collisionFactor;
+  array1d< real64 > m_dCollisionFactor_dProppantConcentration;
 
-  array1d<real64> m_proppantPackPermeability;  
-  
+  array1d< real64 > m_proppantPackPermeability;
+
   integer m_isCollisionalSlip;
 
-  real64 m_maxProppantConcentration;    
-  
+  real64 m_maxProppantConcentration;
+
 };
 
 } //namespace constitutive

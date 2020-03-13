@@ -33,7 +33,7 @@ namespace dataRepository
 {
 namespace keys
 {
-string const partitionManager("partitionManager");
+string const partitionManager( "partitionManager" );
 }
 }
 
@@ -49,10 +49,10 @@ public:
   ~DomainPartition() override;
 
   DomainPartition() = delete;
-  DomainPartition( DomainPartition const &) = delete;
-  DomainPartition( DomainPartition &&) = delete;
-  DomainPartition& operator=( DomainPartition const & ) = delete;
-  DomainPartition& operator=( DomainPartition && ) = delete;
+  DomainPartition( DomainPartition const & ) = delete;
+  DomainPartition( DomainPartition && ) = delete;
+  DomainPartition & operator=( DomainPartition const & ) = delete;
+  DomainPartition & operator=( DomainPartition && ) = delete;
 
   virtual void RegisterDataOnMeshRecursive( Group * const MeshBodies ) override final;
 
@@ -69,23 +69,23 @@ public:
 
   void SetupCommunications( bool use_nonblocking );
 
-  void AddNeighbors(const unsigned int idim,
-                    MPI_Comm& cartcomm,
-                    int* ncoords);
+  void AddNeighbors( const unsigned int idim,
+                     MPI_Comm & cartcomm,
+                     int * ncoords );
   ///@}
 
 
-  void ReadSilo( const SiloFile& siloFile,
+  void ReadSilo( const SiloFile & siloFile,
                  const int cycleNum,
                  const realT problemTime,
                  const bool isRestart );
 
-  void WriteFiniteElementMesh( SiloFile& siloFile,
+  void WriteFiniteElementMesh( SiloFile & siloFile,
                                const int cycleNum,
                                const realT problemTime,
                                const bool isRestart );
 
-  void ReadFiniteElementMesh( const SiloFile& siloFile,
+  void ReadFiniteElementMesh( const SiloFile & siloFile,
                               const int cycleNum,
                               const realT problemTime,
                               const bool isRestart );
@@ -102,34 +102,34 @@ public:
 
 
   constitutive::ConstitutiveManager const * getConstitutiveManager() const
-  { return this->GetGroup<constitutive::ConstitutiveManager>(groupKeys.constitutiveManager); }
+  { return this->GetGroup< constitutive::ConstitutiveManager >( groupKeys.constitutiveManager ); }
 
   constitutive::ConstitutiveManager * getConstitutiveManager()
-  { return this->GetGroup<constitutive::ConstitutiveManager>(groupKeys.constitutiveManager); }
+  { return this->GetGroup< constitutive::ConstitutiveManager >( groupKeys.constitutiveManager ); }
 
 
   Group const * getMeshBodies() const
-  { return this->GetGroup(groupKeys.meshBodies); }
-  
+  { return this->GetGroup( groupKeys.meshBodies ); }
+
   Group * getMeshBodies()
-  { return this->GetGroup(groupKeys.meshBodies); }
+  { return this->GetGroup( groupKeys.meshBodies ); }
 
   MeshBody const * getMeshBody( string const & meshName ) const
-  { return this->GetGroup(groupKeys.meshBodies)->GetGroup<MeshBody>(meshName); }
-  
+  { return this->GetGroup( groupKeys.meshBodies )->GetGroup< MeshBody >( meshName ); }
+
   MeshBody * getMeshBody( string const & meshName )
-  { return this->GetGroup(groupKeys.meshBodies)->GetGroup<MeshBody>(meshName); }
+  { return this->GetGroup( groupKeys.meshBodies )->GetGroup< MeshBody >( meshName ); }
 
   MeshBody const * getMeshBody( localIndex const index ) const
-  { return this->GetGroup(groupKeys.meshBodies)->GetGroup<MeshBody>(index); }
-  
-  MeshBody * getMeshBody( localIndex const index )
-  { return this->GetGroup(groupKeys.meshBodies)->GetGroup<MeshBody>(index); }
+  { return this->GetGroup( groupKeys.meshBodies )->GetGroup< MeshBody >( index ); }
 
-  std::set<int>       & getMetisNeighborList()
+  MeshBody * getMeshBody( localIndex const index )
+  { return this->GetGroup( groupKeys.meshBodies )->GetGroup< MeshBody >( index ); }
+
+  std::set< int > & getMetisNeighborList()
   { return m_metisNeighborList; }
-  
-  std::set<int> const & getMetisNeighborList() const
+
+  std::set< int > const & getMetisNeighborList() const
   { return m_metisNeighborList; }
 
   std::vector< NeighborCommunicator > & getNeighbors()
@@ -140,7 +140,7 @@ public:
 
 private:
 
-  std::set<int> m_metisNeighborList;
+  std::set< int > m_metisNeighborList;
   std::vector< NeighborCommunicator > m_neighbors;
 
 };
