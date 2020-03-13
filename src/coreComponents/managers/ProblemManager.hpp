@@ -41,7 +41,7 @@ class DomainPartition;
 class ProblemManager : public ObjectManagerBase
 {
 public:
-  explicit ProblemManager( const std::string& name,
+  explicit ProblemManager( const std::string & name,
                            Group * const parent );
 
   ~ProblemManager() override;
@@ -50,7 +50,7 @@ public:
    * @name Static Factory Catalog Functions
    */
   ///@{
-  const static string CatalogName() 
+  const static string CatalogName()
   { return "Problem"; }
   virtual const string getCatalogName() const override final
   { return ProblemManager::CatalogName(); }
@@ -60,15 +60,15 @@ public:
    * This function is used to inform the schema generator of any
    * deviations between the xml and GEOS data structures.
    */
-  virtual void SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
-                                   xmlWrapper::xmlNode schemaParent,
-                                   integer documentationType) override;
+  virtual void SetSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
+                                    xmlWrapper::xmlNode schemaParent,
+                                    integer documentationType ) override;
 
   virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 
-  void ParseCommandLineInput( int argc, char* argv[]);
+  void ParseCommandLineInput( int argc, char * argv[] );
 
-  static bool ParseRestart( int argc, char* argv[], std::string& restartFileName );
+  static bool ParseRestart( int argc, char * argv[], std::string & restartFileName );
 
   void InitializePythonInterpreter();
 
@@ -105,16 +105,16 @@ public:
   DomainPartition const * getDomainPartition() const;
 
   const string & getProblemName() const
-  { return GetGroup<Group>(groupKeys.commandLine)->getReference<string>(viewKeys.problemName); }
+  { return GetGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.problemName ); }
 
   const string & getInputFileName() const
-  { return GetGroup<Group>(groupKeys.commandLine)->getReference<string>(viewKeys.inputFileName); }
+  { return GetGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.inputFileName ); }
 
   const string & getRestartFileName() const
-  { return GetGroup<Group>(groupKeys.commandLine)->getReference<string>(viewKeys.restartFileName); }
+  { return GetGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.restartFileName ); }
 
   const string & getSchemaFileName() const
-  { return GetGroup<Group>(groupKeys.commandLine)->getReference<string>(viewKeys.schemaFileName); }
+  { return GetGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.schemaFileName ); }
 
   xmlWrapper::xmlDocument xmlDocument;
   xmlWrapper::xmlResult xmlResult;

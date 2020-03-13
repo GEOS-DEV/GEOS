@@ -258,7 +258,7 @@ void LinearElasticIsotropicUpdates::HyperElastic( localIndex const k,
   real64 stress[6];
   HyperElastic( k, FmI, stress );
 
-  for( localIndex i=0 ; i<6 ; ++i )
+  for( localIndex i=0; i<6; ++i )
   {
     m_stress( k, q, i ) = stress[i];
   }
