@@ -359,6 +359,13 @@ Element: MeshFile
 .. include:: ../../coreComponents/fileIO/schema/docs/MeshFile.rst
 
 
+.. _XML_MohrCoulomb:
+
+Element: MohrCoulomb
+====================
+.. include:: ../../coreComponents/fileIO/schema/docs/MohrCoulomb.rst
+
+
 .. _XML_MultiPhaseMultiComponentFluid:
 
 Element: MultiPhaseMultiComponentFluid
@@ -1033,6 +1040,13 @@ Datastructure: MeshBodies
 Datastructure: MeshFile
 =======================
 .. include:: ../../coreComponents/fileIO/schema/docs/MeshFile_other.rst
+
+
+.. _DATASTRUCTURE_MohrCoulomb:
+
+Datastructure: MohrCoulomb
+==========================
+.. include:: ../../coreComponents/fileIO/schema/docs/MohrCoulomb_other.rst
 
 
 .. _DATASTRUCTURE_MultiPhaseMultiComponentFluid:

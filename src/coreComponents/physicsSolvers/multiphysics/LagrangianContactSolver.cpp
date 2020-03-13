@@ -49,7 +49,9 @@ LagrangianContactSolver::LagrangianContactSolver( const std::string & name,
   SolverBase( name, parent ),
   m_solidSolverName(),
   m_solidSolver( nullptr ),
-  m_stabilizationName()
+  m_stabilizationName(),
+  m_contactRelationName(),
+  m_activeSetMaxIter()
 {
   registerWrapper( viewKeyStruct::solidSolverNameString, &m_solidSolverName, false )->
     setInputFlag( InputFlags::REQUIRED )->
@@ -59,10 +61,34 @@ LagrangianContactSolver::LagrangianContactSolver( const std::string & name,
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of the stabilization to use in the lagrangian contact solver" );
 
+  registerWrapper( viewKeyStruct::contactRelationNameString, &m_contactRelationName, false )->
+    setInputFlag( InputFlags::REQUIRED )->
+    setDescription( "Name of the constitutive law used for fracture elements" );
+
   registerWrapper( viewKeyStruct::activeSetMaxIterString, &m_activeSetMaxIter, false )->
     setApplyDefaultValue( 10 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Maximum number of iteration for the active set strategy in the lagrangian contact solver" );
+
+  registerWrapper( viewKeyStruct::slidingCheckToleranceString, &m_slidingCheckTolerance, false )->
+    setApplyDefaultValue( 0.05 )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Percentage of the current limit tangential stress used to relax the criterion to determine the sliding condition" );
+
+  registerWrapper( viewKeyStruct::normalDisplacementToleranceString, &m_normalDisplacementTolerance, false )->
+    setApplyDefaultValue( 1.e-7 )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Tolerance used to determine if a compenetration is happening" );
+
+  registerWrapper( viewKeyStruct::normalTractionToleranceString, &m_normalTractionTolerance, false )->
+    setApplyDefaultValue( 1.e-4 )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Tolerance used to determine if an element is open due to a positive traction" );
+
+  registerWrapper( viewKeyStruct::slidingToleranceString, &m_slidingTolerance, false )->
+    setApplyDefaultValue( 1.e-7 )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Tolerance below which friction is considered linear and a pseuso Jacobian is assembled" );
 }
 
 void LagrangianContactSolver::RegisterDataOnMesh( dataRepository::Group * const MeshBodies )
@@ -124,6 +150,18 @@ void LagrangianContactSolver::RegisterDataOnMesh( dataRepository::Group * const 
       } );
     } );
   }
+}
+
+void LagrangianContactSolver::InitializePreSubGroups(Group * const rootGroup)
+{
+  SolverBase::InitializePreSubGroups(rootGroup);
+
+  DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
+  ConstitutiveManager const * const cm = domain->getConstitutiveManager();
+
+  ConstitutiveBase const * const contarcRelation  = cm->GetConstitutiveRelation<ConstitutiveBase>( m_contactRelationName );
+  GEOSX_ERROR_IF( contarcRelation == nullptr, "fracture constitutive model " + m_contactRelationName + " not found" );
+  m_contactRelationFullIndex = contarcRelation->getIndexInParent();
 }
 
 void LagrangianContactSolver::ImplicitStepSetup( real64 const & time_n,
@@ -888,7 +926,7 @@ void LagrangianContactSolver::AssembleSystem( real64 const time,
 
   AssembleForceResidualDerivativeWrtTraction( domain, dofManager, &matrix, &rhs );
   AssembleTractionResidualDerivativeWrtDisplacementAndTraction( domain, dofManager, &matrix, &rhs );
-  AssembleStabliziation( domain, dofManager, &matrix, &rhs );
+  AssembleStabiliziation( domain, dofManager, &matrix, &rhs );
 }
 
 void LagrangianContactSolver::ApplyBoundaryConditions( real64 const time,
@@ -1115,6 +1153,11 @@ void LagrangianContactSolver::AssembleTractionResidualDerivativeWrtDisplacementA
   NodeManager const * const nodeManager = mesh->getNodeManager();
   ElementRegionManager const * const elemManager = mesh->getElemManager();
 
+  ConstitutiveManager const * const
+  constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
+  ContactRelationBase const * const
+  contactRelation = constitutiveManager->GetGroup<ContactRelationBase const>(m_contactRelationName);
+
   ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
 
   string const tracDofKey = dofManager.getKey( viewKeyStruct::tractionString );
@@ -1221,8 +1264,7 @@ void LagrangianContactSolver::AssembleTractionResidualDerivativeWrtDisplacementA
                       }
                     }
 
-                    real64 limitTau = m_cohesion - traction[kfe][0] * std::tan( m_frictionAngle );
-
+                    real64 const limitTau = contactRelation->limitTangentialTractionNorm( traction[kfe][0] );
                     R1TensorT< 2 > sliding( localJump[kfe][1] - previousLocalJump[kfe][1], localJump[kfe][2] - previousLocalJump[kfe][2] );
                     real64 slidingNorm = sqrt( sliding( 0 )*sliding( 0 ) + sliding( 1 )*sliding( 1 ) );
 
@@ -1260,7 +1302,7 @@ void LagrangianContactSolver::AssembleTractionResidualDerivativeWrtDisplacementA
                       }
                       for( localIndex i=1 ; i<3 ; ++i )
                       {
-                        dRdT( i, 0 ) = Ja * std::tan( m_frictionAngle ) * sliding( i-1 ) / slidingNorm;
+                        dRdT( i, 0 ) = Ja * contactRelation->dLimitTangentialTractionNorm_dNormalTraction( traction[kfe][0] ) * sliding( i-1 ) / slidingNorm;
                         dRdT( i, i ) = Ja;
                       }
                     }
@@ -1339,10 +1381,10 @@ void LagrangianContactSolver::AssembleTractionResidualDerivativeWrtDisplacementA
   rhs->close();
 }
 
-void LagrangianContactSolver::AssembleStabliziation( DomainPartition * const domain,
-                                                     DofManager const & dofManager,
-                                                     ParallelMatrix * const matrix,
-                                                     ParallelVector * const rhs )
+void LagrangianContactSolver::AssembleStabiliziation( DomainPartition * const domain,
+                                                      DofManager const & dofManager,
+                                                      ParallelMatrix * const matrix,
+                                                      ParallelVector * const rhs )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -1731,6 +1773,11 @@ bool LagrangianContactSolver::UpdateFractureState( DomainPartition * const domai
   MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
+  ConstitutiveManager const * const
+  constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
+  ContactRelationBase const * const
+  contactRelation = constitutiveManager->GetGroup<ContactRelationBase const>(m_contactRelationName);
+
   bool checkActiveSet = true;
 
   elemManager->forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion * const subRegion )->void
@@ -1768,14 +1815,14 @@ bool LagrangianContactSolver::UpdateFractureState( DomainPartition * const domai
             else
             {
               real64 currentTau = sqrt( traction[kfe][1]*traction[kfe][1] + traction[kfe][2]*traction[kfe][2] );
-              real64 limitTau = m_cohesion - traction[kfe][0] * std::tan( m_frictionAngle );
+              real64 limitTau = contactRelation->limitTangentialTractionNorm( traction[kfe][0] );
               if( originalFractureState == FractureState::STICK && currentTau >= limitTau )
               {
-                currentTau *= (1.0 - m_alpha);
+                currentTau *= (1.0 - m_slidingCheckTolerance);
               }
               else if( originalFractureState != FractureState::STICK && currentTau <= limitTau )
               {
-                currentTau *= (1.0 + m_alpha);
+                currentTau *= (1.0 + m_slidingCheckTolerance);
               }
               if( currentTau > limitTau )
               {

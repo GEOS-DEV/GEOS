@@ -1128,11 +1128,15 @@ ApplyBoundaryConditions( real64 const time_n,
                                                                             matrix,
                                                                             rhs );
   });
-  matrix.close();
-  rhs.close();
 
-  rhs.open();
   ApplyTractionBC( time_n + dt, dofManager, domain, rhs );
+
+  if( faceManager->hasWrapper( "ChomboPressure" ) )
+  {
+    fsManager.ApplyFieldValue( time_n, domain, "faceManager", "ChomboPressure" );
+    ApplyChomboPressure( dofManager, domain, rhs );
+  }
+  matrix.close();
   rhs.close();
 
   matrix.open();
@@ -1140,14 +1144,6 @@ ApplyBoundaryConditions( real64 const time_n,
   ApplyDisplacementBC_implicit( time_n + dt, dofManager, *domain, matrix, rhs );
   matrix.close();
   rhs.close();
-
-  if( faceManager->hasWrapper( "ChomboPressure" ) )
-  {
-    fsManager.ApplyFieldValue( time_n, domain, "faceManager", "ChomboPressure" );
-    rhs.open();
-    ApplyChomboPressure( dofManager, domain, rhs );
-    rhs.close();
-  }
 
   if( getLogLevel() >= 2 )
   {
@@ -1157,7 +1153,6 @@ ApplyBoundaryConditions( real64 const time_n,
     GEOSX_LOG_RANK_0( "\nResidual:\n");
     std::cout << rhs;
   }
-
 }
 
 real64

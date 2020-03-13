@@ -680,6 +680,7 @@
 			<xsd:element name="LinearElasticAnisotropic" type="LinearElasticAnisotropicType" />
 			<xsd:element name="LinearElasticIsotropic" type="LinearElasticIsotropicType" />
 			<xsd:element name="LinearElasticTransverseIsotropic" type="LinearElasticTransverseIsotropicType" />
+			<xsd:element name="MohrCoulomb" type="MohrCoulombType" />
 			<xsd:element name="MultiPhaseMultiComponentFluid" type="MultiPhaseMultiComponentFluidType" />
 			<xsd:element name="ParticleFluid" type="ParticleFluidType" />
 			<xsd:element name="PoreVolumeCompressibleSolid" type="PoreVolumeCompressibleSolidType" />
@@ -849,6 +850,11 @@
 		<xsd:attribute name="density" type="real64_array2d" />
 		<!--stress => Material Stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
+	</xsd:complexType>
+	<xsd:complexType name="MohrCoulombType">
+		<xsd:choice minOccurs="0" maxOccurs="1">
+			<xsd:element name="TableFunction" type="TableFunctionType" />
+		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="MultiPhaseMultiComponentFluidType">
 		<!--dPhaseCompFraction_dGlobalCompFraction => (no description available)-->

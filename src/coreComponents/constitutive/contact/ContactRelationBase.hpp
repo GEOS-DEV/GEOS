@@ -81,6 +81,9 @@ public:
 
   virtual void InitializePreSubGroups( Group * const ) override;
 
+  virtual real64 limitTangentialTractionNorm( real64 const normalTraction ) const;
+
+  virtual real64 dLimitTangentialTractionNorm_dNormalTraction( real64 const normalTraction ) const;
 
   /// accessor for penalty stiffness
   inline real64 stiffness() const { return m_penaltyStiffness; }
@@ -106,7 +109,6 @@ public:
   }
 
   inline real64 apertureTolerance() const { return m_apertureTolerance; }
-
 
   /**
    * @struct Structure to hold scoped key names

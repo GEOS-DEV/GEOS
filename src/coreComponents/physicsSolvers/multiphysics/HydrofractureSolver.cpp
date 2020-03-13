@@ -1221,6 +1221,11 @@ ApplySystemSolution( DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
 
 }
 
+#define Trilinos 1
+#define Hypre 2
+#define Petsc 3
+#if GEOSX_LA_INTERFACE == Trilinos
+
 #include "EpetraExt_MatrixMatrix.h"
 #include "Thyra_OperatorVectorClientSupport.hpp"
 #include "Thyra_AztecOOLinearOpWithSolveFactory.hpp"
@@ -1249,15 +1254,19 @@ ApplySystemSolution( DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
 #include "Teuchos_Time.hpp"
 #include "Stratimikos_DefaultLinearSolverBuilder.hpp"
 
+#endif
+
 namespace geosx
 {
-  
+
 void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
                                        ParallelMatrix & ,
                                        ParallelVector & ,
                                        ParallelVector &  )
 {
   GEOSX_MARK_FUNCTION;
+
+#if GEOSX_LA_INTERFACE == Trilinos
 
   /*
   globalIndex numU = m_solidSolver->getSystemRhs().globalSize();
@@ -1627,6 +1636,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( do
     p_solution[1]->Print(std::cout);
 
   }
+#endif
 }
 
 real64

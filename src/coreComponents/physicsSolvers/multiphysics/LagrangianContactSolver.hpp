@@ -44,6 +44,8 @@ public:
     return "LagrangianContact";
   }
 
+  virtual void InitializePreSubGroups(Group * const rootGroup) override;
+
   virtual void RegisterDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
 
   virtual void SetupDofs( DomainPartition const * const domain,
@@ -146,10 +148,10 @@ public:
                                                                      ParallelMatrix * const matrix,
                                                                      ParallelVector * const rhs );
 
-  void AssembleStabliziation( DomainPartition * const domain,
-                              DofManager const & dofManager,
-                              ParallelMatrix * const matrix,
-                              ParallelVector * const rhs );
+  void AssembleStabiliziation( DomainPartition * const domain,
+                               DofManager const & dofManager,
+                               ParallelMatrix * const matrix,
+                               ParallelVector * const rhs );
 
   real64 SplitOperatorStep( real64 const & time_n,
                             real64 const & dt,
@@ -160,6 +162,7 @@ public:
   {
     constexpr static auto solidSolverNameString = "solidSolverName";
     constexpr static auto stabilizationNameString = "stabilizationName";
+    constexpr static auto contactRelationNameString = "contactRelationName";
     constexpr static auto activeSetMaxIterString = "activeSetMaxIter";
 
     constexpr static auto tractionString = "traction";
@@ -168,7 +171,15 @@ public:
     constexpr static auto previousFractureStateString = "previousFractureState";
     constexpr static auto localJumpString = "localJump";
     constexpr static auto previousLocalJumpString = "previousLocalJump";
+
+    constexpr static auto slidingCheckToleranceString = "slidingCheckTolerance";
+    constexpr static auto normalDisplacementToleranceString = "normalDisplacementTolerance";
+    constexpr static auto normalTractionToleranceString = "normalTractionTolerance";
+    constexpr static auto slidingToleranceString = "slidingTolerance";
+
   } LagrangianContactSolverViewKeys;
+
+  string const & getContactRelationName() const { return m_contactRelationName; }
 
 protected:
   virtual void PostProcessInput() override final;
@@ -182,16 +193,19 @@ private:
   SolidMechanicsLagrangianFEM * m_solidSolver;
 
   string m_stabilizationName;
+
+  string m_contactRelationName;
+  localIndex m_contactRelationFullIndex;
+
   integer m_activeSetMaxIter;
 
   integer m_activeSetIter = 0;
 
-  real64 const m_alpha = 0.05;
-  real64 const m_cohesion = 0.0;
-  real64 const m_frictionAngle = 30.0 * M_PI/180.0;
-  real64 const m_normalDisplacementTolerance = 1.e-7;
-  real64 const m_normalTractionTolerance = 1.e-4;
-  real64 const m_slidingTolerance = 1.e-7;
+  real64 m_slidingCheckTolerance = 0.05;
+  real64 m_normalDisplacementTolerance = 1.e-7;
+  real64 m_normalTractionTolerance = 1.e-4;
+  real64 m_slidingTolerance = 1.e-7;
+
   string const m_tractionKey = viewKeyStruct::tractionString;
 
   real64 m_initialResidual[3] = {0.0, 0.0, 0.0};
