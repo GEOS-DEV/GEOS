@@ -1676,9 +1676,9 @@ void SiloFile::WriteElementMesh( ElementRegionBase const * const elementRegion,
     localIndex const numFluids = regionFluidMaterialList.size();
 
     string_array
-      fractureContactList = elementRegion->getConstitutiveNames< constitutive::ContactRelationBase >();
+      fractureContactMaterialList = elementRegion->getConstitutiveNames< constitutive::ContactRelationBase >();
 
-    localIndex const numContacts = fractureContactList.size();
+    localIndex const numContacts = fractureContactMaterialList.size();
 
     if( numSolids + numFluids + numContacts > 0 )
     {
@@ -1760,6 +1760,31 @@ void SiloFile::WriteElementMesh( ElementRegionBase const * const elementRegion,
       WriteMaterialMapsFullStorage( elementRegion,
                                     fluidMeshName,
                                     regionFluidMaterialList,
+                                    cycleNumber,
+                                    problemTime );
+    }
+
+    if( numContacts > 0 )
+    {
+      string const contactMeshName = meshName + "_Contact";
+      WriteMeshObject( contactMeshName,
+                       numNodes,
+                       coords,
+                       globalNodeNum,
+                       ghostNodeFlag,
+                       ghostZoneFlag.data(),
+                       integer_conversion< int >( numElementShapes ),
+                       shapecnt.data(),
+                       meshConnectivity.data(),
+                       nullptr /*globalElementNumbers.data()*/,
+                       shapetype.data(),
+                       shapesize.data(),
+                       cycleNumber,
+                       problemTime );
+
+      WriteMaterialMapsFullStorage( elementRegion,
+                                    contactMeshName,
+                                    fractureContactMaterialList,
                                     cycleNumber,
                                     problemTime );
     }

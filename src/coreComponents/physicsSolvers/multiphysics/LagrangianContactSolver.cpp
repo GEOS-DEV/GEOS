@@ -117,9 +117,15 @@ void LagrangianContactSolver::RegisterDataOnMesh( dataRepository::Group * const 
         subRegion->getReference< array2d< real64 > >( viewKeyStruct::deltaTractionString ).resizeDimension< 1 >( 3 );
 
         subRegion->registerWrapper< array1d< FractureState > >( viewKeyStruct::fractureStateString )->
-          setPlotLevel( PlotLevel::LEVEL_1 )->
+          setPlotLevel( PlotLevel::NOPLOT )->
           setRegisteringObjects( this->getName())->
           setDescription( "An array that holds the fracture state." );
+        InitializeFractureState( meshLevel, viewKeyStruct::fractureStateString );
+
+        subRegion->registerWrapper< array1d< integer > >( viewKeyStruct::integerFractureStateString )->
+          setPlotLevel( PlotLevel::LEVEL_0 )->
+          setRegisteringObjects( this->getName())->
+          setDescription( "An array that holds the fracture state represented using integer values (just for output)." );
         InitializeFractureState( meshLevel, viewKeyStruct::fractureStateString );
 
         subRegion->registerWrapper< array1d< FractureState > >( viewKeyStruct::previousFractureStateString )->
@@ -1789,6 +1795,7 @@ bool LagrangianContactSolver::UpdateFractureState( DomainPartition * const domai
       arrayView2d< real64 const > const & traction = subRegion->getReference< array2d< real64 > >( viewKeyStruct::tractionString );
       arrayView2d< real64 const > const & localJump = subRegion->getReference< array2d< real64 > >( viewKeyStruct::localJumpString );
       arrayView1d< FractureState > const & fractureState = subRegion->getReference< array1d< FractureState > >( viewKeyStruct::fractureStateString );
+      arrayView1d< integer > const & integerFractureState = subRegion->getReference< array1d< integer > >( viewKeyStruct::integerFractureStateString );
 
       forall_in_range< serialPolicy >( 0,
                                        subRegion->size(),
@@ -1841,6 +1848,8 @@ bool LagrangianContactSolver::UpdateFractureState( DomainPartition * const domai
                 fractureState[kfe] = FractureState::STICK;
               }
             }
+
+            integerFractureState[kfe] = FractureStateToInteger( fractureState[kfe] );
 
             if( originalFractureState != fractureState[kfe] )
             {

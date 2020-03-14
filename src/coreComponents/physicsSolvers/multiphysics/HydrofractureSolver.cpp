@@ -1225,10 +1225,7 @@ HydrofractureSolver::
 
 }
 
-#define Trilinos 1
-#define Hypre 2
-#define Petsc 3
-#if GEOSX_LA_INTERFACE == Trilinos
+#ifdef USING_TRILINOS
 
 #include "EpetraExt_MatrixMatrix.h"
 #include "Thyra_OperatorVectorClientSupport.hpp"
@@ -1270,7 +1267,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( do
 {
   GEOSX_MARK_FUNCTION;
 
-#if GEOSX_LA_INTERFACE == Trilinos
+#ifdef USING_TRILINOS
 
   /*
      globalIndex numU = m_solidSolver->getSystemRhs().globalSize();

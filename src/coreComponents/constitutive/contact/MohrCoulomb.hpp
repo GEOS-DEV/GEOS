@@ -73,7 +73,7 @@ public:
 
   ///@}
 
-  bool m_postProcessed;
+  bool m_postProcessed = false;
 
   /**
    * @struct Set of "char const *" and keys for data specified in this class.

@@ -168,6 +168,7 @@ public:
     constexpr static auto tractionString = "traction";
     constexpr static auto deltaTractionString = "deltaTraction";
     constexpr static auto fractureStateString = "fractureState";
+    constexpr static auto integerFractureStateString = "integerFractureState";
     constexpr static auto previousFractureStateString = "previousFractureState";
     constexpr static auto localJumpString = "localJump";
     constexpr static auto previousLocalJumpString = "previousLocalJump";
@@ -250,6 +251,31 @@ private:
       }
     }
     return stringState;
+  }
+
+  integer FractureStateToInteger( FractureState const state ) const
+  {
+    integer integerState;
+    switch( state )
+    {
+      case FractureState::STICK:
+      {
+        integerState = 0;
+        break;
+      }
+      case FractureState::SLIP:
+      case FractureState::NEW_SLIP:
+      {
+        integerState = 1;
+        break;
+      }
+      case FractureState::OPEN:
+      {
+        integerState = 2;
+        break;
+      }
+    }
+    return integerState;
   }
 
   bool CompareFractureStates( FractureState const & state0, FractureState const & state1 ) const

@@ -27,6 +27,7 @@ namespace constitutive
 
 MohrCoulomb::MohrCoulomb( std::string const & name, Group * const parent ):
   ContactRelationBase( name, parent ),
+  m_postProcessed( false ),
   m_cohesion(),
   m_frictionAngle(),
   m_frictionAngleUnitOfMeasurement()
@@ -66,6 +67,7 @@ MohrCoulomb::DeliverClone( string const & name,
   ConstitutiveBase::DeliverClone( name, parent, clone );
   MohrCoulomb * const newConstitutiveRelation = dynamic_cast< MohrCoulomb * >(clone.get());
 
+  newConstitutiveRelation->m_postProcessed = false;
   newConstitutiveRelation->m_cohesion = m_cohesion;
   newConstitutiveRelation->m_frictionAngle = m_frictionAngle;
   newConstitutiveRelation->m_frictionAngleTangent = m_frictionAngleTangent;
