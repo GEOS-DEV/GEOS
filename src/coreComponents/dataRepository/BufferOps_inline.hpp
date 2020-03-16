@@ -47,7 +47,6 @@ template< bool DO_PACKING, typename T, typename INDEX_TYPE >
 typename std::enable_if< std::is_trivial< T >::value, localIndex >::type
 Pack( buffer_unit_type * & buffer, T const * const GEOSX_RESTRICT var, INDEX_TYPE const length )
 {
-  // metadata
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
 
   sizeOfPackedChars += length * sizeof(T);
@@ -82,7 +81,6 @@ Unpack( buffer_unit_type const * & buffer, T * const GEOSX_RESTRICT var, INDEX_T
 template< bool DO_PACKING >
 localIndex Pack( buffer_unit_type * & buffer, const std::string & var )
 {
-  // metadata
   const string::size_type varSize = var.size();
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, varSize );
 
@@ -100,7 +98,6 @@ localIndex Pack( buffer_unit_type * & buffer, const std::string & var )
 template< bool DO_PACKING, typename T >
 localIndex Pack( buffer_unit_type * & buffer, SortedArray< T > const & var )
 {
-  // metadata
   const localIndex length = integer_conversion< localIndex >( var.size() );
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
   for( typename SortedArray< T >::const_iterator i=var.begin() ; i!=var.end() ; ++i )
@@ -139,11 +136,10 @@ localIndex Pack( buffer_unit_type * & buffer,
                  ArrayOfArrays< T > const & var )
 {
   localIndex sizeOfPackedChars = 0;
-  // metadata
   sizeOfPackedChars += Pack< DO_PACKING >( buffer, var.size() );
   for( localIndex a=0 ; a<var.size() ; ++a )
   {
-    // metadata
+
     sizeOfPackedChars += Pack< DO_PACKING >( buffer, var.sizeOfArray( a ) );
     T const * const data = var[a];
     sizeOfPackedChars += PackPointer< DO_PACKING >( buffer, data, var.sizeOfArray( a ) );
@@ -156,11 +152,10 @@ localIndex Pack( buffer_unit_type * & buffer,
                  ArrayOfSets< T > const & var )
 {
   localIndex sizeOfPackedChars = 0;
-  // metadata
   sizeOfPackedChars += Pack< DO_PACKING >( buffer, var.size() );
   for( localIndex a=0 ; a<var.size() ; ++a )
   {
-    // metadata
+
     sizeOfPackedChars += Pack< DO_PACKING >( buffer, var.sizeOfSet( a ) );
     T const * const data = var[a];
     sizeOfPackedChars += PackPointer< DO_PACKING >( buffer, data, var.sizeOfSet( a ) );
@@ -173,7 +168,6 @@ typename std::enable_if< is_packable_map< MAP_TYPE >, localIndex >::type
 Pack( buffer_unit_type * & buffer, MAP_TYPE const & var )
 {
   const typename MAP_TYPE::size_type length = var.size();
-  // metadata
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
   for( typename MAP_TYPE::const_iterator i = var.begin() ; i != var.end() ; ++i )
   {
@@ -205,7 +199,6 @@ template< bool DO_PACKING, typename T, typename INDEX_TYPE >
 typename std::enable_if< std::is_trivial< T >::value, localIndex >::type
 PackPointer( buffer_unit_type * & buffer, T const * const GEOSX_RESTRICT var, INDEX_TYPE const length )
 {
-  // metadata
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
   sizeOfPackedChars += length * sizeof(T);
   static_if( DO_PACKING )
@@ -224,7 +217,6 @@ PackPointer( buffer_unit_type * & buffer,
              INDEX_TYPE const length )
 
 {
-  // metadata
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
   for( INDEX_TYPE a = 0 ; a < length ; ++a )
   {
@@ -240,7 +232,6 @@ PackArray( buffer_unit_type * & buffer,
            arraySlice1d< T, USD > const & var,
            INDEX_TYPE const length )
 {
-  // metadata
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
   sizeOfPackedChars += length * sizeof(T);
   static_if( DO_PACKING )
@@ -262,7 +253,6 @@ PackArray( buffer_unit_type * & buffer,
            arraySlice1d< T, USD > const & var,
            INDEX_TYPE const length )
 {
-  // metadata
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
   for( INDEX_TYPE a = 0 ; a < length ; ++a )
   {
@@ -280,7 +270,6 @@ PackByIndex( buffer_unit_type * & buffer,
              ArrayView< T, NDIM, USD > const & var,
              const T_indices & indices )
 {
-  // metadata
   localIndex sizeOfPackedChars = PackPointer< DO_PACKING >( buffer, var.strides(), NDIM );
   for( localIndex a = 0 ; a < indices.size() ; ++a )
   {
@@ -300,7 +289,6 @@ localIndex PackByIndex( buffer_unit_type * & buffer,
                         T_indices const & indices )
 {
   localIndex sizeOfPackedChars = 0;
-  // metadata
   sizeOfPackedChars += Pack< DO_PACKING >( buffer, indices.size() );
   for( localIndex a = 0 ; a < indices.size() ; ++a )
   {
@@ -318,7 +306,6 @@ PackByIndex( buffer_unit_type * & buffer,
              T_INDICES const & packIndices )
 {
   const typename MAP_TYPE::size_type length = var.size();
-  // metadata
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
   for( typename MAP_TYPE::const_iterator i = var.begin() ; i != var.end() ; ++i )
   {
