@@ -5,6 +5,7 @@
 #include "managers/TimeHistory/HistoryDataSpec.hpp"
 #include "dataRepository/BufferOpsDevice.hpp"
 
+#include <functional>
 
 namespace geosx
 {
@@ -15,8 +16,32 @@ namespace geosx
   {
   public:
     TimeHistoryCollector( string const & name, Group * parent );
-    virtual void AddToSpec( DataSpec & data_spec ) const;
-    virtual void Collect( real64 const time_n, real64 const dt, buffer_unit_type *& buffer );
+
+    virtual void AddToSpec( DataSpec & data_spec ) const = 0;
+    virtual void Collect( real64 const time_n, real64 const dt, buffer_unit_type *& buffer ) = 0;
+
+    void InitSpec( DataSpec & data_spec ) const
+    {
+      data_spec.Append<real64>(1,1,"Time");
+      AddToSpec(data_spec);
+      data_spec.Finalize( );
+    }
+
+    virtual void Execute( real64 const time_n,
+                          real64 const dt,
+                          integer const GEOSX_UNUSED_PARAM( cycleNumber ),
+                          integer const GEOSX_UNUSED_PARAM( eventCounter ),
+                          real64 const GEOSX_UNUSED_PARAM( eventProgress ),
+                          dataRepository::Group * GEOSX_UNUSED_PARAM( domain ) ) override
+    {
+      buffer_unit_type * buffer = m_buffer_call();
+      collect_with_time( time_n, dt, buffer );
+    }
+
+    void RegisterBufferCall( std::function<buffer_unit_type*()> buffer_call )
+    {
+      m_buffer_call = buffer_call;
+    }
 
     static string CatalogName() { return "TimeHistoryCollector"; }
     struct viewKeysStruct
@@ -25,11 +50,17 @@ namespace geosx
     } timeHistoryCollectorKeys;
     struct groupKeysStruct
     {
-      static constexpr auto timeCollectorKey = "TimeCollector";
+      // static constexpr auto timeCollectorKey = "TimeCollector";
     } timeHistoryGroupKeys;
   protected:
     string m_data_title;
-    TimeHistoryCollector * m_time_collector;
+  private:
+    void collect_with_time( real64 time_n, real64 dt, buffer_unit_type *& buffer )
+    {
+      bufferOps::PackPointerDevice< true >( buffer, &time_n, 1 );
+      Collect(time_n, dt, buffer);
+    }
+    std::function<buffer_unit_type*()> m_buffer_call;
   };
 
   template < typename VALUE_TYPE, typename ENABLE = void >
@@ -57,7 +88,7 @@ namespace geosx
     virtual void Collect( real64 const GEOSX_UNUSED_PARAM(time_n), real64 const GEOSX_UNUSED_PARAM(dt), buffer_unit_type *& buffer ) override
     {
       VALUE_T & value = Group::getReference( m_scalar_path );
-      return bufferOps::PackPointerDevice< true >( buffer, &value, 1 );
+      bufferOps::PackPointerDevice< true >( buffer, &value, 1 );
     }
     static string CatalogName() { return "ScalarCollector"; }
 

@@ -12,41 +12,28 @@
 
 using namespace geosx;
 
-// TEST( testHDFTraits, can_hist_io )
-// {
-//   static_assert( can_hist_io< real32 >, "Should be true.");
-//   static_assert( can_hist_io< real64 >, "Should be true.");
-//   static_assert( can_hist_io< integer >, "Should be true.");
-//   static_assert( can_hist_io< localIndex >, "Should be true.");
-//   static_assert( can_hist_io< globalIndex >, "Should be true.");
-
-//   static_assert( can_hist_io< const real32 >, "Should be true.");
-//   static_assert( can_hist_io< const real64 >, "Should be true.");
-//   static_assert( can_hist_io< const integer >, "Should be true.");
-//   static_assert( can_hist_io< const localIndex >, "Should be true.");
-//   static_assert( can_hist_io< const globalIndex >, "Should be true.");
-// }
-
 TEST( testHDFIO, SingleValueTable )
 {
-  HDFTable spec("Array1","arr1");
-  spec.AddCol(1,1,sizeof(real64),typeid(real64),"Time");
+  DataSpec spec;
+  spec.SetTitleID("Time History", "time_hist");
+  spec.Append<real64>(1,1,"Time");
   spec.Finalize();
 
   real64 time = 0.0;
-  HDFTableIO out( spec );
+  HDFTableIO io;
   for( localIndex tidx = 0; tidx < 100; ++tidx )
   {
     time += 0.333;
-    out.BufferRow( reinterpret_cast<buffer_unit_type const * >(&time) );
+    buffer_unit_type * buffer = io.GetBufferHead( &spec );
+    memcpy(buffer,&time,sizeof(real64));
   }
 
   string filename( "single_value" );
-  HDFFile file( filename );
-  out.CreateInTarget( file );
-  out.WriteBuffered( file );
+  io.Init( filename, &spec, false );
+  io.Write( filename, &spec );
 
-  // remove( filename.c_str() );
+  //read and check the data using hdf api
+  remove( filename.c_str() );
 }
 
 TEST( testHDFIO, ArrayTableIO )
@@ -55,35 +42,53 @@ TEST( testHDFIO, ArrayTableIO )
 
   {
     Array<real64, 1> arr(4096);
-    HDFTable spec("ArrayTable1d","arr_tbl");
-    spec.AddArrayCol( arr, "Array1" );
-    spec.Finalize( );
+    real64 count = 0.0;
+    forValuesInSlice(arr.toSlice(),[&count](real64 & value)
+      {
+        value = count++;
+      });
 
-    HDFTableIO out( spec );
-    out.BufferRow( reinterpret_cast<buffer_unit_type const * >( arr.data() ) );
+    DataSpec spec;
+    spec.SetTitleID("Array1d History", "arr1_hist");
+    AppendArraySpec(spec,arr,"Array1d Data");
+    spec.Finalize();
 
-    string filename( "WholeArrayTable" );
-    HDFFile file( filename );
-    out.CreateInTarget( file );
-    out.WriteBuffered( file );
+    HDFTableIO io;
 
-  //  remove( filename.c_str() );
+    buffer_unit_type * buffer = io.GetBufferHead( &spec );
+    bufferOps::PackDevice<true>(buffer,arr);
+
+    string filename( "array1d_value" );
+    io.Init( filename, &spec, false );
+    io.Write( filename, &spec );
+
+    //read and check the data using hdf api
+    remove( filename.c_str() );
   }
   {
-    Array<real64, 2> arr(4096,4096);
-    HDFTable spec("ArrayTable2d","arr_tbl");
-    spec.AddArrayCol( arr, "Array1" );
-    spec.Finalize( );
+    Array<real64, 2> arr(1024,4);
+    real64 count = 0.0;
+    forValuesInSlice(arr.toSlice(),[&count](real64 & value)
+      {
+        value = count++;
+      });
 
-    HDFTableIO out( spec );
-    out.BufferRow( reinterpret_cast<buffer_unit_type const * >( arr.data() ) );
+    DataSpec spec;
+    spec.SetTitleID("Array2d History", "arr2_hist");
+    AppendArraySpec(spec,arr,"Array2d Data");
+    spec.Finalize();
 
-    string filename( "WholeArrayTable" );
-    HDFFile file( filename );
-    out.CreateInTarget( file );
-    out.WriteBuffered( file );
+    HDFTableIO io;
 
-  //  remove( filename.c_str() );
+    buffer_unit_type * buffer = io.GetBufferHead( &spec );
+    bufferOps::PackDevice<true>(buffer,arr);
+
+    string filename( "array2d_value" );
+    io.Init( filename, &spec, false );
+    io.Write( filename, &spec );
+
+    //read and check the data using hdf api
+    remove( filename.c_str() );
   }
 }
 
@@ -91,112 +96,30 @@ TEST( testHDFIO, IdxArrayTable )
 {
   srand(time(NULL));
   {
-    array1d<real64> arr(4096);
-    array1d<localIndex> idx(1024);
-    HDFTable spec("ArrayTable2d","arr_tbl");
-    spec.AddArrayIndicesCol( arr, "Array1", idx.size( ) );
-    spec.Finalize( );
+    Array<localIndex, 1> idx(256);
+    Array<real64, 2> arr(1024,4);
+    real64 count = 0.0;
+    forValuesInSlice(arr.toSlice(),[&count](real64 & value)
+      {
+        value = count++;
+      });
+    forValuesInSlice(idx.toSlice(),[](localIndex & value)
+      {
+        value = rand() % 1024;
+      });
 
-    HDFTableIO out( spec );
-    out.BufferRow( reinterpret_cast<buffer_unit_type const * >( arr.data() ) );
+    DataSpec spec;
+    spec.SetTitleID("Array1d History", "arr1_hist");
+    AppendArrayIndicesSpec(spec,arr,"Array1d Data",idx.size());
+    spec.Finalize();
 
-    string filename( "WholeArrayTable" );
-    HDFFile file( filename );
-    out.CreateInTarget( file );
-    out.WriteBuffered( file );
+    HDFTableIO io;
 
+    buffer_unit_type * buffer = io.GetBufferHead( &spec );
+    bufferOps::PackByIndexDevice<true>(buffer,arr,idx);
+
+    string filename( "array1d_value" );
+    io.Init( filename, &spec, false );
+    io.Write( filename, &spec );
   }
 }
-
-//   {
-
-//     // TimeHistoryCollector * arr_collector = new ArrayTimeHistoryCollector<decltype(arr)>( arr );
-
-//     // TimeHistoryUpdate update_event("TimeHistoryUpdate",NULL);
-//     // TimeHistory & arr_hist = update_event.getTimeHistory( );
-//     // arr_hist.AddHistory("arr1","Array1",arr_collector);
-
-//     // update_event.Execute(1.0,0.5,1,4,0.6,NULL);
-
-//     // TimeHistoryOutput output_event("whole_array_hist","TimeHistoryOutput",NULL);
-//     // output_event.InitHistoryFile( );
-
-//     // output_event.Execute(1.0,0.5,1,4,0.6,NULL);
-
-//   }
-// }
-
-// TEST( testHDFIO, IndexedTabularIO )
-// {
-//   srand(time(NULL));
-//   localIndex dims[DIM] = {0};
-//   for(integer dd = 0; dd < DIM; ++dd )
-//   {
-//     dims[dd] = rand();
-//   }
-//   Array<ARR_TYPE, DIM> arr(rand());
-//   // rand primary dim
-//   Array<IND_TYPE, 1> ind_arr(rand() % dims[0]);
-
-//   {
-//     HDFFile file("indexed_array");
-//     HDFTableIO<decltype(arr)> table_out("Array1","arr1",ind_arr,arr.size( 0 ),0,"nd_");
-//   }
-// }
-
-// //
-// TEST( testHDFIO, PartialTabularIO )
-// {
-//   srand(time(NULL));
-//   localIndex dims[DIM] = {0};
-//   for(integer dd = 0; dd < DIM; ++dd )
-//   {
-//     dims[dd] = rand();
-//   }
-//   Array<ARR_TYPE, DIM> arr(rand());
-//   array1d<IND_TYPE> ind_arr(rand() % dims[0]);
-//   array2d<IND_TYPE> cmp_arr(3,DIM-1);
-
-//   {
-//     HDFFile file("arr_output");
-//     HDFTableIO<decltype(arr)> table_out("Stress","s",0,ind_arr,cmp_arr,"nd");
-//     table_out.OpenTable( file );
-//     table_out.AppendRow( arr );
-//     table_out.AppendRow( arr );
-
-//     table_out.ClearFrom( 1 );
-//   }
-
-//   // check that there is only one row and that it has the correct content
-//   {
-
-//   }
-// }
-
-// //TEST( testHDFIO, IndexedPartialTabularIO )
-
-// TEST( testHDFIO, WholeArrayTimeHistory )
-// {
-//   srand(time(NULL));
-//   localIndex dims[DIM] = {0};
-//   for(integer dd = 0; dd < DIM; ++dd )
-//   {
-//     dims[dd] = rand();
-//   }
-//   Array<ARR_TYPE, DIM> arr(rand());
-
-//   {
-//     HDFFile file("arr_time_hist");
-//     HDFTimeHistoryTable<decltype(arr)> time_hist("Scalar","scl",arr.size(),arr.size(0),0,"nd_");
-//     time_hist.OpenTable( file );
-//     time_hist.AppendRow( 0.3, arr );
-//     time_hist.AppendRow( 0.5, arr );
-//     time_hist.ClearFromTime( 0.4 );
-//   }
-
-// }
-
-//TEST( testHDFIO, IndexedTabularTimeHistory )
-//TEST( testHDFIO, PartialTabularTimeHistory )
-//TEST( testHDFIO, IndexedPartialTimeHistory )
-//
