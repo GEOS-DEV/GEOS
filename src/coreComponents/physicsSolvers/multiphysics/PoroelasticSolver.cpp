@@ -415,10 +415,10 @@ void PoroelasticSolver::AssembleSystem( real64 const time_n,
                                 rhs );
 
   // assemble J_SF
-  AssembleCouplingBlocks( domain,
-                          dofManager,
-                          &matrix,
-                          &rhs );
+  AssembleCouplingTerms( domain,
+                         dofManager,
+                         &matrix,
+                         &rhs );
 
 }
 
