@@ -476,7 +476,7 @@ void DofManager::setSparsityPatternFromStencil( MATRIX & pattern,
 
   // 2. Assemble diagonal and off-diagonal blocks for elements in stencil
   MATRIX * const pattern_ptr = &pattern;
-  coupling.stencils->forCellStencils( [&]( auto const & stencil )
+  coupling.stencils->forAllStencils( [&]( auto const & stencil )
   {
     using StenciType = typename std::decay< decltype( stencil ) >::type;
     constexpr localIndex maxNumFluxElems = StenciType::NUM_POINT_IN_FLUX;

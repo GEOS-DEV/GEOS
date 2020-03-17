@@ -909,7 +909,7 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( real64 const GEOSX_UNUSED_P
 
   integer const capPressureFlag = m_capPressureFlag;
 
-  fluxApprox->forCellStencils( [&] ( auto const & stencil )
+  fluxApprox->forAllStencils( [&] ( auto const & stencil )
   {
     typedef TYPEOFREF( stencil ) STENCIL_TYPE;
     typename STENCIL_TYPE::IndexContainerViewConstType const & eri = stencil.getElementRegionIndices();
