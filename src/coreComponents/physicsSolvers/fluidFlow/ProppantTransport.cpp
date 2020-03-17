@@ -1026,7 +1026,7 @@ void ProppantTransport::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time
   localIndex const fluidIndex = m_fluidIndex;
   localIndex const proppantIndex = m_proppantIndex;
 
-  fluxApprox->forCellStencils( [&]( auto const & stencil )
+  fluxApprox->forAllStencils( [&]( auto const & stencil )
   {
 
     FluxKernel::Launch( stencil,
@@ -1597,7 +1597,7 @@ void ProppantTransport::UpdateCellBasedFlux( real64 const GEOSX_UNUSED_PARAM( ti
 
   localIndex const fluidIndex = m_fluidIndex;
 
-  fluxApprox->forCellStencils( [&]( auto const & stencil )
+  fluxApprox->forAllStencils( [&]( auto const & stencil )
   {
 
     FluxKernel::LaunchCellBasedFluxCalculation( stencil,
@@ -1672,7 +1672,7 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
   localIndex const fluidIndex = m_fluidIndex;
   localIndex const proppantIndex = m_proppantIndex;
 
-  fluxApprox->forCellStencils( [&]( auto const & stencil )
+  fluxApprox->forAllStencils( [&]( auto const & stencil )
   {
 
     ProppantPackVolumeKernel::LaunchProppantPackVolumeCalculation( stencil,
@@ -1721,7 +1721,7 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
   } );
 
 
-  fluxApprox->forCellStencils( [&]( auto const & stencil )
+  fluxApprox->forAllStencils( [&]( auto const & stencil )
   {
 
     ProppantPackVolumeKernel::LaunchProppantPackVolumeUpdate( stencil,
@@ -1751,7 +1751,7 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
 
 
 
-  fluxApprox->forCellStencils( [&]( auto const & stencil )
+  fluxApprox->forAllStencils( [&]( auto const & stencil )
   {
 
     ProppantPackVolumeKernel::LaunchInterfaceElementUpdate( stencil,

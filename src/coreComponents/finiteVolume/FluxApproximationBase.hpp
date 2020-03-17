@@ -100,7 +100,7 @@ public:
 
   /// call a user-provided function for each boundary stencil
   template< typename LAMBDA >
-  void forCellStencils( LAMBDA && lambda ) const;
+  void forAllStencils( LAMBDA && lambda ) const;
 
 
   template< typename TYPE, typename ... TYPES, typename LAMBDA >
@@ -166,7 +166,7 @@ protected:
 };
 
 template< typename LAMBDA >
-void FluxApproximationBase::forCellStencils( LAMBDA && lambda ) const
+void FluxApproximationBase::forAllStencils( LAMBDA && lambda ) const
 {
 //TODO remove dependence on CellElementStencilTPFA and FaceElementStencil
   this->forWrappers< CellElementStencilTPFA, FaceElementStencil >( [&] ( auto const & wrapper )
