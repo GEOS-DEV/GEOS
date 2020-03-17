@@ -906,6 +906,7 @@ void LagrangianContactSolver::SetupSystem( DomainPartition * const domain,
 
   matrix.createWithLocalSize( numDisplacementDofs + numTractionDofs,
                               numDisplacementDofs + numTractionDofs,
+                              0,
                               MPI_COMM_GEOSX );
   rhs.createWithLocalSize( numDisplacementDofs + numTractionDofs,
                            MPI_COMM_GEOSX );
