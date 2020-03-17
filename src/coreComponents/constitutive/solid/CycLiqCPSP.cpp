@@ -46,73 +46,125 @@ CycLiqCPSP::CycLiqCPSP( std::string const & name, Group * const parent ):
 		  m_defaultE0(),
 		  m_defaultKsi(),
 		  m_defaultEin(),
+          m_defaultInitialTime(),
 		  m_strain{},
 		  m_epsvir{},
 		  m_epsvre{},
 		  m_gammamono{},
 		  m_epsvc{},
 		  m_etam{},
-		  m_alpha{}
+		  m_alpha{},
+		  m_initialTime{}
 {
 	registerWrapper( viewKeyStruct::defaultG0String, &m_defaultG0, 0 )->
 	    setApplyDefaultValue(-1)->
 	    setInputFlag(InputFlags::REQUIRED)->
-	    setDescription("CycLiqCPSP Model Parameter : G0");
+	    setDescription("Default for CycLiqCPSP Model Parameter : G0");
 	registerWrapper( viewKeyStruct::defaultKappaString, &m_defaultKappa, 0 )->
 	    setApplyDefaultValue(-1)->
 	    setInputFlag(InputFlags::REQUIRED)->
-	    setDescription("CycLiqCPSP Model Parameter : kappa");
+	    setDescription("Default for CycLiqCPSP Model Parameter : kappa");
 	registerWrapper( viewKeyStruct::defaultHString, &m_defaultH, 0 )->
 	    setApplyDefaultValue(-1)->
 	    setInputFlag(InputFlags::REQUIRED)->
-	    setDescription("CycLiqCPSP Model Parameter : h");
+	    setDescription("Default for CycLiqCPSP Model Parameter : h");
 	registerWrapper( viewKeyStruct::defaultMString, &m_defaultM, 0 )->
 	    setApplyDefaultValue(-1)->
 	    setInputFlag(InputFlags::REQUIRED)->
-	    setDescription("CycLiqCPSP Model Parameter : M");
+	    setDescription("Default for CycLiqCPSP Model Parameter : M");
 	registerWrapper( viewKeyStruct::defaultDre1String, &m_defaultDre1, 0 )->
 	    setApplyDefaultValue(-1)->
 	    setInputFlag(InputFlags::REQUIRED)->
-	    setDescription("CycLiqCPSP Model Parameter : dre1");
+	    setDescription("Default for CycLiqCPSP Model Parameter : dre1");
 	registerWrapper( viewKeyStruct::defaultDre2String, &m_defaultDre2, 0 )->
 	    setApplyDefaultValue(-1)->
 	    setInputFlag(InputFlags::REQUIRED)->
-	    setDescription("CycLiqCPSP Model Parameter : dre2");
+	    setDescription("Default for CycLiqCPSP Model Parameter : dre2");
 	registerWrapper( viewKeyStruct::defaultDirString, &m_defaultDir, 0 )->
 	    setApplyDefaultValue(-1)->
 	    setInputFlag(InputFlags::REQUIRED)->
-	    setDescription("CycLiqCPSP Model Parameter : dir");
+	    setDescription("Default for CycLiqCPSP Model Parameter : dir");
 	registerWrapper( viewKeyStruct::defaultEtaString, &m_defaultEta, 0 )->
 	    setApplyDefaultValue(-1)->
 	    setInputFlag(InputFlags::REQUIRED)->
-	    setDescription("CycLiqCPSP Model Parameter : eta");
+	    setDescription("Default for CycLiqCPSP Model Parameter : eta");
 	registerWrapper( viewKeyStruct::defaultRdrString, &m_defaultRdr, 0 )->
 	    setApplyDefaultValue(-1)->
 	    setInputFlag(InputFlags::REQUIRED)->
-	    setDescription("CycLiqCPSP Model Parameter : rdr");
+	    setDescription("Default for CycLiqCPSP Model Parameter : rdr");
 	registerWrapper( viewKeyStruct::defaultNpString, &m_defaultNp, 0 )->
 	    setApplyDefaultValue(-1)->
 	    setInputFlag(InputFlags::REQUIRED)->
-	    setDescription("CycLiqCPSP Model Parameter : np");
+	    setDescription("Default for CycLiqCPSP Model Parameter : np");
 	registerWrapper( viewKeyStruct::defaultNdString, &m_defaultNd, 0 )->
 	    setApplyDefaultValue(-1)->
 	    setInputFlag(InputFlags::REQUIRED)->
-	    setDescription("CycLiqCPSP Model Parameter : nd");
+	    setDescription("Default for CycLiqCPSP Model Parameter : nd");
 	registerWrapper( viewKeyStruct::defaultLamdacString, &m_defaultLamdac, 0 )->
 	    setApplyDefaultValue(-1)->
 	    setInputFlag(InputFlags::REQUIRED)->
-	    setDescription("CycLiqCPSP Model Parameter : lamdac");
+	    setDescription("Default for CycLiqCPSP Model Parameter : lamdac");
 	registerWrapper( viewKeyStruct::defaultE0String, &m_defaultE0, 0 )->
 	    setApplyDefaultValue(-1)->
 	    setInputFlag(InputFlags::REQUIRED)->
-	    setDescription("CycLiqCPSP Model Parameter : e0");
+	    setDescription("Default for CycLiqCPSP Model Parameter : e0");
 	registerWrapper( viewKeyStruct::defaultKsiString, &m_defaultKsi, 0 )->
 	    setApplyDefaultValue(-1)->
 	    setInputFlag(InputFlags::REQUIRED)->
-	    setDescription("CycLiqCPSP Model Parameter : ksi");
+	    setDescription("Default for CycLiqCPSP Model Parameter : ksi");
 	registerWrapper( viewKeyStruct::defaultEinString, &m_defaultEin, 0 )->
 	    setApplyDefaultValue(-1)->
 	    setInputFlag(InputFlags::REQUIRED)->
+	    setDescription("Default for CycLiqCPSP Model Parameter : ein");
+	registerWrapper( viewKeyStruct::defaultInitialTimeString, &m_defaultInitialTime, 0 )->
+	    setApplyDefaultValue(-1)->
+	    setInputFlag(InputFlags::REQUIRED)->
+	    setDescription("Default for CycLiqCPSP Model Parameter : initial time");
+
+	registerWrapper( viewKeyStruct::G0String, &m_G0, 0 )->
+	    setApplyDefaultValue(-1)->
+	    setDescription("CycLiqCPSP Model Parameter : G0");
+	registerWrapper( viewKeyStruct::kappaString, &m_kappa, 0 )->
+	    setApplyDefaultValue(-1)->
+	    setDescription("CycLiqCPSP Model Parameter : kappa");
+	registerWrapper( viewKeyStruct::hString, &m_h, 0 )->
+	    setApplyDefaultValue(-1)->
+	    setDescription("CycLiqCPSP Model Parameter : h");
+	registerWrapper( viewKeyStruct::MString, &m_M, 0 )->
+	    setApplyDefaultValue(-1)->
+	    setDescription("CycLiqCPSP Model Parameter : M");
+	registerWrapper( viewKeyStruct::dre1String, &m_dre1, 0 )->
+	    setApplyDefaultValue(-1)->
+	    setDescription("CycLiqCPSP Model Parameter : dre1");
+	registerWrapper( viewKeyStruct::dre2String, &m_dre2, 0 )->
+	    setApplyDefaultValue(-1)->
+	    setDescription("CycLiqCPSP Model Parameter : dre2");
+	registerWrapper( viewKeyStruct::dirString, &m_dir, 0 )->
+	    setApplyDefaultValue(-1)->
+	    setDescription("CycLiqCPSP Model Parameter : dir");
+	registerWrapper( viewKeyStruct::etaString, &m_eta, 0 )->
+	    setApplyDefaultValue(-1)->
+	    setDescription("CycLiqCPSP Model Parameter : eta");
+	registerWrapper( viewKeyStruct::rdrString, &m_rdr, 0 )->
+	    setApplyDefaultValue(-1)->
+	    setDescription("CycLiqCPSP Model Parameter : rdr");
+	registerWrapper( viewKeyStruct::npString, &m_np, 0 )->
+	    setApplyDefaultValue(-1)->
+	    setDescription("CycLiqCPSP Model Parameter : np");
+	registerWrapper( viewKeyStruct::ndString, &m_nd, 0 )->
+	    setApplyDefaultValue(-1)->
+	    setDescription("CycLiqCPSP Model Parameter : nd");
+	registerWrapper( viewKeyStruct::lamdacString, &m_lamdac, 0 )->
+	    setApplyDefaultValue(-1)->
+	    setDescription("CycLiqCPSP Model Parameter : lamdac");
+	registerWrapper( viewKeyStruct::e0String, &m_e0, 0 )->
+	    setApplyDefaultValue(-1)->
+	    setDescription("CycLiqCPSP Model Parameter : e0");
+	registerWrapper( viewKeyStruct::ksiString, &m_ksi, 0 )->
+	    setApplyDefaultValue(-1)->
+	    setDescription("CycLiqCPSP Model Parameter : ksi");
+	registerWrapper( viewKeyStruct::einString, &m_ein, 0 )->
+	    setApplyDefaultValue(-1)->
 	    setDescription("CycLiqCPSP Model Parameter : ein");
 
     registerWrapper( viewKeyStruct::strainString, &m_strain, 0 )->
@@ -136,6 +188,9 @@ CycLiqCPSP::CycLiqCPSP( std::string const & name, Group * const parent ):
     registerWrapper( viewKeyStruct::alphaString, &m_alpha, 0 )->
 	    setPlotLevel(PlotLevel::LEVEL_0)->
 	    setDescription("alpha");
+    registerWrapper( viewKeyStruct::initialTimeString, &m_initialTime, 0 )->
+	    setPlotLevel(PlotLevel::LEVEL_0)->
+	    setDescription("initialTime");
 }
 
 CycLiqCPSP::~CycLiqCPSP()
@@ -183,6 +238,7 @@ CycLiqCPSP::DeliverClone( string const & name,
   newConstitutiveRelation->m_ksi = m_ksi;
   newConstitutiveRelation->m_defaultEin = m_defaultEin;
   newConstitutiveRelation->m_ein = m_ein;
+  newConstitutiveRelation->m_defaultInitialTime = m_defaultInitialTime;
 
   newConstitutiveRelation->m_strain = m_strain;
   newConstitutiveRelation->m_epsvir = m_epsvir;
@@ -191,6 +247,7 @@ CycLiqCPSP::DeliverClone( string const & name,
   newConstitutiveRelation->m_epsvc = m_epsvc;
   newConstitutiveRelation->m_etam = m_etam;
   newConstitutiveRelation->m_alpha = m_alpha;
+  newConstitutiveRelation->m_initialTime = m_initialTime;
   newConstitutiveRelation->m_stress = m_stress;
 
 }
@@ -224,7 +281,7 @@ void CycLiqCPSP::AllocateConstitutiveData( dataRepository::Group * const parent,
   m_epsvc.resize( parent->size(), numConstitutivePointsPerParentIndex );
   m_etam.resize( parent->size(), numConstitutivePointsPerParentIndex );
   m_alpha.resize( parent->size(), numConstitutivePointsPerParentIndex );
-  isInitialize.resize( parent->size(), numConstitutivePointsPerParentIndex );
+  m_initialTime.resize( parent->size(), numConstitutivePointsPerParentIndex );
   //m_strain.resize( parent->size(), numConstitutivePointsPerParentIndex );
 
   m_G0 = m_defaultG0;
@@ -242,6 +299,7 @@ void CycLiqCPSP::AllocateConstitutiveData( dataRepository::Group * const parent,
   m_e0 = m_defaultE0;
   m_ksi = m_defaultKsi;
   m_ein = m_defaultEin;
+  m_initialTime = -m_defaultInitialTime;
 }
 
 void CycLiqCPSP::PostProcessInput()
@@ -261,27 +319,39 @@ void CycLiqCPSP::PostProcessInput()
 	  m_e0 = m_defaultE0;
 	  m_ksi = m_defaultKsi;
 	  m_ein = m_defaultEin;
-
+	  m_initialTime = -m_defaultInitialTime;
 }
 
 void CycLiqCPSP::StateUpdatePoint( localIndex const k,
                                                localIndex const q,
                                                R2SymTensor const & D,
                                                R2Tensor const & Rot,
-                                               real64 const GEOSX_UNUSED_ARG( dt ),
+                                               real64 const dt,
                                                integer const GEOSX_UNUSED_ARG( updateStiffnessFlag ) )
 {
-	if(!isInitialize[k][q])
+	if(dt < std::numeric_limits<real64>::max())
 	{
-		m_stress[k][q].Data()[0] = -99.9;
-		m_stress[k][q].Data()[2] = -99.9;
-		m_stress[k][q].Data()[5] = -100.2;
-		m_stress[k][q].Data()[1] = 0;
-		m_stress[k][q].Data()[3] = 0;
-		m_stress[k][q].Data()[4] = 0;
-		isInitialize[k][q] = true;
+		m_initialTime[k][q] += dt;
 	}
+if(m_initialTime[k][q] < 0)
+{
+	 //m_strain[k][q] += D;
+     real64 p = 1e12;
+     real64 G = m_G0[k] * pat * ( pow( ( 2.97 - m_ein[k] ) , 2 ) / ( 1 + m_ein[k])) * sqrt( p / pat );
+     real64 K = (1 + m_ein[k]) / m_kappa[k] * pat * sqrt( p / pat );
+     real64 meanStresIncrement = D.Trace();
+     R2SymTensor temp = D;
+     temp.PlusIdentity( -meanStresIncrement / 3.0 );
+     temp *= 2.0 * G;
+     meanStresIncrement *= K;
+     temp.PlusIdentity( meanStresIncrement );
+     m_stress[k][q] += temp;
+     temp.QijAjkQlk( m_stress[k][q], Rot );
+     m_stress[k][q] = temp;
+}
 
+else
+{
 	real64 Mfc = m_M[k];
 	real64 Mdc = m_M[k];
 	real64 sinphi = 3.0 * Mfc / (Mfc + 6.0);
@@ -908,7 +978,7 @@ void CycLiqCPSP::StateUpdatePoint( localIndex const k,
     m_epsvc[k][q] = epsvc_ns;
     m_etam[k][q] = etamplus1;
 	m_alpha[k][q] = alpha_ns;
-
+}
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, CycLiqCPSP, std::string const &, Group * const )

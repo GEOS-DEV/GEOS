@@ -647,17 +647,28 @@
 			<xsd:element name="PoroLinearElasticAnisotropic" type="PoroLinearElasticAnisotropicType" />
 			<xsd:element name="PoroLinearElasticIsotropic" type="PoroLinearElasticIsotropicType" />
 			<xsd:element name="PoroLinearViscoElasticIsotropic" type="PoroLinearViscoElasticIsotropicType" />
+			<xsd:element name="PoroNonlinearElasticDuncanChangEB" type="PoroNonlinearElasticDuncanChangEBType" />
 			<xsd:element name="VanGenuchtenBakerRelativePermeability" type="VanGenuchtenBakerRelativePermeabilityType" />
 			<xsd:element name="VanGenuchtenCapillaryPressure" type="VanGenuchtenCapillaryPressureType" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="BilinearElasticIsotropicType">
+		<!--criticalStress => Elastic Critical Stress Field-->
+		<xsd:attribute name="criticalStress" type="real64_array" />
 		<!--density => Material Density-->
 		<xsd:attribute name="density" type="real64_array2d" />
 		<!--elasticStress => Elastic Stress-->
 		<xsd:attribute name="elasticStress" type="r2Sym_array2d" />
+		<!--poissonRatio_1 => Elastic Poisson Ratio 1 Field-->
+		<xsd:attribute name="poissonRatio_1" type="real64_array" />
+		<!--poissonRatio_2 => Elastic Poisson Ratio 2 Field-->
+		<xsd:attribute name="poissonRatio_2" type="real64_array" />
 		<!--stress => Stress Deviator-->
 		<xsd:attribute name="stress" type="r2Sym_array2d" />
+		<!--youngsModulus_1 => Elastic Youngs Modulus 1 Field-->
+		<xsd:attribute name="youngsModulus_1" type="real64_array" />
+		<!--youngsModulus_2 => Elastic Youngs Modulus 2 Field-->
+		<xsd:attribute name="youngsModulus_2" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="BlackOilFluidType">
 		<!--dPhaseCompFraction_dGlobalCompFraction => (no description available)-->
@@ -781,10 +792,24 @@
 	</xsd:complexType>
 	<xsd:complexType name="ContactType" />
 	<xsd:complexType name="CycLiqCPSPType">
+		<!--G0 => CycLiqCPSP Model Parameter : G0-->
+		<xsd:attribute name="G0" type="real64_array" />
+		<!--M => CycLiqCPSP Model Parameter : M-->
+		<xsd:attribute name="M" type="real64_array" />
 		<!--alpha => alpha-->
 		<xsd:attribute name="alpha" type="r2Sym_array2d" />
 		<!--density => Material Density-->
 		<xsd:attribute name="density" type="real64_array2d" />
+		<!--dir => CycLiqCPSP Model Parameter : dir-->
+		<xsd:attribute name="dir" type="real64_array" />
+		<!--dre1 => CycLiqCPSP Model Parameter : dre1-->
+		<xsd:attribute name="dre1" type="real64_array" />
+		<!--dre2 => CycLiqCPSP Model Parameter : dre2-->
+		<xsd:attribute name="dre2" type="real64_array" />
+		<!--e0 => CycLiqCPSP Model Parameter : e0-->
+		<xsd:attribute name="e0" type="real64_array" />
+		<!--ein => CycLiqCPSP Model Parameter : ein-->
+		<xsd:attribute name="ein" type="real64_array" />
 		<!--elasticStress => Elastic Stress-->
 		<xsd:attribute name="elasticStress" type="r2Sym_array2d" />
 		<!--epsvc => epsvc-->
@@ -793,10 +818,28 @@
 		<xsd:attribute name="epsvir" type="real64_array2d" />
 		<!--epsvre => epsvre-->
 		<xsd:attribute name="epsvre" type="real64_array2d" />
+		<!--eta => CycLiqCPSP Model Parameter : eta-->
+		<xsd:attribute name="eta" type="real64_array" />
 		<!--etam => etam-->
 		<xsd:attribute name="etam" type="real64_array2d" />
 		<!--gammamono => gammamono-->
 		<xsd:attribute name="gammamono" type="real64_array2d" />
+		<!--h => CycLiqCPSP Model Parameter : h-->
+		<xsd:attribute name="h" type="real64_array" />
+		<!--initialTime => initialTime-->
+		<xsd:attribute name="initialTime" type="real64_array2d" />
+		<!--kappa => CycLiqCPSP Model Parameter : kappa-->
+		<xsd:attribute name="kappa" type="real64_array" />
+		<!--ksi => CycLiqCPSP Model Parameter : ksi-->
+		<xsd:attribute name="ksi" type="real64_array" />
+		<!--lamdac => CycLiqCPSP Model Parameter : lamdac-->
+		<xsd:attribute name="lamdac" type="real64_array" />
+		<!--nd => CycLiqCPSP Model Parameter : nd-->
+		<xsd:attribute name="nd" type="real64_array" />
+		<!--np => CycLiqCPSP Model Parameter : np-->
+		<xsd:attribute name="np" type="real64_array" />
+		<!--rdr => CycLiqCPSP Model Parameter : rdr-->
+		<xsd:attribute name="rdr" type="real64_array" />
 		<!--strain => strain-->
 		<xsd:attribute name="strain" type="r2Sym_array2d" />
 		<!--stress => Stress Deviator-->
@@ -991,24 +1034,48 @@
 		<xsd:attribute name="poreVolumeMultiplier" type="real64_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="PoroBilinearElasticIsotropicType">
+		<!--criticalStress => Elastic Critical Stress Field-->
+		<xsd:attribute name="criticalStress" type="real64_array" />
 		<!--dPVMult_dDensity => (no description available)-->
 		<xsd:attribute name="dPVMult_dDensity" type="real64_array2d" />
 		<!--density => Material Density-->
 		<xsd:attribute name="density" type="real64_array2d" />
 		<!--elasticStress => Elastic Stress-->
 		<xsd:attribute name="elasticStress" type="r2Sym_array2d" />
+		<!--poissonRatio_1 => Elastic Poisson Ratio 1 Field-->
+		<xsd:attribute name="poissonRatio_1" type="real64_array" />
+		<!--poissonRatio_2 => Elastic Poisson Ratio 2 Field-->
+		<xsd:attribute name="poissonRatio_2" type="real64_array" />
 		<!--poreVolumeMultiplier => (no description available)-->
 		<xsd:attribute name="poreVolumeMultiplier" type="real64_array2d" />
 		<!--stress => Stress Deviator-->
 		<xsd:attribute name="stress" type="r2Sym_array2d" />
+		<!--youngsModulus_1 => Elastic Youngs Modulus 1 Field-->
+		<xsd:attribute name="youngsModulus_1" type="real64_array" />
+		<!--youngsModulus_2 => Elastic Youngs Modulus 2 Field-->
+		<xsd:attribute name="youngsModulus_2" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="PoroCycLiqCPSPType">
+		<!--G0 => CycLiqCPSP Model Parameter : G0-->
+		<xsd:attribute name="G0" type="real64_array" />
+		<!--M => CycLiqCPSP Model Parameter : M-->
+		<xsd:attribute name="M" type="real64_array" />
 		<!--alpha => alpha-->
 		<xsd:attribute name="alpha" type="r2Sym_array2d" />
 		<!--dPVMult_dDensity => (no description available)-->
 		<xsd:attribute name="dPVMult_dDensity" type="real64_array2d" />
 		<!--density => Material Density-->
 		<xsd:attribute name="density" type="real64_array2d" />
+		<!--dir => CycLiqCPSP Model Parameter : dir-->
+		<xsd:attribute name="dir" type="real64_array" />
+		<!--dre1 => CycLiqCPSP Model Parameter : dre1-->
+		<xsd:attribute name="dre1" type="real64_array" />
+		<!--dre2 => CycLiqCPSP Model Parameter : dre2-->
+		<xsd:attribute name="dre2" type="real64_array" />
+		<!--e0 => CycLiqCPSP Model Parameter : e0-->
+		<xsd:attribute name="e0" type="real64_array" />
+		<!--ein => CycLiqCPSP Model Parameter : ein-->
+		<xsd:attribute name="ein" type="real64_array" />
 		<!--elasticStress => Elastic Stress-->
 		<xsd:attribute name="elasticStress" type="r2Sym_array2d" />
 		<!--epsvc => epsvc-->
@@ -1017,12 +1084,30 @@
 		<xsd:attribute name="epsvir" type="real64_array2d" />
 		<!--epsvre => epsvre-->
 		<xsd:attribute name="epsvre" type="real64_array2d" />
+		<!--eta => CycLiqCPSP Model Parameter : eta-->
+		<xsd:attribute name="eta" type="real64_array" />
 		<!--etam => etam-->
 		<xsd:attribute name="etam" type="real64_array2d" />
 		<!--gammamono => gammamono-->
 		<xsd:attribute name="gammamono" type="real64_array2d" />
+		<!--h => CycLiqCPSP Model Parameter : h-->
+		<xsd:attribute name="h" type="real64_array" />
+		<!--initialTime => initialTime-->
+		<xsd:attribute name="initialTime" type="real64_array2d" />
+		<!--kappa => CycLiqCPSP Model Parameter : kappa-->
+		<xsd:attribute name="kappa" type="real64_array" />
+		<!--ksi => CycLiqCPSP Model Parameter : ksi-->
+		<xsd:attribute name="ksi" type="real64_array" />
+		<!--lamdac => CycLiqCPSP Model Parameter : lamdac-->
+		<xsd:attribute name="lamdac" type="real64_array" />
+		<!--nd => CycLiqCPSP Model Parameter : nd-->
+		<xsd:attribute name="nd" type="real64_array" />
+		<!--np => CycLiqCPSP Model Parameter : np-->
+		<xsd:attribute name="np" type="real64_array" />
 		<!--poreVolumeMultiplier => (no description available)-->
 		<xsd:attribute name="poreVolumeMultiplier" type="real64_array2d" />
+		<!--rdr => CycLiqCPSP Model Parameter : rdr-->
+		<xsd:attribute name="rdr" type="real64_array" />
 		<!--strain => strain-->
 		<xsd:attribute name="strain" type="r2Sym_array2d" />
 		<!--stress => Stress Deviator-->
@@ -1131,6 +1216,22 @@
 		<xsd:attribute name="stress" type="r2Sym_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="PoroLinearViscoElasticIsotropicType">
+		<!--BulkModulus => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="BulkModulus" type="real64_array" />
+		<!--ShearModulus => Elastic Shear Modulus-->
+		<xsd:attribute name="ShearModulus" type="real64_array" />
+		<!--dPVMult_dDensity => (no description available)-->
+		<xsd:attribute name="dPVMult_dDensity" type="real64_array2d" />
+		<!--density => Material Density-->
+		<xsd:attribute name="density" type="real64_array2d" />
+		<!--elasticStress => Elastic Stress-->
+		<xsd:attribute name="elasticStress" type="r2Sym_array2d" />
+		<!--poreVolumeMultiplier => (no description available)-->
+		<xsd:attribute name="poreVolumeMultiplier" type="real64_array2d" />
+		<!--stress => Stress Deviator-->
+		<xsd:attribute name="stress" type="r2Sym_array2d" />
+	</xsd:complexType>
+	<xsd:complexType name="PoroNonlinearElasticDuncanChangEBType">
 		<!--BulkModulus => Elastic Bulk Modulus Field-->
 		<xsd:attribute name="BulkModulus" type="real64_array" />
 		<!--ShearModulus => Elastic Shear Modulus-->

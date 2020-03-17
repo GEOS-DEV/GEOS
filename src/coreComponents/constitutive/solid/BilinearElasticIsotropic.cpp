@@ -60,6 +60,22 @@ BilinearElasticIsotropic::BilinearElasticIsotropic( std::string const & name, Gr
 	    setInputFlag(InputFlags::REQUIRED)->
 	    setDescription("Elastic Critical Stress Parameter");
 
+	registerWrapper( viewKeyStruct::youngsModulus_1String, &m_youngsModulus_1, 0 )->
+	    setApplyDefaultValue(-1)->
+	    setDescription("Elastic Youngs Modulus 1 Field");
+	registerWrapper( viewKeyStruct::youngsModulus_2String, &m_youngsModulus_2, 0 )->
+	    setApplyDefaultValue(-1)->
+	    setDescription("Elastic Youngs Modulus 2 Field");
+	registerWrapper( viewKeyStruct::poissonRatio_1String, &m_poissonRatio_1, 0 )->
+	    setApplyDefaultValue(-1)->
+	    setDescription("Elastic Poisson Ratio 1 Field");
+	registerWrapper( viewKeyStruct::poissonRatio_2String, &m_poissonRatio_2, 0 )->
+	    setApplyDefaultValue(-1)->
+	    setDescription("Elastic Poisson Ratio 2 Field");
+	registerWrapper( viewKeyStruct::criticalStressString, &m_criticalStress, 0 )->
+	    setApplyDefaultValue(-1)->
+	    setDescription("Elastic Critical Stress Field");
+
 }
 
 BilinearElasticIsotropic::~BilinearElasticIsotropic()

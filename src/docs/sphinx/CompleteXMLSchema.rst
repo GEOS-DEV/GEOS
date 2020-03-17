@@ -462,6 +462,13 @@ Element: PoroLinearViscoElasticIsotropic
 .. include:: ../../coreComponents/fileIO/schema/docs/PoroLinearViscoElasticIsotropic.rst
 
 
+.. _XML_PoroNonlinearElasticDuncanChangEB:
+
+Element: PoroNonlinearElasticDuncanChangEB
+==========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroNonlinearElasticDuncanChangEB.rst
+
+
 .. _XML_Poroelastic:
 
 Element: Poroelastic
@@ -1108,6 +1115,13 @@ Datastructure: PoroLinearElasticIsotropic
 Datastructure: PoroLinearViscoElasticIsotropic
 ==============================================
 .. include:: ../../coreComponents/fileIO/schema/docs/PoroLinearViscoElasticIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_PoroNonlinearElasticDuncanChangEB:
+
+Datastructure: PoroNonlinearElasticDuncanChangEB
+================================================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroNonlinearElasticDuncanChangEB_other.rst
 
 
 .. _DATASTRUCTURE_Poroelastic:

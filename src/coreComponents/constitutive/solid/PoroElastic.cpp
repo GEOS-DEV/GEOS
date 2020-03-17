@@ -25,6 +25,7 @@
 #include "LinearViscoElasticIsotropic.hpp"
 #include "BilinearElasticIsotropic.hpp"
 #include "CycLiqCPSP.hpp"
+#include "NonlinearElasticDuncanChangEB.hpp"
 
 namespace geosx
 {
@@ -112,12 +113,14 @@ typedef PoroElastic<LinearViscoElasticIsotropic> PoroLinearViscoElasticIsotropic
 typedef PoroElastic<LinearViscoElasticAnisotropic> PoroLinearViscoElasticAnisotropic;
 typedef PoroElastic<BilinearElasticIsotropic> PoroBilinearElasticIsotropic;
 typedef PoroElastic<CycLiqCPSP> PoroCycLiqCPSP;
+typedef PoroElastic<NonlinearElasticDuncanChangEB> PoroNonlinearElasticDuncanChangEB;
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroLinearElasticIsotropic, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroLinearElasticAnisotropic, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroLinearViscoElasticIsotropic, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroBilinearElasticIsotropic, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroCycLiqCPSP, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroNonlinearElasticDuncanChangEB, string const &, Group * const )
 
 }
 } /* namespace geosx */

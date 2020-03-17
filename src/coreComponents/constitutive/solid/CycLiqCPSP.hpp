@@ -77,6 +77,23 @@ public:
 		static constexpr auto defaultE0String = "defaultE0";
 		static constexpr auto defaultKsiString = "defaultKsi";
 		static constexpr auto defaultEinString = "defaultEin";
+        static constexpr auto defaultInitialTimeString = "defaultInitialTime";
+
+		static constexpr auto G0String = "G0";
+		static constexpr auto kappaString = "kappa";
+		static constexpr auto hString = "h";
+		static constexpr auto MString = "M";
+		static constexpr auto dre1String = "dre1";
+		static constexpr auto dre2String = "dre2";
+		static constexpr auto dirString = "dir";
+		static constexpr auto etaString = "eta";
+		static constexpr auto rdrString = "rdr";
+		static constexpr auto npString = "np";
+		static constexpr auto ndString = "nd";
+		static constexpr auto lamdacString = "lamdac";
+		static constexpr auto e0String = "e0";
+		static constexpr auto ksiString = "ksi";
+		static constexpr auto einString = "ein";
 
 		static constexpr auto strainString = "strain";
 		static constexpr auto epsvirString = "epsvir";
@@ -85,18 +102,41 @@ public:
 		static constexpr auto epsvcString = "epsvc";
 		static constexpr auto etamString = "etam";
 		static constexpr auto alphaString = "alpha";
+		static constexpr auto initialTimeString = "initialTime";
 
 	};
 
 	// 如何更新？？
 	real64 constrainedModulus(localIndex k) const
 	{
-		//R2SymTensor stress = m_stress[k][0];
-		//real64 p = stress.Trace() / 3.0;
+		/*
+		localIndex numConstitutivePointsPerParentIndex = m_stress[k].size();
+		R2SymTensor stress;
+		for(localIndex i = 0; i < numConstitutivePointsPerParentIndex; ++i)
+		{
+			stress += m_stress[k][i];
+		}
+		stress /= numConstitutivePointsPerParentIndex;
+		real64 p = stress.Trace() / 3.0;
+		*/
+		real64 p = 1000;
 
-		real64 G = m_G0[k] * pat * ( pow( ( 2.97 - m_ein[k] ) , 2 ) / ( 1 + m_ein[k])) * sqrt( 1000 / pat );
-		real64 K = (1 + m_ein[k]) / m_kappa[k] * pat * sqrt( 1000 / pat );
-		return ( K + 4 / 3.0 * G);
+		real64 G = m_G0[k] * pat * ( pow( ( 2.97 - m_ein[k] ) , 2 ) / ( 1 + m_ein[k])) * sqrt( p / pat );
+		real64 K = (1 + m_ein[k]) / m_kappa[k] * pat * sqrt( p / pat );
+		return ( K + 4 / 3.0 * G );
+	}
+
+	real64 compressibility()
+	{
+		real64 bulkModulus;
+		bulkModulus = (1 + m_defaultEin) / m_defaultKappa * pat * sqrt( 1000 / pat );
+		return 1 / bulkModulus;
+	}
+	real64 compressibility() const
+	{
+		real64 bulkModulus;
+		bulkModulus = (1 + m_defaultEin) / m_defaultKappa * pat * sqrt( 1000 / pat );
+		return 1 / bulkModulus;
 	}
 
 	class KernelWrapper
@@ -172,6 +212,7 @@ public:
 		real64 m_defaultE0;
 		real64 m_defaultKsi;
 		real64 m_defaultEin;
+        real64 m_defaultInitialTime;
 
 		array1d<real64> m_G0;
 		array1d<real64> m_kappa;
@@ -196,6 +237,8 @@ public:
 		array2d<real64> m_epsvc;
 		array2d<real64> m_etam;
 	    array2d<R2SymTensor> m_alpha;
+        array2d<real64> m_initialTime;
+
 
 	    const real64 root23 = sqrt( 2.0 / 3.0 );
 	    const real64 root32 = sqrt( 3.0 / 2.0 );
@@ -205,7 +248,6 @@ public:
 	   	const real64 pmin = 0.5;
 	   	const real64 pcut = 0.5;
 	   	const real64 tolerance = 1.0e-8*pcut;
-	   	array2d<bool> isInitialize;
 
 };
 

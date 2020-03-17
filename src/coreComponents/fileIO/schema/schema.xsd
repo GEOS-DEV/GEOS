@@ -1137,6 +1137,7 @@
 			<xsd:element name="PoroLinearElasticAnisotropic" type="PoroLinearElasticAnisotropicType" />
 			<xsd:element name="PoroLinearElasticIsotropic" type="PoroLinearElasticIsotropicType" />
 			<xsd:element name="PoroLinearViscoElasticIsotropic" type="PoroLinearViscoElasticIsotropicType" />
+			<xsd:element name="PoroNonlinearElasticDuncanChangEB" type="PoroNonlinearElasticDuncanChangEBType" />
 			<xsd:element name="VanGenuchtenBakerRelativePermeability" type="VanGenuchtenBakerRelativePermeabilityType" />
 			<xsd:element name="VanGenuchtenCapillaryPressure" type="VanGenuchtenCapillaryPressureType" />
 		</xsd:choice>
@@ -1268,35 +1269,37 @@
 	<xsd:complexType name="CycLiqCPSPType">
 		<!--defaultDensity => Default Material Density-->
 		<xsd:attribute name="defaultDensity" type="real64" use="required" />
-		<!--defaultDir => CycLiqCPSP Model Parameter : dir-->
+		<!--defaultDir => Default for CycLiqCPSP Model Parameter : dir-->
 		<xsd:attribute name="defaultDir" type="real64" use="required" />
-		<!--defaultDre1 => CycLiqCPSP Model Parameter : dre1-->
+		<!--defaultDre1 => Default for CycLiqCPSP Model Parameter : dre1-->
 		<xsd:attribute name="defaultDre1" type="real64" use="required" />
-		<!--defaultDre2 => CycLiqCPSP Model Parameter : dre2-->
+		<!--defaultDre2 => Default for CycLiqCPSP Model Parameter : dre2-->
 		<xsd:attribute name="defaultDre2" type="real64" use="required" />
-		<!--defaultE0 => CycLiqCPSP Model Parameter : e0-->
+		<!--defaultE0 => Default for CycLiqCPSP Model Parameter : e0-->
 		<xsd:attribute name="defaultE0" type="real64" use="required" />
-		<!--defaultEin => CycLiqCPSP Model Parameter : ein-->
+		<!--defaultEin => Default for CycLiqCPSP Model Parameter : ein-->
 		<xsd:attribute name="defaultEin" type="real64" use="required" />
-		<!--defaultEta => CycLiqCPSP Model Parameter : eta-->
+		<!--defaultEta => Default for CycLiqCPSP Model Parameter : eta-->
 		<xsd:attribute name="defaultEta" type="real64" use="required" />
-		<!--defaultG0 => CycLiqCPSP Model Parameter : G0-->
+		<!--defaultG0 => Default for CycLiqCPSP Model Parameter : G0-->
 		<xsd:attribute name="defaultG0" type="real64" use="required" />
-		<!--defaultH => CycLiqCPSP Model Parameter : h-->
+		<!--defaultH => Default for CycLiqCPSP Model Parameter : h-->
 		<xsd:attribute name="defaultH" type="real64" use="required" />
-		<!--defaultKappa => CycLiqCPSP Model Parameter : kappa-->
+		<!--defaultInitialTime => Default for CycLiqCPSP Model Parameter : initial time-->
+		<xsd:attribute name="defaultInitialTime" type="real64" use="required" />
+		<!--defaultKappa => Default for CycLiqCPSP Model Parameter : kappa-->
 		<xsd:attribute name="defaultKappa" type="real64" use="required" />
-		<!--defaultKsi => CycLiqCPSP Model Parameter : ksi-->
+		<!--defaultKsi => Default for CycLiqCPSP Model Parameter : ksi-->
 		<xsd:attribute name="defaultKsi" type="real64" use="required" />
-		<!--defaultLamdac => CycLiqCPSP Model Parameter : lamdac-->
+		<!--defaultLamdac => Default for CycLiqCPSP Model Parameter : lamdac-->
 		<xsd:attribute name="defaultLamdac" type="real64" use="required" />
-		<!--defaultM => CycLiqCPSP Model Parameter : M-->
+		<!--defaultM => Default for CycLiqCPSP Model Parameter : M-->
 		<xsd:attribute name="defaultM" type="real64" use="required" />
-		<!--defaultNd => CycLiqCPSP Model Parameter : nd-->
+		<!--defaultNd => Default for CycLiqCPSP Model Parameter : nd-->
 		<xsd:attribute name="defaultNd" type="real64" use="required" />
-		<!--defaultNp => CycLiqCPSP Model Parameter : np-->
+		<!--defaultNp => Default for CycLiqCPSP Model Parameter : np-->
 		<xsd:attribute name="defaultNp" type="real64" use="required" />
-		<!--defaultRdr => CycLiqCPSP Model Parameter : rdr-->
+		<!--defaultRdr => Default for CycLiqCPSP Model Parameter : rdr-->
 		<xsd:attribute name="defaultRdr" type="real64" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
@@ -1574,35 +1577,37 @@
 		<xsd:attribute name="BiotCoefficient" type="real64" default="0" />
 		<!--defaultDensity => Default Material Density-->
 		<xsd:attribute name="defaultDensity" type="real64" use="required" />
-		<!--defaultDir => CycLiqCPSP Model Parameter : dir-->
+		<!--defaultDir => Default for CycLiqCPSP Model Parameter : dir-->
 		<xsd:attribute name="defaultDir" type="real64" use="required" />
-		<!--defaultDre1 => CycLiqCPSP Model Parameter : dre1-->
+		<!--defaultDre1 => Default for CycLiqCPSP Model Parameter : dre1-->
 		<xsd:attribute name="defaultDre1" type="real64" use="required" />
-		<!--defaultDre2 => CycLiqCPSP Model Parameter : dre2-->
+		<!--defaultDre2 => Default for CycLiqCPSP Model Parameter : dre2-->
 		<xsd:attribute name="defaultDre2" type="real64" use="required" />
-		<!--defaultE0 => CycLiqCPSP Model Parameter : e0-->
+		<!--defaultE0 => Default for CycLiqCPSP Model Parameter : e0-->
 		<xsd:attribute name="defaultE0" type="real64" use="required" />
-		<!--defaultEin => CycLiqCPSP Model Parameter : ein-->
+		<!--defaultEin => Default for CycLiqCPSP Model Parameter : ein-->
 		<xsd:attribute name="defaultEin" type="real64" use="required" />
-		<!--defaultEta => CycLiqCPSP Model Parameter : eta-->
+		<!--defaultEta => Default for CycLiqCPSP Model Parameter : eta-->
 		<xsd:attribute name="defaultEta" type="real64" use="required" />
-		<!--defaultG0 => CycLiqCPSP Model Parameter : G0-->
+		<!--defaultG0 => Default for CycLiqCPSP Model Parameter : G0-->
 		<xsd:attribute name="defaultG0" type="real64" use="required" />
-		<!--defaultH => CycLiqCPSP Model Parameter : h-->
+		<!--defaultH => Default for CycLiqCPSP Model Parameter : h-->
 		<xsd:attribute name="defaultH" type="real64" use="required" />
-		<!--defaultKappa => CycLiqCPSP Model Parameter : kappa-->
+		<!--defaultInitialTime => Default for CycLiqCPSP Model Parameter : initial time-->
+		<xsd:attribute name="defaultInitialTime" type="real64" use="required" />
+		<!--defaultKappa => Default for CycLiqCPSP Model Parameter : kappa-->
 		<xsd:attribute name="defaultKappa" type="real64" use="required" />
-		<!--defaultKsi => CycLiqCPSP Model Parameter : ksi-->
+		<!--defaultKsi => Default for CycLiqCPSP Model Parameter : ksi-->
 		<xsd:attribute name="defaultKsi" type="real64" use="required" />
-		<!--defaultLamdac => CycLiqCPSP Model Parameter : lamdac-->
+		<!--defaultLamdac => Default for CycLiqCPSP Model Parameter : lamdac-->
 		<xsd:attribute name="defaultLamdac" type="real64" use="required" />
-		<!--defaultM => CycLiqCPSP Model Parameter : M-->
+		<!--defaultM => Default for CycLiqCPSP Model Parameter : M-->
 		<xsd:attribute name="defaultM" type="real64" use="required" />
-		<!--defaultNd => CycLiqCPSP Model Parameter : nd-->
+		<!--defaultNd => Default for CycLiqCPSP Model Parameter : nd-->
 		<xsd:attribute name="defaultNd" type="real64" use="required" />
-		<!--defaultNp => CycLiqCPSP Model Parameter : np-->
+		<!--defaultNp => Default for CycLiqCPSP Model Parameter : np-->
 		<xsd:attribute name="defaultNp" type="real64" use="required" />
-		<!--defaultRdr => CycLiqCPSP Model Parameter : rdr-->
+		<!--defaultRdr => Default for CycLiqCPSP Model Parameter : rdr-->
 		<xsd:attribute name="defaultRdr" type="real64" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
@@ -1726,6 +1731,26 @@
 		<xsd:attribute name="referencePressure" type="real64" default="0" />
 		<!--viscosity => Material Viscosity-->
 		<xsd:attribute name="viscosity" type="real64" default="0" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="PoroNonlinearElasticDuncanChangEBType">
+		<!--BiotCoefficient => Biot's coefficient-->
+		<xsd:attribute name="BiotCoefficient" type="real64" default="0" />
+		<!--compressibility => Rock Compressibilty-->
+		<xsd:attribute name="compressibility" type="real64" default="-1" />
+		<!--defaultBulkModulus => Elastic Bulk Modulus Parameter-->
+		<xsd:attribute name="defaultBulkModulus" type="real64" default="-1" />
+		<!--defaultDensity => Default Material Density-->
+		<xsd:attribute name="defaultDensity" type="real64" use="required" />
+		<!--defaultPoissonRatio => Poisson's ratio-->
+		<xsd:attribute name="defaultPoissonRatio" type="real64" default="-1" />
+		<!--defaultShearModulus => Elastic Shear Modulus Parameter-->
+		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
+		<!--defaultYoungsModulus => Elastic Young's Modulus.-->
+		<xsd:attribute name="defaultYoungsModulus" type="real64" default="-1" />
+		<!--referencePressure => ReferencePressure-->
+		<xsd:attribute name="referencePressure" type="real64" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

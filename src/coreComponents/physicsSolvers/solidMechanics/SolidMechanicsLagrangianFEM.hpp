@@ -83,8 +83,6 @@ public:
   virtual void
   updateStress( DomainPartition * const domain );
 
-
-
   /**
    * @defgroup Solver Interface Functions
    *

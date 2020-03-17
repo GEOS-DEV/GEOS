@@ -440,27 +440,27 @@ void SinglePhaseFlow::UpdateEOS( real64 const time_n,
       arrayView1d<real64> const & totalCompressibility = m_totalCompressibility[er][esr];
 
       forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
-      {
-//        dens[ei][0] = mass[ei] / ( vol[ei] * poro[ei] );
-//
-//        dPres[ei] = pres[ei];
-//        fluid->PointUpdatePressure( pres[ei], ei, 0);
-//        dPres[ei] = pres[ei] - dPres[ei];
+          {
+    //        dens[ei][0] = mass[ei] / ( vol[ei] * poro[ei] );
+    //
+    //        dPres[ei] = pres[ei];
+    //        fluid->PointUpdatePressure( pres[ei], ei, 0);
+    //        dPres[ei] = pres[ei] - dPres[ei];
 
-        dPres[ei] = pres[ei];
-        fluid->PointUpdatePressure( pres[ei], mass[ei], vol[ei], poroRef[ei], totalCompressibility[ei]);
-        fluid->PointUpdateDensity( pres[ei], ei, 0 );
-        dPres[ei] = pres[ei] - dPres[ei];
+            dPres[ei] = pres[ei];
+            fluid->PointUpdatePressure( pres[ei], mass[ei], vol[ei], poroRef[ei], totalCompressibility[ei]);
+            fluid->PointUpdateDensity( pres[ei], ei, 0 );
+            dPres[ei] = pres[ei] - dPres[ei];
 
-//        if ( mass[ei] > 0 )
-//        {
-//          arrayView2d<real64> const & dens = m_density[er][esr][m_fluidIndex];
-//          arrayView1d<real64> const & poro = m_porosity[er][esr];
-//          std::cout << "\n Fluid Update in matrix: ei = " << ei  << ", mass = " << mass[ei] << ", poro= " << poro[ei] << ", vol = " << vol[ei]
-//                    << ", calculated dens = " << dens[ei][0] << ", new pres = " << pres[ei] << "\n";
-//        }
+    //        if ( mass[ei] > 0 )
+    //        {
+    //          arrayView2d<real64> const & dens = m_density[er][esr][m_fluidIndex];
+    //          arrayView1d<real64> const & poro = m_porosity[er][esr];
+    //          std::cout << "\n Fluid Update in matrix: ei = " << ei  << ", mass = " << mass[ei] << ", poro= " << poro[ei] << ", vol = " << vol[ei]
+    //                    << ", calculated dens = " << dens[ei][0] << ", new pres = " << pres[ei] << "\n";
+    //        }
 
-      } );
+          } );
     } );
 
     mesh->getElemManager()->
@@ -561,6 +561,18 @@ void SinglePhaseFlow::ExplicitStepSetup( real64 const & time_n,
       else if( dynamic_cast<LinearElasticAnisotropic * >( solid ) )
       {
         totalCompressibility = dynamic_cast<LinearElasticAnisotropic*>(solid)->compressibility() + fluid->compressibility();
+      }
+      else if( dynamic_cast<BilinearElasticIsotropic * >( solid ) )
+      {
+        totalCompressibility = dynamic_cast<BilinearElasticIsotropic*>(solid)->compressibility() + fluid->compressibility();
+      }
+      else if( dynamic_cast<CycLiqCPSP * >( solid ) )
+      {
+        totalCompressibility = dynamic_cast<CycLiqCPSP*>(solid)->compressibility() + fluid->compressibility();
+      }
+      else if( dynamic_cast<NonlinearElasticDuncanChangEB * >( solid ) )
+      {
+        totalCompressibility = dynamic_cast<NonlinearElasticDuncanChangEB*>(solid)->compressibility() + fluid->compressibility();
       }
       else
         totalCompressibility = dynamic_cast<PoreVolumeCompressibleSolid*>(solid)->compressibility() + fluid->compressibility();

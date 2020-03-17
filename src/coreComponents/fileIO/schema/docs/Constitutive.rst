@@ -25,6 +25,7 @@ PoroCycLiqCPSP                        node         :ref:`XML_PoroCycLiqCPSP`
 PoroLinearElasticAnisotropic          node         :ref:`XML_PoroLinearElasticAnisotropic`          
 PoroLinearElasticIsotropic            node         :ref:`XML_PoroLinearElasticIsotropic`            
 PoroLinearViscoElasticIsotropic       node         :ref:`XML_PoroLinearViscoElasticIsotropic`       
+PoroNonlinearElasticDuncanChangEB     node         :ref:`XML_PoroNonlinearElasticDuncanChangEB`     
 VanGenuchtenBakerRelativePermeability node         :ref:`XML_VanGenuchtenBakerRelativePermeability` 
 VanGenuchtenCapillaryPressure         node         :ref:`XML_VanGenuchtenCapillaryPressure`         
 ===================================== ==== ======= ================================================ 

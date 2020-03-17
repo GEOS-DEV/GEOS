@@ -71,10 +71,27 @@ public:
 	    static constexpr auto defaultPoissonRatio_2String =  "defaultPoissonRatio_2" ;
 	    static constexpr auto defaultCriticalStressString =  "defaultCriticalStress" ;
 
+	    static constexpr auto youngsModulus_1String  = "youngsModulus_1";
+	    static constexpr auto youngsModulus_2String =  "youngsModulus_2" ;
+	    static constexpr auto poissonRatio_1String = "poissonRatio_1";
+	    static constexpr auto poissonRatio_2String =  "poissonRatio_2" ;
+	    static constexpr auto criticalStressString =  "criticalStress" ;
+
 	  };
 
-
 	real64 constrainedModulus(localIndex k) const { return ( m_youngsModulus_1[k] * ( 1 - m_poissonRatio_1[k] )/ (1 + m_poissonRatio_1[k]) / (1 - 2 * m_poissonRatio_1[k])); }
+	real64 compressibility()
+	{
+		real64 bulkModulus;
+		bulkModulus = m_defaultYoungsModulus_1 / (3 * (1 - 2 * m_defaultPoissonRatio_1));
+		return 1 / bulkModulus;
+	}
+	real64 compressibility() const
+	{
+		real64 bulkModulus;
+		bulkModulus = m_defaultYoungsModulus_1 / (3 * (1 - 2 * m_defaultPoissonRatio_1));
+		return 1 / bulkModulus;
+	}
 
 	  class KernelWrapper
 	  {

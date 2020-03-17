@@ -26,6 +26,7 @@
 #include "BilinearElasticIsotropic.hpp"
 #include "HardeningElasticIsotropic.hpp"
 #include "CycLiqCPSP.hpp"
+#include "NonlinearElasticDuncanChangEB.hpp"
 
 namespace geosx
 {
@@ -57,6 +58,10 @@ bool constitutiveUpdatePassThru( constitutive::ConstitutiveBase * const constitu
   else if( dynamic_cast<CycLiqCPSP * >( constitutiveRelation ) )
   {
     lambda( static_cast<CycLiqCPSP & >( *constitutiveRelation) );
+  }
+  else if( dynamic_cast<NonlinearElasticDuncanChangEB * >( constitutiveRelation ) )
+  {
+    lambda( static_cast<NonlinearElasticDuncanChangEB & >( *constitutiveRelation) );
   }
   else if( dynamic_cast<LinearElasticAnisotropic * >( constitutiveRelation ) )
   {

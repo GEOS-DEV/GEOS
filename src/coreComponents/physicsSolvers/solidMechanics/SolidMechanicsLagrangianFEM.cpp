@@ -252,9 +252,6 @@ void SolidMechanicsLagrangianFEM::SetInitialTimeStep(Group * const domain )
   }
 }
 
-
-
-
 void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * const domain )
 {
   GEOSX_MARK_FUNCTION;
@@ -365,6 +362,45 @@ void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * co
     mass[index] *= 2;
 
 }
+
+/*
+void SolidMechanicsLagrangianFEM::setInitializeStress( DomainPartition * const domain )
+{
+	  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+	  ElementRegionManager * const elementRegionManager = mesh->getElemManager();
+	  ConstitutiveManager  * const
+	  constitutiveManager = domain->GetGroup<ConstitutiveManager >(dataRepository::keys::ConstitutiveManager);
+	  ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase>
+	  constitutiveRelations = elementRegionManager->ConstructFullConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
+	  R2SymTensor Initializestress;
+	  Initializestress.Data()[0] = -99.9;
+	  Initializestress.Data()[1] = 0;
+	  Initializestress.Data()[2] = -99.9;
+	  Initializestress.Data()[3] = 0;
+	  Initializestress.Data()[4] = 0;
+	  Initializestress.Data()[5] = -100.2;
+
+	  elementRegionManager->
+	  forElementSubRegionsComplete<CellElementSubRegion>( m_targetRegions,
+	                                                      [&]( localIndex const er,
+	                                                           localIndex const esr,
+	                                                           ElementRegionBase * const,
+	                                                           CellElementSubRegion * const)
+	  {
+	    SolidBase * const
+	    constitutiveRelation = constitutiveRelations[er][esr][m_solidMaterialFullIndex]->group_cast<SolidBase*>();
+	    arrayView2d<R2SymTensor> const & stress = constitutiveRelation->getStress();
+
+	    for( localIndex k=0 ; k<stress.size(0) ; ++k )
+	    {
+	      for( localIndex a=0 ; a<stress.size(1) ; ++a )
+	      {
+	    	  stress(k,a) = Initializestress;
+	      }
+	    }
+	  });
+}
+*/
 
 void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( Group * const problemManager )
 {
