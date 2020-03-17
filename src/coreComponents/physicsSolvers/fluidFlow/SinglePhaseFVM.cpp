@@ -203,7 +203,7 @@ void SinglePhaseFVM< BASE >::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM(
   FluxKernel::ElementView< arrayView1d< R1Tensor const > > const & transTMultiplier  = m_transTMultiplier.toViewConst();
 
 
-  fluxApprox->forCellStencils( [&]( auto const & stencil )
+  fluxApprox->forAllStencils( [&]( auto const & stencil )
   {
 
 //    typedef TYPEOFREF( stencil ) STENCIL_TYPE;
