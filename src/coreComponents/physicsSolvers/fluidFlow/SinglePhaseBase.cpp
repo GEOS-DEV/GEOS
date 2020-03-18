@@ -61,8 +61,10 @@ void SinglePhaseBase::RegisterDataOnMesh( Group * const MeshBodies )
     elemManager->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::pressureString )->setPlotLevel( PlotLevel::LEVEL_0 );
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::deltaPressureString );
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::deltaVolumeString );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::deltaPressureString )->
+        setRestartFlags( RestartFlags::NO_WRITE );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::deltaVolumeString )->
+        setRestartFlags( RestartFlags::NO_WRITE );
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::mobilityString );
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::dMobility_dPressureString );
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::porosityString )->setPlotLevel( PlotLevel::LEVEL_1 );
@@ -73,10 +75,13 @@ void SinglePhaseBase::RegisterDataOnMesh( Group * const MeshBodies )
     elemManager->forElementSubRegions< FaceElementSubRegion >( [&] ( FaceElementSubRegion & subRegion )
     {
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::pressureString )->setPlotLevel( PlotLevel::LEVEL_0 );
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::deltaPressureString );
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::deltaVolumeString );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::deltaPressureString )->
+        setRestartFlags( RestartFlags::NO_WRITE );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::deltaVolumeString )->
+        setRestartFlags( RestartFlags::NO_WRITE );
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::mobilityString );
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::dMobility_dPressureString );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::dMobility_dPressureString )->
+        setRestartFlags( RestartFlags::NO_WRITE );;
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::porosityString )->
         setDefaultValue( 1.0 );
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::porosityOldString )->
