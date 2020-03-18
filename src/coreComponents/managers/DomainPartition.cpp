@@ -36,8 +36,13 @@ DomainPartition::DomainPartition( std::string const & name,
                                   Group * const parent ):
   Group( name, parent )
 {
-  this->registerWrapper( "Neighbors", &m_neighbors, false )->setRestartFlags( RestartFlags::NO_WRITE );
-  this->registerWrapper< SpatialPartition, PartitionBase >( keys::partitionManager )->setRestartFlags( RestartFlags::NO_WRITE );
+  this->registerWrapper( "Neighbors", &m_neighbors, false )->
+    setRestartFlags( RestartFlags::NO_WRITE )->
+    setSizedFromParent(false);
+
+  this->registerWrapper< SpatialPartition, PartitionBase >( keys::partitionManager )->
+    setRestartFlags( RestartFlags::NO_WRITE )->
+    setSizedFromParent(false);
 
   RegisterGroup( groupKeys.meshBodies );
   RegisterGroup< constitutive::ConstitutiveManager >( groupKeys.constitutiveManager );
