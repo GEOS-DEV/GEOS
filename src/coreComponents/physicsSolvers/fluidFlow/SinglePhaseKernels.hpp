@@ -656,8 +656,12 @@ struct FluxKernel
       localIndex const ei  = sei[ke];
 
       real64 permeabilityMultiplier = 1.0;
-      if (er != fractureRegionIndex)
-        permeabilityMultiplier = (poro[er][esr][ei] < 0.999) ? pow(poro[er][esr][ei], 3) * pow(1 - poroRef[er][esr][ei], 2) / (pow(poroRef[er][esr][ei], 3) * pow(1 - poro[er][esr][ei], 2)) : 1.0;
+      if (er != fractureRegionIndex && (poro[er][esr][ei] < poroRef[er][esr][ei]))
+//        permeabilityMultiplier = 1.0 - (poroRef[er][esr][ei] - poro[er][esr][ei]);
+        permeabilityMultiplier = pow(poro[er][esr][ei], 3) * pow(1 - poroRef[er][esr][ei], 2) / (pow(poroRef[er][esr][ei], 3) * pow(1 - poro[er][esr][ei], 2));
+
+//      if (permeabilityMultiplier < 0.8)
+//        std::cout << "\n matrix ei = " << ei << ", poro = " << poro[er][esr][ei] << ", permeabilityMultiplier = " << permeabilityMultiplier;
 
       real64 weight = stencilWeights[ke] * permeabilityMultiplier;
 
@@ -684,6 +688,8 @@ struct FluxKernel
     // currently ignore the critical time dictated by faceToCellConnector (need to fix later)
     if (!faceToCellConnector)
       *maxStableDt = std::min( totalCompressibility[er_up][esr_up][ei_up] * visc[er_up][esr_up][fluidIndex][ei_up][0] * poro[er_up][esr_up][ei_up] / 2.0 * weightedSum * weightedSum, *maxStableDt);
+//    if (ei_up == 0 && (*maxStableDt) < 1e-5)
+//      std::cout << "\n Critical Time: maxStableDt = " << *maxStableDt << ", poro = " << poro[er_up][esr_up][ei_up] << ", weightedSum = " << weightedSum;
 
     // populate local flux
     if (std::abs(potDif) > std::numeric_limits<real64>::min() && hasMassTransfer)
@@ -939,6 +945,9 @@ struct FluxKernel
         real64 weightedSum = edgeLength * areaAlongFlowDirection / weight;
 
         *maxStableDt = std::min(totalCompressibility[ei_up] * visc[ei_up][0] / 2.0 * weightedSum, *maxStableDt);
+
+//        if ((stencilElementIndices[k[0]] == 0 || stencilElementIndices[k[1]] == 0) && (*maxStableDt) < 1e-5)
+//          std::cout << "\n Critical Time: maxStableDt = " << *maxStableDt << ", totalCompressibility = " << totalCompressibility[ei_up] << ", weightedSum = " << weightedSum;
 
         // populate local flux
         if (std::abs(potDif) > std::numeric_limits<real64>::min() && (pres[ei[0]] > referencePressure[ei[0]] || pres[ei[1]] > referencePressure[ei[1]]))

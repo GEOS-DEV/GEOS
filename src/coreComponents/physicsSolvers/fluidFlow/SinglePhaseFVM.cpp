@@ -267,7 +267,7 @@ void SinglePhaseFVM::AssembleFluxTermsExplicit( real64 const GEOSX_UNUSED_PARAM(
   m_maxStableDt = std::numeric_limits<real64>::max();
 
   FaceElementRegion const * const fractureRegion = elemManager->GetRegion<FaceElementRegion>("Fracture");
-  localIndex const fractureRegionIndex = fractureRegion->getIndexInParent();
+  localIndex const fractureRegionIndex = (fractureRegion == nullptr) ? -1 : fractureRegion->getIndexInParent();
 
   fluxApprox->forCellStencils( [&]( auto & stencil )
   {
@@ -798,6 +798,29 @@ void SinglePhaseFVM::ExplicitStepSetup( real64 const & time_n,
 
       UpdateEOS( time_n, dt, domain );
     } );
+/*
+    // initialize the fluidMass by defaultDensity
+    ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
+    real64 const defaultDensity = constitutiveManager->GetConstitutiveRelation( m_fluidIndex )->
+                                  getWrapper< array2d<real64> >( SingleFluidBase::viewKeyStruct::densityString )->
+                                  getDefaultValue();
+    applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
+                       ElementRegionBase * const GEOSX_UNUSED_PARAM( region ),
+                       ElementSubRegionBase * const subRegion )
+    {
+      arrayView2d<real64> const & dens = m_density[er][esr][m_fluidIndex];
+      arrayView1d<real64> const & vol  = m_volume[er][esr];
+      arrayView1d<real64> const & poro = m_porosity[er][esr];
+      arrayView1d<real64> const & mass = m_fluidMass[er][esr];
+
+      dens = defaultDensity;
+
+      forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+      {
+        mass[ei] = dens[ei][0] * vol[ei] * poro[ei] * 0.95;
+      } );
+    } );
+*/
   }
 
   elemManager->forElementSubRegionsComplete<FaceElementSubRegion>( m_targetRegions,

@@ -418,8 +418,6 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
   ContactRelationBase const * const
   contactRelation = constitutiveManager->GetGroup<ContactRelationBase>(m_contactRelationName);
 
-  real64 const contactStiffness = contactRelation->stiffness();
-
   // update face area
   faceManager->computeGeometry(nodeManager);
 
@@ -436,6 +434,7 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
       arrayView1d<real64 const> const & area = subRegion->getElementArea();
       arrayView2d< localIndex const > const & elemsToFaces = subRegion->faceList();
       arrayView1d<real64> const & contactStress = subRegion->getReference<array1d<real64> >(viewKeyStruct::contactStressString);
+      real64 const contactStiffness = contactRelation->stiffness();
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
       arrayView1d<real64 const> const &
@@ -1032,7 +1031,8 @@ ApplyContactAndPressureToFacesInExplicitSolver( DomainPartition * const domain )
 
   elemManager->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion * const subRegion )->void
   {
-    arrayView1d<real64 const> const & fluidPressure = subRegion->getReference<array1d<real64> >("pressure");
+    arrayView1d<real64 const> const & fluidPressure = subRegion->getReference<array1d<real64> >(FlowSolverBase::viewKeyStruct::pressureString);
+//    arrayView1d<real64> const & deltaPressure = subRegion->getReference<array1d<real64> >(FlowSolverBase::viewKeyStruct::deltaPressureString);
     arrayView1d<real64 const> const & contactStress = subRegion->getReference<array1d<real64> >(viewKeyStruct::contactStressString);
     arrayView1d<real64> const & area = subRegion->getElementArea();
     arrayView2d< localIndex const > const & elemsToFaces = subRegion->faceList();
@@ -1050,6 +1050,7 @@ ApplyContactAndPressureToFacesInExplicitSolver( DomainPartition * const domain )
 
         real64 const Ja = area[kfe] / numNodesPerFace;
 
+//        deltaPressure[kfe] =  deltaPressure[kfe] * 0.99 +  fluidPressure[kfe] * 0.01;
         real64 nodalForceMag = (contactStress[kfe] + fluidPressure[kfe]) * Ja;
         R1Tensor nodalForce(Nbar);
         nodalForce *= nodalForceMag;

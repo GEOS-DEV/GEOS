@@ -415,19 +415,20 @@ void SinglePhaseBase::UpdateEOS( real64 const time_n,
   {
     SingleFluidBase * const fluid = GetConstitutiveModel<SingleFluidBase>( subRegion, m_fluidName );
     arrayView1d<real64> const & pres = m_pressure[er][esr];
-    arrayView1d<real64> const & dPres = m_deltaPressure[er][esr];
+//    arrayView1d<real64> const & dPres = m_deltaPressure[er][esr];
 
-//      arrayView2d<real64> const & dens = m_density[er][esr][m_fluidIndex];
-//      arrayView1d<real64> const & vol  = m_volume[er][esr];
-//      arrayView1d<real64> const & poro = m_porosity[er][esr];
-//      arrayView1d<real64> const & mass = m_fluidMass[er][esr];
+//    arrayView2d<real64> const & dens = m_density[er][esr][m_fluidIndex];
+//    arrayView1d<real64> const & vol  = m_volume[er][esr];
+//    arrayView1d<real64> const & poro = m_porosity[er][esr];
+//    arrayView1d<real64> const & mass = m_fluidMass[er][esr];
 
     forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
-      dPres[ei] = pres[ei];
+//      dPres[ei] = pres[ei];
       fluid->PointUpdatePressure( pres[ei], ei, 0);
-      dPres[ei] = pres[ei] - dPres[ei];
+//      pres[ei] = dPres[ei] * 0.99 + pres[ei] * 0.01;
 
+//      dPres[ei] = pres[ei] - dPres[ei];
 //          std::cout << "    rank " << MpiWrapper::Comm_rank(MPI_COMM_GEOSX)
 //        if ( pres[ei] > 0 )
 //        if ( std::abs(mass[ei]) > 0 )
