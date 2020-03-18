@@ -450,6 +450,10 @@ public:
 
   template< typename CONSTITUTIVE_TYPE >
   ConstitutiveRelationAccessor< CONSTITUTIVE_TYPE >
+  ConstructFullConstitutiveAccessor( constitutive::ConstitutiveManager const * const cm ) const;
+
+  template< typename CONSTITUTIVE_TYPE >
+  ConstitutiveRelationAccessor< CONSTITUTIVE_TYPE >
   ConstructFullConstitutiveAccessor( constitutive::ConstitutiveManager const * const cm );
 
   using Group::PackSize;
