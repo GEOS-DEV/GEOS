@@ -181,7 +181,7 @@ public:
   /**
    * @brief Read the wrapped data from Conduit.
    */
-  virtual void loadFromConduit() = 0;
+  virtual bool loadFromConduit() = 0;
 
   ///@}
 

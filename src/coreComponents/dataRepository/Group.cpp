@@ -502,10 +502,16 @@ void Group::loadFromConduit()
   }
 
   m_size = m_conduitNode.fetch_child( "__size__" ).value();
-
-  forWrappers( []( WrapperBase & wrapper )
+  localIndex const groupSize = m_size;
+  forWrappers( [groupSize]( WrapperBase & wrapper )
   {
-    wrapper.loadFromConduit();
+    if( !( wrapper.loadFromConduit()) )
+    {
+      if( wrapper.sizedFromParent() == 1 )
+      {
+        wrapper.resize( groupSize );
+      }
+    }
   } );
 
   forSubGroups( []( Group & subGroup )
