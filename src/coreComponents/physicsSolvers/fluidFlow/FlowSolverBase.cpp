@@ -88,32 +88,32 @@ void FlowSolverBase::RegisterDataOnMesh( Group * const MeshBodies )
     MeshBody * const meshBody = subgroup.second->group_cast< MeshBody * >();
     MeshLevel * const mesh = meshBody->getMeshLevel( 0 );
 
-    applyToSubRegions( mesh, [&] ( ElementSubRegionBase * const subRegion )
+    applyToSubRegions( mesh, [&] ( ElementSubRegionBase & subRegion )
     {
-      subRegion->registerWrapper< array1d< real64 > >( viewKeyStruct::referencePorosityString )->setPlotLevel( PlotLevel::LEVEL_0 );
-      subRegion->registerWrapper< array1d< R1Tensor > >( viewKeyStruct::permeabilityString )->setPlotLevel( PlotLevel::LEVEL_0 );
-      subRegion->registerWrapper< array1d< real64 > >( viewKeyStruct::gravityCoefString )->setApplyDefaultValue( 0.0 );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::referencePorosityString )->setPlotLevel( PlotLevel::LEVEL_0 );
+      subRegion.registerWrapper< array1d< R1Tensor > >( viewKeyStruct::permeabilityString )->setPlotLevel( PlotLevel::LEVEL_0 );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::gravityCoefString )->setApplyDefaultValue( 0.0 );
     } );
 
     ElementRegionManager * const elemManager = mesh->getElemManager();
 
-    elemManager->forElementRegions< FaceElementRegion >( [&] ( FaceElementRegion * const region )
+    elemManager->forElementSubRegionsComplete< FaceElementSubRegion >( [&]( localIndex, localIndex, ElementRegionBase & region,
+                                                                            FaceElementSubRegion & subRegion )
     {
-      region->forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion * const subRegion )
-      {
-        subRegion->registerWrapper< array1d< real64 > >( viewKeyStruct::referencePorosityString )->
-          setApplyDefaultValue( 1.0 );
+      FaceElementRegion & faceRegion = dynamicCast< FaceElementRegion & >( region );
 
-        subRegion->registerWrapper< array1d< R1Tensor > >( viewKeyStruct::permeabilityString )->setPlotLevel( PlotLevel::LEVEL_0 );
-        subRegion->registerWrapper< array1d< real64 > >( viewKeyStruct::gravityCoefString )->setApplyDefaultValue( 0.0 );
-        subRegion->registerWrapper< array1d< real64 > >( viewKeyStruct::aperture0String )->
-          setDefaultValue( region->getDefaultAperture() );
-        subRegion->registerWrapper< array1d< real64 > >( viewKeyStruct::effectiveApertureString )->
-          setApplyDefaultValue( subRegion->getWrapper< array1d< real64 > >( FaceElementSubRegion::
-                                                                              viewKeyStruct::
-                                                                              elementApertureString )->getDefaultValue() )->
-          setPlotLevel( PlotLevel::LEVEL_0 );
-      } );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::referencePorosityString )->
+        setApplyDefaultValue( 1.0 );
+
+      subRegion.registerWrapper< array1d< R1Tensor > >( viewKeyStruct::permeabilityString )->setPlotLevel( PlotLevel::LEVEL_0 );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::gravityCoefString )->setApplyDefaultValue( 0.0 );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::aperture0String )->
+        setDefaultValue( faceRegion.getDefaultAperture() );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::effectiveApertureString )->
+        setApplyDefaultValue( subRegion.getWrapper< array1d< real64 > >( FaceElementSubRegion::
+                                                                           viewKeyStruct::
+                                                                           elementApertureString )->getDefaultValue() )->
+        setPlotLevel( PlotLevel::LEVEL_0 );
     } );
 
     FaceManager * const faceManager = mesh->getFaceManager();
@@ -179,15 +179,16 @@ void FlowSolverBase::PrecomputeData( DomainPartition * const domain )
   FaceManager * const faceManager = mesh->getFaceManager();
 
   R1Tensor const gravVector = gravityVector();
-  applyToSubRegions( mesh, [&] ( ElementSubRegionBase * const subRegion )
+
+  applyToSubRegions( mesh, [&] ( ElementSubRegionBase & subRegion )
   {
     arrayView1d< R1Tensor const > const & elemCenter =
-      subRegion->getReference< array1d< R1Tensor > >( CellBlock::viewKeyStruct::elementCenterString );
+      subRegion.getReference< array1d< R1Tensor > >( CellBlock::viewKeyStruct::elementCenterString );
 
     arrayView1d< real64 > const & gravityCoef =
-      subRegion->getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
+      subRegion.getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
 
-    forall_in_range< serialPolicy >( 0, subRegion->size(), [=] ( localIndex a )
+    forAll< serialPolicy >( subRegion.size(), [=] ( localIndex a )
     {
       gravityCoef[a] = Dot( elemCenter[a], gravVector );
     } );
@@ -200,7 +201,7 @@ void FlowSolverBase::PrecomputeData( DomainPartition * const domain )
     arrayView1d< real64 > const & gravityCoef =
       faceManager->getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
 
-    forall_in_range< serialPolicy >( 0, faceManager->size(), [=] ( localIndex a )
+    forAll< serialPolicy >( faceManager->size(), [=] ( localIndex a )
     {
       gravityCoef[a] = Dot( faceCenter[a], gravVector );
     } );

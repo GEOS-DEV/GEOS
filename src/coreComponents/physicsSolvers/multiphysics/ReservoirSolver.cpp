@@ -161,13 +161,13 @@ void ReservoirSolver::SetupSystem( DomainPartition * const domain,
   resDofNumber = elemManager->ConstructViewAccessor< array1d< globalIndex >,
                                                      arrayView1d< globalIndex const > >( resDofKey );
 
-  elemManager->forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion const * const subRegion )
+  elemManager->forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion const & subRegion )
   {
-    PerforationData const * const perforationData = subRegion->GetPerforationData();
+    PerforationData const * const perforationData = subRegion.GetPerforationData();
 
     // get the well degrees of freedom and ghosting info
     arrayView1d< globalIndex const > const & wellElemDofNumber =
-      subRegion->getReference< array1d< globalIndex > >( wellDofKey );
+      subRegion.getReference< array1d< globalIndex > >( wellDofKey );
 
     // get the well element indices corresponding to each perforation
     arrayView1d< localIndex const > const & perfWellElemIndex =

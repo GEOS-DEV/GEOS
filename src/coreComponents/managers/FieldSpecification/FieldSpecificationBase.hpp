@@ -130,7 +130,7 @@ public:
   template< typename FIELD_OP, typename LAI >
   void ApplyBoundaryConditionToSystem( SortedArrayView< localIndex const > const & targetSet,
                                        real64 const time,
-                                       dataRepository::Group * dataGroup,
+                                       dataRepository::Group const * const dataGroup,
                                        string const & fieldName,
                                        string const & dofMapName,
                                        integer const & dofDim,
@@ -165,7 +165,7 @@ public:
   void
   ApplyBoundaryConditionToSystem( SortedArrayView< localIndex const > const & targetSet,
                                   real64 const time,
-                                  dataRepository::Group * dataGroup,
+                                  dataRepository::Group const * const dataGroup,
                                   arrayView1d< globalIndex const > const & dofMap,
                                   integer const & dofDim,
                                   typename LAI::ParallelMatrix & matrix,
@@ -201,7 +201,7 @@ public:
   ApplyBoundaryConditionToSystem( SortedArrayView< localIndex const > const & targetSet,
                                   real64 const time,
                                   real64 const dt,
-                                  dataRepository::Group * dataGroup,
+                                  dataRepository::Group const * const dataGroup,
                                   arrayView1d< globalIndex const > const & dofMap,
                                   integer const & dofDim,
                                   typename LAI::ParallelMatrix & matrix,
@@ -377,7 +377,7 @@ void FieldSpecificationBase::ApplyFieldValueKernel( ArrayView< T, N, USD > const
 
   if( functionName.empty() )
   {
-    forall_in_range< POLICY >( 0, targetSet.size(), [=] GEOSX_HOST_DEVICE( localIndex const i )
+    forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
       {
         localIndex const a = targetSet[ i ];
         FIELD_OP::SpecifyFieldValue( field, a, component, m_scale );
@@ -392,7 +392,7 @@ void FieldSpecificationBase::ApplyFieldValueKernel( ArrayView< T, N, USD > const
     if( function->isFunctionOfTime()==2 )
     {
       real64 value = m_scale * function->Evaluate( &time );
-      forall_in_range< POLICY >( 0, targetSet.size(), [=] GEOSX_HOST_DEVICE( localIndex const i )
+      forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
         {
           localIndex const a = targetSet[ i ];
           FIELD_OP::SpecifyFieldValue( field, a, component, value );
@@ -403,7 +403,7 @@ void FieldSpecificationBase::ApplyFieldValueKernel( ArrayView< T, N, USD > const
       real64_array result( static_cast< localIndex >( targetSet.size() ) );
       function->Evaluate( dataGroup, time, targetSet, result );
       arrayView1d< real64 const > const & resultView = result;
-      forall_in_range< POLICY >( 0, targetSet.size(), [=] GEOSX_HOST_DEVICE( localIndex const i )
+      forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
         {
           localIndex const a = targetSet[ i ];
           FIELD_OP::SpecifyFieldValue( field, a, component, m_scale*resultView[i] );
@@ -429,7 +429,7 @@ void FieldSpecificationBase::ApplyFieldValue( SortedArrayView< localIndex const 
     using ArrayType = decltype(arrayInstance);
     dataRepository::Wrapper< ArrayType > & view = dataRepository::Wrapper< ArrayType >::cast( *wrapper );
 
-    typename ArrayType::ViewType const & field = view.referenceAsView();
+    auto const & field = view.reference().toView();
     ApplyFieldValueKernel< FIELD_OP, POLICY >( field, targetSet, time, dataGroup );
   } );
 }
@@ -437,24 +437,24 @@ void FieldSpecificationBase::ApplyFieldValue( SortedArrayView< localIndex const 
 template< typename FIELD_OP, typename LAI >
 void FieldSpecificationBase::ApplyBoundaryConditionToSystem( SortedArrayView< localIndex const > const & targetSet,
                                                              real64 const time,
-                                                             dataRepository::Group * dataGroup,
+                                                             dataRepository::Group const * const dataGroup,
                                                              string const & fieldName,
                                                              string const & dofMapName,
                                                              integer const & dofDim,
                                                              typename LAI::ParallelMatrix & matrix,
                                                              typename LAI::ParallelVector & rhs ) const
 {
-  dataRepository::WrapperBase * wrapperBase = dataGroup->getWrapperBase( fieldName );
-  std::type_index typeIndex = std::type_index( wrapperBase->get_typeid());
-  arrayView1d< globalIndex > const & dofMap = dataGroup->getReference< array1d< globalIndex > >( dofMapName );
+  dataRepository::WrapperBase const & wrapperBase = *dataGroup->getWrapperBase( fieldName );
+  std::type_index typeIndex = std::type_index( wrapperBase.get_typeid());
+  arrayView1d< globalIndex const > const & dofMap = dataGroup->getReference< array1d< globalIndex > >( dofMapName );
   integer const component = GetComponent();
 
   rtTypes::ApplyArrayTypeLambda1( rtTypes::typeID( typeIndex ),
                                   [&]( auto type )
   {
-    using fieldType = decltype(type);
-    dataRepository::Wrapper< fieldType > & wrapper = dynamic_cast< dataRepository::Wrapper< fieldType > & >(*wrapperBase);
-    typename dataRepository::Wrapper< fieldType >::ViewTypeConst fieldView = wrapper.referenceAsView();
+    using FieldType = decltype( type );
+    dataRepository::Wrapper< FieldType > const & wrapper = dataRepository::Wrapper< FieldType >::cast( wrapperBase );
+    traits::ViewTypeConst< FieldType > fieldView = wrapper.reference();
 
     this->ApplyBoundaryConditionToSystem< FIELD_OP, LAI >( targetSet, time, dataGroup, dofMap, dofDim, matrix, rhs,
                                                            [&]( localIndex const a )
@@ -473,7 +473,7 @@ void
 FieldSpecificationBase::
   ApplyBoundaryConditionToSystem( SortedArrayView< localIndex const > const & targetSet,
                                   real64 const time,
-                                  dataRepository::Group * dataGroup,
+                                  dataRepository::Group const * const dataGroup,
                                   arrayView1d< globalIndex const > const & dofMap,
                                   integer const & GEOSX_UNUSED_PARAM( dofDim ),
                                   typename LAI::ParallelMatrix & matrix,
@@ -572,7 +572,7 @@ FieldSpecificationBase::
   ApplyBoundaryConditionToSystem( SortedArrayView< localIndex const > const & targetSet,
                                   real64 const time,
                                   real64 const dt,
-                                  dataRepository::Group * dataGroup,
+                                  dataRepository::Group const * const dataGroup,
                                   arrayView1d< globalIndex const > const & dofMap,
                                   integer const & GEOSX_UNUSED_PARAM( dofDim ),
                                   typename LAI::ParallelMatrix & matrix,

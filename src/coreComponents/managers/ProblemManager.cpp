@@ -91,7 +91,7 @@ struct Arg : public option::Arg
 
 ProblemManager::ProblemManager( const std::string & name,
                                 Group * const parent ):
-  ObjectManagerBase( name, parent ),
+  dataRepository::Group( name, parent ),
   m_physicsSolverManager( nullptr ),
   m_eventManager( nullptr ),
   m_functionManager( nullptr )
@@ -815,16 +815,11 @@ void ProblemManager::GenerateMesh()
 
       domain->GenerateSets();
 
-      elemManager->forElementRegions( [&]( ElementRegionBase * const region )->void
+      elemManager->forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
       {
-        Group * subRegions = region->GetGroup( ElementRegionBase::viewKeyStruct::elementSubRegions );
-        subRegions->forSubGroups< ElementSubRegionBase >( [&]( ElementSubRegionBase * const subRegion ) -> void
-        {
-          subRegion->setupRelatedObjectsInRelations( meshLevel );
-          subRegion->CalculateElementGeometricQuantities( *nodeManager,
-                                                          *faceManager );
-        } );
-
+        subRegion.setupRelatedObjectsInRelations( meshLevel );
+        subRegion.CalculateElementGeometricQuantities( *nodeManager,
+                                                       *faceManager );
       } );
 
       elemManager->GenerateCellToEdgeMaps( faceManager );
@@ -878,12 +873,12 @@ void ProblemManager::ApplyNumericalMethods()
             regionQuadrature[regionName] = quadratureSize;
           }
           elemRegion->forElementSubRegions< CellElementSubRegion,
-                                            FaceElementSubRegion >( [&]( auto * const subRegion )
+                                            FaceElementSubRegion >( [&]( auto & subRegion )
           {
             if( feDiscretization != nullptr )
             {
-              feDiscretization->ApplySpaceToTargetCells( subRegion );
-              feDiscretization->CalculateShapeFunctionGradients( X, subRegion );
+              feDiscretization->ApplySpaceToTargetCells( &subRegion );
+              feDiscretization->CalculateShapeFunctionGradients( X, &subRegion );
             }
           } );
         }
@@ -908,11 +903,11 @@ void ProblemManager::ApplyNumericalMethods()
         if( elemRegion != nullptr )
         {
           string_array const & materialList = elemRegion->getMaterialList();
-          elemRegion->forElementSubRegions( [&]( auto * const subRegion )
+          elemRegion->forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
           {
             for( auto & materialName : materialList )
             {
-              constitutiveManager->HangConstitutiveRelation( materialName, subRegion, quadratureSize );
+              constitutiveManager->HangConstitutiveRelation( materialName, &subRegion, quadratureSize );
             }
           } );
         }
@@ -971,9 +966,5 @@ void ProblemManager::ReadRestartOverwrite()
   this->loadFromConduit();
   this->postRestartInitializationRecursive( GetGroup< DomainPartition >( keys::domain ) );
 }
-
-
-
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, ProblemManager, string const &, Group * const )
 
 } /* namespace geosx */

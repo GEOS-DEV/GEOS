@@ -81,13 +81,13 @@ ComponentFractionKernel::Compute( localIndex const NC,
 }
 
 template< localIndex NC >
-void ComponentFractionKernel::Launch( localIndex const begin, localIndex const end,
+void ComponentFractionKernel::Launch( localIndex const size,
                                       arrayView2d< real64 const > const & compDens,
                                       arrayView2d< real64 const > const & dCompDens,
                                       arrayView2d< real64 > const & compFrac,
                                       arrayView3d< real64 > const & dCompFrac_dCompDens )
 {
-  forall_in_range( begin, end, [=] ( localIndex const a )
+  forAll< serialPolicy >( size, [=] ( localIndex const a )
   {
     Compute< NC >( compDens[a],
                    dCompDens[a],
@@ -97,13 +97,13 @@ void ComponentFractionKernel::Launch( localIndex const begin, localIndex const e
 }
 
 void ComponentFractionKernel::Launch( localIndex const NC,
-                                      localIndex const begin, localIndex const end,
+                                      localIndex const size,
                                       arrayView2d< real64 const > const & compDens,
                                       arrayView2d< real64 const > const & dCompDens,
                                       arrayView2d< real64 > const & compFrac,
                                       arrayView3d< real64 > const & dCompFrac_dCompDens )
 {
-  forall_in_range( begin, end, [=] ( localIndex const a )
+  forAll< serialPolicy >( size, [=] ( localIndex const a )
   {
     Compute( NC,
              compDens[a],
@@ -114,14 +114,15 @@ void ComponentFractionKernel::Launch( localIndex const NC,
 }
 
 template< localIndex NC >
-void ComponentFractionKernel::Launch( SortedArray< localIndex > const & targetSet,
+void ComponentFractionKernel::Launch( SortedArrayView< localIndex const > const & targetSet,
                                       arrayView2d< real64 const > const & compDens,
                                       arrayView2d< real64 const > const & dCompDens,
                                       arrayView2d< real64 > const & compFrac,
                                       arrayView3d< real64 > const & dCompFrac_dCompDens )
 {
-  forall_in_set( targetSet.values(), targetSet.size(), [=] ( localIndex const a )
+  forAll< serialPolicy >( targetSet.size(), [=] ( localIndex const i )
   {
+    localIndex const a = targetSet[ i ];
     Compute< NC >( compDens[a],
                    dCompDens[a],
                    compFrac[a],
@@ -130,14 +131,15 @@ void ComponentFractionKernel::Launch( SortedArray< localIndex > const & targetSe
 }
 
 void ComponentFractionKernel::Launch( localIndex const NC,
-                                      SortedArray< localIndex > const & targetSet,
+                                      SortedArrayView< localIndex const > const & targetSet,
                                       arrayView2d< real64 const > const & compDens,
                                       arrayView2d< real64 const > const & dCompDens,
                                       arrayView2d< real64 > const & compFrac,
                                       arrayView3d< real64 > const & dCompFrac_dCompDens )
 {
-  forall_in_set( targetSet.values(), targetSet.size(), [=] ( localIndex const a )
+  forAll< serialPolicy >( targetSet.size(), [=] ( localIndex const i )
   {
+    localIndex const a = targetSet[ i ];
     Compute( NC,
              compDens[a],
              dCompDens[a],
@@ -148,13 +150,13 @@ void ComponentFractionKernel::Launch( localIndex const NC,
 
 #define INST_ComponentFractionKernel( NC ) \
   template \
-  void ComponentFractionKernel::Launch< NC >( localIndex const begin, localIndex const end, \
+  void ComponentFractionKernel::Launch< NC >( localIndex const size, \
                                               arrayView2d< real64 const > const & compDens, \
                                               arrayView2d< real64 const > const & dCompDens, \
                                               arrayView2d< real64 > const & compFrac, \
                                               arrayView3d< real64 > const & dCompFrac_dCompDens ); \
   template \
-  void ComponentFractionKernel::Launch< NC >( SortedArray< localIndex > const & targetSet, \
+  void ComponentFractionKernel::Launch< NC >( SortedArrayView< localIndex const > const & targetSet, \
                                               arrayView2d< real64 const > const & compDens, \
                                               arrayView2d< real64 const > const & dCompDens, \
                                               arrayView2d< real64 > const & compFrac, \
@@ -287,7 +289,7 @@ PhaseVolumeFractionKernel::Compute( localIndex const NC, localIndex const NP,
 }
 
 template< localIndex NC, localIndex NP >
-void PhaseVolumeFractionKernel::Launch( localIndex const begin, localIndex const end,
+void PhaseVolumeFractionKernel::Launch( localIndex const size,
                                         arrayView2d< real64 const > const & compDens,
                                         arrayView2d< real64 const > const & dCompDens,
                                         arrayView3d< real64 const > const & dCompFrac_dCompDens,
@@ -301,7 +303,7 @@ void PhaseVolumeFractionKernel::Launch( localIndex const begin, localIndex const
                                         arrayView2d< real64 > const & dPhaseVolFrac_dPres,
                                         arrayView3d< real64 > const & dPhaseVolFrac_dComp )
 {
-  forall_in_range( begin, end, [=] ( localIndex const a )
+  forAll< serialPolicy >( size, [=] ( localIndex const a )
   {
     Compute< NC, NP >( compDens[a],
                        dCompDens[a],
@@ -319,7 +321,7 @@ void PhaseVolumeFractionKernel::Launch( localIndex const begin, localIndex const
 }
 
 void PhaseVolumeFractionKernel::Launch( localIndex const NC, localIndex const NP,
-                                        localIndex const begin, localIndex const end,
+                                        localIndex const size,
                                         arrayView2d< real64 const > const & compDens,
                                         arrayView2d< real64 const > const & dCompDens,
                                         arrayView3d< real64 const > const & dCompFrac_dCompDens,
@@ -333,7 +335,7 @@ void PhaseVolumeFractionKernel::Launch( localIndex const NC, localIndex const NP
                                         arrayView2d< real64 > const & dPhaseVolFrac_dPres,
                                         arrayView3d< real64 > const & dPhaseVolFrac_dComp )
 {
-  forall_in_range( begin, end, [=] ( localIndex const a )
+  forAll< serialPolicy >( size, [=] ( localIndex const a )
   {
     Compute( NC, NP,
              compDens[a],
@@ -352,7 +354,7 @@ void PhaseVolumeFractionKernel::Launch( localIndex const NC, localIndex const NP
 }
 
 template< localIndex NC, localIndex NP >
-void PhaseVolumeFractionKernel::Launch( SortedArray< localIndex > const & targetSet,
+void PhaseVolumeFractionKernel::Launch( SortedArrayView< localIndex const > const & targetSet,
                                         arrayView2d< real64 const > const & compDens,
                                         arrayView2d< real64 const > const & dCompDens,
                                         arrayView3d< real64 const > const & dCompFrac_dCompDens,
@@ -366,8 +368,9 @@ void PhaseVolumeFractionKernel::Launch( SortedArray< localIndex > const & target
                                         arrayView2d< real64 > const & dPhaseVolFrac_dPres,
                                         arrayView3d< real64 > const & dPhaseVolFrac_dComp )
 {
-  forall_in_set( targetSet.values(), targetSet.size(), [=] ( localIndex const a )
+  forAll< serialPolicy >( targetSet.size(), [=] ( localIndex const i )
   {
+    localIndex const a = targetSet[ i ];
     Compute< NC, NP >( compDens[a],
                        dCompDens[a],
                        dCompFrac_dCompDens[a],
@@ -384,7 +387,7 @@ void PhaseVolumeFractionKernel::Launch( SortedArray< localIndex > const & target
 }
 
 void PhaseVolumeFractionKernel::Launch( localIndex const NC, localIndex const NP,
-                                        SortedArray< localIndex > const & targetSet,
+                                        SortedArrayView< localIndex const > const & targetSet,
                                         arrayView2d< real64 const > const & compDens,
                                         arrayView2d< real64 const > const & dCompDens,
                                         arrayView3d< real64 const > const & dCompFrac_dCompDens,
@@ -398,8 +401,9 @@ void PhaseVolumeFractionKernel::Launch( localIndex const NC, localIndex const NP
                                         arrayView2d< real64 > const & dPhaseVolFrac_dPres,
                                         arrayView3d< real64 > const & dPhaseVolFrac_dComp )
 {
-  forall_in_set( targetSet.values(), targetSet.size(), [=] ( localIndex const a )
+  forAll< serialPolicy >( targetSet.size(), [=] ( localIndex const i )
   {
+    localIndex const a = targetSet[ i ];
     Compute( NC, NP,
              compDens[a],
              dCompDens[a],
@@ -418,7 +422,7 @@ void PhaseVolumeFractionKernel::Launch( localIndex const NC, localIndex const NP
 
 #define INST_PhaseVolumeFractionKernel( NC, NP ) \
   template \
-  void PhaseVolumeFractionKernel::Launch< NC, NP >( localIndex const begin, localIndex const end, \
+  void PhaseVolumeFractionKernel::Launch< NC, NP >( localIndex const size, \
                                                     arrayView2d< real64 const > const & compDens, \
                                                     arrayView2d< real64 const > const & dCompDens, \
                                                     arrayView3d< real64 const > const & dCompFrac_dCompDens, \
@@ -432,7 +436,7 @@ void PhaseVolumeFractionKernel::Launch( localIndex const NC, localIndex const NP
                                                     arrayView2d< real64 > const & dPhaseVolFrac_dPres, \
                                                     arrayView3d< real64 > const & dPhaseVolFrac_dComp ); \
   template \
-  void PhaseVolumeFractionKernel::Launch< NC, NP >( SortedArray< localIndex > const & targetSet, \
+  void PhaseVolumeFractionKernel::Launch< NC, NP >( SortedArrayView< localIndex const > const & targetSet, \
                                                     arrayView2d< real64 const > const & compDens, \
                                                     arrayView2d< real64 const > const & dCompDens, \
                                                     arrayView3d< real64 const > const & dCompFrac_dCompDens, \
@@ -593,7 +597,7 @@ PhaseMobilityKernel::Compute( localIndex const NC, localIndex const NP,
 }
 
 template< localIndex NC, localIndex NP >
-void PhaseMobilityKernel::Launch( localIndex const begin, localIndex const end,
+void PhaseMobilityKernel::Launch( localIndex const size,
                                   arrayView3d< real64 const > const & dCompFrac_dCompDens,
                                   arrayView3d< real64 const > const & phaseDens,
                                   arrayView3d< real64 const > const & dPhaseDens_dPres,
@@ -609,7 +613,7 @@ void PhaseMobilityKernel::Launch( localIndex const begin, localIndex const end,
                                   arrayView2d< real64 > const & dPhaseMob_dPres,
                                   arrayView3d< real64 > const & dPhaseMob_dComp )
 {
-  forall_in_range( begin, end, [=] ( localIndex const a )
+  forAll< serialPolicy >( size, [=] ( localIndex const a )
   {
     Compute< NC, NP >( dCompFrac_dCompDens[a],
                        phaseDens[a][0],
@@ -629,7 +633,7 @@ void PhaseMobilityKernel::Launch( localIndex const begin, localIndex const end,
 }
 
 void PhaseMobilityKernel::Launch( localIndex const NC, localIndex const NP,
-                                  localIndex const begin, localIndex const end,
+                                  localIndex const size,
                                   arrayView3d< real64 const > const & dCompFrac_dCompDens,
                                   arrayView3d< real64 const > const & phaseDens,
                                   arrayView3d< real64 const > const & dPhaseDens_dPres,
@@ -645,7 +649,7 @@ void PhaseMobilityKernel::Launch( localIndex const NC, localIndex const NP,
                                   arrayView2d< real64 > const & dPhaseMob_dPres,
                                   arrayView3d< real64 > const & dPhaseMob_dComp )
 {
-  forall_in_range( begin, end, [=] ( localIndex const a )
+  forAll< serialPolicy >( size, [=] ( localIndex const a )
   {
     Compute( NC, NP,
              dCompFrac_dCompDens[a],
@@ -666,7 +670,7 @@ void PhaseMobilityKernel::Launch( localIndex const NC, localIndex const NP,
 }
 
 template< localIndex NC, localIndex NP >
-void PhaseMobilityKernel::Launch( SortedArray< localIndex > const & targetSet,
+void PhaseMobilityKernel::Launch( SortedArrayView< localIndex const > const & targetSet,
                                   arrayView3d< real64 const > const & dCompFrac_dCompDens,
                                   arrayView3d< real64 const > const & phaseDens,
                                   arrayView3d< real64 const > const & dPhaseDens_dPres,
@@ -682,8 +686,9 @@ void PhaseMobilityKernel::Launch( SortedArray< localIndex > const & targetSet,
                                   arrayView2d< real64 > const & dPhaseMob_dPres,
                                   arrayView3d< real64 > const & dPhaseMob_dComp )
 {
-  forall_in_set( targetSet.values(), targetSet.size(), [=] ( localIndex const a )
+  forAll< serialPolicy >( targetSet.size(), [=] ( localIndex const i )
   {
+    localIndex const a = targetSet[ i ];
     Compute< NC, NP >( dCompFrac_dCompDens[a],
                        phaseDens[a][0],
                        dPhaseDens_dPres[a][0],
@@ -702,7 +707,7 @@ void PhaseMobilityKernel::Launch( SortedArray< localIndex > const & targetSet,
 }
 
 void PhaseMobilityKernel::Launch( localIndex const NC, localIndex const NP,
-                                  SortedArray< localIndex > const & targetSet,
+                                  SortedArrayView< localIndex const > const & targetSet,
                                   arrayView3d< real64 const > const & dCompFrac_dCompDens,
                                   arrayView3d< real64 const > const & phaseDens,
                                   arrayView3d< real64 const > const & dPhaseDens_dPres,
@@ -718,8 +723,9 @@ void PhaseMobilityKernel::Launch( localIndex const NC, localIndex const NP,
                                   arrayView2d< real64 > const & dPhaseMob_dPres,
                                   arrayView3d< real64 > const & dPhaseMob_dComp )
 {
-  forall_in_set( targetSet.values(), targetSet.size(), [=] ( localIndex const a )
+  forAll< serialPolicy >( targetSet.size(), [=] ( localIndex const i )
   {
+    localIndex const a = targetSet[ i ];
     Compute( NC, NP,
              dCompFrac_dCompDens[a],
              phaseDens[a][0],
@@ -740,7 +746,7 @@ void PhaseMobilityKernel::Launch( localIndex const NC, localIndex const NP,
 
 #define INST_PhaseMobilityKernel( NC, NP ) \
   template \
-  void PhaseMobilityKernel::Launch< NC, NP >( localIndex const begin, localIndex const end, \
+  void PhaseMobilityKernel::Launch< NC, NP >( localIndex const size, \
                                               arrayView3d< real64 const > const & dCompFrac_dCompDens, \
                                               arrayView3d< real64 const > const & phaseDens, \
                                               arrayView3d< real64 const > const & dPhaseDens_dPres, \
@@ -756,7 +762,7 @@ void PhaseMobilityKernel::Launch( localIndex const NC, localIndex const NP,
                                               arrayView2d< real64 > const & dPhaseMob_dPres, \
                                               arrayView3d< real64 > const & dPhaseMob_dComp ); \
   template \
-  void PhaseMobilityKernel::Launch< NC, NP >( SortedArray< localIndex > const & targetSet, \
+  void PhaseMobilityKernel::Launch< NC, NP >( SortedArrayView< localIndex const > const & targetSet, \
                                               arrayView3d< real64 const > const & dCompFrac_dCompDens, \
                                               arrayView3d< real64 const > const & phaseDens, \
                                               arrayView3d< real64 const > const & dPhaseDens_dPres, \

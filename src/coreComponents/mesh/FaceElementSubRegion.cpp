@@ -146,7 +146,7 @@ void FaceElementSubRegion::CalculateElementGeometricQuantities( NodeManager cons
   arrayView1d< real64 const > const & faceArea = faceManager.faceArea();
   arrayView1d< R2Tensor const > const & faceRotationMatrix = faceManager.faceRotationMatrix();
 
-  forall_in_range< serialPolicy >( 0, this->size(), [=] ( localIndex const k )
+  forAll< serialPolicy >( this->size(), [=] ( localIndex const k )
   {
     m_elementArea[k] = faceArea[ m_toFacesRelation[k][0] ];
     m_elementVolume[k] = m_elementAperture[k] * faceArea[m_toFacesRelation[k][0]];
@@ -180,7 +180,7 @@ localIndex FaceElementSubRegion::PackUpDownMapsPrivate( buffer_unit_type * & buf
                                            m_toNodesRelation.Base(),
                                            m_unmappedGlobalIndicesInToNodes,
                                            packList,
-                                           this->m_localToGlobalMap,
+                                           this->localToGlobalMap(),
                                            m_toNodesRelation.RelatedObjectLocalToGlobal() );
 
   packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::edgeListString ) );
@@ -188,7 +188,7 @@ localIndex FaceElementSubRegion::PackUpDownMapsPrivate( buffer_unit_type * & buf
                                            m_toEdgesRelation.Base(),
                                            m_unmappedGlobalIndicesInToEdges,
                                            packList,
-                                           this->m_localToGlobalMap,
+                                           this->localToGlobalMap(),
                                            m_toEdgesRelation.RelatedObjectLocalToGlobal() );
 
   packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::faceListString ) );
@@ -196,7 +196,7 @@ localIndex FaceElementSubRegion::PackUpDownMapsPrivate( buffer_unit_type * & buf
                                            m_toFacesRelation.Base().toViewConst(),
                                            m_unmappedGlobalIndicesInToFaces,
                                            packList,
-                                           this->m_localToGlobalMap,
+                                           this->localToGlobalMap(),
                                            m_toFacesRelation.RelatedObjectLocalToGlobal() );
 
 
@@ -226,7 +226,7 @@ localIndex FaceElementSubRegion::UnpackUpDownMaps( buffer_unit_type const * & bu
                                      m_toNodesRelation,
                                      packList,
                                      m_unmappedGlobalIndicesInToNodes,
-                                     this->m_globalToLocalMap,
+                                     this->globalToLocalMap(),
                                      m_toNodesRelation.RelatedObjectGlobalToLocal() );
 
 
@@ -238,7 +238,7 @@ localIndex FaceElementSubRegion::UnpackUpDownMaps( buffer_unit_type const * & bu
                                      m_toEdgesRelation,
                                      packList,
                                      m_unmappedGlobalIndicesInToEdges,
-                                     this->m_globalToLocalMap,
+                                     this->globalToLocalMap(),
                                      m_toEdgesRelation.RelatedObjectGlobalToLocal() );
 
   string faceListString;
@@ -249,7 +249,7 @@ localIndex FaceElementSubRegion::UnpackUpDownMaps( buffer_unit_type const * & bu
                                      m_toFacesRelation.Base(),
                                      packList,
                                      m_unmappedGlobalIndicesInToFaces,
-                                     this->m_globalToLocalMap,
+                                     this->globalToLocalMap(),
                                      m_toFacesRelation.RelatedObjectGlobalToLocal() );
 
   string elementListString;
@@ -286,9 +286,10 @@ void FaceElementSubRegion::FixUpDownMaps( bool const clearIfUnmapped )
 void FaceElementSubRegion::inheritGhostRankFromParentFace( FaceManager const * const faceManager,
                                                            std::set< localIndex > const & indices )
 {
+  arrayView1d< integer const > const & faceGhostRank = faceManager->ghostRank();
   for( localIndex const & index : indices )
   {
-    m_ghostRank[index] = faceManager->m_ghostRank[ m_toFacesRelation[index][0] ];
+    m_ghostRank[index] = faceGhostRank[ m_toFacesRelation[index][0] ];
   }
 }
 

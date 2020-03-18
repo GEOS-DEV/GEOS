@@ -67,38 +67,38 @@ void testMixtureDensityNumericalDerivatives( CompositionalMultiphaseWell * solve
   // bind the stored reservoir views to the current domain
   //solver->ImplicitStepSetup( 0, 0, domain, nullptr );
 
-  elemManager->forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion * const subRegion )
+  elemManager->forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion & subRegion )
   {
 
-    SCOPED_TRACE( "Well " + subRegion->getName() );
+    SCOPED_TRACE( "Well " + subRegion.getName() );
 
     arrayView1d< real64 > & pres =
-      subRegion->template getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::pressureString );
+      subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::pressureString );
 
     arrayView1d< real64 > & dPres =
-      subRegion->template getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::deltaPressureString );
+      subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::deltaPressureString );
 
     arrayView2d< real64 > & compDens =
-      subRegion->template getReference< array2d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::globalCompDensityString );
+      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::globalCompDensityString );
 
     arrayView2d< real64 > & dCompDens =
-      subRegion->template getReference< array2d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::deltaGlobalCompDensityString );
+      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::deltaGlobalCompDensityString );
 
     arrayView1d< real64 > const & wellElemMixtureDensity =
-      subRegion->getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::mixtureDensityString );
+      subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::mixtureDensityString );
 
     arrayView1d< real64 > const & dWellElemMixtureDensity_dPres =
-      subRegion->getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::dMixtureDensity_dPressureString );
+      subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::dMixtureDensity_dPressureString );
 
     arrayView2d< real64 > const & dWellElemMixtureDensity_dCompDens =
-      subRegion->getReference< array2d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::dMixtureDensity_dGlobalCompDensityString );
+      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::dMixtureDensity_dGlobalCompDensityString );
 
     // reset the solver state to zero out variable updates
     solver->ResetStateToBeginningOfStep( domain );
 
     // make a copy of unperturbed values of component fractions
-    array1d< real64 > wellElemMixtureDensityOrig( subRegion->size() );
-    for( localIndex iwelem = 0; iwelem < subRegion->size(); ++iwelem )
+    array1d< real64 > wellElemMixtureDensityOrig( subRegion.size() );
+    for( localIndex iwelem = 0; iwelem < subRegion.size(); ++iwelem )
     {
       wellElemMixtureDensityOrig[iwelem] = wellElemMixtureDensity[iwelem];
     }
@@ -106,17 +106,17 @@ void testMixtureDensityNumericalDerivatives( CompositionalMultiphaseWell * solve
     // update pressure and check derivatives
     {
       // perturb pressure in each cell
-      for( localIndex iwelem = 0; iwelem < subRegion->size(); ++iwelem )
+      for( localIndex iwelem = 0; iwelem < subRegion.size(); ++iwelem )
       {
         real64 const dP = perturbParameter * (pres[iwelem] + perturbParameter);
         dPres[iwelem] = dP;
       }
 
       // recompute component fractions
-      solver->UpdateState( subRegion );
+      solver->UpdateState( &subRegion );
 
       // check values in each cell
-      for( localIndex iwelem = 0; iwelem < subRegion->size(); ++iwelem )
+      for( localIndex iwelem = 0; iwelem < subRegion.size(); ++iwelem )
       {
         SCOPED_TRACE( "Element " + std::to_string( iwelem ) );
 
@@ -132,17 +132,17 @@ void testMixtureDensityNumericalDerivatives( CompositionalMultiphaseWell * solve
         solver->ResetStateToBeginningOfStep( domain );
 
         // perturb a single component density in each cell
-        for( localIndex iwelem = 0; iwelem < subRegion->size(); ++iwelem )
+        for( localIndex iwelem = 0; iwelem < subRegion.size(); ++iwelem )
         {
           real64 const dRho = perturbParameter * (compDens[iwelem][jc] + perturbParameter);
           dCompDens[iwelem][jc] = dRho;
         }
 
         // recompute component fractions
-        solver->UpdateState( subRegion );
+        solver->UpdateState( &subRegion );
 
         // check values in each cell
-        for( localIndex iwelem = 0; iwelem < subRegion->size(); ++iwelem )
+        for( localIndex iwelem = 0; iwelem < subRegion.size(); ++iwelem )
         {
           SCOPED_TRACE( "Element " + std::to_string( iwelem ) );
 
@@ -211,30 +211,30 @@ void testNumericalJacobian( ReservoirSolver * solver,
   for( localIndex er = 0; er < elemManager->numRegions(); ++er )
   {
     ElementRegionBase * const elemRegion = elemManager->GetRegion( er );
-    elemRegion->forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const GEOSX_UNUSED_PARAM( esr ), auto * const subRegion )
+    elemRegion->forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const, CellElementSubRegion & subRegion )
     {
       // get the degrees of freedom and ghosting information
       arrayView1d< globalIndex > & dofNumber =
-        subRegion->template getReference< array1d< globalIndex > >( resDofKey );
+        subRegion.getReference< array1d< globalIndex > >( resDofKey );
 
       arrayView1d< integer > & elemGhostRank =
-        subRegion->template getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+        subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
       // get the primary variables on the reservoir elements
       arrayView1d< real64 > & pres =
-        subRegion->template getReference< array1d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::pressureString );
+        subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::pressureString );
 
       arrayView1d< real64 > & dPres =
-        subRegion->template getReference< array1d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::deltaPressureString );
+        subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::deltaPressureString );
 
       arrayView2d< real64 > & compDens =
-        subRegion->template getReference< array2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::globalCompDensityString );
+        subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::globalCompDensityString );
 
       arrayView2d< real64 > & dCompDens =
-        subRegion->template getReference< array2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::deltaGlobalCompDensityString );
+        subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::deltaGlobalCompDensityString );
 
       // a) compute all the derivatives wrt to the pressure in RESERVOIR elem ei
-      for( localIndex ei = 0; ei < subRegion->size(); ++ei )
+      for( localIndex ei = 0; ei < subRegion.size(); ++ei )
       {
         if( elemGhostRank[ei] >= 0 )
         {
@@ -256,9 +256,9 @@ void testNumericalJacobian( ReservoirSolver * solver,
           real64 const dP = perturbParameter * (pres[ei] + perturbParameter);
           dPres[ei] = dP;
           // after perturbing, update the pressure-dependent quantities in the reservoir
-          flowSolver->applyToSubRegions( mesh, [&] ( ElementSubRegionBase * subRegion2 )
+          flowSolver->applyToSubRegions( mesh, [&] ( ElementSubRegionBase & subRegion2 )
           {
-            flowSolver->UpdateState( subRegion2 );
+            flowSolver->UpdateState( &subRegion2 );
           } );
 
           residual.zero();
@@ -291,9 +291,9 @@ void testNumericalJacobian( ReservoirSolver * solver,
           real64 const dRho = perturbParameter * totalDensity;
           dCompDens[ei][jc] = dRho;
 
-          flowSolver->applyToSubRegions( mesh, [&] ( ElementSubRegionBase * subRegion2 )
+          flowSolver->applyToSubRegions( mesh, [&] ( ElementSubRegionBase & subRegion2 )
           {
-            flowSolver->UpdateState( subRegion2 );
+            flowSolver->UpdateState( &subRegion2 );
           } );
 
           residual.zero();
@@ -326,37 +326,37 @@ void testNumericalJacobian( ReservoirSolver * solver,
   /////////////////////////////////////////////////
 
   // loop over the wells
-  elemManager->forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion * const subRegion )
+  elemManager->forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion & subRegion )
   {
 
     // get the degrees of freedom, ghosting info and next well elem index
     arrayView1d< globalIndex const > const & wellElemDofNumber =
-      subRegion->getReference< array1d< globalIndex > >( wellDofKey );
+      subRegion.getReference< array1d< globalIndex > >( wellDofKey );
 
     arrayView1d< integer const > const & wellElemGhostRank =
-      subRegion->getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+      subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
     // get the primary variables on the well elements
     arrayView1d< real64 > const & wellElemPressure =
-      subRegion->getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::pressureString );
+      subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::pressureString );
 
     arrayView1d< real64 > const & dWellElemPressure =
-      subRegion->getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::deltaPressureString );
+      subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::deltaPressureString );
 
     arrayView2d< real64 > const & wellElemCompDens =
-      subRegion->getReference< array2d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::globalCompDensityString );
+      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::globalCompDensityString );
 
     arrayView2d< real64 > const & dWellElemCompDens =
-      subRegion->getReference< array2d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::deltaGlobalCompDensityString );
+      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::deltaGlobalCompDensityString );
 
     arrayView1d< real64 > const & connRate  =
-      subRegion->getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::mixtureConnRateString );
+      subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::mixtureConnRateString );
 
     arrayView1d< real64 > const & dConnRate =
-      subRegion->getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::deltaMixtureConnRateString );
+      subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::deltaMixtureConnRateString );
 
     // a) compute all the derivatives wrt to the pressure in WELL elem iwelem
-    for( localIndex iwelem = 0; iwelem < subRegion->size(); ++iwelem )
+    for( localIndex iwelem = 0; iwelem < subRegion.size(); ++iwelem )
     {
       if( wellElemGhostRank[iwelem] >= 0 )
       {
@@ -378,7 +378,7 @@ void testNumericalJacobian( ReservoirSolver * solver,
         real64 const dP = perturbParameter * (wellElemPressure[iwelem] + perturbParameter);
         dWellElemPressure[iwelem] = dP;
         // after perturbing, update the pressure-dependent quantities in the well
-        wellSolver->UpdateState( subRegion );
+        wellSolver->UpdateState( &subRegion );
 
         residual.zero();
         jacobian.zero();
@@ -435,7 +435,7 @@ void testNumericalJacobian( ReservoirSolver * solver,
     }
 
     // b) compute all the derivatives wrt to the connection in WELL elem iwelem
-    for( localIndex iwelem = 0; iwelem < subRegion->size(); ++iwelem )
+    for( localIndex iwelem = 0; iwelem < subRegion.size(); ++iwelem )
     {
       if( wellElemGhostRank[iwelem] >= 0 )
       {

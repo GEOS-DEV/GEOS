@@ -340,7 +340,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
   // Make sure that the node manager fields are initialized
 
   CellBlockManager * elementManager = domain->GetGroup< CellBlockManager >( keys::cellManager );
-  Group * nodeSets = nodeManager->sets();
+  Group & nodeSets = nodeManager->sets();
 
   PartitionBase & partition = domain->getReference< PartitionBase >( keys::partitionManager );
 
@@ -357,13 +357,13 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
   }
 
 
-  SortedArray< localIndex > & xnegNodes = nodeSets->registerWrapper< SortedArray< localIndex > >( std::string( "xneg" ) )->reference();
-  SortedArray< localIndex > & xposNodes = nodeSets->registerWrapper< SortedArray< localIndex > >( std::string( "xpos" ) )->reference();
-  SortedArray< localIndex > & ynegNodes = nodeSets->registerWrapper< SortedArray< localIndex > >( std::string( "yneg" ) )->reference();
-  SortedArray< localIndex > & yposNodes = nodeSets->registerWrapper< SortedArray< localIndex > >( std::string( "ypos" ) )->reference();
-  SortedArray< localIndex > & znegNodes = nodeSets->registerWrapper< SortedArray< localIndex > >( std::string( "zneg" ) )->reference();
-  SortedArray< localIndex > & zposNodes = nodeSets->registerWrapper< SortedArray< localIndex > >( std::string( "zpos" ) )->reference();
-  SortedArray< localIndex > & allNodes  = nodeSets->registerWrapper< SortedArray< localIndex > >( std::string( "all" ) )->reference();
+  SortedArray< localIndex > & xnegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( std::string( "xneg" ) )->reference();
+  SortedArray< localIndex > & xposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( std::string( "xpos" ) )->reference();
+  SortedArray< localIndex > & ynegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( std::string( "yneg" ) )->reference();
+  SortedArray< localIndex > & yposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( std::string( "ypos" ) )->reference();
+  SortedArray< localIndex > & znegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( std::string( "zneg" ) )->reference();
+  SortedArray< localIndex > & zposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( std::string( "zpos" ) )->reference();
+  SortedArray< localIndex > & allNodes  = nodeSets.registerWrapper< SortedArray< localIndex > >( std::string( "all" ) )->reference();
 
 
   // partition based on even spacing to get load balance
@@ -542,6 +542,8 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
   nodeManager->resize( numNodes );
   arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & X = nodeManager->referencePosition();
 
+  arrayView1d< globalIndex > const & nodeLocalToGlobal = nodeManager->localToGlobalMap();
+
   {
     localIndex localNodeIndex = 0;
     for( int i = 0; i < numNodesInDir[0]; ++i )
@@ -572,7 +574,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
             }
           }
 
-          nodeManager->m_localToGlobalMap[localNodeIndex] = NodeGlobalIndex( index );
+          nodeLocalToGlobal[localNodeIndex] = NodeGlobalIndex( index );
 
           // cartesian-specific nodesets
           if( m_mapToRadial == 0 )
@@ -663,6 +665,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
           integer_array nodeIDInBox( numNodesPerElem );
 
           arrayView2d< localIndex, cells::NODE_MAP_USD > elemsToNodes = elemRegion->nodeList();
+          arrayView1d< globalIndex > const & elemLocalToGlobal = elemRegion->localToGlobalMap();
 
           int numElemsInDirForRegion[3] =
           { lastElemIndexForBlockInPartition[0][iblock] - firstElemIndexForBlockInPartition[0][iblock] + 1,
@@ -742,7 +745,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
                 for( int iEle = 0; iEle < m_numElePerBox[iR]; ++iEle )
                 {
                   localIndex & localElemIndex = localElemIndexInRegion[*iterRegion];
-                  elemRegion->m_localToGlobalMap[localElemIndex] = ElemGlobalIndex( index ) * m_numElePerBox[iR] + iEle;
+                  elemLocalToGlobal[localElemIndex] = ElemGlobalIndex( index ) * m_numElePerBox[iR] + iEle;
 
                   GetElemToNodesRelationInBox( m_elementType[iR], index, iEle, nodeIDInBox.data(),
                                                numNodesPerElem );
@@ -845,6 +848,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
   // Node perturbation
   if( m_fPerturb > 0 )
   {
+
     for( localIndex iN = 0; iN != nodeManager->size(); ++iN )
     {
 
@@ -852,16 +856,16 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
       {
         if( X[iN][i] > m_min[i] && X[iN][i] < m_max[i] )
         {
-          srand( integer_conversion< int >( nodeManager->m_localToGlobalMap[iN] ) + m_randSeed + i ); // This
-                                                                                                      // ensures
-                                                                                                      // that
-                                                                                                      // the
-                                                                                                      // perturbation
-                                                                                                      // pattern
-                                                                                                      // is
-                                                                                                      // unaffected
-                                                                                                      // by
-                                                                                                      // domain
+          srand( integer_conversion< int >( nodeLocalToGlobal[iN] ) + m_randSeed + i ); // This
+          // ensures
+          // that
+          // the
+          // perturbation
+          // pattern
+          // is
+          // unaffected
+          // by
+          // domain
           X[iN][i] += ( ( m_max[i] - m_min[i] ) / m_numElemsTotal[i] ) * ( ( rand() * 1.0 ) / RAND_MAX - 0.5 ) * 2 * m_fPerturb;
         }
       }

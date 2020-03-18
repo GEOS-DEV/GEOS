@@ -73,10 +73,11 @@ void CellElementRegion::GenerateAggregates( FaceManager const * const faceManage
 
   // Counting the total number of cell and number of vertices
   localIndex nbCellElements = 0;
-  this->forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&]( auto * const elementSubRegion ) -> void
+  this->forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&]( auto & elementSubRegion )
   {
-    nbCellElements += elementSubRegion->size();
+    nbCellElements += elementSubRegion.size();
   } );
+
   // Number of aggregate computation
   localIndex nbAggregates = integer_conversion< localIndex >( int(nbCellElements * m_coarseningRatio) );
   GEOSX_LOG_RANK_0( "Generating " << nbAggregates  << " aggregates on region " << this->getName());
@@ -127,39 +128,42 @@ void CellElementRegion::GenerateAggregates( FaceManager const * const faceManage
   array1d< real64 > normalizeVolumes( nbCellElements );
 
   // First, compute the volume of each aggregates
-  this->forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&]( auto * const elementSubRegion ) -> void
+  this->forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&]( ElementSubRegionBase & elementSubRegion )
   {
-    localIndex const subRegionIndex = elementSubRegion->getIndexInParent();
-    for( localIndex cellIndex = 0; cellIndex< elementSubRegion->size(); cellIndex++ )
+    arrayView1d< integer const > const & ghostRank = elementSubRegion.ghostRank();
+    localIndex const subRegionIndex = elementSubRegion.getIndexInParent();
+    for( localIndex cellIndex = 0; cellIndex< elementSubRegion.size(); cellIndex++ )
     {
-      if( elementSubRegion->GhostRank()[cellIndex] >= 0 )
+      if( ghostRank[cellIndex] >= 0 )
         continue;
-      aggregateVolumes[parts[cellIndex + offsetSubRegions[subRegionIndex]]] += elementSubRegion->getElementVolume()[cellIndex];
+      aggregateVolumes[parts[cellIndex + offsetSubRegions[subRegionIndex]]] += elementSubRegion.getElementVolume()[cellIndex];
     }
   } );
 
   // Second, compute the normalized volume of each fine elements
-  this->forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&]( auto * const elementSubRegion ) -> void
+  this->forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&]( ElementSubRegionBase & elementSubRegion )
   {
-    localIndex const subRegionIndex = elementSubRegion->getIndexInParent();
-    for( localIndex cellIndex = 0; cellIndex< elementSubRegion->size(); cellIndex++ )
+    arrayView1d< integer const > const & ghostRank = elementSubRegion.ghostRank();
+    localIndex const subRegionIndex = elementSubRegion.getIndexInParent();
+    for( localIndex cellIndex = 0; cellIndex< elementSubRegion.size(); cellIndex++ )
     {
-      if( elementSubRegion->GhostRank()[cellIndex] >= 0 )
+      if( ghostRank[cellIndex] >= 0 )
         continue;
       normalizeVolumes[cellIndex + offsetSubRegions[subRegionIndex]] =
-        elementSubRegion->getElementVolume()[cellIndex] / aggregateVolumes[parts[cellIndex + offsetSubRegions[subRegionIndex]]];
+        elementSubRegion.getElementVolume()[cellIndex] / aggregateVolumes[parts[cellIndex + offsetSubRegions[subRegionIndex]]];
     }
   } );
 
   // Third, normalize the centers
-  this->forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&]( auto * const elementSubRegion ) -> void
+  this->forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&]( ElementSubRegionBase & elementSubRegion )
   {
-    localIndex const subRegionIndex = elementSubRegion->getIndexInParent();
-    for( localIndex cellIndex = 0; cellIndex< elementSubRegion->size(); cellIndex++ )
+    arrayView1d< integer const > const & ghostRank = elementSubRegion.ghostRank();
+    localIndex const subRegionIndex = elementSubRegion.getIndexInParent();
+    for( localIndex cellIndex = 0; cellIndex< elementSubRegion.size(); cellIndex++ )
     {
-      if( elementSubRegion->GhostRank()[cellIndex] >= 0 )
+      if( ghostRank[cellIndex] >= 0 )
         continue;
-      R1Tensor center = elementSubRegion->getElementCenter()[cellIndex];
+      R1Tensor center = elementSubRegion.getElementCenter()[cellIndex];
       center *= normalizeVolumes[cellIndex + offsetSubRegions[subRegionIndex]];
       aggregateBarycenters[parts[cellIndex + offsetSubRegions[subRegionIndex]]] += center;
     }
