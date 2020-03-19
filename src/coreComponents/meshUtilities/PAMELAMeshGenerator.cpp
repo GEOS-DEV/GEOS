@@ -65,6 +65,8 @@ void PAMELAMeshGenerator::GenerateElementRegions( DomainPartition& GEOSX_UNUSED_
 
 void PAMELAMeshGenerator::PostProcessInput()
 {
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
   m_pamelaMesh =
     std::unique_ptr< PAMELA::Mesh >
       ( PAMELA::MeshFactory::makeMesh( m_filePath ) );
@@ -75,6 +77,10 @@ void PAMELAMeshGenerator::PostProcessInput()
     "TopologicalC2C",
   m_pamelaMesh->getAdjacencySet()->get_TopologicalAdjacency( PAMELA::ELEMENTS::FAMILY::POLYHEDRON, PAMELA::ELEMENTS::FAMILY::POLYHEDRON,
                                                              PAMELA::ELEMENTS::FAMILY::POLYGON ));
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
 }
 
 void PAMELAMeshGenerator::RemapMesh( dataRepository::Group * const GEOSX_UNUSED_PARAM( domain ) )
@@ -89,8 +95,29 @@ Group * PAMELAMeshGenerator::CreateChild( string const & GEOSX_UNUSED_PARAM( chi
 
 void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
 {
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
   GEOSX_LOG_RANK_0("Writing into the GEOSX mesh data structure");
   domain->getMetisNeighborList() = m_pamelaMesh->getNeighborList();
+=======
+=======
+>>>>>>> Stashed changes
+  PAMELA::Mesh * pamelaMesh = PAMELA::MeshFactory::makeMesh( m_filePath );
+    std::unique_ptr< PAMELA::Mesh >
+      ( PAMELA::MeshFactory::makeMesh( m_filePath ) );
+  pamelaMesh->CreateFacesFromCells();
+  pamelaMesh->PerformPolyhedronPartitioning( PAMELA::ELEMENTS::FAMILY::POLYGON,
+                                             PAMELA::ELEMENTS::FAMILY::POLYGON );
+//  pamelaMesh.CreateLineGroupWithAdjacency(
+//    "TopologicalC2C",
+//    pamelaMesh.getAdjacencySet()->get_TopologicalAdjacency( PAMELA::ELEMENTS::FAMILY::POLYHEDRON, PAMELA::ELEMENTS::FAMILY::POLYHEDRON,
+//                                                               PAMELA::ELEMENTS::FAMILY::POLYGON ));
+  GEOSX_LOG_RANK_0( "Writing into the GEOSX mesh data structure" );
+  domain->getMetisNeighborList() = pamelaMesh->getNeighborList();
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
   Group * const meshBodies = domain->GetGroup( std::string( "MeshBodies" ));
   MeshBody * const meshBody = meshBodies->RegisterGroup<MeshBody>( this->getName() );
 
@@ -101,6 +128,8 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
 
 
   // Use the PartMap of PAMELA to get the mesh
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
   auto polyhedronPartMap = std::get<0>( PAMELA::getPolyhedronPartMap( m_pamelaMesh.get(), 0));
 
   // Vertices are written first
@@ -113,12 +142,36 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
     R1Tensor xMin( std::numeric_limits< real64 >::max(),
                    std::numeric_limits< real64 >::max(),
                    std::numeric_limits< real64 >::max());
+=======
+=======
+>>>>>>> Stashed changes
+  auto polyhedronPartMap = std::get< 0 >( PAMELA::getPolyhedronPartMap( pamelaMesh, 0 ));
+
+  // Vertices are written first
+  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & X = nodeManager->referencePosition();
+  nodeManager->resize( pamelaMesh->get_PointCollection()->size_all());
+  R1Tensor xMax( std::numeric_limits< real64 >::min(),
+                 std::numeric_limits< real64 >::min(),
+                 std::numeric_limits< real64 >::min());
+
+  R1Tensor xMin( std::numeric_limits< real64 >::max(),
+                 std::numeric_limits< real64 >::max(),
+                 std::numeric_limits< real64 >::max());
+>>>>>>> Stashed changes
   double zReverseFactor = 1.;
   if( m_isZReverse )
   {
     zReverseFactor = -1.;
   }
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
   for( auto const & verticesIterator : *m_pamelaMesh->get_PointCollection()) {
+=======
+=======
+>>>>>>> Stashed changes
+  for( auto const & verticesIterator : *pamelaMesh->get_PointCollection())
+  {
+>>>>>>> Stashed changes
     localIndex const vertexLocalIndex = verticesIterator->get_localIndex();
     globalIndex const vertexGlobalIndex = verticesIterator->get_globalIndex();
     X( vertexLocalIndex, 0 ) = verticesIterator->get_coordinates().x * m_scale;
@@ -339,6 +392,8 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
       }
     }
   }
+  GEOSX_LOG_RANK_0("Delete PAMELA Mesh");
+  delete pamelaMesh;
 
 }
 

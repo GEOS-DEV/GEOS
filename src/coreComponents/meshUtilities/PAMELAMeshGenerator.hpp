@@ -69,7 +69,7 @@ protected:
 private:
 
   /// Mesh in the data structure of PAMELA.
-  std::unique_ptr< PAMELA::Mesh >  m_pamelaMesh;
+ // std::unique_ptr< PAMELA::Mesh >  m_pamelaMesh;
 
   /// Names of the fields to be copied from PAMELA to GEOSX data structure
   string_array m_fieldsToImport;

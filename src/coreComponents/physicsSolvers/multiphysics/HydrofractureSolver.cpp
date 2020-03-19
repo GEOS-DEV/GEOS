@@ -79,6 +79,8 @@ HydrofractureSolver::HydrofractureSolver( const std::string& name,
     setDescription("Value to indicate how many resolves may be executed to perform surface generation after the execution of flow and mechanics solver. ");
 
   m_numResolves[0] = 0;
+  std::cout << m_densityScaling << std::endl;
+  std::cout << m_pressureScaling << std::endl;
 }
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
@@ -1235,13 +1237,26 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( do
                                        ParallelVector & ,
                                        ParallelVector &  )
 {
+  /*
   GEOSX_MARK_FUNCTION;
 
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
   /*
   globalIndex numU = m_solidSolver->getSystemRhs().globalSize();
   globalIndex numP = m_flowSolver->getSystemRhs().globalSize();
   GEOSX_LOG_RANK_0("size = " << numU << " + " << numP);
   */
+=======
+     globalIndex numU = m_solidSolver->getSystemRhs().globalSize();
+     globalIndex numP = m_flowSolver->getSystemRhs().globalSize();
+     GEOSX_LOG_RANK_0("size = " << numU << " + " << numP);
+>>>>>>> Stashed changes
+=======
+     globalIndex numU = m_solidSolver->getSystemRhs().globalSize();
+     globalIndex numP = m_flowSolver->getSystemRhs().globalSize();
+     GEOSX_LOG_RANK_0("size = " << numU << " + " << numP);
+>>>>>>> Stashed changes
 
   SystemSolverParameters * const params = &m_systemSolverParameters;
   integer const newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
@@ -1578,6 +1593,8 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( do
   //TODO: remove all this once everything is working
   if( getLogLevel() == 2 )
   {
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
     /*
     ParallelVector permutedSol;
     ParallelVector const & solution = m_solidSolver->getSystemSolution();
@@ -1603,8 +1620,34 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( do
     GEOSX_LOG_RANK_0("solution1");
     GEOSX_LOG_RANK_0("***********************************************************");
     p_solution[1]->Print(std::cout);
+=======
+=======
+>>>>>>> Stashed changes
+       ParallelVector permutedSol;
+       ParallelVector const & solution = m_solidSolver->getSystemSolution();
+       permutedSol.createWithLocalSize(m_solidSolver->getSystemMatrix().numLocalRows(), MPI_COMM_GEOSX);
+       m_permutationMatrix0.multiply(solution, permutedSol);
+       permutedSol.close();
+
+       GEOSX_LOG_RANK_0("***********************************************************");
+       GEOSX_LOG_RANK_0("solution0");
+       GEOSX_LOG_RANK_0("***********************************************************");
+       solution.print(std::cout);
+       std::cout<<std::endl;
+       MPI_Barrier(MPI_COMM_GEOSX);
+
+       GEOSX_LOG_RANK_0("***********************************************************");
+       GEOSX_LOG_RANK_0("solution0");
+       GEOSX_LOG_RANK_0("***********************************************************");
+       permutedSol.print(std::cout);
+    GEOSX_LOG_RANK_0( "***********************************************************" );
+    GEOSX_LOG_RANK_0( "solution1" );
+    GEOSX_LOG_RANK_0( "***********************************************************" );
+    p_solution[1]->Print( std::cout );
+>>>>>>> Stashed changes
 
   }
+  */
 }
 
 real64
