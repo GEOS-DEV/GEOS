@@ -196,7 +196,7 @@ void LagrangianContactSolver::ImplicitStepComplete( real64 const & time_n,
   MeshLevel * const meshLevel = domain->getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager * const elemManager = meshLevel->getElemManager();
 
-  elemManager->forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )->void
+  elemManager->forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
   {
     if( subRegion.hasWrapper( m_tractionKey ) )
     {
@@ -252,7 +252,7 @@ void LagrangianContactSolver::ResetStateToBeginningOfStep( DomainPartition * con
   MeshLevel * const meshLevel = domain->getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager * const elemManager = meshLevel->getElemManager();
 
-  elemManager->forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )->void
+  elemManager->forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
   {
     if( subRegion.hasWrapper( m_tractionKey ) )
     {
@@ -334,7 +334,7 @@ void LagrangianContactSolver::UpdateDeformationForCoupling( DomainPartition * co
 
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & u = nodeManager->totalDisplacement();
 
-  elemManager->forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )->void
+  elemManager->forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
   {
     if( subRegion.hasWrapper( m_tractionKey ) )
     {
@@ -900,7 +900,7 @@ void LagrangianContactSolver::SetupSystem( DomainPartition * const domain,
 
   matrix.createWithLocalSize( numDisplacementDofs + numTractionDofs,
                               numDisplacementDofs + numTractionDofs,
-                              0,
+                              5*(3*27+3*12),
                               MPI_COMM_GEOSX );
   rhs.createWithLocalSize( numDisplacementDofs + numTractionDofs,
                            MPI_COMM_GEOSX );
@@ -1064,7 +1064,7 @@ void LagrangianContactSolver::AssembleForceResidualDerivativeWrtTraction( Domain
   matrix->open();
   rhs->open();
 
-  elemManager->forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion const & subRegion )->void
+  elemManager->forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion const & subRegion )
   {
     if( subRegion.hasWrapper( m_tractionKey ) )
     {
@@ -1169,7 +1169,7 @@ void LagrangianContactSolver::AssembleTractionResidualDerivativeWrtDisplacementA
   matrix->open();
   rhs->open();
 
-  elemManager->forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion const & subRegion )->void
+  elemManager->forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion const & subRegion )
   {
     if( subRegion.hasWrapper( m_tractionKey ) )
     {
@@ -1723,7 +1723,7 @@ void LagrangianContactSolver::InitializeFractureState( MeshLevel * const mesh,
   GEOSX_MARK_FUNCTION;
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
-  elemManager->forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )->void
+  elemManager->forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
   {
     if( subRegion.hasWrapper( m_tractionKey ) )
     {
@@ -1740,7 +1740,7 @@ void LagrangianContactSolver::SetFractureStateForElasticStep( DomainPartition * 
   MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
-  elemManager->forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )->void
+  elemManager->forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
   {
     if( subRegion.hasWrapper( m_tractionKey ) )
     {
@@ -1776,7 +1776,7 @@ bool LagrangianContactSolver::UpdateFractureState( DomainPartition * const domai
 
   bool checkActiveSet = true;
 
-  elemManager->forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )->void
+  elemManager->forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
   {
     if( subRegion.hasWrapper( m_tractionKey ) )
     {
@@ -1892,7 +1892,7 @@ void LagrangianContactSolver::ComputeFractureStateStatistics( DomainPartition co
   globalIndex_array localCounter( 3 );
   localCounter = 0;
 
-  elemManager->forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion const & subRegion )->void
+  elemManager->forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion const & subRegion )
   {
     if( subRegion.hasWrapper( m_tractionKey ) )
     {
