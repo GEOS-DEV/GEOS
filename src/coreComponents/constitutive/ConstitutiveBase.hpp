@@ -117,6 +117,8 @@ public:
 
   localIndex numQuadraturePoints() const { return m_numQuadraturePoints; }
 
+  static constexpr localIndex MAX_NUM_COMPONENTS = 4;
+  
 protected:
 
 private:

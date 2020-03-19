@@ -412,9 +412,6 @@ void ProppantTransport::InitializePostInitialConditions_PreSubGroups( Group * co
 
   } );
 
-  m_downVector = gravityVector();
-  m_downVector.Normalize();
-
   m_minAperture = m_bridgingFactor * m_proppantDiameter;
 
   m_proppantPackPermeability =
@@ -567,7 +564,7 @@ real64 ProppantTransport::SolverStep( real64 const & time_n,
 
 
 void ProppantTransport::PreStepUpdate( real64 const & time,
-                                       real64 const & dt,
+                                       real64 const &,
                                        const int cycleNumber,
                                        DomainPartition * domain )
 {
@@ -593,7 +590,7 @@ void ProppantTransport::PreStepUpdate( real64 const & time,
 
     /* Below must be called after ImplicitStepSetup */
 
-    ResizeFractureFields( time, dt, domain );
+    //    ResizeFractureFields( time, dt, domain );
 
     localIndex const NC = m_numComponents;
 
@@ -877,7 +874,7 @@ void ProppantTransport::AssembleAccumulationTerms( DomainPartition const * const
 
     arrayView1d< integer const >     const & elemGhostRank = m_elemGhostRank[er][esr];
 
-    arrayView1d< real64 const > const & proppantConcOld       = m_proppantConcentrationOld[er][esr];
+    //    arrayView1d< real64 const > const & proppantConcOld       = m_proppantConcentrationOld[er][esr];
     arrayView2d< real64 const > const & componentDensOld       = m_componentDensityOld[er][esr];
 
     arrayView1d< real64 const > const & volume        = m_volume[er][esr];
@@ -914,7 +911,7 @@ void ProppantTransport::AssembleAccumulationTerms( DomainPartition const * const
         }
 
         AccumulationKernel::Compute( NC,
-                                     proppantConcOld[ei],
+                                     proppantConc[ei],
                                      proppantConc[ei] + dProppantConc[ei],
                                      componentDensOld[ei],
                                      componentDens[ei][0],
@@ -956,6 +953,9 @@ void ProppantTransport::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time
                                            ParallelVector * const rhs )
 {
   GEOSX_MARK_FUNCTION;
+
+  R1Tensor downVector = gravityVector();
+  downVector.Normalize();  
 
   MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
   ElementRegionManager const * const elemManager = mesh->getElemManager();
@@ -1045,7 +1045,7 @@ void ProppantTransport::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time
                         proppantIndex,
                         transTMultiplier,
                         m_updateProppantPacking,
-                        m_downVector,
+                        downVector,
                         dofNumber,
                         pres,
                         dPres,
@@ -1578,6 +1578,9 @@ void ProppantTransport::UpdateCellBasedFlux( real64 const GEOSX_UNUSED_PARAM( ti
 {
   GEOSX_MARK_FUNCTION;
 
+  R1Tensor downVector = gravityVector();
+  downVector.Normalize();    
+
   MeshLevel * mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
   NumericalMethodsManager const * numericalMethodManager =
@@ -1614,7 +1617,7 @@ void ProppantTransport::UpdateCellBasedFlux( real64 const GEOSX_UNUSED_PARAM( ti
     FluxKernel::LaunchCellBasedFluxCalculation( stencil,
                                                 fluidIndex,
                                                 transTMultiplier,
-                                                m_downVector,
+                                                downVector,
                                                 pres,
                                                 gravCoef,
                                                 dens,
@@ -1639,6 +1642,9 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
 
   GEOSX_MARK_FUNCTION;
 
+  R1Tensor downVector = gravityVector();
+  downVector.Normalize();  
+  
   MeshLevel * mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
   NumericalMethodsManager const * numericalMethodManager =
@@ -1693,7 +1699,7 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
                                                                    m_proppantDensity,
                                                                    m_proppantDiameter,
                                                                    m_maxProppantConcentration,
-                                                                   m_downVector,
+                                                                   downVector,
                                                                    m_criticalShieldsNumber,
                                                                    m_frictionCoefficient,
                                                                    conc,
@@ -1736,7 +1742,7 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
   {
 
     ProppantPackVolumeKernel::LaunchProppantPackVolumeUpdate( stencil,
-                                                              m_downVector,
+                                                              downVector,
                                                               m_maxProppantConcentration,
                                                               conc,
                                                               isProppantMobile,
@@ -1766,7 +1772,7 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
   {
 
     ProppantPackVolumeKernel::LaunchInterfaceElementUpdate( stencil,
-                                                            m_downVector,
+                                                            downVector,
                                                             isProppantMobile,
                                                             isInterfaceElement );
   } );

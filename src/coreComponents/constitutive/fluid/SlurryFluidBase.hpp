@@ -46,7 +46,7 @@ public:
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
 
-  static constexpr localIndex MAX_NUM_COMPONENTS = 3;
+  //  static constexpr localIndex MAX_NUM_COMPONENTS = 4;
 
   // *** SlurryFluidBase-specific interface
 

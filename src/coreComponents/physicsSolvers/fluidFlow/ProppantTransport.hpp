@@ -353,8 +353,6 @@ private:
   localIndex m_proppantIndex;
   integer m_numComponents;
 
-  R1Tensor m_downVector;
-
   integer m_updateProppantPacking;
   real64 m_proppantPackPermeability;
   real64 m_bridgingFactor;

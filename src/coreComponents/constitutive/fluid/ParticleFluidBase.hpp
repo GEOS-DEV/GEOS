@@ -28,6 +28,11 @@ namespace geosx
 namespace constitutive
 {
 
+/**
+ * @class ParticleFluidBase
+ * A class to calculate proppant transport properties
+ */
+  
 class ParticleFluidBase : public ConstitutiveBase
 {
 public:
@@ -47,19 +52,64 @@ public:
 
   // *** ParticleFluidBase-specific interface
 
+  /**
+   * @brief Perform a single point constitutive update.
+   * @param[in] number of fluid components
+   * @param[in] proppant concentration value
+   * @param[in] fluid composition array
+   * @param[in] power-law fluid n index value
+   * @param[in] power-law fluid K index value
+   * @param[in] fluid density
+   * @param[in] derivatives of the fluid density wrt the pressure 
+   * @param[in] derivatives of the fluid density wrt the composition 
+   * @param[in] k first constitutive index (e.g. elem index)
+   *
+   * @note This function should generally not be called from a kernel, use BatchUpdate instead and this function is used for calculation of proppant transport properties in power-law fluid
+   */
+  
   virtual void PointUpdate( localIndex const NC, real64 const & proppantConcentration, arraySlice1d< real64 const > const & ComponentConcentration,
                             arraySlice1d< real64 const > const & nIndex, arraySlice1d< real64 const > const & KIndex, real64 const & fluidDensity,
                             real64 const & dFluidDensity_dPressure, arraySlice1d< real64 const > const & dFluidDensity_dComponentConcentration,
                             localIndex const k ) = 0;
 
+  /**
+   * @brief Perform a single point constitutive update.
+   * @param[in] number of fluid components
+   * @param[in] proppant concentration value
+   * @param[in] fluid density
+   * @param[in] derivatives of the fluid density wrt the pressure 
+   * @param[in] derivatives of the fluid density wrt the composition 
+   * @param[in] fluid viscosity
+   * @param[in] derivatives of the fluid viscosity wrt the pressure 
+   * @param[in] derivatives of the fluid viscosity wrt the composition 
+   * @param[in] k first constitutive index (e.g. elem index)
+   *
+   * @note This function should generally not be called from a kernel, use BatchUpdate instead.
+   */
+  
   virtual void PointUpdate( localIndex const NC, real64 const & proppantConcentration, real64 const & fluidDensity, real64 const & dFluidDensity_dPressure,
                             arraySlice1d< real64 const > const & dFluidDensity_dComponentConcentration, real64 const & fluidViscosity,
                             real64 const & dFluidViscosity_dPressure, arraySlice1d< real64 const > const & dFluidViscosity_dComponentConcentration,
                             localIndex const k ) = 0;
 
+  /**
+   * @brief Perform a batch constitutive update (all points).
+   * @param[in] proppant concentration values
+
+     Not implemented    
+
+   */
+  
   virtual void BatchUpdate( arrayView1d< real64 const > const & concentration ) = 0;
 
-  static constexpr localIndex MAX_NUM_COMPONENTS = 4;
+
+  /**
+   * @brief Maximum supported number of fluid components (species)
+   *
+   * @note This puts an upper bound on memory use, allowing to optimize code better
+   */
+  
+  //  static constexpr localIndex MAX_NUM_COMPONENTS = 4;
 
   // *** Data repository keys
 
