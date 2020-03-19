@@ -224,7 +224,6 @@ struct FluxKernel
                    arrayView1d< real64 const > const & GEOSX_UNUSED_PARAM( proppantPackVf ),
                    arrayView1d< real64 const > const & aperture,
                    arrayView1d< real64 const > const & proppantLiftFlux,
-                   //                              arrayView1d<integer const> const & isInterfaceElement,
                    arrayView1d< integer const > const &,
                    R1Tensor const & unitGravityVector,
                    arrayView1d< R1Tensor const > const & transTMultiplier,
@@ -924,18 +923,7 @@ struct FluxKernel
           if( edgeToFaceProppantFlux[i] >= 0.0 )
           {
 
-            localFluxJacobian[idx1][idx2] = -(dProppantCe_dProppantC[j] * edgeToFaceProppantFlux[i] + proppantCe * dEdgeToFaceProppantFlux_dProppantC[i][j]) *
-                                            dt;
-
-            /*
-               for(localIndex c = 0; c < NC; ++c)
-               {
-
-                localFluxJacobian[idx1][idx2 + 1 + c] = -(dProppantCe_dComponentC[j][c] * edgeToFaceProppantFlux[i] +
-                   proppantCe * dEdgeToFaceProppantFlux_dComponentC[i][j][c]) * dt;
-
-               }
-             */
+            localFluxJacobian[idx1][idx2] = -(dProppantCe_dProppantC[j] * edgeToFaceProppantFlux[i] + proppantCe * dEdgeToFaceProppantFlux_dProppantC[i][j]) * dt;
 
           }
           else
@@ -945,16 +933,6 @@ struct FluxKernel
 
             if( i == j )
               localFluxJacobian[idx1][idx2] += -edgeToFaceProppantFlux[i] * dt;
-            /*
-               for(localIndex c = 0; c < NC; ++c)
-               {
-
-                localFluxJacobian[idx1][idx2 + 1 + c] = -proppantC[i] * dEdgeToFaceProppantFlux_dComponentC[i][j][c] *
-                   dt;
-
-               }
-             */
-
           }
 
         }

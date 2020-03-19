@@ -30,7 +30,7 @@ namespace constitutive
 
 /**
  * @class ParticleFluidBase
- * A class to calculate proppant transport properties
+ * A class to calculate proppant transport and settling properties
  */
   
 class ParticleFluidBase : public ConstitutiveBase

@@ -263,24 +263,46 @@ private:
   void ResetViews( DomainPartition * const domain ) override;
 
   /**
-   * @brief Function to update all constitutive models
+   * @brief Function to update fluid properties
    * @param domain the domain
    */
   void UpdateFluidModel( Group * const dataGroup );
 
+  /**
+   * @brief Function to update fluid component density 
+   * @param domain the domain
+   */
   void UpdateComponentDensity( Group * const dataGroup );
 
+  /**
+   * @brief Function to update proppant transport and settling properties 
+   * @param domain the domain
+   */
   void UpdateProppantModel( Group * const dataGroup );
 
+  /**
+   * @brief Function to update proppant mobility 
+   * @param domain the domain
+   */
   void UpdateProppantMobility( Group * const dataGroup );
 
+  /**
+   * @brief Function to update proppant pack volume fraction
+   */
   void UpdateProppantPackVolume( real64 const time_n,
                                  real64 const dt,
                                  DomainPartition * const domain );
 
+  /**
+   * @brief Function to update cell-based fluid flux
+   */
   void UpdateCellBasedFlux( real64 const time_n,
                             DomainPartition * const domain );
 
+  /**
+   * @brief Function to update fluid and proppant properties
+   * @param domain the domain
+   */
   void UpdateState( Group * dataGroup );
 
   /// views into primary variable fields
