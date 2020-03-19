@@ -1242,11 +1242,17 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( do
 
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
   /*
   globalIndex numU = m_solidSolver->getSystemRhs().globalSize();
   globalIndex numP = m_flowSolver->getSystemRhs().globalSize();
   GEOSX_LOG_RANK_0("size = " << numU << " + " << numP);
   */
+=======
+     globalIndex numU = m_solidSolver->getSystemRhs().globalSize();
+     globalIndex numP = m_flowSolver->getSystemRhs().globalSize();
+     GEOSX_LOG_RANK_0("size = " << numU << " + " << numP);
+>>>>>>> Stashed changes
 =======
      globalIndex numU = m_solidSolver->getSystemRhs().globalSize();
      globalIndex numP = m_flowSolver->getSystemRhs().globalSize();
@@ -1595,6 +1601,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( do
   {
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     /*
     ParallelVector permutedSol;
     ParallelVector const & solution = m_solidSolver->getSystemSolution();
@@ -1621,6 +1628,8 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( do
     GEOSX_LOG_RANK_0("***********************************************************");
     p_solution[1]->Print(std::cout);
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
        ParallelVector permutedSol;

@@ -67,6 +67,7 @@ void PAMELAMeshGenerator::PostProcessInput()
 {
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
   m_pamelaMesh =
     std::unique_ptr< PAMELA::Mesh >
       ( PAMELA::MeshFactory::makeMesh( m_filePath ) );
@@ -77,6 +78,8 @@ void PAMELAMeshGenerator::PostProcessInput()
     "TopologicalC2C",
   m_pamelaMesh->getAdjacencySet()->get_TopologicalAdjacency( PAMELA::ELEMENTS::FAMILY::POLYHEDRON, PAMELA::ELEMENTS::FAMILY::POLYHEDRON,
                                                              PAMELA::ELEMENTS::FAMILY::POLYGON ));
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======
@@ -97,9 +100,12 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
 {
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
   GEOSX_LOG_RANK_0("Writing into the GEOSX mesh data structure");
   domain->getMetisNeighborList() = m_pamelaMesh->getNeighborList();
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
   PAMELA::Mesh * pamelaMesh = PAMELA::MeshFactory::makeMesh( m_filePath );
@@ -115,6 +121,9 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
   GEOSX_LOG_RANK_0( "Writing into the GEOSX mesh data structure" );
   domain->getMetisNeighborList() = pamelaMesh->getNeighborList();
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -128,6 +137,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
 
 
   // Use the PartMap of PAMELA to get the mesh
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
   auto polyhedronPartMap = std::get<0>( PAMELA::getPolyhedronPartMap( m_pamelaMesh.get(), 0));
@@ -149,6 +159,12 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
 
   // Vertices are written first
   arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & X = nodeManager->referencePosition();
+=======
+  auto polyhedronPartMap = std::get< 0 >( PAMELA::getPolyhedronPartMap( pamelaMesh, 0 ));
+
+  // Vertices are written first
+  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & X = nodeManager->referencePosition();
+>>>>>>> Stashed changes
   nodeManager->resize( pamelaMesh->get_PointCollection()->size_all());
   R1Tensor xMax( std::numeric_limits< real64 >::min(),
                  std::numeric_limits< real64 >::min(),
@@ -165,8 +181,11 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
   }
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
   for( auto const & verticesIterator : *m_pamelaMesh->get_PointCollection()) {
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
   for( auto const & verticesIterator : *pamelaMesh->get_PointCollection())
