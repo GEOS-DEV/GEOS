@@ -92,7 +92,7 @@ void Group::resize( indexType const newSize )
     {
       subGroup.resize( newSize );
     }
-  });
+  } );
 
   m_size = newSize;
   if( m_size > m_capacity )
@@ -117,7 +117,7 @@ void Group::reserve( indexType const newSize )
     {
       subGroup.resize( newSize );
     }
-  });
+  } );
 
   m_capacity = newSize;
 }
@@ -527,7 +527,6 @@ void Group::loadFromConduit()
     {
       if( wrapper.sizedFromParent() == 1 )
       {
-        GEOSX_LOG_RANK(this->getName()<<"::"<<wrapper.getName()<<": "<<groupSize<<" ?= "<<wrapper.size()<<std::endl);
         wrapper.resize( groupSize );
       }
     }

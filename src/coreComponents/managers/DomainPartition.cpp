@@ -38,11 +38,11 @@ DomainPartition::DomainPartition( std::string const & name,
 {
   this->registerWrapper( "Neighbors", &m_neighbors, false )->
     setRestartFlags( RestartFlags::NO_WRITE )->
-    setSizedFromParent(false);
+    setSizedFromParent( false );
 
   this->registerWrapper< SpatialPartition, PartitionBase >( keys::partitionManager )->
     setRestartFlags( RestartFlags::NO_WRITE )->
-    setSizedFromParent(false);
+    setSizedFromParent( false );
 
   RegisterGroup( groupKeys.meshBodies );
   RegisterGroup< constitutive::ConstitutiveManager >( groupKeys.constitutiveManager );

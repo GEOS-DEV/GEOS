@@ -73,7 +73,7 @@ ConstitutiveManager::HangConstitutiveRelation( string const & constitutiveRelati
   if( constitutiveGroup == nullptr )
   {
     constitutiveGroup = parent->RegisterGroup( groupKeyStruct::constitutiveModelsString )->
-      setSizedFromParent( 1 );
+                          setSizedFromParent( 1 );
     constitutiveGroup->resize( parent->size() );
   }
 
