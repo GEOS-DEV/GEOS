@@ -39,6 +39,7 @@ conduit::Node & conduitNodeFromParent( string const & name, Group * const parent
 Group::Group( std::string const & name,
               Group * const parent ):
   m_parent( parent ),
+  m_sizedFromParent( 0 ),
   m_wrappers(),
   m_subGroups(),
   m_size( 0 ),
@@ -85,6 +86,14 @@ void Group::resize( indexType const newSize )
     }
   } );
 
+  forSubGroups( [newSize] ( Group & subGroup )
+  {
+    if( subGroup.sizedFromParent() == 1 )
+    {
+      subGroup.resize( newSize );
+    }
+  });
+
   m_size = newSize;
   if( m_size > m_capacity )
   {
@@ -101,6 +110,14 @@ void Group::reserve( indexType const newSize )
       wrapper.reserve( newSize );
     }
   } );
+
+  forSubGroups( [newSize] ( Group & subGroup )
+  {
+    if( subGroup.sizedFromParent() == 1 )
+    {
+      subGroup.resize( newSize );
+    }
+  });
 
   m_capacity = newSize;
 }
@@ -504,12 +521,13 @@ void Group::loadFromConduit()
   m_size = m_conduitNode.fetch_child( "__size__" ).value();
   localIndex const groupSize = m_size;
 
-  forWrappers( [groupSize]( WrapperBase & wrapper )
+  forWrappers( [&]( WrapperBase & wrapper )
   {
     if( !( wrapper.loadFromConduit()) )
     {
       if( wrapper.sizedFromParent() == 1 )
       {
+        GEOSX_LOG_RANK(this->getName()<<"::"<<wrapper.getName()<<": "<<groupSize<<" ?= "<<wrapper.size()<<std::endl);
         wrapper.resize( groupSize );
       }
     }

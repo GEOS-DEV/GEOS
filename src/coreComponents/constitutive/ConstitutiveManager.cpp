@@ -72,11 +72,18 @@ ConstitutiveManager::HangConstitutiveRelation( string const & constitutiveRelati
   dataRepository::Group * constitutiveGroup = parent->GetGroup( groupKeyStruct::constitutiveModelsString );
   if( constitutiveGroup == nullptr )
   {
-    constitutiveGroup = parent->RegisterGroup( groupKeyStruct::constitutiveModelsString );
+    constitutiveGroup = parent->RegisterGroup( groupKeyStruct::constitutiveModelsString )->
+      setSizedFromParent( 1 );
+    constitutiveGroup->resize( parent->size() );
   }
 
-  return constitutiveGroup->RegisterGroup< ConstitutiveBase >( constitutiveRelationInstanceName,
+
+  ConstitutiveBase * const
+  rval = constitutiveGroup->RegisterGroup< ConstitutiveBase >( constitutiveRelationInstanceName,
                                                                std::move( material ) );
+  rval->setSizedFromParent( 1 );
+  rval->resize( constitutiveGroup->size() );
+  return rval;
 
 
 }
