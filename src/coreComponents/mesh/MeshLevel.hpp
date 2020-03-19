@@ -35,11 +35,11 @@ public:
              Group * const parent );
   virtual ~MeshLevel() override;
 
-  void GenerateAdjacencyLists( localIndex_array & seedNodeList,
+  void GenerateAdjacencyLists( arrayView1d< localIndex const > const & seedNodeList,
                                localIndex_array & nodeAdjacencyList,
                                localIndex_array & edgeAdjacencyList,
                                localIndex_array & faceAdjacencyList,
-                               ElementRegionManager::ElementViewAccessor<ReferenceWrapper<localIndex_array>> & elementAdjacencyList,
+                               ElementRegionManager::ElementViewAccessor< ReferenceWrapper< localIndex_array > > & elementAdjacencyList,
                                integer const depth );
 
 

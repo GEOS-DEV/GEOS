@@ -793,14 +793,14 @@ public:
     // Compose the default string
     std::stringstream ss;
 
-    for( integer ii=0 ; ii<value_dim ; ++ii )
+    for( integer ii=0; ii<value_dim; ++ii )
     {
       ss << "{";
     }
 
     ss << m_default;
 
-    for( integer ii=0 ; ii<value_dim ; ++ii )
+    for( integer ii=0; ii<value_dim; ++ii )
     {
       ss << "}";
     }

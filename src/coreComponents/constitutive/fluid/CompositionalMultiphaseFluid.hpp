@@ -13,8 +13,8 @@
  */
 
 /**
-  * @file CompositionalMultiphaseFluid.hpp
-  */
+ * @file CompositionalMultiphaseFluid.hpp
+ */
 
 #ifndef GEOSX_CONSTITUTIVE_FLUID_COMPOSITIONALMULTIPHASEFLUID_HPP_
 #define GEOSX_CONSTITUTIVE_FLUID_COMPOSITIONALMULTIPHASEFLUID_HPP_
@@ -41,7 +41,7 @@ public:
 
   void DeliverClone( string const & name,
                      Group * const parent,
-                     std::unique_ptr<ConstitutiveBase> & clone ) const override;
+                     std::unique_ptr< ConstitutiveBase > & clone ) const override;
 
   static std::string CatalogName() { return "CompositionalMultiphaseFluid"; }
 
@@ -57,7 +57,7 @@ public:
     static constexpr auto componentAcentricFactorString      = "componentAcentricFactor";
     static constexpr auto componentVolumeShiftString         = "componentVolumeShift";
     static constexpr auto componentBinaryCoeffString         = "componentBinaryCoeff";
-    
+
     using ViewKey = dataRepository::ViewKey;
 
     ViewKey equationsOfState = { equationsOfStateString };
@@ -81,11 +81,11 @@ private:
   string_array m_equationsOfState;
 
   // standard EOS component input
-  array1d<real64> m_componentCriticalPressure;
-  array1d<real64> m_componentCriticalTemperature;
-  array1d<real64> m_componentAcentricFactor;
-  array1d<real64> m_componentVolumeShift;
-  array2d<real64> m_componentBinaryCoeff;
+  array1d< real64 > m_componentCriticalPressure;
+  array1d< real64 > m_componentCriticalTemperature;
+  array1d< real64 > m_componentAcentricFactor;
+  array1d< real64 > m_componentVolumeShift;
+  array2d< real64 > m_componentBinaryCoeff;
 
 };
 

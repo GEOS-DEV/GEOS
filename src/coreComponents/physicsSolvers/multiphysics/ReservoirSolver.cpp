@@ -30,33 +30,32 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
-  
-ReservoirSolver::ReservoirSolver( const std::string& name,
+
+ReservoirSolver::ReservoirSolver( const std::string & name,
                                   Group * const parent ):
-  SolverBase(name,parent),
+  SolverBase( name, parent ),
   m_flowSolverName(),
   m_wellSolverName()
 {
-  registerWrapper(viewKeyStruct::flowSolverNameString, &m_flowSolverName, 0)->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Name of the flow solver to use in the reservoir-well system solver");
+  registerWrapper( viewKeyStruct::flowSolverNameString, &m_flowSolverName, 0 )->
+    setInputFlag( InputFlags::REQUIRED )->
+    setDescription( "Name of the flow solver to use in the reservoir-well system solver" );
 
-  registerWrapper(viewKeyStruct::wellSolverNameString, &m_wellSolverName, 0)->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Name of the well solver to use in the reservoir-well system solver");
+  registerWrapper( viewKeyStruct::wellSolverNameString, &m_wellSolverName, 0 )->
+    setInputFlag( InputFlags::REQUIRED )->
+    setDescription( "Name of the well solver to use in the reservoir-well system solver" );
 
 }
 
 ReservoirSolver::~ReservoirSolver()
-{
-}
+{}
 
 void ReservoirSolver::PostProcessInput()
 {
   SolverBase::PostProcessInput();
 
-  m_flowSolver = this->getParent()->GetGroup<FlowSolverBase>( m_flowSolverName );
-  m_wellSolver = this->getParent()->GetGroup<WellSolverBase>( m_wellSolverName );
+  m_flowSolver = this->getParent()->GetGroup< FlowSolverBase >( m_flowSolverName );
+  m_wellSolver = this->getParent()->GetGroup< WellSolverBase >( m_wellSolverName );
 
   GEOSX_ERROR_IF( m_flowSolver == nullptr, "Flow solver not found or invalid type: " << m_flowSolverName );
   GEOSX_ERROR_IF( m_wellSolver == nullptr, "Well solver not found or invalid type: " << m_wellSolverName );
@@ -129,7 +128,7 @@ void ReservoirSolver::SetupSystem( DomainPartition * const domain,
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel const * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  MeshLevel const * const meshLevel = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
   ElementRegionManager const * const elemManager = meshLevel->getElemManager();
 
   dofManager.setMesh( domain, 0, 0 );
@@ -158,31 +157,31 @@ void ReservoirSolver::SetupSystem( DomainPartition * const domain,
   localIndex constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
   localIndex constexpr maxNumDof  = maxNumComp + 1;
 
-  ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex const>> const &
-  resDofNumber = elemManager->ConstructViewAccessor<array1d<globalIndex>,
-                                                    arrayView1d<globalIndex const>>( resDofKey );
+  ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const &
+  resDofNumber = elemManager->ConstructViewAccessor< array1d< globalIndex >,
+                                                     arrayView1d< globalIndex const > >( resDofKey );
 
-  elemManager->forElementSubRegions<WellElementSubRegion>( [&]( WellElementSubRegion const * const subRegion )
+  elemManager->forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion const * const subRegion )
   {
     PerforationData const * const perforationData = subRegion->GetPerforationData();
 
     // get the well degrees of freedom and ghosting info
     arrayView1d< globalIndex const > const & wellElemDofNumber =
-      subRegion->getReference< array1d<globalIndex> >( wellDofKey );
+      subRegion->getReference< array1d< globalIndex > >( wellDofKey );
 
     // get the well element indices corresponding to each perforation
     arrayView1d< localIndex const > const & perfWellElemIndex =
-      perforationData->getReference< array1d<localIndex> >( PerforationData::viewKeyStruct::wellElementIndexString );
+      perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::wellElementIndexString );
 
     // get the element region, subregion, index
     arrayView1d< localIndex const > const & resElementRegion =
-      perforationData->getReference< array1d<localIndex> >( PerforationData::viewKeyStruct::reservoirElementRegionString );
+      perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementRegionString );
 
     arrayView1d< localIndex const > const & resElementSubRegion =
-      perforationData->getReference< array1d<localIndex> >( PerforationData::viewKeyStruct::reservoirElementSubregionString );
+      perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementSubregionString );
 
     arrayView1d< localIndex const > const & resElementIndex =
-      perforationData->getReference< array1d<localIndex> >( PerforationData::viewKeyStruct::reservoirElementIndexString );
+      perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementIndexString );
 
     stackArray1d< globalIndex, maxNumDof > dofIndexRes( resNDOF );
     stackArray1d< globalIndex, maxNumDof > dofIndexWell( wellNDOF );
@@ -224,7 +223,7 @@ void ReservoirSolver::SetupSystem( DomainPartition * const domain,
                      resNDOF );
     }
 
-   } );
+  } );
 
   matrix.close();
 
@@ -237,8 +236,6 @@ void ReservoirSolver::AssembleSystem( real64 const time_n,
                                       ParallelMatrix & matrix,
                                       ParallelVector & rhs )
 {
-  // open() and zero() are called from the flow solver
-
   // assemble J_RR (excluding perforation rates)
   m_flowSolver->AssembleSystem( time_n, dt, domain,
                                 dofManager,
@@ -250,24 +247,25 @@ void ReservoirSolver::AssembleSystem( real64 const time_n,
                                 matrix,
                                 rhs );
 
-
-  matrix.close();
-  rhs.close();
-
   // Debug for logLevel >= 2
-  GEOSX_LOG_LEVEL_RANK_0( 2, "After ReservoirSolver::AssembleSystem" );
-  GEOSX_LOG_LEVEL_RANK_0( 2, "\nJacobian:\n" << matrix );
-  GEOSX_LOG_LEVEL_RANK_0( 2, "\nResidual:\n" << rhs );
+  if( getLogLevel() >= 2 )
+  {
+    GEOSX_LOG_RANK_0( "After ReservoirSolver::AssembleSystem" );
+    GEOSX_LOG_RANK_0( "\nJacobian:\n" );
+    std::cout << matrix;
+    GEOSX_LOG_RANK_0( "\nResidual:\n" );
+    std::cout << rhs;
+  }
 
   if( getLogLevel() >= 3 )
   {
     integer newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
 
     string filename_mat = "matrix_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
-    matrix.write( filename_mat, true );
+    matrix.write( filename_mat, LAIOutputFormat::MATRIX_MARKET );
 
     string filename_rhs = "rhs_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
-    rhs.write( filename_rhs, true );
+    rhs.write( filename_rhs, LAIOutputFormat::MATRIX_MARKET );
 
     GEOSX_LOG_RANK_0( "After ReservoirSolver::AssembleSystem" );
     GEOSX_LOG_RANK_0( "Jacobian: written to " << filename_mat );
@@ -300,7 +298,7 @@ real64 ReservoirSolver::CalculateResidualNorm( DomainPartition const * const dom
   real64 const wellResidualNorm      = m_wellSolver->CalculateResidualNorm( domain, dofManager, rhs );
 
   return sqrt( reservoirResidualNorm*reservoirResidualNorm
-             + wellResidualNorm*wellResidualNorm );
+               + wellResidualNorm*wellResidualNorm );
 }
 
 void ReservoirSolver::SolveSystem( DofManager const & dofManager,
@@ -348,8 +346,8 @@ void ReservoirSolver::ResetStateToBeginningOfStep( DomainPartition * const domai
   m_wellSolver->ResetStateToBeginningOfStep( domain );
 }
 
-void ReservoirSolver::ImplicitStepComplete( real64 const& time_n,
-                                            real64 const& dt,
+void ReservoirSolver::ImplicitStepComplete( real64 const & time_n,
+                                            real64 const & dt,
                                             DomainPartition * const domain )
 {
   m_flowSolver->ImplicitStepComplete( time_n, dt, domain );

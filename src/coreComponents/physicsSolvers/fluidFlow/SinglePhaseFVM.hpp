@@ -20,6 +20,7 @@
 #define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEFVM_HPP_
 
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseProppantBase.hpp"
 
 namespace geosx
 {
@@ -28,20 +29,86 @@ namespace geosx
 /**
  * @class SinglePhaseFVM
  *
- * class to perform a single phase finite volume solve 
- * using only cell-centered variables 
+ * class to perform a single phase finite volume solve
+ * using only cell-centered variables
  * works with both TPFA and MPFA
  */
-class SinglePhaseFVM : public SinglePhaseBase
+template< typename BASE = SinglePhaseBase >
+class SinglePhaseFVM : public BASE
 {
 public:
+
+
+  // Aliasing public/protected members/methods of Group so we don't
+  // have to use this->member etc.
+  using BASE::getLogLevel;
+
+  // Aliasing public/protected members/methods of SolverBase so we don't
+  // have to use this->member etc.
+  using BASE::m_systemSolverParameters;
+  using BASE::m_cflFactor;
+  using BASE::m_maxStableDt;
+  using BASE::m_nextDt;
+  using BASE::m_discretizationName;
+  using BASE::m_targetRegions;
+  using BASE::m_dofManager;
+  using BASE::m_matrix;
+  using BASE::m_rhs;
+  using BASE::m_solution;
+  using BASE::m_linearSolverParameters;
+  using BASE::m_nonlinearSolverParameters;
+
+  // Aliasing public/protected members/methods of FlowSolverBase so we don't
+  // have to use this->member etc.
+  using BASE::m_fluidName;
+  using BASE::m_solidName;
+  using BASE::m_fluidIndex;
+  using BASE::m_solidIndex;
+  using BASE::m_poroElasticFlag;
+  using BASE::m_coupledWellsFlag;
+  using BASE::m_numDofPerCell;
+  using BASE::m_derivativeFluxResidual_dAperture;
+  using BASE::m_fluxEstimate;
+  using BASE::m_elemGhostRank;
+  using BASE::m_volume;
+  using BASE::m_gravCoef;
+  using BASE::m_porosityRef;
+  using BASE::m_elementArea;
+  using BASE::m_elementAperture0;
+  using BASE::m_elementAperture;
+  using BASE::m_effectiveAperture;
+
+
+  // Aliasing public/protected members/methods of SinglePhaseBase so we don't
+  // have to use this->member etc.
+  using BASE::m_pressure;
+  using BASE::m_deltaPressure;
+  using BASE::m_deltaVolume;
+  using BASE::m_porosity;
+  using BASE::m_mobility;
+  using BASE::m_dMobility_dPres;
+  using BASE::m_porosityOld;
+  using BASE::m_densityOld;
+  using BASE::m_pvMult;
+  using BASE::m_dPvMult_dPres;
+  using BASE::m_density;
+  using BASE::m_dDens_dPres;
+  using BASE::m_viscosity;
+  using BASE::m_dVisc_dPres;
+  using BASE::m_totalMeanStressOld;
+  using BASE::m_totalMeanStress;
+  using BASE::m_bulkModulus;
+  using BASE::m_biotCoefficient;
+  using BASE::m_poroMultiplier;
+  using BASE::m_transTMultiplier;
+
   /**
    * @brief main constructor for Group Objects
    * @param name the name of this instantiation of Group in the repository
    * @param parent the parent group of this instantiation of Group
    */
   SinglePhaseFVM( const std::string & name,
-                  Group * const parent );
+                  dataRepository::Group * const parent );
 
 
   /// deleted default constructor
@@ -68,8 +135,21 @@ public:
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
-  static string CatalogName()
-  { return "SinglePhaseFVM"; }
+  template< typename _BASE=BASE >
+  static
+  typename std::enable_if< std::is_same< _BASE, SinglePhaseBase >::value, string >::type
+  CatalogName()
+  {
+    return "SinglePhaseFVM";
+  }
+
+  template< typename _BASE=BASE >
+  static
+  typename std::enable_if< std::is_same< _BASE, SinglePhaseProppantBase >::value, string >::type
+  CatalogName()
+  {
+    return "SinglePhaseProppantFVM";
+  }
 
   /**
    * @defgroup Solver Interface Function
@@ -81,7 +161,7 @@ public:
   virtual void
   SetupDofs( DomainPartition const * const domain,
              DofManager & dofManager ) const override;
-  
+
   virtual void
   ApplyBoundaryConditions( real64 const time_n,
                            real64 const dt,
@@ -94,13 +174,13 @@ public:
   CalculateResidualNorm( DomainPartition const * const domain,
                          DofManager const & dofManager,
                          ParallelVector const & rhs ) override;
-  
+
   virtual void
   ApplySystemSolution( DofManager const & dofManager,
                        ParallelVector const & solution,
                        real64 const scalingFactor,
                        DomainPartition * const domain ) override;
-  
+
   /**
    * @brief assembles the flux terms for all cells
    * @param time_n previous time value
@@ -110,7 +190,7 @@ public:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  virtual void 
+  virtual void
   AssembleFluxTerms( real64 const time_n,
                      real64 const dt,
                      DomainPartition const * const domain,
@@ -121,8 +201,7 @@ public:
   /**@}*/
 
   struct viewKeyStruct : SinglePhaseBase::viewKeyStruct
-  {
-  } viewKeysSinglePhaseFVM;
+  {} viewKeysSinglePhaseFVM;
 
   viewKeyStruct & viewKeys()
   { return viewKeysSinglePhaseFVM; }
@@ -131,8 +210,7 @@ public:
   { return viewKeysSinglePhaseFVM; }
 
   struct groupKeyStruct : SolverBase::groupKeyStruct
-  {
-  } groupKeysSinglePhaseFVM;
+  {} groupKeysSinglePhaseFVM;
 
   groupKeyStruct & groupKeys()
   { return groupKeysSinglePhaseFVM; }

@@ -26,30 +26,30 @@ using namespace dataRepository;
 using namespace cxx_utilities;
 
 VTKOutput::VTKOutput( std::string const & name,
-                        Group * const parent ):
-  OutputBase( name, parent),
+                      Group * const parent ):
+  OutputBase( name, parent ),
   m_plotFileRoot(),
   m_writeFaceMesh(),
   m_plotLevel(),
   m_writerInterface( name )
 {
-  registerWrapper(viewKeysStruct::plotFileRoot, &m_plotFileRoot, false )->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("");
+  registerWrapper( viewKeysStruct::plotFileRoot, &m_plotFileRoot, false )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "" );
 
-  registerWrapper(viewKeysStruct::writeFEMFaces, &m_writeFaceMesh, false )->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("");
+  registerWrapper( viewKeysStruct::writeFEMFaces, &m_writeFaceMesh, false )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "" );
 
-  registerWrapper(viewKeysStruct::plotLevel, &m_plotLevel, false )->
-    setApplyDefaultValue(1)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("");
+  registerWrapper( viewKeysStruct::plotLevel, &m_plotLevel, false )->
+    setApplyDefaultValue( 1 )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "" );
 
-  registerWrapper(viewKeysStruct::binaryString, &m_writeBinaryData, false )->
-    setApplyDefaultValue(1)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Output the data in binary format");
+  registerWrapper( viewKeysStruct::binaryString, &m_writeBinaryData, false )->
+    setApplyDefaultValue( 1 )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Output the data in binary format" );
 
 }
 
@@ -58,12 +58,12 @@ VTKOutput::~VTKOutput()
 
 
 
-void VTKOutput::Execute(real64 const time_n,
+void VTKOutput::Execute( real64 const time_n,
                          real64 const GEOSX_UNUSED_PARAM( dt ),
                          integer const GEOSX_UNUSED_PARAM( cycleNumber ),
                          integer const GEOSX_UNUSED_PARAM( eventCounter ),
                          real64 const GEOSX_UNUSED_PARAM( eventProgress ),
-                         Group * domain)
+                         Group * domain )
 {
   DomainPartition* domainPartition = Group::group_cast<DomainPartition*>(domain);
   m_writerInterface.SetPlotLevel( m_plotLevel );

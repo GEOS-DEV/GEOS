@@ -80,7 +80,7 @@ public:
    * @brief copy constructor
    * @param init the source to copy
    */
-  CellBlock(const CellBlock& init);
+  CellBlock( const CellBlock & init );
 
 
   virtual ~CellBlock() override;
@@ -88,11 +88,11 @@ public:
   virtual void SetElementType( string const & elementType ) override;
 
   localIndex GetNumFaceNodes( localIndex const elementIndex,
-                              localIndex const localFaceIndex) const;
+                              localIndex const localFaceIndex ) const;
 
   localIndex GetFaceNodes( localIndex const elementIndex,
                            localIndex const localFaceIndex,
-                           localIndex * const nodeIndicies) const;
+                           localIndex * const nodeIndicies ) const;
 
   /**
    * @brief function to return the localIndices of the nodes in a face of the element
@@ -102,28 +102,28 @@ public:
    */
   void GetFaceNodes( const localIndex elementIndex,
                      const localIndex localFaceIndex,
-                     localIndex_array& nodeIndicies) const;
+                     localIndex_array & nodeIndicies ) const;
 
   void calculateElementCenters( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const
   {
-    arrayView1d<R1Tensor> const & elementCenters = m_elementCenter;
+    arrayView1d< R1Tensor > const & elementCenters = m_elementCenter;
     localIndex nNodes = numNodesPerElement();
 
-    if (!m_elementTypeString.compare(0, 4, "C3D6"))
+    if( !m_elementTypeString.compare( 0, 4, "C3D6" ))
     {
       nNodes -= 2;
     }
 
-    forall_in_range<parallelHostPolicy>( 0, size(), GEOSX_LAMBDA( localIndex const k )
+    forall_in_range< parallelHostPolicy >( 0, size(), [=]( localIndex const k )
     {
       elementCenters[k] = 0;
-      for ( localIndex a = 0 ; a < nNodes ; ++a)
+      for( localIndex a = 0; a < nNodes; ++a )
       {
         const localIndex b = m_toNodesRelation[k][a];
         elementCenters[k] += X[b];
       }
       elementCenters[k] /= nNodes;
-    });
+    } );
   }
 
   virtual void CalculateElementGeometricQuantities( NodeManager const & nodeManager,
@@ -137,7 +137,7 @@ public:
 
     R1Tensor Xlocal[10];
 
-    for (localIndex a = 0; a < m_numNodesPerElement; ++a)
+    for( localIndex a = 0; a < m_numNodesPerElement; ++a )
     {
       Xlocal[a] = X[m_toNodesRelation[k][a]];
       center += Xlocal[a];
@@ -146,23 +146,23 @@ public:
 
     if( m_numNodesPerElement == 8 )
     {
-      m_elementVolume[k] = computationalGeometry::HexVolume(Xlocal);
+      m_elementVolume[k] = computationalGeometry::HexVolume( Xlocal );
     }
-    else if( m_numNodesPerElement == 4)
+    else if( m_numNodesPerElement == 4 )
     {
-      m_elementVolume[k] = computationalGeometry::TetVolume(Xlocal);
+      m_elementVolume[k] = computationalGeometry::TetVolume( Xlocal );
     }
-    else if( m_numNodesPerElement == 6)
+    else if( m_numNodesPerElement == 6 )
     {
-      m_elementVolume[k] = computationalGeometry::WedgeVolume(Xlocal);
+      m_elementVolume[k] = computationalGeometry::WedgeVolume( Xlocal );
     }
-    else if ( m_numNodesPerElement == 5)
+    else if( m_numNodesPerElement == 5 )
     {
-      m_elementVolume[k] = computationalGeometry::PyramidVolume(Xlocal);
+      m_elementVolume[k] = computationalGeometry::PyramidVolume( Xlocal );
     }
     else
     {
-        GEOSX_ERROR("GEOX does not support cells with " << m_numNodesPerElement << " nodes");
+      GEOSX_ERROR( "GEOX does not support cells with " << m_numNodesPerElement << " nodes" );
     }
   }
 
@@ -178,7 +178,7 @@ public:
   /**
    * @return the element to node map
    */
-  NodeMapType const & nodeList() const        { return m_toNodesRelation; }
+  NodeMapType const & nodeList() const { return m_toNodesRelation; }
 
   /**
    * @return the element to node map
@@ -198,12 +198,12 @@ public:
   /**
    * @return the element to edge map
    */
-  FixedOneToManyRelation const & edgeList() const        { return m_toEdgesRelation; }
+  FixedOneToManyRelation const & edgeList() const { return m_toEdgesRelation; }
 
   /**
    * @return the element to face map
    */
-  FixedOneToManyRelation       & faceList()       { return m_toFacesRelation; }
+  FixedOneToManyRelation & faceList()       { return m_toFacesRelation; }
 
   /**
    * @return the element to face map
@@ -215,7 +215,7 @@ public:
    * @param[in] propertyName the name of the property
    * @return a non-const reference to the property
    */
-  template<typename T>
+  template< typename T >
   T & AddProperty( string const & propertyName )
   {
     m_externalPropertyNames.push_back( propertyName );
@@ -236,13 +236,13 @@ protected:
 
 
   /// The elements to nodes relation
-  NodeMapType  m_toNodesRelation;
+  NodeMapType m_toNodesRelation;
 
   /// The elements to edges relation
-  EdgeMapType  m_toEdgesRelation;
+  EdgeMapType m_toEdgesRelation;
 
   /// The elements to faces relation
-  FaceMapType  m_toFacesRelation;
+  FaceMapType m_toFacesRelation;
 
 private:
   /// Name of the properties register from an external mesh

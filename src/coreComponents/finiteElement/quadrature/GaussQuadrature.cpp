@@ -29,21 +29,21 @@ namespace geosx
 
 using namespace dataRepository;
 
-template <int dim>
-GaussQuadrature<dim>::GaussQuadrature(std::string const & name, Group * const parent)
+template< int dim >
+GaussQuadrature< dim >::GaussQuadrature( std::string const & name, Group * const parent )
   :
-  QuadratureBase(name, parent),
-  m_degree(0),
-  m_n_gauss_points(0)
+  QuadratureBase( name, parent ),
+  m_degree( 0 ),
+  m_n_gauss_points( 0 )
 {
   registerWrapper( viewKeyStruct::degreeString, &m_degree, 0 )->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Quadrature degree");
+    setInputFlag( InputFlags::REQUIRED )->
+    setDescription( "Quadrature degree" );
 }
 
 
-template <int dim>
-GaussQuadrature<dim>::~GaussQuadrature()
+template< int dim >
+GaussQuadrature< dim >::~GaussQuadrature()
 {}
 
 
@@ -51,8 +51,8 @@ GaussQuadrature<dim>::~GaussQuadrature()
  * Get number of integration points.
  */
 
-template<int dim>
-int GaussQuadrature<dim>::size() const
+template< int dim >
+int GaussQuadrature< dim >::size() const
 {
   return m_n_gauss_points;
 }
@@ -61,14 +61,14 @@ int GaussQuadrature<dim>::size() const
  * Get integration point on unit cell.
  */
 
-template<int dim>
-R1Tensor GaussQuadrature<dim>::integration_point( const int index ) const
+template< int dim >
+R1Tensor GaussQuadrature< dim >::integration_point( const int index ) const
 {
-  std::vector<int> indices( dim );
-  StructuredGrid::map_index<dim>( index, m_degree, indices );
+  std::vector< int > indices( dim );
+  StructuredGrid::map_index< dim >( index, m_degree, indices );
 
   R1Tensor point;
-  for( int d = 0 ; d < dim ; ++d )
+  for( int d = 0; d < dim; ++d )
     point[d] = m_points_1d[indices[d]];
 
   return point;
@@ -78,23 +78,23 @@ R1Tensor GaussQuadrature<dim>::integration_point( const int index ) const
  * Get integration weight value on unit cell
  */
 
-template<int dim>
-double GaussQuadrature<dim>::integration_weight( const int index ) const
+template< int dim >
+double GaussQuadrature< dim >::integration_weight( const int index ) const
 {
-  std::vector<int> indices( dim );
-  StructuredGrid::map_index<dim>( index, m_degree, indices );
+  std::vector< int > indices( dim );
+  StructuredGrid::map_index< dim >( index, m_degree, indices );
 
   double weight = 1.0;
-  for( int d = 0 ; d < dim ; ++d )
+  for( int d = 0; d < dim; ++d )
     weight *= m_weights_1d[indices[d]];
 
   return weight;
 }
 
-template<int dim>
-void GaussQuadrature<dim>::PostProcessInput()
+template< int dim >
+void GaussQuadrature< dim >::PostProcessInput()
 {
-  m_n_gauss_points = StructuredGrid::dimpower<dim>( m_degree );
+  m_n_gauss_points = StructuredGrid::dimpower< dim >( m_degree );
 
   assert( m_degree > 0 );
 
@@ -105,7 +105,7 @@ void GaussQuadrature<dim>::PostProcessInput()
 
   const int m = ( m_degree + 1 ) / 2;
 
-  for( int i = 1 ; i <= m ; ++i )
+  for( int i = 1; i <= m; ++i )
   {
     double z = std::cos( M_PI * ( i - 0.25 ) / ( m_degree + 0.5 ) );
 
@@ -115,7 +115,7 @@ void GaussQuadrature<dim>::PostProcessInput()
     {
       p1 = 1.0;
       p2 = 0.0;
-      for( int j = 0 ; j < m_degree ; ++j )
+      for( int j = 0; j < m_degree; ++j )
       {
         p3 = p2;
         p2 = p1;
@@ -140,9 +140,9 @@ void GaussQuadrature<dim>::PostProcessInput()
 
 namespace
 {
-dataRepository::CatalogEntryConstructor<QuadratureBase, GaussQuadrature<1>, std::string const &, Group * const > catEntry_GaussQuadrature1;
-dataRepository::CatalogEntryConstructor<QuadratureBase, GaussQuadrature<2>, std::string const &, Group * const > catEntry_GaussQuadrature2;
-dataRepository::CatalogEntryConstructor<QuadratureBase, GaussQuadrature<3>, std::string const &, Group * const > catEntry_GaussQuadrature3;
+dataRepository::CatalogEntryConstructor< QuadratureBase, GaussQuadrature< 1 >, std::string const &, Group * const > catEntry_GaussQuadrature1;
+dataRepository::CatalogEntryConstructor< QuadratureBase, GaussQuadrature< 2 >, std::string const &, Group * const > catEntry_GaussQuadrature2;
+dataRepository::CatalogEntryConstructor< QuadratureBase, GaussQuadrature< 3 >, std::string const &, Group * const > catEntry_GaussQuadrature3;
 }
 
 }

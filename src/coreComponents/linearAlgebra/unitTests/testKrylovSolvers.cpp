@@ -23,8 +23,10 @@
 #include "common/DataTypes.hpp"
 #include "managers/initialization.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
-#include "linearAlgebra/utilities/BlockMatrixView.hpp"
-#include "linearAlgebra/utilities/BlockVectorView.hpp"
+#include "linearAlgebra/utilities/BlockOperatorWrapper.hpp"
+#include "linearAlgebra/utilities/BlockOperator.hpp"
+#include "linearAlgebra/utilities/BlockVectorWrapper.hpp"
+#include "linearAlgebra/solvers/PreconditionerIdentity.hpp"
 #include "linearAlgebra/solvers/CGsolver.hpp"
 #include "linearAlgebra/solvers/BiCGSTABsolver.hpp"
 
@@ -51,33 +53,25 @@ using namespace geosx;
 // -----------------------------------------
 // We now test the GEOSX implementation of the Conjugate Gradient (CG) and BiCGSTAB algorithms
 // on monolithic matrices.
-template<typename LAI>
+template< template< typename T > class SOLVER, typename LAI >
 void testGEOSXSolvers()
 {
   // Define aliases templated on the Linear Algebra Interface (LAI).
   using Matrix = typename LAI::ParallelMatrix;
   using Vector = typename LAI::ParallelVector;
 
-
   // Use nxn cartesian mesh to generate the Laplace 2D operator.
-  globalIndex n = 100;
-  globalIndex N = n * n;
+  globalIndex constexpr n = 100;
+  globalIndex constexpr N = n * n;
 
   // Compute a 2D Laplace operator and identity matrix
   Matrix matrix;
   Matrix identity;
-  compute2DLaplaceOperator<LAI>( MPI_COMM_WORLD,
-                                 n,
-                                 matrix );
-  computeIdentity<LAI>( MPI_COMM_WORLD,
-                        n,
-                        identity );
+  compute2DLaplaceOperator( MPI_COMM_WORLD, n, matrix );
+  computeIdentity( MPI_COMM_WORLD, N, identity );
 
   // Define vectors
-  Vector x_true,
-    x_comp,
-    b;
-
+  Vector x_true, x_comp, b;
   x_true.createWithGlobalSize( N, MPI_COMM_WORLD );
   x_comp.createWithGlobalSize( N, MPI_COMM_WORLD );
   b.createWithGlobalSize( N, MPI_COMM_WORLD );
@@ -85,25 +79,41 @@ void testGEOSXSolvers()
   x_true.rand();
   x_comp.zero();
 
-  matrix.multiply( x_true, b );
+  matrix.apply( x_true, b );
 
-  // Test with CG solver
-  CGsolver<LAI> testCG;
-  testCG.solve( matrix, x_comp, b, identity );
+  // Solve
+  SOLVER< Vector > solver( matrix, identity, 1e-8, 300 );
+  solver.solve( b, x_comp );
+  /////////////////////////////////////////
+//  GEOSX_LOG_RANK_0("Iterations: " + std::to_string(solver.numIterations()));
+//  if ( MpiWrapper::Comm_rank( MPI_COMM_WORLD ) == 0)
+//  {
+//    GEOSX_LOG_RANK_VAR( solver.relativeResidual() );
+//  }
+  /////////////////////////////////////////
 
-  real64 norm_true = x_true.norm2();
-  real64 norm_comp = x_comp.norm2();
+  real64 const norm_true = x_true.norm2();
+  real64 const norm_comp = x_comp.norm2();
   EXPECT_LT( std::fabs( norm_comp / norm_true - 1. ), 5e-6 );
 
-  // Test with BiCGSTAB solver
+  PreconditionerIdentity< LAI > preconIdentity;
+  preconIdentity.compute( matrix );
+  SOLVER< Vector > solver2( matrix, preconIdentity, 1e-8, 300 );
   x_comp.zero();
 
-  BiCGSTABsolver<LAI> testBiCGSTAB;
-  testBiCGSTAB.solve( matrix, x_comp, b, identity );
+  solver2.solve( b, x_comp );
+  /////////////////////////////////////////
+//  GEOSX_LOG_RANK_0("Iterations: " + std::to_string(solver.numIterations()));
+//  if ( MpiWrapper::Comm_rank( MPI_COMM_WORLD ) == 0)
+//  {
+//    GEOSX_LOG_RANK_VAR( solver.residualNormVector() );
+//  }
+  /////////////////////////////////////////
 
-  norm_true = x_true.norm2();
-  norm_comp = x_comp.norm2();
-  EXPECT_LT( std::fabs( norm_comp / norm_true - 1. ), 5e-6 );
+
+  real64 const norm_true2 = x_true.norm2();
+  real64 const norm_comp2 = x_comp.norm2();
+  EXPECT_LT( std::fabs( norm_comp2 / norm_true2 - 1. ), 5e-6 );
 }
 
 /**
@@ -118,152 +128,121 @@ void testGEOSXSolvers()
 // -----------------------------------------
 // We finish by testing the GEOSX implementation of the Conjugate Gradient (CG) and BiCGSTAB algorithms
 // on block matrices.
-template<typename LAI>
+template< template< typename T > class SOLVER, typename LAI >
 void testGEOSXBlockSolvers()
 {
   // The usual typenames
   using Matrix = typename LAI::ParallelMatrix;
   using Vector = typename LAI::ParallelVector;
 
-
   // We are going to assembly the following dummy system
   // [L L] [x_true] = [b_0]
-  // [L L] [x_true] = [b_1]
+  // [0 L] [x_true] = [b_1]
 
-  globalIndex n = 100;
-  globalIndex N = n * n;
-
-  Matrix matrix;
-  Matrix identity;
-  compute2DLaplaceOperator<LAI>( MPI_COMM_WORLD,
-                                 n,
-                                 matrix );
-  computeIdentity<LAI>( MPI_COMM_WORLD,
-                        n,
-                        identity );
-
-  Vector x_true,
-    x_comp_0,
-    x_comp_1,
-    b_0,
-    b_1;
-
-  x_true.createWithGlobalSize( N, MPI_COMM_WORLD );
-  x_comp_0.createWithGlobalSize( N, MPI_COMM_WORLD );
-  x_comp_1.createWithGlobalSize( N, MPI_COMM_WORLD );
-  b_0.createWithGlobalSize( N, MPI_COMM_WORLD );
-  b_1.createWithGlobalSize( N, MPI_COMM_WORLD );
-
-  x_true.rand();
-  x_comp_0.zero();
-  x_comp_1.zero();
-
-  // Size of the block system
-  localIndex nRows = 2;
-  localIndex nCols = 2;
+  globalIndex constexpr n = 100;
+  globalIndex constexpr N = n * n;
 
   // Declare and allocate block matrices/vectors
-  // System matrix
 
-  BlockMatrixView<LAI> block_matrix( nRows, nCols );
-  BlockMatrixView<LAI> block_precon( nRows, nCols );
-  BlockVectorView<LAI> block_x_true( nCols );
-  BlockVectorView<LAI> block_x_comp( nCols );
-  BlockVectorView<LAI> block_rhs( nRows );
-
-  // In this test we simply tile the laplace operator, so we assign a duplicate
-  // of the monolithic matrix to every block of the matrix.
-
+  // Set up a block operator consisting of two laplacian blocks
+  // Here we demonstrate creating a thin wrapper pointing to the same matrix twice
+  Matrix matrix;
+  compute2DLaplaceOperator( MPI_COMM_WORLD, n, matrix );
+  BlockOperatorWrapper< Vector, Matrix > block_matrix( 2, 2 );
   block_matrix.set( 0, 0, matrix );
-  block_matrix.set( 0, 1, matrix );
-  block_matrix.set( 1, 0, matrix );
   block_matrix.set( 1, 1, matrix );
 
-  // We do the same for the preconditioner to get the block identity matrix.
-  // We ignore the off-diagonal blocks and leave them as null-pointers.
+  // Set up block identity preconditioner
+  // Here we instantiate a concrete block matrix with two independent blocks
+  BlockOperator< Vector, Matrix > block_precon( 2, 2 );
+  computeIdentity( MPI_COMM_WORLD, N, block_precon.block( 0, 0 ) );
+  computeIdentity( MPI_COMM_WORLD, N, block_precon.block( 1, 1 ) );
+  computeZero( MPI_COMM_WORLD, N, block_precon.block( 0, 1 ) );
+  computeZero( MPI_COMM_WORLD, N, block_precon.block( 1, 0 ) );
 
-  block_precon.set( 0, 0, identity );
-  block_precon.set( 1, 1, identity );
+  // Create rhs and solution vectors
+  BlockVector< Vector > x_true( 2 );
+  BlockVector< Vector > x_comp( 2 );
+  BlockVector< Vector > b( 2 );
 
-  // true solution
-  block_x_true.set( 0, x_true );
-  block_x_true.set( 1, x_true );
+  x_true.block( 0 ).createWithGlobalSize( N, MPI_COMM_WORLD );
+  x_true.block( 1 ).createWithGlobalSize( N, MPI_COMM_WORLD );
+  x_comp.block( 0 ).createWithGlobalSize( N, MPI_COMM_WORLD );
+  x_comp.block( 1 ).createWithGlobalSize( N, MPI_COMM_WORLD );
+  b.block( 0 ).createWithGlobalSize( N, MPI_COMM_WORLD );
+  b.block( 1 ).createWithGlobalSize( N, MPI_COMM_WORLD );
 
-  // Set initial guess blocks (here we need multiple objects since we cannot
-  // have them point to the same memory location). These objects are initial
-  // guesses as input but solution vectors as output.
+  x_true.rand();
+  x_comp.zero();
 
-  block_x_comp.set( 0, x_comp_0 );
-  block_x_comp.set( 1, x_comp_1 );
+  // Set right hand side.
+  block_matrix.apply( x_true, b );
 
-  // Set right hand side blocks.
-  block_rhs.set( 0, b_0 );
-  block_rhs.set( 1, b_1 );
-  block_matrix.multiply( block_x_true, block_rhs );
-
-//TODO: Need to refactor Native block solvers.  Disable this testing section for now.
-#if 0
   // Create block CG solver object and solve
-  CGsolver<LAI> testCG;
-  testCG.solve( block_matrix, block_x_comp, block_rhs, block_precon );
+  SOLVER< BlockVectorView< Vector > > solver( block_matrix, block_precon, 1e-8, 300 );
+  solver.solve( b, x_comp );
 
   // The true solution is the vector x, so we check if the norm are equal.
   // Note: the tolerance is higher that in the previous cases because the matrix is
   // twice as big and the condition number is higher. See details on the error
   // bounds of Krylov methods wrt the condition number.
-  real64 norm_x_true = block_x_true.norm2();
-  real64 norm_x_comp = block_x_comp.norm2();
-  EXPECT_LT( std::fabs( norm_x_comp/norm_x_true - 1. ), 5e-6 );
-
-  // now try out the BiCGstab solver
-
-  x_comp_0.zero();// TODO: fix block zero()
-  x_comp_1.zero();
-
-  BiCGSTABsolver<LAI> testBiCGSTAB;
-  testBiCGSTAB.solve( block_matrix, block_x_comp, block_rhs, block_precon );
-
-  norm_x_true = block_x_true.norm2();
-  norm_x_comp = block_x_comp.norm2();
-  EXPECT_LT( std::fabs( norm_x_comp/norm_x_true - 1. ), 5e-6 );
-#endif
+  real64 const norm_x_true = x_true.norm2();
+  real64 const norm_x = x_comp.norm2();
+  EXPECT_LT( std::fabs( norm_x / norm_x_true - 1. ), 5e-6 );
 }
 
 // END_RST_NARRATIVE
 
-#ifdef GEOSX_USE_TRILINOS
-TEST( testKrylovSolvers, withTrilinos )
+template< typename LAI >
+class KrylovSolverTest : public ::testing::Test
+{};
+
+TYPED_TEST_CASE_P( KrylovSolverTest );
+
+TYPED_TEST_P( KrylovSolverTest, CG )
 {
-  testGEOSXSolvers<TrilinosInterface>();
-  testGEOSXBlockSolvers<TrilinosInterface>();
+  testGEOSXSolvers< CGsolver, TypeParam >();
 }
+
+TYPED_TEST_P( KrylovSolverTest, BiCGSTAB )
+{
+  testGEOSXSolvers< BiCGSTABsolver, TypeParam >();
+}
+
+TYPED_TEST_P( KrylovSolverTest, CG_block )
+{
+  testGEOSXBlockSolvers< CGsolver, TypeParam >();
+}
+
+TYPED_TEST_P( KrylovSolverTest, BiCGSTAB_block )
+{
+  testGEOSXBlockSolvers< BiCGSTABsolver, TypeParam >();
+}
+
+REGISTER_TYPED_TEST_CASE_P( KrylovSolverTest,
+                            CG,
+                            BiCGSTAB,
+                            CG_block,
+                            BiCGSTAB_block );
+
+#ifdef GEOSX_USE_TRILINOS
+INSTANTIATE_TYPED_TEST_CASE_P( Trilinos, KrylovSolverTest, TrilinosInterface );
 #endif
 
 #ifdef GEOSX_USE_HYPRE
-TEST( testKrylovSolvers, withHypre )
-{
-//  testGEOSXSolvers<HypreInterface>();
-//  testGEOSXBlockSolvers<HypreInterface>();
-}
+INSTANTIATE_TYPED_TEST_CASE_P( Hypre, KrylovSolverTest, HypreInterface );
 #endif
 
 #ifdef GEOSX_USE_PETSC
-TEST( testKrylovSolvers, withPetsc )
-{
-  testGEOSXSolvers<PetscInterface>();
-  testGEOSXBlockSolvers<PetscInterface>();
-}
+INSTANTIATE_TYPED_TEST_CASE_P( Petsc, KrylovSolverTest, PetscInterface );
 #endif
 
 
-int main( int argc, char ** argv )
+int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
   geosx::basicSetup( argc, argv );
-
   int const result = RUN_ALL_TESTS();
-
   geosx::basicCleanup();
-
   return result;
 }
