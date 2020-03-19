@@ -88,6 +88,18 @@ public:
   virtual localIndex size() const = 0;
 
   /**
+   * @brief Gets the size of the array for the dimension \p dim
+   * @return size of the array for the dimension \p dim
+   */
+  virtual localIndex size( int dim ) const = 0;
+
+  /**
+   * @brief Gets the dimensionnality of the wrapper value
+   * @return 1 for array1d, 2 for array2d, 3 for array3d
+   */
+  virtual int Dimensionality() const = 0;
+
+  /**
    * @brief Calls T::resize( num_dims, dims )
    * @param[in] num_dims number of dimensions in T
    * @param[in] dims pointer to the new dims

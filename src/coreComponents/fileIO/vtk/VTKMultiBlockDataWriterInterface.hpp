@@ -40,9 +40,9 @@ namespace vtk
     /*!
      * @brief Writes the .pvd file
      */
-    void SetPlotLevel( integer plotLevel )
+    void SetPlotLevel(integer plotLevel )
     {
-      m_plotLevel = plotLevel;
+      m_plotLevel = dataRepository::IntToPlotLevel(plotLevel);
     }
     void Write( real64 time, DomainPartition const * const domain  ) const;
 
@@ -74,14 +74,15 @@ namespace vtk
     void CreateTimeStepSubFolder( double time ) const;
 
     string GetTimeStepSubFolder( double time ) const;
-    void SetCellFields( vtkSmartPointer< vtkCellData > & celldata, CellElementRegion const * const er ) const;
+  void SetNodeFields( vtkSmartPointer< vtkPointData > const pointdata, NodeManager const * const nodeManager) const;
+    void SetCellFields( vtkSmartPointer< vtkCellData > const celldata, CellElementRegion const * const er ) const;
 
     private:
     string const m_outputFolder;
     
     VTKPVDWriter m_pvd;
     
-    integer m_plotLevel;
+    dataRepository::PlotLevel m_plotLevel;
   };
 
 } // namespace vtk

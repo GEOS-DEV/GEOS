@@ -33,7 +33,7 @@ namespace geosx
 class PAMELAMeshGenerator : public MeshGeneratorBase
 {
 public:
-  PAMELAMeshGenerator( const std::string& name,
+  PAMELAMeshGenerator( const std::string & name,
                        Group * const parent );
 
   virtual ~PAMELAMeshGenerator() override;
@@ -49,15 +49,15 @@ public:
     constexpr static auto reverseZString = "reverseZ";
   };
 
-  virtual void GenerateElementRegions( DomainPartition& domain ) override;
+  virtual void GenerateElementRegions( DomainPartition & domain ) override;
 
   virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 
   virtual void GenerateMesh( DomainPartition * const domain ) override;
 
-  virtual void GetElemToNodesRelationInBox ( const std::string& elementType,
+  virtual void GetElemToNodesRelationInBox ( const std::string & elementType,
                                              const int index[],
-                                             const int& iEle,
+                                             const int & iEle,
                                              int nodeIDInBox[],
                                              const int size ) override;
 
@@ -69,7 +69,7 @@ protected:
 private:
 
   /// Mesh in the data structure of PAMELA.
- // std::unique_ptr< PAMELA::Mesh >  m_pamelaMesh;
+  std::unique_ptr< PAMELA::Mesh >  m_pamelaMesh;
 
   /// Names of the fields to be copied from PAMELA to GEOSX data structure
   string_array m_fieldsToImport;
@@ -84,7 +84,7 @@ private:
 
   int m_isZReverse;
 
-  const std::unordered_map<PAMELA::ELEMENTS::TYPE, string, PAMELA::ELEMENTS::EnumClassHash> ElementToLabel
+  const std::unordered_map< PAMELA::ELEMENTS::TYPE, string, PAMELA::ELEMENTS::EnumClassHash > ElementToLabel
     =
     {
     { PAMELA::ELEMENTS::TYPE::VTK_VERTEX, "VERTEX"},

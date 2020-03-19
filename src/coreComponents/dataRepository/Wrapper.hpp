@@ -461,6 +461,11 @@ public:
     return wrapperHelpers::size( *m_data );
   }
 
+  virtual localIndex size( int dim ) const override final
+  {
+    return wrapperHelpers::size( *m_data, dim );
+  }
+
   virtual void resize( int ndims, localIndex const * const dims ) override final
   {
     wrapperHelpers::resizeDimensions( *m_data, ndims, dims );
@@ -753,12 +758,8 @@ public:
     return this;
   }
 
-  /**
-   * @copydoc WrapperBase::getDefaultValueString()
-   */
-  virtual std::string getDefaultValueString() const override
+  integer Dimensionality() const override final
   {
-    // Find the dimensionality of the wrapper value
     std::string wrapper_type = rtTypes::typeNames( std::type_index( get_typeid()));
     integer value_dim = 0;
     if( wrapper_type.find( "array3d" ) != std::string::npos )
@@ -769,10 +770,25 @@ public:
     {
       value_dim = 2;
     }
+    else if( wrapper_type.find( "r1_array" ) != std::string::npos )
+    {
+      value_dim = 2;
+    }
     else if( wrapper_type.find( "array" ) != std::string::npos )
     {
       value_dim = 1;
     }
+    return value_dim;
+  }
+
+  /**
+   * @copydoc WrapperBase::getDefaultValueString()
+   */
+  virtual std::string getDefaultValueString() const override
+  {
+    std::string wrapper_type = rtTypes::typeNames( std::type_index( get_typeid()));
+    // Find the dimensionality of the wrapper value
+    integer value_dim = Dimensionality();
 
     // Compose the default string
     std::stringstream ss;

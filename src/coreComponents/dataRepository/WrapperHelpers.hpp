@@ -81,6 +81,20 @@ size( T const & GEOSX_UNUSED_PARAM( value ) )
 }
 
 template< typename T >
+inline std::enable_if_t< traits::has_dimension_size_method< T >, localIndex >
+size( T const & value, int dim )
+{
+  return integer_conversion< localIndex >( value.size( dim ) );
+}
+
+template< typename T >
+inline std::enable_if_t< !traits::has_dimension_size_method< T >, localIndex >
+size( T const & GEOSX_UNUSED_PARAM( value ), int GEOSX_UNUSED_PARAM( dim ) )
+{
+  return 1;
+}
+
+template< typename T >
 inline std::enable_if_t< traits::is_string< T >, char * >
 dataPtr( T & var )
 {
