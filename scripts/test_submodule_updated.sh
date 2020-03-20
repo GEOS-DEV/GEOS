@@ -72,9 +72,9 @@ done
 echo $'\n'
 if [ $exit_code -eq 1 ]
 then
-  echo "##vso[task.logissue type=error]This PR has the following submodules"\
+  echo "This PR has the following submodules"\
        "that are out of sync with master or develop : ${unsync_submodules[@]}"
-  echo "##vso[task.logissue type=error]FAILURE : Please make sure your branch"\
+  echo "FAILURE : Please make sure your branch"\
        "is up to date with develop."\
        "Merge any submodule changes into the submodule's develop or"\
        "master branch before merging this PR with the main GEOSX repository."

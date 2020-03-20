@@ -1,8 +1,0 @@
-jobs:
-- job: submodule_status_test
-  steps:
-    - checkout: self
-      persistCredentials: true
-      submodules: falses
-    - script: ./scripts/test_submodule_updated.sh
-      displayName: 'Testing if submodules are synced'
