@@ -188,7 +188,7 @@ void WellElementSubRegion::AssignUnownedElementsInReservoir( MeshLevel & mesh,
     // find the closest reservoir element
     auto ret = minLocOverElemsInMesh( &mesh, [&] ( localIndex const er,
                                                    localIndex const esr,
-                                                   localIndex const ei ) -> real64
+                                                   localIndex const ei )
     {
       R1Tensor v = wellElemCoords;
       v -= resElemCoords[er][esr][ei];
@@ -372,6 +372,9 @@ void WellElementSubRegion::UpdateNodeManagerSize( MeshLevel & mesh,
 
   array1d< integer > &
   isDomainBoundary = nodeManager->getReference< integer_array >( m_ObjectManagerBaseViewKeys.domainBoundaryIndicator );
+
+  arrayView1d< globalIndex > const & nodeLocalToGlobal = nodeManager->localToGlobalMap();
+
   arrayView1d< R1Tensor const > const & nodeCoordsGlobal = wellGeometry.GetNodeCoords();
 
   // local *well* index
@@ -385,7 +388,7 @@ void WellElementSubRegion::UpdateNodeManagerSize( MeshLevel & mesh,
     localIndex const inodeLocal = oldNumNodesLocal + iwellNodeLocal;
 
     // update node manager maps and position
-    nodeManager->m_localToGlobalMap[inodeLocal]  = nodeOffsetGlobal + iwellNodeGlobal; // global *nodeManager* index
+    nodeLocalToGlobal[inodeLocal]  = nodeOffsetGlobal + iwellNodeGlobal; // global *nodeManager* index
     for( localIndex i = 0; i < 3; ++i )
     {
       X( inodeLocal, i ) = nodeCoordsGlobal[ iwellNodeGlobal ][ i ];
@@ -406,8 +409,7 @@ void WellElementSubRegion::UpdateNodeManagerSize( MeshLevel & mesh,
   {
     // local *nodeManager* index
     localIndex const inodeLocal = oldNumNodesLocal + iwellNodeLocal;
-
-    nodeManager->m_globalToLocalMap[nodeManager->m_localToGlobalMap[inodeLocal]] = inodeLocal;
+    nodeManager->updateGlobalToLocalMap( inodeLocal );
   }
 }
 
@@ -458,9 +460,9 @@ void WellElementSubRegion::ConstructSubRegionLocalElementMaps( MeshLevel & mesh,
     {
       m_nextWellElementIndexGlobal[iwelemLocal] = ielemNextGlobal; // wellhead
 
-      if( m_globalToLocalMap.count( ielemNextGlobal ) > 0 )
+      if( globalToLocalMap().count( ielemNextGlobal ) > 0 )
       {
-        m_nextWellElementIndex[iwelemLocal] = m_globalToLocalMap.at( ielemNextGlobal );
+        m_nextWellElementIndex[iwelemLocal] = globalToLocalMap( ielemNextGlobal );
       }
       else
       {
@@ -477,8 +479,8 @@ void WellElementSubRegion::ConstructSubRegionLocalElementMaps( MeshLevel & mesh,
     globalIndex const inodeBottomGlobal = nodeOffsetGlobal + elemToNodesGlobal[iwelemGlobal][InternalWellGenerator::NodeLocation::BOTTOM];
 
     // then get the local node indices in nodeManager ordering
-    localIndex const inodeTopLocal    = nodeManager->m_globalToLocalMap.at( inodeTopGlobal );
-    localIndex const inodeBottomLocal = nodeManager->m_globalToLocalMap.at( inodeBottomGlobal );
+    localIndex const inodeTopLocal    = nodeManager->globalToLocalMap( inodeTopGlobal );
+    localIndex const inodeBottomLocal = nodeManager->globalToLocalMap( inodeBottomGlobal );
 
     m_toNodesRelation[iwelemLocal][InternalWellGenerator::NodeLocation::TOP]    = inodeTopLocal;
     m_toNodesRelation[iwelemLocal][InternalWellGenerator::NodeLocation::BOTTOM] = inodeBottomLocal;
@@ -537,13 +539,13 @@ void WellElementSubRegion::ReconstructLocalConnectivity()
       m_nextWellElementIndex[iwelemLocal] = -1;
       m_topWellElementIndex = iwelemLocal; // reset this is case top element was added as ghost
     }
-    else if( m_globalToLocalMap.count( nextGlobal ) == 0 )  // next is remote
+    else if( globalToLocalMap().count( nextGlobal ) == 0 )  // next is remote
     {
       m_nextWellElementIndex[iwelemLocal] = -2;
     }
     else // local
     {
-      m_nextWellElementIndex[iwelemLocal] = this->m_globalToLocalMap[nextGlobal];
+      m_nextWellElementIndex[iwelemLocal] = this->globalToLocalMap( nextGlobal );
     }
   }
 }
@@ -582,7 +584,7 @@ localIndex WellElementSubRegion::PackUpDownMapsPrivate( buffer_unit_type * & buf
                                            nodeList().Base().toViewConst(),
                                            m_unmappedGlobalIndicesInNodelist,
                                            packList,
-                                           this->m_localToGlobalMap,
+                                           this->localToGlobalMap(),
                                            nodeList().RelatedObjectLocalToGlobal() );
 
   return packedSize;
@@ -599,7 +601,7 @@ localIndex WellElementSubRegion::UnpackUpDownMaps( buffer_unit_type const * & bu
                                      nodeList().Base().toView(),
                                      packList,
                                      m_unmappedGlobalIndicesInNodelist,
-                                     this->m_globalToLocalMap,
+                                     this->globalToLocalMap(),
                                      nodeList().RelatedObjectGlobalToLocal() );
 
   return unPackedSize;
@@ -622,20 +624,20 @@ void WellElementSubRegion::DebugNodeManager( MeshLevel const & mesh ) const
     return;
   }
 
-  std::cout << std::endl;
-  std::cout << "++++++++++++++++++++++++++" << std::endl;
-  std::cout << "Node manager from = " << getName() << std::endl;
-  std::cout << "MPI rank = " << MpiWrapper::Comm_rank( MPI_COMM_GEOSX ) << std::endl;
-  std::cout << "Number of local node elements = " << nodeManager->size() << std::endl;
+  GEOSX_LOG_RANK( "++++++++++++++++++++++++++" );
+  GEOSX_LOG_RANK( "WellElementSubRegion = " << getName() );
+  GEOSX_LOG_RANK( "Number of local well elements = " << size() );
+  GEOSX_LOG_RANK( "Number of local node elements = " << nodeManager->size() );
 
   if( nodeManager->size() > 0 )
   {
     return;
   }
 
+  arrayView1d< globalIndex const > const & nodeLocalToGlobal = nodeManager->localToGlobalMap();
   for( localIndex inodeLocal = 0; inodeLocal < nodeManager->size(); ++inodeLocal )
   {
-    std::cout << "nodeManager->localToGlobalMap["    << inodeLocal << "] = " << nodeManager->m_localToGlobalMap[inodeLocal]  << std::endl;
+    std::cout << "nodeManager->localToGlobalMap["    << inodeLocal << "] = " << nodeLocalToGlobal[inodeLocal]  << std::endl;
     // std::cout << "nodeManager->referencePosition()[" << inodeLocal << "] = " << X[inodeLocal] << std::endl;
   }
 }
@@ -652,37 +654,19 @@ void WellElementSubRegion::DebugWellElementSubRegions( arrayView1d< integer cons
     return;
   }
 
-  std::cout << std::endl;
-  std::cout << "++++++++++++++++++++++++++" << std::endl;
-  std::cout << "WellElementSubRegion = " << getName() << std::endl;
-  std::cout << "MPI rank = " << MpiWrapper::Comm_rank( MPI_COMM_GEOSX ) << std::endl;
-  std::cout << "Number of local well elements = " << size() << std::endl;
+  GEOSX_LOG_RANK( "++++++++++++++++++++++++++" );
+  GEOSX_LOG_RANK( "WellElementSubRegion = " << getName() );
+  GEOSX_LOG_RANK( "Number of local well elements = " << size() );
 
   for( localIndex iwelem = 0; iwelem < size(); ++iwelem )
   {
-
-    std::cout << "m_nextWellElementIndex[" << iwelem << "] = "
-              << m_nextWellElementIndex[iwelem]
-              << std::endl;
-
-    std::cout << "m_nextWellElementIndexGlobal[" << iwelem << "] = "
-              << m_nextWellElementIndexGlobal[iwelem]
-              << std::endl;
-
-    std::cout << "m_elementCenter[" << iwelem << "] = "
-              << m_elementCenter[iwelem]
-              << std::endl;
-
-    std::cout << "m_localToGlobalMap[" << iwelem << "] = "
-              << m_localToGlobalMap[iwelem]
-              << std::endl;
-
-    std::cout << "elemStatusGlobal[" << m_localToGlobalMap[iwelem] << "] = "
-              << elemStatusGlobal[m_localToGlobalMap[iwelem] - elemOffsetGlobal]
-              << std::endl;
-
-    std::cout << "m_topElementIndex = " << m_topWellElementIndex << std::endl;
-
+    GEOSX_LOG_RANK_VAR( iwelem );
+    GEOSX_LOG_RANK_VAR( m_nextWellElementIndex[iwelem] );
+    GEOSX_LOG_RANK_VAR( m_nextWellElementIndexGlobal[iwelem] );
+    GEOSX_LOG_RANK_VAR( m_elementCenter[iwelem] );
+    GEOSX_LOG_RANK_VAR( m_localToGlobalMap[iwelem] );
+    GEOSX_LOG_RANK_VAR( elemStatusGlobal[m_localToGlobalMap[iwelem] - elemOffsetGlobal] );
+    GEOSX_LOG_RANK_VAR( m_topWellElementIndex );
   }
 }
 
@@ -698,38 +682,20 @@ void WellElementSubRegion::DebugWellElementSubRegionsAfterSetupCommunications() 
     return;
   }
 
-  std::cout << std::endl;
-  std::cout << "++++++++++++++++++++++++++" << std::endl;
-  std::cout << "WellElementSubRegion = " << getName() << std::endl;
-  std::cout << "MPI rank = " << MpiWrapper::Comm_rank( MPI_COMM_GEOSX ) << std::endl;
-  std::cout << "Number of local well elements = " << size() << std::endl;
-  std::cout << "Number of ghost well elements = " << this->GetNumberOfGhosts() << std::endl;
+  GEOSX_LOG_RANK( "++++++++++++++++++++++++++" );
+  GEOSX_LOG_RANK( "WellElementSubRegion = " << getName() );
+  GEOSX_LOG_RANK( "Number of local well elements = " << size() );
+  GEOSX_LOG_RANK( "Number of ghost well elements = " << this->GetNumberOfGhosts() );
 
   for( localIndex iwelem = 0; iwelem < size(); ++iwelem )
   {
-
-    std::cout << "m_nextWellElementIndex[" << iwelem << "] = "
-              << m_nextWellElementIndex[iwelem]
-              << std::endl;
-
-    std::cout << "m_nextWellElementIndexGlobal[" << iwelem << "] = "
-              << m_nextWellElementIndexGlobal[iwelem]
-              << std::endl;
-
-    std::cout << "m_elementCenter[" << iwelem << "] = "
-              << m_elementCenter[iwelem]
-              << std::endl;
-
-    std::cout << "m_localToGlobalMap[" << iwelem << "] = "
-              << m_localToGlobalMap[iwelem]
-              << std::endl;
-
-    std::cout << "m_ghostRank[" << iwelem << "] = "
-              << m_ghostRank[iwelem]
-              << std::endl;
-
-    std::cout << "m_topElementIndex = " << m_topWellElementIndex << std::endl;
-
+    GEOSX_LOG_RANK_VAR( iwelem );
+    GEOSX_LOG_RANK_VAR( m_nextWellElementIndex[iwelem] );
+    GEOSX_LOG_RANK_VAR( m_nextWellElementIndexGlobal[iwelem] );
+    GEOSX_LOG_RANK_VAR( m_elementCenter[iwelem] );
+    GEOSX_LOG_RANK_VAR( m_localToGlobalMap[iwelem] );
+    GEOSX_LOG_RANK_VAR( m_ghostRank[iwelem] );
+    GEOSX_LOG_RANK_VAR( m_topWellElementIndex );
   }
 }
 

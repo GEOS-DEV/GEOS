@@ -68,12 +68,12 @@ void PoroelasticSolver::RegisterDataOnMesh( dataRepository::Group * const MeshBo
   for( auto & mesh : MeshBodies->GetSubGroups() )
   {
     ElementRegionManager * const elemManager = mesh.second->group_cast< MeshBody * >()->getMeshLevel( 0 )->getElemManager();
-    elemManager->forElementSubRegions< CellElementSubRegion,
-                                       FaceElementSubRegion >( [&]( auto * const elementSubRegion ) -> void
+
+    elemManager->forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&]( ElementSubRegionBase & elementSubRegion )
     {
-      elementSubRegion->template registerWrapper< array1d< real64 > >( viewKeyStruct::totalMeanStressString )->
+      elementSubRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::totalMeanStressString )->
         setDescription( "Total Mean Stress" );
-      elementSubRegion->template registerWrapper< array1d< real64 > >( viewKeyStruct::oldTotalMeanStressString )->
+      elementSubRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::oldTotalMeanStressString )->
         setDescription( "Total Mean Stress" );
     } );
   }
@@ -355,40 +355,39 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
       localIndex const numQuadraturePoints = feDiscretization->m_finiteElement->n_quadrature_points();
 
 
-      forall_in_range< parallelHostPolicy >( 0, cellElementSubRegion->size(),
-                                             [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+      forAll< parallelHostPolicy >( cellElementSubRegion->size(), [=] ( localIndex const ei )
+      {
+
+        R1Tensor u_local[10];
+
+        for( localIndex i = 0; i < numNodesPerElement; ++i )
         {
+          localIndex const nodeIndex = elemsToNodes( ei, i );
+          u_local[ i ] = u[ nodeIndex ];
+        }
 
-          R1Tensor u_local[10];
+        real64 effectiveMeanStress = 0.0;
+        for( localIndex q=0; q<numQuadraturePoints; ++q )
+        {
+          effectiveMeanStress += ( stress( ei, q, 0 ) + stress( ei, q, 1 ) + stress( ei, q, 2 ) );
+        }
+        effectiveMeanStress /= ( 3 * numQuadraturePoints );
 
-          for( localIndex i = 0; i < numNodesPerElement; ++i )
-          {
-            localIndex const nodeIndex = elemsToNodes( ei, i );
-            u_local[ i ] = u[ nodeIndex ];
-          }
+        totalMeanStress[ei] = effectiveMeanStress - biotCoefficient * (pres[ei] + dPres[ei]);
 
-          real64 effectiveMeanStress = 0.0;
-          for( localIndex q=0; q<numQuadraturePoints; ++q )
-          {
-            effectiveMeanStress += ( stress( ei, q, 0 ) + stress( ei, q, 1 ) + stress( ei, q, 2 ) );
-          }
-          effectiveMeanStress /= ( 3 * numQuadraturePoints );
+        poro[ei] = poroOld[ei] + (biotCoefficient - poroOld[ei]) / bulkModulus[ei]
+                   * (totalMeanStress[ei] - oldTotalMeanStress[ei] + dPres[ei]);
 
-          totalMeanStress[ei] = effectiveMeanStress - biotCoefficient * (pres[ei] + dPres[ei]);
+        // update element volume
+        R1Tensor Xlocal[ElementRegionManager::maxNumNodesPerElem];
+        for( localIndex a = 0; a < elemsToNodes.size( 1 ); ++a )
+        {
+          Xlocal[a] = X[elemsToNodes[ei][a]];
+          Xlocal[a] += u[elemsToNodes[ei][a]];
+        }
 
-          poro[ei] = poroOld[ei] + (biotCoefficient - poroOld[ei]) / bulkModulus[ei]
-                     * (totalMeanStress[ei] - oldTotalMeanStress[ei] + dPres[ei]);
-
-          // update element volume
-          R1Tensor Xlocal[ElementRegionManager::maxNumNodesPerElem];
-          for( localIndex a = 0; a < elemsToNodes.size( 1 ); ++a )
-          {
-            Xlocal[a] = X[elemsToNodes[ei][a]];
-            Xlocal[a] += u[elemsToNodes[ei][a]];
-          }
-
-          dVol[ei] = computationalGeometry::HexVolume( Xlocal ) - volume[ei];
-        } );
+        dVol[ei] = computationalGeometry::HexVolume( Xlocal ) - volume[ei];
+      } );
     }
   }
 

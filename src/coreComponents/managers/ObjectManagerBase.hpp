@@ -21,7 +21,7 @@
 
 #include "dataRepository/Group.hpp"
 #include "common/TimingMacros.hpp"
-#include "mpiCommunications/MpiWrapper.hpp"
+#include "mpiCommunications/NeighborData.hpp"
 
 namespace geosx
 {
@@ -211,15 +211,10 @@ public:
 
   void SetGhostRankForSenders( int const neighborRank )
   {
-    Group * const neighborData = GetGroup( groupKeys().neighborData )->GetGroup( std::to_string( neighborRank ) );
+    arrayView1d< localIndex const > const & ghostsToSend = getNeighborData( neighborRank ).ghostsToSend();
+    array1d< std::pair< globalIndex, int > > & nonLocalGhosts = getNeighborData( neighborRank ).nonLocalGhosts();
 
-    arrayView1d< localIndex const > const & indicesToSend =
-      neighborData->getReference< array1d< localIndex > >( viewKeys().ghostsToSend );
-
-    array1d< std::pair< globalIndex, int > > & nonLocalGhosts =
-      neighborData->getReference< array1d< std::pair< globalIndex, int > > >( "nonLocalGhosts" );
-
-    for( localIndex const index : indicesToSend )
+    for( localIndex const index : ghostsToSend )
     {
       integer & owningRank = m_ghostRank[ index ];
       if( owningRank >= 0 )
@@ -328,13 +323,10 @@ public:
     static constexpr auto matchedPartitionBoundaryObjectsString = "matchedPartitionBoundaryObjects";
     static constexpr auto parentIndexString = "parentIndex";
 
-    dataRepository::ViewKey adjacencyList = { adjacencyListString };
     dataRepository::ViewKey childIndex = { childIndexString };
     dataRepository::ViewKey domainBoundaryIndicator = { domainBoundaryIndicatorString };
     dataRepository::ViewKey externalSet = { externalSetString };
     dataRepository::ViewKey ghostRank = { ghostRankString };
-    dataRepository::ViewKey ghostsToSend = { ghostsToSendString };
-    dataRepository::ViewKey ghostsToReceive = { ghostsToReceiveString };
     dataRepository::ViewKey globalToLocalMap = { globalToLocalMapString };
     dataRepository::ViewKey isExternal = { isExternalString };
     dataRepository::ViewKey localToGlobalMap = { localToGlobalMapString };
@@ -353,7 +345,6 @@ public:
     static constexpr auto setsString = "sets";
     static constexpr auto neighborDataString = "neighborData";
     dataRepository::GroupKey sets = { setsString };
-    dataRepository::GroupKey neighborData = { neighborDataString };
   } m_ObjectManagerBaseGroupKeys;
 
 
@@ -365,41 +356,104 @@ public:
 
 
 
-  Group * sets()             {return &m_sets;}
-  Group const * sets() const {return &m_sets;}
+  Group & sets()
+  { return m_sets; }
+
+  Group const & sets() const
+  { return m_sets; }
 
   SortedArray< localIndex > & externalSet()
-  {return m_sets.getReference< SortedArray< localIndex > >( m_ObjectManagerBaseViewKeys.externalSet );}
+  { return m_sets.getReference< SortedArray< localIndex > >( m_ObjectManagerBaseViewKeys.externalSet ); }
 
   SortedArrayView< localIndex const > const & externalSet() const
-  {return m_sets.getReference< SortedArray< localIndex > >( m_ObjectManagerBaseViewKeys.externalSet );}
+  { return m_sets.getReference< SortedArray< localIndex > >( m_ObjectManagerBaseViewKeys.externalSet ); }
 
-  integer_array & isExternal()
+  void updateGlobalToLocalMap( localIndex const lid )
+  {
+    globalIndex const gid = m_localToGlobalMap[ lid ];
+    m_localMaxGlobalIndex = std::max( m_localMaxGlobalIndex, gid );
+    m_globalToLocalMap[ gid ] = lid;
+  }
+
+  arrayView1d< globalIndex > const & localToGlobalMap()
+  { return m_localToGlobalMap; }
+
+  arrayView1d< globalIndex const > const & localToGlobalMap() const
+  { return m_localToGlobalMap; }
+
+  unordered_map< globalIndex, localIndex > const & globalToLocalMap() const
+  { return m_globalToLocalMap; }
+
+  localIndex globalToLocalMap( globalIndex const gid ) const
+  { return m_globalToLocalMap.at( gid ); }
+
+  arrayView1d< integer > const & isExternal()
   { return this->m_isExternal; }
 
-  integer_array const & isExternal() const
+  arrayView1d< integer const > const & isExternal() const
   { return this->m_isExternal; }
 
-  integer_array & GhostRank()
+  arrayView1d< integer > const & ghostRank()
   { return this->m_ghostRank; }
 
-  integer_array const & GhostRank() const
+  arrayView1d< integer const > const & ghostRank() const
   { return this->m_ghostRank; }
 
+  NeighborData & getNeighborData( int const rank )
+  { return m_neighborData.at( rank ); }
+
+  NeighborData const & getNeighborData( int const rank ) const
+  { return m_neighborData.at( rank ); }
+
+  void addNeighbor( int const rank )
+  {
+    std::string const & rankString = std::to_string( rank );
+    m_neighborData.emplace( std::piecewise_construct, std::make_tuple( rank ), std::make_tuple( rankString, &m_neighborGroup ) );
+    m_neighborGroup.RegisterGroup( rankString, &getNeighborData( rank ), false );
+  }
+
+  void removeNeighbor( int const rank )
+  {
+    m_neighborGroup.deregisterGroup( getNeighborData( rank ).getName() );
+    m_neighborData.erase( rank );
+  }
+
+  globalIndex maxGlobalIndex() const
+  { return m_maxGlobalIndex; }
+
+protected:
+  /// Group that holds object sets.
   Group m_sets;
 
-  globalIndex_array m_localToGlobalMap;
-  unordered_map< globalIndex, localIndex >  m_globalToLocalMap;
-  integer_array m_isExternal;
-  integer_array m_ghostRank;
+  /// Group that holds all the NeighborData objects.
+  Group m_neighborGroup;
 
+  /// Contains the global index of each object.
+  array1d< globalIndex > m_localToGlobalMap;
+
+  /// Map from object global index to the local index.
+  unordered_map< globalIndex, localIndex > m_globalToLocalMap;
+
+  /// Array that holds if an object is external.
+  array1d< integer > m_isExternal;
+
+  /// Array that holds the ghost information about each object.
+  /// A value of -2 means that the object is owned locally and not communicated.
+  /// A value of -1 means that the object is owned locally and is communicated.
+  /// A positive value means that the object is a ghost and is owned by that rank.
+  array1d< integer > m_ghostRank;
+
+  /// A map from rank to the associated NeighborData object.
+  unordered_map< int, NeighborData > m_neighborData;
+
+  /// Factor by which to overallocate when adding objects.
   real64 m_overAllocationFactor = 1.1;
 
+  /// The maximum global index of all objects across all rank.
   globalIndex m_maxGlobalIndex = -1;
 
-//  localIndex_array m_ghostToSend;
-// localIndex_array m_ghostToReceive;
-
+  /// The maximum global index of any object of all objects on this rank.
+  globalIndex m_localMaxGlobalIndex = -1;
 };
 
 

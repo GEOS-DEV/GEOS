@@ -322,8 +322,7 @@ void SinglePhaseBase::UpdateMobility( Group * const dataGroup ) const
   arrayView2d< real64 const > const & dVisc_dPres =
     fluid->template getReference< array2d< real64 > >( FLUIDBASE::viewKeyStruct::dVisc_dPresString );
 
-  SinglePhaseKernels::MobilityKernel::Launch( 0,
-                                              dataGroup->size(),
+  SinglePhaseKernels::MobilityKernel::Launch( dataGroup->size(),
                                               dens,
                                               dDens_dPres,
                                               visc,

@@ -48,14 +48,6 @@ struct MeshHelper< DofManager::Location::Node >
 
   template< typename MANAGER >
   using MapType = typename MANAGER::NodeMapType;
-
-  HAS_ALIAS( NodeMapType )
-
-  template< typename MANAGER >
-  static bool constexpr hasMapTypeAlias()
-  {
-    return has_alias_NodeMapType< MANAGER >::value;
-  }
 };
 
 template<>
@@ -72,14 +64,6 @@ struct MeshHelper< DofManager::Location::Edge >
 
   template< typename MANAGER >
   using MapType = typename MANAGER::EdgeMapType;
-
-  HAS_ALIAS( EdgeMapType )
-
-  template< typename MANAGER >
-  static bool constexpr hasMapTypeAlias()
-  {
-    return has_alias_EdgeMapType< MANAGER >::value;
-  }
 };
 
 template<>
@@ -96,14 +80,6 @@ struct MeshHelper< DofManager::Location::Face >
 
   template< typename MANAGER >
   using MapType = typename MANAGER::FaceMapType;
-
-  HAS_ALIAS( FaceMapType )
-
-  template< typename MANAGER >
-  static bool constexpr hasMapTypeAlias()
-  {
-    return has_alias_FaceMapType< MANAGER >::value;
-  }
 };
 
 template<>
@@ -119,14 +95,6 @@ struct MeshHelper< DofManager::Location::Elem >
 
   template< typename MANAGER >
   using MapType = typename MANAGER::ElemMapType;
-
-  HAS_ALIAS( ElemMapType )
-
-  template< typename MANAGER >
-  static bool constexpr hasMapTypeAlias()
-  {
-    return has_alias_ElemMapType< MANAGER >::value;
-  }
 };
 
 
@@ -177,16 +145,8 @@ SET_MAX_MESH_INCIDENCE( Elem, Face, 6 );
 
 #undef SET_MAX_MESH_INCIDENCE
 
-
-template< DofManager::Location LOC, typename MANAGER, bool >
-struct MapTypeHelper
-{
-  //using type = FixedOneToManyRelation; // dummy type
-  using type = array1d< array1d< localIndex > >;
-};
-
 template< DofManager::Location LOC, typename MANAGER >
-struct MapTypeHelper< LOC, MANAGER, true >
+struct MapTypeHelper
 {
   using type = typename MeshHelper< LOC >::template MapType< MANAGER >;
 };
@@ -194,7 +154,7 @@ struct MapTypeHelper< LOC, MANAGER, true >
 // return dummy type if target manager type does not declare a type alias to map to LOC objects
 // this allows all switchyards to compile, but one shouldn't attempt to access a non-existent map
 template< DofManager::Location LOC, typename MANAGER >
-using MapType = typename MapTypeHelper< LOC, MANAGER, MeshHelper< LOC >::template hasMapTypeAlias< MANAGER >() >::type;
+using MapType = typename MapTypeHelper< LOC, MANAGER >::type;
 
 // some helper crust to extract underlying type from InterObjectRelation and the likes
 template< typename T, bool >
@@ -209,10 +169,10 @@ struct BaseTypeHelper< T, true >
   using type = typename T::base_type;
 };
 
-HAS_ALIAS( base_type )
+HAS_ALIAS( base_type );
 
 template< typename MAP >
-using BaseType = typename BaseTypeHelper< MAP, has_alias_base_type< MAP >::value >::type;
+using BaseType = typename BaseTypeHelper< MAP, HasAlias_base_type< MAP > >::type;
 
 /**
  * @brief Helper struct that specializes access to various map types
@@ -295,17 +255,17 @@ struct MapHelperImpl< array1d< array1d< T > > >
 template< typename T >
 struct MapHelperImpl< ArrayOfArrays< T > >
 {
-  static localIndex size0( ArrayOfArrays< T > const & map )
+  static localIndex size0( ArrayOfArraysView< T const > const & map )
   {
     return map.size();
   }
 
-  static localIndex size1( ArrayOfArrays< T > const & map, localIndex const i0 )
+  static localIndex size1( ArrayOfArraysView< T const > const & map, localIndex const i0 )
   {
     return map.sizeOfArray( i0 );
   }
 
-  static T const & value( ArrayOfArrays< T > const & map, localIndex const i0, localIndex const i1 )
+  static T const & value( ArrayOfArraysView< T const > const & map, localIndex const i0, localIndex const i1 )
   {
     return map( i0, i1 );
   }
@@ -333,17 +293,17 @@ struct MapHelperImpl< array1d< SortedArray< T > > >
 template< typename T >
 struct MapHelperImpl< ArrayOfSets< T > >
 {
-  static localIndex size0( ArrayOfSets< T > const & map )
+  static localIndex size0( ArrayOfSetsView< T const > const & map )
   {
     return map.size();
   }
 
-  static localIndex size1( ArrayOfSets< T > const & map, localIndex const i0 )
+  static localIndex size1( ArrayOfSetsView< T const > const & map, localIndex const i0 )
   {
     return map.sizeOfSet( i0 );
   }
 
-  static T const & value( ArrayOfSets< T > const & map, localIndex const i0, localIndex const i1 )
+  static T const & value( ArrayOfSetsView< T const > const & map, localIndex const i0, localIndex const i1 )
   {
     return map( i0, i1 );
   }
@@ -500,7 +460,7 @@ struct MeshLoopHelper< LOC, LOC, VISIT_GHOSTS >
 
     // get access to location ghost rank (we don't want to visit ghosted locations
     ObjectManagerLoc const * const objectManager = getObjectManager< LOC >( meshLevel );
-    array1d< integer > const & ghostRank = objectManager->GhostRank();
+    arrayView1d< integer const > const & ghostRank = objectManager->ghostRank();
 
     // create an array to track previously visited locations (to avoid multiple visits)
     array1d< bool > locationsVisited( objectManager->size() );
@@ -511,18 +471,18 @@ struct MeshLoopHelper< LOC, LOC, VISIT_GHOSTS >
     locationsToVisit.reserve( objectManager->size() );
 
     meshLevel->getElemManager()->
-      forElementSubRegions< SUBREGIONTYPES... >( regions, [&]( auto const * const subRegion )
+      forElementSubRegions< SUBREGIONTYPES... >( regions, [&]( auto const & subRegion )
     {
       // derive some more useful, subregion-dependent type aliases
-      using ElementSubRegionType = std::remove_pointer_t< decltype( subRegion ) >;
+      using ElementSubRegionType = std::remove_reference_t< decltype( subRegion ) >;
       using ElemToLocMapType = MapType< LOC, ElementSubRegionType >;
 
       // get access to element-to-location map
       auto const & elemToLocMap =
-        subRegion->template getReference< ElemToLocMapType >( MeshHelper< LOC >::mapViewKey );
+        subRegion.template getReference< ElemToLocMapType >( MeshHelper< LOC >::mapViewKey );
 
       // loop over all elements (including ghosts, which may be necessary to access some locally owned locations)
-      for( localIndex ei = 0; ei < subRegion->size(); ++ei )
+      for( localIndex ei = 0; ei < subRegion.size(); ++ei )
       {
         // loop over all locations incident on an element
         for( localIndex a = 0; a < MapHelper< ElemToLocMapType >::size1( elemToLocMap, ei ); ++a )
@@ -670,19 +630,19 @@ struct MeshLoopHelper< DofManager::Location::Elem, CONN_LOC, VISIT_GHOSTS >
     meshLevel->getElemManager()->
       forElementSubRegionsComplete< SUBREGIONTYPES... >( regions, [&]( localIndex const er,
                                                                        localIndex const esr,
-                                                                       ElementRegionBase const * const GEOSX_UNUSED_PARAM( region ),
-                                                                       auto const * const subRegion )
+                                                                       ElementRegionBase const &,
+                                                                       auto const & subRegion )
     {
       // derive subregion-dependent map type
-      using ElemToConnMapType = MapType< CONN_LOC, TYPEOFPTR( subRegion ) >;
+      using ElemToConnMapType = MapType< CONN_LOC, TYPEOFREF( subRegion ) >;
 
       // get access to element-to-location map
       auto const & elemToConnMap =
-        subRegion->template getReference< ElemToConnMapType >( MeshHelper< CONN_LOC >::mapViewKey );
+        subRegion.template getReference< ElemToConnMapType >( MeshHelper< CONN_LOC >::mapViewKey );
 
-      arrayView1d< integer const > const & elemGhostRank = subRegion->GhostRank();
+      arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
 
-      for( localIndex ei = 0; ei < subRegion->size(); ++ei )
+      for( localIndex ei = 0; ei < subRegion.size(); ++ei )
       {
         if( VISIT_GHOSTS || elemGhostRank[ei] < 0 )
         {
@@ -709,17 +669,18 @@ struct MeshLoopHelper< DofManager::Location::Elem, DofManager::Location::Elem, V
   template< typename ... SUBREGIONTYPES, typename LAMBDA >
   static void visit( MeshLevel * const meshLevel,
                      array1d< string > const & regions,
-                     LAMBDA lambda )
+                     LAMBDA && lambda )
   {
     meshLevel->getElemManager()->
       forElementSubRegionsComplete< SUBREGIONTYPES... >( regions, [&]( localIndex const er,
                                                                        localIndex const esr,
-                                                                       ElementRegionBase const * const GEOSX_UNUSED_PARAM( region ),
-                                                                       auto const * const subRegion )
+                                                                       ElementRegionBase const &,
+                                                                       ElementSubRegionBase const & subRegion )
     {
-      arrayView1d< integer const > const & elemGhostRank = subRegion->GhostRank();
+      arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
+      localIndex const numElems = subRegion.size();
 
-      for( localIndex ei = 0; ei < subRegion->size(); ++ei )
+      for( localIndex ei = 0; ei < numElems; ++ei )
       {
         if( VISIT_GHOSTS || elemGhostRank[ei] < 0 )
         {
@@ -879,9 +840,9 @@ struct IndexArrayHelper< INDEX, DofManager::Location::Elem >
           string const & description,
           string_array const & regions )
   {
-    mesh->getElemManager()->template forElementSubRegions< SUBREGIONTYPES... >( regions, [&]( auto * const subRegion )
+    mesh->getElemManager()->template forElementSubRegions< SUBREGIONTYPES... >( regions, [&]( auto & subRegion )
     {
-      subRegion->template registerWrapper< ArrayType >( key )->
+      subRegion.template registerWrapper< ArrayType >( key )->
         setApplyDefaultValue( -1 )->
         setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
         setRestartFlags( dataRepository::RestartFlags::NO_WRITE )->
@@ -916,9 +877,9 @@ struct IndexArrayHelper< INDEX, DofManager::Location::Elem >
           string const & key,
           string_array const & regions )
   {
-    mesh->getElemManager()->template forElementSubRegions< SUBREGIONTYPES... >( regions, [&]( auto * const subRegion )
+    mesh->getElemManager()->template forElementSubRegions< SUBREGIONTYPES... >( regions, [&]( ElementSubRegionBase & subRegion )
     {
-      subRegion->deregisterWrapper( key );
+      subRegion.deregisterWrapper( key );
     } );
   }
 };
