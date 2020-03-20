@@ -200,17 +200,13 @@ public:
 
     static constexpr auto bcComponentConcentrationString      = "bcComponentConcentration";
 
-    static constexpr auto updatedComponentConcentrationString      = "updatedComponentConcentration";
-
     // these are used to store last converged time step values
-    static constexpr auto oldProppantConcentrationString  = "oldProppantConcentration";
+
     static constexpr auto oldComponentDensityString  = "oldComponentDensity";
 
     static constexpr auto updateProppantPackingString  = "updateProppantPacking";
 
     static constexpr auto cellBasedFluxString  = "cellBasedFlux";
-
-    static constexpr auto isInterfaceElementString   = "isInterfaceElement";
 
     static constexpr auto isProppantBoundaryString   = "isProppantBoundary";
 
@@ -266,7 +262,7 @@ private:
    * @brief Function to update fluid properties
    * @param domain the domain
    */
-  void UpdateFluidModel( Group * const dataGroup );
+  void UpdateFluidDensityAndViscosity( Group * const dataGroup );
 
   /**
    * @brief Function to update fluid component density 
@@ -316,8 +312,6 @@ private:
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_componentConcentration;
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_deltaComponentConcentration;
 
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_updatedComponentConcentration;
-
   ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor > > m_cellBasedFlux;
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_proppantLiftFlux;
@@ -328,8 +322,6 @@ private:
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< integer > > m_isProppantBoundaryElement;
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d< integer > > m_isInterfaceElement;
-
   ElementRegionManager::ElementViewAccessor< arrayView1d< integer > > m_isProppantMobile;
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_poroMultiplier;
@@ -338,7 +330,6 @@ private:
 
   /// views into backup fields
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_proppantConcentrationOld;
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_componentDensityOld;
 
   /// views into material fields

@@ -109,20 +109,6 @@ struct FluxKernel
   /**
    * @brief launches the kernel to assemble the flux contributions to the linear system.
    * @tparam STENCIL_TYPE The type of the stencil that is being used.
-   * @param[in] stencil The stencil object.
-   * @param[in] dt The timestep for the integration step.
-   * @param[in] fluidIndex The index of the fluid being fluxed.
-   * @param[in] gravityFlag Flag to indicate whether or not to use gravity.
-   * @param[in] dofNumber The dofNumbers for each element
-   * @param[in] pres The pressures in each element
-   * @param[in] dPres The change in pressure for each element
-   * @param[in] gravDepth The factor for gravity calculations (g*H)
-   * @param[in] dens The material density in each element
-   * @param[in] dDens_dPres The change in material density for each element
-   * @param[in] mob The fluid mobility in each element
-   * @param[in] dMob_dPres The derivative of mobility wrt pressure in each element
-   * @param[out] jacobian The linear system matrix
-   * @param[out] residual The linear system residual
    */
   template< typename STENCIL_TYPE >
   static void
@@ -164,7 +150,6 @@ struct FluxKernel
           ElementViewConst< arrayView1d< real64 const > > const & proppantPackVf,
           ElementViewConst< arrayView1d< real64 const > > const & aperture,
           ElementViewConst< arrayView1d< real64 const > > const & proppantLiftFlux,
-          ElementViewConst< arrayView1d< integer const > > const & isInterfaceElement,
           ParallelMatrix * const jacobian,
           ParallelVector * const residual );
 
@@ -224,7 +209,6 @@ struct FluxKernel
                    arrayView1d< real64 const > const & GEOSX_UNUSED_PARAM( proppantPackVf ),
                    arrayView1d< real64 const > const & aperture,
                    arrayView1d< real64 const > const & proppantLiftFlux,
-                   arrayView1d< integer const > const &,
                    R1Tensor const & unitGravityVector,
                    arrayView1d< R1Tensor const > const & transTMultiplier,
                    real64 const dt,
@@ -1209,14 +1193,6 @@ struct ProppantPackVolumeKernel
                                   ElementView< arrayView1d< real64 > > const & proppantExcessPackV );
 
 
-  template< typename STENCIL_TYPE >
-  static void
-  LaunchInterfaceElementUpdate( STENCIL_TYPE const & stencil,
-                                R1Tensor const unitGravityVector,
-                                ElementView< arrayView1d< integer > > const & isProppantMobile,
-                                ElementView< arrayView1d< integer > > const & isInterfaceElement );
-
-
   inline static void
   ComputeProppantPackVolume( localIndex const numElems,
                              real64 const dt,
@@ -1367,75 +1343,6 @@ struct ProppantPackVolumeKernel
       }
 
     }
-  }
-
-  inline static void
-  UpdateInterfaceElement( localIndex const numElems,
-                          arraySlice1d< localIndex const > const & stencilElementIndices,
-                          arraySlice1d< real64 const > const & stencilWeights,
-                          arraySlice1d< R1Tensor const > const & stencilCellCenterToEdgeCenters,
-                          R1Tensor const unitGravityVector,
-                          arrayView1d< integer const > const & isProppantMobile,
-                          arrayView1d< integer > const & isInterfaceElement )
-  {
-
-    integer faceIndex = -1;
-
-    static constexpr real64 TINY = 1e-10;
-
-    real64 edgeLength = 12.0 * stencilWeights[0] * stencilCellCenterToEdgeCenters[0].L2_Norm();
-
-    if( numElems == 1 )
-    {
-
-      localIndex const ei  = stencilElementIndices[0];
-
-      real64 stencilEdgeToFaceDownDistance =
-        -Dot( stencilCellCenterToEdgeCenters[0], unitGravityVector ) * edgeLength / stencilCellCenterToEdgeCenters[0].L2_Norm();
-
-      if( stencilEdgeToFaceDownDistance < -TINY && isProppantMobile[ei] == 1 )
-        // bottom face element
-        faceIndex = 0;
-
-    }
-    else if( numElems == 2 )
-    {
-
-      localIndex const ei0  = stencilElementIndices[0];
-      localIndex const ei1  = stencilElementIndices[1];
-
-      real64 stencilEdgeToFaceDownDistance0 =
-        -Dot( stencilCellCenterToEdgeCenters[0], unitGravityVector ) * edgeLength / stencilCellCenterToEdgeCenters[0].L2_Norm();
-
-      real64 stencilEdgeToFaceDownDistance1 =
-        -Dot( stencilCellCenterToEdgeCenters[1], unitGravityVector ) * edgeLength / stencilCellCenterToEdgeCenters[1].L2_Norm();
-
-      //0: top  1: bottom
-
-      if( stencilEdgeToFaceDownDistance0 < -TINY && stencilEdgeToFaceDownDistance1 > TINY && isProppantMobile[ei0] == 1 && isProppantMobile[ei1] == 0 )
-      {
-
-        faceIndex = 0;
-
-      }
-
-      //0: bottom  1: top
-
-      if( stencilEdgeToFaceDownDistance0 > TINY && stencilEdgeToFaceDownDistance1 < -TINY && isProppantMobile[ei1] == 1 && isProppantMobile[ei0] == 0 )
-      {
-
-        faceIndex = 1;
-
-      }
-    }
-
-    if( faceIndex >= 0 )
-    {
-
-      isInterfaceElement[faceIndex] = 1;
-
-    }
-
   }
 
 
