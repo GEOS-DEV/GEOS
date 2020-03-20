@@ -18,6 +18,9 @@ length=${#paths_array[@]}
 exit_code=0
 unsync_submodules=()
 
+# Do not pull large files
+git lfs uninstall &> /dev/null
+
 for (( i=0; i<$length; i++))
 do
   # Just the submodule name
@@ -36,12 +39,12 @@ do
   # Check hashes
   if [ $excluded -eq 0 ]
   then
-    # Do quick 1 second pull of submodule to get .git files.
-    timeout 1s git submodule update --quiet --init ${paths_array[$i]}
+    # Pull submodule to get .git files.
+    git submodule update --quiet --init ${paths_array[$i]}
 
     # Determine if develop or master is main branch of submodule.
-    if $( cd ${paths_array[$i]} && \
-      git rev-parse --quiet --verify origin/develop > /dev/null)
+    if $( git -C ${paths_array[$i]} rev-parse --quiet --verify \
+          origin/develop &> /dev/null)
     then 
       main_branch="origin/develop"
     else
@@ -49,7 +52,7 @@ do
     fi
 
     # Submodule main hash
-    main_hash="$( cd ${paths_array[$i]} && git rev-parse $main_branch )"
+    main_hash="$( git -C ${paths_array[$i]} rev-parse $main_branch )"
 
     # PR hash with prefixed character removed
     pr_hash="$( echo ${pr_hashes_array[$i]} | tr -cd [:alnum:] )"
