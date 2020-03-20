@@ -14,28 +14,18 @@
 
 #include "gtest/gtest.h"
 
-#include "SetSignalHandling.hpp"
-#include "stackTrace.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "managers/ProblemManager.hpp"
 #include "managers/EventManager.hpp"
 #include "managers/DomainPartition.hpp"
+#include "managers/initialization.hpp"
 #include "meshUtilities/MeshManager.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "mesh/MeshForLoopInterface.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/SimpleSolvers/LaplaceFEM.hpp"
 
 using namespace geosx;
-
-namespace
-{
-int global_argc;
-char * * global_argv;
-int mpiRank = 0;
-int mpiSize = 1;
-}
 
 class LaplaceFEMTest : public ::testing::Test
 {
@@ -273,38 +263,11 @@ int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
 
-#ifdef GEOSX_USE_MPI
-  MPI_Init( &argc, &argv );
-
-  MPI_Comm_dup( MPI_COMM_WORLD, &MPI_COMM_GEOSX );
-
-  mpiRank = CommunicationTools::Comm_rank( MPI_COMM_GEOSX );
-  mpiSize = CommunicationTools::Comm_size( MPI_COMM_GEOSX );
-
-  logger::InitializeLogger( MPI_COMM_GEOSX );
-#else
-  logger::InitializeLogger() :
-#endif
-
-  cxx_utilities::setSignalHandling( cxx_utilities::handler1 );
-
-  global_argc = argc;
-  global_argv = new char *[static_cast< unsigned int >(global_argc)];
-  for( int i=0; i<argc; ++i )
-  {
-    global_argv[i] = argv[i];
-  }
+  geosx::basicSetup( argc, argv );
 
   int const result = RUN_ALL_TESTS();
 
-  delete[] global_argv;
-
-  logger::FinalizeLogger();
-
-#ifdef GEOSX_USE_MPI
-  MPI_Comm_free( &MPI_COMM_GEOSX );
-  MPI_Finalize();
-#endif
+  geosx::basicCleanup();
 
   return result;
 }

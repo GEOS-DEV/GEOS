@@ -70,7 +70,14 @@ namespace timingHelpers
 /// Mark the end of timed statements group
 #define GEOSX_MARK_END(name) CALI_MARK_END(STRINGIZE(name))
 
-#else
+/// Mark the beginning of function, only useful when you don't want to or can't mark the whole function.
+#define GEOSX_MARK_FUNCTION_BEGIN CALI_MARK_FUNCTION_BEGIN
+
+/// Mark the end of function, only useful when you don't want to or can't mark the whole function.
+#define GEOSX_MARK_FUNCTION_END CALI_MARK_FUNCTION_END
+
+#else // GEOSX_USE_CALIPER
+
 /// @cond DO_NOT_DOCUMENT
 #define GEOSX_MARK_FUNCTION_TAG(name)
 #define GEOSX_MARK_FUNCTION_SCOPED
@@ -81,8 +88,12 @@ namespace timingHelpers
 #define GEOSX_MARK_LOOP_ITERATION(loop, iter)
 #define GEOSX_MARK_BEGIN(name)
 #define GEOSX_MARK_END(name)
+
+#define GEOSX_MARK_FUNCTION_BEGIN
+#define GEOSX_MARK_FUNCTION_END
 /// @endcond
-#endif
+
+#endif // GEOSX_USE_CALIPER
 
 /// Get current time of day as a floating point number of seconds in a variable @p time.
 #ifdef GEOSX_USE_TIMERS
@@ -98,6 +109,4 @@ namespace timingHelpers
 #define GEOSX_GET_TIME( time )
 #endif
 
-
-
-#endif
+#endif // GEOSX_COMMON_TIMINGMACROS_HPP_

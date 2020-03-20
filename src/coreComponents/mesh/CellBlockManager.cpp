@@ -19,11 +19,8 @@
 #include "CellBlockManager.hpp"
 
 #include "FaceManager.hpp"
-//#include "legacy/IO/BinStream.h"
 #include <map>
 #include <vector>
-//#include "legacy/Constitutive/Material/MaterialFactory.h"
-//#include "legacy/ArrayT/ArrayT.h"
 
 namespace geosx
 {

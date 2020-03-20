@@ -631,7 +631,7 @@ BASETYPE * SolverBase::GetConstitutiveModel( dataRepository::Group * dataGroup, 
   return model;
 }
 
-} /* namespace ANST */
+} // namespace geosx
 
 
 #endif /* GEOSX_PHYSICSSOLVERS_SOLVERBASE_HPP_ */
