@@ -11,7 +11,6 @@ Caliper is included in the GEOSX TPL library and is built by adding the followin
    option( ENABLE_CALIPER "Enables CALIPER" On )
 
 
-
 GEOSX/Caliper Annotation Macros
 =====================================
 
@@ -31,7 +30,7 @@ The following macros may be used to annotate GEOSX:
 
 As an example of annotation, we consider the following example:
    
-.. code-block:: sh
+.. code-block:: c++
 
   void scatter() {
     GEOSX_MARK_FUNCTION; // Mark the function. Exports "function"="scatter"
@@ -60,31 +59,30 @@ As an example of annotation, we consider the following example:
   }
 
 
-Configuring  Caliper
+Configuring Caliper
 =================================
   
-Configuration for CALIPER is done by exporting environment variables, the simplest
-way to get started is setting the following variable
+Caliper configuration is done by specifying a string to initialize Caliper with via the
+`-t` option. A few options are listed below but we refer the reader to
+`Caliper <https://github.com/LLNL/Caliper/blob/releases/v2.3.0/doc/ConfigManagerAPI.md>`_ for the full Caliper tutorial.
 
-* ``CALI_CONFIG_PROFILE=runtime-report``
-
-We refer the reader to the full Caliper tutorial `Caliper <https://github.com/LLNL/Caliper>`_, for further details.
-
-Post running application, the output will be of the following form (where time is given in microseconds). 
-  
-.. code-block:: sh
-
-   Path          sum#time.duration 
-   main                 145.000000 
-     elemLoop            79.000000 
-       scatter         4210.000000 
-    setup                28.000000 
+* ``-t runtime-report`` Will make Caliper print aggregated timing information to standard out.
+* ``-t runtime-report,aggregate_across_ranks=false`` Will make Caliper write per rank timing information to standard out.
+    This isn't useful when using more than one rank but it does provide more information for single rank runs.
+* ``-t spot()`` Will make Caliper output a `.cali` timing file that can be viewed in the Spot web server.
 
 
-To print min/max/avg time per MPI rank for annotated regions, one may export the following variables
+Using Adiak
+=================================
+Adiak is a library that allows the addition of meta-data to the Caliper Spot output, it is enabled with Caliper.
+This meta-data allows you to easily slice and dice the timings available in the Spot web server. To export meta-data
+use the `adiak::value` function.
 
-* ``CALI_SERVICES_ENABLE=aggregate,event,mpi,mpireport,timestamp``
-* ``CALI_TIMER_SNAPSHOT_DURATION=true``
-* ``CALI_TIMER_INCLUSIVE_DURATION=false``
-* ``CALI_MPIREPORT_CONFIG="SELECT statistics(sum#time.duration) GROUP BY annotation,function,loop FORMAT tree"``
+See `Adiak <https://github.com/LLNL/Adiak/blob/f27ba674b88c2435e5e3245acbda9fc0a57bf88f/docs/Adiak%20API.docx>`_
+for the full Adiak documentation.
 
+
+Using Spot
+=================================
+To use Spot you will need an LC account and a directory full of `.cali` files you would like to analyse.
+Point your browser to `Spot <https://lc.llnl.gov/spot2>`_ and open up the directory containing the timing files.

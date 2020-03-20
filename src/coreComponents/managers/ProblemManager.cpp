@@ -12,37 +12,37 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-
+// Source includes
 #include "ProblemManager.hpp"
 
+#include "codingUtilities/StringUtilities.hpp"
+#include "common/Path.hpp"
+#include "common/TimingMacros.hpp"
+#include "constitutive/ConstitutiveManager.hpp"
+#include "dataRepository/ConduitRestart.hpp"
+#include "dataRepository/RestartFlags.hpp"
+#include "finiteElement/FiniteElementDiscretizationManager.hpp"
+#include "managers/DomainPartition.hpp"
+#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
+#include "managers/initialization.hpp"
+#include "managers/NumericalMethodsManager.hpp"
+#include "managers/Outputs/OutputManager.hpp"
+#include "mesh/MeshBody.hpp"
+#include "meshUtilities/MeshManager.hpp"
+#include "meshUtilities/MeshUtilities.hpp"
+#include "meshUtilities/SimpleGeometricObjects/GeometricObjectManager.hpp"
+#include "meshUtilities/SimpleGeometricObjects/SimpleGeometricObjectBase.hpp"
+#include "mpiCommunications/CommunicationTools.hpp"
+#include "mpiCommunications/SpatialPartition.hpp"
+#include "physicsSolvers/PhysicsSolverManager.hpp"
+#include "physicsSolvers/SolverBase.hpp"
+#include "wells/InternalWellGenerator.hpp"
+#include "wells/WellElementRegion.hpp"
+
+// System includes
 #include <vector>
 #include <regex>
 
-#include "mpiCommunications/CommunicationTools.hpp"
-#include "mpiCommunications/SpatialPartition.hpp"
-#include "optionparser.h"
-
-#include "DomainPartition.hpp"
-#include "physicsSolvers/PhysicsSolverManager.hpp"
-#include "physicsSolvers/SolverBase.hpp"
-#include "codingUtilities/StringUtilities.hpp"
-#include "NumericalMethodsManager.hpp"
-#include "meshUtilities/MeshManager.hpp"
-#include "meshUtilities/SimpleGeometricObjects/GeometricObjectManager.hpp"
-#include "constitutive/ConstitutiveManager.hpp"
-#include "managers/Outputs/OutputManager.hpp"
-#include "common/Path.hpp"
-#include "finiteElement/FiniteElementDiscretizationManager.hpp"
-#include "meshUtilities/SimpleGeometricObjects/SimpleGeometricObjectBase.hpp"
-#include "dataRepository/ConduitRestart.hpp"
-#include "dataRepository/RestartFlags.hpp"
-#include "mesh/MeshBody.hpp"
-#include "wells/InternalWellGenerator.hpp"
-#include "wells/WellElementRegion.hpp"
-#include "meshUtilities/MeshUtilities.hpp"
-#include "common/TimingMacros.hpp"
-#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
-// #include "managers/MeshLevel.hpp"
 namespace geosx
 {
 
@@ -51,42 +51,6 @@ using namespace constitutive;
 
 class CellElementSubRegion;
 class FaceElementSubRegion;
-
-struct Arg : public option::Arg
-{
-  static option::ArgStatus Unknown( const option::Option & option, bool /*error*/ )
-  {
-    GEOSX_LOG_RANK( "Unknown option: " << option.name );
-    return option::ARG_ILLEGAL;
-  }
-
-
-  static option::ArgStatus NonEmpty( const option::Option & option, bool /*error*/ )
-  {
-    if((option.arg != nullptr) && (option.arg[0] != 0))
-    {
-      return option::ARG_OK;
-    }
-
-    GEOSX_LOG_RANK( "Error: " << option.name << " requires a non-empty argument!" );
-    return option::ARG_ILLEGAL;
-  }
-
-
-  static option::ArgStatus Numeric( const option::Option & option, bool /*error*/ )
-  {
-    char * endptr = nullptr;
-    if((option.arg != nullptr) && strtol( option.arg, &endptr, 10 )) {}
-    if((endptr != option.arg) && (*endptr == 0))
-    {
-      return option::ARG_OK;
-    }
-
-    GEOSX_LOG_RANK( "Error: " << option.name << " requires a long-int argument!" );
-    return option::ARG_ILLEGAL;
-  }
-
-};
 
 
 ProblemManager::ProblemManager( const std::string & name,
@@ -140,7 +104,7 @@ ProblemManager::ProblemManager( const std::string & name,
 
   commandLine->registerWrapper< string >( viewKeys.problemName.Key() )->
     setRestartFlags( RestartFlags::WRITE )->
-    setDescription( "Used in writing the output files, if not specified defaults to the name of the input file.." );
+    setDescription( "Used in writing the output files, if not specified defaults to the name of the input file." );
 
   commandLine->registerWrapper< string >( viewKeys.outputDirectory.Key() )->
     setRestartFlags( RestartFlags::WRITE )->
@@ -204,140 +168,31 @@ void ProblemManager::ProblemSetup()
 }
 
 
-void ProblemManager::ParseCommandLineInput( int argc, char * * argv )
+void ProblemManager::ParseCommandLineInput()
 {
   Group * commandLine = GetGroup< Group >( groupKeys.commandLine );
 
+  CommandLineOptions const & opts = getCommandLineOptions();
+
+  commandLine->getReference< std::string >( viewKeys.restartFileName ) = opts.restartFileName;
+  commandLine->getReference< integer >( viewKeys.beginFromRestart ) = opts.beginFromRestart;
+  commandLine->getReference< integer >( viewKeys.xPartitionsOverride ) = opts.xPartitionsOverride;
+  commandLine->getReference< integer >( viewKeys.yPartitionsOverride ) = opts.yPartitionsOverride;
+  commandLine->getReference< integer >( viewKeys.zPartitionsOverride ) = opts.zPartitionsOverride;
+  commandLine->getReference< integer >( viewKeys.overridePartitionNumbers ) = opts.overridePartitionNumbers;
+  commandLine->getReference< integer >( viewKeys.useNonblockingMPI ) = opts.useNonblockingMPI;
+
   std::string & inputFileName = commandLine->getReference< std::string >( viewKeys.inputFileName );
-  std::string & restartFileName = commandLine->getReference< std::string >( viewKeys.restartFileName );
-  integer & beginFromRestart = commandLine->getReference< integer >( viewKeys.beginFromRestart );
-  integer & xPartitionsOverride = commandLine->getReference< integer >( viewKeys.xPartitionsOverride );
-  integer & yPartitionsOverride = commandLine->getReference< integer >( viewKeys.yPartitionsOverride );
-  integer & zPartitionsOverride = commandLine->getReference< integer >( viewKeys.zPartitionsOverride );
-  integer & overridePartitionNumbers = commandLine->getReference< integer >( viewKeys.overridePartitionNumbers );
-  integer & useNonblockingMPI = commandLine->getReference< integer >( viewKeys.useNonblockingMPI );
+  inputFileName = opts.inputFileName;
+
   std::string & schemaName = commandLine->getReference< std::string >( viewKeys.schemaFileName );
+  schemaName = opts.schemaName;
+
   std::string & problemName = commandLine->getReference< std::string >( viewKeys.problemName );
+  problemName = opts.problemName;
+
   std::string & outputDirectory = commandLine->getReference< std::string >( viewKeys.outputDirectory );
-  outputDirectory = ".";
-  problemName = "";
-
-
-  // Set the options structs and parse
-  enum optionIndex {UNKNOWN, HELP, INPUT, RESTART, XPAR, YPAR, ZPAR, SCHEMA, NONBLOCKING_MPI, PROBLEMNAME, OUTPUTDIR};
-  const option::Descriptor usage[] =
-  {
-    {UNKNOWN, 0, "", "", Arg::Unknown, "USAGE: geosx -i input.xml [options]\n\nOptions:"},
-    {HELP, 0, "?", "help", Arg::None, "\t-?, --help"},
-    {INPUT, 0, "i", "input", Arg::NonEmpty, "\t-i, --input, \t Input xml filename (required)"},
-    {RESTART, 0, "r", "restart", Arg::NonEmpty, "\t-r, --restart, \t Target restart filename"},
-    {XPAR, 0, "x", "xpartitions", Arg::Numeric, "\t-x, --x-partitions, \t Number of partitions in the x-direction"},
-    {YPAR, 0, "y", "ypartitions", Arg::Numeric, "\t-y, --y-partitions, \t Number of partitions in the y-direction"},
-    {ZPAR, 0, "z", "zpartitions", Arg::Numeric, "\t-z, --z-partitions, \t Number of partitions in the z-direction"},
-    {SCHEMA, 0, "s", "schema", Arg::NonEmpty, "\t-s, --schema, \t Name of the output schema"},
-    {NONBLOCKING_MPI, 0, "b", "use-nonblocking", Arg::None, "\t-b, --use-nonblocking, \t Use non-blocking MPI communication"},
-    {PROBLEMNAME, 0, "n", "name", Arg::NonEmpty, "\t-n, --name, \t Name of the problem, used for output"},
-    {OUTPUTDIR, 0, "o", "output", Arg::NonEmpty, "\t-o, --output, \t Directory to put the output files"},
-    { 0, 0, nullptr, nullptr, nullptr, nullptr}
-  };
-
-  argc -= (argc>0);
-  argv += (argc>0);
-  option::Stats stats( usage, argc, argv );
-  option::Option options[100];//stats.options_max];
-  option::Option buffer[100];//stats.buffer_max];
-  option::Parser parse( usage, argc, argv, options, buffer );
-
-
-  // Handle special cases
-  if( parse.error())
-  {
-    GEOSX_ERROR( "Bad input arguments" );
-  }
-
-  if( options[HELP] || (argc == 0))
-  {
-    int columns = getenv( "COLUMNS" ) ? atoi( getenv( "COLUMNS" )) : 80;
-    option::printUsage( fwrite, stdout, usage, columns );
-    exit( 0 );
-  }
-
-  if( options[INPUT].count() == 0 )
-  {
-    if( options[SCHEMA].count() == 0 )
-    {
-      GEOSX_ERROR( "An input xml must be specified!" );
-    }
-  }
-
-
-  // Iterate over the remaining inputs
-  for( int ii=0; ii<parse.optionsCount(); ++ii )
-  {
-    option::Option & opt = buffer[ii];
-    switch( opt.index())
-    {
-      case UNKNOWN:
-      {
-        // This should have thrown an error
-      }
-      break;
-      case HELP:
-      {
-        // This is already handled above
-      }
-      break;
-      case INPUT:
-      {
-        inputFileName = opt.arg;
-      }
-      break;
-      case RESTART:
-      {
-        restartFileName = opt.arg;
-        beginFromRestart = 1;
-      }
-      break;
-      case XPAR:
-      {
-        xPartitionsOverride = std::stoi( opt.arg );
-        overridePartitionNumbers = 1;
-      }
-      break;
-      case YPAR:
-      {
-        yPartitionsOverride = std::stoi( opt.arg );
-        overridePartitionNumbers = 1;
-      }
-      break;
-      case ZPAR:
-      {
-        zPartitionsOverride = std::stoi( opt.arg );
-        overridePartitionNumbers = 1;
-      }
-      break;
-      case NONBLOCKING_MPI:
-      {
-        useNonblockingMPI = true;
-      }
-      break;
-      case SCHEMA:
-      {
-        schemaName = opt.arg;
-      }
-      break;
-      case PROBLEMNAME:
-      {
-        problemName = opt.arg;
-      }
-      break;
-      case OUTPUTDIR:
-      {
-        outputDirectory = opt.arg;
-      }
-      break;
-    }
-  }
+  outputDirectory = opts.outputDirectory;
 
   if( schemaName.empty())
   {
@@ -376,100 +231,11 @@ void ProblemManager::ParseCommandLineInput( int argc, char * * argv )
 }
 
 
-bool ProblemManager::ParseRestart( int argc, char * * argv, std::string & restartFileName )
+bool ProblemManager::ParseRestart( std::string & restartFileName )
 {
-  // Set the options structs and parse
-  enum optionIndex {UNKNOWN, HELP, INPUT, RESTART, XPAR, YPAR, ZPAR, SCHEMA, NONBLOCKING_MPI, PROBLEMNAME, OUTPUTDIR};
-  const option::Descriptor usage[] =
-  {
-    {UNKNOWN, 0, "", "", Arg::Unknown, "USAGE: geosx -i input.xml [options]\n\nOptions:"},
-    {HELP, 0, "?", "help", Arg::None, "\t-?, --help"},
-    {INPUT, 0, "i", "input", Arg::NonEmpty, "\t-i, --input, \t Input xml filename (required)"},
-    {RESTART, 0, "r", "restart", Arg::NonEmpty, "\t-r, --restart, \t Target restart filename"},
-    {XPAR, 0, "x", "xpartitions", Arg::Numeric, "\t-x, --x-partitions, \t Number of partitions in the x-direction"},
-    {YPAR, 0, "y", "ypartitions", Arg::Numeric, "\t-y, --y-partitions, \t Number of partitions in the y-direction"},
-    {ZPAR, 0, "z", "zpartitions", Arg::Numeric, "\t-z, --z-partitions, \t Number of partitions in the z-direction"},
-    {SCHEMA, 0, "s", "schema", Arg::NonEmpty, "\t-s, --schema, \t Name of the output schema"},
-    {NONBLOCKING_MPI, 0, "b", "use-nonblocking", Arg::None, "\t-b, --use-nonblocking, \t Use non-blocking MPI communication"},
-    {PROBLEMNAME, 0, "n", "name", Arg::NonEmpty, "\t-n, --name, \t Name of the problem, used for output"},
-    {OUTPUTDIR, 0, "o", "output", Arg::NonEmpty, "\t-o, --output, \t Directory to put the output files"},
-    { 0, 0, nullptr, nullptr, nullptr, nullptr}
-  };
-
-  argc -= (argc>0);
-  argv += (argc>0);
-  option::Stats stats( usage, argc, argv );
-  option::Option options[100];//stats.options_max];
-  option::Option buffer[100];//stats.buffer_max];
-  option::Parser parse( usage, argc, argv, options, buffer );
-
-
-  // Handle special cases
-  if( parse.error())
-  {
-    GEOSX_ERROR( "Bad input arguments" );
-  }
-
-  if( options[HELP] || (argc == 0))
-  {
-    int columns = getenv( "COLUMNS" ) ? atoi( getenv( "COLUMNS" )) : 80;
-    option::printUsage( fwrite, stdout, usage, columns );
-    exit( 0 );
-  }
-
-  if( options[INPUT].count() == 0 )
-  {
-    if( options[SCHEMA].count() == 0 )
-    {
-      GEOSX_ERROR( "An input xml must be specified!" );
-    }
-  }
-
-  // Iterate over the remaining inputs
-  bool beginFromRestart = false;
-  for( int ii=0; ii<parse.optionsCount(); ++ii )
-  {
-    option::Option & opt = buffer[ii];
-    switch( opt.index())
-    {
-      case UNKNOWN:
-      {}
-      break;
-      case HELP:
-      {}
-      break;
-      case INPUT:
-      {}
-      break;
-      case RESTART:
-      {
-        restartFileName = opt.arg;
-        beginFromRestart = 1;
-      }
-      break;
-      case XPAR:
-      {}
-      break;
-      case YPAR:
-      {}
-      break;
-      case ZPAR:
-      {}
-      break;
-      case SCHEMA:
-      {}
-      break;
-      case NONBLOCKING_MPI:
-      {}
-      break;
-      case PROBLEMNAME:
-      {}
-      break;
-      case OUTPUTDIR:
-      {}
-      break;
-    }
-  }
+  CommandLineOptions const & opts = getCommandLineOptions();
+  bool const beginFromRestart = opts.beginFromRestart;
+  restartFileName = opts.restartFileName;
 
   if( beginFromRestart == 1 )
   {
@@ -480,10 +246,7 @@ bool ProblemManager::ParseRestart( int argc, char * * argv, std::string & restar
     std::vector< std::string > dir_contents;
     readDirectory( dirname, dir_contents );
 
-    if( dir_contents.size() == 0 )
-    {
-      GEOSX_ERROR( "Directory gotten from " << restartFileName << " " << dirname << " is empty." );
-    }
+    GEOSX_ERROR_IF( dir_contents.size() == 0, "Directory gotten from " << restartFileName << " " << dirname << " is empty." );
 
     std::regex basename_regex( basename );
 
@@ -499,10 +262,7 @@ bool ProblemManager::ParseRestart( int argc, char * * argv, std::string & restar
       }
     }
 
-    if( !match_found )
-    {
-      GEOSX_ERROR( "No matches found for pattern " << basename << " in directory " << dirname << "." );
-    }
+    GEOSX_ERROR_IF( !match_found, "No matches found for pattern " << basename << " in directory " << dirname << "." );
 
     restartFileName = dirname + "/" + max_match;
     getAbsolutePath( restartFileName, restartFileName );

@@ -83,6 +83,10 @@ if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
 endif()
 
+if ( ENABLE_CALIPER )
+  set( dependencyList ${dependencyList} caliper adiak )
+endif()
+
 blt_add_library( NAME                  managers
                  SOURCES               ${managers_sources}
                  HEADERS               ${managers_headers}
