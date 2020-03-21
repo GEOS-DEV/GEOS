@@ -67,14 +67,14 @@ void testGEOSXSolvers()
   // Compute a 2D Laplace operator and identity matrix
   Matrix matrix;
   Matrix identity;
-  compute2DLaplaceOperator( MPI_COMM_WORLD, n, matrix );
-  computeIdentity( MPI_COMM_WORLD, N, identity );
+  compute2DLaplaceOperator( MPI_COMM_GEOSX, n, matrix );
+  computeIdentity( MPI_COMM_GEOSX, N, identity );
 
   // Define vectors
   Vector x_true, x_comp, b;
-  x_true.createWithGlobalSize( N, MPI_COMM_WORLD );
-  x_comp.createWithGlobalSize( N, MPI_COMM_WORLD );
-  b.createWithGlobalSize( N, MPI_COMM_WORLD );
+  x_true.createWithGlobalSize( N, MPI_COMM_GEOSX );
+  x_comp.createWithGlobalSize( N, MPI_COMM_GEOSX );
+  b.createWithGlobalSize( N, MPI_COMM_GEOSX );
 
   x_true.rand();
   x_comp.zero();
@@ -86,7 +86,7 @@ void testGEOSXSolvers()
   solver.solve( b, x_comp );
   /////////////////////////////////////////
 //  GEOSX_LOG_RANK_0("Iterations: " + std::to_string(solver.numIterations()));
-//  if ( MpiWrapper::Comm_rank( MPI_COMM_WORLD ) == 0)
+//  if ( MpiWrapper::Comm_rank( MPI_COMM_GEOSX ) == 0)
 //  {
 //    GEOSX_LOG_RANK_VAR( solver.relativeResidual() );
 //  }
@@ -104,7 +104,7 @@ void testGEOSXSolvers()
   solver2.solve( b, x_comp );
   /////////////////////////////////////////
 //  GEOSX_LOG_RANK_0("Iterations: " + std::to_string(solver.numIterations()));
-//  if ( MpiWrapper::Comm_rank( MPI_COMM_WORLD ) == 0)
+//  if ( MpiWrapper::Comm_rank( MPI_COMM_GEOSX ) == 0)
 //  {
 //    GEOSX_LOG_RANK_VAR( solver.residualNormVector() );
 //  }
@@ -147,7 +147,7 @@ void testGEOSXBlockSolvers()
   // Set up a block operator consisting of two laplacian blocks
   // Here we demonstrate creating a thin wrapper pointing to the same matrix twice
   Matrix matrix;
-  compute2DLaplaceOperator( MPI_COMM_WORLD, n, matrix );
+  compute2DLaplaceOperator( MPI_COMM_GEOSX, n, matrix );
   BlockOperatorWrapper< Vector, Matrix > block_matrix( 2, 2 );
   block_matrix.set( 0, 0, matrix );
   block_matrix.set( 1, 1, matrix );
@@ -155,22 +155,22 @@ void testGEOSXBlockSolvers()
   // Set up block identity preconditioner
   // Here we instantiate a concrete block matrix with two independent blocks
   BlockOperator< Vector, Matrix > block_precon( 2, 2 );
-  computeIdentity( MPI_COMM_WORLD, N, block_precon.block( 0, 0 ) );
-  computeIdentity( MPI_COMM_WORLD, N, block_precon.block( 1, 1 ) );
-  computeZero( MPI_COMM_WORLD, N, block_precon.block( 0, 1 ) );
-  computeZero( MPI_COMM_WORLD, N, block_precon.block( 1, 0 ) );
+  computeIdentity( MPI_COMM_GEOSX, N, block_precon.block( 0, 0 ) );
+  computeIdentity( MPI_COMM_GEOSX, N, block_precon.block( 1, 1 ) );
+  computeZero( MPI_COMM_GEOSX, N, block_precon.block( 0, 1 ) );
+  computeZero( MPI_COMM_GEOSX, N, block_precon.block( 1, 0 ) );
 
   // Create rhs and solution vectors
   BlockVector< Vector > x_true( 2 );
   BlockVector< Vector > x_comp( 2 );
   BlockVector< Vector > b( 2 );
 
-  x_true.block( 0 ).createWithGlobalSize( N, MPI_COMM_WORLD );
-  x_true.block( 1 ).createWithGlobalSize( N, MPI_COMM_WORLD );
-  x_comp.block( 0 ).createWithGlobalSize( N, MPI_COMM_WORLD );
-  x_comp.block( 1 ).createWithGlobalSize( N, MPI_COMM_WORLD );
-  b.block( 0 ).createWithGlobalSize( N, MPI_COMM_WORLD );
-  b.block( 1 ).createWithGlobalSize( N, MPI_COMM_WORLD );
+  x_true.block( 0 ).createWithGlobalSize( N, MPI_COMM_GEOSX );
+  x_true.block( 1 ).createWithGlobalSize( N, MPI_COMM_GEOSX );
+  x_comp.block( 0 ).createWithGlobalSize( N, MPI_COMM_GEOSX );
+  x_comp.block( 1 ).createWithGlobalSize( N, MPI_COMM_GEOSX );
+  b.block( 0 ).createWithGlobalSize( N, MPI_COMM_GEOSX );
+  b.block( 1 ).createWithGlobalSize( N, MPI_COMM_GEOSX );
 
   x_true.rand();
   x_comp.zero();
