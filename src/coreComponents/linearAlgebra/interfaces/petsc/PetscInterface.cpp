@@ -27,6 +27,7 @@ void PetscInterface::initialize( int & argc, char * * & argv )
 {
   PetscOptionsSetValue( nullptr, "-no_signal_handler", "" );
   PetscOptionsSetValue( nullptr, "-on_error_abort", "" );
+  PETSC_COMM_WORLD = MPI_COMM_GEOSX;
   PetscInitialize( &argc, &argv, nullptr, nullptr );
 }
 
