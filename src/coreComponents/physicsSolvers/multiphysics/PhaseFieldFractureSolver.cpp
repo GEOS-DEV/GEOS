@@ -298,7 +298,7 @@ real64 PhaseFieldFractureSolver::SplitOperatorStep( real64 const& time_n,
     ++iter;
   }
 
-  GEOS_ERROR_IF( !isConverged, "PhaseFieldFractureSolver::SplitOperatorStep() did not converge" );
+//  GEOS_ERROR_IF( !isConverged, "PhaseFieldFractureSolver::SplitOperatorStep() did not converge" );
 
   damageSolver.ImplicitStepComplete( time_n, dt, domain );
   solidSolver.ImplicitStepComplete( time_n, dt, domain );
