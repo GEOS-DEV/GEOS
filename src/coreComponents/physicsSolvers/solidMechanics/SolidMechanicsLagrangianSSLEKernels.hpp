@@ -582,7 +582,7 @@ struct ImplicitKernel
 
         for( integer q=0 ; q<NUM_QUADRATURE_POINTS ; ++q )
         {
-          real64 damageFactor = ( 1.0 - damage(k,q) );
+          real64 damageFactor = ( 1.0 - damage(k,q) )*( 1.0 - damage(k,q) );
 //          if( damageFactor > 0.00000000001 )
 //          {
 //            damageFactor = 1.0;
@@ -594,7 +594,7 @@ struct ImplicitKernel
           const realT detJq = detJ[k][q] * damageFactor;
           std::vector<double> const & N = fe->values(q);
 //          std::cout<<"damageFactor("<<k<<","<<q<<") = "<<damageFactor<<std::endl;
-
+            //std::cout<<"in mechanical : damage("<<k<<","<<q<<") = "<<damage(k,q)<<std::endl;
 
 
           for( integer a=0 ; a<NUM_NODES_PER_ELEM ; ++a )
@@ -690,7 +690,7 @@ struct ImplicitKernel
 
           const realT detJq = detJ[k][q];
           R2SymTensor stress0 = referenceStress;
-          real64 damageFactor = ( 1.0 - damage(k,q) );
+          real64 damageFactor = ( 1.0 - damage(k,q) )*( 1.0 - damage(k,q) );
 //          if( damageFactor > 0.00000000001 )
 //          {
 //            damageFactor = 1.0;

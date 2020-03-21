@@ -214,11 +214,10 @@ void LinearElasticIsotropic::calculateStrainEnergyDensity()
                                               2 * ( nu * (stress[2] * stress[5] + stress[0] * (stress[2] + stress[5]) ) +
                                                     (1 + nu) * (stress[4]*stress[4] + stress[3]*stress[3] + stress[1]*stress[1])
                                                   )
-                                            ) * invE;
+                                            ) * invE * 0.5;
       if( newStrainEnergyDensity > m_strainEnergyDensity(k,q) )
       {
         m_strainEnergyDensity(k,q) = newStrainEnergyDensity;
-      }
     }
   }
 }

@@ -8,7 +8,7 @@
                  logLevel="1"
                  discretization="FE1"
                  targetRegions="{Region1}">
-      <SystemSolverParameters maxIterNewton="200"
+      <SystemSolverParameters maxIterNewton="20"
                               logLevel="0"/>
     </PhaseFieldFracture>
 
@@ -19,9 +19,9 @@
                                   targetRegions="{Region1}"
                                   solidMaterialName="shale"
                                   >
-      <SystemSolverParameters krylovTol="1.0e-10"
-                              newtonTol="1.0e-3"
-                              maxIterNewton="5"
+      <SystemSolverParameters krylovTol="1.0e-12"
+                              newtonTol="1.0e-10"
+                              maxIterNewton="20"
                               logLevel="0"/>
     </SolidMechanicsLagrangianSSLE>
 
@@ -30,8 +30,8 @@
                 timeIntegrationOption="SteadyState"
                 fieldName="Damage"
                 solidMaterialName="shale"
-                localDissipation = "Linear"
-                logLevel="1"
+                localDissipation = "Quadratic"
+                logLevel="2"
                 targetRegions="{Region1}">
     </PhaseFieldDamageFEM>
   </Solvers>
@@ -42,13 +42,13 @@
                   xCoords="{-1, 1}"
                   yCoords="{-1, 1}"
                   zCoords="{-1, 1}"
-                  nx="{4}"
+                  nx="{1}"
                   ny="{1}"
                   nz="{1}"
                   cellBlockNames="{cb1}"/>
   </Mesh>
 
-  <Events maxTime="4.0">
+  <Events maxTime="285.0">
     <SoloEvent name="siloOutput0"
                    target="/Outputs/SiloOutput"/>
 
@@ -135,22 +135,22 @@
                objectPath="nodeManager"
                fieldName="TotalDisplacement"
                component="1"
-               scale="0.0"
+               scale="0"
                setNames="{all}"/>
 
     <FieldSpecification name="zconstraint"
                objectPath="nodeManager"
                fieldName="TotalDisplacement"
                component="2"
-               scale="0.0"
+               scale="0"
                setNames="{all}"/>
 
-    <FieldSpecification name="pointSource"
+    <!-- <FieldSpecification name="pointSource"
                         fieldName="Damage"
                         initialCondition="0"
                         objectPath="nodeManager"
                         scale="1"
-                        setNames="{centerLine}"/>
+                        setNames="{centerLine}"/> -->
 
     <!-- FieldSpecification name="pointSource2"
                         fieldName="Damage"
@@ -188,7 +188,7 @@
   </Outputs>
 
   <Geometry>
-    <Box name="centerLine" xMin="-0.201, -1.001, -1.001" xMax="+0.201, +1.001, +1.001"/>
+    <Box name="centerLine" xMin="-0.001, -1.001, -1.001" xMax="+0.001, +1.001, +1.001"/>
   </Geometry>
 
 </Problem>
