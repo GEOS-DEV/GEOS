@@ -577,7 +577,6 @@ void PetscMatrix::clearRow( globalIndex const globalRow,
 
   // The implementation below is not the most efficient, but we can't use
   // PETCs's MatZeroRows because it is collective and clearRow() is not
-
   localIndex const numEntries = globalRowLength( globalRow );
   array1d< globalIndex > colIndices( numEntries );
   array1d< real64 > values( numEntries );
@@ -597,6 +596,10 @@ void PetscMatrix::clearRow( globalIndex const globalRow,
   }
   GEOSX_LAI_CHECK_ERROR( MatRestoreRow( m_mat, globalRow, nullptr, &inds, nullptr ) );
   set( globalRow, colIndices, values );
+
+  // Call a final assembly because PETSc consider the matrix not assembled after a set
+  GEOSX_LAI_CHECK_ERROR( MatAssemblyBegin( m_mat, MAT_FINAL_ASSEMBLY ) );
+  GEOSX_LAI_CHECK_ERROR( MatAssemblyEnd( m_mat, MAT_FINAL_ASSEMBLY ) );
 }
 
 localIndex PetscMatrix::maxRowLength() const
@@ -663,18 +666,20 @@ real64 PetscMatrix::getDiagValue( globalIndex globalRow ) const
   PetscScalar const * vals = nullptr;
   PetscInt const * cols = nullptr;
   PetscInt ncols;
+  real64 diagValue = 0.0;
 
   GEOSX_LAI_CHECK_ERROR( MatGetRow( m_mat, globalRow, &ncols, &cols, &vals ) );
   for( PetscInt i = 0; i < ncols; i++ )
   {
     if( cols[i] == globalRow )
     {
-      return vals[i];
+      diagValue = vals[i];
+      break;
     }
   }
   GEOSX_LAI_CHECK_ERROR( MatRestoreRow( m_mat, globalRow, &ncols, &cols, &vals ) );
 
-  return 0.0;
+  return diagValue;
 }
 
 Mat & PetscMatrix::unwrapped()
