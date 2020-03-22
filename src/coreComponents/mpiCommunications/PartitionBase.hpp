@@ -108,7 +108,7 @@ public:
   virtual int GetColor() = 0;
 
   int Color() const {return m_color;}
-  int NumColor() const {return m_numColors;};
+  int NumColor() const {return m_numColors;}
 
 //  void WriteSilo( SiloFile& siloFile );
 //
