@@ -525,26 +525,38 @@ void EpetraMatrix::transpose( EpetraMatrix & dst ) const
   dst.create( trans );
 }
 
-void EpetraMatrix::clearRow( globalIndex const globalRow,
-                             real64 const diagValue )
+real64 EpetraMatrix::clearRow( globalIndex const globalRow,
+                               bool const keepDiag,
+                               real64 const diagValue )
 {
   GEOSX_LAI_ASSERT( modifiable() );
   GEOSX_LAI_ASSERT_GE( globalRow, ilower() );
   GEOSX_LAI_ASSERT_GT( iupper(), globalRow );
 
   int length;
-  double * values_ptr;
-  GEOSX_LAI_CHECK_ERROR( m_matrix->ExtractMyRowView( m_matrix->LRID( globalRow ), length, values_ptr ) );
+  int * colIndices;
+  double * values;
+  GEOSX_LAI_CHECK_ERROR( m_matrix->ExtractMyRowView( m_matrix->LRID( globalRow ), length, values, colIndices ) );
 
+  bool const square = numGlobalRows() == numGlobalCols();
+
+  real64 oldDiag = 0.0;
   for( int j = 0; j < length; ++j )
   {
-    values_ptr[j] = 0.0;
+    if( square && m_matrix->GCID64( colIndices[j] ) == globalRow )
+    {
+      oldDiag = values[j];
+    }
+    values[j] = 0.0;
   }
 
-  if( std::fabs( diagValue ) > 0.0 && numGlobalRows() == numGlobalCols() )
+  // Set diagonal value
+  real64 const newDiag = keepDiag ? oldDiag : diagValue;
+  if( square && std::fabs( newDiag ) > 0.0 )
   {
-    set( globalRow, globalRow, diagValue );
+    set( globalRow, globalRow, newDiag );
   }
+  return oldDiag;
 }
 
 localIndex EpetraMatrix::maxRowLength() const
