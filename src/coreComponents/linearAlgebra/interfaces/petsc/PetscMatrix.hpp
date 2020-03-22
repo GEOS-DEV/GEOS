@@ -224,8 +224,9 @@ public:
 
   virtual void transpose( PetscMatrix & dst ) const override;
 
-  virtual void clearRow( globalIndex const globalRow,
-                         real64 const diagValue ) override;
+  virtual real64 clearRow( globalIndex const row,
+                           bool const keepDiag = false,
+                           real64 const diagValue = 0.0 ) override;
 
   virtual localIndex maxRowLength() const override;
 
@@ -288,6 +289,12 @@ private:
 
   /// Underlying Petsc object.
   Mat m_mat;
+
+  /// Indices of rows to be cleared on next close()
+  array1d< globalIndex > m_rowsToClear;
+
+  /// Diagonal values of rows to be set on next close()
+  array1d< real64 > m_diagValues;
 
 };
 

@@ -377,8 +377,7 @@ struct FieldSpecificationEqual : public FieldSpecificationOp< OpEqual >
   {
     if( matrix.getLocalRowID( dof ) >= 0 )
     {
-      real64 const diag = matrix.getDiagValue( dof );
-      matrix.clearRow( dof, diag );
+      real64 const diag = matrix.clearRow( dof, true );
       rhs = -diag * (bcValue - fieldValue);
     }
     else
