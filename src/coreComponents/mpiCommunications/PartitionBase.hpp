@@ -108,7 +108,15 @@ public:
   virtual int GetColor() = 0;
 
   int Color() const {return m_color;}
-  int NumColor() const {return m_numColors;}
+  int NumColor()
+  {
+    if( m_numColors < 0 )
+    {
+      GetColor();
+    }
+    GEOSX_LOG_RANK( "in PartitionBase: " << m_numColors );
+    return m_numColors;
+  }
 
 //  void WriteSilo( SiloFile& siloFile );
 //
@@ -132,7 +140,7 @@ protected:
   R1Tensor m_contactGhostMax;
 
   int m_color;
-  int m_numColors;
+  int m_numColors = -1;
 
   DomainPartition * const m_domain;
 
