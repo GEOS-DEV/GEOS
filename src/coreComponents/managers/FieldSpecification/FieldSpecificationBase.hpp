@@ -676,7 +676,7 @@ void FieldSpecificationBase::ZeroSystemRowsForBoundaryCondition( SortedArrayView
   for( auto a : targetSet )
   {
     globalIndex const dof = dofMap[a]+component;
-    matrix.clearRow( dof, 0.0 );
+    matrix.clearRow( dof );
   }
 }
 }

@@ -933,8 +933,9 @@ real64 HypreMatrix::getDiagValue( globalIndex globalRow ) const
   return 0.0;
 }
 
-void HypreMatrix::clearRow( globalIndex const globalRow,
-                            real64 const diagValue )
+real64 HypreMatrix::clearRow( globalIndex const globalRow,
+                              bool const keepDiag,
+                              real64 const diagValue )
 {
   GEOSX_LAI_ASSERT( modifiable() );
   GEOSX_LAI_ASSERT_GE( globalRow, ilower() );
@@ -945,11 +946,19 @@ void HypreMatrix::clearRow( globalIndex const globalRow,
 
   // Clear row in diagonal block
   hypre_CSRMatrix * prt_CSR  = hypre_ParCSRMatrixDiag( m_parcsr_mat );
-  HYPRE_Int *       IA       = hypre_CSRMatrixI( prt_CSR );
+  HYPRE_Int const * IA       = hypre_CSRMatrixI( prt_CSR );
+  HYPRE_Int const * JA       = hypre_CSRMatrixJ( prt_CSR );
   HYPRE_Real *      ptr_data = hypre_CSRMatrixData( prt_CSR );
 
+  bool const square = numGlobalRows() == numGlobalCols();
+
+  real64 oldDiag = 0.0;
   for( HYPRE_Int j = IA[localRow]; j < IA[localRow + 1]; ++j )
   {
+    if( square && JA[j] == localRow )
+    {
+      oldDiag = ptr_data[j];
+    }
     ptr_data[j] = 0.0;
   }
 
@@ -964,10 +973,12 @@ void HypreMatrix::clearRow( globalIndex const globalRow,
   }
 
   // Set diagonal value
-  if( std::fabs( diagValue ) > 0.0 && numGlobalRows() == numGlobalCols() )
+  real64 const newDiag = keepDiag ? oldDiag : diagValue;
+  if( square && std::fabs( newDiag ) > 0.0 )
   {
-    set( globalRow, globalRow, diagValue );
+    set( globalRow, globalRow, newDiag );
   }
+  return oldDiag;
 }
 
 HYPRE_IJMatrix const & HypreMatrix::unwrapped() const
