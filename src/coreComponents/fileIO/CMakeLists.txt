@@ -33,18 +33,10 @@ endif()
 
 if( ENABLE_VTK )
   list( APPEND fileIO_headers
-               vtk/Array2DVTKDataArray.hpp
-               vtk/CellVTKDataArray.hpp
-               vtk/DummyVTKDataArray.hpp 
                vtk/VTKTypes.hpp
-               vtk/VTKPVDWriter.hpp
-               vtk/VTKVTMWriter.hpp
                vtk/VTKMultiBlockDataWriterInterface.hpp )
 
   list( APPEND fileIO_sources
-               vtk/Array2DVTKDataArray.cpp
-               vtk/CellVTKDataArray.cpp
-               vtk/DummyVTKDataArray.cpp
                vtk/VTKTypes.cpp
                vtk/VTKMultiBlockDataWriterInterface.cpp )
 

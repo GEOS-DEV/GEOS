@@ -18,9 +18,6 @@
 #include "dataRepository/Group.hpp"
 
 
-#include "Array2DVTKDataArray.hpp"
-#include "CellVTKDataArray.hpp"
-
 #include <vtkUnstructuredGrid.h>
 #include <vtkCell.h>
 #include <vtkCellData.h>
