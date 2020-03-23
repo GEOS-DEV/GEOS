@@ -121,23 +121,6 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
   }
   else if( m_parameters.preconditionerType == "ilut" )
   {
-//    GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRPilutCreate( comm, &precond ) );
-//
-//    if( m_parameters.ilu.threshold >= 0 )
-//    {
-//      GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRPilutSetDropTolerance( precond,
-//                                                                m_parameters.ilu.threshold ) );
-//    }
-//    if( m_parameters.ilu.fill >= 0 )
-//    {
-//      GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRPilutSetFactorRowSize( precond,
-//                                                                integer_conversion< HYPRE_Int >(
-//                                                                  m_parameters.ilu.fill ) ) );
-//    }
-//
-//    precondApplyFunction = (HYPRE_PtrToSolverFcn) HYPRE_ParCSRPilutSolve;
-//    precondSetupFunction = (HYPRE_PtrToSolverFcn) HYPRE_ParCSRPilutSetup;
-//    precondDestroyFunction = (HYPRE_PtrToDestroyFcn) HYPRE_ParCSRPilutDestroy;
     GEOSX_LAI_CHECK_ERROR( HYPRE_EuclidCreate( comm, &precond ) );
     precondApplyFunction = (HYPRE_PtrToSolverFcn) HYPRE_EuclidSolve;
     precondSetupFunction = (HYPRE_PtrToSolverFcn) HYPRE_EuclidSetup;
