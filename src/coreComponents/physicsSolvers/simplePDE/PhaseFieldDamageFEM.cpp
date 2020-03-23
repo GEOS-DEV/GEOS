@@ -274,7 +274,6 @@ void PhaseFieldDamageFEM::AssembleSystem( real64 const time_n,
 
           real64 ell = 0.2; //phase-field length scale
           real64 Gc = 2.7; //energy release rate
-
           double threshold = 3 * Gc / (16 * ell); //elastic energy threshold - use when LocalDissipation is Linear
           //real64 diffusion = 1.0;
           // begin element loop, skipping ghost elements
