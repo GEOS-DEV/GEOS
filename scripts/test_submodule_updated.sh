@@ -10,6 +10,18 @@ declare -ar pr_hashes_array=( $(git submodule status | awk '{print $1}') )
 # Initialize submodule paths
 declare -ar paths_array=( $(git submodule status | awk '{print $2}') )
 
+# Initialize main branches for submodules
+declare -Ar main_branches=(
+  ["blt"]="origin/develop"
+  ["cxx-utilities"]="origin/develop"
+  ["integratedTests"]="origin/develop"
+  ["GEOSX_PTP"]="origin/master"
+  ["hdf5_interface"]="origin/master"
+  ["PAMELA"]="origin/master"
+  # FIX: PVTPackage main is intermediate branch (diverged from master)
+  ["PVTPackage"]="origin/feature/han12/shareBLT"
+)
+
 length=${#paths_array[@]}
 
 # Returns exit code 0 if the hash for every submodule in the PR is equal
@@ -42,14 +54,8 @@ do
     # Pull submodule to get .git files.
     git submodule update --quiet --init ${paths_array[$i]}
 
-    # Determine if develop or master is main branch of submodule.
-    if $( git -C ${paths_array[$i]} rev-parse --quiet --verify \
-          origin/develop &> /dev/null)
-    then 
-      main_branch="origin/develop"
-    else
-      main_branch="origin/master"
-    fi
+    # Submodule's main branch
+    main_branch="${main_branches[$module_name]}"
 
     # Submodule main hash
     main_hash="$( git -C ${paths_array[$i]} rev-parse $main_branch )"
