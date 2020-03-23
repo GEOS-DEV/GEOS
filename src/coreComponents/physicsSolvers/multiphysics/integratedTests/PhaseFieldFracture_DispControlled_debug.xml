@@ -32,7 +32,7 @@
                 fieldName="Damage"
                 solidMaterialName="shale"
                 localDissipation = "Quadratic"
-                logLevel="1"
+                logLevel="0"
                 targetRegions="{Region1}">
     </PhaseFieldDamageFEM>
   </Solvers>
@@ -49,7 +49,7 @@
                   cellBlockNames="{cb1}"/>
   </Mesh>
 
-  <Events maxTime="285.0">
+  <Events maxTime="885.0">
     <SoloEvent name="siloOutput0"
                    target="/Outputs/SiloOutput"/>
 
