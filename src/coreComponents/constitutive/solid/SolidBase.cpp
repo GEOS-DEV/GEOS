@@ -34,7 +34,8 @@ SolidBase::SolidBase( string const & name,
   m_defaultDensity{0},
   m_density{},
   m_stress{},
-  m_elasticStress{}
+  m_elasticStress{},
+  m_clearDisplacement{}
 {
 
   registerWrapper( viewKeyStruct::defaultDensityString, &m_defaultDensity, 0 )->
@@ -53,6 +54,10 @@ SolidBase::SolidBase( string const & name,
     setPlotLevel(PlotLevel::LEVEL_0)->
     setDescription("Elastic Stress");
 
+  registerWrapper( viewKeyStruct::clearDisplacementString, &m_clearDisplacement, 0 )->
+	setApplyDefaultValue(-1)->
+    setDescription("Clear Displacement");
+
 }
 
 SolidBase::~SolidBase()
@@ -70,6 +75,7 @@ SolidBase::DeliverClone( string const & GEOSX_UNUSED_ARG( name ),
 
   newConstitutiveRelation->m_stress = m_stress;
   newConstitutiveRelation->m_elasticStress = m_elasticStress;
+  newConstitutiveRelation->m_clearDisplacement = m_clearDisplacement;
 }
 
 
@@ -84,7 +90,7 @@ void SolidBase::AllocateConstitutiveData( dataRepository::Group * const parent,
 
   m_stress.resize( parent->size(), numConstitutivePointsPerParentIndex );
   m_elasticStress.resize( parent->size(), numConstitutivePointsPerParentIndex );
-
+  m_clearDisplacement = -1;
 
 }
 

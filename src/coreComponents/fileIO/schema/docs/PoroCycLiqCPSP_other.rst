@@ -6,6 +6,7 @@ Name                 Type           Description
 G0                   real64_array   CycLiqCPSP Model Parameter : G0     
 M                    real64_array   CycLiqCPSP Model Parameter : M      
 alpha                r2Sym_array2d  alpha                               
+clearDisplacement    real64         Clear Displacement                  
 dPVMult_dDensity     real64_array2d (no description available)          
 density              real64_array2d Material Density                    
 dir                  real64_array   CycLiqCPSP Model Parameter : dir    

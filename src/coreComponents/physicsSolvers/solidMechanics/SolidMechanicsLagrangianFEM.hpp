@@ -102,6 +102,9 @@ public:
                                        DomainPartition * domain );
 
   virtual
+  void ClearDisplacement( DomainPartition * const domain );
+
+  virtual
   real64 ExplicitStepVelocityUpdate( real64 const& time_n,
                                      real64 const & dt,
                                      integer const cycleNumber,

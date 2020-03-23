@@ -653,6 +653,8 @@
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="BilinearElasticIsotropicType">
+		<!--clearDisplacement => Clear Displacement-->
+		<xsd:attribute name="clearDisplacement" type="real64" />
 		<!--criticalStress => Elastic Critical Stress Field-->
 		<xsd:attribute name="criticalStress" type="real64_array" />
 		<!--density => Material Density-->
@@ -798,6 +800,8 @@
 		<xsd:attribute name="M" type="real64_array" />
 		<!--alpha => alpha-->
 		<xsd:attribute name="alpha" type="r2Sym_array2d" />
+		<!--clearDisplacement => Clear Displacement-->
+		<xsd:attribute name="clearDisplacement" type="real64" />
 		<!--density => Material Density-->
 		<xsd:attribute name="density" type="real64_array2d" />
 		<!--dir => CycLiqCPSP Model Parameter : dir-->
@@ -846,6 +850,8 @@
 		<xsd:attribute name="stress" type="r2Sym_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="HardeningElasticIsotropicType">
+		<!--clearDisplacement => Clear Displacement-->
+		<xsd:attribute name="clearDisplacement" type="real64" />
 		<!--density => Material Density-->
 		<xsd:attribute name="density" type="real64_array2d" />
 		<!--elasticStress => Elastic Stress-->
@@ -928,6 +934,8 @@
 		<xsd:attribute name="c65" type="real64_array" />
 		<!--c66 => The 66 component of the Elastic Stiffness Tensor in Voigt notation-->
 		<xsd:attribute name="c66" type="real64_array" />
+		<!--clearDisplacement => Clear Displacement-->
+		<xsd:attribute name="clearDisplacement" type="real64" />
 		<!--defaultStiffness => Default Elastic Stiffness Tensor in Voigt notation-->
 		<xsd:attribute name="defaultStiffness" type="geosx::constitutive::LinearElasticAnisotropic::StiffnessTensor" />
 		<!--density => Material Density-->
@@ -942,6 +950,8 @@
 		<xsd:attribute name="BulkModulus" type="real64_array" />
 		<!--ShearModulus => Elastic Shear Modulus-->
 		<xsd:attribute name="ShearModulus" type="real64_array" />
+		<!--clearDisplacement => Clear Displacement-->
+		<xsd:attribute name="clearDisplacement" type="real64" />
 		<!--density => Material Density-->
 		<xsd:attribute name="density" type="real64_array2d" />
 		<!--elasticStress => Elastic Stress-->
@@ -950,6 +960,8 @@
 		<xsd:attribute name="stress" type="r2Sym_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="LinearViscoElasticAnisotropicType">
+		<!--clearDisplacement => Clear Displacement-->
+		<xsd:attribute name="clearDisplacement" type="real64" />
 		<!--defaultStiffness => Default Elastic Stiffness Tensor in Voigt notation-->
 		<xsd:attribute name="defaultStiffness" type="geosx::constitutive::LinearViscoElasticAnisotropic::StiffnessTensor" />
 		<!--density => Material Density-->
@@ -966,6 +978,8 @@
 		<xsd:attribute name="BulkModulus" type="real64_array" />
 		<!--ShearModulus => Elastic Shear Modulus-->
 		<xsd:attribute name="ShearModulus" type="real64_array" />
+		<!--clearDisplacement => Clear Displacement-->
+		<xsd:attribute name="clearDisplacement" type="real64" />
 		<!--density => Material Density-->
 		<xsd:attribute name="density" type="real64_array2d" />
 		<!--elasticStress => Elastic Stress-->
@@ -1020,6 +1034,8 @@
 		<xsd:attribute name="BulkModulus" type="real64_array" />
 		<!--ShearModulus => Elastic Shear Modulus-->
 		<xsd:attribute name="ShearModulus" type="real64_array" />
+		<!--clearDisplacement => Clear Displacement-->
+		<xsd:attribute name="clearDisplacement" type="real64" />
 		<!--density => Material Density-->
 		<xsd:attribute name="density" type="real64_array2d" />
 		<!--elasticStress => Elastic Stress-->
@@ -1034,6 +1050,8 @@
 		<xsd:attribute name="poreVolumeMultiplier" type="real64_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="PoroBilinearElasticIsotropicType">
+		<!--clearDisplacement => Clear Displacement-->
+		<xsd:attribute name="clearDisplacement" type="real64" />
 		<!--criticalStress => Elastic Critical Stress Field-->
 		<xsd:attribute name="criticalStress" type="real64_array" />
 		<!--dPVMult_dDensity => (no description available)-->
@@ -1062,6 +1080,8 @@
 		<xsd:attribute name="M" type="real64_array" />
 		<!--alpha => alpha-->
 		<xsd:attribute name="alpha" type="r2Sym_array2d" />
+		<!--clearDisplacement => Clear Displacement-->
+		<xsd:attribute name="clearDisplacement" type="real64" />
 		<!--dPVMult_dDensity => (no description available)-->
 		<xsd:attribute name="dPVMult_dDensity" type="real64_array2d" />
 		<!--density => Material Density-->
@@ -1186,6 +1206,8 @@
 		<xsd:attribute name="c65" type="real64_array" />
 		<!--c66 => The 66 component of the Elastic Stiffness Tensor in Voigt notation-->
 		<xsd:attribute name="c66" type="real64_array" />
+		<!--clearDisplacement => Clear Displacement-->
+		<xsd:attribute name="clearDisplacement" type="real64" />
 		<!--dPVMult_dDensity => (no description available)-->
 		<xsd:attribute name="dPVMult_dDensity" type="real64_array2d" />
 		<!--defaultStiffness => Default Elastic Stiffness Tensor in Voigt notation-->
@@ -1204,6 +1226,8 @@
 		<xsd:attribute name="BulkModulus" type="real64_array" />
 		<!--ShearModulus => Elastic Shear Modulus-->
 		<xsd:attribute name="ShearModulus" type="real64_array" />
+		<!--clearDisplacement => Clear Displacement-->
+		<xsd:attribute name="clearDisplacement" type="real64" />
 		<!--dPVMult_dDensity => (no description available)-->
 		<xsd:attribute name="dPVMult_dDensity" type="real64_array2d" />
 		<!--density => Material Density-->
@@ -1220,6 +1244,8 @@
 		<xsd:attribute name="BulkModulus" type="real64_array" />
 		<!--ShearModulus => Elastic Shear Modulus-->
 		<xsd:attribute name="ShearModulus" type="real64_array" />
+		<!--clearDisplacement => Clear Displacement-->
+		<xsd:attribute name="clearDisplacement" type="real64" />
 		<!--dPVMult_dDensity => (no description available)-->
 		<xsd:attribute name="dPVMult_dDensity" type="real64_array2d" />
 		<!--density => Material Density-->
@@ -1236,6 +1262,8 @@
 		<xsd:attribute name="BulkModulus" type="real64_array" />
 		<!--ShearModulus => Elastic Shear Modulus-->
 		<xsd:attribute name="ShearModulus" type="real64_array" />
+		<!--clearDisplacement => Clear Displacement-->
+		<xsd:attribute name="clearDisplacement" type="real64" />
 		<!--dPVMult_dDensity => (no description available)-->
 		<xsd:attribute name="dPVMult_dDensity" type="real64_array2d" />
 		<!--density => Material Density-->

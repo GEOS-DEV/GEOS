@@ -103,7 +103,6 @@ public:
 		static constexpr auto etamString = "etam";
 		static constexpr auto alphaString = "alpha";
 		static constexpr auto initialTimeString = "initialTime";
-
 	};
 
 	// 如何更新？？
@@ -237,8 +236,7 @@ public:
 		array2d<real64> m_epsvc;
 		array2d<real64> m_etam;
 	    array2d<R2SymTensor> m_alpha;
-        array2d<real64> m_initialTime;
-
+	    array2d<real64> m_initialTime;
 
 	    const real64 root23 = sqrt( 2.0 / 3.0 );
 	    const real64 root32 = sqrt( 3.0 / 2.0 );

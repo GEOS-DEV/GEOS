@@ -3,6 +3,7 @@
 ==================== ============== ============================== 
 Name                 Type           Description                    
 ==================== ============== ============================== 
+clearDisplacement    real64         Clear Displacement             
 criticalStress       real64_array   Elastic Critical Stress Field  
 dPVMult_dDensity     real64_array2d (no description available)     
 density              real64_array2d Material Density               

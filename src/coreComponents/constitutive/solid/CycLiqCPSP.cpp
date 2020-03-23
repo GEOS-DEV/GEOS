@@ -189,8 +189,8 @@ CycLiqCPSP::CycLiqCPSP( std::string const & name, Group * const parent ):
 	    setPlotLevel(PlotLevel::LEVEL_0)->
 	    setDescription("alpha");
     registerWrapper( viewKeyStruct::initialTimeString, &m_initialTime, 0 )->
-	    setPlotLevel(PlotLevel::LEVEL_0)->
-	    setDescription("initialTime");
+  	    setPlotLevel(PlotLevel::LEVEL_0)->
+  	    setDescription("initialTime");
 }
 
 CycLiqCPSP::~CycLiqCPSP()
@@ -247,9 +247,8 @@ CycLiqCPSP::DeliverClone( string const & name,
   newConstitutiveRelation->m_epsvc = m_epsvc;
   newConstitutiveRelation->m_etam = m_etam;
   newConstitutiveRelation->m_alpha = m_alpha;
-  newConstitutiveRelation->m_initialTime = m_initialTime;
   newConstitutiveRelation->m_stress = m_stress;
-
+  newConstitutiveRelation->m_initialTime = m_initialTime;
 }
 
 void CycLiqCPSP::AllocateConstitutiveData( dataRepository::Group * const parent,
@@ -335,6 +334,8 @@ void CycLiqCPSP::StateUpdatePoint( localIndex const k,
 	}
 if(m_initialTime[k][q] < 0)
 {
+	m_clearDisplacement = 1;
+
 	 //m_strain[k][q] += D;
      real64 p = 1e12;
      real64 G = m_G0[k] * pat * ( pow( ( 2.97 - m_ein[k] ) , 2 ) / ( 1 + m_ein[k])) * sqrt( p / pat );
@@ -352,6 +353,8 @@ if(m_initialTime[k][q] < 0)
 
 else
 {
+	m_clearDisplacement = -1;
+
 	real64 Mfc = m_M[k];
 	real64 Mdc = m_M[k];
 	real64 sinphi = 3.0 * Mfc / (Mfc + 6.0);

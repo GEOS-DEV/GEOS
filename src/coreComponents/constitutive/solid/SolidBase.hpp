@@ -63,11 +63,14 @@ public:
 
     static constexpr auto stressString = "stress";
     static constexpr auto elasticStressString = "elasticStress";
-
+    static constexpr auto clearDisplacementString = "clearDisplacement";
   };
 
   real64   defaultDensity() const { return m_defaultDensity; }
   real64 & defaultDensity()       { return m_defaultDensity; }
+
+  real64   clearDisplacement() const { return m_clearDisplacement; }
+  real64 & clearDisplacement()       { return m_clearDisplacement; }
 
   arrayView2d<real64>       const & density()       { return m_density; }
   arrayView2d<real64 const> const & density() const { return m_density; }
@@ -86,6 +89,7 @@ protected:
 
   array2d<R2SymTensor> m_stress;
   array2d<R2SymTensor> m_elasticStress;
+  real64 m_clearDisplacement;
 
 };
 

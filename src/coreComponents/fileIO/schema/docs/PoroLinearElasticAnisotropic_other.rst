@@ -39,6 +39,7 @@ c63                  real64_array    The 63 component of the Elastic Stiffness T
 c64                  real64_array    The 64 component of the Elastic Stiffness Tensor in Voigt notation 
 c65                  real64_array    The 65 component of the Elastic Stiffness Tensor in Voigt notation 
 c66                  real64_array    The 66 component of the Elastic Stiffness Tensor in Voigt notation 
+clearDisplacement    real64          Clear Displacement                                                 
 dPVMult_dDensity     real64_array2d  (no description available)                                         
 defaultStiffness     StiffnessTensor Default Elastic Stiffness Tensor in Voigt notation                 
 density              real64_array2d  Material Density                                                   

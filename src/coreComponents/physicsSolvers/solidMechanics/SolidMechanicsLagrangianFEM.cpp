@@ -644,6 +644,20 @@ void SolidMechanicsLagrangianFEM::ExplicitStepDisplacementUpdate( real64 const& 
 
 }
 
+void SolidMechanicsLagrangianFEM::ClearDisplacement( DomainPartition * const domain )
+{
+	  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+	  NodeManager * const nodes = mesh->getNodeManager();
+	  arrayView1d<R1Tensor> const & u = nodes->getReference<array1d<R1Tensor>>(keys::TotalDisplacement);
+	  RAJA::forall< parallelDevicePolicy< 256 > >( RAJA::TypedRangeSegment< localIndex >( 0, u.size() ),
+	                                               GEOSX_DEVICE_LAMBDA ( localIndex const i )
+	  {
+	    for (int j = 0; j < 3; ++j)
+	    {
+	      u[ i ][ j ] = 0;
+	    }
+	  });
+}
 
 real64 SolidMechanicsLagrangianFEM::ExplicitStepVelocityUpdate( real64 const& time_n,
                                                                 real64 const& dt,
@@ -804,6 +818,16 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStepVelocityUpdate( real64 const& ti
   ApplyTiedVelocity_explicit(time_n + dt,domain);
 
   fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n + dt, domain, "nodeManager", keys::Velocity );
+
+
+  ElementRegionManager::MaterialViewAccessor< real64 > const
+  clearDisplacement = elemManager->ConstructFullMaterialViewAccessor< real64 >( SolidBase::viewKeyStruct::clearDisplacementString,
+                                                                                       constitutiveManager);
+  if(clearDisplacement[0][0][m_solidMaterialFullIndex] > 0)
+  {
+	  ClearDisplacement( domain );
+  }
+
 
   CommunicationTools::SynchronizeUnpack( mesh, neighbors, m_iComm, true );
 
