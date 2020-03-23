@@ -199,7 +199,7 @@ void SolverBase::Execute( real64 const time_n,
     /*
      * Let us check convergence history of previous solve:
      * - number of nonlinear iter.
-     * - if the time-step was chopped. Then we can add some heuristics to choose next dt.
+     * - if the time-step was c hopped. Then we can add some heuristics to choose next dt.
      * */
     dtRemaining -= dtAccepted;
 
@@ -266,10 +266,6 @@ real64 SolverBase::LinearImplicitStep( real64 const & time_n,
   // call setup for physics solver. Pre step allocations etc.
   ImplicitStepSetup( time_n, dt, domain, dofManager, matrix, rhs, solution );
 
-  // clean matrix and rhs entries
-  matrix.zero();
-  rhs.zero();
-
   // call assemble to fill the matrix and the rhs
   matrix.zero();
   rhs.zero();
@@ -331,10 +327,6 @@ bool SolverBase::LineSearch( real64 const & time_n,
     }
 
     ApplySystemSolution( dofManager, solution, localScaleFactor, domain );
-
-    // clean matrix and rhs entries
-    matrix.zero();
-    rhs.zero();
 
     // re-assemble system
     matrix.zero();

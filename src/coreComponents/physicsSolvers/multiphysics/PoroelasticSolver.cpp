@@ -59,7 +59,7 @@ PoroelasticSolver::PoroelasticSolver( const std::string & name,
 
   registerWrapper( viewKeyStruct::couplingTypeOptionStringString, &m_couplingTypeOptionString, 0 )->
     setInputFlag( InputFlags::REQUIRED )->
-    setDescription( "Coupling option: (FixedStress, TightlyCoupled)" );
+    setDescription( "Coupling option: (FixedStress, FIM)" );
 
 }
 
@@ -140,7 +140,7 @@ void PoroelasticSolver::ImplicitStepSetup( real64 const & time_n,
       oldTotalMeanStress[er][esr][k] = totalMeanStress[er][esr][k];
     } );
   }
-  else if( ctOption == "TightlyCoupled" )
+  else if( ctOption == "FIM" )
   {
     m_flowSolver->ImplicitStepSetup( time_n, dt, domain,
                                      dofManager,
@@ -159,7 +159,7 @@ void PoroelasticSolver::ImplicitStepComplete( real64 const & time_n,
                                               real64 const & dt,
                                               DomainPartition * const domain )
 {
-  if( m_couplingTypeOption == couplingTypeOption::TightlyCoupled )
+  if( m_couplingTypeOption == couplingTypeOption::FIM )
   {
     m_solidSolver->updateStress( domain );
     m_solidSolver->ImplicitStepComplete( time_n, dt, domain );
@@ -192,9 +192,9 @@ void PoroelasticSolver::PostProcessInput()
     minNewtonIterSolid = 0;
     minNewtonIterFluid = 0;
   }
-  else if( ctOption == "TightlyCoupled" )
+  else if( ctOption == "FIM" )
   {
-    this->m_couplingTypeOption = couplingTypeOption::TightlyCoupled;
+    this->m_couplingTypeOption = couplingTypeOption::FIM;
 
     m_flowSolver  = this->getParent()->GetGroup< SinglePhaseBase >( m_flowSolverName );
     m_solidSolver = this->getParent()->GetGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
@@ -204,7 +204,7 @@ void PoroelasticSolver::PostProcessInput()
   }
   else
   {
-    GEOSX_ERROR( "invalid coupling type option" );
+    GEOSX_ERROR( "invalid coupling type option: " + ctOption );
   }
 
 }
@@ -254,7 +254,7 @@ real64 PoroelasticSolver::SolverStep( real64 const & time_n,
   {
     dt_return = SplitOperatorStep( time_n, dt, cycleNumber, domain->group_cast< DomainPartition * >() );
   }
-  else if( m_couplingTypeOption == couplingTypeOption::TightlyCoupled )
+  else if( m_couplingTypeOption == couplingTypeOption::FIM )
   {
     SetupSystem( domain,
                  m_dofManager,
