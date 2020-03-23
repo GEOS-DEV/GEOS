@@ -8,11 +8,7 @@
                  logLevel="2"
                  discretization="FE1"
                  targetRegions="{Region1}">
-<<<<<<< HEAD
       <SystemSolverParameters maxIterNewton="2"
-=======
-      <SystemSolverParameters maxIterNewton="400"
->>>>>>> 589a94499291b437a0af5b9946e763146dd5ecf7
                               logLevel="2"/>
     </PhaseFieldFracture>
 
@@ -24,13 +20,8 @@
                                   solidMaterialName="shale"
                                   >
       <SystemSolverParameters krylovTol="1.0e-10"
-<<<<<<< HEAD
                               newtonTol="1.0e-6"
                               maxIterNewton="50"
-=======
-                              newtonTol="1.0e-12"
-                              maxIterNewton="5"
->>>>>>> 589a94499291b437a0af5b9946e763146dd5ecf7
                               logLevel="0"/>
     </SolidMechanicsLagrangianSSLE>
 
@@ -57,11 +48,7 @@
                   cellBlockNames="{cb1}"/>
   </Mesh>
 
-<<<<<<< HEAD
   <Events maxTime="500.0">
-=======
-  <Events maxTime="1.0">
->>>>>>> 589a94499291b437a0af5b9946e763146dd5ecf7
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
     <PeriodicEvent name="solverApplications"
