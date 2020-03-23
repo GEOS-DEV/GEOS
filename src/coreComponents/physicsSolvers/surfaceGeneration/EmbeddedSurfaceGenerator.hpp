@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
@@ -59,8 +55,8 @@ class ElementRegionBase;
 class EmbeddedSurfaceGenerator : public SolverBase
 {
 public:
-  EmbeddedSurfaceGenerator( const std::string& name,
-                    Group * const parent );
+  EmbeddedSurfaceGenerator( const std::string & name,
+                            Group * const parent );
   ~EmbeddedSurfaceGenerator() override;
 
 
@@ -72,22 +68,22 @@ public:
                         real64 const dt,
                         integer const cycleNumber,
                         integer const GEOSX_UNUSED_PARAM( eventCounter ),
-                        real64 const  GEOSX_UNUSED_PARAM( eventProgress ),
+                        real64 const GEOSX_UNUSED_PARAM( eventProgress ),
                         dataRepository::Group * domain ) override
   {
-    SolverStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>());
+    SolverStep( time_n, dt, cycleNumber, domain->group_cast< DomainPartition * >());
   }
 
   /**
-       * @brief xxx
-       * @param[in] ...
-       * @param[in] ...
-       * @param[in] ...
-       * @return ...
-       *
-       */
-  virtual real64 SolverStep( real64 const& time_n,
-                             real64 const& dt,
+   * @brief xxx
+   * @param[in] ...
+   * @param[in] ...
+   * @param[in] ...
+   * @return ...
+   *
+   */
+  virtual real64 SolverStep( real64 const & time_n,
+                             real64 const & dt,
                              integer const cycleNumber,
                              DomainPartition * domain ) override;
 
@@ -96,22 +92,22 @@ public:
 protected:
 
   /**
-       * @brief xxx
-       * @param[in] ...
-       * @param[in] ...
-       * @param[in] ...
-       * @return ...
-       *
-       */
+   * @brief xxx
+   * @param[in] ...
+   * @param[in] ...
+   * @param[in] ...
+   * @return ...
+   *
+   */
   virtual void InitializePostSubGroups( Group * const problemManager ) override final;
   /**
-         * @brief xxx
-         * @param[in] ...
-         * @param[in] ...
-         * @param[in] ...
-         * @return ...
-         *
-         */
+   * @brief xxx
+   * @param[in] ...
+   * @param[in] ...
+   * @param[in] ...
+   * @return ...
+   *
+   */
   virtual void InitializePostInitialConditions_PreSubGroups( Group * const problemManager ) override final;
   virtual void postRestartInitialization( Group * const domain ) override final;
 
@@ -124,7 +120,8 @@ private:
   {
     constexpr static auto solidMaterialNameString = "solidMaterialName";
     constexpr static auto fractureRegionNameString = "fractureRegion";
-    //TODO: rock toughness should be a material parameter, and we need to make rock toughness to KIC a constitutive relation.
+    //TODO: rock toughness should be a material parameter, and we need to make rock toughness to KIC a constitutive
+    // relation.
     constexpr static auto rockToughnessString = "rockToughness";
   }; //SurfaceGenViewKeys;
 

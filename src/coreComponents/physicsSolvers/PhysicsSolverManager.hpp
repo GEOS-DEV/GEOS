@@ -45,11 +45,10 @@ public:
   } viewKeys;
 
   struct groupKeyStruct
-  {
-  } groupKeys;
+  {} groupKeys;
 
   R1Tensor const & gravityVector() const { return m_gravityVector; }
-  R1Tensor       & gravityVector()       { return m_gravityVector; }
+  R1Tensor & gravityVector()       { return m_gravityVector; }
 
 private:
   PhysicsSolverManager() = delete;

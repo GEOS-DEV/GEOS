@@ -38,13 +38,14 @@ int main( int argc, char *argv[] )
   printTypeSummary();
 
   timeval tim;
-  gettimeofday(&tim, nullptr);
+  gettimeofday( &tim, nullptr );
   real64 t_start = tim.tv_sec + (tim.tv_usec / 1000000.0);
 
   std::string restartFileName;
   bool restart = ProblemManager::ParseRestart( argc, argv, restartFileName );
-  if (restart) {
-    GEOSX_LOG_RANK_0("Loading restart file " << restartFileName);
+  if( restart )
+  {
+    GEOSX_LOG_RANK_0( "Loading restart file " << restartFileName );
     dataRepository::loadTree( restartFileName );
   }
 
@@ -53,7 +54,7 @@ int main( int argc, char *argv[] )
   problemManager.InitializePythonInterpreter();
   problemManager.ParseCommandLineInput( argc, argv );
 
-  if ( !problemManager.getSchemaFileName().empty() )
+  if( !problemManager.getSchemaFileName().empty() )
   {
     problemManager.GenerateDocumentation();
   }
@@ -63,25 +64,26 @@ int main( int argc, char *argv[] )
 
     problemManager.ProblemSetup();
 
-    if (restart) {
+    if( restart )
+    {
       problemManager.ReadRestartOverwrite();
     }
 
-    MpiWrapper::Barrier(MPI_COMM_GEOSX);
-    GEOSX_LOG_RANK_0("Running simulation");
+    MpiWrapper::Barrier( MPI_COMM_GEOSX );
+    GEOSX_LOG_RANK_0( "Running simulation" );
 
-    gettimeofday(&tim, nullptr);
+    gettimeofday( &tim, nullptr );
     const real64 t_initialize = tim.tv_sec + (tim.tv_usec / 1000000.0);
 
     problemManager.RunSimulation();
 
-    gettimeofday(&tim, nullptr);
+    gettimeofday( &tim, nullptr );
     const real64 t_run = tim.tv_sec + (tim.tv_usec / 1000000.0);
 
-    GEOSX_LOG_RANK_0("\ninit time = " << std::setprecision(5) << t_initialize-t_start <<
-                    "s, run time = " << t_run-t_initialize << "s");
+    GEOSX_LOG_RANK_0( "\ninit time = " << std::setprecision( 5 ) << t_initialize-t_start <<
+                      "s, run time = " << t_run-t_initialize << "s" );
   }
-  
+
 
   problemManager.ClosePythonInterpreter();
 
@@ -89,4 +91,3 @@ int main( int argc, char *argv[] )
 
   return 0;
 }
-

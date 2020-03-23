@@ -34,26 +34,25 @@ Perforation::Perforation(string const & name, Group * const parent)
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
   registerWrapper( viewKeyStruct::distanceFromHeadString, &m_distanceFromHead, false )->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Perforation linear distance from well head");
+    setInputFlag( InputFlags::REQUIRED )->
+    setDescription( "Perforation linear distance from well head" );
 
   registerWrapper( viewKeyStruct::wellPeacemanIndexString, &m_wellPeacemanIndex, false )->
-    setApplyDefaultValue(-1.0)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Perforation well Peaceman index");
+    setApplyDefaultValue( -1.0 )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Perforation well Peaceman index" );
 
 }
 
 void Perforation::PostProcessInput()
 {
   GEOSX_ERROR_IF( m_distanceFromHead <= 0,
-                 "Invalid distance well head to perforation " << getName() );
+                  "Invalid distance well head to perforation " << getName() );
 
 }
 
 Perforation::~Perforation()
-{
-}
+{}
 
 
 } //namespace geosx
