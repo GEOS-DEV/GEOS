@@ -161,9 +161,8 @@ void PoroelasticSolver::ImplicitStepComplete( real64 const & time_n,
 {
   if( m_couplingTypeOption == couplingTypeOption::FIM )
   {
-    m_solidSolver->updateStress( domain );
+    m_solidSolver->updateStress( domain ); // TODO: to be moved in m_solidSolver->ImplicitStepComplete
     m_solidSolver->ImplicitStepComplete( time_n, dt, domain );
-
     m_flowSolver->ImplicitStepComplete( time_n, dt, domain );
   }
 }
@@ -428,11 +427,11 @@ void PoroelasticSolver::AssembleCouplingTerms( DomainPartition * const domain,
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
-  NodeManager * const nodeManager = mesh->getNodeManager();
-  ElementRegionManager * const elemManager = mesh->getElemManager();
-  NumericalMethodsManager const * numericalMethodManager = domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
-  FiniteElementDiscretizationManager const * feDiscretizationManager = numericalMethodManager->GetGroup< FiniteElementDiscretizationManager >(
+  MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
+  NodeManager const * const nodeManager = mesh->getNodeManager();
+  ElementRegionManager const * const elemManager = mesh->getElemManager();
+  NumericalMethodsManager const * const numericalMethodManager = domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
+  FiniteElementDiscretizationManager const * const feDiscretizationManager = numericalMethodManager->GetGroup< FiniteElementDiscretizationManager >(
     keys::finiteElementDiscretizations );
 
   string const uDofKey = dofManager.getKey( keys::TotalDisplacement );
@@ -448,7 +447,7 @@ void PoroelasticSolver::AssembleCouplingTerms( DomainPartition * const domain,
   // begin region loop
   for( localIndex er=0; er<elemManager->numRegions(); ++er )
   {
-    ElementRegionBase * const elementRegion = elemManager->GetRegion( er );
+    ElementRegionBase const * const elementRegion = elemManager->GetRegion( er );
 
     FiniteElementDiscretization const *
       feDiscretization = feDiscretizationManager->GetGroup< FiniteElementDiscretization >( m_discretizationName );
@@ -511,15 +510,13 @@ void PoroelasticSolver::AssembleCouplingTerms( DomainPartition * const domain,
           }
           elementPLocalDOfIndex = pDofNumber[k];
 
-          R1Tensor dNdXa;
-
           for( integer q=0; q<numQuadraturePoints; ++q )
           {
             const realT detJq = detJ[k][q];
 
             for( integer a=0; a<numNodesPerElement; ++a )
             {
-              dNdXa = dNdX[k][q][a];
+              R1Tensor const & dNdXa = dNdX[k][q][a];
 
               dRsdP( a*dim+0, 0 ) += biotCoefficient * dNdXa[0] * detJq;
               dRsdP( a*dim+1, 0 ) += biotCoefficient * dNdXa[1] * detJq;
