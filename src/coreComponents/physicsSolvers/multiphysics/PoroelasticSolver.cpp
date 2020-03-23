@@ -455,27 +455,29 @@ void PoroelasticSolver::AssembleCouplingTerms( DomainPartition * const domain,
 
     // begin subregion loop
     elementRegion->forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const GEOSX_UNUSED_PARAM ( esr ),
-                                                                           CellElementSubRegion const * const elementSubRegion )
+                                                                           CellElementSubRegion const & elementSubRegion )
     {
       arrayView3d< R1Tensor const > const &
-      dNdX = elementSubRegion->getReference< array3d< R1Tensor > >( keys::dNdX );
+      dNdX = elementSubRegion.getReference< array3d< R1Tensor > >( keys::dNdX );
 
-      arrayView2d< real64 const > const & detJ = elementSubRegion->getReference< array2d< real64 > >( keys::detJ );
+      arrayView1d< integer const > const & ghostRank = elementSubRegion.ghostRank();
 
-      arrayView1d< globalIndex const > const & pDofNumber = elementSubRegion->getReference< globalIndex_array >( pDofKey );
+      arrayView2d< real64 const > const & detJ = elementSubRegion.getReference< array2d< real64 > >( keys::detJ );
 
-      arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion->nodeList();
+      arrayView1d< globalIndex const > const & pDofNumber = elementSubRegion.getReference< globalIndex_array >( pDofKey );
+
+      arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
       localIndex const numNodesPerElement = elemsToNodes.size( 1 );
 
       std::unique_ptr< FiniteElementBase >
-      fe = feDiscretization->getFiniteElement( elementSubRegion->GetElementTypeString() );
+      fe = feDiscretization->getFiniteElement( elementSubRegion.GetElementTypeString() );
 
       string const solidModelName = this->getSolidSolver()->getSolidMaterialName();
       real64 const
-      biotCoefficient = elementSubRegion->GetConstitutiveModels()->GetGroup( solidModelName )->getReference< real64 >( "BiotCoefficient" );
+      biotCoefficient = elementSubRegion.GetConstitutiveModels()->GetGroup( solidModelName )->getReference< real64 >( "BiotCoefficient" );
 
       arrayView2d< real64 const > const &
-      density = elementSubRegion->GetConstitutiveModels()
+      density = elementSubRegion.GetConstitutiveModels()
                   ->GetGroup( m_flowSolver->fluidIndex())
                   ->getReference< array2d< real64 > >( SingleFluidBase::viewKeyStruct::densityString );
 
@@ -484,9 +486,7 @@ void PoroelasticSolver::AssembleCouplingTerms( DomainPartition * const domain,
       int nPDof = m_flowSolver->numDofPerCell();
       int numQuadraturePoints = fe->n_quadrature_points();
 
-      forall_in_range< serialPolicy >( 0,
-                                       elementSubRegion->size(),
-                                       [=] ( localIndex const k )
+      forAll< serialPolicy >( elementSubRegion.size(), [=] ( localIndex k )
       {
         array1d< globalIndex > elementULocalDofIndex( nUDof );
         globalIndex elementPLocalDOfIndex;
@@ -498,7 +498,7 @@ void PoroelasticSolver::AssembleCouplingTerms( DomainPartition * const domain,
         dRfdU = 0.0;
         Rf = 0.0;
 
-        if( elementSubRegion->m_ghostRank[k] < 0 )
+        if( ghostRank[k] < 0 )
         {
           // Get dof local to global mapping
           for( localIndex a=0; a<numNodesPerElement; ++a )
