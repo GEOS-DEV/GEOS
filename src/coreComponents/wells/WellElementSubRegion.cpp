@@ -517,8 +517,8 @@ void WellElementSubRegion::UpdateNodeManagerNodeToElementMap( MeshLevel & mesh )
 void WellElementSubRegion::ConnectPerforationsToMeshElements( MeshLevel                   & mesh,
                                                               InternalWellGenerator const & wellGeometry )
 {
-  arrayView1d<R1Tensor const> const & perfCoordsGlobal    = wellGeometry.GetPerfCoords();
-  arrayView1d<real64 const>   const & perfWellIndexGlobal = wellGeometry.GetPerfPeacemanIndex();
+  arrayView1d<R1Tensor const> const & perfCoordsGlobal = wellGeometry.GetPerfCoords();
+  arrayView1d<real64 const>   const & perfWellTransmissibilityGlobal = wellGeometry.GetPerfTransmissibility();
 
   m_perforationData.resize( perfCoordsGlobal.size() );
   localIndex iperfLocal = 0;
@@ -570,8 +570,8 @@ void WellElementSubRegion::ConnectPerforationsToMeshElements( MeshLevel         
       m_perforationData.GetMeshElements().m_toElementSubRegion[iperfLocal] = esrMatched;
       m_perforationData.GetMeshElements().m_toElementIndex    [iperfLocal] = eiMatched;
 
-      // construct the local wellPeacemanIndex and location maps
-      m_perforationData.GetWellPeacemanIndex()[iperfLocal] = perfWellIndexGlobal[iperfGlobal];
+      // construct the local wellTransmissibility and location maps
+      m_perforationData.GetWellTransmissibility()[iperfLocal] = perfWellTransmissibilityGlobal[iperfGlobal];
       m_perforationData.GetLocation()[iperfLocal] = location;
 
       // increment the local to global map

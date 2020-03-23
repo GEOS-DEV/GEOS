@@ -80,16 +80,16 @@ public:
    * @brief Getter for the well Peaceman index at the perforation
    * @return the well Peaceman index
    */
-  real64 GetWellPeacemanIndex() const { return m_wellPeacemanIndex ; }
+  real64 GetWellTransmissibility() const { return m_wellTransmissibility ; }
 
 
   struct viewKeyStruct
   {
     static constexpr auto distanceFromHeadString  = "distanceFromHead";
-    static constexpr auto wellPeacemanIndexString = "wellPeacemanIndex";
+    static constexpr auto wellTransmissibilityString = "wellTransmissibility";
 
     dataRepository::ViewKey distanceFromHead  = { distanceFromHeadString };
-    dataRepository::ViewKey wellPeacemanIndex = { wellPeacemanIndexString };
+    dataRepository::ViewKey wellTransmissibility = { wellTransmissibilityString };
 
   } viewKeysPerforation;
 
@@ -103,10 +103,10 @@ private:
   real64 m_distanceFromHead;
 
   // well index at this perforation
-  real64 m_wellPeacemanIndex;
+  real64 m_wellTransmissibility;
 
 };
 
 } //namespace geosx
 
-#endif //GEOSX_MANAGERS_WELLS_PERFORATION_HPP
+#endif //GEOSX_WELLS_PERFORATION_HPP

@@ -43,7 +43,7 @@ PerforationData::PerforationData( string const & name, Group * const parent )
 
   registerWrapper( viewKeyStruct::wellElementIndexString, &m_wellElementIndex, false );
   registerWrapper( viewKeyStruct::locationString, &m_location, false );
-  registerWrapper( viewKeyStruct::wellPeacemanIndexString, &m_wellPeacemanIndex, false );
+  registerWrapper( viewKeyStruct::wellTransmissibilityString, &m_wellTransmissibility, false );
 }
 
 PerforationData::~PerforationData()
@@ -70,10 +70,10 @@ void PerforationData::InitializePostInitialConditions_PreSubGroups( Group * cons
 {
   for( localIndex iperf = 0; iperf < size(); ++iperf )
   {
-    if (m_wellPeacemanIndex[iperf] < 0.0)
+    if (m_wellTransmissibility[iperf] < 0.0)
     {
-      // TODO: compute wellPeacemanIndex internally
-      GEOSX_ERROR( "Invalid well Peaceman index value: " << m_wellPeacemanIndex[iperf] );
+      // TODO: compute wellTransmissibility internally
+      GEOSX_ERROR( "Invalid well Peaceman index value: " << m_wellTransmissibility[iperf] );
     }
   }
 }
@@ -113,7 +113,7 @@ void PerforationData::DebugLocalPerforations() const
               << std::endl;
     std::cout << "m_location[" << iperf << "] = " << m_location[iperf]
               << std::endl;
-    std::cout << "m_wellPeacemanIndex[" << iperf << "] = " << m_wellPeacemanIndex[iperf]
+    std::cout << "m_wellTransmissibility[" << iperf << "] = " << m_wellTransmissibility[iperf]
               << std::endl;
   }
 }

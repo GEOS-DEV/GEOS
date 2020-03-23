@@ -29,7 +29,7 @@ using namespace dataRepository;
 Perforation::Perforation(string const & name, Group * const parent)
   : Group(name, parent),
     m_distanceFromHead(0),
-    m_wellPeacemanIndex(0)
+    m_wellTransmissibility(0)
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
@@ -37,10 +37,10 @@ Perforation::Perforation(string const & name, Group * const parent)
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Perforation linear distance from well head" );
 
-  registerWrapper( viewKeyStruct::wellPeacemanIndexString, &m_wellPeacemanIndex, false )->
+  registerWrapper( viewKeyStruct::wellTransmissibilityString, &m_wellTransmissibility, false )->
     setApplyDefaultValue( -1.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Perforation well Peaceman index" );
+    setDescription( "Perforation transmissibility");
 
 }
 

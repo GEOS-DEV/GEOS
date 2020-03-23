@@ -169,7 +169,7 @@ public:
    * @brief Getter for the well Peaceman index at the perforations
    * @return list of well Peaceman index at all the perforations on the well
    */
-  arrayView1d< real64 const > const & GetPerfPeacemanIndex() const { return m_perfPeacemanIndex; }
+  arrayView1d< real64 const > const & GetPerfTransmissibility() const { return m_perfTransmissibility; }
 
   /**
    * @brief Getter for the global indices of the well elements connected to each perforation
@@ -286,7 +286,7 @@ private:
   array1d< R1Tensor >    m_perfCoords;
 
   /// Well Peaceman index at the perforation
-  array1d<real64>      m_perfPeacemanIndex;
+  array1d<real64>      m_perfTransmissibility;
 
   /// Global index of the well element
   array1d< globalIndex > m_perfElemId;

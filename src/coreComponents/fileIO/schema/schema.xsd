@@ -549,8 +549,8 @@
 	<xsd:complexType name="PerforationType">
 		<!--distanceFromHead => Perforation linear distance from well head-->
 		<xsd:attribute name="distanceFromHead" type="real64" use="required" />
-		<!--wellPeacemanIndex => Perforation well Peaceman index-->
-		<xsd:attribute name="wellPeacemanIndex" type="real64" default="-1" />
+		<!--wellTransmissibility => Perforation transmissibility-->
+		<xsd:attribute name="wellTransmissibility" type="real64" default="-1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

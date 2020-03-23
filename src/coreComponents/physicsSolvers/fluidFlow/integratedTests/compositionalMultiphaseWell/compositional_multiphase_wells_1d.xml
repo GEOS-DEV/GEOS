@@ -76,10 +76,10 @@
                   numElementsPerSegment="2">
         <Perforation name="producer1_perf1"
                      distanceFromHead="19.4"
-                     wellPeacemanIndex="1e-14"/> 
+                     wellTransmissibility="1e-14"/> 
         <Perforation name="producer1_perf2"
                      distanceFromHead="20.3"
-                     wellPeacemanIndex="1e-14"/> 
+                     wellTransmissibility="1e-14"/> 
     </InternalWell> 
 
     <InternalWell name="well_injector1"
@@ -99,10 +99,10 @@
                   numElementsPerSegment="3">
         <Perforation name="injector1_perf1"
                      distanceFromHead="19.52"
-                     wellPeacemanIndex="1e-14"/> 
+                     wellTransmissibility="1e-14"/> 
         <Perforation name="injector1_perf2"
                      distanceFromHead="20.45"
-                     wellPeacemanIndex="1e-14"/> 
+                     wellTransmissibility="1e-14"/> 
     </InternalWell> 
 
   </Mesh>

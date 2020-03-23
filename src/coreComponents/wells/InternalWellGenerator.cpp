@@ -170,7 +170,7 @@ void InternalWellGenerator::GenerateMesh( DomainPartition * const domain )
 
   m_perfCoords.resize( m_numPerforations );
   m_perfDistFromHead.resize( m_numPerforations );
-  m_perfPeacemanIndex.resize( m_numPerforations );
+  m_perfTransmissibility.resize( m_numPerforations );
   m_perfElemId.resize( m_numPerforations );
 
   // construct a reverse map from the polyline nodes to the segments
@@ -381,7 +381,7 @@ void InternalWellGenerator::ConnectPerforationsToWellElements()
     Perforation const * const perf = 
       this->GetGroup<Perforation>( m_perforationList[iperf] );
     m_perfDistFromHead[iperf]  = perf->GetDistanceFromWellHead();
-    m_perfPeacemanIndex[iperf] = perf->GetWellPeacemanIndex();    
+    m_perfTransmissibility[iperf] = perf->GetWellTransmissibility();    
 
     // search in all the elements of this well between head and bottom
     globalIndex iwelemTop    = 0;
@@ -481,21 +481,21 @@ void InternalWellGenerator::MergePerforations()
     if( elemToPerfMap[iwelem].size() > 1 )
     {
       // find the perforation with the largest Peaceman index and keep its location
-      globalIndex iperfMaxPeacemanIndex = elemToPerfMap[iwelem][0];
-      real64 maxPeacemanIndex = m_perfPeacemanIndex[iperfMaxPeacemanIndex];
+      globalIndex iperfMaxTransmissibility = elemToPerfMap[iwelem][0];
+      real64 maxTransmissibility = m_perfTransmissibility[iperfMaxTransmissibility];
       for ( localIndex ip = 1; ip < elemToPerfMap[iwelem].size(); ++ip )
       {
-        if ( m_perfPeacemanIndex[elemToPerfMap[iwelem][ip]] > maxPeacemanIndex )
+        if ( m_perfTransmissibility[elemToPerfMap[iwelem][ip]] > maxTransmissibility )
         {
-          iperfMaxPeacemanIndex = elemToPerfMap[iwelem][ip];
-          maxPeacemanIndex = m_perfPeacemanIndex[iperfMaxPeacemanIndex];
+          iperfMaxTransmissibility = elemToPerfMap[iwelem][ip];
+          maxTransmissibility = m_perfTransmissibility[iperfMaxTransmissibility];
         }
       }
 
       // assign the coordinates of the perf with the largest trans to the other perfs on this elem
       for( localIndex ip = 0; ip < elemToPerfMap[iwelem].size(); ++ip )
       {
-        if( elemToPerfMap[iwelem][ip] == iperfMaxPeacemanIndex )
+        if( elemToPerfMap[iwelem][ip] == iperfMaxTransmissibility )
         {
           continue;
         }
@@ -503,9 +503,9 @@ void InternalWellGenerator::MergePerforations()
         GEOSX_LOG_RANK_0( "Moving perforation #" << elemToPerfMap[iwelem][ip]
                                                  << " of well " << getName()
                                                  << " from " << m_perfCoords[elemToPerfMap[iwelem][ip]]
-                                                 << " to " << m_perfCoords[iperfMaxPeacemanIndex] <<
+                                                 << " to " << m_perfCoords[iperfMaxTransmissibility] <<
                           " to make sure that no well element is shared between two MPI ranks" );
-        m_perfCoords[elemToPerfMap[iwelem][ip]] = m_perfCoords[iperfMaxPeacemanIndex];
+        m_perfCoords[elemToPerfMap[iwelem][ip]] = m_perfCoords[iperfMaxTransmissibility];
       }
     }
 
@@ -565,7 +565,7 @@ void InternalWellGenerator::DebugWellGeometry() const
   {
     std::cout << "m_perfCoords[" << iperf << "] = " << m_perfCoords[iperf]
               << std::endl;
-    std::cout << "m_perfPeacemanIndex[" << iperf << "] = " << m_perfPeacemanIndex[iperf] 
+    std::cout << "m_perfTransmissibility[" << iperf << "] = " << m_perfTransmissibility[iperf] 
               << std::endl;
     std::cout << "m_perfElemId[" << iperf << "] = " << m_perfElemId[iperf]
               << std::endl;

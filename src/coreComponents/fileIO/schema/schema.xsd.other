@@ -1393,7 +1393,7 @@
 		<xsd:attribute name="reservoirElementSubregion" type="localIndex_array" />
 		<!--wellElementIndex => (no description available)-->
 		<xsd:attribute name="wellElementIndex" type="localIndex_array" />
-		<!--wellPeacemanIndex => (no description available)-->
-		<xsd:attribute name="wellPeacemanIndex" type="real64_array" />
+		<!--wellTransmissibility => (no description available)-->
+		<xsd:attribute name="wellTransmissibility" type="real64_array" />
 	</xsd:complexType>
 </xsd:schema>

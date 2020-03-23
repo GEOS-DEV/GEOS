@@ -126,13 +126,13 @@ public:
    * @brief Const getter for perforation well indices
    * @return list of perforation well indices
    */
-  arrayView1d< real64 const > const & GetWellPeacemanIndex() const { return m_wellPeacemanIndex; }
+  arrayView1d< real64 const > const & GetWellTransmissibility() const { return m_wellTransmissibility; }
 
   /**
    * @brief Getter for perforation well indices
    * @return list of perforation well indices
    */
-  arrayView1d< real64 > & GetWellPeacemanIndex() { return m_wellPeacemanIndex; }
+  arrayView1d< real64 > & GetWellTransmissibility() { return m_wellTransmissibility; }
   
   /**
    * @brief Connect each perforation to a local wellbore element
@@ -153,7 +153,7 @@ public:
     static constexpr auto reservoirElementIndexString     = "reservoirElementIndex";
     static constexpr auto wellElementIndexString          = "wellElementIndex";
     static constexpr auto locationString                  = "location";
-    static constexpr auto wellPeacemanIndexString         = "wellPeacemanIndex";
+    static constexpr auto wellTransmissibilityString      = "wellTransmissibility";
 
     dataRepository::ViewKey numPerforationsGlobal     = { numPerforationsGlobalString };
     dataRepository::ViewKey reservoirElementRegion    = { reservoirElementRegionString };
@@ -161,7 +161,7 @@ public:
     dataRepository::ViewKey reservoirElementIndex     = { reservoirElementIndexString };
     dataRepository::ViewKey wellElementIndex          = { wellElementIndexString };
     dataRepository::ViewKey location                  = { locationString };
-    dataRepository::ViewKey wellPeacemanIndex         = { wellPeacemanIndexString };
+    dataRepository::ViewKey wellTransmissibility      = { wellTransmissibilityString };
 
   } viewKeysPerforationData;
 
@@ -189,7 +189,7 @@ private:
   array1d< R1Tensor > m_location;
 
   /// well index of the perforations
-  array1d<real64> m_wellPeacemanIndex;
+  array1d<real64> m_wellTransmissibility;
 
 };
 

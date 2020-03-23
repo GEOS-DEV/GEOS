@@ -1730,8 +1730,8 @@ void CompositionalMultiphaseWell::ComputeAllPerforationRates( WellElementSubRegi
   arrayView1d< localIndex const > const & perfWellElemIndex =
     perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::wellElementIndexString );
 
-  arrayView1d< real64 const > const & perfPeacemanIndex =
-    perforationData->getReference< array1d< real64 > >( PerforationData::viewKeyStruct::wellPeacemanIndexString );
+  arrayView1d< real64 const > const & perfTransmissibility =
+    perforationData->getReference< array1d< real64 > >( PerforationData::viewKeyStruct::wellTransmissibilityString );
 
   arrayView2d< real64 > const & compPerfRate =
     perforationData->getReference< array2d< real64 > >( viewKeyStruct::compPerforationRateString );
@@ -1837,8 +1837,8 @@ void CompositionalMultiphaseWell::ComputeAllPerforationRates( WellElementSubRegi
       dPressure_dC[SubRegionTag::WELL][ic] += dWellElemMixtureDensity_dComp[iwelem][ic] * gravD;
     }
 
-    // get wellPeacemanIndex at the interface
-    real64 const trans = perfPeacemanIndex[iperf]; 
+    // get wellTransmissibility at the interface
+    real64 const trans = perfTransmissibility[iperf]; 
 
     // 2) compute potential difference
 

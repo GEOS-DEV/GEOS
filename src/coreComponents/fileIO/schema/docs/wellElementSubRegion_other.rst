@@ -14,7 +14,7 @@ reservoirElementIndex     localIndex_array                                      
 reservoirElementRegion    localIndex_array                                             (no description available)                                
 reservoirElementSubregion localIndex_array                                             (no description available)                                
 wellElementIndex          localIndex_array                                             (no description available)                                
-wellPeacemanIndex         real64_array                                                 (no description available)                                
+wellTransmissibility      real64_array                                                 (no description available)                                
 neighborData              node                                                         :ref:`DATASTRUCTURE_neighborData`                         
 sets                      node                                                         :ref:`DATASTRUCTURE_sets`                                 
 ========================= ============================================================ ========================================================= 
