@@ -46,30 +46,49 @@ MultiFluidBase::MultiFluidBase( std::string const & name, Group * const parent )
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "List of fluid phases" );
 
-  registerWrapper( viewKeyStruct::phaseFractionString, &m_phaseFraction, false )->setPlotLevel( PlotLevel::LEVEL_0 );
-  registerWrapper( viewKeyStruct::dPhaseFraction_dPressureString, &m_dPhaseFraction_dPressure, false );
-  registerWrapper( viewKeyStruct::dPhaseFraction_dTemperatureString, &m_dPhaseFraction_dTemperature, false );
-  registerWrapper( viewKeyStruct::dPhaseFraction_dGlobalCompFractionString, &m_dPhaseFraction_dGlobalCompFraction, false );
+  registerWrapper( viewKeyStruct::phaseFractionString, &m_phaseFraction, false )->
+    setPlotLevel( PlotLevel::LEVEL_0 );
+  registerWrapper( viewKeyStruct::dPhaseFraction_dPressureString, &m_dPhaseFraction_dPressure, false )->
+    setRestartFlags( RestartFlags::NO_WRITE );
+  registerWrapper( viewKeyStruct::dPhaseFraction_dTemperatureString, &m_dPhaseFraction_dTemperature, false )->
+    setRestartFlags( RestartFlags::NO_WRITE );
+  registerWrapper( viewKeyStruct::dPhaseFraction_dGlobalCompFractionString, &m_dPhaseFraction_dGlobalCompFraction, false )->
+    setRestartFlags( RestartFlags::NO_WRITE );
 
-  registerWrapper( viewKeyStruct::phaseDensityString, &m_phaseDensity, false )->setPlotLevel( PlotLevel::LEVEL_0 );
-  registerWrapper( viewKeyStruct::dPhaseDensity_dPressureString, &m_dPhaseDensity_dPressure, false );
-  registerWrapper( viewKeyStruct::dPhaseDensity_dTemperatureString, &m_dPhaseDensity_dTemperature, false );
-  registerWrapper( viewKeyStruct::dPhaseDensity_dGlobalCompFractionString, &m_dPhaseDensity_dGlobalCompFraction, false );
+  registerWrapper( viewKeyStruct::phaseDensityString, &m_phaseDensity, false )->
+    setPlotLevel( PlotLevel::LEVEL_0 );
+  registerWrapper( viewKeyStruct::dPhaseDensity_dPressureString, &m_dPhaseDensity_dPressure, false )->
+    setRestartFlags( RestartFlags::NO_WRITE );
+  registerWrapper( viewKeyStruct::dPhaseDensity_dTemperatureString, &m_dPhaseDensity_dTemperature, false )->
+    setRestartFlags( RestartFlags::NO_WRITE );
+  registerWrapper( viewKeyStruct::dPhaseDensity_dGlobalCompFractionString, &m_dPhaseDensity_dGlobalCompFraction, false )->
+    setRestartFlags( RestartFlags::NO_WRITE );
 
-  registerWrapper( viewKeyStruct::phaseViscosityString, &m_phaseViscosity, false )->setPlotLevel( PlotLevel::LEVEL_0 );
-  registerWrapper( viewKeyStruct::dPhaseViscosity_dPressureString, &m_dPhaseViscosity_dPressure, false );
-  registerWrapper( viewKeyStruct::dPhaseViscosity_dTemperatureString, &m_dPhaseViscosity_dTemperature, false );
-  registerWrapper( viewKeyStruct::dPhaseViscosity_dGlobalCompFractionString, &m_dPhaseViscosity_dGlobalCompFraction, false );
+  registerWrapper( viewKeyStruct::phaseViscosityString, &m_phaseViscosity, false )->
+    setPlotLevel( PlotLevel::LEVEL_0 );
+  registerWrapper( viewKeyStruct::dPhaseViscosity_dPressureString, &m_dPhaseViscosity_dPressure, false )->
+    setRestartFlags( RestartFlags::NO_WRITE );
+  registerWrapper( viewKeyStruct::dPhaseViscosity_dTemperatureString, &m_dPhaseViscosity_dTemperature, false )->
+    setRestartFlags( RestartFlags::NO_WRITE );
+  registerWrapper( viewKeyStruct::dPhaseViscosity_dGlobalCompFractionString, &m_dPhaseViscosity_dGlobalCompFraction, false )->
+    setRestartFlags( RestartFlags::NO_WRITE );
 
-  registerWrapper( viewKeyStruct::phaseCompFractionString, &m_phaseCompFraction, false )->setPlotLevel( PlotLevel::LEVEL_0 );
-  registerWrapper( viewKeyStruct::dPhaseCompFraction_dPressureString, &m_dPhaseCompFraction_dPressure, false );
-  registerWrapper( viewKeyStruct::dPhaseCompFraction_dTemperatureString, &m_dPhaseCompFraction_dTemperature, false );
-  registerWrapper( viewKeyStruct::dPhaseCompFraction_dGlobalCompFractionString, &m_dPhaseCompFraction_dGlobalCompFraction, false );
+  registerWrapper( viewKeyStruct::phaseCompFractionString, &m_phaseCompFraction, false )->
+    setPlotLevel( PlotLevel::LEVEL_0 );
+  registerWrapper( viewKeyStruct::dPhaseCompFraction_dPressureString, &m_dPhaseCompFraction_dPressure, false )->
+    setRestartFlags( RestartFlags::NO_WRITE );
+  registerWrapper( viewKeyStruct::dPhaseCompFraction_dTemperatureString, &m_dPhaseCompFraction_dTemperature, false )->
+    setRestartFlags( RestartFlags::NO_WRITE );
+  registerWrapper( viewKeyStruct::dPhaseCompFraction_dGlobalCompFractionString, &m_dPhaseCompFraction_dGlobalCompFraction, false )->
+    setRestartFlags( RestartFlags::NO_WRITE );
 
   registerWrapper( viewKeyStruct::totalDensityString, &m_totalDensity, false )->setPlotLevel( PlotLevel::LEVEL_0 );
-  registerWrapper( viewKeyStruct::dTotalDensity_dPressureString, &m_dTotalDensity_dPressure, false );
-  registerWrapper( viewKeyStruct::dTotalDensity_dTemperatureString, &m_dTotalDensity_dTemperature, false );
-  registerWrapper( viewKeyStruct::dTotalDensity_dGlobalCompFractionString, &m_dTotalDensity_dGlobalCompFraction, false );
+  registerWrapper( viewKeyStruct::dTotalDensity_dPressureString, &m_dTotalDensity_dPressure, false )->
+    setRestartFlags( RestartFlags::NO_WRITE );
+  registerWrapper( viewKeyStruct::dTotalDensity_dTemperatureString, &m_dTotalDensity_dTemperature, false )->
+    setRestartFlags( RestartFlags::NO_WRITE );
+  registerWrapper( viewKeyStruct::dTotalDensity_dGlobalCompFractionString, &m_dTotalDensity_dGlobalCompFraction, false )->
+    setRestartFlags( RestartFlags::NO_WRITE );
 }
 
 void MultiFluidBase::ResizeFields( localIndex const size, localIndex const numPts )

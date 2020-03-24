@@ -1319,6 +1319,25 @@ public:
   }
 
   /**
+   * @brief Check whether this Group is resized when its parent is resized.
+   * @return @p true if Group is resized with parent group, @p false otherwise
+   */
+  integer sizedFromParent() const
+  {
+    return m_sizedFromParent;
+  }
+
+  /**
+   * @brief Set whether this wrapper is resized when its parent is resized.
+   * @param val an int that is converted into a bool
+   * @return a pointer to this Group
+   */
+  Group * setSizedFromParent( int val )
+  {
+    m_sizedFromParent = val;
+    return this;
+  }
+  /**
    * @brief Get flags that control restart output of this group.
    * @return the current value of restart flags
    */
@@ -1459,6 +1478,9 @@ private:
   /// The parent Group that contains "this" Group in its "sub-Group" collection.
   Group * m_parent = nullptr;
 
+  /// Specification that this group will have the same m_size as m_parent.
+  integer m_sizedFromParent;
+
   /// The container for the collection of all wrappers continued in "this" Group.
   wrapperMap m_wrappers;
 
@@ -1506,6 +1528,7 @@ template< typename T >
 T * Group::RegisterGroup( std::string const & name,
                           std::unique_ptr< Group > newObject )
 {
+  newObject->m_parent = this;
   return dynamicCast< T * >( m_subGroups.insert( name, newObject.release(), true ) );
 }
 
@@ -1515,6 +1538,10 @@ T * Group::RegisterGroup( std::string const & name,
                           T * newObject,
                           bool const takeOwnership )
 {
+  if( takeOwnership )
+  {
+    newObject->m_parent = this;
+  }
   return dynamicCast< T * >( m_subGroups.insert( name, newObject, takeOwnership ) );
 }
 

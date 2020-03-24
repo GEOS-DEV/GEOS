@@ -31,7 +31,8 @@ ElementSubRegionBase::ElementSubRegionBase( string const & name, Group * const p
   m_elementCenter(),
   m_elementVolume()
 {
-  RegisterGroup( groupKeyStruct::constitutiveModelsString, &m_constitutiveModels, 0 );
+  RegisterGroup( groupKeyStruct::constitutiveModelsString, &m_constitutiveModels, 0 )->
+    setSizedFromParent( 1 );
 }
 
 ElementSubRegionBase::~ElementSubRegionBase()

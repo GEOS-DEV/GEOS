@@ -751,12 +751,12 @@ public:
     getConduitNode().reset();
   }
 
-  void loadFromConduit() override
+  bool loadFromConduit() override
   {
     if( getRestartFlags() != RestartFlags::WRITE_AND_READ )
     {
       getConduitNode().reset();
-      return;
+      return false;
     }
 
     setSizedFromParent( getConduitNode()["__sizedFromParent__"].value() );
@@ -764,6 +764,8 @@ public:
     wrapperHelpers::pullDataFromConduitNode( *m_data, getConduitNode() );
 
     getConduitNode().reset();
+
+    return true;
   }
 
 
