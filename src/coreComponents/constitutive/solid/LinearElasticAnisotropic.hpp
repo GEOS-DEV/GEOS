@@ -173,8 +173,8 @@ public:
 //   */
 //  arrayView1d<StiffnessTensor const> const & stiffness() const { return m_stiffness; }
 
-//  real64 constrainedModulus(localIndex k) const { return std::max(m_c00[k], std::max(m_c11[k], m_c22[k])); }
-  real64 constrainedModulus(localIndex k) const { return m_c22[k]; }
+  real64 constrainedModulus(localIndex k) const { return std::max(m_c00[k], std::max(m_c11[k], m_c22[k])); }
+//  real64 constrainedModulus(localIndex k) const { return m_c22[k]; }
 
   real64 GetCompressibility() const override { return 1 / m_defaultStiffness.m_data[2][2]; }
 
