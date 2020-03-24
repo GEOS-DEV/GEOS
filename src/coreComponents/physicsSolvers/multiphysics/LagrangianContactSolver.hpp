@@ -148,7 +148,7 @@ public:
                                                                      ParallelMatrix * const matrix,
                                                                      ParallelVector * const rhs );
 
-  void AssembleStabiliziation( DomainPartition * const domain,
+  void AssembleStabiliziation( DomainPartition const * const domain,
                                DofManager const & dofManager,
                                ParallelMatrix * const matrix,
                                ParallelVector * const rhs );
@@ -294,6 +294,8 @@ private:
     }
     return false;
   }
+
+public:
 
   void InitializeFractureState( MeshLevel * const mesh,
                                 string const fieldName ) const;
