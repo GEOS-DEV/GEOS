@@ -23,7 +23,7 @@ namespace geosx
 {
 using namespace dataRepository;
 
-SourceFluxBoundaryCondition::SourceFluxBoundaryCondition( string const & name, Group *const parent ):
+SourceFluxBoundaryCondition::SourceFluxBoundaryCondition( string const & name, Group * const parent ):
   FieldSpecificationBase( name, parent )
 {
   m_normalizeBySetSize = true;
@@ -36,9 +36,9 @@ SourceFluxBoundaryCondition::~SourceFluxBoundaryCondition()
 
 void SourceFluxBoundaryCondition::InitializePreSubGroups( Group * const rootGroup )
 {
-  this->SetFieldName(viewKeyStruct::fluxBoundaryConditionString);
-  
-  FieldSpecificationBase::InitializePreSubGroups( rootGroup ); 
+  this->SetFieldName( viewKeyStruct::fluxBoundaryConditionString );
+
+  FieldSpecificationBase::InitializePreSubGroups( rootGroup );
 }
 
 

@@ -47,7 +47,7 @@ struct MobilityKernel
            real64 const & visc,
            real64 & mob );
 
-  static void Launch( localIndex begin, localIndex end,
+  static void Launch( localIndex const size,
                       arrayView2d<real64 const> const & dens,
                       arrayView2d<real64 const> const & dDens_dPres,
                       arrayView2d<real64 const> const & visc,
@@ -63,7 +63,7 @@ struct MobilityKernel
                       arrayView1d<real64> const & mob,
                       arrayView1d<real64> const & dMob_dPres );
 
-  static void Launch( localIndex begin, localIndex end,
+  static void Launch( localIndex const size,
                       arrayView2d<real64 const> const & dens,
                       arrayView2d<real64 const> const & visc,
                       arrayView1d<real64> const & mob );

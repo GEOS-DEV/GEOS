@@ -42,7 +42,7 @@ SinglePhaseHybridFVM<BASE>::SinglePhaseHybridFVM( const std::string& name,
   m_ipType(InnerProductType::QUASI_TPFA),
   m_orthonormalizeWithSVD(false) 
 {
- 
+
   // one cell-centered dof per cell
   m_numDofPerCell = 1;
 }
@@ -54,27 +54,26 @@ void SinglePhaseHybridFVM<BASE>::RegisterDataOnMesh(Group * const MeshBodies)
   // 1) Register the cell-centered data
   BASE::RegisterDataOnMesh(MeshBodies);
 
-  // 2) Register the face data 
+  // 2) Register the face data
   for( auto & mesh : MeshBodies->GetSubGroups() )
   {
-    MeshLevel * const meshLevel = Group::group_cast<MeshBody *>(mesh.second)->getMeshLevel(0);
+    MeshLevel * const meshLevel = Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
     FaceManager * const faceManager = meshLevel->getFaceManager();
 
     // primary variables: face pressures
-    faceManager->registerWrapper<array1d<real64> >( viewKeyStruct::facePressureString )->
-      setPlotLevel(PlotLevel::LEVEL_0)->
-      setRegisteringObjects(this->getName())->
-      setDescription( "An array that holds the pressures at the faces.");
+    faceManager->registerWrapper< array1d< real64 > >( viewKeyStruct::facePressureString )->
+      setPlotLevel( PlotLevel::LEVEL_0 )->
+      setRegisteringObjects( this->getName())->
+      setDescription( "An array that holds the pressures at the faces." );
 
-    faceManager->registerWrapper<array1d<real64> >( viewKeyStruct::deltaFacePressureString )->
-      setPlotLevel(PlotLevel::LEVEL_0)->
-      setRegisteringObjects(this->getName())->
-      setDescription( "An array that holds the accumulated pressure updates at the faces.");
-    
+    faceManager->registerWrapper< array1d< real64 > >( viewKeyStruct::deltaFacePressureString )->
+      setPlotLevel( PlotLevel::LEVEL_0 )->
+      setRegisteringObjects( this->getName())->
+      setDescription( "An array that holds the accumulated pressure updates at the faces." );
+
   }
 }
 
-  
 template< typename BASE >  
 void SinglePhaseHybridFVM<BASE>::ImplicitStepSetup( real64 const & time_n,
                                                     real64 const & dt,
@@ -90,25 +89,25 @@ void SinglePhaseHybridFVM<BASE>::ImplicitStepSetup( real64 const & time_n,
   BASE::ImplicitStepSetup( time_n, dt, domain, dofManager, matrix, rhs, solution );
 
   // setup the face fields
-  MeshLevel * const meshLevel     = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  MeshLevel * const meshLevel     = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
   FaceManager * const faceManager = meshLevel->getFaceManager();
 
-  // get the face-based DOF numbers 
+  // get the face-based DOF numbers
   string const faceDofKey = dofManager.getKey( viewKeyStruct::facePressureString );
 
   // save the face Dof key for use in two functions
   // that do not have acces to the coupled solver dofManager
   // namely ResetStateToBeginningOfStep and ImplicitStepComplete
   m_faceDofKey = faceDofKey;
-  
-  // get the accumulated pressure updates
-  arrayView1d<real64> & dFacePres =
-    faceManager->getReference<array1d<real64>>(viewKeyStruct::deltaFacePressureString);
 
-  forall_in_range<serialPolicy>( 0, faceManager->size(), GEOSX_LAMBDA ( localIndex iface )
+  // get the accumulated pressure updates
+  arrayView1d< real64 > & dFacePres =
+    faceManager->getReference< array1d< real64 > >( viewKeyStruct::deltaFacePressureString );
+
+  forAll< serialPolicy >( faceManager->size(), [=] ( localIndex iface )
   {
     dFacePres[iface] = 0;
-  });
+  } );
 
 }
 
@@ -123,35 +122,35 @@ void SinglePhaseHybridFVM<BASE>::ImplicitStepComplete( real64 const & time_n,
   BASE::ImplicitStepComplete( time_n, dt, domain );
 
   // increment the face fields
-  MeshLevel * const meshLevel     = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  MeshLevel * const meshLevel     = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
   FaceManager * const faceManager = meshLevel->getFaceManager();
 
-  // get the face-based DOF numbers 
-  arrayView1d<globalIndex const> const & faceDofNumber =
-    faceManager->getReference< array1d<globalIndex> >( m_faceDofKey );  
+  // get the face-based DOF numbers
+  arrayView1d< globalIndex const > const & faceDofNumber =
+    faceManager->getReference< array1d< globalIndex > >( m_faceDofKey );
 
-  // get the face-based pressures 
-  arrayView1d<real64> const & facePres =
-    faceManager->getReference<array1d<real64>>(viewKeyStruct::facePressureString);
-  arrayView1d<real64> const & dFacePres =
-    faceManager->getReference<array1d<real64>>(viewKeyStruct::deltaFacePressureString);
+  // get the face-based pressures
+  arrayView1d< real64 > const & facePres =
+    faceManager->getReference< array1d< real64 > >( viewKeyStruct::facePressureString );
+  arrayView1d< real64 > const & dFacePres =
+    faceManager->getReference< array1d< real64 > >( viewKeyStruct::deltaFacePressureString );
 
-  forall_in_range<serialPolicy>( 0, faceManager->size(), GEOSX_LAMBDA ( localIndex iface )
+  forAll< serialPolicy >( faceManager->size(), [=] ( localIndex iface )
   {
     // update if face is in target region
-    if (faceDofNumber[iface] >= 0)
+    if( faceDofNumber[iface] >= 0 )
     {
       facePres[iface] += dFacePres[iface];
     }
-    dFacePres[iface] = 0;    
-  });
+    dFacePres[iface] = 0;
+  } );
 }
 
 template< typename BASE >  
 void SinglePhaseHybridFVM<BASE>::SetupDofs( DomainPartition const * const GEOSX_UNUSED_PARAM( domain ),
                                             DofManager & dofManager ) const
 {
-  
+
   // setup the connectivity of elem fields
   // we need Connectivity::Face because of the two-point upwinding
   // in AssembleOneSidedMassFluxes
@@ -161,8 +160,8 @@ void SinglePhaseHybridFVM<BASE>::SetupDofs( DomainPartition const * const GEOSX_
 
   dofManager.addCoupling( viewKeyStruct::pressureString,
                           viewKeyStruct::pressureString,
-                          DofManager::Connectivity::Face );
-  
+                          DofManager::Connector::Face );
+
   // setup the connectivity of face fields
   dofManager.addField( viewKeyStruct::facePressureString,
                        DofManager::Location::Face,
@@ -170,13 +169,13 @@ void SinglePhaseHybridFVM<BASE>::SetupDofs( DomainPartition const * const GEOSX_
 
   dofManager.addCoupling( viewKeyStruct::facePressureString,
                           viewKeyStruct::facePressureString,
-                          DofManager::Connectivity::Elem );
-  
+                          DofManager::Connector::Elem );
+
   // setup coupling between pressure and face pressure
   dofManager.addCoupling( viewKeyStruct::facePressureString,
                           viewKeyStruct::pressureString,
-                          DofManager::Connectivity::Elem,
-                          true);
+                          DofManager::Connector::Elem,
+                          true );
 
 }
 
@@ -188,64 +187,62 @@ void SinglePhaseHybridFVM<BASE>::AssembleFluxTerms( real64 const GEOSX_UNUSED_PA
                                                     ParallelMatrix * const matrix,
                                                     ParallelVector * const rhs )
 {
-  MeshLevel const * const mesh                   = domain->getMeshBody(0)->getMeshLevel(0);
+  MeshLevel const * const mesh                   = domain->getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager const * const elemManager = mesh->getElemManager();
   NodeManager const * const nodeManager          = mesh->getNodeManager();
-  FaceManager const * const faceManager          = mesh->getFaceManager();   
+  FaceManager const * const faceManager          = mesh->getFaceManager();
 
   // in this function we need to make sure that we act only on the target regions
   // for that, we need the following region filter
-  SortedArray<localIndex> regionFilter;
-  for (string const & regionName : m_targetRegions)
+  SortedArray< localIndex > regionFilter;
+  for( string const & regionName : m_targetRegions )
   {
     regionFilter.insert( elemManager->GetRegions().getIndex( regionName ) );
   }
-  
+
   // node data (for transmissibility computation)
 
-  arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodePosition = nodeManager->referencePosition();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager->referencePosition();
 
-  
+
   // face data
-  
+
   // get the face-based DOF numbers for the assembly
   string const faceDofKey = dofManager->getKey( viewKeyStruct::facePressureString );
-  arrayView1d<globalIndex const> const & faceDofNumber =
-    faceManager->getReference< array1d<globalIndex> >( faceDofKey );  
+  arrayView1d< globalIndex const > const & faceDofNumber =
+    faceManager->getReference< array1d< globalIndex > >( faceDofKey );
 
   // get the face-centered pressures
-  arrayView1d<real64 const> const & facePres =
-    faceManager->getReference< array1d<real64> >( viewKeyStruct::facePressureString );
-  arrayView1d<real64 const> const & dFacePres =
-    faceManager->getReference< array1d<real64> >( viewKeyStruct::deltaFacePressureString );
+  arrayView1d< real64 const > const & facePres =
+    faceManager->getReference< array1d< real64 > >( viewKeyStruct::facePressureString );
+  arrayView1d< real64 const > const & dFacePres =
+    faceManager->getReference< array1d< real64 > >( viewKeyStruct::deltaFacePressureString );
 
-  // get the face-centered depth 
-  arrayView1d<real64 const> const & faceGravCoef =
-    faceManager->getReference<array1d<real64>>(viewKeyStruct::gravityCoefString);
-  
+  // get the face-centered depth
+  arrayView1d< real64 const > const & faceGravCoef =
+    faceManager->getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
+
   // get the face-to-nodes connectivity for the transmissibility calculation
-  ArrayOfArraysView<localIndex const> const & faceToNodes = faceManager->nodeList();
+  ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager->nodeList();
 
-  array2d<localIndex> const & elemRegionList    = faceManager->elementRegionList();
-  array2d<localIndex> const & elemSubRegionList = faceManager->elementSubRegionList();
-  array2d<localIndex> const & elemList          = faceManager->elementList(); 
+  array2d< localIndex > const & elemRegionList    = faceManager->elementRegionList();
+  array2d< localIndex > const & elemSubRegionList = faceManager->elementSubRegionList();
+  array2d< localIndex > const & elemList          = faceManager->elementList();
 
-  
   // tolerance for transmissibility calculation
-  real64 const lengthTolerance = domain->getMeshBody( 0 )->getGlobalLengthScale() * m_areaRelTol; 
-
+  real64 const lengthTolerance = domain->getMeshBody( 0 )->getGlobalLengthScale() * m_areaRelTol;
 
   elemManager->
     forElementSubRegionsComplete<CellElementSubRegion,
 				 FaceElementSubRegion>( m_targetRegions,
                                                       [&]( localIndex const er,
                                                            localIndex const esr,
-                                                           ElementRegionBase const * const,
-                                                           auto const * const subRegion )
+                                                           ElementRegionBase const &,
+                                                           auto const & subRegion )
   {
     FluxLaunch( er,
                 esr,
-                subRegion,
+                &subRegion,
                 regionFilter,
                 mesh,           
                 nodePosition,
@@ -348,7 +345,7 @@ void SinglePhaseHybridFVM<BASE>::FluxLaunch( localIndex er,
 
   // assemble the residual and Jacobian element by element
   // in this loop we assemble both equation types: mass conservation in the elements and constraints at the faces
-  forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+  forAll< serialPolicy >( subRegion->size(), [=] ( localIndex const ei )  
   {
 
     if (elemGhostRank[ei] < 0)
@@ -421,46 +418,46 @@ real64 SinglePhaseHybridFVM<BASE>::CalculateResidualNorm( DomainPartition const 
                                                           DofManager const & dofManager,
                                                           ParallelVector const & rhs )
 {
-  MeshLevel const * const mesh          = domain->getMeshBody(0)->getMeshLevel(0);
+  MeshLevel const * const mesh          = domain->getMeshBody( 0 )->getMeshLevel( 0 );
   FaceManager const * const faceManager = mesh->getFaceManager();
 
   // here we compute the cell-centered residual norm in the derived class
-  // to avoid duplicating a synchronization point 
-  
+  // to avoid duplicating a synchronization point
+
   // get a view into local residual vector
   real64 const * localResidual = rhs.extractLocalVector();
 
   string const elemDofKey = dofManager.getKey( viewKeyStruct::pressureString );
   string const faceDofKey = dofManager.getKey( viewKeyStruct::facePressureString );
-  
-  // local residual
-  array1d<real64> localResidualNorm( 2 ), globalResidualNorm( 2 );
-  globalResidualNorm[EquationType::MASS_CONS]  = 0; 
-  globalResidualNorm[EquationType::CONSTRAINT] = 0; 
-  localResidualNorm[EquationType::MASS_CONS]   = 0; 
-  localResidualNorm[EquationType::CONSTRAINT]  = 0; 
 
-  
+  // local residual
+  array1d< real64 > localResidualNorm( 2 ), globalResidualNorm( 2 );
+  globalResidualNorm[EquationType::MASS_CONS]  = 0;
+  globalResidualNorm[EquationType::CONSTRAINT] = 0;
+  localResidualNorm[EquationType::MASS_CONS]   = 0;
+  localResidualNorm[EquationType::CONSTRAINT]  = 0;
+
+
   // 1. Compute the residual for the mass conservation equations
 
   // compute the norm of local residual scaled by cell pore volume
-  this->applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                       ElementRegionBase const * const GEOSX_UNUSED_PARAM( region ),
-                                       ElementSubRegionBase const * const subRegion )
+  this->applyToSubRegionsComplete( mesh, [&] ( localIndex const er, localIndex const esr,
+                                               ElementRegionBase const &,
+                                               ElementSubRegionBase const & subRegion )
   {
-    arrayView1d<globalIndex const> const & elemDofNumber =
-      subRegion->getReference< array1d<globalIndex> >( elemDofKey );
+    arrayView1d< globalIndex const > const & elemDofNumber =
+      subRegion.getReference< array1d< globalIndex > >( elemDofKey );
 
-    arrayView1d<integer const> const & elemGhostRank = m_elemGhostRank[er][esr];
-    arrayView1d<real64 const> const & refPoro        = m_porosityRef[er][esr];
-    arrayView1d<real64 const> const & volume         = m_volume[er][esr];
-    arrayView1d<real64 const> const & dVol           = m_deltaVolume[er][esr];
-    arrayView2d<real64 const> const & dens           = m_density[er][esr][m_fluidIndex];
+    arrayView1d< integer const > const & elemGhostRank = m_elemGhostRank[er][esr];
+    arrayView1d< real64 const > const & refPoro        = m_porosityRef[er][esr];
+    arrayView1d< real64 const > const & volume         = m_volume[er][esr];
+    arrayView1d< real64 const > const & dVol           = m_deltaVolume[er][esr];
+    arrayView2d< real64 const > const & dens           = m_density[er][esr][m_fluidIndex];
 
-    localIndex const subRegionSize = subRegion->size();
-    for ( localIndex a = 0; a < subRegionSize; ++a )
+    localIndex const subRegionSize = subRegion.size();
+    for( localIndex a = 0; a < subRegionSize; ++a )
     {
-      if (elemGhostRank[a] < 0)
+      if( elemGhostRank[a] < 0 )
       {
         localIndex const lid = rhs.getLocalRowID( elemDofNumber[a] );
         // TODO: implement a normalization that matches the normalization used in SinglePhaseFVM
@@ -468,15 +465,15 @@ real64 SinglePhaseHybridFVM<BASE>::CalculateResidualNorm( DomainPartition const 
         localResidualNorm[EquationType::MASS_CONS] += val * val;
       }
     }
-  });
+  } );
 
-  
+
   // 2. Compute the residual for the face-based constraints
 
-  arrayView1d<integer const> const & faceGhostRank =
-    faceManager->getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
-  arrayView1d<globalIndex const> const & faceDofNumber =
-    faceManager->getReference< array1d<globalIndex> >( faceDofKey );
+  arrayView1d< integer const > const & faceGhostRank =
+    faceManager->getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+  arrayView1d< globalIndex const > const & faceDofNumber =
+    faceManager->getReference< array1d< globalIndex > >( faceDofKey );
 
   array2d<localIndex> const & elemRegionList    = faceManager->elementRegionList();
   array2d<localIndex> const & elemSubRegionList = faceManager->elementSubRegionList();
@@ -485,7 +482,7 @@ real64 SinglePhaseHybridFVM<BASE>::CalculateResidualNorm( DomainPartition const 
   for( localIndex iface = 0 ; iface < faceManager->size(); ++iface )
   {
     // if not ghost face and if adjacent to target region
-    if (faceGhostRank[iface] < 0 && faceDofNumber[iface] >= 0)
+    if( faceGhostRank[iface] < 0 && faceDofNumber[iface] >= 0 )
     {
       real64 normalizer = 0;
       localIndex elemCounter = 0;
@@ -520,7 +517,7 @@ real64 SinglePhaseHybridFVM<BASE>::CalculateResidualNorm( DomainPartition const 
     }
   }
 
-  
+
   // 3. Combine the two norms
 
   MpiWrapper::allReduce(localResidualNorm.data(), globalResidualNorm.data(), 2, MPI_SUM, MPI_COMM_GEOSX);
@@ -528,7 +525,7 @@ real64 SinglePhaseHybridFVM<BASE>::CalculateResidualNorm( DomainPartition const 
   real64 maxNorm = (globalResidualNorm[EquationType::MASS_CONS] > globalResidualNorm[EquationType::CONSTRAINT])
                  ? globalResidualNorm[EquationType::MASS_CONS]
                  : globalResidualNorm[EquationType::CONSTRAINT];
-  
+
   return sqrt( maxNorm );
 }
 
@@ -545,17 +542,17 @@ bool SinglePhaseHybridFVM<BASE>::CheckSystemSolution( DomainPartition const * co
 
   string const dofKey = dofManager.getKey( viewKeyStruct::pressureString );
 
-  this->applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                       ElementRegionBase const * const GEOSX_UNUSED_PARAM( region ),
-                                       ElementSubRegionBase const * const subRegion )
+  this->applyToSubRegionsComplete( mesh, [&] ( localIndex const er, localIndex const esr,
+                                               ElementRegionBase const &,
+                                               ElementSubRegionBase const & subRegion )
   {
-    arrayView1d<globalIndex const> const & dofNumber = subRegion->getReference< array1d<globalIndex> >( dofKey );
+    arrayView1d<globalIndex const> const & dofNumber = subRegion.getReference< array1d<globalIndex> >( dofKey );
     arrayView1d<integer const> const & elemGhostRank = m_elemGhostRank[er][esr];
 
     arrayView1d<real64 const> const & pres      = m_pressure[er][esr];
     arrayView1d<real64 const> const & dPres     = m_deltaPressure[er][esr];
 
-    forall_in_range<serialPolicy>( 0, subRegion->size(), [&] ( localIndex ei )
+    forAll< serialPolicy >( subRegion.size(), [&] ( localIndex ei )
     {
       if (elemGhostRank[ei] >= 0)
       {
@@ -601,8 +598,8 @@ void SinglePhaseHybridFVM<BASE>::ApplySystemSolution( DofManager const & dofMana
   MeshLevel * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
 
   // here we apply the cell-centered update in the derived class
-  // to avoid duplicating a synchronization point 
-  
+  // to avoid duplicating a synchronization point
+
   // 1. apply the cell-centered update
 
   dofManager.addVectorToField( solution,
@@ -616,21 +613,19 @@ void SinglePhaseHybridFVM<BASE>::ApplySystemSolution( DofManager const & dofMana
                                viewKeyStruct::facePressureString,
                                viewKeyStruct::deltaFacePressureString,
                                scalingFactor );
-  
+
   // 3. synchronize
 
   // the tags in fieldNames have to match the tags used in NeighborCommunicator.cpp
-  std::map<string, string_array> fieldNames;
+  std::map< string, string_array > fieldNames;
   fieldNames["face"].push_back( viewKeyStruct::deltaFacePressureString );
   fieldNames["elems"].push_back( viewKeyStruct::deltaPressureString );
 
   CommunicationTools::SynchronizeFields( fieldNames, mesh, domain->getNeighbors() );
-  
-  this->applyToSubRegions( mesh, [&] ( ElementSubRegionBase * subRegion )
+  this->applyToSubRegions( mesh, [&] ( ElementSubRegionBase & subRegion )
   {
-    this->UpdateState( subRegion );
+    this->UpdateState( &subRegion );
   } );
-
 }
 
 
@@ -641,17 +636,17 @@ void SinglePhaseHybridFVM<BASE>::ResetStateToBeginningOfStep( DomainPartition * 
   BASE::ResetStateToBeginningOfStep( domain );
 
   // 2. Reset the face-based fields
-  MeshLevel * const mesh          = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  MeshLevel * const mesh          = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
   FaceManager * const faceManager = mesh->getFaceManager();
 
   // get the accumulated face pressure updates
-  arrayView1d<real64> & dFacePres =
-    faceManager->getReference<array1d<real64>>(viewKeyStruct::deltaFacePressureString);
+  arrayView1d< real64 > & dFacePres =
+    faceManager->getReference< array1d< real64 > >( viewKeyStruct::deltaFacePressureString );
 
-  forall_in_range<serialPolicy>( 0, faceManager->size(), GEOSX_LAMBDA ( localIndex iface )
+  forAll< serialPolicy >( faceManager->size(), [=] ( localIndex iface )
   {
     dFacePres[iface] = 0;
-  });
+  } );
 }
 
 
@@ -659,23 +654,23 @@ namespace
 {
 
 // for now, I just copy-pasted this function from TwoPointFluxApproximation
-// this will go away at some point 
-void makeFullTensor(R1Tensor const & values, R2SymTensor & result)
+// this will go away at some point
+void makeFullTensor( R1Tensor const & values, R2SymTensor & result )
 {
   result = 0.0;
   R1Tensor axis;
   R2SymTensor temp;
 
   // assemble full tensor from eigen-decomposition
-  for (unsigned icoord = 0; icoord < 3; ++icoord)
+  for( unsigned icoord = 0; icoord < 3; ++icoord )
   {
     // assume principal axis aligned with global coordinate system
     axis = 0.0;
-    axis(icoord) = 1.0;
+    axis( icoord ) = 1.0;
 
     // XXX: is there a more elegant way to do this?
-    temp.dyadic_aa(axis);
-    temp *= values(icoord);
+    temp.dyadic_aa( axis );
+    temp *= values( icoord );
     result += temp;
   }
 }
@@ -701,29 +696,29 @@ void SinglePhaseHybridFVM<BASE>::ComputeTPFAInnerProduct( arrayView2d<real64 con
   real64 const weightTolerance = 1e-30 * lengthTolerance; // TODO: choice of constant based on physics?
 
   localIndex const numFacesInElem = elemToFaces.size();
-  
+
   // we are ready to compute the transmissibility matrix
-  for (localIndex ifaceLoc = 0; ifaceLoc < numFacesInElem; ++ifaceLoc)
+  for( localIndex ifaceLoc = 0; ifaceLoc < numFacesInElem; ++ifaceLoc )
   {
-    for (localIndex jfaceLoc = 0; jfaceLoc < numFacesInElem; ++jfaceLoc)
+    for( localIndex jfaceLoc = 0; jfaceLoc < numFacesInElem; ++jfaceLoc )
     {
       // for now, TPFA trans
-      if (ifaceLoc == jfaceLoc)
+      if( ifaceLoc == jfaceLoc )
       {
-        
+
         // 1) compute the face geometry data: center, normal, vector from cell center to face center
         real64 const faceArea =
           computationalGeometry::Centroid_3DPolygon( faceToNodes[elemToFaces[ifaceLoc]],
-                                                     faceToNodes.sizeOfArray(elemToFaces[ifaceLoc]),
+                                                     faceToNodes.sizeOfArray( elemToFaces[ifaceLoc] ),
                                                      nodePosition,
                                                      faceCenter,
                                                      faceNormal,
                                                      areaTolerance );
-        
+
         cellToFaceVec  = faceCenter;
         cellToFaceVec -= elemCenter;
 
-        if (Dot(cellToFaceVec, faceNormal) < 0.0)
+        if( Dot( cellToFaceVec, faceNormal ) < 0.0 )
         {
           faceNormal *= -1;
         }
@@ -731,12 +726,12 @@ void SinglePhaseHybridFVM<BASE>::ComputeTPFAInnerProduct( arrayView2d<real64 con
         real64 const c2fDistance = cellToFaceVec.Normalize();
 
         // 2) assemble full coefficient tensor from principal axis/components
-        makeFullTensor(elemPerm, permeabilityTensor);
+        makeFullTensor( elemPerm, permeabilityTensor );
 
-        faceConormal.AijBj(permeabilityTensor, faceNormal);
+        faceConormal.AijBj( permeabilityTensor, faceNormal );
 
         // 3) compute the one-sided face transmissibility
-        transMatrix[ifaceLoc][jfaceLoc]  = Dot(cellToFaceVec, faceConormal);
+        transMatrix[ifaceLoc][jfaceLoc]  = Dot( cellToFaceVec, faceConormal );
         transMatrix[ifaceLoc][jfaceLoc] *= faceArea / c2fDistance;
         transMatrix[ifaceLoc][jfaceLoc]  = std::max( transMatrix[ifaceLoc][jfaceLoc],
                                                      weightTolerance );
@@ -748,7 +743,6 @@ void SinglePhaseHybridFVM<BASE>::ComputeTPFAInnerProduct( arrayView2d<real64 con
     }
   }
 }
-
 
 template< typename BASE >  
 void SinglePhaseHybridFVM<BASE>::ComputeQFamilyInnerProduct( arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodePosition, 
@@ -767,31 +761,31 @@ void SinglePhaseHybridFVM<BASE>::ComputeQFamilyInnerProduct( arrayView2d<real64 
 
   localIndex const numFacesInElem = elemToFaces.size();
   localIndex const dim = 3;
-  
+
   // TODO: remove all the array2ds of this function once the BlasLapackLA calls have been removed
-  //       work with stackArray2ds instead 
-  array2d<real64> cellToFaceMat;
-  array2d<real64> normalsMat( numFacesInElem, dim );
-  array2d<real64> permMat( dim, dim );
-  array2d<real64> transMat( numFacesInElem, numFacesInElem );
-  
+  //       work with stackArray2ds instead
+  array2d< real64 > cellToFaceMat;
+  array2d< real64 > normalsMat( numFacesInElem, dim );
+  array2d< real64 > permMat( dim, dim );
+  array2d< real64 > transMat( numFacesInElem, numFacesInElem );
+
   // TODO: figure out if it is possible/beneficial to preallocate these arrays
-  array1d<real64> work_dim;
-  array2d<real64> work_dimByDim; 
-  array2d<real64> work_dimByNumFaces( dim, numFacesInElem );
-  array2d<real64> work_numFacesByDim( numFacesInElem, dim );
-  array2d<real64> worka_numFacesByNumFaces( numFacesInElem, numFacesInElem );
-  array2d<real64> workb_numFacesByNumFaces( numFacesInElem, numFacesInElem );
-  array2d<real64> workc_numFacesByNumFaces( numFacesInElem, numFacesInElem );
+  array1d< real64 > work_dim;
+  array2d< real64 > work_dimByDim;
+  array2d< real64 > work_dimByNumFaces( dim, numFacesInElem );
+  array2d< real64 > work_numFacesByDim( numFacesInElem, dim );
+  array2d< real64 > worka_numFacesByNumFaces( numFacesInElem, numFacesInElem );
+  array2d< real64 > workb_numFacesByNumFaces( numFacesInElem, numFacesInElem );
+  array2d< real64 > workc_numFacesByNumFaces( numFacesInElem, numFacesInElem );
 
-  array1d<real64> q0; 
-  array1d<real64> q1; 
-  array1d<real64> q2; 
+  array1d< real64 > q0;
+  array1d< real64 > q1;
+  array1d< real64 > q2;
 
-  if (m_orthonormalizeWithSVD)
+  if( m_orthonormalizeWithSVD )
   {
-    cellToFaceMat.resizeDimension<0>( numFacesInElem );
-    cellToFaceMat.resizeDimension<1>( dim );
+    cellToFaceMat.resizeDimension< 0 >( numFacesInElem );
+    cellToFaceMat.resizeDimension< 1 >( dim );
     work_dim.resize( dim );
     work_dimByDim.resize( dim, dim );
   }
@@ -801,62 +795,62 @@ void SinglePhaseHybridFVM<BASE>::ComputeQFamilyInnerProduct( arrayView2d<real64 
     q1.resize( numFacesInElem );
     q2.resize( numFacesInElem );
   }
-  
-  // 1) fill the matrices cellToFaceMat and normalsMat row by row 
-  for (localIndex ifaceLoc = 0; ifaceLoc < numFacesInElem; ++ifaceLoc)
+
+  // 1) fill the matrices cellToFaceMat and normalsMat row by row
+  for( localIndex ifaceLoc = 0; ifaceLoc < numFacesInElem; ++ifaceLoc )
   {
 
     // compute the face geometry data: center, normal, vector from cell center to face center
     computationalGeometry::Centroid_3DPolygon( faceToNodes[elemToFaces[ifaceLoc]],
-                                               faceToNodes.sizeOfArray(elemToFaces[ifaceLoc]),
+                                               faceToNodes.sizeOfArray( elemToFaces[ifaceLoc] ),
                                                nodePosition,
                                                faceCenter,
                                                faceNormal,
                                                areaTolerance );
-        
+
     cellToFaceVec  = faceCenter;
     cellToFaceVec -= elemCenter;
 
-    if (m_orthonormalizeWithSVD)
-    {  
-      cellToFaceMat(ifaceLoc,0) = cellToFaceVec(0);
-      cellToFaceMat(ifaceLoc,1) = cellToFaceVec(1);
-      cellToFaceMat(ifaceLoc,2) = cellToFaceVec(2);
+    if( m_orthonormalizeWithSVD )
+    {
+      cellToFaceMat( ifaceLoc, 0 ) = cellToFaceVec( 0 );
+      cellToFaceMat( ifaceLoc, 1 ) = cellToFaceVec( 1 );
+      cellToFaceMat( ifaceLoc, 2 ) = cellToFaceVec( 2 );
     }
     else
     {
-      q0(ifaceLoc) = cellToFaceVec(0);
-      q1(ifaceLoc) = cellToFaceVec(1);
-      q2(ifaceLoc) = cellToFaceVec(2);
+      q0( ifaceLoc ) = cellToFaceVec( 0 );
+      q1( ifaceLoc ) = cellToFaceVec( 1 );
+      q2( ifaceLoc ) = cellToFaceVec( 2 );
     }
-    
-    if (Dot(cellToFaceVec, faceNormal) < 0.0)
+
+    if( Dot( cellToFaceVec, faceNormal ) < 0.0 )
     {
       faceNormal *= -1;
     }
-   
-    normalsMat(ifaceLoc,0) = faceNormal(0);
-    normalsMat(ifaceLoc,1) = faceNormal(1);
-    normalsMat(ifaceLoc,2) = faceNormal(2);
-    
+
+    normalsMat( ifaceLoc, 0 ) = faceNormal( 0 );
+    normalsMat( ifaceLoc, 1 ) = faceNormal( 1 );
+    normalsMat( ifaceLoc, 2 ) = faceNormal( 2 );
+
   }
-  
+
   // 2) assemble full coefficient tensor from principal axis/components
-  // TODO: figure out if there is a better way to that 
+  // TODO: figure out if there is a better way to that
   R2SymTensor permeabilityTensor;
-  makeFullTensor(elemPerm, permeabilityTensor);
-  for (localIndex i = 0; i < dim; ++i)
+  makeFullTensor( elemPerm, permeabilityTensor );
+  for( localIndex i = 0; i < dim; ++i )
   {
-    for (localIndex j = 0; j < dim; ++j)
+    for( localIndex j = 0; j < dim; ++j )
     {
-      permMat(i,j) = permeabilityTensor(i,j);
+      permMat( i, j ) = permeabilityTensor( i, j );
     }
   }
-  
+
   // TODO: replace the BlasLapack calls below with explicitly for loops
   //       this should be easy if MGS orthonormalization is as robust as SVD
-  
-  // 3) compute N K N' 
+
+  // 3) compute N K N'
   BlasLapackLA::matrixMatrixTMultiply( permMat,
                                        normalsMat,
                                        work_dimByNumFaces );
@@ -864,11 +858,11 @@ void SinglePhaseHybridFVM<BASE>::ComputeQFamilyInnerProduct( arrayView2d<real64 
                                       work_dimByNumFaces,
                                       transMat );
 
-  // 4) compute the orthonormalization of the matrix cellToFaceVec 
+  // 4) compute the orthonormalization of the matrix cellToFaceVec
   //    This is done either with SVD or MGS
   //    If we find that MGS is stable, I will remove SVD
 
-  if (m_orthonormalizeWithSVD)
+  if( m_orthonormalizeWithSVD )
   {
     // calling SVD seems to be an overkill to orthonormalize the 3 columns of cellToFaceMat...
     BlasLapackLA::matrixSVD( cellToFaceMat,
@@ -885,7 +879,7 @@ void SinglePhaseHybridFVM<BASE>::ComputeQFamilyInnerProduct( arrayView2d<real64 
     real64 const q0Dotq1 = BlasLapackLA::vectorDot( q0, q1 );
     BlasLapackLA::vectorVectorAdd( q0, q1, -q0Dotq1 );
     BlasLapackLA::vectorScale( 1.0/BlasLapackLA::vectorNorm2( q1 ), q1 );
-  
+
     // q2
     real64 const q0Dotq2 = BlasLapackLA::vectorDot( q0, q2 );
     BlasLapackLA::vectorVectorAdd( q0, q2, -q0Dotq2 );
@@ -894,30 +888,30 @@ void SinglePhaseHybridFVM<BASE>::ComputeQFamilyInnerProduct( arrayView2d<real64 
     BlasLapackLA::vectorScale( 1.0/BlasLapackLA::vectorNorm2( q2 ), q2 );
 
     // TODO: remove the copies once the BlasLapackLA calls have been removed
-    for (int i = 0; i < numFacesInElem; ++i)
-    {  
-      work_numFacesByDim(i,0) = q0(i);
-      work_numFacesByDim(i,1) = q1(i);
-      work_numFacesByDim(i,2) = q2(i);
+    for( int i = 0; i < numFacesInElem; ++i )
+    {
+      work_numFacesByDim( i, 0 ) = q0( i );
+      work_numFacesByDim( i, 1 ) = q1( i );
+      work_numFacesByDim( i, 2 ) = q2( i );
     }
   }
-    
+
   // 5) compute P_Q = I - QQ'
   BlasLapackLA::matrixMatrixTMultiply( work_numFacesByDim,
                                        work_numFacesByDim,
                                        worka_numFacesByNumFaces );
   BlasLapackLA::matrixScale( -1, worka_numFacesByNumFaces );
-  for (localIndex i = 0; i < numFacesInElem; ++i)
+  for( localIndex i = 0; i < numFacesInElem; ++i )
   {
-    worka_numFacesByNumFaces(i,i)++;
+    worka_numFacesByNumFaces( i, i )++;
   }
 
-  // 6) compute P_Q D P_Q where D = diag(diag(N K N')  
-  for (localIndex i = 0; i < numFacesInElem; ++i)
+  // 6) compute P_Q D P_Q where D = diag(diag(N K N')
+  for( localIndex i = 0; i < numFacesInElem; ++i )
   {
-    for (localIndex j = 0; j < numFacesInElem; ++j)
+    for( localIndex j = 0; j < numFacesInElem; ++j )
     {
-      workb_numFacesByNumFaces(i,j) = (i == j ) ?  transMat(i,j) : 0.0;
+      workb_numFacesByNumFaces( i, j ) = (i == j ) ?  transMat( i, j ) : 0.0;
     }
   }
   BlasLapackLA::matrixMatrixMultiply( workb_numFacesByNumFaces,
@@ -926,7 +920,7 @@ void SinglePhaseHybridFVM<BASE>::ComputeQFamilyInnerProduct( arrayView2d<real64 
   BlasLapackLA::matrixMatrixMultiply( worka_numFacesByNumFaces,
                                       workc_numFacesByNumFaces,
                                       workb_numFacesByNumFaces );
- 
+
   // 7) compute T = ( N K N' + t U diag(diag(N K N')) U ) / elemVolume
   BlasLapackLA::matrixScale( tParam, workb_numFacesByNumFaces );
   BlasLapackLA::matrixMatrixAdd( workb_numFacesByNumFaces, transMat );
@@ -936,16 +930,16 @@ void SinglePhaseHybridFVM<BASE>::ComputeQFamilyInnerProduct( arrayView2d<real64 
   // I need the array2d to call the BlasLapackLA functions
   // if and when everything works with explicit for loops in this kernel function,
   // I will be able to do remove all the array2ds and then I won't need this copy anymore
-  for (localIndex i = 0; i < numFacesInElem; ++i)
+  for( localIndex i = 0; i < numFacesInElem; ++i )
   {
-    for (localIndex j = 0; j < numFacesInElem; ++j)
+    for( localIndex j = 0; j < numFacesInElem; ++j )
     {
-      transMatrix(i,j) = transMat(i,j);
+      transMatrix( i, j ) = transMat( i, j );
     }
   }
 
 }
- 
+
 
 // TODO: template on the type of inner product
 // TODO: template on the type of subRegion to have a special treatment for fractures
@@ -960,7 +954,7 @@ void SinglePhaseHybridFVM<BASE>::ComputeTransmissibilityMatrix( arrayView2d<real
                                                                 stackArray2d<real64, SinglePhaseHybridFVMKernels::MAX_NUM_FACES
                                                                                     *SinglePhaseHybridFVMKernels::MAX_NUM_FACES> const & transMatrix ) const
 {
-  switch (m_ipType)
+  switch( m_ipType )
   {
     case InnerProductType::TPFA:
     {
@@ -984,7 +978,7 @@ void SinglePhaseHybridFVM<BASE>::ComputeTransmissibilityMatrix( arrayView2d<real
                                   elemCenter,
                                   elemVolume,
                                   elemPerm,
-                                  2,   
+                                  2,
                                   lengthTolerance,
                                   transMatrix );
       break;
@@ -992,7 +986,7 @@ void SinglePhaseHybridFVM<BASE>::ComputeTransmissibilityMatrix( arrayView2d<real
 
     default:
     {
-      GEOSX_LOG_RANK("Unknown inner product in SinglePhaseHybridFVM");
+      GEOSX_LOG_RANK( "Unknown inner product in SinglePhaseHybridFVM" );
       break;
     }
   }

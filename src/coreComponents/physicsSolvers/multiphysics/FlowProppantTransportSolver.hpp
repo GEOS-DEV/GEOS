@@ -31,8 +31,8 @@ namespace geosx
 class FlowProppantTransportSolver : public SolverBase
 {
 public:
-  FlowProppantTransportSolver( const std::string& name,
-                     Group * const parent );
+  FlowProppantTransportSolver( const std::string & name,
+                               Group * const parent );
   ~FlowProppantTransportSolver() override;
 
   /**
@@ -73,11 +73,11 @@ public:
 
   } flowProppantTransportSolverViewKeys;
 
-  
+
 protected:
   virtual void PostProcessInput() override final;
 
-  virtual void InitializePostInitialConditions_PreSubGroups(dataRepository::Group * const problemManager) override final;
+  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const problemManager ) override final;
 
 
 private:

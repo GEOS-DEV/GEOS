@@ -35,25 +35,23 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 
-FlowProppantTransportSolver::FlowProppantTransportSolver( const std::string& name, Group * const parent ):
-  SolverBase(name,parent),
+FlowProppantTransportSolver::FlowProppantTransportSolver( const std::string & name, Group * const parent ):
+  SolverBase( name, parent ),
   m_proppantSolverName(),
   m_flowSolverName()
 {
-  registerWrapper(viewKeyStruct::proppantSolverNameString, &m_proppantSolverName, 0)->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Name of the proppant transport solver to use in the flowProppantTransport solver");
+  registerWrapper( viewKeyStruct::proppantSolverNameString, &m_proppantSolverName, 0 )->
+    setInputFlag( InputFlags::REQUIRED )->
+    setDescription( "Name of the proppant transport solver to use in the flowProppantTransport solver" );
 
-  registerWrapper(viewKeyStruct::flowSolverNameString, &m_flowSolverName, 0)->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Name of the flow solver to use in the flowProppantTransport solver");
+  registerWrapper( viewKeyStruct::flowSolverNameString, &m_flowSolverName, 0 )->
+    setInputFlag( InputFlags::REQUIRED )->
+    setDescription( "Name of the flow solver to use in the flowProppantTransport solver" );
 
 }
 
 void FlowProppantTransportSolver::RegisterDataOnMesh( dataRepository::Group * const )
-{
-
-}
+{}
 
 void FlowProppantTransportSolver::ImplicitStepSetup( real64 const & time_n,
                                                      real64 const & dt,
@@ -116,6 +114,7 @@ FlowProppantTransportSolver::~FlowProppantTransportSolver()
   // TODO Auto-generated destructor stub
 }
 
+
 void FlowProppantTransportSolver::ResetStateToBeginningOfStep( DomainPartition * const domain )
 {
   m_proppantSolver->ResetStateToBeginningOfStep( domain );
@@ -143,14 +142,14 @@ real64 FlowProppantTransportSolver::SolverStep( real64 const & time_n,
   m_proppantSolver->PreStepUpdate(time_n, dt, cycleNumber, domain);
   
   int iter = 0;
-  while (iter <  this->m_nonlinearSolverParameters.m_maxIterNewton )
+  while( iter <  this->m_nonlinearSolverParameters.m_maxIterNewton )
   {
-    if (iter == 0)
+    if( iter == 0 )
     {
       // reset the states of all slave solvers if any of them has been reset
       ResetStateToBeginningOfStep( domain );
     }
-    if (getLogLevel() >= 1)
+    if( getLogLevel() >= 1 )
     {
       GEOSX_LOG_RANK_0( "\tIteration: " << iter+1  << ", FlowSolver: " );
     }
@@ -164,7 +163,7 @@ real64 FlowProppantTransportSolver::SolverStep( real64 const & time_n,
                                                              m_flowSolver->getSystemRhs(),
                                                              m_flowSolver->getSystemSolution() );
 
-    if (dtReturnTemporary < dtReturn)
+    if( dtReturnTemporary < dtReturn )
     {
       iter = 0;
       dtReturn = dtReturnTemporary;
@@ -179,7 +178,7 @@ real64 FlowProppantTransportSolver::SolverStep( real64 const & time_n,
       break;
     }
 
-    if (getLogLevel()  >= 1)
+    if( getLogLevel()  >= 1 )
     {
       GEOSX_LOG_RANK_0( "\tIteration: " << iter+1  << ", Proppant Solver: " );
     }
@@ -193,7 +192,7 @@ real64 FlowProppantTransportSolver::SolverStep( real64 const & time_n,
                                                                  m_proppantSolver->getSystemRhs(),
                                                                  m_proppantSolver->getSystemSolution() );
 
-    if (dtReturnTemporary < dtReturn)
+    if( dtReturnTemporary < dtReturn )
     {
       iter = 0;
       dtReturn = dtReturnTemporary;

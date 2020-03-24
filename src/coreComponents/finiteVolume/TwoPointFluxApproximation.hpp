@@ -33,7 +33,7 @@ public:
 
   TwoPointFluxApproximation() = delete;
 
-  TwoPointFluxApproximation(std::string const & name, dataRepository::Group * const parent);
+  TwoPointFluxApproximation( std::string const & name, dataRepository::Group * const parent );
 
 protected:
 
@@ -44,7 +44,7 @@ protected:
                                      bool const initFlag ) override;
 
   virtual void computeBoundaryStencil( DomainPartition const & domain,
-                                       SortedArrayView<localIndex const> const & faceSet,
+                                       SortedArrayView< localIndex const > const & faceSet,
                                        BoundaryStencil & stencil ) override;
 
 };
