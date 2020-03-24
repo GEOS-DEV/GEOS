@@ -481,16 +481,18 @@ void PoroelasticSolver::AssembleCouplingTerms( DomainPartition * const domain,
                   ->getReference< array2d< real64 > >( SingleFluidBase::viewKeyStruct::densityString );
 
       int dim = 3;
+      static constexpr int maxNumUDof = 24; // TODO: assuming linear HEX at most for the moment
+      static constexpr int maxNumPDof =  1; // TODO: assuming piecewise constant (P0) only for the moment
       int nUDof = dim * numNodesPerElement;
       int nPDof = m_flowSolver->numDofPerCell();
       int numQuadraturePoints = fe->n_quadrature_points();
 
       forAll< serialPolicy >( elementSubRegion.size(), [=] ( localIndex k )
       {
-        array1d< globalIndex > elementULocalDofIndex( nUDof );
+        stackArray1d< globalIndex, maxNumUDof > elementULocalDofIndex( nUDof );
         globalIndex elementPLocalDOfIndex;
-        array2d< real64 >      dRsdP( nUDof, nPDof );
-        array2d< real64 >      dRfdU( nPDof, nUDof );
+        stackArray2d< real64, maxNumUDof *maxNumPDof > dRsdP( nUDof, nPDof );
+        stackArray2d< real64, maxNumUDof *maxNumPDof > dRfdU( nPDof, nUDof );
         real64 Rf;
 
         dRsdP = 0.0;
@@ -590,7 +592,7 @@ void PoroelasticSolver::SolveSystem( DofManager const & dofManager,
   SolverBase::SolveSystem( dofManager, matrix, rhs, solution );
 
   // Debug for logLevel >= 2
-  GEOSX_LOG_LEVEL_RANK_0( 2, "After ReservoirSolver::SolveSystem" );
+  GEOSX_LOG_LEVEL_RANK_0( 2, "After PoroelasticSolver::SolveSystem" );
   GEOSX_LOG_LEVEL_RANK_0( 2, "\nSolution:\n" << solution );
 }
 
