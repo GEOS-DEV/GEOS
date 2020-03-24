@@ -22,6 +22,7 @@
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseProppantBase.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseHybridFVMKernels.hpp"
+#include "finiteVolume/InnerProduct.hpp"
 
 namespace geosx
 {
@@ -33,7 +34,7 @@ namespace geosx
  * class to assemble the single-phase flow equations based
  * on a mixed hybrid formulation known as the mimetic method
  */
-template< typename BASE = SinglePhaseBase >     
+template< typename BASE = SinglePhaseBase >
 class SinglePhaseHybridFVM : public BASE
 {
 public:
@@ -100,19 +101,12 @@ public:
   using BASE::m_biotCoefficient;
   using BASE::m_poroMultiplier;
   using BASE::m_transTMultiplier;
-  
+
   struct EquationType
   {
     static constexpr integer MASS_CONS  = 0;
     static constexpr integer CONSTRAINT = 1;
   };
-
-  struct InnerProductType
-  {
-    static constexpr integer TPFA = 0;
-    static constexpr integer QUASI_TPFA = 1;
-  };
-
 
   /**
    * @brief main constructor for Group Objects
@@ -149,7 +143,7 @@ public:
    */
   template< typename _BASE=BASE >
   static
-  typename std::enable_if< std::is_same<_BASE, SinglePhaseBase>::value, string >::type
+  typename std::enable_if< std::is_same< _BASE, SinglePhaseBase >::value, string >::type
   CatalogName()
   {
     return "SinglePhaseHybridFVM";
@@ -157,12 +151,12 @@ public:
 
   template< typename _BASE=BASE >
   static
-  typename std::enable_if< std::is_same<_BASE, SinglePhaseProppantBase>::value, string >::type
+  typename std::enable_if< std::is_same< _BASE, SinglePhaseProppantBase >::value, string >::type
   CatalogName()
   {
     return "SinglePhaseProppantHybridFVM";
   }
-  
+
   virtual void RegisterDataOnMesh( dataRepository::Group * const MeshBodies ) override;
 
   /**
@@ -203,7 +197,7 @@ public:
                        DofManager const & dofManager,
                        ParallelVector const & solution,
                        real64 const scalingFactor ) override;
-  
+
   virtual void
   ApplySystemSolution( DofManager const & dofManager,
                        ParallelVector const & solution,
@@ -267,37 +261,37 @@ private:
   void FluxLaunch( localIndex er,
                    localIndex esr,
                    FaceElementSubRegion const * const subRegion,
-                   SortedArray<localIndex> regionFilter,
+                   SortedArray< localIndex > regionFilter,
                    MeshLevel const * const mesh,
-                   arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodePosition,
-                   array2d<localIndex> const & elemRegionList,
-                   array2d<localIndex> const & elemSubRegionList,
-                   array2d<localIndex> const & elemList,
-                   ArrayOfArraysView<localIndex const> const & faceToNodes,                
-                   arrayView1d<globalIndex const> const & faceDofNumber,
-                   arrayView1d<real64 const> const & facePres,
-                   arrayView1d<real64 const> const & dFacePres,
-                   arrayView1d<real64 const> const & faceGravCoef,
+                   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
+                   array2d< localIndex > const & elemRegionList,
+                   array2d< localIndex > const & elemSubRegionList,
+                   array2d< localIndex > const & elemList,
+                   ArrayOfArraysView< localIndex const > const & faceToNodes,
+                   arrayView1d< globalIndex const > const & faceDofNumber,
+                   arrayView1d< real64 const > const & facePres,
+                   arrayView1d< real64 const > const & dFacePres,
+                   arrayView1d< real64 const > const & faceGravCoef,
                    real64 const lengthTolerance,
                    real64 const dt,
                    DofManager const * const dofManager,
                    ParallelMatrix * const matrix,
                    ParallelVector * const rhs );
- 
+
   void FluxLaunch( localIndex er,
                    localIndex esr,
                    CellElementSubRegion const * const subRegion,
-                   SortedArray<localIndex> regionFilter,
+                   SortedArray< localIndex > regionFilter,
                    MeshLevel const * const mesh,
-                   arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodePosition,
-                   array2d<localIndex> const & elemRegionList,
-                   array2d<localIndex> const & elemSubRegionList,
-                   array2d<localIndex> const & elemList,
-                   ArrayOfArraysView<localIndex const> const & faceToNodes,                
-                   arrayView1d<globalIndex const> const & faceDofNumber,
-                   arrayView1d<real64 const> const & facePres,
-                   arrayView1d<real64 const> const & dFacePres,
-                   arrayView1d<real64 const> const & faceGravCoef,
+                   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
+                   array2d< localIndex > const & elemRegionList,
+                   array2d< localIndex > const & elemSubRegionList,
+                   array2d< localIndex > const & elemList,
+                   ArrayOfArraysView< localIndex const > const & faceToNodes,
+                   arrayView1d< globalIndex const > const & faceDofNumber,
+                   arrayView1d< real64 const > const & facePres,
+                   arrayView1d< real64 const > const & dFacePres,
+                   arrayView1d< real64 const > const & faceGravCoef,
                    real64 const lengthTolerance,
                    real64 const dt,
                    DofManager const * const dofManager,
@@ -324,9 +318,9 @@ private:
                                       R1Tensor const & elemCenter,
                                       real64 const & elemVolume,
                                       R1Tensor const & elemPerm,
-                                      real64   const & lengthTolerance,
-                                      stackArray2d<real64, SinglePhaseHybridFVMKernels::MAX_NUM_FACES
-                                                          *SinglePhaseHybridFVMKernels::MAX_NUM_FACES> const & transMatrix ) const; 
+                                      real64 const & lengthTolerance,
+                                      stackArray2d< real64, InnerProduct::MAX_NUM_FACES
+                                                    *InnerProduct::MAX_NUM_FACES > const & transMatrix ) const;
 
   /**
    * @brief In a given element, recompute the transmissibility matrix using TPFA
@@ -346,9 +340,9 @@ private:
                                 arraySlice1d< localIndex const > const elemToFaces,
                                 R1Tensor const & elemCenter,
                                 R1Tensor const & elemPerm,
-                                real64   const & lengthTolerance,
-                                stackArray2d<real64, SinglePhaseHybridFVMKernels::MAX_NUM_FACES
-                                                    *SinglePhaseHybridFVMKernels::MAX_NUM_FACES> const & transMatrix ) const; 
+                                real64 const & lengthTolerance,
+                                stackArray2d< real64, InnerProduct::MAX_NUM_FACES
+                                              *InnerProduct::MAX_NUM_FACES > const & transMatrix ) const;
 
   /**
    * @brief In a given element, recompute the transmissibility matrix using a consistent inner product
@@ -373,10 +367,10 @@ private:
                                    R1Tensor const & elemCenter,
                                    real64 const & elemVolume,
                                    R1Tensor const & elemPerm,
-                                   real64   const & tParam, 
-                                   real64   const & lengthTolerance,
-                                   stackArray2d<real64, SinglePhaseHybridFVMKernels::MAX_NUM_FACES
-                                                       *SinglePhaseHybridFVMKernels::MAX_NUM_FACES> const & transMatrix ) const; 
+                                   real64 const & tParam,
+                                   real64 const & lengthTolerance,
+                                   stackArray2d< real64, InnerProduct::MAX_NUM_FACES
+                                                 *InnerProduct::MAX_NUM_FACES > const & transMatrix ) const;
 
 
   /// Dof key for the member functions that do not have access to the coupled Dof manager
@@ -388,10 +382,6 @@ private:
   /// type of inner product for the mimetic method
   /// This is only const for now
   integer const m_ipType;
-
-  /// flag to decide we orthonormalize with SVD or with MGS
-  /// This is only const for now
-  bool const m_orthonormalizeWithSVD;
 
 };
 

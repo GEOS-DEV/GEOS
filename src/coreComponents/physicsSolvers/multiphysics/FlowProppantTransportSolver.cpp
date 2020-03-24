@@ -83,12 +83,12 @@ void FlowProppantTransportSolver::ImplicitStepSetup( real64 const & time_n,
                                        m_proppantSolver->getSystemMatrix(),
                                        m_proppantSolver->getSystemRhs(),
                                        m_proppantSolver->getSystemSolution() );
- 
-  
+
+
 }
 
-void FlowProppantTransportSolver::ImplicitStepComplete( real64 const& time_n,
-                                                        real64 const& dt,
+void FlowProppantTransportSolver::ImplicitStepComplete( real64 const & time_n,
+                                                        real64 const & dt,
                                                         DomainPartition * const domain )
 {
   m_flowSolver->ImplicitStepComplete( time_n, dt, domain );
@@ -97,17 +97,15 @@ void FlowProppantTransportSolver::ImplicitStepComplete( real64 const& time_n,
 
 void FlowProppantTransportSolver::PostProcessInput()
 {
-  m_proppantSolver = this->getParent()->GetGroup(m_proppantSolverName)->group_cast<ProppantTransport*>();
+  m_proppantSolver = this->getParent()->GetGroup( m_proppantSolverName )->group_cast< ProppantTransport * >();
   GEOSX_ERROR_IF( m_proppantSolver == nullptr, this->getName() << ": invalid solid solver name: " << m_proppantSolverName );
-  
-  m_flowSolver = this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseBase*>();
+
+  m_flowSolver = this->getParent()->GetGroup( m_flowSolverName )->group_cast< SinglePhaseBase * >();
   GEOSX_ERROR_IF( m_flowSolver == nullptr, this->getName() << ": invalid solid solver name: " << m_flowSolverName );
 }
 
-void FlowProppantTransportSolver::InitializePostInitialConditions_PreSubGroups(Group * const GEOSX_UNUSED_PARAM( problemManager ))
-{
-
-}
+void FlowProppantTransportSolver::InitializePostInitialConditions_PreSubGroups( Group * const GEOSX_UNUSED_PARAM( problemManager ))
+{}
 
 FlowProppantTransportSolver::~FlowProppantTransportSolver()
 {
@@ -118,7 +116,7 @@ FlowProppantTransportSolver::~FlowProppantTransportSolver()
 void FlowProppantTransportSolver::ResetStateToBeginningOfStep( DomainPartition * const domain )
 {
   m_proppantSolver->ResetStateToBeginningOfStep( domain );
-  m_flowSolver->ResetStateToBeginningOfStep( domain );  
+  m_flowSolver->ResetStateToBeginningOfStep( domain );
 }
 
 real64 FlowProppantTransportSolver::SolverStep( real64 const & time_n,
@@ -130,17 +128,17 @@ real64 FlowProppantTransportSolver::SolverStep( real64 const & time_n,
   real64 dtReturn = dt;
   real64 dtReturnTemporary;
 
-  m_proppantSolver->ResizeFractureFields(time_n, dt, domain);
-  
-  if(cycleNumber == 0)
+  m_proppantSolver->ResizeFractureFields( time_n, dt, domain );
+
+  if( cycleNumber == 0 )
   {
     FieldSpecificationManager const & boundaryConditionManager = FieldSpecificationManager::get();
     boundaryConditionManager.ApplyInitialConditions( domain );
   }
 
   this->ImplicitStepSetup( time_n, dt, domain, m_dofManager, m_matrix, m_rhs, m_solution );
-  m_proppantSolver->PreStepUpdate(time_n, dt, cycleNumber, domain);
-  
+  m_proppantSolver->PreStepUpdate( time_n, dt, cycleNumber, domain );
+
   int iter = 0;
   while( iter <  this->m_nonlinearSolverParameters.m_maxIterNewton )
   {
@@ -169,10 +167,10 @@ real64 FlowProppantTransportSolver::SolverStep( real64 const & time_n,
       dtReturn = dtReturnTemporary;
       continue;
     }
-  
+
     NonlinearSolverParameters const & fluidNonLinearParams = m_flowSolver->getNonlinearSolverParameters();
     if( fluidNonLinearParams.m_numNewtonIterations <= this->m_nonlinearSolverParameters.m_minIterNewton && iter > 0 &&
-        getLogLevel() >= 1)
+        getLogLevel() >= 1 )
     {
       GEOSX_LOG_RANK_0( "***** The iterative coupling has converged in " << iter  << " iterations! *****\n" );
       break;
@@ -182,7 +180,7 @@ real64 FlowProppantTransportSolver::SolverStep( real64 const & time_n,
     {
       GEOSX_LOG_RANK_0( "\tIteration: " << iter+1  << ", Proppant Solver: " );
     }
-    
+
     dtReturnTemporary = m_proppantSolver->NonlinearImplicitStep( time_n,
                                                                  dtReturn,
                                                                  cycleNumber,
@@ -203,9 +201,9 @@ real64 FlowProppantTransportSolver::SolverStep( real64 const & time_n,
   }
 
   this->ImplicitStepComplete( time_n, dt, domain );
-  m_proppantSolver->PostStepUpdate(time_n, dtReturn, cycleNumber, domain);
+  m_proppantSolver->PostStepUpdate( time_n, dtReturn, cycleNumber, domain );
 
-  
+
   return dtReturn;
 }
 

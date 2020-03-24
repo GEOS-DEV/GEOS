@@ -9,6 +9,7 @@ set( finiteVolume_headers
      FluxApproximationBase.hpp
      TwoPointFluxApproximation.hpp
      FluxStencil.hpp
+     InnerProduct.hpp
    )
 #
 # Specify all sources

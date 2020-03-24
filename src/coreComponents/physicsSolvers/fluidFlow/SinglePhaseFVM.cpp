@@ -35,7 +35,7 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
-using namespace SinglePhaseBaseKernels;  
+using namespace SinglePhaseBaseKernels;
 using namespace SinglePhaseFVMKernels;
 
 template< typename BASE >
@@ -49,9 +49,9 @@ SinglePhaseFVM< BASE >::SinglePhaseFVM( const std::string & name,
 
 template< typename BASE >
 
-void SinglePhaseFVM<BASE>::SetupDofs( DomainPartition const * const domain,
-                                      DofManager & dofManager ) const
-{ 
+void SinglePhaseFVM< BASE >::SetupDofs( DomainPartition const * const domain,
+                                        DofManager & dofManager ) const
+{
   dofManager.addField( viewKeyStruct::pressureString,
                        DofManager::Location::Elem,
                        m_targetRegions );
@@ -69,9 +69,9 @@ void SinglePhaseFVM<BASE>::SetupDofs( DomainPartition const * const domain,
 
 
 template< typename BASE >
-real64 SinglePhaseFVM<BASE>::CalculateResidualNorm( DomainPartition const * const domain,
-                                                    DofManager const & dofManager,
-                                                    ParallelVector const & rhs )
+real64 SinglePhaseFVM< BASE >::CalculateResidualNorm( DomainPartition const * const domain,
+                                                      DofManager const & dofManager,
+                                                      ParallelVector const & rhs )
 {
   MeshLevel const * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
@@ -156,12 +156,12 @@ void SinglePhaseFVM< BASE >::ApplySystemSolution( DofManager const & dofManager,
 }
 
 template< typename BASE >
-void SinglePhaseFVM<BASE>::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
-                                              real64 const dt,
-                                              DomainPartition const * const domain,
-                                              DofManager const * const dofManager,
-                                              ParallelMatrix * const matrix,
-                                              ParallelVector * const rhs )
+void SinglePhaseFVM< BASE >::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
+                                                real64 const dt,
+                                                DomainPartition const * const domain,
+                                                DofManager const * const dofManager,
+                                                ParallelMatrix * const matrix,
+                                                ParallelVector * const rhs )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -238,12 +238,12 @@ void SinglePhaseFVM<BASE>::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
 
 template< typename BASE >
 void
-SinglePhaseFVM<BASE>::ApplyBoundaryConditions( real64 const time_n,
-                                               real64 const dt,
-                                               DomainPartition * const domain,
-                                               DofManager const & dofManager,
-                                               ParallelMatrix & matrix,
-                                               ParallelVector & rhs )
+SinglePhaseFVM< BASE >::ApplyBoundaryConditions( real64 const time_n,
+                                                 real64 const dt,
+                                                 DomainPartition * const domain,
+                                                 DofManager const & dofManager,
+                                                 ParallelMatrix & matrix,
+                                                 ParallelVector & rhs )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -357,12 +357,12 @@ SinglePhaseFVM<BASE>::ApplyBoundaryConditions( real64 const time_n,
 }
 
 template< typename BASE >
-void SinglePhaseFVM<BASE>::ApplyFaceDirichletBC_implicit( real64 const time_n,
-                                                          real64 const dt,
-                                                          DofManager const * const dofManager,
-                                                          DomainPartition * const domain,
-                                                          ParallelMatrix * const matrix,
-                                                          ParallelVector * const rhs )
+void SinglePhaseFVM< BASE >::ApplyFaceDirichletBC_implicit( real64 const time_n,
+                                                            real64 const dt,
+                                                            DofManager const * const dofManager,
+                                                            DomainPartition * const domain,
+                                                            ParallelMatrix * const matrix,
+                                                            ParallelVector * const rhs )
 {
   FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
   MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );

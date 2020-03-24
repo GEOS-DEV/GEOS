@@ -47,12 +47,12 @@ MobilityKernel::Compute( real64 const & dens,
 }
 
 void MobilityKernel::Launch( localIndex const size,
-                             arrayView2d<real64 const> const & dens,
-                             arrayView2d<real64 const> const & dDens_dPres,
-                             arrayView2d<real64 const> const & visc,
-                             arrayView2d<real64 const> const & dVisc_dPres,
-                             arrayView1d<real64> const & mob,
-                             arrayView1d<real64> const & dMob_dPres )
+                             arrayView2d< real64 const > const & dens,
+                             arrayView2d< real64 const > const & dDens_dPres,
+                             arrayView2d< real64 const > const & visc,
+                             arrayView2d< real64 const > const & dVisc_dPres,
+                             arrayView1d< real64 > const & mob,
+                             arrayView1d< real64 > const & dMob_dPres )
 {
   forAll< serialPolicy >( size, [=] ( localIndex const a )
   {
@@ -65,13 +65,13 @@ void MobilityKernel::Launch( localIndex const size,
   } );
 }
 
-void MobilityKernel::Launch( SortedArrayView<localIndex const> targetSet,
-                             arrayView2d<real64 const> const & dens,
-                             arrayView2d<real64 const> const & dDens_dPres,
-                             arrayView2d<real64 const> const & visc,
-                             arrayView2d<real64 const> const & dVisc_dPres,
-                             arrayView1d<real64> const & mob,
-                             arrayView1d<real64> const & dMob_dPres )
+void MobilityKernel::Launch( SortedArrayView< localIndex const > targetSet,
+                             arrayView2d< real64 const > const & dens,
+                             arrayView2d< real64 const > const & dDens_dPres,
+                             arrayView2d< real64 const > const & visc,
+                             arrayView2d< real64 const > const & dVisc_dPres,
+                             arrayView1d< real64 > const & mob,
+                             arrayView1d< real64 > const & dMob_dPres )
 {
   forAll< serialPolicy >( targetSet.size(), [=] ( localIndex const a )  {
     Compute( dens[a][0],
@@ -84,9 +84,9 @@ void MobilityKernel::Launch( SortedArrayView<localIndex const> targetSet,
 }
 
 void MobilityKernel::Launch( localIndex const size,
-                             arrayView2d<real64 const> const & dens,
-                             arrayView2d<real64 const> const & visc,
-                             arrayView1d<real64> const & mob )
+                             arrayView2d< real64 const > const & dens,
+                             arrayView2d< real64 const > const & visc,
+                             arrayView1d< real64 > const & mob )
 {
   forAll< serialPolicy >( size, [=] ( localIndex const a )
   {
@@ -96,10 +96,10 @@ void MobilityKernel::Launch( localIndex const size,
   } );
 }
 
-void MobilityKernel::Launch( SortedArrayView<localIndex const> targetSet,
-                             arrayView2d<real64 const> const & dens,
-                             arrayView2d<real64 const> const & visc,
-                             arrayView1d<real64> const & mob )
+void MobilityKernel::Launch( SortedArrayView< localIndex const > targetSet,
+                             arrayView2d< real64 const > const & dens,
+                             arrayView2d< real64 const > const & visc,
+                             arrayView1d< real64 > const & mob )
 {
   forAll< serialPolicy >( targetSet.size(), [=] ( localIndex const a )  {
     Compute( dens[a][0],

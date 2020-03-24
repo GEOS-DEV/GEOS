@@ -48,39 +48,39 @@ struct MobilityKernel
            real64 & mob );
 
   static void Launch( localIndex const size,
-                      arrayView2d<real64 const> const & dens,
-                      arrayView2d<real64 const> const & dDens_dPres,
-                      arrayView2d<real64 const> const & visc,
-                      arrayView2d<real64 const> const & dVisc_dPres,
-                      arrayView1d<real64> const & mob,
-                      arrayView1d<real64> const & dMob_dPres );
+                      arrayView2d< real64 const > const & dens,
+                      arrayView2d< real64 const > const & dDens_dPres,
+                      arrayView2d< real64 const > const & visc,
+                      arrayView2d< real64 const > const & dVisc_dPres,
+                      arrayView1d< real64 > const & mob,
+                      arrayView1d< real64 > const & dMob_dPres );
 
-  static void Launch( SortedArrayView<localIndex const> targetSet,
-                      arrayView2d<real64 const> const & dens,
-                      arrayView2d<real64 const> const & dDens_dPres,
-                      arrayView2d<real64 const> const & visc,
-                      arrayView2d<real64 const> const & dVisc_dPres,
-                      arrayView1d<real64> const & mob,
-                      arrayView1d<real64> const & dMob_dPres );
+  static void Launch( SortedArrayView< localIndex const > targetSet,
+                      arrayView2d< real64 const > const & dens,
+                      arrayView2d< real64 const > const & dDens_dPres,
+                      arrayView2d< real64 const > const & visc,
+                      arrayView2d< real64 const > const & dVisc_dPres,
+                      arrayView1d< real64 > const & mob,
+                      arrayView1d< real64 > const & dMob_dPres );
 
   static void Launch( localIndex const size,
-                      arrayView2d<real64 const> const & dens,
-                      arrayView2d<real64 const> const & visc,
-                      arrayView1d<real64> const & mob );
+                      arrayView2d< real64 const > const & dens,
+                      arrayView2d< real64 const > const & visc,
+                      arrayView1d< real64 > const & mob );
 
-  static void Launch( SortedArrayView<localIndex const> targetSet,
-                      arrayView2d<real64 const> const & dens,
-                      arrayView2d<real64 const> const & visc,
-                      arrayView1d<real64> const & mob );
+  static void Launch( SortedArrayView< localIndex const > targetSet,
+                      arrayView2d< real64 const > const & dens,
+                      arrayView2d< real64 const > const & visc,
+                      arrayView1d< real64 > const & mob );
 };
 
 /******************************** AccumulationKernel ********************************/
 
-template<bool ISPORO>
+template< bool ISPORO >
 struct AssembleAccumulationTermsHelper;
 
 template<>
-struct AssembleAccumulationTermsHelper<true>
+struct AssembleAccumulationTermsHelper< true >
 {
   inline static constexpr void
   porosityUpdate( real64 & poro,
@@ -101,7 +101,7 @@ struct AssembleAccumulationTermsHelper<true>
 };
 
 template<>
-struct AssembleAccumulationTermsHelper<false>
+struct AssembleAccumulationTermsHelper< false >
 {
   inline static constexpr void
   porosityUpdate( real64 & poro,
@@ -124,16 +124,14 @@ struct AssembleAccumulationTermsHelper<false>
 
 template< typename REGIONTYPE >
 struct AccumulationKernel
-{
-
-};
+{};
 
 template<>
-struct AccumulationKernel<CellElementSubRegion>
+struct AccumulationKernel< CellElementSubRegion >
 {
 
 
-  template<bool COUPLED>
+  template< bool COUPLED >
   inline static void
   Compute( real64 const & dPres,
            real64 const & densNew,
@@ -157,17 +155,17 @@ struct AccumulationKernel<CellElementSubRegion>
 
     // TODO porosity update needs to be elsewhere...
     real64 dPoro_dPres;
-    AssembleAccumulationTermsHelper<COUPLED>::porosityUpdate( poroNew,
-                                                              dPoro_dPres,
-                                                              biotCoefficient,
-                                                              poroOld,
-                                                              bulkModulus,
-                                                              totalMeanStress,
-                                                              oldTotalMeanStress,
-                                                              dPres,
-                                                              poroRef,
-                                                              pvMult,
-                                                              dPVMult_dPres );
+    AssembleAccumulationTermsHelper< COUPLED >::porosityUpdate( poroNew,
+                                                                dPoro_dPres,
+                                                                biotCoefficient,
+                                                                poroOld,
+                                                                bulkModulus,
+                                                                totalMeanStress,
+                                                                oldTotalMeanStress,
+                                                                dPres,
+                                                                poroRef,
+                                                                pvMult,
+                                                                dPVMult_dPres );
 
 
     // Residual contribution is mass conservation in the cell
@@ -180,10 +178,10 @@ struct AccumulationKernel<CellElementSubRegion>
 
 
 template<>
-struct AccumulationKernel<FaceElementSubRegion>
+struct AccumulationKernel< FaceElementSubRegion >
 {
 
-  template<bool COUPLED>
+  template< bool COUPLED >
   inline static void
   Compute( real64 const & densNew,
            real64 const & densOld,
@@ -199,7 +197,7 @@ struct AccumulationKernel<FaceElementSubRegion>
     localAccum = densNew * volNew - densOld * volume;
 
     // Derivative of residual wrt to pressure in the cell
-    localAccumJacobian =  dDens_dPres * volNew ;
+    localAccumJacobian =  dDens_dPres * volNew;
   }
 };
 

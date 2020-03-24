@@ -88,7 +88,7 @@ private:
   ProppantTransport * m_proppantSolver;
   SinglePhaseBase * m_flowSolver;
 
-  
+
 };
 
 } /* namespace geosx */
