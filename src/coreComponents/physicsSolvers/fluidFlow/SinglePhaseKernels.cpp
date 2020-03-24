@@ -351,10 +351,10 @@ void FluxKernel::
 
       for( localIndex row=0; row<numFluxElems; ++row )
       {
-        dR_dAper.addToRowBinarySearch( localRowIndices[row],
-                                       localColIndices.data(),
-                                       dFlux_dAper.data() + (stencilSize * row),
-                                       stencilSize );
+        dR_dAper.insertNonZeros( localRowIndices[row],
+                                 localColIndices.data(),
+                                 dFlux_dAper.data() + (stencilSize * row),
+                                 stencilSize );
       }
 
     }

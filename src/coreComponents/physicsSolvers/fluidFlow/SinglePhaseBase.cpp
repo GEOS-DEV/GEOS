@@ -454,7 +454,8 @@ void SinglePhaseBase::AssembleSystem( real64 const time_n,
   {
     m_derivativeFluxResidual_dAperture = std::make_unique< CRSMatrix< real64, localIndex > >(
       matrix.numLocalRows(),
-      matrix.numLocalCols() );
+      matrix.numLocalCols(),
+      10 );
   }
   m_derivativeFluxResidual_dAperture->setValues( 0.0 );
 

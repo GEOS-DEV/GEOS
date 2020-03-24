@@ -148,7 +148,7 @@ public:
                                                                      ParallelMatrix * const matrix,
                                                                      ParallelVector * const rhs );
 
-  void AssembleStabiliziation( DomainPartition * const domain,
+  void AssembleStabiliziation( DomainPartition const * const domain,
                                DofManager const & dofManager,
                                ParallelMatrix * const matrix,
                                ParallelVector * const rhs );
@@ -181,6 +181,10 @@ public:
   } LagrangianContactSolverViewKeys;
 
   string const & getContactRelationName() const { return m_contactRelationName; }
+
+  SolidMechanicsLagrangianFEM const * getSolidSolver() const { return m_solidSolver; }
+
+  integer const & getActiveSetMaxIter() const { return m_activeSetMaxIter; }
 
 protected:
   virtual void PostProcessInput() override final;
@@ -295,6 +299,8 @@ private:
     return false;
   }
 
+public:
+
   void InitializeFractureState( MeshLevel * const mesh,
                                 string const fieldName ) const;
 
@@ -309,6 +315,9 @@ private:
                                        globalIndex & numSlip,
                                        globalIndex & numOpen,
                                        bool printAll = false ) const;
+
+  bool IsElementInOpenState( FaceElementSubRegion const & subRegion,
+                             localIndex const kfe ) const;
 
   // TODO: maybe to be moved in SolverBase ...
   real64 ParabolicInterpolationThreePoints( real64 const lambdac,

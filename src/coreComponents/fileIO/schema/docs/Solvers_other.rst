@@ -9,6 +9,7 @@ EmbeddedSurfaceGenerator     node :ref:`DATASTRUCTURE_EmbeddedSurfaceGenerator`
 FlowProppantTransport        node :ref:`DATASTRUCTURE_FlowProppantTransport`        
 Hydrofracture                node :ref:`DATASTRUCTURE_Hydrofracture`                
 LagrangianContact            node :ref:`DATASTRUCTURE_LagrangianContact`            
+LagrangianContactWithFlow    node :ref:`DATASTRUCTURE_LagrangianContactWithFlow`    
 LaplaceFEM                   node :ref:`DATASTRUCTURE_LaplaceFEM`                   
 Poroelastic                  node :ref:`DATASTRUCTURE_Poroelastic`                  
 ProppantTransport            node :ref:`DATASTRUCTURE_ProppantTransport`            

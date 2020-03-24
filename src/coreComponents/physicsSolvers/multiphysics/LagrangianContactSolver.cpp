@@ -165,9 +165,9 @@ void LagrangianContactSolver::InitializePreSubGroups( Group * const rootGroup )
   DomainPartition * domain = rootGroup->GetGroup< DomainPartition >( keys::domain );
   ConstitutiveManager const * const cm = domain->getConstitutiveManager();
 
-  ConstitutiveBase const * const contarcRelation  = cm->GetConstitutiveRelation< ConstitutiveBase >( m_contactRelationName );
-  GEOSX_ERROR_IF( contarcRelation == nullptr, "fracture constitutive model " + m_contactRelationName + " not found" );
-  m_contactRelationFullIndex = contarcRelation->getIndexInParent();
+  ConstitutiveBase const * const contatcRelation  = cm->GetConstitutiveRelation< ConstitutiveBase >( m_contactRelationName );
+  GEOSX_ERROR_IF( contatcRelation == nullptr, "fracture constitutive model " + m_contactRelationName + " not found" );
+  m_contactRelationFullIndex = contatcRelation->getIndexInParent();
 }
 
 void LagrangianContactSolver::ImplicitStepSetup( real64 const & time_n,
@@ -953,9 +953,6 @@ real64 LagrangianContactSolver::CalculateResidualNorm( DomainPartition const * c
 {
   GEOSX_MARK_FUNCTION;
 
-  string const tracDofKey = dofManager.getKey( viewKeyStruct::tractionString );
-  string const dispDofKey = dofManager.getKey( keys::TotalDisplacement );
-
   localIndex numDispDofs = dofManager.numLocalDofs( keys::TotalDisplacement );
   localIndex numTracDofs = dofManager.numLocalDofs( viewKeyStruct::tractionString );
   real64 const * localResidual = rhs.extractLocalVector();
@@ -1379,25 +1376,25 @@ void LagrangianContactSolver::AssembleTractionResidualDerivativeWrtDisplacementA
   rhs->close();
 }
 
-void LagrangianContactSolver::AssembleStabiliziation( DomainPartition * const domain,
+void LagrangianContactSolver::AssembleStabiliziation( DomainPartition const * const domain,
                                                       DofManager const & dofManager,
                                                       ParallelMatrix * const matrix,
                                                       ParallelVector * const rhs )
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel const * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
   FaceManager const * const faceManager = mesh->getFaceManager();
   NodeManager const * const nodeManager = mesh->getNodeManager();
-  ElementRegionManager * const elemManager = mesh->getElemManager();
+  ElementRegionManager const * const elemManager = mesh->getElemManager();
 
   string const tracDofKey = dofManager.getKey( viewKeyStruct::tractionString );
 
   // Get the finite volume method used to compute the stabilization
-  NumericalMethodsManager const * numericalMethodManager = domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
-  FiniteVolumeManager const * fvManager = numericalMethodManager->GetGroup< FiniteVolumeManager >( keys::finiteVolumeManager );
-  FluxApproximationBase const * stabilizationMethod = fvManager->getFluxApproximation( m_stabilizationName );
+  NumericalMethodsManager const * const numericalMethodManager = domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
+  FiniteVolumeManager const * const fvManager = numericalMethodManager->GetGroup< FiniteVolumeManager >( keys::finiteVolumeManager );
+  FluxApproximationBase const * const stabilizationMethod = fvManager->getFluxApproximation( m_stabilizationName );
 
   // Get the "face to element" map (valid for the entire mesh)
   FaceManager::ElemMapType const & faceToElem = faceManager->toElementRelation();
@@ -1405,8 +1402,8 @@ void LagrangianContactSolver::AssembleStabiliziation( DomainPartition * const do
   // Form the SurfaceGenerator, get the fracture name and use it to retrieve the faceMap (from fracture element to face)
   SurfaceGenerator const * const
   surfaceGenerator = this->getParent()->GetGroup< SolverBase >( "SurfaceGen" )->group_cast< SurfaceGenerator const * >();
-  FaceElementRegion * const fractureRegion = elemManager->GetRegion< FaceElementRegion >( surfaceGenerator->getFractureRegionName() );
-  FaceElementSubRegion * const fractureSubRegion = fractureRegion->GetSubRegion< FaceElementSubRegion >( "default" );
+  FaceElementRegion const * const fractureRegion = elemManager->GetRegion< FaceElementRegion >( surfaceGenerator->getFractureRegionName() );
+  FaceElementSubRegion const * const fractureSubRegion = fractureRegion->GetSubRegion< FaceElementSubRegion >( "default" );
   GEOSX_ERROR_IF( !fractureSubRegion->hasWrapper( m_tractionKey ), "The fracture subregion must contain traction field." );
   FaceElementSubRegion::FaceMapType const & faceMap = fractureSubRegion->faceList();
   GEOSX_ERROR_IF( faceMap.size( 1 ) != 2, "A fracture face has to be shared by two cells." );
@@ -1977,6 +1974,31 @@ void LagrangianContactSolver::ComputeFractureStateStatistics( DomainPartition co
            numSlip,
            numOpen );
   GEOSX_LOG_RANK_0( output );
+}
+
+bool LagrangianContactSolver::IsElementInOpenState( FaceElementSubRegion const & subRegion,
+                                                    localIndex const kfe ) const
+{
+  GEOSX_MARK_FUNCTION;
+
+  bool res = false;
+  if( subRegion.hasWrapper( m_tractionKey ) )
+  {
+    arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
+    arrayView1d< FractureState const > const & fractureState = subRegion.getReference< array1d< FractureState > >( viewKeyStruct::fractureStateString );
+    if( kfe >= 0 && kfe < subRegion.size() )
+    {
+      if( ghostRank[kfe] < 0 )
+      {
+        res = fractureState[kfe] == FractureState::OPEN;
+      }
+    }
+    else
+    {
+      GEOSX_ERROR( "IsElementInOpenState called with index out of range: " << kfe << " not in [0," << subRegion.size() << "]" );
+    }
+  }
+  return res;
 }
 
 void LagrangianContactSolver::SolveSystem( DofManager const & dofManager,

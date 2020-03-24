@@ -574,10 +574,10 @@ real64 SurfaceGenerator::SolverStep( real64 const & time_n,
           fluxApprox->addToFractureStencil( *domain,
                                             this->m_fractureRegionName,
                                             true );
-          edgeManager->m_recalculateFractureConnectorEdges.clear();
-          fractureRegion->GetSubRegion< FaceElementSubRegion >( 0 )->m_newFaceElements.clear();
         }
       }
+      edgeManager->m_recalculateFractureConnectorEdges.clear();
+      fractureRegion->GetSubRegion< FaceElementSubRegion >( 0 )->m_newFaceElements.clear();
     }
   }
 
