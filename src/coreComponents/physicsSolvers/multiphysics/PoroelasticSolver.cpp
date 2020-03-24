@@ -45,7 +45,7 @@ PoroelasticSolver::PoroelasticSolver( const std::string & name,
   SolverBase( name, parent ),
   m_solidSolverName(),
   m_flowSolverName(),
-  m_couplingTypeOptionString( "FIM" ),
+  m_couplingTypeOptionString(),
   m_couplingTypeOption()
 
 {
@@ -60,7 +60,6 @@ PoroelasticSolver::PoroelasticSolver( const std::string & name,
   registerWrapper( viewKeyStruct::couplingTypeOptionStringString, &m_couplingTypeOptionString, 0 )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Coupling option: (FIM, SIM_FixedStress)" );
-
 }
 
 void PoroelasticSolver::RegisterDataOnMesh( dataRepository::Group * const MeshBodies )
@@ -119,9 +118,7 @@ void PoroelasticSolver::ImplicitStepSetup( real64 const & time_n,
                                            ParallelVector & rhs,
                                            ParallelVector & solution )
 {
-  string ctOption = this->getReference< string >( viewKeyStruct::couplingTypeOptionStringString );
-
-  if( ctOption == "SIM_FixedStress" )
+  if( m_couplingTypeOption == couplingTypeOption::SIM_FixedStress )
   {
     MeshLevel * const mesh = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
     ElementRegionManager * const elemManager = mesh->getElemManager();
@@ -140,7 +137,7 @@ void PoroelasticSolver::ImplicitStepSetup( real64 const & time_n,
       oldTotalMeanStress[er][esr][k] = totalMeanStress[er][esr][k];
     } );
   }
-  else if( ctOption == "FIM" )
+  else if( m_couplingTypeOption == couplingTypeOption::FIM )
   {
     m_flowSolver->ImplicitStepSetup( time_n, dt, domain,
                                      dofManager,
@@ -175,7 +172,7 @@ void PoroelasticSolver::PostProcessInput()
 
   if( ctOption == "SIM_FixedStress" )
   {
-    this->m_couplingTypeOption = couplingTypeOption::SIM_FixedStress;
+    m_couplingTypeOption = couplingTypeOption::SIM_FixedStress;
 
     // For this coupled solver the minimum number of Newton Iter should be 0 for both flow and solid solver otherwise it
     // will never converge.
@@ -193,7 +190,7 @@ void PoroelasticSolver::PostProcessInput()
   }
   else if( ctOption == "FIM" )
   {
-    this->m_couplingTypeOption = couplingTypeOption::FIM;
+    m_couplingTypeOption = couplingTypeOption::FIM;
 
     m_flowSolver  = this->getParent()->GetGroup< SinglePhaseBase >( m_flowSolverName );
     m_solidSolver = this->getParent()->GetGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
