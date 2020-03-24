@@ -18,6 +18,7 @@
 
 #include "DofManager.hpp"
 
+#include "finiteVolume/FluxApproximationBase.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "mpiCommunications/CommunicationTools.hpp"
 #include "mpiCommunications/NeighborCommunicator.hpp"
@@ -36,9 +37,9 @@ using namespace dataRepository;
 
 DofManager::DofManager( string name )
   : m_name( std::move( name ) ),
-    m_domain( nullptr ),
-    m_mesh( nullptr ),
-    m_reordered( false )
+  m_domain( nullptr ),
+  m_mesh( nullptr ),
+  m_reordered( false )
 {
   initializeDataStructure();
 }
@@ -47,9 +48,7 @@ void DofManager::initializeDataStructure()
 {
   // we pre-allocate an oversized array to store connectivity type
   // instead of resizing it dynamically as fields are added.
-  m_connectivity.resize( MAX_FIELDS, MAX_FIELDS );
-  m_connectivity = Connectivity::None;
-  m_couplingRegions.resize( MAX_FIELDS, MAX_FIELDS );
+  m_coupling.resize( MAX_FIELDS, MAX_FIELDS );
 }
 
 void DofManager::clear()
@@ -62,8 +61,7 @@ void DofManager::clear()
 
   // delete internal data
   m_fields.clear();
-  m_connectivity.clear();
-  m_couplingRegions.clear();
+  m_coupling.clear();
 
   initializeDataStructure();
 
@@ -143,13 +141,26 @@ localIndex DofManager::rankOffset( string const & fieldName ) const
   }
 }
 
+localIndex DofManager::numComponents( string const & fieldName ) const
+{
+  if( !fieldName.empty() )
+  {
+    return m_fields[getFieldIndex( fieldName )].numComponents;
+  }
+  else
+  {
+    return std::accumulate( m_fields.begin(), m_fields.end(), 0,
+                            []( globalIndex const & n, FieldDescription const & f ) { return n + f.numComponents; } );
+  }
+}
+
 void DofManager::createIndexArray( FieldDescription & field )
 {
   bool const success =
-  LocationSwitch( field.location, [&]( auto const loc )
+    LocationSwitch( field.location, [&]( auto const loc )
   {
     Location constexpr LOC = decltype(loc)::value;
-    using helper = IndexArrayHelper<globalIndex, LOC>;
+    using helper = IndexArrayHelper< globalIndex, LOC >;
 
     // 0. register index arrays
     helper::template create<>( m_mesh, field.key, field.docstring, field.regions );
@@ -164,7 +175,10 @@ void DofManager::createIndexArray( FieldDescription & field )
     field.numLocalDof = field.numComponents * numLocalNodes;
 
     // step 2. gather row counts across ranks
-    std::tie( field.rankOffset, field.numGlobalDof ) = MpiWrapper::PrefixSum<globalIndex>( field.numLocalDof );
+    field.rankOffset = MpiWrapper::PrefixSum< globalIndex >( field.numLocalDof );
+
+    field.numGlobalDof = field.rankOffset + field.numLocalDof;
+    MpiWrapper::Broadcast( field.numGlobalDof, MpiWrapper::Comm_size() - 1 );
 
     // step 3. adjust local dof offsets to reflect processor offset
     forMeshLocation< LOC, false >( m_mesh, field.regions, [&]( auto const locIdx )
@@ -173,14 +187,14 @@ void DofManager::createIndexArray( FieldDescription & field )
     } );
 
     // step 4. synchronize across ranks
-    std::map<string, string_array> fieldNames;
-    fieldNames[ MeshHelper<LOC>::syncObjName ].push_back( field.key );
+    std::map< string, string_array > fieldNames;
+    fieldNames[ MeshHelper< LOC >::syncObjName ].push_back( field.key );
 
     CommunicationTools::
-    SynchronizeFields( fieldNames, m_mesh,
-                       m_domain->getReference< array1d<NeighborCommunicator> >( m_domain->viewKeys.neighbors ) );
+      SynchronizeFields( fieldNames, m_mesh,
+                         m_domain->getNeighbors() );
   } );
-  GEOSX_ERROR_IF( !success, "Invalid location type: " << static_cast<int>(field.location) );
+  GEOSX_ERROR_IF( !success, "Invalid location type: " << static_cast< int >(field.location) );
 }
 
 void DofManager::removeIndexArray( FieldDescription const & field )
@@ -251,9 +265,9 @@ void DofManager::addField( string const & fieldName,
   ElementRegionManager * const elemManager = m_mesh->getElemManager();
   if( field.regions.empty() )
   {
-    elemManager->forElementRegions( [&]( ElementRegionBase const * const region )
+    elemManager->forElementRegions( [&]( ElementRegionBase const & region )
     {
-      field.regions.push_back( region->getName() );
+      field.regions.push_back( region.getName() );
     } );
   }
   else
@@ -269,7 +283,7 @@ void DofManager::addField( string const & fieldName,
   auto const end_it = std::unique( field.regions.begin(), field.regions.end() );
   field.regions.resize( std::distance( field.regions.begin(), end_it ) );
 
-  m_couplingRegions[fieldIndex][fieldIndex] = field.regions;
+  m_coupling[fieldIndex][fieldIndex].regions = field.regions;
 
   // based on location, allocate an index array for this field
   createIndexArray( field );
@@ -368,13 +382,13 @@ struct ConnLocPatternBuilder< DofManager::Location::Elem, DofManager::Location::
     ElementRegionManager const * const elemManager = mesh->getElemManager();
 
     ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofIndex =
-      elemManager->ConstructViewAccessor< array1d<globalIndex>, arrayView1d<globalIndex const> >( field.key );
+      elemManager->ConstructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex const > >( field.key );
 
-    array1d<localIndex> edgeConnectorIndex( edgeManager->size() );
+    array1d< localIndex > edgeConnectorIndex( edgeManager->size() );
     edgeConnectorIndex = -1;
 
     localIndex edgeCount = 0;
-    forMeshLocation< EDGE, true, SUBREGIONTYPES... >( mesh, regions, [&] (localIndex const edgeIdx )
+    forMeshLocation< EDGE, true, SUBREGIONTYPES... >( mesh, regions, [&] ( localIndex const edgeIdx )
     {
       edgeConnectorIndex[edgeIdx] = edgeCount++;
     } );
@@ -433,6 +447,81 @@ void makeConnLocPattern( MeshLevel * const mesh,
 } // namespace
 
 template< typename MATRIX >
+void DofManager::setSparsityPatternFromStencil( MATRIX & pattern,
+                                                localIndex const fieldIndex ) const
+{
+  FieldDescription const & field = m_fields[fieldIndex];
+  CouplingDescription const & coupling = m_coupling[fieldIndex][fieldIndex];
+  localIndex const NC = field.numComponents;
+
+  ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumber =
+    m_mesh->getElemManager()->ConstructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex const > >( field.key );
+
+  array1d< globalIndex > rowIndices( NC );
+  array1d< globalIndex > colIndices( NC );
+  array2d< real64 > values( NC, NC );
+  values = 1.0;
+
+  // 1. Insert diagonal blocks, in case there are elements not included in stencil
+  // (e.g. a single fracture element not connected to any other)
+  forMeshLocation< Location::Elem, false >( m_mesh, field.regions,
+                                            [&]( auto const & elemIdx )
+  {
+    for( localIndex c = 0; c < NC; ++c )
+    {
+      rowIndices[c] = dofNumber[elemIdx[0]][elemIdx[1]][elemIdx[2]] + c;
+    }
+    pattern.insert( rowIndices, rowIndices, values );
+  } );
+
+  // 2. Assemble diagonal and off-diagonal blocks for elements in stencil
+  MATRIX * const pattern_ptr = &pattern;
+  coupling.stencils->forAllStencils( [&]( auto const & stencil )
+  {
+    using StenciType = typename std::decay< decltype( stencil ) >::type;
+    constexpr localIndex maxNumFluxElems = StenciType::NUM_POINT_IN_FLUX;
+    constexpr localIndex maxStencilSize = StenciType::MAX_STENCIL_SIZE;
+
+    typename StenciType::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
+    typename StenciType::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
+    typename StenciType::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+
+    rowIndices.reserve( maxNumFluxElems * NC );
+    colIndices.reserve( maxStencilSize * NC );
+    values.reserve( maxNumFluxElems * NC * maxStencilSize * NC );
+
+    forAll< serialPolicy >( stencil.size(), [&]( localIndex iconn )
+    {
+      localIndex const numFluxElems = stencil.stencilSize( iconn );
+      localIndex const stencilSize  = numFluxElems;
+
+      rowIndices.resize( numFluxElems * NC );
+      for( localIndex i = 0; i < numFluxElems; ++i )
+      {
+        for( localIndex c = 0; c < NC; ++c )
+        {
+          rowIndices[i * NC + c] = dofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )] + c;
+        }
+      }
+
+      colIndices.resize( stencilSize * NC );
+      for( localIndex i = 0; i < stencilSize; ++i )
+      {
+        for( localIndex c = 0; c < NC; ++c )
+        {
+          colIndices[i * NC + c] = dofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )] + c;
+        }
+      }
+
+      values.resize( numFluxElems * NC, stencilSize * NC );
+      values = 1.0;
+
+      pattern_ptr->insert( rowIndices, colIndices, values );
+    } );
+  } );
+}
+
+template< typename MATRIX >
 void DofManager::setSparsityPatternOneBlock( MATRIX & pattern,
                                              localIndex const rowFieldIndex,
                                              localIndex const colFieldIndex ) const
@@ -443,20 +532,25 @@ void DofManager::setSparsityPatternOneBlock( MATRIX & pattern,
   FieldDescription const & rowField = m_fields[rowFieldIndex];
   FieldDescription const & colField = m_fields[colFieldIndex];
 
-  Location conn = static_cast<Location>( m_connectivity[rowFieldIndex][colFieldIndex] );
+  Connector conn = m_coupling[rowFieldIndex][colFieldIndex].connector;
+  if( rowFieldIndex == colFieldIndex && conn == Connector::Stencil )
+  {
+    setSparsityPatternFromStencil( pattern, rowFieldIndex );
+    return;
+  }
 
-  LvArray::SparsityPattern<globalIndex> connLocRow(0, 0, 0), connLocCol(0, 0, 0);
+  LvArray::SparsityPattern< globalIndex > connLocRow( 0, 0, 0 ), connLocCol( 0, 0, 0 );
 
   localIndex maxDofRow = 0;
-  LocationSwitch( rowField.location, conn, [&]( auto const locType,
-                                                auto const connType )
+  LocationSwitch( rowField.location, static_cast< Location >( conn ),
+                  [&]( auto const locType, auto const connType )
   {
     Location constexpr LOC  = decltype(locType)::value;
     Location constexpr CONN = decltype(connType)::value;
 
     makeConnLocPattern< LOC, CONN >( m_mesh,
                                      rowField,
-                                     m_couplingRegions[rowFieldIndex][colFieldIndex],
+                                     m_coupling[rowFieldIndex][colFieldIndex].regions,
                                      connLocRow );
 
     maxDofRow = MeshIncidence< CONN, LOC >::max * rowField.numComponents;
@@ -470,15 +564,15 @@ void DofManager::setSparsityPatternOneBlock( MATRIX & pattern,
   }
   else
   {
-    LocationSwitch( colField.location, conn, [&]( auto const locType,
-                                                  auto const connType )
+    LocationSwitch( colField.location, static_cast< Location >( conn ),
+                    [&]( auto const locType, auto const connType )
     {
       Location constexpr LOC = decltype(locType)::value;
       Location constexpr CONN = decltype(connType)::value;
 
       makeConnLocPattern< LOC, CONN >( m_mesh,
                                        colField,
-                                       m_couplingRegions[rowFieldIndex][colFieldIndex],
+                                       m_coupling[rowFieldIndex][colFieldIndex].regions,
                                        connLocCol );
 
       maxDofCol = MeshIncidence< CONN, LOC >::max * colField.numComponents;
@@ -489,7 +583,6 @@ void DofManager::setSparsityPatternOneBlock( MATRIX & pattern,
   array1d< globalIndex > dofIndicesRow( maxDofRow );
   array1d< globalIndex > dofIndicesCol( maxDofCol );
   array2d< real64 > values( maxDofRow, maxDofCol );
-  values = 1.0;
 
   // Perform assembly/multiply patterns
   for( localIndex irow = 0; irow < connLocRow.numRows(); ++irow )
@@ -509,6 +602,7 @@ void DofManager::setSparsityPatternOneBlock( MATRIX & pattern,
     }
 
     values.resize( numDofRow, numDofCol );
+    values = 1.0;
     pattern.insert( dofIndicesRow, dofIndicesCol, values );
   }
 }
@@ -563,7 +657,7 @@ void vectorToFieldImpl( VECTOR const & vector,
                         localIndex const hiComp )
 {
   arrayView1d< globalIndex const > const & indexArray = manager->getReference< array1d< globalIndex > >( dofKey );
-  arrayView1d< integer const > const & ghostRank = manager->GhostRank();
+  arrayView1d< integer const > const & ghostRank = manager->ghostRank();
 
   real64 const * localVector = vector.extractLocalVector();
 
@@ -577,9 +671,9 @@ void vectorToFieldImpl( VECTOR const & vector,
   {
     using ArrayType = decltype( arrayInstance );
     Wrapper< ArrayType > & view = Wrapper< ArrayType >::cast( *wrapper );
-    typename Wrapper< ArrayType >::ViewType const & field = view.referenceAsView();
+    traits::ViewType< ArrayType > field = view.reference();
 
-    forall_in_range< POLICY >( 0, indexArray.size(), GEOSX_LAMBDA( localIndex const i )
+    forAll< POLICY >( indexArray.size(), [=] ( localIndex const i )
     {
       if( ghostRank[i] < 0 && indexArray[i] >= 0 )
       {
@@ -608,7 +702,7 @@ void fieldToVectorImpl( VECTOR & vector,
                         localIndex const hiComp )
 {
   arrayView1d< globalIndex const > const & indexArray = manager->getReference< array1d< globalIndex > >( dofKey );
-  arrayView1d< integer const > const & ghostRank = manager->GhostRank();
+  arrayView1d< integer const > const & ghostRank = manager->ghostRank();
 
   real64 * localVector = vector.extractLocalVector();
 
@@ -622,9 +716,9 @@ void fieldToVectorImpl( VECTOR & vector,
   {
     using ArrayType = decltype( arrayInstance );
     Wrapper< ArrayType > const & view = Wrapper< ArrayType >::cast( *wrapper );
-    typename Wrapper< ArrayType >::ViewTypeConst const & field = view.referenceAsView();
+    traits::ViewTypeConst< ArrayType > field = view.reference();
 
-    forall_in_range< POLICY >( 0, indexArray.size(), GEOSX_LAMBDA( localIndex const i )
+    forAll< POLICY >( indexArray.size(), [=] ( localIndex const i )
     {
       if( ghostRank[i] < 0 && indexArray[i] >= 0 )
       {
@@ -660,10 +754,10 @@ void DofManager::vectorToField( VECTOR const & vector,
 
   if( fieldDesc.location == Location::Elem )
   {
-    m_mesh->getElemManager()->forElementSubRegions( fieldDesc.regions, [&]( ElementSubRegionBase * const subRegion )
+    m_mesh->getElemManager()->forElementSubRegions< ElementSubRegionBase >( fieldDesc.regions, [&]( ElementSubRegionBase & subRegion )
     {
       vectorToFieldImpl< FIELD_OP, POLICY >( vector,
-                                             subRegion,
+                                             &subRegion,
                                              fieldDesc.key,
                                              dstFieldName,
                                              scalingFactor,
@@ -735,10 +829,10 @@ void DofManager::fieldToVector( VECTOR & vector,
 
   if( fieldDesc.location == Location::Elem )
   {
-    m_mesh->getElemManager()->forElementSubRegions( fieldDesc.regions, [&]( ElementSubRegionBase const * const subRegion )
+    m_mesh->getElemManager()->forElementSubRegions< ElementSubRegionBase >( fieldDesc.regions, [&]( ElementSubRegionBase const & subRegion )
     {
       fieldToVectorImpl< FIELD_OP, POLICY >( vector,
-                                             subRegion,
+                                             &subRegion,
                                              fieldDesc.key,
                                              dstFieldName,
                                              scalingFactor,
@@ -797,7 +891,7 @@ void DofManager::addFieldToVector( VECTOR & vector,
 // Just an interface to allow only three parameters
 void DofManager::addCoupling( string const & rowFieldName,
                               string const & colFieldName,
-                              Connectivity const connectivity )
+                              Connector const connectivity )
 {
   addCoupling( rowFieldName, colFieldName, connectivity, string_array(), true );
 }
@@ -805,7 +899,7 @@ void DofManager::addCoupling( string const & rowFieldName,
 // Just another interface to allow four parameters (no symmetry)
 void DofManager::addCoupling( string const & rowFieldName,
                               string const & colFieldName,
-                              Connectivity const connectivity,
+                              Connector const connectivity,
                               string_array const & regions = string_array() )
 {
   addCoupling( rowFieldName, colFieldName, connectivity, regions, true );
@@ -814,7 +908,7 @@ void DofManager::addCoupling( string const & rowFieldName,
 // Just another interface to allow four parameters (no regions)
 void DofManager::addCoupling( string const & rowFieldName,
                               string const & colFieldName,
-                              Connectivity const connectivity,
+                              Connector const connectivity,
                               bool const symmetric )
 {
   addCoupling( rowFieldName, colFieldName, connectivity, string_array(), symmetric );
@@ -823,7 +917,7 @@ void DofManager::addCoupling( string const & rowFieldName,
 // The real function, allowing the creation of coupling blocks
 void DofManager::addCoupling( string const & rowFieldName,
                               string const & colFieldName,
-                              Connectivity const connectivity,
+                              Connector const connectivity,
                               string_array const & regions,
                               bool const symmetric )
 {
@@ -831,7 +925,7 @@ void DofManager::addCoupling( string const & rowFieldName,
   localIndex const colFieldIndex = getFieldIndex( colFieldName );
 
   // Check if already defined
-  if( m_connectivity[rowFieldIndex][colFieldIndex] != Connectivity::None )
+  if( m_coupling[rowFieldIndex][colFieldIndex].connector != Connector::None )
   {
     GEOSX_ERROR( "addCoupling: coupling already defined with another connectivity" );
     return;
@@ -840,7 +934,7 @@ void DofManager::addCoupling( string const & rowFieldName,
   // get row/col field regions
   string_array const & rowRegions = m_fields[rowFieldIndex].regions;
   string_array const & colRegions = m_fields[colFieldIndex].regions;
-  string_array       & regionList = m_couplingRegions[rowFieldIndex][colFieldIndex];
+  string_array & regionList = m_coupling[rowFieldIndex][colFieldIndex].regions;
 
   if( regions.empty() )
   {
@@ -862,35 +956,46 @@ void DofManager::addCoupling( string const & rowFieldName,
     for( string const & regionName : regionList )
     {
       GEOSX_ERROR_IF( std::find( rowRegions.begin(), rowRegions.end(), regionName ) == rowRegions.end(),
-                     "Region '" << regionName << "' does not belong to the domain of field '" << rowFieldName << "'" );
+                      "Region '" << regionName << "' does not belong to the domain of field '" << rowFieldName << "'" );
       GEOSX_ERROR_IF( std::find( colRegions.begin(), colRegions.end(), regionName ) == colRegions.end(),
-                     "Region '" << regionName << "' does not belong to the domain of field '" << colFieldName << "'" );
+                      "Region '" << regionName << "' does not belong to the domain of field '" << colFieldName << "'" );
     }
   }
 
   // save field's connectivity type (rowField to colField)
-  m_connectivity[rowFieldIndex][colFieldIndex] = connectivity;
+  m_coupling[rowFieldIndex][colFieldIndex].connector = connectivity;
 
-  if( connectivity == Connectivity::None && rowFieldIndex == colFieldIndex )
+  if( connectivity == Connector::None && rowFieldIndex == colFieldIndex )
   {
-    m_connectivity[rowFieldIndex][colFieldIndex] = static_cast<Connectivity>( m_fields[rowFieldIndex].location );
+    m_coupling[rowFieldIndex][colFieldIndex].connector = static_cast< Connector >( m_fields[rowFieldIndex].location );
   }
 
   // Set connectivity with active symmetry flag
   if( symmetric && colFieldIndex != rowFieldIndex )
   {
-    m_connectivity[colFieldIndex][rowFieldIndex] = connectivity;
-    m_couplingRegions[colFieldIndex][rowFieldIndex] = regionList;
+    m_coupling[colFieldIndex][rowFieldIndex].connector = connectivity;
+    m_coupling[colFieldIndex][rowFieldIndex].regions = regionList;
   }
+}
+
+void DofManager::addCoupling( string const & fieldName,
+                              FluxApproximationBase const * stencils )
+{
+  localIndex const fieldIndex = getFieldIndex( fieldName );
+  FieldDescription const & field = m_fields[fieldIndex];
+
+  GEOSX_ERROR_IF( field.location != Location::Elem, "Field must be supported on elements in order to use stencil sparsity" );
+  GEOSX_ERROR_IF( stencils == nullptr, "Must pass a valid pointer to a flux approximation object" );
+
+  CouplingDescription & coupling = m_coupling[fieldIndex][fieldIndex];
+  coupling.connector = Connector::Stencil;
+  coupling.regions = field.regions;
+  coupling.stencils = stencils;
 }
 
 void DofManager::reorderByRank()
 {
-  if( m_reordered || m_fields.size() < 2 )
-  {
-    m_reordered = true;
-    return;
-  }
+  GEOSX_LAI_ASSERT( !m_reordered );
 
   // update field offsets to account for renumbering
   globalIndex dofOffset = rankOffset();
@@ -925,10 +1030,55 @@ void DofManager::reorderByRank()
 
   // synchronize index arrays for all fields across ranks
   CommunicationTools::
-  SynchronizeFields( fieldToSync, m_mesh,
-                     m_domain->getReference< array1d< NeighborCommunicator > >( m_domain->viewKeys.neighbors ) );
+    SynchronizeFields( fieldToSync, m_mesh,
+                       m_domain->getNeighbors() );
 
   m_reordered = true;
+}
+
+template< typename MATRIX >
+void DofManager::makeRestrictor( string const & fieldName,
+                                 MATRIX & restrictor,
+                                 MPI_Comm const comm,
+                                 bool const transpose,
+                                 localIndex const loCompIndex,
+                                 localIndex const hiCompIndex ) const
+{
+  GEOSX_ERROR_IF( !m_reordered, "Cannot make restrictors before reorderByRank() has been called." );
+
+  FieldDescription const & field = m_fields[getFieldIndex( fieldName )];
+
+  localIndex const loComp = loCompIndex;
+  localIndex const hiComp = (hiCompIndex >= 0) ? hiCompIndex : field.numComponents;
+  GEOSX_ASSERT( loComp >= 0 && hiComp <= field.numComponents && loComp < hiComp );
+
+  localIndex const numComp = hiComp - loComp;
+  localIndex const numLoc = field.numLocalDof / field.numComponents;
+
+  globalIndex rowOffset = field.rankOffset / field.numComponents * numComp - loComp;
+  globalIndex colOffset = field.globalOffset;
+  localIndex rowStride = numComp;
+  localIndex colStride = field.numComponents;
+  localIndex rowSize = field.numLocalDof / field.numComponents * numComp;
+  localIndex colSize = numLocalDofs();
+
+  if( transpose )
+  {
+    std::swap( rowOffset, colOffset );
+    std::swap( rowStride, colStride );
+    std::swap( rowSize, colSize );
+  }
+
+  restrictor.createWithLocalSize( rowSize, colSize, 1, comm );
+  restrictor.open();
+  for( localIndex i = 0; i < numLoc; ++i )
+  {
+    for( localIndex c = loComp; c < hiComp; ++c )
+    {
+      restrictor.insert( rowOffset + i * rowStride + c, colOffset + i * colStride + c, 1.0 );
+    }
+  }
+  restrictor.close();
 }
 
 // Print the coupling table on screen
@@ -939,15 +1089,15 @@ void DofManager::printFieldInfo( std::ostream & os ) const
     localIndex numFields = m_fields.size();
 
     os << "Fields:" << std::endl;
-    os << " # | " << std::setw(20) << "name" << " | " << "comp" << " | " << "N global DOF" << std::endl;
+    os << " # | " << std::setw( 20 ) << "name" << " | " << "comp" << " | " << "N global DOF" << std::endl;
     os << "---+----------------------+------+-------------" << std::endl;
     for( localIndex i = 0; i < numFields; ++i )
     {
       FieldDescription const & f = m_fields[i];
       os << ' ' << i << " | "
-         << std::setw(20) << f.name << " | "
-         << std::setw(4) << f.numComponents << " | "
-         << std::setw(12) << f.numGlobalDof << std::endl;
+         << std::setw( 20 ) << f.name << " | "
+         << std::setw( 4 ) << f.numComponents << " | "
+         << std::setw( 12 ) << f.numGlobalDof << std::endl;
     }
     os << "---+----------------------+------+-------------" << std::endl;
 
@@ -956,23 +1106,40 @@ void DofManager::printFieldInfo( std::ostream & os ) const
     {
       for( localIndex j = 0; j < numFields; ++j )
       {
-        switch( m_connectivity[i][j] )
+        switch( m_coupling[i][j].connector )
         {
-          case Connectivity::Elem:
+          case Connector::Elem:
+          {
             os << " E ";
-            break;
-          case Connectivity::Face:
+          }
+          break;
+          case Connector::Face:
+          {
             os << " F ";
-            break;
-          case Connectivity::Edge:
+          }
+          break;
+          case Connector::Edge:
+          {
             os << " G ";
-            break;
-          case Connectivity::Node:
+          }
+          break;
+          case Connector::Node:
+          {
             os << " N ";
-            break;
-          case Connectivity::None:
+          }
+          break;
+          case Connector::None:
+          {
             os << "   ";
-            break;
+          }
+          break;
+          case Connector::Stencil:
+          {
+            os << " S ";
+          }
+          break;
+          default:
+            GEOSX_ERROR( "Invalid connector type: " << static_cast< int >( m_coupling[i][j].connector ) );
         }
         if( j < numFields - 1 )
         {
@@ -994,34 +1161,40 @@ void DofManager::printFieldInfo( std::ostream & os ) const
 }
 
 #define MAKE_DOFMANAGER_METHOD_INST( LAI ) \
-template void DofManager::setSparsityPattern( LAI::ParallelMatrix &, \
-                                              bool const ) const; \
-template void DofManager::setSparsityPattern( LAI::ParallelMatrix &, \
+  template void DofManager::setSparsityPattern( LAI::ParallelMatrix &, \
+                                                bool const ) const; \
+  template void DofManager::setSparsityPattern( LAI::ParallelMatrix &, \
+                                                string const &, \
+                                                string const &, \
+                                                bool const ) const; \
+  template void DofManager::copyVectorToField( LAI::ParallelVector const &, \
+                                               string const &, \
+                                               string const &, \
+                                               real64 const, \
+                                               localIndex const, \
+                                               localIndex const ) const; \
+  template void DofManager::addVectorToField( LAI::ParallelVector const &, \
                                               string const &, \
                                               string const &, \
-                                              bool const ) const; \
-template void DofManager::copyVectorToField( LAI::ParallelVector const &, \
-                                             string const &, \
-                                             string const &, \
-                                             real64 const, \
-                                             localIndex const, \
-                                             localIndex const ) const; \
-template void DofManager::addVectorToField( LAI::ParallelVector const &, \
-                                            string const &, \
-                                            string const &, \
-                                            real64 const, \
-                                            localIndex const, \
-                                            localIndex const ) const; \
-template void DofManager::copyFieldToVector( LAI::ParallelVector &, \
-                                             string const &, \
-                                             string const &, \
-                                             real64 const, \
-                                             localIndex const, \
-                                             localIndex const ) const; \
-template void DofManager::addFieldToVector( LAI::ParallelVector &, \
-                                            string const &, \
-                                            string const &, \
-                                            real64 const, \
+                                              real64 const, \
+                                              localIndex const, \
+                                              localIndex const ) const; \
+  template void DofManager::copyFieldToVector( LAI::ParallelVector &, \
+                                               string const &, \
+                                               string const &, \
+                                               real64 const, \
+                                               localIndex const, \
+                                               localIndex const ) const; \
+  template void DofManager::addFieldToVector( LAI::ParallelVector &, \
+                                              string const &, \
+                                              string const &, \
+                                              real64 const, \
+                                              localIndex const, \
+                                              localIndex const ) const; \
+  template void DofManager::makeRestrictor( string const &, \
+                                            LAI::ParallelMatrix &, \
+                                            MPI_Comm const, \
+                                            bool const, \
                                             localIndex const, \
                                             localIndex const ) const;
 

@@ -37,7 +37,7 @@ public:
    * @param name the name of this instantiation of Group in the repository
    * @param parent the parent group of this instantiation of Group
    */
-  ReservoirSolver( const std::string& name,
+  ReservoirSolver( const std::string & name,
                    Group * const parent );
 
   /**
@@ -69,7 +69,7 @@ public:
    * These functions provide the primary interface that is required for derived classes
    */
   /**@{*/
-  
+
   virtual void ImplicitStepSetup( real64 const & time_n,
                                   real64 const & dt,
                                   DomainPartition * const domain,
@@ -125,7 +125,7 @@ public:
 
   virtual void ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
 
-  
+
   virtual void ImplicitStepComplete( real64 const & time,
                                      real64 const & dt,
                                      DomainPartition * const domain ) override;
@@ -138,7 +138,7 @@ public:
   FlowSolverBase * GetFlowSolver() const { return m_flowSolver; }
 
   WellSolverBase * GetWellSolver() const { return m_wellSolver; }
-  
+
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
 
@@ -153,8 +153,8 @@ public:
 
 protected:
 
-  virtual void InitializePostInitialConditions_PreSubGroups(Group * const rootGroup) override;
-  
+  virtual void InitializePostInitialConditions_PreSubGroups( Group * const rootGroup ) override;
+
   virtual void PostProcessInput() override;
 
 private:

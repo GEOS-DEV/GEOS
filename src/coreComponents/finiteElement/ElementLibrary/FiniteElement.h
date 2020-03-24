@@ -42,7 +42,7 @@
  */
 namespace geosx
 {
-template <int dim>
+template< int dim >
 class FiniteElement : public FiniteElementBase
 {
 public:
@@ -52,22 +52,22 @@ public:
    * and pre-computes all static finite element data.  Any data
    * that depends on the mapped configuration of the element, however,
    * is left uninitialized until reinit(...) is called.
-  */
+   */
   FiniteElement( BasisBase const & basis,
                  QuadratureBase const & quadrature,
-                 const int num_zero_energy_modes = 0 ) :
-    FiniteElementBase( dim, quadrature.size(), basis.size(), num_zero_energy_modes)
+                 const int num_zero_energy_modes = 0 ):
+    FiniteElementBase( dim, quadrature.size(), basis.size(), num_zero_energy_modes )
   {
-    for(int q=0 ; q<n_q_points ; ++q)
+    for( int q=0; q<n_q_points; ++q )
     {
-      data[q].parent_q_point = quadrature.integration_point(q);
-      data[q].parent_q_weight = quadrature.integration_weight(q);
+      data[q].parent_q_point = quadrature.integration_point( q );
+      data[q].parent_q_weight = quadrature.integration_weight( q );
 
-      for(int i=0 ; i<n_dofs ; ++i)
+      for( int i=0; i<n_dofs; ++i )
       {
-        data[q].parent_values[i] = basis.value(i,data[q].parent_q_point);
-        R1Tensor const gradient = basis.gradient(i,data[q].parent_q_point);
-        for ( int j = 0; j < 3; ++j )
+        data[q].parent_values[i] = basis.value( i, data[q].parent_q_point );
+        R1Tensor const gradient = basis.gradient( i, data[q].parent_q_point );
+        for( int j = 0; j < 3; ++j )
         {
           data[q].parent_gradients[i][j] = gradient[j];
         }
@@ -80,10 +80,12 @@ public:
 
   static string CatalogName() { return "C3D8"; }
 
-  void reinit( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X, arraySlice1d< localIndex const, -1 > const & mapped_support_points ) override
+  void reinit( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
+               arraySlice1d< localIndex const, -1 > const & mapped_support_points ) override
   { return reinitPrivate( X, mapped_support_points ); }
 
-  void reinit( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X, arraySlice1d< localIndex const, 0 > const & mapped_support_points ) override
+  void reinit( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
+               arraySlice1d< localIndex const, 0 > const & mapped_support_points ) override
   { return reinitPrivate( X, mapped_support_points ); }
 
 private:
@@ -97,17 +99,18 @@ private:
    * element).
    */
   template< int USD >
-  void reinitPrivate( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X, arraySlice1d< localIndex const, USD > const & mapped_support_points )
+  void reinitPrivate( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X, arraySlice1d< localIndex const,
+                                                                                                          USD > const & mapped_support_points )
   {
     StackArray< real64, 2, 9 > jacobian( 3, 3 );
 
-    for(int q=0 ; q<n_q_points ; ++q)
+    for( int q=0; q<n_q_points; ++q )
     {
       arrayView2d< real64 const > const & parentGradients = data[ q ].parent_gradients;
 
       LvArray::tensorOps::outerProduct( jacobian.toSlice(), X[ mapped_support_points[ 0 ] ], parentGradients[ 0 ] );
 
-      for(int i=1 ; i<n_dofs ; ++i)
+      for( int i=1; i<n_dofs; ++i )
       {
         LvArray::tensorOps::outerProductPE( jacobian.toSlice(), X[ mapped_support_points[ i ] ], parentGradients[ i ] );
       }
@@ -119,7 +122,7 @@ private:
 
       data[ q ].jacobian_determinant = LvArray::tensorOps::invert( jacobian.toSlice() );
 
-      for(int i=0 ; i<n_dofs ; ++i)
+      for( int i=0; i<n_dofs; ++i )
       {
         LvArray::tensorOps::matTVec( data[ q ].mapped_gradients[ i ], jacobian.toSliceConst(), parentGradients[ i ] );
       }

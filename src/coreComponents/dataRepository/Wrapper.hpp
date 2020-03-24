@@ -274,15 +274,15 @@ public:
 
   /**
    * @name Methods for buffer packing/unpacking
-   * @param[in] on_device    whether to use device-based packing functions
+   * @param[in] onDevice    whether to use device-based packing functions
    *                         (buffer must be either pinned or a device pointer)
    *
    * This group of functions is used to pack/unpack wrapped object to/from binary buffers
    */
   virtual
-  bool isPackable( bool on_device ) const override final
+  bool isPackable( bool onDevice ) const override final
   {
-    if( on_device )
+    if( onDevice )
     {
       return bufferOps::can_memcpy< T >;
     }
@@ -295,18 +295,18 @@ public:
   /**
    * @brief function to pack T
    * @param buffer the buffer in which to pack T
-   * @param[in] on_device    whether to use device-based packing functions
+   * @param[in] onDevice    whether to use device-based packing functions
    *                         (buffer must be either pinned or a device pointer)
    * @return number of packed bytes.
    */
   virtual
-  localIndex Pack( buffer_unit_type * & buffer, bool on_device ) const override final
+  localIndex Pack( buffer_unit_type * & buffer, bool onDevice ) const override final
   {
     localIndex packedSize = 0;
     packedSize += bufferOps::Pack< true >( buffer, this->getName() );
-    if( on_device )
+    if( onDevice )
     {
-      packedSize += wrapperHelpers::PackDevice< true >( buffer, referenceAsView() );
+      packedSize += wrapperHelpers::PackDevice< true >( buffer, reference() );
     }
     else
     {
@@ -319,20 +319,20 @@ public:
    * @brief function to pack T
    * @param buffer the buffer in which to pack T
    * @param packList indices of T to pack
-   * @param[in] on_device    whether to use device-based packing functions
+   * @param[in] onDevice    whether to use device-based packing functions
    *                         (buffer must be either pinned or a device pointer)
    * @return number of packed bytes.
    */
   virtual
-  localIndex PackByIndex( buffer_unit_type * & buffer, arrayView1d< localIndex const > const & packList, bool on_device ) const override final
+  localIndex PackByIndex( buffer_unit_type * & buffer, arrayView1d< localIndex const > const & packList, bool onDevice ) const override final
   {
     localIndex packedSize = 0;
     if( sizedFromParent() == 1 )
     {
       packedSize += bufferOps::Pack< true >( buffer, this->getName() );
-      if( on_device )
+      if( onDevice )
       {
-        packedSize += wrapperHelpers::PackByIndexDevice< true >( buffer, referenceAsView(), packList );
+        packedSize += wrapperHelpers::PackByIndexDevice< true >( buffer, reference(), packList );
       }
       else
       {
@@ -344,19 +344,19 @@ public:
 
   /**
    * @brief function to pack return the length of packing...without doing the packing.
-   * @param[in] on_device    whether to use device-based packing functions
+   * @param[in] onDevice    whether to use device-based packing functions
    *                         (buffer must be either pinned or a device pointer)
    * @return size of packed bytes
    */
   virtual
-  localIndex PackSize( bool on_device ) const override final
+  localIndex PackSize( bool onDevice ) const override final
   {
     buffer_unit_type * buffer = nullptr;
     localIndex packedSize = 0;
     packedSize += bufferOps::Pack< false >( buffer, this->getName() );
-    if( on_device )
+    if( onDevice )
     {
-      packedSize += wrapperHelpers::PackDevice< false >( buffer, referenceAsView() );
+      packedSize += wrapperHelpers::PackDevice< false >( buffer, reference() );
     }
     else
     {
@@ -368,21 +368,21 @@ public:
   /**
    * @brief function to get the the packing size
    * @param packList indices of T to pack
-   * @param[in] on_device    whether to use device-based packing functions
+   * @param[in] onDevice    whether to use device-based packing functions
    *                         (buffer must be either pinned or a device pointer)
    * @return number of packed bytes.
    */
   virtual
-  localIndex PackByIndexSize( arrayView1d< localIndex const > const & packList, bool on_device ) const override final
+  localIndex PackByIndexSize( arrayView1d< localIndex const > const & packList, bool onDevice ) const override final
   {
     localIndex packedSize = 0;
     buffer_unit_type * buffer = nullptr;
     if( sizedFromParent() == 1 )
     {
       packedSize += bufferOps::Pack< false >( buffer, this->getName() );
-      if( on_device )
+      if( onDevice )
       {
-        packedSize += wrapperHelpers::PackByIndexDevice< false >( buffer, referenceAsView(), packList );
+        packedSize += wrapperHelpers::PackByIndexDevice< false >( buffer, reference(), packList );
       }
       else
       {
@@ -395,18 +395,18 @@ public:
   /**
    * @brief function to unpack a buffer into the object referred to by m_data
    * @param buffer
-   * @param[in] on_device    whether to use device-based packing functions
+   * @param[in] onDevice    whether to use device-based packing functions
    *                         (buffer must be either pinned or a device pointer)
    * @return
    */
   virtual
-  localIndex Unpack( buffer_unit_type const * & buffer, bool on_device ) override final
+  localIndex Unpack( buffer_unit_type const * & buffer, bool onDevice ) override final
   {
     localIndex unpackedSize = 0;
     string name;
     unpackedSize += bufferOps::Unpack( buffer, name );
     GEOSX_ERROR_IF( name != this->getName(), "buffer unpack leads to wrapper names that don't match" );
-    if( on_device )
+    if( onDevice )
     {
       unpackedSize += wrapperHelpers::UnpackDevice( buffer, referenceAsView() );
     }
@@ -421,12 +421,12 @@ public:
    * @brief function to unpack a buffer into the object referred to by m_data
    * @param buffer
    * @param unpackIndices    indices of T to pack
-   * @param[in] on_device    whether to use device-based packing functions
+   * @param[in] onDevice    whether to use device-based packing functions
    *                         (buffer must be either pinned or a device pointer)
    * @return
    */
   virtual
-  localIndex UnpackByIndex( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool on_device ) override final
+  localIndex UnpackByIndex( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool onDevice ) override final
   {
     localIndex unpackedSize = 0;
     if( sizedFromParent()==1 )
@@ -434,7 +434,7 @@ public:
       string name;
       unpackedSize += bufferOps::Unpack( buffer, name );
       GEOSX_ERROR_IF( name != this->getName(), "buffer unpack leads to wrapper names that don't match" );
-      if( on_device )
+      if( onDevice )
       {
         unpackedSize += wrapperHelpers::UnpackByIndexDevice( buffer, referenceAsView(), unpackIndices );
       }
@@ -447,6 +447,16 @@ public:
   }
 
   ///@}
+
+  void const * voidPointer() const override final
+  {
+    return wrapperHelpers::dataPtr( reference() );
+  }
+
+  virtual localIndex elementByteSize() const override final
+  {
+    return wrapperHelpers::byteSizeOfElement< T >();
+  }
 
   /**
    * @name Methods that delegate to the wrapped type
@@ -466,34 +476,20 @@ public:
     wrapperHelpers::resizeDimensions( *m_data, ndims, dims );
   }
 
-  /// @cond DO_NOT_DOCUMENT
-  struct reserve_wrapper
+  virtual void reserve( localIndex const newCapacity ) override final
   {
-    HAS_MEMBER_FUNCTION( reserve, void, , VA_LIST( std::size_t ), VA_LIST( std::size_t( 1 )) )
-    template< class U = T >
-    static typename std::enable_if< has_memberfunction_reserve< U >::value, void >::type reserve( Wrapper< T > * const parent, std::size_t new_cap )
-    {
-      return parent->m_data->reserve( new_cap );
-    }
-    template< class U = T >
-    static typename std::enable_if< !has_memberfunction_reserve< U >::value, void >::type reserve( Wrapper< T > * const, std::size_t )
-    {
-      return; //parent->m_data;
-    }
-  };
-  /// @endcond DO_NOT_DOCUMENT
-
-  virtual void reserve( std::size_t new_cap ) override final
-  {
-    reserve_wrapper::reserve( this, new_cap );
+    wrapperHelpers::reserve( reference(), newCapacity );
   }
 
-  HAS_MEMBER_FUNCTION( capacity, std::size_t, const, , )
-  CONDITIONAL_VIRTUAL_FUNCTION0( Wrapper< T >, capacity, std::size_t, const )
+  virtual localIndex capacity() const override final
+  {
+    // We don't use reference() here because that would return an ArrayView which has no capacity method.
+    return wrapperHelpers::capacity( *m_data );
+  }
 
   virtual void resize( localIndex const newSize ) override final
   {
-    wrapperHelpers::resizeDefault( *m_data, newSize, m_default );
+    wrapperHelpers::resizeDefault( reference(), newSize, m_default );
   }
 
   /// @cond DO_NOT_DOCUMENT
@@ -522,79 +518,10 @@ public:
     }
   }
 
-  /// @cond DO_NOT_DOCUMENT
-  struct move_wrapper
-  {
-    template< class U = T >
-    static typename std::enable_if< traits::has_chai_move_method< U >, void >::type
-    move( U & data, chai::ExecutionSpace space, bool touch )
-    { data.move( space, touch ); }
-
-    template< class U = T >
-    static typename std::enable_if< !traits::has_chai_move_method< U >, void >::type
-    move( U &, chai::ExecutionSpace, bool )
-    {}
-  };
-  /// @endcond
-
-  virtual void move( chai::ExecutionSpace space, bool touch ) override
-  { return move_wrapper::move( *m_data, space, touch ); }
-
-  /// @cond DO_NOT_DOCUMENT
-  HAS_MEMBER_FUNCTION( setUserCallBack,
-                       void,
-                       ,
-                       std::string const &,
-                       "" )
-
-  template< class U = T >
-  typename std::enable_if< !has_memberfunction_setUserCallBack< U >::value, void >::type
-  setUserCallBack()
-  {}
-  /// @endcond
-
-  /**
-   * @brief Calls @p T::setUserCallBack() if it exists, passing tree path to the wrapper as argument.
-   * @tparam U dummy template parameter to enable SFINAE (do not change)
-   */
-  template< class U = T >
-  typename std::enable_if< has_memberfunction_setUserCallBack< U >::value, void >::type
-  setUserCallBack()
-  {
-    std::string const path = getConduitNode().path();
-    m_data->setUserCallBack( path );
-  }
+  virtual void move( chai::ExecutionSpace const space, bool const touch ) override
+  { return wrapperHelpers::move( reference(), space, touch ); }
 
   ///@}
-
-  /// @cond DO_NOT_DOCUMENT
-  HAS_ALIAS( ViewType )
-
-  template< class U=T,
-            bool HASPOINTERTYPE = has_alias_ViewType< U >::value >
-  struct Get_View_Type
-  {
-    using ViewType = T &;
-    using ViewTypeConst = T const &;
-  };
-
-  template< class U >
-  struct Get_View_Type< U, true >
-  {
-    using ViewType = typename T::ViewType const &;
-    using ViewTypeConst = typename T::ViewTypeConst const &;
-  };
-  /// @endcond
-
-  /**
-   * @brief Alias for @p T::ViewType if it exists, <tt>T &</tt> otherwise
-   */
-  using ViewType      = typename Get_View_Type< T >::ViewType;
-
-  /**
-   * @brief Alias for @p T::ViewTypeConst if it exists, <tt>T const &</tt> otherwise
-   */
-  using ViewTypeConst = typename Get_View_Type< T >::ViewTypeConst;
 
   /**
    * @name Methods for wrapped value data access
@@ -613,43 +540,9 @@ public:
    * @return reference to T, or in the case of an Array, a reference to an
    *         ArrayView<T const> const.
    */
-  auto const &
+  traits::ViewTypeConst< T >
   reference() const
   { return referenceAsView(); }
-
-  /**
-   * @brief Accessor for m_data
-   * @return pointer to T
-   */
-  T * getPointer()
-  { return m_data; }
-
-  /**
-   * @brief Accessor for m_data
-   * @return pointer to const T
-   */
-  T const * getPointer() const
-  { return m_data; }
-
-  /**
-   * @brief Provides type-dependent access to the underlying data.
-   * @return a type-dependent pointer to data
-   *
-   * Particular type and value returned depend on whether wrapped type
-   * provides a @p pointer alias and/or @p data() method.
-   */
-  traits::Pointer< T > dataPtr()
-  {
-    return wrapperHelpers::dataPtr( *m_data );
-  }
-
-  /**
-   * @copydoc dataPtr()
-   */
-  traits::ConstPointer< T > dataPtr() const
-  {
-    return wrapperHelpers::dataPtr( *m_data );
-  }
 
   /**
    * @brief Provide access to wrapped object converted to a view, if possible.
@@ -660,7 +553,7 @@ public:
    * themselves into views. For other types, a regular reference is returned.
    */
   template< class U=T >
-  typename std::enable_if< has_alias_ViewType< U >::value, ViewType >::type
+  std::enable_if_t< traits::HasMemberFunction_toView< U >, traits::ViewType< U > >
   referenceAsView()
   { return m_data->toView(); }
 
@@ -668,7 +561,7 @@ public:
    * @copydoc referenceAsView()
    */
   template< class U=T >
-  typename std::enable_if< !has_alias_ViewType< U >::value, ViewType >::type
+  std::enable_if_t< !traits::HasMemberFunction_toView< U >, traits::ViewType< U > >
   referenceAsView()
   { return *m_data; }
 
@@ -676,7 +569,7 @@ public:
    * @copydoc referenceAsView()
    */
   template< class U=T >
-  typename std::enable_if< has_alias_ViewType< U >::value, ViewTypeConst >::type
+  std::enable_if_t< traits::HasMemberFunction_toView< U >, traits::ViewTypeConst< U > >
   referenceAsView() const
   { return m_data->toViewConst(); }
 
@@ -684,7 +577,7 @@ public:
    * @copydoc referenceAsView()
    */
   template< class U=T >
-  typename std::enable_if< !has_alias_ViewType< U >::value, ViewType >::type
+  std::enable_if_t< !traits::HasMemberFunction_toView< U >, traits::ViewType< U > >
   referenceAsView() const
   { return *m_data; }
 
@@ -777,14 +670,14 @@ public:
     // Compose the default string
     std::stringstream ss;
 
-    for( integer ii=0 ; ii<value_dim ; ++ii )
+    for( integer ii=0; ii<value_dim; ++ii )
     {
       ss << "{";
     }
 
     ss << m_default;
 
-    for( integer ii=0 ; ii<value_dim ; ++ii )
+    for( integer ii=0; ii<value_dim; ++ii )
     {
       ss << "}";
     }
@@ -801,24 +694,39 @@ public:
     return default_string;
   }
 
-  HAS_MEMBER_FUNCTION( setName,
-                       void,
-                       ,
-                       std::string const &,
-                       "" )
-
-  template< class U = T >
-  typename std::enable_if< has_memberfunction_setName< U >::value, void >::type
-  setName()
+  virtual bool processInputFile( xmlWrapper::xmlNode const & targetNode ) override final
   {
-    std::string const path = getConduitNode().path();
-    m_data->setName( path );
+    InputFlags const inputFlag = getInputFlag();
+    if( inputFlag >= InputFlags::OPTIONAL )
+    {
+      if( inputFlag == InputFlags::REQUIRED || !hasDefaultValue() )
+      {
+        bool const readSuccess = xmlWrapper::ReadAttributeAsType( reference(),
+                                                                  getName(),
+                                                                  targetNode,
+                                                                  inputFlag == InputFlags::REQUIRED );
+        GEOSX_ERROR_IF( !readSuccess,
+                        "Input variable " + getName() + " is required in " + targetNode.path()
+                        + ". Available options are: \n"+ dumpInputOptions( true )
+                        + "\nFor more details, please refer to documentation at: \n"
+                        + "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html \n" );
+
+
+      }
+      else
+      {
+        xmlWrapper::ReadAttributeAsType( reference(), getName(), targetNode, getDefaultValueStruct() );
+      }
+
+      return true;
+    }
+
+    return false;
   }
 
-  template< class U = T >
-  typename std::enable_if< !has_memberfunction_setName< U >::value, void >::type
-  setName()
-  {}
+  /// Associate the path to this wrapper with the object being held.
+  void setName()
+  { wrapperHelpers::setName( reference(), getConduitNode().path() ); }
 
   /* Register the pointer to data with the associated conduit::Node. */
   void registerToWrite() override
@@ -926,6 +834,15 @@ public:
   Wrapper< T > * setDescription( string const & description )
   {
     WrapperBase::setDescription( description );
+    return this;
+  }
+
+  /**
+   * @copydoc WrapperBase::setRegisteringObjects(string const &)
+   */
+  Wrapper< T > * setRegisteringObjects( string const & objectName )
+  {
+    WrapperBase::setRegisteringObjects( objectName );
     return this;
   }
 
