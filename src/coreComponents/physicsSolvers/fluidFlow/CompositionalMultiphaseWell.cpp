@@ -1838,7 +1838,7 @@ void CompositionalMultiphaseWell::ComputeAllPerforationRates( WellElementSubRegi
     }
 
     // get wellTransmissibility at the interface
-    real64 const trans = perfTransmissibility[iperf]; 
+    real64 const trans = perfTransmissibility[iperf];
 
     // 2) compute potential difference
 

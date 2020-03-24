@@ -286,7 +286,7 @@ private:
   array1d< R1Tensor >    m_perfCoords;
 
   /// Well Peaceman index at the perforation
-  array1d<real64>      m_perfTransmissibility;
+  array1d< real64 >      m_perfTransmissibility;
 
   /// Global index of the well element
   array1d< globalIndex > m_perfElemId;

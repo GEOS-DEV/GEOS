@@ -102,7 +102,7 @@ void InternalWellGenerator::PostProcessInput()
                   "Incompatible sizes of " << keys::nodeCoords << " and " << keys::segmentConn << " in well " << getName() );
 
   GEOSX_ERROR_IF( m_radius <= 0,
-                 "Invalid " << keys::radius << " in well " << getName() );
+                  "Invalid " << keys::radius << " in well " << getName() );
 
   GEOSX_ERROR_IF( m_wellRegionName.empty(),
                   "Invalid well region name in well " << getName() );
@@ -353,7 +353,7 @@ void InternalWellGenerator::DiscretizePolyline()
 
       // 4) set element volume
       m_elemVolume[iwelemCurrent] = vWellElem.L2_Norm() * M_PI * m_radius * m_radius;
-      
+
       // 4) increment the element counter
       ++iwelemCurrent;
     }
@@ -378,10 +378,10 @@ void InternalWellGenerator::ConnectPerforationsToWellElements()
   {
 
     // get the perforation and its properties
-    Perforation const * const perf = 
-      this->GetGroup<Perforation>( m_perforationList[iperf] );
+    Perforation const * const perf =
+      this->GetGroup< Perforation >( m_perforationList[iperf] );
     m_perfDistFromHead[iperf]  = perf->GetDistanceFromWellHead();
-    m_perfTransmissibility[iperf] = perf->GetWellTransmissibility();    
+    m_perfTransmissibility[iperf] = perf->GetWellTransmissibility();
 
     // search in all the elements of this well between head and bottom
     globalIndex iwelemTop    = 0;
@@ -483,9 +483,9 @@ void InternalWellGenerator::MergePerforations()
       // find the perforation with the largest Peaceman index and keep its location
       globalIndex iperfMaxTransmissibility = elemToPerfMap[iwelem][0];
       real64 maxTransmissibility = m_perfTransmissibility[iperfMaxTransmissibility];
-      for ( localIndex ip = 1; ip < elemToPerfMap[iwelem].size(); ++ip )
+      for( localIndex ip = 1; ip < elemToPerfMap[iwelem].size(); ++ip )
       {
-        if ( m_perfTransmissibility[elemToPerfMap[iwelem][ip]] > maxTransmissibility )
+        if( m_perfTransmissibility[elemToPerfMap[iwelem][ip]] > maxTransmissibility )
         {
           iperfMaxTransmissibility = elemToPerfMap[iwelem][ip];
           maxTransmissibility = m_perfTransmissibility[iperfMaxTransmissibility];
@@ -565,7 +565,7 @@ void InternalWellGenerator::DebugWellGeometry() const
   {
     std::cout << "m_perfCoords[" << iperf << "] = " << m_perfCoords[iperf]
               << std::endl;
-    std::cout << "m_perfTransmissibility[" << iperf << "] = " << m_perfTransmissibility[iperf] 
+    std::cout << "m_perfTransmissibility[" << iperf << "] = " << m_perfTransmissibility[iperf]
               << std::endl;
     std::cout << "m_perfElemId[" << iperf << "] = " << m_perfElemId[iperf]
               << std::endl;

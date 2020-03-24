@@ -38,7 +38,7 @@ static constexpr auto perforation = "Perforation";
  * @class Perforation
  *
  * This class describes a perforation with its location, well Peaceman index  and corresponding well element
- */  
+ */
 class Perforation : public dataRepository::Group
 {
 public:
@@ -80,7 +80,7 @@ public:
    * @brief Getter for the well Peaceman index at the perforation
    * @return the well Peaceman index
    */
-  real64 GetWellTransmissibility() const { return m_wellTransmissibility ; }
+  real64 GetWellTransmissibility() const { return m_wellTransmissibility; }
 
 
   struct viewKeyStruct

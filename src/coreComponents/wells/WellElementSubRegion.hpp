@@ -214,9 +214,9 @@ public:
    * @param[in] meshLevel the mesh object (single level only)
    * @param[in] wellGeometry the InternalWellGenerator containing the global well topology
    */
-  void ConnectPerforationsToMeshElements( MeshLevel                   & mesh,
+  void ConnectPerforationsToMeshElements( MeshLevel & mesh,
                                           InternalWellGenerator const & wellGeometry );
-  
+
   /*
    * @brief Reconstruct the (local) map nextWellElemId using nextWellElemIdGlobal after the ghost exchange
    */
@@ -298,20 +298,6 @@ private:
                                   arrayView1d< integer > & elemStatusGlobal ) const;
 
   /**
-   * @brief Now that the well elements are assigned, collect the nodes and tag the boundary nodes between ranks
-            The function WellElementSubRegion::AssignUnownedElements must have been called before this function
-   * @param[in] wellGeometry the InternalWellGenerator containing the global well topology
-   * @param[in] localElems set of local well elems. At this point all the well elems have been assigned
-   * @param[out] localNodes set of local well nodes (includes boundary nodes)
-   * @param[out] boundaryNodes set of local well nodes that are at the boundary between this rank
-                               and another rank
-   */
-  void CollectLocalAndBoundaryNodes( InternalWellGenerator const & wellGeometry,
-                                     SortedArray< globalIndex >      const & localElems,
-                                     SortedArray< globalIndex > & localNodes,
-                                     SortedArray< globalIndex > & boundaryNodes ) const;
-
-  /**
    * @brief Add the well nodes to the nodeManager (properly resized)
             The function WellElementSubRegion::CollectLocalAndBoundaryNodes must have been called before this function
    * @param[in] meshLevel the mesh object (single level only)
@@ -338,7 +324,7 @@ private:
    * @param[in] localNodes set of local well nodes (includes boundary nodes)
    * @param[in] nodeOffsetGlobal the offset of the first global well node ( = offset of last global mesh node + 1 )
    * @param[in] elemOffsetGlobal the offset of the first global well element ( = offset of last global mesh elem + 1 )
-   */ 
+   */
   void ConstructSubRegionLocalElementMaps( MeshLevel & mesh,
                                            InternalWellGenerator const & wellGeometry,
                                            SortedArray< globalIndex >      const & localElems,
@@ -354,85 +340,6 @@ private:
    */
   void UpdateNodeManagerNodeToElementMap( MeshLevel & mesh );
 
-  /**
-   * @brief Search for the reservoir element that is the *closest* from the center of well element.
-            Note that this reservoir element does not necessarily contain the center of the well element.
-            This "init" reservoir element will be used in SearchLocalElements to find the reservoir element that
-            contains the well element.
-   * @param[in] meshLevel the mesh object (single level only)
-   * @param[in] location the location of that we are trying to match with a reservoir element  
-   * @param[inout] erInit the region index of the reservoir element from which we start the search
-   * @param[inout] esrInit the subregion index of the reservoir element from which we start the search
-   * @param[inout] eiInit the element index of the reservoir element from which we start the search
-   */ 
-  void InitializeLocalSearch( MeshLevel const & mesh,
-                              R1Tensor  const & location,
-                              localIndex      & erInit,
-                              localIndex      & esrInit,
-                              localIndex      & eiInit) const;
-
-  /**
-   * @brief Search for the reservoir element that contains the well element.
-            To do that, loop over the reservoir elements that are in the neighborhood of (erInit,esrInit,eiInit)
-   * @param[in] meshLevel the mesh object (single level only)
-   * @param[in] location the location of that we are trying to match with a reservoir element  
-   * @param[in] erInit the region index of the reservoir element from which we start the search
-   * @param[in] esrInit the subregion index of the reservoir element from which we start the search
-   * @param[in] eiInit the element index of the reservoir element from which we start the search
-   * @param[inout] erMatched the region index of the reservoir element that contains "location", if any
-   * @param[inout] esrMatched the subregion index of the reservoir element that contains "location", if any
-   * @param[inout] eiMatched the element index of the reservoir element that contains "location", if any
-   */ 
-  bool SearchLocalElements( MeshLevel  const & mesh,
-                            R1Tensor   const & location,
-                            localIndex const & erInit,
-                            localIndex const & esrInit,
-                            localIndex const & eiInit,
-                            localIndex       & erMatched,
-                            localIndex       & esrMatched,
-                            localIndex       & eiMatched ) const;
-
-  /**
-   * @brief Search the reservoir elements that can be accessed from the set "nodes".
-            Stop if a reservoir element containing the perforation is found.
-            If not, enlarge the set "nodes" 
-   * @param[in] meshLevel the mesh object (single level only)
-   * @param[in] location the location of that we are trying to match with a reservoir element  
-   * @param[inout] nodes the nodes that have already been visited
-   * @param[inout] elements the reservoir elements that have already been visited
-   * @param[inout] erMatched the region index of the reservoir element that contains "location", if any
-   * @param[inout] esrMatched the subregion index of the reservoir element that contains "location", if any
-   * @param[inout] eiMatched the element index of the reservoir element that contains "location", if any
-   */ 
-  bool VisitNeighborElements( MeshLevel const          & mesh,
-                              R1Tensor  const          & location,
-                              SortedArray<localIndex>  & nodes,
-                              SortedArray<globalIndex> & elements,
-                              localIndex               & erMatched,
-                              localIndex               & esrMatched,
-                              localIndex               & eiMatched ) const;
-
-  /**
-   * @brief Collect the nodes of reservoir element ei
-   * @param[in] subRegion the subRegion of reservoir element ei
-   * @param[in] ei the index of the reservoir element
-   * @param[inout] nodes the nodes that have already been visited
-   */ 
-  void CollectElementNodes( CellBlock const *         subRegion,
-                            localIndex                ei,
-                            SortedArray<localIndex> & nodes ) const;
-
-  /**
-   * @brief Check if "location" is contained in reservoir element ei
-   * @param[in] subRegion the subRegion of reservoir element ei
-   * @param[in] ei the index of the reservoir element
-   * @return true if "location" is contained in reservoir element ei, false otherwise 
-   */ 
-  bool IsPointInsideElement( NodeManager const * const nodeManager,
-                             R1Tensor    const & location,
-                             CellBlock   const * subRegion,
-                             localIndex          ei ) const;
-  
   void DebugNodeManager( MeshLevel const & mesh ) const;
 
   void DebugWellElementSubRegions( arrayView1d< integer const > const & wellElemStatus, globalIndex elemOffsetGlobal ) const;
@@ -472,7 +379,7 @@ private:
 
   /// depth of the local search to match perforation to res elements
   localIndex m_searchDepth;
-  
+
 };
 
 } /* namespace geosx */

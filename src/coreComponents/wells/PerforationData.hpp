@@ -32,7 +32,7 @@ class DomainPartition;
 class MeshLevel;
 class WellElementSubRegion;
 class CellBlock;
-  
+
 /**
  * @class PerforationData
  *
@@ -133,7 +133,7 @@ public:
    * @return list of perforation well indices
    */
   arrayView1d< real64 > & GetWellTransmissibility() { return m_wellTransmissibility; }
-  
+
   /**
    * @brief Connect each perforation to a local wellbore element
    * @param[in] wellGeometry the InternalWellGenerator containing the global well topology
@@ -175,7 +175,7 @@ protected:
 private:
 
   void DebugLocalPerforations() const;
- 
+
   /// global number of perforations
   globalIndex m_numPerforationsGlobal;
 
@@ -189,7 +189,7 @@ private:
   array1d< R1Tensor > m_location;
 
   /// well index of the perforations
-  array1d<real64> m_wellTransmissibility;
+  array1d< real64 > m_wellTransmissibility;
 
 };
 

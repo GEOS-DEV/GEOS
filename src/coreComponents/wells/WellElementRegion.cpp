@@ -65,7 +65,7 @@ void WellElementRegion::GenerateWell( MeshLevel & mesh,
 
   // 1) select the local perforations based on connectivity to the local reservoir elements
   subRegion->ConnectPerforationsToMeshElements( mesh, wellGeometry );
-  
+
   globalIndex const matchedPerforations = MpiWrapper::Sum( perforationData->size() );
   GEOSX_ERROR_IF( matchedPerforations != numPerforationsGlobal,
                   "Invalid mapping perforation-to-element in well " << this->getName() );

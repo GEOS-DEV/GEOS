@@ -70,7 +70,7 @@ void PerforationData::InitializePostInitialConditions_PreSubGroups( Group * cons
 {
   for( localIndex iperf = 0; iperf < size(); ++iperf )
   {
-    if (m_wellTransmissibility[iperf] < 0.0)
+    if( m_wellTransmissibility[iperf] < 0.0 )
     {
       // TODO: compute wellTransmissibility internally
       GEOSX_ERROR( "Invalid well Peaceman index value: " << m_wellTransmissibility[iperf] );
