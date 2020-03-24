@@ -165,9 +165,9 @@ void LagrangianContactSolver::InitializePreSubGroups( Group * const rootGroup )
   DomainPartition * domain = rootGroup->GetGroup< DomainPartition >( keys::domain );
   ConstitutiveManager const * const cm = domain->getConstitutiveManager();
 
-  ConstitutiveBase const * const contatcRelation  = cm->GetConstitutiveRelation< ConstitutiveBase >( m_contactRelationName );
-  GEOSX_ERROR_IF( contatcRelation == nullptr, "fracture constitutive model " + m_contactRelationName + " not found" );
-  m_contactRelationFullIndex = contatcRelation->getIndexInParent();
+  ConstitutiveBase const * const contactRelation  = cm->GetConstitutiveRelation< ConstitutiveBase >( m_contactRelationName );
+  GEOSX_ERROR_IF( contactRelation == nullptr, "fracture constitutive model " + m_contactRelationName + " not found" );
+  m_contactRelationFullIndex = contactRelation->getIndexInParent();
 }
 
 void LagrangianContactSolver::ImplicitStepSetup( real64 const & time_n,
