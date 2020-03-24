@@ -120,8 +120,8 @@ public:
 
   enum class couplingTypeOption : int
   {
-    FixedStress,
-    FIM
+    FIM,
+    SIM_FixedStress
   };
 
 

@@ -45,7 +45,7 @@ PoroelasticSolver::PoroelasticSolver( const std::string & name,
   SolverBase( name, parent ),
   m_solidSolverName(),
   m_flowSolverName(),
-  m_couplingTypeOptionString( "FixedStress" ),
+  m_couplingTypeOptionString( "FIM" ),
   m_couplingTypeOption()
 
 {
@@ -59,7 +59,7 @@ PoroelasticSolver::PoroelasticSolver( const std::string & name,
 
   registerWrapper( viewKeyStruct::couplingTypeOptionStringString, &m_couplingTypeOptionString, 0 )->
     setInputFlag( InputFlags::REQUIRED )->
-    setDescription( "Coupling option: (FixedStress, FIM)" );
+    setDescription( "Coupling option: (FIM, SIM_FixedStress)" );
 
 }
 
@@ -121,7 +121,7 @@ void PoroelasticSolver::ImplicitStepSetup( real64 const & time_n,
 {
   string ctOption = this->getReference< string >( viewKeyStruct::couplingTypeOptionStringString );
 
-  if( ctOption == "FixedStress" )
+  if( ctOption == "SIM_FixedStress" )
   {
     MeshLevel * const mesh = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
     ElementRegionManager * const elemManager = mesh->getElemManager();
@@ -173,9 +173,9 @@ void PoroelasticSolver::PostProcessInput()
 
   string ctOption = this->getReference< string >( viewKeyStruct::couplingTypeOptionStringString );
 
-  if( ctOption == "FixedStress" )
+  if( ctOption == "SIM_FixedStress" )
   {
-    this->m_couplingTypeOption = couplingTypeOption::FixedStress;
+    this->m_couplingTypeOption = couplingTypeOption::SIM_FixedStress;
 
     // For this coupled solver the minimum number of Newton Iter should be 0 for both flow and solid solver otherwise it
     // will never converge.
@@ -210,7 +210,7 @@ void PoroelasticSolver::PostProcessInput()
 
 void PoroelasticSolver::InitializePostInitialConditions_PreSubGroups( Group * const problemManager )
 {
-  if( m_couplingTypeOption == couplingTypeOption::FixedStress )
+  if( m_couplingTypeOption == couplingTypeOption::SIM_FixedStress )
   {
     this->getParent()->GetGroup( m_flowSolverName )->group_cast< SinglePhaseBase * >()->setPoroElasticCoupling();
     // Calculate initial total mean stress
@@ -249,7 +249,7 @@ real64 PoroelasticSolver::SolverStep( real64 const & time_n,
                                       DomainPartition * const domain )
 {
   real64 dt_return = dt;
-  if( m_couplingTypeOption == couplingTypeOption::FixedStress )
+  if( m_couplingTypeOption == couplingTypeOption::SIM_FixedStress )
   {
     dt_return = SplitOperatorStep( time_n, dt, cycleNumber, domain->group_cast< DomainPartition * >() );
   }
