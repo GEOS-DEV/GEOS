@@ -687,7 +687,6 @@ void ProblemManager::ParseInputFile()
     ConstitutiveManager * constitutiveManager = domain->GetGroup< ConstitutiveManager >( keys::ConstitutiveManager );
     xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( constitutiveManager->getName().c_str());
     constitutiveManager->ProcessInputFileRecursive( topLevelNode );
-    constitutiveManager->PostProcessInputRecursive();
 
     // Open mesh levels
     MeshManager * meshManager = this->GetGroup< MeshManager >( groupKeys.meshManager );
@@ -695,7 +694,6 @@ void ProblemManager::ParseInputFile()
     ElementRegionManager * elementManager = domain->getMeshBody( 0 )->getMeshLevel( 0 )->getElemManager();
     topLevelNode = xmlProblemNode.child( elementManager->getName().c_str());
     elementManager->ProcessInputFileRecursive( topLevelNode );
-    elementManager->PostProcessInputRecursive();
 
   }
 }
