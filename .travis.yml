@@ -101,6 +101,10 @@ geosx_pangea_build: &geosx_pangea_build
   - gcloud auth activate-service-account --key-file=${GEOSX_GCLOUD_KEY}
   - gsutil cp -a public-read ${GEOSX_BUNDLE} gs://geosx/Pangea2/
 
+stages:
+  - build
+  - check_submodules
+
 jobs:
   include:
   - <<: *geosx_pangea_build
@@ -138,3 +142,5 @@ jobs:
     env:
     - DOCKER_REPOSITORY=geosx/ubuntu18.04-gcc8
     - CMAKE_BUILD_TYPE=Debug
+  - stage: check_submodules
+    script: scripts/test_submodule_updated.sh
