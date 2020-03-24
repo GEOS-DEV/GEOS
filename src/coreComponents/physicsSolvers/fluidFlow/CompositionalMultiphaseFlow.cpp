@@ -1382,15 +1382,6 @@ void CompositionalMultiphaseFlow::SolveSystem( DofManager const & dofManager,
   solution.zero();
 
   SolverBase::SolveSystem( dofManager, matrix, rhs, solution );
-
-  if( getLogLevel() == 2 )
-  {
-    GEOSX_LOG_RANK_0( "After CompositionalMultiphaseFlow::SolveSystem" );
-    GEOSX_LOG_RANK_0( "\nSolution\n" );
-    std::cout << solution;
-  }
-
-
 }
 
 bool

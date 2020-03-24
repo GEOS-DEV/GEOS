@@ -625,6 +625,10 @@ void SolverBase::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( dofManager 
 
   // Solve using the iterative solver and compare norms with true solution
   solver.solve( matrix, solution, rhs );
+
+  // Debug for logLevel >= 2
+  GEOSX_LOG_LEVEL_RANK_0( 2, "After SolveSystem" );
+  GEOSX_LOG_LEVEL_RANK_0( 2, "\nSolution:\n" << solution );
 }
 
 bool SolverBase::CheckSystemSolution( DomainPartition const * const GEOSX_UNUSED_PARAM( domain ),
