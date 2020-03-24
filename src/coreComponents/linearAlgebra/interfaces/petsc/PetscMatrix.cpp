@@ -177,12 +177,34 @@ void PetscMatrix::open()
 void PetscMatrix::close()
 {
   GEOSX_LAI_ASSERT( !closed() );
+
+  // Initiate global assembly
   GEOSX_LAI_CHECK_ERROR( MatAssemblyBegin( m_mat, MAT_FINAL_ASSEMBLY ) );
   GEOSX_LAI_CHECK_ERROR( MatAssemblyEnd( m_mat, MAT_FINAL_ASSEMBLY ) );
-  GEOSX_LAI_CHECK_ERROR( MatSetOption( m_mat, MAT_NEW_NONZERO_LOCATIONS, PETSC_FALSE ) );
-  GEOSX_LAI_CHECK_ERROR( MatSetOption( m_mat, MAT_NEW_NONZERO_LOCATION_ERR, PETSC_TRUE ) );
-  GEOSX_LAI_CHECK_ERROR( MatSetOption( m_mat, MAT_KEEP_NONZERO_PATTERN, PETSC_TRUE ) );
-  GEOSX_LAI_CHECK_ERROR( MatSetOption( m_mat, MAT_NO_OFF_PROC_ZERO_ROWS, PETSC_TRUE ) );
+
+  // Clear any rows that have been marked for clearing
+  if( assembled() )
+  {
+    GEOSX_LAI_CHECK_ERROR( MatZeroRows( m_mat, m_rowsToClear.size(), m_rowsToClear, 1.0, nullptr, nullptr ) );
+
+    for( localIndex i = 0; i < m_rowsToClear.size(); ++i )
+    {
+      set( m_rowsToClear[i], m_rowsToClear[i], m_diagValues[i] );
+    }
+    GEOSX_LAI_CHECK_ERROR( MatAssemblyBegin( m_mat, MAT_FINAL_ASSEMBLY ) );
+    GEOSX_LAI_CHECK_ERROR( MatAssemblyEnd( m_mat, MAT_FINAL_ASSEMBLY ) );
+    m_rowsToClear.clear();
+    m_diagValues.clear();
+  }
+
+  // If this is initial assembly, set some useful options on the matrix
+  if( !assembled() )
+  {
+    GEOSX_LAI_CHECK_ERROR( MatSetOption( m_mat, MAT_NEW_NONZERO_LOCATIONS, PETSC_FALSE ) );
+    GEOSX_LAI_CHECK_ERROR( MatSetOption( m_mat, MAT_NEW_NONZERO_LOCATION_ERR, PETSC_TRUE ) );
+    GEOSX_LAI_CHECK_ERROR( MatSetOption( m_mat, MAT_KEEP_NONZERO_PATTERN, PETSC_TRUE ) );
+    GEOSX_LAI_CHECK_ERROR( MatSetOption( m_mat, MAT_NO_OFF_PROC_ZERO_ROWS, PETSC_TRUE ) );
+  }
   m_assembled = true;
   m_closed = true;
 }
@@ -568,35 +590,41 @@ void PetscMatrix::transpose( PetscMatrix & dst ) const
   dst.m_assembled = true;
 }
 
-void PetscMatrix::clearRow( globalIndex const globalRow,
-                            real64 const diagValue )
+real64 PetscMatrix::clearRow( globalIndex const globalRow,
+                              bool const keepDiag,
+                              real64 const diagValue )
 {
   GEOSX_LAI_ASSERT( modifiable() );
   GEOSX_LAI_ASSERT_GE( globalRow, ilower() );
   GEOSX_LAI_ASSERT_GT( iupper(), globalRow );
 
-  // The implementation below is not the most efficient, but we can't use
-  // PETCs's MatZeroRows because it is collective and clearRow() is not
-
-  localIndex const numEntries = globalRowLength( globalRow );
-  array1d< globalIndex > colIndices( numEntries );
-  array1d< real64 > values( numEntries );
-  values = 0.0;
-
+  PetscInt numEntries = 0;
   PetscInt const * inds;
-  GEOSX_LAI_CHECK_ERROR( MatGetRow( m_mat, globalRow, nullptr, &inds, nullptr ) );
+  PetscReal const * vals;
+  GEOSX_LAI_CHECK_ERROR( MatGetRow( m_mat, globalRow, &numEntries, &inds, &vals ) );
 
-  bool const isDiagonal = numGlobalRows() == numGlobalCols();
-  for( localIndex i = 0; i < numEntries; ++i )
+  bool const square = numGlobalRows() == numGlobalCols();
+
+  real64 oldDiag = 0.0;
+  if( square )
   {
-    colIndices[i] = inds[i];
-    if( colIndices[i] == globalRow && isDiagonal )
+    for( localIndex i = 0; i < numEntries; ++i )
     {
-      values[i] = diagValue;
+      if( inds[i] == globalRow )
+      {
+        oldDiag = vals[i];
+      }
     }
   }
-  GEOSX_LAI_CHECK_ERROR( MatRestoreRow( m_mat, globalRow, nullptr, &inds, nullptr ) );
-  set( globalRow, colIndices, values );
+  GEOSX_LAI_CHECK_ERROR( MatRestoreRow( m_mat, globalRow, &numEntries, &inds, &vals ) );
+
+  // There is no legitimate way in PETSc to zero out a row in a local fashion,
+  // without any collective calls. Therefore, we store the rows to be cleared
+  // and perform the clearing at the next close() call.
+  m_rowsToClear.push_back( globalRow );
+  m_diagValues.push_back( keepDiag ? oldDiag : diagValue );
+
+  return oldDiag;
 }
 
 localIndex PetscMatrix::maxRowLength() const
@@ -663,18 +691,20 @@ real64 PetscMatrix::getDiagValue( globalIndex globalRow ) const
   PetscScalar const * vals = nullptr;
   PetscInt const * cols = nullptr;
   PetscInt ncols;
+  real64 diagValue = 0.0;
 
   GEOSX_LAI_CHECK_ERROR( MatGetRow( m_mat, globalRow, &ncols, &cols, &vals ) );
   for( PetscInt i = 0; i < ncols; i++ )
   {
     if( cols[i] == globalRow )
     {
-      return vals[i];
+      diagValue = vals[i];
+      break;
     }
   }
   GEOSX_LAI_CHECK_ERROR( MatRestoreRow( m_mat, globalRow, &ncols, &cols, &vals ) );
 
-  return 0.0;
+  return diagValue;
 }
 
 Mat & PetscMatrix::unwrapped()

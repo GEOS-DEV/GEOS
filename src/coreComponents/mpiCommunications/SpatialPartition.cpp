@@ -69,6 +69,7 @@ SpatialPartition::SpatialPartition():
 {
   m_size = 0;
   m_rank = 0;
+  m_numColors = 8,
   setPartitions( 1, 1, 1 );
 }
 
