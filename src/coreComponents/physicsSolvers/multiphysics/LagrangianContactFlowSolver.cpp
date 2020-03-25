@@ -47,12 +47,14 @@ using namespace dataRepository;
 using namespace constitutive;
 
 LagrangianContactFlowSolver::LagrangianContactFlowSolver( const std::string & name,
-                                                  Group * const parent ):
+                                                          Group * const parent ):
   SolverBase( name, parent ),
   m_contactSolverName(),
   m_flowSolverName(),
   m_contactSolver( nullptr ),
-  m_flowSolver( nullptr )
+  m_flowSolver( nullptr ),
+  m_stabilizationName( "" ),
+  m_defaultConductivity( -1.0 )
 {
   registerWrapper( viewKeyStruct::contactSolverNameString, &m_contactSolverName, false )->
     setInputFlag( InputFlags::REQUIRED )->
@@ -65,72 +67,43 @@ LagrangianContactFlowSolver::LagrangianContactFlowSolver( const std::string & na
   registerWrapper( viewKeyStruct::stabilizationNameString, &m_stabilizationName, false )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of the stabilization to use in the lagrangian contact with flow solver" );
+
+  registerWrapper( viewKeyStruct::defaultConductivityString, &m_defaultConductivity, false )->
+    setInputFlag( InputFlags::REQUIRED )->
+    setDescription( "Value of the default conductivity C_{f,0} for the fracture" );
 }
 
-void LagrangianContactFlowSolver::RegisterDataOnMesh( dataRepository::Group * const MeshBodies )
+void LagrangianContactFlowSolver::InitializePreSubGroups( Group * const rootGroup )
 {
-  for( auto & mesh : MeshBodies->GetSubGroups() )
-  {
-    MeshLevel * meshLevel = Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
-
-    ElementRegionManager * const elemManager = meshLevel->getElemManager();
-    elemManager->forElementRegions< FaceElementRegion >( [&] ( FaceElementRegion & region )
-    {
-      region.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
-      {
-        subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::apertureString )->
-          setApplyDefaultValue( 0.0 )->
-          setPlotLevel( PlotLevel::LEVEL_1 )->
-          setRegisteringObjects( this->getName())->
-          setDescription( "An array that holds the fracture aperture." );
-      } );
-    } );
-  }
+  SolverBase::InitializePreSubGroups( rootGroup );
 }
-
-//void LagrangianContactFlowSolver::InitializePreSubGroups( Group * const rootGroup )
-//{
-//  std::cout << "in InitializePreSubGroups\n";
-//  SolverBase::InitializePreSubGroups( rootGroup );
-//}
-//void LagrangianContactFlowSolver::InitializePreSubGroups( Group * const rootGroup )
-//{
-//  SolverBase::InitializePreSubGroups( rootGroup );
-//
-//  DomainPartition * domain = rootGroup->GetGroup< DomainPartition >( keys::domain );
-//  ConstitutiveManager const * const cm = domain->getConstitutiveManager();
-//
-//  ConstitutiveBase const * const contarcRelation  = cm->GetConstitutiveRelation< ConstitutiveBase >( m_contactRelationName );
-//  GEOSX_ERROR_IF( contarcRelation == nullptr, "fracture constitutive model " + m_contactRelationName + " not found" );
-//  m_contactRelationFullIndex = contarcRelation->getIndexInParent();
-//}
 
 void LagrangianContactFlowSolver::ImplicitStepSetup( real64 const & time_n,
-                                                 real64 const & dt,
-                                                 DomainPartition * const domain,
-                                                 DofManager & dofManager,
-                                                 ParallelMatrix & matrix,
-                                                 ParallelVector & rhs,
-                                                 ParallelVector & solution )
+                                                     real64 const & dt,
+                                                     DomainPartition * const domain,
+                                                     DofManager & dofManager,
+                                                     ParallelMatrix & matrix,
+                                                     ParallelVector & rhs,
+                                                     ParallelVector & solution )
 {
   UpdateDeformationForCoupling( domain );
 
   m_contactSolver->ImplicitStepSetup( time_n, dt, domain,
-                                    dofManager,
-                                    matrix,
-                                    rhs,
-                                    solution );
+                                      dofManager,
+                                      matrix,
+                                      rhs,
+                                      solution );
 
   m_flowSolver->ImplicitStepSetup( time_n, dt, domain,
-                                 dofManager,
-                                 matrix,
-                                 rhs,
-                                 solution );
+                                   dofManager,
+                                   matrix,
+                                   rhs,
+                                   solution );
 }
 
 void LagrangianContactFlowSolver::ImplicitStepComplete( real64 const & time_n,
-                                                    real64 const & dt,
-                                                    DomainPartition * const domain )
+                                                        real64 const & dt,
+                                                        DomainPartition * const domain )
 {
   m_contactSolver->ImplicitStepComplete( time_n, dt, domain );
   m_flowSolver->ImplicitStepComplete( time_n, dt, domain );
@@ -162,11 +135,24 @@ void LagrangianContactFlowSolver::ResetStateToBeginningOfStep( DomainPartition *
 }
 
 real64 LagrangianContactFlowSolver::SolverStep( real64 const & time_n,
-                                            real64 const & dt,
-                                            int const cycleNumber,
-                                            DomainPartition * const domain )
+                                                real64 const & dt,
+                                                int const cycleNumber,
+                                                DomainPartition * const domain )
 {
   //TODO
+
+  {
+    // FIXME: to put somewhere else ...
+    MeshLevel * const meshLevel = domain->getMeshBody( 0 )->getMeshLevel( 0 );
+    ElementRegionManager * const elemManager = meshLevel->getElemManager();
+    elemManager->forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
+    {
+      if( subRegion.hasWrapper( m_pressureKey ) )
+      {
+        subRegion.getElementDefaultConductivity() = m_defaultConductivity;
+      }
+    } );
+  }
 
   real64 dtReturn = dt;
 
@@ -215,7 +201,7 @@ void LagrangianContactFlowSolver::UpdateDeformationForCoupling( DomainPartition 
     {
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
       arrayView2d< real64 const > const & localJump = subRegion.getReference< array2d< real64 > >( m_localJumpKey );
-      arrayView1d< real64 > const & aperture = subRegion.getReference< array1d< real64 > >( viewKeyStruct::apertureString );
+      arrayView1d< real64 > const & aperture = subRegion.getElementAperture();
 
       forAll< serialPolicy >( subRegion.size(), [&]( localIndex const kfe )
       {
@@ -240,18 +226,18 @@ void LagrangianContactFlowSolver::UpdateDeformationForCoupling( DomainPartition 
 }
 
 real64 LagrangianContactFlowSolver::SplitOperatorStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
-                                                   real64 const & dt,
-                                                   integer const GEOSX_UNUSED_PARAM( cycleNumber ),
-                                                   DomainPartition * const GEOSX_UNUSED_PARAM( domain ) )
+                                                       real64 const & dt,
+                                                       integer const GEOSX_UNUSED_PARAM( cycleNumber ),
+                                                       DomainPartition * const GEOSX_UNUSED_PARAM( domain ) )
 {
   real64 dtReturn = dt;
   return dtReturn;
 }
 
 real64 LagrangianContactFlowSolver::ExplicitStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
-                                              real64 const & dt,
-                                              const int GEOSX_UNUSED_PARAM( cycleNumber ),
-                                              DomainPartition * const GEOSX_UNUSED_PARAM( domain ) )
+                                                  real64 const & dt,
+                                                  const int GEOSX_UNUSED_PARAM( cycleNumber ),
+                                                  DomainPartition * const GEOSX_UNUSED_PARAM( domain ) )
 {
   GEOSX_MARK_FUNCTION;
   GEOSX_ERROR( "ExplicitStep non available for LagrangianContactFlowSolver!" );
@@ -259,13 +245,13 @@ real64 LagrangianContactFlowSolver::ExplicitStep( real64 const & GEOSX_UNUSED_PA
 }
 
 real64 LagrangianContactFlowSolver::NonlinearImplicitStep( real64 const & time_n,
-                                                       real64 const & dt,
-                                                       integer const cycleNumber,
-                                                       DomainPartition * const domain,
-                                                       DofManager const & dofManager,
-                                                       ParallelMatrix & matrix,
-                                                       ParallelVector & rhs,
-                                                       ParallelVector & solution )
+                                                           real64 const & dt,
+                                                           integer const cycleNumber,
+                                                           DomainPartition * const domain,
+                                                           DofManager const & dofManager,
+                                                           ParallelMatrix & matrix,
+                                                           ParallelVector & rhs,
+                                                           ParallelVector & solution )
 {
   GEOSX_MARK_FUNCTION;
   // dt may be cut during the course of this step, so we are keeping a local
@@ -386,7 +372,7 @@ real64 LagrangianContactFlowSolver::NonlinearImplicitStep( real64 const & time_n
         if( m_nonlinearSolverParameters.m_lineSearchAction>0 && newtonIter > 0 )
         {
           bool lineSearchSuccess = m_contactSolver->LineSearch( time_n, stepDt, cycleNumber, domain, dofManager,
-                                               matrix, rhs, solution, scaleFactor, residualNorm );
+                                                                matrix, rhs, solution, scaleFactor, residualNorm );
 
           if( !lineSearchSuccess )
           {
@@ -503,7 +489,7 @@ real64 LagrangianContactFlowSolver::NonlinearImplicitStep( real64 const & time_n
 }
 
 void LagrangianContactFlowSolver::SetupDofs( DomainPartition const * const domain,
-                                         DofManager & dofManager ) const
+                                             DofManager & dofManager ) const
 {
   GEOSX_MARK_FUNCTION;
   m_contactSolver->SetupDofs( domain, dofManager );
@@ -524,15 +510,13 @@ void LagrangianContactFlowSolver::SetupDofs( DomainPartition const * const domai
 }
 
 void LagrangianContactFlowSolver::SetupSystem( DomainPartition * const domain,
-                                           DofManager & dofManager,
-                                           ParallelMatrix & matrix,
-                                           ParallelVector & rhs,
-                                           ParallelVector & solution )
+                                               DofManager & dofManager,
+                                               ParallelMatrix & matrix,
+                                               ParallelVector & rhs,
+                                               ParallelVector & solution )
 {
   GEOSX_MARK_FUNCTION;
   m_flowSolver->ResetViews( domain );
-
-  std::cout << "In SetupSystem" << std::endl;
 
   // setup DofManager
   dofManager.setMesh( domain, 0, 0 );
@@ -559,62 +543,60 @@ void LagrangianContactFlowSolver::SetupSystem( DomainPartition * const domain,
 }
 
 void LagrangianContactFlowSolver::AssembleSystem( real64 const time,
-                                              real64 const dt,
-                                              DomainPartition * const domain,
-                                              DofManager const & dofManager,
-                                              ParallelMatrix & matrix,
-                                              ParallelVector & rhs )
+                                                  real64 const dt,
+                                                  DomainPartition * const domain,
+                                                  DofManager const & dofManager,
+                                                  ParallelMatrix & matrix,
+                                                  ParallelVector & rhs )
 {
   GEOSX_MARK_FUNCTION;
 
   m_contactSolver->AssembleSystem( time,
-                                 dt,
-                                 domain,
-                                 dofManager,
-                                 matrix,
-                                 rhs );
+                                   dt,
+                                   domain,
+                                   dofManager,
+                                   matrix,
+                                   rhs );
 
   m_flowSolver->AssembleSystem( time,
-                                 dt,
-                                 domain,
-                                 dofManager,
-                                 matrix,
-                                 rhs );
+                                dt,
+                                domain,
+                                dofManager,
+                                matrix,
+                                rhs );
 
   AssembleForceResidualDerivativeWrtPressure( domain, dofManager, &matrix, &rhs );
-  AssemblePressureResidualDerivativeWrtDisplacement( dt, domain, dofManager, &matrix, &rhs );
-  AssembleStabiliziation( dt, domain, dofManager, &matrix, &rhs );
+  AssembleFluidMassResidualDerivativeWrtDisplacement( dt, domain, dofManager, &matrix, &rhs );
+  //AssembleStabiliziation( dt, domain, dofManager, &matrix, &rhs );
 }
 
 void LagrangianContactFlowSolver::ApplyBoundaryConditions( real64 const time,
-                                                       real64 const dt,
-                                                       DomainPartition * const domain,
-                                                       DofManager const & dofManager,
-                                                       ParallelMatrix & matrix,
-                                                       ParallelVector & rhs )
+                                                           real64 const dt,
+                                                           DomainPartition * const domain,
+                                                           DofManager const & dofManager,
+                                                           ParallelMatrix & matrix,
+                                                           ParallelVector & rhs )
 {
   GEOSX_MARK_FUNCTION;
   m_contactSolver->ApplyBoundaryConditions( time,
-                                          dt,
-                                          domain,
-                                          dofManager,
-                                          matrix,
-                                          rhs );
+                                            dt,
+                                            domain,
+                                            dofManager,
+                                            matrix,
+                                            rhs );
   m_flowSolver->ApplyBoundaryConditions( time,
-                                          dt,
-                                          domain,
-                                          dofManager,
-                                          matrix,
-                                          rhs );
+                                         dt,
+                                         domain,
+                                         dofManager,
+                                         matrix,
+                                         rhs );
 }
 
 real64 LagrangianContactFlowSolver::CalculateResidualNorm( DomainPartition const * const GEOSX_UNUSED_PARAM( domain ),
-                                                       DofManager const & dofManager,
-                                                       ParallelVector const & rhs )
+                                                           DofManager const & dofManager,
+                                                           ParallelVector const & rhs )
 {
   GEOSX_MARK_FUNCTION;
-
-  std::cout << "in calculate residual\n";
 
   localIndex numDispDofs = dofManager.numLocalDofs( keys::TotalDisplacement );
   localIndex numTracDofs = dofManager.numLocalDofs( m_tractionKey );
@@ -720,6 +702,7 @@ void LagrangianContactFlowSolver::AssembleForceResidualDerivativeWrtPressure( Do
   NodeManager * const nodeManager = mesh->getNodeManager();
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
+  arrayView1d< R1Tensor const > const & faceNormal = faceManager->faceNormal();
   ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
 
   arrayView1d< R1Tensor > const &
@@ -741,51 +724,53 @@ void LagrangianContactFlowSolver::AssembleForceResidualDerivativeWrtPressure( Do
       arrayView1d< globalIndex const > const &
       presDofNumber = subRegion.getReference< globalIndex_array >( presDofKey );
       arrayView1d< real64 const > const & pressure = subRegion.getReference< array1d< real64 > >( m_pressureKey );
+      arrayView1d< real64 const > const & deltaPressure = subRegion.getReference< array1d< real64 > >( m_deltaPressureKey );
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
       arrayView1d< real64 const > const & area = subRegion.getElementArea();
-      arrayView1d< R2Tensor const > const & rotationMatrix = subRegion.getElementRotationMatrix();
       arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
 
       forAll< serialPolicy >( subRegion.size(), [=]( localIndex const kfe )
       {
-        localIndex const kf0 = elemsToFaces[kfe][0];
-        localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kf0 );
-
-        globalIndex rowDOF[12];
-        real64 nodeRHS[12];
-        stackArray1d< real64, 12 > dRdP( 3*numNodesPerFace );
-        dRdP = 0.0;
-        globalIndex colDOF[1];
-        colDOF[0] = presDofNumber[kfe];
-
-        real64 const nodalArea = area[kfe] / static_cast< real64 >( numNodesPerFace );
-        real64_array nodalForceVec( 3 );
-        nodalForceVec = 0.0;
-        nodalForceVec[0] = pressure[kfe] * nodalArea;
-        R1Tensor localNodalForce( nodalForceVec[0], nodalForceVec[1], nodalForceVec[2] );
-        R1Tensor globalNodalForce;
-        globalNodalForce.AijBj( rotationMatrix[kfe], localNodalForce );
-
-        for( localIndex kf=0; kf<2; ++kf )
+        if( ghostRank[kfe] < 0 )
         {
-          localIndex const faceIndex = elemsToFaces[kfe][kf];
+          localIndex const kf0 = elemsToFaces[kfe][0];
+          localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kf0 );
 
-          for( localIndex a=0; a<numNodesPerFace; ++a )
+          R1Tensor Nbar = faceNormal[elemsToFaces[kfe][0]];
+          Nbar -= faceNormal[elemsToFaces[kfe][1]];
+          Nbar.Normalize();
+
+          globalIndex rowDOF[12];
+          real64 nodeRHS[12];
+          stackArray1d< real64, 12 > dRdP( 3*numNodesPerFace );
+          dRdP = 0.0;
+          globalIndex colDOF[1];
+          colDOF[0] = presDofNumber[kfe];
+
+          real64 const Ja = area[kfe];
+          real64 const nodalArea = Ja / static_cast< real64 >( numNodesPerFace );
+          real64 nodalForceMag = ( pressure[kfe] + deltaPressure[kfe] ) * nodalArea;
+          R1Tensor globalNodalForce( Nbar );
+          globalNodalForce *= nodalForceMag;
+
+          for( localIndex kf=0; kf<2; ++kf )
           {
-            for( localIndex i=0; i<3; ++i )
+            localIndex const faceIndex = elemsToFaces[kfe][kf];
+
+            for( localIndex a=0; a<numNodesPerFace; ++a )
             {
-              rowDOF[3*a+i] = dispDofNumber[faceToNodeMap( faceIndex, a )] + integer_conversion< globalIndex >( i );
-              // Opposite sign w.r.t. theory because of minus sign in stiffness matrix definition (K < 0)
-              nodeRHS[3*a+i] = -globalNodalForce[i] * pow( -1, kf );
-              fext[faceToNodeMap( faceIndex, a )][i] += +globalNodalForce[i] * pow( -1, kf );
+              for( localIndex i=0; i<3; ++i )
+              {
+                rowDOF[3*a+i] = dispDofNumber[faceToNodeMap( faceIndex, a )] + integer_conversion< globalIndex >( i );
+                // Opposite sign w.r.t. theory because of minus sign in stiffness matrix definition (K < 0)
+                nodeRHS[3*a+i] = -globalNodalForce[i] * pow( -1, kf );
+                fext[faceToNodeMap( faceIndex, a )][i] += -globalNodalForce[i] * pow( -1, kf );
 
-              // Opposite sign w.r.t. theory because of minus sign in stiffness matrix definition (K < 0)
-              dRdP( 3*a+i ) = -nodalArea * rotationMatrix[kfe]( i, 0 ) * pow( -1, kf );
+                // Opposite sign w.r.t. theory because of minus sign in stiffness matrix definition (K < 0)
+                dRdP( 3*a+i ) = -nodalArea * Nbar( i ) * pow( -1, kf );
+              }
             }
-          }
 
-          if( ghostRank[kfe] < 0 )
-          {
             rhs->add( rowDOF,
                       nodeRHS,
                       3 * numNodesPerFace );
@@ -805,20 +790,29 @@ void LagrangianContactFlowSolver::AssembleForceResidualDerivativeWrtPressure( Do
   rhs->close();
 }
 
-void LagrangianContactFlowSolver::AssemblePressureResidualDerivativeWrtDisplacement( real64 const dt,
-                                                                                     DomainPartition const * const domain,
-                                                                                     DofManager const & dofManager,
-                                                                                     ParallelMatrix * const matrix,
-                                                                                     ParallelVector * const rhs )
+void LagrangianContactFlowSolver::AssembleFluidMassResidualDerivativeWrtDisplacement( real64 const dt,
+                                                                                      DomainPartition const * const domain,
+                                                                                      DofManager const & dofManager,
+                                                                                      ParallelMatrix * const matrix,
+                                                                                      ParallelVector * const rhs )
 {
   GEOSX_MARK_FUNCTION;
   MeshLevel const * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
+
+  //TODO: add accumulation term!!!
+  std::cout << "DT: " << dt << std::endl;
 
   FaceManager const * const faceManager = mesh->getFaceManager();
   NodeManager const * const nodeManager = mesh->getNodeManager();
   ElementRegionManager const * const elemManager = mesh->getElemManager();
 
+  arrayView1d< R1Tensor const > const & faceNormal = faceManager->faceNormal();
   ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
+
+  /*
+     CRSMatrixView< real64 const, localIndex const > const &
+     dFluxResidual_dAperture = m_flowSolver->getDerivativeFluxResidual_dAperture();
+   */
 
   string const dispDofKey = dofManager.getKey( keys::TotalDisplacement );
   string const presDofKey = dofManager.getKey( m_pressureKey );
@@ -837,61 +831,122 @@ void LagrangianContactFlowSolver::AssemblePressureResidualDerivativeWrtDisplacem
       presDofNumber = subRegion.getReference< globalIndex_array >( presDofKey );
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
       arrayView1d< real64 const > const & area = subRegion.getElementArea();
-      arrayView1d< R2Tensor const > const & rotationMatrix = subRegion.getElementRotationMatrix();
       arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
 
-      CRSMatrixView< real64 const, localIndex const > const &
-      dR_dAper = m_flowSolver->getDerivativeFluxResidual_dAperture();
+      //CRSMatrixView< real64 const, localIndex const > const &
+      //dR_dAper = m_flowSolver->getDerivativeFluxResidual_dAperture();
 
       forAll< serialPolicy >( subRegion.size(), [&]( localIndex const kfe )
       {
+        if( ghostRank[kfe] < 0 )
         {
           localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
           globalIndex nodeDOF[24];
           globalIndex elemDOF[1];
           elemDOF[0] = presDofNumber[kfe];
 
-          real64 elemRHS[3];
+          //real64 elemRHS[3];
           real64 const Ja = area[kfe];
-          real64 const nodalArea = Ja / static_cast< real64 >( numNodesPerFace );
+          //real64 const nodalArea = Ja / static_cast< real64 >( numNodesPerFace );
+
+          R1Tensor Nbar = faceNormal[elemsToFaces[kfe][0]];
+          Nbar -= faceNormal[elemsToFaces[kfe][1]];
+          Nbar.Normalize();
+
+          real64 const dAccumulationResidualdAperture = Ja;
 
           stackArray1d< real64, 2*3*4 > dRdU( 2*3*numNodesPerFace );
           dRdU = 0.0;
 
-          // Contact constraints
-          if( ghostRank[kfe] < 0 )
+          // Accumulation derivative
+          if( m_contactSolver->IsElementInOpenState( subRegion, kfe ) )
           {
-            if( m_contactSolver->IsElementInOpenState( subRegion, kfe ) )
+            for( localIndex kf=0; kf<2; ++kf )
             {
-              //localIndex const * const columns = dR_dAper.getColumns( kfe );
-              real64 const * const values = dR_dAper.getEntries( kfe );
-
-              for( localIndex kf=0; kf<2; ++kf )
+              for( localIndex a=0; a<numNodesPerFace; ++a )
               {
-                for( localIndex a=0; a<numNodesPerFace; ++a )
+                for( int i=0; i<3; ++i )
                 {
-                  for( localIndex i=0; i<3; ++i )
-                  {
-                    nodeDOF[ kf*3*numNodesPerFace + 3*a+i ] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe][kf], a )] +
-                                                              integer_conversion< globalIndex >( i );
-
-                    dRdU( kf*3*numNodesPerFace + 3*a+i ) = -nodalArea * rotationMatrix[kfe]( 0, i ) * dt * values[a] * pow( -1, kf );
-                  }
+                  nodeDOF[ kf*3*numNodesPerFace + 3*a+i] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe][kf], a )] + integer_conversion< globalIndex >( i );
+                  real64 const dAper_dU = -pow( -1, kf ) * Nbar[i] / numNodesPerFace;
+                  dRdU( kf*3*numNodesPerFace + 3*a+i ) = dAccumulationResidualdAperture * dAper_dU;
                 }
               }
-
-              rhs->add( elemDOF,
-                        elemRHS,
-                        1 );
-
-              matrix->add( elemDOF,
-                           nodeDOF,
-                           dRdU.data(),
-                           1,
-                           2*3*numNodesPerFace );
             }
+            matrix->add( elemDOF,
+                         nodeDOF,
+                         dRdU.data(),
+                         2*3*numNodesPerFace,
+                         1 );
           }
+
+#if 0
+          // flux derivative
+          localIndex const numColumns = dFluxResidual_dAperture.numNonZeros( kfe );
+          arraySlice1d< localIndex const > const & columns = dFluxResidual_dAperture.getColumns( kfe );
+          arraySlice1d< real64 const > const & values = dFluxResidual_dAperture.getEntries( kfe );
+
+          for( localIndex kfe1=0; kfe1<numColumns; ++kfe1 )
+          {
+            real64 const dR_dAper = values[kfe1];
+            localIndex const kfe2 = columns[kfe1];
+
+            for( localIndex kf=0; kf<2; ++kf )
+            {
+              for( localIndex a=0; a<numNodesPerFace; ++a )
+              {
+                for( int i=0; i<3; ++i )
+                {
+                  nodeDOF[ kf*3*numNodesPerFace + 3*a+i] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe2][kf], a )] + integer_conversion< globalIndex >( i );
+                  real64 const dAper_dU = -pow( -1, kf ) * Nbar[i] / numNodesPerFace;
+                  dRdU( kf*3*numNodesPerFace + 3*a+i ) = dR_dAper * dAper_dU;
+                }
+              }
+            }
+            matrix->add( elemDOF,
+                         nodeDOF,
+                         dRdU.data(),
+                         2*3*numNodesPerFace,
+                         1 );
+
+          }
+#endif
         }
+
+//            if( m_contactSolver->IsElementInOpenState( subRegion, kfe ) )
+//            {
+//              //localIndex const * const columns = dR_dAper.getColumns( kfe );
+//              real64 const * const values = dR_dAper.getEntries( kfe );
+//
+//              std::cout << " ***** " << kfe << std::endl;
+//
+//              for( localIndex kf=0; kf<2; ++kf )
+//              {
+//                for( localIndex a=0; a<numNodesPerFace; ++a )
+//                {
+//                  for( localIndex i=0; i<3; ++i )
+//                  {
+//                    std::cout << kf << " " << a << " " << i << " " << values[a] << std::endl;
+//                    nodeDOF[ kf*3*numNodesPerFace + 3*a+i ] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe][kf], a )] +
+//                                                              integer_conversion< globalIndex >( i );
+//
+//                    dRdU( kf*3*numNodesPerFace + 3*a+i ) = -nodalArea * faceNormal[kfe]( i ) * dt * values[a] * pow( -1, kf );
+//                  }
+//                }
+//              }
+//
+//              rhs->add( elemDOF,
+//                        elemRHS,
+//                        1 );
+//
+//              matrix->add( elemDOF,
+//                           nodeDOF,
+//                           dRdU.data(),
+//                           1,
+//                           2*3*numNodesPerFace );
+//            }
+//          }
+//        }
       } );
     }
   } );
@@ -1163,29 +1218,29 @@ void LagrangianContactFlowSolver::AssembleStabiliziation( real64 const dt,
 }
 
 void LagrangianContactFlowSolver::ApplySystemSolution( DofManager const & dofManager,
-                                                   ParallelVector const & solution,
-                                                   real64 const scalingFactor,
-                                                   DomainPartition * const domain )
+                                                       ParallelVector const & solution,
+                                                       real64 const scalingFactor,
+                                                       DomainPartition * const domain )
 {
   GEOSX_MARK_FUNCTION;
 
   m_contactSolver->ApplySystemSolution( dofManager,
-                                      solution,
-                                      scalingFactor,
-                                      domain );
+                                        solution,
+                                        scalingFactor,
+                                        domain );
 
   m_flowSolver->ApplySystemSolution( dofManager,
-                                      solution,
-                                      scalingFactor,
-                                      domain );
+                                     solution,
+                                     scalingFactor,
+                                     domain );
 
   UpdateDeformationForCoupling( domain );
 }
 
 void LagrangianContactFlowSolver::SolveSystem( DofManager const & dofManager,
-                                           ParallelMatrix & matrix,
-                                           ParallelVector & rhs,
-                                           ParallelVector & solution )
+                                               ParallelMatrix & matrix,
+                                               ParallelVector & rhs,
+                                               ParallelVector & solution )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -1216,7 +1271,7 @@ void LagrangianContactFlowSolver::SolveSystem( DofManager const & dofManager,
 }
 
 void LagrangianContactFlowSolver::SetNextDt( real64 const & currentDt,
-                                         real64 & nextDt )
+                                             real64 & nextDt )
 {
   nextDt = currentDt;
 }

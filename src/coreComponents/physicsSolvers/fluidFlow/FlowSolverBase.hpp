@@ -204,6 +204,8 @@ protected:
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > >  m_elementAperture;
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > >  m_effectiveAperture;
 
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > >  m_elementConductivity0;
+
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > >  m_elementSeparationCoefficient;
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > >  m_element_dSeparationCoefficient_dAperture;

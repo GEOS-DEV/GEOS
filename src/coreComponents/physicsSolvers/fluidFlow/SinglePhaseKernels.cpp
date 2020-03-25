@@ -150,6 +150,7 @@ void FluxKernel::
                                     FluxKernel::ElementView< arrayView1d< real64 const > > const & dMob_dPres,
                                     FluxKernel::ElementView< arrayView1d< real64 const > > const &,
                                     FluxKernel::ElementView< arrayView1d< real64 const > > const &,
+                                    FluxKernel::ElementView< arrayView1d< real64 const > > const &,
                                     FluxKernel::ElementView< arrayView1d< R1Tensor const > > const &,
                                     R1Tensor const,
                                     real64 const,
@@ -234,6 +235,7 @@ void FluxKernel::
                                 FluxKernel::ElementView< arrayView1d< real64 const > > const & mob,
                                 FluxKernel::ElementView< arrayView1d< real64 const > > const & dMob_dPres,
                                 FluxKernel::ElementView< arrayView1d< real64 const > > const & aperture0,
+                                FluxKernel::ElementView< arrayView1d< real64 const > > const & conductivity0,
                                 FluxKernel::ElementView< arrayView1d< real64 const > > const & aperture,
                                 FluxKernel::ElementView< arrayView1d< R1Tensor const > > const & transTMultiplier,
                                 R1Tensor const gravityVector,
@@ -314,6 +316,7 @@ void FluxKernel::
                                    mob[er][esr],
                                    dMob_dPres[er][esr],
                                    aperture0[er][esr],
+                                   conductivity0[er][esr],
                                    aperture[er][esr],
                                    meanPermCoeff,
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT

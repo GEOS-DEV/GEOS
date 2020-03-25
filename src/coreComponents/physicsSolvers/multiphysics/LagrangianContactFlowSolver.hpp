@@ -47,9 +47,7 @@ public:
     return "LagrangianContactWithFlow";
   }
 
-  //virtual void InitializePreSubGroups( Group * const rootGroup ) override;
-
-  virtual void RegisterDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
+  virtual void InitializePreSubGroups( Group * const rootGroup ) override;
 
   virtual void SetupDofs( DomainPartition const * const domain,
                           DofManager & dofManager ) const override;
@@ -135,11 +133,11 @@ public:
                                                    ParallelMatrix * const matrix,
                                                    ParallelVector * const rhs );
 
-  void AssemblePressureResidualDerivativeWrtDisplacement( real64 const dt,
-                                                          DomainPartition const * const domain,
-                                                          DofManager const & dofManager,
-                                                          ParallelMatrix * const matrix,
-                                                          ParallelVector * const rhs );
+  void AssembleFluidMassResidualDerivativeWrtDisplacement( real64 const dt,
+                                                           DomainPartition const * const domain,
+                                                           DofManager const & dofManager,
+                                                           ParallelMatrix * const matrix,
+                                                           ParallelVector * const rhs );
 
   void AssembleStabiliziation( real64 const dt,
                                DomainPartition const * const domain,
@@ -170,7 +168,7 @@ public:
 //    constexpr static auto localJumpString = "localJump";
 //    constexpr static auto previousLocalJumpString = "previousLocalJump";
 
-    constexpr static auto apertureString = "aperture";
+    constexpr static auto defaultConductivityString = "defaultConductivity";
 
 //    constexpr static auto slidingCheckToleranceString = "slidingCheckTolerance";
 //    constexpr static auto normalDisplacementToleranceString = "normalDisplacementTolerance";
@@ -197,12 +195,15 @@ private:
 
   string m_stabilizationName;
 
+  real64 m_defaultConductivity;
+
   integer m_activeSetIter = 0;
 
   string const m_tractionKey = LagrangianContactSolver::viewKeyStruct::tractionString;
   string const m_fractureStateKey = LagrangianContactSolver::viewKeyStruct::fractureStateString;
   string const m_localJumpKey = LagrangianContactSolver::viewKeyStruct::localJumpString;
   string const m_pressureKey = FlowSolverBase::viewKeyStruct::pressureString;
+  string const m_deltaPressureKey = FlowSolverBase::viewKeyStruct::deltaPressureString;
 
   real64 m_initialResidual[4] = {0.0, 0.0, 0.0, 0.0};
 

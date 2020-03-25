@@ -519,10 +519,10 @@ void SurfaceGenerator::postRestartInitialization( Group * const domain0 )
         fluxApprox->addToFractureStencil( *domain,
                                           this->m_fractureRegionName,
                                           false );
-        edgeManager->m_recalculateFractureConnectorEdges.clear();
-        fractureSubRegion->m_newFaceElements.clear();
       }
     }
+    edgeManager->m_recalculateFractureConnectorEdges.clear();
+    fractureSubRegion->m_newFaceElements.clear();
   }
 }
 

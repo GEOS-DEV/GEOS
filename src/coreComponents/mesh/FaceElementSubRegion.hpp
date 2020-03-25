@@ -96,6 +96,8 @@ public:
     static constexpr auto faceElementsToCellIndexString    = "fractureElementsToCellIndices";
     constexpr static auto creationMassString = "creationMass";
 
+    static constexpr auto elementDefaultConductivityString = "elementDefaultConductivity";
+
 #if GEOSX_USE_SEPARATION_COEFFICIENT
     constexpr static auto separationCoeffString = "separationCoeff";
     constexpr static auto dSeparationCoeffdAperString = "dSeparationCoeffdAper";
@@ -158,6 +160,9 @@ public:
   arrayView1d< R2Tensor > const & getElementRotationMatrix()       { return m_elementRotationMatrix; }
   arrayView1d< R2Tensor const > const & getElementRotationMatrix() const { return m_elementRotationMatrix; }
 
+  arrayView1d< real64 > const & getElementDefaultConductivity()       { return m_elementDefaultConductivity; }
+  arrayView1d< real64 const > const & getElementDefaultConductivity() const { return m_elementDefaultConductivity; }
+
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
   arrayView1d< real64 > const & getSeparationCoefficient()       { return m_separationCoefficient; }
   arrayView1d< real64 const > const & getSeparationCoefficient() const { return m_separationCoefficient; }
@@ -193,6 +198,9 @@ private:
 
   /// The member level field for the element rotation matrix
   array1d< R2Tensor > m_elementRotationMatrix;
+
+  /// The member level field for the default conductivity
+  array1d< real64 > m_elementDefaultConductivity;
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
   array1d< real64 > m_separationCoefficient;

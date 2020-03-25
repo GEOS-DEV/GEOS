@@ -41,7 +41,8 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
   m_toFacesRelation(),
   m_elementAperture(),
   m_elementArea(),
-  m_elementRotationMatrix()
+  m_elementRotationMatrix(),
+  m_elementDefaultConductivity()
 {
   registerWrapper( viewKeyStruct::nodeListString, &m_toNodesRelation, false )->
     setDescription( "Map to the nodes attached to each FaceElement." );
@@ -100,6 +101,11 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
     setApplyDefaultValue( 0.0 )->
     setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
     setDescription( "The amount of remaining mass that was introduced when the FaceElement was created." );
+
+  registerWrapper( viewKeyStruct::elementDefaultConductivityString, &m_elementDefaultConductivity, false )->
+    setApplyDefaultValue( -1.0 )->
+    setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
+    setDescription( "Scalar value of default conductivity C_{f,0} for a fracturing face." );
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
   registerWrapper( viewKeyStruct::separationCoeffString, &m_separationCoefficient, false )->

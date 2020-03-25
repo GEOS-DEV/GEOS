@@ -191,6 +191,7 @@ void SinglePhaseFVM< BASE >::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM(
   FluxKernel::ElementView< arrayView1d< real64 const > > const & dMob_dPres  = m_dMobility_dPres.toViewConst();
 
   FluxKernel::ElementView< arrayView1d< real64 const > > const & aperture0  = m_elementAperture0.toViewConst();
+  FluxKernel::ElementView< arrayView1d< real64 const > > const & conductivity0  = m_elementConductivity0.toViewConst();
   FluxKernel::ElementView< arrayView1d< real64 const > > const & aperture  = m_effectiveAperture.toViewConst();
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
@@ -201,7 +202,6 @@ void SinglePhaseFVM< BASE >::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM(
   localIndex fluidIndex = m_fluidIndex;
 
   FluxKernel::ElementView< arrayView1d< R1Tensor const > > const & transTMultiplier  = m_transTMultiplier.toViewConst();
-
 
   fluxApprox->forAllStencils( [&]( auto const & stencil )
   {
@@ -220,6 +220,7 @@ void SinglePhaseFVM< BASE >::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM(
                         mob,
                         dMob_dPres,
                         aperture0,
+                        conductivity0,
                         aperture,
                         transTMultiplier,
                         this->gravityVector(),

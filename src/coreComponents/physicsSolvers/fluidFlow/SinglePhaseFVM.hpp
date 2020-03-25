@@ -77,6 +77,7 @@ public:
   using BASE::m_elementAperture0;
   using BASE::m_elementAperture;
   using BASE::m_effectiveAperture;
+  using BASE::m_elementConductivity0;
 
 
   // Aliasing public/protected members/methods of SinglePhaseBase so we don't

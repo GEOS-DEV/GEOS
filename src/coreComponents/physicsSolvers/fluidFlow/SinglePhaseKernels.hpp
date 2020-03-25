@@ -347,6 +347,7 @@ struct FluxKernel
             ElementView< arrayView1d< real64 const > > const & mob,
             ElementView< arrayView1d< real64 const > > const & dMob_dPres,
             ElementView< arrayView1d< real64 const > > const & aperture0,
+            ElementView< arrayView1d< real64 const > > const & conductivity0,
             ElementView< arrayView1d< real64 const > > const & aperture,
             ElementView< arrayView1d< R1Tensor const > > const & transTMultiplier,
             R1Tensor const gravityVector,
@@ -575,6 +576,7 @@ struct FluxKernel
                    arrayView1d< real64 const > const & mob,
                    arrayView1d< real64 const > const & dMob_dPres,
                    arrayView1d< real64 const > const & aperture0,
+                   arrayView1d< real64 const > const & conductivity0,
                    arrayView1d< real64 const > const & aperture,
                    real64 const meanPermCoeff,
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
@@ -598,11 +600,22 @@ struct FluxKernel
 //      real64 const aperAdd = aperture0[stencilElementIndices[k]] < 0.09e-3 ? ( 0.09e-3 -
 // aperture0[stencilElementIndices[k]] ) : 0.0;
 #if PERM_CALC==1
-      FluxKernelHelper::
-        apertureForPermeablityCalculation< 1 >( aperture0[stencilElementIndices[k]],
-                                                aperture[stencilElementIndices[k]],
-                                                aperTerm[k],
-                                                dAperTerm_dAper[k] );
+      // FIXME: just a trick to allow both calculations!
+      if( conductivity0[stencilElementIndices[k]] < 0.0 )
+      {
+        FluxKernelHelper::
+          apertureForPermeablityCalculation< 1 >( aperture0[stencilElementIndices[k]],
+                                                  aperture[stencilElementIndices[k]],
+                                                  aperTerm[k],
+                                                  dAperTerm_dAper[k] );
+      }
+      else
+      {
+        // 12 should be at denominator, but it's included in "finiteVolume/TwoPointFluxApproximation.cpp" line 270:
+        // --> stencilWeights[kfe] =  1.0 / 12.0 * edgeLength / cellCenterToEdgeCenter.L2_Norm(); <--
+        aperTerm[k] = (aperture[stencilElementIndices[k]]*aperture[stencilElementIndices[k]]*aperture[stencilElementIndices[k]]) + 12.0*conductivity0[stencilElementIndices[k]];
+        dAperTerm_dAper[k] = 3.0*(aperture[stencilElementIndices[k]]*aperture[stencilElementIndices[k]]);
+      }
 #elif PERM_CALC==2
 
       if( s[k] >= 1.0 )
