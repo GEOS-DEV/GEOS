@@ -89,6 +89,31 @@ void FluxApproximationBase::compute( DomainPartition & domain )
   });
 }
 
+void FluxApproximationBase::update( DomainPartition & domain )
+{
+  GEOSX_MARK_FUNCTION_SCOPED;
+
+  updateCellStencil( domain );
+
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
+
+  fsManager.Apply( 0.0,
+                   &domain,
+                   "faceManager",
+                   m_boundaryFieldName,
+                   [&] ( FieldSpecificationBase const * GEOSX_UNUSED_PARAM( bc ),
+                         string const & setName,
+                         SortedArrayView<localIndex const> const & targetSet,
+                         Group const * GEOSX_UNUSED_PARAM( targetGroup ),
+                         string const & GEOSX_UNUSED_PARAM( targetName ))
+  {
+    Wrapper<BoundaryStencil> * stencil = this->registerWrapper<BoundaryStencil>( setName );
+    stencil->setRestartFlags(RestartFlags::NO_WRITE);
+    updateBoundaryStencil( domain, targetSet, stencil->reference() );
+  });
+
+  updateFractureStencil( domain );
+}
 
 FluxApproximationBase::BoundaryStencil const &
 FluxApproximationBase::getBoundaryStencil(string const & setName) const

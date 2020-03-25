@@ -47,6 +47,14 @@ protected:
                                        SortedArrayView<localIndex const> const & faceSet,
                                        BoundaryStencil & stencil ) override;
 
+  virtual void updateCellStencil( DomainPartition const & domain ) override;
+
+  virtual void updateFractureStencil( DomainPartition & domain ) override;
+
+  virtual void updateBoundaryStencil( DomainPartition const & domain,
+                                       SortedArrayView<localIndex const> const & faceSet,
+                                       BoundaryStencil & stencil ) override;
+
 };
 
 }

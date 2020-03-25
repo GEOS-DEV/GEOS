@@ -22,6 +22,7 @@
 #include "CellElementStencilTPFA.hpp"
 #include "FaceElementStencil.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 
 #include <cmath>
 
@@ -679,6 +680,399 @@ void TwoPointFluxApproximation::computeBoundaryStencil( DomainPartition const & 
     }
   }
   stencil.compress();
+}
+
+
+void TwoPointFluxApproximation::updateCellStencil( DomainPartition const & domain  )
+{
+  MeshBody const * const meshBody = domain.getMeshBody(0);
+  MeshLevel const * const mesh = meshBody->getMeshLevel(0);
+  NodeManager const * const nodeManager = mesh->getNodeManager();
+  FaceManager const * const faceManager = mesh->getFaceManager();
+  ElementRegionManager const * const elemManager = mesh->getElemManager();
+
+  CellElementStencilTPFA & stencil = this->getReference<CellElementStencilTPFA>(viewKeyStruct::cellStencilString);
+
+  arrayView2d<localIndex const> const & elemRegionList = faceManager->elementRegionList();
+  arrayView2d<localIndex const> const & elemSubRegionList = faceManager->elementSubRegionList();
+  arrayView2d<localIndex const> const & elemList = faceManager->elementList();
+  arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & X = nodeManager->referencePosition();
+
+  ElementRegionManager::ElementViewAccessor<arrayView1d<R1Tensor const>> const
+  elemCenter = elemManager->ConstructViewAccessor< array1d<R1Tensor>,
+                                                   arrayView1d<R1Tensor const> >( CellBlock::
+                                                                                  viewKeyStruct::
+                                                                                  elementCenterString);
+
+  ElementRegionManager::ElementViewAccessor<arrayView1d<R1Tensor const>> const
+  coefficient = elemManager->ConstructViewAccessor< array1d<R1Tensor>,
+                                                    arrayView1d<R1Tensor const> >( m_coeffName );
+
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64 const>> const
+  poro = elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64 const>>(FlowSolverBase::viewKeyStruct::porosityString);
+
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64 const>> const
+  poroRef = elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64 const>>(FlowSolverBase::viewKeyStruct::referencePorosityString);
+
+  ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager->nodeList();
+
+  // make a list of region indices to be included
+  SortedArray<localIndex> regionFilter;
+  for (string const & regionName : m_targetRegions)
+  {
+    regionFilter.insert( elemManager->GetRegions().getIndex( regionName ) );
+  }
+
+  constexpr localIndex numElems = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
+
+  R1Tensor faceCenter, faceNormal, faceConormal, cellToFaceVec;
+  R2SymTensor coefTensor;
+  real64 faceArea, faceWeight, faceWeightInv, sumOfDistance;
+
+  stackArray1d<localIndex, numElems> stencilCellsRegionIndex(numElems);
+  stackArray1d<localIndex, numElems> stencilCellsSubRegionIndex(numElems);
+  stackArray1d<localIndex, numElems> stencilCellsIndex(numElems);
+  stackArray1d<real64, numElems> stencilWeights(numElems);
+  stackArray1d<real64, numElems> stencilWeightedElementCenterToConnectorCenter(numElems);
+
+  // loop over faces and calculate faceArea, faceNormal and faceCenter
+
+  real64 const lengthTolerance = meshBody->getGlobalLengthScale() * this->m_areaRelTol;
+  real64 const areaTolerance = lengthTolerance * lengthTolerance;
+  real64 const weightTolerance = 1e-30 * lengthTolerance; // TODO: choice of constant based on physics?
+
+  for (localIndex kf = 0; kf < faceManager->size(); ++kf)
+  {
+    if (elemRegionList[kf][0] == -1 || elemRegionList[kf][1] == -1 || elemList[kf][0] == -1 || elemList[kf][1] == -1)
+      continue;
+
+    if ( !(regionFilter.contains(elemRegionList[kf][0]) && regionFilter.contains(elemRegionList[kf][1])) )
+      continue;
+
+    faceArea = computationalGeometry::Centroid_3DPolygon( faceToNodes[kf], faceToNodes.sizeOfArray( kf ), X, faceCenter, faceNormal, areaTolerance );
+
+    if( faceArea < areaTolerance )
+      continue;
+
+    faceWeightInv = 0.0;
+    sumOfDistance = 0.0;
+
+    for (localIndex ke = 0; ke < numElems; ++ke)
+    {
+      if (elemRegionList[kf][ke] != -1)
+      {
+        localIndex const er  = elemRegionList[kf][ke];
+        localIndex const esr = elemSubRegionList[kf][ke];
+        localIndex const ei  = elemList[kf][ke];
+
+        real64 permeabilityMultiplier = 1.0;
+        permeabilityMultiplier = pow(poro[er][esr][ei], 3) * pow(1 - poroRef[er][esr][ei], 2) / (pow(poroRef[er][esr][ei], 3) * pow(1 - poro[er][esr][ei], 2));
+
+        cellToFaceVec = faceCenter;
+        cellToFaceVec -= elemCenter[er][esr][ei];
+
+        // ensure normal orientation outward of first cell
+        if (ke == 0 && Dot(cellToFaceVec, faceNormal) < 0.0)
+        {
+          faceNormal *= -1;
+        }
+
+        if (ke == 1)
+        {
+          cellToFaceVec *= -1.0;
+        }
+
+        real64 const c2fDistance = cellToFaceVec.Normalize();
+
+        // assemble full coefficient tensor from principal axis/components
+        makeFullTensor(coefficient[er][esr][ei], coefTensor);
+
+        faceConormal.AijBj(coefTensor, faceNormal);
+        real64 halfWeight = Dot(cellToFaceVec, faceConormal);
+
+        // correct negative weight issue arising from non-K-orthogonal grids
+        if( halfWeight < 0.0 )
+        {
+          faceConormal.AijBj(coefTensor, cellToFaceVec);
+          halfWeight = Dot(cellToFaceVec, faceConormal);
+        }
+
+        halfWeight *= faceArea / c2fDistance * permeabilityMultiplier;
+        halfWeight = std::max( halfWeight, weightTolerance );
+
+        faceWeightInv += 1.0 / halfWeight;
+        sumOfDistance += c2fDistance;
+
+        stencilWeightedElementCenterToConnectorCenter[ke] = c2fDistance;
+      }
+    }
+
+    GEOSX_ASSERT( faceWeightInv > 0.0 );
+    faceWeight = 1.0 / faceWeightInv;
+
+    for (localIndex ke = 0; ke < numElems; ++ke)
+    {
+      stencilCellsRegionIndex[ke] = elemRegionList[kf][ke];
+      stencilCellsSubRegionIndex[ke] = elemSubRegionList[kf][ke];
+      stencilCellsIndex[ke] = elemList[kf][ke];
+      stencilWeights[ke] = faceWeight * (ke == 0 ? 1 : -1);
+      stencilWeightedElementCenterToConnectorCenter[ke] /= sqrt(faceWeight / faceArea * sumOfDistance);
+    }
+    stencil.update( CellElementStencilTPFA::NUM_POINT_IN_FLUX,
+                    stencilCellsRegionIndex,
+                    stencilCellsSubRegionIndex,
+                    stencilCellsIndex,
+                    stencilWeights.data(),
+                    stencilWeightedElementCenterToConnectorCenter.data(),
+                    kf);
+  }
+}
+
+
+void TwoPointFluxApproximation::updateFractureStencil( DomainPartition & domain )
+{
+  MeshLevel * const mesh = domain.getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  FaceManager const * const faceManager = mesh->getFaceManager();
+  ElementRegionManager * const elemManager = mesh->getElemManager();
+
+  FaceElementRegion * const fractureRegion = elemManager->GetRegion<FaceElementRegion>("Fracture");
+  if (fractureRegion == nullptr) return;
+  localIndex const fractureRegionIndex = fractureRegion->getIndexInParent();
+
+  ElementRegionManager::ElementViewAccessor<arrayView1d<R1Tensor>> const
+  elemCenter = elemManager->ConstructViewAccessor< array1d<R1Tensor>, arrayView1d<R1Tensor> >( CellBlock::
+                                                                                               viewKeyStruct::
+                                                                                               elementCenterString);
+
+  ElementRegionManager::ElementViewAccessor<arrayView1d<R1Tensor> > const
+  coefficient = elemManager->ConstructViewAccessor< array1d<R1Tensor>, arrayView1d<R1Tensor> >(m_coeffName);
+
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64 const>> const
+  poro = elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64 const>>(FlowSolverBase::viewKeyStruct::porosityString);
+
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64 const>> const
+  poroRef = elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64 const>>(FlowSolverBase::viewKeyStruct::referencePorosityString);
+
+  arrayView1d<real64 const>   const & faceArea = faceManager->faceArea();
+  arrayView1d<R1Tensor const> const & faceCenter = faceManager->faceCenter();
+  arrayView1d<R1Tensor const> const & faceNormal = faceManager->faceNormal();
+
+  CellElementStencilTPFA & cellStencil = getReference<CellElementStencilTPFA>(viewKeyStruct::cellStencilString);
+
+  FaceElementSubRegion * const fractureSubRegion = fractureRegion->GetSubRegion<FaceElementSubRegion>("default");
+  FaceElementSubRegion::FaceMapType const & faceMap = fractureSubRegion->faceList();
+
+  FixedToManyElementRelation const &
+  faceElementsToCells = fractureSubRegion->m_faceElementsToCells;
+
+  localIndex constexpr maxElems = FaceElementStencil::MAX_STENCIL_SIZE;
+
+  stackArray1d<localIndex, maxElems> stencilCellsRegionIndex;
+  stackArray1d<localIndex, maxElems> stencilCellsSubRegionIndex;
+  stackArray1d<localIndex, maxElems> stencilCellsIndex;
+  stackArray1d<real64, maxElems> stencilWeights;
+  stackArray1d<real64, maxElems> stencilWeightedElementCenterToConnectorCenter;
+
+  // update connections for FaceElements to/from CellElements.
+  {
+    arrayView2d<localIndex const> const & elemRegionList = faceElementsToCells.m_toElementRegion;
+    arrayView2d<localIndex const> const & elemSubRegionList = faceElementsToCells.m_toElementSubRegion;
+    arrayView2d<localIndex const> const & elemList = faceElementsToCells.m_toElementIndex;
+//    for( localIndex const kfe : fractureSubRegion->m_newFaceElements )
+    for( localIndex kfe=0 ; kfe<faceElementsToCells.size(0) ; ++kfe )
+    {
+      {
+        localIndex const numElems = faceElementsToCells.size(1);
+
+        GEOSX_ERROR_IF(numElems > maxElems, "Max stencil size exceeded by fracture-cell connector " << kfe);
+        stencilCellsRegionIndex.resize(numElems);
+        stencilCellsSubRegionIndex.resize(numElems);
+        stencilCellsIndex.resize(numElems);
+        stencilWeights.resize(numElems);
+        stencilWeightedElementCenterToConnectorCenter.resize(numElems);
+
+        R2SymTensor coefTensor;
+        R1Tensor cellToFaceVec;
+        R1Tensor faceConormal;
+
+        // remove cell-to-cell connections from cell stencil and add in new connections
+        if( cellStencil.zero( faceMap[kfe][0] ) )
+        {
+          for (localIndex ke = 0; ke < numElems; ++ke)
+          {
+            localIndex const faceIndex = faceMap[kfe][ke];
+            localIndex const er  = elemRegionList[kfe][ke];
+            localIndex const esr = elemSubRegionList[kfe][ke];
+            localIndex const ei  = elemList[kfe][ke];
+
+            real64 permeabilityMultiplier = 1.0;
+            permeabilityMultiplier = pow(poro[er][esr][ei], 3) * pow(1 - poroRef[er][esr][ei], 2) / (pow(poroRef[er][esr][ei], 3) * pow(1 - poro[er][esr][ei], 2));
+
+            cellToFaceVec = faceCenter[faceIndex];
+            cellToFaceVec -= elemCenter[er][esr][ei];
+
+            real64 const c2fDistance = cellToFaceVec.Normalize();
+
+            // assemble full coefficient tensor from principal axis/components
+            makeFullTensor(coefficient[er][esr][ei], coefTensor);
+
+            faceConormal.AijBj(coefTensor, faceNormal[faceIndex]);
+
+            real64 faceWeight = Dot( cellToFaceVec, faceConormal );
+            faceWeight *= permeabilityMultiplier;
+
+            real64 const ht = faceWeight * permeabilityMultiplier * faceArea[faceIndex] / c2fDistance;
+
+            stencilWeightedElementCenterToConnectorCenter[0] = c2fDistance / sqrt( faceWeight );
+            stencilWeightedElementCenterToConnectorCenter[1] = 0;
+
+            // assume the h for the faceElement to the connector (Face) is zero. thus the weights are trivial.
+            stencilCellsRegionIndex[0] = er;
+            stencilCellsSubRegionIndex[0] = esr;
+            stencilCellsIndex[0] = ei;
+            stencilWeights[0] =  ht ;
+
+            stencilCellsRegionIndex[1] = fractureRegionIndex;
+            stencilCellsSubRegionIndex[1] = 0;
+            stencilCellsIndex[1] = kfe;
+            stencilWeights[1] = -ht ;
+
+            cellStencil.update( 2,
+                                stencilCellsRegionIndex,
+                                stencilCellsSubRegionIndex,
+                                stencilCellsIndex,
+                                stencilWeights.data(),
+                                stencilWeightedElementCenterToConnectorCenter.data(),
+                                faceIndex );
+          }
+        }
+      }
+    }
+  }
+}
+
+void TwoPointFluxApproximation::updateBoundaryStencil( DomainPartition const & domain,
+                                                       SortedArrayView<localIndex const> const & faceSet,
+                                                       BoundaryStencil & stencil )
+{
+  MeshBody const * const meshBody = domain.getMeshBody(0);
+  MeshLevel const * const mesh = meshBody->getMeshLevel(0);
+  NodeManager const * const nodeManager = mesh->getNodeManager();
+  FaceManager const * const faceManager = mesh->getFaceManager();
+  ElementRegionManager const * const elemManager = mesh->getElemManager();
+
+  arrayView2d< localIndex const > const & elemRegionList     = faceManager->elementRegionList();
+  arrayView2d< localIndex const > const & elemSubRegionList  = faceManager->elementSubRegionList();
+  arrayView2d< localIndex const > const & elemList           = faceManager->elementList();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager->referencePosition();
+
+  ElementRegionManager::ElementViewAccessor<arrayView1d<R1Tensor const>> const
+  elemCenter = elemManager->ConstructViewAccessor< array1d<R1Tensor>,
+                                                   arrayView1d<R1Tensor const> >( CellBlock::
+                                                                                  viewKeyStruct::
+                                                                                  elementCenterString);
+
+  ElementRegionManager::ElementViewAccessor<arrayView1d<R1Tensor const>> const
+  coefficient = elemManager->ConstructViewAccessor< array1d<R1Tensor>,
+                                                    arrayView1d<R1Tensor const> >(m_coeffName);
+
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64 const>> const
+  poro = elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64 const>>(FlowSolverBase::viewKeyStruct::porosityString);
+
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64 const>> const
+  poroRef = elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64 const>>(FlowSolverBase::viewKeyStruct::referencePorosityString);
+
+  ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager->nodeList();
+
+  // make a list of region indices to be included
+  SortedArray<localIndex> regionFilter;
+  for (string const & regionName : m_targetRegions)
+  {
+    regionFilter.insert( elemManager->GetRegions().getIndex( regionName ) );
+  }
+
+  constexpr localIndex numElems = BoundaryStencil::NUM_POINT_IN_FLUX;
+
+  R1Tensor faceCenter, faceNormal, faceConormal, cellToFaceVec;
+  R2SymTensor coefTensor;
+  real64 faceArea, faceWeight;
+
+  stackArray1d<PointDescriptor, numElems> stencilPoints(numElems);
+  stackArray1d<real64, numElems> stencilWeights(numElems);
+  stackArray1d<real64, numElems> stencilWeightedElementCenterToConnectorCenter(numElems);
+
+  real64 const lengthTolerance = meshBody->getGlobalLengthScale() * this->m_areaRelTol;
+  real64 const areaTolerance = lengthTolerance * lengthTolerance;
+  real64 const weightTolerance = 1e-30 * lengthTolerance; // TODO: choice of constant based on physics?
+
+  // loop over faces and calculate faceArea, faceNormal and faceCenter
+  for (localIndex kf : faceSet)
+  {
+    faceArea = computationalGeometry::Centroid_3DPolygon( faceToNodes[kf], faceToNodes.sizeOfArray( kf ), X, faceCenter, faceNormal, areaTolerance );
+
+    for (localIndex ke = 0; ke < numElems; ++ke)
+    {
+      if (elemRegionList[kf][ke] < 0)
+        continue;
+
+      if (!regionFilter.contains(elemRegionList[kf][ke]))
+        continue;
+
+      localIndex const er  = elemRegionList[kf][ke];
+      localIndex const esr = elemSubRegionList[kf][ke];
+      localIndex const ei  = elemList[kf][ke];
+
+      real64 permeabilityMultiplier = 1.0;
+      permeabilityMultiplier = pow(poro[er][esr][ei], 3) * pow(1 - poroRef[er][esr][ei], 2) / (pow(poroRef[er][esr][ei], 3) * pow(1 - poro[er][esr][ei], 2));
+
+      cellToFaceVec = faceCenter;
+      cellToFaceVec -= elemCenter[er][esr][ei];
+
+      // ensure normal orientation outward of the cell
+      if (Dot(cellToFaceVec, faceNormal) < 0.0)
+      {
+        faceNormal *= -1;
+      }
+
+      real64 const c2fDistance = cellToFaceVec.Normalize();
+
+      // assemble full coefficient tensor from principal axis/components
+      makeFullTensor(coefficient[er][esr][ei], coefTensor);
+
+      faceConormal.AijBj(coefTensor, faceNormal);
+      faceWeight = Dot(cellToFaceVec, faceConormal);
+
+      // correct negative weight issue arising from non-K-orthogonal grids
+      if (faceWeight < 0.0)
+      {
+        faceConormal.AijBj(coefTensor, cellToFaceVec);
+        faceWeight = Dot(cellToFaceVec, faceConormal);
+      }
+
+      faceWeight *= permeabilityMultiplier;
+
+      stencilWeightedElementCenterToConnectorCenter[0] = c2fDistance / sqrt( faceWeight );
+      stencilWeightedElementCenterToConnectorCenter[1] = 0.0 ;
+
+      faceWeight *= faceArea / c2fDistance;
+      faceWeight = std::max( faceWeight, weightTolerance );
+
+      stencilPoints[0].tag = PointDescriptor::Tag::CELL;
+      stencilPoints[0].cellIndex = { er, esr, ei };
+      stencilWeights[0] = faceWeight;
+
+      stencilPoints[1].tag = PointDescriptor::Tag::FACE;
+      stencilPoints[1].faceIndex = kf;
+      stencilWeights[1] = -faceWeight;
+
+      stencil.update( 2,
+                      stencilPoints.data(),
+                      stencilWeights.data(),
+                      stencilWeightedElementCenterToConnectorCenter.data(),
+                      kf );
+    }
+  }
+//  stencil.compress();
 }
 
 

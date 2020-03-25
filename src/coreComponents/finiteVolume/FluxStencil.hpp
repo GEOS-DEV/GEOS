@@ -69,6 +69,13 @@ public:
             WEIGHT const * const weightedElementCenterToConnectorCenter,
             localIndex const connectorIndex );
 
+  /// update data for one connection
+  bool update( localIndex const numPts,
+               INDEX  const * const indices,
+               WEIGHT const * const weights,
+               WEIGHT const * const weightedElementCenterToConnectorCenter,
+               localIndex const connectorIndex );
+
   /// zero out connections
   bool zero( localIndex const connectorIndex );
 
@@ -137,6 +144,25 @@ void FluxStencil<INDEX, WEIGHT>::add( localIndex const numPts,
 
   m_connections.appendArray( entries.data(), numPts );
   m_stencilIndices[connectorIndex] = m_connections.size() - 1;
+}
+
+template<typename INDEX, typename WEIGHT>
+bool FluxStencil<INDEX, WEIGHT>::update( localIndex const GEOSX_UNUSED_PARAM( numPts ),
+                                         INDEX  const * const GEOSX_UNUSED_PARAM( indices ),
+                                         WEIGHT const * const weights,
+                                         WEIGHT const * const weightedElementCenterToConnectorCenter,
+                                         localIndex const connectorIndex )
+{
+  return
+  executeOnMapValue( m_stencilIndices, connectorIndex, [&]( localIndex const connectionListIndex )
+  {
+    Entry * const entries = m_connections[connectionListIndex];
+    for (localIndex i = 0; i < m_connections.sizeOfArray( connectionListIndex ); ++i)
+    {
+      entries[i].weight = weights[i];
+      entries[i].weightedElementCenterToConnectorCenter = weightedElementCenterToConnectorCenter[i];
+    }
+  });
 }
 
 template<typename INDEX, typename WEIGHT>

@@ -58,4 +58,24 @@ void CellElementStencilTPFA::add( localIndex const numPts,
   m_stencilIndices[connectorIndex] = oldSize;
 }
 
+void CellElementStencilTPFA::update( localIndex const numPts,
+                                     localIndex const * const elementRegionIndices,
+                                     localIndex const * const elementSubRegionIndices,
+                                     localIndex const * const elementIndices,
+                                     real64 const * const weights,
+                                     real64 const * const weightedElementCenterToConnectorCenter,
+                                     localIndex const connectorIndex )
+{
+  localIndex const stencilIndex = m_stencilIndices[connectorIndex];
+
+  for( localIndex a=0 ; a<numPts ; ++a )
+  {
+    m_elementRegionIndices(stencilIndex,a) = elementRegionIndices[a];
+    m_elementSubRegionIndices(stencilIndex,a) = elementSubRegionIndices[a];
+    m_elementIndices(stencilIndex,a) = elementIndices[a];
+    m_weights(stencilIndex,a) = weights[a];
+    m_weightedElementCenterToConnectorCenter(stencilIndex,a) = weightedElementCenterToConnectorCenter[a];
+  }
+}
+
 } /* namespace geosx */

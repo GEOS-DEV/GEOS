@@ -78,6 +78,14 @@ public:
                     real64 const * const weightedElementCenterToConnectorCenter,
                     localIndex const connectorIndex ) override final;
 
+  void update( localIndex const numPts,
+                       localIndex  const * const elementRegionIndices,
+                       localIndex  const * const elementSubRegionIndices,
+                       localIndex  const * const elementIndices,
+                       real64 const * const weights,
+                       real64 const * const weightedElementCenterToConnectorCenter,
+                       localIndex const connectorIndex );
+
   virtual localIndex size() const override final
   { return m_elementRegionIndices.size(0); }
 

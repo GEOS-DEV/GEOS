@@ -117,9 +117,14 @@ public:
   /// triggers computation of the stencil, implemented in derived classes
   void compute( DomainPartition & domain );
 
+  /// triggers update of the stencil, implemented in derived classes
+  void update( DomainPartition & domain );
+
   virtual void addToFractureStencil( DomainPartition & GEOSX_UNUSED_PARAM( domain ),
                                      string const & GEOSX_UNUSED_PARAM( faceElementRegionName ),
                                      bool const GEOSX_UNUSED_PARAM(initFlag) ) {}
+
+  virtual void updateFractureStencil( DomainPartition & GEOSX_UNUSED_PARAM( domain ) ) {}
 
 
   struct viewKeyStruct
@@ -153,6 +158,14 @@ protected:
   virtual void computeBoundaryStencil( DomainPartition const & domain,
                                        SortedArrayView<localIndex const> const & faceSet,
                                        BoundaryStencil & stencil ) = 0;
+
+  /// update of the cell-to-cell stencil, to be overridden by implementations
+  virtual void updateCellStencil( DomainPartition const & GEOSX_UNUSED_PARAM(domain) ) {};
+
+  /// update of the boundary stencil, to be overridden by implementations
+  virtual void updateBoundaryStencil( DomainPartition const & GEOSX_UNUSED_PARAM(domain),
+                                      SortedArrayView<localIndex const> const & GEOSX_UNUSED_PARAM(faceSet),
+                                      BoundaryStencil & GEOSX_UNUSED_PARAM(stencil) ) {};
 
   /// name of the primary solution field
   string m_fieldName;

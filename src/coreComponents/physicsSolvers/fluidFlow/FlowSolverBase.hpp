@@ -86,6 +86,8 @@ public:
                           real64 const GEOSX_UNUSED_PARAM( dt ),
                           DomainPartition * const GEOSX_UNUSED_PARAM( domain )) {}
 
+  virtual void UpdateStencil( DomainPartition * const GEOSX_UNUSED_PARAM( domain )) {}
+
   localIndex solidIndex() const { return m_solidIndex; }
 
   localIndex numDofPerCell() const { return m_numDofPerCell; }

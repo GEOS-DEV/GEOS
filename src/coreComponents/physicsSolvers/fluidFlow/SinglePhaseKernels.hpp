@@ -381,7 +381,6 @@ struct FluxKernel
   Launch( STENCIL_TYPE & stencil,
           real64 const dt,
           localIndex const fluidIndex,
-          localIndex const fractureRegionIndex,
           ElementView < arrayView1d<real64 const> > const & pres,
           ElementView < arrayView1d<real64 const> > const & gravCoef,
           MaterialView< arrayView2d<real64 const> > const & dens,
@@ -394,7 +393,6 @@ struct FluxKernel
           ElementView < arrayView1d<real64 const> > const & dSdAper,
 #endif
           ElementView < arrayView1d<real64 const> > const & poro,
-          ElementView < arrayView1d<real64 const> > const & poroRef,
           ElementView < arrayView1d<real64 const> > const & totalCompressibility,
           ElementView < arrayView1d<real64 const> > const & referencePressure,
           ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> * const mass,
@@ -616,11 +614,9 @@ struct FluxKernel
            MaterialView<arrayView2d<real64 const>> const & visc,
            ElementView <arrayView1d<real64 const>> const & mob,
            ElementView <arrayView1d<real64 const>> const & poro,
-           ElementView <arrayView1d<real64 const>> const & poroRef,
            ElementView <arrayView1d<real64 const>> const & totalCompressibility,
            ElementView <arrayView1d<real64 const>> const & referencePressure,
            localIndex const fluidIndex,
-           localIndex const fractureRegionIndex,
            real64 const dt,
            ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> * const mass,
            real64 * const maxStableDt)
@@ -655,22 +651,14 @@ struct FluxKernel
       localIndex const esr = sesri[ke];
       localIndex const ei  = sei[ke];
 
-      real64 permeabilityMultiplier = 1.0;
-      if (er != fractureRegionIndex && (poro[er][esr][ei] < poroRef[er][esr][ei]))
-//        permeabilityMultiplier = 1.0 - (poroRef[er][esr][ei] - poro[er][esr][ei]);
-        permeabilityMultiplier = pow(poro[er][esr][ei], 3) * pow(1 - poroRef[er][esr][ei], 2) / (pow(poroRef[er][esr][ei], 3) * pow(1 - poro[er][esr][ei], 2));
-
-//      permeabilityMultiplier = 1.0;
-//        std::cout << "\n matrix ei = " << ei << ", poro = " << poro[er][esr][ei] << ", poroRef = " << poroRef[er][esr][ei] << ", permeabilityMultiplier = " << permeabilityMultiplier;
-
-      real64 weight = stencilWeights[ke] * permeabilityMultiplier;
+      real64 weight = stencilWeights[ke];
 
       real64 const gravD = gravCoef[er][esr][ei];
       real64 const gravTerm = densMean * gravD;
 
       potDif += weight * (std::max(pres[er][esr][ei], referencePressure[er][esr][ei]) - gravTerm);
 
-      weightedSum += stencilWeightedElementCenterToConnectorCenter[ke] / sqrt(permeabilityMultiplier);
+      weightedSum += stencilWeightedElementCenterToConnectorCenter[ke];
 
       if (stencilWeightedElementCenterToConnectorCenter[ke] < 1e-30)
         faceToCellConnector = true;
@@ -689,20 +677,18 @@ struct FluxKernel
     if (!faceToCellConnector)
       *maxStableDt = std::min( totalCompressibility[er_up][esr_up][ei_up] * visc[er_up][esr_up][fluidIndex][ei_up][0] * poro[er_up][esr_up][ei_up] / 2.0 * weightedSum * weightedSum, *maxStableDt);
 
-    //    if (ei_up == 0 && (*maxStableDt) < 1e-5)
-//      std::cout << "\n Critical Time: maxStableDt = " << *maxStableDt << ", poro = " << poro[er_up][esr_up][ei_up] << ", weightedSum = " << weightedSum;
-
     // populate local flux
     if (std::abs(potDif) > std::numeric_limits<real64>::min() && hasMassTransfer)
     {
       (*mass)[seri[0]][sesri[0]][sei[0]] -= mob[er_up][esr_up][ei_up] * potDif * dt;
       (*mass)[seri[1]][sesri[1]][sei[1]] += mob[er_up][esr_up][ei_up] * potDif * dt;
-      if (potDif >= 0 && ((*mass)[seri[0]][sesri[0]][sei[0]] < (*mass)[seri[1]][sesri[1]][sei[1]]) )
-      std::cout << "\n Violated: Critical Time: maxStableDt = " << *maxStableDt << ", sei[up] = " << sei[0] << ", sei[down] = "  << sei[1] << ", mass[up] = "<< (*mass)[seri[0]][sesri[0]][sei[0]]
-                << ", mass[down] = "<< (*mass)[seri[1]][sesri[1]][sei[1]]<< ", massFlux = " << mob[er_up][esr_up][ei_up] * potDif * dt << ", pres[up] = " << pres[seri[0]][sesri[0]][sei[0]] << ", pres[down] = " << pres[seri[1]][sesri[1]][sei[1]];
-      else if (potDif < 0 && ((*mass)[seri[0]][sesri[0]][sei[0]] > (*mass)[seri[1]][sesri[1]][sei[1]]) )
-        std::cout << "\n Violated: Critical Time: maxStableDt = " << *maxStableDt << ", sei[up] = " << sei[1] << ", sei[down] = "  << sei[0] << ", mass[up] = "<< (*mass)[seri[1]][sesri[1]][sei[1]]
-                  << ", mass[down] = "<< (*mass)[seri[0]][sesri[0]][sei[0]] << ", massFlux = " << mob[er_up][esr_up][ei_up] * potDif * dt << ", pres[up] = " << pres[seri[1]][sesri[1]][sei[1]] << ", pres[down] = " << pres[seri[0]][sesri[0]][sei[0]];
+
+//      if (potDif >= 0 && ((*mass)[seri[0]][sesri[0]][sei[0]] < (*mass)[seri[1]][sesri[1]][sei[1]]) )
+//        std::cout << "\n Violated: Critical Time: maxStableDt = " << *maxStableDt << ", sei[up] = " << sei[0] << ", sei[down] = "  << sei[1] << ", mass[up] = "<< (*mass)[seri[0]][sesri[0]][sei[0]]
+//                << ", mass[down] = "<< (*mass)[seri[1]][sesri[1]][sei[1]]<< ", massFlux = " << mob[er_up][esr_up][ei_up] * potDif * dt << ", pres[up] = " << pres[seri[0]][sesri[0]][sei[0]] << ", pres[down] = " << pres[seri[1]][sesri[1]][sei[1]];
+//      else if (potDif < 0 && ((*mass)[seri[0]][sesri[0]][sei[0]] > (*mass)[seri[1]][sesri[1]][sei[1]]) )
+//        std::cout << "\n Violated: Critical Time: maxStableDt = " << *maxStableDt << ", sei[up] = " << sei[1] << ", sei[down] = "  << sei[0] << ", mass[up] = "<< (*mass)[seri[1]][sesri[1]][sei[1]]
+//                  << ", mass[down] = "<< (*mass)[seri[0]][sesri[0]][sei[0]] << ", massFlux = " << mob[er_up][esr_up][ei_up] * potDif * dt << ", pres[up] = " << pres[seri[1]][sesri[1]][sei[1]] << ", pres[down] = " << pres[seri[0]][sesri[0]][sei[0]];
     }
   }
 

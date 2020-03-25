@@ -188,6 +188,8 @@ public:
                   real64 const dt,
                   DomainPartition * const domain ) override;
 
+  void UpdateStencil( DomainPartition * const domain ) override;
+
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {
     static constexpr auto boundaryFacePressureString = "boundaryFacePressure";
