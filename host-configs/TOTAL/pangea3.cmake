@@ -1,12 +1,14 @@
-
+# hostconfig for pangea3
+# module load cmake/3.14 gcc/8.3 cuda/10.1.243 smpi/10.3.1.0 openblas/0.3.3 lapack/3.9.0
 
 set(CONFIG_NAME "pangea3" CACHE PATH "") 
 
 # Set up the tpls
-set(GEOSX_TPL_ROOT_DIR /workrd/SCR/GEOS/GEOSX/thirdPartyLibs CACHE PATH "")
+set(GEOSX_TPL_ROOT_DIR /workrd/SCR/GEOSX/manualClones/thirdPartyLibs CACHE PATH "")
 set(GEOSX_TPL_DIR ${GEOSX_TPL_ROOT_DIR}/install-${CONFIG_NAME}-release CACHE PATH "")
 
-set(HOST_COMPILER_PATH /data_local/sw/spack/opt/spack/linux-rhel7-ppc64le/gcc-4.8.5/gcc-8.2.0-suea3az6vbveib7t7d7roevy5y2qeebb/bin )
+#set(HOST_COMPILER_PATH /data_local/sw/spack/opt/spack/linux-rhel7-ppc64le/gcc-4.8.5/gcc-8.2.0-suea3az6vbveib7t7d7roevy5y2qeebb/bin )
+set(HOST_COMPILER_PATH /data_local/sw/spack/0.13.3/opt/spack/linux-rhel7-power8le/gcc-4.8/gcc-8.3.0-xvcv2vifxgzn2uz52xu3f4njsq5xrc5p/bin )
 
 # C options
 set(CMAKE_C_COMPILER ${HOST_COMPILER_PATH}/gcc CACHE PATH "")
@@ -24,7 +26,7 @@ set(CMAKE_CXX_STANDARD 14 CACHE STRING "")
 # Fortran options
 set(CMAKE_Fortran_COMPILER ${HOST_COMPILER_PATH}/gfortran CACHE PATH "")
 set(CMAKE_Fortran_FLAGS_RELEASE "-O3 -DNDEBUG -mcpu=power9 -mtune=power9" CACHE STRING "")
-set(FORTRAN_MANGLE_NO_UNDERSCORE ON CACHE BOOL "")
+#set(FORTRAN_MANGLE_NO_UNDERSCORE ON CACHE BOOL "")
 
 
 
@@ -40,7 +42,8 @@ set(ENABLE_OPENMP ON CACHE BOOL "" FORCE)
 
 # MPI options
 set(ENABLE_MPI ON CACHE BOOL "")
-set(MPI_ROOT /data_local/sw/spectrum_mpi/10.03.00.01rtm3-rh7_20190611 CACHE PATH "")
+#set(MPI_ROOT /data_local/sw/spectrum_mpi/10.03.00.01rtm3-rh7_20190611 CACHE PATH "")
+set(MPI_ROOT /data_local/sw/spectrum_mpi/10.03.01.00rtm5-rh7_20191114 CACHE PATH "")
 set(MPI_C_COMPILER         ${MPI_ROOT}/bin/mpicc  CACHE PATH "")
 set(MPI_CXX_COMPILER       ${MPI_ROOT}/bin/mpicxx CACHE PATH "")
 set(MPI_Fortran_COMPILER   ${MPI_ROOT}/bin/mpifort CACHE PATH "")
@@ -101,8 +104,8 @@ if( ENABLE_ESSL )
 		       ${XL_DIR}/xlC/16.1.1/lib/libxl.a
                        CACHE PATH "")
 else()
-  set( BLAS_LIBRARIES /usr/lib64/libblas.so.3 CACHE PATH "")
-  set( LAPACK_LIBRARIES /data_local/sw/cuda/10.1.243/targets/ppc64le-linux/lib/liblapack_static.a CACHE PATH "")
+  set( BLAS_LIBRARIES /data_local/sw/openblas/0.3.4/lib/libopenblas.a CACHE PATH "")
+  set( LAPACK_LIBRARIES /data_local/sw/lapack/3.9.0/toolchain/rhel-7.6/gcc-8.3/lib64/liblapack.a CACHE PATH "")
 endif()
 
 set(ENABLE_DOXYGEN OFF CACHE PATH "")
