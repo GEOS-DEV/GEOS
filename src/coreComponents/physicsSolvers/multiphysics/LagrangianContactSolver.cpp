@@ -1086,24 +1086,6 @@ void LagrangianContactSolver::AssembleForceResidualDerivativeWrtTraction( Domain
           {
             colDOF[i] = tracDofNumber[kfe] + integer_conversion< globalIndex >( i );
           }
-         
-          real64 const nodalArea = area[kfe] / static_cast< real64 >( numNodesPerFace );
-          real64_array nodalForceVec( 3 );
-          nodalForceVec[0] = ( traction[kfe][0] ) * nodalArea;
-          nodalForceVec[1] = ( traction[kfe][1] ) * nodalArea;
-          nodalForceVec[2] = ( traction[kfe][2] ) * nodalArea;
-          R1Tensor localNodalForce( nodalForceVec[0], nodalForceVec[1], nodalForceVec[2] );
-          R1Tensor globalNodalForce;
-          globalNodalForce.AijBj( rotationMatrix[kfe], localNodalForce );
-         
-          for( localIndex kf=0; kf<2; ++kf )
-          {
-            localIndex const faceIndex = elemsToFaces[kfe][kf];
-         
-=======
-          {
-            colDOF[i] = tracDofNumber[kfe] + integer_conversion< globalIndex >( i );
-          }
 
           real64 const nodalArea = area[kfe] / static_cast< real64 >( numNodesPerFace );
           real64_array nodalForceVec( 3 );
