@@ -199,7 +199,7 @@ void SolverBase::Execute( real64 const time_n,
     /*
      * Let us check convergence history of previous solve:
      * - number of nonlinear iter.
-     * - if the time-step was c hopped. Then we can add some heuristics to choose next dt.
+     * - if the time-step was chopped. Then we can add some heuristics to choose next dt.
      * */
     dtRemaining -= dtAccepted;
 
@@ -627,8 +627,12 @@ void SolverBase::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( dofManager 
   solver.solve( matrix, solution, rhs );
 
   // Debug for logLevel >= 2
-  GEOSX_LOG_LEVEL_RANK_0( 2, "After SolveSystem" );
-  GEOSX_LOG_LEVEL_RANK_0( 2, "\nSolution:\n" << solution );
+  if( getLogLevel() >= 2 )
+  {
+    GEOSX_LOG_RANK_0( "After SolveSystem" );
+    GEOSX_LOG_RANK_0( "\nSolution\n" );
+    std::cout << solution;
+  }
 }
 
 bool SolverBase::CheckSystemSolution( DomainPartition const * const GEOSX_UNUSED_PARAM( domain ),
