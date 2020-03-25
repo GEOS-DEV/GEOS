@@ -345,11 +345,10 @@ void LagrangianContactSolver::UpdateDeformationForCoupling( DomainPartition * co
 
       forAll< serialPolicy >( subRegion.size(), [=]( localIndex const kfe )
       {
-        localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
-
         // Contact constraints
         if( ghostRank[kfe] < 0 )
         {
+          localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
           R1Tensor globalJump( 0.0, 0.0, 0.0 );
           for( localIndex a=0; a<numNodesPerFace; ++a )
           {
@@ -1077,7 +1076,7 @@ void LagrangianContactSolver::AssembleForceResidualDerivativeWrtTraction( Domain
         {
           localIndex const kf0 = elemsToFaces[kfe][0];
           localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kf0 );
-         
+
           globalIndex rowDOF[12];
           real64 nodeRHS[12];
           stackArray2d< real64, 3*4*3 > dRdT( 3*numNodesPerFace, 3 );
@@ -1101,6 +1100,24 @@ void LagrangianContactSolver::AssembleForceResidualDerivativeWrtTraction( Domain
           {
             localIndex const faceIndex = elemsToFaces[kfe][kf];
          
+=======
+          {
+            colDOF[i] = tracDofNumber[kfe] + integer_conversion< globalIndex >( i );
+          }
+
+          real64 const nodalArea = area[kfe] / static_cast< real64 >( numNodesPerFace );
+          real64_array nodalForceVec( 3 );
+          nodalForceVec[0] = ( traction[kfe][0] ) * nodalArea;
+          nodalForceVec[1] = ( traction[kfe][1] ) * nodalArea;
+          nodalForceVec[2] = ( traction[kfe][2] ) * nodalArea;
+          R1Tensor localNodalForce( nodalForceVec[0], nodalForceVec[1], nodalForceVec[2] );
+          R1Tensor globalNodalForce;
+          globalNodalForce.AijBj( rotationMatrix[kfe], localNodalForce );
+
+          for( localIndex kf=0; kf<2; ++kf )
+          {
+            localIndex const faceIndex = elemsToFaces[kfe][kf];
+
             for( localIndex a=0; a<numNodesPerFace; ++a )
             {
               for( localIndex i=0; i<3; ++i )
@@ -1109,7 +1126,7 @@ void LagrangianContactSolver::AssembleForceResidualDerivativeWrtTraction( Domain
                 // Opposite sign w.r.t. theory because of minus sign in stiffness matrix definition (K < 0)
                 nodeRHS[3*a+i] = +globalNodalForce[i] * pow( -1, kf );
                 fext[faceToNodeMap( faceIndex, a )][i] += +globalNodalForce[i] * pow( -1, kf );
-         
+
                 // Opposite sign w.r.t. theory because of minus sign in stiffness matrix definition (K < 0)
                 dRdT( 3*a+i, 0 ) = +nodalArea * rotationMatrix[kfe]( i, 0 ) * pow( -1, kf );
                 dRdT( 3*a+i, 1 ) = +nodalArea * rotationMatrix[kfe]( i, 1 ) * pow( -1, kf );
