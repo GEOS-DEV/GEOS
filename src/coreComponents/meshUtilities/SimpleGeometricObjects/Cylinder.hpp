@@ -28,14 +28,14 @@ namespace geosx
 class Cylinder : public SimpleGeometricObjectBase
 {
 public:
-  Cylinder( const std::string& name,
+  Cylinder( const std::string & name,
             Group * const parent );
 
   virtual ~Cylinder() override;
 
   static string CatalogName() { return "Cylinder"; }
 
-  bool IsCoordInObject( const R1Tensor& coord ) const override final;
+  bool IsCoordInObject( const R1Tensor & coord ) const override final;
 
 
 private:

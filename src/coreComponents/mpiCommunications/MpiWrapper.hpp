@@ -86,7 +86,7 @@ struct MPI_Status
 #endif
 
 #if defined(NDEBUG)
-  #define MPI_CHECK_ERROR( error ) ((void) error) 
+  #define MPI_CHECK_ERROR( error ) ((void) error)
 #else
   #define MPI_CHECK_ERROR( error ) GEOSX_ERROR_IF_NE( error, MPI_SUCCESS );
 #endif
@@ -293,11 +293,12 @@ public:
    * @param[out] allValues The values recived from each rank.
    */
   template< typename T >
-  static void allGather( T const myValue, array1d< T > & allValues );
+  static void allGather( T const myValue, array1d< T > & allValues, MPI_Comm comm = MPI_COMM_GEOSX );
 
   template< typename T >
   static int allGather( arrayView1d< T const > const & sendbuf,
-                        array1d< T > & recvbuf );
+                        array1d< T > & recvbuf,
+                        MPI_Comm comm = MPI_COMM_GEOSX );
 
   /**
    * @brief Strongly typed wrapper around MPI_Allreduce.
@@ -330,7 +331,7 @@ public:
    * @param srcRank The rank that is sending the \p value.
    */
   template< typename T >
-  static void Broadcast( T & value, int srcRank = 0 );
+  static void Broadcast( T & value, int srcRank = 0, MPI_Comm comm = MPI_COMM_GEOSX );
 
   /**
    * @brief Strongly typed wrapper around MPI_Gather().
@@ -449,7 +450,7 @@ public:
    * @return The minimum of all \p value across the ranks.
    */
   template< typename T >
-  static T Min( T const & value );
+  static T Min( T const & value, MPI_Comm comm = MPI_COMM_GEOSX );
 
   /**
    * @brief Convenience function for a MPI_Reduce using a MPI_MAX operation.
@@ -457,7 +458,7 @@ public:
    * @return The maximum of all \p value across the ranks.
    */
   template< typename T >
-  static T Max( T const & value );
+  static T Max( T const & value, MPI_Comm comm = MPI_COMM_GEOSX );
 
   /**
    * @brief Compute exclusive prefix sum and full sum
@@ -477,7 +478,7 @@ public:
    * @return The value of reduction across all ranks
    */
   template< typename T >
-  static T Reduce( T const & value, Reduction const op );
+  static T Reduce( T const & value, Reduction const op, MPI_Comm comm = MPI_COMM_GEOSX );
 
   /**
    * @brief Convenience function for a MPI_Reduce using a MPI_SUM operation.
@@ -485,7 +486,7 @@ public:
    * @return The sum of all \p value across the ranks.
    */
   template< typename T >
-  static T Sum( T const & value );
+  static T Sum( T const & value, MPI_Comm comm = MPI_COMM_GEOSX );
 };
 
 template<> inline MPI_Datatype MpiWrapper::getMpiType< char >()           { return MPI_CHAR; }
@@ -542,15 +543,15 @@ int MpiWrapper::Allgather( T_SEND const * const sendbuf,
 
 
 template< typename T >
-void MpiWrapper::allGather( T const myValue, array1d< T > & allValues )
+void MpiWrapper::allGather( T const myValue, array1d< T > & allValues, MPI_Comm MPI_PARAM( comm ) )
 {
 #ifdef GEOSX_USE_MPI
-  int const mpiSize = Comm_size( MPI_COMM_GEOSX );
+  int const mpiSize = Comm_size( comm );
   allValues.resize( mpiSize );
 
   MPI_Datatype const MPI_TYPE = getMpiType< T >();
 
-  MPI_Allgather( &myValue, 1, MPI_TYPE, allValues.data(), 1, MPI_TYPE, MPI_COMM_GEOSX );
+  MPI_Allgather( &myValue, 1, MPI_TYPE, allValues.data(), 1, MPI_TYPE, comm );
 
 #else
   allValues.resize( 1 );
@@ -560,11 +561,12 @@ void MpiWrapper::allGather( T const myValue, array1d< T > & allValues )
 
 template< typename T >
 int MpiWrapper::allGather( arrayView1d< T const > const & sendValues,
-                           array1d< T > & allValues )
+                           array1d< T > & allValues,
+                           MPI_Comm MPI_PARAM( comm ) )
 {
   int const sendSize = integer_conversion< int >( sendValues.size() );
 #ifdef GEOSX_USE_MPI
-  int const mpiSize = Comm_size( MPI_COMM_GEOSX );
+  int const mpiSize = Comm_size( comm );
   allValues.resize( mpiSize * sendSize );
   return MPI_Allgather( sendValues.data(),
                         sendSize,
@@ -572,11 +574,11 @@ int MpiWrapper::allGather( arrayView1d< T const > const & sendValues,
                         allValues.data(),
                         sendSize,
                         getMpiType< T >(),
-                        MPI_COMM_GEOSX );
+                        comm );
 
 #else
   allValues.resize( sendSize );
-  for( localIndex a=0 ; a<sendSize ; ++a )
+  for( localIndex a=0; a<sendSize; ++a )
   {
     allValues[a] = sendValues[a];
   }
@@ -615,25 +617,27 @@ int MpiWrapper::bcast( T * const MPI_PARAM( buffer ),
 }
 
 template< typename T >
-void MpiWrapper::Broadcast( T & MPI_PARAM( value ), int MPI_PARAM( srcRank ) )
+void MpiWrapper::Broadcast( T & MPI_PARAM( value ), int MPI_PARAM( srcRank ), MPI_Comm MPI_PARAM( comm ) )
 {
 #ifdef GEOSX_USE_MPI
   MPI_Datatype const mpiType = getMpiType< T >();
-  MPI_Bcast( &value, 1, mpiType, srcRank, MPI_COMM_GEOSX );
+  MPI_Bcast( &value, 1, mpiType, srcRank, comm );
 #endif
 }
 
 template<>
 inline
-void MpiWrapper::Broadcast< std::string >( std::string & MPI_PARAM( value ), int MPI_PARAM( srcRank ) )
+void MpiWrapper::Broadcast< std::string >( std::string & MPI_PARAM( value ),
+                                           int MPI_PARAM( srcRank ),
+                                           MPI_Comm MPI_PARAM( comm ) )
 {
 #ifdef GEOSX_USE_MPI
   int size = value.size();
-  Broadcast( size, srcRank );
+  Broadcast( size, srcRank, comm );
 
   value.resize( size );
 
-  MPI_Bcast( const_cast< char * >( value.data() ), size, getMpiType< char >(), srcRank, MPI_COMM_GEOSX );
+  MPI_Bcast( const_cast< char * >( value.data() ), size, getMpiType< char >(), srcRank, comm );
 #endif
 }
 
@@ -725,7 +729,7 @@ int MpiWrapper::recv( array1d< T > & buf,
 
   GEOSX_ASSERT_EQ( count % sizeof( T ), 0 );
   buf.resize( count / sizeof( T ) );
-  
+
   return MPI_Recv( reinterpret_cast< char * >( buf.data() ),
                    count,
                    MPI_CHAR,
@@ -734,7 +738,7 @@ int MpiWrapper::recv( array1d< T > & buf,
                    comm,
                    request );
 #else
-  GEOSX_ERROR("Not implemented!");
+  GEOSX_ERROR( "Not implemented!" );
   return MPI_SUCCESS;
 #endif
 }
@@ -755,7 +759,7 @@ int MpiWrapper::iSend( arrayView1d< T const > const & buf,
                     comm,
                     request );
 #else
-  GEOSX_ERROR("Not implemented.");
+  GEOSX_ERROR( "Not implemented." );
   return MPI_SUCCESS;
 #endif
 }
@@ -799,7 +803,7 @@ U MpiWrapper::PrefixSum( T const value )
   int const error = MPI_Exscan( &convertedValue, &localResult, 1, getMpiType< U >(), MPI_SUM, MPI_COMM_GEOSX );
   MPI_CHECK_ERROR( error );
 
-  if ( Comm_rank() == 0 )
+  if( Comm_rank() == 0 )
   {
     localResult = 0;
   }
@@ -809,32 +813,31 @@ U MpiWrapper::PrefixSum( T const value )
 
 
 template< typename T >
-T MpiWrapper::Reduce( T const & value, Reduction const MPI_PARAM( op ) )
+T MpiWrapper::Reduce( T const & value, Reduction const MPI_PARAM( op ), MPI_Comm MPI_PARAM( comm ) )
 {
   T result = value;
 #ifdef GEOSX_USE_MPI
-  MPI_Allreduce( &value, &result, 1, getMpiType< T >(), getMpiOp( op ), MPI_COMM_GEOSX );
-#else
+  MPI_Allreduce( &value, &result, 1, getMpiType< T >(), getMpiOp( op ), comm );
 #endif
   return result;
 }
 
 template< typename T >
-T MpiWrapper::Sum( T const & value )
+T MpiWrapper::Sum( T const & value, MPI_Comm MPI_PARAM( comm ) )
 {
-  return MpiWrapper::Reduce( value, Reduction::Sum );
+  return MpiWrapper::Reduce( value, Reduction::Sum, comm );
 }
 
 template< typename T >
-T MpiWrapper::Min( T const & value )
+T MpiWrapper::Min( T const & value, MPI_Comm MPI_PARAM( comm ) )
 {
-  return MpiWrapper::Reduce( value, Reduction::Min );
+  return MpiWrapper::Reduce( value, Reduction::Min, comm );
 }
 
 template< typename T >
-T MpiWrapper::Max( T const & value )
+T MpiWrapper::Max( T const & value, MPI_Comm MPI_PARAM( comm ) )
 {
-  return MpiWrapper::Reduce( value, Reduction::Max );
+  return MpiWrapper::Reduce( value, Reduction::Max, comm );
 }
 
 
