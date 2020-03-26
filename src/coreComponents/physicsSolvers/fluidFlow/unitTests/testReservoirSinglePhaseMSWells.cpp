@@ -30,12 +30,6 @@ using namespace geosx::dataRepository;
 using namespace geosx::constitutive;
 using namespace geosx::testing;
 
-namespace
-{
-int global_argc;
-char * * global_argv;
-}
-
 // helper struct to represent a var and its derivatives (always with array views, not pointers)
 template< int DIM >
 struct TestReservoirVarContainer
@@ -298,23 +292,9 @@ protected:
   static void SetUpTestCase()
   {
     problemManager = new ProblemManager( "Problem", nullptr );
-    char buf[2][1024];
-
-    char const * workdir  = global_argv[1];
-    char const * filename = "testReservoirSinglePhaseMSWells.xml";
-
-    strcpy( buf[0], "-i" );
-    sprintf( buf[1], "%s/%s", workdir, filename );
-
-    constexpr int argc = 3;
-    char * argv[argc] = {
-      global_argv[0],
-      buf[0],
-      buf[1]
-    };
 
     problemManager->InitializePythonInterpreter();
-    problemManager->ParseCommandLineInput( argc, argv );
+    problemManager->ParseCommandLineInput();
     problemManager->ParseInputFile();
 
     problemManager->ProblemSetup();
@@ -491,16 +471,13 @@ int main( int argc, char * * argv )
 
   geosx::basicSetup( argc, argv );
 
-  global_argc = argc;
-  global_argv = new char *[static_cast< unsigned int >(global_argc)];
-  for( int i=0; i<argc; ++i )
-  {
-    global_argv[i] = argv[i];
-  }
+  GEOSX_ERROR_IF_NE( argc, 2 );
+
+  std::string inputFileName = argv[ 1 ];
+  inputFileName += "/testReservoirSinglePhaseMSWells.xml";
+  geosx::overrideInputFileName( inputFileName );
 
   int const result = RUN_ALL_TESTS();
-
-  delete[] global_argv;
 
   geosx::basicCleanup();
 
