@@ -69,6 +69,7 @@ SpatialPartition::SpatialPartition():
 {
   m_size = 0;
   m_rank = 0;
+  m_numColors = 8,
   setPartitions( 1, 1, 1 );
 }
 
@@ -116,7 +117,7 @@ void SpatialPartition::InitializePostSubGroups( Group * const )
     AddNeighbors( 0, cartcomm, ncoords );
   }
 
-  MpiWrapper::Comm_free( &cartcomm );
+  MpiWrapper::Comm_free( cartcomm );
 
   //initialize cached requests and status
   m_mpiRequest.resize( 2 * m_neighbors.size() );
@@ -279,8 +280,7 @@ void SpatialPartition::setSizes( const R1Tensor & min, const R1Tensor & max )
       AddNeighbors( 0, cartcomm, ncoords );
     }
 
-    MpiWrapper::Comm_free( &cartcomm );
-
+    MpiWrapper::Comm_free( cartcomm );
   }
 
 
