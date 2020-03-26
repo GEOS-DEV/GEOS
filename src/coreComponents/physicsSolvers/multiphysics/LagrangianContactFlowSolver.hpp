@@ -126,6 +126,17 @@ public:
                                         ParallelVector & rhs,
                                         ParallelVector & solution ) override;
 
+  virtual bool LineSearch( real64 const & time_n,
+                           real64 const & dt,
+                           integer const GEOSX_UNUSED_PARAM( cycleNumber ),
+                           DomainPartition * const domain,
+                           DofManager const & dofManager,
+                           ParallelMatrix & matrix,
+                           ParallelVector & rhs,
+                           ParallelVector const & solution,
+                           real64 const scaleFactor,
+                           real64 & lastResidual ) override;
+
   void UpdateDeformationForCoupling( DomainPartition * const domain );
 
   void AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,

@@ -180,7 +180,7 @@ real64 LagrangianContactFlowSolver::SolverStep( real64 const & time_n,
                                           m_rhs,
                                           m_solution );
 
-  //m_solidSolver->updateStress( domain );
+  m_contactSolver->getSolidSolver()->updateStress( domain );
 
   // final step for completion of timestep. typically secondary variable updates and cleanup.
   ImplicitStepComplete( time_n, dtReturn, domain );
@@ -371,8 +371,8 @@ real64 LagrangianContactFlowSolver::NonlinearImplicitStep( real64 const & time_n
         // do line search in case residual has increased
         if( m_nonlinearSolverParameters.m_lineSearchAction>0 && newtonIter > 0 )
         {
-          bool lineSearchSuccess = m_contactSolver->LineSearch( time_n, stepDt, cycleNumber, domain, dofManager,
-                                                                matrix, rhs, solution, scaleFactor, residualNorm );
+          bool lineSearchSuccess = LineSearch( time_n, stepDt, cycleNumber, domain, dofManager,
+                                               matrix, rhs, solution, scaleFactor, residualNorm );
 
           if( !lineSearchSuccess )
           {
@@ -488,6 +488,112 @@ real64 LagrangianContactFlowSolver::NonlinearImplicitStep( real64 const & time_n
   return stepDt;
 }
 
+bool LagrangianContactFlowSolver::LineSearch( real64 const & time_n,
+                                              real64 const & dt,
+                                              integer const GEOSX_UNUSED_PARAM( cycleNumber ),
+                                              DomainPartition * const domain,
+                                              DofManager const & dofManager,
+                                              ParallelMatrix & matrix,
+                                              ParallelVector & rhs,
+                                              ParallelVector const & solution,
+                                              real64 const scaleFactor,
+                                              real64 & lastResidual )
+{
+  bool lineSearchSuccess = true;
+
+  integer const maxNumberLineSearchCuts = m_nonlinearSolverParameters.m_lineSearchMaxCuts;
+
+  real64 const sigma1 = 0.5;
+  real64 const alpha = 1.e-4;
+
+  real64 localScaleFactor = scaleFactor;
+  real64 lamm = scaleFactor;
+  real64 lamc = localScaleFactor;
+  integer lineSearchIteration = 0;
+
+  // get residual norm
+  real64 residualNorm0 = lastResidual;
+
+  ApplySystemSolution( dofManager, solution, scaleFactor, domain );
+
+  // re-assemble system
+  matrix.zero();
+  rhs.zero();
+  AssembleSystem( time_n, dt, domain, dofManager, matrix, rhs );
+
+  // apply boundary conditions to system
+  ApplyBoundaryConditions( time_n, dt, domain, dofManager, matrix, rhs );
+
+  // get residual norm
+  real64 residualNormT = CalculateResidualNorm( domain, dofManager, rhs );
+
+  real64 ff0 = residualNorm0*residualNorm0;
+  real64 ffT = residualNormT*residualNormT;
+  real64 ffm = ffT;
+  real64 cumulativeScale = scaleFactor;
+
+  while( residualNormT >= (1.0 - alpha*localScaleFactor)*residualNorm0 )
+  {
+    real64 const previousLocalScaleFactor = localScaleFactor;
+    // Apply the three point parabolic model
+    if( lineSearchIteration == 0 )
+    {
+      localScaleFactor *= sigma1;
+    }
+    else
+    {
+      localScaleFactor = m_contactSolver->ParabolicInterpolationThreePoints( lamc, lamm, ff0, ffT, ffm );
+    }
+
+    // Update x; keep the books on lambda
+    real64 const deltaLocalScaleFactor = ( localScaleFactor - previousLocalScaleFactor );
+    cumulativeScale += deltaLocalScaleFactor;
+
+    if( !CheckSystemSolution( domain, dofManager, solution, deltaLocalScaleFactor ) )
+    {
+      GEOSX_LOG_LEVEL_RANK_0( 1, "        Line search " << lineSearchIteration << ", solution check failed" );
+      continue;
+    }
+
+    ApplySystemSolution( dofManager, solution, deltaLocalScaleFactor, domain );
+    lamm = lamc;
+    lamc = localScaleFactor;
+
+    // Keep the books on the function norms
+    // re-assemble system
+    // TODO: add a flag to avoid a completely useless Jacobian computation: rhs is enough
+    matrix.zero();
+    rhs.zero();
+    AssembleSystem( time_n, dt, domain, dofManager, matrix, rhs );
+
+    // apply boundary conditions to system
+    ApplyBoundaryConditions( time_n, dt, domain, dofManager, matrix, rhs );
+
+    if( getLogLevel() >= 1 && logger::internal::rank==0 )
+    {
+      char output[100];
+      sprintf( output, "        Line search @ %0.3f:      ", cumulativeScale );
+      std::cout<<output;
+    }
+
+    // get residual norm
+    residualNormT = CalculateResidualNorm( domain, dofManager, rhs );
+    ffm = ffT;
+    ffT = residualNormT*residualNormT;
+    lineSearchIteration += 1;
+
+    if( lineSearchIteration > maxNumberLineSearchCuts )
+    {
+      lineSearchSuccess = false;
+      break;
+    }
+  }
+
+  lastResidual = residualNormT;
+
+  return lineSearchSuccess;
+}
+
 void LagrangianContactFlowSolver::SetupDofs( DomainPartition const * const domain,
                                              DofManager & dofManager ) const
 {
@@ -551,6 +657,8 @@ void LagrangianContactFlowSolver::AssembleSystem( real64 const time,
 {
   GEOSX_MARK_FUNCTION;
 
+  // Need to synchronize the two iteration counters
+  m_contactSolver->getNonlinearSolverParameters().m_numNewtonIterations = m_nonlinearSolverParameters.m_numNewtonIterations;
   m_contactSolver->AssembleSystem( time,
                                    dt,
                                    domain,
@@ -763,8 +871,8 @@ void LagrangianContactFlowSolver::AssembleForceResidualDerivativeWrtPressure( Do
               {
                 rowDOF[3*a+i] = dispDofNumber[faceToNodeMap( faceIndex, a )] + integer_conversion< globalIndex >( i );
                 // Opposite sign w.r.t. theory because of minus sign in stiffness matrix definition (K < 0)
-                nodeRHS[3*a+i] = -globalNodalForce[i] * pow( -1, kf );
-                fext[faceToNodeMap( faceIndex, a )][i] += -globalNodalForce[i] * pow( -1, kf );
+                nodeRHS[3*a+i] = +globalNodalForce[i] * pow( -1, kf );
+                fext[faceToNodeMap( faceIndex, a )][i] += +globalNodalForce[i] * pow( -1, kf );
 
                 // Opposite sign w.r.t. theory because of minus sign in stiffness matrix definition (K < 0)
                 dRdP( 3*a+i ) = -nodalArea * Nbar( i ) * pow( -1, kf );

@@ -184,6 +184,8 @@ public:
 
   SolidMechanicsLagrangianFEM const * getSolidSolver() const { return m_solidSolver; }
 
+  SolidMechanicsLagrangianFEM * getSolidSolver() { return m_solidSolver; }
+
   integer const & getActiveSetMaxIter() const { return m_activeSetMaxIter; }
 
 protected:
