@@ -51,56 +51,72 @@ public:
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
 
-  //  static constexpr localIndex MAX_NUM_COMPONENTS = 4;
+  static constexpr localIndex MAX_NUM_COMPONENTS = 32;
 
   // *** SlurryFluidBase-specific interface
 
   /**
    * @brief Perform a single point constitutive update.
-   * @param[in] pressure value
-   * @param[in] proppant concentration value
-   * @param[in] fluid composition array
-   * @param[in] shear rate for power-law fluid calculation
-   * @param[in] proppant boundary flag
-   * @param[in] k first constitutive index (e.g. elem index)
-   * @param[in] q second constitutive index (e.g. quadrature index)
+   * @param[in] pressure, pressure value
+   * @param[in] proppantConcentration, proppant concentration value
+   * @param[in] Componentconcentration, fluid composition array
+   * @param[in] shearRate, shear rate for power-law fluid calculation
+   * @param[in] isProppantBoundary, proppant boundary flag
+   * @param[in] k, first constitutive index (e.g. elem index)
+   * @param[in] q, second constitutive index (e.g. quadrature index)
    *
    * @note This function should generally not be called from a kernel, use BatchUpdate
    */
   
-  virtual void PointUpdate( real64 const & pressure, real64 const & proppantConcentration, arraySlice1d< real64 const > const & Componentconcentration, real64 const & shearRate, integer const & isProppantBoundary, localIndex const k, localIndex const q ) = 0;
+  virtual void PointUpdate( real64 const & pressure,
+                            real64 const & proppantConcentration,
+                            arraySlice1d< real64 const > const & Componentconcentration,
+                            real64 const & shearRate,
+                            integer const & isProppantBoundary,
+                            localIndex const k,
+                            localIndex const q ) = 0;
 
   /**
    * @brief Perform a batch constitutive update (all points).
-   * @param[in] pressure array containing target pressure values
-   * @param[in] proppant concentration array containing target pressure values
-   * @param[in] fluid composition array containing target pressure values
-   * @param[in] shear rate array containing target pressure values
+   * @param[in] pressure, pressure array containing target pressure values
+   * @param[in] proppantConcentration, proppant concentration array containing target pressure values
+   * @param[in] componentConcentration, fluid composition array containing target pressure values
+   * @param[in] shearRate, shear rate array containing target pressure values
    *
    * @note This function is not implemented
    */
-  virtual void BatchUpdate( arrayView1d< real64 const > const & pressure, arrayView1d< real64 const > const & proppantConcentration, arrayView2d< real64 const > const & componentConcentration, arrayView1d< real64 const > const & shearRate ) = 0;
+  virtual void BatchUpdate( arrayView1d< real64 const > const & pressure,
+                            arrayView1d< real64 const > const & proppantConcentration,
+                            arrayView2d< real64 const > const & componentConcentration,
+                            arrayView1d< real64 const > const & shearRate ) = 0;
 
   /**
    * @brief Perform a single point fluid property update.
-   * @param[in] pressure value
-   * @param[in] fluid composition array
-   * @param[in] shear rate for power-law fluid calculation
-   * @param[in] k first constitutive index (e.g. elem index)
-   * @param[in] q second constitutive index (e.g. quadrature index)
+   * @param[in] pressure, pressure value
+   * @param[in] componentconcentration, fluid composition array
+   * @param[in] shearRate, shear rate for power-law fluid calculation
+   * @param[in] k, first constitutive index (e.g. elem index)
+   * @param[in] q, second constitutive index (e.g. quadrature index)
    *
    */
-  virtual void PointUpdateFluidProperty( real64 const & pressure, arraySlice1d< real64 const > const & Componentconcentration, real64 const & shearRate, localIndex const k, localIndex const q ) = 0;
+  virtual void PointUpdateFluidProperty( real64 const & pressure,
+                                         arraySlice1d< real64 const > const & componentconcentration,
+                                         real64 const & shearRate,
+                                         localIndex const k,
+                                         localIndex const q ) = 0;
 
   /**
    * @brief Perform a single point fluid component property update.
-   * @param[in] pressure value
-   * @param[in] fluid composition array
-   * @param[in] k first constitutive index (e.g. elem index)
-   * @param[in] q second constitutive index (e.g. quadrature index)
+   * @param[in] pressure, pressure value
+   * @param[in] componentconcentration, fluid composition array
+   * @param[in] k, first constitutive index (e.g. elem index)
+   * @param[in] q, second constitutive index (e.g. quadrature index)
    *
    */
-  virtual void PointUpdateComponentDensity( real64 const & pressure, arraySlice1d< real64 const > const & Componentconcentration, localIndex const k, localIndex const q ) = 0;
+  virtual void PointUpdateComponentDensity( real64 const & pressure,
+                                            arraySlice1d< real64 const > const & componentconcentration,
+                                            localIndex const k,
+                                            localIndex const q ) = 0;
 
   localIndex numFluidComponents() const;
 

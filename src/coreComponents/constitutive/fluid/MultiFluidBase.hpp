@@ -96,7 +96,7 @@ public:
    *
    * @note This puts an upper bound on memory use, allowing to optimize code better
    */
-  //  static constexpr localIndex MAX_NUM_COMPONENTS = 32;
+  static constexpr localIndex MAX_NUM_COMPONENTS = 32;
 
   /**
    * @brief Maximum supported number of fluid phases

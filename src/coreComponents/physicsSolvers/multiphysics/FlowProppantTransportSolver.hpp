@@ -25,6 +25,9 @@
 namespace geosx
 {
 
+class FlowSolverBase;
+class ProppantTransport;  
+  
 class FlowProppantTransportSolver : public SolverBase
 {
 public:
@@ -92,6 +95,9 @@ private:
   string m_proppantSolverName;
   string m_flowSolverName;
 
+  FlowSolverBase * m_flowSolver;
+  ProppantTransport * m_proppantSolver;  
+  
 };
 
 } /* namespace geosx */

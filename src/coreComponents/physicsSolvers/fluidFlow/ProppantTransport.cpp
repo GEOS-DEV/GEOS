@@ -234,7 +234,7 @@ void ProppantTransport::UpdateFluidDensityAndViscosity( Group * const dataGroup 
   arrayView2d< real64 const > const & componentConc = dataGroup->getReference< array2d< real64 > >( viewKeyStruct::componentConcentrationString );
   arrayView2d< real64 const > const & dComponentConc = dataGroup->getReference< array2d< real64 > >( viewKeyStruct::deltaComponentConcentrationString );
 
-  array1d< real64 >  updatedCompConc(m_numComponents);
+   stackArray1d< real64, MAX_NUM_COMPONENTS >  updatedCompConc(m_numComponents);
   
   forall_in_range< RAJA::seq_exec >( 0, dataGroup->size(), [=] ( localIndex const a )
   {
@@ -263,7 +263,7 @@ void ProppantTransport::UpdateComponentDensity( Group * const dataGroup )
   arrayView2d< real64 const > const & componentConc = dataGroup->getReference< array2d< real64 > >( viewKeyStruct::componentConcentrationString );
   arrayView2d< real64 const > const & dComponentConc = dataGroup->getReference< array2d< real64 > >( viewKeyStruct::deltaComponentConcentrationString );
 
-  array1d< real64 >  updatedCompConc(m_numComponents);
+  stackArray1d< real64, MAX_NUM_COMPONENTS >  updatedCompConc(m_numComponents);
   
   forall_in_range< RAJA::seq_exec >( 0, dataGroup->size(), [=] ( localIndex const a )
   {
@@ -410,8 +410,7 @@ void ProppantTransport::InitializePostInitialConditions_PreSubGroups( Group * co
 
 }
 
-/** By now the proppant trasnport solver is coupled with single-phase flow solver. This SolverStep function is used for stand-alone proppant transport modeling which is not fully implemented and tested
-**/
+// By now the proppant trasnport solver is coupled with single-phase flow solver. This SolverStep function is used for stand-alone proppant transport modeling which is not fully implemented and tested
 
 real64 ProppantTransport::SolverStep( real64 const & time_n,
                                       real64 const & dt,
@@ -479,8 +478,8 @@ void ProppantTransport::PreStepUpdate( real64 const & time,
 
     applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
                                    ElementRegionBase * const GEOSX_UNUSED_PARAM( region ),
-                                   ElementSubRegionBase * const subRegion ) {
-
+                                   ElementSubRegionBase * const subRegion )
+   {
 
       subRegion->CalculateElementGeometricQuantities( *nodeManager,
                                                       *faceManager );
@@ -516,7 +515,7 @@ void ProppantTransport::PreStepUpdate( real64 const & time,
                                  ElementSubRegionBase * const subRegion )
   {
 
-    arrayView3d< real64 > const & componentDens = m_componentDensity[er][esr][m_fluidIndex];
+    arrayView3d< real64 const > const & componentDens = m_componentDensity[er][esr][m_fluidIndex];
     arrayView2d< real64 > const & componentDensOld = m_componentDensityOld[er][esr];
 
     arrayView1d< real64 > const & excessPackV = m_proppantExcessPackVolume[er][esr];
