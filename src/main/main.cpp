@@ -23,6 +23,11 @@
 #include "common/TimingMacros.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
 
+// TPL includes
+#ifdef GEOSX_USE_CALIPER
+#include <caliper/cali-manager.h>
+#endif
+
 // System includes
 #include <cmath>
 #include <iostream>
@@ -33,7 +38,9 @@ using namespace geosx;
 
 int main( int argc, char *argv[] )
 {
-  basicSetup( argc, argv );
+  basicSetup( argc, argv, true );
+
+  GEOSX_MARK_FUNCTION_BEGIN;
 
   printTypeSummary();
 
@@ -42,7 +49,7 @@ int main( int argc, char *argv[] )
   real64 t_start = tim.tv_sec + (tim.tv_usec / 1000000.0);
 
   std::string restartFileName;
-  bool restart = ProblemManager::ParseRestart( argc, argv, restartFileName );
+  bool restart = ProblemManager::ParseRestart( restartFileName );
   if( restart )
   {
     GEOSX_LOG_RANK_0( "Loading restart file " << restartFileName );
@@ -52,7 +59,7 @@ int main( int argc, char *argv[] )
   ProblemManager problemManager( "Problem", nullptr );
 
   problemManager.InitializePythonInterpreter();
-  problemManager.ParseCommandLineInput( argc, argv );
+  problemManager.ParseCommandLineInput();
 
   if( !problemManager.getSchemaFileName().empty() )
   {
@@ -84,8 +91,9 @@ int main( int argc, char *argv[] )
                       "s, run time = " << t_run-t_initialize << "s" );
   }
 
-
   problemManager.ClosePythonInterpreter();
+
+  GEOSX_MARK_FUNCTION_END;
 
   basicCleanup();
 
