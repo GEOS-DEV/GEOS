@@ -35,14 +35,14 @@ void FluxKernelHelper::ComputeOneSidedVolFluxes( arrayView1d< real64 const > con
                                                  real64 const & elemGravCoef,
                                                  real64 const & elemDens,
                                                  real64 const & dElemDens_dp,
-                                                 stackArray2d< real64, MAX_NUM_FACES
-                                                               *MAX_NUM_FACES > const & transMatrix,
-                                                 stackArray1d< real64, MAX_NUM_FACES > & oneSidedVolFlux,
-                                                 stackArray1d< real64, MAX_NUM_FACES > & dOneSidedVolFlux_dp,
-                                                 stackArray2d< real64, MAX_NUM_FACES
-                                                               *MAX_NUM_FACES > & dOneSidedVolFlux_dfp )
+                                                 stackArray2d< real64, HybridFVMInnerProduct::MAX_NUM_FACES
+                                                               *HybridFVMInnerProduct::MAX_NUM_FACES > const & transMatrix,
+                                                 stackArray1d< real64, HybridFVMInnerProduct::MAX_NUM_FACES > & oneSidedVolFlux,
+                                                 stackArray1d< real64, HybridFVMInnerProduct::MAX_NUM_FACES > & dOneSidedVolFlux_dp,
+                                                 stackArray2d< real64, HybridFVMInnerProduct::MAX_NUM_FACES
+                                                               *HybridFVMInnerProduct::MAX_NUM_FACES > & dOneSidedVolFlux_dfp )
 {
-  localIndex constexpr maxNumFaces = MAX_NUM_FACES;
+  localIndex constexpr maxNumFaces = HybridFVMInnerProduct::MAX_NUM_FACES;
 
   localIndex const numFacesInElem = elemToFaces.size();
 
@@ -118,10 +118,10 @@ void FluxKernelHelper::UpdateUpwindedCoefficients( MeshLevel const * const mesh,
                                                    localIndex const ei,
                                                    globalIndex const elemDofNumber,
                                                    string const elemDofKey,
-                                                   stackArray1d< real64, MAX_NUM_FACES > const & oneSidedVolFlux,
-                                                   stackArray1d< real64, MAX_NUM_FACES > & upwMobility,
-                                                   stackArray1d< real64, MAX_NUM_FACES > & dUpwMobility_dp,
-                                                   stackArray1d< globalIndex, MAX_NUM_FACES > & upwDofNumber )
+                                                   stackArray1d< real64, HybridFVMInnerProduct::MAX_NUM_FACES > const & oneSidedVolFlux,
+                                                   stackArray1d< real64, HybridFVMInnerProduct::MAX_NUM_FACES > & upwMobility,
+                                                   stackArray1d< real64, HybridFVMInnerProduct::MAX_NUM_FACES > & dUpwMobility_dp,
+                                                   stackArray1d< globalIndex, HybridFVMInnerProduct::MAX_NUM_FACES > & upwDofNumber )
 {
   localIndex const numFacesInElem = elemToFaces.size();
 
@@ -162,9 +162,9 @@ void FluxKernelHelper::UpdateUpwindedCoefficients( MeshLevel const * const mesh,
           if( !onBoundary && neighborInTarget )
           {
             ElementRegionBase const * const neighborRegion =
-              Group::group_cast< ElementRegionBase const * >( mesh->getElemManager()->GetRegion( erNeighbor ));
+              dataRepository::Group::group_cast< ElementRegionBase const * >( mesh->getElemManager()->GetRegion( erNeighbor ));
             ElementSubRegionBase const * const neighborSubRegion =
-              Group::group_cast< ElementSubRegionBase const * >( neighborRegion->GetSubRegion( esrNeighbor ));
+              dataRepository::Group::group_cast< ElementSubRegionBase const * >( neighborRegion->GetSubRegion( esrNeighbor ));
 
             arrayView1d< globalIndex const > const & neighborDofNumber =
               neighborSubRegion->getReference< array1d< globalIndex > >( elemDofKey );
@@ -185,17 +185,17 @@ void FluxKernelHelper::AssembleOneSidedMassFluxes( real64 const & dt,
                                                    arrayView1d< globalIndex const > const & faceDofNumber,
                                                    arraySlice1d< localIndex const > const elemToFaces,
                                                    globalIndex const elemDofNumber,
-                                                   stackArray1d< real64, MAX_NUM_FACES > const & oneSidedVolFlux,
-                                                   stackArray1d< real64, MAX_NUM_FACES > const & dOneSidedVolFlux_dp,
-                                                   stackArray2d< real64, MAX_NUM_FACES
-                                                                 *MAX_NUM_FACES > const & dOneSidedVolFlux_dfp,
-                                                   stackArray1d< real64, MAX_NUM_FACES > const & upwMobility,
-                                                   stackArray1d< real64, MAX_NUM_FACES > const & dUpwMobility_dp,
-                                                   stackArray1d< globalIndex, MAX_NUM_FACES > const & upwDofNumber,
+                                                   stackArray1d< real64, HybridFVMInnerProduct::MAX_NUM_FACES > const & oneSidedVolFlux,
+                                                   stackArray1d< real64, HybridFVMInnerProduct::MAX_NUM_FACES > const & dOneSidedVolFlux_dp,
+                                                   stackArray2d< real64, HybridFVMInnerProduct::MAX_NUM_FACES
+                                                                 *HybridFVMInnerProduct::MAX_NUM_FACES > const & dOneSidedVolFlux_dfp,
+                                                   stackArray1d< real64, HybridFVMInnerProduct::MAX_NUM_FACES > const & upwMobility,
+                                                   stackArray1d< real64, HybridFVMInnerProduct::MAX_NUM_FACES > const & dUpwMobility_dp,
+                                                   stackArray1d< globalIndex, HybridFVMInnerProduct::MAX_NUM_FACES > const & upwDofNumber,
                                                    ParallelMatrix * const matrix,
                                                    ParallelVector * const rhs )
 {
-  localIndex constexpr maxNumFaces = MAX_NUM_FACES;
+  localIndex constexpr maxNumFaces = HybridFVMInnerProduct::MAX_NUM_FACES;
 
   localIndex const numFacesInElem = elemToFaces.size();
 
@@ -259,14 +259,14 @@ void FluxKernelHelper::AssembleOneSidedMassFluxes( real64 const & dt,
 void FluxKernelHelper::AssembleConstraints( arrayView1d< globalIndex const > const & faceDofNumber,
                                             arraySlice1d< localIndex const > const elemToFaces,
                                             globalIndex const elemDofNumber,
-                                            stackArray1d< real64, MAX_NUM_FACES > const & oneSidedVolFlux,
-                                            stackArray1d< real64, MAX_NUM_FACES > const & dOneSidedVolFlux_dp,
-                                            stackArray2d< real64, MAX_NUM_FACES
-                                                          *MAX_NUM_FACES > const & dOneSidedVolFlux_dfp,
+                                            stackArray1d< real64, HybridFVMInnerProduct::MAX_NUM_FACES > const & oneSidedVolFlux,
+                                            stackArray1d< real64, HybridFVMInnerProduct::MAX_NUM_FACES > const & dOneSidedVolFlux_dp,
+                                            stackArray2d< real64, HybridFVMInnerProduct::MAX_NUM_FACES
+                                                          *HybridFVMInnerProduct::MAX_NUM_FACES > const & dOneSidedVolFlux_dfp,
                                             ParallelMatrix * const matrix,
                                             ParallelVector * const rhs )
 {
-  localIndex constexpr maxNumFaces = MAX_NUM_FACES;
+  localIndex constexpr maxNumFaces = HybridFVMInnerProduct::MAX_NUM_FACES;
 
   localIndex const numFacesInElem = elemToFaces.size();
 

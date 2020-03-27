@@ -23,16 +23,13 @@
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
+#include "finiteVolume/HybridFVMInnerProduct.hpp"
 
 namespace geosx
 {
 
-using namespace dataRepository;
-
 namespace SinglePhaseHybridFVMKernels
 {
-
-static constexpr localIndex MAX_NUM_FACES = 15;
 
 /******************************** FluxKernelHelper ********************************/
 
@@ -65,12 +62,12 @@ struct FluxKernelHelper
                                  real64 const & elemGravDepth,
                                  real64 const & elemDens,
                                  real64 const & dElemDens_dp,
-                                 stackArray2d< real64, MAX_NUM_FACES
-                                               *MAX_NUM_FACES > const & transMatrix,
-                                 stackArray1d< real64, MAX_NUM_FACES > & oneSidedVolFlux,
-                                 stackArray1d< real64, MAX_NUM_FACES > & dOneSidedVolFlux_dp,
-                                 stackArray2d< real64, MAX_NUM_FACES
-                                               *MAX_NUM_FACES > & dOneSidedVolFlux_dfp );
+                                 stackArray2d< real64, HybridFVMInnerProduct::MAX_NUM_FACES
+                                               *HybridFVMInnerProduct::MAX_NUM_FACES > const & transMatrix,
+                                 stackArray1d< real64, HybridFVMInnerProduct::MAX_NUM_FACES > & oneSidedVolFlux,
+                                 stackArray1d< real64, HybridFVMInnerProduct::MAX_NUM_FACES > & dOneSidedVolFlux_dp,
+                                 stackArray2d< real64, HybridFVMInnerProduct::MAX_NUM_FACES
+                                               *HybridFVMInnerProduct::MAX_NUM_FACES > & dOneSidedVolFlux_dfp );
 
   /**
    * @brief In a given element, collect the upwinded mobilities at this element's faces
@@ -109,10 +106,10 @@ struct FluxKernelHelper
                                    localIndex const ei,
                                    globalIndex const elemDofNumber,
                                    string const elemDofKey,
-                                   stackArray1d< real64, MAX_NUM_FACES > const & oneSidedVolFlux,
-                                   stackArray1d< real64, MAX_NUM_FACES > & upwMobility,
-                                   stackArray1d< real64, MAX_NUM_FACES > & dUpwMobility_dp,
-                                   stackArray1d< globalIndex, MAX_NUM_FACES > & upwDofNumber );
+                                   stackArray1d< real64, HybridFVMInnerProduct::MAX_NUM_FACES > const & oneSidedVolFlux,
+                                   stackArray1d< real64, HybridFVMInnerProduct::MAX_NUM_FACES > & upwMobility,
+                                   stackArray1d< real64, HybridFVMInnerProduct::MAX_NUM_FACES > & dUpwMobility_dp,
+                                   stackArray1d< globalIndex, HybridFVMInnerProduct::MAX_NUM_FACES > & upwDofNumber );
 
   /**
    * @brief In a given element, assemble the mass conservation equation
@@ -135,13 +132,13 @@ struct FluxKernelHelper
                                    arrayView1d< globalIndex const > const & faceDofNumber,
                                    arraySlice1d< localIndex const > const elemToFaces,
                                    globalIndex const elemDofNumber,
-                                   stackArray1d< real64, MAX_NUM_FACES > const & oneSidedVolFlux,
-                                   stackArray1d< real64, MAX_NUM_FACES > const & dOneSidedVolFlux_dp,
-                                   stackArray2d< real64, MAX_NUM_FACES
-                                                 *MAX_NUM_FACES > const & dOneSidedVolFlux_dfp,
-                                   stackArray1d< real64, MAX_NUM_FACES > const & upwMobility,
-                                   stackArray1d< real64, MAX_NUM_FACES > const & dUpwMobility_dp,
-                                   stackArray1d< globalIndex, MAX_NUM_FACES > const & upwDofNumber,
+                                   stackArray1d< real64, HybridFVMInnerProduct::MAX_NUM_FACES > const & oneSidedVolFlux,
+                                   stackArray1d< real64, HybridFVMInnerProduct::MAX_NUM_FACES > const & dOneSidedVolFlux_dp,
+                                   stackArray2d< real64, HybridFVMInnerProduct::MAX_NUM_FACES
+                                                 *HybridFVMInnerProduct::MAX_NUM_FACES > const & dOneSidedVolFlux_dfp,
+                                   stackArray1d< real64, HybridFVMInnerProduct::MAX_NUM_FACES > const & upwMobility,
+                                   stackArray1d< real64, HybridFVMInnerProduct::MAX_NUM_FACES > const & dUpwMobility_dp,
+                                   stackArray1d< globalIndex, HybridFVMInnerProduct::MAX_NUM_FACES > const & upwDofNumber,
                                    ParallelMatrix * const matrix,
                                    ParallelVector * const rhs );
 
@@ -161,10 +158,10 @@ struct FluxKernelHelper
   void AssembleConstraints( arrayView1d< globalIndex const > const & faceDofNumber,
                             arraySlice1d< localIndex const > const elemToFaces,
                             globalIndex const elemDofNumber,
-                            stackArray1d< real64, MAX_NUM_FACES > const & oneSidedVolFlux,
-                            stackArray1d< real64, MAX_NUM_FACES > const & dOneSidedVolFlux_dp,
-                            stackArray2d< real64, MAX_NUM_FACES
-                                          *MAX_NUM_FACES > const & dOneSidedVolFlux_dfp,
+                            stackArray1d< real64, HybridFVMInnerProduct::MAX_NUM_FACES > const & oneSidedVolFlux,
+                            stackArray1d< real64, HybridFVMInnerProduct::MAX_NUM_FACES > const & dOneSidedVolFlux_dp,
+                            stackArray2d< real64, HybridFVMInnerProduct::MAX_NUM_FACES
+                                          *HybridFVMInnerProduct::MAX_NUM_FACES > const & dOneSidedVolFlux_dfp,
                             ParallelMatrix * const matrix,
                             ParallelVector * const rhs );
 
@@ -181,7 +178,36 @@ struct FluxKernel
 template<>
 struct FluxKernel< CellElementSubRegion >
 {
-
+  /**
+   * @brief In a given element, assemble the mass conservation equation and the contribution of this element to the face
+   * constraints
+   * @param[in] er index of this element's region
+   * @param[in] esr index of this element's subregion
+   * @param[in] ei index of this element
+   * @param[in] regionFilter set containing the indices of the target regions
+   * @param[in] mesh the mesh object (single level only)
+   * @param[in] elemRegionList face-to-elemRegions map
+   * @param[in] elemSubRegionList face-to-elemSubRegions map
+   * @param[in] elemList face-to-elemIds map
+   * @param[in] faceDofNumber the dof numbers of the face pressures
+   * @param[in] facePres the pressure at the mesh faces at the beginning of the time step
+   * @param[in] dFacePres the accumulated pressure updates at the mesh face
+   * @param[in] faceGravDepth the depth at the mesh faces
+   * @param[in] elemToFaces the map from one-sided face to face
+   * @param[in] elemDofNumber the dof number of this element's cell centered pressure
+   * @param[in] elemDofKey
+   * @param[in] elemPres the pressure at this element's center
+   * @param[in] dElemPres the accumulated pressure updates at this element's center
+   * @param[in] elemGravDepth the depth at this element's center
+   * @param[in] elemDens the density at this elenent's center
+   * @param[in] dElemDens_dp the derivative of the density at this element's center
+   * @param[in] mobility the mobilities in the domain (non-local)
+   * @param[in] dMobility_dPres the derivatives of the mobilities in the domain wrt cell-centered pressure (non-local)
+   * @param[in] transMatrix the transmissibility matrix in this element
+   * @param[in] dt time step size
+   * @param[inout] matrix the system matrix
+   * @param[inout] rhs the system right-hand side vector
+   */
   inline static void
   Compute( localIndex const er,
            localIndex const esr,
@@ -204,15 +230,15 @@ struct FluxKernel< CellElementSubRegion >
            real64 const & elemDens,
            real64 const & dElemDens_dp,
            ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const & mobility,
-           ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const & dMobility_dPres,
-           stackArray2d< real64, MAX_NUM_FACES
-                         *MAX_NUM_FACES > const & transMatrix,
+           ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const & dMobility_dp,
+           stackArray2d< real64, HybridFVMInnerProduct::MAX_NUM_FACES
+                         *HybridFVMInnerProduct::MAX_NUM_FACES > const & transMatrix,
            real64 const & dt,
            ParallelMatrix * const matrix,
            ParallelVector * const rhs )
   {
     // max number of faces allowed in an element
-    localIndex constexpr maxNumFaces = MAX_NUM_FACES;
+    localIndex constexpr maxNumFaces = HybridFVMInnerProduct::MAX_NUM_FACES;
 
     localIndex const numFacesInElem = elemToFaces.size();
 
@@ -258,7 +284,7 @@ struct FluxKernel< CellElementSubRegion >
                                                   regionFilter,
                                                   elemToFaces,
                                                   mobility,
-                                                  dMobility_dPres,
+                                                  dMobility_dp,
                                                   er, esr, ei,
                                                   elemDofNumber,
                                                   elemDofKey,
@@ -302,8 +328,6 @@ struct FluxKernel< CellElementSubRegion >
   }
 
 };
-
-
 
 } // namespace SinglePhaseHybridFVMKernels
 
