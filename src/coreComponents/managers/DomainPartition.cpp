@@ -177,7 +177,7 @@ void DomainPartition::SetupCommunications( bool use_nonblocking )
     int ncoords[3];
     AddNeighbors( 0, cartcomm, ncoords );
 
-    MPI_Comm_free( &cartcomm );
+    MpiWrapper::Comm_free( cartcomm );
   }
   else
   {

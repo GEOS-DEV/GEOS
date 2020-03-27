@@ -154,7 +154,7 @@ public:
 
   static int Cart_rank( MPI_Comm comm, const int coords[] );
 
-  static int Comm_free( MPI_Comm * comm );
+  static void Comm_free( MPI_Comm & comm );
 
   inline static int Comm_rank( MPI_Comm const & MPI_PARAM( comm )=MPI_COMM_GEOSX )
   {
@@ -174,10 +174,12 @@ public:
     return size;
   }
 
-  static int Finalize( void );
-
-
   static int Init( int * argc, char * * * argv );
+
+  static void Finalize();
+
+  static MPI_Comm Comm_dup( MPI_Comm const comm );
+
 
   static int Test( MPI_Request * request, int * flag, MPI_Status * status );
 
@@ -490,14 +492,22 @@ public:
   static T Sum( T const & value, MPI_Comm comm = MPI_COMM_GEOSX );
 };
 
-template<> inline MPI_Datatype MpiWrapper::getMpiType< char >()           { return MPI_CHAR; }
-template<> inline MPI_Datatype MpiWrapper::getMpiType< signed char >()    { return MPI_SIGNED_CHAR; }
-template<> inline MPI_Datatype MpiWrapper::getMpiType< float >()          { return MPI_FLOAT; }
-template<> inline MPI_Datatype MpiWrapper::getMpiType< double >()         { return MPI_DOUBLE; }
-template<> inline MPI_Datatype MpiWrapper::getMpiType< int >()            { return MPI_INT; }
-template<> inline MPI_Datatype MpiWrapper::getMpiType< long int >()       { return MPI_LONG; }
-template<> inline MPI_Datatype MpiWrapper::getMpiType< long long int >()  { return MPI_LONG_LONG; }
-template<> inline MPI_Datatype MpiWrapper::getMpiType< bool >()           { return MPI_CXX_BOOL; }
+template<> inline MPI_Datatype MpiWrapper::getMpiType< float >()                  { return MPI_FLOAT; }
+template<> inline MPI_Datatype MpiWrapper::getMpiType< double >()                 { return MPI_DOUBLE; }
+
+template<> inline MPI_Datatype MpiWrapper::getMpiType< char >()                   { return MPI_CHAR; }
+template<> inline MPI_Datatype MpiWrapper::getMpiType< signed char >()            { return MPI_SIGNED_CHAR; }
+template<> inline MPI_Datatype MpiWrapper::getMpiType< unsigned char >()          { return MPI_UNSIGNED_CHAR; }
+
+template<> inline MPI_Datatype MpiWrapper::getMpiType< int >()                    { return MPI_INT; }
+template<> inline MPI_Datatype MpiWrapper::getMpiType< long int >()               { return MPI_LONG; }
+template<> inline MPI_Datatype MpiWrapper::getMpiType< long long int >()          { return MPI_LONG_LONG; }
+
+template<> inline MPI_Datatype MpiWrapper::getMpiType< unsigned int >()           { return MPI_UNSIGNED; }
+template<> inline MPI_Datatype MpiWrapper::getMpiType< unsigned long int >()      { return MPI_UNSIGNED_LONG; }
+template<> inline MPI_Datatype MpiWrapper::getMpiType< unsigned long long int >() { return MPI_UNSIGNED_LONG_LONG; }
+
+template<> inline MPI_Datatype MpiWrapper::getMpiType< bool >()                   { return MPI_CXX_BOOL; }
 
 inline MPI_Op MpiWrapper::getMpiOp( Reduction const op )
 {
