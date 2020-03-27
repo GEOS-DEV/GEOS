@@ -104,20 +104,13 @@ install(TARGETS geosx_core LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
 target_include_directories( geosx_core PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
 
-geosx_add_code_checks( PREFIX core )
+geosx_add_code_checks( PREFIX coreComponents 
+                       EXCLUDES cmake )
 
-set( enforceUncrustifyLibs
-     common
-     dataRepository
-     cxx-utilities )
 
-if( ENABLE_UNCRUSTIFY )
-  foreach( lib ${enforceUncrustifyLibs} )
-    add_test( NAME testUncrustifyCheck_${lib}
-              COMMAND ${CMAKE_MAKE_PROGRAM} ${lib}_uncrustify_check
-              WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-            )
-  endforeach()
-endif()
+add_test( NAME testUncrustifyCheck
+          COMMAND ${CMAKE_MAKE_PROGRAM} coreComponents_uncrustify_check main_uncrustify_check
+          WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        )
 
 add_subdirectory( unitTests )

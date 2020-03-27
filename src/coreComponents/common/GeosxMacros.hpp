@@ -24,9 +24,6 @@
 #ifndef GEOSX_COMMON_GEOSXMACROS_HPP_
 #define GEOSX_COMMON_GEOSXMACROS_HPP_
 
-/// Specify default capture mode for GEOSX lambdas.
-#define GEOSX_LAMBDA [=]
-
 /**
  * @name Host-device markers
  *
@@ -40,8 +37,6 @@
   #define GEOSX_HOST __host__
   #define GEOSX_DEVICE __device__
   #define GEOSX_HOST_DEVICE __host__ __device__
-  #define GEOSX_DEVICE_LAMBDA [=] __device__
-  #define GEOSX_HOST_DEVICE_LAMBDA [=] __host__ __device__
   #define GEOSX_FORCE_INLINE __forceinline__
 #else
 /// Marks a host-only function.
@@ -50,10 +45,6 @@
   #define GEOSX_DEVICE
 /// Marks a host-device function.
   #define GEOSX_HOST_DEVICE
-/// Marks a device-only lambda
-  #define GEOSX_DEVICE_LAMBDA [=]
-/// Marks a host-device lambda
-  #define GEOSX_HOST_DEVICE_LAMBDA [=]
 /// Marks a function or lambda for inlining
   #define GEOSX_FORCE_INLINE inline
 #endif
@@ -83,7 +74,8 @@ void i_g_n_o_r_e( T & ) {}
 #define GEOSX_DEBUG_VAR( X ) GEOSX_UNUSED_VAR( X )
 
 #if defined(GEOSX_USE_OPENMP)
-  #define PRAGMA_OMP( clause ) _Pragma(STRINGIZE(clause))
+  #define PRAGMA_OMP( clause ) _Pragma( clause )
+//  #define PRAGMA_OMP( clause ) _Pragma( STRINGIZE( omp clause ) )
 #else
   #define PRAGMA_OMP( clause )
 #endif
