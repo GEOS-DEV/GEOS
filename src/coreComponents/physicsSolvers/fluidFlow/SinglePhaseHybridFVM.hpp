@@ -187,6 +187,28 @@ public:
 
 private:
 
+  /**
+   * @brief Assemble the mass conservation equations and face constraints in the face subregion
+   * @param[in] er index of this element's region
+   * @param[in] esr index of this element's subregion
+   * @param[in] subRegion pointer to the cell element subregion
+   * @param[in] regionFilter set containing the indices of the target regions
+   * @param[in] mesh the mesh object (single level only)
+   * @param[in] nodePosition position of the nodes
+   * @param[in] elemRegionList face-to-elemRegions map
+   * @param[in] elemSubRegionList face-to-elemSubRegions map
+   * @param[in] elemList face-to-elemIds map
+   * @param[in] faceToNodes map from face to nodes
+   * @param[in] faceDofNumber the dof numbers of the face pressures
+   * @param[in] facePres the pressure at the mesh faces at the beginning of the time step
+   * @param[in] dFacePres the accumulated pressure updates at the mesh face
+   * @param[in] faceGravCoef the depth at the mesh faces
+   * @param[in] lengthTolerance tolerance used in the transmissibility calculations
+   * @param[in] dt time step size
+   * @param[in] dofManager the dof manager
+   * @param[inout] matrix the system matrix
+   * @param[inout] rhs the system right-hand side vector
+   */
   void FluxLaunch( localIndex er,
                    localIndex esr,
                    FaceElementSubRegion const * const subRegion,
@@ -207,6 +229,28 @@ private:
                    ParallelMatrix * const matrix,
                    ParallelVector * const rhs );
 
+  /**
+   * @brief Assemble the mass conservation equations and face constraints in the cell subregion
+   * @param[in] er index of this element's region
+   * @param[in] esr index of this element's subregion
+   * @param[in] subRegion pointer to the cell element subregion
+   * @param[in] regionFilter set containing the indices of the target regions
+   * @param[in] mesh the mesh object (single level only)
+   * @param[in] nodePosition position of the nodes
+   * @param[in] elemRegionList face-to-elemRegions map
+   * @param[in] elemSubRegionList face-to-elemSubRegions map
+   * @param[in] elemList face-to-elemIds map
+   * @param[in] faceToNodes map from face to nodes
+   * @param[in] faceDofNumber the dof numbers of the face pressures
+   * @param[in] facePres the pressure at the mesh faces at the beginning of the time step
+   * @param[in] dFacePres the accumulated pressure updates at the mesh face
+   * @param[in] faceGravCoef the depth at the mesh faces
+   * @param[in] lengthTolerance tolerance used in the transmissibility calculations
+   * @param[in] dt time step size
+   * @param[in] dofManager the dof manager
+   * @param[inout] matrix the system matrix
+   * @param[inout] rhs the system right-hand side vector
+   */
   void FluxLaunch( localIndex er,
                    localIndex esr,
                    CellElementSubRegion const * const subRegion,
@@ -235,6 +279,7 @@ private:
    * @param[in] elemCenter the center of the element
    * @param[in] elemVolume the volume of the element
    * @param[in] elemPerm the permeability in the element
+   * @param[in] orthonormalizeWithSVD flag to indicate whether SVD is used (if not, Gram-Schmidt is used)
    * @param[in] lengthTolerance the tolerance used in the trans calculations
    * @param[inout] transMatrix
    *
@@ -248,59 +293,9 @@ private:
                                       real64 const & elemVolume,
                                       R1Tensor const & elemPerm,
                                       real64 const & lengthTolerance,
-                                      stackArray2d< real64, SinglePhaseHybridFVMKernels::MAX_NUM_FACES
-                                                    *SinglePhaseHybridFVMKernels::MAX_NUM_FACES > const & transMatrix ) const;
-
-
-  /**
-   * @brief In a given element, recompute the transmissibility matrix using TPFA
-   * @param[in] nodePosition the position of the nodes
-   * @param[in] faceToNodes the map from the face to their nodes
-   * @param[in] elemToFaces the maps from the one-sided face to the corresponding face
-   * @param[in] elemCenter the center of the element
-   * @param[in] elemPerm the permeability in the element
-   * @param[in] lengthTolerance the tolerance used in the trans calculations
-   * @param[inout] transMatrix
-   *
-   * This function is in this class until we find a better place for it
-   *
-   */
-  void ComputeTPFAInnerProduct( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
-                                ArrayOfArraysView< localIndex const > const & faceToNodes,
-                                arraySlice1d< localIndex const > const elemToFaces,
-                                R1Tensor const & elemCenter,
-                                R1Tensor const & elemPerm,
-                                real64 const & lengthTolerance,
-                                stackArray2d< real64, SinglePhaseHybridFVMKernels::MAX_NUM_FACES
-                                              *SinglePhaseHybridFVMKernels::MAX_NUM_FACES > const & transMatrix ) const;
-
-  /**
-   * @brief In a given element, recompute the transmissibility matrix using a consistent inner product
-   * @param[in] nodePosition the position of the nodes
-   * @param[in] faceToNodes the map from the face to their nodes
-   * @param[in] elemToFaces the maps from the one-sided face to the corresponding face
-   * @param[in] elemCenter the center of the element
-   * @param[in] elemPerm the permeability in the element
-   * @param[in] tParam parameter used in the transmissibility matrix computations
-   * @param[in] lengthTolerance the tolerance used in the trans calculations
-   * @param[inout] transMatrix
-   *
-   * When tParam = 2, we obtain a scheme that reduces to TPFA
-   * on orthogonal meshes, but remains consistent on non-orthogonal meshes
-   *
-   * This function is in this class until we find a better place for it
-   *
-   */
-  void ComputeQFamilyInnerProduct( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
-                                   ArrayOfArraysView< localIndex const > const & faceToNodes,
-                                   arraySlice1d< localIndex const > const elemToFaces,
-                                   R1Tensor const & elemCenter,
-                                   real64 const & elemVolume,
-                                   R1Tensor const & elemPerm,
-                                   real64 const & tParam,
-                                   real64 const & lengthTolerance,
-                                   stackArray2d< real64, SinglePhaseHybridFVMKernels::MAX_NUM_FACES
-                                                 *SinglePhaseHybridFVMKernels::MAX_NUM_FACES > const & transMatrix ) const;
+                                      bool const & orthonormalizeWithSVD,
+                                      stackArray2d< real64, HybridFVMInnerProduct::MAX_NUM_FACES
+                                                    *HybridFVMInnerProduct::MAX_NUM_FACES > const & transMatrix ) const;
 
 
   /// Dof key for the member functions that do not have access to the coupled Dof manager
