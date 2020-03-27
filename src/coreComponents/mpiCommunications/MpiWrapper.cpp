@@ -73,22 +73,12 @@ int MpiWrapper::Cart_rank( MPI_Comm comm, const int coords[] )
   return rank;
 }
 
-int MpiWrapper::Comm_free( MPI_Comm * comm )
+void MpiWrapper::Comm_free( MPI_Comm & comm )
 {
 #ifdef GEOSX_USE_MPI
-  return MPI_Comm_free( comm );
+  MPI_CHECK_ERROR( MPI_Comm_free( &comm ) );
 #else
-  return 0;
-#endif
-}
-
-
-int MpiWrapper::Finalize()
-{
-#ifdef GEOSX_USE_MPI
-  return MPI_Finalize();
-#else
-  return 0;
+  comm = MPI_COMM_NULL;
 #endif
 }
 
@@ -132,6 +122,25 @@ int MpiWrapper::Init( int * argc, char * * * argv )
   return MPI_Init( argc, argv );
 #else
   return 0;
+#endif
+}
+
+void MpiWrapper::Finalize()
+{
+#ifdef GEOSX_USE_MPI
+  MPI_CHECK_ERROR( MPI_Finalize() );
+#endif
+}
+
+
+MPI_Comm MpiWrapper::Comm_dup( MPI_Comm const comm )
+{
+#ifdef GEOSX_USE_MPI
+  MPI_Comm duplicate;
+  MPI_CHECK_ERROR( MPI_Comm_dup( comm, &duplicate ) );
+  return duplicate;
+#else
+  return comm;
 #endif
 }
 

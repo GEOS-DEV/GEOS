@@ -630,7 +630,7 @@
 		<xsd:attribute name="outputDirectory" type="string" />
 		<!--overridePartitionNumbers => Flag to indicate partition number override-->
 		<xsd:attribute name="overridePartitionNumbers" type="integer" />
-		<!--problemName => Used in writing the output files, if not specified defaults to the name of the input file..-->
+		<!--problemName => Used in writing the output files, if not specified defaults to the name of the input file.-->
 		<xsd:attribute name="problemName" type="string" />
 		<!--restartFileName => Name of the restart file.-->
 		<xsd:attribute name="restartFileName" type="string" />

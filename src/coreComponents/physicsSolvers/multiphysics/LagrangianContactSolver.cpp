@@ -1596,34 +1596,24 @@ void LagrangianContactSolver::AssembleStabiliziation( DomainPartition const * co
         // Compute rhs
         real64_array rhs0( 3 );
         rhs0 = 0.0;
-        for( localIndex i = 0; i < nDofStencil; ++i )
+        for( localIndex j = 0; j < nDofStencil; ++j )
         {
-          rhs0( i ) += totalInvStiffApprox( i, 0 ) * ( traction[fractureIndex[0]][0] );
-          for( localIndex j = 1; j < nDofStencil; ++j )
+          rhs0( 0 ) += totalInvStiffApprox( 0, j ) * ( traction[fractureIndex[0]][j] );
+          rhs0( 0 ) -= totalInvStiffApprox( 0, j ) * ( traction[fractureIndex[1]][j] );
+        }
+        for( localIndex i = 1; i < nDofStencil; ++i )
+        {
+          for( localIndex j = 0; j < nDofStencil; ++j )
           {
             rhs0( i ) += totalInvStiffApprox( i, j ) * ( deltaTraction[fractureIndex[0]][j] );
-          }
-          rhs0( i ) -= totalInvStiffApprox( i, 0 ) * ( traction[fractureIndex[1]][0] );
-          for( localIndex j = 1; j < nDofStencil; ++j )
-          {
             rhs0( i ) -= totalInvStiffApprox( i, j ) * ( deltaTraction[fractureIndex[1]][j] );
           }
         }
 
-        real64_array rhs1( 3 );
-        rhs1 = 0.0;
+        real64_array rhs1( rhs0 );
         for( localIndex i = 0; i < nDofStencil; ++i )
         {
-          rhs1( i ) -= totalInvStiffApprox( i, 0 ) * ( traction[fractureIndex[0]][0] );
-          for( localIndex j = 1; j < nDofStencil; ++j )
-          {
-            rhs1( i ) -= totalInvStiffApprox( i, j ) * ( deltaTraction[fractureIndex[0]][j] );
-          }
-          rhs1( i ) += totalInvStiffApprox( i, 0 ) * ( traction[fractureIndex[1]][0] );
-          for( localIndex j = 1; j < nDofStencil; ++j )
-          {
-            rhs1( i ) += totalInvStiffApprox( i, j ) * ( deltaTraction[fractureIndex[1]][j] );
-          }
+          rhs1( i )*=-1;
         }
 
         // Global matrix and rhs assembly
