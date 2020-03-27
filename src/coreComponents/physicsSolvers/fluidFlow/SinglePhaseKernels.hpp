@@ -198,12 +198,8 @@ struct AccumulationKernel< FaceElementSubRegion >
     // Residual contribution is mass conservation in the cell
     localAccum = densNew * volNew - densOld * volume;
 
-//    std::cout<<"\nlocalAccum = "<<densNew<<" * "<<volNew<<" - "<< densOld <<" * "<< volume<<" =
-// "<<localAccum<<std::endl;
-
     // Derivative of residual wrt to pressure in the cell
     localAccumJacobian =  dDens_dPres * volNew;
-//    std::cout<<"localAccumJacobian = "<<dDens_dPres<<" * "<<volNew<<" = "<<localAccumJacobian<<std::endl;
   }
 };
 
