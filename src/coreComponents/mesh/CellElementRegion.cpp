@@ -30,10 +30,10 @@ CellElementRegion::CellElementRegion( string const & name, Group * const parent 
   ElementRegionBase( name, parent )
 {
   registerWrapper( viewKeyStruct::sourceCellBlockNames, &m_cellBlockNames, false )->
-    setInputFlag(InputFlags::OPTIONAL);
+    setInputFlag( InputFlags::OPTIONAL );
 
   registerWrapper( viewKeyStruct::coarseningRatioString, &m_coarseningRatio, false )->
-    setInputFlag(InputFlags::OPTIONAL);
+    setInputFlag( InputFlags::OPTIONAL );
 }
 
 CellElementRegion::~CellElementRegion()
@@ -42,13 +42,13 @@ CellElementRegion::~CellElementRegion()
 
 void CellElementRegion::GenerateMesh( Group * const cellBlocks )
 {
-  Group * const elementSubRegions = this->GetGroup(viewKeyStruct::elementSubRegions);
+  Group * const elementSubRegions = this->GetGroup( viewKeyStruct::elementSubRegions );
 
   for( string const & cellBlockName : this->m_cellBlockNames )
   {
-    CellElementSubRegion * const subRegion = elementSubRegions->RegisterGroup<CellElementSubRegion>(cellBlockName);
-    CellBlock * const source = cellBlocks->GetGroup<CellBlock>( subRegion->getName() );
-    GEOSX_ERROR_IF(source == nullptr, "Cell block named " + subRegion->getName() + " does not exist");
+    CellElementSubRegion * const subRegion = elementSubRegions->RegisterGroup< CellElementSubRegion >( cellBlockName );
+    CellBlock * const source = cellBlocks->GetGroup< CellBlock >( subRegion->getName() );
+    GEOSX_ERROR_IF( source == nullptr, "Cell block named " + subRegion->getName() + " does not exist" );
     subRegion->CopyFromCellBlock( source );
   }
 }
@@ -58,37 +58,38 @@ void CellElementRegion::GenerateAggregates( FaceManager const * const faceManage
 {
   GEOSX_MARK_FUNCTION;
 
-  if(m_coarseningRatio <= 0.)
+  if( m_coarseningRatio <= 0. )
   {
     return;
   }
-  Group * elementSubRegions = this->GetGroup(viewKeyStruct::elementSubRegions);
+  Group * elementSubRegions = this->GetGroup( viewKeyStruct::elementSubRegions );
   localIndex regionIndex = getIndexInParent();
   AggregateElementSubRegion * const aggregateSubRegion =
-    elementSubRegions->RegisterGroup<AggregateElementSubRegion>("coarse");
+    elementSubRegions->RegisterGroup< AggregateElementSubRegion >( "coarse" );
 
-  array2d<localIndex> const & elemRegionList     = faceManager->elementRegionList();
-  array2d<localIndex> const & elemSubRegionList  = faceManager->elementSubRegionList();
-  array2d<localIndex> const & elemList           = faceManager->elementList();
+  array2d< localIndex > const & elemRegionList     = faceManager->elementRegionList();
+  array2d< localIndex > const & elemSubRegionList  = faceManager->elementSubRegionList();
+  array2d< localIndex > const & elemList           = faceManager->elementList();
 
   // Counting the total number of cell and number of vertices
   localIndex nbCellElements = 0;
-  this->forElementSubRegions<CellElementSubRegion,FaceElementSubRegion>( [&]( auto * const elementSubRegion ) -> void
+  this->forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&]( auto & elementSubRegion )
   {
-    nbCellElements += elementSubRegion->size();
-  });
+    nbCellElements += elementSubRegion.size();
+  } );
+
   // Number of aggregate computation
   localIndex nbAggregates = integer_conversion< localIndex >( int(nbCellElements * m_coarseningRatio) );
-  GEOSX_LOG_RANK_0("Generating " << nbAggregates  << " aggregates on region " << this->getName());
+  GEOSX_LOG_RANK_0( "Generating " << nbAggregates  << " aggregates on region " << this->getName());
 
   // METIS variable declarations
   using idx_t = ::idx_t;
   idx_t options[METIS_NOPTIONS];                                    // Contains the METIS options
-  METIS_SetDefaultOptions(options);                                 // ... That are set by default
+  METIS_SetDefaultOptions( options );                                 // ... That are set by default
   idx_t nnodes = integer_conversion< idx_t >( nbCellElements );     // Number of connectivity graph nodes
   idx_t nconst = 1;                                                 // Number of balancy constraints
   idx_t objval;                                                     // Total communication volume
-  array1d< idx_t > parts(nnodes);                                   // Map element index -> aggregate index
+  array1d< idx_t > parts( nnodes );                                   // Map element index -> aggregate index
   idx_t nparts = integer_conversion< idx_t >( nbAggregates );       // Number of aggregates to be generated
 
 
@@ -99,9 +100,9 @@ void CellElementRegion::GenerateAggregates( FaceManager const * const faceManage
   array1d< localIndex > offsetSubRegions( this->GetSubRegions().size() );
   for( localIndex subRegionIndex = 1; subRegionIndex < offsetSubRegions.size(); subRegionIndex++ )
   {
-    offsetSubRegions[subRegionIndex] = offsetSubRegions[subRegionIndex - 1] + this->GetSubRegion(subRegionIndex)->size();
+    offsetSubRegions[subRegionIndex] = offsetSubRegions[subRegionIndex - 1] + this->GetSubRegion( subRegionIndex )->size();
   }
-  for (localIndex kf = 0; kf < faceManager->size(); ++kf)
+  for( localIndex kf = 0; kf < faceManager->size(); ++kf )
   {
     if( elemRegionList[kf][0] == regionIndex && elemRegionList[kf][1] == regionIndex && elemRegionList[kf][0] )
     {
@@ -109,15 +110,15 @@ void CellElementRegion::GenerateAggregates( FaceManager const * const faceManage
       idx_t const ei0  = integer_conversion< idx_t >( elemList[kf][0] + offsetSubRegions[esr0] );
       localIndex const esr1 = elemSubRegionList[kf][1];
       idx_t const ei1  = integer_conversion< idx_t >( elemList[kf][1] + offsetSubRegions[esr1] );
-      graph.insertNonZero(ei0, ei1);
-      graph.insertNonZero(ei1, ei0);
+      graph.insertNonZero( ei0, ei1 );
+      graph.insertNonZero( ei1, ei0 );
       nbConnections++;
     }
   }
 
   // METIS partitionning
-  idx_t * offsets = const_cast< idx_t* >( graph.getOffsets() );
-  idx_t * columns = const_cast< idx_t* >( &graph.getColumns(0)[0] );
+  idx_t * offsets = const_cast< idx_t * >( graph.getOffsets() );
+  idx_t * columns = const_cast< idx_t * >( &graph.getColumns( 0 )[0] );
   METIS_PartGraphRecursive( &nnodes, &nconst, offsets, columns, nullptr, nullptr, nullptr,
                             &nparts, nullptr, nullptr, options, &objval, parts.data() );
 
@@ -127,43 +128,46 @@ void CellElementRegion::GenerateAggregates( FaceManager const * const faceManage
   array1d< real64 > normalizeVolumes( nbCellElements );
 
   // First, compute the volume of each aggregates
-  this->forElementSubRegions<CellElementSubRegion,FaceElementSubRegion>( [&]( auto * const elementSubRegion ) -> void
+  this->forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&]( ElementSubRegionBase & elementSubRegion )
   {
-    localIndex const subRegionIndex = elementSubRegion->getIndexInParent();
-    for(localIndex cellIndex = 0; cellIndex< elementSubRegion->size() ; cellIndex++)
+    arrayView1d< integer const > const & ghostRank = elementSubRegion.ghostRank();
+    localIndex const subRegionIndex = elementSubRegion.getIndexInParent();
+    for( localIndex cellIndex = 0; cellIndex< elementSubRegion.size(); cellIndex++ )
     {
-      if( elementSubRegion->GhostRank()[cellIndex] >= 0 )
+      if( ghostRank[cellIndex] >= 0 )
         continue;
-      aggregateVolumes[parts[cellIndex + offsetSubRegions[subRegionIndex]]] += elementSubRegion->getElementVolume()[cellIndex];
+      aggregateVolumes[parts[cellIndex + offsetSubRegions[subRegionIndex]]] += elementSubRegion.getElementVolume()[cellIndex];
     }
-  });
+  } );
 
   // Second, compute the normalized volume of each fine elements
-  this->forElementSubRegions<CellElementSubRegion,FaceElementSubRegion>( [&]( auto * const elementSubRegion ) -> void
+  this->forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&]( ElementSubRegionBase & elementSubRegion )
   {
-    localIndex const subRegionIndex = elementSubRegion->getIndexInParent();
-    for(localIndex cellIndex = 0; cellIndex< elementSubRegion->size() ; cellIndex++)
+    arrayView1d< integer const > const & ghostRank = elementSubRegion.ghostRank();
+    localIndex const subRegionIndex = elementSubRegion.getIndexInParent();
+    for( localIndex cellIndex = 0; cellIndex< elementSubRegion.size(); cellIndex++ )
     {
-      if( elementSubRegion->GhostRank()[cellIndex] >= 0 )
+      if( ghostRank[cellIndex] >= 0 )
         continue;
       normalizeVolumes[cellIndex + offsetSubRegions[subRegionIndex]] =
-        elementSubRegion->getElementVolume()[cellIndex] / aggregateVolumes[parts[cellIndex + offsetSubRegions[subRegionIndex]]];
+        elementSubRegion.getElementVolume()[cellIndex] / aggregateVolumes[parts[cellIndex + offsetSubRegions[subRegionIndex]]];
     }
-  });
+  } );
 
   // Third, normalize the centers
-  this->forElementSubRegions<CellElementSubRegion,FaceElementSubRegion>( [&]( auto * const elementSubRegion ) -> void
+  this->forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&]( ElementSubRegionBase & elementSubRegion )
   {
-    localIndex const subRegionIndex = elementSubRegion->getIndexInParent();
-    for(localIndex cellIndex = 0; cellIndex< elementSubRegion->size() ; cellIndex++)
+    arrayView1d< integer const > const & ghostRank = elementSubRegion.ghostRank();
+    localIndex const subRegionIndex = elementSubRegion.getIndexInParent();
+    for( localIndex cellIndex = 0; cellIndex< elementSubRegion.size(); cellIndex++ )
     {
-      if( elementSubRegion->GhostRank()[cellIndex] >= 0 )
+      if( ghostRank[cellIndex] >= 0 )
         continue;
-      R1Tensor center = elementSubRegion->getElementCenter()[cellIndex];
+      R1Tensor center = elementSubRegion.getElementCenter()[cellIndex];
       center *= normalizeVolumes[cellIndex + offsetSubRegions[subRegionIndex]];
       aggregateBarycenters[parts[cellIndex + offsetSubRegions[subRegionIndex]]] += center;
     }
-  });
+  } );
 
   // Convert from metis to GEOSX types
   array1d< localIndex > partsGEOS( parts.size() );
@@ -171,7 +175,7 @@ void CellElementRegion::GenerateAggregates( FaceManager const * const faceManage
   {
     partsGEOS[fineCellIndex] = integer_conversion< localIndex >( parts[fineCellIndex] );
   }
-  aggregateSubRegion->CreateFromFineToCoarseMap(nbAggregates, partsGEOS, aggregateBarycenters);
+  aggregateSubRegion->CreateFromFineToCoarseMap( nbAggregates, partsGEOS, aggregateBarycenters );
 }
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, CellElementRegion, std::string const &, Group * const )

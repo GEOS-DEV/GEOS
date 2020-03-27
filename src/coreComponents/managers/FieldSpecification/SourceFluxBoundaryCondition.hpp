@@ -28,7 +28,7 @@ namespace geosx
 class SourceFluxBoundaryCondition : public FieldSpecificationBase
 {
 public:
-  SourceFluxBoundaryCondition( string const & name, dataRepository::Group *const parent );
+  SourceFluxBoundaryCondition( string const & name, dataRepository::Group * const parent );
   SourceFluxBoundaryCondition() = delete;
   virtual ~SourceFluxBoundaryCondition() override;
 

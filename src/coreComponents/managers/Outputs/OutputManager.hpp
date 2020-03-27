@@ -27,8 +27,7 @@ namespace geosx
 namespace dataRepository
 {
 namespace keys
-{
-}
+{}
 }
 
 /**

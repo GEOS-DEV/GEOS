@@ -28,14 +28,14 @@ namespace geosx
 class Box : public SimpleGeometricObjectBase
 {
 public:
-  Box( const std::string& name,
+  Box( const std::string & name,
        Group * const parent );
 
   virtual ~Box() override;
 
   static string CatalogName() { return "Box"; }
 
-  bool IsCoordInObject( const R1Tensor& coord ) const override final;
+  bool IsCoordInObject( const R1Tensor & coord ) const override final;
 
 protected:
   virtual void PostProcessInput() override final;
@@ -45,7 +45,7 @@ private:
   R1Tensor m_min;
   R1Tensor m_max;
   realT m_strikeAngle=0.0;
-  R1Tensor m_boxCenter={0.0,0.0,0.0};
+  R1Tensor m_boxCenter={0.0, 0.0, 0.0};
   realT m_cosStrike=0.0;
   real64 m_sinStrike=0.0;
 

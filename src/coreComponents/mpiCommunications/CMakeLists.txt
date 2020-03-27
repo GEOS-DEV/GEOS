@@ -8,6 +8,7 @@ set(mpiCommunications_headers
     NeighborCommunicator.hpp
     PartitionBase.hpp
     SpatialPartition.hpp
+    NeighborData.hpp
    )
 
 

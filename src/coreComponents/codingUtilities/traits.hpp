@@ -33,182 +33,145 @@ namespace geosx
 namespace traits
 {
 
+/**
+ * @brief Defines a static constexpr bool HasMemberFunction_data< @p CLASS >
+ *        that is true iff the method @p CLASS ::data() exists and the return value is convertable to a pointer.
+ * @tparam CLASS The type to test.
+ */
+HAS_MEMBER_FUNCTION( data, void const *, );
+
+/**
+ * @brief Defines a static constexpr bool HasMemberFunction_move< @p CLASS >
+ *        that is true iff the method @p CLASS ::move(chai::ExecutionSpace, bool) exists.
+ * @tparam CLASS The type to test.
+ */
+HAS_MEMBER_FUNCTION_NO_RTYPE( move, chai::CPU, true );
+
+/**
+ * @brief Defines a static constexpr bool HasMemberFunction_setName< @p CLASS >
+ *        that is true iff the method @p CLASS ::setName( std::string ) exists.
+ * @tparam CLASS The type to test.
+ */
+HAS_MEMBER_FUNCTION_NO_RTYPE( setName, std::string() );
+
+/**
+ * @brief Defines a static constexpr bool HasMemberFunction_size< @p CLASS >
+ *        that is true iff the method @p CLASS ::size() exists and the return value is convertable to a localIndex.
+ * @tparam CLASS The type to test.
+ */
+HAS_MEMBER_FUNCTION( size, localIndex, );
+
+/**
+ * @brief Defines a static constexpr bool HasMemberFunction_capacity< @p CLASS >
+ *        that is true iff the method @p CLASS ::capacity() exists and the return value is convertable to a localIndex.
+ * @tparam CLASS The type to test.
+ */
+HAS_MEMBER_FUNCTION( capacity, localIndex, );
+
+/**
+ * @brief Defines a static constexpr bool HasMemberFunction_resize< @p CLASS >
+ *        that is True iff the method @p CLASS ::resize( int ) exists.
+ * @tparam CLASS The type to test.
+ */
+HAS_MEMBER_FUNCTION_NO_RTYPE( resize, 0 );
+
+/**
+ * @brief Defines a static constexpr bool HasMemberFunction_reserve< @p CLASS >
+ *        that is true iff the method @p CLASS ::reserve( localIndex ) exists.
+ * @tparam CLASS The type to test.
+ */
+HAS_MEMBER_FUNCTION_NO_RTYPE( reserve, localIndex( 55 ) );
+
+HAS_MEMBER_FUNCTION_NO_RTYPE( toView, );
+
+/**
+ * @brief Defines a static constexpr bool with two template parameter CanStreamInto
+ *        that is true iff the operation std::declval< SRC & >() >> src::declval< DST & >() exists.
+ * @tparam SRC The type of the source.
+ * @tparam DST The type of the destination.
+ */
+IS_VALID_EXPRESSION_2( CanStreamInto, SRC, DST, std::declval< SRC & >() >> std::declval< DST & >() );
+
+/**
+ * @brief Defines a static constexpr bool HasAlias_value_type< @p CLASS >
+ *        that is true iff @p CLASS ::value_type is valid and not an enum.
+ * @tparam CLASS The type to test.
+ */
+HAS_ALIAS( value_type );
+
 namespace internal
 {
-  HAS_ALIAS( value_type )
+template< class T,
+          bool HAS_DATA_METHOD = HasMemberFunction_data< T > >
+struct GetPointerType
+{
+  using Pointer = T *;
+  using ConstPointer = T const *;
+};
 
-  HAS_ALIAS( pointer )
+template< class T >
+struct GetPointerType< T, true >
+{
+  using Pointer = decltype( std::declval< T >().data() );
+  using ConstPointer = std::remove_pointer_t< Pointer > const *;
+};
 
-  template< class T,
-            bool HASPOINTERTYPE = has_alias_pointer< T >::value >
-  struct PointerHelper
-  {
-    using Pointer = T *;
-    using ConstPointer = T const *;
-  };
+template< typename T,
+          bool HAS_VIEW_TYPE = HasMemberFunction_toView< T > >
+struct GetViewType
+{
+  using ViewType = T &;
+  using ViewTypeConst = T const &;
+};
 
-  template< class T >
-  struct PointerHelper< T, true >
-  {
-    using Pointer = typename T::pointer;
-    using ConstPointer = typename T::const_pointer;
-  };
-
-  template< typename T >
-  struct has_data_method
-  {
-    HAS_MEMBER_FUNCTION_VARIANT( data, nonconst, typename PointerHelper< T >::Pointer, , , )
-    HAS_MEMBER_FUNCTION_VARIANT( data, const,    typename PointerHelper< T >::Pointer, const, , )
-
-    static constexpr bool value = has_memberfunction_vnonconst_data< T >::value ||
-                                  has_memberfunction_vconst_data< T >::value;
-  };
-
-  template< typename T >
-  struct has_chai_move_method
-  {
-    HAS_MEMBER_FUNCTION( move,
-                         void,
-                         ,
-                         VA_LIST( chai::ExecutionSpace, bool ),
-                         VA_LIST( chai::CPU, true ) )
-    static constexpr bool value = has_memberfunction_move< T >::value;
-  };
-
-  template< typename T >
-  struct has_empty_method
-  {
-    HAS_MEMBER_FUNCTION( empty, bool, const, , )
-    static constexpr bool value = has_memberfunction_empty< T >::value;
-  };
-
-  template< typename T, typename INDEX_TYPE >
-  struct has_size_method
-  {
-    HAS_MEMBER_FUNCTION( size, INDEX_TYPE, const, , )
-    static constexpr bool value = has_memberfunction_size< T >::value;
-  };
-
-  template< typename T, typename INDEX_TYPE >
-  struct has_dimension_size_method
-  {
-    HAS_MEMBER_FUNCTION( size, INDEX_TYPE, const, VA_LIST( int ), VA_LIST( 0 ) )
-    static constexpr bool value = has_memberfunction_size< T >::value;
-  };
-
-  template< typename T, typename INDEX_TYPE >
-  struct has_resize_method
-  {
-    HAS_MEMBER_FUNCTION( resize, void, , VA_LIST( INDEX_TYPE ), VA_LIST( INDEX_TYPE( 0 ) ) )
-    static constexpr bool value = has_memberfunction_resize< T >::value;
-  };
-
-  template< typename T, typename DVT, typename INDEX_TYPE >
-  struct has_resize_default_method
-  {
-    HAS_MEMBER_FUNCTION( resizeDefault, void, , VA_LIST( INDEX_TYPE, DVT const & ), VA_LIST( INDEX_TYPE( 0 ), std::declval< DVT const & >() ) )
-    static constexpr bool value = has_memberfunction_resizeDefault< T >::value;
-  };
-
-  template< typename T >
-  struct has_resize_dimensions_method
-  {
-    HAS_MEMBER_FUNCTION( resize, void, , VA_LIST( int, localIndex const * ),
-                         VA_LIST( 0, static_cast< localIndex const * >( nullptr ) ) )
-    static constexpr bool value = has_memberfunction_resize< T >::value;
-  };
-
+template< class T >
+struct GetViewType< T, true >
+{
+  using ViewType = decltype( std::declval< T >().toView() );
+  using ViewTypeConst = decltype( std::declval< T >().toViewConst() );
+};
 } // namespace internal
 
+/// Type aliased to whatever T::data() returns or T * if that method doesn't exist.
 template< typename T >
-using Pointer = typename internal::PointerHelper< T >::Pointer;
+using Pointer = typename internal::GetPointerType< T >::Pointer;
 
+/// The const version of Pointer.
 template< typename T >
-using ConstPointer = typename internal::PointerHelper< T >::ConstPointer;
+using ConstPointer = typename internal::GetPointerType< T >::ConstPointer;
 
+/// Type aliased to whatever T::toView() returns or T & if that method doesn't exist.
 template< typename T >
-constexpr bool has_alias_value_type = internal::has_alias_value_type< T >::value;
+using ViewType = typename internal::GetViewType< T >::ViewType;
 
+/// Type aliased to whatever T::toViewConst() returns or T const & if that method doesn't exist.
 template< typename T >
-constexpr bool has_data_method = internal::has_data_method< T >::value;
+using ViewTypeConst = typename internal::GetViewType< T >::ViewTypeConst;
 
+/// True if T is or inherits from std::string.
 template< typename T >
-constexpr bool has_chai_move_method = internal::has_chai_move_method< T >::value;
+constexpr bool is_string = std::is_base_of_v< std::string, T >;
 
-template< typename T >
-constexpr bool has_empty_method = internal::has_empty_method< T >::value;
-
-template< typename T >
-constexpr bool has_size_method = internal::has_size_method< T, int >::value ||
-                                 internal::has_size_method< T, unsigned int >::value ||
-                                 internal::has_size_method< T, long >::value ||
-                                 internal::has_size_method< T, unsigned long >::value ||
-                                 internal::has_size_method< T, long long >::value ||
-                                 internal::has_size_method< T, unsigned long long >::value;
-
-template< typename T >
-constexpr bool has_dimension_size_method = internal::has_dimension_size_method< T, int >::value ||
-                                           internal::has_dimension_size_method< T, unsigned int >::value ||
-                                           internal::has_dimension_size_method< T, long >::value ||
-                                           internal::has_dimension_size_method< T, unsigned long >::value ||
-                                           internal::has_dimension_size_method< T, long long >::value ||
-                                           internal::has_dimension_size_method< T, unsigned long long >::value;
-
-template< typename T >
-constexpr bool has_resize_method = internal::has_resize_method< T, int >::value ||
-                                   internal::has_resize_method< T, unsigned int >::value ||
-                                   internal::has_resize_method< T, long >::value ||
-                                   internal::has_resize_method< T, unsigned long >::value ||
-                                   internal::has_resize_method< T, long long >::value ||
-                                   internal::has_resize_method< T, unsigned long long >::value;
-
-template< typename T, typename DVT >
-constexpr bool has_resize_default_method = internal::has_resize_default_method< T, DVT, int >::value ||
-                                           internal::has_resize_default_method< T, DVT, unsigned int >::value ||
-                                           internal::has_resize_default_method< T, DVT, long >::value ||
-                                           internal::has_resize_default_method< T, DVT, unsigned long >::value ||
-                                           internal::has_resize_default_method< T, DVT, long long >::value ||
-                                           internal::has_resize_default_method< T, DVT, unsigned long long >::value;
-
-template< typename T >
-constexpr bool has_resize_default_method< T, void > = false;
-
-template< typename T >
-constexpr bool has_resize_dimensions_method = internal::has_resize_dimensions_method< T >::value;
-
-template< typename T >
-constexpr bool is_string = is_base_of_v< std::string, T >;
-
-template< typename T >
-constexpr bool is_std_vector = is_instantiation_of< std::vector, T >;
-
-template< typename T >
-constexpr bool is_pair = is_instantiation_of< std::pair, T >;
-
-template< typename T >
-constexpr bool is_map = is_instantiation_of< mapBase, T >;
-
-template< typename T >
-constexpr bool is_set = is_instantiation_of< LvArray::SortedArray, T >;
-
+/// True if T is an instantiation of LvArray::Array.
 template< typename T >
 constexpr bool is_array = LvArray::isArray< T >;
 
+/// True if T is a Tensor class.
 template< typename T >
-constexpr bool is_tensorT = is_same_v< std::remove_const_t< T >, R1Tensor > ||
-                            is_same_v< std::remove_const_t< T >, R2Tensor > ||
-                            is_same_v< std::remove_const_t< T >, R2SymTensor >;
+constexpr bool is_tensorT = std::is_same_v< std::remove_const_t< T >, R1Tensor > ||
+                            std::is_same_v< std::remove_const_t< T >, R2Tensor > ||
+                            std::is_same_v< std::remove_const_t< T >, R2SymTensor >;
 
 } /* namespace traits */
 
-template<typename T, bool COND>
+template< typename T, bool COND >
 struct add_const_if
 {
-  using type = typename std::conditional<COND, typename std::add_const<T>::type, T>::type;
+  using type = typename std::conditional< COND, typename std::add_const< T >::type, T >::type;
 };
 
-template<typename T, bool COND>
-using add_const_if_t = typename add_const_if<T, COND>::type;
+template< typename T, bool COND >
+using add_const_if_t = typename add_const_if< T, COND >::type;
 
 } /* namespace geosx */
 

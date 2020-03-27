@@ -50,7 +50,7 @@ std::set< int > & CommunicationTools::getFreeCommIDs()
 
   if( !isInitialized )
   {
-    for( int a = 0 ; a < NeighborCommunicator::maxComm ; ++a )
+    for( int a = 0; a < NeighborCommunicator::maxComm; ++a )
     {
       commIDs.insert( a );
     }
@@ -95,10 +95,12 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
   localIndex const numberOfObjectsHere = object.size();
   globalIndex const offset = MpiWrapper::PrefixSum< globalIndex >( numberOfObjectsHere );
 
+  arrayView1d< globalIndex > const & localToGlobal = object.localToGlobalMap();
+
   // set the global indices as if they were all local to this process
-  for( localIndex a = 0 ; a < object.size() ; ++a )
+  for( localIndex a = 0; a < object.size(); ++a )
   {
-    object.m_localToGlobalMap[a] = offset + a;
+    localToGlobal[a] = offset + a;
   }
 
   // get the relation to the composition object used that will be used to identify the main object. For example,
@@ -114,7 +116,7 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
   map< globalIndex, std::vector< std::pair< std::vector< globalIndex >, localIndex > > > indexByFirstCompositionIndex;
 
   localIndex bufferSize = 0;
-  for( std::size_t a = 0 ; a < objectToCompositionObject.size() ; ++a )
+  for( std::size_t a = 0; a < objectToCompositionObject.size(); ++a )
   {
     if( objectToCompositionObject[a].size() > 0 )
     {
@@ -143,14 +145,14 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
   objectToCompositionObjectSendBuffer.reserve( bufferSize );
 
   // put the map into a buffer
-  for( std::size_t a = 0 ; a < objectToCompositionObject.size() ; ++a )
+  for( std::size_t a = 0; a < objectToCompositionObject.size(); ++a )
   {
     if( objectToCompositionObject[a].size() > 0 )
     {
       std::vector< globalIndex > const & nodeList = objectToCompositionObject[a];
       objectToCompositionObjectSendBuffer.push_back( nodeList.size() );
-      objectToCompositionObjectSendBuffer.push_back( object.m_localToGlobalMap[a] );
-      for( std::size_t b = 0 ; b < nodeList.size() ; ++b )
+      objectToCompositionObjectSendBuffer.push_back( localToGlobal[a] );
+      for( std::size_t b = 0; b < nodeList.size(); ++b )
       {
         objectToCompositionObjectSendBuffer.push_back( nodeList[b] );
       }
@@ -165,7 +167,7 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
 
   int const sendSize = integer_conversion< int const >( objectToCompositionObjectSendBuffer.size() );
 
-  for( std::size_t neighborIndex = 0 ; neighborIndex < neighbors.size() ; ++neighborIndex )
+  for( std::size_t neighborIndex = 0; neighborIndex < neighbors.size(); ++neighborIndex )
   {
     NeighborCommunicator & neighbor = neighbors[neighborIndex];
     neighbor.MPI_iSendReceive( &sendSize,
@@ -179,7 +181,7 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
   }
 
 
-  for( std::size_t count=0 ; count<neighbors.size() ; ++count )
+  for( std::size_t count=0; count<neighbors.size(); ++count )
   {
     int neighborIndex;
     MpiWrapper::Waitany( commData.size,
@@ -211,7 +213,7 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
   std::vector< map< globalIndex, std::vector< std::pair< std::vector< globalIndex >, globalIndex > > > >
   neighborCompositionObjects( neighbors.size() );
 
-  for( std::size_t count=0 ; count<neighbors.size() ; ++count )
+  for( std::size_t count=0; count<neighbors.size(); ++count )
   {
     int neighborIndex;
     MpiWrapper::Waitany( commData.size,
@@ -238,7 +240,7 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
 
       // the remaining composition object indices.
       std::vector< globalIndex > temp;
-      for( localIndex b = 1 ; b < dataSize ; ++b )
+      for( localIndex b = 1; b < dataSize; ++b )
       {
         temp.push_back( *( recBuffer++ ) );
       }
@@ -266,13 +268,13 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
       {
         // first we loop over all local composition arrays (objects with the matched key)
         for( std::vector< std::pair< std::vector< globalIndex >, localIndex > >::const_iterator
-             iter_local2 = iter_local->second.begin() ;
-             iter_local2 != iter_local->second.end() ; ++iter_local2 )
+             iter_local2 = iter_local->second.begin();
+             iter_local2 != iter_local->second.end(); ++iter_local2 )
         {
           // and loop over all of the neighbor composition arrays (objects with the matched key)
           for( std::vector< std::pair< std::vector< globalIndex >, globalIndex > >::const_iterator
-               iter_neighbor2 = iter_neighbor->second.begin() ;
-               iter_neighbor2 != iter_neighbor->second.end() ;
+               iter_neighbor2 = iter_neighbor->second.begin();
+               iter_neighbor2 != iter_neighbor->second.end();
                ++iter_neighbor2 )
           {
             // now compare the composition arrays
@@ -282,11 +284,11 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
                             iter_neighbor2->first.begin() ) )
             {
               // they are equal, so we need to overwrite the global index for the object
-              if( iter_neighbor2->second < object.m_localToGlobalMap[iter_local2->second] )
+              if( iter_neighbor2->second < localToGlobal[iter_local2->second] )
               {
                 if( neighbor.NeighborRank() < commRank )
                 {
-                  object.m_localToGlobalMap[iter_local2->second] = iter_neighbor2->second;
+                  localToGlobal[iter_local2->second] = iter_neighbor2->second;
                   ghostRank[iter_local2->second] = neighbor.NeighborRank();
                 }
                 else
@@ -317,22 +319,13 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
 
   object.ConstructGlobalToLocalMap();
 
-  globalIndex maxGlobalIndex = -1;
-  for( localIndex a=0 ; a<object.m_localToGlobalMap.size() ; ++a )
-  {
-    maxGlobalIndex = std::max( maxGlobalIndex, object.m_localToGlobalMap[a] );
-  }
-
-  MpiWrapper::allReduce( &maxGlobalIndex,
-                         &(object.m_maxGlobalIndex),
-                         1,
-                         MPI_MAX,
-                         MPI_COMM_GEOSX );
+  object.SetMaxGlobalIndex();
 }
 
 void CommunicationTools::AssignNewGlobalIndices( ObjectManagerBase & object,
                                                  std::set< localIndex > const & indexList )
 {
+  // TODO: This should be done with a prefix sum!
   int const thisRank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
   int const commSize = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
   localIndex numberOfNewObjectsHere = indexList.size();
@@ -342,35 +335,27 @@ void CommunicationTools::AssignNewGlobalIndices( ObjectManagerBase & object,
 
 
   glocalIndexOffset[0] = 0;
-  for( int rank = 1 ; rank < commSize ; ++rank )
+  for( int rank = 1; rank < commSize; ++rank )
   {
     glocalIndexOffset[rank] = glocalIndexOffset[rank - 1] + numberOfNewObjects[rank - 1];
   }
 
+  arrayView1d< globalIndex > const & localToGlobal = object.localToGlobalMap();
+
   localIndex nIndicesAssigned = 0;
   for( localIndex const newLocalIndex : indexList )
   {
-    GEOSX_ERROR_IF( object.m_localToGlobalMap[newLocalIndex] != -1,
+    GEOSX_ERROR_IF( localToGlobal[newLocalIndex] != -1,
                     "Local object " << newLocalIndex << " should be new but already has a global index "
-                                    << object.m_localToGlobalMap[newLocalIndex] );
+                                    << localToGlobal[newLocalIndex] );
 
-    object.m_localToGlobalMap[newLocalIndex] = object.m_maxGlobalIndex + glocalIndexOffset[thisRank] + nIndicesAssigned + 1;
-    object.m_globalToLocalMap[object.m_localToGlobalMap[newLocalIndex]] = newLocalIndex;
+    localToGlobal[newLocalIndex] = object.maxGlobalIndex() + glocalIndexOffset[thisRank] + nIndicesAssigned + 1;
+    object.updateGlobalToLocalMap( newLocalIndex );
 
     nIndicesAssigned += 1;
   }
 
-  globalIndex maxGlobalIndex = -1;
-  for( localIndex a=0 ; a<object.m_localToGlobalMap.size() ; ++a )
-  {
-    maxGlobalIndex = std::max( maxGlobalIndex, object.m_localToGlobalMap[a] );
-  }
-
-  MpiWrapper::allReduce( &maxGlobalIndex,
-                         &(object.m_maxGlobalIndex),
-                         1,
-                         MPI_MAX,
-                         MPI_COMM_GEOSX );
+  object.SetMaxGlobalIndex();
 }
 
 void
@@ -378,6 +363,7 @@ CommunicationTools::
   AssignNewGlobalIndices( ElementRegionManager & elementManager,
                           std::map< std::pair< localIndex, localIndex >, std::set< localIndex > > const & newElems )
 {
+  // TODO: This should be done with a prefix sum!
   int const thisRank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
   int const commSize = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
 
@@ -395,14 +381,12 @@ CommunicationTools::
 
 
   glocalIndexOffset[0] = 0;
-  for( int rank = 1 ; rank < commSize ; ++rank )
+  for( int rank = 1; rank < commSize; ++rank )
   {
     glocalIndexOffset[rank] = glocalIndexOffset[rank - 1] + numberOfNewObjects[rank - 1];
   }
 
   localIndex nIndicesAssigned = 0;
-  globalIndex maxGlobalIndex = -1;
-
   for( auto const & iter : newElems )
   {
     localIndex const er = iter.first.first;
@@ -410,42 +394,34 @@ CommunicationTools::
     std::set< localIndex > const & indexList = iter.second;
 
     ElementSubRegionBase * const subRegion = elementManager.GetRegion( er )->GetSubRegion( esr );
+    arrayView1d< globalIndex > const & localToGlobal = subRegion->localToGlobalMap();
 
     for( localIndex const newLocalIndex : indexList )
     {
-      GEOSX_ERROR_IF( subRegion->m_localToGlobalMap[newLocalIndex] != -1,
+      GEOSX_ERROR_IF( localToGlobal[newLocalIndex] != -1,
                       "Local object " << newLocalIndex << " should be new but already has a global index "
-                                      << subRegion->m_localToGlobalMap[newLocalIndex] );
+                                      << localToGlobal[newLocalIndex] );
 
-      subRegion->m_localToGlobalMap[newLocalIndex] = elementManager.m_maxGlobalIndex + glocalIndexOffset[thisRank] + nIndicesAssigned + 1;
-      subRegion->m_globalToLocalMap[subRegion->m_localToGlobalMap[newLocalIndex]] = newLocalIndex;
+      localToGlobal[newLocalIndex] = elementManager.maxGlobalIndex() + glocalIndexOffset[thisRank] + nIndicesAssigned + 1;
+      subRegion->updateGlobalToLocalMap( newLocalIndex );
 
       nIndicesAssigned += 1;
     }
-    for( localIndex a=0 ; a<subRegion->m_localToGlobalMap.size() ; ++a )
-    {
-      maxGlobalIndex = std::max( maxGlobalIndex, subRegion->m_localToGlobalMap[a] );
-    }
   }
 
-
-  MpiWrapper::allReduce( &maxGlobalIndex,
-                         &(elementManager.m_maxGlobalIndex),
-                         1,
-                         MPI_MAX,
-                         MPI_COMM_GEOSX );
+  elementManager.SetMaxGlobalIndex();
 }
 
 void
 CommunicationTools::
-FindMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
-                                     std::vector<NeighborCommunicator> & allNeighbors )
+  FindMatchedPartitionBoundaryObjects( ObjectManagerBase * const objectManager,
+                                       std::vector< NeighborCommunicator > & allNeighbors )
 {
   GEOSX_MARK_FUNCTION;
-  integer_array & domainBoundaryIndicator = group->getReference< integer_array >( group->m_ObjectManagerBaseViewKeys.domainBoundaryIndicator );
+  integer_array & domainBoundaryIndicator = objectManager->getReference< integer_array >( objectManager->m_ObjectManagerBaseViewKeys.domainBoundaryIndicator );
 
   array1d< globalIndex > globalPartitionBoundaryObjectsIndices;
-  group->ConstructGlobalListOfBoundaryObjects( globalPartitionBoundaryObjectsIndices );
+  objectManager->ConstructGlobalListOfBoundaryObjects( globalPartitionBoundaryObjectsIndices );
 
 
   // send the size of the partitionBoundaryObjects to neighbors
@@ -454,20 +430,17 @@ FindMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
 
     int commID = reserveCommID();
 
-    for( std::size_t i=0 ; i<allNeighbors.size() ; ++i )
+    for( std::size_t i=0; i<allNeighbors.size(); ++i )
     {
       allNeighbors[i].MPI_iSendReceive( globalPartitionBoundaryObjectsIndices,
                                         neighborPartitionBoundaryObjects[i],
                                         commID, MPI_COMM_GEOSX );
     }
 
-    for( std::size_t i=0 ; i<allNeighbors.size() ; ++i )
+    for( std::size_t i=0; i<allNeighbors.size(); ++i )
     {
       NeighborCommunicator & neighbor = allNeighbors[i];
-      localIndex_array &
-      matchedPartitionBoundaryObjects = group->GetGroup( group->m_ObjectManagerBaseGroupKeys.neighborData )->
-                                          GetGroup( std::to_string( neighbor.NeighborRank()))->
-                                          getReference< localIndex_array >( group->m_ObjectManagerBaseViewKeys.matchedPartitionBoundaryObjects );
+      localIndex_array & matchedPartitionBoundaryObjects = objectManager->getNeighborData( neighbor.NeighborRank() ).matchedPartitionBoundary();
 
       neighbor.MPI_WaitAll( commID );
       localIndex localCounter = 0;
@@ -477,7 +450,7 @@ FindMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
       {
         if( globalPartitionBoundaryObjectsIndices[localCounter] == neighborPartitionBoundaryObjects[i][neighborCounter] )
         {
-          localIndex const localMatchedIndex = group->m_globalToLocalMap.at( globalPartitionBoundaryObjectsIndices[localCounter] );
+          localIndex const localMatchedIndex = objectManager->globalToLocalMap( globalPartitionBoundaryObjectsIndices[localCounter] );
           matchedPartitionBoundaryObjects.push_back( localMatchedIndex );
           domainBoundaryIndicator[ localMatchedIndex ] = 2;
           ++localCounter;
@@ -508,22 +481,21 @@ void verifyGhostingConsistency( ObjectManagerBase const & objectManager,
 {
   GEOSX_MARK_FUNCTION;
 
-  Group const & neighborGroup = *( objectManager.GetGroup( objectManager.groupKeys().neighborData ) );
-  arrayView1d< integer const > const & ghostRank = objectManager.GhostRank();
+  arrayView1d< integer const > const & ghostRank = objectManager.ghostRank();
 
   /// Variable to track if an error has occurred.
   bool error = false;
 
   /// For each neighbor make sure that the ghost rank is consistent with the send and receive lists.
-  for ( NeighborCommunicator const & neighbor : neighbors )
+  for( NeighborCommunicator const & neighbor : neighbors )
   {
     int const neighborRank = neighbor.NeighborRank();
-    Group const & neighborData = *( neighborGroup.GetGroup( std::to_string( neighborRank ) ) );
+    NeighborData const & neighborData = objectManager.getNeighborData( neighborRank );
 
-    arrayView1d< localIndex const > const & recvList = neighborData.getReference< array1d< localIndex > >( objectManager.viewKeys().ghostsToReceive );
-    for ( localIndex const recvIdx : recvList )
+    arrayView1d< localIndex const > const & recvList = neighborData.ghostsToReceive();
+    for( localIndex const recvIdx : recvList )
     {
-      if ( ghostRank[ recvIdx ] != neighborRank )
+      if( ghostRank[ recvIdx ] != neighborRank )
       {
         error = true;
         GEOSX_LOG_RANK( "Receiving " << recvIdx << " from " << neighborRank <<
@@ -531,15 +503,23 @@ void verifyGhostingConsistency( ObjectManagerBase const & objectManager,
       }
     }
 
-    arrayView1d< localIndex const > const & sendList = neighborData.getReference< array1d< localIndex > >( objectManager.viewKeys().ghostsToSend );
-    for ( localIndex const sendIdx : sendList )
+    arrayView1d< localIndex const > const & sendList = neighborData.ghostsToSend();
+    for( localIndex const sendIdx : sendList )
     {
-      if ( ghostRank[ sendIdx ] != -1 )
+      if( ghostRank[ sendIdx ] != -1 )
       {
         error = true;
         GEOSX_LOG_RANK( "Sending " << sendIdx << " to " << neighborRank <<
                         " but ghostRank[ " << sendIdx << " ] is " << ghostRank[ sendIdx ] );
       }
+    }
+
+    arrayView1d< std::pair< globalIndex, int > const > const & nonLocalGhosts = neighborData.nonLocalGhosts();
+    if( nonLocalGhosts.size() != 0 )
+    {
+      error = true;
+      GEOSX_LOG_RANK( "Expected to send 0 non local ghosts to rank " << neighborRank <<
+                      " but sending " << nonLocalGhosts.size() );
     }
   }
 
@@ -575,29 +555,24 @@ void fixReceiveLists( ObjectManagerBase & objectManager,
 
   constexpr int nonLocalGhostsTag = 54673246;
 
-  Group & neighborGroup = *( objectManager.GetGroup( objectManager.groupKeys().neighborData ) );
   std::vector< MPI_Request > nonLocalGhostsRequests( neighbors.size() );
-  
+
   /// For each neighbor send them the indices of their ghosts that they mistakenly believe are owned by this rank.
-  for ( std::size_t i = 0; i < neighbors.size(); ++i )
+  for( std::size_t i = 0; i < neighbors.size(); ++i )
   {
     int const neighborRank = neighbors[ i ].NeighborRank();
-    Group & neighborData = *( neighborGroup.GetGroup( std::to_string( neighborRank ) ) );
 
-    arrayView1d< std::pair< globalIndex, int > const > const & nonLocalGhosts =
-      neighborData.getReference< array1d< std::pair< globalIndex, int > > >( "nonLocalGhosts" );
-
-    MpiWrapper::iSend( nonLocalGhosts,
+    MpiWrapper::iSend( objectManager.getNeighborData( neighborRank ).nonLocalGhosts().toViewConst(),
                        neighborRank,
                        nonLocalGhostsTag,
                        MPI_COMM_GEOSX,
                        &nonLocalGhostsRequests[ i ] );
   }
 
-  for ( NeighborCommunicator const & neighbor : neighbors )
+  for( NeighborCommunicator const & neighbor : neighbors )
   {
     int const neighborRank = neighbor.NeighborRank();
-    
+
     /// Receive the lists of ghosts we mistakenly though were owned by this neighbor.
     array1d< std::pair< globalIndex, int > > ghostsFromSecondNeighbor;
     MpiWrapper::recv( ghostsFromSecondNeighbor,
@@ -612,25 +587,24 @@ void fixReceiveLists( ObjectManagerBase & objectManager,
     /// Map from owning MPI rank to an array of local objects we need to fix.
     std::unordered_map< int, std::vector< localIndex > > ghostsBySecondNeighbor;
 
-    arrayView1d< integer > const & ghostRank = objectManager.m_ghostRank;
+    arrayView1d< integer > const & ghostRank = objectManager.ghostRank();
 
     /// Populate ghostsToFix and ghostsBySecondNeighbor while also updating ghostRank.
-    for ( std::pair< globalIndex, int > const & pair : ghostsFromSecondNeighbor )
+    for( std::pair< globalIndex, int > const & pair : ghostsFromSecondNeighbor )
     {
-      localIndex const lid = objectManager.m_globalToLocalMap.at( pair.first );
+      localIndex const lid = objectManager.globalToLocalMap( pair.first );
       ghostsBySecondNeighbor[ pair.second ].push_back( lid );
       ghostsToFix.push_back( lid );
       ghostRank[ lid ] = pair.second;
     }
 
     /// Remove the ghosts to fix from the neighbor's receive list.
-    removeFromCommList( ghostsToFix, neighborGroup.GetGroup( std::to_string( neighborRank ) )->getReference< array1d< localIndex > >( objectManager.viewKeys().ghostsToReceive ) );
+    removeFromCommList( ghostsToFix, objectManager.getNeighborData( neighborRank ).ghostsToReceive() );
 
     /// Iterate over the ranks that own the objects. For each rank add the new objects to the receive list.
-    for ( std::pair< int const, std::vector< localIndex > > const & pair : ghostsBySecondNeighbor )
+    for( std::pair< int const, std::vector< localIndex > > const & pair : ghostsBySecondNeighbor )
     {
-      Group & trueOwnerData = *( neighborGroup.GetGroup( std::to_string( pair.first) ) );
-      array1d< localIndex > & trueOwnerRecvList = trueOwnerData.getReference< array1d< localIndex > >( objectManager.viewKeys().ghostsToReceive );
+      array1d< localIndex > & trueOwnerRecvList = objectManager.getNeighborData( pair.first ).ghostsToReceive();
       trueOwnerRecvList.insert( trueOwnerRecvList.size(), pair.second.data(), pair.second.size() );
     }
   }
@@ -640,77 +614,49 @@ void fixReceiveLists( ObjectManagerBase & objectManager,
 }
 
 /**
- * @brief Return true iff the objects have no communication with the given neighbor.
- * @param neighborString string representing the neighbor rank.
- * @param objectManager owner of the objects to check.
- */
-bool usesNeighbor( std::string const & neighborString, ObjectManagerBase const & objectManager )
-{
-  Group const & neighborData = *( objectManager.GetGroup( objectManager.groupKeys().neighborData )->GetGroup( neighborString ) );
-  return neighborData.getReference< array1d< localIndex > >( objectManager.viewKeys().ghostsToSend ).size() &&
-         neighborData.getReference< array1d< localIndex > >( objectManager.viewKeys().ghostsToReceive ).size();
-}
-
-/**
- * @brief Remove the nonLocalGhosts view from the neighbor of the given object.
- * @param neighborString string representing the neighbor rank.
- * @param objectManager the object to remove nonLocalghosts from.
- */
-void removeNonLocalGhosts( std::string const & neighborString, ObjectManagerBase & objectManager )
-{
-  Group & neighborData = *( objectManager.GetGroup( objectManager.groupKeys().neighborData )->GetGroup( neighborString ) );
-  neighborData.deregisterWrapper( "nonLocalGhosts" );
-}
-
-/**
- * @brief Remove neighbors if there is no communication between them. Also remove all the nonLocalGhosts views.
+ * @brief Remove neighbors if there is no communication between them
  * @param nodeManager the NodeManager.
  * @param edgeManager the EdgeManager.
  * @param faceManager the FaceManager.
  * @param elemManager the ElementRegionManager.
  * @param neighbors the list of NeighborCommunicators, may be modified.
  */
-void removeUnusedNeighborsAndNonLocalGhosts( NodeManager & nodeManager,
-                                             EdgeManager & edgeManager,
-                                             FaceManager & faceManager,
-                                             ElementRegionManager & elemManager,
-                                             std::vector< NeighborCommunicator > & neighbors )
+void removeUnusedNeighbors( NodeManager & nodeManager,
+                            EdgeManager & edgeManager,
+                            FaceManager & faceManager,
+                            ElementRegionManager & elemManager,
+                            std::vector< NeighborCommunicator > & neighbors )
 {
-  for ( std::size_t i = 0; i < neighbors.size(); )
+  for( std::size_t i = 0; i < neighbors.size(); )
   {
     int const neighborRank = neighbors[ i ].NeighborRank();
-    std::string const neighborString = std::to_string( neighborRank );
 
     bool used = false;
-    
-    used = used || usesNeighbor( neighborString, nodeManager );
-    removeNonLocalGhosts( neighborString, nodeManager );
 
-    used = used || usesNeighbor( neighborString, edgeManager );
-    removeNonLocalGhosts( neighborString, edgeManager );
+    used = used || nodeManager.getNeighborData( neighborRank ).communicationExists();
 
-    used = used || usesNeighbor( neighborString, faceManager );
-    removeNonLocalGhosts( neighborString, faceManager );
+    used = used || edgeManager.getNeighborData( neighborRank ).communicationExists();
 
-    elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase * const subRegion )
+    used = used || faceManager.getNeighborData( neighborRank ).communicationExists();
+
+    elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
     {
-      used = used || usesNeighbor( neighborString, *subRegion );
-      removeNonLocalGhosts( neighborString, *subRegion );
+      used = used || subRegion.getNeighborData( neighborRank ).communicationExists();
     } );
 
-    if ( used )
+    if( used )
     {
       ++i;
     }
     else
     {
-      nodeManager.GetGroup( nodeManager.groupKeys.neighborData )->deregisterGroup( neighborString );
-      edgeManager.GetGroup( edgeManager.groupKeys.neighborData )->deregisterGroup( neighborString );
-      faceManager.GetGroup( faceManager.groupKeys.neighborData )->deregisterGroup( neighborString );
-      
-      elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase * const subRegion )
+      nodeManager.removeNeighbor( neighborRank );
+      edgeManager.removeNeighbor( neighborRank );
+      faceManager.removeNeighbor( neighborRank );
+
+      elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
       {
-        subRegion->GetGroup( subRegion->groupKeys().neighborData )->deregisterGroup( neighborString );
+        subRegion.removeNeighbor( neighborRank );
       } );
 
       neighbors.erase( neighbors.begin() + i );
@@ -749,21 +695,21 @@ void CommunicationTools::FindGhosts( MeshLevel & meshLevel,
   ElementRegionManager & elemManager = *( meshLevel.getElemManager() );
 
   auto sendGhosts = [&] ( int idx )
-    {
-      neighbors[idx].PrepareAndSendGhosts( false, 1, meshLevel, commID );
-      return neighbors[idx].GetSizeRecvRequest( commID );
-    };
+  {
+    neighbors[idx].PrepareAndSendGhosts( false, 1, meshLevel, commID );
+    return neighbors[idx].GetSizeRecvRequest( commID );
+  };
   auto postRecv = [&] ( int idx )
-    {
-      neighbors[idx].PostRecv( commID );
-      return neighbors[idx].GetRecvRequest( commID );
-    };
+  {
+    neighbors[idx].PostRecv( commID );
+    return neighbors[idx].GetRecvRequest( commID );
+  };
   auto unpackGhosts = [&] ( int idx )
-    {
-      neighbors[idx].UnpackGhosts( meshLevel, commID );
-      return MPI_REQUEST_NULL;
-    };
-  
+  {
+    neighbors[idx].UnpackGhosts( meshLevel, commID );
+    return MPI_REQUEST_NULL;
+  };
+
   waitOrderedOrWaitAll( neighbors.size(), { sendGhosts, postRecv, unpackGhosts }, unorderedComms );
 
   nodeManager.SetReceiveLists();
@@ -783,16 +729,16 @@ void CommunicationTools::FindGhosts( MeshLevel & meshLevel,
   MpiWrapper::Barrier();
 
   auto sendSyncLists = [&] ( int idx )
-    {
-      neighbors[idx].PrepareAndSendSyncLists( meshLevel, commID );
-      return neighbors[idx].GetSizeRecvRequest( commID );
-    };
+  {
+    neighbors[idx].PrepareAndSendSyncLists( meshLevel, commID );
+    return neighbors[idx].GetSizeRecvRequest( commID );
+  };
   auto rebuildSyncLists = [&] ( int idx )
-    {
-      neighbors[idx].UnpackAndRebuildSyncLists( meshLevel, commID );
-      return MPI_REQUEST_NULL;
-    };
-  
+  {
+    neighbors[idx].UnpackAndRebuildSyncLists( meshLevel, commID );
+    return MPI_REQUEST_NULL;
+  };
+
   waitOrderedOrWaitAll( neighbors.size(), { sendSyncLists, postRecv, rebuildSyncLists }, unorderedComms );
 
   fixReceiveLists( nodeManager, neighbors );
@@ -802,24 +748,23 @@ void CommunicationTools::FindGhosts( MeshLevel & meshLevel,
   waitOrderedOrWaitAll( neighbors.size(), { sendSyncLists, postRecv, rebuildSyncLists }, unorderedComms );
 
   nodeManager.FixUpDownMaps( false );
+  verifyGhostingConsistency( nodeManager, neighbors );
   edgeManager.FixUpDownMaps( false );
+  verifyGhostingConsistency( edgeManager, neighbors );
   faceManager.FixUpDownMaps( false );
-  elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase * const subRegion )
+  verifyGhostingConsistency( faceManager, neighbors );
+  elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
   {
-    subRegion->FixUpDownMaps( false );
+    subRegion.FixUpDownMaps( false );
+    verifyGhostingConsistency( subRegion, neighbors );
   } );
 
-  verifyGhostingConsistency( nodeManager, neighbors );
-  verifyGhostingConsistency( edgeManager, neighbors );
-  verifyGhostingConsistency( faceManager, neighbors );
-
-  removeUnusedNeighborsAndNonLocalGhosts( nodeManager, edgeManager, faceManager, elemManager, neighbors );
+  removeUnusedNeighbors( nodeManager, edgeManager, faceManager, elemManager, neighbors );
 
   nodeManager.CompressRelationMaps();
   edgeManager.CompressRelationMaps();
   CommunicationTools::releaseCommID( commID );
 }
-
 
 void CommunicationTools::SynchronizePackSendRecvSizes( const std::map< string, string_array > & fieldNames,
                                                        MeshLevel * const mesh,
@@ -831,10 +776,10 @@ void CommunicationTools::SynchronizePackSendRecvSizes( const std::map< string, s
   icomm.fieldNames.insert( fieldNames.begin(), fieldNames.end() );
   icomm.resize( neighbors.size() );
 
-  for( std::size_t neighborIndex=0 ; neighborIndex<neighbors.size() ; ++neighborIndex )
+  for( std::size_t neighborIndex=0; neighborIndex<neighbors.size(); ++neighborIndex )
   {
     NeighborCommunicator & neighbor = neighbors[neighborIndex];
-    int const bufferSize = neighbor.PackCommSizeForSync( fieldNames, mesh, icomm.commID, on_device );
+    int const bufferSize = neighbor.PackCommSizeForSync( fieldNames, *mesh, icomm.commID, on_device );
 
     neighbor.MPI_iSendReceiveBufferSizes( icomm.commID,
                                           icomm.mpiSizeSendBufferRequest[neighborIndex],
@@ -857,10 +802,10 @@ void CommunicationTools::SynchronizePackSendRecv( const std::map< string, string
   MPI_iCommData sizeComm;
   for( NeighborCommunicator & neighbor : neighbors )
   {
-    neighbor.PackCommBufferForSync( fieldNames, mesh, icomm.commID, on_device );
+    neighbor.PackCommBufferForSync( fieldNames, *mesh, icomm.commID, on_device );
   }
 
-  for( std::size_t count=0 ; count<neighbors.size() ; ++count )
+  for( std::size_t count=0; count<neighbors.size(); ++count )
   {
     int neighborIndex;
     MpiWrapper::Waitany( icomm.size,
@@ -886,25 +831,8 @@ void CommunicationTools::SynchronizeUnpack( MeshLevel * const mesh,
 {
   GEOSX_MARK_FUNCTION;
 
-#if 0
-//  forall_in_range<RAJA::omp_parallel_for_exec>( 0, neighbors.size() ,
-//                                                   [&] ( int neighborIndex )->void
-
-#pragma omp parallel for
-  for( size_t neighborIndex=0 ; neighborIndex<neighbors.size() ; ++neighborIndex )
-  {
-    std::cout<<"thread "<<omp_get_thread_num()<<" of "<<omp_get_num_threads()<<std::endl;
-    NeighborCommunicator & neighbor = neighbors[neighborIndex];
-    MPI_Wait( &( icomm.mpiRecvBufferRequest[neighborIndex] ),
-              &( icomm.mpiRecvBufferStatus[neighborIndex] ) );
-
-    neighbor.UnpackBufferForSync( icomm.fieldNames, mesh, icomm.commID );
-
-  }
-#else
-
   // unpack the buffers
-  for( std::size_t count=0 ; count<neighbors.size() ; ++count )
+  for( std::size_t count=0; count<neighbors.size(); ++count )
   {
     int neighborIndex;
     MpiWrapper::Waitany( icomm.size,
@@ -916,7 +844,6 @@ void CommunicationTools::SynchronizeUnpack( MeshLevel * const mesh,
     neighbor.UnpackBufferForSync( icomm.fieldNames, mesh, icomm.commID, on_device );
   }
 
-#endif
   MpiWrapper::Waitall( icomm.size,
                        icomm.mpiSizeSendBufferRequest.data(),
                        icomm.mpiSizeSendBufferStatus.data() );

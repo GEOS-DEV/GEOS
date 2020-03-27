@@ -101,12 +101,12 @@ public:
 
 //  void Initialize();
 
-  virtual void ViewPackingExclusionList( SortedArray<localIndex> & exclusionList ) const override;
+  virtual void ViewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const override;
 
-  virtual localIndex PackUpDownMapsSize( arrayView1d<localIndex const> const & packList ) const override;
+  virtual localIndex PackUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
 
   virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
-                                     arrayView1d<localIndex const> const & packList ) const override;
+                                     arrayView1d< localIndex const > const & packList ) const override;
 
   virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                        localIndex_array & packList,
@@ -115,7 +115,7 @@ public:
 
   void FixUpDownMaps( bool const clearIfUnmapped );
 
-  void depopulateUpMaps( std::set<localIndex> const & receivedNodes,
+  void depopulateUpMaps( std::set< localIndex > const & receivedNodes,
                          array2d< localIndex > const & edgesToNodes,
                          ArrayOfArraysView< localIndex const > const & facesToNodes,
                          ElementRegionManager const & elemRegionManager );
@@ -172,7 +172,7 @@ public:
   EdgeMapType & edgeList()
   { return m_toEdgesRelation; }
 
-  FaceMapType       & faceList()       { return m_toFacesRelation; }
+  FaceMapType & faceList()       { return m_toFacesRelation; }
   FaceMapType const & faceList() const { return m_toFacesRelation; }
 
   OrderedVariableToManyElementRelation & toElementRelation() {return m_toElements;}
@@ -180,26 +180,26 @@ public:
 
   ArrayOfArrays< localIndex > & elementRegionList()       { return m_toElements.m_toElementRegion; }
   ArrayOfArraysView< localIndex const > const & elementRegionList() const
-  { return m_toElements.m_toElementRegion.toViewCC(); }
+  { return m_toElements.m_toElementRegion.toViewConst(); }
 
   ArrayOfArrays< localIndex > & elementSubRegionList()       { return m_toElements.m_toElementSubRegion; }
   ArrayOfArraysView< localIndex const > const & elementSubRegionList() const
-  { return m_toElements.m_toElementSubRegion.toViewCC(); }
+  { return m_toElements.m_toElementSubRegion.toViewConst(); }
 
   ArrayOfArrays< localIndex > & elementList()       { return m_toElements.m_toElementIndex; }
   ArrayOfArraysView< localIndex const > const & elementList() const
-  { return m_toElements.m_toElementIndex.toViewCC(); }
+  { return m_toElements.m_toElementIndex.toViewConst(); }
 
   /**
    * @brief Return the reference position array.
    */
-  array2d<real64, nodes::REFERENCE_POSITION_PERM> & referencePosition()
+  array2d< real64, nodes::REFERENCE_POSITION_PERM > & referencePosition()
   { return m_referencePosition; }
 
   /**
    * @brief Return an immutable arrayView of the reference position.
    */
-  arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & referencePosition() const
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & referencePosition() const
   { return m_referencePosition; }
 
   /**
@@ -261,10 +261,10 @@ private:
    */
   template< bool DOPACK >
   localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                    arrayView1d<localIndex const> const & packList ) const;
+                                    arrayView1d< localIndex const > const & packList ) const;
 
-   /// reference position of the nodes
-  array2d<real64, nodes::REFERENCE_POSITION_PERM> m_referencePosition;
+  /// reference position of the nodes
+  array2d< real64, nodes::REFERENCE_POSITION_PERM > m_referencePosition;
 
   /// nodeToEdge relation
   EdgeMapType m_toEdgesRelation;
@@ -275,9 +275,9 @@ private:
   /// nodeToElement relation
   ElemMapType m_toElements;
 
-  map< localIndex, SortedArray<globalIndex> > m_unmappedGlobalIndicesInToEdges;
-  map< localIndex, SortedArray<globalIndex> > m_unmappedGlobalIndicesInToFaces;
-  map< localIndex, array1d< array1d< SortedArray<globalIndex> > > > m_unmappedGlobalIndicesInToElems;
+  map< localIndex, SortedArray< globalIndex > > m_unmappedGlobalIndicesInToEdges;
+  map< localIndex, SortedArray< globalIndex > > m_unmappedGlobalIndicesInToFaces;
+  map< localIndex, array1d< array1d< SortedArray< globalIndex > > > > m_unmappedGlobalIndicesInToElems;
 
 
 
@@ -285,10 +285,10 @@ private:
   NodeManager() = delete;
 
   /// deleted copy constructor
-  NodeManager( const NodeManager& init ) = delete;
+  NodeManager( const NodeManager & init ) = delete;
 
   /// deleted assignement operator
-  NodeManager& operator=( const NodeManager&) = delete;
+  NodeManager & operator=( const NodeManager & ) = delete;
 
 };
 }

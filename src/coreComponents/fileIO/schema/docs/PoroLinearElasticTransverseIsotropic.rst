@@ -3,8 +3,8 @@
 ================================== ====== ======== =========================================== 
 Name                               Type   Default  Description                                 
 ================================== ====== ======== =========================================== 
-BiotCoefficient                    real64 0        Biot's coefficient                          
-compressibility                    real64 -1       Fluid Compressibilty                        
+BiotCoefficient                    real64 1        Biot's coefficient                          
+compressibility                    real64 0        Pore volume compressibilty                  
 defaultDensity                     real64 required Default Material Density                    
 defaultPoissonRatioAxialTransverse real64 -1       Elastic Shear Modulus Parameter             
 defaultPoissonRatioTransverse      real64 -1       Elastic Shear Modulus Parameter             

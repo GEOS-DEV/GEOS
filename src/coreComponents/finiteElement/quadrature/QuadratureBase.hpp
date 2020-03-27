@@ -46,7 +46,7 @@ public:
   static string CatalogName() { return "QuadratureBase"; }
 
   using CatalogInterface = dataRepository::CatalogInterface< QuadratureBase, std::string const &, Group * const >;
-  static CatalogInterface::CatalogType& GetCatalog();
+  static CatalogInterface::CatalogType & GetCatalog();
 
   virtual int size() const = 0;
   virtual R1Tensor integration_point( const int index ) const = 0;
