@@ -80,18 +80,17 @@ real64 SinglePhaseFVM< BASE >::CalculateResidualNorm( DomainPartition const * co
 
   // compute the norm of local residual scaled by cell pore volume
   real64 localResidualNorm[3] = { 0.0, 0.0, 0.0 };
-  this->applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                       ElementRegionBase const * const GEOSX_UNUSED_PARAM( region ),
-                                       ElementSubRegionBase const * const subRegion )
+  this->applyToSubRegionsComplete( mesh,
+                                   [&] ( localIndex const er, localIndex const esr, ElementRegionBase const &, ElementSubRegionBase const & subRegion )
   {
-    arrayView1d< globalIndex const > const & dofNumber = subRegion->getReference< array1d< globalIndex > >( dofKey );
+    arrayView1d< globalIndex const > const & dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
 
     arrayView1d< integer const > const & elemGhostRank = m_elemGhostRank[er][esr];
     arrayView1d< real64 const > const & refPoro        = m_porosityRef[er][esr];
     arrayView1d< real64 const > const & volume         = m_volume[er][esr];
     arrayView1d< real64 const > const & densOld        = m_densityOld[er][esr];
 
-    localIndex const subRegionSize = subRegion->size();
+    localIndex const subRegionSize = subRegion.size();
     for( localIndex a = 0; a < subRegionSize; ++a )
     {
       if( elemGhostRank[a] < 0 )
@@ -148,9 +147,9 @@ void SinglePhaseFVM< BASE >::ApplySystemSolution( DofManager const & dofManager,
 
   CommunicationTools::SynchronizeFields( fieldNames, mesh, domain->getNeighbors() );
 
-  this->applyToSubRegions( mesh, [&] ( ElementSubRegionBase * subRegion )
+  this->applyToSubRegions( mesh, [&] ( ElementSubRegionBase & subRegion )
   {
-    this->UpdateState( subRegion );
+    this->UpdateState( &subRegion );
   } );
 }
 
@@ -204,7 +203,7 @@ void SinglePhaseFVM< BASE >::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM(
   FluxKernel::ElementView< arrayView1d< R1Tensor const > > const & transTMultiplier  = m_transTMultiplier.toViewConst();
 
 
-  fluxApprox->forCellStencils( [&]( auto const & stencil )
+  fluxApprox->forAllStencils( [&]( auto const & stencil )
   {
 
 //    typedef TYPEOFREF( stencil ) STENCIL_TYPE;
@@ -413,7 +412,7 @@ void SinglePhaseFVM< BASE >::ApplyFaceDirichletBC_implicit( real64 const time_n,
   arrayView1d< real64 >       const & mobFace       = faceManager->getReference< array1d< real64 > >( viewKeyStruct::boundaryFaceMobilityString );
   arrayView1d< real64 const > const & gravCoefFace  = faceManager->getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
 
-  dataRepository::Group const * sets = faceManager->sets();
+  dataRepository::Group const & sets = faceManager->sets();
 
   // first, evaluate BC to get primary field values (pressure)
 //  fsManager->ApplyField(faceManager, viewKeyStruct::boundaryFacePressure, time + dt);
@@ -483,13 +482,13 @@ void SinglePhaseFVM< BASE >::ApplyFaceDirichletBC_implicit( real64 const time_n,
                          Group * const,
                          string const & )
   {
-    if( !sets->hasWrapper( setName ) || !fluxApprox->hasBoundaryStencil( setName ))
+    if( !sets.hasWrapper( setName ) || !fluxApprox->hasBoundaryStencil( setName ))
       return;
 
     FluxApproximationBase::BoundaryStencil const & stencil = fluxApprox->getBoundaryStencil( setName );
     ArrayOfArraysView< FluxApproximationBase::BoundaryStencil::Entry const, true > const & connections = stencil.getConnections();
 
-    forall_in_range< serialPolicy >( 0, connections.size(), [=] ( localIndex iconn )
+    forAll< serialPolicy >( connections.size(), [=] ( localIndex iconn )
     {
       localIndex const stencilSize = connections.sizeOfArray( iconn );
 

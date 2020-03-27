@@ -45,11 +45,10 @@ FaceElementRegion::~FaceElementRegion()
 
 void FaceElementRegion::InitializePreSubGroups( Group * const )
 {
-  this->forElementSubRegions< FaceElementSubRegion >( [&] ( FaceElementSubRegion * const subRegion )
+  this->forElementSubRegions< FaceElementSubRegion >( [&] ( FaceElementSubRegion & subRegion )
   {
-    subRegion->getWrapper< array1d< real64 > >( FaceElementSubRegion::viewKeyStruct::elementApertureString )->
+    subRegion.getWrapper< array1d< real64 > >( FaceElementSubRegion::viewKeyStruct::elementApertureString )->
       setApplyDefaultValue( m_defaultAperture );
-
   } );
 }
 
@@ -87,6 +86,10 @@ localIndex FaceElementRegion::AddToFractureMesh( real64 const time_np1,
   arrayView1d< R1Tensor > const & elemCenter = subRegion->getElementCenter();
   arrayView1d< real64 const > const & elemArea = subRegion->getElementArea();
 
+  arrayView1d< integer > const & subRegionGhostRank = subRegion->ghostRank();
+
+  arrayView1d< integer const > const & faceGhostRank = faceManager->ghostRank();
+
   FaceElementSubRegion::NodeMapType & nodeMap = subRegion->nodeList();
   FaceElementSubRegion::EdgeMapType & edgeMap = subRegion->edgeList();
   FaceElementSubRegion::FaceMapType & faceMap = subRegion->faceList();
@@ -101,10 +104,10 @@ localIndex FaceElementRegion::AddToFractureMesh( real64 const time_np1,
 
   faceMap[kfe][0] = faceIndices[0];
   faceMap[kfe][1] = faceIndices[1];
-  globalIndex const gi = faceManager->m_localToGlobalMap[faceIndices[0]];
-  subRegion->m_localToGlobalMap[kfe] = gi;
-  subRegion->m_globalToLocalMap[gi] = kfe;
-  subRegion->m_ghostRank[kfe] = faceManager->m_ghostRank[faceIndices[0]];
+  globalIndex const gi = faceManager->localToGlobalMap()[faceIndices[0]];
+  subRegion->localToGlobalMap()[kfe] = gi;
+  subRegion->updateGlobalToLocalMap( kfe );
+  subRegionGhostRank[kfe] = faceGhostRank[faceIndices[0]];
 
   // Add the nodes that compose the new FaceElement to the nodeList
   localIndex const numNodesInFace0 = faceToNodeMap.sizeOfArray( faceIndices[ 0 ] );
@@ -178,10 +181,10 @@ localIndex FaceElementRegion::AddToFractureMesh( real64 const time_np1,
   creationMass[kfe] *= elemArea[kfe];
 
   // update the sets
-  for( auto const & setIter : faceManager->sets()->wrappers() )
+  for( auto const & setIter : faceManager->sets().wrappers() )
   {
-    SortedArrayView< localIndex const > const & faceSet = faceManager->sets()->getReference< SortedArray< localIndex > >( setIter.first );
-    SortedArray< localIndex > & faceElementSet = subRegion->sets()->registerWrapper< SortedArray< localIndex > >( setIter.first )->reference();
+    SortedArrayView< localIndex const > const & faceSet = faceManager->sets().getReference< SortedArray< localIndex > >( setIter.first );
+    SortedArray< localIndex > & faceElementSet = subRegion->sets().registerWrapper< SortedArray< localIndex > >( setIter.first )->reference();
     for( localIndex a=0; a<faceMap.size( 0 ); ++a )
     {
       localIndex const faceIndex = faceMap[a][0];

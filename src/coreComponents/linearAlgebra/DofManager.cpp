@@ -265,9 +265,9 @@ void DofManager::addField( string const & fieldName,
   ElementRegionManager * const elemManager = m_mesh->getElemManager();
   if( field.regions.empty() )
   {
-    elemManager->forElementRegions( [&]( ElementRegionBase const * const region )
+    elemManager->forElementRegions( [&]( ElementRegionBase const & region )
     {
-      field.regions.push_back( region->getName() );
+      field.regions.push_back( region.getName() );
     } );
   }
   else
@@ -476,7 +476,7 @@ void DofManager::setSparsityPatternFromStencil( MATRIX & pattern,
 
   // 2. Assemble diagonal and off-diagonal blocks for elements in stencil
   MATRIX * const pattern_ptr = &pattern;
-  coupling.stencils->forCellStencils( [&]( auto const & stencil )
+  coupling.stencils->forAllStencils( [&]( auto const & stencil )
   {
     using StenciType = typename std::decay< decltype( stencil ) >::type;
     constexpr localIndex maxNumFluxElems = StenciType::NUM_POINT_IN_FLUX;
@@ -490,7 +490,7 @@ void DofManager::setSparsityPatternFromStencil( MATRIX & pattern,
     colIndices.reserve( maxStencilSize * NC );
     values.reserve( maxNumFluxElems * NC * maxStencilSize * NC );
 
-    forall_in_range< serialPolicy >( 0, stencil.size(), [&]( localIndex iconn )
+    forAll< serialPolicy >( stencil.size(), [&]( localIndex iconn )
     {
       localIndex const numFluxElems = stencil.stencilSize( iconn );
       localIndex const stencilSize  = numFluxElems;
@@ -657,7 +657,7 @@ void vectorToFieldImpl( VECTOR const & vector,
                         localIndex const hiComp )
 {
   arrayView1d< globalIndex const > const & indexArray = manager->getReference< array1d< globalIndex > >( dofKey );
-  arrayView1d< integer const > const & ghostRank = manager->GhostRank();
+  arrayView1d< integer const > const & ghostRank = manager->ghostRank();
 
   real64 const * localVector = vector.extractLocalVector();
 
@@ -671,9 +671,9 @@ void vectorToFieldImpl( VECTOR const & vector,
   {
     using ArrayType = decltype( arrayInstance );
     Wrapper< ArrayType > & view = Wrapper< ArrayType >::cast( *wrapper );
-    typename Wrapper< ArrayType >::ViewType const & field = view.referenceAsView();
+    traits::ViewType< ArrayType > field = view.reference();
 
-    forall_in_range< POLICY >( 0, indexArray.size(), [=]( localIndex const i )
+    forAll< POLICY >( indexArray.size(), [=] ( localIndex const i )
     {
       if( ghostRank[i] < 0 && indexArray[i] >= 0 )
       {
@@ -702,7 +702,7 @@ void fieldToVectorImpl( VECTOR & vector,
                         localIndex const hiComp )
 {
   arrayView1d< globalIndex const > const & indexArray = manager->getReference< array1d< globalIndex > >( dofKey );
-  arrayView1d< integer const > const & ghostRank = manager->GhostRank();
+  arrayView1d< integer const > const & ghostRank = manager->ghostRank();
 
   real64 * localVector = vector.extractLocalVector();
 
@@ -716,9 +716,9 @@ void fieldToVectorImpl( VECTOR & vector,
   {
     using ArrayType = decltype( arrayInstance );
     Wrapper< ArrayType > const & view = Wrapper< ArrayType >::cast( *wrapper );
-    typename Wrapper< ArrayType >::ViewTypeConst const & field = view.referenceAsView();
+    traits::ViewTypeConst< ArrayType > field = view.reference();
 
-    forall_in_range< POLICY >( 0, indexArray.size(), [=]( localIndex const i )
+    forAll< POLICY >( indexArray.size(), [=] ( localIndex const i )
     {
       if( ghostRank[i] < 0 && indexArray[i] >= 0 )
       {
@@ -754,10 +754,10 @@ void DofManager::vectorToField( VECTOR const & vector,
 
   if( fieldDesc.location == Location::Elem )
   {
-    m_mesh->getElemManager()->forElementSubRegions( fieldDesc.regions, [&]( ElementSubRegionBase * const subRegion )
+    m_mesh->getElemManager()->forElementSubRegions< ElementSubRegionBase >( fieldDesc.regions, [&]( ElementSubRegionBase & subRegion )
     {
       vectorToFieldImpl< FIELD_OP, POLICY >( vector,
-                                             subRegion,
+                                             &subRegion,
                                              fieldDesc.key,
                                              dstFieldName,
                                              scalingFactor,
@@ -829,10 +829,10 @@ void DofManager::fieldToVector( VECTOR & vector,
 
   if( fieldDesc.location == Location::Elem )
   {
-    m_mesh->getElemManager()->forElementSubRegions( fieldDesc.regions, [&]( ElementSubRegionBase const * const subRegion )
+    m_mesh->getElemManager()->forElementSubRegions< ElementSubRegionBase >( fieldDesc.regions, [&]( ElementSubRegionBase const & subRegion )
     {
       fieldToVectorImpl< FIELD_OP, POLICY >( vector,
-                                             subRegion,
+                                             &subRegion,
                                              fieldDesc.key,
                                              dstFieldName,
                                              scalingFactor,

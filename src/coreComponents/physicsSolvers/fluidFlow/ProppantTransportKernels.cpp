@@ -151,7 +151,7 @@ void FluxKernel::
   constexpr localIndex DOF1 = maxNumFluxElems * constitutive::MultiFluidBase::MAX_NUM_COMPONENTS;
   constexpr localIndex DOF2 = maxStencilSize * constitutive::MultiFluidBase::MAX_NUM_COMPONENTS;
 
-  forall_in_range< serialPolicy >( 0, stencil.size(), [=] ( localIndex iconn )
+  forAll< serialPolicy >( stencil.size(), [=] ( localIndex iconn )
   {
 
     localIndex const numFluxElems = stencil.stencilSize( iconn );
@@ -294,7 +294,7 @@ void FluxKernel::
   ArrayOfArraysView< R1Tensor const > const & cellCenterToEdgeCenters = stencil.getCellCenterToEdgeCenters();
 
 
-  forall_in_range< serialPolicy >( 0, stencil.size(), [=] ( localIndex iconn )
+  forAll< serialPolicy >( stencil.size(), [=] ( localIndex iconn )
   {
 
     localIndex const numFluxElems = stencil.stencilSize( iconn );
@@ -398,7 +398,7 @@ void ProppantPackVolumeKernel::
 
   ArrayOfArraysView< R1Tensor const > const & cellCenterToEdgeCenters = stencil.getCellCenterToEdgeCenters();
 
-  forall_in_range< serialPolicy >( 0, stencil.size(), [=] ( localIndex iconn )
+  forAll< serialPolicy >( stencil.size(), [=] ( localIndex iconn )
   {
 
     localIndex const numFluxElems = stencil.stencilSize( iconn );
@@ -469,7 +469,7 @@ void ProppantPackVolumeKernel::
 
   ArrayOfArraysView< R1Tensor const > const & cellCenterToEdgeCenters = stencil.getCellCenterToEdgeCenters();
 
-  forall_in_range< serialPolicy >( 0, stencil.size(), [=] ( localIndex iconn )
+  forAll< serialPolicy >( stencil.size(), [=] ( localIndex iconn )
   {
 
     localIndex const numFluxElems = stencil.stencilSize( iconn );
@@ -491,7 +491,6 @@ void ProppantPackVolumeKernel::
   } );
 
 }
-
 
 } // namespace ProppantTransportKernels
 

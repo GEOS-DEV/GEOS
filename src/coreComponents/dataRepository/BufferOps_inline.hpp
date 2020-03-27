@@ -1277,7 +1277,7 @@ Pack( buffer_unit_type * & buffer,
 
     sizeOfPackedChars += Pack< DO_PACKING >( buffer,
                                              var[li],
-                                             unmappedGI.values(),
+                                             unmappedGI.data(),
                                              var.sizeOfArray( li ),
                                              relatedObjectLocalToGlobalMap );
   }
@@ -1419,7 +1419,7 @@ Unpack( buffer_unit_type const * & buffer,
                                    relatedObjectGlobalToLocalMap,
                                    clearFlag );
 
-    unmappedGlobalIndices[li].insert( unmappedIndices.values(), unmappedIndices.size() );
+    unmappedGlobalIndices[li].insert( unmappedIndices.data(), unmappedIndices.size() );
   }
   return sizeOfUnpackedChars;
 }
@@ -1508,10 +1508,10 @@ Unpack( buffer_unit_type const * & buffer,
 
     // insert known local indices into the set of indices
     //  related to the local index
-    var.insertSortedIntoSet( li, mapped.values(), mapped.size() );
+    var.insertSortedIntoSet( li, mapped.data(), mapped.size() );
     // insert unknown global indices related to the local index
     //  into an additional mapping to resolve externally
-    unmappedGlobalIndices[li].insertSorted( unmapped.values(), unmapped.size() );
+    unmappedGlobalIndices[li].insertSorted( unmapped.data(), unmapped.size() );
   }
   return sizeOfUnpackedChars;
 }

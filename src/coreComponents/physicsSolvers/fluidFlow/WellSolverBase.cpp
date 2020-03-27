@@ -78,11 +78,11 @@ void WellSolverBase::RegisterDataOnMesh( Group * const meshBodies )
   ElementRegionManager * const elemManager = meshLevel->getElemManager();
 
   // loop over the wells
-  elemManager->forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion * const subRegion )
+  elemManager->forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion & subRegion )
   {
-    subRegion->registerWrapper< array1d< real64 > >( viewKeyStruct::gravityCoefString );
+    subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::gravityCoefString );
 
-    PerforationData * const perforationData = subRegion->GetPerforationData();
+    PerforationData * const perforationData = subRegion.GetPerforationData();
     perforationData->registerWrapper< array1d< real64 > >( viewKeyStruct::gravityCoefString );
   } );
 }
@@ -154,9 +154,9 @@ void WellSolverBase::UpdateStateAll( DomainPartition * const domain )
   MeshLevel * const meshLevel = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
   ElementRegionManager * const elemManager = meshLevel->getElemManager();
 
-  elemManager->forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion * const subRegion )
+  elemManager->forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion & subRegion )
   {
-    UpdateState( subRegion );
+    UpdateState( &subRegion );
   } );
 
 }
@@ -187,9 +187,9 @@ void WellSolverBase::InitializePostInitialConditions_PreSubGroups( Group * const
   MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
-  elemManager->forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion * const subRegion )
+  elemManager->forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion & subRegion )
   {
-    subRegion->ReconstructLocalConnectivity();
+    subRegion.ReconstructLocalConnectivity();
   } );
 
   // bind the stored reservoir views to the current domain
@@ -207,17 +207,17 @@ void WellSolverBase::PrecomputeData( DomainPartition * const domain )
   ElementRegionManager * const elemManager = meshLevel->getElemManager();
 
   // loop over the wells
-  elemManager->forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion * const subRegion )
+  elemManager->forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion & subRegion )
   {
-    WellControls * const wellControls = GetWellControls( subRegion );
+    WellControls * const wellControls = GetWellControls( &subRegion );
 
-    PerforationData * const perforationData = subRegion->GetPerforationData();
+    PerforationData * const perforationData = subRegion.GetPerforationData();
 
     arrayView1d< R1Tensor const > const & wellElemLocation =
-      subRegion->getReference< array1d< R1Tensor > >( ElementSubRegionBase::viewKeyStruct::elementCenterString );
+      subRegion.getReference< array1d< R1Tensor > >( ElementSubRegionBase::viewKeyStruct::elementCenterString );
 
     arrayView1d< real64 > const & wellElemGravCoef =
-      subRegion->getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
+      subRegion.getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
 
     arrayView1d< R1Tensor const > const & perfLocation =
       perforationData->getReference< array1d< R1Tensor > >( PerforationData::viewKeyStruct::locationString );
@@ -225,14 +225,14 @@ void WellSolverBase::PrecomputeData( DomainPartition * const domain )
     arrayView1d< real64 > const & perfGravCoef =
       perforationData->getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
 
-    for( localIndex iwelem = 0; iwelem < subRegion->size(); ++iwelem )
+    for( localIndex iwelem = 0; iwelem < subRegion.size(); ++iwelem )
     {
       // precompute the depth of the well elements
       wellElemGravCoef[iwelem] = Dot( wellElemLocation[iwelem], gravVector );
 
     }
 
-    forall_in_range( 0, perforationData->size(), [=] ( localIndex const iperf )
+    forAll< serialPolicy >( perforationData->size(), [=] ( localIndex const iperf )
     {
       // precompute the depth of the perforations
       perfGravCoef[iperf] = Dot( perfLocation[iperf], gravVector );
@@ -240,13 +240,13 @@ void WellSolverBase::PrecomputeData( DomainPartition * const domain )
 
 
     // set the first well element of the well
-    if( subRegion->IsLocallyOwned())
+    if( subRegion.IsLocallyOwned())
     {
 
-      localIndex const iwelemControl = subRegion->GetTopWellElementIndex();
+      localIndex const iwelemControl = subRegion.GetTopWellElementIndex();
 
       GEOSX_ERROR_IF( iwelemControl < 0,
-                      "Invalid well definition: well " << subRegion->getName()
+                      "Invalid well definition: well " << subRegion.getName()
                                                        << " has no well head" );
 
       // save the index of reference well element (used to enforce constraints)

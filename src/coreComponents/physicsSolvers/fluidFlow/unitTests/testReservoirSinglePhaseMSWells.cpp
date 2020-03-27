@@ -30,12 +30,6 @@ using namespace geosx::dataRepository;
 using namespace geosx::constitutive;
 using namespace geosx::testing;
 
-namespace
-{
-int global_argc;
-char * * global_argv;
-}
-
 // helper struct to represent a var and its derivatives (always with array views, not pointers)
 template< int DIM >
 struct TestReservoirVarContainer
@@ -96,25 +90,24 @@ void testNumericalJacobian( ReservoirSolver * solver,
   for( localIndex er = 0; er < elemManager->numRegions(); ++er )
   {
     ElementRegionBase * const elemRegion = elemManager->GetRegion( er );
-    elemRegion->forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const GEOSX_UNUSED_PARAM( esr ),
-                                                                        auto * const subRegion )
+    elemRegion->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
       // get the dof numbers and ghosting information
       arrayView1d< globalIndex > & dofNumber =
-        subRegion->template getReference< array1d< globalIndex > >( resDofKey );
+        subRegion.getReference< array1d< globalIndex > >( resDofKey );
 
       arrayView1d< integer > & elemGhostRank =
-        subRegion->template getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+        subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
       // get the primary variables on reservoir elements
       arrayView1d< real64 > & pres =
-        subRegion->template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::pressureString );
+        subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::pressureString );
 
       arrayView1d< real64 > & dPres =
-        subRegion->template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaPressureString );
+        subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaPressureString );
 
       // a) compute all the derivatives wrt to the pressure in RESERVOIR elem ei
-      for( localIndex ei = 0; ei < subRegion->size(); ++ei )
+      for( localIndex ei = 0; ei < subRegion.size(); ++ei )
       {
         if( elemGhostRank[ei] >= 0 )
         {
@@ -130,9 +123,9 @@ void testNumericalJacobian( ReservoirSolver * solver,
           real64 const dP = perturbParameter * (pres[ei] + perturbParameter);
           dPres[ei] = dP;
           // after perturbing, update the pressure-dependent quantities in the reservoir
-          flowSolver->applyToSubRegions( mesh, [&] ( ElementSubRegionBase * subRegion2 )
+          flowSolver->applyToSubRegions( mesh, [&] ( ElementSubRegionBase & subRegion2 )
           {
-            flowSolver->UpdateState( subRegion2 );
+            flowSolver->UpdateState( &subRegion2 );
           } );
 
           residual.zero();
@@ -166,31 +159,31 @@ void testNumericalJacobian( ReservoirSolver * solver,
   /////////////////////////////////////////////////
 
   // loop over the wells
-  elemManager->forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion * const subRegion )
+  elemManager->forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion & subRegion )
   {
 
     // get the degrees of freedom and ghosting information
     arrayView1d< globalIndex const > const & wellElemDofNumber =
-      subRegion->getReference< array1d< globalIndex > >( wellDofKey );
+      subRegion.getReference< array1d< globalIndex > >( wellDofKey );
 
     arrayView1d< integer const > const & wellElemGhostRank =
-      subRegion->getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+      subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
     // get the primary variables on well elements
     array1d< real64 > const & wellElemPressure =
-      subRegion->getReference< array1d< real64 > >( SinglePhaseWell::viewKeyStruct::pressureString );
+      subRegion.getReference< array1d< real64 > >( SinglePhaseWell::viewKeyStruct::pressureString );
 
     array1d< real64 > const & dWellElemPressure =
-      subRegion->getReference< array1d< real64 > >( SinglePhaseWell::viewKeyStruct::deltaPressureString );
+      subRegion.getReference< array1d< real64 > >( SinglePhaseWell::viewKeyStruct::deltaPressureString );
 
     array1d< real64 > const & connRate  =
-      subRegion->getReference< array1d< real64 > >( SinglePhaseWell::viewKeyStruct::connRateString );
+      subRegion.getReference< array1d< real64 > >( SinglePhaseWell::viewKeyStruct::connRateString );
 
     array1d< real64 > const & dConnRate =
-      subRegion->getReference< array1d< real64 > >( SinglePhaseWell::viewKeyStruct::deltaConnRateString );
+      subRegion.getReference< array1d< real64 > >( SinglePhaseWell::viewKeyStruct::deltaConnRateString );
 
     // a) compute all the derivatives wrt to the pressure in WELL elem iwelem
-    for( localIndex iwelem = 0; iwelem < subRegion->size(); ++iwelem )
+    for( localIndex iwelem = 0; iwelem < subRegion.size(); ++iwelem )
     {
       if( wellElemGhostRank[iwelem] >= 0 )
       {
@@ -206,7 +199,7 @@ void testNumericalJacobian( ReservoirSolver * solver,
         real64 const dP = perturbParameter * (wellElemPressure[iwelem] + perturbParameter);
         dWellElemPressure[iwelem] = dP;
         // after perturbing, update the pressure-dependent quantities in the well
-        wellSolver->UpdateState( subRegion );
+        wellSolver->UpdateState( &subRegion );
 
         residual.zero();
         jacobian.zero();
@@ -233,7 +226,7 @@ void testNumericalJacobian( ReservoirSolver * solver,
     }
 
     // b) compute all the derivatives wrt to the connection in WELL elem iwelem
-    for( localIndex iwelem = 0; iwelem < subRegion->size(); ++iwelem )
+    for( localIndex iwelem = 0; iwelem < subRegion.size(); ++iwelem )
     {
       globalIndex iwelemOffset = wellElemDofNumber[iwelem];
 
@@ -299,23 +292,9 @@ protected:
   static void SetUpTestCase()
   {
     problemManager = new ProblemManager( "Problem", nullptr );
-    char buf[2][1024];
-
-    char const * workdir  = global_argv[1];
-    char const * filename = "testReservoirSinglePhaseMSWells.xml";
-
-    strcpy( buf[0], "-i" );
-    sprintf( buf[1], "%s/%s", workdir, filename );
-
-    constexpr int argc = 3;
-    char * argv[argc] = {
-      global_argv[0],
-      buf[0],
-      buf[1]
-    };
 
     problemManager->InitializePythonInterpreter();
-    problemManager->ParseCommandLineInput( argc, argv );
+    problemManager->ParseCommandLineInput();
     problemManager->ParseInputFile();
 
     problemManager->ProblemSetup();
@@ -492,16 +471,13 @@ int main( int argc, char * * argv )
 
   geosx::basicSetup( argc, argv );
 
-  global_argc = argc;
-  global_argv = new char *[static_cast< unsigned int >(global_argc)];
-  for( int i=0; i<argc; ++i )
-  {
-    global_argv[i] = argv[i];
-  }
+  GEOSX_ERROR_IF_NE( argc, 2 );
+
+  std::string inputFileName = argv[ 1 ];
+  inputFileName += "/testReservoirSinglePhaseMSWells.xml";
+  geosx::overrideInputFileName( inputFileName );
 
   int const result = RUN_ALL_TESTS();
-
-  delete[] global_argv;
 
   geosx::basicCleanup();
 

@@ -114,7 +114,7 @@ public:
       nNodes -= 2;
     }
 
-    forall_in_range< parallelHostPolicy >( 0, size(), [=]( localIndex const k )
+    forAll< parallelHostPolicy >( size(), [=]( localIndex const k )
     {
       elementCenters[k] = 0;
       for( localIndex a = 0; a < nNodes; ++a )

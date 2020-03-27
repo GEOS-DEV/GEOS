@@ -77,7 +77,8 @@ void ConstitutiveBase::AllocateConstitutiveData( dataRepository::Group * const p
       {
         string const wrapperName = wrapper.first;
         std::unique_ptr< WrapperBase > newWrapper = wrapper.second->clone( wrapperName, parent );
-        parent->registerWrapper( makeFieldName( this->getName(), wrapperName ), newWrapper.release() );
+        parent->registerWrapper( makeFieldName( this->getName(), wrapperName ), newWrapper.release() )->
+          setRestartFlags( RestartFlags::NO_WRITE );
       }
     }
   }
@@ -88,7 +89,8 @@ void ConstitutiveBase::AllocateConstitutiveData( dataRepository::Group * const p
     {
       string const wrapperName = wrapper.first;
       std::unique_ptr< WrapperBase > newWrapper = wrapper.second->clone( wrapperName, parent );
-      parent->registerWrapper( makeFieldName( this->getName(), wrapperName ), newWrapper.release() );
+      parent->registerWrapper( makeFieldName( this->getName(), wrapperName ), newWrapper.release() )->
+        setRestartFlags( RestartFlags::NO_WRITE );
     }
   }
 

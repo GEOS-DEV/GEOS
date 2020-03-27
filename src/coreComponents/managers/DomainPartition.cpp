@@ -36,8 +36,13 @@ DomainPartition::DomainPartition( std::string const & name,
                                   Group * const parent ):
   Group( name, parent )
 {
-  this->registerWrapper( "Neighbors", &m_neighbors, false )->setRestartFlags( RestartFlags::NO_WRITE );
-  this->registerWrapper< SpatialPartition, PartitionBase >( keys::partitionManager )->setRestartFlags( RestartFlags::NO_WRITE );
+  this->registerWrapper( "Neighbors", &m_neighbors, false )->
+    setRestartFlags( RestartFlags::NO_WRITE )->
+    setSizedFromParent( false );
+
+  this->registerWrapper< SpatialPartition, PartitionBase >( keys::partitionManager )->
+    setRestartFlags( RestartFlags::NO_WRITE )->
+    setSizedFromParent( false );
 
   RegisterGroup( groupKeys.meshBodies );
   RegisterGroup< constitutive::ConstitutiveManager >( groupKeys.constitutiveManager );
@@ -112,23 +117,20 @@ void DomainPartition::GenerateSets()
 
 
   ElementRegionManager * const elementRegionManager = mesh->getElemManager();
-  elementRegionManager->forElementSubRegionsComplete( [&]( localIndex const GEOSX_UNUSED_PARAM( er ),
-                                                           localIndex const GEOSX_UNUSED_PARAM( esr ),
-                                                           ElementRegionBase const * const GEOSX_UNUSED_PARAM( region ),
-                                                           auto * const subRegion )
+  elementRegionManager->forElementSubRegions( [&]( auto & subRegion )
   {
-    dataRepository::Group * elementSets = subRegion->sets();
+    dataRepository::Group & elementSets = subRegion.sets();
 
-    auto const & elemToNodeMap = subRegion->nodeList();
+    auto const & elemToNodeMap = subRegion.nodeList();
 
     for( std::string const & setName : setNames )
     {
       arrayView1d< bool const > const & nodeInCurSet = nodeInSet[setName];
 
-      SortedArray< localIndex > & targetSet = elementSets->registerWrapper< SortedArray< localIndex > >( setName )->reference();
-      for( localIndex k = 0; k < subRegion->size(); ++k )
+      SortedArray< localIndex > & targetSet = elementSets.registerWrapper< SortedArray< localIndex > >( setName )->reference();
+      for( localIndex k = 0; k < subRegion.size(); ++k )
       {
-        localIndex const numNodes = subRegion->numNodesPerElement( k );
+        localIndex const numNodes = subRegion.numNodesPerElement( k );
 
         localIndex elementInSet = true;
         for( localIndex i = 0; i < numNodes; ++i )
@@ -175,7 +177,7 @@ void DomainPartition::SetupCommunications( bool use_nonblocking )
     int ncoords[3];
     AddNeighbors( 0, cartcomm, ncoords );
 
-    MPI_Comm_free( &cartcomm );
+    MpiWrapper::Comm_free( cartcomm );
   }
   else
   {

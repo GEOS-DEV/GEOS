@@ -26,12 +26,6 @@ using namespace geosx::dataRepository;
 using namespace geosx::constitutive;
 using namespace geosx::testing;
 
-namespace
-{
-int global_argc;
-char * * global_argv;
-}
-
 // helper struct to represent a var and its derivatives (always with array views, not pointers)
 template< int DIM >
 struct TestCompositionalVarContainer
@@ -81,30 +75,27 @@ void testNumericalJacobian( CompositionalMultiphaseFlow * solver,
 
   string const dofKey = dofManager.getKey( CompositionalMultiphaseFlow::viewKeyStruct::dofFieldString );
 
-  solver->applyToSubRegions( mesh, [&] ( localIndex const GEOSX_UNUSED_PARAM( er ),
-                                         localIndex const GEOSX_UNUSED_PARAM( esr ),
-                                         ElementRegionBase * const GEOSX_UNUSED_PARAM( region ),
-                                         ElementSubRegionBase * const subRegion )
+  solver->applyToSubRegions( mesh, [&] ( ElementSubRegionBase & subRegion )
   {
     arrayView1d< integer > & elemGhostRank =
-      subRegion->template getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+      subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
     arrayView1d< globalIndex > & dofNumber =
-      subRegion->template getReference< array1d< globalIndex > >( dofKey );
+      subRegion.getReference< array1d< globalIndex > >( dofKey );
 
     arrayView1d< real64 > & pres =
-      subRegion->template getReference< array1d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::pressureString );
+      subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::pressureString );
 
     arrayView1d< real64 > & dPres =
-      subRegion->template getReference< array1d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::deltaPressureString );
+      subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::deltaPressureString );
 
     arrayView2d< real64 > & compDens =
-      subRegion->template getReference< array2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::globalCompDensityString );
+      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::globalCompDensityString );
 
     arrayView2d< real64 > & dCompDens =
-      subRegion->template getReference< array2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::deltaGlobalCompDensityString );
+      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::deltaGlobalCompDensityString );
 
-    for( localIndex ei = 0; ei < subRegion->size(); ++ei )
+    for( localIndex ei = 0; ei < subRegion.size(); ++ei )
     {
       if( elemGhostRank[ei] >= 0 )
         continue;
@@ -123,9 +114,9 @@ void testNumericalJacobian( CompositionalMultiphaseFlow * solver,
         real64 const dP = perturbParameter * (pres[ei] + perturbParameter);
         dPres[ei] = dP;
 
-        solver->applyToSubRegions( mesh, [&] ( ElementSubRegionBase * subRegion2 )
+        solver->applyToSubRegions( mesh, [&] ( ElementSubRegionBase & subRegion2 )
         {
-          solver->UpdateState( subRegion2 );
+          solver->UpdateState( &subRegion2 );
         } );
 
         residual.zero();
@@ -154,9 +145,9 @@ void testNumericalJacobian( CompositionalMultiphaseFlow * solver,
         real64 const dRho = perturbParameter * totalDensity;
         dCompDens[ei][jc] = dRho;
 
-        solver->applyToSubRegions( mesh, [&] ( ElementSubRegionBase * subRegion2 )
+        solver->applyToSubRegions( mesh, [&] ( ElementSubRegionBase & subRegion2 )
         {
-          solver->UpdateState( subRegion2 );
+          solver->UpdateState( &subRegion2 );
         } );
 
         residual.zero();
@@ -211,23 +202,9 @@ protected:
   static void SetUpTestCase()
   {
     problemManager = new ProblemManager( "Problem", nullptr );
-    char buf[2][1024];
-
-    char const * workdir  = global_argv[1];
-    char const * filename = "testCompMultiphaseFlowBrooksCoreyCapPressure.xml";
-
-    strcpy( buf[0], "-i" );
-    sprintf( buf[1], "%s/%s", workdir, filename );
-
-    constexpr int argc = 3;
-    char * argv[argc] = {
-      global_argv[0],
-      buf[0],
-      buf[1]
-    };
 
     problemManager->InitializePythonInterpreter();
-    problemManager->ParseCommandLineInput( argc, argv );
+    problemManager->ParseCommandLineInput();
     problemManager->ParseInputFile();
 
     problemManager->ProblemSetup();
@@ -285,16 +262,13 @@ int main( int argc, char * * argv )
 
   geosx::basicSetup( argc, argv );
 
-  global_argc = argc;
-  global_argv = new char *[static_cast< unsigned int >(global_argc)];
-  for( int i=0; i<argc; ++i )
-  {
-    global_argv[i] = argv[i];
-  }
+  GEOSX_ERROR_IF_NE( argc, 2 );
+
+  std::string inputFileName = argv[ 1 ];
+  inputFileName += "/testCompMultiphaseFlowBrooksCoreyCapPressure.xml";
+  geosx::overrideInputFileName( inputFileName );
 
   int const result = RUN_ALL_TESTS();
-
-  delete[] global_argv;
 
   geosx::basicCleanup();
 

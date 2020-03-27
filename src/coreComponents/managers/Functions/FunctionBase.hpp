@@ -136,23 +136,14 @@ void FunctionBase::EvaluateT( dataRepository::Group const * const group,
     }
     else
     {
-      dataRepository::WrapperBase const & wrapperb = *(group->getWrapperBase( varName ));
-      std::type_index typeIndex = std::type_index( wrapperb.get_typeid());
-      rtTypes::ApplyTypeLambda2( rtTypes::typeID( typeIndex ), [&]( auto container_type, auto var_type ) -> void
-      {
-        using containerType = decltype(container_type);
-        using varType = decltype(var_type);
-        dataRepository::Wrapper< containerType > const & view =
-          dynamic_cast< dataRepository::Wrapper< containerType > const & >(wrapperb);
-
-        input_ptrs[varIndex] = reinterpret_cast< double const * >(view.dataPtr());
-        varSize[varIndex] = sizeof(varType) / sizeof(double);
-      } );
+      dataRepository::WrapperBase const & wrapper = *(group->getWrapperBase( varName ));
+      input_ptrs[ varIndex ] = reinterpret_cast< double const * >( wrapper.voidPointer() );
+      varSize[ varIndex ] = wrapper.elementByteSize() / sizeof( double );
     }
   }
 
   integer count=0;
-  forall_in_range< serialPolicy >( 0, set.size(), [&, set]( localIndex const i )
+  forAll< serialPolicy >( set.size(), [&, set]( localIndex const i )
   {
     localIndex const index = set[ i ];
     double input[4];
