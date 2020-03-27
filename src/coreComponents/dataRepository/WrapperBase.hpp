@@ -21,6 +21,7 @@
 #include <memory>
 #include "common/DataTypes.hpp"
 #include "InputFlags.hpp"
+#include "xmlWrapper.hpp"
 #include "RestartFlags.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
@@ -88,6 +89,17 @@ public:
   virtual localIndex size() const = 0;
 
   /**
+   * @brief @return a const void pointer to the data.
+   */
+  virtual void const * voidPointer() const = 0;
+
+  /**
+   * @brief @return the number of bytes in an object of unit size.
+   *        Ie elementByteSize() * size() gives the size of memory pointed to by voidPointer().
+   */
+  virtual localIndex elementByteSize() const = 0;
+
+  /**
    * @brief Calls T::resize( num_dims, dims )
    * @param[in] num_dims number of dimensions in T
    * @param[in] dims pointer to the new dims
@@ -95,21 +107,19 @@ public:
   virtual void resize( int num_dims, localIndex const * const dims ) = 0;
 
   /**
-   * @brief Calls T::resize( new_cap )
-   * @param[in] new_cap the new capacity of the T
+   * @brief Calls T::reserve( newCapacity ) if it exists, otherwise a no-op.
+   * @param[in] newCapacity the new capacity of the T.
    */
-  virtual void reserve( std::size_t new_cap ) = 0;
+  virtual void reserve( localIndex const newCapacity ) = 0;
 
   /**
-   * @brief Calls T::capacity()
-   * @return result of T::capacity()
+   * @brief @return T::capacity() if it exists, other wise calls size().
    */
-  virtual std::size_t capacity() const = 0;
+  virtual localIndex capacity() const = 0;
 
   /**
-   * @brief Calls T::resize(newsize)
+   * @brief Calls T::resize(newsize) if it exists.
    * @param[in] newsize parameter to pass to T::resize(newsize)
-   * @return result of T::resize(newsize)
    */
   virtual void resize( localIndex newsize ) = 0;
 
@@ -130,7 +140,7 @@ public:
    * @param[in] space A CHAI execution space to move the data into
    * @param[in] touch whether to register a touch in target space
    */
-  virtual void move( chai::ExecutionSpace space, bool touch ) = 0;
+  virtual void move( chai::ExecutionSpace const space, bool const touch ) = 0;
 
   ///@}
 
@@ -145,6 +155,13 @@ public:
    * @return A string representing the default value.
    */
   virtual std::string getDefaultValueString() const = 0;
+
+  /**
+   * @brief Initialize the wrapper from the input xml node.
+   * @param targetNode the xml node to initialize from.
+   * @return True iff the wrapper initialized itself from the file.
+   */
+  virtual bool processInputFile( xmlWrapper::xmlNode const & targetNode ) = 0;
 
   /**
    * @name Restart output methods
@@ -164,7 +181,7 @@ public:
   /**
    * @brief Read the wrapped data from Conduit.
    */
-  virtual void loadFromConduit() = 0;
+  virtual bool loadFromConduit() = 0;
 
   ///@}
 
@@ -369,6 +386,14 @@ public:
   {
     return m_description;
   }
+
+  /**
+   * @brief @return a table formatted string containing the input options.
+   * @param outputHeader If true outputs the table header, otherwise just
+   *                     outputs a row.
+   */
+  string dumpInputOptions( bool const outputHeader ) const;
+
 
   /**
    * @brief Get the list of names of groups that registered this wrapper.

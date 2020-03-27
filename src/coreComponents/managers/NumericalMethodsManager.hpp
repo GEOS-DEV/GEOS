@@ -41,12 +41,12 @@ class NumericalMethodsManager : public dataRepository::Group
 {
 public:
   NumericalMethodsManager() = delete;
-  NumericalMethodsManager(string const & name, Group * const parent);
+  NumericalMethodsManager( string const & name, Group * const parent );
   virtual ~NumericalMethodsManager() override;
 
   virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 
-  dataRepository::Group const * FindNumericalMethodByName(string const & name) const;
+  dataRepository::Group const * FindNumericalMethodByName( string const & name ) const;
 
 
 };

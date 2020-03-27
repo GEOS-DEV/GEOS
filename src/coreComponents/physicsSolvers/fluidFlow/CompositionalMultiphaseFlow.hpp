@@ -60,7 +60,7 @@ public:
    * @param name the name of this instantiation of Group in the repository
    * @param parent the parent group of this instantiation of Group
    */
-  CompositionalMultiphaseFlow( const string& name,
+  CompositionalMultiphaseFlow( const string & name,
                                Group * const parent );
 
   /// deleted default constructor
@@ -91,7 +91,7 @@ public:
    */
   static string CatalogName() { return dataRepository::keys::compositionalMultiphaseFlow; }
 
-  virtual void RegisterDataOnMesh(Group * const MeshBodies) override;
+  virtual void RegisterDataOnMesh( Group * const MeshBodies ) override;
 
   /**
    * @defgroup Solver Interface Functions
@@ -100,8 +100,8 @@ public:
    */
   /**@{*/
 
-  virtual real64 SolverStep( real64 const& time_n,
-                             real64 const& dt,
+  virtual real64 SolverStep( real64 const & time_n,
+                             real64 const & dt,
                              integer const cycleNumber,
                              DomainPartition * domain ) override;
 
@@ -388,8 +388,7 @@ public:
   } viewKeysCompMultiphaseFlow;
 
   struct groupKeyStruct : SolverBase::groupKeyStruct
-  {
-  } groupKeysCompMultiphaseFlow;
+  {} groupKeysCompMultiphaseFlow;
 
 protected:
 
@@ -450,13 +449,13 @@ private:
 
 
   void ApplySourceFluxBC( real64 const time,
-			  real64 const dt,
-			  DofManager const * const dofManager,
-			  DomainPartition * const domain,
-			  ParallelMatrix * const matrix,
-			  ParallelVector * const rhs );
+                          real64 const dt,
+                          DofManager const * const dofManager,
+                          DomainPartition * const domain,
+                          ParallelMatrix * const matrix,
+                          ParallelVector * const rhs );
 
-  
+
   /// the max number of fluid phases
   localIndex m_numPhases;
 
@@ -487,60 +486,60 @@ private:
 
   /// views into primary variable fields
 
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>      m_pressure;
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>      m_deltaPressure;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > >      m_pressure;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > >      m_deltaPressure;
 
-  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>>      m_globalCompDensity;
-  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>>      m_deltaGlobalCompDensity;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > >      m_globalCompDensity;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > >      m_deltaGlobalCompDensity;
 
   /// views into other variable fields
 
-  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_compFrac;
-  ElementRegionManager::ElementViewAccessor<arrayView3d<real64>> m_dCompFrac_dCompDens;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_compFrac;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 > > m_dCompFrac_dCompDens;
 
-  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_phaseVolFrac;
-  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_dPhaseVolFrac_dPres;
-  ElementRegionManager::ElementViewAccessor<arrayView3d<real64>> m_dPhaseVolFrac_dCompDens;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_phaseVolFrac;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_dPhaseVolFrac_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 > > m_dPhaseVolFrac_dCompDens;
 
-  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_phaseMob;
-  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_dPhaseMob_dPres;
-  ElementRegionManager::ElementViewAccessor<arrayView3d<real64>> m_dPhaseMob_dCompDens;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_phaseMob;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_dPhaseMob_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 > > m_dPhaseMob_dCompDens;
 
   /// views into backup fields
 
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_porosityOld;
-  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_phaseVolFracOld;
-  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_phaseDensOld;
-  ElementRegionManager::ElementViewAccessor<arrayView3d<real64>> m_phaseCompFracOld;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_porosityOld;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_phaseVolFracOld;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_phaseDensOld;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 > > m_phaseCompFracOld;
 
   /// views into material fields
 
-  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_pvMult;
-  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_dPvMult_dPres;
+  ElementRegionManager::MaterialViewAccessor< arrayView2d< real64 > > m_pvMult;
+  ElementRegionManager::MaterialViewAccessor< arrayView2d< real64 > > m_dPvMult_dPres;
 
-  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_phaseFrac;
-  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_dPhaseFrac_dPres;
-  ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> m_dPhaseFrac_dComp;
+  ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 > > m_phaseFrac;
+  ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 > > m_dPhaseFrac_dPres;
+  ElementRegionManager::MaterialViewAccessor< arrayView4d< real64 > > m_dPhaseFrac_dComp;
 
-  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_phaseDens;
-  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_dPhaseDens_dPres;
-  ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> m_dPhaseDens_dComp;
+  ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 > > m_phaseDens;
+  ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 > > m_dPhaseDens_dPres;
+  ElementRegionManager::MaterialViewAccessor< arrayView4d< real64 > > m_dPhaseDens_dComp;
 
-  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_phaseVisc;
-  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_dPhaseVisc_dPres;
-  ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> m_dPhaseVisc_dComp;
+  ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 > > m_phaseVisc;
+  ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 > > m_dPhaseVisc_dPres;
+  ElementRegionManager::MaterialViewAccessor< arrayView4d< real64 > > m_dPhaseVisc_dComp;
 
-  ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> m_phaseCompFrac;
-  ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> m_dPhaseCompFrac_dPres;
-  ElementRegionManager::MaterialViewAccessor<arrayView5d<real64>> m_dPhaseCompFrac_dComp;
+  ElementRegionManager::MaterialViewAccessor< arrayView4d< real64 > > m_phaseCompFrac;
+  ElementRegionManager::MaterialViewAccessor< arrayView4d< real64 > > m_dPhaseCompFrac_dPres;
+  ElementRegionManager::MaterialViewAccessor< arrayView5d< real64 > > m_dPhaseCompFrac_dComp;
 
-  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_totalDens;
+  ElementRegionManager::MaterialViewAccessor< arrayView2d< real64 > > m_totalDens;
 
-  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_phaseRelPerm;
-  ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> m_dPhaseRelPerm_dPhaseVolFrac;
+  ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 > > m_phaseRelPerm;
+  ElementRegionManager::MaterialViewAccessor< arrayView4d< real64 > > m_dPhaseRelPerm_dPhaseVolFrac;
 
-  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_phaseCapPressure;
-  ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> m_dPhaseCapPressure_dPhaseVolFrac;
+  ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 > > m_phaseCapPressure;
+  ElementRegionManager::MaterialViewAccessor< arrayView4d< real64 > > m_dPhaseCapPressure_dPhaseVolFrac;
 
 };
 

@@ -26,7 +26,7 @@ SimpleGeometricObjectBase::SimpleGeometricObjectBase( std::string const & name,
                                                       Group * const parent ):
   Group( name, parent )
 {
-  setInputFlags(dataRepository::InputFlags::OPTIONAL_NONUNIQUE);
+  setInputFlags( dataRepository::InputFlags::OPTIONAL_NONUNIQUE );
 }
 
 
@@ -34,7 +34,7 @@ SimpleGeometricObjectBase::~SimpleGeometricObjectBase()
 {}
 
 
-SimpleGeometricObjectBase::CatalogInterface::CatalogType& SimpleGeometricObjectBase::GetCatalog()
+SimpleGeometricObjectBase::CatalogInterface::CatalogType & SimpleGeometricObjectBase::GetCatalog()
 {
   static SimpleGeometricObjectBase::CatalogInterface::CatalogType catalog;
   return catalog;

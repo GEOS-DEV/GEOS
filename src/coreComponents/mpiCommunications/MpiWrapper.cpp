@@ -73,22 +73,12 @@ int MpiWrapper::Cart_rank( MPI_Comm comm, const int coords[] )
   return rank;
 }
 
-int MpiWrapper::Comm_free( MPI_Comm * comm )
+void MpiWrapper::Comm_free( MPI_Comm & comm )
 {
 #ifdef GEOSX_USE_MPI
-  return MPI_Comm_free( comm );
+  MPI_CHECK_ERROR( MPI_Comm_free( &comm ) );
 #else
-  return 0;
-#endif
-}
-
-
-int MpiWrapper::Finalize()
-{
-#ifdef GEOSX_USE_MPI
-  return MPI_Finalize();
-#else
-  return 0;
+  comm = MPI_COMM_NULL;
 #endif
 }
 
@@ -132,6 +122,25 @@ int MpiWrapper::Init( int * argc, char * * * argv )
   return MPI_Init( argc, argv );
 #else
   return 0;
+#endif
+}
+
+void MpiWrapper::Finalize()
+{
+#ifdef GEOSX_USE_MPI
+  MPI_CHECK_ERROR( MPI_Finalize() );
+#endif
+}
+
+
+MPI_Comm MpiWrapper::Comm_dup( MPI_Comm const comm )
+{
+#ifdef GEOSX_USE_MPI
+  MPI_Comm duplicate;
+  MPI_CHECK_ERROR( MPI_Comm_dup( comm, &duplicate ) );
+  return duplicate;
+#else
+  return comm;
 #endif
 }
 
@@ -219,7 +228,7 @@ int MpiWrapper::ActiveWaitSome( const int count, MPI_Request array_of_requests[]
       return err;
     if( rcvd > 0 )
     {
-      for( int ii = 0 ; ii < rcvd ; ++ii )
+      for( int ii = 0; ii < rcvd; ++ii )
       {
         if( indices[ii] != MPI_UNDEFINED )
         {
@@ -237,16 +246,16 @@ int MpiWrapper::ActiveWaitSomePartialPhase( const int participants,
 {
   const int num_phases = sizeof(phases.size());
   std::vector< MPI_Request > phase_requests( participants * num_phases, MPI_REQUEST_NULL );
-  for( int idx = 0 ; idx < participants ; ++idx )
+  for( int idx = 0; idx < participants; ++idx )
   {
     phase_requests[idx] = phases[0]( idx );
   }
   auto phase_invocation = [&] ( int idx )
-    {
-      int phase = (idx / participants) + 1;
-      int phase_idx = idx % participants;
-      phase_requests[idx + participants] = phases[phase]( phase_idx );
-    };
+  {
+    int phase = (idx / participants) + 1;
+    int phase_idx = idx % participants;
+    phase_requests[idx + participants] = phases[phase]( phase_idx );
+  };
   return ActiveWaitSome( participants * num_phases, &phase_requests[0], phase_invocation );
 }
 
@@ -255,12 +264,12 @@ int MpiWrapper::ActiveWaitSomeCompletePhase( const int participants,
 {
   const int num_phases = phases.size();
   std::vector< MPI_Request > phase_requests( num_phases * participants, MPI_REQUEST_NULL );
-  for( int idx = 0 ; idx < participants ; ++idx )
+  for( int idx = 0; idx < participants; ++idx )
   {
     phase_requests[idx] = phases[0]( idx );
   }
   int err = 0;
-  for( int phase = 1 ; phase < num_phases ; ++phase )
+  for( int phase = 1; phase < num_phases; ++phase )
   {
     int prev_phase = phase - 1;
     auto phase_wrapper = [&] ( int idx ) { phase_requests[ ( phase * participants ) + idx ] = phases[phase]( idx ); };
@@ -276,13 +285,13 @@ int MpiWrapper::ActiveWaitOrderedCompletePhase( const int participants,
 {
   const int num_phases = phases.size();
   std::vector< MPI_Request > phase_requests( participants );
-  for( int idx = 0 ; idx < participants ; ++idx )
+  for( int idx = 0; idx < participants; ++idx )
   {
     phase_requests[idx] = phases[0]( idx );
   }
-  for( int phase = 1 ; phase < num_phases ; ++phase )
+  for( int phase = 1; phase < num_phases; ++phase )
   {
-    for( int idx = 0 ; idx < participants ; ++idx )
+    for( int idx = 0; idx < participants; ++idx )
     {
       MPI_Status stat;
       Wait( &phase_requests[idx], &stat );

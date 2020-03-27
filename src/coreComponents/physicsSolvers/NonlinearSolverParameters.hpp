@@ -49,7 +49,7 @@ public:
    * @brief Default Move Constructor
    * @param The source object of the move.
    */
-  NonlinearSolverParameters(NonlinearSolverParameters &&) = default;
+  NonlinearSolverParameters( NonlinearSolverParameters && ) = default;
 
   /**
    * @brief The name of this object in the catalog.
@@ -92,7 +92,7 @@ public:
    */
   integer dtCutIterLimit() const
   {
-    return std::ceil(m_dtCutIterLimit * m_maxIterNewton);
+    return std::ceil( m_dtCutIterLimit * m_maxIterNewton );
   }
 
 
@@ -103,7 +103,7 @@ public:
    */
   integer dtIncIterLimit() const
   {
-    return std::ceil(m_dtIncIterLimit * m_maxIterNewton);
+    return std::ceil( m_dtIncIterLimit * m_maxIterNewton );
   }
 
   /// Flag to apply a line search.
@@ -131,11 +131,11 @@ public:
   integer m_allowNonConverged;
 
   /// Fraction of the Max Newton iterations above which the solver asks for the time-step to be cut for the next dt
-  real64  m_dtCutIterLimit;
+  real64 m_dtCutIterLimit;
 
   /// Fraction of the Max Newton iterations below which the solver asks for the time-step to be doubled for the next dt
-  real64  m_dtIncIterLimit;
-  
+  real64 m_dtIncIterLimit;
+
   /// Maximum number of time sub-steps allowed for the solver
   integer m_maxSubSteps;
 
@@ -143,7 +143,7 @@ public:
   integer m_maxTimeStepCuts;
 
   /// Factor by which the time step will be cut if a timestep cut is required.
-  real64  m_timeStepCutFactor;
+  real64 m_timeStepCutFactor;
 
   /// number of times that the time-step had to be cut
   integer m_numdtAttempts;

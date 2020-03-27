@@ -34,11 +34,6 @@
 namespace geosx
 {
 
-namespace dataRepository
-{
-class Group;
-}
-
 
 /**
  * @class xmlWrapper
@@ -111,35 +106,78 @@ public:
    * @tparam T the type of variable fill with string value
    * @param[out] target the object to read values into
    * @param[in]  value  the string that contains the data to be parsed into target
+   * @return void.
    */
   template< typename T >
-  static void StringToInputVariable( T & target, string value );
+  static std::enable_if_t< traits::CanStreamInto< std::istringstream, T > >
+  StringToInputVariable( T & target, string const & value )
+  {
+    std::istringstream ss( value );
+    ss>>target;
+  }
 
   /**
-   * @copybrief StringToInputVariable(T &, string)
+   * @brief Parse a string and fill a R1Tensor with the value(s) in the string.
    * @param[out] target the object to read values into
    * @param[in]  value  the string that contains the data to be parsed into target
    */
-  static void StringToInputVariable( R1Tensor & target, string value );
+  static void StringToInputVariable( R1Tensor & target, string const & value );
 
   /**
-   * @copybrief StringToInputVariable(T &, string)
+   * @brief Parse a string and fill an Array with the value(s) in the string.
    * @tparam T    data type of the array
    * @tparam NDIM number of dimensions of the array
    * @tparam PERMUTATION the permutation of the array
    * @param[out] array the array to read values into
    * @param[in]  value the string that contains the data to be parsed into target
+   * @return void.
    */
   template< typename T, int NDIM, typename PERMUTATION >
-  static void StringToInputVariable( Array< T, NDIM, PERMUTATION > & array, string value );
+  static std::enable_if_t< traits::CanStreamInto< std::istringstream, T > >
+  StringToInputVariable( Array< T, NDIM, PERMUTATION > & array, string const & value )
+  { LvArray::stringToArray( array, value ); }
 
   ///@}
 
+  /// Defines a static constexpr bool canParseVariable that is true iff the template parameter T
+  /// is a valid argument to StringToInputVariable.
+  IS_VALID_EXPRESSION( canParseVariable, T, StringToInputVariable( std::declval< T & >(), std::string() ) );
 
   /**
    * @name Attribute extraction from XML nodes.
    */
   ///@{
+
+  /**
+   * @brief Extract attribute in an xml tree, and translate its value into a typed variable.
+   * @tparam T             the type of variable fill with xml attribute.
+   * @tparam T_DEF         type of the default value for @p rval
+   * @param[out] rval      the variable to fill with value
+   * @param[in] name       the name of the xml attribute to process
+   * @param[in] targetNode the xml node that should contain the attribute
+   * @param[in] defVal     default value of @p rval (or entries of @p rval, if it is an array)
+   * @return boolean value indicating whether the value was successfully read from XML.
+   */
+  template< typename T, typename T_DEF = T >
+  static std::enable_if_t< canParseVariable< T >, bool >
+  ReadAttributeAsType( T & rval,
+                       string const & name,
+                       xmlNode const & targetNode,
+                       T_DEF const & defVal )
+  {
+    pugi::xml_attribute xmlatt = targetNode.attribute( name.c_str() );
+    if( !xmlatt.empty() )
+    {
+      // parse the string/attribute into a value
+      StringToInputVariable( rval, xmlatt.value() );
+    }
+    else
+    {
+      // set the value to the default value
+      rval = defVal;
+    }
+    return true;
+  }
 
   /**
    * @brief Extract attribute in an xml tree, and translate its value into a typed variable.
@@ -151,34 +189,30 @@ public:
    * @return boolean value indicating whether the value was successfully read from XML.
    */
   template< typename T >
-  static bool ReadAttributeAsType( T & rval,
-                                   string const & name,
-                                   xmlNode const & targetNode,
-                                   bool const required );
+  static std::enable_if_t< canParseVariable< T >, bool >
+  ReadAttributeAsType( T & rval,
+                       string const & name,
+                       xmlNode const & targetNode,
+                       bool const required )
+  {
+    pugi::xml_attribute xmlatt = targetNode.attribute( name.c_str() );
+
+    bool const success = !(xmlatt.empty() && required);
+
+    if( success )
+    {
+      // parse the string/attribute into a value
+      StringToInputVariable( rval, xmlatt.value() );
+    }
+    return success;
+  }
 
   /**
-   * @copybrief ReadAttributeAsType(T &, string const &, xmlNode const &, bool const);
-   * @tparam T             the type of variable fill with xml attribute.
-   * @tparam T_DEF         type of the default value for @p rval
-   * @param[out] rval      the variable to fill with value
-   * @param[in] name       the name of the xml attribute to process
-   * @param[in] targetNode the xml node that should contain the attribute
-   * @param[in] defVal     default value of @p rval (or entries of @p rval, if it is an array)
-   * @return boolean value indicating whether the value was successfully read from XML.
-   */
-  template< typename T, typename T_DEF = T >
-  static bool ReadAttributeAsType( T & rval,
-                                   string const & name,
-                                   xmlNode const & targetNode,
-                                   T_DEF const & defVal );
-
-  /**
-   * @copybrief ReadAttributeAsType(T &, string const &, xmlNode const &, bool const);
+   * @brief Extract attribute in an xml tree, and translate its value into a typed variable.
    * @tparam T             the type of variable fill with xml attribute.
    * @param[out] rval      the variable to fill with value
    * @param[in] name       the name of the xml attribute to process
    * @param[in] targetNode the xml node that should contain the attribute
-   * @param[in] defVal     default value of @p rval (or entries of @p rval, if it is an array)
    * @return boolean value indicating whether the value was successfully read from XML.
    */
   template< typename T >
@@ -186,14 +220,11 @@ public:
   ReadAttributeAsType( T & rval,
                        string const & name,
                        xmlNode const & targetNode,
-                       dataRepository::DefaultValue< T > const & defVal )
-  {
-    GEOSX_UNUSED_VAR( defVal );
-    return ReadAttributeAsType( rval, name, targetNode, false );
-  }
+                       dataRepository::DefaultValue< T > const & )
+  { return ReadAttributeAsType( rval, name, targetNode, false ); }
 
   /**
-   * @copybrief ReadAttributeAsType(T &, string const &, xmlNode const &, bool const);
+   * @brief Extract attribute in an xml tree, and translate its value into a typed variable.
    * @tparam T             the type of variable fill with xml attribute.
    * @param[out] rval      the variable to fill with value
    * @param[in] name       the name of the xml attribute to process
@@ -207,69 +238,23 @@ public:
                        string const & name,
                        xmlNode const & targetNode,
                        dataRepository::DefaultValue< T > const & defVal )
+  { return ReadAttributeAsType( rval, name, targetNode, defVal.value ); }
+
+  /**
+   * @brief Stub that for unreadable types that errors out.
+   * @return false.
+   */
+  template< typename T, typename U >
+  static std::enable_if_t< !canParseVariable< T >, bool >
+  ReadAttributeAsType( T &, string const &, xmlNode const &, U const & )
   {
-    return ReadAttributeAsType( rval, name, targetNode, defVal.value );
+    GEOSX_ERROR( "Cannot parse the given type " << cxx_utilities::demangleType< T >() );
+    return false;
   }
 
   ///@}
 
 };
-
-
-template< typename T >
-void xmlWrapper::StringToInputVariable( T & target, string inputValue )
-{
-  std::istringstream ss( inputValue );
-  ss>>target;
-}
-
-template< typename T, int NDIM, typename PERMUTATION >
-void xmlWrapper::StringToInputVariable( Array< T, NDIM, PERMUTATION > & array, string valueString )
-{
-  LvArray::stringToArray( array, valueString );
-}
-
-template< typename T >
-bool xmlWrapper::ReadAttributeAsType( T & rval,
-                                      string const & name,
-                                      xmlNode const & targetNode,
-                                      bool const required )
-{
-  pugi::xml_attribute xmlatt = targetNode.attribute( name.c_str() );
-
-  bool const success = !(xmlatt.empty() && required);
-  //GEOSX_ERROR_IF( xmlatt.empty() && required, "Input variable " + name + " is required in " + targetNode.path() );
-
-  if( success )
-  {
-    // parse the string/attribute into a value
-    StringToInputVariable( rval, xmlatt.value() );
-  }
-  return success;
-}
-
-
-template< typename T, typename T_DEF >
-bool xmlWrapper::ReadAttributeAsType( T & rval,
-                                      string const & name,
-                                      xmlNode const & targetNode,
-                                      T_DEF const & defVal )
-{
-  pugi::xml_attribute xmlatt = targetNode.attribute( name.c_str() );
-  if( !xmlatt.empty() )
-  {
-    // parse the string/attribute into a value
-    StringToInputVariable( rval, xmlatt.value() );
-  }
-  else
-  {
-    // set the value to the default value
-    rval = defVal;
-  }
-  return true;
-}
-
-
 
 } /* namespace geosx */
 

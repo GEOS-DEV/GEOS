@@ -79,43 +79,43 @@ class FluxApproximationBase : public dataRepository::Group
 public:
 
   // necessary declarations for factory instantiation of derived classes
-  using CatalogInterface = dataRepository::CatalogInterface<FluxApproximationBase, string const &, Group * const >;
-  static typename CatalogInterface::CatalogType& GetCatalog();
+  using CatalogInterface = dataRepository::CatalogInterface< FluxApproximationBase, string const &, Group * const >;
+  static typename CatalogInterface::CatalogType & GetCatalog();
 
   // typedefs for stored stencil types
-  using BoundaryStencil = FluxStencil<PointDescriptor, real64>;
+  using BoundaryStencil = FluxStencil< PointDescriptor, real64 >;
 
   FluxApproximationBase() = delete;
 
-  FluxApproximationBase(string const & name, dataRepository::Group * const parent);
+  FluxApproximationBase( string const & name, dataRepository::Group * const parent );
 
   /// return a boundary stencil by face set name
-  BoundaryStencil const & getBoundaryStencil(string const & setName) const;
+  BoundaryStencil const & getBoundaryStencil( string const & setName ) const;
 
   /// return a boundary stencil by face set name
-  BoundaryStencil & getBoundaryStencil(string const & setName);
+  BoundaryStencil & getBoundaryStencil( string const & setName );
 
   /// check if a stencil exists
-  bool hasBoundaryStencil(string const & setName) const;
+  bool hasBoundaryStencil( string const & setName ) const;
 
   /// call a user-provided function for each boundary stencil
-  template<typename LAMBDA>
-  void forCellStencils(LAMBDA && lambda) const;
+  template< typename LAMBDA >
+  void forAllStencils( LAMBDA && lambda ) const;
 
 
-  template<typename TYPE, typename ... TYPES, typename LAMBDA>
-  void forStencils(LAMBDA && lambda) const;
+  template< typename TYPE, typename ... TYPES, typename LAMBDA >
+  void forStencils( LAMBDA && lambda ) const;
 
   /// call a user-provided function for each boundary stencil
-  template<typename LAMBDA>
-  void forBoundaryStencils(LAMBDA && lambda) const;
+  template< typename LAMBDA >
+  void forBoundaryStencils( LAMBDA && lambda ) const;
 
   /// triggers computation of the stencil, implemented in derived classes
   void compute( DomainPartition & domain );
 
   virtual void addToFractureStencil( DomainPartition & GEOSX_UNUSED_PARAM( domain ),
                                      string const & GEOSX_UNUSED_PARAM( faceElementRegionName ),
-                                     bool const GEOSX_UNUSED_PARAM(initFlag) ) {}
+                                     bool const GEOSX_UNUSED_PARAM( initFlag ) ) {}
 
 
   struct viewKeyStruct
@@ -131,11 +131,10 @@ public:
   };
 
   struct groupKeyStruct
-  {
-  };
+  {};
 
   string_array const & targetRegions() const { return m_targetRegions; }
-  string_array &       targetRegions()       { return m_targetRegions; }
+  string_array & targetRegions()       { return m_targetRegions; }
 
 protected:
 
@@ -146,7 +145,7 @@ protected:
 
   /// actual computation of the boundary stencil, to be overridden by implementations
   virtual void computeBoundaryStencil( DomainPartition const & domain,
-                                       SortedArrayView<localIndex const> const & faceSet,
+                                       SortedArrayView< localIndex const > const & faceSet,
                                        BoundaryStencil & stencil ) = 0;
 
   /// name of the primary solution field
@@ -166,33 +165,33 @@ protected:
 
 };
 
-template<typename LAMBDA>
-void FluxApproximationBase::forCellStencils(LAMBDA && lambda) const
+template< typename LAMBDA >
+void FluxApproximationBase::forAllStencils( LAMBDA && lambda ) const
 {
 //TODO remove dependence on CellElementStencilTPFA and FaceElementStencil
-  this->forWrappers<CellElementStencilTPFA,FaceElementStencil>([&] (auto const * const wrapper) -> void
+  this->forWrappers< CellElementStencilTPFA, FaceElementStencil >( [&] ( auto const & wrapper )
   {
-    lambda(wrapper->reference());
-  });
+    lambda( wrapper.reference());
+  } );
 }
 
-template<typename TYPE, typename ... TYPES, typename LAMBDA>
-void FluxApproximationBase::forStencils(LAMBDA && lambda) const
+template< typename TYPE, typename ... TYPES, typename LAMBDA >
+void FluxApproximationBase::forStencils( LAMBDA && lambda ) const
 {
-  this->forWrappers<TYPE,TYPES...>([&] (auto const * const wrapper) -> void
+  this->forWrappers< TYPE, TYPES... >( [&] ( auto const & wrapper )
   {
-    lambda(wrapper->reference());
-  });
+    lambda( wrapper.reference());
+  } );
 }
 
 
-template<typename LAMBDA>
-void FluxApproximationBase::forBoundaryStencils(LAMBDA && lambda) const
+template< typename LAMBDA >
+void FluxApproximationBase::forBoundaryStencils( LAMBDA && lambda ) const
 {
-  this->forWrappers<BoundaryStencil>([&] (auto const * const wrapper) -> void
+  this->forWrappers< BoundaryStencil >( [&] ( auto const & wrapper )
   {
-    lambda(wrapper->reference());
-  });
+    lambda( wrapper.reference());
+  } );
 }
 
 } // namespace geosx

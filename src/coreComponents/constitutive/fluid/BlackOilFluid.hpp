@@ -13,8 +13,8 @@
  */
 
 /**
-  * @file BlackOilFluid.hpp
-  */
+ * @file BlackOilFluid.hpp
+ */
 
 #ifndef GEOSX_CONSTITUTIVE_FLUID_BLACKOILFLUID_HPP_
 #define GEOSX_CONSTITUTIVE_FLUID_BLACKOILFLUID_HPP_
@@ -50,7 +50,7 @@ public:
 
   void DeliverClone( string const & name,
                      Group * const parent,
-                     std::unique_ptr<ConstitutiveBase> & clone ) const override;
+                     std::unique_ptr< ConstitutiveBase > & clone ) const override;
 
   static std::string CatalogName() { return "BlackOilFluid"; }
 
@@ -62,7 +62,7 @@ public:
     static constexpr auto surfaceDensitiesString = "surfaceDensities";
     static constexpr auto tableFilesString = "tableFiles";
     static constexpr auto fluidTypeString = "fluidType";
-    
+
     using ViewKey = dataRepository::ViewKey;
 
     ViewKey surfaceDensities = { surfaceDensitiesString };
@@ -79,10 +79,10 @@ private:
   void createFluid() override;
 
   // Black-oil phase/component description
-  array1d<real64> m_surfaceDensities;
+  array1d< real64 > m_surfaceDensities;
 
   // Black-oil table filenames
-  path_array  m_tableFiles;
+  path_array m_tableFiles;
 
   // Input string for type of black-oil fluid (live/dead)
   string m_fluidTypeString;

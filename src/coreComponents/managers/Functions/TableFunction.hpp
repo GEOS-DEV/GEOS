@@ -37,7 +37,7 @@ public:
    * @param[in] name the name of this object manager
    * @param[in] parent the parent Group
    */
-  TableFunction( const std::string& name,
+  TableFunction( const std::string & name,
                  dataRepository::Group * const parent );
 
   /**
@@ -45,13 +45,13 @@ public:
    */
   virtual ~TableFunction() override;
 
-  /// 
+  ///
   /**
    * @brief The catalog name interface
    * @return name of the TableFunction in the FunctionBase catalog
    */
   static string CatalogName() { return "TableFunction"; }
-  
+
   /**
    * @brief Parse a table file.
    *
@@ -61,7 +61,7 @@ public:
    * @param[in] delimiter The delimiter used for file entries.
    */
   template< typename T >
-  void parse_file( array1d<T> & target, string const & filename, char delimiter );
+  void parse_file( array1d< T > & target, string const & filename, char delimiter );
 
   /// Initialize the table function
   virtual void InitializeFunction() override;
@@ -78,10 +78,10 @@ public:
    */
   virtual void Evaluate( dataRepository::Group const * const group,
                          real64 const time,
-                         SortedArrayView<localIndex const> const & set,
+                         SortedArrayView< localIndex const > const & set,
                          real64_array & result ) const override final
   {
-    FunctionBase::EvaluateT<TableFunction>( group, time, set, result );
+    FunctionBase::EvaluateT< TableFunction >( group, time, set, result );
   }
 
   /**
@@ -89,29 +89,29 @@ public:
    * @param input a scalar input
    * @return the function result
    */
-  virtual real64 Evaluate( real64 const * const input) const override final;
+  virtual real64 Evaluate( real64 const * const input ) const override final;
 
   /**
    * @brief Get the table axes definitions
    * @return a reference to an array of arrays that define each table axis
    */
-  array1d<real64_array> const & getCoordinates() const { return m_coordinates; }
-  
+  array1d< real64_array > const & getCoordinates() const { return m_coordinates; }
+
   /**
    * @copydoc const & getCoordinates() const
    */
-  array1d<real64_array>       & getCoordinates()       { return m_coordinates; }
+  array1d< real64_array > & getCoordinates()       { return m_coordinates; }
 
   /**
    * @brief Get the table values
    * @return a reference to the 1d array of table values.  For ND arrays, values are stored in Fortran order.
    */
-  array1d<real64> const & getValues() const { return m_values; }
-  
+  array1d< real64 > const & getValues() const { return m_values; }
+
   /**
    * @copydoc const & getValues() const
    */
-  array1d<real64>       & getValues()       { return m_values; }
+  array1d< real64 > & getValues()       { return m_values; }
 
   /// Enumerator of available interpolation types
   enum class InterpolationType
@@ -139,11 +139,11 @@ private:
   InterpolationType m_interpolationMethod;
 
   /// An array of table axes
-  array1d<real64_array> m_coordinates;
+  array1d< real64_array > m_coordinates;
 
   /// Table values (in fortran order)
   real64_array m_values;
- 
+
   /// Maximum number of table dimensions
   static localIndex constexpr m_maxDimensions = 4;
 

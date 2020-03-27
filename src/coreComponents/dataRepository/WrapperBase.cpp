@@ -66,6 +66,31 @@ void WrapperBase::CopyWrapperAttributes( WrapperBase const & source )
   m_restart_flags = source.m_restart_flags;
 }
 
+string WrapperBase::dumpInputOptions( bool const outputHeader ) const
+{
+  string rval;
+  char temp[1000] = {0};
+  if( outputHeader )
+  {
+    sprintf( temp, "  |         name         |  opt/req  | Description \n" );
+    rval.append( temp );
+    sprintf( temp, "  |----------------------|-----------|-----------------------------------------\n" );
+    rval.append( temp );
+  }
+
+  if( getInputFlag() == InputFlags::OPTIONAL ||
+      getInputFlag() == InputFlags::REQUIRED )
+  {
+    sprintf( temp, "  | %20s | %9s | %s \n",
+             getName().c_str(),
+             InputFlagToString( getInputFlag()).c_str(),
+             getDescription().c_str() );
+    rval.append( temp );
+  }
+
+  return rval;
+}
+
 #if defined(USE_TOTALVIEW_OUTPUT)
 int WrapperBase::setTotalviewDisplay() const
 {

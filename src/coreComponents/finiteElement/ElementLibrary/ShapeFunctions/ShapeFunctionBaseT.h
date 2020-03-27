@@ -28,15 +28,15 @@ class ShapeFunctionBaseT
 {
 public:
 
-  ShapeFunctionBaseT(void);
+  ShapeFunctionBaseT( void );
 
-  virtual ~ShapeFunctionBaseT(void);
+  virtual ~ShapeFunctionBaseT( void );
 
-  void Calc_Shape_Deriv(const realT fac);
+  void Calc_Shape_Deriv( const realT fac );
 
 
-  realT ShapeFunctionValue( const R1Tensor& Xi,
-                            const R1Tensor& Xi_node );
+  realT ShapeFunctionValue( const R1Tensor & Xi,
+                            const R1Tensor & Xi_node );
 
   int CalculateJacobian( const int elem );
 
