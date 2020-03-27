@@ -103,7 +103,6 @@ geosx_pangea_build: &geosx_pangea_build
 
 stages:
   - build
-  - check_submodules
 
 jobs:
   include:
@@ -142,5 +141,3 @@ jobs:
     env:
     - DOCKER_REPOSITORY=geosx/ubuntu18.04-gcc8
     - CMAKE_BUILD_TYPE=Debug
-  - stage: check_submodules
-    script: scripts/test_submodule_updated.sh
