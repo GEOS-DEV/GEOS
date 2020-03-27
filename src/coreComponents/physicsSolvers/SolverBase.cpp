@@ -432,7 +432,6 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       // get residual norm
       real64 residualNorm = CalculateResidualNorm( domain, dofManager, rhs );
 
-
       if( getLogLevel() >= 1 && logger::internal::rank==0 )
       {
         if( newtonIter!=0 )
@@ -492,8 +491,6 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
 
       // call the default linear solver on the system
       SolveSystem( dofManager, matrix, rhs, solution );
-
-
 
       scaleFactor = ScalingForSystemSolution( domain, dofManager, solution );
 
@@ -628,6 +625,14 @@ void SolverBase::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( dofManager 
 
   // Solve using the iterative solver and compare norms with true solution
   solver.solve( matrix, solution, rhs );
+
+  // Debug for logLevel >= 2
+  if( getLogLevel() >= 2 )
+  {
+    GEOSX_LOG_RANK_0( "After SolveSystem" );
+    GEOSX_LOG_RANK_0( "\nSolution\n" );
+    std::cout << solution;
+  }
 }
 
 bool SolverBase::CheckSystemSolution( DomainPartition const * const GEOSX_UNUSED_PARAM( domain ),
