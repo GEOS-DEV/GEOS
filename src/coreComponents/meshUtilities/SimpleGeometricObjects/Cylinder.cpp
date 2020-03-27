@@ -26,23 +26,23 @@ namespace geosx
 {
 using namespace dataRepository;
 
-Cylinder::Cylinder( const std::string& name, Group * const parent ):
+Cylinder::Cylinder( const std::string & name, Group * const parent ):
   SimpleGeometricObjectBase( name, parent ),
-  m_point1{0.0,0.0,0.0},
-  m_point2{0.0,0.0,0.0},
-  m_radius{0.0}
+  m_point1{ 0.0, 0.0, 0.0 },
+  m_point2{ 0.0, 0.0, 0.0 },
+  m_radius{ 0.0 }
 {
   registerWrapper( viewKeyStruct::point1String, &m_point1, false )->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Center point of one (upper or lower) face of the cylinder");
+    setInputFlag( InputFlags::REQUIRED )->
+    setDescription( "Center point of one (upper or lower) face of the cylinder" );
 
   registerWrapper( viewKeyStruct::point2String, &m_point2, false )->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Center point of the other face of the cylinder");
+    setInputFlag( InputFlags::REQUIRED )->
+    setDescription( "Center point of the other face of the cylinder" );
 
   registerWrapper( viewKeyStruct::radiusString, &m_radius, false )->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Radius of the cylinder");
+    setInputFlag( InputFlags::REQUIRED )->
+    setDescription( "Radius of the cylinder" );
 
 }
 
@@ -50,7 +50,7 @@ Cylinder::~Cylinder()
 {}
 
 
-bool Cylinder::IsCoordInObject( const R1Tensor& coord ) const
+bool Cylinder::IsCoordInObject( const R1Tensor & coord ) const
 {
   bool rval = false;
 
@@ -70,7 +70,7 @@ bool Cylinder::IsCoordInObject( const R1Tensor& coord ) const
   distance  = coord_minus_point1;
   distance -= projection;
 
-  if (distance.L2_Norm()<m_radius && projection.L2_Norm()<height)
+  if( distance.L2_Norm()<m_radius && projection.L2_Norm()<height )
   {
     rval = true;
   }

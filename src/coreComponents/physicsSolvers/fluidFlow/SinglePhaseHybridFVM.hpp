@@ -41,14 +41,14 @@ public:
     static constexpr integer MASS_CONS  = 0;
     static constexpr integer CONSTRAINT = 1;
   };
-  
+
   struct InnerProductType
   {
     static constexpr integer TPFA = 0;
     static constexpr integer QUASI_TPFA = 1;
   };
 
-  
+
   /**
    * @brief main constructor for Group Objects
    * @param name the name of this instantiation of Group in the repository
@@ -125,7 +125,7 @@ public:
                        DofManager const & dofManager,
                        ParallelVector const & solution,
                        real64 const scalingFactor ) override;
-  
+
   virtual void
   ApplySystemSolution( DofManager const & dofManager,
                        ParallelVector const & solution,
@@ -157,16 +157,16 @@ public:
                      ParallelMatrix * const matrix,
                      ParallelVector * const rhs ) override;
 
-  
+
   /**@}*/
 
-  
+
   struct viewKeyStruct : SinglePhaseBase::viewKeyStruct
   {
     // primary face-based field
     static constexpr auto facePressureString      = "facePressure";
     static constexpr auto deltaFacePressureString = "deltaFacePressure";
-  
+
   } viewKeysSinglePhaseHybridFVM;
 
   viewKeyStruct & viewKeys()
@@ -176,8 +176,7 @@ public:
   { return viewKeysSinglePhaseHybridFVM; }
 
   struct groupKeyStruct : SolverBase::groupKeyStruct
-  {
-  } groupKeysSinglePhaseHybridFVM;
+  {} groupKeysSinglePhaseHybridFVM;
 
   groupKeyStruct & groupKeys()
   { return groupKeysSinglePhaseHybridFVM; }
@@ -185,43 +184,43 @@ public:
   groupKeyStruct const & groupKeys() const
   { return groupKeysSinglePhaseHybridFVM; }
 
-  
+
 private:
 
   void FluxLaunch( localIndex er,
                    localIndex esr,
                    FaceElementSubRegion const * const subRegion,
-                   SortedArray<localIndex> regionFilter,
+                   SortedArray< localIndex > regionFilter,
                    MeshLevel const * const mesh,
-                   arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodePosition,
-                   array2d<localIndex> const & elemRegionList,
-                   array2d<localIndex> const & elemSubRegionList,
-                   array2d<localIndex> const & elemList,
-                   ArrayOfArraysView<localIndex const> const & faceToNodes,                
-                   arrayView1d<globalIndex const> const & faceDofNumber,
-                   arrayView1d<real64 const> const & facePres,
-                   arrayView1d<real64 const> const & dFacePres,
-                   arrayView1d<real64 const> const & faceGravCoef,
+                   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
+                   array2d< localIndex > const & elemRegionList,
+                   array2d< localIndex > const & elemSubRegionList,
+                   array2d< localIndex > const & elemList,
+                   ArrayOfArraysView< localIndex const > const & faceToNodes,
+                   arrayView1d< globalIndex const > const & faceDofNumber,
+                   arrayView1d< real64 const > const & facePres,
+                   arrayView1d< real64 const > const & dFacePres,
+                   arrayView1d< real64 const > const & faceGravCoef,
                    real64 const lengthTolerance,
                    real64 const dt,
                    DofManager const * const dofManager,
                    ParallelMatrix * const matrix,
                    ParallelVector * const rhs );
- 
+
   void FluxLaunch( localIndex er,
                    localIndex esr,
                    CellElementSubRegion const * const subRegion,
-                   SortedArray<localIndex> regionFilter,
+                   SortedArray< localIndex > regionFilter,
                    MeshLevel const * const mesh,
-                   arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodePosition,
-                   array2d<localIndex> const & elemRegionList,
-                   array2d<localIndex> const & elemSubRegionList,
-                   array2d<localIndex> const & elemList,
-                   ArrayOfArraysView<localIndex const> const & faceToNodes,                
-                   arrayView1d<globalIndex const> const & faceDofNumber,
-                   arrayView1d<real64 const> const & facePres,
-                   arrayView1d<real64 const> const & dFacePres,
-                   arrayView1d<real64 const> const & faceGravCoef,
+                   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
+                   array2d< localIndex > const & elemRegionList,
+                   array2d< localIndex > const & elemSubRegionList,
+                   array2d< localIndex > const & elemList,
+                   ArrayOfArraysView< localIndex const > const & faceToNodes,
+                   arrayView1d< globalIndex const > const & faceDofNumber,
+                   arrayView1d< real64 const > const & facePres,
+                   arrayView1d< real64 const > const & dFacePres,
+                   arrayView1d< real64 const > const & faceGravCoef,
                    real64 const lengthTolerance,
                    real64 const dt,
                    DofManager const * const dofManager,
@@ -240,18 +239,19 @@ private:
    * @param[inout] transMatrix
    *
    * This function is in this class until we find a better place for it
-   * 
+   *
    */
-  void ComputeTransmissibilityMatrix( arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodePosition, 
-                                      ArrayOfArraysView<localIndex const> const & faceToNodes, 
-                                      arraySlice1d<localIndex const> const elemToFaces,
+  void ComputeTransmissibilityMatrix( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
+                                      ArrayOfArraysView< localIndex const > const & faceToNodes,
+                                      arraySlice1d< localIndex const > const elemToFaces,
                                       R1Tensor const & elemCenter,
-                                      real64   const & elemVolume,
+                                      real64 const & elemVolume,
                                       R1Tensor const & elemPerm,
-                                      real64   const & lengthTolerance,
-                                      stackArray2d<real64, SinglePhaseHybridFVMKernels::MAX_NUM_FACES
-                                                          *SinglePhaseHybridFVMKernels::MAX_NUM_FACES> const & transMatrix ) const; 
-  
+                                      real64 const & lengthTolerance,
+                                      stackArray2d< real64, SinglePhaseHybridFVMKernels::MAX_NUM_FACES
+                                                    *SinglePhaseHybridFVMKernels::MAX_NUM_FACES > const & transMatrix ) const;
+
+
   /**
    * @brief In a given element, recompute the transmissibility matrix using TPFA
    * @param[in] nodePosition the position of the nodes
@@ -263,16 +263,16 @@ private:
    * @param[inout] transMatrix
    *
    * This function is in this class until we find a better place for it
-   * 
+   *
    */
-  void ComputeTPFAInnerProduct( arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodePosition,   
-                                ArrayOfArraysView<localIndex const> const & faceToNodes, 
-                                arraySlice1d<localIndex const> const elemToFaces,
+  void ComputeTPFAInnerProduct( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
+                                ArrayOfArraysView< localIndex const > const & faceToNodes,
+                                arraySlice1d< localIndex const > const elemToFaces,
                                 R1Tensor const & elemCenter,
                                 R1Tensor const & elemPerm,
-                                real64   const & lengthTolerance,
-                                stackArray2d<real64, SinglePhaseHybridFVMKernels::MAX_NUM_FACES
-                                                    *SinglePhaseHybridFVMKernels::MAX_NUM_FACES> const & transMatrix ) const; 
+                                real64 const & lengthTolerance,
+                                stackArray2d< real64, SinglePhaseHybridFVMKernels::MAX_NUM_FACES
+                                              *SinglePhaseHybridFVMKernels::MAX_NUM_FACES > const & transMatrix ) const;
 
   /**
    * @brief In a given element, recompute the transmissibility matrix using a consistent inner product
@@ -281,43 +281,42 @@ private:
    * @param[in] elemToFaces the maps from the one-sided face to the corresponding face
    * @param[in] elemCenter the center of the element
    * @param[in] elemPerm the permeability in the element
-   * @param[in] tParam parameter used in the transmissibility matrix computations 
+   * @param[in] tParam parameter used in the transmissibility matrix computations
    * @param[in] lengthTolerance the tolerance used in the trans calculations
    * @param[inout] transMatrix
-   *   
+   *
    * When tParam = 2, we obtain a scheme that reduces to TPFA
    * on orthogonal meshes, but remains consistent on non-orthogonal meshes
    *
    * This function is in this class until we find a better place for it
-   * 
+   *
    */
-  void ComputeQFamilyInnerProduct( arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodePosition,   
-                                   ArrayOfArraysView<localIndex const> const & faceToNodes, 
-                                   arraySlice1d<localIndex const> const elemToFaces,
+  void ComputeQFamilyInnerProduct( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
+                                   ArrayOfArraysView< localIndex const > const & faceToNodes,
+                                   arraySlice1d< localIndex const > const elemToFaces,
                                    R1Tensor const & elemCenter,
-                                   real64   const & elemVolume,
+                                   real64 const & elemVolume,
                                    R1Tensor const & elemPerm,
-                                   real64   const & tParam, 
-                                   real64   const & lengthTolerance,
-                                   stackArray2d<real64, SinglePhaseHybridFVMKernels::MAX_NUM_FACES
-                                                       *SinglePhaseHybridFVMKernels::MAX_NUM_FACES> const & transMatrix ) const; 
+                                   real64 const & tParam,
+                                   real64 const & lengthTolerance,
+                                   stackArray2d< real64, SinglePhaseHybridFVMKernels::MAX_NUM_FACES
+                                                 *SinglePhaseHybridFVMKernels::MAX_NUM_FACES > const & transMatrix ) const;
 
 
-  
   /// Dof key for the member functions that do not have access to the coupled Dof manager
-  string m_faceDofKey; 
-  
+  string m_faceDofKey;
+
   /// relative tolerance (redundant with FluxApproximationBase)
   real64 m_areaRelTol;
 
   /// type of inner product for the mimetic method
-  /// This is only const for now 
+  /// This is only const for now
   integer const m_ipType;
 
   /// flag to decide we orthonormalize with SVD or with MGS
   /// This is only const for now
   bool const m_orthonormalizeWithSVD;
-  
+
 };
 
 } /* namespace geosx */
