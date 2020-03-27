@@ -153,8 +153,8 @@ public:
 
   enum class couplingTypeOption : int
   {
-    FixedStress,
-    TightlyCoupled
+    FIM,
+    SIM_FixedStress
   };
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
