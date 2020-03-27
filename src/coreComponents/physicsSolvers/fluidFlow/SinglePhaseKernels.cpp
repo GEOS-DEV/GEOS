@@ -358,6 +358,10 @@ void FluxKernel::
                                  localColIndices.data(),
                                  dFlux_dAper.data() + (stencilSize * row),
                                  stencilSize );
+        dR_dAper.addToRow( localRowIndices[row],
+                           localColIndices.data(),
+                           dFlux_dAper.data() + (stencilSize * row),
+                           stencilSize );
       }
 
     }

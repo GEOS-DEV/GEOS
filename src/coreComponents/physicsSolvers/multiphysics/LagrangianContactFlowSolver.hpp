@@ -49,6 +49,8 @@ public:
 
   virtual void InitializePreSubGroups( Group * const rootGroup ) override;
 
+  virtual void RegisterDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
+
   virtual void SetupDofs( DomainPartition const * const domain,
                           DofManager & dofManager ) const override;
 
@@ -137,7 +139,11 @@ public:
                            real64 const scaleFactor,
                            real64 & lastResidual ) override;
 
-  void UpdateDeformationForCoupling( DomainPartition * const domain );
+  void UpdateOpeningForFlow( DomainPartition * const domain );
+
+  void AddTransmissibilityDerivativePattern( DomainPartition * const domain,
+                                             DofManager const & dofManager,
+                                             ParallelMatrix * const matrix );
 
   void AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
                                                    DofManager const & dofManager,
