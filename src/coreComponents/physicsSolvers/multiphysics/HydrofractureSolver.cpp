@@ -51,7 +51,7 @@ HydrofractureSolver::HydrofractureSolver( const std::string & name,
   SolverBase( name, parent ),
   m_solidSolverName(),
   m_flowSolverName(),
-  m_couplingTypeOptionString( "FixedStress" ),
+  m_couplingTypeOptionString( "FIM" ),
   m_couplingTypeOption(),
   m_solidSolver( nullptr ),
   m_flowSolver( nullptr ),
@@ -67,7 +67,7 @@ HydrofractureSolver::HydrofractureSolver( const std::string & name,
 
   registerWrapper( viewKeyStruct::couplingTypeOptionStringString, &m_couplingTypeOptionString, 0 )->
     setInputFlag( InputFlags::REQUIRED )->
-    setDescription( "Coupling option: (FixedStress, TightlyCoupled)" );
+    setDescription( "Coupling option: (FIM, SIM_FixedStress)" );
 
   registerWrapper( viewKeyStruct::contactRelationNameString, &m_contactRelationName, 0 )->
     setInputFlag( InputFlags::REQUIRED )->
@@ -161,17 +161,17 @@ void HydrofractureSolver::PostProcessInput()
 {
   string ctOption = this->getReference< string >( viewKeyStruct::couplingTypeOptionStringString );
 
-  if( ctOption == "FixedStress" )
+  if( ctOption == "SIM_FixedStress" )
   {
-    this->m_couplingTypeOption = couplingTypeOption::FixedStress;
+    this->m_couplingTypeOption = couplingTypeOption::SIM_FixedStress;
   }
-  else if( ctOption == "TightlyCoupled" )
+  else if( ctOption == "FIM" )
   {
-    this->m_couplingTypeOption = couplingTypeOption::TightlyCoupled;
+    this->m_couplingTypeOption = couplingTypeOption::FIM;
   }
   else
   {
-    GEOSX_ERROR( "invalid coupling type option" );
+    GEOSX_ERROR( "invalid coupling type option: " + ctOption );
   }
 
   m_solidSolver = this->getParent()->GetGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
@@ -204,11 +204,11 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 
   SolverBase * const surfaceGenerator =  this->getParent()->GetGroup< SolverBase >( "SurfaceGen" );
 
-  if( m_couplingTypeOption == couplingTypeOption::FixedStress )
+  if( m_couplingTypeOption == couplingTypeOption::SIM_FixedStress )
   {
     dtReturn = SplitOperatorStep( time_n, dt, cycleNumber, domain->group_cast< DomainPartition * >() );
   }
-  else if( m_couplingTypeOption == couplingTypeOption::TightlyCoupled )
+  else if( m_couplingTypeOption == couplingTypeOption::FIM )
   {
 
     ImplicitStepSetup( time_n,
