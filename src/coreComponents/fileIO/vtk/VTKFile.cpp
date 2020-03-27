@@ -443,10 +443,10 @@ private:
   void WriteFractureAsciiData( string const & fieldName,
                                  ElementRegionManager const * const elemManager )
     {
-      elemManager->forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( auto const * const embeddedSurfaceSubRegion )
+      elemManager->forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion )
             {
-              typename T::ViewTypeConst const & dataView = embeddedSurfaceSubRegion->template getReference<T>(fieldName);
-              for ( localIndex ei = 0; ei < embeddedSurfaceSubRegion->size(); ++ei )
+              typename T::ViewTypeConst const & dataView = embeddedSurfaceSubRegion.getReference<T>(fieldName);
+              for ( localIndex ei = 0; ei < embeddedSurfaceSubRegion.size(); ++ei )
               {
                 LvArray::forValuesInSlice( dataView[ei], [this]( auto const & value ) { m_outFile << value << " "; } );
                 m_outFile << "\n";
@@ -1038,14 +1038,12 @@ void VTKFile::WriteFractures( double const timeStep,
   array1d<localIndex> connectivityList;
   array1d<int> offSet, typesList;
   // Find all cell fields to export
-  elemManager->forElementRegions<EmbeddedSurfaceRegion>( [&]( EmbeddedSurfaceRegion const * const embeddedRegion )->void
+  elemManager->forElementSubRegions<EmbeddedSurfaceSubRegion>( [&]( EmbeddedSurfaceSubRegion const & subRegion )->void
   {
-    embeddedRegion->forElementSubRegions<EmbeddedSurfaceSubRegion>([&]( EmbeddedSurfaceSubRegion const * const subRegion )
-    {
       // Get "nodes" relative to the fracture subregion
-      subRegion->getIntersectionPoints(*nodeManager, *edgeManager, *elemManager, intersectionPoints, connectivityList, offSet);
+      subRegion.getIntersectionPoints(*nodeManager, *edgeManager, *elemManager, intersectionPoints, connectivityList, offSet);
       // subRegion->getNumPointsPerElement();
-      for( auto const & wrapperIter : subRegion->wrappers() )
+      for( auto const & wrapperIter : subRegion.wrappers() )
       {
         WrapperBase const * const wrapper = wrapperIter.second;
 
@@ -1069,7 +1067,6 @@ void VTKFile::WriteFractures( double const timeStep,
           cellFields.insert(std::make_tuple(fieldName, geosxToVTKTypeMap.at( typeID ), dimension, fieldType) );
         }
       }
-     });
   });
 
   if( mpiRank == 0 )
@@ -1180,13 +1177,9 @@ void VTKFile::WriteFractures( double const timeStep,
   vtuWriter.CloseXMLNode( "DataArray" );
 
   array1d< std::tuple< integer, localIndex, string > > subRegionsInfo; // First value : cell size, Second value : number of cells, Third value : cell Types
-  elemManager->forElementRegionsComplete< EmbeddedSurfaceRegion >( [&]( localIndex const GEOSX_UNUSED_PARAM( er ),
-                                                                auto const * const Region )
+  elemManager->forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion const & subRegion )
   {
-    Region->template forElementSubRegions< CellElementSubRegion >( [&]( auto const * const SubRegion )
-    {
-      subRegionsInfo.push_back( std::make_tuple( SubRegion->numNodesPerElement(), SubRegion->size(), SubRegion->GetElementTypeString() ) );
-    });
+      subRegionsInfo.push_back( std::make_tuple( subRegion.numNodesPerElement(), subRegion.size(), subRegion.GetElementTypeString() ) );
   });
 
   // Definition of the node DataArray that will contain the offsets

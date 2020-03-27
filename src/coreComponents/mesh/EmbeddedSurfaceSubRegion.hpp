@@ -136,16 +136,11 @@ public:
    */
   //virtual localIndex numNodesPerElement( localIndex const k ) const override { return m_toNodesRelation[k].size(); }
 
-<<<<<<< HEAD
-    localIndex       & numOfJumpEnrichments()       {return m_numOfJumpEnrichments;}
-    localIndex const & numOfJumpEnrichments() const {return m_numOfJumpEnrichments;}
+  localIndex       & numOfJumpEnrichments()       {return m_numOfJumpEnrichments;}
+  localIndex const & numOfJumpEnrichments() const {return m_numOfJumpEnrichments;}
 
-    arrayView1d< real64 > const &       getElementAperture()       { return m_elementAperture; }
-    arrayView1d< real64 const > const & getElementAperture() const { return m_elementAperture; }
-=======
-  arrayView1d< real64 > const & getElementAperture()       { return m_elementAperture; }
+  arrayView1d< real64 > const &       getElementAperture()       { return m_elementAperture; }
   arrayView1d< real64 const > const & getElementAperture() const { return m_elementAperture; }
->>>>>>> develop
 
   arrayView1d< real64 > const & getElementArea()       { return m_elementArea; }
   arrayView1d< real64 const > const & getElementArea() const { return m_elementArea; }
@@ -178,7 +173,6 @@ public:
   R1Tensor const & getTangentVector2( localIndex k ) const { return m_tangentVector2[k];}
 
 private:
-<<<<<<< HEAD
     /// normal vector to the embedded surface element
     array1d < R1Tensor > m_normalVector;
     // tangential direction 1
@@ -206,33 +200,6 @@ private:
     array1d< real64 > m_elementArea;
 
     localIndex m_numOfJumpEnrichments;
-=======
-  /// normal vector to the embedded surface element
-  array1d< R1Tensor > m_normalVector;
-  // tangential direction 1
-  array1d< R1Tensor > m_tangentVector1;
-  // tangential direction 2
-  array1d< R1Tensor > m_tangentVector2;
-
-  /// list of regions
-  array1d< localIndex > m_embeddedSurfaceToRegion;
-  /// list of subregions
-  array1d< localIndex > m_embeddedSurfaceToSubRegion;
-  /// list of elements cut by the embedded surface elem
-  array1d< localIndex > m_embeddedSurfaceToCell;
-
-  /// list of nodes
-  NodeMapType m_toNodesRelation;    // Not used for now. Will need for Flow?
-
-  /// list of edges (if necessary)
-  EdgeMapType m_toEdgesRelation;    // Not used for now. Will need for Flow?
-
-  /// The member level field for the element center
-  array1d< real64 > m_elementAperture;
-
-  /// The member level field for the element center
-  array1d< real64 > m_elementArea;
->>>>>>> develop
 };
 
 } /* namespace geosx */

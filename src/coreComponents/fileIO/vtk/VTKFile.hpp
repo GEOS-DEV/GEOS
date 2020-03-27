@@ -129,23 +129,15 @@ public:
     return CreateDataArray( parent, type, name, nbComponents, format, true );
   }
 
-<<<<<<< HEAD
   private:
     /// Root file ( .pvd )
-    xmlWrapper::xmlDocument m_rootFile;
-    xmlWrapper::xmlDocument m_rootFileFractures;
-
-    /// Unstructured file gathering all vtu files for a time step ( .pvtu )
-    pugi::xml_document m_pvtuFile;
-    pugi::xml_document m_pvtuFileFractures;
-=======
-private:
-  /// Root file ( .pvd )
   xmlWrapper::xmlDocument m_rootFile;
+  xmlWrapper::xmlDocument m_rootFileFractures;
 
   /// Unstructured file gathering all vtu files for a time step ( .pvtu )
   pugi::xml_document m_pvtuFile;
->>>>>>> develop
+  pugi::xml_document m_pvtuFileFractures;
+
 
   /// Plot level
   dataRepository::PlotLevel m_plotLevel;
@@ -153,16 +145,11 @@ private:
   /// Base name of the output
   string m_baseName;
 
-<<<<<<< HEAD
-    /// Tells wether or not the output is binary
-    bool m_binary;
-
-    /// Tells whether or not a fracture file should be outputted.
-    bool m_fractureFile;
-=======
   /// Tells wether or not the output is binary
   bool m_binary;
->>>>>>> develop
+
+  /// Tells whether or not a fracture file should be outputted.
+  bool m_fractureFile;
 };
 }
 #endif /* GEOSX_FILEIO_VTK_VTKFILE_HPP_ */

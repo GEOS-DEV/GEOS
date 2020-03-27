@@ -125,12 +125,12 @@ public:
 protected:
 
   void AssembleEquilibriumOperator(array2d<real64> & eqMatrix,
-                                   EmbeddedSurfaceSubRegion * const embeddedSurfaceSubRegion,
+                                   EmbeddedSurfaceSubRegion & embeddedSurfaceSubRegion,
                                    const localIndex k,
                                    const real64 hInv);
 
   void AssembleCompatibilityOperator(array2d<real64> & compMatrix,
-                                     EmbeddedSurfaceSubRegion * const embeddedSurfaceSubRegion,
+                                     EmbeddedSurfaceSubRegion & embeddedSurfaceSubRegion,
                                      localIndex const k,
                                      localIndex const q,
                                      CellBlock::NodeMapType const & elemsToNodes,
