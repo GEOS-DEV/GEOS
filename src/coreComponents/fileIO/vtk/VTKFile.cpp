@@ -133,6 +133,11 @@ public:
     }
   }
 
+  void WriteVertices( array1d < R1Tensor >  & vertices )
+  {
+    WriteAsciiVertices( vertices );
+  }
+
   /*!
    * @brief Write the cell connectivities
    */
@@ -290,9 +295,17 @@ private:
   {
     for( localIndex i = 0; i < vertices.size( 0 ); ++i )
     {
-      m_outFile << vertices( i, 0 ) << " " << vertices( i, 1 ) << "" << vertices( i, 2 ) << "\n";
+      m_outFile << vertices( i, 0 ) << " " << vertices( i, 1 ) << " " << vertices( i, 2 ) << "\n";
     }
   }
+
+  void WriteAsciiVertices( array1d < R1Tensor >  & vertices )
+    {
+      for( localIndex i = 0; i < vertices.size(); ++i )
+      {
+        m_outFile << vertices[i] << "\n";
+      }
+    }
 
   void WriteBinaryConnectivities( ElementRegionManager const * const elemManager )
   {
@@ -1167,7 +1180,7 @@ void VTKFile::WriteFractures( double const timeStep,
       { "NumberOfComponents", "3" },
       { "format", format }
     } );
-  //vtuWriter.WriteVertices( intersectionPoints, m_binary );
+  vtuWriter.WriteVertices( intersectionPoints );
   vtuWriter.CloseXMLNode( "DataArray" );
   vtuWriter.CloseXMLNode( "Points" );
 
