@@ -1213,6 +1213,8 @@ HydrofractureSolver::
 
 }
 
+#include "Epetra_FECrsMatrix.h"
+#include "Epetra_FEVector.h"
 #include "EpetraExt_MatrixMatrix.h"
 #include "Thyra_OperatorVectorClientSupport.hpp"
 #include "Thyra_AztecOOLinearOpWithSolveFactory.hpp"

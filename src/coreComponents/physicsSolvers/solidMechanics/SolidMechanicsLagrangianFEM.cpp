@@ -17,7 +17,7 @@
  */
 
 #include "SolidMechanicsLagrangianFEM.hpp"
-
+#include "../PhysicsLoopInterface.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
@@ -446,7 +446,7 @@ real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const & time_n,
       dtReturn = NonlinearImplicitStep( time_n, dt, cycleNumber, domain->group_cast< DomainPartition * >(), m_dofManager,
                                         m_matrix, m_rhs, m_solution );
 
-      updateStress( domain );
+//      updateStress( domain );
       if( surfaceGenerator!=nullptr )
       {
         if( surfaceGenerator->SolverStep( time_n, dt, cycleNumber, domain ) > 0 )
@@ -528,8 +528,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
       {
         localIndex const a = targetSet[ i ];
         vel( a, component ) = u( a, component );
-      }
-                                            );
+      } );
   },
                              [&]( FieldSpecificationBase const * const bc,
                                   SortedArrayView< localIndex const > const & targetSet )
@@ -541,10 +540,8 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
         localIndex const a = targetSet[ i ];
         uhat( a, component ) = u( a, component ) - vel( a, component );
         vel( a, component )  = uhat( a, component ) / dt;
-      }
-                                            );
-  }
-                             );
+      } );
+  } );
 
   ElementRegionManager::ConstitutiveRelationAccessor< ConstitutiveBase >
   constitutiveRelations = elemManager->ConstructFullConstitutiveAccessor< ConstitutiveBase >( constitutiveManager );
@@ -972,6 +969,37 @@ void SolidMechanicsLagrangianFEM::SetupDofs( DomainPartition const * const GEOSX
                           DofManager::Connector::Elem );
 }
 
+void SolidMechanicsLagrangianFEM::SetupSystem( DomainPartition * const domain,
+                                               DofManager & dofManager,
+                                               ParallelMatrix & matrix,
+                                               ParallelVector & rhs,
+                                               ParallelVector & solution )
+{
+  GEOSX_MARK_FUNCTION;
+  SolverBase::SetupSystem( domain, dofManager, matrix, rhs, solution );
+
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
+  NodeManager const * const nodeManager = mesh->getNodeManager();
+  arrayView1d< globalIndex const > const &
+  dofNumber = nodeManager->getReference< globalIndex_array >( dofManager.getKey( keys::TotalDisplacement ) );
+
+  physicsLoopInterface
+    ::FiniteElementRegionLoopKernelBase
+    loopKernels( dofNumber,
+                 matrix,
+                 rhs );
+
+  matrix.open();
+  physicsLoopInterface
+    ::FiniteElementRegionLoop( *mesh,
+                               m_targetRegions,
+                               m_solidMaterialName,
+                               loopKernels );
+  matrix.close();
+
+
+}
+
 void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                                   real64 const dt,
                                                   DomainPartition * const domain,
@@ -982,98 +1010,25 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARA
   GEOSX_MARK_FUNCTION;
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
   NodeManager const * const nodeManager = mesh->getNodeManager();
-  ConstitutiveManager * const constitutiveManager = domain->GetGroup< ConstitutiveManager >( keys::ConstitutiveManager );
-  ElementRegionManager * const elemManager = mesh->getElemManager();
-  NumericalMethodsManager const * numericalMethodManager = domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
-  FiniteElementDiscretizationManager const * feDiscretizationManager = numericalMethodManager->GetGroup< FiniteElementDiscretizationManager >(
-    keys::finiteElementDiscretizations );
-
-  ElementRegionManager::MaterialViewAccessor< real64 > const biotCoefficient =
-    elemManager->ConstructFullMaterialViewAccessor< real64 >( "BiotCoefficient", constitutiveManager );
-
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const fluidPres =
-    elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( "pressure" );
-
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const dPres =
-    elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( "deltaPressure" );
 
   matrix.open();
   rhs.open();
 
-  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & disp = nodeManager->totalDisplacement();
-  arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const & uhat = nodeManager->incrementalDisplacement();
-
-  r1_array const uhattilde;
-  r1_array const vtilde;
-
   string const dofKey = dofManager.getKey( keys::TotalDisplacement );
-
   arrayView1d< globalIndex const > const & dofNumber = nodeManager->getReference< globalIndex_array >( dofKey );
 
+  ResetStressToBeginningOfStep( domain );
 
-  ElementRegionManager::ConstitutiveRelationAccessor< ConstitutiveBase >
-  constitutiveRelations = elemManager->ConstructFullConstitutiveAccessor< ConstitutiveBase >( constitutiveManager );
+  GEOSX_UNUSED_VAR( dt );
+//  GEOSX_UNUSED_VAR( numericalMethodManager )
+//  GEOSX_UNUSED_VAR( feDiscretizationManager )
+  SolidMechanicsLagrangianFEMKernels::ImplicitKernel::FiniteElementRegionLoopKernel loopKernels( dofNumber, matrix, rhs );
 
-  ElementRegionManager::MaterialViewAccessor< arrayView2d< real64 const > > const
-  density = elemManager->ConstructFullMaterialViewAccessor< array2d< real64 >,
-                                                            arrayView2d< real64 const > >( SolidBase::viewKeyStruct::densityString,
-                                                                                           constitutiveManager );
-
-  // begin region loop
-  for( localIndex er=0; er<elemManager->numRegions(); ++er )
-  {
-    ElementRegionBase * const elementRegion = elemManager->GetRegion( er );
-
-    FiniteElementDiscretization const *
-      feDiscretization = feDiscretizationManager->GetGroup< FiniteElementDiscretization >( m_discretizationName );
-
-    elementRegion->forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const esr,
-                                                                           CellElementSubRegion const & elementSubRegion )
-    {
-      arrayView3d< R1Tensor const > const &
-      dNdX = elementSubRegion.getReference< array3d< R1Tensor > >( keys::dNdX );
-
-      arrayView2d< real64 const > const & detJ = elementSubRegion.getReference< array2d< real64 > >( keys::detJ );
-
-      arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
-      localIndex const numNodesPerElement = elemsToNodes.size( 1 );
-
-      std::unique_ptr< FiniteElementBase >
-      fe = feDiscretization->getFiniteElement( elementSubRegion.GetElementTypeString() );
-
-      // space for element matrix and rhs
-
-      m_maxForce = ImplicitElementKernelLaunch( numNodesPerElement,
-                                                fe->n_quadrature_points(),
-                                                constitutiveRelations[er][esr][m_solidMaterialFullIndex],
-                                                elementSubRegion.size(),
-                                                dt,
-                                                dNdX,
-                                                detJ,
-                                                fe.get(),
-                                                elementSubRegion.ghostRank(),
-                                                elemsToNodes,
-                                                dofNumber,
-                                                disp,
-                                                uhat,
-                                                vtilde,
-                                                uhattilde,
-                                                density[er][esr][m_solidMaterialFullIndex],
-                                                fluidPres[er][esr],
-                                                dPres[er][esr],
-                                                biotCoefficient[er][esr][m_solidMaterialFullIndex],
-                                                m_timeIntegrationOption,
-                                                this->m_stiffnessDamping,
-                                                this->m_massDamping,
-                                                this->m_newmarkBeta,
-                                                this->m_newmarkGamma,
-                                                gravityVector(),
-                                                &dofManager,
-                                                &matrix,
-                                                &rhs );
-
-    } );
-  }
+  m_maxForce = physicsLoopInterface
+                 ::FiniteElementRegionLoop( *mesh,
+                                            m_targetRegions,
+                                            m_solidMaterialName,
+                                            loopKernels );
 
 
   ApplyContactConstraint( dofManager,
@@ -1087,8 +1042,8 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARA
   if( getLogLevel() >= 2 )
   {
     GEOSX_LOG_RANK_0( "After SolidMechanicsLagrangianFEM::AssembleSystem" );
-    GEOSX_LOG_RANK_0( "\nJacobian:\n" );
-    std::cout<< matrix;
+//    GEOSX_LOG_RANK_0( "\nJacobian:\n" );
+//    std::cout<< matrix;
     GEOSX_LOG_RANK_0( "\nResidual:\n" );
     std::cout<< rhs;
   }
@@ -1154,8 +1109,8 @@ SolidMechanicsLagrangianFEM::
   if( getLogLevel() >= 2 )
   {
     GEOSX_LOG_RANK_0( "After SolidMechanicsLagrangianFEM::ApplyBoundaryConditions" );
-    GEOSX_LOG_RANK_0( "\nJacobian:\n" );
-    std::cout << matrix;
+//    GEOSX_LOG_RANK_0( "\nJacobian:\n" );
+//    std::cout << matrix;
     GEOSX_LOG_RANK_0( "\nResidual:\n" );
     std::cout << rhs;
   }
