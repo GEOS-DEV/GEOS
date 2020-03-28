@@ -31,7 +31,7 @@ class SolidMechanicsLagrangianFEM;
 class SolidMechanicsEmbeddedFractures : public SolverBase
 {
 public:
-  SolidMechanicsEmbeddedFractures( const std::string& name,
+  SolidMechanicsEmbeddedFractures( const std::string & name,
                                    Group * const parent );
 
   ~SolidMechanicsEmbeddedFractures() override;
@@ -65,8 +65,8 @@ public:
                      ParallelVector & rhs,
                      ParallelVector & solution ) override final;
 
-  virtual void ImplicitStepComplete( real64 const& time_n,
-                                     real64 const& dt,
+  virtual void ImplicitStepComplete( real64 const & time_n,
+                                     real64 const & dt,
                                      DomainPartition * const domain ) override final;
 
   virtual void AssembleSystem( real64 const time,
@@ -124,31 +124,31 @@ public:
 
 protected:
 
-  void AssembleEquilibriumOperator(array2d<real64> & eqMatrix,
-                                   EmbeddedSurfaceSubRegion & embeddedSurfaceSubRegion,
-                                   const localIndex k,
-                                   const real64 hInv);
+  void AssembleEquilibriumOperator( array2d< real64 > & eqMatrix,
+                                    EmbeddedSurfaceSubRegion & embeddedSurfaceSubRegion,
+                                    const localIndex k,
+                                    const real64 hInv );
 
-  void AssembleCompatibilityOperator(array2d<real64> & compMatrix,
-                                     EmbeddedSurfaceSubRegion & embeddedSurfaceSubRegion,
-                                     localIndex const k,
-                                     localIndex const q,
-                                     CellBlock::NodeMapType const & elemsToNodes,
-                                     arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodesCoord,
-                                     arrayView1d< localIndex const> const & embeddedSurfaceToCell,
-                                     localIndex const numNodesPerElement,
-                                     arrayView3d<R1Tensor const> const & dNdX);
+  void AssembleCompatibilityOperator( array2d< real64 > & compMatrix,
+                                      EmbeddedSurfaceSubRegion & embeddedSurfaceSubRegion,
+                                      localIndex const k,
+                                      localIndex const q,
+                                      CellBlock::NodeMapType const & elemsToNodes,
+                                      arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoord,
+                                      arrayView1d< localIndex const > const & embeddedSurfaceToCell,
+                                      localIndex const numNodesPerElement,
+                                      arrayView3d< R1Tensor const > const & dNdX );
 
-  void AssembleStrainOperator(array2d<real64> & strainMatrix,
-                              localIndex const elIndex,
-                              localIndex const q,
-                              localIndex const numNodesPerElement,
-                              arrayView3d<R1Tensor const> const & dNdX);
+  void AssembleStrainOperator( array2d< real64 > & strainMatrix,
+                               localIndex const elIndex,
+                               localIndex const q,
+                               localIndex const numNodesPerElement,
+                               arrayView3d< R1Tensor const > const & dNdX );
 
   void ComputeTraction( ConstitutiveManager const * const constitutiveManager,
-                        array1d<real64>  const & dispJump,
-                        array1d<real64>  & tractionVector,
-                        array2d<real64> & dTdw );
+                        array1d< real64 >  const & dispJump,
+                        array1d< real64 > & tractionVector,
+                        array2d< real64 > & dTdw );
 
 
 private:

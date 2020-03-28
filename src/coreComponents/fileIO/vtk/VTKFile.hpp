@@ -79,16 +79,16 @@ public:
   void WriteFractures( double const timeStep,
                        DomainPartition const & domain );
 
-  private:
-    /*!
-     * @brief Create a XML Node for DataArray
-     * @param[in,out] parent the parent XML node
-     * @param[in] type a string containing the type of the field
-     * @param[in] name the name of the field
-     * @param[in] nbComponents dimension of the field
-     * @param[in] p is a parallel data array
-     * @return the corresponding xml node
-     */
+private:
+  /*!
+   * @brief Create a XML Node for DataArray
+   * @param[in,out] parent the parent XML node
+   * @param[in] type a string containing the type of the field
+   * @param[in] name the name of the field
+   * @param[in] nbComponents dimension of the field
+   * @param[in] p is a parallel data array
+   * @return the corresponding xml node
+   */
   xmlWrapper::xmlNode CreateDataArray( pugi::xml_node & parent,
                                        string const & type,
                                        string const & name,
@@ -129,8 +129,8 @@ public:
     return CreateDataArray( parent, type, name, nbComponents, format, true );
   }
 
-  private:
-    /// Root file ( .pvd )
+private:
+  /// Root file ( .pvd )
   xmlWrapper::xmlDocument m_rootFile;
   xmlWrapper::xmlDocument m_rootFileFractures;
 

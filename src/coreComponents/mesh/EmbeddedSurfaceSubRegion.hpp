@@ -64,33 +64,33 @@ public:
   void AddNewEmbeddedSurface( localIndex const cellIndex,
                               R1Tensor normalVector );
 
-  bool AddNewEmbeddedSurface(localIndex const cellIndex,
-                             localIndex const regionIndex,
-                             localIndex const subRegionIndex,
-                             NodeManager const & nodeManager,
-                             EdgeManager const & edgeManager,
-                             FixedOneToManyRelation const & cellToEdges,
-                             BoundedPlane const * fracture);
+  bool AddNewEmbeddedSurface( localIndex const cellIndex,
+                              localIndex const regionIndex,
+                              localIndex const subRegionIndex,
+                              NodeManager const & nodeManager,
+                              EdgeManager const & edgeManager,
+                              FixedOneToManyRelation const & cellToEdges,
+                              BoundedPlane const * fracture );
 
-  void CalculateElementGeometricQuantities( array1d<R1Tensor> const  intersectionPoints,
+  void CalculateElementGeometricQuantities( array1d< R1Tensor > const intersectionPoints,
                                             localIndex const k );
 
-  real64 ComputeHeavisideFunction( ArraySlice<real64 const, 1, -1>  const nodeCoord,
-                                   localIndex const k         );
+  real64 ComputeHeavisideFunction( ArraySlice< real64 const, 1, -1 >  const nodeCoord,
+                                   localIndex const k );
 
   void getIntersectionPoints( NodeManager const & nodeManager,
                               EdgeManager const & edgeManager,
                               ElementRegionManager const & elemManager,
-                              array1d<R1Tensor> & intersectionPoints,
-                              array1d<localIndex> & connectivityList,
-                              array1d<int> & offSet) const;
+                              array1d< R1Tensor > & intersectionPoints,
+                              array1d< localIndex > & connectivityList,
+                              array1d< int > & offSet ) const;
 
   void ComputeIntersectionPoints( NodeManager const & nodeManager,
                                   EdgeManager const & edgeManager,
                                   ElementRegionManager const & elemManager,
-                                  array1d<R1Tensor> & intersectionPoints,
-                                  array1d<localIndex> & connectivityList,
-                                  array1d<int> & offSet,
+                                  array1d< R1Tensor > & intersectionPoints,
+                                  array1d< localIndex > & connectivityList,
+                                  array1d< int > & offSet,
                                   localIndex const k ) const;
 
   /**
@@ -136,10 +136,10 @@ public:
    */
   //virtual localIndex numNodesPerElement( localIndex const k ) const override { return m_toNodesRelation[k].size(); }
 
-  localIndex       & numOfJumpEnrichments()       {return m_numOfJumpEnrichments;}
+  localIndex & numOfJumpEnrichments()       {return m_numOfJumpEnrichments;}
   localIndex const & numOfJumpEnrichments() const {return m_numOfJumpEnrichments;}
 
-  arrayView1d< real64 > const &       getElementAperture()       { return m_elementAperture; }
+  arrayView1d< real64 > const & getElementAperture()       { return m_elementAperture; }
   arrayView1d< real64 const > const & getElementAperture() const { return m_elementAperture; }
 
   arrayView1d< real64 > const & getElementArea()       { return m_elementArea; }
@@ -173,33 +173,33 @@ public:
   R1Tensor const & getTangentVector2( localIndex k ) const { return m_tangentVector2[k];}
 
 private:
-    /// normal vector to the embedded surface element
-    array1d < R1Tensor > m_normalVector;
-    // tangential direction 1
-    array1d < R1Tensor > m_tangentVector1;
-    // tangential direction 2
-    array1d < R1Tensor > m_tangentVector2;
+  /// normal vector to the embedded surface element
+  array1d< R1Tensor > m_normalVector;
+  // tangential direction 1
+  array1d< R1Tensor > m_tangentVector1;
+  // tangential direction 2
+  array1d< R1Tensor > m_tangentVector2;
 
-    /// list of regions
-    array1d< localIndex > m_embeddedSurfaceToRegion;
-    /// list of subregions
-    array1d< localIndex > m_embeddedSurfaceToSubRegion;
-    /// list of elements cut by the embedded surface elem
-    array1d< localIndex > m_embeddedSurfaceToCell;
+  /// list of regions
+  array1d< localIndex > m_embeddedSurfaceToRegion;
+  /// list of subregions
+  array1d< localIndex > m_embeddedSurfaceToSubRegion;
+  /// list of elements cut by the embedded surface elem
+  array1d< localIndex > m_embeddedSurfaceToCell;
 
-    /// list of nodes
-    NodeMapType  m_toNodesRelation; // Not used for now. Will need for Flow?
+  /// list of nodes
+  NodeMapType m_toNodesRelation;    // Not used for now. Will need for Flow?
 
-    /// list of edges (if necessary)
-    EdgeMapType  m_toEdgesRelation; // Not used for now. Will need for Flow?
+  /// list of edges (if necessary)
+  EdgeMapType m_toEdgesRelation;    // Not used for now. Will need for Flow?
 
-    /// The member level field for the element center
-    array1d< real64 > m_elementAperture;
+  /// The member level field for the element center
+  array1d< real64 > m_elementAperture;
 
-    /// The member level field for the element center
-    array1d< real64 > m_elementArea;
+  /// The member level field for the element center
+  array1d< real64 > m_elementArea;
 
-    localIndex m_numOfJumpEnrichments;
+  localIndex m_numOfJumpEnrichments;
 };
 
 } /* namespace geosx */
