@@ -275,10 +275,9 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
 {
   GEOSX_MARK_FUNCTION;
 
-  matrix.open();
-  rhs.open();
   matrix.zero();
   rhs.zero();
+
 
   m_solidSolver->AssembleSystem( time,
                                  dt,
@@ -286,6 +285,9 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
                                  dofManager,
                                  matrix,
                                  rhs );
+
+  matrix.open();
+  rhs.open();
 
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   NodeManager * const nodeManager = mesh->getNodeManager();
