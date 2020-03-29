@@ -198,6 +198,7 @@ void ObjectManagerBase::ConstructGlobalToLocalMap()
 
   m_globalToLocalMap.clear();
   localIndex const N = size();
+  m_globalToLocalMap.reserve( N );
   for( localIndex k = 0; k < N; ++k )
   {
     updateGlobalToLocalMap( k );

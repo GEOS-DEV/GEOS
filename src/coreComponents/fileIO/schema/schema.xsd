@@ -193,6 +193,7 @@
 			<xsd:element name="ElementRegions" type="ElementRegionsType" maxOccurs="1" />
 			<xsd:element name="Included" type="IncludedType" maxOccurs="1" />
 			<xsd:element name="Parameters" type="ParametersType" maxOccurs="1" />
+			<xsd:element name="Benchmarks" type="BenchmarksType" maxOccurs="1" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="EventsType">
@@ -1685,5 +1686,39 @@
 		<xsd:attribute name="value" type="string" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="BenchmarksType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="lassen" type="lassenType" maxOccurs="1" />
+			<xsd:element name="quartz" type="quartzType" maxOccurs="1" />
+		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="lassenType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="Run" type="RunType" maxOccurs="1" />
+		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="RunType">
+		<!--args => Any extra command line arguments to pass to GEOSX.-->
+		<xsd:attribute name="args" type="string" default="" />
+		<!--autoPartition => May be 'Off' or 'On', if 'On' partitioning arguments are created automatically. Default is Off.-->
+		<xsd:attribute name="autoPartition" type="string" default="" />
+		<!--name => The name of this benchmark.-->
+		<xsd:attribute name="name" type="string" use="required" />
+		<!--nodes => The number of nodes needed to run the benchmark.-->
+		<xsd:attribute name="nodes" type="integer" use="required" />
+		<!--strongScaling => Repeat the benchmark N times, scaling the number of nodes in the benchmark by these values.-->
+		<xsd:attribute name="strongScaling" type="integer_array" default="{0}" />
+		<!--tasksPerNode => The number of tasks per node to run the benchmark with.-->
+		<xsd:attribute name="tasksPerNode" type="integer" use="required" />
+		<!--threadsPerTask => The number of threads per task to run the benchmark with.-->
+		<xsd:attribute name="threadsPerTask" type="integer" default="0" />
+		<!--timeLimit => The time limit of the benchmark.-->
+		<xsd:attribute name="timeLimit" type="integer" default="0" />
+	</xsd:complexType>
+	<xsd:complexType name="quartzType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="Run" type="RunType" maxOccurs="1" />
+		</xsd:choice>
 	</xsd:complexType>
 </xsd:schema>
