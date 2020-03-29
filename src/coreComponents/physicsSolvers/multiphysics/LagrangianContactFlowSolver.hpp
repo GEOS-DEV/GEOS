@@ -155,8 +155,7 @@ public:
                                                            ParallelMatrix * const matrix,
                                                            ParallelVector * const rhs );
 
-  void AssembleStabiliziation( real64 const dt,
-                               DomainPartition const * const domain,
+  void AssembleStabiliziation( DomainPartition const * const domain,
                                DofManager const & dofManager,
                                ParallelMatrix * const matrix,
                                ParallelVector * const rhs );

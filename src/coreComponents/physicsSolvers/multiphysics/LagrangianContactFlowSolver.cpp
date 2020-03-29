@@ -683,7 +683,7 @@ void LagrangianContactFlowSolver::AssembleSystem( real64 const time,
 
   AssembleForceResidualDerivativeWrtPressure( domain, dofManager, &matrix, &rhs );
   AssembleFluidMassResidualDerivativeWrtDisplacement( domain, dofManager, &matrix, &rhs );
-  AssembleStabiliziation( dt, domain, dofManager, &matrix, &rhs );
+  AssembleStabiliziation( domain, dofManager, &matrix, &rhs );
 }
 
 void LagrangianContactFlowSolver::ApplyBoundaryConditions( real64 const time,
@@ -1000,6 +1000,7 @@ void LagrangianContactFlowSolver::AssembleFluidMassResidualDerivativeWrtDisplace
   FaceManager const * const faceManager = mesh->getFaceManager();
   NodeManager const * const nodeManager = mesh->getNodeManager();
   ElementRegionManager const * const elemManager = mesh->getElemManager();
+  ConstitutiveManager const * const constitutiveManager = domain->getConstitutiveManager();
 
   arrayView1d< R1Tensor const > const & faceNormal = faceManager->faceNormal();
   ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
@@ -1009,6 +1010,7 @@ void LagrangianContactFlowSolver::AssembleFluidMassResidualDerivativeWrtDisplace
 
   string const dispDofKey = dofManager.getKey( keys::TotalDisplacement );
   string const presDofKey = dofManager.getKey( m_pressureKey );
+  string const constitutiveName = constitutiveManager->GetGroup( m_flowSolver->fluidIndex())->getName();
 
   arrayView1d< globalIndex const > const &
   dispDofNumber = nodeManager->getReference< globalIndex_array >( dispDofKey );
@@ -1025,6 +1027,11 @@ void LagrangianContactFlowSolver::AssembleFluidMassResidualDerivativeWrtDisplace
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
       arrayView1d< real64 const > const & area = subRegion.getElementArea();
       arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
+
+      dataRepository::Group const * const constitutiveGroup = subRegion.GetConstitutiveModels();
+      dataRepository::Group const * const constitutiveRelation = constitutiveGroup->GetGroup( constitutiveName );
+      arrayView2d< real64 const > const &
+      density = constitutiveRelation->getReference< array2d< real64 > >( SingleFluidBase::viewKeyStruct::densityString );
 
       forAll< serialPolicy >( subRegion.size(), [&]( localIndex const kfe )
       {
@@ -1043,7 +1050,7 @@ void LagrangianContactFlowSolver::AssembleFluidMassResidualDerivativeWrtDisplace
           Nbar -= faceNormal[elemsToFaces[kfe][1]];
           Nbar.Normalize();
 
-          real64 const dAccumulationResidualdAperture = Ja;
+          real64 const dAccumulationResidualdAperture = density[kfe][0] * Ja;
 
           stackArray1d< real64, 2*3*4 > dRdU( 2*3*numNodesPerFace );
           dRdU = 0.0;
@@ -1126,8 +1133,7 @@ void LagrangianContactFlowSolver::AssembleFluidMassResidualDerivativeWrtDisplace
   rhs->close();
 }
 
-void LagrangianContactFlowSolver::AssembleStabiliziation( real64 const dt,
-                                                          DomainPartition const * const domain,
+void LagrangianContactFlowSolver::AssembleStabiliziation( DomainPartition const * const domain,
                                                           DofManager const & dofManager,
                                                           ParallelMatrix * const matrix,
                                                           ParallelVector * const rhs )
@@ -1139,8 +1145,10 @@ void LagrangianContactFlowSolver::AssembleStabiliziation( real64 const dt,
   FaceManager const * const faceManager = mesh->getFaceManager();
   NodeManager const * const nodeManager = mesh->getNodeManager();
   ElementRegionManager const * const elemManager = mesh->getElemManager();
+  ConstitutiveManager const * const constitutiveManager = domain->getConstitutiveManager();
 
   string const presDofKey = dofManager.getKey( m_pressureKey );
+  string const constitutiveName = constitutiveManager->GetGroup( m_flowSolver->fluidIndex())->getName();
 
   // Get the finite volume method used to compute the stabilization
   NumericalMethodsManager const * const numericalMethodManager = domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
@@ -1162,6 +1170,14 @@ void LagrangianContactFlowSolver::AssembleStabiliziation( real64 const dt,
   // Get the pressures
   arrayView1d< real64 const > const &
   pressure = fractureSubRegion->getReference< array1d< real64 > >( m_pressureKey );
+  arrayView1d< real64 const > const &
+  deltaPressure = fractureSubRegion->getReference< array1d< real64 > >( m_deltaPressureKey );
+
+  // Get the density
+  dataRepository::Group const * const constitutiveGroup = fractureSubRegion->GetConstitutiveModels();
+  dataRepository::Group const * const constitutiveRelation = constitutiveGroup->GetGroup( constitutiveName );
+  arrayView2d< real64 const > const &
+  density = constitutiveRelation->getReference< array2d< real64 > >( SingleFluidBase::viewKeyStruct::densityString );
 
   // Get the volume for all elements
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const elemVolume =
@@ -1174,7 +1190,6 @@ void LagrangianContactFlowSolver::AssembleStabiliziation( real64 const dt,
   arrayView1d< real64 const > const & faceArea = faceManager->faceArea();
   arrayView1d< R2Tensor const > const & faceRotationMatrix = faceManager->faceRotationMatrix();
 
-  ConstitutiveManager const * const constitutiveManager = domain->GetGroup< ConstitutiveManager >( keys::ConstitutiveManager );
   ElementRegionManager::ConstitutiveRelationAccessor< ConstitutiveBase const > const
   constitutiveRelations = elemManager->ConstructFullConstitutiveAccessor< ConstitutiveBase const >( constitutiveManager );
 
@@ -1324,15 +1339,15 @@ void LagrangianContactFlowSolver::AssembleStabiliziation( real64 const dt,
 
         if( nDofStencil > 0 )
         {
-          totalInvStiffApprox( 0, 0 ) *= dt;
+          totalInvStiffApprox( 0, 0 ) *= 0.5 * ( density[fractureIndex[0]][0] + density[fractureIndex[1]][0] );
         }
 
         // Compute rhs
         real64 rhs0 = 0.0;
         if( nDofStencil > 0 )
         {
-          rhs0 += totalInvStiffApprox( 0, 0 ) * ( pressure[fractureIndex[0]] );
-          rhs0 -= totalInvStiffApprox( 0, 0 ) * ( pressure[fractureIndex[1]] );
+          rhs0 += totalInvStiffApprox( 0, 0 ) * ( pressure[fractureIndex[0]] + deltaPressure[fractureIndex[0]] );
+          rhs0 -= totalInvStiffApprox( 0, 0 ) * ( pressure[fractureIndex[1]] + deltaPressure[fractureIndex[1]] );
         }
         real64 rhs1 = -rhs0;
 

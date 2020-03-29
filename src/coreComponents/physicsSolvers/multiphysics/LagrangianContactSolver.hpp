@@ -230,7 +230,7 @@ private:
     OPEN,     ///< element is open: no constraints are imposed
   };
 
-  string FractureStateToString( FractureState const state ) const
+  string FractureStateToString( FractureState const & state ) const
   {
     string stringState;
     switch( state )
@@ -259,7 +259,7 @@ private:
     return stringState;
   }
 
-  integer FractureStateToInteger( FractureState const state ) const
+  integer FractureStateToInteger( FractureState const & state ) const
   {
     integer integerState;
     switch( state )
