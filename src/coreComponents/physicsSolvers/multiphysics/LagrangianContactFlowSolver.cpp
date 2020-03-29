@@ -1004,8 +1004,8 @@ void LagrangianContactFlowSolver::AssembleFluidMassResidualDerivativeWrtDisplace
   arrayView1d< R1Tensor const > const & faceNormal = faceManager->faceNormal();
   ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
 
-  //CRSMatrixView< real64 const, localIndex const > const &
-  //dFluxResidual_dAperture = m_flowSolver->getDerivativeFluxResidual_dAperture();
+  CRSMatrixView< real64 const, localIndex const > const &
+  dFluxResidual_dAperture = m_flowSolver->getDerivativeFluxResidual_dAperture();
 
   string const dispDofKey = dofManager.getKey( keys::TotalDisplacement );
   string const presDofKey = dofManager.getKey( m_pressureKey );
