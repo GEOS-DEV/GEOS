@@ -609,7 +609,8 @@ struct FluxKernel
       {
         // 12 should be at denominator, but it's included in "finiteVolume/TwoPointFluxApproximation.cpp" line 270:
         // --> stencilWeights[kfe] =  1.0 / 12.0 * edgeLength / cellCenterToEdgeCenter.L2_Norm(); <--
-        aperTerm[k] = (aperture[stencilElementIndices[k]]*aperture[stencilElementIndices[k]]*aperture[stencilElementIndices[k]]) + 12.0*conductivity0[stencilElementIndices[k]];
+        aperTerm[k] = (aperture[stencilElementIndices[k]]*aperture[stencilElementIndices[k]]*aperture[stencilElementIndices[k]])
+                      + 12.0*conductivity0[stencilElementIndices[k]];
         dAperTerm_dAper[k] = 3.0*(aperture[stencilElementIndices[k]]*aperture[stencilElementIndices[k]]);
       }
 #elif PERM_CALC==2
@@ -659,10 +660,16 @@ struct FluxKernel
         real64 const weight = c * harmonicWeight
                               + (1.0 - c) * 0.25 * ( stencilWeights[k[0]]*aperTerm[k[0]] + stencilWeights[k[1]]*aperTerm[k[1]] );
 
+        //real64 const
+        //dHarmonicWeight_dAper[2] =
+        //{ ( 1 / aperTerm[k[0]]  - stencilWeights[k[0]] / sumOfWeights ) * harmonicWeight * dAperTerm_dAper[k[0]],
+        //  ( 1 / aperTerm[k[1]]  - stencilWeights[k[1]] / sumOfWeights ) * harmonicWeight * dAperTerm_dAper[k[1]]};
         real64 const
         dHarmonicWeight_dAper[2] =
-        { ( 1 / aperTerm[k[0]]  - stencilWeights[k[0]] / sumOfWeights ) * harmonicWeight * dAperTerm_dAper[k[0]],
-          ( 1 / aperTerm[k[1]]  - stencilWeights[k[1]] / sumOfWeights ) * harmonicWeight * dAperTerm_dAper[k[1]]};
+        { ( stencilWeights[k[1]]*aperTerm[k[1]] / sumOfWeights )*( stencilWeights[k[1]]*aperTerm[k[1]] / sumOfWeights )
+          * stencilWeights[k[0]]*dAperTerm_dAper[k[0]],
+          ( stencilWeights[k[0]]*aperTerm[k[0]] / sumOfWeights )*( stencilWeights[k[0]]*aperTerm[k[0]] / sumOfWeights )
+          * stencilWeights[k[1]]*dAperTerm_dAper[k[1]] };
 
         real64 const
         dWeight_dAper[2] =

@@ -150,8 +150,7 @@ public:
                                                    ParallelMatrix * const matrix,
                                                    ParallelVector * const rhs );
 
-  void AssembleFluidMassResidualDerivativeWrtDisplacement( real64 const dt,
-                                                           DomainPartition const * const domain,
+  void AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const * const domain,
                                                            DofManager const & dofManager,
                                                            ParallelMatrix * const matrix,
                                                            ParallelVector * const rhs );

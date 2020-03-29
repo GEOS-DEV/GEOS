@@ -627,12 +627,12 @@ void SolverBase::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( dofManager 
   solver.solve( matrix, solution, rhs );
 
   // Debug for logLevel >= 2
-  if( getLogLevel() >= 2 )
-  {
-    GEOSX_LOG_RANK_0( "After SolveSystem" );
-    GEOSX_LOG_RANK_0( "\nSolution\n" );
-    std::cout << solution;
-  }
+//  if( getLogLevel() >= 2 )
+//  {
+//    GEOSX_LOG_RANK_0( "After SolveSystem" );
+//    GEOSX_LOG_RANK_0( "\nSolution\n" );
+//    std::cout << solution;
+//  }
 }
 
 bool SolverBase::CheckSystemSolution( DomainPartition const * const GEOSX_UNUSED_PARAM( domain ),
