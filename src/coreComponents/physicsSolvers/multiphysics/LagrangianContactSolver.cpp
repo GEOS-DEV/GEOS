@@ -1613,7 +1613,7 @@ void LagrangianContactSolver::AssembleStabiliziation( DomainPartition const * co
         real64_array rhs1( rhs0 );
         for( localIndex i = 0; i < nDofStencil; ++i )
         {
-          rhs1( i )*=-1;
+          rhs1( i ) *= -1.0;
         }
 
         // Global matrix and rhs assembly
