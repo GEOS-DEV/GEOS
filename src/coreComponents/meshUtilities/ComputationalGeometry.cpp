@@ -20,6 +20,8 @@
 
 namespace geosx
 {
+
+
 namespace computationalGeometry
 {
 
@@ -748,5 +750,58 @@ real64 PyramidVolume( R1Tensor const * const X )
   return TetVolume( tet1 ) + TetVolume( tet2 );
 }
 
+
+
+template< typename NODEMAP >
+R1Tensor GetBoundingBox( localIndex elemIndex,
+                         NODEMAP const & pointIndices,
+                         arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & pointCoordinates )
+{
+  localIndex constexpr dim = 3;
+
+  // these arrays will store the min and max coordinates of the elem in each direction
+  R1Tensor minCoords( 1e99 );
+  R1Tensor maxCoords( -1e99 );
+
+  // loop over all the vertices of the element to get the min and max coords
+  for( localIndex a = 0; a < pointIndices.size( 1 ); ++a )
+  {
+    localIndex const id = pointIndices( elemIndex, a );
+    R1Tensor const coords = pointCoordinates[id];
+
+    for( localIndex d = 0; d < dim; ++d )
+    {
+      if( coords[d] < minCoords[d] )
+      {
+        minCoords[d] = coords[d];
+      }
+      if( coords[d] > maxCoords[d] )
+      {
+        maxCoords[d] = coords[d];
+      }
+    }
+  }
+
+  // compute the dimensions of the bounding box
+  R1Tensor box( 0 );
+  for( localIndex d = 0; d < dim; ++d )
+  {
+    box[d] = maxCoords[d] - minCoords[d];
+  }
+
+  return box;
 }
+
+template R1Tensor GetBoundingBox( localIndex elemIndex,
+                                  InterObjectRelation< array2d< localIndex, RAJA::PERM_IJ > > const & pointIndices,
+                                  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & pointCoordinates );
+template R1Tensor GetBoundingBox( localIndex elemIndex,
+                                  InterObjectRelation< array2d< localIndex, RAJA::PERM_JI > > const & pointIndices,
+                                  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & pointCoordinates );
+
+
+}
+
+
+
 } /* namespace geosx */
