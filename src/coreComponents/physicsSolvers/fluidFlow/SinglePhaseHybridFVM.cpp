@@ -307,9 +307,10 @@ void SinglePhaseHybridFVM::FluxLaunch( localIndex er,
 
   // get the cell-centered DOF numbers and ghost rank for the assembly
   string const elemDofKey = dofManager->getKey( viewKeyStruct::pressureString );
-  arrayView1d< globalIndex const > const & elemDofNumber =
-    subRegion->template getReference< array1d< globalIndex > >( elemDofKey );
-  arrayView1d< integer const >     const & elemGhostRank = m_elemGhostRank[er][esr];
+  ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
+  elemDofNumber = mesh->getElemManager()->ConstructViewAccessor< array1d< globalIndex >,
+                                                                 arrayView1d< globalIndex const > >( elemDofKey );
+  arrayView1d< integer const > const & elemGhostRank = m_elemGhostRank[er][esr];
 
   // get the map from elem to faces
   arrayView2d< localIndex const > const & elemToFaces = subRegion->faceList();
@@ -363,7 +364,6 @@ void SinglePhaseHybridFVM::FluxLaunch( localIndex er,
       // perform flux assembly in this element
       SinglePhaseHybridFVMKernels::FluxKernel< CellElementSubRegion >::Compute( er, esr, ei,
                                                                                 regionFilter,
-                                                                                mesh,
                                                                                 elemRegionList,
                                                                                 elemSubRegionList,
                                                                                 elemList,
@@ -372,15 +372,14 @@ void SinglePhaseHybridFVM::FluxLaunch( localIndex er,
                                                                                 dFacePres,
                                                                                 faceGravCoef,
                                                                                 elemToFaces[ei],
-                                                                                elemDofNumber[ei],
-                                                                                elemDofKey,
                                                                                 elemPres[ei],
                                                                                 dElemPres[ei],
                                                                                 elemGravCoef[ei],
                                                                                 elemDens[ei][0],
                                                                                 dElemDens_dp[ei][0],
-                                                                                m_mobility,
-                                                                                m_dMobility_dPres,
+                                                                                m_mobility.toViewConst(),
+                                                                                m_dMobility_dPres.toViewConst(),
+                                                                                elemDofNumber.toViewConst(),
                                                                                 transMatrix,
                                                                                 dt,
                                                                                 matrix,
@@ -574,20 +573,10 @@ SinglePhaseHybridFVM::CheckSystemSolution( DomainPartition const * const domain,
 
     } );
   } );
-  int globalCheck;
 
-  MpiWrapper::allReduce( &localCheck,
-                         &globalCheck,
-                         1,
-                         MPI_MIN,
-                         MPI_COMM_GEOSX );
+  int const globalCheck = MpiWrapper::Min( localCheck );
 
-  bool result = true;
-  if( globalCheck == 0 )
-  {
-    result = false;
-  }
-  return result;
+  return globalCheck;
 }
 
 

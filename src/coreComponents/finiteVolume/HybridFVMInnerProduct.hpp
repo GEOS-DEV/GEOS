@@ -45,7 +45,7 @@ struct HybridFVMInnerProductHelper
   // for now, I just copy-pasted this function from TwoPointFluxApproximation
   static
   void makeFullTensor( R1Tensor const & values,
-                       R2SymTensor & result );
+                       stackArray2d< real64, 9 > & result );
 
 };
 
