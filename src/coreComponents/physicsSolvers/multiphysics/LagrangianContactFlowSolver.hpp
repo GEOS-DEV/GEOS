@@ -155,10 +155,10 @@ public:
                                                            ParallelMatrix * const matrix,
                                                            ParallelVector * const rhs );
 
-  void AssembleStabiliziation( DomainPartition const * const domain,
-                               DofManager const & dofManager,
-                               ParallelMatrix * const matrix,
-                               ParallelVector * const rhs );
+  void AssembleStabilization( DomainPartition const * const domain,
+                              DofManager const & dofManager,
+                              ParallelMatrix * const matrix,
+                              ParallelVector * const rhs );
 
   real64 SplitOperatorStep( real64 const & time_n,
                             real64 const & dt,
@@ -171,28 +171,9 @@ public:
     constexpr static auto flowSolverNameString = "flowSolverName";
     constexpr static auto stabilizationNameString = "stabilizationName";
 
-//    constexpr static auto stabilizationNameString = "stabilizationName";
-//    constexpr static auto contactRelationNameString = "contactRelationName";
-//    constexpr static auto activeSetMaxIterString = "activeSetMaxIter";
-
-//    constexpr static auto tractionString = "traction";
-//    constexpr static auto deltaTractionString = "deltaTraction";
-//    constexpr static auto fractureStateString = "fractureState";
-//    constexpr static auto integerFractureStateString = "integerFractureState";
-//    constexpr static auto previousFractureStateString = "previousFractureState";
-//    constexpr static auto localJumpString = "localJump";
-//    constexpr static auto previousLocalJumpString = "previousLocalJump";
-
     constexpr static auto defaultConductivityString = "defaultConductivity";
 
-//    constexpr static auto slidingCheckToleranceString = "slidingCheckTolerance";
-//    constexpr static auto normalDisplacementToleranceString = "normalDisplacementTolerance";
-//    constexpr static auto normalTractionToleranceString = "normalTractionTolerance";
-//    constexpr static auto slidingToleranceString = "slidingTolerance";
-
   } LagrangianContactFlowSolverViewKeys;
-
-  //string const & getContactRelationName() const { return m_contactRelationName; }
 
 protected:
   virtual void PostProcessInput() override final;

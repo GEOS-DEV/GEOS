@@ -688,7 +688,7 @@ void LagrangianContactFlowSolver::AssembleSystem( real64 const time,
 
   AssembleForceResidualDerivativeWrtPressure( domain, dofManager, &matrix, &rhs );
   AssembleFluidMassResidualDerivativeWrtDisplacement( domain, dofManager, &matrix, &rhs );
-  AssembleStabiliziation( domain, dofManager, &matrix, &rhs );
+  AssembleStabilization( domain, dofManager, &matrix, &rhs );
 }
 
 void LagrangianContactFlowSolver::ApplyBoundaryConditions( real64 const time,
@@ -1127,10 +1127,10 @@ void LagrangianContactFlowSolver::AssembleFluidMassResidualDerivativeWrtDisplace
   rhs->close();
 }
 
-void LagrangianContactFlowSolver::AssembleStabiliziation( DomainPartition const * const domain,
-                                                          DofManager const & dofManager,
-                                                          ParallelMatrix * const matrix,
-                                                          ParallelVector * const rhs )
+void LagrangianContactFlowSolver::AssembleStabilization( DomainPartition const * const domain,
+                                                         DofManager const & dofManager,
+                                                         ParallelMatrix * const matrix,
+                                                         ParallelVector * const rhs )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -1285,7 +1285,7 @@ void LagrangianContactFlowSolver::AssembleStabiliziation( DomainPartition const 
           // Compute n^T * (invK) * n
           R1Tensor tmpTensor;
           tmpTensor.AijBj( invStiffApproxTotal, Nbar );
-          rotatedInvStiffApprox[kf] = Dot( Nbar, tmpTensor);
+          rotatedInvStiffApprox[kf] = Dot( Nbar, tmpTensor );
         }
 
         // Compose local nodal-based local stiffness matrices
@@ -1318,11 +1318,11 @@ void LagrangianContactFlowSolver::AssembleStabiliziation( DomainPartition const 
 
         // Compute rhs
         real64 rhs0 = 0.0;
-        if( nDof[0] > 0)
+        if( nDof[0] > 0 )
         {
           rhs0 -= totalInvStiffApprox( 0 ) * ( pressure[fractureIndex[0]] + deltaPressure[fractureIndex[0]] );
         }
-        if( nDof[1] > 0)
+        if( nDof[1] > 0 )
         {
           rhs0 += totalInvStiffApprox( 0 ) * ( pressure[fractureIndex[1]] + deltaPressure[fractureIndex[1]] );
         }

@@ -925,7 +925,7 @@ void LagrangianContactSolver::AssembleSystem( real64 const time,
 
   AssembleForceResidualDerivativeWrtTraction( domain, dofManager, &matrix, &rhs );
   AssembleTractionResidualDerivativeWrtDisplacementAndTraction( domain, dofManager, &matrix, &rhs );
-  AssembleStabiliziation( domain, dofManager, &matrix, &rhs );
+  AssembleStabilization( domain, dofManager, &matrix, &rhs );
 }
 
 void LagrangianContactSolver::ApplyBoundaryConditions( real64 const time,
@@ -1372,10 +1372,10 @@ void LagrangianContactSolver::AssembleTractionResidualDerivativeWrtDisplacementA
   rhs->close();
 }
 
-void LagrangianContactSolver::AssembleStabiliziation( DomainPartition const * const domain,
-                                                      DofManager const & dofManager,
-                                                      ParallelMatrix * const matrix,
-                                                      ParallelVector * const rhs )
+void LagrangianContactSolver::AssembleStabilization( DomainPartition const * const domain,
+                                                     DofManager const & dofManager,
+                                                     ParallelMatrix * const matrix,
+                                                     ParallelVector * const rhs )
 {
   GEOSX_MARK_FUNCTION;
 

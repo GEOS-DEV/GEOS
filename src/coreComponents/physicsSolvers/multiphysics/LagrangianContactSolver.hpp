@@ -148,10 +148,10 @@ public:
                                                                      ParallelMatrix * const matrix,
                                                                      ParallelVector * const rhs );
 
-  void AssembleStabiliziation( DomainPartition const * const domain,
-                               DofManager const & dofManager,
-                               ParallelMatrix * const matrix,
-                               ParallelVector * const rhs );
+  void AssembleStabilization( DomainPartition const * const domain,
+                              DofManager const & dofManager,
+                              ParallelMatrix * const matrix,
+                              ParallelVector * const rhs );
 
   real64 SplitOperatorStep( real64 const & time_n,
                             real64 const & dt,
