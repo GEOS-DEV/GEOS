@@ -609,9 +609,13 @@ struct FluxKernel
       {
         // 12 should be at denominator, but it's included in "finiteVolume/TwoPointFluxApproximation.cpp" line 270:
         // --> stencilWeights[kfe] =  1.0 / 12.0 * edgeLength / cellCenterToEdgeCenter.L2_Norm(); <--
-        aperTerm[k] = (aperture[stencilElementIndices[k]]*aperture[stencilElementIndices[k]]*aperture[stencilElementIndices[k]])
-                      + 12.0*conductivity0[stencilElementIndices[k]];
-        dAperTerm_dAper[k] = 3.0*(aperture[stencilElementIndices[k]]*aperture[stencilElementIndices[k]]);
+        aperTerm[k] = 12.0*conductivity0[stencilElementIndices[k]];
+        dAperTerm_dAper[k] = 0.0;
+        if( aperture[stencilElementIndices[k]] > 0.0 )
+        {
+          aperTerm[k] += (aperture[stencilElementIndices[k]]*aperture[stencilElementIndices[k]]*aperture[stencilElementIndices[k]]);
+          dAperTerm_dAper[k] += 3.0*(aperture[stencilElementIndices[k]]*aperture[stencilElementIndices[k]]);
+        }
       }
 #elif PERM_CALC==2
 

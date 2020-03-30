@@ -1327,6 +1327,8 @@ void LagrangianContactSolver::AssembleTractionResidualDerivativeWrtDisplacementA
               }
             case FractureState::OPEN:
               {
+                GEOSX_LOG_LEVEL_BY_RANK( 3, "element: " << kfe << " opening: " << localJump[kfe][0] );
+
                 for( localIndex i=0; i<3; ++i )
                 {
                   elemRHS[i] = +Ja * traction[kfe][i];
@@ -1584,8 +1586,8 @@ void LagrangianContactSolver::AssembleStabiliziation( DomainPartition const * co
 
         // Define local "transmissibility" matrices
         stackArray2d< real64, 3*3 > totalInvStiffApprox00( nDof[0], nDof[0] );
-        stackArray2d< real64, 3*3 > totalInvStiffApprox01( nDof[1], nDof[0] );
-        stackArray2d< real64, 3*3 > totalInvStiffApprox10( nDof[0], nDof[1] );
+        stackArray2d< real64, 3*3 > totalInvStiffApprox01( nDof[0], nDof[1] );
+        stackArray2d< real64, 3*3 > totalInvStiffApprox10( nDof[1], nDof[0] );
         stackArray2d< real64, 3*3 > totalInvStiffApprox11( nDof[1], nDof[1] );
         for( localIndex i = 0; i < nDof[0]; ++i )
         {
@@ -1657,7 +1659,7 @@ void LagrangianContactSolver::AssembleStabiliziation( DomainPartition const * co
         }
 
         // Global matrix and rhs assembly
-        if( std::min( nDof[0], nDof[1] ) > 0 )
+        if( std::max( nDof[0], nDof[1] ) > 0 )
         {
           matrix->add( elemDOF[0],
                        elemDOF[0],
@@ -1758,6 +1760,7 @@ void LagrangianContactSolver::SetFractureStateForElasticStep( DomainPartition * 
     {
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
       arrayView1d< FractureState > const & fractureState = subRegion.getReference< array1d< FractureState > >( viewKeyStruct::fractureStateString );
+      arrayView1d< integer > const & integerFractureState = subRegion.getReference< array1d< integer > >( viewKeyStruct::integerFractureStateString );
       forAll< serialPolicy >( subRegion.size(), [&]( localIndex const kfe )
       {
         if( ghostRank[kfe] < 0 )
@@ -1766,6 +1769,7 @@ void LagrangianContactSolver::SetFractureStateForElasticStep( DomainPartition * 
           {
             fractureState[kfe] = FractureState::STICK;
           }
+          integerFractureState[kfe] = FractureStateToInteger( fractureState[kfe] );
         }
       } );
     }

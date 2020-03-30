@@ -641,6 +641,9 @@ void SinglePhaseBase::AccumulationLaunch( localIndex const er,
         localAccum += creationMass[ei] * 0.25;
       }
 #endif
+
+      //printf("-----------accumulation------------ %lli %25.15e %25.15e\n", elemDOF, localAccum, localAccumJacobian);
+
       // add contribution to global residual and jacobian
       matrix->add( elemDOF, elemDOF, localAccumJacobian );
       rhs->add( elemDOF, localAccum );

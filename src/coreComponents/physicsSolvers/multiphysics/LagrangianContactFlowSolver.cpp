@@ -136,6 +136,7 @@ void LagrangianContactFlowSolver::ResetStateToBeginningOfStep( DomainPartition *
 {
   m_contactSolver->ResetStateToBeginningOfStep( domain );
   m_flowSolver->ResetStateToBeginningOfStep( domain );
+  UpdateOpeningForFlow( domain );
 }
 
 real64 LagrangianContactFlowSolver::SolverStep( real64 const & time_n,
@@ -143,8 +144,6 @@ real64 LagrangianContactFlowSolver::SolverStep( real64 const & time_n,
                                                 int const cycleNumber,
                                                 DomainPartition * const domain )
 {
-  //TODO
-
   {
     // FIXME: to put somewhere else ...
     MeshLevel * const meshLevel = domain->getMeshBody( 0 )->getMeshLevel( 0 );
@@ -203,8 +202,12 @@ void LagrangianContactFlowSolver::UpdateOpeningForFlow( DomainPartition * const 
     {
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
       arrayView2d< real64 const > const & localJump = subRegion.getReference< array2d< real64 > >( m_localJumpKey );
+      arrayView1d< real64 const > const & area = subRegion.getElementArea();
+      arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
       arrayView1d< real64 > const &
       aperture = subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::effectiveApertureString );
+      arrayView1d< real64 > const &
+      deltaVolume = subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaVolumeString );
 
       forAll< serialPolicy >( subRegion.size(), [&]( localIndex const kfe )
       {
@@ -213,11 +216,12 @@ void LagrangianContactFlowSolver::UpdateOpeningForFlow( DomainPartition * const 
           if( m_contactSolver->IsElementInOpenState( subRegion, kfe ) )
           {
             aperture[kfe] = localJump[kfe][0];
-            //std::cout << aperture[kfe] << std::endl;
+            deltaVolume[kfe] = aperture[kfe] * area[kfe] - volume[kfe];
           }
           else
           {
             aperture[kfe] = 0.0;
+            deltaVolume[kfe] = 0.0;
           }
         }
       } );
@@ -444,6 +448,7 @@ real64 LagrangianContactFlowSolver::NonlinearImplicitStep( real64 const & time_n
         useElasticStep = false;
         ResetStateToBeginningOfStep( domain );
         m_contactSolver->SetFractureStateForElasticStep( domain );
+        UpdateOpeningForFlow( domain );
       }
       else
       {
@@ -1042,10 +1047,7 @@ void LagrangianContactFlowSolver::AssembleFluidMassResidualDerivativeWrtDisplace
           globalIndex elemDOF[1];
           elemDOF[0] = presDofNumber[kfe];
 
-          //real64 elemRHS[3];
           real64 const Ja = area[kfe];
-          //real64 const nodalArea = Ja / static_cast< real64 >( numNodesPerFace );
-
           R1Tensor Nbar = faceNormal[elemsToFaces[kfe][0]];
           Nbar -= faceNormal[elemsToFaces[kfe][1]];
           Nbar.Normalize();
@@ -1077,45 +1079,38 @@ void LagrangianContactFlowSolver::AssembleFluidMassResidualDerivativeWrtDisplace
                          2*3*numNodesPerFace );
           }
 
-#if 1
           dRdU = 0.0;
           // flux derivative
-          //if( m_contactSolver->IsElementInOpenState( subRegion, kfe ) )
+          bool skipAssembly = true;
+          localIndex const numColumns = dFluxResidual_dAperture.numNonZeros( kfe );
+          arraySlice1d< localIndex const > const & columns = dFluxResidual_dAperture.getColumns( kfe );
+          arraySlice1d< real64 const > const & values = dFluxResidual_dAperture.getEntries( kfe );
+
+          skipAssembly &= !( m_contactSolver->IsElementInOpenState( subRegion, kfe ) );
+
+          for( localIndex kfe1=0; kfe1<numColumns; ++kfe1 )
           {
-            localIndex const numColumns = dFluxResidual_dAperture.numNonZeros( kfe );
-            arraySlice1d< localIndex const > const & columns = dFluxResidual_dAperture.getColumns( kfe );
-            arraySlice1d< real64 const > const & values = dFluxResidual_dAperture.getEntries( kfe );
+            real64 const dR_dAper = values[kfe1];
+            localIndex const kfe2 = columns[kfe1];
 
-            //std::cout << dFluxResidual_dAperture.getEntries(kfe) << std::endl;
+            skipAssembly &= !( m_contactSolver->IsElementInOpenState( subRegion, kfe2 ) );
 
-            for( localIndex kfe1=0; kfe1<numColumns; ++kfe1 )
+            for( localIndex kf=0; kf<2; ++kf )
             {
-              real64 const dR_dAper = values[kfe1];
-              localIndex const kfe2 = columns[kfe1];
-
-              //std::cout << kfe << " " << kfe2 << " " << dR_dAper << std::endl;
-
-              for( localIndex kf=0; kf<2; ++kf )
+              for( localIndex a=0; a<numNodesPerFace; ++a )
               {
-                for( localIndex a=0; a<numNodesPerFace; ++a )
+                for( int i=0; i<3; ++i )
                 {
-                  for( int i=0; i<3; ++i )
-                  {
-                    nodeDOF[ kf*3*numNodesPerFace + 3*a+i ] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe2][kf], a )]
-                                                              + integer_conversion< globalIndex >( i );
-                    real64 const dAper_dU = -pow( -1, kf ) * Nbar[i] / numNodesPerFace;
-                    dRdU( kf*3*numNodesPerFace + 3*a+i ) = dR_dAper * dAper_dU;
-                  }
+                  nodeDOF[ kf*3*numNodesPerFace + 3*a+i ] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe2][kf], a )]
+                                                            + integer_conversion< globalIndex >( i );
+                  real64 const dAper_dU = -pow( -1, kf ) * Nbar[i] / numNodesPerFace;
+                  dRdU( kf*3*numNodesPerFace + 3*a+i ) = dR_dAper * dAper_dU;
                 }
               }
+            }
 
-              //std::cout << "ROW: " << elemDOF[0] <<  std::endl;
-              //std::cout << "COL: ";
-              //for (int kk=0;kk<2*3*4;++kk)
-              //        std::cout << nodeDOF[kk] << " ";
-              //std::cout << std::endl;
-              //std::cout << "VAL: " << dRdU << std::endl;
-
+            if( !skipAssembly )
+            {
               matrix->add( elemDOF,
                            nodeDOF,
                            dRdU.data(),
@@ -1123,7 +1118,6 @@ void LagrangianContactFlowSolver::AssembleFluidMassResidualDerivativeWrtDisplace
                            2*3*numNodesPerFace );
             }
           }
-#endif
         }
       } );
     }
@@ -1188,7 +1182,7 @@ void LagrangianContactFlowSolver::AssembleStabiliziation( DomainPartition const 
 
   // Get area and rotation matrix for all faces
   arrayView1d< real64 const > const & faceArea = faceManager->faceArea();
-  arrayView1d< R2Tensor const > const & faceRotationMatrix = faceManager->faceRotationMatrix();
+  arrayView1d< R1Tensor const > const & faceNormal = faceManager->faceNormal();
 
   ElementRegionManager::ConstitutiveRelationAccessor< ConstitutiveBase const > const
   constitutiveRelations = elemManager->ConstructFullConstitutiveAccessor< ConstitutiveBase const >( constitutiveManager );
@@ -1215,7 +1209,7 @@ void LagrangianContactFlowSolver::AssembleStabiliziation( DomainPartition const 
 
         // First index: face element. Second index: node
         real64_array2d nodalArea( 2, 2 );
-        array1d< R2Tensor > rotatedInvStiffApprox( 2 );
+        real64_array rotatedInvStiffApprox( 2 );
         for( localIndex kf = 0; kf < 2; ++kf )
         {
           // Get fracture, face and region/subregion/element indices (for elements on both sides)
@@ -1223,7 +1217,7 @@ void LagrangianContactFlowSolver::AssembleStabiliziation( DomainPartition const 
 
           localIndex faceIndexRef = faceMap[fractureIndex][0];
           real64 const area = faceArea[faceIndexRef];
-          R2Tensor const & rotationMatrix = faceRotationMatrix[faceIndexRef];
+          R1Tensor const & Nbar = faceNormal[faceIndexRef];
           // TODO: use higher order integration scheme
           nodalArea[kf][0] = area / 4.0;
           nodalArea[kf][1] = area / 4.0;
@@ -1288,32 +1282,20 @@ void LagrangianContactFlowSolver::AssembleStabiliziation( DomainPartition const 
               invStiffApproxTotal( j, j ) += invStiffApprox[i][j];
             }
           }
-          // Compute R^T * (invK) * R
-          R2Tensor tmpTensor;
-          tmpTensor.AjiBjk( rotationMatrix, invStiffApproxTotal );
-          rotatedInvStiffApprox[kf].AijBjk( tmpTensor, rotationMatrix );
+          // Compute n^T * (invK) * n
+          R1Tensor tmpTensor;
+          tmpTensor.AijBj( invStiffApproxTotal, Nbar );
+          rotatedInvStiffApprox[kf] = Dot( Nbar, tmpTensor);
         }
 
         // Compose local nodal-based local stiffness matrices
-        stackArray2d< real64, 3*3 > totalInvStiffApprox( 3, 3 );
+        stackArray1d< real64, 1 > totalInvStiffApprox( 1 );
         for( localIndex kf = 0; kf < 2; ++kf )
         {
-          for( localIndex i = 0; i < 3; ++i )
-          {
-            for( localIndex j = 0; j < 3; ++j )
-            {
-              rotatedInvStiffApprox[kf]( i, j ) *= nodalArea[0][kf] * nodalArea[1][kf];
-            }
-          }
+          rotatedInvStiffApprox[kf] *= nodalArea[0][kf] * nodalArea[1][kf];
         }
         // Local assembly
-        for( localIndex i = 0; i < 3; ++i )
-        {
-          for( localIndex j = 0; j < 3; ++j )
-          {
-            totalInvStiffApprox( i, j ) = -( rotatedInvStiffApprox[0]( i, j ) + rotatedInvStiffApprox[1]( i, j ) );
-          }
-        }
+        totalInvStiffApprox( 0 ) = ( rotatedInvStiffApprox[0] + rotatedInvStiffApprox[1] );
 
         // Get DOF numbering
         localIndex fractureIndex[2];
@@ -1324,69 +1306,64 @@ void LagrangianContactFlowSolver::AssembleStabiliziation( DomainPartition const 
           fractureIndex[kf] = sei[iconn][kf];
           elemDOF[kf][0] = -1;
           nDof[kf] = 0;
-          if( !m_contactSolver->IsElementInOpenState( *fractureSubRegion, kf ) )
+          if( !m_contactSolver->IsElementInOpenState( *fractureSubRegion, fractureIndex[kf] ) )
           {
             elemDOF[kf][0] = presDofNumber[fractureIndex[kf]];
             nDof[kf] = 1;
           }
         }
 
-        localIndex nDofStencil = std::min( nDof[0], nDof[1] );
-
-        // Resize local "transmissibility" matrix
-        totalInvStiffApprox.resizeDimension< 0 >( nDofStencil );
-        totalInvStiffApprox.resizeDimension< 1 >( nDofStencil );
-
-        if( nDofStencil > 0 )
-        {
-          totalInvStiffApprox( 0, 0 ) *= 0.5 * ( density[fractureIndex[0]][0] + density[fractureIndex[1]][0] );
-        }
+        // Add mean density contribution
+        totalInvStiffApprox( 0 ) *= 0.5 * ( density[fractureIndex[0]][0] + density[fractureIndex[1]][0] );
 
         // Compute rhs
         real64 rhs0 = 0.0;
-        if( nDofStencil > 0 )
+        if( nDof[0] > 0)
         {
-          rhs0 += totalInvStiffApprox( 0, 0 ) * ( pressure[fractureIndex[0]] + deltaPressure[fractureIndex[0]] );
-          rhs0 -= totalInvStiffApprox( 0, 0 ) * ( pressure[fractureIndex[1]] + deltaPressure[fractureIndex[1]] );
+          rhs0 -= totalInvStiffApprox( 0 ) * ( pressure[fractureIndex[0]] + deltaPressure[fractureIndex[0]] );
+        }
+        if( nDof[1] > 0)
+        {
+          rhs0 += totalInvStiffApprox( 0 ) * ( pressure[fractureIndex[1]] + deltaPressure[fractureIndex[1]] );
         }
         real64 rhs1 = -rhs0;
 
         // Global matrix and rhs assembly
-        if( nDofStencil > 0 )
+        if( std::max( nDof[0], nDof[1] ) > 0 )
         {
           matrix->add( elemDOF[0],
                        elemDOF[0],
                        totalInvStiffApprox.data(),
-                       nDofStencil,
-                       nDofStencil );
+                       nDof[0],
+                       nDof[0] );
 
           matrix->add( elemDOF[1],
                        elemDOF[1],
                        totalInvStiffApprox.data(),
-                       nDofStencil,
-                       nDofStencil );
+                       nDof[1],
+                       nDof[1] );
 
           // Change sign
-          totalInvStiffApprox( 0, 0 ) *= -1.0;
+          totalInvStiffApprox( 0 ) *= -1.0;
 
           matrix->add( elemDOF[0],
                        elemDOF[1],
                        totalInvStiffApprox.data(),
-                       nDofStencil,
-                       nDofStencil );
+                       nDof[0],
+                       nDof[1] );
 
           matrix->add( elemDOF[1],
                        elemDOF[0],
                        totalInvStiffApprox.data(),
-                       nDofStencil,
-                       nDofStencil );
+                       nDof[1],
+                       nDof[0] );
 
           rhs->add( elemDOF[0],
                     &rhs0,
-                    nDofStencil );
+                    nDof[0] );
           rhs->add( elemDOF[1],
                     &rhs1,
-                    nDofStencil );
+                    nDof[1] );
         }
       }
     }
@@ -1394,7 +1371,6 @@ void LagrangianContactFlowSolver::AssembleStabiliziation( DomainPartition const 
 
   matrix->close();
   rhs->close();
-
 }
 
 void LagrangianContactFlowSolver::ApplySystemSolution( DofManager const & dofManager,
