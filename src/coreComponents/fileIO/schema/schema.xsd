@@ -1023,7 +1023,7 @@
 		<!--newmarkGamma => Value of :math:`\gamma` in the Newmark Method for Implicit Dynamic time integration option-->
 		<xsd:attribute name="newmarkGamma" type="real64" default="0.5" />
 		<!--solidMaterialName => The name of the material that should be used in the constitutive updates-->
-		<xsd:attribute name="solidMaterialName" type="string" use="required" />
+		<xsd:attribute name="solidMaterialName" type="string_array" use="required" />
 		<!--stiffnessDamping => Value of stiffness based damping coefficient. -->
 		<xsd:attribute name="stiffnessDamping" type="real64" default="0" />
 		<!--strainTheory => Indicates whether or not to use `Infinitesimal Strain Theory <https://en.wikipedia.org/wiki/Infinitesimal_strain_theory>`_, or `Finite Strain Theory <https://en.wikipedia.org/wiki/Finite_strain_theory>`_. Valid Inputs are:
@@ -1067,7 +1067,7 @@
 		<!--newmarkGamma => Value of :math:`\gamma` in the Newmark Method for Implicit Dynamic time integration option-->
 		<xsd:attribute name="newmarkGamma" type="real64" default="0.5" />
 		<!--solidMaterialName => The name of the material that should be used in the constitutive updates-->
-		<xsd:attribute name="solidMaterialName" type="string" use="required" />
+		<xsd:attribute name="solidMaterialName" type="string_array" use="required" />
 		<!--stiffnessDamping => Value of stiffness based damping coefficient. -->
 		<xsd:attribute name="stiffnessDamping" type="real64" default="0" />
 		<!--strainTheory => Indicates whether or not to use `Infinitesimal Strain Theory <https://en.wikipedia.org/wiki/Infinitesimal_strain_theory>`_, or `Finite Strain Theory <https://en.wikipedia.org/wiki/Finite_strain_theory>`_. Valid Inputs are:

@@ -34,6 +34,7 @@ LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, Group 
   m_defaultShearModulus(),
   m_bulkModulus(),
   m_shearModulus(),
+  m_strain{},
   m_postProcessed(false)
 {
   registerWrapper( viewKeyStruct::defaultBulkModulusString, &m_defaultBulkModulus, 0 )->
@@ -73,6 +74,10 @@ LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, Group 
     setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("ReferencePressure");
+
+  registerWrapper( "strain_", &m_strain, 0 )->
+	    setPlotLevel(PlotLevel::LEVEL_0)->
+	    setDescription("strain");
 }
 
 
@@ -100,6 +105,7 @@ LinearElasticIsotropic::DeliverClone( string const & name,
   newConstitutiveRelation->m_defaultShearModulus = m_defaultShearModulus;
   newConstitutiveRelation->m_shearModulus = m_shearModulus;
   newConstitutiveRelation->m_stress = m_stress;
+  newConstitutiveRelation->m_strain = m_strain;
 }
 
 void LinearElasticIsotropic::AllocateConstitutiveData( dataRepository::Group * const parent,
@@ -110,6 +116,8 @@ void LinearElasticIsotropic::AllocateConstitutiveData( dataRepository::Group * c
   this->resize( parent->size() );
   m_bulkModulus.resize( parent->size() );
   m_shearModulus.resize( parent->size() );
+
+  m_strain.resize( parent->size(), numConstitutivePointsPerParentIndex );
 
   m_bulkModulus = m_defaultBulkModulus;
   m_shearModulus = m_defaultShearModulus;
@@ -207,6 +215,7 @@ void LinearElasticIsotropic::StateUpdatePoint( localIndex const k,
                                                real64 const GEOSX_UNUSED_ARG( dt ),
                                                integer const GEOSX_UNUSED_ARG( updateStiffnessFlag ) )
 {
+	m_strain[k][q] += D;
   real64 meanStresIncrement = D.Trace();
 
   R2SymTensor temp = D;

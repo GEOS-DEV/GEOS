@@ -448,8 +448,8 @@ protected:
   real64 m_maxForce = 0.0;
   integer m_maxNumResolves;
   integer m_strainTheory;
-  string m_solidMaterialName;
-  localIndex m_solidMaterialFullIndex;
+  string_array m_solidMaterialName;
+  localIndex_array m_solidMaterialFullIndex;
   string m_contactRelationName;
 
 

@@ -67,10 +67,10 @@ SolidMechanicsLagrangianSSLE::updateStress( DomainPartition * const domain )
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
   {
     ElementRegionBase * const elementRegion = elemManager->GetRegion(er);
-
     FiniteElementDiscretization const *
     feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
-
+    for(localIndex i = 0;i<m_targetRegions.size();++i)
+        if(elementRegion->getName() == m_targetRegions[i])
     elementRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr,
                                                                         CellElementSubRegion const * const elementSubRegion )
     {
@@ -91,7 +91,7 @@ SolidMechanicsLagrangianSSLE::updateStress( DomainPartition * const domain )
       return SolidMechanicsLagrangianFEMKernels::
              ElementKernelLaunchSelector<Kernels>( numNodesPerElement,
                                                    fe->n_quadrature_points(),
-                                                   constitutiveRelations[er][esr][m_solidMaterialFullIndex],
+                                                   constitutiveRelations[er][esr][m_solidMaterialFullIndex[i]],
                                                    elementSubRegion->size(),
                                                    elemsToNodes,
                                                    dNdX,

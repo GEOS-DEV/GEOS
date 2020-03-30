@@ -155,6 +155,7 @@ private:
   real64 m_defaultShearModulus;
   array1d<real64> m_bulkModulus;
   array1d<real64> m_shearModulus;
+  array2d<R2SymTensor> m_strain;///////////////////////////
   bool m_postProcessed = false;
 };
 

@@ -54,8 +54,8 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const std::string& nam
   m_maxForce(0.0),
   m_maxNumResolves(10),
   m_strainTheory(0),
-  m_solidMaterialName(""),
-  m_solidMaterialFullIndex(0),
+  m_solidMaterialName{},
+  m_solidMaterialFullIndex{},
   m_elemsAttachedToSendOrReceiveNodes(),
   m_elemsNotAttachedToSendOrReceiveNodes(),
   m_sendOrReceiveNodes(),
@@ -209,19 +209,24 @@ void SolidMechanicsLagrangianFEM::RegisterDataOnMesh( Group * const MeshBodies )
 
     ElementRegionManager * const
     elementRegionManager = mesh.second->group_cast<MeshBody*>()->getMeshLevel(0)->getElemManager();
-    elementRegionManager->forElementRegions<CellElementRegion>( m_targetRegions,
-                                                                [&]( CellElementRegion * const elemRegion )
+
+
+    for( localIndex er=0 ; er<elementRegionManager->numRegions() ; ++er )
+  {
+    ElementRegionBase * const elementRegion = elementRegionManager->GetRegion(er);
+
+    for(localIndex i = 0;i<m_targetRegions.size();++i)
+    if(elementRegion->getName() == m_targetRegions[i])
+    elementRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const ,
+                                                                        CellElementSubRegion * const subRegion )
     {
-      elemRegion->forElementSubRegions<CellElementSubRegion>([&]( CellElementSubRegion * const subRegion )
-      {
-        subRegion->registerWrapper<array2d<R2SymTensor> >( viewKeyStruct::stress_n )->
+     subRegion->registerWrapper<array2d<R2SymTensor> >( viewKeyStruct::stress_n )->
           setPlotLevel(PlotLevel::NOPLOT)->
           setRestartFlags(RestartFlags::NO_WRITE)->
           setRegisteringObjects(this->getName())->
           setDescription("Array to hold the beginning of step stress for implicit problem rewinds");
-      });
-    });
-
+});
+}
 
   }
 }
@@ -234,9 +239,13 @@ void SolidMechanicsLagrangianFEM::InitializePreSubGroups(Group * const rootGroup
   DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
   ConstitutiveManager const * const cm = domain->getConstitutiveManager();
 
-  ConstitutiveBase const * const solid  = cm->GetConstitutiveRelation<ConstitutiveBase>( m_solidMaterialName );
-  GEOSX_ERROR_IF( solid == nullptr, "constitutive model " + m_solidMaterialName + " not found" );
-  m_solidMaterialFullIndex = solid->getIndexInParent();
+  m_solidMaterialFullIndex.resize(m_targetRegions.size());
+  for(localIndex i = 0;i < m_targetRegions.size();++i)
+  {
+  ConstitutiveBase const * const solid  = cm->GetConstitutiveRelation<ConstitutiveBase>( m_solidMaterialName[i] );
+  GEOSX_ERROR_IF( solid == nullptr, "constitutive model " + m_solidMaterialName[i] + " not found" );
+  m_solidMaterialFullIndex[i] = solid->getIndexInParent();
+  }
 
 }
 
@@ -281,6 +290,9 @@ void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * co
   {
     ElementRegionBase const * const elemRegion = elementRegionManager->GetRegion(er);
 
+    for(localIndex i = 0;i<m_targetRegions.size();++i)
+    if(elemRegion->getName() == m_targetRegions[i])
+
     elemRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr, CellElementSubRegion const * const elementSubRegion )
     {
       arrayView2d<real64> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
@@ -296,7 +308,7 @@ void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * co
         real64 elemMass = 0;
         for( localIndex q=0 ; q<fe->n_quadrature_points() ; ++q )
         {
-          elemMass += rho[er][esr][m_solidMaterialFullIndex][k][q] * detJ[k][q];
+          elemMass += rho[er][esr][m_solidMaterialFullIndex[i]][k][q] * detJ[k][q];
         }
         for( localIndex a=0 ; a< elemsToNodes.size(1) ; ++a )
         {
@@ -363,45 +375,6 @@ void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * co
 
 }
 
-/*
-void SolidMechanicsLagrangianFEM::setInitializeStress( DomainPartition * const domain )
-{
-	  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-	  ElementRegionManager * const elementRegionManager = mesh->getElemManager();
-	  ConstitutiveManager  * const
-	  constitutiveManager = domain->GetGroup<ConstitutiveManager >(dataRepository::keys::ConstitutiveManager);
-	  ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase>
-	  constitutiveRelations = elementRegionManager->ConstructFullConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
-	  R2SymTensor Initializestress;
-	  Initializestress.Data()[0] = -99.9;
-	  Initializestress.Data()[1] = 0;
-	  Initializestress.Data()[2] = -99.9;
-	  Initializestress.Data()[3] = 0;
-	  Initializestress.Data()[4] = 0;
-	  Initializestress.Data()[5] = -100.2;
-
-	  elementRegionManager->
-	  forElementSubRegionsComplete<CellElementSubRegion>( m_targetRegions,
-	                                                      [&]( localIndex const er,
-	                                                           localIndex const esr,
-	                                                           ElementRegionBase * const,
-	                                                           CellElementSubRegion * const)
-	  {
-	    SolidBase * const
-	    constitutiveRelation = constitutiveRelations[er][esr][m_solidMaterialFullIndex]->group_cast<SolidBase*>();
-	    arrayView2d<R2SymTensor> const & stress = constitutiveRelation->getStress();
-
-	    for( localIndex k=0 ; k<stress.size(0) ; ++k )
-	    {
-	      for( localIndex a=0 ; a<stress.size(1) ; ++a )
-	      {
-	    	  stress(k,a) = Initializestress;
-	      }
-	    }
-	  });
-}
-*/
-
 void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( Group * const problemManager )
 {
   DomainPartition * domain = problemManager->GetGroup<DomainPartition>(keys::domain);
@@ -437,7 +410,8 @@ void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( 
     ElementRegionBase const * const elemRegion = elementRegionManager->GetRegion(er);
     m_elemsAttachedToSendOrReceiveNodes[er].resize( elemRegion->numSubRegions() );
     m_elemsNotAttachedToSendOrReceiveNodes[er].resize( elemRegion->numSubRegions() );
-
+    for(localIndex i = 0;i<m_targetRegions.size();++i)
+        if(elemRegion->getName() == m_targetRegions[i])
     elemRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr, CellElementSubRegion const * const elementSubRegion )
     {
       m_elemsAttachedToSendOrReceiveNodes[er][esr].setName(
@@ -461,7 +435,7 @@ void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( 
         real64 elemMass = 0;
         for( localIndex q=0 ; q<fe->n_quadrature_points() ; ++q )
         {
-          elemMass += rho[er][esr][m_solidMaterialFullIndex][k][q] * detJ[k][q];
+          elemMass += rho[er][esr][m_solidMaterialFullIndex[i]][k][q] * detJ[k][q];
         }
         for( localIndex a=0 ; a< elemsToNodes.size(1) ; ++a )
         {
@@ -713,7 +687,8 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStepVelocityUpdate( real64 const& ti
   {
     ElementRegionBase * const elementRegion = elemManager->GetRegion(er);
     FiniteElementDiscretization const * feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
-
+    for(localIndex i = 0;i<m_targetRegions.size();++i)
+    if(elementRegion->getName() == m_targetRegions[i])
     elementRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr, CellElementSubRegion const * const elementSubRegion )
     {
       arrayView3d< R1Tensor > const & dNdX = elementSubRegion->getReference< array3d< R1Tensor > >(keys::dNdX);
@@ -728,7 +703,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStepVelocityUpdate( real64 const& ti
 
       ExplicitElementKernelLaunch( numNodesPerElement,
                                    numQuadraturePoints,
-                                   constitutiveRelations[er][esr][m_solidMaterialFullIndex],
+                                   constitutiveRelations[er][esr][m_solidMaterialFullIndex[i]],
                                    this->m_elemsAttachedToSendOrReceiveNodes[er][esr],
                                    elemsToNodes,
                                    dNdX,
@@ -738,10 +713,24 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStepVelocityUpdate( real64 const& ti
                                    acc,
                                    fluidPres[er][esr],
                                    dPres[er][esr],
-                                   biotCoefficient[er][esr][m_solidMaterialFullIndex],
-                                   stress[er][esr][m_solidMaterialFullIndex],
+                                   biotCoefficient[er][esr][m_solidMaterialFullIndex[i]],
+                                   stress[er][esr][m_solidMaterialFullIndex[i]],
                                    dt,
                                    &m_maxStableDt);
+      //stress[er][esr][m_solidMaterialFullIndex[0]] = stress[er][esr][m_solidMaterialFullIndex[i]];
+    SolidBase * const
+    constitutiveRelation0 = constitutiveRelations[er][esr][m_solidMaterialFullIndex[0]]->group_cast<SolidBase*>();
+    SolidBase * const
+    constitutiveRelation1 = constitutiveRelations[er][esr][m_solidMaterialFullIndex[i]]->group_cast<SolidBase*>();
+    arrayView2d<R2SymTensor> const & stress0 = constitutiveRelation0->getStress();
+    arrayView2d<R2SymTensor> const & stress1 = constitutiveRelation1->getStress();
+    for( localIndex k=0 ; k<stress0.size(0) ; ++k )
+    {
+      for( localIndex a=0 ; a<stress0.size(1) ; ++a )
+      {
+        stress0(k,a) = stress1(k,a);
+      }
+    }
 
     }); //Element Region
 
@@ -779,7 +768,8 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStepVelocityUpdate( real64 const& ti
     ElementRegionBase * const elementRegion = elemManager->GetRegion(er);
 
     FiniteElementDiscretization const * feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
-
+    for(localIndex i = 0;i<m_targetRegions.size();++i)
+    if(elementRegion->getName() == m_targetRegions[i])
     elementRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr, CellElementSubRegion const * const elementSubRegion )
     {
       arrayView3d< R1Tensor > const & dNdX = elementSubRegion->getReference< array3d< R1Tensor > >(keys::dNdX);
@@ -794,7 +784,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStepVelocityUpdate( real64 const& ti
 
       ExplicitElementKernelLaunch( numNodesPerElement,
                                    numQuadraturePoints,
-                                   constitutiveRelations[er][esr][m_solidMaterialFullIndex],
+                                   constitutiveRelations[er][esr][m_solidMaterialFullIndex[i]],
                                    this->m_elemsNotAttachedToSendOrReceiveNodes[er][esr],
                                    elemsToNodes,
                                    dNdX,
@@ -804,10 +794,24 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStepVelocityUpdate( real64 const& ti
                                    acc,
                                    fluidPres[er][esr],
                                    dPres[er][esr],
-                                   biotCoefficient[er][esr][m_solidMaterialFullIndex],
-                                   stress[er][esr][m_solidMaterialFullIndex],
+                                   biotCoefficient[er][esr][m_solidMaterialFullIndex[i]],
+                                   stress[er][esr][m_solidMaterialFullIndex[i]],
                                    dt,
                                    &m_maxStableDt );
+      //stress[er][esr][m_solidMaterialFullIndex[0]] = stress[er][esr][m_solidMaterialFullIndex[i]];
+    SolidBase * const
+    constitutiveRelation0 = constitutiveRelations[er][esr][m_solidMaterialFullIndex[0]]->group_cast<SolidBase*>();
+    SolidBase * const
+    constitutiveRelation1 = constitutiveRelations[er][esr][m_solidMaterialFullIndex[i]]->group_cast<SolidBase*>();
+    arrayView2d<R2SymTensor> const & stress0 = constitutiveRelation0->getStress();
+    arrayView2d<R2SymTensor> const & stress1 = constitutiveRelation1->getStress();
+    for( localIndex k=0 ; k<stress0.size(0) ; ++k )
+    {
+      for( localIndex a=0 ; a<stress0.size(1) ; ++a )
+      {
+        stress0(k,a) = stress1(k,a);
+      }
+    }
     }); //Element Region
 
   } //Element Manager
@@ -823,7 +827,9 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStepVelocityUpdate( real64 const& ti
   ElementRegionManager::MaterialViewAccessor< real64 > const
   clearDisplacement = elemManager->ConstructFullMaterialViewAccessor< real64 >( SolidBase::viewKeyStruct::clearDisplacementString,
                                                                                        constitutiveManager);
-  if(clearDisplacement[0][0][m_solidMaterialFullIndex] > 0)
+
+  for(localIndex i = 0;i<m_targetRegions.size();++i)
+	  if(clearDisplacement[0][0][m_solidMaterialFullIndex[i]] > 0)
   {
 	  ClearDisplacement( domain );
   }
@@ -1238,15 +1244,16 @@ ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n ),
   ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase>
   constitutiveRelations = elementRegionManager->ConstructFullConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
 
-  elementRegionManager->
-  forElementSubRegionsComplete<CellElementSubRegion>( m_targetRegions,
-                                                      [&]( localIndex const er,
-                                                           localIndex const esr,
-                                                           ElementRegionBase * const,
-                                                           CellElementSubRegion * const subRegion )
+  for( localIndex er=0 ; er<elementRegionManager->numRegions() ; ++er )
   {
+    ElementRegionBase * const elementRegion = elementRegionManager->GetRegion(er);
+
+    for(localIndex i = 0;i<m_targetRegions.size();++i)
+    if(elementRegion->getName() == m_targetRegions[i])
+    elementRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr, CellElementSubRegion * const subRegion )
+    {
     SolidBase * const
-    constitutiveRelation = constitutiveRelations[er][esr][m_solidMaterialFullIndex]->group_cast<SolidBase*>();
+    constitutiveRelation = constitutiveRelations[er][esr][m_solidMaterialFullIndex[i]]->group_cast<SolidBase*>();
 
     arrayView2d<R2SymTensor> const & stress = constitutiveRelation->getStress();
 
@@ -1262,7 +1269,7 @@ ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n ),
       }
     }
   });
-
+  }
 
 
 }
@@ -1418,6 +1425,7 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_ARG(
   density = elemManager->ConstructFullMaterialViewAccessor< real64 >( "density0",
                                                                   constitutiveManager );
 
+
   // begin region loop
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
   {
@@ -1426,6 +1434,8 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_ARG(
     FiniteElementDiscretization const *
     feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
 
+    for(localIndex i = 0;i<m_targetRegions.size();++i)
+    if(elementRegion->getName() == m_targetRegions[i])
     elementRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr,
                                                                         CellElementSubRegion const * const elementSubRegion )
     {
@@ -1444,7 +1454,7 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_ARG(
 
       m_maxForce = ImplicitElementKernelLaunch( numNodesPerElement,
                                                 fe->n_quadrature_points(),
-                                                constitutiveRelations[er][esr][m_solidMaterialFullIndex],
+                                                constitutiveRelations[er][esr][m_solidMaterialFullIndex[i]],
                                                 elementSubRegion->size(),
                                                 dt,
                                                 dNdX,
@@ -1460,7 +1470,7 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_ARG(
                                                 density[er][esr],
                                                 fluidPres[er][esr],
                                                 dPres[er][esr],
-                                                biotCoefficient[er][esr][m_solidMaterialFullIndex],
+                                                biotCoefficient[er][esr][m_solidMaterialFullIndex[i]],
                                                 m_timeIntegrationOption,
                                                 this->m_stiffnessDamping,
                                                 this->m_massDamping,
@@ -1678,15 +1688,17 @@ void SolidMechanicsLagrangianFEM::ResetStressToBeginningOfStep( DomainPartition 
   ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase>
   constitutiveRelations = elementRegionManager->ConstructFullConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
 
-  elementRegionManager->
-  forElementSubRegionsComplete<CellElementSubRegion>( m_targetRegions,
-                                                      [&]( localIndex const er,
-                                                           localIndex const esr,
-                                                           ElementRegionBase * const,
-                                                           CellElementSubRegion * const subRegion )
+  for( localIndex er=0 ; er<elementRegionManager->numRegions() ; ++er )
   {
+    ElementRegionBase * const elementRegion = elementRegionManager->GetRegion(er);
+
+    for(localIndex i = 0;i<m_targetRegions.size();++i)
+    if(elementRegion->getName() == m_targetRegions[i])
+    elementRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr,
+                                                                        CellElementSubRegion * const subRegion )
+    {
     SolidBase * const
-    constitutiveRelation = constitutiveRelations[er][esr][m_solidMaterialFullIndex]->group_cast<SolidBase*>();
+    constitutiveRelation = constitutiveRelations[er][esr][m_solidMaterialFullIndex[i]]->group_cast<SolidBase*>();
 
     arrayView2d<R2SymTensor> const & stress = constitutiveRelation->getStress();
 
@@ -1701,6 +1713,7 @@ void SolidMechanicsLagrangianFEM::ResetStressToBeginningOfStep( DomainPartition 
       }
     }
   });
+  }
 }
 
 
