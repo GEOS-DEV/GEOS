@@ -29,14 +29,16 @@ namespace HybridFVMInnerProduct
 
 void
 HybridFVMInnerProductHelper::makeFullTensor( R1Tensor const & values,
-                                             R2SymTensor & result )
+                                             stackArray2d< real64, 9 > & result )
 {
   result = 0.0;
   R1Tensor axis;
   R2SymTensor temp;
 
+  localIndex constexpr dim = 3;
+
   // assemble full tensor from eigen-decomposition
-  for( unsigned icoord = 0; icoord < 3; ++icoord )
+  for( unsigned icoord = 0; icoord < dim; ++icoord )
   {
     // assume principal axis aligned with global coordinate system
     axis = 0.0;
@@ -45,7 +47,13 @@ HybridFVMInnerProductHelper::makeFullTensor( R1Tensor const & values,
     // XXX: is there a more elegant way to do this?
     temp.dyadic_aa( axis );
     temp *= values( icoord );
-    result += temp;
+    for( localIndex i = 0; i < dim; ++i )
+    {
+      for( localIndex j = 0; j < dim; ++j )
+      {
+        result( i, j ) += temp( i, j );
+      }
+    }
   }
 }
 
@@ -58,13 +66,15 @@ TPFACellInnerProductKernel::Compute( arrayView2d< real64 const, nodes::REFERENCE
                                      real64 const & lengthTolerance,
                                      stackArray2d< real64, MAX_NUM_FACES *MAX_NUM_FACES > const & transMatrix )
 {
-  R1Tensor faceCenter, faceNormal, faceConormal, cellToFaceVec;
-  R2SymTensor permeabilityTensor;
+  localIndex constexpr dim = 3;
+  localIndex const numFacesInElem = elemToFaces.size();
 
-  real64 const areaTolerance   = lengthTolerance * lengthTolerance;
+  real64 const areaTolerance = lengthTolerance * lengthTolerance;
   real64 const weightTolerance = 1e-30 * lengthTolerance; // TODO: choice of constant based on physics?
 
-  localIndex const numFacesInElem = elemToFaces.size();
+  R1Tensor faceCenter, faceNormal, faceConormal, cellToFaceVec;
+  stackArray2d< real64, dim *dim > permTensor( dim, dim );
+  permTensor = 0;
 
   // we are ready to compute the transmissibility matrix
   for( localIndex ifaceLoc = 0; ifaceLoc < numFacesInElem; ++ifaceLoc )
@@ -95,9 +105,18 @@ TPFACellInnerProductKernel::Compute( arrayView2d< real64 const, nodes::REFERENCE
         real64 const c2fDistance = cellToFaceVec.Normalize();
 
         // 2) assemble full coefficient tensor from principal axis/components
-        HybridFVMInnerProductHelper::makeFullTensor( elemPerm, permeabilityTensor );
+        HybridFVMInnerProductHelper::makeFullTensor( elemPerm, permTensor );
 
-        faceConormal.AijBj( permeabilityTensor, faceNormal );
+	// TODO: take symmetry into account to optimize this
+        faceConormal( 0 ) = permTensor( 0, 0 ) * faceNormal( 0 )
+                            + permTensor( 0, 1 ) * faceNormal( 1 )
+                            + permTensor( 0, 2 ) * faceNormal( 2 );
+        faceConormal( 1 ) = permTensor( 1, 0 ) * faceNormal( 0 )
+                            + permTensor( 1, 1 ) * faceNormal( 1 )
+                            + permTensor( 1, 2 ) * faceNormal( 2 );
+        faceConormal( 2 ) = permTensor( 2, 0 ) * faceNormal( 0 )
+                            + permTensor( 2, 1 ) * faceNormal( 1 )
+                            + permTensor( 2, 2 ) * faceNormal( 2 );
 
         // 3) compute the one-sided face transmissibility
         transMatrix[ifaceLoc][jfaceLoc]  = Dot( cellToFaceVec, faceConormal );
@@ -126,45 +145,40 @@ QTPFACellInnerProductKernel::Compute( arrayView2d< real64 const, nodes::REFERENC
                                       bool const & orthonormalizeWithSVD,
                                       stackArray2d< real64, MAX_NUM_FACES *MAX_NUM_FACES > const & transMatrix )
 {
+  localIndex constexpr dim = 3;
+  localIndex const numFacesInElem = elemToFaces.size();
+
   R1Tensor faceCenter, faceNormal, cellToFaceVec;
   real64 const areaTolerance = lengthTolerance * lengthTolerance;
 
-  localIndex const numFacesInElem = elemToFaces.size();
-  localIndex const dim = 3;
+  stackArray2d< real64, dim *MAX_NUM_FACES > cellToFaceMat( numFacesInElem, dim );
+  stackArray2d< real64, dim *MAX_NUM_FACES > normalsMat( numFacesInElem, dim );
+  stackArray2d< real64, dim *dim > permMat( dim, dim );
+  cellToFaceMat = 0;
+  normalsMat = 0;
+  permMat = 0;
 
-  // TODO: remove all the array2ds of this function once the BlasLapackLA calls have been removed
-  //       work with stackArray2ds instead
-  array2d< real64 > cellToFaceMat;
-  array2d< real64 > normalsMat( numFacesInElem, dim );
-  array2d< real64 > permMat( dim, dim );
-  array2d< real64 > transMat( numFacesInElem, numFacesInElem );
+  stackArray1d< real64, dim > work_dim( dim );
+  stackArray2d< real64, dim *dim > work_dimByDim ( dim, dim );
+  stackArray2d< real64, dim *MAX_NUM_FACES > work_dimByNumFaces( dim, numFacesInElem );
+  stackArray2d< real64, dim *MAX_NUM_FACES > work_numFacesByDim( numFacesInElem, dim );
+  stackArray2d< real64, MAX_NUM_FACES *MAX_NUM_FACES > worka_numFacesByNumFaces( numFacesInElem, numFacesInElem );
+  stackArray2d< real64, MAX_NUM_FACES *MAX_NUM_FACES > workb_numFacesByNumFaces( numFacesInElem, numFacesInElem );
+  stackArray2d< real64, MAX_NUM_FACES *MAX_NUM_FACES > workc_numFacesByNumFaces( numFacesInElem, numFacesInElem );
+  work_dim = 0;
+  work_dimByDim = 0;
+  work_dimByNumFaces = 0;
+  work_numFacesByDim = 0;
+  worka_numFacesByNumFaces = 0;
+  workb_numFacesByNumFaces = 0;
+  workc_numFacesByNumFaces = 0;
 
-  // TODO: figure out if it is possible/beneficial to preallocate these arrays
-  array1d< real64 > work_dim;
-  array2d< real64 > work_dimByDim;
-  array2d< real64 > work_dimByNumFaces( dim, numFacesInElem );
-  array2d< real64 > work_numFacesByDim( numFacesInElem, dim );
-  array2d< real64 > worka_numFacesByNumFaces( numFacesInElem, numFacesInElem );
-  array2d< real64 > workb_numFacesByNumFaces( numFacesInElem, numFacesInElem );
-  array2d< real64 > workc_numFacesByNumFaces( numFacesInElem, numFacesInElem );
-
-  array1d< real64 > q0;
-  array1d< real64 > q1;
-  array1d< real64 > q2;
-
-  if( orthonormalizeWithSVD )
-  {
-    cellToFaceMat.resizeDimension< 0 >( numFacesInElem );
-    cellToFaceMat.resizeDimension< 1 >( dim );
-    work_dim.resize( dim );
-    work_dimByDim.resize( dim, dim );
-  }
-  else
-  {
-    q0.resize( numFacesInElem );
-    q1.resize( numFacesInElem );
-    q2.resize( numFacesInElem );
-  }
+  stackArray1d< real64, MAX_NUM_FACES > q0( numFacesInElem );
+  stackArray1d< real64, MAX_NUM_FACES > q1( numFacesInElem );
+  stackArray1d< real64, MAX_NUM_FACES > q2( numFacesInElem );
+  q0 = 0;
+  q1 = 0;
+  q2 = 0;
 
   // 1) fill the matrices cellToFaceMat and normalsMat row by row
   for( localIndex ifaceLoc = 0; ifaceLoc < numFacesInElem; ++ifaceLoc )
@@ -206,16 +220,7 @@ QTPFACellInnerProductKernel::Compute( arrayView2d< real64 const, nodes::REFERENC
   }
 
   // 2) assemble full coefficient tensor from principal axis/components
-  // TODO: figure out if there is a better way to that
-  R2SymTensor permeabilityTensor;
-  HybridFVMInnerProductHelper::makeFullTensor( elemPerm, permeabilityTensor );
-  for( localIndex i = 0; i < dim; ++i )
-  {
-    for( localIndex j = 0; j < dim; ++j )
-    {
-      permMat( i, j ) = permeabilityTensor( i, j );
-    }
-  }
+  HybridFVMInnerProductHelper::makeFullTensor( elemPerm, permMat );
 
   // TODO: replace the BlasLapack calls below with explicitly for loops
   //       this should be easy if MGS orthonormalization is as robust as SVD
@@ -226,7 +231,7 @@ QTPFACellInnerProductKernel::Compute( arrayView2d< real64 const, nodes::REFERENC
                                        work_dimByNumFaces );
   BlasLapackLA::matrixMatrixMultiply( normalsMat,
                                       work_dimByNumFaces,
-                                      transMat );
+                                      transMatrix );
 
   // 4) compute the orthonormalization of the matrix cellToFaceVec
   //    This is done either with SVD or MGS
@@ -281,7 +286,7 @@ QTPFACellInnerProductKernel::Compute( arrayView2d< real64 const, nodes::REFERENC
   {
     for( localIndex j = 0; j < numFacesInElem; ++j )
     {
-      workb_numFacesByNumFaces( i, j ) = (i == j ) ?  transMat( i, j ) : 0.0;
+      workb_numFacesByNumFaces( i, j ) = (i == j ) ?  transMatrix( i, j ) : 0.0;
     }
   }
   BlasLapackLA::matrixMatrixMultiply( workb_numFacesByNumFaces,
@@ -293,20 +298,9 @@ QTPFACellInnerProductKernel::Compute( arrayView2d< real64 const, nodes::REFERENC
 
   // 7) compute T = ( N K N' + t U diag(diag(N K N')) U ) / elemVolume
   BlasLapackLA::matrixScale( tParam, workb_numFacesByNumFaces );
-  BlasLapackLA::matrixMatrixAdd( workb_numFacesByNumFaces, transMat );
-  BlasLapackLA::matrixScale( 1/elemVolume, transMat );
+  BlasLapackLA::matrixMatrixAdd( workb_numFacesByNumFaces, transMatrix );
+  BlasLapackLA::matrixScale( 1/elemVolume, transMatrix );
 
-  // for now, I have this copy to transfer the data from the array2d to the stackArray2d
-  // I need the array2d to call the BlasLapackLA functions
-  // if and when everything works with explicit for loops in this kernel function,
-  // I will be able to do remove all the array2ds and then I won't need this copy anymore
-  for( localIndex i = 0; i < numFacesInElem; ++i )
-  {
-    for( localIndex j = 0; j < numFacesInElem; ++j )
-    {
-      transMatrix( i, j ) = transMat( i, j );
-    }
-  }
 }
 
 }

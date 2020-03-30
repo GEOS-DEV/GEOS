@@ -105,19 +105,17 @@ void FluxKernelHelper::ComputeOneSidedVolFluxes( arrayView1d< real64 const > con
   }
 }
 
-void FluxKernelHelper::UpdateUpwindedCoefficients( MeshLevel const * const mesh,
-                                                   array2d< localIndex > const & elemRegionList,
+void FluxKernelHelper::UpdateUpwindedCoefficients( array2d< localIndex > const & elemRegionList,
                                                    array2d< localIndex > const & elemSubRegionList,
                                                    array2d< localIndex > const & elemList,
                                                    SortedArray< localIndex > const & regionFilter,
                                                    arraySlice1d< localIndex const > const elemToFaces,
-                                                   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const & mob,
-                                                   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const & dMob_dp,
+                                                   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >::ViewTypeConst const & mob,
+                                                   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >::ViewTypeConst const & dMob_dp,
+                                                   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >::ViewTypeConst const & elemDofNumber,
                                                    localIndex const er,
                                                    localIndex const esr,
                                                    localIndex const ei,
-                                                   globalIndex const elemDofNumber,
-                                                   string const elemDofKey,
                                                    stackArray1d< real64, HybridFVMInnerProduct::MAX_NUM_FACES > const & oneSidedVolFlux,
                                                    stackArray1d< real64, HybridFVMInnerProduct::MAX_NUM_FACES > & upwMobility,
                                                    stackArray1d< real64, HybridFVMInnerProduct::MAX_NUM_FACES > & dUpwMobility_dp,
@@ -132,7 +130,7 @@ void FluxKernelHelper::UpdateUpwindedCoefficients( MeshLevel const * const mesh,
     // we initialize these upw quantities with the values of the local elem
     upwMobility[ifaceLoc]     = mob[er][esr][ei];
     dUpwMobility_dp[ifaceLoc] = dMob_dp[er][esr][ei];
-    upwDofNumber[ifaceLoc]    = elemDofNumber;
+    upwDofNumber[ifaceLoc]    = elemDofNumber[er][esr][ei];
 
     // if the local elem if upstream, we are done, we can proceed to the next one-sided face
     // otherwise, we have to access the properties of the neighbor element
@@ -161,17 +159,9 @@ void FluxKernelHelper::UpdateUpwindedCoefficients( MeshLevel const * const mesh,
           // if not on boundary, save the mobility and the upwDofNumber
           if( !onBoundary && neighborInTarget )
           {
-            ElementRegionBase const * const neighborRegion =
-              dataRepository::Group::group_cast< ElementRegionBase const * >( mesh->getElemManager()->GetRegion( erNeighbor ));
-            ElementSubRegionBase const * const neighborSubRegion =
-              dataRepository::Group::group_cast< ElementSubRegionBase const * >( neighborRegion->GetSubRegion( esrNeighbor ));
-
-            arrayView1d< globalIndex const > const & neighborDofNumber =
-              neighborSubRegion->getReference< array1d< globalIndex > >( elemDofKey );
-
             upwMobility[ifaceLoc]     = mob[erNeighbor][esrNeighbor][eiNeighbor];
             dUpwMobility_dp[ifaceLoc] = dMob_dp[erNeighbor][esrNeighbor][eiNeighbor];
-            upwDofNumber[ifaceLoc]    = neighborDofNumber[eiNeighbor];
+            upwDofNumber[ifaceLoc]    = elemDofNumber[erNeighbor][esrNeighbor][eiNeighbor];
           }
           // if the face is on the boundary, use the properties of the local elem
         }
@@ -235,23 +225,18 @@ void FluxKernelHelper::AssembleOneSidedMassFluxes( real64 const & dt,
   // we are ready to assemble the local flux and its derivatives
 
   // residual
-  rhs->add( &eqnRowIndex,
-            &sumLocalMassFluxes,
-            1 );
+  rhs->add( eqnRowIndex,
+            sumLocalMassFluxes );
 
   // jacobian -- derivative wrt elem centered vars
-  matrix->add( &eqnRowIndex,
-               elemDofColIndices.data(),
-               dSumLocalMassFluxes_dElemVars.data(),
-               1,
-               1+numFacesInElem );
+  matrix->add( eqnRowIndex,
+               elemDofColIndices,
+               dSumLocalMassFluxes_dElemVars );
 
   // jacobian -- derivatives wrt face centered vars
-  matrix->add( &eqnRowIndex,
-               faceDofColIndices.data(),
-               dSumLocalMassFluxes_dFaceVars.data(),
-               1,
-               numFacesInElem );
+  matrix->add( eqnRowIndex,
+               faceDofColIndices,
+               dSumLocalMassFluxes_dFaceVars );
 
 }
 
@@ -296,21 +281,18 @@ void FluxKernelHelper::AssembleConstraints( arrayView1d< globalIndex const > con
     }
 
     // residual
-    rhs->add( &eqnRowIndex,
-              &flux,
-              1 );
+    rhs->add( eqnRowIndex,
+              flux );
 
     // jacobian -- derivative wrt local cell centered pressure term
-    matrix->add( &eqnRowIndex,
-                 &dofColIndexElemPres,
-                 &dFlux_dp,
-                 1, 1 );
+    matrix->add( eqnRowIndex,
+                 dofColIndexElemPres,
+                 dFlux_dp );
 
     // jacobian -- derivatives wrt face pressure terms
-    matrix->add( &eqnRowIndex,
-                 dofColIndicesFacePres.data(),
-                 dFlux_dfp.data(),
-                 1, numFacesInElem );
+    matrix->add( eqnRowIndex,
+                 dofColIndicesFacePres,
+                 dFlux_dfp );
   }
 }
 

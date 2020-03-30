@@ -16,13 +16,12 @@
  * @file SinglePhaseHybridFVMKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FINITEVOLUME_SINGLEPHASEHYBRIDFVMKERNELS_HPP
-#define GEOSX_PHYSICSSOLVERS_FINITEVOLUME_SINGLEPHASEHYBRIDFVMKERNELS_HPP
+#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEHYBRIDFVMKERNELS_HPP
+#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEHYBRIDFVMKERNELS_HPP
 
 #include "common/DataTypes.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
-#include "finiteVolume/FluxApproximationBase.hpp"
+#include "mesh/MeshLevel.hpp"
 #include "finiteVolume/HybridFVMInnerProduct.hpp"
 
 namespace geosx
@@ -71,7 +70,6 @@ struct FluxKernelHelper
 
   /**
    * @brief In a given element, collect the upwinded mobilities at this element's faces
-   * @param[in] mesh the mesh object (single level only)
    * @param[in] elemRegionList face-to-elemRegions map
    * @param[in] elemSubRegionList face-to-elemSubRegions map
    * @param[in] elemList face-to-elemIds map
@@ -79,11 +77,10 @@ struct FluxKernelHelper
    * @param[in] elemToFaces elem-to-faces maps
    * @param[in] mob the mobilities in the domain (non-local)
    * @param[in] dMob_dp the derivatives of the mobilities in the domain wrt cell-centered pressure (non-local)
+   * @param[in] elemDofNumber the dof numbers of all the cell centered pressures (non-local)
    * @param[in] er index of this element's region
    * @param[in] esr index of this element's subregion
    * @param[in] ei index of this element
-   * @param[in] elemDofNumber the dof number of this element's cell centered pressure
-   * @param[in] elemDofKey
    * @param[in] oneSidedVolFlux the volumetric fluxes at this element's faces
    * @param[inout] upwMobility the upwinded mobilities at this element's faces
    * @param[inout] dUpwMobility_dp the derivatives of the upwinded mobilities wrt the cell-centered pressures (local or
@@ -93,19 +90,17 @@ struct FluxKernelHelper
    * Note: because of the upwinding, this function requires non-local information
    */
   static
-  void UpdateUpwindedCoefficients( MeshLevel const * const mesh,
-                                   array2d< localIndex > const & elemRegionList,
+  void UpdateUpwindedCoefficients( array2d< localIndex > const & elemRegionList,
                                    array2d< localIndex > const & elemSubRegionList,
                                    array2d< localIndex > const & elemList,
                                    SortedArray< localIndex > const & regionFilter,
                                    arraySlice1d< localIndex const > const elemToFaces,
-                                   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const & mob,
-                                   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const & dMob_dp,
+                                   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >::ViewTypeConst const & mob,
+                                   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >::ViewTypeConst const & dMob_dp,
+                                   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >::ViewTypeConst const & elemDofNumber,
                                    localIndex const er,
                                    localIndex const esr,
                                    localIndex const ei,
-                                   globalIndex const elemDofNumber,
-                                   string const elemDofKey,
                                    stackArray1d< real64, HybridFVMInnerProduct::MAX_NUM_FACES > const & oneSidedVolFlux,
                                    stackArray1d< real64, HybridFVMInnerProduct::MAX_NUM_FACES > & upwMobility,
                                    stackArray1d< real64, HybridFVMInnerProduct::MAX_NUM_FACES > & dUpwMobility_dp,
@@ -185,7 +180,6 @@ struct FluxKernel< CellElementSubRegion >
    * @param[in] esr index of this element's subregion
    * @param[in] ei index of this element
    * @param[in] regionFilter set containing the indices of the target regions
-   * @param[in] mesh the mesh object (single level only)
    * @param[in] elemRegionList face-to-elemRegions map
    * @param[in] elemSubRegionList face-to-elemSubRegions map
    * @param[in] elemList face-to-elemIds map
@@ -194,8 +188,6 @@ struct FluxKernel< CellElementSubRegion >
    * @param[in] dFacePres the accumulated pressure updates at the mesh face
    * @param[in] faceGravDepth the depth at the mesh faces
    * @param[in] elemToFaces the map from one-sided face to face
-   * @param[in] elemDofNumber the dof number of this element's cell centered pressure
-   * @param[in] elemDofKey
    * @param[in] elemPres the pressure at this element's center
    * @param[in] dElemPres the accumulated pressure updates at this element's center
    * @param[in] elemGravDepth the depth at this element's center
@@ -203,6 +195,7 @@ struct FluxKernel< CellElementSubRegion >
    * @param[in] dElemDens_dp the derivative of the density at this element's center
    * @param[in] mobility the mobilities in the domain (non-local)
    * @param[in] dMobility_dPres the derivatives of the mobilities in the domain wrt cell-centered pressure (non-local)
+   * @param[in] elemDofNumber the dof number of the cell centered pressures (non-local)
    * @param[in] transMatrix the transmissibility matrix in this element
    * @param[in] dt time step size
    * @param[inout] matrix the system matrix
@@ -213,7 +206,6 @@ struct FluxKernel< CellElementSubRegion >
            localIndex const esr,
            localIndex const ei,
            SortedArray< localIndex > const & regionFilter,
-           MeshLevel const * const mesh,
            array2d< localIndex > const & elemRegionList,
            array2d< localIndex > const & elemSubRegionList,
            array2d< localIndex > const & elemList,
@@ -222,15 +214,14 @@ struct FluxKernel< CellElementSubRegion >
            arrayView1d< real64 const > const & dFacePres,
            arrayView1d< real64 const > const & faceGravCoef,
            arraySlice1d< localIndex const > const elemToFaces,
-           globalIndex const elemDofNumber,
-           string const elemDofKey,
            real64 const & elemPres,
            real64 const & dElemPres,
            real64 const & elemGravCoef,
            real64 const & elemDens,
            real64 const & dElemDens_dp,
-           ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const & mobility,
-           ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const & dMobility_dp,
+           ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >::ViewTypeConst const & mobility,
+           ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >::ViewTypeConst const & dMobility_dp,
+           ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >::ViewTypeConst const & elemDofNumber,
            stackArray2d< real64, HybridFVMInnerProduct::MAX_NUM_FACES
                          *HybridFVMInnerProduct::MAX_NUM_FACES > const & transMatrix,
            real64 const & dt,
@@ -277,17 +268,15 @@ struct FluxKernel< CellElementSubRegion >
     // at this point, we know the local flow direction in the element
     // so we can upwind the transport coefficients (mobilities) at the one sided faces
     // ** this function needs non-local information **
-    FluxKernelHelper::UpdateUpwindedCoefficients( mesh,
-                                                  elemRegionList,
+    FluxKernelHelper::UpdateUpwindedCoefficients( elemRegionList,
                                                   elemSubRegionList,
                                                   elemList,
                                                   regionFilter,
                                                   elemToFaces,
                                                   mobility,
                                                   dMobility_dp,
-                                                  er, esr, ei,
                                                   elemDofNumber,
-                                                  elemDofKey,
+                                                  er, esr, ei,
                                                   oneSidedVolFlux,
                                                   upwMobility,
                                                   dUpwMobility_dp,
@@ -304,7 +293,7 @@ struct FluxKernel< CellElementSubRegion >
     FluxKernelHelper::AssembleOneSidedMassFluxes( dt,
                                                   faceDofNumber,
                                                   elemToFaces,
-                                                  elemDofNumber,
+                                                  elemDofNumber[er][esr][ei],
                                                   oneSidedVolFlux,
                                                   dOneSidedVolFlux_dp,
                                                   dOneSidedVolFlux_dfp,
@@ -318,7 +307,7 @@ struct FluxKernel< CellElementSubRegion >
     // enforcing flux continuity at this element's faces
     FluxKernelHelper::AssembleConstraints( faceDofNumber,
                                            elemToFaces,
-                                           elemDofNumber,
+                                           elemDofNumber[er][esr][ei],
                                            oneSidedVolFlux,
                                            dOneSidedVolFlux_dp,
                                            dOneSidedVolFlux_dfp,
@@ -333,4 +322,4 @@ struct FluxKernel< CellElementSubRegion >
 
 } // namespace geosx
 
-#endif //GEOSX_PHYSICSSOLVERS_FINITEVOLUME_SINGLEPHASEHYBRIDFVMKERNELS_HPP
+#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEHYBRIDFVMKERNELS_HPP
