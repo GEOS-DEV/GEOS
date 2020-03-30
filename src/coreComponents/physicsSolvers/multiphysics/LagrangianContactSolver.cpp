@@ -925,7 +925,7 @@ void LagrangianContactSolver::AssembleSystem( real64 const time,
 
   AssembleForceResidualDerivativeWrtTraction( domain, dofManager, &matrix, &rhs );
   AssembleTractionResidualDerivativeWrtDisplacementAndTraction( domain, dofManager, &matrix, &rhs );
-  AssembleStabiliziation( domain, dofManager, &matrix, &rhs );
+  AssembleStabilization( domain, dofManager, &matrix, &rhs );
 }
 
 void LagrangianContactSolver::ApplyBoundaryConditions( real64 const time,
@@ -1327,6 +1327,8 @@ void LagrangianContactSolver::AssembleTractionResidualDerivativeWrtDisplacementA
               }
             case FractureState::OPEN:
               {
+                GEOSX_LOG_LEVEL_BY_RANK( 3, "element: " << kfe << " opening: " << localJump[kfe][0] );
+
                 for( localIndex i=0; i<3; ++i )
                 {
                   elemRHS[i] = +Ja * traction[kfe][i];
@@ -1370,10 +1372,10 @@ void LagrangianContactSolver::AssembleTractionResidualDerivativeWrtDisplacementA
   rhs->close();
 }
 
-void LagrangianContactSolver::AssembleStabiliziation( DomainPartition const * const domain,
-                                                      DofManager const & dofManager,
-                                                      ParallelMatrix * const matrix,
-                                                      ParallelVector * const rhs )
+void LagrangianContactSolver::AssembleStabilization( DomainPartition const * const domain,
+                                                     DofManager const & dofManager,
+                                                     ParallelMatrix * const matrix,
+                                                     ParallelVector * const rhs )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -1558,7 +1560,7 @@ void LagrangianContactSolver::AssembleStabiliziation( DomainPartition const * co
           fractureIndex[kf] = sei[iconn][kf];
           for( localIndex i=0; i<3; ++i )
           {
-            elemDOF[kf][i] = -1;
+            elemDOF[kf][i] = tracDofNumber[fractureIndex[kf]] + integer_conversion< globalIndex >( i );
           }
           nDof[kf] = 0;
           switch( fractureState[fractureIndex[kf]] )
@@ -1566,17 +1568,12 @@ void LagrangianContactSolver::AssembleStabiliziation( DomainPartition const * co
             case ( FractureState::STICK ):
               {
                 nDof[kf] = 3;
-                for( localIndex i=0; i<3; ++i )
-                {
-                  elemDOF[kf][i] = tracDofNumber[fractureIndex[kf]] + integer_conversion< globalIndex >( i );
-                }
                 break;
               }
             case ( FractureState::NEW_SLIP ):
             case ( FractureState::SLIP ):
               {
                 nDof[kf] = 1;
-                elemDOF[kf][0] = tracDofNumber[fractureIndex[kf]] + integer_conversion< globalIndex >( 0 );
                 break;
               }
             case ( FractureState::OPEN ):
@@ -1587,77 +1584,113 @@ void LagrangianContactSolver::AssembleStabiliziation( DomainPartition const * co
           }
         }
 
-        localIndex nDofStencil = std::min( nDof[0], nDof[1] );
+        // Define local "transmissibility" matrices
+        stackArray2d< real64, 3*3 > totalInvStiffApprox00( nDof[0], nDof[0] );
+        stackArray2d< real64, 3*3 > totalInvStiffApprox01( nDof[0], nDof[1] );
+        stackArray2d< real64, 3*3 > totalInvStiffApprox10( nDof[1], nDof[0] );
+        stackArray2d< real64, 3*3 > totalInvStiffApprox11( nDof[1], nDof[1] );
+        for( localIndex i = 0; i < nDof[0]; ++i )
+        {
+          for( localIndex j = 0; j < nDof[0]; ++j )
+          {
+            totalInvStiffApprox00( i, j ) = totalInvStiffApprox( i, j );
+          }
+          for( localIndex j = 0; j < nDof[1]; ++j )
+          {
+            totalInvStiffApprox01( i, j ) = -totalInvStiffApprox( i, j );
+          }
+        }
 
-        // Resize local "transmissibility" matrix
-        totalInvStiffApprox.resizeDimension< 0 >( nDofStencil );
-        totalInvStiffApprox.resizeDimension< 1 >( nDofStencil );
+        for( localIndex i = 0; i < nDof[1]; ++i )
+        {
+          for( localIndex j = 0; j < nDof[0]; ++j )
+          {
+            totalInvStiffApprox10( i, j ) = -totalInvStiffApprox( i, j );
+          }
+          for( localIndex j = 0; j < nDof[1]; ++j )
+          {
+            totalInvStiffApprox11( i, j ) = totalInvStiffApprox( i, j );
+          }
+        }
 
         // Compute rhs
         real64_array rhs0( 3 );
         rhs0 = 0.0;
-        for( localIndex j = 0; j < nDofStencil; ++j )
+        for( localIndex j = 0; j < nDof[0]; ++j )
         {
-          rhs0( 0 ) += totalInvStiffApprox( 0, j ) * ( traction[fractureIndex[0]][j] );
-          rhs0( 0 ) -= totalInvStiffApprox( 0, j ) * ( traction[fractureIndex[1]][j] );
+          rhs0( 0 ) += totalInvStiffApprox00( 0, j ) * ( traction[fractureIndex[0]][j] );
         }
-        for( localIndex i = 1; i < nDofStencil; ++i )
+        for( localIndex j = 0; j < nDof[1]; ++j )
         {
-          for( localIndex j = 0; j < nDofStencil; ++j )
+          rhs0( 0 ) += totalInvStiffApprox01( 0, j ) * ( traction[fractureIndex[1]][j] );
+        }
+        for( localIndex i = 1; i < nDof[0]; ++i )
+        {
+          for( localIndex j = 0; j < nDof[0]; ++j )
           {
-            rhs0( i ) += totalInvStiffApprox( i, j ) * ( deltaTraction[fractureIndex[0]][j] );
-            rhs0( i ) -= totalInvStiffApprox( i, j ) * ( deltaTraction[fractureIndex[1]][j] );
+            rhs0( i ) += totalInvStiffApprox00( i, j ) * ( deltaTraction[fractureIndex[0]][j] );
+          }
+          for( localIndex j = 0; j < nDof[1]; ++j )
+          {
+            rhs0( i ) += totalInvStiffApprox01( i, j ) * ( deltaTraction[fractureIndex[1]][j] );
           }
         }
 
-        real64_array rhs1( rhs0 );
-        for( localIndex i = 0; i < nDofStencil; ++i )
+        real64_array rhs1( 3 );
+        rhs1 = 0.0;
+        for( localIndex j = 0; j < nDof[0]; ++j )
         {
-          rhs1( i ) *= -1.0;
+          rhs1( 0 ) += totalInvStiffApprox10( 0, j ) * ( traction[fractureIndex[0]][j] );
+        }
+        for( localIndex j = 0; j < nDof[1]; ++j )
+        {
+          rhs1( 0 ) += totalInvStiffApprox11( 0, j ) * ( traction[fractureIndex[1]][j] );
+        }
+        for( localIndex i = 1; i < nDof[1]; ++i )
+        {
+          for( localIndex j = 0; j < nDof[0]; ++j )
+          {
+            rhs1( i ) += totalInvStiffApprox10( i, j ) * ( deltaTraction[fractureIndex[0]][j] );
+          }
+          for( localIndex j = 0; j < nDof[1]; ++j )
+          {
+            rhs1( i ) += totalInvStiffApprox11( i, j ) * ( deltaTraction[fractureIndex[1]][j] );
+          }
         }
 
         // Global matrix and rhs assembly
-        if( nDofStencil > 0 )
+        if( std::max( nDof[0], nDof[1] ) > 0 )
         {
           matrix->add( elemDOF[0],
                        elemDOF[0],
-                       totalInvStiffApprox.data(),
-                       nDofStencil,
-                       nDofStencil );
+                       totalInvStiffApprox00.data(),
+                       nDof[0],
+                       nDof[0] );
 
           matrix->add( elemDOF[1],
                        elemDOF[1],
-                       totalInvStiffApprox.data(),
-                       nDofStencil,
-                       nDofStencil );
-
-          // Change sign
-          for( localIndex i = 0; i < nDofStencil; ++i )
-          {
-            for( localIndex j = 0; j < nDofStencil; ++j )
-            {
-              totalInvStiffApprox( i, j ) *= -1.0;
-            }
-          }
+                       totalInvStiffApprox11.data(),
+                       nDof[1],
+                       nDof[1] );
 
           matrix->add( elemDOF[0],
                        elemDOF[1],
-                       totalInvStiffApprox.data(),
-                       nDofStencil,
-                       nDofStencil );
+                       totalInvStiffApprox01.data(),
+                       nDof[0],
+                       nDof[1] );
 
           matrix->add( elemDOF[1],
                        elemDOF[0],
-                       totalInvStiffApprox.data(),
-                       nDofStencil,
-                       nDofStencil );
+                       totalInvStiffApprox10.data(),
+                       nDof[1],
+                       nDof[0] );
 
           rhs->add( elemDOF[0],
                     rhs0.data(),
-                    nDofStencil );
+                    nDof[0] );
           rhs->add( elemDOF[1],
                     rhs1.data(),
-                    nDofStencil );
+                    nDof[1] );
         }
       }
     }
@@ -1727,6 +1760,7 @@ void LagrangianContactSolver::SetFractureStateForElasticStep( DomainPartition * 
     {
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
       arrayView1d< FractureState > const & fractureState = subRegion.getReference< array1d< FractureState > >( viewKeyStruct::fractureStateString );
+      arrayView1d< integer > const & integerFractureState = subRegion.getReference< array1d< integer > >( viewKeyStruct::integerFractureStateString );
       forAll< serialPolicy >( subRegion.size(), [&]( localIndex const kfe )
       {
         if( ghostRank[kfe] < 0 )
@@ -1735,6 +1769,7 @@ void LagrangianContactSolver::SetFractureStateForElasticStep( DomainPartition * 
           {
             fractureState[kfe] = FractureState::STICK;
           }
+          integerFractureState[kfe] = FractureStateToInteger( fractureState[kfe] );
         }
       } );
     }
