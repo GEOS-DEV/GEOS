@@ -8,7 +8,7 @@
                wellSolverName="compositionalMultiphaseWell"
                logLevel="1"
                targetRegions="{Region1,wellRegion1,wellRegion2}">
-      <NonlinearSolverParameters newtonTol="1.0e-6"
+      <NonlinearSolverParameters newtonTol="1.0e-8"
                                  newtonMaxIter="40"/>
       <SystemSolverParameters useDirectSolver="1"
                               logLevel="0"/>
@@ -75,11 +75,9 @@
                   radius="0.1"
                   numElementsPerSegment="2">
         <Perforation name="producer1_perf1"
-                     distanceFromHead="19.4"
-                     wellTransmissibility="1e-14"/> 
+                     distanceFromHead="19.4"/> 
         <Perforation name="producer1_perf2"
-                     distanceFromHead="20.3"
-                     wellTransmissibility="1e-14"/> 
+                     distanceFromHead="20.3"/> 
     </InternalWell> 
 
     <InternalWell name="well_injector1"
@@ -98,11 +96,9 @@
                   radius="0.1"
                   numElementsPerSegment="3">
         <Perforation name="injector1_perf1"
-                     distanceFromHead="19.52"
-                     wellTransmissibility="1e-14"/> 
+                     distanceFromHead="19.52"/> 
         <Perforation name="injector1_perf2"
-                     distanceFromHead="20.45"
-                     wellTransmissibility="1e-14"/> 
+                     distanceFromHead="20.45"/> 
     </InternalWell> 
 
   </Mesh>

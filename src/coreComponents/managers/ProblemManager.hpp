@@ -55,9 +55,9 @@ public:
 
   virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 
-  void ParseCommandLineInput( int argc, char * argv[] );
+  void ParseCommandLineInput();
 
-  static bool ParseRestart( int argc, char * argv[], std::string & restartFileName );
+  static bool ParseRestart( std::string & restartFileName );
 
   void InitializePythonInterpreter();
 

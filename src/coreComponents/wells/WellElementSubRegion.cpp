@@ -41,6 +41,7 @@ WellElementSubRegion::WellElementSubRegion( string const & name, Group * const p
   registerWrapper( viewKeyStruct::nextWellElementIndexGlobalString, &m_nextWellElementIndexGlobal, false );
   registerWrapper( viewKeyStruct::topWellElementIndexString, &m_topWellElementIndex, false );
   registerWrapper( viewKeyStruct::topRankString, &m_topRank, false );
+  registerWrapper( viewKeyStruct::radiusString, &m_radius, false );
 
   registerWrapper( ElementSubRegionBase::viewKeyStruct::elementCenterString, &m_elementCenter, false );
   registerWrapper( ElementSubRegionBase::viewKeyStruct::elementVolumeString, &m_elementVolume, false );
@@ -662,7 +663,7 @@ void WellElementSubRegion::UpdateNodeManagerSize( MeshLevel & mesh,
 
 void WellElementSubRegion::ConstructSubRegionLocalElementMaps( MeshLevel & mesh,
                                                                InternalWellGenerator const & wellGeometry,
-                                                               SortedArray< globalIndex >      const & localElems,
+                                                               SortedArray< globalIndex > const & localElems,
                                                                globalIndex nodeOffsetGlobal,
                                                                globalIndex elemOffsetGlobal )
 {
@@ -717,6 +718,7 @@ void WellElementSubRegion::ConstructSubRegionLocalElementMaps( MeshLevel & mesh,
     }
     m_elementCenter[iwelemLocal] = elemCoordsGlobal[iwelemGlobal];
     m_elementVolume[iwelemLocal] = elemVolumeGlobal[iwelemGlobal];
+    m_radius[iwelemLocal] = wellGeometry.GetElementRadius();
 
     // update local well elem to node map (note: nodes are in nodeManager ordering)
 

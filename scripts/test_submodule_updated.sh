@@ -71,7 +71,7 @@ do
       echo "PR branch and $main_branch have different hashes for submodule"\
            "$module_name:"
       echo "---- PR branch has hash $pr_hash"
-      echo "---- $main_branch branch has hash $main_hash"
+      echo "---- $module_name/$main_branch has hash $main_hash"
       unsync_submodules+=( "$module_name" )
       exit_code=1
     fi

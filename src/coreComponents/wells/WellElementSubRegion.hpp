@@ -246,6 +246,7 @@ public:
     static constexpr auto nextWellElementIndexGlobalString = "nextWellElementIndexGlobal";
     static constexpr auto topWellElementIndexString        = "topWellElementIndex";
     static constexpr auto topRankString                    = "topRank";
+    static constexpr auto radiusString                     = "radius";
 
     dataRepository::ViewKey wellControlsName     = { wellControlsString };
     dataRepository::ViewKey wellNodeList         = { wellNodeListString };
@@ -253,6 +254,7 @@ public:
     dataRepository::ViewKey nextWellElementIndexGlobal = { nextWellElementIndexGlobalString };
     dataRepository::ViewKey topWellElementIndex  = { topWellElementIndexString };
     dataRepository::ViewKey topRank            = { topRankString };
+    dataRepository::ViewKey radius             = { radiusString };
 
   } viewKeysWellElementSubRegion;
 
@@ -321,13 +323,12 @@ private:
    * @param[in] meshLevel the mesh object (single level only)
    * @param[in] wellGeometry the InternalWellGenerator containing the global well topology
    * @param[in] localElems set of local well elems. At this point all the well elems have been assigned
-   * @param[in] localNodes set of local well nodes (includes boundary nodes)
    * @param[in] nodeOffsetGlobal the offset of the first global well node ( = offset of last global mesh node + 1 )
    * @param[in] elemOffsetGlobal the offset of the first global well element ( = offset of last global mesh elem + 1 )
    */
   void ConstructSubRegionLocalElementMaps( MeshLevel & mesh,
                                            InternalWellGenerator const & wellGeometry,
-                                           SortedArray< globalIndex >      const & localElems,
+                                           SortedArray< globalIndex > const & localElems,
                                            globalIndex nodeOffsetGlobal,
                                            globalIndex elemOffsetGlobal );
 
@@ -376,6 +377,9 @@ private:
 
   /// top rank
   integer m_topRank;
+
+  /// radius of the well element
+  array1d< real64 > m_radius;
 
   /// depth of the local search to match perforation to res elements
   localIndex m_searchDepth;

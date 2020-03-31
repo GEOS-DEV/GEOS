@@ -64,14 +64,14 @@
                                          {1, 2},
                                          {2, 3},
                                          {3, 4} }"
-                  radius="0.05"
+                  radius="0.1"
                   numElementsPerSegment="2">
         <Perforation name="producer1_perf1"
                      distanceFromHead="19.4"
-                     wellTransmissibility="1e-12"/> 
+                     transmissibility="1.2e-14"/> 
         <Perforation name="producer1_perf2"
                      distanceFromHead="20.3"
-                     wellTransmissibility="1e-12"/> 
+                     transmissibility="1.2e-14"/> 
     </InternalWell> 
 
     <InternalWell name="well_injector1"
@@ -87,30 +87,30 @@
                                          {1, 2},
                                          {2, 3},
                                          {3, 4} }"
-                  radius="0.05"
+                  radius="0.1"
                   numElementsPerSegment="3">
         <Perforation name="injector1_perf1"
                      distanceFromHead="19.52"
-                     wellTransmissibility="1e-12"/> 
+                     transmissibility="1.2e-14"/> 
         <Perforation name="injector1_perf2"
                      distanceFromHead="20.45"
-                     wellTransmissibility="1e-12"/> 
+                     transmissibility="1.2e-14"/> 
     </InternalWell> 
   </Mesh>
 
 
-  <Events maxTime="1e6">
+  <Events maxTime="1e5">
     <PeriodicEvent name="solverApplications"
-                   forceDt="1e5"
+                   forceDt="1e4"
                    target="/Solvers/reservoirSystem" />
 
     <PeriodicEvent name="outputs"
-                   timeFrequency="1e5"
+                   timeFrequency="1e4"
                    targetExactTimestep="1"
                    target="/Outputs/siloOutput" />
 
     <PeriodicEvent name="restarts"
-                   timeFrequency="5e5"
+                   timeFrequency="5e4"
                    targetExactTimestep="0"
                    target="/Outputs/restartOutput"/>
 

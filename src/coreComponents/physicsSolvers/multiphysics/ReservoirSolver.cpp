@@ -50,6 +50,31 @@ ReservoirSolver::ReservoirSolver( const std::string & name,
 ReservoirSolver::~ReservoirSolver()
 {}
 
+void ReservoirSolver::InitializePostInitialConditions_PreSubGroups( Group * const rootGroup )
+{
+  SolverBase::InitializePostInitialConditions_PreSubGroups( rootGroup );
+
+  DomainPartition * const domain = rootGroup->GetGroup< DomainPartition >( keys::domain );
+
+  MeshLevel * const meshLevel = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
+  ElementRegionManager * const elemManager = meshLevel->getElemManager();
+
+  // loop over the wells
+  elemManager->forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion & subRegion )
+  {
+    // get the string to access the permeability
+    string const permeabilityKey = FlowSolverBase::viewKeyStruct::permeabilityString;
+
+    PerforationData * const perforationData = subRegion.GetPerforationData();
+
+    // compute the Peaceman index (if not read from XML)
+    perforationData->ComputeWellTransmissibility( *meshLevel,
+                                                  &subRegion,
+                                                  permeabilityKey );
+  } );
+}
+
+
 void ReservoirSolver::PostProcessInput()
 {
   SolverBase::PostProcessInput();
@@ -310,10 +335,6 @@ void ReservoirSolver::SolveSystem( DofManager const & dofManager,
   solution.zero();
 
   SolverBase::SolveSystem( dofManager, matrix, rhs, solution );
-
-  // Debug for logLevel >= 2
-  GEOSX_LOG_LEVEL_RANK_0( 2, "After ReservoirSolver::SolveSystem" );
-  GEOSX_LOG_LEVEL_RANK_0( 2, "\nSolution:\n" << solution );
 }
 
 bool ReservoirSolver::CheckSystemSolution( DomainPartition const * const domain,

@@ -75,27 +75,47 @@ void CompositionalMultiphaseWell::RegisterDataOnMesh( Group * const meshBodies )
   elemManager->forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion & subRegion )
   {
     subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::pressureString )->setPlotLevel( PlotLevel::LEVEL_0 );
-    subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::deltaPressureString );
+
+    subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::deltaPressureString )->
+      setRestartFlags( RestartFlags::NO_WRITE );
+
     subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::globalCompDensityString )->setPlotLevel( PlotLevel::LEVEL_0 );
-    subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::deltaGlobalCompDensityString );
+
+    subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::deltaGlobalCompDensityString )->
+      setRestartFlags( RestartFlags::NO_WRITE );
+
     subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::mixtureConnRateString )->setPlotLevel( PlotLevel::LEVEL_0 );
-    subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::deltaMixtureConnRateString );
+
+    subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::deltaMixtureConnRateString )->
+      setRestartFlags( RestartFlags::NO_WRITE );
 
     subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::globalCompFractionString )->setPlotLevel( PlotLevel::LEVEL_0 );
-    subRegion.registerWrapper< array3d< real64 > >( viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString );
+    subRegion.registerWrapper< array3d< real64 > >( viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString )->
+      setRestartFlags( RestartFlags::NO_WRITE );
 
     subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::phaseVolumeFractionString )->setPlotLevel( PlotLevel::LEVEL_0 );
-    subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::dPhaseVolumeFraction_dPressureString );
-    subRegion.registerWrapper< array3d< real64 > >( viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString );
+    subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::dPhaseVolumeFraction_dPressureString )->
+      setRestartFlags( RestartFlags::NO_WRITE );
+
+    subRegion.registerWrapper< array3d< real64 > >( viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString )->
+      setRestartFlags( RestartFlags::NO_WRITE );
 
     subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::mixtureDensityString )->setPlotLevel( PlotLevel::LEVEL_0 );
-    subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::dMixtureDensity_dPressureString );
-    subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::dMixtureDensity_dGlobalCompDensityString );
+
+    subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::dMixtureDensity_dPressureString )->
+      setRestartFlags( RestartFlags::NO_WRITE );
+
+    subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::dMixtureDensity_dGlobalCompDensityString )->
+      setRestartFlags( RestartFlags::NO_WRITE );
 
     PerforationData * const perforationData = subRegion.GetPerforationData();
     perforationData->registerWrapper< array2d< real64 > >( viewKeyStruct::compPerforationRateString );
-    perforationData->registerWrapper< array3d< real64 > >( viewKeyStruct::dCompPerforationRate_dPresString );
-    perforationData->registerWrapper< array4d< real64 > >( viewKeyStruct::dCompPerforationRate_dCompString );
+
+    perforationData->registerWrapper< array3d< real64 > >( viewKeyStruct::dCompPerforationRate_dPresString )->
+      setRestartFlags( RestartFlags::NO_WRITE );
+
+    perforationData->registerWrapper< array4d< real64 > >( viewKeyStruct::dCompPerforationRate_dCompString )->
+      setRestartFlags( RestartFlags::NO_WRITE );
   } );
 
 }

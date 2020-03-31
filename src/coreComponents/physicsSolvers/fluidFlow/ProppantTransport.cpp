@@ -1378,14 +1378,6 @@ void ProppantTransport::SolveSystem( DofManager const & dofManager,
   solution.zero();
 
   SolverBase::SolveSystem( dofManager, matrix, rhs, solution );
-
-  if( getLogLevel() >= 2 )
-  {
-    GEOSX_LOG_RANK( "After ProppantTransport::SolveSystem" );
-    GEOSX_LOG_RANK_0( "\nsolution:\n" );
-    std::cout << solution;
-  }
-
 }
 
 void ProppantTransport::ResetStateToBeginningOfStep( DomainPartition * const domain )

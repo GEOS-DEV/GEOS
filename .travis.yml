@@ -2,7 +2,7 @@ language: minimal
 
 env:
   global:
-  - GEOSX_TPL_TAG=96-325
+  - GEOSX_TPL_TAG=99-336
 
 # The integrated test repository contains large data (using git lfs) and we do not use them here.
 # To save time (and money) we do not let travis automatically clone all our (lfs) subrepositories and do it by hand.
@@ -103,7 +103,6 @@ geosx_pangea_build: &geosx_pangea_build
 
 stages:
   - build
-  - check_submodules
 
 jobs:
   include:
@@ -142,5 +141,3 @@ jobs:
     env:
     - DOCKER_REPOSITORY=geosx/ubuntu18.04-gcc8
     - CMAKE_BUILD_TYPE=Debug
-  - stage: check_submodules
-    script: scripts/test_submodule_updated.sh

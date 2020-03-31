@@ -8,7 +8,7 @@
                wellSolverName="compositionalMultiphaseWell"
                logLevel="1"
                targetRegions="{Region1,wellRegion1,wellRegion2,wellRegion3}">
-      <NonlinearSolverParameters newtonTol="1.0e-4"
+      <NonlinearSolverParameters newtonTol="1.0e-8"
                                  newtonMaxIter="40"/>
       <SystemSolverParameters useDirectSolver="1"
                               logLevel="0"/>
@@ -77,14 +77,11 @@
                   radius="0.1"
                   numElementsPerSegment="20">
         <Perforation name="producer1_perf1"
-                     distanceFromHead="14"
-                     wellTransmissibility="1e-15"/> 
+                     distanceFromHead="14"/> 
         <Perforation name="producer1_perf2"
-                     distanceFromHead="11"
-                     wellTransmissibility="1e-15"/> 
+                     distanceFromHead="11"/> 
         <Perforation name="producer1_perf3"
-                     distanceFromHead="8"
-                     wellTransmissibility="1e-15"/> 
+                     distanceFromHead="8"/> 
     </InternalWell> 
 
     <InternalWell name="well_producer2"
@@ -99,14 +96,11 @@
                   radius="0.1"
                   numElementsPerSegment="17">
         <Perforation name="producer2_perf1"
-                     distanceFromHead="14."
-                     wellTransmissibility="1e-15"/> 
+                     distanceFromHead="14."/> 
         <Perforation name="producer2_perf2"
-                     distanceFromHead="10"
-                     wellTransmissibility="1e-15"/> 
+                     distanceFromHead="10"/> 
         <Perforation name="producer2_perf3"
-                     distanceFromHead="6"
-                     wellTransmissibility="1e-15"/> 
+                     distanceFromHead="6"/> 
     </InternalWell> 
 
     <InternalWell name="well_injector1"
@@ -119,11 +113,9 @@
                   radius="0.1"
                   numElementsPerSegment="30">
         <Perforation name="injector1_perf1"
-                     distanceFromHead="19.5"
-                     wellTransmissibility="1e-15"/> 
+                     distanceFromHead="19.5"/> 
         <Perforation name="injector1_perf2"
-                     distanceFromHead="10.45"
-                     wellTransmissibility="1e-15"/> 
+                     distanceFromHead="10.45"/> 
     </InternalWell> 
 
   </Mesh>

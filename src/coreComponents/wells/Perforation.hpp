@@ -86,7 +86,7 @@ public:
   struct viewKeyStruct
   {
     static constexpr auto distanceFromHeadString  = "distanceFromHead";
-    static constexpr auto wellTransmissibilityString = "wellTransmissibility";
+    static constexpr auto wellTransmissibilityString = "transmissibility";
 
     dataRepository::ViewKey distanceFromHead  = { distanceFromHeadString };
     dataRepository::ViewKey wellTransmissibility = { wellTransmissibilityString };

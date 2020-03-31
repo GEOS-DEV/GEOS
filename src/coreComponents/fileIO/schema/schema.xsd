@@ -547,10 +547,10 @@
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="PerforationType">
-		<!--distanceFromHead => Perforation linear distance from well head-->
+		<!--distanceFromHead => Linear distance from well head to the perforation-->
 		<xsd:attribute name="distanceFromHead" type="real64" use="required" />
-		<!--wellTransmissibility => Perforation transmissibility-->
-		<xsd:attribute name="wellTransmissibility" type="real64" default="-1" />
+		<!--transmissibility => Perforation transmissibility-->
+		<xsd:attribute name="transmissibility" type="real64" default="-1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -946,7 +946,7 @@
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--contactRelationName => Name of contact relation to enforce constraints on fracture boundary.-->
 		<xsd:attribute name="contactRelationName" type="string" use="required" />
-		<!--couplingTypeOption => Coupling option: (FixedStress, TightlyCoupled)-->
+		<!--couplingTypeOption => Coupling option: (FIM, SIM_FixedStress)-->
 		<xsd:attribute name="couplingTypeOption" type="string" use="required" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="string" default="none" />
@@ -994,7 +994,7 @@
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--couplingTypeOption => Coupling option: (FixedStress, TightlyCoupled)-->
+		<!--couplingTypeOption => Coupling option: (FIM, SIM_FixedStress)-->
 		<xsd:attribute name="couplingTypeOption" type="string" use="required" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="string" default="none" />
@@ -1510,9 +1510,9 @@
 	</xsd:complexType>
 	<xsd:complexType name="PoroLinearElasticAnisotropicType">
 		<!--BiotCoefficient => Biot's coefficient-->
-		<xsd:attribute name="BiotCoefficient" type="real64" default="0" />
-		<!--compressibility => Fluid Compressibilty-->
-		<xsd:attribute name="compressibility" type="real64" default="-1" />
+		<xsd:attribute name="BiotCoefficient" type="real64" default="1" />
+		<!--compressibility => Pore volume compressibilty-->
+		<xsd:attribute name="compressibility" type="real64" default="0" />
 		<!--defaultDensity => Default Material Density-->
 		<xsd:attribute name="defaultDensity" type="real64" use="required" />
 		<!--defaultStiffness => Default Elastic Stiffness Tensor in Voigt notation (6x6 matrix)-->
@@ -1524,9 +1524,9 @@
 	</xsd:complexType>
 	<xsd:complexType name="PoroLinearElasticIsotropicType">
 		<!--BiotCoefficient => Biot's coefficient-->
-		<xsd:attribute name="BiotCoefficient" type="real64" default="0" />
-		<!--compressibility => Fluid Compressibilty-->
-		<xsd:attribute name="compressibility" type="real64" default="-1" />
+		<xsd:attribute name="BiotCoefficient" type="real64" default="1" />
+		<!--compressibility => Pore volume compressibilty-->
+		<xsd:attribute name="compressibility" type="real64" default="0" />
 		<!--defaultBulkModulus => Elastic Bulk Modulus Parameter-->
 		<xsd:attribute name="defaultBulkModulus" type="real64" default="-1" />
 		<!--defaultDensity => Default Material Density-->
@@ -1544,9 +1544,9 @@
 	</xsd:complexType>
 	<xsd:complexType name="PoroLinearElasticTransverseIsotropicType">
 		<!--BiotCoefficient => Biot's coefficient-->
-		<xsd:attribute name="BiotCoefficient" type="real64" default="0" />
-		<!--compressibility => Fluid Compressibilty-->
-		<xsd:attribute name="compressibility" type="real64" default="-1" />
+		<xsd:attribute name="BiotCoefficient" type="real64" default="1" />
+		<!--compressibility => Pore volume compressibilty-->
+		<xsd:attribute name="compressibility" type="real64" default="0" />
 		<!--defaultDensity => Default Material Density-->
 		<xsd:attribute name="defaultDensity" type="real64" use="required" />
 		<!--defaultPoissonRatioAxialTransverse => Elastic Shear Modulus Parameter-->

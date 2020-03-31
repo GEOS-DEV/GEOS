@@ -134,6 +134,11 @@ public:
    */
   arrayView1d< real64 const > const & GetElemVolume() const { return m_elemVolume; }
 
+  /**
+   * @brief Getter for the radius in the well
+   * @return the radius in the well
+   */
+  real64 GetElementRadius() const { return m_radius; }
 
   // getters for node data
 
