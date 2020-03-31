@@ -36,7 +36,7 @@ public:
 
   static constexpr localIndex NUM_PHASES = 2;
   static constexpr localIndex NUM_DOF    = 2;
-  
+
   // define the column offset of the derivatives
   struct ColOffset
   {
@@ -44,21 +44,21 @@ public:
     static constexpr integer DSAT  = 1;
   };
 
-  // define the row offset for the mass conservation eqns 
+  // define the row offset for the mass conservation eqns
   struct RowOffset
   {
     static constexpr integer NONWETTING = 0;
     static constexpr integer WETTING    = 1;
   };
 
-  
+
   /**
    * @brief main constructor for Group Objects
    * @param name the name of this instantiation of Group in the repository
    * @param parent the parent group of this instantiation of Group
    */
   TwoPhaseBase( const std::string & name,
-                    Group * const parent );
+                Group * const parent );
 
 
   /// deleted default constructor
@@ -188,12 +188,12 @@ public:
     // inputs
     static constexpr auto relPermNameString  = "relPermName";
     static constexpr auto relPermIndexString = "relPermIndex";
-    
-    // primary variables    
+
+    // primary variables
     static constexpr auto wettingPhaseSatString = "wettingPhaseSaturation";
     static constexpr auto deltaWettingPhaseSatString = "deltaWettingPhaseSaturation";
     static constexpr auto phaseSatString = "phaseSaturation"; // currently only used to update relperms
-    
+
     // intermediate fields
     static constexpr auto phaseMobilityString = "phaseMobility";
     static constexpr auto dPhaseMobility_dPressureString = "dPhaseMobility_dPressure";
@@ -212,8 +212,7 @@ public:
   { return viewKeysTwoPhaseBase; }
 
   struct groupKeyStruct : SolverBase::groupKeyStruct
-  {
-  } groupKeysTwoPhaseBase;
+  {} groupKeysTwoPhaseBase;
 
   groupKeyStruct & groupKeys()
   { return groupKeysTwoPhaseBase; }
@@ -226,7 +225,7 @@ protected:
   virtual void PostProcessInput() override;
 
   virtual void InitializePreSubGroups( Group * const rootGroup ) override;
- 
+
   virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const rootGroup ) override;
 
 protected:
@@ -256,8 +255,8 @@ protected:
    * @brief Update all relevant fluid models using current values of pressure and composition
    * @param dataGroup the group storing the required fields
    */
-  void UpdateRelPermModel( Group * const dataGroup ) const; 
-  
+  void UpdateRelPermModel( Group * const dataGroup ) const;
+
   /**
    * @brief Backup current values of all constitutive fields that participate in the accumulation term
    * @param domain the domain containing the mesh and fields
@@ -271,28 +270,28 @@ protected:
 
   /// views into primary variable fields
 
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_pressure;
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_deltaPressure;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_pressure;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_deltaPressure;
 
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_wettingPhaseSat;
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_deltaWettingPhaseSat;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_wettingPhaseSat;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_deltaWettingPhaseSat;
 
   /// views into auxiliary data
-  
-  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_phaseMob;
-  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_dPhaseMob_dPres;
-  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_dPhaseMob_dSat;
 
-  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_pvMult;
-  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_dPvMult_dPres;
-  
-  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_phaseDens;
-  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_dPhaseDens_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_phaseMob;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_dPhaseMob_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_dPhaseMob_dSat;
+
+  ElementRegionManager::MaterialViewAccessor< arrayView2d< real64 > > m_pvMult;
+  ElementRegionManager::MaterialViewAccessor< arrayView2d< real64 > > m_dPvMult_dPres;
+
+  ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 > > m_phaseDens;
+  ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 > > m_dPhaseDens_dPres;
 
   /// views into backup fields
 
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_porosityOld;
-  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_phaseDensOld;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_porosityOld;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_phaseDensOld;
 
   /// name of the rel perm constitutive model
   string m_relPermName;
@@ -301,8 +300,8 @@ protected:
   localIndex m_relPermIndex;
 
   /// map from the phase indices to the row indices
-  array1d<localIndex> m_phaseToRow;
-  
+  array1d< localIndex > m_phaseToRow;
+
   /// index of the wetting phase in the MaterialViewAccessors
   localIndex m_ipw;
 
