@@ -38,7 +38,7 @@ static constexpr auto perforation = "Perforation";
  * @class Perforation
  *
  * This class describes a perforation with its location, transmissibility and corresponding well element
- */  
+ */
 class Perforation : public dataRepository::Group
 {
 public:
@@ -49,7 +49,7 @@ public:
    * @param parent the parent group of this instantiation of Group
    */
   explicit Perforation( string const & name, dataRepository::Group * const parent );
-  
+
   /**
    * @brief default destructor
    */
@@ -59,7 +59,7 @@ public:
   Perforation() = delete;
 
   /// deleted copy constructor
-  Perforation( Perforation const &) = delete;
+  Perforation( Perforation const & ) = delete;
 
   /// deleted move constructor
   Perforation( Perforation && ) = delete;
@@ -98,7 +98,7 @@ protected:
   void PostProcessInput() override;
 
 private:
-  
+
   // linear distance from well head
   real64 m_distanceFromHead;
 

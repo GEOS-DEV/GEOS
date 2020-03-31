@@ -27,14 +27,14 @@ namespace geosx
 class ThickPlane : public SimpleGeometricObjectBase
 {
 public:
-  ThickPlane( const std::string& name,
+  ThickPlane( const std::string & name,
               Group * const parent );
 
   virtual ~ThickPlane() override;
 
   static string CatalogName() { return "ThickPlane"; }
 
-  bool IsCoordInObject( const R1Tensor& coord ) const override final;
+  bool IsCoordInObject( const R1Tensor & coord ) const override final;
 
   /*
    * Accessors
@@ -56,7 +56,7 @@ private:
 
   R1Tensor m_origin;
   R1Tensor m_normal;
-  real64   m_thickness;
+  real64 m_thickness;
 
   struct viewKeyStruct
   {
@@ -70,4 +70,3 @@ private:
 
 #endif /* GEOSX_MESHUTILITIES_SIMPLEGEOMETRICOBJECTS_THICKPLANE_HPP_
         */
-

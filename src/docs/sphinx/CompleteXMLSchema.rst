@@ -338,6 +338,13 @@ Element: LinearElasticIsotropic
 .. include:: ../../coreComponents/fileIO/schema/docs/LinearElasticIsotropic.rst
 
 
+.. _XML_LinearElasticTransverseIsotropic:
+
+Element: LinearElasticTransverseIsotropic
+=========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/LinearElasticTransverseIsotropic.rst
+
+
 .. _XML_Mesh:
 
 Element: Mesh
@@ -441,6 +448,13 @@ Element: PoroLinearElasticAnisotropic
 Element: PoroLinearElasticIsotropic
 ===================================
 .. include:: ../../coreComponents/fileIO/schema/docs/PoroLinearElasticIsotropic.rst
+
+
+.. _XML_PoroLinearElasticTransverseIsotropic:
+
+Element: PoroLinearElasticTransverseIsotropic
+=============================================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroLinearElasticTransverseIsotropic.rst
 
 
 .. _XML_Poroelastic:
@@ -1000,6 +1014,13 @@ Datastructure: LinearElasticIsotropic
 .. include:: ../../coreComponents/fileIO/schema/docs/LinearElasticIsotropic_other.rst
 
 
+.. _DATASTRUCTURE_LinearElasticTransverseIsotropic:
+
+Datastructure: LinearElasticTransverseIsotropic
+===============================================
+.. include:: ../../coreComponents/fileIO/schema/docs/LinearElasticTransverseIsotropic_other.rst
+
+
 .. _DATASTRUCTURE_Mesh:
 
 Datastructure: Mesh
@@ -1110,6 +1131,13 @@ Datastructure: PoroLinearElasticAnisotropic
 Datastructure: PoroLinearElasticIsotropic
 =========================================
 .. include:: ../../coreComponents/fileIO/schema/docs/PoroLinearElasticIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_PoroLinearElasticTransverseIsotropic:
+
+Datastructure: PoroLinearElasticTransverseIsotropic
+===================================================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroLinearElasticTransverseIsotropic_other.rst
 
 
 .. _DATASTRUCTURE_Poroelastic:

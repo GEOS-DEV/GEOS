@@ -31,7 +31,7 @@ class SolidMechanicsLagrangianFEM;
 class HydrofractureSolver : public SolverBase
 {
 public:
-  HydrofractureSolver( const std::string& name,
+  HydrofractureSolver( const std::string & name,
                        Group * const parent );
 
   ~HydrofractureSolver() override;
@@ -67,8 +67,8 @@ public:
                      ParallelVector & rhs,
                      ParallelVector & solution ) override final;
 
-  virtual void ImplicitStepComplete( real64 const& time_n,
-                                     real64 const& dt,
+  virtual void ImplicitStepComplete( real64 const & time_n,
+                                     real64 const & dt,
                                      DomainPartition * const domain ) override final;
 
   virtual void AssembleSystem( real64 const time,
@@ -114,7 +114,7 @@ public:
                              DomainPartition * const domain ) override;
 
   virtual void SetNextDt( real64 const & currentDt,
-                          real64 & nextDt) override;
+                          real64 & nextDt ) override;
 
 
   virtual real64 ExplicitStep( real64 const & time_n,
@@ -136,8 +136,8 @@ public:
                                                            ParallelVector * const rhs0 );
 
 
-  real64 SplitOperatorStep( real64 const& time_n,
-                            real64 const& dt,
+  real64 SplitOperatorStep( real64 const & time_n,
+                            real64 const & dt,
                             integer const cycleNumber,
                             DomainPartition * const domain );
 
@@ -145,8 +145,8 @@ public:
 
   enum class couplingTypeOption : int
   {
-    FixedStress,
-    TightlyCoupled
+    FIM,
+    SIM_FixedStress
   };
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
@@ -191,7 +191,7 @@ private:
   real64 m_densityScaling;
   real64 m_pressureScaling;
 
-  std::unique_ptr<ParallelMatrix> m_blockDiagUU;
+  std::unique_ptr< ParallelMatrix > m_blockDiagUU;
 
   ParallelMatrix m_matrix01;
   ParallelMatrix m_matrix10;

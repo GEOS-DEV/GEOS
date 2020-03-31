@@ -32,6 +32,7 @@ set( constitutive_headers
      relativePermeability/VanGenuchtenBakerRelativePermeability.hpp
      solid/LinearElasticAnisotropic.hpp
      solid/LinearElasticIsotropic.hpp
+     solid/LinearElasticTransverseIsotropic.hpp
      solid/PoroElastic.hpp
      solid/PoreVolumeCompressibleSolid.hpp
      solid/SolidBase.hpp
@@ -76,6 +77,7 @@ set( constitutive_sources
      relativePermeability/VanGenuchtenBakerRelativePermeability.cpp
      solid/LinearElasticAnisotropic.cpp
      solid/LinearElasticIsotropic.cpp
+     solid/LinearElasticTransverseIsotropic.cpp
      solid/PoroElastic.cpp
      solid/PoreVolumeCompressibleSolid.cpp
      solid/SolidBase.cpp
