@@ -1768,8 +1768,8 @@ void LagrangianContactSolver::SetFractureStateForElasticStep( DomainPartition * 
           if( fractureState[kfe] != FractureState::OPEN )
           {
             fractureState[kfe] = FractureState::STICK;
+            integerFractureState[kfe] = FractureStateToInteger( fractureState[kfe] );
           }
-          integerFractureState[kfe] = FractureStateToInteger( fractureState[kfe] );
         }
       } );
     }
