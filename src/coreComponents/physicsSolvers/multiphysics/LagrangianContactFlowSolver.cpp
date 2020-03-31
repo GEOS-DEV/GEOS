@@ -979,6 +979,13 @@ void LagrangianContactFlowSolver::AssembleForceResidualDerivativeWrtPressure( Do
                       nodeRHS,
                       3 * numNodesPerFace );
 
+            //std::stringstream TMP;
+            //TMP << kfe << " " << colDOF[0] << " ";
+            //for(int i=0;i<12;++i)
+            //  TMP << rowDOF[i] << " ";
+            //TMP << dRdP;
+            //GEOSX_LOG_RANK( TMP.str() );
+
             matrix->add( rowDOF,
                          colDOF,
                          dRdP.data(),
