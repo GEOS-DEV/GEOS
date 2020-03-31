@@ -107,7 +107,7 @@ TPFACellInnerProductKernel::Compute( arrayView2d< real64 const, nodes::REFERENCE
         // 2) assemble full coefficient tensor from principal axis/components
         HybridFVMInnerProductHelper::makeFullTensor( elemPerm, permTensor );
 
-	// TODO: take symmetry into account to optimize this
+        // TODO: take symmetry into account to optimize this
         faceConormal( 0 ) = permTensor( 0, 0 ) * faceNormal( 0 )
                             + permTensor( 0, 1 ) * faceNormal( 1 )
                             + permTensor( 0, 2 ) * faceNormal( 2 );
