@@ -13,6 +13,7 @@ localToGlobalMap           globalIndex_array                                    
 nextWellElementIndex       localIndex_array                                                                      (no description available)                                
 nextWellElementIndexGlobal localIndex_array                                                                      (no description available)                                
 nodeList                   InterObjectRelation< Array< long, 2, int_seq< long, 0l, 1l >, long, NewChaiBuffer > > (no description available)                                
+radius                     real64_array                                                                          (no description available)                                
 topRank                    integer                                                                               (no description available)                                
 topWellElementIndex        localIndex                                                                            (no description available)                                
 wellControlsName           string                                                                                (no description available)                                

@@ -41,7 +41,7 @@ public:
    * @param name the name of this instantiation of ManagedGroup in the repository
    * @param parent the parent group of this instantiation of ManagedGroup
    */
-  ReservoirSolverBase( const std::string& name,
+  ReservoirSolverBase( const std::string & name,
                        Group * const parent );
 
   /**
@@ -73,7 +73,7 @@ public:
    * These functions provide the primary interface that is required for derived classes
    */
   /**@{*/
-  
+
   virtual void ImplicitStepSetup( real64 const & time_n,
                                   real64 const & dt,
                                   DomainPartition * const domain,
@@ -129,7 +129,7 @@ public:
 
   virtual void ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
 
-  
+
   virtual void ImplicitStepComplete( real64 const & time,
                                      real64 const & dt,
                                      DomainPartition * const domain ) override;
@@ -142,7 +142,7 @@ public:
   /**@}*/
 
   /**
-   * @Brief assembles the perforation rate terms 
+   * @Brief assembles the perforation rate terms
    * @param time_n previous time value
    * @param dt time step
    * @param domain the physical domain object
@@ -160,7 +160,7 @@ public:
   FlowSolverBase * GetFlowSolver() const { return m_flowSolver; }
 
   WellSolverBase * GetWellSolver() const { return m_wellSolver; }
-  
+
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
 
@@ -175,9 +175,9 @@ public:
 
 protected:
 
-  virtual void PostProcessInput() override;
+  virtual void InitializePostInitialConditions_PreSubGroups( Group * const rootGroup ) override;
 
-  virtual void InitializePostInitialConditions_PreSubGroups(Group * const rootGroup) override;
+  virtual void PostProcessInput() override;
 
   /**
    * @brief Setup stored views into domain data for the current step

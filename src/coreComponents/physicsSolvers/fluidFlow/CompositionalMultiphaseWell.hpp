@@ -30,7 +30,7 @@ namespace dataRepository
 {
 class Group;
 }
-  
+
 namespace constitutive
 {
 class MultiFluidBase;
@@ -59,13 +59,13 @@ public:
     static constexpr integer CONTROL = 0;
     static constexpr integer MASSBAL = 1;
   };
-  
+
   /**
    * @brief main constructor for Group Objects
    * @param name the name of this instantiation of Group in the repository
    * @param parent the parent group of this instantiation of Group
    */
-  CompositionalMultiphaseWell( const string& name,
+  CompositionalMultiphaseWell( const string & name,
                                Group * const parent );
 
   /// deleted default constructor
@@ -93,9 +93,9 @@ public:
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
   static string CatalogName() { return "CompositionalMultiphaseWell"; }
-  
-  virtual void RegisterDataOnMesh(Group * const meshBodies) override;
-  
+
+  virtual void RegisterDataOnMesh( Group * const meshBodies ) override;
+
 
   /**
    * @defgroup Solver Interface Functions
@@ -109,7 +109,7 @@ public:
   CalculateResidualNorm( DomainPartition const * const domain,
                          DofManager const & dofManager,
                          ParallelVector const & rhs ) override;
-    
+
   virtual bool
   CheckSystemSolution( DomainPartition const * const domain,
                        DofManager const & dofManager,
@@ -121,11 +121,11 @@ public:
                        ParallelVector const & solution,
                        real64 const scalingFactor,
                        DomainPartition * const domain ) override;
-  
-  virtual void 
+
+  virtual void
   ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
 
-  virtual void 
+  virtual void
   ImplicitStepComplete( real64 const & time,
                         real64 const & dt,
                         DomainPartition * const domain ) override;
@@ -211,7 +211,7 @@ public:
                                     DofManager const * const dofManager,
                                     ParallelMatrix * const matrix,
                                     ParallelVector * const rhs ) override;
-  
+
   struct viewKeyStruct : WellSolverBase::viewKeyStruct
   {
     static constexpr auto dofFieldString = "compositionalWellVars";
@@ -222,7 +222,7 @@ public:
 
     static constexpr auto resRelPermNameString  = "wellRelPermName";
     static constexpr auto resRelPermIndexString = "elementRelPermIndex";
-    
+
     // primary solution field
     static constexpr auto pressureString = CompositionalMultiphaseFlow::viewKeyStruct::pressureString;
     static constexpr auto deltaPressureString = CompositionalMultiphaseFlow::viewKeyStruct::deltaPressureString;
@@ -234,7 +234,8 @@ public:
     // saturations
     static constexpr auto phaseVolumeFractionString = CompositionalMultiphaseFlow::viewKeyStruct::phaseVolumeFractionString;
     static constexpr auto dPhaseVolumeFraction_dPressureString = CompositionalMultiphaseFlow::viewKeyStruct::dPhaseVolumeFraction_dPressureString;
-    static constexpr auto dPhaseVolumeFraction_dGlobalCompDensityString = CompositionalMultiphaseFlow::viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString;
+    static constexpr auto dPhaseVolumeFraction_dGlobalCompDensityString =
+      CompositionalMultiphaseFlow::viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString;
 
     // mixture density
     static constexpr auto mixtureDensityString = "wellElementMixtureDensity";
@@ -243,13 +244,14 @@ public:
 
     // global component fractions
     static constexpr auto globalCompFractionString = CompositionalMultiphaseFlow::viewKeyStruct::globalCompFractionString;
-    static constexpr auto dGlobalCompFraction_dGlobalCompDensityString = CompositionalMultiphaseFlow::viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString;
-    
+    static constexpr auto dGlobalCompFraction_dGlobalCompDensityString =
+      CompositionalMultiphaseFlow::viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString;
+
     // perforation rates and derivatives
     static constexpr auto compPerforationRateString = "compPerforationRate";
     static constexpr auto dCompPerforationRate_dPresString = "dCompPerforationRate_dPres";
     static constexpr auto dCompPerforationRate_dCompString = "dCompPerforationRate_dComp";
-    
+
     using ViewKey = dataRepository::ViewKey;
 
     // inputs
@@ -258,7 +260,7 @@ public:
 
     ViewKey resRelPermName  = { resRelPermNameString };
     ViewKey resRelPermIndex = { resRelPermIndexString };
-    
+
     // primary solution field
     ViewKey pressure               = { pressureString };
     ViewKey deltaPressure          = { deltaPressureString };
@@ -266,12 +268,12 @@ public:
     ViewKey deltaGlobalCompDensity = { deltaGlobalCompDensityString };
     ViewKey mixtureRate            = { mixtureConnRateString };
     ViewKey deltaMixtureRate       = { deltaMixtureConnRateString };
-    
+
     // saturation
     ViewKey phaseVolFrac        = { phaseVolumeFractionString };
     ViewKey dPhaseVolFrac_dPres = { dPhaseVolumeFraction_dPressureString };
     ViewKey dPhaseVolFrac_dComp = { dPhaseVolumeFraction_dGlobalCompDensityString };
-    
+
     // mixture density
     ViewKey mixtureDensity        = { mixtureDensityString };
     ViewKey dMixtureDensity_dPres = { dMixtureDensity_dPressureString };
@@ -285,12 +287,11 @@ public:
     ViewKey compPerforationRate        = { compPerforationRateString };
     ViewKey dCompPerforationRate_dPres = { dCompPerforationRate_dPresString };
     ViewKey dCompPerforationRate_dComp = { dCompPerforationRate_dCompString };
-    
+
   } viewKeysCompMultiphaseWell;
 
   struct groupKeyStruct : SolverBase::groupKeyStruct
-  {
-  } groupKeysCompMultiphaseWell;
+  {} groupKeysCompMultiphaseWell;
 
 protected:
 
@@ -299,7 +300,7 @@ protected:
   virtual void InitializePostInitialConditions_PreSubGroups( Group * const rootGroup ) override;
 
 private:
-  
+
   /**
    * @brief Setup stored reservoir views into domain data for the current step
    */
@@ -310,7 +311,7 @@ private:
    * @param domain the domain containing the well manager to access individual wells
    */
   void InitializeWells( DomainPartition * const domain ) override;
-  
+
   /**
    * @brief Check if the controls are viable; if not, switch the controls
    * @param domain the domain containing the well manager to access individual wells
@@ -328,13 +329,13 @@ private:
    * @param well the well with its perforations
    */
   void RecordWellData( WellElementSubRegion const * const subRegion );
-  
+
   /// the max number of fluid phases
   localIndex m_numPhases;
 
   /// the number of fluid components
   localIndex m_numComponents;
-  
+
   /// the (uniform) temperature
   real64 m_temperature;
 
@@ -346,23 +347,23 @@ private:
 
   /// index of the rel perm constitutive model in the flow solver
   localIndex m_resRelPermIndex;
-  
+
   /// views into reservoir primary variable fields
 
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_resPressure;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_resPressure;
 
-  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_resGlobalCompDensity;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_resGlobalCompDensity;
 
   /// views into other reservoir variable fields
 
-  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_resPhaseVolFrac;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_resPhaseVolFrac;
 
   /// views into reservoir material fields
 
-  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_resPhaseDens;
+  ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 > > m_resPhaseDens;
 
 };
- 
+
 } // namespace geosx
 
 

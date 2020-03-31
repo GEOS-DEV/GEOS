@@ -23,20 +23,20 @@ namespace geosx
 using namespace dataRepository;
 
 ElementSubRegionBase::ElementSubRegionBase( string const & name, Group * const parent ):
-  ObjectManagerBase(name,parent),
-  m_constitutiveModels(groupKeyStruct::constitutiveModelsString,this),
+  ObjectManagerBase( name, parent ),
+  m_constitutiveModels( groupKeyStruct::constitutiveModelsString, this ),
   m_numNodesPerElement(),
   m_numEdgesPerElement(),
   m_numFacesPerElement(),
   m_elementCenter(),
   m_elementVolume()
 {
-  RegisterGroup( groupKeyStruct::constitutiveModelsString, &m_constitutiveModels, 0 );
+  RegisterGroup( groupKeyStruct::constitutiveModelsString, &m_constitutiveModels, 0 )->
+    setSizedFromParent( 1 );
 }
 
 ElementSubRegionBase::~ElementSubRegionBase()
-{
-}
+{}
 
 void ElementSubRegionBase::SetElementType( string const & elementType )
 {

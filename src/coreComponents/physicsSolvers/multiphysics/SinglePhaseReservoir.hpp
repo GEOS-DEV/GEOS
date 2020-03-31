@@ -38,7 +38,7 @@ public:
    * @param name the name of this instantiation of ManagedGroup in the repository
    * @param parent the parent group of this instantiation of ManagedGroup
    */
-  SinglePhaseReservoir( const std::string& name,
+  SinglePhaseReservoir( const std::string & name,
                         Group * const parent );
 
   /**
@@ -70,7 +70,7 @@ public:
    * These functions provide the primary interface that is required for derived classes
    */
   /**@{*/
-  
+
   virtual void SetupSystem( DomainPartition * const domain,
                             DofManager & dofManager,
                             ParallelMatrix & matrix,
@@ -103,16 +103,16 @@ private:
 
   /// views into reservoir primary variable fields
 
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_resPressure;
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_deltaResPressure;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_resPressure;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_deltaResPressure;
 
   /// views into reservoir material fields
 
-  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_resDensity;
-  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_dResDens_dPres;
+  ElementRegionManager::MaterialViewAccessor< arrayView2d< real64 > > m_resDensity;
+  ElementRegionManager::MaterialViewAccessor< arrayView2d< real64 > > m_dResDens_dPres;
 
-  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_resViscosity;
-  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_dResVisc_dPres;
+  ElementRegionManager::MaterialViewAccessor< arrayView2d< real64 > > m_resViscosity;
+  ElementRegionManager::MaterialViewAccessor< arrayView2d< real64 > > m_dResVisc_dPres;
 
 
 };

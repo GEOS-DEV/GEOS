@@ -32,7 +32,7 @@ class FlowSolverBase;
 class PoroelasticSolver : public SolverBase
 {
 public:
-  PoroelasticSolver( const std::string& name,
+  PoroelasticSolver( const std::string & name,
                      Group * const parent );
   ~PoroelasticSolver() override;
 
@@ -44,6 +44,16 @@ public:
 
   virtual void RegisterDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
 
+
+  virtual void SetupSystem( DomainPartition * const domain,
+                            DofManager & dofManager,
+                            ParallelMatrix & matrix,
+                            ParallelVector & rhs,
+                            ParallelVector & solution ) override;
+
+  virtual void SetupDofs( DomainPartition const * const domain,
+                          DofManager & dofManager ) const override;
+
   virtual void
   ImplicitStepSetup( real64 const & time_n,
                      real64 const & dt,
@@ -52,6 +62,39 @@ public:
                      ParallelMatrix & matrix,
                      ParallelVector & rhs,
                      ParallelVector & solution ) override final;
+
+  virtual void AssembleSystem( real64 const time,
+                               real64 const dt,
+                               DomainPartition * const domain,
+                               DofManager const & dofManager,
+                               ParallelMatrix & matrix,
+                               ParallelVector & rhs ) override;
+
+  void AssembleCouplingTerms( DomainPartition * const domain,
+                              DofManager const & dofManager,
+                              ParallelMatrix * const matrix,
+                              ParallelVector * const rhs );
+
+  virtual void ApplyBoundaryConditions( real64 const time_n,
+                                        real64 const dt,
+                                        DomainPartition * const domain,
+                                        DofManager const & dofManager,
+                                        ParallelMatrix & matrix,
+                                        ParallelVector & rhs ) override;
+
+  virtual real64 CalculateResidualNorm( DomainPartition const * const domain,
+                                        DofManager const & dofManager,
+                                        ParallelVector const & rhs ) override;
+
+  virtual void SolveSystem( DofManager const & dofManager,
+                            ParallelMatrix & matrix,
+                            ParallelVector & rhs,
+                            ParallelVector & solution ) override;
+
+  virtual void ApplySystemSolution( DofManager const & dofManager,
+                                    ParallelVector const & solution,
+                                    real64 const scalingFactor,
+                                    DomainPartition * const domain ) override;
 
   virtual void
   ImplicitStepComplete( real64 const & time_n,
@@ -69,16 +112,16 @@ public:
 
   void UpdateDeformationForCoupling( DomainPartition * const domain );
 
-  real64 SplitOperatorStep( real64 const& time_n,
-                            real64 const& dt,
+  real64 SplitOperatorStep( real64 const & time_n,
+                            real64 const & dt,
                             integer const cycleNumber,
-                            DomainPartition * const domain);
+                            DomainPartition * const domain );
 
 
   enum class couplingTypeOption : int
   {
-    FixedStress,
-    TightlyCoupled
+    FIM,
+    SIM_FixedStress
   };
 
 
@@ -96,16 +139,22 @@ public:
   } poroElasticSolverViewKeys;
 
 
-  SolidMechanicsLagrangianFEM * getSolidSolver()             { return this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolidMechanicsLagrangianFEM *>(); }
-  SolidMechanicsLagrangianFEM const * getSolidSolver() const { return this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolidMechanicsLagrangianFEM const *>(); }
+  SolidMechanicsLagrangianFEM * getSolidSolver()
+  {
+    return this->getParent()->GetGroup( m_solidSolverName )->group_cast< SolidMechanicsLagrangianFEM * >();
+  }
+  SolidMechanicsLagrangianFEM const * getSolidSolver() const
+  {
+    return this->getParent()->GetGroup( m_solidSolverName )->group_cast< SolidMechanicsLagrangianFEM const * >();
+  }
 
-  FlowSolverBase * getFlowSolver()             { return this->getParent()->GetGroup(m_flowSolverName)->group_cast<FlowSolverBase *>(); }
-  FlowSolverBase const * getFlowSolver() const { return this->getParent()->GetGroup(m_flowSolverName)->group_cast<FlowSolverBase const *>(); }
+  FlowSolverBase * getFlowSolver()             { return this->getParent()->GetGroup( m_flowSolverName )->group_cast< FlowSolverBase * >(); }
+  FlowSolverBase const * getFlowSolver() const { return this->getParent()->GetGroup( m_flowSolverName )->group_cast< FlowSolverBase const * >(); }
 
 protected:
   virtual void PostProcessInput() override final;
 
-  virtual void InitializePostInitialConditions_PreSubGroups(dataRepository::Group * const problemManager) override final;
+  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const problemManager ) override final;
 
 
 private:
@@ -114,6 +163,12 @@ private:
   string m_flowSolverName;
   string m_couplingTypeOptionString;
   couplingTypeOption m_couplingTypeOption;
+
+  // pointer to the flow sub-solver
+  FlowSolverBase * m_flowSolver;
+
+  // pointer to the solid mechanics sub-solver
+  SolidMechanicsLagrangianFEM * m_solidSolver;
 
 };
 

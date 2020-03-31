@@ -21,11 +21,13 @@
 
 #include "common/DataTypes.hpp"
 #include "common/DataLayouts.hpp"
+#include "mesh/InterObjectRelation.hpp"
 
 namespace geosx
 {
 namespace computationalGeometry
 {
+
 
 /**
  * Calculates the intersection between a line and a plane
@@ -35,10 +37,10 @@ namespace computationalGeometry
  * @param[in] plane origin
  * @return area of the convex 3D polygon
  */
-R1Tensor LinePlaneIntersection(R1Tensor lineDir,
-                               R1Tensor linePoint,
-                               R1Tensor planeNormal,
-                               R1Tensor planeOrigin);
+R1Tensor LinePlaneIntersection( R1Tensor lineDir,
+                                R1Tensor linePoint,
+                                R1Tensor planeNormal,
+                                R1Tensor planeOrigin );
 
 /**
  * Calculates the area of a polygon given the set of points defining it
@@ -47,9 +49,9 @@ R1Tensor LinePlaneIntersection(R1Tensor lineDir,
  * @param[in] unit normal vector to the surface
  * @return area
  */
-real64 ComputeSurfaceArea(array1d<R1Tensor> const & points,
-                          localIndex const numPoints,
-                          R1Tensor const &  normal);
+real64 ComputeSurfaceArea( array1d< R1Tensor > const & points,
+                           localIndex const numPoints,
+                           R1Tensor const & normal );
 
 /**
  * Given a set of points on a plane it orders them counterclockwise
@@ -58,9 +60,9 @@ real64 ComputeSurfaceArea(array1d<R1Tensor> const & points,
  * @param[in] unit normal vector to the surface
  * @return reordered points
  */
-array1d<R1Tensor> orderPointsCCW(array1d<R1Tensor> const & points,
-                                 localIndex const  numPoints,
-                                 R1Tensor const &  normal);
+array1d< R1Tensor > orderPointsCCW( array1d< R1Tensor > const & points,
+                                    localIndex const numPoints,
+                                    R1Tensor const & normal );
 /**
  * Calculates the centroid of a convex 3D polygon as well as the normal
  * @param[in] pointIndices list of index references for the points array in
@@ -73,7 +75,7 @@ array1d<R1Tensor> orderPointsCCW(array1d<R1Tensor> const & points,
  */
 real64 Centroid_3DPolygon( localIndex const * const pointsIndices,
                            localIndex const numPoints,
-                           arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & points,
+                           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & points,
                            R1Tensor & center,
                            R1Tensor & normal,
                            real64 areaTolerance = 0.0 );
@@ -88,8 +90,8 @@ real64 Centroid_3DPolygon( localIndex const * const pointsIndices,
  * @param[out] normal Normal to the face
  * @return area of the convex 3D polygon
  */
-real64 Centroid_3DPolygon( arrayView1d<localIndex const> const & pointsIndices,
-                           arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & points,
+real64 Centroid_3DPolygon( arrayView1d< localIndex const > const & pointsIndices,
+                           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & points,
                            R1Tensor & center,
                            R1Tensor & normal,
                            real64 areaTolerance = 0.0 );
@@ -107,8 +109,8 @@ real64 Centroid_3DPolygon( arrayView1d<localIndex const> const & pointsIndices,
  */
 real64 Centroid_3DPolygon( localIndex const * const pointsIndices,
                            localIndex const numPoints,
-                           arrayView1d<R1Tensor const> const & pointReferences,
-                           arrayView1d<R1Tensor const> const & pointDisplacements,
+                           arrayView1d< R1Tensor const > const & pointReferences,
+                           arrayView1d< R1Tensor const > const & pointDisplacements,
                            R1Tensor & center,
                            R1Tensor & normal );
 
@@ -123,9 +125,9 @@ real64 Centroid_3DPolygon( localIndex const * const pointsIndices,
  * @param[out] normal Normal to the face
  * @return area of the convex 3D polygon
  */
-real64 Centroid_3DPolygon( arrayView1d<localIndex const> const & pointsIndices,
-                           arrayView1d<R1Tensor const> const & pointReferences,
-                           arrayView1d<R1Tensor const> const & pointDisplacements,
+real64 Centroid_3DPolygon( arrayView1d< localIndex const > const & pointsIndices,
+                           arrayView1d< R1Tensor const > const & pointReferences,
+                           arrayView1d< R1Tensor const > const & pointDisplacements,
                            R1Tensor & center,
                            R1Tensor & normal );
 
@@ -142,10 +144,23 @@ real64 Centroid_3DPolygon( arrayView1d<localIndex const> const & pointsIndices,
  *
  * @note For faces with n>3 nodes that are non-planar, average normal is used
  */
-bool IsPointInsidePolyhedron( arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodeCoordinates,
-                              array1d<array1d<localIndex>> const & faceNodeIndicies,
+bool IsPointInsidePolyhedron( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodeCoordinates,
+                              array1d< array1d< localIndex > > const & faceNodeIndicies,
                               R1Tensor const & point,
                               real64 const areaTolerance = 0.0 );
+
+/**
+ * @brief Compute the dimensions of the bounding box containing the element
+          defined here by the coordinates of its vertices
+ * @param[in] elemIndex index of the element in pointIndices
+ * @param[in] pointIndices the indices of the vertices in pointCoordinates
+ * @param[in] pointCoordinates the vertices coordinates
+ * @return an R1Tensor containing the dimensions of the box
+ */
+template< typename NODEMAP >
+R1Tensor GetBoundingBox( localIndex elemIndex,
+                         NODEMAP const & pointIndices,
+                         arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & pointCoordinates );
 
 inline
 GEOSX_HOST_DEVICE
@@ -190,6 +205,15 @@ real64 WedgeVolume( R1Tensor const * const points );
 real64 PyramidVolume( R1Tensor const * const points );
 
 }
+
+extern template R1Tensor computationalGeometry::GetBoundingBox( localIndex elemIndex,
+                                                                InterObjectRelation< array2d< localIndex, RAJA::PERM_IJ > > const & pointIndices,
+                                                                arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & pointCoordinates );
+extern template R1Tensor computationalGeometry::GetBoundingBox( localIndex elemIndex,
+                                                                InterObjectRelation< array2d< localIndex, RAJA::PERM_JI > > const & pointIndices,
+                                                                arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & pointCoordinates );
+
+
 } /* namespace geosx */
 
 #endif /* GEOSX_MESHUTILITIES_COMPUTATIONALGEOMETRY_HPP_ */

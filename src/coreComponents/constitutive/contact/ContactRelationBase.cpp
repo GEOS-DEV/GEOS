@@ -34,31 +34,29 @@ namespace constitutive
 
 ContactRelationBase::ContactRelationBase( string const & name,
                                           Group * const parent ):
-  ConstitutiveBase(name, parent),
-  m_penaltyStiffness(0.0),
-  m_apertureFunction(nullptr),
-  m_apertureTolerance(1.0e-99)
+  ConstitutiveBase( name, parent ),
+  m_penaltyStiffness( 0.0 ),
+  m_apertureFunction( nullptr ),
+  m_apertureTolerance( 1.0e-99 )
 {
   registerWrapper( viewKeyStruct::penaltyStiffnessString, &m_penaltyStiffness, 0 )->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Value of the penetration penalty stiffness. Units of Pressure/length");
+    setInputFlag( InputFlags::REQUIRED )->
+    setDescription( "Value of the penetration penalty stiffness. Units of Pressure/length" );
 
   registerWrapper( viewKeyStruct::apertureToleranceString, &m_apertureTolerance, 0 )->
-    setApplyDefaultValue(1.0e-9)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Value to be used to avoid floating point errors in expressions involving aperture. "
-                   "For example in the case of dividing by the actual aperture (not the effective aperture "
-                   "that results from the aperture function) this value may be used to avoid 1/0 errors. "
-                   "Note that this value may have some physical significance in its usage, as it may be used "
-                   "to smooth out highly nonlinear behavior associated with 1/0 in addition to avoiding the "
-                   "1/0 error.");
+    setApplyDefaultValue( 1.0e-9 )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Value to be used to avoid floating point errors in expressions involving aperture. "
+                    "For example in the case of dividing by the actual aperture (not the effective aperture "
+                    "that results from the aperture function) this value may be used to avoid 1/0 errors. "
+                    "Note that this value may have some physical significance in its usage, as it may be used "
+                    "to smooth out highly nonlinear behavior associated with 1/0 in addition to avoiding the "
+                    "1/0 error." );
 
 }
 
 ContactRelationBase::~ContactRelationBase()
-{
-}
-
+{}
 
 
 
@@ -68,33 +66,33 @@ ContactRelationBase::CreateChild( string const & catalogKey, string const & chil
   Group * rval = nullptr;
 
   FunctionBase::CatalogInterface::CatalogType const & functionCatalog = FunctionBase::GetCatalog();
-  if( functionCatalog.count(catalogKey) )
+  if( functionCatalog.count( catalogKey ) )
   {
     m_apertureFunction = (FunctionBase::CatalogInterface::Factory( catalogKey, childName, this )).release();
     rval =  FunctionManager::Instance().RegisterGroup( childName, m_apertureFunction, 1 );
   }
   else
   {
-    GEOSX_ERROR(catalogKey<<" is an invalid key ContactRelationBase child group.");
+    GEOSX_ERROR( catalogKey<<" is an invalid key ContactRelationBase child group." );
   }
   return rval;
 }
 
 
-void ContactRelationBase::SetSchemaDeviations(xmlWrapper::xmlNode,
-                                              xmlWrapper::xmlNode schemaParent,
-                                              integer)
+void ContactRelationBase::SetSchemaDeviations( xmlWrapper::xmlNode,
+                                               xmlWrapper::xmlNode schemaParent,
+                                               integer )
 {
-  xmlWrapper::xmlNode targetChoiceNode = schemaParent.child("xsd:choice");
+  xmlWrapper::xmlNode targetChoiceNode = schemaParent.child( "xsd:choice" );
   if( targetChoiceNode.empty() )
   {
-    targetChoiceNode = schemaParent.prepend_child("xsd:choice");
-    targetChoiceNode.append_attribute("minOccurs") = "0";
-    targetChoiceNode.append_attribute("maxOccurs") = "1";
+    targetChoiceNode = schemaParent.prepend_child( "xsd:choice" );
+    targetChoiceNode.append_attribute( "minOccurs" ) = "0";
+    targetChoiceNode.append_attribute( "maxOccurs" ) = "1";
 
-    xmlWrapper::xmlNode tableFunctionNode = targetChoiceNode.prepend_child("xsd:element");
-    tableFunctionNode.append_attribute("name") = "TableFunction";
-    tableFunctionNode.append_attribute("type") = "TableFunctionType";
+    xmlWrapper::xmlNode tableFunctionNode = targetChoiceNode.prepend_child( "xsd:element" );
+    tableFunctionNode.append_attribute( "name" ) = "TableFunction";
+    tableFunctionNode.append_attribute( "type" ) = "TableFunctionType";
   }
 }
 
@@ -102,36 +100,36 @@ void ContactRelationBase::SetSchemaDeviations(xmlWrapper::xmlNode,
 
 void ContactRelationBase::InitializePreSubGroups( Group * const )
 {
-  TableFunction * const apertureTable = dynamic_cast<TableFunction*>(m_apertureFunction);
+  TableFunction * const apertureTable = dynamic_cast< TableFunction * >(m_apertureFunction);
   if( apertureTable!=nullptr )
   {
-    array1d<array1d<real64>> & xvals0 = apertureTable->getCoordinates();
-    array1d<real64> &          yvals = apertureTable->getValues();
+    array1d< array1d< real64 > > & xvals0 = apertureTable->getCoordinates();
+    array1d< real64 > & yvals = apertureTable->getValues();
 
     GEOSX_ERROR_IF( xvals0.size() > 1,
-                   "Aperture limiter table cannot be greater than a 1d table.");
+                    "Aperture limiter table cannot be greater than a 1d table." );
 
-    array1d<real64> & xvals = xvals0[0];
+    array1d< real64 > & xvals = xvals0[0];
 
-    GEOSX_ERROR_IF( xvals.back() > 0.0 || xvals.back() < 0.0 ,
-                   "Invalid aperture limiter table. Last coordinate must be zero!!" );
+    GEOSX_ERROR_IF( xvals.back() > 0.0 || xvals.back() < 0.0,
+                    "Invalid aperture limiter table. Last coordinate must be zero!!" );
 
     GEOSX_ERROR_IF( xvals.size() < 2,
-                   "Invalid aperture limiter table. Must have more than two points specified");
+                    "Invalid aperture limiter table. Must have more than two points specified" );
 
     localIndex n=xvals.size()-1;
-    real64 const slope = (yvals[n]-yvals[n-1]) / (xvals[n]-xvals[n-1]) ;
+    real64 const slope = (yvals[n]-yvals[n-1]) / (xvals[n]-xvals[n-1]);
 
     GEOSX_ERROR_IF( slope >= 1.0,
-                   "Invalid aperture table. slope of last two points >= 1 is invalid.");
+                    "Invalid aperture table. slope of last two points >= 1 is invalid." );
 
     real64 m_apertureTransition = (yvals[n] - slope * xvals[n] ) / ( 1.0 - slope );
 
-    xvals.push_back(m_apertureTransition);
-    yvals.push_back(m_apertureTransition);
+    xvals.push_back( m_apertureTransition );
+    yvals.push_back( m_apertureTransition );
 
-    xvals.push_back(m_apertureTransition*10e9);
-    yvals.push_back(m_apertureTransition*10e9);
+    xvals.push_back( m_apertureTransition*10e9 );
+    yvals.push_back( m_apertureTransition*10e9 );
 
     apertureTable->reInitializeFunction();
   }
@@ -148,4 +146,3 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase, ContactRelationBase, string const &, G
 
 }
 } /* namespace geosx */
-

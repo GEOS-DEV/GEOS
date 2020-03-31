@@ -33,33 +33,32 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
-  
-ReservoirSolverBase::ReservoirSolverBase( const std::string& name,
+
+ReservoirSolverBase::ReservoirSolverBase( const std::string & name,
                                           Group * const parent ):
-  SolverBase(name,parent),
+  SolverBase( name, parent ),
   m_flowSolverName(),
   m_wellSolverName()
 {
-  registerWrapper(viewKeyStruct::flowSolverNameString, &m_flowSolverName, 0)->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Name of the flow solver to use in the reservoir-well system solver");
+  registerWrapper( viewKeyStruct::flowSolverNameString, &m_flowSolverName, 0 )->
+    setInputFlag( InputFlags::REQUIRED )->
+    setDescription( "Name of the flow solver to use in the reservoir-well system solver" );
 
-  registerWrapper(viewKeyStruct::wellSolverNameString, &m_wellSolverName, 0)->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Name of the well solver to use in the reservoir-well system solver");
+  registerWrapper( viewKeyStruct::wellSolverNameString, &m_wellSolverName, 0 )->
+    setInputFlag( InputFlags::REQUIRED )->
+    setDescription( "Name of the well solver to use in the reservoir-well system solver" );
 
 }
 
 ReservoirSolverBase::~ReservoirSolverBase()
-{
-}
+{}
 
 void ReservoirSolverBase::PostProcessInput()
 {
   SolverBase::PostProcessInput();
 
-  m_flowSolver = this->getParent()->GetGroup<FlowSolverBase>( m_flowSolverName );
-  m_wellSolver = this->getParent()->GetGroup<WellSolverBase>( m_wellSolverName );
+  m_flowSolver = this->getParent()->GetGroup< FlowSolverBase >( m_flowSolverName );
+  m_wellSolver = this->getParent()->GetGroup< WellSolverBase >( m_wellSolverName );
 
   GEOSX_ERROR_IF( m_flowSolver == nullptr, "Flow solver not found or invalid type: " << m_flowSolverName );
   GEOSX_ERROR_IF( m_wellSolver == nullptr, "Well solver not found or invalid type: " << m_wellSolverName );
@@ -68,11 +67,28 @@ void ReservoirSolverBase::PostProcessInput()
   m_flowSolver->setReservoirWellsCoupling();
 }
 
-void ReservoirSolverBase::InitializePostInitialConditions_PreSubGroups(Group * const rootGroup)
+void ReservoirSolverBase::InitializePostInitialConditions_PreSubGroups( Group * const rootGroup )
 {
-  SolverBase::InitializePostInitialConditions_PreSubGroups(rootGroup);
+  SolverBase::InitializePostInitialConditions_PreSubGroups( rootGroup );
 
-  DomainPartition * const domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
+  DomainPartition * const domain = rootGroup->GetGroup< DomainPartition >( keys::domain );
+
+  MeshLevel * const meshLevel = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
+  ElementRegionManager * const elemManager = meshLevel->getElemManager();
+
+  // loop over the wells
+  elemManager->forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion & subRegion )
+  {
+    // get the string to access the permeability
+    string const permeabilityKey = FlowSolverBase::viewKeyStruct::permeabilityString;
+
+    PerforationData * const perforationData = subRegion.GetPerforationData();
+
+    // compute the Peaceman index (if not read from XML)
+    perforationData->ComputeWellTransmissibility( *meshLevel,
+                                                  &subRegion,
+                                                  permeabilityKey );
+  } );
 
   // bind the stored reservoir views to the current domain
   ResetViews( domain );
@@ -89,7 +105,7 @@ real64 ReservoirSolverBase::SolverStep( real64 const & time_n,
 
   // setup the coupled linear system
   SetupSystem( domain, m_dofManager, m_matrix, m_rhs, m_solution );
-  
+
   // setup reservoir and well systems
   ImplicitStepSetup( time_n, dt, domain, m_dofManager, m_matrix, m_rhs, m_solution );
 
@@ -150,18 +166,21 @@ void ReservoirSolverBase::AssembleSystem( real64 const time_n,
                                           ParallelMatrix & matrix,
                                           ParallelVector & rhs )
 {
-  // open() and zero() are called from the flow solver
 
   // assemble J_RR (excluding perforation rates)
   m_flowSolver->AssembleSystem( time_n, dt, domain,
                                 dofManager,
                                 matrix,
                                 rhs );
+
   // assemble J_WW (excluding perforation rates)
   m_wellSolver->AssembleSystem( time_n, dt, domain,
                                 dofManager,
                                 matrix,
                                 rhs );
+
+  matrix.open();
+  rhs.open();
 
   // assemble perforation rates in J_WR, J_RW, J_RR and J_WW
   AssembleCouplingTerms( time_n, dt, domain,
@@ -172,12 +191,12 @@ void ReservoirSolverBase::AssembleSystem( real64 const time_n,
   matrix.close();
   rhs.close();
 
-  if( getLogLevel() == 2 )
+  if( getLogLevel() >= 2 )
   {
     GEOSX_LOG_RANK_0( "After ReservoirSolverBase::AssembleSystem" );
-    GEOSX_LOG_RANK_0("\nJacobian:\n");
+    GEOSX_LOG_RANK_0( "\nJacobian:\n" );
     std::cout << matrix;
-    GEOSX_LOG_RANK_0("\nResidual:\n");
+    GEOSX_LOG_RANK_0( "\nResidual:\n" );
     std::cout << rhs;
   }
 
@@ -186,10 +205,10 @@ void ReservoirSolverBase::AssembleSystem( real64 const time_n,
     integer newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
 
     string filename_mat = "matrix_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
-    matrix.write( filename_mat, true );
+    matrix.write( filename_mat, LAIOutputFormat::MATRIX_MARKET );
 
     string filename_rhs = "rhs_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
-    rhs.write( filename_rhs, true );
+    rhs.write( filename_rhs, LAIOutputFormat::MATRIX_MARKET );
 
     GEOSX_LOG_RANK_0( "After ReservoirSolverBase::AssembleSystem" );
     GEOSX_LOG_RANK_0( "Jacobian: written to " << filename_mat );
@@ -231,7 +250,7 @@ real64 ReservoirSolverBase::CalculateResidualNorm( DomainPartition const * const
   real64 const wellResidualNorm      = m_wellSolver->CalculateResidualNorm( domain, dofManager, rhs );
 
   return sqrt( reservoirResidualNorm*reservoirResidualNorm
-             + wellResidualNorm*wellResidualNorm );
+               + wellResidualNorm*wellResidualNorm );
 }
 
 void ReservoirSolverBase::SolveSystem( DofManager const & dofManager,
@@ -243,13 +262,6 @@ void ReservoirSolverBase::SolveSystem( DofManager const & dofManager,
   solution.zero();
 
   SolverBase::SolveSystem( dofManager, matrix, rhs, solution );
-
-  if( getLogLevel() == 2 )
-  {
-    GEOSX_LOG_RANK_0("After SinglePhaseFlow::SolveSystem");
-    GEOSX_LOG_RANK_0("\nSolution:\n");
-    std::cout << solution;
-  }
 }
 
 bool ReservoirSolverBase::CheckSystemSolution( DomainPartition const * const domain,
@@ -282,8 +294,8 @@ void ReservoirSolverBase::ResetStateToBeginningOfStep( DomainPartition * const d
   m_wellSolver->ResetStateToBeginningOfStep( domain );
 }
 
-void ReservoirSolverBase::ImplicitStepComplete( real64 const& time_n,
-                                                real64 const& dt,
+void ReservoirSolverBase::ImplicitStepComplete( real64 const & time_n,
+                                                real64 const & dt,
                                                 DomainPartition * const domain )
 {
   m_flowSolver->ImplicitStepComplete( time_n, dt, domain );
@@ -291,8 +303,7 @@ void ReservoirSolverBase::ImplicitStepComplete( real64 const& time_n,
 }
 
 void ReservoirSolverBase::ResetViews( DomainPartition * const GEOSX_UNUSED_PARAM( domain ) )
-{
-}
+{}
 
 
 } /* namespace geosx */
