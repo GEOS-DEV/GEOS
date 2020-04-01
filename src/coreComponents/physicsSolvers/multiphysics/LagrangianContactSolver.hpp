@@ -310,6 +310,8 @@ public:
 
   bool UpdateFractureState( DomainPartition * const domain ) const;
 
+  void SynchronizeFractureState( DomainPartition * const domain ) const;
+
   bool IsFractureAllInStickCondition( DomainPartition const * const domain ) const;
 
   void ComputeFractureStateStatistics( DomainPartition const * const domain,

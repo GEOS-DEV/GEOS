@@ -226,6 +226,14 @@ void LagrangianContactSolver::ImplicitStepComplete( real64 const & time_n,
       } );
     }
   } );
+
+  // Need a synchronization of deltaTraction as will be used in AssembleStabilization
+  std::map< string, string_array > fieldNames;
+  fieldNames["elems"].push_back( viewKeyStruct::deltaTractionString );
+  CommunicationTools::SynchronizeFields( fieldNames,
+                                         domain->getMeshBody( 0 )->getMeshLevel( 0 ),
+                                         domain->getNeighbors() );
+
   GEOSX_LOG_LEVEL_RANK_0( 2, " ***** ImplicitStepComplete *****" );
 }
 
@@ -915,6 +923,8 @@ void LagrangianContactSolver::AssembleSystem( real64 const time,
                                               ParallelVector & rhs )
 {
   GEOSX_MARK_FUNCTION;
+
+  SynchronizeFractureState( domain );
 
   m_solidSolver->AssembleSystem( time,
                                  dt,
@@ -1867,12 +1877,7 @@ bool LagrangianContactSolver::UpdateFractureState( DomainPartition * const domai
   } );
 
   // Need to synchronize the fracture state due to the use will be made of in AssemblyStabilization
-  std::map< string, string_array > fieldNames;
-  fieldNames["elems"].push_back( viewKeyStruct::fractureStateString );
-
-  CommunicationTools::SynchronizeFields( fieldNames,
-                                         domain->getMeshBody( 0 )->getMeshLevel( 0 ),
-                                         domain->getNeighbors() );
+  SynchronizeFractureState( domain );
 
   // Compute if globally the fracture state has changed
   bool globalCheckActiveSet;
@@ -1883,6 +1888,16 @@ bool LagrangianContactSolver::UpdateFractureState( DomainPartition * const domai
                          MPI_COMM_GEOSX );
 
   return globalCheckActiveSet;
+}
+
+void LagrangianContactSolver::SynchronizeFractureState( DomainPartition * const domain ) const
+{
+  std::map< string, string_array > fieldNames;
+  fieldNames["elems"].push_back( viewKeyStruct::fractureStateString );
+
+  CommunicationTools::SynchronizeFields( fieldNames,
+                                         domain->getMeshBody( 0 )->getMeshLevel( 0 ),
+                                         domain->getNeighbors() );
 }
 
 bool LagrangianContactSolver::IsFractureAllInStickCondition( DomainPartition const * const domain ) const
@@ -1994,17 +2009,14 @@ bool LagrangianContactSolver::IsElementInOpenState( FaceElementSubRegion const &
 {
   GEOSX_MARK_FUNCTION;
 
+  // It can be used only thanks to the global synchronization in AssembleSystem (SynchronizeFractureState)
   bool res = false;
   if( subRegion.hasWrapper( m_tractionKey ) )
   {
-    arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
     arrayView1d< FractureState const > const & fractureState = subRegion.getReference< array1d< FractureState > >( viewKeyStruct::fractureStateString );
     if( kfe >= 0 && kfe < subRegion.size() )
     {
-      if( ghostRank[kfe] < 0 )
-      {
-        res = fractureState[kfe] == FractureState::OPEN;
-      }
+      res = fractureState[kfe] == FractureState::OPEN;
     }
     else
     {

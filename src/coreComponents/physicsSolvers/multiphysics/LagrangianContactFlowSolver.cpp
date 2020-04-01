@@ -671,6 +671,11 @@ void LagrangianContactFlowSolver::AssembleSystem( real64 const time,
 
   // Need to synchronize the two iteration counters
   m_contactSolver->getNonlinearSolverParameters().m_numNewtonIterations = m_nonlinearSolverParameters.m_numNewtonIterations;
+
+  // SynchronizeFractureState is called in AssembleSystem and it is needed by:
+  // - UpdateOpeningForFlow
+  // - AssembleFluidMassResidualDerivativeWrtDisplacement
+  // - AssembleStabilization
   m_contactSolver->AssembleSystem( time,
                                    dt,
                                    domain,
