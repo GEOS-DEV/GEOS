@@ -1192,7 +1192,7 @@ void HypreMatrix::write( string const & filename,
           FILE * fp = std::fopen( filename.c_str(), "w" );
           hypre_fprintf( fp, "%s", "%%MatrixMarket matrix coordinate real general\n" );
 
-          hypre_fprintf( fp, "%d %d %d\n", 0, 0, 0 );
+          hypre_fprintf( fp, "%d %d %d\n", numGlobalRows(), numGlobalCols(), 0 );
           std::fclose( fp );
         }
       }
