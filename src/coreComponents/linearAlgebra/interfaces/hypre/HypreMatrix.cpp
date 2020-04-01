@@ -1185,12 +1185,13 @@ void HypreMatrix::write( string const & filename,
     }
     case LAIOutputFormat::MATRIX_MARKET:
     {
-      // Construct a local CSR matrix copy of the distributed parcsr matrix
-      // on every process with at least one row
+      // Copy distributed parcsr matrix in a local CSR matrix on every process
+      // with at least one row
+      // Warning: works for a parcsr matrix that is smaller than 2^31-1
       hypre_CSRMatrix *CSRmatrix;
       CSRmatrix = hypre_ParCSRMatrixToCSRMatrixAll( m_parcsr_mat );
 
-      // Identify the smallest process where the CRS matrix exists
+      // Identify the smallest process where CSRmatrix exists
       int myID = MpiWrapper::Comm_rank( getComm() );
       if( CSRmatrix == 0 )
       {
@@ -1198,13 +1199,13 @@ void HypreMatrix::write( string const & filename,
       }
       int printID = MpiWrapper::Min( myID, getComm() );
 
-      // Write matrix
+      // Write to file CSRmatrix
       if( MpiWrapper::Comm_rank( getComm() ) == printID )
       {
-        hypre_CSRMatrixPrintMM( CSRmatrix, 1, 1, 0, filename.c_str());
+        hypre_CSRMatrixPrintMM( CSRmatrix, 1, 1, 0, filename.c_str() );
       }
 
-      // Destroy local CSR matrix
+      // Destroy CSRmatrix
       if( CSRmatrix )
       {
         GEOSX_LAI_CHECK_ERROR( hypre_CSRMatrixDestroy( CSRmatrix ) );

@@ -397,13 +397,13 @@ void HypreVector::write( string const & filename,
     }
     case LAIOutputFormat::MATRIX_MARKET:
     {
-      // Construct a local copy of the distributed parVector
-      // on every process with at least one component
-      // Warning: works for a ParCSRMatrix that is smaller than 2^31-1
+      // Copy distributed parVector in a local vector on every process
+      // with at least one component
+      // Warning: works for a parVector that is smaller than 2^31-1
       hypre_Vector *vector;
       vector = hypre_ParVectorToVectorAll( m_par_vector );
 
-      // Identify the smallest process where the local vector exists
+      // Identify the smallest process where vector exists
       int myID = MpiWrapper::Comm_rank( getComm() );
       if( vector == 0 )
       {
@@ -411,11 +411,11 @@ void HypreVector::write( string const & filename,
       }
       int printID = MpiWrapper::Min( myID, getComm() );
 
-      // Write vector
+      // Write to file vector
       if( MpiWrapper::Comm_rank( getComm() ) == printID )
       {
         FILE * fp = std::fopen( filename.c_str(), "w" );
-        HYPRE_Real * data = hypre_VectorData( vector );;
+        HYPRE_Real * data = hypre_VectorData( vector );
         HYPRE_Int size    = hypre_VectorSize( vector );
 
         hypre_fprintf( fp, "%s%s%s", "%", "%", "MatrixMarket matrix array real general\n" );
@@ -428,7 +428,7 @@ void HypreVector::write( string const & filename,
         std::fclose( fp );
       }
 
-      // Destroy local CSR matrix
+      // Destroy vector
       if( vector )
       {
         GEOSX_LAI_CHECK_ERROR( hypre_SeqVectorDestroy( vector ) );
