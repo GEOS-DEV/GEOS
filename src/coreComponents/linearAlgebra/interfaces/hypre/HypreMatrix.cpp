@@ -1183,7 +1183,34 @@ void HypreMatrix::write( string const & filename,
       GEOSX_LAI_CHECK_ERROR( hypre_ParCSRMatrixPrintIJ( m_parcsr_mat, 1, 1, filename.c_str() ) );
       break;
     }
+    case LAIOutputFormat::MATRIX_MARKET:
+    {
+      // Construct a local CSR matrix copy of the distributed parcsr matrix
+      // on every process with at least one row
+      hypre_CSRMatrix *CSRmatrix;
+      CSRmatrix = hypre_ParCSRMatrixToCSRMatrixAll( m_parcsr_mat );
 
+      // Identify the smallest process where the CRS matrix exists
+      int myID = MpiWrapper::Comm_rank( getComm() );
+      if( CSRmatrix == 0 )
+      {
+        myID = MpiWrapper::Comm_size( getComm() );
+      }
+      int printID = MpiWrapper::Min( myID, getComm() );
+
+      // Write matrix
+      if( MpiWrapper::Comm_rank( getComm() ) == printID )
+      {
+        hypre_CSRMatrixPrintMM( CSRmatrix, 1, 1, 0, filename.c_str());
+      }
+
+      // Destroy local CSR matrix
+      if( CSRmatrix )
+      {
+        GEOSX_LAI_CHECK_ERROR( hypre_CSRMatrixDestroy( CSRmatrix ) );
+      }
+      break;
+    }
     default:
       GEOSX_ERROR( "Unsupported matrix output format" );
   }
