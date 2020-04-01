@@ -30,18 +30,18 @@
                 timeIntegrationOption="SteadyState"
                 fieldName="Damage"
                 solidMaterialName="shale"
-                localDissipation = "Linear"
+                localDissipation = "Quadratic"
                 logLevel="1"
                 targetRegions="{Region1}">
     </PhaseFieldDamageFEM>
   </Solvers>
 
-  <Mesh>
+<!-- <Mesh>
     <PAMELAMeshGenerator name="MyMeshName"
                          file="/usr/workspace/macieira/GEOSX/debugTests/geo.msh"/>
-  </Mesh>
+  </Mesh> -->
 
-  <!-- <Mesh>
+  <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="{C3D8}"
                   xCoords="{-1, 1}"
@@ -51,7 +51,7 @@
                   ny="{30}"
                   nz="{1}"
                   cellBlockNames="{cb1}"/>
-  </Mesh> -->
+  </Mesh>
 
   <Events maxTime="500.0">
     <!-- This event is applied every cycle, and overrides the
@@ -147,12 +147,12 @@
                scale="0.0"
                setNames="{xneg}"/>
 
-    <!-- <FieldSpecification name="pointSource"
+    <FieldSpecification name="pointSource"
                         fieldName="Damage"
                         initialCondition="0"
                         objectPath="nodeManager"
                         scale="1"
-                        setNames="{centerLine}"/> -->
+                        setNames="{centerLine}"/>
 
     <!-- <FieldSpecification name="diffusionCoeff"
                         initialCondition="1"

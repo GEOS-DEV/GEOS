@@ -275,6 +275,7 @@ void PhaseFieldDamageFEM::AssembleSystem( real64 const time_n,
           real64 ell = 0.2; //phase-field length scale
           real64 Gc = 2.7; //energy release rate
           double threshold = 3 * Gc / (16 * ell); //elastic energy threshold - use when LocalDissipation is Linear
+          arrayView1d<real64> const & nodalDamage = nodeManager->getReference<array1d<real64>>(m_fieldName);
           //real64 diffusion = 1.0;
           // begin element loop, skipping ghost elements
           for (localIndex k = 0; k < elementSubRegion->size(); ++k) {
@@ -287,41 +288,49 @@ void PhaseFieldDamageFEM::AssembleSystem( real64 const time_n,
                   D = max(threshold, strainEnergy(k,q));
                   //D = max(strainEnergy(k,q), strainEnergy(k,q));//debbuging line - remove after testing
                 }
-                /*real64 Xq = 0;
-                real64 Yq = 0;
-                real64 Zq = 0;*/
-                //for (localIndex a = 0; a < numNodesPerElement; ++a) {
-                  /*Xq = Xq + feDiscretization->m_finiteElement->value(a, q) *
-                                X[elemNodes(k, a)][0];
+                //Interpolate d and grad_d
 
-                  Yq = Yq + feDiscretization->m_finiteElement->value(a, q) *
-                                X[elemNodes(k, a)][1];
+                real64 qp_damage = 0.0;
+                R1Tensor qp_grad_damage;
+                R1Tensor temp;
+                for (localIndex a = 0; a < numNodesPerElement; ++a)
+                {
+                  qp_damage +=
+                      feDiscretization->m_finiteElement->value(a, q) * nodalDamage[elemNodes(k, a)];
+                  temp = dNdX[k][q][a];
+                  temp *= nodalDamage[elemNodes(k, a)];
+                  qp_grad_damage +=
+                      temp;
 
-                  Zq = Zq + feDiscretization->m_finiteElement->value(a, q) *
-                                X[elemNodes(k, a)][2];*/
-                //}
+                }
+                //std::cout << "Damage: " << qp_damage <<std::endl;
+                //std::cout << "GradDamage: " << qp_grad_damage <<std::endl;
                 for (localIndex a = 0; a < numNodesPerElement; ++a) {
                   elemDofIndex[a] = dofIndex[elemNodes(k, a)];
                   //real64 diffusion = 1.0;
                   real64 Na = feDiscretization->m_finiteElement->value(a, q);
                   //element_rhs(a) += detJ[k][q] * Na * myFunc(Xq, Yq, Zq); //older reaction diffusion solver
                   if (m_localDissipationOption == "Linear"){
-                    element_rhs(a) += -detJ[k][q] * Na * (- ell * D + 3 * Gc / 16 )/ Gc;
+                    element_rhs(a) += detJ[k][q] * (Na * (ell * D - 3 * Gc / 16 )/ Gc -
+                    0.375*pow(ell,2) * Dot(qp_grad_damage, dNdX[k][q][a]) -
+                     (ell * D/Gc) * Na * qp_damage);
                   }
                   else{
-                    element_rhs(a) += detJ[k][q] * Na * (2 * ell) * strainEnergy(k,q) / Gc;
+                    element_rhs(a) += detJ[k][q] * (Na * (2 * ell) * strainEnergy(k,q) / Gc -
+                    (pow(ell,2) * Dot(qp_grad_damage, dNdX[k][q][a]) +
+                    Na * qp_damage * (1 + 2 * ell*strainEnergy(k,q)/Gc)) );
                   }
                   for (localIndex b = 0; b < numNodesPerElement; ++b) {
                     real64 Nb = feDiscretization->m_finiteElement->value(b, q);
                     if(m_localDissipationOption == "Linear"){
-                       element_matrix(a, b) += detJ[k][q] *
-                       (0.375*pow(ell,2) * -Dot(dNdX[k][q][a], dNdX[k][q][b]) -
+                       element_matrix(a, b) -= detJ[k][q] *
+                       (0.375*pow(ell,2) * Dot(dNdX[k][q][a], dNdX[k][q][b]) +
                         (ell * D/Gc) * Na * Nb);
                     }
                     else{
-                        element_matrix(a, b) +=
+                        element_matrix(a, b) -=
                         detJ[k][q] *
-                        (pow(ell,2) * -Dot(dNdX[k][q][a], dNdX[k][q][b]) -
+                        (pow(ell,2) * Dot(dNdX[k][q][a], dNdX[k][q][b]) +
                          Na * Nb * (1 + 2 * ell*strainEnergy(k,q)/Gc));
                     }
                 }
@@ -369,7 +378,7 @@ void PhaseFieldDamageFEM::ApplySystemSolution(DofManager const &dofManager,
   MeshLevel *const mesh = domain->getMeshBody(0)->getMeshLevel(0);
   NodeManager *const nodeManager = mesh->getNodeManager();
 
-  dofManager.copyVectorToField(solution, m_fieldName, scalingFactor,
+  dofManager.addVectorToField(solution, m_fieldName, scalingFactor,
                                nodeManager, m_fieldName);
 
   // Syncronize ghost nodes

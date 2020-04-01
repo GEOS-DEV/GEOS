@@ -267,7 +267,7 @@ real64 PhaseFieldFractureSolver::SplitOperatorStep( real64 const& time_n,
       continue;
     }
 
-    if (solidSolver.getSystemSolverParameters()->numNewtonIterations() == 0 && iter > 0) //edited to make 1 pass method
+    if (solidSolver.getSystemSolverParameters()->numNewtonIterations() >= 0 && iter > 0) //edited to make 1 pass method
     {
       GEOS_LOG_LEVEL_RANK_0( 1, "***** The iterative coupling has converged in " << iter  << " iterations! *****\n" );
       isConverged = true;
