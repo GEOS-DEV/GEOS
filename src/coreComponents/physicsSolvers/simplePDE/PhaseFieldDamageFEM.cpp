@@ -158,7 +158,7 @@ real64 PhaseFieldDamageFEM::SolverStep(real64 const &time_n, real64 const &dt,
                  timeIntegrationOption::ImplicitTransient ||
              m_timeIntegrationOption == timeIntegrationOption::SteadyState) {
     dtReturn =
-        this->LinearImplicitStep(time_n, dt, cycleNumber, domain, m_dofManager,
+        this->NonlinearImplicitStep(time_n, dt, cycleNumber, domain, m_dofManager,
                                  m_matrix, m_rhs, m_solution);
   }
   return dtReturn;
@@ -423,6 +423,17 @@ void PhaseFieldDamageFEM::ApplyBoundaryConditions(
     GEOS_LOG_RANK_0("Jacobian: written to " << filename_mat);
     GEOS_LOG_RANK_0("Residual: written to " << filename_rhs);
   }
+}
+
+real64
+PhaseFieldDamageFEM::CalculateResidualNorm( DomainPartition const * const GEOSX_UNUSED_ARG(domain),
+                       DofManager const & GEOSX_UNUSED_ARG(dofManager),
+                       ParallelVector const & rhs ) {
+
+   real64 const norm = rhs.norm2();
+   return norm;
+
+
 }
 
 void PhaseFieldDamageFEM::SolveSystem(DofManager const &dofManager,

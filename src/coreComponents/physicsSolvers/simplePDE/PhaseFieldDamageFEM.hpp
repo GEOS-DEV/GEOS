@@ -83,6 +83,10 @@ public:
                                        ParallelMatrix &matrix,
                                        ParallelVector &rhs) override;
 
+  virtual real64 CalculateResidualNorm( DomainPartition const * const domain,
+                                        DofManager const & dofManager,
+                                        ParallelVector const & rhs ) override;
+
   virtual void SolveSystem(DofManager const &dofManager, ParallelMatrix &matrix,
                            ParallelVector &rhs,
                            ParallelVector &solution) override;

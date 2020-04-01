@@ -277,7 +277,7 @@ real64 PhaseFieldFractureSolver::SplitOperatorStep( real64 const& time_n,
 
     GEOS_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1  << ", DamageSolver: " );
 
-    dtReturnTemporary = damageSolver.LinearImplicitStep( time_n,
+    dtReturnTemporary = damageSolver.NonlinearImplicitStep( time_n,
                                                          dtReturn,
                                                          cycleNumber,
                                                          domain,
