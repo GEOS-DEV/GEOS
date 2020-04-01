@@ -133,7 +133,7 @@ public:
     }
   }
 
-  void WriteVertices( array1d < R1Tensor >  & vertices )
+  void WriteVertices( array1d< R1Tensor > & vertices )
   {
     WriteAsciiVertices( vertices );
   }
@@ -299,13 +299,13 @@ private:
     }
   }
 
-  void WriteAsciiVertices( array1d < R1Tensor >  & vertices )
+  void WriteAsciiVertices( array1d< R1Tensor > & vertices )
+  {
+    for( localIndex i = 0; i < vertices.size(); ++i )
     {
-      for( localIndex i = 0; i < vertices.size(); ++i )
-      {
-        m_outFile << vertices[i] << "\n";
-      }
+      m_outFile << vertices[i] << "\n";
     }
+  }
 
   void WriteBinaryConnectivities( ElementRegionManager const * const elemManager )
   {

@@ -845,14 +845,14 @@ void SolidMechanicsEmbeddedFractures::ComputeTraction( ConstitutiveManager const
     tractionVector[1] = 0.0;
     tractionVector[2] = 0.0;
     dTdw( 0, 0 ) = 0.0;
-    dTdw( 0, 1 )= 0.0;
-    dTdw( 0, 2 )= 0.0;
-    dTdw( 1, 0 )= 0.0;
-    dTdw( 1, 1 )= 0.0;
-    dTdw( 1, 2 )= 0.0;
-    dTdw( 2, 0 )= 0.0;
-    dTdw( 2, 1 )= 0.0;
-    dTdw( 2, 2 )= 0.0;
+    dTdw( 0, 1 ) = 0.0;
+    dTdw( 0, 2 ) = 0.0;
+    dTdw( 1, 0 ) = 0.0;
+    dTdw( 1, 1 ) = 0.0;
+    dTdw( 1, 2 ) = 0.0;
+    dTdw( 2, 0 ) = 0.0;
+    dTdw( 2, 1 ) = 0.0;
+    dTdw( 2, 2 ) = 0.0;
   }
   else
   {

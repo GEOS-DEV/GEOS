@@ -63,9 +63,6 @@
 
 
 	<Events maxTime="10">
-		<!--SoloEvent 
-		name="output0" 
-		target="/Outputs/siloOutput" /-->
 
 		<SoloEvent 
 		name="preFracture" 
@@ -85,6 +82,11 @@
 		cycleFrequency="1"
 		targetExactTimestep="1" 
 		target="/Outputs/vtkOutput" />
+		
+		<PeriodicEvent name="restarts"
+                   timeFrequency="5.0"
+                   targetExactTimestep="0"
+                   target="/Outputs/restartOutput"/>
 	</Events>
 
 	<NumericalMethods>
@@ -162,13 +164,10 @@
 	</Functions>
 
 	<Outputs>
-		<Silo name="siloOutput" 
-		plotFileRoot="Sneddon"
-		plotLevel="4" />
 		<VTK name="vtkOutput"
 		plotFileRoot="Sneddon"
 		plotLevel="4"/>
-		<Restart name="sidreRestart" />
+		<Restart name="restartOutput"/>
 	</Outputs>
 
 </Problem>
