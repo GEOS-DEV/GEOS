@@ -44,7 +44,7 @@ namespace geosx
  * \brief This class ...
  */
 class HypreMatrix final : public virtual LinearOperator< HypreVector >,
-                          private MatrixBase< HypreMatrix, HypreVector >
+  private MatrixBase< HypreMatrix, HypreVector >
 {
 public:
 
@@ -230,8 +230,9 @@ public:
 
   virtual void transpose( HypreMatrix & dst ) const override;
 
-  virtual void clearRow( globalIndex const row,
-                         real64 const diagValue ) override;
+  virtual real64 clearRow( globalIndex const row,
+                           bool const keepDiag = false,
+                           real64 const diagValue = 0.0 ) override;
 
   virtual localIndex maxRowLength() const override;
 

@@ -38,29 +38,29 @@
 
 namespace geosx
 {
-  using namespace dataRepository;
-  using namespace constitutive;
+using namespace dataRepository;
+using namespace constitutive;
 
-EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( const std::string& name,
-                                    Group * const parent ):
+EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( const std::string & name,
+                                                    Group * const parent ):
   SolverBase( name, parent ),
-  m_solidMaterialName("")
+  m_solidMaterialName( "" )
 {
-  registerWrapper(viewKeyStruct::solidMaterialNameString, &m_solidMaterialName, 0)->
-      setInputFlag(InputFlags::REQUIRED)->
-      setDescription("Name of the solid material used in solid mechanic solver");
+  registerWrapper( viewKeyStruct::solidMaterialNameString, &m_solidMaterialName, 0 )->
+    setInputFlag( InputFlags::REQUIRED )->
+    setDescription( "Name of the solid material used in solid mechanic solver" );
 
   registerWrapper( viewKeyStruct::fractureRegionNameString, &m_fractureRegionName, 0 )->
-      setInputFlag(dataRepository::InputFlags::OPTIONAL)->
-      setApplyDefaultValue("FractureRegion");
+    setInputFlag( dataRepository::InputFlags::OPTIONAL )->
+    setApplyDefaultValue( "FractureRegion" );
 }
 
 EmbeddedSurfaceGenerator::~EmbeddedSurfaceGenerator()
-{
-}
+{}
 
 void EmbeddedSurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
 {
+
 //  for( auto & mesh : MeshBodies->GetSubGroups() )
 //  {
 //    MeshLevel * const meshLevel = mesh.second->group_cast<MeshBody*>()->getMeshLevel(0);
@@ -98,29 +98,29 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
    */
 
   // Get domain
-  DomainPartition * domain = problemManager->GetGroup<DomainPartition>( dataRepository::keys::domain );
+  DomainPartition * domain = problemManager->GetGroup< DomainPartition >( dataRepository::keys::domain );
   // Get geometric object manager
-  GeometricObjectManager * geometricObjManager = problemManager->GetGroup<GeometricObjectManager>( "Geometry");
+  GeometricObjectManager * geometricObjManager = problemManager->GetGroup< GeometricObjectManager >( "Geometry" );
 
   // Get meshLevel
-  Group     * const meshBodies = domain->getMeshBodies();
-  MeshBody  * const meshBody   = meshBodies->GetGroup<MeshBody>(0);
-  MeshLevel * const meshLevel  = meshBody->GetGroup<MeshLevel>(0);
+  Group * const meshBodies = domain->getMeshBodies();
+  MeshBody * const meshBody   = meshBodies->GetGroup< MeshBody >( 0 );
+  MeshLevel * const meshLevel  = meshBody->GetGroup< MeshLevel >( 0 );
 
   // Get managers
   ElementRegionManager * const elemManager = meshLevel->getElemManager();
   NodeManager * const nodeManager = meshLevel->getNodeManager();
   EdgeManager * const edgeManager = meshLevel->getEdgeManager();
-  arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodesCoord = nodeManager->referencePosition();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoord = nodeManager->referencePosition();
 
   // Get EmbeddedSurfaceSubRegions
-  EmbeddedSurfaceRegion    * const    embeddedSurfaceRegion =
-      elemManager->GetRegion<EmbeddedSurfaceRegion>(this->m_fractureRegionName);
+  EmbeddedSurfaceRegion * const embeddedSurfaceRegion =
+    elemManager->GetRegion< EmbeddedSurfaceRegion >( this->m_fractureRegionName );
   EmbeddedSurfaceSubRegion * const embeddedSurfaceSubRegion =
-      embeddedSurfaceRegion->GetSubRegion<EmbeddedSurfaceSubRegion>(0);
+    embeddedSurfaceRegion->GetSubRegion< EmbeddedSurfaceSubRegion >( 0 );
 
   // Loop over all the fracture planes
-  geometricObjManager->forSubGroups<BoundedPlane>( [&]( BoundedPlane * const fracture ) -> void
+  geometricObjManager->forSubGroups< BoundedPlane >( [&]( BoundedPlane & fracture )
   {
     /* 1. Find out if an element is cut by the fracture or not.
      * Loop over all the elements and for each one of them loop over the nodes and compute the
@@ -128,52 +128,51 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
      * vector defining the plane. If two scalar products have different signs the plane cuts the
      * cell. If a nodes gives a 0 dot product it has to be neglected or the method won't work.
      */
-    R1Tensor planeCenter  = fracture->getCenter();
-    R1Tensor normalVector = fracture->getNormal();
+    R1Tensor planeCenter  = fracture.getCenter();
+    R1Tensor normalVector = fracture.getNormal();
     // Initialize variables
     globalIndex nodeIndex;
     integer isPositive, isNegative;
     R1Tensor distVec;
 
-    elemManager->forElementRegionsComplete<CellElementRegion>( [&]( localIndex const er, CellElementRegion * const region )->void
+    elemManager->forElementSubRegionsComplete< CellElementSubRegion >(
+      [&]( localIndex const er, localIndex const esr, ElementRegionBase &, CellElementSubRegion & subRegion )
     {
-      region->forElementSubRegionsIndex<CellElementSubRegion>( [&]( localIndex const esr, CellElementSubRegion * const subRegion )->void
+      CellElementSubRegion::NodeMapType::ViewTypeConst const & cellToNodes = subRegion.nodeList();
+      FixedOneToManyRelation const & cellToEdges = subRegion.edgeList();
+      for( localIndex cellIndex =0; cellIndex<subRegion.size(); cellIndex++ )
       {
-        CellElementSubRegion::NodeMapType::ViewTypeConst const & cellToNodes = subRegion->nodeList();
-        FixedOneToManyRelation const & cellToEdges = subRegion->edgeList();
-        for(localIndex cellIndex =0; cellIndex<subRegion->size(); cellIndex++)
+        isPositive = 0;
+        isNegative = 0;
+        for( localIndex kn =0; kn<subRegion.numNodesPerElement(); kn++ )
         {
-          isPositive = 0;
-          isNegative = 0;
-          for(localIndex kn =0; kn<subRegion->numNodesPerElement(); kn++)
+          nodeIndex = cellToNodes[cellIndex][kn];
+          distVec  = nodesCoord[nodeIndex];
+          distVec -= planeCenter;
+          // check if the dot product is zero
+          if( Dot( distVec, normalVector ) > 0 )
           {
-            nodeIndex = cellToNodes[cellIndex][kn];
-            distVec  = nodesCoord[nodeIndex];
-            distVec -= planeCenter;
-            // check if the dot product is zero
-            if ( Dot(distVec, normalVector) > 0 )
-            {
-              isPositive = 1;
-            } else if ( Dot(distVec, normalVector) < 0 )
-            {
-              isNegative = 1;
-            }
-          } // end loop over nodes
-          if (isPositive * isNegative == 1)
-          {
-            bool added = embeddedSurfaceSubRegion->AddNewEmbeddedSurface( cellIndex,
-                                                                          er,
-                                                                          esr,
-                                                                          *nodeManager,
-                                                                          *edgeManager,
-                                                                          cellToEdges,
-                                                                          fracture );
-            if (added)
-              GEOSX_LOG_LEVEL_RANK_0(2, "Element " << cellIndex << " is fractured");
+            isPositive = 1;
           }
-        } // end loop over cells
-      });// end loop over subregions
-    });// end loop over elementRegions
+          else if( Dot( distVec, normalVector ) < 0 )
+          {
+            isNegative = 1;
+          }
+        } // end loop over nodes
+        if( isPositive * isNegative == 1 )
+        {
+          bool added = embeddedSurfaceSubRegion->AddNewEmbeddedSurface( cellIndex,
+                                                                        er,
+                                                                        esr,
+                                                                        *nodeManager,
+                                                                        *edgeManager,
+                                                                        cellToEdges,
+                                                                        &fracture );
+          if( added )
+            GEOSX_LOG_LEVEL_RANK_0( 2, "Element " << cellIndex << " is fractured" );
+        }
+      } // end loop over cells
+   });// end loop over subregions
   });// end loop over thick planes
 
   // Populate EdgeManager for embedded surfaces.
@@ -187,7 +186,7 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
   GEOSX_LOG_LEVEL_RANK_0(1, "Number of embedded surface elements: " << embeddedSurfaceSubRegion->size() );
 }
 
-void EmbeddedSurfaceGenerator::InitializePostInitialConditions_PreSubGroups( Group * const  GEOSX_UNUSED_PARAM ( problemManager ) )
+void EmbeddedSurfaceGenerator::InitializePostInitialConditions_PreSubGroups( Group * const GEOSX_UNUSED_PARAM ( problemManager ) )
 {
   // I don't think there is  much to do here.
 }
@@ -200,10 +199,10 @@ void EmbeddedSurfaceGenerator::postRestartInitialization( Group * const GEOSX_UN
 }
 
 
-real64 EmbeddedSurfaceGenerator::SolverStep( real64 const & GEOSX_UNUSED_PARAM( time_n),
+real64 EmbeddedSurfaceGenerator::SolverStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
                                              real64 const & GEOSX_UNUSED_PARAM( dt ),
                                              const int GEOSX_UNUSED_PARAM( cycleNumber ),
-                                             DomainPartition * const  GEOSX_UNUSED_PARAM( domain ) )
+                                             DomainPartition * const GEOSX_UNUSED_PARAM( domain ) )
 {
   real64 rval = 0;
   /*

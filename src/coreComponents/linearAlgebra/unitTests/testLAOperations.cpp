@@ -33,7 +33,7 @@
 
 using namespace geosx;
 
-static real64 const machinePrecision = 20.0 * std::numeric_limits<real64>::epsilon();
+static real64 const machinePrecision = 20.0 * std::numeric_limits< real64 >::epsilon();
 
 // BEGIN_RST_NARRATIVE testLAOperations.rst
 
@@ -41,11 +41,9 @@ static real64 const machinePrecision = 20.0 * std::numeric_limits<real64>::epsil
  * @brief Test case class for LA operations tests
  * @tparam LAI Linear Algebra Interface
  */
-template<typename LAI>
+template< typename LAI >
 class LAOperationsTest : public ::testing::Test
-{
-
-};
+{};
 
 TYPED_TEST_CASE_P( LAOperationsTest );
 
@@ -74,8 +72,8 @@ TYPED_TEST_P( LAOperationsTest, VectorFunctions )
   using Vector = typename TypeParam::ParallelVector;
 
   // Get the MPI rank
-  int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
-  int const numRanks = MpiWrapper::Comm_size( MPI_COMM_WORLD );
+  int const rank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
+  int const numRanks = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
 
   Vector x;
   localIndex const localSize = 3;
@@ -83,7 +81,7 @@ TYPED_TEST_P( LAOperationsTest, VectorFunctions )
   globalIndex const offset = rank * localSize;
 
   // Testing createWithLocalSize
-  x.createWithLocalSize( localSize, MPI_COMM_WORLD );
+  x.createWithLocalSize( localSize, MPI_COMM_GEOSX );
   EXPECT_EQ( x.localSize(), localSize );
   EXPECT_EQ( x.globalSize(), globalSize );
 
@@ -104,7 +102,7 @@ TYPED_TEST_P( LAOperationsTest, VectorFunctions )
   }
 
   // Testing createWithGlobalSize
-  x.createWithGlobalSize( globalSize, MPI_COMM_WORLD );
+  x.createWithGlobalSize( globalSize, MPI_COMM_GEOSX );
   EXPECT_EQ( x.localSize(), localSize );
   EXPECT_EQ( x.globalSize(), globalSize );
 
@@ -137,7 +135,7 @@ TYPED_TEST_P( LAOperationsTest, VectorFunctions )
   }
 
   Vector v;
-  v.create( localVals, MPI_COMM_WORLD );
+  v.create( localVals, MPI_COMM_GEOSX );
   for( globalIndex i = v.ilower(); i < v.iupper(); ++i )
   {
     EXPECT_EQ( v.get( i ), localVals[v.getLocalRowID( i )] );
@@ -287,8 +285,8 @@ TYPED_TEST_P( LAOperationsTest, MatrixFunctions )
   using Matrix = typename TypeParam::ParallelMatrix;
 
   // Get the MPI rank
-  int numranks = MpiWrapper::Comm_size( MPI_COMM_WORLD );
-  int rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
+  int numranks = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
+  int rank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
 
   std::cout << "*** Rank: " << rank << std::endl;
 
@@ -298,7 +296,7 @@ TYPED_TEST_P( LAOperationsTest, MatrixFunctions )
   {
     // Test matrix-matrix product: C = A*B
     Matrix A;
-    compute2DLaplaceOperator( MPI_COMM_WORLD, 2 * numranks, A );
+    compute2DLaplaceOperator( MPI_COMM_GEOSX, 2 * numranks, A );
     Matrix B( A );
 
     A.multiply( B, C );
@@ -308,10 +306,10 @@ TYPED_TEST_P( LAOperationsTest, MatrixFunctions )
   // Define some vectors, matrices
   Vector vec1, vec2, vec3;
   Matrix mat1, mat2, mat3, mat4;
-  mat1.createWithLocalSize( 2, 2, MPI_COMM_WORLD ); // 2*numranks x 2*numranks
-  mat2.createWithGlobalSize( 2, 2, MPI_COMM_WORLD ); // 2x2
-  mat3.createWithLocalSize( 2, 3, 3, MPI_COMM_WORLD ); // 2*numranks x 3*numranks
-  mat4.createWithGlobalSize( 3, 4, 3, MPI_COMM_WORLD ); // 3x4
+  mat1.createWithLocalSize( 2, 2, MPI_COMM_GEOSX ); // 2*numranks x 2*numranks
+  mat2.createWithGlobalSize( 2, 2, MPI_COMM_GEOSX ); // 2x2
+  mat3.createWithLocalSize( 2, 3, 3, MPI_COMM_GEOSX ); // 2*numranks x 3*numranks
+  mat4.createWithGlobalSize( 3, 4, 3, MPI_COMM_GEOSX ); // 3x4
 
   // Testing create, globalRows, globalCols
   EXPECT_EQ( mat1.numGlobalRows(), 2 * numranks );
@@ -356,7 +354,7 @@ TYPED_TEST_P( LAOperationsTest, MatrixFunctions )
   }
   mat4.close();
 
-  array1d<real64> colvals_CHECK( 3 );
+  array1d< real64 > colvals_CHECK( 3 );
   colvals_CHECK( 0 ) = 6;
   colvals_CHECK( 1 ) = 1;
   colvals_CHECK( 2 ) = 10;
@@ -365,20 +363,20 @@ TYPED_TEST_P( LAOperationsTest, MatrixFunctions )
   {
     localIndex const rowLength = mat.getGlobalRowLength( iRow );
     EXPECT_EQ( rowLength, colvals_CHECK.size() );
-    array1d<real64> colvals( rowLength );
-    array1d<globalIndex> colinds( rowLength );
+    array1d< real64 > colvals( rowLength );
+    array1d< globalIndex > colinds( rowLength );
     mat4.getRowCopy( iRow, colinds, colvals );
-    for( int i = 0 ; i < 3 ; ++i )
+    for( int i = 0; i < 3; ++i )
     {
       EXPECT_DOUBLE_EQ( colvals( colinds[i] ), colvals_CHECK( i ) ); //HYPRE does not return sorted cols!
     }
   }
   // Testing add/set/insert array1d
   Matrix mat6;
-  mat6.createWithGlobalSize( 4, 4, MPI_COMM_WORLD );
-  array1d<real64> vals6( 3 );
-  array1d<real64> vals7( 3 );
-  array1d<globalIndex> inds6( 3 );
+  mat6.createWithGlobalSize( 4, 4, MPI_COMM_GEOSX );
+  array1d< real64 > vals6( 3 );
+  array1d< real64 > vals7( 3 );
+  array1d< globalIndex > inds6( 3 );
   vals6[0] = 1;
   vals6[1] = .5;
   vals6[2] = -3;
@@ -402,10 +400,10 @@ TYPED_TEST_P( LAOperationsTest, MatrixFunctions )
 
   // Testing add/set/insert array2d
   Matrix mat7;
-  mat7.createWithGlobalSize( 4, 4, MPI_COMM_WORLD );
-  array1d<globalIndex> rows( 2 );
-  array1d<globalIndex> cols( 2 );
-  array2d<real64> vals8( 2, 2 );
+  mat7.createWithGlobalSize( 4, 4, MPI_COMM_GEOSX );
+  array1d< globalIndex > rows( 2 );
+  array1d< globalIndex > cols( 2 );
+  array2d< real64 > vals8( 2, 2 );
   rows[0] = 0;
   rows[1] = 2;
   cols[0] = 1;
@@ -434,8 +432,8 @@ TYPED_TEST_P( LAOperationsTest, MatrixFunctions )
   mat1.close();
 
   // Testing vector multiply, matrix multiply, MatrixMatrixMultiply
-  vec1.createWithGlobalSize( 2, MPI_COMM_WORLD );
-  vec2.createWithGlobalSize( 2, MPI_COMM_WORLD );
+  vec1.createWithGlobalSize( 2, MPI_COMM_GEOSX );
+  vec2.createWithGlobalSize( 2, MPI_COMM_GEOSX );
   vec1.set( 1 );
   vec1.close();
   globalIndex inds4[2] = { 0, 1 };
@@ -490,7 +488,7 @@ TYPED_TEST_P( LAOperationsTest, MatrixFunctions )
 TYPED_TEST_P( LAOperationsTest, InterfaceSolvers )
 {
 #ifdef GEOSX_USE_PETSC
-  SKIP_TEST_IF( (std::is_same<TypeParam, PetscInterface>::value), "https://github.com/GEOSX/GEOSX/issues/790" );
+  SKIP_TEST_IF( (std::is_same< TypeParam, PetscInterface >::value), "https://github.com/GEOSX/GEOSX/issues/790" );
 #endif
 
   // Define aliases templated on the Linear Algebra Interface (LAI).
@@ -504,16 +502,16 @@ TYPED_TEST_P( LAOperationsTest, InterfaceSolvers )
 
   // Compute a 2D Laplace operator
   Matrix matrix;
-  compute2DLaplaceOperator( MPI_COMM_WORLD, n, matrix );
+  compute2DLaplaceOperator( MPI_COMM_GEOSX, n, matrix );
 
   // Define some vectors
   Vector x_true;
   Vector x_comp;
   Vector b;
 
-  x_true.createWithGlobalSize( N, MPI_COMM_WORLD );
-  x_comp.createWithGlobalSize( N, MPI_COMM_WORLD );
-  b.createWithGlobalSize( N, MPI_COMM_WORLD );
+  x_true.createWithGlobalSize( N, MPI_COMM_GEOSX );
+  x_comp.createWithGlobalSize( N, MPI_COMM_GEOSX );
+  b.createWithGlobalSize( N, MPI_COMM_GEOSX );
 
   // We have some simple initialization options for vectors:
   x_true.rand(); // random
@@ -534,7 +532,7 @@ TYPED_TEST_P( LAOperationsTest, InterfaceSolvers )
 
   EXPECT_NEAR( norm1, N, N * machinePrecision );
   EXPECT_NEAR( norm2, n, n * machinePrecision );
-  EXPECT_NEAR( normInf, 1., machinePrecision);
+  EXPECT_NEAR( normInf, 1., machinePrecision );
 
   // Compute the matrix/vector multiplication. We compute b as Ax and will aim to get x
   // back from the solvers.
@@ -587,7 +585,7 @@ TYPED_TEST_P( LAOperationsTest, MatrixMatrixOperations )
 
   globalIndex const n = 100;
   Matrix A;
-  compute2DLaplaceOperator( MPI_COMM_WORLD, n, A );
+  compute2DLaplaceOperator( MPI_COMM_GEOSX, n, A );
 
   Matrix A_squared;
   A.multiply( A, A_squared );
@@ -606,19 +604,19 @@ TYPED_TEST_P( LAOperationsTest, RectangularMatrixOperations )
 {
   using Matrix = typename TypeParam::ParallelMatrix;
 
-  int mpiSize = MpiWrapper::Comm_size( MPI_COMM_WORLD );
+  int mpiSize = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
 
   // Set a size that allows to run with arbitrary number of processes
   globalIndex const nRows = std::max( 100, mpiSize );
   globalIndex const nCols = 2 * nRows;
 
   Matrix A;
-  A.createWithGlobalSize( nRows, nCols, 2, MPI_COMM_WORLD );
+  A.createWithGlobalSize( nRows, nCols, 2, MPI_COMM_GEOSX );
 
   A.open();
-  for( globalIndex i = A.ilower() ; i < A.iupper() ; ++i )
+  for( globalIndex i = A.ilower(); i < A.iupper(); ++i )
   {
-    real64 const entry = static_cast<real64>( i + 1 );
+    real64 const entry = static_cast< real64 >( i + 1 );
     A.insert( i, 2 * i, entry );
     A.insert( i, 2 * i + 1, -entry );
   }
@@ -635,7 +633,7 @@ TYPED_TEST_P( LAOperationsTest, RectangularMatrixOperations )
 
   EXPECT_DOUBLE_EQ( a, static_cast< real64 >( nRows ) );
   EXPECT_DOUBLE_EQ( b, static_cast< real64 >( nCols ) );
-  EXPECT_DOUBLE_EQ( c, std::sqrt( static_cast<real64>( nRows * ( nRows + 1 ) * ( 2 * nRows + 1 ) ) / 3.0 ) );
+  EXPECT_DOUBLE_EQ( c, std::sqrt( static_cast< real64 >( nRows * ( nRows + 1 ) * ( 2 * nRows + 1 ) ) / 3.0 ) );
 }
 
 // END_RST_NARRATIVE
@@ -661,7 +659,7 @@ INSTANTIATE_TYPED_TEST_CASE_P( Hypre, LAOperationsTest, HypreInterface );
 INSTANTIATE_TYPED_TEST_CASE_P( Petsc, LAOperationsTest, PetscInterface );
 #endif
 
-int main( int argc, char ** argv )
+int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
 

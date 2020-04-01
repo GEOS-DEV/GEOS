@@ -53,7 +53,7 @@ using namespace geosx;
 // -----------------------------------------
 // We now test the GEOSX implementation of the Conjugate Gradient (CG) and BiCGSTAB algorithms
 // on monolithic matrices.
-template<template<typename T> class SOLVER, typename LAI>
+template< template< typename T > class SOLVER, typename LAI >
 void testGEOSXSolvers()
 {
   // Define aliases templated on the Linear Algebra Interface (LAI).
@@ -67,14 +67,14 @@ void testGEOSXSolvers()
   // Compute a 2D Laplace operator and identity matrix
   Matrix matrix;
   Matrix identity;
-  compute2DLaplaceOperator( MPI_COMM_WORLD, n, matrix );
-  computeIdentity( MPI_COMM_WORLD, N, identity );
+  compute2DLaplaceOperator( MPI_COMM_GEOSX, n, matrix );
+  computeIdentity( MPI_COMM_GEOSX, N, identity );
 
   // Define vectors
   Vector x_true, x_comp, b;
-  x_true.createWithGlobalSize( N, MPI_COMM_WORLD );
-  x_comp.createWithGlobalSize( N, MPI_COMM_WORLD );
-  b.createWithGlobalSize( N, MPI_COMM_WORLD );
+  x_true.createWithGlobalSize( N, MPI_COMM_GEOSX );
+  x_comp.createWithGlobalSize( N, MPI_COMM_GEOSX );
+  b.createWithGlobalSize( N, MPI_COMM_GEOSX );
 
   x_true.rand();
   x_comp.zero();
@@ -82,11 +82,11 @@ void testGEOSXSolvers()
   matrix.apply( x_true, b );
 
   // Solve
-  SOLVER<Vector> solver( matrix, identity, 1e-8, 300 );
+  SOLVER< Vector > solver( matrix, identity, 1e-8, 300 );
   solver.solve( b, x_comp );
   /////////////////////////////////////////
 //  GEOSX_LOG_RANK_0("Iterations: " + std::to_string(solver.numIterations()));
-//  if ( MpiWrapper::Comm_rank( MPI_COMM_WORLD ) == 0)
+//  if ( MpiWrapper::Comm_rank( MPI_COMM_GEOSX ) == 0)
 //  {
 //    GEOSX_LOG_RANK_VAR( solver.relativeResidual() );
 //  }
@@ -98,13 +98,13 @@ void testGEOSXSolvers()
 
   PreconditionerIdentity< LAI > preconIdentity;
   preconIdentity.compute( matrix );
-  SOLVER<Vector> solver2( matrix, preconIdentity, 1e-8, 300 );
+  SOLVER< Vector > solver2( matrix, preconIdentity, 1e-8, 300 );
   x_comp.zero();
 
   solver2.solve( b, x_comp );
   /////////////////////////////////////////
 //  GEOSX_LOG_RANK_0("Iterations: " + std::to_string(solver.numIterations()));
-//  if ( MpiWrapper::Comm_rank( MPI_COMM_WORLD ) == 0)
+//  if ( MpiWrapper::Comm_rank( MPI_COMM_GEOSX ) == 0)
 //  {
 //    GEOSX_LOG_RANK_VAR( solver.residualNormVector() );
 //  }
@@ -128,7 +128,7 @@ void testGEOSXSolvers()
 // -----------------------------------------
 // We finish by testing the GEOSX implementation of the Conjugate Gradient (CG) and BiCGSTAB algorithms
 // on block matrices.
-template<template<typename T> class SOLVER, typename LAI>
+template< template< typename T > class SOLVER, typename LAI >
 void testGEOSXBlockSolvers()
 {
   // The usual typenames
@@ -147,30 +147,30 @@ void testGEOSXBlockSolvers()
   // Set up a block operator consisting of two laplacian blocks
   // Here we demonstrate creating a thin wrapper pointing to the same matrix twice
   Matrix matrix;
-  compute2DLaplaceOperator( MPI_COMM_WORLD, n, matrix );
-  BlockOperatorWrapper<Vector, Matrix> block_matrix( 2, 2 );
+  compute2DLaplaceOperator( MPI_COMM_GEOSX, n, matrix );
+  BlockOperatorWrapper< Vector, Matrix > block_matrix( 2, 2 );
   block_matrix.set( 0, 0, matrix );
   block_matrix.set( 1, 1, matrix );
 
   // Set up block identity preconditioner
   // Here we instantiate a concrete block matrix with two independent blocks
-  BlockOperator<Vector, Matrix> block_precon( 2, 2 );
-  computeIdentity( MPI_COMM_WORLD, N, block_precon.block( 0, 0 ) );
-  computeIdentity( MPI_COMM_WORLD, N, block_precon.block( 1, 1 ) );
-  computeZero( MPI_COMM_WORLD, N, block_precon.block( 0, 1 ) );
-  computeZero( MPI_COMM_WORLD, N, block_precon.block( 1, 0 ) );
+  BlockOperator< Vector, Matrix > block_precon( 2, 2 );
+  computeIdentity( MPI_COMM_GEOSX, N, block_precon.block( 0, 0 ) );
+  computeIdentity( MPI_COMM_GEOSX, N, block_precon.block( 1, 1 ) );
+  computeZero( MPI_COMM_GEOSX, N, block_precon.block( 0, 1 ) );
+  computeZero( MPI_COMM_GEOSX, N, block_precon.block( 1, 0 ) );
 
   // Create rhs and solution vectors
-  BlockVector<Vector> x_true(2);
-  BlockVector<Vector> x_comp( 2);
-  BlockVector<Vector> b(2);
+  BlockVector< Vector > x_true( 2 );
+  BlockVector< Vector > x_comp( 2 );
+  BlockVector< Vector > b( 2 );
 
-  x_true.block( 0 ).createWithGlobalSize( N, MPI_COMM_WORLD );
-  x_true.block( 1 ).createWithGlobalSize( N, MPI_COMM_WORLD );
-  x_comp.block( 0 ).createWithGlobalSize( N, MPI_COMM_WORLD );
-  x_comp.block( 1 ).createWithGlobalSize( N, MPI_COMM_WORLD );
-  b.block( 0 ).createWithGlobalSize( N, MPI_COMM_WORLD );
-  b.block( 1 ).createWithGlobalSize( N, MPI_COMM_WORLD );
+  x_true.block( 0 ).createWithGlobalSize( N, MPI_COMM_GEOSX );
+  x_true.block( 1 ).createWithGlobalSize( N, MPI_COMM_GEOSX );
+  x_comp.block( 0 ).createWithGlobalSize( N, MPI_COMM_GEOSX );
+  x_comp.block( 1 ).createWithGlobalSize( N, MPI_COMM_GEOSX );
+  b.block( 0 ).createWithGlobalSize( N, MPI_COMM_GEOSX );
+  b.block( 1 ).createWithGlobalSize( N, MPI_COMM_GEOSX );
 
   x_true.rand();
   x_comp.zero();
@@ -193,32 +193,30 @@ void testGEOSXBlockSolvers()
 
 // END_RST_NARRATIVE
 
-template<typename LAI>
+template< typename LAI >
 class KrylovSolverTest : public ::testing::Test
-{
-
-};
+{};
 
 TYPED_TEST_CASE_P( KrylovSolverTest );
 
 TYPED_TEST_P( KrylovSolverTest, CG )
 {
-  testGEOSXSolvers<CGsolver, TypeParam>();
+  testGEOSXSolvers< CGsolver, TypeParam >();
 }
 
 TYPED_TEST_P( KrylovSolverTest, BiCGSTAB )
 {
-  testGEOSXSolvers<BiCGSTABsolver, TypeParam>();
+  testGEOSXSolvers< BiCGSTABsolver, TypeParam >();
 }
 
 TYPED_TEST_P( KrylovSolverTest, CG_block )
 {
-  testGEOSXBlockSolvers<CGsolver, TypeParam>();
+  testGEOSXBlockSolvers< CGsolver, TypeParam >();
 }
 
 TYPED_TEST_P( KrylovSolverTest, BiCGSTAB_block )
 {
-  testGEOSXBlockSolvers<BiCGSTABsolver, TypeParam>();
+  testGEOSXBlockSolvers< BiCGSTABsolver, TypeParam >();
 }
 
 REGISTER_TYPED_TEST_CASE_P( KrylovSolverTest,
@@ -240,7 +238,7 @@ INSTANTIATE_TYPED_TEST_CASE_P( Petsc, KrylovSolverTest, PetscInterface );
 #endif
 
 
-int main( int argc, char ** argv )
+int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
   geosx::basicSetup( argc, argv );

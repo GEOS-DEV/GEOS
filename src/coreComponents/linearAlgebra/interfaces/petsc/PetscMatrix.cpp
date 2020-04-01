@@ -32,13 +32,13 @@ namespace geosx
 {
 
 PetscMatrix::PetscMatrix()
-: LinearOperator(),
+  : LinearOperator(),
   MatrixBase(),
   m_mat{}
 {}
 
 PetscMatrix::PetscMatrix( PetscMatrix const & src )
-: PetscMatrix()
+  : PetscMatrix()
 {
   GEOSX_LAI_ASSERT( src.ready() );
   GEOSX_LAI_CHECK_ERROR( MatDuplicate( src.m_mat, MAT_COPY_VALUES, &m_mat ) );
@@ -116,19 +116,19 @@ void PetscMatrix::set( real64 const value )
   const PetscScalar * vals;
 
   PetscInt numEntries_;
-  array1d<PetscScalar> vals_;
-  array1d<PetscInt> inds_;
+  array1d< PetscScalar > vals_;
+  array1d< PetscInt > inds_;
 
   PetscInt const maxNumRows = MpiWrapper::Max( lastrow - firstrow, getComm() );
 
   // loop over rows
-  for( PetscInt row = firstrow; row < lastrow; row++)
+  for( PetscInt row = firstrow; row < lastrow; row++ )
   {
     // get entries in row
     GEOSX_LAI_CHECK_ERROR( MatGetRow( m_mat, row, &numEntries, &inds, &vals ) );
     numEntries_ = numEntries;
     inds_.resize( numEntries_ );
-    for ( int i = 0; i < numEntries_; i++ ) 
+    for( int i = 0; i < numEntries_; i++ )
     {
       inds_[i] = inds[i];
     }
@@ -138,7 +138,7 @@ void PetscMatrix::set( real64 const value )
     if( numEntries_ > 0 )
     {
       vals_.resize( numEntries_ );
-      for ( int i = 0; i < numEntries_; i++ ) 
+      for( int i = 0; i < numEntries_; i++ )
       {
         vals_[i] = value;
       }
@@ -177,12 +177,34 @@ void PetscMatrix::open()
 void PetscMatrix::close()
 {
   GEOSX_LAI_ASSERT( !closed() );
+
+  // Initiate global assembly
   GEOSX_LAI_CHECK_ERROR( MatAssemblyBegin( m_mat, MAT_FINAL_ASSEMBLY ) );
   GEOSX_LAI_CHECK_ERROR( MatAssemblyEnd( m_mat, MAT_FINAL_ASSEMBLY ) );
-  GEOSX_LAI_CHECK_ERROR( MatSetOption( m_mat, MAT_NEW_NONZERO_LOCATIONS, PETSC_FALSE ) );
-  GEOSX_LAI_CHECK_ERROR( MatSetOption( m_mat, MAT_NEW_NONZERO_LOCATION_ERR, PETSC_TRUE ) );
-  GEOSX_LAI_CHECK_ERROR( MatSetOption( m_mat, MAT_KEEP_NONZERO_PATTERN, PETSC_TRUE) );
-  GEOSX_LAI_CHECK_ERROR( MatSetOption( m_mat, MAT_NO_OFF_PROC_ZERO_ROWS, PETSC_TRUE ) );
+
+  // Clear any rows that have been marked for clearing
+  if( assembled() )
+  {
+    GEOSX_LAI_CHECK_ERROR( MatZeroRows( m_mat, m_rowsToClear.size(), m_rowsToClear, 1.0, nullptr, nullptr ) );
+
+    for( localIndex i = 0; i < m_rowsToClear.size(); ++i )
+    {
+      set( m_rowsToClear[i], m_rowsToClear[i], m_diagValues[i] );
+    }
+    GEOSX_LAI_CHECK_ERROR( MatAssemblyBegin( m_mat, MAT_FINAL_ASSEMBLY ) );
+    GEOSX_LAI_CHECK_ERROR( MatAssemblyEnd( m_mat, MAT_FINAL_ASSEMBLY ) );
+    m_rowsToClear.clear();
+    m_diagValues.clear();
+  }
+
+  // If this is initial assembly, set some useful options on the matrix
+  if( !assembled() )
+  {
+    GEOSX_LAI_CHECK_ERROR( MatSetOption( m_mat, MAT_NEW_NONZERO_LOCATIONS, PETSC_FALSE ) );
+    GEOSX_LAI_CHECK_ERROR( MatSetOption( m_mat, MAT_NEW_NONZERO_LOCATION_ERR, PETSC_TRUE ) );
+    GEOSX_LAI_CHECK_ERROR( MatSetOption( m_mat, MAT_KEEP_NONZERO_PATTERN, PETSC_TRUE ) );
+    GEOSX_LAI_CHECK_ERROR( MatSetOption( m_mat, MAT_NO_OFF_PROC_ZERO_ROWS, PETSC_TRUE ) );
+  }
   m_assembled = true;
   m_closed = true;
 }
@@ -242,8 +264,8 @@ void PetscMatrix::insert( globalIndex const rowIndex,
 }
 
 void PetscMatrix::add( globalIndex const rowIndex,
-                       arraySlice1d<globalIndex const> const & colIndices,
-                       arraySlice1d<real64 const> const & values )
+                       arraySlice1d< globalIndex const > const & colIndices,
+                       arraySlice1d< real64 const > const & values )
 {
   GEOSX_LAI_ASSERT( modifiable() );
   PetscInt rows[1] = {rowIndex};
@@ -257,8 +279,8 @@ void PetscMatrix::add( globalIndex const rowIndex,
 }
 
 void PetscMatrix::set( globalIndex const rowIndex,
-                       arraySlice1d<globalIndex const> const &colIndices,
-                       arraySlice1d<real64 const> const &values )
+                       arraySlice1d< globalIndex const > const & colIndices,
+                       arraySlice1d< real64 const > const & values )
 {
   GEOSX_LAI_ASSERT( modifiable() );
   PetscInt rows[1] = {rowIndex};
@@ -272,8 +294,8 @@ void PetscMatrix::set( globalIndex const rowIndex,
 }
 
 void PetscMatrix::insert( globalIndex const rowIndex,
-                          arraySlice1d<globalIndex const> const &colIndices,
-                          arraySlice1d<real64 const> const &values )
+                          arraySlice1d< globalIndex const > const & colIndices,
+                          arraySlice1d< real64 const > const & values )
 {
   GEOSX_LAI_ASSERT( insertable() );
   PetscInt rows[1] = {rowIndex};
@@ -286,9 +308,9 @@ void PetscMatrix::insert( globalIndex const rowIndex,
                                        INSERT_VALUES ) );
 }
 
-void PetscMatrix::add( arraySlice1d<globalIndex const> const & rowIndices,
-                       arraySlice1d<globalIndex const> const & colIndices,
-                       arraySlice2d<real64 const, 1> const & values )
+void PetscMatrix::add( arraySlice1d< globalIndex const > const & rowIndices,
+                       arraySlice1d< globalIndex const > const & colIndices,
+                       arraySlice2d< real64 const, 1 > const & values )
 {
   GEOSX_LAI_ASSERT( modifiable() );
   GEOSX_LAI_CHECK_ERROR( MatSetValues( m_mat,
@@ -296,13 +318,13 @@ void PetscMatrix::add( arraySlice1d<globalIndex const> const & rowIndices,
                                        toPetscInt( rowIndices ),
                                        colIndices.size(),
                                        toPetscInt( colIndices ),
-                                       values.data(),
+                                       values.dataIfContiguous(),
                                        ADD_VALUES ) );
 }
 
-void PetscMatrix::set( arraySlice1d<globalIndex const> const & rowIndices,
-                       arraySlice1d<globalIndex const> const & colIndices,
-                       arraySlice2d<real64 const, 1> const & values )
+void PetscMatrix::set( arraySlice1d< globalIndex const > const & rowIndices,
+                       arraySlice1d< globalIndex const > const & colIndices,
+                       arraySlice2d< real64 const, 1 > const & values )
 {
   GEOSX_LAI_ASSERT( modifiable() );
   GEOSX_LAI_CHECK_ERROR( MatSetValues( m_mat,
@@ -310,13 +332,13 @@ void PetscMatrix::set( arraySlice1d<globalIndex const> const & rowIndices,
                                        toPetscInt( rowIndices ),
                                        colIndices.size(),
                                        toPetscInt( colIndices ),
-                                       values.data(),
+                                       values.dataIfContiguous(),
                                        INSERT_VALUES ) );
 }
 
-void PetscMatrix::insert( arraySlice1d<globalIndex const> const & rowIndices,
-                          arraySlice1d<globalIndex const> const & colIndices,
-                          arraySlice2d<real64 const, 1> const & values )
+void PetscMatrix::insert( arraySlice1d< globalIndex const > const & rowIndices,
+                          arraySlice1d< globalIndex const > const & colIndices,
+                          arraySlice2d< real64 const, 1 > const & values )
 {
   GEOSX_LAI_ASSERT( insertable() );
   GEOSX_LAI_CHECK_ERROR( MatSetValues( m_mat,
@@ -324,13 +346,13 @@ void PetscMatrix::insert( arraySlice1d<globalIndex const> const & rowIndices,
                                        toPetscInt( rowIndices ),
                                        colIndices.size(),
                                        toPetscInt( colIndices ),
-                                       values.data(),
+                                       values.dataIfContiguous(),
                                        INSERT_VALUES ) );
 }
 
-void PetscMatrix::add( arraySlice1d<globalIndex const> const & rowIndices,
-                       arraySlice1d<globalIndex const> const & colIndices,
-                       arraySlice2d<real64 const, 0> const & values )
+void PetscMatrix::add( arraySlice1d< globalIndex const > const & rowIndices,
+                       arraySlice1d< globalIndex const > const & colIndices,
+                       arraySlice2d< real64 const, 0 > const & values )
 {
   GEOSX_LAI_ASSERT( modifiable() );
   GEOSX_LAI_CHECK_ERROR( MatSetOption( m_mat, MAT_ROW_ORIENTED, PETSC_FALSE ) );
@@ -339,14 +361,14 @@ void PetscMatrix::add( arraySlice1d<globalIndex const> const & rowIndices,
                                        toPetscInt( rowIndices ),
                                        colIndices.size(),
                                        toPetscInt( colIndices ),
-                                       values.data(),
+                                       values.dataIfContiguous(),
                                        ADD_VALUES ) );
   GEOSX_LAI_CHECK_ERROR( MatSetOption( m_mat, MAT_ROW_ORIENTED, PETSC_TRUE ) );
 }
 
-void PetscMatrix::set( arraySlice1d<globalIndex const> const & rowIndices,
-                       arraySlice1d<globalIndex const> const & colIndices,
-                       arraySlice2d<real64 const, 0> const & values )
+void PetscMatrix::set( arraySlice1d< globalIndex const > const & rowIndices,
+                       arraySlice1d< globalIndex const > const & colIndices,
+                       arraySlice2d< real64 const, 0 > const & values )
 {
   GEOSX_LAI_ASSERT( modifiable() );
   GEOSX_LAI_CHECK_ERROR( MatSetOption( m_mat, MAT_ROW_ORIENTED, PETSC_FALSE ) );
@@ -355,14 +377,14 @@ void PetscMatrix::set( arraySlice1d<globalIndex const> const & rowIndices,
                                        toPetscInt( rowIndices ),
                                        colIndices.size(),
                                        toPetscInt( colIndices ),
-                                       values.data(),
+                                       values.dataIfContiguous(),
                                        INSERT_VALUES ) );
   GEOSX_LAI_CHECK_ERROR( MatSetOption( m_mat, MAT_ROW_ORIENTED, PETSC_TRUE ) );
 }
 
-void PetscMatrix::insert( arraySlice1d<globalIndex const> const & rowIndices,
-                          arraySlice1d<globalIndex const> const & colIndices,
-                          arraySlice2d<real64 const, 0> const & values )
+void PetscMatrix::insert( arraySlice1d< globalIndex const > const & rowIndices,
+                          arraySlice1d< globalIndex const > const & colIndices,
+                          arraySlice2d< real64 const, 0 > const & values )
 {
   GEOSX_LAI_ASSERT( insertable() );
   GEOSX_LAI_CHECK_ERROR( MatSetOption( m_mat, MAT_ROW_ORIENTED, PETSC_FALSE ) );
@@ -371,7 +393,7 @@ void PetscMatrix::insert( arraySlice1d<globalIndex const> const & rowIndices,
                                        toPetscInt( rowIndices ),
                                        colIndices.size(),
                                        toPetscInt( colIndices ),
-                                       values.data(),
+                                       values.dataIfContiguous(),
                                        INSERT_VALUES ) );
   GEOSX_LAI_CHECK_ERROR( MatSetOption( m_mat, MAT_ROW_ORIENTED, PETSC_TRUE ) );
 }
@@ -501,7 +523,7 @@ void PetscMatrix::gemv( real64 const alpha,
   x_.scale( alpha ); // alpha*x_
   y.scale( beta ); // beta*y
 
-  if ( useTranspose ) 
+  if( useTranspose )
   {
     GEOSX_LAI_CHECK_ERROR( MatMultTranspose( m_mat, x_.unwrapped(), b_.unwrapped() ) );
   }
@@ -518,20 +540,20 @@ void PetscMatrix::scale( real64 const scalingFactor )
   GEOSX_LAI_CHECK_ERROR( MatScale( m_mat, scalingFactor ) );
 }
 
-void PetscMatrix::leftScale( PetscVector const &vec )
+void PetscMatrix::leftScale( PetscVector const & vec )
 {
   GEOSX_LAI_ASSERT( ready() );
   GEOSX_LAI_CHECK_ERROR( MatDiagonalScale( m_mat, vec.unwrapped(), nullptr ) );
 }
 
-void PetscMatrix::rightScale( PetscVector const &vec )
+void PetscMatrix::rightScale( PetscVector const & vec )
 {
   GEOSX_LAI_ASSERT( ready() );
   GEOSX_LAI_CHECK_ERROR( MatDiagonalScale( m_mat, nullptr, vec.unwrapped() ) );
 }
 
-void PetscMatrix::leftRightScale( PetscVector const &vecLeft,
-                                  PetscVector const &vecRight )
+void PetscMatrix::leftRightScale( PetscVector const & vecLeft,
+                                  PetscVector const & vecRight )
 {
   GEOSX_LAI_ASSERT( ready() );
   GEOSX_LAI_CHECK_ERROR( MatDiagonalScale( m_mat, vecLeft.unwrapped(), vecRight.unwrapped() ) );
@@ -568,35 +590,41 @@ void PetscMatrix::transpose( PetscMatrix & dst ) const
   dst.m_assembled = true;
 }
 
-void PetscMatrix::clearRow( globalIndex const globalRow,
-                            real64 const diagValue )
+real64 PetscMatrix::clearRow( globalIndex const globalRow,
+                              bool const keepDiag,
+                              real64 const diagValue )
 {
   GEOSX_LAI_ASSERT( modifiable() );
   GEOSX_LAI_ASSERT_GE( globalRow, ilower() );
   GEOSX_LAI_ASSERT_GT( iupper(), globalRow );
 
-  // The implementation below is not the most efficient, but we can't use
-  // PETCs's MatZeroRows because it is collective and clearRow() is not
-
-  localIndex const numEntries = globalRowLength( globalRow );
-  array1d< globalIndex > colIndices( numEntries );
-  array1d< real64 > values( numEntries );
-  values = 0.0;
-
+  PetscInt numEntries = 0;
   PetscInt const * inds;
-  GEOSX_LAI_CHECK_ERROR( MatGetRow( m_mat, globalRow, nullptr, &inds, nullptr ) );
+  PetscReal const * vals;
+  GEOSX_LAI_CHECK_ERROR( MatGetRow( m_mat, globalRow, &numEntries, &inds, &vals ) );
 
-  bool const isDiagonal = numGlobalRows() == numGlobalCols();
-  for( localIndex i = 0; i < numEntries; ++i)
+  bool const square = numGlobalRows() == numGlobalCols();
+
+  real64 oldDiag = 0.0;
+  if( square )
   {
-    colIndices[i] = inds[i];
-    if( colIndices[i] == globalRow && isDiagonal )
+    for( localIndex i = 0; i < numEntries; ++i )
     {
-      values[i] = diagValue;
+      if( inds[i] == globalRow )
+      {
+        oldDiag = vals[i];
+      }
     }
   }
-  GEOSX_LAI_CHECK_ERROR( MatRestoreRow( m_mat, globalRow, nullptr, &inds, nullptr ) );
-  set( globalRow, colIndices, values );
+  GEOSX_LAI_CHECK_ERROR( MatRestoreRow( m_mat, globalRow, &numEntries, &inds, &vals ) );
+
+  // There is no legitimate way in PETSc to zero out a row in a local fashion,
+  // without any collective calls. Therefore, we store the rows to be cleared
+  // and perform the clearing at the next close() call.
+  m_rowsToClear.push_back( globalRow );
+  m_diagValues.push_back( keepDiag ? oldDiag : diagValue );
+
+  return oldDiag;
 }
 
 localIndex PetscMatrix::maxRowLength() const
@@ -626,8 +654,8 @@ localIndex PetscMatrix::globalRowLength( globalIndex globalRowIndex ) const
 }
 
 void PetscMatrix::getRowCopy( globalIndex globalRow,
-                              arraySlice1d<globalIndex> const & colIndices,
-                              arraySlice1d<real64> const & values ) const
+                              arraySlice1d< globalIndex > const & colIndices,
+                              arraySlice1d< real64 > const & values ) const
 {
   GEOSX_LAI_ASSERT( ready() );
   GEOSX_LAI_ASSERT_GE( globalRow, ilower() );
@@ -642,11 +670,11 @@ void PetscMatrix::getRowCopy( globalIndex globalRow,
   GEOSX_LAI_ASSERT_GE( colIndices.size(), numEntries );
   GEOSX_LAI_ASSERT_GE( values.size(), numEntries );
 
-  for ( int i = 0; i < numEntries; i++ ) 
+  for( int i = 0; i < numEntries; i++ )
   {
     colIndices[i] = inds[i];
   }
-  for ( int i = 0; i < numEntries; i++ ) 
+  for( int i = 0; i < numEntries; i++ )
   {
     values[i] = vals[i];
   }
@@ -663,18 +691,20 @@ real64 PetscMatrix::getDiagValue( globalIndex globalRow ) const
   PetscScalar const * vals = nullptr;
   PetscInt const * cols = nullptr;
   PetscInt ncols;
+  real64 diagValue = 0.0;
 
   GEOSX_LAI_CHECK_ERROR( MatGetRow( m_mat, globalRow, &ncols, &cols, &vals ) );
   for( PetscInt i = 0; i < ncols; i++ )
   {
-    if( cols[i] == globalRow ) 
+    if( cols[i] == globalRow )
     {
-      return vals[i];
+      diagValue = vals[i];
+      break;
     }
   }
   GEOSX_LAI_CHECK_ERROR( MatRestoreRow( m_mat, globalRow, &ncols, &cols, &vals ) );
 
-  return 0.0;
+  return diagValue;
 }
 
 Mat & PetscMatrix::unwrapped()
@@ -695,7 +725,7 @@ globalIndex PetscMatrix::numGlobalRows() const
   PetscInt num_rows;
   PetscInt num_cols;
   GEOSX_LAI_CHECK_ERROR( MatGetSize( m_mat, &num_rows, &num_cols ) );
-  return integer_conversion<globalIndex>( num_rows );
+  return integer_conversion< globalIndex >( num_rows );
 }
 
 globalIndex PetscMatrix::numGlobalCols() const
@@ -704,7 +734,7 @@ globalIndex PetscMatrix::numGlobalCols() const
   PetscInt num_rows;
   PetscInt num_cols;
   GEOSX_LAI_CHECK_ERROR( MatGetSize( m_mat, &num_rows, &num_cols ) );
-  return integer_conversion<globalIndex>( num_cols );
+  return integer_conversion< globalIndex >( num_cols );
 }
 
 globalIndex PetscMatrix::ilower() const
@@ -713,7 +743,7 @@ globalIndex PetscMatrix::ilower() const
   PetscInt firstrow;
   PetscInt lastrow;
   GEOSX_LAI_CHECK_ERROR( MatGetOwnershipRange( m_mat, &firstrow, &lastrow ) );
-  return integer_conversion<globalIndex>( firstrow );
+  return integer_conversion< globalIndex >( firstrow );
 }
 
 globalIndex PetscMatrix::iupper() const
@@ -722,7 +752,7 @@ globalIndex PetscMatrix::iupper() const
   PetscInt firstrow;
   PetscInt lastrow;
   GEOSX_LAI_CHECK_ERROR( MatGetOwnershipRange( m_mat, &firstrow, &lastrow ) );
-  return integer_conversion<globalIndex>( lastrow );
+  return integer_conversion< globalIndex >( lastrow );
 }
 
 localIndex PetscMatrix::numLocalNonzeros() const
@@ -747,7 +777,7 @@ localIndex PetscMatrix::numLocalNonzeros() const
 
 globalIndex PetscMatrix::numGlobalNonzeros() const
 {
-  return MpiWrapper::Sum( integer_conversion<globalIndex>( numLocalNonzeros() ), getComm() );
+  return MpiWrapper::Sum( integer_conversion< globalIndex >( numLocalNonzeros() ), getComm() );
 }
 
 real64 PetscMatrix::normInf() const
@@ -789,7 +819,7 @@ globalIndex PetscMatrix::getGlobalRowID( localIndex const index ) const
   GEOSX_LAI_ASSERT_GT( numLocalRows(), index );
   PetscInt low, high;
   GEOSX_LAI_CHECK_ERROR( MatGetOwnershipRange( m_mat, &low, &high ) );
-  return integer_conversion<globalIndex>( index + low );
+  return integer_conversion< globalIndex >( index + low );
 }
 
 localIndex PetscMatrix::numLocalCols() const
@@ -797,7 +827,7 @@ localIndex PetscMatrix::numLocalCols() const
   GEOSX_LAI_ASSERT( created() );
   PetscInt cols;
   GEOSX_LAI_CHECK_ERROR( MatGetSize( m_mat, nullptr, &cols ) );
-  return integer_conversion<localIndex>( cols );
+  return integer_conversion< localIndex >( cols );
 }
 
 localIndex PetscMatrix::numLocalRows() const
@@ -805,14 +835,14 @@ localIndex PetscMatrix::numLocalRows() const
   GEOSX_LAI_ASSERT( created() );
   PetscInt low, high;
   GEOSX_LAI_CHECK_ERROR( MatGetOwnershipRange( m_mat, &low, &high ) );
-  return integer_conversion<localIndex >( high - low );
+  return integer_conversion< localIndex >( high - low );
 }
 
 MPI_Comm PetscMatrix::getComm() const
 {
   GEOSX_LAI_ASSERT( created() );
   MPI_Comm comm;
-  GEOSX_LAI_CHECK_ERROR( PetscObjectGetComm( reinterpret_cast<PetscObject>( m_mat ), &comm ) );
+  GEOSX_LAI_CHECK_ERROR( PetscObjectGetComm( reinterpret_cast< PetscObject >( m_mat ), &comm ) );
   return comm;
 }
 
@@ -835,20 +865,30 @@ void PetscMatrix::write( string const & filename,
   switch( format )
   {
     case LAIOutputFormat::NATIVE_ASCII:
+    {
       petscFormat = PETSC_VIEWER_ASCII_COMMON;
-      break;
+    }
+    break;
     case LAIOutputFormat::NATIVE_BINARY:
+    {
       petscFormat = PETSC_VIEWER_NATIVE;
-      break;
+    }
+    break;
     case LAIOutputFormat::MATLAB_ASCII:
+    {
       petscFormat = PETSC_VIEWER_ASCII_MATLAB;
-      break;
+    }
+    break;
     case LAIOutputFormat::MATLAB_BINARY:
+    {
       petscFormat = PETSC_VIEWER_BINARY_MATLAB;
-      break;
+    }
+    break;
     case LAIOutputFormat::MATRIX_MARKET:
+    {
       petscFormat = PETSC_VIEWER_ASCII_MATRIXMARKET;
-      break;
+    }
+    break;
     default:
       GEOSX_ERROR( "Unsupported matrix output format" );
   }

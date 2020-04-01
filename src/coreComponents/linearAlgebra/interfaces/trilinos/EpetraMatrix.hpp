@@ -39,7 +39,7 @@ namespace geosx
  *        matrix object type used in Trilinos.
  */
 class EpetraMatrix final : public virtual LinearOperator< EpetraVector >,
-                           private MatrixBase< EpetraMatrix, EpetraVector >
+  private MatrixBase< EpetraMatrix, EpetraVector >
 {
 public:
 
@@ -224,8 +224,9 @@ public:
 
   virtual void transpose( EpetraMatrix & dst ) const override;
 
-  virtual void clearRow( globalIndex const row,
-                         real64 const diagValue ) override;
+  virtual real64 clearRow( globalIndex const row,
+                           bool const keepDiag = false,
+                           real64 const diagValue = 0.0 ) override;
 
   virtual localIndex maxRowLength() const override;
 

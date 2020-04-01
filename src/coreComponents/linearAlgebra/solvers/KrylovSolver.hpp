@@ -52,7 +52,7 @@ public:
                 real64 const tolerance,
                 localIndex const maxIterations,
                 integer const verbosity )
-  : Base(),
+    : Base(),
     m_operator( A ),
     m_precond( M ),
     m_tolerance( tolerance ),
@@ -97,7 +97,7 @@ public:
 
   localIndex numIterations( ) const { return m_numIterations; };
 
-  arrayView1d<const real64> residualNormVector( ) const { return m_residualNormVector.toViewConst(); };
+  arrayView1d< const real64 > residualNormVector( ) const { return m_residualNormVector.toViewConst(); };
 
   bool convergenceFlag( ) const { return m_convergenceFlag; };
 
@@ -122,10 +122,10 @@ protected:
   using VectorTemp = typename VectorStorageHelper< VECTOR >::type;
 
   /// reference to the operator to be solved
-  LinearOperator<Vector> const & m_operator;
+  LinearOperator< Vector > const & m_operator;
 
   /// reference to the preconditioning operator
-  LinearOperator<Vector> const & m_precond;
+  LinearOperator< Vector > const & m_precond;
 
   /// relative residual norm reduction tolerance
   real64 m_tolerance;
@@ -140,7 +140,7 @@ protected:
   mutable localIndex m_numIterations = 0;
 
   /// residual norm vector
-  mutable array1d<real64 > m_residualNormVector;
+  mutable array1d< real64 > m_residualNormVector;
 
   /// convergence flag
   mutable bool m_convergenceFlag;
