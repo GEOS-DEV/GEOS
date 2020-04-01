@@ -512,6 +512,7 @@ struct ImplicitKernel
     typename CONSTITUTIVE_TYPE::KernelWrapper const & constitutive = constitutiveRelation->createKernelWrapper();
 
     arrayView2d<real64 const> const & damage = constitutiveRelation->getDamage();
+//    std::cout << "Arbitrary Gauss point damage value = " << damage(100,0) << "\n";
 //    arrayView2d<real64> const & strainEnergyDensity = constitutiveRelation->getStrainEnergyDensity();
     arrayView2d<R2SymTensor> const & stress = constitutiveRelation->getStress();
 
