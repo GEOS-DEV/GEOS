@@ -213,6 +213,7 @@ public:
   {
     arrayView1d< localIndex const > const & ghostsToSend = getNeighborData( neighborRank ).ghostsToSend();
     array1d< std::pair< globalIndex, int > > & nonLocalGhosts = getNeighborData( neighborRank ).nonLocalGhosts();
+    nonLocalGhosts.clear();
 
     for( localIndex const index : ghostsToSend )
     {
