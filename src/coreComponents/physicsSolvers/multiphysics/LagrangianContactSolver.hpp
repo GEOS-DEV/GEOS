@@ -224,7 +224,7 @@ private:
     OPEN,     ///< element is open: no constraints are imposed
   };
 
-  string FractureStateToString( FractureState const state ) const
+  string FractureStateToString( FractureState const & state ) const
   {
     string stringState;
     switch( state )
@@ -253,7 +253,7 @@ private:
     return stringState;
   }
 
-  integer FractureStateToInteger( FractureState const state ) const
+  integer FractureStateToInteger( FractureState const & state ) const
   {
     integer integerState;
     switch( state )
@@ -303,6 +303,8 @@ public:
   void SetFractureStateForElasticStep( DomainPartition * const domain ) const;
 
   bool UpdateFractureState( DomainPartition * const domain ) const;
+
+  void SynchronizeFractureState( DomainPartition * const domain ) const;
 
   bool IsFractureAllInStickCondition( DomainPartition const * const domain ) const;
 
