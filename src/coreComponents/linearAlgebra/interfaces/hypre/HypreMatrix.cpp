@@ -1185,30 +1185,44 @@ void HypreMatrix::write( string const & filename,
     }
     case LAIOutputFormat::MATRIX_MARKET:
     {
-      // Copy distributed parcsr matrix in a local CSR matrix on every process
-      // with at least one row
-      // Warning: works for a parcsr matrix that is smaller than 2^31-1
-      hypre_CSRMatrix *CSRmatrix;
-      CSRmatrix = hypre_ParCSRMatrixToCSRMatrixAll( m_parcsr_mat );
-
-      // Identify the smallest process where CSRmatrix exists
-      int myID = MpiWrapper::Comm_rank( getComm() );
-      if( CSRmatrix == 0 )
+      if( numGlobalRows() * numGlobalCols() == 0 )
       {
-        myID = MpiWrapper::Comm_size( getComm() );
+        if( MpiWrapper::Comm_rank( getComm() ) == 0 )
+        {
+          FILE * fp = std::fopen( filename.c_str(), "w" );
+          hypre_fprintf( fp, "%s", "%%MatrixMarket matrix coordinate real general\n" );
+
+          hypre_fprintf( fp, "%d %d %d\n", 0, 0, 0 );
+          std::fclose( fp );
+        }
       }
-      int printID = MpiWrapper::Min( myID, getComm() );
-
-      // Write to file CSRmatrix
-      if( MpiWrapper::Comm_rank( getComm() ) == printID )
+      else
       {
-        hypre_CSRMatrixPrintMM( CSRmatrix, 1, 1, 0, filename.c_str() );
-      }
+        // Copy distributed parcsr matrix in a local CSR matrix on every process
+        // with at least one row
+        // Warning: works for a parcsr matrix that is smaller than 2^31-1
+        hypre_CSRMatrix *CSRmatrix;
+        CSRmatrix = hypre_ParCSRMatrixToCSRMatrixAll( m_parcsr_mat );
 
-      // Destroy CSRmatrix
-      if( CSRmatrix )
-      {
-        GEOSX_LAI_CHECK_ERROR( hypre_CSRMatrixDestroy( CSRmatrix ) );
+        // Identify the smallest process where CSRmatrix exists
+        int myID = MpiWrapper::Comm_rank( getComm() );
+        if( CSRmatrix == 0 )
+        {
+          myID = MpiWrapper::Comm_size( getComm() );
+        }
+        int printID = MpiWrapper::Min( myID, getComm() );
+
+        // Write to file CSRmatrix
+        if( MpiWrapper::Comm_rank( getComm() ) == printID )
+        {
+          hypre_CSRMatrixPrintMM( CSRmatrix, 1, 1, 0, filename.c_str() );
+        }
+
+        // Destroy CSRmatrix
+        if( CSRmatrix )
+        {
+          GEOSX_LAI_CHECK_ERROR( hypre_CSRMatrixDestroy( CSRmatrix ) );
+        }
       }
       break;
     }
