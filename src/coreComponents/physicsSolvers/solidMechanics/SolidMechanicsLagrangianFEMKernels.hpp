@@ -61,8 +61,8 @@ inline void velocityUpdate( arrayView1d<R1Tensor> const & acceleration,
   {
     for (int j = 0; j < 3; ++j)
     {
-      velocity[ i ][ j ] += dt * acceleration[ i ][ j ];
-      acceleration[ i ][ j ] = gravityVector[ j ] * mass[ i ];
+    	velocity[ i ][ j ] += dt * acceleration[ i ][ j ];
+        acceleration[ i ][ j ] = gravityVector[ j ] * mass[ i ];
     } 
   });
 }
@@ -207,6 +207,7 @@ struct ExplicitKernel
     arrayView2d<real64 const> const & density =  constitutiveRelation->density();
 //    arrayView1d<real64 const> const & bulkModulus =  constitutiveRelation->bulkModulus();
 //    arrayView1d<real64 const> const & shearModulus =  constitutiveRelation->shearModulus();
+
 
     forall_in_set<serialPolicy>( elementList.values(),
                               elementList.size(),

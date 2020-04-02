@@ -352,6 +352,7 @@ void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * co
 //  }
 
   // Double the mass of nodes at external boundary
+  /*
   Group * nodeSets = nodes->sets();
   localIndex_set & xnegNodes = nodeSets->registerWrapper<localIndex_set>( std::string("xneg") )->reference();
   localIndex_set & xposNodes = nodeSets->registerWrapper<localIndex_set>( std::string("xpos") )->reference();
@@ -372,6 +373,7 @@ void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * co
     mass[index] *= 2;
   for( localIndex index : zposNodes )
     mass[index] *= 2;
+    */
 
 }
 
@@ -823,7 +825,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStepVelocityUpdate( real64 const& ti
 
   fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n + dt, domain, "nodeManager", keys::Velocity );
 
-
+/*
   ElementRegionManager::MaterialViewAccessor< real64 > const
   clearDisplacement = elemManager->ConstructFullMaterialViewAccessor< real64 >( SolidBase::viewKeyStruct::clearDisplacementString,
                                                                                        constitutiveManager);
@@ -833,7 +835,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStepVelocityUpdate( real64 const& ti
   {
 	  ClearDisplacement( domain );
   }
-
+*/
 
   CommunicationTools::SynchronizeUnpack( mesh, neighbors, m_iComm, true );
 

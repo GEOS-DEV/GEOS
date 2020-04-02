@@ -337,7 +337,7 @@ if(m_initialTime[k][q] < 0)
 	m_clearDisplacement = 1;
 
 	 //m_strain[k][q] += D;
-     real64 p = 1e12;
+     real64 p = 1e10;
      real64 G = m_G0[k] * pat * ( pow( ( 2.97 - m_ein[k] ) , 2 ) / ( 1 + m_ein[k])) * sqrt( p / pat );
      real64 K = (1 + m_ein[k]) / m_kappa[k] * pat * sqrt( p / pat );
      real64 meanStresIncrement = D.Trace();

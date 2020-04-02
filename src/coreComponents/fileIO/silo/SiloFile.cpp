@@ -1643,7 +1643,14 @@ void SiloFile::WriteElementMesh( ElementRegionBase const * const elementRegion,
       ++count;
     });
 
-    string_array const regionSolidMaterialList = elementRegion->getConstitutiveNames<constitutive::SolidBase>();
+    //string_array const regionSolidMaterialList = elementRegion->getConstitutiveNames<constitutive::SolidBase>();
+    string_array const regionSolidMaterialList1 = elementRegion->getConstitutiveNames<constitutive::SolidBase>();
+    string_array regionSolidMaterialList2;
+    regionSolidMaterialList2.resize(1);
+    regionSolidMaterialList2[0] = regionSolidMaterialList1[0];
+    string_array const regionSolidMaterialList = regionSolidMaterialList2;
+
+
     localIndex const numSolids = regionSolidMaterialList.size();
     if( numSolids > 0 )
     {
