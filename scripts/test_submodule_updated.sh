@@ -4,11 +4,20 @@
 declare -ar exclusion_list=( "blt" "PVTPackage")
 echo "Submodules that are excluded from sync test : ${exclusion_list[@]}"
 
+# Do not pull large files
+git lfs uninstall &> /dev/null
+
+# Pull submodule to get .git files.
+git submodule update --quiet --init
+
 # Initialize PR submodule hashes
 declare -ar pr_hashes_array=( $(git submodule status | awk '{print $1}') )
 
 # Initialize submodule paths
 declare -ar paths_array=( $(git submodule status | awk '{print $2}') )
+
+# Initialize differences between PR and origin/develop branches
+declare -ar diff_array=( $(git diff --name-only origin/develop | awk '{print $1}') )
 
 # Initialize main branches for submodules
 declare -Ar main_branches=(
@@ -30,9 +39,6 @@ length=${#paths_array[@]}
 exit_code=0
 unsync_submodules=()
 
-# Do not pull large files
-git lfs uninstall &> /dev/null
-
 for (( i=0; i<$length; i++))
 do
   # Just the submodule name
@@ -48,12 +54,25 @@ do
     fi
   done
 
-  # Check hashes
-  if [ $excluded -eq 0 ]
-  then
-    # Pull submodule to get .git files.
-    git submodule update --quiet --init ${paths_array[$i]}
+  # Check if PR has modified the submodule
+  different=0
+  for diff in "${diff_array[@]}"
+  do
+    if [ "${paths_array[$i]}" = "$diff" ]
+    then
+      different=1
+      break
+    fi
+  done
 
+  if [ $excluded -eq 0 ] && [ $different -eq 0 ]
+  then
+    echo "PR branch does not change module $module_name"
+  fi
+
+  # Check hashes if not excluded and differs from develop's hash
+  if [ $excluded -eq 0 ] && [ $different -eq 1 ]
+  then
     # Submodule's main branch
     main_branch="${main_branches[$module_name]}"
 
@@ -90,5 +109,8 @@ then
 else
   echo "SUCCESS : PR submodules are up to date!"
 fi
+
+# Renable git lfs
+git lfs install &> /dev/null
 
 exit $exit_code
