@@ -360,7 +360,7 @@ void PetscVector::write( string const & filename,
     {
       PetscScalar *v;
       GEOSX_LAI_CHECK_ERROR( VecGetArray( globalVec, &v ) );
- 
+
       FILE * fp = std::fopen( filename.c_str(), "w" );
       fprintf( fp, "%s", "%%MatrixMarket matrix array real general\n" );
       fprintf( fp, "%lld %d\n", globalSize(), 1 );
@@ -369,7 +369,7 @@ void PetscVector::write( string const & filename,
         fprintf( fp, "%.16e\n", v[i] );
       }
       std::fclose( fp );
- 
+
       GEOSX_LAI_CHECK_ERROR( VecRestoreArray( globalVec, &v ) );
     }
     GEOSX_LAI_CHECK_ERROR( VecScatterDestroy( &scatter ) );
