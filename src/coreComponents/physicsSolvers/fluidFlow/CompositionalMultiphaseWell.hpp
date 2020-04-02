@@ -302,6 +302,12 @@ protected:
 private:
 
   /**
+   * @brief Compute all the perforation rates for this well
+   * @param well the well with its perforations
+   */
+  void ComputePerforationRates( WellElementSubRegion * const subRegion );
+
+  /**
    * @brief Setup stored reservoir views into domain data for the current step
    */
   void ResetViews( DomainPartition * const domain ) override;
@@ -348,19 +354,40 @@ private:
   /// index of the rel perm constitutive model in the flow solver
   localIndex m_resRelPermIndex;
 
+
   /// views into reservoir primary variable fields
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_resPressure;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_deltaResPressure;
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_resGlobalCompDensity;
 
   /// views into other reservoir variable fields
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_resPhaseVolFrac;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_dResPhaseVolFrac_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 > > m_dResPhaseVolFrac_dCompDens;
+
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 > > m_dResCompFrac_dCompDens;
+
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_resPhaseMob;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_dResPhaseMob_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 > > m_dResPhaseMob_dCompDens;
 
   /// views into reservoir material fields
 
   ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 > > m_resPhaseDens;
+
+  ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 > > m_resPhaseVisc;
+  ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 > > m_dResPhaseVisc_dPres;
+  ElementRegionManager::MaterialViewAccessor< arrayView4d< real64 > > m_dResPhaseVisc_dComp;
+
+  ElementRegionManager::MaterialViewAccessor< arrayView4d< real64 > > m_resPhaseCompFrac;
+  ElementRegionManager::MaterialViewAccessor< arrayView4d< real64 > > m_dResPhaseCompFrac_dPres;
+  ElementRegionManager::MaterialViewAccessor< arrayView5d< real64 > > m_dResPhaseCompFrac_dComp;
+
+  ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 > > m_resPhaseRelPerm;
+  ElementRegionManager::MaterialViewAccessor< arrayView4d< real64 > > m_dResPhaseRelPerm_dPhaseVolFrac;
 
 };
 

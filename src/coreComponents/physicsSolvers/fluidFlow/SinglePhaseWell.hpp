@@ -239,7 +239,14 @@ protected:
 
   virtual void InitializePreSubGroups( Group * const rootGroup ) override;
 
+
 private:
+
+  /**
+   * @brief Compute all the perforation rates for this well
+   * @param well the well with its perforations
+   */
+  void ComputePerforationRates( WellElementSubRegion * const subRegion );
 
   /**
    * @brief Setup stored reservoir views into domain data for the current step
@@ -265,14 +272,20 @@ private:
    */
   void RecordWellData( WellElementSubRegion const * const subRegion );
 
+private:
+
   /// views into reservoir primary variable fields
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_resPressure;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_deltaResPressure;
 
   /// views into reservoir material fields
 
   ElementRegionManager::MaterialViewAccessor< arrayView2d< real64 > > m_resDensity;
+  ElementRegionManager::MaterialViewAccessor< arrayView2d< real64 > > m_dResDens_dPres;
 
+  ElementRegionManager::MaterialViewAccessor< arrayView2d< real64 > > m_resViscosity;
+  ElementRegionManager::MaterialViewAccessor< arrayView2d< real64 > > m_dResVisc_dPres;
 
 };
 

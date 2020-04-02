@@ -229,15 +229,6 @@ void ReservoirSolverBase::AssembleSystem( real64 const time_n,
   }
 }
 
-void ReservoirSolverBase::AssembleCouplingTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
-                                                 real64 const GEOSX_UNUSED_PARAM( dt ),
-                                                 DomainPartition * const GEOSX_UNUSED_PARAM( domain ),
-                                                 DofManager const * const GEOSX_UNUSED_PARAM( dofManager ),
-                                                 ParallelMatrix * const GEOSX_UNUSED_PARAM( matrix ),
-                                                 ParallelVector * const GEOSX_UNUSED_PARAM( rhs ) )
-{
-  GEOSX_ERROR( "ReservoirSolverBase::AssembleCouplingTerms called!. Should be overridden." );
-}
 
 void ReservoirSolverBase::ApplyBoundaryConditions( real64 const time_n,
                                                    real64 const dt,

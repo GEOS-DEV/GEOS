@@ -162,7 +162,7 @@ public:
                                       DomainPartition * const domain,
                                       DofManager const * const dofManager,
                                       ParallelMatrix * const matrix,
-                                      ParallelVector * const rhs );
+                                      ParallelVector * const rhs ) = 0;
 
   FlowSolverBase * GetFlowSolver() const { return m_flowSolver; }
 

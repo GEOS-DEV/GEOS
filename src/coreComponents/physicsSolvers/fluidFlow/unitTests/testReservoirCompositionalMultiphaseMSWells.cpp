@@ -70,22 +70,18 @@ void testMixtureDensityNumericalDerivatives( CompositionalMultiphaseWell * solve
 
     arrayView1d< real64 > & pres =
       subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::pressureString );
-
     arrayView1d< real64 > & dPres =
       subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::deltaPressureString );
 
     arrayView2d< real64 > & compDens =
       subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::globalCompDensityString );
-
     arrayView2d< real64 > & dCompDens =
       subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::deltaGlobalCompDensityString );
 
     arrayView1d< real64 > const & wellElemMixtureDensity =
       subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::mixtureDensityString );
-
     arrayView1d< real64 > const & dWellElemMixtureDensity_dPres =
       subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::dMixtureDensity_dPressureString );
-
     arrayView2d< real64 > const & dWellElemMixtureDensity_dCompDens =
       subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::dMixtureDensity_dGlobalCompDensityString );
 
@@ -219,13 +215,11 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir * solver,
       // get the primary variables on the reservoir elements
       arrayView1d< real64 > & pres =
         subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::pressureString );
-
       arrayView1d< real64 > & dPres =
         subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::deltaPressureString );
 
       arrayView2d< real64 > & compDens =
         subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::globalCompDensityString );
-
       arrayView2d< real64 > & dCompDens =
         subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::deltaGlobalCompDensityString );
 
@@ -256,6 +250,11 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir * solver,
           {
             flowSolver->UpdateState( &subRegion2 );
           } );
+          elemManager->forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion & subRegion3 )
+          {
+            wellSolver->UpdateState( &subRegion3 );
+          } );
+
 
           residual.zero();
           jacobian.zero();
@@ -335,19 +334,16 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir * solver,
     // get the primary variables on the well elements
     arrayView1d< real64 > const & wellElemPressure =
       subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::pressureString );
-
     arrayView1d< real64 > const & dWellElemPressure =
       subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::deltaPressureString );
 
     arrayView2d< real64 > const & wellElemCompDens =
       subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::globalCompDensityString );
-
     arrayView2d< real64 > const & dWellElemCompDens =
       subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::deltaGlobalCompDensityString );
 
     arrayView1d< real64 > const & connRate  =
       subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::mixtureConnRateString );
-
     arrayView1d< real64 > const & dConnRate =
       subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::deltaMixtureConnRateString );
 

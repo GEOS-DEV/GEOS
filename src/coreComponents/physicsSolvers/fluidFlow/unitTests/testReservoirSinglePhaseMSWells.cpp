@@ -104,7 +104,6 @@ void testNumericalJacobian( SinglePhaseReservoir * solver,
       // get the primary variables on reservoir elements
       arrayView1d< real64 > & pres =
         subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::pressureString );
-
       arrayView1d< real64 > & dPres =
         subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaPressureString );
 
@@ -128,6 +127,10 @@ void testNumericalJacobian( SinglePhaseReservoir * solver,
           flowSolver->applyToSubRegions( mesh, [&] ( ElementSubRegionBase & subRegion2 )
           {
             flowSolver->UpdateState( &subRegion2 );
+          } );
+          elemManager->forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion & subRegion3 )
+          {
+            wellSolver->UpdateState( &subRegion3 );
           } );
 
           residual.zero();
@@ -174,13 +177,11 @@ void testNumericalJacobian( SinglePhaseReservoir * solver,
     // get the primary variables on well elements
     array1d< real64 > const & wellElemPressure =
       subRegion.getReference< array1d< real64 > >( SinglePhaseWell::viewKeyStruct::pressureString );
-
     array1d< real64 > const & dWellElemPressure =
       subRegion.getReference< array1d< real64 > >( SinglePhaseWell::viewKeyStruct::deltaPressureString );
 
     array1d< real64 > const & connRate  =
       subRegion.getReference< array1d< real64 > >( SinglePhaseWell::viewKeyStruct::connRateString );
-
     array1d< real64 > const & dConnRate =
       subRegion.getReference< array1d< real64 > >( SinglePhaseWell::viewKeyStruct::deltaConnRateString );
 
