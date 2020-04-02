@@ -582,7 +582,7 @@ void SolverBase::SetupSystem( DomainPartition * const domain,
   rhs.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
   solution.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
 
-//  dofManager.setSparsityPattern( matrix );
+  dofManager.setSparsityPattern( matrix );
 }
 
 void SolverBase::AssembleSystem( real64 const GEOSX_UNUSED_PARAM( time ),

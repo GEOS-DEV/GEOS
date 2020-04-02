@@ -10,6 +10,7 @@
 
 #include "common/DataTypes.hpp"
 #include "constitutive/solid/LinearElasticIsotropic.hpp"
+#include "constitutive/solid/solidSelector.hpp"
 #include "mesh/ElementRegionManager.hpp"
 
 
@@ -18,28 +19,53 @@ namespace geosx
 namespace physicsLoopInterface
 {
 
+template< typename LAMBDA >
+void
+discretizationLaunchSelector( localIndex NUM_NODES_PER_ELEM,
+                              localIndex NUM_QUADRATURE_POINTS,
+                              LAMBDA && lambda )
+{
+  if( NUM_NODES_PER_ELEM==8 && NUM_QUADRATURE_POINTS==8 )
+  {
+    lambda( std::integral_constant< int, 8 >(), std::integral_constant< int, 8 >() );
+  }
+  else if( NUM_NODES_PER_ELEM==8 && NUM_QUADRATURE_POINTS==1 )
+  {
+    lambda( std::integral_constant< int, 8 >(), std::integral_constant< int, 1 >() );
+  }
+  else if( NUM_NODES_PER_ELEM==4 && NUM_QUADRATURE_POINTS==1 )
+  {
+    lambda( std::integral_constant< int, 4 >(), std::integral_constant< int, 1 >() );
+  }
+  else
+  {
+    GEOSX_ERROR( "Valid Branch not found." );
+  }
+}
+
 class FiniteElementRegionLoopKernelBase
 {
 public:
 
-  template< int NDOF, int NUM_NODES_PER_ELEM >
+  template< int NUM_NODES_PER_ELEM, int NUM_DOF_PER_NODE >
   struct StackVariables
   {
 public:
-    static constexpr int ndof = NDOF;
+    static constexpr int numNodesPerElem = NUM_NODES_PER_ELEM;
+    static constexpr int ndof = NUM_DOF_PER_NODE * NUM_NODES_PER_ELEM;
 
     StackVariables():
-      elementLocalDofIndex( NDOF ),
-      R( NDOF ),
-      dRdU( NDOF, NDOF )
+      elementLocalDofIndex( ndof ),
+      R( ndof ),
+      dRdU( ndof, ndof )
     {
       dRdU = 0.0;
       R = 0.0;
     }
 
-    stackArray1d< globalIndex, NDOF >   elementLocalDofIndex;
-    stackArray1d< real64, NDOF >        R;
-    stackArray2d< real64, NDOF *NDOF >  dRdU;
+    stackArray1d< globalIndex, ndof >   elementLocalDofIndex;
+    stackArray1d< real64, ndof >        R;
+    stackArray2d< real64, ndof *ndof >  dRdU;
 
   };
 
@@ -55,7 +81,6 @@ public:
   arrayView1d< globalIndex const > m_dofNumber;
   ParallelMatrix & m_matrix;
   ParallelVector & m_rhs;
-
   arrayView2d< localIndex const, cells::NODE_MAP_USD > elemsToNodes;
 
   void initializeNonElementViews( MeshLevel & GEOSX_UNUSED_PARAM( mesh ) )
@@ -73,10 +98,9 @@ public:
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void preKernel( localIndex const k,
-                  localIndex const numNodesPerElem,
                   STACK_VARIABLE_TYPE & stack ) const
   {
-    for( localIndex a=0; a<numNodesPerElem; ++a )
+    for( localIndex a=0; a<STACK_VARIABLE_TYPE::numNodesPerElem; ++a )
     {
       localIndex const localNodeIndex = elemsToNodes( k, a );
       for( int i=0; i<3; ++i )
@@ -87,14 +111,13 @@ public:
 
   }
 
-  template< typename STACK_VARIABLE_TYPE, typename CONSTITUTIVE_TYPE >
+  template< typename STACK_VARIABLE_TYPE, typename CONSTITUTIVE_UPDATE >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void updateKernel( localIndex const GEOSX_UNUSED_PARAM( k ),
                      localIndex const GEOSX_UNUSED_PARAM( q ),
                      STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ),
-                     CONSTITUTIVE_TYPE & GEOSX_UNUSED_PARAM( constitutive ),
-                     localIndex const GEOSX_UNUSED_PARAM( numNodesPerElem ) ) const
+                     CONSTITUTIVE_UPDATE const & GEOSX_UNUSED_PARAM( constitutiveUpdate )  ) const
   {}
 
   template< typename STACK_VARIABLE_TYPE >
@@ -102,19 +125,16 @@ public:
   GEOSX_FORCE_INLINE
   void stiffnessKernel( localIndex const GEOSX_UNUSED_PARAM( k ),
                         localIndex const GEOSX_UNUSED_PARAM( q ),
-                        localIndex const GEOSX_UNUSED_PARAM( a ),
-                        localIndex const GEOSX_UNUSED_PARAM( b ),
                         STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
   {}
 
-  template< typename STACK_VARIABLE_TYPE, typename CONSTITUTIVE_TYPE >
+  template< typename STACK_VARIABLE_TYPE, typename CONSTITUTIVE_UPDATE >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void integrationKernel( localIndex const GEOSX_UNUSED_PARAM( k ),
                           localIndex const GEOSX_UNUSED_PARAM( q ),
-                          localIndex const GEOSX_UNUSED_PARAM( numNodesPerElem ),
                           STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ),
-                          CONSTITUTIVE_TYPE const & GEOSX_UNUSED_PARAM( constitutive ) ) const
+                          CONSTITUTIVE_UPDATE const & GEOSX_UNUSED_PARAM( constitutiveUpdate ) ) const
   {}
 
   template< typename STACK_VARIABLE_TYPE >
@@ -132,14 +152,20 @@ public:
 
 };
 
-template< typename KERNEL_CLASS >
+template< typename POLICY, typename KERNEL_CLASS = FiniteElementRegionLoopKernelBase >
 static
 real64 FiniteElementRegionLoop( MeshLevel & mesh,
                                 string_array const & targetRegions,
                                 string const & solidMaterialName,
-                                KERNEL_CLASS & kernelClass )
+                                FiniteElementDiscretization const * const feDiscretization,
+                                arrayView1d< globalIndex const > const & inputDofNumber,
+                                ParallelMatrix & inputMatrix,
+                                ParallelVector & inputRhs )
 {
+  KERNEL_CLASS kernelClass( inputDofNumber, inputMatrix, inputRhs );
+
   RAJA::ReduceMax< serialReduce, double > maxForce( 0 );
+
 
   kernelClass.initializeNonElementViews( mesh );
 
@@ -151,53 +177,54 @@ real64 FiniteElementRegionLoop( MeshLevel & mesh,
     localIndex const numElems = elementSubRegion.size();
 //      typedef TYPEOFREF( elementSubRegion ) SUBREGIONTYPE;
 
-    localIndex const NUM_NODES_PER_ELEM = 8;  //elementSubRegion.numNodesPerElement();
-    localIndex const NUM_QUADRATURE_POINTS = 8;
-    localIndex const ndof = 3 * NUM_NODES_PER_ELEM;
-
     arrayView1d< integer const > const & elemGhostRank = elementSubRegion.ghostRank();
 
-    constitutive::LinearElasticIsotropic * const
-    material = elementSubRegion.GetConstitutiveModels()->template GetGroup< constitutive::LinearElasticIsotropic >( solidMaterialName );
+    localIndex const
+    numQuadraturePointsPerElem = feDiscretization == nullptr ?
+                                 1 :
+                                 feDiscretization->m_finiteElement->n_quadrature_points();
 
-    constitutive::LinearElasticIsotropicUpdates constitutiveWrapper = material->createKernelWrapper();
+    discretizationLaunchSelector( elementSubRegion.numNodesPerElement(),
+                                  numQuadraturePointsPerElem,
+                                  [&]( auto constNNPE,
+                                       auto constNQPPE )
+    {
+      constexpr int NUM_NODES_PER_ELEM = decltype( constNNPE )::value;
+      constexpr int NUM_QUADRATURE_POINTS = decltype( constNQPPE )::value;
 
-    kernelClass.initializeElementSubRegionViews( elementSubRegion );
+      constitutive::SolidBase * const
+      solidBase = elementSubRegion.GetConstitutiveModels()->template GetGroup< constitutive::SolidBase >( solidMaterialName );
 
+      kernelClass.initializeElementSubRegionViews( elementSubRegion );
 
-    RAJA::forall< serialPolicy >( RAJA::TypedRangeSegment< localIndex >( 0, numElems ),
-                                  [=] GEOSX_DEVICE ( localIndex const k )
-        {
+      constitutive::constitutiveUpdatePassThru( solidBase, [&]( auto & castedConstitutiveRelation )
+      {
+        using CONSTITUTIVE_TYPE = TYPEOFREF( castedConstitutiveRelation );
 
-          typename KERNEL_CLASS:: template StackVariables< ndof, NUM_NODES_PER_ELEM > stack;
+        typename CONSTITUTIVE_TYPE::KernelWrapper constitutiveWrapper = castedConstitutiveRelation.createKernelWrapper();
 
-          if( elemGhostRank[k] < 0 )
-          {
-            kernelClass.preKernel( k, NUM_NODES_PER_ELEM, stack );
-
-            for( integer q=0; q<NUM_QUADRATURE_POINTS; ++q )
+        forAll< POLICY >( numElems,
+                          [=] GEOSX_HOST_DEVICE ( localIndex const k )
             {
-              kernelClass.updateKernel( k, q, stack, constitutiveWrapper, NUM_NODES_PER_ELEM );
 
-              for( localIndex a=0; a<NUM_NODES_PER_ELEM; ++a )
+              typename KERNEL_CLASS:: template StackVariables< NUM_NODES_PER_ELEM, 3 > stack;
+
+              if( elemGhostRank[k] < 0 )
               {
-                for( localIndex b=0; b<NUM_NODES_PER_ELEM; ++b )
+                kernelClass.preKernel( k, stack );
+                for( integer q=0; q<NUM_QUADRATURE_POINTS; ++q )
                 {
-                  kernelClass.stiffnessKernel( k, q, a, b, stack );
+                  kernelClass.updateKernel( k, q, stack, constitutiveWrapper );
+
+                  kernelClass.stiffnessKernel( k, q, stack );
+
+                  kernelClass.integrationKernel( k, q, stack, constitutiveWrapper );
                 }
+                maxForce.max( kernelClass.postKernel( stack ) );
               }
-
-              kernelClass.integrationKernel( k,
-                                             q,
-                                             NUM_NODES_PER_ELEM,
-                                             stack,
-                                             constitutiveWrapper );
-            }
-
-            maxForce.max( kernelClass.postKernel( stack ) );
-
-          }
-        } );
+            } );
+      } );
+    } );
   } );
 
   return maxForce.get();

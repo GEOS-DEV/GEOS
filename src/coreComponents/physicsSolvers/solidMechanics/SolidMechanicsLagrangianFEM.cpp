@@ -976,25 +976,35 @@ void SolidMechanicsLagrangianFEM::SetupSystem( DomainPartition * const domain,
                                                ParallelVector & solution )
 {
   GEOSX_MARK_FUNCTION;
-  SolverBase::SetupSystem( domain, dofManager, matrix, rhs, solution );
+//  SolverBase::SetupSystem( domain, dofManager, matrix, rhs, solution );
+  dofManager.setMesh( domain, 0, 0 );
+
+  SetupDofs( domain, dofManager );
+  dofManager.reorderByRank();
+
+  localIndex const numLocalDof = dofManager.numLocalDofs();
+
+  matrix.createWithLocalSize( numLocalDof, numLocalDof, 8, MPI_COMM_GEOSX );
+  rhs.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
+  solution.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
+  // obove this is a copy of SolverBase::SetupSystem()
+
 
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
   NodeManager const * const nodeManager = mesh->getNodeManager();
   arrayView1d< globalIndex const > const &
   dofNumber = nodeManager->getReference< globalIndex_array >( dofManager.getKey( keys::TotalDisplacement ) );
 
-  physicsLoopInterface
-    ::FiniteElementRegionLoopKernelBase
-    loopKernels( dofNumber,
-                 matrix,
-                 rhs );
-
   matrix.open();
-  physicsLoopInterface
-    ::FiniteElementRegionLoop( *mesh,
-                               m_targetRegions,
-                               m_solidMaterialName,
-                               loopKernels );
+
+  physicsLoopInterface::
+    FiniteElementRegionLoop< serialPolicy >( *mesh,
+                                             m_targetRegions,
+                                             m_solidMaterialName,
+                                             nullptr,
+                                             dofNumber,
+                                             matrix,
+                                             rhs );
   matrix.close();
 
 
@@ -1011,6 +1021,14 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARA
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
   NodeManager const * const nodeManager = mesh->getNodeManager();
 
+  NumericalMethodsManager const * const
+  numericalMethodManager = domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
+
+  FiniteElementDiscretizationManager const * const
+  feDiscretizationManager = numericalMethodManager->GetGroup< FiniteElementDiscretizationManager >( keys::finiteElementDiscretizations );
+
+  FiniteElementDiscretization const * feDiscretization = feDiscretizationManager->GetGroup< FiniteElementDiscretization >( m_discretizationName );
+
   matrix.open();
   rhs.open();
 
@@ -1022,13 +1040,16 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARA
   GEOSX_UNUSED_VAR( dt );
 //  GEOSX_UNUSED_VAR( numericalMethodManager )
 //  GEOSX_UNUSED_VAR( feDiscretizationManager )
-  SolidMechanicsLagrangianFEMKernels::ImplicitKernel::FiniteElementRegionLoopKernel loopKernels( dofNumber, matrix, rhs );
+  using LoopKernel = SolidMechanicsLagrangianFEMKernels::ImplicitKernel::FiniteElementRegionLoopKernel;
 
-  m_maxForce = physicsLoopInterface
-                 ::FiniteElementRegionLoop( *mesh,
-                                            m_targetRegions,
-                                            m_solidMaterialName,
-                                            loopKernels );
+  m_maxForce = physicsLoopInterface::
+                 FiniteElementRegionLoop< serialPolicy, LoopKernel >( *mesh,
+                                                                      m_targetRegions,
+                                                                      m_solidMaterialName,
+                                                                      feDiscretization,
+                                                                      dofNumber,
+                                                                      matrix,
+                                                                      rhs );
 
 
   ApplyContactConstraint( dofManager,
