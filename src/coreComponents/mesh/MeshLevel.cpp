@@ -36,7 +36,7 @@ MeshLevel::MeshLevel( string const & name,
   m_edgeManager( groupStructKeys::edgeManagerString, this ),
   m_faceManager( groupStructKeys::faceManagerString, this ),
   m_elementManager( groupStructKeys::elemManagerString, this ),
-  m_embSurfEdgeManager( groupStructKeys::embSurfEdgeManagerString, this)
+  m_embSurfEdgeManager( groupStructKeys::embSurfEdgeManagerString, this )
 
 {
 
@@ -51,7 +51,7 @@ MeshLevel::MeshLevel( string const & name,
 
   RegisterGroup< ElementRegionManager >( groupStructKeys::elemManagerString, &m_elementManager, false );
 
-  RegisterGroup<EdgeManager>( groupStructKeys::embSurfEdgeManagerString, &m_embSurfEdgeManager, false );
+  RegisterGroup< EdgeManager >( groupStructKeys::embSurfEdgeManagerString, &m_embSurfEdgeManager, false );
 
   registerWrapper< integer >( viewKeys.meshLevel );
 }

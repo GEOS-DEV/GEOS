@@ -216,34 +216,34 @@ void EmbeddedSurfaceSubRegion::setupRelatedObjectsInRelations( MeshLevel const *
 void EmbeddedSurfaceSubRegion::getIntersectionPoints( NodeManager const & nodeManager,
                                                       EdgeManager const & edgeManager,
                                                       ElementRegionManager const & elemManager,
-                                                      array1d<R1Tensor> & intersectionPoints,
-                                                      array1d<localIndex> & connectivityList,
-                                                      array1d<int> & offSet) const
+                                                      array1d< R1Tensor > & intersectionPoints,
+                                                      array1d< localIndex > & connectivityList,
+                                                      array1d< int > & offSet ) const
 {
 
-  offSet.resize(size());
+  offSet.resize( size());
   offSet = 0;
-  for(localIndex k =0; k < size(); k++)
+  for( localIndex k =0; k < size(); k++ )
   {
-    ComputeIntersectionPoints(nodeManager, edgeManager, elemManager, intersectionPoints, connectivityList, offSet, k);
+    ComputeIntersectionPoints( nodeManager, edgeManager, elemManager, intersectionPoints, connectivityList, offSet, k );
   }
 }
 
 void EmbeddedSurfaceSubRegion::ComputeIntersectionPoints( NodeManager const & nodeManager,
                                                           EdgeManager const & edgeManager,
                                                           ElementRegionManager const & elemManager,
-                                                          array1d<R1Tensor> & intersectionPoints,
-                                                          array1d<localIndex> & connectivityList,
-                                                          array1d<int> & offSet,
+                                                          array1d< R1Tensor > & intersectionPoints,
+                                                          array1d< localIndex > & connectivityList,
+                                                          array1d< int > & offSet,
                                                           localIndex const k ) const
 {
 
   // I ll use this for plotting
-  arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodesCoord = nodeManager.referencePosition();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoord = nodeManager.referencePosition();
   EdgeManager::NodeMapType::ViewTypeConst const & edgeToNodes = edgeManager.nodeList();
 
-  FixedOneToManyRelation const & cellToEdges = elemManager.GetRegion(m_embeddedSurfaceToRegion[k])
-      ->GetSubRegion<CellElementSubRegion>(m_embeddedSurfaceToSubRegion[k])->edgeList();
+  FixedOneToManyRelation const & cellToEdges = elemManager.GetRegion( m_embeddedSurfaceToRegion[k] )
+                                                 ->GetSubRegion< CellElementSubRegion >( m_embeddedSurfaceToSubRegion[k] )->edgeList();
 
   // Initialize variables
   localIndex edgeIndex;
@@ -251,44 +251,44 @@ void EmbeddedSurfaceSubRegion::ComputeIntersectionPoints( NodeManager const & no
   real64 prodScalarProd;
   bool isNew;
   R1Tensor distance;
-  array1d<R1Tensor> localPoints;
+  array1d< R1Tensor > localPoints;
 
   int count = 0;
-  if (k > 0)
+  if( k > 0 )
   {
     count = offSet[k-1];
   }
 
-  for (localIndex ke = 0; ke < cellToEdges.size(1); ke++)
+  for( localIndex ke = 0; ke < cellToEdges.size( 1 ); ke++ )
   {
     edgeIndex = cellToEdges[m_embeddedSurfaceToCell[k]][ke];
     dist = nodesCoord[edgeToNodes[edgeIndex][0]];
     dist -= m_elementCenter[k];
-    prodScalarProd = Dot(dist, m_normalVector[k]);
+    prodScalarProd = Dot( dist, m_normalVector[k] );
     dist = nodesCoord[edgeToNodes[edgeIndex][1]];
     dist -= m_elementCenter[k];
-    prodScalarProd *= Dot(dist, m_normalVector[k]);
+    prodScalarProd *= Dot( dist, m_normalVector[k] );
 
-    if (prodScalarProd < 0)
+    if( prodScalarProd < 0 )
     {
       count += 1;
 
       lineDir  = nodesCoord[edgeToNodes[edgeIndex][0]];
       lineDir -= nodesCoord[edgeToNodes[edgeIndex][1]];
       lineDir.Normalize();
-      point = computationalGeometry::LinePlaneIntersection(lineDir,
-                                                           nodesCoord[edgeToNodes[edgeIndex][0]],
-                                                           m_normalVector[k],
-                                                           m_elementCenter[k]);
+      point = computationalGeometry::LinePlaneIntersection( lineDir,
+                                                            nodesCoord[edgeToNodes[edgeIndex][0]],
+                                                            m_normalVector[k],
+                                                            m_elementCenter[k] );
 
-      localPoints.push_back(point);
+      localPoints.push_back( point );
 
       isNew = true;
-      for (int i=0; i < intersectionPoints.size(); i++)
+      for( int i=0; i < intersectionPoints.size(); i++ )
       {
         distance = point;
         distance-=intersectionPoints[i];
-        if (distance.L2_Norm() < 1e-9)
+        if( distance.L2_Norm() < 1e-9 )
         {
           isNew = false;
           //pointIndex = i;
@@ -296,29 +296,62 @@ void EmbeddedSurfaceSubRegion::ComputeIntersectionPoints( NodeManager const & no
         }
       }
 
-      if (isNew == true)
+      if( isNew == true )
       {
-        intersectionPoints.push_back(point);
+        intersectionPoints.push_back( point );
         //pointIndex = intersectionPoints.size() - 1;
       }
     }
   } //end of edge loop
 
   // Reorder the points CCW and then add the correct index to the connectivity list
-  localPoints = computationalGeometry::orderPointsCCW(localPoints, localPoints.size(), m_normalVector[k]);
-  for (localIndex j=0; j < localPoints.size(); j++)
+  localPoints = computationalGeometry::orderPointsCCW( localPoints, localPoints.size(), m_normalVector[k] );
+  for( localIndex j=0; j < localPoints.size(); j++ )
   {
-    for (localIndex h=0; h < intersectionPoints.size(); h++)
+    for( localIndex h=0; h < intersectionPoints.size(); h++ )
     {
       distance = localPoints[j];
       distance-=intersectionPoints[h];
-      if (distance.L2_Norm() < 1e-9)
+      if( distance.L2_Norm() < 1e-9 )
       {
-        connectivityList.push_back(h);
+        connectivityList.push_back( h );
       }
     }
   }
   offSet[k] = count;
+}
+
+void EmbeddedSurfaceSubRegion::populateToFracturesNodesMap( NodeManager const & nodeManager,
+                                                            EdgeManager const & edgeManager,
+                                                            ElementRegionManager const & elemManager,
+                                                            ArrayOfArrays< localIndex > & embSurfToNodeMap,
+                                                            localIndex & totalNumNodes )
+{
+  array1d< R1Tensor > intersectionPoints;
+  array1d< localIndex > connectivityList;
+  array1d< int > offSet;
+  getIntersectionPoints( nodeManager, edgeManager, elemManager, intersectionPoints, connectivityList, offSet );
+
+  totalNumNodes = intersectionPoints.size();
+
+  int maxNodePerElem = 6;
+  embSurfToNodeMap.reserve( size() * maxNodePerElem );
+  int numNodes, firstInd = 0;
+
+  for( localIndex esi = 0; esi < size(); ++esi )
+  {
+    array1d< localIndex > elemNodes;
+    numNodes = offSet[esi] - firstInd;
+    for( int j=firstInd; j < offSet[esi]; j++ )
+    {
+      elemNodes.push_back( connectivityList( j ));
+    }
+
+    firstInd = offSet[esi];
+    embSurfToNodeMap.appendArray( elemNodes, numNodes );
+  }
+
+  embSurfToNodeMap.compress();
 }
 
 } /* namespace geosx */

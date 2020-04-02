@@ -82,34 +82,34 @@ void SinglePhaseBase::RegisterDataOnMesh( Group * const MeshBodies )
         setRestartFlags( RestartFlags::NO_WRITE );
     } );
 
-    elemManager->forElementSubRegions< FaceElementSubRegion, EmbeddedSurfaceSubRegion >( [&] ( FaceElementSubRegion & subRegion )
+    elemManager->forElementSubRegions< FaceElementSubRegion, EmbeddedSurfaceSubRegion >( [&] ( auto & subRegion )
     {
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::pressureString )->setPlotLevel( PlotLevel::LEVEL_0 );
+      subRegion.template registerWrapper< array1d< real64 > >( viewKeyStruct::pressureString )->setPlotLevel( PlotLevel::LEVEL_0 );
 
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::deltaPressureString )->
+      subRegion.template registerWrapper< array1d< real64 > >( viewKeyStruct::deltaPressureString )->
         setRestartFlags( RestartFlags::NO_WRITE );
 
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::deltaVolumeString )->
+      subRegion.template registerWrapper< array1d< real64 > >( viewKeyStruct::deltaVolumeString )->
         setRestartFlags( RestartFlags::NO_WRITE );
 
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::mobilityString );
+      subRegion.template registerWrapper< array1d< real64 > >( viewKeyStruct::mobilityString );
 
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::dMobility_dPressureString )->
+      subRegion.template registerWrapper< array1d< real64 > >( viewKeyStruct::dMobility_dPressureString )->
         setRestartFlags( RestartFlags::NO_WRITE );
 
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::porosityString )->
+      subRegion.template registerWrapper< array1d< real64 > >( viewKeyStruct::porosityString )->
         setDefaultValue( 1.0 );
 
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::porosityOldString )->
+      subRegion.template registerWrapper< array1d< real64 > >( viewKeyStruct::porosityOldString )->
         setDefaultValue( 1.0 )->
         setRestartFlags( RestartFlags::NO_WRITE );
 
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::densityOldString )->
+      subRegion.template registerWrapper< array1d< real64 > >( viewKeyStruct::densityOldString )->
         setRestartFlags( RestartFlags::NO_WRITE );
 
-      subRegion.registerWrapper< array1d< R1Tensor > >( viewKeyStruct::transTMultString )->
+      subRegion.template registerWrapper< array1d< R1Tensor > >( viewKeyStruct::transTMultString )->
         setDefaultValue( {1.0, 1.0, 1.0} );
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::poroMultString )->
+      subRegion.template registerWrapper< array1d< real64 > >( viewKeyStruct::poroMultString )->
         setDefaultValue( 1.0 );
     } );
 

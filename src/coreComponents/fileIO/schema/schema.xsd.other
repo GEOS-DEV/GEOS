@@ -1005,6 +1005,7 @@
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="ElementRegions" type="ElementRegionsType" maxOccurs="1" />
 			<xsd:element name="edgeManager" type="edgeManagerType" />
+			<xsd:element name="embeddedSurfacesEdgeManager" type="embeddedSurfacesEdgeManagerType" />
 			<xsd:element name="FaceManager" type="FaceManagerType" />
 			<xsd:element name="nodeManager" type="nodeManagerType" />
 		</xsd:choice>
@@ -1073,6 +1074,32 @@
 		<xsd:attribute name="nodeList" type="geosx::InterObjectRelation&lt;LvArray::Array&lt;long, 2, camp::int_seq&lt;long, 0l, 1l&gt;, long, LvArray::NewChaiBuffer&gt; &gt;" />
 		<!--parentIndex => Parent index of the edge.-->
 		<xsd:attribute name="parentIndex" type="localIndex_array" />
+	</xsd:complexType>
+	<xsd:complexType name="embeddedSurfacesEdgeManagerType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="neighborData" type="neighborDataType" />
+			<xsd:element name="sets" type="setsType" />
+		</xsd:choice>
+		<!--domainBoundaryIndicator => (no description available)-->
+		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
+		<!--edgesToFractureConnectors => A map of edge local indices to the fracture connector local indices.-->
+		<xsd:attribute name="edgesToFractureConnectors" type="geosx::mapBase&lt;long, long, std::integral_constant&lt;bool, true&gt; &gt;" />
+		<!--faceList => (no description available)-->
+		<xsd:attribute name="faceList" type="geosx::InterObjectRelation&lt;LvArray::ArrayOfSets&lt;long, long&gt; &gt;" />
+		<!--fractureConnectorsToEdges => A map of fracture connector local indices to edge local indices.-->
+		<xsd:attribute name="fractureConnectorsToEdges" type="localIndex_array" />
+		<!--fractureConnectorsToElementIndex => A map of fracture connector local indices face element local indices-->
+		<xsd:attribute name="fractureConnectorsToElementIndex" type="LvArray::ArrayOfArrays&lt;long, long&gt;" />
+		<!--ghostRank => (no description available)-->
+		<xsd:attribute name="ghostRank" type="integer_array" />
+		<!--globalToLocalMap => (no description available)-->
+		<xsd:attribute name="globalToLocalMap" type="geosx::mapBase&lt;long long, long, std::integral_constant&lt;bool, false&gt; &gt;" />
+		<!--isExternal => (no description available)-->
+		<xsd:attribute name="isExternal" type="integer_array" />
+		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
+		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
+		<!--nodeList => (no description available)-->
+		<xsd:attribute name="nodeList" type="geosx::InterObjectRelation&lt;LvArray::Array&lt;long, 2, camp::int_seq&lt;long, 0l, 1l&gt;, long, LvArray::NewChaiBuffer&gt; &gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="FaceManagerType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">

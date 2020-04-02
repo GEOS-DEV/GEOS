@@ -66,6 +66,9 @@ public:
 
   void BuildEdges( FaceManager * const faceManager, NodeManager * const nodeManager );
 
+  void BuildEdges( localIndex const numNodes,
+                   ArrayOfArraysView< localIndex const > const & faceToNodeMap,
+                   ArrayOfArrays< localIndex > & faceToEdgeMap );
 
   virtual void
   ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const nodeManager,

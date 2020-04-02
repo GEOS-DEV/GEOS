@@ -435,6 +435,30 @@ void EdgeManager::BuildEdges( FaceManager * const faceManager, NodeManager * con
   SetDomainBoundaryObjects( faceManager );
 }
 
+void EdgeManager::BuildEdges( localIndex const numNodes,
+                              ArrayOfArraysView< localIndex const > const & faceToNodeMap,
+                              ArrayOfArrays< localIndex > & faceToEdgeMap )
+{
+  ArrayOfArrays< EdgeBuilder > edgesByLowestNode( numNodes, 2 * maxEdgesPerNode() );
+  createEdgesByLowestNode( faceToNodeMap, edgesByLowestNode );
+
+  array1d< localIndex > uniqueEdgeOffsets( numNodes + 1 );
+  localIndex const numEdges = calculateTotalNumberOfEdges( edgesByLowestNode, uniqueEdgeOffsets );
+
+  resizeEdgeToFaceMap( edgesByLowestNode,
+                       uniqueEdgeOffsets,
+                       m_toFacesRelation );
+
+  resize( numEdges );
+
+  populateMaps( edgesByLowestNode,
+                uniqueEdgeOffsets,
+                faceToNodeMap,
+                faceToEdgeMap,
+                m_toFacesRelation,
+                m_toNodesRelation );
+}
+
 
 /// Calculates the midpoint of the edge
 //void EdgeManager::EdgeCenter(const NodeManager * nodeManager, localIndex edge,

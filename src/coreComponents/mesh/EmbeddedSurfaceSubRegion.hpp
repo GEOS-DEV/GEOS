@@ -79,17 +79,23 @@ public:
   void getIntersectionPoints( NodeManager const & nodeManager,
                               EdgeManager const & edgeManager,
                               ElementRegionManager const & elemManager,
-                              array1d<R1Tensor> & intersectionPoints,
-                              array1d<localIndex> & connectivityList,
-                              array1d<int> & offSet) const;
+                              array1d< R1Tensor > & intersectionPoints,
+                              array1d< localIndex > & connectivityList,
+                              array1d< int > & offSet ) const;
 
   void ComputeIntersectionPoints( NodeManager const & nodeManager,
                                   EdgeManager const & edgeManager,
                                   ElementRegionManager const & elemManager,
-                                  array1d<R1Tensor> & intersectionPoints,
-                                  array1d<localIndex> & connectivityList,
-                                  array1d<int> & offSet,
+                                  array1d< R1Tensor > & intersectionPoints,
+                                  array1d< localIndex > & connectivityList,
+                                  array1d< int > & offSet,
                                   localIndex const k ) const;
+
+  void populateToFracturesNodesMap( NodeManager const & nodeManager,
+                                    EdgeManager const & edgeManager,
+                                    ElementRegionManager const & elemManager,
+                                    ArrayOfArrays< localIndex > & embSurfToNodeMap,
+                                    localIndex & totalNumNodes );
 
 
   struct viewKeyStruct : ElementSubRegionBase::viewKeyStruct

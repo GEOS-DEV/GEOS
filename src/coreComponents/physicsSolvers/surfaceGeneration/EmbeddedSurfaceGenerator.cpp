@@ -58,7 +58,7 @@ EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( const std::string & name,
 EmbeddedSurfaceGenerator::~EmbeddedSurfaceGenerator()
 {}
 
-void EmbeddedSurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
+void EmbeddedSurfaceGenerator::RegisterDataOnMesh( Group * const GEOSX_UNUSED_PARAM( MeshBodies ) )
 {
 
 //  for( auto & mesh : MeshBodies->GetSubGroups() )
@@ -172,18 +172,40 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
             GEOSX_LOG_LEVEL_RANK_0( 2, "Element " << cellIndex << " is fractured" );
         }
       } // end loop over cells
-   });// end loop over subregions
-  });// end loop over thick planes
+    } );// end loop over subregions
+  } );// end loop over thick planes
+
+  GEOSX_LOG_LEVEL_RANK_0( 1, "Number of embedded surface elements: " << embeddedSurfaceSubRegion->size() );
+
+  // Generate Fracture stencil for embedded surfaces
 
   // Populate EdgeManager for embedded surfaces.
-  EdgeManager * const embSurfEdgeManager = meshLevel->getEdgeManager();
+  EdgeManager * const embSurfEdgeManager = meshLevel->getEmbdSurfEdgeManager();
 
-  array1d<R1Tensor> intersectionPoints;
-  array1d<localIndex> connectivityList;
-  array1d<int> offSet;
-  embeddedSurfaceSubRegion->getIntersectionPoints(*nodeManager, *edgeManager, *elemManager, intersectionPoints, connectivityList, offSet);
+  ArrayOfArrays< localIndex >  embSurfToNodeMap, embSurfToEdgeMap;
+  localIndex numFractureNodes;
 
-  GEOSX_LOG_LEVEL_RANK_0(1, "Number of embedded surface elements: " << embeddedSurfaceSubRegion->size() );
+  embeddedSurfaceSubRegion->populateToFracturesNodesMap( *nodeManager,
+                                                         *edgeManager,
+                                                         *elemManager,
+                                                         embSurfToNodeMap,
+                                                         numFractureNodes );
+
+
+//  for (localIndex e=0; e < embSurfToNodeMap.size(); e++)
+//  {
+//    std::cout << "element " << e << " which has" << embSurfToNodeMap.sizeOfArray(e) << std::endl;
+//    for (localIndex i=0; i < embSurfToNodeMap.sizeOfArray(e); i++)
+//    {
+//      std::cout << embSurfToNodeMap(e, i) << std::endl;
+//    }
+//  }
+
+  // resize embSurfToEdgeMap
+  embSurfToEdgeMap.resize( embeddedSurfaceSubRegion->size());
+  embSurfEdgeManager->BuildEdges( numFractureNodes, embSurfToNodeMap, embSurfToEdgeMap );
+
+
 }
 
 void EmbeddedSurfaceGenerator::InitializePostInitialConditions_PreSubGroups( Group * const GEOSX_UNUSED_PARAM ( problemManager ) )
