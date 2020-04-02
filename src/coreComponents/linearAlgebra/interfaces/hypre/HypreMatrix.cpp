@@ -1191,7 +1191,6 @@ void HypreMatrix::write( string const & filename,
         {
           FILE * fp = std::fopen( filename.c_str(), "w" );
           hypre_fprintf( fp, "%s", "%%MatrixMarket matrix coordinate real general\n" );
-
           hypre_fprintf( fp, "%lld %lld %d\n", numGlobalRows(), numGlobalCols(), 0 );
           std::fclose( fp );
         }
@@ -1215,7 +1214,25 @@ void HypreMatrix::write( string const & filename,
         // Write to file CSRmatrix
         if( MpiWrapper::Comm_rank( getComm() ) == printID )
         {
-          hypre_CSRMatrixPrintMM( CSRmatrix, 1, 1, 0, filename.c_str() );
+          FILE * fp = std::fopen( filename.c_str(), "w" );
+
+          HYPRE_Real *matrix_data = hypre_CSRMatrixData( CSRmatrix );
+          HYPRE_Int *matrix_i    = hypre_CSRMatrixI( CSRmatrix );
+          HYPRE_Int *matrix_j    = hypre_CSRMatrixJ( CSRmatrix );
+          HYPRE_Int num_rows    = hypre_CSRMatrixNumRows( CSRmatrix );
+          HYPRE_Int num_cols    = hypre_CSRMatrixNumCols( CSRmatrix );
+          HYPRE_Int num_nnz     = hypre_CSRMatrixNumNonzeros( CSRmatrix );
+
+          hypre_fprintf( fp, "%s", "%%MatrixMarket matrix coordinate real general\n" );
+          hypre_fprintf( fp, "%d %d %d\n", num_rows, num_cols, num_nnz );
+          for( HYPRE_Int i = 0; i < num_rows; i++ )
+          {
+            for( HYPRE_Int j = matrix_i[i]; j < matrix_i[i+1]; j++ )
+            {
+              hypre_fprintf( fp, "%d %d %.16e\n", i + 1, matrix_j[j] + 1, matrix_data[j] );
+            }
+          }
+          std::fclose( fp );
         }
 
         // Destroy CSRmatrix
