@@ -16,6 +16,13 @@ Element: BasisFunctions
 .. include:: ../../coreComponents/fileIO/schema/docs/BasisFunctions.rst
 
 
+.. _XML_Benchmarks:
+
+Element: Benchmarks
+===================
+.. include:: ../../coreComponents/fileIO/schema/docs/Benchmarks.rst
+
+
 .. _XML_BlackOilFluid:
 
 Element: BlackOilFluid
@@ -520,6 +527,13 @@ Element: Restart
 .. include:: ../../coreComponents/fileIO/schema/docs/Restart.rst
 
 
+.. _XML_Run:
+
+Element: Run
+============
+.. include:: ../../coreComponents/fileIO/schema/docs/Run.rst
+
+
 .. _XML_Silo:
 
 Element: Silo
@@ -666,6 +680,20 @@ Element: WellElementRegion
 ==========================
 .. include:: ../../coreComponents/fileIO/schema/docs/WellElementRegion.rst
 
+
+.. _XML_lassen:
+
+Element: lassen
+===============
+.. include:: ../../coreComponents/fileIO/schema/docs/lassen.rst
+
+
+.. _XML_quartz:
+
+Element: quartz
+===============
+.. include:: ../../coreComponents/fileIO/schema/docs/quartz.rst
+
 ********************************
 Datastructure Definitions
 ********************************
@@ -676,6 +704,13 @@ Datastructure Definitions
 Datastructure: BasisFunctions
 =============================
 .. include:: ../../coreComponents/fileIO/schema/docs/BasisFunctions_other.rst
+
+
+.. _DATASTRUCTURE_Benchmarks:
+
+Datastructure: Benchmarks
+=========================
+.. include:: ../../coreComponents/fileIO/schema/docs/Benchmarks_other.rst
 
 
 .. _DATASTRUCTURE_BlackOilFluid:
@@ -1210,6 +1245,13 @@ Datastructure: Restart
 .. include:: ../../coreComponents/fileIO/schema/docs/Restart_other.rst
 
 
+.. _DATASTRUCTURE_Run:
+
+Datastructure: Run
+==================
+.. include:: ../../coreComponents/fileIO/schema/docs/Run_other.rst
+
+
 .. _DATASTRUCTURE_Silo:
 
 Datastructure: Silo
@@ -1420,6 +1462,13 @@ Datastructure: elementSubRegions
 .. include:: ../../coreComponents/fileIO/schema/docs/elementSubRegions_other.rst
 
 
+.. _DATASTRUCTURE_lassen:
+
+Datastructure: lassen
+=====================
+.. include:: ../../coreComponents/fileIO/schema/docs/lassen_other.rst
+
+
 .. _DATASTRUCTURE_neighborData:
 
 Datastructure: neighborData
@@ -1432,6 +1481,13 @@ Datastructure: neighborData
 Datastructure: nodeManager
 ==========================
 .. include:: ../../coreComponents/fileIO/schema/docs/nodeManager_other.rst
+
+
+.. _DATASTRUCTURE_quartz:
+
+Datastructure: quartz
+=====================
+.. include:: ../../coreComponents/fileIO/schema/docs/quartz_other.rst
 
 
 .. _DATASTRUCTURE_sets:
