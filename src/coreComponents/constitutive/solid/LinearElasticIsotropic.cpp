@@ -25,43 +25,40 @@ using namespace cxx_utilities;
 namespace constitutive
 {
 
-
-
 LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, Group * const parent ):
   SolidBase( name, parent ),
   m_defaultBulkModulus(),
   m_defaultShearModulus(),
   m_bulkModulus(),
-  m_shearModulus(),
-  m_postProcessed(false)
+  m_shearModulus()
 {
   registerWrapper( viewKeyStruct::defaultBulkModulusString, &m_defaultBulkModulus, 0 )->
-    setApplyDefaultValue(-1)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Elastic Bulk Modulus Parameter");
+    setApplyDefaultValue( -1 )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Elastic Bulk Modulus Parameter" );
 
   registerWrapper( viewKeyStruct::defaultShearModulusString, &m_defaultShearModulus, 0 )->
-    setApplyDefaultValue(-1)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Elastic Shear Modulus Parameter");
+    setApplyDefaultValue( -1 )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Elastic Shear Modulus Parameter" );
 
-  registerWrapper<real64>( viewKeyStruct::defaultYoungsModulusString )->
-    setApplyDefaultValue(-1)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Elastic Young's Modulus.");
+  registerWrapper< real64 >( viewKeyStruct::defaultYoungsModulusString )->
+    setApplyDefaultValue( -1 )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Elastic Young's Modulus." );
 
-  registerWrapper<real64>( viewKeyStruct::defaultPoissonRatioString )->
-    setApplyDefaultValue(-1)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Poisson's ratio");
+  registerWrapper< real64 >( viewKeyStruct::defaultPoissonRatioString )->
+    setApplyDefaultValue( -1 )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Poisson's ratio" );
 
   registerWrapper( viewKeyStruct::bulkModulusString, &m_bulkModulus, 0 )->
-    setApplyDefaultValue(-1)->
-    setDescription("Elastic Bulk Modulus Field");
+    setApplyDefaultValue( -1 )->
+    setDescription( "Elastic Bulk Modulus Field" );
 
   registerWrapper( viewKeyStruct::shearModulusString, &m_shearModulus, 0 )->
-    setApplyDefaultValue(-1)->
-    setDescription("Elastic Shear Modulus");
+    setApplyDefaultValue( -1 )->
+    setDescription( "Elastic Shear Modulus" );
 }
 
 
@@ -72,14 +69,14 @@ LinearElasticIsotropic::~LinearElasticIsotropic()
 void
 LinearElasticIsotropic::DeliverClone( string const & name,
                                       Group * const parent,
-                                      std::unique_ptr<ConstitutiveBase> & clone ) const
+                                      std::unique_ptr< ConstitutiveBase > & clone ) const
 {
   if( !clone )
   {
-    clone = std::make_unique<LinearElasticIsotropic>( name, parent );
+    clone = std::make_unique< LinearElasticIsotropic >( name, parent );
   }
   SolidBase::DeliverClone( name, parent, clone );
-  LinearElasticIsotropic * const newConstitutiveRelation = dynamic_cast<LinearElasticIsotropic *>(clone.get());
+  LinearElasticIsotropic * const newConstitutiveRelation = dynamic_cast< LinearElasticIsotropic * >(clone.get());
 
 
   newConstitutiveRelation->m_defaultBulkModulus = m_defaultBulkModulus;
@@ -92,7 +89,7 @@ LinearElasticIsotropic::DeliverClone( string const & name,
 }
 
 void LinearElasticIsotropic::AllocateConstitutiveData( dataRepository::Group * const parent,
-                                          localIndex const numConstitutivePointsPerParentIndex )
+                                                       localIndex const numConstitutivePointsPerParentIndex )
 {
   SolidBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
@@ -110,12 +107,12 @@ void LinearElasticIsotropic::PostProcessInput()
 
   if( !m_postProcessed )
   {
-    real64 & nu = getReference<real64> (viewKeyStruct::defaultPoissonRatioString);
-    real64 & E  = getReference<real64> (viewKeyStruct::defaultYoungsModulusString);
+    real64 & nu = getReference< real64 >( viewKeyStruct::defaultPoissonRatioString );
+    real64 & E  = getReference< real64 >( viewKeyStruct::defaultYoungsModulusString );
     real64 & K  = m_defaultBulkModulus;
     real64 & G  = m_defaultShearModulus;
 
-    string errorCheck( "( ");
+    string errorCheck( "( " );
     int numConstantsSpecified = 0;
     if( nu >= 0.0 )
     {
@@ -140,8 +137,8 @@ void LinearElasticIsotropic::PostProcessInput()
     errorCheck += ")";
 
     GEOSX_ERROR_IF( numConstantsSpecified != 2,
-                   "A specific pair of elastic constants is required. Either (K,G) or (E,nu). "<<
-                   "You have specified "<<errorCheck );
+                    "A specific pair of elastic constants is required. Either (K,G) or (E,nu). "<<
+                    "You have specified "<<errorCheck );
 
     if( nu >= 0.0 && E >= 0.0 )
     {
@@ -168,42 +165,17 @@ void LinearElasticIsotropic::PostProcessInput()
       nu = 0.5 * E / G - 1.0;
       K = E / (3 * ( 1 - 2*nu ) );
     }
-    else if( K >= 0.0 && G >= 0.0)
+    else if( K >= 0.0 && G >= 0.0 )
     {
       E = 9 * K * G / ( 3 * K + G );
       nu = ( 3 * K - 2 * G ) / ( 2 * ( 3 * K + G ) );
     }
     else
     {
-      GEOSX_ERROR( "invalid specification for default elastic constants. "<<errorCheck<<" has been specified.");
+      GEOSX_ERROR( "invalid specification for default elastic constants. "<<errorCheck<<" has been specified." );
     }
   }
   m_postProcessed = true;
-}
-
-void LinearElasticIsotropic::StateUpdatePoint( localIndex const k,
-                                               localIndex const q,
-                                               R2SymTensor const & D,
-                                               R2Tensor const & Rot,
-                                               integer const GEOSX_UNUSED_ARG( updateStiffnessFlag ) )
-{
-  real64 meanStresIncrement = D.Trace();
-
-  R2SymTensor temp = D;
-  temp.PlusIdentity( -meanStresIncrement / 3.0 );
-  temp *= 2.0 * m_shearModulus[k];
-  meanStresIncrement *= m_bulkModulus[k];
-  temp.PlusIdentity( meanStresIncrement );
-
-  R2SymTensor temp2 = m_stress[ k ][ q ];
-  temp2 += temp;
-
-  temp.QijAjkQlk( temp2, Rot );
-
-  for ( localIndex i = 0; i < 6; ++i )
-  {
-    m_stress( k, q, i ) = temp.Data()[ i ];
-  }
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, LinearElasticIsotropic, std::string const &, Group * const )

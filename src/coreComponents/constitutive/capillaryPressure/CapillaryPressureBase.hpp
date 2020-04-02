@@ -13,8 +13,8 @@
  */
 
 /**
-  * @file CapillaryPressureBase.hpp
-  */
+ * @file CapillaryPressureBase.hpp
+ */
 
 #ifndef GEOSX_CONSTITUTIVE_CAPILLARYPRESSURE_CAPILLARYPRESSUREBASE_HPP
 #define GEOSX_CONSTITUTIVE_CAPILLARYPRESSURE_CAPILLARYPRESSUREBASE_HPP
@@ -41,25 +41,25 @@ public:
   };
 
   // choose the reference pressure to be the oil pressure for all models
-  static constexpr integer REFERENCE_PHASE = PhaseType::OIL; 
-  
+  static constexpr integer REFERENCE_PHASE = PhaseType::OIL;
+
   CapillaryPressureBase( std::string const & name,
                          dataRepository::Group * const parent );
-  
+
   virtual ~CapillaryPressureBase() override;
 
   // *** Group interface
-  
+
   virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   // *** CapillaryPressure-specific interface
-  
+
   /**
    * @brief Perform a batch constitutive update (all points).
    * @param[in] phaseVolFraction input phase volume fraction
    */
-  virtual void BatchUpdate( arrayView2d<real64 const> const & phaseVolumeFraction ) = 0;
+  virtual void BatchUpdate( arrayView2d< real64 const > const & phaseVolumeFraction ) = 0;
 
   /**
    * @brief Perform a single point constitutive update.
@@ -69,9 +69,9 @@ public:
    *
    * @note This function should generally not be called from a kernel, use BatchUpdate instead
    */
-  virtual void PointUpdate( arraySlice1d<real64 const> const & GEOSX_UNUSED_ARG( phaseVolFraction ),
-                            localIndex const GEOSX_UNUSED_ARG( k ),
-                            localIndex const GEOSX_UNUSED_ARG( q ) ) {}
+  virtual void PointUpdate( arraySlice1d< real64 const > const & GEOSX_UNUSED_PARAM( phaseVolFraction ),
+                            localIndex const GEOSX_UNUSED_PARAM( k ),
+                            localIndex const GEOSX_UNUSED_PARAM( q ) ) {}
 
   localIndex numFluidPhases() const;
 
@@ -82,7 +82,7 @@ public:
     static constexpr auto phaseNamesString = "phaseNames";
     static constexpr auto phaseTypesString = "phaseTypes";
     static constexpr auto phaseOrderString = "phaseOrder";
-    
+
     static constexpr auto phaseCapPressureString                    = "phaseCapPressure";                    // Pc_p
     static constexpr auto dPhaseCapPressure_dPhaseVolFractionString = "dPhaseCapPressure_dPhaseVolFraction"; // dPc_p/dS_p
 
@@ -99,7 +99,7 @@ public:
 
 protected:
   virtual void PostProcessInput() override;
-  
+
   /**
    * @brief Function to batch process constitutive updates via a kernel launch.
    * @tparam LEAFCLASS The derived class that provides the functions for use in the kernel
@@ -108,8 +108,8 @@ protected:
    * @param args arbitrary number of arbitrary types that are passed to the kernel
    */
   template< typename LEAFCLASS, typename POLICY=serialPolicy, typename ... ARGS >
-  void BatchUpdateKernel( arrayView2d<real64 const> const & phaseVolumeFraction,
-                          ARGS&& ... args );
+  void BatchUpdateKernel( arrayView2d< real64 const > const & phaseVolumeFraction,
+                          ARGS && ... args );
 
   /**
    * @brief Function called internally to resize member arrays
@@ -119,45 +119,45 @@ protected:
   void ResizeFields( localIndex const size, localIndex const numPts );
 
   // phase names read from input
-  string_array     m_phaseNames;
+  string_array m_phaseNames;
 
   // phase ordering info
-  array1d<integer> m_phaseTypes;
-  array1d<integer> m_phaseOrder;
-  
+  array1d< integer > m_phaseTypes;
+  array1d< integer > m_phaseOrder;
+
   // output quantities
-  array3d<real64>  m_phaseCapPressure;
-  array4d<real64>  m_dPhaseCapPressure_dPhaseVolFrac;
-  
+  array3d< real64 >  m_phaseCapPressure;
+  array4d< real64 >  m_dPhaseCapPressure_dPhaseVolFrac;
+
 };
 
 template< typename LEAFCLASS, typename POLICY, typename ... ARGS >
-void CapillaryPressureBase::BatchUpdateKernel( arrayView2d<real64 const> const & phaseVolumeFraction,
-                                               ARGS&& ... args )
+void CapillaryPressureBase::BatchUpdateKernel( arrayView2d< real64 const > const & phaseVolumeFraction,
+                                               ARGS && ... args )
 {
-  localIndex const numElem = m_phaseCapPressure.size(0);
-  localIndex const numQ    = m_phaseCapPressure.size(1);
+  localIndex const numElem = m_phaseCapPressure.size( 0 );
+  localIndex const numQ    = m_phaseCapPressure.size( 1 );
   localIndex const NP      = numFluidPhases();
 
-  arrayView3d<real64> const & phaseCapPressure = m_phaseCapPressure;
-  arrayView4d<real64> const & dPhaseCapPressure_dPhaseVolFrac = m_dPhaseCapPressure_dPhaseVolFrac;
-  arrayView1d<integer const> const & phaseOrder = m_phaseOrder;
-  
-  forall_in_range<POLICY>( 0, numElem, GEOSX_LAMBDA ( localIndex const k )
+  arrayView3d< real64 > const & phaseCapPressure = m_phaseCapPressure;
+  arrayView4d< real64 > const & dPhaseCapPressure_dPhaseVolFrac = m_dPhaseCapPressure_dPhaseVolFrac;
+  arrayView1d< integer const > const & phaseOrder = m_phaseOrder;
+
+  forAll< POLICY >( numElem, [=] ( localIndex const k )
   {
-    for( localIndex q=0 ; q<numQ ; ++q )
+    for( localIndex q=0; q<numQ; ++q )
     {
       LEAFCLASS::Compute( NP,
                           phaseVolumeFraction[k],
                           phaseCapPressure[k][q],
                           dPhaseCapPressure_dPhaseVolFrac[k][q],
                           phaseOrder,
-                          args... );
+                          args ... );
     }
-  });
+  } );
 }
 
-  
+
 } // namespace constitutive
 
 } // namespace geosx

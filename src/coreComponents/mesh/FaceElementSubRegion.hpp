@@ -38,9 +38,9 @@ class FaceElementSubRegion : public ElementSubRegionBase
 {
 public:
 
-  using NodeMapType = InterObjectRelation<array1d<array1d<localIndex>>>;
-  using EdgeMapType = InterObjectRelation<array1d<array1d<localIndex>>>;
-  using FaceMapType = InterObjectRelation<array2d<localIndex>>;
+  using NodeMapType = InterObjectRelation< array1d< array1d< localIndex > > >;
+  using EdgeMapType = InterObjectRelation< array1d< array1d< localIndex > > >;
+  using FaceMapType = InterObjectRelation< array2d< localIndex > >;
 
   static const string CatalogName()
   { return "FaceElementSubRegion"; }
@@ -51,18 +51,18 @@ public:
   }
 
   FaceElementSubRegion( string const & name,
-                     dataRepository::Group * const parent );
+                        dataRepository::Group * const parent );
   virtual ~FaceElementSubRegion() override;
 
   virtual void CalculateElementGeometricQuantities( NodeManager const & nodeManager,
                                                     FaceManager const & facemanager ) override;
 
   void CalculateElementGeometricQuantities( localIndex const index,
-                                            arrayView1d<real64 const> const & faceArea );
+                                            arrayView1d< real64 const > const & faceArea );
 
-  virtual localIndex PackUpDownMapsSize( arrayView1d<localIndex const> const & packList ) const override;
+  virtual localIndex PackUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
   virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
-                                     arrayView1d<localIndex const> const & packList ) const override;
+                                     arrayView1d< localIndex const > const & packList ) const override;
 
   virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                        localIndex_array & packList,
@@ -71,7 +71,7 @@ public:
 
   virtual void FixUpDownMaps( bool const clearIfUnmapped ) override;
 
-  virtual void ViewPackingExclusionList( set<localIndex> & exclusionList ) const override;
+  virtual void ViewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const override;
 
   /**
    * @brief function to set the ghostRank for a list of FaceElements and set them to the value of their bounding faces.
@@ -79,7 +79,7 @@ public:
    * @param[in] indices The list of indices to set value of ghostRank.
    */
   void inheritGhostRankFromParentFace( FaceManager const * const faceManager,
-                                       std::set<localIndex> const & indices );
+                                       std::set< localIndex > const & indices );
 
   struct viewKeyStruct : ElementSubRegionBase::viewKeyStruct
   {
@@ -143,38 +143,38 @@ public:
    */
   //virtual localIndex numNodesPerElement( localIndex const k ) const override { return m_toNodesRelation[k].size(); }
 
-  arrayView1d< real64 > const &       getElementAperture()       { return m_elementAperture; }
+  arrayView1d< real64 > const & getElementAperture()       { return m_elementAperture; }
   arrayView1d< real64 const > const & getElementAperture() const { return m_elementAperture; }
 
-  arrayView1d< real64 > const &       getElementArea()       { return m_elementArea; }
+  arrayView1d< real64 > const & getElementArea()       { return m_elementArea; }
   arrayView1d< real64 const > const & getElementArea() const { return m_elementArea; }
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
-  arrayView1d< real64 > const &       getSeparationCoefficient()       { return m_separationCoefficient; }
+  arrayView1d< real64 > const & getSeparationCoefficient()       { return m_separationCoefficient; }
   arrayView1d< real64 const > const & getSeparationCoefficient() const { return m_separationCoefficient; }
 #endif
 
-  map< localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInToNodes;
-  map< localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInToEdges;
-  map< localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInToFaces;
+  map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInToNodes;
+  map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInToEdges;
+  map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInToFaces;
 
   FixedToManyElementRelation m_faceElementsToCells;
 
-  set< localIndex > m_newFaceElements;
+  SortedArray< localIndex > m_newFaceElements;
 
 private:
-  template<bool DOPACK>
+  template< bool DOPACK >
   localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                    arrayView1d<localIndex const> const & packList ) const;
+                                    arrayView1d< localIndex const > const & packList ) const;
 
   /// The elements to nodes relation
-  NodeMapType  m_toNodesRelation;
+  NodeMapType m_toNodesRelation;
 
   /// The elements to edges relation
-  EdgeMapType  m_toEdgesRelation;
+  EdgeMapType m_toEdgesRelation;
 
   /// The elements to faces relation
-  FaceMapType  m_toFacesRelation;
+  FaceMapType m_toFacesRelation;
 
   /// The member level field for the element center
   array1d< real64 > m_elementAperture;

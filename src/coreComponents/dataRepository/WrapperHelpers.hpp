@@ -67,138 +67,155 @@ inline void logOutputType( std::string const & typeString, std::string const & m
 }
 
 template< typename T >
-inline std::enable_if_t< traits::has_size_method< T >, localIndex >
+inline std::enable_if_t< traits::HasMemberFunction_size< T >, localIndex >
 size( T const & value )
-{
-  return integer_conversion< localIndex >( value.size() );
-}
+{ return integer_conversion< localIndex >( value.size() ); }
 
 template< typename T >
-inline std::enable_if_t< !traits::has_size_method< T >, localIndex >
-size( T const & GEOSX_UNUSED_ARG( value ) )
-{
-  return 1;
-}
+inline std::enable_if_t< !traits::HasMemberFunction_size< T >, localIndex >
+size( T const & GEOSX_UNUSED_PARAM( value ) )
+{ return 1; }
+
+
+inline char *
+dataPtr( std::string & var )
+{ return const_cast< char * >( var.data() ); }
+
+inline char *
+dataPtr( Path & var )
+{ return const_cast< char * >( var.data() ); }
 
 template< typename T >
-inline std::enable_if_t< traits::is_string< T >, char * >
-dataPtr( T & var )
-{
-  return const_cast< char * >( var.data() );
-}
-
-template< typename T >
-inline std::enable_if_t< !traits::is_string< T > && traits::has_data_method< T >, typename traits::Pointer< T > >
+inline std::enable_if_t< traits::HasMemberFunction_data< T >, typename traits::Pointer< T > >
 dataPtr( T & value )
-{
-  return value.data();
-}
+{ return value.data(); }
 
 template< typename T >
-inline std::enable_if_t< !traits::is_string< T > && !traits::has_data_method< T >, typename traits::Pointer< T > >
+inline std::enable_if_t< !traits::HasMemberFunction_data< T >, typename traits::Pointer< T > >
 dataPtr( T & value )
-{
-  return &value;
-}
-
-template< class T >
-inline T const *
-dataPtr( SortedArray< T > & value )
-{
-  return value.values();
-}
+{ return &value; }
 
 template< class T >
 inline typename traits::ConstPointer< T >
 dataPtr( T const & value )
-{
-  return dataPtr( const_cast< T & >( value ) );
-}
+{ return dataPtr( const_cast< T & >( value ) ); }
+
 
 template< typename T >
-inline std::enable_if_t< traits::has_resize_method< T > >
+inline std::enable_if_t< traits::HasMemberFunction_resize< T > >
 resize( T & value, localIndex const newSize )
-{
-  value.resize( newSize );
-}
+{ value.resize( newSize ); }
 
 template< typename T >
-inline std::enable_if_t< !traits::has_resize_method< T > >
-resize( T & GEOSX_UNUSED_ARG( value ),
-        localIndex const GEOSX_UNUSED_ARG( newSize ) )
+inline std::enable_if_t< !traits::HasMemberFunction_resize< T > >
+resize( T & GEOSX_UNUSED_PARAM( value ),
+        localIndex const GEOSX_UNUSED_PARAM( newSize ) )
 {}
 
-template< typename T >
-inline std::enable_if_t< traits::has_resize_default_method< T, typename DefaultValue< T >::value_type > >
-resizeDefault( T & value, localIndex const newSize, DefaultValue< T > const & defaultValue )
-{
-  value.resizeDefault( newSize, defaultValue.value );
-}
+
+template< typename T, int NDIM, typename PERMUTATION >
+inline std::enable_if_t< DefaultValue< Array< T, NDIM, PERMUTATION > >::has_default_value >
+resizeDefault( Array< T, NDIM, PERMUTATION > & value,
+               localIndex const newSize,
+               DefaultValue< Array< T, NDIM, PERMUTATION > > const & defaultValue )
+{ value.resizeDefault( newSize, defaultValue.value ); }
 
 template< typename T >
-inline std::enable_if_t< !traits::has_resize_default_method< T, typename DefaultValue< T >::value_type > >
-resizeDefault( T & value, localIndex const newSize, DefaultValue< T > const & GEOSX_UNUSED_ARG( defaultValue ) )
-{
-  resize( value, newSize );
-}
+inline void
+resizeDefault( T & value, localIndex const newSize, DefaultValue< T > const & GEOSX_UNUSED_PARAM( defaultValue ) )
+{ resize( value, newSize ); }
+
+
+template< typename T, int NDIM, typename PERMUTATION >
+inline void
+resizeDimensions( Array< T, NDIM, PERMUTATION > & value, int num_dims, localIndex const * const dims )
+{ value.resize( num_dims, dims ); }
 
 template< typename T >
-inline std::enable_if_t< traits::has_resize_dimensions_method< T > >
-resizeDimensions( T & value, int num_dims, localIndex const * const dims )
-{
-  value.resize( num_dims, dims );
-}
-
-template< typename T >
-inline std::enable_if_t< !traits::has_resize_dimensions_method< T > >
+inline void
 resizeDimensions( T & value, int num_dims, localIndex const * const dims )
 {
   if( num_dims != 1 )
   {
-    GEOSX_ERROR( "Data is only 1D" );
+    GEOSX_ERROR( "Data is not multidimensional" );
     return;
   }
   resize( value, dims[ 0 ] );
 }
 
-template< typename T >
-inline std::enable_if_t< traits::has_alias_value_type< T >, localIndex >
-byteSize( T const & value )
-{
-  return size( value ) * sizeof( typename T::value_type );
-}
 
 template< typename T >
-inline std::enable_if_t< !traits::has_alias_value_type< T >, localIndex >
-byteSize( T const & value )
-{
-  return size( value ) * sizeof( T );
-}
+inline localIndex
+byteSizeOfElement()
+{ return sizeof( *dataPtr( std::declval< T >() ) ); }
+
 
 template< typename T >
-inline std::enable_if_t< traits::has_alias_value_type< T >, localIndex >
+inline localIndex
+byteSize( T const & value )
+{ return size( value ) * byteSizeOfElement< T >(); }
+
+
+template< typename T >
+inline localIndex
 numElementsFromByteSize( localIndex const byteSize )
 {
-  GEOSX_ERROR_IF_NE( byteSize % sizeof( typename T::value_type ), 0 );
-  return byteSize / sizeof( typename T::value_type );
+  GEOSX_ERROR_IF_NE( byteSize % byteSizeOfElement< T >(), 0 );
+  return byteSize / byteSizeOfElement< T >();
 }
 
 
 template< typename T >
-inline std::enable_if_t< !traits::has_alias_value_type< T >, localIndex >
-numElementsFromByteSize( localIndex const byteSize )
-{
-  GEOSX_ERROR_IF_NE( byteSize % sizeof( T ), 0 );
-  return byteSize / sizeof( T );
-}
+std::enable_if_t< traits::HasMemberFunction_reserve< T > >
+reserve( T & value, localIndex const newCapacity )
+{ value.reserve( newCapacity ); }
 
+template< typename T >
+std::enable_if_t< !traits::HasMemberFunction_reserve< T > >
+reserve( T & GEOSX_UNUSED_PARAM( value ), localIndex const GEOSX_UNUSED_PARAM( newCapacity ) )
+{}
+
+
+template< typename T >
+std::enable_if_t< traits::HasMemberFunction_capacity< T const >, localIndex >
+capacity( T const & value )
+{ return value.capacity(); }
+
+template< typename T >
+std::enable_if_t< !traits::HasMemberFunction_capacity< T const >, localIndex >
+capacity( T const & value )
+{ return size( value ); }
+
+
+
+template< typename T >
+std::enable_if_t< traits::HasMemberFunction_setName< T > >
+setName( T & value, std::string const & name )
+{ value.setName( name ); }
+
+template< typename T >
+std::enable_if_t< !traits::HasMemberFunction_setName< T > >
+setName( T & GEOSX_UNUSED_PARAM( value ), std::string const & GEOSX_UNUSED_PARAM( name ) )
+{}
+
+template< typename T >
+std::enable_if_t< traits::HasMemberFunction_move< T > >
+move( T & value, chai::ExecutionSpace const space, bool const touch )
+{ value.move( space, touch ); }
+
+template< typename T >
+std::enable_if_t< !traits::HasMemberFunction_move< T > >
+move( T & GEOSX_UNUSED_PARAM( value ),
+      chai::ExecutionSpace const GEOSX_UNUSED_PARAM( space ),
+      bool const GEOSX_UNUSED_PARAM( touch ) )
+{}
 
 // This is for an object that needs to be packed.
 template< typename T >
 std::enable_if_t< !bufferOps::can_memcpy< typename traits::Pointer< T > > >
 pushDataToConduitNode( T const & var, conduit::Node & node )
 {
-  logOutputType( cxx_utilities::demangle< decltype( var ) >(), "Packing for output: " );
+  logOutputType( cxx_utilities::demangleType( var ), "Packing for output: " );
 
   // Get the number of bytes in the packed object.
   localIndex const byteSize = bufferOps::PackSize( var );
@@ -236,7 +253,7 @@ inline
 void
 pushDataToConduitNode( std::string const & var, conduit::Node & node )
 {
-  logOutputType( cxx_utilities::demangle< decltype( var ) >(), "Output via external pointer: " );
+  logOutputType( cxx_utilities::demangleType( var ), "Output via external pointer: " );
 
   constexpr int conduitTypeID = conduitTypeInfo< signed char >::id;
   conduit::DataType const dtype( conduitTypeID, var.size() );
@@ -250,7 +267,7 @@ template< typename T >
 std::enable_if_t< bufferOps::can_memcpy< typename traits::Pointer< T > > >
 pushDataToConduitNode( T const & var, conduit::Node & node )
 {
-  logOutputType( cxx_utilities::demangle< decltype( var ) >(), "Output via external pointer: " );
+  logOutputType( cxx_utilities::demangleType( var ), "Output via external pointer: " );
 
   constexpr int conduitTypeID = conduitTypeInfo< typename traits::Pointer< T > >::id;
   constexpr int sizeofConduitType = conduitTypeInfo< typename traits::Pointer< T > >::sizeOfConduitType;
@@ -297,7 +314,7 @@ std::enable_if_t< bufferOps::can_memcpy< T > >
 pushDataToConduitNode( Array< T, NDIM, PERMUTATION > const & var,
                        conduit::Node & node )
 {
-  logOutputType( cxx_utilities::demangle< decltype( var ) >(), "Output array via external pointer: " );
+  logOutputType( cxx_utilities::demangleType( var ), "Output array via external pointer: " );
 
   // Push the data into conduit
   constexpr int conduitTypeID = conduitTypeInfo< T >::id;
@@ -308,7 +325,7 @@ pushDataToConduitNode( Array< T, NDIM, PERMUTATION > const & var,
 
   // Create a copy of the dimensions
   localIndex temp[ NDIM + 1 ];
-  for( int i = 0 ; i < NDIM ; ++i )
+  for( int i = 0; i < NDIM; ++i )
   {
     temp[ i ] = var.size( i );
   }
@@ -328,7 +345,7 @@ pushDataToConduitNode( Array< T, NDIM, PERMUTATION > const & var,
 
   // Create a copy of the permutation
   constexpr std::array< camp::idx_t, NDIM > const perm = RAJA::as_array< PERMUTATION >::get();
-  for( int i = 0 ; i < NDIM ; ++i )
+  for( int i = 0; i < NDIM; ++i )
   {
     temp[ i ] = perm[ i ];
   }
@@ -358,7 +375,7 @@ pullDataFromConduitNode( Array< T, NDIM, PERMUTATION > & var,
 
   constexpr std::array< camp::idx_t, NDIM > const perm = RAJA::as_array< PERMUTATION >::get();
   camp::idx_t const * const permFromConduit = permutationNode.value();
-  for( int i = 0 ; i < NDIM ; ++i )
+  for( int i = 0; i < NDIM; ++i )
   {
     GEOSX_ERROR_IF_NE_MSG( permFromConduit[ i ], perm[ i ],
                            "The permutation of the data in conduit and the provided Array don't match." );

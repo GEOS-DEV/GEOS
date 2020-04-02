@@ -52,15 +52,15 @@ public:
    * @param name The name of the solver instance
    * @param parent the parent group of the solver
    */
-  SolidMechanicsLagrangianFEM( const std::string& name,
+  SolidMechanicsLagrangianFEM( const std::string & name,
                                Group * const parent );
 
 
   SolidMechanicsLagrangianFEM( SolidMechanicsLagrangianFEM const & ) = delete;
-  SolidMechanicsLagrangianFEM( SolidMechanicsLagrangianFEM && ) = default ;
+  SolidMechanicsLagrangianFEM( SolidMechanicsLagrangianFEM && ) = default;
 
-  SolidMechanicsLagrangianFEM& operator=( SolidMechanicsLagrangianFEM const & ) = delete;
-  SolidMechanicsLagrangianFEM& operator=( SolidMechanicsLagrangianFEM && ) = delete ;
+  SolidMechanicsLagrangianFEM & operator=( SolidMechanicsLagrangianFEM const & ) = delete;
+  SolidMechanicsLagrangianFEM & operator=( SolidMechanicsLagrangianFEM && ) = delete;
 
   /**
    * destructor
@@ -72,7 +72,7 @@ public:
    */
   static string CatalogName() { return "SolidMechanics_LagrangianFEM"; }
 
-  virtual void InitializePreSubGroups(Group * const rootGroup) override;
+  virtual void InitializePreSubGroups( Group * const rootGroup ) override;
 
   virtual void RegisterDataOnMesh( Group * const MeshBody ) override final;
 
@@ -90,16 +90,16 @@ public:
    */
   /**@{*/
   virtual
-  real64 SolverStep( real64 const& time_n,
-                             real64 const & dt,
-                             integer const cycleNumber,
-                             DomainPartition * domain ) override;
+  real64 SolverStep( real64 const & time_n,
+                     real64 const & dt,
+                     integer const cycleNumber,
+                     DomainPartition * domain ) override;
 
   virtual
-  real64 ExplicitStep( real64 const& time_n,
-                               real64 const & dt,
-                               integer const cycleNumber,
-                               DomainPartition * domain ) override;
+  real64 ExplicitStep( real64 const & time_n,
+                       real64 const & dt,
+                       integer const cycleNumber,
+                       DomainPartition * domain ) override;
 
   virtual void
   ImplicitStepSetup( real64 const & time_n,
@@ -177,28 +177,30 @@ public:
   ExplicitElementKernelLaunch( localIndex NUM_NODES_PER_ELEM,
                                localIndex NUM_QUADRATURE_POINTS,
                                constitutive::ConstitutiveBase * const constitutiveRelation,
-                               set<localIndex> const & elementList,
-                               arrayView2d<localIndex const, cells::NODE_MAP_USD> const & elemsToNodes,
-                               arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & X,
-                               arrayView2d<real64 const, nodes::TOTAL_DISPLACEMENT_USD> const & u,
-                               arrayView2d<real64 const, nodes::VELOCITY_USD> const & vel,
-                               arrayView2d<real64, nodes::ACCELERATION_USD> const & acc,
-                               arrayView3d<real64, solid::STRESS_USD> const & stress,
+                               SortedArray< localIndex > const & elementList,
+                               arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
+                               arrayView3d< R1Tensor const > const & dNdX,
+                               arrayView2d< real64 const > const & detJ,
+                               arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
+                               arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & u,
+                               arrayView2d< real64 const, nodes::VELOCITY_USD > const & vel,
+                               arrayView2d< real64, nodes::ACCELERATION_USD > const & acc,
                                real64 const dt ) const
   {
     using ExplicitKernel = SolidMechanicsLagrangianFEMKernels::ExplicitKernel;
     return SolidMechanicsLagrangianFEMKernels::
-           ElementKernelLaunchSelector<ExplicitKernel>( NUM_NODES_PER_ELEM,
-                                                        NUM_QUADRATURE_POINTS,
-                                                        constitutiveRelation,
-                                                        elementList,
-                                                        elemsToNodes,
-                                                        X,
-                                                        u,
-                                                        vel,
-                                                        acc,
-                                                        stress,
-                                                        dt );
+             ElementKernelLaunchSelector< ExplicitKernel >( NUM_NODES_PER_ELEM,
+                                                            NUM_QUADRATURE_POINTS,
+                                                            constitutiveRelation,
+                                                            elementList,
+                                                            elemsToNodes,
+                                                            dNdX,
+                                                            detJ,
+                                                            X,
+                                                            u,
+                                                            vel,
+                                                            acc,
+                                                            dt );
   }
 
   /**
@@ -239,8 +241,8 @@ public:
                                constitutive::ConstitutiveBase * const constitutiveRelation,
                                localIndex const numElems,
                                real64 const dt,
-                               arrayView3d<R1Tensor const> const & dNdX,
-                               arrayView2d<real64 const > const& detJ,
+                               arrayView3d< R1Tensor const > const & dNdX,
+                               arrayView2d< real64 const > const & detJ,
                                FiniteElementBase const * const fe,
                                arrayView1d< integer const > const & elemGhostRank,
                                arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
@@ -252,7 +254,7 @@ public:
                                arrayView2d< real64 const > const & density,
                                arrayView1d< real64 const > const & fluidPressure,
                                arrayView1d< real64 const > const & deltaFluidPressure,
-                               arrayView1d< real64 const > const & biotCoefficient,
+                               real64 const biotCoefficient,
                                timeIntegrationOption const tiOption,
                                real64 const stiffnessDamping,
                                real64 const massDamping,
@@ -266,34 +268,34 @@ public:
     GEOSX_MARK_FUNCTION;
     using ImplicitKernel = SolidMechanicsLagrangianFEMKernels::ImplicitKernel;
     return SolidMechanicsLagrangianFEMKernels::
-           ElementKernelLaunchSelector<ImplicitKernel>( NUM_NODES_PER_ELEM,
-                                                        NUM_QUADRATURE_POINTS,
-                                                        constitutiveRelation,
-                                                        numElems,
-                                                        dt,
-                                                        dNdX,
-                                                        detJ,
-                                                        fe,
-                                                        elemGhostRank,
-                                                        elemsToNodes,
-                                                        globalDofNumber,
-                                                        disp,
-                                                        uhat,
-                                                        vtilde,
-                                                        uhattilde,
-                                                        density,
-                                                        fluidPressure,
-                                                        deltaFluidPressure,
-                                                        biotCoefficient,
-                                                        tiOption,
-                                                        stiffnessDamping,
-                                                        massDamping,
-                                                        newmarkBeta,
-                                                        newmarkGamma,
-                                                        gravityVector,
-                                                        dofManager,
-                                                        matrix,
-                                                        rhs );
+             ElementKernelLaunchSelector< ImplicitKernel >( NUM_NODES_PER_ELEM,
+                                                            NUM_QUADRATURE_POINTS,
+                                                            constitutiveRelation,
+                                                            numElems,
+                                                            dt,
+                                                            dNdX,
+                                                            detJ,
+                                                            fe,
+                                                            elemGhostRank,
+                                                            elemsToNodes,
+                                                            globalDofNumber,
+                                                            disp,
+                                                            uhat,
+                                                            vtilde,
+                                                            uhattilde,
+                                                            density,
+                                                            fluidPressure,
+                                                            deltaFluidPressure,
+                                                            biotCoefficient,
+                                                            tiOption,
+                                                            stiffnessDamping,
+                                                            massDamping,
+                                                            newmarkBeta,
+                                                            newmarkGamma,
+                                                            gravityVector,
+                                                            dofManager,
+                                                            matrix,
+                                                            rhs );
   }
 
   /**
@@ -343,13 +345,13 @@ public:
     {
       this->m_timeIntegrationOption = timeIntegrationOption::ImplicitDynamic;
     }
-    else if ( stringVal == "QuasiStatic" )
+    else if( stringVal == "QuasiStatic" )
     {
       this->m_timeIntegrationOption = timeIntegrationOption::QuasiStatic;
     }
     else
     {
-      GEOSX_ERROR("Invalid time integration option: " << stringVal);
+      GEOSX_ERROR( "Invalid time integration option: " << stringVal );
     }
   }
 
@@ -391,6 +393,8 @@ public:
     dataRepository::GroupKey systemSolverParameters = { "SystemSolverParameters" };
   } solidMechanicsGroupKeys;
 
+  string const & getSolidMaterialName() const { return m_solidMaterialName; }
+
 protected:
   virtual void PostProcessInput() override final;
 
@@ -411,10 +415,10 @@ protected:
   string m_contactRelationName;
 
 
-  array1d< array1d < set<localIndex> > > m_elemsAttachedToSendOrReceiveNodes;
-  array1d< array1d < set<localIndex> > > m_elemsNotAttachedToSendOrReceiveNodes;
-  set<localIndex> m_sendOrReceiveNodes;
-  set<localIndex> m_nonSendOrReceiveNodes;
+  array1d< array1d< SortedArray< localIndex > > > m_elemsAttachedToSendOrReceiveNodes;
+  array1d< array1d< SortedArray< localIndex > > > m_elemsNotAttachedToSendOrReceiveNodes;
+  SortedArray< localIndex > m_sendOrReceiveNodes;
+  SortedArray< localIndex > m_nonSendOrReceiveNodes;
   MPI_iCommData m_iComm;
 
   SolidMechanicsLagrangianFEM();

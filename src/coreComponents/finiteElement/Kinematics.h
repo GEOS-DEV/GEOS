@@ -25,34 +25,34 @@
 
 namespace geosx
 {
-void IncrementalKinematics( const R2Tensor& A,
-                            R2SymTensor& Dadt,
-                            R2Tensor& Rhat );
+void IncrementalKinematics( const R2Tensor & A,
+                            R2SymTensor & Dadt,
+                            R2Tensor & Rhat );
 
-void IncrementalRotation( const R2Tensor& A,
-                          R2TensorT<3>& Rot );
+void IncrementalRotation( const R2Tensor & A,
+                          R2TensorT< 3 > & Rot );
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
- void CalculateGradient( R2Tensor& Gradient,
-                               const int* bConnectivity,
-                               arraySlice1d<R1Tensor> const & disp,
-                               arraySlice1d<R1Tensor> const & dNdX )
+void CalculateGradient( R2Tensor & Gradient,
+                        const int * bConnectivity,
+                        arraySlice1d< R1Tensor > const & disp,
+                        arraySlice1d< R1Tensor > const & dNdX )
 {
   Gradient = 0.0;
-  for( localIndex a=0 ; a<8 ; ++a )
-    Gradient.plus_dyadic_ab( disp[bConnectivity[a]], dNdX[a]);
+  for( localIndex a=0; a<8; ++a )
+    Gradient.plus_dyadic_ab( disp[bConnectivity[a]], dNdX[a] );
 }
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
- void CalculateGradient(R2Tensor& Gradient,
-                              arraySlice1d<R1Tensor const> const & disp,
-                              arraySlice1d<R1Tensor const> const & dNdX,
-                              localIndex numNodes)
+void CalculateGradient( R2Tensor & Gradient,
+                        arraySlice1d< R1Tensor const > const & disp,
+                        arraySlice1d< R1Tensor const > const & dNdX,
+                        localIndex numNodes )
 {
   Gradient.dyadic_ab( disp[0], dNdX[0] );
-  for( localIndex a=1 ; a<numNodes ; ++a )
+  for( localIndex a=1; a<numNodes; ++a )
   {
     Gradient.plus_dyadic_ab( disp[a], dNdX[a] );
   }
@@ -61,14 +61,30 @@ GEOSX_FORCE_INLINE
 template< int N >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
- void CalculateGradient(R2Tensor& Gradient,
-                              arraySlice1d<R1Tensor const> const & disp,
-                              arraySlice1d<R1Tensor const> const & dNdX )
+void CalculateGradient( R2Tensor & Gradient,
+                        arraySlice1d< R1Tensor const > const & disp,
+                        arraySlice1d< R1Tensor const > const & dNdX )
 {
   Gradient.dyadic_ab( disp[0], dNdX[0] );
-  for( auto a=1 ; a<N ; ++a )
+  for( auto a=1; a<N; ++a )
   {
     Gradient.plus_dyadic_ab( disp[a], dNdX[a] );
+  }
+}
+
+template< int N >
+inline void CalculateGradients( R2Tensor & Gradient0,
+                                R2Tensor & Gradient1,
+                                R1Tensor const * GEOSX_RESTRICT const var0,
+                                R1Tensor const * GEOSX_RESTRICT const var1,
+                                arraySlice1d< R1Tensor const > const & dNdX )
+{
+  Gradient0.dyadic_ab( var0[0], dNdX[0] );
+  Gradient1.dyadic_ab( var1[0], dNdX[0] );
+  for( localIndex a=1; a<N; ++a )
+  {
+    Gradient0.plus_dyadic_ab( var0[a], dNdX[a] );
+    Gradient1.plus_dyadic_ab( var1[a], dNdX[a] );
   }
 }
 
@@ -77,19 +93,19 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void CalculateGradients( R2Tensor & Gradient0,
                          R2Tensor & Gradient1,
-                         R1Tensor const * restrict const var0,
-                         R1Tensor const * restrict const var1,
+                         R1Tensor const * GEOSX_RESTRICT const var0,
+                         R1Tensor const * GEOSX_RESTRICT const var1,
                          real64 const (&dNdX)[8][3] )
 {
   Gradient0 = 0;
   Gradient1 = 0;
-  real64 * const restrict g0 = Gradient0.Data();
-  real64 * const restrict g1 = Gradient1.Data();
+  real64 * const GEOSX_RESTRICT g0 = Gradient0.Data();
+  real64 * const GEOSX_RESTRICT g1 = Gradient1.Data();
 
-  for( int a=0 ; a<N ; ++a )
+  for( int a=0; a<N; ++a )
   {
-    real64 const * const restrict v0 = var0[a].Data();
-    real64 const * const restrict v1 = var1[a].Data();
+    real64 const * const GEOSX_RESTRICT v0 = var0[a].Data();
+    real64 const * const GEOSX_RESTRICT v1 = var1[a].Data();
     g0[0] += v0[0]*dNdX[a][0];
     g0[1] += v0[0]*dNdX[a][1];
     g0[2] += v0[0]*dNdX[a][2];
@@ -119,12 +135,12 @@ void CalculateGradients( R2Tensor & Gradient0,
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
- void HughesWinget( R2Tensor &Rot, R2SymTensor & Dadt, R2Tensor const & G)
+void HughesWinget( R2Tensor & Rot, R2SymTensor & Dadt, R2Tensor const & G )
 {
 
-  real64 * restrict const Dadt_data = Dadt.Data();
-  real64 * restrict const Rot_data = Rot.Data();
-  real64 const * restrict const G_data = G.Data();
+  real64 * GEOSX_RESTRICT const Dadt_data = Dadt.Data();
+  real64 * GEOSX_RESTRICT const Rot_data = Rot.Data();
+  real64 const * GEOSX_RESTRICT const G_data = G.Data();
 
 
   //Dadt = 0.5*(G + GT);

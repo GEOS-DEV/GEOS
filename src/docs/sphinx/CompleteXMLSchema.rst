@@ -23,6 +23,13 @@ Element: BlackOilFluid
 .. include:: ../../coreComponents/fileIO/schema/docs/BlackOilFluid.rst
 
 
+.. _XML_BoundedPlane:
+
+Element: BoundedPlane
+=====================
+.. include:: ../../coreComponents/fileIO/schema/docs/BoundedPlane.rst
+
+
 .. _XML_Box:
 
 Element: Box
@@ -135,6 +142,20 @@ Element: ElementRegions
 .. include:: ../../coreComponents/fileIO/schema/docs/ElementRegions.rst
 
 
+.. _XML_EmbeddedSurfaceElementRegion:
+
+Element: EmbeddedSurfaceElementRegion
+=====================================
+.. include:: ../../coreComponents/fileIO/schema/docs/EmbeddedSurfaceElementRegion.rst
+
+
+.. _XML_EmbeddedSurfaceGenerator:
+
+Element: EmbeddedSurfaceGenerator
+=================================
+.. include:: ../../coreComponents/fileIO/schema/docs/EmbeddedSurfaceGenerator.rst
+
+
 .. _XML_Events:
 
 Element: Events
@@ -189,6 +210,13 @@ Element: FiniteElements
 Element: FiniteVolume
 =====================
 .. include:: ../../coreComponents/fileIO/schema/docs/FiniteVolume.rst
+
+
+.. _XML_FlowProppantTransport:
+
+Element: FlowProppantTransport
+==============================
+.. include:: ../../coreComponents/fileIO/schema/docs/FlowProppantTransport.rst
 
 
 .. _XML_Functions:
@@ -303,6 +331,13 @@ Element: LinearElasticIsotropic
 .. include:: ../../coreComponents/fileIO/schema/docs/LinearElasticIsotropic.rst
 
 
+.. _XML_LinearElasticTransverseIsotropic:
+
+Element: LinearElasticTransverseIsotropic
+=========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/LinearElasticTransverseIsotropic.rst
+
+
 .. _XML_Mesh:
 
 Element: Mesh
@@ -366,6 +401,20 @@ Element: Parameters
 .. include:: ../../coreComponents/fileIO/schema/docs/Parameters.rst
 
 
+.. _XML_ParticleFluid:
+
+Element: ParticleFluid
+======================
+.. include:: ../../coreComponents/fileIO/schema/docs/ParticleFluid.rst
+
+
+.. _XML_Perforation:
+
+Element: Perforation
+====================
+.. include:: ../../coreComponents/fileIO/schema/docs/Perforation.rst
+
+
 .. _XML_PeriodicEvent:
 
 Element: PeriodicEvent
@@ -394,6 +443,13 @@ Element: PoroLinearElasticIsotropic
 .. include:: ../../coreComponents/fileIO/schema/docs/PoroLinearElasticIsotropic.rst
 
 
+.. _XML_PoroLinearElasticTransverseIsotropic:
+
+Element: PoroLinearElasticTransverseIsotropic
+=============================================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroLinearElasticTransverseIsotropic.rst
+
+
 .. _XML_Poroelastic:
 
 Element: Poroelastic
@@ -406,6 +462,20 @@ Element: Poroelastic
 Element: Problem
 ================
 .. include:: ../../coreComponents/fileIO/schema/docs/Problem.rst
+
+
+.. _XML_ProppantSlurryFluid:
+
+Element: ProppantSlurryFluid
+============================
+.. include:: ../../coreComponents/fileIO/schema/docs/ProppantSlurryFluid.rst
+
+
+.. _XML_ProppantTransport:
+
+Element: ProppantTransport
+==========================
+.. include:: ../../coreComponents/fileIO/schema/docs/ProppantTransport.rst
 
 
 .. _XML_QuadratureRules:
@@ -448,6 +518,13 @@ Element: SinglePhaseFVM
 Element: SinglePhaseHybridFVM
 =============================
 .. include:: ../../coreComponents/fileIO/schema/docs/SinglePhaseHybridFVM.rst
+
+
+.. _XML_SinglePhaseProppantFVM:
+
+Element: SinglePhaseProppantFVM
+===============================
+.. include:: ../../coreComponents/fileIO/schema/docs/SinglePhaseProppantFVM.rst
 
 
 .. _XML_SinglePhaseWell:
@@ -555,6 +632,13 @@ Element: VanGenuchtenCapillaryPressure
 .. include:: ../../coreComponents/fileIO/schema/docs/VanGenuchtenCapillaryPressure.rst
 
 
+.. _XML_WellControls:
+
+Element: WellControls
+=====================
+.. include:: ../../coreComponents/fileIO/schema/docs/WellControls.rst
+
+
 .. _XML_WellElementRegion:
 
 Element: WellElementRegion
@@ -578,6 +662,13 @@ Datastructure: BasisFunctions
 Datastructure: BlackOilFluid
 ============================
 .. include:: ../../coreComponents/fileIO/schema/docs/BlackOilFluid_other.rst
+
+
+.. _DATASTRUCTURE_BoundedPlane:
+
+Datastructure: BoundedPlane
+===========================
+.. include:: ../../coreComponents/fileIO/schema/docs/BoundedPlane_other.rst
 
 
 .. _DATASTRUCTURE_Box:
@@ -699,6 +790,20 @@ Datastructure: ElementRegions
 .. include:: ../../coreComponents/fileIO/schema/docs/ElementRegions_other.rst
 
 
+.. _DATASTRUCTURE_EmbeddedSurfaceElementRegion:
+
+Datastructure: EmbeddedSurfaceElementRegion
+===========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/EmbeddedSurfaceElementRegion_other.rst
+
+
+.. _DATASTRUCTURE_EmbeddedSurfaceGenerator:
+
+Datastructure: EmbeddedSurfaceGenerator
+=======================================
+.. include:: ../../coreComponents/fileIO/schema/docs/EmbeddedSurfaceGenerator_other.rst
+
+
 .. _DATASTRUCTURE_Events:
 
 Datastructure: Events
@@ -760,6 +865,13 @@ Datastructure: FiniteElements
 Datastructure: FiniteVolume
 ===========================
 .. include:: ../../coreComponents/fileIO/schema/docs/FiniteVolume_other.rst
+
+
+.. _DATASTRUCTURE_FlowProppantTransport:
+
+Datastructure: FlowProppantTransport
+====================================
+.. include:: ../../coreComponents/fileIO/schema/docs/FlowProppantTransport_other.rst
 
 
 .. _DATASTRUCTURE_Functions:
@@ -881,6 +993,13 @@ Datastructure: LinearElasticIsotropic
 .. include:: ../../coreComponents/fileIO/schema/docs/LinearElasticIsotropic_other.rst
 
 
+.. _DATASTRUCTURE_LinearElasticTransverseIsotropic:
+
+Datastructure: LinearElasticTransverseIsotropic
+===============================================
+.. include:: ../../coreComponents/fileIO/schema/docs/LinearElasticTransverseIsotropic_other.rst
+
+
 .. _DATASTRUCTURE_Mesh:
 
 Datastructure: Mesh
@@ -951,6 +1070,20 @@ Datastructure: Parameters
 .. include:: ../../coreComponents/fileIO/schema/docs/Parameters_other.rst
 
 
+.. _DATASTRUCTURE_ParticleFluid:
+
+Datastructure: ParticleFluid
+============================
+.. include:: ../../coreComponents/fileIO/schema/docs/ParticleFluid_other.rst
+
+
+.. _DATASTRUCTURE_Perforation:
+
+Datastructure: Perforation
+==========================
+.. include:: ../../coreComponents/fileIO/schema/docs/Perforation_other.rst
+
+
 .. _DATASTRUCTURE_PeriodicEvent:
 
 Datastructure: PeriodicEvent
@@ -979,6 +1112,13 @@ Datastructure: PoroLinearElasticIsotropic
 .. include:: ../../coreComponents/fileIO/schema/docs/PoroLinearElasticIsotropic_other.rst
 
 
+.. _DATASTRUCTURE_PoroLinearElasticTransverseIsotropic:
+
+Datastructure: PoroLinearElasticTransverseIsotropic
+===================================================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroLinearElasticTransverseIsotropic_other.rst
+
+
 .. _DATASTRUCTURE_Poroelastic:
 
 Datastructure: Poroelastic
@@ -991,6 +1131,20 @@ Datastructure: Poroelastic
 Datastructure: Problem
 ======================
 .. include:: ../../coreComponents/fileIO/schema/docs/Problem_other.rst
+
+
+.. _DATASTRUCTURE_ProppantSlurryFluid:
+
+Datastructure: ProppantSlurryFluid
+==================================
+.. include:: ../../coreComponents/fileIO/schema/docs/ProppantSlurryFluid_other.rst
+
+
+.. _DATASTRUCTURE_ProppantTransport:
+
+Datastructure: ProppantTransport
+================================
+.. include:: ../../coreComponents/fileIO/schema/docs/ProppantTransport_other.rst
 
 
 .. _DATASTRUCTURE_QuadratureRules:
@@ -1033,6 +1187,13 @@ Datastructure: SinglePhaseFVM
 Datastructure: SinglePhaseHybridFVM
 ===================================
 .. include:: ../../coreComponents/fileIO/schema/docs/SinglePhaseHybridFVM_other.rst
+
+
+.. _DATASTRUCTURE_SinglePhaseProppantFVM:
+
+Datastructure: SinglePhaseProppantFVM
+=====================================
+.. include:: ../../coreComponents/fileIO/schema/docs/SinglePhaseProppantFVM_other.rst
 
 
 .. _DATASTRUCTURE_SinglePhaseWell:
@@ -1138,6 +1299,13 @@ Datastructure: VanGenuchtenBakerRelativePermeability
 Datastructure: VanGenuchtenCapillaryPressure
 ============================================
 .. include:: ../../coreComponents/fileIO/schema/docs/VanGenuchtenCapillaryPressure_other.rst
+
+
+.. _DATASTRUCTURE_WellControls:
+
+Datastructure: WellControls
+===========================
+.. include:: ../../coreComponents/fileIO/schema/docs/WellControls_other.rst
 
 
 .. _DATASTRUCTURE_WellElementRegion:

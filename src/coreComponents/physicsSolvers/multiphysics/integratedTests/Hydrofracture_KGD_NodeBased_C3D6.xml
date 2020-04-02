@@ -7,13 +7,12 @@
       name="hydrofracture" 
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
-      couplingTypeOption="TightlyCoupled"
-      logLevel="0"
+      couplingTypeOption="FIM"
+      logLevel="1"
       targetRegions="{Region2, Fracture}"
       contactRelationName="fractureContact"
       >
       <NonlinearSolverParameters 
-        name="nlsp"
         newtonTol="1.0e-5"
         newtonMaxIter="50"
         lineSearchMaxCuts="10"
@@ -34,11 +33,9 @@
       solidMaterialName="rock"
       contactRelationName="fractureContact"
       >
-      <NonlinearSolverParameters name="nlsp"
-                                 newtonTol="1.0e-6"
+      <NonlinearSolverParameters newtonTol="1.0e-6"
                                  newtonMaxIter="5"/>
-      <SystemSolverParameters name="ssp"
-                              krylovTol="1.0e-10"
+      <SystemSolverParameters krylovTol="1.0e-10"
                               logLevel="0"
         />
     </SolidMechanicsLagrangianSSLE>
@@ -50,12 +47,11 @@
       targetRegions="{Fracture}"
       fluidName="water"
       solidName="rock"
+      meanPermCoeff="0.8"
       >
-      <NonlinearSolverParameters name="nlsp"
-                                 newtonTol="1.0e-5"
+      <NonlinearSolverParameters newtonTol="1.0e-5"
                                  newtonMaxIter="10"/>
-      <SystemSolverParameters name="SystemSolverParameters"
-                              krylovTol="1.0e-12"
+      <SystemSolverParameters krylovTol="1.0e-12"
                               logLevel="0"/>
     </SinglePhaseFVM>
     
@@ -198,10 +194,6 @@
     </Contact>
   </Constitutive>
 
-  <InitialConditions>
-    
-  </InitialConditions>
-
   <FieldSpecifications>
 
     <FieldSpecification name="waterDensity"
@@ -277,10 +269,6 @@
 
   <Functions>
   </Functions>
-
-  <Partition>
-    <SpatialPartition xPar="1" yPar="1" zPar="1"/>
-  </Partition>
 
   <Outputs>
       <Silo name="siloOutput"

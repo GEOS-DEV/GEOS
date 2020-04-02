@@ -1,3 +1,5 @@
+<Problem>
+
   <!-- SPHINX_INTERNAL_MESH -->
   <Mesh>
     <InternalMesh name="mesh1"
@@ -85,14 +87,14 @@
                setNames="{source}"
                objectPath="ElementRegions"
                fieldName="shale_stress"
-               component="2"
+               component="1"
                scale="-1.0e6"/>
     <FieldSpecification name="source2"  
                initialCondition="1"  
                setNames="{source}"
                objectPath="ElementRegions"
                fieldName="shale_stress"
-               component="5"
+               component="2"
                scale="-1.0e6"/>
 
     <FieldSpecification name="xconstraint" 
@@ -130,3 +132,4 @@
   <Geometry>
     <Box name="source" xMin="-1, -1, -1" xMax="1.1, 1.1, 1.1"/>
   </Geometry>
+</Problem>

@@ -27,24 +27,29 @@ namespace geosx
 namespace stringutilities
 {
 
-void toLower(std::string& theString){
-  std::transform(theString.begin(), theString.end(), theString.begin(), ::tolower);
+void toLower( std::string & theString )
+{
+  std::transform( theString.begin(), theString.end(), theString.begin(), ::tolower );
 }
-std::string lowercase(std::string theString){
-  std::transform(theString.begin(), theString.end(), theString.begin(), ::tolower);
+std::string lowercase( std::string theString )
+{
+  std::transform( theString.begin(), theString.end(), theString.begin(), ::tolower );
   return theString;
 }
 
-void toUpper(std::string& theString){
-  std::transform(theString.begin(), theString.end(), theString.begin(), ::toupper);
+void toUpper( std::string & theString )
+{
+  std::transform( theString.begin(), theString.end(), theString.begin(), ::toupper );
 }
-std::string uppercase(std::string theString){
-  std::transform(theString.begin(), theString.end(), theString.begin(), ::toupper);
+std::string uppercase( std::string theString )
+{
+  std::transform( theString.begin(), theString.end(), theString.begin(), ::toupper );
   return theString;
 }
 
-bool ieq(std::string strA,std::string strB){
-  toLower(strA); toLower(strB); return strA == strB;
+bool ieq( std::string strA, std::string strB )
+{
+  toLower( strA ); toLower( strB ); return strA == strB;
 }
 
 
@@ -52,53 +57,53 @@ bool ieq(std::string strA,std::string strB){
 /**
  * String tokenizing function
  **/
-string_array Tokenize(const std::string& str, const std::string& delimiters)
+string_array Tokenize( const std::string & str, const std::string & delimiters )
 {
   string_array tokens;
 
-  if ( str.length() == 0 )
+  if( str.length() == 0 )
   {
-    tokens.push_back(str);
+    tokens.push_back( str );
   }
   else
   {
 
     bool usesNonWhitespaceDelimiters = false;
     std::string::size_type i =0;
-    while(delimiters[i] && !usesNonWhitespaceDelimiters)
+    while( delimiters[i] && !usesNonWhitespaceDelimiters )
     {
       usesNonWhitespaceDelimiters |= !isspace( int(delimiters[i]) );
       ++i;
     }
 
-    if(usesNonWhitespaceDelimiters)
+    if( usesNonWhitespaceDelimiters )
     {
       // do not skip multiple adjacent delimiters - indicates empty strings
       size_t lastPos = 0;
 
       size_t newPos = lastPos;
-      while ( (newPos=str.find_first_of(delimiters, lastPos)) != std::string::npos )
+      while( (newPos=str.find_first_of( delimiters, lastPos )) != std::string::npos )
       {
-        tokens.push_back(str.substr(lastPos, newPos-lastPos));
+        tokens.push_back( str.substr( lastPos, newPos-lastPos ));
         lastPos = newPos + 1;
       }
-      tokens.push_back(str.substr(lastPos, str.length()-lastPos));
+      tokens.push_back( str.substr( lastPos, str.length()-lastPos ));
     }
     else
     {
       // whitespace delimiters
       // skip multiple adjacent delimiters
-      size_t lastPos = str.find_first_not_of(delimiters,0);
+      size_t lastPos = str.find_first_not_of( delimiters, 0 );
       lastPos = (lastPos == std::string::npos) ? 0 : lastPos;
 
       size_t newPos = lastPos;
-      while ( (newPos=str.find_first_of(delimiters, lastPos)) != std::string::npos )
+      while( (newPos=str.find_first_of( delimiters, lastPos )) != std::string::npos )
       {
-        tokens.push_back(str.substr(lastPos, newPos-lastPos));
-        lastPos = str.find_first_not_of(delimiters,newPos);
+        tokens.push_back( str.substr( lastPos, newPos-lastPos ));
+        lastPos = str.find_first_not_of( delimiters, newPos );
       }
-      if(lastPos!= std::string::npos)
-        tokens.push_back(str.substr(lastPos, str.length()-lastPos));
+      if( lastPos!= std::string::npos )
+        tokens.push_back( str.substr( lastPos, str.length()-lastPos ));
 
     }
   }
@@ -110,13 +115,13 @@ string_array Tokenize(const std::string& str, const std::string& delimiters)
  * ie. Tokenize "1.0000 HPO4-- +1.0000 Cu++" with " +" gives {"1.0000
  * HPO4--","1.0000 Cu++"}
  **/
-string_array TokenizeSeq(const std::string& str, const std::string& seq)
+string_array TokenizeSeq( const std::string & str, const std::string & seq )
 {
   string_array tokens;
 
-  if ( str.length() == 0 )
+  if( str.length() == 0 )
   {
-    tokens.push_back(str);
+    tokens.push_back( str );
   }
   else
   {
@@ -124,12 +129,12 @@ string_array TokenizeSeq(const std::string& str, const std::string& seq)
     size_t lastPos = 0;
 
     size_t newPos = lastPos;
-    while ( (newPos=str.find(seq, lastPos)) != std::string::npos )
+    while( (newPos=str.find( seq, lastPos )) != std::string::npos )
     {
-      tokens.push_back(str.substr(lastPos, newPos-lastPos));
+      tokens.push_back( str.substr( lastPos, newPos-lastPos ));
       lastPos = newPos + seq.size();
     }
-    tokens.push_back(str.substr(lastPos, str.length()-lastPos));
+    tokens.push_back( str.substr( lastPos, str.length()-lastPos ));
   }
   return tokens;
 }
@@ -137,25 +142,73 @@ string_array TokenizeSeq(const std::string& str, const std::string& seq)
 /**
  * Split string at deliminator
  **/
-string_array Split(const std::string& str, const std::string& delimiters)
+string_array Split( const std::string & str, const std::string & delimiters )
 {
   string_array tokens;
 
-  if ( str.length() == 0 )
+  if( str.length() == 0 )
   {
-    tokens.push_back(str);
+    tokens.push_back( str );
   }
   else
   {
 
-    size_t pos = str.find_first_of(delimiters,0);
+    size_t pos = str.find_first_of( delimiters, 0 );
 
-    tokens.push_back(str.substr(0, pos));
+    tokens.push_back( str.substr( 0, pos ));
     pos++;
-    if(pos < str.size())
-      tokens.push_back(str.substr(pos));
+    if( pos < str.size())
+      tokens.push_back( str.substr( pos ));
   }
   return tokens;
+}
+
+
+integer FindBase64StringLength( integer dataSize )
+{
+  integer base64StringLength = (dataSize * 8) / 6;
+  while( base64StringLength % 4 )
+  {
+    base64StringLength++;
+  }
+  return base64StringLength;
+}
+
+static const std::string base64Chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                       "abcdefghijklmnopqrstuvwxyz"
+                                       "0123456789+/";
+
+string EncodeBase64( unsigned char const * const bytes,
+                     integer dataSize )
+{
+  string output;
+  output.reserve( FindBase64StringLength( dataSize ) );
+  integer val = 0;
+  integer valB = -6;
+  integer size = 0;
+
+  for( integer i = 0; i < dataSize; i++ )
+  {
+    val = ( val << 8 ) + bytes[i];
+    valB += 8;
+    while( valB >= 0 )
+    {
+      output.push_back( base64Chars[ ( val>>valB ) &0x3F ] );  //0x3f is the Hexadecimal for 63
+      ++size;
+      valB -= 6;
+    }
+  }
+  if( valB > -6 )
+  {
+    output.push_back( base64Chars[ ( ( val << 8 ) >> ( valB + 8 ) ) &0x3F ] );
+    ++size;
+  }
+  while( size % 4 )
+  {
+    output.push_back( '=' );
+    ++size;
+  }
+  return output;
 }
 
 }

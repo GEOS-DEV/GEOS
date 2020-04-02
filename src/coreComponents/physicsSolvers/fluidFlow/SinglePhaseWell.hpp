@@ -29,7 +29,7 @@ namespace dataRepository
 {
 class Group;
 }
-  
+
 namespace constitutive
 {
 class SingleFluidBase;
@@ -58,13 +58,13 @@ public:
     static constexpr integer CONTROL = 0;
     static constexpr integer MASSBAL = 1;
   };
-  
+
   /**
    * @brief main constructor for Group Objects
    * @param name the name of this instantiation of Group in the repository
    * @param parent the parent group of this instantiation of Group
    */
-  SinglePhaseWell( const string& name,
+  SinglePhaseWell( const string & name,
                    Group * const parent );
 
   /// deleted default constructor
@@ -93,7 +93,7 @@ public:
    */
   static string CatalogName() { return "SinglePhaseWell"; }
 
-  virtual void RegisterDataOnMesh(Group * const meshBodies) override;
+  virtual void RegisterDataOnMesh( Group * const meshBodies ) override;
 
   /**
    * @defgroup Solver Interface Functions
@@ -106,7 +106,7 @@ public:
   CalculateResidualNorm( DomainPartition const * const domain,
                          DofManager const & dofManager,
                          ParallelVector const & rhs ) override;
-  
+
   virtual bool
   CheckSystemSolution( DomainPartition const * const domain,
                        DofManager const & dofManager,
@@ -118,11 +118,11 @@ public:
                        ParallelVector const & solution,
                        real64 const scalingFactor,
                        DomainPartition * const domain ) override;
-  
-  virtual void 
+
+  virtual void
   ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
 
-  virtual void 
+  virtual void
   ImplicitStepComplete( real64 const & time,
                         real64 const & dt,
                         DomainPartition * const domain ) override;
@@ -144,7 +144,7 @@ public:
    * @param subRegion the well subRegion containing the well elements and their associated fields
    */
   virtual void UpdateState( WellElementSubRegion * subRegion ) override;
-  
+
   /**
    * @brief assembles the flux terms for all connections between well elements
    * @param time_n previous time value
@@ -163,7 +163,7 @@ public:
 
 
   /**
-   * @Brief assembles the perforation rate terms 
+   * @Brief assembles the perforation rate terms
    * @param time_n previous time value
    * @param dt time step
    * @param domain the physical domain object
@@ -173,11 +173,11 @@ public:
    */
   virtual void AssemblePerforationTerms( real64 const time_n,
                                          real64 const dt,
-                                         DomainPartition const * const domain,
+                                         DomainPartition * const domain,
                                          DofManager const * const dofManager,
                                          ParallelMatrix * const matrix,
                                          ParallelVector * const rhs ) override;
-  
+
   /**
    * @brief assembles the volume balance terms for all well elements
    * @param time_n previous time value
@@ -218,7 +218,7 @@ public:
                                     ParallelMatrix * const matrix,
                                     ParallelVector * const rhs ) override;
 
-  
+
   struct viewKeyStruct : WellSolverBase::viewKeyStruct
   {
     static constexpr auto dofFieldString = "singlePhaseWellVars";
@@ -232,7 +232,7 @@ public:
     // perforation rates
     static constexpr auto perforationRateString        = "perforationRate";
     static constexpr auto dPerforationRate_dPresString = "dPerforationRate_dPres";
-    
+
     using ViewKey = dataRepository::ViewKey;
 
     // primary solution field
@@ -240,16 +240,15 @@ public:
     ViewKey deltaPressure = { deltaPressureString };
     ViewKey rate          = { connRateString };
     ViewKey deltaRate     = { deltaConnRateString };
-    
+
     // perforation rates
     ViewKey perforationRate        = { perforationRateString };
     ViewKey dPerforationRate_dPres = { dPerforationRate_dPresString };
-    
+
   } viewKeysSinglePhaseWell;
 
   struct groupKeyStruct : SolverBase::groupKeyStruct
-  {
-  } groupKeysSinglePhaseWell;
+  {} groupKeysSinglePhaseWell;
 
 protected:
 
@@ -279,26 +278,26 @@ private:
    * @brief Compute all the perforation rates for this well
    * @param well the well with its perforations
    */
-  void ComputeAllPerforationRates( WellElementSubRegion const * const subRegion );
+  void ComputeAllPerforationRates( WellElementSubRegion * const subRegion );
 
   /**
    * @brief Save all the rates and pressures in the well for reporting purposes
    * @param well the well with its perforations
    */
   void RecordWellData( WellElementSubRegion const * const subRegion );
-  
+
   /// views into reservoir primary variable fields
 
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_resPressure;
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_deltaResPressure;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_resPressure;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_deltaResPressure;
 
   /// views into reservoir material fields
 
-  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_resDensity;
-  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_dResDens_dPres;
+  ElementRegionManager::MaterialViewAccessor< arrayView2d< real64 > > m_resDensity;
+  ElementRegionManager::MaterialViewAccessor< arrayView2d< real64 > > m_dResDens_dPres;
 
-  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_resViscosity;
-  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_dResVisc_dPres;
+  ElementRegionManager::MaterialViewAccessor< arrayView2d< real64 > > m_resViscosity;
+  ElementRegionManager::MaterialViewAccessor< arrayView2d< real64 > > m_dResVisc_dPres;
 
 };
 

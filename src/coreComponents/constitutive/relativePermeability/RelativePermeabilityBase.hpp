@@ -13,8 +13,8 @@
  */
 
 /**
-  * @file RelativePermeabilityBase.hpp
-  */
+ * @file RelativePermeabilityBase.hpp
+ */
 
 #ifndef GEOSX_CONSTITUTIVE_RELATIVEPERMEABILITYBASE_HPP
 #define GEOSX_CONSTITUTIVE_RELATIVEPERMEABILITYBASE_HPP
@@ -73,7 +73,7 @@ public:
    *       within a kernel since it is virtual, and the required data is not
    *       guaranteed to be in the target memory space.
    */
-  virtual void PointUpdate( arraySlice1d<real64 const> const & phaseVolFraction,
+  virtual void PointUpdate( arraySlice1d< real64 const > const & phaseVolFraction,
                             localIndex const k,
                             localIndex const q ) = 0;
 
@@ -81,7 +81,7 @@ public:
    * @brief Perform a batch constitutive update (all points).
    * @param[in] phaseVolFraction input phase volume fraction
    */
-  virtual void BatchUpdate( arrayView2d<real64 const> const & phaseVolumeFraction ) = 0;
+  virtual void BatchUpdate( arrayView2d< real64 const > const & phaseVolumeFraction ) = 0;
 
   localIndex numFluidPhases() const;
 
@@ -122,8 +122,8 @@ protected:
    *             kernel
    */
   template< typename LEAFCLASS, typename POLICY=serialPolicy, typename ... ARGS >
-  void BatchUpdateKernel( arrayView2d<real64 const> const & phaseVolumeFraction,
-                          ARGS&& ... args );
+  void BatchUpdateKernel( arrayView2d< real64 const > const & phaseVolumeFraction,
+                          ARGS && ... args );
 
   /**
    * @brief Function called internally to resize member arrays
@@ -133,42 +133,42 @@ protected:
   void ResizeFields( localIndex const size, localIndex const numPts );
 
   // phase names read from input
-  string_array     m_phaseNames;
+  string_array m_phaseNames;
 
   // phase ordering info
-  array1d<integer> m_phaseTypes;
-  array1d<integer> m_phaseOrder;
+  array1d< integer > m_phaseTypes;
+  array1d< integer > m_phaseOrder;
 
   // output quantities
-  array3d<real64>  m_phaseRelPerm;
-  array4d<real64>  m_dPhaseRelPerm_dPhaseVolFrac;
+  array3d< real64 >  m_phaseRelPerm;
+  array4d< real64 >  m_dPhaseRelPerm_dPhaseVolFrac;
 
 
 };
 
 
 template< typename LEAFCLASS, typename POLICY, typename ... ARGS >
-void RelativePermeabilityBase::BatchUpdateKernel( arrayView2d<real64 const> const & phaseVolumeFraction,
-                                                  ARGS&& ... args)
+void RelativePermeabilityBase::BatchUpdateKernel( arrayView2d< real64 const > const & phaseVolumeFraction,
+                                                  ARGS && ... args )
 {
-  localIndex const numElem = m_phaseRelPerm.size(0);
-  localIndex const numQ = m_phaseRelPerm.size(1);
+  localIndex const numElem = m_phaseRelPerm.size( 0 );
+  localIndex const numQ = m_phaseRelPerm.size( 1 );
   localIndex const NP = numFluidPhases();
 
-  arrayView3d<real64> const & phaseRelPerm = m_phaseRelPerm;
-  arrayView4d<real64> const & dPhaseRelPerm_dPhaseVolFrac = m_dPhaseRelPerm_dPhaseVolFrac;
+  arrayView3d< real64 > const & phaseRelPerm = m_phaseRelPerm;
+  arrayView4d< real64 > const & dPhaseRelPerm_dPhaseVolFrac = m_dPhaseRelPerm_dPhaseVolFrac;
 
-  forall_in_range<POLICY>( 0, numElem, GEOSX_LAMBDA ( localIndex const k )
+  forAll< POLICY >( numElem, [=] ( localIndex const k )
   {
-    for( localIndex q=0 ; q<numQ ; ++q )
+    for( localIndex q=0; q<numQ; ++q )
     {
       LEAFCLASS::Compute( NP,
                           phaseVolumeFraction[k],
                           phaseRelPerm[k][q],
                           dPhaseRelPerm_dPhaseVolFrac[k][q],
-                          args... );
+                          args ... );
     }
-  });
+  } );
 }
 
 } // namespace constitutive

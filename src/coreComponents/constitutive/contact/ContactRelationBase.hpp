@@ -63,21 +63,21 @@ public:
 
   virtual string GetCatalogName() override { return CatalogName(); }
 
-  virtual void DeliverClone( string const & GEOSX_UNUSED_ARG( name ),
-                             Group * const GEOSX_UNUSED_ARG( parent ),
-                             std::unique_ptr<ConstitutiveBase> & GEOSX_UNUSED_ARG( clone ) ) const override {}
+  virtual void DeliverClone( string const & GEOSX_UNUSED_PARAM( name ),
+                             Group * const GEOSX_UNUSED_PARAM( parent ),
+                             std::unique_ptr< ConstitutiveBase > & GEOSX_UNUSED_PARAM( clone ) ) const override {}
 
   virtual Group * CreateChild( string const & catalogKey,
-                                      string const & name ) override;
+                               string const & name ) override;
 
 
   /**
    * This function is used to inform the schema generator
    * that table functions are allowed as children.
    */
-  virtual void SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
-                                   xmlWrapper::xmlNode schemaParent,
-                                   integer documentationType) override;
+  virtual void SetSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
+                                    xmlWrapper::xmlNode schemaParent,
+                                    integer documentationType ) override;
 
   virtual void InitializePreSubGroups( Group * const ) override;
 
@@ -90,7 +90,7 @@ public:
    * @param[in] aperture the model aperture/gap
    * @return And effective physical aperture that is always > 0
    */
-  inline real64 effectiveAperture( real64 const aperture ) const { return m_apertureFunction->Evaluate( & aperture ); }
+  inline real64 effectiveAperture( real64 const aperture ) const { return m_apertureFunction->Evaluate( &aperture ); }
 
   /**
    * @brief evaluation of the derivative of the effective physical aperture
@@ -99,7 +99,7 @@ public:
    */
   inline real64 dEffectiveAperture_dAperture( real64 const aperture ) const
   {
-    real64 aperPlus = aperture ;
+    real64 aperPlus = aperture;
     real64 aperMinus = aperture - 1.0e-6;
     real64 slope = (m_apertureFunction->Evaluate( &aperPlus ) - m_apertureFunction->Evaluate( &aperMinus ) ) / 1.0e-6;
     return slope;
@@ -111,7 +111,7 @@ public:
   /**
    * @struct Structure to hold scoped key names
    */
-  struct viewKeyStruct: public ConstitutiveBase::viewKeyStruct
+  struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
     static constexpr auto penaltyStiffnessString  = "penaltyStiffness";
     static constexpr auto apertureToleranceString  = "apertureTolerance";
