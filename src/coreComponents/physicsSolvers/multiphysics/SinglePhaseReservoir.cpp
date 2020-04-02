@@ -51,28 +51,14 @@ void SinglePhaseReservoir::SetupDofs( DomainPartition const * const domain,
   // TODO: add coupling when dofManager can support perforation connectors
 }
 
-void SinglePhaseReservoir::SetupSystem( DomainPartition * const domain,
-                                        DofManager & dofManager,
-                                        ParallelMatrix & matrix,
-                                        ParallelVector & rhs,
-                                        ParallelVector & solution )
+void SinglePhaseReservoir::AddCouplingSparsityPattern( DomainPartition * const domain,
+                                                       DofManager & dofManager,
+                                                       ParallelMatrix & matrix )
 {
   GEOSX_MARK_FUNCTION;
 
   MeshLevel const * const meshLevel = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
   ElementRegionManager const * const elemManager = meshLevel->getElemManager();
-
-  dofManager.setMesh( domain, 0, 0 );
-  SetupDofs( domain, dofManager );
-  dofManager.reorderByRank();
-
-  localIndex const numLocalDof = dofManager.numLocalDofs();
-
-  matrix.createWithLocalSize( numLocalDof, numLocalDof, 8, MPI_COMM_GEOSX );
-  rhs.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
-  solution.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
-
-  dofManager.setSparsityPattern( matrix, false ); // don't close the matrix
 
   // TODO: remove this and just call SolverBase::SetupSystem when DofManager can handle the coupling
 
@@ -324,9 +310,6 @@ void SinglePhaseReservoir::ComputeAllPerforationRates( WellElementSubRegion * co
   resElementIndex = perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementIndexString );
 
   // local working variables and arrays
-  stackArray1d< globalIndex, 2 > eqnRowIndices( 2 );
-  stackArray1d< globalIndex, 2 > dofColIndices( 2 );
-
   stackArray1d< real64, 2 > pressure( 2 );
   stackArray1d< real64, 2 > dPressure_dP( 2 );
 
@@ -335,9 +318,6 @@ void SinglePhaseReservoir::ComputeAllPerforationRates( WellElementSubRegion * co
   // loop over the perforations to compute the perforation rates
   for( localIndex iperf = 0; iperf < perforationData->size(); ++iperf )
   {
-    eqnRowIndices = -1;
-    dofColIndices = -1;
-
     pressure = 0;
     dPressure_dP = 0;
 

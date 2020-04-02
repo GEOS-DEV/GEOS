@@ -21,8 +21,8 @@
  *
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_MULTIPHYSICS_RESERVOIRSOLVERBASE_HPP_
-#define SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_MULTIPHYSICS_RESERVOIRSOLVERBASE_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_RESERVOIRSOLVERBASE_HPP_
+#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_RESERVOIRSOLVERBASE_HPP_
 
 #include "physicsSolvers/SolverBase.hpp"
 
@@ -88,9 +88,6 @@ public:
                             ParallelVector & rhs,
                             ParallelVector & solution ) override;
 
-  virtual void SetupDofs( DomainPartition const * const domain,
-                          DofManager & dofManager ) const override;
-
   virtual void AssembleSystem( real64 const time,
                                real64 const dt,
                                DomainPartition * const domain,
@@ -142,6 +139,16 @@ public:
   /**@}*/
 
   /**
+   * @Brief add the sparsity pattern induced by the perforations
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param matrix the system matrix
+   */
+  virtual void AddCouplingSparsityPattern( DomainPartition * const domain,
+                                           DofManager & dofManager,
+                                           ParallelMatrix & matrix ) = 0;
+
+  /**
    * @Brief assembles the perforation rate terms
    * @param time_n previous time value
    * @param dt time step
@@ -184,20 +191,20 @@ protected:
    */
   virtual void ResetViews( DomainPartition * const domain );
 
-  // solver that assembles the reservoir equations
+  /// solver that assembles the reservoir equations
   string m_flowSolverName;
 
-  // solver that assembles the well equations and compute perforation rates
+  /// solver that assembles the well equations and compute perforation rates
   string m_wellSolverName;
 
-  // pointer to the flow sub-solver
+  /// pointer to the flow sub-solver
   FlowSolverBase * m_flowSolver;
 
-  // pointer to the well sub-solver
+  /// pointer to the well sub-solver
   WellSolverBase * m_wellSolver;
 
 };
 
 } /* namespace geosx */
 
-#endif /* SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_MULTIPHYSICS_RESERVOIRSOLVERBASE_HPP_ */
+#endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_RESERVOIRSOLVERBASE_HPP_ */

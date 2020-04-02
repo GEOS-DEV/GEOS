@@ -122,6 +122,33 @@ real64 ReservoirSolverBase::SolverStep( real64 const & time_n,
   return dt_return;
 }
 
+void ReservoirSolverBase::SetupSystem( DomainPartition * const domain,
+                                       DofManager & dofManager,
+                                       ParallelMatrix & matrix,
+                                       ParallelVector & rhs,
+                                       ParallelVector & solution )
+{
+  GEOSX_MARK_FUNCTION;
+
+  dofManager.setMesh( domain, 0, 0 );
+  SetupDofs( domain, dofManager );
+  dofManager.reorderByRank();
+
+  localIndex const numLocalDof = dofManager.numLocalDofs();
+
+  matrix.createWithLocalSize( numLocalDof, numLocalDof, 8, MPI_COMM_GEOSX );
+  rhs.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
+  solution.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
+
+  dofManager.setSparsityPattern( matrix, false ); // don't close the matrix
+
+  // by hand, add sparsity pattern induced by well perforations
+  AddCouplingSparsityPattern( domain,
+                              dofManager,
+                              matrix );
+}
+
+
 void ReservoirSolverBase::ImplicitStepSetup( real64 const & time_n,
                                              real64 const & dt,
                                              DomainPartition * const domain,
@@ -144,20 +171,6 @@ void ReservoirSolverBase::ImplicitStepSetup( real64 const & time_n,
 
 }
 
-void ReservoirSolverBase::SetupDofs( DomainPartition const * const GEOSX_UNUSED_PARAM( domain ),
-                                     DofManager & GEOSX_UNUSED_PARAM( dofManager ) ) const
-{
-  GEOSX_ERROR( "ReservoirSolverBase::SetupDofs called!. Should be overridden." );
-}
-
-void ReservoirSolverBase::SetupSystem( DomainPartition * const GEOSX_UNUSED_PARAM( domain ),
-                                       DofManager & GEOSX_UNUSED_PARAM( dofManager ),
-                                       ParallelMatrix & GEOSX_UNUSED_PARAM( matrix ),
-                                       ParallelVector & GEOSX_UNUSED_PARAM( rhs ),
-                                       ParallelVector & GEOSX_UNUSED_PARAM( solution ) )
-{
-  GEOSX_ERROR( "ReservoirSolverBase::SetupSystem called!. Should be overridden." );
-}
 
 void ReservoirSolverBase::AssembleSystem( real64 const time_n,
                                           real64 const dt,

@@ -21,8 +21,8 @@
  *
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASERESERVOIR_HPP_
-#define SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASERESERVOIR_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASERESERVOIR_HPP_
+#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASERESERVOIR_HPP_
 
 #include "physicsSolvers/multiphysics/ReservoirSolverBase.hpp"
 
@@ -71,16 +71,14 @@ public:
    */
   /**@{*/
 
-  virtual void SetupSystem( DomainPartition * const domain,
-                            DofManager & dofManager,
-                            ParallelMatrix & matrix,
-                            ParallelVector & rhs,
-                            ParallelVector & solution ) override;
-
   virtual void SetupDofs( DomainPartition const * const domain,
                           DofManager & dofManager ) const override;
 
   /**@}*/
+
+  virtual void AddCouplingSparsityPattern( DomainPartition * const domain,
+                                           DofManager & dofManager,
+                                           ParallelMatrix & matrix ) override;
 
   virtual void AssembleCouplingTerms( real64 const time_n,
                                       real64 const dt,
@@ -119,4 +117,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_COUPLEDSOLVERS_SINGLEPHASERESERVOIR_HPP_ */
+#endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASERESERVOIR_HPP_ */
