@@ -180,8 +180,10 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
                                      rhs.unwrapped(),
                                      sol.unwrapped() );
 
+    // Clear error code to avoid GEOSX from crashing if Krylov method did not converge
+    GEOSX_LAI_CHECK_ERROR( HYPRE_ClearAllErrors() );
 
-    /* Destroy solver and preconditioner */
+    // Destroy solver
     GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRGMRESDestroy( solver ) );
   }
   else if( m_parameters.solverType == "bicgstab" )
@@ -213,8 +215,10 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
                                         rhs.unwrapped(),
                                         sol.unwrapped() );
 
+    // Clear error code to avoid GEOSX from crashing if Krylov method did not converge
+    GEOSX_LAI_CHECK_ERROR( HYPRE_ClearAllErrors() );
 
-    /* Destroy solver and preconditioner */
+    // Destroy solver
     GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRBiCGSTABDestroy( solver ) );
   }
   else if( m_parameters.solverType == "cg" )
@@ -247,9 +251,10 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
                                    rhs.unwrapped(),
                                    sol.unwrapped() );
 
+    // Clear error code to avoid GEOSX from crashing if Krylov method did not converge
+    GEOSX_LAI_CHECK_ERROR( HYPRE_ClearAllErrors() );
 
-
-    /* Destroy solver and preconditioner */
+    // Destroy solver
     GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRPCGDestroy( solver ) );
   }
   else
@@ -261,9 +266,6 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
 
   // Destroy preconditioner
   GEOSX_LAI_CHECK_ERROR( precondDestroyFunction( precond ) );
-
-  // Clear error code to avoid GEOSX from crashing if Krylov method did not converge
-  GEOSX_LAI_CHECK_ERROR( HYPRE_ClearAllErrors() );
 
   //TODO: should we return performance feedback to have GEOSX pretty print details?:
   //      i.e. iterations to convergence, residual reduction, etc.
