@@ -1,5 +1,28 @@
 
-<Problem>  
+<Problem>
+  <Benchmarks>
+    <quartz>
+      <Run name="MPI_OMP"
+           nodes="2" tasksPerNode="2"
+           autoPartition="On"
+           timeLimit="20"
+           strongScaling="{ 1, 2, 4, 8 }"/>
+      <Run name="MPI"
+           nodes="2" tasksPerNode="36"
+           autoPartition="On"
+           timeLimit="20"
+           strongScaling="{ 1, 2, 4, 8 }"/>
+    </quartz>
+
+    <lassen>
+      <Run name="MPI_OMP_CUDA"
+           nodes="1" tasksPerNode="4"
+           autoPartition="On"
+           timeLimit="10"
+           strongScaling="{ 1, 2, 4, 8 }"/>
+    </lassen>
+  </Benchmarks>
+
   <Solvers>
     <SolidMechanicsLagrangianSSLE name="lagsolve" 
                                   cflFactor="0.25"
@@ -14,14 +37,14 @@
                   xCoords="{ 0, 10 }"
                   yCoords="{ 0, 10 }"
                   zCoords="{ 0, 10 }"
-                  nx="{100}"
-                  ny="{100}"
-                  nz="{100}"
+                  nx="{300}"
+                  ny="{300}"
+                  nz="{300}"
                   cellBlockNames="{cb1}"/>
   </Mesh>
 
 
-  <Events maxTime="1.0e-3">
+  <Events maxTime="1.0e-2">
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
     <PeriodicEvent name="solverApplications"
