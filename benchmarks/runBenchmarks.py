@@ -169,7 +169,7 @@ class SlurmMachine( Machine ):
         Args:
             self: The Machine to get the status of.
         """
-        subprocess.call( [ "squeue", "-u", os.environ[ "USER" ] ] )
+        print( subprocess.check_output( [ "squeue", "-u", os.environ[ "USER" ] ], stderr=subprocess.STDOUT ) )
 
 
 class LallocMachine( Machine ):
@@ -205,7 +205,7 @@ class LallocMachine( Machine ):
         Args:
             self: The Machine to get the status of.
         """
-        subprocess.call( [ "bjobs" ] )
+        print( subprocess.check_output( [ "bjobs" ], stderr=subprocess.STDOUT ) )
     
     def hasCudaGPU( self ):
         """ Return True."""
@@ -401,6 +401,7 @@ def printProgress( machine, benchmarks, startTime ):
         print( "{}: {}".format( status, count ) )
 
     machine.printProgress()
+    sys.stdout.flush()
     print("")
 
 
