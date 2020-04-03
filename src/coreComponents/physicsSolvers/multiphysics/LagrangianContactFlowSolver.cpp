@@ -631,6 +631,13 @@ void LagrangianContactFlowSolver::SetupSystem( DomainPartition * const domain,
   GEOSX_MARK_FUNCTION;
   m_flowSolver->ResetViews( domain );
 
+  // Need this strange call to allow the two physics solvers to initialize internal data structures
+  // (like derivativeFluxResidual_dAperture in m_flowSolver) but I need to use my dofManager
+  DofManager localDofManager( "tmp" );
+  m_contactSolver->SetupSystem( domain, localDofManager, matrix, rhs, solution );
+  m_flowSolver->SetupSystem( domain, localDofManager, matrix, rhs, solution );
+  localDofManager.clear();
+
   // setup DofManager
   dofManager.setMesh( domain, 0, 0 );
 

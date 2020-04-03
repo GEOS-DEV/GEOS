@@ -593,7 +593,8 @@ TYPED_TEST_P( LAOperationsTest, MatrixMatrixOperations )
   real64 const a = A.normInf();
   real64 const b = A_squared.normInf();
 
-  EXPECT_DOUBLE_EQ( a * a, b );
+  EXPECT_DOUBLE_EQ( a, 8.0 );
+  EXPECT_DOUBLE_EQ( b, 64.0 );
 }
 
 //-----------------------------------

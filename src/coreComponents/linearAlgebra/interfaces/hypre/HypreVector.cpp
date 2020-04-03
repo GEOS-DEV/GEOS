@@ -430,6 +430,7 @@ void HypreVector::write( string const & filename,
           HYPRE_Real * data = hypre_VectorData( vector );
           HYPRE_Int size    = hypre_VectorSize( vector );
 
+          hypre_fprintf( fp, "%s", "%%MatrixMarket matrix array real general\n" );
           hypre_fprintf( fp, "%d %d\n", size, 1 );
 
           for( HYPRE_Int i = 0; i < size; i++ )

@@ -21,7 +21,9 @@
 #include "managers/DomainPartition.hpp"
 #include "wells/WellElementSubRegion.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
-#include "physicsSolvers/multiphysics/ReservoirSolver.hpp"
+#include "physicsSolvers/multiphysics/ReservoirSolverBase.hpp"
+#include "physicsSolvers/multiphysics/SinglePhaseReservoir.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseFVM.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseWell.hpp"
 
@@ -40,7 +42,7 @@ struct TestReservoirVarContainer
 };
 
 template< typename LAMBDA >
-void testNumericalJacobian( ReservoirSolver * solver,
+void testNumericalJacobian( SinglePhaseReservoir * solver,
                             DomainPartition * domain,
                             double perturbParameter,
                             double relTol,
@@ -102,7 +104,6 @@ void testNumericalJacobian( ReservoirSolver * solver,
       // get the primary variables on reservoir elements
       arrayView1d< real64 > & pres =
         subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::pressureString );
-
       arrayView1d< real64 > & dPres =
         subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaPressureString );
 
@@ -126,6 +127,10 @@ void testNumericalJacobian( ReservoirSolver * solver,
           flowSolver->applyToSubRegions( mesh, [&] ( ElementSubRegionBase & subRegion2 )
           {
             flowSolver->UpdateState( &subRegion2 );
+          } );
+          elemManager->forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion & subRegion3 )
+          {
+            wellSolver->UpdateState( &subRegion3 );
           } );
 
           residual.zero();
@@ -172,13 +177,11 @@ void testNumericalJacobian( ReservoirSolver * solver,
     // get the primary variables on well elements
     array1d< real64 > const & wellElemPressure =
       subRegion.getReference< array1d< real64 > >( SinglePhaseWell::viewKeyStruct::pressureString );
-
     array1d< real64 > const & dWellElemPressure =
       subRegion.getReference< array1d< real64 > >( SinglePhaseWell::viewKeyStruct::deltaPressureString );
 
     array1d< real64 > const & connRate  =
       subRegion.getReference< array1d< real64 > >( SinglePhaseWell::viewKeyStruct::connRateString );
-
     array1d< real64 > const & dConnRate =
       subRegion.getReference< array1d< real64 > >( SinglePhaseWell::viewKeyStruct::deltaConnRateString );
 
@@ -299,7 +302,7 @@ protected:
 
     problemManager->ProblemSetup();
 
-    solver = problemManager->GetPhysicsSolverManager().GetGroup< ReservoirSolver >( "reservoirSystem" );
+    solver = problemManager->GetPhysicsSolverManager().GetGroup< SinglePhaseReservoir >( "reservoirSystem" );
 
     GEOSX_ERROR_IF( solver == nullptr, "ReservoirSystem not found" );
 
@@ -313,12 +316,12 @@ protected:
   }
 
   static ProblemManager * problemManager;
-  static ReservoirSolver * solver;
+  static SinglePhaseReservoir * solver;
 
 };
 
 ProblemManager * ReservoirSolverTest::problemManager = nullptr;
-ReservoirSolver * ReservoirSolverTest::solver = nullptr;
+SinglePhaseReservoir * ReservoirSolverTest::solver = nullptr;
 
 
 TEST_F( ReservoirSolverTest, jacobianNumericalCheck_Perforation )
@@ -346,15 +349,14 @@ TEST_F( ReservoirSolverTest, jacobianNumericalCheck_Perforation )
                              solver->getSystemSolution() );
 
   testNumericalJacobian( solver, domain, eps, tol,
-                         [&] ( SinglePhaseWell * const targetSolver,
+                         [&] ( SinglePhaseWell * const GEOSX_UNUSED_PARAM( targetSolver ),
                                DomainPartition * const targetDomain,
                                ParallelMatrix * targetJacobian,
                                ParallelVector * targetResidual,
                                DofManager const * targetDofManager ) -> void
   {
-    targetSolver->AssemblePerforationTerms( time, dt, targetDomain, targetDofManager, targetJacobian, targetResidual );
+    solver->AssembleCouplingTerms( time, dt, targetDomain, targetDofManager, targetJacobian, targetResidual );
   } );
-
 }
 
 TEST_F( ReservoirSolverTest, jacobianNumericalCheck_Flux )

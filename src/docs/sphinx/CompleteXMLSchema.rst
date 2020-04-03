@@ -100,6 +100,13 @@ Element: CompositionalMultiphaseFluid
 .. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseFluid.rst
 
 
+.. _XML_CompositionalMultiphaseReservoir:
+
+Element: CompositionalMultiphaseReservoir
+=========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseReservoir.rst
+
+
 .. _XML_CompositionalMultiphaseWell:
 
 Element: CompositionalMultiphaseWell
@@ -513,13 +520,6 @@ Element: QuadratureRules
 .. include:: ../../coreComponents/fileIO/schema/docs/QuadratureRules.rst
 
 
-.. _XML_Reservoir:
-
-Element: Reservoir
-==================
-.. include:: ../../coreComponents/fileIO/schema/docs/Reservoir.rst
-
-
 .. _XML_Restart:
 
 Element: Restart
@@ -560,6 +560,13 @@ Element: SinglePhaseHybridFVM
 Element: SinglePhaseProppantFVM
 ===============================
 .. include:: ../../coreComponents/fileIO/schema/docs/SinglePhaseProppantFVM.rst
+
+
+.. _XML_SinglePhaseReservoir:
+
+Element: SinglePhaseReservoir
+=============================
+.. include:: ../../coreComponents/fileIO/schema/docs/SinglePhaseReservoir.rst
 
 
 .. _XML_SinglePhaseWell:
@@ -788,6 +795,13 @@ Datastructure: CompositionalMultiphaseFlow
 Datastructure: CompositionalMultiphaseFluid
 ===========================================
 .. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseFluid_other.rst
+
+
+.. _DATASTRUCTURE_CompositionalMultiphaseReservoir:
+
+Datastructure: CompositionalMultiphaseReservoir
+===============================================
+.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseReservoir_other.rst
 
 
 .. _DATASTRUCTURE_CompositionalMultiphaseWell:
@@ -1231,13 +1245,6 @@ Datastructure: QuadratureRules
 .. include:: ../../coreComponents/fileIO/schema/docs/QuadratureRules_other.rst
 
 
-.. _DATASTRUCTURE_Reservoir:
-
-Datastructure: Reservoir
-========================
-.. include:: ../../coreComponents/fileIO/schema/docs/Reservoir_other.rst
-
-
 .. _DATASTRUCTURE_Restart:
 
 Datastructure: Restart
@@ -1278,6 +1285,13 @@ Datastructure: SinglePhaseHybridFVM
 Datastructure: SinglePhaseProppantFVM
 =====================================
 .. include:: ../../coreComponents/fileIO/schema/docs/SinglePhaseProppantFVM_other.rst
+
+
+.. _DATASTRUCTURE_SinglePhaseReservoir:
+
+Datastructure: SinglePhaseReservoir
+===================================
+.. include:: ../../coreComponents/fileIO/schema/docs/SinglePhaseReservoir_other.rst
 
 
 .. _DATASTRUCTURE_SinglePhaseWell:

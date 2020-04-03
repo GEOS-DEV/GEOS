@@ -1626,45 +1626,51 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const * con
         // Compute rhs
         real64_array rhs0( 3 );
         rhs0 = 0.0;
-        for( localIndex j = 0; j < nDof[0]; ++j )
-        {
-          rhs0( 0 ) += totalInvStiffApprox00( 0, j ) * ( traction[fractureIndex[0]][j] );
-        }
-        for( localIndex j = 0; j < nDof[1]; ++j )
-        {
-          rhs0( 0 ) += totalInvStiffApprox01( 0, j ) * ( traction[fractureIndex[1]][j] );
-        }
-        for( localIndex i = 1; i < nDof[0]; ++i )
+        if( nDof[0] > 0 )
         {
           for( localIndex j = 0; j < nDof[0]; ++j )
           {
-            rhs0( i ) += totalInvStiffApprox00( i, j ) * ( deltaTraction[fractureIndex[0]][j] );
+            rhs0( 0 ) += totalInvStiffApprox00( 0, j ) * ( traction[fractureIndex[0]][j] );
           }
           for( localIndex j = 0; j < nDof[1]; ++j )
           {
-            rhs0( i ) += totalInvStiffApprox01( i, j ) * ( deltaTraction[fractureIndex[1]][j] );
+            rhs0( 0 ) += totalInvStiffApprox01( 0, j ) * ( traction[fractureIndex[1]][j] );
+          }
+          for( localIndex i = 1; i < nDof[0]; ++i )
+          {
+            for( localIndex j = 0; j < nDof[0]; ++j )
+            {
+              rhs0( i ) += totalInvStiffApprox00( i, j ) * ( deltaTraction[fractureIndex[0]][j] );
+            }
+            for( localIndex j = 0; j < nDof[1]; ++j )
+            {
+              rhs0( i ) += totalInvStiffApprox01( i, j ) * ( deltaTraction[fractureIndex[1]][j] );
+            }
           }
         }
 
         real64_array rhs1( 3 );
         rhs1 = 0.0;
-        for( localIndex j = 0; j < nDof[0]; ++j )
-        {
-          rhs1( 0 ) += totalInvStiffApprox10( 0, j ) * ( traction[fractureIndex[0]][j] );
-        }
-        for( localIndex j = 0; j < nDof[1]; ++j )
-        {
-          rhs1( 0 ) += totalInvStiffApprox11( 0, j ) * ( traction[fractureIndex[1]][j] );
-        }
-        for( localIndex i = 1; i < nDof[1]; ++i )
+        if( nDof[1] > 0 )
         {
           for( localIndex j = 0; j < nDof[0]; ++j )
           {
-            rhs1( i ) += totalInvStiffApprox10( i, j ) * ( deltaTraction[fractureIndex[0]][j] );
+            rhs1( 0 ) += totalInvStiffApprox10( 0, j ) * ( traction[fractureIndex[0]][j] );
           }
           for( localIndex j = 0; j < nDof[1]; ++j )
           {
-            rhs1( i ) += totalInvStiffApprox11( i, j ) * ( deltaTraction[fractureIndex[1]][j] );
+            rhs1( 0 ) += totalInvStiffApprox11( 0, j ) * ( traction[fractureIndex[1]][j] );
+          }
+          for( localIndex i = 1; i < nDof[1]; ++i )
+          {
+            for( localIndex j = 0; j < nDof[0]; ++j )
+            {
+              rhs1( i ) += totalInvStiffApprox10( i, j ) * ( deltaTraction[fractureIndex[0]][j] );
+            }
+            for( localIndex j = 0; j < nDof[1]; ++j )
+            {
+              rhs1( i ) += totalInvStiffApprox11( i, j ) * ( deltaTraction[fractureIndex[1]][j] );
+            }
           }
         }
 
