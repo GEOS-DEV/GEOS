@@ -1172,7 +1172,7 @@ void HypreMatrix::print( std::ostream & os ) const
 }
 
 void HypreMatrix::write( string const & filename,
-                         LAIOutputFormat const format ) const
+                         LAIOutputFormat const format = LAIOutputFormat::MATRIX_MARKET ) const override;
 {
   GEOSX_LAI_ASSERT( ready() );
 

@@ -805,7 +805,7 @@ protected:
    * >> M = spconvert(filename_root)
    */
   virtual void write( string const & filename,
-                      LAIOutputFormat const format ) const = 0;
+                      LAIOutputFormat const format = LAIOutputFormat::MATRIX_MARKET ) const = 0;
 
   ///@}
 
