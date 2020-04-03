@@ -16,6 +16,7 @@
 
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
+#include "common/Path.hpp"
 #include "cxx-utilities/src/SetFPE.hpp"
 #include "cxx-utilities/src/SetSignalHandling.hpp"
 #include "cxx-utilities/src/stackTrace.hpp"
@@ -64,8 +65,6 @@ cali::ConfigManager s_caliperManager;
  */
 void addUmpireHighWaterMarks()
 {
-  GEOSX_MARK_FUNCTION;
-
   umpire::ResourceManager & rm = umpire::ResourceManager::getInstance();
 
   // Get a list of all the allocators and sort it so that it's in the same order on each rank.
@@ -140,6 +139,11 @@ void setupCaliper()
   GEOSX_WARNING_IF( !adiak::walltime(), "Error getting the walltime." );
   GEOSX_WARNING_IF( !adiak::systime(), "Error getting the systime." );
   GEOSX_WARNING_IF( !adiak::cputime(), "Error getting the cputime." );
+
+  std::string xmlDir, xmlName;
+  splitPath( s_commandLineOptions.inputFileName, xmlDir, xmlName );
+  adiak::value( "XML File", xmlName );
+  adiak::value( "Problem name", s_commandLineOptions.problemName );
 
   // MPI info
 #if defined( GEOSX_USE_MPI )
@@ -377,6 +381,24 @@ void parseCommandLineOptions( int argc, char * * argv )
         s_commandLineOptions.timerOutput = opt.arg;
       }
       break;
+    }
+  }
+
+  if( s_commandLineOptions.problemName == "" )
+  {
+    std::string & inputFileName = s_commandLineOptions.inputFileName;
+    if( inputFileName.length() > 4 && inputFileName.substr( inputFileName.length() - 4, 4 ) == ".xml" )
+    {
+      string::size_type start = inputFileName.find_last_of( '/' ) + 1;
+      if( start >= inputFileName.length())
+      {
+        start = 0;
+      }
+      s_commandLineOptions.problemName.assign( inputFileName, start, inputFileName.length() - 4 - start );
+    }
+    else
+    {
+      s_commandLineOptions.problemName.assign( inputFileName );
     }
   }
 }

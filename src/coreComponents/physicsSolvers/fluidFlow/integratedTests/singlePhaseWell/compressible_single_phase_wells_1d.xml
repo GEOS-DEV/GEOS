@@ -3,7 +3,7 @@
 
   <Solvers>
 
-    <Reservoir name="reservoirSystem"
+    <SinglePhaseReservoir name="reservoirSystem"
                flowSolverName="singlePhaseFlow"
                wellSolverName="singlePhaseWell"
                logLevel="1"
@@ -11,7 +11,7 @@
       <NonlinearSolverParameters newtonMaxIter="40"/>
       <SystemSolverParameters useDirectSolver="1"
                               logLevel="0"/>
-    </Reservoir>
+    </SinglePhaseReservoir>
   
     <SinglePhaseFVM name="singlePhaseFlow"
                      logLevel="1"

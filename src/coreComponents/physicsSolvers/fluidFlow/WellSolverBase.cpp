@@ -119,12 +119,12 @@ void WellSolverBase::AssembleSystem( real64 const time,
   // first deal with the well control and switch if necessary
   CheckWellControlSwitch( domain );
 
+  // then assemble the mass balance equations (exception perforation terms)
   matrix.open();
   rhs.open();
 
   // then assemble the mass balance equations
   AssembleFluxTerms( time, dt, domain, &dofManager, &matrix, &rhs );
-  AssemblePerforationTerms( time, dt, domain, &dofManager, &matrix, &rhs );
 
   // then assemble the volume balance equations
   AssembleVolumeBalanceTerms( time, dt, domain, &dofManager, &matrix, &rhs );
