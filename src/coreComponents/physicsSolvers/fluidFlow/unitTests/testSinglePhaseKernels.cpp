@@ -15,14 +15,16 @@
 // Source includes
 #include "managers/initialization.hpp"
 #include "common/Logger.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseKernels.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseFVMKernels.hpp"
 #include "physicsSolvers/fluidFlow/unitTests/testFlowKernelHelpers.hpp"
 
 // TPL includes
 #include <gtest/gtest.h>
 
 using namespace geosx;
-using namespace geosx::SinglePhaseKernels;
+using namespace geosx::SinglePhaseBaseKernels;
+using namespace geosx::SinglePhaseFVMKernels;
 
 
 TEST( SinglePhaseKernels, mobility )
