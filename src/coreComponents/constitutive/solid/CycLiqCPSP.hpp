@@ -122,6 +122,7 @@ public:
 
 		real64 G = m_G0[k] * pat * ( pow( ( 2.97 - m_ein[k] ) , 2 ) / ( 1 + m_ein[k])) * sqrt( p / pat );
 		real64 K = (1 + m_ein[k]) / m_kappa[k] * pat * sqrt( p / pat );
+		G = 3.0 / 8.0 * K;
 		return ( K + 4 / 3.0 * G );
 	}
 
