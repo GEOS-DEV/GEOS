@@ -17,9 +17,11 @@ set( physicsSolvers_headers
      fluidFlow/ProppantTransport.hpp
      fluidFlow/ProppantTransportKernels.hpp
      fluidFlow/SinglePhaseBase.hpp
-     fluidFlow/SinglePhaseHybridFVM.hpp
      fluidFlow/SinglePhaseFVM.hpp
-     fluidFlow/SinglePhaseKernels.hpp
+     fluidFlow/SinglePhaseHybridFVM.hpp     
+     fluidFlow/SinglePhaseBaseKernels.hpp
+     fluidFlow/SinglePhaseFVMKernels.hpp          
+     fluidFlow/SinglePhaseHybridFVMKernels.hpp     
      fluidFlow/SinglePhaseWell.hpp
      fluidFlow/SinglePhaseProppantBase.hpp
      fluidFlow/WellSolverBase.hpp
@@ -54,11 +56,12 @@ set( physicsSolvers_sources
      fluidFlow/ProppantTransport.cpp
      fluidFlow/ProppantTransportKernels.cpp
      fluidFlow/SinglePhaseBase.cpp
-     fluidFlow/SinglePhaseHybridFVM.cpp
+     fluidFlow/SinglePhaseBaseKernels.cpp
      fluidFlow/SinglePhaseFVM.cpp
-     fluidFlow/SinglePhaseKernels.cpp
-     fluidFlow/SinglePhaseProppantBase.cpp
-     fluidFlow/SinglePhaseWell.cpp
+     fluidFlow/SinglePhaseFVMKernels.cpp
+     fluidFlow/SinglePhaseHybridFVM.cpp     
+     fluidFlow/SinglePhaseHybridFVMKernels.cpp
+     fluidFlow/SinglePhaseProppantBase.cpp     
      fluidFlow/SinglePhaseWell.cpp
      fluidFlow/WellSolverBase.cpp
      multiphysics/FlowProppantTransportSolver.cpp
