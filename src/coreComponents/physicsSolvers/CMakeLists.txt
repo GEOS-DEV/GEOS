@@ -29,7 +29,9 @@ set( physicsSolvers_headers
      multiphysics/FlowProppantTransportSolver.hpp
      multiphysics/HydrofractureSolver.hpp
      multiphysics/PoroelasticSolver.hpp
-     multiphysics/ReservoirSolver.hpp
+     multiphysics/ReservoirSolverBase.hpp
+     multiphysics/SinglePhaseReservoir.hpp
+     multiphysics/CompositionalMultiphaseReservoir.hpp
      simplePDE/LaplaceFEM.hpp
      solidMechanics/SolidMechanicsLagrangianFEM.hpp
      solidMechanics/SolidMechanicsLagrangianSSLE.hpp
@@ -65,7 +67,9 @@ set( physicsSolvers_sources
      multiphysics/FlowProppantTransportSolver.cpp
      multiphysics/HydrofractureSolver.cpp
      multiphysics/PoroelasticSolver.cpp
-     multiphysics/ReservoirSolver.cpp
+     multiphysics/ReservoirSolverBase.cpp
+     multiphysics/SinglePhaseReservoir.cpp
+     multiphysics/CompositionalMultiphaseReservoir.cpp
      simplePDE/LaplaceFEM.cpp
      solidMechanics/SolidMechanicsLagrangianFEM.cpp
      solidMechanics/SolidMechanicsLagrangianSSLE.cpp
