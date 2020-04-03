@@ -22,8 +22,10 @@
 #include "managers/DomainPartition.hpp"
 #include "wells/WellElementSubRegion.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
-#include "physicsSolvers/multiphysics/ReservoirSolver.hpp"
+#include "physicsSolvers/multiphysics/ReservoirSolverBase.hpp"
+#include "physicsSolvers/multiphysics/CompositionalMultiphaseReservoir.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseWell.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseFlow.hpp"
 
 using namespace geosx;
 using namespace geosx::dataRepository;
@@ -68,22 +70,18 @@ void testMixtureDensityNumericalDerivatives( CompositionalMultiphaseWell * solve
 
     arrayView1d< real64 > & pres =
       subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::pressureString );
-
     arrayView1d< real64 > & dPres =
       subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::deltaPressureString );
 
     arrayView2d< real64 > & compDens =
       subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::globalCompDensityString );
-
     arrayView2d< real64 > & dCompDens =
       subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::deltaGlobalCompDensityString );
 
     arrayView1d< real64 > const & wellElemMixtureDensity =
       subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::mixtureDensityString );
-
     arrayView1d< real64 > const & dWellElemMixtureDensity_dPres =
       subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::dMixtureDensity_dPressureString );
-
     arrayView2d< real64 > const & dWellElemMixtureDensity_dCompDens =
       subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::dMixtureDensity_dGlobalCompDensityString );
 
@@ -153,7 +151,7 @@ void testMixtureDensityNumericalDerivatives( CompositionalMultiphaseWell * solve
 
 
 template< typename LAMBDA >
-void testNumericalJacobian( ReservoirSolver * solver,
+void testNumericalJacobian( CompositionalMultiphaseReservoir * solver,
                             DomainPartition * domain,
                             double perturbParameter,
                             double relTol,
@@ -217,13 +215,11 @@ void testNumericalJacobian( ReservoirSolver * solver,
       // get the primary variables on the reservoir elements
       arrayView1d< real64 > & pres =
         subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::pressureString );
-
       arrayView1d< real64 > & dPres =
         subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::deltaPressureString );
 
       arrayView2d< real64 > & compDens =
         subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::globalCompDensityString );
-
       arrayView2d< real64 > & dCompDens =
         subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::deltaGlobalCompDensityString );
 
@@ -254,6 +250,11 @@ void testNumericalJacobian( ReservoirSolver * solver,
           {
             flowSolver->UpdateState( &subRegion2 );
           } );
+          elemManager->forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion & subRegion3 )
+          {
+            wellSolver->UpdateState( &subRegion3 );
+          } );
+
 
           residual.zero();
           jacobian.zero();
@@ -333,19 +334,16 @@ void testNumericalJacobian( ReservoirSolver * solver,
     // get the primary variables on the well elements
     arrayView1d< real64 > const & wellElemPressure =
       subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::pressureString );
-
     arrayView1d< real64 > const & dWellElemPressure =
       subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::deltaPressureString );
 
     arrayView2d< real64 > const & wellElemCompDens =
       subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::globalCompDensityString );
-
     arrayView2d< real64 > const & dWellElemCompDens =
       subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::deltaGlobalCompDensityString );
 
     arrayView1d< real64 > const & connRate  =
       subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::mixtureConnRateString );
-
     arrayView1d< real64 > const & dConnRate =
       subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::deltaMixtureConnRateString );
 
@@ -507,7 +505,7 @@ protected:
 
     problemManager->ProblemSetup();
 
-    solver = problemManager->GetPhysicsSolverManager().GetGroup< ReservoirSolver >( "reservoirSystem" );
+    solver = problemManager->GetPhysicsSolverManager().GetGroup< CompositionalMultiphaseReservoir >( "reservoirSystem" );
 
     GEOSX_ERROR_IF( solver == nullptr, "ReservoirSystem not found" );
 
@@ -521,12 +519,12 @@ protected:
   }
 
   static ProblemManager * problemManager;
-  static ReservoirSolver * solver;
+  static CompositionalMultiphaseReservoir * solver;
 
 };
 
 ProblemManager * ReservoirSolverTest::problemManager = nullptr;
-ReservoirSolver * ReservoirSolverTest::solver = nullptr;
+CompositionalMultiphaseReservoir * ReservoirSolverTest::solver = nullptr;
 
 TEST_F( ReservoirSolverTest, derivativeNumericalCheck_mixtureDensity )
 {
@@ -568,13 +566,15 @@ TEST_F( ReservoirSolverTest, jacobianNumericalCheck_Perforation )
                              solver->getSystemSolution() );
 
 /*
-   testNumericalJacobian( solver, domain, system, eps, tol,
+
+   testNumericalJacobian( solver, domain, eps, tol,
                          [&] ( CompositionalMultiphaseWell * const targetSolver,
                                DomainPartition * const targetDomain,
-                               Epetra_FECrsMatrix * const targetJacobian,
-                               Epetra_FEVector * const targetResidual ) -> void
+                               ParallelMatrix * targetJacobian,
+                               ParallelVector * targetResidual,
+                               DofManager const * targetDofManager  ) -> void
    {
-    targetSolver->AssemblePerforationTerms( targetDomain, targetJacobian, targetResidual, time, dt );
+    solver->AssembleCouplingTerms( time, dt, targetDomain, targetDofManager, targetJacobian, targetResidual );
    });
  */
 }
