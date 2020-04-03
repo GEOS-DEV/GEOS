@@ -15,7 +15,7 @@
     </SinglePhaseReservoir>
   
     <SinglePhaseHybridFVM name="SinglePhaseFlow"
-                     logLevel="0"
+                     logLevel="1"
                      discretization="singlePhaseTPFA"
                      fluidName="water"
                      solidName="rock"
