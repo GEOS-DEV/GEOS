@@ -4,7 +4,7 @@ Continuous Integration process
 To save building time, the third party libraries (that do not change so often) and GEOSX are build separately.
 
 Everytime a pull is requested in the TPL repository, docker images are generated and deployed on `dockerhub <https://hub.docker.com/r/geosx>`_.
-The repository names (`ubuntu18.04-gcc7 <https://hub.docker.com/r/geosx/ubuntu18.04-gcc7>`_, `ubuntu18.04-gcc8 <https://hub.docker.com/r/geosx/ubuntu18.04-gcc8>`_,
+The repository names (`ubuntu18.04-gcc8 <https://hub.docker.com/r/geosx/ubuntu18.04-gcc8>`_,
 `centos7.5.1804-clang6.0.1 <https://hub.docker.com/r/geosx/centos7.5.1804-clang6.0.1>`_ and `centos7.5.1804-clang7.0.0 <https://hub.docker.com/r/geosx/centos7.5.1804-clang7.0.0>`_)
 obviously reflect the OS and the compiler flavour used.
 For each image, the unique `${TRAVIS_PULL_REQUEST}-${TRAVIS_BUILD_NUMBER}` tag is used so we can connect the related code source in a rather convenient way.
